@@ -6,6 +6,10 @@
 // problem and for obtaining the total/average keyrate for an entire contest.
 //
 // $Log: clirate.cpp,v $
+// Revision 1.17  1999/01/22 18:38:39  remi
+// Removed check of duplicate blocks done, since it was bogging
+// the summary line sometimes.
+//
 // Revision 1.16  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -78,7 +82,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.16 1999/01/01 02:45:14 cramer Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.17 1999/01/22 18:38:39 remi Exp $"; }
 #endif
 
 #include "cputypes.h" //for u64 define
@@ -116,13 +120,10 @@ double CliGetKeyrateForContest( int contestid )
 //internal - see CliGetKeyrateForProblem() for description
 static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
 {
-  static struct { u64 key; signed char contest; } last_done_list[LASTDONE_LIST_SIZE];
-  static int last_done_pos = -1;
-
   RC5Result rc5result;
   unsigned int count;
   struct timeval tv;
-  int contestid, additive;
+  int contestid;
   double keys;
 
   if (!prob)
@@ -148,32 +149,8 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   if (keys==((double)(0))) //no keys done? should never happen.
     return ((double)(0));
 
-  additive = 1;
-  for (int i = 0; i < (LASTDONE_LIST_SIZE); i++)
+  if (doSave)
   {
-    if (last_done_pos==-1)
-    {
-      last_done_list[i].key.lo = last_done_list[i].key.hi = 0;
-      last_done_list[i].contest = -1;
-      if (i == ((LASTDONE_LIST_SIZE)-1)) last_done_pos = 0;
-    }
-    else if (last_done_list[i].key.hi == rc5result.key.hi &&
-        last_done_list[i].key.lo == rc5result.key.lo &&
-        last_done_list[i].contest == contestid )
-    {
-      additive=0;
-      break;
-    }
-  }
-
-  if (additive && doSave)
-  {
-    last_done_list[last_done_pos].key.hi = rc5result.key.hi;
-    last_done_list[last_done_pos].key.lo = rc5result.key.lo;
-    last_done_list[last_done_pos].contest = (u8) contestid;
-    if ((++last_done_pos) >= (LASTDONE_LIST_SIZE))
-      last_done_pos=0;
-
     count = 1; //number of blocks to add to clicdata.cpp information
     CliAddContestInfoSummaryData( contestid, &count, &keys, &tv );
   }
