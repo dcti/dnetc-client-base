@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.11 2003/09/07 18:18:19 kakace Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.12 2003/09/12 13:17:36 mweiser Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -1127,9 +1127,7 @@ int TriggersSetThreadSigMask(void)
   }
 
   #if defined(_POSIX_THREADS_SUPPORTED) /* must be first */
-    #if (CLIENT_OS == OS_AIX)
-    sigthreadmask(SIG_BLOCK, &signals_to_block, NULL);
-    #elif ((CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)) \
+    #if ((CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)) \
        || (CLIENT_OS == OS_DGUX) || (CLIENT_OS == OS_MACOSX)
     /* nothing - no pthread_sigmask() and no alternative */
     #else
