@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.5  1998/11/06 02:32:25  cyp
+// Ok, no more restrictions (at least from the client's perspective) on the
+// number of processors that the client can run on.
+//
 // Revision 1.4  1998/10/05 02:10:19  cyp
 // Removed explicit time stamps ([%s],Time())
 //
@@ -22,7 +26,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.4 1998/10/05 02:10:19 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.5 1998/11/06 02:32:25 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -418,13 +422,12 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 
 unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 {
-  static unsigned int number_of_crunchers = 1;
   static int done_initial_load = 0; 
 
   Problem *thisprob;
   int load_needed, changed_flag;
 
-  int prob_step;  
+  int i,prob_step;  
   unsigned int norm_key_count, prob_i, prob_for, cont_i;
   unsigned int loaded_problems_count[2]={0,0};
   unsigned int loaded_normalized_key_count[2]={0,0};
@@ -443,24 +446,22 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
   if (!done_initial_load)
     {
-    prob_for = 0; 
     prob_step = 1;
 
-    int i = GetNumberOfDetectedProcessors();
-    number_of_crunchers = ((i > 1) ? ((unsigned int)(i)) : 1 );
+    i = InitializeProblemManager(load_problem_count);
+    if (i<=0)
+      return 0;
+    load_problem_count = (unsigned int)i;
     }
   else
     {
-    prob_for = load_problem_count; 
     prob_step = -1;
     }
 
-  for (; ((prob_step > 0)?(prob_for < load_problem_count):(prob_for > 0)); 
-                                                      prob_for+=prob_step )
+
+  for (prob_for=0; prob_for<load_problem_count; prob_for++)
     {
-    prob_i = prob_for;
-    if (prob_step < 0)
-      prob_i--;
+    prob_i= (prob_step < 0) ? ((load_problem_count-1)-prob_for) : (prob_step);
 
     thisprob = GetProblemPointerFromIndex( prob_i );
     if (thisprob == NULL)
@@ -568,10 +569,13 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
       // completed problems is even divisible by the number of processors.
       // Requires a working GetNumberOfDetectedProcessors() [cpucheck.cpp]
 
+      if ((i = GetNumberOfDetectedProcessors()) < 1)
+        i = 1;
+      if (load_problem_count > ((unsigned int)(i)))
+        i = (int)load_problem_count;
+
       if ( ( totalBlocksDone[cont_i] > 0 ) && 
-        (totalBlocksDone[cont_i] % 
-          ((load_problem_count > number_of_crunchers) ? 
-              load_problem_count : number_of_crunchers )) == 0 )
+        (totalBlocksDone[cont_i] % ((unsigned int)(i)) ) == 0 )
         {
         Log( "Summary: %s\n", CliGetSummaryStringForContest(cont_i) );
         }
@@ -589,12 +593,13 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
             out == 1 ? "is" : "are",
             (nodiskbuffers ? "(memory-out)" : out_buffer_file[cont_i]));
       }
-    }
-  
+    } //for ( cont_i = 0; cont_i < 2; cont_i++)
+
 
  if (mode == PROBFILL_UNLOADALL)
    {
    done_initial_load = 0;
+   DeinitializeProblemManager();
    return total_problems_saved;
    }
    

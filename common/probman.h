@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probman.h,v $
+// Revision 1.2  1998/11/06 02:32:26  cyp
+// Ok, no more restrictions (at least from the client's perspective) on the
+// number of processors that the client can run on.
+//
 // Revision 1.1  1998/09/28 02:36:39  cyp
 // Created. Just stubs for now.
 //
@@ -17,7 +21,7 @@
 Problem *GetProblemPointerFromIndex(unsigned int probindex);
 
 //Initialize the problem manager
-int InitializeProblemManager(void);
+int InitializeProblemManager(unsigned int maxnumproblems);
 
 //Deinitialize the problem manager
 int DeinitializeProblemManager(void);
