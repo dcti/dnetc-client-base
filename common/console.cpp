@@ -11,6 +11,9 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.17  1998/11/09 16:54:04  cyp
+// Added special bksp handling for ANSI compliant terms.
+//
 // Revision 1.16  1998/11/08 22:24:15  foxyloxy
 // Really did the below comment this time.
 //
@@ -65,7 +68,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.16 1998/11/08 22:24:15 foxyloxy Exp $"; }
+return "@(#)$Id: console.cpp,v 1.17 1998/11/09 16:54:04 cyp Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -77,12 +80,25 @@ return "@(#)$Id: console.cpp,v 1.16 1998/11/08 22:24:15 foxyloxy Exp $"; }
 #include "triggers.h"
 #include "console.h" //also has CLICONS_SHORTNAME, CLICONS_LONGNAME
 #include "sleepdef.h" //usleep
-#ifndef NOTERMIOS
-#if (CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS)
+
+#if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || \
+    (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS))
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
-#endif
+
+#if (CLIENT_OS==OS_VMS) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==OS_OS9) || \
+    (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_QNX) || (CLIENT_OS==OS_OSF1) || \
+    (CLIENT_OS==OS_BSDI) || (CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || \
+    (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) || \
+    (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_UNIXWARE) || (CLIENT_OS==OS_MVS) || \
+    (CLIENT_OS==OS_MINIX) || (CLIENT_OS==OS_MACH10) || (CLIENT_OS==OS_AIX) || \
+    (CLIENT_OS==OS_AUX) || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_SUNOS) || \
+    (CLIENT_OS==OS_ULTRIX) || (CLIENT_OS==OS_DGUX) || (CLIENT_OS==OS_DYNIX) || \
+    (CLIENT_OS==OS_OS390)
+#define TERM_IS_ANSI_COMPLIANT
+#endif    
+
 /* ---------------------------------------------------- */
 
 static struct 
@@ -388,7 +404,11 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
          {
          if (pos > 0)  
            {
+           #ifdef TERM_IS_ANSI_COMPLIANT
+           ConOut("\x1B" "[1D" " " "\x1B" "[1D");
+           #else
            ConOut("\b \b");
+           #endif
            pos--;
            }
          }
