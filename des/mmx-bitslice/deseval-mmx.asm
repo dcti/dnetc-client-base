@@ -8,6 +8,10 @@
 ;
 ;
 ; $Log: deseval-mmx.asm,v $
+; Revision 1.7  1999/01/17 12:13:22  fordbr
+; Re-wrote sbox 3 and modified some initial lines in sboxes 1, 2, 6 and 8
+; Should be about a 4% speedup
+;
 ; Revision 1.6  1999/01/13 07:40:07  fordbr
 ; Fixed incorrect pop into eax when key found
 ; Removed writeback of unchanged bits when key found
@@ -34,7 +38,8 @@
 ;  73 clocks per key on Pentium MMX
 ;  85                   AMD K6-2
 ;  90                   Intel PII
-; 118                   AMD K6
+; 128                   AMD K6
+; 137                   Cyrix MX
 ;
 ;-----------------------------------------------
 
@@ -57,21 +62,19 @@ global _whack16
 
    pxor  mm0,[%1]
 
-   pxor  mm2,[%3]
-
    pxor  mm3,[%4]
-
-   pxor  mm4,[%5]
-
-   pxor  mm5,[%6]
+   pcmpeqd mm6,mm6            ; create all ones
 
    movq  [mmNOT+8],mm0
-   movq  mm6,mm3              ; copy a4
+   pxor  mm0,mm6              ; x2 = ~a1
 
-   pxor  mm0,[mmNOT]          ; x2 = ~a1
+   pxor  mm2,[%3]
+   pxor  mm6,mm3              ; x1 = ~a4
+
+   pxor  mm4,[%5]
    pxor  mm3,mm2              ; x3 = a3 ^ a4
 
-   pxor  mm6,[mmNOT]          ; x1 = ~a4
+   pxor  mm5,[%6]
    movq  mm7,mm0              ; copy x2
 
    movq  [mmNOT+16],mm4
@@ -213,25 +216,18 @@ global _whack16
 
    pxor  mm7,[esi+128]        ; out2 ^= x51
    pxor  mm2,mm3              ; out3 = out3 ^ x62 ^ x56
-                              
 
 %if STORE_RESULT
    movq  [edi+%7],mm5         ; store out1
-%endif
 
-%if STORE_RESULT
    movq  [edi+%10],mm0        ; store out4
-%endif
 
-%if STORE_RESULT
    movq  [edi+%8],mm7         ; store out2
-%endif
 
-%if STORE_RESULT
    movq  [edi+%9],mm2         ; store out3
 %endif
 
-                              ; 64 clocks for 67 variables
+                              ; 62 clocks for 67 variables
 %endmacro
 
 
@@ -248,28 +244,26 @@ global _whack16
 
    pxor  mm0,[%1]
 
-   pxor  mm2,[%3]
-
-   pxor  mm3,[%4]
-
    pxor  mm4,[%5]
-
-   pxor  mm5,[%6]
-
-   movq  [mmNOT+8],mm3
-   movq  mm6,mm4              ; copy a5
+   pcmpeqd mm7,mm7            ; create all ones
 
    movq  [mmNOT+16],mm0
-   movq  mm7,mm4              ; copy a5
+   movq  mm6,mm4              ; copy a5
 
-   pxor  mm0,[mmNOT]          ; x2 = ~a1
+   pxor  mm2,[%3]
+   pxor  mm0,mm7              ; x2 = ~a1
+
+   pxor  mm5,[%6]
+   pxor  mm7,mm4              ; x1 = ~a5
+
+   pxor  mm3,[%4]
    pxor  mm6,mm5              ; x3 = a5 ^ a6
-
-   pxor  mm7,[mmNOT]          ; x1 = ~a5
-   movq  mm3,mm0              ; copy x2
 
    movq  [mmNOT+24],mm2
    por   mm7,mm5              ; x6 = a6 | x1
+
+   movq  [mmNOT+8],mm3
+   movq  mm3,mm0              ; copy x2
 
    movq  [mmNOT+32],mm6
    por   mm3,mm7              ; x7 = x2 | x6
@@ -395,197 +389,175 @@ global _whack16
 
 %if STORE_RESULT
    movq  [edi+%7],mm1         ; store out1
-%endif
 
-%if STORE_RESULT
    movq  [edi+%10],mm2        ; store out4
 %endif
 
-                              ; 55 clocks for 60 variables
+                              ; 53 clocks for 60 variables
 %endmacro
 
 
 %macro sbox_3 6-10 184,120,232,40
-   movq  mm0,[ebx+56]
+   movq  mm0, [ebx+88]
 
-   movq  mm2,[ebx+72]
+   pxor  mm0, [%5]            ; a5 = e5 ^ k5
 
-   movq  mm3,[ebx+80]
+   movq  mm1, [ebx+72]
+   movq  mm2, mm0             ; copy a5
 
-   movq  mm4,[ebx+88]
+   pxor  mm1, [%3]            ; a3 = e3 ^ k3
+   movq  mm4, mm0             ; copy a5
 
-   movq  mm5,[ebx+96]
+   movq  mm6, [ebx+96]
+   pand  mm2, mm1             ; x3 = a3 & a5
 
-   pxor  mm0,[%1]
+   pxor  mm6, [%6]            ; a6 = e6 ^ k6
+   pandn mm4, mm1             ; x8 = a3 & ~a5
 
-   pxor  mm2,[%3]
+   movq  mm3, [ebx+80]
+   pxor  mm2, mm6             ; x4 = a6 ^ x3
 
-   pxor  mm3,[%4]
+   pxor  mm3, [%4]            ; a4 = e4 ^ k4
+   movq  mm7, mm0             ; copy a5
 
-   pxor  mm4,[%5]
+   movq  [mmNOT+8], mm1       ; store a3
+   pandn mm7, mm3             ; x5 = a4 & ~a5
 
-   pxor  mm5,[%6]
-                              ; mm6 free
-                              ; mm7 free
-   movq  [mmNOT+8],mm0        ;	mm0 free
-   movq  mm6,mm5              ; mm6 = a6
+   movq  [mmNOT+16], mm2      ; store x4
+   movq  mm5, mm6             ; copy a6
 
-   pxor  mm6,[mmNOT]          ;	mm6(x2) = ~a6
-   movq  mm7,mm4              ; mm7 = a5
+   pxor  mm5, [mmNOT]         ; x2 = ~a6
+   pxor  mm1, mm3             ; x21 = a3 ^ a4
 
-   movq  mm1,[ebx+64]
-   pxor  mm7,mm6              ;	mm7(x9) = a5 ^ x2
+   movq  [mmNOT+24], mm7      ; store x5
+   pxor  mm7, mm2             ; x6 = x4 ^ x5
 
-   pxor  mm1,[%2]
-   movq  mm0,mm4              ; mm0 = a5
+   movq  [mmNOT+32], mm5      ; store x2
+   por   mm2, mm5             ; x23 = x2 | x4
 
-   movq  [mmNOT+16],mm6       ;	mm6 free
-   pand  mm0,mm2              ; mm0(x3) = a5 & a3
+   movq  [mmNOT+40], mm7      ; store x6
+   pxor  mm5, mm0             ; x9 = a5 ^ x2
 
-   movq  [mmNOT+24],mm7       ;	mm7 free
-   pxor  mm0,mm5              ; mm0(x4) = x3 ^ a6
+   movq  [mmNOT+48], mm3      ; store a4
+   pxor  mm1, mm5             ; x22 = x9 ^ x21
 
-   movq  [mmNOT+32],mm4       ;	mm4 free
-   pandn mm4,mm3              ; mm4(x5) = a4 & ~a5
+   movq  [mmNOT+56], mm6      ; store a6
+   por   mm3, mm5             ; x10 = a4 | x9
 
-   movq  [mmNOT+40],mm0       ;	mm0 free
-   por   mm7,mm3              ; mm7(x10) = a4 | x9
+   movq  [mmNOT+64], mm1      ; store x22
+   pxor  mm3, mm4             ; x11 = x8 ^ x10
 
-   movq  mm6,[mmNOT+32]       ;	mm6 = a5
-   pxor  mm0,mm4              ; mm0(x6) = x4 ^ x5
+   movq  mm1, [ebx+64]
+   pxor  mm4, mm2             ; x24 = x8 ^ x23
 
-   movq  [mmNOT+48],mm5       ;	mm5 free
-   pandn mm6,mm2              ; mm6(x8) = a3 & ~a5
+   pxor  mm1, [%2]            ; a2 = e2 ^ k2
+   pxor  mm0, mm3             ; x13 = a5 ^ x11
 
-   movq  [mmNOT+56],mm0       ;	mm0 free
-   pxor  mm7,mm6              ; mm7(x11) = x8 ^ x10
+   pxor  mm5, [mmNOT+8]       ; x35 = a3 ^ x9
+   pxor  mm7, mm1             ; x7 = a2 ^ x6
 
-   movq  mm5,[mmNOT+16]       ;	mm5 = x2
-   pxor  mm0,mm1              ; mm0(x7) = x6 ^ a2
+   movq  [mmNOT+72], mm0      ; store x13
+   pxor  mm6, mm2             ; x27 = a6 ^ x23
 
-   movq  [mmNOT+64],mm4       ;	mm4 free
-   movq  mm4,mm7              ; mm4 = x11
+   movq  [mmNOT+80], mm7      ; store x7
+   por   mm4, mm1             ; x25 = a2 | x24
 
-   por   mm5,[mmNOT+40]       ;	mm5(x23) = x1 | x4
-   pand  mm4,mm0              ; mm4(x12) = x7 & x11
+   pxor  mm4, [mmNOT+64]      ; x26 = x22 ^ x25
+   por   mm0, mm7             ; x14 = x7 & x13
 
-   movq  [mmNOT+72],mm7       ;	mm7 free
-   pxor  mm6,mm5              ; mm6(x24) = x23 ^ x8
+   pand  mm0, [mmNOT+48]      ; x15 = a4 & x14
+   pand  mm7, mm3             ; x12 = x7 & x11
 
-   pxor  mm7,[mmNOT+32]       ;	mm7(x13) = a5 ^ x11
-   por   mm6,mm1              ; mm6(x25) = a2 | x24
+   movq  [mmNOT+88], mm6      ; store x37
+   pand  mm2, mm7             ; x54 = x12 & x23
 
-   movq  [mmNOT+80],mm4       ;		# mm4 free
-   pand  mm4,mm5              ; mm4(x54) = x12 & x23
+   movq  [mmNOT+96], mm4      ; store x26
+   pxor  mm7, mm0             ; x16 = x12 ^ x15
 
-   movq  [mmNOT+88],mm7       ;		# mm7 free
-   por   mm7,mm0              ; mm7(x14) = x13 | x7
+   movq  [mmNOT+104], mm2     ; store x54
+   pand  mm7, mm1             ; x17 = a2 & x16
 
-   movq  [mmNOT+96],mm4       ;		# mm4 free
-   movq  mm4,mm2              ; mm4 = a3
+   movq  mm2, [mmNOT+24]      ; retrieve x5
+   pxor  mm7, mm3             ; x18 = x11 ^ x17
 
-   pxor  mm4,[mmNOT+24]       ;	# mm4 = a3 ^ x21
-   pand  mm7,mm3              ; mm7(x15) = a4 & x14
+   pxor  mm0, [mmNOT+8]       ; x29 = a3 ^ x15
+   por   mm5, mm2             ; x36 = x5 | x35
 
-   movq  [mmNOT+104],mm0      ;		# mm0 free
-   pxor  mm4,mm3              ; mm4(x22) = a4 ^ a3 ^ x9
+   movq  mm4, [ebx+56]
+   por   mm2, mm0             ; x30 = x5 | x29
 
-   pxor  mm5,[mmNOT+48]       ;	# mm5(x27) = a6 ^ x23
-   pxor  mm6,mm4              ; mm6(x26) = x22 ^ x25
-                              ; mm4 free
-   movq  [mmNOT+112],mm3      ;		# mm3 free
-   por   mm3,mm5              ; mm3(x28) = x27 | a4
+   pxor  mm4, [%1]            ; a1 = e1 ^ k1
+   por   mm2, mm1             ; x31 = a2 | x30
 
-   movq  [mmNOT+32],mm2       ;		# mm2 free
-   pxor  mm5,mm3              ; mm5(x51) = x27 ^ x28
+   por   mm6, [mmNOT+48]      ; x28 = a4 | x27
+   pand  mm7, mm4             ; x19 = a1 & x18
 
-   por   mm5,mm1              ;	# mm5(x52) = x51 | a2
-   pxor  mm2,mm7              ; mm2(x29) = a3 ^ x15
+   por   mm0, [mmNOT+16]      ; x37 = x4 | x28
+   pxor  mm2, mm6             ; x32 = x28 ^ x31
 
-   pxor  mm7,[mmNOT+80]       ;	# mm7(x16) = x12 ^ x15
-   movq  mm4,mm2              ; mm4 = x29
+   pxor  mm0, [mmNOT+48]      ; x38 = a4 ^ x37
+   por   mm2, mm4             ; x33 = a1 | x32
 
-   por   mm2,[mmNOT+64]       ;	# mm2(x30) = x29 | x5
-   pand  mm7,mm1              ; mm7(x17) = a2 & x16
+   movq  [mmNOT+8], mm1       ; store a2
+   por   mm1, mm0             ; x39 = a2 ^ x38
 
-   por   mm4,[mmNOT+40]       ;	# mm4(x37) = x29 | x4
-   por   mm2,mm1              ; mm2(x31) = a2 | x30
+   pxor  mm2, [mmNOT+96]      ; x34 = x26 ^ x33
+   pxor  mm5, mm1             ; x40 = x36 ^ x39
 
-   pxor  mm7,[mmNOT+72]       ;	# mm7(x18) = x17 ^ x11
-   pxor  mm2,mm3              ; mm2(x32) = x31 ^ x28
-                              ; mm3 free
-   movq  mm3,[mmNOT+8]        ;	# mm1 = a3
+   pand  mm3, [mmNOT+56]      ; x41 = a6 & x11
+   movq  mm1, mm2             ; copy x34
 
-   pxor  mm4,[mmNOT+112]      ;	# mm4(x38) = x37 ^ a4
-   pand  mm7,mm3              ; mm7(x19) = x18 & a1
+   pxor  mm2, [esi+184]       ; out1 ^= x34
+   pxor  mm1, mm0             ; x43 = x34 ^ x38
 
-   pxor  mm7,[mmNOT+104]      ;	# mm7(x20) = x19 ^ x7
-   por   mm2,mm3              ; mm2(x33) = a1 | x32
-
-   movq  [mmNOT+40],mm4       ;		# mm4 free
-   pxor  mm2,mm6              ; mm2(x34) = x26 ^ x33
-                              ; mm6 free
-   pxor  mm7,[esi+40]         ;	### mm7(out4) = out4 ^ x20
-   por   mm4,mm1              ; mm4(x39) = a2 | x38
-
-   movq  mm6,[mmNOT+32]       ;	# mm6 = a3
-   movq  mm3,mm2              ; mm3 = x34
-
-   pxor  mm6,[mmNOT+24]       ;	# mm6(x35) = a3 ^ x9
-
-   por   mm6,[mmNOT+64]       ;	# mm6(x36) = x5 | x35
-
-   pxor  mm3,[mmNOT+40]       ;	# mm3(x43) = x34 ^ x38
-   pxor  mm4,mm6              ; mm4(x40) = x36 ^ x39
-
-   movq  mm6,[mmNOT+48]       ;	# mm6 = a6
-
-   pand  mm6,[mmNOT+72]       ;	# mm6(x41) = a6 & x11
-
-   movq  mm0,[mmNOT+16]       ;	# mm0 = x2
-   pxor  mm3,mm6              ; mm3(x44) = x43 ^ x41
-
-   por   mm6,[mmNOT+56]       ;	# mm6(x42) = x41 | x6
-   pand  mm3,mm1              ; mm3(x45) = x42 & a2
-
-   por   mm0,[mmNOT+40]       ;	# mm0(x49) = x2 | x38
-   pxor  mm3,mm6              ; mm3(x46) = x42 ^ x45
-                              ; mm6 free
-   pxor  mm0,[mmNOT+88]       ;	# mm0(x50) = x49 ^ x13
-   movq  mm6,mm5              ; mm6 = x52
-
-   por   mm3,[mmNOT+8]        ;	# mm3(x47) = x46 | a1
-   pxor  mm0,mm5              ; mm0(x53) = x50 ^ x52
-
-   pand  mm6,[mmNOT+96]       ;	# mm6(x55) = x52 & x54
-   pxor  mm3,mm4              ; mm3(x48) = x40 ^ x47
-
-   por   mm6,[mmNOT+8]        ;	# mm6(x56) = a1 | x55
-
-   pxor  mm3,[esi+232]        ;	### mm3(out3) = out3 ^ x48
-   pxor  mm6,mm0              ; mm6(x57) = x53 ^ x56
+   por   mm0, [mmNOT+32]      ; x49 = x2 | x38
+   pxor  mm1, mm3             ; x44 = x41 ^ x43
 
 %if STORE_RESULT
-   movq  [edi+%10],mm7        ; store out4
+   movq  [edi+%7], mm2        ; store out1
+%else
+   movq  [mmNOT+16], mm2      ; store out1
 %endif
 
-   pxor  mm2,[esi+184]        ;	### mm2(out1) = out1 ^ x34
+   movq  mm2, [mmNOT+8]       ; retrieve a2
+
+   por   mm3, [mmNOT+40]      ; x42 = x6 | x41
+   pand  mm1, mm2             ; x45 = a2 & x44
+
+   pxor  mm6, [mmNOT+88]      ; x51 = x27 ^ x28
+   pxor  mm3, mm1             ; x46 = x42 ^ x45
+
+   pxor  mm0, [mmNOT+72]      ; x50 = x13 ^ x49
+   por   mm6, mm2             ; x52 = a2 | x51
+
+   pxor  mm7, [mmNOT+80]      ; x20 = x7 ^ x19
+   pxor  mm0, mm6             ; x53 = x50 ^ x52
+
+   pand  mm6, [mmNOT+104]     ; x55 = x52 & x54
+   por   mm3, mm4             ; x47 = a1 | x46
+
+   pxor  mm7, [esi+40]        ; out4 ^= x20
+   pxor  mm3, mm5             ; x48 = x40 ^ x47
+
+   pxor  mm3, [esi+232]       ; out3 ^= x48
+   por   mm6, mm4             ; x56 = a1 | x55
 
 %if STORE_RESULT
-   movq  [edi+%9],mm3         ; store out3
+   movq  [edi+%10], mm7       ; store out4
+%else
+   movq  mm2, [mmNOT+16]      ; retrieve out1
 %endif
+   pxor  mm6, mm0             ; x57 = x53 ^ x56
 
-   pxor  mm6,[esi+120]        ;	### mm6(out2) = out2 ^ x57
+   pxor  mm6, [esi+120]       ; out2 ^= x57
 
 %if STORE_RESULT
-   movq  [edi+%7],mm2         ; store out1
+   movq  [edi+%9], mm3        ; store out3
+
+   movq  [edi+%8], mm6        ; store out2
 %endif
 
-%if STORE_RESULT
-   movq  [edi+%8],mm6         ; store out2
-%endif
-
-                              ; 64 clocks for 61 variables
+                              ; 52 clocks for 61 variables
 %endmacro
 
 
@@ -932,16 +904,15 @@ global _whack16
 
    pxor  mm2,[%3]
 
-   pxor  mm3,[%4]
-
    pxor  mm4,[%5]
 
    pxor  mm5,[%6]
+   pcmpeqd mm6,mm6
 
    movq  [mmNOT+8],mm2
-   movq  mm6,mm4              ; copy a5
+   pxor  mm6,mm4              ; x2 = ~a5
 
-   pxor  mm6,[mmNOT]          ; x2 = ~a5
+   pxor  mm3,[%4]
    movq  mm7,mm5              ; copy a6
 
    movq  [mmNOT+16],mm1
@@ -1094,7 +1065,7 @@ global _whack16
    movq  [edi+%9],mm2         ; store out3
 %endif
 
-                              ; 59 clocks for 61 variables
+                              ; 58 clocks for 61 variables
 %endmacro
 
 
@@ -1278,38 +1249,37 @@ global _whack16
 %macro sbox_8 6
    movq  mm0,[ebx+216]
 
-   movq  mm1,[ebx+224]
-
    movq  mm2,[ebx+232]
 
    movq  mm3,[ebx+240]
 
    movq  mm4,[ebx+248]
 
-   movq  mm5,[ebx]
-
    pxor  mm0,[%1]
-
-   pxor  mm1,[%2]
 
    pxor  mm2,[%3]
 
    pxor  mm3,[%4]
 
    pxor  mm4,[%5]
-
-   pxor  mm5,[%6]
+   pcmpeqd mm7,mm7
 
    movq  [mmNOT+8],mm0
    movq  mm6,mm2              ; copy a3
 
-   pxor  mm0,[mmNOT]          ; x1 = ~a1
+   movq  [mmNOT+16],mm3
+   pxor  mm3,mm7              ; x2 = ~a4
+
+   movq  mm5,[ebx]
+   pxor  mm0,mm7              ; x1 = ~a1
+
+   pxor  mm5,[%6]
    movq  mm7,mm2              ; copy a3
 
-   movq  [mmNOT+16],mm3
+   movq  mm1,[ebx+224]
    por   mm7,mm0              ; x4 = a3 | x1
 
-   pxor  mm3,[mmNOT]          ; x2 = ~a4
+   pxor  mm1,[%2]
    pxor  mm6,mm0              ; x3 = a3 ^ x1
 
    movq  [mmNOT+24],mm5
@@ -1423,8 +1393,9 @@ global _whack16
 
 ;   movq  [edi+208],mm2        ; store out2
 
-                              ; 55 clocks for 58 variables
+                              ; 53 clocks for 58 variables
 %endmacro
+
 
 %ifdef __showids__
 ; PLATFORM  data segment definition
@@ -1433,7 +1404,7 @@ SECTION DATA USE32 ALIGN=16
 %else
 [SECTION .data]
 %endif
-idtag:    db "@(#)$Id: deseval-mmx.asm,v 1.6 1999/01/13 07:40:07 fordbr Exp $\0"
+idtag:    db "@(#)$Id: deseval-mmx.asm,v 1.7 1999/01/17 12:13:22 fordbr Exp $\0"
 %endif
 
 ; PLATFORM  text segment definition
