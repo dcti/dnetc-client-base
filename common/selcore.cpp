@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.67 2000/06/12 23:47:01 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.68 2000/06/20 18:21:54 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -586,7 +586,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER
         cindex = 0;                 //only one core - (ansi)
       else if (( detected_type & (1L<<25) ) != 0) //OS supports altivec
-        cindex = 2;                 // vector
+        cindex = 3;                 // vector
       else if (detected_type == 1 ) //PPC 601
         cindex = 0;                 // allitnil
       else if (detected_type == 4 || //PPC 604
