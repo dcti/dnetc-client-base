@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.48  1999/03/20 05:56:16  cyp
+// cast the ResultCode enum in stone: 0=working, 1=nothing, 2=found.
+//
 // Revision 1.47  1999/03/19 15:45:03  gregh
 // Pad ogr union members to be the same size as crypto members.
 //
@@ -191,7 +194,6 @@ typedef struct
                         // Note: data is now in RC5/platform useful form
 } RC5UnitWork;
 
-// this has to stay 'in sync' with FileEntry
 typedef union
 {
   struct {
@@ -219,9 +221,9 @@ typedef struct
 
 typedef enum
 {
-  RESULT_NOTHING,
-  RESULT_FOUND,
-  RESULT_WORKING
+  RESULT_WORKING = 0,   /* do not change RESULT_* code order/init value */
+  RESULT_NOTHING = 1,
+  RESULT_FOUND   = 2
 } Resultcode;
 
 
