@@ -18,7 +18,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.73 2002/04/23 01:45:31 zebe Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.74 2002/04/23 23:33:18 sampo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -564,7 +564,6 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
             return 1; /* we don't have AC */
         } else {
           /* Only do this if we -haven't- executed the if{} above. */
-          CFRelease(cfarray);
           IOServiceClose(pmcon);
         } /* if( IOPMCopyBatteryInfo(master, &cfarray) == kIOReturnSuccess) */
       } /* if(pmcon!=0)*/
