@@ -14,7 +14,7 @@
 */ 
 
 #ifndef __MODEREQ_H__
-#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.17 1999/12/09 12:55:55 cyp Exp $"
+#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.18 2000/01/02 04:12:15 cyp Exp $"
 
 #define MODEREQ_IDENT              0x00000001
 #define MODEREQ_CPUINFO            0x00000002
@@ -27,10 +27,12 @@
 #define MODEREQ_BENCHMARK          0x00000100 /* "long" benchmark */
 #define MODEREQ_BENCHMARK_QUICK    0x00000200 /* "quick" benchmark */
 #define MODEREQ_BENCHMARK_ALLCORE  0x00000400 /* all cores for (each) contest */
+#define MODEREQ_BENCHMARK_MASK     0x00000700 /* combined mask */
 #define MODEREQ_UNLOCK             0x00000800
 #define MODEREQ_IMPORT             0x00001000
 #define MODEREQ_TEST               0x00002000 /* normal test */
 #define MODEREQ_TEST_ALLCORE       0x00004000 /* all cores for (each) contest */
+#define MODEREQ_TEST_MASK          0x00006000 /* combined mask */
 #define MODEREQ_RESTART            0x00008000 /* restart client after mode processing */
 #define MODEREQ_ALL                0x0000FFFF /* mask of all - needed internally */
 
