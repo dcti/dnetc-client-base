@@ -3,11 +3,16 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.169  1998/08/05 19:04:14  cyruspatel
+// Changed some Log()/LogScreen()s to LogRaw()/LogScreenRaw()s, ensured that
+// DeinitializeLogging() is called, and ensured that InitializeLogging() is
+// called only once.
+//
 // Revision 1.168  1998/08/05 16:39:28  cberry
 // Changed register len to register int len in isstringblank()
 //
 // Revision 1.167  1998/08/02 16:05:08  cyruspatel
-// Completed support for logging. (Note: LogScreen() and LogScreenf() are
+// Converted all printf()s to LogScreen()s (LogScreen() and LogScreenf() are
 // synonymous)
 //
 // Revision 1.166  1998/08/02 03:16:20  silby
@@ -166,8 +171,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.168 1998/08/05 16:39:28 cberry Exp $";
-return id; }
+return "@(#)$Id: cliconfig.cpp,v 1.169 1998/08/05 19:04:14 cyruspatel Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -520,12 +524,9 @@ int yesno(char *str)
 // checks for user to type yes or no.
 // Returns 1=yes, 0=no, -1=unknown
 {
-  int returnvalue = 1;
-
-  returnvalue=-1;
-  if (strcmpi(str, "yes")==0) returnvalue=1;
-  if (strcmpi(str, "no")==0) returnvalue=0;
-  return returnvalue;
+  if (strcmpi(str, "yes")==0) return 1;
+  if (strcmpi(str, "no")==0) return 0;
+  return -1;
 }
 
 
@@ -628,44 +629,44 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
     do   //while invalid CONF_xxx option selected
       {
       CliScreenClear(); //in logstuff.cpp
-      LogScreen("Distributed.Net RC5/DES Client build " 
+      LogScreenRaw("Distributed.Net RC5/DES Client build " 
                   CLIENT_VERSIONSTRING " config menu\n" );
-      LogScreen("%s\n",menutable[currentmenu-1]);
-      LogScreen("------------------------------------------------------------\n\n");
+      LogScreenRaw("%s\n",menutable[currentmenu-1]);
+      LogScreenRaw("------------------------------------------------------------\n\n");
 
       for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
         {
         choice=findmenuoption(currentmenu,temp2);
         if (choice >= 0)
           {
-          LogScreen("%2d) %s ==> ",
+          LogScreenRaw("%2d) %s ==> ",
                  (int)options[choice].menuposition,
                  options[choice].description);
  
           if (options[choice].type==1)
             {
             if (options[choice].thevariable != NULL)
-              LogScreen("%s\n",(char *)options[choice].thevariable);
+              LogScreenRaw("%s\n",(char *)options[choice].thevariable);
             }
           else if (options[choice].type==2)
             {
             if (options[choice].choicelist == NULL)
-              LogScreen("%li\n",(long)*(s32 *)options[choice].thevariable);
+              LogScreenRaw("%li\n",(long)*(s32 *)options[choice].thevariable);
             else 
-              LogScreen("%s\n",options[choice].choicelist+
+              LogScreenRaw("%s\n",options[choice].choicelist+
                 ((long)*(s32 *)options[choice].thevariable*60));
             }
           else if (options[choice].type==3)
             {
             sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
-            LogScreen("%s\n",str);
+            LogScreenRaw("%s\n",str);
             }
           }
         }
-      LogScreen("\n 0) Return to main menu\n");
+      LogScreenRaw("\n 0) Return to main menu\n");
 
       // get choice from user
-      LogScreen("\nChoice --> ");
+      LogScreenRaw("\nChoice --> ");
       fflush( stdout );
       fflush( stdin );
       fgets(parm, sizeof(parm), stdin);
@@ -685,7 +686,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       // prompt for new value
       if (options[choice].type==1)
         {
-        LogScreen("\n%s %s\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
+        LogScreenRaw("\n%s %s\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
               options[choice].description, options[choice].comments,
               options[choice].defaultsetting,(char *)options[choice].thevariable);
         }
@@ -693,16 +694,16 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         {
         if (options[choice].choicelist == NULL)
           {
-          LogScreen("\n%s %s\nDefault Setting: %s\nCurrent Setting: %li\nNew Setting --> ",
+          LogScreenRaw("\n%s %s\nDefault Setting: %s\nCurrent Setting: %li\nNew Setting --> ",
                 options[choice].description, options[choice].comments,
                 options[choice].defaultsetting, (long)*(s32 *)options[choice].thevariable);
           }
         else 
           {
-          LogScreen("\n%s %s\n",options[choice].description,options[choice].comments);
+          LogScreenRaw("\n%s %s\n",options[choice].description,options[choice].comments);
           for ( temp = options[choice].choicemin; temp < options[choice].choicemax+1; temp++)
-            LogScreen("  %2d) %s\n", (int)temp, options[choice].choicelist+temp*60);
-          LogScreen("\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
+            LogScreenRaw("  %2d) %s\n", (int)temp, options[choice].choicelist+temp*60);
+          LogScreenRaw("\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
             options[choice].choicelist+atoi(options[choice].defaultsetting)*60,
             options[choice].choicelist+((long)*(s32 *)options[choice].thevariable*60));
           }
@@ -710,11 +711,11 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       else if (options[choice].type==3)
         {
         sprintf(str, "%s", atoi(options[choice].defaultsetting)?"yes":"no");
-        LogScreen("\n%s %s\nDefault Setting: %s\nCurrent Setting: ",
+        LogScreenRaw("\n%s %s\nDefault Setting: %s\nCurrent Setting: ",
                options[choice].description, options[choice].comments,
                str);
         sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
-        LogScreen("%s\nNew Setting --> ",str);
+        LogScreenRaw("%s\nNew Setting --> ",str);
         }
 
       fflush( stdin );
@@ -860,7 +861,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
             }
           else
             {             // http & socks5
-            LogScreen("Enter password--> ");
+            LogScreenRaw("Enter password--> ");
             fflush( stdin );
             fflush( stdout );
             fgets(parm2, sizeof(parm2), stdin);
@@ -1137,21 +1138,21 @@ s32 Client::Configure( void )
   while (returnvalue == 0)
   {
     CliScreenClear(); //in logstuff.cpp
-    LogScreen("Distributed.Net RC5/DES Client build "
+    LogScreenRaw("Distributed.Net RC5/DES Client build "
               CLIENT_VERSIONSTRING " config menu\n" );
-    LogScreen("------------------------------------------------------------\n\n");
-    LogScreen(" 1) %s\n",menutable[0]);
-    LogScreen(" 2) %s\n",menutable[1]);
-    LogScreen(" 3) %s\n",menutable[2]);
-    LogScreen(" 4) %s\n",menutable[3]);
-    LogScreen(" 5) %s\n",menutable[4]);
-    LogScreen(" 6) %s\n\n",menutable[5]);
-    LogScreen(" 9) Discard settings and exit\n");
-    LogScreen(" 0) Save settings and exit\n\n");
+    LogScreenRaw("------------------------------------------------------------\n\n");
+    LogScreenRaw(" 1) %s\n",menutable[0]);
+    LogScreenRaw(" 2) %s\n",menutable[1]);
+    LogScreenRaw(" 3) %s\n",menutable[2]);
+    LogScreenRaw(" 4) %s\n",menutable[3]);
+    LogScreenRaw(" 5) %s\n",menutable[4]);
+    LogScreenRaw(" 6) %s\n\n",menutable[5]);
+    LogScreenRaw(" 9) Discard settings and exit\n");
+    LogScreenRaw(" 0) Save settings and exit\n\n");
     if (strcmpi(id,"rc5@distributed.net")==0)
-      LogScreen("*Note: You have not yet configured your e-mail address.\n"
+      LogScreenRaw("*Note: You have not yet configured your e-mail address.\n"
             "       Please go to %s and configure it.\n",menutable[0]);
-    LogScreen("Choice --> ");
+    LogScreenRaw("Choice --> ");
 
     fflush( stdin );
     fflush( stdout );
@@ -1180,9 +1181,6 @@ s32 Client::Configure( void )
   return returnvalue;
 #endif
 }
-
-//----------------------------------------------------------------------------
-
 
 //----------------------------------------------------------------------------
 
@@ -1345,7 +1343,7 @@ s32 Client::ReadConfig(void)
 
   if ( inierror )
   {
-    LogScreen( "Error reading ini file - Using defaults\n" );
+    LogScreenRaw( "Error reading ini file - Using defaults\n" );
   }
 
 #define INIGETKEY(key) (ini.getkey(OPTION_SECTION, options[key].name, options[key].defaultsetting)[0])
@@ -1644,9 +1642,7 @@ void Client::ValidateConfig( void )
 #endif
 #endif //DONT_USE_PATHWORK
 
-
   CheckForcedKeyport();
-  InitializeLogging();  // in logstuff.cpp - copies the smtp ini settings over
 
   //validate numcpu is now in SelectCore(); //1998/06/21 cyrus
 
@@ -2211,19 +2207,19 @@ s32 Client::SelectCore(void)
 #if ((CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU != CPU_POWERPC))
   if (!(SysBase->AttnFlags & AFF_68020))
   {
-    LogScreen("\nIncompatible CPU type.  Sorry.\n");
+    LogScreenRaw("\nIncompatible CPU type.  Sorry.\n");
     return -1;
   }
 #elif (CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_AMIGAOS))
   // Be OS isn't supported on 601 machines
   // There is no 601 PPC board for the Amiga
-  LogScreen( "| PowerPC assembly by Dan Oetting at USGS\n");
+  LogScreenRaw( "| PowerPC assembly by Dan Oetting at USGS\n");
   double fasttime = 0;
   whichcrunch = 1;
 #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_WIN32)
   const s32 benchsize = 500000L;
   double fasttime = 0;
-  LogScreen( "| RC5 PowerPC assembly by Dan Oetting at USGS\n");
+  LogScreenRaw( "| RC5 PowerPC assembly by Dan Oetting at USGS\n");
   s32 fastcore = cputype;
   if (fastcore == -1)
   {
@@ -2240,21 +2236,21 @@ s32 Client::SelectCore(void)
       contestwork.iterations.hi = htonl( 0 );
       problem.LoadState( &contestwork , 0 ); // RC5 core selection
 
-      LogScreen( "| Benchmarking version %d: ", whichcrunch );
+      LogScreenRaw( "| Benchmarking version %d: ", whichcrunch );
 
       fflush( stdout );
 
       problem.Run( benchsize , 0 );
 
       double elapsed = CliGetKeyrateForProblemNoSave( &problem );
-      LogScreen( "%.1f kkeys/sec\n", (elapsed / 1000.0) );
+      LogScreenRaw( "%.1f kkeys/sec\n", (elapsed / 1000.0) );
 
       if (fastcore < 0 || elapsed > fasttime)
           {fastcore = whichcrunch; fasttime = elapsed;}
     }
   }
   whichcrunch = fastcore;
-  LogScreen( "| Using v%d.\n\n", whichcrunch );
+  LogScreenRaw( "| Using v%d.\n\n", whichcrunch );
   /*
   switch (whichcrunch)
   {
@@ -2274,7 +2270,7 @@ s32 Client::SelectCore(void)
   if (fastcore == -1)
     fastcore = detectedtype; //use autodetect
 
-  LogScreen("Selecting %s code.\n", cputypetable[(int)(fastcore & 0xFF)+1]);
+  LogScreenRaw("Selecting %s code.\n", cputypetable[(int)(fastcore & 0xFF)+1]);
 
   // select the correct core engine
   switch(fastcore & 0xFF)
@@ -2337,7 +2333,7 @@ s32 Client::SelectCore(void)
   if ((detectedtype & 0x100) && usemmx)   // use the MMX DES core ?
     { // MMX core doesn't care about selected Rc5 core at all
     des_unit_func = des_unit_func2 = des_unit_func_mmx;
-    LogScreen("Using MMX DES cores.\n");
+    LogScreenRaw("Using MMX DES cores.\n");
     }
   #endif
 
@@ -2353,7 +2349,7 @@ s32 Client::SelectCore(void)
     double fasttime[2] = { 0, 0 };
     s32 fastcoretest[2] = { -1, -1 };
 
-    LogScreen("Automatically selecting fastest core...\n"
+    LogScreenRaw("Automatically selecting fastest core...\n"
               "This is just a guess based on a small test of each core.  If you know what CPU\n"
               "this machine has, then set it in the Performance section of the choices.\n");
     fflush(stdout);
@@ -2397,7 +2393,7 @@ s32 Client::SelectCore(void)
     fastcore = (4-(fastcoretest[0] + (fastcoretest[1]<<1)))&3;
   }
 
-  LogScreen("Selecting %s code.\n",cputypetable[(int)(fastcore+1)]);
+  LogScreenRaw("Selecting %s code.\n",cputypetable[(int)(fastcore+1)]);
 
   // select the correct core engine
   switch(fastcore)
@@ -2695,7 +2691,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
     }
     else if ( strcmp(Argv[i], "-frequent" ) == 0)
     {
-      LogScreen("Setting connections to frequent\n");
+      LogScreenRaw("Setting connections to frequent\n");
       connectoften=1;
       Argv[i][0] = 0;
     }
@@ -2703,12 +2699,12 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
     else if ( strcmp(Argv[i], "-nommx" ) == 0)
     {
 #if (CLIENT_CPU == CPU_X86) && defined(MMX_BITSLICER)
-      LogScreen("Won't use MMX instructions\n");
+      LogScreenRaw("Won't use MMX instructions\n");
       usemmx=0;
 #elif (CLIENT_CPU == CPU_X86) // && !defined(MMX_BITSLICER)
-      LogScreen("-nommx argument ignored on this client.\n");
+      LogScreenRaw("-nommx argument ignored on this client.\n");
 #else
-      LogScreen("-nommx argument ignored on this non-x86 processor.\n");
+      LogScreenRaw("-nommx argument ignored on this non-x86 processor.\n");
 #endif
       Argv[i][0] = 0;
     }
@@ -2719,7 +2715,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
         if ( (s32) atoi( Argv[i+1] ) > 0)
            outthreshold[0] = inthreshold[0]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreen("Setting RC5 buffer size to %d\n",outthreshold[0]);
+        LogScreenRaw("Setting RC5 buffer size to %d\n",outthreshold[0]);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2729,7 +2725,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
         if ( (s32) atoi( Argv[i+1] ) > 0)
            outthreshold[1] = inthreshold[1]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreen("Setting DES buffer size to %d\n",outthreshold[1]);
+        LogScreenRaw("Setting DES buffer size to %d\n",outthreshold[1]);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2739,7 +2735,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
         if ( (s32) atoi( Argv[i+1] ) > 0)
            inthreshold[0]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreen("Setting RC5 input buffer size to %d\n",inthreshold[0]);
+        LogScreenRaw("Setting RC5 input buffer size to %d\n",inthreshold[0]);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2749,7 +2745,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
         if ( (s32) atoi( Argv[i+1] ) > 0)
            inthreshold[1]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreen("Setting DES input buffer size to %d\n",inthreshold[1]);
+        LogScreenRaw("Setting DES input buffer size to %d\n",inthreshold[1]);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2759,7 +2755,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
         if ( (s32) atoi( Argv[i+1] ) > 0)
            outthreshold[0]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreen("Setting RC5 output buffer size to %d\n",outthreshold[0]);
+        LogScreenRaw("Setting RC5 output buffer size to %d\n",outthreshold[0]);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2769,7 +2765,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
         if ( (s32) atoi( Argv[i+1] ) > 0)
            outthreshold[1]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreen("Setting DES output buffer size to %d\n",outthreshold[1]);
+        LogScreenRaw("Setting DES output buffer size to %d\n",outthreshold[1]);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2778,14 +2774,14 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       {                                           // Here in case its with a fetch/flush/update
         uuehttpmode = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreen("Setting uue/http mode to %d\n",uuehttpmode);
+        LogScreenRaw("Setting uue/http mode to %d\n",uuehttpmode);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
       else if ( strcmp(Argv[i], "-in" ) == 0)
       {                                           // Here in case its with a fetch/flush/update
-        LogScreen("Setting RC5 buffer input file to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting RC5 buffer input file to %s\n",Argv[i+1]);
         strcpy(in_buffer_file[0], Argv[i+1]);
 #ifdef DONT_USE_PATHWORK
         strcpy(ini_in_buffer_file[0], Argv[i+1]);
@@ -2795,7 +2791,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp(Argv[i], "-in2" ) == 0)
       {                                           // Here in case its with a fetch/flush/update
-        LogScreen("Setting DES buffer input file to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting DES buffer input file to %s\n",Argv[i+1]);
         strcpy(in_buffer_file[1], Argv[i+1]);
 #ifdef DONT_USE_PATHWORK
         strcpy(ini_in_buffer_file[1], Argv[i+1]);
@@ -2805,7 +2801,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp(Argv[i], "-out" ) == 0)
       {                                           // Here in case its with a fetch/flush/update
-        LogScreen("Setting RC5 buffer output file to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting RC5 buffer output file to %s\n",Argv[i+1]);
         strcpy(out_buffer_file[0], Argv[i+1]);
 #ifdef DONT_USE_PATHWORK
         strcpy(ini_out_buffer_file[0], Argv[i+1]);
@@ -2815,7 +2811,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp(Argv[i], "-out2" ) == 0)
       {                                           // Here in case its with a fetch/flush/update
-        LogScreen("Setting DES buffer output file to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting DES buffer output file to %s\n",Argv[i+1]);
         strcpy(out_buffer_file[1], Argv[i+1]);
 #ifdef DONT_USE_PATHWORK
         strcpy(ini_out_buffer_file[1], Argv[i+1]);
@@ -2825,7 +2821,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp( Argv[i], "-a" ) == 0 ) // Override the keyserver name
       {
-        LogScreen("Setting keyserver to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting keyserver to %s\n",Argv[i+1]);
         strcpy( keyproxy, Argv[i+1] );
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2835,14 +2831,14 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       {
         keyport = (s32) atoi(Argv[i+1]);
         ValidateConfig();
-        LogScreen("Setting keyserver port to %d\n",keyport);
+        LogScreenRaw("Setting keyserver port to %d\n",keyport);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
       else if ( strcmp( Argv[i], "-ha" ) == 0 ) // Override the http proxy name
       {
-        LogScreen("Setting http proxy to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting http proxy to %s\n",Argv[i+1]);
         strcpy( httpproxy, Argv[i+1] );
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2850,7 +2846,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp( Argv[i], "-hp" ) == 0 ) // Override the http proxy port
       {
-        LogScreen("Setting http proxy port to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting http proxy port to %s\n",Argv[i+1]);
         httpport = (s32) atoi(Argv[i+1]);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2858,7 +2854,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp( Argv[i], "-l" ) == 0 ) // Override the log file name
       {
-        LogScreen("Setting log file to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting log file to %s\n",Argv[i+1]);
         strcpy( logname, Argv[i+1] );
 #ifdef DONT_USE_PATHWORK
         strcpy( ini_logname, Argv[i+1] );
@@ -2869,7 +2865,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp( Argv[i], "-smtplen" ) == 0 ) // Override the mail message length
       {
-        LogScreen("Setting Mail message length to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting Mail message length to %s\n",Argv[i+1]);
         messagelen = (s32) atoi(Argv[i+1]);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2877,7 +2873,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp( Argv[i], "-smtpport" ) == 0 ) // Override the smtp port for mailing
       {
-        LogScreen("Setting smtp port to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting smtp port to %s\n",Argv[i+1]);
         smtpport = (s32) atoi(Argv[i+1]);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2885,7 +2881,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp( Argv[i], "-smtpsrvr" ) == 0 ) // Override the smtp server name
       {
-        LogScreen("Setting smtp server to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting smtp server to %s\n",Argv[i+1]);
         strcpy(smtpsrvr, Argv[i+1]);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2893,7 +2889,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp( Argv[i], "-smtpfrom" ) == 0 ) // Override the smtp source id
       {
-        LogScreen("Setting smtp 'from' address to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting smtp 'from' address to %s\n",Argv[i+1]);
         strcpy(smtpfrom, Argv[i+1]);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2901,7 +2897,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp( Argv[i], "-smtpdest" ) == 0 ) // Override the smtp destination id
       {
-        LogScreen("Setting smtp 'To' address to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting smtp 'To' address to %s\n",Argv[i+1]);
         strcpy(smtpdest, Argv[i+1]);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2909,7 +2905,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp( Argv[i], "-nettimeout" ) == 0 ) // Change network timeout
       {
-        LogScreen("Setting network timeout to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting network timeout to %s\n",Argv[i+1]);
         nettimeout = (s32) min(300,max(5,atoi(Argv[i+1])));
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2930,7 +2926,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp( Argv[i], "-e" ) == 0 ) // Override the email id
       {
-        LogScreen("Setting email for notifications to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting email for notifications to %s\n",Argv[i+1]);
         strcpy( id, Argv[i+1] );
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2938,7 +2934,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp( Argv[i], "-nice" ) == 0 ) // Nice level
       {
-        LogScreen("Setting nice option to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting nice option to %s\n",Argv[i+1]);
         niceness = (s32) atoi( Argv[i+1] );
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2946,7 +2942,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp( Argv[i], "-h" ) == 0 ) // Hours to run
       {
-        LogScreen("Setting time limit to %s hours\n",Argv[i+1]);
+        LogScreenRaw("Setting time limit to %s hours\n",Argv[i+1]);
         minutes = (s32) (60. * atol( Argv[i+1] ));
         strncpy(hours,Argv[i+1],sizeof(hours));
         l_inimissing=0; // Don't complain if the inifile is missing
@@ -2956,7 +2952,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       else if ( strcmp( Argv[i], "-n" ) == 0 ) // Blocks to complete in a run
       {
         blockcount = max(0, (s32) atoi( Argv[i+1] ));
-        LogScreen("Setting block completion limit to %d\n",blockcount);
+        LogScreenRaw("Setting block completion limit to %d\n",blockcount);
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2969,7 +2965,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
         minutes = (int)( ( ((int)(minutes/100))*60 + (minutes%100) ) - ((60. * gmt->tm_hour) + gmt->tm_min));
         if (minutes<0) minutes += 24*60;
         if (minutes<0) minutes = 0;
-        LogScreen("Setting time limit to %d minutes\n",minutes);
+        LogScreenRaw("Setting time limit to %d minutes\n",minutes);
         sprintf(hours,"%u.%02u",(unsigned int)(minutes/60),
                                 (unsigned int)(minutes%60));
         //was sprintf(hours,"%f",minutes/60.); -> "0.000000" which looks silly
@@ -2980,7 +2976,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp( Argv[i], "-numcpu" ) == 0 ) // Override the number of cpus
       {
-        //LogScreen("Configuring for %s CPUs\n",Argv[i+1]);
+        //LogScreenRaw("Configuring for %s CPUs\n",Argv[i+1]);
         //Message appears in SelectCore()
         numcpu = (s32) atoi(Argv[i+1]);
         l_inimissing=0; // Don't complain if the inifile is missing
@@ -2989,7 +2985,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp(Argv[i], "-ckpoint" ) == 0)
       {
-        LogScreen("Setting RC5 checkpoint file to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting RC5 checkpoint file to %s\n",Argv[i+1]);
         strcpy(checkpoint_file[0], Argv[i+1]);
 #ifdef DONT_USE_PATHWORK
         strcpy(ini_checkpoint_file[0], Argv[i+1]);
@@ -2999,7 +2995,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp(Argv[i], "-ckpoint2" ) == 0)
       {
-        LogScreen("Setting DES checkpoint file to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting DES checkpoint file to %s\n",Argv[i+1]);
         strcpy(checkpoint_file[1], Argv[i+1]);
 #ifdef DONT_USE_PATHWORK
         strcpy(ini_checkpoint_file[1], Argv[i+1]);
@@ -3009,7 +3005,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp(Argv[i], "-cktime" ) == 0)
       {
-        LogScreen("Setting checkpointing to %s minutes\n",Argv[i+1]);
+        LogScreenRaw("Setting checkpointing to %s minutes\n",Argv[i+1]);
         checkpoint_min=(s32) atoi(Argv[i+1]);
         checkpoint_min=max(2, checkpoint_min);
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -3017,7 +3013,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       }
       else if ( strcmp(Argv[i], "-pausefile" ) == 0)
       {
-        LogScreen("Setting pause file to %s\n",Argv[i+1]);
+        LogScreenRaw("Setting pause file to %s\n",Argv[i+1]);
         strcpy(pausefile, Argv[i+1]);
 #ifdef DONT_USE_PATHWORK
         strcpy(ini_pausefile, Argv[i+1]);
@@ -3030,7 +3026,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
         preferred_blocksize = (s32) atoi(Argv[i+1]);
         if (preferred_blocksize < 28) preferred_blocksize = 28;
         if (preferred_blocksize > 31) preferred_blocksize = 31;
-        LogScreen("Setting preferred blocksize to 2^%d\n",preferred_blocksize);
+        LogScreenRaw("Setting preferred blocksize to 2^%d\n",preferred_blocksize);
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -3040,11 +3036,11 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
         ValidateConfig();
         if (preferred_contest_id == 0)
           {
-          LogScreen("Client will now NOT compete in DES contest(s).\n");
+          LogScreenRaw("Client will now NOT compete in DES contest(s).\n");
           }
         else
           {
-          LogScreen("Client will now compete in DES contest(s).\n");
+          LogScreenRaw("Client will now compete in DES contest(s).\n");
           preferred_contest_id = 1;
           }
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -3064,28 +3060,28 @@ void Client::PrintBanner( const char * )
   if (guiriscos && guirestart)
       return;
 #endif
-  LogScreen( "\nRC5DES " CLIENT_VERSIONSTRING 
+  LogScreenRaw( "\nRC5DES " CLIENT_VERSIONSTRING 
              " client - a project of distributed.net\n"
              "Copyright distributed.net 1997-1998\n" );
 
   #if defined(KWAN)
   #if defined(MEGGS)
-  LogScreen( "DES bitslice driver Copyright Andrew Meggs\n" 
+  LogScreenRaw( "DES bitslice driver Copyright Andrew Meggs\n" 
              "DES sboxes routines Copyright Matthew Kwan\n" );
   #else
-  LogScreen( "DES search routines Copyright Matthew Kwan\n" );
+  LogScreenRaw( "DES search routines Copyright Matthew Kwan\n" );
   #endif
   #endif
 
   #if (CLIENT_CPU == CPU_X86)
-  LogScreen( "DES search routines Copyright Svend Olaf Mikkelsen\n");
+  LogScreenRaw( "DES search routines Copyright Svend Olaf Mikkelsen\n");
   #endif
   
   #if (CLIENT_OS == OS_DOS)  //PMODE (c) string if not win16 
-  LogScreen( "%s", dosCliGetPmodeCopyrightMsg() );
+  LogScreenRaw( "%s", dosCliGetPmodeCopyrightMsg() );
   #endif
 
-  LogScreen( "Please visit http://www.distributed.net/ for up-to-date contest information.\n"
+  LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n"
              "%s\n",
           #if (CLIENT_OS == OS_RISCOS)
           guiriscos ?
