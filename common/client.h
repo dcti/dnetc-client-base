@@ -568,7 +568,7 @@ public:
   void LogScreenf( const char *format, ... );
     // logs message to screen only
 
-#if define(NEEDVIRTUALMETHODS)
+#if defined(NEEDVIRTUALMETHODS)
   virtual void LogScreen ( const char *text );
     // logs preformated message to screen only.  can be overriden.
 #else

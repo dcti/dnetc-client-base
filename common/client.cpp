@@ -1853,7 +1853,7 @@ PreferredIsDone1:
     //Do keyboard stuff for clients that allow user interaction during the run
     //------------------------------------
 
-    #if (!defined(NOMAIN) && ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)))
+    #if ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)) && !defined(NEEDVIRTUALMETHODS)
     {
       while ( kbhit() )
       {
@@ -2621,7 +2621,7 @@ void Client::LogScreen ( const char *text)
 
 void Client::LogScreenf ( const char *format, ...)
 {
-#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) && defined(NOMAIN)
+#if defined(NEEDVIRTUALMETHODS)
   // the gui clients depend on the overridden LogScreen for output
   va_list argptr;
   va_start(argptr, format);

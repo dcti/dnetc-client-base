@@ -993,7 +993,7 @@ s32 Client::ReadConfig(void)
   if (tempconfig) contestdone[1]=1;
 
 #undef INIGETKEY
-#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) && defined(NOMAIN)
+#if defined(NEEDVIRTUALMETHODS)
   InternalReadConfig(ini);
 #endif
 
@@ -1133,7 +1133,7 @@ void Client::ValidateConfig( void )
   #endif
   //numcputemp=numcpu;
 #endif
-#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) & defined(NOMAIN)
+#if defined(NEEDVIRTUALMETHODS)
   InternalValidateConfig();
 #elif (CLIENT_OS == OS_NETWARE)
   {
@@ -1312,7 +1312,7 @@ s32 Client::WriteConfig(void)
     if (ptr) ptr->values.Erase();
   }
 
-#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) & defined(NOMAIN)
+#if defined(NEEDVIRTUALMETHODS)
   InternalWriteConfig(ini);
 #endif
 
