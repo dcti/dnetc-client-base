@@ -87,8 +87,3 @@
 #define RC5CLOSEDCODE 0x1337F00DL
 #define DESCLOSEDCODE 0xBEEFF00DL
 
-const int contestclosedcodes[2]=
-  {
-  RC5CLOSEDCODE,
-  DESCLOSEDCODE
-  };
