@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.102  1998/09/30 22:48:01  remi
+# Added a new x86-linux-glibc2 entry.
+#
 # Revision 1.101  1998/09/30 08:12:27  snake
 #
 # Removed NASM stuff for BSD/OS, nasm does not support the a.out format of
@@ -936,6 +939,17 @@ case "$1" in
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lpthread -lncurses"
 	;;
+
+    *x86-linux-glibc2-mt-egcs)     # multithreaded build using EGCS options (dyn. linked w/glibc2)
+	TARGET_AS="g++ -c"
+	TARGET_CC="g++ -nodefaultlibs"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -D__showids__ -DMULTITHREAD"
+	TARGET_LDFLAGS=""
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_LIBS="-lgcc -lc -lm /usr/lib/libpthread.a /usr/lib/libncurses.a"
+	;; # hacked a bit to avoid all dynamic linking but libc.so.6 and libm.so.6
 
     *x86-linux-mt-egcs-cramer)     # special target for cramer's non-standard installation
 	TARGET_AS="egcs -c"
