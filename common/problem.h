@@ -6,7 +6,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.1 1999/06/14 13:45:48 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.2 1999/06/23 05:46:06 myshkin Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -104,7 +104,7 @@ public: /* anything public must be thread safe */
   #elif (CLIENT_OS == OS_AIX)
   s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
   #elif (CLIENT_CPU == CPU_POWERPC)
-  int (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
+  s32 (*unit_func)( RC5UnitWork * rc5unitwork, u32 *timeslice );
   #endif
 
   int Run_RC5(u32 *timeslice,int *core_retcode); /* \  run for n timeslices.                */

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.2 1999/06/14 13:45:47 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.3 1999/06/23 05:46:05 myshkin Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -84,8 +84,8 @@ extern "C" void riscos_upcall_6(void);
   #if (CLIENT_OS == OS_WIN32)   // NT PPC doesn't have good assembly
   extern u32 rc5_unit_func( RC5UnitWork *  ); //rc5ansi2-rg.cpp
   #else
-  extern "C" int crunch_allitnil( RC5UnitWork *work, unsigned long iterations);
-  extern "C" int crunch_lintilla( RC5UnitWork *work, unsigned long iterations);
+  extern "C" s32 rc5_unit_func_g1( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
+  extern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
   #endif
   extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
 #elif (CLIENT_CPU == CPU_68K)
@@ -444,14 +444,12 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     #error "Systemtype not supported"
   #endif
 #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX)
-  if (contest == RC5)
-  {
-    rc5_unit_func = crunch_lintilla;
-    #if ((CLIENT_OS != OS_BEOS) || (CLIENT_OS != OS_AMIGAOS))
-    if (cputype == 0)
-      rc5_unit_func = crunch_allitnil;
-    #endif
-  }
+  #if ((CLIENT_OS != OS_BEOS) || (CLIENT_OS != OS_AMIGAOS))
+  if (cputype == 0)
+    unit_func = rc5_unit_func_g1;
+  else
+  #endif
+    unit_func = rc5_unit_func_g2_g3;
   pipeline_count = 1;
 #endif
 
@@ -765,9 +763,12 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
   #elif ((CLIENT_CPU == CPU_SPARC) && (ULTRA_CRUNCH == 1)) || \
         ((CLIENT_CPU == CPU_MIPS) && (MIPS_CRUNCH == 1)) 
     kiter = crunch( &rc5unitwork, timeslice );
-  #elif (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_POWERPC) || \
+  #elif (CLIENT_CPU == CPU_68K) || (CLIENT_OS == OS_AIX) || \
         (CLIENT_CPU == CPU_POWER)
     kiter = (*rc5_unit_func)( &rc5unitwork, timeslice );
+  #elif (CLIENT_CPU == CPU_POWERPC)
+    kiter = timeslice;
+    *resultcode = (*unit_func)( &rc5unitwork, &kiter );
   #elif (CLIENT_CPU == CPU_ARM)
     #if (CLIENT_OS == OS_RISCOS)
     if (threadindex == 1) /* RISC OS specific x86 2nd thread magic. */
