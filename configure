@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.251 2001/05/06 11:15:14 teichp Exp $
+# @(#)$Id: configure,v 1.222.2.252 2001/05/20 00:40:05 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -49,6 +49,7 @@ BUILDNAME="$1"
 #
 TARGET_CC="cc"
 TARGET_CP="cp"
+TARGET_TR="tr"
 TARGET_CCFLAGS=""
 TARGET_LD=""          # blank implies TARGET_CC
 TARGET_LDFLAGS=""
@@ -251,7 +252,11 @@ add_sources() # $1=os, $2=arch, $3=custom
   #-----------------------------------------------------------------  
   elif [ "$2" = "sparc" ]; then
     if [ "$1" = "solaris" -o "$1" = "sunos" ]; then
-      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/ultra/rc5-ultra-crunch.cpp"
+      if [ "$3" = "cc" ]; then # use a gcc -S generated .s file for sun cc
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5/ultra/rc5-ultra-crunch.s"
+      else
+        TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/ultra/rc5-ultra-crunch.cpp"
+      fi
     else  
       TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
     fi
@@ -691,17 +696,17 @@ generate_gcc_opts() {
 
     *internal-sparc)  # (sparc/v7 [SS1/2/IPX]) (v8 [supersparc] is below)
         opts272="$OPTS_GCC272 -O6 -mcypress -DASM_SPARC -funroll-loops"
-        opts295="$OPTS_GCC295 -O2 -mcypress -DASM_SPARC -funroll-loops"
+        opts295="$OPTS_GCC295 -O2 -mcpu=cypress -DASM_SPARC -funroll-loops"
         ;;
 
     *internal-supersparc)  # (sparc/v8 [SS5+])
         opts272="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC -funroll-loops"
-        opts295="$OPTS_GCC295 -O2 -mtune=supersparc -DASM_SPARC -funroll-loops"
+        opts295="$OPTS_GCC295 -O2 -mcpu=supersparc -DASM_SPARC -funroll-loops"
         ;;
 
     *internal-ultrasparc)  # (sparc/v9 [Ultra])
-        opts272="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC -funroll-loops"
-        opts295="$OPTS_GCC295 -Os -mtune=ultrasparc -fforce-mem -mvis \
+        opts272="$OPTS_GCC272 -O6 FIXME-msupersparc -DASM_SPARC -funroll-loops"
+        opts295="$OPTS_GCC295 -Os -mcpu=ultrasparc -fforce-mem -mvis \
 		-fcall-used-g4 -fcall-used-g5 -fcall-used-g6 \
 		-fstrict-aliasing -funroll-loops"
         ;;
@@ -1332,12 +1337,12 @@ case "$1" in
         TARGET_AS="gcc -c"
         generate_gcc_opts "supersparc" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
-	      TARGET_LDFLAGS="-static"
-	      TARGET_LIBS=""
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-sparc"
         add_sources "linux" "sparc"
-        TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/ultra/rc5-ultra-crunch.cpp"
+        echo FIXME: use add_sources TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/ultra/rc5-ultra-crunch.cpp"
         ;;
 
     *sparc-sunos-gcc-nomt)   # [ivo sunos413/nomt]
@@ -1361,17 +1366,90 @@ case "$1" in
         add_sources "solaris" "sparc"
         ;;
 
-    *sparc-solaris-gcc)   # [ivo solaris/mt] fastest rc5 <- production target
+
+    *sparc-solaris-gcc)   # [andreasb sparc/v7]
         TARGET_CC="gcc"
-        generate_gcc_opts "supersparc" "solaris"
+        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
+        generate_gcc_opts "sparc" "solaris"
         TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="solaris26-sparc"
-        add_sources "sunos" "sparc"
+        add_sources "solaris" "sparc"
         ;;
 
-    *sparc-solaris-gcc-ultra)   # [ivo ultra] very fast DES -> hence obsolete
+    *sparc-solaris-gcc-super)   # [andreasb sparc/v8]
+        TARGET_CC="gcc"
+        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
+        generate_gcc_opts "supersparc" "solaris"
+        TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="solaris26-supersparc"
+        add_sources "solaris" "sparc"
+        ;;
+
+    *sparc-solaris-gcc-ultra)   # [andreasb sparc/v9 32 bit] ERROR
+        echo "ERROR: gcc can't do this right, check ULONG_MAX vs. sizeof(long)"
+        TARGET_CC="gcc"
+        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
+        generate_gcc_opts "ultrasparc" "solaris"
+        TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="solaris26-ultrasparc"
+        add_sources "solaris" "sparc"
+        ;;
+
+
+    *sparc-solaris-cc-v7)   # [andreasb sparc/v7] 
+        TARGET_CC="CC"
+        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
+        OPTS_CC_SOLARIS="-fast -xO4 -xarch=v7 -DASM_SPARC"
+        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS -D__inline=inline"
+        TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="solaris26-sparc-cc-v7"
+        add_sources "solaris" "sparc" "cc"
+        ;;
+
+    *sparc-solaris-cc-v8)   # [andreasb sparc/v8] 
+        TARGET_CC="CC"
+        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
+        OPTS_CC_SOLARIS="-fast -xO4 -xarch=v8 -DASM_SPARC"
+        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS -D__inline=inline"
+        TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="solaris26-sparc-cc-v8"
+        add_sources "solaris" "sparc" "cc"
+        ;;
+
+    *sparc-solaris-cc-ultra)   # [andreasb sparc/v9 32 bit] 
+        TARGET_CC="CC"
+        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
+        OPTS_CC_SOLARIS="-fast -xO4 -xtarget=ultra -DASM_SPARC"
+        TARGET_ASFLAGS="$TARGET_ASFLAGS -xarch=v8plus"
+        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS -D__inline=inline"
+        TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="solaris26-sparc-cc-ultra"
+        add_sources "solaris" "sparc" "cc"
+        ;;
+
+    *sparc-solaris-cc-ansi)   # [andreasb] ansi rc5 core 
+        TARGET_CC="CC"
+        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
+        OPTS_CC_SOLARIS="-fast -xO4 -xtarget=ultra -DASM_SPARC"
+        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS -D__inline=inline"
+        TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="solaris26-sparc-cc-ansi"
+        add_sources "ansi" "generic"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -DASM_NONE -Drc5_unit_func_ultrasparc_crunch=rc5_unit_func_ansi_2_rg"
+        ;;
+
+
+    *sparc-solaris-gcc-ultra-des)   # [ivo ultra] very fast DES -> hence obsolete
         TARGET_CC="gcc"
         # See Also: ultrasparc/s_paramaters.h
         #OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT \
@@ -1394,7 +1472,7 @@ case "$1" in
         TARGET_ASFLAGS="$OPTS_AS_ULTRA"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="solaris26-ultrasparc"
+        TARGET_TARBALL="solaris26-ultrasparc-des"
         add_sources "solaris" "sparc" "ultra"
         ;;
 
@@ -2316,7 +2394,7 @@ echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
 if [ "$BUILDNAME" = "x86-os2" ]; then
   echo "BUILDNUM:=\$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|tr -dc 0-9)" >>Makefile
 else
-  echo "BUILDNUM:= \`grep \" CLIENT_BUILD_FRAC \" common/version.h|tr -dc 0-9\`" >>Makefile
+  echo "BUILDNUM:= \`grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9\`" >>Makefile
 fi
 echo "" >> Makefile
 
