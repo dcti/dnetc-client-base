@@ -3,7 +3,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.18.2.3 2001/04/01 20:19:09 andreasb Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.18.2.4 2001/04/01 22:02:15 andreasb Exp $"
 
 // define this to use the new struct Stub
 //#define OGR_NEW_STUB_FORMAT
@@ -305,14 +305,14 @@ struct State {
   int half_depth;                 /* depth of left/right segment */
   int half_depth2;                /* depth of left+middle segment */
   int startdepth;                 /* depth of the stub */
-  int stopdepth;                  /* */
+  int stopdepth;                  /* ogr_cycle() stops if this level is reached; either startdepth or startdepth-1*/
   
   /* Part 2: variables that will be changed by ogr_cycle() and read by 
              ogr_getresult(). Do not read these values while ogr_cycle() is running!
              The state represented by parts 1&2 and returned by ogr_getresult
              is safe to be saved to disk. */
   int depth;                      /* depth of last placed mark */
-  int markpos[MAXDEPTH];          /* was: marks */ /* current positions of the marks */
+//int markpos[MAXDEPTH];          /* duplicates Levels[].cnt2 */ /* was: marks */ /* current positions of the marks */
   u32 nodeshi, nodeslo;           /* our internal nodecounter */
   
   /* Part 3: Variables that may be used ONLY by ogr_cycle() */

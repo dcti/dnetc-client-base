@@ -11,7 +11,7 @@
  * cores.
  * And it will be used in stubmap generation.
  */
-#define __OGR_CORE__ "@(#)$Id: ogr_ab.cor,v 1.1.2.8.2.3 2001/04/01 20:38:12 andreasb Exp $"
+#define __OGR_CORE__ "@(#)$Id: ogr_ab.cor,v 1.1.2.8.2.4 2001/04/01 22:02:15 andreasb Exp $"
 
 #warning This core needs revision by other coders
 
@@ -128,7 +128,7 @@ the needed memory, but reduces the amount of nodes to be visited.
 
 const char* ogr_name()
 {
-  return "AB 0.02 $Revision: 1.1.2.8.2.3 $";
+  return "AB 0.02 $Revision: 1.1.2.8.2.4 $";
 }
 
 
@@ -490,7 +490,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
           limit = limit < oState->half_length ? limit : oState->half_length;
         } else {
           limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepth - oState->depth);
-          limit = limit < oState->max - oState->markpos[oState->half_depth]-1 ? limit : oState->max - oState->markpos[oState->half_depth]-1;
+          limit = limit < oState->max - oState->Levels[oState->half_depth].cnt2-1 ? limit : oState->max - oState->Levels[oState->half_depth].cnt2-1;
         }
       } else {
         limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepth - oState->depth);
@@ -503,7 +503,6 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
           oState->stub_error |= STUB_E_GOLOMB;
 
       //dump(oState->depth, lev, 0);
-      oState->markpos[i+1] = oState->markpos[i] + s;
       if ((lev->cnt2 += s) > limit)
         oState->stub_error |= STUB_E_LIMIT;
 
@@ -560,7 +559,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
     int i;
     printf("marks       = ");
      for (i = 1; i <= oState->depth; i++) {
-      printf("%d ", oState->markpos[i]-oState->markpos[i-1]);
+      printf("%d ", oState->Levels[i].cnt2-oState->Levels[i-1].cnt2);
     }
     printf("\n");
   }
@@ -703,10 +702,6 @@ stay:
       // update part 2 of oState
       oState->depth = depth;
 
-      for (int i = oState->startdepth+1; i <= oState->maxmarks; ++i) {
-        oState->markpos[i] = oState->Levels[i].cnt2;
-      }
-      
       // don't update oState->nodes[hi|lo] !
 
       if (ogr_callback(oState) != 0)
@@ -730,7 +725,6 @@ stay:
     COPY_LIST_SET_BIT(lev2, lev, lev->cnt2-lev->cnt1);
     COPY_DIST_COMP(lev2, lev);
 #endif
-    //oState->markpos[depth] = lev->cnt2;
     lev2->cnt1 = lev->cnt2;
     lev2->cnt2 = lev->cnt2;
     lev->limit = limit;
@@ -755,10 +749,6 @@ up:
 
   /* update part 2 of oState */
   oState->depth = depth-1;
-
-  for (int i = oState->startdepth+1; i <= oState->maxmarks; ++i) {
-    oState->markpos[i] = oState->Levels[i].cnt2;
-  }
 
   oState->nodeslo += nodes;
   if (oState->nodeslo < (u32)nodes)

@@ -6,7 +6,7 @@
  * This is based on GARSP 5.13 "Garry's adaptions of Rado's search principles".
  * There were many modifications ... can anyone tell?
  */
-#define __OGR_CORE__ "@(#)$Id: ogr_g_r.cor,v 1.1.2.11.2.3 2001/04/01 20:38:12 andreasb Exp $"
+#define __OGR_CORE__ "@(#)$Id: ogr_g_r.cor,v 1.1.2.11.2.4 2001/04/01 22:02:15 andreasb Exp $"
 
 #if (OGROPT_ALTERNATE_CYCLE == 0)
 
@@ -372,7 +372,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
           limit = limit < oState->half_length ? limit : oState->half_length;
         } else {
           limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepth - oState->depth);
-          limit = limit < oState->max - oState->markpos[oState->half_depth]-1 ? limit : oState->max - oState->markpos[oState->half_depth]-1;
+          limit = limit < oState->max - oState->Levels[oState->half_depth].cnt2-1 ? limit : oState->max - oState->Levels[oState->half_depth].cnt2-1;
         }
       } else {
         limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepth - oState->depth);
@@ -385,7 +385,6 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
           oState->stub_error |= STUB_E_GOLOMB;
 
       //dump(oState->depth, lev, 0);
-      oState->markpos[i+1] = oState->markpos[i] + s;
       if ((lev->cnt2 += s) > limit)
         oState->stub_error |= STUB_E_LIMIT;
 
@@ -441,7 +440,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
     int i;
     printf("marks       = ");
      for (i = 1; i <= oState->depth; i++) {
-      printf("%d ", oState->markpos[i]-oState->markpos[i-1]);
+      printf("%d ", oState->Levels[i].cnt2-oState->Levels[i-1].cnt2);
     }
     printf("\n");
   }
@@ -541,10 +540,6 @@ stay:
       /* lock state lock here if we had one */
 
       oState->depth = depth;
-
-      for (int i = oState->startdepth+1; i <= oState->maxmarks; ++i) {
-        oState->markpos[i] = oState->Levels[i].cnt2;
-      }
       
       // don't update oState->nodes[hi|lo] !
 
@@ -571,7 +566,6 @@ stay:
     COPY_LIST_SET_BIT(lev2, lev, lev->cnt2-lev->cnt1);
     COPY_DIST_COMP(lev2, lev);
 #endif
-    //oState->markpos[depth] = lev->cnt2;
     lev2->cnt1 = lev->cnt2;
     lev2->cnt2 = lev->cnt2;
     lev->limit = limit;
@@ -599,10 +593,6 @@ up:
   /* lock the changing part of public data (part 2) for updating here */
 
   oState->depth = depth-1;
-
-  for (int i = oState->startdepth+1; i <= oState->maxmarks; ++i) {
-    oState->markpos[i] = oState->Levels[i].cnt2;
-  }
 
   oState->nodeslo += nodes;
   if (oState->nodeslo < (u32)nodes)

@@ -8,7 +8,7 @@
  * - it #includes all neccessary .cor (core functions/macros), 
  *   .mac (general macros), .inc (general stuff) files
  */
-#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.43.2.2 2001/04/01 20:38:11 andreasb Exp $"
+#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.43.2.3 2001/04/01 22:02:15 andreasb Exp $"
 
 #include <stdio.h>      /* printf for debugging */
 #include <stdlib.h>     /* malloc (if using non-static choose dat) */
@@ -505,11 +505,7 @@ static int ogr_getresult(void *state, void *result, int resultlen)
   workstub->stub.marks = (u16)oState->maxmarks;
   workstub->stub.length = (u16)oState->startdepth;
   for (i = 0; i < STUB_MAX; i++) {
-    #if (OGROPT_ALTERNATE_CYCLE == 1 || OGROPT_ALTERNATE_CYCLE == 2)
     workstub->stub.diffs[i] = (u16)(oState->Levels[i+1].cnt2 - oState->Levels[i].cnt2);
-    #else
-    workstub->stub.diffs[i] = (u16)(oState->markpos[i+1] - oState->markpos[i]);
-    #endif
   }
   workstub->worklength = oState->depth;
 
