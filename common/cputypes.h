@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.48  1999/01/20 20:25:10  patrick
+//
+// OS2 EMX has threadid in stdlib
+//
 // Revision 1.47  1999/01/19 09:38:03  patrick
 //
 // added recognition of OS2-EMX
@@ -502,8 +506,12 @@ struct s128 { s64 hi, lo; };
   typedef unsigned long THREADID;
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_OS2)
-  //Headers defined elsewhere in a separate file.
-  typedef long THREADID;
+  #if defined(__EMX__)
+    #include <stdlib.h>
+  #else
+        //Headers defined elsewhere in a separate file.
+    typedef long THREADID;
+  #endif
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_NETWARE)
   #include <process.h>
