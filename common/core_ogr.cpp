@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.20 2004/05/20 21:13:14 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.21 2004/05/21 18:49:20 kakace Exp $"; }
 
 //#define TRACE
 
@@ -232,8 +232,8 @@ const char **corenames_for_contest_ogr()
       "GARSP 5.13-EV4",
     #endif
   #elif (CLIENT_CPU == CPU_POWERPC)
-      "GARSP 5.13 Scalar",
-      "GARSP 5.13 Vector",   /* altivec only */
+      "GARSP 5.14 Scalar",
+      "GARSP 5.14 Vector",   /* altivec only */
   #elif (CLIENT_CPU == CPU_SPARC)
       "GARSP 5.13",
   #elif (CLIENT_OS == OS_PS2LINUX)

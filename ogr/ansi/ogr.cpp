@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.26 2004/05/20 21:13:34 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.27 2004/05/21 18:49:33 kakace Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -454,14 +454,18 @@ extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
       vector unsigned int V;                                        \
       unsigned int U[4];                                            \
    } VU;                                                            \
+   distV0 = state->distV0;                                          \
+   distV1 = state->distV1;                                          \
+   VU.V = distV0;                                                   \
    compV0 = lev->compV0;                                            \
    compV1 = lev->compV1;                                            \
    listV0 = vec_or(lev->listV0, ZEROBIT);                           \
    listV1 = lev->listV1;                                            \
-   distV0 = state->distV0;                                          \
-   distV1 = state->distV1;
+   U dist0;
 
 #define VEC_TO_INT(v,n) (VU.V = (v), VU.U[n])
+#define WRITE_VEC(v) (VU.V = (v))
+#define EXTRACT_INT(n) VU.U[n]
 
 /* shift the list to add or extend the first mark */
 #define COMP_LEFT_LIST_RIGHT(lev, s)                                \
@@ -492,6 +496,7 @@ extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
    listV0 = vec_or(listV0, ZEROBIT);                                \
    distV0 = vec_or(distV0, listV0);                                 \
    distV1 = vec_or(distV1, listV1);                                 \
+   WRITE_VEC(distV0);                                               \
    lev->compV0 = compV0;                                            \
    lev->compV1 = compV1;                                            \
    compV0 = vec_or(compV0, distV0);                                 \
@@ -501,12 +506,13 @@ extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
 
 /* pop a level to continue work on previous mark */
 #define POP_LEVEL(lev)                                              \
+   compV0 = lev->compV0;                                            \
+   compV1 = lev->compV1;                                            \
+   WRITE_VEC(compV0);                                               \
    listV0 = lev->listV0;                                            \
    listV1 = lev->listV1;                                            \
    distV0 = vec_andc(distV0, listV0);                               \
    distV1 = vec_andc(distV1, listV1);                               \
-   compV0 = lev->compV0;                                            \
-   compV1 = lev->compV1;                                            \
    limit = lev->limit;                                              \
    cnt2 = lev->cnt2;
 
@@ -559,6 +565,27 @@ extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
 
 #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__) || \
     defined(ASM_POWER)
+  #define COMP_LEFT_LIST_RIGHT_BASIC(k)       \
+    comp0 = __rlwinm(comp0,k,0,31);           \
+    comp1 = __rlwinm(comp1,k,0,31);           \
+    comp2 = __rlwinm(comp2,k,0,31);           \
+    comp3 = __rlwinm(comp3,k,0,31);           \
+    list4 = __rlwinm(list4,32-k,0,31);        \
+    list3 = __rlwinm(list3,32-k,0,31);        \
+    list2 = __rlwinm(list2,32-k,0,31);        \
+    list1 = __rlwinm(list1,32-k,0,31);        \
+    list0 = __rlwinm(list0,32-k,0,31);        \
+    comp0 = __rlwimi(comp0,comp1,0,32-k,31);  \
+    comp1 = __rlwimi(comp1,comp2,0,32-k,31);  \
+    comp2 = __rlwimi(comp2,comp3,0,32-k,31);  \
+    comp3 = __rlwimi(comp3,comp4,k,32-k,31);  \
+    comp4 = __rlwinm(comp4,k,0,31-k);         \
+    list4 = __rlwimi(list4,list3,0,0,k-1);    \
+    list3 = __rlwimi(list3,list2,0,0,k-1);    \
+    list2 = __rlwimi(list2,list1,0,0,k-1);    \
+    list1 = __rlwimi(list1,list0,0,0,k-1);    \
+    list0 = __rlwimi(list0,newbit,32-k,0,k-1);
+
   #define COMP_LEFT_LIST_RIGHT(lev, s)             \
   {                                                \
     switch (s)                                     \
@@ -566,655 +593,97 @@ extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
       case 0:                                      \
          break;                                    \
       case 1:                                      \
-         comp0 = __rlwinm(comp0,1,0,30);           \
-         list4 = __rlwinm(list4,31,1,31);          \
-         comp0 = __rlwimi(comp0,comp1,1,31,31);    \
-         list4 = __rlwimi(list4,list3,31,0,0);     \
-         comp1 = __rlwinm(comp1,1,0,30);           \
-         list3 = __rlwinm(list3,31,1,31);          \
-         comp1 = __rlwimi(comp1,comp2,1,31,31);    \
-         list3 = __rlwimi(list3,list2,31,0,0);     \
-         comp2 = __rlwinm(comp2,1,0,30);           \
-         list2 = __rlwinm(list2,31,1,31);          \
-         comp2 = __rlwimi(comp2,comp3,1,31,31);    \
-         list2 = __rlwimi(list2,list1,31,0,0);     \
-         comp3 = __rlwinm(comp3,1,0,30);           \
-         list1 = __rlwinm(list1,31,1,31);          \
-         comp3 = __rlwimi(comp3,comp4,1,31,31);    \
-         list1 = __rlwimi(list1,list0,31,0,0);     \
-         comp4 = __rlwinm(comp4,1,0,30);           \
-         list0 = __rlwinm(list0,31,1,31);          \
-         list0 = __rlwimi(list0,newbit,31,0,0);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(1)             \
          break;                                    \
       case 2:                                      \
-         comp0 = __rlwinm(comp0,2,0,29);           \
-         list4 = __rlwinm(list4,30,2,31);          \
-         comp0 = __rlwimi(comp0,comp1,2,30,31);    \
-         list4 = __rlwimi(list4,list3,30,0,1);     \
-         comp1 = __rlwinm(comp1,2,0,29);           \
-         list3 = __rlwinm(list3,30,2,31);          \
-         comp1 = __rlwimi(comp1,comp2,2,30,31);    \
-         list3 = __rlwimi(list3,list2,30,0,1);     \
-         comp2 = __rlwinm(comp2,2,0,29);           \
-         list2 = __rlwinm(list2,30,2,31);          \
-         comp2 = __rlwimi(comp2,comp3,2,30,31);    \
-         list2 = __rlwimi(list2,list1,30,0,1);     \
-         comp3 = __rlwinm(comp3,2,0,29);           \
-         list1 = __rlwinm(list1,30,2,31);          \
-         comp3 = __rlwimi(comp3,comp4,2,30,31);    \
-         list1 = __rlwimi(list1,list0,30,0,1);     \
-         comp4 = __rlwinm(comp4,2,0,29);           \
-         list0 = __rlwinm(list0,30,2,31);          \
-         list0 = __rlwimi(list0,newbit,30,0,1);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(2)             \
          break;                                    \
       case 3:                                      \
-         comp0 = __rlwinm(comp0,3,0,28);           \
-         list4 = __rlwinm(list4,29,3,31);          \
-         comp0 = __rlwimi(comp0,comp1,3,29,31);    \
-         list4 = __rlwimi(list4,list3,29,0,2);     \
-         comp1 = __rlwinm(comp1,3,0,28);           \
-         list3 = __rlwinm(list3,29,3,31);          \
-         comp1 = __rlwimi(comp1,comp2,3,29,31);    \
-         list3 = __rlwimi(list3,list2,29,0,2);     \
-         comp2 = __rlwinm(comp2,3,0,28);           \
-         list2 = __rlwinm(list2,29,3,31);          \
-         comp2 = __rlwimi(comp2,comp3,3,29,31);    \
-         list2 = __rlwimi(list2,list1,29,0,2);     \
-         comp3 = __rlwinm(comp3,3,0,28);           \
-         list1 = __rlwinm(list1,29,3,31);          \
-         comp3 = __rlwimi(comp3,comp4,3,29,31);    \
-         list1 = __rlwimi(list1,list0,29,0,2);     \
-         comp4 = __rlwinm(comp4,3,0,28);           \
-         list0 = __rlwinm(list0,29,3,31);          \
-         list0 = __rlwimi(list0,newbit,29,0,2);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(3)             \
          break;                                    \
       case 4:                                      \
-         comp0 = __rlwinm(comp0,4,0,27);           \
-         list4 = __rlwinm(list4,28,4,31);          \
-         comp0 = __rlwimi(comp0,comp1,4,28,31);    \
-         list4 = __rlwimi(list4,list3,28,0,3);     \
-         comp1 = __rlwinm(comp1,4,0,27);           \
-         list3 = __rlwinm(list3,28,4,31);          \
-         comp1 = __rlwimi(comp1,comp2,4,28,31);    \
-         list3 = __rlwimi(list3,list2,28,0,3);     \
-         comp2 = __rlwinm(comp2,4,0,27);           \
-         list2 = __rlwinm(list2,28,4,31);          \
-         comp2 = __rlwimi(comp2,comp3,4,28,31);    \
-         list2 = __rlwimi(list2,list1,28,0,3);     \
-         comp3 = __rlwinm(comp3,4,0,27);           \
-         list1 = __rlwinm(list1,28,4,31);          \
-         comp3 = __rlwimi(comp3,comp4,4,28,31);    \
-         list1 = __rlwimi(list1,list0,28,0,3);     \
-         comp4 = __rlwinm(comp4,4,0,27);           \
-         list0 = __rlwinm(list0,28,4,31);          \
-         list0 = __rlwimi(list0,newbit,28,0,3);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(4)             \
          break;                                    \
       case 5:                                      \
-         comp0 = __rlwinm(comp0,5,0,26);           \
-         list4 = __rlwinm(list4,27,5,31);          \
-         comp0 = __rlwimi(comp0,comp1,5,27,31);    \
-         list4 = __rlwimi(list4,list3,27,0,4);     \
-         comp1 = __rlwinm(comp1,5,0,26);           \
-         list3 = __rlwinm(list3,27,5,31);          \
-         comp1 = __rlwimi(comp1,comp2,5,27,31);    \
-         list3 = __rlwimi(list3,list2,27,0,4);     \
-         comp2 = __rlwinm(comp2,5,0,26);           \
-         list2 = __rlwinm(list2,27,5,31);          \
-         comp2 = __rlwimi(comp2,comp3,5,27,31);    \
-         list2 = __rlwimi(list2,list1,27,0,4);     \
-         comp3 = __rlwinm(comp3,5,0,26);           \
-         list1 = __rlwinm(list1,27,5,31);          \
-         comp3 = __rlwimi(comp3,comp4,5,27,31);    \
-         list1 = __rlwimi(list1,list0,27,0,4);     \
-         comp4 = __rlwinm(comp4,5,0,26);           \
-         list0 = __rlwinm(list0,27,5,31);          \
-         list0 = __rlwimi(list0,newbit,27,0,4);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(5)             \
          break;                                    \
       case 6:                                      \
-         comp0 = __rlwinm(comp0,6,0,25);           \
-         list4 = __rlwinm(list4,26,6,31);          \
-         comp0 = __rlwimi(comp0,comp1,6,26,31);    \
-         list4 = __rlwimi(list4,list3,26,0,5);     \
-         comp1 = __rlwinm(comp1,6,0,25);           \
-         list3 = __rlwinm(list3,26,6,31);          \
-         comp1 = __rlwimi(comp1,comp2,6,26,31);    \
-         list3 = __rlwimi(list3,list2,26,0,5);     \
-         comp2 = __rlwinm(comp2,6,0,25);           \
-         list2 = __rlwinm(list2,26,6,31);          \
-         comp2 = __rlwimi(comp2,comp3,6,26,31);    \
-         list2 = __rlwimi(list2,list1,26,0,5);     \
-         comp3 = __rlwinm(comp3,6,0,25);           \
-         list1 = __rlwinm(list1,26,6,31);          \
-         comp3 = __rlwimi(comp3,comp4,6,26,31);    \
-         list1 = __rlwimi(list1,list0,26,0,5);     \
-         comp4 = __rlwinm(comp4,6,0,25);           \
-         list0 = __rlwinm(list0,26,6,31);          \
-         list0 = __rlwimi(list0,newbit,26,0,5);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(6)             \
          break;                                    \
       case 7:                                      \
-         comp0 = __rlwinm(comp0,7,0,24);           \
-         list4 = __rlwinm(list4,25,7,31);          \
-         comp0 = __rlwimi(comp0,comp1,7,25,31);    \
-         list4 = __rlwimi(list4,list3,25,0,6);     \
-         comp1 = __rlwinm(comp1,7,0,24);           \
-         list3 = __rlwinm(list3,25,7,31);          \
-         comp1 = __rlwimi(comp1,comp2,7,25,31);    \
-         list3 = __rlwimi(list3,list2,25,0,6);     \
-         comp2 = __rlwinm(comp2,7,0,24);           \
-         list2 = __rlwinm(list2,25,7,31);          \
-         comp2 = __rlwimi(comp2,comp3,7,25,31);    \
-         list2 = __rlwimi(list2,list1,25,0,6);     \
-         comp3 = __rlwinm(comp3,7,0,24);           \
-         list1 = __rlwinm(list1,25,7,31);          \
-         comp3 = __rlwimi(comp3,comp4,7,25,31);    \
-         list1 = __rlwimi(list1,list0,25,0,6);     \
-         comp4 = __rlwinm(comp4,7,0,24);           \
-         list0 = __rlwinm(list0,25,7,31);          \
-         list0 = __rlwimi(list0,newbit,25,0,6);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(7)             \
          break;                                    \
       case 8:                                      \
-         comp0 = __rlwinm(comp0,8,0,23);           \
-         list4 = __rlwinm(list4,24,8,31);          \
-         comp0 = __rlwimi(comp0,comp1,8,24,31);    \
-         list4 = __rlwimi(list4,list3,24,0,7);     \
-         comp1 = __rlwinm(comp1,8,0,23);           \
-         list3 = __rlwinm(list3,24,8,31);          \
-         comp1 = __rlwimi(comp1,comp2,8,24,31);    \
-         list3 = __rlwimi(list3,list2,24,0,7);     \
-         comp2 = __rlwinm(comp2,8,0,23);           \
-         list2 = __rlwinm(list2,24,8,31);          \
-         comp2 = __rlwimi(comp2,comp3,8,24,31);    \
-         list2 = __rlwimi(list2,list1,24,0,7);     \
-         comp3 = __rlwinm(comp3,8,0,23);           \
-         list1 = __rlwinm(list1,24,8,31);          \
-         comp3 = __rlwimi(comp3,comp4,8,24,31);    \
-         list1 = __rlwimi(list1,list0,24,0,7);     \
-         comp4 = __rlwinm(comp4,8,0,23);           \
-         list0 = __rlwinm(list0,24,8,31);          \
-         list0 = __rlwimi(list0,newbit,24,0,7);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(8)             \
          break;                                    \
       case 9:                                      \
-         comp0 = __rlwinm(comp0,9,0,22);           \
-         list4 = __rlwinm(list4,23,9,31);          \
-         comp0 = __rlwimi(comp0,comp1,9,23,31);    \
-         list4 = __rlwimi(list4,list3,23,0,8);     \
-         comp1 = __rlwinm(comp1,9,0,22);           \
-         list3 = __rlwinm(list3,23,9,31);          \
-         comp1 = __rlwimi(comp1,comp2,9,23,31);    \
-         list3 = __rlwimi(list3,list2,23,0,8);     \
-         comp2 = __rlwinm(comp2,9,0,22);           \
-         list2 = __rlwinm(list2,23,9,31);          \
-         comp2 = __rlwimi(comp2,comp3,9,23,31);    \
-         list2 = __rlwimi(list2,list1,23,0,8);     \
-         comp3 = __rlwinm(comp3,9,0,22);           \
-         list1 = __rlwinm(list1,23,9,31);          \
-         comp3 = __rlwimi(comp3,comp4,9,23,31);    \
-         list1 = __rlwimi(list1,list0,23,0,8);     \
-         comp4 = __rlwinm(comp4,9,0,22);           \
-         list0 = __rlwinm(list0,23,9,31);          \
-         list0 = __rlwimi(list0,newbit,23,0,8);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(9)             \
          break;                                    \
       case 10:                                     \
-         comp0 = __rlwinm(comp0,10,0,21);          \
-         list4 = __rlwinm(list4,22,10,31);         \
-         comp0 = __rlwimi(comp0,comp1,10,22,31);   \
-         list4 = __rlwimi(list4,list3,22,0,9);     \
-         comp1 = __rlwinm(comp1,10,0,21);          \
-         list3 = __rlwinm(list3,22,10,31);         \
-         comp1 = __rlwimi(comp1,comp2,10,22,31);   \
-         list3 = __rlwimi(list3,list2,22,0,9);     \
-         comp2 = __rlwinm(comp2,10,0,21);          \
-         list2 = __rlwinm(list2,22,10,31);         \
-         comp2 = __rlwimi(comp2,comp3,10,22,31);   \
-         list2 = __rlwimi(list2,list1,22,0,9);     \
-         comp3 = __rlwinm(comp3,10,0,21);          \
-         list1 = __rlwinm(list1,22,10,31);         \
-         comp3 = __rlwimi(comp3,comp4,10,22,31);   \
-         list1 = __rlwimi(list1,list0,22,0,9);     \
-         comp4 = __rlwinm(comp4,10,0,21);          \
-         list0 = __rlwinm(list0,22,10,31);         \
-         list0 = __rlwimi(list0,newbit,22,0,9);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(10)            \
          break;                                    \
       case 11:                                     \
-         comp0 = __rlwinm(comp0,11,0,20);          \
-         list4 = __rlwinm(list4,21,11,31);         \
-         comp0 = __rlwimi(comp0,comp1,11,21,31);   \
-         list4 = __rlwimi(list4,list3,21,0,10);    \
-         comp1 = __rlwinm(comp1,11,0,20);          \
-         list3 = __rlwinm(list3,21,11,31);         \
-         comp1 = __rlwimi(comp1,comp2,11,21,31);   \
-         list3 = __rlwimi(list3,list2,21,0,10);    \
-         comp2 = __rlwinm(comp2,11,0,20);          \
-         list2 = __rlwinm(list2,21,11,31);         \
-         comp2 = __rlwimi(comp2,comp3,11,21,31);   \
-         list2 = __rlwimi(list2,list1,21,0,10);    \
-         comp3 = __rlwinm(comp3,11,0,20);          \
-         list1 = __rlwinm(list1,21,11,31);         \
-         comp3 = __rlwimi(comp3,comp4,11,21,31);   \
-         list1 = __rlwimi(list1,list0,21,0,10);    \
-         comp4 = __rlwinm(comp4,11,0,20);          \
-         list0 = __rlwinm(list0,21,11,31);         \
-         list0 = __rlwimi(list0,newbit,21,0,10);   \
+         COMP_LEFT_LIST_RIGHT_BASIC(11)            \
          break;                                    \
       case 12:                                     \
-         comp0 = __rlwinm(comp0,12,0,19);          \
-         list4 = __rlwinm(list4,20,12,31);         \
-         comp0 = __rlwimi(comp0,comp1,12,20,31);   \
-         list4 = __rlwimi(list4,list3,20,0,11);    \
-         comp1 = __rlwinm(comp1,12,0,19);          \
-         list3 = __rlwinm(list3,20,12,31);         \
-         comp1 = __rlwimi(comp1,comp2,12,20,31);   \
-         list3 = __rlwimi(list3,list2,20,0,11);    \
-         comp2 = __rlwinm(comp2,12,0,19);          \
-         list2 = __rlwinm(list2,20,12,31);         \
-         comp2 = __rlwimi(comp2,comp3,12,20,31);   \
-         list2 = __rlwimi(list2,list1,20,0,11);    \
-         comp3 = __rlwinm(comp3,12,0,19);          \
-         list1 = __rlwinm(list1,20,12,31);         \
-         comp3 = __rlwimi(comp3,comp4,12,20,31);   \
-         list1 = __rlwimi(list1,list0,20,0,11);    \
-         comp4 = __rlwinm(comp4,12,0,19);          \
-         list0 = __rlwinm(list0,20,12,31);         \
-         list0 = __rlwimi(list0,newbit,20,0,11);   \
+         COMP_LEFT_LIST_RIGHT_BASIC(12)            \
          break;                                    \
       case 13:                                     \
-         comp0 = __rlwinm(comp0,13,0,18);          \
-         list4 = __rlwinm(list4,19,13,31);         \
-         comp0 = __rlwimi(comp0,comp1,13,19,31);   \
-         list4 = __rlwimi(list4,list3,19,0,12);    \
-         comp1 = __rlwinm(comp1,13,0,18);          \
-         list3 = __rlwinm(list3,19,13,31);         \
-         comp1 = __rlwimi(comp1,comp2,13,19,31);   \
-         list3 = __rlwimi(list3,list2,19,0,12);    \
-         comp2 = __rlwinm(comp2,13,0,18);          \
-         list2 = __rlwinm(list2,19,13,31);         \
-         comp2 = __rlwimi(comp2,comp3,13,19,31);   \
-         list2 = __rlwimi(list2,list1,19,0,12);    \
-         comp3 = __rlwinm(comp3,13,0,18);          \
-         list1 = __rlwinm(list1,19,13,31);         \
-         comp3 = __rlwimi(comp3,comp4,13,19,31);   \
-         list1 = __rlwimi(list1,list0,19,0,12);    \
-         comp4 = __rlwinm(comp4,13,0,18);          \
-         list0 = __rlwinm(list0,19,13,31);         \
-         list0 = __rlwimi(list0,newbit,19,0,12);   \
+         COMP_LEFT_LIST_RIGHT_BASIC(13)            \
          break;                                    \
       case 14:                                     \
-         comp0 = __rlwinm(comp0,14,0,17);          \
-         list4 = __rlwinm(list4,18,14,31);         \
-         comp0 = __rlwimi(comp0,comp1,14,18,31);   \
-         list4 = __rlwimi(list4,list3,18,0,13);    \
-         comp1 = __rlwinm(comp1,14,0,17);          \
-         list3 = __rlwinm(list3,18,14,31);         \
-         comp1 = __rlwimi(comp1,comp2,14,18,31);   \
-         list3 = __rlwimi(list3,list2,18,0,13);    \
-         comp2 = __rlwinm(comp2,14,0,17);          \
-         list2 = __rlwinm(list2,18,14,31);         \
-         comp2 = __rlwimi(comp2,comp3,14,18,31);   \
-         list2 = __rlwimi(list2,list1,18,0,13);    \
-         comp3 = __rlwinm(comp3,14,0,17);          \
-         list1 = __rlwinm(list1,18,14,31);         \
-         comp3 = __rlwimi(comp3,comp4,14,18,31);   \
-         list1 = __rlwimi(list1,list0,18,0,13);    \
-         comp4 = __rlwinm(comp4,14,0,17);          \
-         list0 = __rlwinm(list0,18,14,31);         \
-         list0 = __rlwimi(list0,newbit,18,0,13);   \
+         COMP_LEFT_LIST_RIGHT_BASIC(14)            \
          break;                                    \
       case 15:                                     \
-         comp0 = __rlwinm(comp0,15,0,16);          \
-         list4 = __rlwinm(list4,17,15,31);         \
-         comp0 = __rlwimi(comp0,comp1,15,17,31);   \
-         list4 = __rlwimi(list4,list3,17,0,14);    \
-         comp1 = __rlwinm(comp1,15,0,16);          \
-         list3 = __rlwinm(list3,17,15,31);         \
-         comp1 = __rlwimi(comp1,comp2,15,17,31);   \
-         list3 = __rlwimi(list3,list2,17,0,14);    \
-         comp2 = __rlwinm(comp2,15,0,16);          \
-         list2 = __rlwinm(list2,17,15,31);         \
-         comp2 = __rlwimi(comp2,comp3,15,17,31);   \
-         list2 = __rlwimi(list2,list1,17,0,14);    \
-         comp3 = __rlwinm(comp3,15,0,16);          \
-         list1 = __rlwinm(list1,17,15,31);         \
-         comp3 = __rlwimi(comp3,comp4,15,17,31);   \
-         list1 = __rlwimi(list1,list0,17,0,14);    \
-         comp4 = __rlwinm(comp4,15,0,16);          \
-         list0 = __rlwinm(list0,17,15,31);         \
-         list0 = __rlwimi(list0,newbit,17,0,14);   \
+         COMP_LEFT_LIST_RIGHT_BASIC(15)            \
          break;                                    \
       case 16:                                     \
-         comp0 = __rlwinm(comp0,16,0,15);          \
-         list4 = __rlwinm(list4,16,16,31);         \
-         comp0 = __rlwimi(comp0,comp1,16,16,31);   \
-         list4 = __rlwimi(list4,list3,16,0,15);    \
-         comp1 = __rlwinm(comp1,16,0,15);          \
-         list3 = __rlwinm(list3,16,16,31);         \
-         comp1 = __rlwimi(comp1,comp2,16,16,31);   \
-         list3 = __rlwimi(list3,list2,16,0,15);    \
-         comp2 = __rlwinm(comp2,16,0,15);          \
-         list2 = __rlwinm(list2,16,16,31);         \
-         comp2 = __rlwimi(comp2,comp3,16,16,31);   \
-         list2 = __rlwimi(list2,list1,16,0,15);    \
-         comp3 = __rlwinm(comp3,16,0,15);          \
-         list1 = __rlwinm(list1,16,16,31);         \
-         comp3 = __rlwimi(comp3,comp4,16,16,31);   \
-         list1 = __rlwimi(list1,list0,16,0,15);    \
-         comp4 = __rlwinm(comp4,16,0,15);          \
-         list0 = __rlwinm(list0,16,16,31);         \
-         list0 = __rlwimi(list0,newbit,16,0,15);   \
+         COMP_LEFT_LIST_RIGHT_BASIC(16)            \
          break;                                    \
       case 17:                                     \
-         comp0 = __rlwinm(comp0,17,0,14);          \
-         list4 = __rlwinm(list4,15,17,31);         \
-         comp0 = __rlwimi(comp0,comp1,17,15,31);   \
-         list4 = __rlwimi(list4,list3,15,0,16);    \
-         comp1 = __rlwinm(comp1,17,0,14);          \
-         list3 = __rlwinm(list3,15,17,31);         \
-         comp1 = __rlwimi(comp1,comp2,17,15,31);   \
-         list3 = __rlwimi(list3,list2,15,0,16);    \
-         comp2 = __rlwinm(comp2,17,0,14);          \
-         list2 = __rlwinm(list2,15,17,31);         \
-         comp2 = __rlwimi(comp2,comp3,17,15,31);   \
-         list2 = __rlwimi(list2,list1,15,0,16);    \
-         comp3 = __rlwinm(comp3,17,0,14);          \
-         list1 = __rlwinm(list1,15,17,31);         \
-         comp3 = __rlwimi(comp3,comp4,17,15,31);   \
-         list1 = __rlwimi(list1,list0,15,0,16);    \
-         comp4 = __rlwinm(comp4,17,0,14);          \
-         list0 = __rlwinm(list0,15,17,31);         \
-         list0 = __rlwimi(list0,newbit,15,0,16);   \
+         COMP_LEFT_LIST_RIGHT_BASIC(17)            \
          break;                                    \
       case 18:                                     \
-         comp0 = __rlwinm(comp0,18,0,13);          \
-         list4 = __rlwinm(list4,14,18,31);         \
-         comp0 = __rlwimi(comp0,comp1,18,14,31);   \
-         list4 = __rlwimi(list4,list3,14,0,17);    \
-         comp1 = __rlwinm(comp1,18,0,13);          \
-         list3 = __rlwinm(list3,14,18,31);         \
-         comp1 = __rlwimi(comp1,comp2,18,14,31);   \
-         list3 = __rlwimi(list3,list2,14,0,17);    \
-         comp2 = __rlwinm(comp2,18,0,13);          \
-         list2 = __rlwinm(list2,14,18,31);         \
-         comp2 = __rlwimi(comp2,comp3,18,14,31);   \
-         list2 = __rlwimi(list2,list1,14,0,17);    \
-         comp3 = __rlwinm(comp3,18,0,13);          \
-         list1 = __rlwinm(list1,14,18,31);         \
-         comp3 = __rlwimi(comp3,comp4,18,14,31);   \
-         list1 = __rlwimi(list1,list0,14,0,17);    \
-         comp4 = __rlwinm(comp4,18,0,13);          \
-         list0 = __rlwinm(list0,14,18,31);         \
-         list0 = __rlwimi(list0,newbit,14,0,17);   \
+         COMP_LEFT_LIST_RIGHT_BASIC(18)            \
          break;                                    \
       case 19:                                     \
-         comp0 = __rlwinm(comp0,19,0,12);          \
-         list4 = __rlwinm(list4,13,19,31);         \
-         comp0 = __rlwimi(comp0,comp1,19,13,31);   \
-         list4 = __rlwimi(list4,list3,13,0,18);    \
-         comp1 = __rlwinm(comp1,19,0,12);          \
-         list3 = __rlwinm(list3,13,19,31);         \
-         comp1 = __rlwimi(comp1,comp2,19,13,31);   \
-         list3 = __rlwimi(list3,list2,13,0,18);    \
-         comp2 = __rlwinm(comp2,19,0,12);          \
-         list2 = __rlwinm(list2,13,19,31);         \
-         comp2 = __rlwimi(comp2,comp3,19,13,31);   \
-         list2 = __rlwimi(list2,list1,13,0,18);    \
-         comp3 = __rlwinm(comp3,19,0,12);          \
-         list1 = __rlwinm(list1,13,19,31);         \
-         comp3 = __rlwimi(comp3,comp4,19,13,31);   \
-         list1 = __rlwimi(list1,list0,13,0,18);    \
-         comp4 = __rlwinm(comp4,19,0,12);          \
-         list0 = __rlwinm(list0,13,19,31);         \
-         list0 = __rlwimi(list0,newbit,13,0,18);   \
+         COMP_LEFT_LIST_RIGHT_BASIC(19)            \
          break;                                    \
       case 20:                                     \
-         comp0 = __rlwinm(comp0,20,0,11);          \
-         list4 = __rlwinm(list4,12,20,31);         \
-         comp0 = __rlwimi(comp0,comp1,20,12,31);   \
-         list4 = __rlwimi(list4,list3,12,0,19);    \
-         comp1 = __rlwinm(comp1,20,0,11);          \
-         list3 = __rlwinm(list3,12,20,31);         \
-         comp1 = __rlwimi(comp1,comp2,20,12,31);   \
-         list3 = __rlwimi(list3,list2,12,0,19);    \
-         comp2 = __rlwinm(comp2,20,0,11);          \
-         list2 = __rlwinm(list2,12,20,31);         \
-         comp2 = __rlwimi(comp2,comp3,20,12,31);   \
-         list2 = __rlwimi(list2,list1,12,0,19);    \
-         comp3 = __rlwinm(comp3,20,0,11);          \
-         list1 = __rlwinm(list1,12,20,31);         \
-         comp3 = __rlwimi(comp3,comp4,20,12,31);   \
-         list1 = __rlwimi(list1,list0,12,0,19);    \
-         comp4 = __rlwinm(comp4,20,0,11);          \
-         list0 = __rlwinm(list0,12,20,31);         \
-         list0 = __rlwimi(list0,newbit,12,0,19);   \
+         COMP_LEFT_LIST_RIGHT_BASIC(20)            \
          break;                                    \
       case 21:                                     \
-         comp0 = __rlwinm(comp0,21,0,10);          \
-         list4 = __rlwinm(list4,11,21,31);         \
-         comp0 = __rlwimi(comp0,comp1,21,11,31);   \
-         list4 = __rlwimi(list4,list3,11,0,20);    \
-         comp1 = __rlwinm(comp1,21,0,10);          \
-         list3 = __rlwinm(list3,11,21,31);         \
-         comp1 = __rlwimi(comp1,comp2,21,11,31);   \
-         list3 = __rlwimi(list3,list2,11,0,20);    \
-         comp2 = __rlwinm(comp2,21,0,10);          \
-         list2 = __rlwinm(list2,11,21,31);         \
-         comp2 = __rlwimi(comp2,comp3,21,11,31);   \
-         list2 = __rlwimi(list2,list1,11,0,20);    \
-         comp3 = __rlwinm(comp3,21,0,10);          \
-         list1 = __rlwinm(list1,11,21,31);         \
-         comp3 = __rlwimi(comp3,comp4,21,11,31);   \
-         list1 = __rlwimi(list1,list0,11,0,20);    \
-         comp4 = __rlwinm(comp4,21,0,10);          \
-         list0 = __rlwinm(list0,11,21,31);         \
-         list0 = __rlwimi(list0,newbit,11,0,20);   \
+         COMP_LEFT_LIST_RIGHT_BASIC(21)            \
          break;                                    \
       case 22:                                     \
-         comp0 = __rlwinm(comp0,22,0,9);           \
-         list4 = __rlwinm(list4,10,22,31);         \
-         comp0 = __rlwimi(comp0,comp1,22,10,31);   \
-         list4 = __rlwimi(list4,list3,10,0,21);    \
-         comp1 = __rlwinm(comp1,22,0,9);           \
-         list3 = __rlwinm(list3,10,22,31);         \
-         comp1 = __rlwimi(comp1,comp2,22,10,31);   \
-         list3 = __rlwimi(list3,list2,10,0,21);    \
-         comp2 = __rlwinm(comp2,22,0,9);           \
-         list2 = __rlwinm(list2,10,22,31);         \
-         comp2 = __rlwimi(comp2,comp3,22,10,31);   \
-         list2 = __rlwimi(list2,list1,10,0,21);    \
-         comp3 = __rlwinm(comp3,22,0,9);           \
-         list1 = __rlwinm(list1,10,22,31);         \
-         comp3 = __rlwimi(comp3,comp4,22,10,31);   \
-         list1 = __rlwimi(list1,list0,10,0,21);    \
-         comp4 = __rlwinm(comp4,22,0,9);           \
-         list0 = __rlwinm(list0,10,22,31);         \
-         list0 = __rlwimi(list0,newbit,10,0,21);   \
+         COMP_LEFT_LIST_RIGHT_BASIC(22)            \
          break;                                    \
       case 23:                                     \
-         comp0 = __rlwinm(comp0,23,0,8);           \
-         list4 = __rlwinm(list4,9,23,31);          \
-         comp0 = __rlwimi(comp0,comp1,23,9,31);    \
-         list4 = __rlwimi(list4,list3,9,0,22);     \
-         comp1 = __rlwinm(comp1,23,0,8);           \
-         list3 = __rlwinm(list3,9,23,31);          \
-         comp1 = __rlwimi(comp1,comp2,23,9,31);    \
-         list3 = __rlwimi(list3,list2,9,0,22);     \
-         comp2 = __rlwinm(comp2,23,0,8);           \
-         list2 = __rlwinm(list2,9,23,31);          \
-         comp2 = __rlwimi(comp2,comp3,23,9,31);    \
-         list2 = __rlwimi(list2,list1,9,0,22);     \
-         comp3 = __rlwinm(comp3,23,0,8);           \
-         list1 = __rlwinm(list1,9,23,31);          \
-         comp3 = __rlwimi(comp3,comp4,23,9,31);    \
-         list1 = __rlwimi(list1,list0,9,0,22);     \
-         comp4 = __rlwinm(comp4,23,0,8);           \
-         list0 = __rlwinm(list0,9,23,31);          \
-         list0 = __rlwimi(list0,newbit,9,0,22);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(23)            \
          break;                                    \
       case 24:                                     \
-         comp0 = __rlwinm(comp0,24,0,7);           \
-         list4 = __rlwinm(list4,8,24,31);          \
-         comp0 = __rlwimi(comp0,comp1,24,8,31);    \
-         list4 = __rlwimi(list4,list3,8,0,23);     \
-         comp1 = __rlwinm(comp1,24,0,7);           \
-         list3 = __rlwinm(list3,8,24,31);          \
-         comp1 = __rlwimi(comp1,comp2,24,8,31);    \
-         list3 = __rlwimi(list3,list2,8,0,23);     \
-         comp2 = __rlwinm(comp2,24,0,7);           \
-         list2 = __rlwinm(list2,8,24,31);          \
-         comp2 = __rlwimi(comp2,comp3,24,8,31);    \
-         list2 = __rlwimi(list2,list1,8,0,23);     \
-         comp3 = __rlwinm(comp3,24,0,7);           \
-         list1 = __rlwinm(list1,8,24,31);          \
-         comp3 = __rlwimi(comp3,comp4,24,8,31);    \
-         list1 = __rlwimi(list1,list0,8,0,23);     \
-         comp4 = __rlwinm(comp4,24,0,7);           \
-         list0 = __rlwinm(list0,8,24,31);          \
-         list0 = __rlwimi(list0,newbit,8,0,23);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(24)            \
          break;                                    \
       case 25:                                     \
-         comp0 = __rlwinm(comp0,25,0,6);           \
-         list4 = __rlwinm(list4,7,25,31);          \
-         comp0 = __rlwimi(comp0,comp1,25,7,31);    \
-         list4 = __rlwimi(list4,list3,7,0,24);     \
-         comp1 = __rlwinm(comp1,25,0,6);           \
-         list3 = __rlwinm(list3,7,25,31);          \
-         comp1 = __rlwimi(comp1,comp2,25,7,31);    \
-         list3 = __rlwimi(list3,list2,7,0,24);     \
-         comp2 = __rlwinm(comp2,25,0,6);           \
-         list2 = __rlwinm(list2,7,25,31);          \
-         comp2 = __rlwimi(comp2,comp3,25,7,31);    \
-         list2 = __rlwimi(list2,list1,7,0,24);     \
-         comp3 = __rlwinm(comp3,25,0,6);           \
-         list1 = __rlwinm(list1,7,25,31);          \
-         comp3 = __rlwimi(comp3,comp4,25,7,31);    \
-         list1 = __rlwimi(list1,list0,7,0,24);     \
-         comp4 = __rlwinm(comp4,25,0,6);           \
-         list0 = __rlwinm(list0,7,25,31);          \
-         list0 = __rlwimi(list0,newbit,7,0,24);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(25)            \
          break;                                    \
       case 26:                                     \
-         comp0 = __rlwinm(comp0,26,0,5);           \
-         list4 = __rlwinm(list4,6,26,31);          \
-         comp0 = __rlwimi(comp0,comp1,26,6,31);    \
-         list4 = __rlwimi(list4,list3,6,0,25);     \
-         comp1 = __rlwinm(comp1,26,0,5);           \
-         list3 = __rlwinm(list3,6,26,31);          \
-         comp1 = __rlwimi(comp1,comp2,26,6,31);    \
-         list3 = __rlwimi(list3,list2,6,0,25);     \
-         comp2 = __rlwinm(comp2,26,0,5);           \
-         list2 = __rlwinm(list2,6,26,31);          \
-         comp2 = __rlwimi(comp2,comp3,26,6,31);    \
-         list2 = __rlwimi(list2,list1,6,0,25);     \
-         comp3 = __rlwinm(comp3,26,0,5);           \
-         list1 = __rlwinm(list1,6,26,31);          \
-         comp3 = __rlwimi(comp3,comp4,26,6,31);    \
-         list1 = __rlwimi(list1,list0,6,0,25);     \
-         comp4 = __rlwinm(comp4,26,0,5);           \
-         list0 = __rlwinm(list0,6,26,31);          \
-         list0 = __rlwimi(list0,newbit,6,0,25);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(26)            \
          break;                                    \
       case 27:                                     \
-         comp0 = __rlwinm(comp0,27,0,4);           \
-         list4 = __rlwinm(list4,5,27,31);          \
-         comp0 = __rlwimi(comp0,comp1,27,5,31);    \
-         list4 = __rlwimi(list4,list3,5,0,26);     \
-         comp1 = __rlwinm(comp1,27,0,4);           \
-         list3 = __rlwinm(list3,5,27,31);          \
-         comp1 = __rlwimi(comp1,comp2,27,5,31);    \
-         list3 = __rlwimi(list3,list2,5,0,26);     \
-         comp2 = __rlwinm(comp2,27,0,4);           \
-         list2 = __rlwinm(list2,5,27,31);          \
-         comp2 = __rlwimi(comp2,comp3,27,5,31);    \
-         list2 = __rlwimi(list2,list1,5,0,26);     \
-         comp3 = __rlwinm(comp3,27,0,4);           \
-         list1 = __rlwinm(list1,5,27,31);          \
-         comp3 = __rlwimi(comp3,comp4,27,5,31);    \
-         list1 = __rlwimi(list1,list0,5,0,26);     \
-         comp4 = __rlwinm(comp4,27,0,4);           \
-         list0 = __rlwinm(list0,5,27,31);          \
-         list0 = __rlwimi(list0,newbit,5,0,26);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(27)            \
          break;                                    \
       case 28:                                     \
-         comp0 = __rlwinm(comp0,28,0,3);           \
-         list4 = __rlwinm(list4,4,28,31);          \
-         comp0 = __rlwimi(comp0,comp1,28,4,31);    \
-         list4 = __rlwimi(list4,list3,4,0,27);     \
-         comp1 = __rlwinm(comp1,28,0,3);           \
-         list3 = __rlwinm(list3,4,28,31);          \
-         comp1 = __rlwimi(comp1,comp2,28,4,31);    \
-         list3 = __rlwimi(list3,list2,4,0,27);     \
-         comp2 = __rlwinm(comp2,28,0,3);           \
-         list2 = __rlwinm(list2,4,28,31);          \
-         comp2 = __rlwimi(comp2,comp3,28,4,31);    \
-         list2 = __rlwimi(list2,list1,4,0,27);     \
-         comp3 = __rlwinm(comp3,28,0,3);           \
-         list1 = __rlwinm(list1,4,28,31);          \
-         comp3 = __rlwimi(comp3,comp4,28,4,31);    \
-         list1 = __rlwimi(list1,list0,4,0,27);     \
-         comp4 = __rlwinm(comp4,28,0,3);           \
-         list0 = __rlwinm(list0,4,28,31);          \
-         list0 = __rlwimi(list0,newbit,4,0,27);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(28)            \
          break;                                    \
       case 29:                                     \
-         comp0 = __rlwinm(comp0,29,0,2);           \
-         list4 = __rlwinm(list4,3,29,31);          \
-         comp0 = __rlwimi(comp0,comp1,29,3,31);    \
-         list4 = __rlwimi(list4,list3,3,0,28);     \
-         comp1 = __rlwinm(comp1,29,0,2);           \
-         list3 = __rlwinm(list3,3,29,31);          \
-         comp1 = __rlwimi(comp1,comp2,29,3,31);    \
-         list3 = __rlwimi(list3,list2,3,0,28);     \
-         comp2 = __rlwinm(comp2,29,0,2);           \
-         list2 = __rlwinm(list2,3,29,31);          \
-         comp2 = __rlwimi(comp2,comp3,29,3,31);    \
-         list2 = __rlwimi(list2,list1,3,0,28);     \
-         comp3 = __rlwinm(comp3,29,0,2);           \
-         list1 = __rlwinm(list1,3,29,31);          \
-         comp3 = __rlwimi(comp3,comp4,29,3,31);    \
-         list1 = __rlwimi(list1,list0,3,0,28);     \
-         comp4 = __rlwinm(comp4,29,0,2);           \
-         list0 = __rlwinm(list0,3,29,31);          \
-         list0 = __rlwimi(list0,newbit,3,0,28);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(29)            \
          break;                                    \
       case 30:                                     \
-         comp0 = __rlwinm(comp0,30,0,1);           \
-         list4 = __rlwinm(list4,2,30,31);          \
-         comp0 = __rlwimi(comp0,comp1,30,2,31);    \
-         list4 = __rlwimi(list4,list3,2,0,29);     \
-         comp1 = __rlwinm(comp1,30,0,1);           \
-         list3 = __rlwinm(list3,2,30,31);          \
-         comp1 = __rlwimi(comp1,comp2,30,2,31);    \
-         list3 = __rlwimi(list3,list2,2,0,29);     \
-         comp2 = __rlwinm(comp2,30,0,1);           \
-         list2 = __rlwinm(list2,2,30,31);          \
-         comp2 = __rlwimi(comp2,comp3,30,2,31);    \
-         list2 = __rlwimi(list2,list1,2,0,29);     \
-         comp3 = __rlwinm(comp3,30,0,1);           \
-         list1 = __rlwinm(list1,2,30,31);          \
-         comp3 = __rlwimi(comp3,comp4,30,2,31);    \
-         list1 = __rlwimi(list1,list0,2,0,29);     \
-         comp4 = __rlwinm(comp4,30,0,1);           \
-         list0 = __rlwinm(list0,2,30,31);          \
-         list0 = __rlwimi(list0,newbit,2,0,29);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(30)            \
          break;                                    \
       case 31:                                     \
-         comp0 = __rlwinm(comp0,31,0,0);           \
-         list4 = __rlwinm(list4,1,31,31);          \
-         comp0 = __rlwimi(comp0,comp1,31,1,31);    \
-         list4 = __rlwimi(list4,list3,1,0,30);     \
-         comp1 = __rlwinm(comp1,31,0,0);           \
-         list3 = __rlwinm(list3,1,31,31);          \
-         comp1 = __rlwimi(comp1,comp2,31,1,31);    \
-         list3 = __rlwimi(list3,list2,1,0,30);     \
-         comp2 = __rlwinm(comp2,31,0,0);           \
-         list2 = __rlwinm(list2,1,31,31);          \
-         comp2 = __rlwimi(comp2,comp3,31,1,31);    \
-         list2 = __rlwimi(list2,list1,1,0,30);     \
-         comp3 = __rlwinm(comp3,31,0,0);           \
-         list1 = __rlwinm(list1,1,31,31);          \
-         comp3 = __rlwimi(comp3,comp4,31,1,31);    \
-         list1 = __rlwimi(list1,list0,1,0,30);     \
-         comp4 = __rlwinm(comp4,31,0,0);           \
-         list0 = __rlwinm(list0,1,31,31);          \
-         list0 = __rlwimi(list0,newbit,1,0,30);    \
+         COMP_LEFT_LIST_RIGHT_BASIC(31)            \
          break;                                    \
       case 32:                                     \
          comp0 = comp1;                            \
@@ -1725,8 +1194,11 @@ extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
 }
 /* set the current mark and push a level to start a new mark */
 #define PUSH_LEVEL_UPDATE_STATE(lev) { \
-   lev->list[0] = list0; lev->list[1] = list1; lev->list[2] = list2; lev->list[3] = list3; lev->list[4] = list4;  \
-   dist0 |= list0; dist1 |= list1; dist2 |= list2; dist3 |= list3; dist4 |= list4; \
+   lev->list[0] = list0; dist0 |= list0; \
+   lev->list[1] = list1; dist1 |= list1; \
+   lev->list[2] = list2; dist2 |= list2; \
+   lev->list[3] = list3; dist3 |= list3; \
+   lev->list[4] = list4; dist4 |= list4; \
    lev->comp[0] = comp0; comp0 |= dist0; \
    lev->comp[1] = comp1; comp1 |= dist1; \
    lev->comp[2] = comp2; comp2 |= dist2; \
@@ -2169,7 +1641,7 @@ static int found_one(const struct State *oState)
    const int maximum2 = maximum >> 1;     // shouldn't this be rounded up?
    const int maxdepth = oState->maxdepth;
    const struct Level *levels = &oState->Levels[0];
-   char diffs[1024]; // first 64 entries will never be used!
+   char diffs[1024]; // first BITMAPS*32 entries will never be used!
 
    // always check for buffer overruns!
    if (maximum2 >= 1024)
@@ -2184,18 +1656,15 @@ static int found_one(const struct State *oState)
            int diff = levelICount - levels[j].cnt2;
 
          if (2*diff <= maximum) {      /* Principle 1 */
-
-            if (diff <= 64)
-               break;     /* 2 bitmaps always tracked */
+            if (diff <= (BITMAPS * 32))
+               break;     /* 'BITMAPS' bitmaps always tracked */
 
             if (diffs[diff] != 0)
                return CORE_S_CONTINUE;
 
             diffs[diff] = 1;
          }
-
       }   /* for (j = 0; j < i; j++) */
-
    }  /* for (i = 1; i < maxdepth; i++) */
 
   return CORE_S_SUCCESS;
@@ -2677,7 +2146,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen, int 
     for (i = 0; i < n; i++) {
 
      #if (OGROPT_ALTERNATE_CYCLE == 2)
-       U dist0 = VEC_TO_INT(distV0,3);
+       dist0 = VEC_TO_INT(distV0,3);
      #endif
 
      int maxMinusDepth = oStateMaxDepthM1 - oStateDepth;
@@ -2696,12 +2165,6 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen, int 
       }
 
       int s = workstub->stub.diffs[i];
-      
-      #pragma warning This does not work
-//      if (s <= (32*5))
-//        if (lev->dist[(s-1)>>5] & (0x80000000>>((s-1)&0x1f)))//#define BITOFLIST(x) 0x80000000>>((x-1)&0x1f)
-//          return CORE_E_STUB;
-      #pragma warning This does not work
       
       //dump(oStateDepth, lev, 0);
 
@@ -2786,112 +2249,140 @@ static void dump_ruler(struct State *oState, int depth)
 #if (OGROPT_ALTERNATE_CYCLE == 2) || (OGROPT_ALTERNATE_CYCLE == 1)
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 {
-   struct State *oState = (struct State *)state;
-   int depth = oState->depth+1;      /* the depth of recursion */
-   struct Level *lev = &oState->Levels[depth];
-   int nodes = 0;
-   int nodeslimit = *pnodes;
-    const int oStateMax = oState->max;
-    const int oStateMaxDepthM1 = oState->maxdepthm1;
-    const int oStateHalfDepth2 = oState->half_depth2;
-    const int oStateHalfDepth = oState->half_depth;
-    const int oStateHalfLength = oState->half_length;
-   struct Level *levHalfDepth = &oState->Levels[oStateHalfDepth];
-   struct Level *levMaxM1 = &oState->Levels[oStateMaxDepthM1];
-   int retval = CORE_S_CONTINUE;
+  struct State *oState = (struct State *)state;
+  int depth = oState->depth+1;      /* the depth of recursion */
+  struct Level *lev = &oState->Levels[depth];
+  int nodes = 0;
+  const int oStateMax = oState->max;
+  const int oStateMaxDepthM1 = oState->maxdepthm1;
+  const int oStateHalfDepth2 = oState->half_depth2;
+  const int oStateHalfDepth  = oState->half_depth;
+  struct Level *levHalfDepth = &oState->Levels[oStateHalfDepth];
+  struct Level *levMaxM1 = &oState->Levels[oStateMaxDepthM1];
+  int retval = CORE_S_CONTINUE;
 
-   SETUP_TOP_STATE(oState,lev);
+  SETUP_TOP_STATE(oState,lev);  // Buffers distV0
+  OGR_CYCLE_CACHE_ALIGN;
 
-   OGR_CYCLE_CACHE_ALIGN;
+  for (;;) {
+    U c0neg;
+    #if (OGROPT_ALTERNATE_CYCLE == 2)
+      dist0 = EXTRACT_INT(3);   // distV0[3]
+      WRITE_VEC(compV0);
+    #else
+      c0neg = ~comp0;
+    #endif
+    int firstbit;
+    limit = choose(dist0 >> ttmDISTBITS, oStateMaxDepthM1 - depth);
 
-   for (;;) {
-
-   //continue:
-      #if (OGROPT_ALTERNATE_CYCLE == 2)
-         U dist0 = VEC_TO_INT(distV0,3);
-      #endif
-
-      int maxMinusDepth = oStateMaxDepthM1 - depth;
-
-      if (with_time_constraints) { /* if (...) is optimized away if unused */
-         #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
-         if (nodes >= nodeslimit) {
+    if (with_time_constraints) { /* if (...) is optimized away if unused */
+      #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
+        if (nodes >= *pnodes) {
            break;
-         }  
-         #endif  
+        }  
+      #endif  
+    }
+
+    limit = oStateMax - limit;
+
+    if (depth <= oStateHalfDepth2) {
+      if (depth <= oStateHalfDepth) {
+        limit = oStateMax - OGR[oStateMaxDepthM1 - depth];
+        if (nodes >= *pnodes) {
+          break;
+        }
+        if (limit > oState->half_length)
+          limit = oState->half_length;
       }
-
-      if (depth <= oStateHalfDepth2) {
-         if (depth <= oStateHalfDepth) {
-         
-            if (nodes >= nodeslimit) {
-               break;
-            }
-            
-            limit = oStateMax - OGR[maxMinusDepth];
-            limit = (limit < oStateHalfLength) ? limit : oStateHalfLength;
-         } else {
-            limit = oStateMax - choose(dist0 >> ttmDISTBITS, maxMinusDepth);
-            int tempLimit = oStateMax - levHalfDepth->cnt2 - 1;
-            limit = (limit < tempLimit) ? limit : tempLimit;
-         }
-      } else {
-         limit = oStateMax - choose(dist0 >> ttmDISTBITS, maxMinusDepth);
+      else {
+        int temp  = oStateMax - levHalfDepth->cnt2 - 1;
+        if (limit > temp)
+          limit = temp;
       }
+    }
 
-      nodes++;
+    #if (OGROPT_ALTERNATE_CYCLE == 2)
+      c0neg = ~EXTRACT_INT(3);    // compV0[3]
+    #endif
 
-      /* Find the next available mark location for this level */
+    nodes++;
 
-   stay:
+    /* Find the next available mark location for this level */
+
+  stay:
+    __asm__ volatile ("cntlzw %0,%1" : "=r" (firstbit) : "r" (c0neg));
+    ++firstbit;
+
+    if (c0neg > 1) {
+      if ((cnt2 += firstbit) > limit)   goto up; /* no spaces left */
+      COMP_LEFT_LIST_RIGHT(lev, firstbit);
+    }
+    else { /* firstbit > 32 */
+      if ((cnt2 += 32) > limit)  goto up; /* no spaces left */
+      if (c0neg == 0) {
+        #if (OGROPT_ALTERNATE_CYCLE == 2)
+          WRITE_VEC(compV1);
+        #else
+          c0neg = ~comp1;
+        #endif
+        COMP_LEFT_LIST_RIGHT_32(lev)
+        #if (OGROPT_ALTERNATE_CYCLE == 2)
+          c0neg = ~EXTRACT_INT(0);    // compV1[0]
+        #endif
+        goto stay;
+      }
+      else {
+        COMP_LEFT_LIST_RIGHT_32(lev)
+      }
+    }
+
+    #if (OGROPT_ALTERNATE_CYCLE == 2)
+      WRITE_VEC(compV0);
+    #endif
+
+    /* New ruler? */
+    if (depth == oStateMaxDepthM1) {
+      levMaxM1->cnt2 = cnt2;       /* not placed yet into list arrays! */
+      retval = found_one(oState);
       #if (OGROPT_ALTERNATE_CYCLE == 2)
-         U comp0 = VEC_TO_INT(compV0,3);
+        c0neg = ~EXTRACT_INT(3);    // compV0[3]
+      #else
+        c0neg = ~comp0;
       #endif
-      if (comp0 < 0xfffffffe) {
-         int s = LOOKUP_FIRSTBLANK( comp0 );
-         if ((cnt2 += s) > limit)   goto up; /* no spaces left */
-         COMP_LEFT_LIST_RIGHT(lev, s);
-      } else { /* s>32 */
-         U comp = comp0;
-         if ((cnt2 += 32) > limit)  goto up; /* no spaces left */
-         COMP_LEFT_LIST_RIGHT_32(lev)
-         if (comp == 0xffffffff)    goto stay;
+      if (retval != CORE_S_CONTINUE) {
+        break;
       }
+      goto stay;
+    }
 
-      /* New ruler? */
-      if (depth == oStateMaxDepthM1) {
-         levMaxM1->cnt2 = cnt2;       /* not placed yet into list arrays! */
-         retval = found_one(oState);
-         if (retval != CORE_S_CONTINUE) {
-            break;
-         }
-         goto stay;
-      }
+    /* Go Deeper */
+    PUSH_LEVEL_UPDATE_STATE(lev); // Buffers distV0
+    lev++;
+    depth++;
+    continue;
 
-      /* Go Deeper */
-      PUSH_LEVEL_UPDATE_STATE(lev);
-      lev++;
-      depth++;
-      continue;
+  up:
+    lev--;
+    depth--;
+    POP_LEVEL(lev);               // Buffers compV0
 
-   up:
-      lev--;
-      depth--;
-      POP_LEVEL(lev);
-      if (depth <= oState->startdepth) {
-         retval = CORE_S_OK;
-         break;
-      }
-      goto stay; /* repeat this level till done */
-   }
+    #if (OGROPT_ALTERNATE_CYCLE == 2)
+      c0neg = ~EXTRACT_INT(3);    // compV0[3]
+    #else
+      c0neg = ~comp0;
+    #endif
 
-   SAVE_FINAL_STATE(oState,lev);
-   /* oState->Nodes += nodes; (unused, count is returned through *pnodes) */
-   oState->depth = depth-1;
+    if (depth <= oState->startdepth) {
+      retval = CORE_S_OK;
+      break;
+    }
+    goto stay; /* repeat this level till done */
+  }
 
-   *pnodes = nodes;
-
-   return retval;
+  SAVE_FINAL_STATE(oState,lev);
+  oState->depth = depth-1;
+  *pnodes = nodes;
+  return retval;
 }
 #else
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
@@ -3367,7 +2858,7 @@ static int ogr_create_pass2(void *input, int inputlen, void *state,
     for (i = 0; i < n + finalization_stub; i++) {
 
      #if (OGROPT_ALTERNATE_CYCLE == 2)
-       U dist0 = VEC_TO_INT(distV0,3);
+       dist0 = VEC_TO_INT(distV0,3);
      #endif
 
      int maxMinusDepth = oStateMaxDepthM1 - oStateDepth;
