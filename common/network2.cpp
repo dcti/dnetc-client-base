@@ -4,7 +4,7 @@
 //
 
 const char *network_cpp(void) {
-return "@(#)$Id: network2.cpp,v 1.1.2.6 1999/04/25 01:57:27 jlawson Exp $"; }
+return "@(#)$Id: network2.cpp,v 1.1.2.7 1999/04/26 01:45:15 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "dcticonn.h"         // DCTIConnServer class
@@ -236,7 +236,8 @@ int Network::EstablishConnection(void)
     while (connserver->IsConnected() &&
         !connserver->IsEstablished())
     {
-      connserver->EstablishConnection(true, true);
+      if (!connserver->EstablishConnection(true, true))
+        break;
     }
   }
   else
@@ -269,7 +270,8 @@ int Network::EstablishConnection(void)
       // attempt to establish to next state.
       bool readready = (FD_ISSET(sock, &readfds) != 0);
       bool writeready = (FD_ISSET(sock, &writefds) != 0);
-      connserver->EstablishConnection(readready, writeready);
+      if (!connserver->EstablishConnection(readready, writeready))
+        break;
     }
 
   }
