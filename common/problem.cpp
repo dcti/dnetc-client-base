@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.55  1998/12/15 03:08:46  dicamillo
+// Changed "whichcrunch" to "cputype" in PowerPC Run code.
+//
 // Revision 1.54  1998/12/14 12:48:59  cyp
 // This is the final revision of problem.cpp/problem.h before the class goes
 // to 'u64-clean'. Please check/declare all core prototypes.
@@ -148,7 +151,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.54 1998/12/14 12:48:59 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.55 1998/12/15 03:08:46 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -631,7 +634,7 @@ s32 Problem::Run( u32 /*unused*/ )
     kiter = rc5_unit_func( &rc5unitwork );
 #else    
 #if ((CLIENT_OS != OS_BEOS) || (CLIENT_OS != OS_AMIGAOS))
-    if (whichcrunch == 0)
+    if (cputype == 0)
       kiter = crunch_allitnil( &rc5unitwork, timeslice );
     else
 #endif
