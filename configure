@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.248 2001/04/16 21:08:43 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.249 2001/04/21 09:51:19 teichp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -253,6 +253,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
     if [ "X$3" = "Xultra" ]; then
       DESULTRA_SRCS_C="des/ultrasparc/des-slice-ultrasparc.cpp \
                        des/ultrasparc/simple.c \
