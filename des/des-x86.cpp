@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.13  1998/07/07 07:42:20  jlawson
+// added lint tags around cvs id to supress unused variable warning
+//
 // Revision 1.12  1998/06/23 21:59:08  remi
 // Use only two x86 DES cores (P5 & PPro) when not multithreaded.
 //
@@ -35,7 +38,10 @@
 
 // encapsulate the BrydDES library
 
-static char *id="@(#)$Id: des-x86.cpp,v 1.12 1998/06/23 21:59:08 remi Exp $";
+#if (!defined(lint) && defined(__showids__))
+static char *id="@(#)$Id: des-x86.cpp,v 1.13 1998/07/07 07:42:20 jlawson Exp $";
+#endif
+
 
 #include <stdio.h>
 #include <string.h>
