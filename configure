@@ -5,6 +5,13 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.70  1998/07/09 18:40:08  remi
+# Reverted most to the previous changes. If you want to compile x86 linux
+# clients using GCC instead of EGCS, please use the *-gcc targets, not the
+# *-egcs ones.
+# Removed -fno-inline-functions from EGCS options, -O2 does not inline functions,
+# -O3 and up does.
+#
 # Revision 1.69  1998/07/09 07:23:32  cramer
 # Added -fno-inline-functions (on by default) to OPTS_GCC and OPTS_EGCS.
 # This is required to get the MMX des assembly code to build.  (multiple
@@ -264,7 +271,7 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
 OPTS_EGCS='-O2 -fno-exceptions -fomit-frame-pointer -Wall -Icommon -Ides \
-    -Irc5 -Iplatforms -fno-inline-functions'
+    -Irc5 -Iplatforms'
 
 #
 # Common platform compiler options
@@ -692,8 +699,8 @@ case "$1" in
 
 ###### Intel X86 Linux platforms
     *x86-linux-egcs)    # uses EGCS options
-	TARGET_AS="egcs -c"
-	TARGET_CC="egcs"
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
@@ -701,28 +708,7 @@ case "$1" in
 	TARGET_LIBS="-lncurses"
 	;;
 
-    *x86-linux-egcs-debug)    # debug version of x86-linux-egcs
-	TARGET_AS="egcs -c"
-	TARGET_CC="egcs -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2 -D__showids__"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-	TARGET_STRIP="touch"
-	TARGET_LIBS="-lncurses"
-	;;
-
-    *x86-linux-desultra-egcs-debug)    # to debug UltraSparc DES code integration
-	TARGET_AS="egcs -c"
-	TARGET_CC="egcs -g"
-	# -Wno-unused to avoid tons of warnings on some ultra files
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ -DPIPELINE_COUNT=2 $OPTS_DES_ULTRA_C"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_LIBS="-lncurses"
-	TARGET_STRIP="touch"
-	;;
-
-    *x86-linux-old)   # uses standard GCC options plus '-pipe'
+    *x86-linux-gcc)   # uses standard GCC options plus '-pipe'
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
@@ -731,7 +717,7 @@ case "$1" in
 	TARGET_LIBS="-lncurses"
 	;;
 
-    *x86-linux-old-nocurses) # uses standard GCC options plus '-pipe'
+    *x86-linux-gcc-nocurses) # uses standard GCC options plus '-pipe'
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DNOCURSES -DNOTERMIOS"
 	TARGET_LDFLAGS="-static"
@@ -739,7 +725,38 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	;;
 
-    *x86-linux-aout)
+    *x86-linux-egcs-debug)    # debug version of x86-linux-egcs
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2 -D__showids__"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+	TARGET_STRIP="touch"
+	TARGET_LIBS="-lncurses"
+	;;
+
+    *x86-linux-gcc-debug)    # debug version of x86-linux-gcc
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc -g"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2 -D__showids__"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+	TARGET_STRIP="touch"
+	TARGET_LIBS="-lncurses"
+	;;
+
+    *x86-linux-desultra-egcs-debug)    # to debug UltraSparc DES code integration
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc -g"
+	# -Wno-unused to avoid tons of warnings on some ultra files
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ -DPIPELINE_COUNT=2 $OPTS_DES_ULTRA_C"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
+	TARGET_ADDASMS="platforms/x86ident.S"
+	TARGET_LIBS="-lncurses"
+	TARGET_STRIP="touch"
+	;;
+
+    *x86-linux-aout-egcs)
 	TARGET_AS="i486-pc-linux-gnuaout-gcc -c"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
@@ -750,8 +767,8 @@ case "$1" in
 	;;
 
     *x86-linux-mt-egcs)
-	TARGET_AS="egcs -c"
-	TARGET_CC="egcs"
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
