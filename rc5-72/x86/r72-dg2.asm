@@ -3,7 +3,13 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.5 2002/10/21 18:21:54 acidblood Exp $
+; $Id: r72-dg2.asm,v 1.6 2002/10/22 02:49:03 andreasb Exp $
+
+%ifdef __OMF__ ; Borland and Watcom compilers/linkers
+[SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
+%else
+[SECTION .text]
+%endif
 
 [GLOBAL rc5_72_unit_func_dg_2_]
 [GLOBAL _rc5_72_unit_func_dg_2]
