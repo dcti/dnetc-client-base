@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.8 2003/01/22 01:01:27 mfeiri Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.9 2003/01/29 01:56:17 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -278,6 +278,21 @@ static int ClientMain( int argc, char *argv[] )
   int restart = 0;
 
   TRACE_OUT((+1,"Client.Main()\n"));
+
+  {
+    // sanity check for forgetful people :)
+    char buf[32];
+    const char *ver = CliGetFullVersionDescriptor();
+    while (*ver && !isdigit(*ver))
+      ++ver;
+    sprintf(buf, "%d.%d%02d-%d-", CLIENT_MAJOR_VER, CLIENT_CONTEST,
+                                 CLIENT_BUILD, CLIENT_BUILD_FRAC);
+    if (strncmp(buf, ver, strlen(buf)) != 0)
+    {
+      ConOutErr( "Version mismatch." );
+      return -1;
+    }
+  }
 
   if (InitializeTimers()!=0)
   {
