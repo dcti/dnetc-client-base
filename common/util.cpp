@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.5 1999/10/17 22:53:45 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.6 1999/11/09 18:33:45 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -493,36 +493,22 @@ const char *utilSetAppName(const char *newname)
     if (len && initialized < 0)
       initialized = 1;
   }
-  #if (CLIENT_OS == OS_NETWARE)
-  if (initialized < 0)
+  if (initialized <= 0) /* obfusciation 101 for argv[0] stuffing */
   {
-    initialized = 0; /* protect against recursion */
-    strncpy( appname, nwCliGetNLMBaseName(), sizeof(appname));
-    appname[sizeof(appname)-1] = '\0';
-    for (len = 0; appname[len] && (len < (sizeof(appname)-1));len++)
-      appname[len] = (char)tolower(appname[len]);
-    if (len)
-      initialized = 1;
-  }  
-  #endif
-  if (initialized > 0)
-    return (const char *)&appname[0];
-  /* --- */
-  #if defined(__unix__) /* obfusciation 101 for argv[0] stuffing */
-  if (initialized <= 0) /* dummy if to suppress compiler warning */
-  {
-          #if (CLIENT_CONTEST < 80)
+    #if (CLIENT_CONTEST < 80)
     appname[0] = 'r'; appname[1] = 'c'; appname[2] = '5'; 
     appname[3] = 'd'; appname[4] = 'e'; appname[5] = 's';
     appname[6] = '\0';
-                #else
+    #else
     appname[0] = 'd'; appname[1] = 'n'; appname[2] = 'e'; 
     appname[3] = 't'; appname[4] = 'c'; appname[5] = '\0';
-                #endif
+    #endif
     initialized = 1;
-    return (const char *)&appname[0];
   }  
-  #endif
+  if (initialized > 0) /* always true */
+    return (const char *)&appname[0];
+
+  /* put the asciiz name here so the user has something to patch */
   #if (CLIENT_CONTEST < 80)
   return "rc5des";
   #else
