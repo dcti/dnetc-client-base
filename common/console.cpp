@@ -11,6 +11,9 @@
    to functions in modules in your own platform/ area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.5  1998/10/07 12:56:46  silby
+// Reordered Deinitconsole so console functions would still be available during w32deinitconsole.
+//
 // Revision 1.4  1998/10/07 12:25:04  silby
 // Figured out that MSVC doesn't understand continue as it was used; changed ConInKey's loop so that it doesn't rely on continue.  (Functionality unchanged.)
 //
@@ -26,7 +29,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.4 1998/10/07 12:25:04 silby Exp $"; }
+return "@(#)$Id: console.cpp,v 1.5 1998/10/07 12:56:46 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -56,14 +59,15 @@ static struct
 
 int DeinitializeConsole(void)
 {
-  constatics.initlevel--;
 
-  if (constatics.initlevel == 0)
+  if (constatics.initlevel == 1)
     {
     #if (CLIENT_OS == OS_WIN32)
       w32DeinitializeConsole();
     #endif
     } /* constatics.initlevel == 0 */
+
+  constatics.initlevel--;
 
   return 0;
 }  
@@ -231,7 +235,6 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
           }
         }
       #endif
-      
       if (ch || timeout_millisecs == 0 || CheckExitRequestTriggerNoIO())
         break;
       usleep(50*1000); /* with a 50ms delay, no visible processor activity */
