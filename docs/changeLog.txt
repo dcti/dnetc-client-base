@@ -1,5 +1,8 @@
 Dual mode (RC5DES) clients
 --------------------------
+v2.7100.416 98.12.06 Fixed problems with .ini name not following
+                     .exe's name (again).
+v2.7100.416 90.12.06 Even FASTER DES MMX cores added to x86 clients!
 v2.7100.415 98.10.06 Automatic processor count on Solaris and Linux
                      have been added.
 v2.7100.415 98.10.06 Bugs with exitfile handling present in 414 have

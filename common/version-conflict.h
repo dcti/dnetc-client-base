@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version-conflict.h,v $
+// Revision 1.9  1998/07/12 09:09:24  silby
+// updates to 416
+//
 // Revision 1.8  1998/07/12 08:05:12  silby
 // Updated to 416, updated changelog
 //
@@ -45,8 +48,8 @@
 #define CLIENT_BUILD        00
 #define CLIENT_BUILD_FRAC   416
 
-#define CLIENT_VERSIONSTRING    "v2.7100.415"
-#define CLIENT_VERSIONSTRING2   "2.7100.415"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7100.416"
+#define CLIENT_VERSIONSTRING2   "2.7100.416"        // no leading "v"
 
 #endif // _VERSION_H
 
