@@ -1,6 +1,6 @@
 
  distributed.net client for Win32 (Win9x/WinNT/Win2K/WinXP/Win32s)
- document revision $Id: readme.w32,v 1.8 2002/09/02 00:35:45 andreasb Exp $
+ document revision $Id: readme.w32,v 1.8.4.1 2002/12/10 18:39:19 jlawson Exp $
 
  Welcome to the distributed.net client.
 
@@ -306,7 +306,7 @@
 
     Q: I have troble minimizing the client. It sits on the taskbar for 
        several seconds before finally moving to the tray.
-    A: On 16 Jan 2001, at 12:11, Brian Carpenter <brian@nihilism.net> wrote:
+    A: On 16 Jan 2001, at 12:11, Brian Carpenter <brian@geeknik.net> wrote:
        > I think I found the problem.   Norton Systemworks 2001 by default,
        > runs a tray icon manager for their software(Norton System Doctor,
        > Norton Anti-Virus, etc etc).  I turned off the tray icon manager and
