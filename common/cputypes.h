@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.41  1999/01/06 06:04:02  cramer
+// cleaned up some of the solaris/sunos updates
+//
 // Revision 1.40  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -508,9 +511,6 @@ struct s128 { s64 hi, lo; };
   #define OS_SUPPORTS_SMP
   //egcs always includes pthreads.h, so use something other than PTHREAD_H 
   #define _POSIX_THREADS_SUPPORTED
-# if (CLIENT_OS == OS_SOLARIS)
-#  include <unistd.h> // CRAMER
-# endif
 #else 
   typedef int THREADID;
 #endif

@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.44  1999/01/06 06:04:02  cramer
+// cleaned up some of the solaris/sunos updates
+//
 // Revision 1.43  1999/01/02 07:13:33  dicamillo
 // Remove sched.h for BeOS.
 //
@@ -290,6 +293,7 @@ extern "C" {
   #include "platforms/netware/netware.h" //for stuff in netware.cpp
 #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
   #include <fcntl.h>
+  #include <unistd.h>
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int);
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS==OS_BSDI)
