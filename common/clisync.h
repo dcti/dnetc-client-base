@@ -9,7 +9,7 @@
  * and are therefore intended to behave more like spinlocks than mutexes.
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.6 2001/02/07 18:34:05 oliver Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.7 2001/02/09 08:47:16 mfeiri Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -31,6 +31,48 @@
   #define mutex_lock pthread_mutex_lock
   #define mutex_unlock pthread_mutex_unlock
   #define mutex_trylock pthread_mutex_trylock
+
+#elif (CLIENT_OS == OS_MACOS)
+
+  #include <Multiprocessing.h>
+//  Without "if (MPLibraryIsLoaded())" this could be really nice
+//  #define mutex_t MPCriticalRegionID
+//  #define DEFAULTMUTEX 0
+//  #define mutex_lock(x) MPEnterCriticalRegion(*x,kDurationImmediate)
+//  #define mutex_unlock(x) MPExitCriticalRegion(*x)
+//  static inline int mutex_trylock(mutex_t *m)
+//  { return (MPEnterCriticalRegion(*m,kDurationImmediate)?(0):(+1)); }
+
+  typedef struct {MPCriticalRegionID MPregion; long spl;} mutex_t;
+  #define DEFAULTMUTEX {0,0}
+  
+  static inline void mutex_lock(mutex_t *m)
+  {
+    if (MPLibraryIsLoaded())
+      MPEnterCriticalRegion(m->MPregion,kDurationImmediate);
+    else
+      m->spl = 1;
+  }
+  
+  static inline void mutex_unlock(mutex_t *m)
+  {
+    if (MPLibraryIsLoaded())
+      MPExitCriticalRegion(m->MPregion);
+    else
+      m->spl = 0;
+  }
+  
+  /* Please verify this is working as expected before using it
+  static inline int mutex_trylock(mutex_t *m)
+  {
+    if (MPLibraryIsLoaded())
+    {
+      return (MPEnterCriticalRegion(m->MPregion,kDurationImmediate)?(0):(+1));
+    }
+    else
+    { m->spl = 1; return +1; }
+  }
+   */
 
 #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
                                
