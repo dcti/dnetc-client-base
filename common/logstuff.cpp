@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.34 1999/04/20 02:03:28 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.35 1999/04/20 05:03:32 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -616,7 +616,7 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
   unsigned int len;
   int climit = 0;
   char scratch[20];
-  long l = 0;
+  unsigned long l = 0;
 
   *type = LOGFILETYPE_NONE;
   *limit = 0;
