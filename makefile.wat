@@ -6,7 +6,7 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.29 1999/12/08 02:47:02 cyp Exp $
+## $Id: makefile.wat,v 1.30 2000/06/02 06:29:38 jlawson Exp $
 
 BASENAME = dnetc
 
@@ -17,7 +17,7 @@ BASENAME = dnetc
 %COREOBJS = output\rg486.obj     output\rc5-rgk5.obj  output\rg6x86.obj   &
             output\rc5-rgk6.obj  output\brfp5.obj     output\rc5-rgp6.obj
 %LINKOBJS = output\problem.obj  &
-            output\confrwv.obj   output\autobuff.obj  output\buffwork.obj &
+            output\confrwv.obj   output\autobuff.obj  output\buffbase.obj &
             output\mail.obj      output\client.obj    output\disphelp.obj &
             output\iniread.obj   output\network.obj   output\scram.obj    &
             output\clitime.obj   output\clicdata.obj  output\clirate.obj  &
@@ -30,7 +30,7 @@ BASENAME = dnetc
             output\clirun.obj    output\setprio.obj   output\console.obj  &
             output\modereq.obj   output\confmenu.obj  output\confopt.obj  &
             output\util.obj      output\base64.obj    output\random.obj   &
-            output\netres.obj
+            output\netres.obj    output\buffpriv.obj
             # this list can be added to in the platform specific section
             # 49 std OBJ's (+3 desmmx, +1 rc5mmx, +2 mt, +x plat specific)
 
@@ -40,9 +40,11 @@ BASENAME = dnetc
 #---
 %cscstd_LINKOBJS = output\csc-1k-i.obj output\csc-1k.obj &
                    output\csc-6b-i.obj output\csc-6b.obj &
-                   output\convcsc.obj output\csc-common.obj
-%cscstd_DEFALL   = -DHAVE_CSC_CORES -Icsc
-%cscstd_SYMALIAS =
+                   output\convcsc.obj output\csc-common.obj &
+                   output\csc-mmx.obj
+%cscstd_DEFALL   = -DHAVE_CSC_CORES -Icsc -DMMX_CSC
+%cscstd_SYMALIAS = 
+#                  csc_unit_func_1k=_csc_unit_func_1k
 #                  csc_unit_func_6b_i=_csc_unit_func_6b_i &
 #                  csc_unit_func_1k=_csc_unit_func_1k &
 #                  csc_unit_func_6b=_csc_unit_func_6b
@@ -92,7 +94,7 @@ BASENAME = dnetc
 %LINK=wlink #\develop\watcom\binnt\wlink.exe
 
 %NASMEXE  = nasm           #point this to nasm (don't call the envvar 'NASM'!)
-%NASMFLAGS= -f obj -D__OMF__ -DOS2 -s
+%NASMFLAGS= -f win32 -s #-f obj -D__OMF__ -DOS2 -s
 %TASMEXE  =                #point this to tasm in your section if you have it
 %TFLAGS   = /ml /m9 /q /t  #if TASMEXE.==. then wasm will be executed
 %STACKSIZE= 32K            #may be redefined in the platform specific section
@@ -246,7 +248,8 @@ output\rc5mmx-k6-2.obj : rc5\x86\nasm\rc5mmx-k6-2.asm $(%dependall)
 # ----------------------------------------------------------------
 
 output\x86ident.obj : platforms\x86ident.asm $(%dependall)
-  *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+  #*$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\confrwv.obj : common\confrwv.cpp $(%dependall) .AUTODEPEND
@@ -393,7 +396,11 @@ output\mail.obj : common\mail.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\buffwork.obj : common\buffwork.cpp $(%dependall) .AUTODEPEND
+output\buffbase.obj : common\buffbase.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: 
+  @set isused=1
+
+output\buffpriv.obj : common\buffpriv.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: 
   @set isused=1
 
@@ -512,6 +519,13 @@ output\convcsc.obj : csc\x86\convcsc.asm $(%dependall) .AUTODEPEND
   @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
+output\csc-mmx.obj : csc\x86\mmx\csc-mmx.asm $(%dependall) .AUTODEPEND
+  @if exist $[*.obj copy $[*.obj $^@ >nul: 
+  @if exist $[*.obj wtouch $^@
+  @if exist $[*.obj @echo Updated $^@ from $[*.obj
+  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[:..\ $[@
+  @set isused=1
+
 output\csc-common.obj : csc\x86\csc-comm.asm $(%dependall) .AUTODEPEND
   @if exist $[*.obj copy $[*.obj $^@ >nul: 
   @if exist $[*.obj wtouch $^@
@@ -523,7 +537,7 @@ output\csc-1k.obj : csc\x86\csc-1k.asm $(%dependall) .AUTODEPEND
   @if exist $[*.obj copy $[*.obj $^@ >nul: 
   @if exist $[*.obj wtouch $^@
   @if exist $[*.obj @echo Updated $^@ from $[*.obj
-  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -l $[*.lst -i $[: $[@ 
   @set isused=1
 
 output\csc-1k-i.obj : csc\x86\csc-1k-i.asm $(%dependall) .AUTODEPEND
@@ -623,6 +637,18 @@ output\w32x86.obj : platforms\win32cli\w32x86.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
+output\w32pid.obj : platforms\win32cli\w32pid.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\w32exe.obj : platforms\win32cli\w32exe.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\w32ini.obj : platforms\win32cli\w32ini.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
 output\w32util.obj : platforms\win32cli\w32util.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
@@ -638,7 +664,8 @@ output\w32cuis.obj : platforms\win32cli\w32cuis.c $(%LINKOBJS) .AUTODEPEND
    @if not $(%EXECOMPRESSOR).==. @$(%EXECOMPRESSOR) $(BASENAME).com
 
 output\w32ssb.obj : platforms\win32cli\w32ssb.cpp platforms\win32cli\w32cons.rc &
-                    output\w32util.obj output\w32ss.obj
+                    output\w32util.obj output\w32ss.obj output\w32ini.obj &
+                    output\w32exe.obj
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) platforms\win32cli\w32ssb.cpp $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
   @if $(%OSNAME).==win16. @wlink $(%LFLAGS) name $(BASENAME).scr &
@@ -670,7 +697,7 @@ output\os2inst.obj : platforms\os2cli\os2inst.cpp $(%dependall) .AUTODEPEND
 #-----------------------------------------------------------------------
 
 platform: .symbolic
-  @set CFLAGS    = $(%CFLAGS) /zq -DBETA      ## compile quietly
+  @set CFLAGS    = $(%CFLAGS) /zq #-DBETA      ## compile quietly
   @set AFLAGS    = $(%AFLAGS) /q              ## assemble quietly
   @set CFLAGS    = $(%CFLAGS) $(%DEFALL)      ## tack on global defines
   @set isused=0
@@ -750,13 +777,13 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @set DOCFILES  = docs\readme.dos docs\$(BASENAME).txt docs\readme.txt
      @set ZIPFILE   = $(BASENAME)-dos-x86-cli
      @set BINNAME   = $(BASENAME).com
-     @%make declare_for_des
-     @%make declare_for_desmt
-     @%make declare_for_desmmx
+##   @%make declare_for_des
+##   @%make declare_for_desmt
+##   @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
-     @%make declare_for_csc
+#    @%make declare_for_ogr
+#    @%make declare_for_csc
      @%make platform
      #-------------------------
      @\develop\pmodew\pmwlite.exe /C4 /S\develop\pmodew\pmodew.exe $(%BINNAME)
@@ -786,13 +813,13 @@ os2: .symbolic                                       # OS/2
      @set LINKOBJS  = output\os2inst.obj  output\lurk.obj
      @set OBJDIROP  = /fo=output\
      @set ERRDIROP  =                      # no /fr= option for Watcom 10.0
-     @%make declare_for_des
-     @%make declare_for_desmt
-     @%make declare_for_desmmx
+##   @%make declare_for_des
+##   @%make declare_for_desmt
+##   @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
-     @%make declare_for_csc
+#    @%make declare_for_ogr
+#    @%make declare_for_csc
      @%make platform
 
 w16: .symbolic                                       # Windows/16
@@ -812,7 +839,8 @@ w16: .symbolic                                       # Windows/16
      @set OPT_SPEED = /oaxt #/oneatx /oh /oi+ 
      @set LINKOBJS  = output\w32pre.obj output\w32ss.obj output\w32cons.obj &
                       output\w32sock.obj output\w32svc.obj output\w32x86.obj &
-                      output\w32util.obj $(%LINKOBJS)
+                      output\w32util.obj output\w32exe.obj output\w32ini.obj &
+                      output\w32pid.obj $(%LINKOBJS)
      @set PRELINKDEPS = output\w32ssb.obj
      @set POSTLINKTGTS = 
      @set LIBFILES  =
@@ -824,13 +852,13 @@ w16: .symbolic                                       # Windows/16
      @set ZIPFILE   = $(BASENAME)-win16-x86-cli
      @set BINNAME   = $(BASENAME).exe
      @if exist $(BASENAME).rex @del $(BASENAME).rex
-     #@%make declare_for_des
-     ##@%make declare_for_desmt
-     ##@%make declare_for_desmmx
+##   @%make declare_for_des
+##   @%make declare_for_desmt
+##   #@%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
-     @%make declare_for_csc
+#    @%make declare_for_ogr
+#    @%make declare_for_csc
      @%make platform
      #---------------------------
      @if exist $(BASENAME).rex @del $(BASENAME).rex
@@ -856,7 +884,8 @@ w32: .symbolic                               # win32
      @set OPT_SPEED = /oneatx /oh /oi+ /ei #/oneatx /oh /oi+ 
      @set LINKOBJS  = output\w32pre.obj output\w32ss.obj output\w32svc.obj &
                       output\w32cons.obj output\w32sock.obj output\w32ras.obj &
-                      output\w32util.obj output\lurk.obj $(%LINKOBJS)
+                      output\w32util.obj output\w32exe.obj output\w32ini.obj &
+                      output\w32pid.obj output\lurk.obj $(%LINKOBJS)
      @set PRELINKDEPS = output\w32ssb.obj output\w32cuis.obj
      @set POSTLINKTGTS = 
      @set LIBFILES  = user32,kernel32,advapi32,gdi32
@@ -868,13 +897,13 @@ w32: .symbolic                               # win32
      @set ZIPFILE   = #$(BASENAME)-win32-x86-cli
      @set BINNAME   = $(BASENAME).exe
      @set EXECOMPRESSOR=\develop\upx\upxw.exe -9 --compress-resources=0
-     @%make declare_for_des
-     @%make declare_for_desmt
-     @%make declare_for_desmmx
+##   @%make declare_for_des
+##   @%make declare_for_desmt
+##   @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
-     @%make declare_for_csc
+#    @%make declare_for_ogr
+#    @%make declare_for_csc
      @%make platform
      #---------------------------------
      @wrc -31 -bt=nt &
@@ -894,7 +923,8 @@ w32ss: .symbolic                               # win32 screen saver
                       /DSSSTANDALONE
      @set OPT_SIZE  = /s /os
      @set OPT_SPEED = /oneatx /oh /oi+ /ei #/oneatx /oh /oi+ 
-     @set LINKOBJS  = output\w32ssb.obj output\w32ss.obj output\w32util.obj
+     @set LINKOBJS  = output\w32ssb.obj output\w32ss.obj output\w32util.obj &
+                      output\w32exe.obj output\w32ini.obj
      @set COREOBJS  =
      @set LIBFILES  = user32,kernel32,advapi32,gdi32
      @set MODULES   =
@@ -917,7 +947,8 @@ w16ss: .symbolic                    # Windows/16 screen saver
                       /i$(%watcom)\h;$(%watcom)\h\win;platforms/win32cli
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oaxt 
-     @set LINKOBJS  = output\w32ss.obj output\w32util.obj
+     @set LINKOBJS  = output\w32ss.obj output\w32util.obj &
+                      output\w32exe.obj output\w32ini.obj
      @set DEFALL    =
      @set COREOBJS  =
      @set LIBFILES  =
@@ -967,13 +998,13 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      @set COPYRIGHT = 'Copyright 1997-1999 distributed.net\r\n  Visit http://www.distibuted.net/ for more information'
      @set FORMAT    = Novell NLM 'distributed.net client for NetWare'
      @set %dependall=
-     #@%make declare_for_des
-     #@%make declare_for_desmt
-     #@%make declare_for_desmmx
+##   #@%make declare_for_des
+##   #@%make declare_for_desmt
+##   #@%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
-     @%make declare_for_csc
+#    @%make declare_for_ogr
+#    @%make declare_for_csc
      @%make platform
      #
      @\develop\sdkcdall\nlmdump\nlm_dos.exe *$(BASENAME).nlm /b:$(BASENAME).map 

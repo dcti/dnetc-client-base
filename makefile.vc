@@ -1,10 +1,8 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.72 2000/01/04 01:22:16 michmarc Exp $
+# $Id: makefile.vc,v 1.73 2000/06/02 06:29:38 jlawson Exp $
 #
-
-#DEBUG=1
 
 !ifndef PROCESSOR_ARCHITECTURE
 PROCESSOR_ARCHITECTURE = x86
@@ -22,9 +20,10 @@ OGRSRCPATH = ogr
 CSCSRCPATH = csc
 CHIPSRCPATH = platforms
 PLATSRCPATH = platforms/win32cli
+#EXECOMPRESSOR = upxw.exe -9 --compress-resources=0
 
-HAVE_DES_CORES=1
-HAVE_CSC_CORES=1
+#HAVE_DES_CORES=1
+#HAVE_CSC_CORES=1
 HAVE_OGR_CORES=1
 
 # --------------------------------------------
@@ -39,7 +38,7 @@ OPTS_M_PLAT = IX86
 !endif
 
 !ifdef DEBUG
-OPTS_CC_DEBUG = -Zi -DDEBUG -Od
+OPTS_CC_DEBUG = -Zi -DDEBUG
 OPTS_LINK_DEBUG = /debug /pdb:none /pdbtype:consolidate
 !else
 OPTS_CC_DEBUG = -DNDEBUG
@@ -71,14 +70,13 @@ OPTS_LINK_DEBUG = /release
 # -Ox == -Og -Oi -Ot -Oy -Ob1 -Gs
 
 OPTS_MSVC = -nologo -I$(COMMONPATH) -I$(PLATSRCPATH) -I$(OGRSRCPATH) \
-            -I$(CSCSRCPATH) -I$(DESSRCPATH) \
-            -DMULTITHREAD -D__WIN32__ -DLURK \
+            -I$(CSCSRCPATH) -DMULTITHREAD -D__WIN32__ -DLURK \
             -W3 -MT -GR- -GX- -GA -GF \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG) 
 OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
 OPTS_LINK = /nologo /incremental:no /version:3.10 \
             /machine:$(OPTS_M_PLAT) $(OPTS_LINK_DEBUG)
-OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
+OPTS_RC   = -d_Windows -d_M_{$(OPTS_M_PLAT)}
 
 # --------------------------------------------
 
@@ -94,7 +92,8 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/base64.obj     \
         $(OUTPUTPATH)/bench.obj      \
         $(OUTPUTPATH)/buffupd.obj    \
-        $(OUTPUTPATH)/buffwork.obj   \
+        $(OUTPUTPATH)/buffbase.obj   \
+        $(OUTPUTPATH)/buffpriv.obj   \
         $(OUTPUTPATH)/checkpt.obj    \
         $(OUTPUTPATH)/clicdata.obj   \
         $(OUTPUTPATH)/client.obj     \
@@ -140,11 +139,16 @@ PLAT_OBJS =                          \
         $(OUTPUTPATH)/w32sock.obj    \
         $(OUTPUTPATH)/w32ss.obj      \
         $(OUTPUTPATH)/w32svc.obj     \
+        $(OUTPUTPATH)/w32exe.obj     \
+        $(OUTPUTPATH)/w32ini.obj     \
+        $(OUTPUTPATH)/w32snapp.obj   \
         $(OUTPUTPATH)/w32util.obj
 
 SCR_OBJS =                           \
         $(OUTPUTPATH)/w32ss.obj      \
         $(OUTPUTPATH)/w32ssb.obj     \
+        $(OUTPUTPATH)/w32exe.obj     \
+        $(OUTPUTPATH)/w32ini.obj     \
         $(OUTPUTPATH)/w32util.obj
 
 CUI_OBJS =                           \
@@ -171,7 +175,8 @@ RC5_OBJS =                           \
         $(OUTPUTPATH)/rc5-rgp6.obj   \
         $(OUTPUTPATH)/rc5mmx.obj     \
         $(OUTPUTPATH)/rg486.obj      \
-        $(OUTPUTPATH)/rg6x86.obj
+        $(OUTPUTPATH)/rg6x86.obj     \
+        $(OUTPUTPATH)/rc5-ssk7.obj
 OPTS_MSVC = $(OPTS_MSVC) -DMMX_RC5
 !endif
 
@@ -233,7 +238,7 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_CSC_CORES -DMMX_CSC
 # --------------------------------- OGR ----------------------------
 
 !ifndef HAVE_OGR_CORES
-CSC_OBJS =
+OGR_OBJS =
 !else
 OGR_OBJS =                           \
         $(OUTPUTPATH)/choosedat.obj  \
@@ -252,13 +257,13 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
         asaxp $(OPTS_AS) -Fo$@ $<
 
 {$(DESSRCPATH)/alpha-asm}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(CSCSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 !else
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
-        tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
+        nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
 {$(RC5SRCPATH)/x86/nasm}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(RC5SRCPATH:/=\)\x86\nasm\ $(**:/=\)
@@ -281,19 +286,19 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
 !endif
 
 {$(DESSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(OGRSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(PLATSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c -O1 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+        cl -c $(OPTS_MSVC) -O1 -Fo$(OUTPUTPATH)\ $<
 
 {$(PLATSRCPATH)}.c{$(OUTPUTPATH)}.obj::
         cl -c -Zl -O1 -Fo$(OUTPUTPATH)\ $<
 
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+        cl -c $(OPTS_MSVC) -O2 -Fo$(OUTPUTPATH)\ $<
 
 $(RES_FILE):    $(RC_FILE)
         rc  -i $(OPTS_RC) -I$(COMMONPATH) -fo$@ $(**:/=\)
@@ -304,7 +309,7 @@ $(BASENAME): $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS) $(DES_OBJS) $(
 # the screensaver's 4.0 tag will be adjusted to 3.10 by the _client_ if running on a 3.x platform
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).scr /version:4.00 $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE) 
         link $(OPTS_LINK) /SUBSYSTEM:CONSOLE /OUT:$(BASENAME).com /version:3.10 $(OPTS_LIBS) $(CUI_OBJS)
-        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).exe /version:3.10 $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
+        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).exe /version:3.10 /MAP:$(BASENAME).map $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
 !ifdef EXECOMPRESSOR
         $(EXECOMPRESSOR) $(BASENAME).scr
         $(EXECOMPRESSOR) $(BASENAME).com
@@ -315,10 +320,9 @@ clean:
         -del $(OUTPUTPATH:/=\)\*.obj $(RES_FILE:/=\)
 
 superclean: clean
-        -del $(BASENAME).exe $(BASENAME).scr $(BASENAME).com $(BASENAME).ini buff-in.* buff-out.*
+        -del $(BASENAME).map $(BASENAME).exe $(BASENAME).scr $(BASENAME).com $(BASENAME).ini buff-in.* buff-out.*
 
 rebuild: clean all
 
 # --------------------------------------------
 
-$(COMMONPATH)\buffwork.cpp: $(COMMONPATH)\buffbase.cpp

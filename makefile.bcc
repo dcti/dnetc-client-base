@@ -1,0 +1,304 @@
+# makefile distributed.net client (Borland C++ for Win32).
+# For information about distributed.net, see http://www.distributed.net/
+#
+# $Id: makefile.bcc,v 1.26 2000/06/02 06:29:38 jlawson Exp $
+#
+# As of Feb 2000, Borland C++ 5.5 compiler is free for download.
+# http://www.borland.com/bcppbuilder/freecompiler/
+# ftp://ftpd.inprise.com/download/bcppbuilder/FreeCommandLineTools.exe
+
+.autodepend
+
+
+# Borland library and include paths.
+BCCINCLUDE = c:\borland\bcc55\include
+BCCLIBRARY = c:\borland\bcc55\lib
+
+
+# distributed.net source and compilation paths.
+BASENAME = dnetc
+OUTPUTPATH = output
+COMMONPATH = common
+DESPATH = des
+RC5PATH = rc5
+CSCPATH = csc
+OGRPATH = ogr
+CHIPSRCPATH = platforms
+PLATSRCPATH = platforms\win32cli
+
+
+# define variable to existence to enable debugging.
+#DEBUG=1
+
+# define to control which additional contests are included.
+#HAVE_DES_CORES=1
+#HAVE_CSC_CORES=1
+# WARNING: OGR cores don't pass dnetc -test !!! :(((
+HAVE_OGR_CORES=1
+
+
+
+# Main compilation and linking options
+
+# We can't do anything against the following warnings, so let's ignore them:
+#   /w-aus disables "'identifier' is assigned a value that is never used" warning (8004)
+#   /w-par disables "Parameter 'parameter' is never used" warning (8057)
+BCCOPTS = /a4 /Vv /x- /xd- /RT- /r /k- /d /O2 /O /OS /tWM \
+        /w /w-aus /w-par \
+        /I$(BCCINCLUDE) /I$(COMMONPATH) /I$(PLATSRCPATH) \
+        /I$(OGRPATH) /I$(CSCPATH) /D_CPU_32BIT_ /DMULTITHREAD /DLURK
+
+NASMOPTS = -f obj -D__OMF__
+
+TLINKOPTS = /aa /x /Tpe /n /Gn /B:0x400000 /L$(BCCLIBRARY)
+
+
+!ifdef DEBUG
+BCCOPTS = /v $(BCCOPTS) /D__showids__ /DDEBUG /Tkh10000
+TASMOPTS = /zi $(TASMOPTS)
+TLINKOPTS = /v $(TLINKOPTS)
+NASMOPTS = $(NASMOPTS) -D__showids__
+!else
+BCCOPTS = $(BCCOPTS) /DNDEBUG
+!endif
+
+!ifdef TRACE
+BCCOPTS = $(BCCOPTS) /DTRACE
+!endif
+
+!ifdef BETA
+BCCOPTS = $(BCCOPTS) /DBETA
+!endif
+
+
+!ifdef MMXRC5
+BCCOPTS = $(BCCOPTS) /DMMX_RC5
+!endif
+
+!ifdef MMXDES
+BCCOPTS = $(BCCOPTS) /DMMX_BITSLICER /DBIT_64 /DMEGGS /DKWAN
+!endif
+
+
+.path.asm = $(RC5PATH)\x86\nasm;$(DESPATH)\mmx-bitslice;$(CSCPATH)\x86;$(CSCPATH)\x86\mmx;$(CHIPSRCPATH)
+# do not add $(CSCPATH) to .path.cpp - everything is in .path.asm
+.path.cpp = $(COMMONPATH);$(RC5PATH);$(DESPATH);$(OGRPATH);$(PLATSRCPATH)
+.path.c = $(PLATSRCPATH)
+.path.obj = $(OUTPUTPATH)
+
+all:    $(BASENAME).exe
+
+# --------------------------------------------
+
+DEF_FILE = $(OUTPUTPATH)\dnetc.def
+RES_FILE = $(OUTPUTPATH)\$(BASENAME).res
+RC_FILE = $(PLATSRCPATH)\w32cons.rc
+
+COMMON_OBJS =                        \
+        $(OUTPUTPATH)/autobuff.obj   \
+        $(OUTPUTPATH)/base64.obj     \
+        $(OUTPUTPATH)/bench.obj      \
+        $(OUTPUTPATH)/buffupd.obj    \
+        $(OUTPUTPATH)/buffbase.obj   \
+        $(OUTPUTPATH)/buffpriv.obj   \
+        $(OUTPUTPATH)/checkpt.obj    \
+        $(OUTPUTPATH)/clicdata.obj   \
+        $(OUTPUTPATH)/client.obj     \
+        $(OUTPUTPATH)/clievent.obj   \
+        $(OUTPUTPATH)/cliident.obj   \
+        $(OUTPUTPATH)/clirate.obj    \
+        $(OUTPUTPATH)/clirun.obj     \
+        $(OUTPUTPATH)/clisrate.obj   \
+        $(OUTPUTPATH)/clitime.obj    \
+        $(OUTPUTPATH)/cmdline.obj    \
+        $(OUTPUTPATH)/confmenu.obj   \
+        $(OUTPUTPATH)/confopt.obj    \
+        $(OUTPUTPATH)/confrwv.obj    \
+        $(OUTPUTPATH)/console.obj    \
+        $(OUTPUTPATH)/convdes.obj    \
+        $(OUTPUTPATH)/cpucheck.obj   \
+        $(OUTPUTPATH)/disphelp.obj   \
+        $(OUTPUTPATH)/iniread.obj    \
+        $(OUTPUTPATH)/logstuff.obj   \
+        $(OUTPUTPATH)/lurk.obj       \
+        $(OUTPUTPATH)/mail.obj       \
+        $(OUTPUTPATH)/modereq.obj    \
+        $(OUTPUTPATH)/netinit.obj    \
+        $(OUTPUTPATH)/netres.obj     \
+        $(OUTPUTPATH)/network.obj    \
+        $(OUTPUTPATH)/pathwork.obj   \
+        $(OUTPUTPATH)/pollsys.obj    \
+        $(OUTPUTPATH)/probfill.obj   \
+        $(OUTPUTPATH)/problem.obj    \
+        $(OUTPUTPATH)/probman.obj    \
+        $(OUTPUTPATH)/random.obj     \
+        $(OUTPUTPATH)/scram.obj      \
+        $(OUTPUTPATH)/selcore.obj    \
+        $(OUTPUTPATH)/selftest.obj   \
+        $(OUTPUTPATH)/setprio.obj    \
+        $(OUTPUTPATH)/triggers.obj   \
+        $(OUTPUTPATH)/util.obj
+
+PLAT_OBJS =                          \
+        $(OUTPUTPATH)/w32cons.obj    \
+        $(OUTPUTPATH)/w32pre.obj     \
+        $(OUTPUTPATH)/w32ras.obj     \
+        $(OUTPUTPATH)/w32sock.obj    \
+        $(OUTPUTPATH)/w32ss.obj      \
+        $(OUTPUTPATH)/w32svc.obj     \
+        $(OUTPUTPATH)/w32exe.obj     \
+        $(OUTPUTPATH)/w32ini.obj     \
+        $(OUTPUTPATH)/w32snapp.obj   \
+        $(OUTPUTPATH)/w32util.obj
+
+SCR_OBJS =                           \
+        $(OUTPUTPATH)/w32ss.obj      \
+        $(OUTPUTPATH)/w32ssb.obj     \
+        $(OUTPUTPATH)/w32exe.obj     \
+        $(OUTPUTPATH)/w32ini.obj     \
+        $(OUTPUTPATH)/w32util.obj
+
+CUI_OBJS =                           \
+        $(OUTPUTPATH)/w32cuis.obj
+
+CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
+
+CLI_LIBS = noeh32.lib cw32mt.lib import32.lib
+
+# --------------------------------- RC5 ----------------------------
+
+RC5_OBJS =                           \
+        $(OUTPUTPATH)/brfp5.obj      \
+        $(OUTPUTPATH)/rc5-rgk5.obj   \
+        $(OUTPUTPATH)/rc5-rgk6.obj   \
+        $(OUTPUTPATH)/rc5-rgp6.obj   \
+        $(OUTPUTPATH)/rc5mmx.obj     \
+        $(OUTPUTPATH)/rg486.obj      \
+        $(OUTPUTPATH)/rg6x86.obj     \
+        $(OUTPUTPATH)/rc5-ssk7.obj
+BCCOPTS = $(BCCOPTS) -DMMX_RC5
+
+
+# --------------------------------- DES ----------------------------
+
+# untested!
+!ifndef HAVE_DES_CORES
+DES_OBJS =
+!else
+DES_OBJS =                                   \
+        $(OUTPUTPATH)/bbdeslow.obj           \
+        $(OUTPUTPATH)/bdeslow.obj            \
+        $(OUTPUTPATH)/des-slice.obj          \
+        $(OUTPUTPATH)/des-slice-meggs.obj    \
+        $(OUTPUTPATH)/des-x86.obj            \
+        $(OUTPUTPATH)/deseval.obj            \
+#       $(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
+        $(OUTPUTPATH)/deseval-mmx.obj        \
+        $(OUTPUTPATH)/p1bdespro.obj          \
+        $(OUTPUTPATH)/p2bdespro.obj          \
+        $(OUTPUTPATH)/sboxes-kwan4.obj       \
+#       $(OUTPUTPATH)/sboxes-mmx.obj
+BCCOPTS = $(BCCOPTS) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN
+!endif
+
+# --------------------------------- CSC ----------------------------
+
+!ifndef HAVE_CSC_CORES
+CSC_OBJS =
+!else
+CSC_OBJS =                           \
+         $(OUTPUTPATH)/convcsc.obj   \
+         $(OUTPUTPATH)/csc-1k.obj    \
+         $(OUTPUTPATH)/csc-1k-i.obj  \
+         $(OUTPUTPATH)/csc-6b.obj    \
+         $(OUTPUTPATH)/csc-6b-i.obj  \
+         $(OUTPUTPATH)/csc-comm.obj  \
+         $(OUTPUTPATH)/csc-mmx.obj
+BCCOPTS = $(BCCOPTS) -DHAVE_CSC_CORES -DMMX_CSC
+!endif
+
+# --------------------------------- OGR ----------------------------
+
+!ifndef HAVE_OGR_CORES
+OGR_OBJS =
+!else
+!message WARNING! OGR currently fails 2 selftests (dnetc -test) if compiled with BCC! :(
+OGR_OBJS =                           \
+        $(OUTPUTPATH)/choosedat.obj  \
+        $(OUTPUTPATH)/crc32.obj      \
+        $(OUTPUTPATH)/ogr.obj
+BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
+!endif
+
+# --------------------------------------------
+
+{$(CSCPATH)\x86\;$(CSCPATH)\x86\mmx\}.asm{$(OUTPUTPATH:/=\)}.obj:
+        nasmw $(NASMOPTS) -i $(CSCPATH)\x86\ $(<:/=\) -o $(@:/=\)
+
+.asm.obj:
+        nasmw $(NASMOPTS) -DOS2 -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
+
+.cpp.obj:
+        bcc32 -q -c @&&|
+        -P $(BCCOPTS) -n$(OUTPUTPATH)
+| $<
+
+
+.c.obj:
+        bcc32 -q -c @&&|
+-P $(BCCOPTS) -n$(OUTPUTPATH)
+| $<
+
+
+# --------------------------------------------
+
+# Target rule to produce the compiled resource file.
+
+$(RES_FILE):    $(RC_FILE)
+        brcc32 -32 -i$(BCCINCLUDE) -i$(COMMONPATH) -fo$(RES_FILE:/=\) $(RC_FILE:/=\)
+
+
+### Unfortunately, the Borland C++ 5.5 initial public release does not
+### include any of the include\*.rh files necessary to compile resources.
+### [andreasb] Workaround: unzip platform/bcc55-rh.zip to bccinstallpath\include.
+### The zip contains four one-line xxx.rh files including the xxx.h file.
+### This is enough to compile the client's .res file. I don't know about other progs.
+
+# --------------------------------------------
+
+# Apparently it is necessary to supply a module definition file (*.DEF)
+# for our exe, since ILINK32 says it contains "Additional segments".
+
+$(DEF_FILE):
+        if exist $(DEF_FILE:/=\) del $(DEF_FILE:/=\)
+        copy &&|
+CODE    PRELOAD MOVEABLE DISCARDABLE
+DATA    PRELOAD MOVEABLE MULTIPLE
+HEAPSIZE        4096
+STACKSIZE       1048576
+SEGMENTS
+        _TEXT
+        _DATA
+| $(DEF_FILE:/=\)
+
+# --------------------------------------------
+
+# This is the main client exe compilation target rule.
+
+ALLCLIENTOBJS = $(COMMON_OBJS) $(PLAT_OBJS) $(CHIP_OBJS) \
+                $(RC5_OBJS) $(DES_OBJS) $(CSC_OBJS) $(OGR_OBJS)
+
+$(BASENAME).exe:   $(DEF_FILE) $(RES_FILE) $(ALLCLIENTOBJS)
+        ilink32 /q $(TLINKOPTS) @&&|
+c0w32.obj $(ALLCLIENTOBJS:/=\),$(BASENAME:/=\).exe,,$(CLI_LIBS),$(DEF_FILE),$(RES_FILE)
+|
+
+# --------------------------------------------
+
+# Remove all rebuildable and temporary files.
+# You will need a rm command (e.g. from cygwin) and support for long command lines.
+
+clean:
+        rm -f $(ALLCLIENTOBJS:/=\) $(BASENAME:/=\).exe $(DEF_FILE) $(RES_FILE) \
+            $(BASENAME).ilc $(BASENAME).ild $(BASENAME).ilf $(BASENAME).ils \
+            $(BASENAME).tds
