@@ -1,6 +1,6 @@
 
   distributed.net client documentation
-  document revision $Id: dnetc.txt,v 1.1.2.3 2000/03/15 16:47:52 ivo Exp $
+  document revision $Id: dnetc.txt,v 1.1.2.4 2000/04/21 13:26:33 cyp Exp $
 
   Copyright distributed.net 1997-2000 - All Rights Reserved
   For use in distributed.net projects only.
@@ -76,7 +76,7 @@
  3.0  Getting and starting the client --------------------------------
 
     Clients are (barring a few exceptions) *only* available from 
-    http://www.distributed.net/clients/ or from ftp servers linked from 
+    http://www.distributed.net/download/ or from ftp servers linked from 
     that page. They are occasionally available directly from distributed.net 
     coders in the #distributed channel on EFNet IRC. FreeBSD clients are 
     also available on FreeBSD distribution CDs. 
@@ -170,7 +170,7 @@
      advantages if you have a number of clients running inside the 
      firewall, is to use a distributed.net personal proxy on the 
      firewall machine. Personal proxies may be downloaded from 
-     http://www.distributed.net/proxies/. Configuration guides for setting 
+     http://www.distributed.net/download/. Configuration guides for setting 
      up a personal proxy are beyond the scope of this document, but for 
      the client, configuration is the same as that for a "datapipe" (in 
      the section above).
@@ -264,7 +264,7 @@
  6.0  Help! ----------------------------------------------------------
 
      If you've having a problem with the client, the first place you 
-     should visit is http://www.distributed.net/clients.html to 
+     should visit is http://www.distributed.net/download/ to 
      see if a newer version is available. It is likely that a given 
      bug you have been experiencing will be fixed by the new version.
 
