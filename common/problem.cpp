@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.100 1999/04/11 00:13:09 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.101 1999/04/15 01:24:31 michmarc Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -124,8 +124,8 @@ extern "C" void riscos_upcall_6(void);
   #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
   #if (CLIENT_OS == OS_WIN32)
-     extern "C" u32 rc5_unit_func( RC5UnitWork *, u32 timeslice );
-     extern     u32 des_unit_func( RC5UnitWork *, u32 timeslice );
+     extern "C" u32 rc5_unit_func( RC5UnitWork *, unsigned long timeslice );
+     extern "C" u32 des_unit_func_alpha_dworz( RC5UnitWork * , u32 nbbits );
   #elif (CLIENT_OS == OS_DEC_UNIX)
      #if defined(DEC_UNIX_CPU_SELECT)
        #include <machine/cpuconf.h>
@@ -379,6 +379,10 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     rc5_unit_func = rc5_alpha_osf_ev4;
     des_unit_func = des_alpha_osf_ev4;
   }
+  #elif (CLIENT_OS == OS_WIN32)
+  pipeline_count = 2;
+  rc5_unit_func = ::rc5_unit_func;
+  des_unit_func = des_unit_func_alpha_dworz;
   #else
   pipeline_count = 2;
   rc5_unit_func = rc5_unit_func_axp_bmeyer;
