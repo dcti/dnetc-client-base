@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.40 1999/12/07 04:20:39 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.41 1999/12/07 16:31:55 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -145,9 +145,11 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   const char *contname;
   struct timeval totalruntime;
   u64 keysdone;
-  
+
   contname = CliGetContestNameFromID(contestid);
   if (!contname)
+    return 0;
+  if (!IsProblemLoadPermitted(-1 /*any thread*/, contestid))
     return 0;
 
   switch (contestid)
