@@ -1,4 +1,4 @@
-This is the new RC5DES v2.7020.403 (98.04.28) client for IBM S/390
+This is the new RC5DES v2.7023.408 client for IBM S/390
 servers running the OS/390 operating system.
 
 The client code has been ported and tested on an IBM 9672 System
@@ -17,7 +17,7 @@ There are 2 installation procedures:
 
    o  unpack the archive to some temp directory for instance like:
 
-      tar xvzf rc5des403-os390-nomt.tar.gz
+      tar xvzf rc5des408-os390-nomt.tar.gz
 
    o  you will get 3 files:
 
@@ -38,18 +38,18 @@ There are 2 installation procedures:
 
 2) download and unpack on a S/390 system
 
-   o  ftp the rc5des403-os390-nomt.tar.gz to the target IBM S/390 machine
+   o  ftp the rc5des408-os390-nomt.tar.gz to the target IBM S/390 machine
 
-   o  gunzip rc5des403-os390-nomt.tar.gz
+   o  gunzip rc5des408-os390-nomt.tar.gz
       if you don't have 'gunzip', to obtain it, go to:
          
                http://www.s390.ibm.com/oe/bpxqp1.html
 
    o  export A2E='-o from=ISO8859-1,to=IBM-1047'
 
-   o  pax $A2E -rf rc5des403-os390-nomt.tar
+   o  pax $A2E -rf rc5des408-os390-nomt.tar
 
-*) o  pax -rf rc5des403-os390-nomt.tar rc5des
+*) o  pax -rf rc5des408-os390-nomt.tar rc5des
 
    o  chmod +x rc5des
 
@@ -71,6 +71,9 @@ In case of questions, feel free to contact:
 
 #
 # $Log: readme.os390,v $
+# Revision 1.2  1998/06/09 20:37:29  friedbait
+# v2.7023.408
+#
 # Revision 1.1  1998/06/01 17:01:17  friedbait
 # Initial release
 #
