@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.188  1999/02/10 21:30:41  remi
+# Added lurk mode to freebsd targets.
+#
 # Revision 1.187  1999/02/09 23:11:38  remi
 # Added lurk mode to sparc-linux targets.
 #
@@ -18,7 +21,7 @@
 # Fixed a typo in alpha-linux.
 #
 # Revision 1.183  1999/02/04 22:44:22  remi
-# Replaced Meggs' bitslicer by DWorz's one in
+# Replaced Meggs' bitslicer by Dworz's one in
 # alpha-{gcc,linux,openbsd,netbsd} targets.
 #
 # Revision 1.182  1999/02/03 18:20:12  cyp
@@ -1715,9 +1718,9 @@ case "$1" in
     *x86-freebsd)
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DPIPELINE_COUNT=2"
+			-DPIPELINE_COUNT=2 -DLURK"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_LIBS="-lc_r"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1727,9 +1730,9 @@ case "$1" in
     *x86-freebsd-mt)
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DPIPELINE_COUNT=2 -DMULTITHREAD"
+			-DPIPELINE_COUNT=2 -DMULTITHREAD -DLURK"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
 			des/p1bdespro.S des/p2bdespro.S"
@@ -1741,9 +1744,9 @@ case "$1" in
     *x86-freebsd-elf)
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DPIPELINE_COUNT=2 -D__ELF__"
+			-DPIPELINE_COUNT=2 -D__ELF__ -DLURK"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_NASM="/usr/local/bin/nasm"
@@ -1753,9 +1756,9 @@ case "$1" in
     *x86-freebsd-mt-elf)
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DPIPELINE_COUNT=2 -DMULTITHREAD"
+			-DPIPELINE_COUNT=2 -DMULTITHREAD -DLURK"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
 			des/p1bdespro.S des/p2bdespro.S"
@@ -1765,10 +1768,10 @@ case "$1" in
 
     *x86-freebsd4-mt-elf)
         TARGET_AS="gcc -c"
-        TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
+        TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DLURK \
                         -DPIPELINE_COUNT=2 -DMULTITHREAD -DCLIENT_OS_MINOR=4"
         TARGET_LDFLAGS="-static"
-        TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+        TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
         TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
                         platforms/x86ident.S \
                         des/p1bdespro.S des/p2bdespro.S"
