@@ -22,6 +22,10 @@
 // --------------------------------------------------------------------
 //
 // $Log: pathwork.cpp,v $
+// Revision 1.12  1999/01/23 21:29:48  patrick
+//
+// OS2-EMX does not need special care here
+//
 // Revision 1.11  1999/01/08 21:20:38  sugalskd
 // Fixed VMS path-finding code
 //
@@ -54,7 +58,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.11 1999/01/08 21:20:38 sugalskd Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.12 1999/01/23 21:29:48 patrick Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -65,7 +69,7 @@ return "@(#)$Id: pathwork.cpp,v 1.11 1999/01/08 21:20:38 sugalskd Exp $"; }
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16)
   #define WIN32_LEAN_AND_MEAN
   #include <windows.h>
-#elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_OS2)
+#elif (CLIENT_OS == OS_DOS) ||  ( (CLIENT_OS == OS_OS2) && !defined(__EMX__) )
   #include <dos.h>  //drive functions
   #include <ctype.h> //toupper
   #if defined(__WATCOMC__)
@@ -78,7 +82,6 @@ return "@(#)$Id: pathwork.cpp,v 1.11 1999/01/08 21:20:38 sugalskd Exp $"; }
 #endif
 
 #if (CLIENT_OS == OS_RISCOS)
-//#define DEBUG
 #define MAX_FULLPATH_BUFFER_LENGTH (1024)
 #else
 #define MAX_FULLPATH_BUFFER_LENGTH (256)
@@ -197,7 +200,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
     if (slash != NULL) *(slash+1) = 0;
     else cwdBuffer[0] = 0;
     }
-  #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_OS2)
+  #elif (CLIENT_OS == OS_DOS) || ( (CLIENT_OS == OS_OS2) && !defined(__EMX__) )
     {
     strcpy( cwdBuffer, inipath );
     char *slash = strrchr(cwdBuffer, '/');
