@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.33 2000/03/06 03:11:26 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.34 2000/03/08 02:54:08 jlawson Exp $
 ==========================================================================
 
 2.8000
@@ -30,13 +30,20 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.33 2000/03/06 03:11:26 andreasb Exp
 2.8008.459  new: all: new rc5 K7 core thanks to 
                  Sean Stanek <vulture@iastate.edu>
             chg: macos: now supports all variants of System 7
-	    fix: all: OGR -> RC5 / CSC -> RC5 switchover bugs
+                 Linux: now attempts to explicitly load resolv
+                 libraries for dns resolution for greater glibc/libc
+                 cross compatibility
+                 all: checkpointing now done at 10% or 10 minute
+                 intervals, instead of 10% with 10 minute minimum.
+                 winnt4: pause on process handling optimized
+	    fix: all: OGR -> RC5 / CSC -> RC5 switchover hang.
+            fix: all: OGR nodecount network packet ordering fixed.
 
 2.8007.458  fix: all: the annoying OGR 1 node bug finally fixed
             new: all: client can be configured a) to restart itself
                  on .ini change; b) (on most platforms) to pause itself as
                  long as process/executable x|y|z|... is running.
-            fix: win32: use NULL DACLs for CreateMutex. Go Condor!
+            fix: win32: use NULL DACLs for CreateMutex.
             chg: macos: numerous minor interface improvements
             new: macos: multiprocessor support (MP 2.x enhanced)
 
