@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.181 2000/08/09 19:28:18 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.182 2000/08/09 19:36:26 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -303,8 +303,8 @@ generate_gcc_opts() {
            
     *internal-x86)
         opts272="$OPTS_GCC272 -O6 -DASM_X86 -funroll-loops"
-        opts295="$OPTS_GCC295 -O3 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
-                 -malign-functions=5 -malign-loops=4 -funroll-all-loops"
+        opts295="$OPTS_GCC295 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
+                 -malign-functions=5 -malign-loops=4 -funroll-loops"
         ;;
 
     *) # no default needed
