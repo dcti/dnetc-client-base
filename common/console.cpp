@@ -11,6 +11,10 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.24  1998/12/08 05:40:19  dicamillo
+// MacOS: define conistty; call yield routine after output; remove
+// GetKeys- Mac client never reads console input.
+//
 // Revision 1.23  1998/11/16 19:07:06  cyp
 // Fixed integer truncation warnings.
 //
@@ -87,7 +91,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.23 1998/11/16 19:07:06 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.24 1998/12/08 05:40:19 dicamillo Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -199,6 +203,8 @@ int InitializeConsole(int runhidden,int doingmodes)
         constatics.conisatty = w32ConIsScreen();
       #elif (CLIENT_OS == OS_RISCOS)
         constatics.conisatty = 1;
+      #elif (CLIENT_OS == OS_MACOS)
+        constatics.conisatty = 1;
       #else
         constatics.conisatty = ((isatty(fileno(stdout))) && 
           (isatty(fileno(stdin))));
@@ -230,6 +236,9 @@ int ConOut(const char *msg)
     #else
       fwrite( msg, sizeof(char), strlen(msg), stdout);
       fflush(stdout);
+      #if (CLIENT_OS == OS_MACOS)
+	    YieldToMain(0);
+      #endif
     #endif
     return 0;
     }
@@ -348,16 +357,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         if (ch == EOF) ch = 0;
         }
       #elif (CLIENT_OS == OS_MACOS)
-        {
-        unsigned long keys[4];
-        GetKeys(keys);
-        if (keys[0] != 0 || keys[1] != 0 || keys[2] != 0 || keys[3] != 0)
-          {
-          ch = getchar();
-          if (ch == EOF)
-            ch = 0;
-          }
-        }
+	    // Mac code never does console input
       #else
         {
         setvbuf(stdin, (char *)NULL, _IONBF, 0);
