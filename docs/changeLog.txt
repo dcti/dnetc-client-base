@@ -2,6 +2,10 @@ Dual mode (RC5DES) clients
 --------------------------
 v2.7100.413 98.06.29 Client Version # reporting in -config fixed
 v2.7100.413 98.06.29 Extra disk access caused by lurk mode reduced greatly
+v2.7100.412 98.06.29 Put a check on the mailmessage so it won't mail when offline or lurk
+v2.7100.412 98.06.29 Put validateconfig() in the ParseCommandLineOptions()
+v2.7100.412 98.06.29 Gave text output and exit a priority boost, so it's faster in OS/2
+v2.7100.412 98.06.29 Redid the lurk mode to only detect slip/ppp connections in OS/2
 v2.7100.412 98.06.28 Lots of internal changes to prepare for Win16 client
 v2.7100.412 98.06.28 Invalid cpu type value now ignored.
 v2.7100.412 98.06.28 Buffer path problem and buffer truncation issue addressed
@@ -9,6 +13,8 @@ v2.7100.412 98.06.27 GUI autolaunches in minimized state correctly now
 v2.7100.412 98.06.26 Finally reached 2.7100!
 v2.7025.410 98.06.24 New ARM DES cores from Steve Lee
 v2.7025.410 98.06.23 Fixed various things in the help pager
+v2.7024.409 98.06.14 Finalized lurk modes for OS/2
+v2.7024.409 98.05.13 Fixed CPU identification crash under *nix with 486 SX/DX/DX2.
 v2.7024.409 98.06.18 Users can now tell us exactly what we need to add to the CPU identification code to stop their cpu from being mis-ident'd.
 v2.7024.409 98.06.17 Added a new PPro/PII/6x86/K6 *DES* core
 v2.7024.409 98.06.15 New 64-bit UltraSparc DES core - super fast !
