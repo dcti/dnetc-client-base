@@ -45,7 +45,8 @@ common/pathwork.o_ppc\
 common/disphelp.o_ppc\
 common/logstuff.o_ppc\
 common/triggers.o_ppc\
-common/buffupd.o_ppc
+common/buffupd.o_ppc\
+common/selcore.o_ppc
 
 RC5_OBJS_PPC	=\
 common/problem.o_ppc\
@@ -86,7 +87,8 @@ common/disphelp.o_68k\
 common/cliconfig.o_68k\
 common/logstuff.o_68k\
 common/triggers.o_68k\
-common/buffupd.o_68k
+common/buffupd.o_68k\
+common/selcore.o_68k
 
 RC5_OBJS_68K	=\
 common/problem.o_68k\
@@ -182,6 +184,7 @@ common/problem.o_ppc	:	common/problem.cpp
 common/logstuff.o_ppc	:	common/logstuff.cpp
 common/triggers.o_ppc	:	common/triggers.cpp
 common/buffupd.o_ppc	:	common/buffupd.cpp
+common/selcore.o_ppc	:	common/selcore.cpp
 
 # RC5 Dependencies
 
@@ -225,6 +228,7 @@ common/problem.o_68k	:	common/problem.cpp
 common/logstuff.o_68k	:	common/logstuff.cpp
 common/triggers.o_68k	:	common/triggers.cpp
 common/buffupd.o_68k	:	common/buffupd.cpp
+common/selcore.o_68k	:	common/selcore.cpp
 
 # RC5 Dependencies
 

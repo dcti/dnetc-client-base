@@ -43,7 +43,8 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/logstuff.obj   \
 	$(OUTPUTPATH)/buffupd.obj    \
 	$(OUTPUTPATH)/des-slice-meggs.obj \
-	$(OUTPUTPATH)/triggers.obj   
+	$(OUTPUTPATH)/triggers.obj   \
+	$(OUTPUTPATH)/selcore.obj   
 
 PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/rg-486.obj   \
