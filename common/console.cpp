@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.43 2000/09/23 10:29:15 oliver Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.44 2000/09/24 23:32:08 andreasb Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -546,10 +546,10 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
       {
         char x[2];
         buffer[pos++] = (char)ch;
-        if (!(isalpha(ch) || isspace(ch) || isdigit(ch) || ispunct(ch)))
-          ch = '?';
-        else if ((flags & CONINSTR_ASPASSWORD) != 0)
+        if ((flags & CONINSTR_ASPASSWORD) != 0)
           ch = '*';
+        else if (!(isalpha(ch) || isspace(ch) || isdigit(ch) || ispunct(ch)))
+          ch = '?';
         x[0]=(char)ch;
         x[1]=0;
         ConOut(x);
