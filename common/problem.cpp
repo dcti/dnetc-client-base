@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.165 2002/09/25 01:21:19 acidblood Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.166 2002/09/25 03:04:50 acidblood Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -845,6 +845,10 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->priv_data.refL0.lo  = thisprob->priv_data.rc5_72unitwork.L0.lo;
       thisprob->priv_data.refL0.mid = thisprob->priv_data.rc5_72unitwork.L0.mid;
       thisprob->priv_data.refL0.hi  = thisprob->priv_data.rc5_72unitwork.L0.hi;
+      thisprob->priv_data.rc5_72unitwork.plain.hi = thisprob->priv_data.contestwork.bigcrypto.plain.hi ^ thisprob->priv_data.contestwork.bigcrypto.iv.hi;
+      thisprob->priv_data.rc5_72unitwork.plain.lo = thisprob->priv_data.contestwork.bigcrypto.plain.lo ^ thisprob->priv_data.contestwork.bigcrypto.iv.lo;
+      thisprob->priv_data.rc5_72unitwork.cypher.hi = thisprob->priv_data.contestwork.bigcrypto.cypher.hi;
+      thisprob->priv_data.rc5_72unitwork.cypher.lo = thisprob->priv_data.contestwork.bigcrypto.cypher.lo;
 
       thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.crypto.keysdone.hi;
       thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.crypto.keysdone.lo;
