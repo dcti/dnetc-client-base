@@ -1,6 +1,6 @@
  distributed.net client for BeOS (x86 and PowerPC)
  Released by Christopher Tate <ctate@be.com>
- document revision $Id: readme.beos,v 1.1.2.5 2000/04/24 18:20:31 ctate Exp $
+ document revision $Id: readme.beos,v 1.1.2.6 2000/07/06 00:23:08 ctate Exp $
 
  Welcome to the distributed.net client.
 
@@ -10,9 +10,9 @@
 
     1.0  Getting started
     2.0  BeOS specific notes
-   
+
  1.0  Getting started ------------------------------------------------
- 
+
     Just unpack/unzip/untar the client in a directory of your choice and 
     fire it up.  This is a command-line application, so it must be run by
     typing "dnetc" from within a Terminal.  Double-clicking on the "dnetc"
@@ -25,7 +25,7 @@
 
     Then, simply restart the client. From that point on it will use the 
     saved configuration.
-    
+
     The configuration options are fairly self-explanatory and can be run
     at any time by starting the client with the '-config' option.
     A list of command line options is available by starting the client 
@@ -41,12 +41,12 @@
     be in the same directory the binary is in (if the binary was started
     with an explicit path spec). To specify another configuration file 
     use the -ini switch.
-    
+
     Beginning with v2.7102, multi-threaded clients can be forced to run
     single-threaded by setting the number of CPUs (the numcpu= option in
     the configuration file or the -numcpu switch on the command line) to
     zero.
-    
+
     Also beginning with v2.7102, the restriction on the number of processors
     has been lifted. The client will run with as many processors as are
     available (the client will attempt autodetection if numcpu is -1). If
@@ -61,12 +61,15 @@
     the user when it fails to start. With -hide/-quiet you can be sure that
     the client has started successfully if you do not get a message to the
     contrary. 
-    
+
     Beginning with v2.7110.442, the process name (as seen from ps or top) is 
     always 'rc5des'/'dnetc'. This is to facilitate scripted or system-wide 
 		--pause, --unpause, --shutdown and --restart
-    
+
+    Beginning with v2.8010.462, the BeOS client will only run on BeOS R5.0
+    or later.  Users of BeOS versions prior to R5.0 should download the free
+    R5 release from http://www.be.com/.
+
     As of November 7th, 1998, much of the client source, including all the 
     core crunch code that was previously scattered about, is available 
     online at http://www.distributed.net/source/
-    
