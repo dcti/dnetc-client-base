@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.25 2001/03/30 10:11:39 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.26 2001/04/12 14:59:11 cyp Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -88,8 +88,8 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %cscstd_DEFALL   = -DHAVE_CSC_CORES -Icsc
 %cscstd_SYMALIAS = 
 #---
-%ogrstd_LINKOBJS = output\ogr.obj output\ogr_dat.obj output\ogr_sup.obj
-%ogrstd_DEFALL   = -DHAVE_OGR_CORES -Iogr/ansi
+%ogrstd_LINKOBJS = output\ogr-a.obj output\ogr-b.obj output\ogr_dat.obj output\ogr_sup.obj
+%ogrstd_DEFALL   = -DHAVE_OGR_CORES -Iogr
 %ogrstd_SYMALIAS = #
 #---
 %desstd_LINKOBJS = output\des-x86.obj output\convdes.obj &
@@ -135,6 +135,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %AFLAGS   =/5s /fp3 /mf   #may be defined in the platform specific section
 %LFLAGS   =               #may be defined in the platform specific section
 %CFLAGS   =/6s /fp3 /ei /mf #may be defined in the platform specific section
+%CWARNLEV =/wx /we /wcd=604 /wcd=594
 %OPT_SIZE =/s /os         #may be redefined in the platform specific section
 %OPT_SPEED=/oneatx /oh /oi+ #redefine in platform specific section
 %LIBPATH  =               #may be defined in the platform specific section
@@ -224,14 +225,29 @@ clean :  .symbolic
   @%quit
 
 zip : .symbolic  
-  #that $(%ZIPPER) is not "" should already have been done
-  @if $(%ZIPPER).==.  @echo Error(E02): ZIPPER is not defined
-  @if $(%ZIPPER).==.  @%quit
   @if $(%ZIPFILE).==. @set ZIPFILE=$(BASENAME)-$(%OSNAME)-x86
+  @set ZIPPER=#
+  #
+  @set zipexe=#
+  @set pxxx=$(%PATH:;= )
+  @for %i in ($(%pxxx)) do @if exist %i\pkzip.exe @set zipexe=%i\pkzip.exe -exo
+  @if not $(%zipexe).==. set ZIPPER=$(%zipexe)
+  @echo gotit=$(%ZIPPER)
+  @set zipexe=#
+  @for %i in ($(%pxxx)) do @if exist %i\zip.exe @set zipexe=%i\zip.exe -u -9 -o -i -v
+  @if not $(%zipexe).==. set ZIPPER=$(%zipexe)
+  @echo gotit=$(%ZIPPER)
+  @set zipexe=
+  @set pxxx=
+  #
+  #that $(%ZIPPER) is not "" should already have been done
+  #@if $(%ZIPPER).==.  @echo Error(E02): ZIPPER is not defined
+  #@if $(%ZIPPER).==.  @%quit
+  #
   @if exist $(%ZIPFILE).zip @del $(%ZIPFILE).zip >nul:
   @%write con 
-  @echo Generating $(%ZIPFILE).zip...
-  @$(%ZIPPER) $(%ZIPOPTS) $(%ZIPFILE).zip $(%BINNAME) $(%DOCFILES)
+  @if not $(%ZIPPER).==. echo Generating $(%ZIPFILE).zip...
+  @if not $(%ZIPPER).==. $(%ZIPPER) $(%ZIPOPTS) $(%ZIPFILE).zip $(%BINNAME) $(%DOCFILES)
 
 debug : .symbolic
   @set DEBUG=1
@@ -485,7 +501,9 @@ output\modereq.obj : common\modereq.cpp $(%dependall) .AUTODEPEND
   @set isused=1
 
 output\logstuff.obj : common\logstuff.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  #with /wcd=7 to suppress "&array" may not produce intended result" warning
+  #would otherwise require 'va_list *x=((va_list *)(&(__va_list[0])))'
+  *$(%CCPP) $(%CFLAGS) /wcd=7 $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 # ----------------------------------------------------------------
@@ -627,13 +645,17 @@ output\csc-6b-i.obj : csc\x86\csc-6b-i.asm $(%dependall) .AUTODEPEND
 
 # ----------------------------------------------------------------
 
-#output\ogr.obj : ogr\ansi\ogr.cpp $(%dependall) .AUTODEPEND
-#  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-#  @set isused=1
-
-output\ogr.obj : ogr\x86\ogr.asm $(%dependall) 
-  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+output\ogr-a.obj : ogr\x86\ogr-a.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
+
+output\ogr-b.obj : ogr\x86\ogr-b.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+#output\ogr.obj : ogr\x86\ogr.asm $(%dependall) 
+#  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+#  @set isused=1
 
 output\ogr_dat.obj : ogr\ansi\ogr_dat.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
@@ -686,7 +708,8 @@ output\w32svc.obj : plat\win\w32svc.cpp $(%dependall) .AUTODEPEND
   @set isused=1
 
 output\w32cons.obj : plat\win\w32cons.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  #WCD=716 to suppress truncation warnings
+  *$(%CCPP) $(%CFLAGS) /wcd=716 $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\w32pre.obj : plat\win\w32pre.cpp $(%dependall) .AUTODEPEND
@@ -836,13 +859,23 @@ resolve_target_conflicts : .symbolic
    @set explist=#
    @set dellist=#
    @set cmplist=#
-   ### ++++ second resolution ++++
+   ### ++++ second resolution - check output dir is watcom (not vc/bcc etc) ++++
+   @set dellist=#
+   @set cmplist=output\bltwith.wat
+   @if not exist $(%cmplist) @set dellist=out # fall into third resolution
+   @for %i in ($(%dellist)) do @if exist output\bltwith.* @del output\bltwith.*
+   @for %i in ($(%dellist)) do @if exist output\*.%i @del output\*.%i
+   @%create $(%cmplist)
+   @set dellist=#
+   @set cmplist=#
+   ### ++++ third resolution - check output dir is for target OS ++++
    @set dellist=#
    @set cmplist=output\$(%OSNAME).out
    @if not exist $(%cmplist) @set dellist=out obj res
    @for %i in ($(%dellist)) do @if exist output\*.%i @del output\*.%i
    @%create $(%cmplist)
    @set dellist=#
+   @set cmplist=#
 
 #-----------------------------------------------------------------------
 
@@ -861,6 +894,7 @@ resolve_target_conflicts : .symbolic
 #-----------------------------------------------------------------------
 
 platform: .symbolic
+  @set CFLAGS    = $(%CFLAGS) $(%CWARNLEV)    ## add warning level
   @set CFLAGS    = $(%CFLAGS) /zq #-DBETA      ## compile quietly
   @set AFLAGS    = $(%AFLAGS) /q              ## assemble quietly
   @set CFLAGS    = $(%CFLAGS) $(%DEFALL)      ## tack on global defines
@@ -942,9 +976,10 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @if not $(%DOS4GW_STUB).==. @set WLINKOPS=$(%WLINKOPS) stub=$(%DOS4GW_STUB)
      @set LFLAGS    = symtrace usleep  #symtrace printf symtrace whack16 
      @set FORMAT    = os2 le
-     @set CFLAGS    = /zp8 /wx /we /6s /fp3 /fpc /zm /ei /mf &
-                      /bt=dos /d__MSDOS__ /wcd=604 /wcd=594 /wcd=7 &
-                      /DINIT_TIMESLICE=0x40000 /DDYN_TIMESLICE &
+     @set CWARNLEV  = $(%CWARNLEV)
+     @set CFLAGS    = /zp8 /6s /fp3 /fpc /zm /ei /mf &
+                      /bt=dos /d__MSDOS__ &
+                      /DDYN_TIMESLICE &
                       /DUSE_DPMI &
                       /Iplat\dos /I$(%watcom)\h #;plat\dos\libtcp
      @set OPT_SIZE  = /s /os 
@@ -955,8 +990,6 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @set LIBFILES  = #plat\dos\libtcp\libtcp.a
      @set MODULES   =
      @set IMPORTS   =
-     @set ZIPPER    = 
-     @set ZIPOPTS   = 
      @set DOCFILES  = docs\readme.dos docs\$(BASENAME).txt docs\readme.txt
      @set BINNAME   = $(BASENAME).com
      
@@ -978,6 +1011,7 @@ os2: .symbolic                                       # OS/2
      @set AFLAGS    = /5s /fp5 /bt=OS2 /mf
      @set TASMEXE   = 
      @set LFLAGS    = sys os2v2
+     @set CWARNLEV  = $(%CWARNLEV)
      @set CFLAGS    = /zp8 /5s /fp5 /bm /mf /zm /bt=os2 /DOS2 /DLURK &
                       /iplat\os2
      @set OPT_SIZE  = /s /os
@@ -1007,7 +1041,8 @@ win16: .symbolic                                       # Windows/16
      @set AFLAGS    = /5s /fp3 /bt=dos /mf
      @set TASMEXE   = tasm32.exe
      @set LFLAGS    = system win386 symtrace open #debug all op de 'SCRSAVE : distributed.net client for Windows'
-     @set CFLAGS    = /3s /w4 /zW /bt=windows /d_Windows &
+     @set CWARNLEV  = $(%CWARNLEV)
+     @set CFLAGS    = /3s /zW /bt=windows /d_Windows &
                       /i$(%watcom)\h;$(%watcom)\h\win /iplat\win &
                       /DBITSLICER_WITH_LESS_BITS /DDYN_TIMESLICE 
                       #/d2
@@ -1024,8 +1059,6 @@ win16: .symbolic                                       # Windows/16
      @set LIBFILES  =
      @set MODULES   =
      @set IMPORTS   =
-     @set ZIPPER    = 
-     @set ZIPOPTS   = -exo
      @set DOCFILES  = docs\$(BASENAME).txt docs\readme.txt
      @set BINNAME   = $(BASENAME).exe
      @%make declare_for_rc5
@@ -1057,10 +1090,11 @@ win32: .symbolic                               # win32
      @set TASMEXE   = tasm32.exe
      @set NASMEXE   = nasmw.exe
      @set WLINKOPS  = alignment=64 map
-     @set LFLAGS    = sys nt_win op de 'distributed.net client for Windows' #nt
+     @set LFLAGS    = sys nt_win op de 'distributed.net client for Windows'
+     @set CWARNLEV  = $(%CWARNLEV)
      @set CFLAGS    = /zp8 /s /fpi87 /fp6 /6s /bm /mf /zmf /zc /bt=nt /DWIN32 /DLURK &
                       /iplat\win /i$(%watcom)\h;$(%watcom)\h\nt &
-                      /DINIT_TIMESLICE=0x40000 /DDYN_TIMESLICE
+                      /DDYN_TIMESLICE
      @set OPT_SPEED = /oneatx /ok /ol+ /oh /oi+ /ei # ox=obiklmr
      @set OPT_SIZE  = /s /os #$(%OPT_SPEED) #
      @set LINKOBJS  = output\w32pre.obj output\w32ss.obj output\w32svc.obj &
@@ -1072,8 +1106,6 @@ win32: .symbolic                               # win32
      @set MODULES   =
      @set IMPORTS   =
      @set DOCFILES  = docs\$(BASENAME).txt docs\readme.txt
-     @set ZIPPER    = 
-     @set ZIPOPTS   = -exo
      @set BINNAME   = $(BASENAME).exe
      @%make declare_for_rc5
      @%make declare_for_rc5smc
@@ -1102,9 +1134,10 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
                       xdcdata=plat/netware/client.xdc osdomain
      @set LFLAGS    = op scr 'none' op osname='NetWare NLM' symtrace spawnlp #sys netware
      @set OPT_SIZE  = /os /s  
+     @set CWARNLEV  = $(%CWARNLEV)
      @set OPT_SPEED = /oneatx /oh /oi+  
-     @set CFLAGS    = /zp1 /wx /we /6s /fp3 /fpc /zm /ei /ms &
-                      /bt=dos /d__NETWARE__ /wcd=604 /wcd=594 /wcd=7 &
+     @set CFLAGS    = /zp1 /6s /fp3 /fpc /zm /ei /ms &
+                      /bt=dos /d__NETWARE__ &
                       /DBITSLICER_WITH_LESS_BITS /bt=netware &
                       /i$(inc_386) #/fpc /bt=netware /i$(%watcom)\novh #/bm
                       #/zp1 /zm /6s /fp3 /ei /ms /d__NETWARE__ &
@@ -1119,7 +1152,6 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
                       # @$(%watcom)\novi\mathlib.imp
      @set LIBPATH   = plat\netware\misc plat\netware\inet &
                       $(%watcom)\lib386 #$(%watcom)\lib386\netware
-     @set ZIPPER    = 
      @set DOCFILES  = docs\readme.nw docs\$(BASENAME).txt docs\readme.txt
      @set BINNAME   = $(BASENAME).nlm
      @set COPYRIGHT = 'Copyright 1997-2000 Distributed Computing Technologies, Inc.\r\n  Visit http://www.distibuted.net/ for more information'
@@ -1130,7 +1162,7 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
 #    @%make declare_for_des
 #    @%make declare_for_desmt
 ##   @%make declare_for_desmmx
-##   @%make declare_for_ogr
+     @%make declare_for_ogr
 #    @%make declare_for_csc
      @%make platform
      #
