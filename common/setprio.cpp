@@ -5,11 +5,12 @@
  * ------------------------------------------------------------------
  *  'prio' is a value on the scale of 0 to 9, where 0 is the lowest
  *  priority and 9 is the highest priority [9 is what the priority would 
- *  be if priority were not set, ie is 'normal' priority.] 
+ *  be if priority were not set, ie is 'normal' priority. Unices don't
+ *  re-nice() if the prio is 9 (assume external control)] 
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.50.2.14 2000/07/12 14:04:57 oliver Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.50.2.15 2000/07/13 20:55:10 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -275,16 +276,18 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
             #define PRI_OTHER_MIN 20
           #endif
         #endif
-        if (prio < 9 && prio >= 0)
+        #if defined(PRI_OTHER_MIN) && defined(PRI_OTHER_MAX)
+        if (prio < 9)
         {
           int newprio = ((((PRI_OTHER_MAX - PRI_OTHER_MIN) * prio) / 10) + 
                                                              PRIO_OTHER_MIN);
           if (pthread_setprio(pthread_self(), newprio) < 0)
             return -1;
-        }    
+        }
+        #endif    
       #endif
     }
-    else
+    else if (prio < 9) /* prio=9 means "don't change it" (external control) */
     {
       static int oldnice = 0; /* nothing to do if newnice is also zero */
       int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
