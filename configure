@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.22  1999/01/30 15:41:47  remi
+# - Deleted ${BUILDNAME}, not needed in the public configure / makefile
+# - Added TARGET_AS="gcc -c" in the x86-solaris entry
+#
 # Revision 1.113.2.21  1999/01/23 14:22:57  remi
 # Fixed alpha-* entries for the public code.
 #
@@ -764,6 +768,7 @@ case "$1" in
     *x86-solaris)    # gcc, nomt, dynamic
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris $OPTS_DES_MMX -DMMX_RC5 \
 			-DPIPELINE_COUNT=2"
+	TARGET_AS="gcc -c"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1377,28 +1382,19 @@ echo "# Regular targets follow" >> Makefile
 
 if [ "$TARGET_OS" = "OS2" ]; then
 
-echo "${EXENAME}.exe:	\${BUILDNAME}.exe" >> Makefile
-echo "	\${CP} \${BUILDNAME}.exe ${EXENAME}.exe" >> Makefile
+echo "${EXENAME}.exe:	\${ALLOBJS} \${ADDOBJS} output/${EXENAME}.res" >> Makefile
+echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${EXENAME}" >> Makefile
+echo "	emxbind -b -r output/${EXENAME}.res ${EXENAME}" >> Makefile
 echo "" >> Makefile
 
-echo "\${BUILDNAME}.exe:	\${ALLOBJS} \${ADDOBJS} output/\${BUILDNAME}.res" >> Makefile
-echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o \${BUILDNAME}" >> Makefile
-echo "	emxbind -b -r output/\${BUILDNAME}.res \${BUILDNAME}" >> Makefile
-echo "" >> Makefile
-
-echo "output/\${BUILDNAME}.res: platforms/os2cli/rc5des.rc" >> Makefile
-echo "	 platforms\\os2cli\\gcc_rc.cmd \${BUILDNAME}.res" >> Makefile
+echo "output/${EXENAME}.res: platforms/os2cli/rc5des.rc" >> Makefile
+echo "	 platforms\\os2cli\\gcc_rc.cmd ${EXENAME}.res" >> Makefile
 echo "" >> Makefile
 
 else
 
-echo "${EXENAME}:	\${BUILDNAME}" >> Makefile
-echo "	\${CP} \${BUILDNAME} ${EXENAME}" >> Makefile
-echo "	\${STRIP} ${EXENAME}" >> Makefile
-echo "" >> Makefile
-
-echo "\${BUILDNAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
-echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o \${BUILDNAME}" >> Makefile
+echo "${EXENAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
+echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${EXENAME}" >> Makefile
 echo "" >> Makefile
 
 fi
