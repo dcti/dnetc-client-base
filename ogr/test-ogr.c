@@ -89,20 +89,41 @@ int main(int argc, char *argv[])
     printf("init failed: %d\n", r);
     return 1;
   }
-  for (i = 0; i < NTESTS; i++) {
-    struct stub stub;
-    stub.marks = BestKnownRulers[i][0];
-    stub.length = 5; //BestKnownRulers[i][0] / 5 + 1;
-    for (j = 0; j < stub.length; j++) {
-      stub.stub[j] = BestKnownRulers[i][2+j];
+  if (argc == 1) {
+    for (i = 0; i < NTESTS; i++) {
+      struct stub stub;
+      stub.marks = BestKnownRulers[i][0];
+      stub.length = 5; //BestKnownRulers[i][0] / 5 + 1;
+      for (j = 0; j < stub.length; j++) {
+        stub.stub[j] = BestKnownRulers[i][2+j];
+      }
+      r = disp->create(&stub, sizeof(stub), &Tests[i].state);
+      if (r != CORE_S_OK) {
+        printf("create failed: %d\n", r);
+        return 1;
+      }
+      Tests[i].totalnodes = 0;
+      Tests[i].nodeslimit = 256;
     }
-    r = disp->create(&stub, sizeof(stub), &Tests[i].state);
-    if (r != CORE_S_OK) {
-      printf("create failed: %d\n", r);
+  } else {
+    if (argc > 2) {
+      struct stub stub;
+      stub.marks = atoi(argv[1]);
+      stub.length = argc - 2;
+      for (i = 0; i < stub.length; i++) {
+        stub.stub[i] = atoi(argv[2+i]);
+      }
+      r = disp->create(&stub, sizeof(stub), &Tests[0].state);
+      if (r != CORE_S_OK) {
+        printf("create failed: %d\n", r);
+        return 1;
+      }
+      Tests[0].totalnodes = 0;
+      Tests[0].nodeslimit = 256;
+    } else {
+      printf("Usage: %s marks stub1 stub2 ...\n", argv[0]);
       return 1;
     }
-    Tests[i].totalnodes = 0;
-    Tests[i].nodeslimit = 256;
   }
   done = 0;
   while (done < NTESTS) {
