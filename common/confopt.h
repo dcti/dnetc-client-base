@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.h,v $
+// Revision 1.4  1998/12/21 18:48:54  cyp
+// Removed 'unused'/'unimplemented' sil[l|b]yness added in recent version.
+// See client.h for full comment.
+//
 // Revision 1.3  1998/12/21 00:21:01  silby
 // Universally scheduled update time is now retrieved from the proxy,
 // and stored in the .ini file.  Not yet used, however.
@@ -75,14 +79,7 @@
 #define CONF_PAUSEFILE            43
 #define CONF_DIALWHENNEEDED       44
 #define CONF_CONNECTNAME          45
-#define CONF_DESCONTESTCLOSED     46 /* Current DES contest status */
-                                     /* 0xBEEFFOOD means closed,   */
-                                     /* otherwise checksum of      */
-                                     /* ciphertext                 */
-#define CONF_SCHEDULEDUPDATETIME  47 /* Time all clients should do */
-                                     /* a flush, in GMT - used to  */
-                                     /* coordinate project start.  */
-#define OPTION_COUNT              48
+#define OPTION_COUNT              46
 
 /* ---------------------------------------------------------------- */
 

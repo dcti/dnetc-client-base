@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: buffupd.h,v $
+// Revision 1.3  1998/12/21 18:43:58  cyp
+// Removed 'unused'/'unimplemented' sil[l|b]yness added in recent version.
+// See client.h for full comment.
+//
 // Revision 1.2  1998/12/20 23:00:35  silby
 // Descontestclosed value is now stored and retrieved from the ini file,
 // additional updated of the .ini file's contest info when fetches and
@@ -20,7 +24,5 @@
 
 #define BUFFERUPDATE_FETCH 0x01
 #define BUFFERUPDATE_FLUSH 0x02
-
-void __RefreshRandomPrefix( Client *client );
 
 #endif /* __BUFFUPD_H__ */

@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.8  1998/12/21 18:48:54  cyp
+// Removed 'unused'/'unimplemented' sil[l|b]yness added in recent version.
+// See client.h for full comment.
+//
 // Revision 1.7  1998/12/21 00:21:01  silby
 // Universally scheduled update time is now retrieved from the proxy,
 // and stored in the .ini file.  Not yet used, however.
@@ -26,7 +30,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.7 1998/12/21 00:21:01 silby Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.8 1998/12/21 18:48:54 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -418,11 +422,7 @@ struct optionstruct conf_options[OPTION_COUNT]=
   CFGTXT(""),3,3,11,NULL,NULL,0,1},
 //45  
 { "connectionname", CFGTXT("Dial-up Connection Name"),
-  "Your Internet Connection",CFGTXT(""),3,1,12,NULL},
-//46
-{ "descontestclosed","","","",0,1,0,NULL},
-//47
-{ "scheduledupdatetime","","","",0,1,0,NULL}
+  "Your Internet Connection",CFGTXT(""),3,1,12,NULL}
 };
 
 // --------------------------------------------------------------------------
