@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.138 1999/12/13 05:39:47 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.139 1999/12/27 12:16:03 patrick Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -92,8 +92,8 @@ return "@(#)$Id: problem.cpp,v 1.138 1999/12/13 05:39:47 cyp Exp $"; }
   extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
 #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
   #if (CLIENT_CPU == CPU_POWER) || defined(_AIXALL)
-    // rc5/ansi/2-rg.c
-    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+    // rc5/ansi/rc5ansi_2-rg.cpp
+    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
   #endif
   #if (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
     #if (CLIENT_OS == OS_WIN32) //NT has poor PPC assembly
@@ -339,9 +339,9 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     {
       #if (CLIENT_CPU == CPU_POWER) && !defined(_AIXALL) //not hybrid
       {
-        // rc5/ansi/2-rg.c
-        //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-        problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ; //POWER cpu
+        // rc5/ansi/rc5ansi_2-rg.cpp
+        //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
+        problem->rc5_unit_func = rc5_unit_func_ansi_2_rg ; //POWER cpu
         problem->pipeline_count = 2;
       }
       #else //((CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL))
@@ -372,7 +372,8 @@ static int __core_picker(Problem *problem, unsigned int contestid)
         if ((GetProcessorType(1) & (1L<<24)) != 0) //ARCH_IS_POWER
         {
           problem->client_cpu = CPU_POWER;
-          problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ; // rc5/ansi/2-rg.c
+          problem->rc5_unit_func = rc5_unit_func_ansi_2_rg ; 
+			// rc5/ansi/rc5ansi_2-rg.cpp
           problem->pipeline_count = 2;
           coresel = 0; //core #0 is "RG AIXALL" on POWER, and allitnil on PPC
           gotcore = 1;
