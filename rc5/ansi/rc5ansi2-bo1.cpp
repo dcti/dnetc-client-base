@@ -8,7 +8,7 @@
 /*  This file is included from rc5.cpp so we can use __inline__.  */
 
 #include "problem.h"
-#include "../rc5/rotate.h"
+#include "rotate.h"
 
 
 #if (PIPELINE_COUNT != 2)

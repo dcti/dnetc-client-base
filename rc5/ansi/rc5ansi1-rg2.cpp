@@ -59,7 +59,7 @@
 // Rémi Guyomarch - 97/07/19
 
 #include "problem.h"
-#include "../rc5/rotate.h"
+#include "rotate.h"
 
 
 #if (PIPELINE_COUNT != 1)

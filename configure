@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.22  1998/06/08 19:31:49  friedbait
+# Reverted the changes to copy the 'stubs' to ./common instead of ./rc5.
+# Per Jeff's suggestion we achieve the same effect with appropriate '-I'
+# compile options.
+#
 # Revision 1.21  1998/06/08 14:38:27  kbracey
 # Disabled stack-limit checks on RISC OS
 #
@@ -719,9 +724,9 @@ for target in ${TARGET_ALLCCOBJS}; do
   eval TARGETSRC=$`echo DEPEND_$SAFENAME`
   if [ -n "${RC5CORECOPY}" -a `basename ${TARGETSRC}` = problem.cpp ]; then
     echo "$target:	${TARGETSRC} rc5/${RC5CORECOPY}" >> Makefile
-    echo "	cp -f rc5/${RC5CORECOPY} common/rc5stub.cpp" >> Makefile
+    echo "	cp -f rc5/${RC5CORECOPY} rc5/rc5stub.cpp" >> Makefile
     echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
-    echo "	rm -f common/rc5stub.cpp" >> Makefile
+    echo "	rm -f rc5/rc5stub.cpp" >> Makefile
   else
     echo "$target:	${TARGETSRC}" >> Makefile
     echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
