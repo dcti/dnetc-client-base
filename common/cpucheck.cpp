@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.7  1998/06/28 19:48:13  silby
+// Changed default amd 486 core selection to pentium core and changed strings to reflect that.
+//
 // Revision 1.6  1998/06/23 20:22:05  cyruspatel
 // Added new function: GetTimesliceBaseline() returns a value that the
 // ideal RC5 keyrate (kKeys per Mhz) would be IF a machine were running
@@ -29,7 +32,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cpucheck.cpp,v 1.6 1998/06/23 20:22:05 cyruspatel Exp $";
+static const char *id="@(#)$Id: cpucheck.cpp,v 1.7 1998/06/28 19:48:13 silby Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -188,7 +191,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
       {    0x40, 1024,   0, "486"     }, // use Pentium core
       {  0x0440, 1024,   0, "MediaGX" },
       {  0x0490, 1185,   0, "5x86"    },
-      {  0x0520, 2090,   3, "6x86"    }, // "AMD 486, Cyrix 6x86/6x86MX/M2"
+      {  0x0520, 2090,   3, "6x86"    }, // "Cyrix 6x86/6x86MX/M2"
       {  0x0540, 1200,   0, "GXm"     }, // use Pentium core here too
       {  0x0600, 2115,   3, "6x86MX"  },
       {  0x0000, 2115,   3, NULL      } //default core == 6x86
@@ -210,13 +213,13 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     vendorname = "AMD";
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
-      {  0x0040, 1024,   3, "486"      },   // "AMD 486, Cyrix 6x86/6x86MX/M2",
-      {  0x0430, 1024,   3, "486DX2"   },
-      {  0x0470, 1024,   3, "486DX2WB" },
-      {  0x0480, 1024,   3, "486DX4"   },
-      {  0x0490, 1024,   3, "486DX4WB" },
-      {  0x04E0, 1185,   3, "5x86"     },
-      {  0x04F0, 1185,   3, "5x86WB"   },
+      {  0x0040, 1024,   0, "486"      },   // "Pentium, Pentium MMX, Cyrix 486/5x86/MediaGX, AMD 486",
+      {  0x0430, 1024,   0, "486DX2"   },
+      {  0x0470, 1024,   0, "486DX2WB" },
+      {  0x0480, 1024,   0, "486DX4"   },
+      {  0x0490, 1024,   0, "486DX4WB" },
+      {  0x04E0, 1185,   0, "5x86"     },
+      {  0x04F0, 1185,   0, "5x86WB"   },
       {  0x0500, 2353,   4, "K5 PR75, PR90, or PR100" }, // use K5 core
       {  0x0510, 2353,   4, "K5 PR120 or PR133" },
       {  0x0520, 2353,   4, "K5 PR166" },

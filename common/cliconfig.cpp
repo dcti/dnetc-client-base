@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.115  1998/06/28 19:48:08  silby
+// Changed default amd 486 core selection to pentium core and changed strings to reflect that.
+//
 // Revision 1.114  1998/06/27 20:57:14  remi
 // Fixed "Setting DES buffer size to %d" to print DES buffer size, not the RC5
 // one.
@@ -122,7 +125,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.114 1998/06/27 20:57:14 remi Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.115 1998/06/28 19:48:08 silby Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -146,10 +149,10 @@ static const char *id="@(#)$Id: cliconfig.cpp,v 1.114 1998/06/27 20:57:14 remi E
 static char cputypetable[7][60]=
   {
   "Autodetect",
-  "Pentium, Pentium MMX, & Cyrix 486/5x86/MediaGX",
+  "Pentium, Pentium MMX, Cyrix 486/5x86/MediaGX, AMD 486",
   "Intel 80386 & 80486",
   "Pentium Pro & Pentium II",
-  "AMD 486, Cyrix 6x86/6x86MX/M2",
+  "Cyrix 6x86/6x86MX/M2",
   "AMD K5",
   "AMD K6",
   };
