@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.63 1999/04/04 17:37:05 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64 1999/05/08 19:18:24 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -51,6 +51,7 @@ void DisplayHelp( const char * unrecognized_option )
     "-benchmark2        quick (but slightly inaccurate) client speed test",
     "-restart, -hup     restart all active clients",
     "-shutdown, -kill   gracefully shut down all active clients",
+    "-pause             pause all (-unpause is equivalent to -restart)",
   #if (CLIENT_OS == OS_WIN32)
     "-install           install the client as a service",
     "-uninstall         uninstall the client if running as a service",
