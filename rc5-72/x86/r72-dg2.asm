@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.4 2002/10/21 05:39:06 acidblood Exp $
+; $Id: r72-dg2.asm,v 1.5 2002/10/21 18:21:54 acidblood Exp $
 
 [GLOBAL rc5_72_unit_func_dg_2_]
 [GLOBAL _rc5_72_unit_func_dg_2]
@@ -721,7 +721,7 @@ test_key_2:
         mov     [RC5_72UnitWork_CMCmid], ecx
         mov     [RC5_72UnitWork_CMClo], edx
 
-        jne     test_key_2
+        jne     inc_key
 
         mov     ecx, [work_iterations]
         mov     esi, [iterations]
