@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.24  1999/02/21 09:51:39  silby
+// Changes for large block support.
+//
 // Revision 1.23  1999/01/29 04:15:36  pct
 // Updates for the initial attempt at a multithreaded/multicored Digital
 // Unix Alpha client.  Sorry if these changes cause anyone any grief.
@@ -81,7 +84,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-return "@(#)$Id: des-slice-meggs.cpp,v 1.23 1999/01/29 04:15:36 pct Exp $"; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.24 1999/02/21 09:51:39 silby Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -369,8 +372,12 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
 
     return nbkeys;
 
-  } else {
-    rc5unitwork->L0.lo += 1 << nbbits;
+  }
+  else
+  {
+    rc5unitwork->L0.lo += 1 << nbbits; // Increment lower 32 bits
+    if (rc5unitwork->L0.lo < (u32)(1 << nbbits) )
+      rc5unitwork->L0.hi++; // Carry to high 32 bits if needed
     return 1 << nbbits;
   }
 }

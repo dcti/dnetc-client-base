@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.24  1999/02/21 09:51:39  silby
+// Changes for large block support.
+//
 // Revision 1.23  1998/12/25 03:23:43  cyp
 // Bryd now supports upto 4 processors. The third and fourth processor will
 // use the two (otherwise idle) cores, ie pro on a p5 machine and vice versa.
@@ -75,7 +78,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_x86_cpp(void) {
-return "@(#)$Id: des-x86.cpp,v 1.23 1998/12/25 03:23:43 cyp Exp $"; }
+return "@(#)$Id: des-x86.cpp,v 1.24 1999/02/21 09:51:39 silby Exp $"; }
 #endif
 
 
@@ -317,8 +320,12 @@ static u32 which_bryd(RC5UnitWork * rc5unitwork, u32 nbbits, int launch_index)
 
     return nbkeys;
 
-  } else {
-    rc5unitwork->L0.lo += 1 << nbbits;
+  }
+  else
+  {
+    rc5unitwork->L0.lo += 1 << nbbits; // Increment lower 32 bits
+    if (rc5unitwork->L0.lo < (u32)(1 << nbbits) )
+      rc5unitwork->L0.hi++; // Carry to high 32 bits if needed
     return 1 << nbbits;
   }
 }

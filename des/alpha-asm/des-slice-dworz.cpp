@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-dworz.cpp,v $
+// Revision 1.5  1999/02/21 09:53:20  silby
+// Changes for large block support.
+//
 // Revision 1.4  1999/02/09 04:15:36  dworz
 // moved keyschedule to deseval-dworz3.S
 // changed the setup of PT and CT
@@ -21,7 +24,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_dworz_cpp(void) {
-return "@(#)$Id: des-slice-dworz.cpp,v 1.4 1999/02/09 04:15:36 dworz Exp $"; }
+return "@(#)$Id: des-slice-dworz.cpp,v 1.5 1999/02/21 09:53:20 silby Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -125,7 +128,9 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
 #ifdef DEBUG
     Log(" -> EK not found\n");
 #endif
-	rc5unitwork->L0.lo += 1 << nbbits;
+        rc5unitwork->L0.lo += 1 << nbbits; // Increment lower 32 bits
+        if (rc5unitwork->L0.lo < (u32)(1 << nbbits) )
+          rc5unitwork->L0.hi++; // Carry to high 32 bits if needed
 	return 1 << nbbits;
 
 found:

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice.cpp,v $
+// Revision 1.9  1999/02/21 09:51:39  silby
+// Changes for large block support.
+//
 // Revision 1.8  1998/12/20 03:16:15  cyp
 // Trivial change to suppress a pedantic compile-time warning.
 //
@@ -32,7 +35,7 @@
 // encapsulate the bitslice SolNET code
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_cpp(void) {
-return "@(#)$Id: des-slice.cpp,v 1.8 1998/12/20 03:16:15 cyp Exp $"; }
+return "@(#)$Id: des-slice.cpp,v 1.9 1999/02/21 09:51:39 silby Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -303,9 +306,13 @@ u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, u32 nbbits )
 
 	return nbkeys;
 
-    } else {
-	rc5unitwork->L0.lo += 1 << nbbits;
-	return 1 << nbbits;
+    }
+    else
+    {
+      rc5unitwork->L0.lo += 1 << nbbits; // Increment lower 32 bits
+      if (rc5unitwork->L0.lo < (u32)(1 << nbbits) )
+        rc5unitwork->L0.hi++; // Carry to high 32 bits if needed
+      return 1 << nbbits;
     }
 }
 
