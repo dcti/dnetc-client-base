@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version-conflict.h,v $
+// Revision 1.8  1998/07/12 08:05:12  silby
+// Updated to 416, updated changelog
+//
 // Revision 1.7  1998/07/07 21:55:55  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -40,7 +43,7 @@
 
 #define CLIENT_CONTEST      71
 #define CLIENT_BUILD        00
-#define CLIENT_BUILD_FRAC   415
+#define CLIENT_BUILD_FRAC   416
 
 #define CLIENT_VERSIONSTRING    "v2.7100.415"
 #define CLIENT_VERSIONSTRING2   "2.7100.415"        // no leading "v"
