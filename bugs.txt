@@ -6,7 +6,17 @@ Bugs Listing
   This is a text file that lists any bugs that have been found by either
   the coders, or by users.
 
-07-01-98 - Oscar Chang
+1998/Aug/24 - Cyrus Patel
+  "Lurk"ers: fix the FIXMEs in netinit.cpp
+  Win32 gui (only?) 417: (a) the client is not following the ini's path if 
+  one has been specified on the command line. (b) the client is writing 
+  the names of the checkpoint files supplied on the command line back to 
+  the ini (It might be writing back more than that, unchecked.) even when
+  config is not run (See related report 1998/Jan/06 by Remi). 
+  The combination of (a) and (b) makes cross-platform buffer sharing 
+  impossible. 
+  
+1998/Jul/01 - Oscar Chang
   Can't figure out how to fix the weirdness of -runbuffers. Can someone more
   farmilar with the Run() loops take a look?
 FIXED SORTOF - Jeff
@@ -14,13 +24,13 @@ FIXED SORTOF - Jeff
   buffers are emptied instead of after the blocks currently in memory
   are completed.
 
-06-23-98 - Kevin Bracey
+1998/Jun/23 - Kevin Bracey
   The help display crashes if the terminal height is more than the
   amount to be displayed.
 FIXED - Remi
 
   
-06-18-98 - Kevin Bracey
+1998/Jun/18 - Kevin Bracey
   There seem to be far too many breaks in the switch statement in the x86
   section of Client::SelectCore(). I think the fix is obvious, but I thought
   I'd better leave it to an x86 weenie.
@@ -87,8 +97,7 @@ QUESTION - ZiggyB
   .....10%.....20%.....30%.....40%.....50%.....60%.....70%...(etc)...100
   Completed 5 RC5 Blocks 0.00:32:15.64 - [559887.82 keys/s]
 FIXED - Cyrus
-  a benchmark no longer affects (nor looks at) the cumulative
-  block statistics anymore.
+  a benchmark no longer affects (nor uses) the cumulative block statistics.
 
 
 06-08-98 - Jeff Lawson
