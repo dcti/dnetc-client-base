@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.2 2002/10/21 05:02:57 acidblood Exp $
+; $Id: r72-dg2.asm,v 1.3 2002/10/21 05:22:26 acidblood Exp $
 
 [GLOBAL rc5_72_unit_func_dg_2_]
 [GLOBAL _rc5_72_unit_func_dg_2]
@@ -654,6 +654,7 @@ encryption:
 test_key_1:
         cmp     A1, [work_C_0]
         mov     eax, [RC5_72UnitWork]
+
         jne     test_key_2
 
         inc     dword [RC5_72UnitWork_CMCcount]
@@ -662,11 +663,12 @@ test_key_1:
         mov     esi, [RC5_72UnitWork_L0mid]
         mov     edi, [RC5_72UnitWork_L0lo]
 
+        cmp     B1, [work_C_1]
+
         mov     [RC5_72UnitWork_CMChi], ecx
         mov     [RC5_72UnitWork_CMCmid], esi
         mov     [RC5_72UnitWork_CMClo], edi
 
-        cmp     B1, [work_C_1]
         jne     test_key_2
 
         mov     ecx, [work_iterations]
@@ -702,7 +704,7 @@ test_key_1:
 ;      }
 ;    }
 
-align 16
+k7align 16
 test_key_2:
         cmp     A2, [work_C_0]
         mov     ebx, [RC5_72UnitWork_L0hi]
@@ -713,11 +715,11 @@ test_key_2:
 
         inc     dword [RC5_72UnitWork_CMCcount]
 
+        cmp     B2, [work_C_1]
+
         mov     [RC5_72UnitWork_CMChi], ebx
         mov     [RC5_72UnitWork_CMCmid], ecx
         mov     [RC5_72UnitWork_CMClo], edx
-
-        cmp     B2, [work_C_1]
 
         jne     test_key_2
 
@@ -747,7 +749,6 @@ k7align 16
 inc_hi:
         add     bl, 2
         bswap   ecx
-        bswap   edx
 
         mov     [RC5_72UnitWork_L0hi], ebx
         mov     L1(2), ebx
@@ -759,7 +760,13 @@ inc_mid:
         jnz     inc_iter
 
 inc_lo:
+        bswap   edx
+
         inc     edx
+
+        bswap   edx
+
+        mov     [RC5_72UnitWork_L0lo], edx
 
 k7align 16
 inc_iter:
@@ -767,16 +774,13 @@ inc_iter:
         dec     dword [work_iterations]
         bswap   ecx
 
-        bswap   edx
         mov     L2(2), ebx
         mov     L1(1), ecx
-
         mov     L2(1), ecx
+
         mov     L1(0), edx
         mov     L2(0), edx
-
         mov     [RC5_72UnitWork_L0mid], ecx
-        mov     [RC5_72UnitWork_L0lo], edx
 
         jnz     key_setup_1
 
