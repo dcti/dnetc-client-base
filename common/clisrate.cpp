@@ -6,6 +6,9 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.29  1998/07/13 18:01:23  friedbait
+// fixed some typos in 'num_sep()'
+//
 // Revision 1.28  1998/07/13 03:29:54  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
 // ambiguities. ("declaration/type or an expression")
@@ -122,7 +125,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-static const char *id="@(#)$Id: clisrate.cpp,v 1.28 1998/07/13 03:29:54 cyruspatel Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.29 1998/07/13 18:01:23 friedbait Exp $";
 return id; }
 #endif
 
@@ -144,11 +147,11 @@ return id; }
  *
  * Description:
  *
- *  This routine takes a string which actually represents a numer
+ *  This routine takes a string which actually represents a number
  *  for instance "1234567" and converts it to "1,234,567". Effectively
- *  it adds a colon for each 3 digits. The function checks whether
+ *  it adds a comma for each 3 digits. The function checks whether
  *  a 'fractional part' indicated by a '.' is present and takes care
- *  of this by skipping the '.' and the fraction and whatever follows
+ *  of this by skipping the '.', the fraction, and whatever follows
  *  the fraction.
  *
  * Known Side Effects:
@@ -156,7 +159,7 @@ return id; }
  *  The function currently does not work correctly if 'number' points
  *  to a string with some other characters prefixed to the number in
  *  question. It also doesn't work, if the 'number' string is a pure
- *  integer without a fraction and still postfixed with some non-number
+ *  integer without a fraction and is still postfixed with some non-number
  *  data.
  *
  * Return Value:
@@ -178,7 +181,7 @@ static char *num_sep(char *number)
     #define STR_LEN 32
     static char num_string[STR_LEN + 1];
 
-    char *cp, *wp, *xp;
+    char *rp, *wp, *xp;             /* read ptr, write ptr, aux ptr */
     register unsigned int digits;
     register unsigned int i, j;
 
@@ -193,17 +196,17 @@ static char *num_sep(char *number)
 
     strcpy(num_string, number);
     digits = strlen(num_string);
-    cp = num_string + digits - 1;
+    rp = num_string + digits - 1;
     wp = num_string + STR_LEN;
     *wp-- = '\0';
     if ((xp = strchr(num_string, '.')) != NULL) {
-        while (cp >= xp) {
-            *wp-- = *cp--;
+        while (rp >= xp) {
+            *wp-- = *rp--;
             digits--;
         }
     }
     for (i = digits, j = 1; i; i--, j++) {
-        *wp-- = *cp--;
+        *wp-- = *rp--;
         if (j && ((j % 3) == 0))
            *wp-- = ',';
     }
