@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.216 1999/04/08 19:09:20 snake Exp $
+# @(#)$Id: configure,v 1.217 1999/04/16 22:27:17 elric Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -1168,8 +1168,7 @@ case "$1" in
 
     *x86-netbsd)
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
@@ -1329,7 +1328,7 @@ case "$1" in
     *arm-netbsd)
 	TARGET_CC="gcc"
 	TARGET_AS="as"
-	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
+	TARGET_CCFLAGS="$OPTS_GCC_ARM -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS=""
 	TARGET_ADDASMS="rc5/arm/rc5-sa-gnu.s rc5/arm/rc5-arm-gnu.s \
 			des/des-slice-sa-gnu.s des/des-slice-arm-gnu.s"
