@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.23  1998/06/29 07:59:42  ziggyb
+// Need Fake Bool on my older version of Watcom
+//
 // Revision 1.22  1998/06/29 06:58:00  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -343,6 +346,8 @@ struct s128 { s64 hi, lo; };
 #if defined(__VMS) || defined(__SUNPRO_CC) || defined(__DECCXX) || defined(__MVS__)
   #define NEED_FAKE_BOOL
 #elif defined(_HPUX) || defined(_OLD_NEXT_)
+  #define NEED_FAKE_BOOL
+#elif defined(OS2)
   #define NEED_FAKE_BOOL
 #elif defined(__WATCOMC__)           
   //nothing - bool is defined
