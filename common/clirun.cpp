@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.11 1999/09/22 03:06:15 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.12 1999/10/07 18:38:57 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -49,17 +49,17 @@ static struct
 struct __dyn_timeslice_struct
 {
   unsigned int contest; 
-  u32 msec, max, min; 
-  u32 optimal;
+  u32 usec;              /* time */
+  u32 max, min, optimal; /* ... timeslice/nodes */
 };
 
 static struct __dyn_timeslice_struct 
   default_dyn_timeslice_table[CONTEST_COUNT] = 
 {
-  {  RC5, 1000, 0x80000000,  0x00100,  0x10000 },
-  {  DES, 1000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR,  200,   0x100000,  0x00100,  0x10000 }, //in units of nodes
-  {  CSC, 1000, 0x80000000,  0x00100,  0x10000 }
+  {  RC5, 1000000, 0x80000000,  0x00100,  0x10000 },
+  {  DES, 1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR,  200000,   0x100000,  0x00100,  0x10000 },
+  {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 }
 }; 
 
 // =====================================================================
@@ -238,11 +238,17 @@ static void __thread_yield__(void)
     }
   }
 #elif (CLIENT_OS == OS_NETWARE)
+  int usepollprocess = 0;
   if (thrparams->realthread)
   {
     thrparams->threadID = GetThreadID(); /* in case we got here first */
     nwCliInitializeThread( threadnum+1 );
     /* rename thread, migrate to MP, bind to cpu... */
+    if (nwCliGetPollingAllowedFlag() && threadnum == 0)
+    {
+      thrparams->thread_restart_time = 0;  
+      usepollprocess = 1;
+    }
   }
 #elif (CLIENT_OS == OS_MACOS)
   if (thrparams->realthread)
@@ -291,7 +297,8 @@ static void __thread_yield__(void)
     }
     else
     {
-      int run; u32 optimal_timeslice = 0; u32 runtime_ms;
+      int run; u32 optimal_timeslice = 0;
+      u32 elapsed_sec, elapsed_usec, runtime_usec;
       unsigned int contest_i = thisprob->contest;
       u32 last_count = thisprob->core_run_count; 
                   
@@ -313,11 +320,36 @@ static void __thread_yield__(void)
       }
       #endif
 
-      runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000);
+      elapsed_sec = thisprob->runtime_sec;
+      elapsed_usec = thisprob->runtime_usec;
+
       thrparams->is_suspended = 0;
+      #if (CLIENT_OS == OS_NETWARE)
+      if (usepollprocess)
+        run = nwCliRunProblemAsCallback( thisprob, threadnum+1, thrparams->priority);
+      else
+      #endif
       run = thisprob->Run();
       thrparams->is_suspended = 1;
-      runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000) - runtime_ms;
+
+      if (thisprob->runtime_usec < elapsed_usec)
+      {
+        if (thisprob->runtime_sec <= elapsed_sec) /* clock is bad */
+          elapsed_sec = (0xfffffffful / 1000000ul) + 1; /* overflow it */
+        else
+        {
+          elapsed_sec = (thisprob->runtime_sec-1) - elapsed_sec;
+          elapsed_usec = (thisprob->runtime_usec+1000000ul) - elapsed_usec;
+        }
+      }
+      else
+      {
+        elapsed_sec = thisprob->runtime_sec - elapsed_sec;
+        elapsed_usec = thisprob->runtime_usec - elapsed_usec;
+      }
+      runtime_usec = 0xfffffffful;
+      if (elapsed_sec <= (0xfffffffful / 1000000ul))
+        runtime_usec = (elapsed_sec * 1000000ul) + elapsed_usec;
 
       didwork = (last_count != thisprob->core_run_count);
       if (run != RESULT_WORKING)
@@ -343,11 +375,13 @@ static void __thread_yield__(void)
             totaltime = totalts = 0;
             ctr = 0;
           }
-          totaltime += runtime_ms;
+          totaltime += runtime_usec;
           totalts += optimal_timeslice;
-          if ((++ctr) >= 1000)
+          ctr++;
+          if (ctr >= 1000 || totaltime > 100000000ul)
           {
-            LogScreen("ctr: %u avg timeslice: %lu  avg time: %lums\n", ctr, totalts/ctr, totaltime/ctr );
+            if (ctr)
+              LogScreen("ctr: %u avg timeslice: %lu  avg time: %luus\n", ctr, totalts/ctr, totaltime/ctr );
             totaltime = totalts = 0;
             ctr = 0;
           }
@@ -355,14 +389,14 @@ static void __thread_yield__(void)
         #endif
         if (run == RESULT_WORKING) /* timeslice/time is invalid otherwise */
         {
-          unsigned int msec5perc = (thrparams->dyn_timeslice_table[contest_i].msec / 20);
-          if (runtime_ms < (thrparams->dyn_timeslice_table[contest_i].msec - msec5perc))
+          unsigned int usec5perc = (thrparams->dyn_timeslice_table[contest_i].usec / 20);
+          if (runtime_usec < (thrparams->dyn_timeslice_table[contest_i].usec - usec5perc))
           {
             optimal_timeslice <<= 1;
             if (optimal_timeslice > thrparams->dyn_timeslice_table[contest_i].max)
               optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].max;
           }
-          else if (runtime_ms > (thrparams->dyn_timeslice_table[contest_i].msec + msec5perc))
+          else if (runtime_usec > (thrparams->dyn_timeslice_table[contest_i].usec + usec5perc))
           {
             optimal_timeslice -= (optimal_timeslice>>2);
             //optimal_timeslice >>= 1;
@@ -387,8 +421,8 @@ static void __thread_yield__(void)
          re-chaining to a child, we not only zero our cruncher's stats,
          we also give MP a chance to better shuffle things about.
       */
-      if (thrparams->thread_restart_time && thrparams->realthread && 
-          didwork && !CheckExitRequestTriggerNoIO())
+      if (!usepollprocess && thrparams->thread_restart_time && 
+         thrparams->realthread && didwork && !CheckExitRequestTriggerNoIO())
       {
         unsigned long tnow = GetCurrentTime();
         if (tnow > thrparams->thread_restart_time)
@@ -686,16 +720,11 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         thrparams->threadID = _beginthread( Go_mt, NULL, 8192, (void *)thrparams );
         success = ( thrparams->threadID != -1);
       #elif (CLIENT_OS == OS_NETWARE)
-      //if (!NWSMPIsAvailable())
-      //  use_poll_process = 1;
-      //else
-      {
-        thrparams->thread_restart_time = 0;
-        if (nwCliAreCrunchersRestartable())
-          thrparams->thread_restart_time = GetCurrentTime()+(10*60*18);
-        success = ((thrparams->threadID = nwCliCreateThread( 
-                                          Go_mt, (void *)thrparams )) != -1);
-      }
+      thrparams->thread_restart_time = 0;
+      if (nwCliAreCrunchersRestartable())
+        thrparams->thread_restart_time = GetCurrentTime()+(10*60*18);
+      success = ((thrparams->threadID = nwCliCreateThread( 
+                                        Go_mt, (void *)thrparams )) != -1);
       #elif (CLIENT_OS == OS_BEOS)
         char thread_name[128];
         long be_priority = thrparams->priority+1;
@@ -911,7 +940,7 @@ int Client::Run( void )
   {
     if (load_problem_count > 1)
       Log( "Loading crunchers with work...\n" );
-    load_problem_count = LoadSaveProblems( load_problem_count, 0 );
+    load_problem_count = LoadSaveProblems( this, load_problem_count, 0 );
 
     if (CheckExitRequestTrigger())
     {
@@ -961,12 +990,12 @@ int Client::Run( void )
       #if (CLIENT_OS == OS_RISCOS)
       if (riscos_in_taskwindow)
       {
-        default_dyn_timeslice_table[tsinitd].msec = 30;
+        default_dyn_timeslice_table[tsinitd].usec = 30000;
         default_dyn_timeslice_table[tsinitd].optimal = 32768;
       }
       else
       {
-        default_dyn_timeslice_table[tsinitd].msec = 1000;
+        default_dyn_timeslice_table[tsinitd].usec = 1000000;
         default_dyn_timeslice_table[tsinitd].optimal = 131072;
       }
       #elif (CLIENT_OS == OS_NETWARE) 
@@ -981,11 +1010,9 @@ int Client::Run( void )
          from the timer on a 386)
       */
       default_dyn_timeslice_table[tsinitd].optimal = GetTimesliceBaseline();
-      default_dyn_timeslice_table[tsinitd].msec = (priority+1)*2;
-      if (GetFileServerMajorVersionNumber() < 4)
-        default_dyn_timeslice_table[tsinitd].msec += 10;
+      default_dyn_timeslice_table[tsinitd].usec = 500 * (priority+1);
       #else /* x86 */
-      default_dyn_timeslice_table[tsinitd].msec = 22; /* 55/2 ms */
+      default_dyn_timeslice_table[tsinitd].usec = 27500; /* 55/2 ms */
       default_dyn_timeslice_table[tsinitd].optimal = GetTimesliceBaseline();
       #endif
     }
@@ -1052,9 +1079,9 @@ int Client::Run( void )
     if (load_problem_count < planned_problem_count)
     {
       if (TimeToQuit)
-        LoadSaveProblems(planned_problem_count,PROBFILL_UNLOADALL);
+        LoadSaveProblems(this, planned_problem_count,PROBFILL_UNLOADALL);
       else
-        LoadSaveProblems(load_problem_count, PROBFILL_RESIZETABLE);
+        LoadSaveProblems(this, load_problem_count, PROBFILL_RESIZETABLE);
     }
   }
 
@@ -1189,7 +1216,7 @@ int Client::Run( void )
       int anychanged;
       if (!percentprintingoff)
         LogScreenPercent( load_problem_count ); //logstuff.cpp
-      anychanged = LoadSaveProblems(load_problem_count,PROBFILL_ANYCHANGED);
+      anychanged = LoadSaveProblems(this,load_problem_count,PROBFILL_ANYCHANGED);
       runstatics.refillneeded = 0;
 
       if (CheckExitRequestTriggerNoIO())
@@ -1244,7 +1271,7 @@ int Client::Run( void )
           }
           if (desisrunning == 0)
           {
-            int rc = BufferUpdate( BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH, 0 );
+            int rc = BufferUpdate( this, BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH, 0 );
             if (rc > 0 && (rc & BUFFERUPDATE_FETCH)!=0)
               desisrunning = (GetBufferCount( DES, 0/*in*/, NULL) != 0);
           }
@@ -1386,7 +1413,7 @@ int Client::Run( void )
 
   if (probmanIsInit)
   {
-    LoadSaveProblems( load_problem_count, PROBFILL_UNLOADALL );
+    LoadSaveProblems( this,load_problem_count, PROBFILL_UNLOADALL );
     CheckpointAction( CHECKPOINT_CLOSE, 0 ); /* also done by LoadSaveProb */
     DeinitializeProblemManager();
   }

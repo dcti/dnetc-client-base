@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.8 1999/09/28 12:53:05 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.9 1999/10/07 18:39:00 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -153,14 +153,16 @@ extern "C" void riscos_upcall_6(void);
   #error RC5ANSICORE is disappearing. Please declare/prototype cores by CLIENT_CPU and assert PIPELINE_COUNT
 #endif
 
-#ifdef CSC_TEST
+/* ------------------------------------------------------------------- */
+
 // CSC cores
 extern s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *timeslice, void *membuff );
 extern s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *timeslice, void *membuff );
 extern s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *timeslice, void *membuff );
 extern s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *timeslice, void *membuff );
-#endif
+
 /* ------------------------------------------------------------------- */
+
 
 Problem::Problem(long _threadindex /* defaults to -1L */)
 {
@@ -554,25 +556,25 @@ static int __core_picker(Problem *problem, unsigned int contestid, int cputype)
   }
   #endif
 
-  #ifdef CSC_TEST
-  if( contest == CSC ) // CSC
+  #ifdef HAVE_CSC_CORES
+  if( contestid == CSC ) // CSC
   {
-    pipeline_count = 1;
-    unit_func = csc_unit_func_1k_i; /* default */
+    problem->pipeline_count = 1;
+    problem->unit_func = csc_unit_func_1k_i; /* default */
     switch( cputype ) 
     {
-      case 0 : unit_func = csc_unit_func_6b_i;
+      case 0 : problem->unit_func = csc_unit_func_6b_i;
                break;
-      case 1 : unit_func = csc_unit_func_6b;
+      case 1 : problem->unit_func = csc_unit_func_6b;
                break;
-      case 2 : unit_func = csc_unit_func_1k_i;
+      case 2 : problem->unit_func = csc_unit_func_1k_i;
                break;
-      case 3 : unit_func = csc_unit_func_1k;
+      case 3 : problem->unit_func = csc_unit_func_1k;
                break;
     }
     return 0;
   }
-  #endif /* #ifdef CSC_TEST */
+  #endif /* #ifdef HAVE_CSC_CORES */
 
   return -1; /* core selection failed */
 }
@@ -613,7 +615,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   {
     case RC5:
     case DES:
-    case CSC: // CSC_TEST
+    case CSC: // HAVE_CSC_CORES
 
       // copy over the state information
       contestwork.crypto.key.hi = ( work->crypto.key.hi );
@@ -915,7 +917,7 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
 
 int Problem::Run_CSC(u32 *timesliceP, int *resultcode)
 {
-#ifndef CSC_TEST
+#ifndef HAVE_CSC_CORES
   timesliceP = timesliceP;
   *resultcode = -1;
   return -1;
@@ -1265,7 +1267,49 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   return last_resultcode;
 }
 
-/* ======================================================================= */
-/*                                 FINIS                                   */
-/* ======================================================================= */
+/* ----------------------------------------------------------------------- */
 
+int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
+{
+  prob_index = prob_index; /* possibly unused */
+  switch (contest_i)
+  {
+    case RC5: 
+    {
+      #if (CLIENT_OS == OS_RISCOS) /* RISC OS x86 thread only supports RC5 */
+      if (prob_index == 1 && contest_i != RC5)
+        return 0;
+      #endif
+      return 1;
+    }
+    case DES:
+    {
+      #ifdef NO_DES_SUPPORT
+      return 0;
+      #elif (CLIENT_OS == OS_NETWARE)
+      if (prob_index == -1L) /* benchmark/test */
+        return 1;
+      return nwCliIsPreemptiveEnv();
+      #else
+      return 1;
+      #endif
+    }
+    case OGR:
+    {
+      #ifdef GREGH
+      return 1;
+      #else
+      return 0;
+      #endif
+    }
+    case CSC:
+    {
+      #ifdef HAVE_CSC_CORES
+      return 1;
+      #else
+      return 0;
+      #endif
+    }
+  }
+  return 0;
+}

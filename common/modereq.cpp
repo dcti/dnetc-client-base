@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.28.2.3 1999/09/19 16:08:58 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.28.2.4 1999/10/07 18:38:58 cyp Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -134,7 +134,6 @@ int ModeReqRun(Client *client)
           unsigned int contest, benchsecs = 16;
           if ((bits & (MODEREQ_BENCHMARK_QUICK))!=0)
             benchsecs = 8;
-          client->SelectCore( 0 /* not quietly */ );
           for (contest = 0; contest < CONTEST_COUNT; contest++)
           {
             if (CheckExitRequestTriggerNoIO())
@@ -143,7 +142,7 @@ int ModeReqRun(Client *client)
                 (bits & bmask2cid[contest]) != 0)
             {
               retval |= bmask2cid[contest];
-              TBenchmark( contest, benchsecs, client->cputype, 0 );
+              TBenchmark( contest, benchsecs, -1, 0 );
             }
           }
         }    
@@ -189,7 +188,7 @@ int ModeReqRun(Client *client)
           int interactive = ((bits & MODEREQ_FQUIET) == 0);
           domode  = ((bits & MODEREQ_FETCH) ? BUFFERUPDATE_FETCH : 0);
           domode |= ((bits & MODEREQ_FLUSH) ? BUFFERUPDATE_FLUSH : 0);
-          domode = client->BufferUpdate( domode, interactive );
+          domode = BufferUpdate( client, domode, interactive );
           if (domode & BUFFERUPDATE_FETCH)
             retval |= MODEREQ_FETCH;
           if (domode & BUFFERUPDATE_FLUSH)
@@ -236,10 +235,9 @@ int ModeReqRun(Client *client)
         if (client)
         {
           unsigned int contestid = 0;
-          client->SelectCore( 0 /* not quietly */ );
           for (contestid = 0; contestid < CONTEST_COUNT; contestid++ ) 
           {
-            if ( SelfTest(contestid, client->cputype ) < 0 ) 
+            if ( SelfTest(contestid, -1 ) < 0 ) 
               break;
           }
         }

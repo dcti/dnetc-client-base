@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.5 1999/09/15 13:12:24 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.6 1999/10/07 18:38:58 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -279,31 +279,10 @@ static long __loadapacket( Client *client, WorkRecord *wrdata,
   for (cont_i = 0; (bufcount < 0 && cont_i < CONTEST_COUNT); cont_i++ )
   {
     unsigned int selproject = (unsigned int)client->loadorder_map[cont_i];
-
-#ifndef GREGH
-if (selproject == OGR)
-  continue;
-#endif  
-#ifndef CSC_TEST
-if (selproject == CSC)
-  continue;
-#endif
-
     if (selproject >= CONTEST_COUNT) /* user disabled */
       continue;
-    #if (CLIENT_OS == OS_RISCOS) /* RISC OS x86 thread only supports RC5 */
-    if (prob_i == 1 && selproject != RC5)
-      continue;
-    #endif
-    #if defined(NO_DES_SUPPORT)
-    if (selproject == DES)
-      continue;
-    #endif
-    #if (CLIENT_OS == OS_NETWARE) /* needs precise timeslice control */
-    if (selproject == DES && !nwCliIsPreemptiveEnv())
-      continue;
-    #endif
-
+    if (!IsProblemLoadPermitted((long)prob_i, cont_i))
+      continue; /* problem.cpp - result depends on #defs, threadsafety etc */
     bufcount = client->GetBufferRecord( wrdata, selproject, 0 );
 //LogScreen("trying contest %d count %ld\n", selproject, bufcount );
   }
@@ -333,7 +312,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   if (bufcount < 0 && client->nonewblocks == 0)
   {
     int didupdate = 
-       client->BufferUpdate((BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
+       BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
     if (!(didupdate < 0))
     {
       if (client->randomchanged)        
@@ -537,7 +516,8 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
 
 // --------------------------------------------------------------------
 
-unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
+unsigned int LoadSaveProblems(Client *client,
+                              unsigned int load_problem_count,int mode)
 {
   static unsigned int previous_load_problem_count = 0, reentrant_count = 0;
 
@@ -617,10 +597,10 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
     loaded_problems_count[cont_i]=loaded_normalized_key_count[cont_i]=0;
     saved_problems_count[cont_i] =saved_normalized_key_count[cont_i]=0;
 
-    if ( ((unsigned long)(inthreshold[cont_i])) <
+    if ( ((unsigned long)(client->inthreshold[cont_i])) <
       (((unsigned long)(load_problem_count))<<1))
     {
-      inthreshold[cont_i] = load_problem_count<<1;
+      client->inthreshold[cont_i] = load_problem_count<<1;
     }
   }
 
@@ -647,7 +627,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
     // -----------------------------------
 
     load_needed = 0;
-    norm_key_count = __IndividualProblemSave( thisprob, prob_i, this, 
+    norm_key_count = __IndividualProblemSave( thisprob, prob_i, client, 
           &load_needed, load_problem_count, &cont_i, &bufupd_pending,
           (mode == PROBFILL_UNLOADALL || mode == PROBFILL_RESIZETABLE ) );
     if (load_needed)
@@ -665,14 +645,15 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
     if (load_needed && mode!=PROBFILL_UNLOADALL && mode!=PROBFILL_RESIZETABLE)
     {
-      if (blockcount>0 && totalBlocksDone>=((unsigned long)(blockcount)))
+      if (client->blockcount>0 && 
+          totalBlocksDone>=((unsigned long)(client->blockcount)))
       {
         ; //nothing
       }
       else
       {
         load_needed = 0;
-        norm_key_count = __IndividualProblemLoad( thisprob, prob_i, this, 
+        norm_key_count = __IndividualProblemLoad( thisprob, prob_i, client, 
                 &load_needed, load_problem_count, &cont_i, &bufupd_pending );
         if (load_needed)
         {
@@ -715,8 +696,9 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
               ((loaded_problems_count[cont_i]==1)?(""):("s")),
               loaded_normalized_key_count[cont_i],
               ((loaded_normalized_key_count[cont_i]==1)?(""):("s")),
-              (nodiskbuffers ? "(memory-in)" : 
-              BufferGetDefaultFilename( cont_i, 0, in_buffer_basename )) );
+              (client->nodiskbuffers ? "(memory-in)" : 
+              BufferGetDefaultFilename( cont_i, 0, 
+                                        client->in_buffer_basename )) );
       }
 
       if (saved_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD)
@@ -727,13 +709,15 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
               saved_normalized_key_count[cont_i],
               ((saved_normalized_key_count[cont_i]==1)?(""):("s")),
               (mode == PROBFILL_UNLOADALL)?
-                (nodiskbuffers ? "(memory-in)" : 
-                BufferGetDefaultFilename( cont_i, 0, in_buffer_basename ) ) :
-                (nodiskbuffers ? "(memory-out)" : 
-                BufferGetDefaultFilename( cont_i, 1, out_buffer_basename )) );
+                (client->nodiskbuffers ? "(memory-in)" : 
+                BufferGetDefaultFilename( cont_i, 0, 
+                                          client->in_buffer_basename ) ) :
+                (client->nodiskbuffers ? "(memory-out)" : 
+                BufferGetDefaultFilename( cont_i, 1, 
+                                          client->out_buffer_basename )) );
       }
 
-      if (totalBlocksDone > 0 /* && randomchanged == 0 */)
+      if (totalBlocksDone > 0 /* && client->randomchanged == 0 */)
       {
         // To suppress "odd" problem completion count summaries (and not be
         // quite so verbose) we only display summaries if the number of
@@ -760,13 +744,13 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
       for (inout=0;inout<=1;inout++)
       {
         unsigned long norm_count;
-        long block_count = GetBufferCount( cont_i, inout, &norm_count );
+        long block_count = client->GetBufferCount( cont_i, inout, &norm_count );
         if (block_count >= 0) /* no error */
         {
-          char buffer[100+sizeof(in_buffer_basename)];
+          char buffer[100+128 /*sizeof(client->in_buffer_basename)*/];
           if (inout != 0)                              /* out-buffer */
           {
-            if (block_count > ((long)outthreshold[cont_i]))
+            if (block_count > ((long)client->outthreshold[cont_i]))
               bufupd_pending |= BUFFERUPDATE_FLUSH;
           }
           else                                         /* in-buffer */
@@ -785,10 +769,12 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
                  ((block_count==1)?("is"):("are")):
                  ((block_count==1)?("remains"):("remain"))),
               ((inout== 0)?
-                (nodiskbuffers ? "(memory-in)" : 
-                  BufferGetDefaultFilename( cont_i, 0, in_buffer_basename ) ) :
-                (nodiskbuffers ? "(memory-out)": 
-                  BufferGetDefaultFilename( cont_i, 1, out_buffer_basename ) ))
+                (client->nodiskbuffers ? "(memory-in)" : 
+                  BufferGetDefaultFilename( cont_i, 0, 
+                                            client->in_buffer_basename ) ) :
+                (client->nodiskbuffers ? "(memory-out)": 
+                  BufferGetDefaultFilename( cont_i, 1, 
+                                            client->out_buffer_basename ) ))
               );
           Log( "%s\n", __WrapOrTruncateLogLine( buffer, 1 ));
         } //if (block_count >= 0)
@@ -801,10 +787,10 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   if (mode == PROBFILL_UNLOADALL)
   {
     previous_load_problem_count = 0;
-    if (nodiskbuffers == 0)
-      CheckpointAction( CHECKPOINT_CLOSE, 0 );
+    if (client->nodiskbuffers == 0)
+      client->CheckpointAction( CHECKPOINT_CLOSE, 0 );
     else
-      BufferUpdate(BUFFERUPDATE_FLUSH,0);
+      BufferUpdate(client,BUFFERUPDATE_FLUSH,0);
     retval = total_problems_saved;
   }
   else
@@ -837,14 +823,15 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
        ------------------------------------------------------------- 
       */
       int limitsexceeded = 0;
-      if (blockcount < 0 && norandom_count >= load_problem_count)
+      if (client->blockcount < 0 && norandom_count >= load_problem_count)
         limitsexceeded = 1;
-      if (blockcount > 0 && (totalBlocksDone >= (unsigned long)(blockcount)))
+      if (client->blockcount > 0 && 
+         (totalBlocksDone >= (unsigned long)(client->blockcount)))
       {
         if (empty_problems >= load_problem_count)
           limitsexceeded = 1;
         else
-          blockcount = ((u32)(totalBlocksDone))+1;
+          client->blockcount = ((u32)(totalBlocksDone))+1;
       }
       if (limitsexceeded)
       {

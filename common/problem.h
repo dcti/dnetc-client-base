@@ -6,11 +6,18 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.4 1999/09/19 16:02:57 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.5 1999/10/07 18:39:00 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
 #include "ogr.h"     /* OGR core stuff */
+
+/* ---------------------------------------------------------------------- */
+
+int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
+/* result depends on #ifdefs, threadsafety issues etc */
+
+/* ----------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_X86)
   #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
