@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60 1999/05/08 19:05:30 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.1 1999/05/11 16:57:30 cyp Exp $"; }
 
 //#define TRACE
 
@@ -525,7 +525,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     /* --- CONF_MENU_LOG -- */
 
     __XSetProfileStr( sect, "logname", client->logname, fn, NULL );
-    __XSetProfileStr( OPTSECT_LOG, "log-file-type", client->logfiletype, fn, NULL );
+    __XSetProfileStr( OPTSECT_LOG, "log-file-type", client->logfiletype, fn, "none" );
     __XSetProfileStr( OPTSECT_LOG, "log-file-limit", client->logfilelimit, fn, NULL );
     __XSetProfileInt( sect, "messagelen", client->messagelen, fn, 0, 0);
     __XSetProfileStr( sect, "smtpsrvr", client->smtpsrvr, fn, NULL);
