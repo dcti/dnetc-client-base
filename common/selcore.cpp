@@ -1,90 +1,6 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-//
-// $Log: selcore.cpp,v $
-// Revision 1.20  1998/11/02 04:40:07  cyp
-// Removed redundant ::numcputemp. ::numcpu does it all.
-//
-// Revision 1.19  1998/10/29 08:39:39  silby
-// Fixed the condition where core already specified would cause mmx des detection to be skipped and always enabled.
-//
-// Revision 1.18  1998/10/29 08:19:31  silby
-// cputype was not properly being & 0xff'd from detectedtype, messing up x86 mmx processor detection for rc5 cores.
-//
-// Revision 1.17  1998/10/11 00:43:23  cyp
-// Implemented 'quietly' in SelectCore() and ValidateProcessorCount()
-//
-// Revision 1.16  1998/10/09 12:25:25  cyp
-// ValidateProcessorCount() is no longer a client method [is now standalone].
-//
-// Revision 1.15  1998/10/08 21:23:02  blast
-// Fixed Automatic CPU detection that cyp had written a little strangely
-// for 68K CPU's under AmigaOS. It was good thinking but it would've 
-// reported the wrong cpu type, and also, there is no 68050, cyp :)
-//
-// Revision 1.14  1998/10/08 11:05:28  cyp
-// Moved AmigaOS 68k hardware detection code from selcore.cpp to cpucheck.cpp
-//
-// Revision 1.13  1998/10/08 10:12:17  cyp
-// Modified SelectCore(): (a) simply returns 0 if the cputype hasn't changed
-// between calls; (b) autodetection never runs more than once; (c) x86
-// autodetection (which is always run to check for mmx capability) only
-// prints a message when autodetect is actually requested. (d) all Log...()
-// calls are now normal LogScreen() calls. (e) Adjusted log message lengths so
-// that they don't cause line wraps on the screen.
-//
-// Revision 1.12  1998/10/05 22:10:41  remi
-// Added missing usemmx test in RC5 core selection.
-//
-// Revision 1.11  1998/10/05 01:53:23  cyp
-// Cleaned up x86 core selection.
-//
-// Revision 1.10  1998/10/04 00:02:34  remi
-// Removed extraneous #if defined(KWAN) && defined(MEGGS). MMX_BITSLICER is now
-// defined only when the MMX DES core is compiled.
-//
-// Revision 1.9  1998/10/03 23:19:06  remi
-// usemmx select both DES and RC5 cores.
-// LogScreenRaw instead of LogScreen for DES core selection.
-//
-// Revision 1.8  1998/10/03 05:14:58  sampo
-// minor change for MacOS CVS build
-//
-// Revision 1.7  1998/10/03 03:22:07  cyp
-// Moved 68k core kudos to PrintBanner() [client.cpp]
-//
-// Revision 1.6  1998/09/25 11:31:23  chrisb
-// Added stuff to support 3 cores in the ARM clients.
-//
-// Revision 1.5  1998/09/23 22:02:42  blast
-// Added multi-core support for all 68k platforms.
-// AmigaOS now has autodetection (-1) or manual (0, 1) of cores.
-// Other 68k porters will have to add autodetection if their OS can handle
-// autodetection.
-//
-// Revision 1.4  1998/09/04 06:05:46  silby
-// Made selcore more verbose on x86 so that people would not confused
-// rc5 and des core selections.
-//
-// Revision 1.3  1998/09/01 22:32:22  remi
-// Allow a P5-MMX to use the RC5 MMX core.
-//
-// Revision 1.2  1998/08/22 08:01:46  silby
-// Rewrote x86 core selection.
-//
-// Revision 1.1  1998/08/21 23:34:54  cyruspatel
-// Created from code in cliconfig.cpp. x86 SelectCore() works again - clients
-// on P5s are back up to speed. Validation of cputype is now done in SelectCore.
-// All CLIENT_CPU types should be setting cputype correctly now. Coders! please
-// verify this! Calls to Problem::LoadState() expects cputype to be valid.
-//
-//
-
-#if (!defined(lint) && defined(__showids__))
-const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.20 1998/11/02 04:40:07 cyp Exp $"; }
-#endif
 
 #include "cputypes.h"
 #include "client.h"   // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -166,8 +82,6 @@ int Client::SelectCore(int quietly)
   static s32 last_cputype = -123;
   static s32 detectedtype = -2;
 
-  numcpu = ValidateProcessorCount( numcpu, quietly ); //in cpucheck.cpp
-  
   if (cputype == last_cputype) //no change, so don't bother reselecting
     return 0;                  //(cputype can change when restarted)
 
@@ -278,11 +192,6 @@ int Client::SelectCore(int quietly)
     #define DESUNITFUNC61 des_unit_func_slice
     #define DESUNITFUNC62 des_unit_func_slice
     selmsg_des = "Kwan bitslice";
-  #elif defined(MULTITHREAD)
-    #define DESUNITFUNC51 p1des_unit_func_p5
-    #define DESUNITFUNC52 p2des_unit_func_p5
-    #define DESUNITFUNC61 p1des_unit_func_pro
-    #define DESUNITFUNC62 p2des_unit_func_pro
   #else
     #define DESUNITFUNC51 p1des_unit_func_p5
     #define DESUNITFUNC52 p1des_unit_func_p5
@@ -331,7 +240,7 @@ int Client::SelectCore(int quietly)
     cputype = 0;
     
     #if defined(MMX_RC5)
-    if (detectedtype == 0x106 && usemmx) /* Pentium MMX only! */
+    if (detectedtype == 0x106) /* Pentium MMX only! */
       {
       rc5_unit_func = rc5_unit_func_p5_mmx;
       selmsg_rc5 = "Pentium MMX";
@@ -340,7 +249,7 @@ int Client::SelectCore(int quietly)
     }
 
   #if defined(MMX_BITSLICER)
-  if (((detectedtype & 0x100) != 0) && usemmx)   // use the MMX DES core ?
+  if (detectedtype & 0x100)   // use the MMX DES core ?
     { 
     des_unit_func = des_unit_func2 = des_unit_func_mmx;
     selmsg_des = "MMX bitslice";

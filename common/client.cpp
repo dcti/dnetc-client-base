@@ -1,76 +1,19 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+
+// Sync with :
+//   Revision 1.152  1998/11/08 01:01:41  silby
+//   Buncha hacks to get win32gui to compile, lots of cleanup to do.
 //
-// $Log: client.cpp,v $
-// Revision 1.152  1998/11/08 01:01:41  silby
-// Buncha hacks to get win32gui to compile, lots of cleanup to do.
-//
-// Revision 1.151  1998/11/04 21:28:01  cyp
-// Removed redundant ::hidden option. ::quiet was always equal to ::hidden.
-//
-// Revision 1.150  1998/11/02 04:40:13  cyp
-// Removed redundant ::numcputemp. ::numcpu does it all.
-//
-// Revision 1.149  1998/10/26 02:51:41  cyp
-// out_buffer_file[0] was being initialized with the wrong suffix ('des'
-// instead of 'rc5') in the client constructor.
-//
-// Revision 1.148  1998/10/19 12:42:09  cyp
-// win16 changes
-//
-// Revision 1.147  1998/10/11 00:41:23  cyp
-// Implemented ModeReq
-//
-// Revision 1.146  1998/10/07 20:43:32  silby
-// Various quick hacks to make the win32gui operational again (will be cleaned up).
-//
-// Revision 1.145  1998/10/06 22:28:53  cyp
-// Changed initialization order so that initialization that requires filenames
-// follows the second ParseCommandLine().
-//
-// Revision 1.144  1998/10/05 05:21:30  cyp
-// Added PPC core attribute to PrintBanner()
-//
-// Revision 1.143  1998/10/04 16:54:05  remi
-// Moved a misplaced #endif. Wrapped $Log comments.
-//
-// Revision 1.142  1998/10/04 03:22:14  silby
-// Changed startup logging code so that CLIENT_VERSIONSTRING was used
-// so that it's obvious if a BETA is being used in logfiles (could not
-// be determined otherwise)
-//
-// Revision 1.141  1998/10/03 23:27:51  remi
-// Use 'usemmx' .ini setting if any MMX core is compiled in.
-//
-// Revision 1.140  1998/10/03 03:33:13  cyp
-// Removed RunStartup() altogether, changed fprintf(stderr,) to ConOutErr(),
-// moved 68k kudos from selcore.cpp to PrintBanner(), removed ::Install and
-// ::Uninstall, added winNT svc startup code to realmain(), added WinMain().
-//
-// Revision 1.139  1998/09/28 21:42:07  remi
-// Cleared a warning in InitConsole. Wrapped $Log comments.
-//
-// Revision 1.138  1998/09/28 04:13:08  cyp
-// Split: clirun.cpp, bench.cpp, setprio.cpp, probfill.cpp; client.cpp is now
-// startup code only; bugs fixed here (client.cpp): win32 client now does
-// run-once check properly; win32 console client no longer opens a console
-// until it knows -hide is not an option; mail is no longer written if a bad
-// arg is passed; PrintBanner() will no longer print banners when restarting.
-//
-#if (!defined(lint) && defined(__showids__))
-const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.152 1998/11/08 01:01:41 silby Exp $"; }
-#endif
+// Synchronized with official 1.151
 
 // --------------------------------------------------------------------------
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
 #include "client.h"    // Packet, FileHeader, Client class, etc
-#include "scram.h"     // InitRandom() 
 #include "baseincs.h"  // basic (even if port-specific) #includes
-#include "pathwork.h"  // EXTN_SEP
 #include "triggers.h"  // RestartRequestTrigger()
 #include "clitime.h"   // CliTimer(), Time()/(CliGetTimeString(NULL,1))
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
@@ -94,81 +37,14 @@ s32 guiriscos, guirestart;
 
 Client::Client()
 {
-  id[0] = 0;
-  inthreshold[0] = 10;
-  outthreshold[0] = 10;
-  inthreshold[1] = 10;
-  outthreshold[1] = 10;
-  blockcount = 0;
-  minutes = 0;
-  hours[0] = 0;
-  keyproxy[0] = 0;
-  keyport = 2064;
-  httpproxy[0] = 0;
-  httpport = 80;
-  uuehttpmode = 1;
-  httpid[0] = 0;
-  totalBlocksDone[0] = 0;
-  totalBlocksDone[1] = 0;
+  totalBlocksDone[0] = totalBlocksDone[1] = 0;
   cputype=-1;
-  offlinemode = 0;
-  autofindkeyserver = 1;  //implies 'only if keyproxy==dnetkeyserver'
-
-  pausefile[0]=logname[0]=0;
-  strcpy(inifilename, "rc5des" EXTN_SEP "ini");
-  strcpy(in_buffer_file[0], "buff-in" EXTN_SEP "rc5");
-  strcpy(out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
-  strcpy(in_buffer_file[1], "buff-in" EXTN_SEP "des");
-  strcpy(out_buffer_file[1], "buff-out" EXTN_SEP "des");
-  strcpy(exit_flag_file,     "exitrc5" EXTN_SEP "now" );
-  checkpoint_file[0][0]=checkpoint_file[1][0]=0;
-
-  messagelen = 0;
-  smtpport = 25;
-  strcpy(smtpsrvr,"your.smtp.server");
-  strcpy(smtpfrom,"RC5Notify");
-  strcpy(smtpdest,"you@your.site");
-  numcpu = -1;
-  checkpoint_min=5;
-  percentprintingoff=0;
-  connectoften=0;
-  nodiskbuffers=0;
-  for (int i1=0;i1<2;i1++) {
-    membuffcount[i1][0]=0;
-    membuffcount[i1][1]=0;
-    for (int i2=0;i2<500;i2++) {
-      for (int i3=0;i3<2;i3++) {
-        membuff[i1][i2][i3]=NULL;
-      }
-    }
-  }
-  nofallback=0;
-  randomprefix=100;
-  preferred_contest_id = 1;
-  preferred_blocksize=30;
-  randomchanged=0;
-  consecutivesolutions[0]=0;
-  consecutivesolutions[1]=0;
-  quietmode=0;
-  nonewblocks=0;
-  nettimeout=60;
-  noexitfilecheck=0;
-  exitfilechecktime=30;
-#if defined(LURK)
-  dialup.lurkmode=0;
-  dialup.dialwhenneeded=0;
-#endif
-  contestdone[0]=contestdone[1]=0;
   srand( (unsigned) CliTimer( NULL )->tv_usec );
-  InitRandom();
-#if defined(MMX_BITSLICER) || defined(MMX_RC5)
-  usemmx = 1;
-#endif
 }
 
 // --------------------------------------------------------------------------
 
-static void PrintBanner(const char *dnet_id)
+static void PrintBanner(void)
 {
   static unsigned int level = 0; //incrementing so messages are not repeated
             //0 = show copyright/version,  1 = show startup message
@@ -198,16 +74,7 @@ static void PrintBanner(const char *dnet_id)
     #if (CLIENT_OS == OS_DOS)  //PMODE (c) string if not win16 
     LogScreenRaw( "%s", dosCliGetPmodeCopyrightMsg() );
     #endif
-    LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n"
-               "%s\n",
-            #if (CLIENT_OS == OS_RISCOS)
-            guiriscos ?
-            "Interactive help is available, or select 'Help contents' from the menu for\n"
-            "detailed client information.\n" :
-            #endif
-            "Execute with option '-help' for online help, or read rc5des" EXTN_SEP "txt\n"
-            "for a list of command line options.\n"
-            );
+    LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n" );
     #if (CLIENT_OS == OS_DOS)
       dosCliCheckPlatform(); //show warning if pure DOS client is in win/os2 VM
     #endif
@@ -217,29 +84,8 @@ static void PrintBanner(const char *dnet_id)
     {  
     level++; //will never print this message again
 
-    LogRaw("\nRC5DES Client %s started.\n"
-             "Using distributed.net ID %s\n\n",
-         CLIENT_VERSIONSTRING,dnet_id);
-
-    #if defined(BETA) && defined(BETA_EXPIRATION_TIME) && (BETA_EXPIRATION_TIME != 0)
-    timeval currenttime;
-    timeval expirationtime;
-
-    CliTimer(&currenttime);
-    expirationtime.tv_usec= 0;
-    expirationtime.tv_sec = BETA_EXPIRATION_TIME;
-
-    if (currenttime.tv_sec > expirationtime.tv_sec ||
-      currenttime.tv_sec < (BETA_EXPIRATION_TIME - 1814400))
-      {
-      ; //nothing - start run, recover checkpoints and _then_ exit.
-      } 
-    else
-      {
-      LogScreenRaw("Notice: This is beta release and expires on %s\n\n",
-       CliGetTimeString(&expirationtime,1) );
-      }
-    #endif // BETA
+    LogRaw("\nRC5DES Client %s started.\n\n",
+         CLIENT_VERSIONSTRING);
     }
   return;
 }
@@ -253,40 +99,29 @@ int Client::Main( int argc, const char *argv[], int restarted )
   //set up break handlers
   if (InitializeTriggers(NULL, NULL)==0) //CliSetupSignals();
     {
-    //get -ini options/defaults, then ReadConfig(), then get -quiet
+    //get -ini options/defaults, then ReadConfig(), then get -quiet/-hidden
     if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0) //!0 if "mode"
       {                                                
-      if (InitializeConsole(quietmode) == 0) //initialize conio
+      if (InitializeConsole(0) == 0) //initialize conio
         {
         int autoclosecon = 1; // let console close without user intervention
         InitializeLogging(0); //enable only screen logging for now
 
-        PrintBanner(id); //tracks restart state itself
+        PrintBanner(); //tracks restart state itself
 
         //get remaining option overrides and set "mode" bits if applicable
-        if ( !restarted && ParseCommandline( 2, argc, argv, &retcode, 1 ) !=0 )
-          { 
-          if ( ModeReqIsSet( -1 ) ) //do any "modes" (including -config)
-            {
-            ModeReqRun( this );     
-            autoclosecon = 0; //wait for a keypress before closing the console
-            }
-          }
-        else 
-          {
-          InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile);
-          InitializeLogging(1);   //enable timestamps and file/mail logging
-          PrintBanner( id );
-          SelectCore( 0 );
-          retcode = Run();
-          }
+        ParseCommandline( 2, argc, argv, &retcode, 1 );
+        if (ModeReqIsSet( -1 ) == 0)
+	  ModeReqSet( MODEREQ_HELP );
+	ModeReqRun( this );     
+	autoclosecon = 0; //wait for a keypress before closing the console
+
         DeinitializeLogging();
         DeinitializeConsole(autoclosecon);
         }
       }
     DeinitializeTriggers();
     }
-  
   return retcode;
 }  
 
@@ -301,7 +136,7 @@ int realmain( int argc, char *argv[] )
   Client *clientP = NULL;
   int retcode = -1, init_success = 1;
   int restarted = 0;
-
+  
   //------------------------------
   
   #if (CLIENT_OS == OS_RISCOS)
@@ -380,6 +215,7 @@ int realmain( int argc, char *argv[] )
 
 
 /* ----------------------------------------------------------------- */
+
 #if !((CLIENT_OS==OS_WIN32) && defined(NEEDVIRTUALMETHODS))
 
 #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)

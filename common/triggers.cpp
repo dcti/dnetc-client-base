@@ -1,55 +1,13 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-//
-// ----------------------------------------------------------------------
-// This module contains functions for raising/checking flags normally set
-// (asynchronously) by user request. Encapsulating the flags in 
-// functions has two benefits: (1) Transparency: the caller doesn't 
-// (_shouldn't_) need to care whether the triggers are async from signals
-// or polled. (2) Portability: we don't need a bunch of #if (CLIENT_OS...) 
-// sections preceding every signal variable check. As such, someone writing 
-// new code doesn't need to ensure that someone else's signal handling isn't 
-// affected, and inversely, that coder doesn't need to check if his platform 
-// is affected by every itty-bitty change. (3) Modularity: gawd knows we need
-// some of this. (4) Extensibility: hup, two, three, four...
-// -----------------------------------------------------------------------
-//
-// $Log: triggers.cpp,v $
-// Revision 1.8  1998/11/02 04:43:42  cyp
-// win16 no longer polls for ^C. Created [Raise|Clear]PauseRequestTrigger().
-//
-// Revision 1.7  1998/10/04 17:52:49  silby
-// Made CliSetupSignals public because win32 needs to call it when console is initted.
-//
-// Revision 1.6  1998/09/28 02:17:40  cyp
-// NetWare change: removed signal handling for SIGINT, polls keyboard instead.
-//
-// Revision 1.5  1998/09/25 11:31:25  chrisb
-// Added stuff to support 3 cores in the ARM clients.
-//
-// Revision 1.4  1998/09/17 18:59:16  cyp
-// Implemented -HUP handling. (See main() for implemention details)
-//
-// Revision 1.2  1998/09/06 21:01:04  silby
-// Changes to make deinittriggers clear all info so a subsequent call to 
-// inittriggers will be fruitful.
-//
-// Revision 1.1  1998/08/10 20:12:15  cyruspatel
-// Created
-//
-//
 
-#if (!defined(lint) && defined(__showids__))
-const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.8 1998/11/02 04:43:42 cyp Exp $"; }
-#endif
+// Synchronized with official 1.8
 
 // --------------------------------------------------------------------------
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
-#include "pathwork.h"  // GetFullPathForFilename()
 #include "clitime.h"   // CliGetTimeString(NULL,1)
 #include "logstuff.h"  // LogScreen()
 #include "triggers.h"  // for xxx_CHECKTIME defines
@@ -111,9 +69,6 @@ int ClearPauseRequestTrigger(void)
 {
   if (!trigstatics.isinit)
     InitializeTriggers( NULL, NULL );
-  else if ( trigstatics.pausetrig.flagfile && 
-    access( GetFullPathForFilename( trigstatics.pausetrig.flagfile ),0)==0)
-    unlink( GetFullPathForFilename( trigstatics.pausetrig.flagfile ) );
   int oldstate = trigstatics.pausetrig.trigger;
   trigstatics.pausetrig.trigger = 0;
   return oldstate;
@@ -149,16 +104,8 @@ static void InternalPollForFlagFiles(struct trigstruct *trig, int undoable)
     {
     if ((now = time(NULL)) >= trig->nextcheck) 
       {
-      if ( access( GetFullPathForFilename( trig->flagfile ), 0 ) == 0 )
-        {
-        trig->nextcheck = now + (time_t)trig->pollinterval.whenon;
-        trig->trigger = TRIGSETBY_EXTERNAL;
-        }
-      else
-        {
-        trig->nextcheck = now + (time_t)trig->pollinterval.whenoff;
-        trig->trigger = 0;
-        }
+      trig->nextcheck = now + (time_t)trig->pollinterval.whenoff;
+      trig->trigger = 0;
       }
     }
   return;
