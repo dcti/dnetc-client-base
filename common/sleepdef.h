@@ -26,7 +26,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22 1999/04/09 13:55:17 cyp Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.1 1999/06/11 01:16:48 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -90,17 +90,11 @@
   #endif
 #elif (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
-  #if 1
-    #ifndef usleep
-      #include <limits.h>
-      #define usleep(x) sginap((x)*(CLK_TCK/1000000L))
-    #endif
-  #else
-    #ifdef _irix5_
-      #define usleep(x) sleep(1) //will use nanosleep() in next revision
-      #error please fix "next revision" (see hpux above)
-    #endif
-  #endif
+  #undef usleep
+  //#define usleep(x) sginap((x)*10000) /* useless:1ms for root, 10ms/others*/
+  #include <sys/time.h>
+  #define usleep(x) { struct timespec rval, ival; ival.tv_sec = 0; \
+                      ival.tv_nsec = (x)*100; nanosleep(&ival, &rval); }
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
   #ifdef sleep
