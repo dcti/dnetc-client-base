@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CONSOLE_H__
-#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.28.2.3 1999/11/02 16:03:42 cyp Exp $"
+#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.28.2.4 2000/05/06 21:13:08 mfeiri Exp $"
 
 // ConIsScreen() returns non-zero if console represents the screen
 // also returns 0 if the console is not initialized.
@@ -64,6 +64,6 @@ int DeinitializeConsole(int waitforuser);
 
 // Initialize console functionality. Returns !0 on failure.
 // doingmodes is used on some platforms to use a separate screen.
-int InitializeConsole(int runhidden, int doingmodes);
+int InitializeConsole(int *runhidden, int doingmodes);
 
 #endif
