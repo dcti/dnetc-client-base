@@ -14,10 +14,9 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.3 1999/05/31 20:38:31 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.4 1999/06/01 02:55:36 cyp Exp $"; }
 
 //#define TRACE
-//#define ENABLE_ARGV0_REWRITE
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -49,55 +48,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
   const char *thisarg, *nextarg;
 
   TRACE_OUT((+1,"ParseCommandline(%d,%d)\n",run_level,argc));
-
-  #ifdef ENABLE_ARGV0_REWRITE
-  #if defined(__unix__)
-  {
-    static int doneunhider = 0;
-    if (!doneunhider)
-    {
-      static char oldname[sizeof(Client::inifilename)+10];
-      /* now, will those sysadmins please stop bugging us? :) */
-      char defname[]={('r'^80),('c'^80),('5'^80),('d'^80),('e'^80),('s'^80),0};
-      char scratch[sizeof(defname)+1]; /* obfusciation 101 */
-      unsigned int len, scratchlen = strlen(defname);
-      char *p, *newargv0 = (char *)argv[0];
-      
-      doneunhider = 1;
-      for (len=0;len<scratchlen;len++)
-        scratch[len]=defname[len]^80;
-      scratch[scratchlen]='\0';
-      if ((p = strrchr( argv[0], '/')) != NULL) 
-      {
-        ++p;
-        if (strlen(p) >= scratchlen)
-          newargv0 = p;
-        if (strcmp(p,scratch)!=0)
-          p = NULL;
-      }
-      if (p == NULL)
-      {
-        len = strlen(argv[0]);
-        if (len < scratchlen || len >= sizeof(oldname))
-        {
-          ConOutErr("fatal: the total length of binary's filename (including\n"
-              "\tpath) must be greater than 5 and less than 124");
-          terminate_app = 1;
-        }
-        else 
-        {
-          /* kinda from perl source (assign to $0) */
-          len = strlen(newargv0);
-          strcpy( oldname, argv[0] );
-          memset( (void *)newargv0, 0, len );
-          strcpy( newargv0, scratch );
-          argv[0] = (const char *)(&oldname[0]);
-        }
-      }
-    }
-  }
-  #endif
-  #endif
   
   //-----------------------------------
   // In the first loop we (a) get the ini filename and 
@@ -154,11 +104,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           int sig = SIGHUP; char *dowhat_descrip = "-HUP'ed";
           unsigned int kill_ok = 0, kill_failed = 0; 
           int last_errno = 0, kill_found = 0;
-          const char *binname = "rc5des"; /* this is what we look for */
-          #ifndef ENABLE_ARGV0_REWRITE
-          binname = (const char *)strrchr( argv[0], '/' );
+          const char *binname = (const char *)strrchr( argv[0], '/' );
+	  char altbinname[] = {'r','c','5','d','e','s','\0'};
           binname = ((binname==NULL)?(argv[0]):(binname+1));
-          #endif
             
           if ( strcmp( thisarg, "-kill" ) == 0 ||
                strcmp( thisarg, "-shutdown") == 0 )
@@ -177,10 +125,33 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           {
             struct dirent *dp;
             pid_t ourpid = getpid();
-    
+	    char realbinname[64];
+            size_t len; FILE *file = fopen("/proc/curproc/status","r"); 
+	    if (file)
+	    {
+              len = fread( buffer, 1, sizeof(buffer), file );
+              fclose( file );
+              if (len!=0 && memcmp(buffer,"Name:",5)!=0) 
+              { /* useless for OSs that do argv[0]="rc5des" in client.cpp */
+		char *p, *q=&buffer[0];
+                buffer[len-1] = '\0';
+                while (*q && isspace(*q))
+                  q++;
+		p = q;
+		while (*q && !isspace(*q))
+		{
+		  if (*q=='/')
+		    p = q+1;
+		  q++;
+		}
+	        *q = '\0'; 
+		strncpy(realbinname,p,sizeof(realbinname));   
+		realbinname[sizeof(realbinname)-1]='\0';
+		binname = (const char *)&realbinname[0];
+	      }
+	    }
             while ((dp = readdir(dirp)) != ((struct dirent *)0))  
             {
-              FILE *file; size_t len;
               pid_t thatpid = (pid_t)atoi(dp->d_name);
               if (thatpid == 0 /* .,..,curproc,etc */ || thatpid == ourpid) 
                 continue;
@@ -206,9 +177,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                   q++;
                 }
                 *q = '\0';
-                if (strcmp(procname,binname) == 0)
+                //printf("%s: %s (binname:%s,altbinname:%s)\n",dp->d_name,procname,binname,altbinname);
+                if (!strcmp(procname,binname) || !strcmp(procname,altbinname))
                 {
-                  //printf("%s: %s\n",dp->d_name,procname);
                   kill_found++;
                   if ( kill( thatpid, sig ) == 0)
                     kill_ok++;
@@ -226,8 +197,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           const char *pscmd = "ps -ax -o pid -o command"; 
           //sprintf(buffer,"ps auxwww|grep \"%s\"|awk '{print$2}'", binname);
           //"ps auxwww|grep \"%s\" |tr -s \' \'|cut -d\' \' -f2|tr \'\\n\' \' \'"
-          #if (CLIENT_OS == OS_SOLARIS) //CRAMER-/usr/bin/ps or /usr/ucb/ps?
-          pscmd = "/usr/bin/ps -ef|awk '{print$2\" \"$11}'";
+          #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
+          pscmd = "/usr/bin/ps -ef -o pid -o comm"; /*bsd'ish is /usr/ucb/ps*/
           #endif
           FILE *file = popen( pscmd, "r" );
           if (file == NULL)
@@ -284,7 +255,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
 		    }
 		    *q = '\0';
                     //printf("pid='%d' procname='%s'\n",thatpid,procname);
-		    if (strcmp(procname,binname) != 0)  
+		    if (strcmp(procname,binname) && strcmp(procname,altbinname))
 		      thatpid = 0;
 		  }
 		  if (thatpid != 0)
