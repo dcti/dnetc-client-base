@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.16 2004/01/13 19:44:22 kakace Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.17 2004/05/22 15:47:44 kakace Exp $"; }
 
 //#define TRACE
 
@@ -426,20 +426,23 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           const char *pscmd = NULL;
           #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
               (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
-              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX) || \
-              (CLIENT_OS == OS_PS2LINUX)
+              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_PS2LINUX)
           pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
           //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
           //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */
-	  #elif (CLIENT_OS == OS_NEXTSTEP)
-	  /* NeXTstep porduces spaces in process status columns like
-	   * 26513 p1 SW    0:01 -bash (bash)
-	   * 26542 p1 R N  32:52 ./dnetc */
+          #elif (CLIENT_OS == OS_MACOSX)
+          // Only grab the executable name to avoid troubles with white spaces
+          // in file paths.
+          pscmd = "ps acxw|awk '{print$1\" \"$5}' 2>/dev/null";
+          #elif (CLIENT_OS == OS_NEXTSTEP)
+          /* NeXTstep porduces spaces in process status columns like
+          * 26513 p1 SW    0:01 -bash (bash)
+          * 26542 p1 R N  32:52 ./dnetc */
           pscmd = "ps axw|sed \"s/ [RUSITHPD][W >][N< ]//\"|awk '{print$1\" \"$4}' 2>/dev/null";
           #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
                 (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
           pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
-	  #elif (CLIENT_OS == OS_DYNIX)
+          #elif (CLIENT_OS == OS_DYNIX)
           pscmd = "/bin/ps -ef -o pid -o comm 2>/dev/null";	/*svr4/posix*/
           #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
           pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
