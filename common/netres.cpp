@@ -6,7 +6,7 @@
  *
 */
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.25.2.7 2000/03/03 08:53:22 jlawson Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.25.2.8 2000/03/06 00:01:30 gregh Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
@@ -230,13 +230,13 @@ static struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host ord
 #include <dlfcn.h>
 static struct hostent *__ExtraLowlevelGethostbyname( const char *hostname )
 {
-  static struct { const char *lib; *sym; } libsyms = {
+  static struct { const char *lib, *sym; } libsyms[] = {
          { "/usr/lib/libresolv.so", "res_gethostbyname" },
          { "/usr/lib/libc.so",      "gethostbyname"     }    };
   struct hostent *hp = (struct hostent *)0;
   int libsym;
 
-  for (libsym=0; !hp && libsym<(sizeof(libsyms)/sizeof(libsyms[0])); libsym++)
+  for (libsym=0; !hp && libsym<int(sizeof(libsyms)/sizeof(libsyms[0])); libsym++)
   {
     void *plib = dlopen( libsyms[libsym].lib, RTLD_LAZY);
     if (!plib) 
