@@ -15,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.53.4.7 2004/06/19 23:30:16 kakace Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.53.4.8 2004/06/20 15:51:29 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -97,6 +97,39 @@ static struct
   0,      // perc_callcount
   0       // lastperc_done
 };      
+
+// ========================================================================
+
+/*
+** What is 'jdn'?: Julian Day Numbers (JDN) are used by
+** astronomers as a date/time measure independent of calendars and
+** convenient for computing the elapsed time between dates.  The JDN
+** for any date/time is the number of days (including fractional
+** days) elapsed since noon, 1 Jan 4713 BC.  Julian Day Numbers were
+** originated by Joseph Justus Scaliger (1540-1609) in 1582 and named
+** after his father Julius, not after Julius Caesar.  They are not 
+** related to the Julian calendar. Note that some people use the 
+** term "Julian day number" to refer to any numbering of days. The US
+** government, for example, uses the term to denote the number of days 
+** since 1 January of the current year.
+**
+** The macros used below assume a Gregorian calendar.
+**
+** Based on formulae originally posted by
+** Tom Van Flandern metares@well.sf.ca.us in sci.astro
+** http://www.deja.com/dnquery.xp?QRY=julian+sci.astro+calculating&ST=MS
+** http://world.std.com/FAQ/Other/calendar-FAQ.txt
+**
+** Check date is 1 Jan 2000 ==> JDN 2451545
+*/ 
+static unsigned long __ymd2jdn(int yy, int mm, int dd)
+{
+  long m = mm;
+  long a = (14 - m) / 12;
+  long y = yy + 4800 - a;
+  m = m + 12 * a - 3;
+  return (long)dd + (153*m+2)/5 + y*365 + y/4 - y/100 + y/400 - 32045L;
+}
 
 // ========================================================================
 
@@ -185,11 +218,22 @@ static const char *__get_logname( int logfileType, int logfileLimit,
           }
           else if (logfileLimit == 7) /* weekly */
           {
-            /* we intentionally don't use tm_wday. Technically, week 1 is 
-            ** the first week with a monday in it, but we don't care about 
-            ** that here.
+            /* Bug 3336. Make the week number ISO 8601 compliant.
+            ** Technically, weeks begin on a Monday, and week 1 of the year
+            ** is the week that includes January 4th, which is also the week
+            ** that includes the first Thursday of the year, and is also the
+            ** first week that contains at least four days in the year.
             */
-            sprintf( rotsuffix, "%02dw%02d", (tm_year%100), (tm_yday+1+6)/7 );
+            unsigned long jdn, d4, L;
+            int year  = tm_year + 1900;
+            int month = tm_mon + 1;
+            int week;
+            jdn = __ymd2jdn(year, month, tm_mday);
+            d4 = (((jdn + 31741 - (jdn % 7)) % 146097) % 36524) % 1461;
+            L = d4 / 1460;
+            week = (((d4 - L) % 365) + L) / 7 + 1;
+            year += ((week == 1) && (month == 12)) - ((week > 51) && (month == 1));
+            sprintf( rotsuffix, "%02dw%02d", (year % 100), week );
           }
           else /* anything else: daily = 1, fortnightly = 14 etc */
           {
@@ -198,37 +242,6 @@ static const char *__get_logname( int logfileType, int logfileLimit,
             int day   = tm_mday;
             if (logfileLimit > 1) /* not daily - so date stamp may be in the */
             {                     /* past. Use jdn to move back to that date.*/
-              /*
-              ** What is 'jdn'?: Julian Day Numbers (JDN) are used by
-              ** astronomers as a date/time measure independent of calendars and
-              ** convenient for computing the elapsed time between dates.  The JDN
-              ** for any date/time is the number of days (including fractional
-              ** days) elapsed since noon, 1 Jan 4713 BC.  Julian Day Numbers were
-              ** originated by Joseph Justus Scaliger (1540-1609) in 1582 and named
-              ** after his father Julius, not after Julius Caesar.  They are not 
-              ** related to the Julian calendar. Note that some people use the 
-              ** term "Julian day number" to refer to any numbering of days. The US
-              ** government, for example, uses the term to denote the number of days 
-              ** since 1 January of the current year.
-              **
-              ** The macros used below assume a Gregorian calendar.
-              **
-              ** Based on formulae originally posted by
-              ** Tom Van Flandern metares@well.sf.ca.us in sci.astro
-              ** http://www.deja.com/dnquery.xp?QRY=julian+sci.astro+calculating&ST=MS
-              ** http://world.std.com/FAQ/Other/calendar-FAQ.txt
-              **
-              ** Check date is 1 Jan 2000 ==> JDN 2451545
-              */ 
-              #define _ymd2jdn( yy, mm, dd, __j ) {   \
-                long __m = (mm); /*signed!*/          \
-                long __a = (14-(__m))/12;             \
-                long __y = (yy)+4800-__a;             \
-                __m = __m + 12*__a - 3;               \
-                __j = ((long)(dd)) + (153*__m+2)/5 +  \
-                      __y*365 + __y/4 - __y/100 +     \
-                      __y/400 - 32045L;               \
-                }
               #define _jdn2ymd( __j, yy, mm, dd ) {   \
                   long __a = (__j) + 32044L;          \
                   long __b = (4*__a+3)/146097L;       \
@@ -241,7 +254,7 @@ static const char *__get_logname( int logfileType, int logfileLimit,
                   yy = __b*100 + __d - 4800 + __f/10; \
               }
               unsigned long jdn;
-              _ymd2jdn( year, month, day, jdn );
+              jdn = __ymd2jdn(year, month, day);
               jdn -= (jdn % logfileLimit); /* backoff to beginning of period */
               _jdn2ymd( jdn, year, month, day );
             } /* not daily */
