@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.75 2001/07/14 11:44:10 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.76 2001/07/21 23:18:56 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -480,19 +480,8 @@ static long __GetRawProcessorID(const char **cpuname)
         case CPU_SUBTYPE_POWERPC_604:  detectedtype = 0x0004; break;
         case CPU_SUBTYPE_POWERPC_604e: detectedtype = 0x0009; break;
         case CPU_SUBTYPE_POWERPC_750:  detectedtype = 0x0008; break;
-        case CPU_SUBTYPE_POWERPC_Max:
-        {
-          detectedtype = 0x000C;
-          // AltiVec is for MacOSXDP4 or higher (and Darwin 1.0 or higher)
-          char ostype[64]; size_t len = sizeof(ostype);
-          int mib[2]; mib[0] = CTL_KERN; mib[1] = KERN_OSTYPE;
-          if (sysctl( &mib[0], 2, ostype, &len, NULL, 0 ) == 0)
-          {
-            if (memcmp(ostype,"Darwin",6)==0) // MACH 3.x with a Darwin kernel
-               isaltivec = 1;
-          }
-          break;
-        }
+        case CPU_SUBTYPE_POWERPC_7400: detectedtype = 0x000C; break;
+        case CPU_SUBTYPE_POWERPC_7450: detectedtype = 0x000C; break;
         default: // some PPC processor that we don't know about
                  // set the tag (so that the user can tell us), but return 0
         sprintf(namebuf, "0x%x", info.cpu_subtype );
@@ -500,6 +489,14 @@ static long __GetRawProcessorID(const char **cpuname)
         detectedtype = 0;
         break;
       }
+    }
+    // AltiVec support now has a proper sysctl value HW_VECTORUNIT to check for
+    int mib[2], hasVectorUnit; mib[0] = CTL_HW; mib[1] = HW_VECTORUNIT;
+    size_t len = sizeof(hasVectorUnit);
+    if (sysctl( mib, 2, &hasVectorUnit, &len, NULL, 0 ) == 0)
+    {
+      if (hasVectorUnit != 0)
+        isaltivec = 1;
     }
   }
   #elif (CLIENT_OS == OS_WIN32)
