@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.50 2003/05/19 18:03:38 bdragon Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.51 2003/05/21 22:08:47 bdragon Exp $"; }
 
 //#define TRACE
 
@@ -1165,7 +1165,10 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
     {
       if (detected_type >= 7 /*EV56 and higher*/)
         cindex = 0;
-      else /* EV5 and lower */
+      else if ((detected_type <= 4 /*EV4 and lower*/) ||
+              (detected_type == 6 /*EV45*/))
+        cindex = 2;
+      else /* EV5 */
         cindex = -1;
     }
   }

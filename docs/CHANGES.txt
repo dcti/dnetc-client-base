@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.28 2003/05/19 18:03:38 bdragon Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.29 2003/05/21 22:08:47 bdragon Exp $
 ==========================================================================
 
 2.9000
@@ -34,6 +34,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.28 2003/05/19 18:03:38 bdragon Exp
             new: decunix: initial Lurk support
             chg: all: single-threaded clients now ignore numcpu/max-threads
             imp: alpha: preselect ansi 4-pipe for EV56 and higher
+            imp: alpha: preselect ansi 1-pipe for EV45 and lower
 
 2.9005-483  fix: x86: re-added SS-2 core - new version fixes bug #3187
             fix: ppc: no longer coredumps while resolving under Linux (#3213)
