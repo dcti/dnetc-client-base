@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.47 2000/06/28 20:02:59 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.48 2000/06/30 21:03:29 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -51,7 +51,7 @@ struct trigstruct
   const char *flagfile; 
   struct { unsigned int whenon, whenoff; } pollinterval;
   unsigned int incheck; //recursion check
-  void (*pollproc)(void);
+  void (*pollproc)(int io_cycle_allowed);
   volatile int trigger; 
   int laststate;
   time_t nextcheck;
@@ -137,7 +137,12 @@ int ClearPauseRequestTrigger(void)
   return oldstate;
 }  
 int CheckExitRequestTriggerNoIO(void) 
-{ __assert_statics(); return (trigstatics.exittrig.trigger); } 
+{ 
+  __assert_statics(); 
+  if (trigstatics.exittrig.pollproc)
+    (*trigstatics.exittrig.pollproc)(0 /* io_cycle_NOT_allowed */);
+  return (trigstatics.exittrig.trigger); 
+} 
 int CheckPauseRequestTriggerNoIO(void) 
 { __assert_statics(); 
   return ((trigstatics.pausetrig.trigger&(TRIGSETBY_SIGNAL|TRIGSETBY_FLAGFILE))
@@ -149,9 +154,9 @@ int CheckRestartRequestTriggerNoIO(void)
 
 // -----------------------------------------------------------------------
 
-void *RegisterPollDrivenBreakCheck( register void (*proc)(void) )
+void *RegisterPollDrivenBreakCheck( register void (*proc)(int) )
 {
-  register void (*oldproc)(void);
+  register void (*oldproc)(int);
   __assert_statics(); 
   oldproc = trigstatics.exittrig.pollproc;
   trigstatics.exittrig.pollproc = proc;
@@ -515,8 +520,12 @@ static int __CPUTemperaturePoll(void)
 
 // -----------------------------------------------------------------------
 
-static void __PollDrivenBreakCheck( void )
+static void __PollDrivenBreakCheck(int io_cycle_allowed)
 {
+  /* io_cycle_allowed is non-zero when called through CheckExitRequestTrigger
+     and is zero when called through CheckExitRequestTriggerNoIO()
+  */
+  io_cycle_allowed = io_cycle_allowed; /* shaddup compiler */
   #if (CLIENT_OS == OS_RISCOS)
   if (_kernel_escape_seen())
       RaiseExitRequestTrigger();
@@ -524,8 +533,12 @@ static void __PollDrivenBreakCheck( void )
   if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
     RaiseExitRequestTrigger();
   #elif (CLIENT_OS == OS_NETWARE)
+  if (io_cycle_allowed)
     nwCliCheckForUserBreak(); //in nwccons.cpp
-  #elif (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN16)
+    w32ConOut("");    /* benign call to keep ^C handling alive */
+  #elif (CLIENT_OS == OS_WIN16)
+  if (io_cycle_allowed)
     w32ConOut("");    /* benign call to keep ^C handling alive */
   #elif (CLIENT_OS == OS_DOS)
     _asm mov ah,0x0b  /* benign dos call (kbhit()) */
@@ -551,7 +564,7 @@ int CheckExitRequestTrigger(void)
     if ( !trigstatics.exittrig.trigger )
     {
       if (trigstatics.exittrig.pollproc)
-        (*trigstatics.exittrig.pollproc)();
+        (*trigstatics.exittrig.pollproc)(1 /* io_cycle_allowed */);
     }
     if ( !trigstatics.exittrig.trigger )
       __PollExternalTrigger( &trigstatics.exittrig, 0 );
@@ -1175,7 +1188,7 @@ int InitializeTriggers(int doingmodes,
       _init_cputemp( cputempthresh ); /* cpu temp string */
     trigstatics.pause_if_no_mains_power = pauseifnomainspower;
     if (doingmodes) /* dummy if, always false */
-      __PollDrivenBreakCheck(); /* shaddup compiler */
+      __PollDrivenBreakCheck(1); /* shaddup compiler */
   }
   TRACE_OUT( (-1, "InitializeTriggers\n") );
   return 0;
