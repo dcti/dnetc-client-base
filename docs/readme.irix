@@ -1,6 +1,6 @@
-$Id: readme.irix,v 1.1.2.4 2000/09/18 03:18:21 lyndon Exp $
+$Id: readme.irix,v 1.1.2.5 2000/09/18 03:29:16 lyndon Exp $
 
-Additional information for Irix clients.
+Additional information for IRIX clients.
 ========================================
 
 The 2.8XXX series of clients are built on Irix 6.5. They will not run
