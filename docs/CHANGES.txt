@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.106 2002/03/29 09:13:48 sampo Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.107 2002/03/29 12:58:22 mfeiri Exp $
 ==========================================================================
 
 2.8000
@@ -42,6 +42,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.106 2002/03/29 09:13:48 sampo Exp $
             new: all: configurable frequent update failure retry interval.
             fix: linux: no alpha SMP support (#2142)
             new: alpha: OGR core for processors supporting the CIX extension.
+            new: macosx: now supports -[un]install for /Libary/StartupItems/
 
 2.8016.470  new: ppc: new AltiVec RC5 core for the PPC 7450 by Dan Oetting.
             fix: all: flushed when 1 packet was left in in-buffer (#2209).
