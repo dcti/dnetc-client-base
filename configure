@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.88  1998/08/20 20:14:46  cyruspatel
+# Undid changes made in 1.84: -fno-handle-exceptions is back.
+# (also PIPELINE_COUNT hack has been fixed at source level).
+#
 # Revision 1.87  1998/08/20 03:37:18  silby
 # Added NASM includes to all x86 makefiles.
 #
@@ -92,16 +96,7 @@
 # deal with >250 chars lines ?)
 #
 # Revision 1.66  1998/07/07 21:54:52  cyruspatel
-# Serious house cleaning - client.h has been split into client.h (Client
-# class, FileEntry struct etc - but nothing that depends on anything) and
-# baseincs.h (inclusion of generic, also platform-specific, header files).
-# The catchall '#include "client.h"' has been removed where appropriate and
-# replaced with correct dependancies. cvs Ids have been encapsulated in
-# functions which are later called from cliident.cpp. Corrected other
-# compile-time warnings where I caught them. Removed obsolete timer and
-# display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-# Made MailMessage in the client class a static object (in client.cpp) in
-# anticipation of global log functions.
+# client.h has been split into client.h and baseincs.h
 #
 # Revision 1.65  1998/07/07 07:27:44  jlawson
 # added -static to link options for alpha-gcc
@@ -327,11 +322,11 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
     -fexpensive-optimizations -fomit-frame-pointer \
     -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
     -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
-    -fno-inline-functions -fno-exceptions'
+    -fno-inline-functions -fno-handle-exceptions'
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
-OPTS_EGCS='-O2 -fno-exceptions -fomit-frame-pointer -Wall -Icommon -Ides \
+OPTS_EGCS='-O2 -fno-handle-exceptions -fomit-frame-pointer -Wall -Icommon -Ides \
     -Irc5 -Iplatforms'
 
 #
@@ -390,8 +385,8 @@ OPTS_GCC_AIX="$OPTS_GCC -O6 -D_ARCH_PPC -D_AIX"
 
 #--
 
-OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86"
-OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentium -DASM_X86"
+OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86 -DPIPELINE_COUNT=2"
+OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentium -DASM_X86 -DPIPELINE_COUNT=2"
 
 #--
 
@@ -805,10 +800,10 @@ case "$1" in
 	TARGET_LIBS="-lncurses"
 	;;
 
-    *x86-linux-gcc-nocurses)      # client without curses and termios, uses standard GCC options plus '-pipe'
+    *x86-linux-gcc-nocurses)      # standard GCC options, no curses/termios, non-static
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DNOCURSES -DNOTERMIOS"
-	TARGET_LDFLAGS="-static"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -D__showids__ -DNOCURSES -DNOTERMIOS"
+	#TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
