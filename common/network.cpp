@@ -6,6 +6,9 @@
 //
 //
 // $Log: network.cpp,v $
+// Revision 1.20  1998/06/14 10:13:29  ziggyb
+// There was a stray '\' on line 567 that's not supposed to be there
+//
 // Revision 1.19  1998/06/14 08:26:52  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -19,7 +22,7 @@
 //                      (which should now warn if macros are not the same)
 //
 
-static char *id="@(#)$Id: network.cpp,v 1.19 1998/06/14 08:26:52 friedbait Exp $";
+static char *id="@(#)$Id: network.cpp,v 1.20 1998/06/14 10:13:29 ziggyb Exp $";
 
 #include "network.h"
 #include "sleepdef.h"    //  Fix sleep()/usleep() macros there! <--
@@ -564,7 +567,7 @@ Socks4Failure:
     if (psocks5mreply->ver != 5)
     {
 #ifdef VERBOSE_OPEN
-      sprintf(logstr, "SOCKS5 authentication method reply has wrong "\
+      sprintf(logstr, "SOCKS5 authentication method reply has wrong "
                       "version, %d should be 5.\n", psocks5mreply->ver);
       LogScreen(logstr);
 #endif
