@@ -6,7 +6,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61 1999/04/29 05:55:46 dicamillo Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.1 1999/06/14 13:45:48 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -52,19 +52,21 @@ typedef union
 class Problem
 {
 protected: /* these members *must* be protected for thread safety */
-  int last_resultcode; /* the rescode the last time contestwork was stable */
-  int started;
-  int initialized;
+  /* --------------------------------------------------------------- */
+  RC5UnitWork rc5unitwork; /* MUST BE longword (64bit) aligned */
+  u64 refL0;               
   ContestWork contestwork;
-  RC5UnitWork rc5unitwork;
-  u64 refL0;
   CoreDispatchTable *ogr;
+  /* --------------------------------------------------------------- */
   void *ogrstate;
   unsigned int pipeline_count;
   #ifdef MAX_MEM_REQUIRED_BY_CORE
   char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
   #endif
   u32 timehi, timelo;
+  int last_resultcode; /* the rescode the last time contestwork was stable */
+  int started;
+  int initialized;
 public: /* anything public must be thread safe */
   u32 runtime_sec, runtime_usec; /* ~total time spent in core */
   u32 last_runtime_sec, last_runtime_usec; /* time spent in core in last run */
