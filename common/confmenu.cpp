@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.10 1999/11/23 16:28:00 jlawson Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.11 1999/11/23 18:42:54 chrisb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -29,6 +29,7 @@ return "@(#)$Id: confmenu.cpp,v 1.41.2.10 1999/11/23 16:28:00 jlawson Exp $"; }
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
 #include "confopt.h"  // the option table
 #include "confmenu.h" // ourselves
+#include "base64.h"   // base64_encode()
 
 //#define REVEAL_DISABLED /* this is for gregh :) */
 
@@ -1109,7 +1110,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
       }
       else if (client->uuehttpmode == UUEHTTPMODE_SOCKS5)
       {
-        if (strlen(userpass.username) + 1 + strlen(userpass.password) + 1 <= sizeof(userpass.username)
+        if (strlen(userpass.username) + 1 + strlen(userpass.password) + 1 <= sizeof(userpass.username))
         {
           strcat(userpass.username, ":");
           strcat(userpass.username, userpass.password);
