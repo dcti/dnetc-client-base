@@ -199,9 +199,8 @@ Installation involves...
 
 <p><strong><strong>Q:</strong></strong> Is it possible to start the client 
   as a service and yet keep it visible on the desktop or taskbar?<br>
-<strong>A:</strong> Services are not supposed to be interactive. Services 
-  are a hair above device drivers, and on NT many 'devices' are indeed implemented 
-  as services (RAS for instance). There is a special category of interactive 
+<strong>A:</strong> Services are not supposed to be interactive. There is a special 
+  category of interactive 
   services, but they are rare (like kernel debuggers), and NT only. Some 'interactive' 
   functionality may be achieved by enabling logging to file and by using the 
   client's command line -shutdown, -restart, -pause and -unpause options. 
@@ -270,15 +269,6 @@ Installation involves...
       -&gt; click &quot;OK&quot;</li>
 </ol>
 
-<p><strong>Q:</strong> I use LITESTEP (or other alternative shell) and 
-  get a warning when I try to install the client as a service. Whats 
-  the deal?<br>
-<strong>A:</strong> A user suggested: &quot;I don't know about other 
-  shells, but LITESTEP (as of 0.24.4) appears to not completely adhere 
-  to the Microsoft specifications of what tasks a shell should fulfill. 
-  Installing the LiteMAN module fixes whatever it is in Litestep thats 
-  broken. Here's the link: <a href="http://www.litestep.org/binaries/liteman-b3.zip">http://www.litestep.org/binaries/liteman-b3.zip</a></p>
-
 <p> <strong>Q:</strong> I want to run the client and XYZ simultaneously, but 
   XYZ destroys my crunch rate. What can I do?<br>
 
@@ -302,7 +292,7 @@ Installation involves...
   hog the CPU. What can I do?<br>
 
 <strong>A:</strong> The support for this never actually was removed. However, 
-  be *very* careful. Windows' thread scheduling/priority 
+7  be *very* careful. Windows' thread scheduling/priority 
   assignment is brain dead beyond belief. Read the text in the config screen 
   before you fiddle with the priority setting!</p>
 
@@ -344,17 +334,13 @@ Installation involves...
   [&quot;sharing&quot; is simultaneous access via file-sharing, but 
   also manual transfer of the buffer files from one machine to another]<br>
 <strong>A: </strong>Yes. It is however a good idea to ensure that 
-  clients sharing buffers all have the same version number. For instance, 
-  if your share buffers between 2.7110.440 and other older clients, 
-  you must ensure that the client newer than 2.7109 do not request &quot;big-block&quot;s 
-  from the keyservers (ensure 'preferred-packet-size' is less than 32). 
-  Read the general FAQ for specifics. SAMBA note: Samba supports &quot;opportunistic 
-  locking&quot;, which implies that the Samba client's view of the remote 
-  volume is cached. This option is on by default. Consequently, if you 
-  are accessing data on a samba mount both via Samba and via the native-FS, 
-  you *must* &quot;veto oplock &lt;paths&gt;&quot; in your Samba configuration.</p>
+  clients sharing buffers all have the same version number.  Read the 
+  <a href="http://www.distributed.net/FAQ/">general FAQ</a> for specifics. 
+  You may want to read the faq entry on 
+  <a href="http://n0cgi.distributed.net/faq/index.cgi?file=48">sharing buffers over a network,</a>
+  as well as <a href="http://n0cgi.distributed.net/faq/index.cgi?file=59">"sneaker netting".</a>
 
-<p><strong>Q:</strong> I have troble minimizing the client. It sits 
+<p><strong>Q:</strong> I have trouble minimizing the client. It sits 
   on the taskbar for several seconds before finally moving to the tray.<br> 
 <strong>A:</strong> Norton Systemworks 2001 by default, runs 
   a tray icon manager for their software(Norton System Doctor, &gt; 
@@ -372,7 +358,9 @@ Installation involves...
 
 <p><strong>Q:</strong> How do I completely remove the this client from 
   my system?<br>
-<strong>A:</strong> First run the client with the '-uninstall' switch 
+<strong>A:</strong> If the client was installed via the MSI installer, you should first
+  try using "Add/Remove Programs"  in the control panel. If it were not, then you should 
+  run the client with the '-uninstall' switch 
   to ensure that it is not installed as a service. Then, simply delete 
   all files in the client's directory.</p>
 
