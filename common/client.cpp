@@ -1183,8 +1183,16 @@ s32 Client::SelfTest( u8 contest )
   u64 expectedsolution;
 
   if (SelectCore()) return 0;
-  if (contest == 1) test_cases = &rc5_test_cases;
-  else if (contest == 2) test_cases = &des_test_cases;
+  if (contest == 1) 
+    {
+    test_cases = &rc5_test_cases;
+    LogScreen("Beginning RC5 Self-test.\n");
+    }
+  else if (contest == 2)
+    {
+    test_cases = &des_test_cases;
+    LogScreen("Beginning DES Self-test.\n");
+    }
   else return 0;
 
   for ( s32 i = 0 ; i < TEST_CASE_COUNT ; i++ )
