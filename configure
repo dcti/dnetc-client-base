@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.228 1999/06/25 07:18:39 chrisb Exp $
+# @(#)$Id: configure,v 1.229 1999/07/10 13:34:44 cyp Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -61,14 +61,13 @@ OPTS_GCC272_SPARC1="$OPTS_GCC272 -O6 -mcypress -DASM_SPARC"
 
 # (sparc/v8 [SS5+]      gcc)
 OPTS_GCC_SPARC="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
-OPTS_EGCS_SPARC="$OPTS_EGCS -O6 -msupersparc -DASM_SPARC"
 OPTS_GCC272_SPARC="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC"
 
 # (sparc/v9 [Ultra]     gcc)
 OPTS_GCC_ULTRA="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
 OPTS_GCC272_ULTRA="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC"
 OPTS_EGCS_ULTRA="OPTS_GCC -Os -mtune=ultrasparc -fforce-mem -mvis \
-		-fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
+		-fstrict-aliasing -fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
 OPTS_GAS_ULTRA="-Av9a"
 OPTS_AS_ULTRA="-xarch=v8plusa"
 
@@ -382,8 +381,8 @@ case "$1" in
 	TARGET_LIBS="-lpthread"
 	;;
 
-    *mips-gcc-irix5-crunch)	# faster than mips-gcc for IRIX
-	DELETECHARS="'/.\$\-'"
+    *mips-gcc-irix5-crunch)	# [ivo] faster than mips-gcc for IRIX
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -D_irix5_ \
 			-DMIPS_CRUNCH=1 -D_CPU_32BIT_ -DBIT_32 -DKWAN -DMEGGS"
@@ -429,7 +428,8 @@ case "$1" in
 	TARGET_LDFLAGS="$LDFLAGS_CC_HPUX"
 	;;
 
-    *hpux-hppa-gcc)
+    *hpux-hppa-gcc)  # [ivo]
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/parisc/parisc.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_HPUX \
 			-DBIT_32 -DKWAN -DMEGGS"
@@ -543,31 +543,51 @@ case "$1" in
 
     #####
 
-     *sparc-solaris-egcs)       # supersparc, non-mt 
-        RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
-        TARGET_CC="g++"
-        TARGET_CCFLAGS="$OPTS_EGCS_SPARC -Dsolaris \
-                        -DBIT_32 -DKWAN -DMEGGS"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
-        TARGET_LIBS="-lnsl -lsocket -ldl"
-        ;;
-
-
-    *sparc-solaris-egcs-mt)	# supersparc, mt
+    *sparc-solaris-gcc-mt)	# slower rc5, slower des
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
-	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_EGCS_SPARC -Dsolaris \
-			-DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
+			-DMULTITHREAD -DPIPELINE_COUNT=2 \
+			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
+	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
+	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+	;;
+
+    *sparc-solaris-gcc-crunch-mt)    # fastest rc5, slower des
+	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
+			-DMULTITHREAD -DPIPELINE_COUNT=2 \
+			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
+	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
+	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+	;;
+
+    *sparc-solaris-gcc-crunch-slice)   # fastest rc5 & des for ultra
+	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
+	TARGET_CC="gcc -pipe"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
+			-DPIPELINE_COUNT=2 \
+			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lnsl -lsocket -ldl"
+	;;
+
+    *sparc-solaris-gcc-crunch-slice-mt)   # fastest rc5 & des for ultra
+	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
+	TARGET_CC="gcc -pipe"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
+			-DMULTITHREAD -DPIPELINE_COUNT=2 \
+			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
-    *sparc-solaris-gcc-crunch-asmslice-mt) # ultrasparc, mt
+    *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
-			-DMULTITHREAD -DULTRA_CRUNCH=1"
+			-DMULTITHREAD -DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
  	TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
 	TARGET_ASFLAGS="$OPTS_AS_ULTRA"
@@ -577,8 +597,8 @@ case "$1" in
     #####
 
     *x86-solaris)    # gcc, nomt, dynamic
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris $OPTS_DES_MMX -DMMX_RC5 \
-			-DPIPELINE_COUNT=2"
+	DELETECHARS="'/.\$\-'"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris $OPTS_DES_MMX -DMMX_RC5"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -586,8 +606,9 @@ case "$1" in
 	;;
 
     *x86-solaris-mt)    # gcc, mt, dynamic
+	DELETECHARS="'/.\$\-'"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris $OPTS_DES_MMX -DMMX_RC5 \
-			-DMULTITHREAD -DPIPELINE_COUNT=2"
+			-DMULTITHREAD"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
@@ -747,7 +768,7 @@ case "$1" in
 	# the POWER support should use pipelinecount=2 anyway. 
 	# patrick - patrick@mail4you.de
 	RC5CORECOPY="rc5/ansi/rc5ansi1-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_POWER \
+	TARGET_CCFLAGS="$OPTS_GCC_POWER -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	;;
@@ -889,12 +910,11 @@ case "$1" in
 	;;
 
     *x86-linux-glibc2-mt-egcs)	 # [remi] mt, glibc2, static, egcs
-	TARGET_AS="g++ -c"
-	TARGET_CC="g++"
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-D__showids__ -DSMC -DMULTITHREAD -DLURK"
-	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
+			-D__showids__ -DMULTITHREAD -DLURK"
+	TARGET_ADDSRCS="common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
@@ -962,8 +982,7 @@ case "$1" in
 
   ### Other targets
 
-    *x86-linux-gcc)			# nomt, static, gcc/pipe
-        #used by cyp <cyp@fb14.uni-mainz.de>
+    *x86-linux-gcc)			# [cyp] nomt, static, gcc/pipe
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -pipe \
@@ -1101,62 +1120,76 @@ case "$1" in
 	TARGET_LIBS="-lpthread"
 	;;
 
-###### Intel X86 FreeBSD/NetBSD/OpenBSD
+###### Intel X86 FreeBSD
 
-    *x86-freebsd)
+    *x86-freebsd)             # [dbaker] aout
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-DLURK"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
-	TARGET_LIBS="-lc_r"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -f aoutb"
-	;;
-
-    *x86-freebsd-mt)
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DMULTITHREAD -DLURK"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lc_r"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -f aoutb"
 	;;
 
-    *x86-freebsd-elf)
+    *x86-freebsd-mt)         # [dbaker] aout + pthread
+        echo "The x86-freebsd-mt target is obsolete. Its identical to the x86-freebsd target."
+        echo "The only difference is the -DMULTITHREAD switch and thats not needed"
+        echo "since we no longer use pthreads"
+        exit 1
+        TARGET_AS="gcc -c"
+ 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
+ 			-DMULTITHREAD -DLURK"
+ 	TARGET_LDFLAGS="-static"
+ 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+ 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
+ 			platforms/x86ident.S \
+ 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
+ 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+ 	TARGET_LIBS="-lc_r"
+ 	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -f aoutb"
+ 	;;
+
+    *x86-freebsd-elf)       # [dbaker] elf
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-D__ELF__ -DLURK"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASM="/usr/local/bin/nasm"
-	TARGET_LIBS="-lc_r"
-	;;
-
-    *x86-freebsd-mt-elf)
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DMULTITHREAD -DLURK"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lc_r"
 	;;
-
-    *x86-freebsd4-mt-elf)
+ 
+    *x86-freebsd-mt-elf)    # [dbaker] elf + pthread
+        echo "The x86-freebsd-mt-elf target is obsolete. (identical to x86-freebsd-elf)"
+        echo "The only difference is the -DMULTITHREAD switch and thats not needed"
+        echo "since we no longer use pthreads"
+        exit 1
         TARGET_AS="gcc -c"
-        TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DLURK \
+        TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
+ 		       -D__ELF__ -DMULTITHREAD -DLURK"
+        TARGET_LDFLAGS="-static"
+        TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+        TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
+ 		        platforms/x86ident.S \
+ 		        des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
+        TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+        TARGET_LIBS="-lc_r"
+        ;;
+
+    *x86-freebsd4-mt-elf)    # [dbaker] elf + pthread + fbsd4
+        echo "The x86-freebsd4-mt-elf target is obsolete. (identical to x86-freebsd-elf)"
+        echo "The FreeBSD version is detected at runtime."
+        exit 1
+        TARGET_AS="gcc -c"
+        TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -DLURK \
                         -DMULTITHREAD -DCLIENT_OS_MINOR=4"
         TARGET_LDFLAGS="-static"
         TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
@@ -1166,6 +1199,8 @@ case "$1" in
         TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
         TARGET_LIBS="-lc_r"
         ;;
+
+###### Intel X86 NetBSD
 
     *x86-netbsd)
 	TARGET_AS="g++ -c -DNO_BALIGN"
@@ -1177,13 +1212,7 @@ case "$1" in
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	;;
 
-    *x86-qnx4)
-	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
-	;;
+###### Intel X86 OpenBSD
 
     *x86-openbsd)
 	TARGET_AS="g++ -c"
@@ -1195,6 +1224,8 @@ case "$1" in
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	;;
 
+###### Intel X86 BSDI
+
     *x86-bsdi)                        # snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC272_X86 -DKWAN -D_CPU_32BIT_"
@@ -1203,8 +1234,7 @@ case "$1" in
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
        ;;
 
-####### BSD/OS 4.0 with ELF format
-    *x86-bsdi4)                       # snake
+    *x86-bsdi4)                       # BSD/OS 4.0 with ELF format -snake
 	TARGET_AS="g++ -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__ELF__"
 	TARGET_LDFLAGS="-static"
@@ -1212,6 +1242,16 @@ case "$1" in
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
        ;;
+
+####### Intel X86 QNX
+
+    *x86-qnx4)
+	TARGET_AS="g++ -c -DNO_BALIGN"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4"
+	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
+	;;
 
 ####### Intel X86 SCO5
 
@@ -1315,11 +1355,10 @@ case "$1" in
 	EXENAME=rc5des,ff8
 	;;
 
-    *arm-linux)
+    *arm-linux)					# chrisb
 	TARGET_CC="gcc"
 	TARGET_AS="as"
-	TARGET_CCFLAGS="$OPTS_GCC_ARM -Dlinux \
-			-DBIT_32 -DKWAN"
+	TARGET_CCFLAGS="$OPTS_GCC_ARM -Dlinux -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS=""
 	TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu.s rc5/arm/rc5-arm-2-gnu.s \
 			rc5/arm/rc5-arm-3-gnu.s \
@@ -1327,7 +1366,7 @@ case "$1" in
 	TARGET_LIBS="-lm"
 	;;
 
-    *arm-netbsd)
+    *arm-netbsd)				# chrisb
 	TARGET_CC="gcc"
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_ARM -DBIT_32 -DKWAN"
@@ -1636,6 +1675,30 @@ echo "" >> Makefile
 echo "ident:	${EXENAME}" >> Makefile
 echo "	ident ${EXENAME} | awk '{ printf(\"%-30s %10s %s %s %s %s%c\", \$\$2,\$\$3,\$\$4,\$\$5,\$\$6,\$\$7,10)}'" >> Makefile
 echo "" >> Makefile
+
+# add binary-tarball targets
+echo "internal-tarpackit:	\${TARGETFILE} \${TAREXTRAS}" >> Makefile
+echo "	strip \${STRIPFLAGS} \${TARGETFILE}" >> Makefile
+echo "	-rm -rf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+echo "	mkdir \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+echo "	cp -f \${TARGETFILE} \${TAREXTRAS} \\" >> Makefile
+echo "		\${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+echo "	tar cvf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar \\" >> Makefile
+echo "		\${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+echo "	rm -rf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+echo "	-rm -f \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar.gz" >> Makefile
+echo "	\${TARCOMPRESS} \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar" >> Makefile
+echo "	@echo Type \'make ftp\' to upload the tarball to the ftp site." >> Makefile
+echo "" >> Makefile
+
+# make rule to transfer the packaged tarball
+echo "ftp:" >> Makefile
+echo "	echo \"user anonymous -luser@distributed.net#cd /incoming#\\" >> Makefile
+echo "	binary#mput \${TARBASENAME}*.tar*#bye#\" | \\" >> Makefile
+echo "	tr \"#\" \"\n\" | ftp -n -i -v upload.distributed.net" >> Makefile
+echo "" >> Makefile
+
+
 
 #
 # Generate the dependency targets in the makefile
