@@ -1238,7 +1238,8 @@ int Network::rweonline(void)
 char * Network::base64_encode(char *username, char *password)
 {
   static char in[80], out[80];
-  char base64table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  static const char base64table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
+                                    "ghijklmnopqrstuvwxyz0123456789+/";
 
   u32 length = strlen(username) + strlen(password) + 1;
   if ((length+1) >= sizeof(in) || (length + 2) * 4 / 3 >= sizeof(out)) return NULL;
