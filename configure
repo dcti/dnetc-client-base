@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.210 2000/11/30 16:18:52 snake Exp $
+# @(#)$Id: configure,v 1.222.2.211 2000/12/04 16:41:23 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1690,6 +1690,7 @@ case "$1" in
 	      ;;
 
     *m68k-netbsd) # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, -snake
+        # needs gas 2.9.1 to compile OGR
         TARGET_CC="g++"
         TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
                         -m68020-40 -DASM_68K -DLURK -DHAVE_OGR_CORES"
