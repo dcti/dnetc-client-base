@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.125 2002/03/22 00:55:44 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.126 2002/03/22 02:22:20 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -310,7 +310,7 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
       if (!have_nasm && cindex == 6)    /* "RG/DG re-pair III" */
         cindex = ((have_3486 && have_smc)?(7):(3)); /* "RG self-mod" or
                                                        "RG/HB re-pair I"   */
-      if (!have_smc && !have_3486 && cindex == 7)   /* "RG self-modifying"
+      if ((!have_smc || !have_3486) && cindex == 7)   /* "RG self-modifying"
                                                        do not run on > 486 */
         cindex = 1;                     /* "RG class 3/4" */
       if (!have_nasm && cindex == 8)    /* "AK Class 7" */
