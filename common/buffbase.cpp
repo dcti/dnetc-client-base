@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.9 1999/04/20 02:47:10 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.10 1999/04/21 04:55:22 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -662,8 +662,8 @@ static int __CheckBuffLimits( Client *client )
   {
     if (strcmp(client->in_buffer_basename, client->out_buffer_basename) == 0)
     {
-      Log("Fatal: in- and out- buffer prefixes are identical.\n");
-      RaiseExitRequestTrigger();
+      Log("ERROR!: in- and out- buffer prefixes are identical.\n");
+      //RaiseExitRequestTrigger();
       return -1;
     }
   }
@@ -1099,12 +1099,16 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       if (remaining < ((unsigned long)(lefttotrans)))
         lefttotrans = remaining;
       
-      if (client->PutBufferRecord( &wrdata ) < 0)
+      if ((lefttotrans = client->PutBufferRecord( &wrdata )) < 0)
       {
         BufferPutFileRecord( remote_file, &wrdata, NULL );
         failed = -1;
         break;
       }
+      if (((long)(client->inthreshold[contest])) < lefttotrans) 
+        lefttotrans = 0;
+      else 
+        lefttotrans = ((long)(client->inthreshold[contest])) - lefttotrans;
       
       switch (contest) 
       {
