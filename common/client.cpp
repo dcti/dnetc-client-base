@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.23 1999/11/02 14:10:57 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.24 1999/11/02 16:03:43 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -281,6 +281,7 @@ static int ClientMain( int argc, char *argv[] )
           TRACE_OUT((0,"initializeconsole\n"));
           if (InitializeConsole(client->quietmode,domodes) == 0)
           {
+	    int con_waitforuser = 0;
             TRACE_OUT((+1,"initializelogging\n"));
             InitializeLogging( (client->quietmode!=0), 
                                (client->percentprintingoff!=0),
@@ -306,6 +307,7 @@ static int ClientMain( int argc, char *argv[] )
 
             if (domodes)
             {
+	      con_waitforuser = (ModeReqIsSet(MODEREQ_CONFIG)==0);
               TRACE_OUT((+1,"modereqrun\n"));
               ModeReqRun( client );
               TRACE_OUT((-1,"modereqrun\n"));
@@ -324,7 +326,7 @@ static int ClientMain( int argc, char *argv[] )
             TRACE_OUT((0,"deinitialize logging\n"));
             DeinitializeLogging();
             TRACE_OUT((0,"deinitialize console\n"));
-            DeinitializeConsole();
+            DeinitializeConsole(con_waitforuser);
           }
           TRACE_OUT((0,"deinitialize connectivity\n"));
           DeinitializeConnectivity(); //netinit.cpp

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CONSOLE_H__
-#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.28.2.2 1999/09/18 18:02:33 cyp Exp $"
+#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.28.2.3 1999/11/02 16:03:42 cyp Exp $"
 
 // ConIsScreen() returns non-zero if console represents the screen
 // also returns 0 if the console is not initialized.
@@ -58,8 +58,9 @@ int ConSetPos( int row, int col );
 // returns -1 if console is not a tty
 int ConGetSize( int *width, int *height );
 
-// Deinitialize console functionality.
-int DeinitializeConsole(void);
+// Deinitialize console functionality. 'waitforuser' is set if the client
+// ran modes, so that the user can see the output before the screen disappears
+int DeinitializeConsole(int waitforuser);
 
 // Initialize console functionality. Returns !0 on failure.
 // doingmodes is used on some platforms to use a separate screen.
