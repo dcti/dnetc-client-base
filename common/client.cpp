@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.62  1998/06/29 07:57:30  ziggyb
+// Redid the lurk detection for OS/2. Also gave the text output functions
+// a priority boost so the display isn't so sluggish.
+//
+// For the general client, I added an if(!offlinemode) on all the mailmessages,
+// since it seemed that even in offline mode, or lurk mode, a smtp attempt was
+// being made.
+//
 // Revision 1.61  1998/06/29 06:57:38  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -66,7 +74,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.61 1998/06/29 06:57:38 jlawson Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.62 1998/06/29 07:57:30 ziggyb Exp $";
 #endif
 
 #include "client.h"
@@ -1097,11 +1105,16 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
 #endif
     ) {
     mailmessage.quietmode=quietmode;
-    mailmessage.checktosend(0);
+    if (!offlinemode)
+       mailmessage.checktosend(0);
     return( -1 );
   }
 
   // Ready the net
+#if (CLIENT_OS == OS_OS2)
+//  DialOnDemand dod;
+//  dod.ensureonline();
+#endif
   net = new Network( (const char *) (keyproxy[0] ? keyproxy : NULL ),
       (const char *) (nofallback ? (keyproxy[0] ? keyproxy : NULL) : DEFAULT_RRDNS),
       (s16) keyport);
@@ -1155,6 +1168,9 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
 
   // delete the net
   delete net;
+#if (CLIENT_OS == OS_OS2)
+//  dod.checkoffline();
+#endif
 
   if (fetcherr && flusherr) {
      // This is an explicit call to update() by the user.
@@ -1170,7 +1186,8 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
   {
     // did any net traffic occur?
     mailmessage.quietmode=quietmode;
-    mailmessage.checktosend(0);
+    if (!offlinemode)
+      mailmessage.checktosend(0);
   }
 #endif
   return( retcode );
@@ -2020,51 +2037,35 @@ PreferredIsDone1:
     {
       if(lurk)
          {
-         const s32 index = 68;     // index to check if connected
-         s32  s, rc, tmpmode;
-         char netstat[128];
+         s32 tmpmode;
+         DialOnDemand dod;       // just used to check online status for lurk
 
-         netstat[index] = 0;       // clear the bit
-         // Get routing data
-         s = socket(PF_INET, SOCK_DGRAM, 0);
-         rc = ioctl(s, SIOSTATRT, netstat, 128);
-         soclose(s);
-
-         if(rc != 0)
+         if(!(dod.rweonline()))
             {
-            LogScreenf("Unable to get routing information, lurk mode disabled\n");
-            lurk = 0;
+            tmpmode = 0;
+            if(connectstatus != tmpmode)    // No connection
+               {
+               Log("Dialup Connection Disconnected");
+               connectstatus = tmpmode;
+               if(lurk == 2)
+                  {
+                  Log(" - Offline Mode");
+                  offlinemode = 1;
+                  connectrequested = 0; // cancel any connection requests
+                  }
+               Log("\n");
+               }
             }
          else
             {
-            if(!netstat[index])
+            tmpmode = 1;
+            if(connectstatus != tmpmode)
                {
-               tmpmode = 0;
-               if(connectstatus != tmpmode)    // No connection
-                  {
-                  Log("TCP/IP Connection Disconnected");
-                  connectstatus = tmpmode;
-                  if(lurk == 2)
-                     {
-                     Log(" - Offline Mode");
-                     offlinemode = 1;
-                     connectrequested = 0; // cancel any connection requests
-                     }
-                  Log("\n");
-                  }
-               }
-            else
-//             if(netstat[index])
-               {
-               tmpmode = 1;
-               if(connectstatus != tmpmode)
-                  {
-                  // Only put out message the first time.
-                  Log("TCP/IP Connection Detected\n");
-                  connectstatus = tmpmode;
-                  if(lurk == 2)
-                     offlinemode = 0;
-                  }
+               // Only put out message the first time.
+               Log("Dialup Connection Detected\n");
+               connectstatus = tmpmode;
+               if(lurk == 2)
+                  offlinemode = 0;
                }
             }
          }
@@ -2828,8 +2829,15 @@ void Client::LogScreen ( const char *text)
 {
   if (!quietmode)
   {
+#if (CLIENT_OS == OS_OS2)
+    DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, 0, 0);
+    // Give prioirty boost so that text appears faster
+#endif
     fwrite(text, 1, strlen(text), stdout);
     fflush(stdout);
+#if (CLIENT_OS == OS_OS2)
+    SetNiceness();
+#endif
   }
 }
 
@@ -2847,11 +2855,18 @@ void Client::LogScreenf ( const char *format, ...)
 #else
   if (!quietmode)
   {
+#if (CLIENT_OS == OS_OS2)
+    DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, 0, 0);
+    // Give prioirty boost so that text appears faster
+#endif
     va_list argptr;
     va_start(argptr, format);
     vprintf( format, argptr); // display it
     fflush( stdout );
     va_end(argptr);
+#if (CLIENT_OS == OS_OS2)
+    SetNiceness();
+#endif
   }
 #endif
 }
@@ -3158,7 +3173,8 @@ int main( int argc, char *argv[] )
       if (client.contestdone[1]) retcode=1;
 
       client.mailmessage.quietmode = client.quietmode;
-      client.mailmessage.checktosend(1);
+      if (!client.offlinemode)
+         client.mailmessage.checktosend(1);
       NetworkDeinitialize();
       if (retcode < 0 || retcode2 < 0)
       {
@@ -3191,7 +3207,8 @@ int main( int argc, char *argv[] )
       if (client.contestdone[1]) retcode = 0;
 
       client.mailmessage.quietmode=client.quietmode;
-      client.mailmessage.checktosend(1);
+      if (!client.offlinemode)
+         client.mailmessage.checktosend(1);
       NetworkDeinitialize();
       if (retcode < 0 || retcode2 < 0)
       {
@@ -3218,7 +3235,8 @@ int main( int argc, char *argv[] )
       int retcode2 = client.contestdone[1] ? 0 : client.Update(1,1,1);
 
       client.mailmessage.quietmode = client.quietmode;
-      client.mailmessage.checktosend(1);
+      if (!client.offlinemode)
+         client.mailmessage.checktosend(1);
       NetworkDeinitialize();
 
       if (retcode < 0 || retcode2 < 0)
