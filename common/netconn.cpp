@@ -17,10 +17,10 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.1.2.4 2000/10/24 21:36:35 cyp Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.1.2.5 2000/11/09 12:30:42 cyp Exp $"; }
 
-//#define TRACE
-//#define DUMP_PACKET
+#define TRACE
+#define DUMP_PACKET
 
 #include "cputypes.h"
 #include "baseincs.h"  // standard stuff
@@ -1293,10 +1293,16 @@ int netconn_read( void *cookie, char * data, int numRequested )
 
       if (!gotfullpacket && !need_close)
       {
-        numRead = content_length;
-        if (!numRead)
-          numRead = 500; 
-        if (netspool_reserve( &decodebuffer, numRead ) < totalRead)
+        numRead = 500;
+        if (content_length)
+        {
+          numRead = content_length - decodebuffer.used;
+          if (content_length < decodebuffer.used)
+            numRead = 0;
+        }  
+        if (numRead < 1)
+          ; /* nothing */
+        else if (netspool_reserve( &decodebuffer, numRead ) < numRead)
           need_close = 1;
         else
         {  
