@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: console.h,v $
+// Revision 1.23  1998/11/10 21:36:01  cyp
+// Changed InitializeConsole() so that terms know in advance whether the
+// client will be running "modes" or not. This is needed for platforms where
+// the client uses a different screen for "modes" or for others that wait
+// with a "Press any key..." message before destroying the screen/window.
+//
 // Revision 1.22  1998/11/08 19:05:03  cyp
 // Created new function ConGetSize(int *width, int *height) from stuff in
 // DisplayHelp().
@@ -68,11 +74,11 @@ int ConSetPos( int row, int col );
 int ConGetSize( int *width, int *height );
 
 // Deinitialize console functionality. 
-// Waits for a user keypress (on some platforms) if !autoclose.
-int DeinitializeConsole(int autoclose);
+int DeinitializeConsole(void);
 
-// Initialize console functionality. 
-// Returns !0 on failure.
-int InitializeConsole(int runhidden);
+// Initialize console functionality. Returns !0 on failure.
+// doingmodes is used on some platforms to use a separate screen and by
+// others to wait with "Press any key..." before destroying the screen
+int InitializeConsole(int runhidden, int doingmodes);
 
 #endif

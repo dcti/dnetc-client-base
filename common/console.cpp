@@ -11,6 +11,12 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.20  1998/11/10 21:36:02  cyp
+// Changed InitializeConsole() so that terms know in advance whether the
+// client will be running "modes" or not. This is needed for platforms where
+// the client uses a different screen for "modes" or for others that wait
+// with a "Press any key..." message before destroying the screen/window.
+//
 // Revision 1.19  1998/11/10 09:49:28  silby
 // added termios for freebsd, console input works much nicer now.
 //
@@ -74,7 +80,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.19 1998/11/10 09:49:28 silby Exp $"; }
+return "@(#)$Id: console.cpp,v 1.20 1998/11/10 21:36:02 cyp Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -117,15 +123,16 @@ static struct
   int initlevel;
   int runhidden;
   int conisatty;
-} constatics = {0,0,0};
+  int doingmodes;
+} constatics = {0,0,0,0};
 
 /* ---------------------------------------------------- */
 
-int DeinitializeConsole(int autoclose)
+int DeinitializeConsole(void)
 {
   if (constatics.initlevel == 1)
     {
-    if (!autoclose && !constatics.runhidden)
+    if (constatics.doingmodes && !constatics.runhidden)
       {
       #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || \
           (CLIENT_OS==OS_WIN32S)
@@ -157,7 +164,7 @@ int DeinitializeConsole(int autoclose)
 
 /* ---------------------------------------------------- */
 
-int InitializeConsole(int runhidden)
+int InitializeConsole(int runhidden,int doingmodes)
 {
   int retcode = 0;
 
@@ -166,6 +173,7 @@ int InitializeConsole(int runhidden)
     memset( (void *)&constatics, 0, sizeof(constatics) );
     constatics.initlevel = 1;
     constatics.runhidden = runhidden;
+    constatics.doingmodes = doingmodes;
 
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
     retcode = w32InitializeConsole(runhidden);
@@ -329,14 +337,14 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         }
       #elif (CLIENT_OS == OS_MACOS)
         {
-    unsigned long keys[4];
-    GetKeys(keys);
-    if (keys[0] != 0 || keys[1] != 0 || keys[2] != 0 || keys[3] != 0)
-      {
-        ch = getchar();
-        if (ch == EOF)
-          ch = 0;
-      }
+        unsigned long keys[4];
+        GetKeys(keys);
+        if (keys[0] != 0 || keys[1] != 0 || keys[2] != 0 || keys[3] != 0)
+          {
+          ch = getchar();
+          if (ch == EOF)
+            ch = 0;
+          }
         }
       #else
         {
@@ -418,8 +426,8 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
            {
            #ifdef TERM_IS_ANSI_COMPLIANT
            ConOut("\x1B" "[1D" " " "\x1B" "[1D");
-	   #elif (CLIENT_OS == OS_RISCOS)
-	   riscos_backspace();
+           #elif (CLIENT_OS == OS_RISCOS)
+           riscos_backspace();
            #else
            ConOut("\b \b");
            #endif
