@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.32 2000/05/06 22:09:11 mfeiri Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.33 2000/05/27 20:47:49 patrick Exp $"
 
 #include "cputypes.h"
 
@@ -210,6 +210,8 @@
   #include <unistd.h>		// nice()
   #include <strings.h>		// bzero(), strcase...,
   #include <sys/select.h>	// fd_set on AIX 4.1
+// clock_gettime is called getclock (used in clitime.cpp)
+  #define clock_gettime(a,b) (getclock(a,b))
 #elif (CLIENT_OS == OS_LINUX)
   #include <sys/time.h>
   #include <sys/file.h>
