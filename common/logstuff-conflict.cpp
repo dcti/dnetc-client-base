@@ -11,7 +11,7 @@
  * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.37.2.9 2000/01/09 00:00:05 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.37.2.10 2000/01/09 01:36:06 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -51,8 +51,7 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.37.2.9 2000/01/09 00:00:05 cyp Exp $"
      CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
      CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN32S )
   #define ftruncate( fd, sz )  chsize( fd, sz )
-#elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_RISCOS || \
-     CLIENT_OS == OS_AMIGAOS || CLIENT_OS == OS_MACOS)
+#elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_AMIGAOS || CLIENT_OS == OS_MACOS)
   #define ftruncate( fd, sz ) //nada, not supported
   #define FTRUNCATE_NOT_SUPPORTED
 #endif  
@@ -184,38 +183,17 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
   int logfileType = logstatics.logfileType;
   unsigned int logfileLimit = logstatics.logfileLimit;
   
-  if ( logstatics.logfile[0] == 0 )
-    return;
   if ( !msglen || msgbuffer[msglen-1] != '\n') 
     return;
   if ( logfileType == LOGFILETYPE_NONE || logstatics.spoolson==0 ||
        (logstatics.loggingTo & LOGTO_FILE) == 0)
     return;
     
-  #ifdef FTRUNCATE_NOT_SUPPORTED
-  if ( ( logfileType & LOGFILETYPE_FIFO ) != 0 ) 
-    logfileType = LOGFILETYPE_NOLIMIT;
-  #endif    
-
-  if ( logfileType == LOGFILETYPE_NOLIMIT )
-  {
-    if (!logstatics.logstream)
-      logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
-    if (logstatics.logstream)
-    {
-      fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
-      #ifndef __unix__
-      fclose( logstatics.logstream );
-      logstatics.logstream = NULL;
-      #else
-      fflush( logstatics.logstream );
-      #endif
-    }
-    logstatics.logfilestarted = 1;
-  }
-  else if ( logfileType == LOGFILETYPE_RESTART ) 
+  if ( logfileType == LOGFILETYPE_RESTART ) 
   {
     long filelen = (long)(-1);
+    if ( logstatics.logfile[0] == 0 )
+      return;
     if ( logfileLimit < 100 )
       logfileLimit = 100;
     if (!logstatics.logstream)
@@ -371,9 +349,12 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
       logstatics.logfilestarted = 1;
     }
   }
+  #ifndef FTRUNCATE_NOT_SUPPORTED
   else if ( logfileType == LOGFILETYPE_FIFO ) 
   {
     unsigned long filelen = 0;
+    if ( logstatics.logfile[0] == 0 )
+      return;
     if ( logfileLimit < 100 )
       logfileLimit = 100;
       
@@ -442,6 +423,25 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
         #endif
       }
     }  
+    logstatics.logfilestarted = 1;
+  }
+  #endif
+  else /* if ( logfileType == LOGFILETYPE_NOLIMIT ) */
+  {
+    if ( logstatics.logfile[0] == 0 )
+      return;
+    if (!logstatics.logstream)
+      logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
+    if (logstatics.logstream)
+    {
+      fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
+      #ifndef __unix__
+      fclose( logstatics.logstream );
+      logstatics.logstream = NULL;
+      #else
+      fflush( logstatics.logstream );
+      #endif
+    }
     logstatics.logfilestarted = 1;
   }
   return;
