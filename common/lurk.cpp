@@ -1,20 +1,21 @@
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
+//
+// This module contains functions for both lurking and dial
+// initiation/hangup. The workhorse protected function, IsConnected(),
+// is needed to support both.              - cyp
+// Lurk detection is trivial and contain no OS specific routines.
+//                  CheckIfConnectRequested() and CheckForStatusChange()
+// Public function used for dial initiation/hangup:
+//                  DialIfNeeded() and HangupIfNeeded()
+//
+
 //#define LURKDEBUG
-/* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
- * For use in distributed.net projects only.
- * Any other distribution or use of this source violates copyright.
- *
- *
- * This module contains functions for both lurking and dial initiation/hangup.
- * The workhorse protected function, IsConnected(), is needed to support both.
- * Lurk detection is trivial and contain no OS specific routines.
- *                  CheckIfConnectRequested() and CheckForStatusChange()
- * Public function used for dial initiation/hangup:
- *                  DialIfNeeded() and HangupIfNeeded()
- *                                                              - cyp
-*/
+
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.38 1999/04/04 17:48:00 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.39 1999/04/13 01:08:23 jlawson Exp $"; }
 
 /* ---------------------------------------------------------- */
 

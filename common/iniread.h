@@ -1,17 +1,16 @@
-/* Hey, Emacs, this a -*-C++-*- file !
- *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
- * For use in distributed.net projects only.
- * Any other distribution or use of this source violates copyright.
- *
- * ----------------------------------------------------------------------
- * INI file reading/processing class for C++.
- * Created by Jeff Lawson.
- * ----------------------------------------------------------------------
-*/ 
+// Hey, Emacs, this a -*-C++-*- file !
+//
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
+// ----------------------------------------------------------------------
+// INI file reading/processing class for C++.
+// Created by Jeff Lawson.
+// ----------------------------------------------------------------------
 
 #ifndef __INIREAD_H__
-#define __INIREAD_H__ "@(#)$Id: iniread.h,v 1.29 1999/04/05 18:15:20 cyp Exp $"
+#define __INIREAD_H__
 
 #ifdef PROXYTYPE      // compiling proxy
   // proxy needs automatic tokenizing of ini values.

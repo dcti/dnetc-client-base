@@ -1,11 +1,12 @@
-/* Hey, Emacs, this a -*-C++-*- file !
- *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
- * For use in distributed.net projects only.
- * Any other distribution or use of this source violates copyright.
-*/ 
+// Hey, Emacs, this a -*-C++-*- file !
+//
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
+
 #ifndef __RSADATA_H__
-#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.7 1999/04/06 11:55:44 cyp Exp $"
+#define __RSADATA_H__
 
 // RC5-56:
 // Contest identifier: RC5-32/12/7 
@@ -106,3 +107,4 @@
 #define DESCLOSEDCODE 0xBEEFF00DL
 
 #endif /* __RSADATA_H__ */
+
