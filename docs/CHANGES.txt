@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.121 2002/06/14 00:10:27 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.122 2002/06/23 10:25:34 andreasb Exp $
 ==========================================================================
 
 2.8000
@@ -31,7 +31,9 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.121 2002/06/14 00:10:27 andreasb Ex
             fix: macosx: config menu displayed erroneous message that pause
                          on battery was not supported.
             fix: win32: core throughput: summary column not zeroed (#2630)
-            new: x86: detect Celeron 4 (#2673)
+            chg: x86: reorganized intel cpu recognition
+            new: x86: detect Celeron 4 (#2673), VIA C3 (#2725)
+            new: PlayStation2 Linux port
 
 2.8017.471  (not publicly released)
             new: x86: P4 RC5 core (ak-p7)

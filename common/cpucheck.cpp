@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.90 2002/06/14 00:07:39 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.91 2002/06/23 10:25:34 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -890,6 +890,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0580,  0x10A, "C2" }, /* uses RG Cx re-pair */
           {  0x0590,  0x10A, "C3" },
           {  0x0660,  0x109, "Samuel (Cyrix III)" }, /* THIS IS NOT A P6 !!! */
+          {  0x0670,  0x10A, "C3" },
           {  0x0000,     -1, NULL          }
           }; internalxref = &centaurxref[0];
       vendorname = "Centaur/IDT";
@@ -950,7 +951,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0610,  0x109, "K7 (Athlon)"            }, // slot A
           {  0x0620,  0x109, "K7-2 (Athlon)"          }, // slot A
           {  0x0630,  0x109, "K7-3 (Duron)"           }, // 64K L2
-          {  0x0640,  0x109, "K7-4 (Athlon)"          }, // Thunderbird, 256K L2
+          {  0x0640,  0x109, "K7-4 (Athlon Thunderbird)" }, // 256K L2
           {  0x0660,  0x109, "K7-6 (Athlon XP/MP/-4)" }, // Palomino core, 256K L2
           {  0x0670,  0x109, "K7-7 (Duron)"           }, // Morgan core = Palomino core w/ 64K L2
           {  0x0000,     -1, NULL       }
