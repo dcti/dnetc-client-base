@@ -3,8 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.9  1998/12/15 14:11:56  cyp
+// x86 change: Tell the user if his/her client does not support the fastest core
+// that is 'available' for contest X.
+//
 // Revision 1.8  1998/12/15 13:28:22  cyp
-// Prettified: reformatted long msgs, converted LogScreenRaw() to LogScreen() etc
+// Prettified: reformatted long log messages, converted LogScreenRaw() to 
+// LogScreen() etc
 //
 // Revision 1.7  1998/12/08 05:29:45  dicamillo
 // MacOS updates for timeslice and GUI display
@@ -35,7 +40,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.8 1998/12/15 13:28:22 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.9 1998/12/15 14:11:56 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -139,6 +144,30 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
     UpdateThreadProgress(0, 0, 0, true );
     UpdateClientInfo(&client_info);
   #endif
+  #endif
+
+  #if (CLIENT_CPU == CPU_X86) && \
+      (!defined(SMC) || !defined(MMX_RC5) || !defined(MMX_BITSLICER))
+  unsigned int detectedtype = GetProcessorType(1);
+  const char *not_supported = "Note: this client does not support the %s core.\n";
+  if (contestid == 0)
+    {
+    #if (!defined(SMC))            /* all non-gcc platforms except netware */
+    if (cputype == 1) /* 486 */
+      LogScreen(not_supported, "RC5/486/SMC");
+    #endif
+    #if (!defined(MMX_RC5))        /* all non-nasm platforms (bsdi etc) */
+    if (cputype == 0 && (detectedtype & 0x100)!=0) /* P5 + mmx */
+      LogScreen(not_supported, "RC5/P5/MMX");
+    #endif
+    }
+  else 
+    {
+    #if (!defined(MMX_BITSLICER))             /* all watcom platforms */
+    if ((detectedtype & 0x100) != 0) /* mmx */
+      LogScreen(not_supported, "DES/MMX");
+    #endif
+    }
   #endif
 
   do{
