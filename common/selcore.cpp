@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.79 2000/11/12 02:00:15 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.80 2000/11/17 00:58:15 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -221,9 +221,9 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       {
         corenames_table[RC5][3] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
         corenames_table[RC5][4] = NULL;
-        //corenames_table[OGR][0] = "GARSP 5.13-scalar"; /* rename */
-        //corenames_table[OGR][1] = "GARSP 5.13-vector"; /* aka vec_ogr_get_dispatch_table() */
-        //corenames_table[OGR][2] = NULL;
+        corenames_table[OGR][0] = "GARSP 5.13-scalar"; /* rename */
+        corenames_table[OGR][1] = "GARSP 5.13-vector"; /* aka vec_ogr_get_dispatch_table() */
+        corenames_table[OGR][2] = NULL;
       }
     }
     #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
@@ -1438,8 +1438,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
       //extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
       unit_func.ogr = ogr_get_dispatch_table(); //default
-      //if (coresel == 1)    // our vec_ogr core
-      //  unit_func.ogr = vec_ogr_get_dispatch_table();
+      if (coresel == 1)    // our vec_ogr core
+        unit_func.ogr = vec_ogr_get_dispatch_table();
     #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
       //extern CoreDispatchTable *ogr_get_dispatch_table_000(void);
       //extern CoreDispatchTable *ogr_get_dispatch_table_020(void);
