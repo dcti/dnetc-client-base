@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.31 2000/03/20 14:27:56 jbaker Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.32 2000/04/16 19:28:56 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -126,12 +126,6 @@ int CheckPauseRequestTriggerNoIO(void)
 { __assert_statics(); return (trigstatics.pausetrig.trigger); }
 int CheckRestartRequestTriggerNoIO(void) 
 { __assert_statics(); return (trigstatics.huptrig.trigger); }
-
-int CheckExitRequestTriggeredByFlagfileNoIO(void)
-{ 
-  __assert_statics(); 
-  return (trigstatics.exittrig.trigger & TRIGSETBY_FLAGFILE) != 0; 
-}  
 
 // -----------------------------------------------------------------------
 
@@ -692,7 +686,7 @@ int InitializeTriggers(int doingmodes,
       _init_trigfile(inifile,trigstatics.inifile,sizeof(trigstatics.inifile));
     _init_pauseplist( pauseplist );
   }
-  return (CheckExitRequestTrigger());
+  return 0;
 }  
 
 

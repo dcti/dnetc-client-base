@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.49 2000/04/15 16:57:09 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.50 2000/04/16 19:28:55 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1255,11 +1255,13 @@ int ClientRun( Client *client )
     // Check for user break
     //----------------------------------------
     
-    if (!TimeToQuit && CheckExitRequestTrigger())
+    if (!TimeToQuit && CheckExitRequestTrigger()) /* prints a message */
     {
-      Log( "%s%s...\n",
-           (CheckRestartRequestTrigger()?("Restarting"):("Shutting down")),
-           (CheckExitRequestTriggeredByFlagfileNoIO()?(" (found exit flag file)"):("")) );
+      /* the reason for the ExitRequest has already been printed,
+         we just say something here to show that the run loop is break'ing 
+      */
+      Log( "%s...\n",
+           (CheckRestartRequestTrigger()?("Restarting"):("Shutting down")) );
       TimeToQuit = 1;
       exitcode = 1;
     }
