@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.101 1999/10/11 17:06:23 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.102 1999/10/14 00:37:00 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -21,6 +21,7 @@ return "@(#)$Id: clirun.cpp,v 1.101 1999/10/11 17:06:23 cyp Exp $"; }
 #include "clitime.h"   // CliTimer(), Time()/(CliGetTimeString(NULL,1))
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "clicdata.h"  // CliGetContestNameFromID()
+#include "selcore.h"   // selcoreGetSelectedCoreForContest()
 #include "checkpt.h"   // CHECKPOINT_[OPEN|CLOSE|REFRESH|_FREQ_[SECS|PERC]DIFF]
 #include "cpucheck.h"  // GetTimesliceBaseline(), GetNumberOfSupportedProcessors()
 #include "probman.h"   // GetProblemPointerFromIndex()
@@ -832,7 +833,6 @@ int Client::Run( void )
   unsigned int checkpointsPercent = 0;
   int dontSleep=0, isPaused=0, wasPaused=0;
   
-  numcpu = ValidateProcessorCount( numcpu, 0 /* notquietly */ ); //cpucheck.cpp
   ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0 );
 
   // =======================================
@@ -891,8 +891,10 @@ int Client::Run( void )
 
   if (!TimeToQuit)
   {
+    unsigned int numcrunchers;
     force_no_realthreads = 0; /* this is a hint. it does not reflect capability */
-    unsigned int numcrunchers = (unsigned int)numcpu;
+    numcpu = ValidateProcessorCount( numcpu, 0 /* notquietly */ ); //cpucheck.cpp
+    numcrunchers = (unsigned int)numcpu;
 
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_BEOS)
     if (numcrunchers == 0) // must run with real threads because the
@@ -921,15 +923,18 @@ int Client::Run( void )
   // build a problem table
   // -------------------------------------
 
-  probmanIsInit = InitializeProblemManager(load_problem_count);
-  if (probmanIsInit > 0)
-    load_problem_count = (unsigned int)probmanIsInit;
-  else
+  if (!TimeToQuit)
   {
-    Log( "Unable to initialize problem manager. Quitting...\n" );
-    probmanIsInit = 0;
-    load_problem_count = 0;
-    TimeToQuit = 1;
+    probmanIsInit = InitializeProblemManager(load_problem_count);
+    if (probmanIsInit > 0)
+      load_problem_count = (unsigned int)probmanIsInit;
+    else
+    {
+      Log( "Unable to initialize problem manager. Quitting...\n" );
+      probmanIsInit = 0;
+      load_problem_count = 0;
+      TimeToQuit = 1;
+    }
   }
 
   // -------------------------------------
@@ -938,10 +943,14 @@ int Client::Run( void )
 
   if (!TimeToQuit)
   {
-    if (load_problem_count > 1)
-      Log( "Loading crunchers with work...\n" );
-    load_problem_count = LoadSaveProblems( this, load_problem_count, 0 );
-
+    if (load_problem_count != 0)
+    {
+      for (prob_i = 0; prob_i < CONTEST_COUNT; prob_i++) //get select core msgs 
+        selcoreGetSelectedCoreForContest( prob_i );      //... out of the way.
+      if (load_problem_count > 1)
+        Log( "Loading crunchers with work...\n" );
+      load_problem_count = LoadSaveProblems( this, load_problem_count, 0 );
+    }
     if (CheckExitRequestTrigger())
     {
       TimeToQuit = 1;
@@ -959,65 +968,71 @@ int Client::Run( void )
   // Initialize the async "process" subsystem
   // --------------------------------------
 
-  if (!TimeToQuit && InitializePolling())
+  if (!TimeToQuit)
   {
-    Log( "Unable to initialize async subsystem.\n");
-    TimeToQuit = 1;
-    exitcode = -1;
+    if (InitializePolling())
+    {
+      Log( "Unable to initialize async subsystem.\n");
+      TimeToQuit = 1;
+      exitcode = -1;
+    }
   }
 
   // --------------------------------------
   // fixup the dyn_timeslice_table if running a non-preemptive OS 
   // --------------------------------------
 
-  is_non_preemptive_os = 0;  /* assume this until we know better */
-  #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
-      (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_NETWARE) || \
-      (CLIENT_OS == OS_WIN32) /* need to check for win32s */
-  is_non_preemptive_os = 1; /* assume this until we know better */
-  #if (CLIENT_OS == OS_WIN32)                /* only if win32s */
-  if (winGetVersion()>=400)
-    is_non_preemptive_os = 0;
-  #elif (CLIENT_OS == OS_NETWARE)            
-  if (nwCliIsPreemptiveEnv())            /* settable on NetWare 5 */
-    is_non_preemptive_os = 0;
-  #endif
-  if (!TimeToQuit && is_non_preemptive_os)
-  {      
-    int tsinitd;
-    for (tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
-    {
-      #if (CLIENT_OS == OS_RISCOS)
-      if (riscos_in_taskwindow)
+  if (!TimeToQuit)
+  {
+    is_non_preemptive_os = 0;  /* assume this until we know better */
+    #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
+        (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_NETWARE) || \
+        (CLIENT_OS == OS_WIN32) /* need to check for win32s */
+    is_non_preemptive_os = 1; /* assume this until we know better */
+    #if (CLIENT_OS == OS_WIN32)                /* only if win32s */
+    if (winGetVersion()>=400)
+      is_non_preemptive_os = 0;
+    #elif (CLIENT_OS == OS_NETWARE)            
+    if (nwCliIsPreemptiveEnv())            /* settable on NetWare 5 */
+      is_non_preemptive_os = 0;
+    #endif
+    if (is_non_preemptive_os)
+    {      
+      int tsinitd;
+      for (tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
       {
-        default_dyn_timeslice_table[tsinitd].usec = 30000;
-        default_dyn_timeslice_table[tsinitd].optimal = 32768;
+        #if (CLIENT_OS == OS_RISCOS)
+        if (riscos_in_taskwindow)
+        {
+          default_dyn_timeslice_table[tsinitd].usec = 30000;
+          default_dyn_timeslice_table[tsinitd].optimal = 32768;
+        }
+        else
+        {
+          default_dyn_timeslice_table[tsinitd].usec = 1000000;
+          default_dyn_timeslice_table[tsinitd].optimal = 131072;
+        }
+        #elif (CLIENT_OS == OS_NETWARE) 
+        /* The switchcount<->runtime ratio is inversely proportionate. 
+           By definition, 1000ms == 1.0 switchcounts/sec. In real life it
+           looks something like this:  (note the middle magic of "55".
+           55ms == one timer tick)
+           msecs:   880  440  220  110  55  27.5   14  6.8  3.4   1.7  
+           count: ~2.75 ~5.5  ~11  ~22 ~55  ~110 ~220 ~440 ~880 ~1760
+           For simplicity, we use 30ms (~half-a-tick) as max for prio 9
+           and 3ms as min (about the finest monotonic res we can squeeze 
+           from the timer on a 386)
+        */
+        default_dyn_timeslice_table[tsinitd].optimal = GetTimesliceBaseline();
+        default_dyn_timeslice_table[tsinitd].usec = 500 * (priority+1);
+        #else /* x86 */
+        default_dyn_timeslice_table[tsinitd].usec = 27500; /* 55/2 ms */
+        default_dyn_timeslice_table[tsinitd].optimal = GetTimesliceBaseline();
+        #endif
       }
-      else
-      {
-        default_dyn_timeslice_table[tsinitd].usec = 1000000;
-        default_dyn_timeslice_table[tsinitd].optimal = 131072;
-      }
-      #elif (CLIENT_OS == OS_NETWARE) 
-      /* The switchcount<->runtime ratio is inversely proportionate. 
-         By definition, 1000ms == 1.0 switchcounts/sec. In real life it
-         looks something like this:  (note the middle magic of "55".
-         55ms == one timer tick)
-         msecs:   880  440  220  110  55  27.5   14  6.8  3.4   1.7  
-         count: ~2.75 ~5.5  ~11  ~22 ~55  ~110 ~220 ~440 ~880 ~1760
-         For simplicity, we use 30ms (~half-a-tick) as max for prio 9
-         and 3ms as min (about the finest monotonic res we can squeeze 
-         from the timer on a 386)
-      */
-      default_dyn_timeslice_table[tsinitd].optimal = GetTimesliceBaseline();
-      default_dyn_timeslice_table[tsinitd].usec = 500 * (priority+1);
-      #else /* x86 */
-      default_dyn_timeslice_table[tsinitd].usec = 27500; /* 55/2 ms */
-      default_dyn_timeslice_table[tsinitd].optimal = GetTimesliceBaseline();
-      #endif
     }
+    #endif
   }
-  #endif
 
   // --------------------------------------
   // Spin up the crunchers
