@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.64 2001/02/03 20:51:28 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.65 2001/02/03 21:37:54 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -844,8 +844,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0470,      0, "486DX2WB" },
           {  0x0480,      0, "486DX4"   },
           {  0x0490,      0, "486DX4WB" },
-          {  0x04E0,      0, "5x86"     },
-          {  0x04F0,      0, "5x86WB"   },
+          {  0x04E0,      6, "5x86"     },
+          {  0x04F0,      6, "5x86WB"   },
           {  0x0500,      4, "K5 PR75, PR90, or PR100" }, // use K5 core
           {  0x0510,      4, "K5 PR120 or PR133" },
           {  0x0520,      4, "K5 PR166" },
