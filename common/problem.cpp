@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.12 1999/10/11 00:16:14 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.13 1999/10/11 03:02:57 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -492,7 +492,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     return 0;
   }
   
-  #ifndef NO_DES_SUPPORT
+  #ifdef HAVE_DES_CORES
   if (contestid == DES)
   {
     #if (CLIENT_CPU == CPU_ARM)
@@ -574,9 +574,9 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     #endif
     return 0;
   }
-  #endif /* #ifndef NO_DES_SUPPORT */
+  #endif /* #ifdef HAVE_DES_CORES */
 
-  #ifdef GREGH
+  #if defined(GREGH) || defined(HAVE_OGR_CORES)
   if (contestid == OGR)
   {
     return 0;
@@ -691,7 +691,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
 
     case OGR:
 
-      #ifndef GREGH
+      #if !defined(GREGH) && !defined(HAVE_OGR_CORES)
       return -1;
       #else
       extern CoreDispatchTable *ogr_get_dispatch_table();
@@ -1007,7 +1007,7 @@ int Problem::Run_CSC(u32 *timesliceP, int *resultcode)
 
 int Problem::Run_DES(u32 *timesliceP, int *resultcode)
 {
-#ifdef NO_DES_SUPPORT
+#ifndef HAVE_DES_CORES
   *timesliceP = 0;  /* no keys done */
   *resultcode = -1; /* core error */
   return -1;
@@ -1115,14 +1115,14 @@ int Problem::Run_DES(u32 *timesliceP, int *resultcode)
   // more to do, come back later.
   *resultcode = RESULT_WORKING;
   return RESULT_WORKING; // Done with this round
-#endif /* #ifdef NO_DES_SUPPORT */
+#endif /* #ifdef HAVE_DES_CORES */
 }
 
 /* ------------------------------------------------------------- */
 
 int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
 {
-#ifndef GREGH  
+#if !defined(GREGH) && !defined(HAVE_OGR_CORES)
   timesliceP = timesliceP;
 #else
   int r, nodes;
@@ -1312,7 +1312,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
     }
     case DES:
     {
-      #ifdef NO_DES_SUPPORT
+      #ifndef HAVE_DES_CORES
       return 0;
       #else
         #if (CLIENT_CPU == CPU_X86)
@@ -1331,7 +1331,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
     }
     case OGR:
     {
-      #ifdef GREGH
+      #if defined(GREGH) || defined(HAVE_OGR_CORES)
       return 1;
       #else
       return 0;
