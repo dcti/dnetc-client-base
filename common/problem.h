@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.1 2003/01/19 22:49:50 snake Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.2 2003/04/03 21:32:41 oliver Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -72,7 +72,7 @@ enum {
   #endif
   // OGR membuffer should be aligned to a 8-byte boundary
   // (essential for non-x86 CPUs)
-  #if __VEC__ /* We might use AltiVec */
+  #if defined(__VEC__) || defined(__ALTIVEC__) /* We might use AltiVec */
      #if CORE_MEM_ALIGNMENT < 4
        #undef CORE_MEM_ALIGNMENT
        #define CORE_MEM_ALIGNMENT 4
