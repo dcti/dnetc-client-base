@@ -4,6 +4,9 @@
 ; Steve Lee, Chris Berry, Tim Dobson 1997,1998
 ;
 ; $Log: rc5-sa.s,v $
+; Revision 1.7  1998/08/07 10:57:22  cberry
+; Removed unnecessary branch instruction
+;
 ; Revision 1.6  1998/08/05 13:08:23  cberry
 ; New cores from Steve Lee.
 ;
@@ -20,7 +23,7 @@
 
         AREA    fastrc5area, CODE, READONLY
 
-        DCB     "@(#)$Id: rc5-sa.s,v 1.6 1998/08/05 13:08:23 cberry Exp $", 0
+        DCB     "@(#)$Id: rc5-sa.s,v 1.7 1998/08/07 10:57:22 cberry Exp $", 0
         ALIGN
 
         EXPORT  rc5_unit_func_strongarm
@@ -567,7 +570,7 @@ the_end
 	add	r2,r2,#&00000001
 	ands	r2,r2,#&000000ff
 ; increment of high word only at end of block - result does not matter then.
-	b	function_exit
+;	b	function_exit
 ;	bne	function_exit
 ;
 ;; not likely to happen very often...
