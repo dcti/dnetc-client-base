@@ -16,6 +16,9 @@ Bugs Listing
   listen to other ports in http mode ?).
   I'm not sure what is the fallback logic in Network::Open() and
   Network::Put()...
+FIXED (sortof) - Remi Guyomarch
+  I just hardwired port 80 when using http encoding. Is there any proxy that
+  accept http encoding on other ports ?
 
 1998/Aug/24 - Cyrus Patel
   Win32 (gui only?) 417: (a) the client is not following the ini's path if 
