@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.38 2000/01/03 03:25:13 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.39 2000/01/04 14:49:58 chrisb Exp $"; }
 
 
 #include "cputypes.h"
@@ -675,10 +675,10 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
           detected_type == 0x7500 || /* ARM 7500 */ 
           detected_type == 0x7500FE) /* ARM 7500FE */
         cindex = 0;
-      else if (detected_type == 0x810 || /* ARM 810 */
-          detected_type == 0xA10)    /* StrongARM 110 */
-        cindex = 1;
       else if (detected_type == 0x200) /* ARM 2, 250 */
+        cindex = 1;
+      else if (detected_type == 0x810 || /* ARM 810 */
+	       detected_type == 0xA10)    /* StrongARM 110 */
         cindex = 2;
       selcorestatics.corenum[RC5] = cindex;
     }
