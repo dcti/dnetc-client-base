@@ -1,781 +1,287 @@
-Distributed.Net RC5-64/DES Client Readme file version 2.7102
-Last modified Nov 8th by Mike Silbersack (silby@silby.com)
-
-Copyright distributed.net 1998 - All Rights Reserved
-For use in distributed.net projects only.
-Any other distribution or use of this program violates copyright.
-
-Use of this client or its variants implies agreement with
-the prize terms listed on http://www.distributed.net/rc5/ and
-http://www.distributed.net/des/
-
-Index:
-------
-
-1.  Introduction
-2.  System requirements
-3.  Installation of the client
-    a.  Windows 95/98 CLI / NT Service installation instructions
-    b.  OS/2 CLI installation instructions
-    c.  Unix installation instructions
-    d.  Amiga client installation instructions
-    e.  RISC OS CLI installation instructions
-   (DOS, NetWare, Amiga, Windows, Macintosh, OS/2 and RISC OS GUI 
-   installation instructions are included with their respective programs.)
-4.  Upgrading from a previous version of the client
-5.  Configuration of the client via the client config menu
-6.  Client commands
-7.  Client options
-8.  Operation of the client
-9.  Format of the log file
-10. Platform specific information
-    a.  Windows NT Service client
-    b.  Amiga client
-    c.  RISC OS CLI
-11. Frequently asked questions
-12. Firewall support / Network protocol description
-13. Flushing and fetching buffers via e-mail
-14. How to get help
-15. Revisions to this document
-
-
-1.  Introduction
-----------------
-
-Congratulations! This distributed.net client will make your computer a
-part of the world's largest computer, distributed.net. The client you
-have downloaded is capable of working on two of Distributed.Net's
-ongoing projects: The brute-force decryption of a RC5-64 message, and
-the brute force decryption of a DES message. The RC5-64 contest is a
-long-term contest, which may take a couple of years to solve. The DES
-contests, run twice a year, are short, and should take less than a month
-to solve. As a result, this client will work on DES during DES contests,
-and switch back to RC5-64 when no DES contest is going on. No user
-intervention is required for this switchover.
-
-If you'd like more information on our current project status, you should
-view the RC5-64 and DES homepages.  RC5-64 may be found at
-"http://www.distributed.net/rc5/", and DES may be found at
-"http://www.distributed.net/des/". In the next few months, Distributed.net
-will begin working on other (non-encryption related) projects. For
-information on other projects, please look at
-"http://www.distributed.net/projects/".
-
-2.  System Requirements
------------------------
-
-The system requirements for this client vary from platform to platform;
-in general, all that is required is a 32-bit processor with less than 1
-megabyte of ram, less than a megabyte of disk space, and a TCP/IP
-internet connection or a method of sharing files with another computer
-that has internet connectivity.
-
-Note that there may be systems that meet this requirement, but lack a
-client.  If you have one of these systems, e-mail
-coders@lists.distributed.net to request a client for it.  Please
-include processor type an operating system in your request.
-
-The most important requirement for running the distributed.net client,
-of course, is authorization to run the client on the computer that it
-is installed on. This is not an issue with your home computer, but many
-companies and schools have policies against running outside programs on
-their computers. In cases where such a policy exists, ask your system
-administrator BEFORE attempting to install the client. It is very
-possible that he/she will like the idea, and choose to install the
-client on all computers at that site. However, if the answer is a 'no',
-do not push the issue. RSA's contest rules stipulate that all clients
-must be run on authorized systems. The only support we will give to
-unauthorized installations is help in uninstalling them.
-
-
-3.  Installation of the client
-------------------------------
-
-3a.  Windows 95/98 CLI / NT Service installation instructions:
-
-     a.  Unzip the compressed file into the directory in which you
-         will be running the client, most likely
-         "c:\program files\rc5des\".
-     b.  Run rc5des.exe.  This will initiate the menu-driven
-         configuration (described below.)  Set the options for your
-         configuration.
-     c.  Run "rc5des.exe -install" this will set the client so that
-         it will automatically start itself when you enter windows.
-     d.  Start the client up again; it should now receive some
-         blocks, and begin working.
-
-
-3b.  OS/2 CLI installation instructions:
-
-     a.  Unzip the compressed file into the directory in which
-         you will be running the client, most likely "c:\rc5des\".
-     b.  Read the documentation (this file) through so that you
-         completely understand how to operate the client.
-     c.  Run rc5des.exe.  This will initiate the menu-driven
-         configuration (described below.)  Set the options for your
-         configuration.
-     d.  Run "rc5des.exe -install" this will set the client so that
-         it will automatically start itself when you restart OS/2.
-         Run "rc5des.exe -install -hide" if you want the client to
-         start hidden.
-     e.  Start the client up again; it should now receive some
-         blocks, and begin working.
-
-3c.  Unix client installation instructions:
-
-     a.  Untar/gzip the compressed file into the directory in which
-         you will be running the client.
-     b.  Read the documentation (this file) through so that you
-         completely understand how to operate the client.
-     c.  Run rc5des.  This will initiate the menu-driven
-         configuration (described below.)  Set the options for your
-         configuration.
-     d.  Set the client so that it will auto-start on system boot.
-     e.  Start the client up again; it should now receive some
-         blocks, and begin working.
-
-3d.  Amiga client installation instructions:
-
-     a.  Unpack the compressed file into the directory from which you
-         will be running the client.
-     b.  From a shell, use "rc5des -config". This will initiate the
-         menu-driven configuration (described below.) Set the options for
-         your client as described in section 5 of this document. (Note
-         that you will not need to configure most of the options unless
-         you are behind a firewall or have other special configuration
-         needs.) When you are done, type 0 [ENTER] to exit and save the
-         settings.
-     c.  Run rc5des to start up the client; make sure you are connected
-         to the internet at this time so it may obtain blocks to work
-         on.
-     d.  Make sure to add rc5des to your system startup sequence so that
-         it will automatically start in the future.
-
-      If you are running a PPC accelerator board in your amiga, you should
-      also download and run the PPC version of the client (installing it
-      in the same manner as above.) Both a 680x0 and PPC client can be run
-      at the same time. Make sure to use seperate checkpoint files for each
-      client, as sharing checkpoint files will result in duplicate work.
-
-      Please read section 10c of this document for more Amiga specific
-      information.
-
-3e.  RISC OS CLI installation instructions:
-
-     a.  Unpack the archive into the directory from which you will be
-         running the client.
-     b.  From a task window, run rc5des. This will initiate the menu-
-         driven configuration (described below.) Set the options for
-         your client as described in section 5 of this document. (Note
-         that you will not need to configure most of the options unless
-         you are behind a firewall or have other special configuration
-         needs.) When you are done, type 0 [ENTER] to exit and save the
-         settings.
-     c.  Run rc5des to start up the client; make sure you are connected
-         to the internet at this time so it may obtain blocks to work
-         on.
-     d.  Make sure to add rc5des to your boot sequence so that it will
-         automatically start in the future.
-
-      Please read section 10d of this document for more RISC OS specific
-      information.
-
-4.  Upgrading from a previous version of the client
----------------------------------------------------
-
-If you are upgrading from a version of the client older than the 2.7xxx
-series, please stop the existing client, flush its buffers, delete all
-of its files before installing the new client. Buffer files formats
-have changed, and this will help prevent compatibility problems. If you
-are sharing buffer files between multiple clients, please make sure that
-the clients have compatible buffer formats.
-
-5.  Configuration of the client via the client config menu
-----------------------------------------------------------
-
-Simply run rc5des -config; documentation is now contained within
-the configuration menus.
-
-6.  Client commands
--------------------
-
-Run rc5des -help to get a list of client commands.
-
-7.  Client options
-------------------
-
-Please run rc5des -help to see the command line options that are 
-available.
-
-8.  Operation of the client
----------------------------
-
-The RC5/DES client is quite simple in overall operation, and should not
-be hard to adapt to any configuration. The basic operation for a
-multi-threaded client is as follows:
-
-1.  The client attempts to load two blocks from the buff-in.* file, and
-    begins working on decrypting the first block.
-2.  The client (in a seperate thread) checks if the buff-in.* file is
-    empty, or the buff-out.* file has reached its thresholds as set in the
-    configuration. If this has occured, a network update will be
-    attempted, which will send all completed blocks in the buff-out.*
-    files to the server, and fill the buff-in.* file up fresh blocks.
-    If an error occurs in the network communications, the computer will
-    attempt to connect a few more times, and then not try until the
-    completion of the next block.
-3.  When the client has finished with a block from the buff-in.*, it
-    will write it to the buff-out.* file, at which point the above
-    empty/full check will occur again.
-4.  The client will loop back to step one. This process will go on
-    until the completion of the RC5-64 contest.
-
-Note that this is only a basic description of a multi-threaded client's
-operation, of course. Non-multithreaded clients must do these steps
-sequentially. There are a few primary ways to change overall operation:
-If you use the runoffline option, the client will never try to connect
-to the servers, and start creating random blocks to decrypt if the
-buff-in.* files become empty.  By specifying runbuffers, you would cause
-the client to exit when the buffers empty.
-
-9.  Format of the log file
---------------------------
-
-The RC5/DES client log file may seem very confusing at first sight; the
-important thing to remember is that the client (on most platforms) is
-multithreaded, so the order of entries in the log sometimes doesn't make
-much sense; this is normal, as the network code may retrieve and send in
-some blocks while another block is being worked on. The buff-in.* file is
-a stack.  As a result, you may notice that if the client is stopped and
-new blocks are put into the buffer, blocks will *appear* to diappear.
-Don't worry; the block that was saved during client shutdown was put back
-on top of the stack, and then covered over by the newer blocks.  The
-partially completed block will surface again.
-
-Here are the basic entries you will see in the log file:
-
-[dd/mm/yy hh:mm:ss GMT] Shutdown message received - Block being saved.
-
-This message tells you that the client has begun its shutdown, either
-due to system shutdown, client termination, or the creation of the
-exitrc5.now file.
-
-[dd/mm/yy hh:mm:ss GMT] Saved block xxxxxxxx:yyyyyyyy (xx.xx percent complete)
-
-Immediately after the client begins shutdown, you will see this line
-twice per each processor in the system.  There are two lines because each
-thread of the client keeps two blocks in memory at all times in case of
-network errors.
-
-[dd/mm/yy hh:mm:ss GMT] RC5 1*2^bb Block: xxxxxxxx:xxxxxxxx ready to process
-[dd/mm/yy hh:mm:ss GMT] xxx Blocks remain in file <path/name of in buffer>
-[dd/mm/yy hh:mm:ss GMT] xxx Blocks are in file <path/name of in buffer>
-
-Each time a block is completed by the client (or at startup), the client
-needs to load
-
-Child thread # x has been started.
-
-During startup, you should see this message once per processor.
-
-[dd/mm/yy hh:mm:ss GMT] Completed block xxxxxxxx:xxxxxxxx (xxxxxxxxxx keys)
-                        hh:mm:ss.ms - [xxxxxx.xx keys/sec]
-
-This message is printed to indicate the completion of each block. Note
-that the time and keys/sec rate given here are for the duration of that
-block only.
-
-[dd/mm/yy hh:mm:ss GMT] The proxy says: "<insert some message>"
-
-Each time the client connects to send or receive blocks, you'll see a
-message from the proxy. Generally, this is just whatever the proxy
-operator decided to set as a message. So, if it doesn't make sense,
-just ignore it.
-
-[dd/mm/yy hh:mm:ss GMT] Sent x <type> block(s) to server
-
-If the client just received some blocks from the server, it'll tell you
-how many and what kind.
-
-[dd/mm/yy hh:mm:ss GMT] Retrieved x block(s) from server
-
-If the client just sent some blocks to the server, it'll tell you how
-many.
-
-[dd/mm/yy hh:mm:ss GMT] Tot: x RC5 blocks hh:mm:ss.ms - [xxxxxx.xx keys/sec]
-                        Tot: x DES blocks hh:mm:ss.ms - [xxxxxx.xx keys/sec]
-
-These averages are printed after the completion of each block.  Be careful
-how you read them.  The averages
-
-10. Platform specific information
----------------------------------
-    10a.  Windows NT Service client
-
-          For those running windows NT, especially on multiuser systems,
-          the NT service client is the best choice of a client to run.
-          The service client can run without requiring a user to be
-          logged in, and can not be stopped by a non administrator.
-          Users of NT workstation who are always logged in may still
-          consider using the GUI client, as the service has no user
-          interface.
-
-    10b.  Amiga client
-
-          Please refer to 'readme.amiga' for detailed notes.
-
-          The original amiga port was made by `caw', and rewritten for
-          RC5-64 and DES by Stefan Smietanowski (aka Blast).
-
-          For help with the Amiga client, you can either ask through
-          "standard" support channels (listed below), or visit the Amiga
-          RC5 team homepage (http://homepage.cistron.nl/~ttavoly/rc5/) for
-          more Amiga-specific information. (Or e-mail rc5@amiga.cistron.nl)
-
-          If you have problems with the AMIGA port you believe to be AMIGA
-          specific, mail blast@amiganet.org, or look for him as `Blast' or
-          `Blast2' on ANet #Amiga. (irc.amiganet.org or any other ANet
-          server will work.)
-
-    10c.  RISC OS CLI
-
-          The RISC OS CLI client requires:
-
-          -RISC OS 3.10 or later
-          -The Acorn Internet module, or a compatible stack (eg FreeNet)
-
-          The RISC OS port was created by ant.org (team 553).
-
-          If you run the RISC OS client in a task window, you can reduce
-          the amount of processor time used by decreasing the keys per
-          timeslice setting.
-
-          The RISC OS CLI client can be run in a task window at boot time
-          by adding the command
-
-            TaskWindow "Run {path to client}.rc5des" -wimpslot 352K
-                  -name "RC5DES client"
-
-          to your desktop boot file. Changing the quoted command to
-          "Run {path to client}.rc5des { > null: }" will make the client
-          invisible. Stop it by killing it via the task manager or by
-          creating a file "exitrc5/now" in the client's directory.
-          Alternatively, you will probably be better off installing the
-          RISC OS GUI client.
-
-          For help with the RISC OS client, you can either ask through
-          "standard" support channels (listed below), or visit the ant.org
-          RC5 team homepage (http://www.ant.org/rc5/) for more RISC OS-
-          specific information. (Or e-mail rc5@ant.org)
-
-          If you have problems with the RISC OS port you believe to be
-          RISC OS specific, mail kbracey@acorn.co.uk.
-
-
-11.  Frequently asked questions
-------------------------------
-
-(Note, for more FAQs, see http://www.distributed.net/faq/)
-
-Q:  What is a team?
-
-    A team is an entity on our stats server that allows a group of
-people to work together in order to show their combined keyrate. Note
-that creating a team doesn't necessarily mean you'll hit the top 100
-listings, because teams are ranked separately from individuals.
-
-Q:  Do I need to join a team?
-
-    No, you do not need to join a team.  Teams exist so that you can show
-group strength, help advocate a platform, etc. You can see a listing of
-teams based sorted by their type at
-http://stats.distributed.net/teamlist.html
-
-Q:  Are there any disadvantages to joining a team?
-
-    The only disadvantage to joining a team is that part of the prize money
-that would normally go to you will be split with your team.
-
-Q:  How do I join a team?
-
-    To join a team, go to http://stats.distributed.net/ and search
-for your "personal page". To do this, scroll down to the entry "search
-for team" and enter your e-mail address, then click "go". You should be
-gived a screen that shows your current rank, e-mail address, total
-blocks, time working, date of last block, and averate keyrate. Click on
-your e-mail address, and you will be taken to your personal page.
-
-From your personal page, scroll to the bottom where it says 'Mail me a
-password' and click. Then, wait for your password to arrive. If it
-hasn't arrived in your e-mail in 15 minutes or so, go back to your
-personal page and click 'Whoops! I can't seem to find my password.
-Can you send it to me again?'.
-
-Once your password arrives, enter your password on your personal page,
-and click "Edit participant information". Once inside, you'll see a
-screen with your e-mail address, team affiliation, Charity selection,
-and a button that says "update participant information." Here enter the
-team id of the team you wish to join (the team id of the team is on the
-page of the team you decided to join.) You may also wish to vote on
-where the charity part of the prize money will go to at this time as
-well. When you're done, click "update participant information."
-
-Q:  I can't find my personal stats page!
-
-A:  It will take an average of 24 hours since the time you sent your
-first block in for your name to appear on the stats page; the database
-is updated only daily.
-
-Q:  What does "stats are offline for the daily update" mean?
-
-A:  To keep calculations simpler and cause less load on the stats server,
-the stats server is only updated once a day at approximately 0:00 GMT.
-During this time, only the top 100 listings from the previous day are
-available. The update (at this time) usually takes 2.5 hours or so.
-
-Q:  How can I create a team?
-
-A:  Go to http://stats.distributed.net/tm_new.html
-
-Q:  I have to switch e-mail accounts / I typed in the wrong e-mail address.
-Can you move my blocks to my new e-mail?
-
-A:  No. We have no provisions for moving blocks from one e-mail to another.
-However, if you e-mail help@distributed.net you can request the password
-for the incorrect/dead e-mail address so that you can join it to your
-team.
-
-Q:  I'm behind a firewall, can I send and recieve blocks?
-
-A:  Please read section 12 of this document, which describes life with
-firewalls.
-
-Q:  My <insert computer name> doesn't have an internet connection, how
-can I get it blocks to work on?
-
-There are three ways you can get blocks to a computer that does not have
-a direct internet connection:
-
-#1 - If you have a single computer that has a constant connection to the
-internet, and a TCP/IP network between the other computers, you can set up
-a personal proxy on the computer with the connection, and direct the other
-computers to connect to that computer (see the section on "network
-settings" for more explanation on how to do this.)
-
-#2 - If you have a method of file sharing (Novell Netware, NT server,
-NFS, etc), you can share the same set of buff*.* files between clients.
-Simply run all the clients from the same directory, making sure to set
-the ones without the direct connection to -runoffline so that they will
-not attempt to make a network connection. Then, use just one client to
-fetch/flush buffers at your convenience (or automatically).
-
-#3 - If worst comes to worst, and you can't automate the transfer between
-computers in any manner, you can always manually copy buffer files between
-computers. To do this, simply set up a second copy of the client on the
-computer with the internet connection. Then, MOVE the buff*.* files to that
-computer (via FTP, e-mail, or a floppy disk), perform a flush/fetch, then
-MOVE them back to the offline computer. This procedure can get somewhat
-messy if not done properly, but is effective for a small number of
-computers.  If you're working this way, you'll probably want to use large
-buffers so that you need to flush only once a week or so.
-
-Q:  The display is bugging me, how can I hide the display of the client?
-
-A:  This is a simple process on unix machines; instead of using the
-command "./rc5des", use the command "./rc5des >/dev/null &". This
-should start the client running in the background with all output
-redirected to /dev/null. If you need to kill it, do a kill -HUP <pid>,
-or create the exitrc5.now file in the directory, as described below.
-
-On Windows 95, you're best off installing the GUI version of the client,
-which has the option "Run hidden and without system tray icon". Under
-Windows NT, you can(/should) run the NT service client, which will be
-hidden all of the time (and start running before login).
-
-In all cases, enabling logging will still let you go back and see what
-the client has done.
-
-Q:  I see this R in the middle of my percentage bar - what does it mean?
-
-A:  A 'R' in the middle of a percentage bar stands for 'resume'. This
-is the point at which the client was working on last time it was
-shutdown; it just resumed and jumped to that point in the block. Note
-that as a result of not having to process the entire block, resumed
-blocks will be processed faster than normal blocks; the time difference
-this makes obviously depends on where in the block it resumed.
-
-Q:  I just saw the message:  "Read partial DES block from another
-cpu/os/build.  Marking entire block as unchecked."  What does this mean,
-and how can I fix it?
-
-A:  This message means that the client just loaded in a partially
-completed block that had been started with a different version of the
-client.  This normally occurs if you upgrade the client revision or are
-sharing buffer files with a dissimilar computer.  Note that this is not
-a problem; all that is happening is that the client is reprocessing that
-entire block.  This is a precaution in the circumstance that an
-incompatibility between partial buffer formats occurs.  If this is an
-upgrade, you probably won't see that message again.  If you're sharing
-buffer files, you can minimize the occurance by never shutting down the
-clients.
-
-Q:  But it just did two blocks with 'R'! How is that possible?
-
-A:  Partially completed blocks can be 'buried' in the buff-in.* files; if
-you routinely shut the client down and then fetch new blocks, new, full
-blocks will be added to the buff-in.*.  The partially completed blocks
-will not resurface for a while, perhaps a couple of days.
-
-Q:  How can I stop hidden clients / I need to upgrade an entire network of
-    clients, how can I stop them all?
-
-A:  The easiest, most reliable way to stop all clients is to create
-a file named 'exitrc5.now' in the directory where the client is running
-from. Upon seeing this file, the client will perform a proper shutdown
-and exist. The client checks for the existance of this file every few
-seconds, so the shutdown should be almost instant.  (Note that this will
-not work if noexitfilecheck=1 is set in the .ini file.)
-
-Q:  Why is my client downloading both RC5 and DES blocks?
-
-A:  Even during a DES contest, the dual-mode client will attempt to keep
-the RC5 and DES in buffers full; this is not a problem. The client
-won't revert to RC5 blocks until it has completed all DES blocks, so
-you won't loose a bit of DES keyrate. If a DES is not currently in
-progress, and you would like the client to stop getting DES blocks, set
-the DES in and out buffer to 0.
-
-Q:  Will this slowdown my computer at all? I raytrace/play
-quake/compile large programs, and I can't afford any slowdown.
-
-A:  If you leave the client at its default niceness setting (0), it will
-run at the lowest priority level on your system so that it does not
-interfere with the running of any program. The only exceptions to this
-rule are the Windows 3.1, Macintosh and RISC OS clients, which are
-hindered by non-preemptively multitasking operating systems. On these
-systems, you can reduce the processor time consumed by reducing the keys
-per timeslice setting.
-
-Q:  I've been watching my keyrate, and it seems that it gets SLOWER
-during the times I'm not at my computer! Shouldn't the processor be
-busier while I'm working?
-
-A:  If you're seeing slowdown during the night / lunch / whenever you're
-away from the computer, it's probably due to one of two things. The
-most likely cause is that another program is hogging processor time. Some
-web browsers are known to eat processor time, especially while on pages
-with animated images. However, the programs that eat the most processor
-time are screensavers. OpenGL and 3-D screensavers in particular are known
-to consume a LOT of processor time. For this reason, we recommend that you
-either disable your screen saver, or switch to a less CPU intensive one
-(a blank screen one, or one that shows a simple text message, perhaps.)
-The other cause of a slowdown could be your computer entering a 'sleep
-mode' where it powers most components down. To disable automatic power
-down, consult your system's documentation.
-
-Q:  I set my client to receive 2^30 sized blocks.  However, I have been
-watching, and it has done many differently sized blocks smaller than
-2^30. What is going on?
-
-A:  The block size is really only a "request" by the client. Depending
-on the fragmentation of the current keyspace we are working on, the
-keyproxy may be forced to give you a block smaller than requested. This
-is not a problem, just an oddity.
-
-Q:  I just got all blocks smaller than expected, and I ran out of blocks
-too soon as a result! How am I supposed to calculate how many blocks to
-get if they aren't always the same size?
-
-A:  This is a known problem; for now, simply buffer more blocks than you
-plan on needing. We will probably add a more exact count to future clients.
-There is no ETA at this time.
-
-Q:  What happens if my client finds the key?  Does it let me know or
-do anything special?
-
-A:  No, the client treats a success just like a normal block and flushes
-it during the next network transaction.
-
-12. Firewall support / Network protocol description
----------------------------------------------------
-
-For network communications, the Distributed.Net RC5/DES client uses a
-proprietary communications method which talks to our network of proxy
-servers via TCP packets on port 2064. If you are connected through a
-strict firewall, port 2064 will probably be blocked by default. There
-are five primary methods to comminucating through a firewall:
-
-1.  Run a personal proxy on the machine that runs the firewall.  A
-personal proxy will receive connections from the client, buffer them,
-and then communicate with the main proxy network to send/receive
-blocks. The setup of this is simple and reliable; all you must do is
-download a personal proxy (http://www.distributed.net/rc5/proxies.html),
-set it up to run on the machine that functions as the firewall, and set
-all the clients to connect to that machine to receive blocks (via
-keyproxy=<IP/DNS of the computer with the personal
-proxy.)  The major downside to this option is that you must be
-authorized to run an outside program on the firewall computer.
-
-2.  The next most reliable option is to set the firewall to allow
-connections through port 2064 (the port the client uses for
-communication to the keyservers.)  If this is done correctly, you will
-be able to set the client with keyproxy=<IP/DNS of the
-firewall> and have the proxy redirect communications to one of the main
-proxies.  The problem with this configuration is that it requires that
-you have access to the configuration of the firewall.  This method will
-be referred to as "direct port mapping" throughout the rest of the
-documentation.
-
-3.  The most reliable option for sending/receiving blocks through the
-firewall if you are unable to directly modify the firewall's
-configuration is to use SOCKS support (if your firewall supports it, of
-course.)  To configure SOCKS, enter the Communications Options menu
-and select option 1 (Firewall Communications mode). If you are using
-a SOCKS4 proxy, choose option 4, or choose option 5 if you are using a
-SOCKS5 proxy. If you are unsure as to which version of SOCKS you are
-using, select SOCKS4. Now, edit options 4 and 5 (Proxy address and
-port, respectively), ensuring that they point to the SOCKS proxy you
-will be communicating through. If you must use a SOCKS userid/password,
-enter it in option 6. In some situations, option 2 (the address of the
-keyproxy to use) may need to be changed to the specific IP address of a
-proxy. However, SOCKS support *should* work "out of the box" on most 
-proxies.
-
-4.  The most compatible firewall communications option is to use the
-http proxy support of the client. To setup http proxy support, enter
-the client's configuration utility (rc5des -config) and enter the
-Communications Options menu. Select option 1 (Firewall Communications
-mode) and select mode 2 (HTTP encoding). Next, select option 4, and input
-the address of the HTTP proxy you will be connecting through. Finally,
-select option 2, enter "us80.v27.distributed.net", and select option 3
-and enter "80". Also, if you must use a username/password to connect
-through your http proxy, make sure to set option 6 (HTTP/SOCKS
-userid/password).
-
-*This should work, but it may not.*
-
-If the HTTP proxy support does not work at this point, there are a few
-more options to fiddle with. One of the first things to try is to edit
-option two again, and enter the IP address of one of the us80 proxies
-directly (obtainable by nslookup us80.v27.distributed.net). If this does
-not fix the problem, try changing option 1 (Firewall Communications
-mode) to 3 (HTTP+UUE encoding).
-
-In all cases, whether it works or not, please e-mail silby@silby.com so
-the list of known working/non-working proxies can be kept up to date.
-
-5.  If you can not get any of the above methods working, please see section
-13 on the use of e-mail to flush/fetch buffers.
-
-Known working firewalls/proxies:
-(If you know of other working proxies/modes, please e-mail silby@silby.com)
-
-Name: Wingate 2.x
-Operating System: Windows 95/NT
-Connection method: HTTP proxy, Direct port mapping
-Download Site: http://www.wingate.com
-
-Name: Internet Gate v1.30 for OS/2.
-Operating System: OS/2
-Connection method: Direct port mapping
-
-Name: Microsoft Proxy Server 2.0
-Operating System: Windows NT
-Connection method: HTTP proxy
-Notes: userid + password are the normal NT domain login and password
-
-Name: Novell BorderManager web proxy
-Operating System: Novell Netware
-Connection method: HTTP proxy
-
-Name: Squid
-Operating System: Unix
-Connection method: HTTP proxy
-Download Site: http://squid.nlanr.net
-
-Name: AltaVista 97 proxy
-Connection method: HTTP proxy
-
-13.  Flushing and fetching buffers via e-mail
----------------------------------------------
-
-If you can not get your client to flush/fetch directly (due to a very
-stringent firewall), or are running a networkless client, such as the
-MS-DOS client, there is one last way for you two receive blocks to
-process: e-mail.
-
-To receive blocks via e-mail:
-
-1. Send a message to fetch@distributed.net; an auto-responder will
-   reply with information on the proper options to use.
-
-2. Once you know the correct format, send a correctly formatted message
-   in. You should quickly receive a message back with the specified
-   number/size of blocks attached as "buff-in.rc5".
-
-2. Extract this file from your mail program to the directory from which
-   you are running the RC5/DES client.
-
-3. Start the client running (probably with the runbuffers option.)
-
-Once your client has completed the blocks provided to it, you may send
-in the completed blocks via e-mail in the following way:
-
-1. Create a message to flush@distributed.net with the file "buff-out.rc5"
-   attached as a MIME64 encoded file. You will be send a "receipt" of the
-   proper flushing within a few minutes.
-
-2. Delete the buff-out.rc5 file so that you do not accidently send part
-   of its contents twice.
-
-14.  How to get help
---------------------
-
-If you've having a problem with the client, the first place you should
-visit is http://www.distributed.net/des/clients.html to see if a newer
-version is available. It is likely that a given bug you have been
-experiencing will be fixed by the new version.
-
-If you are still having problems, there are a few places you can find
-help:
-
-The quickest, though least reliable, way to get question(s) answered
-about the operation and setup of the client is to connect to an EFNet
-IRC server and join the channel #distributed. Although there are no
-'official' support people there, the channel is often populated with
-people who are familiar with the operation of distributed.net programs
-and can offer quick answers.
-
-More in depth questions, comments, or suggestions can be directed to
-help@distributed.net. Messages sent to this address will be reviewed
-daily, and you should receive a quick answer to your question.
-
-If you don't mind your mailbox receiving a few messages a day, you may
-consider subscribing to the general RC5 mailing list; if you wish to do
-so, send a message to majordomo@lists.distributed.net with the body
-"subscribe rc5". Note that this is a moderated mailing list, so there
-may be some lag in messages getting posted to the list.
-
-15.  Revisions to this document
-------------------------------
-
-The original (v2.6401) version of this document was prepared by Daniel
-"dbaker" Baker (dbaker@distributed.net).
-
-Kiddo (alex) helped dbaker with some of the command line options.
-
-Mike "Silby" Silbersack (silby@silby.com) updated and greatly expanded
-this document on 2/13/1998.
-
-Paul Gentle (gentleps@muohio.edu) converted this document to a windows
-help file.
-
-Mike "Silby" Silbersack (silby@silby.com) updated this document and
-added information about specific platforms on 05/13/1998
-
-Mike "Silby" Silbersack (silby@silby.com) slightly updated this
-document for 2.7100 on 6/26/1998
-
-Mike "Silby" Silbersack (silby@silby.com) gutted the options sections
-for 2.7102 on 11/08/1998
 
+  distributed.net's RC5DES client
+
+  Copyright distributed.net 1997-1998 - All Rights Reserved
+  For use in distributed.net projects only.
+  Any other distribution violates copyright.
+
+  Use of the distributed.net client implies agreement with
+  the prize terms listed on http://www.distributed.net/rc5/ and
+  http://www.distributed.net/des/
+
+
+ Index ---------------------------------------------------------------
+
+    1.0  Introduction   
+    2.0  General system requirements 
+         refer to platform specific readme.s for details
+    3.0  Getting and starting the client
+         refer to platform specific readme.s for details
+    4.0  Upgrading from a client older than the 2.7xxx
+    5.0  Fetching and flushing blocks
+         5.1 through a firewall
+         5.2 via e-mail
+    6.0  Help!
+
+
+ This document's revision history ------------------------------------
+
+    Dec 20. 1997 The original (v2.6401) version of this document was 
+                 created by Daniel "dbaker" Baker, assisted by 
+                 Alex "kiddo" Wong
+    Feb 13. 1998 Mike "Silby" Silbersack <silby@silby.com> updated and 
+                 expanded this document.
+                 Paul Gentle <gentleps@muohio.edu> converted this document 
+                 to a Windows help file.
+    May 13. 1998 Mike "Silby" Silbersack <silby@silby.com> updated this 
+                 document and added information about specific platforms.
+    Jun 26. 1998 Mike "Silby" Silbersack <silby@silby.com> slightly 
+                 updated this document for 2.7100
+    Nov 08. 1998 Mike "Silby" Silbersack <silby@silby.com> gutted the 
+                 options sections for 2.7102
+    Nov 13. 1998 Cyrus Patel <cyp@fb14.uni-mainz.de> moved platform
+                 specific information to separate readmes, replaced a 
+                 great deal with references to documentation available
+                 online or built-in to the client, cleaned up and
+                 reorganized the file.
+
+                                                                     
+ 1.0  Introduction ---------------------------------------------------
+
+    Congratulations! This distributed.net client will make your computer 
+    a part of the world's largest computer, distributed.net. The client 
+    you have downloaded is capable of working on two of Distributed.Net's
+    ongoing projects: The brute-force decryption of a RC5-64 message, and
+    the brute force decryption of a DES message. The RC5-64 contest is a
+    long-term contest, which may take a couple of years to solve. The DES
+    contests, run twice a year, are short, and should take less than a 
+    month to solve. As a result, this client will work on DES during DES 
+    contests, and switch back to RC5-64 when no DES contest is going on. 
+    No user intervention is required for this switchover.
+
+    If you'd like more information on our current project status, you 
+    should visit the RC5-64 and DES homepages.  RC5-64 may be found at
+    http://www.distributed.net/rc5/ , and DES may be found at
+    http://www.distributed.net/des/ . In the next few months, 
+    distributed.net will begin working on other (non-encryption related) 
+    projects. For information on other projects, please look at
+    http://www.distributed.net/projects/ .
+
+
+ 2.0  General system requirements ------------------------------------
+
+    The system requirements for the client vary from platform to platform
+    and are detailed in the readme.* you should have received when you
+    downloaded the client.
+
+    In general, all that is required is:
+    - a 32-bit processor
+    - one megabyte of free memory
+    - a TCP/IP internet connection or another method of sharing files 
+      with another computer that is also running the client.
+    - less than a megabyte of disk space (optional if TCP/IP is available)
+
+    The most important requirement for running the distributed.net client,
+    of course, is authorization to run the client on the computer that it
+    is installed on. This is not an issue with your home computer, but 
+    many companies and schools have policies against running outside 
+    programs on their computers. In cases where such a policy exists, ask 
+    your system administrator BEFORE attempting to install the client. 
+    It is very possible that he/she will like the idea, and choose to 
+    install the client on all computers at that site. However, if the 
+    answer is a 'no', do not push the issue. RSA's contest rules stipulate 
+    that all clients must be run on authorized systems. The only support 
+    we will give to unauthorized installations is help in uninstalling 
+    them.
+
+    Although there are a number of platforms that meet these requirements,
+    distributed.net cannot create or maintain clients for them all. The
+    prerequisites for creating a client for a platform are: 
+    - a C++ compiler is available for that platform
+    - the compiler 'understands' 64bit quanta ('long long', 'wide' etc)
+    - distributed.net must have access to such a machine
+
+    If you know of a platform that fulfills these requirements, and would
+    like to have a client for the platform, you can request it at
+    http://www.distributed.net/porting/
+
+                                                                     
+ 3.0  Getting and starting the client --------------------------------
+
+    Clients are *only* available from http://www.distributed.net/clients/ 
+    or from ftp servers linked from that page and occasionally directly 
+    from distributed.net coders in the #distributed channel on EFNet IRC.
+    If you have downloaded the client from any other site, *delete* it at 
+    once - only clients obtained from distributed.net are authentic.
+
+    Once you have downloaded the client, it is a simple matter of getting
+    going. Simply unpack/unzip/unarc the archive you downloaded and fire 
+    it up. 
+    
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done, the 
+    configuration file will be saved in the same directory as the 
+    client. Then, simply restart the client. From that point on it will 
+    use the saved configuration.
+    
+    Each configuration option is accompanied by a description that will
+    assist you in making the right decisions. Most default values can be
+    accepted as-is. Refer to the Help! section at the end of this document
+    for sources of assistance.
+
+    A "Complete Step-by-Step Guide to Running Your First Client" is 
+    available from http://distributed.net/FAQ/
+
+    The client's configuration may be adjusted at any time by starting 
+    the client with the -config switch. A list of other command line 
+    options can be obtained by starting the client with -help.
+
+
+ 4.0  Upgrading from a client older than the 2.7xxx ------------------
+
+     If you are upgrading from a version of the client older than the 
+     2.7xxx series, please stop the existing client, flush its buffers, 
+     delete all of its files before installing the new client. Buffer 
+     files formats have changed, and this will help prevent compatibility 
+     problems. If you are sharing buffer files between multiple clients, 
+     please make sure that the clients have compatible buffer formats.
+
+                                                                     
+ 5.0  Fetching and flushing blocks -----------------------------------
+ 
+     For network communications, the distributed.net RC5DES client uses 
+     a proprietary communications method to talk to a network of 
+     keyservers using TCP/IP protocols. 
+   
+  5.1  Connecting through a firewall -------
+     
+     If you are connected through a strict firewall, port 2064 will 
+     probably be blocked by default. There are four primary methods to 
+     communicating through a firewall:
+     1. Run a personal proxy on the machine that runs the firewall.  
+        A personal proxy will receive connections from the client, buffer 
+        them, and then communicate with the main proxy network to send/
+        receive blocks. The setup of this is simple and reliable; all 
+        you must do is download a personal proxy available at 
+        http://www.distributed.net/rc5/proxies.html and set it up to run 
+        on the machine that functions as the firewall. Then set up all 
+        clients behind the firewall to connect to that machine to receive 
+        blocks. (The name/address of the proxy may be entered in the 
+        configuration in the "keyserver" field under "Network options")
+        Naturally, you need to be authorized to run the personal proxy on
+        that machine...
+     3. The most reliable option for sending/receiving blocks through 
+        the firewall if you are unable to directly modify the firewall's
+        configuration is to use SOCKS support (if your firewall supports 
+        it, of course.)  To configure SOCKS, enter the "Network Options" 
+        menu and select "Firewall Communications Mode". If you are using 
+        a SOCKS4 proxy, choose "SOCKS4", or choose "SOCKS5" if you know 
+        the firewall supports SOCKS5. If you are unsure as to which 
+        version of SOCKS you are using, select SOCKS4. Now, edit the
+        Proxy address and port and ensuring that they point to the SOCKS 
+        proxy you will be communicating through. If you must use a SOCKS 
+        userid/password, enter it in the appropriate field as well.
+     3. The next most reliable option is to set the firewall to allow
+        connections through to port 2064 (the port the client uses for
+        communication to the keyservers) either directly, through a 
+        "datapipe" or if you are using WinGate or Internet Gate, via 
+        "direct port mapping". All of these are require administrative 
+        access to the firewall host.
+     4. The most compatible firewall communications method is to use the
+        http proxy support of the client. Enter "Network Options", select
+        "Firewall Communications Mode" and set "HTTP encoding". Next,
+        enter the name/address of the HTTP proxy in the "HTTP/SOCKS proxy 
+        address" field and the port number of the HTTP proxy in the 
+        "HTTP/SOCKS proxy port" field. If you have problems with "HTTP
+        encoding", you may wish to try "HTTP+UUE encoding" instead.
+
+     Firewall software Known to work with the distributed.net client.
+
+     Wingate 2.x              Win32       HTTP proxy, Direct port mapping
+                                          http://www.wingate.com
+     Internet Gate            OS/2        Direct port mapping
+     Microsoft Proxy Server   WinNT       HTTP proxy 
+     Novell BorderManager     NetWare     HHTP proxy
+     Squid                    Unix        HHTP proxy
+                                          http://squid.nlanr.net
+     AltaVista 97 proxy       Unix/Win32  HTTP proxy
+
+  5.2  Flushing and fetching via e-mail ----
+
+     If you can not get your client to flush/fetch directly (due to a 
+     very stringent firewall), or are running a networkless client, 
+     such as the MS-DOS client, there is one last way for you two 
+     receive blocks to process: e-mail.
+
+     1. Send a message to fetch@distributed.net; an auto-responder 
+        will reply with information on the proper options to use.
+     2. Once you know the correct format, send a correctly formatted 
+        message in. You should quickly receive a message back with 
+        the specified number/size of blocks attached as "buff-in.rc5".
+     3. Stop the client. 
+     4. Save the file to the directory from which you are running the 
+        client. 
+     5. Restart the client.
+
+     Once your client has completed the blocks provided to it, you may 
+     send in the completed blocks via e-mail as follows:
+
+     1. Create a message to flush@distributed.net with the file 
+        "buff-out.rc5" attached as a MIME64 encoded file. You will 
+        be send a "receipt" of the proper flushing within a few 
+        minutes.
+     2. Delete the buff-out.rc5 file so that you do not accidently 
+        send part of its contents twice.
+
+                                                                     
+ 6.0  Help! ----------------------------------------------------------
+
+     If you've having a problem with the client, the first place you 
+     should visit is http://www.distributed.net/des/clients.html to 
+     see if a newer version is available. It is likely that a given 
+     bug you have been experiencing will be fixed by the new version.
+
+     If you are still having problems, here are a few places you can 
+     find help (in order of responsiveness).
+
+     - The quickest way to get question(s) answered about the operation 
+       and setup of the client is to connect to an EFNet IRC server and 
+       join the channel #distributed. Although there are dozens of EFNet
+       servers world-wide, the following should give you a starting point:
+       In the U.S: irc.cs.cmu.edu:6667, ingenue.eecs.berkeley.edu:6667,
+       piglet.cc.utexas.edu:6667. In Europe: irc.ec-lille.fr:6667, 
+       irc.nijenrode.nl:6667, or efnet.demon.co.uk:6667 
+
+     - If you need further assistance with client use or operation, refer 
+       to the the list of "Frequently asked Questions" (FAQs) available 
+       online at http://www.distributed.net/FAQ/  Documents cover every 
+       aspect of running a client including "The Complete Step by Step 
+       Guide to Running Your First Client", "How To Join A Team", and 
+       the popular "Statistics Server FAQ".
+
+     - If you don't mind your mailbox receiving a few messages a day, 
+       you may consider subscribing to the general RC5DES mailing list
+       at <rc5@lists.distributed.net> (To subscribe to the mailing list, 
+       send a message to <majordomo@lists.distributed.net> with 
+       "subscribe rc5" as the message text).
+
+     - A public database of known problems and incompatibilities is 
+       available at http://www.distributed.net/cgi/buglist.cgi
+
+     - More user support is available from <rc5help@distributed.net> 
+       as well as from our regional support representatives listed at 
+       http://www.distributed.net/regional/index.html
+    
+     - If you believe you have found a bug in the client or would like 
+       to make a suggestion, please send a message to the coders at 
+       <coders@lists.distributed.net>. Don't forget to specify which 
+       platform you are running the client on. 
+    
+     - If you believe you have found a bug specific to this port, or 
+       would like to make a suggestion specific to this port, send a 
+       message to the port maintainer as listed at 
+       http://www.distributed.net/credits.html
+       Don't fret if you don't get a response right away - porters are
+       usually very busy and it may take weeks before they get around 
+       to answering your message.
+       
