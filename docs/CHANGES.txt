@@ -21,13 +21,15 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.5 2003/01/07 15:45:01 oliver Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.6 2003/01/16 09:43:11 oliver Exp $
 ==========================================================================
 
 2.9000
 ------
 2.9002.479  new: ppc: rc5-72 core by Malcolm Howell (603e optimized)
             new: amigaos: optimized 68k rc5-72 cores by Malcolm Howell
+            fix: amigaos: PowerUp compiler linklib no longer trashes memory
+            imp: amigaos: added G3/G4 cpu detection
 
 2.9001.478  new: os2: enabled command line options: -pause, -unpause, -restart
             imp: all: write checkpoint files before client suspends
