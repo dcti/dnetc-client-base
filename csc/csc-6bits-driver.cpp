@@ -3,6 +3,22 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6bits-driver.cpp,v $
+// Revision 1.3  1999/10/11 18:15:09  cyp
+// sync'd from release branch
+//
+// Revision 1.2.2.4  1999/10/08 00:07:01  cyp
+// made (mostly) all extern "C" {}
+//
+// Revision 1.2.2.3  1999/10/07 23:37:40  cyp
+// changed '#elif CSC_BIT_64' to '#elif defined(CSC_BIT_64)' and changed an
+// 'unsigned long' to 'ulong'
+//
+// Revision 1.2.2.2  1999/10/07 19:08:59  remi
+// CSC_64_BITS patch
+//
+// Revision 1.2.2.1  1999/10/07 18:41:14  cyp
+// sync'd from head
+//
 // Revision 1.2  1999/07/25 13:28:51  remi
 // Fix for 64-bit processors.
 //
@@ -21,13 +37,13 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-driver.cpp,v 1.2 1999/07/25 13:28:51 remi Exp $"; }
+return "@(#)$Id: csc-6bits-driver.cpp,v 1.3 1999/10/11 18:15:09 cyp Exp $"; }
 #endif
 
 /*
-void printkey( ulong key[64], int n, bool tab )
+static void printkey( ulong key[64], int n, bool tab )
 {
-  unsigned long long k = 0;
+  ulong k = 0;
   for( int i=0; i<64; i++ )
     if( key[i] & (1ul << n) )
       k |= (1ull << i);
@@ -36,6 +52,14 @@ void printkey( ulong key[64], int n, bool tab )
 */
 
 // ------------------------------------------------------------------
+#ifdef __cplusplus
+extern "C" {
+s32
+PASTE(csc_unit_func_,CSC_SUFFIX)
+( RC5UnitWork *unitwork, u32 *timeslice, void * /*membuff*/ );
+}
+#endif
+
 s32
 PASTE(csc_unit_func_,CSC_SUFFIX)
 ( RC5UnitWork *unitwork, u32 *timeslice, void * /*membuff*/ )
@@ -47,7 +71,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
 
 #ifdef CSC_BIT_32
   assert( sizeof(ulong) == 4);
-#elif CSC_BIT_64
+#elif defined(CSC_BIT_64)
   assert( sizeof(ulong) == 8);
 #endif
 
@@ -95,12 +119,12 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   key[0][csc_bit_order[4+6]] = 0xFFFF0000ul;
   #define CSC_BITSLICER_BITS 11
 #elif defined( CSC_BIT_64 )
-  key[0][csc_bit_order[0+6]] = 0xAAAAAAAAAAAAAAAAul;
-  key[0][csc_bit_order[1+6]] = 0xCCCCCCCCCCCCCCCCul;
-  key[0][csc_bit_order[2+6]] = 0xF0F0F0F0F0F0F0F0ul;
-  key[0][csc_bit_order[3+6]] = 0xFF00FF00FF00FF00ul;
-  key[0][csc_bit_order[4+6]] = 0xFFFF0000FFFF0000ul;
-  key[0][csc_bit_order[5+6]] = 0xFFFFFFFF00000000ul;
+  key[0][csc_bit_order[0+6]] = CASTNUM64(0xAAAAAAAAAAAAAAAA);
+  key[0][csc_bit_order[1+6]] = CASTNUM64(0xCCCCCCCCCCCCCCCC);
+  key[0][csc_bit_order[2+6]] = CASTNUM64(0xF0F0F0F0F0F0F0F0);
+  key[0][csc_bit_order[3+6]] = CASTNUM64(0xFF00FF00FF00FF00);
+  key[0][csc_bit_order[4+6]] = CASTNUM64(0xFFFF0000FFFF0000);
+  key[0][csc_bit_order[5+6]] = CASTNUM64(0xFFFFFFFF00000000);
   #define CSC_BITSLICER_BITS 12
 #endif
 

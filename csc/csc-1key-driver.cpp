@@ -3,6 +3,22 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-1key-driver.cpp,v $
+// Revision 1.4  1999/10/11 18:15:08  cyp
+// sync'd from release branch
+//
+// Revision 1.3.2.4  1999/10/08 00:07:01  cyp
+// made (mostly) all extern "C" {}
+//
+// Revision 1.3.2.3  1999/10/07 23:37:40  cyp
+// changed '#elif CSC_BIT_64' to '#elif defined(CSC_BIT_64)' and changed an
+// 'unsigned long' to 'ulong'
+//
+// Revision 1.3.2.2  1999/10/07 19:08:59  remi
+// CSC_64_BITS patch
+//
+// Revision 1.3.2.1  1999/10/07 18:41:14  cyp
+// sync'd from head
+//
 // Revision 1.3  1999/07/28 23:15:29  trevorh
 // Fixed compilation error on Watcom OS/2
 //
@@ -24,10 +40,18 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-driver.cpp,v 1.3 1999/07/28 23:15:29 trevorh Exp $"; }
+return "@(#)$Id: csc-1key-driver.cpp,v 1.4 1999/10/11 18:15:08 cyp Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
+#ifdef __cplusplus
+extern "C" {
+s32
+PASTE(csc_unit_func_,CSC_SUFFIX)
+( RC5UnitWork *unitwork, u32 *timeslice, void * /*membuff*/ );
+}
+#endif
+
 s32
 PASTE(csc_unit_func_,CSC_SUFFIX)
 ( RC5UnitWork *unitwork, u32 *timeslice, void * /*membuff*/ )
@@ -38,7 +62,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
 
 #ifdef CSC_BIT_32
   assert( sizeof(ulong) == 4);
-#elif CSC_BIT_64
+#elif defined(CSC_BIT_64)
   assert( sizeof(ulong) == 8);
 #endif
 
@@ -74,12 +98,12 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   key[0][csc_bit_order[4]] = 0xFFFF0000ul;
   #define CSC_BITSLICER_BITS 5
 #elif defined( CSC_BIT_64 )
-  key[0][csc_bit_order[0]] = 0xAAAAAAAAAAAAAAAAul;
-  key[0][csc_bit_order[1]] = 0xCCCCCCCCCCCCCCCCul;
-  key[0][csc_bit_order[2]] = 0xF0F0F0F0F0F0F0F0ul;
-  key[0][csc_bit_order[3]] = 0xFF00FF00FF00FF00ul;
-  key[0][csc_bit_order[4]] = 0xFFFF0000FFFF0000ul;
-  key[0][csc_bit_order[5]] = 0xFFFFFFFF00000000ul;
+  key[0][csc_bit_order[0]] = CASTNUM64(0xAAAAAAAAAAAAAAAA);
+  key[0][csc_bit_order[1]] = CASTNUM64(0xCCCCCCCCCCCCCCCC);
+  key[0][csc_bit_order[2]] = CASTNUM64(0xF0F0F0F0F0F0F0F0);
+  key[0][csc_bit_order[3]] = CASTNUM64(0xFF00FF00FF00FF00);
+  key[0][csc_bit_order[4]] = CASTNUM64(0xFFFF0000FFFF0000);
+  key[0][csc_bit_order[5]] = CASTNUM64(0xFFFFFFFF00000000);
   #define CSC_BITSLICER_BITS 6
 #endif
 
@@ -97,7 +121,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   ulong result;
   u32 bkey = 0;
   for( ;; ) {
-    result = PASTE(cscipher_bitslicer_,CSC_SUFFIX) ( (unsigned long const (* )[64])key, plain, cipher );
+    result = PASTE(cscipher_bitslicer_,CSC_SUFFIX) ( (ulong const (* )[64])key, plain, cipher );
     if( result )
       break;
     if( ++bkey >= (1ul << (nbits - CSC_BITSLICER_BITS) ) )

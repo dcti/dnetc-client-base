@@ -5,7 +5,7 @@
  *
 */ 
 const char *convcsc_cpp(void) {
-return "@(#)$Id: convcsc.cpp,v 1.1 1999/07/23 02:43:05 fordbr Exp $"; }
+return "@(#)$Id: convcsc.cpp,v 1.2 1999/10/11 18:15:07 cyp Exp $"; }
 
 /* CSC conversion routines */
 

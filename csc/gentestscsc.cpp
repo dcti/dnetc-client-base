@@ -1,11 +1,17 @@
 //
 // $Log: gentestscsc.cpp,v $
+// Revision 1.2  1999/10/11 18:15:09  cyp
+// sync'd from release branch
+//
+// Revision 1.1.2.1  1999/10/07 18:41:14  cyp
+// sync'd from head
+//
 // Revision 1.1  1999/07/23 02:43:06  fordbr
 // CSC cores added
 //
 //
 
-char *id="@(#)$Id: gentestscsc.cpp,v 1.1 1999/07/23 02:43:06 fordbr Exp $";
+char *id="@(#)$Id: gentestscsc.cpp,v 1.2 1999/10/11 18:15:09 cyp Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>

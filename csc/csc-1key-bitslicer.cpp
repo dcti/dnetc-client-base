@@ -3,6 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-1key-bitslicer.cpp,v $
+// Revision 1.2  1999/10/11 18:15:08  cyp
+// sync'd from release branch
+//
+// Revision 1.1.2.2  1999/10/08 00:07:00  cyp
+// made (mostly) all extern "C" {}
+//
+// Revision 1.1.2.1  1999/10/07 18:41:13  cyp
+// sync'd from head
+//
 // Revision 1.1  1999/07/23 02:43:05  fordbr
 // CSC cores added
 //
@@ -10,7 +19,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_bitslicer_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-bitslicer.cpp,v 1.1 1999/07/23 02:43:05 fordbr Exp $"; }
+return "@(#)$Id: csc-1key-bitslicer.cpp,v 1.2 1999/10/11 18:15:08 cyp Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
@@ -23,6 +32,14 @@ return "@(#)$Id: csc-1key-bitslicer.cpp,v 1.1 1999/07/23 02:43:05 fordbr Exp $";
 // K6-2   :          389.60
 // alpha  :  77.16    67.07
 //
+#ifdef __cplusplus
+extern "C" {
+ulong 
+PASTE(cscipher_bitslicer_,CSC_SUFFIX) 
+( const ulong key[2][64], const ulong msg[64], const ulong cipher[64] );
+}
+#endif
+
 ulong 
 PASTE(cscipher_bitslicer_,CSC_SUFFIX) 
 ( const ulong key[2][64], const ulong msg[64], const ulong cipher[64] )
