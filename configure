@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.112  1998/11/04 05:24:31  dbaker
+# nasm elf flags for x86-freebsd-elf target
+#
 # Revision 1.111  1998/10/31 22:11:23  silby
 # Fixed nasm options for freebsd non-elf
 #
@@ -1052,6 +1055,7 @@ case "$1" in
         TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
         TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
         TARGET_LIBS="-lc_r"
         ;;
 
