@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.16  1998/12/08 05:58:18  dicamillo
+// Add MacOS GUI call to delete thread display at completion.
+//
 // Revision 1.15  1998/12/06 02:55:09  cyp
 // The problem loader now looks ahead in an attempt to guess whether the next
 // load/save cycle will have enough blocks to refresh all problems without a
@@ -68,7 +71,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.15 1998/12/06 02:55:09 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.16 1998/12/08 05:58:18 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -351,6 +354,10 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         }
       norm_key_count = 
           (unsigned int)__iter2norm( ntohl(rc5result.iterations.lo) );
+
+	  #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
+		 FinishThreadProgress(prob_i, rc5result.iterations);
+      #endif
       }
 
     //we can purge the object now
