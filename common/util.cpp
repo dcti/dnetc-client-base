@@ -5,7 +5,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.40 2000/10/20 21:08:45 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.41 2000/11/02 16:17:19 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -66,7 +66,8 @@ void trace_out( int indlevel, const char *format, ... )
 
   if (indentlevel == -1) /* uninitialized */
   {
-    remove(tracefile);
+    unlink(tracefile); /* } both needed for */
+    remove(tracefile); /* } some odd reason */
     indentlevel = 0;
   }
 
