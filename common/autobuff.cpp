@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: autobuff.cpp,v $
+// Revision 1.8  1998/07/08 09:23:17  jlawson
+// eliminated integer type warnings on win16
+//
 // Revision 1.7  1998/07/07 21:54:57  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -32,7 +35,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *autobuff_cpp(void) {
-static const char *id="@(#)$Id: autobuff.cpp,v 1.7 1998/07/07 21:54:57 cyruspatel Exp $";
+static const char *id="@(#)$Id: autobuff.cpp,v 1.8 1998/07/08 09:23:17 jlawson Exp $";
 return id; }
 #endif
 
@@ -44,31 +47,31 @@ AutoBuffer::AutoBuffer(void)
 {
   buffersize = AUTOBUFFER_INCREMENT;
   bufferfilled = 0;
-  buffer = new char[buffersize];
+  buffer = new char[(int)buffersize];
 }
 
 AutoBuffer::AutoBuffer(const AutoBuffer &that)
 {
   buffersize = that.buffersize;
   bufferfilled = that.GetLength();
-  buffer = new char[buffersize];
-  memmove(buffer, that.GetHead(), bufferfilled);
+  buffer = new char[(int)buffersize];
+  memmove(buffer, that.GetHead(), (int)bufferfilled);
 }
 
 AutoBuffer::AutoBuffer(const char *szText)
 {
   bufferfilled = strlen(szText);
   buffersize = bufferfilled + AUTOBUFFER_INCREMENT;
-  buffer = new char[buffersize];
-  memmove(buffer, szText, bufferfilled);
+  buffer = new char[(int)buffersize];
+  memmove(buffer, szText, (int)bufferfilled);
 }
 
 AutoBuffer::AutoBuffer(const char *chData, u32 amount)
 {
   bufferfilled = amount;
   buffersize = bufferfilled + AUTOBUFFER_INCREMENT;
-  buffer = new char[buffersize];
-  memmove(buffer, chData, bufferfilled);
+  buffer = new char[(int)buffersize];
+  memmove(buffer, chData, (int)bufferfilled);
 }
 
 AutoBuffer::~AutoBuffer(void)
@@ -81,12 +84,12 @@ char *AutoBuffer::Reserve(u32 amount)
   if (!buffer) {
     buffersize = amount + AUTOBUFFER_INCREMENT;
     bufferfilled = 0;
-    buffer = new char[buffersize];
+    buffer = new char[(int)buffersize];
   } else if (amount > buffersize - bufferfilled) {
     char *oldbuffer = buffer;
     buffersize = bufferfilled + amount + AUTOBUFFER_INCREMENT;
-    buffer = new char[buffersize];
-    memmove(buffer, oldbuffer, bufferfilled);
+    buffer = new char[(int)buffersize];
+    memmove(buffer, oldbuffer, (int)bufferfilled);
     delete oldbuffer;
   }
   return buffer;
@@ -100,7 +103,7 @@ void AutoBuffer::MarkUsed(u32 amount)
 void AutoBuffer::RemoveHead(u32 amount)
 {
   if (bufferfilled >= amount) {
-    memmove(buffer, buffer + amount, bufferfilled - amount);
+    memmove(buffer, buffer + (int)amount, (int)(bufferfilled - amount));
     bufferfilled -= amount;
   }
 }
@@ -113,7 +116,7 @@ void AutoBuffer::RemoveTail(u32 amount)
 void AutoBuffer::operator+= (const AutoBuffer &that)
 {
   Reserve(that.GetLength());
-  memmove(GetTail(), that.GetHead(), that.GetLength());
+  memmove(GetTail(), that.GetHead(), (int)that.GetLength());
   MarkUsed(that.GetLength());
 }
 
@@ -121,7 +124,7 @@ void AutoBuffer::operator= (const AutoBuffer &that)
 {
   Clear();
   Reserve(that.GetLength());
-  memmove(GetHead(), that.GetHead(), that.GetLength());
+  memmove(GetHead(), that.GetHead(), (int)that.GetLength());
   MarkUsed(that.GetLength());
 }
 
@@ -129,8 +132,8 @@ AutoBuffer AutoBuffer::operator+ (const AutoBuffer &that)
 {
   AutoBuffer output;
   output.Reserve(GetLength() + that.GetLength());
-  memmove(output.GetHead(), GetHead(), GetLength());
-  memmove(output.GetHead() + GetLength(), that.GetHead(), that.GetLength());
+  memmove(output.GetHead(), GetHead(), (int)GetLength());
+  memmove(output.GetHead() + (int)GetLength(), that.GetHead(), (int)that.GetLength());
   output.MarkUsed(GetLength() + that.GetLength());
   return output;
 }
@@ -140,7 +143,7 @@ bool AutoBuffer::RemoveLine(AutoBuffer &line)
 {
   line.Clear();
   int eol = -1;
-  for (u32 pos = 0; pos < GetLength(); pos++)
+  for (int pos = 0; pos < (int)GetLength(); pos++)
   {
     char ch = GetHead()[pos];
     if (ch == 0 || ch == '\r' || ch == '\n') {eol = pos; break;}
@@ -152,7 +155,7 @@ bool AutoBuffer::RemoveLine(AutoBuffer &line)
   line.GetHead()[eol] = 0;      // end with a null, but don't include...
   line.MarkUsed(eol);           // ...as part of allocated buffer
   if (GetHead()[eol] == '\r' &&
-      GetLength() > (u32) eol + 1 &&
+      GetLength() > eol + 1 &&
       GetHead()[eol + 1] == '\n') RemoveHead(eol + 2);
   else RemoveHead(eol + 1);
   return true;
