@@ -5,7 +5,7 @@
  */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.1.2.4 2000/02/20 08:08:14 sampo Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.1.2.5 2000/02/20 08:18:23 sampo Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -179,11 +179,9 @@ static inline vector unsigned int intToVec(unsigned int n)
 	return uv.v;
 }
 
-static asm int first_asm (register int i)
+static inline int first_asm (register int i)
 {
-	not		r3, r3
-	cntlzw	r3, r3
-	addi	r3, r3, 1
+	return __cntlzw(~i)+1;
 }
 
 /*-----------------------------------------*/
