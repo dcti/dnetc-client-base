@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.66 2000/06/24 09:07:25 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.67 2000/06/24 09:56:12 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -266,7 +266,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   if (initialized)
   {
     /* This can only happen if RetrieveState(,,purge) was not called */
-    Log("BUG! BUG! BUG! LoadState() on active problem!\n");
+    Log("BUG! LoadState() without previous RetrieveState(,,purge)!\n");
     return -1;
   }
   
