@@ -2,9 +2,16 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// $Log: csc-1k-i.cpp,v $
-// Revision 1.3  1999/12/09 13:13:18  cyp
+// $Log: csc-1k-i-mmx.cpp,v $
+// Revision 1.2  1999/12/09 13:13:18  cyp
 // sync
+//
+// Revision 1.1.2.2  1999/11/23 23:39:45  remi
+// csc_transP() optimized.
+// modified csc_transP() calling convention.
+//
+// Revision 1.1.2.1  1999/11/22 18:58:11  remi
+// Initial commit of MMX'fied CSC cores.
 //
 // Revision 1.1.2.1  1999/10/07 18:41:13  cyp
 // sync'd from head
@@ -16,7 +23,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *csc_1k_i_cpp(void) {
-return "@(#)$Id: csc-1k-i.cpp,v 1.3 1999/12/09 13:13:18 cyp Exp $"; }
+return "@(#)$Id: csc-1k-i-mmx.cpp,v 1.2 1999/12/09 13:13:18 cyp Exp $"; }
 #endif
 
 #include "problem.h"
@@ -24,7 +31,7 @@ return "@(#)$Id: csc-1k-i.cpp,v 1.3 1999/12/09 13:13:18 cyp Exp $"; }
 #define CSC_SUFFIX 1k_i
 
 #define INLINE_TRANSP
-#include "csc-common.h"
-#include "csc-1key-bitslicer.cpp"
-#include "csc-1key-driver.cpp"
+#include "csc-common-mmx.h"
+#include "csc-1key-bitslicer-mmx.cpp"
+#include "csc-1key-driver-mmx.cpp"
 

@@ -1,6 +1,55 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Log: csc-6bits-driver-mmx.cpp,v $
+// Revision 1.2  1999/12/09 13:13:19  cyp
+// sync
+//
+// Revision 1.1.2.3  1999/12/06 10:52:43  remi
+// #include "csc-common.h" -> #include "csc-common-mmx.h"
+//
+// Revision 1.1.2.2  1999/12/05 14:39:43  remi
+// A faster 6bit MMX core.
+//
+// Revision 1.1.2.1  1999/11/22 18:58:11  remi
+// Initial commit of MMX'fied CSC cores.
+//
+// Revision 1.2.2.7  1999/10/30 15:02:27  remi
+// Hrmm, I can't program in C :(
+// if (blah & 15 != 0)
+// 	slap(remi);
+// if ((blah & 15) != 0)
+// 	pets(remi);
+//
+// Revision 1.2.2.6  1999/10/24 23:54:54  remi
+// Use Problem::core_membuffer instead of stack for CSC cores.
+// Align frequently used memory to 16-byte boundary in CSC cores.
+//
+// Revision 1.2.2.5  1999/10/20 16:15:34  cyp
+// added cast where compiler was complaining about potential underflow when
+// assigning an int value to u8 var.
+//
+// Revision 1.2.2.4  1999/10/08 00:07:01  cyp
+// made (mostly) all extern "C" {}
+//
+// Revision 1.2.2.3  1999/10/07 23:37:40  cyp
+// changed '#elif CSC_BIT_64' to '#elif defined(CSC_BIT_64)' and changed an
+// 'unsigned long' to 'ulong'
+//
+// Revision 1.2.2.2  1999/10/07 19:08:59  remi
+// CSC_64_BITS patch
+//
+// Revision 1.2.2.1  1999/10/07 18:41:14  cyp
+// sync'd from head
+//
+// Revision 1.2  1999/07/25 13:28:51  remi
+// Fix for 64-bit processors.
+//
+// Revision 1.1  1999/07/23 02:43:06  fordbr
+// CSC cores added
+//
+//
 
 #include <stdio.h>
 #include <assert.h>
@@ -8,11 +57,11 @@
 #include "problem.h"
 #include "convcsc.h"
 
-#include "csc-common.h"
+#include "csc-common-mmx.h"
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-driver.cpp,v 1.6 1999/12/09 13:13:20 cyp Exp $"; }
+return "@(#)$Id: csc-6bits-driver-mmx.cpp,v 1.2 1999/12/09 13:13:19 cyp Exp $"; }
 #endif
 
 /*
@@ -42,7 +91,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   // align buffer on a 16-byte boundary
   assert(sizeof(void*) == sizeof(unsigned long));
   char *membuffer = (char*)membuff;
-  if( ((unsigned long)membuffer & 15) != 0)
+  if( ((unsigned)membuffer & 15) != 0)
     membuffer = (char*)(((unsigned long)(membuffer+15) & ~((unsigned long)15)));
 
   //ulong key[2][64];
@@ -61,6 +110,9 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
 #elif defined(CSC_BIT_64)
   assert( sizeof(ulong) == 8);
 #endif
+
+  // zero-out membuffer to write-allocate cache lines on AMD K6
+  memset( membuff, 0, MAX_MEM_REQUIRED_BY_CORE );
 
   // convert the starting key from incrementable format
   // to CSC format
@@ -119,12 +171,10 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   while (*timeslice > (1ul << nbits)) nbits++;
 
   // Zero out all the bits that are to be varied
-  {
   for( int i=0; i<6; i++ ) {
     int n = csc_bit_order[i];
     (*key)[0][n] = _0;
     keyB[7-n/8] &= (u8)(~(1 << (n%8)));
-  }
   }
   {
   for (u32 i=0; i<nbits-CSC_BITSLICER_BITS; i++) {
@@ -181,6 +231,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
     unitwork->L0.lo = keylo;
     unitwork->L0.hi = keyhi;
 
+    asm("emms\n");
     return RESULT_FOUND;
 
   } else {
@@ -190,6 +241,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
     if (unitwork->L0.lo < (u32)(1 << nbits) )
       unitwork->L0.hi++; // Carry to high 32 bits if needed
 
+    asm("emms\n");
     return RESULT_NOTHING;
   }
 }

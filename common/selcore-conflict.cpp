@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.65 1999/12/08 05:41:02 remi Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.66 1999/12/09 13:15:06 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -456,15 +456,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
     if (selcorestatics.corenum[RC5] < 0 && detected_type >= 0)
     {
-      const char *corename = "000/010/020/030";
-      selcorestatics.corenum[RC5] = 0;
+      selcorestatics.corenum[RC5] = 0; /* rc5-000_030-jg.s */
       if (detected_type >= 68040)
-      {
-        selcorestatics.corenum[RC5] = 1;
-        corename = "040/060";
-      }
-      LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename);
-      corename_printed = 1;
+        selcorestatics.corenum[RC5] = 1; /* rc5-040_060-jg.s */
     }
   }
   else if (contestid == DES)
@@ -609,8 +603,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         {
           int cindex = -1; 
           if ((detected_type & 0x100) != 0 && /* have mmx */
-             __corecount_for_contest(contestid) > 2) /* have mmx-bitslicer */
-            cindex = 4; /* mmx bitslicer */
+             __corecount_for_contest(contestid) > 4) /* have csc-mmx */
+            cindex = 4; /* csc mmx */
           else
 	  {
 	    // this is only valid for nasm'd cores or GCC 2.95 and up

@@ -2,9 +2,12 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// $Log: csc-6b-i.cpp,v $
-// Revision 1.3  1999/12/09 13:13:19  cyp
+// $Log: csc-6b-i-mmx.cpp,v $
+// Revision 1.2  1999/12/09 13:13:19  cyp
 // sync
+//
+// Revision 1.1.2.1  1999/11/22 18:58:11  remi
+// Initial commit of MMX'fied CSC cores.
 //
 // Revision 1.1.2.1  1999/10/07 18:41:14  cyp
 // sync'd from head
@@ -16,7 +19,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *csc_6b_i_cpp(void) {
-return "@(#)$Id: csc-6b-i.cpp,v 1.3 1999/12/09 13:13:19 cyp Exp $"; }
+return "@(#)$Id: csc-6b-i-mmx.cpp,v 1.2 1999/12/09 13:13:19 cyp Exp $"; }
 #endif
 
 #include "problem.h"
@@ -24,7 +27,7 @@ return "@(#)$Id: csc-6b-i.cpp,v 1.3 1999/12/09 13:13:19 cyp Exp $"; }
 #define CSC_SUFFIX 6b_i
 
 #define INLINE_TRANSP
-#include "csc-common.h"
-#include "csc-6bits-bitslicer.cpp"
-#include "csc-6bits-driver.cpp"
+#include "csc-common-mmx.h"
+#include "csc-6bits-bitslicer-mmx.cpp"
+#include "csc-6bits-driver-mmx.cpp"
 

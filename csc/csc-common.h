@@ -3,8 +3,27 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common.h,v $
-// Revision 1.3  1999/11/01 17:25:52  cyp
-// sync from release
+// Revision 1.4  1999/12/09 13:13:20  cyp
+// sync
+//
+// Revision 1.1.2.7  1999/11/29 19:12:53  lyndon
+// Document the reason for the MIPS-specific tests.
+//
+// Revision 1.1.2.6  1999/11/29 00:29:44  lyndon
+// Irix MIPSpro incremental commit:
+//
+// * Adds support for 64 bit builds
+// * Re-enable DES and CSC
+// * Heavy optimizations enabled
+// * Portability fixes in CSC
+//
+// Revision 1.1.2.5  1999/11/28 06:17:05  lyndon
+//
+// Irix builds were botching the ULONG_MAX test, thus the code was defaulting
+// to 64 bits everywhere. (I don't know why ...)
+//
+// Both the MIPSpro and GNU compilers define _MIPS_SZLONG. If that define
+// is present, use it in preference to the ULONG_MAX-based tests.
 //
 // Revision 1.1.2.4  1999/11/01 17:23:23  cyp
 // renamed transX(...) to csc_transX(...) to avoid potential (future) symbol
@@ -25,7 +44,7 @@
 //
 
 #ifndef __CSC_COMMON_H
-#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.3 1999/11/01 17:25:52 cyp Exp $"
+#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.4 1999/12/09 13:13:20 cyp Exp $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -48,6 +67,23 @@
     #define CASTNUM64(n) n##ul
   #else
     #error something missing
+  #endif
+#elif defined(_MIPS_SZLONG)
+/*
+ * The tests against ULONG_MAX in the following section fail on
+ * Irix/MIPSpro due to sign-extension of the constants. The
+ * Irix compilers explicitly provide the information we need, so
+ * we use that instead.
+ */
+  #if (_MIPS_SZLONG == 32)
+    #define CSC_BIT_32
+    typedef unsigned long ulong;
+  #elif (_MIPS_SZLONG == 64)
+    #define CSC_BIT_64
+    typedef unsigned long ulong;
+    #define CASTNUM64(n) n##ul
+  #else
+    #error Insane value of _MIPS_SZLONG
   #endif
 #elif (ULONG_MAX == 0xfffffffful)
   #define CSC_BIT_32

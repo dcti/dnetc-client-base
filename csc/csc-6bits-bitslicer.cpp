@@ -3,8 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6bits-bitslicer.cpp,v $
-// Revision 1.3  1999/11/01 17:25:51  cyp
-// sync from release
+// Revision 1.4  1999/12/09 13:13:19  cyp
+// sync
 //
 // Revision 1.1.2.6  1999/11/01 17:23:23  cyp
 // renamed transX(...) to csc_transX(...) to avoid potential (future) symbol
@@ -33,7 +33,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_bitslicer_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-bitslicer.cpp,v 1.3 1999/11/01 17:25:51 cyp Exp $"; }
+return "@(#)$Id: csc-6bits-bitslicer.cpp,v 1.4 1999/12/09 13:13:19 cyp Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
