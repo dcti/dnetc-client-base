@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.65 2001/05/06 11:01:11 teichp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.66 2002/03/22 23:02:06 sampo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -554,6 +554,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
           CFDictionaryRef dict = (CFDictionaryRef)CFArrayGetValueAtIndex(cfarray, 0);
           CFNumberRef cfnum = (CFNumberRef)CFDictionaryGetValue(dict, CFSTR(kIOBatteryFlagsKey));
           CFNumberGetValue(cfnum, kCFNumberLongType, &flags);
+          CFRelease(cfarray);
           if( flags & kIOBatteryChargerConnect )
             return 0; /* we have AC power */
           else
