@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.36 2001/04/10 00:51:09 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.37 2001/04/12 14:48:05 cyp Exp $"; }
 
 //#define TRACE
 
@@ -1001,8 +1001,21 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
               for (i=0; i<bytesReturned; i+=stepsize)
               {
                 int isup = 0;
-                u_long if_flags = ((struct if_info_v4 *)(ifp))->iiFlags;
-                u_long if_addr  = ((struct if_info_v4 *)(ifp))->iiAddress.sin_addr;
+                u_long if_flags, if_addr;
+
+                #if defined(__WATCOMC__)
+                /* WatcomC bitches about unreferenced prototypes in code */
+                /* so reference the ones we otherwise wouldn't */
+                if_flags = ((struct if_info_v6 *)(ifp))->iiFlags;
+                if_addr  = ((struct if_info_v6 *)(ifp))->iiAddress.sin6_flowinfo;
+                if_addr  = ((struct if_info_v6 *)(ifp))->iiBroadcastaddress.sin6_flowinfo;
+                if_addr  = ((struct if_info_v6 *)(ifp))->iiNetmask.sin6_flowinfo;
+                if_addr  = ((struct if_info_v4 *)(ifp))->iiBroadcastaddress.sin_addr;
+                if_addr  = ((struct if_info_v4 *)(ifp))->iiNetmask.sin_addr;
+                #endif
+
+                if_flags = ((struct if_info_v4 *)(ifp))->iiFlags;
+                if_addr  = ((struct if_info_v4 *)(ifp))->iiAddress.sin_addr;
                 /* if_addr is always (?) an AF_INET[4] addr because thats what our socket is */
                 ifp+=stepsize;
 
