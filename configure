@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.188 2000/09/18 03:25:11 lyndon Exp $
+# @(#)$Id: configure,v 1.222.2.189 2000/09/21 16:36:09 oliver Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -2119,7 +2119,7 @@ case "$1" in
         generate_gcc_opts "ppc603e" "amigaos"
 	TARGET_CCFLAGS="$OPTS_GCC -pup -D__POWERUP__ -O6 -mmultiple -mstring \
                         -D__AMIGADATE__=\`platforms/amiga/tools/amigadate\` \
-                        --mstrict-align -I./ -DDYN_TIMESLICE \
+                        -mstrict-align -I./ -DDYN_TIMESLICE \
                         -DHAVE_OGR_CORES -DLURK"
 	TARGET_LDFLAGS="-pup"
 	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
