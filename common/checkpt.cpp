@@ -15,7 +15,7 @@
  *
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.11.2.7 2000/03/04 08:33:38 jlawson Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.11.2.8 2000/06/18 16:23:12 andreasb Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()
@@ -62,7 +62,7 @@ int CheckpointAction( Client *client, int action, unsigned int load_problem_coun
         long recovered = BufferImportFileRecords( client, client->checkpoint_file, 0 );
         if (recovered > 0)  
         {
-          LogScreen("Recovered %d checkpoint packet%s\n", recovered, 
+          Log("Recovered %d checkpoint packet%s\n", recovered, 
             ((recovered == 1)?(""):("s")) );
         }
       }
