@@ -1,13 +1,15 @@
 #
 # $Log: crunch_lintilla_296.ppc.s,v $
-# Revision 1.5  1999/12/27 12:19:40  patrick
+# Revision 1.6  2000/07/11 02:24:16  mfeiri
+# sync
 #
-# It's nice if someone fixes something, but here someone broke something. The
-# AIX loader insist on the '.' notation. Maybe you can call gas indirectly
-# as I do, GCC should remove the ifdefs (at least he does it for me).
+# Revision 1.3.2.3  2000/06/20 15:08:54  oliver
+# ensure main loop starts on 8-byte boundary for optimum cache performance (on
+# a 603e, at least, but can do no harm for other PPC processors too)
 #
-# Revision 1.4  1999/12/06 18:47:42  cyp
-# fixed externs
+# Revision 1.3.2.2  2000/01/03 14:34:37  patrick
+#
+# EGCS on AIX needs the defines. Please keep 'em.
 #
 # Revision 1.3.2.1  1999/12/06 09:56:55  myshkin
 # Minor changes to conform to gas syntax (version 980114).
@@ -22,7 +24,7 @@
 #
  .file	"crunch-ppc.cpp"
 gcc2_compiled.:
-# .csect	.text[PR]
+# .csect        .text[PR]
 # .align 8
 #if (CLIENT_OS == OS_AIX)
  .globl .crunch_lintilla
@@ -523,6 +525,10 @@ label3:
 
  lwz	Sr0,Sr_0(SP)
  lwz	Sr1,Sr_1(SP)
+
+# ensure main loop starts on 8-byte boundary, for optimum cache performance
+# (pad with nop if necessary)
+.balignl	8,0x60000000
 
 loop:
 

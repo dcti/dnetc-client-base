@@ -3,6 +3,17 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: rotate.h,v $
+// Revision 1.6  2000/07/11 02:27:43  mfeiri
+// sync
+//
+// Revision 1.5.2.2  2000/01/08 01:16:38  snake
+// Makes ansi cores usable for 68k NetBSDs (maybe faster than crunch core)
+//
+// Revision 1.5.2.1  1999/12/31 20:05:04  patrick
+//
+//
+// added ansi_increment for increment inside ansi cores
+//
 // Revision 1.5  1998/11/17 09:16:52  remi
 // Reverted the previous change, rlmi and rlimi are valid POWER instructions ...
 //
@@ -24,6 +35,51 @@
 #define __inline__ inline
 #endif
 
+#ifdef USE_ANSI_INCREMENT
+// "mangle-increment" the key number by the number of pipelines
+// this will only work for powers of 2 and is way faster for
+// small numbers than __increment_key()
+
+#ifndef PIPELINE_COUNT
+        #error "Expecting pipeline to be set to something"
+#endif
+
+#define key rc5unitwork->L0
+
+static __inline__ void ansi_increment( RC5UnitWork *rc5unitwork ) {
+    key.hi = (key.hi + ( PIPELINE_COUNT << 24)) & 0xFFFFFFFF;
+    if (!(key.hi & 0xFF000000))
+      {
+      key.hi = (key.hi + 0x00010000) & 0x00FFFFFF;
+      if (!(key.hi & 0x00FF0000))
+        {
+        key.hi = (key.hi + 0x00000100) & 0x0000FFFF;
+        if (!(key.hi & 0x0000FF00))
+          {
+          key.hi = (key.hi + 0x00000001) & 0x000000FF;
+        // we do not need to mask here, was done above
+          if (!(key.hi))
+            {
+            key.lo = key.lo + 0x01000000;
+            if (!(key.lo & 0xFF000000))
+              {
+              key.lo = (key.lo + 0x00010000) & 0x00FFFFFF;
+              if (!(key.lo & 0x00FF0000))
+                {
+                key.lo = (key.lo + 0x00000100) & 0x0000FFFF;
+                if (!(key.lo & 0x0000FF00))
+                  {
+                  key.lo = (key.lo + 0x00000001) & 0x000000FF;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+}
+#undef key
+#endif // USE_ANSI_INCREMENT
 
 #if (CLIENT_CPU == CPU_SPARC)
 
@@ -116,7 +172,7 @@ static __inline__ u32 ROTL3(u32 x)
 
 #elif (CLIENT_CPU == CPU_68K) && defined(__GNUC__)
 
-#if (CLIENT_OS == OS_SUNOS)
+#if (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_NETBSD)
   #define RC5_WORD u32
 #endif
 

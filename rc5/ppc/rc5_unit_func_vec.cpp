@@ -9,18 +9,7 @@ u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 iterations ); /* this */
 
 u32 rc5_unit_func_vec_compat( RC5UnitWork *work, u32 iterations )
 {
-  u32 kiter = 0; /* keys processed so far */
-  do 
-  {
-    kiter += crunch_vec(work, iterations-kiter);
-    if (kiter < iterations)
-    {
-      if (crunch_allitnil(work,1) == 0) 
-        break;
-      kiter++;
-    }
-  } while (kiter < iterations);
-  return kiter;
+  return crunch_vec( work, iterations );
 }  
 
 s32 rc5_unit_func_vec( RC5UnitWork *work, u32 *timeslice, void *savstate)
@@ -30,7 +19,7 @@ s32 rc5_unit_func_vec( RC5UnitWork *work, u32 *timeslice, void *savstate)
 
   if (*timeslice == kiter) 
      return RESULT_WORKING;
-  if (*timeslice < kiter) {
+  if (*timeslice > kiter) {
     *timeslice = kiter;
     return RESULT_FOUND;
   }
