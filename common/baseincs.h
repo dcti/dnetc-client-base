@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.11 1999/12/16 03:06:18 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.12 1999/12/18 15:58:32 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -169,6 +169,14 @@ extern "C" {
   #if defined(__ELF__)
     #include <sched.h>
   #endif
+#elif (CLIENT_OS == OS_MACOS)  
+  #include <sys/time.h>
+  #include <unistd.h>
+  #include <sched.h>
+#elif (CLIENT_OS == OS_FREEBSD)  
+  #include <sys/time.h>
+  #include <unistd.h>
+  #include <sched.h>
 #elif (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
   #include <unistd.h>
@@ -179,10 +187,6 @@ extern "C" {
   #include <sched.h>
 #elif (CLIENT_OS == OS_NETBSD)
   #include <sys/time.h>
-#elif (CLIENT_OS == OS_FREEBSD)  
-  #include <sys/time.h>
-  #include <unistd.h>
-  #include <sched.h>
 #elif (CLIENT_OS == OS_QNX)
   #include <sys/time.h>
   #include <sys/select.h>
@@ -192,11 +196,6 @@ extern "C" {
   struct timezone { int tz_minuteswest, tz_dsttime; };
   extern "C" int gethostname(char *, int);
   extern "C" int gettimeofday(struct timeval *, struct timezone *);
-#elif (CLIENT_OS == OS_MACOS)
-  #include <sys/time.h> /* Mindmorph */
-  #include <unistd.h> /* usleep() etc */
-  #include <Gestalt.h> /* Mindmorph */
-  #include "client_defs.h" /* support stuff */
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
 #endif
