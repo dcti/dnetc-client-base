@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.4 1999/10/05 16:41:33 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.5 1999/10/12 19:14:29 remi Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -25,6 +25,12 @@ return "@(#)$Id: network.cpp,v 1.97.2.4 1999/10/05 16:41:33 cyp Exp $"; }
 
 #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_MACOS)
 #define ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG
+#endif
+
+#if (CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)
+#define SOCKLEN_T socklen_t
+#else
+#define SOCKLEN_T int
 #endif
 
 extern int NetCheckIsOK(void); // used before doing i/o
@@ -2046,7 +2052,8 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
     for (which = 0; which < 2; which++ )
     {
       int type = ((which == 0)?(SO_RCVBUF):(SO_SNDBUF));
-      int sz = 0, szint = (int)sizeof(int);
+      int sz = 0;
+      SOCKLEN_T szint = (SOCKLEN_T)sizeof(int);
       if (getsockopt(sock, SOL_SOCKET, type, (char *)&sz, &szint)<0)
         ;
       else if (sz < parm)
