@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.203  1999/03/05 21:17:14  patrick
+#
+# removed pipelinecount for AIX targets, added comments according to
+# problem.cpp
+#
 # Revision 1.202  1999/03/04 19:54:50  silby
 # removed PIPELINE_COUNT from freebsd targets.
 #
@@ -1482,8 +1487,7 @@ case "$1" in
     *aix4-ppc-xlc)	 # This is the fastest build for AIX 4.x PPC machines
 	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
-	TARGET_CCFLAGS="$OPTS_XLC_PPC -DPIPELINE_COUNT=1 \
-			-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="$OPTS_XLC_PPC -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lCns"
@@ -1492,8 +1496,7 @@ case "$1" in
     *aix4-ppc601-xlc)      # AIX 4.x PPC, 601 chip
 	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
-	TARGET_CCFLAGS="$OPTS_XLC_PPC601 -DPIPELINE_COUNT=1 \
-			-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="$OPTS_XLC_PPC601 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lCns"
@@ -1502,8 +1505,7 @@ case "$1" in
     *aix32-ppc-xlc)	# AIX 3.2.x PPC
 	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
-	TARGET_CCFLAGS="$OPTS_XLC3_PPC601 -DPIPELINE_COUNT=1 \
-			-DBIT_32 -DMEGGS -DKWAN -DNO_STRCASECMP"
+	TARGET_CCFLAGS="$OPTS_XLC3_PPC601 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 		rc5/ppc/crunch_allitnil_552.ppc.s \
 		rc5/ppc/crunch_lintilla_296.ppc.s"
@@ -1511,21 +1513,20 @@ case "$1" in
 	TARGET_LIBS="-lCns"
 	;;
 
-    *ppc-gcc-aix32)	# AIX 3.2.x gcc
+    *ppc-gcc-aix32)	# AIX 3.2.x gcc [patrick] <patrick@skarabeus.de>
 	DELETECHARS="'/.\$\-'"
-	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 \
-			-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="$OPTS_GCC_PPC -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 		rc5/crunch_allitnil_552.ppc.s \
 		rc5/crunch_lintilla_296.ppc.s"
 	;;
 
   ### AIX POWER targets
-	# this one works for all platforms !
-    *aix-power-gcc-pipe2)  # AIX POWER with PIPELINE_COUNT=2 (preferred)
+        # AIX POWER this one works for all platforms (AIX 3.x, 4.[1-3])!
+    *aix-power-gcc)                     # [patrick] <patrick@skarabeus.de>
         DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX -DPIPELINE_COUNT=2 \
+	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	;;
@@ -2063,7 +2064,7 @@ case "$1" in
         #@echo off
         #ksh -c "parm=%1 ; echo ${parm##*[\\/]}"
        
-    *x86-os2-gcc)      
+    *x86-os2-gcc)               # [patrick] <patrick@skarabeus.de>
         basename ()
         {
         export parm=$1
@@ -2081,7 +2082,7 @@ case "$1" in
         TARGET_OS=OS2
         ;;
 
-    *x86-os2-nasm-gcc)      
+    *x86-os2-nasm-gcc)          # [patrick] <patrick@skarabeus.de>
         basename ()
         {
         export parm=$1
