@@ -17,6 +17,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: clitime.cpp,v $
+// Revision 1.28  1999/03/04 02:22:04  silby
+// Fixed typo.
+//
 // Revision 1.27  1999/03/04 00:55:17  cyp
 // adj_time_delta was being added to the wrong variable.
 //
@@ -76,7 +79,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.27 1999/03/04 00:55:17 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.28 1999/03/04 02:22:04 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -221,7 +224,7 @@ struct timeval *CliTimer( struct timeval *tv )
 #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
   static DWORD lastcheck = 0;
   static time_t basetime = 0;
-  DWORD ticks = GetTickCount(VOID); /* millisecs elapsed since OS start */
+  DWORD ticks = GetTickCount(); /* millisecs elapsed since OS start */
   if (lastcheck == 0 || (ticks < lastcheck))
   {
     lastcheck = ticks;
