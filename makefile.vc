@@ -21,14 +21,8 @@ all: rc5des
 
 RC5_OBJS =                    \
 	$(OUTPUTPATH)/client.obj     \
-	$(OUTPUTPATH)/threadcd.obj   \
 	$(OUTPUTPATH)/disphelp.obj   \
-	$(OUTPUTPATH)/autobuff.obj   \
 	$(OUTPUTPATH)/iniread.obj    \
-	$(OUTPUTPATH)/network.obj    \
-	$(OUTPUTPATH)/netinit.obj    \
-	$(OUTPUTPATH)/scram.obj      \
-	$(OUTPUTPATH)/mail.obj       \
 	$(OUTPUTPATH)/cliconfig.obj  \
 	$(OUTPUTPATH)/selftest.obj   \
 	$(OUTPUTPATH)/cmdline.obj    \
@@ -36,30 +30,21 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/clirate.obj    \
 	$(OUTPUTPATH)/clisrate.obj   \
 	$(OUTPUTPATH)/clicdata.obj   \
-	$(OUTPUTPATH)/buffwork.obj   \
 	$(OUTPUTPATH)/convdes.obj    \
 	$(OUTPUTPATH)/problem.obj    \
 	$(OUTPUTPATH)/des-x86.obj    \
 	$(OUTPUTPATH)/cpucheck.obj   \
-	$(OUTPUTPATH)/pathwork.obj   \
-	$(OUTPUTPATH)/cliident.obj   \
-	$(OUTPUTPATH)/lurk.obj \
 	$(OUTPUTPATH)/logstuff.obj   \
-	$(OUTPUTPATH)/buffupd.obj    \
 	$(OUTPUTPATH)/des-slice-meggs.obj \
 	$(OUTPUTPATH)/triggers.obj   \
 	$(OUTPUTPATH)/selcore.obj    \
-	$(OUTPUTPATH)/guistuff.obj   \
 	$(OUTPUTPATH)/clirun.obj     \
-	$(OUTPUTPATH)/pollsys.obj    \
 	$(OUTPUTPATH)/probman.obj    \
-	$(OUTPUTPATH)/probfill.obj   \
 	$(OUTPUTPATH)/bench.obj      \
 	$(OUTPUTPATH)/w32cons.obj    \
 	$(OUTPUTPATH)/w32svc.obj     \
         $(OUTPUTPATH)/w32pre.obj     \
 	$(OUTPUTPATH)/console.obj    \
-	$(OUTPUTPATH)/setprio.obj    \
 	$(OUTPUTPATH)/modereq.obj
 
 PREBUILT_OBJS =                   \
