@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.18  1998/10/29 08:19:31  silby
+// cputype was not properly being & 0xff'd from detectedtype, messing up x86 mmx processor detection for rc5 cores.
+//
 // Revision 1.17  1998/10/11 00:43:23  cyp
 // Implemented 'quietly' in SelectCore() and ValidateProcessorCount()
 //
@@ -74,7 +77,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.17 1998/10/11 00:43:23 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.18 1998/10/29 08:19:31 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -173,7 +176,7 @@ int Client::SelectCore(int quietly)
     {
     if (detectedtype == -2) 
       detectedtype = GetProcessorType(quietly);//returns -1 if unable to detect
-    cputype = detectedtype;
+    cputype = detectedtype & 0xFF;
     }
     
 #if (CLIENT_CPU == CPU_POWERPC)
