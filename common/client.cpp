@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.4 1999/06/01 05:07:23 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.5 1999/06/02 17:20:58 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -128,18 +128,22 @@ static const char *GetBuildOrEnvDescription(void)
   send us log extracts but don't mention the OS they are running on.
   Only useful for win-weenies I suppose.
   */
-
-  #if (CLIENT_OS == OS_DOS)
+#if (CLIENT_OS == OS_DOS)
   return dosCliGetEmulationDescription(); //if in win/os2 VM
-  #elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
+#elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
   static char buffer[32]; long ver = winGetVersion(); /* w32pre.cpp */
-  sprintf(buffer,"under Windows%s %u.%u", (ver>=2000)?(" NT"):(""), (ver/100)%20, ver%100 );
+  sprintf(buffer,"Windows%s %u.%u", (ver>=2000)?("NT"):(""), (ver/100)%20, ver%100 );
   return buffer;
-  #elif defined(BDESCRIP)
-  return BDESCRIP;
-  #else
+#elif defined(__unix__) /* uname -sr */
+  struct utsname ut;
+  if (uname(&ut)==0) {
+    static char buffer[sizeof(ut.sysname)+1+sizeof(ut.release)+1];
+    return strcat(strcat(strcpy(buffer,ut.sysname)," "),ut.release);
+  }
   return "";
-  #endif
+#else
+  return "";
+#endif
 }
 
 int ClientIsGUI(void)
@@ -245,7 +249,7 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
                        "R" /* public release */
                        #endif
                        "-%s " /* date is in bugzilla format yymmddhh */ 
-                       "client for %s%s%s%s started.\n",
+                       "client for %s%s%s%s.\n",
             ((ClientIsGUI())?('G'):('C')),  CliGetTimeString(&tv,4),
             CLIENT_OS_NAME, ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
       LogScreenRaw( "Please provide the *entire* version descriptor "
@@ -585,3 +589,4 @@ int main( int argc, char *argv[] )
   return realmain( argc, argv );
 }
 #endif
+
