@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.10 1999/11/23 23:52:35 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.11 1999/12/02 16:24:59 cyp Exp $
 ==========================================================================
 
 2.8000
@@ -50,7 +50,9 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.10 1999/11/23 23:52:35 cyp Exp $
             new: netware: complete rewrite of netware specific code
             new: *nix: client distribution includes a man page
             chg: all: auto keyserver name resolution now allows as many 
-	         retries as there are addresses for a name.
+                 retries as there are addresses for a name.
+            rel: Mon, 15 Nov 1999 18:19:51 -0600 
+                 http://lists.distributed.net/hypermail/announce/0075.html
 
 2.7100
 ------
@@ -231,6 +233,8 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.10 1999/11/23 23:52:35 cyp Exp $
 2.7100.412  fix: Invalid cpu type value now ignored.
 2.7100.412  chg: Buffer path problem and buffer truncation issue addressed
 2.7100.412  fix: win32GUI autolaunches in minimized state correctly now
+2.7100.412  rel: Sat, 27 Jun 1998 17:09:24 -0500 (CDT) 
+                 http://lists.distributed.net/hypermail/announce/0049.html
 
 2.7000
 ------
@@ -539,42 +543,42 @@ buffer files explictly placed in exe directory on win32
 
 v2 Build 2 (2.002)
 ------------------
-shadow count variable
-hour timout saves work
-timing output problem
-*break* text in win32
-help message fixed
-fetch and flush counts return
-flush core dump fixed
-fclose in Ini
+97.8.05 shadow count variable
+97.8.05 hour timout saves work
+97.8.05 timing output problem
+97.8.05 *break* text in win32
+97.8.05 help message fixed
+97.8.05 fetch and flush counts return
+97.8.05 flush core dump fixed
+97.8.05 fclose in Ini
 
 
 v2 Build 1 (2.001)
 ------------------
-OS/CPU additions to cputypes.h
-partial block restart notify (the R)
-break works during -test
-buffer lock timeout fixed
-default email now rc5@distributed.net
--update option = fetch+flush
-rename files to be 8.3 filename compliant
-zero extra email to help email mangling problem
-strncpy lengths fixed to insure terminated strings
-ini file location specification via RC5INI environment variable
-random keys if client can't connect
-partial block rates are now correct
-time in hh:mm:ss
-rewrote firewall support
-fseeks() for ANSI compliance
-flush checks count before opening connection
-negative run times fixed
-buffer count reporting
-times in benchmark also fixed
-3 nice levels
-logging to file
-error messages more clear
-new autobuff and iniread code - memory leak fixed
-new faster ANSI C and ASM cores
-httpd fixed - checked under CERN and WinProxy
-proxy hunting now works
+97.6.26 OS/CPU additions to cputypes.h
+97.6.26 partial block restart notify (the R)
+97.6.26 break works during -test
+97.6.26 buffer lock timeout fixed
+97.6.26 default email now rc5@distributed.net
+97.6.26 -update option = fetch+flush
+97.6.26 rename files to be 8.3 filename compliant
+97.6.26 zero extra email to help email mangling problem
+97.6.26 strncpy lengths fixed to insure terminated strings
+97.6.26 ini file location specification via RC5INI environment variable
+97.6.26 random keys if client can't connect
+97.6.26 partial block rates are now correct
+97.6.26 time in hh:mm:ss
+97.6.26 rewrote firewall support
+97.6.26 fseeks() for ANSI compliance
+97.6.26 flush checks count before opening connection
+97.6.26 negative run times fixed
+97.6.26 buffer count reporting
+97.6.26 times in benchmark also fixed
+97.6.26 3 nice levels
+97.6.26 logging to file
+97.6.26 error messages more clear
+97.6.26 new autobuff and iniread code - memory leak fixed
+97.6.26 new faster ANSI C and ASM cores
+97.6.26 httpd fixed - checked under CERN and WinProxy
+97.6.26 proxy hunting now works
 
