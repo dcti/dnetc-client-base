@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.14 2004/01/07 02:50:50 piru Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.15 2004/01/08 20:20:23 oliver Exp $"
 
 #include "cputypes.h"
 
@@ -73,7 +73,11 @@
   #endif
 #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   #include "plat/amigaos/amiga.h"
+  #ifdef __amigaos4__
+  #include <unistd.h>
+  #else
   #include <sys/unistd.h>
+  #endif
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
   #include <unixlib/local.h>

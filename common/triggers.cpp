@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.15 2004/01/07 02:50:51 piru Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.16 2004/01/08 20:20:24 oliver Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -981,7 +981,11 @@ int CheckPauseRequestTrigger(void)
 // =======================================================================
 
 #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+#ifdef __amigaos4__
+extern "C" void __check_abort(void)
+#else
 extern "C" void __chkabort(void)
+#endif
 {
   /* Disable SAS/C / GCC CTRL-C handing */
   return;

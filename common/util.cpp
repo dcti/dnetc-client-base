@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29.2.14 2004/01/07 02:50:52 piru Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29.2.15 2004/01/08 20:20:24 oliver Exp $"; }
 
 //#define TRACE
 
@@ -1000,38 +1000,21 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       }
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #elif (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     {
       num_found = 0;
       long taskptr;
 
-      #ifndef __PPC__
-      /* 68K */
-      taskptr = (long)FindTask(procname);
-      #else
-      #ifndef __POWERUP__
+      #if !defined(__OS3PPC__)
+      /* 68K / OS4 / MorphOS */
+      taskptr = (long)FindTask((STRPTR)procname);
+      #elif !defined(__POWERUP__)
       /* WarpOS */
       taskptr = (long)FindTaskPPC((char *)procname);
       #else
       /* PowerUp */
       taskptr = (long)PPCFindTask((char *)procname);
       #endif
-      #endif
-
-      if (taskptr)
-      {
-         if (pidlist)
-            pidlist[num_found] = taskptr;
-         num_found++;
-      }
-    }
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #elif (CLIENT_OS == OS_MORPHOS)
-    {
-      num_found = 0;
-      long taskptr;
-
-      taskptr = (long)FindTask(procname);
 
       if (taskptr)
       {

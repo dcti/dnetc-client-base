@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.15 2004/01/07 02:50:50 piru Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.16 2004/01/08 20:20:23 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -282,16 +282,20 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
 
 void Go_mt( void * parm )
 {
-#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+#if (CLIENT_OS == OS_AMIGAOS) && !defined(__OS3PPC__)
   /* AmigaOS provides no direct way to pass parameters to sub-tasks! */
   struct Process *thisproc = (struct Process *)FindTask(NULL);
   if (!thisproc->pr_Arguments)
   {
+     #if defined(__amigaos4__)
+     parm = thisproc->pr_Task.tc_UserData;
+     #elif (CLIENT_CPU == CPU_68K)
      struct ThreadArgsMsg *msg;
      WaitPort(&(thisproc->pr_MsgPort));
      msg = (struct ThreadArgsMsg *)GetMsg(&(thisproc->pr_MsgPort));
      parm = msg->tp_Params;
      ReplyMsg((struct Message *)msg);
+     #endif
   }
 #endif
 
@@ -401,7 +405,7 @@ void Go_mt( void * parm )
   if (thrparams->realthread)
   {
     amigaThreadInit();
-    #if (CLIENT_CPU == CPU_POWERPC)
+    #if (CLIENT_CPU == CPU_POWERPC) && defined(__OS3PPC__)
     /* Only necessary when using 68k for time measurement */
     for (int tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
     {
@@ -662,6 +666,7 @@ void Go_mt( void * parm )
 
   if (thrparams->realthread)
   {
+    SetThreadPriority( 9 ); /* 0-9 */
     #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     /*
      * Avoid race condition.
@@ -674,8 +679,6 @@ void Go_mt( void * parm )
      *
      */
     Forbid();
-    #else
-    SetThreadPriority( 9 ); /* 0-9 */
     #endif
   }
 
@@ -1132,8 +1135,14 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
            GetMsg(&(thisproc->pr_MsgPort));
         }
         thrparams->threadID = (int)proc;
-        #else
-        #ifndef __POWERUP__
+        #elif defined(__amigaos4__)
+        thrparams->threadID = (int)IDOS->CreateNewProcTags(NP_Entry, (ULONG)Go_mt,
+                                                     NP_StackSize, 8192,
+                                                     NP_Name, (ULONG)threadname,
+                                                     NP_Child, TRUE,
+                                                     NP_UserData, (ULONG)thrparams,
+                                                     TAG_END);
+        #elif !defined(__POWERUP__)
         struct TagItem tags[5];
         tags[0].ti_Tag = TASKATTR_CODE; tags[0].ti_Data = (ULONG)Go_mt;
         tags[1].ti_Tag = TASKATTR_NAME; tags[1].ti_Data = (ULONG)threadname;
@@ -1148,7 +1157,6 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         tags[2].ti_Tag = PPCTASKTAG_ARG1; tags[2].ti_Data = (ULONG)thrparams;
         tags[3].ti_Tag = TAG_END;
         thrparams->threadID = (int)PPCCreateTask(NULL,&Go_mt,tags);
-        #endif
         #endif
         if (thrparams->threadID)
         {

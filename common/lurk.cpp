@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.61.4.11 2004/01/07 02:50:51 piru Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.61.4.12 2004/01/08 20:20:23 oliver Exp $"; }
 
 //#define TRACE
 
@@ -355,14 +355,18 @@ struct ifact
 #include <sys/socket.h>
 #include <net/if.h>
 #include <fcntl.h>
-#ifndef NOMIAMI
+#include "plat/amigaos/amiga.h"
+#ifndef NO_MIAMI
 #include <proto/miami.h>
 #endif
-#include "plat/amigaos/amiga.h"
 #define _KERNEL
 #include <sys/socket.h>
 #undef _KERNEL
+#ifndef __amigaos4__
 #include <proto/socket.h>
+#else
+#include <proto/bsdsocket.h>
+#endif
 #include <sys/ioctl.h>
 #define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
 #define ioctl(a,b,c) IoctlSocket(a,b,(char *)c)
@@ -529,15 +533,12 @@ const char **LurkGetConnectionProfileList(void)
       configptrs[index] = NULL;
       return (const char **)(&configptrs[0]);
     }
-  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+  #elif ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)) && !defined(NO_MIAMI)
     static const char *firstentry = ""; //the first entry is blank, ie use default
     static char namestorage[8][IFNAMSIZ];
     static const char *configptrs[10];
-#ifndef NOMIAMI
     struct Library *MiamiBase;
-#endif
     configptrs[0] = NULL;
-#ifndef NOMIAMI
     if ((MiamiBase = OpenLibrary((unsigned char *)"miami.library",11)))
     {
       struct if_nameindex *name,*nameindex;
@@ -558,7 +559,6 @@ const char **LurkGetConnectionProfileList(void)
       }
       CloseLibrary(MiamiBase);
     }
-#endif
     return configptrs;
   #endif
   return ((const char **)0);
@@ -799,7 +799,7 @@ static int __MatchMask( const char *ifrname,  int is_dialup_dev_for_sure,
         (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_VMS)
       || strcmp(wildmask,"dun*")==0 
       || strcmp(wildmask,"tun*")==0
-      #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+      #elif ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)) && !defined(NO_MIAMI)
       || strcmp(wildmask,"mi*")==0  // required for Miami (not MiamiDx or Genesis)
       #endif
       || strcmp(wildmask,"sl*")==0);
@@ -1514,8 +1514,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
              strncpy(devname,ifr->ifr_name,sizeof(devname));
              devname[sizeof(devname)-1] = '\0';
              ioctl (fd, SIOCGIFFLAGS, ifr); // get iface flags
-             #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
-             #ifndef NOMIAMI
+             #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)) && !defined(NO_MIAMI)
              if (strcmp(ifr->ifr_name,"mi0") == 0) // IFF_UP is always set for mi0
              {
                struct Library *MiamiBase;
@@ -1525,9 +1524,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
                  CloseLibrary(MiamiBase);
                }
              }
-             else
-             #endif
-             if ((ifr->ifr_flags & (IFF_UP | IFF_LOOPBACK)) == IFF_UP)
+             else if ((ifr->ifr_flags & (IFF_UP | IFF_LOOPBACK)) == IFF_UP)
              #else
              if ((ifr->ifr_flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK))
                  == (IFF_UP | IFF_RUNNING))
@@ -1770,7 +1767,7 @@ int LurkDialIfNeeded(int force /* !0== override lurk-only */ )
   TRACE_OUT((-1,"DialIfNeeded() => -1\n"));
   return -1;
 
-#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+#elif ((CLIENT_OS == OS_AMIGAOS) && !defined(__amigaos4__)) || (CLIENT_OS == OS_MORPHOS)
 
   if (strlen(lurker.conf.connprofile) > 0)
     LogScreen("Attempting to put '%s' online...\n",lurker.conf.connprofile);
@@ -1949,7 +1946,7 @@ int LurkHangupIfNeeded(void) //returns 0 on success, -1 on fail
   lurker.dohangupcontrol = 0;
   return 0;
 
-#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+#elif ((CLIENT_OS == OS_AMIGAOS) && !defined(__amigaos4__)) || (CLIENT_OS == OS_MORPHOS)
 
   if (isconnected)
   {

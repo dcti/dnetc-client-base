@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.21 2004/01/07 02:50:50 piru Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.22 2004/01/08 20:20:23 oliver Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -409,7 +409,7 @@
   #define CLIENT_OS        OS_MORPHOS
   #define CLIENT_CPU       CPU_POWERPC
 #elif defined(AMIGA)
-  #define CLIENT_OS_NAME   "Amiga OS"
+  #define CLIENT_OS_NAME   "AmigaOS"
   #define CLIENT_OS        OS_AMIGAOS
   #ifdef __PPC__
     #define CLIENT_CPU     CPU_POWERPC

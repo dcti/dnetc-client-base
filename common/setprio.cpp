@@ -11,7 +11,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.60.4.2 2004/01/07 02:50:51 piru Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.60.4.3 2004/01/08 20:20:24 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -196,9 +196,9 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       // GO-VMS.COM can also be used
     }
   }
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   {
-    #ifdef __PPC__
+    #if defined(__OS3PPC__)
       if ( set_for_thread )
       {
         SetTaskPri(FindTask(NULL),3);
@@ -212,20 +212,13 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       SetNiceValue(task, newnice );
       #endif
     #else
+    /* 68k / OS4/ MorphOS */
     if ( set_for_thread )
     {
        int pri = -(((133*(9-prio))+5)/10); /* scale from 0-9 to -120 to zero */
        SetTaskPri(FindTask(NULL), pri );
     }
     #endif
-  }
-  #elif (CLIENT_OS == OS_MORPHOS)
-  {
-    if ( set_for_thread )
-    {
-       int pri = -(((133*(9-prio))+5)/10); /* scale from 0-9 to -120 to zero */
-       SetTaskPri(FindTask(NULL), pri );
-    }
   }
   #elif (CLIENT_OS == OS_QNX)
   {

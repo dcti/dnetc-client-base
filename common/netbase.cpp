@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.17 2004/01/07 02:50:51 piru Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.18 2004/01/08 20:20:23 oliver Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -111,11 +111,15 @@ return "@(#)$Id: netbase.cpp,v 1.5.2.17 2004/01/07 02:50:51 piru Exp $"; }
   #define _KERNEL
   #include <sys/socket.h>
   #undef _KERNEL
+  #ifndef __amigaos4__
   #include <proto/socket.h>
+  #else
+  #include <proto/bsdsocket.h>
+  #endif
   #include <sys/ioctl.h>
   #include <sys/time.h>
   #define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
-  #if (CLIENT_OS == OS_MORPHOS)
+  #if (CLIENT_OS == OS_MORPHOS) || defined(__amigaos4__)
     #ifndef select
       #define select(a,b,c,d,e) WaitSelect(a,b,c,d,e,NULL)
     #endif
@@ -3078,7 +3082,7 @@ int net_gethostname(char *buffer, unsigned int len)
 int net_resolve( const char *hostname, u32 *addr_list, unsigned int *max_addrs)
 {
   int rc;
-#if (CLIENT_OS == OS_SCO)
+#if (CLIENT_OS == OS_SCO) || ((CLIENT_OS == OS_AMIGAOS) && defined(__amigaos4__))
   /* SCO Openserver < 5.0.5 is missing h_errno in netdb.h */
   extern int h_errno;
 #endif

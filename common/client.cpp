@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.17 2004/01/07 02:50:50 piru Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.18 2004/01/08 20:20:23 oliver Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -112,7 +112,7 @@ static const char *GetBuildOrEnvDescription(void)
   return "";
 #elif (CLIENT_OS == OS_AMIGAOS)
   static char buffer[40];
-  #ifdef __PPC__
+  #ifdef __OS3PPC__
     #ifdef __POWERUP__
     #define PPCINFOTAG_EMULATION (TAG_USER + 0x1f0ff)
     sprintf(buffer,"OS %s, PowerUp%s %ld.%ld",amigaGetOSVersion(),((PPCGetAttr(PPCINFOTAG_EMULATION) == 'WARP') ? " Emu" : ""),PPCVersion(),PPCRevision());
@@ -121,6 +121,8 @@ static const char *GetBuildOrEnvDescription(void)
     #define LIBREV(lib) *((UWORD *)(((UBYTE *)lib)+22))
     sprintf(buffer,"OS %s, WarpOS %d.%d",amigaGetOSVersion(),LIBVER(PowerPCBase),LIBREV(PowerPCBase));
     #endif
+  #elif defined(__PPC__)
+  sprintf(buffer,"OS %s, PowerPC",amigaGetOSVersion());
   #else
   sprintf(buffer,"OS %s, 68K",amigaGetOSVersion());
   #endif

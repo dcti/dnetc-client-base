@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.38 2004/01/07 02:50:51 piru Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.39 2004/01/08 20:20:23 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -654,7 +654,7 @@ static long __GetRawProcessorID(const char **cpuname)
            { "740/750",         0x0008  },
            { "750",             0x0008  },
            { "750CX",           0x0008  },
-           { "750FX",           0x0008  },
+           { "750FX",           0x0008  }, /* PVR coreid is actually 0x7000 */
            { "750P",            0x0008  },
            { "604e",            0x0009  },
            { "604r",            0x000A  }, /* >= 2.3.99 */
@@ -735,7 +735,32 @@ static long __GetRawProcessorID(const char **cpuname)
   #elif (CLIENT_OS == OS_AMIGAOS)  // AmigaOS PPC
   if (detectedtype == -2L)
   {
-    #ifndef __POWERUP__
+    #if defined(__amigaos4__)
+    /* AmigaOS 4.x */
+    ULONG cpu, vec;
+    IExec->GetCPUInfoTags(GCIT_Model, &cpu,
+                          GCIT_VectorUnit, &vec,
+                          TAG_DONE);
+    switch (cpu)
+    {
+       case CPUTYPE_PPC603E:        detectedtype = 0x0006; break;
+       case CPUTYPE_PPC604E:        detectedtype = 0x0009; break;
+       case CPUTYPE_PPC750CXE:
+       case CPUTYPE_PPC750FX:
+       case CPUTYPE_PPC750GX:       detectedtype = 0x0008; break;
+       case CPUTYPE_PPC7410:        detectedtype = 0x800C; break;
+       case CPUTYPE_PPC74XX_VGER:   detectedtype = 0x8000; break;
+       case CPUTYPE_PPC74XX_APOLLO: detectedtype = 0x8001; break;
+       default: // some PPC processor that we don't know about
+                // set the tag (so that the user can tell us), but return 0
+       sprintf(namebuf, "OS4:0x%lx", cpu );
+       detectedname = (const char *)&namebuf[0];
+       detectedtype = 0;
+       break;
+    }
+
+    isaltivec = (vec == VECTORTYPE_ALTIVEC);
+    #elif !defined(__POWERUP__)
     /* WarpOS */
     struct TagItem cputags[2] = { {GETINFO_CPU, 0}, {TAG_END,0} };
     GetInfo(cputags);
