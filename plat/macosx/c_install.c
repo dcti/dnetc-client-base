@@ -7,7 +7,10 @@
  *                      int quietly); // argv[1..(argc-1)] are boot options
  * Both functions return 0 on success, else -1.
  *
- * $Id: c_install.c,v 1.1.2.2 2002/03/27 21:57:23 mfeiri Exp $
+ * For more information about Mac OS X StartupItems go to http://www.opensource
+ * .apple.com/projects/documentation/howto/html/SystemStarter_HOWTO.html
+ *
+ * $Id: c_install.c,v 1.1.2.3 2002/03/29 12:55:39 mfeiri Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -149,6 +152,7 @@ static int create_startup_params_file(const char *stparams_filename,
   "  Description     = \"distributed.net client\";\n"
   "  Provides        = (\"dnetc\");\n"
   "  Requires        = (\"Disks\", \"Resolver\");\n"
+  "  Uses            = (\"NFS\", \"Network Time\");\n"
   "  OrderPreference = \"None\";\n"
   "  Messages =\n"
   "  {\n"
@@ -223,8 +227,10 @@ int macosx_install(const char *argv0, int argc, const char *argv[],
     const char *hostpath = STARTUPITEMS_HOST;
     int dir_created = 0;
 
-    rc = mkdir(hostpath,0775);
-    if ((rc == 0) || (errno == EEXIST))
+    rc = mkdir(hostpath, 0775); // BUG: in Mac OS 10.1.3 mkdir() always creates directories drwxr-xr-x
+    if (rc == 0)
+        chmod(hostpath, 0775); // thus I have to manually chmod the correct permissions
+    else if (errno == EEXIST)
         rc = 0;
     else if (!quietly)
       fprintf(stderr,"%s:\tUnable to create directory '%s'\n\t%s\n",
@@ -232,10 +238,11 @@ int macosx_install(const char *argv0, int argc, const char *argv[],
 
     if (rc == 0)
     {
-    rc = mkdir(basepath, 0775);
-    if (rc == 0)
+    rc = mkdir(basepath, 0775); // BUG: in Mac OS 10.1.3 mkdir() always creates directories drwxr-xr-x
+    if (rc == 0) {
       dir_created = 1;
-    else if (errno == EEXIST)
+      chmod(basepath, 0775); // thus I have to manually chmod the correct permissions
+    } else if (errno == EEXIST)
       rc = 0;
     else if (!quietly)
       fprintf(stderr,"%s:\tUnable to create directory '%s'\n\t%s\n",
