@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.48 2003/04/27 22:35:26 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.49 2003/05/14 19:21:12 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -1490,7 +1490,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
           case 0x08: cindex =-1; break; // PPro           == ?
           case 0x09: cindex = 0; break; // K7             == ANSI 4-pipe
           case 0x0A: cindex =-1; break; // Centaur C6     == ?
-          case 0x0B: cindex = 0; break; // Pentium 4      == ANSO 4-pipe
+          case 0x0B: cindex = 0; break; // Pentium 4      == ANSI 4-pipe
           default:   cindex =-1; break; // no default
         }
         #endif
