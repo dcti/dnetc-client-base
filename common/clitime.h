@@ -6,15 +6,14 @@
  *
  * ----------------------------------------------------------------------
  * This module contains functions for obtaining/formatting/manipulating 
- * the time. 'time' is always stored/passed/returned in timeval format.
+ * the time. 
  * ----------------------------------------------------------------------
  *
 */ 
 #ifndef __CLITIME_H__
-#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.19 1999/04/06 11:55:43 cyp Exp $"
+#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.20 1999/08/09 16:56:04 cyp Exp $"
 
 #include "baseincs.h" /* struct timeval */
-
 
 // Get year-round (ie after compensating for DST) TZ offset in minutes
 int CliTimeGetMinutesWest(void);
@@ -22,16 +21,15 @@ int CliTimeGetMinutesWest(void);
 // Get the current time in timeval format (pass NULL if storage not req'd)
 struct timeval *CliTimer( struct timeval *tv );
 
+// Get monotonic millisecs. Used when timing with CliTimer() aint so hot 
+unsigned long CliMillisecClock(void);
+
 // Set the 'time delta', a value added to the tv_sec member by CliTimer()
 // before it the time is returned. CliTimerSetDelta() returns the old delta.
 int CliTimerSetDelta( int delta );
 
-// Get Date/Time this module was built. Used, for instance, to 'ensure' 
-// that time from the .ini or recvd from a proxy is sane.
-time_t CliTimeGetBuildDate(void);
-
-// Get time as string. Curr time if tv is NULL. Separate buffers for each
-// type: 0=blank type 1, 1="MMM dd hh:mm:ss GMT", 2="hhhh:mm:ss.pp"
+// Get time as string. Curr time if tv is NULL. Separate buffers for 
+// each type: See source for valid types.
 const char *CliGetTimeString( const struct timeval *tv, int strtype );
 
 // Get the time since program start (pass NULL if storage not required)
@@ -44,5 +42,9 @@ int CliTimerAdd( struct timeval *result, const struct timeval *tv1, const struct
 // Store non-negative diff of tv1 and tv2 in 'result'. Uses current time if a 'tv' is NULL
 // tv1/tv2 are not modified (unless 'result' is the same as one of them).
 int CliTimerDiff( struct timeval *result, const struct timeval *tv1, const struct timeval *tv2 );
+
+// do we have a valid timezone to work with? 
+// (currently supported by DOS,WIN[16],OS/2 only)
+int CliIsTimeZoneInvalid(void);
 
 #endif /* __CLITIME_H__ */

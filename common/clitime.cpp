@@ -1,11 +1,12 @@
-/* 
+/* Created by Cyrus Patel <cyp@fb14.uni-mainz.de> 
+ *
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * ----------------------------------------------------------------------
  * This file contains functions for obtaining/formatting/manipulating
- * the time. 'time' is always stored/passed/returned in timeval format.
+ * the time. 'time' is usually stored/passed/returned in timeval format.
  *
  * CliTimer() requires porting so that it returns the time as gettimeofday()
  * would, ie seconds since 1.1.70 GMT in tv_sec, and remaining fraction in
@@ -13,23 +14,104 @@
  *
  * CliTimer() is assumed to return a valid (possibly adjusted) time_t value
  * in tv_sec by much of the client code. If you see wierd time strings,
- * your implementation is borked. tv_usec is assumed to provide the highest
- * resolution time your OS supports (scaled of course).
+ * your implementation is borked. 
  *
  * Please use native OS functions where possible.
  *                                                                 - cyp
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.38 1999/07/25 23:13:38 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.39 1999/08/09 16:56:04 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
-#include "cliident.h" // CliGetNewestModuleTime()
 #include "clitime.h"  // keep the prototypes in sync
 
 // ---------------------------------------------------------------------
 
+static int __GetTimeOfDay( struct timeval *tv )
+{
+  if (tv)
+  {
+    #if (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_SOLARIS) || \
+       (CLIENT_OS==OS_VMS)
+    {     
+      struct timeb tb;
+      ftime(&tb);
+      tv->tv_sec = tb.time;
+      tv->tv_usec = tb.millitm*1000;
+    }
+    #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+    {
+      static DWORD lastcheck = 0;
+      static time_t basetime = 0;
+      DWORD ticks = GetTickCount(); /* millisecs elapsed since OS start */
+      if (lastcheck == 0 || (ticks < lastcheck))
+      {
+        lastcheck = ticks;
+        basetime = time(NULL) - (time_t)(ticks/1000);
+      }
+      tv->tv_usec = (ticks%1000)*1000;
+      tv->tv_sec = basetime + (time_t)(ticks/1000);
+    }
+    #elif (CLIENT_OS == OS_NETWARE)
+    {
+      nwCliGetTimeOfDay( tv );
+    }
+    #elif (CLIENT_OS == OS_AMIGAOS)
+    {
+      return timer((unsigned int *)tv );
+    }
+    #else
+    {
+      //struct timezone tz;
+      return gettimeofday(tv, 0);
+    }
+    #endif
+  }
+  return 0;
+}
+
+static int __GetMinutesWest(void) /* see CliTimeGetMinutesWest() for descr */
+{
+  int minwest;
+#if (CLIENT_OS == OS_NETWARE) || ((CLIENT_OS == OS_OS2) && !defined(EMX)) || \
+    (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  /* ANSI rules :) */
+  minwest = timezone/60;
+  if (daylight)
+    minwest += 60;
+  minwest = -minwest;      /* UTC = localtime + (timezone/60) */
+#elif (CLIENT_OS == OS_WIN32)
+  TIME_ZONE_INFORMATION TZInfo;
+  if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
+    return 0;
+  minwest = TZInfo.Bias; /* sdk doc is wrong. .Bias is always !dst */
+#elif (CLIENT_OS == OS_MACOS)
+  MachineLocation thisLocation;
+  ReadLocation(&thisLocation);
+  minwest = GetGmtDelta(thisLocation);
+  minwest = minwest/60;
+  minwest = -minwest;
+  if (IsDaylightSavingsOn())
+    minwest += 60;
+#elif (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_AMIGA) || \
+  ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
+  #error How does this OS natively deal with timezone? ANSI or Posix rule? (use native calls where possible)
+#else
+  /* POSIX rules :) */
+  struct timezone tz; struct timeval tv;
+  if ( gettimeofday(&tv, &tz) )
+    return 0;
+  minwest = tz.tz_minuteswest;
+  if (tz.tz_dsttime)
+    minwest += 60;
+#endif
+  return minwest;
+}
+
+// ---------------------------------------------------------------------
+  
 static int precalced_minuteswest = -1234;
 static struct timeval cliclock = {0,0};  //base time for CliClock()
 static int adj_time_delta = 0;
@@ -49,61 +131,20 @@ int CliTimerSetDelta( int delta )
   return old;
 }
 
-
 /*
  * timezone offset after compensating for dst (west of utc > 0, east < 0)
  * such that the number returned is constant for any time of year
  */
 int CliTimeGetMinutesWest(void)
 {
-  int minwest;
-
-  if (precalced_minuteswest != -1234)
-    return precalced_minuteswest;
-
-#if (CLIENT_OS == OS_NETWARE) || ((CLIENT_OS == OS_OS2) && !defined(EMX)) || \
-    (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-  /* ANSI rules :) */
-  minwest = timezone/60;
-  if (daylight)
-    minwest += 60;
-  minwest = -minwest;      /* UTC = localtime + (timezone/60) */
-  precalced_minuteswest = minwest;
-#elif (CLIENT_OS == OS_WIN32)
-  TIME_ZONE_INFORMATION TZInfo;
-  if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
-    return 0;
-  minwest = TZInfo.Bias; /* sdk doc is wrong. .Bias is always !dst */
-  precalced_minuteswest = minwest;
-#elif (CLIENT_OS == OS_MACOS)
-  MachineLocation thisLocation;
-  ReadLocation(&thisLocation);
-  minwest = GetGmtDelta(thisLocation);
-  minwest = minwest/60;
-  minwest = -minwest;
-  if (IsDaylightSavingsOn())
-    minwest += 60;
-  precalced_minuteswest = minwest;
-#elif (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_AMIGA) || \
-  ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
-  #error How does this OS natively deal with timezone? ANSI or Posix rule? (use native calls where possible)
-#else
-  /* POSIX rules :) */
-  struct timezone tz; struct timeval tv;
-  if ( gettimeofday(&tv, &tz) )
-    return 0;
-  minwest = tz.tz_minuteswest;
-  if (tz.tz_dsttime)
-    minwest += 60;
-  precalced_minuteswest = minwest;
-#endif
-  return minwest;
+  if (precalced_minuteswest == -1234)
+    precalced_minuteswest = __GetMinutesWest();
+  return precalced_minuteswest;
 }
-
 
 /*
  * Get the time since first call to CliTimer (pass NULL if storage not reqd)
- */
+*/
 struct timeval *CliClock( struct timeval *tv )
 {
   static struct timeval stv = {0,0};
@@ -115,7 +156,7 @@ struct timeval *CliClock( struct timeval *tv )
   }
   else
   {
-    CliTimer( &stv );
+    __GetTimeOfDay( &stv );
     if (stv.tv_usec < cliclock.tv_usec )
     {
       stv.tv_usec += 1000000L;
@@ -139,38 +180,17 @@ struct timeval *CliClock( struct timeval *tv )
 struct timeval *CliTimer( struct timeval *tv )
 {
   static struct timeval stv = {0,0};
-  int dofallback = 0;
-
-#if (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || \
-    (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_VMS)
-  struct timeb tb;
-  ftime(&tb);
-  stv.tv_sec = tb.time;
-  stv.tv_usec = tb.millitm*1000;
-#elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-  static DWORD lastcheck = 0;
-  static time_t basetime = 0;
-  DWORD ticks = GetTickCount(); /* millisecs elapsed since OS start */
-  if (lastcheck == 0 || (ticks < lastcheck))
+  struct timeval ttv;
+  if (__GetTimeOfDay( &ttv ) == 0)
   {
-    lastcheck = ticks;
-    basetime = time(NULL) - (time_t)(ticks/1000);
-  }
-  stv.tv_usec = (ticks%1000)*1000;
-  stv.tv_sec = basetime + (time_t)(ticks/1000);
-#elif (CLIENT_OS == OS_NETWARE)
-  nwCliGetTimeOfDay( &stv );
-#elif (CLIENT_OS == OS_AMIGAOS)
-  timer((unsigned int *)&stv );
-#else
-  //struct timezone tz;
-  gettimeofday(&stv, 0);
-#endif
-  stv.tv_sec += adj_time_delta;
-  if (cliclock.tv_sec == 0) //CliClock() not initialized
-  {
-    cliclock.tv_sec = stv.tv_sec;
-    cliclock.tv_usec = stv.tv_usec;
+    stv.tv_sec = ttv.tv_sec;
+    stv.tv_usec = ttv.tv_usec;
+    if (cliclock.tv_sec == 0) //CliClock() not initialized
+    {
+      cliclock.tv_sec = ttv.tv_sec;
+      cliclock.tv_usec = ttv.tv_usec;
+    }
+    stv.tv_sec += adj_time_delta;
   }
   if (tv)
   {
@@ -252,159 +272,147 @@ int CliTimerDiff( struct timeval *result, const struct timeval *tv1, const struc
 
 // ---------------------------------------------------------------------
 
-/*
- *  Get Date/Time this module was built. Used, for instance, to 'ensure' 
- *  that time from the .ini or recvd from a proxy is sane. (could also use
- *  CVS ID)
- */
-time_t CliTimeGetBuildDate(void)
+int CliIsTimeZoneInvalid(void)
 {
-  static time_t bdtime = 0;
-  if (bdtime == 0)
-    bdtime = CliGetNewestModuleTime(); /* cliident.cpp */
-  if (bdtime == 0)
+  #if ((CLIENT_OS==OS_DOS) || (CLIENT_OS==OS_WIN16) || \
+       (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_OS2) || \
+       (CLIENT_OS==OS_WIN32))
+  static int needfixup = -1;       
+  if (needfixup == -1)
   {
-    struct tm bd;
-    bd.tm_mon = 99;
-
-    bdtime = (time_t)0x362a72f0L; /* my 32nd birthday :) */
-
-    #ifdef __DATE__
-    {
-      int i;
-      const char *p = __DATE__;
-      memset((void *)&bd,0,sizeof(bd));
-      bd.tm_mon = 99;
-      if (p[3]==' ')
-      {
-        for (i=0;i<12;i++)
-        {
-          if (memcmp(monnames[i],p,3)==0)
-          {
-            bd.tm_mon = i;
-            bd.tm_mday = atoi(p+4);
-            bd.tm_year = (atoi(p+7) - 1900);
-            #ifdef __TIME__
-            p = __TIME__;
-            bd.tm_hour = atoi(p);
-            bd.tm_min = atoi(p+3);
-            bd.tm_sec = atoi(p+6);
-            if (bd.tm_hour<0 || bd.tm_hour>23 || bd.tm_min<0 || bd.tm_min>59)
-              bd.tm_hour = bd.tm_min = bd.tm_sec = 0;
-            else if (bd.tm_sec < 0 || bd.tm_sec > 61)
-              bd.tm_sec = 0;
-            #endif
-            break;
-          }
-        }
-      }
-    }
+    needfixup = 0;
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+    if (winGetVersion() < 400)
     #endif
-    if (bd.tm_mon >= 0 && bd.tm_mon <= 11 && 
-        bd.tm_mday >= 1 && bd.tm_mday <= 31 &&
-        bd.tm_year >= 99 && bd.tm_year <= 132 )
+    if (!getenv("TZ"))
     {
-      bdtime = mktime( &bd );
+      needfixup = 1;
+      putenv("TZ=GMT+0");
+      tzset();
     }
   }
-  return bdtime;
+  return needfixup;
+  #else
+  return 0;
+  #endif
 }
-   
 
 // ---------------------------------------------------------------------
 
 // Get time as string. Curr time if tv is NULL. Separate buffers for each
-// type: 0=blank type 1, 1="MMM dd hh:mm:ss UTC", 2="hhhh:mm:ss.pp"
+// type: 0=blank type 1, 
+//       1="MMM dd hh:mm:ss UTC", 
+//       2="hhhh:mm:ss.pp"
 //       3="yyyy/mm/dd hh:mm:ss" (iso/cvs format, implied utc)
+//       4="yymmddhh"            (bugzilla format)
+//       5="MMM dd hh:mm:ss ZTZ" (like 1, but localtime)
 const char *CliGetTimeString( const struct timeval *tv, int strtype )
 {
-  static time_t timelast = (time_t)NULL;
-  static int lasttype;
-  static char timestring[30], spacestring[30], hourstring[30];
+  static unsigned long timelast = 0;
+  static const char *timestr = "";
+  static int lasttype = 0;
+  unsigned long longtime; 
 
-  if (!timelast)
-  {
-    timestring[0] = spacestring[0] = hourstring[0] = 0;
-    timelast = 1;
-    lasttype = 0;
-  }
+  if (strtype < -1 || strtype > 5)
+    return "";
 
   if (strtype == 0)
   {
+    static char spacestring[30] = {0};
     if (!spacestring[0])
     {
-      CliGetTimeString( NULL, 1 );
-      register char *ts = timestring, *ss = spacestring;
-      while (*ts++) *ss++=' '; *ss=0;
+      register char *ss = spacestring;
+      strcpy( spacestring, CliGetTimeString( NULL, 1 ) );
+      while (*ss) *ss++=' ';
     }
     return spacestring;
   }
-  else if (strtype == 2)
+
+  if (!tv) tv = CliTimer(NULL);/* show where CliTimer() is returning gunk */
+  longtime = (unsigned long)tv->tv_sec;
+
+  if (strtype == 2)
   {
-    if (!tv) tv = CliTimer( NULL );
-    sprintf( hourstring, "%u.%02u:%02u:%02u.%02u", (unsigned) (tv->tv_sec / 86400L),
-      (unsigned) ((tv->tv_sec % 86400L) / 3600L), (unsigned) ((tv->tv_sec % 3600L)/60),
-      (unsigned) (tv->tv_sec % 60), (unsigned) ((tv->tv_usec/10000L)%100) );
-    //if ((tv->tv_sec / 86400L)==0 ) //don't show days if not needed
-    //  return &hourstring[2]; // skip the "0."
+    static char hourstring[8+1 +2+1 +2+1+2 +1 +2];
+    int days = (longtime / 86400UL);
+    if (days < 0 || days > 365)
+      return "-.--:--:--.--";
+    sprintf( hourstring,  "%d.%02d:%02d:%02d.%02d", (int) (longtime / 86400UL),
+      (int) ((longtime % 86400L) / 3600UL), (int) ((longtime % 3600UL)/60),
+      (int) (longtime % 60), (int) ((tv->tv_usec/10000L)%100) );
+      //if ((longtime / 86400UL)==0 ) //don't show days if not needed
+      //  return &hourstring[2]; // skip the "0."
     return hourstring;
   }
-  else if (strtype < -1 || strtype > 4)
-    ; // return ""
-  else //if (strtype >= -1 && strtype <= 4) //-1,1,3,4
+
+  if (longtime && (longtime != timelast) && (lasttype != strtype))
   {
-    if (!tv) tv = CliTimer(NULL);/* show where CliTimer() is returning gunk */
     time_t timenow = tv->tv_sec;
+    struct tm *gmt = (struct tm *)0;
+    struct tm tmbuf; 
 
-    if (timenow && (timenow != timelast) && (lasttype != strtype))
+    if (CliIsTimeZoneInvalid()) /* initializes it if not initialized */
     {
-      struct tm *gmt;
-      if (( gmt = gmtime( (const time_t *) &timenow) ) == NULL)
-      {
-        time_t lt = timenow - (time_t)(CliTimeGetMinutesWest() * 60);
-        gmt = localtime( (const time_t *) &lt);
-      }
+      if (strtype == 1)
+        strtype = 5; /* like 1 but local time */
+    }
+    
+    lasttype = strtype;
+    timelast = longtime;
 
-      if (gmt)
-      {
-        timelast = timenow;
+    if (strtype == 5) /* "MMM dd hh:mm:ss ZTZ" (like 1, but localtime) */
+    {
+      gmt = localtime( (const time_t *) &timenow);
+      strtype = 1; /* just like 1 */
+    }
+    else 
+    {
+      gmt = gmtime( (const time_t *) &timenow );
+    }
+    if (!gmt)
+    {
+      memset((void *)&tmbuf, 0, sizeof(tmbuf));
+      gmt = &tmbuf;
+    }    
 
-        if (strtype == 3) // "yyyy/mm/dd hh:mm:ss" (cvs/iso format, implied utc)
-        {
-          sprintf( timestring, "%04d/%02d/%02d %02d:%02d:%02d",
+    if (strtype == 3) // "yyyy/mm/dd hh:mm:ss" (cvs/iso format, implied utc)
+    {
+      static char timestring3[4+   4 +1 +2+1 +2+1 +2+1 +2+1+2  ];
+      sprintf( timestring3,      "%04d/%02d/%02d %02d:%02d:%02d",
                gmt->tm_year+1900, gmt->tm_mon + 1, gmt->tm_mday,
                gmt->tm_hour,  gmt->tm_min, gmt->tm_sec );
-          timelast = 0;
-        }
-        else if (strtype == 4) // yymmddhh (bugzilla version date format)
-        {
-          sprintf( timestring, "%02d%02d%02d%02d",
+      timestr = (const char *)&timestring3[0];
+    }
+    else if (strtype == 4) // yymmddhh (bugzilla version date format)
+    {
+      static char timestring4[4+  2   +2  +2  +2 ];
+      sprintf( timestring4,     "%02d%02d%02d%02d",
                gmt->tm_year%100, gmt->tm_mon + 1, gmt->tm_mday,
                gmt->tm_hour );
-          timelast = 0;
-        }
-        else if (strtype == -1) // old "un-PC" type of length 21 OR 23 chars
-        {
-          // old: "04/03/98 11:22:33 GMT"
-          //                      2 1  2 1 2  1  2 1 2  1 2  1 3/5 = 21 or 23
-          sprintf( timestring, "%02d/%02d/%02d %02d:%02d:%02d GMT",
+      timestr = (const char *)&timestring4[0];
+    }
+    else if (strtype == -1) // old "un-PC" type of length 21 OR 23 chars
+    {
+      // old: "04/03/98 11:22:33 GMT"
+      static char timestringX[8+  2+1 +2+1+2 +1 +2+1+2 +1+2 +1+3  ]; //21 or 23
+      sprintf( timestringX,    "%02d/%02d/%02d %02d:%02d:%02d GMT",
                gmt->tm_mon + 1, gmt->tm_mday,
                gmt->tm_year%100, gmt->tm_hour,
                gmt->tm_min, gmt->tm_sec );
-        }
-        else // strtype == 1 == new type of fixed length and neutral locale
-        {                      // ie clock(8) without year
-          // new: "Apr 03 11:22:33 UTC" year = gmt->tm_year%100,
-          //                    3 1  2 1  2 1  2 1  2 1 3   = 19
-          sprintf( timestring, "%s %02d %02d:%02d:%02d UTC",
-             monnames[gmt->tm_mon%12], gmt->tm_mday,
-             gmt->tm_hour, gmt->tm_min, gmt->tm_sec );
-        }
-      }
+      timestr = (const char *)&timestringX[0];
     }
-    return timestring;
+    else // strtype == 1 == new type of fixed length and neutral locale
+    {                      // ie `date -u` without year
+      // new: "Apr 03 11:22:33 UTC" year = gmt->tm_year%100,
+      static char timestring1[4+ 3+1 +2+1 +2+1 +2+1 +2+1+3]; // = 19
+      sprintf( timestring1,     "%s %02d %02d:%02d:%02d %s",
+              monnames[gmt->tm_mon%12], gmt->tm_mday,
+              gmt->tm_hour, gmt->tm_min, gmt->tm_sec,
+              ((lasttype == 5)?("ZTZ"):("UTC")) );
+      timestr = (const char *)&timestring1[0];
+    }
   }
-  return "";
+  return timestr;
 }
 
 // ---------------------------------------------------------------------
