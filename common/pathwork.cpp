@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de> to be able to throw
- * away some very ugly hackery in buffer open code. I apologize for Bovine.
+ * away some very ugly hackery in buffer open code.
  *
  * This module contains functions for setting the "working directory"
  * and pathifying a filename that has no dirspec. Functions need to be
@@ -23,7 +23,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.15.2.3 2000/01/08 23:23:28 cyp Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.15.2.4 2001/04/13 12:31:32 cyp Exp $"; }
 
 #include <stdio.h>
 #include <string.h>
@@ -40,6 +40,10 @@ return "@(#)$Id: pathwork.cpp,v 1.15.2.3 2000/01/08 23:23:28 cyp Exp $"; }
   #endif
 #elif (CLIENT_OS == OS_RISCOS)
   #include <swis.h>
+#elif defined(__unix__)
+  #include <unistd.h>    /* geteuid() */
+  #include <pwd.h>       /* getpwnam(), getpwuid(), struct passwd */
+  #define HAVE_UNIX_TILDE_EXPANSION
 #endif
 
 #if (CLIENT_OS == OS_RISCOS)
@@ -90,8 +94,55 @@ unsigned int GetFilenameBaseOffset( const char *fullpath )
 
 /* ------------------------------------------------------------------------ */
 
-static char cwdBuffer[MAX_FULLPATH_BUFFER_LENGTH+1];
-static int cwdBufferLength = -1; /* not initialized */
+static const char *__finalize_fixup(char *path, unsigned int maxlen)
+{
+  maxlen = maxlen;  /* shaddup compiler */
+#if defined(HAVE_UNIX_TILDE_EXPANSION)
+  if (*path == '~')
+  {
+    char username[64];
+    unsigned int usernamelen = 0;
+    const char *homedir = (const char *)0;
+    char *rempath = &path[1];
+    while (*rempath && *rempath != '/' && 
+           usernamelen < (sizeof(username)-1))
+    {
+      username[usernamelen] = *rempath++;
+    } 
+    if (usernamelen < (sizeof(username)-1))
+    {
+      struct passwd *pw = (struct passwd *)0;
+      username[usernamelen] = '\0';
+      if (usernamelen == 0)
+        pw = getpwuid(geteuid());
+      else 
+        pw = getpwnam(username);
+      if (pw)
+        homedir = pw->pw_dir;
+    }
+    if (homedir)
+    {
+      unsigned int dirlen = strlen(homedir);
+      unsigned int remlen = strlen(rempath);
+      if (*rempath == '/' && dirlen > 0 && homedir[dirlen-1] == '/')
+      {
+        rempath++; 
+        remlen--;  
+      }  
+      if ((remlen+1+dirlen+1) < maxlen)
+      {
+        memmove( &path[dirlen], rempath, remlen+1 );
+        memcpy( &path[0], homedir, dirlen);
+      }
+    }   
+  }
+#endif
+  return path;
+}
+
+
+static char __cwd_buffer[MAX_FULLPATH_BUFFER_LENGTH+1];
+static int __cwd_buffer_len = -1; /* not initialized */
 
 /* ------------------------------------------------------------------------ */
 /* the working directory is the app's directory, unless the ini filename    */
@@ -103,97 +154,97 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
   if ( inipath == NULL ) inipath = "";
   if ( apppath == NULL ) apppath = "";
 
-  cwdBuffer[0] = '\0';
+  __cwd_buffer[0] = '\0';
   #if (CLIENT_OS == OS_MACOS)
   {
-    strcpy( cwdBuffer, inipath );
-    char *slash = strrchr(cwdBuffer, ':');
+    strcpy( __cwd_buffer, inipath );
+    char *slash = strrchr(__cwd_buffer, ':');
     if (slash != NULL) *(slash+1) = 0;   //<peterd> On the Mac, the current
-    else cwdBuffer[0] = 0; // directory is always the apps directory at startup.
+    else __cwd_buffer[0] = 0; // directory is always the apps directory at startup.
   }
   #elif (CLIENT_OS == OS_VMS)
   {
-    strcpy( cwdBuffer, inipath );
+    strcpy( __cwd_buffer, inipath );
     char *slash, *bracket, *dirend;
-    slash = strrchr(cwdBuffer, ':');
-    bracket = strrchr(cwdBuffer, ']');
+    slash = strrchr(__cwd_buffer, ':');
+    bracket = strrchr(__cwd_buffer, ']');
     dirend = (slash > bracket ? slash : bracket);
     if (dirend == NULL && apppath != NULL && strlen( apppath ) > 0)
     {
-      strcpy( cwdBuffer, apppath );
-      slash = strrchr(cwdBuffer, ':');
-      bracket = strrchr(cwdBuffer, ']');
+      strcpy( __cwd_buffer, apppath );
+      slash = strrchr(__cwd_buffer, ':');
+      bracket = strrchr(__cwd_buffer, ']');
       dirend = (slash > bracket ? slash : bracket);
     }
     if (dirend != NULL) *(dirend+1) = 0;
-    else cwdBuffer[0] = 0;  //current directory is also always the apps dir
+    else __cwd_buffer[0] = 0;  //current directory is also always the apps dir
   }
   #elif (CLIENT_OS == OS_NETWARE)
   {
-    strcpy( cwdBuffer, inipath );
-    char *slash = strrchr(cwdBuffer, '/');
-    char *slash2 = strrchr(cwdBuffer, '\\');
+    strcpy( __cwd_buffer, inipath );
+    char *slash = strrchr(__cwd_buffer, '/');
+    char *slash2 = strrchr(__cwd_buffer, '\\');
     if (slash2 > slash) slash = slash2;
     if ( slash == NULL )
     {
-      if ( strlen( cwdBuffer ) < 2 || cwdBuffer[1] != ':' ) /* dos partn */
+      if ( strlen( __cwd_buffer ) < 2 || __cwd_buffer[1] != ':' ) /* dos partn */
       {
-        strcpy( cwdBuffer, apppath );
-        slash = strrchr(cwdBuffer, '/');
-        slash2 = strrchr(cwdBuffer, '\\');
+        strcpy( __cwd_buffer, apppath );
+        slash = strrchr(__cwd_buffer, '/');
+        slash2 = strrchr(__cwd_buffer, '\\');
         if (slash2 > slash) slash = slash2;
       }
-      if ( slash == NULL && strlen( cwdBuffer ) >= 2 && cwdBuffer[1] == ':' )
-        slash = &( cwdBuffer[1] );
+      if ( slash == NULL && strlen( __cwd_buffer ) >= 2 && __cwd_buffer[1] == ':' )
+        slash = &( __cwd_buffer[1] );
     }
     if (slash != NULL) *(slash+1) = 0;
-    else cwdBuffer[0] = 0;
+    else __cwd_buffer[0] = 0;
   }
   #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   {
-    strcpy( cwdBuffer, inipath );
-    char *slash = strrchr(cwdBuffer, '/');
-    char *slash2 = strrchr(cwdBuffer, '\\');
+    strcpy( __cwd_buffer, inipath );
+    char *slash = strrchr(__cwd_buffer, '/');
+    char *slash2 = strrchr(__cwd_buffer, '\\');
     if (slash2 > slash) slash = slash2;
-    slash2 = strrchr(cwdBuffer, ':');
+    slash2 = strrchr(__cwd_buffer, ':');
     if (slash2 > slash) slash = slash2;
     if ( slash == NULL )
     {
-      strcpy( cwdBuffer, apppath );
-      slash = strrchr(cwdBuffer, '/');
-      slash2 = strrchr(cwdBuffer, '\\');
+      strcpy( __cwd_buffer, apppath );
+      slash = strrchr(__cwd_buffer, '/');
+      slash2 = strrchr(__cwd_buffer, '\\');
       if (slash2 > slash) slash = slash2;
-      slash2 = strrchr(cwdBuffer, ':');
+      slash2 = strrchr(__cwd_buffer, ':');
       if (slash2 > slash) slash = slash2;
     }
     if (slash != NULL) *(slash+1) = 0;
-    else cwdBuffer[0] = 0;
+    else __cwd_buffer[0] = 0;
   }
   #elif (CLIENT_OS == OS_DOS) || ( (CLIENT_OS == OS_OS2) && !defined(__EMX__) )
   {
-    strcpy( cwdBuffer, inipath );
-    char *slash = strrchr(cwdBuffer, '/');
-    char *slash2 = strrchr(cwdBuffer, '\\');
+    strcpy( __cwd_buffer, inipath );
+    char *slash = strrchr(__cwd_buffer, '/');
+    char *slash2 = strrchr(__cwd_buffer, '\\');
     if (slash2 > slash) slash = slash2;
-    slash2 = strrchr(cwdBuffer, ':');
+    slash2 = strrchr(__cwd_buffer, ':');
     if (slash2 > slash) slash = slash2;
     if ( slash == NULL )
     {
-      strcpy( cwdBuffer, apppath );
-      slash = strrchr(cwdBuffer, '\\');
+      strcpy( __cwd_buffer, apppath );
+      slash = strrchr(__cwd_buffer, '\\');
     }
     if ( slash == NULL )
     {
-      cwdBuffer[0] = cwdBuffer[ sizeof( cwdBuffer )-2 ] = 0;
-      if ( getcwd( cwdBuffer, sizeof( cwdBuffer )-2 )==NULL )
-        strcpy( cwdBuffer, ".\\" ); //don't know what else to do
-      else if ( cwdBuffer[ strlen( cwdBuffer )-1 ] != '\\' )
-        strcat( cwdBuffer, "\\" );
+      __cwd_buffer[0] = __cwd_buffer[ sizeof( __cwd_buffer )-2 ] = 0;
+      if ( getcwd( __cwd_buffer, sizeof( __cwd_buffer )-2 )==NULL )
+        strcpy( __cwd_buffer, ".\\" ); //don't know what else to do
+      else if ( __cwd_buffer[ strlen( __cwd_buffer )-1 ] != '\\' )
+        strcat( __cwd_buffer, "\\" );
     }
     else
     {
       *(slash+1) = 0;
-      if ( ( *slash == ':' ) && ( strlen( cwdBuffer )== 2 ) )
+      if ( ( *slash == ':' ) && ( strlen( __cwd_buffer )== 2 ) )
       {
         char buffer[256];
         buffer[0] = buffer[ sizeof( buffer )-1 ] = 0;
@@ -201,7 +252,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
         {
           unsigned int drive1, drive2, drive3;
           _dos_getdrive( &drive1 );   /* 1 to 26 */
-          drive2 = ( toupper( *cwdBuffer ) - 'A' )+1;  /* 1 to 26 */
+          drive2 = ( toupper( *__cwd_buffer ) - 'A' )+1;  /* 1 to 26 */
           _dos_setdrive( drive2, &drive3 );
           _dos_getdrive( &drive3 );
           if (drive2 != drive3 || getcwd( buffer, sizeof(buffer)-1 )==NULL)
@@ -210,13 +261,13 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
         }
         #else
           #error FIXME: need to get the current directory on that drive
-          //strcat( cwdBuffer, ".\\" );  does not work
+          //strcat( __cwd_buffer, ".\\" );  does not work
         #endif
-        if (buffer[0] != 0 && strlen( buffer ) < (sizeof( cwdBuffer )-2) )
+        if (buffer[0] != 0 && strlen( buffer ) < (sizeof( __cwd_buffer )-2) )
         {
-          strcpy( cwdBuffer, buffer );
-          if ( cwdBuffer[ strlen( cwdBuffer )-1 ] != '\\' )
-            strcat( cwdBuffer, "\\" );
+          strcpy( __cwd_buffer, buffer );
+          if ( __cwd_buffer[ strlen( __cwd_buffer )-1 ] != '\\' )
+            strcat( __cwd_buffer, "\\" );
         }
       }
     }
@@ -229,89 +280,121 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
       inipath = apppath;
       runpath = "Run$Path";
     }
-    _swi(OS_FSControl, _INR(0,5), 37, inipath, cwdBuffer,
-                         runpath, NULL, sizeof cwdBuffer);
-    char *slash = strrchr( cwdBuffer, '.' );
+    _swi(OS_FSControl, _INR(0,5), 37, inipath, __cwd_buffer,
+                         runpath, NULL, sizeof __cwd_buffer);
+    char *slash = strrchr( __cwd_buffer, '.' );
     if ( slash != NULL )
       *(slash+1) = 0;
-    else cwdBuffer[0]=0;
+    else __cwd_buffer[0]=0;
   }
   #elif (CLIENT_OS == OS_AMIGAOS)
   {
-    strcpy( cwdBuffer, inipath );
-    char *slash = strrchr(cwdBuffer, ':');
-    char *slash2 = strrchr(cwdBuffer, '/');
+    strcpy( __cwd_buffer, inipath );
+    char *slash = strrchr(__cwd_buffer, ':');
+    char *slash2 = strrchr(__cwd_buffer, '/');
     if (slash2 > slash) slash = slash2;
     if (slash == NULL && apppath != NULL && strlen( apppath ) > 0)
     {
-      strcpy( cwdBuffer, apppath );
-      slash = strrchr(cwdBuffer, ':');
+      strcpy( __cwd_buffer, apppath );
+      slash = strrchr(__cwd_buffer, ':');
     }
     if (slash != NULL) *(slash+1) = 0;
-    else cwdBuffer[0] = 0; // Means we're started from the dir the things are in...
+    else __cwd_buffer[0] = 0; // Means we're started from the dir the things are in...
   }
   #else
   {
-    strcpy( cwdBuffer, inipath );
-    char *slash = strrchr( cwdBuffer, '/' );
+    strcpy( __cwd_buffer, inipath );
+    char *slash = strrchr( __cwd_buffer, '/' );
     if (slash == NULL)
     {
-      strcpy( cwdBuffer, apppath );
-      slash = strrchr( cwdBuffer, '/' );
+      strcpy( __cwd_buffer, apppath );
+      slash = strrchr( __cwd_buffer, '/' );
     }
     if ( slash != NULL )
       *(slash+1) = 0;
     else
-      strcpy( cwdBuffer, "./" );
+      strcpy( __cwd_buffer, "./" );
+    __finalize_fixup( __cwd_buffer, sizeof(__cwd_buffer) );
   }
   #endif
-  cwdBufferLength = strlen( cwdBuffer );
+  __cwd_buffer_len = strlen( __cwd_buffer );
 
   #ifdef DEBUG_PATHWORK
-  printf( "Working directory is \"%s\"\n", cwdBuffer );
+  printf( "Working directory is \"%s\"\n", __cwd_buffer );
   #endif
   return 0;
 }
 
 /* --------------------------------------------------------------------- */
 
+static int __is_filename_absolute(const char *fname)
+{
+  #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_VMS)
+  return (*fname == ':');
+  #elif (CLIENT_OS == OS_RISCOS)
+  return (*fname == '.');
+  #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
+      (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+  return (*fname == '\\' || *fname == '/' || (*fname && fname[1]==':'));       
+  #elif (CLIENT_OS == OS_NETWARE)
+  return (*fname == '\\' || *fname == '/' || (strchr(fname,':')));       
+  #else
+  return (*fname == '/');
+  #endif
+}
+
+/* --------------------------------------------------------------------- */
+
+/* get working directory (may be relative to system's current directory),
+** including trailing directory separator. Returns NULL on error.
+*/
 const char *GetWorkingDirectory( char *buffer, unsigned int maxlen )
 {
   if ( buffer == NULL )
     return buffer; //could do a malloc() here. naah.
-  if ( maxlen == 0 )
+  else if ( maxlen == 0 )
     return "";
-  if ( cwdBufferLength <= 0 ) /* not initialized or zero len */
+  else if ( __cwd_buffer_len <= 0 ) /* not initialized or zero len */
     buffer[0] = 0;
-  else if ( ((unsigned int)cwdBufferLength) > maxlen )
+  else if ( ((unsigned int)__cwd_buffer_len) > maxlen )
     return NULL;
   else
-    strcpy( buffer, cwdBuffer );
+    strcpy( buffer, __cwd_buffer );
+  /* __cwd_buffer is already fixed up, so __finalize_fixup() is not needed */
   return buffer;
 }
 
 /* --------------------------------------------------------------------- */
 
-static char pathBuffer[MAX_FULLPATH_BUFFER_LENGTH+2];
+static char __path_buffer[MAX_FULLPATH_BUFFER_LENGTH+2];
 
+/* GetFullPathForFilename( const char *fname )
+**   is a misnomer - should be called GetWorkingPathForFilename()
+**   to reflect that returned paths may be relative.
+** returns "" on error.
+** returns <fname> if <fname> is absolute
+** otherwise returns <X> + <fname>
+**   where <X> is "" if <fname> is not just a plain basename (has a dir spec)
+**   where <X> is __cwd_buffer + <dirsep> if <fname> is just a plain basename
+*/   
 const char *GetFullPathForFilename( const char *filename )
 {
   const char *outpath;
 
   if ( filename == NULL )
     outpath = "";
-  else if ( !*filename )
+  else if (*filename == '\0' || __is_filename_absolute(filename))
     outpath = filename;
-  else if ( GetFilenameBaseOffset( filename ) != 0 ) /* already pathified */
-    outpath = filename;
-  else if ( GetWorkingDirectory( pathBuffer, sizeof( pathBuffer ) )==NULL )
+  else if (strlen(filename) >= sizeof(__path_buffer))
     outpath = "";
-  else if (pathBuffer[0] == '\0') /* no need to cat */
-    outpath = filename;
-  else if (strlen(pathBuffer)+strlen(filename)+1 > sizeof(pathBuffer))
+  else if ( GetFilenameBaseOffset( filename ) != 0 ) /* already pathified */
+    outpath = __finalize_fixup(strcpy(__path_buffer, filename),sizeof(__path_buffer));
+  else if ( !GetWorkingDirectory( __path_buffer, sizeof( __path_buffer ) ) )
+    outpath = "";
+  else if (strlen(__path_buffer)+strlen(filename) >= sizeof(__path_buffer))
     outpath = "";
   else
-    outpath = strcat(pathBuffer, filename);
+    outpath = __finalize_fixup(strcat(__path_buffer, filename),sizeof(__path_buffer));
 
   #ifdef DEBUG_PATHWORK
   printf( "got \"%s\" returning \"%s\"\n", filename, outpath );
@@ -322,31 +405,40 @@ const char *GetFullPathForFilename( const char *filename )
 
 /* --------------------------------------------------------------------- */
 
+/* GetFullPathForFilenameAndDir( const char *fname, const char *dir )
+** returns <fname> if <fname> is absolute
+** otherwise returns <dir> + <dirsep> + <fname>
+**      if <dir> is NULL, use __cwd_buffer as <dir>; 
+**      if <dir> is "", use ""
+**      if <fname> is NULL, use "" as <fname>
+*/   
 const char *GetFullPathForFilenameAndDir( const char *fname, const char *dir )
 {
   if (!fname)
     fname = "";
-  else if ( GetFilenameBaseOffset( fname ) != 0 )
+  else if (__is_filename_absolute(fname))
     return fname;
   if (!dir)
-    return GetFullPathForFilename( fname );
-  if ( ( strlen( dir ) + strlen( fname ) + 2 ) > sizeof(pathBuffer) )
+    dir = ((__cwd_buffer_len > 0) ? (__cwd_buffer) : "");
+
+  if ( ( strlen( dir ) + 1 + strlen( fname ) + 1 ) >= sizeof(__path_buffer) )
     return "";
-  strcpy( pathBuffer, dir );
-  if ( strlen( pathBuffer ) > GetFilenameBaseOffset( pathBuffer ) )
+  strcpy( __path_buffer, dir );
+  if ( strlen( __path_buffer ) > GetFilenameBaseOffset( __path_buffer ) )
   {
     /* dirname is not terminated with a directory separator - so add one */
     #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_VMS)
-      strcat( pathBuffer, ":" );
+      strcat( __path_buffer, ":" );
     #elif (CLIENT_OS == OS_RISCOS)
-      strcat( pathBuffer, "." );
+      strcat( __path_buffer, "." );
     #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
       (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
-      strcat( pathBuffer, "\\" );
+      strcat( __path_buffer, "\\" );
     #else
-      strcat( pathBuffer, "/" );
+      strcat( __path_buffer, "/" );
     #endif
   }
-  strcat( pathBuffer, fname );
-  return pathBuffer;
+  strcat( __path_buffer, fname );
+  return __finalize_fixup(__path_buffer, sizeof(__path_buffer));
 }  
+
