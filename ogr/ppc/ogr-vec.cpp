@@ -9,7 +9,7 @@
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.3.4.11 2004/08/18 10:49:01 piru Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.3.4.12 2004/08/18 18:37:47 kakace Exp $"; }
 
 #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
 
@@ -85,106 +85,21 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.11 2004/08/18 10:49:01 piru Exp $"; }
 
     #if defined (__GNUC__) && !defined(__APPLE_CC__) && (__GNUC__ >= 3)
       #include <altivec.h>
-      #define BYTE_VECTOR_DEF(x) (vector unsigned char) {x}
       #define ONES_DECL   (vector unsigned int) {~0u}
-      
     #else
-      #define BYTE_VECTOR_DEF(x) (vector unsigned char) (x)
       #define ONES_DECL   (vector unsigned int) (~0u)
     #endif
 
     typedef vector unsigned char v8_t;
     typedef vector unsigned int v32_t;
 
-    /*
-    ** Shift counts.
-    ** It's much faster to load the corresponding vector (Varray[s]) from
-    ** memory (data cache) than to convert an integer to a splatted vector.
-    */
-    #if !defined (__GNUC__) || (__GNUC__ >= 3)
-    static const v8_t Varray[32] = {
-      BYTE_VECTOR_DEF(0),
-      BYTE_VECTOR_DEF(1),
-      BYTE_VECTOR_DEF(2),
-      BYTE_VECTOR_DEF(3),
-      BYTE_VECTOR_DEF(4),
-      BYTE_VECTOR_DEF(5),
-      BYTE_VECTOR_DEF(6),
-      BYTE_VECTOR_DEF(7),
-      BYTE_VECTOR_DEF(8),
-      BYTE_VECTOR_DEF(9),
-      BYTE_VECTOR_DEF(10),
-      BYTE_VECTOR_DEF(11),
-      BYTE_VECTOR_DEF(12),
-      BYTE_VECTOR_DEF(13),
-      BYTE_VECTOR_DEF(14),
-      BYTE_VECTOR_DEF(15),
-      BYTE_VECTOR_DEF(16),
-      BYTE_VECTOR_DEF(17),
-      BYTE_VECTOR_DEF(18),
-      BYTE_VECTOR_DEF(19),
-      BYTE_VECTOR_DEF(20),
-      BYTE_VECTOR_DEF(21),
-      BYTE_VECTOR_DEF(22),
-      BYTE_VECTOR_DEF(23),
-      BYTE_VECTOR_DEF(24),
-      BYTE_VECTOR_DEF(25),
-      BYTE_VECTOR_DEF(26),
-      BYTE_VECTOR_DEF(27),
-      BYTE_VECTOR_DEF(28),
-      BYTE_VECTOR_DEF(29),
-      BYTE_VECTOR_DEF(30),
-      BYTE_VECTOR_DEF(31)
-    };
-    #else
-    /*
-    ** gcc 2.95.3-altivec doesn't seem to like this, and uses altivec insts
-    ** in static constructor breaking things if there's no altivec or altivec
-    ** is disabled. Workaround with having the data in aligned char array.
-    */
-    static const unsigned char Varray_data[32 * 16] __attribute__ ((aligned (16))) = {
-      #define UCHAR_VECTOR_DEF(x) x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x
-      UCHAR_VECTOR_DEF(0),
-      UCHAR_VECTOR_DEF(1),
-      UCHAR_VECTOR_DEF(2),
-      UCHAR_VECTOR_DEF(3),
-      UCHAR_VECTOR_DEF(4),
-      UCHAR_VECTOR_DEF(5),
-      UCHAR_VECTOR_DEF(6),
-      UCHAR_VECTOR_DEF(7),
-      UCHAR_VECTOR_DEF(8),
-      UCHAR_VECTOR_DEF(9),
-      UCHAR_VECTOR_DEF(10),
-      UCHAR_VECTOR_DEF(11),
-      UCHAR_VECTOR_DEF(12),
-      UCHAR_VECTOR_DEF(13),
-      UCHAR_VECTOR_DEF(14),
-      UCHAR_VECTOR_DEF(15),
-      UCHAR_VECTOR_DEF(16),
-      UCHAR_VECTOR_DEF(17),
-      UCHAR_VECTOR_DEF(18),
-      UCHAR_VECTOR_DEF(19),
-      UCHAR_VECTOR_DEF(20),
-      UCHAR_VECTOR_DEF(21),
-      UCHAR_VECTOR_DEF(22),
-      UCHAR_VECTOR_DEF(23),
-      UCHAR_VECTOR_DEF(24),
-      UCHAR_VECTOR_DEF(25),
-      UCHAR_VECTOR_DEF(26),
-      UCHAR_VECTOR_DEF(27),
-      UCHAR_VECTOR_DEF(28),
-      UCHAR_VECTOR_DEF(29),
-      UCHAR_VECTOR_DEF(30),
-      UCHAR_VECTOR_DEF(31)
-    };
-    const v8_t *Varray = (const v8_t *) Varray_data;
-    #endif
 
     /* define the local variables used for the top recursion state */
     #define SETUP_TOP_STATE(lev)                            \
+      v8_t Varray[32];                                      \
       U comp0, dist0, list0;                                \
       vector unsigned int compV, listV, distV;              \
-      vector unsigned int zeroes = (v32_t)Varray[0];        \
+      vector unsigned int zeroes = vec_splat_u32(0);        \
       vector unsigned int ones = ONES_DECL;                 \
       listV = lev->listV.v;                                 \
       distV = lev->distV.v;                                 \
@@ -194,8 +109,17 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.11 2004/08/18 10:49:01 piru Exp $"; }
       comp0 = lev->comp0;                                   \
       size_t listOff = offsetof(struct Level, list0);       \
       if ((listOff&15) != 12) return CORE_E_INTERNAL;       \
-      int newbit = 1;
-
+      int newbit = 1;                                       \
+      { /* Initialize Varray[] */                           \
+        vector unsigned char val = vec_splat_u8(0);         \
+        vector unsigned char one = vec_splat_u8(1);         \
+        int i;                                              \
+        for (i = 0; i < 32; i++) {                          \
+          Varray[i] = val;                                  \
+          val = vec_add(val, one);                          \
+        }                                                   \
+      }
+          
     /* shift the list to add or extend the first mark */
     #define COMP_LEFT_LIST_RIGHT(lev, s)                    \
     {                                                       \
@@ -292,7 +216,7 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.11 2004/08/18 10:49:01 piru Exp $"; }
     extern "C" {
     #endif
     int cycle_ppc_hybrid(void *state, int *pnodes, const unsigned char *choose,
-                         const int *OGR, const vector unsigned char *array);
+                         const int *OGR);
     #ifdef __cplusplus
     }
     #endif
@@ -300,8 +224,7 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.11 2004/08/18 10:49:01 piru Exp $"; }
     static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
     {
       with_time_constraints = with_time_constraints;
-      return cycle_ppc_hybrid(state, pnodes, &choose(0,0), OGR,
-                              (const vector unsigned char *)Varray);
+      return cycle_ppc_hybrid(state, pnodes, &choose(0,0), OGR);
     }
   #endif
 
