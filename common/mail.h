@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: mail.h,v $
+// Revision 1.15  1999/01/29 04:10:27  cyp
+// default nettimeout for mail is -1
+//
 // Revision 1.14  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -37,17 +40,22 @@
 #ifndef __MAIL_H__
 #define __MAIL_H__
 
+#include "logstuff.h"
+
 #if (defined(MAILSPOOL_IS_AUTOBUFFER))
   #include "autobuff.h"
 #elif defined(MAILSPOOL_IS_MEMFILE)
   #include "memfile.h"
-#else //if (defined(MAILSPOOL_IS_STATICBUFFER))
+#elif (defined(MAILSPOOL_IS_STATICBUFFER))
   #include <limits.h>
   #define MAILBUFFSIZE 150000L
   #if (UINT_MAX < MAILBUFFSIZE)
     #undef MAILBUFFSIZE
     #define MAILBUFFSIZE 32000
   #endif
+#else //if defined(MAILSPOOL_IS_MALLOCBUFFER)
+  //
+  #define MAILSPOOL_IS_MALLOCBUFFER
 #endif  
 
 struct mailmessage
@@ -60,8 +68,10 @@ struct mailmessage
     AutoBuffer *spoolbuff;
   #elif defined(MAILSPOOL_IS_MEMFILE)
     MEMFILE *spoolbuff;
-  #else //if (defined(MAILSPOOL_IS_STATICBUFFER))
+  #elif (defined(MAILSPOOL_IS_STATICBUFFER))
     char spoolbuff[MAILBUFFSIZE];
+  #elif (defined(MAILSPOOL_IS_MALLOCBUFFER))
+    char *spoolbuff;
   #endif
     
   char fromid[256];
@@ -90,7 +100,7 @@ public:
       const char *_rc5id )    { return smtp_initialize_message( &msg, 
                                 _sendthresh, _smtphost, _smtpport,
                                 _fromid,  _destid, _rc5id );               }
-				
+        
   int Deinitialize(void)      { return smtp_deinitialize_message( &msg );  }
                               //Deinitialize() send()s if necessary
 
