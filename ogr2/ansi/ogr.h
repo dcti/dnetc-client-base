@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.h,v 1.1.2.1 2000/08/09 13:16:01 cyp Exp $
+ * $Id: ogr.h,v 1.1.2.2 2000/09/17 10:33:54 cyp Exp $
 */
 #ifndef __OGR_H__
 #define __OGR_H__ 
@@ -145,7 +145,10 @@ struct Level {
 #define OGR_LEVEL_SIZE (((4*BITMAPS)*3)+(OGR_INT_SIZE*3))
 
 struct State {
-  double Nodes;                   /* counts "tree branches" */
+  #if 0 /* unused - see notes for ogr_cycle() above */
+  struct { U hi,lo; } Nodes;      /* counts "tree branches" */
+  //double Nodes;                 /* counts "tree branches" */  
+  #endif
   int max;                        /* maximum length of ruler */
   int maxdepth;                   /* maximum number of marks in ruler */
   int maxdepthm1;                 /* maxdepth-1 */

@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.6 2000/08/22 14:46:35 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.7 2000/09/17 10:33:54 cyp Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -194,7 +194,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 #if (OGROPT_COPY_LIST_SET_BIT_JUMPS == 1)
 #define COPY_LIST_SET_BIT(lev2,lev,bitindex)      \
   {                                               \
-    register int d = bitindex;                    \
+    register unsigned int d = bitindex;           \
     lev2->list[0] = lev->list[0];                 \
     lev2->list[1] = lev->list[1];                 \
     lev2->list[2] = lev->list[2];                 \
@@ -206,7 +206,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 #elif (OGROPT_COPY_LIST_SET_BIT_JUMPS == 2)
 #define COPY_LIST_SET_BIT(lev2,lev,bitindex)      \
   {                                               \
-    register int d = bitindex;                    \
+    register unsigned int d = bitindex;           \
     memcpy( &(lev2->list[0]), &(lev->list[0]), sizeof(lev2->list[0])*5 ); \
     if (d <= (32*5))                              \
       lev2->list[(d-1)>>5] |= BITOFLIST( d );     \
@@ -214,7 +214,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 #else
 #define COPY_LIST_SET_BIT(lev2,lev,bitindex)      \
   {                                               \
-    register int d = bitindex;                    \
+    register unsigned int d = bitindex;           \
     register int bit = BITOFLIST( d );            \
     if (d <= 32) {                                \
        lev2->list[0] = lev->list[0] | bit;        \
@@ -761,7 +761,21 @@ up:
     goto stay; /* repeat this level till done */
   }
 
-  oState->Nodes += nodes;
+  #if 0 /* oState->Nodes is unused (count is returned through *pnodes) */
+  // oState->Nodes += nodes;
+  {
+    U new_hi = oState->Nodes.hi;
+    U new_lo = oState->Nodes.lo;
+    new_lo += nodes;
+    if (new_lo < oState->Nodes.lo)
+    {
+      if ((++new_hi) < oState->Nodes.hi)
+        new_hi = new_lo = ((U)ULONG_MAX);
+    } 
+    oState->Nodes.hi = new_hi;
+    oState->Nodes.lo = new_lo;
+  }    
+  #endif
   oState->depth = depth-1;
 
   *pnodes = nodes;
