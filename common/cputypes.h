@@ -95,179 +95,179 @@ struct s128 { s64 hi, lo; };
 
 // determine current compiling platform
 #if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
-    #if defined(NTALPHA)
-        #define CLIENT_OS     OS_WIN32
-        #define CLIENT_CPU    CPU_ALPHA
-    #elif defined(ASM_PPC)
-        #define CLIENT_OS     OS_WIN32
-        #define CLIENT_CPU    CPU_POWERPC
-    #elif !defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32)
-        #define CLIENT_OS     OS_WIN16
-        #define CLIENT_CPU    CPU_X86
-    #elif defined(WIN32s)
-        #define CLIENT_OS     OS_WIN16
-        #define CLIENT_CPU    CPU_X86
-    #elif defined(_M_IX86)
-        #define CLIENT_OS     OS_WIN32
-        #define CLIENT_CPU    CPU_X86
-    #endif
+  #if defined(NTALPHA)
+    #define CLIENT_OS     OS_WIN32
+    #define CLIENT_CPU    CPU_ALPHA
+  #elif defined(ASM_PPC)
+    #define CLIENT_OS     OS_WIN32
+    #define CLIENT_CPU    CPU_POWERPC
+  #elif !defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32)
+    #define CLIENT_OS     OS_WIN16
+    #define CLIENT_CPU    CPU_X86
+  #elif defined(WIN32s)
+    #define CLIENT_OS     OS_WIN16
+    #define CLIENT_CPU    CPU_X86
+  #elif defined(_M_IX86)
+    #define CLIENT_OS     OS_WIN32
+    #define CLIENT_CPU    CPU_X86
+  #endif
 #elif defined(DJGPP) || defined(DOS4G) || defined(__MSDOS__)
-    #define CLIENT_OS     OS_DOS
-    #define CLIENT_CPU    CPU_X86
+  #define CLIENT_OS     OS_DOS
+  #define CLIENT_CPU    CPU_X86
 #elif defined(__NETWARE__) && defined(_M_IX86)
-    #define CLIENT_OS     OS_NETWARE
-    #define CLIENT_CPU    CPU_X86
+  #define CLIENT_OS     OS_NETWARE
+  #define CLIENT_CPU    CPU_X86
 #elif defined(__OS2__)
-    #define CLIENT_OS     OS_OS2
-    #define CLIENT_CPU    CPU_X86
+  #define CLIENT_OS     OS_OS2
+  #define CLIENT_CPU    CPU_X86
 #elif defined(linux)
-    #if defined(ASM_ALPHA)
-        #define CLIENT_OS     OS_LINUX
-        #define CLIENT_CPU    CPU_ALPHA
-    #elif defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
-        #define CLIENT_OS     OS_LINUX
-        #define CLIENT_CPU    CPU_X86
-    #elif defined(ARM)
-        #define CLIENT_OS     OS_LINUX
-        #define CLIENT_CPU    CPU_STRONGARM
-    #elif defined(ASM_SPARC) || defined(SPARCLINUX)
-        #define CLIENT_OS     OS_LINUX
-        #define CLIENT_CPU    CPU_SPARC
-    #elif defined(ASM_PPC)
-        #define CLIENT_OS     OS_LINUX
-        #define CLIENT_CPU    CPU_POWERPC
-    #elif defined(ASM_68K)
-        #define CLIENT_OS     OS_LINUX
-        #define CLIENT_CPU    CPU_68K
-    #endif
-#elif defined(__FreeBSD__)
-    #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
-        #define CLIENT_OS     OS_FREEBSD
-        #define CLIENT_CPU    CPU_X86
-    #endif
-#elif defined(__NetBSD__)
-    #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
-        #define CLIENT_OS     OS_NETBSD
-        #define CLIENT_CPU    CPU_X86
-    #elif defined(ARM)
-        #define CLIENT_OS     OS_NETBSD
-        #define CLIENT_CPU    CPU_STRONGARM
-    #endif
-#elif defined(__OpenBSD__) || defined(openbsd)
-    #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
-        #define CLIENT_OS     OS_OPENBSD
-        #define CLIENT_CPU    CPU_X86
-    #elif defined(ASM_ALPHA)
-        #define CLIENT_OS     OS_OPENBSD
-        #define CLIENT_CPU    CPU_ALPHA
-    #endif
-#elif defined(__QNX__)
-    #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
-        #define CLIENT_OS     OS_QNX
-        #define CLIENT_CPU    CPU_X86
-    #endif
-#elif defined(solaris)
-    #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
-        #define CLIENT_OS     OS_SOLARIS
-        #define CLIENT_CPU    CPU_X86
-    #elif defined(ASM_SPARC)
-        #define CLIENT_OS     OS_SOLARIS
-        #define CLIENT_CPU    CPU_SPARC
-    #endif
-#elif defined(_SUN68K_)
-    #define CLIENT_OS         OS_SUNOS
-    #define CLIENT_CPU        CPU_68K
-#elif defined(bsdi)
-    #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
-        #define CLIENT_OS     OS_BSDI
-        #define CLIENT_CPU    CPU_X86
-    #endif
-#elif defined(sco5)
-    #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
-        #define CLIENT_OS     OS_SCO
-        #define CLIENT_CPU    CPU_X86
-    #endif
-#elif defined(__osf__)
-    #if defined(__alpha)
-        #define CLIENT_OS     OS_DEC_UNIX
-        #define CLIENT_CPU    CPU_ALPHA
-    #endif
-#elif defined(sinix)
-    #if defined(ASM_MIPS) || defined(__mips)
-        #define CLIENT_OS     OS_SINIX
-        #define CLIENT_CPU    CPU_MIPS
-    #endif
-#elif (defined(ASM_MIPS) || defined(__mips)) && !defined(sinix)
-    #define CLIENT_OS     OS_IRIX
-    #define CLIENT_CPU    CPU_MIPS
-#elif defined(__VMS)
-    #if defined(__ALPHA)
-        #define CLIENT_OS     OS_VMS
-        #define CLIENT_CPU    CPU_ALPHA
-    #endif
-    #if !defined(__VMS_UCX__) && !defined(NONETWORK) && !defined(MULTINET)
-      #define MULTINET 1
-    #endif
-#elif defined(_HPUX)
-    #if defined(ASM_HPPA)
-        #define CLIENT_OS     OS_HPUX
-        #define CLIENT_CPU    CPU_PA_RISC
-    #endif
-#elif defined(_DGUX)
-    #define CLIENT_OS     OS_DGUX
-    #define CLIENT_CPU    CPU_88K
-    #define PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_GLOBAL
-    #define pthread_sigmask(a,b,c)
-#elif defined(_AIX)
-    #if defined(_ARCH_PPC)
-        #define CLIENT_OS     OS_AIX
-        #define CLIENT_CPU    CPU_POWERPC
-    #endif
-#elif defined(macintosh)
-    #if GENERATINGPOWERPC
-        #define CLIENT_OS     OS_MACOS
-        #define CLIENT_CPU    CPU_POWERPC
-    #elif GENERATING68K
-        #define CLIENT_OS     OS_MACOS
-        #define CLIENT_CPU    CPU_68K
-    #endif
-#elif defined(__dest_os) && defined(__be_os) && (__dest_os == __be_os)
-    #if defined(__POWERPC__)
-        #define CLIENT_OS     OS_BEOS
-        #define CLIENT_CPU    CPU_POWERPC
-    #elif defined(__INTEL__)
-        #define CLIENT_OS     OS_BEOS
-        #define CLIENT_CPU    CPU_X86
-    #endif
-#elif defined(AMIGA)
-    #define CLIENT_OS     OS_AMIGA
-    #define CLIENT_CPU    CPU_68K
-#elif defined(__riscos)
-    #define CLIENT_OS     OS_RISCOS
+  #if defined(ASM_ALPHA)
+    #define CLIENT_OS     OS_LINUX
+    #define CLIENT_CPU    CPU_ALPHA
+  #elif defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+    #define CLIENT_OS     OS_LINUX
+    #define CLIENT_CPU    CPU_X86
+  #elif defined(ARM)
+    #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_STRONGARM
+  #elif defined(ASM_SPARC) || defined(SPARCLINUX)
+    #define CLIENT_OS     OS_LINUX
+    #define CLIENT_CPU    CPU_SPARC
+  #elif defined(ASM_PPC)
+    #define CLIENT_OS     OS_LINUX
+    #define CLIENT_CPU    CPU_POWERPC
+  #elif defined(ASM_68K)
+    #define CLIENT_OS     OS_LINUX
+    #define CLIENT_CPU    CPU_68K
+  #endif
+#elif defined(__FreeBSD__)
+  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+    #define CLIENT_OS     OS_FREEBSD
+    #define CLIENT_CPU    CPU_X86
+  #endif
+#elif defined(__NetBSD__)
+  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+    #define CLIENT_OS     OS_NETBSD
+    #define CLIENT_CPU    CPU_X86
+  #elif defined(ARM)
+    #define CLIENT_OS     OS_NETBSD
+    #define CLIENT_CPU    CPU_STRONGARM
+  #endif
+#elif defined(__OpenBSD__) || defined(openbsd)
+  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+    #define CLIENT_OS     OS_OPENBSD
+    #define CLIENT_CPU    CPU_X86
+  #elif defined(ASM_ALPHA)
+    #define CLIENT_OS     OS_OPENBSD
+    #define CLIENT_CPU    CPU_ALPHA
+  #endif
+#elif defined(__QNX__)
+  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+    #define CLIENT_OS     OS_QNX
+    #define CLIENT_CPU    CPU_X86
+  #endif
+#elif defined(solaris)
+  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+    #define CLIENT_OS     OS_SOLARIS
+    #define CLIENT_CPU    CPU_X86
+  #elif defined(ASM_SPARC)
+    #define CLIENT_OS     OS_SOLARIS
+    #define CLIENT_CPU    CPU_SPARC
+  #endif
+#elif defined(_SUN68K_)
+  #define CLIENT_OS         OS_SUNOS
+  #define CLIENT_CPU        CPU_68K
+#elif defined(bsdi)
+  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+    #define CLIENT_OS     OS_BSDI
+    #define CLIENT_CPU    CPU_X86
+  #endif
+#elif defined(sco5)
+  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+    #define CLIENT_OS     OS_SCO
+    #define CLIENT_CPU    CPU_X86
+  #endif
+#elif defined(__osf__)
+  #if defined(__alpha)
+    #define CLIENT_OS     OS_DEC_UNIX
+    #define CLIENT_CPU    CPU_ALPHA
+  #endif
+#elif defined(sinix)
+  #if defined(ASM_MIPS) || defined(__mips)
+    #define CLIENT_OS     OS_SINIX
+    #define CLIENT_CPU    CPU_MIPS
+  #endif
+#elif (defined(ASM_MIPS) || defined(__mips)) && !defined(sinix)
+  #define CLIENT_OS     OS_IRIX
+  #define CLIENT_CPU    CPU_MIPS
+#elif defined(__VMS)
+  #if defined(__ALPHA)
+    #define CLIENT_OS     OS_VMS
+    #define CLIENT_CPU    CPU_ALPHA
+  #endif
+  #if !defined(__VMS_UCX__) && !defined(NONETWORK) && !defined(MULTINET)
+    #define MULTINET 1
+  #endif
+#elif defined(_HPUX)
+  #if defined(ASM_HPPA)
+    #define CLIENT_OS     OS_HPUX
+    #define CLIENT_CPU    CPU_PA_RISC
+  #endif
+#elif defined(_DGUX)
+  #define CLIENT_OS     OS_DGUX
+  #define CLIENT_CPU    CPU_88K
+  #define PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_GLOBAL
+  #define pthread_sigmask(a,b,c)
+#elif defined(_AIX)
+  #if defined(_ARCH_PPC)
+    #define CLIENT_OS     OS_AIX
+    #define CLIENT_CPU    CPU_POWERPC
+  #endif
+#elif defined(macintosh)
+  #if GENERATINGPOWERPC
+    #define CLIENT_OS     OS_MACOS
+    #define CLIENT_CPU    CPU_POWERPC
+  #elif GENERATING68K
+    #define CLIENT_OS     OS_MACOS
+    #define CLIENT_CPU    CPU_68K
+  #endif
+#elif defined(__dest_os) && defined(__be_os) && (__dest_os == __be_os)
+  #if defined(__POWERPC__)
+    #define CLIENT_OS     OS_BEOS
+    #define CLIENT_CPU    CPU_POWERPC
+  #elif defined(__INTEL__)
+    #define CLIENT_OS     OS_BEOS
+    #define CLIENT_CPU    CPU_X86
+  #endif
+#elif defined(AMIGA)
+  #define CLIENT_OS     OS_AMIGA
+  #define CLIENT_CPU    CPU_68K
+#elif defined(__riscos)
+  #define CLIENT_OS     OS_RISCOS
+  #define CLIENT_CPU    CPU_STRONGARM
 #elif defined(_NeXT_)
-    #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
-        #define CLIENT_OS     OS_NEXTSTEP
-        #define CLIENT_CPU    CPU_X86
-    #elif defined(ASM_68K)
-        #define CLIENT_OS     OS_NEXTSTEP
-        #define CLIENT_CPU    CPU_68K
-    #elif defined(ASM_HPPA)
-        #define CLIENT_OS     OS_NEXTSTEP
-        #define CLIENT_CPU    CPU_PA_RISC
-    #elif defined(ASM_SPARC)
-        #define CLIENT_OS     OS_NEXTSTEP
-        #define CLIENT_CPU    CPU_SPARC
-    #endif
+  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+    #define CLIENT_OS     OS_NEXTSTEP
+    #define CLIENT_CPU    CPU_X86
+  #elif defined(ASM_68K)
+    #define CLIENT_OS     OS_NEXTSTEP
+    #define CLIENT_CPU    CPU_68K
+  #elif defined(ASM_HPPA)
+    #define CLIENT_OS     OS_NEXTSTEP
+    #define CLIENT_CPU    CPU_PA_RISC
+  #elif defined(ASM_SPARC)
+    #define CLIENT_OS     OS_NEXTSTEP
+    #define CLIENT_CPU    CPU_SPARC
+  #endif
 #elif defined(__MVS__)
-    #define CLIENT_OS     OS_OS390
-    #define CLIENT_CPU    CPU_S390
+  #define CLIENT_OS     OS_OS390
+  #define CLIENT_CPU    CPU_S390
 #endif
 
 #if !defined(CLIENT_OS) || !defined(CLIENT_CPU) || (CLIENT_OS == OS_UNKNOWN) || (CLIENT_CPU == CPU_UNKNOWN)
-    #define CLIENT_OS     OS_UNKNOWN
-    #define CLIENT_CPU    CPU_UNKNOWN
-    #error "Unknown CPU/OS detected in cputypes.h"
+  #define CLIENT_OS     OS_UNKNOWN
+  #define CLIENT_CPU    CPU_UNKNOWN
+  #error "Unknown CPU/OS detected in cputypes.h"
 #endif
 
 // Some platforms don't yet support bool internally
