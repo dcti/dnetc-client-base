@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.87.2.11 2004/06/19 23:30:16 kakace Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.87.2.12 2004/06/24 21:03:17 kakace Exp $"; }
 
 //#define TRACE
 
@@ -494,8 +494,12 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         char info_name[32];
         tv.tv_sec = info.elapsed_secs; tv.tv_usec = info.elapsed_usecs;
 
-        if (load_problem_count > 1)
-          sprintf(info_name, "%s #%u", info.name, prob_i+1);
+        if (load_problem_count > 1) {
+          char core = 'a' + prob_i;
+          if (core > 'z')
+            core = 'A' + (prob_i - ('z' - 'a'));
+          sprintf(info_name, "%s #%c", info.name, core);
+        }
         else
           strcpy(info_name, info.name);
 
@@ -793,7 +797,10 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
             }
 
             if (load_problem_count > 1) {
-              Log("%s #%u: Loaded %s%s%s\n", info.name, prob_i+1,
+              char core = 'a' + prob_i;
+              if (core > 'z')
+                core = 'A' + (prob_i - ('z' - 'a'));
+              Log("%s #%c: Loaded %s%s%s\n", info.name, core,
                       ((thisprob->pub_data.is_random)?("random "):("")),
                       info.sigbuf, extramsg );
             }
@@ -1083,18 +1090,6 @@ unsigned int LoadSaveProblems(Client *client,
 
     if (!allclosed && mode != PROBFILL_RESIZETABLE)
     {
-      /*
-       =============================================================
-       the running crunchers need new blocks, but the buffers remain
-       empty and no random work is allowed (OGR, bug #2726)
-       -------------------------------------------------------------
-      */
-      if (norandom_count >= load_problem_count)
-      {
-        Log( "Shutdown - buffers empty.\n" );
-        RaiseExitRequestTrigger();
-      }
-
       /*
        =============================================================
        if we are running a limited number of blocks then check if we have
