@@ -2,17 +2,27 @@
 # see http://www.distributed.net/
 
 
-OPTS_MSVC = -DPIPELINE_COUNT=2 -D_CPU_32BIT_ -DMULTITHREAD -D__WIN32__ -O1 -MD
+
+OPTS_MSVC = -DPIPELINE_COUNT=2 -D_CPU_32BIT_ -DMULTITHREAD -D__WIN32__ -O1 -MD -Gm -Zi
 
 # --------------------------------------------
 
 EXENAME = rc5des.exe
 
-RC5_SRCS = client.cpp problem.cpp autobuff.cpp iniread.cpp network.cpp \
-           scram.cpp mail.cpp cliconfig.cpp buffwork.cpp des-x86.cpp convdes.obj
+RC5_SRCS = common/client.cpp common/problem.cpp common/autobuff.cpp \
+           common/iniread.cpp common/network.cpp common/scram.cpp \
+           common/mail.cpp common/cliconfig.cpp common/buffwork.cpp \
+           des/des-x86.cpp
 
-RC5_OBJS = rg-486.obj rg-6x86.obj rg-k5.obj rg-k6.obj rc5p5brf.obj rg-p6.obj \
-           bdeslow.obj bbdeslow.obj x86ident.obj
+RC5_OBJS = platforms/win32-os2/rg-486.obj \
+           platforms/win32-os2/rg-6x86.obj \
+           platforms/win32-os2/rg-k5.obj \
+           platforms/win32-os2/rg-k6.obj \
+           platforms/win32-os2/rc5p5brf.obj \
+           platforms/win32-os2/rg-p6.obj \
+           platforms/win32-os2/bdeslow.obj \
+           platforms/win32-os2/bbdeslow.obj \
+           platforms/win32-os2/x86ident.obj
 
 RC5_LIBS = wsock32.lib advapi32.lib
 
