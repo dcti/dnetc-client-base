@@ -8,11 +8,12 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.71 1999/12/03 00:02:14 sampo Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.72 1999/12/05 17:28:35 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
 /* Major CPU architectures, we don't need (or want) very fine resolution */
+/* We only have 4 bits to store the CLIENT_CPU in, so please recycle! */
 #define CPU_UNKNOWN     0
 #define CPU_X86         1
 #define CPU_POWERPC     2
@@ -21,15 +22,16 @@
 #define CPU_PA_RISC     5
 #define CPU_68K         6
 #define CPU_SPARC       7
-/* #define CPU_UNUSED_1 8 */
+/* #define CPU_UNUSED_1 8 - please recycle */
 #define CPU_POWER       9
 #define CPU_VAX         10
 #define CPU_ARM         11
 #define CPU_88K         12
-#define CPU_KSR1        13
+/* #define CPU_UNUSED_2 13 - please recycle */
 #define CPU_S390        14
-/* #define CPU_UNUSED_2 15 */
+/* #define CPU_UNUSED_3 15 - please recycle */
 #define CPU_DESCRACKER  16  /* eff descracker */
+/* **** We only have 4 bits to store the CLIENT_CPU in ******* */
 
 /* Major OS Architectures. */
 #define OS_UNKNOWN      0
