@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.51 2001/03/19 18:06:56 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.52 2001/03/26 16:19:07 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -269,14 +269,16 @@ int ConOutErr(const char *msg)
 
 int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
 {
-  timeval timenow, timestop;
   int ch = -1;
 
   if (constatics.initlevel > 0 && constatics.conisatty)
   {
+    timeval timenow, timestop;
+    timestop.tv_sec = 0;
     if (timeout_millisecs > 0)
     {
-      CliTimer(&timestop);
+      if (CliClock(&timestop) != 0)
+        return -1;
       timestop.tv_sec += timeout_millisecs/1000;
       timestop.tv_usec += ( timeout_millisecs % 1000 )*1000;
       timestop.tv_sec += ( timestop.tv_usec / 1000000 );
