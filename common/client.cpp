@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.67 2000/04/11 14:45:00 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.68 2000/04/14 18:11:48 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -124,7 +124,8 @@ void ClientSetNumberOfProcessorsInUse(int num) /* from probfill.cpp */
   numcpusinuse = num;
 }
 
-int ClientGetInThreshold(Client *client, int contestid, int force)
+unsigned int ClientGetInThreshold(Client *client, 
+                                  int contestid, int force /*=0*/)
 {
   int thresh = BUFTHRESHOLD_DEFAULT;
 
@@ -158,33 +159,23 @@ int ClientGetInThreshold(Client *client, int contestid, int force)
   return thresh;
 }
 
-int ClientGetOutThreshold(Client *client, int contestid, int /* force */)
-{                                  /* out threshold is never time driven */
-  int outthresh = 0;
-  if (contestid < CONTEST_COUNT)
-  {
-    outthresh = client->outthreshold[contestid];
-    /*if outthresh is 0, don't do outthresh checking, (let load_order kick in)*/
-    if (outthresh <= 0)
-      outthresh = 0; /* outthreshold is ignorable */
-    else
-    {
-      int inthresh = client->inthreshold[contestid];
-      /*
-      if both thresholds are non-zero, make sure outthresh <= inthresh
-      but if inthreshold is zero (use time), just return outthresh 
-      (allow split personality: intresh=time,outthres=workunits) 
-                                                                   
-      note that an (outthresh > 0 && < inthresh) effectively disables
-      contest _rotation_, and enables contest _fallover_.
+/* 
+   How thresholds affect contest rotation and contest fallover:
 
-      Example scenarios:
-      1) User wants to run both OGR and RC5, allocating 3 times as much cpu
-         time to OGR than to RC5. These would be the required settings:
-         load_order=OGR,RC5      (the order in which the client LOOKs for work)
-         inthresholds=OGR=6,RC5=2    (OGR thresh is 3 times RC5 thresh)
-         outthresholds=OGR=0,RC5=0 (an outhresh<=0 means ">=inthresh")  
-         what happens: 
+   For contest rotation, outthreshold checks (and connectoften) must be 
+   disabled, otherwise the client will update before it hits the end of 
+   the load_order, resulting in more work becoming available for all 
+   projects.
+   Inversely, for contest fallover, outthreshold checks (or connectoften) 
+   must be enabled.
+
+   Example scenarios:
+   1) User wants to run both OGR and RC5, allocating 3 times as much cpu
+      time to OGR than to RC5. These would be the required settings:
+      load_order=OGR,RC5      (the order in which the client LOOKs for work)
+      inthresholds=OGR=6,RC5=2    (OGR thresh is 3 times RC5 thresh)
+      outthresholds=OGR=0,RC5=0 (disable outthresh checking)  
+      what happens: 
          client looks for work. OGR is available. does OGR.
          (repeat OGR inthresh times)
          client looks for work, no OGR is available, RC5 is. does RC5.
@@ -192,29 +183,73 @@ int ClientGetOutThreshold(Client *client, int contestid, int /* force */)
          client looks for work, no OGR, no RC5 available. 
                 fetches&flushes. 
          client looks for work. OGR is available. does OGR.
-      2) User wants to run OGR as long as OGR is available, the do RC5 (until 
-         OGR is available again).
-         load_order=OGR,RC5
-         inthresholds=OGR=6,RC5=2
-         outthresholds=OGR=5,RC5=1   (values are > 0 AND < inthresh)
+   2) User wants to run OGR as long as OGR is available, the do RC5 (until 
+      OGR is available again).
+      load_order=OGR,RC5
+      inthresholds=OGR=<something>,RC5=<something>
+      outthresholds=OGR=<not zero and less than inthresh>,RC5=<whatever>
+      what happens: 
          client looks for work. OGR is available. does OGR.
          (repeat OGR outhresh times) 
          out threshold now crossed. flushes&fetches.
          client looks for work. OGR is available. does OGR.
-      3) User wants to run ONLY contest XXX.
-         load_order=XXX,<all others>=0
-         if contest XXX is NOT RC5, and no work is available, the client
-         will exit. if contest XXX is RC5, and no work is available, it will
-         do randoms.
-      */
-      if (inthresh > 0)
+   3) User wants to run ONLY contest XXX.
+      load_order=XXX,<all others>=0
+      if contest XXX is NOT RC5, and no work is available, the client
+      will exit. if contest XXX is RC5, and no work is available, it will
+      do randoms.
+*/
+
+unsigned int ClientGetOutThreshold(Client *client, 
+                                   int contestid, int /* force */)
+{
+  int outthresh = 0;  /* returns zero if outthresholds are not to be checked */
+  client = client; /* shaddup compiler. */
+
+  if (contestid < CONTEST_COUNT)
+  {
+    #if (!defined(NO_OUTBUFFER_THRESHOLDS))
+    outthresh = client->outthreshold[contestid]; /* never time driven */
+    if (outthresh != 0) /* outthresh=0 => outthresh=inthresh => return 0 */
+    {
+      unsigned int inthres = ClientGetInThreshold(client, contestid, 0);
+      if (inthresh > 0) /* no error */
       {
-        if (outthresh >= inthresh) /* an outthreshold >= inthreshold means */
-          outthresh = 0;  /* outthreshold is ignorable (inthreshold rules) */
+        if (outthresh <= 0) /* relative to inthresh */
+        {
+          /*
+          a) if the outthreshold (as per .ini) is <=0, then outthreshold is 
+          to be interpreted as a value relative to the (computed) inthreshold.
+          ie, computed_outthreshold = computed_intthreshold + ini_outthreshold.
+          [thus an ini_threshold equal to zero implies rule c)]
+          */
+          outthresh = inthresh + outthresh;
+        }
+        if (outthresh >= inthresh)
+        {
+          /*
+          b) if the outthreshold (according to the .ini) was > inthresh
+          then inthreshold rules are effective because outthresh can never
+          be greater than inthresh (inthresh will have been checked first).
+          (The exception is when using shared buffers, and another client 
+          fetches but does not flush).
+          Consequence: Only inthreshold is effective and outthresh 
+          doesn't need to be checked. ClientGetOutThreshold() returns 0.
+          c) if the outthreshold (according to the .ini) was equal to inthresh
+          there there is usually no point checking outthresh because 
+          the result of both checks would be the same. (The exception is 
+          when using shared buffers, and another client fetches but does
+          not flush).
+          Consequence: inthreshold is effective and outthresh 
+          doesn't need to be checked. ClientGetOutThreshold() returns 0.
+          */
+          outthresh = 0;
+        }
       }
     }
+    #endif
   }
-  return outthresh;
+  return ((unsigned int)outthresh);      
 }
 
 // --------------------------------------------------------------------------
@@ -271,15 +306,16 @@ static const char *GetBuildOrEnvDescription(void)
   return "";
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
-  if (uname(&ut)==0) {
-#if (CLIENT_OS == OS_AIX)
+  if (uname(&ut)==0) 
+  {
+    #if (CLIENT_OS == OS_AIX)
     // on AIX version is the major and release the minor
     static char buffer[sizeof(ut.sysname)+1+sizeof(ut.release)+1+sizeof(ut.version)+1];
     return strcat(strcat(strcat(strcat(strcpy(buffer,ut.sysname)," "),ut.version),"."),ut.release);
-#else
+    #else
     static char buffer[sizeof(ut.sysname)+1+sizeof(ut.release)+1];
     return strcat(strcat(strcpy(buffer,ut.sysname)," "),ut.release);
-#endif
+    #endif
   }
   return "";
 #else

@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.24 2000/03/16 22:38:52 jlawson Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.25 2000/04/14 18:11:51 cyp Exp $"; }
 
 //#define TRACE
 
@@ -512,7 +512,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
       /* if we have _any_ key already in the new format, then we're done */
       if (GetPrivateProfileStringB( __getprojsectname(cont_i), "fetch-workunit-threshold", "", buffer, sizeof(buffer), fn )
        || GetPrivateProfileStringB( __getprojsectname(cont_i), "flush-workunit-threshold", "", buffer, sizeof(buffer), fn )
-       || GetPrivateProfileStringB( __getprojsectname(cont_i), "flush-time-threshold", "", buffer, sizeof(buffer), fn ))
+       )
       {
         thresholdsdone = 1;
         break;
@@ -575,6 +575,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
                 oldstyle_inout[0] * multiplier;
             modfail += (!WritePrivateProfileIntB( cont_sect, "fetch-workunit-threshold", client->inthreshold[cont_i], fn));
           }
+          #if !defined(NO_OUTBUFFER_THRESHOLDS)          
           if (oldstyle_inout[1] > 0)
           {
             /* outthreshold >= inthreshold implied 'inthreshold decides' */
@@ -586,6 +587,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
               modfail += (!WritePrivateProfileIntB( cont_sect, "flush-workunit-threshold", client->outthreshold[cont_i], fn));
             }
           }
+          #endif
         }
       } /* for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++ ) */
     } /* if !donethresholds */
@@ -612,10 +614,16 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
   }
   if (!GetPrivateProfileStringB( OPTSECT_BUFFERS, "frequent-threshold-checks", "", buffer, sizeof(buffer), fn ))
   {
-    if (GetPrivateProfileIntB( OPTION_SECTION, "frequent", 0, fn ))
+    if (GetPrivateProfileIntB( OPTION_SECTION, "lurkonly", 0, fn ) ||
+        GetPrivateProfileIntB( OPTION_SECTION, "lurk", 0, fn ))
+    { //used to set frequent=1 in the ini if lurk/lurkonly
+      //this is a local implication in ClientRun now
+      client->connectoften = 0;
+    }  
+    else if (GetPrivateProfileIntB( OPTION_SECTION, "frequent", 0, fn ))
     {
-      client->connectoften = 1;
-      modfail += (!WritePrivateProfileStringB( OPTSECT_BUFFERS, "frequent-threshold-checks", "yes", fn ));
+      client->connectoften = 3; /* both fetch and flush */
+      modfail += (!WritePrivateProfileStringB( OPTSECT_BUFFERS, "frequent-threshold-checks", "3", fn ));
     }
   }
   if (!GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", "", buffer, sizeof(buffer), fn ))
@@ -747,6 +755,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
     }
     else if ((i = GetPrivateProfileIntB( OPTION_SECTION, "lurkonly", 0, fn )) != 0)
     {
+      WritePrivateProfileStringB( OPTION_SECTION, "frequent", NULL, fn );
       strcpy(buffer,"passive");
       #ifdef LURK
       client->lurk_conf.lurkmode = CONNECT_LURKONLY;
@@ -1047,22 +1056,18 @@ int ReadConfig(Client *client)
       client->inthreshold[cont_i] =
            GetPrivateProfileIntB(cont_name, "fetch-workunit-threshold",
                          client->inthreshold[cont_i], fn );
+      #if defined(NO_OUTBUFFER_THRESHOLDS)          
+      WritePrivateProfileIntB( cont_name, "flush-workunit-threshold",NULL,fn);
+      #else
       client->outthreshold[cont_i] =
            GetPrivateProfileIntB(cont_name, "flush-workunit-threshold",
                          client->outthreshold[cont_i], fn );
-      if (client->outthreshold[cont_i] >= client->inthreshold[cont_i])
-        client->outthreshold[cont_i] = -1; /* ie, inthreshold rules */
-
+      if (client->outthreshold[cont_i] > client->inthreshold[cont_i])
+        client->outthreshold[cont_i] = client->inthreshold[cont_i];
+      #endif        
       client->timethreshold[cont_i] =
            GetPrivateProfileIntB(cont_name, "fetch-time-threshold",
                          client->timethreshold[cont_i], fn);
-
-#if 0
-      // Just one time threshold right now, used for both fetch and flush
-      client->timethreshold[cont_i] =
-           GetPrivateProfileIntB(cont_name, "flush-time-threshold",
-                         client->timethreshold[cont_i], fn);
-#endif
     }
   }
 
@@ -1204,7 +1209,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileStr( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, fn, NULL );
     __XSetProfileInt( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn, 1, 1 );
     __XSetProfileStr( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, fn, NULL );
-    __XSetProfileInt( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn, 0, 'y' );
+    __XSetProfileInt( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn, 0, 0 );
 
     /* --- CONF_MENU_MISC __ */
 
@@ -1237,9 +1242,10 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       if ((p =  __getprojsectname(cont_i)) != ((const char *)0))
       {
         __XSetProfileInt( p, "fetch-workunit-threshold", client->inthreshold[cont_i], fn,  0, 0 );
+        #if !defined(NO_OUTBUFFER_THRESHOLDS)          
         __XSetProfileInt( p, "flush-workunit-threshold", client->outthreshold[cont_i], fn, 0, 0 );
+        #endif
         __XSetProfileInt( p, "fetch-time-threshold", client->timethreshold[cont_i], fn, 0, 0 );
-//      __XSetProfileInt( p, "flush-time-threshold", client->timethreshold[cont_i], fn, 0, 0 );
         if (cont_i != OGR)
         {
           __XSetProfileInt( p, "core", client->coretypes[cont_i], fn, -1, 0 );

@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.47 2000/03/20 14:27:53 jbaker Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.48 2000/04/14 18:11:49 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -31,18 +31,6 @@ return "@(#)$Id: clirun.cpp,v 1.98.2.47 2000/03/20 14:27:53 jbaker Exp $"; }
 #include "probfill.h"  // LoadSaveProblems(), FILEENTRY_xxx macros
 #include "modereq.h"   // ModeReq[Set|IsSet|Run]()
 #include "clievent.h"  // ClientEventSyncPost() and constants
-
-#if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
-#include <thread.h>
-#endif
-#if (CLIENT_OS == OS_FREEBSD)
-#include <sys/mman.h>     /* minherit() */
-#include <sys/wait.h>     /* wait() */
-#include <sys/resource.h> /* WIF*() macros */
-#include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
-//#define USE_THREADCODE_ONLY_WHEN_SMP_KERNEL_FOUND /* otherwise its for >=3.0 */
-#define FIRST_THREAD_UNDER_MAIN_CONTROL /* otherwise main is separate */
-#endif
 
 // --------------------------------------------------------------------------
 
@@ -532,6 +520,9 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       #if (!defined(CLIENT_SUPPORTS_SMP)) //defined in cputypes.h
         use_poll_process = 1; //no thread support or cores are not thread safe
       #elif (CLIENT_OS == OS_FREEBSD)
+      //#define USE_THREADCODE_ONLY_WHEN_SMP_KERNEL_FOUND /* otherwise its for >=3.0 */
+      #define FIRST_THREAD_UNDER_MAIN_CONTROL /* otherwise main is separate */
+
       static int ok2thread = 0; /* <0 = no, >0 = yes, 0 = unknown */
       #ifdef USE_THREADCODE_ONLY_WHEN_SMP_KERNEL_FOUND
       if (ok2thread == 0)
@@ -1209,9 +1200,7 @@ int ClientRun( Client *client )
     //sleep, run or pause...
     //------------------------------------
 
-    if (dontSleep)
-      dontSleep = 0; //for the next round
-    else
+    if (!dontSleep)
     {             
       SetGlobalPriority( client->priority );
       if (isPaused)
@@ -1227,6 +1216,7 @@ int ClientRun( Client *client )
       }
       SetGlobalPriority( 9 );
     }
+    dontSleep = 0; //for the next round
 
     //------------------------------------
     // Fixup timers
@@ -1350,7 +1340,7 @@ int ClientRun( Client *client )
             Problem *thisprob = GetProblemPointerFromIndex( prob_i );
             if (thisprob == NULL)
               break;
-            if (thisprob->IsInitialized() && thisprob->contest == 1)
+            if (thisprob->IsInitialized() && thisprob->contest == DES)
             {
               desisrunning = 1;
               break;
@@ -1430,16 +1420,25 @@ int ClientRun( Client *client )
     // Lurking
     //------------------------------------
 
-    local_connectoften = (client->connectoften != 0);
+    local_connectoften = 0;
     #if defined(LURK)
     if (dialup.IsWatching()) /* is lurk or lurkonly enabled? */
     {
       client->connectoften = 0;
-      local_connectoften = (!TimeToQuit && 
-                            !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) &&
-                            dialup.CheckIfConnectRequested());
+      if (!TimeToQuit && !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) &&
+                         dialup.CheckIfConnectRequested());
+      {                   
+        local_connectoften = 3; /* both fetch and flush */
+      }         
     }
+    else
     #endif
+    {
+      local_connectoften = client->connectoften;
+      /* 0=none, &1 = in-buf, &2 = out-buf */ 
+      if (local_connectoften < 0 || local_connectoften > 3)
+        local_connectoften = 3;
+    }    
 
     //------------------------------------
     //handle 'connectoften' requests
@@ -1456,17 +1455,23 @@ int ClientRun( Client *client )
           unsigned cont_i = (unsigned int)client->loadorder_map[i];
           if (cont_i < CONTEST_COUNT) /* not disabled */
           {
-            if (GetBufferCount( client, cont_i, 1, NULL ) > 0) 
+            if ((local_connectoften & 2) != 0) /* check flush */
             {
-              have_non_empty = 1; /* at least one out-buffer is not empty */
-              break;
-            }
-            unsigned long count;
-            if (GetBufferCount( client, cont_i, 0, &count ) >= 0)
+              if (GetBufferCount( client, cont_i, 1, NULL ) > 0) 
+              {
+                have_non_empty = 1; /* at least one out-buffer is not empty */
+                break;
+              }
+            }  
+            if ((local_connectoften & 1) != 0) /* check fetch */
             {
-              if (count >= (unsigned int)ClientGetInThreshold( client, cont_i, 1 /* force */ )) 
-              {         
-                have_one_full = 1; /* at least one in-buffer is full */
+              unsigned long count;
+              if (GetBufferCount( client, cont_i, 0, &count ) >= 0)
+              {
+                if (count >= (unsigned int)ClientGetInThreshold( client, cont_i, 1 /* force */ )) 
+                {         
+                  have_one_full = 1; /* at least one in-buffer is full */
+                }
               }
             }  
           }
@@ -1477,7 +1482,7 @@ int ClientRun( Client *client )
       {
         ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
       }
-      timeNextConnect = timeRun + 30;
+      timeNextConnect = timeRun + 30; /* every 30 seconds */
     }
 
     //----------------------------------------

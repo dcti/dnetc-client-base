@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.10 2000/02/06 06:17:08 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.11 2000/04/14 18:11:48 cyp Exp $"
 
 
 enum {
@@ -49,6 +49,7 @@ typedef struct
 #define BUFFER_DEFAULT_IN_BASENAME  "buff-in"
 #define BUFFER_DEFAULT_OUT_BASENAME "buff-out"
 #define MINCLIENTOPTSTRLEN   64 /* no asciiz var is smaller than this */
+#define NO_OUTBUFFER_THRESHOLDS /* no longer have outthresholds */
 
 struct membuffstruct 
 { 
@@ -101,15 +102,17 @@ public:
   #ifdef LURK 
   struct dialup_conf lurk_conf;
   #endif
-  int  connectoften;
-  int  minupdateinterval; /* the better 'outthreshold'. in minutes */
+  int connectoften; /* 0=no,1=check both flush/fetch thresh, 2=only=flush*/
 
   // In general, don't use inthreshold anymore;
   // Use ClientGetInThreshold(client, contest)
   int inthreshold[CONTEST_COUNT]; 
-  int outthreshold[CONTEST_COUNT];
   int timethreshold[CONTEST_COUNT];  /* in hours */
-
+  #if (!defined(NO_OUTBUFFER_THRESHOLDS))
+  int  minupdateinterval; /* the better 'outthreshold'. in minutes */
+  int outthreshold[CONTEST_COUNT];
+  #endif
+  
   int preferred_blocksize[CONTEST_COUNT];
 
   /* -- perf -- */
@@ -130,8 +133,8 @@ public:
 } Client;
 
 void ResetClientData(Client *client); /* reset everything */
-int ClientGetInThreshold(Client *client, int contestid, int force = 0 );
-int ClientGetOutThreshold(Client *client, int contestid, int force = 0 );
+unsigned int ClientGetInThreshold(Client *client, int contestid, int force = 0 );
+unsigned int ClientGetOutThreshold(Client *client, int contestid, int force = 0 );
 int ClientRun(Client *client);  /* run the loop, do the work */
 
 #endif /* __CLIENT_H__ */

@@ -4,10 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.26 2000/04/05 00:48:58 andreasb Exp $"; }
-
-// no, we don't rotate by default
-//#define ROTATE_BETWEEN_PROJECTS
+return "@(#)$Id: confopt.cpp,v 1.34.2.27 2000/04/14 18:11:50 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -130,28 +127,30 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   CFGTXT(""
   ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL},
 //10
-{ CFGTXT("Project order"/*"Load-work precedence"*/), "DES,CSC,OGR,RC5", 
+{ CFGTXT("Load-work precedence"), "DES,CSC,OGR,RC5", 
   /* CFGTXT( */
-  "The client looks for work in the order specified here. For example, \"OGR,\n"
-  "RC5\" instructs the client to work on OGR until those buffers are exhausted;\n"
-#ifdef ROTATE_BETWEEN_PROJECTS
-  "afterwards, it works on RC5. If *all* 'flush thresholds' are at -1 (default)\n"
-  "then the client will obtain new work from the network only when all buffers\n"
-  "are empty; ie it will rotate through the list.\n"
-#else
-// FIXME: native english speakers check this, please [andreasb]
-  "afterwards, it tries to update buffers. If new OGR work can't be received\n"
-  "(update disabled, project completed), it works on RC5.\n"
-#endif
+  "The order specified here determines the order the client will look for work\n"
+  "each time it needs to load a packet from a buffer. For example, \"OGR,RC5,...\"\n"
+  "instructs the client to first look for work for OGR and if it doesn't find\n"
+  "any, to try RC5 next, and so on.\n"
   "\n"
   "You can turn off a project by setting \":0\" or \"=0\" after the project's\n"
   "name - for instance, \"OGR:0\" tells your client not to work on, or request\n"
-  "for, the OGR project.\n"
+  "work for, the OGR project.\n"
   "\n"
   "Projects not found in the list you enter here will be inserted in their\n"
   "default position.\n"
   "\n"
-#if 0  
+  "It is possible to have the client rotate through this list, updating\n"
+  "its buffers only once for each pass. To do so, 'Dialup-link detection'\n"
+  "and 'Frequent buffer-level checks' must be disabled since a buffer update\n"
+  "(new work being made available) would otherwise cause the client to go back\n"
+  "to the beginning of the load order.\n"
+  /* if any flush setting is less than fetch, and the client then updates, 
+     it will also end up going back to the beginning of the loadorder 
+     since new work will then be available for that project.
+  */
+#if 0 
   "Please note: when DES is active & enabled, the client will clear input\n"
   "buffers for all other projects, thus ensuring that clients sharing those\n"
   "buffer files do not inadvertantly work on the \"wrong\" project for the\n"
@@ -165,7 +164,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
 { CFGTXT("Buffer and Buffer Update Options"),"",
   CFGTXT(""),CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_BUFF,0,NULL},
 //12
-{  CFGTXT("Buffer in RAM only? (no disk I/O)"),"0",
+{  CFGTXT("Buffer in memory only? (no disk I/O)"),"0",
    CFGTXT(
    "This option is for machines with permanent connections to a keyserver\n"
    "but without local disks. Note: This option will cause all buffered,\n"
@@ -211,9 +210,9 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "where the client writes its progress to disk so that it can recover\n"
   "partially completed work if the client had previously failed to shutdown\n"
   "normally.\n"
-  "DO NOT SHARE CHECKPOINTS BETWEEN CLIENTS. Avoid the use of checkpoints\n"
-  "unless your client is running in an environment where it might not be able\n"
-  "to shutdown properly.\n"
+  "DO NOT SHARE CHECKPOINT FILES BETWEEN CLIENTS. Avoid the use of checkpoint\n"
+  "files unless your client is running in an environment where it might not\n"
+  "be able to shutdown properly.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
 //16
 { CFGTXT("Disable buffer updates from/to a keyserver"),"0",
@@ -245,15 +244,22 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "for RC5 becomes \"/there/"BUFFER_DEFAULT_IN_BASENAME".rc5\"\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
 //20
-{ CFGTXT("Frequently update empty buffers?"),"0",
+{ CFGTXT("Frequent buffer-level check type"),"0 (disabled)",
   CFGTXT(
-  "Enabling this option will cause the client to check the input buffers\n"
+  "Enabling this option will cause the client to check buffers levels\n"
   "every few minutes or so. You might want to use this if you have a\n"
   "single computer with a network connection \"feeding\" other clients via\n"
-  "a common input file.\n"
-  "Note: enabling (modem-) connection detection implies that buffers will\n"
-  "be updated frequently while a connection is detected.\n" 
-  ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL},
+  "a common set of buffers, or if you want to ensure that buffers are kept\n"
+  "full, or if you want to ensure that completed work is flushed immediately.\n" 
+  "\n"
+  " 0) Disable frequent threshold checks.\n"  
+  " 1) in-buffer checks only. (checks that in-buffers are kept full).\n"
+  " 2) out-buffers checks only. (checks that all work is flushed).\n"
+  " 3) both in- and out-buffers.\n"
+  "\n"  
+  "Note: enabling (modem-) connection detection implies type 3, ie that\n" 
+  "buffers will be updated frequently while a connection is detected.\n" 
+  ),CONF_MENU_BUFF,CONF_TYPE_INT,NULL,NULL,0,3,NULL,NULL},
 //21
 { CFGTXT("Preferred packet size (2^X keys/packet)"), "-1 (auto)",
   /* CFGTXT( */
@@ -272,7 +278,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   #endif
   /*)*/,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,PREFERREDBLOCKSIZE_MIN,PREFERREDBLOCKSIZE_MAX,NULL,NULL},
 //22
-{ CFGTXT("Fetch:Flush work threshold"), "-1 (default size or determine from time threshold)",
+{ CFGTXT("Fetch work threshold"), "0 (default size or determine from time threshold)",
   "This option specifies how many *work units* your client will buffer between\n"
   "communications with a keyserver. When the number of work units in the\n"
   "input buffer reaches 0, the client will attempt to connect to a keyserver,\n"
@@ -283,24 +289,14 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "here, the client has internal limits on the number of packets that it can\n"
   "safely deal with.\n"
   "\n"
-  "Defaults: Thresholds as displayed here are in the form \"fetch:flush\":\n"
-  "A value of -1 for the 'fetch setting' indicates that a time threshold\n"
+  "A value of 0 for the 'fetch setting' indicates that a time threshold\n"
   "should be used instead. If that too is unspecified, then the client will\n"
-  "use defaults. A value of -1 for the 'flush setting' is advisable and\n"
-#ifdef ROTATE_BETWEEN_PROJECTS
-  "indicates that a) flush and fetch values are equal, b) the client is to\n"
-  "switch/rotate between all active and enabled projects (only if all are -1)\n"
-  /* Actually that last sentence is slightly off the mark - if any flush
-     setting is less than fetch, and the client then updates, it will also
-     end up going back to the beginning of the loadorder (highest priority
-     project) since new work will then be available for that project.
-  */
-#else
-  "indicates that flush and fetch values are equal.\n"
-#endif
+  "use defaults.\n"
+  "\n"
+  "* See also: 'Frequent buffer-level checks'\n"
   ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,1,0xffff,NULL,NULL},
 //23
-{ CFGTXT("Fetch time threshold (in hours)"), "0 (disabled)",
+{ CFGTXT("Fetch time threshold (in hours)"), "0 (use work threshold)",
   "This option specifies that instead of fetching a specific number of\n"
   "work units from the keyservers, enough work units should be downloaded\n"
   "to keep your client busy for a specified number of hours.  This causes\n"
@@ -308,15 +304,15 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "current speed of your client on your machine.\n\n"
   "For fixed (static) connections, you should set this to a low value, like\n"
   "three to six hours.  For dialup connections, set this based on how often\n"
-  "you connect to the network.\n"
-// FIXME: native english speakers check this, please [andreasb]
-  "\nYou can specify a fetch work threshold, too. This will be used as the\n"
-  "minimum number of workunits to buffer.\n" 
 #ifdef HAVE_OGR_CORES
-  "\nCurrently not implemented for OGR because the amount of work in an\n"
-  "unprocessed packet cannot be predicted.\n\n"
+  "\n"
+  "Currently not implemented for OGR because the amount of work in an\n"
+  "unprocessed packet cannot be predicted.\n"
 #endif
+  "\n"
+  "* See also: 'Frequent buffer-level checks'\n"
   ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,0,336,NULL,NULL},
+
 /* ------------------------------------------------------------ */
 
 //24
@@ -554,11 +550,9 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "Enable this option if your network environment only supports 7bit traffic.\n"
   ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL},
 //49
-{ CFGTXT("Modem detection options"),"0",
+{ CFGTXT("Dialup-link detection"),"0",
   CFGTXT(
-  "0) Normal mode: the client will send/receive packets only when it\n"
-  "         empties the in buffer, hits the flush threshold, or\n"
-  "         the user specifically requests a flush/fetch.\n"
+  "0) Off:  the client will send/receive packets only when it needs to do so.\n"
   "1) Dial-up detection mode: This acts like mode 0, with the addition\n"
   "         that the client will automatically send/receive packets when a\n"
   "         dial-up networking connection is established. Modem users\n"

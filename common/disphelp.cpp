@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.10 2000/04/05 00:40:41 andreasb Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.11 2000/04/14 18:11:51 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -15,6 +15,7 @@ return "@(#)$Id: disphelp.cpp,v 1.64.2.10 2000/04/05 00:40:41 andreasb Exp $"; }
 #include "logstuff.h" //LogScreenRaw()
 #include "util.h"     //UtilGetAppName()
 #include "console.h"  //ConClear(), ConInkey()
+#include "client.h"   //various #defines
 
 #if defined(__unix__) && !defined(__EMX__)
   #define NO_INTERNAL_PAGING  //internal paging is very un-unix-ish
@@ -24,6 +25,7 @@ return "@(#)$Id: disphelp.cpp,v 1.64.2.10 2000/04/05 00:40:41 andreasb Exp $"; }
 
 static const char *helpbody[] =
 {
+/*"------------------------------------ max width == 77 ------------------------" */
   "Special Options: (the client will execute the option and then exit)",
   "-config            start the configuration menu",
   "-flush             flush all output buffers",
@@ -60,17 +62,20 @@ static const char *helpbody[] =
   "-nodisk            don't use disk buffer files",
   "-n <count>         packets to complete. -1 forces exit when buffer is empty.",
   "-runbuffers        set -n == -1 (exit when buffers are empty)",
-  "-frequent          frequently check for empty buffers",
+  "-frequent          frequently check if buffers need topping-up",
   "-inbase <fname>    input buffer basename (ie without 'extension'/suffix)",
   "-outbase <fname>   output buffer basename (ie without 'extension'/suffix)",
   "-ckpoint <fname>   set the name of the checkpoint file",
   "-blsize <pn> <n>   set preferred packet size (2^n keys/packet)",
   "-bin <pn> <n>      set fetch buffer threshold to <n> work units",
+  #if !defined(NO_OUTBUFFER_THRESHOLDS)
   "-bout <pn> <n>     set flush buffer threshold to <n> work units",
   "-b <pn> <n>        set both buffer thresholds to <n> work units",
+  #endif
   "-btime <pn> <n>    set fetch time threshold to <n> hours",
   "                   If not specified, project name <pn> defaults to RC5",
   "",
+/*"------------------------------------ max width == 77 ------------------------" */
   "Network update related options:",
   "",
   "-runoffline        disable network access",
@@ -88,6 +93,7 @@ static const char *helpbody[] =
   "-interfaces <list> limit the interfaces to monitor for online/offline status",
 #endif
   "",
+/*"------------------------------------ max width == 77 ------------------------" */
   "Performance related options:",
   "",
   "-c <pn> <n>        core number (run -config for a list of valid core numbers)",
@@ -104,11 +110,12 @@ static const char *helpbody[] =
   "-smtpfrom <id>     who the client should say is sending the message",
   "-smtpdest <id>     who the client should send mail to",
   "",
+/*"------------------------------------ max width == 77 ------------------------" */
   "Miscellaneous runtime options:",
   "",
   "-h <hours>         time limit in hours",
   "-until <HH:MM>     quit at HH:MM (eg 07:30)",
-  "-noexitfilecheck   don't check for a 'exitrc5.now' command file",
+  "-noexitfilecheck   don't check for an 'exitrc5.now' file",
   "-pausefile <fn>    name of file that causes the client to pause",
   "-percentoff        don't display work completion as a running percentage",
   "-quiet/-hide       suppress screen output (== detach for some clients)",

@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.50 2000/04/05 00:39:47 andreasb Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.51 2000/04/14 18:11:49 cyp Exp $"; }
 
 //#define TRACE
 
@@ -661,11 +661,13 @@ int ParseCommandline( Client *client,
       else if ( strcmp( thisarg, "-c" ) == 0 ||
                 strcmp( thisarg, "-blsize" ) == 0 ||
                 strcmp( thisarg, "-b" ) == 0 ||
-                strcmp( thisarg, "-bin" ) == 0 ||
-                strcmp( thisarg, "-bout" ) == 0 ||
                 strcmp( thisarg, "-b2" ) == 0 ||
+                strcmp( thisarg, "-bin" ) == 0 ||
+                //#if !defined(NO_OUTBUFFER_THRESHOLDS)
+                strcmp( thisarg, "-bout" ) == 0 || /* no effect */
+                strcmp( thisarg, "-bout2") == 0 || /* no effect */
+                //#endif
                 strcmp( thisarg, "-bin2")==0 ||
-                strcmp( thisarg, "-bout2") == 0 ||
                 strcmp( thisarg, "-btime") == 0 )
       {
         if (!argvalue)
@@ -773,8 +775,10 @@ int ParseCommandline( Client *client,
                    user may add -btime <pn> <n> if needed */
                 client->timethreshold[contest] = 0;
               }
+              #if !defined(NO_OUTBUFFER_THRESHOLDS)
               if ((isthresh & 2)!=0)
                 client->outthreshold[contest] = n;
+              #endif  
               if ((isthresh & 4)!=0)
                 client->timethreshold[contest] = n;
             }
@@ -805,10 +809,12 @@ int ParseCommandline( Client *client,
                   LogScreenRaw("%s fetch time threshold cleared\n",
                     CliGetContestNameFromID(contest) );
               }
+              #if !defined(NO_OUTBUFFER_THRESHOLDS)
               if ((isthresh & 2)!=0)
                 LogScreenRaw("%s flush threshold set to %d work unit%s\n",
                   CliGetContestNameFromID(contest),
                   client->outthreshold[contest], (client->outthreshold[contest]==1)?"":"s" );
+              #endif                  
               if ((isthresh & 4)!=0)
                 LogScreenRaw("%s fetch time threshold set to %d hour%s\n",
                   CliGetContestNameFromID(contest),

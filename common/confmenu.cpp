@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.17 2000/04/03 20:12:11 andreasb Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.18 2000/04/14 18:11:50 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -75,6 +75,67 @@ static int __enumcorenames(const char **corenames, int index, void * /*unused*/)
   return +1; /* keep going */
 }      
 
+/* ----------------------------------------------------------------------- */
+
+static void __strip_project_from_alist(char *alist, unsigned int cont_i)
+{
+  const char *projname = CliGetContestNameFromID(cont_i);
+  if (projname)
+  {
+    unsigned int namelen = 0;
+    char *nextpos = alist;
+    char pbuf[16]; pbuf[0] = 0;
+
+    while (*nextpos && (*nextpos==',' || *nextpos== ';' || isspace(*nextpos)))
+      nextpos++;
+
+    while (*nextpos)
+    {
+      alist = nextpos;
+      while (*nextpos && *nextpos!=',' && *nextpos!= ';')
+        nextpos++;
+      if (*nextpos==',' || *nextpos== ';')
+      {
+        nextpos++;
+        while (*nextpos && isspace(*nextpos))
+          nextpos++;
+      }
+      if (pbuf[0] == 0)
+      {
+        namelen = 0;
+        while (projname[namelen])
+        {
+          pbuf[namelen] = (char)tolower(projname[namelen]);
+          namelen++;
+        }
+        pbuf[namelen] = 0;
+        if (namelen == 0)
+          break;
+      }
+      //printf("alist = '%s', nextpos = '%s'\n", alist, nextpos );
+      if (((unsigned int)(nextpos - alist)) >= namelen)
+      {
+        unsigned int pos = 0;
+        while (pos < namelen && pbuf[pos] == (char)tolower(*alist))
+        {
+          alist++;
+          pos++;
+        } 
+        if (pos == namelen && 
+           (!*alist || *alist == ':' || *alist == '=' || *alist == ',' || 
+            *alist == ';' || isspace(*alist)))
+        {
+          memmove( alist-namelen, nextpos, strlen(nextpos)+1 );
+          break;
+        }
+      }
+    }
+  }  
+  return;
+}  
+
+/* ----------------------------------------------------------------------- */
+
 int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 {
   struct __userpass { 
@@ -84,7 +145,9 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   unsigned int cont_i;
   char loadorder[MINCLIENTOPTSTRLEN];
   int inthreshold[CONTEST_COUNT];
+  #if !defined(NO_OUTBUFFER_THRESHOLDS)
   int outthreshold[CONTEST_COUNT];
+  #endif
   int preferred_blocksize[CONTEST_COUNT];
 
   // ---- Set all stuff that doesn't change during config ----   
@@ -127,10 +190,10 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
       preferred_blocksize[cont_i] = PREFERREDBLOCKSIZE_DEFAULT; /*yes, default*/
     inthreshold[cont_i] = client->inthreshold[cont_i];
     if (inthreshold[cont_i] < 1)
-      inthreshold[cont_i] = -1;
+      inthreshold[cont_i] = 0;
+    #if !defined(NO_OUTBUFFER_THRESHOLDS)
     outthreshold[cont_i] = client->outthreshold[cont_i];
-    if (outthreshold[cont_i] < 1)
-      outthreshold[cont_i] = -1;
+    #endif  
   }
   conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=&(preferred_blocksize[0]);
   conf_options[CONF_THRESHOLDI].thevariable=&(inthreshold[0]);
@@ -560,10 +623,17 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
               else if (conf_options[menuoption].type==CONF_TYPE_IARRAY)
               {
                 int *vectb = NULL;
+                #if !defined(NO_OUTBUFFER_THRESHOLDS)
                 if ( menuoption == CONF_THRESHOLDI )  // don't have a
                   vectb = &(outthreshold[0]); // THRESHOLDO any more
+                #endif  
                 utilGatherOptionArraysToList( parm, sizeof(parm),
-                    (int *)conf_options[menuoption].thevariable, vectb ); 
+                    (int *)conf_options[menuoption].thevariable, vectb );
+                if ( menuoption == CONF_THRESHOLDT || 
+                     menuoption == CONF_PREFERREDBLOCKSIZE )
+                {     
+                  __strip_project_from_alist( parm, OGR ); //no OGR for these
+                }       
                 descr = parm;
               }
               else if (conf_options[menuoption].type==CONF_TYPE_ASCIIZ
@@ -733,7 +803,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
         if ( conf_options[editthis].type == CONF_TYPE_ASCIIZ || 
              conf_options[editthis].type == CONF_TYPE_INT ||
              conf_options[editthis].type == CONF_TYPE_PASSWORD ||
-             conf_options[editthis].type==CONF_TYPE_IARRAY )
+             conf_options[editthis].type == CONF_TYPE_IARRAY )
         {
           p = "";
           char defaultbuff[30];
@@ -784,10 +854,17 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           else if (conf_options[editthis].type==CONF_TYPE_IARRAY)
           {
             int *vectb = NULL;
+            #if !defined(NO_OUTBUFFER_THRESHOLDS)
             if ( editthis == CONF_THRESHOLDI )  // don't have a
               vectb = &(outthreshold[0]); // THRESHOLDO any more
+            #endif  
             utilGatherOptionArraysToList( parm, sizeof(parm),
                     (int *)conf_options[editthis].thevariable, vectb ); 
+            if ( editthis == CONF_THRESHOLDT || 
+                 editthis == CONF_PREFERREDBLOCKSIZE )
+            {     
+              __strip_project_from_alist( parm, OGR ); //no OGR for these
+            }       
             p = (const char *)(conf_options[editthis].defaultsetting);
           }
           else //if (conf_options[editthis].type==CONF_TYPE_INT)
@@ -1005,8 +1082,10 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           int *vecta = (int *)conf_options[editthis].thevariable;
           int *vectb = NULL;
           unsigned int cont_i;
+          #if !defined(NO_OUTBUFFER_THRESHOLDS)
           if ( editthis == CONF_THRESHOLDI )  // don't have a
             vectb = &(outthreshold[0]); // THRESHOLDO any more
+          #endif  
           utilScatterOptionListToArraysEx(parm,vecta, vectb,NULL, NULL );
           if (editthis == CONF_CPUTYPE) 
           {
@@ -1032,6 +1111,11 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                 {
                   if (vectb[cont_i] == mdef)
                     ; /* default */
+                  else if (editthis == CONF_THRESHOLDI)
+                  {  /* outthresh must only be < inthresh and can be <=0 */
+                    if (vectb[cont_i] > vecta[cont_i])
+                      vectb[cont_i] = vecta[cont_i];
+                  }
                   else if (vectb[cont_i] < mmin)
                     vectb[cont_i] = mmin;
                   else if (vectb[cont_i] > mmax)
@@ -1072,9 +1156,11 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
       if (inthreshold[cont_i] < 1) /* "auto" */
         inthreshold[cont_i] = 0;
       client->inthreshold[cont_i] = inthreshold[cont_i];
-      if (outthreshold[cont_i] < 1)
-        outthreshold[cont_i] = 0;
+      #if !defined(NO_OUTBUFFER_THRESHOLDS)
       client->outthreshold[cont_i] = outthreshold[cont_i];
+      if (client->outthreshold[cont_i] > inthreshold[cont_i])
+        client->outthreshold[cont_i] = inthreshold[cont_i];
+      #endif
     }
     if (logtype >=0 && logtype < (int)(sizeof(logtypes)/sizeof(logtypes[0])))
     {
