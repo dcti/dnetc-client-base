@@ -6,7 +6,7 @@ Bugs Listing
   This is a text file that lists any bugs that have been found by either
   the coders, or by users.
 
-1998/Jan/31 - cyp - (Cyrus Patel)
+1999/Jan/31 - cyp - (Cyrus Patel)
   http encoding via http proxy (squid or whatever) still doesn't work.
   The error users see is "Bad packet acknowledgement" which is the result
   of an incorrect packet size as obtained from net->Get().
