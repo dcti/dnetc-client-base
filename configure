@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.75 1999/12/13 15:04:00 snake Exp $
+# @(#)$Id: configure,v 1.222.2.76 1999/12/13 18:17:38 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -764,10 +764,12 @@ case "$1" in
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
 
     *sparc-openbsd)                   # snake
-	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1  -DKWAN -DMEGGS"
+	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1  -DKWAN -DMEGGS -DHAVE_CSC_CORES \
+                    $CSC_ANSI_CCOPTS"
 	TARGET_LDFLAGS="-static"
 	#TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c des/deseval-meggs2-2.cpp \
+                    des/des-slice-meggs.cpp $CSC_ANSI_SRCS"
     TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="openbsd-sparc-aout"
 	;;
