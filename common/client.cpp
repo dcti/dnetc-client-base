@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.79 2000/06/12 20:08:20 lyndon Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.80 2000/06/14 08:53:36 oliver Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -317,6 +317,20 @@ static const char *GetBuildOrEnvDescription(void)
   return "";
 #elif (CLIENT_OS == OS_NEXTSTEP)
   return "";
+#elif (CLIENT_OS == OS_AMIGAOS)
+  static char buffer[40];
+  #ifdef __PPC__
+    #ifdef __POWERUP__
+    sprintf(buffer,"%s, PowerUp %ld.%ld",amigaGetOSVersion(),PPCVersion(),PPCRevision());
+    #else
+    #define LIBVER(lib) *((UWORD *)(((UBYTE *)lib)+20))
+    #define LIBREV(lib) *((UWORD *)(((UBYTE *)lib)+22))
+    sprintf(buffer,"%s, WarpOS %d.%d",amigaGetOSVersion(),LIBVER(PowerPCBase),LIBREV(PowerPCBase));
+    #endif
+  #else
+  sprintf(buffer,"%s, 68K",amigaGetOSVersion());
+  #endif
+  return buffer;
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
   if (uname(&ut)==0) 
