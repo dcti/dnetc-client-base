@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.22  1999/03/03 04:33:27  cyp
+// a) limited japan proxy's zone of influence; b) now gets timezone offset
+// from CliTimeGetMinutesWest() (clitime.cpp)
+//
 // Revision 1.21  1999/01/21 23:29:26  cyp
 // fixed a #ifdef DEBUG that should have been an #ifdef RESDEBUG
 //
@@ -76,7 +80,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.21 1999/01/21 23:29:26 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.22 1999/03/03 04:33:27 cyp Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -100,6 +104,7 @@ return "@(#)$Id: netres.cpp,v 1.21 1999/01/21 23:29:26 cyp Exp $"; }
 #else
 #include "cputypes.h"
 #include "network.h"
+#include "clitime.h" /* CliTimeGetMinutesWest() */
 #include <ctype.h> //tolower()
 #endif
 
@@ -125,7 +130,7 @@ static const struct        // this structure defines which proxies are
                 { "euro",   -2, +6 ,  +2 }, //euro crosses 0 degrees longitude
                 { "asia",   +5, +10,  +9 },
                 { "aussie", +9, -9 , +12 }, //jp and aussie cross the dateline
-                { "jp",    +10, -8 , -11 }   
+                { "jp",    +10, -10, -11 }   
                };
 //static int dnet_portlist[] = {80,23,2064,3064,110};
 static const char DNET_PROXY_DOMAINNAME[]="v27.distributed.net"; // NOT char* 
@@ -182,13 +187,16 @@ static int IsHostnameDNetKeyserver( const char *hostname, int *tzdiff )
 #ifndef OLDRESOLVE
 static int calc_tzmins(void)
 {
-  static int saved_tz = -123; 
+  #ifndef TEST
+  return -CliTimeGetMinutesWest();  /* clitime.cpp */
+  #else
+  static int saved_tz = -12345; 
   time_t timenow;
   struct tm * tmP;
   struct tm loctime, utctime;
   int haveutctime, haveloctime, tzdiff;
 
-  if (saved_tz != -123)
+  if (saved_tz != -12345)
     return saved_tz;
 
   #if (CLIENT_OS != OS_MACOS)
@@ -227,6 +235,7 @@ static int calc_tzmins(void)
     saved_tz = tzdiff;
 
   return tzdiff;
+  #endif
 }
 #endif
 
