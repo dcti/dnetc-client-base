@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.45 2001/04/10 00:50:16 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.46 2001/04/12 10:55:47 cyp Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -212,6 +212,8 @@
 */
 #define OGROPT_IGNORE_TIME_CONSTRAINT_ARG
 #if defined(macintosh) || defined(__riscos) || \
+    defined(__NETWARE__) || defined(NETWARE) || \
+    defined(__WINDOWS386__) /* 16bit windows */ || \
     (defined(ASM_X86) && defined(GENERATE_ASM))
     /* ASM_X86: the ogr core used by all x86 platforms is a hand optimized */
     /* .S/.asm version of this core - If we're compiling for asm_x86 then */
