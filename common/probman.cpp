@@ -6,7 +6,7 @@
  *
 */ 
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.9.2.5 2001/02/23 03:38:07 sampo Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.9.2.6 2002/03/27 23:25:46 andreasb Exp $"; }
 
 #include "baseincs.h"  // malloc()/NULL/memset()
 #include "problem.h"   // Problem class
@@ -20,6 +20,14 @@ static struct
   unsigned int tablesize;
   unsigned int probcount;
 } probmanstatics = {((Problem **)0),0,0};
+
+// -----------------------------------------------------------------------
+
+// returns the number of problems managed by ProblemManager
+unsigned int GetManagedProblemCount(void)
+{
+  return probmanstatics.probcount;
+}
 
 // -----------------------------------------------------------------------
 

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __PROBMAN_H__
-#define __PROBMAN_H__ "@(#)$Id: probman.h,v 1.5 1999/04/06 10:20:48 cyp Exp $"
+#define __PROBMAN_H__ "@(#)$Id: probman.h,v 1.5.2.1 2002/03/27 23:25:46 andreasb Exp $"
 
 //Return a specific Problem object or NULL if that problem doesn't exist
 Problem *GetProblemPointerFromIndex(unsigned int probindex);
@@ -19,5 +19,8 @@ int InitializeProblemManager(unsigned int maxnumproblems);
 
 //Deinitialize the problem manager
 int DeinitializeProblemManager(void);
+
+// returns the number of problems managed by ProblemManager
+unsigned int GetManagedProblemCount(void);
 
 #endif /* __PROBMAN_H__ */
