@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.37 2000/11/04 19:59:25 oliver Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.38 2000/11/09 20:04:30 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -755,20 +755,17 @@ void LogScreenPercent( unsigned int load_problem_count )
     // since it causes a number of context-switches to the 68K, which in turn
     // slows the 68K client down quite dramatically if both clients are running
     // in parallel.  So, we only do it once per minute, minus the time display.
-    static int cnt = 11;
-    if (cnt++ > 10 || !logstatics.lastwasperc)
+    if (!logstatics.lastwasperc || (logstatics.perc_callcount % 12) == 0)
     {
       LogScreenRaw( "\r%s", buffer, NULL );
-      cnt = 0;
+    #else
+    {
+      LogScreen( "\r%s", buffer, NULL );
+    #endif
       logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
       logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
+      /* simple, eh? :) */
     }
-    #else
-    LogScreen( "\r%s", buffer, NULL );
-    logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
-    logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
-    /* simple, eh? :) */
-    #endif
   }
   else
   {
