@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.8  1998/11/10 21:37:47  cyp
+// added support for -forceunlock.
+//
 // Revision 1.7  1998/11/08 19:03:21  cyp
 // -help (and invalid command line options) are now treated as "mode" requests.
 //
@@ -32,7 +35,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.7 1998/11/08 19:03:21 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.8 1998/11/10 21:37:47 cyp Exp $"; }
 #endif
 
 #include "client.h"   //client class
@@ -43,11 +46,11 @@ return "@(#)$Id: modereq.cpp,v 1.7 1998/11/08 19:03:21 cyp Exp $"; }
 #include "console.h"  //Clear the screen after config if restarting
 
 #include "disphelp.h" //"mode" DisplayHelp()
-#include "cmdline.h"  //CmdLineFindInvalidOption()
 #include "cpucheck.h" //"mode" DisplayProcessorInformation()
 #include "cliident.h" //"mode" CliIdentifyModules();
 #include "selftest.h" //"mode" SelfTest()
 #include "bench.h"    //"mode" Benchmark()
+#include "buffwork.h" //"mode" UnlockBuffer()
 
 
 /* --------------------------------------------------------------- */
@@ -56,8 +59,29 @@ static struct
 {
   int isrunning;
   int reqbits;
-} modereq = {0,0};
+  const char *filetounlock;
+  const char *helpoption;
+} modereq = {0,0,(const char *)0,(const char *)0};
 
+/* --------------------------------------------------------------- */
+
+int ModeReqSetArg(int mode, void *arg )
+{
+  if (mode == MODEREQ_UNLOCK)
+    {
+    ModeReqSet(MODEREQ_UNLOCK);
+    modereq.filetounlock = (const char *)arg;
+    return 0;
+    }
+  if (mode == MODEREQ_CMDLINE_HELP)
+    {
+    ModeReqSet(MODEREQ_CMDLINE_HELP);
+    modereq.helpoption = (const char *)arg;
+    return 0;
+    }
+  return -1;
+}  
+  
 /* --------------------------------------------------------------- */
 
 int ModeReqIsSet(int modemask)
@@ -136,8 +160,10 @@ int ModeReqRun(Client *client)
         }
       if ((bits & MODEREQ_CMDLINE_HELP) != 0)
         {
-        DisplayHelp(CmdLineFindInvalidOption()); 
+        DisplayHelp(modereq.helpoption);
+        modereq.helpoption = (const char *)0;
         modereq.reqbits &= ~(MODEREQ_CMDLINE_HELP);        
+        retval |= (MODEREQ_CMDLINE_HELP);
         }
       if ((bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART)) != 0)
         {
@@ -233,6 +259,16 @@ int ModeReqRun(Client *client)
         CliIdentifyModules();
         modereq.reqbits &= ~(MODEREQ_IDENT);
         retval |= (MODEREQ_IDENT);
+        }
+      if ((bits & MODEREQ_UNLOCK)!=0)
+        {
+        if (modereq.filetounlock)
+          {
+          UnlockBuffer(modereq.filetounlock);
+          modereq.filetounlock = (const char *)0;
+          }
+        modereq.reqbits &= ~(MODEREQ_UNLOCK);
+        retval |= (MODEREQ_UNLOCK);
         }
       if ((bits & MODEREQ_CPUINFO)!=0)
         {
