@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.93  1998/08/30 11:54:15  remi
+# Another tweaking in the x86-linux entries : deleted desultra entries,
+# added some libc5 specific entries to compile a libc5 binary on a glibc2
+# system.
+#
 # Revision 1.92  1998/08/28 22:32:30  cyp
 # Added support for selftest.cpp and cmdline.cpp
 #
@@ -31,7 +36,9 @@
 # Adddition of NASM to configure
 #
 # Revision 1.84  1998/08/19 01:31:05  silby
-# Cazatnged -fno-handle-exceptions to -fno-exceptions, since GCC told me that was what to do. <g> Also, removed -DPIPELINE_COUNT for linux x85 builds - it's now a variable for x86.
+# Cazatnged -fno-handle-exceptions to -fno-exceptions, since GCC told me that
+# was what to do. <g> Also, removed -DPIPELINE_COUNT for linux x85 builds - 
+# it's now a variable for x86.
 #
 # Revision 1.83  1998/08/10 22:36:53  cyruspatel
 # Added support for triggers.cpp and buffupd.cpp
@@ -768,8 +775,8 @@ case "$1" in
 
 ###### Intel X86 Linux platforms
     *x86-linux-egcs)              # uses EGCS options
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
+	TARGET_AS="g++ -c"
+	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
@@ -799,6 +806,17 @@ case "$1" in
 	TARGET_LIBS="-lncurses"
 	;;
 
+    *x86-linux-libc5-gcc)         # uses GCC options plus '-pipe' (libc5)
+	TARGET_AS="i486-linuxlibc1-gcc -c"
+	TARGET_CC="i486-linuxlibc1-gcc"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_LIBS="-lncurses"
+	;;
+
     *x86-linux-gcc-nocurses)      # standard GCC options, no curses/termios, non-static
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -D__showids__ -DNOCURSES -DNOTERMIOS"
@@ -809,8 +827,8 @@ case "$1" in
 	;;
 
     *x86-linux-egcs-debug)        # debug version of x86-linux-egcs
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc -g"
+	TARGET_AS="g++ -c"
+	TARGET_CC="g++ -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -D__showids__"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
@@ -841,35 +859,12 @@ case "$1" in
 	TARGET_LIBS="-lncurses"
 	;;
 
-    *x86-linux-desultra-egcs-debug)    # to debug UltraSparc DES code integration
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc -g"
-	# -Wno-unused to avoid tons of warnings on some ultra files
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ $OPTS_DES_ULTRA_C"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
-	TARGET_ADDASMS="platforms/x86ident.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
-	TARGET_STRIP="touch"
-	;;
-
-    *x86-linux-desultra-egcs-debug-cramer)    # special target for cramer's non-standard installation
-	TARGET_AS="egcs -c"
-	TARGET_CC="egcs -g"
-	# -Wno-unused to avoid tons of warnings on some ultra files
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ $OPTS_DES_ULTRA_C"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
-	TARGET_ADDASMS="platforms/x86ident.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
-	TARGET_STRIP="touch"
-	;;
-
     *x86-linux-aout-egcs)          # aout version, using EGCS options
 	TARGET_AS="i486-pc-linux-gnuaout-gcc -c"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__"
 	TARGET_LDFLAGS="-static"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -f aout"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
@@ -888,8 +883,8 @@ case "$1" in
 	;;
 
     *x86-linux-mt-egcs)            # multithreaded build using EGCS options
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
+	TARGET_AS="g++ -c"
+	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
@@ -911,6 +906,17 @@ case "$1" in
 
     *x86-linux-mt-gcc)             # multithreaded build using GCC options
 	TARGET_AS="gcc -c"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DMULTITHREAD"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_LIBS="-lpthread -lncurses"
+	;;
+
+    *x86-linux-libc5-mt-gcc)             # multithreaded build using GCC options (libc5)
+	TARGET_AS="i486-linuxlibc1-gcc -c"
+	TARGET_CC="i486-linuxlibc1-gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
