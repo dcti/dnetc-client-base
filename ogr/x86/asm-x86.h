@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.1.2.1 2004/08/08 19:29:08 kakace Exp $"
+#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.1.2.2 2004/08/09 06:12:46 jlawson Exp $"
 
 /* If we were to cover the whole range of 0x00000000 ... 0xffffffff
    we would need ...
@@ -39,7 +39,7 @@
   }
   #define __CNTLZ(x) __CNTLZ__(x)
 
-#elif defined(__386__) && defined(__WATCOMC__)
+#elif defined(__WATCOMC__)
 
   #if (OGROPT_ALTERNATE_CYCLE == 0) && (OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 1)
     #error fixme: No longer compatible with existing code
@@ -81,7 +81,7 @@
           value [edx] parm [eax] modify exact [eax edx] nomemory;
   #define __CNTLZ(x) __CNTLZ__(x)
 
-#elif defined(ASM_X86) && defined(__GNUC__)
+#elif defined(__GNUC__)
 
   #if (OGROPT_ALTERNATE_CYCLE == 0) && (OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 1)
     #error fixme: No longer compatible with existing code
@@ -131,6 +131,21 @@
              "subl %1,%0\n\t"  \
              :"=r"(result), "=r"(input) : "1"(input) : "cc" );
      return result;
+  }
+  #define __CNTLZ(x) __CNTLZ__(x)
+
+#elif defined(_MSC_VER)
+
+  static __forceinline int __CNTLZ__(register unsigned int i)
+  {
+      __asm {
+        mov ecx,i
+        not ecx
+        mov eax,20h
+        bsr ecx,ecx
+        sub eax,ecx
+      }
+      // return value in eax
   }
   #define __CNTLZ(x) __CNTLZ__(x)
 
