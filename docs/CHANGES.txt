@@ -1,4 +1,28 @@
+==========================================================================  
+Version bump guide: 
+==========================================================================  
 
+ "2.7106.435-XXX-YYMMDDHH"
+  | | |   |   |  `------'
+  | | |   |   |     |
+  | | |   |   |  bugzilla format build time stamp (time of newest module)
+  | | |   |   |  Please report this when making bug reports.
+  | | |   |   `- Build flags: GUI/CLI, SMP-aware, etc. 
+  | | |   |      Please report this when making bug reports.
+  | | |   `----- Changes in /common/ code, or simply a significant number 
+  | | |          of bug fixes, gets a "build fraction" change.
+  | | `--------- New cores, for any platform, will be accompanied by a 
+  | |            "build version" change, ie 2.7103.x to 2.7104.x. 
+  | |            New significant feature(s) also increment build version.
+  | `----------- A "client contest" change follows a code freeze at which
+  |              point the client is assumed to be stable. Code that
+  |              would make clients incompatible with previous clients or
+  |              proxies will be a accompanied by 'client contest' change.
+  `------------- Denotes a client rewrite.
+
+==========================================================================  
+Version change log:  
+==========================================================================  
 
 2.7110.442  new: win32: ioctl-driven network adapter online state detection.
                  primarily for use with non-RAS net devs (heads up! AOL users)
@@ -501,3 +525,4 @@ new autobuff and iniread code - memory leak fixed
 new faster ANSI C and ASM cores
 httpd fixed - checked under CERN and WinProxy
 proxy hunting now works
+
