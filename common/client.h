@@ -10,7 +10,7 @@
 // For GUIs and such
 //#define NOMAIN
 
-#define NEW_STATS_AND_LOGMSG_STUFF   //if you want a 'better looking' screen
+//#define NEW_STATS_AND_LOGMSG_STUFF   //if you want a 'better looking' screen
 #define NEW_LOGSCREEN_PERCENT_SINGLE //if the percbar is to stay < 80 chars
 //#define PERCBAR_ON_ONE_LINE //prints percs for all (max 16) threads on one line
                      //platform must support "\r" to return to start of line
@@ -633,7 +633,7 @@ public:
 #endif
 
 #ifndef NEW_STATS_AND_LOGMSG_STUFF
-#if ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K) ||   \
+#if ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K)) ||  \
      (CLIENT_OS == OS_MACOS) ||                              \
      (CLIENT_OS == OS_SCO) ||                                \
      (CLIENT_OS == OS_OS2) ||                                \
