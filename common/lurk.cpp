@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.33 2001/01/21 16:22:29 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.34 2001/02/01 21:05:21 oliver Exp $"; }
 
 //#define TRACE
 
@@ -1248,17 +1248,19 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
      // note : SIOCGIFCOUNT doesn't work so we have to hack around
      //        to retrieve the number of interfaces
      unsigned numreqs = 10;
+     int prev_ifc_len;
      ifc.ifc_len = 0;
      ifc.ifc_buf = (caddr_t) malloc( sizeof(struct ifreq) * numreqs );
      while (ifc.ifc_buf)
      {
+       prev_ifc_len = ifc.ifc_len;
        ifc.ifc_len = sizeof(struct ifreq) * numreqs;
        if (ioctl (fd, SIOCGIFCONF, &ifc) < 0)
        {
          ifc.ifc_len = 0;
          break;
        }
-       if ((ifc.ifc_len / sizeof(struct ifreq)) < numreqs )
+       if (ifc.ifc_len == prev_ifc_len)
          break;
        // assume overflow, enlarge buffer
        numreqs += 10;
