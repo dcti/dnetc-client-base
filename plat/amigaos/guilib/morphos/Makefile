@@ -12,8 +12,8 @@ TARGET	= ../../../../dnetcgui.library
 CC	= ppc-morphos-gcc
 CDEFS	= -DUSE_INLINE_STDARG
 CWARN	= -Wall -Wno-parentheses -Wno-missing-braces
-CFLAGS	= $(CDEFS) $(CWARN) -O2 -fomit-frame-pointer -mcpu=603 -finline-functions -mstring -mmultiple
-LDFLAGS	= -s -noixemul
+CFLAGS	= -noixemul -O2 $(CDEFS) $(CWARN) -fomit-frame-pointer -finline-functions -mstring -mmultiple
+LDFLAGS	= -noixemul -nostartfiles
 
 OBJS	= LibHeader.o LibInit.o AppClass.o MUIGUI.o CreateGUI.o
 
@@ -29,9 +29,9 @@ clean:
 	rm -f $(OBJS) $(TARGET) $(TARGET).db
 
 $(TARGET): $(OBJS)
-		  $(CC) $(LDFLAGS) -nostartfiles -o $@.db $(OBJS) -lsyscall
-		  ppc-morphos-strip --strip-unneeded --strip-debug --remove-section .comment -o $@ $@.db
-		  -flushlib dnetcgui.library
+		$(CC) $(LDFLAGS) -o $@.db $(OBJS) -lsyscall
+		ppc-morphos-strip --strip-unneeded --strip-debug --remove-section .comment -o $@ $@.db
+		-flushlib dnetcgui.library
 
 GLOBAL		= LibHeader.h CreateGui.h dnetcgui.h ../dnetcgui.h
 LibHeader.o	: LibHeader.c $(GLOBAL) guilib_version.h
