@@ -16,7 +16,8 @@ Dual mode (RC5DES) clients
                      spurious shutdowns during fetches/flushes fixed.
                     -HTTP authentication works correctly once again.
 2.7106.436 99.02.14 Randomprefix incrementation problem fixed.
-2.7106.435 99.02.06 Added lurk fonctionnality in x86-Linux clients.
+2.7106.435 99.02.10 Generalized lurk fonctionnality and added FreeBSD support.
+2.7106.435 99.02.06 Added lurk fonctionnality for Linux.
 2.7105.432 99.01.21 OS2-EMX and lurk mode changes. -(un)install honors -quiet
                     Network send errors fixed
 2.7105.432 99.01.19 Connection error message support added for win16/32
