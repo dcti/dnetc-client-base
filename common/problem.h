@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.27  1998/11/14 14:07:54  cyp
+// Removed trailing ^Z
+//
 // Revision 1.26  1998/11/14 13:56:13  cyp
 // Fixed pipeline_count for x86 clients (DES cores were running with 4
 // pipelines). Fixed unused parameter warning in LoadState(). Problem manager
@@ -262,4 +265,3 @@ public:
 
 #endif
 
-
