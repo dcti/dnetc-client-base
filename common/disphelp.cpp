@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.17 2001/02/17 20:31:42 sampo Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.18 2002/03/25 22:26:16 sampo Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -177,7 +177,6 @@ void GenerateManPage( void )
     fprintf(manp, ".Nd distributed.net distributed computing client for "
                     CLIENT_OS_NAME"\n" );
 
-    fprintf(manp,"\n");
     fprintf(manp, ".Sh SYNOPSIS\n");
     fprintf(manp, ".Nm %s\n", appname);
     for (pos=0;pos<(sizeof(helpbody)/sizeof(helpbody[0]));pos++)
@@ -211,7 +210,6 @@ void GenerateManPage( void )
       }
     }
 
-    fprintf(manp,"\n");
     fprintf(manp, ".Sh DESCRIPTION\n");
     fprintf(manp,
       ".Ar %s\nis a distributed computing client that coordinates with servers "
@@ -221,7 +219,6 @@ void GenerateManPage( void )
       "It is designed to run in idle time so as to not impact the normal operation "
       "of the computer.\n", appname);
 
-    fprintf(manp,"\n");
     fprintf(manp, ".Sh INSTALLATION\n");
     fprintf(manp,
       "Since you are already reading this, I assume you know how to "
@@ -240,7 +237,6 @@ void GenerateManPage( void )
       "A list of command line options is listed below. "
       );
 
-    fprintf(manp,"\n");
     fprintf(manp, ".Sh OPTIONS\n"
       "In addition to the conventional command line passed to the client from "
       "a shell, options may also be passed to the client using either or both "
@@ -348,22 +344,19 @@ void GenerateManPage( void )
         fprintf(manp,".Bl -tag -width Fl\n");
       }
     }
-
-    fprintf(manp,"\n");
+    fprintf(manp,".El\n");
     fprintf(manp,".Sh BUGS\n"
-                 ".Pp\n"
                  "No client, irrespective of platform, has ever been released "
                  "with any known bugs.\n"
-                 ".Sp\n"
+		 ".Sp\n"
                  "If you believe you have found one, please submit it to the "
                  "distributed.net bug reporting pages at "
                  "http://www.distributed.net/bugs/\n"
-                 "\n"
-                 "Please provide the entire version descriptor as displayed on client start "
+                 ".sp 1\n" 
+		 "Please provide the entire version descriptor as displayed on client start "
                  "when doing so. For example, the client version this manpage was "
                  "generated for was \"%s\".\n", CliGetFullVersionDescriptor() );
 
-    fprintf(manp,"\n");
     fprintf(manp,".Sh ENVIRONMENT\n"
                  ".Pp\n"
     #if 0
@@ -373,19 +366,16 @@ void GenerateManPage( void )
                  "\\fB%s_opt\\fP (or the upper\\-case version thereof)\n"
                  ".sp 0\nAdditional source of command line options (parsed first)\n", 
                  appname );
-    fprintf(manp,"\n");
     fprintf(manp,".Sh FILES\n"
                  ".Pp\n"
                  "\\fB/usr/local/etc/%s.opt\\fP\n"
                  ".sp 0\n\\fB/etc/%s.opt\\fP\n"
                  ".sp 0\nAdditional sources of command line options (parsed last)\n", appname, appname );
 
-    fprintf(manp,"\n");
     fprintf(manp,".Sh \"SEE ALSO\"\n"
                  ".Pp\n"
                  "Client documentation: %s.txt and http://www.distributed.net/FAQ/\n",
                  appname);
-    fprintf(manp,"\n");
     fprintf(manp,".Sh AUTHOR\n"
                  "distributed.net\n"
                  "http://www.distributed.net/\n");
