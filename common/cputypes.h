@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.46 2001/02/07 19:05:45 oliver Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.47 2001/02/08 18:17:01 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -426,7 +426,10 @@
 #if !defined(CLIENT_CPU)
   #define CLIENT_CPU    CPU_UNKNOWN
 #endif
-#if (CLIENT_OS == OS_UNKNOWN) || (CLIENT_CPU == CPU_UNKNOWN)
+#if defined(ASM_NONE)
+  #undef CLIENT_CPU
+  #define CLIENT_CPU CPU_UNKNOWN
+#elif (CLIENT_OS == OS_UNKNOWN) || (CLIENT_CPU == CPU_UNKNOWN)
   /* ignoreunknowncpuos is used by the client's testplat.cpp utility. */
   #if !defined(IGNOREUNKNOWNCPUOS)
     #error "Unknown CPU/OS detected in cputypes.h"
