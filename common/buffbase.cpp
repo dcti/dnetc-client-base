@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.34 2002/10/11 23:52:05 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.35 2002/10/15 22:46:03 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -648,7 +648,7 @@ static int __get_remote_filename(Client *client, int project, int use_out,
                    client->remote_update_dir ), buflen );
   buffer[buflen-1] = '\0';
 
-  strcat( strcpy( suffix, EXTN_SEP ), CliGetContestNameFromID( project ));
+  strcat( strcpy( suffix, EXTN_SEP ), ProjectGetFileExtension( project ));
   for (len = 0; suffix[len]; len++)
     suffix[len] = (char)tolower(suffix[len]);
   len = strlen(buffer);
