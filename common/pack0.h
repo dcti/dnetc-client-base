@@ -5,7 +5,9 @@
  * Any other distribution or use of this source violates copyright.
 */
 
-/* "@(#)$Id: pack0.h,v 1.1.2.1 2003/08/25 08:37:59 mweiser Exp $" */
+#ifndef __PACK0_H__
+# define __PACK0_H__ "@(#)$Id: pack0.h,v 1.1.2.2 2003/08/25 09:34:21 mweiser Exp $"
+#endif
 
 #if !defined(__PACK_H__)
 # error "you must include pack{,1,4,8}.h first!"

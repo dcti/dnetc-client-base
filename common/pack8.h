@@ -5,12 +5,14 @@
  * Any other distribution or use of this source violates copyright.
 */
 
-/* "@(#)$Id: pack8.h,v 1.1.2.1 2003/08/25 08:37:59 mweiser Exp $" */
+#ifndef __PACK8_H__
+# define __PACK8_H__ "@(#)$Id: pack8.h,v 1.1.2.2 2003/08/25 09:34:21 mweiser Exp $"
 
-#include "pack.h"
+# include "pack.h"
+#endif
 
 /* make sure we don't get confused by predefined macros and initialise
-** DNETC_PACKED to do nothing */
+** DNETC_PACKED to do 8-byte alignment */
 #undef DNETC_PACKED
 #define DNETC_PACKED DNETC_ALIGNED8
 
