@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.122  1998/11/11 19:08:19  remi
+# Simplified $OPTS_GCC272
+#
 # Revision 1.121  1998/11/11 16:39:02  remi
 # Sorted out x86-linux entries.
 # Created new $OPTS_GCC272 as I don't think -fno-exceptions is a gcc
@@ -423,11 +426,8 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
     -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
     -fno-inline-functions -fno-exceptions'
 
-OPTS_GCC272='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
-    -fexpensive-optimizations -fomit-frame-pointer \
-    -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
-    -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
-    -fno-inline-functions -fno-handle-exceptions -fno-rtti'
+OPTS_GCC272='-fomit-frame-pointer -fno-inline-functions -fno-handle-exceptions \
+    -fno-rtti -Wall -Icommon -Irc5 -Ides -Iplatforms '
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
