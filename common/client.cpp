@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.204 1999/04/20 02:41:08 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.205 1999/04/22 18:28:54 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -156,6 +156,8 @@ int ClientIsGUI(void)
 void PrintBanner(const char *dnet_id,int level,int restarted)
 {
   /* level = 0 = show copyright/version,  1 = show startup message */
+  restarted = 0; /* yes, always show everything */
+  
   if (!restarted)
   {
     if (level == 0)
