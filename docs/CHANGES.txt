@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.29 2000/02/12 03:50:18 mfeiri Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.30 2000/02/12 19:55:59 andreasb Exp $
 ==========================================================================
 
 2.8000
@@ -29,8 +29,8 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.29 2000/02/12 03:50:18 mfeiri Exp $
 
 2.8007.458  fix: all: the annoying OGR 1 node bug finally fixed
             new: all: client can be configured a) to restart itself
-            on .ini change; b) (on most platforms) to pause itself as
-            long as process/executable x|y|z|... is running.
+                 on .ini change; b) (on most platforms) to pause itself as
+                 long as process/executable x|y|z|... is running.
             fix: win32: use NULL DACLs for CreateMutex. Go Condor!
             chg: macos: numerous minor interface improvements
             new: macos: multiprocessor support (MP 2.x enhanced)
