@@ -1,6 +1,6 @@
 
  distributed.net client for Win32 (Win9x/WinNT/Win32s)
- document revision $Id: readme.w32,v 1.1.2.5 1999/11/16 21:06:19 cyp Exp $
+ document revision $Id: readme.w32,v 1.1.2.6 1999/11/25 01:58:08 cyp Exp $
 
  Welcome to the distributed.net client.
 
@@ -41,7 +41,8 @@
     a user logs out.
 
     Obviously, a service does not have access to remote file and disk 
-    resources that require a user to log in first.
+    resources that require a user to log in first. (this restriction
+    can be nullified on NT - see FAQ below)
 
     To install the client as a service, run the client with the -install
     switch. This will cause it to register itself with the service handler,
@@ -66,7 +67,7 @@
     idle, waiting for keystrokes, and the client can use that time.
 
     However, in some environments, utilizing *any* cpu time while a 
-    user is actively trying to use the machine is a problem. The 
+    user is actively trying to use the machine may be a problem. The 
     distributed.net screen saver multiplexor addresses that issue. 
     When activated by the system, it will launch a client in the 
     background and _another_ screen saver of your choice in the 
@@ -87,7 +88,8 @@
        on Win95:  your \WINDOWS\ or \WINDOWS\SYSTEM\ directory
        on WinNT:  your \WINNT\ or \WINNT\SYSTEM32\ directory
     b) Once you have copied it, go to the Display properties in the Control
-       Panel and select the RC5 screen saver as the active screen saver.
+       Panel and select the distributed.net screen saver as the active 
+       screen saver.
     c) Clicking on the "Settings..." button opens the multiplexors 
        configuration dialog. Select the client you wish the multiplexor to
        run in the background and select the screensaver you wish to run
@@ -107,6 +109,12 @@
 
  2.0  Notes: ---------------------------------------------------------
 
+    Beginning with v2.8001.445, the client distribution includes a separate
+    CUI wrapper that communicates with the GUI client over pipes. Older
+    clients can be started in native CUI mode either by renaming the .exe to
+    .com, or by using a patch utility to change the executable's subsystem 
+    type to CUI.
+        
     Beginning with v2.2702.419, the win32 CLI client consolidates the
     rc5des.exe (normal CUI client), rc5desh.exe (hidden client) and
     rc5dessvc.exe (service mode client) in one executable. It no longer 
@@ -132,12 +140,6 @@
         "modes", ie -fetch, -flush, -update and so on. Clicking with 
         right mouse button on the client window will bring up a "mode" menu.
 
-    Beginning with v2.8001.445, the client distribution includes a separate
-    CUI wrapper that communicates with the GUI client over pipes. Older
-    clients can be started in native CUI mode either by renaming the .exe to
-    .com, or by using a patch utility to change the executable's subsystem 
-    type to CUI.
-        
     Beginning with v2.2706.425, it is no longer mandatory to have 
     winsock.dll/wsock32.dll installed. 
 
@@ -148,46 +150,51 @@
     A: Read CHANGES.txt as included with this distribution!
 
     Q: Where is the (what-used-to-be-) GUI version of the client?
-    A: The "GUI" features currently not in the non-"GUI" client, ie
-       moo sound, log grapher and gui config, are scheduled for release
-       as portable, separate utilities. As always, user contribution 
-       will be much appreciated. The code will be "Open Source".
+    A: The "GUI" features not in the non-"GUI" client, are/will be
+       release as portable, separate utilities. The code will be 
+       "Open Source". As always, user contribution will be much 
+       appreciated. 
+       The source for the log grapher (useless though it may now be) 
+       is available at http://www.distributed.net/addons.html
 
     Q: Is it possible to start the client as a service and yet keep it
        visible on the desktop or taskbar?
     A: Services are not supposed to be interactive. Services are a hair 
-       above device drivers, and on NT many 'devices' are indeed implemented 
-       as services (RAS for instance). There is a special category of 
-       interactive services, but they are rare (like kernel debuggers), 
-       and NT only. Some 'interactive' functionality may be achieved by 
-       enabling logging to file and by using the client's command line 
-       -shutdown, -restart, -pause and -unpause options.
+       above device drivers, and on NT many 'devices' are indeed 
+       implemented as services (RAS for instance). There is a special 
+       category of interactive services, but they are rare (like kernel 
+       debuggers), and NT only. Some 'interactive' functionality may be 
+       achieved by enabling logging to file and by using the client's 
+       command line -shutdown, -restart, -pause and -unpause options.
 
-    Q: How do I check that the client is infact running hidden/as a service?
-    A: On NT, service status can be determined in the service manager and 
-       the task manager will show the client taking up lots of cpu time. 
-       Win9x does not have a service manager or a task manager, so you will 
-       need to either enable logging or use 'wintop' or similar utility.
+    Q: How do I check that the client is in fact running hidden/as
+       a service?
+    A: On NT, service status can be determined in the service manager 
+       and the task manager will show the client taking up lots of cpu 
+       time. Win9x does not have a service manager or a task manager, 
+       so you will need to either enable logging or use 'wintop' or 
+       similar utility. (wintop for Windows 9x is available from the
+       'kerneltoys' pack or at http://www.distributed.net/addon.html)
        
     Q: What are the client's service keys/ID? 
     A: if you use NT, it will be in the service manager. The client's 
        service ID (shortname) is "dnetc" for v2.80xx and later, and
-       "rc5desnt" or "bovrc5nt" for pre-2.80xx clients.
-       On win9x (win9x doesn't have a service manager), the client
-       is registered with the registry as "bovwin32" or "distributed.net 
-       client" under HKEY_LOCAL_MACHINE in
+       "rc5desnt" or "bovrc5nt" for pre-2.80xx clients. 
+       On win9x (win9x doesn't have a service manager), the client is 
+       registered with the registry as "distributed.net client" (or 
+       "bovwin32" in very old versions) under HKEY_LOCAL_MACHINE in
        \Software\Microsoft\Windows\CurrentVersion\RunService
 
     Q: How do I stop the service from the command line? 
-    A: Run the client with '-shutdown' or (on NT only) 'net stop SERVICEID'
+    A: Run the client with '-shutdown' or, on NT, 'net stop SERVICEID'
        (see previous question for service ID)
 
-    Q: When installed as a service, the client cannot access the network.
-       How come?
-    A: When installed as a service, the client is (on NT, by default) not 
-       running in a user's context (there isn't a user logged in). Under 
-       Win9x (where security is virtually non-existant), the client 
-       *could* theoretically access network devices /once/ a user has 
+    Q: When installed as a service, the client cannot access files
+       on remote drives (network shares). How come?
+    A: When installed as a service, the client is (on NT, by default) 
+       not running in a user's context (there isn't a user logged in). 
+       Under Win9x, where security is virtually non-existant, the client 
+       *could* theoretically access network shares /once/ a user has 
        logged in, but that is obviously not a good idea :). On NT, the 
        service can be configured from the service manager to start in a 
        context other than the default "Local System": Control Panel -> 
@@ -220,8 +227,8 @@
     
     Q: I want to run the client as a screen saver. How do I do this?
     A: Beginning with v2.7112.444, the client release archive includes a
-       screensaver multiplexor. When activated, it will launch a client in 
-       the background and _another_ screen saver of your choice in the 
+       screensaver multiplexor. When activated, it will launch a client 
+       in the background and _another_ screen saver of your choice in the 
        foreground. Documentation is elsewhere in this document.
        
     Q: I want to run the client at a higher priority than zero/idle.
@@ -249,32 +256,34 @@
     Q: What is the 'Dialup interfaces' option I see in the config?
     A: Dial-up detection was previously available only the RAS (Remote
        Access Service) API. Beginning with 2.7110.440, the Win32 client
-       is capable of detecting 'UP' state on *non-RAS* devices such as ISDN
-       adapters that are not RAS capable or AOL's proprietary modem adapter 
-       which appears as a network cards and not as a modems.
+       is capable of detecting 'UP' state on *non-RAS* devices such as 
+       ISDN adapters that are not RAS capable or AOL's proprietary 
+       modem adapter which appears as a network cards and not as a 
+       modems.
        The 'Dialup interfaces' list then allows you to mask or mask-out
        those devices you do not want the client to 'see'. 
        Windows has no consistant naming scheme for network adapters:
        What appears as "PPP Adapter NdisWan'n'" on NT, appears as 
        "'i' Ethernet Adapter" on Windows9x and the numbering sequence 
        ('n' and 'i') isn't uniform either. To simplify this, the client
-       refers to all dialup adapters as "ppp[0-9]" and all non-dialup devices 
-       as "eth[0-9]".
+       refers to all dialup adapters as "ppp[0-9]" and all non-dialup 
+       devices as "eth[0-9]".
        Generally speaking, if you were happy with the way lurk worked 
        before, you probably do need the 'Dialup interfaces' option now.
 
     Q: Can I share my win32 client's buffers with non-win32 clients?
-       ["sharing" is simultaneous access via file-sharing, but also manual 
-       transfer of the buffer files from one machine to another]
-    A: Theoretically, yes. It is however a good idea to ensure that clients 
-       sharing buffers all have the same version number. For instance, if 
-       you share buffers between 2.7110.440 and other older clients, you 
-       must ensure that the client newer than 2.7109 do not request 
-       "big-block"s from the keyservers (ensure 'preferred-packet-size' is 
-       less than 32). Read the general FAQ for specificities.
+       ["sharing" is simultaneous access via file-sharing, but also 
+       manual transfer of the buffer files from one machine to another]
+    A: Theoretically, yes. It is however a good idea to ensure that 
+       clients sharing buffers all have the same version number. For 
+       instance, if you share buffers between 2.7110.440 and other 
+       older clients, you must ensure that the client newer than 2.7109
+       do not request "big-block"s from the keyservers (ensure 
+       'preferred-packet-size' is less than 32). Read the general FAQ 
+       for specifics.
 
     Q: How do I completely remove the this client from my system?
     A: First run the client with the '-uninstall' switch to ensure that 
-       it is not installed as a service. Then, simply delete all files in 
-       the client's directory.
+       it is not installed as a service. Then, simply delete all files 
+       in the client's directory.
 
