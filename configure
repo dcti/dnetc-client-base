@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.149 2000/04/22 16:29:35 snake Exp $
+# @(#)$Id: configure,v 1.222.2.150 2000/04/23 01:02:50 jlawson Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1182,6 +1182,32 @@ case "$1" in
 
   ### ***RELEASE*** targets - mt for all but libc4, _never_ static for glibc2
 
+
+  ### The "x86-linux-elf" (universal elf) target is now the only release
+  ### build that should be distributed anymore.  The remaining x86-linux
+  ### targets for libc4/libc5/glibc2 are only left for development
+  ### convenience.  The "x86-linux-elf" target should ideally be built on
+  ### a glibc21 machine and verified with "ldd" that it does not have
+  ### any dynamic library dependencies.
+
+    *x86-linux-elf)	                   # universal elf
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DMMX_RC5 -D__showids__ \
+			-DMULTITHREAD -DLURK -DSMC -DHAVE_OGR_CORES \
+                        -DUNIVERSALRESOLVER"
+	TARGET_LDFLAGS="-Xlinker -omagic"  #NEVER STATIC FOR GLIBC!!!
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
+			common/lurk.cpp $OGR_ANSI_SRCS"
+	TARGET_ADDASMS="platforms/x86ident.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_NASM_FMT="elf"
+	TARGET_LIBS="-lpthread -ldl"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-x86-elf"
+	;;
+
+
     *x86-linux-glibc2)	                   # glibc20/glibc21
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
@@ -1199,34 +1225,12 @@ case "$1" in
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
 			##$NASM_DESMMX_SRCS $CSC_ASM_SRCS
 	TARGET_NASM_FMT="elf"
-	TARGET_LIBS="-lpthread -ldl"
+	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-glibc2"
 	;;
 
-    *x86-linux-glibc2-static)	 # glibc2 static for b0rken RH50
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DLURK -DHAVE_OGR_CORES"
-                        ##-DMMX_CSC -DHAVE_CSC_CORES
-                        ##$OPTS_DES_MMX -DHAVE_DES_CORES
-	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
-			common/lurk.cpp $OGR_ANSI_SRCS"
-			##$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-	TARGET_ADDASMS="platforms/x86ident.S"
-                        ##des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S
-			##des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-                        ## $NASM_DESMMX_SRCS $CSC_ASM_SRCS
-	TARGET_NASM_FMT="elf"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-x86-glibc2-static-redhat50"
-	;;
-
-    *x86-linux-libc5)	                   # libc5
+    *x86-linux-libc5)	                   # libc5-elf
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DMMX_RC5 -D__showids__ \
@@ -1248,7 +1252,7 @@ case "$1" in
         TARGET_TARBALL="linux-x86-libc5"
 	;;
 
-    *x86-linux-libc4)	                    # libc4
+    *x86-linux-libc4)	                    # libc4-aout
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -D__showids__ \
@@ -1260,7 +1264,7 @@ case "$1" in
 			common/lurk.cpp $OGR_ANSI_SRCS"
 			##$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
 	TARGET_ADDASMS="platforms/x86ident.S"
-			##des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S			
+			##des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S
 			##des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
 			## $NASM_DESMMX_SRCS $CSC_ASM_SRCS

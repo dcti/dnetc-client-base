@@ -6,7 +6,7 @@
  *
 */
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.25.2.10 2000/04/22 16:27:47 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.25.2.11 2000/04/23 01:02:51 jlawson Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
@@ -226,7 +226,7 @@ static struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host ord
 // the resolver and directly call it, bypassing the statically linked
 // version of gethostbyname() bound to our executable.
 
-#if (CLIENT_OS == OS_LINUX)
+#if (CLIENT_OS == OS_LINUX) && defined(UNIVERSALRESOLVER)
 #include <dlfcn.h>
 static struct hostent *__linux_gethostbyname_shim( const char *hostname )
 {
