@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.87 1999/04/11 15:37:21 sampo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.88 1999/04/17 05:40:58 gregh Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -29,12 +29,18 @@ return "@(#)$Id: clirun.cpp,v 1.87 1999/04/11 15:37:21 sampo Exp $"; }
 
 // --------------------------------------------------------------------------
 
+const u32 OGR_TIMESLICE_MSEC = 200;
+const u32 OGR_TIMESLICE_MAX  = 0x100000; // in units of nodes
+
+// --------------------------------------------------------------------------
+
 static struct
 {
   int nonmt_ran;
   unsigned long yield_run_count;
   volatile int refillneeded;
-} runstatics = {0,0,0};
+  volatile u32 ogr_tslice;
+} runstatics = {0,0,0,0x1000};
 
 // --------------------------------------------------------------------------
 
@@ -595,7 +601,7 @@ if (targ->realthread)
     else
     {
 //printf("run: doing run\n");
-      int run; u32 last_count;
+      int run; u32 last_count; u32 runtime_ms;
       #ifdef NON_PREEMPTIVE_OS_PROFILING
       thisprob->tslice = do_ts_profiling( thisprob->tslice,
                           thisprob->contest, threadnum );
@@ -603,11 +609,33 @@ if (targ->realthread)
       #if (CLIENT_OS == OS_MACOS)
       thisprob->tslice = GetTimesliceToUse(thisprob->contest);
       #endif
+      if (thisprob->contest == 2) // OGR
+      {
+        thisprob->tslice = runstatics.ogr_tslice;
+        runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000);
+      }
 
       last_count = thisprob->core_run_count; 
+
       targ->is_suspended = 0;
       run = thisprob->Run();
       targ->is_suspended = 1;
+
+      if (thisprob->contest == 2) // OGR
+      {
+        runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000) - runtime_ms;
+        if (runtime_ms < OGR_TIMESLICE_MSEC/2 && runstatics.ogr_tslice < OGR_TIMESLICE_MAX)
+        {
+          runstatics.ogr_tslice <<= 1;
+        }
+        else if (runtime_ms > OGR_TIMESLICE_MSEC*2 && runstatics.ogr_tslice > 1)
+        {
+          u32 newtslice = runstatics.ogr_tslice;
+          newtslice -= (newtslice >> 2);
+          runstatics.ogr_tslice = newtslice;
+        }
+      }
+
       didwork = 1;
       if (run != RESULT_WORKING)
       {
