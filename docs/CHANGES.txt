@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.116 2002/04/13 13:01:50 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.117 2002/04/14 23:25:42 andreasb Exp $
 ==========================================================================
 
 2.8000
@@ -29,7 +29,8 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.116 2002/04/13 13:01:50 andreasb Ex
 
 2.8018.472
 
-2.8017.471  new: x86: P4 RC5 core (ak-p7)
+2.8017.471  (not publicly released)
+            new: x86: P4 RC5 core (ak-p7)
             imp: x86: better intel and AMD chip identification. (#2448, #2424)
             fix: x86: Win2K, WinXP: disabled crashing RC5 SMC core. (#2399)
             new: alpha: OGR core for processors supporting the CIX extension.
