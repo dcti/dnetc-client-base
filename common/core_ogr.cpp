@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.23 2004/05/28 15:33:09 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.24 2004/06/02 18:49:20 teichp Exp $"; }
 
 //#define TRACE
 
@@ -82,8 +82,8 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.23 2004/05/28 15:33:09 kakace Exp $"; }
     extern "C" CoreDispatchTable *ogr_p2_get_dispatch_table(void); //A
     extern "C" CoreDispatchTable *ogr_p2_get_dispatch_table_nobsr(void); //B
 #elif (CLIENT_CPU == CPU_ARM)
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm1(void);
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm2(void);
+      extern "C" CoreDispatchTable *ogr_p2_get_dispatch_table_arm1(void);
+      extern "C" CoreDispatchTable *ogr_p2_get_dispatch_table_arm2(void);
 #else
     extern "C" CoreDispatchTable *ogr_p2_get_dispatch_table(void);
 #endif
@@ -613,10 +613,10 @@ int selcoreSelectCore_ogr_p2(unsigned int threadindex,
   coresel = 0;
 #elif (CLIENT_CPU == CPU_ARM)
   if (coresel == 0)
-    unit_func.ogr = ogr_get_dispatch_table_arm1();
+    unit_func.ogr = ogr_p2_get_dispatch_table_arm1();
   else
   {
-    unit_func.ogr = ogr_get_dispatch_table_arm2();
+    unit_func.ogr = ogr_p2_get_dispatch_table_arm2();
     coresel = 1;
   }
 #else
