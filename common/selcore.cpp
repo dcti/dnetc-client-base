@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.61 2000/04/21 10:19:16 jlawson Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.62 2000/05/09 15:06:00 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -102,7 +102,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "dworz/amazing",
       NULL
     },
-  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_OS == OS_POWER)
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
     { /* RC5 */
       /* lintilla depends on allitnil, and since we need both even on OS's 
          that don't support the 601, we may as well "support" them visually.
@@ -130,6 +130,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
   #endif  
     { /* OGR */
       "GARSP 5.13",
+      NULL, /* possibly used by "GARSP 5.13-vec" */
       NULL
     },
     { /* CSC */
@@ -174,8 +175,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
         #endif
       }
     }
-    #endif
-    #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+    #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
     {
       long det = GetProcessorType(1);
       if (det < 0) 
@@ -189,7 +189,8 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       {
         corenames_table[RC5][2] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
         corenames_table[RC5][3] = NULL;
-        //corenames_table[OGR][1] = "GARSP 5.13-vec"; /* aka vec_ogr_get_dispatch_table() */
+        //corenames_table[OGR][0] = "GARSP 5.13-scalar"; /* rename */
+        //corenames_table[OGR][1] = "GARSP 5.13-vector"; /* aka vec_ogr_get_dispatch_table() */
         //corenames_table[OGR][2] = NULL;
       }
     }
@@ -552,11 +553,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     selcorestatics.corenum[OGR] = selcorestatics.user_cputype[OGR];
     if (selcorestatics.corenum[OGR] < 0 && detected_type > 0)
     {
-      int cindex = -1;
+      int cindex = 0; //scalar
       if (( detected_type & (1L<<25) ) != 0) //OS supports altivec
         cindex = 1;                 // vector
-      else                          
-        cindex = 0;                 // scalar
       selcorestatics.corenum[OGR] = cindex;
     }
   }
