@@ -95,5 +95,4 @@
 // distributed.net signals used to indiciate contest closure.
 #define RC5CLOSEDCODE 0x1337F00DL
 #define DESCLOSEDCODE 0xBEEFF00DL
-#define OGRCLOSEDCODE 0xBEADF00DL
 
