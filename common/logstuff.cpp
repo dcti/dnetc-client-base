@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.43 2000/12/01 13:56:17 oliver Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.44 2000/12/14 19:24:45 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -964,6 +964,7 @@ void LogScreenPercent( unsigned int load_problem_count )
       ProblemComputeRate( cont_i, 0, 0, ratehi, ratelo, 0, 0,
                           &buffer[i], sizeof(buffer)-i );
       strcat(buffer, "/sec");
+#if 0
       //if (CliGetThreadUserTime(0)==0) /* thread time supported */
       { 
         unsigned long efficiency = 0;
@@ -983,7 +984,7 @@ void LogScreenPercent( unsigned int load_problem_count )
         sprintf(&buffer[strlen(buffer)], " (%lu.%01lu%% efficient)", 
                                           efficiency/10, efficiency%10);
       }
-#if 0 /* is this useful/meaningful? */
+      #if 0 /* is this useful/meaningful? */
       else 
       {
         unsigned long benchrate = BenchGetBestRate(cont_i);
@@ -1012,6 +1013,7 @@ void LogScreenPercent( unsigned int load_problem_count )
                                             bestperm/100, bestperm%100);
         }
       }    
+      #endif
 #endif
     }   
   }
