@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.11  1998/11/29 14:38:04  cyp
+// Fixed missing outthreshold check. Added connectoften support (haven't
+// tested yet). But why, why, why isn't the inthreshold check code working?
+//
 // Revision 1.10  1998/11/28 19:47:13  cyp
 // __IndividualProblemLoad() retries all contests buffers after a buffer
 // (net) update.
@@ -45,7 +49,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.10 1998/11/28 19:47:13 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.11 1998/11/29 14:38:04 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -132,7 +136,8 @@ static void __RefreshRandomPrefix( Client *client )
 
 static unsigned int __IndividualProblemUnload( Problem *thisprob, 
                 unsigned int prob_i, Client *client, int *load_needed, 
-                      unsigned load_problem_count, unsigned int *contest )
+                unsigned load_problem_count, unsigned int *contest,
+                int *bufupd_pending )
 {
   FileEntry fileentry;
   unsigned int cont_i;
@@ -181,6 +186,9 @@ static unsigned int __IndividualProblemUnload( Problem *thisprob,
       }
     else
       {
+      if (client->nodiskbuffers)
+        *bufupd_pending |= BUFFERUPDATE_FLUSH;
+            
       if (load_problem_count <= COMBINEMSG_THRESHOLD)
         msg = "Saved";
       else
@@ -200,12 +208,14 @@ static unsigned int __IndividualProblemUnload( Problem *thisprob,
 
 static unsigned int __IndividualProblemSave( Problem *thisprob, 
                 unsigned int prob_i, Client *client, int *load_needed, 
-                       unsigned load_problem_count, unsigned int *contest )
+                unsigned load_problem_count, unsigned int *contest,
+                int *bufupd_pending )
 {                    
   FileEntry fileentry;
   RC5Result rc5result;
   unsigned int cont_i;
   unsigned int norm_key_count = 0;
+  long longcount;
   prob_i = prob_i; //get rid of warning
   
   if ( thisprob->IsInitialized() && thisprob->GetResult( &rc5result ) != -1 &&
@@ -259,7 +269,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                 (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
 
     // send it back...
-    if (client->PutBufferRecord( &fileentry ) < 0)  // send it back...
+    if ( (longcount = client->PutBufferRecord( &fileentry )) < 0)
       {
       //Log( "PutBuffer Error\n" ); //error already printed?
       }
@@ -268,6 +278,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       //---------------------
       // update the totals for this contest
       //---------------------
+      if ((unsigned long)(longcount) >= (unsigned long)(client->outthreshold[*contest]))
+        *bufupd_pending |= BUFFERUPDATE_FLUSH;
 
       if (load_problem_count <= COMBINEMSG_THRESHOLD)
         {
@@ -292,8 +304,9 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 // -----------------------------------------------------------------------
 
 static unsigned int __IndividualProblemLoad( Problem *thisprob, 
-                   unsigned int prob_i, Client *client, int *load_needed, 
-                   unsigned load_problem_count, unsigned int *contest )
+                    unsigned int prob_i, Client *client, int *load_needed, 
+                    unsigned load_problem_count, unsigned int *contest,
+                    int *bufupd_pending )
 {
   FileEntry fileentry;
   unsigned int cont_i;
@@ -345,6 +358,8 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         longcount = client->GetBufferRecord( &fileentry, contest_selected, 0 );
         if (longcount >= 0)
           {
+	  if (longcount == 0)
+	    *bufupd_pending |= BUFFERUPDATE_FETCH;
           didload = 1;
           break;
           }
@@ -356,6 +371,8 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         client->BufferUpdate((BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
       if (didupdate < 0)
         break;
+      if (didupdate!=0)
+        *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
       if ((didupdate & BUFFERUPDATE_FETCH) == 0) /* didn't fetch */
         break;
       resetloop = 1; /* we refreshed buffers, so retry all */
@@ -480,12 +497,13 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   Problem *thisprob;
   int load_needed, changed_flag;
 
-  int i,prob_step;  
+  int i,prob_step,bufupd_pending;  
   unsigned int norm_key_count, prob_i, prob_for, cont_i;
-  unsigned int loaded_problems_count[2]={0,0};
-  unsigned int loaded_normalized_key_count[2]={0,0};
-  unsigned int saved_problems_count[2]={0,0};
-  unsigned int saved_normalized_key_count[2]={0,0};
+  unsigned int loaded_problems_count[CONTEST_COUNT];
+  unsigned int loaded_normalized_key_count[CONTEST_COUNT];
+  unsigned int saved_problems_count[CONTEST_COUNT];
+  unsigned int saved_normalized_key_count[CONTEST_COUNT];
+  
   char buffer[100+sizeof(in_buffer_file[0])];
   unsigned int total_problems_loaded, total_problems_saved;
   unsigned int getbuff_errs;
@@ -494,6 +512,13 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   changed_flag = (done_initial_load == 0);
   total_problems_loaded = 0;
   total_problems_saved = 0;
+  bufupd_pending = 0;
+  
+  for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+   {
+   loaded_problems_count[cont_i]=loaded_normalized_key_count[cont_i]=0;
+   saved_problems_count[cont_i] =saved_normalized_key_count[cont_i]=0;
+   }
 
   // ====================================================
 
@@ -548,14 +573,14 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
       if (mode == PROBFILL_UNLOADALL)
         {
         norm_key_count = __IndividualProblemUnload( thisprob, prob_i, this, 
-          &load_needed, load_problem_count, &cont_i );
+          &load_needed, load_problem_count, &cont_i, &bufupd_pending );
         load_needed = 0;
         changed_flag = (norm_key_count!=0);
         }
       else
         {
         norm_key_count = __IndividualProblemSave( thisprob, prob_i, this, 
-          &load_needed, load_problem_count, &cont_i );
+          &load_needed, load_problem_count, &cont_i, &bufupd_pending );
         if (load_needed)
           changed_flag = 1;
         }
@@ -581,7 +606,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
         {
         load_needed = 0;
         norm_key_count = __IndividualProblemLoad( thisprob, prob_i, this, 
-                    &load_needed, load_problem_count, &cont_i );
+                &load_needed, load_problem_count, &cont_i, &bufupd_pending );
         if (load_needed)
           getbuff_errs++;
         if (norm_key_count)
@@ -598,8 +623,14 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
   // ====================================
 
-  for ( cont_i = 0; cont_i < 2; cont_i++) //once for each contest
+  for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
     {
+    if (bufupd_pending == 0 && connectoften)
+      {
+      if ((GetBufferCount( cont_i, 0, NULL ) <= (unsigned long)inthreshold[cont_i]) ||
+          (GetBufferCount( cont_i, 1, NULL ) != 0))
+        bufupd_pending = BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH;
+      }    
     if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
       {
       const char *cont_name = CliGetContestNameFromID(cont_i);
@@ -651,12 +682,30 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
         {
         Log( "Summary: %s\n", CliGetSummaryStringForContest(cont_i) );
         }
+      } //if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
+    } //for ( cont_i = 0; cont_i < 2; cont_i++)
+
+  // ====================================
+    
+  if (bufupd_pending)
+    {
+    if ((bufupd_pending = BufferUpdate(bufupd_pending,0)) < 0)
+      bufupd_pending = 0;
+    }
+
+  // ====================================
+    
+  for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
+    {
+    if (bufupd_pending || loaded_problems_count[cont_i] || saved_problems_count[cont_i])
+      {
+      const char *cont_name = CliGetContestNameFromID(cont_i);
 
       unsigned long in, norm_in, out, norm_out;
       in = GetBufferCount( cont_i, 0, &norm_in );
       out = GetBufferCount( cont_i, 1, &norm_out );
-      const char *msg = "%lu %s block%s (%lu*2^28 keys) %s in file %s\n";
-
+      const char *msg = "%lu %s block%s (%lu*2^28 keys) %s in %s\n";
+	            
       sprintf(buffer, msg, in, cont_name, in == 1 ? "" : "s",  norm_in,
             ((mode == PROBFILL_UNLOADALL)?(in==1?"is":"are"):
                                           (in==1?"remains":"remain")),
@@ -680,7 +729,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
         }
       Log( "%s", buffer );
 
-      }
+      } //if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
     } //for ( cont_i = 0; cont_i < 2; cont_i++)
 
  if (randomchanged)
