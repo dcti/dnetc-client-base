@@ -5,12 +5,17 @@
    This module contains the screen i/o primitives/wrappers for all
    those GUIs and less-than-G UIs we have been threatened with :)
    and we pretty much have scattered about anyway.
-   
-   Implementation guidelines: none. see what the neighbour did.  
+
+   Implementation guidelines: none. see what the neighbour did.
    Keep the functions small (total less than 25 lines) or make calls
    to functions in modules in your own platform area.   - cyp
 */
 // $Log: console.cpp,v $
+// Revision 1.35  1999/01/25 23:49:07  trevorh
+// #ifdef around the WinMessageBox() calls to make them used only when the
+// OS/2 GUI is being compiled. WinMessageBox() is invalid in the CLI.
+// VioGetCurPos() will not compile under Watcom 11.0
+//
 // Revision 1.34  1999/01/24 23:27:43  silby
 // Change so conisatty even when win32gui is run in hidden mode.
 //
@@ -61,7 +66,7 @@
 //
 // Revision 1.20  1998/11/10 21:36:02  cyp
 // Changed InitializeConsole() so that terms know in advance whether the
-// client will be running "modes" or not. 
+// client will be running "modes" or not.
 //
 // Revision 1.19  1998/11/10 09:49:28  silby
 // added termios for freebsd, console input works much nicer now.
@@ -102,20 +107,20 @@
 // new win32 callouts: w32ConOut(), w32ConGetCh(), w32ConKbhit()
 //
 // Revision 1.7  1998/10/07 20:43:37  silby
-// Various quick hacks to make the win32gui operational again (will 
+// Various quick hacks to make the win32gui operational again (will
 // be cleaned up).
 //
 // Revision 1.6  1998/10/07 18:36:18  silby
-// Changed logic in ConInKey once more so it's not reading uninit 
+// Changed logic in ConInKey once more so it's not reading uninit
 // variables.  Should be solid now. :)
 //
 // Revision 1.5  1998/10/07 12:56:46  silby
-// Reordered Deinitconsole so console functions would still be 
+// Reordered Deinitconsole so console functions would still be
 // available during w32deinitconsole.
 //
 // Revision 1.4  1998/10/07 12:25:04  silby
-// Figured out that MSVC doesn't understand continue as it was used; 
-// changed ConInKey's loop so that it doesn't rely on continue.  
+// Figured out that MSVC doesn't understand continue as it was used;
+// changed ConInKey's loop so that it doesn't rely on continue.
 // (Functionality unchanged.)
 //
 // Revision 1.3  1998/10/07 04:04:20  silby
@@ -130,7 +135,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.34 1999/01/24 23:27:43 silby Exp $"; }
+return "@(#)$Id: console.cpp,v 1.35 1999/01/25 23:49:07 trevorh Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -167,7 +172,7 @@ return "@(#)$Id: console.cpp,v 1.34 1999/01/24 23:27:43 silby Exp $"; }
     (CLIENT_OS == OS_OS9)         || (CLIENT_OS == OS_BEOS)    || \
     (CLIENT_OS == OS_MVS)         || (CLIENT_OS == OS_MACH10)
 #define TERM_IS_ANSI_COMPLIANT
-#endif    
+#endif
 
 #if (CLIENT_OS == OS_RISCOS)
 extern "C" void riscos_backspace();
@@ -175,7 +180,7 @@ extern "C" void riscos_backspace();
 
 /* ---------------------------------------------------- */
 
-static struct 
+static struct
 {
   int initlevel;
   int runhidden;
@@ -219,12 +224,12 @@ int DeinitializeConsole(void)
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
       w32DeinitializeConsole();
     #endif
-    } 
+    }
 
   constatics.initlevel--;
 
   return 0;
-}  
+}
 
 /* ---------------------------------------------------- */
 
@@ -232,7 +237,7 @@ int InitializeConsole(int runhidden,int doingmodes)
 {
   int retcode = 0;
 
-  if ((++constatics.initlevel) == 1) 
+  if ((++constatics.initlevel) == 1)
     {
     memset( (void *)&constatics, 0, sizeof(constatics) );
     constatics.initlevel = 1;
@@ -261,10 +266,10 @@ int InitializeConsole(int runhidden,int doingmodes)
       #endif
       }
     } /* constatics.initlevel == 1 */
-    
+
   return retcode;
 }
-  
+
 /* ---------------------------------------------------- */
 
 int ConIsScreen(void)
@@ -274,9 +279,9 @@ int ConIsScreen(void)
 
 /* ---------------------------------------------------- */
 
-/* 
+/*
 ** ConBeep() does uh..., well..., like... causes the console speaker to beep
-*/ 
+*/
 int ConBeep(void)
 {
   if (constatics.initlevel > 0 && constatics.conisatty) /*can't beep to file*/
@@ -289,9 +294,9 @@ int ConBeep(void)
 
 /* ---------------------------------------------------- */
 
-/* 
-** ConOut() does what printf("%s",str) would do 
-*/ 
+/*
+** ConOut() does what printf("%s",str) would do
+*/
 int ConOut(const char *msg)
 {
   if (constatics.initlevel > 0 /*&& constatics.conisatty*/ )
@@ -311,19 +316,19 @@ int ConOut(const char *msg)
 
 /* ---------------------------------------------------- */
 
-/* 
-** ConOutModal() should only be used when the console is known to be 
+/*
+** ConOutModal() should only be used when the console is known to be
 ** uninitialized and should be avoided. Not affected by -hidden/-quiet mode
 */
 
 int ConOutModal(const char *msg)
 {
   #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-     MessageBox( NULL, msg, CLICONS_LONGNAME, 
+     MessageBox( NULL, msg, CLICONS_LONGNAME,
            MB_OK | MB_ICONINFORMATION );
-  #elif (CLIENT_OS == OS_OS2)
-    WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, msg, (PSZ)NULL,
-       CLICONS_LONGNAME, MB_OK | MB_INFORMATION | MB_MOVEABLE );
+  #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
+    WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, msg,
+       CLICONS_LONGNAME, (PSZ)NULL, MB_OK | MB_INFORMATION | MB_MOVEABLE );
   #else
     fprintf( stderr, "%s\n", msg );
     fflush( stderr );
@@ -333,20 +338,19 @@ int ConOutModal(const char *msg)
 
 /* ---------------------------------------------------- */
 
-/* 
+/*
 ** ConOutErr() does what fprintf(stderr "\nRC5DES: %s\n",msg) would do.
-** Can be blocking. Note the leading and trailing newlines. 
+** Can be blocking. Note the leading and trailing newlines.
 */
 
 int ConOutErr(const char *msg)
 {
   #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-    MessageBox( NULL, msg, CLICONS_LONGNAME, 
+    MessageBox( NULL, msg, CLICONS_LONGNAME,
                  MB_OK | MB_TASKMODAL | MB_ICONSTOP /*MB_ICONERROR*/ );
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
-     // this is definitly wrong !! (also only for PM)
-     WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, (PSZ)msg, (PSZ)NULL,
-           CLICONS_LONGNAME, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
+     WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, (PSZ)msg,
+           CLICONS_LONGNAME,  (PSZ)NULL, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
     ConsolePrintf( "%s: %s\r\n", CLICONS_SHORTNAME, msg );
   #else
@@ -360,7 +364,7 @@ int ConOutErr(const char *msg)
 
 /*
 ** ConInKey() does what a (non-blocking and polling) DOS-ish getch() would do
-** key is not echoed. timeout ==> 0 == don't wait, -1 == wait forever. 
+** key is not echoed. timeout ==> 0 == don't wait, -1 == wait forever.
 */
 
 int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
@@ -379,11 +383,11 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       timestop.tv_usec %= 1000000;
       }
     ch = 0;
-    
+
     do{
       #if (CLIENT_OS == OS_RISCOS)
         {
-        ch = _swi(OS_ReadC, _RETURN(0));      
+        ch = _swi(OS_ReadC, _RETURN(0));
         }
       #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
          (CLIENT_OS == OS_WIN32)
@@ -427,7 +431,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       #else
         {
         setvbuf(stdin, (char *)NULL, _IONBF, 0);
-        
+
         int fd = fileno(stdin);
         fd_set rfds;
         FD_ZERO(&rfds);
@@ -435,7 +439,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
 
         fflush(stdout);
         fflush(stdin);
-        errno = 0;        
+        errno = 0;
         if ( select( fd+1, &rfds, NULL, NULL, NULL) && errno != EINTR )
           {
           ch = fgetc( stdin );
@@ -457,11 +461,11 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
     }
 
   return ch;
-}  
+}
 
 /* ---------------------------------------------------- */
 
-/* ConInStr() is similar to readline(); buffer is always '\0' terminated. 
+/* ConInStr() is similar to readline(); buffer is always '\0' terminated.
 ** Returns -1 if err (stdin is not a tty)
 */
 
@@ -500,7 +504,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
       buffer[1]=0;
     redraw = -1;
     }
-   
+
 
   if ((flags & CONINSTR_BYEXAMPLE) != 0)
     {
@@ -512,7 +516,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
       for (ch=0;ch<((int)(pos));ch++)
         ConOut(scratch);
       }
-    else 
+    else
       {
       ConOut(buffer);
       }
@@ -551,13 +555,13 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
        pos = 1;
        redraw = 0;
        }
-  
+
      ch = ConInKey(-1);
      exitreq = CheckExitRequestTriggerNoIO();
 
      if (!exitreq)
        {
-       if (ch == '\n' || ch == '\r') 
+       if (ch == '\n' || ch == '\r')
          {
          ConOut("\n");
          exitreq = 1;
@@ -591,7 +595,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
          }
        else if (ch == 0x08 || ch == '\177') /* backspace */
          {
-         if (pos > 0)  
+         if (pos > 0)
            {
            #ifdef TERM_IS_ANSI_COMPLIANT
            ConOut("\x1B" "[1D" " " "\x1B" "[1D");
@@ -603,7 +607,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
            pos--;
            }
          }
-       else if (pos < (buflen-1)) 
+       else if (pos < (buflen-1))
          {
          buffer[pos++] = (char)ch;
          if ((flags & CONINSTR_ASPASSWORD) != 0)
@@ -612,7 +616,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
            {
            /* if (!isctrl(ch)) */
            char x[2];
-           x[0]=(char)ch; 
+           x[0]=(char)ch;
            x[1]=0;
            ConOut(x);
            }
@@ -642,8 +646,12 @@ int ConGetPos( int *col, int *row )  /* zero-based */
     #elif (CLIENT_OS == OS_DOS)
     return dosCliConGetPos( col, row );
     #elif (CLIENT_OS == OS_OS2)
+    #if defined(__WATCOMC__)
+    return 0;
+    #else
     return ((VioGetCurPos( (unsigned int)row, (unsigned int)col,
                  0 /*handle*/) != 0)?(-1):(0));
+    #endif
     #else
     return ((row == NULL && col == NULL)?(0):(-1));
     #endif
@@ -667,7 +675,7 @@ int ConSetPos( int col, int row )  /* zero-based */
     return dosCliConSetPos( col, row );
     #elif (CLIENT_OS == OS_OS2)
     return ((VioSetCurPos(row, col, 0 /*handle*/) != 0)?(-1):(0));
-    #else 
+    #else
     return -1;
     #endif
     }
@@ -712,16 +720,16 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     // grrr... terminfo database location is installation dependent
     // search some standard (?) locations
     static int slines=0, scolumns=0;
-    
+
     if (slines == 0 && scolumns == 0)
       {
       unsigned int loc = 0;
       int success = 0;
-      
+
       while (success == 0)
         {
         int termerr;
-        if (setupterm( NULL, 1, &termerr ) != ERR) 
+        if (setupterm( NULL, 1, &termerr ) != ERR)
           {
           if (termerr == 1)
             {
@@ -729,7 +737,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
             break;
             }
           }
-        char *terminfo_locations[] = 
+        char *terminfo_locations[] =
           {
           "/usr/share/terminfo",       // ncurses 1.9.9g defaults
           "/usr/local/share/terminfo", //
@@ -754,7 +762,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     #endif
     }
   #endif
-  
+
   if (height == 0)
     {
     char *p = getenv( "LINES" );
@@ -777,8 +785,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
 
 /* ---------------------------------------------------- */
 
-/* 
-** ConClear() clears the screen. 
+/*
+** ConClear() clears the screen.
 ** Returns -1 if err
 */
 
