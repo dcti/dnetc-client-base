@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.175  1999/01/21 05:02:41  pct
+# Minor updates for Digital Unix clients.
+#
 # Revision 1.174  1999/01/18 18:49:35  remi
 # Integration of Christoph Dworzak's alpha bitslicer.
 # Currently only on alpha-linux.
@@ -1191,7 +1194,7 @@ case "$1" in
     *alpha-gcc-ev5-digital_unix-mt)
 	RC5CORECOPY="rc5/rc5-alpha-osf.cpp"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="-Wa,-02 -mcpu=ev5 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT"
+	TARGET_CCFLAGS="-Wa,-02 -mcpu=ev5 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT -DALPHA_EV5_CORE"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LDFLAGS=""
 	TARGET_LIBS="-lpthread -lexc"
@@ -1200,7 +1203,7 @@ case "$1" in
     *alpha-gcc-ev5-digital_unix-static)
 	RC5CORECOPY="rc5/rc5-alpha-osf.cpp"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="-Wa,-02 -mcpu=ev5 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="-Wa,-02 -mcpu=ev5 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DALPHA_EV5_CORE"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS=""

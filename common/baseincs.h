@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.49  1999/01/21 05:02:41  pct
+// Minor updates for Digital Unix clients.
+//
 // Revision 1.48  1999/01/19 12:51:01  patrick
 //
 // added strings.h for AIX
@@ -369,6 +372,8 @@ extern "C" {
   #if defined(MAC_GUI)
     #include "gui_incs.h"
   #endif
+#elif (CLIENT_OS == OS_DEC_UNIX)
+  #include <unistd.h>
 #endif
 
 // --------------------------------------------------------------------------

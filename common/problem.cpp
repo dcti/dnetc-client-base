@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.70  1999/01/21 05:02:41  pct
+// Minor updates for Digital Unix clients.
+//
 // Revision 1.69  1999/01/18 12:12:35  cramer
 // - Added code for ncpu detection for linux/alpha
 // - Corrected the alpha RC5 core handling (support "timeslice")
@@ -198,7 +201,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.69 1999/01/18 12:12:35 cramer Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.70 1999/01/21 05:02:41 pct Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -305,6 +308,9 @@ extern void CliSignalHandler(int);
      #if (PIPELINE_COUNT != 2)
      #error "Expecting PIPELINE_COUNT=2"
      #endif
+  #elif (CLIENT_OS == OS_DEC_UNIX)
+     extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
+     extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
   #else
      extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
      extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore.cpp,v $
+// Revision 1.28  1999/01/21 05:02:42  pct
+// Minor updates for Digital Unix clients.
+//
 // Revision 1.27  1999/01/14 23:02:12  pct
 // Updates for Digital Unix alpha client and ev5 related code.  This also
 // includes inital code for autodetection of CPU type and SMP.
@@ -108,7 +111,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.27 1999/01/14 23:02:12 pct Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.28 1999/01/21 05:02:42 pct Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -495,9 +498,11 @@ int Client::SelectCore(int quietly)
     LogScreen("Detected a %s type Alpha.\n",GetCoreNameFromCoreType(cputype));
     tmpcputype = cputype;
     GET_CPU_FAMILY(&tmpcputype);
+    #ifdef ALPHA_EV5_CORE
     if (tmpcputype != EV5_CPU)
 	LogScreen("Warning:  This client is optimised for the EV5 family.\n"
 		"There may be a faster client than this for your machine.\n");
+    #endif
   }
 #else
   cputype = 0;
