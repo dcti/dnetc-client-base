@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk-conflict.cpp,v $
+// Revision 1.20  1999/02/05 23:24:38  silby
+// Changed long -> unsigned long so type matched.
+//
 // Revision 1.19  1999/02/04 22:53:15  trevorh
 // Corrected compilation errors for OS/2 after cyp change
 //
@@ -47,7 +50,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.19 1999/02/04 22:53:15 trevorh Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.20 1999/02/05 23:24:38 silby Exp $"; }
 #endif
 
 /* --------------------------------- */
@@ -241,7 +244,7 @@ char *Lurk::GetEntryList(long *finalcount)
   RASENTRYNAME rasentries[10];
   static char configentries[10][60];
   unsigned long buffersize;
-  long entrycount;
+  unsigned long entrycount;
   char *EntryList;
 
   rasentries[0].dwSize=sizeof(RASENTRYNAME);
