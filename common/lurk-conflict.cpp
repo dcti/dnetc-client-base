@@ -14,6 +14,10 @@
 
 */
 // $Log: lurk-conflict.cpp,v $
+// Revision 1.31  1999/02/12 23:21:19  silby
+// Changed win32 RAS function names used so that they
+// do not conflict with system headers.
+//
 // Revision 1.30  1999/02/10 21:39:21  remi
 // Cleared a warning on FreeBSD.
 //
@@ -98,7 +102,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.30 1999/02/10 21:39:21 remi Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.31 1999/02/12 23:21:19 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -299,7 +303,7 @@ const char **Lurk::GetConnectionProfileList(void)
   int rasok = 0;
 
   rasentries[0].dwSize = sizeof(RASENTRYNAME);
-  if (RasEnumEntries(NULL,NULL,&rasentries[0],&buffersize,&maxentries) == 0)
+  if (OurRasEnumEntries(NULL,NULL,&rasentries[0],&buffersize,&maxentries) == 0)
     rasok = 1;
   else if (buffersize > (DWORD)(sizeof(rasentries)))
     {
@@ -308,7 +312,7 @@ const char **Lurk::GetConnectionProfileList(void)
       {
       maxentries = 0;
       rasentryp->dwSize=sizeof(RASENTRYNAME);
-      if ( RasEnumEntries(NULL,NULL,rasentryp,&buffersize,&maxentries) == 0)
+      if ( OurRasEnumEntries(NULL,NULL,rasentryp,&buffersize,&maxentries) == 0)
         {
         rasok = 1;
         buffersize = (DWORD)(maxentries*sizeof(rasentries[0]));
@@ -502,7 +506,7 @@ int Lurk::IsConnected(void)               // Checks status of connection
   cb = sizeof(rasconn);
   rasconn.dwSize = sizeof(RASCONN);
   rasconnp = &rasconn;
-  if (RasEnumConnections( rasconnp, &cb, &cConnections) != 0)
+  if (OurRasEnumConnections( rasconnp, &cb, &cConnections) != 0)
     {
     cConnections = 0;
     if (cb > (DWORD)(sizeof(RASCONN)))
@@ -511,7 +515,7 @@ int Lurk::IsConnected(void)               // Checks status of connection
       if (rasconnp)
         {
         rasconnp->dwSize = sizeof(RASCONN);
-        if (RasEnumConnections( rasconnp, &cb, &cConnections) != 0)
+        if (OurRasEnumConnections( rasconnp, &cb, &cConnections) != 0)
           cConnections = 0;
         }
       }
@@ -523,7 +527,7 @@ int Lurk::IsConnected(void)               // Checks status of connection
     char *connname = rasconnp[whichconn].szEntryName;
     RASCONNSTATUS rasconnstatus;
     rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
-    if (RasGetConnectStatus(hrasconn,&rasconnstatus) == 0)
+    if (OurRasGetConnectStatus(hrasconn,&rasconnstatus) == 0)
       {
       if (rasconnstatus.rasconnstate == RASCS_Connected)
         {
@@ -795,7 +799,7 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
   strcpy(dialparameters.szDomain,"*");
 
   returnvalue =
-    RasGetEntryDialParams(NULL,&dialparameters,&passwordretrieved);
+    OurRasGetEntryDialParams(NULL,&dialparameters,&passwordretrieved);
 
   if ( returnvalue==0 )
     {
@@ -805,7 +809,7 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
     //  LogScreen("Password could not be found, connection may fail.\n");
 
     LogScreen("Dialing '%s'...\n",dialparameters.szEntryName);
-    returnvalue = RasDial(NULL,NULL,&dialparameters,NULL,NULL,&connhandle);
+    returnvalue = OurRasDial(NULL,NULL,&dialparameters,NULL,NULL,&connhandle);
 
     if (returnvalue == 0)
       {
@@ -815,7 +819,7 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
       }
     else if (connhandle != NULL)
       {
-      RasHangUp(connhandle);
+      OurRasHangUp(connhandle);
       Sleep(3000);
       }
     }
@@ -831,7 +835,7 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
     }
   else
     {
-    if (RasGetErrorString(returnvalue,buffer,sizeof(buffer)) == 0)
+    if (OurRasGetErrorString(returnvalue,buffer,sizeof(buffer)) == 0)
       LogScreen("Dial cancelled: %s\n", buffer);
     else
       LogScreen("Dial cancelled: Unknown RAS error %ld\n", (long) returnvalue);
@@ -909,7 +913,7 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
     cb = sizeof(rasconn);
     rasconn.dwSize = sizeof(RASCONN);
     rasconnp = &rasconn;
-    if (RasEnumConnections( rasconnp, &cb, &cConnections) != 0)
+    if (OurRasEnumConnections( rasconnp, &cb, &cConnections) != 0)
       {
       cConnections = 0;
       if (cb > (DWORD)(sizeof(RASCONN)))
@@ -918,7 +922,7 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
         if (rasconnp)
           {
           rasconnp->dwSize = sizeof(RASCONN);
-          if (RasEnumConnections( rasconnp, &cb, &cConnections) != 0)
+          if (OurRasEnumConnections( rasconnp, &cb, &cConnections) != 0)
             cConnections = 0;
           }
         }
@@ -932,11 +936,11 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
         RASCONNSTATUS rasconnstatus;
         rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
         do{
-          if (RasGetConnectStatus(hrasconn,&rasconnstatus) != 0)
+          if (OurRasGetConnectStatus(hrasconn,&rasconnstatus) != 0)
             break;
           if (rasconnstatus.rasconnstate == RASCS_Connected)
             {
-            if (RasHangUp( hrasconn ) != 0)
+            if (OurRasHangUp( hrasconn ) != 0)
               break;
             Sleep(1000);
             }
