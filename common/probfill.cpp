@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.9 1999/11/02 14:14:37 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.10 1999/11/02 14:20:10 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -560,13 +560,15 @@ unsigned int LoadSaveProblems(Client *pass_client,
 
   /* ============================================================= */
 
+  if (pass_client)
+    client = pass_client;
+  if (!client)
+    return 0;
   if ((++reentrant_count) > 1)
   {
     --reentrant_count;
     return 0;
   }
-  if (pass_client)
-    client = pass_client;
 
   /* ============================================================= */
 
