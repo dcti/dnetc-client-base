@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.20 2000/11/21 19:22:05 teichp Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.21 2001/02/05 18:39:42 ephraim Exp $"
 
 #include "cputypes.h"
 
@@ -123,6 +123,7 @@
   // DYNIX doesn't have nanosleep() or usleep(), but has poll()
   #undef usleep
   #define usleep(x) poll(NULL, 0, (x)/1000);
+  #include <poll.h>
 #elif (CLIENT_OS == OS_ULTRIX)
   #include <sys/time.h>
   #define usleep(x) {struct timeval tv__={0,(x)};select(0,NULL,NULL,NULL,&tv__);}

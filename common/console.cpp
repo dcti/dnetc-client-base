@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.49 2001/01/20 12:32:21 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.50 2001/02/05 18:39:41 ephraim Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -36,7 +36,8 @@ return "@(#)$Id: console.cpp,v 1.48.2.49 2001/01/20 12:32:21 cyp Exp $"; }
   || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
   || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDOS) \
   || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) \
-  || ((CLIENT_OS==OS_MACOSX) && !defined(__RHAPSODY__)) || (CLIENT_OS==OS_NTO2))
+  || ((CLIENT_OS==OS_MACOSX) && !defined(__RHAPSODY__)) || (CLIENT_OS==OS_NTO2) \
+  || (CLIENT_OS==OS_DYNIX))
 #include <termios.h>
 #define HAVE_TERMIOS
 #endif
@@ -676,7 +677,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_IRIX) || \
         (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX) || \
         (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
-        (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_MACOSX)
+        (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_MACOSX) || \
+	(CLIENT_OS == OS_DYNIX)
     /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;

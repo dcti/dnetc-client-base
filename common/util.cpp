@@ -5,7 +5,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.43 2000/11/22 19:04:54 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.44 2001/02/05 18:39:42 ephraim Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -1039,7 +1039,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         /* fbsd: "ps ax -o pid -o command 2>/dev/null"; */ /* bsd + -o ext */
         /* lnux: "ps ax --format pid,comm 2>/dev/null"; */ /* bsd + gnu -o */
         #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
-              (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
+              (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX) || \
+	      (CLIENT_OS == OS_DYNIX)
         pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
         #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
         pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";

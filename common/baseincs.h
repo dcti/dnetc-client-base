@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.48 2001/01/21 16:22:29 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.49 2001/02/05 18:39:39 ephraim Exp $"
 
 #include "cputypes.h"
 
@@ -297,9 +297,7 @@
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_DYNIX)
   #include <unistd.h> // sleep(3c)
-  struct timezone { int tz_minuteswest, tz_dsttime; };
   extern "C" int gethostname(char *, int);
-  extern "C" int gettimeofday(struct timeval *, struct timezone *);
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
