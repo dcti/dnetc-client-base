@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.49 2001/02/22 07:55:33 mfeiri Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.50 2001/02/27 00:55:40 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -580,7 +580,9 @@
   /* so don't break the class keyword in this case. */
   /* Need to disable this for VC 5.0, since installation of recent */
   /* platform SDK's (e.g. January 2000) puts the class back in unknwn.h */
-  #if !defined(_MSC_VER) || (_MSC_VER < 1100)
+  /* Borland C++ 5.5 needs the class keyword in stdlib.h */
+  #if (!defined(_MSC_VER) || (_MSC_VER < 1100)) && \
+      (!defined(__BORLANDC__) || (__BORLANDC__ != 0x0550))
     #define class the_client_is_class_free /* phew! */
   #endif
 #endif
