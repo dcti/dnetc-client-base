@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.79 2001/02/15 23:38:57 oliver Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.80 2001/02/18 23:34:50 sampo Exp $
 ==========================================================================
 
 2.8000
@@ -29,6 +29,10 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.79 2001/02/15 23:38:57 oliver Exp $
 
 2.8013.467  new: 68k: new, faster RC5 cores (previously only available in
                  the AmigaOS client)
+            new: x86: new, faster RC5 core for the P4.
+            new: ia64: new 4 pipeline ansi core, used by ia64.
+            imp: all: add support for a second argument to -test/-bench, the
+                 number to use.  example: 'dnetc -test rc5 8' 
 
 2.8012.466  new: x86: most unix-ish clients now support the RC5/SMC core.
             imp: some: even faster OGR core.
