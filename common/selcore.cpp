@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.56 2000/02/21 00:46:45 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.57 2000/02/22 07:44:49 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1323,9 +1323,11 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
 
   #if defined(HAVE_OGR_CORES)
   if (contestid == OGR)
+  {
     #if (CLIENT_CPU != CPU_POWERPC)
       coresel = 0;
     #endif
+  }
   #endif
 
   /* ================================================================== */
