@@ -1,5 +1,5 @@
 /*
- * .ini (configuration file ala windows) file read/write routines
+ * .ini (configuration file ala windows) file read/write[parse] routines
  * written by Cyrus Patel <cyp@fb14.uni-mainz.de>, no copyright, 
  * and no restrictions on usage in any form or function :)
  *
@@ -15,12 +15,10 @@
  * crlf translation, and does not assume that the calling function
  * was written by a twit. 
  *
- * But,.. it ain't perfect (yet) and doesn't pretend to be.
- *
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.27.2.6 2000/02/01 23:03:35 ivo Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.27.2.7 2000/02/02 18:28:02 cyp Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -28,7 +26,12 @@ return "@(#)$Id: iniread.cpp,v 1.27.2.6 2000/02/01 23:03:35 ivo Exp $"; }
 #include <stdlib.h>  /* malloc()/free()/atoi() */
 #include <limits.h>  /* UINT_MAX */
 #include "iniread.h"
-#include "baseincs.h" /* SEEK_[SET|END|CUR] on SunOS */
+
+#ifndef SEEK_SET   /* some OSs (sunos4) don't have SEEK_* */
+#define SEEK_SET 0 /* Seek relative to start of file  */
+#define SEEK_CUR 1 /* Seek relative to current positn */
+#define SEEK_END 2 /* Seek relative to end of file    */
+#endif
 
 #if 0 /* embedded comment handling is not api conform */
 #define ALLOW_EMBEDDED_COMMENTS 
@@ -47,6 +50,8 @@ return "@(#)$Id: iniread.cpp,v 1.27.2.6 2000/02/01 23:03:35 ivo Exp $"; }
                     w delete section  (nop - return ok)
                     r get key+value   (nop - return default)
                     r get all key+value pairs for section (nop, return 0)
+   null section:    w without key/value [ = flush] (nop - return ok)
+                    w with key/value (as above)
 */                            
 
 static unsigned long ini_doit( int dowrite, const char *sect, 
