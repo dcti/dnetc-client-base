@@ -8,9 +8,12 @@
    
    Implementation guidelines: none. see what the neighbour did.  
    Keep the functions small (total less than 25 lines) or make calls
-   to functions in modules in your own platform area. 
+   to functions in modules in your own platform area.   - cyp
 */
 // $Log: console.cpp,v $
+// Revision 1.29  1999/01/09 05:46:08  cyp
+// x86dos clear screen fix.
+//
 // Revision 1.28  1999/01/07 02:15:57  cyp
 // ConInStr() now has a special 'boolean' mode. woohoo!
 //
@@ -80,16 +83,21 @@
 // new win32 callouts: w32ConOut(), w32ConGetCh(), w32ConKbhit()
 //
 // Revision 1.7  1998/10/07 20:43:37  silby
-// Various quick hacks to make the win32gui operational again (will be cleaned up).
+// Various quick hacks to make the win32gui operational again (will 
+// be cleaned up).
 //
 // Revision 1.6  1998/10/07 18:36:18  silby
-// Changed logic in ConInKey once more so it's not reading uninit variables.  Should be solid now. :)
+// Changed logic in ConInKey once more so it's not reading uninit 
+// variables.  Should be solid now. :)
 //
 // Revision 1.5  1998/10/07 12:56:46  silby
-// Reordered Deinitconsole so console functions would still be available during w32deinitconsole.
+// Reordered Deinitconsole so console functions would still be 
+// available during w32deinitconsole.
 //
 // Revision 1.4  1998/10/07 12:25:04  silby
-// Figured out that MSVC doesn't understand continue as it was used; changed ConInKey's loop so that it doesn't rely on continue.  (Functionality unchanged.)
+// Figured out that MSVC doesn't understand continue as it was used; 
+// changed ConInKey's loop so that it doesn't rely on continue.  
+// (Functionality unchanged.)
 //
 // Revision 1.3  1998/10/07 04:04:20  silby
 // Fixed ConInKey - the logic was reversed when checking for timeout
@@ -103,7 +111,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.28 1999/01/07 02:15:57 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.29 1999/01/09 05:46:08 cyp Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -161,8 +169,9 @@ int DeinitializeConsole(void)
     {
     if (constatics.doingmodes && !constatics.runhidden)
       {
-      #if (((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || \
-          (CLIENT_OS==OS_WIN32S)) && (!defined(WIN32GUI)))
+      #if (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S) || \
+          ((CLIENT_OS==OS_WIN32) && (!defined(WIN32GUI))) || \
+          (CLIENT_OS==OS_NETWARE) || (CLIENT_OS==OS_OS2)
         {
         int init = 0;
         time_t endtime = (CliTimer(NULL)->tv_sec) + CONCLOSE_DELAY;
@@ -249,7 +258,7 @@ int ConOut(const char *msg)
     {
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
       w32ConOut(msg);
-	#elif (CLIENT_OS == OS_MACOS)
+  	#elif (CLIENT_OS == OS_MACOS)
       macConOut(msg);
     #else
       fwrite( msg, sizeof(char), strlen(msg), stdout);
@@ -301,6 +310,7 @@ int ConOutErr(const char *msg)
     ConsolePrintf( "%s: %s\r\n", CLICONS_SHORTNAME, msg );
   #else
     fprintf( stderr, "%s: %s\n", CLICONS_SHORTNAME, msg );
+    fflush( stderr );
   #endif
   return 0;
 }
@@ -395,8 +405,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       #endif
       if (ch || timeout_millisecs == 0 || CheckExitRequestTriggerNoIO())
         break;
-      usleep(50*1000); /* with a 50ms delay, no visible processor activity */
-                       /* with NT4/P200 and still responsive to user requests */
+      usleep(50*1000);
 
       CliTimer(&timenow);
 
@@ -571,43 +580,6 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
    return pos; /* length */
 }
 
-#if 0
-int ConInStr(char *buffer, unsigned int buflen )
-{
-  char buff[256];
-  unsigned int len;
-
-  if (constatics.initlevel < 1 || !constatics.conisatty)
-    return -1;
-
-  if (!buffer || !buflen)
-    return 0;
-
-  len = 0;
-  *buffer = 0;
-
-  if ( fgets( buff, sizeof(buff), stdin ) != NULL )
-    {
-    for (len = 0; buff[len]!=0; len++ )
-      {
-      if ( iscntrl( buff[len] ) )
-        {
-        buff[len]=0;
-        break;
-        }
-      }
-    len = strlen( buff );
-    if (len > buflen)
-      {
-      len = buflen;
-      buff[len-1] = 0;
-      }
-    if (len > 0)
-      strcpy( buffer, buff );
-    }
-  return len;
-}  
-#endif
 
 /* ---------------------------------------------------- */
 
@@ -620,8 +592,10 @@ int ConGetPos( int *col, int *row )  /* zero-based */
     #elif (CLIENT_OS == OS_NETWARE)
     short x, y;
     GetOutputCursorPosition( &x, &y );
-    row = (int)y; col = (int)x;
+    if (row) *row = (int)y; if (col) *col = (int)x;
     return 0;
+    #elif (CLIENT_OS == OS_DOS)
+    return dosCliConGetPos( col, row );
     #else
     return ((row == NULL && col == NULL)?(0):(-1));
     #endif
@@ -638,9 +612,11 @@ int ConSetPos( int col, int row )  /* zero-based */
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
     return w32ConSetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
-    WORD c = col, r = row;
+    short c = col, r = row;
     gotoxy( c, r );
     return 0;
+    #elif (CLIENT_OS == OS_DOS)
+    return dosCliConSetPos( col, row );
     #else 
     if (col < 0 || row < 0)
       return -1;
@@ -671,6 +647,9 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         }
       }
     }
+  #elif (CLIENT_OS == OS_DOS)
+    if (dosCliConGetSize( &width, &height ) < 0)
+      height = width = 0;
   #elif (CLIENT_OS == OS_WIN32)
     if ( w32ConGetSize(&width,&height) < 0 )
       height = width = 0;
@@ -759,23 +738,25 @@ int ConClear(void)
   if (constatics.initlevel > 0 && constatics.conisatty)
     {
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-      if (w32ConClear() != 0)
-        return -1;
+      return w32ConClear();
     #elif (CLIENT_OS == OS_OS2)
       BYTE space[] = " ";
       VioScrollUp(0, 0, -1, -1, -1, space, 0);
       VioSetCurPos(0, 0, 0);      /* move cursor to upper left */
+      return 0;
     #elif (CLIENT_OS == OS_DOS)
-      dosCliClearScreen(); /* in platform/dos/clidos.cpp */
+      return dosCliConClear();
     #elif (CLIENT_OS == OS_NETWARE)
       clrscr();
+      return 0;
     #elif (CLIENT_OS == OS_RISCOS)
       riscos_clear_screen();
-    #else
+      return 0;
+    #elif defined(TERM_IS_ANSI_COMPLIANT)
       printf("\x1B" "[2J" "\x1B" "[H" "\r       \r" );
       /* ANSI cls  '\r space \r' is in case ansi is not supported */
+      return 0;
     #endif
-    return 0;
     }
   return -1;
 }
