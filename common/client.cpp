@@ -5,7 +5,7 @@
 
 #include "client.h"
 
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
 const char versionstring[] = "$VER: RC5DES v2.7021.405 (30.05.98)";
 #endif
 
