@@ -1886,62 +1886,61 @@ PreferredIsDone1:
       CliKickWatchdog(); //wonder what the RSPCA will say to that?
     #endif
 
-	 //------------------------------------
+    //------------------------------------
     // Lurking in OS/2
     //------------------------------------
-#if (CLIENT_OS == OS_OS2)
+#if (CLIENT_OS == OS_OS2) && defined(MULTITHREADED)
     {
-   	 if(lurk)
-			 {
+       if(lurk)
+          {
           const s32 index = 68;     // index to check if connected
-			 s32  s, rc, tmpmode;
-			 char netstat[128];
+          s32  s, rc, tmpmode;
+          char netstat[128];
 
-			 netstat[index] = 0;       // clear the bit
-			 // Get routing data
-			 s = socket(PF_INET, SOCK_DGRAM, 0);
-			 rc = ioctl(s, SIOSTATRT, netstat, 128);
-			 soclose(s);
+          netstat[index] = 0;       // clear the bit
+          // Get routing data
+          s = socket(PF_INET, SOCK_DGRAM, 0);
+          rc = ioctl(s, SIOSTATRT, netstat, 128);
+          soclose(s);
 
-			 if(rc != 0)
-				 {
-				 Log("Unable to get routing information, lurk mode disabled\n");
-				 lurk = 0;
-				 }
-			 else
-				 {
-				 if(!netstat[index])
-					 {
-					 tmpmode = 0;
-					 if(connectstatus != tmpmode)    // No connection
-						 {
-						 Log("TCP/IP Connection Disconnected");
-						 connectstatus = tmpmode;
-						 if(lurk == 2)
-							 {
-							 Log(" - Offline Mode");
-							 offlinemode = 1;
-							 }
-						 Log("\n");
-						 }
-					 }
-				 else if(netstat[index])
-					 {
-					 tmpmode = 1;
-					 connectrequested = 2;     // update blocks in all cases
-					 if(connectstatus != tmpmode)
-						 {
-						 // Only put out message the first time.
-						 Log("TCP/IP Connection Detected\n");
-						 connectstatus = tmpmode;
-						 if(lurk == 2)
-							 offlinemode = 0;
-
-						 }
-					 }
-				 }
-			 }
-	 }
+          if(rc != 0)
+             {
+             Log("Unable to get routing information, lurk mode disabled\n");
+             lurk = 0;
+             }
+          else
+             {
+             if(!netstat[index])
+                {
+                tmpmode = 0;
+                if(connectstatus != tmpmode)    // No connection
+                   {
+                   Log("TCP/IP Connection Disconnected");
+                   connectstatus = tmpmode;
+                   if(lurk == 2)
+                      {
+                      Log(" - Offline Mode");
+                      offlinemode = 1;
+                      }
+                   Log("\n");
+                   }
+                }
+             else if(netstat[index])
+                {
+                tmpmode = 1;
+                connectrequested = 2;     // update blocks in all cases
+                if(connectstatus != tmpmode)
+                   {
+                   // Only put out message the first time.
+                   Log("TCP/IP Connection Detected\n");
+                   connectstatus = tmpmode;
+                   if(lurk == 2)
+                      offlinemode = 0;
+                   }
+                }
+             }
+          }
+    }
 #endif
 
     //------------------------------------
