@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.7.2.9 2002/04/11 20:21:58 oliver Exp $
+ Document revision $Id: readme.amiga,v 1.7.2.10 2002/07/25 10:28:02 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -56,7 +56,10 @@
     To install the client, drag the client's drawer to a location of your
     choice and fire it up.  If you would like the client to be started
     automatically each time your boot, click the "Add to WBStartup" icon
-    or run the client from a shell using the '-install' option.
+    or run the client from a shell using the '-install' option - this
+    will install an icon to your WBStartup drawer, which will run the
+    client from where you actually placed the client's drawer (DO NOT copy
+    the client into your WBStartup drawer).
 
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done, the 
