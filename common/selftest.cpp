@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.58 1999/12/02 05:25:24 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.59 1999/12/04 15:54:03 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -243,11 +243,11 @@ int SelfTest( unsigned int contest )
       #if (CLIENT_OS == OS_NETWARE)
       non_preemptive_env = (!nwCliIsPreemptiveEnv());
       if (non_preemptive_env)
-        tslice = GetTimesliceBaseline();
+        tslice = 2048;
       #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) /* win32s */
       non_preemptive_env = (winGetVersion() < 400);
       if (non_preemptive_env)
-        tslice = GetTimesliceBaseline();
+        tslice = 2048;
       #elif (CLIENT_OS == OS_RISCOS)
       non_preemptive_env = riscos_check_taskwindow();
       if (non_preemptive_env)
