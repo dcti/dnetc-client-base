@@ -14,6 +14,10 @@
 
 */
 // $Log: lurk-conflict.cpp,v $
+// Revision 1.28  1999/02/10 00:30:11  trevorh
+// Removed #include for platforms\os2cli\os2defs.h to make this portable
+// back to proxy code.
+//
 // Revision 1.27  1999/02/10 00:01:56  trevorh
 // Change delay() to sleep() for ifdefed OS/2 code
 //
@@ -89,7 +93,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.27 1999/02/10 00:01:56 trevorh Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.28 1999/02/10 00:30:11 trevorh Exp $"; }
 #endif
 
 /* --------------------------------- */
@@ -202,7 +206,13 @@ static HRASCONN hRasDialConnHandle = NULL; /* conn we opened with RasDial */
 #include <stdio.h>
 #include <string.h>
 #include <types.h>
-#include "..\platforms\os2cli\os2defs.h"
+#define INCL_DOSPROCESS
+#include <os2.h>
+extern "C" {
+#include <ctype.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+}
 #endif
 #include <net/if.h>          // ifmib
 #ifndef ULONG
