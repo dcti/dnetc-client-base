@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.10 1999/11/14 18:59:52 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.11 1999/11/15 02:20:36 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -25,7 +25,7 @@ static const char *lurkmodetable[] =
 
 // --------------------------------------------------------------------------
 
-#define CFGTXT(x) x
+#define CFGTXT(x) (x)
 
 struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
 {
@@ -88,26 +88,31 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   CFGTXT(""
   ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL},
 //8
-{ CFGTXT("Project Priority"), "DES,CSC,OGR,RC5",
-  CFGTXT(
-  "Enter the order in which the client will load work, for instance\n"
-  "the order \"OGR,RC5\" specifies that OGR work (if available) will be\n"
-  "crunched before RC5 work.\n"
-  "To disable a project, append \":0\" (or \"=0\") to project's name. For\n"
-  "example, \"DES,OGR=0,RC5\" will disable the client's OGR support.\n"
-  "Project names not found on the list when the client starts will be\n"
-  "inserted automatically according to their default priority. Thus,\n"
-  "specifying \"RC5,OGR\" is equivalent to specifying \"DES,CSC,RC5,OGR\",\n"
-  "and \"OGR,DES\" is equivalent to \"CSC,OGR,DES,RC5\".\n"
-  "Note: DES micro-contests are of extremely short duration, and when active\n"
-  "(and not disabled) the client will clear the input buffers of all other\n"
-  "projects and so ensure that clients sharing buffers do not inadvertently\n"
-  "work on the \"wrong\" project during the few hours that DES is running.\n"
-  ),CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
+{ CFGTXT("Project order"/*"Load-work precedence"*/), "DES,CSC,OGR,RC5", 
+  /* CFGTXT( */
+  "The client cycles through work on various projects in an order specified\n"
+  "here. For example, \"OGR,RC5\" instructs the client to work on OGR until\n"
+  "those buffers are exhausted; afterwards, it works on RC5. The client will\n" 
+  "obtain more work from the network only when all buffers are empty.\n"
+  "\n"
+  "You can turn off a project by setting \":0\" or \"=0\" after the project's\n"
+  "name - for instance, \"OGR:0\" tells your client not to work on, or request\n"
+  "for, the OGR project.\n"
+  "\n"
+  "Projects not found in the list you enter here will be inserted in their\n"
+  "default position.\n"
+  "\n"
+#if 0  
+  "Please note: when DES is active & enabled, the client will clear input\n"
+  "buffers for all other projects, thus ensuring that clients sharing those\n"
+  "buffer files do not inadvertantly work on the \"wrong\" project for the\n"
+  "few hours DES is active.\n"
+#endif  
+  /*) */,CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
 
 /* ------------------------------------------------------------ */
 
-//9 
+//9
 { CFGTXT("Buffer and Buffer Update Options"),"",
   CFGTXT(""),CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_BUFF,0,NULL},
 //10
