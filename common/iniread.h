@@ -1,3 +1,5 @@
+// Hey, Emacs, this a -*-C++-*- file !
+
 /*
   INI file reading/processing class for C++
 
