@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.212 2000/12/04 23:43:50 snake Exp $
+# @(#)$Id: configure,v 1.222.2.213 2000/12/18 02:10:55 mfeiri Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1344,6 +1344,7 @@ case "$1" in
         TARGET_CC="cc"
         generate_gcc_opts "ppc" "macosx"
         TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD -force_cpusubtype_ALL -faltivec"
+        TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="macosx-ppc"
         add_sources "macosx" "ppc"
