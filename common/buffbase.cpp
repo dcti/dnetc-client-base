@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.36.2.2 2003/05/25 00:30:27 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.36.2.3 2003/09/01 07:12:21 jlawson Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -1092,7 +1092,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
         didnews = 1;
       if ((check_flags & BUFFERUPDATE_STATE_MSGPOSTED)!=0)
         net_state_shown = 1;
-      if ((transerror = (check_flags & BUFFERUPDATE_STATE_TRANSERR)!=0))
+      if ((transerror = (check_flags & BUFFERUPDATE_STATE_TRANSERR))!=0)
         updatefailflags |= BUFFERUPDATE_MODE_NET;
       if (client->net_update_status == 0 && transerror != 0)
         Log("Network update is currently not available.\n");
