@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.h,v $
+// Revision 1.15  1999/04/01 02:59:12  cyp
+// made IsConnected() public so that we can *quietly* check the state.
+//
 // Revision 1.14  1999/02/09 23:41:39  cyp
 // Lurk iface mask changes: a) default iface mask no longer needs to be known
 // outside lurk; b) iface mask now supports wildcards; c) redid help text.
@@ -84,8 +87,10 @@ int HangupIfNeeded(void);          // -> 0=success, !0 = failure
 int Start(void);                   // Start -> 0=success, !0 = failure
 int Stop(void);                    // Stop  -> 0=success, !0 = failure
 
-Lurk()  { Stop(); /* clear all variables */ }
-~Lurk() { Stop(); /* clear all variables */ }
+int IsConnected(void);   // quietly! check if connected-> !0 = connected
+
+Lurk(); 
+~Lurk();
 
 protected:
 
@@ -95,7 +100,6 @@ char ifacemaskcopy[64];            //sizeof(connifacemask)
 
 char conndevice[35];        //name of the device a connection was detected on
                             //informational use only
-int IsConnected(void);      // Checks status of connection -> !0 = connected
 int islurkstarted;          //was lurk.Start() successful?
 int lastcheckshowedconnect; //the connect state at the last CheckIfConnectRequested()
 int dohangupcontrol;        //if we dialed, we're welcome to hangup
