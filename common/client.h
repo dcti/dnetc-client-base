@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.105  1998/12/21 00:56:56  silby
+// Connectrequested is no longer used, removed the variable.
+//
 // Revision 1.104  1998/12/20 23:57:02  silby
 // Added variable scheduledupdatetime; used to coordinate massive
 // update at start of new contests.
@@ -454,14 +457,6 @@ public:
 
 #if defined(MMX_BITSLICER) || defined(MMX_RC5)
   int usemmx;
-#endif
-
-#if (CLIENT_OS == OS_WIN32) && defined(NEEDVIRTUALMETHODS)
-  u32 connectrequested;       // used by win32gui to signal an update
-  // 1 = user requested update
-  // 2 = automaticly requested update (quiet mode)
-  // 3 = user requested flush
-  // 4 = user requested fetch
 #endif
 
 #if defined(NEEDVIRTUALMETHODS)
