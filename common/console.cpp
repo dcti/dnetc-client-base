@@ -13,6 +13,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: console.cpp,v $
+// Revision 1.41  1999/02/04 22:49:06  trevorh
+// Corrected another problem with Vio calls being incorrect
+//
 // Revision 1.40  1999/02/04 14:50:34  patrick
 //
 // added TERMIOS support for AIX, now the menues work again. There seams to be
@@ -157,7 +160,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.40 1999/02/04 14:50:34 patrick Exp $"; }
+return "@(#)$Id: console.cpp,v 1.41 1999/02/04 22:49:06 trevorh Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -673,12 +676,8 @@ int ConGetPos( int *col, int *row )  /* zero-based */
     #elif (CLIENT_OS == OS_DOS)
     return dosCliConGetPos( col, row );
     #elif (CLIENT_OS == OS_OS2)
-//    #if defined(__WATCOMC__)
-//    return 0;
-//    #else
     return ((VioGetCurPos( (USHORT*)&row, (USHORT*)&col,
                  0 /*handle*/) != 0)?(-1):(0));
-//    #endif
     #else
     return ((row == NULL && col == NULL) ? (0) : (-1));
     #endif
@@ -826,8 +825,8 @@ int ConClear(void)
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
       return w32ConClear();
     #elif (CLIENT_OS == OS_OS2)
-      BYTE space[] = " ";
-      VioScrollUp(0, 0, -1, -1, -1, (char*)&space, 0);
+      USHORT attrib = 7;
+      VioScrollUp(0, 0, (USHORT)-1, (USHORT)-1, (USHORT)-1, (PCH)&attrib, 0);
       VioSetCurPos(0, 0, 0);      /* move cursor to upper left */
       return 0;
     #elif (CLIENT_OS == OS_DOS)
