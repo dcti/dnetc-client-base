@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.31 2000/06/02 18:26:53 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.32 2000/06/23 13:33:24 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -494,12 +494,12 @@ int SelfTest( unsigned int contest )
     {
       if (successes > 0)
       {
-        LogScreen( "\n%s: %d/%d Tests Passed\n", contname,
+        Log( "%s: %d/%d Tests Passed\n", contname,
           (int) successes, (int) TEST_CASE_COUNT );
       }
       if (successes != TEST_CASE_COUNT)
       {
-        LogScreen( "\n%s: WARNING WARNING WARNING: %d Tests FAILED!!!\n", 
+        Log( "%s: WARNING WARNING WARNING: %d Tests FAILED!!!\n", 
           contname, (int) (TEST_CASE_COUNT - successes) );
           successes=-successes;
       }
