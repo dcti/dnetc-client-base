@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.53 2001/05/06 11:01:05 teichp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.54 2001/07/27 08:09:27 mfeiri Exp $"
 
 #include "cputypes.h"
 
@@ -227,6 +227,8 @@
 #elif (CLIENT_OS == OS_MACOSX)
   //rhapsody is mach 2.x based and altivec unsafe
   #include <sys/time.h>
+  #include <sys/vmparam.h> //USRSTACK
+  #include <sys/exec.h>  //PS_STRINGS
   #include <sys/sysctl.h>
   #include <unistd.h>
   #include <fcntl.h> /* O_RDWR etc */
