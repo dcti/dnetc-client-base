@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.71 2003/03/31 01:29:28 mfeiri Exp $
+# @(#)$Id: configure,v 1.288.2.72 2003/04/01 10:24:49 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1815,7 +1815,6 @@ case "$1" in
 
     *sparc-solaris-gcc)   # [andreasb sparc/v7]
         TARGET_CC="gcc"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         generate_gcc_opts "sparc" "solaris"
         TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
@@ -1826,7 +1825,6 @@ case "$1" in
 
     *sparc-solaris-gcc-super)   # [andreasb sparc/v8]
         TARGET_CC="gcc"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         generate_gcc_opts "supersparc" "solaris"
         TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
@@ -1838,7 +1836,6 @@ case "$1" in
     *sparc-solaris-gcc-ultra)   # [andreasb sparc/v9 32 bit] ERROR
         echo "ERROR: gcc can't do this right, check ULONG_MAX vs. sizeof(long)"
         TARGET_CC="gcc"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         generate_gcc_opts "ultrasparc" "solaris"
         TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
@@ -1850,7 +1847,6 @@ case "$1" in
 
     *sparc-solaris-cc-v7)   # [andreasb sparc/v7]
         TARGET_CC="CC"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         OPTS_CC_SOLARIS="-fast -xO4 -xarch=v7 -DASM_SPARC"
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
@@ -1861,7 +1857,6 @@ case "$1" in
 
     *sparc-solaris-cc-v8a)   # [andreasb sparc/v8a]
         TARGET_CC="CC"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         OPTS_CC_SOLARIS="-fast -xO4 -xarch=v8a -DASM_SPARC"
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
@@ -1872,7 +1867,6 @@ case "$1" in
 
     *sparc-solaris-cc-v8)   # [andreasb sparc/v8]
         TARGET_CC="CC"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         OPTS_CC_SOLARIS="-fast -xO4 -xarch=v8 -DASM_SPARC"
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
@@ -1883,7 +1877,6 @@ case "$1" in
 
     *sparc-solaris-cc-ultra)   # [andreasb sparc/v9 32 bit]
         TARGET_CC="CC"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         OPTS_CC_SOLARIS="-fast -xO4 -xtarget=ultra -DASM_SPARC"
         TARGET_ASFLAGS="$TARGET_ASFLAGS -xarch=v8plus"
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
@@ -1895,9 +1888,8 @@ case "$1" in
 
     *sparc-solaris-cc-universal)   # [snikkel sparc 32 bit]
         TARGET_CC="CC"
-	TARGET_LD="cc"
-	TARGET_LDFLAGS="-mt"      
-        TARGET_TR="/usr/xpg4/bin/tr"    # Solaris /usr/bin/tr: 0-9 is not [0-9]
+        TARGET_LD="cc"
+        TARGET_LDFLAGS="-mt"      
         OPTS_CC_SOLARIS="-fast -xtarget=generic -xarch=generic -DASM_SPARC"
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -mt -Dsolaris"
         TARGET_LIBS="-lnsl -lsocket -ldl -lthread"    # Linking and order
@@ -1938,7 +1930,6 @@ case "$1" in
 
     *x86-solaris)    # gcc, mt, dynamic
         TARGET_CC="gcc"
-        TARGET_TR="/usr/xpg4/bin/tr"    # Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         generate_gcc_opts "x86" "solaris"
         TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
         TARGET_LIBS="-ldl -lc -lmp -lnsl -lsocket -lthread"
