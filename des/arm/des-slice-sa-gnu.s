@@ -15,626 +15,8 @@
 	.global _convert_key_from_des_to_inc__FPUlT0
 	.global _convert_key_from_inc_to_des__FPUlT0
 	.global _des_unit_func_strongarm
-	
-s1:
-	STMDB   R13!,{R6-R9,R14}
-	LDR     R6,[R12,#124]
-	LDMIA   R12,{R7-R11}
-	EOR     R0,R0,R6
-	EOR     R1,R1,R7
-	EOR     R2,R2,R8
-	EOR     R3,R3,R9
-	EOR     R4,R4,R10
-	EOR     R5,R5,R11
-	BIC     R6,R2,R4
-	EOR     R7,R6,R3
-	BIC     R9,R2,R3
-	ORR     R8,R9,R4
-	AND     R10,R5,R8
-	EOR     R12,R2,R3
-	EOR     R14,R4,R10
-	AND     R14,R14,R12
-	EOR     R8,R9,R14
-	ORR     R8,R5,R8
-	BIC     R11,R4,R3
-	EOR     R8,R8,R11
-	ORR     R11,R1,R8
-	EOR     R11,R11,R14
-	AND     R11,R0,R11
-	ORR     R6,R6,R10
-	EOR     R6,R6,R12
-	EOR     R14,R7,R10
-	BIC     R7,R8,R7
-	BIC     R12,R5,R12
-	BIC     R3,R3,R4
-	EOR     R10,R3,R12
-	ORR     R10,R1,R10
-	EOR     R10,R10,R14
-	EOR     R10,R10,R11
-	LDR     R11,[R13,#4]
-	ORR     R14,R14,R3
-	LDR     R3,[R11,#0]
-	MVN     R10,R10
-	EOR     R3,R3,R10
-	EOR     R10,R6,R12
-	STR     R3,[R11,#0]
-	BIC     R10,R8,R10
-	AND     R11,R1,R10
-	EOR     R11,R14,R11
-	EOR     R11,R7,R11
-	AND     R14,R2,R14
-	BIC     R7,R1,R7
-	EOR     R7,R6,R7
-	BIC     R3,R8,R14
-	BIC     R6,R6,R3
-	ORR     R6,R6,R9
-	BIC     R12,R11,R12
-	AND     R11,R0,R11
-	EOR     R7,R7,R11
-	ORR     R11,R1,R9
-	EOR     R11,R11,R3
-	MVN     R11,R11
-	ORR     R10,R2,R10
-	BIC     R3,R6,R1
-	EOR     R10,R10,R3
-	BIC     R10,R0,R10
-	EOR     R10,R10,R11
-	LDR     R3,[R13],#8
-	ORR     R8,R6,R8
-	LDR     R6,[R3,#0]
-	EOR     R8,R8,R4
-	EOR     R6,R6,R10
-	ORR     R9,R9,R4
-	AND     R10,R5,R9
-	STR     R6,[R3,#0]
-	EOR     R9,R9,R14
-	BIC     R9,R9,R10
-	BIC     R8,R1,R8
-	EOR     R8,R8,R9
-	ORR     R8,R0,R8
-	EOR     R8,R8,R11
-	LDMIA   R13!,{R10,R11}
-	EOR     R8,R8,R12
-	LDR     R12,[R10,#0]
-	LDR     R9,[R11,#0]
-	EOR     R8,R8,R12
-	EOR     R9,R7,R9
-	STR     R8,[R10,#0]
-	STR     R9,[R11,#0]
-	LDR     PC,[R13],#4
-s2:	
-	STMDB   R13!,{R6-R9,R14}
-	LDMIA   R12,{R6-R11}
-	EOR     R0,R0,R6
-	EOR     R1,R1,R7
-	EOR     R2,R2,R8
-	EOR     R3,R3,R9
-	EOR     R4,R4,R10
-	EOR     R5,R5,R11
-	EOR     R7,R0,R5
-	EOR     R8,R7,R4
-	AND     R9,R5,R4
-	BIC     R6,R0,R9
-	BIC     R11,R1,R6
-	EOR     R12,R8,R11
-	ORR     R11,R9,R11
-	BIC     R7,R11,R7
-	BIC     R11,R4,R6
-	EOR     R4,R4,R1
-	BIC     R5,R5,R6
-	ORR     R0,R12,R0
-	EOR     R0,R0,R1
-	ORR     R14,R2,R7
-	EOR     R14,R12,R14
-	EOR     R12,R12,R11
-	AND     R12,R1,R12
-	ORR     R11,R11,R1
-	BIC     R7,R4,R7
-	ORR     R10,R0,R12
-	AND     R4,R4,R10
-	BIC     R4,R11,R4
-	ORR     R4,R3,R4
-	MVN     R14,R14
-	AND     R11,R3,R11
-	EOR     R11,R14,R11
-	AND     R10,R2,R10
-	EOR     R10,R10,R4
-	BIC     R0,R2,R0
-	EOR     R0,R7,R0
-	ORR     R7,R7,R5
-	EOR     R7,R7,R14
-	EOR     R4,R1,R8
-	AND     R14,R4,R7
-	EOR     R14,R14,R0
-	BIC     R14,R2,R14
-	EOR     R14,R4,R14
-	ORR     R4,R9,R12
-	AND     R9,R2,R9
-	EOR     R9,R9,R4
-	BIC     R9,R3,R9
-	EOR     R9,R9,R14
-	EOR     R6,R6,R11
-	BIC     R6,R6,R1
-	EOR     R6,R8,R6
-	EOR     R8,R12,R5
-	AND     R8,R2,R8
-	ORR     R12,R3,R0
-	EOR     R12,R8,R12
-	LDMIA   R13!,{R0-R3}
-	EOR     R12,R6,R12
-	LDR     R6,[R0,#0]
-	EOR     R10,R7,R10
-	LDR     R7,[R1,#0]
-	EOR     R6,R6,R11
-	LDR     R8,[R2,#0]
-	MVN     R9,R9
-	STR     R6,[R0,#0]
-	EOR     R7,R7,R9
-	LDR     R9,[R3,#0]
-	EOR     R8,R8,R12
-	STR     R7,[R1,#0]
-	EOR     R9,R9,R10
-	STR     R8,[R2,#0]
-	STR     R9,[R3,#0]
-	LDR     PC,[R13],#4
-s3:	
-	STMDB   R13!,{R6-R8,R14}
-	LDMIA   R12,{R6-R8,R10-R12}
-	EOR     R0,R0,R6
-	EOR     R1,R1,R7
-	EOR     R2,R2,R8
-	EOR     R3,R3,R10
-	EOR     R4,R4,R11
-	EOR     R5,R5,R12
-	EOR     R6,R1,R2
-	EOR     R6,R6,R5
-	AND     R7,R1,R6
-	EOR     R11,R2,R7
-	BIC     R12,R11,R4
-	ORR     R8,R4,R7
-	EOR     R10,R6,R8
-	ORR     R14,R0,R12
-	EOR     R14,R10,R14
-	BIC     R7,R5,R7
-	EOR     R10,R7,R4
-	AND     R7,R0,R10
-	EOR     R7,R4,R7
-	ORR     R7,R3,R7
-	EOR     R7,R14,R7
-	LDR     R14,[R9,#0]
-	EOR     R14,R14,R7
-	AND     R7,R5,R7
-	STR     R14,[R9,#0]
-	EOR     R7,R7,R11
-	BIC     R7,R7,R0
-	BIC     R9,R12,R2
-	ORR     R9,R0,R9
-	EOR     R9,R6,R9
-	AND     R11,R2,R4
-	EOR     R9,R11,R9
-	AND     R2,R2,R5
-	BIC     R11,R6,R12
-	ORR     R12,R1,R12
-	ORR     R14,R1,R11
-	EOR     R14,R14,R7
-	AND     R1,R1,R6
-	EOR     R6,R6,R8
-	EOR     R8,R8,R12
-	ORR     R10,R10,R11
-	EOR     R11,R11,R2
-	ORR     R11,R0,R11
-	ORR     R2,R2,R1
-	EOR     R10,R10,R2
-	EOR     R4,R2,R4
-	MVN     R4,R4
-	EOR     R14,R14,R4
-	EOR     R11,R11,R4
-	BIC     R1,R5,R1
-	ORR     R1,R1,R10
-	EOR     R2,R5,R2
-	BIC     R2,R2,R6
-	AND     R2,R2,R0
-	EOR     R6,R1,R2
-	AND     R6,R3,R6
-	EOR     R6,R9,R6
-	BIC     R12,R6,R12
-	ORR     R12,R0,R12
-	EOR     R9,R7,R12
-	AND     R9,R3,R9
-	EOR     R9,R14,R9
-	ORR     R10,R0,R10
-	EOR     R8,R8,R10
-	LDMIA   R13!,{R10,R12,R14}
-	BIC     R8,R3,R8
-	LDR     R7,[R12,#0]
-	EOR     R11,R11,R8
-	LDR     R8,[R14,#0]
-	EOR     R7,R7,R6
-	LDR     R6,[R10,#0]
-	EOR     R8,R8,R11
-	STR     R7,[R12,#0]
-	EOR     R6,R6,R9
-	STR     R8,[R14,#0]
-	STR     R6,[R10,#0]
-	LDR     PC,[R13],#4
-s4:	
-	STMDB   R13!,{R7-R9,R14}
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
-	EOR     R4,R4,R11
-	EOR     R5,R5,R12
-	ORR     R8,R0,R2
-	AND     R8,R4,R8
-	EOR     R9,R0,R8
-	EOR     R8,R2,R8
-	BIC     R10,R2,R0
-	ORR     R10,R10,R9
-	AND     R11,R1,R10
-	BIC     R12,R1,R8
-	EOR     R10,R10,R12
-	ORR     R8,R8,R9
-	EOR     R12,R4,R11
-	AND     R14,R3,R12
-	EOR     R9,R9,R14
-	ORR     R14,R1,R2
-	EOR     R9,R9,R14
-	EOR     R14,R2,R4
-	BIC     R14,R14,R1
-	EOR     R11,R11,R14
-	EOR     R11,R2,R11
-	BIC     R11,R3,R11
-	EOR     R11,R8,R11
-	AND     R12,R1,R12
-	EOR     R11,R11,R12
-	EOR     R8,R8,R14
-	ORR     R8,R3,R8
-	EOR     R8,R10,R8
-	ORR     R10,R5,R8
-	EOR     R10,R9,R10
-	LDR     R12,[R6,#0]
-	AND     R8,R5,R8
-	EOR     R12,R12,R10
-	EOR     R14,R9,R11
-	STR     R12,[R6,#0]
-	BIC     R6,R1,R14
-	BIC     R14,R14,R3
-	EOR     R6,R6,R14
-	EOR     R6,R6,R10
-	ORR     R10,R5,R6
-	EOR     R10,R10,R11
-	MVN     R10,R10
-	MVN     R9,R9
-	EOR     R9,R8,R9
-	LDMIA   R13!,{R11,R12,R14}
-	EOR     R6,R8,R6
-	LDR     R7,[R11,#0]
-	EOR     R6,R6,R10
-	LDR     R8,[R12,#0]
-	EOR     R7,R7,R9
-	LDR     R9,[R14,#0]
-	EOR     R8,R8,R10
-	STR     R7,[R11,#0]
-	EOR     R9,R9,R6
-	STR     R8,[R12,#0]
-	STR     R9,[R14,#0]
-	LDR     PC,[R13],#4
-s5:	
-	STMDB   R13!,{R6-R9,R14}
-	LDMIA   R12,{R6-R11}
-	EOR     R0,R0,R6
-	EOR     R1,R1,R7
-	EOR     R2,R2,R8
-	EOR     R3,R3,R9
-	EOR     R4,R4,R10
-	EOR     R5,R5,R11
-	BIC     R6,R0,R2
-	ORR     R10,R5,R6
-	EOR     R11,R3,R6
-	ORR     R11,R5,R11
-	BIC     R12,R2,R3
-	EOR     R14,R3,R0
-	ORR     R8,R12,R14
-	BIC     R5,R8,R5
-	EOR     R12,R12,R0
-	AND     R7,R2,R8
-	EOR     R7,R7,R3
-	BIC     R6,R7,R6
-	EOR     R6,R6,R11
-	ORR     R11,R7,R11
-	ORR     R14,R4,R6
-	EOR     R7,R7,R14
-	EOR     R14,R12,R10
-	AND     R10,R3,R10
-	EOR     R10,R10,R6
-	AND     R6,R6,R14
-	BIC     R8,R8,R6
-	EOR     R9,R2,R5
-	BIC     R5,R5,R3
-	EOR     R5,R5,R2
-	EOR     R6,R9,R6
-	ORR     R2,R4,R9
-	EOR     R14,R14,R2
-	BIC     R2,R7,R1
-	EOR     R14,R14,R2
-	EOR     R9,R0,R9
-	AND     R12,R12,R9
-	BIC     R12,R4,R12
-	EOR     R10,R10,R12
-	BIC     R7,R7,R8
-	AND     R12,R4,R5
-	EOR     R8,R8,R12
-	ORR     R12,R4,R6
-	EOR     R11,R11,R12
-	ORR     R11,R1,R11
-	EOR     R8,R8,R11
-	ORR     R11,R10,R7
-	EOR     R12,R3,R0
-	EOR     R11,R11,R12
-	BIC     R11,R4,R11
-	EOR     R11,R9,R11
-	EOR     R7,R7,R11
-	AND     R12,R12,R6
-	EOR     R12,R12,R5
-	ORR     R9,R3,R9
-	EOR     R6,R14,R6
-	BIC     R6,R9,R6
-	AND     R6,R4,R6
-	EOR     R6,R12,R6
-	ORR     R6,R1,R6
-	EOR     R6,R7,R6
-	BIC     R7,R9,R1
-	LDMIA   R13!,{R0-R3}
-	EOR     R7,R10,R7
-	LDR     R9,[R0,#0]
-	MVN     R8,R8
-	LDR     R10,[R1,#0]
-	EOR     R6,R9,R6
-	LDR     R11,[R2,#0]
-	EOR     R7,R10,R7
-	LDR     R9,[R3,#0]
-	EOR     R8,R11,R8
-	STR     R6,[R0,#0]
-	EOR     R9,R9,R14
-	STR     R7,[R1,#0]
-	STR     R8,[R2,#0]
-	STR     R9,[R3,#0]
-	LDR     PC,[R13],#4
-s6:	
-	STMDB   R13!,{R7-R9,R14}
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
-	EOR     R4,R4,R11
-	EOR     R5,R5,R12
-	MVN     R2,R2
-	EOR     R7,R4,R0
-	EOR     R8,R7,R5
-	AND     R9,R0,R5
-	BIC     R10,R9,R4
-	BIC     R11,R3,R10
-	EOR     R12,R5,R9
-	ORR     R14,R10,R12
-	BIC     R14,R14,R3
-	EOR     R14,R12,R14
-	AND     R12,R4,R12
-	BIC     R12,R3,R12
-	ORR     R12,R1,R12
-	ORR     R10,R10,R14
-	EOR     R0,R8,R11
-	EOR     R9,R9,R0
-	BIC     R9,R9,R14
-	AND     R14,R1,R14
-	EOR     R14,R0,R14
-	ORR     R3,R5,R0
-	BIC     R3,R3,R4
-	BIC     R8,R1,R10
-	EOR     R8,R3,R8
-	AND     R8,R8,R2
-	LDR     R3,[R6,#0]
-	EOR     R8,R8,R14
-	MVN     R8,R8
-	EOR     R3,R3,R8
-	BIC     R8,R8,R7
-	STR     R3,[R6,#0]
-	EOR     R8,R8,R10
-	BIC     R6,R5,R8
-	EOR     R6,R6,R0
-	BIC     R10,R1,R6
-	ORR     R14,R4,R5
-	BIC     R0,R14,R7
-	BIC     R3,R1,R10
-	EOR     R0,R0,R3
-	ORR     R0,R2,R0
-	EOR     R10,R8,R10
-	EOR     R0,R10,R0
-	EOR     R10,R5,R10
-	BIC     R10,R4,R10
-	EOR     R7,R7,R5
-	ORR     R6,R6,R10
-	EOR     R6,R6,R11
-	ORR     R11,R10,R7
-	EOR     R11,R11,R12
-	AND     R14,R14,R9
-	EOR     R7,R14,R7
-	AND     R7,R1,R7
-	EOR     R7,R6,R7
-	ORR     R7,R2,R7
-	EOR     R7,R11,R7
-	BIC     R8,R8,R4
-	BIC     R8,R2,R8
-	BIC     R10,R1,R10
-	LDMIA   R13!,{R11,R12,R14}
-	EOR     R8,R8,R10
-	LDR     R6,[R11,#0]
-	EOR     R8,R8,R9
-	LDR     R9,[R14,#0]
-	EOR     R7,R7,R6
-	LDR     R6,[R12,#0]
-	EOR     R9,R9,R0
-	STR     R7,[R11,#0]
-	EOR     R8,R6,R8
-	STR     R9,[R14,#0]
-	STR     R8,[R12,#0]
-	LDR     PC,[R13],#4
-s7:	
-	STMDB   R13!,{R7-R9,R14}
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
-	EOR     R4,R4,R11
-	EOR     R5,R5,R12
-	AND     R7,R1,R3
-	EOR     R7,R7,R4
-	AND     R8,R3,R7
-	EOR     R9,R8,R1
-	BIC     R10,R2,R9
-	EOR     R7,R7,R10
-	EOR     R10,R2,R10
-	ORR     R11,R1,R3
-	ORR     R11,R11,R4
-	BIC     R12,R4,R1
-	ORR     R12,R2,R12
-	EOR     R11,R11,R12
-	BIC     R12,R5,R10
-	EOR     R12,R7,R12
-	EOR     R7,R8,R7
-	ORR     R14,R5,R7
-	EOR     R11,R11,R14
-	AND     R11,R0,R11
-	LDR     R14,[R6,#0]
-	EOR     R11,R12,R11
-	EOR     R14,R14,R11
-	EOR     R9,R3,R9
-	STR     R14,[R6,#0]
-	ORR     R6,R1,R9
-	EOR     R6,R6,R11
-	BIC     R6,R6,R5
-	ORR     R11,R2,R8
-	EOR     R11,R9,R11
-	EOR     R8,R2,R8
-	AND     R8,R8,R1
-	BIC     R8,R5,R8
-	EOR     R8,R11,R8
-	EOR     R10,R10,R8
-	EOR     R7,R1,R7
-	BIC     R7,R9,R7
-	AND     R7,R5,R7
-	ORR     R9,R0,R8
-	EOR     R9,R12,R9
-	BIC     R11,R11,R2
-	ORR     R8,R11,R8
-	BIC     R8,R8,R0
-	EOR     R8,R6,R8
-	EOR     R8,R10,R8
-	BIC     R6,R3,R2
-	ORR     R11,R4,R6
-	EOR     R10,R10,R11
-	EOR     R10,R10,R7
-	BIC     R6,R1,R6
-	AND     R6,R5,R6
-	AND     R11,R2,R6
-	EOR     R11,R11,R7
-	ORR     R11,R0,R11
-	EOR     R10,R10,R11
-	EOR     R7,R6,R9
-	LDMIA   R13!,{R6,R11,R12}
-	LDR     R9,[R6,#0]
-	MVN     R7,R7
-	EOR     R7,R9,R7
-	LDR     R9,[R12,#0]
-	STR     R7,[R6,#0]
-	LDR     R6,[R11,#0]
-	EOR     R9,R9,R10
-	EOR     R8,R6,R8
-	STR     R9,[R12,#0]
-	STR     R8,[R11,#0]
-	LDR     PC,[R13],#4
-s8:	
-	STMDB   R13!,{R6-R9,R14}
-	LDMIA   R12,{R6-R10}
-	LDR     R11,[R12,#-108]
-	EOR     R0,R0,R6
-	EOR     R1,R1,R7
-	EOR     R2,R2,R8
-	EOR     R3,R3,R9
-	EOR     R4,R4,R10
-	EOR     R5,R5,R11
-	BIC     R7,R0,R2
-	EOR     R8,R7,R3
-	EOR     R10,R0,R2
-	ORR     R11,R4,R8
-	EOR     R11,R10,R11
-	BIC     R12,R11,R0
-	ORR     R14,R12,R3
-	EOR     R14,R14,R10
-	EOR     R14,R14,R4
-	BIC     R10,R10,R4
-	ORR     R10,R10,R3
-	BIC     R6,R7,R14
-	EOR     R9,R4,R6
-	EOR     R9,R2,R9
-	BIC     R9,R9,R1
-	EOR     R9,R10,R9
-	AND     R9,R5,R9
-	EOR     R10,R12,R2
-	BIC     R8,R8,R14
-	EOR     R8,R8,R10
-	BIC     R10,R10,R4
-	EOR     R10,R3,R10
-	BIC     R2,R2,R8
-	ORR     R2,R10,R2
-	ORR     R12,R1,R12
-	EOR     R12,R2,R12
-	BIC     R8,R1,R8
-	EOR     R8,R14,R8
-	ORR     R8,R5,R8
-	BIC     R10,R1,R10
-	EOR     R10,R11,R10
-	MVN     R10,R10
-	ORR     R11,R11,R4
-	EOR     R14,R10,R8
-	EOR     R9,R10,R9
-	ORR     R10,R10,R3
-	EOR     R8,R7,R3
-	EOR     R8,R8,R11
-	AND     R7,R4,R7
-	EOR     R7,R7,R10
-	BIC     R7,R1,R7
-	AND     R11,R0,R11
-	EOR     R11,R11,R7
-	BIC     R11,R11,R5
-	AND     R10,R1,R10
-	EOR     R10,R8,R10
-	EOR     R10,R10,R11
-	ORR     R7,R8,R10
-	BIC     R7,R1,R7
-	EOR     R7,R6,R7
-	ORR     R7,R5,R7
-	LDMIA   R13!,{R0-R3}
-	EOR     R7,R12,R7
-	LDR     R8,[R2,#0]
-	MVN     R7,R7
-	LDR     R11,[R3,#0]
-	EOR     R8,R8,R10
-	LDR     R12,[R1,#0]
-	EOR     R9,R11,R9
-	STR     R8,[R2,#0]
-	LDR     R6,[R0,#0]
-	EOR     R7,R12,R7
-	STR     R9,[R3,#0]
-	EOR     R6,R6,R14
-	STR     R7,[R1,#0]
-	STR     R6,[R0,#0]
-	LDR     PC,[R13],#4
-	
-_convert_key_from_des_to_inc__FPUlT0:	
+
+_convert_key_from_des_to_inc__FPUlT0:
 	STMDB   R13!,{R4,R14}
 	LDR     R2,[R0,#0]
 	AND     R3,R2,#0xFE         
@@ -710,7 +92,6 @@ _convert_key_from_des_to_inc__FPUlT0:
 	MOV     R1,R1,LSR #4
 	STR     R1,[R0,#0]
 	LDMIA   R13!,{R4,PC}^
-	
 _convert_key_from_inc_to_des__FPUlT0:	
 	STMDB   R13!,{R4,R14}
 	LDR     R2,[R1,#0]
@@ -769,8 +150,12 @@ _convert_key_from_inc_to_des__FPUlT0:
 	STR     R2,[R0,#0]
 	STR     R12,[R1,#0]
 	LDR     R3,[R0,#0]
-	AND     R12,R3,#0x7F        
-	ADR     R2,odd_parity
+	AND     R12,R3,#0x7F
+	adrl	r2,odd_parity
+	/*
+	ADR     R2,0x00000704
+	ADD     R2,R2,#0x01EC
+	*/
 	LDRB    R14,[R2,R12,LSL #1]
 	AND     R12,R3,#0x3F80
 	LDRB    R12,[R2,R12,LSR #6]
@@ -796,99 +181,24 @@ _convert_key_from_inc_to_des__FPUlT0:
 	ORR     R0,R3,R0,LSL #24
 	STR     R0,[R1,#0]
 	LDMIA   R13!,{R4,PC}^
-
-odd_parity:
-
-        .byte      0x01,0x01,0x02,0x02
-        .byte      0x04,0x04,0x07,0x07
-        .byte      0x08,0x08,0x0b,0x0b
-        .byte      0x0d,0x0d,0x0e,0x0e
-        .byte      0x10,0x10,0x13,0x13
-        .byte      0x15,0x15,0x16,0x16
-        .byte      0x19,0x19,0x1a,0x1a
-        .byte      0x1c,0x1c,0x1f,0x1f
-        .byte      0x20,0x20,0x23,0x23
-        .byte      0x25,0x25,0x26,0x26
-        .byte      0x29,0x29,0x2a,0x2a
-        .byte      0x2c,0x2c,0x2f,0x2f
-        .byte      0x31,0x31,0x32,0x32
-        .byte      0x34,0x34,0x37,0x37
-        .byte      0x38,0x38,0x3b,0x3b
-        .byte      0x3d,0x3d,0x3e,0x3e
-        .byte      0x40,0x40,0x43,0x43
-        .byte      0x45,0x45,0x46,0x46
-        .byte      0x49,0x49,0x4a,0x4a
-        .byte      0x4c,0x4c,0x4f,0x4f
-        .byte      0x51,0x51,0x52,0x52
-        .byte      0x54,0x54,0x57,0x57
-        .byte      0x58,0x58,0x5b,0x5b
-        .byte      0x5d,0x5d,0x5e,0x5e
-        .byte      0x61,0x61,0x62,0x62
-        .byte      0x64,0x64,0x67,0x67
-        .byte      0x68,0x68,0x6b,0x6b
-        .byte      0x6d,0x6d,0x6e,0x6e
-        .byte      0x70,0x70,0x73,0x73
-        .byte      0x75,0x75,0x76,0x76
-        .byte      0x79,0x79,0x7a,0x7a
-        .byte      0x7c,0x7c,0x7f,0x7f
-        .byte      0x80,0x80,0x83,0x83
-        .byte      0x85,0x85,0x86,0x86
-        .byte      0x89,0x89,0x8a,0x8a
-        .byte      0x8c,0x8c,0x8f,0x8f
-        .byte      0x91,0x91,0x92,0x92
-        .byte      0x94,0x94,0x97,0x97
-        .byte      0x98,0x98,0x9b,0x9b
-        .byte      0x9d,0x9d,0x9e,0x9e
-        .byte      0xa1,0xa1,0xa2,0xa2
-        .byte      0xa4,0xa4,0xa7,0xa7
-        .byte      0xa8,0xa8,0xab,0xab
-        .byte      0xad,0xad,0xae,0xae
-        .byte      0xb0,0xb0,0xb3,0xb3
-        .byte      0xb5,0xb5,0xb6,0xb6
-        .byte      0xb9,0xb9,0xba,0xba
-        .byte      0xbc,0xbc,0xbf,0xbf
-        .byte      0xc1,0xc1,0xc2,0xc2
-        .byte      0xc4,0xc4,0xc7,0xc7
-        .byte      0xc8,0xc8,0xcb,0xcb
-        .byte      0xcd,0xcd,0xce,0xce
-        .byte      0xd0,0xd0,0xd3,0xd3
-        .byte      0xd5,0xd5,0xd6,0xd6
-        .byte      0xd9,0xd9,0xda,0xda
-        .byte      0xdc,0xdc,0xdf,0xdf
-        .byte      0xe0,0xe0,0xe3,0xe3
-        .byte      0xe5,0xe5,0xe6,0xe6
-        .byte      0xe9,0xe9,0xea,0xea
-        .byte      0xec,0xec,0xef,0xef
-        .byte      0xf1,0xf1,0xf2,0xf2
-        .byte      0xf4,0xf4,0xf7,0xf7
-        .byte      0xf8,0xf8,0xfb,0xfb
-        .byte      0xfd,0xfd,0xfe,0xfe
-
-twiddles:
-        .byte      0x0c,0x0f,0x12,0x28
-        .byte      0x29,0x2a,0x2b,0x2d
-        .byte      0x2e,0x31,0x32,0x00
-        .byte      0x01,0x02,0x04,0x06
-        .byte      0x07,0x09,0x0d,0x00
-
-L000380:
-lowbits:
-        .word      0xaaaaaaaa
-L000384:
-        .word      0xcccccccc
-L000388:
-        .word      0xf0f0f0f0
-
+	
+lowbits:	
+	.word	0xAAAAAAAA
+	.word	0xCCCCCCCC
+	.word	0xF0F0F0F0
+	.word	0xFF00FF00
+	.word	0xFFFF0000
 
 _des_unit_func_strongarm:
+	
 	MOV     R12,R13
 	STMDB   R13!,{R0,R1,R4-R9,R11,R12,R14,PC}
 	SUB     R11,R12,#4
-	SUB     R12,R13,#0x02EC     
-	/*
+	SUB     R12,R13,#0x0400     
+/*
 	CMP     R12,R10
-	BLMI    0xFFFFFFC0
-	*/
+	BLMI    0x000000A8
+*/
 	MOV     R4,R0
 	SUB     R13,R13,#0x02E8     
 	LDR     R0,[R0,#16]
@@ -901,7 +211,7 @@ _des_unit_func_strongarm:
 	MOV     R5,#1
 	MOV     R6,#0
 	LDMIA   R13,{R7,R8}
-L000048J5:	
+L000048J5:
 	MOV     R0,R6
 	MOV     R1,#7
 	BL      ___umodsi3
@@ -917,38 +227,289 @@ L000048J5:
 	ADD     R6,R6,#1
 	CMP     R6,#0x38            
 	BCC     L000048J5
-	MOV     R1,#1
-	MOV     R0,#0
+	MOV     R5,#0
+	MOV     R6,#0
+	MOV     R1,#0x20            
+	ADD     R12,R13,#0x0208     
+clearbits:
+	STMDB   R12!,{R5,R6}
+	STMDB   R12!,{R5,R6}
+	SUBS    R1,R1,#1
+	BNE     clearbits
 	LDR     R2,[R4,#12]
-	LDR     R3,[R4,#4]
-L000094J14:
-	ANDS    R14,R3,R1
-	MVNNE   R14,#0
-	ADD     R12,R13,#0x0108     
-	STR     R14,[R12,R0,LSL #2]
-	ANDS    R14,R2,R1
-	MVNNE   R14,#0
+	LDR     R3,[R4,#8]
 	ADD     R12,R13,#8
-	STR     R14,[R12,R0,LSL #2]
-	MOVS    R1,R1,LSL #1
-	MOVEQ   R1,#1
-	LDREQ   R2,[R4,#8]
-	LDREQ   R3,[R4,#0]
-	ADD     R0,R0,#1
-	CMP     R0,#0x40            
-	BCC     L000094J14
-	LDR     R0,L000380
-	STR     R0,[R13,#532]
-	LDR     R0,L000384
-	STR     R0,[R13,#540]
-	LDR     R0,L000388
-	STR     R0,[R13,#552]
-	MOV     R0,#0xFF00
-	ADD     R0,R0,R0,ROR #16
-	STR     R0,[R13,#560]
-	MOV     R0,#0x00FF0000
-	ADD     R0,R0,#0xFF000000
-	STR     R0,[R13,#564]
+	MVN     R7,#0
+	TST     R2,#0x20            
+	STRNE   R7,[R12,#252]
+	TST     R2,#8
+	STRNE   R7,[R12,#248]
+	TST     R3,#0x00080000
+	STRNE   R7,[R12,#244]
+	TST     R3,#0x00020000
+	STRNE   R7,[R12,#240]
+	TST     R3,#0x20            
+	STRNE   R7,[R12,#236]
+	TST     R2,#0x02000000
+	STRNE   R7,[R12,#232]
+	TST     R2,#0x8000
+	STRNE   R7,[R12,#228]
+	TST     R2,#0x0800          
+	STRNE   R7,[R12,#224]
+	TST     R3,#0x08000000
+	STRNE   R7,[R12,#220]
+	TST     R3,#0x20000000
+	STRNE   R7,[R12,#216]
+	TST     R3,#0x0200          
+	STRNE   R7,[R12,#212]
+	TST     R3,#0x8000
+	STRNE   R7,[R12,#208]
+	TST     R2,#0x0200          
+	STRNE   R7,[R12,#204]
+	TST     R2,#0x08000000
+	STRNE   R7,[R12,#200]
+	TST     R2,#0x2000
+	STRNE   R7,[R12,#196]
+	TST     R2,#0x80            
+	STRNE   R7,[R12,#192]
+	TST     R3,#0x80000000
+	STRNE   R7,[R12,#188]
+	TST     R3,#0x2000
+	STRNE   R7,[R12,#184]
+	TST     R2,#2
+	STRNE   R7,[R12,#180]
+	TST     R2,#0x00800000
+	STRNE   R7,[R12,#176]
+	TST     R2,#0x80000000
+	STRNE   R7,[R12,#172]
+	TST     R3,#2
+	STRNE   R7,[R12,#168]
+	TST     R2,#0x00200000
+	STRNE   R7,[R12,#164]
+	TST     R2,#0x00080000
+	STRNE   R7,[R12,#160]
+	TST     R3,#0x02000000
+	STRNE   R7,[R12,#156]
+	TST     R2,#0x20000000
+	STRNE   R7,[R12,#152]
+	TST     R3,#0x0800          
+	STRNE   R7,[R12,#148]
+	TST     R3,#0x00800000
+	STRNE   R7,[R12,#144]
+	TST     R3,#0x80            
+	STRNE   R7,[R12,#140]
+	TST     R2,#0x00020000
+	STRNE   R7,[R12,#136]
+	TST     R3,#0x00200000
+	STRNE   R7,[R12,#132]
+	TST     R3,#8
+	STRNE   R7,[R12,#128]
+	TST     R2,#0x10            
+	STRNE   R7,[R12,#124]
+	TST     R2,#4
+	STRNE   R7,[R12,#120]
+	TST     R3,#0x00040000
+	STRNE   R7,[R12,#116]
+	TST     R3,#0x00010000
+	STRNE   R7,[R12,#112]
+	TST     R3,#0x10            
+	STRNE   R7,[R12,#108]
+	TST     R2,#0x01000000
+	STRNE   R7,[R12,#104]
+	TST     R2,#0x4000
+	STRNE   R7,[R12,#100]
+	TST     R2,#0x0400          
+	STRNE   R7,[R12,#96]
+	TST     R3,#0x04000000
+	STRNE   R7,[R12,#92]
+	TST     R3,#0x10000000
+	STRNE   R7,[R12,#88]
+	TST     R3,#0x0100          
+	STRNE   R7,[R12,#84]
+	TST     R3,#0x4000
+	STRNE   R7,[R12,#80]
+	TST     R2,#0x0100          
+	STRNE   R7,[R12,#76]
+	TST     R2,#0x04000000
+	STRNE   R7,[R12,#72]
+	TST     R2,#0x1000          
+	STRNE   R7,[R12,#68]
+	TST     R2,#0x40            
+	STRNE   R7,[R12,#64]
+	TST     R3,#0x40000000
+	STRNE   R7,[R12,#60]
+	TST     R3,#0x1000          
+	STRNE   R7,[R12,#56]
+	TST     R2,#1
+	STRNE   R7,[R12,#52]
+	TST     R2,#0x00400000
+	STRNE   R7,[R12,#48]
+	TST     R2,#0x40000000
+	STRNE   R7,[R12,#44]
+	TST     R3,#1
+	STRNE   R7,[R12,#40]
+	TST     R2,#0x00100000
+	STRNE   R7,[R12,#36]
+	TST     R2,#0x00040000
+	STRNE   R7,[R12,#32]
+	TST     R3,#0x01000000
+	STRNE   R7,[R12,#28]
+	TST     R2,#0x10000000
+	STRNE   R7,[R12,#24]
+	TST     R3,#0x0400          
+	STRNE   R7,[R12,#20]
+	TST     R3,#0x00400000
+	STRNE   R7,[R12,#16]
+	TST     R3,#0x40            
+	STRNE   R7,[R12,#12]
+	TST     R2,#0x00010000
+	STRNE   R7,[R12,#8]
+	TST     R3,#0x00100000
+	STRNE   R7,[R12,#4]
+	TST     R3,#4
+	STRNE   R7,[R12,#0]
+	LDR     R2,[R4,#4]
+	LDR     R3,[R4,#0]
+	ADD     R12,R13,#0x0108     
+	TST     R3,#0x02000000
+	STRNE   R7,[R12,#252]
+	TST     R3,#0x00020000
+	STRNE   R7,[R12,#248]
+	TST     R3,#0x0200          
+	STRNE   R7,[R12,#244]
+	TST     R3,#2
+	STRNE   R7,[R12,#240]
+	TST     R2,#0x02000000
+	STRNE   R7,[R12,#236]
+	TST     R2,#0x00020000
+	STRNE   R7,[R12,#232]
+	TST     R2,#0x0200          
+	STRNE   R7,[R12,#228]
+	TST     R2,#2
+	STRNE   R7,[R12,#224]
+	TST     R3,#0x08000000
+	STRNE   R7,[R12,#220]
+	TST     R3,#0x00080000
+	STRNE   R7,[R12,#216]
+	TST     R3,#0x0800          
+	STRNE   R7,[R12,#212]
+	TST     R3,#8
+	STRNE   R7,[R12,#208]
+	TST     R2,#0x08000000
+	STRNE   R7,[R12,#204]
+	TST     R2,#0x00080000
+	STRNE   R7,[R12,#200]
+	TST     R2,#0x0800          
+	STRNE   R7,[R12,#196]
+	TST     R2,#8
+	STRNE   R7,[R12,#192]
+	TST     R3,#0x20000000
+	STRNE   R7,[R12,#188]
+	TST     R3,#0x00200000
+	STRNE   R7,[R12,#184]
+	TST     R3,#0x2000
+	STRNE   R7,[R12,#180]
+	TST     R3,#0x20            
+	STRNE   R7,[R12,#176]
+	TST     R2,#0x20000000
+	STRNE   R7,[R12,#172]
+	TST     R2,#0x00200000
+	STRNE   R7,[R12,#168]
+	TST     R2,#0x2000
+	STRNE   R7,[R12,#164]
+	TST     R2,#0x20            
+	STRNE   R7,[R12,#160]
+	TST     R3,#0x80000000
+	STRNE   R7,[R12,#156]
+	TST     R3,#0x00800000
+	STRNE   R7,[R12,#152]
+	TST     R3,#0x8000
+	STRNE   R7,[R12,#148]
+	TST     R3,#0x80            
+	STRNE   R7,[R12,#144]
+	TST     R2,#0x80000000
+	STRNE   R7,[R12,#140]
+	TST     R2,#0x00800000
+	STRNE   R7,[R12,#136]
+	TST     R2,#0x8000
+	STRNE   R7,[R12,#132]
+	TST     R2,#0x80            
+	STRNE   R7,[R12,#128]
+	TST     R3,#0x01000000
+	STRNE   R7,[R12,#124]
+	TST     R3,#0x00010000
+	STRNE   R7,[R12,#120]
+	TST     R3,#0x0100          
+	STRNE   R7,[R12,#116]
+	TST     R3,#1
+	STRNE   R7,[R12,#112]
+	TST     R2,#0x01000000
+	STRNE   R7,[R12,#108]
+	TST     R2,#0x00010000
+	STRNE   R7,[R12,#104]
+	TST     R2,#0x0100          
+	STRNE   R7,[R12,#100]
+	TST     R2,#1
+	STRNE   R7,[R12,#96]
+	TST     R3,#0x04000000
+	STRNE   R7,[R12,#92]
+	TST     R3,#0x00040000
+	STRNE   R7,[R12,#88]
+	TST     R3,#0x0400          
+	STRNE   R7,[R12,#84]
+	TST     R3,#4
+	STRNE   R7,[R12,#80]
+	TST     R2,#0x04000000
+	STRNE   R7,[R12,#76]
+	TST     R2,#0x00040000
+	STRNE   R7,[R12,#72]
+	TST     R2,#0x0400          
+	STRNE   R7,[R12,#68]
+	TST     R2,#4
+	STRNE   R7,[R12,#64]
+	TST     R3,#0x10000000
+	STRNE   R7,[R12,#60]
+	TST     R3,#0x00100000
+	STRNE   R7,[R12,#56]
+	TST     R3,#0x1000          
+	STRNE   R7,[R12,#52]
+	TST     R3,#0x10            
+	STRNE   R7,[R12,#48]
+	TST     R2,#0x10000000
+	STRNE   R7,[R12,#44]
+	TST     R2,#0x00100000
+	STRNE   R7,[R12,#40]
+	TST     R2,#0x1000          
+	STRNE   R7,[R12,#36]
+	TST     R2,#0x10            
+	STRNE   R7,[R12,#32]
+	TST     R3,#0x40000000
+	STRNE   R7,[R12,#28]
+	TST     R3,#0x00400000
+	STRNE   R7,[R12,#24]
+	TST     R3,#0x4000
+	STRNE   R7,[R12,#20]
+	TST     R3,#0x40            
+	STRNE   R7,[R12,#16]
+	TST     R2,#0x40000000
+	STRNE   R7,[R12,#12]
+	TST     R2,#0x00400000
+	STRNE   R7,[R12,#8]
+	TST     R2,#0x4000
+	STRNE   R7,[R12,#4]
+	TST     R2,#0x40            
+	STRNE   R7,[R12,#0]
+	adrl    R0,lowbits
+	/*
+	ADR	R0,0x00000444
+	SUB     R0,R0,#0x37,ROR #30
+	*/
+	LDMIA   R0,{R5-R9}
+	STR     R5,[R13,#532]
+	STR     R6,[R13,#540]
+	STR     R7,[R13,#552]
+	STR     R8,[R13,#560]
+	STR     R9,[R13,#564]
 	LDR     R0,[R11,#-40]
 	SUB     R5,R0,#5
 	MOV     R8,#0
@@ -960,97 +521,841 @@ resettwiddles:
 	MOV     R0,#0
 	MOV     R12,#0
 	ADR     R3,twiddles
+	ADD     R2,R13,#0x0208      
 resettwiddleloop:
 	LDRB    R1,[R3,R0]
-	ADD     R2,R13,#0x0208      
 	STR     R12,[R2,R1,LSL #2]
 	ADD     R0,R0,#1
 	CMP     R0,R5
 	BCC     resettwiddleloop
 	B       deseval
+half_keys_done:
+	CMP     R8,#0
+	BNE     inc_then_exit
+	MOV     R8,#1
+	MOV     R6,#0
+	MOV     R7,R6
+	MOV     R0,#0x38            
+	ADD     R1,R13,#0x0208      
+invertloop:
+	LDR     R2,[R1,#0]
+	SUBS    R0,R0,#1
+	MVN     R2,R2
+	STR     R2,[R1],#4
+	BNE     invertloop
+	B       resettwiddles
+inc_then_exit:
+	LDR     R1,[R4,#20]
+	MOV     R2,#1
+	LDR     R0,[R11,#-40]
+	MOV     R0,R2,LSL R0
+	ADD     R1,R1,R0
+	STR     R1,[R4,#20]
+	LDMDB   R11,{R4-R9,R11,R13,PC}^
+
+odd_parity:
+	.word	0x02020101
+	.word	0x07070404
+	.word	0x0B0B0808
+	.word	0x0E0E0D0D
+	.word	0x13131010
+	.word	0x16161515
+	.word	0x1A1A1919
+	.word	0x1F1F1C1C
+	.word	0x23232020
+	.word	0x26262525
+	.word	0x2A2A2929
+	.word	0x2F2F2C2C
+	.word	0x32323131
+	.word	0x37373434
+	.word	0x3B3B3838
+	.word	0x3E3E3D3D
+	.word	0x43434040
+	.word	0x46464545
+	.word	0x4A4A4949
+	.word	0x4F4F4C4C
+	.word	0x52525151
+	.word	0x57575454
+	.word	0x5B5B5858
+	.word	0x5E5E5D5D
+	.word	0x62626161
+	.word	0x67676464
+	.word	0x6B6B6868
+	.word	0x6E6E6D6D
+	.word	0x73737070
+	.word	0x76767575
+	.word	0x7A7A7979
+	.word	0x7F7F7C7C
+	.word	0x83838080
+	.word	0x86868585
+	.word	0x8A8A8989
+	.word	0x8F8F8C8C
+	.word	0x92929191
+	.word	0x97979494
+	.word	0x9B9B9898
+	.word	0x9E9E9D9D
+	.word	0xA2A2A1A1
+	.word	0xA7A7A4A4
+	.word	0xABABA8A8
+	.word	0xAEAEADAD
+	.word	0xB3B3B0B0
+	.word	0xB6B6B5B5
+	.word	0xBABAB9B9
+	.word	0xBFBFBCBC
+	.word	0xC2C2C1C1
+	.word	0xC7C7C4C4
+	.word	0xCBCBC8C8
+	.word	0xCECECDCD
+	.word	0xD3D3D0D0
+	.word	0xD6D6D5D5
+	.word	0xDADAD9D9
+	.word	0xDFDFDCDC
+	.word	0xE3E3E0E0
+	.word	0xE6E6E5E5
+	.word	0xEAEAE9E9
+	.word	0xEFEFECEC
+	.word	0xF2F2F1F1
+	.word	0xF7F7F4F4
+	.word	0xFBFBF8F8
+	.word	0xFEFEFDFD
+twiddles:
+	.word	0x28120F0C
+	.word	0x2D2B2A29
+	.word	0x0032312E
+	.word	0x06040201
+	.word	0x000D0907
+
+foundkey:
+	MVN     R5,#0
+	MOV     R1,#0
+	MOV     R2,#1
+L000228J51:
+	TST     R0,R2,LSL R1
+	MOVNE   R5,R1
+	ADD     R1,R1,#1
+	CMP     R1,#0x20            
+	BCC     L000228J51
+	MOV     R0,#0
+	STR     R0,[R13,#4]
+	MOV     R6,#0x31            
+	STR     R0,[R13,#0]
+	ADR     R9,odd_parity
+L000250J55:
+	ADD     R0,R13,#0x0208      
+	ADD     R0,R0,R6,LSL #2
+	LDR     R1,[R0,#24]
+	MOV     R1,R1,LSR R5
+	AND     R1,R1,#1
+	MOV     R2,R1,LSL #7
+	LDR     R1,[R0,#20]
+	MOV     R1,R1,LSR R5
+	AND     R1,R1,#1
+	ORR     R2,R2,R1,LSL #6
+	LDR     R1,[R0,#16]
+	MOV     R1,R1,LSR R5
+	AND     R1,R1,#1
+	ORR     R2,R2,R1,LSL #5
+	LDR     R1,[R0,#12]
+	MOV     R1,R1,LSR R5
+	AND     R1,R1,#1
+	ORR     R2,R2,R1,LSL #4
+	LDR     R1,[R0,#8]
+	MOV     R1,R1,LSR R5
+	AND     R1,R1,#1
+	ORR     R2,R2,R1,LSL #3
+	LDR     R1,[R0,#4]
+	MOV     R1,R1,LSR R5
+	AND     R1,R1,#1
+	ORR     R1,R2,R1,LSL #2
+	LDR     R0,[R0,#0]
+	MOV     R0,R0,LSR R5
+	AND     R0,R0,#1
+	ORR     R0,R1,R0,LSL #1
+	LDRB    R7,[R9,R0]
+	ADD     R0,R6,#7
+	MOV     R1,#7
+	BL      ___divsi3
+	SUB     R0,R0,#1
+	CMP     R0,#4
+	BLT     L000300J58
+	MVN     R1,#0x1F            
+	ADD     R0,R1,R0,LSL #3
+	LDR     R1,[R13,#4]
+	ORR     R0,R1,R7,LSL R0
+	STR     R0,[R13,#4]
+	B       L000310J60
+L000300J58:
+	MOV     R0,R0,LSL #3
+	LDR     R1,[R13,#0]
+	ORR     R0,R1,R7,LSL R0
+	STR     R0,[R13,#0]
+L000310J60:
+	SUB     R6,R6,#7
+	CMP     R6,#0
+	BGE     L000250J55
+	CMP     R8,#0
+	BEQ     L00033cJ62
+	LDR     R0,[R13,#4]
+	MVN     R0,R0
+	STR     R0,[R13,#4]
+	LDR     R0,[R13,#0]
+	MVN     R0,R0
+	STR     R0,[R13,#0]
+L00033cJ62:
+	MOV     R1,R13
+	ADD     R0,R13,#4
+	BL      _convert_key_from_des_to_inc__FPUlT0
+	LDR     R0,[R4,#20]
+	LDR     R1,[R13,#0]
+	SUB     R0,R1,R0
+	STR     R1,[R4,#20]
+	LDR     R1,[R13,#4]
+	STR     R1,[R4,#16]
+	LDMDB   R11,{R4-R9,R11,R13,PC}^
+s1:
+	STMDB   R13!,{R6-R9,R14}
+	LDR     R6,[R12,#124]
+	LDMIA   R12,{R7-R11}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
+	EOR     R4,R4,R10
+	EOR     R5,R5,R11
+	BIC     R6,R2,R4
+	EOR     R7,R6,R3
+	BIC     R9,R2,R3
+	ORR     R8,R9,R4
+	AND     R10,R5,R8
+	EOR     R12,R2,R3
+	EOR     R14,R4,R10
+	AND     R14,R14,R12
+	EOR     R8,R9,R14
+	ORR     R8,R5,R8
+	BIC     R11,R4,R3
+	EOR     R8,R8,R11
+	ORR     R11,R1,R8
+	EOR     R11,R11,R14
+	AND     R11,R0,R11
+	ORR     R6,R6,R10
+	EOR     R6,R6,R12
+	EOR     R14,R7,R10
+	BIC     R7,R8,R7
+	BIC     R12,R5,R12
+	BIC     R3,R3,R4
+	EOR     R10,R3,R12
+	ORR     R10,R1,R10
+	EOR     R10,R10,R14
+	EOR     R10,R10,R11
+	LDR     R11,[R13,#4]
+	ORR     R14,R14,R3
+	LDR     R3,[R11,#0]
+	MVN     R10,R10
+	EOR     R3,R3,R10
+	EOR     R10,R6,R12
+	STR     R3,[R11,#0]
+	BIC     R10,R8,R10
+	AND     R11,R1,R10
+	EOR     R11,R14,R11
+	EOR     R11,R7,R11
+	AND     R14,R2,R14
+	BIC     R7,R1,R7
+	EOR     R7,R6,R7
+	BIC     R3,R8,R14
+	BIC     R6,R6,R3
+	ORR     R6,R6,R9
+	BIC     R12,R11,R12
+	AND     R11,R0,R11
+	EOR     R7,R7,R11
+	ORR     R11,R1,R9
+	EOR     R11,R11,R3
+	MVN     R11,R11
+	ORR     R10,R2,R10
+	BIC     R3,R6,R1
+	EOR     R10,R10,R3
+	BIC     R10,R0,R10
+	EOR     R10,R10,R11
+	LDR     R3,[R13],#8
+	ORR     R8,R6,R8
+	LDR     R6,[R3,#0]
+	EOR     R8,R8,R4
+	EOR     R10,R6,R10
+	ORR     R9,R9,R4
+	AND     R6,R5,R9
+	STR     R10,[R3,#0]
+	EOR     R9,R9,R14
+	BIC     R9,R9,R6
+	BIC     R8,R1,R8
+	EOR     R8,R8,R9
+	ORR     R8,R0,R8
+	EOR     R8,R8,R11
+	LDMIA   R13!,{R9,R11}
+	EOR     R8,R8,R12
+	LDR     R12,[R9,#0]
+	LDR     R14,[R11,#0]
+	EOR     R12,R8,R12
+	EOR     R14,R7,R14
+	STR     R12,[R9,#0]
+	STR     R14,[R11,#0]
+	LDR     PC,[R13],#4
+s2:	
+	STMDB   R13!,{R6-R9,R14}
+	LDMIA   R12,{R6-R11}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
+	EOR     R4,R4,R10
+	EOR     R5,R5,R11
+	EOR     R7,R0,R5
+	EOR     R8,R7,R4
+	AND     R9,R5,R4
+	BIC     R6,R0,R9
+	BIC     R11,R1,R6
+	EOR     R12,R8,R11
+	ORR     R11,R9,R11
+	BIC     R7,R11,R7
+	BIC     R11,R4,R6
+	EOR     R4,R4,R1
+	BIC     R5,R5,R6
+	ORR     R0,R12,R0
+	EOR     R0,R0,R1
+	ORR     R14,R2,R7
+	EOR     R14,R12,R14
+	EOR     R12,R12,R11
+	AND     R12,R1,R12
+	ORR     R11,R11,R1
+	BIC     R7,R4,R7
+	ORR     R10,R0,R12
+	AND     R4,R4,R10
+	BIC     R4,R11,R4
+	ORR     R4,R3,R4
+	MVN     R14,R14
+	AND     R11,R3,R11
+	EOR     R11,R14,R11
+	AND     R10,R2,R10
+	EOR     R10,R10,R4
+	BIC     R0,R2,R0
+	EOR     R0,R7,R0
+	ORR     R7,R7,R5
+	EOR     R7,R7,R14
+	EOR     R4,R1,R8
+	AND     R14,R4,R7
+	EOR     R14,R14,R0
+	BIC     R14,R2,R14
+	EOR     R14,R4,R14
+	ORR     R4,R9,R12
+	AND     R9,R2,R9
+	EOR     R9,R9,R4
+	BIC     R9,R3,R9
+	EOR     R9,R9,R14
+	EOR     R6,R6,R11
+	BIC     R6,R6,R1
+	EOR     R6,R8,R6
+	EOR     R8,R12,R5
+	AND     R8,R2,R8
+	ORR     R12,R3,R0
+	EOR     R12,R8,R12
+	LDMIA   R13!,{R0-R3}
+	EOR     R12,R6,R12
+	LDR     R14,[R0,#0]
+	EOR     R6,R7,R10
+	LDR     R7,[R1,#0]
+	EOR     R10,R14,R11
+	LDR     R8,[R2,#0]
+	MVN     R9,R9
+	STR     R10,[R0,#0]
+	EOR     R11,R7,R9
+	LDR     R14,[R3,#0]
+	EOR     R12,R8,R12
+	STR     R11,[R1,#0]
+	EOR     R14,R14,R6
+	STR     R12,[R2,#0]
+	STR     R14,[R3,#0]
+	LDR     PC,[R13],#4
+s3:
+	STMDB   R13!,{R6-R8,R14}
+	LDMIA   R12,{R6-R8,R10-R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R10
+	EOR     R4,R4,R11
+	EOR     R5,R5,R12
+	EOR     R6,R1,R2
+	EOR     R6,R6,R5
+	AND     R7,R1,R6
+	EOR     R11,R2,R7
+	BIC     R12,R11,R4
+	ORR     R8,R4,R7
+	EOR     R10,R6,R8
+	ORR     R14,R0,R12
+	EOR     R14,R10,R14
+	BIC     R7,R5,R7
+	EOR     R10,R7,R4
+	AND     R7,R0,R10
+	EOR     R7,R4,R7
+	ORR     R7,R3,R7
+	EOR     R7,R14,R7
+	LDR     R14,[R9,#0]
+	EOR     R14,R14,R7
+	AND     R7,R5,R7
+	STR     R14,[R9,#0]
+	EOR     R7,R7,R11
+	BIC     R7,R7,R0
+	BIC     R9,R12,R2
+	ORR     R9,R0,R9
+	EOR     R9,R6,R9
+	AND     R11,R2,R4
+	EOR     R9,R11,R9
+	AND     R2,R2,R5
+	BIC     R11,R6,R12
+	ORR     R12,R1,R12
+	ORR     R14,R1,R11
+	EOR     R14,R14,R7
+	AND     R1,R1,R6
+	EOR     R6,R6,R8
+	EOR     R8,R8,R12
+	ORR     R10,R10,R11
+	EOR     R11,R11,R2
+	ORR     R11,R0,R11
+	ORR     R2,R2,R1
+	EOR     R10,R10,R2
+	EOR     R4,R2,R4
+	MVN     R4,R4
+	EOR     R14,R14,R4
+	EOR     R11,R11,R4
+	BIC     R1,R5,R1
+	ORR     R1,R1,R10
+	EOR     R2,R5,R2
+	BIC     R2,R2,R6
+	AND     R2,R2,R0
+	EOR     R6,R1,R2
+	AND     R6,R3,R6
+	EOR     R6,R9,R6
+	BIC     R12,R6,R12
+	ORR     R12,R0,R12
+	EOR     R9,R7,R12
+	AND     R9,R3,R9
+	EOR     R9,R14,R9
+	ORR     R10,R0,R10
+	EOR     R10,R8,R10
+	LDMIA   R13!,{R7,R8,R14}
+	BIC     R10,R3,R10
+	LDR     R2,[R8,#0]
+	EOR     R10,R11,R10
+	LDR     R12,[R14,#0]
+	EOR     R11,R2,R6
+	LDR     R6,[R7,#0]
+	EOR     R12,R12,R10
+	STR     R11,[R8,#0]
+	EOR     R10,R6,R9
+	STR     R12,[R14,#0]
+	STR     R10,[R7,#0]
+	LDR     PC,[R13],#4
+s4:	
+	STMDB   R13!,{R9,R14}
+	LDMIA   R12!,{R10,R11,R14}
+	EOR     R0,R0,R10
+	EOR     R1,R1,R11
+	LDMIA   R12,{R10-R12}
+	EOR     R2,R2,R14
+	EOR     R3,R3,R10
+	EOR     R4,R4,R11
+	EOR     R5,R5,R12
+	ORR     R10,R0,R2
+	AND     R10,R4,R10
+	EOR     R9,R0,R10
+	EOR     R12,R2,R10
+	BIC     R10,R2,R0
+	ORR     R10,R10,R9
+	AND     R11,R1,R10
+	BIC     R14,R1,R12
+	EOR     R10,R10,R14
+	ORR     R0,R12,R9
+	EOR     R12,R4,R11
+	AND     R14,R3,R12
+	EOR     R9,R9,R14
+	ORR     R14,R1,R2
+	EOR     R9,R9,R14
+	EOR     R14,R2,R4
+	BIC     R14,R14,R1
+	EOR     R11,R11,R14
+	EOR     R11,R2,R11
+	BIC     R11,R3,R11
+	EOR     R11,R0,R11
+	AND     R12,R1,R12
+	EOR     R11,R11,R12
+	EOR     R12,R0,R14
+	ORR     R12,R3,R12
+	EOR     R14,R10,R12
+	ORR     R12,R5,R14
+	EOR     R12,R9,R12
+	LDR     R10,[R6,#0]
+	AND     R14,R5,R14
+	EOR     R10,R10,R12
+	EOR     R0,R9,R11
+	STR     R10,[R6,#0]
+	BIC     R6,R1,R0
+	BIC     R0,R0,R3
+	EOR     R6,R6,R0
+	EOR     R6,R6,R12
+	ORR     R12,R5,R6
+	EOR     R12,R12,R11
+	MVN     R12,R12
+	MVN     R9,R9
+	EOR     R0,R14,R9
+	LDR     R9,[R13],#4
+	EOR     R14,R14,R6
+	LDR     R11,[R7,#0]
+	EOR     R14,R14,R12
+	LDR     R6,[R8,#0]
+	EOR     R11,R11,R0
+	LDR     R0,[R9,#0]
+	EOR     R12,R6,R12
+	STR     R11,[R7,#0]
+	EOR     R14,R0,R14
+	STR     R12,[R8,#0]
+	STR     R14,[R9,#0]
+	LDR     PC,[R13],#4
+s5:	
+	STMDB   R13!,{R6-R9,R14}
+	LDMIA   R12,{R6-R11}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
+	EOR     R4,R4,R10
+	EOR     R5,R5,R11
+	BIC     R6,R0,R2
+	ORR     R10,R5,R6
+	EOR     R11,R3,R6
+	ORR     R11,R5,R11
+	BIC     R12,R2,R3
+	EOR     R14,R3,R0
+	ORR     R8,R12,R14
+	BIC     R5,R8,R5
+	EOR     R12,R12,R0
+	AND     R7,R2,R8
+	EOR     R7,R7,R3
+	BIC     R6,R7,R6
+	EOR     R6,R6,R11
+	ORR     R11,R7,R11
+	ORR     R14,R4,R6
+	EOR     R7,R7,R14
+	EOR     R14,R12,R10
+	AND     R10,R3,R10
+	EOR     R10,R10,R6
+	AND     R6,R6,R14
+	BIC     R8,R8,R6
+	EOR     R9,R2,R5
+	BIC     R5,R5,R3
+	EOR     R5,R5,R2
+	EOR     R6,R9,R6
+	ORR     R2,R4,R9
+	EOR     R14,R14,R2
+	BIC     R2,R7,R1
+	EOR     R14,R14,R2
+	EOR     R9,R0,R9
+	AND     R12,R12,R9
+	BIC     R12,R4,R12
+	EOR     R10,R10,R12
+	BIC     R7,R7,R8
+	AND     R12,R4,R5
+	EOR     R8,R8,R12
+	ORR     R12,R4,R6
+	EOR     R11,R11,R12
+	ORR     R11,R1,R11
+	EOR     R8,R8,R11
+	ORR     R11,R10,R7
+	EOR     R12,R3,R0
+	EOR     R11,R11,R12
+	BIC     R11,R4,R11
+	EOR     R11,R9,R11
+	EOR     R7,R7,R11
+	AND     R12,R12,R6
+	EOR     R12,R12,R5
+	ORR     R9,R3,R9
+	EOR     R6,R14,R6
+	BIC     R6,R9,R6
+	AND     R6,R4,R6
+	EOR     R6,R12,R6
+	ORR     R6,R1,R6
+	EOR     R6,R7,R6
+	BIC     R7,R9,R1
+	LDMIA   R13!,{R0-R3}
+	EOR     R7,R10,R7
+	LDR     R10,[R0,#0]
+	MVN     R8,R8
+	LDR     R11,[R1,#0]
+	EOR     R10,R10,R6
+	LDR     R12,[R2,#0]
+	EOR     R11,R11,R7
+	LDR     R9,[R3,#0]
+	EOR     R12,R12,R8
+	STR     R10,[R0,#0]
+	EOR     R14,R9,R14
+	STR     R11,[R1,#0]
+	STR     R12,[R2,#0]
+	STR     R14,[R3,#0]
+	LDR     PC,[R13],#4
+s6:	
+	STMDB   R13!,{R7-R9,R14}
+	LDMIA   R12,{R7-R12}
+	EOR     R0,R0,R7
+	EOR     R1,R1,R8
+	EOR     R2,R2,R9
+	EOR     R3,R3,R10
+	EOR     R4,R4,R11
+	EOR     R5,R5,R12
+	MVN     R2,R2
+	EOR     R7,R4,R0
+	EOR     R8,R7,R5
+	AND     R9,R0,R5
+	BIC     R10,R9,R4
+	BIC     R11,R3,R10
+	EOR     R12,R5,R9
+	ORR     R14,R10,R12
+	BIC     R14,R14,R3
+	EOR     R14,R12,R14
+	AND     R12,R4,R12
+	BIC     R12,R3,R12
+	ORR     R12,R1,R12
+	ORR     R10,R10,R14
+	EOR     R0,R8,R11
+	EOR     R9,R9,R0
+	BIC     R9,R9,R14
+	AND     R14,R1,R14
+	EOR     R14,R0,R14
+	ORR     R3,R5,R0
+	BIC     R3,R3,R4
+	BIC     R8,R1,R10
+	EOR     R8,R3,R8
+	AND     R8,R8,R2
+	LDR     R3,[R6,#0]
+	EOR     R8,R8,R14
+	MVN     R8,R8
+	EOR     R3,R3,R8
+	BIC     R8,R8,R7
+	STR     R3,[R6,#0]
+	EOR     R8,R8,R10
+	BIC     R6,R5,R8
+	EOR     R6,R6,R0
+	BIC     R10,R1,R6
+	ORR     R14,R4,R5
+	BIC     R0,R14,R7
+	BIC     R3,R1,R10
+	EOR     R0,R0,R3
+	ORR     R0,R2,R0
+	EOR     R10,R8,R10
+	EOR     R0,R10,R0
+	EOR     R10,R5,R10
+	BIC     R10,R4,R10
+	EOR     R7,R7,R5
+	ORR     R6,R6,R10
+	EOR     R6,R6,R11
+	ORR     R11,R10,R7
+	EOR     R11,R11,R12
+	AND     R14,R14,R9
+	EOR     R7,R14,R7
+	AND     R7,R1,R7
+	EOR     R7,R6,R7
+	ORR     R7,R2,R7
+	EOR     R7,R11,R7
+	BIC     R12,R8,R4
+	BIC     R12,R2,R12
+	BIC     R11,R1,R10
+	LDMIA   R13!,{R6,R8,R10}
+	EOR     R12,R12,R11
+	LDR     R11,[R6,#0]
+	EOR     R12,R12,R9
+	LDR     R14,[R10,#0]
+	EOR     R11,R7,R11
+	LDR     R7,[R8,#0]
+	EOR     R14,R14,R0
+	STR     R11,[R6,#0]
+	EOR     R12,R7,R12
+	STR     R14,[R10,#0]
+	STR     R12,[R8,#0]
+	LDR     PC,[R13],#4
+s7:	
+	STMDB   R13!,{R7-R9,R14}
+	LDMIA   R12,{R7-R12}
+	EOR     R0,R0,R7
+	EOR     R1,R1,R8
+	EOR     R2,R2,R9
+	EOR     R3,R3,R10
+	EOR     R4,R4,R11
+	EOR     R5,R5,R12
+	AND     R7,R1,R3
+	EOR     R7,R7,R4
+	AND     R8,R3,R7
+	EOR     R9,R8,R1
+	BIC     R10,R2,R9
+	EOR     R7,R7,R10
+	EOR     R11,R2,R10
+	ORR     R10,R1,R3
+	ORR     R10,R10,R4
+	BIC     R12,R4,R1
+	ORR     R12,R2,R12
+	EOR     R10,R10,R12
+	BIC     R12,R5,R11
+	EOR     R12,R7,R12
+	EOR     R7,R8,R7
+	ORR     R14,R5,R7
+	EOR     R10,R10,R14
+	AND     R14,R0,R10
+	LDR     R10,[R6,#0]
+	EOR     R14,R12,R14
+	EOR     R10,R10,R14
+	EOR     R9,R3,R9
+	STR     R10,[R6,#0]
+	ORR     R6,R1,R9
+	EOR     R6,R6,R14
+	BIC     R6,R6,R5
+	ORR     R14,R2,R8
+	EOR     R14,R9,R14
+	EOR     R8,R2,R8
+	AND     R8,R8,R1
+	BIC     R8,R5,R8
+	EOR     R8,R14,R8
+	EOR     R11,R11,R8
+	EOR     R7,R1,R7
+	BIC     R7,R9,R7
+	AND     R7,R5,R7
+	ORR     R9,R0,R8
+	EOR     R9,R12,R9
+	BIC     R14,R14,R2
+	ORR     R8,R14,R8
+	BIC     R8,R8,R0
+	EOR     R8,R6,R8
+	EOR     R12,R11,R8
+	BIC     R6,R3,R2
+	ORR     R8,R4,R6
+	EOR     R11,R11,R8
+	EOR     R11,R11,R7
+	BIC     R6,R1,R6
+	AND     R6,R5,R6
+	AND     R8,R2,R6
+	EOR     R8,R8,R7
+	ORR     R8,R0,R8
+	EOR     R7,R11,R8
+	EOR     R11,R6,R9
+	LDMIA   R13!,{R6,R8,R9}
+	LDR     R14,[R6,#0]
+	MVN     R11,R11
+	EOR     R11,R14,R11
+	LDR     R14,[R9,#0]
+	STR     R11,[R6,#0]
+	LDR     R6,[R8,#0]
+	EOR     R14,R14,R7
+	EOR     R12,R6,R12
+	STR     R14,[R9,#0]
+	STR     R12,[R8,#0]
+	LDR     PC,[R13],#4
+s8:	
+	STMDB   R13!,{R6-R9,R14}
+	LDMIA   R12,{R6-R10}
+	LDR     R11,[R12,#-108]
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
+	EOR     R4,R4,R10
+	EOR     R5,R5,R11
+	BIC     R7,R0,R2
+	EOR     R8,R7,R3
+	EOR     R10,R0,R2
+	ORR     R11,R4,R8
+	EOR     R11,R10,R11
+	BIC     R12,R11,R0
+	ORR     R14,R12,R3
+	EOR     R14,R14,R10
+	EOR     R14,R14,R4
+	BIC     R10,R10,R4
+	ORR     R10,R10,R3
+	BIC     R6,R7,R14
+	EOR     R9,R4,R6
+	EOR     R9,R2,R9
+	BIC     R9,R9,R1
+	EOR     R9,R10,R9
+	AND     R9,R5,R9
+	EOR     R10,R12,R2
+	BIC     R8,R8,R14
+	EOR     R8,R8,R10
+	BIC     R10,R10,R4
+	EOR     R10,R3,R10
+	BIC     R2,R2,R8
+	ORR     R2,R10,R2
+	ORR     R12,R1,R12
+	EOR     R12,R2,R12
+	BIC     R8,R1,R8
+	EOR     R8,R14,R8
+	ORR     R8,R5,R8
+	BIC     R10,R1,R10
+	EOR     R14,R11,R10
+	MVN     R14,R14
+	ORR     R11,R11,R4
+	EOR     R10,R14,R8
+	EOR     R9,R14,R9
+	ORR     R14,R14,R3
+	EOR     R8,R7,R3
+	EOR     R8,R8,R11
+	AND     R7,R4,R7
+	EOR     R7,R7,R14
+	BIC     R7,R1,R7
+	AND     R11,R0,R11
+	EOR     R11,R11,R7
+	BIC     R11,R11,R5
+	AND     R14,R1,R14
+	EOR     R14,R8,R14
+	EOR     R11,R14,R11
+	ORR     R7,R8,R11
+	BIC     R7,R1,R7
+	EOR     R7,R6,R7
+	ORR     R7,R5,R7
+	LDMIA   R13!,{R0-R3}
+	EOR     R7,R12,R7
+	LDR     R12,[R2,#0]
+	MVN     R7,R7
+	LDR     R14,[R3,#0]
+	EOR     R12,R12,R11
+	LDR     R11,[R1,#0]
+	EOR     R14,R14,R9
+	STR     R12,[R2,#0]
+	LDR     R6,[R0,#0]
+	EOR     R11,R11,R7
+	STR     R14,[R3,#0]
+	EOR     R10,R6,R10
+	STR     R11,[R1,#0]
+	STR     R10,[R0,#0]
+	LDR     PC,[R13],#4
+
 timingloop:
 	ADD     R2,R13,#0x0208      
 	LDR     R0,[R2,R1,LSL #2]
 	MVN     R0,R0
 	STR     R0,[R2,R1,LSL #2]
-deseval:
+deseval:	
 	ADD     R1,R13,#8
-	ADD     R0,R13,#0x0108      
-	STMDB   R13!,{R4-R11}
 	MVN     R3,#0
-	STMDB   R13!,{R1-R3}
-	LDR     R11,[R0,#228]
-	LDR     R10,[R0,#196]
-	LDR     R9,[R0,#164]
-	LDR     R8,[R0,#132]
-	LDR     R7,[R0,#100]
-	LDR     R6,[R0,#68]
-	LDR     R5,[R0,#36]
-	LDR     R4,[R0,#4]
-	LDR     R12,[R0,#236]
+	STMDB   R13!,{R1-R11}
+	LDMDB   R2!,{R4-R11}
 	STMDB   R13!,{R4-R11}
-	LDR     R10,[R0,#204]
-	LDR     R9,[R0,#172]
-	LDR     R8,[R0,#140]
-	LDR     R7,[R0,#108]
-	LDR     R6,[R0,#76]
-	LDR     R5,[R0,#44]
-	LDR     R4,[R0,#12]
-	LDR     R11,[R0,#244]
-	STMDB   R13!,{R4-R10,R12}
-	LDR     R10,[R0,#212]
-	LDR     R9,[R0,#180]
-	LDR     R8,[R0,#148]
-	LDR     R7,[R0,#116]
-	LDR     R6,[R0,#84]
-	LDR     R5,[R0,#52]
-	LDR     R4,[R0,#20]
-	LDR     R12,[R0,#252]
+	LDMDB   R2!,{R4-R11}
 	STMDB   R13!,{R4-R11}
-	LDR     R10,[R0,#220]
-	LDR     R9,[R0,#188]
-	LDR     R8,[R0,#156]
-	LDR     R7,[R0,#124]
-	LDR     R6,[R0,#92]
-	LDR     R5,[R0,#60]
-	LDR     R4,[R0,#28]
-	LDR     R11,[R0,#224]
-	STMDB   R13!,{R4-R10,R12}
-	LDR     R10,[R0,#192]
-	LDR     R9,[R0,#160]
-	LDR     R8,[R0,#128]
-	LDR     R7,[R0,#96]
-	LDR     R6,[R0,#64]
-	LDR     R5,[R0,#32]
-	LDR     R4,[R0,#0]
-	LDR     R12,[R0,#232]
+	LDMDB   R2!,{R4-R11}
 	STMDB   R13!,{R4-R11}
-	LDR     R10,[R0,#200]
-	LDR     R9,[R0,#168]
-	LDR     R8,[R0,#136]
-	LDR     R7,[R0,#104]
-	LDR     R6,[R0,#72]
-	LDR     R5,[R0,#40]
-	LDR     R4,[R0,#8]
-	LDR     R11,[R0,#240]
-	STMDB   R13!,{R4-R10,R12}
-	LDR     R10,[R0,#208]
-	LDR     R9,[R0,#176]
-	LDR     R8,[R0,#144]
-	LDR     R7,[R0,#112]
-	LDR     R6,[R0,#80]
-	LDR     R5,[R0,#48]
-	LDR     R4,[R0,#16]
-	LDR     R12,[R0,#248]
+	LDMDB   R2!,{R4-R11}
 	STMDB   R13!,{R4-R11}
-	LDR     R10,[R0,#216]
-	LDR     R9,[R0,#184]
-	LDR     R8,[R0,#152]
-	LDR     R7,[R0,#120]
-	LDR     R6,[R0,#88]
-	LDR     R5,[R0,#56]
-	LDR     R4,[R0,#24]
-	STMDB   R13!,{R4-R10,R12}
+	LDMDB   R2!,{R4-R11}
+	STMDB   R13!,{R4-R11}
+	LDMDB   R2!,{R4-R11}
+	STMDB   R13!,{R4-R11}
+	LDMDB   R2!,{R4-R11}
+	STMDB   R13!,{R4-R11}
+	LDMDB   R2!,{R4-R11}
+	STMDB   R13!,{R4-R11}
 	ADD     R12,R13,#0x80       
 	ADD     R6,R13,#0x20        
 	ADD     R7,R13,#0x40        
@@ -2507,95 +2812,6 @@ deseval:
 	LDR     R4,[R14,#152]
 	LDR     R5,[R14,#0]
 	BL      s8
-	ADD     R12,R13,#0x80       
-	ADD     R6,R13,#0x20        
-	ADD     R7,R13,#0x40        
-	ADD     R8,R13,#0x58        
-	LDR     R14,[R13,#260]
-	ADD     R9,R13,#0x78        
-	LDR     R0,[R14,#132]
-	LDR     R1,[R14,#216]
-	LDR     R2,[R14,#48]
-	LDR     R3,[R14,#184]
-	LDR     R4,[R14,#96]
-	LDR     R5,[R14,#108]
-	BL      s1
-	LDR     R1,[R13,#256]
-	LDR     R3,[R1,#20]
-	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R7,[R13,#64]
-	LDR     R3,[R1,#12]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#204]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#196]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R9
-	BICS    R0,R0,R2
-	BEQ     got_result
-	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x8C       
-	ADD     R6,R13,#0x30        
-	ADD     R7,R13,#0x6C        
-	ADD     R8,R13,#4
-	LDR     R14,[R13,#260]
-	ADD     R9,R13,#0x44        
-	LDR     R0,[R14,#52]
-	LDR     R1,[R14,#68]
-	LDR     R2,[R14,#160]
-	LDR     R3,[R14,#136]
-	LDR     R4,[R14,#100]
-	LDR     R5,[R14,#20]
-	BL      s2
-	LDR     R1,[R13,#256]
-	LDR     R3,[R1,#148]
-	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#100]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#60]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#44]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R9
-	BICS    R0,R0,R2
-	BEQ     got_result
-	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x9C       
-	ADD     R6,R13,#0x5C        
-	ADD     R7,R13,#0x3C        
-	ADD     R8,R13,#0x74        
-	LDR     R14,[R13,#260]
-	ADD     R9,R13,#0x14        
-	LDR     R0,[R14,#156]
-	LDR     R1,[R14,#44]
-	LDR     R2,[R14,#76]
-	LDR     R3,[R14,#80]
-	LDR     R4,[R14,#12]
-	LDR     R5,[R14,#192]
-	BL      s3
-	LDR     R1,[R13,#256]
-	LDR     R3,[R1,#236]
-	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#244]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#164]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R9,[R13,#20]
-	LDR     R3,[R1,#188]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R9
-	BICS    R0,R0,R2
-	BEQ     got_result
-	STR     R0,[R13,#264]
 	ADD     R12,R13,#0xAC       
 	ADD     R6,R13,#0x64        
 	ADD     R7,R13,#0x4C        
@@ -2610,80 +2826,18 @@ deseval:
 	LDR     R5,[R14,#24]
 	BL      s4
 	LDR     R1,[R13,#256]
-	LDR     R6,[R13,#100]
-	LDR     R3,[R1,#36]
+	ADD     R1,R1,#0xC0         
+	LDMIA   R1,{R6-R9}
 	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#108]
+	EOR     R2,R14,R6
 	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#52]
+	EOR     R2,R12,R7
 	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#28]
+	EOR     R2,R11,R8
 	BIC     R0,R0,R2
-	EOR     R2,R3,R9
+	EOR     R2,R10,R9
 	BICS    R0,R0,R2
-	BEQ     got_result
-	STR     R0,[R13,#264]
-	ADD     R12,R13,#0xBC       
-	ADD     R6,R13,#0x1C        
-	ADD     R7,R13,#0x34        
-	ADD     R8,R13,#0x60        
-	LDR     R14,[R13,#260]
-	ADD     R9,R13,#8
-	LDR     R0,[R14,#88]
-	LDR     R1,[R14,#176]
-	LDR     R2,[R14,#28]
-	LDR     R3,[R14,#196]
-	LDR     R4,[R14,#36]
-	LDR     R5,[R14,#152]
-	BL      s5
-	LDR     R1,[R13,#256]
-	LDR     R3,[R1,#252]
-	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#180]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#4]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#92]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R9
-	BICS    R0,R0,R2
-	BEQ     got_result
-	STR     R0,[R13,#264]
-	ADD     R12,R13,#0xCC       
-	ADD     R6,R13,#0x0C        
-	ADD     R7,R13,#0x70        
-	ADD     R8,R13,#0x28        
-	LDR     R14,[R13,#260]
-	ADD     R9,R13,#0x48        
-	LDR     R0,[R14,#0]
-	LDR     R1,[R14,#60]
-	LDR     R2,[R14,#148]
-	LDR     R3,[R14,#200]
-	LDR     R4,[R14,#84]
-	LDR     R5,[R14,#64]
-	BL      s6
-	LDR     R1,[R13,#256]
-	LDR     R6,[R13,#12]
-	LDR     R3,[R1,#124]
-	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#132]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#84]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#76]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R9
-	BICS    R0,R0,R2
-	BEQ     got_result
+	BEQ     gotresult
 	STR     R0,[R13,#264]
 	ADD     R12,R13,#0xDC       
 	ADD     R6,R13,#0x7C        
@@ -2699,21 +2853,45 @@ deseval:
 	LDR     R5,[R14,#204]
 	BL      s7
 	LDR     R1,[R13,#256]
-	LDR     R6,[R13,#124]
-	LDR     R3,[R1,#228]
+	ADD     R1,R1,#0x90         
+	LDMIA   R1,{R6-R9}
 	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#116]
+	EOR     R2,R14,R6
 	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#172]
+	EOR     R2,R12,R7
 	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#220]
+	EOR     R2,R11,R8
 	BIC     R0,R0,R2
-	EOR     R2,R3,R9
+	EOR     R2,R10,R9
 	BICS    R0,R0,R2
-	BEQ     got_result
+	BEQ     gotresult
+	STR     R0,[R13,#264]
+	ADD     R12,R13,#0x8C       
+	ADD     R6,R13,#0x30        
+	ADD     R7,R13,#0x6C        
+	ADD     R8,R13,#4
+	LDR     R14,[R13,#260]
+	ADD     R9,R13,#0x44        
+	LDR     R0,[R14,#52]
+	LDR     R1,[R14,#68]
+	LDR     R2,[R14,#160]
+	LDR     R3,[R14,#136]
+	LDR     R4,[R14,#100]
+	LDR     R5,[R14,#20]
+	BL      s2
+	LDR     R1,[R13,#256]
+	ADD     R1,R1,#0xE0         
+	LDMIA   R1,{R6-R9}
+	LDR     R0,[R13,#264]
+	EOR     R2,R14,R6
+	BIC     R0,R0,R2
+	EOR     R2,R12,R7
+	BIC     R0,R0,R2
+	EOR     R2,R11,R8
+	BIC     R0,R0,R2
+	EOR     R2,R10,R9
+	BICS    R0,R0,R2
+	BEQ     gotresult
 	STR     R0,[R13,#264]
 	ADD     R12,R13,#0xEC       
 	ADD     R6,R13,#0x10        
@@ -2729,109 +2907,129 @@ deseval:
 	LDR     R5,[R14,#56]
 	BL      s8
 	LDR     R1,[R13,#256]
-	LDR     R3,[R1,#156]
+	ADD     R1,R1,#0x80         
+	LDMIA   R1,{R6-R9}
 	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#68]
+	EOR     R2,R14,R6
 	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#212]
+	EOR     R2,R12,R7
 	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#140]
+	EOR     R2,R11,R8
 	BIC     R0,R0,R2
-	EOR     R2,R3,R9
+	EOR     R2,R10,R9
 	BICS    R0,R0,R2
-	BEQ     got_result
+	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0
-	ADD     R6,R13,#0xA0        
-	ADD     R7,R13,#0xC0        
-	ADD     R8,R13,#0xD8        
+	ADD     R12,R13,#0xCC       
+	ADD     R6,R13,#0x0C        
+	ADD     R7,R13,#0x70        
+	ADD     R8,R13,#0x28        
 	LDR     R14,[R13,#260]
-	ADD     R9,R13,#0xF8        
-	LDR     R0,[R14,#160]
-	LDR     R1,[R14,#16]
+	ADD     R9,R13,#0x48        
+	LDR     R0,[R14,#0]
+	LDR     R1,[R14,#60]
+	LDR     R2,[R14,#148]
+	LDR     R3,[R14,#200]
+	LDR     R4,[R14,#84]
+	LDR     R5,[R14,#64]
+	BL      s6
+	LDR     R1,[R13,#256]
+	LDR     R10,[R13,#12]
+	ADD     R1,R1,#0xA0         
+	LDMIA   R1,{R6-R9}
+	LDR     R0,[R13,#264]
+	EOR     R2,R14,R6
+	BIC     R0,R0,R2
+	EOR     R2,R12,R7
+	BIC     R0,R0,R2
+	EOR     R2,R11,R8
+	BIC     R0,R0,R2
+	EOR     R2,R10,R9
+	BICS    R0,R0,R2
+	BEQ     gotresult
+	STR     R0,[R13,#264]
+	ADD     R12,R13,#0x9C       
+	ADD     R6,R13,#0x5C        
+	ADD     R7,R13,#0x3C        
+	ADD     R8,R13,#0x74        
+	LDR     R14,[R13,#260]
+	ADD     R9,R13,#0x14        
+	LDR     R0,[R14,#156]
+	LDR     R1,[R14,#44]
 	LDR     R2,[R14,#76]
-	LDR     R3,[R14,#212]
-	LDR     R4,[R14,#24]
-	LDR     R5,[R14,#136]
-	BL      s1
-	LDR     R1,[R13,#256]
-	LDR     R3,[R1,#16]
-	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R7,[R13,#192]
-	LDR     R3,[R1,#8]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#200]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#192]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R9
-	BICS    R0,R0,R2
-	BEQ     got_result
-	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x0C       
-	ADD     R6,R13,#0xB0        
-	ADD     R7,R13,#0xEC        
-	ADD     R8,R13,#0x84        
-	LDR     R14,[R13,#260]
-	ADD     R9,R13,#0xC4        
-	LDR     R0,[R14,#80]
-	LDR     R1,[R14,#96]
-	LDR     R2,[R14,#188]
-	LDR     R3,[R14,#164]
-	LDR     R4,[R14,#128]
-	LDR     R5,[R14,#48]
-	BL      s2
-	LDR     R1,[R13,#256]
-	LDR     R3,[R1,#144]
-	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#96]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#56]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#40]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R9
-	BICS    R0,R0,R2
-	BEQ     got_result
-	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x1C       
-	ADD     R6,R13,#0xDC        
-	ADD     R7,R13,#0xBC        
-	ADD     R8,R13,#0xF4        
-	LDR     R14,[R13,#260]
-	ADD     R9,R13,#0x94        
-	LDR     R0,[R14,#184]
-	LDR     R1,[R14,#72]
-	LDR     R2,[R14,#104]
-	LDR     R3,[R14,#108]
-	LDR     R4,[R14,#40]
-	LDR     R5,[R14,#220]
+	LDR     R3,[R14,#80]
+	LDR     R4,[R14,#12]
+	LDR     R5,[R14,#192]
 	BL      s3
 	LDR     R1,[R13,#256]
-	LDR     R3,[R1,#232]
+	LDR     R14,[R13,#20]
+	ADD     R1,R1,#0xD0         
+	LDMIA   R1,{R6-R9}
 	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#240]
+	EOR     R2,R14,R6
 	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#160]
+	EOR     R2,R12,R7
 	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R9,[R13,#148]
-	LDR     R3,[R1,#184]
+	EOR     R2,R11,R8
 	BIC     R0,R0,R2
-	EOR     R2,R3,R9
+	EOR     R2,R10,R9
 	BICS    R0,R0,R2
-	BEQ     got_result
+	BEQ     gotresult
+	STR     R0,[R13,#264]
+	ADD     R12,R13,#0xBC       
+	ADD     R6,R13,#0x1C        
+	ADD     R7,R13,#0x34        
+	ADD     R8,R13,#0x60        
+	LDR     R14,[R13,#260]
+	ADD     R9,R13,#8
+	LDR     R0,[R14,#88]
+	LDR     R1,[R14,#176]
+	LDR     R2,[R14,#28]
+	LDR     R3,[R14,#196]
+	LDR     R4,[R14,#36]
+	LDR     R5,[R14,#152]
+	BL      s5
+	LDR     R1,[R13,#256]
+	ADD     R1,R1,#0xB0         
+	LDMIA   R1,{R6-R9}
+	LDR     R0,[R13,#264]
+	EOR     R2,R14,R6
+	BIC     R0,R0,R2
+	EOR     R2,R12,R7
+	BIC     R0,R0,R2
+	EOR     R2,R11,R8
+	BIC     R0,R0,R2
+	EOR     R2,R10,R9
+	BICS    R0,R0,R2
+	BEQ     gotresult
+	STR     R0,[R13,#264]
+	ADD     R12,R13,#0x80       
+	ADD     R6,R13,#0x20        
+	ADD     R7,R13,#0x40        
+	ADD     R8,R13,#0x58        
+	LDR     R14,[R13,#260]
+	ADD     R9,R13,#0x78        
+	LDR     R0,[R14,#132]
+	LDR     R1,[R14,#216]
+	LDR     R2,[R14,#48]
+	LDR     R3,[R14,#184]
+	LDR     R4,[R14,#96]
+	LDR     R5,[R14,#108]
+	BL      s1
+	LDR     R1,[R13,#256]
+	LDR     R11,[R13,#64]
+	ADD     R1,R1,#0xF0         
+	LDMIA   R1,{R6-R9}
+	LDR     R0,[R13,#264]
+	EOR     R2,R14,R6
+	BIC     R0,R0,R2
+	EOR     R2,R12,R7
+	BIC     R0,R0,R2
+	EOR     R2,R11,R8
+	BIC     R0,R0,R2
+	EOR     R2,R10,R9
+	BICS    R0,R0,R2
+	BEQ     gotresult
 	STR     R0,[R13,#264]
 	ADD     R12,R13,#0x2C       
 	ADD     R6,R13,#0xE4        
@@ -2847,80 +3045,18 @@ deseval:
 	LDR     R5,[R14,#52]
 	BL      s4
 	LDR     R1,[R13,#256]
-	LDR     R6,[R13,#228]
-	LDR     R3,[R1,#32]
+	ADD     R1,R1,#0x40         
+	LDMIA   R1,{R6-R9}
 	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#104]
+	EOR     R2,R14,R6
 	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#48]
+	EOR     R2,R12,R7
 	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#24]
+	EOR     R2,R11,R8
 	BIC     R0,R0,R2
-	EOR     R2,R3,R9
+	EOR     R2,R10,R9
 	BICS    R0,R0,R2
-	BEQ     got_result
-	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x3C       
-	ADD     R6,R13,#0x9C        
-	ADD     R7,R13,#0xB4        
-	ADD     R8,R13,#0xE0        
-	LDR     R14,[R13,#260]
-	ADD     R9,R13,#0x88        
-	LDR     R0,[R14,#116]
-	LDR     R1,[R14,#204]
-	LDR     R2,[R14,#56]
-	LDR     R3,[R14,#4]
-	LDR     R4,[R14,#64]
-	LDR     R5,[R14,#180]
-	BL      s5
-	LDR     R1,[R13,#256]
-	LDR     R3,[R1,#248]
-	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#176]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#0]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#88]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R9
-	BICS    R0,R0,R2
-	BEQ     got_result
-	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x4C       
-	ADD     R6,R13,#0x8C        
-	ADD     R7,R13,#0xF0        
-	ADD     R8,R13,#0xA8        
-	LDR     R14,[R13,#260]
-	ADD     R9,R13,#0xC8        
-	LDR     R0,[R14,#28]
-	LDR     R1,[R14,#88]
-	LDR     R2,[R14,#176]
-	LDR     R3,[R14,#8]
-	LDR     R4,[R14,#112]
-	LDR     R5,[R14,#92]
-	BL      s6
-	LDR     R1,[R13,#256]
-	LDR     R6,[R13,#140]
-	LDR     R3,[R1,#120]
-	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#128]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#80]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#72]
-	BIC     R0,R0,R2
-	EOR     R2,R3,R9
-	BICS    R0,R0,R2
-	BEQ     got_result
+	BEQ     gotresult
 	STR     R0,[R13,#264]
 	ADD     R12,R13,#0x5C       
 	ADD     R6,R13,#0xFC        
@@ -2936,21 +3072,45 @@ deseval:
 	LDR     R5,[R14,#124]
 	BL      s7
 	LDR     R1,[R13,#256]
-	LDR     R6,[R13,#252]
-	LDR     R3,[R1,#224]
+	ADD     R1,R1,#0x10         
+	LDMIA   R1,{R6-R9}
 	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#112]
+	EOR     R2,R14,R6
 	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#168]
+	EOR     R2,R12,R7
 	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#216]
+	EOR     R2,R11,R8
 	BIC     R0,R0,R2
-	EOR     R2,R3,R9
+	EOR     R2,R10,R9
 	BICS    R0,R0,R2
-	BEQ     got_result
+	BEQ     gotresult
+	STR     R0,[R13,#264]
+	ADD     R12,R13,#0x0C       
+	ADD     R6,R13,#0xB0        
+	ADD     R7,R13,#0xEC        
+	ADD     R8,R13,#0x84        
+	LDR     R14,[R13,#260]
+	ADD     R9,R13,#0xC4        
+	LDR     R0,[R14,#80]
+	LDR     R1,[R14,#96]
+	LDR     R2,[R14,#188]
+	LDR     R3,[R14,#164]
+	LDR     R4,[R14,#128]
+	LDR     R5,[R14,#48]
+	BL      s2
+	LDR     R1,[R13,#256]
+	ADD     R1,R1,#0x60         
+	LDMIA   R1,{R6-R9}
+	LDR     R0,[R13,#264]
+	EOR     R2,R14,R6
+	BIC     R0,R0,R2
+	EOR     R2,R12,R7
+	BIC     R0,R0,R2
+	EOR     R2,R11,R8
+	BIC     R0,R0,R2
+	EOR     R2,R10,R9
+	BICS    R0,R0,R2
+	BEQ     gotresult
 	STR     R0,[R13,#264]
 	ADD     R12,R13,#0x6C       
 	ADD     R6,R13,#0x90        
@@ -2966,23 +3126,132 @@ deseval:
 	LDR     R5,[R14,#84]
 	BL      s8
 	LDR     R1,[R13,#256]
-	LDR     R3,[R1,#152]
+	LDMIA   R1,{R6-R9}
 	LDR     R0,[R13,#264]
-	EOR     R2,R3,R6
-	LDR     R3,[R1,#64]
+	EOR     R2,R14,R6
 	BIC     R0,R0,R2
-	EOR     R2,R3,R7
-	LDR     R3,[R1,#208]
+	EOR     R2,R12,R7
 	BIC     R0,R0,R2
-	EOR     R2,R3,R8
-	LDR     R3,[R1,#136]
+	EOR     R2,R11,R8
 	BIC     R0,R0,R2
-	EOR     R2,R3,R9
+	EOR     R2,R10,R9
 	BICS    R0,R0,R2
-got_result:
+	ADD     R12,R13,#0x4C       
+	ADD     R6,R13,#0x8C        
+	ADD     R7,R13,#0xF0        
+	ADD     R8,R13,#0xA8        
+	LDR     R14,[R13,#260]
+	ADD     R9,R13,#0xC8        
+	LDR     R0,[R14,#28]
+	LDR     R1,[R14,#88]
+	LDR     R2,[R14,#176]
+	LDR     R3,[R14,#8]
+	LDR     R4,[R14,#112]
+	LDR     R5,[R14,#92]
+	BL      s6
+	LDR     R1,[R13,#256]
+	LDR     R10,[R13,#140]
+	ADD     R1,R1,#0x20         
+	LDMIA   R1,{R6-R9}
+	LDR     R0,[R13,#264]
+	EOR     R2,R14,R6
+	BIC     R0,R0,R2
+	EOR     R2,R12,R7
+	BIC     R0,R0,R2
+	EOR     R2,R11,R8
+	BIC     R0,R0,R2
+	EOR     R2,R10,R9
+	BICS    R0,R0,R2
+	BEQ     gotresult
+	STR     R0,[R13,#264]
+	ADD     R12,R13,#0x1C       
+	ADD     R6,R13,#0xDC        
+	ADD     R7,R13,#0xBC        
+	ADD     R8,R13,#0xF4        
+	LDR     R14,[R13,#260]
+	ADD     R9,R13,#0x94        
+	LDR     R0,[R14,#184]
+	LDR     R1,[R14,#72]
+	LDR     R2,[R14,#104]
+	LDR     R3,[R14,#108]
+	LDR     R4,[R14,#40]
+	LDR     R5,[R14,#220]
+	BL      s3
+	LDR     R1,[R13,#256]
+	LDR     R14,[R13,#148]
+	ADD     R1,R1,#0x50         
+	LDMIA   R1,{R6-R9}
+	LDR     R0,[R13,#264]
+	EOR     R2,R14,R6
+	BIC     R0,R0,R2
+	EOR     R2,R12,R7
+	BIC     R0,R0,R2
+	EOR     R2,R11,R8
+	BIC     R0,R0,R2
+	EOR     R2,R10,R9
+	BICS    R0,R0,R2
+	BEQ     gotresult
+	STR     R0,[R13,#264]
+	ADD     R12,R13,#0x3C       
+	ADD     R6,R13,#0x9C        
+	ADD     R7,R13,#0xB4        
+	ADD     R8,R13,#0xE0        
+	LDR     R14,[R13,#260]
+	ADD     R9,R13,#0x88        
+	LDR     R0,[R14,#116]
+	LDR     R1,[R14,#204]
+	LDR     R2,[R14,#56]
+	LDR     R3,[R14,#4]
+	LDR     R4,[R14,#64]
+	LDR     R5,[R14,#180]
+	BL      s5
+	LDR     R1,[R13,#256]
+	ADD     R1,R1,#0x30         
+	LDMIA   R1,{R6-R9}
+	LDR     R0,[R13,#264]
+	EOR     R2,R14,R6
+	BIC     R0,R0,R2
+	EOR     R2,R12,R7
+	BIC     R0,R0,R2
+	EOR     R2,R11,R8
+	BIC     R0,R0,R2
+	EOR     R2,R10,R9
+	BICS    R0,R0,R2
+	BEQ     gotresult
+	STR     R0,[R13,#264]
+	ADD     R12,R13,#0
+	ADD     R6,R13,#0xA0        
+	ADD     R7,R13,#0xC0        
+	ADD     R8,R13,#0xD8        
+	LDR     R14,[R13,#260]
+	ADD     R9,R13,#0xF8        
+	LDR     R0,[R14,#160]
+	LDR     R1,[R14,#16]
+	LDR     R2,[R14,#76]
+	LDR     R3,[R14,#212]
+	LDR     R4,[R14,#24]
+	LDR     R5,[R14,#136]
+	BL      s1
+	LDR     R1,[R13,#256]
+	LDR     R11,[R13,#192]
+	ADD     R1,R1,#0x70         
+	LDMIA   R1,{R6-R9}
+	LDR     R0,[R13,#264]
+	EOR     R2,R14,R6
+	BIC     R0,R0,R2
+	EOR     R2,R12,R7
+	BIC     R0,R0,R2
+	EOR     R2,R11,R8
+	BIC     R0,R0,R2
+	EOR     R2,R10,R9
+	BICS    R0,R0,R2
+/*	BEQ     gotresult*/
+/* @@@@ get rid of that BEQ? */
+gotresult:
+	STR     R0,[R13,#264]
 	ADD     R13,R13,#0x010C     
-	LDMIA   R13!,{R4-R11}
 deseval_end:
+	LDMIA   R13!,{R4-R11}
 	BNE     foundkey
 	EOR     R6,R7,R7,LSR #1
 	ADD     R7,R7,#1
@@ -3047,120 +3316,7 @@ deseval_end:
 	TST     R1,#0x00040000
 	MOVNE   R1,#0x0D            
 	BNE     timingloop
-this_shouldnt_happen:	
-	B       this_shouldnt_happen
-half_keys_done:	
-	CMP     R8,#0
-	BNE     inc_then_exit
-	MOV     R8,#1
-	MOV     R6,#0
-	MOV     R7,R6
-	MOV     R0,#0x38            
-	ADD     R1,R13,#0x0208      
-invertloop:
-	LDR     R2,[R1,#0]
-	SUBS    R0,R0,#1
-	MVN     R2,R2
-	STR     R2,[R1],#4
-	BNE     invertloop
-	B       resettwiddles
-inc_then_exit:	
-	LDR     R1,[R4,#20]
-	MOV     R2,#1
-	LDR     R0,[R11,#-40]
-	MOV     R0,R2,LSL R0
-	ADD     R1,R1,R0
-	STR     R1,[R4,#20]
-	LDMDB   R11,{R4-R9,R11,R13,PC}^
 
-foundkey:
-	MVN     R5,#0
-	MOV     R1,#0
-	MOV     R2,#1
-L000228J51:
-	TST     R0,R2,LSL R1
-	MOVNE   R5,R1
-	ADD     R1,R1,#1
-	CMP     R1,#0x20
-	BCC     L000228J51
+	.word	0xE6000010
 
-	MOV     R0,#0
-	STR     R0,[R13,#4]
-	MOV     R6,#0x37
-	STR     R0,[R13,#0]
-	
-	adrl	r9,odd_parity
-
-L000250J55:
-	ADD     R0,R13,#0x0208
-	LDR     R0,[R0,R6,LSL #2]
-	MOV     R0,R0,LSR R5
-	AND     R0,R0,#1
-	MOV     R2,R0,LSL #7
-	ADD     R0,R13,#0x0208
-	ADD     R0,R0,R6,LSL #2
-	LDR     R1,[R0,#-4]
-	MOV     R1,R1,LSR R5
-	AND     R1,R1,#1
-	ORR     R2,R2,R1,LSL #6
-	LDR     R1,[R0,#-8]
-	MOV     R1,R1,LSR R5
-	AND     R1,R1,#1
-	ORR     R2,R2,R1,LSL #5
-	LDR     R1,[R0,#-0x00C]
-	MOV     R1,R1,LSR R5
-	AND     R1,R1,#1
-	ORR     R2,R2,R1,LSL #4
-	LDR     R1,[R0,#-0x010]
-	MOV     R1,R1,LSR R5
-	AND     R1,R1,#1
-	ORR     R2,R2,R1,LSL #3
-	LDR     R1,[R0,#-0x014]
-	MOV     R1,R1,LSR R5
-	AND     R1,R1,#1
-	ORR     R1,R2,R1,LSL #2
-	LDR     R0,[R0,#-0x018]
-	MOV     R0,R0,LSR R5
-	AND     R0,R0,#1
-	ORR     R0,R1,R0,LSL #1
-	LDRB    R7,[R9,R0]
-	ADD     R0,R6,#1
-	MOV     R1,#7
-	bl      ___divsi3
-	SUB     R0,R0,#1
-	CMP     R0,#4
-	BLT     L000300J58
-	MVN     R1,#0x1F
-	ADD     R0,R1,R0,LSL #3
-	LDR     R1,[R13,#4]
-	ORR     R0,R1,R7,LSL R0
-	STR     R0,[R13,#4]
-	B       L000310J60
-L000300J58:
-	MOV     R0,R0,LSL #3
-	LDR     R1,[R13,#0]
-	ORR     R0,R1,R7,LSL R0
-	STR     R0,[R13,#0]
-L000310J60:
-	SUB     R6,R6,#7
-	CMP     R6,#0
-	BGT     L000250J55
-	CMP     R8,#0
-	BEQ     L00033cJ62
-	LDR     R0,[R13,#4]
-	MVN     R0,R0
-	STR     R0,[R13,#4]
-	LDR     R0,[R13,#0]
-	MVN     R0,R0
-	STR     R0,[R13,#0]
-L00033cJ62:
-	MOV     R1,R13
-	ADD     R0,R13,#4
-	BL      _convert_key_from_des_to_inc__FPUlT0
-	LDR     R0,[R4,#0x014]
-	LDR     R1,[R13,#0]
-	SUB     R0,R1,R0
-	STR     R1,[R4,#0x014]
-	LDR     R1,[R13,#4]
-	STR     R1,[R4,#0x010]
-	LDMDB   R11,{R4-R9,R11,R13,PC}^
+	B       0x000033C4

@@ -1,14 +1,3 @@
-/*
- * $Log: des-slice-arm-gnu.s,v $
- * Revision 1.4  1998/06/17 08:12:50  cberry
- * First checkin of the dedicated non-Strong ARM core, with the latest Kwan
- * S-Boxes.
- *
- * The interfaces may change in the near future to give some more performance.
- *
- */
-
-
 
 .macro  adrli   dest, addr, a, b, c
         .set    \a, \addr-.-8
@@ -21,31 +10,25 @@
 .macro  adrl    dest, addr
         adrli   \dest, \addr, "adrla\@", "adrlb\@", "adrlc\@"
 .endm
-
-	
 	.text
-	.global _des_unit_func_arm
-
+	.global	_des_unit_func_arm
 lowbits:
 	.word	0xAAAAAAAA
 	.word	0xCCCCCCCC
 	.word	0xF0F0F0F0
 	.word	0xFF00FF00
 	.word	0xFFFF0000
-
-
 _des_unit_func_arm:
-
 	MOV     R12,R13
 	STMDB   R13!,{R0,R1,R4-R9,R11,R12,R14,PC}
 	SUB     R11,R12,#4
-	SUB     R12,R13,#0x0400
+	SUB     R12,R13,#0x0400     
 /*
 	CMP     R12,R10
 	BLMI    0x000000A8
 */
 	MOV     R4,R0
-	SUB     R13,R13,#0x02E8
+	SUB     R13,R13,#0x02E8     
 	LDR     R0,[R0,#16]
 	STR     R0,[R13,#4]
 	LDR     R0,[R4,#20]
@@ -56,7 +39,7 @@ _des_unit_func_arm:
 	MOV     R5,#1
 	MOV     R6,#0
 	LDMIA   R13,{R7,R8}
-L000048J5:	
+L000048J5:
 	MOV     R0,R6
 	MOV     R1,#7
 	BL      ___umodsi3
@@ -81,7 +64,6 @@ clearbits:
 	STMDB   R12!,{R5,R6}
 	SUBS    R1,R1,#1
 	BNE     clearbits
-	
 	LDR     R2,[R4,#12]
 	LDR     R3,[R4,#8]
 	ADD     R12,R13,#8
@@ -347,11 +329,11 @@ clearbits:
 	STRNE   R7,[R12,#0]
 
 	adrl	r0,lowbits
-	
-
+/*
+	ADR     R0,0x00000448
+	SUB     R0,R0,#0x37,ROR #30
+*/	
 	LDMIA   R0,{R5-R9}
-
-		
 	STR     R5,[R13,#532]
 	STR     R6,[R13,#540]
 	STR     R7,[R13,#552]
@@ -359,28 +341,24 @@ clearbits:
 	STR     R9,[R13,#564]
 	LDR     R0,[R11,#-40]
 	SUB     R5,R0,#5
-
 	MOV     R8,#0
 	MOV     R7,#0
 	MOV     R6,#0
 	MOV     R0,#1
 	MOV     R9,R0,LSL R5
-
 resettwiddles:
 	MOV     R0,#0
 	MOV     R12,#0
 	ADR     R3,twiddles
 	ADD     R2,R13,#0x0208      
-resettwiddleloop:
-	
+resettwiddleloop:	
 	LDRB    R1,[R3,R0]
 	STR     R12,[R2,R1,LSL #2]
 	ADD     R0,R0,#1
 	CMP     R0,R5
 	BCC     resettwiddleloop
 	B       deseval
-
-half_keys_done:	
+half_keys_done:
 	CMP     R8,#0
 	BNE     inc_then_exit
 	MOV     R8,#1
@@ -395,7 +373,7 @@ invertloop:
 	STR     R2,[R1],#4
 	BNE     invertloop
 	B       resettwiddles
-inc_then_exit:		
+inc_then_exit:
 	LDR     R1,[R4,#20]
 	MOV     R2,#1
 	LDR     R0,[R11,#-40]
@@ -476,13 +454,11 @@ twiddles:
 	.word	0x0032312E
 	.word	0x06040201
 	.word	0x000D0907
-
 foundkey:
-
 	MVN     R5,#0
 	MOV     R1,#0
 	MOV     R2,#1
-L000228J51:	
+L000228J51:
 	TST     R0,R2,LSL R1
 	MOVNE   R5,R1
 	ADD     R1,R1,#1
@@ -493,7 +469,7 @@ L000228J51:
 	MOV     R6,#0x31            
 	STR     R0,[R13,#0]
 	ADR     R9,odd_parity
-L000250J55:	
+L000250J55:
 	ADD     R0,R13,#0x0208      
 	ADD     R0,R0,R6,LSL #2
 	LDR     R1,[R0,#24]
@@ -566,10 +542,8 @@ L00033cJ62:
 	STR     R1,[R4,#16]
 	LDMDB   R11,{R4-R9,R11,R13,PC}^
 
-
-
 s1:
-	STMDB   R13!,{R6-R9,R11,R14}
+	STMDB   R13!,{R6-R9,R11}
 	LDR     R6,[R12,#124]
 	LDMIA   R12,{R7-R11}
 	EOR     R0,R0,R6
@@ -635,27 +609,28 @@ s1:
 	ORR     R8,R6,R8
 	LDR     R6,[R3,#0]
 	EOR     R8,R8,R4
-	EOR     R6,R6,R10
+	EOR     R10,R6,R10
 	ORR     R9,R9,R4
-	AND     R10,R5,R9
-	STR     R6,[R3,#0]
+	AND     R6,R5,R9
+	STR     R10,[R3,#0]
 	EOR     R9,R9,R14
-	BIC     R9,R9,R10
+	BIC     R9,R9,R6
 	BIC     R8,R1,R8
 	EOR     R8,R8,R9
 	ORR     R8,R0,R8
 	EOR     R8,R8,R11
-	LDMIA   R13!,{R10,R11}
+	LDMIA   R13!,{R9,R11}
 	EOR     R8,R8,R12
-	LDR     R12,[R10,#0]
-	LDR     R9,[R11,#0]
-	EOR     R8,R8,R12
-	EOR     R9,R7,R9
-	STR     R8,[R10,#0]
-	STR     R9,[R11,#0]
-	LDMIA   R13!,{R11,PC}
-s2:
-	STMDB   R13!,{R6-R9,R11,R14}
+	LDR     R12,[R9,#0]
+	LDR     R14,[R11,#0]
+	EOR     R12,R8,R12
+	EOR     R14,R7,R14
+	STR     R12,[R9,#0]
+	STR     R14,[R11,#0]
+	LDR     R11,[R13],#4
+	B       s_call_loop
+s2:	
+	STMDB   R13!,{R6-R9,R11}
 	LDMIA   R12,{R6-R11}
 	EOR     R0,R0,R6
 	EOR     R1,R1,R7
@@ -714,23 +689,24 @@ s2:
 	EOR     R12,R8,R12
 	LDMIA   R13!,{R0-R3}
 	EOR     R12,R6,R12
-	LDR     R6,[R0,#0]
-	EOR     R10,R7,R10
+	LDR     R14,[R0,#0]
+	EOR     R6,R7,R10
 	LDR     R7,[R1,#0]
-	EOR     R6,R6,R11
+	EOR     R10,R14,R11
 	LDR     R8,[R2,#0]
 	MVN     R9,R9
-	STR     R6,[R0,#0]
-	EOR     R7,R7,R9
-	LDR     R9,[R3,#0]
-	EOR     R8,R8,R12
-	STR     R7,[R1,#0]
-	EOR     R9,R9,R10
-	STR     R8,[R2,#0]
-	STR     R9,[R3,#0]
-	LDMIA   R13!,{R11,PC}
-s3:
-	STMDB   R13!,{R6-R8,R11,R14}
+	STR     R10,[R0,#0]
+	EOR     R11,R7,R9
+	LDR     R14,[R3,#0]
+	EOR     R12,R8,R12
+	STR     R11,[R1,#0]
+	EOR     R14,R14,R6
+	STR     R12,[R2,#0]
+	STR     R14,[R3,#0]
+	LDR     R11,[R13],#4
+	B       s_call_loop
+s3:	
+	STMDB   R13!,{R6-R8,R11}
 	LDMIA   R12,{R6-R8,R10-R12}
 	EOR     R0,R0,R6
 	EOR     R1,R1,R7
@@ -795,39 +771,41 @@ s3:
 	AND     R9,R3,R9
 	EOR     R9,R14,R9
 	ORR     R10,R0,R10
-	EOR     R8,R8,R10
-	LDMIA   R13!,{R10,R12,R14}
-	BIC     R8,R3,R8
-	LDR     R7,[R12,#0]
-	EOR     R11,R11,R8
-	LDR     R8,[R14,#0]
-	EOR     R7,R7,R6
-	LDR     R6,[R10,#0]
-	EOR     R8,R8,R11
-	STR     R7,[R12,#0]
-	EOR     R6,R6,R9
-	STR     R8,[R14,#0]
-	STR     R6,[R10,#0]
-	LDMIA   R13!,{R11,PC}
-s4:
-	STMDB   R13!,{R7-R9,R11,R14}
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
+	EOR     R10,R8,R10
+	LDMIA   R13!,{R7,R8,R14}
+	BIC     R10,R3,R10
+	LDR     R2,[R8,#0]
+	EOR     R10,R11,R10
+	LDR     R12,[R14,#0]
+	EOR     R11,R2,R6
+	LDR     R6,[R7,#0]
+	EOR     R12,R12,R10
+	STR     R11,[R8,#0]
+	EOR     R10,R6,R9
+	STR     R12,[R14,#0]
+	STR     R10,[R7,#0]
+	LDR     R11,[R13],#4
+	B       s_call_loop
+s4:	
+	STMDB   R13!,{R9,R11}
+	LDMIA   R12!,{R10,R11,R14}
+	EOR     R0,R0,R10
+	EOR     R1,R1,R11
+	LDMIA   R12,{R10-R12}
+	EOR     R2,R2,R14
 	EOR     R3,R3,R10
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
-	ORR     R8,R0,R2
-	AND     R8,R4,R8
-	EOR     R9,R0,R8
-	EOR     R8,R2,R8
+	ORR     R10,R0,R2
+	AND     R10,R4,R10
+	EOR     R9,R0,R10
+	EOR     R12,R2,R10
 	BIC     R10,R2,R0
 	ORR     R10,R10,R9
 	AND     R11,R1,R10
-	BIC     R12,R1,R8
-	EOR     R10,R10,R12
-	ORR     R8,R8,R9
+	BIC     R14,R1,R12
+	EOR     R10,R10,R14
+	ORR     R0,R12,R9
 	EOR     R12,R4,R11
 	AND     R14,R3,R12
 	EOR     R9,R9,R14
@@ -838,43 +816,44 @@ s4:
 	EOR     R11,R11,R14
 	EOR     R11,R2,R11
 	BIC     R11,R3,R11
-	EOR     R11,R8,R11
+	EOR     R11,R0,R11
 	AND     R12,R1,R12
 	EOR     R11,R11,R12
-	EOR     R8,R8,R14
-	ORR     R8,R3,R8
-	EOR     R8,R10,R8
-	ORR     R10,R5,R8
-	EOR     R10,R9,R10
-	LDR     R12,[R6,#0]
-	AND     R8,R5,R8
-	EOR     R12,R12,R10
-	EOR     R14,R9,R11
-	STR     R12,[R6,#0]
-	BIC     R6,R1,R14
-	BIC     R14,R14,R3
-	EOR     R6,R6,R14
-	EOR     R6,R6,R10
-	ORR     R10,R5,R6
-	EOR     R10,R10,R11
-	MVN     R10,R10
+	EOR     R12,R0,R14
+	ORR     R12,R3,R12
+	EOR     R14,R10,R12
+	ORR     R12,R5,R14
+	EOR     R12,R9,R12
+	LDR     R10,[R6,#0]
+	AND     R14,R5,R14
+	EOR     R10,R10,R12
+	EOR     R0,R9,R11
+	STR     R10,[R6,#0]
+	BIC     R6,R1,R0
+	BIC     R0,R0,R3
+	EOR     R6,R6,R0
+	EOR     R6,R6,R12
+	ORR     R12,R5,R6
+	EOR     R12,R12,R11
+	MVN     R12,R12
 	MVN     R9,R9
-	EOR     R9,R8,R9
-	LDMIA   R13!,{R11,R12,R14}
-	EOR     R6,R8,R6
-	LDR     R7,[R11,#0]
-	EOR     R6,R6,R10
-	LDR     R8,[R12,#0]
-	EOR     R7,R7,R9
-	LDR     R9,[R14,#0]
-	EOR     R8,R8,R10
-	STR     R7,[R11,#0]
-	EOR     R9,R9,R6
-	STR     R8,[R12,#0]
-	STR     R9,[R14,#0]
-	LDMIA   R13!,{R11,PC}
-s5:
-	STMDB   R13!,{R6-R9,R11,R14}
+	EOR     R0,R14,R9
+	LDR     R9,[R13],#4
+	EOR     R14,R14,R6
+	LDR     R11,[R7,#0]
+	EOR     R14,R14,R12
+	LDR     R6,[R8,#0]
+	EOR     R11,R11,R0
+	LDR     R0,[R9,#0]
+	EOR     R12,R6,R12
+	STR     R11,[R7,#0]
+	EOR     R14,R0,R14
+	STR     R12,[R8,#0]
+	STR     R14,[R9,#0]
+	LDR     R11,[R13],#4
+	B       s_call_loop
+s5:	
+	STMDB   R13!,{R6-R9,R11}
 	LDMIA   R12,{R6-R11}
 	EOR     R0,R0,R6
 	EOR     R1,R1,R7
@@ -940,22 +919,23 @@ s5:
 	BIC     R7,R9,R1
 	LDMIA   R13!,{R0-R3}
 	EOR     R7,R10,R7
-	LDR     R9,[R0,#0]
+	LDR     R10,[R0,#0]
 	MVN     R8,R8
-	LDR     R10,[R1,#0]
-	EOR     R6,R9,R6
-	LDR     R11,[R2,#0]
-	EOR     R7,R10,R7
+	LDR     R11,[R1,#0]
+	EOR     R10,R10,R6
+	LDR     R12,[R2,#0]
+	EOR     R11,R11,R7
 	LDR     R9,[R3,#0]
-	EOR     R8,R11,R8
-	STR     R6,[R0,#0]
-	EOR     R9,R9,R14
-	STR     R7,[R1,#0]
-	STR     R8,[R2,#0]
-	STR     R9,[R3,#0]
-	LDMIA   R13!,{R11,PC}
-s6:
-	STMDB   R13!,{R7-R9,R11,R14}
+	EOR     R12,R12,R8
+	STR     R10,[R0,#0]
+	EOR     R14,R9,R14
+	STR     R11,[R1,#0]
+	STR     R12,[R2,#0]
+	STR     R14,[R3,#0]
+	LDR     R11,[R13],#4
+	B       s_call_loop
+s6:	
+	STMDB   R13!,{R7-R9,R11}
 	LDMIA   R12,{R7-R12}
 	EOR     R0,R0,R7
 	EOR     R1,R1,R8
@@ -1017,24 +997,25 @@ s6:
 	EOR     R7,R6,R7
 	ORR     R7,R2,R7
 	EOR     R7,R11,R7
-	BIC     R8,R8,R4
-	BIC     R8,R2,R8
-	BIC     R10,R1,R10
-	LDMIA   R13!,{R11,R12,R14}
-	EOR     R8,R8,R10
-	LDR     R6,[R11,#0]
-	EOR     R8,R8,R9
-	LDR     R9,[R14,#0]
-	EOR     R7,R7,R6
-	LDR     R6,[R12,#0]
-	EOR     R9,R9,R0
-	STR     R7,[R11,#0]
-	EOR     R8,R6,R8
-	STR     R9,[R14,#0]
-	STR     R8,[R12,#0]
-	LDMIA   R13!,{R11,PC}
+	BIC     R12,R8,R4
+	BIC     R12,R2,R12
+	BIC     R11,R1,R10
+	LDMIA   R13!,{R6,R8,R10}
+	EOR     R12,R12,R11
+	LDR     R11,[R6,#0]
+	EOR     R12,R12,R9
+	LDR     R14,[R10,#0]
+	EOR     R11,R7,R11
+	LDR     R7,[R8,#0]
+	EOR     R14,R14,R0
+	STR     R11,[R6,#0]
+	EOR     R12,R7,R12
+	STR     R14,[R10,#0]
+	STR     R12,[R8,#0]
+	LDR     R11,[R13],#4
+	B       s_call_loop
 s7:
-	STMDB   R13!,{R7-R9,R11,R14}
+	STMDB   R13!,{R7-R9,R11}
 	LDMIA   R12,{R7-R12}
 	EOR     R0,R0,R7
 	EOR     R1,R1,R8
@@ -1048,68 +1029,69 @@ s7:
 	EOR     R9,R8,R1
 	BIC     R10,R2,R9
 	EOR     R7,R7,R10
-	EOR     R10,R2,R10
-	ORR     R11,R1,R3
-	ORR     R11,R11,R4
+	EOR     R11,R2,R10
+	ORR     R10,R1,R3
+	ORR     R10,R10,R4
 	BIC     R12,R4,R1
 	ORR     R12,R2,R12
-	EOR     R11,R11,R12
-	BIC     R12,R5,R10
+	EOR     R10,R10,R12
+	BIC     R12,R5,R11
 	EOR     R12,R7,R12
 	EOR     R7,R8,R7
 	ORR     R14,R5,R7
-	EOR     R11,R11,R14
-	AND     R11,R0,R11
-	LDR     R14,[R6,#0]
-	EOR     R11,R12,R11
-	EOR     R14,R14,R11
+	EOR     R10,R10,R14
+	AND     R14,R0,R10
+	LDR     R10,[R6,#0]
+	EOR     R14,R12,R14
+	EOR     R10,R10,R14
 	EOR     R9,R3,R9
-	STR     R14,[R6,#0]
+	STR     R10,[R6,#0]
 	ORR     R6,R1,R9
-	EOR     R6,R6,R11
+	EOR     R6,R6,R14
 	BIC     R6,R6,R5
-	ORR     R11,R2,R8
-	EOR     R11,R9,R11
+	ORR     R14,R2,R8
+	EOR     R14,R9,R14
 	EOR     R8,R2,R8
 	AND     R8,R8,R1
 	BIC     R8,R5,R8
-	EOR     R8,R11,R8
-	EOR     R10,R10,R8
+	EOR     R8,R14,R8
+	EOR     R11,R11,R8
 	EOR     R7,R1,R7
 	BIC     R7,R9,R7
 	AND     R7,R5,R7
 	ORR     R9,R0,R8
 	EOR     R9,R12,R9
-	BIC     R11,R11,R2
-	ORR     R8,R11,R8
+	BIC     R14,R14,R2
+	ORR     R8,R14,R8
 	BIC     R8,R8,R0
 	EOR     R8,R6,R8
-	EOR     R8,R10,R8
+	EOR     R12,R11,R8
 	BIC     R6,R3,R2
-	ORR     R11,R4,R6
-	EOR     R10,R10,R11
-	EOR     R10,R10,R7
+	ORR     R8,R4,R6
+	EOR     R11,R11,R8
+	EOR     R11,R11,R7
 	BIC     R6,R1,R6
 	AND     R6,R5,R6
-	AND     R11,R2,R6
-	EOR     R11,R11,R7
-	ORR     R11,R0,R11
-	EOR     R10,R10,R11
-	EOR     R7,R6,R9
-	LDMIA   R13!,{R6,R11,R12}
-	LDR     R9,[R6,#0]
-	MVN     R7,R7
-	EOR     R7,R9,R7
-	LDR     R9,[R12,#0]
-	STR     R7,[R6,#0]
-	LDR     R6,[R11,#0]
-	EOR     R9,R9,R10
-	EOR     R8,R6,R8
-	STR     R9,[R12,#0]
-	STR     R8,[R11,#0]
-	LDMIA   R13!,{R11,PC}
-s8:
-	STMDB   R13!,{R6-R9,R11,R14}
+	AND     R8,R2,R6
+	EOR     R8,R8,R7
+	ORR     R8,R0,R8
+	EOR     R7,R11,R8
+	EOR     R11,R6,R9
+	LDMIA   R13!,{R6,R8,R9}
+	LDR     R14,[R6,#0]
+	MVN     R11,R11
+	EOR     R11,R14,R11
+	LDR     R14,[R9,#0]
+	STR     R11,[R6,#0]
+	LDR     R6,[R8,#0]
+	EOR     R14,R14,R7
+	EOR     R12,R6,R12
+	STR     R14,[R9,#0]
+	STR     R12,[R8,#0]
+	LDR     R11,[R13],#4
+	B       s_call_loop
+s8:	
+	STMDB   R13!,{R6-R9,R11}
 	LDMIA   R12,{R6-R10}
 	LDR     R11,[R12,#-108]
 	EOR     R0,R0,R6
@@ -1148,52 +1130,50 @@ s8:
 	EOR     R8,R14,R8
 	ORR     R8,R5,R8
 	BIC     R10,R1,R10
-	EOR     R10,R11,R10
-	MVN     R10,R10
+	EOR     R14,R11,R10
+	MVN     R14,R14
 	ORR     R11,R11,R4
-	EOR     R14,R10,R8
-	EOR     R9,R10,R9
-	ORR     R10,R10,R3
+	EOR     R10,R14,R8
+	EOR     R9,R14,R9
+	ORR     R14,R14,R3
 	EOR     R8,R7,R3
 	EOR     R8,R8,R11
 	AND     R7,R4,R7
-	EOR     R7,R7,R10
+	EOR     R7,R7,R14
 	BIC     R7,R1,R7
 	AND     R11,R0,R11
 	EOR     R11,R11,R7
 	BIC     R11,R11,R5
-	AND     R10,R1,R10
-	EOR     R10,R8,R10
-	EOR     R10,R10,R11
-	ORR     R7,R8,R10
+	AND     R14,R1,R14
+	EOR     R14,R8,R14
+	EOR     R11,R14,R11
+	ORR     R7,R8,R11
 	BIC     R7,R1,R7
 	EOR     R7,R6,R7
 	ORR     R7,R5,R7
 	LDMIA   R13!,{R0-R3}
 	EOR     R7,R12,R7
-	LDR     R8,[R2,#0]
+	LDR     R12,[R2,#0]
 	MVN     R7,R7
-	LDR     R11,[R3,#0]
-	EOR     R8,R8,R10
-	LDR     R12,[R1,#0]
-	EOR     R9,R11,R9
-	STR     R8,[R2,#0]
+	LDR     R14,[R3,#0]
+	EOR     R12,R12,R11
+	LDR     R11,[R1,#0]
+	EOR     R14,R14,R9
+	STR     R12,[R2,#0]
 	LDR     R6,[R0,#0]
-	EOR     R7,R12,R7
-	STR     R9,[R3,#0]
-	EOR     R6,R6,R14
-	STR     R7,[R1,#0]
-	STR     R6,[R0,#0]
-	LDMIA   R13!,{R11,PC}
-
-
-
+	EOR     R11,R11,R7
+	STR     R14,[R3,#0]
+	EOR     R10,R6,R10
+	STR     R11,[R1,#0]
+	STR     R10,[R0,#0]
+	LDR     R11,[R13],#4
+	B       s_call_loop
 timingloop:
 	ADD     R2,R13,#0x0208      
 	LDR     R0,[R2,R1,LSL #2]
 	MVN     R0,R0
 	STR     R0,[R2,R1,LSL #2]
-deseval:
+deseval:	
 	ADD     R1,R13,#8
 	MVN     R3,#0
 	STMDB   R13!,{R1-R11}
@@ -1213,24 +1193,22 @@ deseval:
 	STMDB   R13!,{R4-R11}
 	LDMDB   R2!,{R4-R11}
 	STMDB   R13!,{R4-R11}
-
 	ADR     R11,s_param_table
 s_call_loop:
-	LDR     R10,[R11],#4
-	TST     R10,#0x80000000
+	LDR     R8,[R11],#4
+	TST     R8,#0x80000000
 	BNE     do_check
-donecheck:
-	
+donecheck:	
 	LDR     R14,[R13,#260]
-	AND     R0,R10,#0x3F000000
+	AND     R0,R8,#0x3F000000
 	LDR     R0,[R14,R0,LSR #22]
-	AND     R1,R10,#0x00FC0000
+	AND     R1,R8,#0x00FC0000
 	LDR     R1,[R14,R1,LSR #16]
-	AND     R2,R10,#0x0003F000
+	AND     R2,R8,#0x0003F000
 	LDR     R2,[R14,R2,LSR #10]
-	AND     R3,R10,#0x0FC0      
+	AND     R3,R8,#0x0FC0       
 	LDR     R3,[R14,R3,LSR #4]
-	AND     R4,R10,#0x3F        
+	AND     R4,R8,#0x3F         
 	LDR     R4,[R14,R4,LSL #2]
 	LDR     R10,[R11],#4
 	AND     R5,R10,#0x3F        
@@ -1250,7 +1228,6 @@ donecheck:
 	ANDS    R10,R10,#0xE0000000
 	ADDNE   R12,R12,R10,LSR #25
 	SUBNE   R12,R12,#4
-	ADR     R14,s_call_loop
 	LDR     PC,[PC,R10,LSR #27]
 
 	.word	0x12345678
@@ -1265,41 +1242,38 @@ donecheck:
 	.word	s8
 
 do_check:
-
-	TST     R10,#0x04000000
+	TST     R8,#0x04000000
 	SUBEQ   R5,R13,#0x80        
 	MOVNE   R5,R13
-	ANDS    R4,R10,#0x03F00000
-	LDRNE   R6,[R5,R4,LSR #18]
-	ANDS    R4,R10,#0x000FC000
-	LDRNE   R7,[R5,R4,LSR #12]
-	ANDS    R4,R10,#0x3F00
-	LDRNE   R8,[R5,R4,LSR #6]
-	ANDS    R4,R10,#0xFC        
-	LDRNE   R9,[R5,R4]
+	ANDS    R4,R8,#0x03F00000
+	LDRNE   R10,[R5,R4,LSR #18]
+	AND     R4,R8,#0x000FC000
+	LDR     R6,[R5,R4,LSR #12]
+	ANDS    R4,R8,#0x3F00
+	LDRNE   R12,[R5,R4,LSR #6]
+	ANDS    R4,R8,#0xFC         
+	LDRNE   R14,[R5,R4]
 	LDR     R1,[R13,#256]
-	AND     R4,R10,#0x78000000
+	AND     R4,R8,#0x78000000
 	ADD     R1,R1,R4,LSR #23
-	LDMIA   R1,{R3-R5,R14}
+	LDMIA   R1,{R3-R5,R7}
 	LDR     R0,[R13,#264]
-	EOR     R2,R14,R6
+	EOR     R2,R7,R10
 	BIC     R0,R0,R2
-	EOR     R2,R5,R7
+	EOR     R2,R5,R6
 	BIC     R0,R0,R2
-	EOR     R2,R4,R8
+	EOR     R2,R4,R12
 	BIC     R0,R0,R2
-	EOR     R2,R3,R9
+	EOR     R2,R3,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	LDR     R10,[R11],#4
-	TST     R10,#0x80000000
+	LDR     R8,[R11],#4
+	TST     R8,#0x80000000
 	BEQ     donecheck
-	
 gotresult:
 	ADD     R13,R13,#0x010C     
 	LDMIA   R13!,{R4-R11}
-
 deseval_end:
 	BNE     foundkey
 	EOR     R6,R7,R7,LSR #1
@@ -1308,8 +1282,6 @@ deseval_end:
 	BCS     half_keys_done
 	EOR     R1,R7,R7,LSR #1
 	EOR     R1,R1,R6
-
-
 	TST     R1,#1
 	MOVNE   R1,#0x0C            
 	BNE     timingloop
@@ -1368,11 +1340,9 @@ deseval_end:
 	MOVNE   R1,#0x0D            
 	BNE     timingloop
 
-	.word	0xE6000010	/* illegal instruction */
-
+	.word	0xE6000010
 this_shouldnt_happen:
-	b	this_shouldnt_happen
-
+	B       this_shouldnt_happen
 s_param_table:
 	.word	0x2F2DA0CD
 	.word	0x0420B7A9
@@ -1598,55 +1568,54 @@ s_param_table:
 	.word	0xDFD7A9A5
 	.word	0x2B3D0726
 	.word	0xF2757500
+	.word	0x2FA4A49A
+	.word	0x6CA64806
+	.word	0xE00CC000
+	.word	0x2B5C8B5C
+	.word	0xCF96A9B3
+	.word	0xC80AC000
+	.word	0x0D468899
+	.word	0x26360C45
+	.word	0xF00EC000
+	.word	0x0275EAB4
+	.word	0xE234750E
+	.word	0xC00E8000
+	.word	0x003E5C95
+	.word	0xA1B85490
+	.word	0xD23F0000
+	.word	0x272D3503
+	.word	0x4B9EE970
+	.word	0xE80BC094
+	.word	0x16B07C49
+	.word	0x839AC0A6
+	.word	0xD80B4000
 	.word	0x21D8CB98
 	.word	0x0420B79B
 	.word	0xF80C0000
-	.word	0x0D468899
-	.word	0x26360C45
-	.word	0xF0000000
-	.word	0x272D3503
-	.word	0x4B9EE970
-	.word	0xE8000094
-	.word	0x2FA4A49A
-	.word	0x6CA64806
-	.word	0xE3900000
-	.word	0x16B07C49
-	.word	0x839AC0A6
-	.word	0xD8000000
-	.word	0x003E5C95
-	.word	0xA1B85490
-	.word	0xD2300000
-	.word	0x2B5C8B5C
-	.word	0xCF96A9B3
-	.word	0xCBF00000
-	.word	0x0275EAB4
-	.word	0xE234750E
-	.word	0xC0000000
+	.word	0x36C11661
+	.word	0x7CE7480D
+	.word	0xA40CC000
+	.word	0x3278FD23
+	.word	0xDFD7A99F
+	.word	0x8C0AC000
+	.word	0x1462FA60
+	.word	0x36770C4C
+	.word	0xB40EC000
+	.word	0x09925C40
+	.word	0xF2757515
+	.word	0x840E8000
+	.word	0x075AC09C
+	.word	0xB1F95497
+	.word	0x963F0000
+	.word	0x2E49A6CA
+	.word	0x5BDFE977
+	.word	0xAC0BC094
+	.word	0x1DCCE050
+	.word	0x93DBC0AD
+	.word	0x9C0B4000
 	.word	0x28113D46
 	.word	0x1461B7A2
 	.word	0xBC0C0000
-	.word	0x1462FA60
-	.word	0x36770C4C
-	.word	0xB4000000
-	.word	0x2E49A6CA
-	.word	0x5BDFE977
-	.word	0xAC000094
-	.word	0x36C11661
-	.word	0x7CE7480D
-	.word	0xA7900000
-	.word	0x1DCCE050
-	.word	0x93DBC0AD
-	.word	0x9C000000
-	.word	0x075AC09C
-	.word	0xB1F95497
-	.word	0x96300000
-	.word	0x3278FD23
-	.word	0xDFD7A99F
-	.word	0x8FF00000
-	.word	0x09925C40
-	.word	0xF2757515
-	.word	0x84000000
-
 	.word	0xFFFFFFFF
 
 
