@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.262 2001/11/22 08:50:40 sampo Exp $
+# @(#)$Id: configure,v 1.222.2.263 2002/03/04 18:39:12 acidblood Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -192,7 +192,7 @@ add_sources() # $1=os, $2=arch, $3=custom
                        rc5/x86/rg-k5.asm     rc5/x86/brf-p5.asm \
                        rc5/x86/rg-k6.asm     rc5/x86/rg-p6.asm \
                        rc5/x86/rg-6x86.asm   rc5/x86/nb-p7.asm \
-                       rc5/x86/jp-mmx.asm    rc5/x86/hb-k7.asm"
+                       rc5/x86/jp-mmx.asm    rc5/x86/dg-k7.asm"
     fi                       
 
     # --------------- des ----------------
