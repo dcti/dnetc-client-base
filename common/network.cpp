@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.120 2000/07/03 07:13:15 jlawson Exp $"; }
+return "@(#)$Id: network.cpp,v 1.121 2000/07/05 21:09:17 mfeiri Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -30,23 +30,6 @@ return "@(#)$Id: network.cpp,v 1.120 2000/07/03 07:13:15 jlawson Exp $"; }
   #undef offsetof
   #define offsetof(__typ,__id) ((size_t)&(((__typ*)0)->__id))
 #endif
-
-
-#if defined(__TURBOC__)
-  #define strcasecmp(x,y)  strcmpi(x,y)
-  #define strncasecmp(x,y,z) strncmpi(x,y,z)
-#elif defined(_MSC_VER)
-  #define strcasecmp(x,y)  _stricmp(x,y)
-  #define strncasecmp(x,y,n)  _strnicmp(x,y,n)
-#elif defined(__WATCOMC__) || defined(__IBMCPP__) || defined(__SASC__)
-  #define strcasecmp(x,y)  stricmp(x,y)
-  #define strncasecmp(x,y,n)  strnicmp(x,y,n)
-#elif (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_MACOS) || \
-      (CLIENT_OS == OS_ULTRIX)
-  extern "C" int strcasecmp(const char *s1, const char *s2);
-  extern "C" int strncasecmp(const char *s1, const char *s2, size_t);
-#endif
-
 
 extern int NetCheckIsOK(void); // used before doing i/o
 
