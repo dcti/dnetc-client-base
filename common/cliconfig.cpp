@@ -7,7 +7,7 @@
 
 // --------------------------------------------------------------------------
 
-#define OPTION_COUNT    39
+#define OPTION_COUNT    43
 
 char *menutable[4]=
   {
@@ -189,8 +189,11 @@ optionstruct options[OPTION_COUNT]=
   "        connected. HOWEVER, if the client runs out of blocks,\n"
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n",
-  3,2,0}
-
+  3,2,0},
+{ "in",  "RC5 In-Buffer Path/Name", "[Current Path]\\buff-in.rc5","",4,1,0},
+{ "out", "RC5 Out-Buffer Path/Name", "[Current Path]\\buff-out.rc5","",4,1,0},
+{ "in2", "DES In-Buffer Path/Name", "[Current Path]\\buff-in.des","",4,1,0},
+{ "out2","DES Out-Buffer Path/Name","[Current Path]\\buff-out.des","",4,1,0}
 };
 
 #define CONF_ID 0
@@ -232,6 +235,11 @@ optionstruct options[OPTION_COUNT]=
 #define CONF_EXITFILECHECKTIME 36
 #define CONF_OFFLINEMODE 37
 #define CONF_LURKMODE 38
+#define CONF_RC5IN 39
+#define CONF_RC5OUT 40
+#define CONF_DESIN 41
+#define CONF_DESOUT 42
+
 // --------------------------------------------------------------------------
 
 s32 Client::ConfigureGeneral( s32 currentmenu )
@@ -289,6 +297,10 @@ options[CONF_NETTIMEOUT].thevariable=&nettimeout;
 options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
 options[CONF_OFFLINEMODE].thevariable=&offlinemode;
 options[CONF_LURKMODE].thevariable=&lurk;
+options[CONF_RC5IN].thevariable=&in_buffer_file[0];
+options[CONF_RC5OUT].thevariable=&out_buffer_file[0];
+options[CONF_DESIN].thevariable=&in_buffer_file[1];
+options[CONF_DESOUT].thevariable=&out_buffer_file[1];
 
   while ( 1 )
   {
@@ -337,6 +349,10 @@ printf("------------------------------------------------------------\n\n");
 #if (CLIENT_OS==OS_WIN32)
            || (choice == CONF_LURKMODE)
 #endif
+           || (choice == CONF_RC5IN)
+           || (choice == CONF_RC5OUT)
+           || (choice == CONF_DESIN)
+           || (choice == CONF_DESOUT)
            )
            && (options[choice].optionscreen==currentmenu)
           )
@@ -408,6 +424,10 @@ printf("------------------------------------------------------------\n\n");
 #if (CLIENT_OS==OS_WIN32)
            || (choice == CONF_LURKMODE)
 #endif
+           || (choice == CONF_RC5IN)
+           || (choice == CONF_RC5OUT)
+           || (choice == CONF_DESIN)
+           || (choice == CONF_DESOUT)
            )
            && (options[choice].optionscreen==currentmenu)
           )
@@ -737,6 +757,18 @@ printf("------------------------------------------------------------\n\n");
             lurk=2;
             connectoften=0;
             };
+        case CONF_RC5IN:
+          strncpy( in_buffer_file[0] , parm, sizeof(in_buffer_file)/2 -1 );
+          break;
+        case CONF_RC5OUT:
+          strncpy( out_buffer_file[0] , parm, sizeof(out_buffer_file)/2 -1 );
+          break;
+        case CONF_DESIN:
+          strncpy( in_buffer_file[1] , parm, sizeof(in_buffer_file)/2 -1 );
+          break;
+        case CONF_DESOUT:
+          strncpy( out_buffer_file[1] , parm, sizeof(out_buffer_file)/2 -1 );
+          break;
                       
         default:
           break;
@@ -1181,6 +1213,10 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_CKTIME, checkpoint_min );
   INISETKEY( CONF_NETTIMEOUT, nettimeout );
   INISETKEY( CONF_EXITFILECHECKTIME, exitfilechecktime );
+  INISETKEY( CONF_RC5IN, in_buffer_file[0]);
+  INISETKEY( CONF_RC5OUT, out_buffer_file[0]);
+  INISETKEY( CONF_DESIN, in_buffer_file[1]);
+  INISETKEY( CONF_DESOUT, out_buffer_file[1]);
 
   if (offlinemode == 0)
     {
