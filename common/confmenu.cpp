@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.27  1999/02/10 03:46:32  cyp
+// dialup script/profile options are now disabled if dialwhenneeded is off.
+//
 // Revision 1.26  1999/02/09 23:57:26  cyp
 // The CONNECT_IFACEMASK default is now internal to lurk.
 //
@@ -109,7 +112,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.26 1999/02/09 23:57:26 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.27 1999/02/10 03:46:32 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -354,10 +357,11 @@ int Client::Configure( void )
         while (connectnames[maxconn])
           maxconn++;
         }
-      if (maxconn > 0) {
+      if (maxconn > 1) /* the first option is "", ie default */
+        {
+        connectnames[0] = "<Use Control Panel Setting>";
         conf_options[CONF_CONNPROFILE].choicemax = (s32)(maxconn-1);
         conf_options[CONF_CONNPROFILE].choicelist = connectnames;
-        conf_options[CONF_CONNPROFILE].defaultsetting = connectnames[0];
         }
       }
     }
@@ -545,6 +549,14 @@ int Client::Configure( void )
           conf_options[CONF_AUTOFINDKS].optionscreen=
           conf_options[CONF_KEYSERVPORT].optionscreen=
                       ((offlinemode)?(0):(CONF_MENU_NET));
+          
+          #ifdef LURK
+          conf_options[CONF_CONNPROFILE].optionscreen=
+          conf_options[CONF_CONNSTARTCMD].optionscreen=
+          conf_options[CONF_CONNSTOPCMD].optionscreen=
+            ((conf_options[CONF_DIALWHENNEEDED].thevariable == NULL ||
+            dialup.dialwhenneeded == 0)?(0):(CONF_MENU_NET));
+          #endif
           }
 
           
@@ -753,6 +765,8 @@ int Client::Configure( void )
                   {
                   strncpy(parm, conf_options[userselection].choicelist[newval_d], sizeof(parm));
                   parm[sizeof(parm)-1]=0; 
+                  if (newval_d == 0 && userselection == CONF_CONNPROFILE)
+                    parm[0]=0;
                   }
                 }
               }
