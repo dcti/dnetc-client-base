@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.90 2003/07/08 00:24:16 bdragon Exp $
+# @(#)$Id: configure,v 1.288.2.91 2003/07/16 00:35:52 mfeiri Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -520,7 +520,8 @@ add_sources() # $1=os, $2=arch, $3=custom
       if [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
         if [ "X$3" = "X" ]; then #mach3+
           TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/ppc/r72-KKS7400.osx.s \
-                                          rc5-72/ppc/r72-KKS7450.osx.s"
+                                          rc5-72/ppc/r72-KKS7450.osx.s \
+                                          rc5-72/ppc/r72-KKS970.osx.s"
 	fi
       elif [ "X$3" = "Xaltivec" ] ; then
           TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/ppc/r72-KKS7400.gas.s \

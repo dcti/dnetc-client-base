@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.54 2003/07/15 00:29:18 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.55 2003/07/16 00:36:33 mfeiri Exp $"; }
 
 //#define TRACE
 
@@ -259,6 +259,7 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.54 2003/07/15 00:29:18 mfeiri Exp $"; }
         #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
           extern "C" s32 CDECL rc5_72_unit_func_KKS7400( RC5_72UnitWork *, u32 *, void *);
           extern "C" s32 CDECL rc5_72_unit_func_KKS7450( RC5_72UnitWork *, u32 *, void *);
+          extern "C" s32 CDECL rc5_72_unit_func_KKS970( RC5_72UnitWork *, u32 *, void *);
         #endif
       #endif
     #endif
@@ -288,7 +289,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
    they are different from their predecessor(s). If only one core,
    use the obvious "MIPS optimized" or similar.
   */
-  #define LARGEST_SUBLIST 11 /* including the terminating null */
+  #define LARGEST_SUBLIST 12 /* including the terminating null */
   static const char *corenames_table[CONTEST_COUNT][LARGEST_SUBLIST]= 
   #undef LARGEST_SUBLIST
   /* ================================================================== */
@@ -502,6 +503,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "KKS 7450",      /* gas and OSX format, AltiVec only */
       "MH 1-pipe",     /* gas and OSX format */
       "MH 1-pipe 604e",/* gas and OSX format */
+      "KKS 970",       /* gas and OSX format, AltiVec only */
       NULL
     },
   #elif (CLIENT_CPU == CPU_SPARC)
@@ -642,6 +644,8 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
           cindex = 4;                   /* "KKS 2pipes" */
         if (!have_vec && cindex == 7)   /* "KKS 7450" */
           cindex = 5;                   /* "KKS 604e" */
+        if (!have_vec && cindex == 10)  /* "KKS 970" */
+            cindex = 4;                 /* "KKS 2pipes", see micro-bench in #3310 */
       #endif
     }
   }
@@ -1337,6 +1341,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
             case 0x8000: cindex = 7; break; // 7450 (G4+)  == KKS 7450
             case 0x8001: cindex = 7; break; // 7455 (G4+)  == KKS 7450
             case 0x800C: cindex = 6; break; // 7410 (G4)   == KKS 7400
+            //case 0x0039: cindex = 10; break; // 970 (G5)   == KKS 970
             default:     cindex =-1; break; // no default
         }
       }
@@ -2462,6 +2467,12 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_mh604e_addi;
         pipeline_count = 1;
         break;
+      #if defined(__VEC__) || defined(__ALTIVEC__)
+      case 10:
+          unit_func.gen_72 = rc5_72_unit_func_KKS970;
+          pipeline_count = 4;
+          break;
+      #endif
       #endif
 
      #else /* the ansi cores */
