@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.235 2001/02/14 19:36:37 ephraim Exp $
+# @(#)$Id: configure,v 1.222.2.236 2001/02/18 23:31:01 sampo Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -121,6 +121,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   # only generic/ansi cores are declared here. 
   # arch specific ones are declared in each arch specific section.
   #-- RC5 -- --------------------------------------------------
+  RC5_ANSI4_SRCS="rc5/ansi/rc5ansi_4-rg.cpp" # 4 pipeline ("rc5/ansi/2-rg.c")
   RC5_ANSI2_SRCS="rc5/ansi/rc5ansi_2-rg.cpp" # 2 pipeline ("rc5/ansi/2-rg.c")
   RC5_ANSI1_SRCS="rc5/ansi/rc5ansi_1-rg.cpp" # 1 pipeline
   # -- DES -- (needs -DHAVE_DES_CORES) -------------------------
@@ -409,6 +410,16 @@ add_sources() # $1=os, $2=arch, $3=custom
       -o "$2" = "vax" -o "$2" = "s390" -o "$2" = "generic" ]; then
     # pure ansi targets. (2 pipeline RC5 core)
     TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+    ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES -DMEGGS -DKWAN"
+    ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
+    ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
+    ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+  #-----------------------------------------------------------------  
+  elif [ "$2" = "ia64" ]; then
+    # pure ansi target. (4 pipeline RC5 core)
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI4_SRCS"
     ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES -DMEGGS -DKWAN"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
     ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"

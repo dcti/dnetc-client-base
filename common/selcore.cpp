@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.99 2001/02/17 20:31:42 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.100 2001/02/18 23:31:18 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1048,7 +1048,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
 #elif (CLIENT_CPU == CPU_IA64)
   // rc5/ansi/rc5ansi_2-rg.cpp
-  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
+  extern "C" u32 rc5_unit_func_ansi_4_rg( RC5UnitWork *, u32 iterations );
 #elif (CLIENT_CPU == CPU_PA_RISC)
   // rc5/parisc/parisc.cpp encapulates parisc.s, 2 pipelines
   // extern "C" u32 rc5_parisc_unit_func( RC5UnitWork *, u32 );
@@ -1274,8 +1274,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     {
       // rc5/ansi/rc5ansi_2-rg.cpp
       //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-      unit_func.rc5 = rc5_unit_func_ansi_2_rg;
-      pipeline_count = 2;
+      unit_func.rc5 = rc5_unit_func_ansi_4_rg;
+      pipeline_count = 4;
       coresel = 0;
     }
     #elif (CLIENT_CPU == CPU_PA_RISC)
