@@ -18,7 +18,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31 2002/11/03 15:06:31 pfeffi Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.1 2002/11/16 21:30:42 gavin Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -357,7 +357,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         /* third condition is 0xff ("unknown"), so fall through */
       }
     }
-    #elif (CLIENT_OS == OS_LINUX)
+    #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU != CPU_POWERPC)
     {
       static long time_last = 0;
       long time_now = (time(0)/60); /* not more than once per minute */
@@ -444,7 +444,49 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
           trigstatics.pause_if_no_mains_power = 0;
         }
       }  
-    } /* #if (linux) */
+    } /* #if (linux & !cpu_ppc) */
+    #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_POWERPC)
+    { 
+      static long time_last = 0;
+      long time_now = (time(0)/60); /* not more than once per minute */
+      if (time_now != time_last)
+      {
+        int disableme = 1; // if this is still set when we get to the end
+                           // then disable further apm checking
+        FILE *fd = fopen("/proc/pmu/info", "r" );
+        if ( fd > 0)
+        {
+          char buffer[256];
+          int ac_status = -1;
+          while(fgets(buffer, sizeof(buffer), fd))
+          {
+            buffer[sizeof(buffer) - 1] = '\0';
+            if (strstr(buffer, "AC Power") == buffer)
+            {
+              if (sscanf(buffer, "AC Power               : %d",
+                &ac_status) == 1) 
+              {
+                disableme = 0;
+                break;
+              }
+            }
+          } /* while */
+          fclose (fd);
+          if (ac_status == 1)
+            return 0; /* not running from battery */
+          if (ac_status == 0)
+            return 1; /* are running on battery */
+          /* fallthrough, return -1 */
+        } /* if (fd) */
+
+        if (disableme) /* disable further checks */
+        {
+          TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
+          trigstatics.pause_if_no_mains_power = 0;
+        }
+      } /* if time */
+    } /* #if (linux & cpu_ppc) */
+
     #elif (CLIENT_OS == OS_FREEBSD) && (CLIENT_CPU == CPU_X86)
     {
       /* This is sick and sooo un-BSD like! Tatsumi Hokosawa must have
