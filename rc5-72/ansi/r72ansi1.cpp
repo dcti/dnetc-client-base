@@ -31,8 +31,8 @@ u32 rc5_72_unit_func_ansi_1 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
     B = rc5_72unitwork->plain.hi + S[1];
     for (i=1; i<=12; i++)
     {
-      A = ROTL(A^B,B1)+S[2*i];
-      B = ROTL(B^A,A1)+S[2*i+1];
+      A = ROTL(A^B,B)+S[2*i];
+      B = ROTL(B^A,A)+S[2*i+1];
     }
     if (A == rc5_72unitwork->cypher.lo)
     {
