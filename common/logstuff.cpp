@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.52.2.5 2001/03/23 21:54:09 sampo Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.52.2.6 2001/03/23 21:54:58 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1024,7 +1024,7 @@ void LogScreenPercent( unsigned int load_problem_count )
       pbuf[prob_i] = 0;
       if (selprob)
       {
-        u32 permille = 0, start_permille = 0;
+        u32 permille = 0, startpermille = 0;
         int girc = -1;
         cont_i = selprob->pub_data.contest;
  
