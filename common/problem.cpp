@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108 1999/04/23 07:12:38 gregh Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.1 1999/05/18 14:43:07 sampo Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -777,6 +777,12 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
   #else
     kiter = rc5_singlestep_core_wrapper( &rc5unitwork, timeslice,
                 pipeline_count, rc5_unit_func );
+  #endif
+
+  // Mac OS needs to yield here, since yielding works differently
+  // depending on the core
+  #if (CLIENT_OS == OS_MACOS)
+    if (MP_active == 0) YieldToMain(1);
   #endif
 
   timeslice *= pipeline_count;
