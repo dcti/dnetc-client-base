@@ -21,13 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.69 2000/12/01 13:57:58 oliver Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.70 2000/12/18 04:54:33 mfeiri Exp $
 ==========================================================================
 
 2.8000
 ------
 
 2.8011.464  imp: many: OGR cores improved - should now be slightly faster
+            new: many: AltiVec OGR cruncher by Dan Oetting and Chris Cox
             new: AmigaOS: added full lurk functionality
             new: AmigaOS: -shutdown, -restart and -(un)pause support added
             new: AmigaOS: "Pause if running" support now enabled
@@ -63,6 +64,11 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.69 2000/12/01 13:57:58 oliver Exp $
                  differently for different projects). Inexact percentages 
                  (ie, for OGR) are no longer displayed at load/save time.
             new: AmigaOS: fifo log file type now enabled
+            new: macos: temp. sensing support for single CPU G3 and G4 Macs
+            new: macos: LURK support for users of OT-PPP or RemoteAccess
+            chg: nonpreemptive systems yield much more when running OGR
+            new: macos: pause-on-battery support for battery driven macs
+            new: macosx: pause-on-battery support for battery driven macs
 
 2.8010.463  fix: linux/x86: resolved various dns lookup, lib and
                  portability issues by building against static libc5
