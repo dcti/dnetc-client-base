@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.64  1998/06/30 03:11:46  fordbr
+// Fixed blockcount bug with 'x' to exit
+//
 // Revision 1.63  1998/06/29 08:43:53  jlawson
 // More OS_WIN32S/OS_WIN16 differences and long constants added.
 //
@@ -77,7 +80,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.63 1998/06/29 08:43:53 jlawson Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.64 1998/06/30 03:11:46 fordbr Exp $";
 #endif
 
 #include "client.h"
@@ -2012,7 +2015,12 @@ PreferredIsDone1:
             if (hitchar == 3 || hitchar == 'X' || hitchar == 'x' || hitchar == '!')
             {
               // exit after current blocks
-              blockcount = min(blockcount, (s32) (totalBlocksDone[0] + totalBlocksDone[1] + numcputemp));
+              if (blockcount > 0)
+              {
+                blockcount = min(blockcount, (s32) (totalBlocksDone[0] + totalBlocksDone[1] + numcputemp));
+              } else {
+                blockcount = (s32) (totalBlocksDone[0] + totalBlocksDone[1] + numcputemp);
+              }
               Log("Exiting after current block\n");
               exitcode = 1;
             }
