@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.9 1999/06/11 01:17:25 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.10 1999/06/15 13:22:01 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -517,13 +517,22 @@ int main( int argc, char *argv[] )
   */
   #if (CLIENT_OS != OS_FREEBSD) && (CLIENT_OS != OS_NETBSD) && \
       (CLIENT_OS != OS_BSDOS) && (CLIENT_OS != OS_OPENBSD) && \
-      (CLIENT_OS != OS_DGUX) && (CLIENT_OS != OS_DYNIX) && \
-      (CLIENT_OS != OS_SOLARIS)
+      (CLIENT_OS != OS_DGUX) && (CLIENT_OS != OS_DYNIX)
   /* ... all the SPT_REUSEARGV types */
   if (needchange && strlen(argv[0]) >= strlen(defname))
   {
     char *q = "RC5PROG";
-    if (setenv( q, argv[0], 1 ) == 0)
+    int didset = 0;
+    #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX)
+    char *m = (char *)malloc( strlen(q)+1+strlen(argv[0])+1 );
+    if (m) {
+      didset=(0==putenv(strcat(strcat(strcpy(m,q),"="),argv[0]))); //BSD4.3
+      free((void *)m); 
+    }
+    #else
+    didset = (setenv( q, argv[0], 1 ) == 0); //SYSV7 and posix
+    #endif
+    if (didset)
     {
       if ((q = (char *)getenv(q)) != ((char *)0))
       {
