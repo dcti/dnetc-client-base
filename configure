@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.55 1999/11/24 07:54:47 remi Exp $
+# @(#)$Id: configure,v 1.222.2.56 1999/11/28 06:11:37 lyndon Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -379,7 +379,12 @@ DELETECHARS="'[:punct:]'"
 # Determine the platform specific options for this target
 #
 case "$1" in
+
 ###### MIPS based platforms
+
+# If compiling on Irix 5 you must -D_irix5_ now to get the usleep()
+# wrapper.
+
     *mips-cobalt)	# For Cobalt Qube - doesn't work yet - Peter
 	RC5CORECOPY="rc5/mips-crunch.cpp"
 	TARGET_CC="gcc"
@@ -478,6 +483,20 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
+    *mips-gcc)	# [lyndon] Irix 6, gcc, threaded (assumes n32 ABI)
+        DELETECHARS="'/.\$\-'"
+        RC5CORECOPY="rc5/mips/mips-crunch.cpp"
+        TARGET_CC="gcc"
+        TARGET_CCFLAGS="$OPTS_GCC_MIPS   \
+                        -DHAVE_DES_CORES -DHAVE_CSC_CORES \
+			-DMULTITHREAD \
+                        -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
+        TARGET_LIBS="-lpthread"
+	TARGET_STRIP="strip"
+	TARGET_TARBALL="irix6-mips-n32"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        ;;
 
     *mips-gcc-ultrix)	# For mips based DEC Ultrix machines
 	DELETECHARS="'/.\$\-'"
