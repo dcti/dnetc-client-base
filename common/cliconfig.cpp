@@ -338,39 +338,41 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
 
   while ( 1 )
   {
-setupoptions();
+    setupoptions();
 
     // display menu
 
-clearscreen();
-printf("Distributed.Net RC5/DES Client build v2.70%i.%i config menu\n",CLIENT_BUILD,CLIENT_BUILD_FRAC);
-printf("%s\n",menutable[currentmenu-1]);
-printf("------------------------------------------------------------\n\n");
+    clearscreen();
+    printf("Distributed.Net RC5/DES Client build v2.70%i.%i config menu\n",
+           CLIENT_BUILD,CLIENT_BUILD_FRAC);
+    printf("%s\n",menutable[currentmenu-1]);
+    printf("------------------------------------------------------------\n\n");
 
-for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
+    for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
     {
       choice=findmenuoption(currentmenu,temp2);
       if (choice >= 0)
-          {
-          printf("%2ld) %s ==> ",
-                  options[choice].menuposition, options[choice].description);
+      {
+        printf("%2d) %s ==> ",
+               (int)options[choice].menuposition, 
+               options[choice].description);
 
-          if (options[choice].type==1)
-             {
-             if (options[choice].thevariable != NULL)
-               printf("%s\n",(char *)options[choice].thevariable);
-             }
-          else if (options[choice].type==2)
-             if (options[choice].choicelist == NULL)
-               printf("%li\n",(long)*(s32 *)options[choice].thevariable);
-             else printf("%s\n",options[choice].choicelist+
-             ((long)*(s32 *)options[choice].thevariable*60));
-          else if (options[choice].type==3)
-             {
-             sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
-             printf("%s\n",str);
-             };
-          };
+        if (options[choice].type==1)
+        {
+          if (options[choice].thevariable != NULL)
+            printf("%s\n",(char *)options[choice].thevariable);
+        }
+        else if (options[choice].type==2)
+          if (options[choice].choicelist == NULL)
+            printf("%li\n",(long)*(s32 *)options[choice].thevariable);
+          else printf("%s\n",options[choice].choicelist+
+            ((long)*(s32 *)options[choice].thevariable*60));
+        else if (options[choice].type==3)
+        {
+          sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
+          printf("%s\n",str);
+        };
+      };
     }
     printf("\n 0) Return to main menu\n");
 
@@ -407,23 +409,25 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
         printf("\n%s %s\n",options[choice].description,options[choice].comments);
            for ( temp = options[choice].choicemin;
                  temp < options[choice].choicemax+1; temp++)
-             {
-             printf("  %2ld) %s\n",temp,options[choice].choicelist+temp*60);
-             }
-           printf("\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
+           {
+             printf("  %2d) %s\n", (int)temp,
+                   options[choice].choicelist+temp*60);
+           }
+           printf("\nDefault Setting: %s\n"
+                  "Current Setting: %s\nNew Setting --> ",
                   options[choice].choicelist+atoi(options[choice].defaultsetting)*60,
                   options[choice].choicelist+
                   ((long)*(s32 *)options[choice].thevariable*60));
            }
     else if (options[choice].type==3)
-      {
+    {
       sprintf(str, "%s", atoi(options[choice].defaultsetting)?"yes":"no");
       printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: ",
               options[choice].description, options[choice].comments,
               str);
       sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
       printf("%s\nNew Setting --> ",str);
-      };
+    };
 
     fflush( stdout );
     fgets(parm, sizeof(parm), stdin);
