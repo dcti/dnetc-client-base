@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.38  1998/11/08 22:25:48  silby
+// Fixed RC5_MMX pipeline count selection, was incorrect.
+//
 // Revision 1.37  1998/10/02 16:59:03  chrisb
 // lots of fiddling in a vain attempt to get the NON_PREEMPTIVE_OS_PROFILING to be a bit sane under RISC OS
 //
@@ -88,7 +91,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.37 1998/10/02 16:59:03 chrisb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.38 1998/11/08 22:25:48 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -236,7 +239,8 @@ s32 Problem::LoadState( ContestWork * work, u32 contesttype, u32 _timeslice, u32
   pipeline_count = PIPELINE_COUNT;
   
 #if (CLIENT_CPU == CPU_X86)
-    if (_cputype == 6 && contest == 0) //RC5 MMX cores
+    if (rc5_unit_func == rc5_unit_func_p5_mmx)
+      // RC5 MMX core is 4 pipelines
       pipeline_count = 4;
 #elif (CLIENT_CPU == CPU_ARM)
     if (_cputype == 0)
