@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.52  1998/11/22 14:54:36  cyp
+// Adjusted to reflect changed -runonline, -runoffline, -n behaviour
+//
 // Revision 1.51  1998/11/19 20:54:00  cyp
 // Updated command line options to reflect changed -until format.
 //
@@ -166,7 +169,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.51 1998/11/19 20:54:00 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.52 1998/11/22 14:54:36 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -222,9 +225,12 @@ void DisplayHelp( const char * unrecognized_option )
   "",
 //----the runoffline/runbuffers lines are the longest a description may get-----#
   "Other Options:",
-  "-runoffline        don't attempt any flush/fetches (generate random if needed)",
-  "-runbuffers        like -runoffline, but exit when the current buffer is empty",
+  "-runoffline        disable network access",
+  "-runonline         enable network access",
+  "-runbuffers        set -n == -1 (exit when buffers are empty)",
+  /*
   "-run               normal run (override ini offlinemode/runbuffer settings)",
+  */
   "-a <address>       proxy server name or IP address",
   "-p <port>          proxy server port number",
   "-e <address>       the email id by which you are known to distributed.net",
@@ -234,9 +240,9 @@ void DisplayHelp( const char * unrecognized_option )
   "-priority <[0-9]>  scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
   #endif
   "-c <cputype>       cpu type (run -config for a list of valid cputype numbers)",
-  "-numcpu <n>        run <n> threads/run on <n> cpus",
+  "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
   "-h <hours>         time limit in hours",
-  "-n <count>         blocks to complete",
+  "-n <count>         blocks to complete. -1 forces exit when buffer is empty.",
   "-until <HH:MM>     quit at HH:MM (eg 07:30)",
   "-u <uuehttp>       use UUE/HTTP mode",
   "-ha <address>      http proxy name or IP address",

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.102  1998/11/22 14:54:35  cyp
+// Adjusted to reflect changed -runonline, -runoffline, -n behaviour
+//
 // Revision 1.101  1998/11/21 13:08:09  remi
 // Fixed "Setting cputype to" when cputype < 0.
 //
@@ -79,7 +82,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.101 1998/11/21 13:08:09 remi Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.102 1998/11/22 14:54:35 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -296,20 +299,43 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         if (run_level == 0)
           noexitfilecheck=1;             // Change network timeout
         }
-      else if ( strcmp( thisarg, "-runoffline" ) == 0 ) 
+      else if ( strcmp( thisarg, "-runoffline" ) == 0 || 
+                strcmp( thisarg, "-runonline" ) == 0) 
         {
-        if (run_level == 0)
-          offlinemode=1;                // Run offline
+        if (run_level!=0)
+          {
+          if (logging_is_initialized)
+	    LogScreen("Client will run %s network access.\n", 
+	               ((offlinemode)?("without"):("with")) );
+	  }
+        else 
+          offlinemode = ((strcmp( thisarg, "-runoffline" ) == 0)?(1):(0));
         }
       else if ( strcmp( thisarg, "-runbuffers" ) == 0 ) 
         {
-        if (run_level == 0)
-          offlinemode=2;                // Run offline & exit when buffer empty
+        if (run_level!=0)
+          {
+          if (logging_is_initialized && blockcount < 0)
+              LogScreenRaw("Setting blockcount to -1. (exit on empty buffer)\n");
+	  }
+        else
+          blockcount = -1;
         }
       else if ( strcmp( thisarg, "-run" ) == 0 ) 
         {
-        if (run_level == 0)
-          offlinemode=0;                // Run online
+        if (run_level!=0)
+          {
+          if (logging_is_initialized && blockcount == 0 && offlinemode == 0)
+	    {
+	    LogScreenRaw("Warning: -run is obsolete. "
+	                 "Setting -runonline and -n 0.\n");
+	    }
+	  }
+	else
+	  {
+          offlinemode = 0;
+	  blockcount = 0;
+	  }
         }
       else if ( strcmp( thisarg, "-nodisk" ) == 0 ) 
         {
@@ -785,11 +811,17 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           if (run_level!=0)
             {
             if (logging_is_initialized)
-              LogScreenRaw("Setting block completion limit to %u\n",
-                                                (unsigned int)blockcount);
+	      {
+	      if (blockcount < 0)
+	        LogScreenRaw("Client will exit when buffers are empty.\n");
+	      else
+                LogScreenRaw("Setting block completion limit to %u%s\n",
+                    (unsigned int)blockcount, 
+		    ((blockcount==0)?(" (no limit)"):("")));
+	      }
             }
           else if ( (blockcount = atoi( nextarg )) < 0)
-            blockcount = 0;
+            blockcount = -1;
           }
         }
       else if ( strcmp( thisarg, "-numcpu" ) == 0 ) // Override the number of cpus
