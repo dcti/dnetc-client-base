@@ -43,7 +43,7 @@ x86features:
   push edx
   push esi
 
-  mov 0h, esi
+  mov esi, 0h
 
   ; See if CPUID instruction is supported ...
   ; ... Get copies of EFLAGS into eax and ecx
@@ -73,31 +73,31 @@ x86features:
 
 ; Check for Intel
 TryIntel:
-  cmpl ebx, 756E6547h
+  cmp ebx, 756E6547h
   jne TryAMD
-  cmpl edx, 49656E69h
+  cmp edx, 49656E69h
   jne TryAMD
-  cmpl ecx, 6C65746Eh
+  cmp ecx, 6C65746Eh
   jne TryAMD
   jmp Intel
 
 ; Check for AMD
 TryAMD:
-  cmpl ebx, 68747541h
+  cmp ebx, 68747541h
   jne TryCyrix
-  cmpl edx, 69746E65h
+  cmp edx, 69746E65h
   jne TryCyrix
-  cmpl ecx, 444D4163h
+  cmp ecx, 444D4163h
   jne TryCyrix
   jmp AMD
 
 ; Check for Cyrix
 TryCyrix:
-  cmpl ebx, 69727943h
+  cmp ebx, 69727943h
   jne TryExtended
-  cmpl edx, 736E4978h
+  cmp edx, 736E4978h
   jne TryExtended
-  cmpl ecx, 64616574h
+  cmp ecx, 64616574h
   jne TryExtended
   jmp Cyrix
 
@@ -114,7 +114,7 @@ AMD:
   mov edx, eax
 
   test edx, 00400000h  ; Test for AMD Ext'd MMX
-  jz Return
+  jz Extended
   or esi, AMD_MMX_PLUS           ; AMD EMMX supported
 
   jmp Extended
@@ -127,7 +127,7 @@ Cyrix:
   jl Standard  ; Try standard CPUID instead
 
   test edx, 01000000h  ; Test for Cyrix Ext'd MMX
-  jz Return
+  jz Extended
   or esi, CYRIX_MMX_PLUS           ; Cyrix EMMX supported
 
   jmp Extended
@@ -182,10 +182,11 @@ SSE3:
 ; Nothing supported
 NotSupported:
 Return:
-  popl edx
-  popl ecx
-  popl ebx
-
   mov eax, esi
-		
+
+  pop esi
+  pop edx
+  pop ecx
+  pop ebx
+
   ret
