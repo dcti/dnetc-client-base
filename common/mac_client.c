@@ -3,9 +3,16 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mac_client.c,v $
+// Revision 1.2  1998/12/13 23:54:05  dicamillo
+// Added RSCID
+//
 // Revision 1.1  1998/12/09 07:20:28  dicamillo
 // First Checked In.
 //
+#if (!defined(lint) && defined(__showids__))
+const char *mac_client_cpp(void) {
+return "@(#)$Id:"; }
+#endif
 
 // This file contains the routines added to the Client class for the Mac_Client
 // class the Mac client uses.  Some methods here are likely to require changes when
