@@ -1,9 +1,9 @@
-; Copyright distributed.net 1997-2002 - All Rights Reserved
+; Copyright distributed.net 1997-2003 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.13.2.4 2003/01/29 00:41:26 andreasb Exp $
+; $Id: r72-dg2.asm,v 1.13.2.5 2003/01/29 01:29:58 andreasb Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]

@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72ansi4_cpp(void) {
-return "@(#)$Id: r72ansi4.cpp,v 1.20.2.1 2003/01/15 14:10:19 stream Exp $"; }
+return "@(#)$Id: r72ansi4.cpp,v 1.20.2.2 2003/01/29 01:29:58 andreasb Exp $"; }
 
 #include "ccoreio.h"
 #include "rotate.h"

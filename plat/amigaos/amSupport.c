@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.2.4.1 2003/01/16 09:40:40 oliver Exp $
+ * $Id: amSupport.c,v 1.2.4.2 2003/01/29 01:29:58 andreasb Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *

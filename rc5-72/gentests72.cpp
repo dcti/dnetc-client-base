@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: gentests72.cpp,v 1.7.2.1 2003/01/28 04:58:00 andreasb Exp $
+ * $Id: gentests72.cpp,v 1.7.2.2 2003/01/29 01:29:58 andreasb Exp $
 */
 /**************************************************************************/
 /*                                                                        */

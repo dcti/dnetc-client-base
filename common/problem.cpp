@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.3 2003/01/19 22:49:50 snake Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.4 2003/01/29 01:29:58 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1612,7 +1612,7 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
     if (thisprob->priv_data.contestwork.bigcrypto.iterations.hi == 0 &&
         thisprob->priv_data.contestwork.bigcrypto.iterations.lo == 0x20000) /* test case */
     {
-      Log("RC5 incrementation mismatch:\n"
+      Log("RC5-72 incrementation mismatch:\n"
           "Debug Information: %02x:%08x:%08x - %02x:%08x:%08x\n",
           thisprob->priv_data.rc5_72unitwork.L0.hi, thisprob->priv_data.rc5_72unitwork.L0.mid, thisprob->priv_data.rc5_72unitwork.L0.lo,
           thisprob->priv_data.refL0.hi, thisprob->priv_data.refL0.mid, thisprob->priv_data.refL0.lo);
