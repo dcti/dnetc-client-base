@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.82 2000/06/19 16:38:41 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.83 2000/06/22 09:15:39 oliver Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -353,9 +353,12 @@ static const char *GetBuildOrEnvDescription(void)
 
 /* ---------------------------------------------------------------------- */
 
-static void PrintBanner(const char *dnet_id,int level,int restarted)
+static void PrintBanner(const char *dnet_id,int level,int restarted,int logscreenonly)
 {
   restarted = 0; /* yes, always show everything */
+  int logto = LOGTO_RAWMODE|LOGTO_SCREEN;
+  if (!logscreenonly)
+    logto |= LOGTO_FILE|LOGTO_MAIL;
 
   if (!restarted)
   {
@@ -407,22 +410,22 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       const char *msg = GetBuildOrEnvDescription();
       if (msg == NULL) msg="";
 
-      LogRaw("\n%s%s%s%s.\n",
-             CliGetFullVersionDescriptor(), /* cliident.cpp */
-             ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
+      LogTo( logto, "\n%s%s%s%s.\n",
+                    CliGetFullVersionDescriptor(), /* cliident.cpp */
+                    ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
       LogScreenRaw( "Please provide the *entire* version descriptor "
                     "when submitting bug reports.\n");
       LogScreenRaw( "The distributed.net bug report pages are at "
                     "http://www.distributed.net/bugs/\n");
       if (dnet_id[0] != '\0' && strcmp(dnet_id,"rc5@distributed.net") !=0 )
-        LogRaw( "Using email address (distributed.net ID) \'%s\'\n",dnet_id);
+        LogTo( logto, "Using email address (distributed.net ID) \'%s\'\n",dnet_id);
       else if (level == 2)
-        LogRaw( "\n* =========================================================================="
-                "\n* The client is not configured with your email address (distributed.net ID) "
-                "\n* Work done cannot be credited until it is set. Please run '%s -config'"
-                "\n* =========================================================================="
-                "\n", utilGetAppName());
-      LogRaw("\n");
+        LogTo( logto, "\n* =========================================================================="
+                      "\n* The client is not configured with your email address (distributed.net ID) "
+                      "\n* Work done cannot be credited until it is set. Please run '%s -config'"
+                      "\n* =========================================================================="
+                      "\n", utilGetAppName());
+      LogTo( logto, "\n");
       #if CLIENT_OS == OS_IRIX
       /*
        * Irix 6.5 has a kernel bug that will cause the system
@@ -530,7 +533,7 @@ static int ClientMain( int argc, char *argv[] )
               TRACE_OUT((-1,"initializelogging\n"));
               if ((domodes & MODEREQ_CONFIG)==0)
               {
-                PrintBanner(client->id,0,restarted);
+                PrintBanner(client->id,0,restarted,0);
 
                 TRACE_OUT((+1,"parsecmdline(1)\n"));
                 ParseCommandline( client, 1, argc, (const char **)argv, NULL,
@@ -548,7 +551,7 @@ static int ClientMain( int argc, char *argv[] )
                 con_waitforuser = ((domodes & ~MODEREQ_CONFIG)!=0);
                 if ((domodes & MODEREQ_CONFIG)==0) 
                 { /* avoid printing/logging banners for nothing */
-                  PrintBanner(client->id,1,restarted);
+                  PrintBanner(client->id,1,restarted,((domodes & MODEREQ_CMDLINE_HELP)!=0));
                 }
                 TRACE_OUT((+1,"modereqrun\n"));
                 ModeReqRun( client );
@@ -558,7 +561,7 @@ static int ClientMain( int argc, char *argv[] )
               else if (!utilCheckIfBetaExpired(1)) /* prints message */
               {
                 con_waitforuser = 0;
-                PrintBanner(client->id,2,restarted);
+                PrintBanner(client->id,2,restarted,0);
                 TRACE_OUT((+1,"client.run\n"));
                 retcode = ClientRun(client);
                 TRACE_OUT((-1,"client.run\n"));
