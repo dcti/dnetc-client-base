@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.8 1999/09/18 18:07:59 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.9 1999/10/10 23:05:36 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -693,9 +693,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0570, 1611, 0x105, "K6"       },
           {  0x0580, 1690, 0x105, "K6-2"     },
           {  0x0590, 1690, 0x105, "K6-3"     },
-          {  0x0610, 4096, 0x105, "K7"       }, /* K6 core or PII core? */
-          {  0x0620, 4096, 0x105, "K7"       },
-          {  0x0000, 4096,     5, NULL       }   // for the future - default core = K6
+          {  0x0610, 4096, 0x102, "K7"       }, /* K6 core or PII core? */
+          {  0x0620, 4096, 0x102, "K7"       },
+          {  0x0000, 4096,     2, NULL       } // default core = K7
           }; internalxref = &amdxref[0];
       vendorname = "AMD ";
       cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
@@ -718,9 +718,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0510, 1416,     0, "Pentium" },
           {  0x0520, 1416,     0, "Pentium" },
           {  0x0530, 1416,     0, "Pentium Overdrive" },
-          {  0x0540, 1432, 0x106, "Pentium MMX" },
+          {  0x0540, 1432, 0x100, "Pentium MMX" },
           {  0x0570, 1416,     0, "Pentium" },
-          {  0x0580, 1432, 0x106, "Pentium MMX" },
+          {  0x0580, 1432, 0x100, "Pentium MMX" },
           {  0x0600, 2785,     2, "Pentium Pro" },
           {  0x0610, 2785,     2, "Pentium Pro" },
           {  0x0630, 3092, 0x102, "Pentium II" },
