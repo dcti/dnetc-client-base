@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.82 2000/01/01 22:20:38 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.83 2000/01/04 23:26:28 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -764,13 +764,11 @@ case "$1" in
 
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
 
-    *sparc-openbsd)                   # snake
-	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1  -DKWAN -DMEGGS -DHAVE_CSC_CORES \
+    *sparc-openbsd)                   # snake, now without DES
+	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1  -DHAVE_CSC_CORES \
                     $CSC_ANSI_CCOPTS"
 	TARGET_LDFLAGS="-static"
-	#TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c des/deseval-meggs2-2.cpp \
-                    des/des-slice-meggs.cpp $CSC_ANSI_SRCS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $CSC_ANSI_SRCS"
     TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="openbsd-sparc-aout"
 	;;
@@ -1289,30 +1287,28 @@ case "$1" in
 
 	# somebody is again and again trying to change this to use nasm, but
 	# nasm doesn't support BSD/OS aout format, so please don't do it again!!
-    *x86-bsdi)                        # snake
+    *x86-bsdos)                        # snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC272_X86 -DHAVE_CSC_CORES"  #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $CSC_ANSI_SRCS" #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="bsdi2-x86-aout"
+	TARGET_TARBALL="bsdos2-x86-aout"
        ;;
 
-    *x86-bsdi4)                       # BSD/OS 4.0 with ELF format -snake
-	TARGET_AS="g++ -c"
-	TARGET_CCFLAGS="$OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
-	                -DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
+    # bsdos-4 client is still experimental, found a severe bug with PentiumII
+    *x86-bsdos4)      # BSD/OS 4.0 with ELF format, now without DES -snake
+	TARGET_AS="g++ -c -DNO_BALIGN"
+	TARGET_CCFLAGS="-g $OPTS_GCC272_X86 -DMMX_RC5 -DHAVE_CSC_CORES"
+					 # -DMMX_CSC #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-	                " #$OGR_ANSI_SRCS
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
-	                des/brydgnu/p1bdespro.S"
+	TARGET_ADDSRCS="$CSC_ANSI_SRCS" #$OGR_ANSI_SRCS
+	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_NASM_FMT="elf"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS \
-	                 $CSC_ASM_SRCS"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS" # $CSC_ASM_SRCS"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="bsdi4-x86-elf"
+	TARGET_TARBALL="bsdos4-x86-elf"
        ;;
 
 ####### Intel X86 QNX
