@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.55 2004/03/29 17:58:16 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.56 2004/03/31 14:18:26 pfeffi Exp $
 ==========================================================================
 
 2.9000
@@ -30,6 +30,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.55 2004/03/29 17:58:16 snikkel Exp
             fix: ppc: now detects 745/755 (G3) cpu under linux
             chg: x86: core preselection (#3477, #3580, #3602, #3621)
             imp: x86: xbox cpu identification (#3593)
+            chg: x86-linux: new build style using uClibc
 
 2.9007-488  fix: macosx: Undefined symbol issue (10.1.5, #3578)
             imp: all: Force partial work to be restarted when fetched from a
