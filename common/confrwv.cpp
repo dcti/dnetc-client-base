@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.43  1999/02/09 03:16:41  remi
+// ReadConfig() now calls dialup.GetDefaultIFaceMask() to get
+// the default value of connifacemask[].
+// WriteConfig() will always write it in the .ini
+//
 // Revision 1.42  1999/02/08 23:19:39  remi
 // The right default for interface-to-watch is "ppp0:sl0" not "\0"
 // (at least on Linux).
@@ -180,7 +185,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.42 1999/02/08 23:19:39 remi Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.43 1999/02/09 03:16:41 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -313,12 +318,7 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   else if ((i & CONNECT_LURK)!=0 && GetPrivateProfileIntB( sect, "lurk", 0, fn ))
     dialup.lurkmode = CONNECT_LURK;
   if ((i & CONNECT_IFACEMASK)!=0)
-    GetPrivateProfileStringB( netsect, "interfaces-to-watch", 
-                              #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
-                              "ppp0:sl0", 
-                              #else
-                              dialup.connifacemask,
-                              #endif
+    GetPrivateProfileStringB( netsect, "interfaces-to-watch", dialup.connifacemask,
                               dialup.connifacemask, sizeof(dialup.connifacemask), fn );
   if ((i & CONNECT_DOD)!=0)
     {
@@ -474,11 +474,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     WritePrivateProfileStringB( sect, "lurk", (dialup.lurkmode==CONNECT_LURK)?("1"):(NULL), fn );
     WritePrivateProfileStringB( sect, "lurkonly", (dialup.lurkmode==CONNECT_LURKONLY)?("1"):(NULL), fn );
     if ((i & CONNECT_IFACEMASK) != 0)
-      #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
-      __XSetProfileStr( netsect, "interfaces-to-watch", dialup.connifacemask, fn, "ppp0:sl0" );
-      #else
       __XSetProfileStr( netsect, "interfaces-to-watch", dialup.connifacemask, fn, NULL );
-      #endif
     if ((i & CONNECT_DOD) != 0)
       {
       #if (CLIENT_OS == OS_WIN32)
