@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __PROBMAN_H__
-#define __PROBMAN_H__ "@(#)$Id: probman.h,v 1.5.2.1 2002/03/27 23:25:46 andreasb Exp $"
+#define __PROBMAN_H__ "@(#)$Id: probman.h,v 1.5.2.2 2002/03/28 01:07:47 andreasb Exp $"
 
 //Return a specific Problem object or NULL if that problem doesn't exist
 Problem *GetProblemPointerFromIndex(unsigned int probindex);

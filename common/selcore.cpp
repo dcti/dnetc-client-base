@@ -1,5 +1,5 @@
 /* 
- * Copyright distributed.net 1998-2001 - All Rights Reserved
+ * Copyright distributed.net 1998-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Written August 1998 by Cyrus Patel <cyp@fb14.uni-mainz.de>
@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.132 2002/03/27 23:36:46 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.133 2002/03/28 01:07:47 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc

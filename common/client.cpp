@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2001 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.104 2001/07/21 21:54:10 mfeiri Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.105 2002/03/28 01:07:39 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -156,7 +156,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     if (level == 0)
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
-                    "Copyright 1997-2001, distributed.net\n");
+                    "Copyright 1997-2002, distributed.net\n");
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
       #endif

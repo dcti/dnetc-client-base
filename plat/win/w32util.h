@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __W32UTIL_H__
-#define __W32UTIL_H__ "@(#)$Id: w32util.h,v 1.1.2.2 2002/03/23 23:57:00 andreasb Exp $"
+#define __W32UTIL_H__ "@(#)$Id: w32util.h,v 1.1.2.3 2002/03/28 01:07:48 andreasb Exp $"
 
 #ifdef _INC_WINDOWS
 /* ScreenSaver boot vector (initialized from w32ss.cpp if linked) */

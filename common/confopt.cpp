@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.63 2002/03/27 23:37:58 andreasb Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.64 2002/03/28 01:07:43 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 

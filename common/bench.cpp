@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.61 2002/03/27 22:46:52 andreasb Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.62 2002/03/28 01:07:37 andreasb Exp $"; }
 
 //#define TRACE
 

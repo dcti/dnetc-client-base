@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.82 2002/03/22 23:20:34 sampo Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.83 2002/03/28 01:07:44 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files

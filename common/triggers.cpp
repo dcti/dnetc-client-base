@@ -1,5 +1,5 @@
 /* Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.67 2002/03/25 15:45:24 sampo Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.68 2002/03/28 01:07:47 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 

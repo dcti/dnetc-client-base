@@ -1,12 +1,12 @@
 /* Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
 */ 
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.9.2.6 2002/03/27 23:25:46 andreasb Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.9.2.7 2002/03/28 01:07:47 andreasb Exp $"; }
 
 #include "baseincs.h"  // malloc()/NULL/memset()
 #include "problem.h"   // Problem class

@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.24 2002/03/25 01:45:46 andreasb Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.25 2002/03/28 01:07:39 andreasb Exp $"
 
 #include "problem.h" /* WorkRecord, CONTEST_COUNT */
 #include "lurk.h"    /* lurk_conf structure */

@@ -1,5 +1,5 @@
 /* Hey, Emacs, this a -*-C-*- file !
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -24,7 +24,7 @@
  * ---------------------------------------------------------------------
 */
 #ifndef __VERSION_H__
-#define __VERSION_H__ "@(#)$Id: version.h,v 1.52.2.38 2002/03/22 02:33:50 andreasb Exp $"
+#define __VERSION_H__ "@(#)$Id: version.h,v 1.52.2.39 2002/03/28 01:07:47 andreasb Exp $"
 
 /* BETA etc is handled internally/at-runtime by cliident.cpp. */
 /* Do not adjust for BETA here, particularly CLIENT_VERSIONSTRING. */

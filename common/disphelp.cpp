@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1997 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.20 2002/03/26 01:28:52 andreasb Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.21 2002/03/28 01:07:44 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 

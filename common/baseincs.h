@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.55 2002/03/25 00:16:21 sampo Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.56 2002/03/28 01:07:37 andreasb Exp $"
 
 #include "cputypes.h"
 

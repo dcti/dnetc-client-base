@@ -1,12 +1,12 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16.2.10 2002/03/25 01:45:55 andreasb Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16.2.11 2002/03/28 01:07:43 andreasb Exp $"
 
 enum /* anonymous */
 {

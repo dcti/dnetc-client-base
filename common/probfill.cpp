@@ -1,6 +1,6 @@
 /* Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * Copyright distributed.net 1997-2001 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.75 2002/03/27 23:20:52 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.76 2002/03/28 01:07:44 andreasb Exp $"; }
 
 //#define TRACE
 
