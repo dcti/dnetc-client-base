@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.17 2004/05/08 15:38:19 piru Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.18 2004/05/25 09:22:16 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -761,6 +761,15 @@ static int __StopThread( struct thread_param_block *thrparams )
       while (!thrparams->hasexited)
         NonPolledUSleep(100000);
       #elif (CLIENT_OS == OS_AMIGAOS)
+      #if !defined(__OS3PPC__)
+      /* Raise thread's priority so it can exit if a user process is hogging cpu time */
+      Forbid();
+      if (!thrparams->hasexited)
+      {
+        SetTaskPri((struct Task *)thrparams->threadID,0);
+      }
+      Permit();
+      #endif
       while (!thrparams->hasexited)
         NonPolledUSleep(300000);
       #elif (CLIENT_OS == OS_MORPHOS)
