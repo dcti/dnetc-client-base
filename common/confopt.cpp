@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.22  1999/02/09 03:24:34  remi
+// Reverted the previous patch. connifacemask default is now set in confmenu.cpp.
+//
 // Revision 1.21  1999/02/08 23:19:39  remi
 // The right default for interface-to-watch is "ppp0:sl0" not "\0"
 // (at least on Linux).
@@ -69,7 +72,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.21 1999/02/08 23:19:39 remi Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.22 1999/02/09 03:24:34 remi Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -78,6 +81,7 @@ return "@(#)$Id: confopt.cpp,v 1.21 1999/02/08 23:19:39 remi Exp $"; }
 #include "client.h"   // only the MAXBLOCKSPERBUFFER define
 #include "confopt.h"  // ourselves
 #include "pathwork.h" // EXTN_SEP
+#include "lurk.h"     // DEFAULT_IFACES
 
 // --------------------------------------------------------------------------
 
@@ -449,13 +453,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "        on random blocks until a connection is detected.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,12,NULL,CFGTXT(&lurkmodetable[0]),0,2},
 //37
-{ "", CFGTXT("Interfaces to watch"),
-    // default value
-#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
-    "ppp0:sl0",
-#else
-    "",
-#endif
+{ "interfaces-to-watch", CFGTXT("Interfaces to watch"), "",
   CFGTXT(
   "Colon-separated list of interface names to monitor for a connection.\n"
   "For example: \"ppp0:eth0:eth1\". An empty list implies any 'up' interface\n"
