@@ -1,6 +1,9 @@
 // Hey, Emacs, this a -*-C++-*- file !
 // 
 // $Log: iniread.h,v $
+// Revision 1.11  1998/06/26 07:13:53  daa
+// move strcmpi and strncmpi defs to cmpidefs.h
+//
 // Revision 1.10  1998/06/14 08:12:55  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -36,35 +39,7 @@ extern "C" {
 #endif
 
 #include <sys/stat.h>
-
-#if defined(__TURBOC__) || defined(__QNX__)
-  // Borland already knows strcmpi
-#elif defined(_MSC_VER)
-  #define strcmpi(x,y)  _stricmp(x,y)
-#elif defined(__WATCOMC__)
-  #define strcmpi(x,y)  stricmp(x,y)
-#elif (CLIENT_OS == OS_VMS)
-  // strcmpi() has no equivalent in DEC C++ 5.0  (not true if based on MS C)  #define NO_STRCASECMP
-  #define NO_STRCASECMP
-  #define strcmpi(x,y)  strcasecmp(x,y)
-#elif (CLIENT_OS == OS_AMIGAOS)
-  // SAS/C already knows strcmpi
-#elif (CLIENT_OS == OS_RISCOS)
-  #include <unixlib.h>
-  #define strcmpi(x,y)  strcasecmp(x,y)
-#elif (CLIENT_OS == OS_SUNOS)
-  #include <sys/types.h>
-  #if (CLIENT_CPU == CPU_68K)
-    #define strcmpi(x,y)  strcasecmp(x,y)
-    extern "C" int strcasecmp(char *s1, char *s2); // Keep g++ happy.
-  #endif
-#else
-  #if (CLIENT_OS == OS_AIX) || defined(__MVS__)
-    #include <strings.h>
-  #endif
-  #include <unistd.h>
-  #define strcmpi(x,y)  strcasecmp(x,y)
-#endif
+#include "cmpidefs.h"
 
 #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS)
 }
