@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.162  1999/01/11 20:50:00  patrick
+# modified aix-pwer-gcc\nCHANGE of DELETECHARS broke AIX compile (only changed POWER targets)
+#
 # Revision 1.161  1999/01/11 11:44:13  cramer
 # *** empty log message ***
 #
@@ -1322,15 +1325,18 @@ case "$1" in
 	;;
 
   ### AIX POWER targets
+	# classes are buggy with AIX !
 
-    *aix-power-gcc-pipe1)  # AIX POWER with PIPELINE_COUNT=1
+    *aix-power-gcc-pipe1)  # AIX POWER with PIPELINE_COUNT=1 (do not use)
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/rc5ansi1-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	;;
 
-    *aix-power-gcc-pipe2)  # AIX POWER with PIPELINE_COUNT=2
+    *aix-power-gcc-pipe2)  # AIX POWER with PIPELINE_COUNT=2 (preferred)
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DMEGGS -DKWAN"
