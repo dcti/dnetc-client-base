@@ -12,6 +12,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.84  1998/10/08 10:13:33  cyp
+// Removed GetProcessorType() from the client class. No need for it to be a
+// method.
+//
 // Revision 1.83  1998/10/06 21:17:08  cyp
 // Changed prototype of InitializeLogging() to take an argument.
 //
@@ -542,9 +546,6 @@ public:
     // If force > 0, a update will be attempted no matter the offline
     // mode/etc. - -update and GUIs should call with this 1. Automated
     // fetches by the client will all use 0 of course.
-
-  int GetProcessorType();  //was x86id(); and ARMid(); nullfunction otherwise
-  // Identify CPU type by hardware check - in cpucheck.cpp
 
   void ValidateProcessorCount();
   // validates numcpu (stores result in numcputemp) - in cpucheck.cpp
