@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.120 2000/06/02 06:24:54 jlawson Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.121 2000/06/25 04:35:54 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -31,6 +31,8 @@ return "@(#)$Id: clirun.cpp,v 1.120 2000/06/02 06:24:54 jlawson Exp $"; }
 #include "probfill.h"  // LoadSaveProblems(), FILEENTRY_xxx macros
 #include "modereq.h"   // ModeReq[Set|IsSet|Run]()
 #include "clievent.h"  // ClientEventSyncPost() and constants
+#include "xmlserve.h"
+#include "minihttp.h"
 
 // --------------------------------------------------------------------------
 
@@ -75,7 +77,7 @@ struct thread_param_block
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
   #elif (CLIENT_OS == OS_MACOS)
-    MPTaskID /*long*/ threadID; /* MPTaskID but we cast */
+    MPTaskID threadID;
   #else
     int threadID;
   #endif
@@ -102,7 +104,7 @@ static void __cruncher_sleep__(int /*is_non_preemptive_cruncher*/)
 {
   #if (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
     /* only real threads sleep and all our real threads are MP threads */
-    MPYield(); MPYield(); MPYield(); MPYield(); 
+    MPYield();
   #elif (CLIENT_OS == OS_NETWARE)
     __MPKDelayThread(1000);  /* one second sleep (millisecs) */
   #else
@@ -157,6 +159,8 @@ static void __cruncher_yield__(int is_non_preemptive_cruncher)
     #endif
       macosSmartYield();
   #elif (CLIENT_OS == OS_MACOSX)
+    sched_yield();
+  #elif (CLIENT_OS == OS_RHAPSODY)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
@@ -185,6 +189,8 @@ static void __cruncher_yield__(int is_non_preemptive_cruncher)
     NonPolledUSleep(0);
   #elif (CLIENT_OS == OS_NTO2)
     sched_yield();
+  #elif (CLIENT_OS == OS_AMIGAOS)
+    NonPolledUSleep( 0 ); /* yield */
   #else
     #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */
@@ -212,11 +218,13 @@ void Go_mt( void * parm )
   }
   #endif
 #elif (CLIENT_OS == OS_MACOS)
-  if (is_non_preemptive_cruncher)   /* preemptive threads may as well use */
+  if (!is_non_preemptive_cruncher)   /* preemptive threads may as well use */
   {                                 /* ... (a copy of) the default_dyn_tt */
+    #if 0
     memcpy( (void *)(thrparams->dyn_timeslice_table),
             default_dyn_timeslice_table,
             sizeof(default_dyn_timeslice_table));
+    #endif
   }
   else      /* only non-realthreads are non-preemptive */
   {         /* non-realthreads have a shared thrparams->dyn_timeslice_table */
@@ -231,6 +239,7 @@ void Go_mt( void * parm )
       }
       thrparams->priority = priority;
     }  
+    //printf("usec:%d, thrprio:%d \n",thrparams->dyn_timeslice_table[0].usec,thrparams->priority);
     #endif
   }
 #elif (CLIENT_OS == OS_WIN32)
@@ -955,7 +964,7 @@ int ClientRun( Client *client )
   unsigned int load_problem_count = 0;
   unsigned int getbuff_errs = 0;
 
-  time_t timeNow,timeRun=0,timeLast=0; /* Last is also our "firstloop" flag */
+  time_t timeRun = 0;
   time_t timeNextConnect=0, timeNextCheckpoint=0, ignoreCheckpointUntil=0;
 
   time_t last_scheduledupdatetime = 0; /* we reset the next two vars on != */
@@ -966,6 +975,15 @@ int ClientRun( Client *client )
   int checkpointsDisabled = (client->nodiskbuffers != 0);
   unsigned int checkpointsPercent = 0;
   int dontSleep=0, isPaused=0, wasPaused=0;
+  
+#define MAX_CONNECTIONS   5
+#define LISTENADDRESS     0
+#define LISTENPORT        81
+#define CLIENTIDLETIMEOUT 30
+
+  SOCKET mainListener;
+  MiniHttpDaemonConnection *connections[MAX_CONNECTIONS];
+
   
   ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0 );
 
@@ -1123,6 +1141,7 @@ int ClientRun( Client *client )
     }
   }
 
+
   // --------------------------------------
   // fixup the dyn_timeslice_table if running a non-preemptive OS 
   // --------------------------------------
@@ -1168,18 +1187,30 @@ int ClientRun( Client *client )
           }
           #elif (CLIENT_OS == OS_NETWARE) 
           {
-            /* The switchcount<->runtime ratio is inversely proportionate. 
-               By definition, 1000ms == 1.0 switchcounts/sec. In real life it
-               looks something like this:  (note the middle magic of "55".
-               55ms == one timer tick)
-               msecs:   880  440  220  110  55  27.5   14  6.8  3.4   1.7  
-               count: ~2.75 ~5.5  ~11  ~22 ~55  ~110 ~220 ~440 ~880 ~1760
-               For simplicity, we use 30ms (~half-a-tick) as max for prio 9
-               and 3ms as min (about the finest monotonic res we can squeeze 
-               from the timer on a 386)
-            */
+            long quantum = non_preemptive_dyn_timeslice_table[0].usec;
+            if (tsinitd == 0)
+            {
+              quantum = 100;
+              #if (CLIENT_CPU == CPU_X86)
+              quantum = 512; /* good enough for NetWare 3x */
+              if (GetFileServerMajorVersionNumber() >= 4) /* just guess */
+              {
+                long det_type = (GetProcessorType(1) & 0xff);
+                if (det_type > 0x0A) /* not what we know about */
+                  ConsolePrintf("\rDNETC: unknown CPU type for quantum selection in "__FILE__").\r\n");
+                if (det_type==0x02 || det_type==0x07 || det_type==0x09)
+                  quantum = 256; /* PII/PIII || Celeron-A || AMD-K7 */
+                else /* the rest */
+                  quantum = 100;
+              }
+              #endif
+              if (client->priority >= 0 && client->priority <= 9)
+                quantum *= (client->priority+1);
+              Log("NetWare: crunchers will use a %ldus timeslice quantum\n", quantum);
+            }
+            non_preemptive_dyn_timeslice_table[tsinitd].min = 0x10;
+            non_preemptive_dyn_timeslice_table[tsinitd].usec = quantum;
             non_preemptive_dyn_timeslice_table[tsinitd].optimal = 1024;
-            non_preemptive_dyn_timeslice_table[tsinitd].usec = 512 * (client->priority+1);
           }
           #else /* x86 */
           {
@@ -1192,6 +1223,7 @@ int ClientRun( Client *client )
     }  
     #endif
   }
+
 
   // --------------------------------------
   // Spin up the crunchers
@@ -1271,6 +1303,26 @@ int ClientRun( Client *client )
            client->outthreshold[i] );
   #endif
 
+
+  // --------------------------------------
+  // Setup the HTTP listener for XMLSERVE
+  // --------------------------------------
+
+
+  // blank out the connection placeholders.
+  for (int i = 0; i < MAX_CONNECTIONS; i++)
+    connections[i] = NULL;
+
+  // create the listener socket.
+  if (netio_openlisten(mainListener, LISTENADDRESS,
+        LISTENPORT, true) < 0)
+  {
+    printf("Error: Cannot setup primary listener on port %d!\n",
+        (int) LISTENPORT);
+    return 0;
+  }
+
+
   //============================= MAIN LOOP =====================
   //now begin looping until we have a reason to quit
   //------------------------------------
@@ -1317,10 +1369,16 @@ int ClientRun( Client *client )
     // Fixup timers
     //------------------------------------
 
-    timeNow = CliTimer(NULL)->tv_sec;
-    if (timeLast!=0 && ((unsigned long)timeNow) > ((unsigned long)timeLast))
-      timeRun += (timeNow - timeLast); //make sure time is monotonic
-    timeLast = timeNow;
+    {
+      struct timeval tv;
+      if (CliClock(&tv) == 0)
+      {
+        if ( ((unsigned long)tv.tv_sec) < ((unsigned long)timeRun) )
+          Log("ERROR: monotonic time found to be going backwards!\n");
+        else  
+          timeRun = tv.tv_sec;
+      }
+    }
 
     //----------------------------------------
     // Check for time limit...
@@ -1406,57 +1464,61 @@ int ClientRun( Client *client )
     #define TIME_AFTER_START_TO_UPDATE 10800 // Three hours
     #define UPDATE_INTERVAL 600 // Ten minutes
 
-    if (!TimeToQuit && client->scheduledupdatetime != 0 && 
+    if (!TimeToQuit && client->scheduledupdatetime != 0)
+    {
+      time_t timeNow = CliTimer(NULL)->tv_sec;
+      if (
       (((unsigned long)timeNow) < ((unsigned long)ignore_scheduledupdatetime_until)) &&
       (((unsigned long)timeNow) >= ((unsigned long)client->scheduledupdatetime)) &&
       (((unsigned long)timeNow) < (((unsigned long)client->scheduledupdatetime)+TIME_AFTER_START_TO_UPDATE)) )
-    {
-      if (last_scheduledupdatetime != ((time_t)client->scheduledupdatetime))
       {
-        last_scheduledupdatetime = (time_t)client->scheduledupdatetime;
-        //flush_scheduled_count = 0;
-        flush_scheduled_adj = (rand()%UPDATE_INTERVAL);
-        Log("Buffer update scheduled in %u minutes %02u seconds.\n",
-             flush_scheduled_adj/60, flush_scheduled_adj%60 );
-        flush_scheduled_adj += timeNow - last_scheduledupdatetime;
-      }
-      if ( (((unsigned long)flush_scheduled_adj) < TIME_AFTER_START_TO_UPDATE) &&
-        (((unsigned long)timeNow) >= (unsigned long)(flush_scheduled_adj+last_scheduledupdatetime)) )
-      {
-        //flush_scheduled_count++; /* for use with exponential staging */
-        flush_scheduled_adj += ((UPDATE_INTERVAL>>1)+
-                               (rand()%(UPDATE_INTERVAL>>1)));
-        
-        int desisrunning = 0;
-        if (GetBufferCount(client,DES, 0/*in*/, NULL) != 0) /* do we have DES blocks? */
-          desisrunning = 1;
-        else
+        if (last_scheduledupdatetime != ((time_t)client->scheduledupdatetime))
         {
-          for (prob_i = 0; prob_i < load_problem_count; prob_i++ )
-          {
-            Problem *thisprob = GetProblemPointerFromIndex( prob_i );
-            if (thisprob == NULL)
-              break;
-            if (thisprob->IsInitialized() && thisprob->contest == DES)
-            {
-              desisrunning = 1;
-              break;
-            }
-          }
-          if (desisrunning == 0)
-          {
-            int rc = BufferUpdate( client, BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH, 0 );
-            if (rc > 0 && (rc & BUFFERUPDATE_FETCH)!=0)
-              desisrunning = (GetBufferCount( client, DES, 0/*in*/, NULL) != 0);
-          }
-        }  
-        if (desisrunning)
-        {
-          ignore_scheduledupdatetime_until = timeNow + TIME_AFTER_START_TO_UPDATE;
-          /* if we got DES blocks, start ignoring sched update time */
+          last_scheduledupdatetime = (time_t)client->scheduledupdatetime;
+          //flush_scheduled_count = 0;
+          flush_scheduled_adj = (rand()%UPDATE_INTERVAL);
+          Log("Buffer update scheduled in %u minutes %02u seconds.\n",
+               flush_scheduled_adj/60, flush_scheduled_adj%60 );
+          flush_scheduled_adj += timeNow - last_scheduledupdatetime;
         }
-      }
-    } 
+        if ( (((unsigned long)flush_scheduled_adj) < TIME_AFTER_START_TO_UPDATE) &&
+          (((unsigned long)timeNow) >= (unsigned long)(flush_scheduled_adj+last_scheduledupdatetime)) )
+        {
+          //flush_scheduled_count++; /* for use with exponential staging */
+          flush_scheduled_adj += ((UPDATE_INTERVAL>>1)+
+                                 (rand()%(UPDATE_INTERVAL>>1)));
+          
+          int desisrunning = 0;
+          if (GetBufferCount(client,DES, 0/*in*/, NULL) != 0) /* do we have DES blocks? */
+            desisrunning = 1;
+          else
+          {
+            for (prob_i = 0; prob_i < load_problem_count; prob_i++ )
+            {
+              Problem *thisprob = GetProblemPointerFromIndex( prob_i );
+              if (thisprob == NULL)
+                break;
+              if (thisprob->IsInitialized() && thisprob->contest == DES)
+              {
+                desisrunning = 1;
+                break;
+              }
+            } 
+            if (desisrunning == 0)
+            {
+              int rc = BufferUpdate( client, BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH, 0 );
+              if (rc > 0 && (rc & BUFFERUPDATE_FETCH)!=0)
+                desisrunning = (GetBufferCount( client, DES, 0/*in*/, NULL) != 0);
+            }
+          }  
+          if (desisrunning)
+          {
+            ignore_scheduledupdatetime_until = timeNow + TIME_AFTER_START_TO_UPDATE;
+            /* if we got DES blocks, start ignoring sched update time */
+          }
+        }
+      } 
+    }
 
     //----------------------------------------
     // If not quitting, then write checkpoints
@@ -1580,6 +1642,148 @@ int ClientRun( Client *client )
       timeNextConnect = timeRun + 30; /* every 30 seconds */
     }
 
+
+    //----------------------------------------
+    // XMLSERVE
+    //----------------------------------------
+
+    fd_set readfds, writefds, errorfds;
+    int sockmax;
+    int readcnt, writecnt, errorcnt;
+    struct timeval tv;
+
+    // Reset the socket select structures.
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+    FD_ZERO(&errorfds);
+    sockmax = 0;
+    readcnt = writecnt = errorcnt = 0;
+
+    // Add primary listener socket.
+    if (mainListener != INVALID_SOCKET)
+      __fdsetsockadd(mainListener, &readfds, &sockmax, &readcnt);
+
+    // Add the Clients.
+    for (int j = 0; j < MAX_CONNECTIONS; j++)
+    {
+      if (connections[j] != NULL &&
+        connections[j]->IsConnected() &&
+        connections[j]->GetSocket() != INVALID_SOCKET)
+      {
+        if (connections[j]->HavePendingData())
+          __fdsetsockadd(connections[j]->GetSocket(),
+              &writefds, &sockmax, &writecnt);
+
+        __fdsetsockadd(connections[j]->GetSocket(),
+            &readfds, &sockmax, &readcnt);
+
+        __fdsetsockadd(connections[j]->GetSocket(),
+            &errorfds, &sockmax, &errorcnt);
+      }
+    }
+
+    //
+    // determine which sockets are ready to read/write.
+    //
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+    int haverwx = netio_select(sockmax + 1, &readfds, &writefds, &errorfds, &tv);
+    if (haverwx < 0)    // should only get here on socket errors.
+    {
+      // Select() failed, so just clear the result sets and pause
+      // for the amount of time it should have maximally blocked.
+      // Drop through, since we must let the idle timeout checks occur.
+      FD_ZERO(&readfds);
+      FD_ZERO(&writefds);
+      FD_ZERO(&errorfds);
+      //sleep(1);
+    }
+
+
+    //
+    // First, check the listeners and accept any new connections.
+    //
+    if (haverwx > 0 &&
+        mainListener != INVALID_SOCKET &&
+        FD_ISSET(mainListener, &readfds) )
+    {
+      SOCKET newclient;
+      u32 clientaddr;
+
+      if (netio_accept(mainListener, &newclient, &clientaddr, NULL, false) >= 0)
+      {
+        for (int newslot = 0;; newslot++)
+        {
+          if (newslot >= MAX_CONNECTIONS)
+          {
+            printf("Client: [%s] No available slots to accept new client.\n",
+                netio_ntoa(clientaddr));
+            netio_close(newclient);
+            break;
+          }
+          if (!connections[newslot])
+          {
+            printf("Client: [%s] Accepted new client connection.\n",
+                netio_ntoa(clientaddr));
+            connections[newslot] = new MiniHttpDaemonConnection(newclient, clientaddr);
+            break;
+          }
+        }
+      }
+    }
+
+    //
+    // Check for client connection activity and handle any requests.
+    //
+    for (int j = 0; j < MAX_CONNECTIONS; j++)
+    {
+      if (connections[j] != NULL)
+      {
+        bool read_ready = false, write_ready = false;
+        bool closeneeded = false;
+
+        if (haverwx > 0 && connections[j]->GetSocket() != INVALID_SOCKET)
+        {
+          SOCKET sock = connections[j]->GetSocket();
+          read_ready =  FD_ISSET(sock, &readfds) != 0;
+          write_ready = FD_ISSET(sock, &writefds) != 0;
+          closeneeded = FD_ISSET(sock, &errorfds) != 0;
+        }
+
+        if (!closeneeded && read_ready &&
+            !connections[j]->FetchIncoming())
+          closeneeded = true;
+        if (!closeneeded && connections[j]->IsComplete())
+        {
+          printf("content is complete. reading\n");
+          if (!ProcessClientPacket(connections[j]))
+            closeneeded = true;
+        }
+        if (!closeneeded && write_ready &&
+            connections[j]->HavePendingData() &&
+            !connections[j]->FlushOutgoing())
+        {
+          closeneeded = true;
+          write_ready = false;
+        }
+        if (!closeneeded && connections[j]->GetLastActivity() > CLIENTIDLETIMEOUT)
+        {
+          printf("Client: [%s] %d secs idle. Closing connection.\n",
+              netio_ntoa(connections[j]->GetAddress()),
+              (int)connections[j]->GetLastActivity() );
+          closeneeded = true;
+        }
+        if (closeneeded || !connections[j]->IsConnected())
+        {
+          printf("Client: Closing client connection with %s\n",
+              netio_ntoa(connections[j]->GetAddress()));
+          delete connections[j];
+          connections[j] = NULL;
+        }
+      }
+    }
+
+
     //----------------------------------------
     // If not quitting, then handle mode requests
     //----------------------------------------
@@ -1630,6 +1834,17 @@ int ClientRun( Client *client )
       __StopThread( thrdatap );
     }
   }
+
+
+  // ----------------
+  // Close the HTTP listeners for XMLSERVE
+  // ----------------
+
+  netio_close(mainListener);
+  for (int k = 0; k < MAX_CONNECTIONS; k++)
+    if (connections[k] != NULL)
+      delete connections[k];
+
 
   // ----------------
   // Close the async "process" handler
