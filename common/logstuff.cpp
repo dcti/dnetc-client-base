@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.57 2001/04/09 01:33:02 sampo Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.58 2001/04/17 18:06:52 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1220,7 +1220,33 @@ void DeinitializeLogging(void)
   return;
 }
 
-// ---------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
+
+static int __is_path_a_directory( const char *path )
+{
+  if ( strlen( path ) > GetFilenameBaseOffset( path ) )
+  { /* path does not end with a directory separator ('/' or whatever), so */ 
+    /* use stat() to determine if the last component of the path is a subdir */
+
+    #if (CLIENT_OS == OS_RISCOS)
+     #error riscos specific code needed here I think.
+    #else
+    {
+      struct stat statblk;
+      if (stat(path,&statblk)!=0)
+        return 0;
+      #if !defined(S_IFDIR) && defined(_S_IFDIR)
+      #define S_IFDIR _S_IFDIR /* stupid visual C runtime */
+      #endif
+      if ((statblk.st_mode & S_IFDIR)==0)
+        return 0;
+    }
+    #endif
+  }
+  return 1; /* path ends with a dir separator or was stat()'d as S_IFDIR */
+}
+
+/* ---------------------------------------------------------------------- */
 
 static int fixup_logfilevars( const char *stype, const char *slimit,
                               int *type, unsigned int *limit,
@@ -1256,7 +1282,14 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
   }
 
   /* generate a basedir if we're going to be needing it */
-  if (!*logname || strcmp(GetFullPathForFilename(logname),logname)!=0)
+  if (*logname && __is_path_a_directory(logname))
+  {
+    /* make sure directory is "/" terminated */
+    strncpy(logbasedir,GetFullPathForFilenameAndDir("", logname),maxlogdirlen);
+    logbasedir[maxlogdirlen-1] = '\0';
+    logname[0] = '\0';
+  }
+  else if (!*logname || strcmp(GetFullPathForFilename(logname),logname)!=0)
   {
     /* get dir with trailing dir separator. returns NULL if buf is too small*/
     if (!GetWorkingDirectory( logbasedir, maxlogdirlen ))

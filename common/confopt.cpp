@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.56 2001/04/01 11:38:48 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.57 2001/04/17 18:06:52 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -599,12 +599,12 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "\n"
   "The effective file name used for the \"rotate\" log file type is constructed\n"
   "from a unique identifier for the period (time limit) concatenated to whatever\n"
-  "you specify here. Thus, if the interval is weekly, the name of the log file used\n"
-  "will be [file_to_log_to]yearweek"EXTN_SEP"log.\n"
+  "you specify here.\n"
   "\n"
   "If the rotate interval was specified as a number of days, then the name of the\n"
-  "log file used will be [file_to_log_to]YYMMDD"EXTN_SEP"log, where YYMMDD is the\n"
-  "date of the first day of that 'interval'.\n"
+  "log file used will be [file_or_dir_to_log_to]YYMMDD"EXTN_SEP"log, where YYMMDD\n"
+  "is the date of the first day of that 'interval'. If the interval were weekly,\n"
+  "the name of the log file used will be [file_or_dir_to_log_to]yearweek"EXTN_SEP"log\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 
