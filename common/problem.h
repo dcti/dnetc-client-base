@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.20  1998/08/15 21:30:27  jlawson
+// modified PIPELINE_COUNT definition
+//
 // Revision 1.19  1998/08/14 00:05:11  silby
 // Changes for rc5 mmx core integration.
 //
@@ -56,7 +59,7 @@
 
 #include "cputypes.h"
 
-#if (!defined(PIPELINE_COUNT) & !(CLIENT_CPU==CPU_X86))
+#if (!defined(PIPELINE_COUNT) && (CLIENT_CPU != CPU_X86))
  #define PIPELINE_COUNT  2  // normally 1, but 2+ if we do more then one unit in parallel
 #endif
 
