@@ -1,0 +1,6 @@
+---------- WARNING ------------
+
+starting with the 2.7110 clients , distributed.net clients now support
+block sizes up to 2^33 -  because of this buffers CANNOT be shared with
+older version clients.  Also client version 2.7111 and up require a proxyper
+of at least build 306 because of the big-block changes
