@@ -6,7 +6,7 @@
  *
 */ 
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.9.2.3 2000/11/12 02:00:15 cyp Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.9.2.4 2000/11/12 17:16:43 cyp Exp $"; }
 
 #include "baseincs.h"  // malloc()/NULL/memset()
 #include "problem.h"   // Problem class
@@ -19,7 +19,7 @@ static struct
   Problem **probtable;
   unsigned int tablesize;
   unsigned int probcount;
-} probmanstatics = {NULL,0,0};
+} probmanstatics = {((Problem **)0),0,0};
 
 // -----------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ Problem *GetProblemPointerFromIndex(unsigned int probindex)
 {
   if (probmanstatics.probcount && probindex < probmanstatics.probcount )
     return probmanstatics.probtable[probindex];
-  return NULL;
+  return ((Problem *)0);
 }  
 
 // -----------------------------------------------------------------------
@@ -54,14 +54,14 @@ int InitializeProblemManager(unsigned int maxnumproblems)
 {
   unsigned int i, probcount;
   
-  if (maxnumproblems == 0 || probmanstatics.probtable!= NULL)
+  if (maxnumproblems == 0 || probmanstatics.probtable!= ((Problem **)0))
     return -1;
   if (((int)(maxnumproblems)) < 0)
     maxnumproblems = (16*1024);
 
   probmanstatics.probtable=(Problem **)
                              malloc(maxnumproblems * sizeof(Problem *));
-  if (probmanstatics.probtable == NULL)
+  if (probmanstatics.probtable == ((Problem **)0))
     return -1;
 
   probmanstatics.tablesize = maxnumproblems;
@@ -72,14 +72,14 @@ int InitializeProblemManager(unsigned int maxnumproblems)
   for (i=0;i<maxnumproblems;i++)
   {
     probmanstatics.probtable[i]=ProblemAlloc();
-    if (probmanstatics.probtable[i]==NULL)
+    if (probmanstatics.probtable[i]==((Problem *)0))
       break;
     probcount++;
   }
   if (probcount == 0)
   {
     free((void *)probmanstatics.probtable);
-    probmanstatics.probtable = NULL;
+    probmanstatics.probtable = ((Problem **)0);
     probmanstatics.probcount = 0;
     probmanstatics.tablesize = 0;
     return -1;
@@ -94,63 +94,21 @@ int DeinitializeProblemManager(void)
 {
   Problem **probtable = probmanstatics.probtable;
 
-  if (probtable!= NULL)
+  if (probtable != ((Problem **)0))
   {
     for (;probmanstatics.probcount>0;probmanstatics.probcount--)
     {
       if (probtable[probmanstatics.probcount-1])
         ProblemFree(probtable[probmanstatics.probcount-1]);
-      probtable[probmanstatics.probcount-1] = NULL;
+      probtable[probmanstatics.probcount-1] = ((Problem *)0);
     }
     free((void *)probtable);
   }
 
   probmanstatics.probcount = 0;
   probmanstatics.tablesize = 0;
-  probmanstatics.probtable = NULL;
+  probmanstatics.probtable = ((Problem **)0);
   return 0;
 }
-
-// -----------------------------------------------------------------------
-
-#if (CLIENT_OS == OS_FREEBSD)
-#include <sys/mman.h>
-int TBF_MakeProblemsVMInheritable(void)
-{
-  Problem **probtable = probmanstatics.probtable;
-  unsigned int probcount  = probmanstatics.probcount;
-
-  if (probtable != NULL && probcount != 0)
-  {
-    unsigned int i;  
-    int failed = 0, mflag = 0; /*VM_INHERIT_SHARE*/ /*MAP_SHARED|MAP_INHERIT*/;
-
-    for (i=0;(!failed && i<probcount);i++)
-    {
-      if (probtable[i]==NULL)
-        break;
-      failed = (minherit((void *)probtable[i],sizeof(Problem),mflag)!=0);
-      //if (failed)
-      //  fprintf(stderr,"probman_inherit:1:%u %s\n",i,strerror(errno));
-    }
-    if (!failed)
-    {
-      failed = (minherit((void *)probtable, 
-          probmanstatics.tablesize * sizeof(Problem *), mflag)!=0);
-      //if (failed)
-      //  perror("probman_inherit:2");
-    }
-    if (!failed)
-    {
-      failed=(minherit((void*)&probmanstatics,sizeof(probmanstatics),mflag)!=0);
-      //if (failed)
-      //  perror("probman_inherit:3");
-    }
-    if (!failed)
-      return 0;
-  }   
-  return -1;
-}
-#endif
 
 // -----------------------------------------------------------------------
