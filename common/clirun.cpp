@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.15  1998/10/25 11:26:35  silby
+// Added call to yield_pump in go_mt for win32 so that new CLI is responsive.
+//
 // Revision 1.14  1998/10/24 15:24:37  sampo
 // Added MacOS yielding code
 //
@@ -61,7 +64,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.14 1998/10/24 15:24:37 sampo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.15 1998/10/25 11:26:35 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -683,7 +686,10 @@ void Go_mt( void * parm )
           run = (thrprob[probnum])->Run( threadnum ); 
           yield_pump(NULL);
           #else
-          run = (thrprob[probnum])->Run( threadnum ); 
+          run = (thrprob[probnum])->Run( threadnum );
+            #if (CLIENT_OS==OS_WIN32) // change to accomodate new CLI
+            yield_pump(NULL);
+            #endif
           #endif
           targ->is_suspended = 1;
           } 
