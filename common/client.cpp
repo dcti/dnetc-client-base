@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.79  1998/07/07 01:14:09  silby
+// Fixed a bug where the default rc5 out buffer was buff-out.des. 413 needs to be recalled now.
+//
 // Revision 1.78  1998/07/05 21:49:15  silby
 // Modified logging so that manual wrapping is not done on win32gui, as it looks terrible in a non-fixed spaced font.
 //
@@ -137,7 +140,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.78 1998/07/05 21:49:15 silby Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.79 1998/07/07 01:14:09 silby Exp $";
 #endif
 
 #include "client.h"
@@ -290,7 +293,7 @@ Client::Client()
   strcpy(in_buffer_file[0], "buff-in" EXTN_SEP "rc5");
   strcpy(out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
   strcpy(in_buffer_file[1], "buff-in" EXTN_SEP "des");
-  strcpy(out_buffer_file[0], "buff-out" EXTN_SEP "des");
+  strcpy(out_buffer_file[1], "buff-out" EXTN_SEP "des");
   strcpy(exit_flag_file, "exitrc5" EXTN_SEP "now");
   strcpy(checkpoint_file[1],"none");
   strcpy(pausefile,"none");
