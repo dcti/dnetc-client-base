@@ -33,7 +33,7 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
-OPTS_EGCS='-Os -fomit-frame-pointer -Wall'
+OPTS_EGCS='-Os -fomit-frame-pointer -Wall -Icommon'
 
 
 #
