@@ -3,10 +3,9 @@ Dual mode (RC5DES) clients
 
 2.7100
 ------
-v2.7102.422 98.12.21 Stripped one instruction in all x86 rc5 cores
-v2.7102.422 98.12.20 Fixed some weirdness in menus and ini file handling
+v2.7100.422 98.12.20 Fixed some weirdness in menus and ini file handling
                      of uuehttpmode, keyproxy and keyport
-v2.7101.421 98.11.28 Added a new self-modifying 386/486 core
+v2.7100.421 98.11.28 Added a new self-modifying 386/486 core
 v2.7100.420 98.11.15 Fixed -hide/-quiet for unix'sh clients
 v2.7100.420 98.11.15 Bring back the cputype config screen
 v2.7100.420 98.11.13 Changed default blocksize to 31.
