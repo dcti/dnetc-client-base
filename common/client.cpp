@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.195  1999/03/04 00:04:38  trevorh
+// Add support for OS/2 GUI client
+//
 // Revision 1.194  1999/02/20 02:59:14  gregh
 // Add defaults for new OGR config options.
 //
@@ -203,7 +206,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.194 1999/02/20 02:59:14 gregh Exp $"; }
+return "@(#)$Id: client.cpp,v 1.195 1999/03/04 00:04:38 trevorh Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -212,7 +215,7 @@ return "@(#)$Id: client.cpp,v 1.194 1999/02/20 02:59:14 gregh Exp $"; }
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "client.h"    // Client class
-#include "scram.h"     // InitRandom() 
+#include "scram.h"     // InitRandom()
 #include "pathwork.h"  // EXTN_SEP
 #include "clitime.h"   // CliTimer()
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
@@ -305,8 +308,8 @@ static void __initialize_client_object(Client *client)
 }
 
 Client::Client()
-{ 
-  __initialize_client_object(this); 
+{
+  __initialize_client_object(this);
 }
 
 // --------------------------------------------------------------------------
@@ -314,14 +317,14 @@ Client::Client()
 static const char *GetBuildOrEnvDescription(void)
 {
   /*
-  <cyp> hmm. would it make sense to have the client print build data 
+  <cyp> hmm. would it make sense to have the client print build data
   when starting? running OS, static/dynamic, libver etc? For idiots who
   send us log extracts but don't mention the OS they are running on.
-  Only useful for win-weenies I suppose. 
+  Only useful for win-weenies I suppose.
   */
 
   #if (CLIENT_OS == OS_DOS)
-  return dosCliGetEmulationDescription(); //if in win/os2 VM 
+  return dosCliGetEmulationDescription(); //if in win/os2 VM
   #elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
   static char buffer[32]; long ver = winGetVersion(); /* w32pre.cpp */
   sprintf(buffer,"under Windows%s %u.%u", (ver>=2000)?(" NT"):(""), (ver/100)%20, ver%100 );
@@ -329,7 +332,7 @@ static const char *GetBuildOrEnvDescription(void)
   #else
   return "";
   #endif
-}  
+}
 
 int ClientIsGUI(void)
 {
@@ -347,15 +350,15 @@ int ClientIsGUI(void)
 void PrintBanner(const char *dnet_id,int level,int restarted)
 {
   //level = 0 = show copyright/version,  1 = show startup message
-  
+
   if (!restarted)
     {
     if (level == 0)
       {
-      LogScreenRaw( "\nRC5DES v" CLIENT_VERSIONSTRING 
+      LogScreenRaw( "\nRC5DES v" CLIENT_VERSIONSTRING
                  " client - a project of distributed.net\n"
                  "Copyright 1997-1999 distributed.net\n" );
-      
+
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
       #endif
@@ -374,22 +377,22 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       #endif
 
       #if defined(KWAN) && defined(MEGGS)
-      LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n" 
+      LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n"
                     "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
       #elif defined(KWAN) && defined(DWORZ)
       LogScreenRaw( "DES bitslice driver Copyright 1999, Christoph Dworzak\n"
                     "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
-      #elif defined(KWAN) 
+      #elif defined(KWAN)
       LogScreenRaw( "DES search routines Copyright 1997-1998, Matthew Kwan\n" );
       #endif
       #if (CLIENT_CPU == CPU_X86)
       LogScreenRaw( "DES search routines Copyright 1997-1998, Svend Olaf Mikkelsen\n");
       #endif
-      #if (CLIENT_OS == OS_DOS)  
+      #if (CLIENT_OS == OS_DOS)
       LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
       #endif
       LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n");
-      LogScreenRaw( 
+      LogScreenRaw(
         #if (CLIENT_OS == OS_RISCOS)
         guiriscos ?
         "Interactive help is available, or select 'Help contents' from the menu for\n"
@@ -402,13 +405,13 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
         );
       }
     else if ( level == 1 )
-      {  
+      {
       #if ((CLIENT_OS==OS_DOS) || (CLIENT_OS==OS_WIN16) || \
            (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_OS2) || \
            ((CLIENT_OS==OS_WIN32) && !defined(NEEDVIRTUALMETHODS)))
       #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
       if ((winGetVersion()%2000) < 400) /* w32pre.cpp. +2000==NT */
-      #endif   
+      #endif
       if (getenv("TZ") == NULL)
         {
         LogScreenRaw("Warning: The TZ= variable is not set in the environment. "
@@ -422,24 +425,24 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       if (msg == NULL) msg="";
 
       LogRaw("\nRC5DES v%s %sClient for %s%s%s%s started.\n",
-            CLIENT_VERSIONSTRING, ((ClientIsGUI())?("GUI "):("")), 
+            CLIENT_VERSIONSTRING, ((ClientIsGUI())?("GUI "):("")),
             CLIENT_OS_NAME, ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
-  
+
       LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n", dnet_id );
-      
+
       #if defined(BETA) && defined(BETA_EXPIRATION_TIME) && (BETA_EXPIRATION_TIME != 0)
       timeval currenttime;
       timeval expirationtime;
-  
+
       CliTimer(&currenttime);
       expirationtime.tv_usec= 0;
       expirationtime.tv_sec = BETA_EXPIRATION_TIME;
-  
+
       if (currenttime.tv_sec > expirationtime.tv_sec ||
         currenttime.tv_sec < (BETA_EXPIRATION_TIME - 1814400))
         {
         ; //nothing - start run, recover checkpoints and _then_ exit.
-        } 
+        }
       else
         {
         LogScreenRaw("Notice: This is a beta release and expires on %s\n\n",
@@ -470,7 +473,7 @@ int Client::Main( int argc, const char *argv[] )
     if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
       {
       domodes = (ModeReqIsSet(-1) != 0);
-      if (InitializeTriggers(((noexitfilecheck || 
+      if (InitializeTriggers(((noexitfilecheck ||
                               domodes)?(NULL):(exit_flag_file)),
                               ((domodes)?(NULL):(pausefile)) )==0)
         {
@@ -478,16 +481,16 @@ int Client::Main( int argc, const char *argv[] )
           {
           if (InitializeConsole(quietmode,domodes) == 0)
             {
-            InitializeLogging( (quietmode!=0), (percentprintingoff!=0), 
-                               logname, LOGFILETYPE_NOLIMIT, 0, messagelen, 
+            InitializeLogging( (quietmode!=0), (percentprintingoff!=0),
+                               logname, LOGFILETYPE_NOLIMIT, 0, messagelen,
                                smtpsrvr, smtpport, smtpfrom, smtpdest, id );
             PrintBanner(id,0,restarted);
             ParseCommandline( 1, argc, argv, NULL, (quietmode==0)); //show overrides
             InitRandom2( id );
-          
+
             if (domodes)
               {
-              ModeReqRun( this );     
+              ModeReqRun( this );
               }
             else
               {
@@ -506,13 +509,13 @@ int Client::Main( int argc, const char *argv[] )
       }
     } while (restart);
   return retcode;
-}  
+}
 
 // --------------------------------------------------------------------------
 
 int realmain( int argc, char *argv[] )
 {
-  // This is the main client object.  we 'new'/malloc it, rather than make 
+  // This is the main client object.  we 'new'/malloc it, rather than make
   // it static in the hope that people will think twice about using exit()
   // or otherwise breaking flow. (wanna bet it'll happen anyway?)
   // The if (success) thing is for nesting without {} nesting.
@@ -520,12 +523,12 @@ int realmain( int argc, char *argv[] )
   int retcode = -1, init_success = 1;
 
   //------------------------------
-  
+
   #if (CLIENT_OS == OS_RISCOS)
   if (init_success) //protect ourselves
     {
     riscos_in_taskwindow = riscos_check_taskwindow();
-    if (riscos_find_local_directory(argv[0])) 
+    if (riscos_find_local_directory(argv[0]))
       init_success = 0;
     }
   #endif
@@ -535,13 +538,13 @@ int realmain( int argc, char *argv[] )
   if ( init_success )
     {
     init_success = (( clientP = new Client() ) != NULL);
-    if (!init_success) 
+    if (!init_success)
       ConOutErr( "Unable to create client object. Out of memory." );
     }
 
   //----------------------------
 
-  #if (CLIENT_OS == OS_NETWARE) 
+  #if (CLIENT_OS == OS_NETWARE)
   //create stdout/screen, set cwd etc. save ptr to client for fnames/niceness
   if ( init_success )
     init_success = ( nwCliInitClient( argc, argv, clientP ) == 0);
@@ -551,7 +554,7 @@ int realmain( int argc, char *argv[] )
 
   #if (CLIENT_OS==OS_WIN16 || CLIENT_OS==OS_WIN32S || CLIENT_OS==OS_WIN32)
   if ( init_success )
-    w32ConSetClientPointer( clientP ); // save the client * so we can bail out 
+    w32ConSetClientPointer( clientP ); // save the client * so we can bail out
   #endif                               // when we get a WM_ENDSESSION message
 
   //----------------------------
@@ -568,7 +571,7 @@ int realmain( int argc, char *argv[] )
   #endif // (CLIENT_OS == OS_AMIGAOS)
 
   //------------------------------
-  
+
   #if (CLIENT_OS == OS_NETWARE)
   if (init_success)
     nwCliExitClient(); // destroys AES process, screen, polling procedure
@@ -577,11 +580,11 @@ int realmain( int argc, char *argv[] )
   //------------------------------
 
   #if (CLIENT_OS==OS_WIN16 || CLIENT_OS==OS_WIN32S || CLIENT_OS==OS_WIN32)
-  w32ConSetClientPointer( NULL ); // clear the client * 
+  w32ConSetClientPointer( NULL ); // clear the client *
   #endif
 
   //------------------------------
-  
+
   if (clientP)
     delete clientP;
 
@@ -600,13 +603,15 @@ int realmain( int argc, char *argv[] )
 // nothing - realmain() is called from elsewhere
 //
 #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow) 
+int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* abstraction layer between WinMain() and realmain() */
   return winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, realmain);
 }
+#elif ((CLIENT_OS == OS_OS2) && defined(OS2_PM))
+// nothing
 #else
 int main( int argc, char *argv[] )
-{ 
-  return realmain( argc, argv ); 
+{
+  return realmain( argc, argv );
 }
 #endif
