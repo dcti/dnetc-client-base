@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.3  1998/11/11 03:03:44  remi
+# Oops, forget a " and a # !
+#
 # Revision 1.113.2.2  1998/11/11 01:04:07  remi
 # Synced with :
 #   Revision 1.119  1998/11/10 10:35:31  jlawson
@@ -427,7 +430,7 @@ case "$1" in
     *alpha-linux)
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/alphaasm/axp-bmeyer.cpp rc5/alphaasm/axp-bmeyer.s"
 	;;
 
@@ -783,7 +786,7 @@ echo "" >> Makefile
 
 echo "clean:" >> Makefile
 echo "	rm -f \${ALLOBJS} ${EXENAME}" >> Makefile
-echo "	sh $0 \${BUILDNAME}" >> Makefile
+#echo "	sh $0 \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
 
 echo "superclean:" >> Makefile
