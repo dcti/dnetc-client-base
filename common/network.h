@@ -1,89 +1,19 @@
-// Hey, Emacs, this a -*-C++-*- file !
-
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: network.h,v $
-// Revision 1.62  1999/04/03 16:41:01  cyp
-// added code to a) force blocking i/o if using packet wrappers. This greatly
-// improves throughput b) ensure a minimum SO_[SND|RCV]BUF of /at least/ 2K
-//
-// Revision 1.61  1999/03/31 22:27:30  cyp
-// Created ::ShowConnection() so that the connected host can be shown later
-// on get/put and not simply when the connection is established.
-//
-// Revision 1.60  1999/03/23 10:17:23  cyp
-// a) changed ::Reset() to take svc address to reset to; b) changed ::Put()
-// to use Reset() instead of Open();
-//
-// Revision 1.59  1999/03/18 04:01:35  cyp
-// new network class method: Reset()
-//
-// Revision 1.58  1999/02/03 03:41:56  cyp
-// InitializeConnectivity()/DeinitializeConnectivity() are now in netinit.cpp
-//
-// Revision 1.57  1999/02/01 18:02:44  cyp
-// undid last SillyB change. (so, whats new?)
-//
-// Revision 1.56  1999/02/01 08:20:00  silby
-// Network class once again allows autofindkeyserver to be disabled.
-//
-// Revision 1.55  1999/01/31 20:19:09  cyp
-// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
-//
-// Revision 1.54  1999/01/29 18:57:10  jlawson
-// fixed formatting.  changed some int vars to bool.
-//
-// Revision 1.53  1999/01/29 04:12:37  cyp
-// NetOpen() no longer needs the autofind setting to be passed from the client.
-//
-// Revision 1.52  1999/01/23 21:36:10  patrick
-// OS2-EMX supports close (doesn't even know about soclose ;-)
-//
-// Revision 1.51  1999/01/21 22:01:04  cyp
-// fixed LowLevelSend() which didn't know /anything/ about non-blocking sox.
-//
-// Revision 1.50  1999/01/08 02:57:37  michmarc
-// Wrapper around #define STRICT to avoid a _HUGE_ pile of warnings
-// under VC6/AlphaNT
-//
-// Revision 1.49  1999/01/05 22:44:34  cyp
-// Resolve() copies the hostname being resolved (first if from a list) to a
-// buffer in the network object. This is later used by SOCKS5 if lookup fails.
-//
-// Revision 1.48  1999/01/04 04:47:55  cyp
-// Minor fixes for platforms without network support.
-//
-// Revision 1.47  1999/01/02 07:18:23  dicamillo
-// Add ctype.h for BeOS.
-//
-// Revision 1.46  1999/01/01 02:45:16  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.45  1998/12/31 17:55:50  cyp
-// changes to Network::Open(): (a) retry loop is inside ::Open() (was from
-// the external NetOpen()) (b) cleaned up the various hostname/addr/port
-// variables to make sense and be uniform throughout. (c) nofallback handling
-// is performed by ::Open() and not by the external NetOpen().
-//
-// Revision 1.44  1998/12/24 05:19:55  dicamillo
-// Add socket_ioctl to Mac OS definitions.
-//
-
-//#define SELECT_FIRST      // define to perform select() before reading
-//#define __VMS_UCX__       // define for UCX instead of Multinet on VMS
-
-///////////////////////////////////////////////////////////////////////////
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/
 
 #ifndef NETWORK_H
-#define NETWORK_H
-
-#define NETTIMEOUT (60)
+#define NETWORK_H "@(#)$Id: network.h,v 1.63 1999/04/04 15:06:19 cyp Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
 
+
+//#define SELECT_FIRST      // define to perform select() before reading
+//#define __VMS_UCX__       // define for UCX instead of Multinet on VMS
 
 #if ((CLIENT_OS == OS_AMIGAOS)|| (CLIENT_OS == OS_RISCOS))
 extern "C" {
@@ -400,7 +330,5 @@ public:
     //show who we are connected to. (::Open() no longer does this)
 };
 
-///////////////////////////////////////////////////////////////////////////
-
-#endif //NETWORK_H
+#endif /* NETWORK_H */
 
