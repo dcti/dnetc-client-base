@@ -3,8 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
-// Revision 1.102  1998/07/16 03:15:51  silby
-// Change to non-PERCBAR_ON_ONE_LINE code for peterd so multicpu startup % looks correct
+// Revision 1.103  1998/07/16 08:25:07  cyruspatel
+// Added more NONETWORK wrappers around calls to Update/Fetch/Flush. Balanced
+// the '{' and '}' in Fetch and Flush. Also, Flush/Fetch will now end with
+// 100% unless there was a real send/retrieve fault.
 //
 // Revision 1.101  1998/07/15 06:58:03  silby
 // Changes to Flush, Fetch, and Update so that when the win32 gui sets connectoften to initiate one of the above more verbose feedback will be given.  Also, when force=1, a connect will be made regardless of offlinemode and lurk.
@@ -17,7 +19,7 @@
 // blocks from the buffer files until all blocks have been exhausted and then
 // exit.  [look in common/client.cpp for the three "cramer magic" lines]
 //
-// 		Ricky Beam <cramer@foobar.interpath.net>
+//    Ricky Beam <cramer@foobar.interpath.net>
 //
 // Revision 1.98  1998/07/13 22:52:29  cramer
 // Fixed Alde's divide by zero error in printing the % for block flush/fetch.
@@ -63,7 +65,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.102 1998/07/16 03:15:51 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.103 1998/07/16 08:25:07 cyruspatel Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -239,7 +241,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.102 1998/07/16 03:15:51 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.103 1998/07/16 08:25:07 cyruspatel Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -557,11 +559,14 @@ s32 Client::ForceFetch( u8 contest, Network *netin )
 
 // --------------------------------------------------------------------------
 
+#if defined(NONETWORK)
+s32 Client::Fetch( u8 /*contest*/, Network * /*netin*/, s32 /*quietness*/, s32 /*force*/ )
+{ return -2; }
+
+#else
+
 s32 Client::Fetch( u8 contest, Network *netin, s32 quietness, s32 force )
 {
-#if defined(NONETWORK)
-  return -2;
-#else
   Network *net;
   Packet packet;
   u32 scram;
@@ -883,23 +888,19 @@ if (force == 0) // check to see if fetch should be done
         }
       proxymessage[0]=0;
     }
-#if !defined(NOMAIN)           // these two must match
-#if (CLIENT_OS == OS_RISCOS)
-    if (isatty(fileno(stdout))) {
-#else
-    if (isatty(1)) {
+#if !defined(NOMAIN)
+    if (!isatty(fileno(stdout))) 
+      Log( "<" );  // use simple output for redirected stdout
+    else
 #endif
-#endif
+      {
       u32 percent2div = (inthreshold[contest]-more)+count;
-      u32 percent2 = ((count*10000)/(percent2div?percent2div:1));
-   LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
-          CliGetTimeString(NULL,1), count, percent2div?percent2div:1,
+      if (((s32)(percent2div)) <= 0) percent2div = 0; 
+      u32 percent2 = ((percent2div)?((count*10000)/percent2div):(10000));
+       LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
+          CliGetTimeString(NULL,1), count, percent2div?percent2div:count,
           percent2/100, percent2%100 );
-#if !defined(NOMAIN)           // these two must match
-    } else {                 // use simple output for redirected stdout
-      Log( "<" );
-    }
-#endif
+      }    
     if (tmpcontest != contest)
     {
       // We didn't get the block we were requesting.
@@ -918,8 +919,9 @@ if (force == 0) // check to see if fetch should be done
   LogScreen( "\n" );
   Log( "[%s] Retrieved %d %s block%s from server              \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
   return ( count );
-#endif
 }
+
+#endif //NONETWORK
 
 // ---------------------------------------------------------------------------
 
@@ -947,11 +949,14 @@ s32 Client::ForceFlush( u8 contest , Network *netin )
 
 // ---------------------------------------------------------------------------
 
+#if defined(NONETWORK)
+s32 Client::Flush( u8 /*contest*/, Network * /*netin*/, s32 /*quietness*/, s32 /*force*/ )
+{ return -2; }
+
+#else
+
 s32 Client::Flush( u8 contest , Network *netin, s32 quietness, s32 force )
 {
-#if defined(NONETWORK)
-  return -2;
-#else
   // send data, look for ack...
   // we must differentiate between OP_DONE and OP_SUCCESS so we can look for
   // OP_DONE_NOCLOSE_ACK or OP_SUCCESS_ACK
@@ -1249,12 +1254,12 @@ if (force == 0) // Check if flush should be done
     if ( net->Put( sizeof( Packet ), (char *) &packet ) )
     {
       LogScreenf( "\n[%s] Network::Error Unable to send 25\n", Time() );
-      if (!netin) delete net;
 
       // return packet to buffer...
       Scramble( ntohl( data.scramble ),
                 (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 1 );
       PutBufferOutput( &data );
+      if (!netin) delete net;
       return( count ? count : -1 );
     }
 
@@ -1273,11 +1278,11 @@ if (force == 0) // Check if flush should be done
             )
       {
         LogScreenf( "Network::Error Bad Data 26\n", Time() );
-        if (!netin) delete net;
         // return packet to buffer...
         Scramble( ntohl( data.scramble ),
                   (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 1 );
         PutBufferOutput( &data );
+        if (!netin) delete net;
         return( count ? count : -1 );
       }
       count++;
@@ -1294,31 +1299,28 @@ if (force == 0) // Check if flush should be done
           }
         proxymessage[0]=0;
       }
-#if !defined(NOMAIN)           // these two must match
-#if (CLIENT_OS == OS_RISCOS)
-      if (isatty(fileno(stdout))) {
-#else
-      if (isatty(1)) {
+#if !defined(NOMAIN)
+    if (!isatty(fileno(stdout))) 
+      Log( "<" );  // use simple output for redirected stdout
+    else
 #endif
-#endif
-        u32 percent2 = ((count*10000)/(more+count));
-        LogScreenf( "\r[%s] Sent block %u of %u (%u.%02u%% transferred) ",
-                    CliGetTimeString(NULL,1), count, more+count,
-                    percent2/100, percent2%100 );
-#if !defined(NOMAIN)           // these two must match
-      } else {                 // use simple output for redirected stdout
-        Log( ">" );
+      {
+      u32 percent2div = (more+count);  //hmm, can more be negative?
+      if (((s32)(percent2div)) <= 0) percent2div = 0;
+      u32 percent2 = ((percent2div)?((count*10000)/percent2div):(10000));
+       LogScreenf( "\r[%s] Sent block %u of %u (%u.%02u%% transferred) ",
+          CliGetTimeString(NULL,1), count, percent2div?percent2div:count,
+          percent2/100, percent2%100 );
       }
-#endif
     }
     else //Get()...
     {
       LogScreenf( "\n[%s] Network::Error Read Failed 27/%d\n", Time(), (int) err );
-      if (!netin) delete net;
       // return packet to buffer...
       Scramble( ntohl( data.scramble ),
                 (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 1 );
       PutBufferOutput( &data );
+      if (!netin) delete net;
       return( count ? count : -1 );
     }
 
@@ -1334,17 +1336,21 @@ if (force == 0) // Check if flush should be done
   LogScreen( "\n" );
   Log( "[%s] Sent %d %s block%s to server                \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
   return( count );
-#endif //NONETWORK
 }
 
+#endif //NONETWORK
+
 // ---------------------------------------------------------------------------
+
+#ifdef NONETWORK
+s32 Client::Update (u8 /*contest*/, s32 /*fetcherr*/, s32 /*flusherr*/, s32 /*force*/ )
+{ return -1; }
+
+#else
 
 s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr, s32 force )
 {
   s32 retcode,retcode1,retcode2;
-#ifdef NONETWORK
-  retcode = -1;
-#else
   Network *net;
 
 if (force == 0) // We need to check if we're allowed to connect
@@ -1448,9 +1454,10 @@ if (force == 0) // We need to check if we're allowed to connect
     if (!offlinemode)
       mailmessage.checktosend(0);
   }
-#endif
   return( retcode );
 }
+
+#endif //NONETWORK
 
 // ---------------------------------------------------------------------------
 
@@ -2163,7 +2170,7 @@ PreferredIsDone1:
         {
           LogScreenPercentMulti((u32) cpu_i%numcputemp,
             (u32) problem[(int) cpu_i].percent, 0, (bool) problem[(int) cpu_i].restart );
-//          cpu_i++; // removed at peterd's request on 7/15/1998
+          cpu_i++;
         }
         else
         {
@@ -3148,7 +3155,8 @@ int main( int argc, char *argv[] )
   }
   else
   {
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
+    (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
     char fndrive[_MAX_DRIVE], fndir[_MAX_DIR], fname[_MAX_FNAME], fext[_MAX_FNAME];
     _splitpath(argv[0], fndrive, fndir, fname, fext);
     _makepath(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
@@ -3156,43 +3164,34 @@ int main( int argc, char *argv[] )
     strcat(client.exepath, fndir);     // append dir for fully qualified path
     strcpy(client.exename, fname);     // exe filename
     strcat(client.exename, fext);      // tack on extention
-  #else
-    #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
-        (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || \
-        (CLIENT_OS == OS_OS2)
-      #if defined(DJGPP)
-        char fndrive[MAXDRIVE], fndir[MAXDIR], fname[MAXFILE], fext[MAXEXT];
-        fnsplit(argv[0], fndrive, fndir, fname, fext);
-        fnmerge(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
-      #else // __WATCOM__ || __TURBOC__ || MSVC
-        char fndrive[_MAX_DRIVE], fndir[_MAX_DIR], fname[_MAX_FNAME], fext[_MAX_FNAME];
-        _splitpath(argv[0], fndrive, fndir, fname, fext);
-        _makepath(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
-      #endif
-      strcpy(client.exepath, fndrive);   // have the drive
-      strcat(client.exepath, fndir);     // append dir for fully qualified path
-      strcpy(client.exename, fname);     // exe filename
-      strcat(client.exename, fext);      // tack on extention
-    #elif (CLIENT_OS == OS_NETWARE) //also ok for dos,win,os2,vms,mac,amiga,*ix
-      client.inifilename[0] = 0;
-      if (argv[0] != NULL && ((strlen(argv[0])+5) < sizeof(client.inifilename)) )
-        {
-        strcpy( client.inifilename, argv[0] );
-        char *slash = strrchr( client.inifilename, '/' );
-        slash = max( slash, strrchr( client.inifilename, '\\') );
-        slash = max( slash, strrchr( client.inifilename, ':') );
-        if (slash) *(slash+1) = 0;
-         else client.inifilename[0] = 0;
-        }
-      strcat( client.inifilename, "rc5des" EXTN_SEP "ini" );
-    #elif (CLIENT_OS == OS_VMS)
-      strcpy( client.inifilename, "rc5des" EXTN_SEP "ini" );
-    #else
+  #elif (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS)
+    //not really needed for netware (appname in argv[0] won't be anything 
+    //except what I tell it to be at link time.)
+    client.inifilename[0] = 0;
+    if (argv[0] != NULL && ((strlen(argv[0])+5) < sizeof(client.inifilename)))
+      {
       strcpy( client.inifilename, argv[0] );
-      strcat( client.inifilename, EXTN_SEP "ini" );
-    #endif
+      char *slash = strrchr( client.inifilename, '/' );
+      char *slash2 = strrchr( client.inifilename, '\\');
+      if (slash2 > slash ) slash = slash2;
+      slash2 = strrchr( client.inifilename, ':' );
+      if (slash2 > slash ) slash = slash2;
+      if ( slash == NULL ) slash = client.inifilename;
+      if ( ( slash2 = strrchr( slash, '.' ) ) != NULL ) // ie > slash
+        strcpy( slash2, ".ini" );
+      else if ( strlen( slash ) > 0 )
+        strcat( slash, ".ini" );
+      }
+    if ( client.inifilename[0] == 0 )
+      strcpy( client.inifilename, "rc5des.ini" );
+  #elif (CLIENT_OS == OS_VMS)
+    strcpy( client.inifilename, "rc5des" EXTN_SEP "ini" );
+  #else
+    strcpy( client.inifilename, argv[0] );
+    strcat( client.inifilename, EXTN_SEP "ini" );
   #endif
   }
+
   // See if there's a command line parameter to override the INI filename...
   for (i = 1; i < argc; i++)
   {
@@ -3261,6 +3260,19 @@ int main( int argc, char *argv[] )
   for (i = 1; ((retcode == OK_TO_RUN) && (i < argc)); i++)
   {
     if ( argv[i][0] == 0 ) continue;
+    #if defined(NONETWORK)
+    else if (( strcmp( argv[i], "-fetch" ) == 0 ) || \
+             ( strcmp( argv[i], "-forcefetch" ) == 0 ) || \
+             ( strcmp( argv[i], "-flush"      ) == 0 ) || \
+             ( strcmp( argv[i], "-forceflush" ) == 0 ) || \
+             ( strcmp( argv[i], "-update"     ) == 0 ))
+    {
+        client.LogScreen( 
+        "Sorry, this client is not capable of networking and cannot support\n"
+         "the -flush, -forceflush, -fetch, -forcefetch or -update options.\n");
+        //retcode = 0; //and break out of loop
+    }    
+    #endif
     else if ( strcmp(argv[i], "-ident" ) == 0)
       {
         CliIdentifyModules();
@@ -3381,7 +3393,6 @@ int main( int argc, char *argv[] )
       }
       else
         client.LogScreen( "Flush completed.\n" );
-
     }
     else if ( strcmp( argv[i], "-update" ) == 0 )
     {
@@ -3409,6 +3420,16 @@ int main( int argc, char *argv[] )
       }
       else
         client.LogScreen( "Update completed.\n" );
+    }
+    else if ( strcmp( argv[i], "-cpuinfo" ) == 0 )
+    {
+      const char *scpuid, *smaxcpus, *sfoundcpus;  //cpucheck.cpp
+      GetProcessorInformationStrings( &scpuid, &smaxcpus, &sfoundcpus );
+      client.LogScreenf("Automatic processor detection tag:\n\t%s\n"
+      "Number of processors detected by this client:\n\t%s\n"
+      "Number of processors supported by each instance of this client:\n\t%s\n",
+      scpuid, sfoundcpus, smaxcpus );
+      retcode = 0; //and break out of loop
     }
     else if ( strcmp( argv[i], "-config" ) == 0 )
     {
