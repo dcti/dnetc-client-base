@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.1 2002/11/16 22:55:40 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.2 2002/11/25 17:45:18 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -788,7 +788,13 @@ static u32 __os_x86ident_fixup(u32 x86ident_result)
 #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
   extern "C" u32 x86ident( void ) asm ("x86ident");
 #else
+#if defined(__WATCOMC__)
+  // x86ident() can destroy all registers except ebx/esi/edi/ebp =>
+  // must be declared as "cdecl" to allow compiler save necessary registers.
+  extern "C" u32 __cdecl x86ident( void );
+#else
   extern "C" u32 x86ident( void );
+#endif
   extern "C" u32 x86ident_haveioperm; /* default is zero */
 #endif
 
