@@ -1,0 +1,30 @@
+#works best with newer versions of gcc
+# requirements:
+# %i7 gets used as frame pointer in inner loops.
+#   That register gets it's top 32-bits set to a wierd value to test
+#   whether the top bits are discarded due to context swaps.
+# no %sp references (and no %fp references) of any sort are done in
+#   in the inner loops.  Any %sp references make the code much slower.
+# gcc 2.7.2.2 does NOT know that there are 32 double registers in the
+#   the Ultra.  Therefore, it uses only 16, and spills registers.
+#
+# The resultant .s file can be examined.  In all cases, the "vars=0"
+# is critical.  If there are stack pointer refs, or frame pointer
+# refs, this will run slow, and maybe calculate wrong results.
+#
+# This code should be able to run 100,000,000 keys in 25.5 seconds on
+# a 167 MHz ultra-1, and in 14.66 seconds on a 297 MHz ultra-2.
+# This correcponds to a speed of 3.9 million keys checked per second
+# and 6.8 million keys checked per second, correspondingly.
+#
+# for some unknown reason compiling using the .o file is faster than the
+# version made from .c file and .s file.
+#
+
+gcc -Wa,-xarch=v8plusa -O3 -g -c -o simple.o simple.c
+# cc -xarch=v8plusa -O -g des_ultra_crunch.c simple.o
+
+# cc -xarch=v8plusa -O -g des_ultra_crunch.c simple.o
+cc -xarch=v8plusa -O -g des_ultra_crunch.c simple.o kwan_from_to.c do_s1.c do_s2.c do_s3.c do_s4.c do_s5.c do_s6.c do_s7.c do_s8.c do_s1_s3.c do_all.c do_all_fancy.c
+gcc -Wa,-xarch=v8plusa -O3 -S simple.c
+
