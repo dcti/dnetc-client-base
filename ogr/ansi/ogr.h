@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.15 2004/07/08 17:15:34 piru Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.16 2004/07/16 13:22:04 kakace Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -170,16 +170,21 @@ struct WorkStub { /* size is 28 */
 
 typedef u32 U;
 
-#ifdef __VEC__
-typedef union {
-  vector unsigned int v;
-  u32 u[4];
-} VECTOR;
+// Vector (AltiVec) implementation
+// Since ogr.cpp (thus ogr.h) is included from ppc/ogr-vec.cpp, we can
+// relie upon OGROPT_ALTERNATE_CYCLE to enable vector declarations.
+#if defined(OGROPT_ALTERNATE_CYCLE) && (OGROPT_ALTERNATE_CYCLE == 2) \
+    && (defined(__VEC__) || defined(__ALTIVEC__))
+  #define ENABLE_VECTOR_DECL
+  typedef union {
+    vector unsigned int v;
+    u32 u[4];
+  } VECTOR;
 #endif
 
 struct Level {
   /* If AltiVec is possible we must reserve memory, just in case */
-  #ifdef __VEC__   // unused if OGROPT_ALTERNATE_CYCLE == 0 || == 1
+  #ifdef ENABLE_VECTOR_DECL
   VECTOR listV0, listV1, compV;
   U list0, comp0;
   #endif
@@ -228,7 +233,7 @@ struct State {
    } prof;
   #endif
   /* If AltiVec is possible we must reserve memory, just in case */
-  #ifdef __VEC__     /* only used by OGROPT_ALTERNATE_CYCLE == 2 */
+  #ifdef ENABLE_VECTOR_DECL
     U dist0, pad1;
     VECTOR distV;
   #endif
