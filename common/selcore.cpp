@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.37 2000/01/02 07:06:28 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.38 2000/01/03 03:25:13 mfeiri Exp $"; }
 
 
 #include "cputypes.h"
@@ -820,9 +820,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
   #endif
 #elif (CLIENT_CPU == CPU_68K)
-  #if (CLIENT_OS == OS_MACOS) //I cant use gcc style 68k assembly (yet?)
-    extern "C" u32 rc5_unit_func( RC5UnitWork *, u32 );
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #if (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS) temporarily fall back to ansi
     // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
     extern "C" u32 rc5_unit_func_000_030( RC5UnitWork *, u32 );
     extern "C" u32 rc5_unit_func_040_060( RC5UnitWork *, u32 );
@@ -1051,13 +1049,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #elif (CLIENT_CPU == CPU_68K)
     {
-      #if (CLIENT_OS == OS_MACOS) //I cant use gcc style 68k assembly (yet?)
-      {
-        unit_func.rc5 = rc5_unit_func;
-        pipeline_count = 1; //the default is 2
-        coresel = 0;
-      }
-      #elif (CLIENT_OS == OS_AMIGAOS)
+      #if (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS) temorarily fall back to ansi
       {
         // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
         //xtern "C" u32 rc5_unit_func_000_030( RC5UnitWork *, u32 );
