@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.26.2.9 2000/07/12 14:11:51 oliver Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.26.2.10 2000/08/22 13:33:32 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -119,20 +119,44 @@ static int __netInitAndDeinit( int doWhat )
   {
     if ( doWhat == 0 )     //request to check online mode
     {
-      return amigaIsOnline();  //test if tcpip is still online
+      if (dialup.IsWatching())
+      {
+        if (dialup.CheckForStatusChange()) //- no longer-online?
+          return 0;                        //oops, return 0
+        return 1;            //assume always online once initialized
+      }
+      else
+        return amigaIsNetworkingActive();  //test if tcpip is still available
     }
     else if (doWhat > 0)   //request to initialize
     {
-      if ((++net_init_level)!=1) //don't initialize more than once
-        success = 1;
-      else if ((success = amigaSocketInit()) == 0)
-        --net_init_level;
+      success = 1;
+      if ((++net_init_level)==1) //don't initialize more than once
+      {
+        if (amigaSocketInit())
+        {
+          if ( dialup.DialIfNeeded(1) != 0 ) /* not connected and dialup failed */
+            success = 0;
+          else
+            success = dialup.IsConnected();
+        }
+        else
+          success = 0;
+      }
+      if (!success)
+      {
+        net_init_level--;
+        amigaSocketDeinit();
+      }
     }
     else //if (doWhat < 0) //request to de-initialize
     {
-      if ((--net_init_level)==0) //don't deinitialize more than once
-        amigaSocketDeinit();
       success = 1;
+      if ((--net_init_level)==0) //don't deinitialize more than once
+      {
+        dialup.HangupIfNeeded();
+        amigaSocketDeinit();
+      }
     }
   }
   #define DOWHAT_WAS_HANDLED
