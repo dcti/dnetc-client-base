@@ -3,9 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.87  1998/07/09 04:37:56  jlawson
+// cleared integer cast warning.
+//
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id$.
+// Tweaked $Id: client.cpp,v 1.87 1998/07/09 04:37:56 jlawson Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -181,7 +184,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.86 1998/07/08 23:31:27 remi Exp $"; }
+return "@(#)$Id: client.cpp,v 1.87 1998/07/09 04:37:56 jlawson Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -2489,7 +2492,7 @@ PreferredIsDone1:
 
           if (!nonewblocks)
           {
-            int outcount = (int) CountBufferOutput((int) fileentry.contest);
+            int outcount = (int) CountBufferOutput((u8) fileentry.contest);
             Log( "[%s] %s\n", CliGetTimeString(NULL,1), /* == Time() */
                               CliGetMessageForFileentryLoaded( &fileentry ) );
             Log( "[%s] %d %s block%s remain%s in file %s\n"
