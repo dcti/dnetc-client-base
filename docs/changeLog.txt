@@ -1,5 +1,11 @@
 Dual mode (RC5DES) clients
 --------------------------
+v2.7100.418 98.08.19 Complete rewrite of logging code; blocks now
+                     displayed in 2^28 increments, other changes.
+v2.7100.418 98.08.19 Problem with client rewriting .ini file while in
+                     nodisk mode fixed.
+v2.7100.418 98.08.19 Win32 Clients have Dial On Demand support.
+v2.7100.418 98.08.19 Clients now auto-detect the roundrobin to connect to.
 v2.7100.417 98.08.07 New ARM/StrongARM RC5 cores.
 v2.7100.416 98.07.20 work around added for Win95/98 combo-box bug that created system
                      pausing after opening the config dialog at least once.
