@@ -2,7 +2,7 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
-// $Id: rotate.h,v 1.2 2002/10/16 21:33:51 jlawson Exp $
+// $Id: rotate.h,v 1.3 2002/10/17 10:34:01 andreasb Exp $
 //
 
 #ifndef __ROTATE_H__
@@ -168,6 +168,16 @@ static __forceinline u32 ROTL(u32 x, u32 y)
 
 #elif (CLIENT_CPU == CPU_X86) && defined(__GNUC__)
 
+#if (__GNUC__ > 2)
+
+// GCC3 built cores fail on inline asm function ROTL,
+// but GCC3 translates this macro into a roll instruction ;-)
+
+#define ROTL(x, s) ((u32) (SHL((x), (s)) | SHR((x), (s))))
+#define ROTL3(x) ROTL(x, 3)
+
+#else
+
 static __inline__ u32 ROTL(u32 x, u32 y)
 {
 	register u32 res;
@@ -175,8 +185,7 @@ static __inline__ u32 ROTL(u32 x, u32 y)
 	__asm__ __volatile(
 		"roll %%cl,%0\n\t"
 		:"=g" (res)
-		:"0" (x), "ecx" (y)
-		);
+		:"0" (x), "ecx" (y));
 
 	return res;
 }
@@ -192,6 +201,8 @@ static __inline__ u32 ROTL3(u32 x)
 
 	return res;
 }
+
+#endif
 
 #elif (CLIENT_CPU == CPU_ALPHA || CLIENT_CPU == CPU_IA64)
 
