@@ -53,20 +53,20 @@ RC5_LIBS = wsock32.lib advapi32.lib
 
 # --------------------------------------------
 
-{$(DESPATH)}.cpp{$(OUTPUTPATH)}.obj:
-	cl -c $(OPTS_MSVC) -Fo$@ $**
-
-{$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj:
-	cl -c $(OPTS_MSVC) -Fo$@ $**
-
 {$(PLATPATH)}.asm{$(OUTPUTPATH)}.obj:
-	tasm32 /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
+        tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
 
-{$(DESPATH/brydmasm)}.asm{$(OUTPUTPATH)}.obj:
-	tasm32 /m /ml $(**:/=\), $(@:/=\)
+{$(DESPATH)/brydmasm}.asm{$(OUTPUTPATH)}.obj:
+        tasm32 /t /m /ml /i$(DESPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
 
 {$(RC5PATH)}.asm{$(OUTPUTPATH)}.obj:
-	tasm32 /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
+        tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
+
+{$(DESPATH)}.cpp{$(OUTPUTPATH)}.obj:
+        cl -c $(OPTS_MSVC) -Fo$@ $**
+
+{$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj:
+        cl -c $(OPTS_MSVC) -Fo$@ $**
 
 # --------------------------------------------
 
