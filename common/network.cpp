@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.22 2000/01/16 20:59:36 ctate Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.23 2000/02/08 22:00:08 remi Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -938,7 +938,9 @@ int Network::InitializeConnection(void)
         strcpy( p+1, svc_hostname );
         *p = (char)(len = strlen( p+1 ));
         p += (++len);
-        *((u16 *)(p)) = (u16)htons((u16)svc_hostport);
+        u16 xx = (u16)htons((u16)svc_hostport);
+	*(p+0) = *(((char*)(&xx)) + 0);
+	*(p+1) = *(((char*)(&xx)) + 1);
         packetsize = (10-sizeof(u32))+len;
       }
 
