@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.4 1999/10/11 18:42:59 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.5 1999/10/17 22:53:45 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -91,12 +91,14 @@ const char *ogr_stubstr(const struct Stub *stub)
 
 /* ------------------------------------------------------------------- */
 
-const char *utilGatherOptionArraysToList( int *table1, int *table2 )
+int utilGatherOptionArraysToList( char *buffer, unsigned int buflen,
+                                  const int *table1, const int *table2 )
 {
-  static char buffer[(CONTEST_COUNT+1)*(MAX_CONTEST_NAME_LEN+10)];
-  unsigned int contest, pos = 0;
+  unsigned int donelen = 0;
+  unsigned int contest;
   const char *delim = "";
-  buffer[0] = '\0';
+  if (buffer && buflen)
+    buffer[0] = '\0';
   for (contest = 0; contest < CONTEST_COUNT; contest++)
   {
     /* HACK: OGR doesn't a member in the preferred_blocksize/coretype arrays */
@@ -112,27 +114,35 @@ const char *utilGatherOptionArraysToList( int *table1, int *table2 )
                         (int)table1[contest],(int)table2[contest]);
         else
           len = sprintf(single,"%s%s=%d",delim, p, (int)table1[contest] );
-        if (len <= (MAX_CONTEST_NAME_LEN+10))
+        if (!buffer || !buflen)
         {
-          strcpy( &buffer[pos], single );
-          pos += len;
+          donelen += len;
+          delim = ",";
+        }
+        else if ((donelen + len) < (buflen-1))
+        {
+          strcpy( &buffer[donelen], single );
+          donelen += len;
           delim = ",";
         }
       }
     }
   }
-  return (const char *)&buffer[0];
+  return donelen;
 }
 
-int utilScatterOptionListToArrays( const char *oplist, 
-                                   int *table1, int *table2, int defaultval )
+int utilScatterOptionListToArraysEx( const char *oplist, 
+                                   int *table1, int *table2, 
+                                   const int *default1, const int *default2 )
 {
   unsigned int cont_i;
+
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
-    table1[cont_i] = defaultval;
-    if (table2)
-      table2[cont_i] = defaultval;
+    if (default1)
+      table1[cont_i] = default1[cont_i];
+    if (table2 && default2)
+      table2[cont_i] = default2[cont_i];
   }
   
   while (*oplist)
@@ -145,8 +155,7 @@ int utilScatterOptionListToArrays( const char *oplist,
       unsigned int len = 0;
       int needbreak = 0, kwpos = 0, precspace = 0;
       unsigned int contest = CONTEST_COUNT;
-      int havenondig = 0, haveval1 = 0, haveval2 = 0;
-      int value1 = defaultval, value2 = defaultval;
+      int havenondig = 0, value1 = 0, value2 = 0, haveval1 = 0, haveval2 = 0;
       while (!needbreak && len<sizeof(buffer)-1)
       {
         char c = buffer[len] = (char)(*oplist++);
@@ -242,6 +251,17 @@ int utilScatterOptionListToArrays( const char *oplist,
     }
   }
   return 0;
+}
+
+int utilScatterOptionListToArrays( const char *oplist, 
+                                   int *table1, int *table2, int defaultval )
+{
+  int defarray[CONTEST_COUNT];
+  unsigned int cont_i;
+  for (cont_i = 0;cont_i < CONTEST_COUNT; cont_i++)
+    defarray[cont_i] = defaultval;
+  return utilScatterOptionListToArraysEx( oplist, 
+                                 table1, table2, &defarray[0], &defarray[0]);
 }
 
 const char *projectmap_expand( const char *map )
@@ -491,27 +511,26 @@ const char *utilSetAppName(const char *newname)
   #if defined(__unix__) /* obfusciation 101 for argv[0] stuffing */
   if (initialized <= 0) /* dummy if to suppress compiler warning */
   {
-	  #if (CLIENT_CONTEST < 80)
+          #if (CLIENT_CONTEST < 80)
     appname[0] = 'r'; appname[1] = 'c'; appname[2] = '5'; 
     appname[3] = 'd'; appname[4] = 'e'; appname[5] = 's';
     appname[6] = '\0';
-		#else
+                #else
     appname[0] = 'd'; appname[1] = 'n'; appname[2] = 'e'; 
     appname[3] = 't'; appname[4] = 'c'; appname[5] = '\0';
-		#endif
+                #endif
     initialized = 1;
     return (const char *)&appname[0];
   }  
   #endif
   #if (CLIENT_CONTEST < 80)
   return "rc5des";
-	#else
-	return "dnetc";
-	#endif
+  #else
+  return "dnetc";
+  #endif
 }
 
 const char *utilGetAppName(void) 
 {
   return utilSetAppName((const char *)0);
 }
-
