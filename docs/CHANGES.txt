@@ -21,11 +21,13 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.46 2004/01/11 20:00:04 piru Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.47 2004/01/15 18:13:48 piru Exp $
 ==========================================================================
 
 2.9000
 ------
+2.9007-488  new: morphos: MorphOS pre-release
+
 2.9007-487  fix: amigaos: 68k: fixed a race condition adding public port
             fix: amigaos: fixed a race quitting the cruncher thread
             new: MorphOS port
