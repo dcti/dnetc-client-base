@@ -1,5 +1,8 @@
 Dual mode (RC5DES) clients
 --------------------------
+v2.7100.416 98.07.18 win32 gui logging fixed
+v2.7100.416 98.07.18 Clients updated so that des-ii-2 blocks will be
+                     ignored in future des contests.
 v2.7100.416 98.07.15 Change to fetch, flush, and update in the win32 GUI
                      so that they're more verbose and will ignore
                      offline/lurk settings.
