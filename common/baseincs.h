@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.37  1998/12/15 07:00:21  dicamillo
+// Use "_" instead of "/" in Mac header file names for CVS.
+//
 // Revision 1.36  1998/12/14 05:09:16  dicamillo
 // Fix formatting error in log comment.
 //
@@ -154,7 +157,11 @@ extern "C" {
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#if (CLIENT_OS == OS_MACOS)
+#include <sys_types.h>
+#else
 #include <sys/types.h>
+#endif
 #include <errno.h>
 
 #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
@@ -288,9 +295,9 @@ extern "C" {
   extern "C" int gethostname(char *, int);
   extern "C" int gettimeofday(struct timeval *, struct timezone *);
 #elif (CLIENT_OS == OS_MACOS)
-  #include <sys/time.h>
+  #include <sys_time.h>
   #include <stat.mac.h>
-  #include <machine/endian.h>
+  #include <machine_endian.h>
   #include <unistd.h>
   #define _UTIME
   #include <unix.mac.h>

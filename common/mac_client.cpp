@@ -3,12 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mac_client.cpp,v $
+// Revision 1.2  1998/12/15 07:01:49  dicamillo
+// Use "_" instead of "/" in Mac header file names for CVS.
+//
 // Revision 1.1  1998/12/14 00:03:43  dicamillo
 // First Checked In.
 //
 #if (!defined(lint) && defined(__showids__))
 const char *mac_client_cpp(void) {
-return "@(#)$Id: mac_client.cpp,v 1.1 1998/12/14 00:03:43 dicamillo Exp $"; }
+return "@(#)$Id: mac_client.cpp,v 1.2 1998/12/15 07:01:49 dicamillo Exp $"; }
 #endif
 
 // This file contains the routines added to the Client class for the Mac_Client
@@ -20,7 +23,7 @@ return "@(#)$Id: mac_client.cpp,v 1.1 1998/12/14 00:03:43 dicamillo Exp $"; }
 #include "client.h"
 #include "problem.h"
 #include "modereq.h"
-#include <machine/endian.h>
+#include <machine_endian.h>
 #include "triggers.h"
 #include "console.h"
 #include "probman.h"

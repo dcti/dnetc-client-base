@@ -3,6 +3,9 @@
 // INI file reading/processing class for C++
 // 
 // $Log: iniread.h,v $
+// Revision 1.15  1998/12/15 07:01:30  dicamillo
+// Use "_" instead of "/" in Mac header file names for CVS.
+//
 // Revision 1.14  1998/12/08 05:44:55  dicamillo
 // For MacOS, delete "class ostream" because it is already provided in
 // Metrowerks header files.
@@ -41,7 +44,11 @@ extern "C" {
 #include <sys/types.h>
 #endif
 
+#if (CLIENT_OS == OS_MACOS)
+#include <sys_stat.h>
+#else
 #include <sys/stat.h>
+#endif
 #include "cmpidefs.h"
 
 #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS)
