@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.205  1999/03/09 07:37:11  gregh
+# Add OGR source files. Only added to one target for now.
+#
 # Revision 1.204  1999/03/07 06:03:10  peter
 # Added mips-cobalt target, which doesn't work yet.  Fails DES tests,
 # and segfaults when running for real.
@@ -981,6 +984,14 @@ DESULTRA_SRCS_ASM="des/ultrasparc/des-slice-ultrasparc.cpp \
 		   des/ultrasparc/des_ultra_crunch.c"
 
 #
+# Source files making up the OGR core code
+#
+OGR_SRCS="ogr/ogr.c \
+	  ogr/choosedat.c \
+	  ogr/crc32.c \
+	  ogr/stubutil.c"
+
+#
 # Define the default compilation options
 #
 TARGET_CC="g++"
@@ -1715,7 +1726,8 @@ case "$1" in
 			-DMULTITHREAD -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
-			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
+			$OGR_SRCS"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
