@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __TRIGGERS_H__
-#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.6 2000/02/21 00:57:36 trevorh Exp $"
+#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.7 2000/03/11 02:59:35 andreasb Exp $"
 
 #if defined(__unix__) && !defined(__EMX__)
   /* These constants define symbolically the signal names used by the
@@ -66,5 +66,8 @@ extern int CheckExitRequestTriggerNoIO(void);
 //just return the pause trigger state (no poll cycle)
 //preferred method for child threads
 extern int CheckPauseRequestTriggerNoIO(void);
+
+//just return the exit trigger flagfile bit (no poll cycle)
+extern int CheckExitRequestTriggeredByFlagfileNoIO(void);
 
 #endif //__TRIGGERS_H__
