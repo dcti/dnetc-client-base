@@ -1,10 +1,25 @@
 // Hey, Emacs, this a -*-C++-*- file !
 
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
 // $Log: baseincs.h,v $
+// Revision 1.30.2.7  1999/01/04 01:50:06  remi
+// Synced with :
+//
+//  Revision 1.43  1999/01/02 07:13:33  dicamillo
+//  Remove sched.h for BeOS.
+//
+//  Revision 1.42  1999/01/01 02:45:14  cramer
+//  Part 1 of 1999 Copyright updates...
+//
+//  Revision 1.41  1998/12/31 11:28:26  cyp
+//  Moved inclusion of sys/stat.h and sys_stat.h from buffwork.cpp to baseincs.h
+//
+//  Revision 1.40  1998/12/31 08:06:26  dicamillo
+//  Add UseMP function for MacOS.
+//
 // Revision 1.30.2.6  1998/12/29 11:19:32  remi
 // Synced with :
 //
@@ -68,9 +83,11 @@ extern "C" {
 #include <string.h>
 #include <ctype.h>
 #if (CLIENT_OS == OS_MACOS)
-#include <sys_types.h>
+#include <sys_types.h> /* in platforms/macos */
+#include <sys_stat.h>  /* in platforms/macos */
 #else
 #include <sys/types.h>
+#include <sys/stat.h>
 #endif
 #include <errno.h>
 
@@ -169,7 +186,6 @@ extern "C" {
   #include <OS.h>
   #include <unistd.h>
   #include <fcntl.h>
-  #include <sched.h>
 #elif (CLIENT_OS == OS_NETWARE)
   #include <sys/time.h> //timeval
   #include <unistd.h> //isatty, chdir, getcwd, access, unlink, chsize, O_...
@@ -225,6 +241,7 @@ extern "C" {
   extern short MP_active;
   extern "C" unsigned long mp_sleep(unsigned long seconds);
   extern MPCriticalRegionID MP_count_region;
+  extern char useMP(void);
   extern volatile s32 ThreadIsDone[2*MAC_MAXCPUS];
   #if defined(MAC_GUI)
     #include "gui_incs.h"
