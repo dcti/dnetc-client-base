@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.99 2000/01/19 00:49:28 ctate Exp $
+# @(#)$Id: configure,v 1.222.2.100 2000/01/20 11:09:30 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1231,6 +1231,7 @@ case "$1" in
 
 ###### Intel X86 FreeBSD
 
+
     *x86-freebsd)             # [dbaker] aout
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -DLURK"
@@ -1247,6 +1248,27 @@ case "$1" in
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"  #$CSC_ASM_SRCS" $NASM_DESMMX_SRCS 
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="freebsd-x86-aout"
+        ;;
+
+    # as I don't know what the above target should be for, I added the
+    # following FreeBSD 2 target for a.out. The above target can't be used
+    # for that, as it assumes FreeBSD 3.x stuff.
+
+    *x86-freebsd2)             # FreeBSD 2.x , snake 
+	TARGET_AS="gcc -c"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -DLURK"
+			#-DHAVE_CSC_CORES -DMMX_CSC" #-DHAVE_OGR_CORES
+                        # -DHAVE_DES_CORES $OPTS_DES_MMX 
+    TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="common/lurk.cpp" #$OGR_ANSI_SRCS 
+                        #$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
+	TARGET_ADDASMS="platforms/x86ident.S"
+                        #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
+			#des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
+	TARGET_NASM_FMT="aoutb"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"  #$CSC_ASM_SRCS" $NASM_DESMMX_SRCS 
+    TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+    TARGET_TARBALL="freebsd-x86-aout"
         ;;
 
     *x86-freebsd-elf)       # [dbaker] elf
