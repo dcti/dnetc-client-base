@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.60 1999/04/06 13:37:34 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.61 1999/04/09 18:42:08 patrick Exp $"
 
 #include "cputypes.h"
 
@@ -53,8 +53,8 @@ extern "C" {
   #include <fcntl.h>
   #include <io.h>
   #include "platforms/os2cli/os2inst.h" //-install/-uninstall functionality
+  #include <sys/time.h>         /* timeval */
   #if defined(__WATCOMC__)
-    #include <sys/time.h>         /* timeval */
     #include <conio.h>            /* for console functions */
     #include <direct.h>
   #endif
