@@ -1673,14 +1673,15 @@ s32 Client::RunStartup(void)
 
 s32 Client::SelectCore(void)
 {
-#if (CLIENT_OS == OS_AMIGAOS)
+#if ((CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU != CPU_POWERPC))
   if (!(SysBase->AttnFlags & AFF_68020))
   {
     LogScreen("\nIncompatible CPU type.  Sorry.\n");
     return -1;
   }
-#elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_BEOS)
+#elif (CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_AMIGAOS))
   // Be OS isn't supported on 601 machines
+  // There is no 601 PPC board for the Amiga
   LogScreen( "| PowerPC assembly by Dan Oetting at USGS\n");
   double fasttime = 0;
   whichcrunch = 1;

@@ -272,10 +272,18 @@ s32 Network::Resolve(const char *host, u32 &hostaddress)
 {
 #if !defined(NONETWORK)
 
+#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_POWERPC)
+  if ((hostaddress = inet_addr((unsigned char*)host)) == 0xFFFFFFFFL)
+#else
   if ((hostaddress = inet_addr((char*)host)) == 0xFFFFFFFFL)
+#endif
   {
     struct hostent *hp;
+#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_POWERPC)
+    if ((hp = gethostbyname((unsigned char*)host)) == NULL) return -1;
+#else
     if ((hp = gethostbyname((char*)host)) == NULL) return -1;
+#endif
 
 #if defined(_SUNOS3_)
     // gethostbyname() returns only one address.

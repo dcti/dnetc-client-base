@@ -207,7 +207,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
 {
   unsigned long kiter = 0;
   if (contest == 0) {
-#if (CLIENT_OS != OS_BEOS)
+#if ((CLIENT_OS != OS_BEOS) || (CLIENT_OS != OS_AMIGAOS))
     if (whichcrunch == 0)
       kiter = crunch_allitnil( &rc5unitwork, timeslice );
     else

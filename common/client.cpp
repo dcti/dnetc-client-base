@@ -5,6 +5,10 @@
 
 #include "client.h"
 
+#if (CLIENT_OS == OS_AMIGA)
+const char versionstring[] = "$VER: RC5DES v2.7021.405 (30.05.98)";
+#endif
+
 #if (CLIENT_OS == OS_WIN32)
 rasenumconnectionsT rasenumconnections = NULL;
 rasgetconnectstatusT rasgetconnectstatus = NULL;
