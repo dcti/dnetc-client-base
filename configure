@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.89 2003/07/08 00:15:56 bdragon Exp $
+# @(#)$Id: configure,v 1.288.2.90 2003/07/08 00:24:16 bdragon Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1200,15 +1200,15 @@ case "$1" in
 # Alpha ****************************************************************
 
     *alpha*-digital_unix*) #takes alpha[4|5|67|]-digital_unix[-nonmt|]
-        arch=`echo "$1" | sed 's/^.*alpha/alpha/'| sed 's/-.*$//'`
+        archname=`echo "$1" | sed 's/^.*alpha/alpha/'| sed 's/-.*$//'`
         TARGET_CC="g++"
         TARGET_AS="as"
-        generate_gcc_opts "$arch" "digital-unix"
+        generate_gcc_opts "$archname" "digital-unix"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_ASFLAGS=""
         TARGET_LDFLAGS=""
         TARGET_LIBS="-Wl,-no_so -lrt"
-        TARGET_TARBALL="digital_unix-""$arch"
+        TARGET_TARBALL="digital_unix-""$archname"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "digital-unix" "alpha"
         case "internal-$1" in
