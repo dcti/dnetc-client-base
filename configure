@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.90  1998/08/22 08:16:39  silby
+# changed opts_egcs from -f-no-handle-exceptions to -f-no-exceptions to make egcs happy.
+#
 # Revision 1.89  1998/08/21 23:46:52  cyruspatel
 # Spun off Client::SelectCore() from cliconfig.cpp to selcore.cpp
 #
@@ -318,7 +321,7 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
-OPTS_EGCS='-O2 -fno-handle-exceptions -fomit-frame-pointer -Wall -Icommon -Ides \
+OPTS_EGCS='-O2 -fno-exceptions -fomit-frame-pointer -Wall -Icommon -Ides \
     -Irc5 -Iplatforms'
 
 #
