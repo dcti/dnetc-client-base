@@ -13,7 +13,7 @@
  * has 'host', and that too can be bypassed (described below).
  *
  * Created Aug 2 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: resolv.c,v 1.2.4.2 2003/02/22 14:09:20 andreasb Exp $
+ * $Id: resolv.c,v 1.2.4.3 2003/05/14 23:18:05 andreasb Exp $
  *
  * The functions exported from here will first check if a bypass 
  * (described below) has been provided. 
@@ -737,6 +737,10 @@ static int do_nslookup( struct gen_hostent_data *_r_buffer,
         while (linelen && (*bufp == ' ' || *bufp == '\t' || *bufp == '>'))
         { bufp++; linelen--; }
         if (linelen == 0)
+          continue;
+        /* some versions of 'host' add comments about failing dns servers
+           (this has been reported for Mandrake 9.1/bind 9.2.2) */
+        if (*bufp == ';')
           continue;
         nblinenum++;
 
