@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.68 2001/04/05 23:28:24 sampo Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.69 2001/04/06 00:44:12 sampo Exp $"; }
 
 //#define TRACE
 
@@ -472,7 +472,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         else
           action_msg = "Completed";
       }
-      ProblemInfo info;
       info.permille_only_if_exact = 1;
       
       if (ProblemGetInfo( thisprob, &info, P_INFO_E_TIME   | P_INFO_SWUCOUNT | P_INFO_C_PERMIL |
