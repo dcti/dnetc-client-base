@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.260 2001/11/06 22:39:26 mfeiri Exp $
+# @(#)$Id: configure,v 1.222.2.261 2001/11/10 03:38:50 lyndon Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -805,7 +805,7 @@ OPTS_MIPSPRO_ABI_64="-64 -mips4 -r10000"
 OPTS_CC_MIPSPRO="-O3 -IPA -LNO:opt=1 -xansi -DMIPSpro"
 
 # Common across all MIPSpro compiles:
-OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DHAVE_POSIX_THREADS -DHAVE_OGR_CORES"
+OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DIRIX -DHAVE_POSIX_THREADS -DHAVE_OGR_CORES"
 OPTS_MIPSPRO_DOCS="docs/readme._ix"
 
 # Common to a specific ABI:
