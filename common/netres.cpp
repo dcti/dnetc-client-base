@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.9  1998/12/31 17:50:45  cyp
+// Resolve makes no assumptions about the port. Both port and hostname must
+// be valid when passed to resolve, ie network::Open() must validate them.
+//
 // Revision 1.8  1998/12/08 05:54:26  dicamillo
 // For MacOS, delete call to tzset; add ".s_addr" to access result from
 // inet_addr.
@@ -17,13 +21,7 @@
 // corrected loss of precision warning
 //
 // Revision 1.4  1998/08/10 21:53:56  cyruspatel
-// Two major changes to work around a lack of a method to detect if the network
-// availability state had changed (or existed to begin with) and also protect
-// against any re-definition of client.offlinemode. (a) The NO!NETWORK define is
-// now obsolete. Whether a platform has networking capabilities or not is now
-// a purely network.cpp thing. (b) NetworkInitialize()/NetworkDeinitialize()
-// are no longer one-shot-and-be-done-with-it affairs. ** Documentation ** is
-// in netinit.cpp.
+// The NO!NETWORK define is now obsolete. 
 //
 // Revision 1.3  1998/08/03 19:37:51  jlawson
 // changed order of "static" to eliminate gcc warning
@@ -37,7 +35,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.8 1998/12/08 05:54:26 dicamillo Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.9 1998/12/31 17:50:45 cyp Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -82,6 +80,7 @@ static const struct        // this structure defines which proxies are
                 { "aussie", +9, -9 , +12 }, //jp and aussie cross the dateline
                 { "jp",    +10, -8 , -11 }   
                };
+static int dnet_portlist[] = {80,23,2064,3064,110};
 static const char DNET_PROXY_DOMAINNAME[]="v27.distributed.net"; // NOT char* 
 #endif
 
@@ -97,8 +96,10 @@ static int IsHostnameDNetKeyserver( const char *hostname, int *tzdiff )
   if ( i < sizeof( buffer ) )
     {
     strcpy( buffer, hostname );
+
     for ( pos = 0; pos < i; pos++ )
       buffer[pos] = (char)tolower( hostname[pos] );
+
     if ( strcmp( buffer, "rc5proxy.distributed.net" )==0 ) //old name
       {
       if ( tzdiff ) *tzdiff = 0;
@@ -111,8 +112,10 @@ static int IsHostnameDNetKeyserver( const char *hostname, int *tzdiff )
         {
         for (i=0;;i++)
           {
+          int xport = ((isdigit(buffer[i]))?(atoi(buffer+i)):(-1));
           if ((proxyzoi[pos].name[i] == 0) && ((buffer[i]=='.') || 
-                 atoi(buffer+i)==80 || atoi(buffer+i)==23))
+                 xport==80 || xport==23 || xport==2064 || 
+                 xport==3064 || xport==110 ))
             {
             if (tzdiff) *tzdiff = proxyzoi[pos].midzone * 60;
             return 1;
@@ -243,18 +246,18 @@ struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host order*/
 
 #elif defined(STUBIFY_ME) //ooookay...
 
-s32 Network::Resolve(const char * , u32 & )
+int Network::Resolve(const char * , u32 *, int )
 { return -1; }
 
 #elif defined(OLDRESOLVE)  //***** OLD ****
 
 // returns -1 on error, 0 on success
-s32 Network::Resolve(const char *host, u32 &hostaddress )
+int Network::Resolve(const char *host, u32 *hostaddress, int )
 {
 #if (CLIENT_OS == OS_MACOS)
-  if ((hostaddress = inet_addr((char*)host).s_addr) == 0xFFFFFFFFL)
+  if ((*hostaddress = inet_addr((char*)host).s_addr) == 0xFFFFFFFFL)
 #else
-  if ((hostaddress = inet_addr((char*)host)) == 0xFFFFFFFFL)
+  if ((*hostaddress = inet_addr((char*)host)) == 0xFFFFFFFFL)
 #endif
     {
     struct hostent *hp;
@@ -265,53 +268,60 @@ s32 Network::Resolve(const char *host, u32 &hostaddress )
     // randomly select one
     for (addrcount = 0; hp->h_addr_list[addrcount]; addrcount++);
     int index = rand() % addrcount;
-    memcpy((void*) &hostaddress, (void*) hp->h_addr_list[index], sizeof(u32));
+    memcpy((void*) hostaddress, (void*) hp->h_addr_list[index], sizeof(u32));
     }
   return 0;
 }
 
 #else
 
-s32 Network::Resolve(const char *host, u32 &hostaddress )
+int Network::Resolve(const char *host, u32 *hostaddress, int resport )
 {
   struct proxylist *plist;
   struct proxylist dummylist;
   u32 addrlist[64]; /* should be more than enough */
   unsigned int proxypos, maxaddr, addrpos, addrcount;
   struct hostent *hp;
-
-  int resport = lastport;            // as found in the network class
   int resauto = autofindkeyserver;
 
-  if ( !host || !*host )
-    {
-    host = "";
-    resauto = 1;
-    resport = 0; // ie default port
-    }
-#if (CLIENT_OS == OS_MACOS)
-  else if ( *host && ((hostaddress = inet_addr((char*)host).s_addr) != 0xFFFFFFFFL))
-#else
-  else if ( *host && ((hostaddress = inet_addr((char*)host)) != 0xFFFFFFFFL))
-#endif
+  if (!host || !*host)
+    return -1;
+
+  #if (CLIENT_OS == OS_MACOS)
+    *hostaddress = inet_addr((char*)host).s_addr;
+  #else
+    *hostaddress = inet_addr((char*)host);
+  #endif
+  if (*hostaddress != 0xFFFFFFFFL)
     return 0;
 
   #ifdef RESDEBUG
-    printf("host:=%s:%d autofindkeyserver=%d\n", host, (int)lastport, (int)resauto );
+    printf("host:=%s:%d autofindkeyserver=%d\n", host, (int)resport, (int)resauto );
   #endif
 
+  if ( resauto && !resport )
+    return -1;
+
   if ( resauto && (!*host || IsHostnameDNetKeyserver( host, NULL )))
+    {
     #ifdef RESDEBUGZONE
     plist = GetApplicableProxyList( resport, RESDEBUGZONE*60 ); 
     #else
     plist = GetApplicableProxyList( resport, calc_tzmins() ); 
     #endif
+    }
   else
     {
     dummylist.numproxies = 1;
     dummylist.proxies = &host;
     plist = &dummylist;
     }
+
+  #ifdef DEBUG
+  unsigned int i;
+  for (i=0;i<plist->numproxies;i++)
+    printf("%s resolved to %s\n", host, plist->proxies[i]);
+  #endif        
 
   addrcount = 0;
   for (proxypos = 0; (proxypos < (plist->numproxies)) &&
@@ -340,9 +350,9 @@ s32 Network::Resolve(const char *host, u32 &hostaddress )
   if (addrcount < 1)
     return -1;
   if (addrcount == 1)  
-    hostaddress = addrlist[0];
+    *hostaddress = addrlist[0];
   else
-    hostaddress = addrlist[rand() % addrcount];
+    *hostaddress = addrlist[rand() % addrcount];
 
   #ifdef RESDEBUG                                           
   printf(" total adds==%d  Selected add=%d.%d.%d.%d\n", //screw inet_ntoa()
