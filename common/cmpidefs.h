@@ -9,6 +9,9 @@
 */
 //  
 // $Log: cmpidefs.h,v $
+// Revision 1.16  1999/01/27 00:36:58  jlawson
+// added sys/types.h for riscos
+//
 // Revision 1.15  1999/01/19 12:49:28  patrick
 //
 // forgot to change define re: strings.h
@@ -104,6 +107,7 @@
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C" {
   #include <unixlib.h>
+  #include <sys/types.h>
   }
   #define strcmpi(x,y)  strcasecmp(x,y)
   #define strncmpi(x,y,n)  strncasecmp(x,y,n)
