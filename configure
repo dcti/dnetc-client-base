@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.27  1998/06/09 22:21:56  remi
+# Added testplat to the 'superclean' list
+#
 # Revision 1.26  1998/06/09 20:44:18  friedbait
 # -Icommon -Irc5 -Ides added to OS/390 options
 #
@@ -727,7 +730,7 @@ echo "clean:" >> Makefile
 echo "	rm -f \${ALLOBJS} ${EXENAME}" >> Makefile
 echo "" >> Makefile
 echo "superclean:	clean" >> Makefile
-echo "	rm -f Makefile buff-in.* buff-out.* *.ini" >> Makefile
+echo "	rm -f Makefile buff-in.* buff-out.* *.ini testplat" >> Makefile
 echo "	rm -f \`find . -name '*~' -printf %p\ \`" >> Makefile
 echo "" >> Makefile
 
