@@ -5,16 +5,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.14  1998/12/04 16:50:07  cyp
+// Non-interactive fetch automatically does a flush as well. Similarly,
+// a non-interactive flush will also top off the input buffer (if the client
+// is not in the process of shutting down).
+//
 // Revision 1.13  1998/12/01 19:49:14  cyp
-// Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
-// then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
-// are CORE_SUPPORTS_SMP, OS_SUPPORTS_SMP. If both CORE_* and OS_* support
-// SMP, then CLIENT_SUPPORTS_SMP is defined as well. This should keep thread
-// strangeness (as foxy encountered it) out of the picture. threadcd.h
-// (and threadcd.cpp) are no longer used, so those two can disappear as well.
-// Editorial note: The term "multi-threaded" is (and has always been)
-// virtually meaningless as far as the client is concerned. The phrase we
-// should be using is "SMP-aware".
+// Cleaned up MULT1THREAD #define. See cputypes.h log entry for details.
 //
 // Revision 1.12  1998/11/30 23:41:12  cyp
 // Probfill now handles blockcount limits; can resize the loaded problem
@@ -66,7 +63,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.13 1998/12/01 19:49:14 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.14 1998/12/04 16:50:07 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -595,10 +592,10 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
       {
-      if ( ((unsigned long)(inthreshold[cont_i])) < 
-         ((unsigned long)(load_problem_count)))
+      if ( ((unsigned long)(inthreshold[cont_i])) <
+         (((unsigned long)(load_problem_count))<<1))
         {
-        inthreshold[cont_i] = load_problem_count;
+        inthreshold[cont_i] = load_problem_count<<1;
         }
       }
     }
@@ -708,9 +705,9 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
       {
       long block_count = GetBufferCount( cont_i, 0, NULL );
       if (block_count >= 0 && block_count < ((long)(inthreshold[cont_i])))
-        bufupd_pending = BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH;
+        bufupd_pending = BUFFERUPDATE_FETCH;
       else if ((GetBufferCount( cont_i, 1, NULL ) > 0))
-        bufupd_pending = BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH;
+        bufupd_pending = BUFFERUPDATE_FLUSH;
       }    
     if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
       {
@@ -762,6 +759,10 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
   if (bufupd_pending)
     {
+    if ((bufupd_pending & BUFFERUPDATE_FETCH)!=0) // always flush while
+      bufupd_pending |= BUFFERUPDATE_FLUSH;      // fetching
+    else if (mode!=PROBFILL_UNLOADALL)           // if not ending the client
+      bufupd_pending |= BUFFERUPDATE_FETCH;      // try to fetch anyway.
     if ((bufupd_pending = BufferUpdate(bufupd_pending,0)) < 0)
       bufupd_pending = 0;
     }
