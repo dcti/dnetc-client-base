@@ -590,9 +590,18 @@ Commands that can be invoked from the command line only:
 
 -update       Combination of flush/fetch
 
--benchmark    Benchmarks the client's speed on the system.
+-benchmark        Benchmarks the client's RC5 and DES speed on the system.
 
--benchmark2   Performs a shorter and less accurate benchmark.
+-benchmarkrc5     Benchmarks only the RC5 core's speed
+
+-benchmarkdes     Benchmarks only the DES core's speed
+
+-benchmark2       Performs a shorter and less accurate benchmark
+                  on both RC5 and DES.
+
+-benchmark2rc5    Performs a shorter and less accurate RC5 benchmark.
+
+-benchmark2des    Performs a shorter and less accurate DES benchmark.
 
 -forceunlock <filename>
                 Unlocks the buffer file indicated by <filename>
