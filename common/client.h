@@ -573,20 +573,24 @@ public:
     //     3 = exit by time limit expiration
     //     4 = exit by block count expiration
 
-  s32  Fetch( u8 contest, Network *netin = NULL );
+  s32  Fetch( u8 contest, Network *netin = NULL, s32 quietness=0 );
     // fills up all of the input buffers
     // this is for sneakernet support amung other things
     // Returns: number of buffers received, negative if some error occured
+    // If quietness > 1, it will not display the proxymessage.
+    // in the future, 1 could make it not show # of blocks transferred
 
   s32  ForceFetch( u8 contest, Network *netin = NULL );
     // Like fetch, but keeps trying until done or until buffer size doesn't get bigger
     // Basically, ignores premature disconnection.
 
-  s32  Flush( u8 contest, Network *netin = NULL );
+  s32  Flush( u8 contest, Network *netin = NULL, s32 quietness=0 );
     // flushes out result buffers, useful when a SUCCESS happens
     // Also remove buffer file stub if done
     // this is for sneakernet support
     // Returns: number of buffers sent, negative if some error occured
+    // If quietness > 1, it will not display the proxymessage.
+    // in the future, 1 could make it not show # of blocks transferred
 
   s32  ForceFlush( u8 contest, Network *netin = NULL );
     // Like flush, but keeps trying until done or until buffer size doesn't get smaller
