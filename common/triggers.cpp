@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.6 1999/09/17 19:36:59 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.7 1999/09/22 03:06:43 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -43,31 +43,40 @@ struct trigstruct
 
 static struct 
 {
-  int isinit;
   int exitmsgwasseen;
   struct trigstruct exittrig;
   struct trigstruct pausetrig;
   struct trigstruct huptrig;
   char pausefilebuf[64];
   char exitfilebuf[64];
-} trigstatics = {0};
+} trigstatics;
+
+static void __assert_statics(void)
+{
+  static int initialized = -1;
+  if (initialized == -1)
+  {
+    memset( &trigstatics, 0, sizeof(trigstatics) );
+    initialized = +1;
+  }
+}
 
 // -----------------------------------------------------------------------
 
 int RaiseExitRequestTrigger(void) 
 { 
-  if (!trigstatics.isinit)
-    InitializeTriggers( NULL, NULL );
-  int oldstate = trigstatics.exittrig.trigger;
+  int oldstate;
+  __assert_statics();
+  oldstate = trigstatics.exittrig.trigger;
   trigstatics.exittrig.trigger = TRIGSETBY_INTERNAL;
   return (oldstate);
 }  
 
 int RaiseRestartRequestTrigger(void) 
 { 
-  if (!trigstatics.isinit)
-    InitializeTriggers( NULL, NULL );
-  int oldstate = trigstatics.huptrig.trigger;
+  int oldstate;
+  __assert_statics();
+  oldstate = trigstatics.huptrig.trigger;
   trigstatics.exittrig.trigger = TRIGSETBY_INTERNAL;
   trigstatics.huptrig.trigger = TRIGSETBY_INTERNAL;
   return (oldstate);
@@ -75,48 +84,50 @@ int RaiseRestartRequestTrigger(void)
 
 static int ClearRestartRequestTrigger(void) /* used internally */
 {
-  int oldstate = trigstatics.huptrig.trigger;
+  int oldstate;
+  __assert_statics();
+  oldstate = trigstatics.huptrig.trigger;
   trigstatics.huptrig.trigger = 0;
   return oldstate;
 }  
 
 int RaisePauseRequestTrigger(void) 
 { 
-  if (!trigstatics.isinit)
-    InitializeTriggers( NULL, NULL );
-  int oldstate = trigstatics.pausetrig.trigger;
+  int oldstate;
+  __assert_statics();
+  oldstate = trigstatics.pausetrig.trigger;
   trigstatics.pausetrig.trigger = TRIGSETBY_INTERNAL;
   return (oldstate);
 }  
 
 int ClearPauseRequestTrigger(void)
 {
-  if (!trigstatics.isinit)
-    InitializeTriggers( NULL, NULL );
-  else if ( trigstatics.pausetrig.flagfile && 
+  int oldstate;
+  __assert_statics();
+  if ( trigstatics.pausetrig.flagfile && 
     access( GetFullPathForFilename( trigstatics.pausetrig.flagfile ),0)==0)
     unlink( GetFullPathForFilename( trigstatics.pausetrig.flagfile ) );
-  int oldstate = trigstatics.pausetrig.trigger;
+  oldstate = trigstatics.pausetrig.trigger;
   trigstatics.pausetrig.trigger = 0;
   return oldstate;
 }  
 
 int CheckExitRequestTriggerNoIO(void) 
-{ return (trigstatics.exittrig.trigger); } 
+{ __assert_statics(); return (trigstatics.exittrig.trigger); } 
 int CheckPauseRequestTriggerNoIO(void) 
-{ return (trigstatics.pausetrig.trigger); }
+{ __assert_statics(); return (trigstatics.pausetrig.trigger); }
 int CheckRestartRequestTriggerNoIO(void) 
-{ return (trigstatics.huptrig.trigger); }
+{ __assert_statics(); return (trigstatics.huptrig.trigger); }
 int CheckRestartRequestTrigger(void) 
-{ return (trigstatics.huptrig.trigger); }
+{ __assert_statics(); return (trigstatics.huptrig.trigger); }
 
 // -----------------------------------------------------------------------
 
 void *RegisterPollDrivenBreakCheck( register void (*proc)(void) )
 {
-  if (!trigstatics.isinit)
-    InitializeTriggers( NULL, NULL );
-  register void (*oldproc)(void) = trigstatics.exittrig.pollproc;
+  register void (*oldproc)(void);
+  __assert_statics(); 
+  oldproc = trigstatics.exittrig.pollproc;
   trigstatics.exittrig.pollproc = proc;
   return (void *)oldproc;
 }
@@ -125,6 +136,7 @@ void *RegisterPollDrivenBreakCheck( register void (*proc)(void) )
 
 static void __PollExternalTrigger(struct trigstruct *trig, int undoable)
 {
+  __assert_statics(); 
   #if (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN32S)
   // we treat a running defrag as another flagfile (we need to ensure
   // that two 'external' type checks don't cancel each other out.)
@@ -178,8 +190,7 @@ static void __PollExternalTrigger(struct trigstruct *trig, int undoable)
 
 int CheckExitRequestTrigger(void) 
 {
-  if (!trigstatics.isinit)
-    InitializeTriggers( NULL, NULL );
+  __assert_statics(); 
   if (!trigstatics.exitmsgwasseen && !trigstatics.exittrig.incheck)
   {
     ++trigstatics.exittrig.incheck;
@@ -208,8 +219,7 @@ int CheckExitRequestTrigger(void)
 
 int CheckPauseRequestTrigger(void) 
 {
-  if (!trigstatics.isinit)
-    InitializeTriggers( NULL, NULL );
+  __assert_statics(); 
   if ( CheckExitRequestTrigger() )   //only check if not exiting
     return 0;
   if ( !trigstatics.pausetrig.incheck && 
@@ -226,27 +236,26 @@ int CheckPauseRequestTrigger(void)
 
 int DeinitializeTriggers(void)
 {
-  trigstatics.isinit=0;
-  int huptrig = trigstatics.huptrig.trigger;
+  int huptrig;
+  __assert_statics(); 
+  huptrig = trigstatics.huptrig.trigger;
+  /* clear everything to ensure we don't use IO after DeInit */
   memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
-  trigstatics.huptrig.trigger = huptrig;
-  return 0;
+  return huptrig;
 }  
 
 // -----------------------------------------------------------------------
 
 int InitializeTriggers( const char *exitfile, const char *pausefile )
 {
-  if (!trigstatics.isinit)
-  {
-    memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
-    trigstatics.isinit = 1;
-    trigstatics.exittrig.pollinterval.whenon = 0;
-    trigstatics.exittrig.pollinterval.whenoff = EXITFILE_CHECKTIME;
-    trigstatics.pausetrig.pollinterval.whenon = PAUSEFILE_CHECKTIME_WHENON;
-    trigstatics.pausetrig.pollinterval.whenoff = PAUSEFILE_CHECKTIME_WHENOFF;
-    CliSetupSignals();
-  }
+  __assert_statics(); 
+  memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
+  trigstatics.exittrig.pollinterval.whenon = 0;
+  trigstatics.exittrig.pollinterval.whenoff = EXITFILE_CHECKTIME;
+  trigstatics.pausetrig.pollinterval.whenon = PAUSEFILE_CHECKTIME_WHENON;
+  trigstatics.pausetrig.pollinterval.whenoff = PAUSEFILE_CHECKTIME_WHENOFF;
+  CliSetupSignals();
+
   if (exitfile)
   {
     trigstatics.exittrig.flagfile = NULL;
@@ -260,6 +269,7 @@ int InitializeTriggers( const char *exitfile, const char *pausefile )
     if (len > 0 && strcmp(trigstatics.exitfilebuf,"none")!=0)
       trigstatics.exittrig.flagfile = trigstatics.exitfilebuf;
   }
+
   if (pausefile)
   {
     trigstatics.pausetrig.flagfile = NULL;
@@ -278,7 +288,7 @@ int InitializeTriggers( const char *exitfile, const char *pausefile )
 
 // =======================================================================
 
-void __PollDrivenBreakCheck( void ) /* not static */
+static void __PollDrivenBreakCheck( void ) /* not static */
 {
   #if (CLIENT_OS == OS_RISCOS)
   if (_kernel_escape_seen())
@@ -306,6 +316,7 @@ extern "C" void __regargs __chkabort(void)
 #define CLISIGHANDLER_IS_SPECIAL
 void CliSetupSignals( void )
 {
+  __assert_statics(); 
   SetSignal(0L, SIGBREAKF_CTRL_C); // Clear the signal triggers
   RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
 }    
@@ -332,6 +343,8 @@ BOOL WINAPI CliSignalHandler(DWORD dwCtrlType)
 #define CLISIGHANDLER_IS_SPECIAL
 void CliSetupSignals( void ) 
 {
+  __assert_statics(); 
+  SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, FALSE );
   SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, TRUE );
 }
 #endif
@@ -342,7 +355,10 @@ void CliSetupSignals( void )
 // Mac framework code will raise requests by calling
 // RaiseExitRequestTrigger
 #define CLISIGHANDLER_IS_SPECIAL
-void CliSetupSignals( void ) {}
+void CliSetupSignals( void ) 
+{
+  __assert_statics(); 
+}
 #endif
 
 // -----------------------------------------------------------------------
@@ -387,6 +403,7 @@ extern "C" void CliSignalHandler( int sig )
 #ifndef CLISIGHANDLER_IS_SPECIAL
 void CliSetupSignals( void )
 {
+  __assert_statics(); 
   #if (CLIENT_OS == OS_SOLARIS)
   signal( SIGPIPE, SIG_IGN );
   #endif
