@@ -4,10 +4,11 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *projdata_cpp(void) {
-return "@(#)$Id: projdata.cpp,v 1.1 2002/10/06 19:25:44 andreasb Exp $"; }
+return "@(#)$Id: projdata.cpp,v 1.2 2002/10/13 08:09:46 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "projdata.h"
+#include "baseincs.h"
 
 
 static const struct ProjectInfo_t
