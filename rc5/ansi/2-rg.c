@@ -18,7 +18,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_rg_cpp (void) {
-return "@(#)$Id: 2-rg.c,v 1.4.2.2 1999/12/01 21:00:14 cyp Exp $"; }
+return "@(#)$Id: 2-rg.c,v 1.4.2.3 2000/02/08 21:57:36 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -53,8 +53,8 @@ return "@(#)$Id: 2-rg.c,v 1.4.2.2 1999/12/01 21:00:14 cyp Exp $"; }
  *	- all others
 */
 
-#define _P_RC5       0xB7E15163
-#define _Q       0x9E3779B9
+#define _P_RC5   0xB7E15163u
+#define _Q       0x9E3779B9u
 #define S_not(n) _P_RC5+_Q*n
 
 /* Round 1 macros */
@@ -328,8 +328,8 @@ u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice )
     /* "mangle-increment" the key number by the number of pipelines */
     /* (2 in this case) - didn't like to change the whole thing */
     #define key rc5unitwork->L0
-    key.hi = (key.hi + ( 2 << 24)) & 0xFFFFFFFF;
-    if (!(key.hi & 0xFF000000))
+    key.hi = (key.hi + ( 2 << 24)) & 0xFFFFFFFFu;
+    if (!(key.hi & 0xFF000000u))
     {
       key.hi = (key.hi + 0x00010000) & 0x00FFFFFF;
       if (!(key.hi & 0x00FF0000))
@@ -342,7 +342,7 @@ u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice )
           if (!(key.hi))
           {
             key.lo = key.lo + 0x01000000;
-            if (!(key.lo & 0xFF000000))
+            if (!(key.lo & 0xFF000000u))
             {
               key.lo = (key.lo + 0x00010000) & 0x00FFFFFF;
               if (!(key.lo & 0x00FF0000))
