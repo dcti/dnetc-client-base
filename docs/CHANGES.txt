@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.57 2004/04/02 21:58:13 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.58 2004/04/12 16:21:20 snikkel Exp $
 ==========================================================================
 
 2.9000
@@ -29,7 +29,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.57 2004/04/02 21:58:13 snikkel Exp
 2.9007-489  new: x86: new rc5-72 cores (#3265, #3398)
             fix: ppc: now detects 745/755 (G3) cpu under linux
             chg: x86: core preselection (#3477, #3580, #3602, #3621, #3625)
-            imp: x86: xbox cpu identification (#3593)
+            imp: x86: cpu identification (#3593, #3627)
             chg: x86-linux: new build style using uClibc
 
 2.9007-488  fix: macosx: Undefined symbol issue (10.1.5, #3578)

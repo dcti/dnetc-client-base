@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.48 2004/03/29 17:58:16 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.49 2004/04/12 16:21:19 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1284,6 +1284,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0xBF20, CPU_F_I686, 0x0B, "Xeon" },
           {  0xEF20, CPU_F_I686, 0x0B, "Mobile Pentium 4-M" },
           {  0xFF20, CPU_F_I686, 0x0B, "Mobile Celeron 4" },
+          {  0x0F30, CPU_F_I686, 0x0B, "Pentium 4" },
           {  0x0000, 0,               -1, NULL }
           }; internalxref = &intelxref[0];
       vendorname = "Intel"; 
@@ -2165,6 +2166,7 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
   else
   {
     static char namebuf[60];
+    long x86features;
     if (cpuid_s == NULL) cpuid_s = "*unknown*";
     if (*cpuid_s =='\0') cpuid_s = "???";
   #if (CLIENT_CPU == CPU_ARM)
@@ -2181,6 +2183,37 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     if (rawid != 0) /* if rawid == 0, then cpuid_s == "%04x:%04x" */
       sprintf( namebuf, "%04X:%04X\n\tname: ",(int)((rawid>>16)&0xffff),(int)(rawid&0xffff));
     strcat( namebuf, cpuid_s ); /* always valid */
+    strcat( namebuf, "\n\tfeatures: " );
+    x86features = GetProcessorFeatureFlags();
+    if (x86features & CPU_F_MMX) {
+      strcat( namebuf, "MMX " );
+    }
+    if (x86features & CPU_F_CYRIX_MMX_PLUS) {
+      strcat( namebuf, "Cyrix MMX+ " );
+    }
+    if (x86features & CPU_F_AMD_MMX_PLUS) {   
+      strcat( namebuf, "AMD MMX+ " );   
+    }
+    if (x86features & CPU_F_3DNOW) {   
+      strcat( namebuf, "3DNOW " );   
+    }
+    if (x86features & CPU_F_3DNOW_PLUS) {   
+      strcat( namebuf, "3DNOW+ " );   
+    }
+    if (x86features & CPU_F_SSE) {   
+      strcat( namebuf, "SSE " );   
+    }
+    if (x86features & CPU_F_SSE2) {   
+      strcat( namebuf, "SSE2 " );   
+    }
+    if (x86features & CPU_F_SSE3) {   
+      strcat( namebuf, "SSE3 " );   
+    }
+    if (x86features & CPU_F_HYPERTHREAD) {   
+      static char htbuf[60];
+      sprintf( htbuf, "Hyper-Threading (%ld)", x86htcount() );
+      strcat( namebuf, htbuf );   
+    }
   #else
     sprintf(namebuf, "%ld\n\tname: %s\n", rawid, cpuid_s );
   #endif
