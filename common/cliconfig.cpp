@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.192  1998/11/06 02:21:38  cyp
+// Fixed a missing return type for findmenuoption().
+//
 // Revision 1.191  1998/11/04 21:27:52  cyp
 // Removed redundant ::hidden option. ::quiet was always equal to ::hidden.
 //
@@ -258,7 +261,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.191 1998/11/04 21:27:52 cyp Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.192 1998/11/06 02:21:38 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -810,22 +813,19 @@ static int _IsHostnameDNetHost( const char * hostname )
       strcmpi(dot, ".distributed.net") == 0);
 }           
 
-static findmenuoption( s32 menu, s32 option)
+static s32 findmenuoption( s32 menu, s32 option)
     // Returns the id of the option that matches the menu and option
     // requested. Will return -1 if not found.
 {
-s32 returnvalue=-1;
-s32 temp;
+  int tpos;
 
-for (temp=0; temp < OPTION_COUNT; temp++)
-  {
-  if ((options[temp].optionscreen==menu) &&
-      (options[temp].menuposition==option))
-
-     returnvalue=temp;
-  };
-
-return returnvalue;
+  for (tpos=0; tpos < OPTION_COUNT; tpos++)
+    {
+    if ((options[tpos].optionscreen==menu) &&
+        (options[tpos].menuposition==option))
+      return (s32)tpos;
+    }
+  return -1;
 }
 
 // --------------------------------------------------------------------------
