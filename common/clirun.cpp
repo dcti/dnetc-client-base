@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.93 2001/03/26 17:49:52 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.94 2001/04/12 10:44:49 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -96,6 +96,7 @@ struct thread_param_block
   unsigned long thread_data2;
   struct __dyn_timeslice_struct *dyn_timeslice_table;
   struct __dyn_timeslice_struct rt_dyn_timeslice_table[CONTEST_COUNT];
+  struct { int ixes; int usecs; } dyn_timeslice_slide[CONTEST_COUNT];
   #if (CLIENT_OS == OS_NETWARE)
   int previous_was_sleep;
   #endif
@@ -502,54 +503,72 @@ void Go_mt( void * parm )
       /* fine tune the timeslice for the *next* round */
       if (optimal_timeslice != 0)
       {
+        /* Note: if running on a non-preemptive OS, ogr.cpp must have been
+        ** modified such that OGROPT_IGNORE_TIME_CONSTRAINT_ARG is undefined!
+        */
         //if (contest_i != OGR) // OGR makes dynamic timeslicing go crazy!
+        {
           optimal_timeslice = thisprob->pub_data.tslice; /* get the number done back */
-
+        }
         if (run == RESULT_WORKING) /* timeslice/time is invalid otherwise */
         {
           if (runtime_usec != 0xfffffffful) /* not negative time or other bad thing */
           {
-#ifdef HAVE_I64
-/* This calculates the optimal timeslice based on a sliding average of the
- * reached rate. It reacts slower than the normal algorithm below, but has
- * the advantage that it reaches a stable point.
- */
+            #ifdef HAVE_I64
+            if (contest_i == OGR)    
             {
-              static int ixes=0, usecs=0;
-
-              ixes=(ixes*15+thisprob->pub_data.tslice)/16;
-              usecs=(usecs*15+runtime_usec)/16;
-
-              /*if(usecs!=0)
-                printf("%5d %4d\r", thisprob->pub_data.tslice, ixes*1000/usecs);
+              /* This calculates the optimal timeslice based on a sliding 
+              ** average of the reached rate. It reacts slower than the 
+              ** normal algorithm below, but has the advantage that it reaches 
+              ** a stable point.
               */
+              int ixes = thrparams->dyn_timeslice_slide[contest_i].ixes;
+              int usecs = thrparams->dyn_timeslice_slide[contest_i].usecs;
 
-              optimal_timeslice=(unsigned long)
-                                ((ui64)thrparams->dyn_timeslice_table[contest_i].usec
-                                 *ixes/usecs);
-              if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
-                optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
-              if (optimal_timeslice > thrparams->dyn_timeslice_table[contest_i].max)
-                optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].max;
-            }
-#else
-            unsigned int usec5perc = (thrparams->dyn_timeslice_table[contest_i].usec / 20);
-            if (runtime_usec < (thrparams->dyn_timeslice_table[contest_i].usec - usec5perc))
-            {
-              optimal_timeslice <<= 1;
-              if (optimal_timeslice > thrparams->dyn_timeslice_table[contest_i].max)
-                optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].max;
-            }
-            else if (runtime_usec > (thrparams->dyn_timeslice_table[contest_i].usec + usec5perc))
-            {
-              optimal_timeslice -= (optimal_timeslice>>2);
-              if (is_non_preemptive_cruncher)
-                optimal_timeslice >>= 2; /* fall fast, rise slow(er) */
-              if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
-                optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
-            }
+              ixes = (ixes*15 + thisprob->pub_data.tslice)/16;
+              usecs = (usecs*15 + runtime_usec)/16;
 
-#endif
+              if (usecs)
+              {
+                /*if(usecs!=0)
+                  printf("%5d %4d\r", thisprob->pub_data.tslice, ixes*1000/usecs);
+                */
+                #define TS_MULDIV(__muld,__mulr,__divr) \
+                  (unsigned long)((((ui64)(__muld)) * ((ui64)(__mulr))) / \
+                                 ((unsigned long)(__divr)))
+
+                optimal_timeslice = TS_MULDIV(
+                                thrparams->dyn_timeslice_table[contest_i].usec,
+                                ixes, usecs );
+
+                if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
+                  optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
+                if (optimal_timeslice > thrparams->dyn_timeslice_table[contest_i].max)
+                optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].max;
+
+                thrparams->dyn_timeslice_slide[contest_i].ixes = ixes;
+                thrparams->dyn_timeslice_slide[contest_i].usecs = usecs;
+              }
+            }
+            else
+            #endif
+            {
+              unsigned int usec5perc = (thrparams->dyn_timeslice_table[contest_i].usec / 20);
+              if (runtime_usec < (thrparams->dyn_timeslice_table[contest_i].usec - usec5perc))
+              {
+                optimal_timeslice <<= 1;
+                if (optimal_timeslice > thrparams->dyn_timeslice_table[contest_i].max)
+                  optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].max;
+              }
+              else if (runtime_usec > (thrparams->dyn_timeslice_table[contest_i].usec + usec5perc))
+              {
+                optimal_timeslice -= (optimal_timeslice>>2);
+                if (is_non_preemptive_cruncher)
+                  optimal_timeslice >>= 2; /* fall fast, rise slow(er) */
+                if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
+                  optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
+              }
+            } 
             thisprob->pub_data.tslice = optimal_timeslice; /* for the next round */
           }
         }
@@ -1484,12 +1503,12 @@ int ClientRun( Client *client )
               if (GetFileServerMajorVersionNumber() >= 4) /* just guess */
               {
                 long det_type = (GetProcessorType(1) & 0xff);
-                if (det_type > 0x0A) /* not what we know about */
-                  ConsolePrintf("\rDNETC: unknown CPU type for quantum selection in "__FILE__").\r\n");
-                if (det_type==0x02 || det_type==0x07 || det_type==0x09)
-                  quantum = 500; /* 256 PII/PIII || Celeron-A || AMD-K7 */
+                //if (det_type > 0x0A) /* not what we know about */
+                //  ConsolePrintf("\rDNETC: unknown CPU type for quantum selection in "__FILE__").\r\n");
+                if (det_type==0x02 || det_type==0x07 || det_type==0x09 || det_type == 0x0B)
+                  quantum = 250; /* 250 PII/PIII || Celeron-A || AMD-K7 || P4 */
                 else /* the rest */
-                  quantum = 250; /* 100 */
+                  quantum = 100; /* 100 */
               }
               #endif
               if (client->priority >= 0 && client->priority <= 9)
