@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.20 2004/01/24 07:20:31 bdragon Exp $
+ * $Id: ogr.cpp,v 1.2.4.21 2004/02/14 14:18:01 kakace Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -3167,7 +3167,16 @@ static int ogr_create_pass2(void *input, int inputlen, void *state,
   ** OGR already handled all stubs upto (and including) length 70, so the
   ** starting point must be higher.
   */
-
+#if 1
+  #pragma warning OGR-20-P2 (test case) is enabled
+  if (workstub->stub.marks == 20 && workstub->stub.length < 4) {
+    if (minpos <= 20 || minpos > OGR[20-1] - OGR[(20-2) - workstub->stub.length]) {
+      return CORE_E_FORMAT;         // Too low.
+    }
+    finalization_stub = 1;
+  }
+  else
+#endif
   if (workstub->stub.marks == 24 && workstub->stub.length < 5) {
     if (minpos <= 70 || minpos > OGR[24-1] - OGR[(24-2) - workstub->stub.length]) {
       return CORE_E_FORMAT;         // Too low.
