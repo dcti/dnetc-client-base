@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.68 2000/01/08 23:36:07 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.69 2000/01/09 20:32:39 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -111,7 +111,7 @@ int InitializeConsole(int runhidden,int doingmodes)
     {
       #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
         constatics.conisatty = w32ConIsScreen();
-      #elif (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_MACOS)
+      #elif (CLIENT_OS == OS_RISCOS)
         constatics.conisatty = 1;
       #else
         constatics.conisatty = (isatty(fileno(stdout)));
@@ -325,6 +325,9 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       #elif (CLIENT_OS == OS_MACOS)
       {
         ch = getch();
+        #if (CLIENT_CPU == CPU_68K)
+        ch = (ch & 0x000000ff);
+        #endif
         if (ch == 3) ch = 13; /* In MacOS its common that "enter" equals "return". */
       }
       #else

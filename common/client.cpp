@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.241 2000/01/08 23:36:04 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.242 2000/01/09 20:32:38 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -115,6 +115,12 @@ void ResetClientData(Client *client)
 
 // --------------------------------------------------------------------------
 
+static int numcpusinuse = -1; /* *real* count */
+void ClientSetNumberOfProcessorsInUse(int num) /* from probfill.cpp */
+{
+  numcpusinuse = num;
+}
+
 int ClientGetInThreshold(Client *client, int contestid, int force)
 {
   int thresh = BUFTHRESHOLD_DEFAULT;
@@ -130,21 +136,39 @@ int ClientGetInThreshold(Client *client, int contestid, int force)
       /* use time limit */
       thresh = BUFTHRESHOLD_DEFAULT; /* default (if time is also zero) */
       if (client->timethreshold[contestid] > 0) /* use time */
-      {	
-        unsigned int sec; int proc;
-        /* - note that we do not use client->numcpu here: If MP isn't supported */
-        /* then numcpu is 1 anyway. And, yes, the client _does_ assume that */
-        /* GetNumberOfDetectedProcessors() works for clients that support MP */
+      { 
+        unsigned int sec; int proc, numcrunchers;
+        /* we need the correct number of cpus _used_ for time estimates */
+        /* but need the correct number of _crunchers_ for thresh */
         proc = GetNumberOfDetectedProcessors();
-        if (proc <= 0)
+        if (proc < 1)
           proc = 1;
-	thresh = proc; /* Just make sure we have one unit for each CPU */
-	               /* for outthresh we'd set it to _MAX (don't connect) */
+        numcrunchers = client->numcpu;
+        if (numcrunchers < 0)
+          numcrunchers = proc;
+        else if (numcrunchers == 0) /* force non-threaded */
+          numcrunchers = 1;
+        if (numcrunchers < proc) /* get number of cpus _used_ */
+          proc = numcrunchers;
+        if (numcpusinuse >= 1) /* we have a 'good' number here */
+          proc = numcpusinuse;
 
         // get the speed
         sec = CliGetContestWorkUnitSpeed(contestid, force);
+              thresh = 0; /* fall into next 'if .. ' should secs be zero */
         if (sec != 0) /* we have a rate */
           thresh = 1 + (client->timethreshold[contestid] * 3600 * proc/sec);
+        if (numcrunchers > thresh) /* make sure we have one unit for each */
+        {                        
+          thresh = numcrunchers; 
+          /* this is not kosher since thresh is in workunits and 
+             numcrunchers == packets. Although the loader will
+             get more data (thresh units per connect) as needed, it
+             also means repeated connects/disconnects.
+          */
+          if (contestid != OGR)  /* HACK ALERT */
+            thresh *= 4; /* assume 4:1 workunit:packet ratio */
+        }
       }  
     }  
   }    
@@ -170,7 +194,7 @@ int ClientGetOutThreshold(Client *client, int contestid, int /* force */)
       /* (allow split personality: intresh=time,outthres=workunits) */
       if (inthresh > 0 && outthresh > inthresh)
         outthresh = inthresh;
-    }	
+    }   
   }    
   /* if outthreshold is greater than max, cap it */
   if (outthresh > BUFTHRESHOLD_MAX)
@@ -394,6 +418,7 @@ static int ClientMain( int argc, char *argv[] )
             TRACE_OUT((+1,"initcoretable\n"));
             InitializeCoreTable( &(client->coretypes[0]) );
             TRACE_OUT((-1,"initcoretable\n"));
+            ClientSetNumberOfProcessorsInUse(-1); /* reset */
 
             if (domodes)
             {
@@ -413,6 +438,7 @@ static int ClientMain( int argc, char *argv[] )
               restart = CheckRestartRequestTrigger();
             }
 
+            ClientSetNumberOfProcessorsInUse(-1); /* reset */
             TRACE_OUT((0,"deinit coretable\n"));
             DeinitializeCoreTable();
             #ifdef LURK
@@ -445,11 +471,10 @@ static int ClientMain( int argc, char *argv[] )
 #if (CLIENT_OS == OS_MACOS)
 int main( void )
 {
-  extern void MacInitToolbox(void);
   char *argv[2]; 
   ((const char **)argv)[0] = utilGetAppName();
   argv[1] = (char *)0;
-  MacInitToolbox();
+  macosInitialize();
   ClientMain(1,argv);
   return 0;
 }

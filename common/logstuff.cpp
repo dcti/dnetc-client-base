@@ -11,7 +11,7 @@
  * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.47 2000/01/09 01:36:35 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.48 2000/01/09 20:32:39 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -51,7 +51,7 @@ return "@(#)$Id: logstuff.cpp,v 1.47 2000/01/09 01:36:35 cyp Exp $"; }
      CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
      CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN32S )
   #define ftruncate( fd, sz )  chsize( fd, sz )
-#elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_AMIGAOS || CLIENT_OS == OS_MACOS)
+#elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_AMIGAOS)
   #define ftruncate( fd, sz ) //nada, not supported
   #define FTRUNCATE_NOT_SUPPORTED
 #endif  
