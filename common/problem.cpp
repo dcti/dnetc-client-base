@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.108.2.6 2001/03/22 22:39:52 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.108.2.7 2001/03/22 22:41:24 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1942,7 +1942,7 @@ const char *ProblemComputeRate( unsigned int contestid,
   if (ratelo) *ratelo = lo;
   if (ratebuf && ratebufsz)
   {
-    __u64stringify( ratebuf, ratebufsz, hi, lo, 2, CliGetContestUnitFromID(contestid) );
+    U64stringify( ratebuf, ratebufsz, hi, lo, 2, CliGetContestUnitFromID(contestid) );
   }
   TRACE_U64OPS((-1,"ProblemComputeRate() => %u:%u\n",hi,lo));
   return ratebuf;
@@ -2261,7 +2261,9 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, u32 flags)
 
         if (flags & (P_INFO_RATE | P_INFO_RATEBUF))
         {
-          int _ratebuf = 0, _ratebufsz = 0;
+          char * _ratebuf = 0;
+          u32 _ratebufsz = 0;
+          
           if(flags & P_INFO_RATEBUF)
           {
             _ratebuf = info->ratebuf;
