@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.3  1998/08/03 19:37:51  jlawson
+// changed order of "static" to eliminate gcc warning
+//
 // Revision 1.2  1998/07/26 13:20:51  cyruspatel
 // Fixed a signed vs unsigned comparison.
 //
@@ -17,7 +20,7 @@
 #endif
 
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.2 1998/07/26 13:20:51 cyruspatel Exp $";
+return "@(#)$Id: netres.cpp,v 1.3 1998/08/03 19:37:51 jlawson Exp $";
 }
 
 //---------------------------------------------------------------------
@@ -43,7 +46,7 @@ return "@(#)$Id: netres.cpp,v 1.2 1998/07/26 13:20:51 cyruspatel Exp $";
 //------------------------------------------------------------------------
 
 #ifndef OLDRESOLVE
-const static struct        // this structure defines which proxies are 
+static const struct        // this structure defines which proxies are 
 {                          // 'responsible' for which time zone. The 
   const char *name;        // timezones overlap, and users in an overlapped
   int minzone;             // area will have 2 (or more) proxies at their
