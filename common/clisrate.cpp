@@ -6,6 +6,11 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.24  1998/07/10 20:56:59  cyruspatel
+// The summary line creation code now generates the keyrate as a factor of
+// 1000, and uses the saved space to write "kkeys/sec" instead of "k/s".
+// This also works around a potential line-wrap problem.
+//
 // Revision 1.23  1998/07/09 21:09:45  friedbait
 // added some simple logic to display keyrates like: [657,661.45 k/s]
 // which means I have added a number separater ',' to separate groups
@@ -103,7 +108,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-static const char *id="@(#)$Id: clisrate.cpp,v 1.23 1998/07/09 21:09:45 friedbait Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.24 1998/07/10 20:56:59 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -138,7 +143,7 @@ return id; }
  *
  */
 
-char *num_sep(char *number)
+static char *num_sep(char *number)
 {
 
     #define STR_LEN 32
@@ -183,7 +188,7 @@ char *num_sep(char *number)
 
 // returns keyrate as string (len<=26) "nnnn.nn ['K'|'M'|'G'|'T']"
 // return value is a pointer to buffer.
-char *CliGetKeyrateAsString( char *buffer, double rate )
+static char *__CliGetKeyrateAsString( char *buffer, double rate, u32 limit )
 {
   if (rate<=((double)(0)))  // unfinished (-2) or error (-1) or impossible (0)
     strcpy( buffer, "---.-- " );
@@ -191,7 +196,7 @@ char *CliGetKeyrateAsString( char *buffer, double rate )
   {
     unsigned int t1, t2 = 0;
     const char *t3[]={"","k","M","G","T"}; // "", "kilo", "mega", "giga", "tera"
-    while (t2<=5 && (((double)(rate))>((double)(_U32LimitDouble_))) )
+    while (t2<=5 && (((double)(rate))>=((double)(limit))) )
     {
       t2++;
       rate=((double)(rate))/((double)(1000));
@@ -206,12 +211,19 @@ char *CliGetKeyrateAsString( char *buffer, double rate )
          t3[t2] );
     }
   }
-  return num_sep(buffer);
+  return buffer;
+}
+
+// returns keyrate as string (len<=26) "nnnn.nn ['k'|'M'|'G'|'T']"
+// return value is a pointer to buffer.
+char *CliGetKeyrateAsString( char *buffer, double rate )
+{ 
+  return (num_sep(__CliGetKeyrateAsString( buffer, rate, _U32LimitDouble_ )));
 }
 
 // ---------------------------------------------------------------------------
 
-// "4 RC5 blocks 12:34:56.78 - [123456789 k/s]" !!!DONT MAKE IT keys/s!!!
+// "4 RC5 blocks 12:34:56.78 - [234.56 Kkeys/s]" 
 const char *CliGetSummaryStringForContest( int contestid )
 {
   static char str[70];
@@ -223,8 +235,9 @@ const char *CliGetSummaryStringForContest( int contestid )
   if ( CliIsContestIDValid( contestid ) ) //clicdata.cpp
   {
     CliGetContestInfoBaseData( contestid, &name, NULL ); //clicdata.cpp
-    keyrateP=CliGetKeyrateAsString(keyrate,CliGetKeyrateForContest(contestid));
     CliGetContestInfoSummaryData( contestid, &blocks, NULL, &ttime ); //ditto
+    keyrateP=__CliGetKeyrateAsString(keyrate,
+          CliGetKeyrateForContest(contestid),1000);
   }
   else
   {
@@ -235,7 +248,7 @@ const char *CliGetSummaryStringForContest( int contestid )
     keyrateP = "---.-- ";
   }
 
-  sprintf(str, "%d %s block%s %s%c- [%sk/s]", //!!!DON'T MAKE IT longer!
+  sprintf(str, "%d %s block%s %s%c- [%skeys/s]", 
        blocks, name, ((blocks==1)?(""):("s")),
        CliGetTimeString( &ttime, 2 ), ((!blocks)?(0):(' ')), keyrateP );
   return str;
