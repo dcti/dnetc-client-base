@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.35 2002/10/15 22:46:03 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.36 2002/10/17 02:29:08 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -1223,7 +1223,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
     {
       int fetchable = 1, flushable = 1;
       int proj_state = client->project_state[projectid];
-      TRACE_OUT((0,"proj_flags[cont_i=%d] = 0x%x\n", cont_i, proj_flags));
+      TRACE_OUT((0,"proj_state[projectid=%d] = 0x%x\n", projectid, proj_state));
 
       if (!ignore_closed_flags && 
          (proj_state & (PROJECTSTATE_CLOSED|PROJECTSTATE_SUSPENDED)) != 0)
@@ -1280,7 +1280,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
         }
       }	  
 
-      TRACE_OUT((0,"contest %d, fetchable=%d flushable=%d\n", cont_i, fetchable, flushable));
+      TRACE_OUT((0,"project %d, fetchable=%d flushable=%d\n", projectid, fetchable, flushable));
       if (check_flush && !need_flush && flushable)
       {
         if (GetBufferCount( client, projectid, 1 /* use_out_file */, NULL ) > 0)
@@ -1289,7 +1289,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
           if (either_or)    /* either criterion satisfied ... */
             need_fetch = 1; /* ... fullfills both criteria */
         }    
-        TRACE_OUT((0,"1. contest %d, need_flush = %d need_fetch = %d\n", cont_i, need_flush, need_fetch));
+        TRACE_OUT((0,"1. project %d, need_flush = %d need_fetch = %d\n", projectid, need_flush, need_fetch));
       }      
       if (check_fetch && !need_fetch && fetchable)
       {
@@ -1313,7 +1313,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
         }      
         if (need_fetch && either_or) /* either criterion satisfied ... */
           need_flush = 1;            /* ... fulfills both criteria */
-        TRACE_OUT((0,"2. contest %d, need_flush = %d need_fetch = %d\n", cont_i, need_flush, need_fetch));
+        TRACE_OUT((0,"2. project %d, need_flush = %d need_fetch = %d\n", projectid, need_flush, need_fetch));
       }
       if (need_flush && need_fetch)
         break;

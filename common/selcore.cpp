@@ -11,7 +11,9 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.99 2002/10/16 23:49:33 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.100 2002/10/17 02:29:08 andreasb Exp $"; }
+
+//#define TRACE
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -25,6 +27,7 @@ return "@(#)$Id: selcore.cpp,v 1.99 2002/10/16 23:49:33 andreasb Exp $"; }
 #include "selcore.h"   // keep prototypes in sync
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
+#include "util.h"      // TRACE_OUT
 #if (CLIENT_OS == OS_AIX) // needs signal handler
   #include <sys/signal.h>
   #include <setjmp.h>
@@ -756,6 +759,7 @@ long selcoreSelfTest( unsigned int cont_i, int corenum)
 /* this is called from Problem::LoadState() */
 int selcoreGetSelectedCoreForContest( unsigned int contestid )
 {
+  TRACE_OUT((0, "selcoreGetSelectedCoreForContest project=%d\n", contestid));
   int corename_printed = 0;
   static long detected_type = -123;
   const char *contname = CliGetContestNameFromID(contestid);
@@ -772,6 +776,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   if (selcorestatics.corenum[contestid] >= 0) /* already selected one? */
     return selcorestatics.corenum[contestid];
 
+  TRACE_OUT((+1, "selcoreGetSelectedCoreForContest project=%d\n", contestid));
   if (detected_type == -123) /* haven't autodetected yet? */
   {
     int quietly = 1;
@@ -788,11 +793,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       detected_type = -1;
   }
 
-  // While no core benchmark data is available, run microbenchs for every target
-  if (contestid == RC5_72)
-    selcorestatics.corenum[RC5_72] =  selcorestatics.user_cputype[RC5_72];
-  
-  // PROJECT_NOT_HANDLED("you may add your pre-selected core depending on arch and cpu here")
+  // PROJECT_NOT_HANDLED("you may add your pre-selected core depending on arch
+  //  and cpu here, but leaving the defaults (runs micro-benchmark) is ok")
   #if (CLIENT_CPU == CPU_ALPHA)
   if (contestid == RC5 || contestid == DES) /* old style */
   {
@@ -1161,11 +1163,14 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   }
   #endif
 
+  TRACE_OUT((0, "cpu/arch preselection done: %d\n", selcorestatics.corenum[contestid]));
+
   if (selcorestatics.corenum[contestid] < 0)
     selcorestatics.corenum[contestid] = selcorestatics.user_cputype[contestid];
 
   if (selcorestatics.corenum[contestid] < 0) /* ok, bench it then */
   {
+    TRACE_OUT((0, "do benchmark\n"));
     int corecount = (int)__corecount_for_contest(contestid);
     selcorestatics.corenum[contestid] = 0;
     if (corecount > 0)
@@ -1238,6 +1243,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     selcorestatics.corenum[contestid] = override;
   }  
 
+  TRACE_OUT((-1, "selcoreGetSelectedCoreForContest(%d) => %d\n", contestid, selcorestatics.corenum[contestid]));
   return selcorestatics.corenum[contestid];
 }
 

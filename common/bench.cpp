@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.54 2002/09/15 21:45:49 andreasb Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.55 2002/10/17 02:29:08 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -56,6 +56,7 @@ unsigned long BenchGetBestRate(unsigned int contestid)
 
 static inline void __BenchSetBestRate(unsigned int contestid, unsigned long rate)
 {
+  TRACE_OUT((0, "__BenchSetBestRate(%d, %ld)\n", contestid, rate));
   if (contestid < CONTEST_COUNT)
   { 
     if (rate > bestrate_tab[contestid])

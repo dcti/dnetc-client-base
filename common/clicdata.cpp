@@ -12,13 +12,16 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.33 2002/10/06 19:57:12 andreasb Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.34 2002/10/17 02:29:08 andreasb Exp $"; }
+
+//#define TRACE
 
 #include "baseincs.h" // for timeval
 #include "projdata.h" // general project data: ids, flags, states; names, ...
 #include "clitime.h"  // required for CliTimerDiff() and CliClock()
 #include "bench.h"    // for TBenchmark
 #include "selcore.h"  // for selcoreGetSelectedCoreForContest()
+#include "util.h"     // TRACE_OUT
 
 /* ------------------------------------------------------------------------ */
 
@@ -98,6 +101,7 @@ int CliGetContestIDFromName( char *name )
 // rate if no work on this contest has been completed yet.
 int CliGetContestWorkUnitSpeed( int contestid, int force, int *was_forced)
 {
+  TRACE_OUT((+1, "CliGetContestWorkUnitSpeed project=%d force=%d\n", contestid, force));
   struct contestInfo *conInfo =
                        __internalCliGetContestInfoVectorForID( contestid );
   if (conInfo)
@@ -115,8 +119,10 @@ int CliGetContestWorkUnitSpeed( int contestid, int force, int *was_forced)
     }
     if (was_forced) /* ever (besttime was via benchmark) */
       *was_forced = conInfo->BestTimeWasForced;
+    TRACE_OUT((-1, "CliGetContestWorkUnitSpeed => %d\n", conInfo->BestTime));
     return conInfo->BestTime;
   }
+  TRACE_OUT((-1, "CliGetContestWorkUnitSpeed => 0\n"));
   return 0;  
 }
 

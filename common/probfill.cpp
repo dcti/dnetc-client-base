@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.86 2002/10/16 23:49:33 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.87 2002/10/17 02:29:08 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -85,6 +85,7 @@ static unsigned int __get_thresh_secs(Client *client, int contestid,
                                       int force, unsigned int stats_units,
                                       unsigned int *numcrunchersP)
 {
+  TRACE_OUT((+1, "__get_thresh_secs project=%d force=%d stats_units=%d\n", contestid, force, stats_units));
   int was_forced; unsigned int sec;
 
   /* somebody keeps freaking playing with client->numcpu dependancy */
@@ -116,6 +117,7 @@ static unsigned int __get_thresh_secs(Client *client, int contestid,
     else             /* get number of stats units per day */
       sec = (100 * 24 * 3600 * divx) / sec; 
   }
+  TRACE_OUT((-1, "__get_thresh_secs => %d\n", sec));
   return sec;
 }
 
@@ -203,6 +205,7 @@ int ProbfillCacheBufferCounts( Client *client,
 unsigned int ClientGetInThreshold(Client *client, 
                                   int contestid, int force )
 {
+  TRACE_OUT((+1,"ClientGetInThreshold project=%d force=%d\n", contestid, force));
   // If inthreshold is == 0, then use time threshold.
   // If inthreshold is == 0, AND time is 0, then use BUFTHRESHOLD_DEFAULT
   // If inthreshold > 0 AND time > 0, then use MAX(inthreshold, effective_workunits(time))
@@ -220,6 +223,7 @@ unsigned int ClientGetInThreshold(Client *client,
   if (client->inthreshold[contestid] > 0)
   {
     bufthresh = client->inthreshold[contestid] * 100;
+    TRACE_OUT((0, "inthreshold[contestid] = %d\n", bufthresh));
   }
   if (client->timethreshold[contestid] > 0) /* use time */
   {
@@ -230,6 +234,7 @@ unsigned int ClientGetInThreshold(Client *client,
       timethresh = 1 + (client->timethreshold[contestid] * secs / 24);
     if (timethresh > bufthresh)
       bufthresh = timethresh;
+    TRACE_OUT((0, "timethresh = %d   bufthresh = %d\n", timethresh, bufthresh));
   }
   if (numcrunchers < 1) /* undetermined */
   {
@@ -246,6 +251,7 @@ unsigned int ClientGetInThreshold(Client *client,
     bufthresh = numcrunchers * 100;
   }
   buffer_counts[contestid].threshold = bufthresh;  
+  TRACE_OUT((-1,"ClientGetInThreshold => %d\n", bufthresh));
   return bufthresh;
 }
 
