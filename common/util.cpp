@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.11 2000/02/04 08:29:59 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.12 2000/02/04 20:30:58 ctate Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -607,12 +607,15 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
   {
     #if (CLIENT_OS == OS_BEOS)
     {
-      team_info tInfo;
-      int32 ourteam = xxx /* fix me! ourteam == ourselves */
-      int32 team = 0;
+      thread_info thisThread;
+      get_thread_info(find_thread(NULL), &thisThread);
+      team_id ourteam = thisThread.team;
+
       /* procname is either a basename or a full path; determine which */
       int usefullpathcmp = (strchr( procname, '/' ) != ((char *)0));
   
+      team_info tInfo;
+      int32 team = 0;
       while (get_next_team_info(&team, &tInfo) == B_OK)
       {
         if (num_found < 0) /* our scanner is working */
