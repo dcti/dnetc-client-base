@@ -20,7 +20,7 @@
 
 //#define DEBUG
 
-static char *id="@(#)$Id: des-slice-ultrasparc.cpp,v 1.4 1999/12/07 23:44:26 cyp Exp $";
+static char *id="@(#)$Id: des-slice-ultrasparc.cpp,v 1.5 1999/12/07 23:58:01 cyp Exp $";
 
 typedef unsigned long long base_slice_type;
 
@@ -41,8 +41,8 @@ extern "C" base_slice_type whack16 (
 
 // rc5unitwork.LO in lo:hi 24+32 incrementable format
 
-u32 des_unit_func_ultrasparc( RC5UnitWork * rc5unitwork, 
-                              u32 *iterations, char * /*coremem*/ )
+u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, 
+                         u32 *iterations, char * /*coremem*/ )
 {
     base_slice_type key[56];
     base_slice_type plain[64];
