@@ -12,6 +12,10 @@
 //
 //
 // $Log: clicdata.cpp,v $
+// Revision 1.15  1999/02/20 02:58:07  gregh
+// Added OGR contest data, plus routines to translate between client contest
+// IDs and proxy contest IDs.
+//
 // Revision 1.14  1999/01/29 19:05:08  jlawson
 // fixed formatting.
 //
@@ -59,11 +63,12 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.14 1999/01/29 19:05:08 jlawson Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.15 1999/02/20 02:58:07 gregh Exp $"; }
 #endif
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
+#include "client.h" // for IDCONTEST_*
 
 // ---------------------------------------------------------------------------
 
@@ -71,15 +76,17 @@ static struct contestInfo
 {
   const char *ContestName;
   int ContestID;
+  int ProxyContestID;
   unsigned int Iter2KeyFactor; /* by how much must iterations/keysdone
                         be multiplied to get the number of keys checked. */
   unsigned int BlocksDone;
   double IterDone;
   struct timeval TimeDone;
   struct timeval TimeStart;
-} conStats[] = {  { "RC5", 0, 1, 0, 0, {0,0}, {0,0} },
-                  { "DES", 1, 2, 0, 0, {0,0}, {0,0} },
-                  {  NULL,-1, 0, 0, 0, {0,0}, {0,0} }  };
+} conStats[] = {  { "RC5", 0, IDCONTEST_RC564, 1, 0, 0, {0,0}, {0,0} },
+                  { "DES", 1, IDCONTEST_DESII, 2, 0, 0, {0,0}, {0,0} },
+                  { "OGR", 2, IDCONTEST_OGR, 1, 0, 0, {0,0}, {0,0} },
+                  {  NULL,-1, -1, 0, 0, 0, {0,0}, {0,0} }  };
 
 // ---------------------------------------------------------------------------
 
@@ -226,3 +233,26 @@ const char *CliGetContestNameFromID(int contestid)
 
 // ---------------------------------------------------------------------------
 
+// Return the corresponding contest ID that the proxy will understand.
+int CliGetContestProxyIDFromID(int contestid)
+{
+  struct contestInfo *conInfo =
+                     __internalCliGetContestInfoVectorForID( contestid );
+  if (conInfo)
+    return conInfo->ProxyContestID;
+  return -1;
+}
+
+// ---------------------------------------------------------------------------
+
+// Return the contest id for a given proxy contest id.
+int CliGetContestIDFromProxyID(int proxycontestid)
+{
+  for (int i = 0; conStats[i].ContestName != NULL; i++)
+  {
+    if (conStats[i].ProxyContestID == proxycontestid) {
+      return i;
+    }
+  }
+  return -1;
+}

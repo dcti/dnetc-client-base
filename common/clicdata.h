@@ -13,6 +13,10 @@
 // ----------------------------------------------------------------------
 //
 // $Log: clicdata.h,v $
+// Revision 1.16  1999/02/20 02:58:07  gregh
+// Added OGR contest data, plus routines to translate between client contest
+// IDs and proxy contest IDs.
+//
 // Revision 1.15  1999/01/29 19:05:23  jlawson
 // fixed formatting.
 //
@@ -83,6 +87,12 @@ int CliAddContestInfoSummaryData( int contestid, unsigned int *addblocks,
 
 // Return a usable contest name, returns "???" if bad id.
 const char *CliGetContestNameFromID(int contestid);
+
+// Return the corresponding contest ID that the proxy will understand.
+int CliGetContestProxyIDFromID(int contestid);
+
+// Return the contest id for a given proxy contest id.
+int CliGetContestIDFromProxyID(int proxycontestid);
 
 #endif //ifndef _CLICDATA_H_
 
