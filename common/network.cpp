@@ -36,50 +36,47 @@
   #include "netware/hbyname.cpp"  // this is a domain name resolver
 #endif
 
-#if (CLIENT_OS != OS_RISCOS)
 #pragma pack(1)               // no padding allowed
-#define __packed
-#endif
 
-typedef __packed struct _socks4 {
+typedef struct _socks4 {
   unsigned char VN;           // version == 4
   unsigned char CD;           // command code, CONNECT == 1
   u16 DSTPORT;                // destination port, network order
   u32 DSTIP;                  // destination IP, network order
   char USERID[1];             // variable size, null terminated
+  char end;
 } SOCKS4;
 
-typedef __packed struct _socks5methodreq {
+typedef struct _socks5methodreq {
   unsigned char ver;          // version == 5
   unsigned char nMethods;     // number of allowable methods following
   unsigned char Methods[2];   // this program will request at most two
+  char end;
 } SOCKS5METHODREQ;
 
-typedef __packed struct _socks5methodreply {
+typedef struct _socks5methodreply {
   unsigned char ver;          // version == 1
   unsigned char Method;       // server chose method ...
+  char end;
 } SOCKS5METHODREPLY;
 
-typedef __packed struct _socks5userpwreply {
+typedef struct _socks5userpwreply {
   unsigned char ver;          // version == 1
   unsigned char status;       // 0 == success
+  char end;
 } SOCKS5USERPWREPLY;
 
-typedef __packed struct _socks5 {
+typedef struct _socks5 {
   unsigned char ver;          // version == 5
-  __packed union {
-    unsigned char cmd;        // 1 == connect
-    unsigned char rep;        // 0 == success
-  };
+  unsigned char cmdORrep;     // cmd: 1 == connect, rep: 0 == success
   unsigned char rsv;          // must be 0
   unsigned char atyp;         // address type we assume IPv4 == 1
   u32 addr;                   // network order
   u16 port;                   // network order
+  char end;
 } SOCKS5;
 
-#if (CLIENT_OS != OS_RISCOS)
 #pragma pack()
-#endif
 
 char *Socks5ErrorText[9] =
 {
@@ -574,15 +571,15 @@ Socks4Failure:
     psocks5mreq->Methods[1] = 2;  // username/password
 
     assert(offsetof(SOCKS5METHODREQ, Methods) == 2);
+    assert(offsetof(SOCKS5METHODREQ, end) == 4);
 
     len = 2 + psocks5mreq->nMethods;
     if (LowLevelPut(len, socksreq) < 0)
       goto Socks5Failure;
 
-    assert(sizeof *psocks5mreply == 2);
+    assert(offsetof(SOCKS5METHODREPLY, end) == 2);
 
-    len = sizeof(*psocks5mreply);
-    if ((u32)LowLevelGet(len, socksreq) != len)
+    if ((u32)LowLevelGet(2, socksreq) != 2)
       goto Socks5Failure;
 
     if (psocks5mreply->ver != 5)
@@ -635,10 +632,9 @@ Socks4Failure:
       if (LowLevelPut(len, socksreq) < 0)
         goto Socks5Failure;
 
-      assert(sizeof *psocks5userpwreply == 2);
+      assert(offsetof(SOCKS5USERPWREPLY, end) == 2);
 
-      len = sizeof(*psocks5userpwreply);
-      if ((u32)LowLevelGet(len, socksreq) != len)
+      if ((u32)LowLevelGet(2, socksreq) != 2)
         goto Socks5Failure;
 
       if (psocks5userpwreply->ver != 1 ||
@@ -660,20 +656,18 @@ Socks4Failure:
 
     // after subnegotiation, send connect request
     psocks5->ver = 5;
-    psocks5->cmd = 1;   // connnect
+    psocks5->cmdORrep = 1;   // connnect
     psocks5->rsv = 0;   // must be zero
     psocks5->atyp = 1;  // IPv4
     psocks5->addr = lasthttpaddress;
     psocks5->port = htons(lastport);
 
-    assert(offsetof(SOCKS5, port) == 8);
-    assert(sizeof(SOCKS5) == 10);
+    assert(offsetof(SOCKS5, end) == 10);
 
-    len = sizeof(*psocks5);
-    if (LowLevelPut(len, socksreq) < 0)
+    if (LowLevelPut(10, socksreq) < 0)
       goto Socks5Failure;
 
-    if ((u32)LowLevelGet(len, socksreq) != len)
+    if ((u32)LowLevelGet(10, socksreq) != 10)
       goto Socks5Failure;
 
     if (psocks5->ver != 5)
@@ -683,13 +677,13 @@ Socks4Failure:
       goto Socks5Failure;
     }
 
-    if (psocks5->rep != 0)          // 0 is successful connect
+    if (psocks5->cmdORrep != 0)          // 0 is successful connect
     {
       fprintf(stderr, "SOCKS5 server error connecting to keyproxy: %s\n",
-              (psocks5->rep >=
+              (psocks5->cmdORrep >=
                 (sizeof Socks5ErrorText / sizeof Socks5ErrorText[0]))
                 ? "unrecognized SOCKS5 error"
-                : Socks5ErrorText[ psocks5->rep ] );
+                : Socks5ErrorText[ psocks5->cmdORrep ] );
 
 Socks5Failure:
       close(sock);
