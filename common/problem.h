@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.17  1998/07/29 21:31:44  blast
+// Changed the default 68K cpu PIPELINE_COUNT for AmigaOS to 256...
+// Testing new core that's faster on 68060...
+//
 // Revision 1.16  1998/07/14 10:43:33  remi
 // Added support for a minimum timeslice value of 16 instead of 20 when
 // using BIT_64, which is needed by MMX_BITSLICER. Will help some platforms
@@ -147,8 +151,14 @@ typedef enum
   #endif
   extern int whichcrunch;
 #elif (CLIENT_CPU == CPU_68K)
-  #if (PIPELINE_COUNT != 1)
-  #error "Expecting PIPELINE_COUNT=1"
+  #if (CLIENT_OS == OS_AMIGAOS)
+    #if (PIPELINE_COUNT != 256)
+    #error "Expecting PIPELINE_COUNT=256"
+    #endif
+  #else
+    #if (PIPELINE_COUNT != 1)
+    #error "Expecting PIPELINE_COUNT=1"
+    #endif
   #endif
 #elif (CLIENT_CPU == CPU_ARM)
   #if (PIPELINE_COUNT != 1)
