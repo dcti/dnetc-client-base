@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.81 2002/04/13 13:01:49 andreasb Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.82 2002/04/13 13:20:25 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -1753,7 +1753,9 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         if (!*inimissing)
         {
           client->quietmode = 0;
+          #if defined(LURK)
           client->lurk_conf.lurkmode = 0;
+          #endif
           int do_mode = 0;
 
           if ( strcmp( thisarg, "-update" ) == 0)
