@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.174  1998/12/01 23:31:43  cyp
+// Removed ::totalBlocksDone. count was inaccurate if client was restarted.
+// ::Main() (as opposed to realmain()) now controls restart.
+//
 // Revision 1.173  1998/11/28 19:44:34  cyp
 // InitializeLogging() and DeinitializeLogging() are no longer Client class
 // methods.
@@ -133,7 +137,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.173 1998/11/28 19:44:34 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.174 1998/12/01 23:31:43 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -181,8 +185,6 @@ Client::Client()
   httpport = 80;
   uuehttpmode = 0;
   httpid[0] = 0;
-  totalBlocksDone[0] = 0;
-  totalBlocksDone[1] = 0;
   cputype=-1;
   offlinemode = 0;
   autofindkeyserver = 1;  //implies 'only if keyproxy==dnetkeyserver'
@@ -246,10 +248,8 @@ static const char *GetBuildOrEnvDescription(void)
   #if (CLIENT_OS == OS_DOS)
   return dosCliGetEmulationDescription(); //if in win/os2 VM 
   #elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
-  static char buffer[32];
-  int major, minor;
-  w32ConGetWinVersion(&major,&minor);
-  sprintf(buffer,"under Windows%s %u.%u", (major>20)?(" NT"):(""), major%20, minor );
+  static char buffer[32]; long ver = winGetVersion(); /* w32pre.cpp */
+  sprintf(buffer,"under Windows%s %u.%u", (ver>=2000)?(" NT"):(""), (ver/100)%20, ver%100 );
   return buffer;
   #else
   return "";
@@ -313,9 +313,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
            (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_OS2) || \
            ((CLIENT_OS==OS_WIN32) && !defined(NEEDVIRTUALMETHODS)))
       #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-      int major=0;
-      w32ConGetWinVersion(&major,NULL);
-      if ((major%20) <= 3) /* >=20 == NT */
+      if ((winGetVersion()%2000) < 400) /* w32pre.cpp. +2000==NT */
       #endif   
       if (getenv("TZ") == NULL)
         {
@@ -381,45 +379,53 @@ int DeinitializeConnectivity(void)
 //------------------------------------------------------------------------
 
 
-int Client::Main( int argc, const char *argv[], int restarted )
+int Client::Main( int argc, const char *argv[] )
 {
   int retcode = 0;
   int domodes = 0;
+  int restart = 0;
+  int restarted;
 
-  //ReadConfig() and parse command line - returns !0 if shouldn't continue
-  if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
-    {
-    domodes = (ModeReqIsSet(-1) != 0);
-    if (InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile)==0)
+  do{
+    restarted = restart;
+    restart = 0;
+
+    //ReadConfig() and parse command line - returns !0 if shouldn't continue
+    if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
       {
-      if (InitializeConnectivity() == 0)
+      domodes = (ModeReqIsSet(-1) != 0);
+      if (InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile)==0)
         {
-        if (InitializeConsole(quietmode,domodes) == 0)
+        if (InitializeConnectivity() == 0)
           {
-          InitializeLogging( (quietmode!=0), (percentprintingoff!=0), 
-                             logname, LOGFILETYPE_NOLIMIT, 0, messagelen, 
-                             smtpsrvr, smtpport, smtpfrom, smtpdest, id );
-          PrintBanner(id,0,restarted);
-          ParseCommandline( 1, argc, argv, NULL, (quietmode==0)); //show overrides
-        
-          if (domodes)
+          if (InitializeConsole(quietmode,domodes) == 0)
             {
-            ModeReqRun( this );     
+            InitializeLogging( (quietmode!=0), (percentprintingoff!=0), 
+                               logname, LOGFILETYPE_NOLIMIT, 0, messagelen, 
+                               smtpsrvr, smtpport, smtpfrom, smtpdest, id );
+            PrintBanner(id,0,restarted);
+            ParseCommandline( 1, argc, argv, NULL, (quietmode==0)); //show overrides
+          
+            if (domodes)
+              {
+              ModeReqRun( this );     
+              }
+            else
+              {
+              PrintBanner(id,1,restarted);
+              SelectCore( 0 );
+              retcode = Run();
+              restart = CheckRestartRequestTrigger();
+              }
+            DeinitializeLogging();
+            DeinitializeConsole();
             }
-          else
-            {
-            PrintBanner(id,1,restarted);
-            SelectCore( 0 );
-            retcode = Run();
-            }
-          DeinitializeLogging();
-          DeinitializeConsole();
+          DeinitializeConnectivity();
           }
-        DeinitializeConnectivity();
+        DeinitializeTriggers();
         }
-      DeinitializeTriggers();
       }
-    }
+    } while (restart);
   return retcode;
 }  
 
@@ -433,7 +439,6 @@ int realmain( int argc, char *argv[] )
   // The if (success) thing is for nesting without {} nesting.
   Client *clientP = NULL;
   int retcode = -1, init_success = 1;
-  int restarted = 0;
 
   //------------------------------
   
@@ -467,10 +472,7 @@ int realmain( int argc, char *argv[] )
 
   if ( init_success )
     {
-    do {
-       retcode = clientP->Main( argc, (const char **)argv, restarted );
-       restarted = 1; //for the next round
-       } while ( CheckRestartRequestTrigger() );
+    retcode = clientP->Main( argc, (const char **)argv );
     }
 
   //------------------------------

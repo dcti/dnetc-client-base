@@ -12,6 +12,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.101  1998/12/01 23:31:43  cyp
+// Removed ::totalBlocksDone. count was inaccurate if client was restarted.
+// ::Main() (as opposed to realmain()) now controls restart.
+//
 // Revision 1.100  1998/11/28 19:44:34  cyp
 // InitializeLogging() and DeinitializeLogging() are no longer Client class
 // methods.
@@ -255,6 +259,7 @@
 
 #define PACKET_VERSION      0x03
 #define MAXBLOCKSPERBUFFER  500
+#define CONTEST_COUNT       2 /* 2 contests */
 
 // --------------------------------------------------------------------------
 
@@ -371,8 +376,8 @@ public:
   int  quietmode;
   char inifilename[128];
   char id[64];
-  s32  inthreshold[2];
-  s32  outthreshold[2];
+  s32  inthreshold[CONTEST_COUNT];
+  s32  outthreshold[CONTEST_COUNT];
   s32  blockcount;
   s32  minutes;
   s32  timeslice;
@@ -399,7 +404,7 @@ public:
 
   char logname[128];
   char exit_flag_file[128];
-  char checkpoint_file[2][128];
+  char checkpoint_file[CONTEST_COUNT][128];
   char pausefile[128];
 
   s32 numcpu;
@@ -407,12 +412,12 @@ public:
   s32 connectoften;
 
   int nodiskbuffers;
-  struct { struct membuffstruct in, out; } membufftable[2];
-  char in_buffer_file[2][128];
-  char out_buffer_file[2][128];
+  struct { struct membuffstruct in, out; } membufftable[CONTEST_COUNT];
+  char in_buffer_file[CONTEST_COUNT][128];
+  char out_buffer_file[CONTEST_COUNT][128];
   long PutBufferRecord(const FileEntry *data);
   long GetBufferRecord( FileEntry *data, unsigned int contest, int use_out_file);
-  unsigned long GetBufferCount( unsigned int contest, int use_out_file, unsigned long *normcountP );
+  long GetBufferCount( unsigned int contest, int use_out_file, unsigned long *normcountP );
   
   //s32 membuffcount[2][2];
   //FileEntry *membuff[2][MAXBLOCKSPERBUFFER][2];
@@ -420,21 +425,18 @@ public:
   s32 nofallback;
   u32 randomprefix;
   int randomchanged;
-  s32 consecutivesolutions[2];
+  s32 consecutivesolutions[CONTEST_COUNT];
   int autofindkeyserver;
   s32 nonewblocks;
   s32 nettimeout;
   s32 noexitfilecheck;
   s32 preferred_contest_id;  // 0 for RC564, 1 for DESII 
   s32 preferred_blocksize;
-  s32 contestdone[2];
+  s32 contestdone[CONTEST_COUNT];
 
 #if defined(MMX_BITSLICER) || defined(MMX_RC5)
   int usemmx;
 #endif
-
-  u32 totalBlocksDone[2];
-  u32 old_totalBlocksDone[2];
 
 #if (CLIENT_OS == OS_WIN32) && defined(NEEDVIRTUALMETHODS)
   u32 connectrequested;       // used by win32gui to signal an update
@@ -456,8 +458,8 @@ public:
   ~Client() {};
 
 
-  int Main( int argc, const char *argv[], int restarted );
-  //encapsulated main().  client.Main() is restartable
+  int Main( int argc, const char *argv[] );
+  //encapsulated main().  client.Main() may restart itself
 
   int ParseCommandline( int runlevel, int argc, const char *argv[], 
                         int *retcodeP, int logging_is_initialized );
