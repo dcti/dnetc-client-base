@@ -14,7 +14,7 @@
 */ 
 
 #ifndef __MODEREQ_H__
-#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.19 2000/01/08 23:36:09 cyp Exp $"
+#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.20 2000/06/02 06:24:57 jlawson Exp $"
 
 #define MODEREQ_IDENT              0x00000001
 #define MODEREQ_CPUINFO            0x00000002

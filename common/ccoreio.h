@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.5 1999/12/31 20:29:29 cyp Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.6 2000/06/02 06:24:53 jlawson Exp $"
 
 typedef enum
 {

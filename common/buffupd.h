@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __BUFFUPD_H__
-#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.10 2000/01/08 23:36:04 cyp Exp $"
+#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.11 2000/06/02 06:24:53 jlawson Exp $"
 
 #define BUFFERUPDATE_FETCH 0x01
 #define BUFFERUPDATE_FLUSH 0x02

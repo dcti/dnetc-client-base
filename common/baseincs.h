@@ -5,11 +5,21 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.81 2000/01/23 00:41:31 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.82 2000/06/02 06:24:52 jlawson Exp $"
 
 #include "cputypes.h"
 
-extern "C" {
+// ------------------
+
+#if (CLIENT_OS == OS_RISCOS) || defined(UNSAFEHEADERS)
+  // Some environments include old system headers that are not safe for direct
+  // inclusion within C++ programs and need to be explicitly wrapped with extern.
+  #define UNSAFEHEADERS
+  extern "C" {
+#endif
+
+// ------------------
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -17,14 +27,18 @@ extern "C" {
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#if (CLIENT_OS != OS_MACOS)
 #include <sys/types.h>
 #include <sys/stat.h>
+#endif
 #include <errno.h>
 #include <limits.h>
+#include <assert.h>
 #if defined(__unix__)
-#include <sys/utsname.h> /* uname() */
+  #include <sys/utsname.h> /* uname() */
 #endif
-}
+
+// ------------------
 
 #if (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
@@ -70,27 +84,26 @@ extern "C" {
   #include <unistd.h>
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
-  extern "C"
-  {
-    #include <sys/fcntl.h>
-    #include <unistd.h>
-    #include <stdarg.h>
-    #include <machine/endian.h>
-    #include <sys/time.h>
-    #include <swis.h>
-    extern unsigned int ARMident(), IOMDident();
-    extern void riscos_clear_screen();
-    extern int riscos_check_taskwindow();
-    extern void riscos_backspace();
-    extern int riscos_count_cpus();
-    extern char *riscos_x86_determine_name();
-    extern int riscos_find_local_directory(const char *argv0);
-    extern char *riscos_localise_filename(const char *filename);
-    extern void riscos_upcall_6(void); //yield
-    extern int getch();
-    #define fileno(f) ((f)->__file)
-    #define isatty(f) ((f) == 0)
-  }
+  #include <sys/fcntl.h>
+  #include <unistd.h>
+  #include <stdarg.h>
+  #include <machine/endian.h>
+  #include <sys/time.h>
+  #include <swis.h>
+  extern unsigned int ARMident(), IOMDident();
+  extern void riscos_clear_screen();
+  extern int riscos_check_taskwindow();
+  extern void riscos_backspace();
+  extern int riscos_count_cpus();
+  extern char *riscos_x86_determine_name();
+  extern int riscos_find_local_directory(const char *argv0);
+  extern char *riscos_localise_filename(const char *filename);
+  extern int riscos_get_filelength(int fd, unsigned long *fsizeP);
+  extern int riscos_get_file_modified(const char *filename, unsigned long *timestampP);
+  extern void riscos_upcall_6(void); //yield
+  extern int getch();
+  #define fileno(f) ((f)->__file)
+  #define isatty(f) ((f) == 0)
   extern s32 guiriscos, guirestart;
   extern int riscos_in_taskwindow;
 #elif (CLIENT_OS == OS_VMS)
@@ -115,17 +128,37 @@ extern "C" {
   #include <share.h>
   #include <fcntl.h>
   #include <io.h>
+  #ifdef __BORLANDC__
+    #include <utime.h>
+  #else
+    #include <sys/utime.h>
+  #endif
+  #include <fcntl.h>
+  #ifndef SH_DENYNO
+    #include <share.h>
+  #endif
+  #include "w32util.h"
   #include "w32svc.h"       // service
   #include "w32cons.h"      // console
   #include "w32pre.h"       // prelude
-  #ifdef _MSC_VER
-  // msc equivalents of file perm flags
-  #define R_OK 04
-  #define W_OK 02
-  #define S_IRUSR _S_IREAD
-  #define S_IWUSR _S_IWRITE
-  #define S_IRGRP _S_IREAD
-  #define S_IWGRP _S_IWRITE
+  #if defined(_MSC_VER)
+    // msc equivalents of file perm flags
+    #define R_OK 04
+    #define W_OK 02
+    #define S_IRUSR _S_IREAD
+    #define S_IWUSR _S_IWRITE
+    #define S_IRGRP _S_IREAD
+    #define S_IWGRP _S_IWRITE
+  #elif defined(__BORLANDC__)
+    #define R_OK 04
+    #define W_OK 02
+    //#define S_IRUSR S_IREAD
+    //#define S_IWUSR S_IWRITE
+    #define S_IRGRP S_IREAD
+    #define S_IWGRP S_IWRITE
+  #endif
+  #ifndef MAX_PATH
+    #define MAX_PATH 256
   #endif
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
@@ -153,7 +186,20 @@ extern "C" {
   #include <nwfile.h> //sopen()
   #include <fcntl.h> //O_... constants
   #include "platforms/netware/netware.h" //for stuff in netware.cpp
-#elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
+#elif (CLIENT_OS == OS_SUNOS) 
+  #include <fcntl.h>
+  #include <unistd.h>
+  #include <stdlib.h>
+  #include <stdio.h>
+  #define SEEK_SET 0
+  #define SEEK_CUR 1
+  #define SEEK_END 2
+  #include <poll.h>
+  #include <sys/time.h>
+  #include <sys/socket.h>
+  extern "C" int nice(int);
+  extern "C" int gethostname(char *, int);
+#elif (CLIENT_OS == OS_SOLARIS)
   #include <fcntl.h>
   #include <unistd.h>
   #include <poll.h>
@@ -164,18 +210,22 @@ extern "C" {
   #include <unistd.h>		// nice()
   #include <strings.h>		// bzero(), strcase...,
   #include <sys/select.h>	// fd_set on AIX 4.1
+// clock_gettime is called getclock (used in clitime.cpp)
+  #define clock_gettime(a,b) (getclock(a,b))
 #elif (CLIENT_OS == OS_LINUX)
   #include <sys/time.h>
+  #include <sys/file.h>
   #include <unistd.h>
   #if defined(__ELF__)
     #include <sched.h>
   #endif
 #elif (CLIENT_OS == OS_MACOS)  
-  #include <sys/time.h>
-  #include <unistd.h>
-  #include <sched.h>
+  #include <unix.h>
   #include <Gestalt.h>
   #include "client_defs.h"
+  struct timezone { int tz_minuteswest, tz_dsttime; };
+  extern "C" int gethostname(char *, int);
+  extern "C" int gettimeofday(struct timeval *, struct timezone *);
   #define fileno(f) ((f)->handle)
 #elif (CLIENT_OS == OS_FREEBSD)  
   #include <sys/time.h>
@@ -199,7 +249,14 @@ extern "C" {
 #elif (CLIENT_OS == OS_QNX)
   #include <sys/time.h>
   #include <sys/select.h>
-  #define strncmpi strncasecmp
+  #include <process.h>
+  #include <env.h>
+#elif (CLIENT_OS == OS_NTO2)
+  #include <sys/time.h>
+  #include <strings.h>
+  #include <unistd.h>
+  #include <sched.h>
+  #include <sys/syspage.h>
 #elif (CLIENT_OS == OS_DYNIX)
   #include <unistd.h> // sleep(3c)
   struct timezone { int tz_minuteswest, tz_dsttime; };
@@ -207,7 +264,28 @@ extern "C" {
   extern "C" int gettimeofday(struct timeval *, struct timezone *);
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
+  #include <machine/cpuconf.h>
+  #include <sys/time.h>
+#elif (CLIENT_OS == OS_NEXTSTEP)
+  #include <bsd/sys/time.h>
+  #include <sys/types.h>
+  #include <fcntl.h>
+  #define       S_IRUSR         0x400           /* read permission, */
+  #define       S_IWUSR         0x200           /* write permission, */
+  #define       S_IRGRP         0x040           /* read permission, group */
+  #define       S_IWGRP         0x020           /* write permission, group */
+  #define       CLOCKS_PER_SEC          CLK_TCK
+  extern "C" int sleep(unsigned int seconds);
+  extern "C" int usleep(unsigned int useconds);
 #endif
 
+// ------------------
+
+#ifdef UNSAFEHEADERS
+  // End the extern needed to handle unsafe system headers.
+  }
+#endif
+
+// ------------------
 
 #endif /* __BASEINCS_H__ */

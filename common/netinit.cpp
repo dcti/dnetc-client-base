@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.34 2000/01/08 23:36:09 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.35 2000/06/02 06:24:57 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -227,6 +227,10 @@ static int __globalInitAndDeinit( int doWhat )
       #if ((CLIENT_OS == OS_OS2) && !defined(__EMX__))
       sock_init();
       #endif
+      #if (CLIENT_OS == OS_MACOS)
+      if (socket_glue_init() != 0)
+        global_is_init = 0;
+      #endif
       #if (CLIENT_OS == OS_WIN32)
       WSADATA wsaData;
       if ( WSAStartup( 0x0101, &wsaData ) != 0 )
@@ -239,10 +243,14 @@ static int __globalInitAndDeinit( int doWhat )
   {
     if (global_is_init != 0)
     {
+      global_is_init = 0; // assume all success
+      
       #if (CLIENT_OS == OS_WIN32)
       WSACleanup();
+      #elif (CLIENT_OS == OS_MACOS)
+      global_is_init = 1; // a hack to prevent a 2nd global initialization
+      // real global network deinitialization gets done at client shutdown
       #endif
-      global_is_init = 0;
     }
   }
   else //if (doWhat == 0)                   //query state

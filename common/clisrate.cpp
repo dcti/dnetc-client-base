@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.50 1999/12/31 20:29:31 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.51 2000/06/02 06:24:54 jlawson Exp $"; }
 
 #include "cputypes.h"  // u32
 #include "problem.h"   // Problem class
@@ -101,27 +101,32 @@ static const char *num_sep(const char *number)
 
 // returns keyrate as string (len<=26) "nnnn.nn ['K'|'M'|'G'|'T']"
 // return value is a pointer to buffer.
-static char *__CliGetKeyrateAsString( char *buffer, double rate, double limit )
+static char *__CliGetKeyrateAsString( char *buffer, double rate, double limit, int round )
 {
   if (rate<=((double)(0)))  // unfinished (-2) or error (-1) or impossible (0)
     strcpy( buffer, "---.-- " );
   else
   {
-    unsigned int t1, t2 = 0;
-    const char *t3[]={"","k","M","G","T"}; // "", "kilo", "mega", "giga", "tera"
-    while (t2<=5 && (((double)(rate))>=((double)(limit))) )
+    unsigned int rateint, index = 0;
+    const char *multiplier[]={"","k","M","G","T"}; // "", "kilo", "mega", "giga", "tera"
+    while (index<=5 && (((double)(rate))>=((double)(limit))) )
     {
-      t2++;
+      index++;
       rate = ((double)(rate)) / ((double)(1000));
     }
-    if (t2 > 4)
+    if (index > 4)
       strcpy( buffer, "***.** " ); //overflow (rate>1.0 TKeys. Str>25 chars)
     else
     {
-      t1 = (unsigned int)(rate);
-      sprintf( buffer, "%u.%02u %s", t1,
-         ((unsigned int)((((double)(rate-((double)(t1)))))*((double)(100)))),
-         t3[t2] );
+      rateint = (unsigned int)(rate);
+      if (round) {
+        sprintf( buffer, "%u.%02u %s", rateint,
+           ((unsigned int)((((double)(rate-((double)(rateint)))))*((double)(100)))),
+           multiplier[index] );
+      }
+      else {
+        sprintf( buffer, "%u %s", rateint, multiplier[index] );
+      }
     }
   }
   return buffer;
@@ -131,7 +136,55 @@ static char *__CliGetKeyrateAsString( char *buffer, double rate, double limit )
 // return value is a pointer to buffer.
 const char *CliGetKeyrateAsString( char *buffer, double rate )
 { 
-  return (num_sep(__CliGetKeyrateAsString( buffer, rate, _U32LimitDouble_ )));
+  return (num_sep(__CliGetKeyrateAsString( buffer, rate, _U32LimitDouble_, 1 )));
+}
+
+// ---------------------------------------------------------------------------
+
+// internal: return iter/keysdone/whatever as string. 
+// called by CliGet[U64|Double]AsString
+const char *__CliGetNumberAsString( double d, u32 norm_hi, u32 norm_lo, 
+                               int /*inNetOrder*/, int contestid )
+{
+  static char str[32];
+  unsigned int i;
+
+  if (CliGetContestInfoBaseData( contestid, NULL, &i )==0 && i>1) //clicdata
+    d = d * ((double)(i));
+
+  i = 0;
+  norm_hi = (unsigned int)(d / 1000000000.0);
+  norm_lo = (unsigned int)(d - (((double)(norm_hi))*1000000000.0));
+  d = d / 1000000000.0;
+  if (d > 0)
+  {
+    i = (unsigned int)(d / 1000000000.0);
+    norm_hi = (unsigned int)(d - (((double)(i))*1000000000.0));
+  }
+
+  if (i)            sprintf( str, "%u%09u%09u", (unsigned) i, (unsigned) norm_hi, (unsigned) norm_lo );
+  else if (norm_hi) sprintf( str, "%u%09u", (unsigned) norm_hi, (unsigned) norm_lo );
+  else              sprintf( str, "%u", (unsigned) norm_lo );
+
+  return str;
+}
+
+// return iter/keysdone/whatever as string. 
+// set contestID = -1 to have the ID ignored
+const char *CliGetU64AsString( u32 norm_hi, u32 norm_lo, 
+                               int /*inNetOrder*/, int contestid )
+{
+  double d;
+  d = U64TODOUBLE(norm_hi, norm_lo);
+  return __CliGetNumberAsString(d, norm_hi, norm_lo, 0, contestid);
+}
+
+// return iter/keysdone/whatever as string. 
+// set contestID = -1 to have the ID ignored
+const char *CliGetDoubleAsString( double d, 
+                               int /*inNetOrder*/, int contestid )
+{
+  return __CliGetNumberAsString(d, 0, 0, 0, contestid);
 }
 
 // ---------------------------------------------------------------------------
@@ -140,26 +193,29 @@ const char *CliGetKeyrateAsString( char *buffer, double rate )
 const char *CliGetSummaryStringForContest( int contestid )
 {
   static char str[70];
-  char keyrate[32];
+  char keyrate[32], iterstr[32];
   double totaliter;
-  const char *keyrateP, *name;
+  const char *keyrateP, *name, *totalnodesP;
   unsigned int packets, units;
   struct timeval ttime;
 
+  name = "???";
+  units = packets = 0;
+  ttime.tv_sec = 0;
+  ttime.tv_usec = 0;
+  keyrateP = "---.-- ";
+  totalnodesP = "---.-- ";
   if ( CliIsContestIDValid( contestid ) ) //clicdata.cpp
   {
     CliGetContestInfoBaseData( contestid, &name, NULL ); //clicdata.cpp
     CliGetContestInfoSummaryData( contestid, &packets, &totaliter, &ttime, &units ); //ditto
     keyrateP=__CliGetKeyrateAsString(keyrate,
-          CliGetKeyrateForContest(contestid),((double)(1000)));
-  }
-  else
-  {
-    name = "???";
-    units = packets = 0;
-    ttime.tv_sec = 0;
-    ttime.tv_usec = 0;
-    keyrateP = "---.-- ";
+          CliGetKeyrateForContest(contestid),((double)(1000)), 1);
+    if (contestid == OGR) {
+      //totalnodesP=CliGetKeyrateAsString(iterstr, totaliter);
+      totalnodesP=num_sep(__CliGetKeyrateAsString(iterstr, totaliter, ((double)(1000)), 1));
+      //totalnodesP=num_sep(CliGetDoubleAsString(totaliter, 0, -1));
+    }
   }
 
   str[0] = '\0';
@@ -178,45 +234,15 @@ const char *CliGetSummaryStringForContest( int contestid )
     }
     case OGR:  /* old style */
     {
-      sprintf(str, "%d %s packet%s %s%c- [%s%s/s]", 
-           packets, name, ((packets==1)?(""):("s")),
+      sprintf(str, "%d %s packet%s (%snodes)\n"
+                   "%s%c- [%s%s/s]", 
+           packets, name, ((packets==1)?(""):("s")), totalnodesP,
            CliGetTimeString( &ttime, 2 ), ((!packets)?(0):(' ')), keyrateP,
            contestid == OGR ? "nodes" : "keys" );
+      //printf("DEBUG: %.0f\n", totaliter);
       break;
     }
   }
-
-  return str;
-}
-
-// ---------------------------------------------------------------------------
-
-// return iter/keysdone/whatever as string. 
-// set contestID = -1 to have the ID ignored
-const char *CliGetU64AsString( u32 norm_hi, u32 norm_lo, 
-                               int /*inNetOrder*/, int contestid )
-{
-  static char str[32];
-  unsigned int i;
-  double d;
-
-  d = U64TODOUBLE(norm_hi, norm_lo);
-  if (CliGetContestInfoBaseData( contestid, NULL, &i )==0 && i>1) //clicdata
-    d = d * ((double)(i));
-
-  i = 0;
-  norm_hi = (unsigned int)(d / 1000000000.0);
-  norm_lo = (unsigned int)(d - (((double)(norm_hi))*1000000000.0));
-  d = d / 1000000000.0;
-  if (d > 0)
-  {
-    i = (unsigned int)(d / 1000000000.0);
-    norm_hi = (unsigned int)(d - (((double)(i))*1000000000.0));
-  }
-
-  if (i)            sprintf( str, "%u%09u%09u", (unsigned) i, (unsigned) norm_hi, (unsigned) norm_lo );
-  else if (norm_hi) sprintf( str, "%u%09u", (unsigned) norm_hi, (unsigned) norm_lo );
-  else              sprintf( str, "%u", (unsigned) norm_lo );
 
   return str;
 }
@@ -251,7 +277,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
       keyrateP = __CliGetKeyrateAsString( keyrate, 
           ((doSave) ? ( CliGetKeyrateForProblem( prob ) ) :
                       ( CliGetKeyrateForProblemNoSave( prob ) )),
-                      _U32LimitDouble_ );
+                      _U32LimitDouble_, 1 );
       keyrateP = (const char *)strcpy( keyrate, num_sep( keyrateP ) );
     }
     /*  

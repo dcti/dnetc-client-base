@@ -5,8 +5,10 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.144 2000/01/08 23:36:04 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.145 2000/06/02 06:24:53 jlawson Exp $"
 
+
+// ------------------
 
 enum {
   RC5, // http://www.rsa.com/rsalabs/97challenge/
@@ -16,8 +18,12 @@ enum {
 };
 #define CONTEST_COUNT       4  /* RC5,DES,OGR,CSC */
 
+// ------------------
+
 #include "problem.h"           /* ContestWork structure */
 #include "lurk.h"              /* client structure copy of lurk_conf */
+
+// ------------------
 
 #ifndef MIPSpro
 #pragma pack(1)               /* no padding allowed */
@@ -39,10 +45,11 @@ typedef struct
 # pragma pack()
 #endif /* ! MIPSpro */
 
+// ------------------
+
 #define __TEXTIFY(x) #x
 #define _TEXTIFY(x) __TEXTIFY(x)
 
-#define BUFTHRESHOLD_MAX               2000  /* Now in work units */
 #define BUFTHRESHOLD_DEFAULT             24  /* Now in work units */
 #define PREFERREDBLOCKSIZE_DEFAULT       30
 #define PREFERREDBLOCKSIZE_MIN           28
@@ -50,16 +57,18 @@ typedef struct
 #define BUFFER_DEFAULT_IN_BASENAME  "buff-in"
 #define BUFFER_DEFAULT_OUT_BASENAME "buff-out"
 #define MINCLIENTOPTSTRLEN   64 /* no asciiz var is smaller than this */
+#define NO_OUTBUFFER_THRESHOLDS /* no longer have outthresholds */
 
 struct membuffstruct 
 { 
   unsigned long count; 
-  WorkRecord *buff[BUFTHRESHOLD_MAX];
+  WorkRecord *buff[500];
 };
+
+// ------------------
 
 typedef struct
 {
-public:
   /* non-user-configurable */
   int  nonewblocks;
   int  randomchanged;
@@ -68,7 +77,6 @@ public:
   int  stopiniio;
   u32  scheduledupdatetime;
   char inifilename[MINCLIENTOPTSTRLEN*2];
-  struct { struct membuffstruct in, out; } membufftable[CONTEST_COUNT];
 
   /* -- general -- */
   char id[MINCLIENTOPTSTRLEN];
@@ -76,12 +84,10 @@ public:
   int  blockcount;
   int  minutes;
   int  percentprintingoff;
-  int  noexitfilecheck;
-  char pausefile[MINCLIENTOPTSTRLEN*2];
-  char loadorder_map[CONTEST_COUNT];
 
   /* -- buffers -- */
   int  nodiskbuffers;
+  struct { struct membuffstruct in, out; } membufftable[CONTEST_COUNT];
   char in_buffer_basename[MINCLIENTOPTSTRLEN*2];
   char out_buffer_basename[MINCLIENTOPTSTRLEN*2];
   char checkpoint_file[MINCLIENTOPTSTRLEN*2];
@@ -100,20 +106,30 @@ public:
   #ifdef LURK 
   struct dialup_conf lurk_conf;
   #endif
-  int  connectoften;
-
-  // In general, don't use inthreshold anymore;
-  // Use ClientGetInThreshold(client, contest)
+  int connectoften; /* 0=no,1=check both flush/fetch thresh, 2=only=flush*/
+  // Don't use inthreshold directly, Use ClientGetInThreshold(client, contest)
   int inthreshold[CONTEST_COUNT]; 
-  int outthreshold[CONTEST_COUNT];
   int timethreshold[CONTEST_COUNT];  /* in hours */
-
+  #if (!defined(NO_OUTBUFFER_THRESHOLDS))
+  int  minupdateinterval; /* the better 'outthreshold'. in minutes */
+  int outthreshold[CONTEST_COUNT];
+  #endif
   int preferred_blocksize[CONTEST_COUNT];
+  char loadorder_map[CONTEST_COUNT];
 
   /* -- perf -- */
   int  numcpu;
   int  priority;
   int  coretypes[CONTEST_COUNT];
+
+  /* -- triggers -- */
+  int  restartoninichange;
+  char pauseplist[MINCLIENTOPTSTRLEN]; /* processname list */
+  char pausefile[MINCLIENTOPTSTRLEN*2];
+  char exitflagfile[MINCLIENTOPTSTRLEN*2];
+  int  nopauseifnomainspower;
+  int  watchcputempthresh;
+  char cputempthresh[MINCLIENTOPTSTRLEN]; /* [lowwatermark:]highwatermark */
 
   /* -- log -- */
   char logname[MINCLIENTOPTSTRLEN*2];
@@ -127,9 +143,13 @@ public:
 
 } Client;
 
+// ------------------
+
 void ResetClientData(Client *client); /* reset everything */
-int ClientGetInThreshold(Client *client, int contestid, int force = 0 );
-int ClientGetOutThreshold(Client *client, int contestid, int force = 0 );
+unsigned int ClientGetInThreshold(Client *client, int contestid, int force = 0 );
+unsigned int ClientGetOutThreshold(Client *client, int contestid, int force = 0 );
 int ClientRun(Client *client);  /* run the loop, do the work */
+
+// ------------------
 
 #endif /* __CLIENT_H__ */

@@ -10,7 +10,7 @@
  *
 */ 
 const char *base64_cpp(void) {
-return "@(#)$Id: base64.cpp,v 1.7 2000/01/08 23:36:03 cyp Exp $"; }
+return "@(#)$Id: base64.cpp,v 1.8 2000/06/02 06:24:52 jlawson Exp $"; }
 
 static unsigned char base64table[64] = 
 {

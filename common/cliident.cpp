@@ -4,28 +4,32 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * ----------------------------------------------------------------------
- * The file contains CliIdentifyModules() which lists the cvs id strings
- * to stdout. Users can assist us (when making bug reports) by telling us 
- * exactly which modules were actually in effect when the binary was made. 
- * Currently, starting the client with the '-ident' switch will exec the 
- * function.
- *
- * This file also contains CliGetNewestModuleTime() which returns time_t of  
- * the newest module in the list - useful for asserting beta expiry, that the
- * time obtained from proxies is sane etc.
+ * The file contains:
+ * - CliIdentifyModules() which lists the cvs id strings to stdout. 
+ *   Users can assist us (when making bug reports) by telling us 
+ *   exactly which modules were actually in effect when the binary was made. 
+ *   Currently, starting the client with the '-ident' switch will exec the 
+ *   function.
+ * - CliGetNewestModuleTime() returns time_t of the newest module 
+ *   in the list - useful for asserting beta expiry, that the
+ *   time obtained from proxies is sane etc.
+ * - CliGetFullVersionDescriptor() returns the unique build descriptor
+ *   as used in the startup banner.
+ * - CliIsDevelVersion() returns non-zero if the client was built from
+ *   the devel branch or BETA or BETA_PERIOD is defined
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.23 1999/12/31 20:29:30 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.24 2000/06/02 06:24:54 jlawson Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
 #include "autobuff.h"
 #include "base64.h"
 #include "bench.h"
-#include "buffupd.h"
-#include "client.h"
+#include "client.h" /* client.h needs to before buff*.h */
 #include "buffbase.h"
+#include "buffupd.h"
 #include "ccoreio.h"
 #include "checkpt.h"
 #include "clicdata.h"
@@ -35,7 +39,6 @@ return "@(#)$Id: cliident.cpp,v 1.23 1999/12/31 20:29:30 cyp Exp $"; }
 #include "clisrate.h"
 #include "clitime.h"
 #include "cmdline.h"
-#include "cmpidefs.h"
 #include "confopt.h"
 #include "confrwv.h"
 #include "console.h"
@@ -82,7 +85,6 @@ static const char *h_ident_table[] =
   (const char *)__CLISRATE_H__,
   (const char *)__CLITIME_H__,
   (const char *)__CMDLINE_H__,
-  (const char *)__CMPIDEFS_H__,
   (const char *)__CONFOPT_H__,
   (const char *)__CONFRWV_H__,
   (const char *)__CONSOLE_H__,
@@ -118,7 +120,7 @@ extern const char *base64_cpp(void);
 extern const char *bench_cpp(void);
 extern const char *buffbase_cpp(void);
 extern const char *buffupd_cpp(void);
-extern const char *buffwork_cpp(void);
+extern const char *buffpub_cpp(void);
 extern const char *checkpt_cpp(void);
 extern const char *clicdata_cpp(void);
 extern const char *client_cpp(void);
@@ -163,7 +165,7 @@ static const char * (*ident_table[])() =
   bench_cpp,
   buffbase_cpp,
   buffupd_cpp,
-  buffwork_cpp,
+  buffpub_cpp,
   checkpt_cpp,
   clicdata_cpp,
   client_cpp,
@@ -388,7 +390,7 @@ int CliIsDevelVersion(void)
   static int isdevel = -1;
   if (isdevel == -1)
   {
-    char *p = strchr( cliident_cpp(), ',' );
+    char *p = (char*)strchr( cliident_cpp(), ',' );
     isdevel = 0;
     if (p)
     {
@@ -425,7 +427,7 @@ const char *CliGetFullVersionDescriptor(void)
          #endif
          "%c"  /* limited release or dev branch or public release */
          "-%s" /* date is in bugzilla format yymmddhh */ 
-	 "%s"  /* "-*dev*" or "" */
+         "%s"  /* "-*dev*" or "" */
          " for "CLIENT_OS_NAME,
          utilGetAppName(),
          ((ConIsGUI())?('G'):('C')),  

@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.76 2000/01/08 23:36:09 cyp Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.77 2000/06/02 06:24:57 jlawson Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -54,7 +54,7 @@ extern "C" {
   }
 #elif (CLIENT_OS == OS_DOS) 
   //ntohl()/htonl() defines are in...
-  #include "platform/dos/clidos.h" 
+  #include "platforms/dos/clidos.h" 
 #elif (CLIENT_OS == OS_VMS)
   #include <signal.h>
   #ifdef __VMS_UCX__
@@ -83,6 +83,13 @@ extern "C" {
       extern "C" char *inet_ntoa(struct in_addr in);
     #endif
   #endif
+  typedef int SOCKET;
+#elif (CLIENT_OS == OS_MACOS)
+  #include "socket_glue.h" // includes ntohl()/htonl() etc.
+  #define write(sock, buff, len) socket_write(sock, buff, len)
+  #define read(sock, buff, len) socket_read(sock, buff, len)
+  #define close(sock) socket_close(sock)
+  #define ioctl(sock, request, arg) socket_ioctl(sock, request, arg)
   typedef int SOCKET;
 #elif (CLIENT_OS == OS_OS2)
   #define BSD_SELECT

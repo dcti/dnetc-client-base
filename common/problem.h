@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.78 1999/12/31 21:15:40 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.79 2000/06/02 06:24:58 jlawson Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -23,6 +23,8 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 
 #undef MAX_MEM_REQUIRED_BY_CORE
 #define MAX_MEM_REQUIRED_BY_CORE  8  //64 bits
+// Problem->core_membuffer should be aligned to 2^CORE_MEM_ALIGNMENT
+#define CORE_MEM_ALIGNMENT 3
 
 #if defined(HAVE_DES_CORES) && defined(MMX_BITSLICER)
   #if MAX_MEM_REQUIRED_BY_CORE < (17*1024)
@@ -34,15 +36,26 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
   #if MAX_MEM_REQUIRED_BY_CORE < (17*1024)
      #undef MAX_MEM_REQUIRED_BY_CORE
      #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
-  #endif      
+  #endif
+  // CSC membuffer should be aligned to a 16-byte boundary
+  #if CORE_MEM_ALIGNMENT < 4
+     #undef CORE_MEM_ALIGNMENT
+     #define CORE_MEM_ALIGNMENT 4
+  #endif
 #endif
 #if defined(HAVE_OGR_CORES)
   #if MAX_MEM_REQUIRED_BY_CORE < OGR_PROBLEM_SIZE
      #undef MAX_MEM_REQUIRED_BY_CORE
      #define MAX_MEM_REQUIRED_BY_CORE OGR_PROBLEM_SIZE
-  #endif     
-#endif    
-  
+  #endif
+  // OGR membuffer should be aligned to a 8-byte boundary
+  // (essential for non-x86 CPUs)
+  #if CORE_MEM_ALIGNMENT < 3
+     #undef CORE_MEM_ALIGNMENT
+     #define CORE_MEM_ALIGNMENT 3
+  #endif
+#endif
+
 /* ---------------------------------------------------------------------- */
 
 typedef union
@@ -70,6 +83,9 @@ typedef union
     #if defined(HAVE_DES_CORES)
     u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );
     #endif  
+    #if defined(HAVE_OGR_CORES)
+    CoreDispatchTable *ogr;
+    #endif  
 } unit_func_union;
 
 
@@ -84,17 +100,21 @@ protected: /* these members *must* be protected for thread safety */
   ContestWork contestwork;
   CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */
-  char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
+  char __core_membuffer_space[(MAX_MEM_REQUIRED_BY_CORE+(1UL<<CORE_MEM_ALIGNMENT)-1)];
+  void *core_membuffer; /* aligned pointer to __core_membuffer_space */
+  /* --------------------------------------------------------------- */
   u32 timehi, timelo;
   int last_resultcode; /* the rescode the last time contestwork was stable */
   int started;
   int initialized;
   unsigned int threadindex; /* 0-n (globally unique identifier) */
+  volatile int running; /* LoadState() has to wait while Run()ning */
 
 public: /* anything public must be thread safe */
   u32 completion_timehi, completion_timelo; /* wall clock time between start/finish */
   u32 runtime_sec, runtime_usec; /* ~total user time spent in core */
   u32 last_runtime_sec, last_runtime_usec; /* time spent in core in last run */
+  int last_runtime_is_invalid; /* last_runtime was bad (clock change etc) */
   u32 core_run_count; /* used by go_mt and other things */
 
   struct
@@ -102,6 +122,7 @@ public: /* anything public must be thread safe */
   } profiling;                   /* -- managed by non-preemptive OSs     */
 
   u32 startpermille;             /* -,                                   */
+  struct {u32 hi,lo;} startkeys;
   unsigned int contest;          /*  |__ assigned in LoadState()         */
   int coresel;                   /*  |                                   */
   int client_cpu;                /*  | effective CLIENT_CPU              */

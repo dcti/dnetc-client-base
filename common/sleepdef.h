@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.33 2000/01/23 00:41:34 cyp Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.34 2000/06/02 06:25:01 jlawson Exp $"
 
 #include "cputypes.h"
 
@@ -61,6 +61,9 @@
   #endif
   #define sleep(x) DosSleep(1000*(x))
   #define usleep(x) DosSleep((x)/1000)
+#elif (CLIENT_OS == OS_MACOS)
+  #define sleep(x) macosTickSleep((x) * 60L)
+  #define usleep(x) macosTickSleep(((x) * 3 + 25000) / 50000)
 #elif (CLIENT_OS == OS_NETWARE)
   //emulated in platforms/netware/...
   extern "C" void usleep(unsigned long);
@@ -73,7 +76,7 @@
   #include <sys/types.h>
   // found in <unistd.h>, but requires _XOPEN_SOURCE_EXTENDED,
   // which causes more trouble...
-  extern "C" int usleep(useconds_t);
+//  extern "C" int usleep(useconds_t);
 #elif (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
   #ifdef _irix5_
@@ -121,6 +124,16 @@
 #elif (CLIENT_OS == OS_ULTRIX)
   #include <sys/time.h>
   #define usleep(x) {struct timeval tv__={0,(x)};select(0,NULL,NULL,NULL,&tv__);}
+#elif (CLIENT_OS == OS_FREEBSD)
+  /* sleep/usleep in freebsd static libs use setitimer on pre-3.4 
+     and nanosleep on 3.4 and above.
+  */
+  #include <sys/time.h>
+  #define _xsleep(_secs,_usecs) {struct timeval tv__={(_secs),(_usecs)};select(0,NULL,NULL,NULL,&tv__);}
+  #undef usleep
+  #define usleep(x) _xsleep(0,(x))
+  #undef sleep
+  #define sleep(x) _xsleep((x),0)
 #else
   #include <unistd.h> //has both sleep() and usleep()
 #endif

@@ -10,7 +10,7 @@
  * ------------------------------------------------------------------
 */
 #ifndef __BUFFBASE_H__
-#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.2 1999/11/09 16:30:52 cyp Exp $"
+#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.3 2000/06/02 06:24:53 jlawson Exp $"
 
 /* ..Put() returns <0 on ioerr, else 0 on success */
 int BufferPutFileRecord( const char *filename, const WorkRecord * data, 
@@ -42,8 +42,14 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
 long BufferFlushFile( Client *client, const char *loadermap_flags );
 long BufferFetchFile( Client *client, const char *loadermap_flags );
 
+/* automatically open a buffer and read/write/count single records */
 long PutBufferRecord(Client *client, const WorkRecord * data);
-long GetBufferRecord(Client *client, WorkRecord * data, unsigned int contest, int use_out_file);
-long GetBufferCount(Client *client, unsigned int contest, int use_out_file, unsigned long *normcountP );
+long GetBufferRecord(Client *client, WorkRecord * data, 
+		     unsigned int contest, int use_out_file);
+long GetBufferCount(Client *client, unsigned int contest, 
+		    int use_out_file, unsigned long *normcountP );
+
+/* determine if an in-buffer is full. */
+int BufferAssertIsBufferFull( Client *client, unsigned int contest );
 
 #endif /* __BUFFBASE_H__ */

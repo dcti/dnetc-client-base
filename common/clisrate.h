@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------
 */ 
 #ifndef __CLISRATE_H__
-#define __CLISRATE_H__ "@(#)$Id: clisrate.h,v 1.23 1999/12/31 20:29:31 cyp Exp $"
+#define __CLISRATE_H__ "@(#)$Id: clisrate.h,v 1.24 2000/06/02 06:24:54 jlawson Exp $"
 
 //#include "problem.h"  // Problem class
 

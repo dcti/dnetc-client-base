@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.6 1999/12/31 20:29:36 cyp Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.7 2000/06/02 06:25:00 jlawson Exp $"
 
 #if defined(__PROBLEM_H__)
 /* Set the xx_unit_func vectors/cputype/coresel in the problem. */

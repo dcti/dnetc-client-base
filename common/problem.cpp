@@ -11,9 +11,11 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.144 2000/01/08 23:36:10 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.145 2000/06/02 06:24:58 jlawson Exp $"; }
 
 /* ------------------------------------------------------------- */
+
+#include <assert.h>   //assert() macro
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -27,6 +29,7 @@ return "@(#)$Id: problem.cpp,v 1.144 2000/01/08 23:36:10 cyp Exp $"; }
 #include "cpucheck.h" //hardware detection
 #include "console.h"  //ConOutErr
 #include "triggers.h" //RaiseExitRequestTrigger()
+#include "sleepdef.h" //sleep() 
 
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
 
@@ -70,6 +73,15 @@ Problem::Problem(void)
   threadindex = __problem_counter++;
   initialized = 0;
   started = 0;
+  running = 0;
+
+  //align core_membuffer to 16byte boundary
+  {
+    char *p = &__core_membuffer_space[0];
+    while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
+      p++;
+    core_membuffer = p;
+  }
 
   {
     unsigned int sz = sizeof(int);
@@ -124,7 +136,7 @@ Problem::Problem(void)
       char getyes[10];
       ConInStr(getyes,4,0);
       ClearPauseRequestTrigger();
-      if (strcmpi(getyes,"yes") != 0)
+      if (strcmp( getyes, "yes" ) == 0)
       {
         runlevel = +12345;
         RaiseExitRequestTrigger();
@@ -245,6 +257,29 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
               int expected_corenum, int expected_os,
               int expected_buildfrac )
 {
+  if (started && last_resultcode == RESULT_WORKING)
+  {
+    Log("BUG! BUG! BUG! LoadState() on active problem!\n");
+    return -1;
+  }
+
+  #if 0 /* IF THIS IS NEEDED THEN THE CLIENT IS THOROUGHLY FUBARED */
+  if (running) 
+  {
+    //Log("LoadState() while Run() ...\n");
+    /* wait until Run() has finished, otherwise Run() will overwrite the new state */
+    for (int i = 0; i < 50 && running; ++i)
+      NonPolledUSleep(100000);//usleep(100000);
+    if (running) /* don't load the new state if Run() doesn't finish */
+    {
+      //Log("Still Run()ning. LoadState() failed!\n");
+      started = 0; /* let Run() fail */
+      return -1;
+    }
+  }
+  #endif
+  
+  initialized = 0; /* Run() won't start any more */
   last_resultcode = -1;
   started = initialized = 0;
   timehi = timelo = 0;
@@ -253,6 +288,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   last_runtime_sec = last_runtime_usec = 0;
   memset((void *)&profiling, 0, sizeof(profiling));
   startpermille = permille = 0;
+  startkeys.lo = startkeys.hi = 0;
   loaderflags = 0;
   contest = contestid;
   tslice = _iterations;
@@ -346,6 +382,8 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
                            ((double)(contestwork.crypto.keysdone.lo))) /
         ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
                         ((double)(contestwork.crypto.iterations.lo)))) );
+        startkeys.hi = contestwork.crypto.keysdone.hi;
+        startkeys.lo = contestwork.crypto.keysdone.lo;
       }     
       break;
     }
@@ -363,13 +401,17 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
           contestwork.ogr.nodes.hi = contestwork.ogr.nodes.lo = 0;
         }  
       }
+      #if ((CLIENT_OS != OS_MACOS) || (CLIENT_CPU != CPU_POWERPC))
       extern CoreDispatchTable *ogr_get_dispatch_table();
       ogr = ogr_get_dispatch_table();
+      #else
+      ogr = unit_func.ogr;
+      #endif
       int r = ogr->init();
       if (r != CORE_S_OK)
         return -1;
       r = ogr->create(&contestwork.ogr.workstub, 
-                      sizeof(WorkStub), core_membuffer, sizeof(core_membuffer));
+                      sizeof(WorkStub), core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
       if (r != CORE_S_OK)
         return -1;
       if (contestwork.ogr.workstub.worklength > contestwork.ogr.workstub.stub.length)
@@ -377,6 +419,8 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
         // This is just a quick&dirty calculation that resembles progress.
         startpermille = contestwork.ogr.workstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10
                       + contestwork.ogr.workstub.stub.diffs[contestwork.ogr.workstub.stub.length+1]/10;
+        startkeys.hi = contestwork.ogr.nodes.hi;
+        startkeys.lo = contestwork.ogr.nodes.lo;
       }
       break;
     }  
@@ -636,7 +680,7 @@ int Problem::Run_DES(u32 *iterationsP, int *resultcode)
 #else
 
   //iterationsP == in: suggested iterations, out: effective iterations
-  u32 kiter = (*(unit_func.des))( &rc5unitwork, iterationsP, core_membuffer );
+  u32 kiter = (*(unit_func.des))( &rc5unitwork, iterationsP, (char *)core_membuffer );
 
   __IncrementKey ( &refL0.hi, &refL0.lo, *iterationsP, contest);
   // Increment reference key count
@@ -758,12 +802,151 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
 
 /* ------------------------------------------------------------- */
 
+static void __compute_run_times(Problem *problem, 
+                                u32 runstart_secs, u32 runstart_usecs,
+                                u32 *probstart_secs, u32 *probstart_usecs,
+                                int using_ptime, volatile int *s_using_ptime,
+                                int core_resultcode )
+{
+  struct timeval clock_stop;
+  int last_runtime_is_invalid = 0;
+  int clock_stop_is_time_now = 0;  
+  u32 timehi, timelo, elapsedhi, elapsedlo;
+  clock_stop.tv_sec = 0;
+
+  /* ++++++++++++++++++++++++++ */
+
+  /* first compute elapsed time for this run */
+  if (runstart_secs == 0xfffffffful) /* couldn't get a start time */
+  {
+    last_runtime_is_invalid = 1;
+  }
+  else if (!using_ptime)
+  {
+    if (CliGetMonotonicClock(&clock_stop) != 0)
+    {
+      if (CliGetMonotonicClock(&clock_stop) != 0)
+        last_runtime_is_invalid = 1;
+    }
+    if (!last_runtime_is_invalid)
+    {
+      /* flag to say clock_stop reflects 'now' */
+      clock_stop_is_time_now = 1;
+    }
+  }
+  else if (CliGetThreadUserTime(&clock_stop) < 0)
+  {
+    *s_using_ptime = 0; 
+    last_runtime_is_invalid = 1;
+  }
+  if (!last_runtime_is_invalid)
+  {
+    timehi = runstart_secs;
+    timelo = runstart_usecs;
+    elapsedhi = clock_stop.tv_sec;
+    elapsedlo = clock_stop.tv_usec;
+
+    if (elapsedhi <  timehi || (elapsedhi == timehi && elapsedlo < timelo ))
+    {
+      /* AIEEEE - clock is whacked */
+      last_runtime_is_invalid = 1;
+    }
+    else
+    {
+      last_runtime_is_invalid = 0;
+
+      if (elapsedlo < timelo)
+      {
+        elapsedhi--;
+        elapsedlo += 1000000UL;
+      }
+      elapsedhi -= timehi;
+      elapsedlo -= timelo;
+      problem->last_runtime_sec = elapsedhi;
+      problem->last_runtime_usec = elapsedlo; 
+
+      elapsedhi += problem->runtime_sec;
+      elapsedlo += problem->runtime_usec;
+      if (elapsedlo >= 1000000UL)
+      {
+        elapsedhi++;
+        elapsedlo -= 1000000UL;
+      }
+      problem->runtime_sec  = elapsedhi;
+      problem->runtime_usec = elapsedlo;
+    }
+  }
+  if (last_runtime_is_invalid)
+  {
+    problem->last_runtime_sec = 0;
+    problem->last_runtime_usec = 0; 
+  }
+  problem->last_runtime_is_invalid = last_runtime_is_invalid;
+
+  /* ++++++++++++++++++++++++++ */
+
+  /* do we need to compute elapsed wall clock time for this packet? */
+  if ( core_resultcode == RESULT_WORKING ) /* no, not yet */ 
+  {
+    if (clock_stop_is_time_now /* we have determined 'now' */
+    && *probstart_secs == 0xfffffffful) /* our start time was invalid */
+    {                          /* then save 'now' as our start time */
+      *probstart_secs = clock_stop.tv_sec;
+      *probstart_usecs = clock_stop.tv_usec;
+    }
+  }
+  else /* _FOUND/_NOTHING. run is finished, compute elapsed wall clock time */
+  {
+    timehi = *probstart_secs;
+    timelo = *probstart_usecs;
+
+    if (!clock_stop_is_time_now /* we haven't determined 'now' yet */
+    && timehi != 0xfffffffful) /* our start time was not invalid */
+    {
+      if (CliGetMonotonicClock(&clock_stop) != 0)
+      {
+        if (CliGetMonotonicClock(&clock_stop) != 0) 
+          timehi = 0xfffffffful; /* no stop time, so make start invalid */
+      }
+    }
+    elapsedhi = clock_stop.tv_sec;
+    elapsedlo = clock_stop.tv_usec;
+
+    if (timehi == 0xfffffffful || /* start time is invalid */
+        elapsedhi <  timehi || (elapsedhi == timehi && elapsedlo < timelo ))
+    {
+      /* either start time is invalid, or end-time < start-time */
+      /* both are BadThing(TM)s - have to use the per-run total */
+      elapsedhi = problem->runtime_sec;
+      elapsedlo = problem->runtime_usec;
+    }
+    else /* start and 'now' time are ok */
+    {
+      if (elapsedlo < timelo)
+      {
+        elapsedlo += 1000000UL;
+        elapsedhi --;
+      }
+      elapsedhi -= timehi;
+      elapsedlo -= timelo;
+    }
+    problem->completion_timehi = elapsedhi;
+    problem->completion_timelo = elapsedlo;
+  }
+
+  return;
+}
+
+/* ---------------------------------------------------------------- */
+
 int Problem::Run(void) /* returns RESULT_*  or -1 */
 {
-  static volatile int using_ptime = -1;
-  struct timeval stop, start, pstart, clock_stop;
-  int retcode, core_resultcode;
-  u32 iterations;
+  static volatile int s_using_ptime = -1;
+  struct timeval tv; int retcode, core_resultcode;
+  u32 iterations, runstart_secs, runstart_usecs;
+  int using_ptime;
+
+  last_runtime_is_invalid = 1; /* haven't changed runtime fields yet */
 
   if ( !initialized )
     return ( -1 );
@@ -771,16 +954,26 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   if ( last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
     return ( last_resultcode );
 
-  CliClock(&start);
-  if (using_ptime)
+  if (++running > 1) /* What happened here? Who else called Run(), too? */
   {
-    if (CliGetProcessTime(&pstart) < 0)
-      using_ptime = 0;
-  }      
-    
+    Log("Error: Multiple Run() calls ...\n"); /* shouldn't occur */
+    --running;
+    return -1;
+  }
+  
   if (!started)
   {
-    timehi = start.tv_sec; timelo = start.tv_usec;
+    timehi = 0;
+    if (CliGetMonotonicClock(&tv) != 0)
+    {
+      if (CliGetMonotonicClock(&tv) != 0)
+        timehi = 0xfffffffful;
+    }
+    if (timehi == 0)
+    {
+      timehi = tv.tv_sec; 
+      timelo = tv.tv_usec;
+    }
     completion_timelo = completion_timehi = 0;
     runtime_sec = runtime_usec = 0;
     memset((void *)&profiling, 0, sizeof(profiling));
@@ -794,6 +987,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     runtime_usec = 1; /* ~1Tkeys for a 2^20 packet */
     completion_timelo = 1;
     last_resultcode = RESULT_NOTHING;
+    --running;
     return RESULT_NOTHING;
 #endif    
   }
@@ -809,13 +1003,37 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     sync when the main thread gets it with RetrieveState(). 
     
     note: although the value returned by Run_XXX is usually the same as 
-    the core_resultcode it is not always so. For instance, if 
+    the core_resultcode it is not always the case. For instance, if 
     post-LoadState() initialization  failed, but can be deferred, Run_XXX 
     may choose to return -1, but keep core_resultcode at RESULT_WORKING.
   */
 
-  iterations = tslice;
   last_runtime_usec = last_runtime_sec = 0;
+  runstart_secs = 0xfffffffful;
+  using_ptime = s_using_ptime;
+  if (using_ptime) 
+  {
+    if (CliGetThreadUserTime(&tv) != 0)
+      using_ptime = 0;
+    else
+      runstart_secs = 0;
+  }    
+  if (!using_ptime) 
+  {
+    runstart_secs = 0;
+    if (CliGetMonotonicClock(&tv) != 0)
+    {
+      if (CliGetMonotonicClock(&tv) != 0)
+        runstart_secs = 0xfffffffful;
+    }
+  }
+  runstart_usecs = 0; /* shaddup compiler */
+  if (runstart_secs == 0)
+  {
+    runstart_secs = tv.tv_sec;
+    runstart_usecs = tv.tv_usec;
+  }
+  iterations = tslice;
   core_resultcode = last_resultcode;
   retcode = -1;
 
@@ -833,89 +1051,35 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
        break;
   }
 
-  
   if (retcode < 0) /* don't touch tslice or runtime as long as < 0!!! */
   {
+    --running;
+    return -1;
+  }
+  if (!started) /* LoadState was called while we were running - state was overwritten! */
+                /* shouldn't occur any more */  
+  {
+    //Log( "Error: LoadState() while Run()ning (thread %u)!\n", threadindex );
+    last_resultcode = -1; // "Discarded (core error)": discard the overwritten block
+    --running;
     return -1;
   }
   
   core_run_count++;
-  if (using_ptime)
-  {
-    //Warning for GetProcessTime(): if the OSs thread model is ala SunOS's LWP,
-    //ie, threads don't get their own pid, then GetProcessTime() functionality 
-    //is limited to single thread/benchmark/test only (the way it is now),
-    //otherwise it will be return process time for all threads. 
-    //This is asserted below too.
-    if (CliGetProcessTime(&stop) < 0)
-      using_ptime = 0;
-    else if (using_ptime < 0)
-    {
-      CliClock(&clock_stop);
-      if (((clock_stop.tv_sec < stop.tv_sec) ||
-        (clock_stop.tv_sec==stop.tv_sec) && clock_stop.tv_usec<stop.tv_usec))
-        using_ptime = 0; /* clock time can never be less than process time */
-      else
-        using_ptime = 1;
-    }
-    if (using_ptime)
-    {
-      start.tv_sec = pstart.tv_sec;
-      start.tv_usec = pstart.tv_usec;
-    }
-  }
-  if (!using_ptime || core_resultcode != RESULT_WORKING )
-  {
-    CliClock(&clock_stop);
-    if (!using_ptime)
-    {
-      stop.tv_sec = clock_stop.tv_sec;
-      stop.tv_usec = clock_stop.tv_usec;
-    }
-    if ( core_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING */
-    {
-      if (((u32)clock_stop.tv_usec) < timelo)
-      {
-        clock_stop.tv_usec += 1000000;
-        clock_stop.tv_sec--;
-      }
-      completion_timehi = (((u32)clock_stop.tv_sec) - timehi);
-      completion_timelo = (((u32)clock_stop.tv_usec) - timelo);
-      if (completion_timelo >= 1000000)
-      {
-        completion_timelo-= 1000000;
-        completion_timehi++;
-      }
-    }
-  }
-  if (stop.tv_sec < start.tv_sec || 
-     (stop.tv_sec == start.tv_sec && stop.tv_usec <= start.tv_usec))
-  {
-    //AIEEE! clock is whacky (or unusably inaccurate if ==)
-  }
-  else
-  {
-    if (stop.tv_usec < start.tv_usec)
-    {
-      stop.tv_sec--;
-      stop.tv_usec+=1000000L;
-    }
-    runtime_usec += (last_runtime_usec = (stop.tv_usec - start.tv_usec));
-    runtime_sec  += (last_runtime_sec = (stop.tv_sec - start.tv_sec));
-    if (runtime_usec >= 1000000L)
-    {
-      runtime_sec++;
-      runtime_usec-=1000000L;
-    }
-  }
-
+  __compute_run_times( this, runstart_secs, runstart_usecs, &timehi, &timelo,
+                       using_ptime, &s_using_ptime, core_resultcode );
   tslice = iterations;
-
   last_resultcode = core_resultcode;
+  --running;
   return last_resultcode;
 }
 
 /* ----------------------------------------------------------------------- */
+
+// Returns 1 if it is safe to load the specified contest onto a
+// specified problem slot, or 0 if it is not allowed.  Core
+// thread-safety and contest availability checks are used to determine
+// allowability, but not contest closure.
 
 int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
 {
@@ -927,6 +1091,59 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
      GetNumberOfDetectedProcessors() > 1) /* have x86 card */
     return 0;
   #endif
+  #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS) || \
+      (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_RISCOS)
+  /* Cannot run (long-running) OGR on non-preemptive OSs on low end 
+     hardware. OGR has significant per-call overhead which ultimately 
+     prevents frequent yielding no matter how small the timeslice. 
+     Examples (486/66, NetWare, 3c5x9 polling NIC):
+     16 nodes per call: max achievable yield rate: 13-15/sec
+     Server is extremely laggy. 
+     256 nodes per call: max achievable yield rate ALSO 13-15/sec
+     For the fun of it, I then tried 1024 nodes per call: NetWare 
+     started dropping packets, clients disconnected, the profiler
+     froze - I couldn't switch back to the console to unload the
+     client and had to power-cycle.
+  */
+  if (contest_i == OGR /* && prob_index >= 0 */) /* crunchers only */
+  {
+    #if (CLIENT_CPU == CPU_68K)
+    return 0;
+    #elif (CLIENT_CPU == CPU_ARM)
+    if (riscos_check_taskwindow())    
+      return 0;
+    #else
+    static int should_not_do = -1;
+    if (should_not_do == -1)
+    {
+      long det = GetProcessorType(1);
+      if (det >= 0)
+      {
+        switch (det & 0xff)
+        {
+          #if (CLIENT_CPU == CPU_X86)
+          case 0x00:  // P5
+          case 0x01:  // 386/486
+          case 0x03:  // Cx6x86
+          case 0x04:  // K5
+          case 0x06:  // Cyrix 486
+          case 0x0A:  // Centaur C6
+          #elif (CLIENT_CPU == CPU_POWERPC)
+          case 0x01:  // PPC 601
+          #endif
+                    should_not_do = +1;
+                    break;
+          default:  should_not_do = 0;
+                    break;
+        }
+      }
+    }
+    if (should_not_do)
+      return 0;
+    #endif
+  }
+  #endif
+
   
   switch (contest_i)
   {
@@ -962,3 +1179,4 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
   return 0;
 }
 
+/* ----------------------------------------------------------------------- */

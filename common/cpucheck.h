@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.12 1999/12/04 15:37:08 cyp Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.13 2000/06/02 06:24:56 jlawson Exp $"
 
 //return number of processors detected (by the hardware/from the OS)
 //returns -1 if detection is not supported.

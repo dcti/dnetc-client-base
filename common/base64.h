@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __BASE64_H__
-#define __BASE64_H__ "@(#)$Id: base64.h,v 1.5 1999/11/08 02:02:33 cyp Exp $"
+#define __BASE64_H__ "@(#)$Id: base64.h,v 1.6 2000/06/02 06:24:52 jlawson Exp $"
 
 /* 
   On success, both functions return the number of bytes in the outbuf (not 

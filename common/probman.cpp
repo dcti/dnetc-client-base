@@ -6,7 +6,7 @@
  *
 */ 
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.14 1999/12/31 20:29:36 cyp Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.15 2000/06/02 06:24:58 jlawson Exp $"; }
 
 #include "baseincs.h"  // malloc()/NULL/memset()
 #include "problem.h"   // Problem class

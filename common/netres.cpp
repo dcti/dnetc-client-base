@@ -6,7 +6,7 @@
  *
 */
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.31 1999/12/31 20:29:34 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.32 2000/06/02 06:24:57 jlawson Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
@@ -50,8 +50,8 @@ static const struct        // this structure defines which proxies are
   int midzone;
 } proxyzoi[] = {
                 { "us",    -10, -1 ,  -5 },
-                { "euro",   -2, +6 ,  +2 }, //euro crosses 0 degrees longitude
-                { "asia",   +5, +10,  +9 },
+                { "euro",   -2, +4 ,  +2 }, //euro crosses 0 degrees longitude
+                { "asia",   +3, +10,  +9 },
                 { "aussie", +9, -9 , +12 }, //jp and aussie cross the dateline
                 { "jp",    +10, -10, -11 }
                };
@@ -218,6 +218,152 @@ static struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host ord
 
 //-----------------------------------------------------------------------
 
+// Linux especially has problems with proper name resolution handling
+// because of the existence of C Libraries based on libc5, glibc2.0,
+// and glibc2.1; all of which present binary compatibility issues
+// typically resulting in only name resolutions failing.  This small
+// shim attempts to explicitly dynamically load the library containing
+// the resolver and directly call it, bypassing the statically linked
+// version of gethostbyname() bound to our executable.
+
+#if (CLIENT_OS == OS_LINUX) && defined(UNIVERSALRESOLVER)
+#include <dlfcn.h>
+static struct hostent *__linux_gethostbyname_shim( const char *hostname )
+{
+  static struct { const char *lib, *sym; } libsyms[] = {
+         { "/usr/lib/libresolv.so", "res_gethostbyname" },
+         { "/usr/lib/libc.so",      "gethostbyname"     }    };
+  struct hostent *hp = gethostbyname(hostname);
+  int libsym;
+
+  for (libsym=0; !hp && libsym<int(sizeof(libsyms)/sizeof(libsyms[0])); libsym++)
+  {
+    void *plib = dlopen( libsyms[libsym].lib, RTLD_LAZY);
+    if (!plib) 
+    {
+      //printf("failed to load '%s'\n", libsyms[libsym].lib);
+    }
+    else 
+    {
+      void *funcptr = dlsym(plib, libsyms[libsym].sym );
+      if (!funcptr) 
+      {
+        //printf("failed to get pointer to '%s'\n", libsyms[libsym].sym);
+      }
+      else
+      {
+        struct hostent *(*pgethostbyname)(const char *name) =
+              (struct hostent*(*)(const char *)) funcptr;
+        hp = pgethostbyname(hostname);
+        if (!hp)
+        {
+          //printf("no results\n");
+        }
+        else
+        {
+          static char hostbuf[1024], aliasbuf[1024];
+          static char addrbuf[32*sizeof(ulong)];
+          static char *aliaslist[2]; 
+          static char *addrlist[32];
+          static struct hostent hent;
+  
+          hostbuf[0] = 0;
+          aliaslist[0]= (char *)0;
+          addrlist[0] = (char *)0;
+  
+          hent.h_addrtype = hp->h_addrtype;
+          hent.h_length = hp->h_length;
+          hent.h_name = &(hostbuf[0]);
+          hent.h_aliases = &(aliaslist[0]);
+          hent.h_addr_list = &(addrlist[0]);
+  
+          if (hp->h_addr_list)
+          {
+            unsigned int addrpos = 0;
+            while ( hp->h_addr_list[addrpos] 
+              && ( ((addrpos+1)*hp->h_length) < sizeof(addrbuf))
+              && ( (addrpos+1) < (sizeof(addrlist)/sizeof(addrlist[0])) ))
+            {
+              char *p = hp->h_addr_list[addrpos];
+              char *q = &addrbuf[addrpos*hp->h_length];
+              memcpy(q, p, hp->h_length );
+              addrlist[addrpos++] = q;
+            }  
+            addrlist[addrpos] = (char *)0;
+          }
+          if (hp->h_name)
+          {
+            strncpy( hostbuf, hp->h_name, sizeof(hostbuf) );
+            hostbuf[sizeof(hostbuf)-1] = '\0';
+          }
+          if (hp->h_aliases)
+          {
+            if (hp->h_aliases[0])
+            {
+              strncpy( aliasbuf, hp->h_aliases[0], sizeof(aliasbuf));
+              aliasbuf[sizeof(aliasbuf)-1] = '\0';
+              aliaslist[0] = &aliasbuf[0];
+              aliaslist[1] = (char *)0;
+            }  
+          }
+          hp = &hent;
+        }
+        //free symbol?
+      }
+      dlclose(plib);
+    }
+  }
+  return hp;
+}
+// remap calls to our replacement shim.
+#undef gethostbyname
+#define gethostbyname(xx) __linux_gethostbyname_shim(xx)
+#endif
+
+//-----------------------------------------------------------------------
+
+#ifndef NETRES_STUBS_ONLY
+// Returns -1 if the resolve fails, or 0 on success.
+static int __LowLevelGethostbyname(const char *hostname,
+    u32 *addrlist, unsigned int addrlistcount,
+    unsigned int *foundaddrcount)
+{
+  struct hostent *hp;
+  char *lookup;
+
+  // copy pointer to "lookup" to work around gethostbyname()
+  // not prototyped to take const arg on some platforms.
+  *((const char **)&lookup) = hostname;
+
+  if ((hp = gethostbyname(lookup) ) != NULL)
+  {
+    unsigned int addrpos;
+
+    // Iterate through the matching IP Address list and add only
+    // addresses that we haven't already added, ignoring the
+    // duplicates that already exist.
+    for ( addrpos = 0; (hp->h_addr_list[addrpos] &&
+         (*foundaddrcount < addrlistcount)); addrpos++ )
+    {
+      unsigned int dupcheck = 0;
+      addrlist[*foundaddrcount] = *((u32 *)(hp->h_addr_list[addrpos]));
+      while (dupcheck < *foundaddrcount)
+      {
+        if (addrlist[*foundaddrcount] == addrlist[dupcheck])
+          break;
+        dupcheck++;
+      }
+      if (!(dupcheck < *foundaddrcount)) /* no dupes */
+        (*foundaddrcount)++;
+    }
+    return 0;
+  }
+  return -1;
+}
+#endif
+
+//-----------------------------------------------------------------------
+
 int NetResolve( const char *host, int resport, int resauto,
                 u32 *addrlist, unsigned int addrlistcount,
                 char *resolve_hostname, unsigned int resolve_hostname_sz )
@@ -254,13 +400,35 @@ int NetResolve( const char *host, int resport, int resauto,
     hostname[pos]=0;
     host = hostname;
 
-    if (!hostname[0])
+    if (pos == 0) /* len == 0 */
       resauto = 1;
-    else
+    else 
     {
-      addrlist[0] = (u32)(inet_addr(hostname));
+      addrlist[0] = 0xFFFFFFFFL;
+      if (pos > 13 && strcmp(&hostname[pos-13],".in-addr.arpa")==0)
+      {
+        hostname[pos-=13]='\0';
+        #if (CLIENT_OS == OS_MACOS)
+        addrlist[0] = (u32)(inet_addr(hostname).s_addr);
+        #else
+        addrlist[0] = (u32)(inet_addr(hostname));
+        #endif
+        if (addrlist[0] != 0xFFFFFFFFL)
+          addrlist[0] = ((addrlist[0]>>24)&0xff)|((addrlist[0]>>8)&0xff00)|
+                        ((addrlist[0]&0xff)<<24)|((addrlist[0]&0xff00)<<8);
+      }
+      else
+      {
+        #if (CLIENT_OS == OS_MACOS)
+        addrlist[0] = (u32)(inet_addr(hostname).s_addr);
+        #else
+        addrlist[0] = (u32)(inet_addr(hostname));
+        #endif
+      }  
       if (addrlist[0] != 0xFFFFFFFFL)
       {
+        if (addrlist[0] == 0)
+          return -1;
         if (resolve_hostname_sz)
         {
           host = (const char *)(addrlist);
@@ -297,6 +465,8 @@ int NetResolve( const char *host, int resport, int resauto,
       struct proxylist *plist;
       struct proxylist dummylist;
 
+      // If automatic geographic zone selection based on time zone should
+      // be done, then first identify which zones apply to us.
       if (resauto)
       {
         int tzmin = -6*60; /* middle of us.d.net */
@@ -323,45 +493,33 @@ int NetResolve( const char *host, int resport, int resauto,
         plist = &dummylist;
       }
 
+      // Iterate through all of the hostnames lists and place all
+      // of the resolved IP Addresses into the "addrlist".
       for (pos = 0; ((pos < (plist->numproxies)) &&
                          (foundaddrcount < addrlistcount)); pos++ )
       {
-        struct hostent *hp; char *lookup;
         #ifdef RESDEBUG
         printf(" => %d:\"%s\"\n", pos+1, plist->proxies[pos] );
         #endif
 
-        //work around gethostbyname not getting const arg on some platforms
-        *((const char **)&lookup) = plist->proxies[pos];
-        if ((hp = gethostbyname(lookup) ) != NULL)
+        if (__LowLevelGethostbyname(plist->proxies[pos], addrlist,
+            addrlistcount, &foundaddrcount) >= 0)
         {
-          unsigned int addrpos;
+          // when successful, copy the first good hostname into
+          // the "resolve_hostname" buffer for display purposes.
           if (resolve_hostname_sz)
           {
             if (resolve_hostname[0] == '\0')
             {
-              strncpy( resolve_hostname, plist->proxies[pos],
-                                          resolve_hostname_sz);
+              strncpy(resolve_hostname,plist->proxies[pos],
+                      resolve_hostname_sz);
               resolve_hostname[resolve_hostname_sz-1]='\0';
             }
-          }
-          for ( addrpos = 0; (hp->h_addr_list[addrpos] &&
-               (foundaddrcount < addrlistcount)); addrpos++ )
-          {
-            unsigned int dupcheck = 0;
-            addrlist[foundaddrcount] = *((u32 *)(hp->h_addr_list[addrpos]));
-            while (dupcheck < foundaddrcount)
-            {
-              if (addrlist[foundaddrcount] == addrlist[dupcheck])
-                break;
-              dupcheck++;
-            }
-            if (!(dupcheck < foundaddrcount)) /* no dupes */
-              foundaddrcount++;
           }
         }
       }
 
+      // If a successful zone name was found, then do something with it.
       if (resolve_hostname_sz)
       {
         if (resolve_hostname[0] == '\0')
@@ -371,7 +529,7 @@ int NetResolve( const char *host, int resport, int resauto,
           else
             strncpy( resolve_hostname, hostname, resolve_hostname_sz );
           resolve_hostname[resolve_hostname_sz-1]='\0';
-        }
+        }  
       }
     }
   }
@@ -381,6 +539,8 @@ int NetResolve( const char *host, int resport, int resauto,
     return -1;
   return (int)foundaddrcount;
 }
+
+//-----------------------------------------------------------------------
 
 #if 0
 int Network::Resolve(const char *host, u32 *hostaddress, int resport )
@@ -481,3 +641,6 @@ int main(void)
   return 0;
 }
 #endif
+
+//-----------------------------------------------------------------------
+

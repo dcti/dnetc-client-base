@@ -9,10 +9,10 @@
 // arbitrary binary data for network communications.
 // Created by Jeff Lawson.
 // ----------------------------------------------------------------------
-// 
+//
 
 #ifndef __AUTOBUFF_H__
-#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.15 1999/11/23 22:36:36 cyp Exp $"
+#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.16 2000/06/02 06:24:52 jlawson Exp $"
 
 #ifndef AUTOBUFFER_INCREMENT
 #define AUTOBUFFER_INCREMENT 100
@@ -21,31 +21,29 @@
 class AutoBuffer
 {
   char *buffer;
-  unsigned int bufferfilled;
-  unsigned int buffersize;
+  unsigned int bufferfilled;    // number of actually used bytes
+  unsigned int buffersize;      // current maximum size of buffer
+  unsigned int bufferskip;      // unused slack at start of buffer
 public:
   AutoBuffer(void);
   AutoBuffer(const AutoBuffer &that);
   AutoBuffer(const char *szText);
   AutoBuffer(const char *chData, unsigned int amount);
   ~AutoBuffer(void);
-  operator const char* (void) const {return buffer;}
-  char *GetHead(void) const {return buffer;}
-  char *GetTail(void) const {return buffer + (int)bufferfilled;}
+  operator const char* (void) const {return buffer + (int)bufferskip;}
+  char *GetHead(void) const {return buffer + (int)bufferskip;}
+  char *GetTail(void) const {return buffer + (int)bufferskip + (int)bufferfilled;}
   char *Reserve(unsigned int amount);
   void MarkUsed(unsigned int amount);
   void RemoveHead(unsigned int amount);
   void RemoveTail(unsigned int amount);
   unsigned int GetLength(void) const {return bufferfilled;}
-  unsigned int GetSlack(void) const {return buffersize - bufferfilled;}
-  void Clear(void) {bufferfilled = 0;}
+  unsigned int GetTailSlack(void) const {return buffersize - bufferskip - bufferfilled;}
+  void Clear(void) {bufferfilled = bufferskip = 0;}
   void operator+= (const AutoBuffer &that);
   void operator= (const AutoBuffer &that);
-  #ifdef PROXYTYPE /* not for client: aggregate returns are not portable */
-  AutoBuffer operator+ (const AutoBuffer &that) const;
-  #endif
-  bool RemoveLine(AutoBuffer *line);
-  bool StepLine(AutoBuffer *line, unsigned int *offset) const;
+  int RemoveLine(AutoBuffer *line);
+  int StepLine(AutoBuffer *line, unsigned int *offset) const;
 };
 
 #endif /* __AUTOBUFF_H__ */

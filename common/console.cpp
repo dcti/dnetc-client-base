@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.71 2000/01/16 22:38:24 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.72 2000/06/02 06:24:55 jlawson Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -36,11 +36,12 @@ return "@(#)$Id: console.cpp,v 1.71 2000/01/16 22:38:24 cyp Exp $"; }
   || (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
   || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
   || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDOS) \
-  || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) )
+  || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) \
+  || (CLIENT_OS==OS_NTO2) )
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
-#if defined(__unix__) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390)
+#if (defined(__unix__) && !defined(__EMX__)) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390)
 #define TERM_IS_ANSI_COMPLIANT
 #endif
 #if defined(__unix__)
@@ -49,7 +50,9 @@ return "@(#)$Id: console.cpp,v 1.71 2000/01/16 22:38:24 cyp Exp $"; }
 #if (CLIENT_OS == OS_RISCOS)
 extern "C" void riscos_backspace();
 #endif
-
+#if defined(__EMX__)
+#include <sys/video.h>
+#endif
 /* ---------------------------------------------------- */
 
 static struct
@@ -85,22 +88,33 @@ int DeinitializeConsole(int waitforuser)
 
 /* ---------------------------------------------------- */
 
-int InitializeConsole(int runhidden,int doingmodes)
+int InitializeConsole(int *runhidden,int doingmodes)
 {
   int retcode = 0;
   if ((++constatics.initlevel) == 1)
   {
     memset( (void *)&constatics, 0, sizeof(constatics) );
     constatics.initlevel = 1;
-    constatics.runhidden = runhidden;
+    constatics.runhidden = *runhidden;
     doingmodes = doingmodes; /* possibly unused */
 
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     retcode = w32InitializeConsole(constatics.runhidden,doingmodes);
     #elif (CLIENT_OS == OS_NETWARE)
     retcode = nwCliInitializeConsole(constatics.runhidden,doingmodes);
-    #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
-    retcode = os2CliInitializeConsole(constatics.runhidden,doingmodes);
+    #elif (CLIENT_OS == OS_MACOS)
+     #ifndef MAC_FBA // because I might need -config I cannot run the MacOS CLI
+     // client truly detached but rather hide the screenoutput in the console
+     retcode = macosInitializeConsole(constatics.runhidden,doingmodes);
+     *runhidden = 0;
+     #endif
+    #elif (CLIENT_OS == OS_OS2)
+     #if defined(OS2_PM)
+     retcode = os2CliInitializeConsole(constatics.runhidden,doingmodes);
+     #endif
+     #if defined(__EMX__)
+     v_init();
+     #endif
     #endif
 
     if (retcode != 0)
@@ -133,6 +147,8 @@ int ConIsGUI(void)
   #elif (CLIENT_OS == OS_RISCOS)
   extern int guiriscos;
   return (guiriscos!=0);
+  #elif (CLIENT_OS == OS_MACOS) && !defined(MAC_FBA)
+  return 1;
   #else
   return 0;
   #endif
@@ -319,7 +335,11 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         #if (CLIENT_OS == OS_BEOS)
         newios.c_lflag &= ~(ECHO|ECHONL);  /* BeOS does not have (non-Posix?) ECHOPRT and ECHOCTL */
         #else
+        #if (CLIENT_OS == OS_NTO2)
+        newios.c_lflag &= ~(ECHO|ECHONL|ECHOCTL);
+        #else
         newios.c_lflag &= ~(ECHO|ECHONL|ECHOPRT|ECHOCTL); /* no echo at all */
+        #endif
         #endif
         newios.c_lflag &= ~(ICANON);     /* not linemode and no translation */
         newios.c_cc[VTIME] = 0;          /* tsecs inter-char gap */
@@ -381,6 +401,10 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
 
   if (!buffer || !buflen)
     return 0;
+
+#if (CLIENT_OS == OS_NEXTSTEP)
+  flags &= ~CONINSTR_BYEXAMPLE;
+#endif
 
   //if ((flags & CONINSTR_ASPASSWORD) != 0)
   //  flags = CONINSTR_ASPASSWORD;
@@ -615,8 +639,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     if (dosCliConGetSize( &width, &height ) < 0)
       height = width = 0;
   #elif (CLIENT_OS == OS_OS2)
+    #if !defined(__EMX__)
     VIOMODEINFO viomodeinfo = {0};
-    APIRET rc;
     HVIO   hvio = 0;
     viomodeinfo.cb = sizeof(VIOMODEINFO);
     if(!VioGetMode(&viomodeinfo, hvio))
@@ -624,6 +648,10 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
        height = viomodeinfo.row;
        width = viomodeinfo.col;
        }
+    #else
+    v_init();
+    v_dimen(&width, &height);
+    #endif
   #elif (CLIENT_OS == OS_WIN32)
     if ( w32ConGetSize(&width,&height) < 0 )
       height = width = 0;
@@ -634,7 +662,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
   #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SOLARIS) || \
         (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_IRIX) || \
         (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX) || \
-        (CLIENT_OS == OS_BEOS)
+        (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
+        (CLIENT_OS == OS_DEC_UNIX)
     /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
@@ -652,6 +681,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       width   = winsz.ts_cols;
       height  = winsz.ts_lines;
     }
+  #elif (CLIENT_OS == OS_NTO2)
+    tcgetsize(fileno(stdout), &height, &width);
   #elif defined(TIOCGWINSZ)
     #error please add support for TIOCGWINSZ to avoid the following stuff
   #else
@@ -758,12 +789,18 @@ int ConClear(void)
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
       return w32ConClear();
     #elif (CLIENT_OS == OS_OS2)
-      CHAR attrib = 0007;
+      #ifndef __EMX__
+      UCHAR attrib = ' ';
       USHORT row = 0, col = 0;
       HVIO hvio = 0;
-      VioScrollUp(0, 0, (USHORT)-1, (USHORT)-1, (USHORT)-1, &attrib, hvio);
+
+      VioScrollUp(0, 0, (USHORT)-1, (USHORT)-1, (USHORT)-1, (char __far16 *)&attrib, hvio);
       VioSetCurPos(row, col, hvio);      /* move cursor to upper left */
       return 0;
+      #else
+      v_clear();
+      v_gotoxy(0,0);
+      #endif
     #elif (CLIENT_OS == OS_DOS)
       return dosCliConClear();
     #elif (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS)

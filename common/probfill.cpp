@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.78 2000/01/16 17:09:14 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.79 2000/06/02 06:24:58 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -57,6 +57,37 @@ int SetProblemLoaderFlags( const char *loaderflags_map )
   }
   return ((prob_i == 0)?(-1):((int)prob_i));
 }  
+
+/* ----------------------------------------------------------------------- */
+
+/* determine if out buffer threshold has been crossed, and if so, set 
+   the flush_required flag
+*/
+static int __check_outbufthresh_limit( Client *client, unsigned int cont_i, 
+                                     long packet_count, unsigned long wu_count, 
+                                     int *bufupd_pending )
+{
+  if ((*bufupd_pending & BUFFERUPDATE_FLUSH) == 0)
+  {
+    unsigned int thresh = ClientGetOutThreshold( client, cont_i, 0 );
+    /* ClientGetOutThreshold() returns 0 if thresh doesn't need checking */
+    if (thresh > 0) /* threshold _does_ need to be checked. */
+    {               
+      if (packet_count < 0) /* not determined or error */
+      {
+        packet_count = GetBufferCount( client, cont_i, 1, &wu_count );
+      }
+      if (packet_count > 0) /* wu_count is valid */
+      {
+        if ((unsigned long)(wu_count) >= ((unsigned long)thresh))
+        {
+          *bufupd_pending |= BUFFERUPDATE_FLUSH;
+        }
+      }
+    }     
+  }
+  return ((*bufupd_pending & BUFFERUPDATE_FLUSH) != 0);
+}
 
 /* ----------------------------------------------------------------------- */
 
@@ -145,26 +176,16 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         if (cont_i != OGR)
         {
           double rate = CliGetKeyrateForProblemNoSave( thisprob );
-                  if (rate > 0.0)
+          if (rate > 0.0)
             CliSetContestWorkUnitSpeed(cont_i, (int)((1<<28)/rate + 0.5));
         }
 
+        /* adjust bufupd_pending if outthresh has been crossed */
+        if (__check_outbufthresh_limit( client, cont_i, -1, 0,bufupd_pending))
         {
-          unsigned int thresh = ClientGetOutThreshold( client, cont_i, 0 );
-          if (thresh > 0) /* zero means ignore output buffer threshold */
-          {
-            unsigned long count;
-            if (GetBufferCount( client, cont_i, 1, &count ) > 0)
-            {
-              if ((unsigned long)(count) >= ((unsigned long)thresh))
-              {
-//Log("1. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
-                *bufupd_pending |= BUFFERUPDATE_FLUSH;
-              }
-            }
-          }     
-        }
-        
+          //Log("1. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
+        }       
+
       }
       ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
     }
@@ -226,22 +247,33 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       }
       if (msg)
       {
-        char workunit[80];
-        switch (cont_i)
+        char workpacket[80];
+        workpacket[0] = '\0';
+        switch (cont_i) 
         {
           case RC5:
           case DES:
           case CSC:
-                 sprintf(workunit, "%08lX:%08lX", 
-                       (long) ( wrdata.work.crypto.key.hi ),
-                       (long) ( wrdata.work.crypto.key.lo ) );
-                 break;
+          {
+            unsigned int packet_iter_size = // can't use norm_key_count: zero on error
+              (unsigned int) __iter2norm((wrdata.work.crypto.iterations.lo),
+                                         (wrdata.work.crypto.iterations.hi));
+            sprintf(workpacket, " %u*2^28 packet %08lX:%08lX", packet_iter_size,
+                    (unsigned long) ( wrdata.work.crypto.key.hi ),
+                    (unsigned long) ( wrdata.work.crypto.key.lo ) );
+            break;
+          }
           case OGR:
-                 strcpy(workunit, ogr_stubstr(&wrdata.work.ogr.workstub.stub));
-                 break;
+          {
+            sprintf(workpacket," stub %s", ogr_stubstr(&wrdata.work.ogr.workstub.stub) );
+            break;
+          }
         }
-        Log( "%s packet %s%c(%u.%u0%% complete)\n", msg, workunit,
-              ((permille == 0)?('\0'):(' ')), permille/10, permille%10 );
+        char perdone[48]; 
+        perdone[0]='\0';
+        if (permille!=0 && permille<=1000)
+          sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
+        Log("%s %s%s%s\n", msg, CliGetContestNameFromID(cont_i), workpacket, perdone);
       }
     } /* unconditional unload */
     
@@ -255,11 +287,21 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 /* ----------------------------------------------------------------------- */
 
 #ifndef STRESS_RANDOMGEN
-/* returns *total* (of all buffers) number of packets available
-   (... for the thread in question)
-*/
-static long __loadapacket( Client *client, WorkRecord *wrdata, 
-                          int /*ign_closed*/,  unsigned int prob_i )
+//     Internal function that loads 'wrdata' with a new workrecord
+//     from the next open contest with available blocks.
+// Return value:
+//     if (return_single_count) is non-zero, returns number of packets
+//     left for the same project work was found for, otherwise it
+//     returns the *total* number of packets available for *all*
+//     contests for the thread in question.
+//
+// Note that 'return_single_count' IS ALL IT TAKES TO DISABLE ROTATION.
+//
+static long __loadapacket( Client *client, 
+                           WorkRecord *wrdata /*where to load*/, 
+                           int /*ign_closed*/,  
+                           unsigned int prob_i /* for which 'thread' */, 
+                           int return_single_count /* see above */ )
 {                    
   unsigned int cont_i; 
   long bufcount, totalcount = -1;
@@ -290,6 +332,8 @@ static long __loadapacket( Client *client, WorkRecord *wrdata,
       if (totalcount < 0)
         totalcount = 0;
       totalcount += bufcount;
+      if (return_single_count)
+        break;
     }
   }
   return totalcount;
@@ -371,10 +415,12 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   WorkRecord wrdata;
   unsigned int norm_key_count = 0;
   int didload = 0, didrandom = 0;
+  int update_on_current_contest_exhaust_flag = (client->connectoften & 4);
   long bufcount = -1;
   
 #ifndef STRESS_RANDOMGEN
-  bufcount = __loadapacket( client, &wrdata, 1, prob_i );
+  bufcount = __loadapacket( client, &wrdata, 1, prob_i, 
+                            update_on_current_contest_exhaust_flag );
   if (bufcount < 0 && client->nonewblocks == 0)
   {
 //Log("3. BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0)\n");
@@ -387,7 +433,8 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       if (didupdate!=0)
         *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
       if ((didupdate & BUFFERUPDATE_FETCH) != 0) /* fetched successfully */
-        bufcount = __loadapacket( client, &wrdata, 0, prob_i );
+        bufcount = __loadapacket( client, &wrdata, 0, prob_i,
+                                  update_on_current_contest_exhaust_flag );
     }
   }
 #endif
@@ -734,19 +781,18 @@ unsigned int LoadSaveProblems(Client *pass_client,
       {
         unsigned long norm_count;
         long block_count = GetBufferCount( client, cont_i, inout, &norm_count );
-        if (block_count >= 0) /* no error */
+        if (block_count >= 0) /* no error */ 
         {
           char buffer[128+sizeof(client->in_buffer_basename)];
           /* we don't check in-buffer here since we need cumulative count */
-          if (inout != 0)                              /* out-buffer */
+          if (inout != 0) /* out-buffer */ 
           {
-            unsigned int thresh = ClientGetOutThreshold(client, cont_i, 0);
-            /* a zero outbuffer threshold means 'don't check it' */
-            if (thresh > 0 && norm_count > thresh)
+            /* adjust bufupd_pending if outthresh has been crossed */
+            if (__check_outbufthresh_limit( client, cont_i, block_count, 
+                                            norm_count, &bufupd_pending ))
             {
-//Log("5. bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
-              bufupd_pending |= BUFFERUPDATE_FLUSH;
-            }  
+              //Log("5. bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
+            }
           }
           sprintf(buffer, 
               "%ld %s packet%s (%lu work unit%s) %s in\n%s",
@@ -808,8 +854,16 @@ unsigned int LoadSaveProblems(Client *pass_client,
     previous_load_problem_count = 0;
     if (client->nodiskbuffers == 0)
       CheckpointAction( client, CHECKPOINT_CLOSE, 0 );
-    else
+    else {
       BufferUpdate(client,BUFFERUPDATE_FLUSH,0);
+      for(int i = 0; i < CONTEST_COUNT; i++)
+      {
+          for(unsigned long j = 0; j < client->membufftable[i].in.count; j++)
+            free(client->membufftable[i].in.buff[j]);
+          for(unsigned long k = 0; k < client->membufftable[i].out.count; k++)
+            free(client->membufftable[i].out.buff[k]);
+      }
+    }
     retval = total_problems_saved;
   }
   else

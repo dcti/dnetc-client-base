@@ -1,5 +1,5 @@
 /*
- * .ini (configuration file ala windows) file read/write routines
+ * .ini (configuration file ala windows) file read/write[parse] routines
  * written by Cyrus Patel <cyp@fb14.uni-mainz.de>, no copyright, 
  * and no restrictions on usage in any form or function :)
  *
@@ -15,12 +15,10 @@
  * crlf translation, and does not assume that the calling function
  * was written by a twit. 
  *
- * But,.. it ain't perfect (yet) and doesn't pretend to be.
- *
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.34 1999/12/02 05:15:00 cyp Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.35 2000/06/02 06:24:56 jlawson Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -28,6 +26,12 @@ return "@(#)$Id: iniread.cpp,v 1.34 1999/12/02 05:15:00 cyp Exp $"; }
 #include <stdlib.h>  /* malloc()/free()/atoi() */
 #include <limits.h>  /* UINT_MAX */
 #include "iniread.h"
+
+#ifndef SEEK_SET   /* some OSs (sunos4) don't have SEEK_* */
+#define SEEK_SET 0 /* Seek relative to start of file  */
+#define SEEK_CUR 1 /* Seek relative to current positn */
+#define SEEK_END 2 /* Seek relative to end of file    */
+#endif
 
 #if 0 /* embedded comment handling is not api conform */
 #define ALLOW_EMBEDDED_COMMENTS 
@@ -46,6 +50,8 @@ return "@(#)$Id: iniread.cpp,v 1.34 1999/12/02 05:15:00 cyp Exp $"; }
                     w delete section  (nop - return ok)
                     r get key+value   (nop - return default)
                     r get all key+value pairs for section (nop, return 0)
+   null section:    w without key/value [ = flush] (nop - return ok)
+                    w with key/value (as above)
 */                            
 
 static unsigned long ini_doit( int dowrite, const char *sect, 
@@ -412,6 +418,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
         } /* if foundsect */
       } /* if linelen */
     } /* while (offset < filelen) */
+
         
     if (dowrite) 
     {
@@ -544,15 +551,19 @@ static unsigned long ini_doit( int dowrite, const char *sect,
       success--;
     else if (buffer && bufflen)
     {
-      buffer[0]=0;
       if (key == NULL) /* get all key+value pairs for sect */
       {
-        if (bufflen>1)
-          buffer[1]=0;
+        buffer[0] = 0; 
+        if (bufflen > 1) /* getsect is terminated by '\0\0' */
+          buffer[1] = 0;
       }
-      else if (value && bufflen>1)
+      else if (value == NULL || bufflen < 2)
+      {   /* no default or buffer is not long enough */
+        buffer[0] = 0;
+      }
+      else
       {
-        strncpy( buffer, value, bufflen-1);
+        strncpy( buffer, value, bufflen);
         buffer[bufflen-1]=0;
         success = strlen(buffer);
       }
@@ -568,11 +579,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
                       const char *defval, char *buffer, 
                       unsigned long buffsize, const char *filename )
 {
-//  printf("GetStr: [%s]%s=%s\n", sect, key, defval);
-//  getchar();
-  unsigned long x=ini_doit( 0, sect, key, defval, buffer, buffsize, filename );
-//printf("GetStr2: [%s]%s=%s\n", sect, key, buffer );
-  return x;
+  return ini_doit( 0, sect, key, defval, buffer, buffsize, filename );
 }
 
 int WritePrivateProfileStringB( const char *sect, const char *key, 
@@ -587,14 +594,13 @@ unsigned int GetPrivateProfileIntB( const char *sect, const char *key,
                           int defvalue, const char *filename )
 {
   char buf[(sizeof(long)+1)*3];
-  int n;
-  unsigned long i;
+  int n;  unsigned long i;
   i = GetPrivateProfileStringB( sect, key, "", buf, sizeof(buf), filename);
   if (i==0)
     return defvalue;
   if ((n = atoi( buf ))!=0)
     return n;
-  if (i<2)
+  if (i<2 || i>4)
     return 0;
   for (n=0;(i>((unsigned long)(n))) && n<4;n++)
     buf[n]=(char)tolower(buf[n]);

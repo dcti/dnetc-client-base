@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.69 1999/11/08 02:02:40 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.70 2000/06/02 06:24:56 jlawson Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -15,15 +15,17 @@ return "@(#)$Id: disphelp.cpp,v 1.69 1999/11/08 02:02:40 cyp Exp $"; }
 #include "logstuff.h" //LogScreenRaw()
 #include "util.h"     //UtilGetAppName()
 #include "console.h"  //ConClear(), ConInkey()
+#include "client.h"   //various #defines
 
-#if defined(__unix__)
+#if defined(__unix__) && !defined(__EMX__)
   #define NO_INTERNAL_PAGING  //internal paging is very un-unix-ish
-#endif  
+#endif
 
 /* ------------------------------------------------------------------------ */
 
 static const char *helpbody[] =
 {
+/*"------------------------------------ max width == 77 ------------------------" */
   "Special Options: (the client will execute the option and then exit)",
   "-config            start the configuration menu",
   "-flush             flush all output buffers",
@@ -31,7 +33,7 @@ static const char *helpbody[] =
   "-update            fetch + flush",
   "-benchmark [pn]    16-20 sec speed check [optional: only project pn]",
   "-benchmark2 [pn]   half (8-10 sec) and slightly inaccurate -benchmark",
-	"-bench [pn]        -benchmark all cores [optional: only project pn]",
+  "-bench [pn]        -benchmark all cores [optional: only project pn]",
   "-test [pn]         tests for core errors [optional: only project pn]",
   "-restart           restart all active clients (equivalent to -hup)",
   "-shutdown          gracefully shut down all active clients",
@@ -60,16 +62,20 @@ static const char *helpbody[] =
   "-nodisk            don't use disk buffer files",
   "-n <count>         packets to complete. -1 forces exit when buffer is empty.",
   "-runbuffers        set -n == -1 (exit when buffers are empty)",
-  "-frequent          frequently check for empty buffers",
+  "-frequent          frequently check if buffers need topping-up",
   "-inbase <fname>    input buffer basename (ie without 'extension'/suffix)",
   "-outbase <fname>   output buffer basename (ie without 'extension'/suffix)",
   "-ckpoint <fname>   set the name of the checkpoint file",
   "-blsize <pn> <n>   set preferred packet size (2^n keys/packet)",
-  "-bin <pn> <n>      set fetch buffer threshold to <n> packets",
-  "-bout <pn> <n>     set flush buffer threshold to <n> packets",
-  "-b <pn> <n>        set both buffer thresholds to <n> packets",
+  "-bin <pn> <n>      set fetch buffer threshold to <n> work units",
+  #if !defined(NO_OUTBUFFER_THRESHOLDS)
+  "-bout <pn> <n>     set flush buffer threshold to <n> work units",
+  "-b <pn> <n>        set both buffer thresholds to <n> work units",
+  #endif
+  "-btime <pn> <n>    set fetch time threshold to <n> hours",
   "                   If not specified, project name <pn> defaults to RC5",
   "",
+/*"------------------------------------ max width == 77 ------------------------" */
   "Network update related options:",
   "",
   "-runoffline        disable network access",
@@ -87,6 +93,7 @@ static const char *helpbody[] =
   "-interfaces <list> limit the interfaces to monitor for online/offline status",
 #endif
   "",
+/*"------------------------------------ max width == 77 ------------------------" */
   "Performance related options:",
   "",
   "-c <pn> <n>        core number (run -config for a list of valid core numbers)",
@@ -103,11 +110,12 @@ static const char *helpbody[] =
   "-smtpfrom <id>     who the client should say is sending the message",
   "-smtpdest <id>     who the client should send mail to",
   "",
+/*"------------------------------------ max width == 77 ------------------------" */
   "Miscellaneous runtime options:",
   "",
   "-h <hours>         time limit in hours",
   "-until <HH:MM>     quit at HH:MM (eg 07:30)",
-  "-noexitfilecheck   don't check for a 'exitrc5.now' command file",
+  "-noexitfilecheck   override .ini exit flagfile setting",
   "-pausefile <fn>    name of file that causes the client to pause",
   "-percentoff        don't display work completion as a running percentage",
   "-quiet/-hide       suppress screen output (== detach for some clients)",
@@ -129,7 +137,7 @@ void GenerateManPage( void )
   buffer[sizeof(buffer)-1] = '\0';
   strcpy( buffer, buffer );
   strcat( buffer, ".1" );
-  
+
   manp = fopen(buffer,"w");
   if (!manp)
     fprintf(stderr,"Unable to create %s", buffer );
@@ -139,7 +147,7 @@ void GenerateManPage( void )
     char *p; const char *cp;
     time_t t = time(NULL);
     struct tm *gmt = gmtime(&t);
-  
+
     fprintf(manp, ".\\\" Copyright (c) 1996-%d\n", gmt->tm_year+1900 );
     fprintf(manp, ".\\\"         distributed.net. All rights reserved.\n" );
     fprintf(manp, ".\\\"\n");
@@ -148,7 +156,7 @@ void GenerateManPage( void )
     fprintf(manp, ".Dd %s", ctime(&t));
     strncpy(buffer, appname,sizeof(buffer));
     buffer[sizeof(buffer)-1] = '\0';
-    for (pos=0;buffer[pos];pos++)  
+    for (pos=0;buffer[pos];pos++)
       buffer[pos]=(char)toupper(buffer[pos]);
     fprintf(manp, ".Dt %s 1\n", buffer );
     //fprintf(manp, ".Os "CLIENT_OS_NAME"\n");
@@ -193,7 +201,7 @@ void GenerateManPage( void )
 
     fprintf(manp,"\n");
     fprintf(manp, ".Sh DESCRIPTION\n");
-    fprintf(manp, 
+    fprintf(manp,
       ".Ar %s\nis a distributed computing client that coordinates with servers\n"
       "operated by\n.Ar distributed.net\nto cooperate with other network-connected\n"
       "computers to work on a common task.  It communicates over public networks\n"
@@ -203,7 +211,7 @@ void GenerateManPage( void )
 
     fprintf(manp,"\n");
     fprintf(manp, ".Sh INSTALLATION\n");
-    fprintf(manp, 
+    fprintf(manp,
       "Since you are already reading this, I assume you know how to\n"
       "unpack an archive (don't laugh!) into a directory of your\n"
       "choice.\n"
@@ -230,14 +238,14 @@ void GenerateManPage( void )
       if (*cp=='-')
       {
         fprintf(manp,".It Fl ");
-	cp++;
+        cp++;
         while (*cp && *cp != ' ')
         {
           if (*cp == '\"')
           {
             cp++;
             fputc('\'', manp);
-          }  
+          }
           else
           {
             if (_istrofspecial(*cp))
@@ -250,7 +258,7 @@ void GenerateManPage( void )
         while (*cp == '<' || *cp == '[')
         {
           const char closure = ((*cp == '<')?('>'):(']'));
-	  fprintf(manp, (*cp == '<')?(" Ar "):(" Op "));
+          fprintf(manp, (*cp == '<')?(" Ar "):(" Op "));
           cp++;
           while (*cp && *cp!=closure)
           {
@@ -258,7 +266,7 @@ void GenerateManPage( void )
             {
               cp++;
               fputc('\'', manp);
-            }  
+            }
             else
             {
               if (_istrofspecial(*cp))
@@ -280,7 +288,7 @@ void GenerateManPage( void )
             {
               cp++;
               fputc('\'', manp);
-            }  
+            }
             else
             {
               if (_istrofspecial(*cp))
@@ -303,7 +311,7 @@ void GenerateManPage( void )
             {
               cp++;
               fputc('\'', manp);
-            }  
+            }
             else
             {
               if (_istrofspecial(*cp))
@@ -316,8 +324,8 @@ void GenerateManPage( void )
       }
       else if (*cp) /* new section */
       {
-	if (pos) 
-	  fprintf(manp,".El\n");
+        if (pos)
+          fprintf(manp,".El\n");
         fprintf(manp, ".sp 2\n");
         fprintf(manp,".Ss \"");
         while (*cp)
@@ -355,7 +363,7 @@ void GenerateManPage( void )
     fprintf(manp,".Sh AUTHOR\n"
                  "distributed.net\n"
                  "http://www.distributed.net/\n");
-                 
+
     fclose(manp);
   }
   #endif /* __unix__ */
@@ -378,7 +386,7 @@ void DisplayHelp( const char * unrecognized_option )
     "Visit http://www.distributed.net/FAQ/ for in-depth command line help",
     "-------------------------------------------------------------------------"
   };
-  
+
   int headerlines, bodylines, footerlines;
   int startline, maxscreenlines, maxpagesize;
   int i, key, nopaging = (!ConIsScreen());
@@ -468,14 +476,14 @@ void DisplayHelp( const char * unrecognized_option )
     LogScreenRaw( linebuffer );
 
     key = ConInKey(-1);
-    
+
     linebuffer[i=strlen(linebuffer)]='\r';
     linebuffer[i+1]=0;
-    for (--i; i > 0; i--) 
+    for (--i; i > 0; i--)
       linebuffer[i]=' ';
     linebuffer[0]='\r';
     LogScreenRaw( linebuffer );
-    
+
     if (CheckExitRequestTriggerNoIO())
       break;
 
@@ -505,7 +513,7 @@ void DisplayHelp( const char * unrecognized_option )
       key = -1; //unknown keystroke, so quit
     }
   } while (key >= 0);
-      
+
   return;
 }
 

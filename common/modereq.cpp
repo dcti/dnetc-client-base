@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.36 1999/11/23 22:42:43 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.37 2000/06/02 06:24:57 jlawson Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
