@@ -21,13 +21,16 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.83 2001/03/02 01:27:26 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.84 2001/03/10 17:23:20 andreasb Exp $
 ==========================================================================
 
 2.8000
 ------
 
 2.8014.468  fix: all: bad results caused by build .466.
+            fix: all: packets were saved and reloaded after buffer update.
+            fix: all: current packet wasn't discarded on contest closure.
+            fix: all: exited without crunching with "-n 1" option.
 
 2.8013.467  new: 68k: new, faster RC5 cores (previously only available in
                  the AmigaOS client)
@@ -38,7 +41,6 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.83 2001/03/02 01:27:26 andreasb Exp
             imp: some: OGR behaves more predictably on non-preemptive systems.
             new: macos: dnetc can now find its support files in the active
                  systems "Application Support" or "Preferences" folder.
-            fix: all: packets were saved and reloaded after buffer update.
 
 2.8012.466  new: x86: most unix-ish clients now support the RC5/SMC core.
             imp: some: even faster OGR core.
