@@ -3,12 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.124  1999/02/07 16:00:09  cyp
+// Lurk changes: genericified variable names, made less OS-centric.
+//
 // Revision 1.123  1999/02/06 09:08:08  remi
 // Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
 // to watch for online/offline status. If this list is empty (the default), any
 // interface up and running (besides the lookback one) will trigger the online
 // status.
-// Fixed formating in lurk.cpp.
 //
 // Revision 1.122  1999/02/04 07:48:05  cyp
 // added lurk.h
@@ -162,7 +164,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.123 1999/02/06 09:08:08 remi Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.124 1999/02/07 16:00:09 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -532,26 +534,25 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         #endif
         }
       else if ( strcmp( thisarg, "-interfaces" ) == 0 )
-      {
-        #if defined(LURK) && (CLIENT_OS == OS_LINUX)
+        {
+        #if defined(LURK)
         if (nextarg)
-	{
-	  skip_next = 1;
+          {
+          skip_next = 1;
           if (run_level!=0)
-	  {
+            {
             if (logging_is_initialized)
-              LogScreenRaw ("Setting interface watch list to %s\n",
-			    dialup.ifacestowatch );
-	  }
+              LogScreenRaw ("Limited interface watch list to %s\n",
+                             dialup.connifacemask );
+            }
           else
-	  {
-            inimissing = 0; // Don't complain if the inifile is missing
-            dialup.ifacestowatch[sizeof(dialup.ifacestowatch)-1] = 0;
-            strncpy (dialup.ifacestowatch, nextarg, sizeof(dialup.ifacestowatch) );
-	  }
-	}
+            {
+            strncpy(dialup.connifacemask, nextarg, sizeof(dialup.connifacemask) );
+            dialup.connifacemask[sizeof(dialup.connifacemask)-1] = 0;
+            }
+          }
         #endif
-      }
+        }
       else if ( strcmp( thisarg, "-noexitfilecheck" ) == 0 )
         {
         if (run_level == 0)

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.20  1999/02/07 16:00:08  cyp
+// Lurk changes: genericified variable names, made less OS-centric.
+//
 // Revision 1.19  1999/02/06 10:42:55  remi
 // - the default for dialup.ifacestowatch is now 'ppp0:sl0'.
 // - #ifdef'ed dialup.ifacestowatch (only Linux at the moment)
@@ -13,7 +16,6 @@
 // to watch for online/offline status. If this list is empty (the default), any
 // interface up and running (besides the lookback one) will trigger the online
 // status.
-// Fixed formating in lurk.cpp.
 //
 // Revision 1.17  1999/02/04 10:44:19  cyp
 // Added support for script-driven dialup. (currently linux only)
@@ -62,7 +64,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.19 1999/02/06 10:42:55 remi Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.20 1999/02/07 16:00:08 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -425,18 +427,6 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "authentication before permitting communication through it.\n"
   ),CONF_MENU_NET,CONF_TYPE_PASSWORD,11,NULL,NULL,0,0},
 //36
-{ "dialwhenneeded", CFGTXT("Dial the Internet as needed?"),"0",
-   CFGTXT(""
-   ),CONF_MENU_NET,CONF_TYPE_BOOL,12,NULL,NULL,0,1},
-//37
-{ "", CFGTXT("Dial-up Connection Name" /* "Command/script to start dialup" */),"",
-  CFGTXT(""
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,13,NULL,NULL,0,0},
-//38
-{ "", CFGTXT("Command/script to stop dialup"),"",
-  CFGTXT(""
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,14,NULL,NULL,0,0},
-//39
 { "lurk", CFGTXT("Modem detection options"),"0",
   CFGTXT(
   "Normal mode: the client will send/receive blocks only when it\n"
@@ -452,26 +442,52 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "        connected. HOWEVER, if the client runs out of blocks,\n"
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n"
-  ),CONF_MENU_NET,CONF_TYPE_INT,10,NULL,CFGTXT(&lurkmodetable[0]),0,2},
-//40
-{ "interfaces-to-watch", CFGTXT("Interfaces to watch"),"ppp0:sl0",
+  ),CONF_MENU_NET,CONF_TYPE_INT,12,NULL,CFGTXT(&lurkmodetable[0]),0,2},
+//37
+{ "", CFGTXT("Interfaces to watch"),"",
   CFGTXT(
-  "Colon-separated list of interfaces. If one of the interfaces listed here\n"
-  "goes up, the client will know it can fetch and flush blocks.\n"
-  "\n"
+  "Colon-separated list of interface names to monitor for a connection.\n"
+  "For example: \"ppp0:eth0:eth1\". An empty list implies any 'up' interface\n"
+  "except loopback.\n\n"
   "1) If you access the Internet only through a modem, put in this list\n"
   "'ppp0' for a PPP connection, 'sl0' for a SLIP connection, or 'ppp0:sl0'\n"
-  "for both.\n"
-  "\n"
+  "for both.\n\n"
   "2) if you have an intermittent ethernet connection through which you can\n"
   "access the Internet, put the corresponding interface name in this list,\n"
-  "typically 'eth0'.\n"
-  "\n"
-  "3) if you don't put anything here, the client will know it can fetch or\n"
-  "flush blocks through any 'up' interface. This is OK for home users without\n"
-  "a LAN and for portable users who can access the Internet through the office\n"
-  "LAN and through a modem connection when they are at home.\n"
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,15,NULL,NULL,0,0}
+  "typically 'eth0'.\n\n"
+  "3) if you don't put anything here, the client will consider any 'up'\n"
+  "interface as usable. This is OK for home users without a LAN and for\n"
+  "portable users who can access the Internet through the office LAN and\n"
+  "through a modem connection when they are at home.\n"
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,13,NULL,NULL,0,0},
+//38
+{ "", CFGTXT("Dial the net as needed?"),"0",
+   CFGTXT(
+   "Select 'yes' to permit the client to initiate a network\n"
+   "connection if it needs one and none is active.\n"
+   ),CONF_MENU_NET,CONF_TYPE_BOOL,14,NULL,NULL,0,1},
+//39
+{ "", CFGTXT("Dial-up Connection Profile"),"",
+  #if (CLIENT_OS == OS_WIN32)
+  CFGTXT("Select the DUN profile to use when dialing-as-needed.\n")
+  #else
+  CFGTXT("")
+  #endif
+  ,CONF_MENU_NET,CONF_TYPE_ASCIIZ,15,NULL,NULL,0,0},
+//40
+{ "", CFGTXT("Command/script to start dialup"),"",
+  CFGTXT(
+  "Enter any valid shell command or script name to use to initiate a\n"
+  "network connection. \"Dial the Internet as needed?\" must be enabled for\n"
+  "this to be of any use.\n"
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,16,NULL,NULL,0,0},
+//41
+{ "", CFGTXT("Command/script to stop dialup"),"",
+  CFGTXT(
+  "Enter any valid shell command or script name to use to shutdown a\n"
+  "network connection previously initiated with the script/command specified\n"
+  "in the \"Command/script to start dialup\" option.\n"
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,17,NULL,NULL,0,0}
 };
 
 // --------------------------------------------------------------------------
@@ -497,11 +513,11 @@ int confopt_isstringblank( const char *string )
   register int len = ( string ? ( strlen( string )+1 ) : 0 );
 
   while (len)
-  {
+    {
     len--;
     if ( isprint( string[len] ) && !isspace( string[len] ) )
       return 0;
-  }
+    }
   return 1;
 }
 
@@ -512,11 +528,11 @@ void confopt_killwhitespace( char *string )
   char *opos, *ipos;
   ipos = opos = string;
   while ( *ipos )
-  {
+    {
     if ( !isspace( *ipos ) )
       *opos++ = *ipos;
     ipos++;
-  }
+    }
   *opos = 0;
   if ( strcmpi(string, "none") == 0 )
     string[0]=0;

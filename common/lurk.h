@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.h,v $
+// Revision 1.12  1999/02/07 16:00:09  cyp
+// Lurk changes: genericified variable names, made less OS-centric.
+//
 // Revision 1.11  1999/02/06 10:42:55  remi
 // - the default for dialup.ifacestowatch is now 'ppp0:sl0'.
 // - #ifdef'ed dialup.ifacestowatch (only Linux at the moment)
@@ -13,7 +16,6 @@
 // to watch for online/offline status. If this list is empty (the default), any
 // interface up and running (besides the lookback one) will trigger the online
 // status.
-// Fixed formating in lurk.cpp.
 //
 // Revision 1.9  1999/02/04 07:47:06  cyp
 // Re-import from proxy base. Cleaned up. Added linux and win16 support.
@@ -37,8 +39,12 @@
 #ifndef __LURK_H__
 #define __LURK_H__
 
-#define CONNECT_LURKONLY 2
-#define CONNECT_LURK     1
+#define CONNECT_LURK         0x01
+#define CONNECT_LURKONLY     0x02
+#define CONNECT_IFACEMASK    0x04 /* limit the interfaces to watch for conn on */
+#define CONNECT_DODBYSCRIPT  0x08
+#define CONNECT_DODBYPROFILE 0x10
+#define CONNECT_DOD          (CONNECT_DODBYSCRIPT|CONNECT_DODBYPROFILE)
 
 class Lurk
 {
@@ -54,24 +60,25 @@ int dialwhenneeded;
   // 0 = Don't dial, let autodial handle it or fail
   // !0 = Have the client manually dial/hangup when a flush happens.
 
-char connectionname[100];
-  // For win32, name of connection to use, perhaps useful for other lurkers.
-  // used by linux and OS/2 as name of script to call to initiate connection
-char stopconnection[100];  
+char connprofile[64];
+  // Used by win32 for name of DUN connection to use.
+  
+char connifacemask[64];  
+  // Used by some as a list of interfaces to watch for detecting online 
+  // status accept a ':' separated list of interface names, for example :
+  // "ppp0:eth0:eth1".  "\0" means any interface (besides the loopback one)
+
+char connstartcmd[64];
+  // used by linux and OS/2 as name of script to call to start connection
+
+char connstopcmd[64];
   // used by linux and OS/2 as name of script to call to stop connection
 
-char *GetEntryList(long *finalcount);
+const char **GetConnectionProfileList(void);
   // Gets the list of possible dial-up networking connections for the
   // user to select. - called in cliconfig
 
-#if (CLIENT_OS == OS_LINUX) 
-char ifacestowatch[100];
-  // Used by Linux as a list of interfaces to watch for detecting online status
-  // accept a ':' separated list of interface names, for example :
-  // "ppp0:eth0:eth1"
-  // "\0" means any interface (besides the loopback one)
-#endif
- 
+int GetCapabilityFlags(void);      //return supported CONNECT_* bits 
 int CheckIfConnectRequested(void); // -> 0=no, !0=yes
 int CheckForStatusChange(void);    // -> 0 = nochange, !0 connection dropped
 int DialIfNeeded(int ignore_lurkonly_flag); // -> 0=success, !0 = failure
@@ -79,11 +86,13 @@ int HangupIfNeeded(void);          // -> 0=success, !0 = failure
 int Start(void);                   // Start lurking -> 0=success, !0 = failure
 int Stop(void);                    // Stop lurking -> 0=success, !0 = failure
 
-Lurk() { islurkstarted = lastcheckshowedconnect = 0; };  // Init lurk
-~Lurk() {;}; // guess!
+Lurk();
+~Lurk();
 
 protected:
 
+char conndevice[35];        //name of the device a connection was detected on
+                            //informational use only
 int IsConnected(void);      // Checks status of connection -> !0 = connected
 int islurkstarted;          //was lurk.Start() successful?
 int lastcheckshowedconnect; //the connect state at the last CheckIfConnectRequested()

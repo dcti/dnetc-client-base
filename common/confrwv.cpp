@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.41  1999/02/07 16:00:08  cyp
+// Lurk changes: genericified variable names, made less OS-centric.
+//
 // Revision 1.40  1999/02/06 10:42:55  remi
 // - the default for dialup.ifacestowatch is now 'ppp0:sl0'.
 // - #ifdef'ed dialup.ifacestowatch (only Linux at the moment)
@@ -172,7 +175,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.40 1999/02/06 10:42:55 remi Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.41 1999/02/07 16:00:08 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -199,6 +202,7 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
 {                              //DO NOT VALIDATE FROM HERE
   char buffer[64];
   const char *sect = OPTION_SECTION;
+  const char *netsect = "networking";
   char *p; int i;
 
   client->randomchanged = 0;
@@ -251,7 +255,7 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   client->autofindkeyserver = (client->keyproxy[0]==0 || 
     strcmpi( client->keyproxy, "rc5proxy.distributed.net" )==0 ||
     ( confopt_IsHostnameDNetHost(client->keyproxy) &&
-    GetPrivateProfileIntB( "networking", "autofindkeyserver", 1, fn ) ));
+    GetPrivateProfileIntB( netsect, "autofindkeyserver", 1, fn ) ));
   if (client->autofindkeyserver && client->keyport != 3064)  
     client->keyport = 0;
   
@@ -297,20 +301,28 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   GetPrivateProfileStringB( sect, "out2", client->out_buffer_file[1], client->out_buffer_file[1], sizeof(client->out_buffer_file[1]), fn );
 
   #if defined(LURK)
+  i = dialup.GetCapabilityFlags();
   dialup.lurkmode = 0;
-  if (GetPrivateProfileIntB( sect, "lurkonly", 0, fn )) 
+  if ((i & CONNECT_LURKONLY)!=0 && GetPrivateProfileIntB( sect, "lurkonly", 0, fn ))
     { dialup.lurkmode = CONNECT_LURKONLY; client->connectoften = 1; }
-  else if (GetPrivateProfileIntB( sect, "lurk", 0, fn ))
+  else if ((i & CONNECT_LURK)!=0 && GetPrivateProfileIntB( sect, "lurk", 0, fn ))
     dialup.lurkmode = CONNECT_LURK;
-  #if (CLIENT_OS == OS_LINUX)
-  dialup.dialwhenneeded = GetPrivateProfileIntB( "networking", "enable-start-stop", 0, fn );
-  GetPrivateProfileStringB( "networking", "dialup-start-cmd", dialup.connectionname, dialup.connectionname, sizeof(dialup.connectionname), fn );
-  GetPrivateProfileStringB( "networking", "dialup-stop-cmd", dialup.stopconnection, dialup.stopconnection, sizeof(dialup.stopconnection), fn );
-  GetPrivateProfileStringB( "networking", "interfaces-to-watch", dialup.ifacestowatch, dialup.ifacestowatch, sizeof(dialup.ifacestowatch), fn );
-  #elif (CLIENT_OS == OS_WIN32)
-  dialup.dialwhenneeded = GetPrivateProfileIntB( sect, "dialwhenneeded", 0, fn );
-  GetPrivateProfileStringB( sect, "connectionname", dialup.connectionname, dialup.connectionname, sizeof(dialup.connectionname), fn );
-  #endif
+  if ((i & CONNECT_IFACEMASK)!=0)
+    GetPrivateProfileStringB( netsect, "interfaces-to-watch", dialup.connifacemask, dialup.connifacemask, sizeof(dialup.connifacemask), fn );
+  if ((i & CONNECT_DOD)!=0)
+    {
+    dialup.dialwhenneeded = GetPrivateProfileIntB( netsect, "enable-start-stop", 0, fn );
+    #if (CLIENT_OS == OS_WIN32) /* old format */
+    dialup.dialwhenneeded |= GetPrivateProfileIntB( sect, "dialwhenneeded", 0, fn );
+    #endif
+    if ((i & CONNECT_DODBYSCRIPT)!=0)
+      {
+      GetPrivateProfileStringB( netsect, "dialup-start-cmd", dialup.connstartcmd, dialup.connstartcmd, sizeof(dialup.connstartcmd), fn );
+      GetPrivateProfileStringB( netsect, "dialup-stop-cmd", dialup.connstopcmd, dialup.connstopcmd, sizeof(dialup.connstopcmd), fn );
+      }
+    if ((i & CONNECT_DODBYPROFILE)!=0)
+      GetPrivateProfileStringB( sect, "connectionname", dialup.connprofile, dialup.connprofile, sizeof(dialup.connprofile), fn );
+    }
   #endif /* LURK */
 
   return 0;
@@ -447,18 +459,28 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileStr( sect, "httpid", client->httpid, fn, NULL);
 
     #if defined(LURK)
+    i = dialup.GetCapabilityFlags();
     WritePrivateProfileStringB( sect, "lurk", (dialup.lurkmode==CONNECT_LURK)?("1"):(NULL), fn );
     WritePrivateProfileStringB( sect, "lurkonly", (dialup.lurkmode==CONNECT_LURKONLY)?("1"):(NULL), fn );
-    #if (CLIENT_OS==OS_LINUX)
-    if (dialup.dialwhenneeded || GetPrivateProfileStringB( netsect, "enable-start-stop", "", buffer, 2, fn))
-      WritePrivateProfileStringB( netsect, "enable-start-stop", (dialup.dialwhenneeded)?("yes"):("no"), fn );
-    __XSetProfileStr( netsect, "dialup-start-cmd", dialup.connectionname, fn, NULL );
-    __XSetProfileStr( netsect, "dialup-stop-cmd", dialup.stopconnection, fn, NULL );
-    __XSetProfileStr( netsect, "interfaces-to-watch", dialup.ifacestowatch, fn, "ppp0:sl0" );
-    #elif (CLIENT_OS==OS_WIN32)
-    __XSetProfileInt( sect, "dialwhenneeded", dialup.dialwhenneeded, fn, 0, 1 );
-    __XSetProfileStr( sect, "connectionname", dialup.connectionname, fn, NULL );
-    #endif
+    if ((i & CONNECT_IFACEMASK) != 0)
+      __XSetProfileStr( netsect, "interfaces-to-watch", dialup.connifacemask, fn, NULL );
+    if ((i & CONNECT_DOD) != 0)
+      {
+      #if (CLIENT_OS == OS_WIN32)
+      __XSetProfileInt( sect, "dialwhenneeded", dialup.dialwhenneeded, fn, 0, 1 );
+      __XSetProfileStr( sect, "connectionname", dialup.connprofile, fn, NULL );
+      #else
+      if (dialup.dialwhenneeded || GetPrivateProfileStringB( netsect, "enable-start-stop", "", buffer, 2, fn))
+        WritePrivateProfileStringB( netsect, "enable-start-stop", (dialup.dialwhenneeded)?("yes"):("no"), fn );
+      if ((i & CONNECT_DODBYPROFILE) != 0)
+        __XSetProfileStr( netsect, "dialup-profile", dialup.connprofile, fn, NULL );
+      #endif
+      if ((i & CONNECT_DODBYSCRIPT) != 0)
+        {
+        __XSetProfileStr( netsect, "dialup-start-cmd", dialup.connstartcmd, fn, NULL );
+        __XSetProfileStr( netsect, "dialup-stop-cmd", dialup.connstopcmd, fn, NULL );
+        }
+      }
     #endif // defined LURK
 
     /* --- CONF_MENU_LOG -- */

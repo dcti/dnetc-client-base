@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.193  1999/02/07 16:00:09  cyp
+// Lurk changes: genericified variable names, made less OS-centric.
+//
 // Revision 1.192  1999/02/06 10:42:55  remi
 // - the default for dialup.ifacestowatch is now 'ppp0:sl0'.
 // - #ifdef'ed dialup.ifacestowatch (only Linux at the moment)
@@ -197,7 +200,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.192 1999/02/06 10:42:55 remi Exp $"; }
+return "@(#)$Id: client.cpp,v 1.193 1999/02/07 16:00:09 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -209,7 +212,6 @@ return "@(#)$Id: client.cpp,v 1.192 1999/02/06 10:42:55 remi Exp $"; }
 #include "scram.h"     // InitRandom() 
 #include "pathwork.h"  // EXTN_SEP
 #include "clitime.h"   // CliTimer()
-#include "lurk.h"      // dialup object
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
@@ -292,13 +294,6 @@ static void __initialize_client_object(Client *client)
   client->noexitfilecheck=0;
 #if defined(MMX_BITSLICER) || defined(MMX_RC5)
   client->usemmx = 1;
-#endif
-#if defined(LURK)
-  dialup.lurkmode=0;
-  dialup.dialwhenneeded=0;
-  #if (CLIENT_OS == OS_LINUX)
-  strcpy (dialup.ifacestowatch, "ppp0:sl0");
-  #endif
 #endif
   srand( (unsigned) time(NULL) );
   InitRandom();
