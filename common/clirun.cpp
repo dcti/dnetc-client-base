@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129 2002/09/23 01:54:06 acidblood Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.1 2002/11/26 13:49:33 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1756,7 +1756,10 @@ int ClientRun( Client *client )
       if (isPaused)
       {
         if (!wasPaused)
+        {
           __gsc_flag_allthreads(thread_data_table, 's'); //suspend 'em
+          timeNextCheckpoint = 0; // write checkpoint file now
+        }
         wasPaused = 1;
       }
       else if (wasPaused)
@@ -1784,7 +1787,8 @@ int ClientRun( Client *client )
     // If not quitting, then write checkpoints
     //----------------------------------------
 
-    if (!TimeToQuit && !checkpointsDisabled && !isPaused
+    if (!TimeToQuit && !checkpointsDisabled 
+        && (!isPaused || timeNextCheckpoint == 0)
         && !CheckExitRequestTriggerNoIO())
     {
       /* Checkpoints are done when CHECKPOINT_FREQ_SECSDIFF secs
