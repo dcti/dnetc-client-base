@@ -10,7 +10,7 @@
 // ----------------------------------------------------------------------
 
 #ifndef __INIREAD_H__
-#define __INIREAD_H__ "@(#)$Id: iniread.h,v 1.31 1999/04/13 12:41:25 jlawson Exp $"
+#define __INIREAD_H__ "@(#)$Id: iniread.h,v 1.32 1999/05/23 09:21:16 jlawson Exp $"
 
 #ifdef PROXYTYPE      // compiling proxy
   // proxy needs automatic tokenizing of ini values.
@@ -296,6 +296,9 @@ public:
   inline IniSection() {};
   inline IniSection(const char *Section) : section(Section) {};
 
+  // file writing
+  void fwrite(FILE *out);
+
   // record searching
   IniRecord *findnext();
   inline IniRecord *findfirst() 
@@ -305,13 +308,12 @@ public:
   inline IniRecord *findfirst(const IniString &Key) 
   { lastindex = 0; lastsearch = Key; return findnext(); }
 
+
   // record deletion
   inline void deleterecord(IniRecord *record) { records.Detach(record); }
   inline void deleterecord(const char *Key)
     { IniRecord *record = findfirst(Key); if (record) records.Detach(record); }
 
-  // file writing
-  void fwrite(FILE *out);
 
   // record addition
 #ifdef INIREAD_SINGLEVALUE
@@ -428,7 +430,7 @@ public:
   int WriteIniFile(const char *Filename = NULL);
   void fwrite(FILE *out);
 
-  
+
   // section matching
   IniSection *findsection(const char *Section)
    { for (int i = 0; i < sections.GetCount(); i++)
@@ -441,6 +443,13 @@ public:
     { IniSection *that = findsection(Section);
       return (that ? that : sections.AddFrom(new IniSection(Section))); }
 
+
+  // section deletion
+  inline void deletesection(IniSection *section) { sections.Detach(section); }
+  inline void deletesection(const char *Key)
+    { IniSection *section = findsection(Key); if (section) sections.Detach(section); }
+
+  
   // alternate record retrieval (similar to Win32 api).
   // (it is much more efficient to use findsection and call those methods)
   inline int GetProfileInt(const char *Section, const char *Key, int DefValue)
