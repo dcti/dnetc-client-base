@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.66 2000/07/13 20:51:44 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.67 2000/08/29 11:04:21 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -324,7 +324,8 @@ void Go_mt( void * parm )
     amigaThreadInit();
     #if (CLIENT_CPU == CPU_POWERPC)
     /* Only necessary when using 68k for time measurement */
-    thrparams->dyn_timeslice_table[0].usec = 8000000;
+    thrparams->dyn_timeslice_table[0].usec = 8000000;  // RC5
+    thrparams->dyn_timeslice_table[2].usec = 4000000;  // OGR
     #endif
   }
 #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
@@ -1673,8 +1674,11 @@ int ClientRun( Client *client )
     else
     #endif
     {
-      local_connectoften = client->connectoften;
-      /* 0=none, &1=in-buf, &2=out-buf, &4=sticky-flag (handled elsewhere) */ 
+      if (!client->offlinemode)
+      {
+        local_connectoften = client->connectoften;
+        /* 0=none, &1=in-buf, &2=out-buf, &4=sticky-flag (handled elsewhere) */ 
+      }
     }    
 
     //------------------------------------
