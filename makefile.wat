@@ -5,7 +5,7 @@
 ##   where <platform> is one of [dos | netware | os2 | w32 | w_h | wsv ]
 ##                       or anything else defined at the end of this makefile
 ##
-## $Id: makefile.wat,v 1.7 1998/06/14 01:43:16 cyruspatel Exp $
+## $Id: makefile.wat,v 1.8 1998/06/14 11:16:11 ziggyb Exp $
 ##
 ## Revision history:
 ## 1.6  cyp Added support for new disphelp.cpp, deleted obsolete "cd xxx" 
@@ -20,16 +20,15 @@ LINK=wlink
 %VERSION  = 70.21          
 %VERSTRING= v2.7024.409
 
-%LINKOBJS = output\cliconfig.obj output\autobuff.obj output\buffwork.obj &
+%LINKOBJS = output\RG-486.OBJ output\RG-6X86.OBJ &
+           output\RG-K5.OBJ output\RG-K6.OBJ output\RC5P5BRF.OBJ &
+           output\RG-P6.OBJ output\BDESLOW.OBJ output\BBDESLOW.OBJ &
+           output\cliconfig.obj output\autobuff.obj output\buffwork.obj &
            output\mail.obj output\client.obj output\disphelp.obj &
            output\iniread.obj output\network.obj output\problem.obj &
            output\scram.obj output\des-x86.obj output\convdes.obj &
            output\clitime.obj output\clicdata.obj output\clirate.obj &
-           output\clisrate.obj output\BDESLOW.OBJ &
-           output\RG-486.OBJ output\RG-6X86.OBJ &
-           output\RG-K5.OBJ output\RG-K6.OBJ &
-           output\RC5P5BRF.OBJ output\RG-P6.OBJ &
-           output\BBDESLOW.OBJ output\X86IDENT.OBJ 
+           output\clisrate.obj output\X86IDENT.OBJ 
            # this list can be added to in the platform specific section
 
 %STACKSIZE= 32767          #may be redefined in the platform specific section
@@ -46,6 +45,9 @@ LINK=wlink
 %BINNAME  =                #may be defined in the platform specific section
 %COPYRIGHT=                #may be defined in the platform specific section
 %FORMAT   =                #may be defined in the platform specific section
+%PATHOPS  = /fo=$^@ /fr=$[: /i$[: 
+                           #Puts the objs in the right directories needs
+                           # to be redefined for older versions of Watcom
 
 !ifdef SILENT
 .silent
@@ -81,147 +83,147 @@ zip :
   *zip -r zip *
 
 output\cliconfig.obj : common\cliconfig.cpp common\client.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[: 
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\client.obj : common\client.cpp common\client.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\problem.obj : common\problem.cpp common\problem.h common\network.h common\cputypes.h common\autobuff.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%PATHOPS)
   @set isused=1
 
 output\convdes.obj : common\convdes.cpp makefile.wat  
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%PATHOPS)
   @set isused=1
 
 output\disphelp.obj : common\disphelp.cpp common\client.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\clitime.obj : common\clitime.cpp common\clitime.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\clicdata.obj : common\clicdata.cpp common\clicdata.h   makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\clirate.obj : common\clirate.cpp common\clirate.h  makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\clisrate.obj : common\clisrate.cpp common\clisrate.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\clistime.obj : common\clistime.cpp common\clistime.h makefile.wat  
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\deseval-meggs2.obj : des\deseval-meggs2.cpp makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%PATHOPS)
   @set isused=1
 
 output\deseval-meggs3.obj : des\deseval-meggs3.cpp makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%PATHOPS)
   @set isused=1
 
 output\deseval-slice-meggs.obj : des\deseval-slice-meggs.cpp makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%PATHOPS)
   @set isused=1
 
 output\des-x86.obj : des\des-x86.cpp common\problem.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ /fo=$^@ /fr=$[: /i$[:;common
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%PATHOPS);common
   @set isused=1
 
 output\autobuff.obj : common\autobuff.cpp common\autobuff.h common\cputypes.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\network.obj : common\network.cpp common\network.h common\cputypes.h common\autobuff.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\iniread.obj : common\iniread.cpp common\iniread.h common\cputypes.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\scram.obj : common\scram.cpp common\scram.h common\cputypes.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\mail.obj : common\mail.cpp common\mail.h common\network.h common\client.h common\cputypes.h common\autobuff.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\buffwork.obj : common\buffwork.cpp common\buffwork.h common\client.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[: 
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS) 
   @set isused=1
 
 output\rg-486.obj : platforms\win32-os2\rg-486.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 output\rg-6x86.obj : platforms\win32-os2\rg-6x86.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 output\rc5p5brf.obj : platforms\win32-os2\rc5p5brf.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 output\rg-p5.obj : platforms\win32-os2\rg-p5.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 output\rg-p6.obj : platforms\win32-os2\rg-p6.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 output\rg-k5.obj : platforms\win32-os2\rg-k5.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 output\rg-k6.obj : platforms\win32-os2\rg-k6.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 output\bdeslow.obj: platforms\win32-os2\bdeslow.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 output\Bbdeslow.obj: platforms\win32-os2\Bbdeslow.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 output\bdeshgh.obj: platforms\win32-os2\bdeshgh.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 output\Bbdeshgh.obj: platforms\win32-os2\Bbdeshgh.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 output\x86ident.obj : platforms\win32-os2\x86ident.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 output\netware.obj : platforms\netware\netware.cpp common\client.h makefile.wat 
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:;common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS);common
   @set isused=1
 
 output\hbyname.obj : platforms\netware\hbyname.cpp makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
 output\chklocks.obj : platforms\win32-os2\chklocks.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 output\clearscr.obj : platforms\win32-os2\clearscr.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
 #-----------------------------------------------------------------------
