@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.cpp,v $
+// Revision 1.152.2.15  1999/01/30 15:46:11  remi
+// No need for InitRandom2() here...
+//
 // Revision 1.152.2.14  1999/01/23 14:02:13  remi
 // Added $Id tag.
 // Synced with :
@@ -101,7 +104,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.152.2.14 1999/01/23 14:02:13 remi Exp $"; }
+return "@(#)$Id: client.cpp,v 1.152.2.15 1999/01/30 15:46:11 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -272,7 +275,6 @@ int Client::Main( int argc, const char *argv[], int restarted )
       
         if (domodes)
           {
-          InitRandom2( id );
           ModeReqRun( this );     
           }
         DeinitializeLogging();
