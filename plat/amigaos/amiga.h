@@ -1,5 +1,5 @@
 /*
-** $Id: amiga.h,v 1.1.2.1 2001/01/21 15:10:27 cyp Exp $
+** $Id: amiga.h,v 1.1.2.2 2001/04/16 21:04:57 oliver Exp $
 */
 
 #ifndef _AMIGA_H_
@@ -18,8 +18,8 @@ extern "C" {
 
    #ifdef __PPC__
       #ifndef __POWERUP__
-         #include <powerpc/warpup_macros.h>
          #include <powerpc/powerpc.h>
+         #include <powerpc/powerpc_protos.h>
       #else
          #include <powerup/ppcinline/macros.h>
          #include <powerup/ppclib/ppc.h>
