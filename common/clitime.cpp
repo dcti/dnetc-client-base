@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.37 2000/07/13 21:10:15 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.38 2000/08/09 19:27:06 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -265,7 +265,6 @@ int CliClock(struct timeval *tv)
 {
   static struct timeval base = {0,0};
   static int need_base_time = 1;
-
   if (need_base_time)
   {
     if (CliGetMonotonicClock(&base) != 0)
@@ -517,8 +516,6 @@ int CliGetMonotonicClock( struct timeval *tv )
       #if 1
       static int fd = -1;
       char buffer[128]; int len;
-      unsigned long secs;
-      double uptime, idletime; 
       if (fd == -1)
         fd = open("/proc/uptime",O_RDONLY);
       if (fd == -1)
@@ -529,12 +526,30 @@ int CliGetMonotonicClock( struct timeval *tv )
       if (len < 1 || len >= ((int)(sizeof(buffer)-1)) )
         return -1;
       buffer[len-1] = '\0';
-      if (sscanf( buffer, "%lf %lf", &uptime, &idletime)!=2)
+      {
+        unsigned long tt = 0, t2 = 0, t1 = 0;
+	register char *p = buffer;
+	while (t1>=tt && *p >= '0' && *p <='9')
+	{
+	  tt = t1;
+	  t1 = (t1*10)+((*p++)-'0');
+	}  
+	if (*p++ != '.') return -1;
+	tt=0;
+	while (t2>=tt && *p >= '0' && *p <='9')
+	{
+	  tt = t2;
+	  t2 = (t2*10)+((*p++)-'0');
+	}  
+	if (*p++ != ' ') return -1;
+        tv->tv_usec = (long)(10000UL * t2);
+        tv->tv_sec = (time_t)t1;
+        //printf("\rt=%d.%06d\n",tv->tv_sec,tv->tv_usec);
+      }
+      #elif 0
+      if (gettimeofday(tv,0)!=0)
         return -1;
-      secs = (unsigned long)uptime;
-      tv->tv_usec = (long)(1000000.0 * (uptime - ((double)secs)));
-      tv->tv_sec = (time_t)secs;
-      #else 
+      #else      
       int rc = -1;
       FILE *file = fopen("/proc/uptime","r");
       if (file)
@@ -639,8 +654,10 @@ int CliGetThreadUserTime( struct timeval *tv )
     {
       tv->tv_sec = rus.ru_utime.tv_sec;
       tv->tv_usec = rus.ru_utime.tv_usec;
+      //printf("\rgetrusage(%d) => %d.%02d\n", getpid(), tv->tv_sec, tv->tv_usec/10000 ); 
       return 0;
     }
+    //printf("\rgetrusage() => %s\n", strerror(errno));
     #elif (CLIENT_OS == OS_WIN32)
     {
       static int isnt = -1;
