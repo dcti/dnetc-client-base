@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.h,v $
+// Revision 1.3  1998/09/28 02:49:12  cyp
+// Added prototypes for GetNumberOf[Supported|Detected]Processors()
+//
 // Revision 1.2  1998/07/13 23:39:30  cyruspatel
 // Added functions to format and display raw cpu info for better management
 // of the processor detection functions and tables. Well, not totally raw,
@@ -19,10 +22,30 @@
 #ifndef __CPUCHECK_H__
 #define __CPUCHECK_H__
 
-void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxcpus, const char ** sfoundcpus );
+//Return cpuid/cputag, maxcpus, foundcpus as descriptive strings.
+//Assists in debugging user complaints/bug reports.
+void GetProcessorInformationStrings( const char ** scpuid, 
+                  const char ** smaxcpus, const char ** sfoundcpus );
+
+//-------
+
+//Wrapper for GetProcessorInformationStrings()
+//(used to be a client class function for access to the log functions)
 void DisplayProcessorInformation( void );
 
-// --------------------------------------------------------------------------
+//-------
+
+//returns number of processors supported by the client.
+//should this be in client.cpp?
+unsigned int GetNumberOfSupportedProcessors( void );
+
+//------
+
+//return number of processors detected (by the hardware/from the OS)
+//returns -1 if detection is not supported.
+int GetNumberOfDetectedProcessors( void );
+
+// ------
 
 // GetTimesliceBaseline() returns a value that the ideal RC5 keyrate (kKeys 
 // per Mhz) would be IF a machine were running at peak efficiency. For 
@@ -36,6 +59,6 @@ void DisplayProcessorInformation( void );
 
 unsigned int GetTimesliceBaseline(void);
 
-// --------------------------------------------------------------------------
+// ------
 
 #endif
