@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.49  1998/12/07 15:21:23  chrisb
+// more riscos/x86 changes
+//
 // Revision 1.48  1998/12/06 03:06:11  cyp
 // Define STRESS_THREADS_AND_BUFFERS to configure problem.cpp for 'dummy
 // crunching', ie problems are finished before they even start. You will be
@@ -125,7 +128,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.48 1998/12/06 03:06:11 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.49 1998/12/07 15:21:23 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -225,13 +228,9 @@ Problem::~Problem()
   {
       _kernel_swi_regs r;
 
-      r.r[0] = 1;
+      r.r[0] = 0;
       _kernel_swi(RC5PC_RetriveBlock,&r,&r);
-      LogScreen("Retrieved block from x86 card");
-      _kernel_swi(RC5PC_Off,&r,&r);
   }
-  LogScreen("Killing problem");
-  
 #endif
 
 }
@@ -379,10 +378,6 @@ s32 Problem::LoadState( ContestWork * work, u32 _contest,
     if (r.r[0] == -1)
       {
       LogScreen("Failed to add block to x86 cruncher\n");
-      }
-    else
-      {
-      LogScreen("Added block to x86 cruncher. %d slots left\n",r.r[0]);
       }
     }
 #endif
@@ -700,41 +695,54 @@ s32 Problem::Run( u32 threadnum )
       }
     else // threadnum == 1
       {
-          /*
-            This is the RISC OS specific x86 2nd thread magic.
-          */
-          _kernel_swi_regs r;
-          volatile RC5PCstruct *rc5pcr;
-          _kernel_swi(RC5PC_BufferStatus,&r,&r);
+	  /*
+	    This is the RISC OS specific x86 2nd thread magic.
+	  */
+	  _kernel_swi_regs r;
+	  volatile RC5PCstruct *rc5pcr;
+	  _kernel_swi(RC5PC_BufferStatus,&r,&r);
 
-          rc5pcr = (volatile RC5PCstruct *)r.r[1];
-          contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+	  /*
+	    contestwork.keysdone.lo is 0 for a completed block,
+	    so take care when setting it.
+	   */
+	  rc5pcr = (volatile RC5PCstruct *)r.r[1];
+
 //LogScreen("x86: Keysdone %08lx",contestwork.keysdone.lo);
-          
-          if (r.r[2]==1)
-          {
-              /*
-                block finished
-              */
-              LogScreen("x86: Finished (%08lx)",contestwork.keysdone.lo);
-              r.r[0] = 0;
-              _kernel_swi(RC5PC_RetriveBlock,&r,&r);
-              rc5pcr = (volatile RC5PCstruct *)r.r[1];
-              
-              if (rc5pcr->result == RESULT_FOUND)
-              {
-                  LogScreen("x86: Found it (%08lx)!",contestwork.keysdone.lo);
-                  rc5result.key.hi = contestwork.key.hi;
-                  rc5result.key.lo = contestwork.key.lo;
-                  rc5result.keysdone.hi = contestwork.keysdone.hi;
-                  rc5result.keysdone.lo = contestwork.keysdone.lo;
-                  rc5result.iterations.hi = contestwork.iterations.hi;
-                  rc5result.iterations.lo = contestwork.iterations.lo;
-                  rc5result.result = RESULT_FOUND;
-                  finished = 1;
-                  return( 1 );
-              }
-          }
+	  
+	  if (r.r[2]==1)
+	  {
+	      /*
+		block finished
+	      */
+	      r.r[0] = 0;
+	      _kernel_swi(RC5PC_RetriveBlock,&r,&r);
+	      rc5pcr = (volatile RC5PCstruct *)r.r[1];
+	      
+	      if (rc5pcr->result == RESULT_FOUND)
+	      {
+		  contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+
+		  rc5result.key.hi = contestwork.key.hi;
+		  rc5result.key.lo = contestwork.key.lo;
+		  rc5result.keysdone.hi = contestwork.keysdone.hi;
+		  rc5result.keysdone.lo = contestwork.keysdone.lo;
+		  rc5result.iterations.hi = contestwork.iterations.hi;
+		  rc5result.iterations.lo = contestwork.iterations.lo;
+		  rc5result.result = RESULT_FOUND;
+		  finished = 1;
+		  return( 1 );
+	      }
+	      else
+	      {
+		  contestwork.keysdone.lo = contestwork.iterations.lo;
+	      }
+
+	  }
+	  else
+	  {
+	      contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+	  }
       }
 #endif
     }
@@ -926,14 +934,14 @@ s32 Problem::Run( u32 threadnum )
   rc5result.iterations.hi = contestwork.iterations.hi;
   rc5result.iterations.lo = contestwork.iterations.lo;
 
-
+#if 0
 #if (CLIENT_OS == OS_RISCOS)    
 if (!finished)
   LogScreen("Thread %d: Didn't find the key",threadnum);
 else if (threadnum == 1)
   LogScreen("working... %08lx",contestwork.keysdone.lo);
 #endif
-
+#endif
   return( finished );
 }
 
