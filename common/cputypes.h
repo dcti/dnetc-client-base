@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.9 2003/05/20 20:53:18 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.10 2003/06/24 19:28:59 bdragon Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -469,7 +469,8 @@
      (CLIENT_CPU == CPU_SPARC) || (CLIENT_CPU == CPU_68K) || \
      (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC) || \
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
-     ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)))
+     ((CLIENT_CPU == CPU_ALPHA) && ((CLIENT_OS == OS_WIN32) || \
+     (CLIENT_OS == OS_DEC_UNIX))))
    #define CORES_SUPPORT_SMP
 #endif
 

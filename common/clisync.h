@@ -18,7 +18,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.5 2003/02/18 00:43:07 snake Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.6 2003/06/24 19:28:59 bdragon Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -32,7 +32,8 @@
   static inline int fastlock_trylock(fastlock_t *m) { m->spl = 1; return +1; }
   /* _trylock returns -1 on EINVAL, 0 if could not lock, +1 if could lock */
 
-#elif (CLIENT_CPU == CPU_ALPHA) && defined(__GNUC__)
+#elif (CLIENT_CPU == CPU_ALPHA) && defined(__GNUC__) && \
+      (CLIENT_OS != OS_DEC_UNIX)
 
   typedef struct { volatile unsigned int spl; } fastlock_t __attribute__ ((__aligned__ (32)));
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
