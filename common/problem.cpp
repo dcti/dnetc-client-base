@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.101 2001/02/23 00:30:11 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.102 2001/02/23 03:47:49 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -275,17 +275,19 @@ Problem *ProblemAlloc(void)
   return (Problem *)thisprob;
 }
 
-static InternalProblem *__pick_probptr(void *__thisprob, int which)
+static InternalProblem *__pick_probptr(void *__thisprob, unsigned int which)
 {
   if (__thisprob)
   {
     SuperProblem *p = (SuperProblem *)__thisprob;
-    if (which == PICKPROB_CORE)
-      return &(p->twist_and_shout[PICKPROB_CORE]);
-    if (which == PICKPROB_MAIN)
-      return &(p->twist_and_shout[PICKPROB_MAIN]);
-    if (which == PICKPROB_TEMP)
-      return &(p->twist_and_shout[PICKPROB_TEMP]);
+    
+    // XXX
+    // which may be one of the three PICKPROB_* types
+    // if we want to, we can put an assert(which < NUM_PICKPROB_TYPES)
+    // or something. note that this is only called with #defined
+    // positive constants, so changing prototype to unsigned.  - sampo
+    
+    return &(p->twist_and_shout[which]);
   }    
   return (InternalProblem *)0;
 }
@@ -302,11 +304,19 @@ static inline void __release_lock( void *__thisprob )
   mutex_unlock(&(p->copy_lock));
 }
 
-#undef SuperProblem /* so references beyond this point */
+#undef SuperProblem /* no references beyond this point */
 
 static inline void __copy_internal_problem( InternalProblem *dest,
                                             const InternalProblem *source )
 {
+    // XXX
+    // do we *really* want to not copy the core_membuffer address?  For example...
+    // dest.membuffer and source.membuffer don't change after a call to this.
+    // you copy(dest, source);  then you load dest with an OGR problem, which
+    // sets up the membuffer in a certain way.  Then you copy(source, dest) on the
+    // second call, except that source still has it's original membuffer, when the
+    // one we want is in dest.  Is this heinously bad, or am I smoking crack? -- sampo
+
   void *p = dest->priv_data.core_membuffer;
   memcpy( dest, source, sizeof(InternalProblem));
   dest->priv_data.core_membuffer = p;
@@ -738,17 +748,21 @@ int ProblemLoadState( void *__thisprob,
 
   __assert_lock(__thisprob);
   __copy_internal_problem( temp_prob, main_prob ); /* copy main->temp */
-  __release_lock(__thisprob);
-
+  
+  // hold the lock for __InternalLoadState().  If we release the lock before the 
+  // State is loaded, theoretically another thread could preempt us and overwrite
+  // our data between the two __copy_internal_problem() calls;
+  
   if (__InternalLoadState( temp_prob, work, contestid, _iterations, 
                            expected_cputype, expected_corenum, expected_os,
                            expected_buildfrac ) != 0)
   {
+    __release_lock(__thisprob);
     return -1;
   }                             
 
-  /* success */
-  __assert_lock(__thisprob);
+  /* success - we still hold the lock at this point */
+
   __copy_internal_problem( main_prob, temp_prob ); /* copy temp->main */
   __release_lock(__thisprob);
   return 0;
