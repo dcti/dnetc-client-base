@@ -1,5 +1,13 @@
 //
 // $Log: sboxes-kwan3.cpp,v $
+// Revision 1.5.2.1  1999/12/07 23:56:28  cyp
+// sync
+//
+// Revision 1.6  1999/12/07 23:44:25  cyp
+// standardized calling conventions, converted nbbits parameter to iterstodo
+// (cores return effective iterstodo), removed MIN_DES_BITS/MAX_DES_BITS gunk,
+// removed BIT_32/BIT_64 craziness.
+//
 // Revision 1.5  1998/11/16 15:47:30  remi
 // Updated to the latest version, from Mattew's web site.
 // (kwan-sboxes.h used by Meggs' bitslicers had the same sboxes as
@@ -19,14 +27,10 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *sboxes_kwan3_cpp(void) {
-return "@(#)$Id: sboxes-kwan3.cpp,v 1.5 1998/11/16 15:47:30 remi Exp $"; }
+return "@(#)$Id: sboxes-kwan3.cpp,v 1.5.2.1 1999/12/07 23:56:28 cyp Exp $"; }
 #endif
 
 #include "sboxes.h"
-
-#ifndef KWAN
-#error "You must compile with -DKWAN.  Set this and then recompile cliconfig.cpp"
-#endif
 
 /*
  * Generated S-box files.

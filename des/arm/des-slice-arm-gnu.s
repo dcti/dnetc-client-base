@@ -1,3 +1,4 @@
+/* @(#)$Id: des-slice-arm-gnu.s,v 1.7.2.2 1999/12/07 23:56:29 cyp Exp $ */
 
 .macro  adrli   dest, addr, a, b, c
         .set    \a, \addr-.-8
@@ -11,7 +12,7 @@
         adrli   \dest, \addr, "adrla\@", "adrlb\@", "adrlc\@"
 .endm
 	.text
-	.global	_des_unit_func_arm
+	.global	_des_unit_func_arm_asm
 
 lowbits:
 	.word	0xAAAAAAAA
@@ -20,7 +21,7 @@ lowbits:
 	.word	0xFF00FF00
 	.word	0xFFFF0000
 
-_des_unit_func_arm:
+_des_unit_func_arm_asm:
 	MOV     R12,R13
 	STMDB   R13!,{R0,R1,R4-R9,R11,R12,R14,PC}
 	SUB     R11,R12,#4

@@ -6,6 +6,14 @@
 ; based on deseval.c from Matthew Kwan's bitslicing DES key search.
 ;
 ; $Log: des-slice-sa.s,v $
+; Revision 1.9.2.2  1999/12/07 23:56:30  cyp
+; sync
+;
+; Revision 1.10  1999/12/07 23:44:26  cyp
+; standardized calling conventions, converted nbbits parameter to iterstodo
+; (cores return effective iterstodo), removed MIN_DES_BITS/MAX_DES_BITS gunk,
+; removed BIT_32/BIT_64 craziness.
+;
 ; Revision 1.9.2.1  1999/11/24 19:11:13  chrisb
 ; miscellaneous RISC OS changes
 ;
@@ -34,10 +42,10 @@
 
 	AREA	fastdesarea, CODE, READONLY
 
-        DCB     "@(#)$Id: des-slice-sa.s,v 1.9.2.1 1999/11/24 19:11:13 chrisb Exp $", 0
+        DCB     "@(#)$Id: des-slice-sa.s,v 1.9.2.2 1999/12/07 23:56:30 cyp Exp $", 0
         ALIGN
 
-        EXPORT	des_unit_func_strongarm
+        EXPORT	des_unit_func_strongarm_asm
         EXPORT  convert_key_from_des_to_inc__FPUiT1
         EXPORT  convert_key_from_inc_to_des__FPUiT1
 
@@ -49,7 +57,7 @@ startofcode	; &2c000
 
 	DCD	&b7e15163
 
-	B	des_unit_func_strongarm
+	B	des_unit_func_strongarm_asm
 
 __rt_udiv	B	startofcode - &2c000 + &1b938
 __rt_sdiv	B	startofcode - &2c000 + &1b8d8
@@ -417,7 +425,7 @@ lowbits
 	DCD	0xffff0000
 
 
-des_unit_func_strongarm
+des_unit_func_strongarm_asm
         MOV      r12,r13
         STMDB    r13!,{r0,r1,r4-r9,r11,r12,lr,pc}
         SUB      r11,r12,#4

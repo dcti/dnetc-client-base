@@ -6,7 +6,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_x86_cpp(void) {
-return "@(#)$Id: des-x86.cpp,v 1.25.2.1 1999/11/28 14:31:50 remi Exp $"; }
+return "@(#)$Id: des-x86.cpp,v 1.25.2.2 1999/12/07 23:56:28 cyp Exp $"; }
 #endif
 
 
@@ -288,16 +288,27 @@ int bbryd_continue_pro (void)   { return which_continue( P62_LAUNCH_INDEX); }
 
 // ------------------------------------------------------------------
 
-u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 nbbits )
-{ return which_bryd( rc5unitwork, nbbits, P51_LAUNCH_INDEX ); }
+u32 which_bryd_wrapper( RC5UnitWork * rc5unitwork, u32 *iter, int index )
+{
+  u32 nbits = 8;
+  while (*iter > (1ul << nbits))
+    nbits++;
+  if (nbits > 24)
+    nbits = 24;    
+  *iter = (1ul << nbits);
+  return which_bryd( rc5unitwork, nbits, index );
+}  
 
-u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 nbbits )
-{ return which_bryd( rc5unitwork, nbbits, P52_LAUNCH_INDEX ); }
+u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 *iterations, char * )
+{ return which_bryd_wrapper( rc5unitwork, iterations, P51_LAUNCH_INDEX ); }
+
+u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 *iterations, char * )
+{ return which_bryd_wrapper( rc5unitwork, iterations, P52_LAUNCH_INDEX ); }
                                      
-u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits )
-{ return which_bryd( rc5unitwork, nbbits, P61_LAUNCH_INDEX ); }
+u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 *iterations, char * )
+{ return which_bryd_wrapper( rc5unitwork, iterations, P61_LAUNCH_INDEX ); }
 
-u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits )
-{ return which_bryd( rc5unitwork, nbbits, P62_LAUNCH_INDEX ); }
+u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 *iterations, char * )
+{ return which_bryd_wrapper( rc5unitwork, iterations, P62_LAUNCH_INDEX ); }
 
 /* ========================= FINIS =================================== */

@@ -1,5 +1,13 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.13.2.2  1999/12/07 23:56:28  cyp
+// sync
+//
+// Revision 1.19  1999/12/07 23:44:25  cyp
+// standardized calling conventions, converted nbbits parameter to iterstodo
+// (cores return effective iterstodo), removed MIN_DES_BITS/MAX_DES_BITS gunk,
+// removed BIT_32/BIT_64 craziness.
+//
 // Revision 1.13.2.1  1999/12/02 13:33:30  mfeiri
 // Removed MacOS yield inside cruncher
 //
@@ -52,7 +60,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.13.2.1 1999/12/02 13:33:30 mfeiri Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.13.2.2 1999/12/07 23:56:28 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"		/* Isn't this needed for using CLIENT_OS defines? */

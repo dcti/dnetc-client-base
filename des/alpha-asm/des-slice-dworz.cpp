@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-dworz.cpp,v $
+// Revision 1.7.2.1  1999/12/07 23:56:29  cyp
+// sync
+//
+// Revision 1.8  1999/12/07 23:44:25  cyp
+// standardized calling conventions, converted nbbits parameter to iterstodo
+// (cores return effective iterstodo), removed MIN_DES_BITS/MAX_DES_BITS gunk,
+// removed BIT_32/BIT_64 craziness.
+//
 // Revision 1.7  1999/04/04 16:41:21  dworz
 // replaced (1UL << i) with (ONE << i)...
 //
@@ -30,7 +38,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_dworz_cpp(void) {
-return "@(#)$Id: des-slice-dworz.cpp,v 1.7 1999/04/04 16:41:21 dworz Exp $"; }
+return "@(#)$Id: des-slice-dworz.cpp,v 1.7.2.1 1999/12/07 23:56:29 cyp Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -40,11 +48,7 @@ return "@(#)$Id: des-slice-dworz.cpp,v 1.7 1999/04/04 16:41:21 dworz Exp $"; }
 #include "convdes.h"
 #include "logstuff.h"
 
-#ifndef DWORZ
-#error "You must compile with -DDWORZ.  Set this and then recompile."
-#endif
-
-#if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32) && defined(BIT_64) && (_MSC_VER >= 11)
+#if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32) && (_MSC_VER >= 11)
 typedef unsigned __int64 WORD_TYPE;
 #else
 typedef unsigned long WORD_TYPE;
@@ -66,22 +70,16 @@ extern "C" WORD_TYPE checkKey (DesWorkStruct *dws);
 // Input : 56 bit key, plain & cypher text, timeslice
 // Output: key incremented, return 'timeslice' if no key found, 
 //         'timeslice-something' else
-// note : nbbits can't be less than 19 when BIT_32 is defined
-// and can't be less than 20 when BIT_64
 
 // rc5unitwork.LO in lo:hi 24+32 incrementable format
 
-extern "C"
-u32 des_unit_func_alpha_dworz( RC5UnitWork * rc5unitwork, u32 nbbits )
+u32 des_unit_func_alpha_dworz( RC5UnitWork * rc5unitwork, u32 *iterations, char * /* coremem */)
 {
   WORD_TYPE i, j, result, SK, EK;
   DesWorkStruct dws;
-  
-  // check nbbits
-  if (nbbits != 20) {
-    Log ("Bad nbbits ! (%d)\n", nbbits);
-    exit (-1);
-  }
+  u32 nbbits = 20;
+
+  *iterations = (1ul << nbbits);
   
   j = (WORD_TYPE)rc5unitwork->plain.hi<<32|(WORD_TYPE)rc5unitwork->plain.lo;
 #ifdef DEBUG

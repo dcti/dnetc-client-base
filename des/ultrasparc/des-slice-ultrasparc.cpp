@@ -3,21 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 
 // encapsulate UltraSparc bitslice code
-
-// $Log: des-slice-ultrasparc.cpp,v $
-// Revision 1.2.2.1  1999/11/16 16:36:32  ivo
-// Removed "#error ifndef 32BIT"
 //
-// Revision 1.2  1998/06/15 02:44:28  djones
-// First build of UltraSPARC 64-bit/VIS DES client:
+// First build of UltraSPARC 64-bit/VIS DES client: (djones)
 // - many configure file tweaks: split up C++, ASM and C files; make "gcc" the
 //   compiler.
 // - "tr" on SunOS 4.1.4 goes into endless loop when faced with "..-"; change
 //   to "..\-".
 // - Enable generation of whack16()
-//
-// Revision 1.1.1.1  1998/06/14 14:23:52  remi
-// Initial integration.
 //
 
 #include <stdio.h>
@@ -28,11 +20,7 @@
 
 //#define DEBUG
 
-//#ifndef _CPU_32BIT_
-//#error "everything assumes a 32bit CPU..."
-//#endif
-
-static char *id="@(#)$Id: des-slice-ultrasparc.cpp,v 1.2.2.1 1999/11/16 16:36:32 ivo Exp $";
+static char *id="@(#)$Id: des-slice-ultrasparc.cpp,v 1.2.2.2 1999/12/07 23:56:31 cyp Exp $";
 
 typedef unsigned long long base_slice_type;
 
@@ -53,18 +41,20 @@ extern "C" base_slice_type whack16 (
 
 // rc5unitwork.LO in lo:hi 24+32 incrementable format
 
-u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
+u32 des_unit_func_ultrasparc( RC5UnitWork * rc5unitwork, 
+                              u32 *iterations, char * /*coremem*/ )
 {
     base_slice_type key[56];
     base_slice_type plain[64];
     base_slice_type cypher[64];
-    u32 i;
-
-    // check nbbits
-    if (nbbits != MIN_DES_BITS) {
-	printf ("Bad nbbits ! (%d)\n", (int)nbbits);
-	exit (-1);
-    }
+    u32 i, nbbits;
+    
+    #if (BITS_PER_SLICE == 32)
+      nbbits = 19; //both min and max
+    #else
+      nbbits = 20; //both min and max
+    #endif  
+    *iterations = (1ul << nbbits);
 
     // convert the starting key from incrementable format
     // to DES format

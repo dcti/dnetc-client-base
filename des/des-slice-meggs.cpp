@@ -2,136 +2,64 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// $Log: des-slice-meggs.cpp,v $
-// Revision 1.25  1999/04/05 20:32:05  patrick
-//
-// removed check for CPU_32BIT
-//
-// Revision 1.24  1999/02/21 09:51:39  silby
-// Changes for large block support.
-//
-// Revision 1.23  1999/01/29 04:15:36  pct
-// Updates for the initial attempt at a multithreaded/multicored Digital
-// Unix Alpha client.  Sorry if these changes cause anyone any grief.
-//
-// Revision 1.22  1999/01/17 21:48:50  cyp
-// deseval-mmx whack16() is now passed a memblock from the problem object.
-//
-// Revision 1.21  1999/01/09 08:56:24  remi
-// Fixed the previous fix : it's only for alpha/nt + defined(bit_64) + msvc++
-//
-// Revision 1.20  1999/01/08 02:53:37  michmarc
-// Added __int64 type support for Alpha/NT (whose "unsigned long" type
-// is only 32 bits)
-//
-// Revision 1.19  1998/12/14 01:56:21  dicamillo
-// MacOS: allow use of extern "C" for whack16.
-//
-// Revision 1.18  1998/07/16 08:52:20  cyruspatel
-// The correct path to the #include files is now handled from the makefile,
-// and added an #if (CLIENT_OS == OS_OS2) inside the #if (__WATCOMC__) so
-// that _malloc and _free are not affected on other watcom platforms.
-//
-// Revision 1.17  1998/07/15 06:10:28  ziggyb
-// Did a couple of things to get things working under Watcom - First, I had 
-// to add "..\common" in front of the local headers or else it won't be able 
-// to read them. Then I added functions _free and _malloc which call the 
-// real versions so they work with the precompiled mmx core by BRF and Remi.
-//
-// Revision 1.16  1998/07/14 10:43:39  remi
-// Added support for a minimum timeslice value of 16 instead of 20 when
-// using BIT_64, which is needed by MMX_BITSLICER. Will help some platforms
-// like Netware or Win16. I added support in deseval-meggs3.cpp, but it's just
-// for completness, Alphas don't need this patch.
-//
-// Important note : this patch **WON'T** work with deseval-meggs2.cpp, but
-// according to the configure script it isn't used anymore. If you compile
-// des-slice-meggs.cpp and deseval-meggs2.cpp with BIT_64 and
-// BITSLICER_WITH_LESS_BITS, the DES self-test will fail.
-//
-// Revision 1.15  1998/07/13 03:48:48  cyruspatel
-// Converted an 'if (sizeof(BASIC_SLICE_TYPE)!=8)' check to an assert() to
-// squelch a compiler warning.
-//
-// Revision 1.14  1998/07/12 23:52:14  foxyloxy
-// Fixed typo (changed NOTSZERO to NOTZERO) to allow compile to work on IRIX
-// (and probably other platforms).
-//
-// Revision 1.13  1998/07/10 20:08:25  cyruspatel
-// Added support for Watcom compilers (__int64) to mmx bitslice stuff
-//
-// Revision 1.12  1998/07/08 23:42:05  remi
-// Added support for CliIdentifyModules().
-//
-// Revision 1.11  1998/07/08 16:26:22  remi
-// Added support for MS-VC++ 5.0
-//
-// Revision 1.10  1998/07/08 10:06:20  remi
-// Another RCS-id tweaking.
-//
-// Revision 1.9  1998/07/08 10:02:46  remi
-// Declare whack16() with "C" linkage. Will help MS platforms.
-//
-// Revision 1.8  1998/07/08 10:00:31  remi
-// Added support for the MMX bitslicer.
-//
-// Revision 1.7  1998/06/14 08:27:02  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.6  1998/06/14 08:13:17  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
-
 // encapsulate Meggs' bitslicer
+//
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-return "@(#)$Id: des-slice-meggs.cpp,v 1.25 1999/04/05 20:32:05 patrick Exp $"; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.25.2.1 1999/12/07 23:56:27 cyp Exp $"; }
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <limits.h>
 #include "problem.h"
 #include "convdes.h"
 
+#if defined(BIT_32) || defined(BIT_64)
+  #error "Remove BIT_32/BIT_64 defines from your makefile"
+#endif  
 
-#if defined(MMX_BITSLICER)
-  #include "logstuff.h"
+#if defined(MMX_BITSLICER) || defined(NTALPHA)
+  #define BIT_64
   #if defined(__GNUC__)
     #define BASIC_SLICE_TYPE unsigned long long
     #define NOTZERO ~(0ull)
-  #elif defined(__WATCOMC__) || (_MSC_VER >= 11) // VC++ >= 5.0
+    #define BIGNUM(n) n##ull
+  #elif defined(__WATCOMC__)
     #define BASIC_SLICE_TYPE __int64
     #define NOTZERO ~((__int64)0)
-  #elif
-    #error "What's the 64-bit type on your compiler ?"
-  #endif
-#else
-  // int and long are 32bits under Alpha/NT for compatability with x86/NT
-  #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32) && \
-      defined(BIT_64) && (_MSC_VER >= 11) // VC++ >= 5.0
-    #define BASIC_SLICE_TYPE unsigned __int64
-    #define NOTZERO ~((unsigned __int64)0)
+    #define BIGNUM(n) n##ul
+  #elif (defined(_MSC_VER) && (_MSC_VER >= 11)) // VC++ >= 5.0
+    #define BASIC_SLICE_TYPE __int64
+    #define NOTZERO ~((__int64)0)
+    #define BIGNUM(n) n##ul
   #else
-    #define BASIC_SLICE_TYPE unsigned long
-    #define NOTZERO ~(0ul)
-  #endif
+    #error "What's the 64-bit type on your compiler ?"
+  #endif 
+#elif (ULONG_MAX == 0xfffffffful)
+  #define BIT_32
+  #define BASIC_SLICE_TYPE unsigned long
+  #define NOTZERO ~(0ul)
+  #define BIGNUM(n) n##ul
+#elif (ULONG_MAX == 0xfffffffffffffffful)
+  #define BIT_64
+  #define BASIC_SLICE_TYPE unsigned long
+  #define NOTZERO ~(0ul)
+  #define BIGNUM(n) n##ul
+#else  
+  #error "Cannot determine 32/64 bittedness"
 #endif
 
 #ifdef BIT_32
 #define BITS_PER_SLICE 32
-#elif defined(BIT_64)
+#else //if defined(BIT_64)
 #define BITS_PER_SLICE 64
-#else
-// make sure the size of a "long" was specified
-#error "You must define BIT_32 or BIT_64"
 #endif
 
-#if defined(MMX_BITSLICER)
+#if defined(MMX_BITSLICER) /* mmx-bitslice */
 extern "C" BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
             BASIC_SLICE_TYPE *cypher,
             BASIC_SLICE_TYPE *key, char *coremem);
@@ -148,47 +76,38 @@ extern BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
 
 // ------------------------------------------------------------------
 // Input : 56 bit key, plain & cypher text, timeslice
-// Output: key incremented, return 'timeslice' if no key found, 'timeslice-something' else
-// note : nbbits can't be less than 19 when BIT_32 is defined
-// and can't be less than 20 when BIT_64
+// Output: key incremented, return 'iterations' if no key found, 'iterations-something' else
+//         the adjusted number of iterations is stored back in the param
+//         (can't be less than 1<<19 when BIT_32 is defined
+//          and can't be less than 1<<20 when BIT_64)
 
 // rc5unitwork.LO in lo:hi 24+32 incrementable format
 
 #if defined(MMX_BITSLICER)
-u32 des_unit_func_mmx( RC5UnitWork * rc5unitwork, u32 nbbits, char *coremem )
+u32 des_unit_func_mmx( RC5UnitWork * rc5unitwork, u32 *iterations, char *coremem)
 #elif defined(DEC_UNIX_CPU_SELECT)
-u32 des_alpha_osf_ev4( RC5UnitWork * rc5unitwork, u32 nbbits )
+u32 des_alpha_osf_ev4( RC5UnitWork * rc5unitwork, u32 *iterations, char *)
 #else
-u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
+u32 des_unit_func_meggs( RC5UnitWork * rc5unitwork, u32 *iterations, char *)
 #endif
 {
   BASIC_SLICE_TYPE key[56];
   BASIC_SLICE_TYPE plain[64];
   BASIC_SLICE_TYPE cypher[64];
-  u32 i;
+  u32 i, nbbits;
 
-  // check if we have the right BIT_xx define
-  // this should be phased out by an optimizing compiler
-  // if the right BIT_xx is defined
 #ifdef BIT_32
   assert( sizeof(BASIC_SLICE_TYPE) == 4);
-  //  if (sizeof(BASIC_SLICE_TYPE) != 4) {
-  //printf ("Bad BIT_32 define !\n");
-  //exit (-1);
-  // }
-#elif BIT_64
+  nbbits = 19; //minimum and maximum
+#else //BIT_64
   assert( sizeof(BASIC_SLICE_TYPE) == 8);
-  // if (sizeof(BASIC_SLICE_TYPE) != 8) {
-  // printf ("Bad BIT_64 define !\n");
-  // exit (-1);
-  // }
-#endif
+  nbbits = 20; //minimum and maximum
+#endif  
+#if defined(MMX_BITSLICER) && defined(BITSLICER_WITH_LESS_BITS)
+  nbbits = 16; //mmx-bitslice allows this
+#endif    
 
-  // check nbbits
-  if (nbbits != MIN_DES_BITS) {
-    printf ("Bad nbbits ! (%d)\n", (int)nbbits);
-    exit (-1);
-  }
+  *iterations = (1ul << nbbits);
 
   // convert the starting key from incrementable format
   // to DES format
@@ -229,17 +148,6 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
     }
   }
 
-#if defined(MMX_BITSLICER)
-  #if defined(__GNUC__)
-    #define BIGNUM(n) n##ull
-  #elif (defined(__WATCOMC__) || (_MSC_VER>=11))
-    #define BIGNUM(n) n##ul
-  #else
-    #error "Write this macro for your compiler"
-  #endif
-#else
-  #define BIGNUM(n) n##ul
-#endif // MMX_BITSLICER
 
     // now we must generate 32/64 different keys with
     // bits not used by Meggs core
@@ -249,47 +157,51 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
   key[ 0] = 0xF0F0F0F0ul;
   key[ 1] = 0xFF00FF00ul;
   key[ 2] = 0xFFFF0000ul;
-#elif defined(BITSLICER_WITH_LESS_BITS) && defined(BIT_64)
+#elif defined(BIT_64)
+  #if defined(MMX_BITSLICER) && defined(BITSLICER_WITH_LESS_BITS)
   key[40] = BIGNUM(0xAAAAAAAAAAAAAAAA);
   key[41] = BIGNUM(0xCCCCCCCCCCCCCCCC);
   key[12] = BIGNUM(0x0F0F0F0FF0F0F0F0);
   key[15] = BIGNUM(0xFF00FF00FF00FF00);
   key[45] = BIGNUM(0xFFFF0000FFFF0000);
   key[50] = BIGNUM(0xFFFFFFFF00000000);
-#elif defined(BIT_64)
+  #else
   key[40] = BIGNUM(0xAAAAAAAAAAAAAAAA);
   key[41] = BIGNUM(0xCCCCCCCCCCCCCCCC);
   key[ 0] = BIGNUM(0x0F0F0F0FF0F0F0F0);
   key[ 1] = BIGNUM(0xFF00FF00FF00FF00);
   key[ 2] = BIGNUM(0xFFFF0000FFFF0000);
   key[ 4] = BIGNUM(0xFFFFFFFF00000000);
+  #endif
 #endif
   
-#if defined(DEBUG) && defined(BIT_32)
+#if defined(DEBUG) 
+  #if defined(BIT_32)
   for (i=0; i<64; i++) printf ("bit %02d of plain  = %08X\n", i, plain[i]);
   for (i=0; i<64; i++) printf ("bit %02d of cypher = %08X\n", i, cypher[i]);
   for (i=0; i<56; i++) printf ("bit %02d of key    = %08X\n", i, key[i]);
-#elif defined(DEBUG) && defined(MMX_BITSLICER)
+  #elif defined(MMX_BITSLICER) //mmx bitslice
   for (i=0; i<64; i++) printf ("bit %02ld of plain  = %08X%08X\n", i, (unsigned)(plain[i] >> 32), (unsigned)(plain[i] & 0xFFFFFFFF));
   for (i=0; i<64; i++) printf ("bit %02ld of cypher = %08X%08X\n", i, (unsigned)(cypher[i] >> 32), (unsigned)(cypher[i] & 0xFFFFFFFF));
   for (i=0; i<56; i++) printf ("bit %02ld of key    = %08X%08X\n", i, (unsigned)(key[i] >> 32), (unsigned)(key[i] & 0xFFFFFFFF));
-#elif defined(DEBUG) && defined(BIT_64)
+  #else
   for (i=0; i<64; i++) printf ("bit %02d of plain  = %016X\n", i, plain[i]);
   for (i=0; i<64; i++) printf ("bit %02d of cypher = %016X\n", i, cypher[i]);
   for (i=0; i<56; i++) printf ("bit %02d of key    = %016X\n", i, key[i]);
-#endif
+  #endif
+#endif  
 
   // Zero out all the bits that are to be varied
-#if defined(BITSLICER_WITH_LESS_BITS)
+#if defined(MMX_BITSLICER) && defined(BITSLICER_WITH_LESS_BITS)
   key[ 3]=key[ 5]=key[ 8]=key[10]=key[11]=
   key[18]=key[42]=key[43]        =key[46]=key[49]        =0;
 #else
   key[ 3]=key[ 5]=key[ 8]=key[10]=key[11]=key[12]=key[15]=
   key[18]=key[42]=key[43]=key[45]=key[46]=key[49]=key[50]=0;
-#endif
+#endif    
 
   // Launch a crack session
-//LogScreen("beginning whack\n");  
+//printf("beginning whack\n");  
 
 #if defined(MMX_BITSLICER)
   BASIC_SLICE_TYPE result = whack16( plain, cypher, key, coremem);
@@ -297,7 +209,7 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
   BASIC_SLICE_TYPE result = whack16( plain, cypher, key);
 #endif  
 
-//LogScreen("ended whack\n");  
+//printf("ended whack\n");  
 
   // Test also the complementary key
   if (result == 0 && complement == false) {
