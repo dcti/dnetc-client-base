@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.57  1999/02/03 17:49:38  cyp
+// Cleaned up CLIENT_VERSIONSTRING #define
+//
 // Revision 1.56  1999/01/31 20:19:09  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -181,13 +184,12 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.56 1999/01/31 20:19:09 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.57 1999/02/03 17:49:38 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
 #include "version.h"  //CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
 #include "baseincs.h" //generic include
-#include "cmpidefs.h" //strcmpi()
 #include "triggers.h" //CheckExitRequestTriggerNoIO()
 #include "logstuff.h" //LogScreenRaw()
 #include "console.h"  //ConClear(), ConInkey()
@@ -301,7 +303,7 @@ void DisplayHelp( const char * unrecognized_option )
   
   static const char *helpheader[] =
     {
-    "RC5DES " CLIENT_VERSIONSTRING " client - a project of distributed.net",
+    "RC5DES v" CLIENT_VERSIONSTRING " client - a project of distributed.net",
     "Visit http://www.distributed.net/FAQ/ for in-depth command line help",
     "-------------------------------------------------------------------------"
     };
@@ -331,7 +333,15 @@ void DisplayHelp( const char * unrecognized_option )
 
     for (i = 0; ((goodopt == 0) && (i < (int)
          (sizeof(valid_help_requests)/sizeof(char *)))); i++)
-      goodopt = (strcmpi(unrecognized_option, valid_help_requests[i]) == 0);
+      {
+      int n=0;
+      for (;((valid_help_requests[i][n])!=0 && unrecognized_option[n]!=0);n++)
+        {
+        if (tolower(valid_help_requests[i][n])!=tolower(unrecognized_option[n]))
+          break;
+        }
+      goodopt = ((valid_help_requests[i][n])==0 && unrecognized_option[n]==0);
+      }
 
     if (!goodopt)
       {

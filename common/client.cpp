@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.190  1999/02/03 17:49:38  cyp
+// Cleaned up CLIENT_VERSIONSTRING #define
+//
 // Revision 1.189  1999/02/03 04:31:16  cyp
 // cosmetic change: fixed a misplaced space in the startup banner.
 //
@@ -186,7 +189,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.189 1999/02/03 04:31:16 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.190 1999/02/03 17:49:38 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -337,7 +340,7 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
     {
     if (level == 0)
       {
-      LogScreenRaw( "\nRC5DES " CLIENT_VERSIONSTRING 
+      LogScreenRaw( "\nRC5DES v" CLIENT_VERSIONSTRING 
                  " client - a project of distributed.net\n"
                  "Copyright 1997-1999 distributed.net\n" );
       
@@ -406,7 +409,7 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       const char *msg = GetBuildOrEnvDescription();
       if (msg == NULL) msg="";
 
-      LogRaw("\nRC5DES %s %sClient for %s%s%s%s started.\n",
+      LogRaw("\nRC5DES v%s %sClient for %s%s%s%s started.\n",
             CLIENT_VERSIONSTRING, ((ClientIsGUI())?("GUI "):("")), 
             CLIENT_OS_NAME, ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
   

@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.30  1999/02/03 17:49:38  cyp
+// Cleaned up CLIENT_VERSIONSTRING #define
+//
 // Revision 1.29  1999/01/29 04:10:27  cyp
 // default nettimeout for mail is -1
 //
@@ -114,7 +117,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.29 1999/01/29 04:10:27 cyp Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.30 1999/02/03 17:49:38 cyp Exp $"; }
 #endif
 
 #include "network.h"
@@ -591,7 +594,7 @@ static int smtp_send_message_header( Network * net,
   if (errcode == 0) //send the date 
     {
     sprintf( buffer, "\r\nDate: %s" 
-        "\r\nX-Mailer: distributed.net RC5DES "CLIENT_VERSIONSTRING" client",
+        "\r\nX-Mailer: distributed.net RC5DES v"CLIENT_VERSIONSTRING" client",
         rfc822Date( buffer + 256 ) ); 
     if ( put_smtp_line( buffer, strlen( buffer ), net ) ) 
       errcode = -1;
