@@ -12,7 +12,7 @@
 # (replace ?? with a two letter country code, eg 'de', 'us', 'uk' etc)
 # A list of all mirrors is at http://www.kernel.org/mirrors/
 #
-# $Id: makefile.bcc,v 1.33.2.5 2003/09/01 07:06:26 jlawson Exp $
+# $Id: makefile.bcc,v 1.33.2.5.2.1 2003/10/02 09:27:31 andreasb Exp $
 
 BASENAME = dnetc
 OUTPUTPATH = output
@@ -188,7 +188,10 @@ RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-dg2.obj    \
         $(OUTPUTPATH)/r72-dg3.obj    \
         $(OUTPUTPATH)/r72-dg3a.obj   \
-        $(OUTPUTPATH)/r72-ss2.obj
+        $(OUTPUTPATH)/r72-ss2.obj    \
+        $(OUTPUTPATH)/r72-go2.obj    \
+        $(OUTPUTPATH)/r72-sgp3.obj   \
+        $(OUTPUTPATH)/r72-ma4.obj
 
 BCCOPTS = $(BCCOPTS) -DHAVE_RC5_72_CORES
 !endif
