@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.7.2.5 2000/10/16 17:18:28 oliver Exp $
+ Document revision $Id: readme.amiga,v 1.7.2.6 2000/11/04 20:09:20 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -41,6 +41,7 @@
      - A 603e or higher PPC processor. Tested on 603e and 604e.
      - Ralph Schmidt's ppc.library version 46.30 or higher.
        Available from ftp://ftp.meanmachine.ch/pub/amiga/ppclib/
+     - Stack must be set to at least 200000 bytes.
      - Also works under WarpUp with PPCLibEmu 0.8a or higher (although
        you should really use the native WarpOS version instead, of course).
 
@@ -80,10 +81,12 @@
     the client to operate, so you should not need any special stack
     settings in this.  Similarly with the WarpOS version, WarpOS programs
     always get assigned a largish stack.  However, if you're using the
-    PowerUp version and start experiencing crashes, it could be that the
-    stack is set too low.  Increase it by calling the stack command
+    PowerUp version, you will need to set the stack to at least 200000
+    bytes, otherwise the client will exit telling you to increase the
+    stack size (instead of running with the potential for crashes to
+    happen).  Stack size can be increased by calling the stack command
     before running the client or change it via the respective Myzar
-    config option - 100000 should be more than enough for the client.
+    config option.
 
   3.2  Setting the time zone -----------------------------------------
 
