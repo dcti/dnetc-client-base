@@ -6,6 +6,9 @@
  * Marco.Walther@mch.sni.de
  *
  * $Log: mips-crunch.cpp,v $
+ * Revision 1.12  1999/02/06 23:00:31  foxyloxy
+ * *** empty log message ***
+ *
  * Revision 1.11  1999/02/06 22:49:57  foxyloxy
  * *** empty log message ***
  *
@@ -39,7 +42,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mips_crunch_cpp(void) {
-return "@(#)$Id: mips-crunch.cpp,v 1.11 1999/02/06 22:49:57 foxyloxy Exp $"; }
+return "@(#)$Id: mips-crunch.cpp,v 1.12 1999/02/06 23:00:31 foxyloxy Exp $"; }
 #endif
 
 
@@ -981,8 +984,8 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
 
 #define LB_RC5_ROUND0_PARTIAL2_A					\
 {									\
-    int A = _init;		/* 1 */ /* S[0] rotated left 3 by macro */ \
-    int A2 = A;			/* -1 */				\
+    A = _init;		/* 1 */ /* S[0] rotated left 3 by macro */ \
+    A2 = A;			/* -1 */				\
          \
     pipelined_read2 = pipelined_read = S0_Source[1];			\
 /*    S0_Dest[0] = A; */		/* no need to store not used */	\
