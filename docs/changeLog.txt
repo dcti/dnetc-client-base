@@ -1,5 +1,6 @@
 Dual mode (RC5DES) clients
 --------------------------
+v2.7100.416 98.07.12 patched a possible divide by zero race condition that could occur when two or more clients attempt to flush a shared buffer where file locking cannot be enforced (eg. NFS)
 v2.7100.416 98.07.12 win32gui will again only respect "runhidden" if it is auto-launched on startup (via -guistart)
 v2.7100.416 98.07.12 Fixed problems with .ini name not following .exe's name (again).
 v2.7100.416 98.07.12 Even FASTER DES MMX cores added to x86 clients!

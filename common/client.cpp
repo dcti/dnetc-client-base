@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.99  1998/07/14 04:37:33  cramer
+// -runbuffers now works (as far as I've been able to tell)  It will process
+// blocks from the buffer files until all blocks have been exhausted and then
+// exit.  [look in common/client.cpp for the three "cramer magic" lines]
+//
+// 		Ricky Beam <cramer@foobar.interpath.net>
+//
 // Revision 1.98  1998/07/13 22:52:29  cramer
 // Fixed Alde's divide by zero error in printing the % for block flush/fetch.
 // (Leave it to NFS to create a race condition!)
@@ -47,7 +54,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.98 1998/07/13 22:52:29 cramer Exp $.
+// Tweaked $Id: client.cpp,v 1.99 1998/07/14 04:37:33 cramer Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -223,7 +230,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.98 1998/07/13 22:52:29 cramer Exp $"; }
+return "@(#)$Id: client.cpp,v 1.99 1998/07/14 04:37:33 cramer Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -2129,8 +2136,18 @@ PreferredIsDone1:
   //now begin looping until we have a reason to quit
   //------------------------------------
 
+  // -- cramer - until we have a better way of telling how many blocks
+  //             are loaded and if we can get more, this is gonna be a
+  //             a little complicated.  getbuff_errs and nonewblocks
+  //             control the exit process.  getbuff_errs indicates the
+  //             number of attempts to load new blocks that failed.
+  //             nonewblocks indcates that we aren't get anymore blocks.
+  //             Together, they can signal when the buffers have been
+  //             truely exhausted.  The magic below is there to let
+  //             the client finish processing those blocks before exiting.
+
   // Start of MAIN LOOP
-  while ((getbuff_errs == 0) && (TimeToQuit == 0))
+  while (TimeToQuit == 0)
   {
     //------------------------------------
     //Do keyboard stuff for clients that allow user interaction during the run
@@ -2513,15 +2530,18 @@ PreferredIsDone1:
                 }
               }
             }
+            else if (nonewblocks) getbuff_errs++; // cramer magic #1 (mt)
           }
 
-
-          if (count < 0 && !nonewblocks)
+          if (count < 0)
           {
-            getbuff_errs++;
-            TimeToQuit=1; // Force blocks to be saved
-            exitcode = -2;
-            continue;  //break out of the next cpu_i loop
+            getbuff_errs++; // cramer magic #2 (non-mt)
+            if (!nonewblocks)
+            {
+              TimeToQuit=1; // Force blocks to be saved
+              exitcode = -2;
+              continue;  //break out of the next cpu_i loop
+            }
           }
 
           //---------------------
@@ -2656,7 +2676,12 @@ PreferredIsDone1:
     // Has -runbuffers exhausted all buffers?
     //----------------------------------------
 
-    if (nonewblocks > 0)
+    // cramer magic (voodoo)
+#ifdef MULTITHREAD
+    if (nonewblocks > 0 && (getbuff_errs >= 2*numcputemp))
+#else
+    if (nonewblocks > 0 && getbuff_errs)
+#endif
     {
       TimeToQuit = 1;
       exitcode = 4;
