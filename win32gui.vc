@@ -3,7 +3,7 @@
 # see http://www.distributed.net/
 
 VWCL_PATH = c:\bc5\vwcl
-EXENAMEG = output/rc5desg.exe
+EXENAMEG = rc5desg.exe
 OUTPUTPATH = output
 COMMONPATH = common
 DESPATH = des
@@ -16,7 +16,7 @@ OPTS_MSVCG = -nologo -W3 -O1 -I$(RC5PATH) -I$(DESPATH) \
   -I$(COMMONPATH) -I$(VWCL_PATH) -I$(W32CLIPATH) -I$(WIN32GUI) \
   -D_CPU_32BIT_ -D__WIN32__ -DNOMAIN -DNOCONFIG \
   -DNEEDVIRTUALMETHODS -GR- -GX- -GA -GF \
-  -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN
+  -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN -DWIN32GUI 
 
 !ifdef WIN32S
 OPTS_MSVCG = -ML $(OPTS_MSVCG)
@@ -67,7 +67,9 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/netinit.obj    \
 	$(OUTPUTPATH)/scram.obj      \
 	$(OUTPUTPATH)/mail.obj       \
-	$(OUTPUTPATH)/cliconfig.obj  \
+	$(OUTPUTPATH)/confrwv.obj  \
+	$(OUTPUTPATH)/confmenu.obj  \
+	$(OUTPUTPATH)/confopt.obj  \
 	$(OUTPUTPATH)/pathwork.obj   \
 	$(OUTPUTPATH)/cliident.obj    \
 	$(OUTPUTPATH)/clitime.obj    \
@@ -95,6 +97,8 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/rg-6x86.obj  \
 	$(OUTPUTPATH)/rg-k6.obj    \
 	$(OUTPUTPATH)/rc5mmx.obj   \
+	$(OUTPUTPATH)/w32pre.obj   \
+	$(OUTPUTPATH)/guicons.obj \
 !ifndef WIN32S
 	$(OUTPUTPATH)/p2bdespro.obj \
 	$(OUTPUTPATH)/bbdeslow.obj \
