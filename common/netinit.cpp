@@ -1,25 +1,21 @@
-// Hey, Emacs, this a -*-C++-*- file !
-
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 /* 
-   NetworkInitialize() is no longer a one-shot-and-be-done-with-it affair.
-   I had to do this to work around the lack of definition of what
-   client.offlinemode is, and the lack of a method to detect if the network 
-   availability state had changed (or existed to begin with). The file
-   expects to be #included from network.cpp 
- 
-   Expected usage: Every construction of a new Network object *must* be 
-   preceded with a call to NetworkInitialize() which returns a value < 0 if
-   network services are not available. Call NetworkDeinitialize when finished 
-   with the object. Do not call NetworkDeinitialize() if initialization 
-   failed. Do not assume that if one NetworkInitialize() succeeds, the next
-   one will too. Calls to the functions can (obviously) be nested. 
+   The Network constructor and destructor methods are encapsulated in
+   this module, thereby permitting us (a) to set up and tear down non-static 
+   network connections on the fly, (b) to increase portability (c) to 
+   simplify the code and eliminate multiple possible points of failure.
    - cyp 08. Aug 1998
 */
 //
 // $Log: netinit.cpp,v $
+// Revision 1.4  1998/08/25 00:01:16  cyp
+// Merged (a) the Network destructor and DeinitializeNetwork() into NetClose()
+// (b) the Network constructor and InitializeNetwork() into NetOpen().
+// These two new functions (in netinit.cpp) are essentially what the static
+// FetchFlushNetwork[Open|Close]() functions in buffupd.cpp used to be.
+//
 // Revision 1.3  1998/08/24 07:09:19  cyruspatel
 // Added FIXME comments for "lurk"ers.
 //
@@ -28,18 +24,36 @@
 // transparent.
 //
 // Revision 1.1  1998/08/10 21:53:55  cyruspatel
-// Created - see documentatin above.
+// Created - see documentation above.
 //
-
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.3 1998/08/24 07:09:19 cyruspatel Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.4 1998/08/25 00:01:16 cyp Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
 
-static int netInitAndDeinit( int doWhat )     //combines both init and deinit
-{                                             //so statics can be localized
+#include "cputypes.h"
+#include "network.h"
+#include "logstuff.h" //for messages
+#include "clitime.h"  //for the time stamp string
+#include "sleepdef.h" //for sleep();
+#include "triggers.h" //for break checks
+#define Time() (CliGetTimeString(NULL,1))
+#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32))
+#include "lurk.h"
+#endif
+
+//--------------------------------------------------------------------------
+
+/*
+  __netInitAndDeinit( ... ) combines both init and deinit so statics can
+  be localized. The function is called with (> 0) to init, (< 0) to deinint 
+  and (== 0) to return the current 'isOK' state.
+*/
+
+static int __netInitAndDeinit( int doWhat )  
+{                                            
   static unsigned int initializationlevel=0;
   int success = 1;
 
@@ -48,37 +62,8 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
     Log("[%s] Squawk! Unbalanced Network Init/Deinit!\n",Time());
     abort();
     }
-
-  //---------------------------
-
-  if (initializationlevel == 0)  // cross-platform stuff done at top level
-    {
-    if ( doWhat == 0 )           //isAvaliable() check
-      return 0;
-    else if ( doWhat > 1)        //request for initialization
-      {
-      size_t dummy;
-      if (((dummy = offsetof(SOCKS4, USERID[0])) != 8) ||
-          ((dummy = offsetof(SOCKS5METHODREQ, Methods[0])) != 2) ||
-          ((dummy = offsetof(SOCKS5METHODREPLY, end)) != 2) ||
-          ((dummy = offsetof(SOCKS5USERPWREPLY, end)) != 2) ||
-          ((dummy = offsetof(SOCKS5, end)) != 10))
-        {
-        LogScreenf("[%s] Network::Socks Incorrectly packed structures.\n",Time());
-        success = 0;  
-        #if 0
-        // check that the packet structures have been correctly packed
-        // do it here to make sure the asserts go off
-        // if all is correct, the asserts should get totally optimised out :)
-        assert(offsetof(SOCKS4, USERID[0]) == 8);
-        assert(offsetof(SOCKS5METHODREQ, Methods[0]) == 2);
-        assert(offsetof(SOCKS5METHODREPLY, end) == 2);
-        assert(offsetof(SOCKS5USERPWREPLY, end) == 2);
-        assert(offsetof(SOCKS5, end) == 10);
-        #endif
-        }
-      }
-    }
+  else if (( doWhat == 0 ) && ( initializationlevel == 0 ))
+    return 0;  //isOK() always returns false if we are not initialized
 
   //----------------------------
 
@@ -124,20 +109,32 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
   #if (CLIENT_OS == OS_WIN32) 
   if (success)
     {
-    if ( doWhat == 0 )     //request to check online mode
+    if ( doWhat == 0 )                     //request to check online mode
       {
-      //----------------------- add still-online? check here --------------
-      return 1;            //always online once initialized?  //FIXME!!
+      //- still-online? 
+      #if defined(LURK)
+      if (dialup.CheckForStatusChange() == -1)
+        return 0;                          //oops, return false
+      #endif
+      return 1;                           //yeah, we are still online
       }
-    else if (doWhat > 0)   //request to initialize
+    else if (doWhat > 0)                  //request to initialize
       {
-      if ((++initializationlevel)!=1) //don't initialize more than once
+      if ((++initializationlevel)!=1)     //don't initialize more than once
         success = 1;
       else
         {
         WSADATA wsaData;
         WSAStartup(0x0101, &wsaData);
-        success = 1;         // --- dialup initialize goes here -- FIXME!!
+        success = 1; 
+
+        #if defined(LURK)
+        if ( dialup.DialIfNeeded(1) < 0 )
+          {
+          success = 0;
+          WSACleanup();     // cleanup because we won't be called to deinit
+          } 
+        #endif
         }
       }
     else //if (doWhat < 0) //request to de-initialize
@@ -146,8 +143,12 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
         success = 1;
       else
         {
+        #if defined(LURK)
+        dialup.HangupIfNeeded();
+        #endif
+
         WSACleanup();
-        success = 1;                  // --- hangup goes here -- FIXME!!
+        success = 1;
         }
       }
     }
@@ -159,19 +160,30 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
   #if (CLIENT_OS == OS_OS2)
   if (success)
     {
-    if ( doWhat == 0 )     //request to check online mode
+    if ( doWhat == 0 )                   //request to check online mode
       {
-      //----------------------- add still-online? check here --------------
-      return 1; //always online once initialized?                //FIXME!!
+      //- still-online? 
+      #if defined(LURK)
+      if (dialup.CheckForStatusChange() == -1)
+        return 0;                        //oops, return false
+      #endif
+      return 1;                          //yeah, we are still online
       }
-    else if (doWhat > 0)   //request to initialize
+    else if (doWhat > 0)                 //request to initialize
       {
       if ((++initializationlevel)!=1) //don't initialize more than once
         success = 1;
       else
         {
         sock_init();
-        success = 1;         // --- dialup initialize goes here -- FIXME!!
+        success = 1;
+
+        #if defined(LURK)
+        if ( dialup.DialIfNeeded(1) < 0 )
+	  {
+          success = 0;           //FIXME: sock_deinit()? missing (?)
+	  } 
+        #endif
         }
       }
     else //if (doWhat < 0) //request to de-initialize
@@ -180,8 +192,11 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
         success = 1;
       else
         {
-        //nothing else to do
-        success = 1;                  // --- hangup goes here -- FIXME!!
+        #if defined(LURK)
+        dialup.HangupIfNeeded();
+        #endif
+                                //FIXME: sock_deinit()? missing (?) 
+        success = 1;
         }
       }
     }
@@ -264,13 +279,111 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
   return ((success)?(0):(-1));
 }  
 
+
+//======================================================================
+
+
+int NetCheckIsOK(void)
+{
+  //get the (platform specific) network state 
+  return __netInitAndDeinit( 0 ); 
+}  
+
 //----------------------------------------------------------------------
 
-int NetworkInitialize(void)   // perform platform specific socket init
-{ return netInitAndDeinit( +1 ); }  
-int NetworkDeinitialize(void) // perform platform specific socket deinit
-{ return netInitAndDeinit( -1 ); }  
-static int NetworkCheckIsOnline(void)
-{ return netInitAndDeinit( 0 ); }  
+int NetClose( Network *net )
+{
+  if ( net )
+    {
+    delete net;
+    //do (platform specific) network deinit
+    return __netInitAndDeinit( -1 ); 
+    }
+  return 0;
+}    
+
+//----------------------------------------------------------------------
+
+Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback = 1, 
+          int autofindks = 0, s32 proxytype = 0, const char *proxyhost = NULL, 
+          s32 proxyport = 0, const char *proxyuid = NULL)
+{
+  const char *fbkeyserver;
+  Network *net;
+  int success;
+  
+  // do platform specific socket init
+  if ( __netInitAndDeinit( +1 ) < 0)
+    return NULL; 
+
+  if (!keyserver || !*keyserver) 
+    keyserver = NULL;
+  fbkeyserver = DEFAULT_RRDNS;
+  if ( nofallback )
+    fbkeyserver = keyserver;
+          
+  net = new Network( keyserver, fbkeyserver, (s16)keyserverport, autofindks);
+  success = ( net != NULL );
+    
+  if (success)
+    {
+    switch (proxytype)
+      {
+      case 1:  // uue
+        net->SetModeUUE(true);
+        break;
+      case 2:  // http
+        net->SetModeHTTP(proxyhost, (s16) proxyport, proxyuid);
+        break;
+      case 3:  // uue + http
+        net->SetModeHTTP(proxyhost, (s16) proxyport, proxyuid);
+        net->SetModeUUE(true);
+        break;
+      case 4:  // SOCKS4
+        net->SetModeSOCKS4(proxyhost, (s16) proxyport, proxyuid);
+        break;
+      case 5:  // SOCKS5
+        net->SetModeSOCKS5(proxyhost, (s16) proxyport, proxyuid);
+        break;
+      }
+    }
+
+  if (success)    
+    {    
+    int retry = 0;
+    success = 0;
+    do{
+      if (!net->Open()) //opened ok
+        {
+	success = 1;
+        break;
+	}
+      if (!CheckExitRequestTrigger())
+        {
+        LogScreen( "[%s] Network::Open Error %d - "
+                   "sleeping for 3 seconds\n", Time(), retry );
+        sleep( 3 );
+        }
+      if (CheckExitRequestTrigger())
+        break;
+      if ( !NetCheckIsOK() ) //connection broken
+        {
+        Log("[%s] Network::Open Error - TCP/IP Connection Lost.\n", Time());
+        break;
+	}
+      } while (++retry <= 3);
+    }
+            
+  if (!success)
+    {
+    if (net)
+      delete net;
+    net = NULL;
+    //do platform specific sock deinit
+    __netInitAndDeinit( -1 ); 
+    }
+
+  return (net);
+}  
 
 //----------------------------------------------------------------------
