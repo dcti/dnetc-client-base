@@ -18,7 +18,7 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.37.4.2 2003/08/25 08:32:07 mweiser Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.37.4.3 2003/10/24 15:26:03 jr_brady Exp $"; }
 
 #include "baseincs.h"
 #include "iniread.h"
@@ -559,7 +559,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
             else /* new size is less than old */
             {
               /* we should use ftruncate here, but thats not 
-                 supported by MacOS, AmigaOS, VMS and perhaps others.
+                 supported by MacOS, AmigaOS and perhaps others.
               */
               if (fwrite( (void *)&nnn[0], sizeof(char), 
                            sizeof(nnn), file )!=sizeof(nnn))
