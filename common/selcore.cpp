@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.103 2001/03/26 17:51:41 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.104 2001/03/27 17:34:00 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -203,6 +203,19 @@ static const char **__corenames_for_contest( unsigned int cont_i )
           x86_smc_initialized = +1;
         #elif defined(USE_DPMI) /* dos client */
           x86_smc_initialized = +1;
+        #elif (CLIENT_OS == OS_WIN32)
+        {
+          HANDLE h = OpenProcess(PROCESS_VM_OPERATION,
+                                 FALSE,GetCurrentProcessId());
+          if (h)
+          {
+            DWORD old = 0;
+            if (VirtualProtectEx(h,&rc5_unit_func_486_smc,4096*3,
+                                 PAGE_EXECUTE_READWRITE, &old))
+              x86_smc_initialized = +1;
+            CloseHandle(h);
+          }  
+        }
         #endif
         if (x86_smc_initialized < 0)
           x86_smc_initialized = 0;
