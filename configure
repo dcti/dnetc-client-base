@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.172 2000/07/10 02:22:12 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.173 2000/07/10 15:33:02 jbaker Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -837,11 +837,11 @@ case "$1" in
   ### QNX MIPS targets
 
     *mipsle-nto2)
-        TARGET_AS="qcc -c"
-        TARGET_CC="qcc"
+        TARGET_AS="qcc -Vgcc_ntomipsle -c"
+        TARGET_CC="qcc -Vgcc_ntomipsle"
         TARGET_STRIP="/usr/gcc/bin/ntomipsle-strip"
-        TARGET_ASFLAGS="-Vgcc_ntomipsle -DNO_BALIGN"
-        TARGET_CCFLAGS="-Vgcc_ntomipsle -lang-c++ -fomit-frame-pointer -fno-inline-functions \
+        TARGET_ASFLAGS="-DNO_BALIGN"
+        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti \
                         -DHAVEOGR_CORES -DASM_MIPS\
                         -DMULTITHREAD"
@@ -855,11 +855,11 @@ case "$1" in
         ;;
 
     *mipsbe-nto2)
-        TARGET_AS="qcc -c"
-        TARGET_CC="qcc"
+        TARGET_AS="qcc -Vgcc_ntomipsbe -c"
+        TARGET_CC="qcc -Vgcc_ntomipsbe"
         TARGET_STRIP="/usr/gcc/bin/ntomipsbe-strip"
-        TARGET_ASFLAGS="-Vgcc_ntomipsbe -DNO_BALIGN"
-        TARGET_CCFLAGS="-Vgcc_ntomipsbe -lang-c++ -fomit-frame-pointer -fno-inline-functions \
+        TARGET_ASFLAGS="-DNO_BALIGN"
+        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti \
                         -DHAVEOGR_CORES -DASM_MIPS\
                         -DMULTITHREAD"
@@ -1290,11 +1290,11 @@ case "$1" in
 
   ### QNX PPC targets
     *ppc-nto2)
-	TARGET_AS="qcc -c"
-	TARGET_CC="qcc"
+	TARGET_AS="qcc -Vgcc_ntoppcbe -c"
+	TARGET_CC="qcc -Vgcc_ntoppcbe"
 	TARGET_STRIP="/usr/gcc/bin/ntoppc-strip"
-        TARGET_ASFLAGS="-Vgcc_ntoppcbe -DNO_BALIGN"
-	TARGET_CCFLAGS="-Vgcc_ntoppcbe -lang-c++ -fomit-frame-pointer -fno-inline-functions \
+        TARGET_ASFLAGS="-DNO_BALIGN"
+	TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
 	                -fno-exceptions -fno-rtti \
 	                -DHAVEOGR_CORES -DASM_PPC\
 	                -DMULTITHREAD"
@@ -1312,11 +1312,11 @@ case "$1" in
   ### SH4 QNX targets
 
     *sh4le-nto2)
-        TARGET_AS="qcc -c"
-        TARGET_CC="qcc"
+        TARGET_AS="qcc -Vgcc_ntoshle -c"
+        TARGET_CC="qcc -Cgcc_ntoshle"
         TARGET_STRIP="/usr/gcc/bin/ntoshle-strip"
-        TARGET_ASFLAGS="-Vgcc_ntoshle -DNO_BALIGN" 
-        TARGET_CCFLAGS="-Vgcc_ntoshle -lang-c++ -fomit-frame-pointer -fno-inline-functions \
+        TARGET_ASFLAGS="-DNO_BALIGN" 
+        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti \
                         -DHAVEOGR_CORES -DASM_SH4 \
                         -DMULTITHREAD"
@@ -1330,11 +1330,11 @@ case "$1" in
         ;;
 
     *sh4be-nto2)
-        TARGET_AS="qcc -c"
-        TARGET_CC="qcc"
+        TARGET_AS="qcc -Vgcc_ntoshbe -c"
+        TARGET_CC="qcc -Vgcc_ntoshbe"
         TARGET_STRIP="/usr/gcc/bin/ntoshbe-strip"
-        TARGET_ASFLAGS="-Vgcc_ntoshbe -DNO_BALIGN" 
-        TARGET_CCFLAGS="-Vgcc_ntoshbe -lang-c++ -fomit-frame-pointer -fno-inline-functions \
+        TARGET_ASFLAGS="-DNO_BALIGN" 
+        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti \
                         -DHAVEOGR_CORES -DASM_SH4 \
                         -DMULTITHREAD"
@@ -1680,13 +1680,13 @@ case "$1" in
         ;;
 
     *x86-nto2)
-    	TARGET_AS="qcc -c"
-	TARGET_CC="qcc"
+    	TARGET_AS="qcc -Vgcc_ntox86 -c"
+	TARGET_CC="qcc -Vgcc_ntox86"
 	TARGET_STRIP="/usr/gcc/bin/ntox86-strip"
 	TARGET_NASM="//55/home/jbaker/nasm.qnx4"
 	#TARGET_NASM="nasm"
-        TARGET_ASFLAGS="-Vgcc_ntox86 -DNO_BALIGN"
-	TARGET_CCFLAGS="-Vgcc_ntox86 -lang-c++ -fomit-frame-pointer -fno-inline-functions \
+        TARGET_ASFLAGS="-DNO_BALIGN"
+	TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
 			-fno-exceptions -fno-rtti \
 			-DMMX_RC5 -DHAVE_OGR_CORES \
 			-DMULTITHREAD -DASM_X86"
@@ -1886,11 +1886,11 @@ case "$1" in
 	;;
 
     *arm-nto2)
-        TARGET_AS="qcc -c"
-        TARGET_CC="qcc"
+        TARGET_AS="qcc -Vgcc_ntoarmle -c"
+        TARGET_CC="qcc -Vgcc_ntoarmle"
         TARGET_STRIP="/usr/gcc/bin/ntoarmle-strip"
-        TARGET_ASFLAGS="-Vgcc_ntoarmle -DNO_BALIGN"
-        TARGET_CCFLAGS=" -Vgcc_ntoarmle -lang-c++ -fomit-frame-pointer -fno-inline-functions \
+        TARGET_ASFLAGS="-DNO_BALIGN"
+        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti -DASM_ARM -DMULTITHREAD \
 			-DHAVE_OGR_CORES"
         TARGET_LIBS="-lsocket"
