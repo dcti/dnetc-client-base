@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.41 2001/01/04 15:17:28 gregh Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.42 2001/01/09 00:52:54 mfeiri Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -552,7 +552,7 @@
     #define false ((bool)0)
     #define true  (!false)
   #endif
-#else /* client - maximize portability. */
+#elif (CLIENT_OS != OS_MACOS) /* MacOS APIs (UniversalInterfaces) need bool */
   /* puke before others have to deal with errant code */
   /* IT IS NOT SUFFICIENT TO 'typedef int bool'!! */
   #undef true
