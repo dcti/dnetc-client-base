@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.75 2002/09/25 01:31:53 trashover Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.76 2002/09/25 01:36:48 trashover Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -605,9 +605,8 @@ long SelfTest( unsigned int contest )
                   resulttext = "passed";
                   successes++;
                 }
-                LogScreen( "\r%s: Test %02d %s: %02X:%08X:%08X-%02X:%08X:%08X\n",
-                   contname, testnum + 1, resulttext, contestwork.bigcrypto.key.hi, 
-                   contestwork.bigcrypto.key.mid, contestwork.bigcrypto.key.lo,
+                LogScreen( "\r%s: Test %02d %s: %02X:%08X:%08X\n",
+                   contname, testnum + 1, resulttext,
                    expectedsolution_hi, expectedsolution_mid, expectedsolution_lo );
                 break;
               }
