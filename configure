@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.79 1999/12/22 04:41:54 snake Exp $
+# @(#)$Id: configure,v 1.222.2.80 1999/12/22 17:18:31 chrisb Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -215,7 +215,7 @@ OPTS_GCC="-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 	  -funroll-loops -fno-inline-functions -fno-handle-exceptions \
 	  $OPTS_WARN"
 OPTS_GCC272="-fomit-frame-pointer -fno-inline-functions \
-	     -fno-handle-exceptions -fno-rtti \
+	     -fno-exceptions -fno-rtti \
 	     -Wall -Wtraditional -Wpointer-arith -Wcast-align \
 	     -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes \
 	     -Wconversion  -Winline -Waggregate-return -Wcast-qual \
@@ -836,26 +836,12 @@ case "$1" in
     #####
 
     *x86-solaris)    # gcc, nomt, dynamic
-	DELETECHARS="'/.\$\-'"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris $OPTS_DES_MMX -DMMX_RC5"
-	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_LIBS="-lnsl -lsocket -ldl"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *x86-solaris-mt)    # gcc, mt, dynamic
-	DELETECHARS="'/.\$\-'"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris $OPTS_DES_MMX -DMMX_RC5 \
-			-DMULTITHREAD"
-	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
-			platforms/x86ident.S \
-			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_CCFLAGS="$OPTS_GCC272_X86 -Dsolaris -DMMX_CSC -DMULTITHREAD -D_REENTRANT -DMMX_RC5 -DHAVE_CSC_CORES"
+	TARGET_ADDASMS="platforms/x86ident.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $CSC_ASM_SRCS"
+	TARGET_LIBS="-lnsl -lsocket -ldl -lthread"
+        TARGET_DOCFILES="docs/readme._ix docs/readme.x86-solaris libstdc++.so.2.8.1"   #platform specific docfile
+        TARGET_TARBALL="x86-solaris"
 	;;
 
 ###### Alpha
