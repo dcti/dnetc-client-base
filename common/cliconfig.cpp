@@ -12,7 +12,7 @@
 #define MAXMENUENTRIES  18
 
 #if !defined(NOCONFIG)
-static char *menutable[5]=
+static const char *menutable[5]=
   {
   "Required Options",
   "Logging Options",
@@ -85,16 +85,16 @@ static char lurkmodetable[3][60]=
 
 struct optionstruct
   {
-  char *name;//name of the option in the .ini file
-  char *description;//description of the option
-  char *defaultsetting;//default setting
-  char *comments;//additional comments
+  const char *name;//name of the option in the .ini file
+  const char *description;//description of the option
+  const char *defaultsetting;//default setting
+  const char *comments;//additional comments
   s32 optionscreen;//screen to appear on
   s32 type;//type: 0=other, 1=string, 2=integer, 3=boolean (yes/no)
   s32 menuposition;//number on that menu to appear as
   void *thevariable;//pointer to the variable
-  char *choicelist;//pointer to the char* array of choices
-                   //(used for numeric responses)
+  const char *choicelist;//pointer to the char* array of choices
+                         //(used for numeric responses)
   s32 choicemin;//minimum choice number
   s32 choicemax;//maximum choice number
   };
@@ -1072,6 +1072,8 @@ void Client::clearscreen( void )
 #elif (CLIENT_OS == OS_OS2)
   BYTE space[] = " ";
   VioScrollUp(0, 0, -1, -1, -1, space, 0);
+#elif (CLIENT_OS == OS_RISCOS)
+  riscos_clear_screen();
 #endif
 
 }
@@ -1332,7 +1334,7 @@ void Client::ValidateConfig( void )
     } else {
       numcputemp=numcpu;
     }
-  #elif (CLIENT_OS == OS2)
+  #elif (CLIENT_OS == OS_OS2)
     if (numcpu == -1)
     {
       int rc = DosQuerySysInfo(QSV_NUMPROCESSORS, QSV_NUMPROCESSORS,
