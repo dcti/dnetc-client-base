@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.62  1998/12/31 10:24:36  dicamillo
+// Change Mac OS yield call.
+//
 // Revision 1.61  1998/12/31 08:08:35  dicamillo
 // MacOS GUI code needed to call CalcPercent;support MacOS UseMP function.
 //
@@ -238,7 +241,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.61 1998/12/31 08:08:35 dicamillo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.62 1998/12/31 10:24:36 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -444,7 +447,7 @@ static void yield_pump( void *tv_p )
     // to know the contest
     // MP code yields here because it can do only pure computing
     // (no toolbox or mixed-mode calls)
-    if (MP_active) tick_sleep(60);  // is this optimal?
+    tick_sleep(0); /* yield */
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OPENBSD)
