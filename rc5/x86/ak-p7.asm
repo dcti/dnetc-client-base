@@ -1,7 +1,12 @@
+; $Id: ak-p7.asm,v 1.1.2.2 2002/03/23 20:22:31 andreasb Exp $
 ; Pentium4 optimized version
 ;
 
+%ifdef __OMF__ ; Borland and Watcom compilers/linkers
+[SECTION _TEXT USE32 align=16]
+%else
 [SECTION .text]
+%endif
 
 [GLOBAL _rc5_unit_func_p7]
 [GLOBAL rc5_unit_func_p7]
