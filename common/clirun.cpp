@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.35 2000/01/28 07:46:03 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.36 2000/02/07 02:21:48 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -105,7 +105,7 @@ struct thread_param_block
 static void __thread_sleep__(int secs)
 {
   #if (CLIENT_OS == OS_MACOS)
-    // need this because sleep (->eventhandling) is not MP safe
+    // need this because ordinary sleep is not MP safe
     macosYield(secs);
   #else
     NonPolledSleep(secs);
@@ -148,7 +148,9 @@ static void __thread_yield__(void)
     NonPolledUSleep( 0 ); /* yield */
     #endif
   #elif (CLIENT_OS == OS_MACOS)
-    macosYield( 0 );
+    macosYield(0);
+  #elif (CLIENT_OS == OS_MACOSX)
+    NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OPENBSD)
@@ -337,7 +339,12 @@ void Go_mt( void * parm )
       {
         if (thrparams->is_non_preemptive_os) /* non-preemptive environment */
         {
+          #if (CLIENT_OS==OS_MACOS)
+          if (!thrparams->realthread)
+          macosTickSleep(0); /* only non-realthreads are non-preemptive */
+          #elif
           __thread_yield__();
+          #endif
         }
         optimal_timeslice = thisprob->tslice; /* get the number done back */
         #if defined(DYN_TIMESLICE_SHOWME)
@@ -458,10 +465,10 @@ static int __StopThread( struct thread_param_block *thrparams )
         #elif (CLIENT_OS == OS_BEOS)
         static status_t be_exit_value;
         wait_for_thread(thrparams->threadID, &be_exit_value);
+        #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
+        while (thrparams->threadID) MPYield();//MPTerminateTask((thrparams->threadID),nil);
         #elif (CLIENT_OS == OS_NETWARE)
         while (thrparams->threadID) delay(100);
-        #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
-        while (thrparams->threadID) MPYield();
         #elif (CLIENT_OS == OS_FREEBSD)
         while (thrparams->threadID) NonPolledUSleep(100000);
         #endif
@@ -705,6 +712,10 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
              (resume_thread(thrparams->threadID) == B_NO_ERROR) )
 	    success = 1;
 	    #elif (CLIENT_OS == OS_MACOS)
+	      if (thrparams->threadnum == 0) /* the first to spin up */
+	      use_poll_process = 1;
+	      else
+	      {
         OSErr thread_error;
         thread_error = MPCreateTask((long (*)(void *))Go_mt,  // TaskProc
                                    (void *)thrparams,         // Parameters
@@ -715,6 +726,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
                                    &(thrparams->threadID));   // ID new_threadid
         if (thread_error == noErr)
           success = 1;
+        }
       #elif ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
          if (thr_create(NULL, 0, (void *(*)(void *))Go_mt, 
                          (void *)thrparams, THR_BOUND, &thrparams->threadID ) == 0)
@@ -933,7 +945,7 @@ int ClientRun( Client *client )
         LogScreen("Automatic processor detection found %d processor%s.\n",
                    numcrunchers, ((numcrunchers==1)?(""):("s")) );
       }
-    }  
+    }    
     if (numcrunchers > GetMaxCrunchersPermitted())
     {
       numcrunchers = GetMaxCrunchersPermitted();
@@ -942,8 +954,6 @@ int ClientRun( Client *client )
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_BEOS)
     force_no_realthreads = 0; // must run with real threads because the
                               // main thread runs at normal priority
-    #elif (CLIENT_OS == OS_MACOS)
-    force_no_realthreads = macosAllowThreads(force_no_realthreads);
     #elif (CLIENT_OS == OS_NETWARE)
     //if (numcrunchers == 1) // NetWare client prefers non-threading
     //  force_no_realthreads = 1; // if only one thread/processor is to used
