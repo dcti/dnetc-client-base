@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.196  1998/11/18 12:24:41  silby
+// Added check to see if cputype is out of range.  Lack of check was causing crashes if coretype was > allowed.
+//
 // Revision 1.195  1998/11/15 10:55:42  remi
 // Bring back the cputype config screen.
 //
@@ -272,7 +275,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.195 1998/11/15 10:55:42 remi Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.196 1998/11/18 12:24:41 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1655,6 +1658,9 @@ void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
        priority > options[CONF_NICENESS].choicemax )
     priority = options[CONF_NICENESS].choicemin;
   #endif
+
+  if (!GetCoreNameFromCoreType(cputype) || !*GetCoreNameFromCoreType(cputype))
+    cputype=-1;
 
   if ( uuehttpmode < 0 || uuehttpmode > 5 ) 
     uuehttpmode = 0;
