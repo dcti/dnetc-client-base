@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.23 2000/02/01 23:03:34 ivo Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.24 2000/02/12 23:26:11 mfeiri Exp $"
 
 #include "cputypes.h"
 
@@ -186,7 +186,6 @@ extern "C" {
 #elif (CLIENT_OS == OS_MACOS)  
   #include <sys/time.h>
   #include <unistd.h>
-  #include <sched.h>
   #include <Gestalt.h>
   #include "client_defs.h"
   #define fileno(f) ((f)->handle)
