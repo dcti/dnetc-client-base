@@ -53,11 +53,15 @@ Addendum (silby):  I'll fix this soon, working on it now.
          (If it does not, please comment, of course.)
 
 5-31-98 - Oscar Chang
-  New Bug: Between 403 and 406, there is a drop of almost 50k keys/sec on my
+  FIXED!!: Between 403 and 406, there is a drop of almost 50k keys/sec on my
            K6-200 using the same CPU core. I've tried taking out the new
            CLI code and playing with the link order with no avail. Me and Daa
            are guessing that it could be the new timing code.
-
+  NOTE:    It seems that when the stack size is 32k instead of 16k it slows
+           down the client. Probably affects the variable look ups in the
+           rc5 cores, since it doesn't affect the DES core.
+           In addition, it solved the problem of why the k6 core was running
+           slower then the p6 core on a K6. It was all in the stack.
 5-31-98 - Oscar Chang
   FIXED!!: The X key no longer works on Watcom compiles. It will display the
            message that it will quit after the next block is completed but,
