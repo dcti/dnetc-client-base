@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.10 2003/01/19 14:33:56 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.11 2003/01/19 23:08:23 mfeiri Exp $"; }
 
 //#define TRACE
 
@@ -245,7 +245,16 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.10 2003/01/19 14:33:56 andreasb Exp $"; }
     extern "C" s32 CDECL rc5_72_unit_func_020_030_mh_2( RC5_72UnitWork *, u32 *, void *);
     extern "C" s32 CDECL rc5_72_unit_func_060_mh_2( RC5_72UnitWork *, u32 *, void *);
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+  #if (CLIENT_OS == OS_MACOSX)
+    extern "C" s32 CDECL rc5_72_unit_func_KKS2pipes( RC5_72UnitWork *, u32 *, void *);
+    extern "C" s32 CDECL rc5_72_unit_func_KKS604e( RC5_72UnitWork *, u32 *, void *);
+    #if defined(__VEC__) /* OS+compiler support altivec */
+      extern "C" s32 CDECL rc5_72_unit_func_KKS7400( RC5_72UnitWork *, u32 *, void *);
+      extern "C" s32 CDECL rc5_72_unit_func_KKS7450( RC5_72UnitWork *, u32 *, void *);
+    #endif
+  #elif defined(__GCC__) || defined(__GNUC__)
     extern "C" s32 CDECL rc5_72_unit_func_ppc_mh_2( RC5_72UnitWork *, u32 *, void *);
+  #endif
   #endif
 
 #endif
@@ -468,11 +477,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       "ANSI 1-pipe",
-     #if defined(__GCC__) || defined(__GNUC__)
-      "MH 2-pipe",
-     #else
-      #error "ppc optimized rc5-72 core available - needs testing for non-gcc targets"
-     #endif
+      "MH 2-pipe",     /* Amiga gas format */
+      "KKS 2-pipe",    /* Apple gas format */
+      "KKS 604e",      /* Apple gas format */
+      "KKS 7400",      /* Apple gas format, AltiVec only */
+      "KKS 7450",      /* Apple gas format, AltiVec only */
       NULL
     },
   #else
@@ -575,6 +584,13 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
         cindex = 0;                     /* "PPC-scalar" */
       if (!have_vec && cindex == 2)     /* "PPC-vector" */
         cindex = 0;                     /* "PPC-scalar" */
+    }
+    else if (contestid == RC5_72)
+    {
+        if (!have_vec && cindex == 6)     /* "KKS 7400" */
+            cindex = -1;                  /* minibench */
+        if (!have_vec && cindex == 7)     /* "KKS 7450" */
+            cindex = -1;                  /* minibench */
     }
   }
   #elif (CLIENT_CPU == CPU_X86)
@@ -1176,6 +1192,15 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
     {
       switch ( detected_type & 0xffff) // only compare the low PVR bits
       {
+        #if (CLIENT_OS == OS_MACOSX)
+        case 0x0003: cindex = 4; break; // 603            == KKS 2pipes
+        case 0x0004: cindex = 5; break; // 604            == KKS 604e
+        case 0x0006: cindex = 4; break; // 603e           == KKS 2pipes
+        case 0x0007: cindex = 4; break; // 603r/603ev     == KKS 2pipes
+        case 0x0008: cindex = 4; break; // 740/750 (G3)   == KKS 2pipes
+        case 0x0009: cindex = 5; break; // 604e           == KKS 604e
+        case 0x000A: cindex = 5; break; // 604ev          == KKS 604e
+        #elif defined(__GCC__) || defined(__GNUC__)
         case 0x0003: cindex = 3; break; // 603            == MH 2-pipe
         case 0x0004: cindex = 3; break; // 604            == MH 2-pipe
         case 0x0006: cindex = 3; break; // 603e           == MH 2-pipe
@@ -1183,8 +1208,22 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         case 0x0008: cindex = 3; break; // 740/750 (G3)   == MH 2-pipe
         case 0x0009: cindex = 3; break; // 604e           == MH 2-pipe
         case 0x000A: cindex = 3; break; // 604ev          == MH 2-pipe
+        #endif
         default:     cindex =-1; break; // no default
       }
+      #if defined(__VEC__) && (CLIENT_OS == OS_MACOSX) /* OS+compiler support altivec */
+      if (( detected_type & (1L<<25) ) != 0) //altivec?
+      {
+        switch ( detected_type & 0xffff) // only compare the low PVR bits
+        {
+            case 0x000C: cindex = 6; break; // 7400 (G4)   == KKS 7400
+            case 0x8000: cindex = 7; break; // 7450 (G4+)  == KKS 7450
+            case 0x8001: cindex = 7; break; // 7455 (G4+)  == KKS 7450
+            case 0x800C: cindex = 6; break; // 7410 (G4)   == KKS 7400
+            default:     cindex =-1; break; // no default
+        }
+      }
+      #endif
     }
   }
   #elif (CLIENT_CPU == CPU_X86)
@@ -2167,14 +2206,31 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
      #endif
 
      #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-     #if defined(__GCC__) || defined(__GNUC__)
+      #if (CLIENT_OS == OS_MACOSX)
+      case 4:
+          unit_func.gen_72 = rc5_72_unit_func_KKS2pipes;
+          pipeline_count = 2;
+          break;
+      case 5:
+          unit_func.gen_72 = rc5_72_unit_func_KKS604e;
+          pipeline_count = 2;
+          break;
+      #if defined(__VEC__)
+      case 6:
+          unit_func.gen_72 = rc5_72_unit_func_KKS7400;
+          pipeline_count = 4;
+          break;
+      case 7:
+          unit_func.gen_72 = rc5_72_unit_func_KKS7450;
+          pipeline_count = 4;
+          break;
+      #endif
+      #elif defined(__GCC__) || defined(__GNUC__)
       case 3:
         unit_func.gen_72 = rc5_72_unit_func_ppc_mh_2;
         pipeline_count = 2;
         break;
-     #else
-      #error "ppc optimized rc5-72 core available - needs testing for non-gcc targets"
-     #endif
+      #endif
      #endif
 
     }
