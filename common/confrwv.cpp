@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.29 2000/04/22 11:01:59 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.30 2000/04/23 12:58:41 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -33,6 +33,9 @@ static const char *OPTSECT_DISPLAY  = "display";
 static const char *DEFAULT_EXITFLAGFILENAME = "exitrc5"EXTN_SEP"now";
 
 /* ------------------------------------------------------------------------ */
+
+// Returns a static textual name representation of the given contest id.
+// On error, returns NULL.
 
 static const char *__getprojsectname( unsigned int ci )
 {
@@ -63,6 +66,14 @@ static const char *__getprojsectname( unsigned int ci )
 /* ------------------------------------------------------------------------ */
 
 // Reads or writes a hostname and port in "hostname:port" format.
+//
+// aswrite - should be zero to indicate reading, or non-zero to write.
+// fn - filename of the ini file.
+// sect - section within the ini file that holds the hostname.
+// opt - option name within the ini file section.
+// hostname/hnamelen/port - the hostname and port to read or write.
+//
+// Always returns 0.
 
 static int _readwrite_hostname_and_port( int aswrite, const char *fn,
                                          const char *sect, const char *opt,
@@ -134,6 +145,14 @@ TRACE_OUT((0,"host:%s,port=%d\n",hostname,pos));
 }
 
 /* ------------------------------------------------------------------------ */
+
+// Reads the firewall host/port, type, encoding, and authentication values.
+//
+// aswrite - should be zero to indicate reading, or non-zero to write.
+// fn - filename of the ini file.
+// client - reference to the client structure being loaded/saved.
+//
+// Returns the new state of uuehttpmode.
 
 static int _readwrite_fwallstuff(int aswrite, const char *fn, Client *client)
 {
@@ -305,8 +324,19 @@ static int _readwrite_fwallstuff(int aswrite, const char *fn, Client *client)
 
 /* ------------------------------------------------------------------------ */
 
+// Convert a textual time duration specifier into the equivalent integer
+// representation of the number of equivalent seconds.  The textual string
+// is required to be in the format of "hh[:mm[:ss]]".
+//
+// If the argument 'oldstyle_hours_compat' is non-zero, then the textual
+// input may optionally be in the format of "hh.hhh", representing a decimal
+// number of hours.
+// 
+// Returns equivalent number of seconds. Returns 0 for an empty string ("").
+// Otherwise returns a negative value (<0 on error).
+
 static int __parse_timestring(const char *source, int oldstyle_hours_compat )
-{           /* convert hh[:mm[:ss]] into secs. return 0 for "", <0 on err */
+{
   int hms[3];
   int colcount = 0, fieldlen = 0;
 
@@ -365,7 +395,15 @@ static int __parse_timestring(const char *source, int oldstyle_hours_compat )
 
 /* ------------------------------------------------------------------------ */
 
-static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if failed */
+// Loads configuration parameters from the specified ini file according to
+// obsolete client ini formatting standards.  This function will simultaneously 
+// attempt to convert the ini file to conform to new standards when possible.
+// 
+// Returns 0 on succes, or negative if any failures occurred.  Any failures
+// encountered during the remapping process are treated as non-critical
+// occurrances and do not prevent the entire process from running to completion.
+
+static int __remapObsoleteParameters( Client *client, const char *fn )
 {
   char buffer[128];
   char *p;
@@ -911,11 +949,13 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
 
 /* ------------------------------------------------------------------------ */
 
+// Main configuration reading function.
+//
+// 1. never printf()/logscreen()/conout() from here
+// 2. never force an option based on the value of some other valid option
+
 int ReadConfig(Client *client)
 {
-  // 1. never printf()/logscreen()/conout() from here
-  // 2. never force an option based on the value of some other valid option
-
   char buffer[64];
   const char *cont_name;
   unsigned int cont_i;
@@ -1330,3 +1370,5 @@ void RefreshRandomPrefix( Client *client )
   }
   return;
 }
+
+// --------------------------------------------------------------------------
