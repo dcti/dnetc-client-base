@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.32  1998/11/10 10:44:06  silby
+// Excess yield_pump removed for win32 now that priorities are correct.
+//
 // Revision 1.31  1998/11/09 20:05:09  cyp
 // Did away with client.cktime altogether. Time-to-Checkpoint is calculated
 // dynamically based on problem completion state and is now the greater of 1
@@ -125,7 +128,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.31 1998/11/09 20:05:09 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.32 1998/11/10 10:44:06 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -697,7 +700,7 @@ if (targ->realthread)
       run = thisprob->Run( threadnum ); 
       targ->is_suspended = 1;
       
-      #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32)//accomodate new CLI
+      #if (CLIENT_OS == OS_NETWARE)
       yield_pump(NULL);
       #endif
       }
