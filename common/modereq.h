@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.h,v $
+// Revision 1.4  1998/11/01 20:36:12  cyp
+// added a 'class Client;' for forward resolution.
+//
 // Revision 1.3  1998/10/11 05:07:38  cyp
 // Fixed MODEREQ_ constant overlaps
 //
@@ -16,8 +19,6 @@
 //
 // Revision 1.1  1998/10/08 20:49:42  cyp
 // Created.
-//
-//
 //
 
 #ifndef __MODEREQ_H__
@@ -49,6 +50,7 @@ extern int ModeReqIsRunning(void);
 
 /* this is the mode runner. bits can be set/cleared while active.
    returns a mask of modebits that were cleared during the run. */
+class Client; /* for forward resolution */
 extern int ModeReqRun( Client *client ); 
 
 #endif /* __MODEREQ_H__ */
