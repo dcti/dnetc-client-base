@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.62 2002/03/27 22:54:16 mfeiri Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.63 2002/03/27 23:37:58 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -145,7 +145,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "the temperature of a processor exceeds the threshold specified in the\n"
   "\"Processor temperature thresholds\" option.\n"
   "\n"
-  "Processor temperature checking is only supported under Mac OS with a PPC G3\n
+  "Processor temperature checking is only supported under Mac OS with a PPC G3\n"
   "or some early PPC G4 processors.\n"
   ,CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
@@ -166,7 +166,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "render the pair invalid and cause temperature threshold checking to be\n"
   "silently disabled.\n"
   "\n"
-  "Processor temperature checking is only supported under Mac OS with a PPC G3\n
+  "Processor temperature checking is only supported under Mac OS with a PPC G3\n"
   "or some early PPC G4 processors.\n"
   ,CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
