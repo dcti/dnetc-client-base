@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.200 1999/04/09 13:28:38 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.201 1999/04/10 22:34:04 trevorh Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -141,7 +141,7 @@ static const char *GetBuildOrEnvDescription(void)
 
 int ClientIsGUI(void)
 {
-  #if defined(WIN32GUI) || defined(MAC_GUI) || defined(OS2GUI)
+  #if defined(WIN32GUI) || defined(MAC_GUI) || defined(OS2_PM)
   return 1;
   #elif (CLIENT_OS == OS_RISCOS)
   return (guiriscos!=0);

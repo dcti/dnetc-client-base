@@ -3,9 +3,9 @@
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
-*/ 
+*/
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.61 1999/04/09 18:42:08 patrick Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.62 1999/04/10 22:32:53 trevorh Exp $"
 
 #include "cputypes.h"
 
@@ -57,6 +57,9 @@ extern "C" {
   #if defined(__WATCOMC__)
     #include <conio.h>            /* for console functions */
     #include <direct.h>
+  #endif
+  #if defined(OS2_PM)
+    #include "platforms/os2gui/os2cons.h"
   #endif
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
     #define QSV_NUMPROCESSORS     26

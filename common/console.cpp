@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.46 1999/04/04 17:48:00 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.47 1999/04/10 22:35:55 trevorh Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -144,6 +144,8 @@ int InitializeConsole(int runhidden,int doingmodes)
         constatics.conisatty = 1;
       #elif (CLIENT_OS == OS_MACOS)
         constatics.conisatty = 1;
+      #elif defined(OS2_PM)
+        constatics.conisatty = 1;
       #else
         constatics.conisatty = (isatty(fileno(stdout)));
       #endif
@@ -188,6 +190,8 @@ int ConOut(const char *msg)
       w32ConOut(msg);
     #elif (CLIENT_OS == OS_MACOS)
       macConOut(msg);
+    #elif (CLIENT_OS == OS_OS2 && defined(OS2_PM))
+      os2conout(msg);
     #else
       fwrite( msg, sizeof(char), strlen(msg), stdout);
       fflush(stdout);
