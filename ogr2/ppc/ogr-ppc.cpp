@@ -5,7 +5,7 @@
  */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-ppc.cpp,v 1.1.2.3 2000/11/17 00:47:44 mfeiri Exp $"; }
+return "@(#)$Id: ogr-ppc.cpp,v 1.1.2.4 2001/03/19 17:39:39 andreasb Exp $"; }
 
 #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
   #if (__MWERKS__)
