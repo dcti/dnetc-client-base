@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.82 2000/11/17 16:43:28 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.83 2000/11/20 15:08:14 oliver Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -297,16 +297,16 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
     case OGR:
     {
       //24/2-22-32-21-5-1-12
-      //25/2-8-6-20-4-9
+      //25/6-9-30-14-10-11
       work->ogr.workstub.stub.marks = 25;    //24;
       work->ogr.workstub.worklength = 6;     //7;
       work->ogr.workstub.stub.length = 6;    //7;
-      work->ogr.workstub.stub.diffs[0] = 2;  //2;
-      work->ogr.workstub.stub.diffs[1] = 8;  //22;
-      work->ogr.workstub.stub.diffs[2] = 6;  //32;
-      work->ogr.workstub.stub.diffs[3] = 20; //21;
-      work->ogr.workstub.stub.diffs[4] = 4;  //5;
-      work->ogr.workstub.stub.diffs[5] = 9;  //1;
+      work->ogr.workstub.stub.diffs[0] = 6;  //2;
+      work->ogr.workstub.stub.diffs[1] = 9;  //22;
+      work->ogr.workstub.stub.diffs[2] = 30;  //32;
+      work->ogr.workstub.stub.diffs[3] = 14; //21;
+      work->ogr.workstub.stub.diffs[4] = 10;  //5;
+      work->ogr.workstub.stub.diffs[5] = 11;  //1;
       work->ogr.workstub.stub.diffs[6] = 0;  //12;
       work->ogr.nodes.lo = 0;
       work->ogr.nodes.hi = 0;
