@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.71  1999/01/19 05:39:08  cyp
+// added connect() error message support for win16/32
+//
 // Revision 1.70  1999/01/19 04:47:35  cyp
 // Fixed win16/32 connect bug. EINVAL is (of course!) not equal to WSAEINVAL.
 //
@@ -208,7 +211,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.70 1999/01/19 04:47:35 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.71 1999/01/19 05:39:08 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -223,13 +226,8 @@ return "@(#)$Id: network.cpp,v 1.70 1999/01/19 04:47:35 cyp Exp $"; }
 #include "triggers.h"  // CheckExitRequestTrigger()
 #include "network.h"   // thats us
 
-#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
-    (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
-    (CLIENT_OS == OS_MACOS)
-#define ERRNO_IS_UNUSABLE /* ... for network purposes */
-#endif
-#if (CLIENT_OS == OS_WIN16) || (CLIENT_OS==OS_WIN32)
-//#define ENSURE_CONNECT_WITH_BLOCKING_SOCKET
+#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_MACOS)
+#define ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG 
 #endif
 
 extern int NetCheckIsOK(void); // used before doing i/o
@@ -740,7 +738,19 @@ int Network::Open( void )               // returns -1 on error, 0 on success
           {
           LogScreen( "Connect to host %s:%u failed.\n",
              __inet_ntoa__(conn_hostaddr), (unsigned int)(conn_hostport));
-          #ifndef ERRNO_IS_UNUSABLE 
+          #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+          int err = errno; /* connect copies it from WSAGetLastError(); */
+          const char *msg = "unrecognized error";
+          if      (err == WSAEADDRINUSE)  msg="The specified address is already in use";
+          else if (err == WSAEADDRNOTAVAIL) msg="The specified address is not available from the local machine";
+          else if (err == WSAECONNREFUSED) msg="The attempt to connect was rejected. Destination may be busy.";
+          else if (err == WSAEISCONN)      msg="The socket is already connected"; //udp only?
+          else if (err == WSAENETUNREACH)  msg="The network cannot be reached from this host at this time";
+          else if (err == WSAENOBUFS)      msg="No buffer space is currently available";
+          else if (err == WSAETIMEDOUT)    msg="Attempt to connect timed out";
+          LogScreen( " %s  Error %d (%s)\n",CliGetTimeString(NULL,0), 
+                                      err, msg );
+          #elif (!defined(ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG))
           if (NetCheckIsOK()) //use errno only if netcheck says ok.
             {
             #if defined(_TIUSER_)
@@ -776,10 +786,9 @@ int Network::Open( void )               // returns -1 on error, 0 on success
     Close();
     retries++;
 
-    if (retries < (maxtries-1))
+    if (retries < maxtries)
       {
-      LogScreen( "Network::Open Error - "
-                 "sleeping for 3 seconds (%d)\n", retries );
+      LogScreen( "Network::Open Error - sleeping for 3 seconds\n" );
       sleep( 3 );
       }
     }
@@ -1560,6 +1569,8 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
     #define EALREADY WSAEALREADY
     #undef  EWOULDBLOCK
     #define EWOULDBLOCK WSAEWOULDBLOCK
+    #undef  ETIMEDOUT
+    #define ETIMEDOUT WSAETIMEDOUT
     if (errno == WSAEINVAL) /* ws1.1 returns WSAEINVAL instead of WSAEALREADY */
       errno = EALREADY;  
     #elif (CLIENT_OS == OS_OS2)
@@ -1585,7 +1596,7 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
     if ( (time(NULL)-starttime) > iotimeout )
       {
       rc = -1;
-      #ifndef ERRNO_IS_UNUSABLE
+      #ifndef ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG
       errno = ETIMEDOUT;
       #endif
       break;
