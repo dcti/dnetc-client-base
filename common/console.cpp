@@ -14,13 +14,12 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.45 2000/10/13 23:02:16 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.46 2000/10/25 00:57:22 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
 #include "cputypes.h"
 #include "baseincs.h"
-#include "network.h"
 #include "version.h"  //CLIENT_VERSIONSTRING
 #include "clitime.h"
 #include "triggers.h"

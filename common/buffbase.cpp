@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.39 2000/10/24 21:36:34 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.40 2000/10/25 00:57:21 cyp Exp $"; }
 
 //#define PROFILE_DISK_HITS
 
@@ -14,7 +14,6 @@ return "@(#)$Id: buffbase.cpp,v 1.12.2.39 2000/10/24 21:36:34 cyp Exp $"; }
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
 #include "client.h"   //client struct and threshold functions
 #include "baseincs.h" //basic #includes
-#include "network.h"  //ntohl(), htonl()
 #include "util.h"     //trace
 #include "clievent.h" //event stuff
 #include "clicdata.h" //GetContestNameFromID()

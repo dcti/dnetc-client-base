@@ -20,11 +20,10 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.16 2000/10/20 21:43:06 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.17 2000/10/25 00:57:22 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
-#include "autobuff.h"
 #include "base64.h"
 #include "bench.h"
 #include "client.h" /* client.h needs to before buff*.h */
@@ -70,7 +69,6 @@ return "@(#)$Id: cliident.cpp,v 1.17.2.16 2000/10/20 21:43:06 cyp Exp $"; }
 
 static const char *h_ident_table[] = 
 {
-  (const char *)__AUTOBUFF_H__,
   (const char *)__BASE64_H__,
   (const char *)__BASEINCS_H__,
   (const char *)__BENCH_H__,
@@ -117,7 +115,6 @@ static const char *h_ident_table[] =
   (const char *)__VERSION_H__
 };
 
-extern const char *autobuff_cpp(void);
 extern const char *base64_cpp(void);
 extern const char *bench_cpp(void);
 extern const char *buffbase_cpp(void);
@@ -160,7 +157,6 @@ extern const char *util_cpp(void);
 
 static const char * (*ident_table[])() = 
 {
-  autobuff_cpp,
   base64_cpp,
   bench_cpp,
   buffbase_cpp,
