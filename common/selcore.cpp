@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.96 2002/09/26 02:01:06 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.97 2002/09/28 01:58:06 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -302,7 +302,6 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     #if defined(__VEC__)                /* OS+compiler support altivec */ 
     have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
     #endif
-#ifdef HAVE_OLD_CRYPTO
     if (contestid == RC5)
     {
       if (have_pwr)
@@ -315,7 +314,6 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
         cindex = 1;                     /* "lintilla" */
     }
     else
-#endif
     if (contestid == OGR)
     {
       if (have_pwr)
@@ -328,7 +326,6 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
   }  
   #elif (CLIENT_CPU == CPU_X86)
   {
-#ifdef HAVE_OLD_CRYPTO
     long det = GetProcessorType(1);
     int have_mmx = (det >= 0 && (det & 0x100)!=0);
     int have_3486 = (det >= 0 && (det & 0xff)==1);
@@ -371,7 +368,6 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
       if (!have_mmx && cindex == 3)   /* "BRF MMX bitslice */
         cindex = 1;                   /* "movzx Bryd" */ 
     }
-#endif /* HAVE_OLD_CRYPTO */
   }
   #endif         
   contestid = contestid; /* possibly unused */
@@ -1467,7 +1463,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
 
   /* -------------------------------------------------------------- */
 
-#ifdef HAVE_OLD_CRYPTO
+  #if defined(HAVE_RC5_64_CORES)
   if (contestid == RC5) /* avoid switch */
   {
     #if (CLIENT_CPU == CPU_UNKNOWN)
@@ -1779,12 +1775,11 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #endif
   } /* if (contestid == RC5) */
-
-  #endif  // HAVE_OLD_CRYPTO
+  #endif  // HAVE_RC5_64_CORES
 
   /* ================================================================== */
   
-  #ifdef HAVE_DES_CORES
+  #if defined(HAVE_DES_CORES)
   if (contestid == DES)
   {
     #if (CLIENT_CPU == CPU_ARM)
@@ -1953,7 +1948,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
 
   /* ================================================================== */
 
-  #ifdef HAVE_CSC_CORES
+  #if defined(HAVE_CSC_CORES)
   if( contestid == CSC ) // CSC
   {
     //xtern "C" s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *iterations, void *membuff );
@@ -1986,13 +1981,11 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
    #endif
   }
-  #endif /* #ifdef HAVE_CSC_CORES */
+  #endif /* #if defined(HAVE_CSC_CORES) */
 
   /* ================================================================== */
 
-//  if (0)
-//    PROJECT_NOT_HANDLED(contestid); // add code to select core function here
-// OK!
+  #if defined(HAVE_RC5_72_CORES)
   if (contestid == RC5_72)
   {
     switch (coresel)
@@ -2013,6 +2006,12 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         break;
     }
   }
+  #endif
+
+  /* ================================================================== */
+
+  //if (0)
+  //  PROJECT_NOT_HANDLED(contestid); // add code to select core function here
 
   /* ================================================================== */
 

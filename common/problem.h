@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.90 2002/09/24 16:34:49 jlawson Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.91 2002/09/28 01:58:06 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -26,6 +26,16 @@ enum {
   RC5_72 // http://www.rsasecurity.com/rsalabs/challenges/secretkey/
 };
 #define CONTEST_COUNT       6  /* RC5,DES,OGR,CSC,OGR_NEXTGEN,RC5_72 */
+
+/* ---------------------------------------------------------------------- */
+
+#if defined(HAVE_RC5_64_CORES) || defined(HAVE_DES_CORES) \
+    || defined(HAVE_CSC_CORES)
+  #define HAVE_CRYPTO_V1
+#endif
+#if defined(HAVE_RC5_72_CORES)
+  #define HAVE_CRYPTO_V2
+#endif
 
 /* ---------------------------------------------------------------------- */
 
@@ -82,7 +92,7 @@ enum {
 
 typedef union
 {
-  #if defined(HAVE_OLD_CRYPTO)  // used by RC5, DES, CSC
+  #if defined(HAVE_CRYPTO_V1)  // used by RC5, DES, CSC
   struct {
     struct {u32 hi,lo;} key;              // starting key
     struct {u32 hi,lo;} iv;               // initialization vector
@@ -92,6 +102,7 @@ typedef union
     struct {u32 hi,lo;} iterations;       // iterations to do
   } crypto;        /* 48 bytes */
   #endif
+  #if defined(HAVE_CRYPTO_V2)
   struct {
     struct {u32 hi,mid,lo;} key;          // starting key
     struct {u32 hi,lo;} iv;               // initialization vector
@@ -102,6 +113,7 @@ typedef union
     u16 randomsubspace;                   // subspace for random generation.
     struct {u16 count; u32 hi,mid,lo;} check;   // keyid of last found counter-measure check.
   } bigcrypto;     /* 68 bytes */
+  #endif
   #if defined(HAVE_OGR_CORES)
   struct {
     struct WorkStub workstub;             // stub to work on (28 bytes)

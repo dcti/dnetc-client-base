@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.167 2002/09/26 00:45:50 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.168 2002/09/28 01:58:06 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -91,10 +91,12 @@ typedef struct
     /* the following must be protected for thread safety */
     /* --------------------------------------------------------------- */
 // TODO: acidblood/trashover
-#ifdef HAVE_OLD_CRYPTO
+#ifdef HAVE_CRYPTO_V1
     RC5UnitWork rc5unitwork; /* MUST BE longword (64bit) aligned */
 #endif
+#ifdef HAVE_CRYPTO_V2
     RC5_72UnitWork rc5_72unitwork;
+#endif
     struct {u32 hi,mid,lo;} refL0;
     ContestWork contestwork;
     /* --------------------------------------------------------------- */
@@ -247,17 +249,24 @@ Problem *ProblemAlloc(void)
   if (thisprob && !err)
   {
 // TODO: acidblood/trashover
-#ifdef HAVE_OLD_CRYPTO
+#ifdef HAVE_CRYPTO_V1
     p = (char *)&(thisprob->iprobs[PICKPROB_CORE].priv_data.rc5unitwork);
-#else
-    p = (char *)&(thisprob->iprobs[PICKPROB_CORE].priv_data.rc5_72unitwork);
-#endif
     if ((((unsigned long)p) & (sizeof(void *)-1)) != 0)
     {
       /* Ensure that the core data is going to be aligned */
       Log("priv_data.rc5unitwork for problem %d is misaligned!\n", __problem_counter);
       err = 1;
     }
+#endif
+#ifdef HAVE_CRYPTO_V2
+    p = (char *)&(thisprob->iprobs[PICKPROB_CORE].priv_data.rc5_72unitwork);
+    if ((((unsigned long)p) & (sizeof(void *)-1)) != 0)
+    {
+      /* Ensure that the core data is going to be aligned */
+      Log("priv_data.rc5_72unitwork for problem %d is misaligned!\n", __problem_counter);
+      err = 1;
+    }
+#endif
   }      
 
   if (thisprob && !err)
@@ -356,6 +365,8 @@ static inline void __copy_internal_problem( InternalProblem *dest,
 
 /* ======================================================================= */
 
+#ifdef HAVE_RC5_64_CORES
+
 // for some odd reasons, the RC5 algorithm requires keys in reversed order
 //         key.hi   key.lo
 // ie key 01234567:89ABCDEF is sent to rc5_pub_data.unit_func like that :
@@ -368,8 +379,6 @@ static inline void __copy_internal_problem( InternalProblem *dest,
 //
 // Note that DES has a similiar but far more complex system, but everything
 // is handled by des_pub_data.unit_func().
-
-#ifdef HAVE_RC564_CORES
 
 static void  __SwitchRC564Format(u32 *hi, u32 *lo)
 {
@@ -391,6 +400,8 @@ static void  __SwitchRC564Format(u32 *hi, u32 *lo)
 #endif
 
 /* ======================================================================= */
+
+#ifdef HAVE_RC5_72_CORES
 
 // Here's the same mangling for RC5-72:
 //            key.hi key.mid  key.lo
@@ -414,6 +425,7 @@ static void  __SwitchRC572Format(u32 *hi, u32 *mid, u32 *lo)
     *hi  = ((tempkeylo)        & 0x000000FFL);
 }
 
+#endif
 
 /* ------------------------------------------------------------------- */
 
@@ -427,6 +439,7 @@ static void __IncrementKey(u32 *keyhi, u32 *keymid, u32 *keylo, u32 iters, int c
 {
   switch (contest)
   {
+#ifdef HAVE_RC5_72_CORES
     case RC5_72:
       __SwitchRC572Format(keyhi,keymid,keylo);
       *keylo = *keylo + iters;
@@ -437,7 +450,8 @@ static void __IncrementKey(u32 *keyhi, u32 *keymid, u32 *keylo, u32 iters, int c
       }
       __SwitchRC572Format(keyhi,keymid,keylo);
       break;
-#ifdef HAVE_RC564_CORES
+#endif
+#ifdef HAVE_RC5_64_CORES
     case RC5:
       __SwitchRC564Format(keyhi,keylo);
       *keylo = *keylo + iters;
@@ -468,7 +482,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
 {
   switch (contestid)  
   {
-    #if defined(HAVE_OLD_CRYPTO)
+    #if defined(HAVE_CRYPTO_V1)
     case RC5:
     case DES:
     case CSC:
@@ -488,6 +502,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       return contestid;
     }
     #endif
+    #if defined(HAVE_CRYPTO_V2)
     case RC5_72:
     {
       work->bigcrypto.key.lo = ( 0 );
@@ -505,7 +520,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       work->bigcrypto.iterations.hi = ( 1 );
       return contestid;
     }
-// OK!
+    #endif
     #if defined(HAVE_OGR_CORES)
     case OGR:
     {
@@ -535,7 +550,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
 
 /* ------------------------------------------------------------------- */
 
-#ifdef HAVE_OLD_CRYPTO
+#ifdef HAVE_RC5_64_CORES
 static int last_rc5_prefix = -1;
 #endif
 
@@ -549,7 +564,7 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
 
   switch (contestid)
   {
-  #ifdef HAVE_OLD_CRYPTO
+  #ifdef HAVE_RC5_64_CORES
   case RC5:
   {
     u32 randomprefix = last_rc5_prefix;
@@ -571,6 +586,7 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
     break;
   }
   #endif
+  #ifdef HAVE_RC5_72_CORES
   case RC5_72:
     work->bigcrypto.key.lo  = 0;
     work->bigcrypto.key.mid = (rnd >> 4) & ((u32)work->bigcrypto.randomsubspace << 28);
@@ -587,6 +603,10 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
     work->bigcrypto.iterations.lo = 0;
     work->bigcrypto.iterations.hi = 1;
     break;
+  #endif
+  default:
+    //PROJECT_NOT_HANDLED(contestid);
+    return -1;  
   }
   return contestid;
 }
@@ -656,7 +676,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
   if (work == CONTESTWORK_MAGIC_RANDOM) /* ((const ContestWork *)0) */
   {
 // TODO?: acidblood/trashover
-//#ifdef HAVE_RC564_CORES
+//#ifdef HAVE_RC5_64_CORES
     contestid = __gen_random_work(contestid, &for_magic);
     work = &for_magic;
     genned_random = 1;
@@ -742,17 +762,19 @@ static int __InternalLoadState( InternalProblem *thisprob,
 
   switch (thisprob->pub_data.contest)
   {
-  #if defined(HAVE_OLD_CRYPTO)
+  #if defined(HAVE_CRYPTO_V1)
   case RC5:
   case DES:
   case CSC:
     {
+      #if defined(HAVE_RC5_64_CORES)
       if (thisprob->pub_data.contest == RC5) {
         if (!thisprob->pub_data.is_random &&
             (work->crypto.iterations.hi || work->crypto.iterations.lo >= (1L<<28))) {
           last_rc5_prefix = (int)(work->crypto.key.hi >> 24);
         }    
       }
+      #endif
     
       // copy over the state information
       thisprob->priv_data.contestwork.crypto.key.hi = ( work->crypto.key.hi );
@@ -783,8 +805,10 @@ static int __InternalLoadState( InternalProblem *thisprob,
         ((((thisprob->priv_data.contestwork.crypto.key.lo & 0xffff) + (thisprob->priv_data.contestwork.crypto.keysdone.lo & 0xffff)) +
           ((thisprob->priv_data.contestwork.crypto.key.lo >> 16) + (thisprob->priv_data.contestwork.crypto.keysdone.lo >> 16))) >> 16);
       thisprob->priv_data.rc5unitwork.L0.lo = thisprob->priv_data.contestwork.crypto.key.lo + thisprob->priv_data.contestwork.crypto.keysdone.lo;
+      #if defined(HAVE_RC5_64_CORES)
       if (thisprob->pub_data.contest == RC5)
         __SwitchRC564Format(&(thisprob->priv_data.rc5unitwork.L0.hi), &(thisprob->priv_data.rc5unitwork.L0.lo));
+      #endif
       thisprob->priv_data.refL0.lo = thisprob->priv_data.rc5unitwork.L0.lo;
       thisprob->priv_data.refL0.hi = thisprob->priv_data.rc5unitwork.L0.hi;
       // set up the unitwork structure
@@ -801,6 +825,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
     }
   #endif
 
+  #if defined(HAVE_CRYPTO_V2)
   case RC5_72:
     {
 
@@ -854,12 +879,11 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
       thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
 
-
       // TODO: acidblood/trashover
       // OK!
       break;
     }
-
+  #endif
 
   #if defined(HAVE_OGR_CORES)
   case OGR:
@@ -1076,10 +1100,10 @@ int ProblemRetrieveState( void *__thisprob,
 
 /* ------------------------------------------------------------- */
 
-static int Run_RC564(InternalProblem *thisprob, /* already validated */
+static int Run_RC5_64(InternalProblem *thisprob, /* already validated */
                    u32 *keyscheckedP /* count of ... */, int *resultcode)
 {
-#ifndef HAVE_RC564_CORES
+#ifndef HAVE_RC5_64_CORES
   thisprob = thisprob;
   *keyscheckedP = 0;
   *resultcode = -1;
@@ -1260,7 +1284,7 @@ static int Run_CSC(InternalProblem *thisprob, /* already validated */
   *resultcode = (int)rescode;
 
   // Increment reference key count
-  __IncrementKey (&thisprob->priv_data.refL0.hi, &thisprob->priv_data.refL0.lo, *iterationsP, thisprob->pub_data.contest);
+  __IncrementKey (&thisprob->priv_data.refL0.hi, &thisprob->priv_data.refL0.mid, &thisprob->priv_data.refL0.lo, *iterationsP, thisprob->pub_data.contest);
 
   // Compare ref to core key incrementation
   if ((thisprob->priv_data.refL0.hi != thisprob->priv_data.rc5unitwork.L0.hi) || (thisprob->priv_data.refL0.lo != thisprob->priv_data.rc5unitwork.L0.lo))
@@ -1320,7 +1344,7 @@ static int Run_DES(InternalProblem *thisprob, /* already validated */
   //iterationsP == in: suggested iterations, out: effective iterations
   u32 kiter = (*(thisprob->pub_data.unit_func.des))( &thisprob->priv_data.rc5unitwork, iterationsP, (char *)thisprob->priv_data.core_membuffer );
 
-  __IncrementKey ( &thisprob->priv_data.refL0.hi, &thisprob->priv_data.refL0.lo, *iterationsP, thisprob->pub_data.contest);
+  __IncrementKey ( &thisprob->priv_data.refL0.hi, &thisprob->priv_data.refL0.mid, &thisprob->priv_data.refL0.lo, *iterationsP, thisprob->pub_data.contest);
   // Increment reference key count
 
   if (((thisprob->priv_data.refL0.hi != thisprob->priv_data.rc5unitwork.L0.hi) ||  // Compare ref to core
@@ -1442,9 +1466,15 @@ static int Run_OGR( InternalProblem *thisprob, /* already validated */
 
 /* ------------------------------------------------------------- */
 
-static int Run_RC572(InternalProblem *thisprob, /* already validated */
+static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
                    u32 *keyscheckedP /* count of ... */, int *resultcode)
 {
+#ifndef HAVE_RC5_72_CORES
+  thisprob = thisprob;
+  *keyscheckedP = 0;
+  *resultcode = -1;
+  return -1;
+#else
   s32 rescode = -1;
 
   /* a brace to ensure 'keystocheck' is not referenced in the common part */
@@ -1606,6 +1636,7 @@ static int Run_RC572(InternalProblem *thisprob, /* already validated */
   // more to do, come back later.
   *resultcode = RESULT_WORKING;
   return RESULT_WORKING;    // Done with this round
+#endif
 }
 
 /* ------------------------------------------------------------- */
@@ -1843,10 +1874,10 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
     switch (core_prob->pub_data.contest)
     {
       case RC5_72:
-        retcode = Run_RC572( core_prob, &iterations, &last_resultcode );
+        retcode = Run_RC5_72( core_prob, &iterations, &last_resultcode );
         break;
       case RC5:
-        retcode = Run_RC564( core_prob, &iterations, &last_resultcode );
+        retcode = Run_RC5_64( core_prob, &iterations, &last_resultcode );
         break;
       case DES:
         retcode = Run_DES( core_prob, &iterations, &last_resultcode );
@@ -1994,11 +2025,15 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
   {
     case RC5_72:
     {
+      #ifdef HAVE_RC5_72_CORES
       return 1;
+      #else
+      return 0;
+      #endif
     }
     case RC5:
     {
-      #ifdef HAVE_RC564_CORES
+      #ifdef HAVE_RC5_64_CORES
       return 1;
       #else
       return 0;
@@ -2364,7 +2399,7 @@ static unsigned int __compute_permille(unsigned int cont_i,
   switch (cont_i)
   {
 // TODO: acidblood/trashover
-#ifdef HAVE_OLD_CRYPTO
+#ifdef HAVE_CRYPTO_V1
     case RC5:
     case DES:
     case CSC:
@@ -2399,6 +2434,7 @@ static unsigned int __compute_permille(unsigned int cont_i,
     }
     break;
 #endif
+#ifdef HAVE_CRYPTO_V2
     case RC5_72:
     {
       if (work->bigcrypto.keysdone.lo || work->bigcrypto.keysdone.hi)
@@ -2420,6 +2456,7 @@ static unsigned int __compute_permille(unsigned int cont_i,
       }
     }
     break;
+#endif
 
     default:
     PROJECT_NOT_HANDLED(cont_i);
@@ -2444,7 +2481,7 @@ int WorkGetSWUCount( const ContestWork *work,
     switch (contestid)
     {
 // TODO: acidblood/trashover
-#ifdef HAVE_OLD_CRYPTO
+#ifdef HAVE_CRYPTO_V1
       case RC5:
       case DES:
       case CSC:
@@ -2458,6 +2495,7 @@ int WorkGetSWUCount( const ContestWork *work,
         /* note that we return zero for test packets */
         units = 100 * ((tcountlo >> 28)+(tcounthi << 4)); 
 
+        #ifdef HAVE_RC5_64_CORES
         // if this is a completed packet and not a test one (other random
         // packets are ok), then remember its prefix for random prefix.
         if (contestid == RC5 && rescode != RESULT_WORKING &&
@@ -2465,6 +2503,7 @@ int WorkGetSWUCount( const ContestWork *work,
         {   
           last_rc5_prefix = ((work->crypto.key.hi >> 24) & 0xFF);
         }
+        #endif
       }
       break;
 #endif
@@ -2482,6 +2521,7 @@ int WorkGetSWUCount( const ContestWork *work,
       } /* OGR */      
       break;
 #endif /* HAVE_OGR_CORES */
+#ifdef HAVE_CRYPTO_V2
       case RC5_72:
       { 
         u32 tcounthi = work->bigcrypto.iterations.hi;
@@ -2489,6 +2529,7 @@ int WorkGetSWUCount( const ContestWork *work,
         units = 100 * tcounthi; 
       }
       break;
+#endif
 
       default:
         PROJECT_NOT_HANDLED(contestid);
@@ -2522,9 +2563,12 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
   
       info->name = CliGetContestNameFromID(contestid);
       info->unit = CliGetContestUnitFromID(contestid);
+#ifdef HAVE_RC5_72_CORES
       info->is_test_packet = contestid == RC5_72 && 
                              work.bigcrypto.iterations.lo == 0x00100000 &&
                              work.bigcrypto.iterations.hi == 0;
+#endif
+// FIXME: hmmm is this correct ??????
       info->stats_units_are_integer = (contestid != OGR);
       info->show_exact_iterations_done = (contestid == OGR);
   
@@ -2599,7 +2643,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
           switch (contestid)
           {
 // TODO: acidblood/trashover
-#ifdef HAVE_OLD_CRYPTO
+  #ifdef HAVE_CRYPTO_V1
             case RC5:
             case DES:
             case CSC:
@@ -2659,7 +2703,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               }
             } /* case: crypto */
             break;
-#endif /* HAVE_OLD_CRYPTO */
+  #endif /* HAVE_CRYPTO_V1 */
   #ifdef HAVE_OGR_CORES
             case OGR:
             {
@@ -2703,6 +2747,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
             } /* OGR */      
             break;
   #endif /* HAVE_OGR_CORES */
+  #ifdef HAVE_CRYPTO_V2
             case RC5_72:
             { 
               unsigned int units, twoxx;
@@ -2756,6 +2801,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               }
             } /* case: crypto */
             break;
+  #endif /* HAVE_CRYPTO_V2 */
 
             default:
             PROJECT_NOT_HANDLED(contestid);
