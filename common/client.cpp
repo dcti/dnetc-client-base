@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.138  1998/09/28 04:13:08  cyp
+// Split: clirun.cpp, bench.cpp, setprio.cpp, probfill.cpp; client.cpp is now
+// startup code only; bugs fixed here (client.cpp): win32 client now does
+// run-once check properly; win32 console client no longer opens a console
+// until it knows -hide is not an option; mail is no longer written if a bad
+// arg is passed; PrintBanner() will no longer print banners when restarting.
+//
 // Revision 1.137  1998/09/23 22:26:42  silby
 // Changed checkifbetaexpired from s32 to int
 //
@@ -146,55 +153,23 @@
 // Revision 1.100  1998/07/15 06:10:54  silby
 // Fixed an improper #ifdef
 //
-
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.137 1998/09/23 22:26:42 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.138 1998/09/28 04:13:08 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
 
-#include "cputypes.h"
-#include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
+#include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
+#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
+#include "client.h"    // Packet, FileHeader, Client class, etc
+#include "scram.h"     // InitRandom() 
 #include "baseincs.h"  // basic (even if port-specific) #includes
-#include "version.h"
-#include "problem.h"
-#include "network.h"
-#include "mail.h"
-#include "scram.h"
-#include "convdes.h"  // convert_key_from_des_to_inc 
-#include "triggers.h" //[Check|Raise][Pause|Exit]RequestTrigger()
-#include "sleepdef.h" //sleep(), usleep()
-#include "threadcd.h"
-#include "buffwork.h"
-#include "clitime.h"
-#include "clirate.h"
-#include "clisrate.h"
-#include "clicdata.h"
-#include "pathwork.h"
-#include "cpucheck.h"  //GetTimesliceBaseline()
-#include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
-
-#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32))
-#include "lurk.h"      //lurk stuff
-#endif
-
+#include "pathwork.h"  // EXTN_SEP
+#include "triggers.h"  // RestartRequestTrigger()
+#include "clitime.h"   //CliTimer(), Time()/(CliGetTimeString(NULL,1))
 #define Time() (CliGetTimeString(NULL,1))
-
-// --------------------------------------------------------------------------
-#if ((CLIENT_CPU > 0x01F /* 0-31 */) || ((CLIENT_CONTEST-64) > 0x0F /* 64-79 */) || \
-     (CLIENT_BUILD > 0x07 /* 0-7 */) || (CLIENT_BUILD_FRAC > 0x03FF /* 0-1023 */) || \
-     (CLIENT_OS  > 0x3F  /* 0-63 */)) // + cputype 0-15
-#error CLIENT_CPU/_OS/_CONTEST/_BUILD are out of range for FileEntry check tags
-#endif    
-
-#define FILEENTRY_CPU    ((u8)(((cputype & 0x0F)<<4) | (CLIENT_CPU & 0x0F)))
-#define FILEENTRY_OS      ((CLIENT_OS & 0x3F) | ((CLIENT_CPU & 0x10) << 3) | \
-                           (((CLIENT_BUILD_FRAC>>8)&2)<<5))
-#define FILEENTRY_BUILDHI ((((CLIENT_CONTEST-64)&0x0F)<<4) | \
-                            ((CLIENT_BUILD & 0x07)<<1) | \
-                            ((CLIENT_BUILD_FRAC>>8)&1)) 
-#define FILEENTRY_BUILDLO ((CLIENT_BUILD_FRAC) & 0xff)  
+#include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
 
 // --------------------------------------------------------------------------
 
@@ -208,10 +183,6 @@ long __near __stack  = 65536L;  // AmigaOS has no automatic stack extension
 #if (CLIENT_OS == OS_RISCOS)
 s32 guiriscos, guirestart;
 #endif
-
-// --------------------------------------------------------------------------
-
-Problem problem[2*MAXCPUS];
 
 // --------------------------------------------------------------------------
 
@@ -309,7 +280,7 @@ Client::Client()
   dialup.dialwhenneeded=0;
 #endif
   contestdone[0]=contestdone[1]=0;
-  srand( (unsigned) time( NULL ) );
+  srand( (unsigned) CliTimer( NULL )->tv_usec );
   InitRandom();
 #ifdef MMX_BITSLICER
   usemmx = 1;
@@ -319,1481 +290,15 @@ Client::Client()
 
 // --------------------------------------------------------------------------
 
-Client::~Client()
+static void PrintBanner(const char *dnet_id)
 {
-  cputype=-1; //dummy to suppress compiler 'Warning:'
-}
-
-// --------------------------------------------------------------------------
-
-void Client::RandomWork( FileEntry * data )
-{
-  u32 randompref2;
-
-  randompref2 = ( ( (u32) randomprefix) + 1 ) & 0xFF;
-
-  data->key.lo = htonl( Random( NULL, 0 ) & 0xF0000000L );
-  data->key.hi = htonl( (Random( NULL, 0 ) & 0x00FFFFFFL) + ( randompref2 << 24) ); // 64 bits significant
-
-  data->iv.lo = htonl( 0xD5D5CE79L );
-  data->iv.hi = htonl( 0xFCEA7550L );
-  data->cypher.lo = htonl( 0x550155BFL );
-  data->cypher.hi = htonl( 0x4BF226DCL );
-  data->plain.lo = htonl( 0x20656854L );
-  data->plain.hi = htonl( 0x6E6B6E75L );
-  data->keysdone.lo = htonl( 0 );
-  data->keysdone.hi = htonl( 0 );
-  data->iterations.lo = htonl( 0x10000000L );
-  data->iterations.hi = htonl( 0 );
-  data->id[0] = 0;
-//82E51B9F:9CC718F9 -- sample problem from RSA pseudo-contest...
-//  data->key.lo = htonl(0x9CC718F9L & 0xFF000000L );
-//  data->key.hi = htonl(0x82E51B9FL & 0xFFFFFFFFL );
-//  data->iv.lo = htonl( 0xF839A5D9L );
-//  data->iv.hi = htonl( 0xC41F78C1L );
-//  data->cypher.lo = htonl( 0xB74BE041L );
-//  data->cypher.hi = htonl( 0x496DEF29L );
-//  data->plain.lo = htonl( 0x20656854L );
-//  data->plain.hi = htonl( 0x6E6B6E75L );
-//  data->iterations.lo = htonl( 0x01000000L );
-//END SAMPLE PROBLEM
-  data->op = htonl( OP_DATA );
-  data->os = 0;
-  data->cpu = 0;
-  data->buildhi = 0;
-  data->buildlo = 0;
-
-  data->contest = 0; // Random blocks are always RC5, not DES.
-
-  data->checksum =
-    htonl( Checksum( (u32 *) data, ( sizeof(FileEntry) / 4 ) - 2 ) );
-  data->scramble = htonl( Random( NULL, 0 ) );
-  Scramble( ntohl(data->scramble), (u32 *) data, ( sizeof(FileEntry) / 4 ) - 1 );
-
-}
-
-// ---------------------------------------------------------------------------
-
-u32 Client::Benchmark( u8 contest, u32 numk )
-{
-  ContestWork contestwork;
-
-  unsigned int itersize;
-  unsigned int keycountshift;
-  const char *contestname;
-  unsigned int contestid;
-  u32 tslice;
-
-  if (numk == 0)
-    itersize = 23;         //8388608 instead of 10000000L;
-  else if ( numk < (1<<20))   //max(numk,1000000L);
-    itersize = 20;         //1048576 instead of 1000000L
-  else 
-    {  
-    itersize = 31;
-    while (( numk & (1<<itersize) ) == 0)
-      itersize--;
-    }
-
-  if (contest == 2 && itersize < 31) //Assumes that DES is (at least)
-    itersize++;                      //twice as fast as RC5.
-
-  if (contest == 2)
-    {
-    keycountshift = 1;
-    contestname = "DES";
-    contestid = 1;
-    }
-  else
-    {
-    keycountshift = 0;
-    contestname = "RC5";
-    contestid = 0;
-    }
-
-  if (SelectCore() || CheckExitRequestTrigger()) 
-    return 0;
-
-  tslice = 100000L;
-
-  #if (CLIENT_OS == OS_NETWARE)
-    tslice = GetTimesliceBaseline(); //in cpucheck.cpp
-  #endif
-
-  LogScreenRaw( "\nBenchmarking %s with 1*2^%d tests (%u keys):\n", 
-                 contestname, itersize+keycountshift,
-                          (int)(1<<(itersize+keycountshift)) );
-
-  contestwork.key.lo = htonl( 0 );
-  contestwork.key.hi = htonl( 0 );
-  contestwork.iv.lo = htonl( 0 );
-  contestwork.iv.hi = htonl( 0 );
-  contestwork.plain.lo = htonl( 0 );
-  contestwork.plain.hi = htonl( 0 );
-  contestwork.cypher.lo = htonl( 0 );
-  contestwork.cypher.hi = htonl( 0 );
-  contestwork.keysdone.lo = htonl( 0 );
-  contestwork.keysdone.hi = htonl( 0 );
-  contestwork.iterations.lo = htonl( (1<<itersize) );
-  contestwork.iterations.hi = htonl( 0 );
-
-  (problem[0]).LoadState( &contestwork , (u32) (contestid), tslice, cputype );
-
-  (problem[0]).percent = 0;
-
-  while ( (problem[0]).Run( 0 ) == 0 ) //threadnum
-    {
-    if (!percentprintingoff)
-      LogScreenPercent( 1 ); //logstuff.cpp - number of loaded problems
-
-    #if (CLIENT_OS == OS_NETWARE)   //yield
-      nwCliThreadSwitchLowPriority();
-    #endif
-
-    if ( CheckExitRequestTrigger() )
-      return 0;
-    }
-  LogScreenPercent( 1 ); //finish the percent bar
-
-  struct timeval tv;
-  char ratestr[32];
-  double rate = CliGetKeyrateForProblemNoSave( &(problem[0]) );
-  tv.tv_sec = (problem[0]).timehi;  //read the time the problem:run started
-  tv.tv_usec = (problem[0]).timelo;
-  CliTimerDiff( &tv, &tv, NULL );    //get the elapsed time
-  LogScreenRaw("\nCompleted in %s [%skeys/sec]\n", CliGetTimeString( &tv, 2 ),
-                             CliGetKeyrateAsString( ratestr, rate ) );
-
-  itersize+=keycountshift;
-  while ((tv.tv_sec<(60*60) && itersize<31) || (itersize < 28))
-    {
-    tv.tv_sec<<=1;
-    tv.tv_usec<<=1;
-    tv.tv_sec+=(tv.tv_usec/1000000L);
-    tv.tv_usec%=1000000L;
-    itersize++;
-    }
-
-
-  LogScreenRaw(
-  "The preferred %s blocksize for this machine should be set to %d (%d*2^28 keys).\n"
-  "At the benchmarked keyrate (ie, under ideal conditions) each processor\n"
-  "would finish a block of that size in approximately %s.\n", contestname, 
-   (unsigned int)itersize, (unsigned int)((((u32)(1<<itersize))/((u32)(1<<28)))),
-   CliGetTimeString( &tv, 2 ));  
-
-  #if 0 //for proof-of-concept testing plehzure...
-  //what follows is probably true for all processors, but oh well...
-  u32 krate = ((contest==2)?(451485):(127254)); //real numbers for a 90Mhz P5
-  u32 prate = 90;
-
-  LogScreenRaw( 
-  "If this client is running on a cooperative multitasking system, then a good\n"
-  "%s timeslice setting may be determined by dividing the benchmarked rate by\n"
-  "the processor clock rate in MHz. For example, if the %s keyrate is %d\n"
-  "and this is %dMHz machine, then an ideal %s timeslice would be about %u.\n", 
-  contestname, contestname, (int)(krate), (int)(prate), contestname, 
-                                         (int)(((krate)+(prate>>1))/prate) );
-  #endif  
+  static unsigned int level = 0; //incrementing so messages are not repeated
+            //0 = show copyright/version,  1 = show startup message
   
-  return (u32)(rate);
-}
-
-// ---------------------------------------------------------------------------
-
-static int IsFilenameValid( const char *filename )
-{ return ( filename && *filename != 0 && strcmp( filename, "none" ) != 0 ); }
-
-static int DoesFileExist( const char *filename )
-{
-  if ( !IsFilenameValid( filename ) )
-    return 0;
-  return ( access( GetFullPathForFilename( filename ), 0 ) == 0 );
-}
-
-// ---------------------------------------------------------------------------
-
-#if defined(MULTITHREAD)
-void Go_mt( void * parm )
-{
-// Serve both problem[cpunum] and problem[cpunum+numcputemp] until interrupted.
-// 2 are used to avoid stalls when network traffic becomes required.
-// The main thread of execution will remove finished blocks &
-// insert new ones.
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
-  char * FAR *argv = (char * FAR *) parm;
-  #elif (CLIENT_OS == OS_NETWARE)
-  char * *argv = (char * *) parm;
-  #else
-  char * *argv = (char * *) parm;
-  sigset_t signals_to_block;
-  #endif
-  s32 tempi2;
-  s32 numcputemp;
-  s32 timeslice;
-  u32 run;
-  s32 niceness;
-
-  #if (CLIENT_OS == OS_WIN32)
-  DWORD LAffinity, LProcessAffinity, LSystemAffinity;
-  OSVERSIONINFO osver;
-  #endif
-
-  tempi2 = atol(argv[0]);
-  numcputemp = atol(argv[1]);
-  timeslice = atol(argv[2]);
-  niceness = atol(argv[3]);
-//LogScreen("tempi2: %d\n",tempi2);
-//LogScreen("numcpu: %d\n",numcputemp);
-//LogScreen("timeslice: %d\n",timeslice);
-//LogScreen("niceness: %d\n",niceness);
-
-
-#if (CLIENT_OS == OS_WIN32)
-  if (niceness == 0)
-    SetThreadPriority(GetCurrentThread(),THREAD_PRIORITY_IDLE);
-
-  osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
-  GetVersionEx(&osver);
-  if ((VER_PLATFORM_WIN32_NT == osver.dwPlatformId) && (numcputemp > 1))
-  {
-    if (GetProcessAffinityMask(GetCurrentProcess(), &LProcessAffinity, &LSystemAffinity))
-    {
-      LAffinity = 1L << tempi2;
-      if (LProcessAffinity & LAffinity)
-        SetThreadAffinityMask(GetCurrentThread(), LAffinity);
-    }
-  }
-#elif (CLIENT_OS == OS_NETWARE)
-  {
-  nwCliInitializeThread( tempi2+1 ); //in netware.cpp
-  }
-#elif (CLIENT_OS == OS_OS2)
-#elif (CLIENT_OS == OS_BEOS)
-#else
-  sigemptyset(&signals_to_block);
-  sigaddset(&signals_to_block, SIGINT);
-  sigaddset(&signals_to_block, SIGTERM);
-  sigaddset(&signals_to_block, SIGKILL);
-  sigaddset(&signals_to_block, SIGHUP);
-  pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL);
-#endif
-
-  while (!CheckExitRequestTriggerNoIO())
-    {
-    for (s32 tempi = tempi2; tempi < 2*numcputemp ; tempi += numcputemp)
-      {
-      run = 0;
-      while (!CheckExitRequestTriggerNoIO() && (run == 0))
-        {
-        if (CheckPauseRequestTriggerNoIO()) 
-          {
-          run = 0;
-          sleep( 1 ); // don't race in this loop
-          }
-        else
-          {
-          #if (CLIENT_OS == OS_NETWARE)
-              //sets up and uses a polling procedure that runs as
-              //an OS callback when the system enters an idle loop.
-          run = nwCliRunProblemAsCallback( &(problem[tempi]), tempi2, niceness );
-          #else
-          // This will return without doing anything if uninitialized...
-          run = (problem[tempi]).Run( tempi2 ); //threadnum
-          #endif
-          } 
-        }
-      }
-    sleep( 1 ); 
-    }
-  #if (CLIENT_OS == OS_BEOS)
-  exit(0);
-  #endif
-}
-#endif
-
-// ---------------------------------------------------------------------------
-
-// returns:
-//    -2 = exit by error (all contests closed)
-//    -1 = exit by error (critical)
-//     0 = exit for unknown reason
-//     1 = exit by user request
-//     2 = exit by exit file check
-//     3 = exit by time limit expiration
-//     4 = exit by block count expiration
-s32 Client::Run( void )
-{
-  FileEntry fileentry;
-  RC5Result rc5result;
-
-#if defined(MULTITHREAD)
-  char buffer[MAXCPUS][4][40];
-  #if (CLIENT_OS == OS_BEOS)
-    static char * thstart[MAXCPUS][4];
-  #else
-    char * thstart[MAXCPUS][4];
-  #endif
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_NETWARE)
-    unsigned long threadid[MAXCPUS];
-  #elif (CLIENT_OS == OS_BEOS)
-    thread_id threadid[MAXCPUS];
-    char thread_name[32];
-    char thread_error;
-    long be_priority;
-    static status_t be_exit_value;
-  #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
-    pthread_attr_t thread_sched[MAXCPUS];
-    pthread_t threadid[MAXCPUS];
-  #else
-    pthread_t threadid[MAXCPUS];
-  #endif
-#endif
-
-  s32 count = 0, nextcheckpointtime = 0;
-  s32 TimeToQuit = 0, getbuff_errs = 0;
-
-  #if (CLIENT_OS == OS_WIN32) && defined(NEEDVIRTUALMETHODS)
-    connectrequested = 0;         // uses public class member
-  #else
-    u32 connectrequested = 0;
-  #endif
-  u32 connectloops = 0;
-
-  s32 cpu_i;
-  s32 exitchecktime;
-  s32 tmpcontest;
-  s32 exitcode = 0;
-
-  if ( contestdone[0] && contestdone[1])
-    {
-    Log( "Both contests are marked as over.  Correct the ini file and restart\n" );
-    Log( "This may mean the contests are over.  Check at http://www.distributed.net/rc5/\n" );
-    return (-2);
-    }
-
-  // --------------------------------------
-  // Recover blocks from checkpoint files
-  // --------------------------------------
-
-  if ( DoesFileExist( checkpoint_file[0] ) )
-    {
-    s32 recovered = CkpointToBufferInput(0); // Recover any checkpointed information in case we abnormally quit.
-    if (recovered != 0) Log("Recovered %d block%s from RC5 checkpoint file\n",recovered,recovered==1?"":"s");
-    }
-  if ( DoesFileExist( checkpoint_file[1] ) )
-    {
-    s32 recovered = CkpointToBufferInput(1); // Recover any checkpointed information in case we abnormally quit.
-    if (recovered != 0) Log("Recovered %d block%s from DES checkpoint file\n",recovered,recovered==1?"":"s");
-    }
-
-  // --------------------------------------
-  // Select an appropriate core, niceness and timeslice setting
-  // --------------------------------------
-
-  if (SelectCore())
-    return -1;
-
-  #if (CLIENT_CPU == CPU_POWERPC) //this should be in SelectCore()
-  switch (whichcrunch)
-    {
-    case 0:
-      Log("Using the 601 core.\n\n");
-      break;
-    case 1:
-      Log("Using the 603/604/750 core.\n\n");
-      break;
-  }
-#endif
-
-  SetNiceness();
-
-  // --------------------------------------
-  // Initialize the timers
-  // --------------------------------------
-
-  timeStarted = time( NULL );
-  exitchecktime = timeStarted + 5;
-
-  // --------------------------------------
-  // Determine the number of problems to work with. Number is used everywhere.
-  // --------------------------------------
-
-  int load_problem_count = 1;
-  #ifdef MULTITHREAD
-    if (numcputemp == 0) //multithread compile but user requests non-mt
-      numcputemp = 1;
-    #if (CLIENT_OS == OS_NETWARE)
-    else if (numcputemp == 1) //NetWare client prefers non-MT if only one 
-      load_problem_count = 1; //thread/processor is to used
-    #endif
-    else
-      load_problem_count = 2*numcputemp;
-  #endif
-
-  // --------------------------------------
-  // Set up initial state of each problem[]...
-  // uses 2 active buffers per CPU to avoid stalls
-  // --------------------------------------
-
-  for (cpu_i = 0; cpu_i < load_problem_count; cpu_i++ )
-  {
-#if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
-    if (((cpu_i%numcputemp)>=2)
-#if ((CLIENT_CPU == CPU_X86) && defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS))
-      && (des_unit_func!=des_unit_func_mmx) // we're not using the mmx cores
-#endif
-      )
-    {
-      // Not the 1st or 2nd cracking thread...
-      // Must do RC5.  DES x86 cores aren't multithread safe.
-      // Note that if rc5 contest is over, this will return -2...
-      count = GetBufferInput( &fileentry , 0);
-      if (contestdone[0])
-        count = -2; //means that this thread won't actually start
-    }
-    else
-#endif
-    {
-      if (getbuff_errs == 0)
-      {
-        if (!contestdone[ (int) preferred_contest_id ])
-        {
-          // Neither contest is done...
-          count = GetBufferInput( &fileentry , (u8) preferred_contest_id);
-          if (contestdone[ (int) preferred_contest_id ]) // This contest just finished.
-          {
-            goto PreferredIsDone1;
-          }
-          else
-          {
-            if (count == -3)
-            {
-              // No DES blocks available while in offline mode.  Do rc5...
-              count = GetBufferInput( &fileentry , (u8) ( ! preferred_contest_id));
-            }
-          }
-        }
-        else
-        {
-          // Preferred contest is done...
-PreferredIsDone1:
-          count = GetBufferInput( &fileentry , (u8) ( ! preferred_contest_id));
-          if (contestdone[ ! preferred_contest_id ])
-          {
-            // This contest just finished.
-            count = -2; // Both contests finished!
-          }
-        }
-      }
-    }
-
-    if (count == -1)
-    {
-      getbuff_errs++;
-    }
-    else if ((!nonewblocks) && (count != -2))
-    {
-      // LoadWork expects things descrambled.
-      Descramble( ntohl( fileentry.scramble ),
-                     (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-      // If a block was finished with an 'odd' number of keys done, then make it redo the last
-      // key -- this will prevent a 2-pipelined core from looping forever.
-      if ((ntohl(fileentry.iterations.lo) & 0x00000001L) == 1)
-      {
-        fileentry.iterations.lo = htonl((ntohl(fileentry.iterations.lo) & 0xFFFFFFFEL) + 1);
-        fileentry.key.lo = htonl(ntohl(fileentry.key.lo) & 0xFEFFFFFFL);
-      }
-      if (fileentry.contest != 1)
-        fileentry.contest=0;
-
-      // If this is a partial block, and completed by a different cpu/os/build, then
-      // reset the keysdone to 0...
-      {
-        if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) )
-        {
-         if ((fileentry.cpu     != FILEENTRY_CPU) ||
-             (fileentry.os      != FILEENTRY_OS) ||
-             (fileentry.buildhi != FILEENTRY_BUILDHI) || 
-             (fileentry.buildlo != FILEENTRY_BUILDLO))
-          {
-            fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
-            LogScreen("[%s] Read partial block from another cpu/os/build.\n",Time());
-            LogScreen("[%s] Marking entire block as unchecked.\n",Time());
-          }
-        }
-      }
-
-      {
-        if (cpu_i==0 && load_problem_count>1)
-          Log( "[%s] %s\n", CliGetTimeString(NULL,1),
-                                  "Loading two blocks per thread...");
-
-        Log( "[%s] %s\n", CliGetTimeString(NULL,1),
-                       CliGetMessageForFileentryLoaded( &fileentry ) );
-
-        //only display the "remaining blocks in file" once
-        static char have_loaded_buffers[2]={0,0};
-        have_loaded_buffers[fileentry.contest]=1;
-
-        if (cpu_i == (load_problem_count-1)) //last loop?
-        {
-          if (load_problem_count == 2)
-            Log("[%s] 1 Child thread has been started.\n", Time());
-          else if (load_problem_count > 2)
-            Log("[%s] %d Child threads ('A'%s'%c') have been started.\n",
-              Time(), load_problem_count>>1,
-              ((load_problem_count>4)?("-"):(" and ")),
-              'A'+((load_problem_count>>1)-1));
-
-          for (s32 tmpc = 0; tmpc < 2; tmpc++) //once for each contest
-          {
-            if (have_loaded_buffers[(int) tmpc]) //load any of this type?
-            {
-              int in = (int) CountBufferInput((u8) tmpc);
-              int out = (int) CountBufferOutput((u8) tmpc);
-              Log( "[%s] %d %s block%s remain%s in file %s\n", CliGetTimeString(NULL,1),
-                in,
-                CliGetContestNameFromID((int) tmpc),
-                in == 1 ? "" : "s",
-                in == 1 ? "s" : "",
-                (nodiskbuffers ? "(memory-in)" :
-#ifdef DONT_USE_PATHWORK
-                ini_in_buffer_file[(int) tmpc]));
-#else
-                in_buffer_file[(int) tmpc]));
-#endif
-              Log( "[%s] %d %s block%s %s in file %s\n", CliGetTimeString(NULL,1),
-                out,
-                CliGetContestNameFromID((int) tmpc),
-                out == 1 ? "" : "s",
-                out == 1 ? "is" : "are",
-                (nodiskbuffers ? "(memory-out)" :
-#ifdef DONT_USE_PATHWORK
-                ini_out_buffer_file[(int) tmpc]));
-#else
-                out_buffer_file[(int) tmpc]));
-#endif
-            }
-          }
-        }
-      }
-
-      (problem[(int) cpu_i]).LoadState( (ContestWork *) &fileentry , 
-               (u32) (fileentry.contest), timeslice, cputype );
-
-      //----------------------------
-      //spin off a thread for this problem
-      //----------------------------
-
-#if defined(MULTITHREAD)  //this is the last time we use the MULTITHREAD define. 
-  #undef MULTITHREAD //protect against abuse lower down. A client can be mt capable
-  //but be running single threaded, so we need to check (load_problem_count > 1)
-  //and not whether its mt capable or not.
-      {
-        //Only launch a thread if we have really loaded 2*threadcount buffers
-        if ((load_problem_count > 1) && (cpu_i < numcputemp))
-        {
-          // Start the thread for this cpu
-          sprintf(buffer[cpu_i][0],"%d",(int)cpu_i);
-          sprintf(buffer[cpu_i][1],"%d",(int)numcputemp);
-          sprintf(buffer[cpu_i][2],"%d",(int)timeslice);
-          sprintf(buffer[cpu_i][3],"%d",(int)niceness);
-          thstart[cpu_i][0] = &buffer[cpu_i][0][0];
-          thstart[cpu_i][1] = &buffer[cpu_i][1][0];
-          thstart[cpu_i][2] = &buffer[cpu_i][2][0];
-          thstart[cpu_i][3] = &buffer[cpu_i][3][0];
-#if (CLIENT_OS == OS_WIN32)
-          threadid[cpu_i] = _beginthread( Go_mt, 8192, thstart[cpu_i]);
-          //if ( threadid[cpu_i] == 0)
-          //  threadid[cpu_i] = NULL; //0
-#elif (CLIENT_OS == OS_OS2)
-          threadid[cpu_i] = _beginthread( Go_mt, NULL, 8192, thstart[cpu_i]);
-          if ( threadid[cpu_i] == -1)
-            threadid[cpu_i] = NULL; //0
-#elif (CLIENT_OS == OS_NETWARE)
-          threadid[cpu_i] = BeginThread( Go_mt, NULL, 8192, thstart[cpu_i]);
-          if ( threadid[cpu_i] == -1)
-            threadid[cpu_i] = NULL; //0
-#elif (CLIENT_OS == OS_BEOS)
-          switch(niceness)
-          {
-            case 0: be_priority = B_LOW_PRIORITY; break;
-            case 1: be_priority = (B_LOW_PRIORITY + B_NORMAL_PRIORITY) / 2; break;
-            case 2: be_priority = B_NORMAL_PRIORITY; break;
-            default: be_priority = B_LOW_PRIORITY; break;
-          }
-          sprintf(thread_name, "RC5DES crunch#%d", cpu_i + 1);
-          threadid[cpu_i] = spawn_thread((long (*)(void *)) Go_mt, thread_name,
-                be_priority, (void *)thstart[cpu_i]);
-          thread_error = (threadid[cpu_i] < B_NO_ERROR);
-          if (!thread_error)
-            thread_error =  (resume_thread(threadid[cpu_i]) != B_NO_ERROR);
-          if (thread_error)
-            threadid[cpu_i] = NULL; //0
-#elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
-          pthread_attr_init(&thread_sched[cpu_i]);
-          pthread_attr_setscope(&thread_sched[cpu_i],PTHREAD_SCOPE_SYSTEM);
-          pthread_attr_setinheritsched(&thread_sched[cpu_i],PTHREAD_INHERIT_SCHED);
-          if (pthread_create( &threadid[cpu_i], &thread_sched[cpu_i], (void *(*)(void*)) Go_mt, thstart[cpu_i]) )
-            threadid[cpu_i] = (pthread_t) NULL; //0
-#else
-          #define USING_POSIX_THREADS //so we can stop later without using MULTITHREAD
-          if (pthread_create( &threadid[cpu_i], NULL, (void *(*)(void*)) Go_mt, thstart[cpu_i]) )
-            threadid[cpu_i] = (pthread_t) NULL; //0
-#endif
-
-          if ( !threadid[cpu_i] )
-          {
-            Log("[%s] Could not start child thread '%c'.\n",Time(),cpu_i+'A');
-
-            numcputemp = cpu_i+1;            //# of threads already loaded
-
-            if ( cpu_i == 0 ) //was it the first thread that failed?
-            {
-              load_problem_count = 1; //then switch to non-threaded mode
-              Log("[%s] Switching to single-threaded mode.\n", Time());
-              break;
-            }
-            else
-            {
-              load_problem_count = numcputemp * 2; //resize ourselves
-              
-              fileentry.contest = (u8) (problem[(int)cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
-              fileentry.op = htonl( OP_DATA );
-
-              fileentry.cpu     = FILEENTRY_CPU;
-              fileentry.os      = FILEENTRY_OS;
-              fileentry.buildhi = FILEENTRY_BUILDHI; 
-              fileentry.buildlo = FILEENTRY_BUILDLO;
-
-              fileentry.checksum =
-                  htonl( Checksum( (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 2 ) );
-              Scramble( ntohl( fileentry.scramble ),
-                         (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-              PutBufferInput( &fileentry );  // send it back...
-            }
-          }
-        }
-      }
-#endif
-    } //if ((!nonewblocks) && (count != -2))
-  } //for (cpu_i = 0; cpu_i < load_problem_count; cpu_i ++)
-
-
-  //------------------------------------
-  // display the percent bar so the user sees some action
-  //------------------------------------
-
-  if (!percentprintingoff)
-    LogScreenPercent( load_problem_count ); //logstuff.cpp
-
-  //============================= MAIN LOOP =====================
-  //now begin looping until we have a reason to quit
-  //------------------------------------
-
-  // -- cramer - until we have a better way of telling how many blocks
-  //             are loaded and if we can get more, this is gonna be a
-  //             a little complicated.  getbuff_errs and nonewblocks
-  //             control the exit process.  getbuff_errs indicates the
-  //             number of attempts to load new blocks that failed.
-  //             nonewblocks indcates that we aren't get anymore blocks.
-  //             Together, they can signal when the buffers have been
-  //             truely exhausted.  The magic below is there to let
-  //             the client finish processing those blocks before exiting.
-
-  // Start of MAIN LOOP
-  while (TimeToQuit == 0)
-  {
-    //------------------------------------
-    //Do keyboard stuff for clients that allow user interaction during the run
-    //------------------------------------
-
-    #if ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)) && !defined(NEEDVIRTUALMETHODS)
-    {
-      while ( kbhit() )
-      {
-        int hitchar = getch();
-          if (hitchar == 0) //extended keystroke
-            getch();
-          else
-          {
-            if (hitchar == 3 || hitchar == 'X' || hitchar == 'x' || hitchar == '!')
-            {
-              // exit after current blocks
-              if (blockcount > 0)
-              {
-                blockcount = min(blockcount, (s32) (totalBlocksDone[0] + totalBlocksDone[1] + numcputemp));
-              } else {
-                blockcount = (s32) (totalBlocksDone[0] + totalBlocksDone[1] + numcputemp);
-              }
-              Log("Exiting after current block\n");
-              exitcode = 1;
-            }
-            if ((load_problem_count > 1) && (hitchar == 'u' || hitchar == 'U'))
-            {
-              Log("Keyblock Update forced\n");
-              connectrequested = 1;
-            }
-          }
-        }
-    }
-    #endif
-
-    //------------------------------------
-    //special update request (by keyboard or by lurking) handling
-    //------------------------------------
-
-    if (load_problem_count > 1)  //ie multi-threaded
-      {
-      if ((connectoften && ((connectloops++)==19)) || (connectrequested > 0) )
-        {
-        // Connect every 20*3=60 seconds
-        // Non-MT 60 + (time for a client.run())
-        connectloops=0;
-        if (connectrequested == 1) // forced update by a user
-          {
-          Update(0 ,1,1,1);  // RC5 We care about the errors, force update.
-          Update(1 ,1,1,1);  // DES We care about the errors, force update.
-          LogScreen("Keyblock Update completed.\n");
-          connectrequested=0;
-          }
-        else if (connectrequested == 2) // automatic update
-          {
-          Update(0 ,0,0);  // RC5 We don't care about any of the errors.
-          Update(1 ,0,0);  // DES 
-          connectrequested=0;
-          }
-        else if (connectrequested == 3) // forced flush
-          {
-          Flush(0,NULL,1,1); // Show errors, force flush
-          Flush(1,NULL,1,1);
-          LogScreen("Flush request completed.\n");
-          connectrequested=0;
-          }
-        else if (connectrequested == 4) // forced fetch
-          {
-          Fetch(0,NULL,1,1); // Show errors, force fetch
-          Fetch(1,NULL,1,1);
-          LogScreen("Fetch request completed.\n");
-          connectrequested=0;
-          };
-        }
-      }
-
-    //------------------------------------
-    // Lurking
-    //------------------------------------
-
-#if defined(LURK)
-if(dialup.lurkmode) // check to make sure lurk mode is enabled
-  connectrequested=dialup.CheckIfConnectRequested();
-#endif
-
-    //------------------------------------
-    //sleep, run or pause...
-    //------------------------------------
-
-    if (load_problem_count > 1) //ie multi-threaded
-      {
-      // prevent the main thread from racing & bogging everything down.
-      sleep(3);
-      }
-    else if (CheckPauseRequestTrigger()) //threads have their own sleep section
-      {
-      #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-        SurrenderCPU();
-      #elif (CLIENT_OS != OS_DOS)
-        sleep(1);
-      #endif
-      }
-    else //only one problem and we are not paused
-      {
-      //Actually run a problem
-      #if (CLIENT_OS == OS_NETWARE)
-        {
-        //sets up and uses a polling procedure that runs as
-        //an OS callback when the system enters an idle loop.
-        nwCliRunProblemAsCallback( &(problem[0]), 0 , niceness );
-        }
-      #else
-        {
-        (problem[0]).Run( 0 ); //threadnum
-        #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-        SurrenderCPU();
-        #endif
-        }
-      #endif //if non-mt, netware or not
-      }
-   
-
-    //------------------------------------
-    //update the status bar
-    //------------------------------------
-
-    if (!percentprintingoff)
-      LogScreenPercent( load_problem_count ); //logstuff.cpp
-
-
-    //------------------------------------
-    //now check all problems for change, do checkpointing, reloading etc
-    //------------------------------------
-
-    for (cpu_i = 0; ((!CheckPauseRequestTrigger()) && (!CheckExitRequestTrigger()) 
-                    && (cpu_i < load_problem_count)); cpu_i++)
-    {
-
-      // -------------
-      // check for finished blocks that need reloading
-      // -------------
-
-      // Did any threads finish a block???
-      if ((problem[(int) cpu_i]).finished == 1)
-      {
-      #if defined(BETA)
-      if (checkifbetaexpired() > 0) RaiseExitRequestTrigger();
-      #endif
-        (problem[(int) cpu_i]).GetResult( &rc5result );
-
-        //-----------------
-        //only do something if RESULT_FOUND or RESULT_NOTHING
-        //Q: when can it be finished AND result_working?
-        //-----------------
-
-        if ((rc5result.result == RESULT_FOUND) || (rc5result.result == RESULT_NOTHING))
-        {
-          //---------------------
-          //print the keyrate and update the totals for this contest
-          //---------------------
-
-          {
-            Log( "\n[%s] %s", CliGetTimeString(NULL,1), /* == Time() */
-                   CliGetMessageForProblemCompleted( &(problem[(int) cpu_i]) ) );
-          }
-
-          //----------------------------------------
-          // Figure out which contest block was from, and increment totals
-          //----------------------------------------
-
-          tmpcontest = (u8) (problem[(int) cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
-
-          totalBlocksDone[(int) tmpcontest]++;
-
-          //----------------------------------------
-          // Print contest totals
-          //----------------------------------------
-
-          // Detect/report any changes to the total completed blocks...
-
-
-          {
-          //display summaries only of contests w/ more than one block done
-          int i = 1;
-          for (s32 tmpc = 0; tmpc < 2; tmpc++)
-            {
-              if (totalBlocksDone[(int) tmpc] > 0)
-                {
-                  Log( "%c%s%c Summary: %s\n",
-                       ((i == 1) ? ('[') : (' ')), CliGetTimeString(NULL, i),
-                       ((i == 1) ? (']') : (' ')), CliGetSummaryStringForContest((int) tmpc) );
-                  if ((--i) < 0) i = 0;
-                }
-            }
-          }
-
-          //---------------------
-          //put the completed problem away
-          //---------------------
-
-          tmpcontest = fileentry.contest = (u8) (problem[(int) cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
-
-          // make it into a reply
-          if (rc5result.result == RESULT_FOUND)
-          {
-            consecutivesolutions[fileentry.contest]++;
-            if (keyport == 3064)
-                LogScreen("Success\n");
-            fileentry.op = htonl( OP_SUCCESS_MULTI );
-            fileentry.key.lo = htonl( ntohl( fileentry.key.lo ) +
-                                ntohl( fileentry.keysdone.lo ) );
-          }
-          else
-          {
-            if (keyport == 3064)
-              LogScreen("Success was not detected!\n");
-            fileentry.op = htonl( OP_DONE_MULTI );
-          }
-
-          fileentry.os = CLIENT_OS;
-          fileentry.cpu = CLIENT_CPU;
-          fileentry.buildhi = CLIENT_CONTEST;
-          fileentry.buildlo = CLIENT_BUILD;
-          strncpy( fileentry.id, id , sizeof(fileentry.id)-1); // set id for this block
-          fileentry.id[sizeof(fileentry.id)-1]=0;  // in case id>58 bytes, truncate.
-
-          fileentry.checksum =
-              htonl( Checksum( (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 2 ) );
-          Scramble( ntohl( fileentry.scramble ),
-                     (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-
-          // send it back...
-          if ( PutBufferOutput( &fileentry ) == -1 )
-            {
-            Log( "PutBuffer Error\n" );
-
-            // Block didn't get put into a buffer, subtract it from the count.
-            totalBlocksDone[(int)tmpcontest]--;
-            };
-
-          //---------------------
-          //delete the checkpoint file, info is outdated
-          //---------------------
-
-          // Checkpoint info just became outdated...
-
-          if ( DoesFileExist( checkpoint_file[0] ) )
-            EraseCheckpointFile(checkpoint_file[0]); //buffwork.cpp
-          if ( DoesFileExist( checkpoint_file[1] ) )
-            EraseCheckpointFile(checkpoint_file[1]); //buffwork.cpp
-
-          //---------------------
-          // See if the request to quit after the completed block
-          //---------------------
-          if(exitcode == 1) TimeToQuit=1; // Time to quit
-
-          //---------------------
-          //now load another block for this contest
-          //---------------------
-
-          // Get another block...
-
-#if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
-          if (((cpu_i%numcputemp)>=2)
-#if ((CLIENT_CPU == CPU_X86) && defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS))
-       && (des_unit_func!=des_unit_func_mmx) // we're not using the mmx cores
-#endif
-          )
-          {
-              // Not the 1st or 2nd cracking thread...
-              // Must do RC5.  DES x86 cores aren't multithread safe.
-              // Note that if rc5 contest is over, this will return -2...
-              count = GetBufferInput( &fileentry , 0);
-            if (contestdone[0])
-              count = -2;
-          }
-          else
-#endif
-          {
-            if (getbuff_errs == 0)
-            {
-              if (!contestdone[ (int) preferred_contest_id ])
-              {
-                // Neither contest is done...
-                count = GetBufferInput( &fileentry , (u8) preferred_contest_id);
-                if (contestdone[ (int) preferred_contest_id ]) // This contest just finished.
-                {
-                  goto PreferredIsDone2;
-                }
-                else
-                {
-                  if (count == -3)
-                  {
-                    // No DES blocks available while in offline mode.  Do rc5...
-                    count = GetBufferInput( &fileentry , (u8) ( ! preferred_contest_id));
-                  }
-                }
-              }
-              else
-              {
-                // Preferred contest is done...
-      PreferredIsDone2:
-                count = GetBufferInput( &fileentry , (u8) ( ! preferred_contest_id));
-                if (contestdone[ ! preferred_contest_id ])
-                {
-                  // This contest just finished.
-                  count = -2; // Both contests finished!
-                }
-              }
-            }
-            else if (nonewblocks) getbuff_errs++; // cramer magic #1 (mt)
-          }
-
-          if (count < 0)
-          {
-            getbuff_errs++; // cramer magic #2 (non-mt)
-            if (!nonewblocks)
-            {
-              TimeToQuit=1; // Force blocks to be saved
-              exitcode = -2;
-              continue;  //break out of the next cpu_i loop
-            }
-          }
-
-          //---------------------
-          // correct any potential problems in the freshly loaded fileentry
-          //---------------------
-
-          if (!nonewblocks)
-          {
-            // LoadWork expects things descrambled.
-            Descramble( ntohl( fileentry.scramble ),
-                       (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-            // If a block was finished with an 'odd' number of keys done, then make it redo the last
-            // key -- this will prevent a 2-pipelined core from looping forever.
-            if ((ntohl(fileentry.iterations.lo) & 0x00000001L) == 1)
-            {
-              fileentry.iterations.lo = htonl((ntohl(fileentry.iterations.lo) & 0xFFFFFFFEL) + 1);
-              fileentry.key.lo = htonl(ntohl(fileentry.key.lo) & 0xFEFFFFFFL);
-            }
-            if (fileentry.contest != 1)
-              fileentry.contest=0;
-
-            // If this is a partial block, and completed by a different
-            // cpu/os/build, then reset the keysdone to 0...
-            {
-              if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) )
-              {
-                if ((fileentry.cpu     != FILEENTRY_CPU) ||
-                    (fileentry.os      != FILEENTRY_OS) ||
-                    (fileentry.buildhi != FILEENTRY_BUILDHI) || 
-                    (fileentry.buildlo != FILEENTRY_BUILDLO))
-                {
-                  fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
-                  LogScreen("[%s] Read partial block from another cpu/os/build.\n",Time());
-                  LogScreen("[%s] Marking entire block as unchecked.\n",Time());
-                }
-              }
-            }
-          }
-
-          //---------------------
-          // display the status of the file buffers
-          //---------------------
-
-          if (!nonewblocks)
-          {
-            int outcount = (int) CountBufferOutput((u8) fileentry.contest);
-            Log( "[%s] %s\n", CliGetTimeString(NULL,1), /* == Time() */
-                              CliGetMessageForFileentryLoaded( &fileentry ) );
-            Log( "[%s] %d %s block%s remain%s in file %s\n"
-                 "[%s] %d %s block%s %s in file %s\n",
-                 CliGetTimeString(NULL,1), count, CliGetContestNameFromID(fileentry.contest),
-                 count == 1 ? "" : "s", count == 1 ? "s" : "",
-                 (nodiskbuffers ? "(memory-in)" :
-#ifdef DONT_USE_PATHWORK
-                 ini_in_buffer_file[(int)fileentry.contest]),
-#else
-                 in_buffer_file[(int)fileentry.contest]),
-#endif
-                 CliGetTimeString(NULL,1), outcount, CliGetContestNameFromID(fileentry.contest),
-                 outcount == 1 ? "" : "s", outcount == 1 ? "is" : "are",
-                 (nodiskbuffers ? "(memory-out)" :
-#ifdef DONT_USE_PATHWORK
-                 ini_out_buffer_file[(int)fileentry.contest]) );
-#else
-                 out_buffer_file[(int)fileentry.contest]) );
-#endif
-          }
-
-          //---------------------
-          // now load the problem with the fileentry
-          //---------------------
-          if (!nonewblocks)
-            (problem[(int)cpu_i]).LoadState( (ContestWork *) &fileentry , 
-               (u32) (fileentry.contest), timeslice, cputype );
-
-        } // end (if 'found' or 'nothing')
-
-        DoCheckpoint( load_problem_count );
-      } // end(if finished)
-    } // endfor(cpu_i)
-
-    //----------------------------------------
-    // Check for time limit...
-    //----------------------------------------
-
-    if ( ( minutes > 0 ) &&
-           (s32) ( time( NULL ) > (s32) ( timeStarted + ( 60 * minutes ) ) ) )
-    {
-      Log( "\n[%s] Shutdown - %u.%02u hours expired\n", Time(), minutes/60, (minutes%60) );
-      TimeToQuit = 1;
-      exitcode = 3;
-    }
-
-    //----------------------------------------
-    // Check for user break
-    //----------------------------------------
-
-    if ( CheckExitRequestTrigger() )
-    {
-      Log( "\n[%s] Shutdown message received - Block being saved.\n", Time() );
-      TimeToQuit = 1;
-      exitcode = 1;
-    }
-
-    //----------------------------------------
-    // Check for 32 consecutive solutions
-    //----------------------------------------
-
-    for (int tmpc = 0; tmpc < 2; tmpc++)
-    {
-      const char *contname = CliGetContestNameFromID( tmpc ); //clicdata.cpp
-      if ((consecutivesolutions[tmpc] >= 32) && !contestdone[tmpc])
-      {
-        Log( "\n[%s] Too many consecutive %s solutions detected.\n", Time(), contname );
-        Log( "[%s] Either the contest is over, or this client is pointed at a test port.\n", Time() );
-        Log( "[%s] Marking %s contest as over\n", Time(), contname );
-        Log( "[%s] Further %s blocks will not be processed.\n", Time(), contname );
-        contestdone[tmpc] = 1;
-        WriteContestandPrefixConfig( );
-      }
-    }
-    if (contestdone[0] && contestdone[1])
-    {
-      TimeToQuit = 1;
-      Log( "\n[%s] Both RC5 and DES are marked as finished.\n", Time() );
-      exitcode = -2;
-    }
-
-    //----------------------------------------
-    // Has -runbuffers exhausted all buffers?
-    //----------------------------------------
-
-    // cramer magic (voodoo)
-    if (nonewblocks > 0 && (getbuff_errs >= load_problem_count))
-    {
-      TimeToQuit = 1;
-      exitcode = 4;
-    }
-
-    //----------------------------------------
-    // Reached the -b limit?
-    //----------------------------------------
-
-    // Done enough blocks?
-    if ( ( blockcount > 0 ) && ( totalBlocksDone[0]+totalBlocksDone[1] >= (u32) blockcount ) )
-      {
-      Log( "[%s] Shutdown - %d blocks completed\n", Time(), (u32) totalBlocksDone[0]+totalBlocksDone[1] );
-      TimeToQuit = 1;
-      exitcode = 4;
-      }
-
-    if (!TimeToQuit && CheckExitRequestTrigger())
-      {
-      TimeToQuit = 1;
-      exitcode = 2;
-      }
-
-    //----------------------------------------
-    // Are we quitting?
-    //----------------------------------------
-
-    if ( TimeToQuit )
-    {
-      // ----------------
-      // Shutting down: shut down threads
-      // ----------------
-
-      RaiseExitRequestTrigger(); // will make other threads exit
-
-      if (load_problem_count > 1)  //we have threads running
-        {
-        LogScreen("[%s] Shutting threads down...\n", Time());
-        // Wait for all threads to end...
-        for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
-          {
-#if (CLIENT_OS == OS_OS2)
-          DosWaitThread(&threadid[cpu_i], DCWW_WAIT);
-#elif (CLIENT_OS == OS_WIN32)
-          WaitForSingleObject((HANDLE)threadid[cpu_i], INFINITE);
-#elif (CLIENT_OS == OS_BEOS)
-          wait_for_thread(threadid[cpu_i], &be_exit_value);
-#elif (CLIENT_OS == OS_NETWARE)
-          nwCliWaitForThreadExit( threadid[cpu_i] ); //in netware.cpp
-#elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING) || defined(USING_POSIX_THREADS)
-          pthread_join(threadid[cpu_i], NULL);
-#endif
-          }
-        }
-
-      // ----------------
-      // Shutting down: save problem buffers
-      // ----------------
-
-      for (cpu_i = (load_problem_count - 1); cpu_i >= 0; cpu_i-- )
-      {
-        if ((problem[(int)cpu_i]).IsInitialized())
-        {
-          fileentry.contest = (u8) (problem[(int)cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
-          fileentry.op = htonl( OP_DATA );
-
-          fileentry.cpu     = FILEENTRY_CPU;
-          fileentry.os      = FILEENTRY_OS;
-          fileentry.buildhi = FILEENTRY_BUILDHI; 
-          fileentry.buildlo = FILEENTRY_BUILDLO;
-
-          fileentry.checksum =
-                 htonl( Checksum( (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 2 ) );
-          u32 temphi = ntohl( fileentry.key.hi );
-          u32 templo = ntohl( fileentry.key.lo );
-          u32 percent2 = (u32) ( (double) 10000.0 *
-                           ( (double) ntohl(fileentry.keysdone.lo) /
-                              (double) ntohl(fileentry.iterations.lo) ) );
-          Scramble( ntohl( fileentry.scramble ),
-                       (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-
-          // send it back...
-          if ( PutBufferInput( &fileentry ) == -1 )
-          {
-            Log( "Buffer Error\n" );
-          }
-          else
-          {
-            Log( "[%s] Saved block %08lX:%08lX (%d.%02d percent complete)\n",
-                Time(), (unsigned long) temphi, (unsigned long) templo,
-                percent2/100, percent2%100 );
-          }
-        }
-      } //endfor(cpu_i)
-
-      // ----------------
-      // Shutting down: delete checkpoint files
-      // ----------------
-
-      if ( DoesFileExist( checkpoint_file[0] ) )
-        EraseCheckpointFile(checkpoint_file[0]);
-      if ( DoesFileExist( checkpoint_file[1] ) )
-        EraseCheckpointFile(checkpoint_file[1]);
-
-      // ----------------
-      // Shutting down: do a net flush if we don't have diskbuffers
-      // ----------------
-
-      // no disk buffers -- we had better flush everything.
-      if (nodiskbuffers)
-      {
-        ForceFlush((u8) preferred_contest_id ) ;
-        ForceFlush((u8) ! preferred_contest_id );
-      }
-
-    } // TimeToQuit
-
-    //----------------------------------------
-    // If not quitting, then write checkpoints
-    //----------------------------------------
-
-    if (!TimeToQuit)
-    {
-      // Time to checkpoint?
-      if ((IsFilenameValid( checkpoint_file[0] ) ||
-           IsFilenameValid( checkpoint_file[1] ))
-           && (!nodiskbuffers) && (!CheckPauseRequestTrigger()))
-        {
-       if ( (!TimeToQuit ) && ( ( (s32) time( NULL ) ) > ( (s32) nextcheckpointtime ) ) )
-
-        {
-          nextcheckpointtime = time(NULL) + checkpoint_min * 60;
-          //Checkpoints may be slightly late (a few seconds). However,
-          //this eliminates checkpoint catchup due to pausefiles/clock
-          //changes/other nasty things that change the clock
-          DoCheckpoint(load_problem_count);
-        }
-      } // Checkpointing
-    }
-
-  }  // End of MAIN LOOP
-
-  //======================END OF MAIN LOOP =====================
-
-  if (randomchanged)  
-    WriteContestandPrefixConfig();
-
-  #if (CLIENT_OS == OS_VMS)
-    nice(0);
-  #endif
-  return exitcode;
-}
-
-// ---------------------------------------------------------------------------
-
-void Client::DoCheckpoint( int load_problem_count )
-{
-  FileEntry fileentry;
-
-  for (int j = 0; j < 2; j++)
-  {
-    if ( IsFilenameValid(checkpoint_file[j] ) )
-    {
-      EraseCheckpointFile(checkpoint_file[j]); // Remove prior checkpoint information (if any).
-
-      for (int cpu_i = 0 ; cpu_i < (int) load_problem_count ; cpu_i++)
-      {
-        fileentry.contest = (u8) (problem[cpu_i]).RetrieveState( (ContestWork *) &fileentry , 0 );
-        if (fileentry.contest == j)
-        {
-          fileentry.op = htonl( OP_DATA );
-          fileentry.cpu     = FILEENTRY_CPU;
-          fileentry.os      = FILEENTRY_OS;
-          fileentry.buildhi = FILEENTRY_BUILDHI; 
-          fileentry.buildlo = FILEENTRY_BUILDLO;
-          fileentry.checksum=
-              htonl( Checksum( (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 2 ) );
-          Scramble( ntohl( fileentry.scramble ),
-                      (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-
-          // send it back...
-          if (InternalPutBuffer( this->checkpoint_file[j], &fileentry ) == -1)
-            Log( "Checkpoint Buffer Error\n" );
-        }
-      } //endfor(cpu_i)
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-
-s32 Client::SetContestDoneState( Packet * packet)
-{
-  u32 detect;
-
-  // Set the contestdone state, if possible...
-  // Move contestdone[] from 0->1, or 1->0.
-  detect = 0;
-  if (packet->descontestdone == ntohl(0xBEEFF00DL)) {
-    if (contestdone[1]==0) {detect = 2; contestdone[1] = 1;}
-  } else {
-    if (contestdone[1]==1) {detect = 2; contestdone[1] = 0;}
-  }
-  if (detect == 2) {
-    Log( "Received notification: %s contest %s.\n",
-         (detect == 2 ? "DES" : "RC5"),
-         (contestdone[(int)detect-1]?"is not currently active":"has started") );
-  }
-
-  if (packet->rc564contestdone == ntohl(0xBEEFF00DL)) {
-    if (contestdone[0] == 0) {detect = 1; contestdone[0] = 1;}
-  } else {
-    if (contestdone[0] == 1) {detect = 1; contestdone[0] = 0;}
-  }
-  if (detect == 1) {
-    Log( "Received notification: %s CONTEST %s\n",
-        (detect == 2 ? "DES" : "RC5"),
-        (contestdone[(int)detect-1]?"IS OVER":"HAS STARTED") );
-  }
-
-  if (detect != 0) {
-    WriteContestandPrefixConfig();
-    return 1;
-  }
-  return 0;
-}
-
-// ---------------------------------------------------------------------------
-
-#if !defined(NOMAIN)
-int main( int argc, char *argv[] )
-{
-  // This is the main client object.  we 'new'/malloc it, rather than make 
-  // it static in the hope that people will think twice about using exit()
-  // or otherwise breaking flow. (wanna bet it'll happen anyway?)
-  // The if (success) thing is for nesting without {} nesting.
-  Client *clientP = NULL;
-  int retcode = -1, init_success = 1;
-  
-  //------------------------------
-
-  #if (CLIENT_OS == OS_RISCOS)
-  if (init_success) //protect ourselves
-    {
-    riscos_in_taskwindow = riscos_check_taskwindow();
-    if (riscos_find_local_directory(argv[0])) 
-      init_success = 0;
-    }
-  #endif
-
-  if ( init_success )
-    {
-    init_success = (( clientP = new Client() ) != NULL);
-    if (!init_success) fprintf( stderr, "\nRC5DES: Out of memory.\n" );
-    }
-
-  #if (CLIENT_OS == OS_NETWARE) 
-  //create stdout/screen, set cwd etc. save ptr to client for fnames/niceness
-  if ( init_success )
-    init_success = ( nwCliInitClient( argc, argv, clientP ) == 0);
-  #endif
-
-  if ( init_success )
-    {
-    retcode = clientP->Main( argc, (const char **)argv );
-    #if (CLIENT_OS == OS_AMIGAOS)
-    if (retcode) retcode = 5; // 5 = Warning
-    #endif // (CLIENT_OS == OS_AMIGAOS)
-    }
-  
-  #if (CLIENT_OS == OS_NETWARE)
-  if (init_success)
-    nwCliExitClient(); // destroys AES process, screen, polling procedure
-  #endif
-  
-  if (clientP)
-    delete clientP;
-
-  return (retcode);
-}
-
-//------------------------------------------------------------------------
-
-int Client::Main( int argc, const char *argv[] )
-{
-  int retcode = 0;
-
-  // set up break handlers
-  if (InitializeTriggers(NULL, NULL)==0) //CliSetupSignals();
-    {
-    //get inifilename and get -quiet/-hidden overrides
-    if (ParseCommandline( 0, argc, argv, NULL, &retcode, 0 ) == 0) //change defaults
-      {
-      int inimissing = (ReadConfig() != 0); //reads using defaults
-      InitializeLogging(); //let -quiet take affect
-      PrintBanner(0);
-      if ( ParseCommandline( 2, argc, argv, &inimissing, &retcode, 1 )==0 )
-        {
-        if (inimissing)
-          {
-          if (Configure() ==1 ) 
-            WriteFullConfig(); //full new build
-          }
-        else if ( RunStartup() == 0 ) //also checks the triggers
-          {
-          ValidateConfig();
-          PrintBanner(1);
-          #if defined(BETA)
-          if (checkifbetaexpired() == 0)
-          #endif
-          retcode = (int)Run();
-          RunShutdown();
-          }
-        }
-      DeinitializeLogging();
-      }
-    DeinitializeTriggers();
-    }
-  return retcode;
-}  
-#endif
-
-// --------------------------------------------------------------------------
-
-void Client::PrintBanner( int level )
-{
-  #if (CLIENT_OS == OS_RISCOS)
-  if (guiriscos && guirestart)
-    return;
-  #endif
-
   if (level == 0)
     {
+    level++; //will never print this message again
+
     LogScreenRaw( "\nRC5DES " CLIENT_VERSIONSTRING 
                " client - a project of distributed.net\n"
                "Copyright distributed.net 1997-1998\n" );
@@ -1828,12 +333,11 @@ void Client::PrintBanner( int level )
   
   if ( level == 1 )
     {  
-    #if (CLIENT_OS == OS_RISCOS)
-    if (guirestart) return;
-    #endif
+    level++; //will never print this message again
+
     LogRaw("\nRC5DES Client v2.%d.%d started.\n"
              "Using distributed.net ID %s\n\n",
-             CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,id);
+         CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,dnet_id);
     }
 
   return;
@@ -1841,7 +345,10 @@ void Client::PrintBanner( int level )
 
 // --------------------------------------------------------------------------
 
-#if defined(WINNTSERVICE)
+#if (CLIENT_OS == OS_WIN32) && defined(WINNTSERVICE)
+#define NTSERVICEID "rc5desnt"
+#include <winsvc.h>
+
 static SERVICE_STATUS_HANDLE serviceStatusHandle;
 
 void __stdcall ServiceCtrlHandler(DWORD controlCode)
@@ -1870,16 +377,15 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
 
 // ---------------------------------------------------------------------------
 
-#if defined(WINNTSERVICE)
+#if (CLIENT_OS == OS_WIN32) && defined(WINNTSERVICE)
+static Client *mainclient; 
 
-static Client *mainclient;
-
-#pragma argsused
 void ServiceMain(DWORD Argc, LPTSTR *Argv)
 {
   SERVICE_STATUS serviceStatus;
+  
   serviceStatusHandle = RegisterServiceCtrlHandler(NTSERVICEID,
-      ServiceCtrlHandler);
+                                              ServiceCtrlHandler);
 
   // update our status to running
   serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
@@ -1891,15 +397,17 @@ void ServiceMain(DWORD Argc, LPTSTR *Argv)
   serviceStatus.dwWaitHint = 0;
   SetServiceStatus(serviceStatusHandle, &serviceStatus);
 
-  // start working
-  mainclient->ValidateConfig();
-
-  InitializeTriggers( ((mainclient->noexitfilecheck)?(NULL):
-                      ("exitrc5" EXTN_SEP "now")),mainclient->pausefile);
-  mainclient->InitializeLogging(); //in logstuff.cpp - copies the smtp ini settings over
-  mainclient->Run();
-  mainclient->DeinitializeLogging(); //flush and stop logging to file/mail
-  DeinitializeTriggers();
+  mainclient = new Client();
+  if (mainclient == NULL)
+    {
+    MessageBox( NULL, "Unable to initialize client.\n",
+        "RC5DES", MB_OK | MB_TASKMODAL);
+    }
+  else
+    {
+    mainclient->Main( (int)(Argc), (const char **)Argv, -1 ); //restarted == -1
+    delete mainclient;
+    }
 
   // update our status to stopped
   serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
@@ -1913,39 +421,396 @@ void ServiceMain(DWORD Argc, LPTSTR *Argv)
 }
 #endif
 
+// ---------------------------------------------------------------------
+
+static int RunShutdown(void) { return 0; }
+
+
+// do stuff before calling Run() for the first time
+// returns: non-zero on failure
+
+static int RunStartup(int restarted)
+{
+  int retcode = 0;
+
+  if (restarted == 0)
+    {
+    #if (CLIENT_OS == OS_WIN32) && defined(WINNTSERVICE)
+      {
+      LogScreen("Attempting to start up NT service.\n");
+      //mainclient = this;  //ignored - service must create a new one
+      SERVICE_TABLE_ENTRY serviceTable[] = {
+        {NTSERVICEID, (LPSERVICE_MAIN_FUNCTION) ServiceMain},
+        {NULL, NULL}};
+      if (!StartServiceCtrlDispatcher(serviceTable))
+        {
+        LogScreen("Error starting up NT service.  Please remember that this\n"
+           "client cannot be invoked directly.  If you wish to install it\n"
+           "as a service, use the -install option\n");
+        }
+      retcode = -1; //always -1
+      }
+    #elif ((CLIENT_OS == OS_WIN32) && (!defined(WINNTSERVICE)))
+      {
+      OSVERSIONINFO osver;
+      osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
+      GetVersionEx(&osver);
+
+      //check if we are registered as a w9x "service" (survive logouts)
+      if (VER_PLATFORM_WIN32_NT != osver.dwPlatformId)
+        {
+        HKEY srvkey = NULL;
+        int run_as_w9x_service = 0;
+        #ifdef W9x_ALWAYS_RUN_AS_SERVICE
+        run_as_w9x_service = 1;
+        #endif
+        
+        if (!run_as_w9x_service)
+          {
+          if (RegOpenKey(HKEY_LOCAL_MACHINE, 
+            "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",
+            &srvkey) == ERROR_SUCCESS)
+            {
+            DWORD valuetype = REG_SZ;
+            char buffer[260]; // maximum registry key length
+            DWORD valuesize = sizeof(buffer);
+
+            if ( RegQueryValueEx(srvkey, "bovwin32", NULL,
+                &valuetype, (unsigned char *)(&buffer[0]), 
+                &valuesize) == ERROR_SUCCESS )
+              {
+              run_as_w9x_service = 1;
+              }
+            RegCloseKey(srvkey);
+            }
+          }
+
+        if (run_as_w9x_service)
+          {              
+          // register ourself as a Win95 service
+          HMODULE kernl = GetModuleHandle("KERNEL32");
+          if (kernl)
+            {
+            typedef DWORD (CALLBACK *ULPRET)(DWORD,DWORD);
+            ULPRET func = (ULPRET) GetProcAddress(kernl, "RegisterServiceProcess");
+            if (func) (*func)(0, 1);
+            }
+          }
+        
+        }
+      retcode = 0;
+      }
+    #endif
+    }
+
+  return retcode;
+}
+
+// -----------------------------------------------------------------------
+
+static int DeinitializeConsole(void)
+{
+  #if ((CLIENT_OS == OS_WIN32) && defined(CONSOLE))
+    {
+    FreeConsole();
+    }
+  #endif
+  return 0;
+}  
+
 // ---------------------------------------------------------------------------
 
-s32 Client::Install()
+#if 0 //((CLIENT_OS == OS_WIN32) && defined(CONSOLE))
+
+static WNDPROC (*oldwndproc)(HWND,unsigned,UINT,LONG);
+
+/* CALLBACK */
+extern "C" WNDPROC FAR __export PASCAL WindowProc( HWND hwnd, unsigned msg,
+             UINT wparam, LONG lparam );
+
+WNDPROC FAR __export PASCAL WindowProc( HWND hwnd, unsigned msg,
+             UINT wparam, LONG lparam )
 {
-#if (!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32) && !defined(NOMAIN)
-  HKEY srvkey=NULL;
-  DWORD dwDisp=NULL;
-  char mypath[200];
-  GetModuleFileName(NULL, mypath, sizeof(mypath));
+  if (msg == WM_DESTROY )
+    {
+    RaiseExitRequestTrigger();
+    PostQuitMessage( 0 );
+    return(0L);
+    }
+  return( (*oldwndproc)( hwnd, msg, wparam, lparam ) );
+}    
+#endif
 
-  strcat( mypath, " -hide" );
+static int InitializeConsole(int runhidden)
+{
+  int retcode = 0;
 
-  // register a Win95 "RunService" item
-  if (RegCreateKeyEx(HKEY_LOCAL_MACHINE,
-      "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",0,"",
-            REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,
-            &srvkey,&dwDisp) == ERROR_SUCCESS)
-  {
-    RegSetValueEx(srvkey, "bovwin32", 0, REG_SZ, (unsigned const char *)mypath, strlen(mypath) + 1);
-    RegCloseKey(srvkey);
-  }
+  //the win32 console client is really a GUI client without a GUI - cyrus
+  #if ((CLIENT_OS == OS_WIN32) && defined(CONSOLE))
+    {
+    const char *contitle = "Distributed.Net RC5/DES Client " 
+                             "" CLIENT_VERSIONSTRING "";
+    OSVERSIONINFO osver;
+    osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
+    GetVersionEx(&osver);
+      
+    // only allow one running instance
+    CreateMutex(NULL, TRUE, "Bovine RC5/DES Win32 Client");
+    if (GetLastError()) 
+      {
+      retcode = -1;
+      }
+    else if (runhidden)
+      {
+      //nothing - console won't be created
+      retcode = 0;
+      }
+    else if (!AllocConsole())
+      {
+      retcode = -1;
+      MessageBox( NULL, "Unable to create console window.",
+                           contitle, MB_OK | MB_TASKMODAL);
+      }
+    else
+      {
+      retcode = 0;
+      SetConsoleTitle(contitle);
+      
+      #if 0
+      HWND hwnd = FindWindow( NULL, contitle );
+      if ( hwnd )
+        {
+        oldwndproc = (WNDPROC (*)(HWND,unsigned,UINT,LONG))
+                     GetWindowLong(hwnd, GWL_WNDPROC);
+                         
+        if (oldwndproc)
+          {             //thing doesn't set. probably a mem access issue.
+          SetWindowLong(hwnd, GWL_WNDPROC, (LPARAM)(WNDPROC)(WindowProc));
+          //SubclassWindow(hwnd, WindowProc);
+          }
+        }
+      #endif
 
-  // unregister a Win95 "Run" item
-  if (RegOpenKey(HKEY_LOCAL_MACHINE,
-      "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-      &srvkey) == ERROR_SUCCESS)
-  {
-    RegDeleteValue(srvkey, "bovwin32");
-    RegCloseKey(srvkey);
-  }
+      // Now re-map the C Runtime STDIO handles
+      if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
+        {
+        //microsoft method - fails on win98 (_fdopen fails)
+        //http://support.microsoft.com/support/kb/articles/q105/3/05.asp
 
-  LogScreen("Win95 Service installation complete.\n");
-#elif defined(WINNTSERVICE) && (CLIENT_OS == OS_WIN32)
+        int hCrt = _open_osfhandle((long)GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
+        FILE *hf = _fdopen(hCrt, "w");
+        *stdout = *hf;
+        setvbuf(stdout, NULL, _IONBF, 0);         
+        hCrt = _open_osfhandle((long)GetStdHandle(STD_ERROR_HANDLE), _O_TEXT);
+        hf = _fdopen(hCrt, "w");
+        *stderr = *hf;
+        setvbuf(stderr, NULL, _IONBF, 0);         
+        hCrt = _open_osfhandle((long)GetStdHandle(STD_INPUT_HANDLE), _O_TEXT);
+        hf = _fdopen(hCrt, "r");
+        *stdin = *hf;
+        setvbuf(stdin, NULL, _IONBF, 0);
+        }
+      else
+        {
+        FILE *hf;
+        hf = fopen("CONOUT$", "w+t");
+        if (!hf)
+          {
+          MessageBox( NULL, "Unable to open console for write.",
+                            contitle, MB_OK | MB_TASKMODAL);
+          retcode = -1;
+          }
+        else
+          {
+          *stdout = *hf;
+          setvbuf(stdout, NULL, _IONBF, 0);
+          *stderr = *hf;
+          setvbuf(stderr, NULL, _IONBF, 0);
+            
+          hf = fopen("CONIN$", "rt");
+          if (!hf)
+            {
+            MessageBox( NULL, "Unable to open console for read.",
+                              contitle, MB_OK | MB_TASKMODAL);
+            retcode = -1;
+            }
+          else
+            {
+            *stdin = *hf;
+            setvbuf(stdin, NULL, _IONBF, 0);
+            }
+          }
+        #if 0
+        else
+          {
+          SECURITY_ATTRIBUTES sa;
+          sa.nLength      = sizeof(SECURITY_ATTRIBUTES);
+          sa.lpSecurityDescriptor = NULL;
+          sa.bInheritHandle   = TRUE;
+
+          HANDLE hIFile = CreateFile( "CONIN$", GENERIC_READ /*dwDesiredAccess*/, 
+          FILE_SHARE_READ /*dwShareMode*/, &sa /*lpSecurityAttributes*/,
+          OPEN_EXISTING /*dwCreationDistribution*/, 0 /*dwFlagsAndAttributes*/,
+          0 /*hTemplateFile*/ );
+          HANDLE hOFile = CreateFile( "CONOUT$", GENERIC_WRITE /*dwDesiredAccess*/, 
+          FILE_SHARE_WRITE /*dwShareMode*/, &sa /*lpSecurityAttributes*/,
+          OPEN_EXISTING /*dwCreationDistribution*/, 0 /*dwFlagsAndAttributes*/,
+          0 /*hTemplateFile*/ );
+
+          SetStdHandle( STD_OUTPUT_HANDLE, hOFile );
+          SetStdHandle( STD_ERROR_HANDLE, hOFile );
+          SetStdHandle( STD_INPUT_HANDLE, hIFile );
+          }
+        #endif
+        }
+      }
+    }
+  #elif ((CLIENT_OS == OS_WIN32) && (!defined(WINNTSERVICE)))
+    {
+    const char *contitle = "Distributed.Net RC5/DES Client " 
+                           "" CLIENT_VERSIONSTRING "";
+    OSVERSIONINFO osver;
+    osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
+    GetVersionEx(&osver);
+
+    SetConsoleTitle(contitle);
+        
+    // only allow one running instance
+    CreateMutex(NULL, TRUE, "Bovine RC5/DES Win32 Client");
+    if (GetLastError()) 
+      {
+      retcode = -1;
+      }
+    else if (!runhidden)
+      {
+      //nothing - screen is already visible
+      }
+    else if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
+      {
+      MessageBox( NULL, "Running -hidden is not recommended under NT.\n"
+      "(There have been cases of conflicts with system process csrss.exe)\n"
+        "Please use the NT Service client.", contitle, MB_OK | MB_TASKMODAL);
+      retcode = -1;
+      }
+    else
+      {
+      FreeConsole();
+      }
+    }
+  #endif
+
+  return retcode;
+}  
+
+
+#if !defined(NOMAIN)
+int main( int argc, char *argv[] )
+{
+  // This is the main client object.  we 'new'/malloc it, rather than make 
+  // it static in the hope that people will think twice about using exit()
+  // or otherwise breaking flow. (wanna bet it'll happen anyway?)
+  // The if (success) thing is for nesting without {} nesting.
+  Client *clientP = NULL;
+  int retcode = -1, init_success = 1;
+  int restarted = 0;
+  
+  //------------------------------
+
+  #if (CLIENT_OS == OS_RISCOS)
+  if (init_success) //protect ourselves
+    {
+    riscos_in_taskwindow = riscos_check_taskwindow();
+    if (riscos_find_local_directory(argv[0])) 
+      init_success = 0;
+    }
+  #endif
+
+  if ( init_success )
+    {
+    init_success = (( clientP = new Client() ) != NULL);
+    if (!init_success) fprintf( stderr, "\nRC5DES: Out of memory.\n" );
+    }
+
+  #if (CLIENT_OS == OS_NETWARE) 
+  //create stdout/screen, set cwd etc. save ptr to client for fnames/niceness
+  if ( init_success )
+    init_success = ( nwCliInitClient( argc, argv, clientP ) == 0);
+  #endif
+
+  if ( init_success )
+    {
+    do {
+       retcode = clientP->Main( argc, (const char **)argv, restarted );
+       restarted = 1; //for the next round
+       } while (CheckRestartRequestTrigger());
+
+    #if (CLIENT_OS == OS_AMIGAOS)
+    if (retcode) retcode = 5; // 5 = Warning
+    #endif // (CLIENT_OS == OS_AMIGAOS)
+    }
+  
+  #if (CLIENT_OS == OS_NETWARE)
+  if (init_success)
+    nwCliExitClient(); // destroys AES process, screen, polling procedure
+  #endif
+  
+  if (clientP)
+    delete clientP;
+
+  return (retcode);
+}
+
+//------------------------------------------------------------------------
+
+int Client::Main( int argc, const char *argv[], int restarted )
+{
+  int retcode = 0;
+
+  // set up break handlers
+  if (InitializeTriggers(NULL, NULL)==0) //CliSetupSignals();
+    {
+    //get inifilename and get -quiet/-hidden overrides
+    if (ParseCommandline( 0, argc, argv, NULL, &retcode, 0 ) == 0) //change defaults
+      {
+      int inimissing = (ReadConfig() != 0); //reads using defaults
+      InitializeTriggers( ((noexitfilecheck)?(NULL):("exitrc5" EXTN_SEP "now")),pausefile);
+
+      InitializeLogging(); //let -quiet take affect
+      if (InitializeConsole(runhidden) == 0)  //create console (if required)
+        {
+        PrintBanner(id); //tracks restart state itself
+
+        if ( ParseCommandline( 2, argc, argv, &inimissing, &retcode, 1 )==0 )
+          {
+          if (inimissing)
+            {
+            if (Configure() ==1 ) 
+              WriteFullConfig(); //full new build
+            }
+          else if ( RunStartup(restarted) == 0 ) 
+            {
+            ValidateConfig();
+            PrintBanner(id);  //tracks restart state itself
+            retcode = Run();
+            RunShutdown();
+            }
+          }
+        DeinitializeConsole();
+        }
+      DeinitializeLogging();
+      }
+    DeinitializeTriggers();
+    }
+  return retcode;
+}  
+#endif
+
+
+// ---------------------------------------------------------------------------
+
+int Client::Install()
+{
+#if (CLIENT_OS == OS_WIN32) && defined(WINNTSERVICE)
   char mypath[200];
   GetModuleFileName(NULL, mypath, sizeof(mypath));
   SC_HANDLE myService, scm;
@@ -1970,6 +835,47 @@ s32 Client::Install()
   } else {
     LogScreen("Error opening service control manager.\n");
   }
+#elif ((CLIENT_OS == OS_WIN32) && !defined(WINNTSERVICE))
+  HKEY srvkey=NULL;
+  DWORD dwDisp=NULL;
+  char mypath[260];
+
+  OSVERSIONINFO osver;
+  osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
+  GetVersionEx(&osver);
+
+  if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
+    {
+    LogScreen("-install failed. This version of the client was built "
+              "without NT service support.\n" );
+    }
+  else
+    {
+    GetModuleFileName(NULL, mypath, sizeof(mypath));
+ 
+    strcat( mypath, " -hide" );
+
+    // register a Win95 "RunService" item
+    if (RegCreateKeyEx(HKEY_LOCAL_MACHINE,
+        "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",0,"",
+              REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,
+              &srvkey,&dwDisp) == ERROR_SUCCESS)
+      {
+      RegSetValueEx(srvkey, "bovwin32", 0, REG_SZ, (unsigned const char *)mypath, strlen(mypath) + 1);
+      RegCloseKey(srvkey);
+      }
+
+    // unregister a Win95 "Run" item
+    if (RegOpenKey(HKEY_LOCAL_MACHINE,
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      &srvkey) == ERROR_SUCCESS)
+      {
+      RegDeleteValue(srvkey, "bovwin32");
+      RegCloseKey(srvkey);
+      }
+    LogScreen("Win95 Service installation complete.\n");
+    }
+
 #elif (CLIENT_OS == OS_OS2)
   int rc;
   const int len = 4068;
@@ -2017,30 +923,23 @@ s32 Client::Install()
 
 // ---------------------------------------------------------------------------
 
-s32 Client::Uninstall(void)
+int Client::Uninstall(void)
 {
-#if (!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32) && !defined(NOMAIN)
-  HKEY srvkey;
+#if (CLIENT_OS == OS_OS2)
+  HOBJECT hObject = WinQueryObject("<RC5DES-CLI>");
 
-  // unregister a Win95 "RunService" item
-  if (RegOpenKey(HKEY_LOCAL_MACHINE,
-      "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",
-      &srvkey) == ERROR_SUCCESS)
-  {
-    RegDeleteValue(srvkey, "bovwin32");
-    RegCloseKey(srvkey);
-  }
+  if(hObject == NULLHANDLE)
+    LogScreen("ERROR: RC5-DES Client object was not found\n"
+          "No RC5-DES client installed in the Startup folder\n");
+  else
+    {
+    LogScreen("RC5-DES Client object %s removed from the Startup Folder.\n",
+      ((WinDestroyObject(hObject) == TRUE)?("was"):("could not be"))  );
+    }
+#endif
 
-  // unregister a Win95 "Run" item
-  if (RegOpenKey(HKEY_LOCAL_MACHINE,
-      "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-      &srvkey) == ERROR_SUCCESS)
-  {
-    RegDeleteValue(srvkey, "bovwin32");
-    RegCloseKey(srvkey);
-  }
-  LogScreen("Win95 Service uninstallation complete.\n");
-#elif defined(WINNTSERVICE) && (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) && defined(WINNTSERVICE)
+
   SC_HANDLE myService, scm;
   SERVICE_STATUS status;
   scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
@@ -2069,177 +968,43 @@ s32 Client::Uninstall(void)
   } else {
     LogScreen("Error opening service control manager.\n");
   }
-#elif (CLIENT_OS == OS_OS2)
-  int rc;
-  const int len = 4068;
-  char *cwd;
-
-  char pObjectID[len];
-  HOBJECT hObject;
-
-  hObject = WinQueryObject("<RC5DES-CLI>");
-
-  if(hObject == NULLHANDLE)
-    LogScreen("ERROR: RC5-DES Client object was not found\n"
-          "No RC5-DES client installed in the Startup folder\n");
-  else
-  {
-    LogScreen("RC5-DES Client object found in Startup Folder... ");
-
-    rc = WinDestroyObject(hObject);
-    if(rc == TRUE)
-      LogScreen("Object removed\n");
-    else
-      LogScreen("Object NOT removed\n");
-  }
 #endif
-  return 0;
-}
 
-// ---------------------------------------------------------------------------
+#if (CLIENT_OS == OS_WIN32) && (!defined(WINNTSERVICE))
+  HKEY srvkey;
 
-s32 Client::RunStartup(void)
-{
-  int retcode = 0;
+  OSVERSIONINFO osver;
+  osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
+  GetVersionEx(&osver);
 
-  if ( InitializeTriggers( ((noexitfilecheck)?(NULL):
-                        ("exitrc5" EXTN_SEP "now")),pausefile) )
-    retcode = -1;   //will have checked the exitstate right away
+  if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
+    {
+    LogScreen("-uninstall failed. This version of the client was built "
+              "without NT service support.\n" );
+    }
   else
     {
-    #if ((CLIENT_OS == OS_WIN32) && defined(WINNTSERVICE))
+    // unregister a Win95 "RunService" item
+    if (RegOpenKey(HKEY_LOCAL_MACHINE,
+        "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",
+        &srvkey) == ERROR_SUCCESS)
       {
-      LogScreen("Attempting to start up NT service.\n");
-      mainclient = this;
-      SERVICE_TABLE_ENTRY serviceTable[] = {
-        {NTSERVICEID, (LPSERVICE_MAIN_FUNCTION) ServiceMain},
-        {NULL, NULL}};
-      if (!StartServiceCtrlDispatcher(serviceTable))
-        {
-        LogScreen("Error starting up NT service.  Please remember that this\n"
-           "client cannot be invoked directly.  If you wish to install it\n"
-           "as a service, use the -install option\n");
-        }
-      retcode = -1; //always -1
+      RegDeleteValue(srvkey, "bovwin32");
+      RegCloseKey(srvkey);
       }
-    #elif ((CLIENT_OS == OS_WIN32) && (!defined(WINNTSERVICE)))
-      {
-      // register ourself as a Win95 service
-      SetConsoleTitle("Distributed.Net RC5/DES Client "CLIENT_VERSIONSTRING);
-      if (runhidden)
-        {
-        HMODULE kernl = GetModuleHandle("KERNEL32");
-        if (kernl)
-          {
-          typedef DWORD (CALLBACK *ULPRET)(DWORD,DWORD);
-          ULPRET func = (ULPRET) GetProcAddress(kernl, "RegisterServiceProcess");
-          if (func) (*func)(0, 1);
-          }
-        // free the console window
-        OSVERSIONINFO osver;
-        osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
-        GetVersionEx(&osver);
-        if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
-          {
-          LogScreen("\n This is not recommended under NT.  Please use the NT Service client"
-            "\n (There have been cases of this conflicting with system process csrss.exe)\n"
-            "Continuing...\n");
-          sleep(2);
-          }
-        FreeConsole();
 
-        // only allow one running instance
-        CreateMutex(NULL, TRUE, "Bovine RC5/DES Win32 Client");
-        if (GetLastError()) 
-          retcode = -1;
-        }
+    // unregister a Win95 "Run" item
+    if (RegOpenKey(HKEY_LOCAL_MACHINE,
+      "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      &srvkey) == ERROR_SUCCESS)
+      {
+      RegDeleteValue(srvkey, "bovwin32");
+      RegCloseKey(srvkey);
       }
-    #endif
+    LogScreen("Win95 Service uninstallation complete.\n");
     }
-  
-  return retcode;
-}
-
-// ---------------------------------------------------------------------------
-
-void Client::SetNiceness(void)
-{
-  // renice maximally
-  #if (CLIENT_OS == OS_IRIX)
-    if ( niceness == 0 )     schedctl( NDPRI, 0, 200 );
-    // else                  /* nothing */;
-  #elif (CLIENT_OS == OS_OS2)
-    if ( niceness == 0 )      DosSetPriority( 2, PRTYC_IDLETIME, 0, 0 );
-    else if ( niceness == 1 ) DosSetPriority( 2, PRTYC_IDLETIME, 31, 0 );
-    // else                  /* nothing */;
-  #elif (CLIENT_OS == OS_WIN32)
-    if ( niceness != 2 )      SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
-    if ( niceness == 0 )      SetThreadPriority( GetCurrentThread() ,THREAD_PRIORITY_IDLE );
-    // else                  /* nothing */;
-  #elif (CLIENT_OS == OS_MACOS)
-     // nothing
-  #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-     // nothing - could use the same setting as DOS though
-  #elif (CLIENT_OS == OS_NETWARE)
-     // nothing - netware sets timeslice dynamically
-  #elif (CLIENT_OS == OS_DOS)
-     timeslice = dosCliGetTimeslice(); //65536 or GetTimesliceBaseline if win16
-  #elif (CLIENT_OS == OS_BEOS)
-     // Main control thread runs at normal priority, since it does very little;
-     // priority of crunching threads is set when they are created.
-  #elif (CLIENT_OS == OS_RISCOS)
-     // nothing
-  #elif (CLIENT_OS == OS_VMS)
-    if ( niceness == 0 )      nice( 4 ); // Assumes base priority of 4, (the
-    else if ( niceness == 1 ) nice( 2 ); // default). 0 is highest priority.
-    // else                  /* nothing */; // GO-VMS.COM can also be used
-  #elif (CLIENT_OS == OS_AMIGAOS)
-    if ( niceness == 0 )      SetTaskPri(FindTask(NULL), -20);
-    else if ( niceness == 1 ) SetTaskPri(FindTask(NULL), -10);
-    // else                  /* nothing */;
-  #elif (CLIENT_OS == OS_QNX)
-    if ( niceness == 0 )      setprio( 0, getprio(0)-1 );
-    else if ( niceness == 1 ) setprio( 0, getprio(0)+1 );
-    // else                  /* nothing */;
-  #else
-    if ( niceness == 0 )      nice( 19 );
-    else if ( niceness == 1 ) nice( 10 );
-    // else                  /* nothing */;
-  #endif
-}
-
-#if defined(BETA)
-int checkifbetaexpired(void)
-{
-timeval currenttime;
-timeval expirationtime;
-
-expirationtime.tv_sec=EXPIRATIONTIME;
-
-Log("Checking to see if this beta has gone stale:\n");
-CliTimer(&currenttime);
-Log("Current Date/Time: %s\n",CliGetTimeString(&currenttime,1));
-Log("Expiration Date/Time: %s\n",CliGetTimeString(&expirationtime,1));
-if (currenttime.tv_sec > expirationtime.tv_sec)
-  {
-  Log("This beta is old, and may no longer be run.\n"
-      "Please download a newer beta, or run a standard release client.\n");
-  return 1;
-  }
-else if (currenttime.tv_sec < expirationtime.tv_sec-1814400)
-  {
-  Log("Somehow, your date is set BEFORE this beta was released.\n"
-      "Please, don't try to fool the date checking system.\n");
-  return 1;
-  }
-else // Finally, it's actually within range.
-  {
-  Log("Date check passed, please continue testing this client.\n\n");
-  };
-return 0;
-}
-
 #endif
 
-// --------------------------------------------------------------------------
+  return 0;
+}
 
