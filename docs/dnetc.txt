@@ -1,6 +1,6 @@
 
   distributed.net client documentation
-  document revision $Id: dnetc.txt,v 1.1.2.2 1999/12/31 20:27:19 michmarc Exp $
+  document revision $Id: dnetc.txt,v 1.1.2.3 2000/03/15 16:47:52 ivo Exp $
 
   Copyright distributed.net 1997-2000 - All Rights Reserved
   For use in distributed.net projects only.
@@ -292,7 +292,7 @@
        send a message to <majordomo@lists.distributed.net> with 
        "subscribe rc5" as the message text).
 
-     - More user support is available from <rc5help@distributed.net> 
+     - More user support is available from <help@distributed.net> 
        as well as from our regional support representatives listed at 
        http://www.distributed.net/regional/index.html
     
