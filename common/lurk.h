@@ -6,7 +6,7 @@
 //
 
 #ifndef __LURK_H__
-#define __LURK_H__ "@(#)$Id: lurk.h,v 1.21.2.6 2000/10/06 00:40:15 mfeiri Exp $"
+#define __LURK_H__ "@(#)$Id: lurk.h,v 1.21.2.7 2000/11/12 04:31:19 cyp Exp $"
 
 /* lurk: fetch/flush if modem goes online but also go online if fetch/flush needed */
 #define CONNECT_LURK         0x01 
@@ -34,61 +34,20 @@ struct dialup_conf
   char connstopcmd[64];    // name of script to call to stop connection
 };
 
-
-class Lurk
-{
-public:
-  Lurk(); 
-  ~Lurk();
-  // initialization/stop. -> 0=success, !0 = failure
-  int Start(int nonetworking, struct dialup_conf *);  
-  int Stop(void);
+// initialization/stop. -> 0=success, !0 = failure
+int LurkStart(int nonetworking, struct dialup_conf *);  
+int LurkStop(void);
   
-  // state info
-  int IsWatching(void); //Start() was ok and CONNECT_LURK|LURKONLY|DOD */
-  int IsWatcherPassive(void); //Start was ok and lurkmode is CONNECT_LURKONLY
-  int IsConnected(void); // test (and say) connection state
-  const char **GetConnectionProfileList(void); //get the list of conn profiles
-  int GetCapabilityFlags(void);      //return supported CONNECT_* bits 
+// state info
+int LurkIsWatching(void); //Start() was ok and CONNECT_LURK|LURKONLY|DOD */
+int LurkIsWatcherPassive(void); //Start was ok and lurkmode is CONNECT_LURKONLY
+int LurkIsConnected(void); // test (and say) connection state
+const char **LurkGetConnectionProfileList(void); //get the list of conn profiles
+int LurkGetCapabilityFlags(void);      //return supported CONNECT_* bits 
 
   // methods used for dialup initiation/hangup
-  int DialIfNeeded(int ignore_lurkonly_flag); // -> 0=success, !0 = failure
-  int HangupIfNeeded(void);          // -> 0=success, !0 = failure
-
-  #if 0 /* unused - IsConnected() does everything we need */
-  // methods used for lurk
-  int CheckIfConnectRequested(void); // -> 0=no, !0=yes
-  int CheckForStatusChange(void);    // -> 0 = nochange, !0 connection dropped
-  #endif
-protected:
-  int InternalIsConnected(void); /* workhorse */
-  int islurkstarted;      //was lurk.Start() successful?
-  struct dialup_conf conf; //local copy of config. Initialized by Start()
-
-  int mask_include_all, mask_default_only; //what does the mask tell us?
-  const char *ifacestowatch[(64/2)+1]; //(sizeof(connifacemask)/sizeof(char *))+1
-  char ifacemaskcopy[64];            //sizeof(connifacemask)
-
-  int showedconnectcount; //used by CheckIfConnectRequested()
-  int dohangupcontrol;    //if we dialed, we're welcome to hangup
-
-  #ifndef CLIENT_OS /* catch static struct problems _now_ */
-  #error "CLIENT_OS isn't defined yet. cputypes.h must be #included before lurk.h"
-  #endif
-  #if (CLIENT_OS != OS_WIN16) && (CLIENT_OS != OS_MACOS)
-  #define LURK_MULTIDEV_TRACK
-  #endif
-  
-  #ifdef LURK_MULTIDEV_TRACK
-  char conndevices[64*32];
-  #else
-  //name of the device a connection was detected on informational use only
-  char conndevice[35];        
-  char previous_conndevice[35]; //copy of last conndevice
-  #endif
-};
-
-extern Lurk dialup;
+int LurkDialIfNeeded(int ignore_lurkonly_flag); // -> 0=success, !0 = failure
+int LurkHangupIfNeeded(void);          // -> 0=success, !0 = failure
 
 #endif /* __LURK_H__ */
 
