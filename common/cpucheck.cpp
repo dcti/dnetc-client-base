@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.5  1998/06/22 10:28:22  kbracey
+// Just tidying
+//
 // Revision 1.4  1998/06/22 09:37:47  cyruspatel
 // Fixed another cosmetic bug.
 //
@@ -17,7 +20,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cpucheck.cpp,v 1.4 1998/06/22 09:37:47 cyruspatel Exp $";
+static const char *id="@(#)$Id: cpucheck.cpp,v 1.5 1998/06/22 10:28:22 kbracey Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -47,7 +50,7 @@ static int __GetProcessorCount()  //returns -1 if not supported
       }
     #elif (CLIENT_OS == OS_NETWARE)
       {
-      cpucount = CliGetNumberOfProcessors(); 
+      cpucount = CliGetNumberOfProcessors();
       }
     #elif (CLIENT_OS == OS_OS2)
       {
@@ -59,26 +62,26 @@ static int __GetProcessorCount()  //returns -1 if not supported
       }
     #endif
     if (cpucount < 1)  //not supported
-      cpucount = -1; 
+      cpucount = -1;
     }
   return cpucount;
-}  
+}
 
 // --------------------------------------------------------------------------
 
 void Client::ValidateProcessorCount( void )
 {
   //-------------------------------------------------------------
-  // Validate processor/thread count. 
+  // Validate processor/thread count.
   // --------------------
-  // numcpu is the value read/written from the ini/cmdline - we never modify 
-  // it. numcputemp is the value actually used/modified internally by the 
+  // numcpu is the value read/written from the ini/cmdline - we never modify
+  // it. numcputemp is the value actually used/modified internally by the
   // client and is not written out to the ini.
   //
   // The use of -numcpu on the command line is now *not* illegal
   // for non-mt clients (think of shell scripts used for testing).
-  // The use of numcpu is not illegal in the ini either and is a valid 
-  // option in the config menu. (think of shared/cross-configured ini 
+  // The use of numcpu is not illegal in the ini either and is a valid
+  // option in the config menu. (think of shared/cross-configured ini
   // files, in dos/win for instance).
   //
   // Simply put, if it ain't MULTITHREAD, there's ain't gonna be a thread,
@@ -87,7 +90,7 @@ void Client::ValidateProcessorCount( void )
 
   numcputemp = numcpu;
   #ifndef MULTITHREAD  //this is the only place in the config where we
-  numcputemp = 1;      //check this 
+  numcputemp = 1;      //check this
   #endif
 
   if (numcputemp < 1)
@@ -95,7 +98,7 @@ void Client::ValidateProcessorCount( void )
     static int cpu_count = -2;
     if (cpu_count == -2)
       {
-      cpu_count = __GetProcessorCount(); //in cpuinfo.cpp 
+      cpu_count = __GetProcessorCount(); //in cpuinfo.cpp
       // returns -1 if no hardware detection
       if ( cpu_count < 1 )
         {
@@ -105,7 +108,7 @@ void Client::ValidateProcessorCount( void )
         }
       else
         {
-        LogScreenf("Automatic processor detection found %d processor%s\n", 
+        LogScreenf("Automatic processor detection found %d processor%s\n",
            cpu_count, ((cpu_count==1)?(""):("s")) );
         }
       }
@@ -125,12 +128,12 @@ void Client::ValidateProcessorCount( void )
       }
   #endif
   return;
-}  
+}
 
 // --------------------------------------------------------------------------
 
 #if (!((CLIENT_CPU == CPU_X86) || \
-      ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == RISCOS)) ))
+      ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS)) ))
 int Client::GetProcessorType()
 { return -1; }
 #endif
@@ -276,7 +279,7 @@ int Client::GetProcessorType()
 
 // --------------------------------------------------------------------------
 
-#if ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS)) 
+#if ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS))
 
 #include <setjmp.h>
 

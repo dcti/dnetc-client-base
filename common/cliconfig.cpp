@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.104  1998/06/22 10:28:16  kbracey
+// Just tidying
+//
 // Revision 1.103  1998/06/22 01:04:08  silby
 // Fixed problem with x86 cpu type detection not working.
 //
@@ -16,18 +19,18 @@
 // cpucheck.cpp. Adjusted and cleaned up client.h accordingly.
 //
 // Revision 1.100  1998/06/21 02:48:46  silby
-// Added sixth menu with just filesnames/paths to make misc 
+// Added sixth menu with just filesnames/paths to make misc
 // smaller, and (hopefully) reduce confusion.
 //
 // Revision 1.99  1998/06/21 01:37:56  silby
-// Furthur changes in validation of options (validations are all 
-// being moved to ValidateConfig, which is now used much more liberally), 
-// fixed isstringblank to say that "   " is a blank string, and fixed a 
-// bug with buff-in.des being set wrong if a blank string was put into 
+// Furthur changes in validation of options (validations are all
+// being moved to ValidateConfig, which is now used much more liberally),
+// fixed isstringblank to say that "   " is a blank string, and fixed a
+// bug with buff-in.des being set wrong if a blank string was put into
 // buff-out.des.
 //
 // Revision 1.98  1998/06/20 22:42:56  silby
-// Improved error checking on some options (notable changes include 
+// Improved error checking on some options (notable changes include
 // mins and maxes now on checkpoint time and exitfilechecktime)
 //
 // Revision 1.97  1998/06/20 10:04:12  cyruspatel
@@ -80,7 +83,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.103 1998/06/22 01:04:08 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.104 1998/06/22 10:28:16 kbracey Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -523,7 +526,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         case CONF_THRESHOLDI:
           choice=atoi(parm);
           if (choice > 0) inthreshold[0]=choice;
-          ValidateConfig();          
+          ValidateConfig();
           outthreshold[0]=inthreshold[0];
           break;
         case CONF_THRESHOLDO:
@@ -697,7 +700,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           ValidateConfig();
           break;
         case CONF_NUMCPU:
-          numcpu = atoi(parm); 
+          numcpu = atoi(parm);
           break; //validation is done in SelectCore() 1998/06/21 cyrus
         case CONF_CHECKPOINT:
           strncpy( ini_checkpoint_file[0] , parm, sizeof(ini_checkpoint_file)/2 -1 );
@@ -1007,7 +1010,7 @@ void Client::killwhitespace( char *string )
   while ((whitespaceptr = strchr(string, ' ')) != NULL)
   {
     strcpy(whitespaceptr, whitespaceptr+1);
-  };
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -1016,14 +1019,14 @@ int Client::isstringblank( char *string )
 {
   u32 counter, length, summation = 0;
 
-  if (string == NULL || !*string) 
+  if (string == NULL || !*string)
     return 1;
   length = strlen(string);
   for (counter = 0; counter < length; counter++)
   {
     if (isprint(*(string+counter)) && (*(string+counter) != ' '))
      summation ++;
-  };
+  }
 
   if (summation == 0) return 1;
 
@@ -1064,7 +1067,7 @@ void Client::clearscreen( void )
 #elif (CLIENT_OS == OS_RISCOS)
   riscos_clear_screen();
 #else
-  printf("\x1B" "[2J" "\x1B" "[H" "\r       \r" ); 
+  printf("\x1B" "[2J" "\x1B" "[H" "\r       \r" );
   //ANSI cls  '\r space \r' is in case ansi is not supported
 #endif
 }
@@ -2169,7 +2172,7 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
        #define DESUNITFUNC52 p2des_unit_func_p5
        #define DESUNITFUNC61 p1des_unit_func_pro
        #define DESUNITFUNC62 p2des_unit_func_pro
-    #endif   
+    #endif
 
     case 1:rc5_unit_func = rc5_unit_func_486;
            des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
