@@ -320,96 +320,10 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
   system_info the_info;
 #endif
 
-contestidtemp=preferred_contest_id+1;
-
-options[CONF_ID].thevariable=&id;
-options[CONF_THRESHOLDI].thevariable=&inthreshold[0];
-options[CONF_THRESHOLDO].thevariable=&outthreshold[0];
-options[CONF_THRESHOLDI2].thevariable=&inthreshold[1];
-options[CONF_THRESHOLDO2].thevariable=&outthreshold[1];
-options[CONF_COUNT].thevariable=&blockcount;
-options[CONF_HOURS].thevariable=&hours;
-options[CONF_TIMESLICE].thevariable=&timeslice;
-options[CONF_NICENESS].thevariable=&niceness;
-options[CONF_LOGNAME].thevariable=&logname;
-options[CONF_UUEHTTPMODE].thevariable=&uuehttpmode;
-options[CONF_KEYPROXY].thevariable=&keyproxy;
-options[CONF_KEYPORT].thevariable=&keyport;
-options[CONF_HTTPPROXY].thevariable=&httpproxy;
-options[CONF_HTTPPORT].thevariable=&httpport;
-options[CONF_HTTPID].thevariable=&httpid;
-#if !((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
-options[CONF_CPUTYPE].optionscreen=0;
-#endif
-options[CONF_CPUTYPE].thevariable=&cputype;
-options[CONF_MESSAGELEN].thevariable=&messagelen;
-options[CONF_SMTPSRVR].thevariable=&smtpsrvr;
-options[CONF_SMTPPORT].thevariable=&smtpport;
-options[CONF_SMTPFROM].thevariable=&smtpfrom;
-options[CONF_SMTPDEST].thevariable=&smtpdest;
-#if !defined(MULTITHREAD)
-options[CONF_NUMCPU].optionscreen=0;
-#endif
-options[CONF_NUMCPU].thevariable=&numcpu;
-options[CONF_CHECKPOINT].thevariable=&checkpoint_file[0];
-options[CONF_CHECKPOINT2].thevariable=&checkpoint_file[1];
-options[CONF_RANDOMPREFIX].thevariable=&randomprefix;
-options[CONF_PREFERREDBLOCKSIZE].thevariable=&preferred_blocksize;
-options[CONF_PREFERREDCONTEST].thevariable=&contestidtemp;
-options[CONF_QUIETMODE].thevariable=&quietmode;
-options[CONF_NOEXITFILECHECK].thevariable=&noexitfilecheck;
-options[CONF_PERCENTOFF].thevariable=&percentprintingoff;
-#if !defined(MULTITHREAD)
-options[CONF_FREQUENT].optionscreen=0;
-#endif
-options[CONF_FREQUENT].thevariable=&connectoften;
-options[CONF_NODISK].thevariable=&nodiskbuffers;
-options[CONF_NOFALLBACK].thevariable=&nofallback;
-options[CONF_CKTIME].thevariable=&checkpoint_min;
-options[CONF_NETTIMEOUT].thevariable=&nettimeout;
-options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
-options[CONF_OFFLINEMODE].thevariable=&offlinemode;
-
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
-options[CONF_LURKMODE].thevariable=&lurk;
-#else
-options[CONF_LURKMODE].optionscreen=0;
-#endif
-options[CONF_RC5IN].thevariable=&in_buffer_file[0];
-options[CONF_RC5OUT].thevariable=&out_buffer_file[0];
-options[CONF_DESIN].thevariable=&in_buffer_file[1];
-options[CONF_DESOUT].thevariable=&out_buffer_file[1];
-
-if (messagelen != 0)
-  {
-  options[CONF_SMTPSRVR].optionscreen=2;
-  options[CONF_SMTPPORT].optionscreen=2;
-  options[CONF_SMTPDEST].optionscreen=2;
-  options[CONF_SMTPFROM].optionscreen=2;
-  }
-  else
-  {
-  options[CONF_SMTPSRVR].optionscreen=0;
-  options[CONF_SMTPPORT].optionscreen=0;
-  options[CONF_SMTPDEST].optionscreen=0;
-  options[CONF_SMTPFROM].optionscreen=0;
-  }; 
-
-if (uuehttpmode > 1)
-  {
-  options[CONF_HTTPPROXY].optionscreen=3;
-  options[CONF_HTTPPORT].optionscreen=3;
-  options[CONF_HTTPID].optionscreen=3;
-  }
-  else
-  {
-  options[CONF_HTTPPROXY].optionscreen=0;
-  options[CONF_HTTPPORT].optionscreen=0;
-  options[CONF_HTTPID].optionscreen=0;
-  };
-
   while ( 1 )
   {
+setupoptions();
+options[CONF_PREFERREDCONTEST].thevariable=&contestidtemp;
 contestidtemp=preferred_contest_id+1;
 
     // display menu
@@ -510,7 +424,14 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
       switch ( choice )
       {
         case CONF_ID:
+          char *whitespacekiller;
           strncpy( id, parm, sizeof(id) - 1 );
+          while (strchr(id, ' ') != NULL)
+            {
+            whitespacekiller=strchr(id, ' ');
+            strncpy(whitespacekiller, whitespacekiller+1,
+                    sizeof(id)-(whitespacekiller+1-id));
+            };
           break;
         case CONF_THRESHOLDI:
           inthreshold[0]=atoi(parm);
@@ -632,22 +553,18 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
             options[CONF_HTTPID].optionscreen=0;
             };
           break;
-#if (CLIENT_CPU == CPU_X86)
+#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) 
         case CONF_CPUTYPE:
           cputype = atoi(parm);
-          if (cputype < -1 || cputype > 5)
+          if (cputype < -1 ||
+              cputype > options[CONF_CPUTYPE].choicemax)
             cputype = -1;
           break;
-#elif (CLIENT_CPU == CPU_ARM)
+#elif (CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX)) 
         case CONF_CPUTYPE:
           cputype = atoi(parm);
-          if (cputype < -1 || cputype > 1)
-            cputype = -1;
-          break;
-#elif ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX)) )
-        case CONF_CPUTYPE:
-          cputype = atoi(parm);
-          if (cputype < -1 || cputype > 1)
+          if (cputype < -1 ||
+              cputype > options[CONF_CPUTYPE].choicemax)
             cputype = -1;
           break;
 #endif
@@ -933,6 +850,101 @@ return returnvalue;
 
 //----------------------------------------------------------------------------
 
+void Client::setupoptions( void )
+// Sets all the pointers/etc for optionstruct options
+{
+
+options[CONF_ID].thevariable=&id;
+options[CONF_THRESHOLDI].thevariable=&inthreshold[0];
+options[CONF_THRESHOLDO].thevariable=&outthreshold[0];
+options[CONF_THRESHOLDI2].thevariable=&inthreshold[1];
+options[CONF_THRESHOLDO2].thevariable=&outthreshold[1];
+options[CONF_COUNT].thevariable=&blockcount;
+options[CONF_HOURS].thevariable=&hours;
+options[CONF_TIMESLICE].thevariable=&timeslice;
+options[CONF_NICENESS].thevariable=&niceness;
+options[CONF_LOGNAME].thevariable=&logname;
+options[CONF_UUEHTTPMODE].thevariable=&uuehttpmode;
+options[CONF_KEYPROXY].thevariable=&keyproxy;
+options[CONF_KEYPORT].thevariable=&keyport;
+options[CONF_HTTPPROXY].thevariable=&httpproxy;
+options[CONF_HTTPPORT].thevariable=&httpport;
+options[CONF_HTTPID].thevariable=&httpid;
+#if !((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
+options[CONF_CPUTYPE].optionscreen=0;
+#endif
+options[CONF_CPUTYPE].thevariable=&cputype;
+options[CONF_MESSAGELEN].thevariable=&messagelen;
+options[CONF_SMTPSRVR].thevariable=&smtpsrvr;
+options[CONF_SMTPPORT].thevariable=&smtpport;
+options[CONF_SMTPFROM].thevariable=&smtpfrom;
+options[CONF_SMTPDEST].thevariable=&smtpdest;
+#if !defined(MULTITHREAD)
+options[CONF_NUMCPU].optionscreen=0;
+#endif
+options[CONF_NUMCPU].thevariable=&numcpu;
+options[CONF_CHECKPOINT].thevariable=&checkpoint_file[0];
+options[CONF_CHECKPOINT2].thevariable=&checkpoint_file[1];
+options[CONF_RANDOMPREFIX].thevariable=&randomprefix;
+options[CONF_PREFERREDBLOCKSIZE].thevariable=&preferred_blocksize;
+options[CONF_QUIETMODE].thevariable=&quietmode;
+options[CONF_NOEXITFILECHECK].thevariable=&noexitfilecheck;
+options[CONF_PERCENTOFF].thevariable=&percentprintingoff;
+#if !defined(MULTITHREAD)
+options[CONF_FREQUENT].optionscreen=0;
+#endif
+options[CONF_FREQUENT].thevariable=&connectoften;
+options[CONF_NODISK].thevariable=&nodiskbuffers;
+options[CONF_NOFALLBACK].thevariable=&nofallback;
+options[CONF_CKTIME].thevariable=&checkpoint_min;
+options[CONF_NETTIMEOUT].thevariable=&nettimeout;
+options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
+options[CONF_OFFLINEMODE].thevariable=&offlinemode;
+
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+options[CONF_LURKMODE].thevariable=&lurk;
+#else
+options[CONF_LURKMODE].optionscreen=0;
+#endif
+options[CONF_RC5IN].thevariable=&in_buffer_file[0];
+options[CONF_RC5OUT].thevariable=&out_buffer_file[0];
+options[CONF_DESIN].thevariable=&in_buffer_file[1];
+options[CONF_DESOUT].thevariable=&out_buffer_file[1];
+
+if (messagelen != 0)
+  {
+  options[CONF_SMTPSRVR].optionscreen=2;
+  options[CONF_SMTPPORT].optionscreen=2;
+  options[CONF_SMTPDEST].optionscreen=2;
+  options[CONF_SMTPFROM].optionscreen=2;
+  }
+  else
+  {
+  options[CONF_SMTPSRVR].optionscreen=0;
+  options[CONF_SMTPPORT].optionscreen=0;
+  options[CONF_SMTPDEST].optionscreen=0;
+  options[CONF_SMTPFROM].optionscreen=0;
+  }; 
+
+if (uuehttpmode > 1)
+  {
+  options[CONF_HTTPPROXY].optionscreen=3;
+  options[CONF_HTTPPORT].optionscreen=3;
+  options[CONF_HTTPID].optionscreen=3;
+  }
+  else
+  {
+  options[CONF_HTTPPROXY].optionscreen=0;
+  options[CONF_HTTPPORT].optionscreen=0;
+  options[CONF_HTTPID].optionscreen=0;
+  };
+
+
+}
+
+//----------------------------------------------------------------------------
+
+
 void Client::clearscreen( void )
 // Clears the screen. (Platform specific ifdefs go inside of it.)
 
@@ -965,6 +977,7 @@ s32 Client::ReadConfig(void)
   IniSection ini;
   s32 inierror, tempconfig;
   char *p, buffer[64];
+  char *whitespacekiller;
 
   inierror = ini.ReadIniFile( inifilename );
   if ( inierror )
@@ -975,6 +988,13 @@ s32 Client::ReadConfig(void)
 #define INIGETKEY(key) (ini.getkey(OPTION_SECTION, options[key].name, options[key].defaultsetting)[0])
 
   INIGETKEY(CONF_ID).copyto(id, sizeof(id));
+  while (strchr(id, ' ') != NULL)
+    {
+    whitespacekiller=strchr(id, ' ');
+    strncpy(whitespacekiller, whitespacekiller+1,
+    sizeof(id)-(whitespacekiller+1-id));
+    };// removes whitespace in the address
+
   INIGETKEY(CONF_THRESHOLDI).copyto(buffer, sizeof(buffer));
   p = strchr( buffer, ':' );
   if (p == NULL) {
