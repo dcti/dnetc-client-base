@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.35 2000/03/20 14:27:54 jbaker Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.36 2000/05/06 21:12:02 mfeiri Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -88,20 +88,26 @@ int DeinitializeConsole(int waitforuser)
 
 /* ---------------------------------------------------- */
 
-int InitializeConsole(int runhidden,int doingmodes)
+int InitializeConsole(int *runhidden,int doingmodes)
 {
   int retcode = 0;
   if ((++constatics.initlevel) == 1)
   {
     memset( (void *)&constatics, 0, sizeof(constatics) );
     constatics.initlevel = 1;
-    constatics.runhidden = runhidden;
+    constatics.runhidden = *runhidden;
     doingmodes = doingmodes; /* possibly unused */
 
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     retcode = w32InitializeConsole(constatics.runhidden,doingmodes);
     #elif (CLIENT_OS == OS_NETWARE)
     retcode = nwCliInitializeConsole(constatics.runhidden,doingmodes);
+    #elif (CLIENT_OS == OS_MACOS)
+     #ifndef MAC_FBA // because I might need -config I cannot run the MacOS CLI
+     // client truly detached but rather hide the screenoutput in the console
+     retcode = macosInitializeConsole(constatics.runhidden,doingmodes);
+     *runhidden = 0;
+     #endif
     #elif (CLIENT_OS == OS_OS2)
      #if defined(OS2_PM)
      retcode = os2CliInitializeConsole(constatics.runhidden,doingmodes);
@@ -141,6 +147,8 @@ int ConIsGUI(void)
   #elif (CLIENT_OS == OS_RISCOS)
   extern int guiriscos;
   return (guiriscos!=0);
+  #elif (CLIENT_OS == OS_MACOS) && !defined(MAC_FBA)
+  return 1;
   #else
   return 0;
   #endif
