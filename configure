@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.156  1999/01/08 07:25:08  cramer
+# Added Solaris/Sparc/non-mt target
+#
 # Revision 1.155  1999/01/06 21:37:24  cramer
 # Changes sparc-solaris targets to TARGET_CC="gcc" to avoid g++ stupidly
 # linking in libs that it doesn't need.
@@ -1025,6 +1028,16 @@ case "$1" in
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+	;;
+
+    *sparc-solaris-gcc-crunch-slice)   # fastest rc5 & des for ultra
+	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
+			-DPIPELINE_COUNT=2 \
+			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
     *sparc-solaris-gcc-crunch-slice-mt)   # fastest rc5 & des for ultra
