@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.87.2.8 2004/01/10 22:02:59 kakace Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.87.2.9 2004/01/17 16:34:14 kakace Exp $"; }
 
 //#define TRACE
 
@@ -429,6 +429,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       wrdata.os         = FILEENTRY_OS;
       wrdata.build      = FILEENTRY_BUILD;
       wrdata.core       = FILEENTRY_CORE(thisprob->pub_data.coresel);
+      strncpy( wrdata.id, client->id , sizeof(wrdata.id));
+      wrdata.id[sizeof(wrdata.id)-1]=0;
 
       if (finito)
       {
@@ -441,8 +443,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         wrdata.cpu     = CLIENT_CPU;
         wrdata.build   = CLIENT_VERSION;
         wrdata.core    = FILEENTRY_CORE(thisprob->pub_data.coresel);
-        strncpy( wrdata.id, client->id , sizeof(wrdata.id));
-        wrdata.id[sizeof(wrdata.id)-1]=0;
         ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, &prob_i, sizeof(prob_i) );
       }
 
@@ -706,10 +706,17 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       else
       {
         *loaded_for_contest = (unsigned int)(wrdata.contest);
-        expected_cpu   = wrdata.cpu;
-        expected_core  = wrdata.core;
-        expected_os    = wrdata.os;
-        expected_build = wrdata.build;
+        // If a user gets a packet already started by another user,
+        // force a restart to occur (may happen when the input buffer
+        // is shared).
+        if (strcmp(wrdata.id, "rc5@distributed.net") == 0
+            || strncmp(wrdata.id, client->id, sizeof(wrdata.id)-1) == 0)
+        {
+          expected_cpu   = wrdata.cpu;
+          expected_core  = wrdata.core;
+          expected_os    = wrdata.os;
+          expected_build = wrdata.build;
+        }
         work = &wrdata.work;
 
         /* if the total number of packets in buffers is less than the number
@@ -765,7 +772,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 
             *loaded_for_contest = thisprob->pub_data.contest;
             if (thisprob->pub_data.was_reset)
-              extramsg="\nPacket was from a different core/client cpu/os/build.";
+              extramsg="\nPacket was from a different user/core/client cpu/os/build.";
             else if (info.s_permille > 0 && info.s_permille < 1000)
             {
               sprintf(perdone, " (%u.%u0%% done)", (info.s_permille/10), (info.s_permille%10));
