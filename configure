@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.50  1998/06/23 20:46:51  remi
+# -lcurses should go to TARGET_LIBS, not to TARGET_LDFLAGS.
+# Enabled __showids__ for Linux targets.
+#
 # Revision 1.49  1998/06/23 20:37:01  remi
 # *** empty log message ***
 #
@@ -545,19 +549,19 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -D__showids__ -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+	TARGET_LIBS="-lcurses"
 	;;
 
     *x86-linux-egcs-debug)    # debug version of x86-linux-egcs
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DPIPELINE_COUNT=2 -D__showids__"
-	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_STRIP="touch"
+	TARGET_LIBS="-lcurses"
 	;;
 
     *x86-linux-desultra-egcs-debug)    # to debug UltraSparc DES code integration
@@ -565,9 +569,9 @@ case "$1" in
 	TARGET_CC="gcc -g"
 	# -Wno-unused to avoid tons of warnings on some ultra files
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ -DPIPELINE_COUNT=2 $OPTS_DES_ULTRA_C"
-	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
 	TARGET_ADDASMS="platforms/x86ident.S"
+	TARGET_LIBS="-lcurses"
 	TARGET_STRIP="touch"
 	;;
 
@@ -575,9 +579,9 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -D__showids__ -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+	TARGET_LIBS="-lcurses"
 	;;
 
     *x86-linux-aout)
@@ -585,9 +589,9 @@ case "$1" in
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -D__showids__ -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+	TARGET_LIBS="-lcurses"
 	;;
 
     *x86-linux-mt-egcs)
@@ -595,30 +599,27 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-	TARGET_LIBS="-lpthread"
+	TARGET_LIBS="-lpthread -lcurses"
 	;;
 
     *x86-linux-mt-gcc)
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-	TARGET_LIBS="-lpthread"
+	TARGET_LIBS="-lpthread -lcurses"
 	;;
 
     *x86-linux-mt-slice-kwan-gcc)     # using slice not bryddes
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -D__showids__ -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
 	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_LIBS="-lpthread"
+	TARGET_LIBS="-lpthread -lcurses"
 	;;
 
 ###### Intel X86 FreeBSD/NetBSD/OpenBSD
