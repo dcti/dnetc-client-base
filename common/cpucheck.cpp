@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.51 2000/07/12 14:13:57 oliver Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.52 2000/09/04 03:11:11 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -695,25 +695,36 @@ static long __GetRawProcessorID(const char **cpuname)
   extern "C" u32 x86ident( void ) asm ("x86ident");
 #else
   extern "C" u32 x86ident( void );
+  extern "C" u32 x86ident_haveioperm; /* default is zero */
 #endif
 
 long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
 {
   static long detectedtype = -2L;  /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
-  static int  kKeysPerMhz = 512; /* default rate if not found */
   static int  simpleid   = 0xff; /* default id if not found */
   
   if ( detectedtype == -2L )
   {
-    static char namebuf[30];
+    static char namebuf[80];
     const char *vendorname = NULL;
-    struct cpuxref { int cpuid, kKeysPerMhz, simpleid; 
+    const char *chipname_override = NULL;
+    int cpuidbmask, cpuid, vendorid; u32 dettype; 
+    struct cpuxref { int cpuid, simpleid; 
                      const char *cpuname; } *internalxref = NULL;
-    u32 dettype     = x86ident();
-    int cpuidbmask  = 0xfff0; /* mask with this to find it in the table */
-    int cpuid       = (((int)dettype) & 0xffff);
-    int vendorid    = (((int)(dettype >> 16)) & 0xffff);
+
+    #if (CLIENT_OS == OS_WIN32)
+    if (winGetVersion() < 2000) /* win95 permits inb()/outb() */
+      x86ident_haveioperm = 1;
+    #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
+          (CLIENT_OS == OS_NETWARE) /* netware client runs at IOPL 0 */
+      x86ident_haveioperm = 1;
+    #endif
+
+    dettype     = x86ident();
+    cpuidbmask  = 0xfff0; /* mask with this to find it in the table */
+    cpuid       = (((int)dettype) & 0xffff);
+    vendorid    = (((int)(dettype >> 16)) & 0xffff);
 
     if (vendorid == 0x6E49 ) /* 'nI': broken x86ident */
       vendorid = 0x6547; /* 'eG' */
@@ -726,50 +737,70 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       detectedtype = -1; /* assume not found */
     simpleid = 0xff; /* default id = unknown */
     
-    /* use detectedt type= 0xFF when you don't know what to use.
-       DO *NOT* guess
-    */
-    if ( vendorid == 0x7943 /* 'yC' */ ) // Cyrix CPU
+    /* DO *NOT* guess. use detype=0xFF when you don't know what to use. */
+    if ((cpuid & 0xff00) == 0x0000)       /* generic legacy stuff */
+    {                                     /* new x86ident splits completely */
+      static struct cpuxref genericxref[]={
+          {  0x0030,      1, "80386"      },   // generic 386/486 core
+          {  0x0040,      1, "80486"      },
+          {  0x0000,     -1, NULL        }
+          }; internalxref = &genericxref[0];
+      vendorname = ""; /* nothing */
+      cpuidbmask = 0xfff0;
+    }
+    else if ( vendorid == 0x4D54 /* 'MT' NOTE! */) /* "GenuineTMx86" */
     {
+      static struct cpuxref transmeta_xref[]={
+          {  0x0320,      0, "TM3200"    }, /* 0x320 is a guess */
+          {  0x0540,      0, "TM5400"    },
+          {  0x0000,     -1, NULL        }
+          }; internalxref = &transmeta_xref[0];
+      vendorname = "Transmeta ";
+      cpuidbmask = 0x0ff0;
+    }
+    else if ( vendorid == 0x7943 /* 'yC' */ ) /* CyrixInstead */
+    {                                  /* The VIA Cyrix III is CentaurHauls */
       static struct cpuxref cyrixxref[]={
-          {    0x40,  950,     6, "486" /* obsolete entry */},
-          {  0x0400,  950,     6, "486SLC/DLC/SR/DR" },
-          {  0x0410,  950,     6, "486S/Se/S2/DX/DX2" },
-          {  0x0440,  950,     0, "GX/MediaGX" },
-          {  0x0490, 1185,     0, "5x86"      },
-          {  0x0520, 2090,     3, "6x86/MI"   },
-          {  0x0540, 1200,     0, "GXm"       },
-          {  0x0600, 2115, 0x103, "6x86MX/MII"},
-          {  0x0000, 2115,    -1, NULL        }
+          {  0x0400,      6, "486SLC/DLC/SR/DR" },
+          {  0x0410,      6, "486S/Se/S2/DX/DX2" },
+          {  0x0440,      0, "GX/MediaGX" },
+          {  0x0490,      0, "5x86"      },
+          {  0x0520,      3, "6x86/MI"   },
+          {  0x0540,      0, "GXm"       },
+          {  0x0600,  0x103, "6x86MX/MII"},
+          {  0x0000,     -1, NULL        }
           }; internalxref = &cyrixxref[0];
       vendorname = "Cyrix ";
       cpuidbmask = 0x0ff0;
     }
-    else if ( vendorid == 0x6952 /* 'iR' */  ) //"RiseRiseRiseRise"
+    else if ( vendorid == 0x6952 /* 'iR' */  ) /* "RiseRiseRiseRise" */
     {
       static struct cpuxref risexref[]={
-          {  0x0500, 1500,  0xFF, "mP6" }, /* (0.25 æm) - dunno which core */
-          {  0x0500, 1500,  0xFF, "mP6" }, /* (0.18 æm) - dunno which core */
-          {  0x0000, 2115,    -1, NULL  }
+          {  0x0500,   0xFF, "mP6" }, /* (0.25 æm) - dunno which core */
+          {  0x0500,   0xFF, "mP6" }, /* (0.18 æm) - dunno which core */
+          {  0x0000,     -1, NULL  }
           }; internalxref = &risexref[0];
       vendorname = "Rise ";
       cpuidbmask = 0xfff0;
     }
-    else if ( vendorid == 0x6543 /* 'eC' */ ) //"CentaurHauls"
+    else if ( vendorid == 0x6543 /* 'eC' */ ) /* "CentaurHauls" */
     {
       static struct cpuxref centaurxref[]={
-          {  0x0540, 1200,0x10A, "C6"          }, // has its own id
-          {  0x0585, 1346,0x10A, "WinChip 2"   }, // uses RG Cx re-pair
-          {  0x0000, 1346,   -1, NULL          }
+          {  0x0540,  0x10A, "C6"          }, /* has its own id */
+          {  0x0585,  0x10A, "WinChip 2"   }, /* uses RG Cx re-pair */
+          {  0x0660,  0x10A, "Samuel (Cyrix III)" }, /* THIS IS NOT A P6 !!! */
+          {  0x0000,     -1, NULL          }
           }; internalxref = &centaurxref[0];
       vendorname = "Centaur/IDT ";
+      if (cpuid >= 0x0600)
+        vendorname = "VIA ";
       cpuidbmask = 0xfff0;
     }
     else if ( vendorid == 0x654E /* 'eN' */  ) //"NexGenDriven"
     {   
       static struct cpuxref nexgenxref[]={
-          {  0x0500, 1500,     1, "Nx586" }, //386/486 core
-          {  0x0000, 1500,    -1, NULL  } //no such thing
+          {  0x0500,      1, "Nx586" }, //386/486 core
+          {  0x0000,     -1, NULL  } //no such thing
           }; internalxref = &nexgenxref[0];
       vendorname = "NexGen ";
       cpuidbmask = 0xfff0;
@@ -777,9 +808,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     else if ( vendorid == 0x4D55 /* 'MU' */  ) //"UMC UMC UMC "
     {   
       static struct cpuxref umcxref[]={
-          {  0x0410, 1500,     0, "U5D" },
-          {  0x0420, 1500,     0, "U5S" },
-          {  0x0400, 1500,    -1, NULL  }
+          {  0x0410,      0, "U5D" },
+          {  0x0420,      0, "U5S" },
+          {  0x0400,     -1, NULL  }
           }; internalxref = &umcxref[0];
       vendorname = "UMC ";
       cpuidbmask = 0xfff0;
@@ -787,80 +818,93 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     else if ( vendorid == 0x7541 /* 'uA' */ ) // "AuthenticAMD"
     {
       static struct cpuxref amdxref[]={
-          {  0x0040,  950,     0, "486"      },
-          {  0x0400,  950,     0, "486"      },
-          {  0x0430,  950,     0, "486DX2"   },
-          {  0x0470,  950,     0, "486DX2WB" },
-          {  0x0480,  950,     0, "486DX4"   },
-          {  0x0490,  950,     0, "486DX4WB" },
-          {  0x04E0, 1185,     0, "5x86"     },
-          {  0x04F0, 1185,     0, "5x86WB"   },
-          {  0x0500, 2353,     4, "K5 PR75, PR90, or PR100" }, // use K5 core
-          {  0x0510, 2353,     4, "K5 PR120 or PR133" },
-          {  0x0520, 2353,     4, "K5 PR166" },
-          {  0x0530, 2353,     4, "K5 PR200" },
-          {  0x0560, 1611, 0x105, "K6"       },
-          {  0x0570, 1611, 0x105, "K6"       },
-          {  0x0580, 1690, 0x105, "K6-2"     },
-          {  0x0590, 1690, 0x105, "K6-3"     },
-          {  0x0610, 3400, 0x109, "K7"       }, 
-          {  0x0620, 3400, 0x109, "K7-2"     },
-          {  0x0630, 3400, 0x109, "K7-3" }, //spitfire, socket+128K on-die 
-          {  0x0640, 3400, 0x109, "K7-4" }, //thunderbird, 256K on-die cache
+          {  0x0400,      0, "486"      },
+          {  0x0430,      0, "486DX2"   },
+          {  0x0470,      0, "486DX2WB" },
+          {  0x0480,      0, "486DX4"   },
+          {  0x0490,      0, "486DX4WB" },
+          {  0x04E0,      0, "5x86"     },
+          {  0x04F0,      0, "5x86WB"   },
+          {  0x0500,      4, "K5 PR75, PR90, or PR100" }, // use K5 core
+          {  0x0510,      4, "K5 PR120 or PR133" },
+          {  0x0520,      4, "K5 PR166" },
+          {  0x0530,      4, "K5 PR200" },
+          {  0x0560,  0x105, "K6"       },
+          {  0x0570,  0x105, "K6"       },
+          {  0x0580,  0x105, "K6-2"     },
+          {  0x0590,  0x105, "K6-3"     },
+          {  0x0610,  0x109, "K7"       }, 
+          {  0x0620,  0x109, "K7-2"     },
+          {  0x0630,  0x109, "K7-3" }, //spitfire, socket+128K on-die 
+          {  0x0640,  0x109, "K7-4" }, //thunderbird, 256K on-die cache
           //next-gen chip is athlon core + 2MB on-die cache (Mustang)
-          {  0x0000, 4096,    -1, NULL       }
+          {  0x0000,     -1, NULL       }
           }; internalxref = &amdxref[0];
       vendorname = "AMD ";
-      if (cpuid == 0x0400)
-        vendorname = ""; //not for generic 486
+      if (cpuid == 0x0400)          /* no such AMD ident */
+        vendorname = "Intel/AMD ";  /* identifies AMD or Intel 486 */
       cpuidbmask = 0x0ff0;
     }
     else if ( vendorid == 0x6547 /* 'eG' */ ) // "GenuineIntel"
     {
       static struct cpuxref intelxref[]={
-          {  0x0030,  426,     1, "80386"      },   // generic 386/486 core
-          {  0x0040,  950,     1, "80486"      },
-          {  0x0400,  950,     1, "486DX 25 or 33" },
-          {  0x0410,  950,     1, "486DX 50" },
-          {  0x0420,  950,     1, "486SX" },
-          {  0x0430,  950,     1, "486DX2" },
-          {  0x0440,  950,     1, "486SL" },
-          {  0x0450,  950,     1, "486SX2" },
-          {  0x0470,  950,     1, "486DX2WB" },
-          {  0x0480,  950,     1, "486DX4" },
-          {  0x0490,  950,     1, "486DX4WB" },
-          {  0x0500, 1416,     0, "Pentium" }, //stepping A
-          {  0x0510, 1416,     0, "Pentium" },
-          {  0x0520, 1416,     0, "Pentium" },
-          {  0x0530, 1416,     0, "Pentium Overdrive" },
-          {  0x0540, 1432, 0x100, "Pentium MMX" },
-          {  0x0570, 1416,     0, "Pentium" },
-          {  0x0580, 1432, 0x100, "Pentium MMX" },
-          {  0x0600, 2785,     8, "Pentium Pro" },
-          {  0x0610, 2785,     8, "Pentium Pro" },
-          /*
-          A80522, Klamath (0.28 æm)
-          A80523, Deschutes (0.25 æm)
-          Tonga (0.25 æm mobile) - 0x0650+0
-          Covington (no On-Die L2 Cache) 0x650
-          Mendocino (128 KB On-Die L2 Cache) 0x0660
-          Dixon (256 KB On-Die L2 Cache) 
-          Intel P6-core 
-          3 P2 (0.28 æm) 
-          5 P2 (0.25 æm)  
-          6 P2 with on-die L2 cache 
-          */
-          {  0x0630, 2785, 0x102, "Pentium II" },
-          {  0x0650, 2785, 0x102, "Pentium II" }, //0x0650=mobile,651=boxed PII/Xeon
-          {  0x0660, 2785, 0x102, "Celeron-A"  }, //on-die L2 
-          {  0x0670, 2785, 0x102, "Pentium III" },
-          {  0x0680, 2785, 0x102, "Pentium III" },
-          {  0x0000, 4096,    -1, NULL }
+          {  0x0300,      1, "386SX/DX" },
+          {  0x0400,      1, "486DX 25 or 33" },
+          {  0x0410,      1, "486DX 50" },
+          {  0x0420,      1, "486SX" },
+          {  0x0430,      1, "486DX2" },
+          {  0x0440,      1, "486SL" },
+          {  0x0450,      1, "486SX2" },
+          {  0x0470,      1, "486DX2WB" },
+          {  0x0480,      1, "486DX4" },
+          {  0x0490,      1, "486DX4WB" },
+          {  0x0500,      0, "Pentium" }, //stepping A
+          {  0x0510,      0, "Pentium" },
+          {  0x0520,      0, "Pentium" },
+          {  0x0530,      0, "Pentium Overdrive" },
+          {  0x0540,  0x100, "Pentium MMX" },
+          {  0x0570,      0, "Pentium" },
+          {  0x0580,  0x100, "Pentium MMX" },
+          {  0x0600,      8, "Pentium Pro A-step" },
+          {  0x0610,      8, "Pentium Pro" },
+          {  0x0630,  0x102, "Pentium II" }, /* Klamath (0.35um/512KB) */
+          {  0x0650,  0x102, "Pentium II" }, /* renamed below */
+          /* PII:  650: Deschutes A80522 (0.28um) */
+          /* PII:  650: Tonga [Mobile] (0.25 æm) */
+          /* Cely: 650: Covington (no On-Die L2 Cache) */
+          {  0x0660,  0x102, "Pentium II" }, /* renamed below */
+          /* Cely: 660: Dixon [Mobile] (128 [Cely] or 256 [PII] KB On-Die) */
+          /* Cely: 660: Mendocino A80523 (0.25um, 128 KB On-Die L2 Cache) */
+          {  0x0670,  0x102, "Pentium III" }, /* Katmai (0.25um/0.18um), 512KB, KNI */
+          {  0x0680,  0x102, "Pentium III" },
+          {  0x06A0,  0x102, "Pentium III" }, //0.18 um w/ 1/2MB on-die L2
+          {  0x0F00,  0x102, "Pentium 4" },
+          {  0x0000,     -1, NULL }
           }; internalxref = &intelxref[0];
       vendorname = "Intel "; 
-      if ((cpuid == 0x30) || (cpuid == 0x40))
-        vendorname = ""; //not for generic 386/486
-      cpuidbmask = 0x0ff0; //strip type AND stepping bits.
+      cpuidbmask = 0x0ff0; //strip brand/type AND stepping bits.
+      if ((cpuid & 0x0f00) == 0x0F00) /* end of the road */
+        cpuid &= 0x0f00;
+      else if ((cpuid & 0x0ff0) >= 0x650) /* have brand bits */
+      {
+        switch (cpuid & 0xf000) { /* brand from cpuid 1, ebx & 0x0f */
+          case 0x1000: if ((cpuid & 0x0f00) == 0x0500)
+                         chipname_override = "Celeron (Covington)"; 
+                       else if ((cpuid & 0x0f00) == 0x0600)
+                         chipname_override = "Celeron-A (Mendocino/Dixon)"; 
+                       else
+                         chipname_override = "Celeron-A (Coppermine)";
+                       break;
+          case 0x2000: chipname_override = "Pentium III"; break;
+          case 0x4000: if ((cpuid & 0x0f00) < 0x0700)
+                         chipname_override = "Pentium II Xeon";
+                       else
+                         chipname_override = "Pentium III Xeon"; 
+                       break;
+          case 0x8000: chipname_override = "Pentium 4"; break;
+          default:     chipname_override = NULL;
+        }
+      }
     }
     if (internalxref != NULL) /* we know about this vendor */
     {
@@ -871,13 +915,15 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       {
         if (maskedid == (internalxref[pos].cpuid & cpuidbmask)) /* found it */
         {
-          kKeysPerMhz  = internalxref[pos].kKeysPerMhz;
           simpleid    = internalxref[pos].simpleid;
           detectedtype = dettype;
           if ( internalxref[pos].cpuname )
           {
             strcpy( namebuf, vendorname );
-            strcat( namebuf, internalxref[pos].cpuname );
+            if (chipname_override)
+              strcat( namebuf, chipname_override );
+            else
+              strcat( namebuf, internalxref[pos].cpuname );
             detectedname = (const char *)&namebuf[0];
           }
           break;
@@ -890,8 +936,6 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     *cpuname = detectedname;
   if (whattoret == 'c')
     return ((long)simpleid);
-  if (whattoret == 'k')
-    return ((long)kKeysPerMhz);
   return detectedtype;
 }
 #endif /* X86 */
