@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log:   $Id: CHANGES.txt,v 1.4.2.1 1999/05/11 02:11:00 cyp Exp $
+Version change log:   $Id: CHANGES.txt,v 1.4.2.2 1999/06/03 15:32:15 cyp Exp $
 ==========================================================================  
 
 2.7110.443  new: win/*nix: support -pause and -unpause (SIGSTOP and SIGCONT
@@ -29,38 +29,43 @@ Version change log:   $Id: CHANGES.txt,v 1.4.2.1 1999/05/11 02:11:00 cyp Exp $
 2.7110.442  new: win32: ioctl-driven network adapter online state detection.
                  primarily for use with non-RAS net devs (heads up! AOL users)
                  includes device masking support ala Linux/FreeBSD
-	    new: unix: ps will always see the client as 'rc5des'. This is
-	         to facilitate scripted or system-wide shutdowns/restarts.
-		 Note: to avoid having to re-exec itself, the client must be
-		 started with something (a cmd) that is at least 5 chars long.
-		 So, while ./rc5 is too short, ././rc5 is long enough. :)
+            new: unix: ps will always see the client as 'rc5des'. This is
+                 to facilitate scripted or system-wide shutdowns/restarts.
+                 Note: to avoid having to re-exec itself, the client must be
+                 started with something (a cmd) that is at least 5 chars long.
+                 So, while ./rc5 is too short, ././rc5 is long enough. :)
 2.7110.441  new: log-to-file options/types/limits
-	    imp: made --config menus more intuitive
+            imp: made --config menus more intuitive
 2.7109.441  fix: win32cli shutdown if not hidden and not service :)
 2.7109.440  fix: win32cli shutdown for win95 if hidden or service
             fix: proxified HTTP works again
-	    new: Big block (>8*2^28) support (requires proxy 306 or newer)
-	    new: infrastructure for new/more contests
-	    chg: |- includes partial .ini restructuring
-	    chg: |- tracking contest open/closed states is no longer necessary
-	    chg: |  `- .inis no longer need to be shared with offline clients
-	    chg: `- buffer filenames are now generated from base names
-	    new: fetch/flush from 'remote' buffers
-	    new: Buffers are now FIFO (sorta)
-	    new: introduced unique release number scheme
-	    new: client<->proxy time synchronization added
-	    new: --import option to merge buffer files
-	    chg: checkpting interval is now the greater of 10min/10% change
-	    chg: coalescing flush is no longer supported
-	    imp: socket buffer size is increased if necessary which improves
-	         network throughput on non-unix platforms
+            new: Big block (>8*2^28) support (requires proxy 306 or newer)
+                 Support is enabled only if the 'preferred-block-size' is 
+                 greater than 31.
+                 *Warning*: do not share buffers between clients that have
+                 the use of big blocks enabled and clients older than
+                 2.7109.440 since older clients will truncate the blocks.
+            new: infrastructure for new/more contests
+            chg: |- includes partial .ini restructuring
+            chg: |- tracking contest open/closed states is no longer necessary
+            chg: |  `- .inis no longer need to be shared with offline clients
+            chg: `- buffer filenames are now generated from base names
+            new: fetch/flush from 'remote' buffers
+            new: Buffers are now FIFO (sorta)
+            new: introduced unique release number scheme
+            new: client<->proxy time synchronization added
+            new: --import option to merge buffer files
+            chg: checkpting interval is now the greater of 10min/10% change
+            chg: coalescing flush is no longer supported
+            imp: socket buffer size is increased if necessary which improves
+                 network throughput on non-unix platforms
 2.7106.436  fix: win32gui:Percent bar in hidden mode reenabled
             fix: win32gui:Log Grapher now allows end date to be set
             fix: win32gui:Window/Logger settings now saved at shutdown
             fix: win32gui:Log File only reread when required now
 2.7106.436  fix: Randomprefix incrementation problem fixed.
 2.7106.435  new: Linux/FreeBSD: Added lurk functionality
-	         Includes device (eth*,ppp*,sl*) masking support
+                 Includes device (eth*,ppp*,sl*) masking support
 2.7105.432  fix: OS2: EMX & lurk mode changes. 
             fix: -(un)install honors -quiet
 2.7105.432  new: win16/32: Connection error message support added for 
@@ -82,7 +87,7 @@ Version change log:   $Id: CHANGES.txt,v 1.4.2.1 1999/05/11 02:11:00 cyp Exp $
             new: win32/win16/*nix: -kill/-shutdown, -hup/-restart 
 2.7102.421  fix: IRIX MT fixed. 
             imp: Many RISC OS x86 changes. 
-	    fix: MacOS Block count and processor id bug fixed.
+            fix: MacOS Block count and processor id bug fixed.
 2.7102.421  new: Added a new self-modifying 386/486 core
 2.7102.420  fix: Fixed -hide/-quiet for unix'sh clients
 2.7102.420  fix: Bring back the cputype config screen
@@ -91,10 +96,10 @@ Version change log:   $Id: CHANGES.txt,v 1.4.2.1 1999/05/11 02:11:00 cyp Exp $
 2.7102.419  fix: Complete cmdline option cleanup.
             new: creation of portable (encapsulated) console i/o.
                  Many terminal issues fixed.
-	    new: the number of threads is now unlimited
-	    new: "non-threaded" clients are now threaded :)
-	         non-threaded clients use an internal round-robin
-		 mechanism but are not SMP-aware. 
+            new: the number of threads is now unlimited
+            new: "non-threaded" clients are now threaded :)
+                 non-threaded clients use an internal round-robin
+                 mechanism but are not SMP-aware. 
 2.7100.418  fix: Randomprefix is now changed from buffer
                  files; offline clients will now generate
                  from the "correct" randomprefix.
@@ -116,7 +121,7 @@ Version change log:   $Id: CHANGES.txt,v 1.4.2.1 1999/05/11 02:11:00 cyp Exp $
                  2 new 68k cores implemented.
 2.7100.418  new: SIGHUP handling implemented. 
             chg: Beta client timeout implemented. 
-	    chg: AmigaOS changes.
+            chg: AmigaOS changes.
 2.7100.418  chg: Block size selection changed to support slow CPUs.
 2.7100.418  new: RC5 MMX cores are now in place. 50% speed
                  improvement on Pentium MMX processors.
@@ -141,7 +146,7 @@ Version change log:   $Id: CHANGES.txt,v 1.4.2.1 1999/05/11 02:11:00 cyp Exp $
 2.7100.416  fix: win32gui: Change to fetch, flush, and update to be verbose
 2.7100.416  fix: OS/2: Got new version of Watcom for OS/2, now able to 
                  compile MMX core and build the new version without a 
-		 major speed decrease in both the rc5 and des cores.
+                 major speed decrease in both the rc5 and des cores.
 2.7100.416  fix: fixed -runbuffers behaviour.
 2.7100.416  chg: RISC OS Updates. 
             new: -cpuinfo added.
@@ -161,7 +166,7 @@ Version change log:   $Id: CHANGES.txt,v 1.4.2.1 1999/05/11 02:11:00 cyp Exp $
 2.7100.415  new: Added DES MMX cores to x86 clients - thanks go out to
                  Remi Guyomarch and Bruce Ford who made this possible.
 2.7100.413  fix: Fixed problems in 413 with .ini name not following .exe name 
-	    fix: rc5 outbuffer being set incorrectly to buff-out.des
+            fix: rc5 outbuffer being set incorrectly to buff-out.des
 2.7100.413  fix: More SMTP log mailing overriding offline mode fixes.
             fix: Secondary intel CPUs now identified correctly.
 2.7100.413  fix: lurk is now more verbose and acts the same way in win32/os2
@@ -181,8 +186,8 @@ Version change log:   $Id: CHANGES.txt,v 1.4.2.1 1999/05/11 02:11:00 cyp Exp $
 2.7100.412  fix: OS/2: Redid the lurk mode to only detect slip/ppp 
 2.7100.412  chg: Numerous win16 updates. 
             new: Default AMD 486 core now Pentium core. 
-	    chg: No longer attempts SMTP connections for mailing
-	         logs if the client is in offline mode.
+            chg: No longer attempts SMTP connections for mailing
+                 logs if the client is in offline mode.
 2.7100.412  chg: Lots of internal changes to prepare for Win16 client
 2.7100.412  fix: Invalid cpu type value now ignored.
 2.7100.412  chg: Buffer path problem and buffer truncation issue addressed
