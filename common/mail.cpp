@@ -7,9 +7,10 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.32.2.8 2000/05/19 10:42:13 cyp Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.32.2.9 2000/06/04 10:22:44 oliver Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
+#define __MAIL_CPP__    // used by AmigaOS, to leave out conflicting includes
 
 #include "baseincs.h"
 #include "network.h"
