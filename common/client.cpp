@@ -129,10 +129,13 @@ Client::Client()
   offlinemode = 0;
   strcpy(inifilename, InternalGetLocalFilename("rc5des.ini"));
   strcpy(in_buffer_file[0], InternalGetLocalFilename("buff-in.rc5"));
+  strcpy(ini_in_buffer_file[0], "buff-in.rc5");
   strcpy(out_buffer_file[0], InternalGetLocalFilename("buff-out.rc5"));
-  strcpy(in_buffer_file[1], InternalGetLocalFilename("buff-in.des"));
-  strcpy(out_buffer_file[1], InternalGetLocalFilename("buff-out.des"));
+  strcpy(ini_out_buffer_file[0], "buff-out.rc5");
+  strcpy(ini_in_buffer_file[1], "buff-in.des");
+  strcpy(ini_out_buffer_file[1], "buff-out.des");
   strcpy(exit_flag_file, InternalGetLocalFilename("exitrc5.now"));
+  strcpy(ini_exit_flag_file, "exitrc5.now");
   messagelen = 0;
   smtpport = 25;
   strcpy(smtpsrvr,"your.smtp.server");
@@ -145,8 +148,11 @@ Client::Client()
 #endif
   numcputemp=1;
   strcpy(checkpoint_file[0],"none");
+  strcpy(ini_checkpoint_file[0],"none");
   strcpy(checkpoint_file[1],"none");
+  strcpy(ini_checkpoint_file[1],"none");
   strcpy(pausefile,"none");
+  strcpy(ini_pausefile,"none");
   checkpoint_min=5;
   percentprintingoff=0;
   connectoften=0;
