@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.34 1999/12/08 02:28:18 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.35 1999/12/09 12:15:46 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -157,12 +157,12 @@ return "@(#)$Id: problem.cpp,v 1.108.2.34 1999/12/08 02:28:18 cyp Exp $"; }
    extern u32 p2des_unit_func_pro( RC5UnitWork * , u32 *iter, char *coremem );
    extern u32 des_unit_func_mmx( RC5UnitWork * , u32 *iter, char *coremem );
    extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
-#elif defined(KWAN)
-   extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
 #elif defined(MEGGS)
+   //des/des-slice-meggs.cpp
    extern u32 des_unit_func_meggs( RC5UnitWork * , u32 *iter, char *coremem );
 #else
-  #error "Whats up, Doc?"
+   //all rvc based drivers (eg des/ultrasparc/des-slice-ultrasparc.cpp)
+   extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
 #endif
 #endif
 
@@ -602,12 +602,14 @@ static int __core_picker(Problem *problem, unsigned int contestid)
         }
       }
     }
-    #elif defined(KWAN)
-      problem->des_unit_func = des_unit_func_slice;
     #elif defined(MEGGS)
+      //des/des-slice-meggs.cpp
+      //xtern u32 des_unit_func_meggs( RC5UnitWork *, u32 *iter, char *coremem);
       problem->des_unit_func = des_unit_func_meggs;
     #else
-      #error "Whats up, Doc?"
+      //all rvc based drivers (eg des/ultrasparc/des-slice-ultrasparc.cpp)
+      //xtern u32 des_unit_func_slice( RC5UnitWork *, u32 *iter, char *coremem);
+      problem->des_unit_func = des_unit_func_slice;
     #endif
     return coresel;
   }
