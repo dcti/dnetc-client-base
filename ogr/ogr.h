@@ -3,7 +3,7 @@
 // Any other distribution or use of this source violates copyright.
 
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.3.2.12 2000/06/24 23:19:39 andreasb Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.3.2.13 2000/07/01 13:32:43 cyp Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -81,4 +81,8 @@ struct State {
                          (4*OGR_INT_SIZE)+(OGR_LEVEL_SIZE*MAXDEPTH) + 64)
                          //sizeof(struct State)
 
+unsigned long ogr_nodecount(const struct Stub *);
+const char *ogr_stubstr(const struct Stub *stub);
+
 #endif
+
