@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.120  1998/06/30 03:10:15  silby
+// Fixed version number reporting in -config menus.
+//
 // Revision 1.119  1998/06/29 08:43:48  jlawson
 // More OS_WIN32S/OS_WIN16 differences and long constants added.
 //
@@ -142,7 +145,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.119 1998/06/29 08:43:48 jlawson Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.120 1998/06/30 03:10:15 silby Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -482,8 +485,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
     // display menu
 
     clearscreen();
-    printf("Distributed.Net RC5/DES Client build v2.70%i.%i config menu\n",
-           CLIENT_BUILD,CLIENT_BUILD_FRAC);
+    printf("Distributed.Net RC5/DES Client build v2.%d.%d config menu\n",
+           CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC);
     printf("%s\n",menutable[currentmenu-1]);
     printf("------------------------------------------------------------\n\n");
 
@@ -890,8 +893,8 @@ s32 Client::Configure( void )
   while (returnvalue == 0)
   {
     clearscreen();
-    printf("Distributed.Net RC5/DES Client build v2.70%i.%i config menu\n",
-        CLIENT_BUILD, CLIENT_BUILD_FRAC);
+    printf("Distributed.Net RC5/DES Client build v2.%d.%d config menu\n",
+           CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC);
     printf("------------------------------------------------------------\n\n");
     printf(" 1) %s\n",menutable[0]);
     printf(" 2) %s\n",menutable[1]);
