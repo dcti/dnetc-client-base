@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.214 2000/12/25 23:28:23 snake Exp $
+# @(#)$Id: configure,v 1.222.2.215 2001/01/01 21:16:23 teichp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1755,6 +1755,7 @@ case "$1" in
         add_sources "riscos" "arm"
 	      ;; 
     *arm-riscos-prepare) #create tar archive for native compilation
+        rm -rf dnetc_riscos
         mkdir dnetc_riscos
         mkdir dnetc_riscos/common
         mkdir dnetc_riscos/common/c++
