@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: MUIGUI.c,v 1.1.2.3 2004/01/14 01:21:19 piru Exp $
+ * $Id: MUIGUI.c,v 1.1.2.4 2004/03/14 11:13:40 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -184,4 +184,7 @@ VOID NATDECLFUNC_4(GUI_ConsoleOut, d0, ULONG, cpu, a0, STRPTR, output, d1, BOOL,
 	(void)cpu;
 
 	DoMethod(LibBase->App, MUIM_MyApplication_InsertNode, (ULONG)output, overwrite);
+
+	/* Handle possible queued input */
+	DoMethod(LibBase->App, MUIM_Application_InputBuffered);
 }
