@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.92 2002/09/25 01:32:37 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.93 2002/09/25 17:38:08 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -226,6 +226,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     { /* RC5-72 */
       "ANSI 4-pipe",
       "ANSI 2-pipe",
+      "ANSI 1-pipe",
       NULL
     },
   };

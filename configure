@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.271 2002/09/25 04:15:43 jlawson Exp $
+# @(#)$Id: configure,v 1.272 2002/09/25 17:38:08 acidblood Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -154,6 +154,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   #-- RC5-72 -- -----------------------------------------------
   RC5_72_ANSI4_SRCS="rc5-72/ansi/rc5ansi4.cpp" # 4 pipeline
   RC5_72_ANSI2_SRCS="rc5-72/ansi/rc5ansi2.cpp" # 2 pipeline
+  RC5_72_ANSI1_SRCS="rc5-72/ansi/rc5ansi1.cpp" # 1 pipeline
   # -- DES -- (needs -DHAVE_DES_CORES) -------------------------
   KWAN_SLICE_SRCS1="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
   KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
@@ -204,7 +205,7 @@ add_sources() # $1=os, $2=arch, $3=custom
 
     # -------------- rc5-72 --------------
     TARGET_ADDSRCS="$TARGET_ADDSRCS \
-                    $RC5_72_ANSI4_SRCS $RC5_72_ANSI2_SRCS"
+                    $RC5_72_ANSI4_SRCS $RC5_72_ANSI2_SRCS $RC5_72_ANSI1_SRCS"
     TARGET_CCFLAGS="$TARGET_CCFLAGS \
                     -DHAVE_OLD_CRYPTO -DHAVE_RC564_CORES"
     # --------------- des ----------------
