@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.61  1999/03/18 03:09:12  cyp
+// Removed help text for obsolete options (-forcefetch,-forceflush etc)
+//
 // Revision 1.60  1999/02/10 03:43:12  cyp
 // disphelp.cpp doesn't need lurk.h
 //
@@ -197,7 +200,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.60 1999/02/10 03:43:12 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.61 1999/03/18 03:09:12 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -212,7 +215,7 @@ return "@(#)$Id: disphelp.cpp,v 1.60 1999/02/10 03:43:12 cyp Exp $"; }
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)  || \
     (CLIENT_OS == OS_BEOS)  || (CLIENT_OS == OS_SOLARIS) || \
     (CLIENT_OS == OS_IRIX)  || (CLIENT_OS == OS_FREEBSD) || \
-    (CLIENT_OS == OS_BSDI) || (CLIENT_OS == OS_AIX)     || \
+    (CLIENT_OS == OS_BSDI)  || (CLIENT_OS == OS_AIX)     || \
     (CLIENT_OS == OS_OS390) || (CLIENT_OS == OS_NEXT)    || \
     (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_MACH)    || \
     (CLIENT_OS == OS_SCO)   || (CLIENT_OS == OS_OPENBSD) || \
@@ -239,8 +242,6 @@ void DisplayHelp( const char * unrecognized_option )
     "-test              tests for client errors",
     "-flush             flush all output buffers",
     "-fetch             fill all input buffers",
-    "-forceflush        ignore most errors & retry",
-    "-forcefetch        ignore most errors & retry",
     "-update            fetch + flush",
     "-forceunlock <fn>  unlock buffer file <fn>",
     "-benchmark         tests the client speed",
@@ -285,7 +286,6 @@ void DisplayHelp( const char * unrecognized_option )
     "-ckpoint2 <fn>     set the name of the RC5 checkpoint file",
     "-noexitfilecheck   don't check for a 'exitrc5.now' command file",
     "-pausefile <fn>    name of file that causes the client to pause",
-    "-processdes <x>    determines if the client will compete in DES contests",
     "-l <filename>      name of the log file",
     "-nofallback        don't fallback to a distributed.net proxy",
     "-smtplen <len>     max size (in bytes) of a mail message (0 means no mail)",
@@ -453,4 +453,3 @@ void DisplayHelp( const char * unrecognized_option )
 }
 
 // --------------------------------------------------------------------------
-
