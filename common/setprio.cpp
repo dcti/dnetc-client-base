@@ -11,6 +11,11 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.32  1998/10/29 04:13:19  foxyloxy
+//
+// Initial IRIX support of new priority handling. Not debugged yet,
+// but it won't lock up your system.
+//
 // Revision 1.31  1998/10/26 03:13:24  cyp
 // Changed win32 priority setting so that the main thread always runs at
 // normal priority (but in the idle class). Crunch threads are locked at idle.
@@ -29,7 +34,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.31 1998/10/26 03:13:24 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.32 1998/10/29 04:13:19 foxyloxy Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -175,11 +180,15 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       }
     else
       {
-      if (niceness == 0)
-        schedctl( NDPRI, 0, 200 );
-      //else //nothing
+	if (prio == 0){
+	  schedctl( NDPRI, 0, NDPLOMIN );
+	  schedctl( RENICE, 0, 39);
+	}	
+	else{
+	  if (prio < 9)
+	    schedctl( NDPRI, 0, (NDPLOMIN - NDPNORMMIN)/prio);
+	}
       }
-    #error FIXME: SetPriority needs to be scaled from 0 (lowest/idle prio) to 9 (normal)
   #else
     if ( set_for_thread )
       {
