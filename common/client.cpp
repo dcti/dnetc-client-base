@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.149  1998/10/26 02:51:41  cyp
+// out_buffer_file[0] was being initialized with the wrong suffix ('des'
+// instead of 'rc5') in the client constructor.
+//
+// Revision 1.148  1998/10/19 12:42:09  cyp
+// win16 changes
+//
 // Revision 1.147  1998/10/11 00:41:23  cyp
 // Implemented ModeReq
 //
@@ -44,7 +51,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.147 1998/10/11 00:41:23 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.149 1998/10/26 02:51:41 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -97,15 +104,15 @@ Client::Client()
   offlinemode = 0;
   autofindkeyserver = 1;  //implies 'only if keyproxy==dnetkeyserver'
 
-  strcpy(logname, "none");
+  strcpy(logname, "");
   strcpy(inifilename, "rc5des" EXTN_SEP "ini");
   strcpy(in_buffer_file[0], "buff-in" EXTN_SEP "rc5");
   strcpy(out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
   strcpy(in_buffer_file[1], "buff-in" EXTN_SEP "des");
-  strcpy(out_buffer_file[0], "buff-out" EXTN_SEP "des");
+  strcpy(out_buffer_file[1], "buff-out" EXTN_SEP "des");
   strcpy(exit_flag_file,     "exitrc5" EXTN_SEP "now" );
-  strcpy(checkpoint_file[1],"none");
-  strcpy(pausefile,"none");
+  strcpy(checkpoint_file[1],"");
+  strcpy(pausefile,"");
 
   messagelen = 0;
   smtpport = 25;
@@ -114,7 +121,7 @@ Client::Client()
   strcpy(smtpdest,"you@your.site");
   numcpu = -1;
   numcputemp=1;
-  strcpy(checkpoint_file[0],"none");
+  strcpy(checkpoint_file[0],"");
   checkpoint_min=5;
   percentprintingoff=0;
   connectoften=0;
@@ -247,26 +254,30 @@ int Client::Main( int argc, const char *argv[], int restarted )
       {                                                
       if (InitializeConsole(runhidden||quietmode) == 0) //initialize conio
         {
+        int autoclosecon = 1; // let console close without user intervention
         InitializeLogging(0); //enable only screen logging for now
+
         PrintBanner(id); //tracks restart state itself
 
         //get remaining option overrides and set "mode" bits if applicable
-        if ( ParseCommandline( 2, argc, argv, &retcode, 1 ) !=0 )
+        if ( !restarted && ParseCommandline( 2, argc, argv, &retcode, 1 ) !=0 )
           { 
           if ( ModeReqIsSet( -1 ) ) //do any "modes" (including -config)
+            {
             ModeReqRun( this );     
+            autoclosecon = 0; //wait for a keypress before closing the console
+            }
           }
         else 
           {
           InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile);
           InitializeLogging(1);   //enable timestamps and file/mail logging
-            
           PrintBanner( id );
           SelectCore( 0 );
           retcode = Run();
           }
         DeinitializeLogging();
-        DeinitializeConsole();
+        DeinitializeConsole(autoclosecon);
         }
       }
     DeinitializeTriggers();
@@ -349,9 +360,9 @@ int realmain( int argc, char *argv[] )
 /* ----------------------------------------------------------------- */
 
 #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst,
-                                             LPSTR lpszCmdLine, int nCmdShow)
-{ /* need an abstraction layer between WinMain() and realmain() */
+int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, 
+                                                               int nCmdShow) 
+{ /* abstraction layer between WinMain() and realmain() */
   return winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, realmain);
 }
 #else
