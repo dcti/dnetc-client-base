@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.28 2001/01/14 02:37:09 andreasb Exp $
+ * $Id: ogr.cpp,v 1.1.2.29 2001/01/14 19:56:19 andreasb Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -22,6 +22,7 @@
   #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - default is 1 ('yes') */
   #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - default is 0 ('no') */
   #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0-2 - default is 0 */
+  #define OGROPT_SMALL_FIRST_ZERO_BIT_TABLE     0 /* 0/1 - default is 0 ('no') */
 #elif (defined(OVERWRITE_DEFAULT_OPTIMIZATIONS))  /* defines reside in an external file */
 #elif (defined(ASM_X86) || defined(__386__))
   #if defined(OGR_NOFFZ) /* the bsr insn is slooooow on anything less than a PPro */
@@ -80,6 +81,7 @@
 #elif defined(ASM_ARM)
   #if (__GNUC__)
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1
+    #define OGROPT_SMALL_FIRST_ZERO_BIT_TABLE     1
     #define OGROPT_BITOFLIST_DIRECT_BIT           0
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1
@@ -122,6 +124,16 @@
   #endif
 #endif
 
+/* use a 256 byte table instead of the 64k table. Costs an additional 
+   comparison and shift, but saves memory when cache is rare, e.g. on ARM.
+*/
+#ifndef OGROPT_SMALL_FIRST_ZERO_BIT_TABLE
+  #define OGROPT_SMALL_FIRST_ZERO_BIT_TABLE 0
+#elif (OGROPT_SMALL_FIRST_ZERO_BIT_TABLE == 1)
+  /* it's in the asm section, even if it's only C */
+  #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 1
+#endif
 
 /* optimize COPY_LIST_SET_BIT macro for when jumps are expensive.
    0=no reduction (6 'if'), 1=one 'if'+manual copy; 2=one 'if' plus memcpy;
@@ -1652,25 +1664,25 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
     \
     asm ("ldr %0,[%2,#44]\n \
           ldr %1,[%2,#48]\n \
-	  str %0,[%2,#40]\n \
-	  ldr %0,[%2,#52]\n \
-	  str %1,[%2,#44]\n \
-	  ldr %1,[%2,#56]\n \
-	  str %0,[%2,#48]\n \
+          str %0,[%2,#40]\n \
+          ldr %0,[%2,#52]\n \
+          str %1,[%2,#44]\n \
+          ldr %1,[%2,#56]\n \
+          str %0,[%2,#48]\n \
           ldr %0,[%2,#12]\n \
-	  str %1,[%2,#52]\n \
-	  ldr %1,[%2,#8]\n \
-	  str %0,[%2,#16]\n \
+          str %1,[%2,#52]\n \
+          ldr %1,[%2,#8]\n \
+          str %0,[%2,#16]\n \
           ldr %0,[%2,#4]\n \
-	  str %1,[%2,#12]\n \
-	  ldr %1,[%2,#0]\n \
-	  str %0,[%2,#8]\n \
-	  mov %0,#0\n \
-	  str %1,[%2,#4]\n \
-	  str %0,[%2,#56]\n \
-	  str %0,[%2,#0]" : \
-	 "=r" (a1), "=r" (a2),\
-	 "=r" (lev) : "2" (lev)); \
+          str %1,[%2,#12]\n \
+          ldr %1,[%2,#0]\n \
+          str %0,[%2,#8]\n \
+          mov %0,#0\n \
+          str %1,[%2,#4]\n \
+          str %0,[%2,#56]\n \
+          str %0,[%2,#0]" : \
+         "=r" (a1), "=r" (a2),\
+         "=r" (lev) : "2" (lev)); \
   }
 #else
   #define COMP_LEFT_LIST_RIGHT_32(lev)              \
@@ -2037,9 +2049,62 @@ static int found_one(const struct State *oState)
 }
 #endif
 
+
 #if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
   #define LOOKUP_FIRSTBLANK(x) ((x < 0xffff0000) ? \
       (ogr_first_blank[x>>16]) : (16 + ogr_first_blank[x - 0xffff0000]))
+#elif (OGROPT_SMALL_FIRST_ZERO_BIT_TABLE == 1)
+  static const char ogr_first_blank_8bit[256] = {
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 8, 9
+  };
+  #if defined(ASM_ARM) && defined(__GNUC__)
+    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input)
+    {
+      register int temp, result;
+      __asm__ ("mov     %0,#0\n\t"             \
+               "cmp     %1,#0xffff0000\n\t"    \
+               "movcs   %1,%1,lsl#16\n\t"      \
+               "addcs   %0,%0,#16\n\t"         \
+               "cmp     %1,#0xff000000\n\t"    \
+               "movcs   %1,%1,lsl#8\n\t"       \
+               "ldrb    %1,[%3,%1,lsr#24]\n\t" \
+               "addcs   %0,%0,#8\n\t"          \
+               "add     %0,%0,%1"              \
+               :"=r" (result), "=r" (temp) : "1" (input), "r" (ogr_first_blank_8bit));
+      return result;
+    }
+  #else /* C code, no asm */
+  #warning LOOKUP_FIRSTBLANK is a C only version!
+  static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input)
+  {
+    register int result = 0;
+    if (input >= 0xffff0000) {
+      input <<= 16;
+      result += 16;
+    }
+    if (input >= 0xff000000) {
+      input <<= 8;
+      result += 8;
+    }
+    result += ogr_first_blank_8bit[input>>24];
+    return result;
+  }
+  #endif
 #elif defined(__PPC__) || defined(ASM_PPC) || defined (__POWERPC__)/* CouNT Leading Zeros Word */
   #if defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
@@ -2108,42 +2173,6 @@ static int found_one(const struct State *oState)
 #elif defined(ASM_68K) && defined(__GNUC__) /* Bit field find first one set (020+) */
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
   { i = ~i; __asm__ ("bfffo %0,0,0,%0" : "=d" (i) : "0" (i)); return ++i; }
-#elif defined(ASM_ARM)
-  #if defined(__GNUC__)
-    static char first[256] = {
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-      2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-      2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-      2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-      5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 8, 9
-    };
-    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input)
-    {
-      register int temp, result;
-      __asm__ ("mov     %0,#0\n\t"             \
-               "cmp     %1,#0xffff0000\n\t"    \
-	       "movcs   %1,%1,lsl#16\n\t"      \
-	       "addcs   %0,%0,#16\n\t"         \
-	       "cmp	%1,#0xff000000\n\t"    \
-	       "movcs	%1,%1,lsl#8\n\t"       \
-	       "ldrb	%1,[%3,%1,lsr#24]\n\t" \
-	       "addcs	%0,%0,#8\n\t"          \
-	       "add	%0,%0,%1"              \
-	       :"=r" (result), "=r" (temp) : "1" (input), "r" (first));
-      return result;
-    }
-  #endif
 #else
   #error OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM is defined, and no code to match
 #endif
@@ -2784,7 +2813,4 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
   dispatch_table.cleanup   = ogr_cleanup;
   return &dispatch_table;
 }
-
-
-
 
