@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.124 2000/02/12 04:41:00 andrewm Exp $
+# @(#)$Id: configure,v 1.222.2.125 2000/02/13 04:00:14 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1267,7 +1267,15 @@ case "$1" in
 	TARGET_TARBALL="freebsd-x86-aout"
         ;;
 
-    *x86-freebsd-elf)       # FreeBSD >=3.x, elf, "threaded", cyp 
+    *x86-freebsd-elf)       # FreeBSD >=3.x, elf, "threaded", cyp
+        # note: although this client supports SMP (and is thus threaded),
+        # we NEED to link against libc, and NOT libc_r because the libc_r
+	# in 3.4 and above is incompatible with the pre-3.4 (specifically,
+	# the >=3.4 libc_r versions of select() and nanosleep() syscalls 
+	# have their own new syscall numbers; they were emulated before). 
+        # We don't really need the libc_r stuff anyway because the "threads" 
+	# are really rfork()'d children.
+	#                                  -cyp Feb/13/2000
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -Werror -DMMX_RC5 -DLURK -DHAVE_OGR_CORES"
 			#-DHAVE_CSC_CORES -DMMX_CSC"
@@ -1279,7 +1287,7 @@ case "$1" in
 			#des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
 	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS" 
 	                #$CSC_ASM_SRCS $NASM_DESMMX_SRCS
-	TARGET_LIBS="-lc_r"
+	TARGET_LIBS="-lc" # NOT libc_r
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="freebsd-x86-elf"
 	;;
