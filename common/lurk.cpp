@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.20 2000/09/20 18:15:51 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.21 2000/10/04 09:33:04 snake Exp $"; }
 
 //#define TRACE
 
@@ -655,8 +655,8 @@ static int __MatchMask( const char *ifrname, int mask_include_all,
       #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
         (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
         (CLIENT_OS == OS_MACOSX)
-      || strcmp(wildmask,"dun*")==0 || 
-      || strcmp(wildmask,"tun*")==0 ||
+      || strcmp(wildmask,"dun*")==0 
+      || strcmp(wildmask,"tun*")==0
       #elif (CLIENT_OS == OS_AMIGAOS)
       || strcmp(wildmask,"mi*")==0  // required for Miami (not MiamiDx or Genesis)
       #endif
