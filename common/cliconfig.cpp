@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.174  1998/08/15 21:28:05  jlawson
+// added ifdef MMX_BITSLICE around mmx core selection to allow compilation
+// without mmx cores
+//
 // Revision 1.173  1998/08/14 00:23:19  silby
 // Changed WriteContestAndPrefixConfig so that it would not attempt to do so if nodiskbuffers was specified (aiming towards complete diskless operation aside from the inital .ini read)
 //
@@ -188,7 +192,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.173 1998/08/14 00:23:19 silby Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.174 1998/08/15 21:28:05 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -2379,12 +2383,14 @@ s32 Client::SelectCore(void)
       des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
       des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
       break;
+#ifdef MMX_BITSLICER
     case 6: // Pentium MMX ONLY
       rc5_unit_func = rc5_unit_func_p5_mmx;
       des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
       des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
       break;
-
+#endif
+      
     #undef DESUNITFUNC61
     #undef DESUNITFUNC62
     #undef DESUNITFUNC51
