@@ -9,6 +9,7 @@ Bugs Listing
 06-23-98 - Kevin Bracey
   The help display crashes if the terminal height is more than the
   amount to be displayed.
+FIXED - Remi
   
 06-18-98 - Kevin Bracey
   There seem to be far too many breaks in the switch statement in the x86
