@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.41  1998/11/04 22:55:09  dicamillo
+// change Mac cpu_description text to be static
+//
 // Revision 1.40  1998/11/04 22:35:42  dicamillo
 // additional updates to Mac CPU detection code
 //
@@ -144,7 +147,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.40 1998/11/04 22:35:42 dicamillo Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.41 1998/11/04 22:55:09 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -355,7 +358,7 @@ int GetProcessorType(int quietly)
 {
 	long result;
 	static int detectedtype = -1;
-	char cpu_description[6];
+	static char cpu_description[6] = "";
 
 	if(detectedtype == -1)
 	{
