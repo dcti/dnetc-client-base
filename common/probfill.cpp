@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.66.2.1 2001/03/22 22:03:56 sampo Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.66.2.2 2001/03/22 22:24:50 sampo Exp $"; }
 
 //#define TRACE
 
@@ -398,7 +398,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       const char *action_msg = 0;
       const char *reason_msg = 0;
       int discarded = 0;
-      unsigned int permille, swucount = 0;
       char pktid[32], ratebuf[32]; 
       char dcountbuf[64]; /* we use this as scratch space too */
       struct timeval tv;
@@ -495,13 +494,12 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           {
             //[....] Discarded CSC 12345678:ABCDEF00 4*2^28
             //       (project disabled/closed)
-            Log("%s: %s %s%c(%s)\n", CliGetContestNameFromID(thisprob->contest), action_msg, pktid, 
-                                   ((strlen(reason_msg)>10)?('\n'):(' ')),
-                                   reason_msg );
+            Log("%s: %s %s%c(%s)\n", CliGetContestNameFromID(cont_i), action_msg,
+                                     pktid, ((strlen(reason_msg)>10)?('\n'):(' ')), reason_msg );
           }
           else
           {
-            U64stringify(dcountbuf, sizeof(dcountbuf), info.dcounthi, info.dcountlo, 2, CliGetContestUnitNameFromID(cont_i));
+            U64stringify(dcountbuf, sizeof(dcountbuf), info.dcounthi, info.dcountlo, 2, CliGetContestUnitFromID(cont_i));
             if (finito && !info.is_test_packet) /* finished test packet */
               strcat( strcpy( dcountbuf,"Test: RESULT_"),
                      ((resultcode==RESULT_NOTHING)?("NOTHING"):("FOUND")) );
@@ -711,7 +709,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
           info.permille_only_if_exact = 1;
           info.sigbuf = pktid;
           info.sigbufsz = sizeof(pktid);
-          if (ProblemGetInfo( thisprob, &info, P_INFO_S_PERMIL, | P_INFO_SIGBUF | P_INFO_DCOUNT) != -1)
+          if (ProblemGetInfo( thisprob, &info, P_INFO_S_PERMIL | P_INFO_SIGBUF | P_INFO_DCOUNT) != -1)
           {
             const char *extramsg = ""; 
             char perdone[32]; 
@@ -723,18 +721,18 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
               sprintf(perdone, " (%u.%u0%% done)", (info.s_permille/10), (info.s_permille%10));
               extramsg = perdone;
             }
-            else if (ddonehi || ddonelo)
+            else if (info.ddonehi || info.ddonelo)
             {
-              strcat( strcat( strcpy(perdone, " ("), U64strinfigy(ddonebuf, sizeof(ddonebuf), 
+              strcat( strcat( strcpy(perdone, " ("), U64stringify(ddonebuf, sizeof(ddonebuf), 
                                                                   info.ddonehi, info.ddonelo, 2,
-                                                                  CliGetContestUnitFromID(thisprob->contest)),
+                                                                  CliGetContestUnitFromID(thisprob->pub_data.contest)),
                                                      " done)"); 
               extramsg = perdone;
             }
             
             Log("%s: Loaded %s%s%s\n",
-                 contname, ((thisprob->pub_data.is_random)?("random "):("")),
-                 pktid, extramsg );
+                 CliGetContestNameFromID(rhisprob->pub_data.contest),
+                 ((thisprob->pub_data.is_random)?("random "):("")), pktid, extramsg );
           } /* if (thisprob->GetProblemInfo(...) != -1) */
         } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
       } /* if (LoadState(...) != -1) */
