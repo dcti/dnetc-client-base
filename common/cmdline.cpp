@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.94  1998/11/09 01:59:20  remi
+// Fixed a bug where ./rc5des -help will print the help text and then go to
+// config mode if there isn't any .ini file.
+//
 // Revision 1.93  1998/11/08 19:03:22  cyp
 // -help (and invalid command line options) are now treated as "mode" requests.
 //
@@ -47,7 +51,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.93 1998/11/08 19:03:22 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.94 1998/11/09 01:59:20 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -712,6 +716,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         invalid_option = thisarg;
         ModeReqClear(-1); /* clear all */
         ModeReqSet( MODEREQ_CMDLINE_HELP );
+        inimissing = 0; // don't need an .ini file if we just want help
         retcode = 0;
         do_break = 1;
         }
