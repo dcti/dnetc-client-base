@@ -1,7 +1,10 @@
 .386p
 
-;.model flat    ; some use small model, so use appropriate cmdline switch
-                ; eg /mf or /ms for WASM, 
+if modelnum eq 1
+  .model small
+elseif modelnum eq 2
+  .model flat
+endif
 
 
 _TEXT   segment dword public use32 'CODE'
