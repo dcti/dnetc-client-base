@@ -5,10 +5,24 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: network.h,v $
+// Revision 1.40.2.3  1998/12/28 15:49:10  remi
+// Synced with :
+//  Revision 1.44  1998/12/24 05:19:55  dicamillo
+//  Add socket_ioctl to Mac OS definitions.
+//
+//  Revision 1.43  1998/12/22 15:58:24  jcmichot
+//  QNX port.
+//
+//  Revision 1.42  1998/12/21 17:54:23  cyp
+//  (a) Network connect is now non-blocking. (b) timeout param moved from
+//  network::Get() to object scope.
+//
+//  Revision 1.41  1998/12/08 05:57:03  dicamillo
+//  Add defines for MacOS.
+//
 // Revision 1.40.2.2  1998/11/08 11:51:36  remi
 // Lots of $Log tags.
 //
-
 // Sychronized with official 1.40
 
 #ifndef NETWORK_H
@@ -25,7 +39,10 @@ extern "C" {
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>    // for offsetof
 #include <time.h>
+#include <errno.h>     // for errno and EINTR
+
 #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
 }
 #endif
@@ -89,8 +106,12 @@ extern "C" {
   #endif
   typedef int SOCKET;
 #elif (CLIENT_OS == OS_MACOS)
-  #include <gusi.h>
-  typedef int SOCKET;
+  #include "socket_glue.h"
+  #define write(sock, buff, len) socket_write(sock, buff, len)
+  #define read(sock, buff, len) socket_read(sock, buff, len)
+  #define close(sock) socket_close(sock)
+  #define ioctl(sock, request, arg) socket_ioctl(sock, request, arg)
+  extern Boolean myNetInit(void);
 #elif (CLIENT_OS == OS_OS2)
   #include <process.h>
   #include <io.h>
@@ -138,6 +159,10 @@ extern "C" {
   #define read(sock, buff, len) recv(sock, (unsigned char*)buff, len, 0)
   #define close(sock) closesocket(sock)
 #else
+
+#if (CLIENT_OS == OS_QNX)
+  #include <sys/select.h>
+#endif
   #include <sys/types.h>
   #include <sys/socket.h>
   #include <netinet/in.h>
