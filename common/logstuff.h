@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.h,v $
+// Revision 1.3  1998/10/03 04:04:04  cyp
+// changed prototype for CliClearScreen() into a #redefinition of ConClear()
+//
 // Revision 1.2  1998/08/03 21:13:40  cyruspatel
 // Fixed many bugs (especially percentbar related ones). New log file
 // types work correctly now. Added some functionality, eg a function for
@@ -19,10 +22,9 @@
 #ifndef __LOGSTUFF_H__
 #define __LOGSTUFF_H__
 
-#if (defined(NEEDVIRTUALMETHODS))  // gui clients have this elsewhere
-//flags is currently always 0
-extern void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int flags );
-#endif
+//for compatability until it can be changed everywhere.
+#include "console.h"
+#define CliScreenClear() ConClear()
 
 //Flush mail and if last screen write didn't end with a LF then do that now. 
 extern void LogFlush( int forceflush );
@@ -49,9 +51,6 @@ extern void LogScreenPercent( unsigned int load_problem_count );
 //Return name of last accessed logfile, or NULL if not logging to file, 
 //or "" if logfile hasn't been accessed yet.
 extern const char *LogGetCurrentLogFilename( void );
-
-// SLIGHTLY out of place.... :) - cyp
-extern void CliScreenClear( void );  
 
 #endif //__LOGSTUFF_H__
 
