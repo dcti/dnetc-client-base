@@ -2,74 +2,68 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.15 2000/11/07 21:11:56 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.16 2000/11/09 14:29:14 cyp Exp $
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stdio.h>  /* printf for debugging */
+#include <stdlib.h> /* malloc (if using non-static choose dat) */
+#include <string.h> /* memset */
 
 #define HAVE_STATIC_CHOOSEDAT /* choosedat table is static, pre-generated */
 /* #define CRC_CHOOSEDAT_ANYWAY */ /* you'll need to link crc32 if this is defd */
 
 /* --- various optimization option overrides ----------------------------- */
 
-/* baseline/reference == ogr.cpp without optimization == old ogr.cpp */
+/* baseline/reference == ogr.cpp without optimization == ~old ogr.cpp */
 #if defined(NO_OGR_OPTIMIZATION) || defined(GIMME_BASELINE_OGR_CPP)
-  #define OGROPT_BITOFLIST_DIRECT_BIT 0           /* 0/1 - default is 1 ('yes')) */
-  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 0   /* 0/1 - default is hw dependant */
-  #define OGROPT_COPY_LIST_SET_BIT_JUMPS  0       /* 0-2 - default is 1 */
+  #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 0/1 - default is 1 ('yes')) */
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0/1 - default is hw dependant */
+  #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 0-2 - default is 1 */
   #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 0-2 - default is 2 */
-#else
-  #if (defined(ASM_X86) || defined(__386__)) && defined(OGR_NOFFZ)
-    /* the bsr instruction is very slow on some cpus */
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - default is 0 */
+  #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - default is 0 */
+#elif (defined(ASM_X86) || defined(__386__))
+  #if defined(OGR_NOFFZ) /* the bsr insn is slooooow on anything less than a PPro */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 0
-    /* #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table_noffz */
   #endif
-  #if defined(ASM_68K) 
-    #define OGROPT_BITOFLIST_DIRECT_BIT 0          /* we want 'no' */
+#elif defined(ASM_68K) 
+  #define OGROPT_BITOFLIST_DIRECT_BIT 0          /* we want 'no' */
+#elif defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
+  #ifndef ASM_PPC
+  #define ASM_PPC
   #endif
-  #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
-    #ifndef ASM_PPC
-    #define ASM_PPC
-    #endif
-    #if defined(__VEC__)
-       #define OGR_PPC_VECTOR_CYCLE /* subset of OGROPT_ALTERNATE_CYCLE=1 */
-    #endif
-    #if (__MWERKS__)
-      #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* we want 'no'  irrelev */
-      #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* important     irrelev */
-      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2 /* dunno         irrelev */
-      #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* cntlzw        */
-      #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* MWC=1  MrC=0  */
-      #define OGROPT_ALTERNATE_CYCLE                1 /* oetting/cox   */
-    #elif (__MRC__)
-      #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* we want 'no'  irrelev */
-      #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* important     irrelev */
-      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2 /* dunno         irrelev */
-      #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* cntlzw        */
-      #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* MWC=1  MrC=0  */
-      #define OGROPT_ALTERNATE_CYCLE                1 /* oetting/cox   */
-    #elif (__GNUC__)
-      #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* we want 'no'  irrelev */
-      #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* important     irrelev */
-      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* no optimization */
-      #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* cntlzw        */
-      #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* GCC=1         */
-      #define OGROPT_ALTERNATE_CYCLE                1 /* oetting/cox   */
-    #else
-      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0    /* no optimization */
-    #endif
-    #if defined(__VEC__) /* PPC_VECTOR_CYCLE */
-       #undef OGROPT_ALTERNATE_CYCLE 
-       #define OGROPT_ALTERNATE_CYCLE 1 /* requires ALTERNATE_CYCLE=1 */
-       #define OGR_PPC_VECTOR_CYCLE /* superset of OGROPT_ALTERNATE_CYCLE=1 */
-    #endif
-  #endif  
+  #if (__MWERKS__)
+    #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* we want 'no'  irrelev */
+    #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* important     irrelev */
+    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2 /* dunno         irrelev */
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* cntlzw        */
+    #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* MWC=1  MrC=0  */
+    #define OGROPT_ALTERNATE_CYCLE                1 /* oetting/cox   */
+  #elif (__MRC__)
+    #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* we want 'no'  irrelev */
+    #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* important     irrelev */
+    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2 /* dunno         irrelev */
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* cntlzw        */
+    #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* MWC=1  MrC=0  */
+    #define OGROPT_ALTERNATE_CYCLE                1 /* oetting/cox   */
+  #elif (__GNUC__)
+    #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* we want 'no'  irrelev */
+    #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* important     irrelev */
+    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* no optimization */
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* cntlzw        */
+    #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* GCC=1         */
+    #define OGROPT_ALTERNATE_CYCLE                1 /* oetting/cox   */
+  #else
+    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0    /* no optimization */
+    #error play with the defines to find optimal settings for your compiler
+  #endif
+  #if defined(__VEC__) && (OGROPT_ALTERNATE_CYCLE == 1)
+    #define OGR_PPC_VECTOR_CYCLE /* superset of OGROPT_ALTERNATE_CYCLE=1 */
+  #endif
 #endif  
 
 /* -- various optimization option defaults ------------------------------- */
 
-/* optimization for machines where mem access is faster than a shift+sub+and.
+/* optimization for machines where mem access is slower than a shift+sub+and.
    Particularly effective with small data cache.
    If not set to 1, BITOFLIST will use a pre-computed memtable lookup, 
    otherwise it will compute the value at runtime (0x80000000>>((x-1)&0x1f))
@@ -77,7 +71,6 @@
 #ifndef OGROPT_BITOFLIST_DIRECT_BIT
 #define OGROPT_BITOFLIST_DIRECT_BIT 1 /* the default is "yes" */
 #endif
-
 
 /* optimization for available hardware insn(s) for 'find first zero bit',
    counting from highest bit, ie 0xEFFFFFFF returns 1, and 0xFFFFFFFE => 32 
@@ -91,11 +84,11 @@
   #if (defined(__PPC__) || defined(ASM_PPC)) || defined(__POWERPC__) ||\
       (defined(__WATCOMC__) && defined(__386__)) || \
       (defined(__ICC)) /* icc is Intel only (duh!) */ || \
-      (defined(__GNUC__) && (defined(ASM_SPARC) || defined(ASM_ALPHA) \
-                           || defined(ASM_X86) \
-                           || (defined(ASM_68K) && (defined(mc68020) \
-                           || defined(mc68030) || defined(mc68040) \
-                           || defined(mc68060)))))
+      (defined(__GNUC__) && (defined(ASM_ALPHA) \
+                             || defined(ASM_X86) \
+                             || (defined(ASM_68K) && (defined(mc68020) \
+                             || defined(mc68030) || defined(mc68040) \
+                             || defined(mc68060)))))
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 1
     /* #define FIRSTBLANK_ASM_TEST *//* define this to test */
   #endif
@@ -129,20 +122,23 @@
 #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2 /* 0 (no opt) or 1 or 2 */
 #endif
 
-/* 
+
+/* Note changes:
+   top level is now in registers (thus requires a register rich arch)
+   bit[] and first[] are not used
+   dist is not saved except on exit
+   newbit is shifted into list instead of setting the bit for last mark
+   cnt1 and lev2 have been eliminated
+
+   To Do:
+   ogr_create() should be updated to match
+   dist is not needed in lev*, we only need the final value in state
+   
    OGROPT_ALTERNATE_CYCLE == 0 -> default (GARSP) ogr_cycle()
-   OGROPT_ALTERNATE_CYCLE == 1 ->
-     top level is now in registers (needs register-rich target arch)
-     bit[] and first[] are not used
-     dist is not saved except on exit
-     newbit is shifted into list instead of setting the bit for last mark
-     cnt1 and lev2 have been eliminated
-     To Do:
-     ogr_create() should be updated to match
-     dist is not needed in lev*, we only need the final value in state
+   OGROPT_ALTERNATE_CYCLE == 1 -> tuned (for ppc [only?]) ogr_cycle() by dan and chris
 */
 #ifndef OGROPT_ALTERNATE_CYCLE
-#define OGROPT_ALTERNATE_CYCLE 0 /* 0 (standard) or 1 (register intensive version) */
+#define OGROPT_ALTERNATE_CYCLE 0 /* 0 (default) or 1 */
 #endif
 
 
@@ -150,17 +146,14 @@
    on MANY processors -- from "12*(x)" to "((x)<<3)+((x)<<2)" in choose(x,y).
    Note that very smart compilers can sometimes do a better job at replacing
    the original statement with intrinsics than we can do by inserting these
-   shift operations (e.g.: MrC).
+   shift operations (e.g.: MrC). Thanks to Chris Cox for this optimization.
    If CHOOSEBITS != 12 this setting will have no effect.
-   Thanks to Chris Cox for this optimization.
 */
 #ifndef OGROPT_STRENGTH_REDUCE_CHOOSE
-#define OGROPT_STRENGTH_REDUCE_CHOOSE 0 /* the default is "no" */
+#define OGROPT_STRENGTH_REDUCE_CHOOSE 1 /* the default is "yes" */
 #endif
 
-
-/* ----------------------------------------------------------------------- */
-
+/* ====================================================================== */
 
 #if !defined(HAVE_STATIC_CHOOSEDAT) || defined(CRC_CHOOSEDAT_ANYWAY)
 #include "crc32.h" /* only need to crc choose_dat if its not static */
@@ -172,7 +165,7 @@
 #define ttmMAXBITS (32-MAXBITS)
 
 #if defined(__cplusplus)
-extern "C" { /* unmangled symbols please */
+extern "C" {
 #endif
 
 #ifdef HAVE_STATIC_CHOOSEDAT  /* choosedat table is static, pre-generated */
@@ -198,7 +191,6 @@ static const int OGR[] = {
   /* 11 */   72,  85, 106, 127, 151, 177, 199, 216, 246, 283,
   /* 21 */  333, 356, 372, 425, 480, 492, 553, 585, 623
 };
-
 #if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) || defined(FIRSTBLANK_ASM_TEST)
 static char ogr_first_blank[65537]; /* first blank in 16 bit COMP bitmap, range: 1..16 */
 #endif
@@ -231,146 +223,145 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 }
 #endif
 
-/* ================================================================== */
+/* ====================================================================== */
 
-#if defined(OGR_PPC_VECTOR_CYCLE) /* support for the vectorized ogr_cycle() routine */
-   /****************************************************************
-    * The following macros define the BITLIST CLASS
-    * The variables defined here should only be manipulated within these class macros.
-    ****************************************************************
-   */
+#if defined(OGR_PPC_VECTOR_CYCLE) /* superset of OGROPT_ALTERNATE_CYCLE=1 */
+  /*****************************************************************************
+   * The following macros define the BITLIST CLASS
+   * The vars defined here should only be manipulated within these class macros.
+  ******************************************************************************/
    /* define the local variables used for the top recursion state */
-   #define SETUP_TOP_STATE(state,lev)                               \
-   vector unsigned int  compV0;                                     \
-   vector unsigned int  compV1;                                     \
-   vector unsigned int  listV0;                                     \
-   vector unsigned int  listV1;                                     \
-   vector unsigned int  distV0;                                     \
-   vector unsigned int  distV1;                                     \
-   int cnt2 = lev->cnt2;                                            \
-   vector unsigned int ZEROBIT = (vector unsigned int)(0, 0, 1, 0); \
-   vector unsigned int ZEROS = (vector unsigned int)(0);            \
-   vector unsigned int ONES = vec_nor(ZEROS,ZEROS);                 \
-   int limit;                                                       \
-   union {                                                          \
-      vector unsigned int V;                                        \
-      unsigned int U[4];                                            \
-   } VU;                                                            \
-   compV0 = lev->compV0;                                            \
-   compV1 = lev->compV1;                                            \
-   listV0 = vec_or(lev->listV0, ZEROBIT);                           \
-   listV1 = lev->listV1;                                            \
-   distV0 = state->distV0;                                          \
-   distV1 = state->distV1;
+  #define SETUP_TOP_STATE(state,lev)                                 \
+    vector unsigned int  compV0;                                     \
+    vector unsigned int  compV1;                                     \
+    vector unsigned int  listV0;                                     \
+    vector unsigned int  listV1;                                     \
+    vector unsigned int  distV0;                                     \
+    vector unsigned int  distV1;                                     \
+    int cnt2 = lev->cnt2;                                            \
+    vector unsigned int ZEROBIT = (vector unsigned int)(0, 0, 1, 0); \
+    vector unsigned int ZEROS = (vector unsigned int)(0);            \
+    vector unsigned int ONES = vec_nor(ZEROS,ZEROS);                 \
+    int limit;                                                       \
+    union {                                                          \
+       vector unsigned int V;                                        \
+       unsigned int U[4];                                            \
+    } VU;                                                            \
+    compV0 = lev->compV0;                                            \
+    compV1 = lev->compV1;                                            \
+    listV0 = vec_or(lev->listV0, ZEROBIT);                           \
+    listV1 = lev->listV1;                                            \
+    distV0 = state->distV0;                                          \
+    distV1 = state->distV1;
 
    #define VEC_TO_INT(v,n) (VU.V = (v), VU.U[n])
 
    /* set the current mark and push a level to start a new mark */
    #define PUSH_LEVEL_UPDATE_STATE(lev)                             \
-   lev->listV0 = listV0;                                            \
-   lev->listV1 = listV1;                                            \
-   listV0 = vec_or(listV0, ZEROBIT);                                \
-   distV0 = vec_or(distV0, listV0);                                 \
-   distV1 = vec_or(distV1, listV1);                                 \
-   lev->compV0 = compV0;                                            \
-   lev->compV1 = compV1;                                            \
-   compV0 = vec_or(compV0, distV0);                                 \
-   compV1 = vec_or(compV1, distV1);                                 \
-   lev->cnt2 = cnt2;                                                \
-   lev->limit = limit;
+     lev->listV0 = listV0;                                          \
+     lev->listV1 = listV1;                                          \
+     listV0 = vec_or(listV0, ZEROBIT);                              \
+     distV0 = vec_or(distV0, listV0);                               \
+     distV1 = vec_or(distV1, listV1);                               \
+     lev->compV0 = compV0;                                          \
+     lev->compV1 = compV1;                                          \
+     compV0 = vec_or(compV0, distV0);                               \
+     compV1 = vec_or(compV1, distV1);                               \
+     lev->cnt2 = cnt2;                                              \
+     lev->limit = limit;
 
    /* pop a level to continue work on previous mark */
-   #define POP_LEVEL(lev)                                           \
-   listV0 = lev->listV0;                                            \
-   listV1 = lev->listV1;                                            \
-   distV0 = vec_andc(distV0, listV0);                               \
-   distV1 = vec_andc(distV1, listV1);                               \
-   compV0 = lev->compV0;                                            \
-   compV1 = lev->compV1;                                            \
-   limit = lev->limit;                                              \
-   cnt2 = lev->cnt2;
+   #define POP_LEVEL(lev)                                             \
+     listV0 = lev->listV0;                                            \
+     listV1 = lev->listV1;                                            \
+     distV0 = vec_andc(distV0, listV0);                               \
+     distV1 = vec_andc(distV1, listV1);                               \
+     compV0 = lev->compV0;                                            \
+     compV1 = lev->compV1;                                            \
+     limit = lev->limit;                                              \
+     cnt2 = lev->cnt2;
 
-   /* save the local state variables */
-   #define SAVE_FINAL_STATE(state,lev)                              \
-   lev->listV0 = listV0;                                            \
-   lev->listV1 = listV1;                                            \
-   state->distV0 = distV0;                                          \
-   state->distV1 = distV1;                                          \
-   lev->compV0 = compV0;                                            \
-   lev->compV1 = compV1;                                            \
-   lev->cnt2 = cnt2;
+  /* save the local state variables */
+  #define SAVE_FINAL_STATE(state,lev)                                 \
+     lev->listV0 = listV0;                                            \
+     lev->listV1 = listV1;                                            \
+     state->distV0 = distV0;                                          \
+     state->distV1 = distV1;                                          \
+     lev->compV0 = compV0;                                            \
+     lev->compV1 = compV1;                                            \
+     lev->cnt2 = cnt2;
 
-#elif (OGROPT_ALTERNATE_CYCLE == 1)
+#elif (OGROPT_ALTERNATE_CYCLE == 1) /* support macros for the alternate ogr_cycle() */
 
-   #define SETUP_TOP_STATE(state,lev)              \
-   U  comp0 = lev->comp[0], comp1 = lev->comp[1], comp2 = lev->comp[2], comp3 = lev->comp[3], comp4 = lev->comp[4]; \
-   U  list0 = lev->list[0], list1 = lev->list[1], list2 = lev->list[2], list3 = lev->list[3], list4 = lev->list[4]; \
-   U  dist0 = state->dist[0], dist1 = state->dist[1], dist2 = state->dist[2], dist3 = state->dist[3], dist4 = state->dist[4]; \
-   int cnt2 = lev->cnt2;                           \
-   int newbit = 1;                                 \
-   int limit;
+   #define SETUP_TOP_STATE(state,lev)                 \
+     U  comp0 = lev->comp[0], comp1 = lev->comp[1], comp2 = lev->comp[2], comp3 = lev->comp[3], comp4 = lev->comp[4]; \
+     U  list0 = lev->list[0], list1 = lev->list[1], list2 = lev->list[2], list3 = lev->list[3], list4 = lev->list[4]; \
+     U  dist0 = state->dist[0], dist1 = state->dist[1], dist2 = state->dist[2], dist3 = state->dist[3], dist4 = state->dist[4]; \
+     int cnt2 = lev->cnt2;                           \
+     int newbit = 1;                                 \
+     int limit;
 
    /* set the current mark and push a level to start a new mark */
    #define PUSH_LEVEL_UPDATE_STATE(lev) { \
-   lev->list[0] = list0; lev->list[1] = list1; lev->list[2] = list2; lev->list[3] = list3; lev->list[4] = list4;  \
-   dist0 |= list0; dist1 |= list1; dist2 |= list2; dist3 |= list3; dist4 |= list4; \
-   lev->comp[0] = comp0; comp0 |= dist0; \
-   lev->comp[1] = comp1; comp1 |= dist1; \
-   lev->comp[2] = comp2; comp2 |= dist2; \
-   lev->comp[3] = comp3; comp3 |= dist3; \
-   lev->comp[4] = comp4; comp4 |= dist4; \
-   newbit = 1; \
-   lev->cnt2 = cnt2; \
-   lev->limit = limit; \
-   }
+     lev->list[0] = list0; lev->list[1] = list1; lev->list[2] = list2; lev->list[3] = list3; lev->list[4] = list4;  \
+     dist0 |= list0; dist1 |= list1; dist2 |= list2; dist3 |= list3; dist4 |= list4; \
+     lev->comp[0] = comp0; comp0 |= dist0; \
+     lev->comp[1] = comp1; comp1 |= dist1; \
+     lev->comp[2] = comp2; comp2 |= dist2; \
+     lev->comp[3] = comp3; comp3 |= dist3; \
+     lev->comp[4] = comp4; comp4 |= dist4; \
+     newbit = 1; \
+     lev->cnt2 = cnt2; \
+     lev->limit = limit; \
+     }
 
    /* pop a level to continue work on previous mark */
    #define POP_LEVEL(lev) { \
-   limit = lev->limit; \
-   list0 = lev->list[0], list1 = lev->list[1], list2 = lev->list[2], list3 = lev->list[3], list4 = lev->list[4]; \
-   dist0 = dist0 & ~list0; dist1 = dist1 & ~list1; dist2 = dist2 & ~list2; dist3 = dist3 & ~list3; dist4 = dist4 & ~list4; \
-   comp0 = lev->comp[0], comp1 = lev->comp[1], comp2 = lev->comp[2], comp3 = lev->comp[3], comp4 = lev->comp[4]; \
-   newbit = 0; \
-   cnt2 = lev->cnt2; \
-   }
+     limit = lev->limit; \
+     list0 = lev->list[0], list1 = lev->list[1], list2 = lev->list[2], list3 = lev->list[3], list4 = lev->list[4]; \
+     dist0 = dist0 & ~list0; dist1 = dist1 & ~list1; dist2 = dist2 & ~list2; dist3 = dist3 & ~list3; dist4 = dist4 & ~list4; \
+     comp0 = lev->comp[0], comp1 = lev->comp[1], comp2 = lev->comp[2], comp3 = lev->comp[3], comp4 = lev->comp[4]; \
+     newbit = 0; \
+     cnt2 = lev->cnt2; \
+  }
 
-   /* save the local state variables */
-   #define SAVE_FINAL_STATE(state,lev) {   \
-   lev->list[0] = list0; lev->list[1] = list1; lev->list[2] = list2; lev->list[3] = list3; lev->list[4] = list4;  \
-   state->dist[0] = dist0; state->dist[1] = dist1; state->dist[2] = dist2; state->dist[3] = dist3; state->dist[4] = dist4; \
-   lev->comp[0] = comp0; lev->comp[1] = comp1; lev->comp[2] = comp2; lev->comp[3] = comp3; lev->comp[4] = comp4; \
-   lev->cnt2 = cnt2; \
-   }
-#endif /* (OGROPT_ALTERNATE_CYCLE == 1)  */
+  /* save the local state variables */
+  #define SAVE_FINAL_STATE(state,lev) {   \
+     lev->list[0] = list0; lev->list[1] = list1; lev->list[2] = list2; lev->list[3] = list3; lev->list[4] = list4;  \
+     state->dist[0] = dist0; state->dist[1] = dist1; state->dist[2] = dist2; state->dist[3] = dist3; state->dist[4] = dist4; \
+     lev->comp[0] = comp0; lev->comp[1] = comp1; lev->comp[2] = comp2; lev->comp[3] = comp3; lev->comp[4] = comp4; \
+     lev->cnt2 = cnt2; \
+  }
+#endif /* OGROPT_ALTERNATE_CYCLE */
 
-/* ================================================================== */
+/* ====================================================================== */
 
-/* COMP_LEFT_LIST_RIGHT(): shift the list to add or extend the first mark */
-
-#if defined(OGR_PPC_VECTOR_CYCLE)
-   #define COMP_LEFT_LIST_RIGHT(lev, s)                             \
-   VU.U[3] = s;                                                     \
-   vector unsigned int Vs = vec_splat(VU.V,3);                      \
-   vector unsigned int Vm = vec_sl(ONES,Vs);                        \
-   vector unsigned int Vss = vec_sub(ZEROS,Vs);                     \
-   compV0 = vec_rl(compV0,Vs);                                      \
-   compV1 = vec_rl(compV1,Vs);                                      \
-   compV0 = vec_sel(vec_sld(compV0,compV1,4),compV0,Vm);            \
-   compV1 = vec_sel(vec_sld(compV1,ZEROS,4),compV1,Vm);             \
-   listV1 = vec_sel(vec_sld(listV0,listV1,12),listV1,Vm);           \
-   listV0 = vec_sel(vec_sld(ZEROS,listV0,12),listV0,Vm);            \
-   listV1 = vec_rl(listV1,Vss);                                     \
-   listV0 = vec_rl(listV0,Vss);
-#elif defined(ASM_PPC) && (OGROPT_ALTERNATE_CYCLE == 1) && !defined(__MRC__)
-   #if defined(__GNUC__)
+#if defined(OGR_PPC_VECTOR_CYCLE) /* superset of OGROPT_ALTERNATE_CYCLE=1 */
+  /* shift the list to add or extend the first mark */
+  #define COMP_LEFT_LIST_RIGHT(lev, s)                                \
+     VU.U[3] = s;                                                     \
+     vector unsigned int Vs = vec_splat(VU.V,3);                      \
+     vector unsigned int Vm = vec_sl(ONES,Vs);                        \
+     vector unsigned int Vss = vec_sub(ZEROS,Vs);                     \
+     compV0 = vec_rl(compV0,Vs);                                      \
+     compV1 = vec_rl(compV1,Vs);                                      \
+     compV0 = vec_sel(vec_sld(compV0,compV1,4),compV0,Vm);            \
+     compV1 = vec_sel(vec_sld(compV1,ZEROS,4),compV1,Vm);             \
+     listV1 = vec_sel(vec_sld(listV0,listV1,12),listV1,Vm);           \
+     listV0 = vec_sel(vec_sld(ZEROS,listV0,12),listV0,Vm);            \
+     listV1 = vec_rl(listV1,Vss);                                     \
+     listV0 = vec_rl(listV0,Vss);
+#elif (OGROPT_ALTERNATE_CYCLE == 1) && defined(ASM_PPC) && !defined(__MRC__)
+  #if defined(__GNUC__)
      #define __rlwinm(Rs,SH,MB,ME) \
      ({ int Ra; __asm__ ("rlwinm %0,%1,%2,%3,%4" : "=r" (Ra) : "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
      #define __rlwimi(Ra,Rs,SH,MB,ME) \
      ({ __asm__ ("rlwimi %0,%2,%3,%4,%5" : "=r" (Ra) : "0" (Ra), "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
   #endif /* __GNUC__ */
-  #define COMP_LEFT_LIST_RIGHT(lev, s) {           \
-   switch (s)                                      \
-      {                                            \
+  #define COMP_LEFT_LIST_RIGHT(lev, s)             \
+  {                                                \
+    switch (s)                                     \
+    {                                              \
       case 0:                                      \
          break;                                    \
       case 1:                                      \
@@ -1036,10 +1027,10 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
          list1 = list0;                            \
          list0 = newbit;                           \
          break;                                    \
-      }                                            \
-   newbit = 0;                                     \
+    }                                              \
+    newbit = 0;                                    \
   }
-#elif defined(__WATCOMC__) && defined(__386__) && (OGROPT_ALTERNATE_CYCLE == 0)
+#elif (OGROPT_ALTERNATE_CYCLE == 0) && defined(__386__) && defined(__WATCOMC__)
    void COMP_LEFT_LIST_RIGHT_xx(U *levcomp, U *levlist, int s);
     #pragma aux COMP_LEFT_LIST_RIGHT_xx =  \
     "mov eax,[edi+4]"                   \
@@ -1065,7 +1056,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
     parm [edi] [esi] [ecx] modify exact [edx eax];
   #define COMP_LEFT_LIST_RIGHT(lev,s) \
         COMP_LEFT_LIST_RIGHT_xx(&(lev->comp[0]),&(lev->list[0]),s)
-#elif defined(__GNUC__) && defined(ASM_X86) && (OGROPT_ALTERNATE_CYCLE == 0)
+#elif (OGROPT_ALTERNATE_CYCLE == 0) && defined(ASM_X86) && defined(__GNUC__)
   #define COMP_LEFT_LIST_RIGHT(lev,s)       \
   {                                         \
     asm(                                    \
@@ -1102,22 +1093,23 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
       : "memory", "cc", "eax", "edx"        \
     );                                      \
   }
-#elif (OGROPT_ALTERNATE_CYCLE == 1) /* default COMP_LEFT_LIST_RIGHT for cycle=1 */
-  #define COMP_LEFT_LIST_RIGHT(lev, s) {           \
-   int ss = 32 - s;                                \
-   comp0 = (comp0 << s) | (comp1 >> ss);           \
-   comp1 = (comp1 << s) | (comp2 >> ss);           \
-   comp2 = (comp2 << s) | (comp3 >> ss);           \
-   comp3 = (comp3 << s) | (comp4 >> ss);           \
-   comp4 = comp4 << s;                             \
-   list4 = (list4 >> s) | (list3 << ss);           \
-   list3 = (list3 >> s) | (list2 << ss);           \
-   list2 = (list2 >> s) | (list1 << ss);           \
-   list1 = (list1 >> s) | (list0 << ss);           \
-   list0 = (list0 >> s) | (newbit << ss);          \
-   newbit = 0;                                     \
-   }
-#else /* default COMP_LEFT_LIST_RIGHT for OGROPT_ALTERNATE_CYCLE == 0 */
+#elif (OGROPT_ALTERNATE_CYCLE == 1) /* default for ALTCYLCLE==1 */
+  #define COMP_LEFT_LIST_RIGHT(lev, s)              \
+  {                                                 \
+    int ss = 32 - s;                                \
+    comp0 = (comp0 << s) | (comp1 >> ss);           \
+    comp1 = (comp1 << s) | (comp2 >> ss);           \
+    comp2 = (comp2 << s) | (comp3 >> ss);           \
+    comp3 = (comp3 << s) | (comp4 >> ss);           \
+    comp4 = comp4 << s;                             \
+    list4 = (list4 >> s) | (list3 << ss);           \
+    list3 = (list3 >> s) | (list2 << ss);           \
+    list2 = (list2 >> s) | (list1 << ss);           \
+    list1 = (list1 >> s) | (list0 << ss);           \
+    list0 = (list0 >> s) | (newbit << ss);          \
+    newbit = 0;                                     \
+  }
+#else /* default for ALTCYCLE == 0 */   
   #define COMP_LEFT_LIST_RIGHT(lev,s)                           \
   {                                                             \
     register int ss = 32 - s;                                   \
@@ -1134,37 +1126,38 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
   }
 #endif /* various COMP_LEFT_LIST_RIGHT() */
 
-/* ================================================================== */
+/* ====================================================================== */
 
-#if defined(OGR_PPC_VECTOR_CYCLE)
+#if defined(OGR_PPC_VECTOR_CYCLE) /* superset of OGROPT_ALTERNATE_CYCLE=1 */
   /* shift by word size */
   #define COMP_LEFT_LIST_RIGHT_32(lev)                              \
-   compV0 = vec_sld(compV0, compV1, 4);                             \
-   compV1 = vec_sld(compV1, ZEROS, 4);                              \
-   listV1 = vec_sld(listV0, listV1, 12);                            \
-   listV0 = vec_sld(ZEROS, listV0, 12);
-#elif (OGROPT_ALTERNATE_CYCLE == 1) 
+     compV0 = vec_sld(compV0, compV1, 4);                           \
+     compV1 = vec_sld(compV1, ZEROS, 4);                            \
+     listV1 = vec_sld(listV0, listV1, 12);                          \
+     listV0 = vec_sld(ZEROS, listV0, 12);
+#elif (OGROPT_ALTERNATE_CYCLE == 1)
   /* shift by word size */
-  #define COMP_LEFT_LIST_RIGHT_32(lev) { \
-  comp0 = comp1; comp1 = comp2; comp2 = comp3; comp3 = comp4; comp4 = 0;  \
-  list4 = list3; list3 = list2; list2 = list1; list1 = list0; list0 = newbit; \
-  newbit = 0; \
+  #define COMP_LEFT_LIST_RIGHT_32(lev) \
+  {                                    \
+    comp0 = comp1; comp1 = comp2; comp2 = comp3; comp3 = comp4; comp4 = 0;  \
+    list4 = list3; list3 = list2; list2 = list1; list1 = list0; list0 = newbit; \
+    newbit = 0; \
   }
-#else /* (OGROPT_ALTERNATE_CYCLE == 0)  */
+#else
   #define COMP_LEFT_LIST_RIGHT_32(lev)            \
-  lev->comp[0] = lev->comp[1];                    \
-  lev->comp[1] = lev->comp[2];                    \
-  lev->comp[2] = lev->comp[3];                    \
-  lev->comp[3] = lev->comp[4];                    \
-  lev->comp[4] = 0;                               \
-  lev->list[4] = lev->list[3];                    \
-  lev->list[3] = lev->list[2];                    \
-  lev->list[2] = lev->list[1];                    \
-  lev->list[1] = lev->list[0];                    \
-  lev->list[0] = 0;
-#endif /* various COMP_LEFT_LIST_RIGHT32() */
+    lev->comp[0] = lev->comp[1];                  \
+    lev->comp[1] = lev->comp[2];                  \
+    lev->comp[2] = lev->comp[3];                  \
+    lev->comp[3] = lev->comp[4];                  \
+    lev->comp[4] = 0;                             \
+    lev->list[4] = lev->list[3];                  \
+    lev->list[3] = lev->list[2];                  \
+    lev->list[2] = lev->list[1];                  \
+    lev->list[1] = lev->list[0];                  \
+    lev->list[0] = 0;
+#endif /* various COMP_LEFT_LIST_RIGHT_32() */    
 
-/* ================================================================== */
+/* ====================================================================== */
 
 #if (OGROPT_BITOFLIST_DIRECT_BIT == 0)
   #define BITOFLIST(x) ogr_bit_of_LIST[x]
@@ -1172,7 +1165,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
   #define BITOFLIST(x) 0x80000000>>((x-1)&0x1f) /*0x80000000 >> ((x-1) % 32)*/
 #endif
 
-/* ================================================================== */
+/* ====================================================================== */
 
 #if (OGROPT_COPY_LIST_SET_BIT_JUMPS == 1)
 #define COPY_LIST_SET_BIT(lev2,lev,bitindex)      \
@@ -1239,7 +1232,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
   }
 #endif  
 
-/* ================================================================== */
+/* ====================================================================== */
 
 #define COPY_DIST_COMP(lev2,lev)                  \
   lev2->dist[0] = lev->dist[0] | lev2->list[0];   \
@@ -1253,7 +1246,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
   lev2->comp[3] = lev->comp[3] | lev2->dist[3];   \
   lev2->comp[4] = lev->comp[4] | lev2->dist[4];
 
-/* ================================================================== */
+/* ====================================================================== */
 
 static int init_load_choose(void)
 {
@@ -1315,6 +1308,8 @@ static int init_load_choose(void)
 #endif
   return CORE_S_OK;
 }
+
+/* ====================================================================== */
 
 /*-----------------------------------------*/
 /*  found_one() - print out golomb rulers  */
@@ -1410,6 +1405,8 @@ static int found_one(const struct State *oState)
 }
 #endif
 
+/* ====================================================================== */
+
 #if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
   #define LOOKUP_FIRSTBLANK(x) ((x < 0xffff0000) ? \
       (ogr_first_blank[x>>16]) : (16 + ogr_first_blank[x - 0xffff0000]))
@@ -1417,18 +1414,15 @@ static int found_one(const struct State *oState)
   #if defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
     { i = ~i; __asm__ ("cntlzw %0,%1" : "=r" (i) : "r" (i)); return i+1; }
-  #else /* if (__MWERKS__) || (__MRC__) */
+  #elif (__MWERKS__) || (__MRC__)
     #define LOOKUP_FIRSTBLANK(x) (__cntlzw(~((unsigned int)(x)))+1)
+  #else
+    #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
   #endif    
 #elif defined(ASM_ALPHA) && defined(__GNUC__)
   #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
   { i = ~i; __asm__ ("cntlzw %0,%0" : "=r"(i) : "0" (i)); return i+1; }
-#elif defined(ASM_SPARC) && defined(__GNUC__)    
-  #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
-  static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
-  { register int count; __asm__ ("scan %1,0,%0" : "=r" (count)
-    : "r" ((unsigned int)(~i)) );  return count /* +(i>>31) maybe? */; }
 #elif defined(ASM_X86) && defined(__GNUC__) || \
       defined(__386__) && defined(__WATCOMC__) || \
       defined(__ICC)
@@ -1488,14 +1482,7 @@ static int found_one(const struct State *oState)
   #error OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM is defined, and no code to match
 #endif
     
-/*
-     0- (0x0000+0x8000-1) = 1    0x0000-0x7fff = 1 (0x7fff) 1000 0000 0000 0000
-0x8000- (0x8000+0x4000-1) = 2    0x8000-0xBfff = 2 (0x3fff) 1100 0000 0000 0000
-0xC000- (0xC000+0x2000-1) = 3    0xC000-0xDfff = 3 (0x1fff) 1110 0000 0000 0000
-0xE000- (0xE000+0x1000-1) = 4    0xE000-0xEfff = 4 (0x0fff) 1111 0000 0000 0000
-0xF000- (0xF000+0x0800-1) = 5    0xF000-0xF7ff = 5 (0x07ff) 1111 1000 0000 0000
-0xF800- (0xF800+0x0400-1) = 6    0xF800-0xFBff = 6 (0x03ff) 1111 1100 0000 0000
-*/
+
 
 static int ogr_init(void)
 {
@@ -1577,7 +1564,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
   struct State *oState;
   struct WorkStub *workstub = (struct WorkStub *)input;
 
-  if (input == NULL || inputlen != sizeof(struct WorkStub)) {
+  if (!input || inputlen != sizeof(struct WorkStub)) {
     return CORE_E_FORMAT;
   }
 
@@ -1585,7 +1572,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
     return CORE_E_FORMAT;
   }
   oState = (struct State *)state;
-  if (oState == NULL) {
+  if (!oState) {
     return CORE_E_MEMORY;
   }
 
@@ -1889,11 +1876,11 @@ static int ogr_cycle(void *state, int *pnodes)
    up:
       lev--;
       depth--;
+      POP_LEVEL(lev);
       if (depth <= oState->startdepth) {
          retval = CORE_S_OK;
          break;
       }
-      POP_LEVEL(lev);
       goto stay; /* repeat this level till done */
    }
 
@@ -2092,7 +2079,7 @@ static int ogr_load(void *buffer, int buflen, void **state)
     return CORE_E_FORMAT;
   }
   *state = malloc(sizeof(struct State));
-  if (*state == NULL) {
+  if (!*state) {
     return CORE_E_MEMORY;
   }
   memcpy(*state, buffer, sizeof(struct State));
@@ -2121,4 +2108,7 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
   dispatch_table.cleanup   = ogr_cleanup;
   return &dispatch_table;
 }
+
+
+
 
