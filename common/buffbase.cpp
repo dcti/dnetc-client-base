@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.32 2002/10/06 19:57:11 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.33 2002/10/10 21:58:48 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -430,7 +430,7 @@ int BufferAssertIsBufferFull( Client *client, unsigned int contest )
       if (BufferCountFileRecords( filename, contest, &reccount, NULL ) != 0)
         isfull = 1;
       else
-        isfull = (reccount >= 2000); /* yes, hardcoded. */
+        isfull = (reccount >= 1000); /* yes, hardcoded. */
       /* This function should be the only place where maxlimit is checked */
     }
     else
