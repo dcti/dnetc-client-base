@@ -10,8 +10,10 @@
 */
 //
 // $Log: netinit.cpp,v $
-// Revision 1.16  1999/01/23 21:25:40  patrick
+// Revision 1.17  1999/01/29 04:12:37  cyp
+// NetOpen() no longer needs the autofind setting to be passed from the client.
 //
+// Revision 1.16  1999/01/23 21:25:40  patrick
 // sock_init not used by OS2-EMX
 //
 // Revision 1.15  1999/01/01 02:45:15  cramer
@@ -69,7 +71,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.16 1999/01/23 21:25:40 patrick Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.17 1999/01/29 04:12:37 cyp Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -276,16 +278,13 @@ static int __netInitAndDeinit( int doWhat )
         success = 1;
       else
         {
-    #if !defined(__EMX__)
+        #if !defined(__EMX__)
         sock_init();
-    #endif
+        #endif
         success = 1;
-
         #if defined(LURK)
         if ( dialup.DialIfNeeded(1) < 0 )
-          {
-          success = 0;           //FIXME: sock_deinit()? missing (?)
-          } 
+          success = 0;
         #endif
         }
       }
@@ -407,15 +406,10 @@ int NetClose( Network *net )
 
 //----------------------------------------------------------------------
 
-// prototype is: 
-// ork *NetOpen(const char *keyserver, s32 keyserverport, int nofallback = 1, 
-//       int autofindks = 0, int iotimeout = -1, s32 proxytype = 0, 
-//       const char *proxyhost = NULL, s32 proxyport = 0, 
-//       const char *proxyuid = NULL)
-
-Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback, 
-          int autofindks, int iotimeout, s32 proxytype, const char *proxyhost, 
-          s32 proxyport, const char *proxyuid)
+Network *NetOpen( const char *servname, int servport, 
+           int _nofallback/*= 1*/, int _iotimeout/*= -1*/, int _enctype/*=0*/, 
+           const char *_fwallhost /*= NULL*/, int _fwallport /*= 0*/, 
+           const char *_fwalluid /*= NULL*/ )
 {
   Network *net;
   int success;
@@ -424,39 +418,14 @@ Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback,
   if ( __netInitAndDeinit( +1 ) < 0)
     return NULL; 
 
-  net = new Network( ((keyserver && !*keyserver)?((char *)NULL):(keyserver)), 
-                     (s16)keyserverport, nofallback, autofindks, iotimeout );
+  net = new Network( servname, servport, 
+           _nofallback /*=1*/, _iotimeout/*=-1*/, _enctype /*= 0*/, 
+           _fwallhost /*= NULL*/, _fwallport /*= 0*/, _fwalluid /*= NULL*/ );
   success = ( net != NULL );
-    
-  if (success)
-    {
-//LogScreen("hostname:%s:%d proxyuid:'%s'\n", proxyhost, proxyport,proxyuid);
-    switch (proxytype)
-      {
-      case 1:  // uue
-        net->SetModeUUE(true);
-        break;
-      case 2:  // http
-        net->SetModeHTTP(proxyhost, (s16) proxyport, proxyuid);
-        break;
-      case 3:  // uue + http
-        net->SetModeHTTP(proxyhost, (s16) proxyport, proxyuid);
-        net->SetModeUUE(true);
-        break;
-      case 4:  // SOCKS4
-        net->SetModeSOCKS4(proxyhost, (s16) proxyport, proxyuid);
-        break;
-      case 5:  // SOCKS5
-        net->SetModeSOCKS5(proxyhost, (s16) proxyport, proxyuid);
-        break;
-      }
-    }
 
   if (success)    
-    {    
     success = ((net->Open()) == 0); //opened ok
-    }
-            
+
   if (!success)
     {
     if (net)

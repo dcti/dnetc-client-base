@@ -5,8 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
-// Revision 1.52  1999/01/23 21:36:10  patrick
+// Revision 1.53  1999/01/29 04:12:37  cyp
+// NetOpen() no longer needs the autofind setting to be passed from the client.
 //
+// Revision 1.52  1999/01/23 21:36:10  patrick
 // OS2-EMX supports close (doesn't even know about soclose ;-)
 //
 // Revision 1.51  1999/01/21 22:01:04  cyp
@@ -353,7 +355,7 @@ extern "C" {
 #define MODE_SOCKS4     4
 #define MODE_PROXIED    (MODE_HTTP | MODE_SOCKS4 | MODE_SOCKS5)
 #define MODE_SOCKS5     8
-#define DEFAULT_RRDNS   "us.v27.distributed.net"
+#define DEFAULT_RRDNS   ""
 #define DEFAULT_PORT    2064
 #define CONDSOCK_BLOCKING_ON     0x00000011L
 #define CONDSOCK_BLOCKING_OFF    0x00000010L
@@ -370,12 +372,11 @@ class Network; //for forward resolution
 // two functions that combine the functionality of NetworkInitialize()+
 // Network::Network() and NetworkDeinitialize()+Network::~Network() 
 // must be called instead of the Network constructor or destructor.
-extern Network *NetOpen(const char *keyserver, s32 keyserverport, 
-                int nofallback = 1, int autofindks = 0, 
-                int iotimeout = 60, s32 proxytype = 0, 
-                const char *proxyhost = NULL, s32 proxyport = 0, 
-                const char *proxyuid = NULL);
-
+// **** if you change defaults, change comments in netinit.cpp and below ***
+extern Network *NetOpen( const char *servname, int servport, 
+           int _nofallback = 1, int _iotimeout = -1, int _enctype = 0, 
+           const char *_fwallhost = NULL, int _fwallport = 0, 
+           const char *_fwalluid = NULL );
 extern int NetClose( Network *net );
 
 ///////////////////////////////////////////////////////////////////////////
@@ -389,7 +390,7 @@ class Network
 {
 protected:
   char server_name[64];   // used only by ::Open
-  s16  server_port;       // used only by ::Open
+  int  server_port;       // used only by ::Open
   int  nofallback;        // used only by ::Open
 
   int  startmode;
@@ -403,40 +404,24 @@ protected:
   int  reconnected;       // set to 1 once a connect succeeds 
 
   char fwall_hostname[64]; //intermediate
-  s16  fwall_hostport;
+  int  fwall_hostport;
   u32  fwall_hostaddr;
   char fwall_userpass[128]; //username+password
   char resolve_hostname[64]; //last hostname Resolve() did a lookup on.
                           //used by socks5 if the svc_hostname doesn't resolve
 
   char *svc_hostname;  //name of the final dest (server_name or rrdns_name)
-  s16  svc_hostport;   //the port of the final destination
+  int  svc_hostport;   //the port of the final destination
   u32  svc_hostaddr;   //resolved if direct connection or socks.
 
   char *conn_hostname; //hostname we connect()ing to (fwall or server)
-  s16  conn_hostport;  //port we are connect()ing to
+  int  conn_hostport;  //port we are connect()ing to
   u32  conn_hostaddr;  //the address we are connect()ing to
-
-  //u32  lastaddress;
-  //s16  lastport;
-
-  // http related
-  //char httpproxy[64];     // also used for socks4
-  //s16 httpport;           // also used for socks4
-  //u32 lasthttpaddress;
 
   // communications and decoding buffers
   AutoBuffer netbuffer, uubuffer;
   int gotuubegin, gothttpend, puthttpdone, gethttpdone;
   u32 httplength;
-
-  int InitializeConnection(void); //high level method. Used internally by Open
-    //currently only negotiates/authenticates the SOCKSx session. 
-    // returns < 0 on error, 0 on success
-
-  int Resolve( const char *host, u32 *hostaddress, int hostport ); //LowLevel.. 
-    // perform a DNS lookup, handling random selection of DNS lists
-    // returns < 0 on error, 0 on success
 
   int LowLevelCreateSocket(void);
     // Returns < 0 on error, else assigns fd to this->sock and returns 0.
@@ -450,58 +435,19 @@ protected:
   int LowLevelConditionSocket( unsigned long cond_type );
     // Returns < 0 if error - see CONDSOCK... defines above
 
-  s32 LowLevelGet(u32 length, char *data);
-    // returns 0 if success/-1 if error. 
-    // length of read buffer stored back into 'length'
+  int LowLevelGet(char *data, int length);
+    // returns 0 if sock closed, -1 if timeout, else length of rcvd data
 
-  s32 LowLevelPut(u32 length, const char *data);
-    // returns 0 if success/-1 if error. 
-    // length of sent buffer stored back into 'length'
+  int LowLevelPut(const char *data, int length);
+    // returns 0 if sock closed, -1 if timeout, else length of sent data
 
-  Network( const char *preferred, s16 port, int nofallback,
-           int AutoFindKeyServer, int _iotimeout );
-    // constructor: If preferred is NULL, use DEFAULT_RRDNS.
-    // Can be IP and not necessarily a name, though a name is better
-    // suited for roundrobin use.  if port is 0, use DEFAULT_PORT
-    // protected!: used by friend NetOpen() below.
+  int Resolve( const char *host, u32 *hostaddress, int hostport ); //LowLevel
+    // perform a DNS lookup, handling random selection of DNS lists
+    // returns < 0 on error, 0 on success
 
-  ~Network( void );
-    // guess. 
-
-  int  Open( SOCKET insock );
-    // takes over a preconnected socket to a client.
-    // returns -1 on error, 0 on success
-
-  int  Open( void );
-    // [re]open the connection using the current settings.
-    // returns -1 on error, 0 on success
-
-  friend Network *NetOpen(const char *keyserver, s32 keyserverport, 
-                          int nofallback, int autofindks, int iotimeout, 
-                          s32 proxytype, const char *proxyhost, s32 proxyport, 
-                          const char *proxyuid );
-
-  friend int NetClose( Network *net );
-
-  void SetModeUUE( int is_enabled );
-    // enables or disable uuencoding of the data stream
-
-  void SetModeHTTP( const char *httpproxyin = NULL, s16 httpportin = 80,
-      const char * httpidin = NULL );
-    // enables http-proxy tunnelling transmission.
-    // Specifying NULL for httpproxy will disable.
-
-  void SetModeSOCKS4(const char *sockshost = NULL, s16 socksport = 1080,
-      const char * socksusername = NULL );
-    // enables socks4-proxy tunnelling transmission.
-    // Specifying NULL for sockshost will disable.
-
-  void SetModeSOCKS5(const char *sockshost = NULL, s16 socksport = 1080,
-      const char * socksusernamepw = NULL );
-    // enables socks5-proxy tunnelling transmission.
-    // Specifying NULL for sockshost will disable.
-    // usernamepw is username:pw
-    // An empty or NULL usernamepw means use only no authentication method
+  int InitializeConnection(void); //high level method. Used internally by Open
+    //currently only negotiates/authenticates the SOCKSx session. 
+    // returns < 0 on error, 0 on success
 
   int  Close( void );
     // close the connection
@@ -512,18 +458,45 @@ protected:
   int MakeNonBlocking(void) //the other shortcut
       { return LowLevelConditionSocket( CONDSOCK_BLOCKING_OFF ); };
 
+  int  Open( SOCKET insock );
+    // takes over a preconnected socket to a client.
+    // returns -1 on error, 0 on success
+
+  int  Open( void );
+    // [re]open the connection using the current settings.
+    // returns -1 on error, 0 on success
+
+  ~Network( void );
+    // guess. 
+ 
+  Network( const char *servname, int servport, 
+           int _nofallback = 1, int _iotimeout = -1, int _enctype = 0, 
+           const char *_fwallhost = NULL, int _fwallport = 0, 
+           const char *_fwalluid = NULL );
+    // protected!: used by friend NetOpen() below.
+
 public:
-  s32  Get( u32 length, char * data );
-    // recv data over the open connection, uue/http based on ( mode & MODE_UUE ) etc.
+  friend Network *NetOpen( const char *servname, int servport, 
+           int _nofallback/*= 1*/, int _iotimeout/*= -1*/, int _enctype/*=0*/, 
+           const char *_fwallhost /*= NULL*/, int _fwallport /*= 0*/, 
+           const char *_fwalluid /*= NULL*/ );
+
+  friend int NetClose( Network *net );
+
+  int Get( char * data, int length );
+    // recv data over the open connection, handle uue/http translation,
     // Returns length of read buffer.
 
-  s32  Put( u32 length, const char * data );
-    // send data over the open connection, uue/http based on ( mode & MODE_UUE ) etc.
-    // returns -1 on error, or 0 on success
+  int Put( const char * data, int length );
+    // send data over the open connection, handle uue/http translation,
+    // Returns length of sent buffer
 
   int GetHostName( char *buffer, unsigned int len ); //used by mail.
-    // like gethostname() 
-    
+    // like gethostname(). returns !0 on error
+
+  int SetPeerAddress( u32 addr ) 
+    { if (svc_hostaddr == 0) svc_hostaddr = addr; return 0; }
+  //used by buffupd when proxies return an address in the scram packet
 };
 
 ///////////////////////////////////////////////////////////////////////////
