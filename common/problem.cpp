@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.164 2002/09/24 23:48:04 acidblood Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.165 2002/09/25 01:21:19 acidblood Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -803,6 +803,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
 
   case RC5_72:
     {
+
       // copy over the state information
       thisprob->priv_data.contestwork.bigcrypto.key.hi = ( work->bigcrypto.key.hi );
       thisprob->priv_data.contestwork.bigcrypto.key.mid = ( work->bigcrypto.key.mid );
@@ -834,6 +835,21 @@ static int __InternalLoadState( InternalProblem *thisprob,
               thisprob->pub_data.was_reset = 1;
             }
         }
+
+      thisprob->priv_data.rc5_72unitwork.L0.hi  = thisprob->priv_data.contestwork.bigcrypto.key.hi;
+      thisprob->priv_data.rc5_72unitwork.L0.mid = thisprob->priv_data.contestwork.bigcrypto.key.mid + thisprob->priv_data.contestwork.bigcrypto.keysdone.hi +
+        ((((thisprob->priv_data.contestwork.bigcrypto.key.lo & 0xffff) + (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo & 0xffff)) +
+          ((thisprob->priv_data.contestwork.bigcrypto.key.lo >> 16) + (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo >> 16))) >> 16);
+      thisprob->priv_data.rc5_72unitwork.L0.lo = thisprob->priv_data.contestwork.bigcrypto.key.lo + thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
+      __SwitchRC572Format(&(thisprob->priv_data.rc5_72unitwork.L0.hi), &(thisprob->priv_data.rc5_72unitwork.L0.mid), &(thisprob->priv_data.rc5_72unitwork.L0.lo));
+      thisprob->priv_data.refL0.lo  = thisprob->priv_data.rc5_72unitwork.L0.lo;
+      thisprob->priv_data.refL0.mid = thisprob->priv_data.rc5_72unitwork.L0.mid;
+      thisprob->priv_data.refL0.hi  = thisprob->priv_data.rc5_72unitwork.L0.hi;
+
+      thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.crypto.keysdone.hi;
+      thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.crypto.keysdone.lo;
+      thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
+
 
       // TODO: acidblood/trashover
       // OK!
