@@ -8,6 +8,9 @@
 // the time. 'time' is always stored/passed/returned in timeval format.
 // 
 // $Log: clitime.h,v $
+// Revision 1.9  1998/07/28 11:44:54  blast
+// Amiga specific changes
+//
 // Revision 1.8  1998/07/08 05:19:28  jlawson
 // updates to get Borland C++ to compile under Win32.
 //
@@ -33,6 +36,9 @@
 
 #ifndef _CLITIME_H_
 #define _CLITIME_H_
+#if (CLIENT_OS == OS_AMIGAOS)
+#include <sys/time.h> // To make it compile, deine from this file needed..
+#endif
 
 struct timeval;     // prototype
 

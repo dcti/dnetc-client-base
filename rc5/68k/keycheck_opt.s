@@ -1,5 +1,8 @@
 ;
 ; $Log: keycheck_opt.s,v $
+; Revision 1.3  1998/07/28 11:45:00  blast
+; Amiga specific changes
+;
 ; Revision 1.2  1998/06/14 10:30:40  friedbait
 ; 'Log' keyword added.
 ;
@@ -20,7 +23,7 @@
 ; have to rewrite the main loop in asm to do so...
 
 
-        MACHINE MC68020
+;       MACHINE MC68020
         ; at least :)
 
         XDEF @rc5_unit_func
@@ -32,13 +35,13 @@
 
 		; I have reordered some instructions to optimize pipeline uses.
 
-            move.l  ($0014,a3),d0	; Looking at the C main loop shows that a0 is loaded with
+            move.l  $0014(a3),d0	; Looking at the C main loop shows that a0 is loaded with
             move.l  #$15235639,d2	; a3. Using a3 here avoid us to save a spare register on the
-            lea     (_datas,pc),a1	; stack (2 cycles less) and doesn't require an additional
+            lea     _datas(pc),a1	; stack (2 cycles less) and doesn't require an additional
             addi.l  #$BF0A8B1D,d0	; move (1 cycle less). This is a 'tiny' optimization, and this
-            move.l  ($0010,a3),d1	; looks not so good... But who will care about that ? :))
+            move.l  $0010(a3),d1	; looks not so good... But who will care about that ? :))
             ror.l   #3,d0
-            lea     (4-$0068,sp),a0	; There is no need for "subq.l #$0068,sp" :)))
+            lea     4-$0068(sp),a0	; There is no need for "subq.l #$0068,sp" :)))
 
 ; First stage. Can't be optimized further (instruction order point of view)
 		
@@ -271,7 +274,7 @@
 
             add.l   d1,d2
 
-	lea (-$0068,sp),a0		; Will be dispatched with the previous instruction.
+	lea -$0068(sp),a0		; Will be dispatched with the previous instruction.
 					; So this occurs no time penalty for the 68060.
 
             rol.l   #3,d2
@@ -504,16 +507,16 @@
             add.l   d0,d3
             move.l  d2,(a0)+
             add.l   d3,d1
-            add.l   (-$0068,sp),d2
+            add.l   -$0068(sp),d2
             rol.l   d3,d1
 
 ; 3rd stage. 1 cycle less (68060) by changing instructions order)
 
             add.l   d1,d2		; 1
-            move.l  (4,a3),d4		; 0
+            move.l  4(a3),d4		; 0
             rol.l   #3,d2		; 1
 
-	lea (4-$0068,sp),a0		; 0  (No time penalty)
+	lea 4-$0068(sp),a0		; 0  (No time penalty)
 
             move.l  d2,d3		; 1
             add.l   d1,d3		; 0
@@ -779,7 +782,7 @@
             rol.l   #3,d2	; 1
             rol.l   d5,d4	; 0
             add.l   d2,d4	; 1
-            cmp.l   (12,a3),d4	; 1
+            cmp.l   12(a3),d4	; 1
             bne.s   .lb0119B8
 
             move.l  d2,d3

@@ -2,28 +2,38 @@ AmigaOS 2.7021.405 client - Released 1998-05-31
 
  Requirements:
 
--AmigaOS 2.04 or greater (3.0 is you're running the PPC client)
+-AmigaOS 2.04 or greater (3.0 if you're running the PPC client)
 -A TCP stack compatible with AmiTCP 3.0 or newer..
  There are several. Miami for example.
- Also AS225R2 with a special emulation library. Don't ask me where to get it.
- I don't know.
+ Also AS225R2 with a special emulation library, look on the Amiga effort
+ homepage/misc section for the archive link (address below).
 
  There are two versions of the client.
  One 68k version and one PPC version.
 
  The 68k version requires:
--An 020 or higher. A 040 or preferably 060 is HIGHLY recommended.
+-An 020 or higher. An 040 or preferably 060 is HIGHLY recommended.
 
  The PPC version requires:
--An 603e or higher PPC processor. Tested on 603e and 604e.
+-A 603e or higher PPC processor. Tested on 603e and 604e.
 -Phase5's ppc.library version 45.15 or higher.
  Recommended you use at least 45.20 as that's what I use and it works fine
  for me.
 
 Read rc5des.txt for instructions on installation and a FAQ and other info.
 
-Have any general problems ? First try to read the rc5des.txt's FAQ section.
+Have any general problems? First try to read the rc5des.txt's FAQ section.
 Doesn't help? Mail me. blast@amiganet.org is my email.
+
+
+If you want to contribute to the Amiga RC5 Team Effort, visit the effort
+homepage at http://homepage.cistron.nl/~ttavoly/rc5, it contains all the
+necessary info along with extensive information on usage, configuration,
+trouble shooting etc. IMPORTANT: the client defaults to rc5@distributed.net,
+unless you change this your work is going to Bovine instead of the Amiga
+effort. The usage section on the Amiga effort pages contains all you need to
+know to change this.
+
 
 I just have to say Thank You to:
 
@@ -34,19 +44,19 @@ Steve Krueger - The man behind SAS/C and SAS/C for PPC.
 
 My whole betatesting team - Oliver Wagner.
 
-- You've tested more unstable clients than anyone would dare to. You've crashed,
-  you've had system problems due to the PPC client and you never said "I don't
-  want to test the client anymore". Another THANK YOU.
+- You've tested more unstable clients than anyone would dare to. You've
+  crashed, you've had system problems due to the PPC client and you never
+  said "I don't want to test the client anymore". Another THANK YOU.
 
-Thomas Tavoly - leader of the Amiga RC5 Team.
+Thomas Tavoly - coordinator of the Amiga RC5 Team.
 
-- How many members are there now ? Slightly over 1000 members ? Well, without
-  you there wouldn't be. Even when I scared them away with my unstable releases :).
-  Keep up the good work!
+- How many members are there now? Slightly over 1000 members? Well, without
+  you there wouldn't be. Even when I scared them away with my unstable
+  releases :). Keep up the good work!
 
 Various people emailing about the client.
 
-There are three kinds of general people:
+There are generally three kinds of people:
 
 1. The "There's a bug in there, and I think it could be related to ... " or
    "maybe you should try to.." person. - You know you're appreciated.
@@ -61,5 +71,6 @@ The whole Amiga RC5 Team
 
 - Without you there wouldn't be much of a point in doing the client, so keep
   on cracking! Maybe YOU can find the key with the client.
+
 
 // Stefan `Blast' Smietanowski

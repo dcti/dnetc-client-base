@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clicdata.h,v $
+// Revision 1.11  1998/07/28 11:44:50  blast
+// Amiga specific changes
+//
 // Revision 1.10  1998/07/15 05:49:11  ziggyb
 // included the header baseincs.h because that's where timeval is and it won't compile without it being defined
 //
@@ -43,6 +46,10 @@
 #ifndef _CLICDATA_H_
 #define _CLICDATA_H_
 #include "baseincs.h"   // for timeval
+#if (CLIENT_OS == OS_AMIGAOS)
+#include <sys/time.h> // This is to make it compile, there was a define in there
+                      // that was needed 'cause someone changed the source tree :)
+#endif
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestID);

@@ -5,7 +5,7 @@ DEBUG    =
 OPTIMIZE = optimize optsched
 CFLAGS   = unsignedchars nostkchk strmerge parms=reg define=LESS_GETENV define=PIPELINE_COUNT=1 define=_CPU_32BIT_ define=BIT_32 define=KWAN define=MEGGS includedir=netinclude: includedir=platforms/ includedir=common/ utillib nover NOLINK
 DISASM   =
-LFLAGS   = NODEBUG #farcode fardata
+LFLAGS   = #farcode fardata
 
 DEBUG_PPC    = $(DEBUG) #DEBUG=S
 OPTIMIZE_PPC = $(OPTIMIZE)
@@ -15,7 +15,7 @@ LFLAGS_PPC   = $(LFLAGS)
 
 DEBUG_68K    = $(DEBUG) #DEBUG=S
 OPTIMIZE_68K = $(OPTIMIZE)
-CFLAGS_68K   = $(DEBUG_68K) $(OPTIMIZE_68K) $(CFLAGS) CPU=68040
+CFLAGS_68K   = $(DEBUG_68K) $(OPTIMIZE_68K) $(CFLAGS) CPU=68040 DATA=FAR CODE=FAR
 DISASM_68K   = $(DISASM)
 LFLAGS_68K   = $(LFLAGS)
 
@@ -93,31 +93,26 @@ OBJS_68K     = $(COMMON_OBJS_68K) $(RC5_OBJS_68K) $(DES_OBJS_68K)
 LIBS_68K     = LIB:scm.lib LIB:sc.lib LIB:amiga.lib LIB:debug.lib
 
 .s.o_ppc:
-	ppc-amigaos-gas -m604 $*.s -o $*.o_ppc
-	elf2am -o $*.o_ppc
+	ppc-amigaos-gas -m604 $< -o $@
+	elf2am -o $@
 
 .cpp.o_ppc:
-	scppc RESETOPTS $(CFLAGS_PPC) $(DISASM) $*.cpp
-	@copy $*.o $*.o_ppc QUIET CLONE
-	@delete $*.o QUIET
+	scppc RESETOPTS $(CFLAGS_PPC) $(DISASM) $< OBJNAME $@
+	@rename $*.o $@ QUIET
 
 .c.o_ppc:
-	scppc RESETOPTS $(CFLAGS_PPC)  $(DISASM) $*.c
-	@copy $*.o $*.o_ppc QUIET CLONE
-	@delete $*.o QUIET
+	scppc RESETOPTS $(CFLAGS_PPC) $(DISASM) $< OBJNAME $@
 
 .s.o_68k:
-	genam FROM $*.s TO $*.o QUIET
+	asm -m2 -o$@ $<
 
 .cpp.o_68k:
-	sc RESETOPTS $(CFLAGS_68K) $(DISASM) $*.cpp
-	@copy $*.o $*.o_68k QUIET CLONE
-	@delete $*.o QUIET
+	sc RESETOPTS $(CFLAGS_68K) $(DISASM) $<
+#	@delete $@ QUIET FORCE
+	@rename $*.o $@ QUIET
 
 .c.o_68k:
-	sc RESETOPTS $(CFLAGS_68K) $(DISASM) $*.c
-	@copy $*.o $*.o_68k QUIET CLONE
-	@delete $*.o QUIET
+	sc RESETOPTS $(CFLAGS_68K) $(DISASM) $< OBJNAME $@
 
 all: $(PROGNAME_PPC) $(PROGNAME_68K)
 ppc: $(PROGNAME_PPC)
@@ -125,10 +120,9 @@ ppc: $(PROGNAME_PPC)
 
 $(PROGNAME_PPC): $(OBJS_PPC)
 #	ppc-amigaos-ld -r -o $(PROGNAME_PPC) $(LIBSTART_PPC) $(FINAL_OBJS_PPC) $(LIBS_PPC)
-	SLINKPPC with << 
+	SLINKPPC noicons with << 
 PPC FROM $(LIBSTART_PPC) $(OBJS_PPC) TO $(PROGNAME_PPC) LIB $(LIBS_PPC) $(LFLAGS_PPC)
 <
-	protect $(PROGNAME_PPC) rwed
 
 $(PROGNAME_68K): $(OBJS_68K)
 	slink noicons with lib:utillib.with <with < (rc5des.lnk)
@@ -163,15 +157,12 @@ common/mail.o_ppc	:	common/mail.cpp
 common/convdes.o_ppc	:	common/convdes.cpp
 common/cpucheck.o_ppc	:	common/cpucheck.cpp
 common/disphelp.o_ppc	:	common/disphelp.cpp
+common/problem.o_ppc	:	common/problem.cpp
 
 # RC5 Dependencies
 
-common/problem.o_ppc	:	common/problem.cpp
 rc5/crunch_allitnil_552.ppc.o_ppc	:	rc5/crunch_allitnil_552.ppc.s
-	ppc-amigaos-gas -m604 $*.s -o $*.o_ppc
-
 rc5/crunch_lintilla_296.ppc.o_ppc	:	rc5/crunch_lintilla_296.ppc.s
-	ppc-amigaos-gas -m604 $*.s -o $*.o_ppc
 
 # DES Dependencies
 
@@ -199,10 +190,10 @@ common/mail.o_68k	:	common/mail.cpp
 common/convdes.o_68k	:	common/convdes.cpp
 common/cpucheck.o_68k	:	common/cpucheck.cpp
 common/disphelp.o_68k	:	common/disphelp.cpp
+common/problem.o_68k	:	common/problem.cpp
 
 # RC5 Dependencies
 
-common/problem.o_68k	:	common/problem.cpp
 rc5/keycheck_opt.o_68k	:	rc5/keycheck_opt.s
 
 # DES Dependencies
