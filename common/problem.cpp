@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.49 2000/01/23 18:13:15 remi Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.50 2000/01/26 05:38:57 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -61,8 +61,6 @@ static unsigned int __problem_counter = 0;
 
 Problem::~Problem()
 {
-  free( malloced_core_membuffer );
-  malloced_core_membuffer = core_membuffer = NULL;
   __problem_counter--;
   initialized = started = 0;
 }
@@ -75,10 +73,13 @@ Problem::Problem(void)
   initialized = 0;
   started = 0;
 
-  // Allocates core_membuffer and align it
-  malloced_core_membuffer = malloc( MAX_MEM_REQUIRED_BY_CORE + (1<<CORE_MEM_ALIGNMENT) - 1 );
-  assert( sizeof(void*) <= sizeof(unsigned) );
-  core_membuffer = (void*)((unsigned)malloced_core_membuffer & (~0 << CORE_MEM_ALIGNMENT));
+  //align core_membuffer to 16byte boundary
+  {
+    char *p = &__core_membuffer_space[0];
+    while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
+      p++;
+    core_membuffer = p;
+  }
 
   {
     unsigned int sz = sizeof(int);

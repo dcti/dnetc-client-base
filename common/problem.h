@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.21 2000/01/23 18:13:16 remi Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.22 2000/01/26 05:38:59 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -97,8 +97,9 @@ protected: /* these members *must* be protected for thread safety */
   ContestWork contestwork;
   CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */
-  void *malloced_core_membuffer;
-  void *core_membuffer; //[MAX_MEM_REQUIRED_BY_CORE];
+  char __core_membuffer_space[(MAX_MEM_REQUIRED_BY_CORE+(1UL<<CORE_MEM_ALIGNMENT)-1)];
+  void *core_membuffer; /* aligned pointer to __core_membuffer_space */
+  /* --------------------------------------------------------------- */
   u32 timehi, timelo;
   int last_resultcode; /* the rescode the last time contestwork was stable */
   int started;
