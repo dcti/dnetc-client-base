@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.4 1999/06/01 02:55:36 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.5 1999/06/01 03:13:39 cyp Exp $"; }
 
 //#define TRACE
 
@@ -193,7 +193,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             }  
             closedir(dirp);
           }  
-          #else
+          #endif
+          #if 1
           const char *pscmd = "ps -ax -o pid -o command"; 
           //sprintf(buffer,"ps auxwww|grep \"%s\"|awk '{print$2}'", binname);
           //"ps auxwww|grep \"%s\" |tr -s \' \'|cut -d\' \' -f2|tr \'\\n\' \' \'"
@@ -202,7 +203,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           #endif
           FILE *file = popen( pscmd, "r" );
           if (file == NULL)
-            kill_found = -1; /* spawn failed */
+          {
+            if (kill_found == 0)
+              kill_found = -1; /* spawn failed */
+          }
           else
           {
 	    pid_t ourpid = getpid();
@@ -279,7 +283,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
 		  buffer[linelen++] = ch;
 	      }	
 	    } /* while (file) */
-	    if (!got_output)
+	    if (!got_output && kill_found == 0)
 	      kill_found = -1;
 	    pclose(file);
           }
