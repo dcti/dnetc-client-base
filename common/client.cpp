@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.93  1998/07/11 07:26:26  silby
+// Fixed my fix for the exitrc5.now path problem.  Now the path is added on at each read instead of once at the beginning of the code (where it could be wrong depending on the os.)
+//
 // Revision 1.92  1998/07/11 04:31:43  silby
 // Made exitrc5.now files GetFullPathed so they act properly.
 //
@@ -24,7 +27,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.92 1998/07/11 04:31:43 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.93 1998/07/11 07:26:26 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -200,7 +203,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.92 1998/07/11 04:31:43 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.93 1998/07/11 07:26:26 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -374,7 +377,7 @@ Client::Client()
   strcpy(out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
   strcpy(in_buffer_file[1], "buff-in" EXTN_SEP "des");
   strcpy(out_buffer_file[1], "buff-out" EXTN_SEP "des");
-  strcpy(exit_flag_file, GetFullPathForFilename("exitrc5" EXTN_SEP "now"));
+  strcpy(exit_flag_file, "exitrc5" EXTN_SEP "now");
   strcpy(checkpoint_file[1],"none");
   strcpy(pausefile,"none");
 #endif
@@ -2642,7 +2645,7 @@ PreferredIsDone1:
         //----------------------------------------
         // Found an "exitrc5.now" flag file?
         //----------------------------------------
-        if( access( exit_flag_file, 0 ) == 0 )
+        if( access( GetFullPathForFilename(exit_flag_file), 0 ) == 0 )
         {
           Log( "[%s] Found \"exitrc5" EXTN_SEP "now\" file.  Exiting.\n", Time() );
           TimeToQuit = 1;
