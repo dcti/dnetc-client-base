@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.100 2002/10/17 02:29:08 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.101 2002/10/19 15:09:14 acidblood Exp $"; }
 
 //#define TRACE
 
@@ -2015,6 +2015,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
   /* ================================================================== */
 
   #if defined(HAVE_RC5_72_CORES)
+  use_generic_proto = 1;
   if (contestid == RC5_72)
   {
     switch (coresel)

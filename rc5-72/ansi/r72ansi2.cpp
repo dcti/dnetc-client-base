@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi2_cpp(void) {
-return "@(#)$Id: r72ansi2.cpp,v 1.12 2002/10/17 12:01:31 andreasb Exp $"; }
+return "@(#)$Id: r72ansi2.cpp,v 1.13 2002/10/19 15:09:14 acidblood Exp $"; }
 
 #include "ccoreio.h"
 #include "rotate.h"
@@ -13,14 +13,14 @@ return "@(#)$Id: r72ansi2.cpp,v 1.12 2002/10/17 12:01:31 andreasb Exp $"; }
 #define Q 0x9E3779B9
 
 #ifdef __cplusplus
-extern "C" u32 rc5_72_unit_func_ansi_2 ( RC5_72UnitWork *, u32 );
+extern "C" u32 rc5_72_unit_func_ansi_2 ( RC5_72UnitWork *, u32, void * );
 #endif
 
 #ifdef _MSC_VER
 #pragma warning(disable:4307)   // integral constant overflow
 #endif
 
-u32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
+u32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice, void *memblk)
 {
   u32 A1, A2, B1, B2;
   u32 S1[26], S2[26];
@@ -210,7 +210,7 @@ u32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
       rc5_72unitwork->check.mid = rc5_72unitwork->L0.mid;
       rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
       if (B1 == rc5_72unitwork->cypher.hi)
-        return kiter;
+        return RESULT_FOUND;
     }
 
     if (A2 == rc5_72unitwork->cypher.lo)
@@ -220,7 +220,7 @@ u32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
       rc5_72unitwork->check.mid = rc5_72unitwork->L0.mid;
       rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
       if (B2 == rc5_72unitwork->cypher.hi)
-        return kiter + 1;
+        return RESULT_FOUND;
     }
     kiter += 2;
     #define key rc5_72unitwork->L0
@@ -259,5 +259,5 @@ u32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
     }
     #undef key
   }
-  return kiter;
+  return RESULT_NOTHING;
 }
