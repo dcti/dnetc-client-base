@@ -22,6 +22,9 @@
 // --------------------------------------------------------------------
 //
 // $Log: pathwork.cpp,v $
+// Revision 1.8  1998/07/30 02:11:52  blast
+// AmigaOS update
+//
 // Revision 1.7  1998/07/13 12:40:31  kbracey
 // RISC OS update.
 // Added -noquiet option.
@@ -42,7 +45,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *pathwork_cpp(void) {
-static const char *id="@(#)$Id: pathwork.cpp,v 1.7 1998/07/13 12:40:31 kbracey Exp $";
+static const char *id="@(#)$Id: pathwork.cpp,v 1.8 1998/07/30 02:11:52 blast Exp $";
 return id; }
 #endif
 
@@ -99,6 +102,10 @@ static int IsFilenamePathified( const char *filename )
     char *slash2 = strrchr( filename, '//' );
     if (slash2 > slash) slash = slash2;
     slash2 = strrchr( filename, ':' );
+    if (slash2 > slash) slash = slash2;
+  #elif (CLIENT_OS == OS_AMIGAOS)
+    slash = strrchr( filename, '/' );
+    char *slash2 = strrchr( filename, ':' );
     if (slash2 > slash) slash = slash2;
   #else
     slash = strrchr( filename, '/' );
@@ -246,6 +253,20 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
     if ( slash != NULL )
       *(slash+1) = 0;
     else cwdBuffer[0]=0;
+    }
+  #elif (CLIENT_OS == OS_AMIGAOS)
+    {
+    strcpy( cwdBuffer, inipath );
+    char *slash = strrchr(cwdBuffer, ':');
+    char *slash2 = strrchr(cwdBuffer, '/');
+    if (slash2 > slash) slash = slash2;
+    if (slash == NULL && apppath != NULL && strlen( apppath ) > 0)
+      {
+      strcpy( cwdBuffer, apppath );
+      slash = strrchr(cwdBuffer, ':');
+      }
+    if (slash != NULL) *(slash+1) = 0;
+    else cwdBuffer[0] = 0; // Means we're started from the dir the things are in...
     }
   #else
     {
