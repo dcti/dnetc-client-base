@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68 1999/05/08 19:35:10 patrick Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.1 1999/11/08 00:01:20 cyp Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -236,8 +236,11 @@ protected:
   int  fwall_hostport;
   u32  fwall_hostaddr;
   char fwall_userpass[128]; //username+password
+
   char resolve_hostname[64]; //last hostname Resolve() did a lookup on.
-                          //used by socks5 if the svc_hostname doesn't resolve
+                             //used by socks5 if the svc_hostname doesn't resolve
+  u32  resolve_addrlist[32]; //list of resolved (proxy) addresses
+  int  resolve_addrcount;    //number of addresses in there. <0 if uninitialized
 
   char *svc_hostname;  //name of the final dest (server_name or rrdns_name)
   int  svc_hostport;   //the port of the final destination
@@ -258,7 +261,7 @@ protected:
   int LowLevelCloseSocket(void);
     // destroys this->sock if (this->sock != INVALID_SOCKET) and returns 0.
 
-  int LowLevelConnectSocket( u32 that_address, u16 that_port ); 
+  int LowLevelConnectSocket( u32 that_address, int that_port ); 
     // connect to address:port.  Return < 0 if error
 
   int LowLevelSetSocketOption( int cond_type, int parm );
@@ -269,10 +272,6 @@ protected:
 
   int LowLevelPut(const char *data, int length);
     // returns 0 if sock closed, -1 if timeout, else length of sent data
-
-  int Resolve( const char *host, u32 *hostaddress, int hostport ); //LowLevel
-    // perform a DNS lookup, handling random selection of DNS lists
-    // returns < 0 on error, 0 on success
 
   int InitializeConnection(void); //high level method. Used internally by Open
     //currently only negotiates/authenticates the SOCKSx session. 
