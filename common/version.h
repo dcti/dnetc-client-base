@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version.h,v $
+// Revision 1.4  1998/06/28 20:52:11  jlawson
+// added version string without leading "v" character
+//
 // Revision 1.3  1998/06/26 15:48:08  daa
 // Its Here....V2.7100.412
 //
@@ -21,6 +24,8 @@
 #define CLIENT_BUILD        00
 #define CLIENT_BUILD_FRAC   412
 
-#define CLIENT_VERSIONSTRING "v2.7100.412"
+#define CLIENT_VERSIONSTRING    "v2.7100.412"
+#define CLIENT_VERSIONSTRING2   "2.7100.412"        // no leading "v"
 
 #endif // _VERSION_H
+
