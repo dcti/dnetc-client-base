@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.108.2.4 2001/03/22 22:35:25 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.108.2.5 2001/03/22 22:38:51 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2135,18 +2135,12 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, u32 flags)
         e_sec = thisprob->pub_data.runtime_sec;
         e_usec = thisprob->pub_data.runtime_usec;
       }
-    } /* if (elapsed || rate || ratebuf) */
-    if ( flags & (P_INFO_C_PERMIL | P_INFO_S_PERMIL | P_INFO_RATE
-                  P_INFO_RATEBUF  | P_INFO_SIGBUF   | P_INFO_CWPBUF
-                  P_INFO_SWUCOUNT | P_INFO_TCOUNT   | P_INFO_CCOUNT
+    } // if (flags & (P_INFO_E_TIME | P_INFO_RATE | P_INFO_RATEBUF))
+    if ( flags & (P_INFO_C_PERMIL | P_INFO_S_PERMIL | P_INFO_RATE   |
+                  P_INFO_RATEBUF  | P_INFO_SIGBUF   | P_INFO_CWPBUF |
+                  P_INFO_SWUCOUNT | P_INFO_TCOUNT   | P_INFO_CCOUNT |
                   P_INFO_DCOUNT) )
     {
-      ContestWork work;
-      unsigned int contestid = 0;
-      int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
-
-      if (rescode >= 0) /* hmm! */
-      {
         u32 hi, lo;
         u32 tcounthi=0, tcountlo=0; /*total 'iter' (n/a if not finished)*/
         u32 ccounthi=0, ccountlo=0; /*'iter' done (so far, this start) */
@@ -2312,7 +2306,6 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, u32 flags)
           info->tcounthi = tcounthi;
           info->tcountlo = tcountlo;
         }
-      } /* if (rescode >= 0) */
     } /* if (sigbuf || ... ) */
   } /* if (rescode >= 0) */
   return rescode;
