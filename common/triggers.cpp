@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.48 2000/06/30 21:03:29 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.49 2000/07/13 19:47:11 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -331,7 +331,9 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       else
         getsps = (FARPROC)0;
     }
-    if (getsps)
+    if (!getsps)
+      trigstatics.pause_if_no_mains_power = 0;
+    else  
     {    
       SYSTEM_POWER_STATUS sps;
       sps.ACLineStatus = 255;
@@ -345,63 +347,84 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         /* third condition is 0xff ("unknown"), so fall through */
       }
     }
-    #elif (CLIENT_OS == OS_LINUX)
+    #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86)
     {
-      /*  linux support from 
-       *  Friedemann Baitinger (aka 'friedbait'), fb@baiti.net
-      */
-      #define PROC_APM "/proc/apm"
+      int disableme= 1; // if this is still set when we get to the end
+                        // then disable further apm checking
+      char buffer[256]; // must be big enough for complete read of /proc/apm
+                        // nn.nn nn.nn 0xnn 0xnn 0xnn 0xnn [-]nnn% [-]nnnn *s\n
+      int readsz = -1;
+      int fd = open( "/proc/apm", O_RDONLY );
 
-      int disableme = 1; // if this is still set when we get to the end, 
-                         // then disable further apm checking.
-      if (access(PROC_APM, R_OK) == 0) /* have apm support in the kernel? */
+      if (fd == -1)
       {
-        FILE *fd = fopen(PROC_APM, "r" );
-        disableme = 0; /* be optimistic */
-        if (fd)
-        {
-          unsigned int kmaj      = 0;
-          unsigned int kmin      = 0;
-          unsigned int amaj      = 0;
-          unsigned int amin      = 0;
-          unsigned int apm_flags = 0;
-          unsigned int line_stat = 0;
-          unsigned int bat_stat  = 0;
-          unsigned int bat_flags = 0;
-
-          if ( 8 != fscanf(fd, "%u.%u %u.%u 0x%02x 0x%02x 0x%02x 0x%02x",
-                               &kmaj, &kmin, &amaj, &amin, &apm_flags,
-                               &line_stat, &bat_stat, &bat_flags))
-          {
-            /* got less than 8 args. make major version something we
-             * don't want to process further.
-            */
-            kmaj = 0;
-          }
-          fclose(fd);
+        if (errno == ENOMEM || errno == EAGAIN) /*ENOENT,ENXIO,EIO,EPERM */
+          disableme = 0;  /* ENOMEM because apm kmallocs a struct per open */
           
-          if (kmaj == 1) 
+        TRACE_OUT((0,"sps: open(\"/proc/apm\",O_RDONLY) => %s, disableme=%d\n", strerror(errno), disableme));
+        #if defined(TRACE) /* real-life example (1.2 is similar) */
+        readsz = strlen(strcpy(buffer, "1.13 1.2 0x07 0xff 0xff 0xff -1% -1 ?"));
+        #endif
+      }
+      else 
+      {
+        readsz = read( fd, buffer, sizeof(buffer));
+        close(fd);
+      }
+
+      /* read should never fail for /proc/apm, and the size must be less 
+         than sizeof(buffer) otherwise its some /proc/apm that we
+         don't know how to parse.
+      */   
+      if (readsz > 0 && ((unsigned int)readsz) < sizeof(buffer))
+      {
+        unsigned int drv_maj, drv_min; /* "1.2","1.9","1.10","1.12,"1.13" etc*/
+        int bios_maj, bios_min; /* %d.%d */
+        int bios_flags, ac_line_status, batt_status, batt_flag; /* 0x%02x */
+        /* remaining fields are percentage, time_units, units. (%d %d %s) */
+
+        buffer[readsz-1] = '\0';
+        if (sscanf( buffer, "%u.%u %d.%d 0x%02x 0x%02x 0x%02x 0x%02x",
+                            &drv_maj, &drv_min, &bios_maj, &bios_min,
+                            &bios_flags, &ac_line_status, 
+                            &batt_status, &batt_flag ) == 8 )
+        {			      
+          TRACE_OUT((0,"sps: drvver:%u.%u biosver:%d.%d biosflags:0x%02x "
+                       "ac_line_status=0x%02x, batt_status=0x%02x\n",
+                       drv_maj, drv_min, bios_maj, bios_min, bios_flags,
+                       ac_line_status, batt_status ));      
+          if (drv_maj == 1)
           {
-            /*
-             * /proc layout is kernel version dependent. Layout may
-             * change but it always starts with a major version number
-             * as long as that is '1' the format we have parsed is valid
-             * in all other cases we don't really know what we have got.
-             * Of course if major goes to '2' we will add a switch/case
-             * support the new layout too.
-             */
-            TRACE_OUT((0,"sps: ACLineStatus = 0x%02x, BatteryFlag = 0x%02x\n",
-                       line_stat, bat_stat));
-
-            if (line_stat == 1) return 0; /* we have AC power */
-            return 1;                     /* we don't have AC */
-          }
-          disableme = 1; /* unknown major version. disable further checks */
-        } /* if (fd) */
-      } /* if (access) */
-
+            #define _APM_16_BIT_SUPPORT   (1<<0)
+            #define _APM_32_BIT_SUPPORT   (1<<1)
+            //      _APM_IDLE_SLOWS_CLOCK (1<<2)
+            #define _APM_BIOS_DISABLED    (1<<3)
+            //      _APM_BIOS_DISENGAGED  (1<<4)	      
+            if ((bios_flags & (_APM_16_BIT_SUPPORT | _APM_32_BIT_SUPPORT))!=0
+              && (bios_flags & _APM_BIOS_DISABLED) == 0)
+            { 
+              disableme = 0;
+              ac_line_status &= 0xff; /* its a char */
+              /* From /usr/src/[]/arch/i386/apm.c for (1.2)1996-(1.13)2/2000
+                 3) AC Line Status:
+                    0x00: Off-line
+                    0x01: On-line
+                    0x02: On backup-power (APM BIOS 1.1+ only)
+                    0xff: Unknown
+              */      
+              if (ac_line_status == 1)
+                return 0; /* we are not on battery */
+              if (ac_line_status != 0xff) /* 0x00, 0x02 */
+                return 1; /* yes we are on battery */
+              /* fallthrough, return -1 */    
+            }
+          } /* drv_maj == 1 */
+        } /* sscanf() == 8 */ 
+      } /* readsz */
+    
       if (disableme) /* disable further checks */
       {
+        TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
         trigstatics.pause_if_no_mains_power = 0;
       }
     } /* #if (linux) */
