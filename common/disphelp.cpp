@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.43  1998/10/04 19:43:00  remi
+// Added help lines for -benchmark*
+//
 // Revision 1.42  1998/10/04 11:35:35  remi
 // Id tags fun.
 //
@@ -135,7 +138,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.42 1998/10/04 11:35:35 remi Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.43 1998/10/04 19:43:00 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -312,7 +315,9 @@ void Client::DisplayHelp( const char * unrecognized_option )
   "-update            fetch + flush",
   "-forceunlock <fn>  unlock buffer file <fn>",
   "-benchmark         tests the client speed",
+  "                   (add rc5 or des to test only one core)",
   "-benchmark2        quick (but slightly inaccurate) client speed test",
+  "                   (add rc5 or des to test only one core)",
   "-help              display these help screens",
   "",
 //----the runoffline/runbuffers lines are the longest a description may get-----#
