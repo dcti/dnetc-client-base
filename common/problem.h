@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.36  1999/02/04 22:49:32  remi
+// Added #ifdef(DWORZ) into the {MIN,MAX}_DES_BITS selection code.
+//
 // Revision 1.35  1999/01/17 21:38:52  cyp
 // memblock for bruce ford's deseval-mmx is now passed from the problem object.
 //
@@ -117,14 +120,15 @@
  #define PIPELINE_COUNT  2  // normally 1, but 2+ if we do more then one unit in parallel
 #endif
 
-#if !defined(MEGGS) && !defined(DES_ULTRA)
+#if !defined(MEGGS) && !defined(DES_ULTRA) && !defined(DWORZ)
   #define MIN_DES_BITS  8
   #define MAX_DES_BITS 24
 #else
   #if defined(BIT_32)
     #define MIN_DES_BITS 19
     #define MAX_DES_BITS 19
-  #elif defined(BIT_64) && defined(BITSLICER_WITH_LESS_BITS)
+  #elif defined(BIT_64) && defined(BITSLICER_WITH_LESS_BITS) \
+                        && !defined(DWORZ)
     #define MIN_DES_BITS 16
     #define MAX_DES_BITS 16
   #elif defined(BIT_64)
