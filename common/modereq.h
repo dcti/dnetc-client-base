@@ -14,7 +14,7 @@
 */ 
 
 #ifndef __MODEREQ_H__
-#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.11.2.4 1999/10/11 04:16:13 cyp Exp $"
+#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.11.2.5 1999/11/02 15:59:21 cyp Exp $"
 
 #define MODEREQ_IDENT              0x00000001
 #define MODEREQ_CPUINFO            0x00000002
@@ -58,7 +58,6 @@ extern int ModeReqSetArg( int mode, void *arg );
 
 /* this is the mode runner. bits can be set/cleared while active.
    returns a mask of modebits that were cleared during the run. */
-class Client; /* for forward resolution */
 extern int ModeReqRun( Client *client ); 
 
 #endif /* __MODEREQ_H__ */
