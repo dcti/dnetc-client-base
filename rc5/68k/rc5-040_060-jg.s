@@ -1,9 +1,10 @@
 
 	OPT	O+,W-
 
-	XDEF	_rc5_unit_func_040_060
+	XDEF	_rc5_unit_func_040_060_asm
 
 ;--------------------
+;@(#)$Id: rc5-040_060-jg.s,v 1.2 1999/12/08 01:28:52 cyp Exp $
 
 	RSRESET
 	;Offsets into .ruf_vars
@@ -28,7 +29,7 @@ PR3Q:	equ	$15235639	;P0QR3+P+Q
 
 RUF_CODEALIGN:	MACRO
 	;Ensure next instruction is aligned on quadword boundary
-.align\@:	equ	*-_rc5_unit_func_040_060
+.align\@:	equ	*-_rc5_unit_func_040_060_asm
 	IFNE	.align\@&7
 	nop
 	RUF_CODEALIGN
@@ -51,7 +52,7 @@ RUF_CODEALIGN:	MACRO
 	;	20(a0) = L0.lo
 	;       d0=number of iterations to run for
 
-_rc5_unit_func_040_060:	movem.l	d2-7/a2-6,-(a7)
+_rc5_unit_func_040_060_asm:	movem.l	d2-7/a2-6,-(a7)
 
 	move.l	#P0QR3,a5	;a5=handy constant
 	move.l	20(a0),d1	;d1=L0a
