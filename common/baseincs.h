@@ -11,6 +11,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.53  1999/01/31 14:00:47  snake
+//
+// small correction of defines for BSD/OS 4
+//
 // Revision 1.52  1999/01/29 19:34:08  jlawson
 // added limits.h to linux
 //
@@ -341,7 +345,7 @@ extern "C" {
     #include <errno.h> // glibc2 has errno only here
   #endif
   #if (((CLIENT_OS == OS_LINUX) && defined(__ELF__)) || \
-       (CLIENT_OS == OS_FREEBSD))
+    (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI))
     #include <sched.h>
   #endif
 #elif (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_ARM)
