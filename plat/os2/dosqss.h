@@ -1,5 +1,6 @@
 #ifndef DOSQSS_H
-#define DOSQSS_H
+#define DOSQSS_H "@(#)$Id: dosqss.h,v 1.1.2.2 2002/11/24 17:50:10 pfeffi Exp $"
+
 
 #ifdef __cplusplus
 extern "C" {
