@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.24  1999/01/06 07:28:45  dicamillo
+// Add (apparently missing) code to ReadConfig to set cputype.
+//
 // Revision 1.23  1999/01/06 03:07:00  remi
 // Last minute patch from cyp.
 //
@@ -110,7 +113,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.23 1999/01/06 03:07:00 remi Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.24 1999/01/06 07:28:45 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -229,6 +232,8 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
       }
     }
   
+  if (INIFIND(CONF_CPUTYPE) != NULL)
+    client->cputype = INIGETKEY(CONF_CPUTYPE);
   if (INIFIND(CONF_NUMCPU) != NULL)
     client->numcpu = INIGETKEY(CONF_NUMCPU);
   if (INIFIND(CONF_MESSAGELEN) != NULL)
