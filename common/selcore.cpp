@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: selcore.cpp,v $
+// Revision 1.20.2.6  1999/01/09 11:46:25  remi
+// Synced with :
+//
+//  Revision 1.26  1999/01/05 17:49:19  chrisb
+//  fixes to the ARM core selection
+//
 // Revision 1.20.2.5  1999/01/04 02:23:59  remi
 // Synced with :
 //
@@ -33,7 +39,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.20.2.5 1999/01/04 02:23:59 remi Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.20.2.6 1999/01/09 11:46:25 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -72,6 +78,16 @@ static const char *cputypetable[]=
   "ARM 2, 250",
   "ARM 710"
   };
+extern "C" u32 (*rc5_unit_func)(RC5UnitWork *rc5unitwork, unsigned long t);
+extern "C" u32 (*des_unit_func)(RC5UnitWork *rc5unitwork, unsigned long t);
+extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * rc5unitwork , unsigned long t);
+extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * rc5unitwork , unsigned long t);
+extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * rc5unitwork , unsigned long t);
+extern "C" u32 des_unit_func_arm( RC5UnitWork * rc5unitwork , unsigned long t);
+extern "C" u32 des_unit_func_strongarm( RC5UnitWork * rc5unitwork , unsigned long t);
+u32 (*rc5_unit_func)(RC5UnitWork *rc5unitwork, unsigned long t);
+u32 (*des_unit_func)(RC5UnitWork *rc5unitwork, unsigned long t);
+
 #elif ((CLIENT_CPU == CPU_POWERPC) && \
       ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX || (CLIENT_OS == OS_MACOS))))
 static const char *cputypetable[]=
@@ -353,11 +369,16 @@ int Client::SelectCore(int quietly)
           }
         }
       }
-    cputype = (8-(fastcoretest[0] + ((fastcoretest[1]&1)<<2)))&7;
-    if (cputype == 1)
-      cputype = 3;
-    else if (cputype > 3)
-      cputype = 1;
+    cputype = (fastcoretest[0] + ((fastcoretest[1]&1)<<2));
+    if (cputype == 6)
+	cputype = 1;
+    else if (cputype == 5)
+	cputype = 2;
+    else if (cputype == 2)
+	cputype = 3;
+    else
+	cputype = 0;
+
     detectedtype = cputype;
     }
   if (!quietly)
