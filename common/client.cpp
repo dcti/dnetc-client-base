@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.54 2000/02/04 08:29:56 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.55 2000/02/06 06:17:08 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -136,10 +136,10 @@ int ClientGetInThreshold(Client *client, int contestid, int force)
     if (thresh <= 0) 
       thresh = BUFTHRESHOLD_DEFAULT; /* default (if time is also zero) */
 
-    unsigned int sec;
     if (client->timethreshold[contestid] > 0) /* use time */
     { 
       int proc;
+      unsigned int sec;
       proc = GetNumberOfDetectedProcessors();
       if (proc < 1)
         proc = 1;
@@ -150,9 +150,6 @@ int ClientGetInThreshold(Client *client, int contestid, int force)
         thresh = 1 + (client->timethreshold[contestid] * 3600 * proc/sec);
     }
   }  
-
-  if (thresh > BUFTHRESHOLD_MAX)
-    thresh = BUFTHRESHOLD_MAX;
   return thresh;
 }      
     
@@ -164,20 +161,22 @@ int ClientGetOutThreshold(Client *client, int contestid, int /* force */)
     outthresh = client->outthreshold[contestid];
     /*if outthresh is 0, don't do outthresh checking, (let load_order kick in)*/
     if (outthresh <= 0)
-      outthresh = 0;
+      outthresh = 0; /* outthreshold is ignorable */
     else  
     {
       int inthresh = client->inthreshold[contestid];
       /* if both thresholds are non-zero, make sure outthresh <= inthresh */
       /* but if inthreshold is zero (use time), just return outthresh */
       /* (allow split personality: intresh=time,outthres=workunits) */
-      if (inthresh > 0 && outthresh > inthresh)
-        outthresh = inthresh;
+      if (inthresh > 0)
+      {
+        if (outthresh >= inthresh) /* an outthreshold >= inthreshold means */
+          outthresh = 0;  /* outthreshold is ignorable (inthreshold rules) */
+        else
+          outthresh = inthresh;
+      }
     }   
   }    
-  /* if outthreshold is greater than max, cap it */
-  if (outthresh > BUFTHRESHOLD_MAX)
-    outthresh = BUFTHRESHOLD_MAX;
   return outthresh;
 }
 

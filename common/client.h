@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.9 2000/02/04 08:29:57 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.10 2000/02/06 06:17:08 cyp Exp $"
 
 
 enum {
@@ -42,7 +42,6 @@ typedef struct
 #define __TEXTIFY(x) #x
 #define _TEXTIFY(x) __TEXTIFY(x)
 
-#define BUFTHRESHOLD_MAX               2000  /* Now in work units */
 #define BUFTHRESHOLD_DEFAULT             24  /* Now in work units */
 #define PREFERREDBLOCKSIZE_DEFAULT       30
 #define PREFERREDBLOCKSIZE_MIN           28
@@ -54,7 +53,7 @@ typedef struct
 struct membuffstruct 
 { 
   unsigned long count; 
-  WorkRecord *buff[BUFTHRESHOLD_MAX];
+  WorkRecord *buff[500];
 };
 
 typedef struct
@@ -103,6 +102,7 @@ public:
   struct dialup_conf lurk_conf;
   #endif
   int  connectoften;
+  int  minupdateinterval; /* the better 'outthreshold'. in minutes */
 
   // In general, don't use inthreshold anymore;
   // Use ClientGetInThreshold(client, contest)

@@ -4,14 +4,14 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.20 2000/02/06 05:31:15 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.21 2000/02/06 06:17:08 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
 #include "cputypes.h" // CLIENT_OS
 #include "pathwork.h" // EXTN_SEP
 #include "baseincs.h" // NULL
-#include "client.h"   // BUFTHRESHOLD_MAX etc
+#include "client.h"   // PREFERREDBLOCKSIZE_MIN etc
 #include "confopt.h"  // ourselves
 
 /* ----------------------------------------------------------------------- */
@@ -263,22 +263,28 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   /*)*/,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,PREFERREDBLOCKSIZE_MIN,PREFERREDBLOCKSIZE_MAX,NULL,NULL},
 //22
 { CFGTXT("Fetch:Flush work threshold"), "-1 (default size or determine from time threshold)",
-  CFGTXT(
-  "This option specifies how many work units your client will buffer between\n"
+  "This option specifies how many *work units* your client will buffer between\n"
   "communications with a keyserver. When the number of work units in the\n"
   "input buffer reaches 0, the client will attempt to connect to a keyserver,\n"
   "fill the input buffer to the threshold, and send in all completed work\n"
   "units. Keep the number of workunits to buffer low if you have a fixed\n"
   "connection to the internet, or the cost of your dialup connection is\n"
-  "negligible.\n"
+  "negligible. While you could theoretically enter any number in the fields\n"
+  "here, the client has internal limits on the number of packets that it can\n"
+  "safely deal with.\n"
   "\n"
-  "Thresholds as displayed here are in the form \"fetch:flush\":\n"
-  "A value of -1 for the 'fetch setting' indicates that a time threshold should\n"
-  "be used instead. If that too is unspecified, then the client will use defaults.\n"
-  "A value of -1 for the 'flush setting' indicates that the client is not to\n"
-  "monitor the level of the output buffer. If all flush settings are -1, the\n"
-  "client will update buffers only when all input buffers are empty.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,1,BUFTHRESHOLD_MAX,NULL,NULL},
+  "Defaults: Thresholds as displayed here are in the form \"fetch:flush\":\n"
+  "A value of -1 for the 'fetch setting' indicates that a time threshold\n"
+  "should be used instead. If that too is unspecified, then the client will\n"
+  "use defaults. A value of -1 for the 'flush setting' is advisable and\n"
+  "indicates that a) flush and fetch values are equal, b) the client is to\n"
+  "switch/rotate between all active and enabled projects (only if all are -1)\n"
+  /* Actually that last sentence is slightly off the mark - if any flush
+     setting is less than fetch, and the client then updates, it will also
+     end up going back to the beginning of the loadorder (highest priority
+     project) since new work will then be available for that project.
+  */
+  ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,1,0xffff,NULL,NULL},
 //23
 { CFGTXT("Fetch time threshold (in hours)"), "0 (disabled)",
   "This option specifies that instead of fetching a specific number of\n"
