@@ -21,9 +21,18 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.12 2002/09/02 00:35:45 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.13 2002/09/14 23:03:36 andreasb Exp $
 ==========================================================================
 
+2.9000
+------
+
+2.9000.475  new: all: contest rc5-72
+            chg: all: new buffer format (incompatible with previous 
+                      clients and proxies)
+
+
+ 
 2.8000
 ------
 
