@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.24 2000/02/01 20:52:53 ivo Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.25 2000/02/12 04:46:57 andrewm Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -138,7 +138,7 @@
     #define CLIENT_CPU    CPU_X86
   #elif defined(__S390__)  
     #define CLIENT_CPU    CPU_S390
-  #elif defined(ARM)
+  #elif defined(ARM) || defined(__arm__)
     #define CLIENT_CPU    CPU_ARM
   #elif defined(ASM_SPARC) || defined(__sparc__)
     #define CLIENT_CPU    CPU_SPARC
