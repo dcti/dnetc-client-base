@@ -8,6 +8,9 @@
 // common, and all that will be needed are #ifdefs in here.
 //
 // $Log: guistuff.cpp,v $
+// Revision 1.7  1998/12/28 22:39:58  silby
+// SetIcon just moved over to platforms/win32gui/guicons.cpp
+//
 // Revision 1.6  1998/12/28 04:09:04  silby
 // Urk.  Fixed some foolishness with out of order defines.
 //
@@ -26,7 +29,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *guistuff_cpp(void) {
-return "@(#)$Id: guistuff.cpp,v 1.6 1998/12/28 04:09:04 silby Exp $"; }
+return "@(#)$Id: guistuff.cpp,v 1.7 1998/12/28 22:39:58 silby Exp $"; }
 #endif
 
 #include "guistuff.h"
@@ -59,36 +62,5 @@ void UpdateBufferBars(void)
 #endif
 }
 
-void SetIcon(s32 currentcontest)
-{
-#if (CLIENT_OS == OS_WIN32) && defined(WIN32GUI)
-  if (MainWindow)
-  {
-    static int lastcontest = -1;
-
-    // don't go on if the icon is the same
-    if (lastcontest == currentcontest) return;
-    lastcontest = currentcontest;
-
-    // determine the icon resource number
-    int icon;
-    switch (currentcontest)
-    {
-    case 0: // rc5 (bovine)
-      icon = IDI_ICON_COW;
-      break;
-    case 1: // des (monarch)
-      icon = IDI_ICON_MONARCH;
-      break;
-    default: // default
-      icon = IDI_ICON_MAIN;
-      break;
-    }
-
-    // actually set the icon
-    MainWindow->SetIcon(icon);
-  }
-#endif
-}
 
 #endif

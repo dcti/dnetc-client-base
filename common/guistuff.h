@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: guistuff.h,v $
+// Revision 1.5  1998/12/28 22:39:58  silby
+// SetIcon just moved over to platforms/win32gui/guicons.cpp
+//
 // Revision 1.4  1998/12/28 04:09:04  silby
 // Urk.  Fixed some foolishness with out of order defines.
 //
@@ -26,7 +29,6 @@
 
 extern void UpdatePercentBar(void);
 extern void UpdateBufferBars(void);
-extern void SetIcon(s32 currentcontest);
 #endif
 
 #endif
