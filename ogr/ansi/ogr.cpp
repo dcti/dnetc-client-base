@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.7 2003/07/20 00:52:17 mfeiri Exp $
+ * $Id: ogr.cpp,v 1.2.4.8 2003/08/09 12:53:14 mweiser Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -45,7 +45,9 @@
     #define OGROPT_STRENGTH_REDUCE_CHOOSE 0      /* GCC is better */
     #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
   #endif
-  #if defined(mc68020) || defined(mc68030) || defined(mc68040) || defined(mc68060)
+  /* as on NeXT doesn't know .balignw */
+  #if !defined(__NeXT__) && \
+      (defined(mc68020) || defined(mc68030) || defined(mc68040) || defined(mc68060))
     #define OGROPT_CYCLE_CACHE_ALIGN 1
   #endif
 #elif defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
@@ -2165,6 +2167,30 @@ static int found_one(const struct State *oState)
                :"=r" (result), "=r" (temp) : "1" (input), "r" ((unsigned int)ogr_first_blank_8bit));
       return result;
     }
+  #elif defined(ASM_68K) && defined(__GNUC__) && (__NeXT__)
+    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input)
+    {
+      register int result;
+
+      /* gcc-2.5.8 on NeXT needs (&ogr_first_blank_8bit[0]) for
+       * address register parameters. Otherweise it will give:
+       * ogr/ansi/ogr.cpp:2172: inconsistent operand constraints in an `asm'
+       */
+      __asm__ ("   cmpl    #0xffff0000,%1\n"
+               "   bcs     0f\n"
+               "   moveq   #16,%0\n"
+               "   bra     1f\n"
+               "0: swap    %1\n"
+               "   moveq   #0,%0\n"
+               "1: cmpw    #0xff00,%1\n"
+               "   bcs     2f\n"
+               "   lslw    #8,%1\n"
+               "   addql   #8,%0\n"
+               "2: lsrw    #8,%1\n"
+               "   addb    %3@(0,%1:w),%0"
+               :"=d" (result), "=d" (input) : "1" (input), "a" (&ogr_first_blank_8bit[0]));
+      return result;
+    }
   #elif defined(ASM_68K) && defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input)
     {
@@ -2293,7 +2319,11 @@ static int found_one(const struct State *oState)
   #endif
 #elif defined(ASM_68K) && defined(__GNUC__) /* Bit field find first one set (020+) */
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
+#if defined(__NeXT__)
+  { i = ~i; __asm__ ("bfffo %0{#0:#0},%0" : "=d" (i) : "0" (i)); return ++i; }
+#else
   { i = ~i; __asm__ ("bfffo %0,0,0,%0" : "=d" (i) : "0" (i)); return ++i; }
+#endif
 #else
   #error OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM is defined, and no code to match
 #endif
