@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.56.2.7 2004/01/07 02:50:50 piru Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.56.2.8 2004/06/27 21:52:04 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -78,7 +78,7 @@ static int __GetTimeOfDay( struct timeval *tv )
       tv->tv_sec = tb.time;
       tv->tv_usec = tb.millitm*1000;
     }
-    #elif (CLIENT_OS == OS_WIN32)
+    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     {
       unsigned __int64 now, epoch;
       unsigned long ell;
@@ -159,7 +159,7 @@ static int __GetMinutesWest(void)
   /* ANSI rules :) - 'timezone' doesn't reflect 'daylight' state. */
   /* ie utctime-localtime == timezone-(daylight*3600) */
   minwest = (int)(((long)timezone)/60L);
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   TIME_ZONE_INFORMATION TZInfo;
   if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
     return 0;
@@ -426,7 +426,7 @@ int CliGetMonotonicClock( struct timeval *tv )
       //tv->tv_usec = ((ticks % 1000) + (adj % 1000)) * 1000UL;
       //tv->tv_sec = (time_t)((ticks/1000)+(adj/1000)+(wrap_ctr*4294967UL));
     }
-    #elif (CLIENT_OS == OS_WIN32)
+    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     {
       #if 0 /* too many failures to be useful */
       static int using_qff = -1;
@@ -779,7 +779,7 @@ int CliGetThreadUserTime( struct timeval *tv )
     //printf("\rgetrusage(%d) => %d.%02d\n", getpid(), tv->tv_sec, tv->tv_usec/10000 );
   }
   return 0;
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   static int is_supp = -1;
   FILETIME ct,et,kt,ut;
   if (is_supp == 0)
@@ -895,12 +895,12 @@ int CliTimerDiff( struct timeval *result, const struct timeval *tv1, const struc
 int CliIsTimeZoneInvalid(void)
 {
   #if ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
-       (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32))
+       (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64))
   static int needfixup = -1;
   if (needfixup == -1)
   {
     needfixup = 0;
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     if (winGetVersion() < 400)
     #endif
     if (!getenv("TZ"))
