@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.36  1998/10/31 21:53:55  silby
+// Fixed a typo from previous commit.
+//
 // Revision 1.35  1998/10/30 19:43:39  sampo
 // Added MacOS PowerPC detection stuff
 //
@@ -129,7 +132,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.35 1998/10/30 19:43:39 sampo Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.36 1998/10/31 21:53:55 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -274,7 +277,7 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
 
 #if (!((CLIENT_CPU == CPU_X86) || \
       ((CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)) || \
-      ((CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_MACOS) || \
+      ((CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_MACOS)) || \
       ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS)) ))
 int GetProcessorType(int quietly)
 { 
