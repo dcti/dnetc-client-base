@@ -134,7 +134,7 @@ TryExtended:
 Extended_Checks:
 
   test edx, 00800000h   ; Test for MMX
-  jz AMDMMXPLUS
+  jz AMDMMXPLus
   or esi, CPU_F_MMX     ; MMX Supported
 AMDMMXPlus:
   test edx, 00400000h   ; Test for AMD Ext'd MMX
