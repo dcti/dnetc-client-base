@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.4 2003/01/19 22:49:50 snake Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.5 2003/04/03 21:24:12 oliver Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -1875,7 +1875,7 @@ int net_open(SOCKET *sockP, u32 local_addr, int local_port)
   }
   else if ((rc = net_init_check_deinit(0,0)) != 0)
   {
-    ; /* rc = ps_ENETDOWN|ps_ENOSYS; above */
+    open_endpoint_count--; /* rc = ps_ENETDOWN|ps_ENOSYS; above */
   }
 
   if (rc == 0)
