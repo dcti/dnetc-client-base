@@ -11,12 +11,13 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.43 1999/12/21 04:02:59 gregh Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.44 1999/12/23 21:43:22 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
 #include "cputypes.h"
 #include "baseincs.h"
+#include "version.h"  //CLIENT_BUILD_FRAC
 #include "client.h"   //CONTEST_COUNT
 #include "clitime.h"  //CliClock()
 #include "logstuff.h" //LogScreen()
@@ -33,11 +34,13 @@ return "@(#)$Id: problem.cpp,v 1.108.2.43 1999/12/21 04:02:59 gregh Exp $"; }
 #define MINIMUM_ITERATIONS 24
 /* 
    MINIMUM_ITERATIONS determines minimum number of iterations that will 
-   be requested, which then automatically implies the alignment as well,
-   since partially completed work can (should!) never end up on a 
-   cruncher that it did not originate on. [that is because core cpu, core #,
-   and client version are saved in partially completed work, and work is
-   reset if any of them don't match].
+   be requested, as well as the boundary on which number of iterations will
+   be aligned. This then automatically implies keysdone alignment as well.
+   [This applies to partially completed work loaded from disk as well,
+   since partially completed work will (should!) never end up on a cruncher 
+   that it did not originate on because core cpu, core #, client os and 
+   client version are saved in partially completed work, and work is reset 
+   by LoadState if any of them don't match.
    24 was chosen because it is evenly divisible by any/all the
    pipeline_counts currently in use (1,2,3,4[,6?])
 */   
@@ -238,7 +241,9 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
 /* ------------------------------------------------------------------- */
 
 int Problem::LoadState( ContestWork * work, unsigned int contestid, 
-                              u32 _iterations, int /* was _cputype */ )
+              u32 _iterations, int expected_cputype, 
+              int expected_corenum, int expected_os,
+              int expected_buildfrac )
 {
   last_resultcode = -1;
   started = initialized = 0;
@@ -251,6 +256,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   loaderflags = 0;
   contest = contestid;
   tslice = _iterations;
+  was_reset = 0;
 
   if (!IsProblemLoadPermitted(threadindex, contestid))
     return -1;
@@ -292,6 +298,16 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       contestwork.crypto.keysdone.lo = ( work->crypto.keysdone.lo );
       contestwork.crypto.iterations.hi = ( work->crypto.iterations.hi );
       contestwork.crypto.iterations.lo = ( work->crypto.iterations.lo );
+
+      if (contestwork.crypto.keysdone.lo || contestwork.crypto.keysdone.hi)
+      {
+        if (client_cpu != expected_cputype || coresel != expected_corenum ||
+            CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
+        { 
+          contestwork.crypto.keysdone.lo = contestwork.crypto.keysdone.hi = 0;
+          was_reset = 1;
+        }  
+      }
 
       #if 0
       //this next if is from original TimC post-load-from-disk code, but it
@@ -335,6 +351,16 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
     case OGR:
     {
       contestwork.ogr = work->ogr;
+      if (contestwork.ogr.nodes.hi != 0 || contestwork.ogr.nodes.lo != 0)
+      {
+        if (client_cpu != expected_cputype || coresel != expected_corenum ||
+            CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
+        { 
+          was_reset = 1;
+          contestwork.ogr.workstub.worklength = contestwork.ogr.workstub.stub.length;
+          contestwork.ogr.nodes.hi = contestwork.work.ogr.nodes.lo = 0;
+        }  
+      }
       contestwork.ogr.nodes.lo = 0;
       contestwork.ogr.nodes.hi = 0;
       extern CoreDispatchTable *ogr_get_dispatch_table();
@@ -403,31 +429,26 @@ int Problem::Run_RC5(u32 *iterationsP, int *resultcode)
   u32 kiter = 0;
   u32 iterations = *iterationsP;
 
-  // align the iterations to an even-multiple of pipeline_count and 2 
-  u32 alignfact = pipeline_count + (pipeline_count & 1);
-  iterations = ((iterations + (alignfact - 1)) & ~(alignfact - 1));
-
   // don't allow a too large of a iterations be used ie (>(iter-keysdone)) 
   // (technically not necessary, but may save some wasted time)
   if (contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi)
   {
     u32 todo = contestwork.crypto.iterations.lo-contestwork.crypto.keysdone.lo;
     if (todo < iterations)
-    {
       iterations = todo;
-      iterations = ((iterations + (alignfact - 1)) & ~(alignfact - 1));
-    }
   }
 
   if (iterations < MINIMUM_ITERATIONS)
     iterations = MINIMUM_ITERATIONS;
+  else if ((iterations % MINIMUM_ITERATIONS) != 0)
+    iterations += (MINIMUM_ITERATIONS - (iterations % MINIMUM_ITERATIONS));
 
  #if 0
 LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
           "suggested iterations: %lu (0x%lx)\n"
           "pipeline_count = %lu, iterations%%pipeline_count = %lu\n", 
-          (unsigned long)iterations, (unsigned long)(*iterationsP),
-          (unsigned long)tslice, (unsigned long)tslice,
+          (unsigned long)iterations, (unsigned long)iterations,
+          (unsigned long)(*iterationsP), (unsigned long)(*iterationsP),
           pipeline_count, iterations%pipeline_count );
 #endif
 
@@ -890,3 +911,4 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
   }
   return 0;
 }
+

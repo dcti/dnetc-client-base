@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.18 1999/12/21 04:02:10 gregh Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.19 1999/12/23 21:43:25 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -130,7 +130,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       if (client->keyport == 3064)
       {
         LogScreen("Test success was %sdetected!\n",
-           (wrdata.resultcode == RESULT_NOTHING ? "not" : "") );
+           (wrdata.resultcode == RESULT_NOTHING ? "not " : "") );
       }
 
       wrdata.contest = (u8)(cont_i);
@@ -200,9 +200,9 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       wrdata.resultcode = resultcode;
       wrdata.cpu        = FILEENTRY_CPU(thisprob->client_cpu,
                                         thisprob->coresel);
-      wrdata.os         = FILEENTRY_OS;
-      wrdata.buildhi    = FILEENTRY_BUILDHI; 
-      wrdata.buildlo    = FILEENTRY_BUILDLO;
+      wrdata.os         = FILEENTRY_OS;      //CLIENT_OS
+      wrdata.buildhi    = FILEENTRY_BUILDHI; //(CLIENT_BUILDFRAC >> 8)
+      wrdata.buildlo    = FILEENTRY_BUILDLO; //CLIENT_BUILDFRAC & 0xff
 
       if ((thisprob->loaderflags & PROBLDR_DISCARD)!=0)
       {
@@ -316,42 +316,6 @@ static long __loadapacket( Client *client, WorkRecord *wrdata,
 
 /* ---------------------------------------------------------------------- */
 
-static int __resetWork( WorkRecord *wrdata )
-{
-  int work_was_reset = -1;
-  switch (wrdata->contest)
-  {
-    case RC5:
-    case DES:
-    case CSC:
-    {
-      work_was_reset = 0;
-      if (wrdata->work.crypto.keysdone.hi != 0 || wrdata->work.crypto.keysdone.lo != 0)
-      {
-        work_was_reset = 1;
-        wrdata->work.crypto.keysdone.hi = wrdata->work.crypto.keysdone.lo = 0;
-      }
-      break;
-    }
-    #if defined(HAVE_OGR_CORES)
-    case OGR:
-    {
-      work_was_reset = 0;
-      if (wrdata->work.ogr.nodes.hi != 0 || wrdata->work.ogr.nodes.lo != 0)
-      {
-        work_was_reset = 1;
-        wrdata->work.ogr.workstub.worklength = wrdata->work.ogr.workstub.stub.length;
-        wrdata->work.ogr.nodes.hi = wrdata->work.ogr.nodes.lo = 0;
-      }
-      break;
-    }
-    #endif
-  }
-  return work_was_reset;
-}
-
-/* ---------------------------------------------------------------------- */
-
 #define NOLOAD_NONEWBLOCKS       -3
 #define NOLOAD_ALLCONTESTSCLOSED -2
 #define NOLOAD_NORANDOM          -1
@@ -422,7 +386,6 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
                     unsigned int *loaded_for_contest,
                     int *bufupd_pending )
 {
-  int work_was_reset = 0;
   WorkRecord wrdata;
   unsigned int norm_key_count = 0;
   int didload = 0, didrandom = 0;
@@ -462,15 +425,6 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     {
       didload = 1;
       *load_needed = 0;
-       
-      if (wrdata.cpu     != FILEENTRY_CPU(client_cpu, coresel)
-       || wrdata.os      != FILEENTRY_OS 
-       || wrdata.buildhi != FILEENTRY_BUILDHI
-       || wrdata.buildlo != FILEENTRY_BUILDLO)
-      {
-        if ( __resetWork( &wrdata ) > 0)
-          work_was_reset = 1;
-      }
     }
   } 
 
@@ -494,6 +448,11 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   {
     char msgbuf[80]; 
     u32 timeslice = 0x10000;
+    int expected_cpu = FILEENTRY_CPU_TO_CPUNUM( wrdata.cpu );
+    int expected_core = FILEENTRY_CPU_TO_CORENUM( wrdata.cpu );
+    int expected_os  = FILEENTRY_OS_TO_OS( wrdata.os );
+    int expected_build=FILEENTRY_BUILD_TO_BUILD(wrdata.buildhi,wrdata.buildlo);
+    
     #if (defined(INIT_TIMESLICE) && (INIT_TIMESLICE > 64))
     timeslice = INIT_TIMESLICE;
     #endif
@@ -502,7 +461,8 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     *load_needed = 0;
     *loaded_for_contest = (unsigned int)(wrdata.contest);
 
-    thisprob->LoadState( &wrdata.work, *loaded_for_contest, timeslice, 0 /*unused*/ );
+    thisprob->LoadState( &wrdata.work, *loaded_for_contest, timeslice, 
+         expected_cpu, expected_core, expected_os, expected_build );
     thisprob->loaderflags = 0;
 
     switch (wrdata.contest) 
@@ -538,7 +498,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
       Log("Loaded %s%s%s\n%s",
          CliGetContestNameFromID(*loaded_for_contest), msgbuf, perdone,
-           (work_was_reset ? ("Packet was from a different core/"
+           (thisprob->was_reset ? ("Packet was from a different core/"
            "client cpu/os/build.\n"):("")) );
     } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
 

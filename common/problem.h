@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.18 1999/12/19 19:23:26 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.19 1999/12/23 21:43:25 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -95,6 +95,7 @@ public: /* anything public must be thread safe */
   int coresel;                   /*  |                                   */
   int client_cpu;                /*  | effective CLIENT_CPU              */
   u32 tslice;                    /* -' -- adjusted by non-preemptive OSs */
+  int was_reset;                 /* set if loadstate reset the block     */
 
   u32 permille;    /* used by % bar */
   int loaderflags; /* used by problem loader (probfill.cpp) */
@@ -121,10 +122,11 @@ public: /* anything public must be thread safe */
   int IsInitialized() { return (initialized!=0); }
 
   int LoadState( ContestWork * work, unsigned int _contest, u32 _iterations, 
-     int _unused );
+     int expected_cpunum, int expected_corenum, 
+     int expected_os, int expected_buildfrac );
     // Load state into internal structures.
     // state is invalid (will generate errors) until this is called.
-    // expected_[core|cpu|buildnum] are those loaded with the workunit
+    // expected_[core|cpu|os|buildnum] are those loaded with the workunit
     //   and allow LoadState to reset the problem if deemed necessary.
     // returns: -1 on error, 0 is OK
 
