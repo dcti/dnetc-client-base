@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.48 2000/11/03 16:47:49 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.49 2000/11/04 18:54:03 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -50,6 +50,57 @@ int SetProblemLoaderFlags( const char *loaderflags_map )
 
 /* ----------------------------------------------------------------------- */
 
+static unsigned int __get_thresh_secs(Client *client, int contestid,
+                                      int force, unsigned int stats_units,
+                                      unsigned int *numcrunchersP)
+{
+  int was_forced; unsigned int sec;
+
+  /* somebody keeps freaking playing with client->numcpu dependancy */
+  /* is it so difficult to understand that some users explictely specify */
+  /* a number of crunchers not equal to the number of cpus in the machine? */
+  /* (not necessarily crunchers less than cpus either) */
+
+  // get the speed - careful!: if CliGetContestWorkUnitSpeed
+  // uses benchmark (was_forced) to get the speed, then the speed is 
+  // per-cpu, not per-cruncher. Otherwise, its per-cruncher.
+  sec = CliGetContestWorkUnitSpeed(contestid, force, &was_forced);
+
+  if (sec != 0) /* we have a rate */
+  {
+    unsigned int divx;
+    int numcrunchers = ProblemCountLoaded(contestid);
+    int numprocs = client->numcpu;
+    if (numprocs == 0) /* forced single cpu */
+      numprocs = 1;  
+    else if (numprocs < 0) /* auto-detect */
+    {
+      numprocs = GetNumberOfDetectedProcessors();
+      if (numprocs < 0)
+        numprocs = 1;
+    } 
+    if (!numcrunchers)
+      numcrunchers = numprocs;
+
+    if (numcrunchersP)
+      *numcrunchersP = numcrunchers;
+
+    divx = 0;
+    if (was_forced) /* work unit speed is per-cpu */
+      divx = numprocs;
+    else            /* work unit speed is per-cruncher */
+      divx = numcrunchers;
+    
+    if (stats_units) /* get projected time to completion */
+      sec = (stats_units * sec) / (divx * 100); /* statsunits=workunits*100 */
+    else             /* get number of workunits per hour */
+      sec = (3600 * divx) / sec; 
+  }
+  return sec;
+}
+
+/* ----------------------------------------------------------------------- */
+
 unsigned int ClientGetInThreshold(Client *client, 
                                   int contestid, int force /*=0*/)
 {
@@ -70,31 +121,14 @@ unsigned int ClientGetInThreshold(Client *client,
 
     if (client->timethreshold[contestid] > 0) /* use time */
     {
-      int numprocs, numcrunchers, timethresh = 0;
-      unsigned int sec;
-      /* somebody keeps freaking playing with client->numcpu dependancy */
-      /* is it so difficult to understand that some users explictely specify */
-      /* a number of crunchers not equal to the number of cpus in the machine? */
-      /* (not necessarily crunchers less than cpus either) */
-      numprocs = GetNumberOfDetectedProcessors();
-      if (numprocs < 1)
-        numprocs = 1;
-      numcrunchers = client->numcpu;
-      if (numcrunchers < 0)
-        numcrunchers = numprocs;
-      else if (numcrunchers == 0)
-        numcrunchers = numprocs = 1; 
-      else if (numcrunchers < numprocs)
-        numprocs = numcrunchers;  
+      unsigned int secs, numcrunchers, timethresh = 0;
+      secs = __get_thresh_secs(client, contestid, force, 0, &numcrunchers );
 
-      // get the speed
-      sec = CliGetContestWorkUnitSpeed(contestid, force);
-      if (sec != 0) /* we have a rate */
-        timethresh = 1 + (client->timethreshold[contestid] * 3600 * numprocs/sec);
-        
-      if (timethresh > client->inthreshold[contestid])
+      if (secs)
+        timethresh = 1 + (client->timethreshold[contestid] * secs);
+      if (((int)timethresh) > client->inthreshold[contestid])
         thresh = timethresh;
-      if (thresh < numcrunchers)
+      if (thresh < ((int)numcrunchers))
         thresh = numcrunchers;
     }
   }
@@ -355,8 +389,12 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
               strcat( strcpy( dcountbuf,"Test: RESULT_"),
                      ((resultcode==RESULT_NOTHING)?("NOTHING"):("FOUND")) );
             else if (finito) /* finished non-test packet */ 
+            {
+              char *p = strchr(pktid,':'); /* HACK! to supress too long */
+              if (p) *p = '\0';            /* crypto "Completed" lines */
               sprintf( dcountbuf, "%u.%02u stats units", 
                                   swucount/100, swucount%100);
+            }
             else if (permille > 0)
               sprintf( dcountbuf, "%u.%u0%% done", permille/10, permille%10);
             else
@@ -957,18 +995,14 @@ unsigned int LoadSaveProblems(Client *client,
           }
           else /*in*/ if (stats_count && (mode!=PROBFILL_UNLOADALL))
           {
-            unsigned int numcrunchers = ProblemCountLoaded(cont_i);
-            if (numcrunchers)
+            timeval tv;
+            tv.tv_sec = __get_thresh_secs(client, cont_i, 0, stats_count, 0 );
+            if (tv.tv_sec > 0)          
             {
-              timeval tv;
               tv.tv_usec = 0;
-              tv.tv_sec = stats_count * 
-                        CliGetContestWorkUnitSpeed( cont_i, 0 ) / 
-                        numcrunchers;
-              if (tv.tv_sec > 0)          
-                len += sprintf(&buffer[len],
-                        "\nProjected ideal time to completion: %s", 
-                             CliGetTimeString( &tv, 2));
+              len += sprintf(&buffer[len],
+                       "\nProjected ideal time to completion: %s", 
+                       CliGetTimeString( &tv, 2));
             }
           }
           Log( "%s\n", buffer );
