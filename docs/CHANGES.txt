@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.7 2003/01/29 02:51:09 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.8 2003/01/31 14:37:09 mfeiri Exp $
 ==========================================================================
 
 2.9000
@@ -29,9 +29,10 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.7 2003/01/29 02:51:09 andreasb Exp
 
 2.9003.480  new: x86: rc5-72 core by Gnatiuc Ianos (Athlon optimized)
             chg: all: -numcpu 0 disables use of shared memory (if any)
+            fix: macosx: changed -install to work on Mac OS X 10.2 
 
 2.9002.479  new: ppc: rc5-72 core by Malcolm Howell (603e optimized)
-            new: ppc: rc5-72 cores by Didier Levet
+            new: ppc: rc5-72 cores by Didier Levet (AltiVec optimized)
             new: amigaos: optimized 68k rc5-72 cores by Malcolm Howell
             fix: amigaos: PowerUp compiler linklib no longer trashes memory
             imp: amigaos: added G3/G4 cpu detection
