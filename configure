@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.174  1999/01/18 18:49:35  remi
+# Integration of Christoph Dworzak's alpha bitslicer.
+# Currently only on alpha-linux.
+#
 # Revision 1.173  1999/01/14 23:02:11  pct
 # Updates for Digital Unix alpha client and ev5 related code.  This also
 # includes inital code for autodetection of CPU type and SMP.
@@ -1252,11 +1256,12 @@ case "$1" in
 	;;
 
     *alpha-linux)
-	TARGET_AS="g++ -c"
-	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=2 \
-			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="-O2 -fno-schedule-insns -fno-handle-exceptions -fno-rtti \
+	                -Wall -Icommon -Irc5 -Ides -Iplatforms -DASM_ALPHA -static \
+                        -DPIPELINE_COUNT=2 -DBIT_64 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="des/deseval-dworz2.c des/des-slice-dworz.cpp \
 			rc5/alphaasm/axp-bmeyer.cpp \
 			rc5/alphaasm/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
