@@ -21,11 +21,18 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.43 1999/11/08 02:02:37 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.44 1999/11/11 02:30:31 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
 #include "clitime.h"  // keep the prototypes in sync
+
+#if 0 //if your OS doesn't support getrusage, #if it here.
+  //nothing
+#elif defined(__unix__) //possibly not for all unices. getrusage() is BSD4.3
+  #define HAVE_GETRUSAGE
+  #include <sys/resource.h>
+#endif
 
 // ---------------------------------------------------------------------
 
@@ -44,10 +51,10 @@ static int __GetTimeOfDay( struct timeval *tv )
     #elif (CLIENT_OS==OS_SOLARIS)
         //struct timezone tz;
       return gettimeofday(tv, 0);
-    #elif (CLIENT_OS == OS_WIN32)
+    #elif (CLIENT_OS == OS_WIN32)  || (CLIENT_OS==OS_WIN32S)
     {
       unsigned __int64 now, epoch;
-			unsigned long ell;
+      unsigned long ell;
       FILETIME ft;
       SYSTEMTIME st;
       GetSystemTime(&st);
@@ -60,12 +67,12 @@ static int __GetTimeOfDay( struct timeval *tv )
       now += ft.dwLowDateTime;
       now -= epoch;
       now /= 10UL;
-			ell = (unsigned long)(now % 1000000ul);
+      ell = (unsigned long)(now % 1000000ul);
       tv->tv_usec = ell;
-			ell = (unsigned long)(now / 1000000ul);
+      ell = (unsigned long)(now / 1000000ul);
       tv->tv_sec = ell;
     }
-    #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+    #elif (CLIENT_OS==OS_WIN16)
     {
       static DWORD lastcheck = 0;
       static time_t basetime = 0;
@@ -127,6 +134,57 @@ static int __GetMonotonicClock( struct timeval *tv )
   #else
   return __GetTimeOfDay(tv); /* should optimize into a jump :) */
   #endif
+}
+
+/* 
+ * get thread time 
+*/
+static int __GetProcessTime( struct timeval *tv )
+{
+  #if defined(HAVE_GETRUSAGE)
+  struct rusage rus;
+  if (getrusage(RUSAGE_SELF,&rus) == 0)
+  {
+    tv->tv_sec = rus.ru_utime.tv_sec;
+    tv->tv_usec = rus.ru_utime.tv_usec;
+    return 0;
+  }
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S)
+  static int isnt = -1;
+  #if 0
+  if (isnt == -1)
+  {
+    if ( winGetVersion() < 2000)
+      isnt = 0;
+  }
+  #endif
+  if ( isnt != 0 ) 
+  {
+    FILETIME ct,et,kt,ut;
+    if (GetThreadTimes(GetCurrentThread(),&ct,&et,&kt,&ut))
+    {
+      unsigned __int64 now, epoch;
+      unsigned long ell;
+      //epoch.dwHighDate = 27111902UL;
+      //epoch.dwLowDate = 3577643008UL; 
+      epoch = 116444736000000000ui64;
+      now = ut.dwHighDateTime;
+      now <<= 32;
+      now += ut.dwLowDateTime;
+      now -= epoch;
+      now /= 10UL;
+      ell = (unsigned long)(now % 1000000ul);
+      tv->tv_usec = ell;
+      ell = (unsigned long)(now / 1000000ul);
+      tv->tv_sec = ell;
+      isnt = 1;
+      return 0;
+    }
+    if (isnt < 0) /* first try? */
+      isnt = 0; /* don't try again */
+  }
+  #endif
+  return -1;
 }
 
 
@@ -199,6 +257,15 @@ int CliTimeGetMinutesWest(void)
   return precalced_minuteswest;
 }
 
+int CliGetProcessTime( struct timeval *tv )
+{
+  struct timeval temp_tv;
+  if (!tv) tv = &temp_tv;
+  if ( __GetProcessTime( tv ) < 0)
+    return -1;
+  return 0;
+}
+
 /*
  * Get time elapsed since start. (used from cores. Thread safe.)
 */
@@ -207,8 +274,7 @@ struct timeval *CliClock( struct timeval *tv )
   static struct timeval base_tv = {-1,0};  /* base time for CliClock() */
   static struct timeval stv = {0,0};
 
-
-  /* initialization is not thread safe, (see ctor above) */
+  /* initialization is not thread safe, (see ctor below) */
   if (base_tv.tv_sec == -1) /* CliClock() not initialized */
   {                         
     __GetMonotonicClock(&base_tv); /* set cliclock to current time */
@@ -231,7 +297,7 @@ struct timeval *CliClock( struct timeval *tv )
 static class _clockinit_  /* we use a static constructor to */
 {                         /* ensure initialization before thread spin up */
   public:
-    _clockinit_()  { CliClock(NULL); }
+    _clockinit_()  { CliClock(NULL); CliGetProcessTime(NULL); }
    ~_clockinit_()  { }
 } _clockinit;
 

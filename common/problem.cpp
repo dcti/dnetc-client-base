@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.119 1999/11/08 02:02:43 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.120 1999/11/11 02:30:32 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -1206,7 +1206,8 @@ int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
 
 int Problem::Run(void) /* returns RESULT_*  or -1 */
 {
-  struct timeval stop, start;
+  int using_ptime;
+  struct timeval stop, start, pstart;
   int retcode, core_resultcode;
   u32 timeslice;
 
@@ -1215,8 +1216,12 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
 
   if ( last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
     return ( last_resultcode );
-    
+
   CliClock(&start);
+  using_ptime = 1;
+  if (CliGetProcessTime(&pstart) < 0)
+    using_ptime = 0;
+    
   if (!started)
   {
     timehi = start.tv_sec; timelo = start.tv_usec;
@@ -1277,19 +1282,32 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   }
   
   core_run_count++;
-  CliClock(&stop);
-  if ( core_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING */
+  if (using_ptime)
   {
-    if (((u32)(stop.tv_sec)) > ((u32)(timehi)))
+    if (CliGetProcessTime(&stop) < 0)
+      using_ptime = 0;
+    else 
     {
-      u32 tmpdif = timehi - stop.tv_sec;
-      tmpdif = (((tmpdif >= runtime_sec) ?
-        (tmpdif - runtime_sec) : (runtime_sec - tmpdif)));
-      if ( tmpdif < core_run_count )
+      start.tv_sec = pstart.tv_sec;
+      start.tv_usec = pstart.tv_usec;
+    }
+  }
+  if (!using_ptime)
+  {
+    CliClock(&stop);
+    if ( core_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING */
+    {
+      if (((u32)(stop.tv_sec)) > ((u32)(timehi)))
       {
-        runtime_sec = runtime_usec = 0;
-        start.tv_sec = timehi;
-        start.tv_usec = timelo;
+        u32 tmpdif = timehi - stop.tv_sec;
+        tmpdif = (((tmpdif >= runtime_sec) ?
+          (tmpdif - runtime_sec) : (runtime_sec - tmpdif)));
+        if ( tmpdif < core_run_count )
+        {
+          runtime_sec = runtime_usec = 0;
+          start.tv_sec = timehi;
+          start.tv_usec = timelo;
+        }
       }
     }
   }

@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.54 1999/11/08 02:02:44 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.55 1999/11/11 02:30:32 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -364,7 +364,7 @@ int selcoreSelfTest( unsigned int cont_i )
 /* this is called from Problem::LoadState() */
 int selcoreGetSelectedCoreForContest( unsigned int contestid )
 {
-  bool corename_printed = false;
+  int corename_printed = 0;
   static long detected_type = -123;
   const char *contname = CliGetContestNameFromID(contestid);
   if (!contname) /* no such contest */
@@ -375,7 +375,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
   if (__corecount_for_contest(contestid) == 1) /* only one core? */
     return 0;
-    
   if (selcorestatics.corenum[contestid] >= 0) /* already selected one? */
     return selcorestatics.corenum[contestid];
 
@@ -427,18 +426,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
     if (selcorestatics.corenum[CSC] < 0)
     {
-  #if 0
-    // Who knows?  Just benchmark them all below
-  #endif
+      ; // Who knows?  Just benchmark them all below
     }
-  }
-  if (selcorestatics.corenum[contestid] >= 0)
-  {
-    LogScreen( "%s: %s core #%d (%s)\n", contname, 
-      ((selcorestatics.user_cputype[contestid] >= 0)?("Using"):("Auto-selected")),
-      selcorestatics.corenum[contestid],
-     selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
-    corename_printed = true;
   }
   #elif (CLIENT_CPU == CPU_68K)
   if (contestid == RC5 || contestid == DES) /* old style */
@@ -455,7 +444,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     else //if (cputype == 0 || cputype == 1 || cputype == 2 || cputype == 3)
       corename = "000/010/020/030";
     LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename );
-    corename_printed = true;
+    corename_printed = 1;
   }
   #elif (CLIENT_CPU == CPU_POWERPC)
   if (contestid == RC5 || contestid == DES) /* old style */
@@ -506,55 +495,23 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
       if (selcorestatics.corenum[CSC] < 0)
       {
-  #if (__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 95))
-	// select the right cores if compiled with GCC 2.95 and up
-	switch( detected_type & 0xff ) {
-	case 1:  // 386/486
-	  selcorestatics.corenum[CSC] = 3; // 1key - called
-	  break;
-	case 2:  // Ppro/PII/Celeron/PIII
-	case 4:  // K5
-	  selcorestatics.corenum[CSC] = 2; // 1key - inline
-	  break;
-	case 5:  // K6/K6-2/K6-3
-	  selcorestatics.corenum[CSC] = 0; // 6bit - inline
-	  break;
-	}
-  #elif defined(_MSC_VER) && (_MSC_VER >= 11)
-	// select the right cores if compiled with MS VC++ 5.0 and up
-	switch( detected_type & 0xff ) {
-	case 2:  // Ppro/PII/Celeron/PIII
-	  selcorestatics.corenum[CSC] = 2; // 1key - inline
-	  break;
-	}
-  #endif
-  #if 0
-        int cpu2core = detected_type & 0xff;
-        /* note: because these are C cores, crunch efficacy can swing
-           wildly. For instance (here PII/400):
-           Watcom 10      VC 5.0
-           core0: 130     354
-           core1: 344     441
-           core2: 121     508
-           core3: 334     418
-           We need to find the best generated asm for each core and nasmify it.
-        */
-        if (cpu2core == 3) // Ppro/PII/PIII
-          selcorestatics.corenum[CSC] = 1; //6bit - called
-        /*
-        else if (cpu2core == ....
-          ...
-        */
-  #endif
+        // this is only valid for nasm'd cores or GCC 2.95 and up
+        switch( detected_type & 0xff ) 
+        {
+        case 0:  // P5
+        case 1:  // 386/486
+          selcorestatics.corenum[CSC] = 3; // 1key - called
+          break;
+        case 2:  // Ppro/PII/Celeron/PIII
+        case 4:  // K5
+          selcorestatics.corenum[CSC] = 2; // 1key - inline
+          break;
+        case 3:  // Cx6x86
+        case 5:  // K6/K6-2/K6-3
+          selcorestatics.corenum[CSC] = 0; // 6bit - inline
+          break;
+        }
       }
-    }
-    if (selcorestatics.corenum[contestid] >= 0)
-    {
-      LogScreen( "%s: %s core #%d (%s)\n", contname, 
-        ((user_selected)?("using"):("auto-selected")),
-        selcorestatics.corenum[contestid],
-       selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
-      corename_printed = true;
     }
   }
   #elif (CLIENT_CPU == CPU_ARM)
@@ -566,12 +523,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       if (detected_type >= 0)
         selcorestatics.corenum[contestid] = (int)detected_type;
     }
-    if (selcorestatics.corenum[contestid] >= 0)
-    {
-      LogScreen( "%s: selecting %s optimized code.\n", contname, 
-       selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid]));
-      corename_printed = true;
-    }
     /* otherwise fall into bench */
   }
   #endif
@@ -582,8 +533,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   if (selcorestatics.corenum[contestid] >= 0) 
   { 
     if (!corename_printed)
-      LogScreen("%s: selected core #%d (%s).\n", contname, selcorestatics.corenum[contestid], 
-		selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
+    {
+      LogScreen("%s: using core #%d (%s).\n", contname, 
+         selcorestatics.corenum[contestid], 
+         selcoreGetDisplayName(contestid, selcorestatics.corenum[contestid]) );
+     }
   }
   else /* ok, bench it then */
   {
@@ -609,7 +563,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         {
           if (!saidmsg)
           {
-            LogScreen("%s: Manually selecting fastest core...\n", contname);
+            LogScreen("%s: Running micro-bench to select fastest core...\n", 
+                      contname);
             saidmsg = 1;
           }                                
           problem->Run();
@@ -628,13 +583,15 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       delete problem;
 
       if (fastestcrunch < 0) /* all failed */
+      { 
         selcorestatics.corenum[contestid] = 0; /* don't bench again */
+      }
       else
       {
         selcorestatics.corenum[contestid] = fastestcrunch;
         LogScreen("%s: selected core #%d (%s).\n", contname, fastestcrunch, 
                        selcoreGetDisplayName( contestid, fastestcrunch ) );
-	corename_printed = true;
+        corename_printed = 1;
       }
     }
   }
