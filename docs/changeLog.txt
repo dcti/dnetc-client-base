@@ -1,6 +1,10 @@
 Dual mode (RC5DES) clients
 --------------------------
+v2.7024.409 98.06.18 Users can now tell us exactly what we need to add to the CPU identification code to stop their cpu from being mis-ident'd.
+v2.7024.409 98.06.17 Added a new PPro/PII/6x86/K6 *DES* core
+v2.7024.409 98.06.15 New 64-bit UltraSparc DES core - super fast !
 v2.7024.409 98.06.15 ARM version of Kwan's latest sboxes - 30% faster
+v2.7024.409 98.06.14 Fixed the OS/2 lurk mode so that it updates less freqently.
 v2.7024.409 98.06.13 Fixed CPU identification crash under *nix with 486 SX/DX/DX2.
 v2.7021.405 98.05.23 Resolved a number of signal handling problems from Cyrus Patel
 v2.7021.405 98.05.23 Mail doesn't clear buffers on mail send failure from Cyrus Patel
