@@ -4,12 +4,10 @@
 ;
 ; Author: Gnatiuc Ianos <ssianky@hotmail.com>
 ; based on r72-dg2 and r72ansi2 cores
-; $Id: r72-ss2.asm,v 1.1.2.5 2003/02/06 20:59:42 andreasb Exp $
+; $Id: r72-ss2.asm,v 1.1.2.6 2003/03/01 10:35:54 andreasb Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
-[SECTION _DATA FLAT USE32 align=32 CLASS=DATA]
-%error ??? have __OMF__ ???
-%error !!!  not tested  !!!
+[SECTION _DATA FLAT USE32 align=16 CLASS=DATA]
 %else
 [SECTION .data]
 %endif
