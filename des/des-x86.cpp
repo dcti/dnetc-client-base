@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.14  1998/07/08 18:53:06  remi
+// Added function for CliIdentifyModules().
+//
 // Revision 1.13  1998/07/07 07:42:20  jlawson
 // added lint tags around cvs id to supress unused variable warning
 //
@@ -39,7 +42,9 @@
 // encapsulate the BrydDES library
 
 #if (!defined(lint) && defined(__showids__))
-static char *id="@(#)$Id: des-x86.cpp,v 1.13 1998/07/07 07:42:20 jlawson Exp $";
+const char *des_x86_cpp(void) {
+static char *id="@(#)$Id: des-x86.cpp,v 1.14 1998/07/08 18:53:06 remi Exp $";
+return id; }
 #endif
 
 
