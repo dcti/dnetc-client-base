@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.5 1999/06/02 17:20:58 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.6 1999/06/05 23:36:29 remi Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -449,6 +449,14 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int 
 #elif defined(__unix__)
 int main( int argc, char *argv[] )
 {
+  // stop the shell from seeing SIGTSTP and putting the client
+  // into the background when we '-pause' it.
+  // porters : those calls are POSIX.1, 
+  // - on BSD you might need to change setpgid(0,0) to setpgrp()
+  // - on SYSV you might need to change getpgrp() to getpgid(0)
+  if( getpgrp() != getpid() )
+    setpgid( 0, 0 );
+
   /* the SPT_* constants refer to sendmail source (conf.[c|h]) */
   char defname[]={('r'),('c'),('5'),('d'),('e'),('s'),0};
   int needchange = 0;
