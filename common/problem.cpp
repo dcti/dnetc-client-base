@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.78  1999/02/16 08:45:41  silby
+// Fix for .cpp cores.
+//
 // Revision 1.77  1999/02/15 09:10:01  silby
 // Fixed bug in last change.
 //
@@ -228,7 +231,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.77 1999/02/15 09:10:01 silby Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.78 1999/02/16 08:45:41 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -834,7 +837,8 @@ if (contest == 0) // RC5
   #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_LINUX)
     kiter = rc5_unit_func( &rc5unitwork, timeslice);
   #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
-    while ( timeslice-- ) // timeslice ignores the number of pipelines
+    int keycount = timeslice;
+    while ( keycount-- ) // timeslice ignores the number of pipelines
       {
         switch (cputype)
         {
@@ -855,6 +859,8 @@ if (contest == 0) // RC5
       if ( result )
         {
         kiter+=result-1;
+        break;
+        }
       else
         {
         // "mangle-increment" the key number by the number of pipelines
@@ -863,12 +869,15 @@ if (contest == 0) // RC5
         };
       };
   #else
-    while ( timeslice-- ) // timeslice ignores the number of pipelines
+    int keycount=timeslice;
+    while ( keycount-- ) // timeslice ignores the number of pipelines
       {
       u32 result = rc5_unit_func( &rc5unitwork );
       if ( result )
         {
         kiter+=result-1;
+        break;
+        }
       else
         {
         // "mangle-increment" the key number by the number of pipelines
