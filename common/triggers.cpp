@@ -18,7 +18,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.74 2002/04/23 23:33:18 sampo Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.75 2002/07/14 13:39:36 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -357,7 +357,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         /* third condition is 0xff ("unknown"), so fall through */
       }
     }
-    #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86)
+    #elif (CLIENT_OS == OS_LINUX)
     {
       static long time_last = 0;
       long time_now = (time(0)/60); /* not more than once per minute */
