@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.180  1999/01/03 04:58:59  dicamillo
+// Restore missing initialization for checkpoint_file[1].
+//
 // Revision 1.179  1999/01/03 02:31:10  cyp
 // Client::Main() reinitializes the client object when restarting. ::pausefile
 // and ::exitflagfile are now ignored when starting with "modes".
@@ -155,7 +158,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.179 1999/01/03 02:31:10 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.180 1999/01/03 04:58:59 dicamillo Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -216,7 +219,7 @@ static void __initialize_client_object(Client *client)
   strcpy(client->out_buffer_file[1], "buff-out" EXTN_SEP "des");
   strcpy(client->exit_flag_file,     "exitrc5" EXTN_SEP "now" );
   client->checkpoint_file[0][0]=
-
+  client->checkpoint_file[1][0]=
   client->messagelen = 0;
   client->smtpport = 25;
   client->smtpsrvr[0]=
