@@ -18,6 +18,7 @@ Bugs Listing
   filename is not a fully qualified filename (doesn't contain any '\'
   or '/' or start with a drive specifier), then the filename should be
   made into a fully qualified local file by using the above function.
+Addendum (silby):  Logfiles appear to be this way too.
 
 6-03-98 - Kevin Bracey
   New Bug: Some parts of the program (mail.cpp in particular) print stuff
