@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.22  1999/01/05 09:02:02  silby
+// Fixed bug in writeconfig - processdes=0 was being set, but
+// not deleted.
+//
 // Revision 1.21  1999/01/04 02:47:30  cyp
 // Cleaned up menu options and handling.
 //
@@ -103,7 +107,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.21 1999/01/04 02:47:30 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.22 1999/01/05 09:02:02 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -535,8 +539,13 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
 
     /* no menu option */
   
-    if (client->preferred_contest_id!=1 || ini.findfirst( OPTION_SECTION, "processdes")!=NULL)
+    if (client->preferred_contest_id!=1)
       ini.setrecord(OPTION_SECTION, "processdes", IniString("0"));
+    else if (ini.findfirst( OPTION_SECTION, "processdes")!=NULL)
+      {
+      tempptr = ini.findfirst( OPTION_SECTION, "processdes");
+      tempptr->values.Erase();
+      };
       
     } /* if (writefull != 0) */
   
