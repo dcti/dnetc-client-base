@@ -113,6 +113,8 @@ optionstruct options[OPTION_COUNT]=
 { "timeslice", "Keys per timeslice - for Macs, Win16, RISC OS, etc",
 #if (CLIENT_OS == OS_WIN16)
     "200",
+#elif (CLIENT_OS == OS_RISCOS)
+    "2048",
 #else
     "65536",
 #endif
@@ -120,7 +122,7 @@ optionstruct options[OPTION_COUNT]=
     "DO NOT TOUCH this unless you know what you're doing!!!",4,2,1,NULL},
 //8
 { "niceness", "Level of niceness to run at", "0",
-     "\n  mode 0) (recomended) Very nice, should not interfere with any other process\n"
+     "\n  mode 0) (recommended) Very nice, should not interfere with any other process\n"
      "  mode 1) Nice, runs with slightly higher priority than idle processes\n"
      "          Same as mode 0 in OS/2 and Win32\n"
      "  mode 2) Normal, runs with same priority as normal user processes\n",4,2,1,NULL},
@@ -140,7 +142,7 @@ optionstruct options[OPTION_COUNT]=
 { "httpproxy", "Local HTTP/SOCKS proxy address",
        "wwwproxy.corporate.com", "(DNS or IP address)\n",3,1,4,NULL},
 //14
-{ "httpport", "Local HTTP/SOCKS proxy port", "80", "(TCP/IP port on http proxy)",3,2,5,NULL},
+{ "httpport", "Local HTTP/SOCKS proxy port", "80", "(TCP/IP port on HTTP proxy)",3,2,5,NULL},
 //15
 { "httpid", "HTTP/SOCKS proxy userid/password", "", "(Enter userid (. to reset it to empty) )",3,1,6,NULL},
 #if (CLIENT_CPU == CPU_X86)
@@ -148,7 +150,7 @@ optionstruct options[OPTION_COUNT]=
 { "cputype", "Optimize performance for CPU type", "Autodetect",
       "\n",1,2,8,NULL,&cputypetable[1][0],-1,5},
 #elif (CLIENT_CPU == CPU_ARM)
-  { "cputype", "Optimize performance for CPU type", "Autodetect",
+{ "cputype", "Optimize performance for CPU type", "Autodetect",
       "\n",1,2,8,NULL,&cputypetable[1][0],-1,1},
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
 //16
@@ -208,13 +210,13 @@ optionstruct options[OPTION_COUNT]=
 //31
 { "frequent", "Attempt keyserver connections frequently?","no","",3,3,6,NULL},
 //32
-{ "nodisk", "Buffer blocks in ram only? (no disk I/O)","no",
+{ "nodisk", "Buffer blocks in RAM only? (no disk I/O)","no",
     "\nNote: This option will cause all buffered, unflushable blocks to be lost\n"
     "during client shutdown!",4,3,10,NULL},
 //33
 { "nofallback", "Disable fallback to US Round-Robin?","no",
   "\nIf your specified proxy is down, the client normally falls back\n"
-  "to the US Round robin (us.v27.distributed.net) - this option causes\n"
+  "to the US Round-Robin (us.v27.distributed.net) - this option causes\n"
   "the client to NEVER attempt a fallback if the local proxy is down.",
   3,3,7,NULL},
 //34
@@ -226,7 +228,7 @@ optionstruct options[OPTION_COUNT]=
 { "exitfilechecktime", "Exit file check time (seconds)","30","",4,2,12,NULL},
 //37
 { "runbuffers", "Offline operation mode","Normal Operation",
-  "\nNormal operation: The client will connect to a keyserver as needed,\n"
+  "\nNormal Operation: The client will connect to a keyserver as needed,\n"
   "        and use random blocks if a keyserver connection cannot be made.\n"
   "Offline Always: The client will never connect to a keyserver, and will\n"
   "        generate random blocks if the block buffers empty.)\n"
@@ -244,7 +246,7 @@ optionstruct options[OPTION_COUNT]=
   "        will probably wish to use this option so that their client\n"
   "        never runs out of blocks.\n"
   "Dial-up detection ONLY mode: Like the previous mode, this will cause\n"
-  "        the client to automatically send/receieve blocks when\n"
+  "        the client to automatically send/receive blocks when\n"
   "        connected. HOWEVER, if the client runs out of blocks,\n"
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n",
