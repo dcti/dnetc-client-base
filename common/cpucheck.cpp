@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.57 2004/06/16 18:29:38 kakace Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.58 2004/06/16 21:07:20 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1762,8 +1762,7 @@ static long __GetRawProcessorID(const char **cpuname)
 #elif (CLIENT_OS == OS_SOLARIS)
   FILE *prtconf;
   char buf[256], name[256], *work_s, *work_t;
-  int i, n, foundcpu = 0;
-  processor_info_t *infop;
+  int i, foundcpu = 0;
 
   /* DON'T RENUMBER */
   static struct { int rid; const char *raw_name, *name; } cpuridtable[] =
@@ -1844,18 +1843,10 @@ static long __GetRawProcessorID(const char **cpuname)
 
   /* Detected SuperSPARC, **special case** */
   if ((detectedtype == 12) || (detectedtype == 13)) {
-    n = GetNumberOfDetectedProcessors ();
-    for (i = 0; i < n; i++) {
-      if (p_online (i, P_STATUS) == P_ONLINE) {
-        break;
-      }
-    }
-    if (processor_info (i, infop) == 0) {
-      if (infop->pi_clock >= 75) {  /* If cpu speed is 75Mhz or more, then
-                                       we have a SuperSPARC II */
-        detectedtype += 2;          /* table must not be renumbered */
-        detectedname = cpuridtable[detectedtype].name;
-      }
+    if (GetProcessorFrequency() >= 75) {  
+    /* If cpu speed is 75Mhz or more, then we have a SuperSPARC II */
+      detectedtype += 2;          /* table must not be renumbered */
+      detectedname = cpuridtable[detectedtype].name;
     }
   }
 
@@ -2117,6 +2108,18 @@ unsigned int GetProcessorFrequency()
       if (frequency != 0)
         freq = (frequency + 500000) / 1000000;
     }
+  #elif (CLIENT_OS == OS_SOLARIS)
+    int i, n;
+    processor_info_t infop;
+    n = GetNumberOfDetectedProcessors ();
+    for (i = 0; i < n; i++) {
+      if (p_online (i, P_STATUS) == P_ONLINE) {
+        break;
+      }
+    }
+    if (processor_info (i, &infop) == 0) {
+      freq = infop.pi_clock;
+    }      
   #endif
 
   return freq;
