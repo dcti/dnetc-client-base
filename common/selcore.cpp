@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.35 2003/03/28 17:28:56 snikkel Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.36 2003/03/30 17:38:53 gavin Exp $"; }
 
 //#define TRACE
 
@@ -2349,7 +2349,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           unit_func.gen_72 = rc5_72_unit_func_KKS7450;
           pipeline_count = 4;
           break;
-      #elif defined(__GCC__) || defined(__GNUC__)
+      #endif
+      #if defined(__GCC__) || defined(__GNUC__)
       case 3:
         unit_func.gen_72 = rc5_72_unit_func_ppc_mh_2;
         pipeline_count = 2;
