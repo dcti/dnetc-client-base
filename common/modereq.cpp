@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.3  1998/10/11 02:45:20  cyp
+// Added &= ~(MODEREQ_CONFIG) that I forgot.
+//
 // Revision 1.2  1998/10/11 00:40:11  cyp
 // Added MODEREQ_CONFIG.
 //
@@ -18,7 +21,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.2 1998/10/11 00:40:11 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.3 1998/10/11 02:45:20 cyp Exp $"; }
 #endif
 
 #include "client.h"    //client class
@@ -107,8 +110,8 @@ int ModeReqRun(Client *client)
           if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0)
             Benchmark( 1, benchsize, client->cputype );
           }
-        retval |= (MODEREQ_BENCHMARK_DES | 
-                 MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_QUICK );
+        retval |= (modereq.reqbits & (MODEREQ_BENCHMARK_DES | 
+                 MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_QUICK ));
         modereq.reqbits &= ~(MODEREQ_BENCHMARK_DES | 
                  MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_QUICK );
         }
@@ -116,6 +119,8 @@ int ModeReqRun(Client *client)
         {
         if ( client->Configure() == 1 )
           client->WriteFullConfig(); //full new build
+        retval |= (MODEREQ_CONFIG);
+        modereq.reqbits &= ~(MODEREQ_CONFIG);
         }
       if ((bits & (MODEREQ_FETCH | MODEREQ_FLUSH))!=0)
         {
@@ -172,7 +177,8 @@ int ModeReqRun(Client *client)
           retcode = 0;
           }
   
-        retval |= (MODEREQ_FETCH | MODEREQ_FLUSH | MODEREQ_FFORCE);
+        retval |= (modereq.reqbits & (MODEREQ_FETCH | MODEREQ_FLUSH | 
+                               MODEREQ_FFORCE));
         modereq.reqbits &= ~(MODEREQ_FETCH | MODEREQ_FLUSH | MODEREQ_FFORCE);
         }
       if ((bits & MODEREQ_IDENT)!=0)    
