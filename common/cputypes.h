@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.85 2002/10/09 22:22:15 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86 2002/10/28 19:47:27 rick Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -221,9 +221,9 @@
   #endif
   #define CLIENT_OS       OS_QNX
   #if defined(__QNXNTO__)
-    #define CLIENT_OS_NAME "QNX Neutrino"
+    #define CLIENT_OS_NAME "QNX6"
   #else
-    #define CLIENT_OS_NAME  "QNX"
+    #define CLIENT_OS_NAME  "QNX4"
   #endif
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
@@ -754,6 +754,7 @@ extern "C" {
   #define SIZEOF_LONGLONG 8
   typedef unsigned __int64 ui64;
   typedef __int64 si64;
+
   #endif
 #elif (defined(_MSC_VER) && (_MSC_VER >= 11)) /* VC++ >= 5.0 */
   #define HAVE_I64
