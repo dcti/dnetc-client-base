@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.64 2004/08/14 23:31:59 kakace Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.65 2004/08/17 16:53:40 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -645,18 +645,22 @@ static long __GetRawProcessorID(const char **cpuname)
            { "750",             0x0008  },
            { "750CX",           0x0008  },
            { "750FX",           0x0008  }, /* PVR coreid is actually 0x7000 */
+           { "750GX",           0x0008  }, /* PVR coreid is actually 0x7000 */
            { "750P",            0x0008  },
            { "604e",            0x0009  },
            { "604r",            0x000A  }, /* >= 2.3.99 */
            { "604ev",           0x000A  }, /* < 2.3.34 */
            { "604ev5",          0x000A  }, /* >= 2.3.34 */
            { "7400",            0x000C  },
+           { "7400 (1.1)",      0x000C  },
            { "403G",            0x0020  },
            { "403GC",           0x0020  },
            { "403GCX",          0x0020  },
            { "821",             0x0050  },
            { "860",             0x0080  },
            { "8240",            0x0081  },
+           { "82xx",            0x0081  },
+           { "8280",            0x0082  },
            { "405GP",           0x4011  },
            { "7441",            0x8000  },
            { "7450",            0x8000  },
@@ -665,13 +669,17 @@ static long __GetRawProcessorID(const char **cpuname)
            { "7455",            0x8001  },
            { "7447",            0x8002  },
            { "7457",            0x8002  },
-           { "7410",            0x800C  }
+           { "7447/7457",       0x8002  },
+           { "7410",            0x800C  },
+           { "7447A",           0x8003  },
+           { "PPC970",          0x0039  },
+           { "PPC970FX",        0x003C  }
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
           {
             unsigned int l = strlen( sigs[n].sig );
-            if ((!p[l] || isspace(p[l]) || p[l]==',') && memcmp( p, sigs[n].sig, l)==0)
+            if (memcmp( p, sigs[n].sig, l)==0 && (!p[l] || isspace(p[l]) || p[l]==','))
             {
               detectedtype = (long)sigs[n].rid;
               if (detectedtype == 0x000C || detectedtype & 0x8000) /* 7400, 7410, 7450, 7455 (G4) */
