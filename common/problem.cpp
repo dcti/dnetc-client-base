@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.59 2000/05/06 20:14:07 mfeiri Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.60 2000/05/25 18:59:16 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -257,7 +257,13 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
               int expected_corenum, int expected_os,
               int expected_buildfrac )
 {
-  initialized = 0; /* Run() won't start any more */
+  if (started && last_resultcode == RESULT_WORKING)
+  {
+    Log("BUG! BUG! BUG! LoadState() on active problem!\n");
+    return -1;
+  }
+
+  #if 0 /* IF THIS IS NEEDED THEN THE CLIENT IS THOROUGHLY FUBARED */
   if (running) 
   {
     //Log("LoadState() while Run() ...\n");
@@ -271,7 +277,9 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       return -1;
     }
   }
+  #endif
   
+  initialized = 0; /* Run() won't start any more */
   last_resultcode = -1;
   started = initialized = 0;
   timehi = timelo = 0;
@@ -794,12 +802,149 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
 
 /* ------------------------------------------------------------- */
 
+static void __compute_run_times(Problem *problem, 
+                                u32 runstart_secs, u32 runstart_usecs,
+                                u32 *probstart_secs, u32 *probstart_usecs,
+                                int using_ptime, volatile int *s_using_ptime,
+                                int core_resultcode )
+{
+  struct timeval clock_stop;
+  int last_runtime_is_invalid = 0;
+  int clock_stop_is_time_now = 0;  
+  u32 timehi, timelo, elapsedhi, elapsedlo;
+  clock_stop.tv_sec = 0;
+
+  /* ++++++++++++++++++++++++++ */
+
+  /* first compute elapsed time for this run */
+  if (runstart_secs == 0xfffffffful) /* couldn't get a start time */
+  {
+    last_runtime_is_invalid = 1;
+  }
+  else if (!using_ptime)
+  {
+    if (CliGetMonotonicClock(&clock_stop) != 0)
+    {
+      if (CliGetMonotonicClock(&clock_stop) != 0)
+        last_runtime_is_invalid = 1;
+    }
+    if (!last_runtime_is_invalid)
+    {
+      /* flag to say clock_stop reflects 'now' */
+      clock_stop_is_time_now = 1;
+    }
+  }
+  else if (CliGetThreadUserTime(&clock_stop) < 0)
+  {
+    *s_using_ptime = 0; 
+    last_runtime_is_invalid = 1;
+  }
+  if (!last_runtime_is_invalid)
+  {
+    timehi = runstart_secs;
+    timelo = runstart_usecs;
+    elapsedhi = clock_stop.tv_sec;
+    elapsedlo = clock_stop.tv_usec;
+
+    if (elapsedhi <  timehi || (elapsedhi == timehi && elapsedlo < timelo ))
+    {
+      /* AIEEEE - clock is whacked */
+      last_runtime_is_invalid = 1;
+    }
+    else
+    {
+      last_runtime_is_invalid = 0;
+
+      if (elapsedlo < timelo)
+      {
+        elapsedhi--;
+        elapsedlo += 1000000UL;
+      }
+      elapsedhi -= timehi;
+      elapsedlo -= timelo;
+      problem->last_runtime_sec = elapsedhi;
+      problem->last_runtime_usec = elapsedlo; 
+
+      elapsedhi += problem->runtime_sec;
+      elapsedlo += problem->runtime_usec;
+      if (elapsedlo >= 1000000UL)
+      {
+        elapsedhi++;
+        elapsedlo -= 1000000UL;
+      }
+      problem->runtime_sec  = elapsedhi;
+      problem->runtime_usec = elapsedlo;
+    }
+  }
+  if (last_runtime_is_invalid)
+  {
+    problem->last_runtime_sec = 0;
+    problem->last_runtime_usec = 0; 
+  }
+  problem->last_runtime_is_invalid = last_runtime_is_invalid;
+
+  /* ++++++++++++++++++++++++++ */
+
+  /* do we need to compute elapsed wall clock time for this packet? */
+  if ( core_resultcode == RESULT_WORKING ) /* no, not yet */ 
+  {
+    if (clock_stop_is_time_now /* we have determined 'now' */
+    && *probstart_secs == 0xfffffffful) /* our start time was invalid */
+    {                          /* then save 'now' as our start time */
+      *probstart_secs = clock_stop.tv_sec;
+      *probstart_usecs = clock_stop.tv_usec;
+    }
+  }
+  else /* _FOUND/_NOTHING. run is finished, compute elapsed wall clock time */
+  {
+    timehi = *probstart_secs;
+    timelo = *probstart_usecs;
+
+    if (!clock_stop_is_time_now /* we haven't determined 'now' yet */
+    && timehi != 0xfffffffful) /* our start time was not invalid */
+    {
+      if (CliGetMonotonicClock(&clock_stop) != 0)
+      {
+        if (CliGetMonotonicClock(&clock_stop) != 0) 
+          timehi = 0xfffffffful; /* no stop time, so make start invalid */
+      }
+    }
+    elapsedhi = clock_stop.tv_sec;
+    elapsedlo = clock_stop.tv_usec;
+
+    if (timehi == 0xfffffffful || /* start time is invalid */
+        elapsedhi <  timehi || (elapsedhi == timehi && elapsedlo < timelo ))
+    {
+      /* either start time is invalid, or end-time < start-time */
+      /* both are BadThing(TM)s - have to use the per-run total */
+      elapsedhi = problem->runtime_sec;
+      elapsedlo = problem->runtime_usec;
+    }
+    else /* start and 'now' time are ok */
+    {
+      if (elapsedlo < timelo)
+      {
+        elapsedlo += 1000000UL;
+        elapsedhi --;
+      }
+      elapsedhi -= timehi;
+      elapsedlo -= timelo;
+    }
+    problem->completion_timehi = elapsedhi;
+    problem->completion_timelo = elapsedlo;
+  }
+
+  return;
+}
+
+/* ---------------------------------------------------------------- */
+
 int Problem::Run(void) /* returns RESULT_*  or -1 */
 {
-  static volatile int using_ptime = -1;
-  struct timeval stop, start, pstart, clock_stop;
-  int retcode, core_resultcode;
-  u32 iterations;
+  static volatile int s_using_ptime = -1;
+  struct timeval tv; int retcode, core_resultcode;
+  u32 iterations, runstart_secs, runstart_usecs;
+  int using_ptime;
 
   last_runtime_is_invalid = 1; /* haven't changed runtime fields yet */
 
@@ -816,16 +961,19 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     return -1;
   }
   
-  CliClock(&start);
-  if (using_ptime)
-  {
-    if (CliGetProcessTime(&pstart) < 0)
-      using_ptime = 0;
-  }      
-    
   if (!started)
   {
-    timehi = start.tv_sec; timelo = start.tv_usec;
+    timehi = 0;
+    if (CliGetMonotonicClock(&tv) != 0)
+    {
+      if (CliGetMonotonicClock(&tv) != 0)
+        timehi = 0xfffffffful;
+    }
+    if (timehi == 0)
+    {
+      timehi = tv.tv_sec; 
+      timelo = tv.tv_usec;
+    }
     completion_timelo = completion_timehi = 0;
     runtime_sec = runtime_usec = 0;
     memset((void *)&profiling, 0, sizeof(profiling));
@@ -855,13 +1003,36 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     sync when the main thread gets it with RetrieveState(). 
     
     note: although the value returned by Run_XXX is usually the same as 
-    the core_resultcode it is not always so. For instance, if 
+    the core_resultcode it is not always the case. For instance, if 
     post-LoadState() initialization  failed, but can be deferred, Run_XXX 
     may choose to return -1, but keep core_resultcode at RESULT_WORKING.
   */
 
-  iterations = tslice;
   last_runtime_usec = last_runtime_sec = 0;
+  runstart_secs = 0xfffffffful;
+  using_ptime = s_using_ptime;
+  if (using_ptime) 
+  {
+    if (CliGetThreadUserTime(&tv) != 0)
+      using_ptime = 0;
+    else
+      runstart_secs = 0;
+  }    
+  if (!using_ptime) 
+  {
+    runstart_secs = 0;
+    if (CliGetMonotonicClock(&tv) != 0)
+    {
+      if (CliGetMonotonicClock(&tv) != 0)
+        runstart_secs = 0xfffffffful;
+    }
+  }
+  if (runstart_secs == 0)
+  {
+    runstart_secs = tv.tv_sec;
+    runstart_usecs = tv.tv_usec;
+  }
+  iterations = tslice;
   core_resultcode = last_resultcode;
   retcode = -1;
 
@@ -879,15 +1050,13 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
        break;
   }
 
-  
   if (retcode < 0) /* don't touch tslice or runtime as long as < 0!!! */
   {
     --running;
     return -1;
   }
-  
-  if (!started)   /* LoadState was called while we were running - state was overwritten! */
-                  /* shouldn't occur any more */  
+  if (!started) /* LoadState was called while we were running - state was overwritten! */
+                /* shouldn't occur any more */  
   {
     //Log( "Error: LoadState() while Run()ning (thread %u)!\n", threadindex );
     last_resultcode = -1; // "Discarded (core error)": discard the overwritten block
@@ -896,78 +1065,9 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   }
   
   core_run_count++;
-  if (using_ptime)
-  {
-    //Warning for GetProcessTime(): if the OSs thread model is ala SunOS's LWP,
-    //ie, threads don't get their own pid, then GetProcessTime() functionality 
-    //is limited to single thread/benchmark/test only (the way it is now),
-    //otherwise it will be return process time for all threads. 
-    //This is asserted below too.
-    if (CliGetProcessTime(&stop) < 0)
-      using_ptime = 0;
-    else if (using_ptime < 0)
-    {
-      CliClock(&clock_stop);
-      if (((clock_stop.tv_sec < stop.tv_sec) ||
-        (clock_stop.tv_sec==stop.tv_sec) && clock_stop.tv_usec<stop.tv_usec))
-        using_ptime = 0; /* clock time can never be less than process time */
-      else
-        using_ptime = 1;
-    }
-    if (using_ptime)
-    {
-      start.tv_sec = pstart.tv_sec;
-      start.tv_usec = pstart.tv_usec;
-    }
-  }
-  if (!using_ptime || core_resultcode != RESULT_WORKING )
-  {
-    CliClock(&clock_stop);
-    if (!using_ptime)
-    {
-      stop.tv_sec = clock_stop.tv_sec;
-      stop.tv_usec = clock_stop.tv_usec;
-    }
-    if ( core_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING */
-    {
-      if (((u32)clock_stop.tv_usec) < timelo)
-      {
-        clock_stop.tv_usec += 1000000;
-        clock_stop.tv_sec--;
-      }
-      completion_timehi = (((u32)clock_stop.tv_sec) - timehi);
-      completion_timelo = (((u32)clock_stop.tv_usec) - timelo);
-      if (completion_timelo >= 1000000)
-      {
-        completion_timelo-= 1000000;
-        completion_timehi++;
-      }
-    }
-  }
-  if (stop.tv_sec < start.tv_sec || 
-     (stop.tv_sec == start.tv_sec && stop.tv_usec <= start.tv_usec))
-  {
-    //AIEEE! clock is whacky (or unusably inaccurate if ==)
-  }
-  else
-  {
-    last_runtime_is_invalid = 0;
-    if (stop.tv_usec < start.tv_usec)
-    {
-      stop.tv_sec--;
-      stop.tv_usec+=1000000L;
-    }
-    runtime_usec += (last_runtime_usec = (stop.tv_usec - start.tv_usec));
-    runtime_sec  += (last_runtime_sec = (stop.tv_sec - start.tv_sec));
-    if (runtime_usec >= 1000000L)
-    {
-      runtime_sec++;
-      runtime_usec-=1000000L;
-    }
-  }
-
+  __compute_run_times( this, runstart_secs, runstart_secs, &timehi, &timelo,
+                       using_ptime, &s_using_ptime, core_resultcode );
   tslice = iterations;
-
   last_resultcode = core_resultcode;
   --running;
   return last_resultcode;
