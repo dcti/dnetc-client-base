@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.102  1998/12/12 02:21:40  daa
+// update to add iterationshi to rc5_packet_t and BIG ops to op enum
+//
 // Revision 1.101  1998/12/01 23:31:43  cyp
 // Removed ::totalBlocksDone. count was inaccurate if client was restarted.
 // ::Main() (as opposed to realmain()) now controls restart.
@@ -284,7 +287,9 @@ typedef enum
   OP_REQUEST_MULTI,
   OP_SUCCESS_MULTI,
   OP_DONE_MULTI,
-  OP_PERREQUEST_MULTI
+  OP_PERREQUEST_MULTI,
+  OP_BIGREQUEST_MULTI,
+  OP_BIGDATA
 } Operation;
 
 // --------------------------------------------------------------------------
@@ -344,7 +349,8 @@ typedef struct Packet
   u32  iterations;    // number of iterations (the low 32bits) |       |
   char id[64];        // identifier (email address)            |       |
   u32  ip;            // IP Address (proxy filled)             |       |
-  char other[24];     // extra space                           |       |
+  u32  iterationshi;  // number of iterations (the high 32bits)|       |
+  char other[20];     // extra space                           |       |
   u32  rc564contestdone; //  set to htonl(0xBEEFF00D) by the proxies if the rc564 contest is finished
   u32  descontestdone;   //   set to htonl(0xBEEFF00D) by the proxies if current des contest is over
   u32  contestid;     // contest identifier                    |       |
