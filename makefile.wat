@@ -6,6 +6,9 @@
 ##                       or anything else defined at the end of this makefile
 ##
 ## $Log: makefile.wat,v $
+## Revision 1.23  1998/08/10 22:36:47  cyruspatel
+## Added support for triggers.cpp and buffupd.cpp
+##
 ## Revision 1.22  1998/08/02 16:17:28  cyruspatel
 ## Completed support for logging.
 ##
@@ -96,7 +99,7 @@
 ## Import 5/23/98 client tree
 ## 
 
-## $Id: makefile.wat,v 1.22 1998/08/02 16:17:28 cyruspatel Exp $
+## $Id: makefile.wat,v 1.23 1998/08/10 22:36:47 cyruspatel Exp $
 
 %VERMINOR = 416       # for zip - fixit if not the same as version.h
 %VERMAJOR = 7100      # for NetWare copyright: v2.$(%VERMAJOR).$(%VERMINOR)
@@ -116,7 +119,7 @@
             output\clitime.obj   output\clicdata.obj  output\clirate.obj  &
             output\clisrate.obj  output\cpucheck.obj  output\pathwork.obj &
             output\cliident.obj  output\threadcd.obj  output\x86ident.obj &
-            output\logstuff.obj
+            output\logstuff.obj  output\triggers.obj  output\buffupd.obj
             # this list can be added to in the platform specific section
 
             # 30 std OBJ's (+3 mmx, +2 mt) - platform specific stuff extra
@@ -279,6 +282,14 @@ output\autobuff.obj : common\autobuff.cpp $(%dependall) .autodepend
   @set isused=1
 
 output\network.obj : common\network.cpp $(%dependall) .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
+  @set isused=1
+
+output\buffupd.obj : common\buffupd.cpp $(%dependall) .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
+  @set isused=1
+
+output\triggers.obj : common\triggers.cpp $(%dependall) .autodepend
   *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 

@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.83  1998/08/10 22:36:53  cyruspatel
+# Added support for triggers.cpp and buffupd.cpp
+#
 # Revision 1.82  1998/08/05 16:42:12  cberry
 # ARM clients now define PIPELINE_COUNT=2
 #
@@ -428,7 +431,8 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/convdes.cpp common/clicdata.cpp common/clirate.cpp
     common/clisrate.cpp common/clitime.cpp common/disphelp.cpp
     common/threadcd.cpp common/cpucheck.cpp common/pathwork.cpp
-    common/cliident.cpp common/logstuff.cpp"
+    common/cliident.cpp common/logstuff.cpp common/buffupd.cpp
+    common/triggers.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"

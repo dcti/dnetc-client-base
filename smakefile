@@ -43,7 +43,9 @@ common/convdes.o_ppc\
 common/cpucheck.o_ppc\
 common/pathwork.o_ppc\
 common/disphelp.o_ppc\
-common/logstuff.o_ppc
+common/logstuff.o_ppc\
+common/triggers.o_ppc\
+common/buffupd.o_ppc
 
 RC5_OBJS_PPC	=\
 common/problem.o_ppc\
@@ -83,6 +85,8 @@ common/pathwork.o_68k\
 common/disphelp.o_68k\
 common/cliconfig.o_68k\
 common/logstuff.o_68k\
+common/triggers.o_68k\
+common/buffupd.o_68k
 
 RC5_OBJS_68K	=\
 common/problem.o_68k\
@@ -176,6 +180,8 @@ common/disphelp.o_ppc	:	common/disphelp.cpp
 common/pathwork.o_ppc	:	common/pathwork.cpp
 common/problem.o_ppc	:	common/problem.cpp
 common/logstuff.o_ppc	:	common/logstuff.cpp
+common/triggers.o_ppc	:	common/triggers.cpp
+common/buffupd.o_ppc	:	common/buffupd.cpp
 
 # RC5 Dependencies
 
@@ -217,6 +223,8 @@ common/disphelp.o_68k	:	common/disphelp.cpp
 common/pathwork.o_68k	:	common/pathwork.cpp
 common/problem.o_68k	:	common/problem.cpp
 common/logstuff.o_68k	:	common/logstuff.cpp
+common/triggers.o_68k	:	common/triggers.cpp
+common/buffupd.o_68k	:	common/buffupd.cpp
 
 # RC5 Dependencies
 
