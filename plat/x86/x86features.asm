@@ -42,6 +42,7 @@ x86features:
   push ecx
   push edx
   push esi
+  push edi
 
   mov esi, 0h
 
@@ -152,6 +153,10 @@ Standard:
   mov eax, 1h
   cpuid
 MMX_test:
+  mov edi, eax
+  and edi, 00000FFFh
+  cmp edi, 00000545h    ; Skip Pentium with buggy MMX
+  je SSE_test
   test edx, 00800000h   ; Test for MMX
   jz SSE_test           ; MMX Not supported
   or esi, CPU_F_MMX     ; MMX Supported
@@ -174,6 +179,7 @@ NotSupported:
 Return:
   mov eax, esi
 
+  pop edi
   pop esi
   pop edx
   pop ecx
