@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.38 2000/05/14 08:37:51 andreasb Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.39 2000/05/14 11:34:39 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -407,7 +407,7 @@ int CheckExitRequestTrigger(void)
       trigstatics.exittrig.laststate = 1;             
       if (!trigstatics.doingmodes)
       {
-        LogScreen("*Break* %s\n",
+        Log("*Break* %s\n",
           ( ((trigstatics.exittrig.trigger & TRIGSETBY_FLAGFILE)!=0)?
                ("(found exit flag file)"): 
            ((trigstatics.huptrig.trigger)?("Restarting..."):("Shutting down..."))
