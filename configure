@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.218 1999/04/18 14:40:27 patrick Exp $
+# @(#)$Id: configure,v 1.219 1999/04/18 16:01:10 patrick Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -235,8 +235,8 @@ COMMON_SRCS="common/client.cpp \
 #
 # Source files making up the RC5 core code
 #
-XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s \
-		   rc5/crunch_allitnil_552.ppcxlc.s"
+XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
+		   rc5/ppc/crunch_allitnil_552.ppcxlc.s"
 
 NASM_RC5X86_SRCS="rc5/x86/nasm/rg486.asm \
 		  rc5/x86/nasm/rc5-rgk5.asm \
@@ -672,8 +672,8 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_PPC601 -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/crunch_allitnil_552.ppc.s \
-			rc5/crunch_lintilla_296.ppc.s"
+			rc5/ppc/crunch_allitnil_552.ppc.s \
+			rc5/ppc/crunch_lintilla_296.ppc.s"
 	;;
 
     *ppc-601-linux-mt-egcs)		# [cramer] PPC 601-mt target
@@ -681,8 +681,8 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_PPC601 -DPIPELINE_COUNT=1 \
 			-DMULTITHREAD -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/crunch_allitnil_552.ppc.s \
-			rc5/crunch_lintilla_296.ppc.s"
+			rc5/ppc/crunch_allitnil_552.ppc.s \
+			rc5/ppc/crunch_lintilla_296.ppc.s"
 	TARGET_LIBS="-lpthread"
 	;;
 
@@ -691,8 +691,8 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_PPC604 -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/crunch_allitnil_552.ppc.s \
-			rc5/crunch_lintilla_296.ppc.s"
+			rc5/ppc/crunch_allitnil_552.ppc.s \
+			rc5/ppc/crunch_lintilla_296.ppc.s"
 	;;
 
     *ppc-604-linux-mt-egcs)		# [cramer] PPC 604-mt target
@@ -700,8 +700,8 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_PPC604 -DPIPELINE_COUNT=1 \
 			-DMULTITHREAD -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/crunch_allitnil_552.ppc.s \
-			rc5/crunch_lintilla_296.ppc.s"
+			rc5/ppc/crunch_allitnil_552.ppc.s \
+			rc5/ppc/crunch_lintilla_296.ppc.s"
 	TARGET_LIBS="-lpthread"
 	;;
 
@@ -710,8 +710,8 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_PPC860 -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/crunch_allitnil_552.ppc.s \
-			rc5/crunch_lintilla_296.ppc.s"
+			rc5/ppc/crunch_allitnil_552.ppc.s \
+			rc5/ppc/crunch_lintilla_296.ppc.s"
 	;;
 
     *ppc-860-linux-mt-egcs)		# [cramer] PPC 860-mt target
@@ -719,8 +719,8 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_PPC860 -DPIPELINE_COUNT=1 \
 			-DMULTITHREAD -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/crunch_allitnil_552.ppc.s \
-			rc5/crunch_lintilla_296.ppc.s"
+			rc5/ppc/crunch_allitnil_552.ppc.s \
+			rc5/ppc/crunch_lintilla_296.ppc.s"
 	TARGET_LIBS="-lpthread"
 	;;
 
@@ -728,32 +728,32 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/crunch_allitnil_552.ppc.s \
-			rc5/crunch_lintilla_296.ppc.s"
+			rc5/ppc/crunch_allitnil_552.ppc.s \
+			rc5/ppc/crunch_lintilla_296.ppc.s"
 	;;
 
     *ppc860-gcc)	# PPC 821/860 target
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/crunch_allitnil_552.ppc.s \
-			rc5/crunch_lintilla_296.ppc.s"
+			rc5/ppc/crunch_allitnil_552.ppc.s \
+			rc5/ppc/crunch_lintilla_296.ppc.s"
 	;;
 
     *ppc-gcc272)	# generic PPC target, gcc 2.7.2
 	TARGET_CCFLAGS="$OPTS_GCC272_PPC -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/crunch_allitnil_552.ppc.s \
-			rc5/crunch_lintilla_296.ppc.s"
+			rc5/ppc/crunch_allitnil_552.ppc.s \
+			rc5/ppc/crunch_lintilla_296.ppc.s"
 	;;
 
     *ppc860-gcc272)	# PPC 821/860 target, gcc 2.7.2
 	TARGET_CCFLAGS="$OPTS_GCC272_PPC860 -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/crunch_allitnil_552.ppc.s \
-			rc5/crunch_lintilla_296.ppc.s"
+			rc5/ppc/crunch_allitnil_552.ppc.s \
+			rc5/ppc/crunch_lintilla_296.ppc.s"
 	;;
 
     *power-gcc)	    # generic POWER target
@@ -801,9 +801,18 @@ case "$1" in
 	DELETECHARS="'/.\$\-'"
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-		rc5/crunch_allitnil_552.ppc.s \
-		rc5/crunch_lintilla_296.ppc.s"
+		rc5/ppc/crunch_allitnil_552.ppc.s \
+		rc5/ppc/crunch_lintilla_296.ppc.s"
 	;;
+
+    *aix4-ppc-egcs)			# [patrick] <patrick@mail4you.de>
+        DELETECHARS="'/.\$\-'"
+        TARGET_CCFLAGS="$OPTS_EGCS -D_AIX -mcpu=ppc601 -DASM_PPC -DBIT_32 -DMEGGS -DKWAN"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2\
+			rc5/ppc/crunch_allitnil_552.ppc.s \
+                        rc5/ppc/crunch_lintilla_296.ppc.s"
+        ;;
+
 
   ### AIX POWER targets
         # AIX POWER this one works for all platforms (AIX 3.x, 4.[1-3])!
