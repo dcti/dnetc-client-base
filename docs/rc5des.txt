@@ -135,18 +135,18 @@ unauthorized installations is help in uninstalling them.
 3c.  OS/2 CLI installation instructions:
 
      a.  Unzip the compressed file into the directory in which
-         you will be running the client, most likely "c:\program
-         files\rc5des\".
+         you will be running the client, most likely "c:\rc5des\".
      b.  Read the documentation (this file) through so that you
          completely understand how to operate the client.
      c.  Run rc5des.exe.  This will initiate the menu-driven
          configuration (described below.)  Set the options for your
          configuration.
-     d.  Start the client up again; it should now receive some
+     d.  Run "rc5des.exe -install" this will set the client so that
+         it will automatically start itself when you restart OS/2.
+         Run "rc5des.exe -install -hide" if you want the client to
+         start hidden.
+     e.  Start the client up again; it should now receive some
          blocks, and begin working.
-     e.  Make sure to set the client to start on each bootup by
-         right clicking on the icon and creating a shadow in the
-         startup directory.
 
 3d.  Unix client installation instructions:
 
