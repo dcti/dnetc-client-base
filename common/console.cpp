@@ -11,6 +11,9 @@
    to functions in modules in your own platform/ area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.4  1998/10/07 12:25:04  silby
+// Figured out that MSVC doesn't understand continue as it was used; changed ConInKey's loop so that it doesn't rely on continue.  (Functionality unchanged.)
+//
 // Revision 1.3  1998/10/07 04:04:20  silby
 // Fixed ConInKey - the logic was reversed when checking for timeout
 //
@@ -23,7 +26,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.3 1998/10/07 04:04:20 silby Exp $"; }
+return "@(#)$Id: console.cpp,v 1.4 1998/10/07 12:25:04 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -233,10 +236,9 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         break;
       usleep(50*1000); /* with a 50ms delay, no visible processor activity */
                        /* with NT4/P200 and still responsive to user requests */
-      if (timeout_millisecs < 0)
-        continue;
-      
-      CliTimer(&timenow);
+
+      if (timeout_millisecs >= 0) CliTimer(&timenow);
+
       } while (( timenow.tv_sec < timestop.tv_sec ) ||
                  (( timenow.tv_sec == timestop.tv_sec ) &&
                   ( timenow.tv_usec < timestop.tv_usec )));
