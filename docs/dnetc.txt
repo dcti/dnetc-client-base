@@ -1,6 +1,6 @@
 
   distributed.net client documentation
-  document revision $Id: dnetc.txt,v 1.4.4.4 2005/03/09 23:56:16 jlawson Exp $
+  document revision $Id: dnetc.txt,v 1.4.4.5 2005/03/11 20:05:48 snikkel Exp $
 
   Copyright distributed.net 1997-2005 - All Rights Reserved
   For use in distributed.net projects only.
@@ -8,6 +8,7 @@
 
   Use of the distributed.net client implies agreement with
   the prize terms listed on http://www.distributed.net/
+
 
  Index ---------------------------------------------------------------
 
@@ -23,6 +24,7 @@
          5.3 to/from "remote" buffers that are serviced by another client 
     6.0  Help!
 
+
  1.0  Introduction ---------------------------------------------------
 
     Congratulations! This distributed.net client will make your computer 
@@ -31,6 +33,7 @@
     ongoing projects: The brute-force decryption of a RC5-72 message, and
     the search for Optimal Golomb Rulers (OGR). Both are long-term projects
     that will go on for some time.
+
 
  2.0  General system requirements ------------------------------------
 
@@ -121,8 +124,9 @@
      2) via e-mail
      3) to/from "remote" buffers that are serviced by another client 
      In addition, it can share buffers with another client.
+
  
-  5.1  Fetching and flushing work over a TCP/IP connection ---
+   5.1  Fetching and flushing work over a TCP/IP connection -----
 
      The client uses normal TCP/IP to communicate with keyservers.
      It connects to port TCP port 2064 by default. 
@@ -223,7 +227,8 @@
                                        Port Mapping
      AltaVista 97 proxy    Unix/Win32  HTTP
 
-  5.2  Flushing and fetching via e-mail ----
+
+   5.2  Flushing and fetching via e-mail ------------------------
 
      If you can not get your client to flush/fetch directly (due to a 
      very stringent firewall), or are running a networkless client, 
@@ -250,7 +255,8 @@
      2. Delete the buff-out.r72 file so that you do not accidently 
         send part of its contents twice.
 
-  5.3  Flushing and fetching using remote buffers ----
+
+   5.3  Flushing and fetching using remote buffers --------------
   
      "Remote buffers" are simply buffers that are serviced by another
      client. When fetching/flushing from/to remote buffers, the client
@@ -260,6 +266,7 @@
      client has its own files. Lock contention is thus minimized and
      they can work without the user having to worry about the network
      (if one exists) between them failing.
+
 
  6.0  Help! ----------------------------------------------------------
 
