@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5p5brf.cpp,v $
+// Revision 1.12  1999/04/06 13:30:35  cyp
+// removed #ifndef _32BIT_ guard
+//
+// Revision 1.11  1998/12/21 01:21:39  remi
+// Recommitted to get the right modification time.
+//
 // Revision 1.10  1998/12/21 16:37:28  remi
 // - supressed work_key2_ebp as it's the same as S2(25). Thanks Silby!
 // - put extern "C" in front of the *.cpp cores.
@@ -14,7 +20,7 @@
 // Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.5  1998/07/08 22:59:53  remi
-// Lots of $Id: rc5p5brf.cpp,v 1.10 1998/12/21 16:37:28 remi Exp $ stuff.
+// Lots of $Id: rc5p5brf.cpp,v 1.12 1999/04/06 13:30:35 cyp Exp $ stuff.
 //
 // Revision 1.4  1998/07/08 18:47:42  remi
 // $Id fun ...
@@ -52,10 +58,8 @@
 // For a really *good* pentium optimization manual :
 //	http://announce.com/agner/assem
 
-#if (!defined(lint) && defined(__showids__))
 const char *rc5p5brf_cpp (void) {
-return "@(#)$Id: rc5p5brf.cpp,v 1.10 1998/12/21 16:37:28 remi Exp $"; }
-#endif
+return "@(#)$Id: rc5p5brf.cpp,v 1.12 1999/04/06 13:30:35 cyp Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -67,11 +71,6 @@ return "@(#)$Id: rc5p5brf.cpp,v 1.10 1998/12/21 16:37:28 remi Exp $"; }
 //#if (PIPELINE_COUNT != 2)
 //#error "Expecting pipeline count of 2"
 //#endif
-
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
-
 
 // Stringify macro.
 
@@ -713,4 +712,5 @@ _done:
 
     return (timeslice - work.iterations) * 2 + work.add_iter;
 }
+
 

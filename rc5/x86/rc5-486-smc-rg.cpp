@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-486-smc-rg.cpp,v $
+// Revision 1.8  1999/04/06 13:30:34  cyp
+// removed #ifndef _32BIT_ guard
+//
+// Revision 1.7  1998/12/21 01:21:39  remi
+// Recommitted to get the right modification time.
+//
 // Revision 1.6  1998/12/21 16:37:28  remi
 // - supressed work_key2_ebp as it's the same as S2(25). Thanks Silby!
 // - put extern "C" in front of the *.cpp cores.
@@ -61,7 +67,7 @@
 // build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:33  remi
-// Lots of $Id: rc5-486-smc-rg.cpp,v 1.6 1998/12/21 16:37:28 remi Exp $ stuff.
+// Lots of $Id: rc5-486-smc-rg.cpp,v 1.8 1999/04/06 13:30:34 cyp Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:43  remi
 // $Id fun ...
@@ -99,10 +105,8 @@
 // Checking two keys at once is still a (slight) win for a 486
 // probably because less load/store operations
 
-#if (!defined(lint) && defined(__showids__))
 const char *rc5_486_smc_rg_cpp (void) {
-return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.6 1998/12/21 16:37:28 remi Exp $"; }
-#endif
+return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.8 1999/04/06 13:30:34 cyp Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -114,11 +118,6 @@ return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.6 1998/12/21 16:37:28 remi Exp $"; }
 //#if (PIPELINE_COUNT != 2)
 //#error "Expecting pipeline count of 2"
 //#endif
-
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
-
 
 // Stringify macro.
 
@@ -744,3 +743,4 @@ _full_exit_486:
 
     return (timeslice - work.iterations) * 2 + work.add_iter;
 }
+
