@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.5 1999/11/15 01:52:36 remi Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.6 1999/11/28 21:35:10 lyndon Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -265,7 +265,14 @@
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME  "Irix"
+  /*
+   * Let the Makefile override the presentation name. This is
+   * used by the MIPSpro build targets, letting us set the
+   * specific platform the build was for (e.g. "Irix (IP19)").
+   */
+  #ifndef CLIENT_OS_NAME
+    #define CLIENT_OS_NAME  "Irix"
+  #endif /* ! CLIENT_OS_NAME */
   #define CLIENT_OS       OS_IRIX
   #define CLIENT_CPU    CPU_MIPS
 #elif defined(__VMS)
