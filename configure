@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.54  1998/06/24 16:35:18  remi
+# CFLAGS tweaking for the Ultra client. Should give ~4.1 Mkeys/s on a
+# 167 Mhz Ultra-1.
+#
 # Revision 1.53  1998/06/24 11:00:43  cberry
 # Added -lncurses to arm-linux
 #
@@ -263,9 +267,16 @@ OPTS_OS390="-D_ALL_SOURCE -I./common -I./rc5 -I./des"
 
 #--
 # look in platforms/ultrasparc/s_paramaters.h for the meaning of all these defines
-OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION -DBIT_32 -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
-OPTS_DES_ULTRA_ASM="-DIN_DCTI_CLIENT -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID -DASM -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL -DBIT_64 -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc
-"
+OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT \
+-DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION -DBIT_32 \
+-DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
+# a bit hairy, isn't it ? ;-)
+OPTS_DES_ULTRA_ASM="-DINTSIZES=442 -fstrength-reduce -Wall -Icommon \
+-Irc5 -Ides -Iplatforms -O6 -mv8 -mepilogue -Wa,-xarch=v8plusa -mno-float \
+-DASM_SPARC -DIN_DCTI_CLIENT -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID \
+-DASM -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE \
+-DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL -DBIT_64 \
+-DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
 
 
 #
@@ -438,7 +449,7 @@ case "$1" in
 
     *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
 	RC5CORECOPY="rc5-ultra-crunch.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_ULTRA -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1 $OPTS_DES_ULTRA_ASM"
+	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
  	TARGET_ADDASMS="platforms/ultrasparc/simple.handopt.s"
 	TARGET_ASFLAGS="$OPTS_GAS_ULTRA"
