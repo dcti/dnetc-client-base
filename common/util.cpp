@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.22 2000/03/08 08:34:55 jlawson Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.23 2000/03/10 03:04:50 jlawson Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -484,6 +484,42 @@ int DoesFileExist( const char *filename )
   if ( !IsFilenameValid( filename ) )
     return 0;
   return ( access( GetFullPathForFilename( filename ), 0 ) == 0 );
+}
+
+int GetFileLengthFromStream( FILE *file, u32 *length )
+{
+  #if (CLIENT_OS == OS_WIN32)
+    u32 result = (u32) GetFileSize((HANDLE)_get_osfhandle(fileno(file)),NULL);
+    if (result == 0xFFFFFFFFL) return -1;
+    *length = result;
+  #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16)
+    u32 result = filelength( fileno(file) );
+    if (result == 0xFFFFFFFFL) return -1;
+    *length = result;
+  #elif (CLIENT_OS == OS_RISCOS)
+    if (riscos_get_filelength(fileno(file),(unsigned long *)length) != 0)
+    {
+      return -1;
+    }
+  #else
+    struct stat statbuf;
+    #if (CLIENT_OS == OS_NETWARE)
+    unsigned long inode;
+    int vno;
+    if (FEMapHandleToVolumeAndDirectory( fileno(file), &vno, &inode )!=0)
+      { vno = 0; inode = 0; }
+    if ( vno == 0 && inode == 0 )
+    {                                       /* file on DOS partition */
+      u32 result = filelength( fileno(file) );  // ugh! uses seek
+      if (result == 0xFFFFFFFFL) return -1;
+      *length = result;
+      return 0;
+    }
+    #endif
+    if ( fstat( fileno( file ), &statbuf ) != 0) return -1;
+    *length = (u32)statbuf.st_size;
+  #endif
+  return 0;
 }
 
 /* ------------------------------------------------------------------ */

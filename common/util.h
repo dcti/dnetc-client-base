@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.6 2000/02/04 08:29:59 cyp Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.7 2000/03/10 03:04:50 jlawson Exp $"
 
 void trace_out( int indlevel, const char *fmt, ... );
 #ifdef TRACE
@@ -22,6 +22,7 @@ const char *projectmap_expand( const char *map );
 const char *projectmap_build( char *buf, const char *strtomap );
 //char *strfproj( char *buffer, const char *fmt, WorkRecord *work );
 
+
 int utilGatherOptionArraysToList( char *opsize, unsigned int maxsize,
                                   const int *table1, const int *table2 );
 int utilScatterOptionListToArraysEx( const char *oplist, 
@@ -31,22 +32,33 @@ int utilScatterOptionListToArrays( const char *oplist,
                                   int *table1, int *table2, 
                                   int defaultval );
 
+/* RC5/DES/CSC 2^28 key count conversion. */
 unsigned int __iter2norm( u32 iterlo, u32 iterhi );
 
+
+/* OGR display and formatting operations. */
 const char *ogr_stubstr(const struct Stub *stub);
 unsigned long ogr_nodecount( const struct Stub *stub );
 
+
+/* Filename and file operations. */
 int IsFilenameValid( const char *filename );
 int DoesFileExist( const char *filename );
+int GetFileLengthFromStream( FILE *file, u32 *length );
+
 
 /* convert a basename to a real buffer file name */
 const char *BufferGetDefaultFilename( unsigned int proj, int is_out_type,
                                                     const char *basename );
 
+/* Obscures the argv[0] value on UNIX systems */
 const char *utilGetAppName(void); /* "rc5 des" or "dnetc" or whatever */
 const char *utilSetAppName(const char *newname); /* shouldn't be needed */
 
-int utilCheckIfBetaExpired(int print_msg); /* prints message if appropriate */
+
+/* prints message if appropriate */
+int utilCheckIfBetaExpired(int print_msg);
+
 
 /* get list of pid's for procname. if procname has a path, then search 
    for exactly that, else search for basename. if pidlist or maxnumpids
