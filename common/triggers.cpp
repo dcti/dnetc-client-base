@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.51 2000/09/17 11:46:34 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.52 2000/10/20 21:23:04 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -940,8 +940,8 @@ static void __init_signal_handlers( int doingmodes )
 {
   __assert_statics(); 
   doingmodes = doingmodes; /* possibly unused */
-  #if (CLIENT_OS == OS_SOLARIS)
-  SETSIGNAL( SIGPIPE, SIG_IGN );
+  #if defined(SIGPIPE) //needed by at least solaris and fbsd
+  SETSIGNAL( SIGPIPE, SIG_IGN ); 
   #endif
   #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
   RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
