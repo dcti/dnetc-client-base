@@ -3,8 +3,8 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.2 1999/06/10 18:19:52 cyp Exp $"; }
+const char *buffwork_cpp(void) {
+return "@(#)$Id: buffbase.cpp,v 1.12.2.3 1999/07/30 22:54:33 remi Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -17,6 +17,8 @@ return "@(#)$Id: buffbase.cpp,v 1.12.2.2 1999/06/10 18:19:52 cyp Exp $"; }
 #include "triggers.h" //[Check|Raise][Pause|Exit]RequestTrigger()
 #include "pathwork.h" //GetFullPathForFilename() or dummy if DONT_USE_PATHWORK
 #include "problem.h"  //Resultcode enum
+#include "probfill.h"
+#include "buffupd.h"  // BUFFERUPDATE_FETCH / BUFFERUPDATE_FLUSH
 #include "buffwork.h" //our defines
 #define __iter2norm( iterlo, iterhi ) ((iterlo >> 28) + (iterhi << 4))
 
@@ -240,6 +242,7 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
 
 int BufferZapFileRecords( const char *filename )
 {
+  FILE *file;
   /* truncate, don't erase buffers (especially checkpoints). This reduces */
   /* disk fragmentation (on some systems) and is better on systems with a */
   /* "trash can" that saves deleted files. */
@@ -256,7 +259,7 @@ int BufferZapFileRecords( const char *filename )
     return -1;
   }
   fclose(file);
-  return(0);
+  return 0;
 }  
 
 
@@ -276,7 +279,6 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
       failed = 1;
     else // file created. may be an exclusive open, so close and reopen
       fclose( file );
-    }
   }
   if (failed == 0)
   {
@@ -323,26 +325,26 @@ static int BufferCloseFile( FILE *file )
 
 static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
 { 
-  if (((cost WorkRecord *)dest) != source )
+  if (((const WorkRecord *)dest) != source )
     memcpy( (void *)dest, (void *)source, sizeof(WorkRecord));
   /* we don't do PDP byte order, so this is ok */
-  switch (dest->workrec.contest) 
+  switch (dest->contest) 
   {
     case RC5:
     case DES:
     case CSC:
     {
-      u32 *w = (u32 *)(&(dest->workrec.work.crypto));
-      for (i=0; i<(sizeof(dest->workrec.work.crypto)/sizeof(u32)); i++)
+      u32 *w = (u32 *)(&(dest->work));
+      for (unsigned i=0; i<(sizeof(dest->work)/sizeof(u32)); i++)
         w[i] = ntohl(w[i]);
       break;
     }
     case OGR:
     {
-      dest->workrec.work.ogr.stub.marks  = ntohs(dest->workrec.work.ogr.stub.marks);
-      dest->workrec.work.ogr.stub.length = ntohs(dest->workrec.work.ogr.stub.length);
-      for (i = 0; i < STUB_MAX; i++) 
-        dest->workrec.work.ogr.stub.stub[i] = ntohs(dest->workrec.work.ogr.stub.stub[i]);
+      dest->work.ogr.workstub.stub.marks  = ntohs(dest->work.ogr.workstub.stub.marks);
+      dest->work.ogr.workstub.stub.length = ntohs(dest->work.ogr.workstub.stub.length);
+      for (int i = 0; i < STUB_MAX; i++) 
+        dest->work.ogr.workstub.stub.diffs[i] = ntohs(dest->work.ogr.workstub.stub.diffs[i]);
       break;
     }
   }
@@ -353,10 +355,10 @@ static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
 
 int UnlockBuffer( const char *filename )
 {
-  FILE *file = BufferOpen( filename, NULL );
+  FILE *file = BufferOpenFile( filename, NULL );
   if (file)
   {
-    BufferClose( file );
+    BufferCloseFile( file );
     LogScreen("%s has been unlocked.\n",filename);
     return 0;
   }
@@ -369,7 +371,7 @@ int BufferPutFileRecord( const char *filename, const WorkRecord * data,
                          unsigned long *countP ) 
 {
   unsigned long reccount;
-  FILE *file = BufferOpen( filename, &reccount );
+  FILE *file = BufferOpenFile( filename, &reccount );
   int failed = -1;
   if ( file )
   {
@@ -385,14 +387,14 @@ int BufferPutFileRecord( const char *filename, const WorkRecord * data,
         failed = -1;
       else if ( 0 == memcmp( (void *)&scratch, (void *)&blank, sizeof(WorkRecord)))
         break; /* blank record, write here */
-      recno++
+      recno++;
     }
     if (!failed)
     {
       failed = -1;
       __switchborder( &scratch, data );
       if ( fseek( file, (recno * sizeof(WorkRecord)), SEEK_SET ) == 0 &&
-                fwrite( (void *)scratch, sizeof(WorkRecord), 1, file ) == 1 )
+                fwrite( (void *)&scratch, sizeof(WorkRecord), 1, file ) == 1 )
         failed = 0;
     }
     BufferCloseFile( file );
@@ -522,7 +524,6 @@ int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data,
   int failed = -1;
   if ( file )
   {
-    int canremove = 0;
     unsigned long recno = 0;
     WorkRecord blank, scratch;
     memset( (void *)&blank, 0, sizeof(blank) );
@@ -572,7 +573,7 @@ int BufferGetFileRecord( const char *filename, WorkRecord * data,
 /* --------------------------------------------------------------------- */
 
 int BufferCountFileRecords( const char *filename, unsigned int contest, 
-                       unsigned long *countP, unsigned long *normcountP )
+                       unsigned long *packetcountP, unsigned long *normcountP )
 {
   unsigned long normcount = 0, reccount = 0;
   FILE *file = BufferOpenFile( filename, &reccount );
@@ -593,7 +594,7 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
         ; /* blank record, ignore it */
       else if ( ((unsigned int)(scratch.contest)) == contest )
       {
-        packetcount++
+	packetcount++;
         if ( normcountP )
         {
           switch (contest) 
@@ -618,7 +619,7 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
       recno++;
     }
     reccount = packetcount;
-    BufferClose( file );
+    BufferCloseFile( file );
   }
   if (failed != 0)
     normcount = reccount = 0;
@@ -791,6 +792,8 @@ long Client::GetBufferRecord( WorkRecord* data, unsigned int contest, int use_ou
         LogScreen("Buffer seek/read error. Partial packet discarded.\n");
         break; /* return -1; */
       }
+      else if( retcode > 0 ) // no recs
+	break;
     }
     else
     {
