@@ -2,16 +2,10 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// $Log: base64.cpp,v $
-// Revision 1.1  1999/03/18 03:52:44  cyp
-// Split from confmenu.cpp so Client::Configure() doesn't need to be virtual
-// for clients that don't use it.
-//
-//
 
 #if (!defined(lint) && defined(__showids__))
 const char *base64_cpp(void) {
-return "@(#)$Id: base64.cpp,v 1.1 1999/03/18 03:52:44 cyp Exp $"; }
+return "@(#)$Id: base64.cpp,v 1.1.2.1 1999/04/04 09:44:33 jlawson Exp $"; }
 #endif
 
 static unsigned char base64table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
