@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.27  1998/06/24 06:45:15  remi
+// The terminfo database can be located everywhere. Try some known locations
+// before falling back to a 25 lines screen.
+//
 // Revision 1.26  1998/06/23 19:48:50  remi
 // - Fixed pager crashing when terminal has more lines than help text
 // - Fixed off by one bug in pageup/pagedown logic
@@ -79,7 +83,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: disphelp.cpp,v 1.26 1998/06/23 19:48:50 remi Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.27 1998/06/24 06:45:15 remi Exp $";
 #endif
 
 #include "client.h"
@@ -226,8 +230,32 @@ static int gettermheight() {
 
   return value[0] - value[1] + 1;
 
+
 #elif defined(TERMINFOLINES)
-  setupterm( NULL, 1, NULL );
+
+  // grrr... terminfo database location is installation dependent
+  // search some standard (?) locations
+  char *terminfo_locations[] = {
+      "/usr/share/terminfo",       // ncurses 1.9.9g defaults
+      "/usr/local/share/terminfo", // 
+      "/usr/lib/terminfo",         // Debian 1.3x use this one
+      "/usr/local/lib/terminfo",   // variation
+      "/etc/terminfo",             // found something here on my machine, doesn't hurt
+      "~/.terminfo",               // last resort
+      NULL                         // stop tag
+  };
+  for (;;) {
+    char **location = &terminfo_locations[0];
+    int termerr;
+    if (setupterm( NULL, 1, &termerr ) == ERR) {
+      if ((termerr == 0 || termerr == -1) && *location != NULL)
+	setenv( "TERMINFO", *(location++), 1);
+      else 
+	return -1;
+    } else
+      break;
+  }
+      
   int nlines = tigetnum( "lines" );
   // check for insane values
   if (nlines <= 0 || nlines >= 300)
