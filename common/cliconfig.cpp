@@ -3027,48 +3027,46 @@ void Client::PrintBanner(const char * /*clname*/)
 #if (CLIENT_CPU == CPU_X86)
 int Client::x86id()
 {
-  u32 detectedvalue; //valye x86ident returns, must be interpreted
-  int coretouse = -1; // the core the client should use of the 5(6?)
-
-  LogScreen("Beginning CPU identification...\n");
+  u32 detectedvalue; //value x86ident returns, must be interpreted
+  int coretouse = 0; // the core the client should use of the 5(6?)
+                     // defaults to P5 core
   detectedvalue = x86ident();
-  LogScreen("Completed CPU identification. ");
   if ((detectedvalue >> 16) == 0x7943) // Cyrix CPU
   {
     detectedvalue &= 0xfff0; //strip last 4 bits, don't need stepping info
     if (detectedvalue == 0x40)
     {
-      LogScreen("Detected a Cyrix 486\n");
+      LogScreen("Detected a Cyrix 486; ");
       coretouse=0;
     }
     else if (detectedvalue == 0x0490)
     {
-      LogScreen("Detected a Cyrix 5x86\n");
+      LogScreen("Detected a Cyrix 5x86; ");
       coretouse=0;
     }
     else if (detectedvalue == 0x0440)
     {
-      LogScreen("Detected a Cyrix MediaGX\n");
+      LogScreen("Detected a Cyrix MediaGX; ");
       coretouse=0;
     }
     else if (detectedvalue == 0x0520)
     {
-      LogScreen("Detected a Cyrix 6x86\n");
+      LogScreen("Detected a Cyrix 6x86; ");
       coretouse=3;
     }
     else if (detectedvalue == 0x0540)
     {
-      LogScreen("Detected a Cyrix GXm\n");
+      LogScreen("Detected a Cyrix GXm; ");
       coretouse=0;
     }
     else if (detectedvalue == 0x0600)
     {
-      LogScreen("Detected a Cyrix 6x86MX\n");
+      LogScreen("Detected a Cyrix 6x86MX; ");
       coretouse=3;
     }
     else
     {
-      LogScreen("Detected an Unknown Cyrix Processor\n");
+      LogScreen("Detected an Unknown Cyrix Processor; ");
       coretouse=3;
     }
   }
@@ -3078,7 +3076,7 @@ int Client::x86id()
     if (detectedvalue == 0x0540)
     {
     coretouse=0;
-    LogScreen("Detected a Centaur C6\n");
+    LogScreen("Detected a Centaur C6; ");
     }
   }
   else if ((detectedvalue >> 16) == 0x7541) // AMD CPU
@@ -3086,83 +3084,83 @@ int Client::x86id()
     detectedvalue &= 0xfff0; //strip last 4 bits, don't need stepping info
     if (detectedvalue == 0x40)
     {
-      LogScreen("Detected an AMD 486\n");
+      LogScreen("Detected an AMD 486; ");
       coretouse=3;
     }
     else if (detectedvalue == 0x0430)
     {
       coretouse = 3; // 486
-      LogScreen("Detected an AMD 486DX2\n");
+      LogScreen("Detected an AMD 486DX2; ");
     }
     else if (detectedvalue == 0x0470)
     {
       coretouse = 3;
-      LogScreen("Detected an AMD 486DX2WB\n");
+      LogScreen("Detected an AMD 486DX2WB; ");
     }
     else if (detectedvalue == 0x0480)
     {
       coretouse = 3;
-      LogScreen("Detected an AMD 486DX4\n");
+      LogScreen("Detected an AMD 486DX4; ");
     }
     else if (detectedvalue == 0x0490)
     {
       coretouse = 3;
-      LogScreen("Detected an AMD 486DX4WB\n");
+      LogScreen("Detected an AMD 486DX4WB; ");
     }
     else if (detectedvalue == 0x04E0)
     {
       coretouse = 3;
-      LogScreen("Detected an AMD 5x86\n");
+      LogScreen("Detected an AMD 5x86; ");
     }
     else if (detectedvalue == 0x04F0)
     {
       coretouse = 3;
-      LogScreen("Detected an AMD 5x86WB\n");
+      LogScreen("Detected an AMD 5x86WB; ");
     }
     else if (detectedvalue == 0x0500)
     {
       coretouse = 4; // K5
-      LogScreen("Detected an AMD K5 PR75, PR90, or PR100\n");
+      LogScreen("Detected an AMD K5 PR75, PR90, or PR100; ");
     }
     else if (detectedvalue == 0x0510)
     {
       coretouse = 4;
-      LogScreen("Detected an AMD K5 PR120 or PR133\n");
+      LogScreen("Detected an AMD K5 PR120 or PR133; ");
     }
     else if (detectedvalue == 0x0520)
     {
       coretouse = 4;
-      LogScreen("Detected an AMD K5 PR166");
+      LogScreen("Detected an AMD K5 PR166; ");
     }
     else if (detectedvalue == 0x0530)
     {
       coretouse = 4;
-      LogScreen("Detected an AMD K5 PR200");
+      LogScreen("Detected an AMD K5 PR200; ");
     }
     else if (detectedvalue == 0x0560)
     {
       coretouse = 5; // K6
-      LogScreen("Detected an AMD K6\n");
+      LogScreen("Detected an AMD K6; ");
     }
     else if (detectedvalue == 0x0570)
     {
       coretouse = 5;
-      LogScreen("Detected an AMD K6\n");
+      LogScreen("Detected an AMD K6; ");
     }
     else if (detectedvalue == 0x0580)
     {
       coretouse = 5;
-      LogScreen("Detected an AMD K6-2\n");
+      LogScreen("Detected an AMD K6-2; ");
     }
     else if (detectedvalue == 0x0590)
     {
       coretouse = 5;
-      LogScreen("Detected an AMD K6-3\n");
+      LogScreen("Detected an AMD K6-3; ");
     }
     else
     {
       coretouse = 5;                    // for the future
-      LogScreen("Detected an unknown AMD processor\n");
+      LogScreen("Detected an unknown AMD processor; ");
     }
   }
   else if ((detectedvalue >> 16) == 0x6849 || (detectedvalue >> 16) == 0x6547) // Intel CPU
@@ -3170,123 +3168,123 @@ int Client::x86id()
     detectedvalue &= 0xfff0; //strip last 4 bits, don't need stepping info
     if (detectedvalue == 0x30)
     {
-      LogScreen("Detected an 80386\n");
+      LogScreen("Detected an 80386; ");
       coretouse=1;
     }
     else if (detectedvalue == 0x40)
     {
-      LogScreen("Detected an Intel 486\n");
+      LogScreen("Detected an Intel 486; ");
       coretouse=1;
     }
     else if (detectedvalue == 0x0400)
     {
-      LogScreen("Detected an Intel 486DX 25 or 33\n");
+      LogScreen("Detected an Intel 486DX 25 or 33; ");
       coretouse=1;
     }
     else if (detectedvalue == 0x0410)
     {
-      LogScreen("Detected an Intel 486DX 50\n");
+      LogScreen("Detected an Intel 486DX 50; ");
       coretouse=1;
     }
     else if (detectedvalue == 0x0420)
     {
-      LogScreen("Detected an Intel 486SX\n");
+      LogScreen("Detected an Intel 486SX; ");
       coretouse=1;
     }
     else if (detectedvalue == 0x0430)
     {
-      LogScreen("Detected an Intel 486DX2\n");
+      LogScreen("Detected an Intel 486DX2; ");
       coretouse=1;
     }
     else if (detectedvalue == 0x0440)
     {
-      LogScreen("Detected an Intel 486SL\n");
+      LogScreen("Detected an Intel 486SL; ");
       coretouse=1;
     }
     else if (detectedvalue == 0x0450)
     {
-      LogScreen("Detected an Intel 486SX2\n");
+      LogScreen("Detected an Intel 486SX2; ");
       coretouse=1;
     }
     else if (detectedvalue == 0x0470)
     {
-      LogScreen("Detected an Intel 486DX2WB\n");
+      LogScreen("Detected an Intel 486DX2WB; ");
       coretouse=1;
     }
     else if (detectedvalue == 0x0480)
     {
-      LogScreen("Detected an Intel 486DX4\n");
+      LogScreen("Detected an Intel 486DX4; ");
       coretouse=1;
     }
     else if (detectedvalue == 0x0490)
     {
-      LogScreen("Detected an Intel 486DX4WB\n");
+      LogScreen("Detected an Intel 486DX4WB; ");
       coretouse=1;
     }
     else if (detectedvalue == 0x0500)
     {
-      LogScreen("Detected an Intel Pentium\n"); // stepping A
+      LogScreen("Detected an Intel Pentium; "); // stepping A
       coretouse=0;
     }
     else if (detectedvalue == 0x0510)
     {
-      LogScreen("Detected an Intel Pentium\n");
+      LogScreen("Detected an Intel Pentium; ");
       coretouse=0;
     }
     else if (detectedvalue == 0x0520)
     {
-      LogScreen("Detected an Intel Pentium\n");
+      LogScreen("Detected an Intel Pentium; ");
       coretouse=0;
     }
     else if (detectedvalue == 0x0530)
     {
-      LogScreen("Detected an Intel Pentium Overdrive\n");
+      LogScreen("Detected an Intel Pentium Overdrive; ");
       coretouse=0;
     }
     else if (detectedvalue == 0x0540)
     {
-      LogScreen("Detected an Intel Pentium MMX\n");
+      LogScreen("Detected an Intel Pentium MMX; ");
       coretouse=0;
     }
     else if (detectedvalue == 0x0570)
     {
-      LogScreen("Detected an Intel Pentium\n");
+      LogScreen("Detected an Intel Pentium; ");
       coretouse=0;
     }
     else if (detectedvalue == 0x0580)
     {
-      LogScreen("Detected an Intel Pentium MMX\n");
+      LogScreen("Detected an Intel Pentium MMX; ");
       coretouse=0;
     }
     else if (detectedvalue == 0x0600)
     {
-      LogScreen("Detected an Intel Pentium Pro\n");
+      LogScreen("Detected an Intel Pentium Pro; ");
       coretouse=2;
     }
     else if (detectedvalue == 0x0610)
     {
-      LogScreen("Detected an Intel Pentium Pro\n");
+      LogScreen("Detected an Intel Pentium Pro; ");
       coretouse=2;
     }
     else if (detectedvalue == 0x0630)
     {
-      LogScreen("Detected an Intel Pentium II\n");
+      LogScreen("Detected an Intel Pentium II; ");
       coretouse=2;
     }
     else if (detectedvalue == 0x0650)
     {
-      LogScreen("Detected an Intel Pentium II\n");
+      LogScreen("Detected an Intel Pentium II; ");
       coretouse=2;
     }
     else
     {
       coretouse = 2;  //PPro and PII
-      LogScreen("Detected an unknown Intel Processor\n");
+      LogScreen("Detected an unknown Intel Processor; ");
     }
   }
   else
   {
-    LogScreen("Detected an unknown processor from an unknown manufacturer\n");
+    LogScreen("Detected an unknown processor from an unknown manufacturer; ");
   }
   return coretouse;
 }
