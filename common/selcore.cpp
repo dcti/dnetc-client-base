@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.15 1999/11/01 12:19:18 remi Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.16 1999/11/02 17:30:58 remi Exp $"; }
 
 
 #include "cputypes.h"
@@ -518,6 +518,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 	  break;
 	case 5:  // K6/K6-2/K6-3
 	  selcorestatics.corenum[CSC] = 0; // 6bit - inline
+	  break;
+	}
+  #elif defined(_MSC_VER) && (_MSC_VER >= 11)
+	// select the right cores if compiled with MS VC++ 5.0 and up
+	switch( detected_type & 0xff ) {
+	case 2:  // Ppro/PII/Celeron/PIII
+	  selcorestatics.corenum[CSC] = 2; // 1key - inline
 	  break;
 	}
   #endif
