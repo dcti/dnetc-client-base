@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.105 1999/04/18 15:04:57 patrick Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.106 1999/04/23 02:43:15 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -417,7 +417,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   #ifdef _AIXALL
     rc5_unit_func = rc5_ansi_2_rg_unit_func ;
     pipeline_count = 2;
-  #else			// no POWER support
+  #else                 // no POWER support
     rc5_unit_func = crunch_allitnil;
     pipeline_count = 1;
   #endif
@@ -731,7 +731,7 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
         ((CLIENT_CPU == CPU_MIPS) && (MIPS_CRUNCH == 1)) 
     kiter = crunch( &rc5unitwork, timeslice );
   #elif (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_POWERPC) || \
-	(CLIENT_CPU == CPU_POWER)
+        (CLIENT_CPU == CPU_POWER)
     kiter = (*rc5_unit_func)( &rc5unitwork, timeslice );
   #elif (CLIENT_CPU == CPU_ARM)
     #if (CLIENT_OS == OS_RISCOS)
@@ -1120,9 +1120,18 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   CliTimer(&stop);
   if ( core_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING */
   {
-    runtime_sec = runtime_usec = 0;
-    start.tv_sec = timehi;
-    start.tv_usec = timelo;
+    if (((u32)(stop.tv_sec)) > ((u32)(timehi)))
+    {
+      u32 tmpdif = timehi - stop.tv_sec;
+      tmpdif = (((tmpdif >= runtime_sec) ?
+        (tmpdif - runtime_sec) : (runtime_sec - tmpdif)));
+      if ( tmpdif < core_run_count )
+      {
+        runtime_sec = runtime_usec = 0;
+        start.tv_sec = timehi;
+        start.tv_usec = timelo;
+      }
+    }
   }
   if (stop.tv_sec < start.tv_sec || 
      (stop.tv_sec == start.tv_sec && stop.tv_usec <= start.tv_usec))
