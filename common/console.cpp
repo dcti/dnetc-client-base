@@ -11,8 +11,11 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.22  1998/11/16 17:04:38  cyp
+// Cleared up a couple of unused parameter warnings
+//
 // Revision 1.21  1998/11/11 05:09:31  cyp
-// Passing on 'doingmodes' flag from InitializeConsole() to w32InitializeCon -
+// Passed on 'doingmodes' flag from InitializeConsole() to w32InitializeCon -
 // used on win16 to ensure only a single instance of the client can run.
 //
 // Revision 1.20  1998/11/10 21:36:02  cyp
@@ -81,7 +84,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.21 1998/11/11 05:09:31 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.22 1998/11/16 17:04:38 cyp Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -518,6 +521,8 @@ int ConGetPos( int *col, int *row )  /* zero-based */
     GetOutputCursorPosition( &x, &y );
     row = (int)y; col = (int)x;
     return 0;
+    #else
+    return ((row == NULL && col == NULL)?(0):(-1));
     #endif
     }
   return -1;
@@ -535,6 +540,9 @@ int ConSetPos( int col, int row )  /* zero-based */
     WORD c = col, r = row;
     gotoxy( c, r );
     return 0;
+    #else 
+    if (col < 0 || row < 0)
+      return -1;
     #endif
     }
   return -1;
