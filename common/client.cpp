@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.176  1998/12/12 12:28:49  cyp
+// win16/win32 change: win16/win32 console code needs access to the client
+// object so that it can force a shutdown when it gets an endsession message.
+//
 // Revision 1.175  1998/12/08 05:35:47  dicamillo
 // MacOS updates: allow PrintBanner to be called by Mac client;
 // added help text; Mac client provides its own "main".
@@ -141,7 +145,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.175 1998/12/08 05:35:47 dicamillo Exp $"; }
+return "@(#)$Id: client.cpp,v 1.176 1998/12/12 12:28:49 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -478,6 +482,13 @@ int realmain( int argc, char *argv[] )
 
   //----------------------------
 
+  #if (CLIENT_OS==OS_WIN16 || CLIENT_OS==OS_WIN32S || CLIENT_OS==OS_WIN32)
+  if ( init_success )
+    w32ConSetClientPointer( clientP ); // save the client * so we can bail out 
+  #endif                               // when we get a WM_ENDSESSION message
+
+  //----------------------------
+
   if ( init_success )
     {
     retcode = clientP->Main( argc, (const char **)argv );
@@ -497,6 +508,12 @@ int realmain( int argc, char *argv[] )
   #endif
 
   //------------------------------
+
+  #if (CLIENT_OS==OS_WIN16 || CLIENT_OS==OS_WIN32S || CLIENT_OS==OS_WIN32)
+  w32ConSetClientPointer( NULL ); // clear the client * 
+  #endif
+
+  //------------------------------
   
   if (clientP)
     delete clientP;
@@ -507,21 +524,22 @@ int realmain( int argc, char *argv[] )
 
 /* ----------------------------------------------------------------- */
 
-
-#if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-#if !defined(WIN32GUI)
-int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, 
-    int nCmdShow) 
+#if (CLIENT_OS == OS_MACOS)
+//
+// nothing - Mac framework provides main
+//
+#elif ((CLIENT_OS == OS_WIN32) && defined(WIN32GUI))
+//
+// nothing - realmain() is called from elsewhere
+//
+#elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow) 
 { /* abstraction layer between WinMain() and realmain() */
   return winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, realmain);
 }
-#endif
-#elif (CLIENT_OS == OS_MACOS)
-// nothing- Mac framework provides main
 #else
 int main( int argc, char *argv[] )
 { 
   return realmain( argc, argv ); 
 }
 #endif
-
