@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.161  1999/01/11 11:44:13  cramer
+# *** empty log message ***
+#
 # Revision 1.160  1999/01/11 05:45:09  pct
 # Ultrix modifications for updated client.
 #
@@ -1059,7 +1062,7 @@ case "$1" in
 
     *sparc-solaris-gcc-crunch-slice)   # fastest rc5 & des for ultra
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc"
+	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DPIPELINE_COUNT=2 \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
@@ -1069,7 +1072,7 @@ case "$1" in
 
     *sparc-solaris-gcc-crunch-slice-mt)   # fastest rc5 & des for ultra
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc"
+	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
@@ -1079,7 +1082,7 @@ case "$1" in
 
     *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc"
+	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
