@@ -5,7 +5,7 @@
                  includes device masking support ala Linux/FreeBSD
 	    new: unix: ps will always show the client as 'rc5des'. This is
 	         to facilitate scripted or system-wide shutdowns/restarts.
-2.7110.441  new: extended log-to-file options/types/limits
+2.7110.441  new: log-to-file options/types/limits
 	    imp: made --config menus more intuitive
 2.7109.441  fix: win32cli shutdown if not hidden and not service :)
 2.7109.440  fix: win32cli shutdown for win95 if hidden or service
