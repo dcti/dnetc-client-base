@@ -41,9 +41,7 @@
   #include "rc5stub.cpp"
 #endif
 
-#if (CLIENT_OS != OS_OS390)
 extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
-#endif
 
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
   extern u32 Bdes_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
@@ -499,11 +497,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
-#if (CLIENT_OS != OS_OS390)
     kiter = des_unit_func ( &rc5unitwork, nbits );
-#else
-    kiter = 0;
-#endif
     contestwork.keysdone.lo += kiter;
     if (kiter < ( timeslice * PIPELINE_COUNT ) )
     {

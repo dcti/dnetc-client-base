@@ -271,7 +271,7 @@ struct s128 { s64 hi, lo; };
 #endif
 
 // Some platforms don't yet support bool internally
-#if defined(__VMS) || defined(__SUNPRO_CC) || defined(__DECCXX)
+#if defined(__VMS) || defined(__SUNPRO_CC) || defined(__DECCXX) || defined(__MVS__)
   #define NEED_FAKE_BOOL
 #elif defined(AMIGA) || defined(_HPUX) || defined(_OLD_NEXT_)
   #define NEED_FAKE_BOOL

@@ -99,7 +99,9 @@ OPTS_NEXT_M68K="$OPTS_GCC -O6 -m68040 -DASM_68K"
 OPTS_NEXT_SPARC="$OPTS_GCC -O6 -DASM_SPARC -D_OLD_NEXT_"
 OPTS_NEXT_HPPA="$OPTS_GCC -O6 -DASM_HPPA -D_OLD_NEXT_"
 
- #-D__STRING_CODE_SET__="ISO8859-1"
+#--
+
+#-D__STRING_CODE_SET__="ISO8859-1"
 OPTS_OS390="-D_ALL_SOURCE"  
 
 
@@ -231,8 +233,8 @@ case "$1" in
 	;;
     *m68k-linux-gcc)
         TARGET_CFLAGS="$(OPTS_GCC_M68K) -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
-	TARGET_AFLAGS="$(OPTS_GAS_M68K)"
- 	TARGET_ADDSRCS=" $(SLICE_SRCS3)"
+	TARGET_AFLAGS="$OPTS_GAS_M68K"
+ 	TARGET_ADDSRCS="$SLICE_SRCS3"
  	TARGET_ADDASMS="crunch.68k.gcc.s"
  	TARGET_LIBS="-static"
 	;;
@@ -486,7 +488,7 @@ case "$1" in
 ###### RISCOS
 
     *riscos)
-        TARGET_CC="armcpp"
+	TARGET_CC="armcpp"
 	TARGET_AS="armasm"
 	TARGET_CCFLAGS="-LIttleend -apcs 3/26bit/swst/hardfp/fpe3 -J/home/cberry/play/unixlib -D__riscos -Driscos -Otime -DPIPELINE_COUNT=1 -DBIT_32"
 	TARGET_ADDSRCS="platforms/riscos.c"
@@ -495,7 +497,7 @@ case "$1" in
 	;;
 
     *arm-linux)
-        TARGET_CC="gcc"
+	TARGET_CC="gcc"
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=1 -DBIT_32 -Dlinux"
 	TARGET_ADDSRCS=""
@@ -504,7 +506,7 @@ case "$1" in
 	;;
 
     *arm-netbsd)
-        TARGET_CC="gcc"
+	TARGET_CC="gcc"
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=1 -DBIT_32"
 	TARGET_ADDSRCS=""
@@ -515,10 +517,10 @@ case "$1" in
 ###### OS390
     *os390)
 	RC5CORECOPY="rc5ansi2-rg2.cpp"
-        TARGET_CC="cxx"
+	TARGET_CC="cxx"
 	TARGET_AS=""
-	TARGET_CCFLAGS="$OPTS_OS390 -DPIPELINE_COUNT=2"
-	TARGET_ADDSRCS=""
+	TARGET_CCFLAGS="$OPTS_OS390 -DPIPELINE_COUNT=2 -DBIT_32"
+	TARGET_ADDSRCS="$SLICE_SRCS4"
 	TARGET_ADDASMS=""
 	TARGET_LIBS="$SOCKS_LIBS"
 	;;
