@@ -5,10 +5,10 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.128 1999/04/04 16:28:04 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.129 1999/04/09 17:36:35 cyp Exp $"
 
 #define MAXBLOCKSPERBUFFER  500
-#define CONTEST_COUNT       3  /* RC5,DES,OGR */
+#define CONTEST_COUNT       4  /* RC5,DES,OGR,CSC */
 
 #include "problem.h"          /* ContestWork structure */
 #pragma pack(1)               /* no padding allowed */
