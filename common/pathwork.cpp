@@ -24,12 +24,15 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.21 2002/09/02 00:35:43 andreasb Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.21.4.1 2002/12/15 10:47:10 pfeffi Exp $"; }
+
+// #define TRACE
 
 #include <stdio.h>
 #include <string.h>
 #include "cputypes.h"
 #include "pathwork.h"
+#include "util.h"      // trace
 
 #if (CLIENT_OS == OS_DOS) ||  ( (CLIENT_OS == OS_OS2) && !defined(__EMX__) )
   #include <dos.h>  //drive functions
@@ -153,6 +156,8 @@ static int __cwd_buffer_len = -1; /* not initialized */
 
 int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppath )
 {
+  TRACE_OUT((0,"ini: %s app: %s \n",inipath,apppath));
+  
   if ( inipath == NULL ) inipath = "";
   if ( apppath == NULL ) apppath = "";
 
@@ -202,7 +207,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
     if (slash != NULL) *(slash+1) = 0;
     else __cwd_buffer[0] = 0;
   }
-  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || ( (CLIENT_OS == OS_OS2) && defined(__EMX__) )
   {
     strcpy( __cwd_buffer, inipath );
     char *slash = strrchr(__cwd_buffer, '/');
@@ -329,6 +334,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
   #endif
   __cwd_buffer_len = strlen( __cwd_buffer );
 
+  TRACE_OUT((0,"GetFullPathForFilename: Working directory is \"%s\"\n", __cwd_buffer));
   #ifdef DEBUG_PATHWORK
   printf( "Working directory is \"%s\"\n", __cwd_buffer );
   #endif
@@ -411,6 +417,7 @@ const char *GetFullPathForFilename( const char *filename )
   else
     outpath = __finalize_fixup(strcat(__path_buffer, filename),sizeof(__path_buffer));
 
+  TRACE_OUT((0,"GetFullPathForFilename: got \"%s\" returning \"%s\"\n", filename, outpath));
   #ifdef DEBUG_PATHWORK
   printf( "got \"%s\" returning \"%s\"\n", filename, outpath );
   #endif
