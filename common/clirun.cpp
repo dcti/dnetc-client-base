@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.50  1998/12/14 09:38:58  snake
+//
+// Re-integrated non-nasm x86 cores, cause nasm doesn't support all x86 platforms.
+// Sorry, no bye-bye to .cpp cores.
+// Moved RC5X86_SRCS to NASM_RC5X86_SRCS and corrected other targets.
+//
 // Revision 1.49  1998/12/14 05:14:21  dicamillo
 // Mac OS updates to eliminate use of MULTITHREAD and have a singe client
 // for MT and non-MT machines.
@@ -187,7 +193,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.49 1998/12/14 05:14:21 dicamillo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.50 1998/12/14 09:38:58 snake Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -366,8 +372,12 @@ static void yield_pump( void *tv_p )
 
   #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
     thr_yield();
-  #elif (CLIENT_OS == OS_FREEBSD)
+  #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI)
+    #if defined(__ELF__)
     sched_yield();
+    #else // a.out 
+    NonPolledUSleep( 0 ); /* yield */
+    #endif
   #elif (CLIENT_OS == OS_OS2)
     DosSleep(0);
   #elif (CLIENT_OS == OS_IRIX)

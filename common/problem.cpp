@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.53  1998/12/14 09:38:59  snake
+//
+// Re-integrated non-nasm x86 cores, cause nasm doesn't support all x86 platforms.
+// Sorry, no bye-bye to .cpp cores.
+// Moved RC5X86_SRCS to NASM_RC5X86_SRCS and corrected other targets.
+//
 // Revision 1.52  1998/12/14 05:16:10  dicamillo
 // Mac OS updates to eliminate use of MULTITHREAD and have a singe client
 // for MT and non-MT machines.
@@ -139,7 +145,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.52 1998/12/14 05:16:10 dicamillo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.53 1998/12/14 09:38:59 snake Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -336,8 +342,12 @@ s32 Problem::LoadState( ContestWork * work, u32 _contest,
   pipeline_count = PIPELINE_COUNT;
   
 #if (CLIENT_CPU == CPU_X86)
+# if (CLIENT_OS != OS_BSDI)
   if (contest == 0 && rc5_unit_func == rc5_unit_func_p5_mmx)
     pipeline_count = 4; // RC5 MMX core is 4 pipelines
+# else
+	u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+# endif
 #elif (CLIENT_CPU == CPU_ARM)
   if (_cputype == 0)
     pipeline_count = 1;
