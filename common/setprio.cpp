@@ -9,11 +9,14 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.46  1999/01/17 13:27:42  cyp
+// SetPriority() does its own range validation.
+//
 // Revision 1.45  1999/01/01 02:45:16  cramer
 // Part 1 of 1999 Copyright updates...
 //
 // Revision 1.44  1998/12/22 15:58:24  jcmichot
-// *** empty log message ***
+// Fixed QNX prio.
 //
 // Revision 1.43  1998/12/09 08:33:20  silby
 // Freebsd fixes
@@ -68,7 +71,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.45 1999/01/01 02:45:16 cramer Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.46 1999/01/17 13:27:42 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -79,6 +82,11 @@ return "@(#)$Id: setprio.cpp,v 1.45 1999/01/01 02:45:16 cramer Exp $"; }
 
 static int __SetPriority( unsigned int prio, int set_for_thread )
 {
+  if (((int)prio) < 0) 
+    prio = 0;
+  else if (prio > 9) 
+    prio = 9;
+
   #if (CLIENT_OS == OS_MACH)
     if ( set_for_thread )
       {
@@ -229,7 +237,7 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       SetTaskPri(FindTask(NULL), pri ); 
       }
   #elif (CLIENT_OS == OS_QNX)
-	setprio( 0, prio-3 );
+	  setprio( 0, prio-3 );
     // if ( niceness == 0 )      setprio( 0, getprio(0)-3 );
     // else if ( niceness == 1 ) setprio( 0, getprio(0)+3 );
     // else                  /* nothing */;
