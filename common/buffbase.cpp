@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.23 2000/02/21 06:29:53 sampo Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.24 2000/03/09 07:38:11 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -15,7 +15,7 @@ return "@(#)$Id: buffbase.cpp,v 1.12.2.23 2000/02/21 06:29:53 sampo Exp $"; }
 #include "network.h"  //ntohl(), htonl()
 #include "util.h"     //IsFilenameValid(), DoesFileExist(), __iter2norm()
 #include "clievent.h" //event stuff
-#include "clicdata.h" //GetContestNameFromID() 
+#include "clicdata.h" //GetContestNameFromID()
 #include "logstuff.h" //Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "triggers.h" //[Check|Raise][Pause|Exit]RequestTrigger()
 #include "pathwork.h" //GetFullPathForFilename() or dummy if DONT_USE_PATHWORK
@@ -55,13 +55,13 @@ static int BufferPutMemRecord( struct membuffstruct *membuff,
   if (countP)
     *countP = count;
   return retcode;
-}    
+}
 
 
 /* --------------------------------------------------------------------- */
 
 static int BufferGetMemRecord( struct membuffstruct *membuff,
-                            WorkRecord* data, unsigned long *countP ) 
+                            WorkRecord* data, unsigned long *countP )
 {
   /*  <0 on ioerr, >0 if norecs */
   unsigned long count = 0;
@@ -85,7 +85,7 @@ static int BufferGetMemRecord( struct membuffstruct *membuff,
   if (countP)
     *countP = count;
   return retcode;
-}    
+}
 
 
 /* --------------------------------------------------------------------- */
@@ -96,7 +96,7 @@ static int BufferCountMemRecords( struct membuffstruct *membuff,
 {
   unsigned long rec, reccount = 0, packetcount = 0, normcount = 0;
   int retcode = -1;
-  
+
   if (membuff != NULL)
   {
     retcode = 0;
@@ -113,7 +113,7 @@ static int BufferCountMemRecords( struct membuffstruct *membuff,
           if (((unsigned int)workrec->contest) == contest)
           {
             packetcount++;
-            switch (contest) 
+            switch (contest)
             {
               case RC5:
               case DES:
@@ -152,8 +152,8 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
     u32 result = (u32) GetFileSize((HANDLE)_get_osfhandle(fileno(file)),NULL);
     if (result == 0xFFFFFFFFL) return -1;
     *length = result;
-  #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) 
-    u32 result = filelength( fileno(file) );    
+  #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16)
+    u32 result = filelength( fileno(file) );
     if (result == 0xFFFFFFFFL) return -1;
     *length = result;
   #elif (CLIENT_OS == OS_RISCOS)
@@ -180,31 +180,36 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
     *length = (u32)statbuf.st_size;
   #endif
   return 0;
-}  
+}
 
 /* --------------------------------------------------------------------- */
 
-//Do it the way I originally intended...
+// Supply macros to wrap around the system-dependent file open, creation,
+// and share locking operations.  Notice that you should attempt to do
+// native file-system share locking when possible, even though we
+// additionally implement a "soft lock" within the buffer-format itself.
+
 #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
      (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_RISCOS))
   #define BUFFEROPEN( fn )  fopen( fn, "r+b" )
+  #define BUFFEROPENCREATE( fn )  fopen( fn, "a+b" )
   #define BUFFERCREATE( fn )   fopen( fn, "wb" )
 #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_VMS)
   #define BUFFEROPEN( fn )  fopen( fn, "r+" )
+  #define BUFFEROPENCREATE( fn )  fopen( fn, "a+" )
   #define BUFFERCREATE( fn )   fopen( fn, "w" )
   #define ftruncate(h,sz) //nothing. ftruncate not supported.
 #elif (CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K) //Sun3
   #define BUFFEROPEN( fn )  fopen( fn, "r+" )
+  #define BUFFEROPENCREATE( fn )  fopen( fn, "a+" )
   #define BUFFERCREATE( fn )   fopen( fn, "w" )
   extern "C" int ftruncate(int, off_t); // Keep g++ happy.
 #elif ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
        (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_OS2) || \
        (CLIENT_OS == OS_WIN16))
-  #define ftruncate(h,sz) chsize(h,sz)
-  #define BUFFERCREATE( fn ) fopen( fn, "wb" )
-  static FILE *BUFFEROPEN(const char *fn) 
-  { 
-    #if (CLIENT_OS == OS_NETWARE) 
+  static FILE *__bufferopenlock(const char *fn, int bCreate)
+  {
+    #if (CLIENT_OS == OS_NETWARE)
     DIR *dir = opendir( fn );
     if ( dir != NULL && ( readdir( dir ) != NULL ) )
     {
@@ -212,16 +217,22 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
       dir->d_adatetime=(dir->d_adatetime >> 16 | dir->d_adatetime << 16);
       long mdatetime  =(dir->d_date | dir->d_time << 16);
       dir->d_bdatetime=(dir->d_bdatetime >> 16 | dir->d_bdatetime << 16);
- 
+
       SetFileInfo( (char *)(fn), 0x06, (dir->d_attr|_A_SHARE|_A_IMMPURG),
-                   (char *)(&dir->d_cdatetime), (char *)(&dir->d_adatetime), 
-                   (char *)(&mdatetime), (char *)(&dir->d_bdatetime), 
-                   dir->d_uid  ); 
+                   (char *)(&dir->d_cdatetime), (char *)(&dir->d_adatetime),
+                   (char *)(&mdatetime), (char *)(&dir->d_bdatetime),
+                   dir->d_uid  );
       closedir( dir );
       //technically could now use normal fopen().
     }
     #endif
-    int handle = sopen(fn, O_RDWR|O_BINARY, SH_DENYNO); 
+    int handle;
+    if (bCreate)
+      handle = sopen(fn, O_RDWR|O_BINARY|O_CREAT,
+                     SH_DENYRW, S_IREAD|S_IWRITE);
+    else
+      handle = sopen(fn, O_RDWR|O_BINARY, SH_DENYWR);
+
     if (handle != -1)
     {
       FILE *f = fdopen(handle, "r+b");
@@ -231,8 +242,28 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
     }
     return (FILE *)0;
   }
+  #define ftruncate(h,sz) chsize(h,sz)
+  #define BUFFEROPEN( fn )  __bufferopenlock( fn, 0 )
+  #define BUFFEROPENCREATE( fn )  __bufferopenlock( fn, 1 )
+  #define BUFFERCREATE( fn ) fopen( fn, "wb" )
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
+  static FILE *__bufferopenlock(const char *fn, const char *mode)
+  {
+    FILE *fp = fopen(fn, mode);
+    if (fp != NULL) {
+      if (flock(fp, LOCK_EX | LOCK_NB) < 0) {
+        fclose(fp);
+        fp = NULL;
+      }
+    }
+    return fp;
+  }
+  #define BUFFEROPEN( fn )   __bufferopenlock( fn, "r+" )
+  #define BUFFEROPENCREATE( fn )   __bufferopenlock( fn, "a+" )
+  #define BUFFERCREATE( fn )   fopen( fn, "w" )
 #else
   #define BUFFEROPEN( fn )  fopen( fn, "r+" )
+  #define BUFFEROPENCREATE( fn )  fopen( fn, "a+" )
   #define BUFFERCREATE( fn )   fopen( fn, "w" )
 #endif
 
@@ -262,7 +293,7 @@ int BufferZapFileRecords( const char *filename )
   }
   fclose(file);
   return 0;
-}  
+}
 
 
 /* --------------------------------------------------------------------- */
@@ -321,16 +352,16 @@ static int BufferCloseFile( FILE *file )
 {
   fclose(file);
   return 0;
-}  
+}
 
 /* --------------------------------------------------------------------- */
 
 static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
-{ 
+{
   if (((const WorkRecord *)dest) != source )
     memcpy( (void *)dest, (const void *)source, sizeof(WorkRecord));
   /* we don't do PDP byte order, so this is ok */
-  switch (dest->contest) 
+  switch (dest->contest)
   {
     case RC5:
     case DES:
@@ -345,7 +376,7 @@ static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
     {
       dest->work.ogr.workstub.stub.marks  = ntohs(dest->work.ogr.workstub.stub.marks);
       dest->work.ogr.workstub.stub.length = ntohs(dest->work.ogr.workstub.stub.length);
-      for (int i = 0; i < STUB_MAX; i++) 
+      for (int i = 0; i < STUB_MAX; i++)
         dest->work.ogr.workstub.stub.diffs[i] = ntohs(dest->work.ogr.workstub.stub.diffs[i]);
       dest->work.ogr.workstub.worklength  = ntohl(dest->work.ogr.workstub.worklength);
       dest->work.ogr.nodes.hi             = ntohl(dest->work.ogr.nodes.hi);
@@ -354,7 +385,7 @@ static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
     }
   }
   return;
-}  
+}
 
 /* --------------------------------------------------------------------- */
 
@@ -368,12 +399,12 @@ int UnlockBuffer( const char *filename )
     return 0;
   }
   return -1; /* error message will already have been printed */
-}  
+}
 
 /* --------------------------------------------------------------------- */
 
-int BufferPutFileRecord( const char *filename, const WorkRecord * data, 
-                         unsigned long *countP ) 
+int BufferPutFileRecord( const char *filename, const WorkRecord * data,
+                         unsigned long *countP )
 {
   unsigned long reccount;
   FILE *file = BufferOpenFile( filename, &reccount );
@@ -407,12 +438,12 @@ int BufferPutFileRecord( const char *filename, const WorkRecord * data,
   if (!failed && countP)
     BufferCountFileRecords( filename, data->contest, countP, NULL );
   return failed;
-}  
-  
+}
+
 /* --------------------------------------------------------------------- */
 
 int BufferUpdate( Client *client, int updatereq_flags, int interactive )
-{ 
+{
   char loaderflags_map[CONTEST_COUNT];
   int failed, dofetch, doflush, didfetch, didflush, dontfetch, dontflush;
   unsigned int i, contest_i;
@@ -432,7 +463,7 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
   if ((updatereq_flags & BUFFERUPDATE_FLUSH) != 0)
     dontflush = 0;
 
-  dofetch = doflush = 0;  
+  dofetch = doflush = 0;
   for (i = 0; i < CONTEST_COUNT; i++)
   {
     contest_i = (unsigned int)(client->loadorder_map[i]);
@@ -464,7 +495,7 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
         long count = GetBufferCount( client, contest_i, 1 /* use_out_file */, NULL );
         if (count >= 0) /* no error */
         {
-          if ( count > 0 /* count >= ClientGetOutThreshold( client, contest ) || 
+          if ( count > 0 /* count >= ClientGetOutThreshold( client, contest ) ||
             ( client->connectoften && count > 0) || (interactive && count > 0) */)
           {
             doflush = 1;
@@ -473,7 +504,7 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
       }
     }
   }
-    
+
   failed = didfetch = didflush = 0;
   if ((doflush || dofetch) && CheckExitRequestTriggerNoIO() == 0)
   {
@@ -521,9 +552,9 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
 
 /* --------------------------------------------------------------------- */
 
-int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data, 
+int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data,
              unsigned long *countP ) /* returns <0 on ioerr, >0 if norecs */
-{                                      
+{
   unsigned long reccount = 0;
   FILE *file = BufferOpenFile( filename, &reccount );
   int failed = -1;
@@ -565,19 +596,19 @@ int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data,
   if (!failed && countP)
     BufferCountFileRecords( filename, data->contest, countP, NULL );
   return failed;
-}  
+}
 
 /* --------------------------------------------------------------------- */
 
-int BufferGetFileRecord( const char *filename, WorkRecord * data, 
+int BufferGetFileRecord( const char *filename, WorkRecord * data,
                unsigned long *countP ) /* returns <0 on ioerr, >0 if norecs */
 {
   return BufferGetFileRecordNoOpt( filename, data, countP );
-}  
+}
 
 /* --------------------------------------------------------------------- */
 
-int BufferCountFileRecords( const char *filename, unsigned int contest, 
+int BufferCountFileRecords( const char *filename, unsigned int contest,
                        unsigned long *packetcountP, unsigned long *normcountP )
 {
   unsigned long normcount = 0, reccount = 0;
@@ -602,7 +633,7 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
         packetcount++;
         if ( normcountP )
         {
-          switch (contest) 
+          switch (contest)
           {
             case RC5:
             case DES:
@@ -642,12 +673,12 @@ static void __FixupRandomPrefix( const WorkRecord * data, Client *client )
   if (data->contest == RC5 && data->work.crypto.iterations.hi == 0 /* < 2^32 */
      && (data->work.crypto.iterations.lo) != 0x00100000UL /*!test*/
      && (data->work.crypto.iterations.lo) != 0x10000000UL /* !2**28 */)
-  {                                   
+  {
     u32 randomprefix = ((data->work.crypto.key.hi) & 0xFF000000L) >> 24;
-    if (randomprefix != ((u32) client->randomprefix) ) 
+    if (randomprefix != ((u32) client->randomprefix) )
     {
       // Has the high byte changed?  If so, then remember it.
-      client->randomprefix = randomprefix;          
+      client->randomprefix = randomprefix;
       client->randomchanged=1;
     }
   }
@@ -659,7 +690,7 @@ static void __FixupRandomPrefix( const WorkRecord * data, Client *client )
 static int __CheckBuffLimits( Client *client )
 {
   /* thresholds are managed in ClientGet[In|Out]Threshold() [client.cpp] */
-  if (client->nodiskbuffers == 0 && 
+  if (client->nodiskbuffers == 0 &&
       client->out_buffer_basename[0] && client->in_buffer_basename[0])
   {
     if (strcmp(client->in_buffer_basename, client->out_buffer_basename) == 0)
@@ -670,7 +701,7 @@ static int __CheckBuffLimits( Client *client )
     }
   }
   return 0;
-}  
+}
 
 /* --------------------------------------------------------------------- */
 
@@ -690,7 +721,7 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
   {
     //LogScreen("Discarded packet from unknown contest.\n");
   }
-  else if (workstate != RESULT_WORKING && workstate != RESULT_FOUND && 
+  else if (workstate != RESULT_WORKING && workstate != RESULT_FOUND &&
            workstate != RESULT_NOTHING)
   {
     LogScreen("Discarded packet with unrecognized workstate %ld.\n",workstate);
@@ -740,7 +771,7 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
 
 /* --------------------------------------------------------------------- */
 
-long GetBufferRecord( Client *client, WorkRecord* data, 
+long GetBufferRecord( Client *client, WorkRecord* data,
                       unsigned int contest, int use_out_file)
 {
   unsigned long workstate;
@@ -752,7 +783,7 @@ long GetBufferRecord( Client *client, WorkRecord* data,
 
   if (__CheckBuffLimits( client ))
     return -1;
-  
+
   do
   {
     if (!(contest < CONTEST_COUNT))
@@ -800,7 +831,7 @@ long GetBufferRecord( Client *client, WorkRecord* data,
       {
         LogScreen("Discarded packet from unknown contest.\n");
       }
-      else if (workstate != RESULT_WORKING && workstate != RESULT_FOUND && 
+      else if (workstate != RESULT_WORKING && workstate != RESULT_FOUND &&
               workstate != RESULT_NOTHING)
       {
         LogScreen("Discarded packet with unrecognized workstate %ld.\n",workstate);
@@ -844,7 +875,7 @@ long GetBufferRecord( Client *client, WorkRecord* data,
       }
     }
   /* bad packet, but loop if we have more in buff */
-  } while (count && !CheckExitRequestTriggerNoIO()); 
+  } while (count && !CheckExitRequestTriggerNoIO());
 
   return -1;
 }
@@ -881,7 +912,7 @@ int BufferAssertIsBufferFull( Client *client, unsigned int contest )
 
 /* --------------------------------------------------------------------- */
 
-long GetBufferCount( Client *client, unsigned int contest, 
+long GetBufferCount( Client *client, unsigned int contest,
                      int use_out_file, unsigned long *normcountP )
 {
   membuffstruct *membuff;
@@ -925,9 +956,9 @@ long GetBufferCount( Client *client, unsigned int contest,
 long BufferImportFileRecords( Client *client, const char *source_file, int interactive)
 {
   unsigned long remaining, lastremaining = 0;
-  unsigned int recovered = 0; 
+  unsigned int recovered = 0;
   int errs = 0;
-  WorkRecord data; 
+  WorkRecord data;
 
   if ( !DoesFileExist( source_file ) )
   {
@@ -935,8 +966,8 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
       LogScreen("Import error: Source '%s' doesn't exist\n", source_file );
     return -1L;
   }
-  
-  while (BufferGetFileRecordNoOpt( source_file, &data, &remaining ) == 0) 
+
+  while (BufferGetFileRecordNoOpt( source_file, &data, &remaining ) == 0)
                            //returns <0 on ioerr/corruption, > 0 if norecs
   {
     if (lastremaining != 0)
@@ -945,7 +976,7 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
       {
         if (interactive)
           LogScreen("Import error: something bad happened.\n"
-                    "The source file isn't getting smaller.\n"); 
+                    "The source file isn't getting smaller.\n");
         errs = 1;
         recovered = 0;
         break;
@@ -977,26 +1008,26 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
                 sizeof(client->out_buffer_basename) + 10 ];
   unsigned int contest;
   int failed = 0;
-  
+
   if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
     return 0;
 
   if (client->out_buffer_basename[0] == '\0')
   {
-    strcpy( basename, 
+    strcpy( basename,
             GetFullPathForFilenameAndDir( BUFFER_DEFAULT_OUT_BASENAME,
                                           client->remote_update_dir ));
-  }                                          
+  }
   else
   {
-    strcpy( basename, 
+    strcpy( basename,
            GetFullPathForFilenameAndDir(
              &(client->out_buffer_basename[
                         GetFilenameBaseOffset(client->out_buffer_basename)]),
              client->remote_update_dir ) );
-  }                                          
+  }
   basename[sizeof(basename)-1] = '\0';
-    
+
   for (contest = 0; failed == 0  && contest < CONTEST_COUNT; contest++)
   {
     WorkRecord wrdata;
@@ -1004,12 +1035,12 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
     long lefttotrans;
     char remote_file[128];
 
-    if (CheckExitRequestTriggerNoIO())  
+    if (CheckExitRequestTriggerNoIO())
       break;
 
     if (loadermap_flags[contest] != 0) /* contest is closed or disabled */
       continue;
-  
+
     strncpy( remote_file, BufferGetDefaultFilename(contest,1,basename), sizeof(remote_file));
     remote_file[sizeof(remote_file)-1] = '\0';
 
@@ -1017,22 +1048,22 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
     {
       long workunits = 0;
 
-      if (( wrdata.resultcode != RESULT_NOTHING && 
-            wrdata.resultcode != RESULT_FOUND ) || 
+      if (( wrdata.resultcode != RESULT_NOTHING &&
+            wrdata.resultcode != RESULT_FOUND ) ||
             ((unsigned int)wrdata.contest) != contest)
       { /* buffer code should have handled this */
         //Log( "%sError - Bad Data - packet discarded.\n",exchname );
         continue;
       }
-      
+
       if ( BufferPutFileRecord( remote_file, &wrdata, NULL ) != 0 )
       {
         PutBufferRecord( client, &wrdata );
         failed = -1;
         break;
       }
-      
-      switch (contest) 
+
+      switch (contest)
       {
         case RC5:
         case DES:
@@ -1041,10 +1072,10 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
                                    wrdata.work.crypto.iterations.hi);
           break;
         case OGR:
-          workunits = 1;                   
+          workunits = 1;
           break;
       }
-      
+
       projtrans++;
       combinedtrans++;
       combinedworkunits += workunits;
@@ -1059,23 +1090,23 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
         if (totrans < projtrans)
           totrans = projtrans;
         percent = ((projtrans*10000)/totrans);
-        
+
         LogScreen( "\rSent %s packet %lu of %lu (%u.%02u%% transferred)     ",
             CliGetContestNameFromID(contest),
             projtrans, totrans,  percent/100, percent%100 );
       }
-    
-      if (CheckExitRequestTriggerNoIO())  
+
+      if (CheckExitRequestTriggerNoIO())
         break;
 
     } /* while (lefttotrans >=0 ) */
-    
+
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
 
   if (combinedtrans > 0)
   {
     ClientEventSyncPost( CLIEVENT_BUFFER_FLUSHEND, (long)(combinedtrans) );
-    Log( "Moved %lu packet%s (%lu work units) to remote file.\n", 
+    Log( "Moved %lu packet%s (%lu work units) to remote file.\n",
       combinedtrans, ((combinedtrans==1)?(""):("s")), combinedworkunits );
   }
 
@@ -1083,7 +1114,7 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
     return -((long)(combinedtrans+1));
   return combinedtrans;
 }
-        
+
 /* --------------------------------------------------------------------- */
 
 long BufferFetchFile( Client *client, const char *loaderflags_map )
@@ -1111,22 +1142,22 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
 
   if (client->in_buffer_basename[0] == '\0')
   {
-    strcpy( basename, 
+    strcpy( basename,
             GetFullPathForFilenameAndDir( BUFFER_DEFAULT_IN_BASENAME,
                                           client->remote_update_dir ));
   }
   else
   {
-     strcpy( basename, 
+     strcpy( basename,
              GetFullPathForFilenameAndDir(
                &(client->in_buffer_basename[
                         GetFilenameBaseOffset(client->in_buffer_basename)]),
              client->remote_update_dir ) );
 
-  }                                          
+  }
   basename[sizeof(basename)-1] = '\0';
 //printf("basename: %s\n",basename);
-    
+
   for (contest = 0; !failed && contest < CONTEST_COUNT; contest++)
   {
     unsigned long projtrans = 0, projworkunits = 0;
@@ -1134,7 +1165,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
     int packets;
     char remote_file[128];
 
-    if (CheckExitRequestTriggerNoIO())  
+    if (CheckExitRequestTriggerNoIO())
       break;
 
     if (loaderflags_map[contest] != 0) /* contest is closed or disabled */
@@ -1168,7 +1199,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       WorkRecord wrdata;
       unsigned long remaining;
       int workunits = 0;
-      
+
       if (CheckExitRequestTriggerNoIO() != 0 )
         break;
 
@@ -1176,7 +1207,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
         break;
       if (remaining == 0)
          lefttotrans = 0;
-      
+
       if (PutBufferRecord( client, &wrdata ) < 0)
       {
         BufferPutFileRecord( remote_file, &wrdata, NULL );
@@ -1185,7 +1216,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
         break;
       }
 
-      switch (contest) 
+      switch (contest)
       {
         case RC5:
         case DES:
@@ -1194,7 +1225,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
                                    wrdata.work.crypto.iterations.hi);
           break;
         case OGR:
-          workunits = 1;                   
+          workunits = 1;
           break;
       }
 
@@ -1204,10 +1235,10 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       combinedworkunits+=workunits;
       if (((unsigned long)workunits) > lefttotrans)
         lefttotrans = 0;
-      else  
+      else
         lefttotrans -= workunits;
 
-      if (combinedtrans == 1) 
+      if (combinedtrans == 1)
         ClientEventSyncPost( CLIEVENT_BUFFER_FETCHBEGIN, 0 );
 
       {
@@ -1226,13 +1257,13 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
             projworkunits, totrans,  percent/100, percent%100 );
       }
     }  /* while ( lefttotrans > 0  ) */
-    
+
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
 
   if (combinedtrans > 0)
   {
     ClientEventSyncPost( CLIEVENT_BUFFER_FETCHEND, (long)(combinedtrans) );
-    Log( "Retrieved %lu work unit%s (%lu packet%s) from remote file.\n", 
+    Log( "Retrieved %lu work unit%s (%lu packet%s) from remote file.\n",
       combinedworkunits, ((combinedworkunits==1)?(""):("s")),
       combinedtrans, ((combinedtrans==1)?(""):("s")) );
   }
@@ -1241,3 +1272,6 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
     return -((long)(combinedtrans+1));
   return combinedtrans;
 }
+
+/* --------------------------------------------------------------------- */
+
