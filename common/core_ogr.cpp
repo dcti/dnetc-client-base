@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.2 2003/09/12 23:19:10 mweiser Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.3 2003/11/01 15:00:08 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -38,7 +38,9 @@ return "@(#)$Id: core_ogr.cpp,v 1.2 2003/09/12 23:19:10 mweiser Exp $"; }
     #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
+  #if (CLIENT_OS != OS_VMS)    /* Include for other OSes */
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix(void);
+  #endif
 #elif (CLIENT_CPU == CPU_68K)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_000(void);
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_020(void);
@@ -83,7 +85,9 @@ int InitializeCoreTable_ogr(int first_time)
         ogr_get_dispatch_table_060();
       #elif (CLIENT_CPU == CPU_ALPHA)
         ogr_get_dispatch_table();
-        ogr_get_dispatch_table_cix();
+        #if (CLIENT_OS != OS_VMS)         /* Include for other OSes */
+           ogr_get_dispatch_table_cix();
+        #endif
       #elif (CLIENT_CPU == CPU_VAX)
         ogr_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_SPARC)
@@ -132,7 +136,9 @@ const char **corenames_for_contest_ogr()
       "GARSP 5.13 68060",
   #elif (CLIENT_CPU == CPU_ALPHA)
       "GARSP 5.13",
+    #if (CLIENT_OS != OS_VMS)  /* Include for other OSes */
       "GARSP 5.13-CIX",
+    #endif
   #elif (CLIENT_CPU == CPU_POWERPC)
       "GARSP 5.13 Scalar",
       "GARSP 5.13 Vector",   /* altivec only */
@@ -294,6 +300,12 @@ int selcoreGetPreselectedCoreForProject_ogr()
       }
   // ===============================================================
   #elif (CLIENT_CPU == CPU_ARM)
+    {
+      extern signed int default_ogr_core;
+
+      cindex = default_ogr_core;
+    }
+#if 0
     if (detected_type > 0)
     {
       if (detected_type == 0x200  || /* ARM 2 */
@@ -312,6 +324,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
                detected_type == 0xB11)   /* StrongARM 1110 */
         cindex = 0;
     }
+#endif
   // ===============================================================
   #endif
 
@@ -369,10 +382,12 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
     coresel = 0;
   }
 #elif (CLIENT_CPU == CPU_ALPHA)
-  if (coresel == 1)
-    unit_func.ogr = ogr_get_dispatch_table_cix();
-  else
-    unit_func.ogr = ogr_get_dispatch_table();
+  #if (CLIENT_OS != OS_VMS)       /* Include for other OSes */
+    if (coresel == 1)       
+      unit_func.ogr = ogr_get_dispatch_table_cix();
+    else
+  #endif 
+      unit_func.ogr = ogr_get_dispatch_table();
 #elif (CLIENT_CPU == CPU_X86)
   if (coresel == 0) //A
     unit_func.ogr = ogr_get_dispatch_table(); //A

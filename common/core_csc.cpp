@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_csc_cpp(void) {
-return "@(#)$Id: core_csc.cpp,v 1.2 2003/09/12 23:19:10 mweiser Exp $"; }
+return "@(#)$Id: core_csc.cpp,v 1.3 2003/11/01 15:00:08 mweiser Exp $"; }
 
 //#define TRACE
 
