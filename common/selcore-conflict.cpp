@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.24  1998/12/18 18:29:27  sampo
+// MacOS doesn't use the PPC whichrcunch calculation loop.
+//
 // Revision 1.23  1998/12/14 11:43:27  cyp
 // (*unit_func)(...) style core selection is now completed in Prob::LoadState()
 //
@@ -95,7 +98,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.23 1998/12/14 11:43:27 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.24 1998/12/18 18:29:27 sampo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -205,6 +208,7 @@ int Client::SelectCore(int quietly)
   #elif (CLIENT_OS == OS_WIN32)
     //actually not supported, but just in case
     cputype = 1;
+  #elif (CLIENT_OS == OS_MACOS)
   #else
     {
     if (cputype == -1)
