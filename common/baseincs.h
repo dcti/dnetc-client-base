@@ -10,8 +10,12 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.36  1998/12/14 05:09:16  dicamillo
+// Fix formatting error in log comment.
+//
 // Revision 1.35  1998/12/14 05:05:04  dicamillo
-// MacOS updates to eliminate MULTITHREAD and have a singe client for MT// and non-MT machines
+// MacOS updates to eliminate MULTITHREAD and have a singe client for MT
+// and non-MT machines
 //
 // Revision 1.34  1998/12/08 05:27:51  dicamillo
 // Add includes for MacOS
