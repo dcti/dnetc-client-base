@@ -131,7 +131,7 @@ optionstruct options[OPTION_COUNT]=
 //9
 { "logname", "File to log to", "", "(128 characters max, blank = no log)\n",2,1,1,NULL},
 //10
-{ "uuehttpmode", "Firewall Communications mode (UUE/HTTP/SOCKS)", "No special encoding",
+{ "uuehttpmode", "Firewall Communications mode (UUE/HTTP/SOCKS)", "0",
   "",3,2,1,NULL,&uuehttptable[0][0],0,5},
 //11
 { "keyproxy", "Preferred KeyServer Proxy", "us.v27.distributed.net",
@@ -149,14 +149,14 @@ optionstruct options[OPTION_COUNT]=
 { "httpid", "HTTP/SOCKS proxy userid/password", "", "(Enter userid (. to reset it to empty) )",3,1,6,NULL},
 #if (CLIENT_CPU == CPU_X86)
 //16
-{ "cputype", "Optimize performance for CPU type", "Autodetect",
+{ "cputype", "Optimize performance for CPU type", "-1",
       "\n",4,2,3,NULL,&cputypetable[1][0],-1,5},
 #elif (CLIENT_CPU == CPU_ARM)
-{ "cputype", "Optimize performance for CPU type", "Autodetect",
+{ "cputype", "Optimize performance for CPU type", "-1",
       "\n",4,2,3,NULL,&cputypetable[1][0],-1,1},
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
 //16
-{ "cputype", "Optimize performance for CPU type", "Autodetect",
+{ "cputype", "Optimize performance for CPU type", "-1",
       "\n",4,2,3,NULL,&cputypetable[1][0],-1,1},
 #else
 //16
@@ -202,7 +202,7 @@ optionstruct options[OPTION_COUNT]=
 { "preferredblocksize", "Preferred Block Size","30",
   "(2^28 -> 2^31)",5,2,5,NULL},
 //27
-{ "preferredcontest", "Preferred Contest","DES","- DES strongly recommended",5,2,6,
+{ "preferredcontest", "Preferred Contest","2","- DES strongly recommended",5,2,6,
   NULL,&contesttable[0][0],1,2},
 //28
 { "quiet", "Disable all screen output? (quiet mode)","no","",5,3,7,NULL},
@@ -230,7 +230,7 @@ optionstruct options[OPTION_COUNT]=
 //36
 { "exitfilechecktime", "Exit file check time (seconds)","30","",5,2,12,NULL},
 //37
-{ "runbuffers", "Offline operation mode","Normal Operation",
+{ "runbuffers", "Offline operation mode","0",
   "\nNormal Operation: The client will connect to a keyserver as needed,\n"
   "        and use random blocks if a keyserver connection cannot be made.\n"
   "Offline Always: The client will never connect to a keyserver, and will\n"
@@ -239,7 +239,7 @@ optionstruct options[OPTION_COUNT]=
   "        to a keyserver, and when the block buffers empty, it will\n"
   "        terminate.\n",3,2,9,NULL,&offlinemodetable[0][0],0,2},
 //38
-{ "lurk", "Modem detection options","Normal mode",
+{ "lurk", "Modem detection options","0",
   "\nNormal mode: the client will send/receive blocks only when it\n"
   "        empties the in buffer, hits the flush threshold, or the user\n"
   "        specifically requests a flush/fetch.\n"
@@ -399,7 +399,8 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
              printf("  %2d) %s\n",temp,options[choice].choicelist+temp*60);
              }
            printf("\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
-                  options[choice].defaultsetting,options[choice].choicelist+
+                  options[choice].choicelist+atoi(options[choice].defaultsetting)*60,
+                  options[choice].choicelist+
                   ((long)*(s32 *)options[choice].thevariable*60));
            }
     else if (options[choice].type==3)
@@ -549,7 +550,7 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
             options[CONF_HTTPPROXY].optionscreen=3;
             options[CONF_HTTPPORT].optionscreen=3;
             options[CONF_HTTPID].optionscreen=3;
-            } 
+            }
             else
             {
             options[CONF_HTTPPROXY].optionscreen=0;
@@ -557,14 +558,14 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
             options[CONF_HTTPID].optionscreen=0;
             };
           break;
-#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) 
+#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM)
         case CONF_CPUTYPE:
           cputype = atoi(parm);
           if (cputype < -1 ||
               cputype > options[CONF_CPUTYPE].choicemax)
             cputype = -1;
           break;
-#elif (CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX)) 
+#elif (CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))
         case CONF_CPUTYPE:
           cputype = atoi(parm);
           if (cputype < -1 ||
@@ -592,7 +593,7 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
             options[CONF_SMTPPORT].optionscreen=0;
             options[CONF_SMTPDEST].optionscreen=0;
             options[CONF_SMTPFROM].optionscreen=0;
-            }; 
+            };
           break;
         case CONF_SMTPPORT:
           smtpport = atoi(parm);
@@ -930,7 +931,7 @@ if (messagelen != 0)
   options[CONF_SMTPPORT].optionscreen=0;
   options[CONF_SMTPDEST].optionscreen=0;
   options[CONF_SMTPFROM].optionscreen=0;
-  }; 
+  };
 
 if (uuehttpmode > 1)
   {
