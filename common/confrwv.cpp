@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.25  1999/01/07 20:14:55  cyp
+// fixed priority=. Readini quote handling _really_ needs rewriting.
+//
 // Revision 1.24  1999/01/06 07:28:45  dicamillo
 // Add (apparently missing) code to ReadConfig to set cputype.
 //
@@ -113,7 +116,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.24 1999/01/06 07:28:45 dicamillo Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.25 1999/01/07 20:14:55 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -147,6 +150,9 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   char buffer[64];
   char *p;
   IniRecord *tempptr;
+
+  client->randomchanged = 0;
+  RefreshRandomPrefix( client, 1 /* don't trigger */ );
 
   inierror = ini.ReadIniFile( GetFullPathForFilename( client->inifilename ) );
   if (inierror) return -1;
@@ -191,8 +197,11 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
 
   client->timeslice = 0x10000;
 
-  if ((tempptr = ini.findfirst( "processor usage", "priority"))!=NULL)
-    client->priority = (ini.getkey("processor usage", "priority", "0")[0]);
+  if ((tempptr = ini.findfirst( "processor-usage", "priority"))!=NULL)
+    client->priority = (ini.getkey("processor-usage", "priority", "0")[0]);
+  else if ((tempptr = ini.findfirst( "processor usage", "BABERUTH"))!=NULL)
+    //need this because of foobared readini.cpp space handling in keywords.
+    client->priority = (ini.getkey("processor usage", "MICKEYMANTLE", "0")[0]);
   else if ((client->priority=(ini.getkey(OPTION_SECTION,"niceness","0")[0]))!=0)
     client->priority = ((client->priority==2)?(8):((client->priority==1)?(4):(0)));
 
@@ -460,8 +469,11 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       INISETKEY( CONF_CPUTYPE, client->cputype );
     if (client->numcpu!=-1 || INIFIND(CONF_NUMCPU)!=NULL)
       INISETKEY( CONF_NUMCPU, client->numcpu );
-    if (client->priority != 0 || ini.findfirst("processor usage", "priority"))
-      ini.setrecord(OPTION_SECTION, "processor usage",  IniString(client->priority));
+    if (client->priority != 0 || ini.findfirst( "processor-usage", "priority"))
+      client->priority = (ini.getkey("processor-usage", "priority", "0")[0]);
+    //spaces in a SECTIONname result in a (bad) KEYWORD just anywhere
+    if ((tempptr = ini.findfirst( "processor usage", "FOOBAR"))!=NULL)
+      tempptr->values.Erase();
 
     /* --- CONF_MENU_NET -- */
 
