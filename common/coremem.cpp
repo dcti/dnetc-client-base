@@ -9,7 +9,7 @@
  * Created March 2001 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *probmem_cpp(void) {
-return "@(#)$Id: coremem.cpp,v 1.1.2.3 2001/03/20 18:26:27 cyp Exp $"; }
+return "@(#)$Id: coremem.cpp,v 1.1.2.4 2001/03/20 18:31:23 cyp Exp $"; }
 
 //#define TRACE
 
@@ -63,7 +63,7 @@ void *cmem_alloc(unsigned int sz)
     int fd = open("/dev/zero", O_RDWR);
     if (fd != -1)
     {
-      mem = mmap( 0, sz, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+      mem = mmap( 0, sz, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
       if (mem == ((void *)-1))
         mem = (void *)0;
       close(fd);
