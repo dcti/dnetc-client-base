@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.34  1998/08/28 22:05:49  cyp
+// Added prototypes for new/extended "low level" methods.
+//
 // Revision 1.33  1998/08/25 00:06:57  cyp
 // Merged (a) the Network destructor and DeinitializeNetwork() into NetClose()
 // (b) the Network constructor and InitializeNetwork() into NetOpen().
@@ -253,7 +256,7 @@ extern "C" {
   #endif  
 #endif
 
-///////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
 
 #define MODE_UUE        1
 #define MODE_HTTP       2
@@ -262,8 +265,31 @@ extern "C" {
 #define MODE_SOCKS5     8
 #define DEFAULT_RRDNS   "us.v27.distributed.net"
 #define DEFAULT_PORT    2064
+#define INVALID_SOCKET  ((SOCKET)(-1))
+#define CONDSOCK_BLOCKING_ON     0x00000011L
+#define CONDSOCK_BLOCKING_OFF    0x00000010L
+#define CONDSOCK_NONBLOCKING_ON  CONDSOCK_BLOCKING_OFF
+#define CONDSOCK_NONBLOCKING_OFF CONDSOCK_BLOCKING_ON
+
+//-------------------------------------------------------------------------
+
+class Network; //for forward resolution
+
+// two functions that combine the functionality of NetworkInitialize()+
+// Network::Network() and NetworkDeinitialize()+Network::~Network() 
+// must be called instead of the Network constructor or destructor.
+extern Network *NetOpen(const char *keyserver, s32 keyserverport, 
+                int nofallback = 1, int autofindks = 0, s32 proxytype = 0, 
+                const char *proxyhost = NULL, s32 proxyport = 0, 
+                const char *proxyuid = NULL);
+extern int NetClose( Network *net );
 
 ///////////////////////////////////////////////////////////////////////////
+
+//----------------------------------------------------------------
+// Only the "LowLevel..()" methods (and Resolve()) use BSD socket functions.
+// Protected functions do not (should not) display error messages.
+//----------------------------------------------------------------
 
 class Network
 {
@@ -276,7 +302,9 @@ protected:
   s32  retries;         // 3 retries, then do RRDNS lookup
   u32  lastaddress;
   s16  lastport;
+  int  isnonblocking;    // whether the socket could be set non-blocking
   int autofindkeyserver; // implies 'only if hostname is a dnet keyserver'
+  int  verbose_level; // 0 == no messages, 1 == user, 2 = diagnostic/debug
 
   // http related
   char httpproxy[64];   // also used for socks4
@@ -286,32 +314,64 @@ protected:
 
   // communications and decoding buffers
   AutoBuffer netbuffer, uubuffer;
-  bool gotuubegin, gothttpend, puthttpdone, gethttpdone;
+  int gotuubegin, gothttpend, puthttpdone, gethttpdone;
   u32 httplength;
 
-  friend void MakeNonBlocking(SOCKET sock, bool nonblocking = true);
+  int InitializeConnection(void); //high level method. Used internally by Open
+    //currently only negotiates/authenticates the SOCKSx session. 
+    // returns < 0 on error, 0 on success
+
+  s32 Resolve( const char *host, u32 &hostaddress ); //LowLevel.. 
+    // perform a DNS lookup, handling random selection of DNS lists
+    // returns < 0 on error, 0 on success
+
+  int LowLevelCreateSocket(void);
+    // Returns < 0 on error, else assigns fd to this->sock and returns 0.
+    
+  int LowLevelCloseSocket(void);
+    // destroys this->sock if (this->sock != INVALID_SOCKET) and returns 0.
+
+  int LowLevelConnectSocket( u32 that_address, u16 that_port ); 
+    // connect to address:port.  Return < 0 if error
+
+  int LowLevelConditionSocket( unsigned long cond_type );
+    // Returns < 0 if error - see CONDSOCK... defines above
 
   s32 LowLevelGet(u32 length, char *data);
     // Returns length of read buffer
     //    or 0 if connection closed
-    //    or -1 if no data waiting
+    //    or < 0 if no data waiting
 
   s32 LowLevelPut(u32 length, const char *data);
     // Returns length of sent buffer
     //    or -1 on error
 
-public:
   Network( const char * preferred, const char * roundrobin, 
            s16 port, int AutoFindKeyServer );
     // constructor: If preferred or roundrobin are NULL, use DEFAULT_RRDNS.
     // They can be IP's and not necessarily names, though a name is better
-    // suited for roundrobin use.
-    // if port is 0, use DEFAULT_PORT
+    // suited for roundrobin use.  if port is 0, use DEFAULT_PORT
+    // protected!: used by friend NetOpen() below.
 
   ~Network( void );
-    // guess
+    // guess. 
 
-  void SetModeUUE( bool enabled );
+  s32  Open( SOCKET insock );
+    // takes over a preconnected socket to a client.
+    // returns -1 on error, 0 on success
+
+  s32  Open( void );
+    // [re]open the connection using the current settings.
+    // returns -1 on error, 0 on success
+
+  friend Network *NetOpen(const char *keyserver, s32 keyserverport, 
+                  int nofallback, int autofindks, s32 proxytype, 
+                  const char *proxyhost, s32 proxyport, const char *proxyuid);
+  friend int NetClose( Network *net );
+
+public:
+
+  void SetModeUUE( int is_enabled );
     // enables or disable uuencoding of the data stream
 
   void SetModeHTTP( const char *httpproxyin = NULL, s16 httpportin = 80,
@@ -334,20 +394,8 @@ public:
     // usernamepw is username:pw
     // An empty or NULL usernamepw means use only no authentication method
 
-  s32  Open( SOCKET insock );
-    // takes over a preconnected socket to a client.
-    // returns -1 on error, 0 on success
-
-  s32  Open( void );
-    // [re]open the connection using the current settings.
-    // returns -1 on error, 0 on success
-
   s32  Close( void );
     // close the connection
-
-  s32 Resolve( const char *host, u32 &hostaddress );
-    // perform a DNS lookup, handling random selection of DNS lists
-    // returns -1 on error, 0 on success
 
   s32  Get( u32 length, char * data, u32 timeout = 10 );
     // recv data over the open connection, uue/http based on ( mode & MODE_UUE ) etc.
@@ -357,25 +405,16 @@ public:
     // send data over the open connection, uue/http based on ( mode & MODE_UUE ) etc.
     // returns -1 on error, or 0 on success
 
-  void MakeBlocking();
-    // makes the socket operate in blocking mode.
-    
   int GetHostName( char *buffer, unsigned int len ); //used by mail.
     // like gethostname() 
+    
+  int MakeBlocking(void) // make the socket operate in blocking mode.
+      { return LowLevelConditionSocket( CONDSOCK_BLOCKING_ON ); }
+
+  int MakeNonBlocking(void) //the other shortcut
+      { return LowLevelConditionSocket( CONDSOCK_BLOCKING_OFF ); };
 };
-
-//-------------------------------------------------------------------------
-
-// two functions that combine the functionality of NetworkInitialize()+
-// Network::Network() and NetworkDeinitialize()+Network::~Network() 
-// must be called instead of the Network constructor or destructor.
-extern Network *NetOpen(const char *keyserver, s32 keyserverport, 
-                int nofallback = 1, int autofindks = 0, s32 proxytype = 0, 
-                const char *proxyhost = NULL, s32 proxyport = 0, 
-                const char *proxyuid = NULL);
-extern int NetClose( Network *net );
 
 ///////////////////////////////////////////////////////////////////////////
 
 #endif //NETWORK_H
-
