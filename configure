@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.103  1998/10/03 05:49:17  cyp
+# Added console.cpp - do Linux et al really need to link curses just to
+# figure out the terminal height for a function thats never (or rarely) used?
+#
 # Revision 1.102  1998/09/30 22:48:01  remi
 # Added a new x86-linux-glibc2 entry.
 #
@@ -479,7 +483,8 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/triggers.cpp common/selcore.cpp common/netinit.cpp
     common/cmdline.cpp common/selftest.cpp common/guistuff.cpp
     common/bench.cpp common/probman.cpp common/clirun.cpp
-    common/probfill.cpp common/pollsys.cpp common/setprio.cpp"
+    common/probfill.cpp common/pollsys.cpp common/setprio.cpp
+    common/console.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
