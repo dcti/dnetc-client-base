@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.15 2003/12/13 14:09:26 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.16 2003/12/27 14:41:57 kakace Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -3111,14 +3111,14 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
 ** OGR-25 :
 ** The method is based upon 3-diffs (4 marks), 4-diffs (5 marks) and 5-diffs
 ** (6 marks) stubs :
-** + 3-diffs stubs : Check rulers that have the 5th mark at position >= 110.
-** + 4-diffs stubs : Check rulers that have the 6th mark at position >= 100.
-** + 5-diffs stubs : Check rulers that have the 7th mark at position > 90.
+** + 3-diffs stubs : Check rulers that have the 5th mark at position >= 125.
+** + 4-diffs stubs : Check rulers that have the 6th mark at position >= 115.
+** + 5-diffs stubs : Check rulers that have the 7th mark at position > 100.
 **
 ** Stated otherwise, let 25/a-b-c-d-e be a valid 5-diffs stub
-** - If a+b+c+d >= 110, the client expects the 3-diffs stub 25/a-b-c
-** - If a+b+c+d+e >= 100, the client expects the 4-diffs stub 25/a-b-c-d
-** - If a+b+c+d+e < 100, the client expects the 5-diffs stub 25/a-b-c-d-e
+** - If a+b+c+d >= 125, the client expects the 3-diffs stub 25/a-b-c
+** - If a+b+c+d+e >= 115, the client expects the 4-diffs stub 25/a-b-c-d
+** - If a+b+c+d+e < 115, the client expects the 5-diffs stub 25/a-b-c-d-e
 **
 ** The code below is derived from the regular OGR cores (minor changes)
 */
@@ -3126,9 +3126,9 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
 #define OGR24_THRESHOLD     70
 #define OGR24_4DIFFS_LIMIT  80
 
-#define OGR25_THRESHOLD     90
-#define OGR25_4DIFFS_LIMIT 110
-#define OGR25_5DIFFS_LIMIT 100
+#define OGR25_THRESHOLD    100
+#define OGR25_4DIFFS_LIMIT 125
+#define OGR25_5DIFFS_LIMIT 115
 
 
 /*
