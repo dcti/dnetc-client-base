@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.29 2000/02/01 23:03:34 ivo Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.30 2000/02/09 01:46:44 trevorh Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -644,7 +644,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       height  = winsz.ws_row;
     }
   #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
-        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) 
+        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
     struct ttysize winsz;
     winsz.ts_lines = winsz.ts_cols = winsz.ts_xxx = winsz.ts_yyy = 0;
     ioctl (fileno(stdout), TIOCGWINSZ, &winsz);
