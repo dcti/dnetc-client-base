@@ -3,8 +3,8 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *buffwork_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.3 1999/07/30 22:54:33 remi Exp $"; }
+const char *buffbase_cpp(void) {
+return "@(#)$Id: buffbase.cpp,v 1.12.2.4 1999/08/06 08:31:55 chrisb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
