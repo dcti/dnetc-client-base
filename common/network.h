@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.41  1998/12/08 05:57:03  dicamillo
+// Add defines for MacOS.
+//
 // Revision 1.40  1998/10/26 03:21:53  cyp
 // More tags fun.
 //
@@ -190,8 +193,11 @@ extern "C" {
   #endif
   typedef int SOCKET;
 #elif (CLIENT_OS == OS_MACOS)
-  #include <gusi.h>
-  typedef int SOCKET;
+  #include "socket_glue.h"
+  #define write(sock, buff, len) socket_write(sock, buff, len)
+  #define read(sock, buff, len) socket_read(sock, buff, len)
+  #define close(sock) socket_close(sock)
+  extern Boolean myNetInit(void);
 #elif (CLIENT_OS == OS_OS2)
   #include <process.h>
   #include <io.h>
