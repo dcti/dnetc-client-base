@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.2 1999/06/01 00:29:22 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.3 1999/06/01 02:49:44 cyp Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -1124,7 +1124,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
-	TARGET_LIBS="-lc_r -lutil"
+	TARGET_LIBS="-lc_r"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -f aoutb"
 	;;
@@ -1139,7 +1139,7 @@ case "$1" in
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_LIBS="-lc_r -lutil"
+	TARGET_LIBS="-lc_r"
 	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -f aoutb"
 	;;
 
@@ -1152,7 +1152,7 @@ case "$1" in
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_NASM="/usr/local/bin/nasm"
-	TARGET_LIBS="-lc_r -lutil"
+	TARGET_LIBS="-lc_r"
 	;;
 
     *x86-freebsd-mt-elf)
@@ -1165,7 +1165,7 @@ case "$1" in
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_LIBS="-lc_r -lutil"
+	TARGET_LIBS="-lc_r"
 	;;
 
     *x86-freebsd4-mt-elf)
@@ -1178,7 +1178,7 @@ case "$1" in
                         platforms/x86ident.S \
                         des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
         TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-        TARGET_LIBS="-lc_r -lutil"
+        TARGET_LIBS="-lc_r"
         ;;
 
     *x86-netbsd)
