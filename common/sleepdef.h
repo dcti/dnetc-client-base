@@ -26,7 +26,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.21 1999/04/06 13:37:34 cyp Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22 1999/04/09 13:55:17 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -130,4 +130,13 @@
   #include <unistd.h> //gcc has both sleep() and usleep()
 #endif
 
+#ifndef __SLEEP_FOR_POLLING__
+#include "pollsys.h"
+#undef  sleep
+#define sleep(x) PolledSleep(x)
+#undef  usleep
+#define usleep(x) PolledUSleep(x)
+#endif /* __SLEEP_FOR_POLLING__ */
+
 #endif /* __SLEEPDEF_H__ */
+
