@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.247 2001/04/16 18:02:55 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.248 2001/04/16 21:08:43 oliver Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2087,11 +2087,11 @@ case "$1" in
 ###### AmigaOS (m68k, PPC)
     *m68k-amigaos)              # [oliver] <oliver@futaura.co.uk>
         TARGET_AS="plat/amigaos/tools/genam_wrapper"
-        TARGET_CC="g++ -V 2.95.2"
+        TARGET_CC="g++"
         generate_gcc_opts "68k" "amigaos"
         TARGET_CCFLAGS="$OPTS_GCC -m68000 -fpermissive -O6 -I./ -noixemul \
                         -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
-                        -DDYN_TIMESLICE"
+                        -DDYN_TIMESLICE -Wno-unknown-pragmas"
         TARGET_LDFLAGS="-noixemul"
         TARGET_ASFLAGS="$OPTS_GAS"
         TARGET_ADDOBJS="/gg/lib/libnix/swapstack.o"
@@ -2114,7 +2114,7 @@ case "$1" in
                         -DDYN_TIMESLICE"
         TARGET_TARBALL="amigaos-ppc-wos"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
-        TARGET_STRIP="plat/amigaos/tools/strip_wos"
+        TARGET_STRIP="touch"
         TARGET_BINNAME_SUFFIX="_ppc"
         TARGET_GENMAN=
         TARGET_ARCTYPE="lha"
