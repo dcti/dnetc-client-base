@@ -7,41 +7,13 @@
  * The two functions in this module install/deinstall the client
  * to/from the startup folder
  * ----------------------------------------------------------------
- *
- * $Log: os2inst.cpp,v $
- * Revision 1.2.4.2  2002/11/17 21:00:33  pfeffi
- * OS/2 added signalhandler
- * enabled: -pause, -unpause, -restart
- *
- * Revision 1.2.4.1  2002/11/10 12:15:44  pfeffi
- * OS/2:
- * a) rewritten installation;
- * b) added signal processing (kill, restart, etc);
- *     (only 'kill' is currently supported).
- *     c) added os/2 version of os2GetPIDList() - now 'pause-when-running' etc.
- *         are supported.
- *
- * code was supplied by Roman Trunov, proxyma@tula.net
- *
- * Revision 1.2  2002/09/02 00:35:51  andreasb
- * sync: merged changes from release-2-7111 branch between
- *       2000-07-11 and release-2-7111_20020901 into trunk
- *
- * Revision 1.1.2.2  2002/04/12 23:56:50  andreasb
- * 2002 copyright update - round 2
- *
- * Revision 1.1.2.1  2001/01/21 15:10:27  cyp
- * restructure and discard of obsolete elements
- *
- * Revision 1.7.2.1  2001/01/01 22:48:57  trevorh
- * Update for OS/2 465 build
- *
- * Revision 1.7  1999/04/11 14:47:14  cyp
- * a) simplified install by passing argv[0]; b) Added comment re:detached
+ * other function are for signal handling (GetPidList, sendSignal....)
+ * should be in separate module....
+ * ----------------------------------------------------------------
  *
 */
 const char *os2inst_cpp(void) {
-return "@(#)$Id: os2inst.cpp,v 1.2.4.2 2002/11/17 21:00:33 pfeffi Exp $"; }
+return "@(#)$Id: os2inst.cpp,v 1.2.4.3 2002/11/24 17:51:06 pfeffi Exp $"; }
 
 // #define TRACE
 
@@ -55,7 +27,7 @@ static char RC5DES_FOLDOBJ_NAME[] = "<RC5DES-CLI>";
 
 int os2CliUninstallClient(int do_the_uninstall_without_feedback)
 {
-  HOBJECT hObject = WinQueryObject((const unsigned char*)RC5DES_FOLDOBJ_NAME);
+  HOBJECT hObject = WinQueryObject((PSZ)RC5DES_FOLDOBJ_NAME);
   char *msg = "The distributed.net client was not found in the Startup Folder.";
   int rc = +1;
 
@@ -65,7 +37,7 @@ int os2CliUninstallClient(int do_the_uninstall_without_feedback)
     msg = "The distributed.net client could not be removed from in the Startup Folder.";
     if (WinDestroyObject(hObject) == TRUE)
     {
-      if (WinQueryObject((const unsigned char*)RC5DES_FOLDOBJ_NAME) == NULLHANDLE)
+      if (WinQueryObject((PSZ)RC5DES_FOLDOBJ_NAME) == NULLHANDLE)
       {
         msg = "The distributed.net client was successfully removed from the Startup Folder.";
         rc = 0;
@@ -86,12 +58,35 @@ int os2CliInstallClient(int do_the_install_without_feedback, const char *exename
 #define PSZSTRINGSIZE 4068
   static char
     pszClassName[] = "WPProgram",
-    pszTitle[]     = "distributed.net Client",
+    pszTitle[]     = "distributed.net client",
     pszLocation[]  = "<WP_START>";    // Startup Folder
 
   int rc, was_installed;
   char pszSetupString[PSZSTRINGSIZE];
+ 
+#if defined(__EMX__)
+  /* argv[0] contains the name typed on command line, not full name with path
+      need _execname() to get this
+      different behavior under cmd.exe and 4os2.exe :-((
+  */
+  char buf[_MAX_PATH];
+  char *my_exename;
+  char *execopy;
+  if ( 0 == _execname( buf,_MAX_PATH )  ) {
+    execopy = strdup(buf);
+    char *p = _getname(execopy);
+    *p = 0;
+    my_exename = strdup(buf);
+  } else {
+    /* this should *never* happen */
+    ConOutErr("Your path is longer than max_path.\nPlease report this bug at http://www.distributed.net/bugs\n");
+    rc = -1;
+    execopy = NULL;
+  } /* endif */
+#else
+  char *my_exename = strdup(exename);
   char *execopy = strdup(exename);
+#endif
 
   if (execopy == NULL || (rc = os2CliUninstallClient(1)) < 0)
   { /* was there but couldn't be uninstalled */
@@ -103,11 +98,21 @@ int os2CliInstallClient(int do_the_install_without_feedback, const char *exename
     char *p, *q;
     was_installed = (rc == 0);
 
-    for (p = execopy, q = NULL; *p; p++)
-      if (*p == ':' || *p == '\\' || *p == ':')
+   for (p = execopy, q = NULL; *p; p++)
+      if (*p == ':' || *p == '\\' || *p == '/')
         q = p+1; /* where to split path */
     if (q)
+    {
       *q = 0;
+      /* Now path is cut to "D:\SOME\PATH\" form. Next, kill last
+backslash
+         (XWorkplace do not like it?) but do not broke "D:\" form
+       */
+      q--;
+      if (strlen(execopy) > 3 && *q != ':')  /* avoid "D:FILE" form */
+        *q = 0;
+      q = execopy;
+    }
     else
       q = "";
 
@@ -116,16 +121,16 @@ int os2CliInstallClient(int do_the_install_without_feedback, const char *exename
         "MINIMIZED=YES;"
         "PROGTYPE=WINDOWABLEVIO;"
         "EXENAME=%s;"
-        "PARAMETERS=-svcstart;"
         "STARTUPDIR=%s",
         RC5DES_FOLDOBJ_NAME,
-        exename,
-        execopy
+        my_exename,
+        q
          );
 
     rc = -1;
-    if (WinCreateObject((const unsigned char*)pszClassName, (const unsigned char*)pszTitle, (const unsigned char*)pszSetupString,
-              (const unsigned char*)pszLocation, 0) != NULLHANDLE)
+    TRACE_OUT((0, "WinCreateObject with pszSetupString: %s\n",pszSetupString));
+    if (WinCreateObject((PSZ)pszClassName, (PSZ)pszTitle, (PSZ)pszSetupString,
+              (PSZ)pszLocation, 0) != NULLHANDLE)
     {
       rc = 0;
     }
@@ -133,6 +138,8 @@ int os2CliInstallClient(int do_the_install_without_feedback, const char *exename
 
   if (execopy)
     free(execopy);
+  if (my_exename)
+    free(my_exename);
 
   if (!do_the_install_without_feedback)
   {
