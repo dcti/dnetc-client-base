@@ -10,28 +10,31 @@
 */
 //
 // $Log: netinit.cpp,v $
-// Revision 1.5  1998/08/25 08:21:33  cyp
+// Revision 1.6  1998/08/28 21:41:37  cyp
+// Stopped network->Open() from being retried in a no-network environment.
+//
+// Revision 1.5  1998/08/25 08:21:33  cyruspatel
 // Removed the default values from the declaration of NetOpen().
 //
-// Revision 1.4  1998/08/25 00:01:16  cyp
+// Revision 1.4  1998/08/25 00:01:16  cyruspatel
 // Merged (a) the Network destructor and DeinitializeNetwork() into NetClose()
 // (b) the Network constructor and InitializeNetwork() into NetOpen().
 // These two new functions (in netinit.cpp) are essentially what the static
 // FetchFlush[Create|Destroy]Net() functions in buffupd.cpp used to be.
 //
-// Revision 1.3  1998/08/24 07:09:19  cyp
+// Revision 1.3  1998/08/24 07:09:19  cyruspatel
 // Added FIXME comments for "lurk"ers.
 //
-// Revision 1.2  1998/08/20 19:27:16  cyp
+// Revision 1.2  1998/08/20 19:27:16  cyruspatel
 // Made the purpose of NetworkInitialize/Deinitialize a little more
 // transparent.
 //
-// Revision 1.1  1998/08/10 21:53:55  cyp
+// Revision 1.1  1998/08/10 21:53:55  cyruspatel
 // Created - see documentation above.
 //
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.5 1998/08/25 08:21:33 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.6 1998/08/28 21:41:37 cyp Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -70,8 +73,8 @@ static int __netInitAndDeinit( int doWhat )
 
   //----------------------------
 
-  #ifdef STUBIFY_ME
-  if (success)
+  #if (!defined(AF_INET) || !defined(SOCK_STREAM))
+  if (success)  //no networking capabilities
     {
     if ( doWhat == 0 )     //query online mode
       return 0; //always fail - should never get called
@@ -128,16 +131,22 @@ static int __netInitAndDeinit( int doWhat )
       else
         {
         WSADATA wsaData;
-        WSAStartup(0x0101, &wsaData);
-        success = 1; 
-
-        #if defined(LURK)
-        if ( dialup.DialIfNeeded(1) < 0 )
+        success = 0;
+        if ( WSAStartup( 0x0101, &wsaData ) == 0 )
           {
-          success = 0;
-          WSACleanup();     // cleanup because we won't be called to deinit
-          } 
-        #endif
+          success = 1; 
+          #if defined(LURK)
+          if ( dialup.DialIfNeeded(1) < 0 )
+            {
+            success = 0;
+            WSACleanup();  // cleanup because we won't be called to deinit
+            }
+          #endif
+          }
+        if (!success)
+          {
+          --initializationlevel;
+          }
         }
       }
     else //if (doWhat < 0) //request to de-initialize
@@ -368,8 +377,8 @@ Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback,
         }
       if ((retry < 4) && (!CheckExitRequestTrigger()))
         {
-        LogScreen( "[%s] Network::Open Error %d - "
-                   "sleeping for 3 seconds\n", Time(), retry );
+        LogScreen( "[%s] Network::Open Error - "
+                   "sleeping for 3 seconds (%d)\n", Time(), retry );
         sleep( 3 );
         }
       if (CheckExitRequestTrigger())
