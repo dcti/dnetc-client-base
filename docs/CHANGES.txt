@@ -21,13 +21,16 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.57 2000/07/06 05:17:33 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.58 2000/07/11 03:06:54 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
 
-2.8010.463  imp: all: client always fetches the largest packet possible
+2.8010.463  fix: linux/x86: resoloved various dns lookup, lib and
+                 portability issues by building against static libc5
+                 client runs on all elf kernels, 2.0.x - 2.4.x-preX
+            imp: all: client always fetches the largest packet possible
                  and then splits it locally into sub-packets. Greatly
                  improves network throughput and reduces server load.
             fix: win32: .462 client was taking long to shutdown.
