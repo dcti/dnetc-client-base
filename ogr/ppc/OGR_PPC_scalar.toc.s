@@ -16,7 +16,7 @@
 ;# - LR register not used nor saved in caller's stack.
 ;# - CTR, CR0, CR1, GPR0 and GPR3-GPR12 are volatile (not preserved).
 ;#
-;# $Id: OGR_PPC_scalar.toc.s,v 1.1.2.2 2004/08/11 00:55:02 kakace Exp $
+;# $Id: OGR_PPC_scalar.toc.s,v 1.1.2.3 2004/08/12 22:46:01 sod75 Exp $
 ;#
 ;#============================================================================
 
@@ -82,6 +82,7 @@
 
 ;.set         r0,0
 ;.set         r1,1
+;.set         RTOC,2        # AIX
 ;.set         r3,3
 ;.set         r4,4
 ;.set         r5,5
@@ -119,15 +120,17 @@
 ;#                      const unsigned char *choose (r5)
 ;#                      const int *OGR (r6)
 
-    ;# add new TOC entry
+    ;# add new TOC entries
     .toc      
+
+T.sw_addr:    .tc scalar_core[TC],L_switch_cases-64
+
     .csect    .cycle_ppc_scalar[DS]
 cycle_ppc_scalar:
-
     ;# set the TOC anchor
     .long     .cycle_ppc_scalar, TOC[tc0], 0
 
-    .csect    .text[PR]
+    .csect    scalar_core[PR]
     .align    4
 
 .cycle_ppc_scalar:                      ;# coff
@@ -208,13 +211,8 @@ cycle_ppc_scalar:
     add       r0,r3,r0                  ;# (dist0 >> DIST_SHIFT) * DIST_BITS
     lbzx      r7,r5,r0                  ;# choose(dist0 >> ttmDISTBITS, remdepth)
 
-    ;# Dirty trick to cope with GAS vs AS syntax
-    ;lis      r8,(L_switch_cases-64)@ha
-    ;addi     r8,r8,(L_switch_cases-64)@l
-    ;.if      0                         ;# Skip over Apple's AS code
-    lis       r8,ha16(L_switch_cases-64)
-    addi      r8,r8,lo16(L_switch_cases-64)
-    ;.endif   
+    ;# COFF-specific
+    lwz       r8,T.sw_addr(RTOC)
     b         L_comp_limit
 
     .align    4
