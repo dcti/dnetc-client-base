@@ -1,12 +1,22 @@
 // Hey, Emacs, this a -*-C++-*- file !
 //
+// Copyright distributed.net 1997-1998 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
+/*
+* Generic strcmpi and strncmpi macros
+*/
+//  
 // $Log: cmpidefs.h,v $
+// Revision 1.8  1998/08/27 00:43:28  cyp
+// DOS change: strncmpi() now defined.
+//
 // Revision 1.7  1998/07/16 21:23:03  nordquist
 // More DYNIX port changes.
 //
 // Revision 1.6  1998/07/13 12:40:28  kbracey
-// RISC OS update.
-// Added -noquiet option.
+// RISC OS update. Added -noquiet option.
 //
 // Revision 1.5  1998/07/05 07:04:26  jlawson
 // changes for Win32s
@@ -24,14 +34,6 @@
 // move macro defs for strcmpi and strncmpi to a seperate header file
 //
 
-/*
-  Generic strcmpi and strncmpi macros
-
-  version 1.0
-  by DCTI
-  Copyright 1998 Distributed Computing Technologies Inc.
-*/
-
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
   #if defined(__TURBOC__)
   // Borland already knows strcmpi
@@ -40,14 +42,14 @@
     #define strcmpi(x,y)  _stricmp(x,y)
     #define strncmpi(x,y,n)  _strnicmp(x,y,n)
   #elif defined(__WATCOMC__)
+    // already knows strcmpi
     #define strncmpi(x,y,n)  strnicmp(x,y,n)
-    // watcom knows both
-    // Older version of watcom does do strncmpi
   #else
     //nada. Let the compiler generate the error if needed
   #endif
 #elif (CLIENT_OS == OS_DOS) && defined(__WATCOMC__)
-  // watcom knows both
+  // already knows strcmpi
+  #define strncmpi(x,y,n)  strnicmp(x,y,n)
 #elif (CLIENT_OS == OS_NETWARE)
   #define strcmpi(x,y)  stricmp(x,y)
   #define strncmpi(x,y,n)  strnicmp(x,y,n)
