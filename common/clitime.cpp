@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.45 2000/11/22 19:33:50 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.46 2000/12/21 16:53:36 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -407,39 +407,103 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
     #elif (CLIENT_OS == OS_WIN32)
     {
-      /* '-benchmark rc5' in keys/sec with disabled ThreadUserTime(): */
-      /* using spinlocks: 1,386,849.10 | using critical section: 994,861.48 */
-      static long splbuf[4] = {0,0,0,0}; /* 64bit*2 */
-      static DWORD lastticks = 0, wrap_count = 0;
-      DWORD ticks, l_wrap_count; long *spllp;
-      char *splcp = (char *)&splbuf[0];
-
-      int lacquired = 0, locktries = 0;
-      splcp += ((64/8) - (((unsigned long)splcp) & ((64/8)-1)));
-      spllp = (long *)splcp; /* long * to 64bit-aligned spinlock space */
-      while (!lacquired)
+      #if 1
+      static int using_qff = -1;
+      if (using_qff != 0)
       {
-        #if (CLIENT_CPU == CPU_ALPHA)
-        lacquired = _AcquireSpinLockCount(spllp, 0x0f); /* VC6 intrinsic */
-        locktries += 0x0f;
-        #else
-        if (InterlockedExchange(spllp,1)==0) /* spl must be 32bit-aligned */
-          lacquired = 1;
-        #endif
-        if (!lacquired && ((++locktries)&0x0f)==0)
-          Sleep(0);
+        static unsigned __int64 freq = 0;  
+        unsigned __int64 now; int gotit = 0;
+        LARGE_INTEGER qperf;
+        if (winGetVersion() >= 400 && /* not efficient on win32s */
+           QueryPerformanceCounter(&qperf))
+        {
+          if (qperf.LowPart || qperf.HighPart)
+          {
+            gotit = +1;
+            if (using_qff < 0) 
+            {
+              /* guard against Japanese Win95 (PC9800 version) which always 
+              ** returns 1193180 (.eq. QueryPerfFrequency()) as counter.
+              ** See KB article Q152145
+              */
+              LARGE_INTEGER qcheck;
+              Sleep(5); /* not really necessary, but doesn't hurt */
+              gotit = 0;
+              if (QueryPerformanceCounter(&qcheck))
+              {
+                if ((qcheck.LowPart || qcheck.HighPart) &&
+                    ((qcheck.LowPart != qperf.LowPart) ||
+                     (qcheck.HighPart != qperf.HighPart)))
+                {  
+                  qperf.LowPart = qcheck.LowPart;
+                  qperf.HighPart = qcheck.HighPart;
+                  if (QueryPerformanceFrequency(&qcheck))
+                  {
+                    now = qcheck.HighPart;
+                    now <<= 32;
+                    now += qcheck.LowPart;
+                    freq = now;
+                    gotit = +1;
+                  }  
+                }
+              }    
+            }
+          }
+        }
+        if (using_qff < 0) 
+          using_qff = gotit;  
+        else if (!gotit)
+          return -1; 
+        if (gotit)
+        {
+          now = qperf.HighPart;
+          now <<= 32;
+          now += qperf.LowPart;
+          tv->tv_sec = (time_t)(now / freq);
+          now = now % freq;
+          now = now * 1000000ui64;
+          tv->tv_usec = (time_t)(now / freq);
+          return 0; 
+        }
+        /* fallthrough: using_qff == 0 */
       }
-      ticks = GetTickCount(); /* millisecs elapsed since OS start */
-      l_wrap_count = wrap_count;
-      if (ticks < lastticks)
-        wrap_count = ++l_wrap_count;
-      lastticks = ticks;
-      #if (CLIENT_CPU == CPU_ALPHA)
-      _ReleaseSpinLock(spllp);  /* VC6 intrinsic */
-      #else
-      *spllp = 0;
       #endif
-      __clks2tv( 1000, ticks, l_wrap_count, tv );
+      /* if (using_qff == 0) */
+      {
+        /* '-benchmark rc5' in keys/sec with disabled ThreadUserTime(): */
+        /* using spinlocks: 1,386,849.10 | using critical section: 994,861.48 */
+        static long splbuf[4] = {0,0,0,0}; /* 64bit*2 */
+        static DWORD lastticks = 0, wrap_count = 0;
+        DWORD ticks, l_wrap_count; long *spllp;
+        char *splcp = (char *)&splbuf[0];
+
+        int lacquired = 0, locktries = 0;
+        splcp += ((64/8) - (((unsigned long)splcp) & ((64/8)-1)));
+        spllp = (long *)splcp; /* long * to 64bit-aligned spinlock space */
+        while (!lacquired)
+        {
+          #if (CLIENT_CPU == CPU_ALPHA)
+          lacquired = _AcquireSpinLockCount(spllp, 0x0f); /* VC6 intrinsic */
+          locktries += 0x0f;
+          #else
+          if (InterlockedExchange(spllp,1)==0) /* spl must be 32bit-aligned */
+            lacquired = 1;
+          #endif
+          if (!lacquired && ((++locktries)&0x0f)==0)
+            Sleep(0);
+        }
+        ticks = GetTickCount(); /* millisecs elapsed since OS start */
+        l_wrap_count = wrap_count;
+        if (ticks < lastticks)
+          wrap_count = ++l_wrap_count;
+        lastticks = ticks;
+        #if (CLIENT_CPU == CPU_ALPHA)
+        _ReleaseSpinLock(spllp);  /* VC6 intrinsic */
+        #else
+        *spllp = 0;
+        #endif
+        __clks2tv( 1000, ticks, l_wrap_count, tv );
+      }
     }
     #elif (CLIENT_OS == OS_OS2)
     {
