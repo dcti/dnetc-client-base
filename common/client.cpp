@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.67  1998/07/01 03:12:42  blast
+// AmigaOS changes...
+//
 // Revision 1.66  1998/07/01 00:06:27  cyruspatel
 // Added full buffering to ::LogScreenPercentSingle() so that the write is
 // done in one go, regardless of whether stdout is buffered or not.
@@ -88,15 +91,14 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.66 1998/07/01 00:06:27 cyruspatel Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.67 1998/07/01 03:12:42 blast Exp $";
 #endif
 
 #include "client.h"
 
 #if (CLIENT_OS == OS_AMIGAOS)
-const char versionstring[] = "$VER: RC5DES v2.7021.405 (30.05.98)";
 #if (CLIENT_CPU == CPU_68K)
-long __stack 65536L;	// AmigaOS has no automatic stack extension
+long __stack  = 65536L;	// AmigaOS has no automatic stack extension
 			// seems standard stack isn't enough
 #endif // (CLIENT_CPU == CPU_68K)
 #endif // (CLIENT_OS == OS_AMIGAOS)
@@ -3365,7 +3367,11 @@ int main( int argc, char *argv[] )
   CliExitClient(); // destroys AES process, screen, polling procedure
 #endif
 
+#if (CLIENT_OS == OS_AMIGAOS)
+  return (retcode ? 5 : 0); // 5 = Warning
+#else
   return retcode;
+#endif // (CLIENT_OS == OS_AMIGAOS)
 }
 #endif
 

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice.cpp,v $
+// Revision 1.5  1998/07/01 03:12:46  blast
+// AmigaOS changes...
+//
 // Revision 1.4  1998/06/20 10:04:18  cyruspatel
 // Modified so x86 make with /DKWAN will work: Renamed des_unit_func() in
 // des_slice to des_unit_func_slice() to resolve conflict with (*des_unit_func)().
@@ -19,13 +22,13 @@
 
 // encapsulate the bitslice SolNET code
 
-static char *id="@(#)$Id: des-slice.cpp,v 1.4 1998/06/20 10:04:18 cyruspatel Exp $";
+static char *id="@(#)$Id: des-slice.cpp,v 1.5 1998/07/01 03:12:46 blast Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../common/problem.h"
-#include "../common/convdes.h"
+#include "problem.h"
+#include "convdes.h"
 
 #ifndef _CPU_32BIT_
 #error "everything assumes a 32bit CPU..."

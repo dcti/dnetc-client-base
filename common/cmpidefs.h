@@ -1,6 +1,9 @@
 // Hey, Emacs, this a -*-C++-*- file !
 // 
 // $Log: cmpidefs.h,v $
+// Revision 1.4  1998/07/01 03:12:45  blast
+// AmigaOS changes...
+//
 // Revision 1.3  1998/06/29 07:58:39  ziggyb
 // strncmpi(x,y,n) doesn't seem to be defined in my older version of watcom.
 //
@@ -50,6 +53,8 @@
   #define strncmpi(x,y,n)  strncasecmp(x,y,n)
 #elif (CLIENT_OS == OS_AMIGAOS)
   // SAS/C already knows strcmpi
+  // but doesn't know strncmpi, translated to strnicmp
+  #define strncmpi(x,y,n) strnicmp(x,y,n)
 #elif (CLIENT_OS == OS_RISCOS)
   #include <unixlib.h>
   #define strcmpi(x,y)  strcasecmp(x,y)

@@ -2,14 +2,14 @@ PROGNAME_PPC = rc5des_PPC
 PROGNAME_68K = rc5des_68K
 
 DEBUG    = 
-OPTIMIZE = optimize optsched
-CFLAGS   = nostkchk strmerge parms=reg define=LESS_GETENV define=PIPELINE_COUNT=1 define=_CPU_32BIT_ define=BIT_32 define=KWAN define=MEGGS includedir=netinclude: includedir=platforms/ includedir=common/ utillib nover NOLINK
+OPTIMIZE = #optimize optsched
+CFLAGS   = unsignedchars nostkchk strmerge parms=reg define=LESS_GETENV define=PIPELINE_COUNT=1 define=_CPU_32BIT_ define=BIT_32 define=KWAN define=MEGGS includedir=netinclude: includedir=platforms/ includedir=common/ utillib nover NOLINK
 DISASM   =
 LFLAGS   = #farcode fardata
 
-DEBUG_PPC    = $(DEBUG) #DEBUG=SF
+DEBUG_PPC    = $(DEBUG) DEBUG=S
 OPTIMIZE_PPC = $(OPTIMIZE)
-CFLAGS_PPC   = $(DEBUG_PPC) $(OPTIMIZE_PPC) $(CFLAGS)
+CFLAGS_PPC   = $(DEBUG_PPC) $(OPTIMIZE_PPC) $(CFLAGS) HUNKOBJ
 DISASM_PPC   = $(DISASM)
 LFLAGS_PPC   = $(LFLAGS)
 
@@ -19,92 +19,116 @@ CFLAGS_68K   = $(DEBUG_68K) $(OPTIMIZE_68K) $(CFLAGS) CPU=68040
 DISASM_68K   = $(DISASM)
 LFLAGS_68K   = $(LFLAGS)
 
-COMMON_OBJS_PPC =	platforms/_tzset.o_ppc \
-			common/cliconfig.o_ppc \
-			common/clirate.o_ppc \
-			common/clisrate.o_ppc \
-			common/clitime.o_ppc \
-			common/clicdata.o_ppc \
-			common/client.o_ppc \
-			common/autobuff.o_ppc \
-			common/iniread.o_ppc \
-			common/network.o_ppc \
-			common/scram.o_ppc \
-			common/buffwork.o_ppc \
-			common/mail.o_ppc \
-			common/convdes.o_ppc \
-			common/cpucheck.o_ppc
+FINAL_OBJS_PPC =\
+common_objs.o_ppc\
+core_objs.o_ppc
+
+#dummy_obj.o_ppc
+
+COMMON_OBJS_PPC =\
+platforms/_tzset.o_ppc\
+platforms/amiga_version.o_ppc\
+common/cliconfig.o_ppc\
+common/clirate.o_ppc\
+common/clisrate.o_ppc\
+common/clitime.o_ppc\
+common/clicdata.o_ppc\
+common/client.o_ppc\
+common/autobuff.o_ppc\
+common/iniread.o_ppc\
+common/network.o_ppc\
+common/scram.o_ppc\
+common/buffwork.o_ppc\
+common/mail.o_ppc\
+common/convdes.o_ppc\
+common/cpucheck.o_ppc\
+common/disphelp.o_ppc
+
+RC5_OBJS_PPC	=\
+common/problem.o_ppc\
+rc5/crunch_allitnil_552.ppc.o_ppc\
+rc5/crunch_lintilla_296.ppc.o_ppc
+
+DES_OBJS_PPC	=\
+des/des-slice-meggs.o_ppc\
+des/deseval-meggs3.o_ppc
+
+#des/deseval.o_ppc\
+#des/des-slice.o_ppc\
+#des/sboxes-kwan4.o_ppc
+
+COMMON_OBJS_68K =\
+platforms/_tzset.o_68k\
+platforms/amiga_version.o_68k\
+common/cliconfig.o_68k\
+common/clirate.o_68k\
+common/clisrate.o_68k\
+common/clitime.o_68k\
+common/clicdata.o_68k\
+common/client.o_68k\
+common/autobuff.o_68k\
+common/iniread.o_68k\
+common/network.o_68k\
+common/scram.o_68k\
+common/buffwork.o_68k\
+common/mail.o_68k\
+common/convdes.o_68k\
+common/cpucheck.o_68k\
+common/disphelp.o_68k
+
+RC5_OBJS_68K	=\
+common/problem.o_68k\
+rc5/keycheck_opt.o_68k
+
+DES_OBJS_68K	=\
+des/des-slice-meggs.o_68k\
+des/deseval-meggs3.o_68k
 
 
-RC5_OBJS_PPC	=	common/problem.o_ppc \
-			rc5/crunch_allitnil_552.ppc.o_ppc \
-			rc5/crunch_lintilla_296.ppc.o_ppc
-
-DES_OBJS_PPC	=	des/des-slice-meggs.o_ppc \
-			des/deseval-meggs3.o_ppc
-
-COMMON_OBJS_68K =	platforms/_tzset.o_68k \
-			common/cliconfig.o_68k \
-			common/clirate.o_68k \
-			common/clisrate.o_68k \
-			common/clitime.o_68k \
-			common/clicdata.o_68k \
-			common/client.o_68k \
-			common/autobuff.o_68k \
-			common/iniread.o_68k \
-			common/network.o_68k \
-			common/scram.o_68k \
-			common/buffwork.o_68k \
-			common/mail.o_68k \
-			common/convdes.o_68k \
-			common/cpucheck.o_68k
-
-RC5_OBJS_68K	=	common/problem.o_68k \
-			rc5/keycheck_opt.o_68k
-
-DES_OBJS_68K	=	des/des-slice-meggs.o_68k \
-			des/deseval-meggs3.o_68k
-
-
-LIBSTART_PPC = lib:c_ppc.o
+LIBSTART     = lib:c.o
+LIBSTART_PPC = $(LIBSTART)
 OBJS_PPC     = $(COMMON_OBJS_PPC) $(RC5_OBJS_PPC) $(DES_OBJS_PPC)
-LIBS_PPC     = LIB:sccxxppc.a LIB:scppc.a LIB:end.o
+LIBS_PPC     = LIB:sccxxppc.lib LIB:scppc.lib #LIB:end.o
 
-LIBSTART_68K = lib:c.o
+LIBSTART_68K = $(LIBSTART)
 OBJS_68K     = $(COMMON_OBJS_68K) $(RC5_OBJS_68K) $(DES_OBJS_68K)
 LIBS_68K     = LIB:scm.lib LIB:sc.lib LIB:amiga.lib LIB:debug.lib
-
-
 
 .s.o_ppc:
 	ppc-amigaos-gas -m604 $*.s -o $*.o
 
 .cpp.o_ppc:
-	scppc RESETOPTS $(CFLAGS) $(DISASM) $*.cpp
-	rename $*.o $*.o_ppc	
+	scppc RESETOPTS $(CFLAGS_PPC) $(DISASM) $*.cpp
+	@copy $*.o $*.o_ppc QUIET CLONE
+	@delete $*.o QUIET
 
 .c.o_ppc:
-	scppc RESETOPTS $(CFLAGS) $(DISASM) $*.c
-	rename $*.o $*.o_ppc	
+	scppc RESETOPTS $(CFLAGS_PPC) $(DISASM) $*.c
+	@copy $*.o $*.o_ppc QUIET CLONE
+	@delete $*.o QUIET
 
 .s.o_68k:
 	genam FROM $*.s TO $*.o QUIET
 
 .cpp.o_68k:
-	sc RESETOPTS $(CFLAGS) $(DISASM) $*.cpp
-	rename $*.o $*.o_68k	
+	sc RESETOPTS $(CFLAGS_68K) $(DISASM) $*.cpp
+	@copy $*.o $*.o_68k QUIET CLONE
+	@delete $*.o QUIET
 
 .c.o_68k:
-	sc RESETOPTS $(CFLAGS) $(DISASM) $*.c
-	rename $*.o $*.o_68k	
-
+	sc RESETOPTS $(CFLAGS_68K) $(DISASM) $*.c
+	@copy $*.o $*.o_68k QUIET CLONE
+	@delete $*.o QUIET
 
 all: $(PROGNAME_PPC) $(PROGNAME_68K)
 ppc: $(PROGNAME_PPC)
 68k: $(PROGNAME_68K)
 
 $(PROGNAME_PPC): $(OBJS_PPC)
-	ppc-amigaos-ld -r -o $(PROGNAME_PPC) $(LIBSTART_PPC) $(OBJS_PPC) $(LIBS_PPC)
+#	ppc-amigaos-ld -r -o $(PROGNAME_PPC) $(LIBSTART_PPC) $(FINAL_OBJS_PPC) $(LIBS_PPC)
+	SLINKPPC with << 
+PPC FROM $(LIBSTART_PPC) $(OBJS_PPC) TO $(PROGNAME_PPC) LIB $(LIBS_PPC)
+<
 	protect $(PROGNAME_PPC) rwed
 
 $(PROGNAME_68K): $(OBJS_68K)
@@ -117,7 +141,16 @@ FROM $(LIBSTART_68K) $(OBJS_68K) TO $(PROGNAME_68K) LIB $(LIBS_68K) $(LFLAGS_68K
 # PPC Dependencies
 #	
  
+dummy_obj.o_ppc		:	dummy_obj.c
+
+common_objs.o_ppc	:	$(COMMON_OBJS_PPC)
+	ppc-amigaos-ld -r -o common_objs.o_ppc $(COMMON_OBJS_PPC)
+
+core_objs.o_ppc	:	$(RC5_OBJS_PPC) $(DES_OBJS_PPC)
+	ppc-amigaos-ld -r -o core_objs.o_ppc $(RC5_OBJS_PPC) $(DES_OBJS_PPC)
+
 platforms/_tzset.o_ppc	:	platforms/_tzset.c
+platforms/amiga_version.o_ppc	:	platforms/amiga_version.c common/client.h
 common/cliconfig.o_ppc	:	common/cliconfig.cpp
 common/clirate.o_ppc	:	common/clirate.cpp
 common/clisrate.o_ppc	:	common/clisrate.cpp
@@ -130,8 +163,9 @@ common/network.o_ppc	:	common/network.cpp
 common/scram.o_ppc	:	common/scram.cpp
 common/buffwork.o_ppc	:	common/buffwork.cpp
 common/mail.o_ppc	:	common/mail.cpp
-common/convdes.o_ppc	:	common/convsed.cpp
+common/convdes.o_ppc	:	common/convdes.cpp
 common/cpucheck.o_ppc	:	common/cpucheck.cpp
+common/disphelp.o_ppc	:	common/disphelp.cpp
 
 # RC5 Dependencies
 
@@ -152,6 +186,7 @@ des/deseval-meggs3.o_ppc	:	des/deseval-meggs3.cpp
 #	
  
 platforms/_tzset.o_68k	:	platforms/_tzset.c
+platforms/amiga_version.o_68k	:	platforms/amiga_version.c common/client.h
 common/cliconfig.o_68k	:	common/cliconfig.cpp
 common/clirate.o_68k	:	common/clirate.cpp
 common/clisrate.o_68k	:	common/clisrate.cpp
@@ -164,8 +199,9 @@ common/network.o_68k	:	common/network.cpp
 common/scram.o_68k	:	common/scram.cpp
 common/buffwork.o_68k	:	common/buffwork.cpp
 common/mail.o_68k	:	common/mail.cpp
-common/convdes.o_68k	:	common/convsed.cpp
+common/convdes.o_68k	:	common/convdes.cpp
 common/cpucheck.o_68k	:	common/cpucheck.cpp
+common/disphelp.o_68k	:	common/disphelp.cpp
 
 # RC5 Dependencies
 
@@ -177,7 +213,11 @@ rc5/keycheck_opt.o_68k	:	rc5/keycheck_opt.s
 des/des-slice-meggs.o_68k	:	des/des-slice-meggs.cpp
 des/deseval-meggs3.o_68k	:	des/deseval-meggs3.cpp
 
+clean:
+	delete common/*.o_68k rc5/*.o_68k des/*.o_68k platforms/*.o_68k $(PROGNAME_68K) QUIET
+	delete common/*.o_ppc rc5/*.o_ppc des/*.o_ppc platforms/*.o_ppc $(PROGNAME_PPC) QUIET
+
 clean_68k:
-	delete common/*.o_68k rc5/*.o_68k des/*.o_ppc
+	delete common/*.o_68k rc5/*.o_68k des/*.o_68k platforms/*.o_68k $(PROGNAME_68K) QUIET
 clean_ppc:
-	delete common/*.o_ppc rc5/*.o_ppc des/*.o_ppc
+	delete common/*.o_ppc rc5/*.o_ppc des/*.o_ppc platforms/*.o_ppc $(PROGNAME_PPC) QUIET
