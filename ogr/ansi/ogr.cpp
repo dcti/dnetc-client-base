@@ -2,8 +2,9 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.20 2001/01/02 20:13:52 patrick Exp $
+ * $Id: ogr.cpp,v 1.1.2.21 2001/01/03 22:54:02 teichp Exp $
  */
+#include "baseincs.h"
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -27,7 +28,7 @@
   #if defined(OGR_NOFFZ) /* the bsr insn is slooooow on anything less than a PPro */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 0
   #endif
-#elif defined(ASM_68K) 
+#elif defined(ASM_68K)
   #define OGROPT_BITOFLIST_DIRECT_BIT 0          /* we want 'no' */
 #elif defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
   #if (__MWERKS__)
@@ -87,13 +88,13 @@
     #define OGROPT_ALTERNATE_CYCLE                0
     #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
   #endif
-#endif  
+#endif
 
 /* -- various optimization option defaults ------------------------------- */
 
 /* optimization for machines where mem access is slower than a shift+sub+and.
    Particularly effective with small data cache.
-   If not set to 1, BITOFLIST will use a pre-computed memtable lookup, 
+   If not set to 1, BITOFLIST will use a pre-computed memtable lookup,
    otherwise it will compute the value at runtime (0x80000000>>((x-1)&0x1f))
 */
 #ifndef OGROPT_BITOFLIST_DIRECT_BIT
@@ -101,7 +102,7 @@
 #endif
 
 /* optimization for available hardware insn(s) for 'find first zero bit',
-   counting from highest bit, ie 0xEFFFFFFF returns 1, and 0xFFFFFFFE => 32 
+   counting from highest bit, ie 0xEFFFFFFF returns 1, and 0xFFFFFFFE => 32
    This is the second (or first) most effective speed optimization.
 */
 #if defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) && \
@@ -124,8 +125,8 @@
 #endif
 
 
-/* optimize COPY_LIST_SET_BIT macro for when jumps are expensive. 
-   0=no reduction (6 'if'), 1=one 'if'+manual copy; 2=one 'if' plus memcpy; 
+/* optimize COPY_LIST_SET_BIT macro for when jumps are expensive.
+   0=no reduction (6 'if'), 1=one 'if'+manual copy; 2=one 'if' plus memcpy;
    This is the most (or second most) effective speed optimization.
    If your compiler has an intrinsic memcpy() AND optimizes that for size
    and alignment (ie, doesn't just inline memcpy) AND/OR the target arch
@@ -141,10 +142,10 @@
    opt 1 or 2 adds two shifts, two bitwise 'and's and one bitwise 'or'.
    NOTE: that found_one() is not a speed critical function, and *should*
    have no effect on -benchmark at all since it is never called for -bench,
-   Some compilers/archs show a negative impact on -benchmark because 
-   they optimize register usage in ogr_cycle while tracking those used in 
-   found_one and/or are size sensitive, and the increased size of found_one() 
-   skews -benchmark. [the latter can be compensated for by telling the 
+   Some compilers/archs show a negative impact on -benchmark because
+   they optimize register usage in ogr_cycle while tracking those used in
+   found_one and/or are size sensitive, and the increased size of found_one()
+   skews -benchmark. [the latter can be compensated for by telling the
    compiler to align functions, the former by making found_one() non static]
 */
 #ifndef OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE
@@ -162,7 +163,7 @@
    To Do:
    ogr_create() should be updated to match
    dist is not needed in lev*, we only need the final value in state
-   
+
    OGROPT_ALTERNATE_CYCLE == 0 -> default (GARSP) ogr_cycle()
    OGROPT_ALTERNATE_CYCLE == 1 -> tuned (for ppc [only?]) ogr_cycle() by dan and chris
    OGROPT_ALTERNATE_CYCLE == 2 -> vectorized ogr_cycle() contibuted by dan and chris
@@ -187,7 +188,7 @@
 /* These are alternatives for the COMP_LEFT_LIST_RIGHT macro to "shift the
    list to add or extend the first mark".
    Note that this option gets ignored if OGROPT_ALTERNATE_CYCLE != 1.
-   
+
    OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 0 -> default COMP_LEFT_LIST_RIGHT
    OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 1 -> alternate approach by sampoo
    OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 2 -> assembly versions
@@ -1657,7 +1658,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
     lev2->list[4] = lev->list[4];                 \
     if (d <= (32*5))                              \
       lev2->list[(d-1)>>5] |= BITOFLIST( d );     \
-  }    
+  }
 #elif (OGROPT_COPY_LIST_SET_BIT_JUMPS == 2)
 #define COPY_LIST_SET_BIT(lev2,lev,bitindex)      \
   {                                               \
@@ -1665,7 +1666,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
     memcpy( &(lev2->list[0]), &(lev->list[0]), sizeof(lev2->list[0])*5 ); \
     if (d <= (32*5))                              \
       lev2->list[(d-1)>>5] |= BITOFLIST( d );     \
-  }    
+  }
 #else
 #define COPY_LIST_SET_BIT(lev2,lev,bitindex)      \
   {                                               \
@@ -1709,7 +1710,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
        lev2->list[4] = lev->list[4];              \
     }                                             \
   }
-#endif  
+#endif
 
 #define COPY_DIST_COMP(lev2,lev)                  \
   lev2->dist[0] = lev->dist[0] | lev2->list[0];   \
@@ -1821,14 +1822,14 @@ static int init_load_choose(void)
 {
 #ifndef HAVE_STATIC_CHOOSEDAT
   #error choose_dat needs to be created/loaded here
-#endif  
+#endif
   if (MAXBITS != ogr_choose_dat[2]) {
     return CORE_E_FORMAT;
   }
 #ifndef HAVE_STATIC_CHOOSEDAT
   /* skip over the choose.dat header */
   choosedat = &ogr_choose_dat[3];
-#endif  
+#endif
 
 #if !defined(HAVE_STATIC_CHOOSEDAT) || defined(CRC_CHOOSEDAT_ANYWAY)
   /* CRC32 check */
@@ -1916,11 +1917,11 @@ static int found_one(const struct State *oState)
             diff -= 64;
             #endif
             mask = 1<<(diff&7);
-            diff >>= 3;   
+            diff >>= 3;
             if ((diffs[diff] & mask)!=0) return 0;
             diffs[diff] |= (char)mask;
           }
-          #else    
+          #else
           if (diffs[diff]) return 0;
           diffs[diff] = 1;
           #endif
@@ -1944,30 +1945,30 @@ static int found_one(const struct State *oState)
    // always check for buffer overruns!
    if (maximum2 >= 1024)
       return CORE_E_MEMORY;
-   
+
    memset( diffs, 0, maximum2 + 1 );
-   
+
    for (i = 1; i < maxdepth; i++) {
       int levelICount = levels[i].cnt2;
-      
+
       for (j = 0; j < i; j++) {
            int diff = levelICount - levels[j].cnt2;
-         
+
          if (2*diff <= maximum) {      /* Principle 1 */
-            
+
             if (diff <= 64)
                break;     /* 2 bitmaps always tracked */
-            
+
             if (diffs[diff] != 0)
                return CORE_S_CONTINUE;
-            
+
             diffs[diff] = 1;
          }
-      
+
       }   /* for (j = 0; j < i; j++) */
-   
+
    }  /* for (i = 1; i < maxdepth; i++) */
-  
+
   return CORE_S_SUCCESS;
 }
 #endif
@@ -1983,7 +1984,7 @@ static int found_one(const struct State *oState)
     #define LOOKUP_FIRSTBLANK(x) (__cntlzw(~((unsigned int)(x)))+1)
   #else
     #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
-  #endif    
+  #endif
 #elif defined(ASM_ALPHA) && defined(__GNUC__)
   #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
@@ -1993,9 +1994,9 @@ static int found_one(const struct State *oState)
       defined(__ICC)
   /* If we were to cover the whole range of 0x00000000 ... 0xffffffff
      we would need ...
-     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input) 
+     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input)
      {
-        register unsigned int result;        
+        register unsigned int result;
         __asm__("notl %1\n\t"     \
                 "movl $33,%0\n\t" \
                 "bsrl %1,%1\n\t"  \
@@ -2009,10 +2010,10 @@ static int found_one(const struct State *oState)
      but since the function is only executed for (comp0 < 0xfffffffe),
      we can optimize it to...
   */
-  #if defined(__GNUC__)      
-    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input) 
+  #if defined(__GNUC__)
+    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input)
     {
-       register unsigned int result;        
+       register unsigned int result;
        __asm__("notl %1\n\t"     \
                "movl $32,%0\n\t" \
                "bsrl %1,%1\n\t"  \
@@ -2042,7 +2043,7 @@ static int found_one(const struct State *oState)
   #endif
 #elif defined(ASM_68K) && defined(__GNUC__) /* Bit field find first one set (020+) */
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
-  { i = ~i; __asm__ ("bfffo %0,0,0,%0" : "=d" (i) : "0" (i)); return ++i; }  
+  { i = ~i; __asm__ ("bfffo %0,0,0,%0" : "=d" (i) : "0" (i)); return ++i; }
 #elif defined(ASM_ARM)
   #if defined(__GNUC__)
     static char first[256] = {
@@ -2082,7 +2083,7 @@ static int found_one(const struct State *oState)
 #else
   #error OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM is defined, and no code to match
 #endif
-    
+
 
 
 static int ogr_init(void)
@@ -2099,7 +2100,7 @@ static int ogr_init(void)
     for( n=1; n < 200; n++) {
        ogr_bit_of_LIST[n] = 0x80000000 >> ((n-1) % 32);
     }
-  }    
+  }
   #endif
 
   #if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) || defined(FIRSTBLANK_ASM_TEST)
@@ -2112,7 +2113,7 @@ static int ogr_init(void)
       m >>= 1;
     }
     ogr_first_blank[0xffff] = 17;     /* just in case we use it */
-  }    
+  }
   #endif
 
   #if defined(FIRSTBLANK_ASM_TEST)
@@ -2122,7 +2123,7 @@ static int ogr_init(void)
     {
       unsigned int q, err_count = 0;
       printf("begin firstblank test\n"
-             "(this may take a looooong time and requires a -KILL to stop)\n");   
+             "(this may take a looooong time and requires a -KILL to stop)\n");
       for (q = 0; q <= 0xfffffffe; q++)
       {
         int s1 = ((q < 0xffff0000) ? \
@@ -2132,14 +2133,14 @@ static int ogr_init(void)
         {
           printf("\nfirstblank error %d != %d (q=%u/0x%08x)\n", s1, s2, q, q);
           err_count++;
-        }  
-        else if (q == 0xfffffffe || (q & 0xfffff) == 0xfffff)      
+        }
+        else if (q == 0xfffffffe || (q & 0xfffff) == 0xfffff)
         {
           printf("\rfirstblank done 0x%08x-0x%08x ", q & 0xfff00000, q);
           fflush(stdout);
         }
       }
-      printf("\nend firstblank test (%u errors)\n", err_count);    
+      printf("\nend firstblank test (%u errors)\n", err_count);
     }
     done_test = 0;
   }
@@ -2265,30 +2266,30 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
    SETUP_TOP_STATE(oState,lev);
    lev++;
     n = workstub->worklength;
-    
+
     if (n < workstub->stub.length) {
       n = workstub->stub.length;
     }
-    
+
     if (n > STUB_MAX) {
       return CORE_E_FORMAT;
     }
-    
+
     const int oStateMax = oState->max;
     const int oStateMaxDepthM1 = oState->maxdepthm1;
     const int oStateHalfDepth2 = oState->half_depth2;
     const int oStateHalfDepth = oState->half_depth;
     const int oStateHalfLength = oState->half_length;
     int oStateDepth = oState->depth;
-    
+
     for (i = 0; i < n; i++) {
-    
+
      #if (OGROPT_ALTERNATE_CYCLE == 2)
        U dist0 = VEC_TO_INT(distV0,3);
      #endif
-     
+
      int maxMinusDepth = oStateMaxDepthM1 - oStateDepth;
-     
+
       if (oStateDepth <= oStateHalfDepth2) {
         if (oStateDepth <= oStateHalfDepth) {
           limit = oStateMax - OGR[maxMinusDepth];
@@ -2301,29 +2302,29 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
       } else {
         limit = oStateMax - choose(dist0 >> ttmMAXBITS, maxMinusDepth);
       }
-      
+
       int s = workstub->stub.diffs[i];
       //dump(oStateDepth, lev, 0);
-      
+
 // The following line is the same as:  oState->Levels[i+1].cnt2 = oState->Levels[i].cnt2 + s;
 //   lev->cnt2 = lev[-1].cnt2 + s;
 // because:  lev == oState->Levels[i+1]
 // AND because we replace the count below, this assignment isn't needed at all!
 
       cnt2 += s;
-      
+
       while (s>=32) {
         COMP_LEFT_LIST_RIGHT_32(lev);
         s -= 32;
       }
-      
+
       COMP_LEFT_LIST_RIGHT(lev, s);
       PUSH_LEVEL_UPDATE_STATE(lev);
       lev++;
       oStateDepth++;
-     
+
     }
-    
+
     SAVE_FINAL_STATE(oState,lev);
     oState->depth = oStateDepth - 1; // externally visible depth is one less than internal
   }
@@ -2376,7 +2377,7 @@ static void dump_ruler(struct State *oState, int depth)
     printf("%d ", oState->marks[i] - oState->marks[i-1]);
     #else
     printf("%d ", oState->Levels[i].cnt2 - oState->Levels[i-1].cnt2);
-    #endif    
+    #endif
   }
   printf("\n");
 }
@@ -2398,18 +2399,18 @@ static int ogr_cycle(void *state, int *pnodes)
    struct Level *levHalfDepth = &oState->Levels[oStateHalfDepth];
    struct Level *levMaxM1 = &oState->Levels[oStateMaxDepthM1];
    int retval = CORE_S_CONTINUE;
-   
+
    SETUP_TOP_STATE(oState,lev);
-   
+
    for (;;) {
-   
+
    //continue:
       #if (OGROPT_ALTERNATE_CYCLE == 2)
          U dist0 = VEC_TO_INT(distV0,3);
       #endif
-      
+
       int maxMinusDepth = oStateMaxDepthM1 - depth;
-      
+
       if (depth <= oStateHalfDepth2) {
          if (depth <= oStateHalfDepth) {
             if (nodes >= nodeslimit) {
@@ -2439,15 +2440,15 @@ static int ogr_cycle(void *state, int *pnodes)
          int s = LOOKUP_FIRSTBLANK( comp0 );
          #else
          int s;
-         if (comp0 < 0xffff0000) 
+         if (comp0 < 0xffff0000)
            s = ogr_first_blank[comp0 >> 16];
-         else {    
+         else {
            /* s = 16 + ogr_first_blank[comp0 & 0x0000ffff]; slow code */
            s = 16 + ogr_first_blank[comp0 - 0xffff0000];
-         }        
+         }
          #endif
          if ((cnt2 += s) > limit)   goto up; /* no spaces left */
-         COMP_LEFT_LIST_RIGHT(lev, s); 
+         COMP_LEFT_LIST_RIGHT(lev, s);
       } else { /* s>32 */
          U comp = comp0;
          if ((cnt2 += 32) > limit)  goto up; /* no spaces left */
@@ -2545,12 +2546,12 @@ stay:
       #if defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
       s = LOOKUP_FIRSTBLANK( comp0 );
       #else
-      if (comp0 < 0xffff0000) 
+      if (comp0 < 0xffff0000)
         s = ogr_first_blank[comp0 >> 16];
-      else {    
+      else {
         /* s = 16 + ogr_first_blank[comp0 & 0x0000ffff]; slow code */
         s = 16 + ogr_first_blank[comp0 - 0xffff0000];
-      }        
+      }
       #endif
 #ifdef OGR_DEBUG
   if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
@@ -2612,10 +2613,10 @@ up:
     {
       if ((++new_hi) < oState->Nodes.hi)
         new_hi = new_lo = ((U)ULONG_MAX);
-    } 
+    }
     oState->Nodes.hi = new_hi;
     oState->Nodes.lo = new_lo;
-  }    
+  }
   #endif
   oState->depth = depth-1;
 
@@ -2623,6 +2624,142 @@ up:
 
   return retval;
 }
+
+#if (CLIENT_OS == OS_RISCOS)
+static int ogr_cycle_non_preemptive(void *state, int *pnodes)
+{
+  struct State *oState = (struct State *)state;
+  int depth = oState->depth+1;      /* the depth of recursion */
+  struct Level *lev = &oState->Levels[depth];
+  struct Level *lev2;
+  int nodes = 0;
+  int nodeslimit = *pnodes;
+  int retval = CORE_S_CONTINUE;
+  int limit;
+  int s;
+  U comp0;
+
+#ifdef OGR_DEBUG
+  oState->LOGGING = 1;
+#endif
+  for (;;) {
+
+    if (nodes >= nodeslimit) {
+      break;
+    }
+
+    oState->marks[depth-1] = lev->cnt2;
+#ifdef OGR_DEBUG
+    if (oState->LOGGING) dump_ruler(oState, depth);
+#endif
+    if (depth <= oState->half_depth2) {
+      if (depth <= oState->half_depth) {
+        //dump_ruler(oState, depth);
+        limit = oState->max - OGR[oState->maxdepthm1 - depth];
+        limit = limit < oState->half_length ? limit : oState->half_length;
+      } else {
+        limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - depth);
+        limit = limit < oState->max - oState->marks[oState->half_depth]-1 ? limit : oState->max - oState->marks[oState->half_depth]-1;
+      }
+    } else {
+      limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - depth);
+    }
+
+#ifdef OGR_DEBUG
+    if (oState->LOGGING) dump(depth, lev, limit);
+#endif
+
+    nodes++;
+
+    /* Find the next available mark location for this level */
+stay:
+    comp0 = lev->comp[0];
+#ifdef OGR_DEBUG
+    if (oState->LOGGING) printf("comp0=%08x\n", comp0);
+#endif
+    if (comp0 < 0xfffffffe) {
+      #if defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
+      s = LOOKUP_FIRSTBLANK( comp0 );
+      #else
+      if (comp0 < 0xffff0000)
+        s = ogr_first_blank[comp0 >> 16];
+      else {
+        /* s = 16 + ogr_first_blank[comp0 & 0x0000ffff]; slow code */
+        s = 16 + ogr_first_blank[comp0 - 0xffff0000];
+      }
+      #endif
+#ifdef OGR_DEBUG
+  if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
+#endif
+      if ((lev->cnt2 += s) > limit) goto up; /* no spaces left */
+      COMP_LEFT_LIST_RIGHT(lev, s);
+    } else {
+      /* s>32 */
+      if ((lev->cnt2 += 32) > limit) goto up; /* no spaces left */
+      COMP_LEFT_LIST_RIGHT_32(lev);
+      if (comp0 == 0xffffffff) goto stay;
+    }
+
+
+    /* New ruler? */
+    if (depth == oState->maxdepthm1) {
+      oState->marks[oState->maxdepthm1] = lev->cnt2;       /* not placed yet into list arrays! */
+      if (found_one(oState)) {
+        retval = CORE_S_SUCCESS;
+        break;
+      }
+      goto stay;
+    }
+
+    /* Go Deeper */
+    lev2 = lev + 1;
+#if (OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP == 1)
+    COPY_LIST_SET_BIT_COPY_DIST_COMP(lev2, lev, lev->cnt2-lev->cnt1);
+#else
+    COPY_LIST_SET_BIT(lev2, lev, lev->cnt2-lev->cnt1);
+    COPY_DIST_COMP(lev2, lev);
+#endif
+    lev2->cnt1 = lev->cnt2;
+    lev2->cnt2 = lev->cnt2;
+    lev->limit = limit;
+    lev++;
+    depth++;
+    continue;
+
+up:
+    lev--;
+    depth--;
+    if (depth <= oState->startdepth) {
+      retval = CORE_S_OK;
+      break;
+    }
+    limit = lev->limit;
+
+    goto stay; /* repeat this level till done */
+  }
+
+  #if 0 /* oState->Nodes is unused (count is returned through *pnodes) */
+  // oState->Nodes += nodes;
+  {
+    U new_hi = oState->Nodes.hi;
+    U new_lo = oState->Nodes.lo;
+    new_lo += nodes;
+    if (new_lo < oState->Nodes.lo)
+    {
+      if ((++new_hi) < oState->Nodes.hi)
+        new_hi = new_lo = ((U)ULONG_MAX);
+    }
+    oState->Nodes.hi = new_hi;
+    oState->Nodes.lo = new_lo;
+  }
+  #endif
+  oState->depth = depth-1;
+
+  *pnodes = nodes;
+
+  return retval;
+}
+#endif
 #endif
 
 static int ogr_getresult(void *state, void *result, int resultlen)
@@ -2653,7 +2790,7 @@ static int ogr_getresult(void *state, void *result, int resultlen)
 static int ogr_destroy(void *state)
 {
   #if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
-  if (state) free(state); 
+  if (state) free(state);
   #else
   state = state;
   #endif
@@ -2699,7 +2836,18 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
   static CoreDispatchTable dispatch_table;
   dispatch_table.init      = ogr_init;
   dispatch_table.create    = ogr_create;
+#if (CLIENT_OS == OS_RISCOS)
+  if (riscos_in_taskwindow)
+  {
+    dispatch_table.cycle   = ogr_cycle_non_preemptive;
+  }
+  else
+  {
+    dispatch_table.cycle   = ogr_cycle;
+  }
+#else
   dispatch_table.cycle     = ogr_cycle;
+#endif
   dispatch_table.getresult = ogr_getresult;
   dispatch_table.destroy   = ogr_destroy;
 #if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
