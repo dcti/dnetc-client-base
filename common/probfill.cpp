@@ -5,8 +5,11 @@
  * Any other distribution or use of this source violates copyright.
 */
 
+//#define STRESS_RANDOMGEN
+//#define STRESS_RANDOMGEN_ALL_KEYSPACE
+
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.3 1999/09/07 02:51:26 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.4 1999/09/14 14:06:29 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -266,6 +269,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 
 /* ----------------------------------------------------------------------- */
 
+#ifndef STRESS_RANDOMGEN
 static long __loadapacket( Client *client, WorkRecord *wrdata, 
                           int /*ign_closed*/,  unsigned int prob_i )
 {                    
@@ -277,19 +281,26 @@ static long __loadapacket( Client *client, WorkRecord *wrdata,
     unsigned int selproject = (unsigned int)client->loadorder_map[cont_i];
 
 #ifndef GREGH
-if (selproject == 2)
+if (selproject == OGR)
   continue;
 #endif  
 #ifndef CSC_TEST
-if (selproject == 3)
+if (selproject == CSC)
   continue;
 #endif
 
     if (selproject >= CONTEST_COUNT) /* user disabled */
       continue;
-      
     #if (CLIENT_OS == OS_RISCOS) /* RISC OS x86 thread only supports RC5 */
-    if (prob_i == 1 && selproject != 0)
+    if (prob_i == 1 && selproject != RC5)
+      continue;
+    #endif
+    #if defined(NO_DES_SUPPORT)
+    if (selproject == DES)
+      continue;
+    #endif
+    #if (CLIENT_OS == OS_NETWARE) /* needs precise timeslice control */
+    if (selproject == DES && !nwCliIsPreemptiveEnv())
       continue;
     #endif
 
@@ -298,6 +309,7 @@ if (selproject == 3)
   }
   return bufcount;
 }  
+#endif
 
 /* ---------------------------------------------------------------------- */
 
@@ -314,8 +326,10 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   WorkRecord wrdata;
   unsigned int norm_key_count = 0;
   int didload = 0, didrandom = 0;
-  long bufcount = __loadapacket( client, &wrdata, 1, prob_i );
-
+  long bufcount = -1;
+  
+#ifndef STRESS_RANDOMGEN
+  bufcount = __loadapacket( client, &wrdata, 1, prob_i );
   if (bufcount < 0 && client->nonewblocks == 0)
   {
     int didupdate = 
@@ -330,6 +344,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         bufcount = __loadapacket( client, &wrdata, 0, prob_i );
     }
   }
+#endif
 
   if (bufcount >= 0) /* load from file succeeded */
   {
@@ -405,6 +420,12 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 
       u32 randomprefix = ( (u32)(client->randomprefix) + 1 ) & 0xFF;
       u32 rnd = Random(NULL,0);
+
+#ifdef STRESS_RANDOMGEN && defined(STRESS_RANDOMGEN_ALL_KEYSPACE)
+      ++client->randomprefix;
+      if (client->randomprefix > 0xff)
+        client->randomprefix = 100
+#endif
       
       wrdata.id[0]                 = 0;
       wrdata.resultcode            = RESULT_WORKING;
