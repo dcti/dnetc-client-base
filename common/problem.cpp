@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.38 1999/12/12 15:34:04 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.39 1999/12/13 15:53:49 snake Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -275,7 +275,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       {
         //rc5/ultra/rc5-ultra-crunch.cpp
         //xtern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
-        rc5_unit_func = rc5_unit_func_ultrasparc_crunch;
+        problem->rc5_unit_func = rc5_unit_func_ultrasparc_crunch;
         problem->pipeline_count = 1;
         coresel = 0;
       }
@@ -283,7 +283,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       {
         //rc5/ansi/2-rg.c
         //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-        rc5_unit_func = rc5_ansi_2_rg_unit_func;
+        problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
         problem->pipeline_count = 2;
         coresel = 0;
       }
