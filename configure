@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.57  1998/06/25 21:29:34  remi
+# Switched to -lncurses for x86 Linux targets.
+# Fixed CFLAGS for the Ultra.
+#
 # Revision 1.56  1998/06/25 20:57:05  foxyloxy
 # IRIX5's lack of usleep() rectified temporarily with sleep()... will change
 # to nanosleep() soon. (sleepdef.h) -MIPS4 changed to -mips4 (configure)
@@ -280,9 +284,9 @@ OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT \
 -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
 # a bit hairy, isn't it ? ;-)
 OPTS_DES_ULTRA_ASM="-DINTSIZES=442 -fstrength-reduce -Wall -Icommon \
--Irc5 -Ides -Iplatforms -O6 -mv8 -mepilogue -Wa,-xarch=v8plusa -mno-float \
--DASM_SPARC -DIN_DCTI_CLIENT -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID \
--DASM -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE \
+-Irc5 -Ides -Iplatforms -O6 -mv8 -mepilogue -Wa,-xarch=v8plusa -mno-flat \
+-funroll-loops -DASM_SPARC -DIN_DCTI_CLIENT -DDES_ULTRA -DINLINE=inline \
+-DFULL_64_BIT_VALID -DASM -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE \
 -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL -DBIT_64 \
 -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
 
@@ -603,7 +607,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-	TARGET_LIBS="-lcurses"
+	TARGET_LIBS="-lncurses"
 	;;
 
     *x86-linux-egcs-debug)    # debug version of x86-linux-egcs
@@ -613,7 +617,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_STRIP="touch"
-	TARGET_LIBS="-lcurses"
+	TARGET_LIBS="-lncurses"
 	;;
 
     *x86-linux-desultra-egcs-debug)    # to debug UltraSparc DES code integration
@@ -623,7 +627,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ -DPIPELINE_COUNT=2 $OPTS_DES_ULTRA_C"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
 	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_LIBS="-lcurses"
+	TARGET_LIBS="-lncurses"
 	TARGET_STRIP="touch"
 	;;
 
@@ -633,7 +637,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-	TARGET_LIBS="-lcurses"
+	TARGET_LIBS="-lncurses"
 	;;
 
     *x86-linux-aout)
@@ -643,7 +647,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-	TARGET_LIBS="-lcurses"
+	TARGET_LIBS="-lncurses"
 	;;
 
     *x86-linux-mt-egcs)
@@ -653,7 +657,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-	TARGET_LIBS="-lpthread -lcurses"
+	TARGET_LIBS="-lpthread -lncurses"
 	;;
 
     *x86-linux-mt-gcc)
@@ -662,7 +666,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-	TARGET_LIBS="-lpthread -lcurses"
+	TARGET_LIBS="-lpthread -lncurses"
 	;;
 
     *x86-linux-mt-slice-kwan-gcc)     # using slice not bryddes
@@ -671,7 +675,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_LIBS="-lpthread -lcurses"
+	TARGET_LIBS="-lpthread -lncurses"
 	;;
 
 ###### Intel X86 FreeBSD/NetBSD/OpenBSD
