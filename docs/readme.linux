@@ -1,6 +1,6 @@
 
  distributed.net client for Linux/x86
- document revision $Id: readme.linux,v 1.1.2.2 2002/07/26 22:51:17 andreasb Exp $
+ document revision $Id: readme.linux,v 1.1.2.3 2002/08/04 21:22:57 andreasb Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -75,6 +75,10 @@
     
     Beginning with v2.8011.464, the client supports the -[un]install switch
     for creation/removal of SYSV-style rc.d scripts.
+    
+    The client needs SYSV IPC for its operation, otherwise you will get an
+    "Insufficient memory to allocate problem data" error. If you get this 
+    error, you need to recompile your kernel with CONFIG_SYSVIPC enabled.
     
     As of November 7th, 1998, much of the client source, including all the 
     core crunch code that was previously scattered about, is available 
