@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.96 2001/01/26 17:04:04 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.97 2001/01/28 14:10:05 cyp Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -84,8 +84,8 @@ typedef struct
     struct {u32 hi,lo;} refL0;
     ContestWork contestwork;
     /* --------------------------------------------------------------- */
-    char __core_membuffer_space[(MAX_MEM_REQUIRED_BY_CORE+(1UL<<CORE_MEM_ALIGNMENT)-1)];
     void *core_membuffer; /* aligned pointer to __core_membuffer_space */
+    char __core_membuffer_space[(MAX_MEM_REQUIRED_BY_CORE+(1UL<<CORE_MEM_ALIGNMENT)-1)];
     /* --------------------------------------------------------------- */
     u32 loadtime_sec, loadtime_usec; /* LoadState() time */
     int last_resultcode; /* the rescode the last time contestwork was stable */
@@ -106,18 +106,43 @@ typedef struct
 #endif
 
 /* SuperProblem() is an InternalInternal problem struct                */
-/* One Problem for LoadState/RetrieveState()/mainthread and            */
-/* one problem for the core. The core's copy is updated on entry       */
-/* into Run(), and the mainthread copy is syncronized on exit from Run */
-/*                                                                     */
 /* SuperProblem members are never accessed by any functions other than */
 /* those listed immediately below (ProblemAlloc and friends)           */
+/*                                                                     */
+/* This is how the different copies are used:                          */
+/*   LoadState()                                                       */
+/*     on entry: locked copy from PICKPROB_MAIN -> PICKPROB_TEMP       */
+/*     modifies: PICKPROB_TEMP                                         */
+/*     on success: locked copy from PICKPROB_TEMP -> PICKPROB_MAIN     */
+/*   RetrieveState()                                                   */
+/*   IsProblemInitialized()                                            */
+/*     on entry: lock PICKPROB_MAIN                                    */
+/*     modifies (only for RetrieveState(purge)): PICKPROB_MAIN         */
+/*     on return: unlock PICKPROB_MAIN                                 */
+/*   Run()                                                             */
+/*     on entry: locked copy from PICKPROB_MAIN -> PICKPROB_CORE       */
+/*     modifies: PICKPROB_CORE                                         */
+/*     on success and if the PICKPROB_MAIN initialized/started state   */
+/*     hasn't changed (that is, RetrieveState() hasn't purged it in    */
+/*     meantime), locked copy from PICKPROB_CORE -> PICKPROB_MAIN      */       
+/*                                                                     */
+/*  **NOTE**: this scheme implies that the cores may NOT have          */
+/*  absolute pointers in their mem buffers that point to other         */
+/*  parts of the membuffer.                                            */
+/*                                                                     */
+/* The reason why we use a temp area for LoadState() is twofold:       */
+/* a) LoadState() can take time, for instance when selcore will need   */
+/*    to do a benchmark. If that happens, and Run() starts, it will    */
+/*    spin in the lock and (minimally) skew the results.               */
+/* b) LoadState() can fail at anytime during the intitalization,       */
+/*    which could leave the problem in an inconsistant state.          */  
 
 typedef struct 
 {
-  InternalProblem twist_and_shout[2]; 
+  InternalProblem twist_and_shout[3]; 
   #define PICKPROB_MAIN 0 /* MAIN must be first */
   #define PICKPROB_CORE 1
+  #define PICKPROB_TEMP 2 /* temporary copy used by load */
   mutex_t copy_lock; /* locked when a sync is in progress */
 } SuperProblem;  
 
@@ -210,7 +235,9 @@ Problem *ProblemAlloc(void)
     
     thisprob->twist_and_shout[PICKPROB_CORE].priv_data.threadindex = 
     thisprob->twist_and_shout[PICKPROB_MAIN].priv_data.threadindex = 
+    thisprob->twist_and_shout[PICKPROB_TEMP].priv_data.threadindex = 
                                               __problem_counter++;
+
     //align core_membuffer to 16byte boundary
     p = &(thisprob->twist_and_shout[PICKPROB_CORE].priv_data.__core_membuffer_space[0]);
     while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
@@ -221,6 +248,11 @@ Problem *ProblemAlloc(void)
     while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
       p++;
     thisprob->twist_and_shout[PICKPROB_MAIN].priv_data.core_membuffer = p;
+
+    p = &(thisprob->twist_and_shout[PICKPROB_TEMP].priv_data.__core_membuffer_space[0]);
+    while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
+      p++;
+    thisprob->twist_and_shout[PICKPROB_TEMP].priv_data.core_membuffer = p;
   }
   
   if (thisprob && err)
@@ -238,41 +270,35 @@ static InternalProblem *__pick_probptr(void *__thisprob, int which)
     SuperProblem *p = (SuperProblem *)__thisprob;
     if (which == PICKPROB_CORE)
       return &(p->twist_and_shout[PICKPROB_CORE]);
-    return &(p->twist_and_shout[PICKPROB_MAIN]);
+    if (which == PICKPROB_MAIN)
+      return &(p->twist_and_shout[PICKPROB_MAIN]);
+    if (which == PICKPROB_TEMP)
+      return &(p->twist_and_shout[PICKPROB_TEMP]);
   }    
   return (InternalProblem *)0;
 }
 
-static void __synchronize_problems( void *__thisprob, int which_source )
+static inline void __assert_lock( void *__thisprob )
 {
-  if (__thisprob)
-  {
-    SuperProblem *p = (SuperProblem *)__thisprob;
-    void *bufptr;
+  SuperProblem *p = (SuperProblem *)__thisprob;
+  mutex_lock(&(p->copy_lock));
+}
 
-    mutex_lock(&(p->copy_lock));
-    if (which_source == PICKPROB_CORE)
-    {
-      bufptr = p->twist_and_shout[PICKPROB_MAIN].priv_data.core_membuffer;
-      memcpy( &(p->twist_and_shout[PICKPROB_MAIN]),
-              &(p->twist_and_shout[PICKPROB_CORE]),
-              sizeof(InternalProblem));
-      p->twist_and_shout[PICKPROB_MAIN].priv_data.core_membuffer = bufptr;
-    }              
-    else
-    {
-      bufptr = p->twist_and_shout[PICKPROB_CORE].priv_data.core_membuffer;
-      memcpy( &(p->twist_and_shout[PICKPROB_CORE]),
-              &(p->twist_and_shout[PICKPROB_MAIN]),
-              sizeof(InternalProblem));
-      p->twist_and_shout[PICKPROB_CORE].priv_data.core_membuffer = bufptr;
-    }          
-    mutex_unlock(&(p->copy_lock));
-  }    
-  return;
-}                                   
+static inline void __release_lock( void *__thisprob )
+{
+  SuperProblem *p = (SuperProblem *)__thisprob;
+  mutex_unlock(&(p->copy_lock));
+}
 
 #undef SuperProblem /* so references beyond this point */
+
+static inline void __copy_internal_problem( InternalProblem *dest,
+                                            const InternalProblem *source )
+{
+  void *p = dest->priv_data.core_membuffer;
+  memcpy( dest, source, sizeof(InternalProblem));
+  dest->priv_data.core_membuffer = p;
+}
 
 /* ======================================================================= */
 
@@ -441,6 +467,7 @@ int ProblemIsInitialized(void *__thisprob)
   InternalProblem *thisprob = __pick_probptr(__thisprob,PICKPROB_MAIN);
   if (thisprob)
   {
+    __assert_lock(__thisprob);
     rescode = 0;
     if (thisprob->priv_data.initialized)
     {
@@ -449,6 +476,7 @@ int ProblemIsInitialized(void *__thisprob)
         rescode = -1;
       /* otherwise 1==RESULT_NOTHING, 2==RESULT_FOUND */
     } 
+    __release_lock(__thisprob);
   }
   return rescode;
 }
@@ -458,10 +486,14 @@ int ProblemIsInitialized(void *__thisprob)
 /* forward reference */
 static unsigned int __compute_permille(unsigned int cont_i, const ContestWork *work);
 
-/* LoadState() and RetrieveState() work in pairs. A LoadState() without
-   a previous RetrieveState(,,purge) will fail, and vice-versa.
+/*
+** the guts of LoadState().  
+**
+** 'thisprob' is a scratch area to work in, and on entry
+** is a copy of the main InternalProblem. On successful return
+** the scratch area will be copied back to the main InternalProblem.
 */
-int ProblemLoadState( void *__thisprob,
+static inline int __InternalLoadState( InternalProblem *thisprob,
                       const ContestWork * work, unsigned int contestid,
                       u32 _iterations, int expected_cputype,
                       int expected_corenum, int expected_os,
@@ -469,13 +501,8 @@ int ProblemLoadState( void *__thisprob,
 {
   ContestWork for_magic;
   int genned_random = 0, genned_benchmark = 0;
-  InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
   struct selcore selinfo; int coresel;
 
-  if (!thisprob)
-  {
-    return -1;
-  }
   //has to be done before anything else
   if (work == CONTESTWORK_MAGIC_RANDOM) /* ((const ContestWork *)0) */
   {
@@ -657,7 +684,9 @@ int ProblemLoadState( void *__thisprob,
     }
     #endif
     default:
+    {
       return -1;
+    }
   }
 
   //---------------------------------------------------------------
@@ -683,10 +712,43 @@ int ProblemLoadState( void *__thisprob,
   loaded_problems[CONTEST_COUNT]++; /* total */
   thisprob->priv_data.last_resultcode = RESULT_WORKING;
   thisprob->priv_data.initialized = 1;
+  
   return( 0 );
 }
 
+/* LoadState() and RetrieveState() work in pairs. A LoadState() without
+   a previous RetrieveState(,,purge) will fail, and vice-versa.
+*/
+int ProblemLoadState( void *__thisprob,
+                      const ContestWork * work, unsigned int contestid,
+                      u32 _iterations, int expected_cputype,
+                      int expected_corenum, int expected_os,
+                      int expected_buildfrac )
+{
+  InternalProblem *temp_prob = __pick_probptr(__thisprob, PICKPROB_TEMP);
+  InternalProblem *main_prob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+  if (!temp_prob || !main_prob)
+  {
+    return -1;
+  }
 
+  __assert_lock(__thisprob);
+  __copy_internal_problem( temp_prob, main_prob ); /* copy main->temp */
+  __release_lock(__thisprob);
+
+  if (__InternalLoadState( temp_prob, work, contestid, _iterations, 
+                           expected_cputype, expected_corenum, expected_os,
+                           expected_buildfrac ) != 0)
+  {
+    return -1;
+  }                             
+
+  /* success */
+  __assert_lock(__thisprob);
+  __copy_internal_problem( main_prob, temp_prob ); /* copy temp->main */
+  __release_lock(__thisprob);
+  return 0;
+}                      
 
 /* ------------------------------------------------------------------- */
 
@@ -702,7 +764,9 @@ int ProblemRetrieveState( void *__thisprob,
   if (!thisprob)
   {
     return -1;
-  }    
+  }
+  __assert_lock(__thisprob);
+
   if (!thisprob->priv_data.initialized)
   {
     //LogScreen("ProblemRetrieveState() without preceding LoadState()\n");
@@ -741,6 +805,7 @@ int ProblemRetrieveState( void *__thisprob,
       ret_code = -1;
     }    
   }
+  __release_lock(__thisprob);
   dontwait = dontwait; /* no longer neccesary since we have full locks now */
   return ret_code;
 }
@@ -1237,13 +1302,17 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
   {
     return -1;
   }
-  main_prob->pub_data.last_runtime_is_invalid = 1; /* haven't changed runtime fields yet */
-  if ( !main_prob->priv_data.initialized )
-  {
-    return ( -1 );
-  }
-  __synchronize_problems(__thisprob, PICKPROB_MAIN); /* copy from main->core */
 
+  if ( !main_prob->priv_data.initialized )
+    return ( -1 );
+
+  __assert_lock(__thisprob);
+  main_prob->priv_data.started = 1;
+  main_prob->pub_data.last_runtime_is_invalid = 1; /* haven't changed runtime fields yet */
+  __copy_internal_problem( core_prob, main_prob ); /* copy main->core */
+  __release_lock(__thisprob);
+  
+  
 #ifdef STRESS_THREADS_AND_BUFFERS
   if (core_prob->pub_data.contest == RC5)
   {
@@ -1329,21 +1398,32 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
     {
       /* don't touch core_prob->pub_data.tslice or runtime as long as retcode < 0!!! */
     }
-    else if (!main_prob->priv_data.initialized)
+    else 
     {
-      /* whoops! RetrieveState(,,purge) was called while we in core */
-      retcode = -1; // discard the purged block
-    }
-    else /* update the remaining core related things, and synchronize */
-    {
-      core_prob->pub_data.core_run_count++;
-      __compute_run_times( core_prob, runstart_secs, runstart_usecs, 
-                           &core_prob->priv_data.loadtime_sec, &core_prob->priv_data.loadtime_usec,
-                           using_ptime, &s_using_ptime, core_resultcode );
-      core_prob->pub_data.tslice = iterations;
-      core_prob->priv_data.last_resultcode = core_resultcode;
-      __synchronize_problems(__thisprob, PICKPROB_CORE); /* copy from core->main */
-      retcode = core_resultcode;
+      __assert_lock(__thisprob);
+      if (!main_prob->priv_data.started ||  /* LoadState() clears this */
+          !main_prob->priv_data.initialized) /* RetrieveState() clears this */
+      {
+        /* whoops! RetrieveState(,,purge) [with or without a subsequent 
+        ** LoadState()] was called while we in core.
+        */
+        retcode = -1; // discard the purged block
+      }
+      else /* update the remaining core related things, and synchronize */
+      {  
+        /* runtimes update must come after we have checked that a 
+        ** RetrieveState(,,purge) wasn't called while we in core
+        */
+        core_prob->pub_data.core_run_count++;
+        __compute_run_times( core_prob, runstart_secs, runstart_usecs, 
+                             &core_prob->priv_data.loadtime_sec, &core_prob->priv_data.loadtime_usec,
+                             using_ptime, &s_using_ptime, core_resultcode );
+        core_prob->pub_data.tslice = iterations;
+        core_prob->priv_data.last_resultcode = core_resultcode;
+        retcode = core_resultcode;
+        __copy_internal_problem( main_prob, core_prob ); /* copy core->main */
+      }  
+      __release_lock(__thisprob);
     }    
     
   } /* if (core_prob->priv_data.last_resultcode == RESULT_WORKING) */
@@ -1378,7 +1458,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
      Server is extremely laggy.
      256 nodes per call: max achievable yield rate ALSO 13-15/sec
      For the fun of it, I then tried 1024 nodes per call: NetWare
-     thisprob->priv_data.started dropping packets, clients disconnected, the profiler
+     started dropping packets, clients disconnected, the profiler
      froze - I couldn't switch back to the console to unload the
      client and had to power-cycle.
      
