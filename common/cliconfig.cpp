@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.106  1998/06/23 03:14:13  silby
+// Small fix to make sure e-mail addresses contain @something, so SMTP servers are happy.
+//
 // Revision 1.105  1998/06/22 11:25:48  cyruspatel
 // Created new function in clicdata.cpp: CliClearContestSummaryData(int c)
 // Needed to flush/clear accumulated statistics for a particular contest.
@@ -91,7 +94,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.105 1998/06/22 11:25:48 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.106 1998/06/23 03:14:13 silby Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -281,7 +284,7 @@ static optionstruct options[OPTION_COUNT]=
 //19
 { "smtpport", CFGTXT("SMTP Port"), "25", CFGTXT("(SMTP port on mail server -- default 25)"),2,2,4,NULL},
 //20
-{ "smtpfrom", CFGTXT("E-mail address that logs will be mailed from"), "RC5notify", CFGTXT("\n(Some servers require this to be a real address)\n"),2,1,5,NULL},
+{ "smtpfrom", CFGTXT("E-mail address that logs will be mailed from"), "a.computer@your.site", CFGTXT("\n(Some servers require this to be a real address)\n"),2,1,5,NULL},
 //21
 { "smtpdest", CFGTXT("E-mail address to send logs to"), "you@your.site", CFGTXT("\n(Full name and site eg: you@your.site.  Comma delimited list permitted)\n"),2,1,6,NULL},
 //22
@@ -702,6 +705,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         case CONF_SMTPFROM:
           strncpy( smtpfrom, parm, sizeof(smtpfrom) - 1 );
+          ValidateConfig();
           break;
         case CONF_SMTPDEST:
           strncpy( smtpdest, parm, sizeof(smtpdest) - 1 );
@@ -1207,6 +1211,11 @@ void Client::ValidateConfig( void )
   killwhitespace(httpproxy);
   killwhitespace(smtpsrvr);
   killwhitespace(smtpdest);
+  killwhitespace(smtpfrom);
+  if (strchr(smtpfrom,'@') == NULL && (isstringblank(smtpfrom) != 1))
+    strcat(smtpfrom,"@domainnameisrequired");  
+  if (strchr(smtpdest,'@') == NULL && (isstringblank(smtpdest) != 1))
+    strcat(smtpdest,"@domainnameisrequired");  
 
   if ( inthreshold[0] < 1   ) inthreshold[0] = 1;
   if ( inthreshold[0] > 1000 ) inthreshold[0] = 1000;
