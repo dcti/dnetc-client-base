@@ -17,6 +17,8 @@ TOPT=/ml /zi /m
            common\mail.obj platforms\win32-os2\BDESLOW.OBJ common\client.obj &
            common\iniread.obj common\network.obj common\problem.obj &
            common\scram.obj des\des-x86.obj common\convdes.obj &
+           common\clitime.obj common\clicdata.obj common\clirate.obj &
+           common\clisrate.obj &
            platforms\win32-os2\RG-486.OBJ platforms\win32-os2\RG-6X86.OBJ &
            platforms\win32-os2\RG-K5.OBJ platforms\win32-os2\RG-K6.OBJ &
            platforms\win32-os2\RC5P5BRF.OBJ platforms\win32-os2\RG-P6.OBJ &
@@ -100,6 +102,36 @@ common\problem.obj : common\problem.cpp common\problem.h common\network.h common
 common\convdes.obj : common\convdes.cpp configure
   *cd common
   *$(CC) $(%CFLAGS) $(%OPT_SPEED) convdes.cpp
+  *cd ..
+  @set isused=1
+
+common\clitime.obj : common\clitime.cpp common\clitime.h configure
+  *cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) clitime.cpp
+  *cd ..
+  @set isused=1
+
+common\clicdata.obj : common\clicdata.cpp common\clicdata.h configure
+  *cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) clicdata.cpp
+  *cd ..
+  @set isused=1
+
+common\clirate.obj : common\clirate.cpp common\clirate.h configure
+  *cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) clirate.cpp
+  *cd ..
+  @set isused=1
+
+common\clisrate.obj : common\clisrate.cpp common\clisrate.h configure
+  *cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) clisrate.cpp
+  *cd ..
+  @set isused=1
+
+common\clistime.obj : common\clistime.cpp common\clistime.h configure
+  *cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) clistime.cpp
   *cd ..
   @set isused=1
 
@@ -305,9 +337,9 @@ os2: .symbolic                                       # OS/2
      @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
      @set LFLAGS    = sys os2v2
      @set CFLAGS    = /5s /fp5 /bm /mf /bt=os2 /DOS2 /DMULTITHREAD -i$(%watcom)\h\os2
-     @set OPT_SIZE  = /oantrlexih /zp4
-     @set OPT_SPEED = /oantrlexih /oi+ /zp8
-     @set LIBFILES  = libf so32dll.lib,tcp32dll.lib
+     @set OPT_SIZE  = /oantrlexi /zp4
+     @set OPT_SPEED = /oantrlexi /zp8
+     @set LIBFILES  = so32dll.lib,tcp32dll.lib
      @set MODULES   =
      @set EXTOBJS   =
      @set IMPORTS   =
