@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.3 2003/02/25 12:30:23 snake Exp $
+ * $Id: ogr.cpp,v 1.2.4.4 2003/03/07 17:25:23 oliver Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -363,6 +363,14 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 
 #if (OGROPT_ALTERNATE_CYCLE == 2) /* support macros for the vectorized ogr_cycle() routine */
 
+#if defined(__GNUC__)
+  #define ZEROBIT_DECL {0, 0, 1, 0}
+  #define ZEROS_DECL {0}
+#else
+  #define ZEROBIT_DECL (0, 0, 1, 0)
+  #define ZEROS_DECL (0)
+#endif
+
  /* define the local variables used for the top recursion state */
 #define SETUP_TOP_STATE(state,lev)                                  \
    vector unsigned int  compV0;                                     \
@@ -372,8 +380,8 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
    vector unsigned int  distV0;                                     \
    vector unsigned int  distV1;                                     \
    int cnt2 = lev->cnt2;                                            \
-   vector unsigned int ZEROBIT = (vector unsigned int)(0, 0, 1, 0); \
-   vector unsigned int ZEROS = (vector unsigned int)(0);            \
+   vector unsigned int ZEROBIT = (vector unsigned int)ZEROBIT_DECL; \
+   vector unsigned int ZEROS = (vector unsigned int)ZEROS_DECL;     \
    vector unsigned int ONES = vec_nor(ZEROS,ZEROS);                 \
    int limit;                                                       \
    union {                                                          \
