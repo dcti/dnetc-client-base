@@ -14,7 +14,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.17 2001/05/31 00:19:36 snake Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.18 2001/07/27 08:44:16 mfeiri Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -27,48 +27,6 @@
   static inline void fastlock_unlock(fastlock_t *m) { m->spl = 0; }
   static inline int fastlock_trylock(fastlock_t *m) { m->spl = 1; return +1; }
   /* _trylock returns -1 on EINVAL, 0 if could not lock, +1 if could lock */
-
-#elif (CLIENT_OS == OS_MACOS)
-
-  #include <Multiprocessing.h>
-//  Without "if (MPLibraryIsLoaded())" this could be really nice
-//  #define fastlock_t MPCriticalRegionID
-//  #define FASTLOCK_INITIALIZER_UNLOCKED 0
-//  #define fastlock_lock(x) MPEnterCriticalRegion(*x,kDurationImmediate)
-//  #define fastlock_unlock(x) MPExitCriticalRegion(*x)
-//  static inline int fastlock_trylock(fastlock_t *m)
-//  { return (MPEnterCriticalRegion(*m,kDurationImmediate)?(0):(+1)); }
-
-  typedef struct {MPCriticalRegionID MPregion; long spl;} fastlock_t;
-  #define FASTLOCK_INITIALIZER_UNLOCKED {0,0}
-  
-  static inline void fastlock_lock(fastlock_t *m)
-  {
-    if (MPLibraryIsLoaded())
-      MPEnterCriticalRegion(m->MPregion,kDurationImmediate);
-    else
-      m->spl = 1;
-  }
-  
-  static inline void fastlock_unlock(fastlock_t *m)
-  {
-    if (MPLibraryIsLoaded())
-      MPExitCriticalRegion(m->MPregion);
-    else
-      m->spl = 0;
-  }
-  
-  /* Please verify this is working as expected before using it
-  static inline int fastlock_trylock(fastlock_t *m)
-  {
-    if (MPLibraryIsLoaded())
-    {
-      return (MPEnterCriticalRegion(m->MPregion,kDurationImmediate)?(0):(+1));
-    }
-    else
-    { m->spl = 1; return +1; }
-  }
-   */
 
 #elif (CLIENT_CPU == CPU_ALPHA) && defined(__GNUC__)
 
@@ -254,7 +212,7 @@
   {
     while (fastlock_trylock(m) <= 0)
     {
-      #if (CLIENT_OS == OS_AMIGAOS)
+      #if (CLIENT_OS == OS_AMIGAOS) || (defined(__unix__))
       NonPolledUSleep(1);
       #else
       #error "What's up Doc?"
@@ -283,9 +241,8 @@
   static __inline__ int fastlock_trylock(fastlock_t *__alp)
   {
     int dummy;
-    register int *dummyp = &dummy;
-    register old, locked = 1;
-    volatile int *alp = &(__alp->spl);
+    register int *dummyp = &dummy, old, locked = 1;
+    volatile int register *alp = &(__alp->spl);
     asm 
     {
       @1:     lwarx   old,0,alp
@@ -309,25 +266,27 @@
     int need_mp_sleep = -1; /* unknown */
     while (fastlock_trylock(m) <= 0)
     {
+      #warning "Busy spin because using MPTaskIsPreemptive() would break MP 1.x support"
       /* the only way we could get here is if we are
       ** running on an MP system and the lock is being
       ** held on another cpu, so we could actually 
       ** busy spin until the lock was released. But 
       ** we'll play nice...
-      */
-      if (need_mp_sleep == -1) /* first time through */
+      
+      if (need_mp_sleep == -1) // first time through
       {
         need_mp_sleep = 0;
         if (MPLibraryIsLoaded())
         {
-          if (MPTaskIsPreemptive(kMPInvalidIDErr /* self */))
+          if (MPTaskIsPreemptive(kInvalidID)) // self
             need_mp_sleep = +1;
         }
       }
       if (need_mp_sleep)
         MPYield();
       else
-        macosSmartYield(6); /* shouldn't be needed, but doesn't hurt */
+        macosSmartYield(6); // shouldn't be needed, but doesn't hurt
+      */
     }
     #else
       #error "What's up Doc?"
