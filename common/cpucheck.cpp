@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.26 2003/09/12 21:59:28 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.27 2003/10/19 12:11:55 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -135,6 +135,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         {
           buffer[sizeof(buffer) - 1] = '\0';
           #if (CLIENT_CPU == CPU_X86      || \
+               CLIENT_CPU == CPU_X86_64   || \
                CLIENT_CPU == CPU_POWERPC  || \
                CLIENT_CPU == CPU_S390     || \
                CLIENT_CPU == CPU_S390X    || \
@@ -826,7 +827,7 @@ static long __GetRawProcessorID(const char **cpuname) {
 
 /* ---------------------------------------------------------------------- */
 
-#if (CLIENT_CPU == CPU_X86)
+#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_X86_64)
 static u32 __os_x86ident_fixup(u32 x86ident_result)
 {
   #if (CLIENT_OS == OS_LINUX)
@@ -1908,8 +1909,9 @@ long GetProcessorType(int quietly)
   const char *apd = "Automatic processor type detection ";
   #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
       (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
-      (CLIENT_CPU == CPU_X86)     || (CLIENT_CPU == CPU_ARM) || \
-      (CLIENT_CPU == CPU_MIPS)    || (CLIENT_CPU == CPU_SPARC)
+      (CLIENT_CPU == CPU_X86)     || (CLIENT_CPU == CPU_X86_64) || \
+      (CLIENT_CPU == CPU_MIPS)    || (CLIENT_CPU == CPU_SPARC) || \
+      (CLIENT_CPU == CPU_ARM)
   {
     const char *cpuname = NULL;
     long rawid = __GetRawProcessorID(&cpuname);
@@ -2003,9 +2005,9 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
 
 #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
     (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
-    (CLIENT_CPU == CPU_X86)     || (CLIENT_CPU == CPU_ARM) || \
-    (CLIENT_CPU == CPU_MIPS)    || (CLIENT_CPU == CPU_SPARC)
-
+    (CLIENT_CPU == CPU_X86)     || (CLIENT_CPU == CPU_X86_64) || \
+    (CLIENT_CPU == CPU_MIPS)    || (CLIENT_CPU == CPU_SPARC) || \
+    (CLIENT_CPU == CPU_ARM)
   long rawid = __GetRawProcessorID(&cpuid_s);
   if (rawid < 0)
     cpuid_s = ((rawid==-1)?("?\n\t(identification failed)"):
