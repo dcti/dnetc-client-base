@@ -1,7 +1,7 @@
 # RC5 client makefile (MS Visual C++ for Win32 x86)
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.62 1999/10/21 17:15:37 cyp Exp $
+# $Id: makefile.vc,v 1.63 1999/10/21 17:22:51 cyp Exp $
 #
 
 BASENAME = dnetc
@@ -26,8 +26,6 @@ OPTS_LIBS = advapi32.lib user32.lib gdi32.lib
 RES_FILE = $(OUTPUTPATH)/$(BASENAME).res
 RC_FILE = $(PLATSRCPATH)/w32cons.rc
 
-all: $(BASENAME)
-
 # --------------------------------------------
 
 !ifdef DEBUG
@@ -37,6 +35,10 @@ OPTS_LINK = $(OPTS_LINK) /debug /pdb:none /pdbtype:consolidate
 OPTS_MSVC = -DNDEBUG $(OPTS_MSVC) $(OPTS_CC_X86)
 OPTS_LINK = $(OPTS_LINK) /release
 !endif
+
+# --------------------------------------------
+
+all: $(BASENAME)
 
 # --------------------------------------------
 
