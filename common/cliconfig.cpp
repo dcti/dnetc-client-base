@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.182  1998/10/03 16:56:43  sampo
+// Finished the ConClear() replacement of CliScreenClear.
+//
 // Revision 1.181  1998/08/28 22:18:21  cyp
 // Commandline parse function is now in cmdline.cpp. Also moved all non-config
 // functions (SetNiceness()/RunStartup()/[Un]Install()/PrintBanner()) to
@@ -207,9 +210,10 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.181 1998/08/28 22:18:21 cyp Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.182 1998/10/03 16:56:43 sampo Exp $"; }
 #endif
 
+#include "console.h"
 #include "cputypes.h"
 #include "client.h"   // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h" // basic (even if port-specific) #includes
@@ -615,7 +619,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
 
     do   //while invalid CONF_xxx option selected
       {
-      CliScreenClear(); //in logstuff.cpp
+      ConClear(); //in logstuff.cpp
       LogScreenRaw("Distributed.Net RC5/DES Client build " 
                   CLIENT_VERSIONSTRING " config menu\n" );
       LogScreenRaw("%s\n",menutable[currentmenu-1]);
@@ -1107,7 +1111,7 @@ s32 Client::Configure( void )
 
   while (returnvalue == 0)
   {
-    CliScreenClear(); //in logstuff.cpp
+    ConClear(); //in logstuff.cpp
     LogScreenRaw("Distributed.Net RC5/DES Client build "
               CLIENT_VERSIONSTRING " config menu\n" );
     LogScreenRaw("------------------------------------------------------------\n\n");

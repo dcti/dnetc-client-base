@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.h,v $
+// Revision 1.4  1998/10/03 17:00:30  sampo
+// Finished the ConClear() replacement of CliScreenClear.
+//
 // Revision 1.3  1998/10/03 04:04:04  cyp
 // changed prototype for CliClearScreen() into a #redefinition of ConClear()
 //
@@ -21,10 +24,6 @@
 
 #ifndef __LOGSTUFF_H__
 #define __LOGSTUFF_H__
-
-//for compatability until it can be changed everywhere.
-#include "console.h"
-#define CliScreenClear() ConClear()
 
 //Flush mail and if last screen write didn't end with a LF then do that now. 
 extern void LogFlush( int forceflush );
