@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probman.cpp,v $
+// Revision 1.6  1998/11/14 13:57:42  cyp
+// ProbMan saves its index to the Problem object. (needed for chrisb's copro
+// board code)
+//
 // Revision 1.5  1998/11/13 21:08:49  cyp
 // Changed DeinitializeProblemManager() for chrisb's x86 option board support
 // so that the index is still valid when the problem is destroyed. This
@@ -29,7 +33,7 @@
 // 
 #if (!defined(lint) && defined(__showids__))
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.5 1998/11/13 21:08:49 cyp Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.6 1998/11/14 13:57:42 cyp Exp $"; }
 #endif
 
 #include "baseincs.h"  // malloc()/NULL/memset()
@@ -98,6 +102,7 @@ int InitializeProblemManager(unsigned int maxnumproblems)
     probmanstatics.probtable[i]=new Problem;
     if (probmanstatics.probtable[i]==NULL)
       break;
+    (probmanstatics.probtable[i])->probman_index = i;
     probcount++;
     }
   if (probcount == 0)
