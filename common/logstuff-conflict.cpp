@@ -4,6 +4,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.14  1998/10/07 12:38:45  remi
+// Fixed logstatistics' initializer.
+// Fixed a "computed value is not used" warning.
+//
 // Revision 1.13  1998/10/06 21:31:11  cyp
 // Modified InitializeLogging() so that logging to mail/file must be
 // explicitly enabled.
@@ -58,7 +62,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.13 1998/10/06 21:31:11 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.14 1998/10/07 12:38:45 remi Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -127,7 +131,20 @@ static struct
   char stableflag;           //last log screen didn't end in '\n'
   char lastwasperc;          //last log screen was a percentbar
   
-} logstatics = { 0, LOGTO_NONE, NULL, {0}, 0, LOGFILETYPE_NONE, 0,0,0,0,0 };
+} logstatics = { 
+  0, 			// initlevel
+  LOGTO_NONE,		// loggingTo
+  0,			// spoolson
+  0,			// percprint
+  NULL,			// *mailmessage
+  {0},			// logfile[]
+  0,			// logfilebaselen
+  LOGFILETYPE_NONE,	// logfileType
+  0,			// logfileLimit
+  0,			// logfilestarted
+  0,			// stdoutisatty
+  0,			// stableflag
+  0 };			// lastwasperc
 
 // ========================================================================
 
@@ -364,7 +381,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list arglist )
         {
         obuffptr = buffptr;
         while (*obuffptr == ' ' || *obuffptr == '\t')
-          *obuffptr++;
+          obuffptr++;
         memmove( buffptr, obuffptr, strlen( obuffptr )+1 );
         }
       if (*buffptr && *buffptr!='[' && *buffptr!='\r' && *buffptr!='\n' )
