@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.142  1998/10/04 03:22:14  silby
+// Changed startup logging code so that CLIENT_VERSIONSTRING was used so that it's obvious if a BETA is being used in logfiles (could not be determined otherwise)
+//
 // Revision 1.141  1998/10/03 23:27:51  remi
 // Use 'usemmx' .ini setting if any MMX core is compiled in.
 //
@@ -184,7 +187,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.141 1998/10/03 23:27:51 remi Exp $"; }
+return "@(#)$Id: client.cpp,v 1.142 1998/10/04 03:22:14 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -367,9 +370,9 @@ static void PrintBanner(const char *dnet_id)
     {  
     level++; //will never print this message again
 
-    LogRaw("\nRC5DES Client v2.%d.%d started.\n"
+    LogRaw("\nRC5DES Client %s started.\n"
              "Using distributed.net ID %s\n\n",
-         CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,dnet_id);
+         CLIENT_VERSIONSTRING,dnet_id);
 
     #if defined(BETA) && defined(BETA_EXPIRATION_TIME) && (BETA_EXPIRATION_TIME != 0)
     timeval currenttime;
