@@ -8,55 +8,58 @@
  * This file contains functions for obtaining/formatting/manipulating
  * the time. 'time' is usually stored/passed/returned in timeval format.
  *
- * CliTimer() requires porting so that it returns the time as gettimeofday()
- * would, ie seconds since 1.1.70 GMT in tv_sec, and remaining fraction in
- * microseconds in tv_usec;
- *
- * CliTimer() is assumed to return a valid (possibly adjusted) time_t value
- * in tv_sec by much of the client code. If you see wierd time strings,
- * your implementation is borked.
- *
  * Please use native OS functions where possible.
  *                                                                 - cyp
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.20 2000/03/09 10:30:42 jlawson Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.21 2000/05/25 19:27:45 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
 #include "clitime.h"  // keep the prototypes in sync
 
-#if defined(__unix__) //possibly not for all unices. getrusage() is BSD4.3
-  // Warning for getrusage(): if the OSs thread model is ala SunOS's LWP,
-  // ie, threads don't get their own pid, then GetProcessTime() functionality
-  // is limited to single thread/benchmark/test only (the way it is now),
-  // otherwise it will be return process time for all threads.
-  // (problem::Run() guards against this condition, but keep it mind anyway.)
+#if defined(__unix__) && !defined(__EMX__)
   #define HAVE_GETRUSAGE
   #include <sys/resource.h>
+  #undef THREADS_HAVE_OWN_ACCOUNTING
+  #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
+    // if threads have their own pid, then we can use getrusage() to
+    // obtain thread-time, otherwise resort to something else (eg gettimeofday)
+    #define THREADS_HAVE_OWN_ACCOUNTING
+  #endif
 #endif
 
-// ---------------------------------------------------------------------
+/* --------------------------------------------------------------------- */
 
-// Internal function.  Fills "tv" with current system time.  The returned
-// time is not guaranteed to be monotonically increasing.
+int InitializeTimers(void)
+{
+  if (CliClock(NULL)!=0) /* this is a one-shot */
+    return -1;
+  /* currently don't have anything else to do */
+  return 0;
+}
 
+int DeinitializeTimers(void)
+{
+  return 0;
+}
+
+/* --------------------------------------------------------------------- */
+
+/* Get current system time (UTC). */
 static int __GetTimeOfDay( struct timeval *tv )
 {
   if (tv)
   {
     #if (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || \
-        (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_NETWARE)
+        (CLIENT_OS == OS_VMS)
     {
       struct timeb tb;
       ftime(&tb);
       tv->tv_sec = tb.time;
       tv->tv_usec = tb.millitm*1000;
     }
-    #elif (CLIENT_OS==OS_SOLARIS)
-        //struct timezone tz;
-      return gettimeofday(tv, 0);
     #elif (CLIENT_OS == OS_WIN32)
     {
       unsigned __int64 now, epoch;
@@ -91,6 +94,36 @@ static int __GetTimeOfDay( struct timeval *tv )
       tv->tv_usec = (ticks%1000)*1000;
       tv->tv_sec = basetime + (time_t)(ticks/1000);
     }
+    #elif (CLIENT_OS == OS_NETWARE)
+    {
+      unsigned long cas[3];
+      unsigned long secs, fsec;
+
+      /* emulated for nw3 in nwlemu.c */
+      GetClockStatus(cas);
+
+      secs = cas[0]; /* full secs (UTC) */
+      fsec = cas[1]; /* frac secs 0-0xfffffffful */
+      /* cas[3] has sync state flags */
+
+      #if (CLIENT_CPU == CPU_X86) 
+      /* avoid yanking in watcom's crappy static clib for int64 mul/div */
+      _asm mov eax, fsec
+      _asm xor edx, edx
+      _asm mov ecx, 1000000
+      _asm mul ecx
+      _asm xor ecx, ecx
+      _asm dec ecx
+      _asm div ecx
+      _asm mov fsec, eax
+      #else
+      fsec = (unsigned long)(((unsigned __int64)
+             (((unsigned __int64)fsec) * 1000000ul)) / 0xfffffffful);
+      #endif
+
+      tv->tv_sec = (time_t)secs;
+      tv->tv_usec = (long)fsec;
+    }
     #elif (CLIENT_OS == OS_AMIGAOS)
     {
       return timer((unsigned int *)tv );
@@ -105,108 +138,11 @@ static int __GetTimeOfDay( struct timeval *tv )
   return 0;
 }
 
-// ---------------------------------------------------------------------
+/* --------------------------------------------------------------------- */
 
-// Internal function.
-// Unlike __GetTimeOfDay(), which may change when the user changes
-// the day/date, __GetMonotonicClock should return a monotonic time.
-// This is particularly critical for timing on non-preemptive systems.
-
-static int __GetMonotonicClock( struct timeval *tv )
-{
-  #if (CLIENT_OS == OS_NETWARE) /* use hardware clock */
-  /* we have two time sources at our disposal: a low res (software) one
-   * which is (often) network adjusted, and a high res one, which is a
-   * raw read of the hardware clock but is liable to drift.
-   * NetWare is a non-preemptive OS and dynamically adjusts timeslice, for
-   * which it needs a high res timesource. So, we use the ftime() for
-   * "displayable" time and the hardware clock for core timing since
-   * hwclock skew hardly figures when measuring elapsed time, but
-   * is quite visible if we were to use it for "displayable time".
-  */
-  return nwCliGetHardwareClock(tv); /* hires but not sync'd with time() */
-  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-  /* with win16 this is not soooo critical since its a single user system */
-  static DWORD lastcheck = 0;
-  static unsigned long basetime = 0;
-  DWORD ticks = GetTickCount(); /* millisecs elapsed since OS start */
-  if (lastcheck == 0 || (ticks < lastcheck))
-  {
-    __GetTimeOfDay(tv);
-    lastcheck = ticks;
-    basetime = ((unsigned long)tv->tv_sec)-(((unsigned long)ticks)/1000UL);
-  }
-  tv->tv_usec = ((ticks%1000UL)*1000UL);
-  tv->tv_sec = (time_t)(basetime + (ticks/1000UL));
-  return 0;
-  #else
-  return __GetTimeOfDay(tv); /* should optimize into a jump :) */
-  #endif
-}
-
-// ---------------------------------------------------------------------
-
-// Internal function.  get thread cpu time
-
-static int __GetProcessTime( struct timeval *tv )
-{
-  tv = tv; /* may be unused */
-  #if (CLIENT_OS == OS_BEOS)
-  thread_info tInfo;
-  get_thread_info(find_thread(NULL), &tInfo);
-  tv->tv_sec = tInfo.user_time / 1000000;	// convert from microseconds
-  tv->tv_usec = tInfo.user_time % 1000000;
-  return 0;
-  #elif defined(HAVE_GETRUSAGE) && !defined(__EMX__)
-  struct rusage rus;
-  if (getrusage(RUSAGE_SELF,&rus) == 0)
-  {
-    tv->tv_sec = rus.ru_utime.tv_sec;
-    tv->tv_usec = rus.ru_utime.tv_usec;
-    return 0;
-  }
-  #elif (CLIENT_OS == OS_WIN32)
-  static int isnt = -1;
-  #if 0
-  if (isnt == -1)
-  {
-    if ( winGetVersion() < 2000)
-      isnt = 0;
-  }
-  #endif
-  if ( isnt != 0 )
-  {
-    FILETIME ct,et,kt,ut;
-    if (GetThreadTimes(GetCurrentThread(),&ct,&et,&kt,&ut))
-    {
-      unsigned __int64 now, epoch;
-      unsigned long ell;
-      //epoch.dwHighDate = 27111902UL;
-      //epoch.dwLowDate = 3577643008UL;
-      epoch = 116444736000000000ui64;
-      now = ut.dwHighDateTime;
-      now <<= 32;
-      now += ut.dwLowDateTime;
-      now -= epoch;
-      now /= 10UL;
-      ell = (unsigned long)(now % 1000000ul);
-      tv->tv_usec = ell;
-      ell = (unsigned long)(now / 1000000ul);
-      tv->tv_sec = ell;
-      isnt = 1;
-      return 0;
-    }
-    if (isnt < 0) /* first try? */
-      isnt = 0; /* don't try again */
-  }
-  #endif
-  return -1;
-}
-
-// ---------------------------------------------------------------------
-
-// Internal function.
-// see CliTimeGetMinutesWest() for description.
+// timezone offset after compensating for dst (west of utc > 0, east < 0)
+// such that the number returned is constant for any time of year
+// CliGetMinutesWest() caches the value returned from __GetMinutesWest()
 
 static int __GetMinutesWest(void)
 {
@@ -223,53 +159,49 @@ static int __GetMinutesWest(void)
   if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
     return 0;
   minwest = TZInfo.Bias; /* sdk doc is wrong. .Bias is always !dst */
-#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_AMIGA) || (CLIENT_OS == OS_VMS)
-  #error How does this OS natively deal with timezone?
-#elif (CLIENT_OS == OS_FREEBSD)
-  static int saved_tz = -12345;
+#elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_SCO) || \
+      (CLIENT_OS == OS_AMIGA) || (CLIENT_OS == OS_VMS)
   time_t timenow;
   struct tm * tmP;
   struct tm loctime, utctime;
   int haveutctime, haveloctime, tzdiff;
 
-  if (saved_tz == -12345)
-  {
-    timenow = time(NULL);
-    tmP = localtime( (const time_t *) &timenow);
-    haveloctime = (tmP != NULL);
-    if (haveloctime != 0)
-      memcpy( &loctime, tmP, sizeof( struct tm ));
-    tmP = gmtime( (const time_t *) &timenow);
-    haveutctime = (tmP != NULL);
-    if (haveutctime != 0)
-      memcpy( &utctime, tmP, sizeof( struct tm ));
-    if (!haveutctime && !haveloctime)
-      return 0;
-    if (haveloctime && !haveutctime)
-      memcpy( &utctime, &loctime, sizeof( struct tm ));
-    else if (haveutctime && !haveloctime)
-      memcpy( &loctime, &utctime, sizeof( struct tm ));
-    
-    tzdiff =  ((loctime.tm_min  - utctime.tm_min) )
-      +((loctime.tm_hour - utctime.tm_hour)*60 );
-    /* last two are when the time is on a year boundary */
-    if      (loctime.tm_yday == utctime.tm_yday) { ;/* no change */ }
-    else if (loctime.tm_yday == utctime.tm_yday + 1) { tzdiff += 1440; }
-    else if (loctime.tm_yday == utctime.tm_yday - 1) { tzdiff -= 1440; }
-    else if (loctime.tm_yday <  utctime.tm_yday) { tzdiff += 1440; }
-    else { tzdiff -= 1440; }
-    
-    if (utctime.tm_isdst > 0)
-      tzdiff -= 60;
-    if (tzdiff < -(12*60))
-      tzdiff = -(12*60);
-    else if (tzdiff > +(12*60))
-      tzdiff = +(12*60);
-    if (haveutctime && haveloctime)
-      saved_tz = -tzdiff;
-  }    
-  minwest = saved_tz;
+  tzset();
+  timenow = time(NULL);
+  tmP = localtime( (const time_t *) &timenow);
+  if (!tmP) return 0;
+  haveloctime = (tmP != NULL);
+  if (haveloctime != 0)
+    memcpy( &loctime, tmP, sizeof( struct tm ));
+  tmP = gmtime( (const time_t *) &timenow);
+  if (!tmP) return 0;
+  haveutctime = (tmP != NULL);
+  if (haveutctime != 0)
+    memcpy( &utctime, tmP, sizeof( struct tm ));
+  if (!haveutctime && !haveloctime)
+    return 0;
+  if (haveloctime && !haveutctime)
+    memcpy( &utctime, &loctime, sizeof( struct tm ));
+  else if (haveutctime && !haveloctime)
+    memcpy( &loctime, &utctime, sizeof( struct tm ));
   
+  tzdiff =  ((loctime.tm_min  - utctime.tm_min) )
+          +((loctime.tm_hour - utctime.tm_hour)*60 );
+  /* last two are when the time is on a year boundary */
+  if      (loctime.tm_yday == utctime.tm_yday) { ;/* no change */ }
+  else if (loctime.tm_yday == utctime.tm_yday + 1) { tzdiff += 1440; }
+  else if (loctime.tm_yday == utctime.tm_yday - 1) { tzdiff -= 1440; }
+  else if (loctime.tm_yday <  utctime.tm_yday) { tzdiff += 1440; }
+  else { tzdiff -= 1440; }
+  
+  if (utctime.tm_isdst > 0)
+    tzdiff -= 60;
+  if (tzdiff < -(12*60))
+    tzdiff = -(12*60);
+  else if (tzdiff > +(12*60))
+    tzdiff = +(12*60);
+
+  minwest = -tzdiff;
 #else
   /* POSIX rules :) */
   /* FreeBSD does not provide timezone information with gettimeofday */
@@ -283,40 +215,27 @@ static int __GetMinutesWest(void)
   return minwest;
 }
 
-// ---------------------------------------------------------------------
+/* --------------------------------------------------------------------- */
 
 static int precalced_minuteswest = -1234;
 static int adj_time_delta = 0;
-static const char *monnames[]={ "Jan","Feb","Mar","Apr","May","Jun",
-                                "Jul","Aug","Sep","Oct","Nov","Dec"};
 
-// We use a static class to allow its constructor to ensure 
-// counter initialization before the first thread spins up.
-static class _clockinit_  
-{                         
-  public:
-    _clockinit_()  { CliClock(NULL); CliGetProcessTime(NULL); }
-   ~_clockinit_()  { }
-} _clockinit;
-
-// ---------------------------------------------------------------------
-
-// Set the 'time delta', a value added to the tv_sec member by CliTimer()
-// before the time is returned. CliTimerSetDelta() returns the old delta.
+/* offset in seconds to add to value returned by CliTimer() */
 
 int CliTimerSetDelta( int delta )
 {
   int old = adj_time_delta;
   adj_time_delta = delta;
-  if ( abs( old - delta ) >= 20 )
+  if ( ((old<delta)?(delta-old):(old-delta)) >= 20 )
     precalced_minuteswest = -1234;
   return old;
 }
 
-// ---------------------------------------------------------------------
+/* --------------------------------------------------------------------- */
 
 // timezone offset after compensating for dst (west of utc > 0, east < 0)
 // such that the number returned is constant for any time of year
+// CliGetMinutesWest() caches the value returned from __GetMinutesWest()
 
 int CliTimeGetMinutesWest(void)
 {
@@ -327,50 +246,7 @@ int CliTimeGetMinutesWest(void)
 
 // ---------------------------------------------------------------------
 
-// Fills the tv structure with the elapsed time since process startup.
-
-int CliGetProcessTime( struct timeval *tv )
-{
-  struct timeval temp_tv;
-  if (!tv) tv = &temp_tv;
-  if ( __GetProcessTime( tv ) < 0)
-    return -1;
-  return 0;
-}
-
-// ---------------------------------------------------------------------
-
-// Get time elapsed since start. (used from cores. Thread safe.)
-
-struct timeval *CliClock( struct timeval *tv )
-{
-  static struct timeval base_tv = {-1,0};  /* base time for CliClock() */
-  static struct timeval stv = {0,0};
-
-  /* initialization is not thread safe, (see ctor below) */
-  if (base_tv.tv_sec == -1) /* CliClock() not initialized */
-  {
-    __GetMonotonicClock(&base_tv); /* set cliclock to current time */
-    base_tv.tv_sec--;       /* we've been running 1 second. :) */
-  }
-
-  if ( !tv )                /* if we have an arg, we can run thread safe */
-    tv = &stv;              /* ... otherwise use the static */
-  __GetMonotonicClock(tv);  /* get the current time */
-
-  if ( ((unsigned long)tv->tv_usec) < ((unsigned long)base_tv.tv_usec) )
-  {
-    tv->tv_usec += 1000000L;
-    tv->tv_sec--;
-  }
-  tv->tv_usec -= base_tv.tv_usec;
-  tv->tv_sec -= base_tv.tv_sec;
-  return (tv);
-}
-
-// ---------------------------------------------------------------------
-
-// Get the current time in timeval format (pass NULL if storage not req'd)
+/* Get the current time in timeval format (pass NULL if storage not req'd) */
 struct timeval *CliTimer( struct timeval *tv )
 {
   static struct timeval stv = {0,0};
@@ -388,6 +264,290 @@ struct timeval *CliTimer( struct timeval *tv )
     return tv;
   }
   return (&stv);
+}
+
+/* --------------------------------------------------------------------- */
+
+// CliClock() is a wrapper around CliGetMonotonicClock() and returns the
+// time since the first call (assumed to be the time the client started).
+// Please don't be tempted to merge this functionality into GetMonotonicClock
+//
+// This function is used only for generation of "Summary" stats.
+
+int CliClock(struct timeval *tv) 
+{
+  static struct timeval base = {0,0};
+  static int need_base_time = 1;
+
+  if (need_base_time)
+  {
+    if (CliGetMonotonicClock(&base) != 0)
+    {
+      return -1;
+    }
+    need_base_time = 0;
+    if (tv)
+    {
+      tv->tv_sec = 0;
+      tv->tv_usec = 1;
+    }
+    return 0;
+  }
+
+  if (tv)
+  {
+    struct timeval now;
+    if (CliGetMonotonicClock(&now) != 0)
+    {
+      return -1;    
+    }
+    if (now.tv_sec < base.tv_sec ||
+       (now.tv_sec == base.tv_sec && now.tv_usec < base.tv_usec))
+    {
+      return -1;
+    }
+    if (now.tv_usec < base.tv_usec)
+    {
+      now.tv_usec += 1000000UL;
+      now.tv_sec--;
+    }
+    tv->tv_usec = now.tv_usec - base.tv_usec;
+    tv->tv_sec  = now.tv_sec  - base.tv_sec;
+  }
+  return 0;
+}
+
+/* --------------------------------------------------------------------- */
+
+// CliGetMonotonicClock() must return a ...
+// real (not virtual per process, but secs that increment as a wall clock 
+// would), monotonic (won't speed up/slow down), linear time (won't go 
+// backward, won't wrap) and is not subject to resetting or the user changing 
+// day/date. It need not be correlated to the time-of-day. The epoch 
+// (base time) can be anything just as long as it remains constant over 
+// the course of the client's lifetime. 
+//
+// This function is used to determine total elapsed runtime for completed 
+// work (both single and "Summary:" stats - see CliClock() above).
+//
+// If CliGetThreadUserTime() is not supported, then this function is also 
+// used for the other (fine-res) crunch timing eg core selection/timeslice 
+// optimization etc.
+//
+// On non-preemptive systems this function is particularly critical since
+// clients on non-preemptive systems measure their own run/yield quantums.
+
+int CliGetMonotonicClock( struct timeval *tv )
+{
+  if (tv)
+  {
+    #if defined(CLOCK_REALTIME) /* POSIX 1003.1b-1993 but not 1003.1-1990 */
+    {
+      struct timespec ts;
+      if (clock_gettime(CLOCK_REALTIME, &ts))
+        return -1;
+      tv->tv_sec = ts.tv_sec;
+      tv->tv_usec = ts.tv_nsec / 1000;
+    }
+    #elif (CLIENT_OS == OS_NETWARE)
+    {
+      /* wrapper (for scaling/emu) around GetHighResolutionTimer() */
+      if (nwCliGetHardwareClock(tv)!=0) /* microsecs since boot */
+        return -1;
+    }      
+    #elif (CLIENT_OS == OS_RISCOS)
+    {
+      static unsigned long last_ctr = 0, wrap_hi = 0, wrap_lo = 0;
+      unsigned long usecs, ctr = read_monotonic_time(); /* hsecs since boot */
+      if (ctr < last_ctr)
+      {
+        wrap_hi += 42949672UL;
+        wrap_lo += 960000UL;
+      }
+      last_ctr = ctr;
+      usecs = ((ctr%100UL)*10000UL) + wrap_lo;
+      tv->tv_sec = (time_t)((ctr/100UL) + wrap_hi + (usecs / 1000000UL);
+      tv->tv_usec = usecs % 1000000UL;
+    }
+    #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_OS2)
+    {
+      #if (CLIENT_OS == OS_OS2)
+        #define myULONG ULONG
+      #else
+        #define myULONG DWORD
+      #endif  
+      static int sguard = -1;
+      static myULONG lastcheck = 0, wrap_count = 0;
+      unsigned long usecs;
+      myULONG ticks, l_wrap_count;
+
+      while ((++sguard)!=0)
+        sguard--;
+      l_wrap_count = wrap_count;
+      #if (CLIENT_OS == OS_OS2)
+      if (DosQuerySysInfo(QSV_MS_COUNT, QSV_MS_COUNT, &ticks, sizeof(ticks)))
+        {sguard--; return -1; }
+      #else
+      ticks = GetTickCount(); /* millisecs elapsed since OS start */
+      #endif
+      if (ticks < lastcheck)
+        wrap_count = ++l_wrap_count;
+      lastcheck = ticks;
+      sguard--;
+ 
+      usecs = ((ticks%1000UL)*1000UL) + (l_wrap_count * 296000UL);
+      tv->tv_usec = usecs % 1000000ul;
+      tv->tv_sec = (time_t)((ticks/1000UL) + (l_wrap_count * 4294967UL)) +
+                               (usecs / 1000000ul);
+    }
+    #elif (CLIENT_OS == OS_DOS)
+    {
+      /* in platforms/dos/dostime.cpp */
+      /* resolution (granularity) is 54925us */
+      if (getmicrotime(tv)!=0)
+        return -1;       
+    }
+    #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
+    {
+      hrtime_t hirestime = gethrtime();
+      hirestime /= 1000; /* nanosecs to microsecs */
+      tv.tv_sec = (time_t)(hirestime / 1000000);
+      tv.tv_usec = (unsigned long)(hirestime % 1000000);
+    }
+    #elif 0
+    {
+      /* DO NOT USE THIS WITHOUT ENSURING ...
+         a) that clock() does *not* return virtual time. 
+            (under unix clock() is often implemented as 
+            getrusage().usertime+kerneltime and is thus virtual.
+            posix 1b compatible OSs should have clock_gettime())
+         b) that clock() is not dependant on system time
+            (all watcom clibs have this bug)
+         c) that the value from clock() does indeed count up to
+            Uxxx_MAX (whatever size clock_t is) before wrapping.
+            At least one implementation (EMX 0.9) is known to 
+            wrap at (0xfffffffful/10).
+      */
+      static int sguard = -1;
+      static clock_t lastcheck = 0;
+      static unsigned long wrap_count = 0;
+      clock_t cps, counter, wrap_hi, wrap_lo;
+      unsigned long l_wrap_count;
+
+      while ((++sguard)!=0)
+        --sguard;
+      l_wrap_count = wrap_count;
+      counter = clock();
+      if (counter == ((clock_t)-1))
+        {--sguard; return -1;}
+      if (counter < lastcheck)
+        wrap_count = ++l_wrap_count;
+      lastcheck = counter;
+      sguard--;
+              
+      cps = CLOCKS_PER_SEC;
+      tv->tv_usec = ((counter%cps)*(1000000ul/cps));
+      tv->tv_sec = (time_t)(basetime + (counter / cps);
+
+      if (cps > 1000000)
+      {
+        #if defined(HAVE_I64)
+        ui64 usecs = (ui64)(counter%cps))
+        usecs *= 1000000ul;
+        usecs /= cps;
+        tv->tv_usec = (unsigned long)usecs;
+        #else
+        tv->tv_usec = (unsigned long)((((double)(counter%cps))
+                                     * 1000000.0)/((double)cps));
+        #endif    
+      }
+      if (l_wrap_count)
+      {
+        double x = (((double)l_wrap_count)*(((double)((clock_t)-1))+1.0) /
+                    ((double)cps));
+        unsigned long secs = (unsigned long)x;
+        unsigned long usecs = (unsigned long)(1000000.0 * (x-((double)secs)));
+        tv->tv_secs += secs;
+        tv->tv_usecs += usecs;
+      }
+      if (tv->tv_usec > 1000000)
+      {
+        tv->tv_sec += tv->tv_usec / 1000000ul;
+        tv->tv_usec %= 1000000ul;
+      }
+    }
+    #else
+    // this is a bad thing because time-of-day is user modifyable.
+    //if (__GetTimeOfDay( tv ))
+      return -1;
+    #endif
+  }
+  return 0;
+}
+
+/* --------------------------------------------------------------------- */
+
+/* Get thread (user) cpu time, used for fine-slice benchmark etc. */
+
+int CliGetThreadUserTime( struct timeval *tv )
+{
+  if (tv)
+  {
+    #if (CLIENT_OS == OS_BEOS)
+    {
+      thread_info tInfo;
+      get_thread_info(find_thread(NULL), &tInfo);
+      tv->tv_sec = tInfo.user_time / 1000000; // convert from microseconds
+      tv->tv_usec = tInfo.user_time % 1000000;
+      return 0;
+    }
+    #elif defined(HAVE_GETRUSAGE) && defined(THREADS_HAVE_OWN_ACCOUNTING)
+    struct rusage rus;
+    if (getrusage(RUSAGE_SELF,&rus) == 0)
+    {
+      tv->tv_sec = rus.ru_utime.tv_sec;
+      tv->tv_usec = rus.ru_utime.tv_usec;
+      return 0;
+    }
+    #elif (CLIENT_OS == OS_WIN32)
+    {
+      static int isnt = -1;
+      #if 0
+      if (isnt == -1)
+      {
+        if ( winGetVersion() < 2000)
+          isnt = 0;
+      }
+      #endif
+      if ( isnt != 0 )
+      {
+        FILETIME ct,et,kt,ut;
+        if (GetThreadTimes(GetCurrentThread(),&ct,&et,&kt,&ut))
+        {
+          unsigned __int64 now, epoch;
+          unsigned long ell;
+          //epoch.dwHighDate = 27111902UL;
+          //epoch.dwLowDate = 3577643008UL;
+          epoch = 116444736000000000ui64;
+          now = ut.dwHighDateTime;
+          now <<= 32;
+          now += ut.dwLowDateTime;
+          now -= epoch;
+          now /= 10UL;
+          ell = (unsigned long)(now % 1000000ul);
+          tv->tv_usec = ell;
+          ell = (unsigned long)(now / 1000000ul);
+          tv->tv_sec = ell;
+          isnt = 1;
+          return 0;
+        }
+        if (isnt < 0) /* first try? */
+          isnt = 0; /* don't try again */
+      } 
+    }
+    #endif
+  }
+  return -1;
 }
 
 // ---------------------------------------------------------------------
@@ -501,6 +661,8 @@ int CliIsTimeZoneInvalid(void)
 //       5="MMM dd hh:mm:ss ZTZ" (like 1, but localtime)
 const char *CliGetTimeString( const struct timeval *tv, int strtype )
 {
+  static const char *monnames[]={ "Jan","Feb","Mar","Apr","May","Jun",
+                                  "Jul","Aug","Sep","Oct","Nov","Dec"};
   static unsigned long timelast = 0;
   static const char *timestr = "";
   static int lasttype = 0;
