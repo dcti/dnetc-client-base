@@ -11,7 +11,8 @@ PLATPATH = platforms
 
 OPTS_MSVC = -nologo -W3 -O1 -MT -I$(RC5PATH) -I$(DESPATH) \
   -I$(COMMONPATH) -DPIPELINE_COUNT=2 -D_CPU_32BIT_ \
-  -DMULTITHREAD -D__WIN32__ -DNDEBUG -GR- -GX- -GA -GF
+  -DMULTITHREAD -D__WIN32__ -DNDEBUG -GR- -GX- -GA -GF \
+  -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN
 
 all: rc5des
 
@@ -36,8 +37,9 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/problem.obj    \
 	$(OUTPUTPATH)/des-x86.obj    \
 	$(OUTPUTPATH)/cpucheck.obj   \
-        $(OUTPUTPATH)/pathwork.obj   \
-        $(OUTPUTPATH)/cliident.obj
+	$(OUTPUTPATH)/pathwork.obj   \
+	$(OUTPUTPATH)/cliident.obj   \
+        $(OUTPUTPATH)/des-slice-meggs.obj
 
 PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/rg-486.obj   \
@@ -50,7 +52,9 @@ PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/bbdeslow.obj \
 	$(OUTPUTPATH)/p1bdespro.obj  \
 	$(OUTPUTPATH)/p2bdespro.obj  \
-	$(OUTPUTPATH)/x86ident.obj
+	$(OUTPUTPATH)/x86ident.obj  \
+        $(OUTPUTPATH)/sboxes-mmx.obj \
+        $(OUTPUTPATH)/deseval-meggs3-mmx.obj
 
 RC5_LIBS = wsock32.lib advapi32.lib
 
