@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.12 2000/04/16 19:27:19 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.13 2000/06/21 22:41:45 oliver Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -467,12 +467,12 @@ void DisplayHelp( const char * unrecognized_option )
     }
 
     if (startline == 0)
-      strcpy( linebuffer, "Press '+' for the next page... ");
+      strcpy( linebuffer, "Press '+' for the next page,");
     else if (startline >= ((bodylines-maxpagesize)-1))
-      strcpy( linebuffer, "Press '-' for the previous page... ");
+      strcpy( linebuffer, "Press '-' for the previous page,");
     else
-      strcpy( linebuffer, "Press '+' or '-' for the next/previous page,"
-                          " or any other key to quit... ");
+      strcpy( linebuffer, "Press '+' or '-' for the next/previous page,");
+    strcat( linebuffer, " 'Esc' or 'Q' to quit... ");
     LogScreenRaw( linebuffer );
 
     key = ConInKey(-1);
@@ -496,6 +496,10 @@ void DisplayHelp( const char * unrecognized_option )
         if ( startline >= (bodylines-maxpagesize))
           startline = (bodylines-maxpagesize);
         key = 0; //refresh required
+      }
+      else if (key == ' ' || key == '\r' || key == '\n')
+      {
+        key = -1; // quit if space or enter pressed on last page
       }
     }
     else if (key == '-' || key == 'b')
