@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.21  1999/01/21 23:29:26  cyp
+// fixed a #ifdef DEBUG that should have been an #ifdef RESDEBUG
+//
 // Revision 1.20  1999/01/13 08:50:26  cramer
 // changed maxaddr to a #define
 //
@@ -73,13 +76,12 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.20 1999/01/13 08:50:26 cramer Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.21 1999/01/21 23:29:26 cyp Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
 //#define TEST  //standalone test
 
-#define MAXADDR 64 /* should be more than enough */
 
 //#define RESDEBUG //to show what network::resolve() is resolving
 #ifdef RESDEBUG
@@ -347,7 +349,7 @@ int Network::Resolve(const char *host, u32 *hostaddress, int resport )
 {
   struct proxylist *plist;
   struct proxylist dummylist;
-  u32 addrlist[MAXADDR];
+  u32 addrlist[64]; /* should be more than enough */
   unsigned int proxypos, addrpos, addrcount;
   struct hostent *hp;
   int resauto = autofindkeyserver;
@@ -401,7 +403,7 @@ int Network::Resolve(const char *host, u32 *hostaddress, int resport )
     plist = &dummylist;
     }
 
-  #ifdef DEBUG
+  #ifdef RESDEBUG
   {
   unsigned int i;
   for (i=0;i<plist->numproxies;i++)
@@ -423,7 +425,7 @@ int Network::Resolve(const char *host, u32 *hostaddress, int resport )
         strcpy( resolve_hostname, plist->proxies[proxypos] );
       
       for ( addrpos = 0; hp->h_addr_list[addrpos] && 
-                                  (addrcount < MAXADDR ); addrpos++ )
+           (addrcount < (sizeof(addrlist)/sizeof(addrlist[0]))); addrpos++ )
         {      
         memcpy((void*) &addrlist[addrcount], 
                (void*) hp->h_addr_list[addrpos], sizeof(u32));
