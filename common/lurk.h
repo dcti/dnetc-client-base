@@ -6,16 +6,20 @@
 //
 
 #ifndef __LURK_H__
-#define __LURK_H__ "@(#)$Id: lurk.h,v 1.21 1999/04/13 12:41:25 jlawson Exp $"
+#define __LURK_H__ "@(#)$Id: lurk.h,v 1.21.2.1 1999/11/23 15:35:19 jlawson Exp $"
 
 /* lurk: fetch/flush if modem goes online but also go online if fetch/flush needed */
 #define CONNECT_LURK         0x01 
+
 /* lurkonly: connect only if modem goes online. equivalent to lurk+offlinemode? */
 #define CONNECT_LURKONLY     0x02
+
 /* ifacemask: limit the interfaces to watch for conn on */
 #define CONNECT_IFACEMASK    0x04 
+
 /* dodbyscript: run this script to initiate a dialup connection */
 #define CONNECT_DODBYSCRIPT  0x08
+
 /* dodbyprofile: use this profile when initiating a dialup connection */
 #define CONNECT_DODBYPROFILE 0x10
 #define CONNECT_DOD          (CONNECT_DODBYSCRIPT|CONNECT_DODBYPROFILE)
@@ -51,8 +55,10 @@ int HangupIfNeeded(void);          // -> 0=success, !0 = failure
 int Start(void);                   // Start -> 0=success, !0 = failure
 int Stop(void);                    // Stop  -> 0=success, !0 = failure
 
+  // test if we are currently connected.
 int IsConnected(void);   // quietly! check if connected-> !0 = connected
 
+  // constructor and destructor.
 Lurk(); 
 ~Lurk();
 

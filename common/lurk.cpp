@@ -18,7 +18,7 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.5 1999/10/17 14:22:24 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.6 1999/11/23 15:35:18 jlawson Exp $"; }
 
 /* ---------------------------------------------------------- */
 #include <stdio.h>
@@ -32,7 +32,7 @@ return "@(#)$Id: lurk.cpp,v 1.43.2.5 1999/10/17 14:22:24 cyp Exp $"; }
 #include "util.h" //trace
 #endif
 
-Lurk dialup;
+Lurk dialup;        // publicly exported class instance.
 
 /* ---------------------------------------------------------- */
 
@@ -106,7 +106,7 @@ int Lurk::CheckForStatusChange(void) //returns -1 if connection dropped
 #include <unistd.h>
 #include <ctype.h>
 
-#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+#elif (CLIENT_OS == OS_WIN16)
 
 #include <windows.h>
 #include <string.h>
@@ -140,6 +140,7 @@ static HRASCONN hRasDialConnHandle = NULL; /* conn we opened with RasDial */
 #include <process.h>
 #include <types.h>
 #endif
+
 extern "C" {
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -228,7 +229,7 @@ int Lurk::GetCapabilityFlags(void)
     caps = what;
   }
   what = caps;
-#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+#elif (CLIENT_OS == OS_WIN16)
   OFSTRUCT ofstruct;
   ofstruct.cBytes = sizeof(ofstruct);
   if ( OpenFile( "WINSOCK.DLL", &ofstruct, OF_EXIST|OF_SEARCH) != HFILE_ERROR)
@@ -326,7 +327,7 @@ int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
       #if (CLIENT_OS == OS_WIN32)
       //LogScreen( "Dial-up must be installed for lurk/lurkonly/dialing\n" );
       dialwhenneeded = 0; //if we can't support lurk, we can't support dod either
-      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+      #elif (CLIENT_OS == OS_WIN16)
       LogScreen("Winsock must be available for -lurk/-lurkonly.\n");
       dialwhenneeded = 0; //if we can't support lurk, we can't support dod either
       #else
@@ -338,7 +339,7 @@ int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
       dialwhenneeded = 0;
       #if (CLIENT_OS == OS_WIN32)
       LogScreen( "Dial-up-Networking must be installed for demand dialing\n" );
-      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+      #elif (CLIENT_OS == OS_WIN16)
       LogScreen("Demand dialing is only supported with Trumpet Winsock.\n");
       #else
       LogScreen("Demand dialing is currently unsupported.\n");
@@ -478,7 +479,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
   if (!lurkmode && !dialwhenneeded)
     return 1;
 
-#if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN16S)
+#if (CLIENT_OS == OS_WIN16)
   if ( GetModuleHandle("WINSOCK") )
     return 1;
 
@@ -837,8 +838,8 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
    conndevice[0]=0;
 
 #else
-  #error IsConnected() must always return a valid yes/no.
-  #error There is no default return value.
+  #error "IsConnected() must always return a valid yes/no."
+  #error "There is no default return value."
 #endif
   return 0;// Not connected
 }
@@ -859,7 +860,7 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
   if (lurkmode == CONNECT_LURKONLY && !force)
     return -1; // lurk-only, we're not allowed to connect unless forced
 
-#if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+#if (CLIENT_OS == OS_WIN16)
 
   if (hWinsockInst != NULL) //programmer error - should never happen
   {
@@ -1016,8 +1017,7 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
   if (!dohangupcontrol) //if we didn't initiate, we shouldn't terminate
     return ((isconnected)?(-1):(0));
 
-#if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-
+#if (CLIENT_OS == OS_WIN16)
   if (hWinsockInst)
   {
     FreeLibrary(hWinsockInst);
