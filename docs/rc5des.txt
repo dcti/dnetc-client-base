@@ -1139,11 +1139,7 @@ how you read them.  The averages
 
           The Amiga client requires:
 
-          -Amiga Workbench 2.04 or greater
-          -A 68020 or better 680x0 processor, or a PPC processor
-          -AmiTCP v3 or greater, or other a different compatible stack
-           (Miami, TermiteTCP). The iw225 with the emulation library should
-           also work, but has not been tested.
+          Please read readme.amiga
 
           The original amiga port was made by `caw', and rewritten for
           RC5-64 and DES by Stefan Smietanowski (aka Blast).
