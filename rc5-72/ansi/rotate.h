@@ -2,7 +2,7 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
-// $Id: rotate.h,v 1.3 2002/10/17 10:34:01 andreasb Exp $
+// $Id: rotate.h,v 1.4 2002/10/17 12:04:36 andreasb Exp $
 //
 
 #ifndef __ROTATE_H__
@@ -29,8 +29,15 @@
 
 //-------------------------------------------------------------------
 
+#if (defined(USE_ROTL_MACRO))
 
-#if (CLIENT_CPU == CPU_PA_RISC) && defined(__GNUC__)
+// this is faster than the inline assembler on x86/gcc
+// because gcc translates it into a roll instruction by itself
+
+#define ROTL(x, s) ((u32) (SHL((x), (s)) | SHR((x), (s))))
+#define ROTL3(x) ROTL(x, 3)
+
+#elif (CLIENT_CPU == CPU_PA_RISC) && defined(__GNUC__)
 
 static __inline__ u32 ROTL(u32 x, u32 y)
 {
@@ -168,16 +175,6 @@ static __forceinline u32 ROTL(u32 x, u32 y)
 
 #elif (CLIENT_CPU == CPU_X86) && defined(__GNUC__)
 
-#if (__GNUC__ > 2)
-
-// GCC3 built cores fail on inline asm function ROTL,
-// but GCC3 translates this macro into a roll instruction ;-)
-
-#define ROTL(x, s) ((u32) (SHL((x), (s)) | SHR((x), (s))))
-#define ROTL3(x) ROTL(x, 3)
-
-#else
-
 static __inline__ u32 ROTL(u32 x, u32 y)
 {
 	register u32 res;
@@ -201,8 +198,6 @@ static __inline__ u32 ROTL3(u32 x)
 
 	return res;
 }
-
-#endif
 
 #elif (CLIENT_CPU == CPU_ALPHA || CLIENT_CPU == CPU_IA64)
 
