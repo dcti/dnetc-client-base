@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.21 2004/02/14 14:18:01 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.22 2004/03/12 06:40:03 snikkel Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -3067,22 +3067,9 @@ static int ogr_cleanup(void)
   return CORE_S_OK;
 }
 
-
-/* dispatch_table has to be strictly aligned for SPARC Solaris,
-** otherwise it'll throw SIGBUS, gcc seems to do it automatically
-** but SUNPRO has to be told and only does it if dispatch_table
-** is global */
-#ifdef _SUNPRO_CC
-# pragma align 16 (dispatch_table)
-#endif
-
-/* this should not break reentrancy as opposed to having the
-** variable declared inside the function because a static buffer
-** inside a function isn't reentrant either */
-static CoreDispatchTable dispatch_table;
-
 CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
 {
+  static CoreDispatchTable dispatch_table;
   dispatch_table.init      = ogr_init;
   dispatch_table.create    = ogr_create;
   dispatch_table.cycle     = ogr_cycle;
@@ -3449,11 +3436,9 @@ static int ogr_create_pass2(void *input, int inputlen, void *state,
   return CORE_S_OK;
 }
 
-
-static CoreDispatchTable dispatch_table_pass2;
-
 CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void)
 {
+  static CoreDispatchTable dispatch_table_pass2;
   dispatch_table_pass2.init      = ogr_init;
   dispatch_table_pass2.create    = ogr_create_pass2;
   dispatch_table_pass2.cycle     = ogr_cycle;

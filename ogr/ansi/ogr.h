@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.10 2004/01/12 23:45:23 kakace Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.11 2004/03/12 06:40:03 snikkel Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -43,8 +43,12 @@
 #define CORE_E_STOPPED  (-4)
 #define CORE_E_STUB     (-5)
 
-#include "pack1.h"
-
+#ifndef __SUNPRO_CC
+  #include "pack1.h"
+#else
+  #undef DNETC_PACKED
+  #define DNETC_PACKED
+#endif
 /*
  * Dispatch table structure. A pointer to one of these should be returned
  * from an exported function in the module.
