@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72ansi2_cpp(void) {
-return "@(#)$Id: r72ansi2.cpp,v 1.19 2002/10/20 22:10:45 andreasb Exp $"; }
+return "@(#)$Id: r72ansi2.cpp,v 1.20 2002/10/22 00:14:32 andreasb Exp $"; }
 
 #include "ccoreio.h"
 #include "rotate.h"
@@ -16,8 +16,10 @@ return "@(#)$Id: r72ansi2.cpp,v 1.19 2002/10/20 22:10:45 andreasb Exp $"; }
 extern "C" s32 rc5_72_unit_func_ansi_2 ( RC5_72UnitWork *, u32 *, void * );
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 #pragma warning(disable:4307)   // integral constant overflow
+#elif defined(__WATCOMC__)
+#pragma warning 130 9           // arithmetic overflow in a constant expression
 #endif
 
 s32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
