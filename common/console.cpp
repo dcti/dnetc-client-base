@@ -11,6 +11,9 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.16  1998/11/08 22:24:15  foxyloxy
+// Really did the below comment this time.
+//
 // Revision 1.15  1998/11/08 22:16:19  foxyloxy
 //
 // Made sure that termios.h is included for Irix/Solaris builds.
@@ -62,7 +65,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.15 1998/11/08 22:16:19 foxyloxy Exp $"; }
+return "@(#)$Id: console.cpp,v 1.16 1998/11/08 22:24:15 foxyloxy Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -75,7 +78,7 @@ return "@(#)$Id: console.cpp,v 1.15 1998/11/08 22:16:19 foxyloxy Exp $"; }
 #include "console.h" //also has CLICONS_SHORTNAME, CLICONS_LONGNAME
 #include "sleepdef.h" //usleep
 #ifndef NOTERMIOS
-#if (CLIENT_OS==OS_IRIX) || (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS)
+#if (CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS)
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
