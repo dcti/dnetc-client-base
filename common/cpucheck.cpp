@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.20 2003/06/14 22:54:44 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.21 2003/07/15 02:23:25 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -29,6 +29,7 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.20 2003/06/14 22:54:44 andreasb Exp $"; 
 #  include <sys/systemcfg.h>
 #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
 #  include <mach/mach.h>
+#  include <IOKit/IOKitLib.h>
 #elif (CLIENT_OS == OS_DYNIX)
 #  include <sys/tmp_ctl.h>
 #elif (CLIENT_OS == OS_SOLARIS)
@@ -389,6 +390,7 @@ static long __GetRawProcessorID(const char **cpuname)
                 {    0x000A,   "604ev"                 },
                 {    0x000C,   "7400 (G4)"             },
                 {    0x0020,   "403G/403GC/403GCX"     },
+                {    0x0039,   "970 (G5)"              },
                 {    0x0050,   "821"                   },
                 {    0x0080,   "860"                   },
                 {    0x0081,   "8240"                  },
@@ -480,35 +482,30 @@ static long __GetRawProcessorID(const char **cpuname)
   #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
   if (detectedtype == -2L)
   {
-    kern_return_t   kr;
-    unsigned int    count;
-    struct host_basic_info  info;
+    // We prefer raw PVR values over the IDs provided by host_info()
+    CFDataRef value = NULL;
+    io_object_t device = NULL;
+    io_iterator_t objectIterator = NULL;
+    CFMutableDictionaryRef properties = NULL;
+    detectedtype = -1L;
 
-    count = HOST_BASIC_INFO_COUNT;
-    kr = host_info(mach_host_self(),HOST_BASIC_INFO,(host_info_t)&info,&count);
-    if (kr == KERN_SUCCESS)
-    {
-      // host_info() doesnt use PVR values, so I map them as in mach/machine.h
-      // http://www.opensource.apple.com/cgi-bin/registered/cvs/System/xnu/osfmk/mach/
-      switch (info.cpu_subtype)
-      {
-        case CPU_SUBTYPE_POWERPC_601:  detectedtype = 0x0001; break;
-        case CPU_SUBTYPE_POWERPC_603:  detectedtype = 0x0003; break;
-        case CPU_SUBTYPE_POWERPC_603e: detectedtype = 0x0006; break;
-        case CPU_SUBTYPE_POWERPC_603ev:detectedtype = 0x0007; break;
-        case CPU_SUBTYPE_POWERPC_604:  detectedtype = 0x0004; break;
-        case CPU_SUBTYPE_POWERPC_604e: detectedtype = 0x0009; break;
-        case CPU_SUBTYPE_POWERPC_750:  detectedtype = 0x0008; break;
-        case CPU_SUBTYPE_POWERPC_7400: detectedtype = 0x000C; break;
-        case CPU_SUBTYPE_POWERPC_7450: detectedtype = 0x8000; break;
-        default: // some PPC processor that we don't know about
-                 // set the tag (so that the user can tell us), but return 0
-        sprintf(namebuf, "0x%x", info.cpu_subtype );
-        detectedname = (const char *)&namebuf[0];
-        detectedtype = 0;
-        break;
-      }
+    // In I/O Registry Search for "IOPlatformDevice" devices
+    if (kIOReturnSuccess == IOServiceGetMatchingServices(kIOMasterPortDefault, IOServiceMatching("IOPlatformDevice"), &objectIterator)) {
+        // Test the results for a certain property entry, in this case we look for a "cpu-version" field
+        while ((device = IOIteratorNext(objectIterator))) {
+            if (kIOReturnSuccess == IORegistryEntryCreateCFProperties(device, &properties, kCFAllocatorDefault, kNilOptions)) {
+                if(CFDictionaryGetValueIfPresent(properties, CFSTR("cpu-version"), (const void **)&value)) {
+                    CFDataGetBytes(value, CFRangeMake(0,4/*CFDataGetLength((void *)value)*/ ), (UInt8 *)&detectedtype);
+                    //printf("PVR Hi:%04x Lo:%04x\n",(detectedtype>>16)&0xffff,detectedtype&0xffff);
+                    detectedtype = (detectedtype>>16)&0xffff;
+                }
+                CFRelease(properties);
+            }
+            IOObjectRelease(device);
+        }
+        IOObjectRelease(objectIterator);
     }
+    
     // AltiVec support now has a proper sysctl value HW_VECTORUNIT to check for
     int mib[2], hasVectorUnit; mib[0] = CTL_HW; mib[1] = HW_VECTORUNIT;
     size_t len = sizeof(hasVectorUnit);
