@@ -12,6 +12,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.88  1998/10/11 00:49:46  cyp
+// Removed Benchmark(), SelfTest() [both are now standalone] and
+// CkpointToBufferInput() which has been superceded by UndoCheckpoint()
+//
 // Revision 1.87  1998/10/09 12:25:23  cyp
 // ValidateProcessorCount() is no longer a client method [is now standalone].
 //
@@ -344,14 +348,6 @@ public:
   void InitializeLogging(int spool_on);
   void DeinitializeLogging(void); 
 
-#ifdef DONT_USE_PATHWORK
-  char ini_logname[128];
-  char ini_in_buffer_file[2][128];
-  char ini_out_buffer_file[2][128];
-  char ini_exit_flag_file[128];
-  char ini_checkpoint_file[2][128];
-  char ini_pausefile[128];
-#endif
   char logname[128];
   char in_buffer_file[2][128];
   char out_buffer_file[2][128];
@@ -390,8 +386,6 @@ protected:
 
   u32 totalBlocksDone[2];
   u32 old_totalBlocksDone[2];
-  u32 timeStarted;
-
 
 #if (CLIENT_OS == OS_WIN32) && defined(NEEDVIRTUALMETHODS)
   u32 connectrequested;       // used by win32gui to signal an update
@@ -456,18 +450,16 @@ public:
   //encapsulated main().  client.Main() is restartable
 
   int ParseCommandline( int runlevel, int argc, const char *argv[], 
-                    int *inimissP, int *retcodeP, int show_set_messages );
-  //runlevel == 0 = pre-anything    (-quiet, -ini, -guistart etc done here)
+                        int *retcodeP, int logging_is_initialized );
+                        
+  //runlevel == 0 = ReadConfig() (-quiet, -ini, -guistart etc done here too)
   //         >= 1 = post-readconfig (override ini options)
   //         == 2 = run "modes"
 
-  s32 CkpointToBufferInput(unsigned int contest);
-    // Copies info in checkpint file back to input buffer
+  int UndoCheckpoint(void);
+    // Copy blocks from checkpint files back to input buffers
 
-  void RandomWork( FileEntry * data );
-    // returns a random block.
-
-  void DoCheckpoint( unsigned int load_problem_count );
+  int DoCheckpoint( unsigned int load_problem_count );
     // Make the checkpoint file represent current blocks being worked on
 
   void DisplayHelp( const char * unrecognized_option );
@@ -506,13 +498,6 @@ public:
   s32  WriteContestandPrefixConfig( void );
     // returns -1 on error, 0 otherwise
     // only writes contestdone and randomprefix .ini entries
-
-  u32  Benchmark( unsigned int contest, u32 numk );
-    // returns keys/second or zero if break
-
-  s32  SelfTest( u8 contest );
-    // run all the test keys
-    // Returns: number of tests passed, or negative number of test that failed
 
   int Run( void );
     // run the loop, do the work
@@ -564,9 +549,12 @@ public:
     // Set the contest state appropriately based on packet information
     // Returns 1 if a change to contest state was detected
 
-  s32 SelectCore(void);
-    // to be called before Run(), Benchmark(), or Test() to configure for cpu
-    // returns: non-zero on failure
+  int SelectCore(int quietly); //always returns zero.
+    // to configure for cpu. called before Run() from main(), or for 
+    // "modes" (Benchmark()/Test()) from ParseCommandLine().
+
+  void RandomWork( FileEntry * data );
+    // returns a random block.
 
   unsigned int LoadSaveProblems(unsigned int load_problem_count, int retmode);
     // returns actually loaded problems 
