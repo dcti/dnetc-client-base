@@ -1,8 +1,19 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
 // $Log: modereq.cpp,v $
+// Revision 1.6.2.7  1999/01/09 11:41:13  remi
+// Synced with :
+//
+//  Revision 1.18  1999/01/08 10:05:42  chrisb
+//  Added 'threadindex' parameter (defaults to -1L, as with
+//  Problem::Problem) to SelfTest(). Allows RISC OS to self test the x86
+//  core.
+//
+//  Revision 1.17  1999/01/01 02:45:15  cramer
+//  Part 1 of 1999 Copyright updates...
+//
 // Revision 1.6.2.6  1998/12/29 19:58:59  remi
 // A small fix, and synced with :
 //
@@ -31,7 +42,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.6.2.6 1998/12/29 19:58:59 remi Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.6.2.7 1999/01/09 11:41:13 remi Exp $"; }
 #endif
 
 #include "client.h"    //client class
@@ -157,8 +168,27 @@ int ModeReqRun(Client *client)
         if (client)
           {
           client->SelectCore( 0 /* not quietly */ );
+#if (CLIENT_OS == OS_RISCOS)
+/*
+    we may have to test cores for 2 different CPU architectures
+*/
+	  if (client->numcpu == 2)
+	  {
+	      if ((SelfTest(0, client->cputype, 0) > 0 ) &&
+		  (SelfTest(1, client->cputype, 0) > 0 ))
+	      {
+		  SelfTest(0, client->cputype, 1);
+	      }
+	  }
+	  else
+	  {
+	      if ( SelfTest(0, client->cputype , 0) > 0 ) 
+		  SelfTest(1, client->cputype , 0);
+	  }
+#else
           if ( SelfTest(0, client->cputype ) > 0 ) 
             SelfTest(1, client->cputype );
+#endif
           }
         retval |= (MODEREQ_TEST);
         modereq.reqbits &= ~(MODEREQ_TEST);
