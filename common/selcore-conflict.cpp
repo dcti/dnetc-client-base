@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.34  1999/02/04 23:06:44  remi
+// Added OS_LINUX in the Alpha cputypetable[] #ifdef block.
+//
 // Revision 1.33  1999/01/31 20:19:09  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -127,7 +130,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.33 1999/01/31 20:19:09 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.34 1999/02/04 23:06:44 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -159,7 +162,8 @@ static const char *cputypetable[]=
   //core 6 is "reserved" (was Pentium MMX)
   };
 #elif (CLIENT_CPU == CPU_ALPHA)
-  #if ((CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_OPENBSD))
+  #if ((CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_OPENBSD) || 
+       (CLIENT_OS == OS_LINUX))
     #include <machine/cpuconf.h>
     static const char *cputypetable[]=
      {
@@ -510,7 +514,8 @@ int Client::SelectCore(int quietly)
             break;
     }
 #elif ((CLIENT_CPU == CPU_ALPHA) && ((CLIENT_OS == OS_DEC_UNIX) || \
-  (CLIENT_OS == OS_OPENBSD)))
+                                     (CLIENT_OS == OS_OPENBSD) || \
+                                     (CLIENT_OS == OS_LINUX)))
   if (!quietly)
     {
     if (detectedtype != -2)
