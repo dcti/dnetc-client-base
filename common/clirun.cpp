@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.53 2000/05/06 21:56:02 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.54 2000/05/07 17:49:42 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -75,6 +75,7 @@ struct thread_param_block
   unsigned int numthreads;
   int realthread;
   unsigned int priority;
+  int last_priority; /* last used */
   int refillneeded;
   int do_suspend;
   int do_exit;
@@ -199,6 +200,21 @@ void Go_mt( void * parm )
     return;
   }
   #endif
+#elif (CLIENT_OS == OS_MACOS)
+  if (!thrparams->realthread)   /* only non-realthreads are non-preemptive */
+  {                            
+    unsigned int priority = thrparams->priority;
+    //could do 'priority = macos_whats_my_next_priority();'
+    if (priority != thrparams->last_priority)
+    {
+      for (int tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
+      {
+        thrparams->dyn_timeslice_table[tsinitd].usec = 100000*(priority+1);
+        //printf("usec:%d \n",thrparam->dyn_timeslice_table[tsinitd].usec);
+      }
+      thrparams->last_priority = priority;
+    }  
+  }
 #elif (CLIENT_OS == OS_WIN32)
   if (thrparams->realthread)
   {
@@ -509,6 +525,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     thrparams->threadnum = thread_i;      /* unsigned int */
     thrparams->realthread = 1;            /* int */
     thrparams->priority = priority;       /* unsigned int */
+    thrparams->last_priority = -1;        /* int */
     thrparams->is_non_preemptive_os = is_non_preemptive_os; /* int */
     thrparams->do_exit = 0;
     thrparams->do_suspend = 0;
@@ -830,27 +847,7 @@ static int __gsc_flag_allthreads(struct thread_param_block *thrparam,
   return 0;
 }                                 
  
-static void __adjust_timeslice_usec(struct thread_param_block *thrparam,
-                                   unsigned int priority)
-{
-   while (thrparam)
-   {
-      for (int tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
-      {
-         #if (CLIENT_OS == OS_MACOS)
-         if (!thrparam->realthread) // realthreads are preemptive for MacOS
-         {
-           default_dyn_timeslice_table[tsinitd].usec = 100000*(priority+1);
-         }
-         #elif (CLIENT_OS == OS_NETWARE) 
-         default_dyn_timeslice_table[tsinitd].usec = 512 * (priority+1);
-         #endif
-         //printf("usec:%d \n",thrparam->dyn_timeslice_table[tsinitd].usec);
-      }
-      thrparam = thrparam->next;
-   }
-}
- 
+
 static int __CheckClearIfRefillNeeded(struct thread_param_block *thrparam,
                                       int doclear)
 {
@@ -1237,10 +1234,6 @@ int ClientRun( Client *client )
 
     if (!dontSleep)
     {             
-      if (is_non_preemptive_os) // under a non-preemptive OS we adjust
-         // aggressiveness by defining how long to stay in a cruncher
-         __adjust_timeslice_usec(thread_data_table,client->priority);
-      else
       SetGlobalPriority( client->priority );
       if (isPaused)
         NonPolledSleep(3); //sleep(3);
