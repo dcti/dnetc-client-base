@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.109  1998/12/19 05:04:30  cyp
+// Fixed unix'ish -kill/-hup to ignore processes that are already dead.
+//
 // Revision 1.108  1998/12/16 05:55:53  cyp
 // MODEREQ_FFORCE doesn't do anything different from normal force/flush, so I
 // recycled it as MODEREQ_FQUIET for use with non-interactive BufferUpdate()
@@ -105,7 +108,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.108 1998/12/16 05:55:53 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.109 1998/12/19 05:04:30 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -196,18 +199,21 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
               ConOutErr( ((pos==argc || argv[pos]==NULL)?
                    ("Unable to get pid list."):(argv[pos])) );
               }
-            else
+            else 
               {
               unsigned int kill_ok = 0;
               unsigned int kill_failed = 0;
               int last_errno = 0;
+	      buffer[0]=0;
               do{
                 pid_t tokill = atol( argv[pos++] );
                 if (tokill!=ourpid[0] && tokill!=ourpid[1] && tokill!=0)
                   {
                   if ( kill( tokill, sig ) == 0)
+		    {
                     kill_ok++;
-                  else
+		    }
+                  else if ((errno != ESRCH) && (errno != ENOENT))
                     {
                     kill_failed++;
                     last_errno = errno;
@@ -236,11 +242,18 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             }
           else
             {
-            const char *p = "pidof";
-            const char *q = (const char *)strrchr( argv[0], '/' );
-            q = ((q==NULL)?(argv[0]):(q+1));
-            sprintf(buffer, "%s %s [%lu] `%s %s`", argv[0], thisarg,
-                    (unsigned long)getpid(), p, q );
+            const char *binname = (const char *)strrchr( argv[0], '/' );
+            binname = ((binname==NULL)?(argv[0]):(binname+1));
+	    
+            sprintf(buffer, "%s %s [%lu] `"
+//#if (CLIENT_OS == OS_LINUX)
+//                          "pidof %s"
+//#else
+                            "ps aux|grep \"%s \" |tr -s \' \'"
+                            "|cut -d\' \' -f2|tr \'\\n\' \' \'"
+//#endif
+			    "`", argv[0], thisarg,
+                            (unsigned long)(getpid()), binname );
             if (system( buffer ) != 0)
               {
               sprintf(buffer, "%s failed. Unable to get pid list.", thisarg );
