@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.72 1999/12/06 19:11:10 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.73 1999/12/07 03:16:25 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -121,10 +121,9 @@ public: /* anything public must be thread safe */
   /* this is our generic prototype */
   s32 (*unit_func)( RC5UnitWork *, u32 *iterations, void *memblk );
   
-  #if (CLIENT_CPU == CPU_68K) && \
-     ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS))
-    __asm u32 (*rc5_unit_func)
-       ( register __a0 RC5UnitWork * , register __d0 u32 iterations);
+  #if ((CLIENT_CPU == CPU_68K) && \
+    ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)))
+    __asm u32 (*rc5_unit_func)(register __a0 RC5UnitWork *, register __d0 u32);
   #elif (CLIENT_CPU == CPU_ARM)
     u32 (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
   #elif (CLIENT_CPU == CPU_ALPHA)
@@ -154,7 +153,7 @@ public: /* anything public must be thread safe */
   int IsInitialized() { return (initialized!=0); }
 
   int LoadState( ContestWork * work, unsigned int _contest, u32 _iterations, 
-     int expected_coresel, int expected_client_cpu, int expected_buildnum);
+     int _unused );
     // Load state into internal structures.
     // state is invalid (will generate errors) until this is called.
     // expected_[core|cpu|buildnum] are those loaded with the workunit
@@ -178,4 +177,3 @@ public: /* anything public must be thread safe */
 
 #endif /* __PROBLEM_H__ */
 
-
