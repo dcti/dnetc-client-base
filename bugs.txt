@@ -29,6 +29,7 @@ Bugs Listing
                   definitely one of the main settings, and I know menu 4
                   was the last place I looked for it when setting 7022 up
                   on by dual-PII box for the first time.
+  Fixed: Both options now on a Performance Options menu
   
 6-01-98 - Remi Guyomarch
   New Bug: In 407+ (406?) a call to client.WriteConfig() overwrites the
