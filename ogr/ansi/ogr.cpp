@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.27 2004/05/21 18:49:33 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.28 2004/05/22 12:57:53 kakace Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -1783,10 +1783,13 @@ static int found_one(const struct State *oState)
   #if defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
     { i = ~i; __asm__ ("cntlzw %0,%0" : "=r" (i) : "0" (i)); return ++i; }
+    #define PPC_CNTLZW(b,p) __asm__ volatile ("cntlzw %0,%1" : "=r"(b) : "r" (p))
   #elif defined(__MWERKS__) || defined(__MRC__)
     #define LOOKUP_FIRSTBLANK(x) (__cntlzw(~((unsigned int)(x)))+1)
+    #define PPC_CNTLZW(b,p)      (b = __cntlzw((unsigned int)(p)))
   #elif defined(__xlC__)
     #define LOOKUP_FIRSTBLANK(x) (__cntlz4(~((unsigned int)(x)))+1)
+    #define PPC_CNTLZW(b,p)      (b = __cntlz4((unsigned int)(p)))
   #else
     #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   #endif
@@ -1794,8 +1797,10 @@ static int found_one(const struct State *oState)
   #if defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
     { i = ~i; __asm__ ("cntlz %0,%0" : "=r" (i) : "0" (i)); return ++i; }
+    #define PPC_CNTLZW(b,p) __asm__ volatile ("cntlzw %0,%1" : "=r"(b) : "r" (p))
   #elif defined(__xlC__)
     #define LOOKUP_FIRSTBLANK(x) (__cntlz4(~((unsigned int)(x)))+1)
+    #define PPC_CNTLZW(b,p)      (b = __cntlz4((unsigned int)(p)))
   #else
     #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   #endif
@@ -2310,9 +2315,8 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
     /* Find the next available mark location for this level */
 
   stay:
-    __asm__ volatile ("cntlzw %0,%1" : "=r" (firstbit) : "r" (c0neg));
+    PPC_CNTLZW(firstbit, c0neg);
     ++firstbit;
-
     if (c0neg > 1) {
       if ((cnt2 += firstbit) > limit)   goto up; /* no spaces left */
       COMP_LEFT_LIST_RIGHT(lev, firstbit);
