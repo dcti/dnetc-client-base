@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.40 2000/09/20 18:23:58 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.41 2000/09/22 16:04:50 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -591,6 +591,8 @@ int Network::OpenConnection( void )
           // if name resolution fails - cyp
           svc_hostaddr = 0;
         }
+        if (!reconnected && verbose_level > 0)
+          LogScreen( "\rAttempting to resolve %s...", fwall_hostname );
         if (NetResolve( fwall_hostname, fwall_hostport, 0,
                         &fwall_hostaddr, 1, ((char *)0), 0 ) < 0)
         {
@@ -607,6 +609,8 @@ int Network::OpenConnection( void )
         {
           if (resolve_addrcount < 1)
           {
+            if (!reconnected && verbose_level > 0)
+              LogScreen( "\rAttempting to resolve '%s'...",svc_hostname );
             resolve_addrcount =
                NetResolve( svc_hostname, svc_hostport, autofindkeyserver,
                &resolve_addrlist[0],
@@ -640,6 +644,13 @@ int Network::OpenConnection( void )
       {
         if (resolve_addrcount < 1)
         {
+          if (!reconnected && verbose_level > 0)
+          {
+            if (autofindkeyserver)
+              LogScreen("\rAttempting to locate a distributed.net server...");
+            else
+              LogScreen("\rResolving hostname/address '%s'...",svc_hostname );
+          }    
           resolve_addrcount =
              NetResolve( svc_hostname, svc_hostport, autofindkeyserver,
              &resolve_addrlist[0],
@@ -709,10 +720,10 @@ int Network::OpenConnection( void )
       }
       #endif
 
-      if (!reconnected)
+      if (!reconnected && verbose_level > 0)
       {
-        LogScreen( "Network::Connecting to %s:%u...",
-             ((conn_hostaddr)?(__inet_ntoa__(conn_hostaddr)):(conn_hostname)),
+        LogScreen( "\rConnecting to %s:%u...",
+               ((conn_hostaddr)?(__inet_ntoa__(conn_hostaddr)):(conn_hostname)),
              (unsigned int)(conn_hostport) );
       }
       success = ( LowLevelConnectSocket( conn_hostaddr, conn_hostport ) == 0 );
@@ -812,7 +823,7 @@ int Network::OpenConnection( void )
             errreasonbuf[sizeof(errreasonbuf)-1] = '\0';
             strcat(errreasonbuf,")\n");
           }
-          LogScreen( "\n%sonnect to host %s:%u failed.\n%s",
+          LogScreen( "\r%sonnect to host %s:%u failed.\n%s",
              ((reconnected)?("Rec"):("C")),
              ((conn_hostaddr)?(__inet_ntoa__(conn_hostaddr)):(conn_hostname)),
              (unsigned int)(conn_hostport), errreasonbuf );
@@ -2274,8 +2285,6 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
         return ( t_blocking( sock ) );
       else
         return ( t_nonblocking( sock ) );
-    #elif (!defined(FIONBIO) && !(defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK))))
-      return -1;
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
       unsigned long flagon = ((parm == 0/* off */)?(1):(0));
       return ioctlsocket(sock, FIONBIO, &flagon);
@@ -2288,8 +2297,11 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
       return socket_ioctl(sock, FIONBIO, &flagon);
     #elif (CLIENT_OS == OS_RISCOS)
       int flagon = ((parm == 0 /* off */) ? (1): (0));
-      if (ioctl(sock, FIONBIO, &flagon) && !flagon) // allow blocking socket calls
-      { flagon = 1; ioctl(sock, FIOSLEEPTW, &flagon); } //to preemptively multitask
+      if (ioctl(sock, FIONBIO, &flagon))
+        return -1;
+      // allow blocking socket calls to preemptively multitask
+      if (parm != 0) {flagon = 1; ioctl(sock, FIOSLEEPTW, &flagon);}
+      return 0;  
     #elif (CLIENT_OS == OS_OS2)
       int flagon = ((parm == 0 /* off */) ? (1): (0));
       return ioctl(sock, FIONBIO, (char *) &flagon, sizeof(flagon));
@@ -2298,29 +2310,45 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
       return IoctlSocket(sock, FIONBIO, &flagon);
     #elif (CLIENT_OS == OS_DOS)
       return ((parm == 0 /* off */)?(0):(-1)); //always non-blocking
+    #elif (CLIENT_OS == OS_LINUX) /*use ioctl to avoid 2.0+2.1 vs 2.2+ trouble*/
+      unsigned int flagon = ((parm == 0 /* off */)?(1):(0));
+      return ioctl(sock, FIONBIO, &flagon);
     #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
     {
-      int flag, res, arg;
+      int res, flag;
       #if (defined(FNDELAY))
-        flag = FNDELAY;
+      flag = FNDELAY;
       #else
-        flag = O_NONBLOCK;
+      flag = O_NONBLOCK;
       #endif
-      arg = ((parm == 0 /* off */) ? (flag): (0) );
-
-      if (( res = fcntl(sock, F_GETFL, flag ) ) == -1)
-        return -1;
-      if ((arg && res) || (!arg && !res))
-        return 0;
-      if ((res = fcntl(sock, F_SETFL, arg )) == -1)
-        return -1;
-      if (( res = fcntl(sock, F_GETFL, flag ) ) == -1)
-        return -1;
-      if ((arg && res) || (!arg && !res))
-        return 0;
+      if (( res = fcntl(sock, F_GETFL, flag ) ) != -1)
+      {
+        //printf("want: %sblocking, was: %sblocking, ", ((parm==0)?("non-"):("")), ((res & flag)?("non-"):("")) );
+        if ((parm == 0 /* off */ && (res & flag) != 0) ||
+            (parm != 0 /* on */  && (res & flag) == 0))
+        {    
+          //printf("no change needed\n");
+          return 0;
+        }  
+        if (fcntl(sock, F_SETFL, (res ^ flag)) != -1)  
+        {
+          if (( res = fcntl(sock, F_GETFL, flag ) ) != -1)
+          {
+            if ((parm == 0 /* off */ && (res & flag) != 0) ||
+                (parm != 0 /* on */  && (res & flag) == 0))
+            {    
+              //printf("changed ok\n"); 
+              return 0;
+            }  
+            //printf("fcntl() said 'ok' but did not change. still %sblocking\n", ((res & flag)?("non-"):("")) );
+            return -1;
+          }  
+        }
+      }  
+      //printf("fcntl err: '%s'\n", strerror(errno));
     }
     #endif
-  }
+  } /* if ( cond_type == CONDSOCK_BLOCKMODE ) */
   parm = parm; /* shaddup compiler */
   return -1;
 }

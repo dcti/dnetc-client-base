@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.13 2000/07/12 14:11:51 oliver Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.14 2000/09/22 16:04:50 cyp Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -132,8 +132,11 @@ extern "C" {
   #include <fcntl.h>
   #include <netdb.h>
   typedef int SOCKET;
-  #if (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_ALPHA)
-    #include <asm/byteorder.h>
+  #if (CLIENT_OS == OS_LINUX)
+    #include <sys/ioctl.h> /* FIONBIO */
+    #if (CLIENT_CPU == CPU_ALPHA)
+      #include <asm/byteorder.h>
+    #endif
   #elif (CLIENT_OS == OS_QNX)
     #include <sys/select.h>
   #elif (CLIENT_OS == OS_DYNIX) && defined(NTOHL)
