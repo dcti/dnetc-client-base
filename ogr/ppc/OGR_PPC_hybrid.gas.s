@@ -13,141 +13,117 @@
 ;# - Source code compatible with GAS and Apple's AS.
 ;# - Built-in implementation of found_one().
 ;# - Use a custom stack frame (leaf procedure).
+;# - LR register not used nor saved in caller's stack.
 ;# - CTR, CR0, CR1, GPR0 and GPR3-GPR12 are volatile (not preserved).
 ;#
-;# $Id: OGR_PPC_hybrid.gas.s,v 1.1.2.3 2004/07/16 13:24:27 kakace Exp $
+;# $Id: OGR_PPC_hybrid.gas.s,v 1.1.2.3.2.1 2004/08/08 20:18:22 kakace Exp $
 ;#
 ;#============================================================================
 
 
-    .text                               
-    .align    4                         
-    .globl    cycle_ppc_hybrid          ;# elf
+    .text     
+    .align    4
     .globl    _cycle_ppc_hybrid         ;# a.out
+    .globl    cycle_ppc_hybrid          ;# elf
 
 
 ;# Bitmaps dependencies (offsets)
-.set          STATE_DISTV,        208   ;# dist vector
-.set          STATE_DIST0,        200   ;# dist[0] scalar
-.set          LEVEL_LISTV0,       0     ;# list[0] vector
-.set          LEVEL_LISTV1,       16    ;# list[1] vector
-.set          LEVEL_COMPV,        32    ;# comp vector
-.set          LEVEL_LIST0,        48    ;# list[0] scalar
-.set          LEVEL_COMP0,        52    ;# comp[0] scalar
+.set          LEVEL_DISTV,        32    ;# distV vector
+.set          LEVEL_LISTV,        0     ;# listV vector
+.set          LEVEL_COMPV,        16    ;# compV vector
+.set          LEVEL_DIST0,        56    ;# dist0 scalar
+.set          LEVEL_LIST0,        60    ;# list0 scalar
+.set          LEVEL_COMP0,        52    ;# comp0 scalar
 
 
 ;# Structure members dependencies (offsets)
-.set          STATE_DEPTH,        192   
-.set          STATE_LEVELS,       256   
-.set          SIZEOF_LEVEL,       128   
-.set          STATE_MAX,          0     ;# OGR[stub.marks-1] = length max
+.set          STATE_DEPTH,        28
+.set          STATE_LEVELS,       32
+.set          SIZEOF_LEVEL,       80
+.set          STATE_MAX,          0     ;# OGR[stub.marks-1] = max length
 .set          STATE_MAXDEPTHM1,   8     ;# stub.marks - 1
-.set          STATE_STARTDEPTH,   188   ;# workstub->stub.length
-.set          STATE_HALFDEPTH,    16    
-.set          STATE_HALFDEPTH2,   20    
-.set          STATE_HALFLENGTH,   12    
-.set          LEVEL_CNT2,         120   
-.set          LEVEL_LIMIT,        124   
-.set          SIZEOF_OGR,         4     
-.set          OGR_SHIFT,          2     
+.set          STATE_STARTDEPTH,   24    ;# workstub->stub.length
+.set          STATE_HALFDEPTH,    16    ;# first mark of the middle segment
+.set          STATE_HALFDEPTH2,   20    ;# last mark of the middle segment
+.set          STATE_HALFLENGTH,   12    ;# maximum position of the middle segment
+.set          LEVEL_MARK,         64
+.set          LEVEL_LIMIT,        48
+.set          SIZEOF_OGR,         4
+.set          OGR_SHIFT,          2
 
 
 ;# Constants
-.set          CORE_S_SUCCESS, 2         
-.set          CORE_S_CONTINUE, 1        
-.set          CORE_S_OK, 0              
-.set          BITMAP_LENGTH, 160        ;# bitmap : 5 * 32-bits
-.set          DIST_SHIFT, 20            
-.set          DIST_BITS, 12             
+.set          CORE_S_SUCCESS,     2
+.set          CORE_S_CONTINUE,    1
+.set          CORE_S_OK,          0
+.set          BITMAP_LENGTH,      160   ;# bitmap : 5 * 32-bits
+.set          DIST_SHIFT,         20
+.set          DIST_BITS,          32-DIST_SHIFT
 
 
 ;# Parameters for rlwinm (choose addressing)
-.set          DIST_SH, 32-DIST_SHIFT    
-.set          DIST_MB, 32-DIST_BITS     
-.set          DIST_ME, 31               
+.set          DIST_SH, DIST_BITS
+.set          DIST_MB, DIST_SHIFT
+.set          DIST_ME, 31
 
 
 ;#============================================================================
 ;# Custom stack frame
 
 .set          FIRST_NV_GPR, 13          ;# Save r13..r31
-.set          GPRSaveArea, (32-FIRST_NV_GPR) * 4 
-.set          FIRST_NV_VR, 20           ;# Save v20..
-.set          VRSaveArea, (28 - FIRST_NV_VR) * 16 
+.set          GPRSaveArea, (32-FIRST_NV_GPR) * 4
 
-.set          aStorage, 4               ;# Private storage area
 .set          aDiffs, 16                ;# diffs control array
-.set          wVRSave,-(GPRSaveArea+4)  
-.set          aVectorArea, 1040         ;# Vectors save area
-.set          localTop, aVectorArea + 4 + VRSaveArea 
-.set          FrameSize, (localTop + GPRSaveArea + 15) & (-16) 
+.set          wVRSave,-(GPRSaveArea+4)
+.set          localTop, 1040
+.set          FrameSize, (localTop + GPRSaveArea + 15) & (-16)
 
 
 ;#============================================================================
 ;# Register aliases (GAS). Ignored by Apple's AS
 
-;.set         r0,0                      
-;.set         r1,1                      
-;.set         r2,2                      
-;.set         r3,3                      
-;.set         r4,4                      
-;.set         r5,5                      
-;.set         r6,6                      
-;.set         r7,7                      
-;.set         r8,8                      
-;.set         r9,9                      
-;.set         r10,10                    
-;.set         r11,11                    
-;.set         r12,12                    
-;.set         r13,13                    
-;.set         r14,14                    
-;.set         r15,15                    
-;.set         r16,16                    
-;.set         r17,17                    
-;.set         r18,18                    
-;.set         r19,19                    
-;.set         r20,20                    
-;.set         r21,21                    
-;.set         r22,22                    
-;.set         r23,23                    
-;.set         r24,24                    
-;.set         r25,25                    
-;.set         r26,26                    
-;.set         r27,27                    
-;.set         r28,28                    
-;.set         r29,29                    
-;.set         r30,30                    
-;.set         r31,31                    
+;.set         r0,0
+;.set         r1,1
+;.set         r3,3
+;.set         r4,4
+;.set         r5,5
+;.set         r6,6
+;.set         r7,7
+;.set         r8,8
+;.set         r9,9
+;.set         r10,10
+;.set         r11,11
+;.set         r12,12
+;.set         r13,13
+;.set         r14,14
+;.set         r15,15
+;.set         r16,16
+;.set         r17,17
+;.set         r18,18
+;.set         r19,19
+;.set         r20,20
+;.set         r21,21
+;.set         r22,22
+;.set         r23,23
+;.set         r24,24
+;.set         r25,25
+;.set         r26,26
+;.set         r27,27
+;.set         r28,28
+;.set         r29,29
+;.set         r30,30
+;.set         r31,31
 
-;.set         v0,0                      
-;.set         v1,1                      
-;.set         v2,2                      
-;.set         v3,3                      
-;.set         v4,4                      
-;.set         v5,5                      
-;.set         v6,6                      
-;.set         v7,7                      
-;.set         v8,8                      
-;.set         v9,9                      
-;.set         v10,10                    
-;.set         v11,11                    
-;.set         v12,12                    
-;.set         v13,13                    
-;.set         v14,14                    
-;.set         v15,15                    
-;.set         v16,16                    
-;.set         v17,17                    
-;.set         v18,18                    
-;.set         v19,19                    
-;.set         v20,20                    
-;.set         v21,21                    
-;.set         v22,22                    
-;.set         v23,23                    
-;.set         v24,24                    
-;.set         v25,25                    
-;.set         v26,26                    
-;.set         v27,27                    
-;.set         VRsave,0x100              
+;.set         v0,0
+;.set         v1,1
+;.set         v2,2
+;.set         v3,3
+;.set         v4,4
+;.set         v5,5
+;.set         v6,6
+;.set         v7,7
+;.set         v8,8
+;.set         VRsave,0x100
 
 
 ;#============================================================================
@@ -155,805 +131,270 @@
 ;#                      int *pnodes (r4)
 ;#                      const unsigned char *choose (r5)
 ;#                      const int *OGR (r6)
+;#                      const vector unsigned char Varray[] (r7)
 
-cycle_ppc_hybrid:                       ;# elf entry point (SVR4/EABI ABI)
-    mflr      r0                        
-    stw       r0,4(r1)                  ;# Store LR at offset 4 in caller's stack
-    bl        L_ogr_cycle_common        ;# Call common code
-    lwz       r0,4(r1)                  ;# restore LR
-    mtlr      r0                        
-    blr                                 
-
-_cycle_ppc_hybrid:                      ;# a.out entry point (Mac OS/AIX ABI)
-    mflr      r0                        
-    stw       r0,8(r1)                  ;# Store LR at offset 8 in caller's stack
-    bl        L_ogr_cycle_common        ;# Call common code
-    lwz       r0,8(r1)                  ;# restore LR
-    mtlr      r0                        
-    blr                                 
-
-    ;# Allocate the new stack frame (common code)
-L_ogr_cycle_common:                           
-    mr        r8,r1                     ;# Caller's stack pointer
-    clrlwi    r10,r1,27                 ;# keep the low-order 4 bits
-    subfic    r10,r10,-FrameSize        ;# Frame size, including padding
-    stwux     r1,r1,r10                 
+cycle_ppc_hybrid:                       ;# elf
+_cycle_ppc_hybrid:                      ;# a.out
+    mr        r10,r1                    ;# Caller's stack pointer
+    clrlwi    r12,r1,27                 ;# keep the low-order 4 bits
+    subfic    r12,r12,-FrameSize        ;# Frame size, including padding
+    stwux     r1,r1,r12
 
     ;# Save non-volatile registers
-    stmw      r13,-GPRSaveArea(r8)      ;# Save GPRs
+    stmw      r13,-GPRSaveArea(r10)     ;# Save GPRs
 
-    ;# Save vector registers
-    mfspr     r9,VRsave                 
-    oris      r10,r9,0xffff             ;# Use vector v0...v27
-    stw       r9,wVRSave(r8)            
-    ori       r10,r10,0xfff0            
-    mtspr     VRsave,r10                
-
-    li        r10,aVectorArea           
-    stvx      v27,r10,r1                
-    addi      r10,r10,16                
-    stvx      v26,r10,r1                
-    addi      r10,r10,16                
-    stvx      v25,r10,r1                
-    addi      r10,r10,16                
-    stvx      v24,r10,r1                
-    addi      r10,r10,16                
-    stvx      v23,r10,r1                
-    addi      r10,r10,16                
-    stvx      v22,r10,r1                
-    addi      r10,r10,16                
-    stvx      v21,r10,r1                
-    addi      r10,r10,16                
-    stvx      v20,r10,r1                
+    mfspr     r11,VRsave
+    oris      r12,r11,0xff80            ;# Use vector v0...v8
+    stw       r11,wVRSave(r10)
+    mtspr     VRsave,r12
 
 
 ;#============================================================================
 ;# Core engine initialization - Registers allocation :
-;#   r3  := retval
 ;#   r4  := int *pnodes (const)
-;#   r5  := &choose[3] (const)
-;#   r6  := &OGR[0] (const)
+;#   r5  := &choose[3+remdepth]
+;#   r6  := &OGR[remdepth]
+;#   r7  := &Varray[0] (const)
 ;#   r13 := struct State *oState (const)
 ;#   r14 := &oState->Levels[depth]
 ;#   r15 := &oState->Levels[halfdepth]
 ;#   r16 := depth
 ;#   r17 := nodes
-;#   r18 := oStateMax (const)
-;#   r19 := oStateHalfDepth (const)
-;#   r20 := oStateHaldDepth2 (const)
-;#   r21 := cnt2
-;#   r22 := nodes max (*pnodes)
+;#   r18 := oState->max (const)
+;#   r19 := remdepth
+;#   r20 := oState->half_depth2 (const)
+;#   r21 := mark
+;#   r22 := nodes max (*pnodes, const)
 ;#   r23 := c0neg
-;#   r24 := newbit
-;#   r25 := limit
-;#   r26 := startdepth (const)
-;#   r27 := pointer to switch_cases-64
-;#   r28 := maxdepthm1 (const)
+;#   r24 := limit
+;#   r25 := offsetof(Level, list0) (const)
+;#   r26 := offsetof(Level, distV) (const)
+;#   r27 := offsetof(Level, listV) (const)
+;#   r28 := offsetof(Level, compV) (const)
 ;#   r29 := dist[0]
 ;#   r30 := list[0]
 ;#   r31 := comp[0]
-;#   v1 -v7  := Shift constants (bytes)
-;#   v11-v23 := Shift constants (words)
-;#   v0  := ZEROS (0, 0, 0, 0)
-;#   v20 := ZEROBIT (0, 0, 1, 0)
-;#   v19 := ONES (0xff, 0xff, 0xff, 0xff)
-;#   v24 := dist bitmap
-;#   v25 := list[0] bitmap
-;#   v26 := list[1] bitmap
-;#   v27 := comp bitmap
+;#   v0  := zeroes (0, 0, 0, 0) (const)
+;#   v1  := ones (0xff, 0xff, 0xff, 0xff) (const)
+;#   v6  := dist bitmap
+;#   v7  := list bitmap
+;#   v8  := comp bitmap
 
-    ;# Dirty trick to cope with GAS vs AS syntax issues
-    ;lis      r27,(L_switch_cases-64)@h 
-    ;ori      r27,r27,(L_switch_cases-64)@l 
-    ;.if      0                         ;# Skip over Apple's AS code
-    lis       r27,hi16(L_switch_cases-64) 
-    ori       r27,r27,lo16(L_switch_cases-64) 
-    ;.endif                             
-
-    lwz       r16,STATE_DEPTH(r3)       ;# oState->depth
     mr        r13,r3                    ;# Copy oState
-    lwz       r19,STATE_HALFDEPTH(r3)   ;# oState->half_depth
-    addi      r14,r3,STATE_LEVELS       ;# &oState->Levels[0]
-    lwz       r28,STATE_MAXDEPTHM1(r3)  ;# oState->maxdepthm1
-    li        r17,0                     ;# nodes = 0
+    lwz       r16,STATE_DEPTH(r3)       ;# oState->depth
     addi      r16,r16,1                 ;# ++depth
+
+    addi      r14,r3,STATE_LEVELS       ;# &oState->Levels[0]
+    lwz       r3,STATE_HALFDEPTH(r13)   ;# oState->half_depth
+    mulli     r3,r3,SIZEOF_LEVEL
+    add       r15,r14,r3                ;# &oState->Levels[half_depth]
+    mulli     r3,r16,SIZEOF_LEVEL
+    add       r14,r14,r3                ;# &oState->Levels[depth]
+
+    li        r17,0                     ;# nodes = 0
+    lwz       r21,LEVEL_MARK(r14)       ;# level->mark
+
+    lwz       r3,STATE_STARTDEPTH(r13)  ;# oState->startdepth
+    lwz       r18,STATE_MAX(r13)        ;# oState->max
+    lwz       r19,STATE_MAXDEPTHM1(r13) ;# oState->maxdepthm1
     lwz       r20,STATE_HALFDEPTH2(r13) ;# oState->half_depth2
-    li        r3,CORE_S_CONTINUE        ;# retval
-    mulli     r7,r19,SIZEOF_LEVEL       
-    lwz       r18,STATE_MAX(r13)        ;# oStateMax
-    mulli     r8,r16,SIZEOF_LEVEL       
-    sub       r0,r28,r16                ;# remainingDepth = maxdepthm1 - depth
+    sub       r19,r19,r16               ;# remdepth = maxdepthm1 - depth
+    sub       r20,r20,r3                ;# halfdepth2 -= startdepth
+    sub       r16,r16,r3                ;# depth -= startdepth
+
     lwz       r22,0(r4)                 ;# nodes max = *pnodes
-    add       r15,r14,r7                ;# &oState->Levels[half_depth]
-    slwi      r7,r0,OGR_SHIFT           ;# remainingDepth * sizeof(int)
-    add       r14,r14,r8                ;# &oState->Levels[depth]
-    lwz       r26,STATE_STARTDEPTH(r13) ;# oState->startdepth
-    add       r5,r5,r0                  ;# &choose[remainingDepth]
-    add       r6,r6,r7                  ;# &OGR[remainingDepth]
+    slwi      r3,r19,OGR_SHIFT          ;# remdepth * sizeof(int)
+    add       r5,r5,r19                 ;# &choose[remdepth]
+    add       r6,r6,r3                  ;# &OGR[remdepth]
 
     ;# SETUP_TOP_STATE
     ;# - Initialize vector constants required to shift bitmaps
     ;# - Load current state
-    vspltisw  v11,1                     ;# VSHIFT_L1 = vector (1)
-    li        r9,STATE_DISTV            
-    vspltisb  v1,1                      ;# VSHIFT_B1 = vector (1)
-    li        r12,LEVEL_COMPV           
-    vspltisb  v4,4                      ;# VSHIFT_B4 = vector (4)
-    li        r11,LEVEL_LISTV1          
-    vspltisw  v12,2                     ;# VSHIFT_L2 = vector (2)
-    vadduwm   v2,v1,v1                  ;# VSHIFT_B2 = vector (2)
-    vspltisw  v13,3                     ;# VSHIFT_L3 = vector (3)
-    vadduwm   v5,v4,v1                  ;# VSHIFT_B5 = vector (5)
-    vspltisw  v14,4                     ;# VSHIFT_L4 = vector (4)
-    vadduwm   v3,v2,v1                  ;# VSHIFT_B3 = vector (3)
-    vspltisw  v15,5                     ;# VSHIFT_L5 = vector (5)
-    vadduwm   v6,v4,v2                  ;# VSHIFT_B6 = vector (6)
-    vspltisw  v16,6                     ;# VSHIFT_L6 = vector (6)
-    vadduwm   v7,v4,v3                  ;# VSHIFT_B7 = vector (7)
-    vspltisw  v17,7                     ;# VSHIFT_L7 = vector (7)
-    vsubuwm   v0,v0,v0                  ;# ZEROS = vector (0)
-    vspltisw  v18,8                     ;# VSHIFT_L8 = vector (8)
-    vnor      v19,v0,v0                 ;# ONES = vector (-1)
+    vsubuwm   v0,v0,v0                  ;# zeroes = vector (0)
+    vnor      v1,v0,v0                  ;# ones = vector (-1)
+    li        r27,LEVEL_LISTV
+    li        r26,LEVEL_DISTV
+    li        r28,LEVEL_COMPV
+    li        r25,LEVEL_LIST0
+    lwz       r29,LEVEL_DIST0(r14)      ;# dist0 bitmap
     lwz       r31,LEVEL_COMP0(r14)      ;# comp0 bitmap
-    vadduwm   v21,v18,v18               ;# VSHIFT_L16
-    lwz       r29,STATE_DIST0(r13)      ;# dist0 bitmap
-    vadduwm   v22,v21,v18               ;# VSHIFT_L24
     lwz       r30,LEVEL_LIST0(r14)      ;# list0 bitmap
-    vmrglw    v20,v0,v11                ;# = (0, 1, 0, 1)
-    lwz       r21,LEVEL_CNT2(r14)       ;# level->cnt2
-    vadduwm   v23,v21,v21               ;# VSHIFT_L32
-    lvx       v24,r9,r13                ;# dist vector
-    vmrglw    v20,v20,v0                ;# = (0, 0, 1, 0)
-    lvx       v27,r12,r14               ;# comp vector
-    rlwinm    r7,r29,DIST_SH+2,DIST_MB-2,DIST_ME-2 
-    lvx       v25,0,r14                 ;# listV0 vector
-    rlwinm    r0,r29,DIST_SH+3,DIST_MB-3,DIST_ME-3 
-    lvx       v26,r11,r14               ;# listV1 vector
-    add       r0,r7,r0                  ;# (dist0 >> DIST_SHIFT) * DIST_BITS
-    lbzx      r25,r5,r0                 ;# choose(dist0 >> ttmDISTBITS, remainingDepth)
-    vor       v25,v25,v20               ;# listV0 |= ZEROBIT
-    b         L_comp_limit              
-    nop                                 
+    lvx       v6,r26,r14                ;# dist vector
+    lvx       v8,r28,r14                ;# comp vector
+    lvx       v7,0,r14                  ;# list vector
+    rlwinm    r3,r29,DIST_SH+2,DIST_MB-2,DIST_ME-2
+    rlwinm    r0,r29,DIST_SH+3,DIST_MB-3,DIST_ME-3
+    add       r0,r3,r0                  ;# (dist0 >> DIST_SHIFT) * DIST_BITS
+    lbzx      r24,r5,r0                 ;# choose(dist0 >> ttmDISTBITS, remdepth)
+    b         L_comp_limit
+    nop       
 
-    .align    4                         
-L_comp_limit:                           
+    .align    4
+L_push_level: 
+    ;# PUSH_LEVEL_UPDATE_STATE(lev)
+    addi      r3,r14,SIZEOF_LEVEL       ;# lev+1
+    vor       v6,v6,v7                  ;# distV |= listV
+    stw       r30,LEVEL_LIST0+SIZEOF_LEVEL(r14) ;# (lev+1)->list0 = list0
+    addi      r16,r16,1                 ;# ++depth
+    vor       v8,v8,v6                  ;# compV |= distV
+    stw       r31,LEVEL_COMP0(r14)      ;# store comp0
+    or        r29,r29,r30               ;# dist0 |= list0
+    subi      r6,r6,SIZEOF_OGR          ;# --ogr
+    stvx      v8,r28,r3                 ;# (lev+1)->compV.v = compV
+    or        r31,r31,r29               ;# comp0 |= dist0
+    rlwinm    r8,r29,DIST_SH+2,DIST_MB-2,DIST_ME-2
+    stvx      v7,0,r14                  ;# store listV
+    subi      r5,r5,1                   ;# --choose
+    rlwinm    r0,r29,DIST_SH+3,DIST_MB-3,DIST_ME-3
+    stw       r24,LEVEL_LIMIT(r14)      ;# store limit
+    subi      r19,r19,1                 ;# --remdepth
+    add       r0,r8,r0                  ;# (dist0 >> DIST_SHIFT) * DIST_BITS
+    lbzx      r24,r5,r0                 ;# choose(dist0 >> ttmDISTBITS, remdepth)
+    addi      r14,r14,SIZEOF_LEVEL      ;# ++lev
+
+L_comp_limit: 
     ;# Compute the maximum position (limit)
-    cmpw      r16,r19                   ;# depth <= oStateHalfDepth ?
+    ;# "depth <= halfdepth" is equivalent to "&lev[depth] <= &lev[halfdepth]"
+    cmplw     r14,r15                   ;# depth <= oState->half_depth ?
     not       r23,r31                   ;# c0neg = ~comp0
-    li        r24,1                     ;# newbit = 1
-    cmpw      cr1,r16,r20               ;# depth <= oStateHalfDepth2 ?
+    li        r12,1                     ;# newbit = 1
+    cmpw      cr1,r16,r20               ;# depth <= oState->half_depth2 ?
     srwi      r23,r23,1                 ;# prepare c0neg for cntlzw
-    ble       L_left_side               ;# depth <= oStateHalfDepth
+    ble-      L_left_side               ;# depth <= oState->half_depth
     addi      r17,r17,1                 ;# ++nodes
-    sub       r25,r18,r25               ;# limit = oStateMax - choose[...]
-    bgt       cr1,L_stay                ;# depth > oStateHalfDepth2
+    sub       r24,r18,r24               ;# limit = oState->max - choose[...]
+    bgt+      cr1,L_stay                ;# depth > oState->half_depth2
 
-    ;# oStateHalfDepth < depth <= oStateHalfDepth2
-    lwz       r7,LEVEL_CNT2(r15)        ;# levHalfDepth->cnt2
-    sub       r7,r18,r7                 ;# temp = oStateMax - levHalfDepth->cnt2
-    cmpw      r25,r7                    ;# limit < temp ?
-    blt       L_stay                    
+    ;# oState->half_depth < depth <= oState->half_depth2
+    lwz       r3,LEVEL_MARK(r15)        ;# levHalfDepth->mark
+    sub       r3,r18,r3                 ;# temp = oState->max - levHalfDepth->mark
+    cmpw      r24,r3                    ;# limit < temp ?
+    blt       L_stay
 
-    subi      r25,r7,1                  ;# limit = temp - 1
-    b         L_stay                    
+    subi      r24,r3,1                  ;# limit = temp - 1
+    b         L_stay
 
-L_left_side:                            
-    ;# depth <= oStateHalfDepth
-    lwz       r7,0(r6)                  ;# OGR[remainingDepth]
+L_left_side:                            ;# depth <= oState->half_depth
+    lwz       r8,0(r6)                  ;# OGR[remdepth]
     cmpw      r17,r22                   ;# nodes >= *pnodes ?
-    lwz       r8,STATE_HALFLENGTH(r13)  ;# oState->half_length
-    sub       r25,r18,r7                ;# limit = oStateMax - OGR[...]
-    cmpw      cr1,r25,r8                ;# limit > half_length ?
-    bge       L_exit_loop               ;# nodes >= pnodes : exit
+    lwz       r9,STATE_HALFLENGTH(r13)  ;# oState->half_length
+    sub       r24,r18,r8                ;# limit = oState->max - OGR[...]
+    li        r3,CORE_S_CONTINUE        ;# pre-load
+    cmpw      cr1,r24,r9                ;# limit > half_length ?
+    bge-      L_exit_loop               ;# nodes >= pnodes : exit
 
     addi      r17,r17,1                 ;# ++nodes
     ble       cr1,L_stay                ;# limit <= oState->half_length
-    mr        r25,r8                    ;# otherwise limit = half_length
 
-L_stay:                                 
-    ;# r0 = (~comp0) >> 1, so that cntlzw returns a value in the range [1;32]
-    cntlzw    r0,r23                    ;# Find first bit set
-    cmpwi     cr1,r31,-1                ;# Pre-check comp0 for case #32
-    slwi      r7,r0,6                   ;# firstbit * 64 = Offset of each 'case' block
-    add       r21,r21,r0                ;# cnt2 += firstbit
-    slw       r31,r31,r0                ;# comp0 <<= firstbit
-    add       r7,r7,r27                 ;# jump address
-    cmpw      r21,r25                   ;# cnt2 > limit ?
-    mtctr     r7                        
-    lwz       r8,LEVEL_COMPV(r14)       ;# comp1 = lev->compV.u[0]
-    srw       r30,r30,r0                ;# list0 >>= firstbit
-    bgt       L_up_level                ;# Go back to the preceding mark
-    bctr                                ;# Jump to 'case firstbit:'
+    mr        r24,r9                    ;# otherwise limit = half_length
+    b         L_stay
 
-    .align    6                         ;# Align to a 64 bytes boundary
-L_switch_cases:                           
-    ;# Case 1:
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v11                ;# maskV = vector (0xFFFFFFFE)
-    rlwimi    r31,r8,1,31,31            ;# comp0 = (comp0:comp1) << 1
-    vsl       v27,v27,v1                ;# compV <<= 1
-    vsubuwm   v10,v0,v11                ;# shiftV = vector (-1)
-    rlwimi    r30,r24,31,0,0            ;# list0 |= newbit << 31
-    vsr       v25,v25,v1                ;# listV0 >>= 1
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    li        r24,0                     ;# newbit = 0
-    vrlw      v26,v26,v10               ;# rotate listV1 (== right shift)
-    b         L_end_switch              
-    .align    6                         ;# Align to a 64 bytes boundary
-
-    ;# Case 2:
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v12                ;# maskV = vector (0xFFFFFFFC)
-    rlwimi    r31,r8,2,30,31            ;# comp0 = (comp0:comp1) << 2
-    vsl       v27,v27,v2                ;# compV <<= 2
-    vsubuwm   v10,v0,v12                ;# shiftV = vector (-2)
-    rlwimi    r30,r24,30,0,1            ;# list0 |= newbit << 30
-    vsr       v25,v25,v2                ;# listV0 >>= 2
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    li        r24,0                     ;# newbit = 0
-    vrlw      v26,v26,v10               ;# rotate listV1 (== right shift)
-    b         L_end_switch              
-    .align    6                         ;# Align to a 64 bytes boundary
-
-    ;# Case 3:
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v13                ;# maskV = vector (0xFFFFFFF8)
-    rlwimi    r31,r8,3,29,31            ;# comp0 = (comp0:comp1) << 3
-    vsl       v27,v27,v3                ;# compV <<= 3
-    vsubuwm   v10,v0,v13                ;# shiftV = vector (-3)
-    rlwimi    r30,r24,29,0,2            ;# list0 |= newbit << 29
-    vsr       v25,v25,v3                ;# listV0 >>= 3
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    li        r24,0                     ;# newbit = 0
-    vrlw      v26,v26,v10               ;# rotate listV1 (== right shift)
-    b         L_end_switch              
-    .align    6                         ;# Align to a 64 bytes boundary
-
-    ;# Case 4:
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v14                ;# maskV = vector (0xFFFFFFF0)
-    rlwimi    r31,r8,4,28,31            ;# comp0 = (comp0:comp1) << 4
-    vsl       v27,v27,v4                ;# compV <<= 4
-    vsubuwm   v10,v0,v14                ;# shiftV = vector (-4)
-    rlwimi    r30,r24,28,0,3            ;# list0 |= newbit << 28
-    vsr       v25,v25,v4                ;# listV0 >>= 4
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    li        r24,0                     ;# newbit = 0
-    vrlw      v26,v26,v10               ;# rotate listV1 (== right shift)
-    b         L_end_switch              
-    .align    6                         ;# Align to a 64 bytes boundary
-
-    ;# Case 5:
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v15                ;# maskV = vector (0xFFFFFFE0)
-    rlwimi    r31,r8,5,27,31            ;# comp0 = (comp0:comp1) << 5
-    vsl       v27,v27,v5                ;# compV <<= 5
-    vsubuwm   v10,v0,v15                ;# shiftV = vector (-5)
-    rlwimi    r30,r24,27,0,4            ;# list0 |= newbit << 27
-    vsr       v25,v25,v5                ;# listV0 >>= 5
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    li        r24,0                     ;# newbit = 0
-    vrlw      v26,v26,v10               ;# rotate listV1 (== right shift)
-    b         L_end_switch              
-    .align    6                         ;# Align to a 64 bytes boundary
-
-    ;# Case 6:
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v16                ;# maskV = vector (0xFFFFFFC0)
-    rlwimi    r31,r8,6,26,31            ;# comp0 = (comp0:comp1) << 6
-    vsl       v27,v27,v6                ;# compV <<= 6
-    vsubuwm   v10,v0,v16                ;# shiftV = vector (-6)
-    rlwimi    r30,r24,26,0,5            ;# list0 |= newbit << 26
-    vsr       v25,v25,v6                ;# listV0 >>= 6
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    li        r24,0                     ;# newbit = 0
-    vrlw      v26,v26,v10               ;# rotate listV1 (== right shift)
-    b         L_end_switch              
-    .align    6                         ;# Align to a 64 bytes boundary
-
-    ;# Case 7:
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v17                ;# maskV = vector (0xFFFFFF80)
-    rlwimi    r31,r8,7,25,31            ;# comp0 = (comp0:comp1) << 7
-    vsl       v27,v27,v7                ;# compV <<= 7
-    vsubuwm   v10,v0,v17                ;# shiftV = vector (-7)
-    rlwimi    r30,r24,25,0,6            ;# list0 |= newbit << 25
-    vsr       v25,v25,v7                ;# listV0 >>= 7
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    li        r24,0                     ;# newbit = 0
-    vrlw      v26,v26,v10               ;# rotate listV1 (== right shift)
-    b         L_end_switch              
-    .align    6                         ;# Align to a 64 bytes boundary
-
-    ;# Case 8:
-    vslo      v27,v27,v18               ;# compV <<= 8
-    rlwimi    r31,r8,8,24,31            ;# comp0 = (comp0:comp1) << 8
-    rlwimi    r30,r24,24,0,7            ;# list0 |= newbit << 24
-    vsldoi    v26,v25,v26,15            ;# listV1 = (listV0:listV1) >> 8
-    li        r24,0                     ;# newbit = 0
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsro      v25,v25,v18               ;# listV0 >>= 8
-    b         L_end_switch              
-    .align    6                         ;# Align to a 64 bytes boundary
-
-    ;# Case 9:
-    vslo      v27,v27,v18               ;# compV <<= 8
-    vadduwm   v10,v18,v11               ;# shiftV = vector (9)
-    rlwimi    r31,r8,9,23,31            ;# comp0 = (comp0:comp1) << 9
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFFFFFE00)
-    rlwimi    r30,r24,23,0,8            ;# list0 |= newbit << 23
-    vsl       v27,v27,v1                ;# compV <<= 1
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-9)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v18               ;# listV0 >>= 8
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v1                ;# listV0 >>= 1
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 10:
-    vslo      v27,v27,v18               ;# compV <<= 8
-    vadduwm   v10,v18,v12               ;# shiftV = vector (10)
-    rlwimi    r31,r8,10,22,31           ;# comp0 = (comp0:comp1) << 10
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFFFFFC00)
-    rlwimi    r30,r24,22,0,9            ;# list0 |= newbit << 22
-    vsl       v27,v27,v2                ;# compV <<= 2
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-10)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v18               ;# listV0 >>= 8
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v2                ;# listV0 >>= 2
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 11:
-    vslo      v27,v27,v18               ;# compV <<= 8
-    vadduwm   v10,v18,v13               ;# shiftV = vector (11)
-    rlwimi    r31,r8,11,21,31           ;# comp0 = (comp0:comp1) << 11
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFFFFF800)
-    rlwimi    r30,r24,21,0,10           ;# list0 |= newbit << 21
-    vsl       v27,v27,v3                ;# compV <<= 3
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-11)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v18               ;# listV0 >>= 8
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v3                ;# listV0 >>= 3
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 12:
-    vslo      v27,v27,v18               ;# compV <<= 8
-    vadduwm   v10,v18,v14               ;# shiftV = vector (12)
-    rlwimi    r31,r8,12,20,31           ;# comp0 = (comp0:comp1) << 12
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFFFFF000)
-    rlwimi    r30,r24,20,0,11           ;# list0 |= newbit << 20
-    vsl       v27,v27,v4                ;# compV <<= 4
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-12)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v18               ;# listV0 >>= 8
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v4                ;# listV0 >>= 4
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 13:
-    vslo      v27,v27,v18               ;# compV <<= 8
-    vadduwm   v10,v18,v15               ;# shiftV = vector (13)
-    rlwimi    r31,r8,13,19,31           ;# comp0 = (comp0:comp1) << 13
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFFFFE000)
-    rlwimi    r30,r24,19,0,12           ;# list0 |= newbit << 19
-    vsl       v27,v27,v5                ;# compV <<= 5
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-13)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v18               ;# listV0 >>= 8
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v5                ;# listV0 >>= 5
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 14:
-    vslo      v27,v27,v18               ;# compV <<= 8
-    vadduwm   v10,v18,v16               ;# shiftV = vector (14)
-    rlwimi    r31,r8,14,18,31           ;# comp0 = (comp0:comp1) << 14
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFFFFC000)
-    rlwimi    r30,r24,18,0,13           ;# list0 |= newbit << 18
-    vsl       v27,v27,v6                ;# compV <<= 6
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-14)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v18               ;# listV0 >>= 8
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v6                ;# listV0 >>= 6
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 15:
-    vslo      v27,v27,v18               ;# compV <<= 8
-    vadduwm   v10,v18,v17               ;# shiftV = vector (15)
-    rlwimi    r31,r8,15,17,31           ;# comp0 = (comp0:comp1) << 15
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFFFF8000)
-    rlwimi    r30,r24,17,0,14           ;# list0 |= newbit << 17
-    vsl       v27,v27,v7                ;# compV <<= 7
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-15)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v18               ;# listV0 >>= 8
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v7                ;# listV0 >>= 7
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 16:
-    vslo      v27,v27,v21               ;# compV <<= 16
-    rlwimi    r31,r8,16,16,31           ;# comp0 = (comp0:comp1) << 16
-    rlwimi    r30,r24,16,0,15           ;# list0 |= newbit << 16
-    vsldoi    v26,v25,v26,14            ;# listV1 = (listV0:listV1) >> 16
-    li        r24,0                     ;# newbit = 0
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsro      v25,v25,v21               ;# listV0 >>= 16
-    b         L_end_switch              
-    .align    6                         ;# Align to a 64 bytes boundary
-
-    ;# Case 17:
-    vslo      v27,v27,v21               ;# compV <<= 16
-    vadduwm   v10,v21,v11               ;# shiftV = vector (17)
-    rlwimi    r31,r8,17,15,31           ;# comp0 = (comp0:comp1) << 17
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFFFE0000)
-    rlwimi    r30,r24,15,0,16           ;# list0 |= newbit << 15
-    vsl       v27,v27,v1                ;# compV <<= 1
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-17)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v21               ;# listV0 >>= 16
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v1                ;# listV0 >>= 1
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 18:
-    vslo      v27,v27,v21               ;# compV <<= 16
-    vadduwm   v10,v21,v12               ;# shiftV = vector (18)
-    rlwimi    r31,r8,18,14,31           ;# comp0 = (comp0:comp1) << 18
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFFFC0000)
-    rlwimi    r30,r24,14,0,17           ;# list0 |= newbit << 14
-    vsl       v27,v27,v2                ;# compV <<= 2
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-18)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v21               ;# listV0 >>= 16
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v2                ;# listV0 >>= 2
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 19:
-    vslo      v27,v27,v21               ;# compV <<= 16
-    vadduwm   v10,v21,v13               ;# shiftV = vector (19)
-    rlwimi    r31,r8,19,13,31           ;# comp0 = (comp0:comp1) << 19
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFFF80000)
-    rlwimi    r30,r24,13,0,18           ;# list0 |= newbit << 13
-    vsl       v27,v27,v3                ;# compV <<= 3
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-19)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v21               ;# listV0 >>= 16
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v3                ;# listV0 >>= 3
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 20:
-    vslo      v27,v27,v21               ;# compV <<= 16
-    vadduwm   v10,v21,v14               ;# shiftV = vector (20)
-    rlwimi    r31,r8,20,12,31           ;# comp0 = (comp0:comp1) << 20
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFFF00000)
-    rlwimi    r30,r24,12,0,19           ;# list0 |= newbit << 12
-    vsl       v27,v27,v4                ;# compV <<= 4
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-20)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v21               ;# listV0 >>= 16
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v4                ;# listV0 >>= 4
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 21:
-    vslo      v27,v27,v21               ;# compV <<= 16
-    vadduwm   v10,v21,v15               ;# shiftV = vector (21)
-    rlwimi    r31,r8,21,11,31           ;# comp0 = (comp0:comp1) << 21
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFFE00000)
-    rlwimi    r30,r24,11,0,20           ;# list0 |= newbit << 11
-    vsl       v27,v27,v5                ;# compV <<= 5
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-21)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v21               ;# listV0 >>= 16
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v5                ;# listV0 >>= 5
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 22:
-    vslo      v27,v27,v21               ;# compV <<= 16
-    vadduwm   v10,v21,v16               ;# shiftV = vector (22)
-    rlwimi    r31,r8,22,10,31           ;# comp0 = (comp0:comp1) << 22
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFFC00000)
-    rlwimi    r30,r24,10,0,21           ;# list0 |= newbit << 10
-    vsl       v27,v27,v6                ;# compV <<= 6
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-22)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v21               ;# listV0 >>= 16
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v6                ;# listV0 >>= 6
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 23:
-    vslo      v27,v27,v21               ;# compV <<= 16
-    vadduwm   v10,v21,v17               ;# shiftV = vector (23)
-    rlwimi    r31,r8,23,9,31            ;# comp0 = (comp0:comp1) << 23
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFF800000)
-    rlwimi    r30,r24,9,0,22            ;# list0 |= newbit << 9
-    vsl       v27,v27,v7                ;# compV <<= 7
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-23)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v21               ;# listV0 >>= 16
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v7                ;# listV0 >>= 7
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 24:
-    vslo      v27,v27,v22               ;# compV <<= 24
-    rlwimi    r31,r8,24,8,31            ;# comp0 = (comp0:comp1) << 24
-    rlwimi    r30,r24,8,0,23            ;# list0 |= newbit << 8
-    vsldoi    v26,v25,v26,13            ;# listV1 = (listV0:listV1) >> 24
-    li        r24,0                     ;# newbit = 0
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsro      v25,v25,v22               ;# listV0 >>= 24
-    b         L_end_switch              
-    .align    6                         ;# Align to a 64 bytes boundary
-
-    ;# Case 25:
-    vslo      v27,v27,v22               ;# compV <<= 24
-    vadduwm   v10,v22,v11               ;# shiftV = vector (25)
-    rlwimi    r31,r8,25,7,31            ;# comp0 = (comp0:comp1) << 25
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFE000000)
-    rlwimi    r30,r24,7,0,24            ;# list0 |= newbit << 7
-    vsl       v27,v27,v1                ;# compV <<= 1
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-25)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v22               ;# listV0 >>= 24
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v1                ;# listV0 >>= 1
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 26:
-    vslo      v27,v27,v22               ;# compV <<= 24
-    vadduwm   v10,v22,v12               ;# shiftV = vector (26)
-    rlwimi    r31,r8,26,6,31            ;# comp0 = (comp0:comp1) << 26
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xFC000000)
-    rlwimi    r30,r24,6,0,25            ;# list0 |= newbit << 6
-    vsl       v27,v27,v2                ;# compV <<= 2
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-26)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v22               ;# listV0 >>= 24
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v2                ;# listV0 >>= 2
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 27:
-    vslo      v27,v27,v22               ;# compV <<= 24
-    vadduwm   v10,v22,v13               ;# shiftV = vector (27)
-    rlwimi    r31,r8,27,5,31            ;# comp0 = (comp0:comp1) << 27
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xF8000000)
-    rlwimi    r30,r24,5,0,26            ;# list0 |= newbit << 5
-    vsl       v27,v27,v3                ;# compV <<= 3
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-27)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v22               ;# listV0 >>= 24
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v3                ;# listV0 >>= 3
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 28:
-    vslo      v27,v27,v22               ;# compV <<= 24
-    vadduwm   v10,v22,v14               ;# shiftV = vector (28)
-    rlwimi    r31,r8,28,4,31            ;# comp0 = (comp0:comp1) << 28
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xF0000000)
-    rlwimi    r30,r24,4,0,27            ;# list0 |= newbit << 4
-    vsl       v27,v27,v4                ;# compV <<= 4
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-28)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v22               ;# listV0 >>= 24
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v4                ;# listV0 >>= 4
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 29:
-    vslo      v27,v27,v22               ;# compV <<= 24
-    vadduwm   v10,v22,v15               ;# shiftV = vector (29)
-    rlwimi    r31,r8,29,3,31            ;# comp0 = (comp0:comp1) << 29
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xE0000000)
-    rlwimi    r30,r24,3,0,28            ;# list0 |= newbit << 3
-    vsl       v27,v27,v5                ;# compV <<= 5
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-29)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v22               ;# listV0 >>= 24
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v5                ;# listV0 >>= 5
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 30:
-    vslo      v27,v27,v22               ;# compV <<= 24
-    vadduwm   v10,v22,v16               ;# shiftV = vector (30)
-    rlwimi    r31,r8,30,2,31            ;# comp0 = (comp0:comp1) << 30
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0xC0000000)
-    rlwimi    r30,r24,2,0,29            ;# list0 |= newbit << 2
-    vsl       v27,v27,v6                ;# compV <<= 6
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-30)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v22               ;# listV0 >>= 24
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v6                ;# listV0 >>= 6
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 31:
-    vslo      v27,v27,v22               ;# compV <<= 24
-    vadduwm   v10,v22,v17               ;# shiftV = vector (31)
-    rlwimi    r31,r8,31,1,31            ;# comp0 = (comp0:comp1) << 31
-    vsldoi    v8,v25,v26,12             ;# tempV = (listV0:listV1) >> 32
-    vslw      v9,v19,v10                ;# maskV = vector (0x80000000)
-    rlwimi    r30,r24,1,0,30            ;# list0 |= newbit << 1
-    vsl       v27,v27,v7                ;# compV <<= 7
-    vsubuwm   v10,v0,v10                ;# shiftV = vector (-31)
-    li        r24,0                     ;# newbit = 0
-    vsro      v25,v25,v22               ;# listV0 >>= 24
-    vsel      v26,v8,v26,v9             ;# listV1 = select(tempV, listV1, maskV)
-    stvx      v27,r12,r14               ;# lev->compV.v = compV
-    vsr       v25,v25,v7                ;# listV0 >>= 7
-    vrlw      v26,v26,v10               ;# rotate listV1 (== shift right)
-    b         L_end_switch              
-    nop                                 ;# 16 instructions (64 bytes)
-
-    ;# Case 32: COMP_LEFT_LIST_RIGHT_32(lev)
-    ;# cr1 := (comp0 == -1)
-    mr        r31,r8                    ;# comp0 = comp1
-    vslo      v27,v27,v23               ;# compV <<= 32
+    .align    4
+L_shift32:    
+    ;# r8  = comp1 = compV.u[0]
+    ;# r30 = (list0 >> 32) | (newbit << 0) = list0 = newbit
+    ;# v4  = listV1 = INT_TO_VEC(list0)
+    cmpwi     cr1,r31,-1                ;# comp0 == -1 (i.e. s == 33) ?
+    vsldoi    v8,v8,v0,4                ;# compV = (compV:zeroes) << 32
+    cmpwi     r19,0                     ;# remdepth == 0 ?
+    stw       r30,LEVEL_LIST0(r14)      ;# lev->list0 = list0
     not       r23,r8                    ;# c0neg = ~comp1
-    vsldoi    v26,v25,v26,12            ;# listV1 = (listV0:listV1) >> 32
-    mr        r30,r24                   ;# list0 = newbit
-    stvx      v27,r12,r14               ;# store compV
-    srwi      r23,r23,1                 ;# prepare c0neg for cntlzw
-    vsro      v25,v25,v23               ;# listV0 >>= 32
-    li        r24,0                     ;# newbit = 0
-    beq       cr1,L_stay                ;# comp0 == -1 : rescan
-    nop                                 
-    nop                                 
+    mr        r31,r8                    ;# comp0 = comp1
+    vsldoi    v7,v4,v7,12               ;# listV = (listV1:listV) << 96
+    srwi      r23,r23,1                 ;# Prepare c0neg
+    stvx      v8,r28,r14                ;# lev->compV = compV
+    li        r12,0                     ;# newbit = 0
+    beq+      cr1,L_stay                ;# shift again (s > 32)
+    ;# else s == 32
+    stw       r21,LEVEL_MARK(r14)       ;# store mark
+    bne+      L_push_level              ;# remdepth > 0
+    b         L_check_Golomb            ;# last mark : Check Golombness
 
-L_end_switch:                           
-    cmpw      r16,r28                   ;# depth == maxdepthm1 ?
-    stw       r21,LEVEL_CNT2(r14)       ;# store cnt2
-    beq-      L_check_Golomb            ;# Last mark placed : check for Golombness
+    .align    4
+L_up_level:   
+    ;# POP_LEVEL(lev) : Restore the bitmaps then iterate
+    lwz       r31,LEVEL_COMP0-SIZEOF_LEVEL(r14) ;# comp0 = (lev-1)->comp0
+    subi      r14,r14,SIZEOF_LEVEL      ;# --lev
+    subic.    r16,r16,1                 ;# --depth. Also set CR0
+    lvx       v7,0,r14                  ;# Load listV
+    addi      r5,r5,1                   ;# ++choose
+    addi      r19,r19,1                 ;# ++remdepth
+    lwz       r30,LEVEL_LIST0(r14)      ;# Load list0
+    addi      r6,r6,SIZEOF_OGR          ;# ++ogr
+    li        r3,CORE_S_OK
+    lvx       v8,r28,r14                ;# Load compV
+    not       r23,r31                   ;# c0neg = ~comp0
+    li        r12,0                     ;# newbit = 0
+    lwz       r24,LEVEL_LIMIT(r14)      ;# Load limit
+    srwi      r23,r23,1                 ;# Prepare c0neg
+    vandc     v6,v6,v7                  ;# distV &= ~listV
+    lwz       r21,LEVEL_MARK(r14)       ;# Load mark
+    andc      r29,r29,r30               ;# dist0 &= ~list0
+    ble-      L_exit_loop               ;# depth <= 0 : exit
 
-    ;# PUSH_LEVEL_UPDATE_STATE(lev)
-    vor       v24,v24,v26               ;# distV |= listV1
-    stvx      v26,r11,r14               ;# store listV1
-    addi      r7,r12,SIZEOF_LEVEL       
-    vor       v27,v27,v24               ;# compV |= distV
-    stvx      v25,0,r14                 ;# store listV0
-    vor       v25,v25,v20               ;# listV0 |= ZEROBIT
-    or        r29,r29,r30               ;# dist0 |= list0
-    stvx      v27,r7,r14                ;# (lev+1)->compV.v = compV
-    addi      r16,r16,1                 ;# ++depth
-    subi      r5,r5,1                   ;# --choose
-    stw       r30,LEVEL_LIST0(r14)      ;# store list0
-    rlwinm    r7,r29,14,18,29           ;# (dist0 >> DIST_SHIFT) * 4
-    rlwinm    r0,r29,15,17,28           ;# (dist0 >> DIST_SHIFT) * 8
-    stw       r31,LEVEL_COMP0(r14)      ;# store comp0
-    or        r31,r31,r29               ;# comp0 |= dist0
-    add       r0,r7,r0                  ;# (dist0 >> DIST_SHIFT) * DIST_BITS
-    stw       r25,LEVEL_LIMIT(r14)      ;# store limit
-    subi      r6,r6,SIZEOF_OGR          ;# --ogr
-    addi      r14,r14,SIZEOF_LEVEL      ;# ++lev
-    lbzx      r25,r5,r0                 ;# choose(dist0 >> ttmDISTBITS, remainingDepth)
-    b         L_comp_limit              
+L_stay:       
+    ;# r23 = (~comp0) >> 1, so that cntlzw returns a value in the range [1;32]
+    ;# r12 = newbit
+    cntlzw    r0,r23                    ;# Find first bit set
+    cmpwi     cr1,r23,0                 ;# Pre-check for case #32
+    add       r21,r21,r0                ;# mark += s
+    slwi      r11,r0,4                  ;# temp = s * 16
+    lvewx     v4,r25,r14                ;# listV1 = vec_lde(list0)
+    cmpw      r21,r24                   ;# mark > limit ?
+    subfic    r3,r0,32                  ;# ss = 32 - s
+    lvx       v2,r11,r7                 ;# Vs = Varray[s]
+    bgt-      L_up_level                ;# Go back to the preceding mark
+    srw       r30,r30,r0                ;# list0 >>= s
+    lwz       r8,LEVEL_COMPV(r14)       ;# comp1 = lev->compV.u[0]
+    slw       r12,r12,r3                ;# newbit <<= ss
+    or        r30,r30,r12               ;# list0 |= newbit
+    beq-      cr1,L_shift32             ;# s == 32
 
-L_check_Golomb:                           
+    cmpwi     r19,0                     ;# remdepth == 0 ?
+    vslo      v8,v8,v2                  ;# compV = vec_slo(compV, Vs)
+    stw       r30,LEVEL_LIST0(r14)      ;# lev->list0 = list0
+    vsubuwm   v3,v0,v2                  ;# Vss = zeroes - Vs
+    vsldoi    v4,v4,v7,12               ;# listV1 = (listV1:listV) << 96
+    stw       r21,LEVEL_MARK(r14)       ;# store mark
+    vslw      v5,v1,v2                  ;# bmV = vec_sl(ones, Vs)
+    vsl       v8,v8,v2                  ;# compV <<= Vs
+    slw       r31,r31,r0                ;# comp0 <<= s
+    srw       r8,r8,r3                  ;# comp1 >>= ss
+    vsel      v7,v4,v7,v5               ;# listV = vec_sel(listV1, listV, bmV)
+    stvx      v8,r28,r14                ;# lev->compV = compV
+    or        r31,r31,r8                ;# comp0 |= comp1
+    vrlw      v7,v7,v3                  ;# listV = vec_rl(listV, Vss)
+    li        r12,0                     ;# newbit = 0
+    bne+      L_push_level              ;# remdepth > 0
+
+L_check_Golomb: 
     ;# Last mark placed : verify the Golombness = found_one()
     ;# This part is seldom used.
 
     ;# Reset the diffs array
     srwi      r8,r18,5                  ;# maximum2 = oState->max / 32
-    li        r7,aDiffs                 ;# diffs array
-    addi      r8,r8,1                   
-    mtctr     r8                        
+    li        r3,aDiffs                 ;# diffs array
+    addi      r8,r8,1
+    mtctr     r8
+    lwz       r0,STATE_MAXDEPTHM1(r13)  ;# oState->maxdepthm1
 
-L_clrloop:                              
-    stvx      v0,r7,r1                  
-    addi      r7,r7,16                  
-    bdnz      L_clrloop                 
+L_clrloop:    
+    stvx      v0,r3,r1
+    addi      r3,r3,16
+    bdnz      L_clrloop
 
     addi      r12,r13,STATE_LEVELS      ;# &oState->Level[0]
     li        r9,1                      ;# Initial depth
     addi      r10,r12,SIZEOF_LEVEL      ;# levels[i=1]
 
-L_iLoop:                                
-    lwz       r7,LEVEL_CNT2(r10)        ;# levels[i].cnt2
+L_iLoop:      
+    lwz       r3,LEVEL_MARK(r10)        ;# levels[i].mark
     mr        r11,r12                   ;# levels[j=0]
-    addi      r9,r9,1                   ;# ++i
 
-L_jLoop:                                
-    lwz       r8,LEVEL_CNT2(r11)        ;# levels[j].cnt2
+L_jLoop:      
+    lwz       r8,LEVEL_MARK(r11)        ;# levels[j].mark
     addi      r11,r11,SIZEOF_LEVEL      ;# ++j
-    sub       r8,r7,r8                  ;# diffs = levels[i].cnt2 - levels[j].cnt2
+    sub       r8,r3,r8                  ;# diffs = levels[i].mark - levels[j].mark
     cmpwi     r8,BITMAP_LENGTH          ;# diffs <= BITMAPS * 32 ?
     add       r0,r8,r8                  ;# 2*diffs
     cmpw      cr1,r0,r18                ;# 2*diff <= maximum ?
@@ -963,99 +404,52 @@ L_jLoop:
 
     lbzux     r0,r8,r0                  ;# diffs[diffs]
     cmpwi     r0,0                      ;# diffs[diffs] != 0 ?
-    ori       r0,r0,1                   
+    ori       r0,r0,1
     bne       L_not_golomb              ;# retval = CORE_S_CONTINUE
     stb       r0,0(r8)                  ;# Update the array
 
-L_next_j:                               
-    cmpw      r11,r10                   ;# &diffs[j] < &diffs[i] ?
-    blt       L_jLoop                   
-L_next_i:                               
-    addi      r10,r10,SIZEOF_LEVEL      
-    cmpw      r9,r28                    ;# i <= maxdepthm1 ?
-    ble       L_iLoop                   
+L_next_j:     
+    cmplw     r11,r10                   ;# &diffs[j] < &diffs[i] ?
+    blt       L_jLoop
+L_next_i:     
+    addi      r9,r9,1                   ;# ++i
+    addi      r10,r10,SIZEOF_LEVEL
+    cmpw      r9,r0                     ;# i <= maxdepthm1 ?
+    ble       L_iLoop
 
     li        r3,CORE_S_SUCCESS         ;# Ruler is Golomb
-    ;# Restore clobbered registers
-    li        r9,STATE_DISTV            
-    li        r12,LEVEL_COMPV           
-    li        r11,LEVEL_LISTV1          
     b         L_exit_loop               ;# Found it !
 
-L_not_golomb:                           
-    ;# Restore clobbered registers
-    li        r9,STATE_DISTV            
-    li        r12,LEVEL_COMPV           
-    li        r11,LEVEL_LISTV1          
+L_not_golomb: 
     not       r23,r31                   ;# c0neg = ~comp0
+    li        r12,0                     ;# newbit = 0
     srwi      r23,r23,1                 ;# Prepare c0neg
     b         L_stay                    ;# Not Golomb : iterate
 
-    .align    4                         
-L_up_level:                             
-    ;# POP_LEVEL(lev) : Restore the bitmaps then iterate
-    subi      r16,r16,1                 ;# --depth
-    lwz       r31,LEVEL_COMP0-SIZEOF_LEVEL(r14) ;# comp0 = (lev-1)->comp0
-    subi      r14,r14,SIZEOF_LEVEL      ;# --lev
-    lvx       v26,r11,r14               ;# Load listV1
-    addi      r6,r6,SIZEOF_OGR          ;# ++ogr
-    addi      r5,r5,1                   ;# ++choose
-    lwz       r30,LEVEL_LIST0(r14)      ;# Load list0
-    li        r24,0                     ;# newbit = 0
-    cmpw      r16,r26                   ;# depth <= startdepth ?
-    lvx       v27,r12,r14               ;# Load compV
-    not       r23,r31                   ;# c0neg = ~comp0
-    lvx       v25,0,r14                 ;# Load listV0
-    vandc     v24,v24,v26               ;# distV &= ~listV1
-    lwz       r25,LEVEL_LIMIT(r14)      ;# Load limit
-    andc      r29,r29,r30               ;# dist0 &= ~list0
-    srwi      r23,r23,1                 ;# Prepare c0neg
-    lwz       r21,LEVEL_CNT2(r14)       ;# Load cnt2
-    bgt+      L_stay                    ;# depth > startdepth : iterate
-
-    li        r3,CORE_S_OK              
-
-L_exit_loop:                            
+L_exit_loop:  
     ;# SAVE_FINAL_STATE(oState,lev)
-    stvx      v25,0,r14                 ;# Store listV0
-    stvx      v26,r11,r14               ;# Store listV1
-    stvx      v24,r9,r13                ;# Store distV
-    stvx      v27,r12,r14               ;# Store compV
+    stvx      v7,0,r14                  ;# Store listV
+    stvx      v6,r26,r14                ;# Store distV
+    stvx      v8,r28,r14                ;# Store compV
     stw       r30,LEVEL_LIST0(r14)      ;# Store list0
-    stw       r29,STATE_DIST0(r13)      ;# Store dist0
+    stw       r29,LEVEL_DIST0(r14)      ;# Store dist0
     stw       r31,LEVEL_COMP0(r14)      ;# Store comp0
-    stw       r21,LEVEL_CNT2(r14)       ;# Store cnt2
+    stw       r21,LEVEL_MARK(r14)       ;# Store mark
+    lwz       r8,STATE_STARTDEPTH(r13)
     subi      r16,r16,1                 ;# --depth
+    add       r16,r16,r8                ;# depth += startdepth
     stw       r17,0(r4)                 ;# Store node count
-    stw       r16,STATE_DEPTH(r13)      
+    stw       r16,STATE_DEPTH(r13)
 
 
 ;#============================================================================
 ;# Epilog
 
-    ;# Restore vector registers
-    li        r7,aVectorArea            
-    lvx       v27,r7,r1                 
-    addi      r7,r7,16                  
-    lvx       v26,r7,r1                 
-    addi      r7,r7,16                  
-    lvx       v25,r7,r1                 
-    addi      r7,r7,16                  
-    lvx       v24,r7,r1                 
-    addi      r7,r7,16                  
-    lvx       v23,r7,r1                 
-    addi      r7,r7,16                  
-    lvx       v22,r7,r1                 
-    addi      r7,r7,16                  
-    lvx       v21,r7,r1                 
-    addi      r7,r7,16                  
-    lvx       v20,r7,r1                 
-
     ;# Restore non-volatile registers
     lwz       r5,0(r1)                  ;# Obtains caller's stack pointer
     lmw       r13,-GPRSaveArea(r5)      ;# Restore GPRs
     lwz       r6,wVRSave(r5)            ;# Restore VRsave
-    mtspr     VRsave,r6                 
-    mr        r1,r5                     
-    blr                                 
+    mtspr     VRsave,r6
+    mr        r1,r5
+    blr       
 

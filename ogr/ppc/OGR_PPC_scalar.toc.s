@@ -16,14 +16,12 @@
 ;# - LR register not used nor saved in caller's stack.
 ;# - CTR, CR0, CR1, GPR0 and GPR3-GPR12 are volatile (not preserved).
 ;#
-;# $Id: OGR_PPC_scalar.gas.s,v 1.1.2.2.2.1 2004/08/08 20:18:22 kakace Exp $
+;# $Id: OGR_PPC_scalar.toc.s,v 1.1.2.1 2004/08/08 20:18:22 kakace Exp $
 ;#
 ;#============================================================================
 
 
-    .text     
-    .align    4
-    .globl    _cycle_ppc_scalar         ;# a.out
+    .globl    .cycle_ppc_scalar         ;# coff
     .globl    cycle_ppc_scalar          ;# elf
 
 
@@ -121,8 +119,18 @@
 ;#                      const unsigned char *choose (r5)
 ;#                      const int *OGR (r6)
 
-cycle_ppc_scalar:                       ;# elf
-_cycle_ppc_scalar:                      ;# a.out
+    ;# add new TOC entry
+    .toc      
+    .csect    .cycle_ppc_scalar[DS]
+cycle_ppc_scalar:
+
+    ;# set the TOC anchor
+    .long     .cycle_ppc_scalar, TOC[tc0], 0
+
+    .csect    .text[PR]
+    .align    4
+
+.cycle_ppc_scalar:                      ;# coff
     mr        r10,r1                    ;# Caller's stack pointer
     clrlwi    r12,r1,27                 ;# keep the low-order 4 bits
     subfic    r12,r12,-FrameSize        ;# Frame size, including padding
