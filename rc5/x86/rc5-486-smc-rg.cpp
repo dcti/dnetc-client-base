@@ -3,6 +3,19 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-486-smc-rg.cpp,v $
+// Revision 1.2  1998/11/18 16:04:19  remi
+// Nothing changed, just a few numbers :
+//
+//                          DX4/100         P/200 MMX       PII/400
+//
+// classic 486 core         97 kkeys/s     224 kkeys/s      984 kkeys/s
+// 486 SMC core            102 kkeys/s     145 kkeys/s       92 kkeys/s (!)
+// using the best core      //             400 kkeys/s     1120 kkeys/s
+// for the given processor
+//
+// DX4/100 under Linux
+// P/200 MMX and PII/400 under NT4
+//
 // Revision 1.1  1998/11/18 05:53:07  remi
 // Ok, this one does 101.8 kkeys/s on my DX4/100 instead of 97 kkeys/s
 // for the previous 386/486 code.
@@ -32,7 +45,7 @@
 // build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:33  remi
-// Lots of $Id: rc5-486-smc-rg.cpp,v 1.1 1998/11/18 05:53:07 remi Exp $ stuff.
+// Lots of $Id: rc5-486-smc-rg.cpp,v 1.2 1998/11/18 16:04:19 remi Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:43  remi
 // $Id fun ...
@@ -72,7 +85,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_486_smc_rg_cpp (void) {
-return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.1 1998/11/18 05:53:07 remi Exp $"; }
+return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.2 1998/11/18 16:04:19 remi Exp $"; }
 #endif
 
 #define CORE_INCREMENTS_KEY
@@ -328,8 +341,10 @@ _modif486_r3_"_(Sx)"_"_(N2)":			#	26
 // (can't use static variables, and can't use push/pop in this
 //  function because &work_struct is relative to %esp)
 
+extern "C" u32 rc5_unit_func_486( RC5UnitWork * rc5unitwork, u32 timeslice ) ;
+
 //static
-u32 rc5_unit_func_486( RC5UnitWork * rc5unitwork, u32 timeslice )
+u32 rc5_unit_func_486( RC5UnitWork * rc5unitwork, u32 timeslice ) 
 {
     work_struct work;
 
