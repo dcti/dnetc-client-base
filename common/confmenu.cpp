@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.62.2.12 2004/06/20 18:30:56 kakace Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.62.2.13 2004/10/26 19:52:52 snikkel Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -903,7 +903,8 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
               )
               {
                 descr = (const char *)conf_options[menuoption].thevariable;
-                if (!*descr)
+                if (((conf_options[menuoption].index==CONF_INBUFFERBASENAME)
+                  || (conf_options[menuoption].index==CONF_OUTBUFFERBASENAME)) && (!*descr))
                   descr = (const char *)conf_options[menuoption].defaultsetting;
               }
               else if (conf_options[menuoption].type==CONF_TYPE_PASSWORD)
@@ -1121,6 +1122,9 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           )
           {
             strcpy(parm, (char *)conf_options[editthis].thevariable);
+            if (((conf_options[editthis].index==CONF_INBUFFERBASENAME)
+              || (conf_options[editthis].index==CONF_OUTBUFFERBASENAME)) && (!*parm))
+                  strcpy(parm, (const char *)conf_options[editthis].defaultsetting);
             p = (const char *)(conf_options[editthis].defaultsetting);
           }
           else if (conf_options[editthis].type==CONF_TYPE_PASSWORD)

@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.92.2.8 2004/06/20 18:30:56 kakace Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.92.2.9 2004/10/26 19:52:52 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -1270,8 +1270,8 @@ int ConfigRead(Client *client)
 
   client->noupdatefromfile = (!GetPrivateProfileIntB( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn ));
   client->nodiskbuffers = GetPrivateProfileIntB( OPTSECT_BUFFERS, "buffer-only-in-memory", client->nodiskbuffers , fn );
-  GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, client->in_buffer_basename, sizeof(client->in_buffer_basename), fn );
-  GetPrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, client->out_buffer_basename, sizeof(client->out_buffer_basename), fn );
+  GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", BUFFER_DEFAULT_IN_BASENAME, client->in_buffer_basename, sizeof(client->in_buffer_basename), fn );
+  GetPrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", BUFFER_DEFAULT_OUT_BASENAME, client->out_buffer_basename, sizeof(client->out_buffer_basename), fn );
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, client->remote_update_dir, sizeof(client->remote_update_dir), fn );
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, client->checkpoint_file, sizeof(client->checkpoint_file), fn );
   client->connectoften = GetPrivateProfileIntB( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften , fn );
@@ -1422,8 +1422,8 @@ int ConfigWrite(Client *client)
   
     /* --- CONF_MENU_BUFF -- */
     __XSetProfileInt( OPTSECT_BUFFERS, "buffer-only-in-memory", (client->nodiskbuffers)?(1):(0), fn, 0, 'y' );
-    __XSetProfileStr( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, fn, NULL );
-    __XSetProfileStr( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, fn, NULL );
+    __XSetProfileStr( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, fn, BUFFER_DEFAULT_IN_BASENAME );
+    __XSetProfileStr( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, fn, BUFFER_DEFAULT_OUT_BASENAME );
     __XSetProfileStr( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, fn, NULL );
     __XSetProfileInt( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn, 1, 'y' );
     __XSetProfileStr( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, fn, NULL );
