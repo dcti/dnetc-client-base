@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.43  1999/01/13 01:07:14  snake
+//
+// fixed OpenBSD CLIENT_OS_NAME stuff
+//
 // Revision 1.42  1999/01/11 23:38:53  michmarc
 // Add SMP support for Alpha/Win32.  [Are Alpha/unix cores also SMP safe?]
 //
@@ -311,7 +315,7 @@ struct s128 { s64 hi, lo; };
   #elif defined(ASM_ALPHA)
     #define CLIENT_OS     OS_OPENBSD
     #define CLIENT_CPU    CPU_ALPHA
-  #elif defined(ASM_SPARC)
+  #elif defined(__sparc__)
     #define CLIENT_OS     OS_OPENBSD
     #define CLIENT_CPU    CPU_SPARC
   #endif
