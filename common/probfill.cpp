@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.49 1999/04/20 23:50:54 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.50 1999/04/21 00:15:47 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -189,9 +189,10 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       *contest = cont_i;
       *is_empty = 1; /* will soon be */
 
+      cputype           = client->cputype; /* uh, "coretype" */
       wrdata.contest    = (u8)cont_i;
       wrdata.resultcode = resultcode;
-      wrdata.cpu        = FILEENTRY_CPU; /* uses cputype variable */
+      wrdata.cpu        = FILEENTRY_CPU; /* combines CLIENT_CPU and coretype */
       wrdata.os         = FILEENTRY_OS;
       wrdata.buildhi    = FILEENTRY_BUILDHI; 
       wrdata.buildlo    = FILEENTRY_BUILDLO;
@@ -354,7 +355,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
           // cpu/os/build, then reset the keysdone to 0...
           if ((wrdata.os      != FILEENTRY_OS) ||
               (wrdata.buildhi != FILEENTRY_BUILDHI) || 
-              (wrdata.cpu     != FILEENTRY_CPU) || /* uses 'cputype' variable */
+              (wrdata.cpu     != FILEENTRY_CPU) || /*CLIENT_CPU+coretype */
               (wrdata.buildlo != FILEENTRY_BUILDLO))
           {
              wrdata.work.crypto.keysdone.lo = 0;
