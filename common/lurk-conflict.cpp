@@ -1,6 +1,20 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Log: lurk-conflict.cpp,v $
+// Revision 1.7  1998/10/04 11:37:48  remi
+// Added Log and Id tags.
+//
+
+//-------------------------------------------------------------------------
+
+#if (!defined(lint) && defined(__showids__))
+const char *lurk_cpp(void) {
+return "@(#)$Id: lurk-conflict.cpp,v 1.7 1998/10/04 11:37:48 remi Exp $"; }
+#endif
+
+//-------------------------------------------------------------------------
 
 #include "baseincs.h"
 #include "lurk.h"

@@ -1,3 +1,10 @@
+//
+// $Log: testplat.cpp,v $
+// Revision 1.3  1998/10/04 11:37:49  remi
+// Added Log and Id tags.
+//
+//
+
 #include <stdio.h>
 #include <string.h>
 #define IGNOREUNKNOWNCPUOS
