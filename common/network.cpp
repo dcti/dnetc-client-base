@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.51  1998/11/16 19:07:01  cyp
+// Fixed integer truncation warnings.
+//
 // Revision 1.50  1998/11/12 07:33:36  remi
 // Solved the round-robin bug. Network::Close() sets retries=0, and it was
 // called by Network::Open(), so multiple Network::Open() won't see
@@ -139,7 +142,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.50 1998/11/12 07:33:36 remi Exp $"; }
+return "@(#)$Id: network.cpp,v 1.51 1998/11/16 19:07:01 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -735,7 +738,7 @@ int Network::InitializeConnection(void)
     psocks5->rsv = 0;   // must be zero
     psocks5->atyp = 1;  // IPv4
     psocks5->addr = lasthttpaddress;
-    psocks5->port = htons( server_name[0] ? port : DEFAULT_PORT );
+    psocks5->port = (u16)(htons((server_name[0]!=0)?((u16)port):((u16)(DEFAULT_PORT))));
 
     if (LowLevelPut(10, socksreq) < 0)
       goto Socks5InitEnd;
@@ -780,7 +783,7 @@ Socks5InitEnd:
 
     psocks4->VN = 4;
     psocks4->CD = 1;  // CONNECT
-    psocks4->DSTPORT = htons( server_name[0] ? port : DEFAULT_PORT );
+    psocks4->DSTPORT = (u16)htons((server_name[0]!=0)?((u16)port):((u16)DEFAULT_PORT));
     psocks4->DSTIP = lasthttpaddress;
     strncpy(psocks4->USERID, httpid, sizeof(httpid));
 

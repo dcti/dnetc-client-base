@@ -11,6 +11,9 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.23  1998/11/16 19:07:06  cyp
+// Fixed integer truncation warnings.
+//
 // Revision 1.22  1998/11/16 17:04:38  cyp
 // Cleared up a couple of unused parameter warnings
 //
@@ -84,7 +87,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.22 1998/11/16 17:04:38 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.23 1998/11/16 19:07:06 cyp Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -450,14 +453,15 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
          }
        else if (pos < (buflen-1)) 
          {
-         buffer[pos++] = ch;
+         buffer[pos++] = (char)ch;
          if ((flags & CONINSTR_ASPASSWORD) != 0)
            ch = '*';
          if (isalpha(ch) || isspace(ch) || isdigit(ch) || ispunct(ch))
            {
            /* if (!isctrl(ch)) */
            char x[2];
-           x[0]=ch; x[1]=0;
+           x[0]=(char)ch; 
+           x[1]=0;
            ConOut(x);
            }
          }
