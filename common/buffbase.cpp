@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.3 1999/04/04 17:37:23 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.4 1999/04/05 17:16:52 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -856,14 +856,19 @@ long Client::GetBufferCount( unsigned int contest, int use_out_file, unsigned lo
 
 /* import records from source, return -1 if err, or number of recs imported. */
 /* On success, source is truncated/deleted. Used by checkpt and --import */
-long BufferImportFileRecords( Client *client, const char *source_file )
+long BufferImportFileRecords( Client *client, const char *source_file, int interactive )
 {
   unsigned long remaining, lastremaining = 0;
-  unsigned recovered = 0;
+  unsigned int recovered = 0; 
+  int errs = 0;
   WorkRecord data; 
 
   if ( !DoesFileExist( source_file ) )
+  {
+    if (interactive)
+      LogScreen("Import error: Source '%s' doesn't exist\n", source_file );
     return -1L;
+  }
   
   while (BufferGetFileRecord( source_file, &data, &remaining ) == 0) 
                            //returns <0 on ioerr/corruption, > 0 if norecs
@@ -872,6 +877,10 @@ long BufferImportFileRecords( Client *client, const char *source_file )
     {
       if (lastremaining <= remaining)
       {
+        if (interactive)
+	  LogScreen("Import error: something bad happened.\n"
+	            "The source file isn't getting smaller.\n"); 
+        errs = 1;
         recovered = 0;
         break;
       }
@@ -884,7 +893,11 @@ long BufferImportFileRecords( Client *client, const char *source_file )
   }
   if (recovered > 0)
     BufferZapFileRecords( source_file );
-  return recovered;
+  if (recovered > 0 && interactive)
+    LogScreen("Import::%ld records successfully imported.\n", recovered);
+  else if (errs == 0 && recovered == 0 && interactive)
+    LogScreen("Import::No buffer records could be imported.\n");
+  return (long)recovered;
 }
 
 /* --------------------------------------------------------------------- */
