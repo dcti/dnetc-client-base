@@ -125,7 +125,9 @@ extern "C" {
   #include <ras.h>
   #include <conio.h>
   #include <share.h>
+#ifdef __TURBOC__
   #include <dir.h>
+#endif
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
   #include <io.h>
