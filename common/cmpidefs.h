@@ -9,6 +9,11 @@
 */
 //  
 // $Log: cmpidefs.h,v $
+// Revision 1.14  1999/01/19 09:41:32  patrick
+//
+// added OS2-EMX defines for strcmpi...
+// moved AIX include for strings.h to basincs.h
+//
 // Revision 1.13  1999/01/09 19:31:14  cyp
 // synchronized cmpidefs.h in client and proxy source trees
 //
@@ -49,7 +54,7 @@
 // move macro defs for strcmpi and strncmpi to a seperate header file
 //
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16)
   #if defined(__TURBOC__)
   // Borland already knows strcmpi
   // Borland already knows strncmpi
@@ -65,6 +70,16 @@
 #elif (CLIENT_OS == OS_DOS) && defined(__WATCOMC__)
   // already knows strcmpi
   #define strncmpi(x,y,n)  strnicmp(x,y,n)
+#elif (CLIENT_OS == OS_OS2)
+  #if defined(__EMX__)
+    #define strcmpi(x,y)  _stricmp(x,y)
+    #define strncmpi(x,y,n)  _strnicmp(x,y,n)
+  #elif defined(__WATCOMC__)
+    // already knows strcmpi
+    #define strncmpi(x,y,n)  strnicmp(x,y,n)
+  #else
+    //nada. Let the compiler generate the error if needed
+  #endif
 #elif (CLIENT_OS == OS_NETWARE)
   #define strcmpi(x,y)  stricmp(x,y)
   #define strncmpi(x,y,n)  strnicmp(x,y,n)
