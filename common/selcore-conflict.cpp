@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.12  1998/10/05 22:10:41  remi
+// Added missing usemmx test in RC5 core selection.
+//
 // Revision 1.11  1998/10/05 01:53:23  cyp
 // Cleaned up x86 core selection.
 //
@@ -49,7 +52,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.11 1998/10/05 01:53:23 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.12 1998/10/05 22:10:41 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -264,7 +267,7 @@ s32 Client::SelectCore(void)
     cputype = 0;
     
     #if defined(MMX_RC5)
-    if (detectedtype == 0x106) /* Pentium MMX only! */
+    if (detectedtype == 0x106 && usemmx) /* Pentium MMX only! */
       {
       rc5_unit_func = rc5_unit_func_p5_mmx;
       selmsg_rc5 = "Pentium MMX";
