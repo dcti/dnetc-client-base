@@ -4,7 +4,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.cpp,v $
-// Revision 1.5  1998/08/24 23:50:07  cyp
+// Revision 1.6  1998/09/06 02:01:28  cyp
+// Added isstable check to LogFlush() to suppress an unneccesary linefeed.
+//
+// Revision 1.5  1998/08/24 23:50:07  cyruspatel
 // added mailmessage.clear() so logstuff can clear the spool if necessary.
 //
 // Revision 1.4  1998/08/20 19:25:04  cyruspatel
@@ -29,7 +32,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.5 1998/08/24 23:50:07 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.6 1998/09/06 02:01:28 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -370,7 +373,8 @@ void LogFlush( int forceflush )
 {
   if (( logstatics.loggingTo & LOGTO_SCREEN ) != 0)
     {
-    LogWithPointer( LOGTO_SCREEN, "\n", NULL );  //LF if needed then fflush()
+    if ( logstatics.stableflag == 0 )
+      LogWithPointer( LOGTO_SCREEN, "\n", NULL ); //LF if needed then fflush()
     }
   if (( logstatics.loggingTo & LOGTO_MAIL ) != 0)
     {
@@ -562,7 +566,7 @@ void LogScreenPercent( unsigned int load_problem_count )
         else if (((percent&1)?(percent<90):(percent>90)))
           {
           equals = 0;
-          if (numthreads > 1 && logstatics.stdoutisatty )
+          if (numthreads > 1 && logstatics.stdoutisatty && specperc < 100)
             {
             for (selthread=0; selthread<numthreads; selthread++ )
               {
@@ -618,7 +622,7 @@ void LogScreenPercent( unsigned int load_problem_count )
         {
         GetPercDataForThread( selthread, numthreads, &percent, NULL, NULL );
         sprintf( bufptr, ((percent<100)?("%c:%02d%% "):("%c:%d ")),
-                selthread+'A', percent );
+                selthread+'a', percent );
         bufptr+=sizeof("A:00% ");
         }
       }
