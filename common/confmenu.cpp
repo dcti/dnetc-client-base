@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.20 2000/05/01 08:19:17 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.21 2000/05/04 21:40:56 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -33,45 +33,127 @@ return "@(#)$Id: confmenu.cpp,v 1.41.2.20 2000/05/01 08:19:17 cyp Exp $"; }
 static const char *CONFMENU_CAPTION="distributed.net client configuration: %s\n"
 "--------------------------------------------------------------------------\n";
 
+static int __have_xxx_cores(unsigned int cont_i)
+{
+  switch (cont_i)
+  {
+    case RC5: return 1;
+    #if defined(HAVE_DES_CORES)
+    case DES: return 1;
+    #endif
+    #if defined(HAVE_OGR_CORES)
+    case OGR: return 1;
+    #endif
+    #if defined(HAVE_CSC_CORES)
+    case CSC: return 1;
+    #endif
+  }
+  return 0;
+}
+
+
 static int __enumcorenames(const char **corenames, int index, void * /*unused*/)
 {
-  unsigned int cont_i;
-  char linebuff[CONTEST_COUNT][32];
-  if (index == 0)
-  {
-    const char *uline = "------------------------";
-    for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-    {
-      if (cont_i != OGR)
-      {
-        const char *contname = CliGetContestNameFromID(cont_i);
-        linebuff[cont_i][0] = '\0';
-        if (contname)
-        {
-          strncpy(&(linebuff[cont_i][0]),contname,sizeof(linebuff[cont_i]));
-          linebuff[cont_i][sizeof(linebuff[cont_i])-1] = '\0';
-        }
-      }
-    }
-    LogScreenRaw(" %-25.25s %-25.25s %-25.25s\n", &(linebuff[RC5][0]), 
-                  &(linebuff[DES][0]),   &(linebuff[CSC][0]) );
-    LogScreenRaw(" %-25.25s %-25.25s %-25.25s\n",uline,uline,uline);
-    uline = "-1) Auto-select";
-    LogScreenRaw(" %-25.25s %-25.25s %-25.25s\n",uline,uline,uline);
-    
-  }
+  char scrline[80];
+  unsigned int cont_i, i, colwidth, nextpos;
+  int have_xxx_table[CONTEST_COUNT];
+  unsigned int colcount = 0;
+
+  have_xxx_table[0] = 0; /* shaddup "perhaps unused" */
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
-    linebuff[cont_i][0] = '\0';
-    if (cont_i != OGR && corenames[cont_i])
+    have_xxx_table[cont_i] = (cont_i != OGR /* only one core */
+                  &&  __have_xxx_cores(cont_i)); /* HAVE_XXX_CORES define */
+    if (have_xxx_table[cont_i])
+      colcount++;
+  }
+  
+  colwidth = (sizeof(scrline)-2)/(colcount);
+
+  if (index == 0)
+  {
+    nextpos = 0;
+    for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
     {
-      sprintf(&(linebuff[cont_i][0]),"%2d) ", index );
-      strncpy(&(linebuff[cont_i][4]),corenames[cont_i],sizeof(linebuff[cont_i])-4);
-      linebuff[cont_i][sizeof(linebuff[cont_i])-1] = '\0';
-    }  
-  } 
-  LogScreenRaw(" %-25.25s %-25.25s %-25.25s\n", &(linebuff[RC5][0]), 
-                &(linebuff[DES][0]),   &(linebuff[CSC][0]) );
+      if (have_xxx_table[cont_i])
+      {
+        const char *xxx = CliGetContestNameFromID(cont_i);        
+        if (!xxx) xxx = "";
+        if ((i = strlen( xxx )) > colwidth)
+          i = colwidth;
+        strncpy( &scrline[nextpos], xxx, i );
+        memset( &scrline[nextpos+i], ' ', colwidth-i );
+        nextpos+=colwidth;
+        have_xxx_table[cont_i] = 1;
+      }
+    }
+    if (nextpos)
+    {
+      scrline[nextpos] = '\0';
+      LogScreenRaw("%s\n",scrline);
+    }
+    nextpos = 0;
+    for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+    {
+      if (have_xxx_table[cont_i])
+      {
+        memset( &scrline[nextpos], '-', colwidth );
+        if (colwidth > 10)
+          scrline[nextpos+(colwidth-1)] = scrline[nextpos+(colwidth-2)] = ' ';
+        nextpos+=colwidth;
+      }
+    }        
+    if (nextpos)
+    {
+      scrline[nextpos] = '\0';
+      LogScreenRaw("%s\n",scrline);
+    }
+    nextpos = 0;
+    for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+    {
+      if (have_xxx_table[cont_i])
+      {
+        const char *xxx = "-1) Auto-select";
+        if (!xxx) xxx = "";
+        if ((i = strlen( xxx )) > colwidth)
+          i = colwidth;
+        strncpy( &scrline[nextpos], xxx, i );
+        memset( &scrline[nextpos+i], ' ', colwidth-i );
+        nextpos+=colwidth;
+      }
+    }
+    if (nextpos)
+    {
+      scrline[nextpos] = '\0';
+      LogScreenRaw("%s\n",scrline);
+    }
+    nextpos = 0;
+  }
+
+  nextpos = 0;  
+  for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+  {
+    if (have_xxx_table[cont_i])
+    {
+      i = 0;
+      if (corenames[cont_i]) /* have a corename at this index */
+      {
+        char xxx[4+32];
+        i = sprintf(xxx,"%2d) %-30.30s", index, corenames[cont_i] );
+        if (i > colwidth)
+          i = colwidth;
+        strncpy( &scrline[nextpos], xxx, i );
+      }
+      memset( &scrline[nextpos+i], ' ', colwidth-i );
+      nextpos+=colwidth;
+    }
+  }
+  if (nextpos)
+  {
+    scrline[nextpos] = '\0';
+    LogScreenRaw("%s\n",scrline);
+  }
+
   return +1; /* keep going */
 }      
 
@@ -84,6 +166,7 @@ static void __strip_project_from_alist(char *alist, unsigned int cont_i)
   {
     unsigned int namelen = 0;
     char *nextpos = alist;
+    char *startpos = alist;
     char pbuf[16]; pbuf[0] = 0;
 
     while (*nextpos && (*nextpos==',' || *nextpos== ';' || isspace(*nextpos)))
@@ -125,7 +208,17 @@ static void __strip_project_from_alist(char *alist, unsigned int cont_i)
            (!*alist || *alist == ':' || *alist == '=' || *alist == ',' || 
             *alist == ';' || isspace(*alist)))
         {
-          memmove( alist-namelen, nextpos, strlen(nextpos)+1 );
+          memmove( alist-namelen, nextpos, strlen(nextpos)+1 ); 
+          alist = startpos;
+          pos = strlen(alist);
+          while (pos > 0)
+          {
+            pos--;
+            if (alist[pos]!=':' && alist[pos]!='=' && alist[pos]!=',' &&
+                alist[pos]!=';' && !isspace(alist[pos]))
+              break;
+            alist[pos] = '\0';
+          } 
           break;
         }
       }
@@ -133,6 +226,22 @@ static void __strip_project_from_alist(char *alist, unsigned int cont_i)
   }  
   return;
 }  
+
+static void __strip_inappropriates_from_alist( char *alist, int menuoption )
+{
+  unsigned int cont_i;
+  for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+  {
+    if ((cont_i == OGR && ( menuoption == CONF_THRESHOLDT ||
+                            menuoption == CONF_PREFERREDBLOCKSIZE ||
+                            menuoption == CONF_CPUTYPE ))
+       || !__have_xxx_cores(cont_i))
+    {
+      __strip_project_from_alist( alist, cont_i  );
+    }
+  }
+  return;
+}
 
 /* ----------------------------------------------------------------------- */
 
@@ -641,12 +750,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                 #endif  
                 utilGatherOptionArraysToList( parm, sizeof(parm),
                     (int *)conf_options[menuoption].thevariable, vectb );
-                if ( menuoption == CONF_THRESHOLDT || 
-                     menuoption == CONF_PREFERREDBLOCKSIZE ||
-                     menuoption == CONF_CPUTYPE )
-                {     
-                  __strip_project_from_alist( parm, OGR ); //no OGR for these
-                }       
+                __strip_inappropriates_from_alist( parm, menuoption );
                 descr = parm;
               }
               else if (conf_options[menuoption].type==CONF_TYPE_ASCIIZ
@@ -873,12 +977,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
             #endif  
             utilGatherOptionArraysToList( parm, sizeof(parm),
                     (int *)conf_options[editthis].thevariable, vectb ); 
-            if ( editthis == CONF_THRESHOLDT || 
-                 editthis == CONF_PREFERREDBLOCKSIZE ||
-                 editthis == CONF_CPUTYPE )
-            {     
-              __strip_project_from_alist( parm, OGR ); //no OGR for these
-            }       
+            __strip_inappropriates_from_alist( parm, editthis );
             p = (const char *)(conf_options[editthis].defaultsetting);
           }
           else //if (conf_options[editthis].type==CONF_TYPE_INT)
