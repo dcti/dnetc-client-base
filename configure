@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.174 2000/07/11 01:53:09 snake Exp $
+# @(#)$Id: configure,v 1.222.2.175 2000/07/11 18:02:48 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -128,13 +128,41 @@ gcc_get_ver() {
     if [ "${TARGET_CC}X" = "X" ]; then  # should not happen
       TARGET_CC="gcc"                   # since TARGET_CC is set by default
     fi
-    #gccver=`$TARGET_CC -v 2>&1 | grep version | tr -dc .0-9 | tr '.' ' '`
-    gccver=`$TARGET_CC -v 2>&1 | tr ' ' '\n' | tail -1 | tr '.' ' '`
-    if [ "${gccver}X" = "X" ]; then
+    gcc_v=`$TARGET_CC -v 2>&1`
+    #gcc_v="gcc version 2.7.2.1"
+    #gcc_v="Reading specs from blah\ngcc version 2.96 19991004 (experimental)"
+    #gcc_v="gcc version egcs-2.91.66 19990314 (egcs-1.1.2 release)"
+    #gcc_v="gcc driver version 2.7.2.3 executing gcc version 2.95.2"
+
+    gccver_line=`echo $gcc_v|tail -1`
+    #echo "gccver_line=#$gccver_line#"
+    lastwas=""
+    ver_num=""
+    for ver_word in $gccver_line ; do
+      if [ "${ver_num}X" = "X" ]; then
+        #echo "verword=#$ver_word#,ver_num=#$ver_num#,laswas=#$lastwas#"
+        if [ "$lastwas" = "version" ]; then
+          ver_num="$ver_word"
+        else
+          if [ "$ver_word" = "version" ]; then
+            if [ "$lastwas" = "driver" ]; then
+	      lastwas="driver"
+	    else  
+	      lastwas="version"
+	    fi
+          else
+	    lastwas="$ver_word"
+          fi
+        fi
+      fi	
+    done  	  
+    echo "ver_num=#$ver_num#"  
+    if [ "${ver_num}X" = "X" ]; then
       gccver=0
-    else
-     #echo "gccver1=$gccver"
-     gcc_get_ver $gccver
+    else  
+      #can't use cut -d- -f2
+      gccver=`echo $ver_num|tr '-' '\n'|tail -1|tr '.' ' '`
+      gcc_get_ver $gccver
     fi
   else
     a1=$1
@@ -154,9 +182,10 @@ gcc_get_ver() {
     if [ -z "$a4" ]; then
       a4=0
     fi 
-    #2.7.2.1 = 200000 +  7000 + 200 + 1 = 207201
-    #2.95.1  = 200000 + 95000 + 100     = 295100
-    gccver=`echo "($a1 * 100000)+($a2 * 1000)+($a3 * 100)+$a4" | bc`
+    #2.7.2.1 = 2000000 +  70000 +  200 + 1 = 2070201
+    #2.95.1  = 2000000 + 950000 +  100     = 2950100
+    #2.91.66 = 2000000 + 910000 + 6600     = 2916600
+    gccver=`echo "($a1 * 1000000)+($a2 * 10000)+($a3 * 100)+$a4" | bc`
     #echo $gccver
   fi
 } 
@@ -164,7 +193,7 @@ gcc_get_ver() {
 generate_gcc_opts() {  
 
   gcc_get_ver
-  if [ $gccver -lt 200000 ]; then
+  if [ $gccver -lt 2000000 ]; then
     echo "gcc version less than 2, or something strange happened"
     exit 1
   fi
@@ -264,9 +293,9 @@ generate_gcc_opts() {
   # ------
 
   gccopts="$OPTS_GCC295" # 3.0
-  if [ $gccver -lt 296000 ]; then
+  if [ $gccver -lt 2960000 ]; then
     gccopts="$OPTS_GCC295"
-    if [ $gccver -lt 295000 ]; then
+    if [ $gccver -lt 2900000 ]; then
       gccopts="$OPTS_GCC272"
     fi
   fi
