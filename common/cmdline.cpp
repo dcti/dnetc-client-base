@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.156 2002/09/02 00:35:41 andreasb Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.157 2002/09/23 03:14:02 acidblood Exp $"; }
 
 //#define TRACE
 
@@ -898,7 +898,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           }
           else
           {
-            contest = RC5;
+// TODO?: acidblood/trashover
+            contest = RC5_72;
             if ((whichswitch & 8)!=0)   //-blsize without contest means both
               contest_defaulted = 1; //RC5 and DES
             else if (strcmp( thisarg, "-bin2")==0 ||

@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.86 2002/09/15 21:45:49 andreasb Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.87 2002/09/23 03:14:02 acidblood Exp $"; }
 
 //#define TRACE
 
@@ -51,6 +51,7 @@ static const char *__getprojsectname( unsigned int ci )
       // RC5 and DES should be available (unchecked writes!)
       // FIXME: put this into conStats[]
       static const char *sectnames[CONTEST_COUNT]={"rc5","des","ogr","csc","ogr-nextgen-someday","rc5-72"};
+// OK!
       return sectnames[ci];
     #else
       const char *cname = CliGetContestNameFromID(ci);
@@ -787,6 +788,9 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
           int multiplier = 1;
           switch (cont_i)
           {
+// TODO: acidblood/trashover
+             case RC5_72:
+// OK!
              case RC5:
              case DES:
              case CSC:

@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.60 2002/09/15 21:45:49 andreasb Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.61 2002/09/23 03:14:02 acidblood Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -43,6 +43,8 @@ static int __is_opt_available_for_project(unsigned int cont_i, int menuoption)
   }
   switch (cont_i)
   {
+    case RC5_72:
+// OK!
     case RC5: return 1;
     #if defined(HAVE_DES_CORES)
     case DES: return 1;
