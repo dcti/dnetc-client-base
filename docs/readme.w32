@@ -1,6 +1,6 @@
 
  distributed.net client for Win32 (Win9x/WinNT/Win32s)
- document revision $Id: readme.w32,v 1.1.2.10 2000/12/25 04:44:27 cyp Exp $
+ document revision $Id: readme.w32,v 1.1.2.11 2001/01/17 04:03:25 cyp Exp $
 
  Welcome to the distributed.net client.
 
@@ -291,18 +291,25 @@
     Q: Can I share my win32 client's buffers with non-win32 clients?
        ["sharing" is simultaneous access via file-sharing, but also 
        manual transfer of the buffer files from one machine to another]
-    A: Theoretically, yes. It is however a good idea to ensure that 
-       clients sharing buffers all have the same version number. For 
-       instance, if you share buffers between 2.7110.440 and other 
-       older clients, you must ensure that the client newer than 2.7109
-       do not request "big-block"s from the keyservers (ensure 
-       'preferred-packet-size' is less than 32). Read the general FAQ 
-       for specifics.
+    A: Yes. It is however a good idea to ensure that clients sharing 
+       buffers all have the same version number. For instance, if your
+       share buffers between 2.7110.440 and other older clients, you must 
+       ensure that the client newer than 2.7109 do not request "big-block"s 
+       from the keyservers (ensure 'preferred-packet-size' is less than 32). 
+       Read the general FAQ for specifics.
        SAMBA note: Samba supports "opportunistic locking", which implies
        that the Samba client's view of the remote volume is cached. This
        option is on by default. Consequently, if you are accessing data 
        on a samba mount both via Samba and via the native-FS, you *must* 
        "veto oplock <paths>" in your Samba configuration.
+
+    Q: I have troble minimizing the client. It sits on the taskbar for 
+       several seconds before finally moving to the tray.
+    A: On 16 Jan 2001, at 12:11, Brian Carpenter <brian@nihilism.net> wrote:
+       > I think I found the problem.   Norton Systemworks 2001 by default,
+       > runs a tray icon manager for their software(Norton System Doctor,
+       > Norton Anti-Virus, etc etc).  I turned off the tray icon manager and
+       > rebooted, and the client then minimizes to the systray with no lag.
 
     Q: How do I completely remove the this client from my system?
     A: First run the client with the '-uninstall' switch to ensure that 
