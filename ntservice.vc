@@ -29,6 +29,8 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/scram.obj      \
 	$(OUTPUTPATH)/mail.obj       \
 	$(OUTPUTPATH)/cliconfig.obj  \
+	$(OUTPUTPATH)/selftest.obj   \
+	$(OUTPUTPATH)/cmdline.obj    \
 	$(OUTPUTPATH)/clitime.obj    \
 	$(OUTPUTPATH)/clirate.obj    \
 	$(OUTPUTPATH)/clisrate.obj   \
