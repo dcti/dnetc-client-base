@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.51.4.10 2003/10/24 15:24:22 jr_brady Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.51.4.11 2003/11/11 02:42:39 kakace Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -209,8 +209,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
       ((CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD)))
   "This option is ignored if power management is disabled or not configured or\n"
   "if /dev/apm cannot be opened for reading (may require superuser privileges).\n"
-  #elif (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_WIN32) || \
-        ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__))
+  #elif (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOSX)
   "This option is ignored if power source detection is not supported by the\n"
   "the operating system or hardware architecture.\n"
   #else

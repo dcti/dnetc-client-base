@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.31 2003/11/09 03:11:08 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.32 2003/11/11 02:42:39 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -27,7 +27,7 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.31 2003/11/09 03:11:08 jlawson Exp $"; }
 #  include <Multiprocessing.h>
 #elif (CLIENT_OS == OS_AIX)
 #  include <sys/systemcfg.h>
-#elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+#elif (CLIENT_OS == OS_MACOSX)
 #  include <mach/mach.h>
 #  include <IOKit/IOKitLib.h>
 #elif (CLIENT_OS == OS_DYNIX)
@@ -72,7 +72,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       //if (sysctlbyname("hw.ncpu", &ncpus, &len, NULL, 0 ) == 0)
         cpucount = ncpus;
     }
-    #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+    #elif (CLIENT_OS == OS_MACOSX)
     {
       unsigned int    count;
       struct host_basic_info  info;
@@ -523,7 +523,7 @@ static long __GetRawProcessorID(const char **cpuname)
       }
     }
   }
-  #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+  #elif (CLIENT_OS == OS_MACOSX)
   if (detectedtype == -2L)
   {
     // We prefer raw PVR values over the IDs provided by host_info()

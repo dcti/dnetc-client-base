@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.17 2003/11/07 03:41:11 snake Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.18 2003/11/11 02:42:39 kakace Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -385,13 +385,6 @@
    #define CLIENT_OS       OS_MACOSX
    #ifndef __unix__
    #define __unix__
-   #endif
-   #if (__APPLE_CC__ < 795)
-     #define __RHAPSODY__
-     /* MACH 2.x based and AltiVec unsafe variants of MacOSX (MXS and others) */
-   #elif defined(__RHAPSODY__)
-     #undef __RHAPSODY__
-     /* MACH 3.x based versions of Mac OS X (min. Mac OS X DP4 or Darwin 1.0) */
    #endif
    #if defined(__ppc__)
      #define CLIENT_CPU    CPU_POWERPC

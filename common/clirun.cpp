@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.11 2003/10/15 03:04:38 jr_brady Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.12 2003/11/11 02:42:39 kakace Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -231,11 +231,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     #endif
       macosSmartYield(thrparams->priority);
   #elif (CLIENT_OS == OS_MACOSX)
-    #if defined(__RHAPSODY__)
-    NonPolledUSleep( 0 ); /* yield */
-    #else
     sched_yield();
-    #endif
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OPENBSD)

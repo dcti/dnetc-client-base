@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.10 2003/08/09 12:46:21 mweiser Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.11 2003/11/11 02:42:39 kakace Exp $"; }
 
 //#define TRACE
 
@@ -45,9 +45,9 @@ return "@(#)$Id: cmdline.cpp,v 1.160.2.10 2003/08/09 12:46:21 mweiser Exp $"; }
   extern "C" int linux_uninstall(const char *basename, int quietly);
   extern "C" int linux_install(const char *basename, int argc,
     const char *argv[], int quietly); /* argv[1..(argc-1)] as start options */
-#elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY)
-  extern "C" int macosx_uninstall(const char *argv0, int quietly);
-  extern "C" int macosx_install(const char *argv0, int argc,
+#elif (CLIENT_OS == OS_MACOSX)
+  int macosx_uninstall(const char *argv0, int quietly);
+  int macosx_install(const char *argv0, int argc,
     const char *argv[], int quietly); /* argv[1..(argc-1)] as start options */
 #endif
 /* -------------------------------------- */
@@ -682,7 +682,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         retcode = 0;  
         if (0!=linux_install(utilGetAppName(), (argc-pos), &argv[pos], loop0_quiet))
           retcode = 3;           /* plat/linux/li_inst.c */
-        #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+        #elif (CLIENT_OS == OS_MACOSX)
         retcode = 0;  
         if (0!=macosx_install(argv[0], (argc-pos), &argv[pos], loop0_quiet))
           retcode = 3;           /* plat/macosx/c_install.c */
@@ -730,7 +730,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         retcode = 0;
         if (linux_uninstall(utilGetAppName(), loop0_quiet)!=0)
           retcode = 3;           /* plat/linux/li_inst.c */ 
-        #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+        #elif (CLIENT_OS == OS_MACOSX)
         retcode = 0;  
         if (macosx_uninstall(argv[0], loop0_quiet)!=0)
           retcode = 3;           /* plat/macosx/c_install.c */

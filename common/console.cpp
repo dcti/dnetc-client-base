@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.75.2.9 2003/10/15 03:06:09 jr_brady Exp $"; }
+return "@(#)$Id: console.cpp,v 1.75.2.10 2003/11/11 02:42:39 kakace Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -32,7 +32,7 @@ return "@(#)$Id: console.cpp,v 1.75.2.9 2003/10/15 03:06:09 jr_brady Exp $"; }
   || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
   || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDOS) \
   || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) \
-  || ((CLIENT_OS==OS_MACOSX) && !defined(__RHAPSODY__)) \
+  || (CLIENT_OS==OS_MACOSX) \
   || ((CLIENT_OS==OS_QNX) && defined(__QNXNTO__)) \
   || (CLIENT_OS==OS_DYNIX)) || (CLIENT_OS == OS_PS2LINUX)
 #include <termios.h>

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.12 2003/11/02 19:55:00 pfeffi Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.13 2003/11/11 02:42:39 kakace Exp $"
 
 #include "cputypes.h"
 
@@ -221,7 +221,6 @@
   #include <unistd.h>
   #define fileno(f) ((f)->handle)
 #elif (CLIENT_OS == OS_MACOSX)
-  //rhapsody is mach 2.x based and altivec unsafe
   #include <sys/time.h>
   #include <sys/vmparam.h> //USRSTACK
   #include <sys/exec.h>  //PS_STRINGS

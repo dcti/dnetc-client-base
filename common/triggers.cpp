@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.13 2003/09/21 09:11:32 jlawson Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.14 2003/11/11 02:42:39 kakace Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -332,7 +332,7 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 #include <machine/apm_bios.h>
 #elif (CLIENT_OS == OS_MACOS)
 #include <Power.h>
-#elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+#elif (CLIENT_OS == OS_MACOSX)
 #include <IOKit/IOKitLib.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
 #include <IOKit/pwr_mgt/IOPM.h>
@@ -595,7 +595,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
     }
     // We seem to have no PowerManager, so disable battery checking.
     trigstatics.pause_if_no_mains_power = 0;
-    #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+    #elif (CLIENT_OS == OS_MACOSX)
     mach_port_t master;
     /* Initialize the connection to IOKit */
     if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess )
@@ -632,8 +632,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 
 // -----------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY)
-extern "C" s32 macosx_cputemp();
+#if (CLIENT_OS == OS_MACOSX)
+s32 macosx_cputemp();
 #elif (CLIENT_OS == OS_DEC_UNIX)
 extern "C" int dunix_cputemp();
 #endif
@@ -655,7 +655,7 @@ static int __CPUTemperaturePoll(void) /*returns 0=no, >0=yes, <0=err/unknown*/
     #if (CLIENT_OS == OS_MACOS)
       cputemp = macosCPUTemp();
       cputemp = cputemp * 100 + 15;     // Convert to fixed-point format
-    #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+    #elif (CLIENT_OS == OS_MACOSX)
       cputemp = macosx_cputemp();
     #elif (CLIENT_OS == OS_DEC_UNIX)
       if ((cputemp = dunix_cputemp()) < 0) {
