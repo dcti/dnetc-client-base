@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.22 2000/01/10 23:32:54 michmarc Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.23 2000/01/14 21:32:09 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -157,7 +157,10 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             if (GetBufferCount( client, cont_i, 1, &count ) > 0)
             {
               if ((unsigned long)(count) >= ((unsigned long)thresh))
+              {
+//Log("1. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
                 *bufupd_pending |= BUFFERUPDATE_FLUSH;
+              }
             }
           }     
         }
@@ -214,7 +217,10 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         }
         permille = (unsigned int)thisprob->CalcPermille();
         if (client->nodiskbuffers)
+        {
+//Log("2. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
           *bufupd_pending |= BUFFERUPDATE_FLUSH;
+        }
         if (load_problem_count <= COMBINEMSG_THRESHOLD)
           msg = "Saved";
       }
@@ -371,6 +377,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   bufcount = __loadapacket( client, &wrdata, 1, prob_i );
   if (bufcount < 0 && client->nonewblocks == 0)
   {
+//Log("3. BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0)\n");
     int didupdate = 
        BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
     if (!(didupdate < 0))
@@ -394,8 +401,11 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
        effective _total_ minimum threshold is always >= num crunchers
     */   
     if (((unsigned long)(bufcount)) < (load_problem_count - prob_i))
+    {
+//Log("4. *bufupd_pending |= BUFFERUPDATE_FETCH;\n"
+//    "   buffcount=%ld, loadproblemcount=%d, prob_i=%d\n",bufcount,load_problem_count,prob_i);
       *bufupd_pending |= BUFFERUPDATE_FETCH;
-
+    }
     coresel = selcoreSelectCore( wrdata.contest, prob_i, &client_cpu, NULL );
     if (coresel < 0)
     {
@@ -727,17 +737,16 @@ unsigned int LoadSaveProblems(Client *pass_client,
         if (block_count >= 0) /* no error */
         {
           char buffer[128+sizeof(client->in_buffer_basename)];
+          /* we don't check in-buffer here since we need cumulative count */
           if (inout != 0)                              /* out-buffer */
           {
             unsigned int thresh = ClientGetOutThreshold(client, cont_i, 0);
             /* a zero outbuffer threshold means 'don't check it' */
             if (thresh > 0 && norm_count > thresh)
+            {
+//Log("5. bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
               bufupd_pending |= BUFFERUPDATE_FLUSH;
-          }
-          else                                         /* in-buffer */
-          {
-            if (((unsigned long)(block_count)) < load_problem_count)
-              bufupd_pending |= BUFFERUPDATE_FETCH;
+            }  
           }
           sprintf(buffer, 
               "%ld %s packet%s (%lu work unit%s) %s in\n%s",
