@@ -2,9 +2,11 @@
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ *
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.15 1999/12/18 06:16:39 gregh Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.16 2000/01/04 06:38:17 cyp Exp $"; }
 
 //#define TRACE
 
@@ -20,12 +22,14 @@ return "@(#)$Id: confrwv.cpp,v 1.60.2.15 1999/12/18 06:16:39 gregh Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
-static const char *OPTION_SECTION  = "parameters";
-static const char *OPTSECT_NET     = "networking";
-static const char *OPTSECT_BUFFERS = "buffers";
-static const char *OPTSECT_MISC    = "misc";
-static const char *OPTSECT_LOG     = "logging";
-static const char *OPTSECT_CPU     = "processor-usage";
+static const char *OPTION_SECTION   = "parameters";/*all obsolete except "id"*/
+static const char *OPTSECT_NET      = "networking";
+static const char *OPTSECT_BUFFERS  = "buffers";
+static const char *OPTSECT_MISC     = "misc";
+static const char *OPTSECT_LOG      = "logging";
+static const char *OPTSECT_CPU      = "processor-usage";
+static const char *OPTSECT_TRIGGERS = "triggers";
+static const char *OPTSECT_DISPLAY  = "display";
 
 /* ------------------------------------------------------------------------ */
 
@@ -306,6 +310,66 @@ static int _readwrite_fwallstuff(int aswrite, const char *fn, Client *client)
 
 /* ------------------------------------------------------------------------ */
 
+static int __parse_timestring(const char *source, int oldstyle_hours_compat )
+{           /* convert hh[:mm[:ss]] into secs. return 0 for "", <0 on err */
+  int hms[3];
+  int colcount = 0, fieldlen = 0;
+  
+  hms[0] = hms[1] = hms[2] = 0;
+  while (*source && isspace(*source))
+    source++;
+
+  while (*source && (*source == ':' || isdigit(*source)))
+  {
+    if (*source == ':')
+    {
+      fieldlen = 0;
+      if ((++colcount) > 2)
+        return -1;
+    }
+    else
+    {
+      fieldlen++;
+      if (fieldlen > 7 || (colcount != 0 && fieldlen > 2))
+        return -1;
+      hms[colcount] *= 10;
+      hms[colcount] += (char)(*source - '0');
+    }
+    source++;
+  }
+  if (*source == '.' && colcount == 0 && oldstyle_hours_compat)
+  {
+    /* "hours" was once-upon-a-time literally hours with a decimal */
+    /* point; at first with six frac digits!; go! sprintf(%f)!!! */
+    /* and later "fixed" to two (still double) */
+    /* fwiw, we support that historical curiosity */
+    colcount++; /* we have a seconds field */
+    source++;
+    if (isdigit(*source) && isdigit(source[1]))
+    {                                /* fill in seconds */
+      hms[1] = ((((*source-'0')*10)+(source[1]-'0'))*60)/100; /* frac of hours */
+      source += 2;
+    }
+    while (*source == '0')
+      source++;
+  }  
+  
+  while (*source && isspace(*source))
+    source++;
+  if (*source)
+    return -1;    
+    
+  if (colcount == 0) /* only minutes */
+    return hms[0] * 60;
+  
+  if (hms[0] > ((0x7fffffffl)/(60*60)) || hms[1] > 59 || hms[2] > 59)
+    return -1;
+  
+  return (((hms[0] * 60)+hms[1])*60)+hms[2]; /* hh:mm or hh:mm:ss */
+}  
+
+/* ------------------------------------------------------------------------ */
+
 static int confopt_IsHostnameDNetHost( const char * hostname )
 {
   unsigned int len;
@@ -324,18 +388,6 @@ static int confopt_IsHostnameDNetHost( const char * hostname )
 
 static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if failed */
 {
-  static const char *obskeys[]={ /* all in "parameters" section */
-             "runhidden", "os2hidden", "win95hidden", "checkpoint2",
-             "niceness", "processdes", "timeslice", "runbuffers",
-             "contestdone" /* now in "rc564" */, "contestdone2", 
-             "contestdone3", "contestdoneflags", "descontestclosed",
-             "scheduledupdatetime" /* now in OPTSECT_NET */,
-             "processdes", "usemmx", "runoffline", "in","out","in2","out2",
-             "in3","out3","nodisk", "dialwhenneeded","connectionname",
-             "cputype","threshold","threshold2","preferredblocksize",
-             "logname", "keyproxy", "keyport", "numcpu",
-             "smtpsrvr", "smtpport", "messagelen", "smtpfrom", "smtpdest",
-             "lurk", "lurkonly" };
   char buffer[128];
   char *p;
   unsigned int ui;
@@ -462,7 +514,16 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
   }
 
   /* ----------------- OPTSECT_BUFFERS ----------------- */
-  
+
+  if (!GetPrivateProfileStringB( OPTSECT_BUFFERS, "checkpoint-filename", "", buffer, sizeof(buffer), fn ))
+  {
+    if (GetPrivateProfileStringB( OPTION_SECTION, "checkpointfile", "", buffer, sizeof(buffer), fn ))
+    {
+      strncpy(client->checkpoint_file, buffer, sizeof(client->checkpoint_file));
+      client->checkpoint_file[sizeof(client->checkpoint_file)-1] = '\0';
+      modfail += (!WritePrivateProfileStringB( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, fn ));
+    }
+  }
   if (!GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-only-in-memory", "", buffer, sizeof(buffer), fn ))
   {
     if (GetPrivateProfileIntB( OPTION_SECTION, "nodisk", 0, fn ))
@@ -471,6 +532,14 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
       modfail += (!WritePrivateProfileStringB( OPTSECT_BUFFERS, "buffer-only-in-memory", "yes", fn ));
     }
   }
+  if (!GetPrivateProfileStringB( OPTSECT_BUFFERS, "frequent-threshold-checks", "", buffer, sizeof(buffer), fn ))
+  {
+    if (GetPrivateProfileIntB( OPTION_SECTION, "frequent", 0, fn ))
+    {
+      client->connectoften = 1;
+      modfail += (!WritePrivateProfileStringB( OPTSECT_BUFFERS, "frequent-threshold-checks", "yes", fn ));
+    }
+  }  
   if (!GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", "", buffer, sizeof(buffer), fn ))
   {
     if (GetPrivateProfileStringB( OPTION_SECTION, "in", "", buffer, sizeof(buffer), fn ))
@@ -513,6 +582,28 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
   
   /* ----------------- OPTSECT_NET ----------------- */
 
+  if (GetPrivateProfileIntB( OPTSECT_NET, "nettimeout", 0, fn ) == 0)
+  {
+    if ((i = GetPrivateProfileIntB( OPTION_SECTION, "nettimeout", 0, fn ))!=0)
+    {
+      if (i < 0)
+        i = -1;
+      else if (i < 5)
+        i = 5;
+      else if (i > 180)
+        i = 180;  
+      client->nettimeout = i;
+      modfail += (!WritePrivateProfileIntB( OPTSECT_NET, "nettimeout", i, fn));
+    }
+  }
+  if (!GetPrivateProfileStringB( OPTSECT_NET, "nofallback", "", buffer, sizeof(buffer), fn ))
+  {
+    if (GetPrivateProfileIntB( OPTION_SECTION, "nofallback", 0, fn ))
+    {
+      client->nofallback = 1;
+      modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "nofallback", "true", fn));
+    }
+  }
   if (!GetPrivateProfileStringB( OPTSECT_NET, "disabled", "", buffer, sizeof(buffer), fn ))
   {
     if (GetPrivateProfileIntB( OPTION_SECTION, "runoffline", 0, fn ))
@@ -592,7 +683,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
   }
   if (!GetPrivateProfileStringB( OPTSECT_NET, "dialup-profile", "", buffer, sizeof(buffer), fn ))
   {
-    if (GetPrivateProfileStringB( OPTSECT_MISC, "connectionname", "", buffer, sizeof(buffer), fn ))
+    if (GetPrivateProfileStringB( OPTION_SECTION, "connectionname", "", buffer, sizeof(buffer), fn ))
     {
       #ifdef LURK
       strncpy( client->lurk_conf.connprofile, buffer, sizeof(client->lurk_conf.connprofile) );
@@ -624,6 +715,30 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
 
   /* ----------------- OPTSECT_MISC ----------------- */
 
+  if (!GetPrivateProfileStringB(OPTSECT_MISC,"run-time-limit","",buffer,2,fn))
+  {
+    if (GetPrivateProfileStringB(OPTION_SECTION,"hours","",buffer,sizeof(buffer),fn))
+    {
+      if ((i = __parse_timestring( buffer, 1 /* compat */ )) > 0)
+      {
+        client->minutes = i / 60; /* we only want minutes */
+        sprintf(buffer,"%u:%02u", (unsigned)(client->minutes/60), (unsigned)(client->minutes%60)); 
+        modfail += (!WritePrivateProfileStringB( OPTSECT_MISC, "run-time-limit", buffer, fn ));
+      }
+    }  
+  }
+  if (!GetPrivateProfileStringB(OPTSECT_MISC,"run-work-limit","",buffer,2,fn))
+  {
+    if (GetPrivateProfileIntB( OPTION_SECTION, "runbuffers", 0, fn ))
+      i = -1;
+    else 
+      i = GetPrivateProfileIntB( OPTION_SECTION, "count", 0, fn );
+    if (i == -1 || i > 0)
+    {
+      client->blockcount = i;
+      modfail += (!WritePrivateProfileIntB( OPTSECT_MISC, "run-work-limit", i, fn));
+    }
+  }
   if (!GetPrivateProfileStringB( OPTSECT_MISC, "project-priority", "", buffer, sizeof(buffer), fn ))
   {
     if (GetPrivateProfileIntB( OPTION_SECTION, "processdes", sizeof(buffer), fn ) == 0 )
@@ -646,27 +761,80 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
       modfail += (!WritePrivateProfileStringB( OPTSECT_MISC, "project-priority", projectmap_expand(buffer), fn ));
     }
   }
-  /* ----------------- OPTION_SECTION ----------------- */
-  if (GetPrivateProfileIntB( OPTION_SECTION, "runbuffers", 0, fn ))
-  {
-    client->blockcount = -1;
-    modfail += (!WritePrivateProfileStringB( OPTION_SECTION, "count", "-1", fn ));
-  }
-  if (!GetPrivateProfileStringB( OPTION_SECTION, "quiet", "", buffer, sizeof(buffer), fn ))
+  /* ----------------- OPTSECT_DISPLAY ----------------- */
+
+  if (!GetPrivateProfileStringB( OPTSECT_DISPLAY, "detached", "", buffer, sizeof(buffer), fn ))
   {
     if (GetPrivateProfileIntB(OPTION_SECTION, "runhidden", 0, fn ) ||
+        GetPrivateProfileIntB( OPTION_SECTION, "quiet", 0, fn ) ||
         GetPrivateProfileIntB(OPTION_SECTION, "os2hidden", 0, fn ) ||
         GetPrivateProfileIntB(OPTION_SECTION, "win95hidden", 0, fn ))
     {
       client->quietmode = 1;
-      modfail += (!WritePrivateProfileIntB( OPTION_SECTION, "quiet", 1, fn));
+      modfail += (!WritePrivateProfileStringB( OPTSECT_DISPLAY, "detached", "yes", fn));
+    }
+  }
+  if (!GetPrivateProfileStringB( OPTSECT_DISPLAY, "progress-indicator", "", buffer, sizeof(buffer), fn ))
+  {
+    if (GetPrivateProfileIntB(OPTION_SECTION, "percentoff", 0, fn ))
+    {
+      client->percentprintingoff = 1;
+      modfail += (!WritePrivateProfileStringB( OPTSECT_DISPLAY, "progress-indicator", "off", fn));
+    }
+  }
+
+  /* ----------------- OPTSECT_TRIGGERS ----------------- */
+
+  if (!GetPrivateProfileStringB( OPTSECT_TRIGGERS, "exit-flag-file-checks", "", buffer, sizeof(buffer), fn ))
+  {
+    if (GetPrivateProfileIntB(OPTION_SECTION, "noexitfilecheck", 0, fn ))
+    {
+      client->noexitfilecheck = 1;
+      modfail += (!WritePrivateProfileStringB( OPTSECT_TRIGGERS, "exit-flag-file-checks", "off", fn));
+    }
+  }
+  if (!GetPrivateProfileStringB( OPTSECT_TRIGGERS, "pause-flag-filename", "", buffer, sizeof(buffer), fn ))
+  {
+    if (GetPrivateProfileStringB(OPTION_SECTION, "pausefile", "", buffer, sizeof(buffer), fn ))
+    {
+      strncpy( client->pausefile, buffer, sizeof(client->pausefile) );
+      client->pausefile[sizeof(client->pausefile)-1]='\0';
+      modfail += (!WritePrivateProfileStringB( OPTSECT_TRIGGERS, "pause-flag-filename", client->pausefile, fn));
     }
   }
 
   /* ---------------------------- */
   /* unconditional deletion of obsolete keys */
-  for (ui = 0; ui < (sizeof(obskeys) / sizeof(obskeys[0])); ui++)
-    modfail += (!WritePrivateProfileStringB( OPTION_SECTION, obskeys[ui], NULL, fn ));
+  /* (all keys in OPTION_SECTION except "id") */
+  {
+    #if 0
+    if (GetPrivateProfileStringB( OPTION_SECTION, "id", "", buffer, sizeof(buffer), fn ))
+    {
+      if ( __STRCASECMP( buffer, "rc5@distributed.net" ) == 0 )
+        buffer[0] = '\0';
+    }
+    if (WritePrivateProfileStringB( OPTION_SECTION, NULL, "", fn))
+    {
+      modfail += (!WritePrivateProfileStringB( OPTION_SECTION, "id", buffer, fn));
+    }
+    #else
+    static const char *obskeys[]={ /* all in "parameters" section */
+             "runhidden", "os2hidden", "win95hidden", "checkpoint2",
+             "niceness", "processdes", "timeslice", "runbuffers",
+             "contestdone" /* now in "rc564" */, "contestdone2", 
+             "contestdone3", "contestdoneflags", "descontestclosed",
+             "scheduledupdatetime", "checkpointfile", "hours",
+             "processdes", "usemmx", "runoffline", "in","out","in2","out2",
+             "in3","out3","nodisk", "dialwhenneeded","connectionname",
+             "cputype","threshold","threshold2","preferredblocksize",
+             "logname", "keyproxy", "keyport", "numcpu", "count",
+             "smtpsrvr", "smtpport", "messagelen", "smtpfrom", "smtpdest",
+             "lurk", "lurkonly", "nettimout", "nofallback", "frequent",
+             "pausefile","noexitfilecheck","percentoff", "quiet" };
+    for (ui = 0; ui < (sizeof(obskeys) / sizeof(obskeys[0])); ui++)
+      modfail += (!WritePrivateProfileStringB( OPTION_SECTION, obskeys[ui], NULL, fn ));
+    #endif
+  }      
 
   TRACE_OUT((-1,"__remapObsoleteParameters() modif failed?=%d\n", modfail));
   
@@ -684,11 +852,9 @@ int ReadConfig(Client *client)
   // 2. never force an option based on the value of some other valid option
 
   char buffer[64];
-  const char *sect = OPTION_SECTION;
   const char *cont_name;
   unsigned int cont_i;
   const char *fn = client->inifilename;
-  char *p;
 
   fn = GetFullPathForFilename( fn );
 
@@ -706,7 +872,7 @@ int ReadConfig(Client *client)
 
   __remapObsoleteParameters( client, fn ); /* load obsolete options */
 
-  if (GetPrivateProfileStringB( sect, "id", "", client->id, sizeof(client->id), fn ))
+  if (GetPrivateProfileStringB( OPTION_SECTION, "id", "", client->id, sizeof(client->id), fn ))
   {
     if (__STRCASECMP( client->id, "rc5@distributed.net" ) == 0)
       client->id[0] = '\0';
@@ -714,30 +880,16 @@ int ReadConfig(Client *client)
 
   /* --------------------- */
 
-  if (GetPrivateProfileStringB( sect, "hours", "", buffer, sizeof(buffer), fn ))
-  {
-    client->minutes = (atoi(buffer) * 60);
-    if ((p = strchr( buffer, ':' )) == NULL)
-      p = strchr( buffer, '.' );
-    if (client->minutes < 0)
-      client->minutes = 0;
-    else if (p != NULL && strlen(p) == 3 && isdigit(p[1]) && isdigit(p[2]) && atoi(p+1)<60)
-      client->minutes += atoi(p+1);
-    else if (p != NULL) //strlen/isdigit check failed
-      client->minutes = 0;
-  }
-  client->blockcount = GetPrivateProfileIntB( sect, "count", client->blockcount, fn );
-  client->nofallback = GetPrivateProfileIntB( sect, "nofallback", client->nofallback, fn );
-  client->percentprintingoff = GetPrivateProfileIntB( sect, "percentoff", client->percentprintingoff, fn );
-  client->connectoften = GetPrivateProfileIntB( sect, "frequent", client->connectoften , fn );
-  client->quietmode = GetPrivateProfileIntB( sect, "quiet", client->quietmode, fn );
-  client->noexitfilecheck = GetPrivateProfileIntB( sect, "noexitfilecheck", client->noexitfilecheck, fn );
-  GetPrivateProfileStringB( sect, "pausefile", client->pausefile, client->pausefile, sizeof(client->pausefile), fn );
-  GetPrivateProfileStringB( sect, "checkpointfile", client->checkpoint_file, client->checkpoint_file, sizeof(client->checkpoint_file), fn );
+  client->quietmode = GetPrivateProfileIntB( OPTSECT_DISPLAY, "detached", client->quietmode, fn );
+  client->percentprintingoff = !GetPrivateProfileIntB( OPTSECT_DISPLAY, "progress-indicator", !(client->percentprintingoff), fn );
+
+  /* --------------------- */
+
+  client->noexitfilecheck = !GetPrivateProfileIntB( OPTSECT_TRIGGERS, "exit-flag-file-checks", !(client->noexitfilecheck), fn );
+  GetPrivateProfileStringB( OPTSECT_TRIGGERS, "pause-flag-filename", client->pausefile, client->pausefile, sizeof(client->pausefile), fn );
 
   /* -------------------------------- */
 
-  client->nettimeout = GetPrivateProfileIntB( sect, "nettimeout", client->nettimeout, fn );
   client->offlinemode = GetPrivateProfileIntB( OPTSECT_NET, "disabled", client->offlinemode, fn );
   _readwrite_fwallstuff( 0, fn, client );
   _readwrite_hostname_and_port( 0, fn, OPTSECT_NET, "keyserver",
@@ -748,10 +900,12 @@ int ReadConfig(Client *client)
     /* this is only to catch incomplete direct edits of the .ini */
     ( confopt_IsHostnameDNetHost(client->keyproxy) &&
     GetPrivateProfileIntB( OPTSECT_NET, "autofindkeyserver", 1, fn ) ));
+  client->nettimeout = GetPrivateProfileIntB( OPTSECT_NET, "nettimeout", client->nettimeout, fn );
+  client->nofallback = GetPrivateProfileIntB( OPTSECT_NET, "nofallback", client->nofallback, fn );
 
   #if defined(LURK)
   {
-    p = "";
+    char *p = "";
     if (client->lurk_conf.lurkmode == CONNECT_LURKONLY)
       p = "passive";
     else if (client->lurk_conf.lurkmode == CONNECT_LURK)
@@ -807,6 +961,13 @@ int ReadConfig(Client *client)
 
   GetPrivateProfileStringB( OPTSECT_MISC, "project-priority", "", buffer, sizeof(buffer), fn );
   projectmap_build(client->loadorder_map, buffer);
+  if (GetPrivateProfileStringB(OPTSECT_MISC,"run-time-limit","",buffer,sizeof(buffer),fn))
+  {
+    if ((client->minutes = __parse_timestring( buffer, 0 )) < 0)
+      client->minutes = 0;
+    client->minutes /= 60; /* we only want minutes */
+  }
+  client->blockcount = GetPrivateProfileIntB( OPTSECT_MISC, "run-work-limit", client->blockcount, fn );
 
   TRACE_OUT((0,"ReadConfig() [2 end]\n"));
 
@@ -829,6 +990,9 @@ int ReadConfig(Client *client)
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, client->in_buffer_basename, sizeof(client->in_buffer_basename), fn );
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, client->out_buffer_basename, sizeof(client->out_buffer_basename), fn );
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, client->remote_update_dir, sizeof(client->remote_update_dir), fn );
+  GetPrivateProfileStringB( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, client->checkpoint_file, sizeof(client->checkpoint_file), fn );
+  client->connectoften = GetPrivateProfileIntB( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften , fn );
+
 
   TRACE_OUT((0,"ReadConfig() [3 begin]\n"));
   TRACE_OUT((0,"ReadConfig() [3 end]\n"));
@@ -905,14 +1069,13 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
   char buffer[64]; int i;
   unsigned int cont_i;
   const char *p;
-  const char *sect = OPTION_SECTION;
   const char *fn = client->inifilename;
   
   fn = GetFullPathForFilename( fn );
   if ( !writefull && access( fn, 0 )!=0 )
     writefull = 1;
  
-  if (!WritePrivateProfileStringB( sect, "id", 
+  if (!WritePrivateProfileStringB( OPTION_SECTION, "id", 
     ((strcmp( client->id,"rc5@distributed.net")==0)?(""):(client->id)), fn ))
     return -1; //failed
 
@@ -928,27 +1091,27 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileInt( OPTSECT_BUFFERS, "buffer-only-in-memory", (client->nodiskbuffers)?(1):(0), fn, 0, 'y' );
     __XSetProfileStr( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, fn, NULL );
     __XSetProfileStr( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, fn, NULL );
-
+    __XSetProfileStr( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, fn, NULL );
     __XSetProfileInt( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn, 1, 1 );
     __XSetProfileStr( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, fn, NULL );
+    __XSetProfileInt( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn, 0, 'y' );
 
     /* --- CONF_MENU_MISC __ */
 
     strcpy(buffer,projectmap_expand(NULL));
     __XSetProfileStr( OPTSECT_MISC, "project-priority", projectmap_expand(client->loadorder_map), fn, buffer );
-
-    if (client->minutes!=0 || GetPrivateProfileStringB(sect,"hours","",buffer,2,fn))
+    if (client->minutes!=0 || GetPrivateProfileStringB(OPTSECT_MISC,"run-time-limit","",buffer,2,fn))
     {
       sprintf(buffer,"%u:%02u", (unsigned)(client->minutes/60), (unsigned)(client->minutes%60)); 
-      WritePrivateProfileStringB( sect, "hours", buffer, fn );
-    }
-    __XSetProfileInt( sect, "count", client->blockcount, fn, 0, 0 );
-    __XSetProfileStr( sect, "pausefile", client->pausefile, fn, NULL );
-    __XSetProfileInt( sect, "quiet", client->quietmode, fn, 0, 1 );
-    __XSetProfileInt( sect, "noexitfilecheck", client->noexitfilecheck, fn, 0, 1 );
-    __XSetProfileInt( sect, "percentoff", client->percentprintingoff, fn, 0, 1 );
-    __XSetProfileInt( sect, "frequent", client->connectoften, fn, 0, 1 );
-    __XSetProfileStr( sect, "checkpointfile", client->checkpoint_file, fn, NULL );
+      WritePrivateProfileStringB( OPTSECT_MISC, "run-time-limit", buffer, fn );
+    }  
+    __XSetProfileInt( OPTSECT_MISC, "run-work-limit", client->blockcount, fn, 0, 0 );
+
+    __XSetProfileStr( OPTSECT_TRIGGERS, "pause-flag-filename", client->pausefile, fn, NULL );
+    __XSetProfileInt( OPTSECT_TRIGGERS, "exit-flag-file-checks", !client->noexitfilecheck, fn, 1, 'o' );
+
+    __XSetProfileInt( OPTSECT_DISPLAY, "detached", client->quietmode, fn, 0, 'y' );
+    __XSetProfileInt( OPTSECT_DISPLAY, "progress-indicator", !client->percentprintingoff, fn, 1, 'o' );
     
     /* --- CONF_MENU_PERF -- */
 
@@ -975,8 +1138,8 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     /* --- CONF_MENU_NET -- */
 
     __XSetProfileInt( OPTSECT_NET, "disabled", client->offlinemode, fn, 0, 'n');
-    __XSetProfileInt( sect, "nettimeout", client->nettimeout, fn, 60, 0);
-    __XSetProfileInt( sect, "nofallback", client->nofallback, fn, 0, 1);
+    __XSetProfileInt( OPTSECT_NET, "nettimeout", client->nettimeout, fn, 60, 0);
+    __XSetProfileInt( OPTSECT_NET, "nofallback", client->nofallback, fn, 0, 't');
 
     _readwrite_fwallstuff( 1, fn, client );
     p = NULL;
