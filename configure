@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.178 2000/07/12 00:12:42 mfeiri Exp $
+# @(#)$Id: configure,v 1.222.2.179 2000/07/12 14:36:07 oliver Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -2082,8 +2082,9 @@ case "$1" in
                         -DDYN_TIMESLICE -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-noixemul"
 	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
-                        platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
-                        ogr/ogr_sup.cpp ogr/crc32.cpp ogr/choosedat.cpp"
+                        platforms/amiga/amTime.c platforms/amiga/amNetwork.c \
+                        platforms/amiga/amConsole.c ogr/ogr_sup.cpp ogr/crc32.cpp \
+                        ogr/choosedat.cpp"
 	TARGET_ADDASMS="rc5/68k/rc5-000_010-jg.s rc5/68k/rc5-020_030-jg.s \
                         rc5/68k/rc5-040_060-jg.s"
         TARGET_ADDOBJS="output/ogr000.o output/ogr020.o output/ogr030.o \
@@ -2104,8 +2105,8 @@ case "$1" in
                         -D__AMIGADATE__=\`platforms/amiga/tools/amigadate\` \
                         -DDYN_TIMESLICE -DHAVE_OGR_CORES"
 	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
-                        platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
-                        $RC5PPC_SRCS $OGR_PPC_SRCS"
+                        platforms/amiga/amTime.c platforms/amiga/amNetwork.c \
+                        platforms/amiga/amConsole.c $RC5PPC_SRCS $OGR_PPC_SRCS"
         TARGET_TARBALL="amigaos-ppc-wos"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
         TARGET_STRIP="platforms/amiga/tools/strip_wos"
@@ -2124,8 +2125,8 @@ case "$1" in
                         -mstring -mstrict-align -I./ -DDYN_TIMESLICE -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-pup"
 	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
-                        platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
-                        $RC5PPC_SRCS $OGR_PPC_SRCS"
+                        platforms/amiga/amTime.c platforms/amiga/amNetwork.c \
+                        platforms/amiga/amConsole.c $RC5PPC_SRCS $OGR_PPC_SRCS"
         TARGET_TARBALL="amigaos-ppc-pup"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
         TARGET_STRIP="platforms/amiga/tools/strip_pup"
