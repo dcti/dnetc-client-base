@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.54 2001/02/19 08:12:20 mfeiri Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.55 2001/03/03 03:59:27 sampo Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -51,7 +51,7 @@ unsigned long BenchGetBestRate(unsigned int contestid)
 
 /* -------------------------------------------------------------------- */
 
-static void __BenchSetBestRate(unsigned int contestid, unsigned long rate)
+static inline void __BenchSetBestRate(unsigned int contestid, unsigned long rate)
 {
   if (contestid < CONTEST_COUNT)
   { 
