@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.13  1999/01/06 14:29:23  chrisb
+// hacked in a strcpy to the OLDRESOLVE version of Network::Resolve() so resolve_hostname isn't uninitialised.
+//
 // Revision 1.12  1999/01/05 22:44:34  cyp
 // Resolve() copies the hostname being resolved (first if from a list) to a
 // buffer in the network object. This is later used by SOCKS5 if lookup fails.
@@ -45,7 +48,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.12 1999/01/05 22:44:34 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.13 1999/01/06 14:29:23 chrisb Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -280,6 +283,14 @@ int Network::Resolve(const char *host, u32 *hostaddress, int )
     int index = rand() % addrcount;
     memcpy((void*) hostaddress, (void*) hp->h_addr_list[index], sizeof(u32));
     }
+
+  /*
+    @@@@@ chrisb
+
+    this appears to work, but could be hugely bogus for all I know
+  */
+  strcpy(resolve_hostname,host);
+
   return 0;
 }
 
