@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.60 2000/04/19 23:21:48 jlawson Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.61 2000/04/21 10:19:16 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -48,7 +48,9 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "RG Cx re-pair",     /* Cyrix 486/6x86[MX]/M2 */
       "RG RISC-rotate I",  /* K5 */
       "RG RISC-rotate II", /* K6 - may become mmx-k6-2 core at runtime */
-      "RG/SS ath",         /* K7 Athelon */
+      #ifdef MMX_RC5
+      "RG/SS ath",         /* K7 Athlon */
+      #endif
       NULL
     },
     { /* DES */
@@ -575,7 +577,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x02: cindex = 2; break; // PII/PIII ("RG class 6")
             case 0x03: cindex = 3; break; // Cx6x86 ("RG Cx re-pair")
             case 0x04: cindex = 4; break; // K5 ("RG RISC-rotate I")
-            case 0x05: cindex = 5; break; // K6/K6-2/K6-3 ("RG RISC-rotate II)
+            case 0x05: cindex = 5; break; // K6/K6-2/K6-3 ("RG RISC-rotate II")
             #if defined(SMC)    
             case 0x06: cindex = 1; break; // cx486 uses SMC if avail (bug #99)
             #else 
@@ -583,7 +585,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             #endif
             case 0x07: cindex = 2; break; // Celeron
             case 0x08: cindex = 2; break; // PPro
-            case 0x09: cindex = 6; break; // AMD K7
+            #ifdef MMX_RC5
+            case 0x09: cindex = 6; break; // AMD K7 ("athlon")
+            #else
+            case 0x09: cindex = 3; break; // AMD K7 ("RG Cx re-pair")
+            #endif
             case 0x0A: cindex = 3; break; // Centaur C6
             //no default
           }
