@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.4 1999/09/14 14:06:29 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.5 1999/09/15 13:12:24 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -421,7 +421,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       u32 randomprefix = ( (u32)(client->randomprefix) + 1 ) & 0xFF;
       u32 rnd = Random(NULL,0);
 
-#ifdef STRESS_RANDOMGEN && defined(STRESS_RANDOMGEN_ALL_KEYSPACE)
+#if defined(STRESS_RANDOMGEN) && defined(STRESS_RANDOMGEN_ALL_KEYSPACE)
       ++client->randomprefix;
       if (client->randomprefix > 0xff)
         client->randomprefix = 100
