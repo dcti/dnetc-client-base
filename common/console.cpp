@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.42 2000/09/17 11:46:30 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.43 2000/09/23 10:29:15 oliver Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -153,6 +153,8 @@ int ConIsGUI(void)
   return (guiriscos!=0);
   #elif (CLIENT_OS == OS_MACOS) && !defined(MAC_FBA)
   return 1;
+  #elif (CLIENT_OS == OS_AMIGAOS)
+  return MyzarIsRunning();
   #else
   return 0;
   #endif
