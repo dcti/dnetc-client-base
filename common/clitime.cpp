@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.35 2000/06/27 01:48:14 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.36 2000/07/04 17:25:32 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -182,7 +182,7 @@ static int __GetMinutesWest(void)
   else if (loctime.tm_yday <  utctime.tm_yday)     { tzdiff += 1440; }
   else                                             { tzdiff -= 1440; }
 
-  if (utctime.tm_isdst > 0)
+  if (loctime.tm_isdst > 0)
     tzdiff -= 60;
   if (tzdiff < -(12*60))
     tzdiff = -(12*60);
