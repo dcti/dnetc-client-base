@@ -3,6 +3,10 @@
 // INI file reading/processing class for C++
 // 
 // $Log: iniread.h,v $
+// Revision 1.14  1998/12/08 05:44:55  dicamillo
+// For MacOS, delete "class ostream" because it is already provided in
+// Metrowerks header files.
+//
 // Revision 1.13  1998/09/25 04:32:06  pct
 // DEC Ultrix port changes
 //
@@ -46,7 +50,9 @@ extern "C" {
 
 #define IniNULL IniString()
 
-class ostream;
+#if (CLIENT_OS != OS_MACOS)
+  class ostream;
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 class IniString
