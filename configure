@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.32  1998/06/14 08:45:34  friedbait
+# 'ident' target added, builds a formatted list of a 'bill of material' of the
+# rc5des binary executable.
+#
 # Revision 1.31  1998/06/13 10:34:56  remi
 # Added handy x86-linux-egcs-debug target.
 # Removed unused x86-linux-mt-slice-meggs-gcc target.
@@ -755,6 +759,9 @@ echo "	rm -f Makefile buff-in.* buff-out.* *.ini testplat" >> Makefile
 echo "	rm -f \`find . -name '*~' -printf %p\ \`" >> Makefile
 echo "" >> Makefile
 
+echo "ident:" >> Makefile
+echo "	ident rc5des | awk '{ printf(\"%-20s %10s %s %s %s %s\n\", \$\$2,\$\$3,\$\$4,\$\$5,\$\$6,\$\$7)}'" >> Makefile
+echo "" >> Makefile
 
 #
 # Generate the dependency targets in the makefile
