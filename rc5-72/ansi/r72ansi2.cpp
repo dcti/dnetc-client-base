@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi2_cpp(void) {
-return "@(#)$Id: r72ansi2.cpp,v 1.16 2002/10/19 16:55:41 acidblood Exp $"; }
+return "@(#)$Id: r72ansi2.cpp,v 1.17 2002/10/19 16:57:38 acidblood Exp $"; }
 
 #include "ccoreio.h"
 #include "rotate.h"
@@ -211,7 +211,7 @@ s32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
       rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
       if (B1 == rc5_72unitwork->cypher.hi)
       {
-        *iterations = (kiter + 1)*2;
+        *iterations -= (kiter + 1)*2;
         return RESULT_FOUND;
       }
     }
@@ -224,7 +224,7 @@ s32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
       rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
       if (B2 == rc5_72unitwork->cypher.hi)
       {
-        *iterations = (kiter + 1)*2 - 1;
+        *iterations -= (kiter + 1)*2 - 1;
         return RESULT_FOUND;
       }
     }
