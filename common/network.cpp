@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.80  1999/02/07 02:27:17  silby
+// Change to allow connection to n0 cgis.
+//
 // Revision 1.79  1999/02/03 03:45:02  cyp
 // corrected Network::Get() handling of blocking sockets.
 //
@@ -170,7 +173,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.79 1999/02/03 03:45:02 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.80 1999/02/07 02:27:17 silby Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -184,9 +187,6 @@ return "@(#)$Id: network.cpp,v 1.79 1999/02/03 03:45:02 cyp Exp $"; }
 #include "clitime.h"   // CliGetTimeString(NULL,1);
 #include "triggers.h"  // CheckExitRequestTrigger()
 #include "network.h"   // thats us
-
-//#defined PERMIT_NODEZERO_ACCESS //allow access to fullserver on nodezero 
-                                  //FOR DCTI USE ONLY!!!
 
 #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_MACOS)
 #define ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG 
@@ -337,10 +337,8 @@ static int __fixup_dnethostname( char *host, int *portP )
       {
       if (len == 15)
         autofind = 1;
-      #ifdef PERMIT_NODEZERO_ACCESS
-      else if ( strcmp( host, "nodezero.distributed.net")==0 )
-        autofind = (access("dcti_test.ok",0)!=0); // FOR DCTI USE ONLY!!!
-      #endif
+      else if ( strcmp( host, "n0cgi.distributed.net")==0 )
+        autofind = 0;
       else if ( strcmp( strchr( host, '.' ), ".v27.distributed.net" )!=0 )
         autofind = 1;
       else
