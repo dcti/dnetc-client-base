@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.75 2001/03/26 17:51:39 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.76 2001/04/15 14:41:16 cyp Exp $"; }
 
 //#define TRACE
 
@@ -37,9 +37,15 @@ return "@(#)$Id: cmdline.cpp,v 1.133.2.75 2001/03/26 17:51:39 cyp Exp $"; }
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
 #include <dirent.h> /* for direct read of /proc/ */
 #endif
-#ifdef __unix__
-# include <fcntl.h>
-#endif /* __unix__ */
+#if (CLIENT_OS == OS_LINUX)
+  extern "C" int linux_uninstall(const char *basename, int quietly);
+  extern "C" int linux_install(const char *basename, int argc,
+    const char *argv[], int quietly); /* argv[1..(argc-1)] as start options */
+#elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY)
+  extern "C" int macosx_uninstall(const char *argv0, int quietly);
+  extern "C" int macosx_install(const char *argv0, int argc,
+    const char *argv[], int quietly); /* argv[1..(argc-1)] as start options */
+#endif
 
 /* -------------------------------------- */
 
@@ -655,8 +661,12 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         #if (CLIENT_OS==OS_LINUX) /* argv[1..(argc-1)] as start options */
         retcode = 0;  
         if (0!=linux_install(utilGetAppName(), (argc-pos), &argv[pos], loop0_quiet))
-          retcode = 3;           /* li_inst.c */
-        #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16)
+          retcode = 3;           /* plat/linux/li_inst.c */
+        #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+        retcode = 0;  
+        if (0!=macosx_install(argv[0], (argc-pos), &argv[pos], loop0_quiet))
+          retcode = 3;           /* plat/macosx/c_install.c */
+        #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
         win32CliInstallService(loop0_quiet); /*w32svc.cpp*/
         retcode = 0;
         #elif (CLIENT_OS == OS_OS2)
@@ -687,7 +697,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         not_supported = 1;
         #endif
       }
-      else if (!strcmp(thisarg,"-uninstall") || !strcmp(thisarg, "-deinstall"))
+      else if (strcmp(thisarg,"-uninstall") == 0 || 
+              strcmp(thisarg, "-deinstall") == 0)
       {
         if (misc_call)
           continue;
@@ -695,11 +706,15 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         extern int os2CliUninstallClient(int /*do it without feedback*/);
         os2CliUninstallClient(loop0_quiet); /* os2inst.cpp */
         retcode = 0;                  
-	      #elif (CLIENT_OS == OS_LINUX)
+        #elif (CLIENT_OS == OS_LINUX)
         retcode = 0;
-        if (linux_uninstall(utilGetAppName(), loop0_quiet)!=0) /* li_inst.c */
-          retcode = 3;
-        #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16)
+        if (linux_uninstall(utilGetAppName(), loop0_quiet)!=0)
+          retcode = 3;           /* plat/linux/li_inst.c */ 
+        #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+        retcode = 0;  
+        if (macosx_uninstall(argv[0], loop0_quiet)!=0)
+          retcode = 3;           /* plat/macosx/c_install.c */
+        #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
         win32CliUninstallService(loop0_quiet); /*w32svc.cpp*/
         retcode = 0;
         #else
@@ -2114,3 +2129,6 @@ int ParseCommandline( Client *client,
              client, run_level, retcodeP, restarted, &inimissing, &multiok );
   return rc;  
 }                      
+  extern "C" int linux_uninstall(const char *basename, int quietly);
+  extern "C" int linux_install(const char *basename, int argc,
+    const char *argv[], int quietly); /* argv[1..(argc-1)] as start options */
