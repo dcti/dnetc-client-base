@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.20 1999/12/24 04:17:37 trevorh Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.21 1999/12/29 07:24:49 snake Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -35,7 +35,7 @@ return "@(#)$Id: console.cpp,v 1.48.2.20 1999/12/24 04:17:37 trevorh Exp $"; }
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) \
   || (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
   || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
-  || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDI) \
+  || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDOS) \
   || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) )
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE

@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.26 1999/12/22 17:42:22 chrisb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.27 1999/12/29 07:24:47 snake Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -109,7 +109,7 @@ static void __thread_yield__(void)
 {
   #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
     thr_yield();
-  #elif (CLIENT_OS == OS_BSDI)
+  #elif (CLIENT_OS == OS_BSDOS)
     #if defined(__ELF__)
     sched_yield();
     #else // a.out
