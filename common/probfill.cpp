@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.63 2001/02/03 18:18:57 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.64 2001/03/03 04:01:26 sampo Exp $"; }
 
 //#define TRACE
 
@@ -48,7 +48,7 @@ int SetProblemLoaderFlags( const char *loaderflags_map )
 {
   unsigned int prob_i = 0;
   Problem *thisprob;
-  while ((thisprob = GetProblemPointerFromIndex(prob_i)) != NULL)
+  while ((thisprob = GetProblemPointerFromIndex(prob_i)) != 0)
   {
     if (ProblemIsInitialized(thisprob))
       thisprob->pub_data.loaderflags |= loaderflags_map[thisprob->pub_data.contest];
@@ -196,11 +196,10 @@ int ProbfillCacheBufferCounts( Client *client,
 /* --------------------------------------------------------------------- */
 
 unsigned int ClientGetInThreshold(Client *client, 
-                                  int contestid, int force /*=0*/)
+                                  int contestid, int force )
 {
-  // If inthreshold is <=0, then use time exclusively.
-  // If time threshold is 0, then use inthreshold exclusively.
-  // If inthreshold is <=0, AND time is 0, then use BUFTHRESHOLD_DEFAULT
+  // If inthreshold is == 0, then use time threshold.
+  // If inthreshold is == 0, AND time is 0, then use BUFTHRESHOLD_DEFAULT
   // If inthreshold > 0 AND time > 0, then use MAX(inthreshold, effective_workunits(time))
   unsigned int numcrunchers = 0; /* unknown */
   unsigned int bufthresh = 0; /* unknown */
@@ -208,9 +207,10 @@ unsigned int ClientGetInThreshold(Client *client,
   // OGR time threshold NYI
   client->timethreshold[OGR] = 0;
 
-  if (!(contestid < CONTEST_COUNT))
+  if (contestid >= CONTEST_COUNT)
   {
-    return 1000; /* something, anything */
+    return 1000; // XXX return 1000 when in an invalid state.  this should be
+                 // changed or documented.
   }
   if (client->inthreshold[contestid] > 0)
   {
@@ -395,8 +395,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       (thisprob->pub_data.loaderflags & (PROBLDR_DISCARD|PROBLDR_FORCEUNLOAD)) != 0) 
     { 
       int finito = (resultcode==RESULT_FOUND || resultcode==RESULT_NOTHING);
-      const char *action_msg = NULL;
-      const char *reason_msg = NULL;
+      const char *action_msg = 0;
+      const char *reason_msg = 0;
       int discarded = 0;
       unsigned int permille, swucount = 0;
       const char *contname;
@@ -584,7 +584,7 @@ static long __loadapacket( Client *client,
     {
       bufcount = GetBufferRecord( client, wrdata, selproject, 0 );
       if (bufcount >= 0) /* no error */
-        wrdata = NULL;     /* don't load again */
+        wrdata = 0;     /* don't load again */
     }
     if (bufcount >= 0) /* no error */
     {  
@@ -795,10 +795,10 @@ unsigned int LoadSaveProblems(Client *client,
      gets an ENDSESSION message and has to exit then and there. So also 
      win9x when running as a service where windows suspends all threads 
      except the window thread. For these (and perhaps other platforms)
-     we save our last state so calling with (NULL,0,0) will save the
+     we save our last state so calling with (0,0,0) will save the
      problem states (without hanging). see 'abortive_action' below.
   */
-  static Client *previous_client = (Client *)NULL;
+  static Client *previous_client = 0;
   static unsigned int previous_load_problem_count = 0, reentrant_count = 0;
   static int abortive_action = 0;
 
@@ -904,7 +904,7 @@ unsigned int LoadSaveProblems(Client *client,
       prob_i = prob_last - prob_for;
       
     thisprob = GetProblemPointerFromIndex( prob_i );
-    if (thisprob == NULL)
+    if (thisprob == 0)
     {
       if (prob_step < 0)
         continue;
