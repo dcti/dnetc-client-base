@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.28.2.5 1999/10/11 04:16:13 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.28.2.6 1999/10/16 16:42:10 cyp Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -20,6 +20,7 @@ return "@(#)$Id: modereq.cpp,v 1.28.2.5 1999/10/11 04:16:13 cyp Exp $"; }
 #include "modereq.h"  //our constants
 #include "triggers.h" //RaiseRestartRequestTrigger/CheckExitRequestTriggerNoIO
 #include "console.h"  //Clear the screen after config if restarting
+#include "confrwv.h"  //load/save after successful Configure()
 
 #include "disphelp.h" //"mode" DisplayHelp()
 #include "cpucheck.h" //"mode" DisplayProcessorInformation()
@@ -28,8 +29,8 @@ return "@(#)$Id: modereq.cpp,v 1.28.2.5 1999/10/11 04:16:13 cyp Exp $"; }
 #include "selftest.h" //"mode" SelfTest()
 #include "bench.h"    //"mode" Benchmark()
 #include "buffwork.h" //"mode" UnlockBuffer(), ImportBuffer()
-#include "buffupd.h"  //"mode" BufferUpdate() flags
-#include "confrwv.h"  //"mode" (actually needed to update config)
+#include "buffupd.h"  //"mode" BufferUpdate()
+#include "confmenu.h" //"mode" Configure()
 
 /* --------------------------------------------------------------- */
 
@@ -42,7 +43,8 @@ static struct
   const char *helpoption;
   unsigned long bench_projbits;
   unsigned long test_projbits;
-} modereq = {0,0,(const char *)0,(const char *)0,(const char *)0,0,0};
+  int cmdline_config; /* user passed --config opt, so don't do tty check */
+} modereq = {0,0,(const char *)0,(const char *)0,(const char *)0,0,0,0};
 
 /* --------------------------------------------------------------- */
 
@@ -95,6 +97,8 @@ int ModeReqSetArg(int mode, void *arg)
     modereq.filetoimport = (const char *)arg;
   else if (mode == MODEREQ_CMDLINE_HELP)
     modereq.helpoption = (const char *)arg;
+  else if (mode == MODEREQ_CONFIG)
+    modereq.cmdline_config = 1;
   else
     return -1;
   ModeReqSet(mode);
@@ -201,7 +205,19 @@ int ModeReqRun(Client *client)
       }
       if ((bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART)) != 0)
       {
-        if (client)
+        /* <BovineMoo> okay, so if -config is 
+        //   explicitly specified, then do not check isatty().
+        */
+        int ttycheckok = 1;
+        if (!modereq.cmdline_config) /* not started by cmdline --config */
+        {
+          if (!ConIsScreen())
+          {
+            ConOutErr("Screen output is redirected/not available. Please use --config\n");
+            ttycheckok = 0;
+          }
+        }
+        if (ttycheckok && client)
         {
           Client *newclient = new Client;
           if (!newclient)
@@ -211,9 +227,9 @@ int ModeReqRun(Client *client)
             strcpy(newclient->inifilename, client->inifilename );
             if ( ReadConfig(newclient) >= 0 ) /* no or non-fatal error */
             {
-              if ( newclient->Configure() == 1 )
+              if ( Configure(newclient) > 0 ) /* success */
               {
-                WriteConfig(newclient,1); //full new build
+                WriteConfig(newclient,1);
                 retval |= (bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART));
               }
               if ((bits & MODEREQ_CONFRESTART) != 0)
@@ -222,6 +238,7 @@ int ModeReqRun(Client *client)
             delete newclient;
           }
         }
+        modereq.cmdline_config = 0;
         modereq.reqbits &= ~(MODEREQ_CONFIG | MODEREQ_CONFRESTART);
       }
       if ((bits & (MODEREQ_FETCH | MODEREQ_FLUSH)) != 0)

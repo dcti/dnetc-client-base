@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.6 1999/10/11 19:46:58 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.7 1999/10/16 16:42:09 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -26,6 +26,9 @@ return "@(#)$Id: confmenu.cpp,v 1.41.2.6 1999/10/11 19:46:58 cyp Exp $"; }
 #include "lurk.h"     // lurk stuff
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
 #include "confopt.h"  // the option table
+#include "confrwv.h"  // load configuration into client copy
+#include "confmenu.h" // ourselves
+//#define REVEAL_DISABLED /* this is for gregh :) */
 
 /* ----------------------------------------------------------------------- */
 static const char *CONFMENU_CAPTION="distributed.net client configuration: %s\n"
@@ -73,7 +76,7 @@ static int __enumcorenames(const char **corenames, int index, void * /*unused*/)
   return +1; /* keep going */
 }      
 
-int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
+int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 {
   struct __userpass { 
     char username[128]; 
@@ -84,94 +87,89 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
   char cputypelist[64];
   char threshlist[64];
   char blsizelist[64];
-  
-  if (!ConIsScreen())
-  {
-    ConOutErr("Can't configure when stdin or stdout is redirected.\n");
-    return -1;
-  }
-    
+
   // ---- Set all stuff that doesn't change during config ----   
   // note that some options rely on others, so watch the init order
 
   /* ------------------- CONF_MENU_MISC ------------------ */  
 
-  if (strcmpi(id,"rc5@distributed.net") == 0)
-    id[0] = 0; /*is later converted back to 'rc5@distributed.net' */
-  conf_options[CONF_ID].thevariable=(char *)(&id[0]);
-  conf_options[CONF_COUNT].thevariable=&blockcount;
-  conf_options[CONF_HOURS].thevariable=&minutes;
-  conf_options[CONF_QUIETMODE].thevariable=&quietmode;
-  conf_options[CONF_NOEXITFILECHECK].thevariable=&noexitfilecheck;
-  conf_options[CONF_PERCENTOFF].thevariable=&percentprintingoff;
-  conf_options[CONF_PAUSEFILE].thevariable=(char *)(&pausefile[0]);
-  strcpy(loadorder, projectmap_expand( loadorder_map ) );
+  if (strcmpi(client->id,"rc5@distributed.net") == 0)
+    client->id[0] = 0; /*is later converted back to 'rc5@distributed.net' */
+  conf_options[CONF_ID].thevariable=(char *)(&(client->id[0]));
+  conf_options[CONF_COUNT].thevariable=&(client->blockcount);
+  conf_options[CONF_HOURS].thevariable=&(client->minutes);
+  conf_options[CONF_QUIETMODE].thevariable=&(client->quietmode);
+  conf_options[CONF_NOEXITFILECHECK].thevariable=&(client->noexitfilecheck);
+  conf_options[CONF_PERCENTOFF].thevariable=&(client->percentprintingoff);
+  conf_options[CONF_PAUSEFILE].thevariable=(char *)(&(client->pausefile[0]));
+  strcpy(loadorder, projectmap_expand( client->loadorder_map ) );
   conf_options[CONF_CONTESTPRIORITY].thevariable=(char *)(&loadorder[0]);
 
   /* ------------------- CONF_MENU_BUFF ------------------ */  
 
   strncpy(threshlist,utilGatherOptionArraysToList( 
-               &inthreshold[0], &outthreshold[0]), sizeof(threshlist));
+               &(client->inthreshold[0]), &(client->outthreshold[0])), 
+               sizeof(threshlist));
   threshlist[sizeof(threshlist)-1] = '\0'; 
   strncpy(blsizelist,utilGatherOptionArraysToList( 
-               &preferred_blocksize[0], NULL), sizeof(blsizelist));
+               &(client->preferred_blocksize[0]), NULL), sizeof(blsizelist));
   blsizelist[sizeof(blsizelist)-1] = '\0'; 
 
-  conf_options[CONF_NODISK].thevariable=&nodiskbuffers;
-  conf_options[CONF_INBUFFERBASENAME].thevariable=(char *)(&in_buffer_basename[0]);
-  conf_options[CONF_OUTBUFFERBASENAME].thevariable=(char *)(&out_buffer_basename[0]);
-  conf_options[CONF_CHECKPOINT].thevariable=(char *)(&checkpoint_file[0]);
-  conf_options[CONF_OFFLINEMODE].thevariable=&offlinemode;
-  conf_options[CONF_REMOTEUPDATEDISABLED].thevariable=&noupdatefromfile;
-  conf_options[CONF_REMOTEUPDATEDIR].thevariable=(char *)(&remote_update_dir[0]);
-  conf_options[CONF_FREQUENT].thevariable=&connectoften;
-  conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=(char *)&blsizelist[0];
-  conf_options[CONF_THRESHOLDI].thevariable=(char *)&threshlist[0];
+  conf_options[CONF_NODISK].thevariable=&(client->nodiskbuffers);
+  conf_options[CONF_INBUFFERBASENAME].thevariable=(char *)(&(client->in_buffer_basename[0]));
+  conf_options[CONF_OUTBUFFERBASENAME].thevariable=(char *)(&(client->out_buffer_basename[0]));
+  conf_options[CONF_CHECKPOINT].thevariable=(char *)(&(client->checkpoint_file[0]));
+  conf_options[CONF_OFFLINEMODE].thevariable=&(client->offlinemode);
+  conf_options[CONF_REMOTEUPDATEDISABLED].thevariable=&(client->noupdatefromfile);
+  conf_options[CONF_REMOTEUPDATEDIR].thevariable=(char *)(&(client->remote_update_dir[0]));
+  conf_options[CONF_FREQUENT].thevariable=&(client->connectoften);
+  conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=(char *)&(blsizelist[0]);
+  conf_options[CONF_THRESHOLDI].thevariable=(char *)&(threshlist[0]);
 
   /* ------------------- CONF_MENU_LOG  ------------------ */  
 
   static const char *logtypes[] = {"none","no limit","restart","fifo","rotate"};
-  char logkblimit[sizeof(logfilelimit)], logrotlimit[sizeof(logfilelimit)];
+  char logkblimit[sizeof(client->logfilelimit)], logrotlimit[sizeof(client->logfilelimit)];
   s32 logtype = LOGFILETYPE_NOLIMIT;
   logkblimit[0] = logrotlimit[0] = '\0';
   
-  if ( strcmp( logfiletype, "rotate" ) == 0)
+  if ( strcmp( client->logfiletype, "rotate" ) == 0)
   {
     logtype = LOGFILETYPE_ROTATE;
-    strcpy( logrotlimit, logfilelimit );
+    strcpy( logrotlimit, (client->logfilelimit) );
   }
   else 
   {
-    strcpy( logkblimit, logfilelimit );
-    if ( logname[0] == '\0' || strcmp( logfiletype, "none" ) == 0 )
+    strcpy( logkblimit, client->logfilelimit );
+    if ( client->logname[0] == '\0' || strcmp( client->logfiletype, "none" ) == 0 )
       logtype = LOGFILETYPE_NONE;
-    else if (strcmp( logfiletype, "restart" ) == 0)
+    else if (strcmp( client->logfiletype, "restart" ) == 0)
       logtype = LOGFILETYPE_RESTART;
-    else if (strcmp( logfiletype, "fifo" ) == 0)
+    else if (strcmp( client->logfiletype, "fifo" ) == 0)
       logtype = LOGFILETYPE_FIFO;
   }
   
   conf_options[CONF_LOGTYPE].thevariable=&logtype;
   conf_options[CONF_LOGTYPE].choicelist=&logtypes[0];
   conf_options[CONF_LOGTYPE].choicemax=(s32)((sizeof(logtypes)/sizeof(logtypes[0]))-1);
-  conf_options[CONF_LOGNAME].thevariable=(char *)(&logname[0]);
+  conf_options[CONF_LOGNAME].thevariable=(char *)(&(client->logname[0]));
   conf_options[CONF_LOGLIMIT].thevariable=(char *)(&logkblimit[0]);
-  conf_options[CONF_MESSAGELEN].thevariable=&messagelen;
-  conf_options[CONF_SMTPSRVR].thevariable=(char *)(&smtpsrvr[0]);
-  conf_options[CONF_SMTPPORT].thevariable=&smtpport;
-  conf_options[CONF_SMTPFROM].thevariable=(char *)(&smtpfrom[0]);
-  conf_options[CONF_SMTPDEST].thevariable=(char *)(&smtpdest[0]);
+  conf_options[CONF_MESSAGELEN].thevariable=&(client->messagelen);
+  conf_options[CONF_SMTPSRVR].thevariable=(char *)(&(client->smtpsrvr[0]));
+  conf_options[CONF_SMTPPORT].thevariable=&(client->smtpport);
+  conf_options[CONF_SMTPFROM].thevariable=(char *)(&(client->smtpfrom[0]));
+  conf_options[CONF_SMTPDEST].thevariable=(char *)(&(client->smtpdest[0]));
   conf_options[CONF_SMTPFROM].defaultsetting=(char *)conf_options[CONF_ID].thevariable;
   conf_options[CONF_SMTPDEST].defaultsetting=(char *)conf_options[CONF_ID].thevariable;
 
   /* ------------------- CONF_MENU_NET  ------------------ */  
 
-  conf_options[CONF_NETTIMEOUT].thevariable=&nettimeout;
-  s32 autofindks = (autofindkeyserver!=0);
-  conf_options[CONF_AUTOFINDKS].thevariable=&autofindks;
-  conf_options[CONF_KEYSERVNAME].thevariable=(char *)(&keyproxy[0]);
-  conf_options[CONF_KEYSERVPORT].thevariable=&keyport;
-  conf_options[CONF_NOFALLBACK].thevariable=&nofallback;
+  conf_options[CONF_NETTIMEOUT].thevariable=&(client->nettimeout);
+  s32 autofindks = ((client->autofindkeyserver)!=0);
+  conf_options[CONF_AUTOFINDKS].thevariable=&(autofindks);
+  conf_options[CONF_KEYSERVNAME].thevariable=(char *)(&(client->keyproxy[0]));
+  conf_options[CONF_KEYSERVPORT].thevariable=&(client->keyport);
+  conf_options[CONF_NOFALLBACK].thevariable=&(client->nofallback);
 
   #define UUEHTTPMODE_UUE      1
   #define UUEHTTPMODE_HTTP     2
@@ -185,18 +183,19 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
   #define FWALL_TYPE_SOCKS4    2
   #define FWALL_TYPE_SOCKS5    3
   s32 fwall_type = FWALL_TYPE_NONE;
-  s32 use_http_regardless = (( uuehttpmode == UUEHTTPMODE_HTTP
-                            || uuehttpmode == UUEHTTPMODE_UUEHTTP)
-                            && httpproxy[0] == '\0');
-  s32 use_uue_regardless =  (  uuehttpmode == UUEHTTPMODE_UUE 
-                            || uuehttpmode == UUEHTTPMODE_UUEHTTP);
-  if (httpproxy[0])
+  s32 use_http_regardless = (( client->uuehttpmode == UUEHTTPMODE_HTTP
+                            || client->uuehttpmode == UUEHTTPMODE_UUEHTTP)
+                            && client->httpproxy[0] == '\0');
+  s32 use_uue_regardless =  (  client->uuehttpmode == UUEHTTPMODE_UUE 
+                            || client->uuehttpmode == UUEHTTPMODE_UUEHTTP);
+  if (client->httpproxy[0])
   {                           
-    if (uuehttpmode == UUEHTTPMODE_SOCKS4) 
+    if (client->uuehttpmode == UUEHTTPMODE_SOCKS4) 
       fwall_type = FWALL_TYPE_SOCKS4;
-    else if (uuehttpmode == UUEHTTPMODE_SOCKS5) 
+    else if (client->uuehttpmode == UUEHTTPMODE_SOCKS5) 
       fwall_type = FWALL_TYPE_SOCKS5;
-    else if (uuehttpmode==UUEHTTPMODE_HTTP || uuehttpmode==UUEHTTPMODE_UUEHTTP)
+    else if (client->uuehttpmode==UUEHTTPMODE_HTTP || 
+             client->uuehttpmode==UUEHTTPMODE_UUEHTTP)
       fwall_type = FWALL_TYPE_HTTP;
   }
   conf_options[CONF_FORCEHTTP].thevariable=&use_http_regardless;
@@ -205,18 +204,18 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
   conf_options[CONF_FWALLTYPE].choicelist=&fwall_types[0];
   conf_options[CONF_FWALLTYPE].choicemax=(s32)((sizeof(fwall_types)/sizeof(fwall_types[0]))-1);
   
-  conf_options[CONF_FWALLHOSTNAME].thevariable=(char *)(&httpproxy[0]);
-  conf_options[CONF_FWALLHOSTPORT].thevariable=&httpport;
+  conf_options[CONF_FWALLHOSTNAME].thevariable=(char *)(&(client->httpproxy[0]));
+  conf_options[CONF_FWALLHOSTPORT].thevariable=&(client->httpport);
   userpass.username[0] = userpass.password[0] = 0;
   
-  if (httpid[0] == 0)
+  if (client->httpid[0] == 0)
     ; //nothing
-  else if (uuehttpmode==UUEHTTPMODE_UUEHTTP || uuehttpmode==UUEHTTPMODE_HTTP)
+  else if (client->uuehttpmode==UUEHTTPMODE_UUEHTTP || client->uuehttpmode==UUEHTTPMODE_HTTP)
   {
     char *p;
-    if (strlen(httpid) >= (sizeof(userpass)-1)) /* mime says maxlen=76 */
+    if (strlen(client->httpid) >= (sizeof(userpass)-1)) /* mime says maxlen=76 */
       userpass.username[0]=0;
-    else if (base64_decode(userpass.username, httpid, sizeof(userpass), strlen(httpid) )<0) 
+    else if (base64_decode(userpass.username, client->httpid, sizeof(userpass), strlen(client->httpid) )<0) 
       userpass.username[0]=0;                         /* parity errors */
     else if ((p = strchr( userpass.username, ':' )) == NULL)
       userpass.username[0]=0;                         /* wrong format */
@@ -226,11 +225,11 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
       memmove(userpass.password,p,sizeof(userpass.password));
     }
   }
-  else if (uuehttpmode == UUEHTTPMODE_SOCKS4) 
-    strcpy(userpass.username,httpid);
-  else if (uuehttpmode == UUEHTTPMODE_SOCKS5)
+  else if (client->uuehttpmode == UUEHTTPMODE_SOCKS4) 
+    strcpy(userpass.username,client->httpid);
+  else if (client->uuehttpmode == UUEHTTPMODE_SOCKS5)
   {
-    strcpy( userpass.username, httpid );
+    strcpy( userpass.username, client->httpid );
     char *p = strchr( userpass.username,':');
     if (p != NULL) 
     {
@@ -327,14 +326,14 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
   #endif
 
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-     coretypes[cont_i] = selcoreValidateCoreIndex(cont_i,coretypes[cont_i]);
+     client->coretypes[cont_i] = selcoreValidateCoreIndex(cont_i,client->coretypes[cont_i]);
   
-  strncpy(cputypelist,utilGatherOptionArraysToList( &coretypes[0], NULL),
+  strncpy(cputypelist,utilGatherOptionArraysToList( &(client->coretypes[0]), NULL),
                      sizeof(cputypelist));
   cputypelist[sizeof(cputypelist)-1] = '\0'; 
   conf_options[CONF_CPUTYPE].thevariable = &cputypelist[0];
-  conf_options[CONF_NICENESS].thevariable = &priority;
-  conf_options[CONF_NUMCPU].thevariable = &numcpu;
+  conf_options[CONF_NICENESS].thevariable = &(client->priority);
+  conf_options[CONF_NUMCPU].thevariable = &(client->numcpu);
 
   /* --------------------------------------------------------- */
 
@@ -370,29 +369,30 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
 
     if (whichmenu == CONF_MENU_BUFF)
     {
-      const char *na = "n/a";
+      const char *na = "n/a [no net & no remote dir]";
       int noremotedir = 0;
 
       conf_options[CONF_INBUFFERBASENAME].disabledtext=
       conf_options[CONF_OUTBUFFERBASENAME].disabledtext=
       conf_options[CONF_CHECKPOINT].disabledtext=
-                  ((!nodiskbuffers)?(NULL):
+                  ((!client->nodiskbuffers)?(NULL):
                   ("n/a [disk buffers are disabled]"));
 
-      noremotedir = (noupdatefromfile || remote_update_dir[0]=='\0');
+      noremotedir = (client->noupdatefromfile || 
+                     client->remote_update_dir[0]=='\0');
 
       conf_options[CONF_MENU_NET_PLACEHOLDER].disabledtext = 
-                  (offlinemode ? na : NULL );
+                  (client->offlinemode ? " ==> n/a [no net & no remote dir]" : NULL );
       conf_options[CONF_REMOTEUPDATEDIR].disabledtext = 
-                  (noupdatefromfile ? na : NULL );
+                  (client->noupdatefromfile ? na : NULL );
       conf_options[CONF_THRESHOLDI].disabledtext= 
-                  (offlinemode && noremotedir ? na : NULL );
+                  (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_FREQUENT].disabledtext= 
-                  (offlinemode && noremotedir ? na : NULL );
+                  (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_PREFERREDBLOCKSIZE].disabledtext= 
-                  (offlinemode && noremotedir ? na : NULL );
+                  (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_THRESHOLDI].disabledtext= 
-                  (offlinemode && noremotedir ? na : NULL );
+                  (client->offlinemode && noremotedir ? na : NULL );
  
     }
     else if (whichmenu == CONF_MENU_LOG)
@@ -411,7 +411,7 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
       conf_options[CONF_SMTPPORT].disabledtext=
       conf_options[CONF_SMTPDEST].disabledtext=
       conf_options[CONF_SMTPFROM].disabledtext=
-                  ((messagelen > 0)?(NULL):
+                  ((client->messagelen > 0)?(NULL):
                   ("n/a [mail log disabled]"));
     }
     else if (whichmenu == CONF_MENU_NET)
@@ -438,7 +438,7 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
           conf_options[CONF_FORCEUUE].disabledtext=
                 "n/a [not available for this proxy method]";
         }
-        if (httpproxy[0] == 0)
+        if (client->httpproxy[0] == 0)
         {
           conf_options[CONF_FWALLHOSTPORT].disabledtext=
           conf_options[CONF_FWALLUSERNAME].disabledtext=
@@ -454,9 +454,8 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
       
       if (autofindks)
       {
-        conf_options[CONF_NOFALLBACK].disabledtext= //can't fallback to self
-        conf_options[CONF_KEYSERVNAME].disabledtext = 
-                "n/a [requires non-distributed.net host]";
+        conf_options[CONF_NOFALLBACK].disabledtext= "n/a"; //can't fallback to self
+        conf_options[CONF_KEYSERVNAME].disabledtext = "n/a [autoselected]";
       }
       #ifdef LURK
       if (lurkmode!=CONNECT_LURK && lurkmode!=CONNECT_LURKONLY)
@@ -466,14 +465,14 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
         conf_options[CONF_CONNPROFILE].disabledtext=
         conf_options[CONF_CONNSTARTCMD].disabledtext=
         conf_options[CONF_CONNSTOPCMD].disabledtext=
-        "n/a [requires dial-on-demand support]";
+        "n/a [Dialup detection is off]";
       }
       else if (!dialwhenneeded || conf_options[CONF_DIALWHENNEEDED].thevariable==NULL)
       {
         conf_options[CONF_CONNPROFILE].disabledtext=
         conf_options[CONF_CONNSTARTCMD].disabledtext=
         conf_options[CONF_CONNSTOPCMD].disabledtext=
-        "n/a [requires dial-on-demand support]";
+        "n/a [Demand-dial is off/not supported]";
       }
       #endif
     }
@@ -528,7 +527,7 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
                        conf_options[optionlist[menuoption]].description);
           LogScreenRaw("\n 9) Discard settings and exit"
                        "\n 0) Save settings and exit\n\n");
-          if (id_menuname && id[0] == '\0')
+          if (id_menuname && client->id[0] == '\0')
             LogScreenRaw("Note: You have not yet provided a distributed.net ID.\n"
             "      Please go to the '%s' and set it.\n", id_menuname);
           LogScreenRaw("\nChoice --> " );
@@ -588,7 +587,7 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
               
               if (conf_options[menuoption].disabledtext != NULL)
               {
-                #ifdef GREGH /* this is only for greg! :) */
+                #ifdef REVEAL_DISABLED /* this is only for greg! :) */
                 descr = (char *)conf_options[menuoption].disabledtext;
                 #endif /* othewise ignore it */
               }
@@ -598,7 +597,7 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
               }
               else if (conf_options[menuoption].thevariable == NULL)
               {
-                #ifdef GREGH /* this is only for greg! :) */
+                #ifdef REVEAL_DISABLED /* this is only for greg! :) */
                 descr = "n/a [not available on this platform]";
                 #endif /* othewise ignore it */
               }
@@ -1065,11 +1064,11 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
         {
           *(s32 *)conf_options[editthis].thevariable = (s32)newval_d;
           if ( editthis == CONF_COUNT && newval_d < 0)
-            blockcount = -1;
-          else if (editthis == CONF_THRESHOLDI)
-            inthreshold[0]=outthreshold[0]=inthreshold[1]=outthreshold[1]=newval_d;
+            *(s32 *)conf_options[editthis].thevariable = -1;
+          //else if (editthis == CONF_THRESHOLDI)
+          //  inthreshold[0]=outthreshold[0]=inthreshold[1]=outthreshold[1]=newval_d;
           else if (editthis == CONF_NETTIMEOUT)
-            nettimeout = ((newval_d<0)?(-1):((newval_d<5)?(5):(newval_d)));
+            *(s32 *)conf_options[editthis].thevariable = ((newval_d<0)?(-1):((newval_d<5)?(5):(newval_d)));
         }
       } /* if (editthis >= 0 && newval_isok) */
       editthis = -1; /* no longer an editable option */
@@ -1086,32 +1085,32 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
 
   if (returnvalue != -1)
   {
-    if (id[0] == 0)
-      strcpy(id, "rc5@distributed.net");
+    //if (client->id[0] == 0)
+    //  strcpy(client->id, "rc5@distributed.net");
 
     if (logtype >=0 && logtype < (s32)(sizeof(logtypes)/sizeof(logtypes[0])))
     {
       if (logtype == LOGFILETYPE_ROTATE)
-        strcpy( logfilelimit, logrotlimit );
+        strcpy( client->logfilelimit, logrotlimit );
       else 
       {
-        if (logname[0] == '\0')
+        if (client->logname[0] == '\0')
           logtype = LOGFILETYPE_NONE;
-        strcpy( logfilelimit, logkblimit );
+        strcpy( client->logfilelimit, logkblimit );
       }
-      strcpy( logfiletype, logtypes[logtype] );
+      strcpy( client->logfiletype, logtypes[logtype] );
     }
 
-    autofindkeyserver = (autofindks!=0);
+    client->autofindkeyserver = (autofindks!=0);
 
-    utilScatterOptionListToArrays(cputypelist,&coretypes[0], NULL, -1 );
-    utilScatterOptionListToArrays(blsizelist,&preferred_blocksize[0], NULL,4);
-    utilScatterOptionListToArrays(threshlist,&inthreshold[0], &outthreshold[0],10);
+    utilScatterOptionListToArrays(cputypelist,&(client->coretypes[0]), NULL, -1 );
+    utilScatterOptionListToArrays(blsizelist,&(client->preferred_blocksize[0]), NULL, 31);
+    utilScatterOptionListToArrays(threshlist,&(client->inthreshold[0]), &(client->outthreshold[0]),10);
 
-    if (nettimeout < 0)
-      nettimeout = -1;
-    else if (nettimeout < 5)
-      nettimeout = 5;
+    if (client->nettimeout < 0)
+      client->nettimeout = -1;
+    else if (client->nettimeout < 5)
+      client->nettimeout = 5;
 
     #ifdef LURK
     dialup.lurkmode = lurkmode;
@@ -1122,42 +1121,42 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
     strcpy(dialup.connprofile, connprofile);
     #endif
 
-    projectmap_build(loadorder_map, loadorder );
+    projectmap_build(client->loadorder_map, loadorder );
 
-    uuehttpmode = 0;
+    client->uuehttpmode = 0;
     if (fwall_type == FWALL_TYPE_SOCKS4)
-      uuehttpmode = UUEHTTPMODE_SOCKS4;
+      client->uuehttpmode = UUEHTTPMODE_SOCKS4;
     else if (fwall_type == FWALL_TYPE_SOCKS5)
-      uuehttpmode = UUEHTTPMODE_SOCKS5;
+      client->uuehttpmode = UUEHTTPMODE_SOCKS5;
     else if (fwall_type == FWALL_TYPE_HTTP || use_http_regardless)
-      uuehttpmode = (use_uue_regardless?UUEHTTPMODE_UUEHTTP:UUEHTTPMODE_HTTP);
+      client->uuehttpmode = (use_uue_regardless?UUEHTTPMODE_UUEHTTP:UUEHTTPMODE_HTTP);
     else if (use_uue_regardless)
-      uuehttpmode = UUEHTTPMODE_UUE;
+      client->uuehttpmode = UUEHTTPMODE_UUE;
     
     if (strlen(userpass.username) == 0 && strlen(userpass.password) == 0)
-      httpid[0] = 0;
-    else if (uuehttpmode==UUEHTTPMODE_UUEHTTP || uuehttpmode==UUEHTTPMODE_HTTP)
+      client->httpid[0] = 0;
+    else if (client->uuehttpmode==UUEHTTPMODE_UUEHTTP || client->uuehttpmode==UUEHTTPMODE_HTTP)
     {
       if (((strlen(userpass.username)+strlen(userpass.password)+4)*4/3) >
-        sizeof(httpid)) /* too big. what should we do? */
-        httpid[0] = 0; 
+        sizeof(client->httpid)) /* too big. what should we do? */
+        client->httpid[0] = 0; 
       else
       {
         strcat(userpass.username,":");
         strcat(userpass.username,userpass.password);
-        base64_encode(httpid,userpass.username, sizeof(httpid),strlen(userpass.username));
+        base64_encode(client->httpid,userpass.username, sizeof(client->httpid),strlen(userpass.username));
       }
     }
-    else if (uuehttpmode == UUEHTTPMODE_SOCKS4)
+    else if (client->uuehttpmode == UUEHTTPMODE_SOCKS4)
     {
-      strcpy( httpid, userpass.username );
+      strcpy( client->httpid, userpass.username );
     }
-    else if (uuehttpmode == UUEHTTPMODE_SOCKS5)
+    else if (client->uuehttpmode == UUEHTTPMODE_SOCKS5)
     {
       strcat(userpass.username, ":");
       strcat(userpass.username, userpass.password);
-      strncpy( httpid, userpass.username, sizeof( httpid )-1);
-      httpid[sizeof( httpid )-1] = 0;
+      strncpy( client->httpid, userpass.username, sizeof( client->httpid ));
+      client->httpid[sizeof( client->httpid )-1] = 0;
     }
   }
 
@@ -1165,4 +1164,3 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
     
   return returnvalue;
 }
-
