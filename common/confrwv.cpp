@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.91 2002/10/17 16:51:35 andreasb Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.92 2002/10/20 22:54:07 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -43,30 +43,7 @@ static const char *DEFAULT_EXITFLAGFILENAME = "exitrc5"EXTN_SEP"now";
 static const char *__getprojsectname( unsigned int ci )
 {
   if (ci < CONTEST_COUNT)
-  {
-    #if 1
-      #if (CONTEST_COUNT != 6)
-        #error PROJECT_NOT_HANDLED("static .ini section name list expects CONTEST_COUNT == 6")
-      #endif
-      // section name of obsolete projects may be NULL
-      // RC5 and DES should be available (unchecked writes!)
-      // FIXME: put this into conStats[]
-      static const char *sectnames[CONTEST_COUNT]={"rc5","des","ogr","csc","ogr-nextgen-someday","rc5-72"};
-// OK!
-      return sectnames[ci];
-    #else
-      const char *cname = CliGetContestNameFromID(ci);
-      if (cname)
-      {
-        static char cont_name[16];
-        ci=0;
-        while (*cname && ci<(sizeof(cont_name)-1))
-          cont_name[ci++] = (char)tolower((char)(*cname++));
-        cont_name[ci]='\0';
-        return &cont_name[0];
-      }
-    #endif
-  }
+    return ProjectGetIniSectionName(ci);
   return ((const char *)0);
 }
 
