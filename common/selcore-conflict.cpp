@@ -11,7 +11,7 @@
  * ----------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.48 1999/07/23 03:16:56 fordbr Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.49 1999/09/16 21:37:27 remi Exp $"; }
 
 
 #include "cputypes.h"
@@ -255,17 +255,17 @@ int Client::SelectCore(int quietly)
     {
       for ( whichcrunch = 0; whichcrunch < 3; whichcrunch++)
       {
-        Problem problem;
+        Problem *problem = new Problem();
         ContestWork contestwork;
 	unsigned long elapsed;
         //!! This should probably be addressed for OGR, zero data is not valid input.
 	memset( (void *)&contestwork, 0, sizeof(contestwork));
         contestwork.crypto.iterations.lo = benchsize;
-        problem.LoadState( &contestwork , contestid, benchsize, whichcrunch );
-        problem.Run();
+        problem->LoadState( &contestwork , contestid, benchsize, whichcrunch );
+        problem->Run();
     
-        elapsed = (((unsigned long)problem.runtime_sec) * 1000000UL)+
-	          (((unsigned long)problem.runtime_usec));
+        elapsed = (((unsigned long)problem->runtime_sec) * 1000000UL)+
+	          (((unsigned long)problem->runtime_usec));
         //printf("%s Core %d: %lu usec\n", CliGetContestName(contestid),whichcrunch,elapsed);
     
         if (fastcoretest[contestid] < 0 || elapsed < fasttime[contestid])
@@ -273,6 +273,7 @@ int Client::SelectCore(int quietly)
           fastcoretest[contestid] = whichcrunch; 
 	  fasttime[contestid] = elapsed;
         }
+	delete problem;
       }
     }
     cputype = (fastcoretest[0] + ((fastcoretest[1]&1)<<2));
@@ -309,17 +310,18 @@ int Client::SelectCore(int quietly)
     for (whichcrunch = 0; whichcrunch < ((int)corecount); whichcrunch++ )
     {
       const u32 benchsize = 500000L;
-      Problem problem;
+      Problem *problem = new Problem();
       ContestWork contestwork;
       unsigned long elapsed;
       memset( (void *)&contestwork, 0, sizeof(contestwork));
       contestwork.crypto.iterations.lo = benchsize;
-      problem.LoadState( &contestwork , 0 /* RC5 */, benchsize, whichcrunch );
-      problem.Run();  //threadnum
-      elapsed = (((unsigned long)problem.runtime_sec) * 1000000UL)+
-                 (((unsigned long)problem.runtime_usec));
+      problem->LoadState( &contestwork , 0 /* RC5 */, benchsize, whichcrunch );
+      problem->Run();  //threadnum
+      elapsed = (((unsigned long)problem->runtime_sec) * 1000000UL)+
+                 (((unsigned long)problem->runtime_usec));
       if (cputype < 0 || elapsed < fasttime)
         {cputype = whichcrunch; fasttime = elapsed;}
+      delete problem;
     }
     detectedtype = cputype;
     if (!quietly)
