@@ -7,14 +7,18 @@
  * dual-key, mixed round 3 and encryption, A1/A2 use for last value,
  * non-arrayed S1/S2 tables, run-time generation of S0[]
  *
- * Prototype:
+ * extern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *work, 
+ *                            u32 *timeslice, void *scratch_area );
+ *            //returns RESULT_FOUND,RESULT_WORKING or -1,
+ *
  * extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 timeslice );
+ *            //returns timeslice
  * ---------------------------------------------------------------
 */
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_rg_cpp (void) {
-return "@(#)$Id: 2-rg.c,v 1.4.2.1 1999/11/28 13:09:16 cyp Exp $"; }
+return "@(#)$Id: 2-rg.c,v 1.4.2.2 1999/12/01 21:00:14 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -358,5 +362,31 @@ u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice )
     kiter += 2;
   }
   return kiter;
+}
+
+#if defined(__cplusplus)
+extern "C" s32 rc5_ansi_2_rg_unified_form( RC5UnitWork * work,
+                                u32 *timeslice, void *scratch_area );
+#endif
+
+s32 rc5_ansi_rg_unified_form( RC5UnitWork *work, 
+                              u32 *timeslice, void *scratch_area )
+{
+  /*  this is a two pipeline core, so ... iterations_to_do == timeslice / 2
+   *                              and ... iterations_done  == retval * 2
+  */                                
+  u32 kiter, xiter = (*timeslice / 2);
+  scratch_area = scratch_area; /* shaddup compiler */
+
+  kiter = rc5_ansi_2_rg_unit_func( work, xiter );
+  *timeslice = kiter * 2;
+  
+  if (xiter == kiter) {
+    return RESULT_WORKING;
+  } else if (xiter < kiter) {
+    return RESULT_FOUND;
+  } 
+
+  return -1; /* error */
 }
 
