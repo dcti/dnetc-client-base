@@ -3,8 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
-// Revision 1.18  1998/07/16 19:21:49  remi
-// Added a \n, just nicer.
+// Revision 1.19  1998/07/18 17:05:39  cyruspatel
+// Lowered the TimesliceBaseline for 486's from 1024 to 512. The high timeslice
+// was causing problems on 486s with 3com and other poll-driven NICs.
 //
 // Revision 1.17  1998/07/13 23:39:33  cyruspatel
 // Added functions to format and display raw cpu info for better management
@@ -82,7 +83,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.18 1998/07/16 19:21:49 remi Exp $";
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.19 1998/07/18 17:05:39 cyruspatel Exp $";
 }
 #endif
 
@@ -264,8 +265,8 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     vendorname = "Cyrix";
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
-      {    0x40, 1024,     0, "486"     }, // use Pentium core
-      {  0x0440, 1024,     0, "MediaGX" },
+      {    0x40, 0512,     0, "486"     }, // use Pentium core
+      {  0x0440, 0512,     0, "MediaGX" },
       {  0x0490, 1185,     0, "5x86"    },
       {  0x0520, 2090,     3, "6x86"    }, // "Cyrix 6x86/6x86MX/M2"
       {  0x0540, 1200,     0, "GXm"     }, // use Pentium core here too
@@ -289,11 +290,11 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     vendorname = "AMD";
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
-      {  0x0040, 1024,     0, "486"      },   // "Pentium, Pentium MMX, Cyrix 486/5x86/MediaGX, AMD 486",
-      {  0x0430, 1024,     0, "486DX2"   },
-      {  0x0470, 1024,     0, "486DX2WB" },
-      {  0x0480, 1024,     0, "486DX4"   },
-      {  0x0490, 1024,     0, "486DX4WB" },
+      {  0x0040, 0512,     0, "486"      },   // "Pentium, Pentium MMX, Cyrix 486/5x86/MediaGX, AMD 486",
+      {  0x0430, 0512,     0, "486DX2"   },
+      {  0x0470, 0512,     0, "486DX2WB" },
+      {  0x0480, 0512,     0, "486DX4"   },
+      {  0x0490, 0512,     0, "486DX4WB" },
       {  0x04E0, 1185,     0, "5x86"     },
       {  0x04F0, 1185,     0, "5x86WB"   },
       {  0x0500, 2353,     4, "K5 PR75, PR90, or PR100" }, // use K5 core
@@ -316,16 +317,16 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     cpuidb &= 0x0ff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
       {  0x0030, 0426,     1, "80386"    },   // generic 386/486 core
-      {  0x0040, 1024,     1, "80486"    },   // - 946 ('95) + 1085 (NetWare) 
-      {  0x0400, 1024,     1, "486DX 25 or 33" },
-      {  0x0410, 1024,     1, "486DX 50" },
-      {  0x0420, 1024,     1, "486SX" },
-      {  0x0430, 1024,     1, "486DX2" },
-      {  0x0440, 1024,     1, "486SL" },
-      {  0x0450, 1024,     1, "486SX2" },
-      {  0x0470, 1024,     1, "486DX2WB" },
-      {  0x0480, 1024,     1, "486DX4" },
-      {  0x0490, 1024,     1, "486DX4WB" },
+      {  0x0040, 0512,     1, "80486"    },   // - 946 ('95) + 1085 (NetWare) 
+      {  0x0400, 0512,     1, "486DX 25 or 33" },
+      {  0x0410, 0512,     1, "486DX 50" },
+      {  0x0420, 0512,     1, "486SX" },
+      {  0x0430, 0512,     1, "486DX2" },
+      {  0x0440, 0512,     1, "486SL" },
+      {  0x0450, 0512,     1, "486SX2" },
+      {  0x0470, 0512,     1, "486DX2WB" },
+      {  0x0480, 0512,     1, "486DX4" },
+      {  0x0490, 0512,     1, "486DX4WB" },
       {  0x0500, 1416,     0, "Pentium" }, //stepping A
       {  0x0510, 1416,     0, "Pentium" },    
       {  0x0520, 1416,     0, "Pentium" },
@@ -517,7 +518,7 @@ unsigned int GetTimesliceBaseline(void)
 { 
 #if (CLIENT_CPU == CPU_X86)    
   struct _cpuxref *cpuxref = __GetProcessorXRef( NULL, NULL, NULL, NULL );
-  return ((!cpuxref) ? ( 1024 ) : (cpuxref->kKeysPerMhz) );
+  return ((!cpuxref) ? ( 0512 ) : (cpuxref->kKeysPerMhz) );
    //(cpuxref->kKeysPerMhz * (((cpuxref->coretouse & 0xF00 )!=0)?2:1) ) );
 #else 
   return 0;
@@ -592,7 +593,7 @@ void DisplayProcessorInformation(void)
   
   printf("Automatic processor identification tag:\n\t%s\n"
    "Number of processors detected by this client:\n\t%s\n"
-   "Number of processors supported by each instance of this client:\n\t%s\n\n",
+   "Number of processors supported by each instance of this client:\n\t%s\n",
    scpuid, sfoundcpus, smaxcpus );
   return;
 }     
