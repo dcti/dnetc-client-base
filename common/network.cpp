@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.55  1998/12/24 05:22:03  dicamillo
+// Mac OS updates: use ioctl for blocking; support connection timeout value.
+//
 // Revision 1.54  1998/12/22 02:38:39  snake
 //
 // EPROTO doesn't exist on some systems
@@ -153,7 +156,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.54 1998/12/22 02:38:39 snake Exp $"; }
+return "@(#)$Id: network.cpp,v 1.55 1998/12/24 05:22:03 dicamillo Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -1312,6 +1315,27 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
       }
     }
   return rc;
+#elif (CLIENT_OS == OS_MACOS)
+    // The Mac OS client simulates just the most essential socket calls, as a
+    // convenience in interfacing to a non-socket network library. "Select" is
+    // not available, but the timeout for a connection can be specified.
+
+    // set up the address structure
+    struct sockaddr_in sin;
+    memset((void *) &sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons( that_port ); 
+    sin.sin_addr.s_addr = that_address;
+
+	// set timeout for connect
+	if (iotimeout > 0)
+	{
+	  // timeout for this call must be >0 to not have default used
+	  socket_set_conn_timeout(sock, iotimeout);
+	}
+
+    return(connect(sock, (struct sockaddr *)&sin, sizeof(sin)));
+    
 #else
   #if (defined( SOL_SOCKET ) && defined( SO_REUSEADDR ) && defined(AF_INET))
     {
@@ -1544,9 +1568,9 @@ int Network::LowLevelConditionSocket( unsigned long cond_type )
     #elif (CLIENT_OS == OS_AMIGAOS)
       char flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
       return IoctlSocket(sock, FIONBIO, &flagon);
-          #elif (CLIENT_OS == OS_MACOS)
+    #elif (CLIENT_OS == OS_MACOS)
       char flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
-            return(-1); // need to check this   
+	  return ioctl(sock, FIONBIO, &flagon);    
     #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
       {
       int flag, res, arg;
