@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.27 2002/10/06 19:26:50 andreasb Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.27.2.1 2002/11/11 18:06:49 jlawson Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -412,6 +412,20 @@ time_t CliGetNewestModuleTime(void)
   return newest;
 }  
 
+
+//! Determines whether the current build is a "development" or
+//! "stable" build.
+/*!
+ * Development builds typically have a timebomb that causes them to
+ * expire after a few days/weeks.
+ *
+ * The build is determined to be a development build if either BETA or
+ * BETA_PERIOD is defined, or if the RCS/CVS file version has only one
+ * period ('.') in the version number (indicating that it is on the
+ * HEAD branch).
+ *
+ * \return Returns zero if stable, non-zero if development.
+ */
 int CliIsDevelVersion(void)
 {
   #if (defined(BETA) || defined(BETA_PERIOD))
