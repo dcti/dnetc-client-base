@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.8 2003/08/09 12:53:14 mweiser Exp $
+ * $Id: ogr.cpp,v 1.2.4.9 2003/08/26 22:48:46 mweiser Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -3009,9 +3009,21 @@ static int ogr_cleanup(void)
   return CORE_S_OK;
 }
 
+/* dispatch_table has to be strictly aligned for SPARC Solaris,
+** otherwise it'll throw SIGBUS, gcc seems to do it automatically
+** but SUNPRO has to be told and only does it if dispatch_table
+** is global */
+#ifdef _SUNPRO_CC
+# pragma align 16 (dispatch_table)
+#endif
+
+/* this should not break reentrancy as opposed to having the
+** variable declared inside the function because a static buffer
+** inside a function isn't reentrant either */
+static CoreDispatchTable dispatch_table;
+
 CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
 {
-  static CoreDispatchTable dispatch_table;
   dispatch_table.init      = ogr_init;
   dispatch_table.create    = ogr_create;
   dispatch_table.cycle     = ogr_cycle;
