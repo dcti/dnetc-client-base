@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.85 1999/11/03 01:03:58 remi Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.86 1999/11/03 01:17:21 remi Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -693,9 +693,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0570, 1611, 0x105, "K6"       },
           {  0x0580, 1690, 0x105, "K6-2"     },
           {  0x0590, 1690, 0x105, "K6-3"     },
-          {  0x0610, 3400, 0x103, "K7"       }, /* K7 is faster with the Cyrix core */
-          {  0x0620, 3400, 0x103, "K7"       },
-          {  0x0000, 4096,     2, NULL       } // default core = P6 (??)
+          {  0x0610, 3400, 0x102, "K7"       }, /* P6, Cyrix or K6 core ? */
+          {  0x0620, 3400, 0x102, "K7"       },
+          {  0x0000, 4096,     2, NULL       } // default core = P6 (?)
           }; internalxref = &amdxref[0];
       vendorname = "AMD ";
       cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
