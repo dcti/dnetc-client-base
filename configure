@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.130 2000/02/16 00:27:17 snake Exp $
+# @(#)$Id: configure,v 1.222.2.131 2000/02/17 10:17:28 chrisb Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1480,16 +1480,17 @@ case "$1" in
 	TARGET_BINNAME_SUFFIX=",ff8"
 	;;
 
-    *arm-linux)					# chrisb
+    *arm-linux-aout)					# chrisb
 	TARGET_CC="gcc"
 	TARGET_AS="as"
-	TARGET_CCFLAGS="$OPTS_GCC_ARM -Dlinux  -DKWAN"
-	TARGET_ADDSRCS=""
+	TARGET_CCFLAGS="$OPTS_GCC_ARM -Dlinux -DHAVE_OGR_CORES"
+	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
 	TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu.s rc5/arm/rc5-arm-2-gnu.s \
 			rc5/arm/rc5-arm-3-gnu.s \
 			des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="linux-arm-aout"
 	;;
 
     *arm-linuxelf)				# andrewm
