@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.2 2003/01/03 19:39:02 teichp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.3 2003/01/04 10:25:41 pfeffi Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -666,7 +666,7 @@ static int __StopThread( struct thread_param_block *thrparams )
       if (!thrparams->hasexited)
         pthread_join( thrparams->threadID, (void **)NULL);
       #elif (CLIENT_OS == OS_OS2)
-      DosSetPriority( 2, PRTYC_REGULAR, 0, 0); /* thread to normal prio */
+      DosSetPriority( 2, PRTYC_REGULAR, 0, (ULONG)thrparams->threadID); /* thread to normal prio */
       if (!thrparams->hasexited)
         DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
       #elif (CLIENT_OS == OS_WIN32)
