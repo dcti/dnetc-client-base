@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.1 1999/05/15 07:15:23 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.2 1999/06/07 02:42:21 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -32,30 +32,20 @@ return "@(#)$Id: console.cpp,v 1.48.2.1 1999/05/15 07:15:23 cyp Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
-#if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || \
-    (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
-    || (CLIENT_OS==OS_FREEBSD) || defined(__EMX__) || (CLIENT_OS==OS_AIX) \
-    || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDI) \
+
+#if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) \
+  || (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
+  || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
+  || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDI) \
   || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) )
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
-
-#if (CLIENT_OS == OS_DEC_UNIX)    || (CLIENT_OS == OS_HPUX)    || \
-    (CLIENT_OS == OS_QNX)         || (CLIENT_OS == OS_OSF1)    || \
-    (CLIENT_OS == OS_BSDI)        || (CLIENT_OS == OS_SOLARIS) || \
-    (CLIENT_OS == OS_IRIX)        || (CLIENT_OS == OS_SCO)     || \
-    (CLIENT_OS == OS_LINUX)       || (CLIENT_OS == OS_NETBSD)  || \
-    (CLIENT_OS == OS_UNIXWARE)    || (CLIENT_OS == OS_DYNIX)   || \
-    (CLIENT_OS == OS_MINIX)       || (CLIENT_OS == OS_MACH10)  || \
-    (CLIENT_OS == OS_AIX)         || (CLIENT_OS == OS_AUX)     || \
-    (CLIENT_OS == OS_OPENBSD)     || (CLIENT_OS == OS_SUNOS)   || \
-    (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX)    || \
-    (CLIENT_OS == OS_VMS)         || (CLIENT_OS == OS_OS390)   || \
-    (CLIENT_OS == OS_OS9)         || (CLIENT_OS == OS_BEOS)    || \
-    (CLIENT_OS == OS_MVS)         || (CLIENT_OS == OS_MACH10)  || \
-    (CLIENT_OS == OS_FREEBSD)
+#if defined(__unix__) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390)
 #define TERM_IS_ANSI_COMPLIANT
+#endif
+#if defined(__unix__)
+#include <sys/ioctl.h>  
 #endif
 
 #if (CLIENT_OS == OS_RISCOS)
@@ -121,7 +111,6 @@ int DeinitializeConsole(void)
 int InitializeConsole(int runhidden,int doingmodes)
 {
   int retcode = 0;
-
   if ((++constatics.initlevel) == 1)
   {
     memset( (void *)&constatics, 0, sizeof(constatics) );
@@ -603,6 +592,27 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     WORD ht, wdth;
     GetSizeOfScreen( &ht, &wt );
     height = ht; width = wt;
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SOLARIS) || \
+        (CLIENT_OS == OS_SUNOS)
+    /* good for any non-sco flavour? */
+    struct winsize winsz;
+    winsz.ws_col = winsz.ws_row = 0;
+    ioctl (fileno(stdout), TIOCGWINSZ, &winsz);
+    if (winsz.ws_col && winsz.ws_row){
+      width   = winsz.ws_col;
+      height  = winsz.ws_row;
+    }
+  #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
+        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) 
+    struct ttysize winsz;
+    winsz.ts_lines = winsz.ts_cols = winsz.ts_xxx = winsz.ts_yyy = 0;
+    ioctl (fileno(stdout), TIOCGWINSZ, &winsz);
+    if (winsz.ts_lines && winsz.ts_cols){
+      width   = winsz.ts_cols;
+      height  = winsz.ts_lines;
+    }
+  #elif defined(TIOCGWINSZ)
+    #error please add support for TIOCGWINSZ (will be used by graph stuff)
   #else 
   {
     char *envp = getenv( "LINES" );
