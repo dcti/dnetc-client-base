@@ -4,19 +4,38 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.39 1999/11/15 03:39:46 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.40 1999/11/15 03:54:43 cyp Exp $
 
-if [ -z "$1" ]; then
-  echo "No platform specified on command line.";
-  echo "Run with 'list' as an argument to see available platforms."
-  exit 1
-fi
+# *** Notes for v2.8001+ ***
+#
+# - Adding CSC/OGR to the target:
+#   a) Add ${CSC_ANSI_SRCS} to your target's TARGET_ADDSRCS
+#      (x86 clients also have nasm cores. See linux/freebsd.)
+#   b) Add -DHAVE_CSC_CORES to your target's TARGET_CCFLAGS
+#   The same applies to OGR ( $OGR_ANSI_SRCS and -DHAVE_OGR_CORES of course :)
+#
+# - If you wish to continue supporting DES, add -DHAVE_DES_CORES
+#
+# - If you wish to have the build automatically generate a .tar.gz ready
+#   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>" 
+#   for example: TARGET_TARBALL="linux-x86-libc4" 
+#
+# - Avoid building separate MT and non-MT clients. MT is always preferred
+#   (from the client's perspective), and the user can always force non-MT
+#   by setting numcpu=0
+#
 
 #####################################################################
 # Note to people making changes..  Do not put spaces around the '=' #
 # signs in the variable definitions below.  Some sh implementations #
 # will interpret such lines as statements rather than assignments.  #
 #####################################################################
+
+if [ -z "$1" ]; then
+  echo "No platform specified on command line.";
+  echo "Run with 'list' as an argument to see available platforms."
+  exit 1
+fi
 
 #
 # Binary's name
