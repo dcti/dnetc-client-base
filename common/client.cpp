@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.57 2000/02/11 16:23:48 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.58 2000/02/13 04:06:01 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -306,13 +306,14 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       LogScreenRaw( "The distributed.net bug report pages are at "
                     "http://www.distributed.net/bugs/\n");
       if (dnet_id[0] != '\0' && strcmp(dnet_id,"rc5@distributed.net") !=0 )
-        LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n",dnet_id);
+        LogRaw( "Using email address (distributed.net ID) \'%s\'\n",dnet_id);
       else if (level == 2)
         LogRaw( "\n* =========================================================================="
                 "\n* The client is not configured with your email address (distributed.net ID) "
                 "\n* Work done cannot be credited until it is set. Please run '%s -config'"
                 "\n* =========================================================================="
-                "\n\n", utilGetAppName());
+                "\n", utilGetAppName());
+      LogRaw("\n");
 
       if (CliIsTimeZoneInvalid()) /*clitime.cpp (currently DOS,OS/2,WIN[16] only)*/
       {
@@ -324,7 +325,6 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
   }
   return;
 }
-
 /* ---------------------------------------------------------------------- */
 
 static int ClientMain( int argc, char *argv[] )
@@ -405,7 +405,7 @@ static int ClientMain( int argc, char *argv[] )
             if (domodes)
             {
               PrintBanner(client->id,1,restarted);
-              con_waitforuser = ((domodes & MODEREQ_CONFIG)!=0);
+              con_waitforuser = ((domodes & ~MODEREQ_CONFIG)!=0);
               TRACE_OUT((+1,"modereqrun\n"));
               ModeReqRun( client );
               TRACE_OUT((-1,"modereqrun\n"));
