@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.58 2000/05/06 17:01:45 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.59 2000/05/06 20:14:07 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -263,7 +263,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
     //Log("LoadState() while Run() ...\n");
     /* wait until Run() has finished, otherwise Run() will overwrite the new state */
     for (int i = 0; i < 50 && running; ++i)
-      usleep(100000);
+      NonPolledUSleep(100000);//usleep(100000);
     if (running) /* don't load the new state if Run() doesn't finish */
     {
       //Log("Still Run()ning. LoadState() failed!\n");
@@ -393,7 +393,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
           contestwork.ogr.nodes.hi = contestwork.ogr.nodes.lo = 0;
         }  
       }
-      #if(CLIENT_OS != OS_MACOS)
+      #if ((CLIENT_OS != OS_MACOS) || (CLIENT_CPU != CPU_POWERPC))
       extern CoreDispatchTable *ogr_get_dispatch_table();
       ogr = ogr_get_dispatch_table();
       #else
