@@ -79,6 +79,7 @@ platforms/amiga/usleep.o_ppc
 
 AMIGA_OBJS_68K =\
 platforms/amiga/_tzset.o_68k\
+platforms/amiga/globals.o_68k\
 platforms/amiga/amiga_version.o_68k\
 
 COMMON_OBJS_68K =\
@@ -247,6 +248,7 @@ platforms/amiga/usleep.o_ppc	:	platforms/amiga/usleep.c
 #	
  
 platforms/amiga/_tzset.o_68k	:	platforms/amiga/_tzset.c
+platforms/amiga/globals.o_68k	:	platforms/amiga/globals.c
 platforms/amiga/amiga_version.o_68k	:	platforms/amiga/amiga_version.c common/client.h
 common/confrwv.o_68k	:	common/confrwv.cpp
 common/confopt.o_68k	:	common/confopt.cpp
