@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.45  1998/12/31 17:55:50  cyp
+// changes to Network::Open(): (a) retry loop is inside ::Open() (was from
+// the external NetOpen()) (b) cleaned up the various hostname/addr/port
+// variables to make sense and be uniform throughout. (c) nofallback handling
+// is performed by ::Open() and not by the external NetOpen().
+//
 // Revision 1.44  1998/12/24 05:19:55  dicamillo
 // Add socket_ioctl to Mac OS definitions.
 //
@@ -353,24 +359,40 @@ extern int NetClose( Network *net );
 class Network
 {
 protected:
-  char server_name[64];
-  char rrdns_name[64];
-  s16  port;
-  int  mode, startmode;
-  SOCKET sock;            // socket file handle
-  int  retries;           // 3 retries, then do RRDNS lookup
-  u32  lastaddress;
-  s16  lastport;
-  int  isnonblocking;     // whether the socket could be set non-blocking
+  char server_name[64];   // used only by ::Open
+  s16  server_port;       // used only by ::Open
+  int  nofallback;        // used only by ::Open
+
+  int  startmode;
   int  autofindkeyserver; // implies 'only if hostname is a dnet keyserver'
-  int  verbose_level ;    // 0 == no messages, 1 == user, 2 = diagnostic/debug
+  int  verbose_level;     // 0 == no messages, 1 == user, 2 = diagnostic/debug
   int  iotimeout;         // use blocking calls if iotimeout is <0
 
+  int  mode;              // startmode as modified at runtime
+  SOCKET sock;            // socket file handle
+  int  isnonblocking;     // whether the socket could be set non-blocking
+  int  reconnected;       // set to 1 once a connect succeeds 
+
+  char fwall_hostname[64]; //intermediate
+  s16  fwall_hostport;
+  u32  fwall_hostaddr;
+  char fwall_userpass[128]; //username+password
+
+  char *svc_hostname;  //name of the final dest (server_name or rrdns_name)
+  s16  svc_hostport;   //the port of the final destination
+  u32  svc_hostaddr;   //resolved if direct connection or socks.
+
+  char *conn_hostname; //hostname we connect()ing to (fwall or server)
+  s16  conn_hostport;  //port we are connect()ing to
+  u32  conn_hostaddr;  //the address we are connect()ing to
+
+  //u32  lastaddress;
+  //s16  lastport;
+
   // http related
-  char httpproxy[64];     // also used for socks4
-  s16 httpport;           // also used for socks4
-  char httpid[128];       // also used for socks4
-  u32 lasthttpaddress;
+  //char httpproxy[64];     // also used for socks4
+  //s16 httpport;           // also used for socks4
+  //u32 lasthttpaddress;
 
   // communications and decoding buffers
   AutoBuffer netbuffer, uubuffer;
@@ -381,7 +403,7 @@ protected:
     //currently only negotiates/authenticates the SOCKSx session. 
     // returns < 0 on error, 0 on success
 
-  s32 Resolve( const char *host, u32 &hostaddress ); //LowLevel.. 
+  int Resolve( const char *host, u32 *hostaddress, int hostport ); //LowLevel.. 
     // perform a DNS lookup, handling random selection of DNS lists
     // returns < 0 on error, 0 on success
 
@@ -405,10 +427,10 @@ protected:
     // returns 0 if success/-1 if error. 
     // length of sent buffer stored back into 'length'
 
-  Network( const char *preferred, const char * roundrobin, 
-           s16 port, int AutoFindKeyServer, int _iotimeout );
-    // constructor: If preferred or roundrobin are NULL, use DEFAULT_RRDNS.
-    // They can be IP's and not necessarily names, though a name is better
+  Network( const char *preferred, s16 port, int nofallback,
+           int AutoFindKeyServer, int _iotimeout );
+    // constructor: If preferred is NULL, use DEFAULT_RRDNS.
+    // Can be IP and not necessarily a name, though a name is better
     // suited for roundrobin use.  if port is 0, use DEFAULT_PORT
     // protected!: used by friend NetOpen() below.
 

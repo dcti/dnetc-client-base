@@ -10,6 +10,12 @@
 */
 //
 // $Log: netinit.cpp,v $
+// Revision 1.12  1998/12/31 17:55:50  cyp
+// changes to Network::Open(): (a) retry loop is inside ::Open() (was from
+// the external NetOpen()) (b) cleaned up the various hostname/addr/port
+// variables to make sense and be uniform throughout. (c) nofallback handling
+// is performed by ::Open() and not by the external NetOpen().
+//
 // Revision 1.11  1998/12/21 17:54:23  cyp
 // (a) Network connect is now non-blocking. (b) timeout param moved from
 // network::Get() to object scope.
@@ -50,7 +56,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.11 1998/12/21 17:54:23 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.12 1998/12/31 17:55:50 cyp Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -396,7 +402,6 @@ Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback,
           int autofindks, int iotimeout, s32 proxytype, const char *proxyhost, 
           s32 proxyport, const char *proxyuid)
 {
-  const char *fbkeyserver;
   Network *net;
   int success;
   
@@ -404,18 +409,13 @@ Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback,
   if ( __netInitAndDeinit( +1 ) < 0)
     return NULL; 
 
-  if (!keyserver || !*keyserver) 
-    keyserver = NULL;
-  fbkeyserver = DEFAULT_RRDNS;
-  if ( nofallback )
-    fbkeyserver = keyserver;
-          
-  net = new Network( keyserver, fbkeyserver, 
-                     (s16)keyserverport, autofindks, iotimeout );
+  net = new Network( ((keyserver && !*keyserver)?(NULL):(keyserver)), 
+                     (s16)keyserverport, nofallback, autofindks, iotimeout );
   success = ( net != NULL );
     
   if (success)
     {
+LogScreen("hostname:%s:%d proxyuid:'%s'\n", proxyhost, proxyport,proxyuid);
     switch (proxytype)
       {
       case 1:  // uue
@@ -439,28 +439,7 @@ Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback,
 
   if (success)    
     {    
-    int retry = 0;
-    success = 0;
-    do{
-      if (!net->Open()) //opened ok
-        {
-        success = 1;
-        break;
-        }
-      if ((retry < 4) && (!CheckExitRequestTrigger()))
-        {
-        LogScreen( "Network::Open Error - "
-                   "sleeping for 3 seconds (%d)\n", retry );
-        sleep( 3 );
-        }
-      if (CheckExitRequestTrigger())
-        break;
-      if ( !NetCheckIsOK() ) //connection broken
-        {
-        Log("Network::Open Error - TCP/IP Connection Lost.\n");
-        break;
-        }
-      } while ((++retry) <= 4);
+    success = ((net->Open()) == 0); //opened ok
     }
             
   if (!success)

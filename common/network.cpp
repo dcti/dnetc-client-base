@@ -5,11 +5,16 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.56  1998/12/31 17:55:50  cyp
+// changes to Network::Open(): (a) retry loop is inside ::Open() (was from
+// the external NetOpen()) (b) cleaned up the various hostname/addr/port
+// variables to make sense and be uniform throughout. (c) nofallback handling
+// is performed by ::Open() and not by the external NetOpen().
+//
 // Revision 1.55  1998/12/24 05:22:03  dicamillo
 // Mac OS updates: use ioctl for blocking; support connection timeout value.
 //
 // Revision 1.54  1998/12/22 02:38:39  snake
-//
 // EPROTO doesn't exist on some systems
 //
 // Revision 1.53  1998/12/21 17:54:23  cyp
@@ -156,7 +161,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.55 1998/12/24 05:22:03 dicamillo Exp $"; }
+return "@(#)$Id: network.cpp,v 1.56 1998/12/31 17:55:50 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -167,6 +172,7 @@ return "@(#)$Id: network.cpp,v 1.55 1998/12/24 05:22:03 dicamillo Exp $"; }
 #include "cmpidefs.h"  // strncmpi(), strcmpi()
 #include "logstuff.h"  // LogScreen()
 #include "clitime.h"   // CliGetTimeString(NULL,1);
+#include "triggers.h"  // CheckExitRequestTrigger()
 #include "network.h"   // thats us
 
 #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
@@ -265,24 +271,48 @@ static const char *__inet_ntoa__(u32 addr)
   return buff;
 }  
 
+static void __print_packet( const char *label, const char *apacket, int alen )
+{
+  int i,n;
+  for (i=0;i<alen;i+=16)
+    {
+    char buffer[128];
+    char *p=&buffer[0];
+    p+=sprintf(buffer,"%s %04x: ", label, i );
+    for (n=0;(n<16 && ((n+i)<alen));n++)
+      p+=sprintf(p,"%02x ", apacket[n+i]);
+    for (;n<16;n++)
+      {*p++=' ';*p++=' ';*p++=' ';}
+    for (n=0;(n<16 && ((n+i)<alen));n++)        
+      *p++=((apacket[n+1]!='\r' && apacket[n+i]!='\n' && apacket[n+i]!='\t'
+           && isprint(apacket[n+i]))?(apacket[n+i]):('.'));
+    *p++=0;
+    LogRaw("%s\n",buffer);
+    }
+  LogRaw("%s total len: %d\n",label, alen);
+  return;
+}
+
 //======================================================================
 
-Network::Network( const char * Preferred, const char * Roundrobin, 
-             s16 Port, int AutoFindKeyServer, int _iotimeout )
+Network::Network( const char * servname, s16 servport, int _nofallback,
+                  int AutoFindKeyServer, int _iotimeout )
 {
   // intialize communication parameters
-  strncpy(server_name, (Preferred ? Preferred : ""), sizeof(server_name));
-  strncpy(rrdns_name, (Roundrobin ? Roundrobin : ""), sizeof(rrdns_name));
-  port = (s16) (Port ? Port : DEFAULT_PORT);
+  server_name[0] = 0;
+  if (servname)
+    strncpy(server_name, servname, sizeof(server_name));
+  server_port = servport;
   autofindkeyserver = AutoFindKeyServer;
-  
+
   mode = startmode = 0;
-  retries = 0;
   sock = INVALID_SOCKET;
   gotuubegin = gothttpend = 0;
   httplength = 0;
-  lasthttpaddress = lastaddress = 0;
-  httpid[0] = 0;
+  reconnected = 0;
+  
+  fwall_hostaddr = svc_hostaddr = conn_hostaddr = 0;
+  fwall_userpass[0] = 0;
 
   isnonblocking = 0;      /* whether the socket could be set non-blocking */
   iotimeout = _iotimeout; /* if iotimeout is <0, use blocking calls */
@@ -328,24 +358,33 @@ void Network::SetModeUUE( int is_enabled )
     startmode &= ~(MODE_SOCKS4 | MODE_SOCKS5);
     startmode |= MODE_UUE;
     }
-  else startmode &= ~MODE_UUE;
+  else 
+    {
+    startmode &= ~MODE_UUE;
+    }
+  return;
 }
 
 //----------------------------------------------------------------------
 
-void Network::SetModeHTTP( const char *httpproxyin, s16 httpportin,
-    const char *httpidin)
+void Network::SetModeHTTP( const char *httphost, s16 httpport, const char *httpusername)
 {
-  if (httpproxyin && httpproxyin[0])
-  {
+  conn_hostaddr = svc_hostaddr = fwall_hostaddr = 0;
+
+  if (httphost && httphost[0])
+    {
     startmode &= ~(MODE_SOCKS4 | MODE_SOCKS5);
     startmode |= MODE_HTTP;
-    httpport = httpportin;
-    strncpy(httpid, httpidin, 128);
-    strncpy(httpproxy, httpproxyin, 64);
-  }
-  else startmode &= ~MODE_HTTP;
-  lastaddress = lasthttpaddress = 0;
+    fwall_hostport = httpport;
+    strncpy( fwall_userpass, httpusername, 128);
+    strncpy( fwall_hostname, httphost, 64);
+    strlwr( fwall_hostname );
+    }
+  else 
+    {
+    startmode &= ~MODE_HTTP;
+    }
+  return;
 }
 
 //----------------------------------------------------------------------
@@ -353,24 +392,25 @@ void Network::SetModeHTTP( const char *httpproxyin, s16 httpportin,
 void Network::SetModeSOCKS4(const char *sockshost, s16 socksport,
       const char * socksusername )
 {
+  conn_hostaddr = svc_hostaddr = fwall_hostaddr = 0;
+
   if (sockshost && sockshost[0])
-  {
+    {
     startmode &= ~(MODE_HTTP | MODE_SOCKS5 | MODE_UUE);
     startmode |= MODE_SOCKS4;
-    httpport = socksport;
-    strncpy(httpproxy, sockshost, sizeof(httpproxy));
-    if (socksusername) {
-      strncpy(httpid, socksusername, sizeof(httpid));
-    } else {
-      httpid[0] = 0;
+    fwall_hostport = socksport;
+    strncpy(fwall_hostname, sockshost, sizeof(fwall_hostname));
+    fwall_userpass[0] = 0;
+    if (socksusername && *socksusername)
+      strncpy(fwall_userpass, socksusername, sizeof(fwall_userpass));
+    strlwr( fwall_hostname );
     }
-  }
   else
-  {
+    {
     startmode &= ~MODE_SOCKS4;
-    httpproxy[0] = 0;
-  }
-  lastaddress = lasthttpaddress = 0;
+    fwall_hostname[0] = 0;
+    }
+  return;
 }
 
 //----------------------------------------------------------------------
@@ -378,24 +418,24 @@ void Network::SetModeSOCKS4(const char *sockshost, s16 socksport,
 void Network::SetModeSOCKS5(const char *sockshost, s16 socksport,
       const char * socksusernamepw )
 {
+  conn_hostaddr = svc_hostaddr = fwall_hostaddr = 0;
+
   if (sockshost && sockshost[0])
-  {
+    {
     startmode &= ~(MODE_HTTP | MODE_SOCKS4 | MODE_UUE);
     startmode |= MODE_SOCKS5;
-    httpport = socksport;
-    strncpy(httpproxy, sockshost, sizeof(httpproxy));
-    if (socksusernamepw) {
-      strncpy(httpid, socksusernamepw, sizeof(httpid));
-    } else {
-      httpid[0] = 0;
+    fwall_hostport = socksport;
+    strncpy(fwall_hostname, sockshost, sizeof(fwall_hostname));
+    fwall_userpass[0] = 0;
+    if (socksusernamepw && *socksusernamepw)
+      strncpy(fwall_userpass, socksusernamepw, sizeof(fwall_userpass));
     }
-  }
   else
-  {
+    {
     startmode &= ~MODE_SOCKS5;
-    httpproxy[0] = 0;
-  }
-  lastaddress = lasthttpaddress = 0;
+    fwall_hostname[0] = 0;
+    }
+  return;
 }
 
 /* ----------------------------------------------------------------------- */
@@ -422,216 +462,244 @@ int Network::Open( SOCKET insock)
 
 int Network::Open( void )               // returns -1 on error, 0 on success
 {
-  int success;
-  mode = startmode;
-  const char *conntohost = "";
-
-  //Close();
-  //LowLevelCloseSocket(); // will be called by LowLevelCreateSocket()
-  //retries = 0;
   gethttpdone = puthttpdone = 0;
   netbuffer.Clear();
   uubuffer.Clear();
   gotuubegin = gothttpend = 0;
   httplength = 0;
+  mode = startmode;
 
-  if (!NetCheckIsOK())
-    return -1;
+  unsigned int retries = 0;
+  unsigned int maxtries = 5; /* 3 for preferred server, 2 for fallback */
+  unsigned int preftries = 3;
+  if (nofallback) maxtries = preftries;
   
-  success = (LowLevelCreateSocket() == 0);      // create a new socket
+  while (retries < maxtries) 
+    {
+    int success = 0, sockopened = 0;
+    const char *netcheckfailed = "Network::Open Error - TCP/IP Connection Lost.\n";
 
-  if (success)
-    {
-    if (iotimeout < 0)
-      isnonblocking = 0;
-    else
-      isnonblocking = ( MakeNonBlocking() == 0 );
-    if (verbose_level > 1) //debug
-      LogScreen("Network::Connected (%sblocking).\n", 
-                                 ((isnonblocking)?("non-"):("")) );
-    }
+    if (CheckExitRequestTrigger())
+      return -1;
 
-  if (!success)
-    {
-    if (verbose_level > 0) 
-      LogScreen("Network::failed to create network socket.\n");
-    }
-    
-  if (success)  
-    {
-    // resolve the address of keyserver, or if performing a proxied
-    // connection, the address of the proxy gateway server.
-    if (lastaddress == 0)
+    if ((startmode & MODE_PROXIED)!=0 && (fwall_hostname[0]==0 || fwall_hostport==0))
       {
-      if (mode & MODE_PROXIED) 
-        {
-        conntohost = httpproxy;
-        lastport = httpport;
-        }
-      else
-        {
-        lastport = port;
-        if ( retries < 4 )
-          conntohost = server_name;
-        else
-          {
-          conntohost = rrdns_name;
-          autofindkeyserver = 1;
-          }
-        if (!conntohost[0]) 
-          {
-          autofindkeyserver = 1;
-          conntohost = DEFAULT_RRDNS;
-          lastport = DEFAULT_PORT;
-          } 
-        }
-
-      if (!NetCheckIsOK())
-        {
-        success = 0;
-        lastaddress = 0;
-        retries = 4;
-        }
-      else
-        {
-        if (Resolve(conntohost, lastaddress ) < 0)
-          {
-          lastaddress = 0;
-          success = 0;
-          retries++;
-
-          if (verbose_level > 0)
-            LogScreen("Network::failed to resolve hostname \"%s\"\n", 
-                         conntohost);
-          }
-        }  // NetCheckIsOK())
-      } // if (lastaddress == 0)
-    } // if (success)  
-
-
-  if ( success )
-    {
-    // if we are doing a proxied connection, resolve the actual destination
-    if ((mode & MODE_PROXIED) && (lasthttpaddress == 0))
-      {
-      const char * hostname;
-      lastport = httpport;
-      if ( retries < 4 )
-        hostname = server_name;
-      else
-        {
-        hostname = rrdns_name;
-        autofindkeyserver = 1;
-        }
-      if (!hostname[0]) 
-        {
-        autofindkeyserver = 1;
-        hostname = DEFAULT_RRDNS;
-        lastport = DEFAULT_PORT;
-        } 
-
-      if (!NetCheckIsOK())
-        {
-        lasthttpaddress = 0;
-        success = 0;
-        retries = 4;
-        }
-      else
-        {
-        if (Resolve(hostname, lasthttpaddress ) < 0)
-          {
-          lasthttpaddress = 0;
-          success = 0;
-          if (mode & (MODE_SOCKS4 | MODE_SOCKS5))
-            {
-            // socks needs the address to resolve now.
-            lastaddress = 0;
-            
-            if (verbose_level > 0)
-              LogScreen("Network::failed to resolve hostname \"%s\"\n", 
-                          hostname);
-            }
-          } // if (Resolve(hostname, lasthttpaddress ) < 0)
-        } // if (NetCheckIsOK())
-      } // if ((mode & MODE_PROXIED) && (lasthttpaddress == 0))
-    } // if (success)  
-
-
-  if (success)
-    {
-    if (verbose_level > 0)
-      {
-      const char *p = strchr( conntohost, '.' );
-      if (!*conntohost)
-        conntohost = __inet_ntoa__( lastaddress );
-      else if (p && (strcmpi(p,".distributed.net")==0 || 
-           strcmpi(p,".v27.distributed.net")==0) && autofindkeyserver)
-        conntohost = "distributed.net";
-      LogScreen("Connecting to %s:%u...\n", conntohost,
-                                              ((unsigned int)(lastport)) );
+      Log("Network::Invalid %s proxy hostname or port.\n"
+         "Connect cancelled.\n",((startmode & MODE_HTTP)?("HTTP"):("SOCKS")));
+      return -1;
       }
 
-    success = ( LowLevelConnectSocket( lastaddress, lastport ) == 0 );
+    if (!NetCheckIsOK()) /* connection broken */
+      {
+      LogScreen(netcheckfailed);
+      return -1;
+      }
+
+    /* ---------- create a new socket --------------- */
+
+    sock = INVALID_SOCKET;
+    success = (LowLevelCreateSocket() == 0);      
 
     if (!success)
       {
-      if (verbose_level > 0)
+      if (verbose_level > 0) 
+        LogScreen("Network::failed to create network socket.\n");
+      }
+    else
+      {
+      isnonblocking = ((iotimeout < 0) ? (0) : ( MakeNonBlocking() == 0 ) );
+      if (verbose_level > 1) //debug
         {
-        LogScreen( "Connect to host %s:%u failed.\n",
-           __inet_ntoa__(lastaddress), (unsigned int)(lastport));
+        LogScreen("Network::Connected (%sblocking).\n", 
+            ((isnonblocking)?("non-"):("")) );
         }
-      #ifdef ERRNO_IS_UNUSABLE 
+      }
+
+    /* --- resolve the addresses(es) --- */
+
+    if (success)  
+      {
+      svc_hostname = server_name;
+      svc_hostport = server_port;
+
+      if (svc_hostname[0]==0 || retries > (preftries-1) /* fallback*/)
         {
-        lastaddress = 0; //so reset
+        svc_hostaddr = 0; 
+        svc_hostname = "rc5proxy.distributed.net";
+        if (svc_hostport != 80 && svc_hostport != 23 && 
+          svc_hostport != 2064 && svc_hostport != 3064 /* && 
+          svc_hostport != 21 && svc_hostport != 25 && svc_hostport!=110 */)
+          {
+          svc_hostport = 0;
+          }
+        autofindkeyserver = 1;
         }
-      #else
+      if (svc_hostport == 0)
         {
-        if (!NetCheckIsOK()) //use errno only if netcheck says ok.
-          lastaddress = 0; //reset
+        if ((startmode & MODE_HTTP)!=0)
+          svc_hostport = 80;
+        else if ((startmode & MODE_UUE)!=0)
+          svc_hostport = 23;
+        else
+          svc_hostport = DEFAULT_PORT;
+        }
+
+      if ((startmode & MODE_HTTP) == 0) /* we always re-resolve unless http */
+        {
+        svc_hostaddr = 0; 
+        }
+      
+      if (!NetCheckIsOK())
+        {
+        success = 0;
+        retries = maxtries;
+        LogScreen(netcheckfailed);
+        }
+      else if ((startmode & MODE_PROXIED) != 0)
+        {
+        if (Resolve( fwall_hostname, &fwall_hostaddr, fwall_hostport ) < 0)
+          {
+          success = 0;
+          fwall_hostaddr = 0;
+          if (verbose_level > 0)
+            LogScreen("Network::failed to resolve name \"%s\"\n", fwall_hostname );
+          retries = maxtries; //unrecoverable error. retry won't help
+          }
+        else if (svc_hostaddr == 0 && Resolve(svc_hostname, &svc_hostaddr, svc_hostport ) < 0)
+          {
+          svc_hostaddr = 0;
+          if (startmode & (MODE_SOCKS4 | MODE_SOCKS5))
+            {
+            success = 0; // socks needs the address to resolve now.
+            if (verbose_level > 0)
+              LogScreen("Network::failed to resolve hostname \"%s\"\n", 
+                                           svc_hostname);
+            }
+          }
+        conn_hostaddr = fwall_hostaddr;
+        conn_hostname = fwall_hostname;
+        conn_hostport = fwall_hostport;
+        }
+      else /* resolve for non-proxied connect */
+        {
+        strlwr( svc_hostname );
+        if (Resolve( svc_hostname, &svc_hostaddr, svc_hostport ) < 0) 
+          {
+          success = 0;
+          svc_hostaddr = 0;
+          if (verbose_level > 0)
+            LogScreen("Network::failed to resolve name \"%s\"\n", svc_hostname );
+          }
+        conn_hostaddr = svc_hostaddr;
+        conn_hostname = svc_hostname;
+        conn_hostport = svc_hostport;
+        }
+      }
+
+    /* ------ connect ------- */
+
+    if (success)
+      {  
+      if (verbose_level > 0 && reconnected == 0)
+        {
+        const char *targethost = svc_hostname;
+        unsigned int len = strlen( targethost );
+        const char sig[]=".distributed.net";
+        char scratch[sizeof(sig)+20];
+        if ((len > (sizeof( sig )-1) && autofindkeyserver &&
+           strcmpi( &targethost[(len-(sizeof( sig )-1))], sig ) == 0))
+          {
+          targethost = sig+1;
+          if (svc_hostaddr)
+            {
+            sprintf(scratch, "%s %s", sig+1, __inet_ntoa__(svc_hostaddr));
+            targethost = scratch;
+            }
+          }
+        if ((startmode & MODE_PROXIED)==0)
+          {  
+          #ifdef DEBUG
+          Log
+          #else
+          LogScreen
+          #endif
+          ("Connecting to %s:%u...\n", targethost,
+                                     ((unsigned int)(svc_hostport)) );
+          }
         else
           {
-          #if defined(_TIUSER_)
-            char *errmsg = "undefined error";
-            if (t_errno < t_nerr)
-              errmsg = t_errlist[t_errno];
-            LogScreen( " %s  Error %d (%s)\n",CliGetTimeString(NULL,0), 
-                                    t_errno, errmsg );
+          #ifdef DEBUG
+          Log
           #else
-          int my_errno = errno;
-          if (verbose_level > 0 )
-            LogScreen( " %s  Error %d (%s)\n",CliGetTimeString(NULL,0), 
-                                    my_errno, strerror(my_errno) );
-          //#ifdef EINTR
-          //if (my_errno != EINTR) //should retry
-          //#endif
+          LogScreen
           #endif
-          lastaddress = 0; //or reset
+          ("Connecting to %s:%u\nvia %s proxy %s:%u\n", targethost,
+                                     ((unsigned int)(svc_hostport)),
+                      ((startmode & MODE_SOCKS5)?("SOCKS5"):
+                        ((startmode & MODE_SOCKS4)?("SOCKS4"):
+                         ((startmode & MODE_HTTP)?("HTTP"):("???")))),
+                      fwall_hostname, (unsigned int)fwall_hostport );
           }
         }
-      #endif                            
-      } // if (!success)
-    } // if (success)
-
-  if (success)
-    {
-    success = ( InitializeConnection() == 0 );
-    if (!success && verbose_level > 0)
+      
+      success = ( LowLevelConnectSocket( conn_hostaddr, conn_hostport ) == 0 );
+      
+      if (success)
+        reconnected = 1;
+      else //if (!success)   /* connect failed */
+        {
+        if (verbose_level > 0)
+          {
+          LogScreen( "Connect to host %s:%u failed.\n",
+             __inet_ntoa__(conn_hostaddr), (unsigned int)(conn_hostport));
+          #ifdef ERRNO_IS_UNUSABLE 
+          if (NetCheckIsOK()) //use errno only if netcheck says ok.
+            {
+            #if defined(_TIUSER_)
+              LogScreen( " %s  Error %d (%s)\n", 
+                  CliGetTimeString(NULL,0),  t_errno, 
+                ((t_errno>=t_nerr)?("undefined error"):(t_errlist[t_errno])) );
+            #else
+              LogScreen( " %s  Error %d (%s)\n",CliGetTimeString(NULL,0), 
+                                      errno, strerror(errno) );
+            #endif                            
+            }
+          #endif
+          }
+        } //connect failed
+      } // resolve succeeded
+      
+    /* ---- initialize the connection ---- */
+       
+    if (success)
       {
-      LogScreen( "Network::Failed to initialize %sconnection.\n",
-       ((!startmode)?(""):((startmode & MODE_SOCKS5)?("SOCKS5 "):
-       ((startmode & MODE_SOCKS4)?("SOCKS4 "):
-       ((startmode & MODE_HTTP)?("HTTP "):("??? "))))));
+      success = ( InitializeConnection() == 0 );
+      if (!success && verbose_level > 0)
+        {
+        LogScreen( "Network::Failed to initialize %sconnection.\n",
+          (((startmode & MODE_PROXIED)==0)?(""):((startmode & MODE_SOCKS5)?("SOCKS5 "):
+          ((startmode & MODE_SOCKS4)?("SOCKS4 "):
+          ((startmode & MODE_HTTP)?("HTTP "):("??? "))))));
+        }
+      }
+
+    /* ---- clean up ---- */
+      
+    if (success)
+      return 0;
+      
+    Close();
+    retries++;
+
+    if (retries < (maxtries-1))
+      {
+      LogScreen( "Network::Open Error - "
+                 "sleeping for 3 seconds (%d)\n", retries );
+      sleep( 3 );
       }
     }
-
     
-  if (!success)
-    {
-    LowLevelCloseSocket();
-    retries++;
-    return -1;
-    }
-  return 0;
+  return -1;
 }  
 
 // -----------------------------------------------------------------------
@@ -665,7 +733,7 @@ int Network::InitializeConnection(void)
     // Otherwise we ask for no authentication only.
 
     psocks5mreq->ver = 5;
-    psocks5mreq->nMethods = (unsigned char) (httpid[0] ? 2 : 1);
+    psocks5mreq->nMethods = (unsigned char) (fwall_userpass[0] ? 2 : 1);
     psocks5mreq->Methods[0] = 0;  // no authentication
     psocks5mreq->Methods[1] = 2;  // username/password
 
@@ -695,7 +763,7 @@ int Network::InitializeConnection(void)
       char *pchSrc, *pchDest;
       int userlen, pwlen;
 
-      pchSrc = httpid;
+      pchSrc = fwall_userpass;
       pchDest = username;
       while (*pchSrc && *pchSrc != ':')
         *pchDest++ = *pchSrc++;
@@ -750,8 +818,8 @@ int Network::InitializeConnection(void)
     psocks5->cmdORrep = 1;   // connnect
     psocks5->rsv = 0;   // must be zero
     psocks5->atyp = 1;  // IPv4
-    psocks5->addr = lasthttpaddress;
-    psocks5->port = (u16)(htons((server_name[0]!=0)?((u16)port):((u16)(DEFAULT_PORT))));
+    psocks5->addr = svc_hostaddr;
+    psocks5->port = svc_hostport; //(u16)(htons((server_name[0]!=0)?((u16)port):((u16)(DEFAULT_PORT))));
 
     if (LowLevelPut(10, socksreq) < 0)
       goto Socks5InitEnd;
@@ -787,7 +855,7 @@ Socks5InitEnd:
   if (startmode & MODE_SOCKS4)
     {
     int success = 0; //assume failed
-    char socksreq[128];  // min sizeof(httpid) + sizeof(SOCKS4)
+    char socksreq[128];  // min sizeof(fwall_userpass) + sizeof(SOCKS4)
     SOCKS4 *psocks4 = (SOCKS4 *)socksreq;
     u32 len;
 
@@ -796,11 +864,11 @@ Socks5InitEnd:
 
     psocks4->VN = 4;
     psocks4->CD = 1;  // CONNECT
-    psocks4->DSTPORT = (u16)htons((server_name[0]!=0)?((u16)port):((u16)DEFAULT_PORT));
-    psocks4->DSTIP = lasthttpaddress;
-    strncpy(psocks4->USERID, httpid, sizeof(httpid));
+    psocks4->DSTPORT = svc_hostport; //(u16)htons((server_name[0]!=0)?((u16)port):((u16)DEFAULT_PORT));
+    psocks4->DSTIP = svc_hostaddr;   //lasthttpaddress;
+    strncpy(psocks4->USERID, fwall_userpass, sizeof(fwall_userpass));
 
-    len = sizeof(*psocks4) - 1 + strlen(httpid) + 1;
+    len = sizeof(*psocks4) - 1 + strlen(fwall_userpass) + 1;
     if (!(LowLevelPut(len, socksreq) < 0))
       {
       len = sizeof(*psocks4) - 1;  // - 1 for the USERID[1]
@@ -837,7 +905,6 @@ Socks5InitEnd:
 int Network::Close(void)
 {
   LowLevelCloseSocket();
-  retries = 0;
   gethttpdone = puthttpdone = 0;
   netbuffer.Clear();
   uubuffer.Clear();
@@ -855,6 +922,9 @@ s32 Network::Get( u32 length, char * data )
 {
   int need_close = 0;
   time_t timestop = time(NULL)+((time_t)((isnonblocking)?(iotimeout):(0)));
+
+  if (verbose_level > 1)
+    Log("startget: time()==%u, timeout at %u\n", time(NULL), timestop );
 
   while (netbuffer.GetLength() < length && time(NULL) <= timestop)
   {
@@ -878,11 +948,11 @@ s32 Network::Get( u32 length, char * data )
         {
           httplength = atoi((const char*)line + 16);
         }
-        else if ((lasthttpaddress == 0) &&
+        else if ((svc_hostaddr == 0) &&
           (strncmpi(line, "X-KeyServer: ", 13) == 0))
         {
-          if (Resolve( line + 13, lasthttpaddress) < 0)
-            lasthttpaddress = 0;
+          if (Resolve( line + 13, &svc_hostaddr, svc_hostport ) < 0)
+            svc_hostaddr = 0;
         }
         else if (line.GetLength() < 1)
         {
@@ -1037,7 +1107,12 @@ s32 Network::Get( u32 length, char * data )
   memmove(data, netbuffer.GetHead(), (int) bytesfilled);
   netbuffer.RemoveHead(bytesfilled);
 
-  if (need_close) Close();
+  if (need_close) 
+    Close();
+
+  if (verbose_level > 1) //DEBUG
+    __print_packet("Get", data, bytesfilled );
+
   return bytesfilled;
 }
 
@@ -1101,49 +1176,28 @@ s32 Network::Put( u32 length, const char * data )
     outbuf = AutoBuffer(data, length);
     }
 
-  if (mode & MODE_HTTP)
+  if ((mode & MODE_HTTP)!=0)
     {
     char header[500];
-    char ipbuff[64];
-    if (lasthttpaddress) 
-      {
-      strncpy( ipbuff, __inet_ntoa__(lasthttpaddress), sizeof(ipbuff));
-      #if 0      
-        in_addr addr;
-        addr.s_addr = lasthttpaddress;
-        strncpy(ipbuff, inet_ntoa(addr), sizeof(ipbuff));
-      #endif
-      } 
-    else
-     {
-     strncpy(ipbuff, server_name, sizeof(ipbuff));
-     }
-
-    if ( httpid[0] ) 
-      {
-      sprintf(header, "POST http://%s:80/cgi-bin/rc5.cgi HTTP/1.0\r\n"
-         "Proxy-authorization: Basic %s\r\n"
-         "Proxy-Connection: Keep-Alive\r\n"
-         "Content-Type: application/octet-stream\r\n"
-         "Content-Length: %lu\r\n\r\n",
-         ipbuff, //(long) lastport,
-         httpid,
-         (unsigned long) outbuf.GetLength());
-      } 
-    else 
-      {
-      sprintf(header, "POST http://%s:80/cgi-bin/rc5.cgi HTTP/1.0\r\n"
-         "Content-Type: application/octet-stream\r\n"
-         "Content-Length: %lu\r\n\r\n",
-         ipbuff, //(long) lastport,
-         (unsigned long) outbuf.GetLength());
-      }
+    sprintf(header, "POST http://%s:%u/cgi-bin/rc5.cgi HTTP/1.0\r\n"
+                    "%s%s%s"
+                    "Content-Type: application/octet-stream\r\n"
+                    "Content-Length: %lu\r\n\r\n",
+                    ((svc_hostaddr)?(__inet_ntoa__(svc_hostaddr)):(svc_hostname)),
+                    ((unsigned int)(svc_hostport)),
+                    ((fwall_userpass[0])?("Proxy-authorization: Basic "):("")),
+                    ((fwall_userpass[0])?(fwall_userpass):("")),
+                    ((fwall_userpass[0])?("\r\nProxy-Connection: Keep-Alive\r\n"):("")),
+                    (unsigned long) outbuf.GetLength());
     #if (CLIENT_OS == OS_OS390)
       __etoa(header);
     #endif
     outbuf = AutoBuffer(header) + outbuf;
     puthttpdone = 1;
     }
+
+  if (verbose_level > 1) //DEBUG
+    __print_packet("Put", outbuf, outbuf.GetLength() );
 
   return (LowLevelPut(outbuf.GetLength(), outbuf) != -1 ? 0 : -1);
 }
@@ -1327,12 +1381,12 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
     sin.sin_port = htons( that_port ); 
     sin.sin_addr.s_addr = that_address;
 
-	// set timeout for connect
-	if (iotimeout > 0)
-	{
-	  // timeout for this call must be >0 to not have default used
-	  socket_set_conn_timeout(sock, iotimeout);
-	}
+  // set timeout for connect
+  if (iotimeout > 0)
+  {
+    // timeout for this call must be >0 to not have default used
+    socket_set_conn_timeout(sock, iotimeout);
+  }
 
     return(connect(sock, (struct sockaddr *)&sin, sizeof(sin)));
     
@@ -1397,17 +1451,16 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
             rc = -1;
             break;
             }
-          else if (rc > 0)
+          else if (rc > 0) /* either writeready or exception */
             {
             #if defined(__WINDOWS_386__) /*hack against FAR * casts in macros*/
-            rc = ((__WSAFDIsSet(sock, &writefds))?(0):(-1));
+            rc = ((__WSAFDIsSet(sock, &writefds) == 0)?(-1):(0));
             #else
-            rc = ((FD_ISSET(sock, &writefds))?(0):(-1));
+            rc = ((FD_ISSET(sock, &writefds) == 0)?(-1):(0));
             #endif
-            
-            #if !defined(ERRNO_IS_UNUSABLE) && defined(EPROTO)
-            if (rc != 0)      /* exception */
-              errno = EPROTO;
+            #if !defined(ERRNO_IS_UNUSABLE)
+            if (rc != 0) /* not writeready, so must be an exception */
+              errno = EAGAIN;
             #endif
             break;
             }
@@ -1461,7 +1514,7 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
 //------------------------------------------------------------------------
 
 #if (!defined(AF_INET) || !defined(SOCK_STREAM))  
-s32 Network::Resolve( const char *, u32 & )
+s32 Network::Resolve( const char *, u32 *, int )
 { return -1; }
 #else
 #include "netres.cpp"
@@ -1477,14 +1530,46 @@ s32 Network::LowLevelPut(u32 length, const char *data)
   if (!NetCheckIsOK())                                  
     return -1;
 #if defined(_TIUSER_)                                          //TLI
-  if (!length) return 0;
-  int rc;
-  do{
-    rc = t_snd(sock, (char *)data, (unsigned int)length, 0);
-    if ( rc == -1 && t_errno == TFLOW ) /* sending too fast */
-      usleep(500000); // 0.5 secs
-    } while ( rc == -1 && t_errno == TFLOW );
-  return (s32)(rc);
+  int rc = 0;
+  unsigned int totalsent = 0;
+
+  if (length > 0)
+    {
+    unsigned sendquota = 512;
+    struct t_info info;
+    if ( t_getinfo( sock, &info ) != -1)
+      {
+      if (info.tdsu > 0)
+        sendquota = info.tdsu;
+      else if (info.tdsu == -1) /* no limit */
+        sendquota = (unsigned int)length;
+      else if (info.tdsu == 0) /* no boundaries */
+        sendquota = 1;
+      else //if (info.tdsu == -2) /* normal send not supp'd (ever happens?)*/
+        return -1;
+      }
+    while (length != 0)
+      {
+      unsigned int sendlen = (unsigned int)length;
+      if (sendlen > sendquota)
+        sendlen = sendquota;
+      rc = t_snd(sock, (char *)data, (unsigned int)sendlen, 
+                  (((sendlen < (unsigned int)length)?(T_MORE):(0))) );
+      if (rc == -1)
+        {
+        if (t_errno == TFLOW ) /* sending too fast */
+          {
+          usleep(500000); // 0.5 secs
+          continue;
+          }
+        break;
+        }
+      totalsent += rc;
+      data += rc;
+      length -= rc;
+      }
+    }
+  return (s32)((rc == -1 && totalsent == 0)?(-1):(totalsent));
 #else                                                         //BSD sox
   u32 writelen = write(sock, (char*)data, length);
   return (s32) (writelen != length ? -1 : (s32)writelen);
@@ -1570,7 +1655,7 @@ int Network::LowLevelConditionSocket( unsigned long cond_type )
       return IoctlSocket(sock, FIONBIO, &flagon);
     #elif (CLIENT_OS == OS_MACOS)
       char flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
-	  return ioctl(sock, FIONBIO, &flagon);    
+      return ioctl(sock, FIONBIO, &flagon);    
     #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
       {
       int flag, res, arg;
