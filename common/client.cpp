@@ -570,9 +570,11 @@ s32 Client::Fetch( u8 contest, Network *netin )
 #endif
 #endif
       u32 percent2 = ((count*10000)/((inthreshold[contest]-more)+count));
-      LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
+#ifdef NEW_STATS_AND_LOGMSG_STUFF
+	 LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
           CliGetTimeString(NULL,1), count, ((inthreshold[contest]-more)+count),
-                    percent2/100, percent2%100 );
+			 percent2/100, percent2%100 );
+#endif
 #if !defined(NOMAIN)           // these two must match
     } else {                 // use simple output for redirected stdout
       Log( "<" );
@@ -943,9 +945,11 @@ s32 Client::Flush( u8 contest , Network *netin )
 #endif
 #endif
         u32 percent2 = ((count*10000)/(more+count));
+#ifdef NEW_STATS_AND_LOGMSG_STUFF
         LogScreenf( "\r[%s] Sent block %u of %u (%u.%02u%% transferred) ",
                     CliGetTimeString(NULL,1), count, more+count,
                     percent2/100, percent2%100 );
+#endif
 #if !defined(NOMAIN)           // these two must match
       } else {                 // use simple output for redirected stdout
         Log( ">" );
