@@ -3,6 +3,9 @@
 // INI file reading/processing class for C++
 // 
 // $Log: iniread.h,v $
+// Revision 1.13  1998/09/25 04:32:06  pct
+// DEC Ultrix port changes
+//
 // Revision 1.12  1998/06/29 06:58:04  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -30,7 +33,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 
-#if (CLIENT_OS == OS_RISCOS)
+#if (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_ULTRIX)
 #include <sys/types.h>
 #endif
 

@@ -9,6 +9,9 @@
 */
 //  
 // $Log: cmpidefs.h,v $
+// Revision 1.9  1998/09/25 04:29:12  pct
+// DEC Ultrix port changes
+//
 // Revision 1.8  1998/08/27 00:43:28  cyp
 // DOS change: strncmpi() now defined.
 //
@@ -91,5 +94,8 @@
   #if (CLIENT_OS == OS_DYNIX)
     extern "C" int strcasecmp(const char *s1, const char *s2);
     extern "C" int strncasecmp(const char *s1, const char *s2, size_t);
+  #elif (CLIENT_OS == OS_ULTRIX)
+    extern "C" int strcasecmp(const char *s1, const char *s2);
+    extern "C" int strncasecmp(const char *s1, const char *s2, int);
   #endif
 #endif

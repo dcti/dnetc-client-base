@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.29  1998/09/25 04:30:32  pct
+// DEC Ultrix port changes
+//
 // Revision 1.28  1998/08/10 20:09:34  cyruspatel
 // Added a warning for the VMS porter that NO!NETWORK is now obsolete
 //
@@ -275,7 +278,11 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_MIPS
   #endif
 #elif (defined(ASM_MIPS) || defined(__mips)) && !defined(sinix)
-  #define CLIENT_OS     OS_IRIX
+  #if defined(ultrix)
+    #define CLIENT_OS	OS_ULTRIX
+  #else
+    #define CLIENT_OS     OS_IRIX
+  #endif
   #define CLIENT_CPU    CPU_MIPS
 #elif defined(__VMS)
   #if defined(__ALPHA)

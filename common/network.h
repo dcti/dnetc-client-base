@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.37  1998/09/25 04:32:12  pct
+// DEC Ultrix port changes
+//
 // Revision 1.36  1998/09/03 16:01:35  cyp
 // Added TLI support. Any other SYSV (-type) takers?
 //
@@ -252,6 +255,13 @@ extern "C" {
     int socket(int, int, int);
     int setsockopt(int, int, int, char *, int);
     int connect(int, struct sockaddr *, int);
+    }
+  #endif
+  #if (CLIENT_OS == OS_ULTRIX)
+    extern "C" {
+      int socket(int, int, int);
+      int setsockopt(int, int, int, char *, int);
+      int connect(int, struct sockaddr *, int);
     }
   #endif
   #if (CLIENT_OS == OS_NETWARE)

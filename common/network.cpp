@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.44  1998/09/25 04:32:09  pct
+// DEC Ultrix port changes
+//
 // Revision 1.43  1998/09/20 15:24:26  blast
 // AmigaOS changes
 //
@@ -113,7 +116,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.43 1998/09/20 15:24:26 blast Exp $"; }
+return "@(#)$Id: network.cpp,v 1.44 1998/09/25 04:32:09 pct Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -974,7 +977,7 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
     {
       if (need_close || gethttpdone) 
         break;
-      #if (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_SOLARIS)
+      #if (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_ULTRIX)
         sleep(1); // full 1 second due to so many reported network problems.
       #else
         usleep( 100000 );  // Prevent racing on error (1/10 second)

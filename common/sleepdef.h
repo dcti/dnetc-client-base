@@ -21,6 +21,9 @@
 */
 //
 // $Log: sleepdef.h,v $
+// Revision 1.12  1998/09/25 04:32:15  pct
+// DEC Ultrix port changes
+//
 // Revision 1.11  1998/08/10 10:16:35  cyruspatel
 // DOS port changes.
 //
@@ -127,6 +130,9 @@
 #elif (CLIENT_OS == OS_DYNIX)
   // DYNIX doesn't have nanosleep() or usleep()
   #define usleep(x) sleep(1)
+#elif (CLIENT_OS == OS_ULTRIX)
+  #define usleep(x) { struct timeval tv = {0,(x)}; \
+		           select(0,NULL,NULL,NULL,&tv); }
 #else
   #include <unistd.h> //gcc has both sleep() and usleep()
 #endif
