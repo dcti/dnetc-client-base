@@ -1,6 +1,6 @@
 
- distributed.net RC5-DES client for the unix (-family)
- document revision $Id: readme._ix,v 1.5 1999/05/06 18:35:50 cyp Exp $
+ distributed.net RC5-DES client for the unix family
+ document revision $Id: readme._ix,v 1.6 1999/06/03 21:03:53 cyp Exp $
                                                           
  Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
 
@@ -17,10 +17,13 @@
     fire it up with [path]rc5des
 
     If you have never run the client before, it will initiate the
-    menu-driven configuration. Save and quit when done, the configuration
-    file will be saved in_the_same_directory_as_the_client. Then, simply 
-    restart the client. From that point on it will use the saved 
-    configuration.
+    menu-driven configuration. Save and quit when done. If the client
+    was started with an explicit path specifier, eg './there/rc5des',
+    then the configuration file will be saved ./there/. Otherwise, it 
+    will be saved in the current directory.
+
+    Then, simply restart the client. From that point on it will use the 
+    saved configuration.
     
     The configuration options are fairly self-explanatory and can be run
     at any time by starting the client with the '-config' option.
@@ -34,8 +37,9 @@
 
     Beginning with v2.7101, the client's default directory is the 
     one the configuration file is located in, which in turn is assumed to
-    be in the same directory the binary is in. To specify another 
-    configuration file use the -ini switch.
+    be in the same directory the binary is in (if the binary was started
+    with an explicit path spec). To specify another configuration file 
+    use the -ini switch.
     
     Beginning with v2.7102, multi-threaded clients can be forced to run
     single-threaded by setting the number of CPUs (the numcpu= option in
@@ -57,9 +61,9 @@
     the client has started successfully if you do not get a message to the
     contrary. 
     
-    Beginning with v2.7110.442, the process name (as seen from ps) is always
-    'rc5des'. This is to facilitate scripted or system-wide 
-    -shutdowns/restarts.
+    Beginning with v2.7110.442, the process name (as seen from ps or top) is 
+    always 'rc5des'. This is to facilitate scripted or system-wide --pause, 
+    --unpause, --shutdown and --restart
     
     As of November 7th, 1998, much of the client source, including all the 
     core crunch code that was previously scattered about, is available 
