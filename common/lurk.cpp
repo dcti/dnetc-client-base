@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.21 2000/10/04 09:33:04 snake Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.22 2000/10/06 00:52:51 mfeiri Exp $"; }
 
 //#define TRACE
 
@@ -122,7 +122,7 @@ int Lurk::IsConnected(void)
     {
       if (showedconnectcount == 0) /* there was no previous device */
         previous_conndevice[0] = '\0';
-      if (conndevice[0]==0) /* only win16 has no name */
+      if ((conndevice[0]==0) && (showedconnectcount == 0)) /* win16 and macos have no name */
       {
         LogScreen("Dialup link detected...\n"); // so this is the first time
         showedconnectcount = 1; // and there is only one device
@@ -138,14 +138,17 @@ int Lurk::IsConnected(void)
     }
     else if ( showedconnectcount > 0 ) /* no longer connected */
     {
-      #if 0
-       LogScreen("(Dialup-)link was dropped%s.\n",
-                ((conf.lurkmode == CONNECT_LURKONLY)?
-                (" and will not be re-initiated")?("")) );
-      #else
-       LogScreen("Tracked termination of %s.\n",
+      if (conndevice[0]==0) /* win16 and macos have no name */
+      {
+        LogScreen("(Dialup-)link was dropped%s.\n",
+                 ((conf.lurkmode == CONNECT_LURKONLY)?
+                 (" and will not be re-initiated"):("")));
+      }
+      else
+      {
+        LogScreen("Tracked termination of %s.\n",
           ((showedconnectcount > 1)?("all IP links"):("IP link")) );
-      #endif
+      }
       showedconnectcount = 0;
       previous_conndevice[0] = '\0';
     }
@@ -225,6 +228,19 @@ int Lurk::CheckIfConnectRequested(void) //yes/no
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
+
+#elif (CLIENT_OS == OS_MACOS)
+
+#include <ctype.h>
+#include <Gestalt.h>
+#include <OpenTransportProviders.h>
+
+EndpointRef fEndPoint = kOTInvalidEndpointRef;
+
+#ifdef LURK_LISTENER
+pascal void __OTListener(void *context, OTEventCode code, OTResult result, void *cookie);
+int isonline=0;
+#endif
 
 #elif (CLIENT_OS == OS_WIN16)
 
@@ -370,11 +386,42 @@ int Lurk::GetCapabilityFlags(void)
         what |= CONNECT_DODBYPROFILE;
     }
   }
+#elif (CLIENT_OS == OS_MACOS)
+  {
+    static int caps = -1;
+    if (caps == -1)
+    {
+	   long	response;
+      //	OpenTransport/Remote Access PPP must be present
+	   Gestalt(gestaltOpenTptRemoteAccess, &response);
+	   if (response & (1 << gestaltOpenTptPPPPresent))
+      {
+         InitOpenTransport();
+         fEndPoint = OTOpenEndpoint(OTCreateConfiguration(kPPPControlName),0, nil, &response);  
+         if((response == kOTNoError) && (fEndPoint != kOTInvalidEndpointRef))
+         {
+            #ifdef LURK_LISTENER
+				if( fEndPoint->InstallNotifier((OTNotifyProcPtr)__OTListener,this) == kOTNoError) 
+				{
+					OTSetAsynchronous(fEndPoint);
+					if(OTIoctl(fEndPoint, I_OTGetMiscellaneousEvents, (void*)1) == kOTNoError )
+					{
+				#endif
+                  what = (CONNECT_LURK | CONNECT_LURKONLY );
+            #ifdef LURK_LISTENER
+               }
+				}
+				#endif
+		   }
+      }
+      caps = what;
+    }
+    what |= caps;
+  }
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
       (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-      (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX)
-  what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
-#elif (CLIENT_OS == OS_OS2)
+      (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX) || \
+      (CLIENT_OS == OS_OS2)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
 #elif (CLIENT_OS == OS_AMIGAOS)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYPROFILE | CONNECT_IFACEMASK);
@@ -623,8 +670,9 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
 
 /* ---------------------------------------------------------- */
 
-#if (!((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2) && !defined(__EMX__)))
-/* needed by all except win16 and non-emx-os/2 */
+#if (!((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2) && !defined(__EMX__) || \
+      (CLIENT_OS == OS_MACOS)))
+/* needed by all except win16 and non-emx-os/2 and macos*/
 static int __MatchMask( const char *ifrname, int mask_include_all,
                        int mask_default_only, const char *ifacestowatch[] )
 {
@@ -740,6 +788,30 @@ static int __insdel_devname(const char *devname, int isup,
   strcat(strcat(conndevices,"|"),devname);
   return 0;
 }  
+#endif
+
+
+/* ---------------------------------------------------------- */
+
+#ifdef LURK_LISTENER
+pascal void __OTListener(void *context, OTEventCode code, OTResult result, void *cookie)
+{
+   //printf("default: %X\n",code);
+   switch (code)
+   {
+      case kPPPIPCPDownEvent:
+			   isonline=0;
+            break;
+            
+		case kPPPIPCPUpEvent:
+				if (result == kOTNoError)
+               isonline=1;
+		   	break;
+		
+		default:
+            break;
+	}
+}
 #endif
 
 /* ---------------------------------------------------------- */
@@ -1277,6 +1349,48 @@ int Lurk::InternalIsConnected(void) //must always returns a valid yes/no
      TRACE_OUT((-1,"Lurk::InternalIsConnected() => 1\n"));
      return 1;
    }
+
+#elif (CLIENT_OS == OS_MACOS)
+
+#ifdef LURK_LISTENER
+static init = -1;
+if (init == -1)
+{
+init=0;
+#endif
+
+   TOptMgmt cmd;
+   TOption* option;
+   UInt8 buf[128];
+   cmd.opt.buf = buf;
+   cmd.opt.len = sizeof(TOptionHeader);
+   cmd.opt.maxlen = sizeof buf;
+   cmd.flags = T_CURRENT;
+   option = (TOption *) buf;
+   option->level = COM_PPP;
+   option->name = CC_OPT_GETMISCINFO;
+   option->status = 0;
+   option->len = sizeof(TOptionHeader);
+
+   OTOptionManagement(fEndPoint, &cmd, &cmd);
+   option = (TOption *) cmd.opt.buf;
+
+   if ((option->status == T_SUCCESS) || (option->status == T_READONLY))
+   {
+      CCMiscInfo *info = (CCMiscInfo *) &option->value[0];
+      if (info->connectionStatus == kPPPConnectionStatusConnected)
+      {
+         #ifdef LURK_LISTENER
+         isonline=1;
+         #endif
+         return 1;
+      }
+   }
+
+#ifdef LURK_LISTENER
+}
+return isonline;
+#endif
 
 #else
   #error "InternalIsConnected() must always return a valid yes/no."
