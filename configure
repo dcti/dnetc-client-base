@@ -133,10 +133,11 @@ DESX86_SRCS="des/des-x86.cpp"
 #
 TARGET_CC="g++"
 TARGET_CCFLAGS="$OPTS_GCC"
+TARGET_LDFLAGS=""
 TARGET_LIBS=""
 TARGET_AS="gas"
 TARGET_ASFLAGS=""
-TARGET_STRIP="strip"
+
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
 TARGET_ADDOBJS=""
@@ -355,6 +356,7 @@ case "$1" in
     *aix-gcc2)     # possibly useful for POWER machines
 	RC5CORECOPY="rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_AIX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
@@ -363,6 +365,7 @@ case "$1" in
 	TARGET_AS="as"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
+	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	;;
@@ -370,6 +373,7 @@ case "$1" in
     *x86-linux-old)   # uses standard GCC options plus '-pipe'
 	TARGET_AS="as"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
+	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	;;
@@ -378,6 +382,7 @@ case "$1" in
 	TARGET_AS="as"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
 	TARGET_CCFLAGS="$(OPTS_EGCS_P5) -static -DPIPELINE_COUNT=2"
+	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$(X86_CPP)"
 	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	;;
@@ -386,6 +391,7 @@ case "$1" in
 	TARGET_AS="as"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	TARGET_LIBS="-lpthread"
@@ -394,6 +400,7 @@ case "$1" in
     *x86-linux-mt-old)
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	TARGET_LIBS="-lpthread"
@@ -402,6 +409,7 @@ case "$1" in
     *x86-linux-mt-slice)     # using slice not bryddes
 	TARGET_AS="as"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
+	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $SLICE_SRCS"
 	TARGET_LIBS="-lpthread"
 	;;
@@ -409,6 +417,7 @@ case "$1" in
     *x86-linux-mt-slice-meggs)     # using slice not bryddes
 	TARGET_AS="as"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
+	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $SLICE_SRCS"
 	TARGET_LIBS="-lpthread"
 	;;
@@ -581,6 +590,7 @@ echo "" >> Makefile
 
 echo "CC = ${TARGET_CC}" >> Makefile
 echo "CCFLAGS = ${TARGET_CCFLAGS}" >> Makefile
+echo "LDFLAGS = ${TARGET_LDFLAGS}" >> Makefile
 echo "LIBS = ${TARGET_LIBS}" >> Makefile
 echo "AS = ${TARGET_AS}" >> Makefile
 echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
@@ -598,7 +608,7 @@ echo "Generating Makefile production targets..."
 echo "# Regular targets follow" >> Makefile
 
 echo "${EXENAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
-echo "	\${CC} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${EXENAME}" >> Makefile
+echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${EXENAME}" >> Makefile
 echo "	\${STRIP} ${EXENAME}" >> Makefile
 echo "" >> Makefile
 
