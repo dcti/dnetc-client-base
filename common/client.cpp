@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.128  1998/08/20 03:48:59  silby
+// Quite hack to get winnt service compiling.
+//
 // Revision 1.127  1998/08/20 02:40:34  silby
 // Kicked version to 2.7100.418-BETA1, ensured that clients report the string ver (which has beta1 in it) in the startup.
 //
@@ -335,7 +338,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.127 1998/08/20 02:40:34 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.128 1998/08/20 03:48:59 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -558,7 +561,7 @@ Client::Client()
   dialup.lurkmode=0;
   dialup.dialwhenneeded=0;
 #endif
-#if (CLIENT_OS==OS_WIN32) 
+#if (CLIENT_OS==OS_WIN32) && !defined(WINNTSERVICE)
   win95hidden=0;
 #endif
 #if (CLIENT_OS == OS_OS2)
