@@ -21,16 +21,19 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.22 2003/04/07 04:45:43 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.23 2003/04/09 02:42:22 andreasb Exp $
 ==========================================================================
 
 2.9000
 ------
 
+2.9005-484  new: x86: detect Athlon with Barton core (#3227)
+            imp: x86: changed some preselected cores (#3233)
+
 2.9005-483  fix: x86: re-added SS-2 core - new version fixes bug #3187
             fix: ppc: no longer coredumps while resolving under Linux (#3213)
             new: ppc: support for Altivec under linux (#1349)
-            new: sparc/solaris: optimized rc5-72 core by Didier Levet
+            new: sparc: optimized rc5-72 core by Didier Levet
             new: sparc/solaris: cpu detection
             new: ppc: faster non-Altivec rc5-72 core by Malcolm Howell
             new: 68k: optimized rc5-72 cores, now not only for AmigaOS
