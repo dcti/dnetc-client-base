@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.139  1998/07/09 01:44:16  silby
+// Added ifdefs so a non-mmx x86 build was still possible.
+//
 // Revision 1.138  1998/07/08 23:48:33  foxyloxy
 // Typo in des-slice-meggs.cpp fixed to allow non-mmx clients to
 // compile (NOTSZERO changed back to NOTZERO).
@@ -229,7 +232,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.138 1998/07/08 23:48:33 foxyloxy Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.139 1998/07/09 01:44:16 silby Exp $";
 return id; }
 #endif
 
@@ -2281,21 +2284,27 @@ s32 Client::SelectCore(void)
       break;
     case 2:
       rc5_unit_func = rc5_unit_func_p6;
+#ifdef MMX_BITSLICER
       if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
 	  des_unit_func = des_unit_func2 = des_unit_func_mmx;
-      else {
-	  des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-	  des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
-      }
+      else
+#endif
+        {
+        des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+        des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+        }
       break;
     case 3:
       rc5_unit_func = rc5_unit_func_6x86;
+#ifdef MMX_BITSLICER
       if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
 	  des_unit_func = des_unit_func2 = des_unit_func_mmx;
-      else {
-	  des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-	  des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
-      }
+      else
+#endif
+        {
+        des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+        des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+        }
       break;
     case 4:
       rc5_unit_func = rc5_unit_func_k5;
@@ -2304,20 +2313,26 @@ s32 Client::SelectCore(void)
       break;
     case 5:
       rc5_unit_func = rc5_unit_func_k6;
+#ifdef MMX_BITSLICER
       if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
 	  des_unit_func = des_unit_func2 = des_unit_func_mmx;
-      else {
-	  des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-	  des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
-      }
+      else
+#endif
+        {
+        des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+        des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+        }
       break;
     default:
       rc5_unit_func = rc5_unit_func_p5;
+#ifdef MMX_BITSLICER
       if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
 	  des_unit_func = des_unit_func2 = des_unit_func_mmx;
-      else {
-	  des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
-	  des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
+      else
+#endif
+      {
+      des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
+      des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
       }
       break;
   }
@@ -2683,7 +2698,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
     }
     else if ( strcmp(Argv[i], "-nommx" ) == 0)
     {
-#if (CLIENT_CPU == CPU_X86)
+#if (CLIENT_CPU == CPU_X86) && defined(MMX_BITSLICER)
       LogScreenf("Won't use MMX instructions\n");
       usemmx=0;
 #else
