@@ -1,12 +1,11 @@
 /* Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>                         
  *
  * -------------------------------------------------------------------
  * *All* option handling is performed by ParseCommandLine(), including
  * options loaded from an external .ini.
- *
- * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>                         
  *
  * Note to porters: your port can be expected to break frequently if your 
  * implementation does not call this or does start the client via the 
@@ -14,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.21 1999/08/08 16:49:58 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.22 1999/09/18 00:54:13 cyp Exp $"; }
 
 //#define TRACE
 
@@ -99,7 +98,19 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                 ( strcmp( thisarg, "-pause" ) == 0 ) ||
                 ( strcmp( thisarg, "-unpause" ) == 0 ) )
       {
-        #if defined(__unix__)
+        #if (CLIENT_OS == OS_NETWARE)
+        {
+          if (!loop0_quiet)
+          {
+            ConsolePrintf("RC5DES: %s cannot be used as a load time option.\r\n"
+            "\tPlease use 'rc5des [-quiet] %s'\r\n"
+            "\tinstead of 'load rc5des [-quiet] %s'\r\n"
+            "\t(note: this is only available when a client is running)\r\n",
+                     thisarg, thisarg, thisarg );
+          }
+          terminate_app = 1;
+        }
+        #elif defined(__unix__)
         {
           char buffer[1024];
           int sig = SIGHUP; char *dowhat_descrip = "-HUP'ed";
