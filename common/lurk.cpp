@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.38 2001/05/13 17:58:37 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.39 2001/10/23 22:18:00 mfeiri Exp $"; }
 
 //#define TRACE
 
@@ -263,6 +263,7 @@ int LurkCheckIfConnectRequested(void) //yes/no
 
 #include <ctype.h>
 #include <Gestalt.h>
+#include <Files.h>
 #include <OpenTransportProviders.h>
 
 EndpointRef fEndPoint = kOTInvalidEndpointRef;
