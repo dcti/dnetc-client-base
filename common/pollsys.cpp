@@ -39,7 +39,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.9 1999/04/06 07:50:39 cyp Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.9.2.1 1999/06/13 16:02:14 cyp Exp $"; }
 
 #include "baseincs.h"  /* NULL, malloc */
 #include "clitime.h"   /* CliTimer() */
@@ -252,7 +252,7 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
   {
     if ( secs )
       sleep( secs );
-    if ( usecs || !secs )
+    else
       usleep( usecs );
   }
   else
