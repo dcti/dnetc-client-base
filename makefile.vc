@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.7 2004/02/26 06:57:18 jlawson Exp $
+# $Id: makefile.vc,v 1.83.2.8 2004/03/28 06:13:18 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -13,10 +13,6 @@ DESSRCPATH = des
 OGRSRCPATH = ogr
 CSCSRCPATH = csc
 PLATSRCPATH = plat/win
-#EXECOMPRESSOR = upx.exe -9 -qq --compress-resources=0
-#EXECOMPRESSOR2 =
-EXECOMPRESSOR = pecompact.exe 
-EXECOMPRESSOR2 = /A /X
 
 
 #HAVE_RC5_64_CORES=1
@@ -39,6 +35,14 @@ CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 OPTS_CC_CPU = 
 OPTS_M_PLAT = IX86
+CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
+#EXECOMPRESSOR = upx.exe -9 -qq --compress-resources=0
+#EXECOMPRESSOR2 =
+EXECOMPRESSOR = pecompact.exe 
+EXECOMPRESSOR2 = /A /X
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+OPTS_CC_CPU =
+OPTS_M_PLAT = AMD64
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 !else
 !error unrecognized PROCESSOR_ARCHITECTURE found in the environment
@@ -202,6 +206,7 @@ RC5_64_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 RC5_64_OBJS =                        \
         $(OUTPUTPATH)/rc5-alpha-nt.obj
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_64_CORES
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 RC5_64_OBJS =                        \
         $(OUTPUTPATH)/brf-p5.obj     \
@@ -215,13 +220,19 @@ RC5_64_OBJS =                        \
         $(OUTPUTPATH)/hb-k7.obj      \
         $(OUTPUTPATH)/ak-p7.obj	
 OPTS_MSVC = $(OPTS_MSVC) -DSMC -DHAVE_RC5_64_CORES
+!else
+!error No RC5-64 cores for this architecture.
 !endif
 
 # --------------------------------- RC5-72 -------------------------
 
 !ifndef HAVE_RC5_72_CORES
 RC5_72_OBJS =
-!else
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+RC5_72_OBJS = \
+        $(OUTPUTPATH)/r72-snjl.obj
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-ses1.obj   \
         $(OUTPUTPATH)/r72-ses2.obj   \
@@ -231,8 +242,9 @@ RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-ss2.obj    \
         $(OUTPUTPATH)/r72-go2.obj    \
         $(OUTPUTPATH)/r72-sgp3.obj
-
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
+!else
+!error No RC5-72 cores for this architecture.
 !endif
 
 # --------------------------------- DES ----------------------------
@@ -261,6 +273,8 @@ DES_OBJS =                                   \
         $(OUTPUTPATH)/sboxes-kwan4.obj       \
 #       $(OUTPUTPATH)/sboxes-mmx.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN 
+!else
+!error No DES cores for this architecture.
 !endif
 
 # --------------------------------- CSC ----------------------------
@@ -286,6 +300,8 @@ CSC_OBJS =                           \
          $(OUTPUTPATH)/csc-comm.obj  \
          $(OUTPUTPATH)/csc-mmx.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_CSC_CORES
+!else
+!error No CSC cores for this architecture.
 !endif
 
 # --------------------------------- OGR ----------------------------
@@ -298,6 +314,13 @@ OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
 OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH) -DHAVE_OGR_CORES
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+OGR_OBJS =                           \
+        $(OUTPUTPATH)/ogr-a.obj      \
+        $(OUTPUTPATH)/ogr-b.obj      \
+        $(OUTPUTPATH)/ogr_dat.obj    \
+        $(OUTPUTPATH)/ogr_sup.obj
+OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH) -DHAVE_OGR_CORES
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr-a.obj      \
@@ -305,6 +328,8 @@ OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
 OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH) -DHAVE_OGR_CORES
+!else
+!error No OGR cores for this architecture.
 !endif
 
 # --------------------------------------------
@@ -330,6 +355,11 @@ $(VC_CHECK):
 
 {$(CSCSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+
+{$(RC572SRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
+        yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS -I $(RC572SRCPATH:/=\)\amd64\ $(**:/=\)
 
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 
