@@ -2,9 +2,12 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * This module contains functions for both lurking and dial
- * initiation/hangup. The workhorse protected function, IsConnected(),
- * is needed to support both.              - cyp
+ *
+ * This module contains functions for both lurking and dial initiation/hangup.
+ *
+ * The workhorse function, IsConnected(), is needed to support both.
+ * IsConnected() can be called at any time and *always* returns a valid yes/no.
+ *
  * Lurk detection is trivial and contain no OS specific routines.
  *                  CheckIfConnectRequested() and CheckForStatusChange()
  * Public function used for dial initiation/hangup:
@@ -14,10 +17,10 @@
 //#define LURKDEBUG
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.41 1999/05/04 04:11:23 cyp Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.42 1999/05/07 04:28:19 cyp Exp $"; }
 
 /* ---------------------------------------------------------- */
-
+#include <stdio.h>
 #include "cputypes.h"
 #include "lurk.h"
 #ifdef PROXYTYPE
@@ -51,7 +54,7 @@ int Lurk::CheckIfConnectRequested(void) //yes/no
   {
     if ( lastcheckshowedconnect == 0 ) // We previously weren't connected
     {
-      if (conndevice[0]==0)
+      if (conndevice[0]==0) /* only win16 has no name */
         LogScreen("Dialup Connection Detected...\n"); // so this is the first time
       else
         LogScreen("Connection detected on '%s'...\n", conndevice );
@@ -64,8 +67,8 @@ int Lurk::CheckIfConnectRequested(void) //yes/no
     char *msg = "";
     lastcheckshowedconnect = 0;        // So we know next time through this loop
     if (lurkmode == CONNECT_LURKONLY) // Lurk-only mode
-      msg = "\nConnections will not be initiated by the client.";
-    LogScreen("Dialup Connection Disconnected.%s\n",msg);
+      msg = " and will not be re-initiated";
+    LogScreen("Connection lost%s.\n",msg);
   }
   return 0;
 }
@@ -307,7 +310,7 @@ int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
     {              //only happens if user used -lurk on the command line
       lurkmode = 0;
       #if (CLIENT_OS == OS_WIN32)
-      LogScreen( "Dial-up must be installed for lurk/lurkonly/dialing\n" );
+      //LogScreen( "Dial-up must be installed for lurk/lurkonly/dialing\n" );
       dialwhenneeded = 0; //if we can't support lurk, we can't support dod either
       #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
       LogScreen("Winsock must be available for -lurk/-lurkonly.\n");
@@ -320,7 +323,7 @@ int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
     {               //should never happen since dod is not a cmdline option
       dialwhenneeded = 0;
       #if (CLIENT_OS == OS_WIN32)
-      LogScreen( "Dial-up must be installed for demand dialing\n" );
+      LogScreen( "Dial-up-Networking must be installed for demand dialing\n" );
       #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
       LogScreen("Demand dialing is only supported with Trumpet Winsock.\n");
       #else
@@ -374,6 +377,13 @@ int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
         #if (CLIENT_OS == OS_OS2)  //convert 'eth*' names to 'lan*'
         if (*p=='e' && p[1]=='t' && p[2]=='h' && (isdigit(p[3]) || p[3]=='*'))
         {*p='l'; p[1]='a'; p[2]='n'; }
+        #elif (CLIENT_OS == OS_WIN32)
+        if (*p=='s' && p[1]=='l' && (isdigit(p[2]) || p[2]=='*'))
+        {                          //convert 'sl*' names to 'ppp*'
+          char buf[sizeof(ifacemaskcopy)];
+          strcpy(buf,p+2);strcat(strcpy(p,"ppp"),buf);
+          stindex++;
+        }
         #endif
         ifacestowatch[ptrindex++] = (const char *)p;
       }
@@ -383,11 +393,13 @@ int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
     ifacestowatch[ptrindex] = NULL;
   }
   #ifdef LURKDEBUG
-  printf("mask flags: include_all=%d, defaults_only=%d\niface list:\n",
+  FILE *f = fopen("debug.log","a");
+  fprintf(f,"mask flags: include_all=%d, defaults_only=%d\niface list:\n",
                  mask_include_all, mask_default_only );
   for (int ptrindex=0;ifacestowatch[ptrindex];ptrindex++)
-    printf("  %d) '%s'\n",ptrindex+1,ifacestowatch[ptrindex]);
-  printf("lurkmode=%d dialwhenneeded=%d\n",lurkmode,dialwhenneeded);
+    fprintf(f,"  %d) '%s'\n",ptrindex+1,ifacestowatch[ptrindex]);
+  fprintf(f,"lurkmode=%d dialwhenneeded=%d\n",lurkmode,dialwhenneeded);
+  fclose(f);
   #endif
 
   islurkstarted=1;
@@ -442,12 +454,15 @@ static int __MatchMask( const char *ifrname, int mask_include_all,
 
 /* ---------------------------------------------------------- */
 
-int Lurk::IsConnected(void)               // Checks status of connection
+int Lurk::IsConnected(void)  // always returns a valid yes/no (state of dialwhenneeded/lurkmode is irrelevant)
 {
   conndevice[0]=0;
 
   if (!islurkstarted)
-    return 0;
+  {
+    if (Start() != 0)
+      return 0;
+  }
 
 #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN16S)
   if ( GetModuleHandle("WINSOCK") )
@@ -512,6 +527,9 @@ int Lurk::IsConnected(void)               // Checks status of connection
             memset((void *)(&if_info[0]),0,sizeof(if_info));
                    
             //don't use INTERFACE_INFO format due to NT4SP<4 not grokking IPV6
+            //IMO, Thats a serious bug in the API that returns AF_INET6 data 
+            //for an AF_INET[4] socket.
+
             int wsError = (*((int PASCAL FAR (*)(
                 SOCKET,DWORD,LPVOID,DWORD,LPVOID,DWORD,LPDWORD,
                 LPWSAOVERLAPPED,LPWSAOVERLAPPED_COMPLETION_ROUTINE))
@@ -530,6 +548,7 @@ int Lurk::IsConnected(void)               // Checks status of connection
               {
                 u_long if_flags = ((struct if_info_v4 *)(ifp))->iiFlags;
                 u_long if_addr  = ((struct if_info_v4 *)(ifp))->iiAddress.sin_addr;
+                /* if_addr is always (?) an AF_INET[4] addr because thats what our socket is */
                 ifp+=stepsize;
 
 //LogScreen("stage6: adapter: %u flags: 0x%08x %s\n", i/stepsize, if_flags,inet_ntoa(*((struct in_addr *)&if_addr)) );
@@ -537,7 +556,7 @@ int Lurk::IsConnected(void)               // Checks status of connection
                 if ((if_flags & IFF_LOOPBACK)==0 && if_addr != 0x0100007ful)
                 {
                   char seqname[20], devname[20];
-                  wsprintf(seqname,"lan%u",i/stepsize);
+                  wsprintf(seqname,"lan%u",pppdev+ethdev+slipdev);
                   if (if_addr==0 && (if_flags & IFF_POINTTOPOINT)==0)
                   {
                     //Dial-Up adapters are never down. They appear as normal
@@ -547,8 +566,8 @@ int Lurk::IsConnected(void)               // Checks status of connection
                   }
                   if ((if_flags & IFF_POINTTOPOINT)!=IFF_POINTTOPOINT)
                     wsprintf(devname,"eth%u",ethdev++);
-                  else if ((if_flags & (IFF_BROADCAST|IFF_MULTICAST))==0)
-                    wsprintf(devname,"sl%u",slipdev++);
+                  //else if ((if_flags & (IFF_BROADCAST|IFF_MULTICAST))==0)
+                  //  wsprintf(devname,"sl%u",slipdev++);
                   else
                     wsprintf(devname,"ppp%u",pppdev++);
 //LogScreen("stage7: not lo. up?=%s, seqname=%s devname=%s\n", ((if_flags & IFF_UP)?"yes":"no"), seqname, devname );
@@ -559,6 +578,8 @@ int Lurk::IsConnected(void)               // Checks status of connection
                          mask_default_only, &ifacestowatch[0] )))
                   {
 //LogScreen("stage8: mask matched. name=%s\n", devname );
+                    strcat( devname, "/" );
+                    strcat( devname, seqname );
                     strncpy( conndevice, devname, sizeof(conndevice) );
                     conndevice[sizeof(conndevice)-1] = 0;
                     break;
@@ -799,7 +820,10 @@ int Lurk::IsConnected(void)               // Checks status of connection
      return 1;
    conndevice[0]=0;
 
-#endif // OS_LINUX || FREEBSD
+#else
+  #error IsConnected() must always return a valid yes/no.
+  #error There is no default return value.
+#endif
   return 0;// Not connected
 }
 

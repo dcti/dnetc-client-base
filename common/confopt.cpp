@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.33 1999/05/04 04:12:09 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34 1999/05/07 04:28:19 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -16,18 +16,6 @@ return "@(#)$Id: confopt.cpp,v 1.33 1999/05/04 04:12:09 cyp Exp $"; }
 #include "pathwork.h" // EXTN_SEP
 
 /* ----------------------------------------------------------------------- */
-
-#if 0
-static const char *uuehttptable[] =
-{
-  "No special encoding",
-  "UUE encoding (telnet proxies)",
-  "HTTP encoding",
-  "HTTP+UUE encoding",
-  "SOCKS4 proxy",
-  "SOCKS5 proxy"
-};
-#endif
 
 static const char *lurkmodetable[] =
 {
@@ -198,6 +186,8 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "every few minutes or so. You might want to use this if you have a\n"
   "single computer with a network connecting \"feeding\" other clients via\n"
   "a common input file.\n"
+  "Note: enabling (modem-) connection detection implies that buffers will\n"
+  "updated frequently while a connection is detected.\n" 
   ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
 //19
 { CFGTXT("Preferred RC5/DES packet size (2^X keys/packet)"),"31 (default)",
@@ -328,7 +318,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "is optional. The effective file name used for the \"rotate\" log file type is\n"
   "constructed from a unique identifier for the period (time limit) concatenated\n"
   "to whatever you specify here. Thus, if the interval is weekly, the name of the\n"
-  "log file used will be [to log to]yearweek"EXTN_SEP"log.\n"
+  "log file used will be [file_to_log_to]yearweek"EXTN_SEP"log.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //28
 { CFGTXT("Log file limit/interval"), "",
@@ -465,40 +455,40 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
 //46
 { CFGTXT("Modem detection options"),"0",
   CFGTXT(
-  "Normal mode: the client will send/receive packets only when it\n"
-  "        empties the in buffer, hits the flush threshold, or the user\n"
-  "        specifically requests a flush/fetch.\n"
-  "Dial-up detection mode: This acts like mode 0, with the addition\n"
-  "        that the client will automatically send/receive packets when a\n"
-  "        dial-up networking connection is established. Modem users\n"
-  "        will probably wish to use this option so that their client\n"
-  "        never runs out of packets.\n"
-  "Dial-up detection ONLY mode: Like the previous mode, this will cause\n"
-  "        the client to automatically send/receive packets when\n"
-  "        connected. HOWEVER, if the client runs out of packets,\n"
-  "        it will NOT trigger auto-dial, and will instead work\n"
-  "        on random packets until a connection is detected.\n"
+  "0) Normal mode: the client will send/receive packets only when it\n"
+  "         empties the in buffer, hits the flush threshold, or\n"
+  "         the user specifically requests a flush/fetch.\n"
+  "1) Dial-up detection mode: This acts like mode 0, with the addition\n"
+  "         that the client will automatically send/receive packets when a\n"
+  "         dial-up networking connection is established. Modem users\n"
+  "         will probably wish to use this option so that their client\n"
+  "         never runs out of packets.\n"
+  "2) Dial-up detection ONLY mode: Like the previous mode, this will cause\n"
+  "         the client to automatically send/receive packets when\n"
+  "         connected. HOWEVER, if the client runs out of packets,\n"
+  "         it will NOT trigger auto-dial, and will instead work\n"
+  "         on random packets until a connection is detected.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,NULL,&lurkmodetable[0],0,2,NULL},
 //47
 { CFGTXT("Interfaces to watch"), "",
   /* CFGTXT( */
   "Colon-separated list of interface names to monitor for a connection,\n"
   "For example: \"ppp0:ppp1:eth1\". Wildcards are permitted, ie \"ppp*\".\n"
-  "1) An empty list implies all interfaces that are identifiable as dialup,\n"
+  "a) An empty list implies all interfaces that are identifiable as dialup,\n"
   "   ie \"ppp*:sl*:...\" (dialup interface names vary from platform to\n"
-  "   platform. FreeBSD for example, also includes 'dun*' interfaces).\n"
-  "2) if you have an intermittent ethernet connection through which you can\n"
+  "   platform. FreeBSD for example, also includes 'dun*' interfaces. Win32\n"
+  "   emulates SLIP as a subset of PPP: sl* interfaces are seen as ppp*).\n"
+  "b) if you have an intermittent ethernet connection through which you can\n"
   "   access the Internet, put the corresponding interface name in this list,\n"
   "   typically 'eth0'\n"
-  "3) To include all devices, set this option to '*'.\n"
+  "c) To include all interfaces, set this option to '*'.\n"
   #if (CLIENT_OS == OS_WIN32)
-  "** Win32 specific note: While dialup adapters are easy enough to identify\n"
-  "   when offline, they morph when online and can thus end up with different\n"
-  "   names: a 'ppp?' adapter will become 'sl?' when a SLIP connection is\n"
-  "   established, and may become 'eth?' if the PPP link is not also tunneling\n"
-  "   another protocol. However, all network adapters (regardless of medium;\n"
-  "   dialup/non-dialup) also have a unique unchanging alias: 'lan0', 'lan1'\n"
-  "   and so on. Both naming conventions can be used simultaneously.\n"
+  "** All Win32 network adapters (regardless of medium; dialup/non-dialup)\n"
+  "   also have a unique unchanging alias: 'lan0', 'lan1' and so on. Both\n"
+  "   naming conventions can be used simultaneously.\n"
+  "** a list of interfaces can be obtained from ipconfig.exe or winipcfg.exe\n"
+  "   The first dialup interface is ppp0, the second is ppp1 and so on, while\n"
+  "   the first non-dialup interface is eth0, the second is eth1 and so on.\n"
   #else
   "** The command line equivalent of this option is --interfaces-to-watch\n"
   #endif
