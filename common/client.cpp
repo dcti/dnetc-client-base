@@ -4,13 +4,13 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.70 2000/04/28 04:37:08 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.71 2000/05/01 08:19:18 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
 //#define TRACE
 
-//#include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
+#include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "client.h"    // Client class
@@ -39,6 +39,8 @@ void ResetClientData(Client *client)
      init needs fixing.
      Variables are initialized in the same order that they are declared in
      the client object. Keep it that way to ensure we don't miss something.
+     When creating new variables, name them such that the default is 0/"",
+     eg 'nopauseonbatterypower'.
    */
 
   int contest;
@@ -52,8 +54,6 @@ void ResetClientData(Client *client)
   client->stopiniio=0;
   client->scheduledupdatetime = 0;
   client->inifilename[0]=0;
-  for (contest=0; contest<CONTEST_COUNT; contest++)
-    memset((void *)&(client->membufftable[contest]),0,sizeof(client->membufftable[0]));
 
   /* -- general -- */
   client->id[0]='\0';
@@ -61,14 +61,10 @@ void ResetClientData(Client *client)
   client->blockcount = 0;
   client->minutes = 0;
   client->percentprintingoff=0;
-  client->restartoninichange=0;
-  client->pauseplist[0]=0;
-  client->pausefile[0]=0;
-  client->exitflagfile[0]=0;
-  projectmap_build(client->loadorder_map,"");
 
   /* -- buffers -- */
   client->nodiskbuffers=0;
+  memset((void *)&(client->membufftable[0]),0,sizeof(client->membufftable));
   client->in_buffer_basename[0] = '\0';
   client->out_buffer_basename[0] = '\0';
   client->checkpoint_file[0]=0;
@@ -85,25 +81,33 @@ void ResetClientData(Client *client)
     client->httpid[0] = 0;
   client->noupdatefromfile = 0;
     client->remote_update_dir[0] = '\0';
+  #ifdef LURK 
+  memset(&(client->lurk_conf),0,sizeof(client->lurk_conf));
+  #endif
   client->connectoften=0;
-  //memset(&(client->lurk_conf),0,sizeof(client->lurk_conf));
-  // If inthreshold is <=0, then use time exclusively.
-  // If time threshold is 0, then use inthreshold exclusively.
-  // If inthreshold is <=0, AND time is 0, then use BUFTHRESHOLD_DEFAULT
-  // If inthreshold > 0 AND time > 0, then use MAX(inthreshold, effective_workunits(time))
-  // If out is <=0, don't do outbuffer threshold checking, regardless of time
-  // If out is >0, then use outthreshold, regardless of time
-  //memset(&(client->inthreshold),0,sizeof(client->inthreshold));
-  //memset(&(client->outhreshold),0,sizeof(client->outhreshold));
-  //memset(&(client->timethreshold),0,sizeof(client->timethreshold));
-  //if preferred_blocksize is <=0, then "auto"
-  //memset(&(client->preferred_blocksize),0,sizeof(client->preferred_blocksize));
+  memset(&(client->inthreshold),0,sizeof(client->inthreshold));
+  memset(&(client->timethreshold),0,sizeof(client->timethreshold));
+  #if (!defined(NO_OUTBUFFER_THRESHOLDS))
+  minupdateinterval = 0;
+  memset(&(client->outhreshold),0,sizeof(client->outhreshold));
+  #endif
+  memset(&(client->preferred_blocksize),0,sizeof(client->preferred_blocksize));
+  projectmap_build(client->loadorder_map,"");
 
   /* -- perf -- */
   client->numcpu = -1;
   client->priority = 0;
   for (contest=0; contest<CONTEST_COUNT; contest++)
     client->coretypes[contest] = -1;
+
+  /* triggers */
+  client->restartoninichange=0;
+  client->pauseplist[0]=0;
+  client->pausefile[0]=0;
+  client->exitflagfile[0]=0;
+  client->nopauseifnomainspower=0;
+  client->watchcputempthresh=0;
+  client->cputempthresh[0]=0;
 
   /* -- log -- */
   client->logname[0]= 0;
@@ -127,6 +131,10 @@ void ClientSetNumberOfProcessorsInUse(int num) /* from probfill.cpp */
 unsigned int ClientGetInThreshold(Client *client, 
                                   int contestid, int force /*=0*/)
 {
+  // If inthreshold is <=0, then use time exclusively.
+  // If time threshold is 0, then use inthreshold exclusively.
+  // If inthreshold is <=0, AND time is 0, then use BUFTHRESHOLD_DEFAULT
+  // If inthreshold > 0 AND time > 0, then use MAX(inthreshold, effective_workunits(time))
   int thresh = BUFTHRESHOLD_DEFAULT;
 
   // OGR time threshold NYI
@@ -444,7 +452,9 @@ static int ClientMain( int argc, char *argv[] )
                              client->pausefile,
                              client->pauseplist,
                              ((domodes)?(0):(client->restartoninichange)),
-                             client->inifilename ) == 0) 
+                             client->inifilename,
+                             client->watchcputempthresh, client->cputempthresh,
+                             (!client->nopauseifnomainspower) ) == 0)
       {
         TRACE_OUT((0,"CheckExitRequestTrigger()=%d\n",CheckExitRequestTrigger()));
         // no messages from the following CheckExitRequestTrigger() will
@@ -478,12 +488,15 @@ static int ClientMain( int argc, char *argv[] )
                                  client->smtpdest,
                                  client->id );
               TRACE_OUT((-1,"initializelogging\n"));
-              PrintBanner(client->id,0,restarted);
+              if ((domodes & MODEREQ_CONFIG)==0)
+              {
+                PrintBanner(client->id,0,restarted);
 
-              TRACE_OUT((+1,"parsecmdline(1)\n"));
-              ParseCommandline( client, 1, argc, (const char **)argv, NULL,
+                TRACE_OUT((+1,"parsecmdline(1)\n"));
+                ParseCommandline( client, 1, argc, (const char **)argv, NULL,
                                       (client->quietmode==0)); //show overrides
-              TRACE_OUT((-1,"parsecmdline(1)\n"));
+                TRACE_OUT((-1,"parsecmdline(1)\n"));
+              }
               InitRandom2( client->id );
               TRACE_OUT((+1,"initcoretable\n"));
               InitializeCoreTable( &(client->coretypes[0]) );
@@ -493,7 +506,10 @@ static int ClientMain( int argc, char *argv[] )
               if (domodes)
               {
                 con_waitforuser = ((domodes & ~MODEREQ_CONFIG)!=0);
-                PrintBanner(client->id,1,restarted);
+                if ((domodes & MODEREQ_CONFIG)==0) 
+                { /* avoid printing/logging banners for nothing */
+                  PrintBanner(client->id,1,restarted);
+                }
                 TRACE_OUT((+1,"modereqrun\n"));
                 ModeReqRun( client );
                 TRACE_OUT((-1,"modereqrun\n"));
@@ -747,3 +763,4 @@ int main( int argc, char *argv[] )
   return rc;
 }
 #endif
+

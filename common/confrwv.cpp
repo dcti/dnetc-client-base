@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.31 2000/04/26 00:01:05 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.32 2000/05/01 08:19:18 cyp Exp $"; }
 
 //#define TRACE
 
@@ -1012,6 +1012,9 @@ int ReadConfig(Client *client)
   GetPrivateProfileStringB( OPTSECT_TRIGGERS, "pause-flag-filename", client->pausefile, client->pausefile, sizeof(client->pausefile), fn );
   client->restartoninichange = GetPrivateProfileIntB( OPTSECT_TRIGGERS, "restart-on-config-file-change", client->restartoninichange, fn );
   GetPrivateProfileStringB( OPTSECT_TRIGGERS, "pause-watch-plist", client->pauseplist, client->pauseplist, sizeof(client->pauseplist), fn );
+  client->nopauseifnomainspower = !GetPrivateProfileIntB( OPTSECT_TRIGGERS, "pause-on-no-mains-power", !client->nopauseifnomainspower, fn );
+  client->watchcputempthresh = GetPrivateProfileIntB( OPTSECT_TRIGGERS, "pause-on-high-cpu-temp", client->watchcputempthresh, fn );
+  GetPrivateProfileStringB( OPTSECT_TRIGGERS, "cpu-temperature-thresholds", client->cputempthresh, client->cputempthresh, sizeof(client->cputempthresh), fn );
 
   /* --------------------- */
 
@@ -1256,6 +1259,9 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileStr( OPTSECT_TRIGGERS, "exit-flag-filename", client->exitflagfile, fn, DEFAULT_EXITFLAGFILENAME );
     __XSetProfileStr( OPTSECT_TRIGGERS, "pause-flag-filename", client->pausefile, fn, NULL );
     __XSetProfileStr( OPTSECT_TRIGGERS, "pause-watch-plist", client->pauseplist, fn, NULL );
+    __XSetProfileInt( OPTSECT_TRIGGERS, "pause-on-no-mains-power", !client->nopauseifnomainspower, fn, 1, 'y' );
+    __XSetProfileInt( OPTSECT_TRIGGERS, "pause-on-high-cpu-temp", client->watchcputempthresh, fn, 0, 'n' );
+    __XSetProfileStr( OPTSECT_TRIGGERS, "cpu-temperature-thresholds", client->cputempthresh, fn, NULL );
 
     __XSetProfileInt( OPTSECT_DISPLAY, "detached", client->quietmode, fn, 0, 'y' );
     __XSetProfileInt( OPTSECT_DISPLAY, "progress-indicator", !client->percentprintingoff, fn, 1, 'o' );

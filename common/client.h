@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.13 2000/04/23 12:53:52 jlawson Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.14 2000/05/01 08:19:19 cyp Exp $"
 
 
 // ------------------
@@ -77,7 +77,6 @@ typedef struct
   int  stopiniio;
   u32  scheduledupdatetime;
   char inifilename[MINCLIENTOPTSTRLEN*2];
-  struct { struct membuffstruct in, out; } membufftable[CONTEST_COUNT];
 
   /* -- general -- */
   char id[MINCLIENTOPTSTRLEN];
@@ -85,14 +84,10 @@ typedef struct
   int  blockcount;
   int  minutes;
   int  percentprintingoff;
-  int  restartoninichange;
-  char pauseplist[MINCLIENTOPTSTRLEN]; /* processname list */
-  char pausefile[MINCLIENTOPTSTRLEN*2];
-  char exitflagfile[MINCLIENTOPTSTRLEN*2];
-  char loadorder_map[CONTEST_COUNT];
 
   /* -- buffers -- */
   int  nodiskbuffers;
+  struct { struct membuffstruct in, out; } membufftable[CONTEST_COUNT];
   char in_buffer_basename[MINCLIENTOPTSTRLEN*2];
   char out_buffer_basename[MINCLIENTOPTSTRLEN*2];
   char checkpoint_file[MINCLIENTOPTSTRLEN*2];
@@ -112,22 +107,29 @@ typedef struct
   struct dialup_conf lurk_conf;
   #endif
   int connectoften; /* 0=no,1=check both flush/fetch thresh, 2=only=flush*/
-
-  // In general, don't use inthreshold anymore;
-  // Use ClientGetInThreshold(client, contest)
+  // Don't use inthreshold directly, Use ClientGetInThreshold(client, contest)
   int inthreshold[CONTEST_COUNT]; 
   int timethreshold[CONTEST_COUNT];  /* in hours */
   #if (!defined(NO_OUTBUFFER_THRESHOLDS))
   int  minupdateinterval; /* the better 'outthreshold'. in minutes */
   int outthreshold[CONTEST_COUNT];
   #endif
-  
   int preferred_blocksize[CONTEST_COUNT];
+  char loadorder_map[CONTEST_COUNT];
 
   /* -- perf -- */
   int  numcpu;
   int  priority;
   int  coretypes[CONTEST_COUNT];
+
+  /* -- triggers -- */
+  int  restartoninichange;
+  char pauseplist[MINCLIENTOPTSTRLEN]; /* processname list */
+  char pausefile[MINCLIENTOPTSTRLEN*2];
+  char exitflagfile[MINCLIENTOPTSTRLEN*2];
+  int  nopauseifnomainspower;
+  int  watchcputempthresh;
+  char cputempthresh[MINCLIENTOPTSTRLEN]; /* [lowwatermark:]highwatermark */
 
   /* -- log -- */
   char logname[MINCLIENTOPTSTRLEN*2];

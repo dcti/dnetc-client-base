@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.19 2000/04/16 19:27:20 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.20 2000/05/01 08:19:17 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -149,6 +149,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   int outthreshold[CONTEST_COUNT];
   #endif
   int preferred_blocksize[CONTEST_COUNT];
+  int pauseifbattery;
 
   // ---- Set all stuff that doesn't change during config ----   
   // note that some options rely on others, so watch the init order
@@ -162,14 +163,20 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   conf_options[CONF_EXITFILE].thevariable=&(client->exitflagfile[0]);
   conf_options[CONF_RESTARTONINICHANGE].thevariable=&(client->restartoninichange);
   conf_options[CONF_PAUSEPLIST].thevariable=&(client->pauseplist[0]);
+  conf_options[CONF_PAUSEIFCPUTEMPHIGH].thevariable=&(client->watchcputempthresh);
+  conf_options[CONF_CPUTEMPTHRESHOLDS].thevariable=&(client->cputempthresh[0]);
+  pauseifbattery = !client->nopauseifnomainspower;
+  conf_options[CONF_PAUSEIFBATTERY].thevariable=&(pauseifbattery);
   conf_options[CONF_QUIETMODE].thevariable=&(client->quietmode);
   conf_options[CONF_PERCENTOFF].thevariable=&(client->percentprintingoff);
-  conf_options[CONF_CONTESTPRIORITY].thevariable = 
-       strcpy(loadorder, projectmap_expand( client->loadorder_map ) );
+  conf_options[CONF_QUIETMODE].thevariable=&(client->quietmode);
+  conf_options[CONF_COMPLETIONSOUNDON].thevariable=NULL; /* not available yet */
 
   /* ------------------- CONF_MENU_BUFF ------------------ */  
 
   conf_options[CONF_NODISK].thevariable=&(client->nodiskbuffers);
+  conf_options[CONF_LOADORDER].thevariable = 
+       strcpy(loadorder, projectmap_expand( client->loadorder_map ) );
   conf_options[CONF_INBUFFERBASENAME].thevariable=&(client->in_buffer_basename[0]);
   conf_options[CONF_OUTBUFFERBASENAME].thevariable=&(client->out_buffer_basename[0]);
   conf_options[CONF_CHECKPOINT].thevariable=&(client->checkpoint_file[0]);
@@ -380,7 +387,12 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 
     /* --------------- drop/pickup menu options ---------------- */
 
-    if (whichmenu == CONF_MENU_BUFF)
+    if (whichmenu == CONF_MENU_MISC)
+    {
+      conf_options[CONF_CPUTEMPTHRESHOLDS].disabledtext=
+                  ((client->watchcputempthresh)?(NULL):("n/a"));
+    }
+    else if (whichmenu == CONF_MENU_BUFF)
     {
       const char *na = "n/a [no net & no remote dir]";
       int noremotedir = 0;
@@ -630,7 +642,8 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                 utilGatherOptionArraysToList( parm, sizeof(parm),
                     (int *)conf_options[menuoption].thevariable, vectb );
                 if ( menuoption == CONF_THRESHOLDT || 
-                     menuoption == CONF_PREFERREDBLOCKSIZE )
+                     menuoption == CONF_PREFERREDBLOCKSIZE ||
+                     menuoption == CONF_CPUTYPE )
                 {     
                   __strip_project_from_alist( parm, OGR ); //no OGR for these
                 }       
@@ -861,7 +874,8 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
             utilGatherOptionArraysToList( parm, sizeof(parm),
                     (int *)conf_options[editthis].thevariable, vectb ); 
             if ( editthis == CONF_THRESHOLDT || 
-                 editthis == CONF_PREFERREDBLOCKSIZE )
+                 editthis == CONF_PREFERREDBLOCKSIZE ||
+                 editthis == CONF_CPUTYPE )
             {     
               __strip_project_from_alist( parm, OGR ); //no OGR for these
             }       
@@ -1020,8 +1034,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           LogScreenRaw("Default Setting: %s\n"
                        "Current Setting: %s\n"
                        "New Setting --> ",
-                       *(conf_options[editthis].defaultsetting)=='0'?"no":"yes", 
-                       parm );
+                       conf_options[editthis].defaultsetting, parm );
           parm[1] = 0;
           ConInStr( parm, 2, CONINSTR_BYEXAMPLE|CONINSTR_ASBOOLEAN );
           if (CheckExitRequestTriggerNoIO())
@@ -1148,6 +1161,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 
   if (returnvalue != -1)
   {
+    client->nopauseifnomainspower = !pauseifbattery;
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
     {
       if (preferred_blocksize[cont_i] < 1) /* "auto" */
