@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.23 2000/01/03 02:59:50 jlawson Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.24 2000/01/04 16:43:28 dakidd Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -325,6 +325,9 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       #elif (CLIENT_OS == OS_MACOS)
       {
         ch = getch();
+        #if (CLIENT_CPU == CPU_68K)
+        ch = (ch & 0x000000ff);
+        #endif
         if (ch == 3) ch = 13; /* In MacOS its common that "enter" equals "return". */
       }
       #else
