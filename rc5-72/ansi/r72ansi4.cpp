@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi4_cpp(void) {
-return "@(#)$Id: r72ansi4.cpp,v 1.16 2002/10/19 16:53:52 acidblood Exp $"; }
+return "@(#)$Id: r72ansi4.cpp,v 1.17 2002/10/20 01:22:03 jlawson Exp $"; }
 
 #include "ccoreio.h"
 #include "rotate.h"
@@ -20,7 +20,7 @@ extern "C" s32 rc5_72_unit_func_ansi_4 ( RC5_72UnitWork *, u32 *, void * );
 #pragma warning(disable:4307)   // integral constant overflow
 #endif
 
-s32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *memblk)
+s32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
   u32 A1, A2, A3, A4, B1, B2, B3, B4;
   u32 S1[26], S2[26], S3[26], S4[26];
