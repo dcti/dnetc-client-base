@@ -21,13 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.118 2002/04/19 22:33:05 zebe Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.119 2002/04/21 08:17:08 zebe Exp $
 ==========================================================================
 
 2.8000
 ------
 
-2.8018.472  fix: macosx: config menu displayed erroneous message that pause
+2.8018.472  fix: macosx: fix crash in battery pause code from #2465 (#2615)
+            fix: macosx: config menu displayed erroneous message that pause
                          on battery was not supported.
 
 2.8017.471  (not publicly released)
