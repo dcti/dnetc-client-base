@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.89  1999/03/18 03:49:24  cyp
+// a) discarded intermediate rc5result state/structures; b) Modified
+// RetrieveState() to return the core's resultcode; c) #if 0'd all Log()
+// calls from Problem::Run();  d) Some OGR changes
+//
 // Revision 1.88  1999/03/09 07:15:45  gregh
 // Various OGR changes.
 //
@@ -272,7 +277,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.88 1999/03/09 07:15:45 gregh Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.89 1999/03/18 03:49:24 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -536,6 +541,7 @@ static void __IncrementKey (u64 &key, u32 iters, int contest)
 int Problem::LoadState( ContestWork * work, unsigned int _contest, 
                               u32 _timeslice, int _cputype )
 {
+  loaderflags = 0;
   contest = _contest;
   cputype = _cputype;
 
@@ -737,34 +743,27 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
         __SwitchRC5Format (rc5unitwork.L0);
 
       refL0 = rc5unitwork.L0;
-
-      // set up the current result state
-      rc5result.key.hi = contestwork.crypto.key.hi;
-      rc5result.key.lo = contestwork.crypto.key.lo;
-      rc5result.keysdone.hi = contestwork.crypto.keysdone.hi;
-      rc5result.keysdone.lo = contestwork.crypto.keysdone.lo;
-      rc5result.iterations.hi = contestwork.crypto.iterations.hi;
-      rc5result.iterations.lo = contestwork.crypto.iterations.lo;
-      rc5result.result = RESULT_WORKING;
-
       break;
 
     case 2: // OGR
 
+      #ifndef GREGH
+      return -1;
+      #else
       extern CoreDispatchTable *ogr_get_dispatch_table();
       contestwork.ogr = work->ogr;
       ogr = ogr_get_dispatch_table();
       int r = ogr->init();
-      if (r != CORE_S_OK) {
+      if (r != CORE_S_OK)
         return -1;
-      }
       r = ogr->create(&contestwork.ogr.stub, sizeof(Stub), &ogrstate);
-      if (r != CORE_S_OK) {
+      if (r != CORE_S_OK)
         return -1;
-      }
       break;
+      #endif
 
   }
+  resultcode = RESULT_WORKING;
 
   //---------------------------------------------------------------
   
@@ -834,50 +833,30 @@ s32 Problem::GetResult( RC5Result * result )
   if ( !initialized )
     return ( -1 );
 
-  // note that all but result go back to network byte order at this point.
-  result->key.hi = ( rc5result.key.hi );
-  result->key.lo = ( rc5result.key.lo );
-  result->keysdone.hi = ( rc5result.keysdone.hi );
-  result->keysdone.lo = ( rc5result.keysdone.lo );
-  result->iterations.hi = ( rc5result.iterations.hi );
-  result->iterations.lo = ( rc5result.iterations.lo );
-  result->result = rc5result.result;
+  result->key.hi = contestwork.crypto.key.hi;
+  result->key.lo = contestwork.crypto.key.lo;
+  result->keysdone.hi = contestwork.crypto.keysdone.hi;
+  result->keysdone.lo = contestwork.crypto.keysdone.lo;
+  result->iterations.hi = contestwork.crypto.iterations.hi;
+  result->iterations.lo = contestwork.crypto.iterations.lo;
+  result->result = resultcode;
 
   return ( contest );
 }
 
 /* ------------------------------------------------------------------- */
 
-s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
+int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dopurge )
 {
-  // store back the state information
-  switch (contest) {
-    case 0: // RC5
-    case 1: // DES
-      work->crypto.key.hi = ( contestwork.crypto.key.hi );
-      work->crypto.key.lo = ( contestwork.crypto.key.lo );
-      work->crypto.iv.hi = ( contestwork.crypto.iv.hi );
-      work->crypto.iv.lo = ( contestwork.crypto.iv.lo );
-      work->crypto.plain.hi = ( contestwork.crypto.plain.hi );
-      work->crypto.plain.lo = ( contestwork.crypto.plain.lo );
-      work->crypto.cypher.hi = ( contestwork.crypto.cypher.hi );
-      work->crypto.cypher.lo = ( contestwork.crypto.cypher.lo );
-      work->crypto.keysdone.hi = ( contestwork.crypto.keysdone.hi );
-      work->crypto.keysdone.lo = ( contestwork.crypto.keysdone.lo );
-      work->crypto.iterations.hi = ( contestwork.crypto.iterations.hi );
-      work->crypto.iterations.lo = ( contestwork.crypto.iterations.lo );
-      break;
-    case 2: // OGR
-      work->ogr.stub = contestwork.ogr.stub;
-      break;
-  }
-
-  if (setflags) 
-    {
-    initialized = 0;
-    finished = 0;
-    }
-  return( contest );
+  if (!initialized)
+    return -1;
+  if (work) // store back the state information
+    memcpy( (void *)work, (void *)&contestwork, sizeof(ContestWork));
+  if (contestid)
+    *contestid = contest;
+  if (dopurge)
+    initialized = finished = 0;
+  return( resultcode );
 }
 
 /* ------------------------------------------------------------- */
@@ -960,16 +939,10 @@ s32 Problem::Run( u32 /*unused*/ )
     started=1;
 
 #ifdef STRESS_THREADS_AND_BUFFERS 
-    contestwork.keysdone.hi = contestwork.iterations.hi;
-    contestwork.keysdone.lo = contestwork.iterations.lo;
-    rc5result.result = RESULT_NOTHING;
-    rc5result.key.hi = contestwork.key.hi;
-    rc5result.key.lo = contestwork.key.lo;
-    rc5result.keysdone.hi = contestwork.keysdone.hi;
-    rc5result.keysdone.lo = contestwork.keysdone.lo;
-    rc5result.iterations.hi = contestwork.iterations.hi;
-    rc5result.iterations.lo = contestwork.iterations.lo;
+    contestwork.crypto.keysdone.hi = contestwork.crypto.iterations.hi;
+    contestwork.crypto.keysdone.lo = contestwork.crypto.iterations.lo;
 
+    resultcode = RESULT_NOTHING;
     finished = 1;
     return 1;
 #endif    
@@ -1003,9 +976,11 @@ if (contest == 0) //************************ RC5 *********************
       (refL0.lo != rc5unitwork.L0.lo)) &&  // key incrementation
       (kiter == timeslice*pipeline_count))
     {
+    #if 0 /* can you spell "thread safe"? */
     Log("Internal Client Error #23: Please contact help@distributed.net\n"
         "Debug Information: %08x:%08x - %08x:%08x\n",
         rc5unitwork.L0.hi, rc5unitwork.L0.lo, refL0.hi, refL0.lo);
+    #endif
     return -1;
     };
 
@@ -1014,27 +989,22 @@ if (contest == 0) //************************ RC5 *********************
     contestwork.crypto.keysdone.hi++;
     // Checks passed, increment keys done count.
 
-  // Update data returned to caller
-  rc5result.key.hi = contestwork.crypto.key.hi;
-  rc5result.key.lo = contestwork.crypto.key.lo;
-  rc5result.keysdone.hi = contestwork.crypto.keysdone.hi;
-  rc5result.keysdone.lo = contestwork.crypto.keysdone.lo;
-  rc5result.iterations.hi = contestwork.crypto.iterations.hi;
-  rc5result.iterations.lo = contestwork.crypto.iterations.lo;
-
   if (kiter < timeslice*pipeline_count)
     {
     // found it!
-    rc5result.result = RESULT_FOUND;
+    resultcode = RESULT_FOUND;
+    
     finished = 1;
     return( 1 );
     }
   else if (kiter != timeslice*pipeline_count)
     {
+    #if 0 /* can you spell "thread safe"? */
     Log("Internal Client Error #24: Please contact help@distributed.net\n"
         "Debug Information: k: %x t: %x\n"
         "Debug Information: %08x:%08x - %08x:%08x\n", kiter, timeslice,
         rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
+    #endif
     return -1;
     };
 
@@ -1043,13 +1013,13 @@ if (contest == 0) //************************ RC5 *********************
        ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
     {
     // done with this block and nothing found
-    rc5result.result = RESULT_NOTHING;
+    resultcode = RESULT_NOTHING;
     finished = 1;
     }
   else
     {
     // more to do, come back later.
-    rc5result.result = RESULT_WORKING;
+    resultcode = RESULT_WORKING;
     finished = 0;
     }
 
@@ -1094,8 +1064,8 @@ else if (contest == 1) // *********************** DES *********************
     #if (CLIENT_OS == OS_LINUX)
       #error remi, if you compare a previous problem.cpp rev to this one,
       #error you will see that logic in the old rev is the same as when pipeline_count==1
+      #error but incrementation is for two pipelines (as per PIPELINE_COUNT #def).
       #error Are you sure about this? Is this only for LINUX or for any DWORZ core?
-      #error   And is the incrementation with 2 pipelines correct?
     #endif
 
     #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_LINUX)
@@ -1123,9 +1093,11 @@ else if (contest == 1) // *********************** DES *********************
       (refL0.lo != rc5unitwork.L0.lo)) &&  // key incrementation
       (kiter == timeslice*pipeline_count))
     {
+    #if 0 /* can you spell "thread safe"? */
     Log("Internal Client Error #23: Please contact help@distributed.net\n"
         "Debug Information: %08x:%08x - %08x:%08x\n",
         rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
+    #endif
     return -1;
     };
 
@@ -1135,26 +1107,21 @@ else if (contest == 1) // *********************** DES *********************
     // Checks passed, increment keys done count.
 
   // Update data returned to caller
-  rc5result.key.hi = contestwork.crypto.key.hi;
-  rc5result.key.lo = contestwork.crypto.key.lo;
-  rc5result.keysdone.hi = contestwork.crypto.keysdone.hi;
-  rc5result.keysdone.lo = contestwork.crypto.keysdone.lo;
-  rc5result.iterations.hi = contestwork.crypto.iterations.hi;
-  rc5result.iterations.lo = contestwork.crypto.iterations.lo;
-
   if (kiter < timeslice*pipeline_count)
     {
     // found it!
-    rc5result.result = RESULT_FOUND;
+    resultcode = RESULT_FOUND;
     finished = 1;
     return( 1 );
     }
   else if (kiter != timeslice*pipeline_count)
     {
+    #if 0 /* can you spell "thread safe"? */
     Log("Internal Client Error #24: Please contact help@distributed.net\n"
         "Debug Information: k: %x t: %x\n"
         "Debug Information: %08x:%08x - %08x:%08x\n", kiter, timeslice,
         rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
+    #endif
     return -1;
     };
 
@@ -1163,41 +1130,53 @@ else if (contest == 1) // *********************** DES *********************
        ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
     {
     // done with this block and nothing found
-    rc5result.result = RESULT_NOTHING;
+    resultcode = RESULT_NOTHING;
     finished = 1;
     }
   else
     {
     // more to do, come back later.
-    rc5result.result = RESULT_WORKING;
+    resultcode = RESULT_WORKING;
     finished = 0;
     }
 
   }
 else if (contest == 2) // ******************************* OGR ***************
   {
+    #ifndef GREGH
+    LogScreen("OGR stub %s\nOGR not implemented yet in Problem::Run\n"); 
+    return -1;
+    #else
     int nodes = 0x10000;
     int r = ogr->cycle(ogrstate, &nodes);
-    if (r != CORE_S_CONTINUE) {
-      if (r != CORE_S_OK) {
+    if (r != CORE_S_CONTINUE) 
+    {
+      if (r != CORE_S_OK) 
+      {
         // error!
-      } else {
+      } 
+      else 
+      {
         r = ogr->destroy(ogrstate);
-        if (r != CORE_S_OK) {
+        if (r != CORE_S_OK) 
+        {
           // error!
         }
         ogrstate = NULL;
       }
-      rc5result.result = RESULT_NOTHING;
+      resultcode = RESULT_NOTHING;
       finished = 1;
-    } else {
-      rc5result.result = RESULT_WORKING;
+    } 
+    else 
+    {
+      resultcode = RESULT_WORKING;
       finished = 0;
     }
+    #endif
   }
 else
   {
-  Log("Invalid Contest passed to Problem::Run!\n");
+  //invalid contest 
   return -1;
   }
 
@@ -1257,86 +1236,70 @@ return finished; // Done with this round
       if (kiter != (timeslice*pipeline_count))
         {
         // found it?
-        rc5result.key.hi = contestwork.key.hi;
-        rc5result.key.lo = contestwork.key.lo;
-        rc5result.keysdone.hi = contestwork.keysdone.hi;
-        rc5result.keysdone.lo = contestwork.keysdone.lo;
-        rc5result.iterations.hi = contestwork.iterations.hi;
-        rc5result.iterations.lo = contestwork.iterations.lo;
-        rc5result.result = RESULT_FOUND;
+        resultcode = RESULT_FOUND;
         finished = 1;
         return( 1 );
         }
 #if (CLIENT_OS == OS_RISCOS)
       }
     else // threadindex == 1
-      {
-          /*
-            This is the RISC OS specific x86 2nd thread magic.
-          */
-          _kernel_swi_regs r;
-    _kernel_oserror *err;
-          volatile RC5PCstruct *rc5pcr;
-          err = _kernel_swi(RC5PC_BufferStatus,&r,&r);
-    if (err)
     {
+      /* This is the RISC OS specific x86 2nd thread magic. */
+      _kernel_swi_regs r;
+      _kernel_oserror *err;
+      volatile RC5PCstruct *rc5pcr;
+      err = _kernel_swi(RC5PC_BufferStatus,&r,&r);
+      if (err)
+        {
         LogScreen("Error retrieving buffer status from x86 card");
-    }
-    else
-    {
+        }
+      else
+      {
         /*
-    contestwork.keysdone.lo is 0 for a completed block,
-    so take care when setting it.
+        contestwork.keysdone.lo is 0 for a completed block,
+        so take care when setting it.
         */
         rc5pcr = (volatile RC5PCstruct *)r.r[1];
         
         if (r.r[2]==1)
         {
-      /*
-        block finished
-      */
-      r.r[0] = 0;
-      err = _kernel_swi(RC5PC_RetriveBlock,&r,&r);
-      if (err)
-      {
-          LogScreen("Error retrieving block from x86 card");
-      }
-      else
-      {
-          rc5pcr = (volatile RC5PCstruct *)r.r[1];
-      
-          if (rc5pcr->result == RESULT_FOUND)
+          /* block finished */
+          r.r[0] = 0;
+          err = _kernel_swi(RC5PC_RetriveBlock,&r,&r);
+          if (err)
           {
-        contestwork.keysdone.lo = rc5pcr->keysdone.lo;
-        contestwork.keysdone.hi = rc5pcr->keysdone.hi;
-//printf("x86:FF Keysdone %08lx\n",contestwork.keysdone.lo);
-        
-        rc5result.key.hi = contestwork.key.hi;
-        rc5result.key.lo = contestwork.key.lo;
-        rc5result.keysdone.hi = contestwork.keysdone.hi;
-        rc5result.keysdone.lo = contestwork.keysdone.lo;
-        rc5result.iterations.hi = contestwork.iterations.hi;
-        rc5result.iterations.lo = contestwork.iterations.lo;
-        rc5result.result = RESULT_FOUND;
-        finished = 1;
-        return( 1 );
+            LogScreen("Error retrieving block from x86 card");
           }
           else
           {
-        contestwork.keysdone.lo = contestwork.iterations.lo;
-        contestwork.keysdone.hi = contestwork.iterations.hi;
-//printf("x86:FN Keysdone %08lx\n",contestwork.keysdone.lo);
+            rc5pcr = (volatile RC5PCstruct *)r.r[1];
+      
+            if (rc5pcr->result == RESULT_FOUND)
+            {
+              contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+              contestwork.keysdone.hi = rc5pcr->keysdone.hi;
+//printf("x86:FF Keysdone %08lx\n",contestwork.keysdone.lo);
+        
+              resultcode = RESULT_FOUND;
+              finished = 1;
+              return( 1 );
+            }
+            else
+            {
+              contestwork.keysdone.lo = contestwork.iterations.lo;
+              contestwork.keysdone.hi = contestwork.iterations.hi;
+  //printf("x86:FN Keysdone %08lx\n",contestwork.keysdone.lo);
+             }
           }
-      }
         }
         else
         {
-      contestwork.keysdone.lo = rc5pcr->keysdone.lo;
-      contestwork.keysdone.hi = rc5pcr->keysdone.hi;
+          contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+          contestwork.keysdone.hi = rc5pcr->keysdone.hi;
 //printf("x86:NF Keysdone %08lx\n",contestwork.keysdone.lo);
         }
-    }
       }
+    }
 #endif
     }
   else
@@ -1361,13 +1324,7 @@ return finished; // Done with this round
     if (kiter < timeslice)
       {
       // found it?
-      rc5result.key.hi = contestwork.key.hi;
-      rc5result.key.lo = contestwork.key.lo;
-      rc5result.keysdone.hi = contestwork.keysdone.hi;
-      rc5result.keysdone.lo = contestwork.keysdone.lo;
-      rc5result.iterations.hi = contestwork.iterations.hi;
-      rc5result.iterations.lo = contestwork.iterations.lo;
-      rc5result.result = RESULT_FOUND;
+      resultcode = RESULT_FOUND;
       finished = 1;
       return( 1 );
       }

@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.45  1999/03/18 03:49:24  cyp
+// a) discarded intermediate rc5result state/structures; b) Modified
+// RetrieveState() to return the core's resultcode; c) #if 0'd all Log()
+// calls from Problem::Run();  d) Some OGR changes
+//
 // Revision 1.44  1999/03/09 07:15:45  gregh
 // Various OGR changes.
 //
@@ -217,6 +222,7 @@ class Problem
 {
 public:
   int finished;
+  int resultcode; /* previously rc5result.result */
   u32 startpercent;
   u32 percent;
   int restart;
@@ -227,6 +233,7 @@ public:
 
   unsigned int pipeline_count;
   u32 tslice; 
+  int loaderflags; /* used by problem loader (probfill.cpp) */
 
   #ifdef MAX_MEM_REQUIRED_BY_CORE
   char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
@@ -235,11 +242,9 @@ public:
   unsigned int threadindex; /* index of this problem in the problem table */
   int threadindex_is_valid; /* 0 if the problem is not managed by probman*/
   
-// protected: ahem.
   u32 initialized;
   ContestWork contestwork;
   RC5UnitWork rc5unitwork;
-  RC5Result rc5result;
   u64 refL0;
   CoreDispatchTable *ogr;
   void *ogrstate;
@@ -258,7 +263,6 @@ public:
   int (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations );
   #endif
 
-public:
   Problem(long _threadindex = -1L);
   ~Problem();
 
@@ -270,10 +274,10 @@ public:
     // state is invalid (will generate errors) until this is called.
     // returns: -1 on error, 0 is OK
 
-  s32 RetrieveState( ContestWork * work , s32 setflags );
+  int RetrieveState( ContestWork * work, unsigned int *contestid, int dopurge );
     // Retrieve state from internal structures.
-    // state is invalid (will generate errors) immediately after this is called, if setflags==1.
-    // returns: -1 on error, 0 is OK
+    // state is invalid (will generate errors) once the state is purged.
+    // returns: -1 on error, resultcode otherwise
 
   s32 Run( u32 /* unused */ );
     // Runs calling rc5_unit for timeslice times...
