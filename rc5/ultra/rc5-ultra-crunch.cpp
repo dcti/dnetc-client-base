@@ -3,6 +3,13 @@
  * generation of S0[]
  *
  * $Log: rc5-ultra-crunch.cpp,v $
+ * Revision 1.9.2.1  1999/07/09 15:26:46  cyp
+ * sync from dev branch to release. Apparently silby doesn't know that you
+ * can't _release_ something that won't compile.
+ *
+ * Revision 1.10  1999/06/04 21:44:53  silby
+ * Removed checks for PIPELINE_COUNT and _CPU_32BIT_
+ *
  * Revision 1.9  1998/11/28 18:20:24  remi
  * Fixed the key incrementation bug. Many thanks to Simon Fenney for
  * finding it !
@@ -30,7 +37,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_ultra_crunch_cpp (void) {
-return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.9 1998/11/28 18:20:24 remi Exp $"; }
+return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.9.2.1 1999/07/09 15:26:46 cyp Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -42,14 +49,6 @@ return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.9 1998/11/28 18:20:24 remi Exp $"; }
 /* include files for version 2 code */
 #include "problem.h"
 #include "rotate.h"
-
-#if (PIPELINE_COUNT != 2)
-#error "Expecting pipeline count of 2"
-#endif
-
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
 
 
 #define _P_RC5     0xB7E15163
