@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.87 2001/02/07 19:05:45 oliver Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.88 2001/02/19 08:16:24 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -47,7 +47,7 @@ static struct __dyn_timeslice_struct
 {
   {  RC5, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  DES, 1000000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR,  200000,   0x100000,  0x00010,  0x10000 },
+  {  OGR,  200000,  0x8000000,  0x00010,  0x10000 },
   {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 }
 };
 static struct __dyn_timeslice_struct
@@ -55,7 +55,7 @@ static struct __dyn_timeslice_struct
 {                                  /* adjusted by ClientRun() if appropriate */
   {  RC5, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  DES, 1000000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR,  200000,   0x100000,  0x00010,  0x10000 },
+  {  OGR,  200000,  0x8000000,  0x00010,  0x10000 },
   {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 }
 };
 
@@ -208,7 +208,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
       MPYield(); /* MP Threads are non-preemptive */
     else
     #endif
-      macosSmartYield();
+      macosSmartYield(thrparams->priority);
   #elif (CLIENT_OS == OS_MACOSX)
     #if defined(__RHAPSODY__)
     NonPolledUSleep( 0 ); /* yield */
@@ -499,14 +499,14 @@ void Go_mt( void * parm )
       /* fine tune the timeslice for the *next* round */
       if (optimal_timeslice != 0)
       {
-        if (contest_i != OGR) // OGR makes dynamic timeslicing go crazy!
+        //if (contest_i != OGR) // OGR makes dynamic timeslicing go crazy!
           optimal_timeslice = thisprob->pub_data.tslice; /* get the number done back */
 
         if (run == RESULT_WORKING) /* timeslice/time is invalid otherwise */
         {
           if (runtime_usec != 0xfffffffful) /* not negative time or other bad thing */
           {
-#ifdef ALTERNATE_DYNAMIC_TIMESLICE
+#ifdef HAVE_I64
 /* This calculates the optimal timeslice based on a sliding average of the
  * reached rate. It reacts slower than the normal algorithm below, but has
  * the advantage that it reaches a stable point.
@@ -519,9 +519,7 @@ void Go_mt( void * parm )
 
               /*if(usecs!=0)
                 printf("%5d %4d\r", thisprob->pub_data.tslice, ixes*1000/usecs);*/
-#ifndef HAVE_I64
-#error You need to have a 64 bit integer type for ALTERNATE_DYNAMIC_TIMESLICE
-#endif
+
               optimal_timeslice=(ui64)thrparams->dyn_timeslice_table[contest_i].usec*ixes/usecs;
               if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
                 optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
@@ -1400,12 +1398,23 @@ int ClientRun( Client *client )
           }
           #elif (CLIENT_OS == OS_MACOS)
           {
+            /* OGR need special treatment because it doesnt always do what its told */
+//            if (tsinitd == OGR)
+//               non_preemptive_dyn_timeslice_table[tsinitd].usec = 10000*pow((client->priority+1),2);
+//            else
+               non_preemptive_dyn_timeslice_table[tsinitd].usec = 100000*(client->priority+1);
+
+            /* Try to hint */
+//            long gestaltResult;
+//            if (Gestalt(gestaltProcClkSpeed, &gestaltResult) == noErr)
+//            {
+//               printf("\nRunning at %d Mhz\n",gestaltResult/10000000);
+//            }
             #if (CLIENT_CPU == CPU_POWERPC)
-            non_preemptive_dyn_timeslice_table[tsinitd].optimal = 1024;
+            non_preemptive_dyn_timeslice_table[tsinitd].optimal = 2048;
             #else // eg. (CLIENT_CPU == CPU_68K)
-            non_preemptive_dyn_timeslice_table[tsinitd].optimal = 256;
+            non_preemptive_dyn_timeslice_table[tsinitd].optimal = 128;
             #endif
-            non_preemptive_dyn_timeslice_table[tsinitd].usec = 100000*(client->priority+1);
           }
           #elif (CLIENT_OS == OS_NETWARE)
           {
