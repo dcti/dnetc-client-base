@@ -8,7 +8,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.6 2000/09/17 11:46:26 cyp Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.7 2000/09/20 18:26:23 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -222,113 +222,6 @@ int BufferPutFileRecord( const char *filename, const WorkRecord * data,
 
 /* --------------------------------------------------------------------- */
 
-int BufferUpdate( Client *client, int updatereq_flags, int interactive )
-{
-  char loaderflags_map[CONTEST_COUNT];
-  int failed, dofetch, doflush, didfetch, didflush, dontfetch, dontflush;
-  unsigned int i, contest_i;
-  const char *ffmsg="--fetch and --flush services are not available.\n";
-
-  if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
-  {
-    if (interactive)
-      LogScreen( "%sThis client has been configured to run without\n"
-                 "updating its buffers.\n",ffmsg);
-    return -1;
-  }
-
-  dontfetch = dontflush = 1;
-  if ((updatereq_flags & BUFFERUPDATE_FETCH) != 0)
-    dontfetch = 0;
-  if ((updatereq_flags & BUFFERUPDATE_FLUSH) != 0)
-    dontflush = 0;
-
-  dofetch = doflush = 0;
-  for (i = 0; i < CONTEST_COUNT; i++)
-  {
-    contest_i = (unsigned int)(client->loadorder_map[i]);
-    loaderflags_map[i] = 0;
-
-    if (contest_i >= CONTEST_COUNT) /* disabled */
-    {
-      /* retrieve the original contest number from the load order */
-      contest_i &= 0x7f;
-      if (contest_i < CONTEST_COUNT)
-        loaderflags_map[contest_i] = PROBLDR_DISCARD;  /* thus discardable */
-    }
-    else if (dofetch == 0 || doflush == 0)/* (contest_i < CONTEST_COUNT ) */
-    {
-      if (!dofetch && !dontfetch)
-      {
-        unsigned long count;
-        if (GetBufferCount(client, contest_i, 0, &count) >= 0) /* no error */
-        {
-          long threshold = ClientGetInThreshold( client, contest_i );
-          if (threshold > 0 && count < (unsigned long) threshold )
-          {
-            if (count <= 1 || client->connectoften || interactive)
-              dofetch = 1;
-          }
-        }
-      }
-      if (!doflush && !dontflush)
-      {
-        long count = GetBufferCount( client, contest_i, 1 /* use_out_file */, NULL );
-        if (count > 0) /* no error and something there to flush */
-        {
-          doflush = 1;
-        }
-      }
-    }
-  }
-
-  failed = didfetch = didflush = 0;
-  if ((doflush || dofetch) && CheckExitRequestTriggerNoIO() == 0)
-  {
-    if (!client->noupdatefromfile && client->remote_update_dir[0] != '\0')
-    {
-      if (failed == 0 && !dontfetch && CheckExitRequestTriggerNoIO() == 0)
-      {
-        long transferred = BufferFetchFile( client, &loaderflags_map[0] );
-        if (transferred < 0)
-        {
-          failed = 1;
-          if (transferred < -1)
-            didfetch = 1;
-        }
-        else if (transferred > 0)
-          didfetch = 1;
-      }
-      if (failed == 0 && !dontflush && CheckExitRequestTriggerNoIO() == 0)
-      {
-        long transferred = BufferFlushFile( client, &loaderflags_map[0] );
-        if (transferred < 0)
-        {
-          failed = 1;
-          if (transferred < -1)
-            didflush = 1;
-        }
-        else if (transferred > 0)
-          didflush = 1;
-      }
-    }
-  }
-
-  ffmsg = "%sput buffers are %s. No %s required.\n";
-  updatereq_flags = 0;
-  if (didfetch)
-    updatereq_flags |= BUFFERUPDATE_FETCH;
-  else if (interactive && failed==0 && !dontfetch && !dofetch)
-    LogScreen(ffmsg, "In", "full", "fetch");
-  if (didflush)
-    updatereq_flags |= BUFFERUPDATE_FLUSH;
-  else if (interactive && failed==0 && !dontflush && !doflush)
-    LogScreen(ffmsg, "Out", "empty", "flush");
-  return (updatereq_flags);
-}
-
-/* --------------------------------------------------------------------- */
-
 int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data,
              unsigned long *countP ) /* returns <0 on ioerr, >0 if norecs */
 {
@@ -438,3 +331,191 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
     *packetcountP = reccount;
   return failed;
 }
+
+/* --------------------------------------------------------------------- */
+
+int BufferUpdate( Client *client, int req_flags, int interactive )
+{
+  int dofetch, doflush, didfetch, didflush, dontfetch, dontflush, didnews;
+  unsigned int i; char loaderflags_map[CONTEST_COUNT];
+  const char *ffmsg = "--fetch and --flush services are not available.\n";
+  int check_flags, updatefailflags, updatemodeflags, net_state_shown = 0;
+  int fill_even_if_not_totally_empty = (client->connectoften || interactive);
+
+  #define BUFFERUPDATE_MODE_FILE 0x01
+  #define BUFFERUPDATE_MODE_NET  0x02
+
+  /* -------------------------------------- */
+
+  updatefailflags = updatemodeflags = 0;
+  if (!client->noupdatefromfile && client->remote_update_dir[0] != '\0')
+  {
+    updatemodeflags |= BUFFERUPDATE_MODE_FILE;
+  }
+  if (interactive) /* ignore offlinemode and 'runbuffers' if interactive */
+  {
+    /* but... use networking only if remote buffers has been disabled */
+    if ((updatemodeflags & BUFFERUPDATE_MODE_FILE) == 0)
+      updatemodeflags |= BUFFERUPDATE_MODE_NET;
+  }
+  else if (client->blockcount < 0) /* "runbuffers" */
+  {
+    /* dnetc -help says:
+       -n <count>   packets to complete. -1 forces exit when buffer is empty.
+       --
+       Its probfill's job to 'force exit if empty', but its our job
+       to ensure that they aren't refilled.
+       In the event that we want to still allow a flush to occur, change
+       'req_flags = 0' to 'req_flags &= ~BUFFERUPDATE_FETCH'
+    */
+    req_flags = 0; // &= ~BUFFERUPDATE_FETCH;
+  }
+  else if (!client->offlinemode) /* not interactive, not networking disabled */
+  {                            
+    int connect_permitted = 1;
+    #ifdef LURK
+    if ((dialup.IsWatching() & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
+    {                 /* started ok, and either CONNECT_LURK or _LURKONLY */
+      fill_even_if_not_totally_empty = 1;
+      if (dialup.IsWatcherPassive()) //started ok, lurkmode is CONNECT_LURKONLY
+      {
+        //connect is permitted only if we are already connected
+        connect_permitted = (dialup.IsConnected());
+      }
+    }
+    #endif
+    if (connect_permitted)
+      updatemodeflags |= BUFFERUPDATE_MODE_NET;
+  }
+  if (updatemodeflags == 0)
+  {
+    if (interactive)
+      LogScreen( "%sThis client has been configured to run without\n"
+                 "updating its buffers.\n",ffmsg);
+    return -1;
+  }
+
+  /* -------------------------------------- */
+
+  for (i = 0; i < CONTEST_COUNT; i++)
+  {
+    unsigned int cont_i = (unsigned int)(client->loadorder_map[i]);
+    if (cont_i >= CONTEST_COUNT) /* disabled */
+    {
+      /* retrieve the original contest number from the load order */
+      cont_i &= 0x7f;
+      if (cont_i < CONTEST_COUNT)
+        loaderflags_map[cont_i] = PROBLDR_DISCARD;  /* thus discardable */
+    }
+    else /* cont_i < CONTEST_COUNT */
+    {
+      loaderflags_map[cont_i] = 0;  
+    }
+  }    
+
+  /* -------------------------------------- */
+
+  dontfetch = dontflush = 1;
+  if ((req_flags & BUFFERUPDATE_FETCH) != 0)
+    dontfetch = 0;
+  if ((req_flags & BUFFERUPDATE_FLUSH) != 0)
+    dontflush = 0;
+
+  /* -------------------------------------- */
+
+  dofetch = doflush = 0;
+  if (!dontfetch || !dontflush)
+  {
+    check_flags = 0;
+    if (!dontfetch)
+      check_flags |= BUFFERUPDATE_FETCH;
+    if (!dontflush)
+      check_flags |= BUFFERUPDATE_FLUSH;  
+    if (fill_even_if_not_totally_empty)
+      check_flags |= BUFFUPDCHECK_TOPOFF;
+    check_flags = BufferCheckIfUpdateNeeded(client, -1, check_flags);
+    if ((check_flags & BUFFERUPDATE_FETCH) != 0)
+      dofetch = 1;
+    if ((check_flags & BUFFERUPDATE_FLUSH) != 0)
+      doflush = 1;
+  }    
+
+  /* -------------------------------------- */
+
+  updatefailflags = didfetch = didflush = didnews = 0;
+  if ((doflush || dofetch) && !CheckExitRequestTriggerNoIO())
+  {
+    if ((updatemodeflags & BUFFERUPDATE_MODE_FILE)!=0)
+    {
+      int transerror = 0;
+      if (transerror == 0 && !dontfetch && !CheckExitRequestTriggerNoIO())
+      {
+        long transferred = BufferFetchFile( client, &loaderflags_map[0] );
+        if (transferred < 0)
+        {
+          transerror = 1;
+          if (transferred < -1)
+            didfetch = 1;
+        }
+        else if (transferred > 0)
+          didfetch = 1;
+      }
+      if (transerror == 0 && !dontflush && !CheckExitRequestTriggerNoIO())
+      {
+        long transferred = BufferFlushFile( client, &loaderflags_map[0] );
+        if (transferred < 0)
+        {
+          transerror = 1;
+          if (transferred < -1)
+            didflush = 1;
+        }
+        else if (transferred > 0)
+          didflush = 1;
+      }
+      if (transerror != 0)
+        updatefailflags |= BUFFERUPDATE_MODE_FILE;
+    }
+  }
+
+  /* -------------------------------------- */
+
+  req_flags = 0;
+  if (didflush)
+    req_flags |= BUFFERUPDATE_FLUSH;
+  if (didfetch)
+    req_flags |= BUFFERUPDATE_FETCH;
+  if (didfetch || didflush || didnews)
+  {
+    struct timeval tv;
+    if (CliClock(&tv) == 0)
+    {
+      if (!tv.tv_sec) tv.tv_sec++;
+      client->last_buffupd_time = tv.tv_sec;
+    }  
+  }
+
+  /* -------------------------------------- */
+
+  if (updatefailflags == updatemodeflags && !didfetch && !didflush)
+  {                             /* all methods failed completely */
+    if (interactive && !net_state_shown && !CheckExitRequestTrigger())
+    {
+      if ((updatefailflags & BUFFERUPDATE_MODE_NET)!=0)
+      {
+        LogScreen( "Could not update to/from the net. Network down?\n" );
+      }
+    }
+    return -1;
+  }
+  if (interactive && !CheckExitRequestTrigger())
+  {
+    ffmsg = "%sput buffers are %sNo %s required.\n";
+    if (!dontfetch && !dofetch && !didfetch)
+      LogScreen(ffmsg, "In", "full (or projects are closed).\n", "fetch");
+    if (!dontflush && !doflush && !didflush)
+      LogScreen(ffmsg, "Out", "empty. ", "flush");
+  }    
+  return (req_flags);
+}
+
+/* --------------------------------------------------------------------- */

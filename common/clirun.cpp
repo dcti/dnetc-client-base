@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.67 2000/08/29 11:04:21 oliver Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.68 2000/09/20 18:26:24 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1408,16 +1408,6 @@ int ClientRun( Client *client )
   //now begin looping until we have a reason to quit
   //------------------------------------
 
-  // -- cramer - until we have a better way of telling how many blocks
-  //             are loaded and if we can get more, this is gonna be a
-  //             a little complicated.  getbuff_errs and nonewblocks
-  //             control the exit process.  getbuff_errs indicates the
-  //             number of attempts to load new blocks that failed.
-  //             nonewblocks indcates that we aren't get anymore blocks.
-  //             Together, they can signal when the buffers have been
-  //             truely exhausted.  The magic below is there to let
-  //             the client finish processing those blocks before exiting.
-
   dontSleep = 1; // don't sleep in the first loop 
                  // (do percbar, connectoften, checkpt first)
 
@@ -1455,7 +1445,10 @@ int ClientRun( Client *client )
       if (CliClock(&tv) == 0)
       {
         if ( ((unsigned long)tv.tv_sec) < ((unsigned long)timeRun) )
+        {
           Log("ERROR: monotonic time found to be going backwards!\n");
+          //TimeToQuit = 1;
+        }
         else  
           timeRun = tv.tv_sec;
       }
@@ -1661,87 +1654,62 @@ int ClientRun( Client *client )
     //------------------------------------
 
     local_connectoften = 0;
-    #if defined(LURK)
-    if (dialup.IsWatching()) /* is lurk or lurkonly enabled? */
+    if (!TimeToQuit)
     {
-      client->connectoften = 0;
-      if (!TimeToQuit && !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) &&
-                         dialup.CheckIfConnectRequested())
-      {                   
-        local_connectoften = 3; /* both fetch and flush */
+      #if defined(LURK)
+      if ((dialup.IsWatching() & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
+      {                                  /* is lurk or lurkonly enabled? */
+        client->connectoften = 0; /* turn off old setting */
+        if (dialup.IsConnected()) 
+          local_connectoften = 3; /* both fetch and flush */
       }         
-    }
-    else
-    #endif
-    {
-      if (!client->offlinemode)
+      else
+      #endif
       {
-        local_connectoften = client->connectoften;
-        /* 0=none, &1=in-buf, &2=out-buf, &4=sticky-flag (handled elsewhere) */ 
-      }
-    }    
+        if (!client->offlinemode)
+        {
+          local_connectoften = client->connectoften;
+          /* 0=none, &1=in-buf, &2=out-buf, &4=sticky-flag (handled elsewhere) */ 
+        }
+      }    
+    }  
 
     //------------------------------------
     //handle 'connectoften' requests
     //------------------------------------
 
-    #if 0
-    if (client->min_buffupd_interval > 0 && client->last_buffupd_time != 0)
-    {
-      /* Fixup next connect time so that the elapsed time between updates
-         is _at_least_ client->min_buffupd_interval 
-      */   
-      timeNextConnect = ((time_t)client->last_buffupd_time) + 
-                        (time_t)(client->min_buffupd_interval * 60); 
-    }
-    #endif
+    TRACE_OUT((0,"local_connectoften=0x%x,timeRun=%u,timeNextConnect=%u\n",
+               local_connectoften, (unsigned)timeRun, (unsigned)timeNextConnect));
 
-    if (!TimeToQuit && ((local_connectoften & 3)!=0) && timeRun>=timeNextConnect)
+    if (!TimeToQuit 
+      && (local_connectoften & 3)!=0 
+      && timeRun >= timeNextConnect 
+      && (client->max_buffupd_interval <= 0 || 
+          client->last_buffupd_time == 0 ||
+          timeRun >= (((time_t)client->last_buffupd_time) + 
+                       (time_t)(client->max_buffupd_interval * 60))) )
     {
-      int doupd = 1;
-      if (timeNextConnect != 0)
+      timeNextConnect = timeRun + 30; /* never more often than 30 seconds */  
+      if (ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) == 0)
       {
-        int i, have_non_empty = 0, have_one_full = 0;
-        for (i = 0; i < CONTEST_COUNT; i++ )
+        int upd_flags = BUFFUPDCHECK_EITHER; 
+        /* BUFFUPDCHECK_EITHER == return both if _either_ fetch or flush needed*/
+        TRACE_OUT((+1,"frequent connect check.\n"));
+        if ((local_connectoften & 1) != 0) /* check fetch */  
+          upd_flags |= BUFFERUPDATE_FETCH|BUFFUPDCHECK_TOPOFF;
+        /* BUFFUPDCHECK_TOPOFF == "fetch even if not completely empty" */
+        if ((local_connectoften & 2) != 0) /* check flush */
+          upd_flags |= BUFFERUPDATE_FLUSH;
+        upd_flags = BufferCheckIfUpdateNeeded(client, -1, upd_flags);
+        //printf("\rconnect-often: BufferCheckIfUpdateNeeded()=>0x%x\n",upd_flags);
+        TRACE_OUT((-1,"frequent connect check. need update?=0x%x\n",upd_flags));
+        if (upd_flags >= 0 && /* no error */
+           (upd_flags & (BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH))!=0)
         {
-          unsigned cont_i = (unsigned int)client->loadorder_map[i];
-          if (cont_i < CONTEST_COUNT) /* not disabled */
-          {
-            if ((client->project_flags[cont_i] & PROJECTFLAGS_CLOSED) == 0)
-            {
-              if ((local_connectoften & 2) != 0) /* check flush */
-              {
-                if (GetBufferCount( client, cont_i, 1, NULL ) > 0) 
-                {
-                  have_non_empty = 1; /* at least one out-buffer is not empty */
-                  break;
-                }
-              }  
-              if ((local_connectoften & 1) != 0) /* check fetch */
-              {
-                unsigned long count;
-                if (GetBufferCount( client, cont_i, 0, &count ) >= 0)
-                {
-                  if (count >= (unsigned int)ClientGetInThreshold( client, cont_i, 1 /* force */ )) 
-                  {         
-                    have_one_full = 1; /* at least one in-buffer is full */
-                  }
-                }
-              }  
-            }
-          }
-        }
-        doupd = (have_non_empty || !have_one_full);
+          ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
+        }   
       }
-      if ( doupd )
-      {
-        ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
-      }
-      if (client->max_buffupd_interval > 0) /* interval was specified (minutes) */
-        timeNextConnect = timeRun + (client->max_buffupd_interval*60);  
-      else
-        timeNextConnect = timeRun + 30; /* every 30 seconds */
-    }
+    }  
 
     //----------------------------------------
     // If not quitting, then handle mode requests
@@ -1817,3 +1785,4 @@ int ClientRun( Client *client )
 }
 
 // ---------------------------------------------------------------------------
+
