@@ -8,10 +8,11 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.50 2001/03/06 03:17:25 sampo Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.51 2001/03/06 04:35:43 sampo Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
+#include "selcore.h"  // unit_func_union
 #if defined(HAVE_OGR_CORES)
 #include "ogr.h"      /* OGR core stuff */
 #endif
@@ -108,39 +109,6 @@ typedef struct
 #ifndef MIPSpro
 # pragma pack()
 #endif /* ! MIPSpro */
-
-/* ---------------------------------------------------------------------- */
-
-/* the unit_func_union union and struct selcore are here rather than in
- * selcore.h because they need RC5UnitWork/CoreDispatchTable to
- * be prototyped first. (yes, its yucky)
-*/
-
-typedef union
-{
-    /* this is our generic prototype */
-    s32 (*gen)( RC5UnitWork *, u32 *iterations, void *memblk );
-    #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
-    u32 __regargs (*rc5)( RC5UnitWork * , u32 iterations );
-    #else
-    u32 (*rc5)( RC5UnitWork * , u32 iterations );
-    #endif
-    #if defined(HAVE_DES_CORES)
-    u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );
-    #endif
-    #if defined(HAVE_OGR_CORES)
-    CoreDispatchTable *ogr;
-    #endif
-} unit_func_union;
-
-struct selcore
-{
-  int client_cpu;
-  int pipeline_count;
-  int use_generic_proto;
-  int cruncher_is_asynchronous;
-  unit_func_union unit_func;
-};
 
 /* ---------------------------------------------------------------------- */
 
