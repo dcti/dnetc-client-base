@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.109  1998/07/25 06:31:39  silby
+// Added lurk functions to initiate a connection and hangup a connection.  win32 hangup is functional.
+//
 // Revision 1.108  1998/07/25 05:29:49  silby
 // Changed all lurk options to use a LURK define (automatically set in client.h) so that lurk integration of mac/amiga clients needs only touch client.h and two functions in client.cpp
 //
@@ -80,7 +83,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.108 1998/07/25 05:29:49 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.109 1998/07/25 06:31:39 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -256,7 +259,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.108 1998/07/25 05:29:49 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.109 1998/07/25 06:31:39 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -3549,12 +3552,13 @@ int main( int argc, char *argv[] )
 
 // ---------------------------------------------------------------------------
 
+#if defined(LURK)
+
 #if (CLIENT_OS == OS_WIN32)
 static rasenumconnectionsT rasenumconnections = NULL;
 static rasgetconnectstatusT rasgetconnectstatus = NULL;
+static rashangupT rashangup = NULL;
 #endif
-
-#if defined(LURK)
 
 s32 Client::StartLurk(void)// Initializes Lurk Mode
   // 0 == Successfully started lurk mode
@@ -3597,6 +3601,20 @@ s32 Client::StartLurk(void)// Initializes Lurk Mode
       LocalFree( lpMsgBuf );
       return -1;
     }
+    rashangup = (rashangupT) GetProcAddress(hinstance,"RasHangUpA");
+    if (rashangup==NULL)
+    {
+      FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        (LPTSTR) &lpMsgBuf,0,NULL);
+      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
+      LocalFree( lpMsgBuf );
+      return -1;
+    }
+
+
   }
 #endif
 return 0;
@@ -3636,6 +3654,56 @@ if (lurk && rasenumconnections && rasgetconnectstatus)
   return dod.rweonline();
 #endif
 return 0;// Not connected
+}
+
+s32 Client::LurkInitiateConnection(void)
+  // Initiates a dialup connection
+  // 0 = already connected, 1 = connection started,
+  // -1 = connection failed
+{
+
+return 0;
+}
+
+s32 Client::LurkTerminateConnection(void)
+  // -1 = connection did not terminate properly, 0 = connection
+  // terminated
+{
+if (LurkStatus() == 0) return 0; // We're already disconnected
+
+#if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
+if (lurk && rasenumconnections && rasgetconnectstatus)
+  {
+  RASCONN rasconn[8];
+  DWORD cb;
+  DWORD cConnections;
+  RASCONNSTATUS rasconnstatus;
+  (rasconn[0]).dwSize = sizeof(RASCONN);
+  cb = sizeof(rasconn);
+  if (rasenumconnections(&rasconn[0], &cb, &cConnections) == 0)
+    {
+    if (cConnections > 0)
+      {
+      rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
+      for (DWORD whichconn = 1; whichconn <= cConnections; whichconn++)
+        {
+        if (rasgetconnectstatus((rasconn[whichconn-1]).hrasconn,
+            &rasconnstatus) == 0 && rasconnstatus.rasconnstate == RASCS_Connected)
+            // We're connected
+            if (rashangup(rasconn[whichconn-1].hrasconn) == 0) // So kill it!
+              return 0; // Successful hangup
+            else return -1; // RasHangUp reported an error.
+ 
+        }   
+      }
+    }
+  }
+return 0;
+#else
+return 0;
+#endif
+
+
 }
 
 #endif

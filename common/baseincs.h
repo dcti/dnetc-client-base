@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.10  1998/07/25 06:31:37  silby
+// Added lurk functions to initiate a connection and hangup a connection.  win32 hangup is functional.
+//
 // Revision 1.9  1998/07/16 21:47:56  nordquist
 // More DYNIX port changes.
 //
@@ -142,6 +145,7 @@ extern "C" {
     #include <ras.h>
     typedef DWORD (CALLBACK *rasenumconnectionsT)(LPRASCONN, LPDWORD, LPDWORD);
     typedef DWORD (CALLBACK *rasgetconnectstatusT)(HRASCONN, LPRASCONNSTATUS);
+    typedef DWORD (CALLBACK *rashangupT)(HRASCONN); 
   #endif
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>

@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.69  1998/07/25 06:31:44  silby
+// Added lurk functions to initiate a connection and hangup a connection.  win32 hangup is functional.
+//
 // Revision 1.68  1998/07/25 05:29:57  silby
 // Changed all lurk options to use a LURK define (automatically set in client.h) so that lurk integration of mac/amiga clients needs only touch client.h and two functions in client.cpp
 //
@@ -399,6 +402,15 @@ protected:
 
   s32 LurkStatus(void);
     // Checks status of connection -> !0 = connected
+
+  s32 LurkInitiateConnection(void);
+    // Initiates a dialup connection
+    // 0 = already connected, 1 = connection started,
+    // -1 = connection failed
+
+  s32 LurkTerminateConnection(void);
+    // -1 = connection did not terminate properly, 0 = connection
+    // terminated
 #endif
 
 #if defined(NEEDVIRTUALMETHODS)
