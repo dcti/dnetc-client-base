@@ -50,7 +50,13 @@ common/logstuff.o_ppc\
 common/triggers.o_ppc\
 common/buffupd.o_ppc\
 common/selcore.o_ppc\
-common/guistuff.o_ppc
+common/guistuff.o_ppc\ 
+common/clirun.o_ppc\
+common/pollsys.o_ppc\  
+common/probman.o_ppc\ 
+common/probfill.o_ppc\ 
+common/bench.o_ppc\
+common/setprio.o_ppc   
 
 RC5_OBJS_PPC	=\
 common/problem.o_ppc\
@@ -95,8 +101,14 @@ common/cmdline.o_68k\
 common/logstuff.o_68k\
 common/triggers.o_68k\
 common/buffupd.o_68k\
-common/selcore.o_68k\
-common/guistuff.o_68k
+common/selcore.o_68k
+common/guistuff.o_68k\ 
+common/clirun.o_68k\
+common/pollsys.o_68k\  
+common/probman.o_68k\ 
+common/probfill.o_68k\ 
+common/bench.o_68k\
+common/setprio.o_68k   
 
 RC5_OBJS_68K	=\
 common/problem.o_68k\
@@ -197,7 +209,13 @@ common/logstuff.o_ppc	:	common/logstuff.cpp
 common/triggers.o_ppc	:	common/triggers.cpp
 common/buffupd.o_ppc	:	common/buffupd.cpp
 common/selcore.o_ppc	:	common/selcore.cpp
-common/guistuff.o_ppc	:	common/guistuff.cpp
+common/guistuff.o_ppc   :       common/guistuff.cpp 
+common/clirun.o_ppc     :       common/clirun.cpp
+common/pollsys.o_ppc    :       common/pollsys.cpp
+common/probman.o_ppc    :       common/probman.cpp
+common/probfill.o_ppc   :       common/probfill.cpp
+common/bench.o_ppc      :       common/bench.cpp
+common/setprio.o_ppc    :       common/setprio.cpp
 
 # RC5 Dependencies
 
@@ -246,6 +264,12 @@ common/triggers.o_68k	:	common/triggers.cpp
 common/buffupd.o_68k	:	common/buffupd.cpp
 common/selcore.o_68k	:	common/selcore.cpp
 common/guistruff.o_68k	:	common/guistuff.cpp
+common/clirun.o_68k     :       common/clirun.cpp
+common/pollsys.o_68k    :       common/pollsys.cpp
+common/probman.o_68k    :       common/probman.cpp
+common/probfill.o_68k   :       common/probfill.cpp
+common/bench.o_68k      :       common/bench.cpp
+common/setprio.o_68k    :       common/setprio.cpp
 
 # RC5 Dependencies
 

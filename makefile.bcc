@@ -69,7 +69,13 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/lurk.obj       \
 	$(OUTPUTPATH)/triggers.obj   \
 	$(OUTPUTPATH)/selcore.obj    \
-        $(OUTPUTPATH)/guistuff.obj
+	$(OUTPUTPATH)/guistuff.obj   \
+	$(OUTPUTPATH)/clirun.obj     \
+	$(OUTPUTPATH)/pollsys.obj    \
+	$(OUTPUTPATH)/probman.obj    \
+	$(OUTPUTPATH)/probfill.obj   \
+	$(OUTPUTPATH)/bench.obj      \
+	$(OUTPUTPATH)/setprio.obj    
 
 PREBUILT_OBJS =                   \
         $(OUTPUTPATH)/rg-486.obj   \
@@ -108,6 +114,4 @@ rc5des:   $(RC5_OBJS) $(PREBUILT_OBJS)
 c0x32.obj $(RC5_OBJS:/=\) $(PREBUILT_OBJS:/=\),\
 $(EXENAME:/=\),,$(CLI_LIBS)
 |
-
-# --------------------------------------------
 

@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.98  1998/09/28 04:41:20  cyp
+# new kids on the block: clirun, pollsys, probman, bench, probfill, setprio
+#
 # Revision 1.97  1998/09/25 11:30:46  chrisb
 # Added stuff to support 3 cores in the ARM clients.
 #
@@ -458,7 +461,9 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/threadcd.cpp common/cpucheck.cpp common/pathwork.cpp
     common/cliident.cpp common/logstuff.cpp common/buffupd.cpp
     common/triggers.cpp common/selcore.cpp common/netinit.cpp
-    common/cmdline.cpp common/selftest.cpp common/guistuff.cpp"
+    common/cmdline.cpp common/selftest.cpp common/guistuff.cpp
+    common/bench.cpp common/probman.cpp common/clirun.cpp
+    common/probfill.cpp common/pollsys.cpp common/setprio.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"

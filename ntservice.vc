@@ -42,12 +42,19 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/cpucheck.obj   \
 	$(OUTPUTPATH)/pathwork.obj   \
 	$(OUTPUTPATH)/cliident.obj   \
-	$(OUTPUTPATH)/lurk.obj \
+	$(OUTPUTPATH)/lurk.obj       \
 	$(OUTPUTPATH)/logstuff.obj   \
 	$(OUTPUTPATH)/buffupd.obj    \
 	$(OUTPUTPATH)/des-slice-meggs.obj \
 	$(OUTPUTPATH)/triggers.obj   \
-	$(OUTPUTPATH)/selcore.obj   
+	$(OUTPUTPATH)/selcore.obj    \
+	$(OUTPUTPATH)/guistuff.obj   \
+	$(OUTPUTPATH)/clirun.obj     \
+	$(OUTPUTPATH)/pollsys.obj    \
+	$(OUTPUTPATH)/probman.obj    \
+	$(OUTPUTPATH)/probfill.obj   \
+	$(OUTPUTPATH)/bench.obj      \
+	$(OUTPUTPATH)/setprio.obj    
 
 PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/rg-486.obj   \
@@ -105,4 +112,3 @@ superclean: clean
 rebuild: clean all
 
 # --------------------------------------------
-
