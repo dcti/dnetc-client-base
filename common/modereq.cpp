@@ -8,6 +8,10 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.4  1998/11/02 04:46:08  cyp
+// Added check for user break after each mode is processed. Added code to
+// automatically trip a restart after mode processing (for use with config).
+//
 // Revision 1.3  1998/10/11 02:45:20  cyp
 // Added &= ~(MODEREQ_CONFIG) that I forgot.
 //
@@ -17,22 +21,23 @@
 // Revision 1.1  1998/10/08 20:49:41  cyp
 // Created.
 //
-//
-//
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.3 1998/10/11 02:45:20 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.4 1998/11/02 04:46:08 cyp Exp $"; }
 #endif
 
-#include "client.h"    //client class
-#include "triggers.h"  //CheckExitRequestTrigger() [used by bench stuff]
-#include "logstuff.h"  //LogScreen() [used by update/fetch/flush stuff]
-#include "modereq.h"   //our constants
+#include "client.h"   //client class
+#include "triggers.h" //CheckExitRequestTrigger() [used by bench stuff]
+#include "logstuff.h" //LogScreen() [used by update/fetch/flush stuff]
+#include "modereq.h"  //our constants
+#include "triggers.h" //RaiseRestartRequestTrigger/CheckExitRequestTriggerNoIO
+#include "console.h"  //Clear the screen after config if restarting
 
-#include "cpucheck.h"  //"mode" DisplayProcessorInformation()
-#include "cliident.h"  //"mode" CliIdentifyModules();
-#include "selftest.h"  //"mode" SelfTest()
-#include "bench.h"     //"mode" Benchmark()
+#include "cpucheck.h" //"mode" DisplayProcessorInformation()
+#include "cliident.h" //"mode" CliIdentifyModules();
+#include "selftest.h" //"mode" SelfTest()
+#include "bench.h"    //"mode" Benchmark()
+
 
 /* --------------------------------------------------------------- */
 
@@ -94,6 +99,9 @@ int ModeReqRun(Client *client)
   
   if (++modereq.isrunning == 1)
     {
+    int restart = ((modereq.reqbits & MODEREQ_RESTART)!=0);
+    modereq.reqbits &= ~MODEREQ_RESTART;
+    
     while ((modereq.reqbits & MODEREQ_ALL)!=0)
       {
       unsigned int bits = modereq.reqbits;
@@ -115,12 +123,16 @@ int ModeReqRun(Client *client)
         modereq.reqbits &= ~(MODEREQ_BENCHMARK_DES | 
                  MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_QUICK );
         }
-      if ((bits & (MODEREQ_CONFIG)) != 0)
+      if ((bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART)) != 0)
         {
         if ( client->Configure() == 1 )
+          {
           client->WriteFullConfig(); //full new build
-        retval |= (MODEREQ_CONFIG);
-        modereq.reqbits &= ~(MODEREQ_CONFIG);
+          }
+        if ((bits & MODEREQ_CONFRESTART) != 0)
+          restart = 1;
+        retval |= (bits & (MODEREQ_CONFIG|MODEREQ_CONFRESTART));
+        modereq.reqbits &= ~(MODEREQ_CONFIG|MODEREQ_CONFRESTART);
         }
       if ((bits & (MODEREQ_FETCH | MODEREQ_FLUSH))!=0)
         {
@@ -203,7 +215,15 @@ int ModeReqRun(Client *client)
         retval |= (MODEREQ_TEST);
         modereq.reqbits &= ~(MODEREQ_TEST);
         }
+      if (CheckExitRequestTriggerNoIO())
+        {
+        restart = 0;
+        break;
+        }
       } //end while
+    
+    if (restart)
+      RaiseRestartRequestTrigger();
     } //if (++isrunning == 1)
 
   modereq.isrunning--;
