@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.53 1999/04/23 06:18:37 gregh Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.54 1999/04/23 07:12:38 gregh Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -495,7 +495,7 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
         }
         case OGR:
         {
-          Log("Loaded %s stub %s (%u.%u0%% done)",
+          Log("Loaded %s stub %s%c(%u.%u0%% done)",
                   cont_name,
                   ogr_stubstr(&wrdata.work.ogr.workstub.stub),
                   ((permille!=0 && permille<=1000)?(' '):(0)),

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.107 1999/04/23 06:18:37 gregh Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108 1999/04/23 07:12:38 gregh Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -600,6 +600,12 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
       r = ogr->create(&contestwork.ogr.workstub, sizeof(WorkStub), &ogrstate);
       if (r != CORE_S_OK)
         return -1;
+      if (contestwork.ogr.workstub.worklength > contestwork.ogr.workstub.stub.length)
+      {
+        // This is just a quick&dirty calculation that resembles progress.
+        startpermille = contestwork.ogr.workstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10
+                      + contestwork.ogr.workstub.stub.diffs[contestwork.ogr.workstub.stub.length+1]/10;
+      }
       break;
       #endif
 
