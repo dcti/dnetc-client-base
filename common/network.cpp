@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.114 2000/01/04 01:31:37 michmarc Exp $"; }
+return "@(#)$Id: network.cpp,v 1.115 2000/01/04 12:30:48 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -1691,7 +1691,7 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
       rc = -1;
       break;
     }
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     errno = WSAGetLastError();
 #ifdef DEBUGTHIS
     Log( "failure (ret: %d, code: %d)\n", retval, errno);
@@ -1786,7 +1786,7 @@ int Network::LowLevelPut(const char *ccdata,int length)
     else //if (info.tsdu == -2) /* normal send not supp'd (ever happens?)*/
       return -1;
   }
-  #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32S)
+  #elif (CLIENT_OS == OS_WIN16)
   if (sendquota > 0x7FFF)  /* 16 bit OS but int is 32 bits */
     sendquota = 0x7FFF;
   #else
@@ -2120,7 +2120,7 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
         return ( t_nonblocking( sock ) );
     #elif (!defined(FIONBIO) && !(defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK))))
       return -1;
-    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
       unsigned long flagon = ((parm == 0/* off */)?(1):(0));
       return ioctlsocket(sock, FIONBIO, &flagon);
     #elif ((CLIENT_OS == OS_VMS) && defined(__VMS_UCX__))

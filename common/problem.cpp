@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.142 2000/01/04 01:31:38 michmarc Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.143 2000/01/04 12:30:49 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 

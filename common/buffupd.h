@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __BUFFUPD_H__
-#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.8 2000/01/04 01:31:33 michmarc Exp $"
+#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.9 2000/01/04 12:30:47 cyp Exp $"
 
 #define BUFFERUPDATE_FETCH 0x01
 #define BUFFERUPDATE_FLUSH 0x02

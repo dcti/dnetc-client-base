@@ -1,11 +1,11 @@
 /* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.115 2000/01/04 01:31:34 michmarc Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.116 2000/01/04 12:30:47 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -125,7 +125,7 @@ static void __thread_yield__(void)
     dosCliYield(); //dpmi yield
   #elif (CLIENT_OS == OS_NETWARE)
     nwCliThreadSwitchLowPriority();
-  #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  #elif (CLIENT_OS == OS_WIN16)
     w32Yield();
   #elif (CLIENT_OS == OS_RISCOS)
     if (riscos_in_taskwindow)
@@ -1369,7 +1369,7 @@ int ClientRun( Client *client )
             }
             unsigned long count;
             GetBufferCount( client, cont_i, 0, &count );
-            if (count >= (unsigned int)ClientGetInThreshold( client, cont_i, true )) 
+            if (count >= (unsigned int)ClientGetInThreshold( client, cont_i, 1 /* force */ )) 
             {         
               have_one_full = 1; /* at least one in-buffer is full */
             }
