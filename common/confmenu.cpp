@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.36 1999/04/04 16:15:14 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.37 1999/04/08 19:04:50 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -25,7 +25,8 @@ return "@(#)$Id: confmenu.cpp,v 1.36 1999/04/04 16:15:14 cyp Exp $"; }
 /* ----------------------------------------------------------------------- */
 
 #define MAX_MENUENTRIESPERSCREEN 18 /* max menu entries per screen */
-static const char *CONFMENU_CAPTION="RC5DES Client Configuration: %s\n";
+static const char *CONFMENU_CAPTION="RC5DES Client Configuration: %s\n"
+"-----------------------------------------------------------------------\n";
 
 /* ----------------------------------------------------------------------- */
        
@@ -107,10 +108,10 @@ int Client::Configure( void )
   int returnvalue = 0;
 
   if (!ConIsScreen())
-    {
+  {
     ConOutErr("Can't configure when stdin or stdout is redirected.\n");
     return -1;
-    }
+  }
     
   // ---- Set all stuff that doesn't change during config ----   
   // note that some options rely on others, so watch the init order
