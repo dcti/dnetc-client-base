@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.52 2001/03/26 16:19:07 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.53 2001/03/26 17:51:39 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -275,6 +275,8 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
   {
     timeval timenow, timestop;
     timestop.tv_sec = 0;
+    timestop.tv_usec = 0;
+
     if (timeout_millisecs > 0)
     {
       if (CliClock(&timestop) != 0)

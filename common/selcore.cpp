@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.102 2001/03/07 00:21:09 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.103 2001/03/26 17:51:41 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1221,6 +1221,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
   int coresel = selcoreGetSelectedCoreForContest( contestid );
   if (coresel < 0)
     return -1;
+  memset( &unit_func, 0, sizeof(unit_func));
 
   /* -------------------------------------------------------------- */
 
@@ -1725,7 +1726,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
 
   /* ================================================================== */
 
-  if (coresel >= 0 && coresel < ((int)__corecount_for_contest( contestid )))
+  if (coresel >= 0 && unit_func.gen && 
+     coresel < ((int)__corecount_for_contest( contestid )))
   {
     if (client_cpuP)
       *client_cpuP = client_cpu;

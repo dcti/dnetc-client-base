@@ -5,7 +5,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.48 2001/03/26 16:31:33 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.49 2001/03/26 17:51:41 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -486,10 +486,16 @@ const char *utilSetAppName(const char *newname)
    no longer (as of Nov/2000) used.
   */
   static int initialized = -1;
-  static char appname[32];
+  #if (CLIENT_CONTEST < 80)
+  /* put the asciiz name here so the user has something to patch :) */
+  static char appname[32] = {'r','c','5','d','e','s','\0'};
+  #else
+  /* put the asciiz name here so the user has something to patch :) */
+  static char appname[32] = {'d','n','e','t','c','\0'};
+  #endif
+
   if (newname != NULL)
   {
-    /* this is bogus behavior that is never really used */
     unsigned int len;
     const char *sep = EXTN_SEP;
     while (*newname == ' ' || *newname == '\t')
@@ -515,15 +521,8 @@ const char *utilSetAppName(const char *newname)
     #endif
     initialized = 1;
   }
-  if (initialized > 0) /* always true */
-    return (const char *)&appname[0];
+  return (const char *)&appname[0];
 
-  /* put the asciiz name here so the user has something to patch :) */
-  #if (CLIENT_CONTEST < 80)
-  return "rc5des";
-  #else
-  return "dnetc";
-  #endif
 }
 
 const char *utilGetAppName(void)

@@ -7,7 +7,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.32.2.12 2000/10/24 21:36:35 cyp Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.32.2.13 2001/03/26 17:51:39 cyp Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
 
@@ -422,6 +422,8 @@ static char *rfc822Date(char *timestring)  //min 32 chars
   int haveutctime, haveloctime, tzdiff, abstzdiff;
 
   timestring[0]=0;
+  memset(&loctime, 0, sizeof(loctime));
+  memset(&utctime, 0, sizeof(utctime));
 
   timenow = time(NULL);
   tmP = localtime( (const time_t *) &timenow);

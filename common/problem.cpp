@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.112 2001/03/24 17:03:22 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.113 2001/03/26 17:51:40 cyp Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -545,7 +545,7 @@ static unsigned int __compute_permille(unsigned int cont_i, const ContestWork *w
 ** is a copy of the main InternalProblem. On successful return
 ** the scratch area will be copied back to the main InternalProblem.
 */
-static inline int __InternalLoadState( InternalProblem *thisprob,
+static int __InternalLoadState( InternalProblem *thisprob,
                       const ContestWork * work, unsigned int contestid,
                       u32 _iterations, int expected_cputype,
                       int expected_corenum, int expected_os,
@@ -1259,6 +1259,7 @@ static void __compute_run_times(InternalProblem *thisprob,
   int clock_stop_is_time_now = 0;
   u32 timehi, timelo, elapsedhi, elapsedlo;
   clock_stop.tv_sec = 0;
+  clock_stop.tv_usec = 0;
 
   /* ++++++++++++++++++++++++++ */
 

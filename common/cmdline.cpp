@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.74 2001/03/21 13:37:03 ephraim Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.75 2001/03/26 17:51:39 cyp Exp $"; }
 
 //#define TRACE
 
@@ -2081,10 +2081,14 @@ static int __finalize_level(const char *argv0,
   } /* if (retcode == -12345 && run_level == 0) */
 
   if (retcode == -12345)
-    return 0;
-  if (retcodeP) 
-    *retcodeP = retcode;  
-  return -1;
+    retcode = 0;
+  else
+  {
+    if (retcodeP) 
+      *retcodeP = retcode;  
+    retcode = -1;
+  }
+  return retcode;
 }
 
 /* -------------------------------------- */
