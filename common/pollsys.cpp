@@ -39,7 +39,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.9.2.3 2000/06/22 09:24:27 oliver Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.9.2.4 2000/06/24 14:48:59 oliver Exp $"; }
 
 #include "baseincs.h"  /* NULL, malloc */
 #include "clitime.h"   /* CliTimer() */
@@ -271,14 +271,7 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
     until.tv_usec %= 1000000;
 
     /* substract extra time used by previous call */
-    until.tv_sec -= overflow.tv_sec;
-    if ( until.tv_usec < overflow.tv_usec )
-    {
-      until.tv_sec--;
-      until.tv_usec += 1000000 - overflow.tv_usec;
-    }
-    else
-      until.tv_usec -= overflow.tv_usec;
+    CliTimerDiff( &until, &overflow, &until );
 
     runprio = MAX_POLL_RUNLEVEL;
     
@@ -359,14 +352,7 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
                ( now.tv_usec < until.tv_usec )));
 
     /* store extra time spent, ready for next call */
-    overflow.tv_sec = now.tv_sec - until.tv_sec;
-    if ( now.tv_usec < until.tv_usec )
-    {
-      overflow.tv_sec--;
-      overflow.tv_usec = 1000000 + now.tv_usec - until.tv_usec;
-    }
-    else
-      overflow.tv_usec = now.tv_usec - until.tv_usec;
+    CliTimerDiff( &now, &until, &overflow );
 //printf("overflow = %ld,%06ld\n",overflow.tv_sec,overflow.tv_usec);
   }
     
