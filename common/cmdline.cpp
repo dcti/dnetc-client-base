@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.159 2002/10/11 00:02:26 andreasb Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160 2002/10/13 08:11:32 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -1257,7 +1257,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             *inimissing = 0; // Don't complain if the inifile is missing
             client->autofindkeyserver = 0;
             for (len = 0; len < sizeof(client->keyproxy) && argvalue[len]; ++len)
-              client->keyproxy[len] = tolower(argvalue[len]);
+              client->keyproxy[len] = (char) tolower(argvalue[len]);
             /* update .v27. proxy names to .v29. */
             if (len > 20 && strcmp(&client->keyproxy[len-20], ".v27.distributed.net") == 0)
               client->keyproxy[len-17] = '9';
