@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.114  1998/06/27 20:57:14  remi
+// Fixed "Setting DES buffer size to %d" to print DES buffer size, not the RC5
+// one.
+//
 // Revision 1.113  1998/06/26 02:47:04  daa
 // fix core selection on ppc -- from goldbob
 //
@@ -118,7 +122,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.113 1998/06/26 02:47:04 daa Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.114 1998/06/27 20:57:14 remi Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -2696,7 +2700,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         if ( (s32) atoi( Argv[i+1] ) > 0)
            outthreshold[1] = inthreshold[1]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreenf("Setting DES buffer size to %d\n",outthreshold[0]);
+        LogScreenf("Setting DES buffer size to %d\n",outthreshold[1]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
