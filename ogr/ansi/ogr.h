@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.h,v 1.1.2.3 2000/10/05 12:21:11 cyp Exp $
+ * $Id: ogr.h,v 1.1.2.4 2000/11/02 11:16:17 mfeiri Exp $
 */
 #ifndef __OGR_H__
 #define __OGR_H__ 
@@ -114,6 +114,9 @@ typedef struct {
 
 // define this to enable LOGGING code
 #undef OGR_DEBUG
+//#define OGR_PROFILE
+// OGR_WINDOW is used to test register windowing in the core
+//#define OGR_WINDOW 10
 
 // specifies the number of ruler diffs can be represented.
 // Warning: increasing this will cause all structures based
@@ -134,21 +137,30 @@ struct WorkStub { /* size is 28 */
 
 // Internal stuff that's not part of the interface but we need for
 // declaring the problem work area size.
+
+// I have to reserve memory for all possible OGR cruncher setups because
+// memory reservation happens inside problem.h/.c and I cannot know what
+// cruncher is going to get used :(
+
 #define BITMAPS     5       /* need to change macros when changing this */
 #define MAXDEPTH   40
 
 typedef u32 U;
 
 struct Level {
-  U list[BITMAPS];
-  U dist[BITMAPS];
-  U comp[BITMAPS];
-  int cnt1;
-  int cnt2;
-  int limit;
+  /* If AltiVec is possible we must reserve memory, just in case */
+  #ifdef __VEC__   // unused if OGROPT_ALTERNATE_CYCLE == 0 || == 1
+  vector unsigned int listV0, listV1, compV0, compV1;
+  #endif
+  U list[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 2
+  U dist[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 1 || 2
+  U comp[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 2
+  int cnt1;        // unused if OGROPT_ALTERNATE_CYCLE == 1 || == 2
+  int cnt2;        // always needed
+  int limit;       // always needed
 };
 
-#define OGR_LEVEL_SIZE (((4*BITMAPS)*3)+(OGR_INT_SIZE*3))
+#define OGR_LEVEL_SIZE ((128*4)+((4*BITMAPS)*3)+(OGR_INT_SIZE*3))
 
 struct State {
   #if 0 /* unused - see notes for ogr_cycle() above */
@@ -165,9 +177,30 @@ struct State {
   int startdepth;
   int depth;
   int limit;
-#ifdef OGR_DEBUG
-  int LOGGING;
-#endif
+  #ifdef OGR_DEBUG
+    int LOGGING;
+  #endif
+  #ifdef  OGR_WINDOW /* used by OGRtestbench */
+    int wind;                     /* depth window base */
+    int turn;                     /* window turn counter */
+  #endif
+  #ifdef OGR_PROFILE /* used by OGRtestbench */
+    struct {
+      long hd;                    /* Half depth */
+      long hd2;                   /* Half depth 2 */
+      long ghd;                   /* Greater than Half depth */
+      long lt16;                  /* shift <16 */
+      long lt32;                  /* shift < 32 */
+      long ge32;                  /* shift >= 32 */
+      long fo;                    /* found one? */
+      long push;                  /* Go deeper */
+   } prof;
+  #endif
+  /* If AltiVec is possible we must reserve memory, just in case */
+  #ifdef __VEC__     /* only used by OGROPT_ALTERNATE_CYCLE == 2 */
+    vector unsigned int distV0, distV1;
+  #endif
+  U dist[BITMAPS];   /* only used by OGROPT_ALTERNATE_CYCLE == 1 */
   struct Level Levels[MAXDEPTH];
 };
 
@@ -175,8 +208,9 @@ struct State {
 #pragma pack()
 #endif
 
-#define OGR_PROBLEM_SIZE (16+ (6*OGR_INT_SIZE)+(OGR_INT_SIZE*(MAXDEPTH+1))+ \
-                         (4*OGR_INT_SIZE)+(OGR_LEVEL_SIZE*MAXDEPTH) + 64)
+#define OGR_PROBLEM_SIZE (/*16+*/(6*OGR_INT_SIZE)+(OGR_INT_SIZE*(MAXDEPTH+1))+ \
+                         (4*OGR_INT_SIZE)+(128*2)+(OGR_INT_SIZE*BITMAPS)+ \
+                         (OGR_LEVEL_SIZE*MAXDEPTH)+64)
                          /* sizeof(struct State) */
 
 unsigned long ogr_nodecount(const struct Stub *);
