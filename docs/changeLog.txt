@@ -3,98 +3,143 @@ Dual mode (RC5DES) clients
 
 2.7100
 ------
-v2.7100.422 98.12.20 Fixed some weirdness in menus and ini file handling
-                     of uuehttpmode, keyproxy and keyport
-v2.7100.421 98.11.28 Added a new self-modifying 386/486 core
-v2.7100.420 98.11.15 Fixed -hide/-quiet for unix'sh clients
-v2.7100.420 98.11.15 Bring back the cputype config screen
-v2.7100.420 98.11.13 Changed default blocksize to 31.
-v2.7100.420 98.11.13 Default encoding set to 'no special encoding' instead
-                     of 'uue encoding'
-v2.7100.419 98.11.12 Added -hide/-quiet support for unix'ish clients
-v2.7100.418 98.11.07 Randomprefix is now changed from buffer
-                     files; offline clients will now generate
-                     from the "correct" randomprefix.
-v2.7100.418 98.11.07 Client now counts buffer files in 2^28
-                     blocks.
-v2.7100.418 98.10.xx Celeron-A detection added.
-v2.7100.418 98.10.xx New win16/32 console code by Jeff Lawson
-                     implemented for CLI clients.
-v2.7100.418 98.10.xx Windows CLI and NT service client integrated.
-v2.7100.418 98.10.16 Corrected SOCKS4 & 5 support
-v2.7100.418 98.09.30 HTTP connections will always go to port 80 of the
-                     specified *key* proxy
-v2.7100.418 98.08.19 RC5 MMX cores are now in place. 50% speed
-                     improvement on Pentium MMX processors.
-v2.7100.418 98.08.19 Complete rewrite of logging code; blocks now
-                     displayed in 2^28 increments, other changes.
-v2.7100.418 98.08.19 Problem with client rewriting .ini file while in
-                     nodisk mode fixed.
-v2.7100.418 98.08.19 Win32 Clients have Dial On Demand support.
-v2.7100.418 98.08.19 Clients now auto-detect the roundrobin to connect to.
-v2.7100.417 98.08.07 New ARM/StrongARM RC5 cores.
-v2.7100.416 98.07.20 work around added for Win95/98 combo-box bug that created
-                     system pausing after opening the config dialog at least
-                     once.
-v2.7100.416 98.07.18 win32 gui logging fixed
-v2.7100.416 98.07.18 Clients updated so that des-ii-2 blocks will be
-                     ignored in future des contests.
-v2.7100.416 98.07.15 Change to fetch, flush, and update in the win32 GUI
-                     so that they're more verbose and will ignore
-                     offline/lurk settings.
-v2.7100.416 98.07.14 Got new version of Watcom for OS/2, now able to compile
-                     MMX core and build the new version without a major speed
-                     decrease in both the rc5 and des cores.
-v2.7100.416 98.07.14 fixed -runbuffers behaviour.  it now completely exhausts
-                     the buffer file(s) and then exits as it should.
-v2.7100.416 98.07.12 patched a possible divide by zero race condition that
-                     could occur when two or more clients attempt to flush a
-                     shared buffer where file locking cannot be enforced (eg.
-                     NFS)
-v2.7100.416 98.07.12 win32gui will again only respect "runhidden" if it is
-                     auto-launched on startup (via -guistart)
-v2.7100.416 98.07.12 Fixed problems with .ini name not following .exe's name
-                     (again).
-v2.7100.416 98.07.12 Even FASTER DES MMX cores added to x86 clients!
-v2.7100.416 98.07.11 win32gui fetch/flush menu options can now occur without
-                     halting client operations.  fetch/flush/update options
-                     will now all work even if current connection mode is set
-                     to offline.
-v2.7100.415 98.07.10 win32gui thread priority of message thread increased to
-                     higher priority to try to increase responsiveness of the
-                     gui.
-v2.7100.415 98.07.10 Automatic processor count on Solaris and Linux have been
+2.7105.432 98.01.21 OS2-EMX and lurk mode changes. -(un)install honors -quiet
+                    Network send errors fixed
+2.7105.432 98.01.19 Connection error message support added for win16/32
+2.7105.432 98.01.12 -1 for nettimeout forces blocking network I/O
+2.7105.432 98.01.18 IDT WinChip 2 added to CPU list. 4% faster MMX DES core 
                      added.
-v2.7100.415 98.07.10 Bugs with exitfile handling present in 414 have been
-                     fixed.
-v2.7100.415 98.07.09 Added DES MMX cores to x86 clients - thanks go out to
-                     Remi Guyomarch and Bruce Ford who made this possible.
-v2.7100.413 98.07.07 Fixed problems in 413 with .ini name not following .exe's
-                     name and also  rc5 outbuffer being set incorrectly to
-                     buff-out.des
-v2.7100.413 98.07.04 Changed lurk code, now is more verbose and acts the same
-                     way in win32 and os2
-v2.7100.413 98.07.04 Fixed -runbuffers bug that caused invalid block info to
-                     be printed on screen after buffer exhaustion.
-v2.7100.413 98.07.04 Fixed the pause file bug in non-mt clients
-v2.7100.413 98.07.01 Fixed the -lurkonly problem when buffers ran out, and not
-                     connected, the HD would just sit and grind in OS/2 and
-                     Win32
-v2.7100.413 98.07.01 Put -lurk/-lurkonly on the menu for OS/2
-v2.7100.413 98.06.29 Client Version # reporting in -config fixed
-v2.7100.413 98.06.29 Extra disk access caused by lurk mode reduced greatly
-v2.7100.412 98.06.29 Put a check on the mailmessage so it won't mail when
-                     offline or lurk
-v2.7100.412 98.06.29 Put validateconfig() in the ParseCommandLineOptions()
-v2.7100.412 98.06.29 Gave text output and exit a priority boost, so it's
-                     faster in OS/2
-v2.7100.412 98.06.29 Redid the lurk mode to only detect slip/ppp connections
-                     in OS/2
-v2.7100.412 98.06.28 Lots of internal changes to prepare for Win16 client
-v2.7100.412 98.06.28 Invalid cpu type value now ignored.
-v2.7100.412 98.06.28 Buffer path problem and buffer truncation issue addressed
-v2.7100.412 98.06.27 GUI autolaunches in minimized state correctly now
-v2.7100.412 98.06.26 Finally reached 2.7100!
+2.7103.430 98.01.15 revert back from old "distributed.net ID" phrasing.
+                     50% faster DES MMX core added.
+2.7103.427 98.01.13 SMP support added for Alpha/Win32. RISC OS processor
+                     detection and scheduling improved.
+2.7103.425 98.01.06 Menu/options cleanups. Single checkpoint used for all
+                     contests.
+2.7102.422 98.12.21 Stripped one instruction in all x86 rc5 cores
+2.7102.422 98.12.20 Improved menu and ini file handling of uuehttpmode,
+                     keyproxy, and keyport
+2.7102.422 98.12.20 scheduledupdatetime added, for coordinating project
+                     switching
+2.7102.421 98.12.14 More MacOS changes, to merge MT and non-MT clients.
+2.7102.421 98.12.08 Many, many MacOS changes. FreeBSD, RISC OS x86 fixes.
+2.7102.421 98.12.05 "Coalescing" flush added, with notable speed increase.
+                    -kill/-shutdown, -hup/-restart added for win32/win16/*nix
+2.7102.421 98.12.01 IRIX MT fixed. Many RISC OS x86 changes. Block count bug
+                    and MacOS processor identification bug fixed.
+2.7102.421 98.11.28 Added a new self-modifying 386/486 core
+2.7102.420 98.11.15 Fixed -hide/-quiet for unix'sh clients
+2.7102.420 98.11.15 Bring back the cputype config screen
+2.7102.420 98.11.13 Changed default blocksize to 31.
+2.7102.420 98.11.13 Default encoding set to 'no special encoding' instead
+                    of 'uue encoding'
+2.7102.419 98.11.12 Added -hide/-quiet support for unix'ish clients
+2.7102.419 98.11.10 General options parsing cleanup. -forceunlock added.
+                    Many terminal issues fixed.
+2.7100.418 98.11.07 Randomprefix is now changed from buffer
+                    files; offline clients will now generate
+                    from the "correct" randomprefix.
+2.7100.418 98.11.04 FreeBSD, Macos detection changes/fixes
+2.7100.418 98.10.30 PowerPC detection added to Mac clients.
+2.7100.418 98.10.09 Celeron-A detection added.
+2.7100.418 98.10.03 New win16/32 console code implemented for CLI clients.
+2.7100.418 98.10.16 Corrected SOCKS4 & 5 support
+2.7100.418 98.10.08 x86 autodetect cleanup
+2.7100.418 98.10.04 Verbosity, help file, other general fixes.
+2.7100.418 98.09.30 HTTP connections will always go to port 80 of the
+                    specified *key* proxy
+2.7100.418 98.09.28 Priority scale changed to 0-9. Old OS/2 priority code
+                    removed. Win32 option checking fixes.
+2.7100.418 98.09.25 Ultrix changes. ARM clients now support 3 cores.
+2.7100.418 98.09.23 Multi-core support added for all 68k platforms. 2 new
+                    68k cores implemented.
+2.7100.418 98.09.19 SIGHUP handling implemented. Beta client timeout
+                    implemented. AmigaOS changes.
+2.7100.418 98.08.21 Block size selection fixed for slow CPUs.
+2.7100.418 98.08.19 RC5 MMX cores are now in place. 50% speed
+                    improvement on Pentium MMX processors.
+2.7100.418 98.08.19 Complete rewrite of logging code; blocks now
+                    displayed in 2^28 increments, other changes.
+2.7100.418 98.08.19 Problem with client rewriting .ini file while in
+                    nodisk mode fixed.
+2.7100.418 98.08.19 Win32 Clients have Dial On Demand support.
+2.7100.418 98.08.19 Clients now auto-detect the roundrobin to connect to.
+2.7100.417 98.08.15 Hooks for RC5 MMX added, general clean-ups/sanity checks
+2.7100.417 98.08.07 New ARM/StrongARM RC5 cores.
+2.7100.417 98.08.07 Network message timestamps added. Block count now in
+                    units of 2^28
+2.7100.417 98.07.28 Amiga changes, autofindkeyserver option added.
+2.7100.417 98.07.25 Lurk functions added to enable dialing and hanging up.
+2.7100.416 98.07.20 work around added for Win95/98 combo-box bug that created
+                    system pausing after opening the config dialog at least
+                    once.
+2.7100.416 98.07.20 Windows CLI and NT service client integrated.
+2.7100.416 98.07.18 win32 gui logging fixed
+2.7100.416 98.07.18 Clients updated so that des-ii-2 blocks will be
+                    ignored in future des contests.
+2.7100.416 98.07.16 Many DYNIX fixes.
+2.7100.416 98.07.15 Change to fetch, flush, and update in the win32 GUI
+                    so that they're more verbose and will ignore
+                    offline/lurk settings.
+2.7100.416 98.07.14 Got new version of Watcom for OS/2, now able to compile
+                    MMX core and build the new version without a major speed
+                    decrease in both the rc5 and des cores.
+2.7100.416 98.07.14 fixed -runbuffers behaviour.  it now completely exhausts
+                    the buffer file(s) and then exits as it should.
+2.7100.416 98.07.13 RISC OS Updates. -noquiet option added. -cpuinfo added.
+2.7100.416 98.07.12 patched a possible divide by zero race condition that
+                    could occur when two or more clients attempt to flush a
+                    shared buffer where file locking cannot be enforced (eg.
+                    NFS)
+2.7100.416 98.07.12 win32gui will again only respect "runhidden" if it is
+                    auto-launched on startup (via -guistart)
+2.7100.416 98.07.12 Fixed problems with .ini name not following .exe's name
+                    (again).
+2.7100.416 98.07.12 Even FASTER DES MMX cores added to x86 clients!
+2.7100.416 98.07.11 win32gui fetch/flush menu options can now occur without
+                    halting client operations.  fetch/flush/update options
+                    will now all work even if current connection mode is set
+                    to offline.
+2.7100.415 98.07.10 win32gui thread priority of message thread increased to
+                    higher priority to try to increase responsiveness of the
+                    gui.
+2.7100.415 98.07.10 Automatic processor count on Solaris and Linux have been
+                    added.
+2.7100.415 98.07.10 Bugs with exitfile handling present in 414 have been
+                    fixed.
+2.7100.415 98.07.09 Added DES MMX cores to x86 clients - thanks go out to
+                    Remi Guyomarch and Bruce Ford who made this possible.
+2.7100.413 98.07.07 Fixed problems in 413 with .ini name not following .exe's
+                    name and also  rc5 outbuffer being set incorrectly to
+                    buff-out.des
+2.7100.413 98.07.05 More SMTP log mailing overriding offline mode fixes.
+                    Secondary intel CPUs now identified correctly.
+2.7100.413 98.07.04 Changed lurk code, now is more verbose and acts the same
+                    way in win32 and os2
+2.7100.413 98.07.04 Fixed -runbuffers bug that caused invalid block info to
+                    be printed on screen after buffer exhaustion.
+2.7100.413 98.07.04 Fixed the pause file bug in non-mt clients
+2.7100.413 98.07.01 Fixed the -lurkonly problem when buffers ran out, and not
+                    connected, the HD would just sit and grind in OS/2 and
+                    Win32
+2.7100.413 98.07.01 Put -lurk/-lurkonly on the menu for OS/2
+2.7100.413 98.07.02 RISC OS and AmigaOS changes/fixes...
+2.7100.413 98.06.29 Client Version # reporting in -config fixed
+2.7100.413 98.06.29 Extra disk access caused by lurk mode reduced greatly
+2.7100.412 98.06.29 Put a check on the mailmessage so it won't mail when
+                    offline or lurk
+2.7100.412 98.06.29 Put validateconfig() in the ParseCommandLineOptions()
+2.7100.412 98.06.29 Gave text output and exit a priority boost, so it's
+                    faster in OS/2
+2.7100.412 98.06.29 Redid the lurk mode to only detect slip/ppp connections
+                    in OS/2
+2.7100.412 98.06.29 Numerous win16 updates. Default AMD 486 core now Pentium
+                    core. No longer attempts SMTP connections for mailing
+                    logs if the client is in offline mode.
+2.7100.412 98.06.28 Lots of internal changes to prepare for Win16 client
+2.7100.412 98.06.28 Invalid cpu type value now ignored.
+2.7100.412 98.06.28 Buffer path problem and buffer truncation issue addressed
+2.7100.412 98.06.27 GUI autolaunches in minimized state correctly now
+2.7100.412 98.06.26 Finally reached 2.7100!
 
 
 2.7000
@@ -112,6 +157,14 @@ v2.7024.409 98.06.14 Fixed the OS/2 lurk mode so that it updates less
                      freqently.
 v2.7024.409 98.05.13 Fixed CPU identification crash under *nix with
                      486 SX/DX/DX2.
+2.7024.409 98.06.08 More aesthetic fixes, SparcBSD fixes, fetch/flush  
+                     quietmode added to suppress proxy message.
+2.7023.408 98.06.08 General aesthetic fixes.
+2.7023.408 98.06.08 SOCKS5 authentication fixed.
+2.7022.407 98.06.01 -update bug is now cleaned up.
+2.7022.407 98.06.01 Lurk now works in OS/2
+2.7021.405 98.05.29 Improved RISC OS multitasking, as well as RISC OS GUI 
+                     support. Improved ARM CPU detection. Many AmigaOS changes.
 v2.7021.405 98.05.23 Resolved a number of signal handling problems from
                      Cyrus Patel
 v2.7021.405 98.05.23 Mail doesn't clear buffers on mail send failure from
@@ -231,7 +284,8 @@ v2.7003.385 98.01.15 Don't process a partial block started on another
 v2.7002.384 98.01.13 RISCOS changes
 v2.7002.383 98.01.13 Banner problem
 v2.7002.382 98.01.13 Client shows size of block being processed
-v2.7002.382 98.01.13 Win32 clients no longer set  processor affinity when                           only 1 cpu is configured.
+v2.7002.382 98.01.13 Win32 clients no longer set processor affinity when 
+                     when only 1 cpu is configured.
 v2.7002.382 98.01.13 Fixed RC5 blocks being sent to server with wrong contestid
                      when they were downloaded by older non-dual clients.
                      This also caused various other buffer problems, and
@@ -420,6 +474,7 @@ ini file location specification via RC5INI environment variable
 random keys if client can't connect
 partial block rates are now correct
 time in hh:mm:ss
+rewrote firewall support
 fseeks() for ANSI compliance
 flush checks count before opening connection
 negative run times fixed
@@ -432,4 +487,3 @@ new autobuff and iniread code - memory leak fixed
 new faster ANSI C and ASM cores
 httpd fixed - checked under CERN and WinProxy
 proxy hunting now works
-
