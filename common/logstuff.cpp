@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.52 2001/03/12 00:00:57 sampo Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.53 2001/03/19 15:34:25 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -761,6 +761,7 @@ static int __ContestGetLiveRate(unsigned int contest_i,
               u32 ccounthi, ccountlo;
               if (ProblemGetInfo(selprob, 0, 0,
                                  0, 0,
+                                 0, 0,
                                  0, 0, 
                                  0, 
                                  0, 0, 
@@ -1041,7 +1042,7 @@ void LogScreenPercent( unsigned int load_problem_count )
             (!buffer[0] || prob_i == selprob_i))
         {
           char blkdone[32], blksig[32]; const char *contname;
-          girc = ProblemGetInfo(selprob, &cont_i, &contname, 0, 0, 0, 0, 0, 
+          girc = ProblemGetInfo(selprob, 0, 0, &cont_i, &contname, 0, 0, 0, 0, 0, 
                            &permille, &startpermille, 0,
                            0, 0, blksig, sizeof(blksig), 0, 0, 0, 0, 0,0,0, 0,0,0,
                            0, 0, 0, 0, blkdone, sizeof(blkdone) );
@@ -1056,7 +1057,7 @@ void LogScreenPercent( unsigned int load_problem_count )
         }
         else
         {
-          girc = ProblemGetInfo(selprob, &cont_i, 0, 0, 0, 0, 0, 0,
+          girc = ProblemGetInfo(selprob, 0, 0, &cont_i, 0, 0, 0, 0, 0, 0,
                                          &permille, &startpermille, 0,
                                          0, 0, 0, 0, 0, 0, 0, 0, 
                                          0,0,0, 0,0,0, 0, 0, 0, 0, 0, 0 );
