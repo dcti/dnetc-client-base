@@ -12,14 +12,14 @@
 */
 
 #ifndef __COREMEM_H__
-#define __COREMEM_H__ "@(#)$Id: coremem.h,v 1.1.2.1 2001/03/20 09:11:59 cyp Exp $"
+#define __COREMEM_H__ "@(#)$Id: coremem.h,v 1.1.2.2 2001/03/20 09:15:48 cyp Exp $"
 
 #ifdef __cplusplus /* header may be included by cores */
 extern "C" {
 #endif
 
-void *crunchermem_alloc(unsigned int sz);
-int crunchermem_free(void *mem);
+void *cmem_alloc(unsigned int sz);
+int cmem_free(void *mem);
 
 #ifdef __cplusplus
 }
