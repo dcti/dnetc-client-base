@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.67 2004/08/20 16:32:43 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.68 2004/08/20 16:35:18 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1274,7 +1274,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0F30, CPU_F_I686, 0x0B, "Pentium 4 (Prescott)" }, /* (#3627) */
           {  0x9F30, CPU_F_I686, 0x0B, "Pentium 4 (Prescott)" },
           {  0xAF30, CPU_F_I686, 0x0B, "Celeron 4 (Prescott)" },
-          {  0xBF30, CPU_F_I686, 0x0B, "Xeon" }
+          {  0xBF30, CPU_F_I686, 0x0B, "Xeon" },
           {  0xEF30, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Prescott)" },
           {  0x0000, 0,               -1, NULL }
           }; internalxref = &intelxref[0];
