@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.59 2000/06/04 09:50:41 oliver Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.60 2000/06/12 18:40:05 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -957,7 +957,7 @@ int ClientRun( Client *client )
   unsigned int load_problem_count = 0;
   unsigned int getbuff_errs = 0;
 
-  time_t timeNow,timeRun=0,timeLast=0; /* Last is also our "firstloop" flag */
+  time_t timeRun = 0;
   time_t timeNextConnect=0, timeNextCheckpoint=0, ignoreCheckpointUntil=0;
 
   time_t last_scheduledupdatetime = 0; /* we reset the next two vars on != */
@@ -1125,6 +1125,7 @@ int ClientRun( Client *client )
     }
   }
 
+
   // --------------------------------------
   // fixup the dyn_timeslice_table if running a non-preemptive OS 
   // --------------------------------------
@@ -1170,16 +1171,29 @@ int ClientRun( Client *client )
           }
           #elif (CLIENT_OS == OS_NETWARE) 
           {
-            /* Due to timer resolution limitations, the max yield rate on 
-            NetWare 3 is about 256/sec. For Netware 4 and above the effective
-            yield rate is about twice what we enter here. For nw4/5 we 
-            need ~7500 low-prio-yields/sec to be really "nice". Its all very
-            environment dependant, but we try our best anyway.
-            */
-            if (GetFileServerMajorVersionNumber() < 4)
-              non_preemptive_dyn_timeslice_table[tsinitd].usec = 512;
-            else
-              non_preemptive_dyn_timeslice_table[tsinitd].usec = 256;
+            long quantum = non_preemptive_dyn_timeslice_table[0].usec;
+            if (tsinitd == 0)
+            {
+              quantum = 100;
+              #if (CLIENT_CPU == CPU_X86)
+              quantum = 512; /* good enough for NetWare 3x */
+              if (GetFileServerMajorVersionNumber() >= 4) /* just guess */
+              {
+                long det_type = (GetProcessorType(1) & 0xff);
+                if (det_type > 0x0A) /* not what we know about */
+                  ConsolePrintf("\rDNETC: unknown CPU type for quantum selection in "__FILE__").\r\n");
+                if (det_type==0x02 || det_type==0x07 || det_type==0x09)
+                  quantum = 256; /* PII/PIII || Celeron-A || AMD-K7 */
+                else /* the rest */
+                  quantum = 100;
+              }
+              #endif
+              if (client->priority >= 0 && client->priority <= 9)
+                quantum *= (client->priority+1);
+              Log("NetWare: crunchers will use a %ldus timeslice quantum\n", quantum);
+            }
+            non_preemptive_dyn_timeslice_table[tsinitd].min = 0x10;
+            non_preemptive_dyn_timeslice_table[tsinitd].usec = quantum;
             non_preemptive_dyn_timeslice_table[tsinitd].optimal = 1024;
           }
           #else /* x86 */
@@ -1193,6 +1207,7 @@ int ClientRun( Client *client )
     }  
     #endif
   }
+
 
   // --------------------------------------
   // Spin up the crunchers
@@ -1318,10 +1333,16 @@ int ClientRun( Client *client )
     // Fixup timers
     //------------------------------------
 
-    timeNow = CliTimer(NULL)->tv_sec;
-    if (timeLast!=0 && ((unsigned long)timeNow) > ((unsigned long)timeLast))
-      timeRun += (timeNow - timeLast); //make sure time is monotonic
-    timeLast = timeNow;
+    {
+      struct timeval tv;
+      if (CliClock(&tv) == 0)
+      {
+        if ( ((unsigned long)tv.tv_sec) < ((unsigned long)timeRun) )
+          Log("ERROR: monotonic time found to be going backwards!\n");
+        else  
+          timeRun = tv.tv_sec;
+      }
+    }
 
     //----------------------------------------
     // Check for time limit...
@@ -1407,57 +1428,61 @@ int ClientRun( Client *client )
     #define TIME_AFTER_START_TO_UPDATE 10800 // Three hours
     #define UPDATE_INTERVAL 600 // Ten minutes
 
-    if (!TimeToQuit && client->scheduledupdatetime != 0 && 
+    if (!TimeToQuit && client->scheduledupdatetime != 0)
+    {
+      time_t timeNow = CliTimer(NULL)->tv_sec;
+      if (
       (((unsigned long)timeNow) < ((unsigned long)ignore_scheduledupdatetime_until)) &&
       (((unsigned long)timeNow) >= ((unsigned long)client->scheduledupdatetime)) &&
       (((unsigned long)timeNow) < (((unsigned long)client->scheduledupdatetime)+TIME_AFTER_START_TO_UPDATE)) )
-    {
-      if (last_scheduledupdatetime != ((time_t)client->scheduledupdatetime))
       {
-        last_scheduledupdatetime = (time_t)client->scheduledupdatetime;
-        //flush_scheduled_count = 0;
-        flush_scheduled_adj = (rand()%UPDATE_INTERVAL);
-        Log("Buffer update scheduled in %u minutes %02u seconds.\n",
-             flush_scheduled_adj/60, flush_scheduled_adj%60 );
-        flush_scheduled_adj += timeNow - last_scheduledupdatetime;
-      }
-      if ( (((unsigned long)flush_scheduled_adj) < TIME_AFTER_START_TO_UPDATE) &&
-        (((unsigned long)timeNow) >= (unsigned long)(flush_scheduled_adj+last_scheduledupdatetime)) )
-      {
-        //flush_scheduled_count++; /* for use with exponential staging */
-        flush_scheduled_adj += ((UPDATE_INTERVAL>>1)+
-                               (rand()%(UPDATE_INTERVAL>>1)));
-        
-        int desisrunning = 0;
-        if (GetBufferCount(client,DES, 0/*in*/, NULL) != 0) /* do we have DES blocks? */
-          desisrunning = 1;
-        else
+        if (last_scheduledupdatetime != ((time_t)client->scheduledupdatetime))
         {
-          for (prob_i = 0; prob_i < load_problem_count; prob_i++ )
-          {
-            Problem *thisprob = GetProblemPointerFromIndex( prob_i );
-            if (thisprob == NULL)
-              break;
-            if (thisprob->IsInitialized() && thisprob->contest == DES)
-            {
-              desisrunning = 1;
-              break;
-            }
-          }
-          if (desisrunning == 0)
-          {
-            int rc = BufferUpdate( client, BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH, 0 );
-            if (rc > 0 && (rc & BUFFERUPDATE_FETCH)!=0)
-              desisrunning = (GetBufferCount( client, DES, 0/*in*/, NULL) != 0);
-          }
-        }  
-        if (desisrunning)
-        {
-          ignore_scheduledupdatetime_until = timeNow + TIME_AFTER_START_TO_UPDATE;
-          /* if we got DES blocks, start ignoring sched update time */
+          last_scheduledupdatetime = (time_t)client->scheduledupdatetime;
+          //flush_scheduled_count = 0;
+          flush_scheduled_adj = (rand()%UPDATE_INTERVAL);
+          Log("Buffer update scheduled in %u minutes %02u seconds.\n",
+               flush_scheduled_adj/60, flush_scheduled_adj%60 );
+          flush_scheduled_adj += timeNow - last_scheduledupdatetime;
         }
-      }
-    } 
+        if ( (((unsigned long)flush_scheduled_adj) < TIME_AFTER_START_TO_UPDATE) &&
+          (((unsigned long)timeNow) >= (unsigned long)(flush_scheduled_adj+last_scheduledupdatetime)) )
+        {
+          //flush_scheduled_count++; /* for use with exponential staging */
+          flush_scheduled_adj += ((UPDATE_INTERVAL>>1)+
+                                 (rand()%(UPDATE_INTERVAL>>1)));
+          
+          int desisrunning = 0;
+          if (GetBufferCount(client,DES, 0/*in*/, NULL) != 0) /* do we have DES blocks? */
+            desisrunning = 1;
+          else
+          {
+            for (prob_i = 0; prob_i < load_problem_count; prob_i++ )
+            {
+              Problem *thisprob = GetProblemPointerFromIndex( prob_i );
+              if (thisprob == NULL)
+                break;
+              if (thisprob->IsInitialized() && thisprob->contest == DES)
+              {
+                desisrunning = 1;
+                break;
+              }
+            } 
+            if (desisrunning == 0)
+            {
+              int rc = BufferUpdate( client, BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH, 0 );
+              if (rc > 0 && (rc & BUFFERUPDATE_FETCH)!=0)
+                desisrunning = (GetBufferCount( client, DES, 0/*in*/, NULL) != 0);
+            }
+          }  
+          if (desisrunning)
+          {
+            ignore_scheduledupdatetime_until = timeNow + TIME_AFTER_START_TO_UPDATE;
+            /* if we got DES blocks, start ignoring sched update time */
+          }
+        }
+      } 
+    }
 
     //----------------------------------------
     // If not quitting, then write checkpoints
