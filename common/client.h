@@ -11,6 +11,10 @@
 // ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.124  1999/03/18 07:38:02  gregh
+// Add #ifdef GREGH blocks so we can safely leave CONTEST_COUNT at 2 for
+// current builds (until OGR is ready).
+//
 // Revision 1.123  1999/03/18 03:55:09  cyp
 // cleaned up client class variables.
 //
@@ -329,12 +333,11 @@
 #define PACKET_VERSION      0x03
 #define MAXBLOCKSPERBUFFER  500
 
-// The following is a slight hack to allow us to release code that has
-// room for OGR in the config, but no actual OGR support. So clients
-// compiled like this won't be surprised when OGR suddenly appears from
-// the proxies.
-
+#ifdef GREGH
 #define CONTEST_COUNT       3 /* RC5,DES,OGR */
+#else
+#define CONTEST_COUNT       2 /* RC5,DES */
+#endif
 
 // --------------------------------------------------------------------------
 

@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.34  1999/03/18 07:38:02  gregh
+// Add #ifdef GREGH blocks so we can safely leave CONTEST_COUNT at 2 for
+// current builds (until OGR is ready).
+//
 // Revision 1.33  1999/03/18 06:06:44  cyp
 // fixed: threshold and preferred packet size are nodiskbuffers dependancies,
 // and not of offlinemode.
@@ -132,7 +136,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.33 1999/03/18 06:06:44 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.34 1999/03/18 07:38:02 gregh Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -217,8 +221,10 @@ int Client::Configure( void )
   conf_options[CONF_RC5OUT].thevariable=(char *)(&out_buffer_file[0][0]);
   conf_options[CONF_DESIN].thevariable=(char *)(&in_buffer_file[1][0]);
   conf_options[CONF_DESOUT].thevariable=(char *)(&out_buffer_file[1][0]);
+#ifdef GREGH
   conf_options[CONF_OGRIN].thevariable=(char *)(&in_buffer_file[2][0]);
   conf_options[CONF_OGROUT].thevariable=(char *)(&out_buffer_file[2][0]);
+#endif
   conf_options[CONF_CHECKPOINT].thevariable=(char *)(&checkpoint_file[0]);
   char loadorder[64];
   strcpy(loadorder, projectmap_expand( loadorder_map ) );

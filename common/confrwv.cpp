@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.47  1999/03/18 07:38:02  gregh
+// Add #ifdef GREGH blocks so we can safely leave CONTEST_COUNT at 2 for
+// current builds (until OGR is ready).
+//
 // Revision 1.46  1999/03/18 03:06:26  cyp
 // This module is OGR ready. Minor fixes to reflect client class changes as
 // well as reassignment of some ini keys to new sections.
@@ -197,7 +201,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.46 1999/03/18 03:06:26 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.47 1999/03/18 07:38:02 gregh Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -288,8 +292,12 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
     p = strchr( buffer, ':' );
     client->inthreshold[0] = atoi(buffer);
     client->outthreshold[0] = ((p==NULL)?(client->inthreshold[0]):(atoi(p+1)));
-    client->inthreshold[2] = client->inthreshold[1] = client->inthreshold[0];
-    client->outthreshold[2] = client->outthreshold[1] = client->outthreshold[0];
+    client->inthreshold[1] = client->inthreshold[0];
+    client->outthreshold[1] = client->outthreshold[0];
+#ifdef GREGH
+    client->inthreshold[2] = client->inthreshold[0];
+    client->outthreshold[2] = client->outthreshold[0];
+#endif
     }
   if (GetPrivateProfileStringB( sect, "threshold2", "", buffer, sizeof(buffer), fn ))
     {
@@ -365,8 +373,10 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   GetPrivateProfileStringB( sect, "out", client->out_buffer_file[0], client->out_buffer_file[0], sizeof(client->out_buffer_file[0]), fn );
   GetPrivateProfileStringB( sect, "in2", client->in_buffer_file[1], client->in_buffer_file[1], sizeof(client->in_buffer_file[1]), fn );
   GetPrivateProfileStringB( sect, "out2", client->out_buffer_file[1], client->out_buffer_file[1], sizeof(client->out_buffer_file[1]), fn );
+#ifdef GREGH
   GetPrivateProfileStringB( OPTSECT_OGR, "in-buffer", client->in_buffer_file[2], client->in_buffer_file[2], sizeof(client->in_buffer_file[2]), fn );
   GetPrivateProfileStringB( OPTSECT_OGR, "out-buffer", client->out_buffer_file[2], client->out_buffer_file[2], sizeof(client->out_buffer_file[2]), fn );
+#endif
 
   #if defined(LURK)
   i = dialup.GetCapabilityFlags();
@@ -471,8 +481,10 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileStr( sect, "out", client->out_buffer_file[0], fn, NULL );
     __XSetProfileStr( sect, "in2", client->in_buffer_file[1], fn, NULL );
     __XSetProfileStr( sect, "out2", client->out_buffer_file[1], fn, NULL );
+#ifdef GREGH
     __XSetProfileStr( OPTSECT_OGR, "in-buffer", client->in_buffer_file[2], fn, NULL );
     __XSetProfileStr( OPTSECT_OGR, "out-buffer", client->out_buffer_file[2], fn, NULL );
+#endif
 
     strcpy(buffer,projectmap_expand(NULL));
     __XSetProfileStr( OPTSECT_MISC, "project-priority", projectmap_expand(client->loadorder_map), fn, buffer );
