@@ -20,7 +20,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.19 2000/10/31 03:07:29 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.20 2001/01/19 02:28:39 andreasb Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -70,6 +70,9 @@ return "@(#)$Id: cliident.cpp,v 1.17.2.19 2000/10/31 03:07:29 cyp Exp $"; }
 #include "w32pre.h"
 #include "w32util.h"
 #include "w32svc.h"
+#endif
+#if defined(HAVE_OGR_CORES)
+#include "ogr.h"
 #endif
 
 static const char *h_ident_table[] = 
@@ -123,6 +126,9 @@ static const char *h_ident_table[] =
   (const char *)__W32UTIL_H__,
   (const char *)__W32SVC_H__,
   #endif
+  #if defined(HAVE_OGR_CORES)
+  (const char *)__OGR_H__,
+  #endif
   (const char *)0
 };
 
@@ -169,6 +175,12 @@ extern const char *w32cons_cpp(void);
 extern const char *w32pre_cpp(void);
 extern const char *w32util_cpp(void);
 extern const char *w32svc_cpp(void);
+#endif
+#if defined(HAVE_OGR_CORES)
+extern const char *ogr_cpp(void);
+extern const char *ogr_core(void);
+extern const char *ogr_sup_cpp(void);
+extern const char *ogr_dat_cpp(void);
 #endif
 
 static const char * (*ident_table[])(void) = 
@@ -218,6 +230,12 @@ static const char * (*ident_table[])(void) =
   w32pre_cpp,
   w32util_cpp,
   w32svc_cpp,
+  #endif
+  #if defined(HAVE_OGR_CORES)
+  ogr_cpp,
+  ogr_core,
+  ogr_sup_cpp,
+  ogr_dat_cpp,
   #endif
   ((const char * (*)(void))0)  
 };

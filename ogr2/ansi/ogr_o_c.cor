@@ -8,8 +8,9 @@
  * - use the processor cache better when many registers are available
  * - support altivec
  *
- * $Id: ogr_o_c.cor,v 1.1.2.1 2001/01/19 01:26:05 andreasb Exp $
  */
+const char *ogr_core(void) {
+return "@(#)$Id: ogr_o_c.cor,v 1.1.2.2 2001/01/19 02:29:34 andreasb Exp $"; }
 
 #if ( (OGROPT_ALTERNATE_CYCLE == 1) || (OGROPT_ALTERNATE_CYCLE == 2))
 

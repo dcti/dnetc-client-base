@@ -8,8 +8,9 @@
  * - it #includes all neccessary .cor (core functions/macros), 
  *   .mac (general macros), .inc (general stuff) files
  *
- * $Id: ogr.cpp,v 1.1.2.33 2001/01/19 01:26:05 andreasb Exp $
  */
+const char *ogr_cpp(void) {
+return "@(#)$Id: ogr.cpp,v 1.1.2.34 2001/01/19 02:29:33 andreasb Exp $"; }
 
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */

@@ -1,4 +1,5 @@
-/* $Id: ogr_dat2.cpp,v 1.1.2.1 2001/01/14 02:38:13 andreasb Exp $ */
+const char *ogr_dat_cpp(void) {
+return "@(#)$Id: ogr_dat2.cpp,v 1.1.2.2 2001/01/19 02:31:25 andreasb Exp $"; }
 
 #include "ogr.h"
 
