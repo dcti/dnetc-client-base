@@ -28,6 +28,12 @@
  *
  */ 
 // $Log: clievent.cpp,v $
+// Revision 1.5  1999/01/24 22:20:50  silby
+// I suppose I could make clievent2 to handle events
+// and hook it into clievent if that would be more
+// efficient, but in the meantime I'll just add
+// more listeners here.
+//
 // Revision 1.4  1999/01/24 17:51:50  cyp
 // You do not need more listeners. You need to learn how to read instructions.
 //
@@ -45,7 +51,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clievent_cpp(void) {
-return "@(#)$Id: clievent.cpp,v 1.4 1999/01/24 17:51:50 cyp Exp $"; }
+return "@(#)$Id: clievent.cpp,v 1.5 1999/01/24 22:20:50 silby Exp $"; }
 #endif
 
 #include "baseincs.h"   /* NULL, memset */
@@ -53,7 +59,11 @@ return "@(#)$Id: clievent.cpp,v 1.4 1999/01/24 17:51:50 cyp Exp $"; }
 
 
 #ifndef MAX_EVENT_LISTENERS
+#ifdef WIN32GUI
+#define MAX_EVENT_LISTENERS 8
+#else
 #define MAX_EVENT_LISTENERS 4
+#endif
 #endif
 
 /* ------------------------------------------------------------ */
