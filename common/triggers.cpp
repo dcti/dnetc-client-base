@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.68 2002/03/28 01:07:47 andreasb Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.69 2002/03/29 14:22:46 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -541,8 +541,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
     #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
     mach_port_t master;
     /* Initialize the connection to IOKit */
-	 if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess )
-	 {
+    if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess )
+    {
       io_connect_t pmcon = IOPMFindPowerManagement(master);
       if(pmcon!=0)
       {
@@ -555,13 +555,16 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
           CFNumberRef cfnum = (CFNumberRef)CFDictionaryGetValue(dict, CFSTR(kIOBatteryFlagsKey));
           CFNumberGetValue(cfnum, kCFNumberLongType, &flags);
           CFRelease(cfarray);
+          IOServiceClose(pmcon);
           if( flags & kIOBatteryChargerConnect )
             return 0; /* we have AC power */
           else
             return 1; /* we don't have AC */
         } /* if( IOPMCopyBatteryInfo(master, &cfarray) == kIOReturnSuccess) */
+        CFRelease(cfarray);
+        IOServiceClose(pmcon);
       } /* if(pmcon!=0)*/
-	 } /* if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess ) */
+    } /* if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess ) */
     /* We dont seem to have a PowerManager, disable battery checking. */
     trigstatics.pause_if_no_mains_power = 0;
     #endif
