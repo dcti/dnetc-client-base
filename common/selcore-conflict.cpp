@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.13  1998/10/08 10:12:17  cyp
+// Modified SelectCore(): (a) simply returns 0 if the cputype hasn't changed
+// between calls; (b) autodetection never runs more than once; (c) x86
+// autodetection (which is always run to check for mmx capability) only
+// prints a message when autodetect is actually requested. (d) all Log...()
+// calls are now normal LogScreen() calls. (e) Adjusted log message lengths so
+// that they don't cause line wraps on the screen.
+//
 // Revision 1.12  1998/10/05 22:10:41  remi
 // Added missing usemmx test in RC5 core selection.
 //
@@ -52,7 +60,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.12 1998/10/05 22:10:41 remi Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.13 1998/10/08 10:12:17 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -68,10 +76,14 @@ return "@(#)$Id: selcore-conflict.cpp,v 1.12 1998/10/05 22:10:41 remi Exp $"; }
 
 // --------------------------------------------------------------------------
 
+//************************************
+//"--------- max width = 34 ---------" (35 including terminating '\0')
+//************************************
+
 #if (CLIENT_CPU == CPU_X86)
 static const char *cputypetable[]=
   {
-  "Pentium, Cyrix 486/5x86/MediaGX, AMD 486",
+  "Pentium, Am486, Cx486/5x86/MediaGX",
   "80386 & 80486",
   "Pentium Pro & Pentium II",
   "Cyrix 6x86/6x86MX/M2",
@@ -97,12 +109,19 @@ static const char *cputypetable[]=
 #elif (CLIENT_CPU == CPU_68K)
 static const char *cputypetable[]=
   {
-  "Motorola 68040/060",
-  "Motorola 68000/020/030"
+  "Motorola 68000", "Motorola 68010", "Motorola 68020", "Motorola 68030",
+  "Motorola 68040", "Motorola 68050", "Motorola 68060"    
   };
 #else
   #define NO_CPUTYPE_TABLE
 #endif
+
+/* *******************************************************************
+   PORTER NOTE: when adding support for a new processor family, add each
+   major processor type individually - *even_if_one_core_covers_more_than_
+   one_processor*. This is to avoid having obsolete cputype entries
+   in inis when more cores become available.
+   ******************************************************************** */
 
 // ---------------------------------------------------------------------------
 
@@ -121,8 +140,20 @@ const char *GetCoreNameFromCoreType( unsigned int coretype )
 
 s32 Client::SelectCore(void)
 {
-  ValidateProcessorCount(); //in cpucheck.cpp
+  static s32 last_cputype = -123;
 
+  ValidateProcessorCount(); //in cpucheck.cpp
+  
+  if (cputype == last_cputype) //no change, so don't bother reselecting
+    return 0;                  //(cputype can change when restarted)
+
+  #ifdef NO_CPUTYPE_TABLE
+    cputype = 0;
+  #else
+  if (cputype<0 || cputype>=(int)(sizeof(cputypetable)/sizeof(cputypetable[0])))
+    cputype = -1;
+  #endif
+    
 #if (CLIENT_CPU == CPU_POWERPC)
   #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_AMIGAOS))
     // Be OS isn't supported on 601 machines
@@ -133,17 +164,19 @@ s32 Client::SelectCore(void)
     cputype = 1;
   #else
     {
-    if (cputype<0 || cputype>=(int)(sizeof(cputypetable)/sizeof(cputypetable[0])))
-      cputype = -1;
-        
+    static s32 detectedtype = -1;
+    
+    if (cputype == -1)
+      cputype = detectedtype;
+              
     if (cputype == -1)
       {
       double fasttime = 0;
 
       LogScreen("Automatically selecting fastest core...\n"
-      "This is just a guess based on a small test of each core. If you know what\n"
-      "processor this machine has, then please set it in the Performance section\n"
-      "of the client configuration.\n");
+                "This is a guess based on a small test of each core.\n"
+                "If you know what processor this machine has, then please\n"
+                "please set it in the client's configuration.\n");
 
       for (whichcrunch = 0; whichcrunch < 2; whichcrunch++)
         {
@@ -160,53 +193,72 @@ s32 Client::SelectCore(void)
         contestwork.iterations.hi = htonl( 0 );
         problem.LoadState( &contestwork, 0, benchsize, whichcrunch ); // RC5 core selection
 
-        LogScreenRaw("Benchmarking the %s core... ", ((whichcrunch)?("second"):("first")));
+        //LogScreen("Benchmarking the %s core... ", ((whichcrunch)?("second"):("first")));
         problem.Run( 0 ); //threadnum
         double elapsed = CliGetKeyrateForProblemNoSave( &problem );
-        LogScreenRaw( "%.1f kkeys/sec\n", (elapsed / 1000.0) );
+        //LogScreen( "%.1f kkeys/sec\n", (elapsed / 1000.0) );
 
         if (cputype < 0 || elapsed < fasttime)
           {cputype = whichcrunch; fasttime = elapsed;}
         }
+      detectedtype = cputype;
       }
     }
   #endif
   whichcrunch = cputype;
   
-  LogScreenRaw( "Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
+  LogScreen( "Selected code optimized for the %s.\n", GetCoreNameFromCoreType(cputype) ); 
 #elif (CLIENT_CPU == CPU_68K)
+    
   #if (CLIENT_OS == OS_AMIGAOS)
-  if (cputype==-1)
+  if (cputype == -1)
     {
     if (SysBase->AttnFlags & AFF_68040) // Means we have either 040 or 060
-      cputype=0;
+      cputype=4;
     else
-      cputype=1;
+      cputype=0;
+    }
+  #elif (CLIENT_OS == OS_MACOS)
+  if (cputype == -1)
+    {
+    #error cpu detection is missing    
+    }
+  #else
+  if (cputype == -1)
+    {
+    //blah blah - cpu detection goes here
+    #error cpu detection is missing    
     }
   #endif
-  if (cputype == 1)
-    rc5_unit_func = rc5_unit_func_000_030;
-  else //if (cputype == 0)
-    rc5_unit_func = rc5_unit_func_040_060;
 
-  LogScreenRaw( "Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
+  const char *corename = NULL;
+  if (cputype == 0 || cputype == 1 || cputype == 2 || cputype == 3)
+    {
+    rc5_unit_func = rc5_unit_func_000_030;
+    corename = "000/010/020/030";
+    }
+  else //if (cputype == 4 || cputype == 5 || cputype == 6 )
+    {
+    rc5_unit_func = rc5_unit_func_040_060;
+    corename = "040/050/060";
+    }
+  LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename ); 
 
 #elif (CLIENT_CPU == CPU_X86)
-
-  s32 detectedtype = GetProcessorType(); //was x86id() now in cpucheck.cpp
-  s32 requestedtype = cputype;
-  int ismmx = ((detectedtype & 0x100) != 0);
-  const char *selmsg_rc5 = NULL, *selmsg_des = NULL;
+  static s32 detectedtype = -1;
   int selppro_des = 0;
-
-  if (requestedtype == 6) /* Pentium MMX */
-    requestedtype = 0;    /* but we need autodetect for it */
-
-  if (cputype<0 || cputype>=(int)(sizeof(cputypetable)/sizeof(cputypetable[0])))
+  const char *selmsg_rc5 = NULL, *selmsg_des = NULL;
+  
+  if (cputype == 6) /* Pentium MMX */
+    cputype = 0;    /* but we need backwards compatability */
+  else if (cputype == -1)
     {
-    requestedtype = detectedtype; //use autodetect
-    cputype = (requestedtype & 0xFF);
+    if (detectedtype == -1)
+      detectedtype = GetProcessorType(0);
+    cputype = (detectedtype & 0xFF);
     }
+  if (detectedtype == -1) /* we need detection for mmx cores */
+    detectedtype = GetProcessorType(1); /* but do it quietly */
 
   #if ((defined(KWAN) || defined(MEGGS)) && !defined(MMX_BITSLICER))
     #define DESUNITFUNC51 des_unit_func_slice
@@ -276,7 +328,7 @@ s32 Client::SelectCore(void)
     }
 
   #if defined(MMX_BITSLICER)
-  if (ismmx && usemmx)   // use the MMX DES core ?
+  if (((detectedtype & 0x100) != 0) && usemmx)   // use the MMX DES core ?
     { 
     des_unit_func = des_unit_func2 = des_unit_func_mmx;
     selmsg_des = "MMX bitslice";
@@ -288,8 +340,8 @@ s32 Client::SelectCore(void)
   if (!selmsg_rc5)
     selmsg_rc5 = GetCoreNameFromCoreType(cputype);
     
-  LogScreenRaw( "DES: selecting %s core.\n"
-                "RC5: selecting %s core.\n", selmsg_des, selmsg_rc5 );
+  LogScreen( "DES: selecting %s core.\n"
+             "RC5: selecting %s core.\n", selmsg_des, selmsg_rc5 );
       
   #undef DESUNITFUNC61
   #undef DESUNITFUNC62
@@ -297,117 +349,107 @@ s32 Client::SelectCore(void)
   #undef DESUNITFUNC52
 
 #elif (CLIENT_CPU == CPU_ARM)
+  static s32 detectedtype = -1;
 #if (CLIENT_OS == OS_RISCOS)
-    if (cputype<0 || cputype>=(int)(sizeof(cputypetable)/sizeof(cputypetable[0])))
-  cputype = -1;
-    if (cputype == -1)              //was ArmID(). Now in cpucheck.cpp
-  cputype = GetProcessorType(); // will return -1 if unable to identify
+  if (cputype == -1)              //was ArmID(). Now in cpucheck.cpp
+    detectedtype = GetProcessorType(0); // will return -1 if unable to identify
 #endif
-    if (cputype == -1)
-    {
-  const s32 benchsize = 50000*2; // pipeline count is 2
-  double fasttime[2] = { 0, 0 };
-  s32 fastcoretest[2] = { -1, -1 };
-  
-  LogScreenRaw("Automatically selecting fastest core...\n"
-         "This is just a guess based on a small test of each core. If you know what\n"
-         "processor this machine has, then please set it in the Performance section\n"
-         "of the client configuration.\n");
-  
+  if (cputype == -1)
+    cputype = detectedtype;
 
-  for (int contestid = 0; contestid < 2; contestid++)
-  {
-      for (int whichcrunch = 0; whichcrunch < 3; whichcrunch++)
+  if (cputype == -1)
+    {
+    const s32 benchsize = 50000*2; // pipeline count is 2
+    double fasttime[2] = { 0, 0 };
+    s32 fastcoretest[2] = { -1, -1 };
+  
+    LogScreen("Automatically selecting fastest core...\n"
+              "This is a guess based on a small test of each core.\n"
+	      "If you know what processor this machine has, then please\n"
+	      "please set it in the client's configuration.\n");
+
+    for (int contestid = 0; contestid < 2; contestid++)
       {
-    Problem problem;
-    ContestWork contestwork;
-    contestwork.key.lo = contestwork.key.hi = htonl( 0 );
-    contestwork.iv.lo = contestwork.iv.hi = htonl( 0 );
-    contestwork.plain.lo = contestwork.plain.hi = htonl( 0 );
-    contestwork.cypher.lo = contestwork.cypher.hi = htonl( 0 );
-    contestwork.keysdone.lo = contestwork.keysdone.hi = htonl( 0 );
-    contestwork.iterations.lo = htonl( benchsize );
-    contestwork.iterations.hi = htonl( 0 );
-    problem.LoadState( &contestwork , contestid, benchsize, whichcrunch ); 
+      for (int whichcrunch = 0; whichcrunch < 3; whichcrunch++)
+        {
+        Problem problem;
+        ContestWork contestwork;
+        contestwork.key.lo = contestwork.key.hi = htonl( 0 );
+        contestwork.iv.lo = contestwork.iv.hi = htonl( 0 );
+        contestwork.plain.lo = contestwork.plain.hi = htonl( 0 );
+        contestwork.cypher.lo = contestwork.cypher.hi = htonl( 0 );
+        contestwork.keysdone.lo = contestwork.keysdone.hi = htonl( 0 );
+        contestwork.iterations.lo = htonl( benchsize );
+        contestwork.iterations.hi = htonl( 0 );
+        problem.LoadState( &contestwork , contestid, benchsize, whichcrunch ); 
 
-    if (contestid == 0)
-    {
-        // there are now 3 RC5 cores from which to choose
-        // probably be a 4th one soon
-        switch(whichcrunch)
-        {
-        case 1:
-      rc5_unit_func = rc5_unit_func_arm_2;
-      break;
-        case 2:
-      rc5_unit_func = rc5_unit_func_arm_3;
-      break;
-        default:
-      rc5_unit_func = rc5_unit_func_arm_1;
-      break;
-        }
-    }
-    else
-    {
-        // select the correct DES core engine
-        switch(whichcrunch)
-        {
-        case 1:
-      des_unit_func = des_unit_func_strongarm;
-      break;
-        default:
-      des_unit_func = des_unit_func_arm;
-      break;
-        }
-    }
-    problem.Run( 0 ); //threadnum
+        if (contestid == 0)
+          {
+          // there are now 3 RC5 cores from which to choose
+          // probably be a 4th one soon
+          switch(whichcrunch)
+            {
+            case 1: rc5_unit_func = rc5_unit_func_arm_2;
+                    break;
+            case 2: rc5_unit_func = rc5_unit_func_arm_3;
+                    break;
+            default:rc5_unit_func = rc5_unit_func_arm_1;
+                    break;
+            }
+          }
+        else
+          {
+          // select the correct DES core engine
+          switch(whichcrunch)
+            {
+            case 1:des_unit_func = des_unit_func_strongarm;
+                   break;
+            default:des_unit_func = des_unit_func_arm;
+                   break;
+            }
+          }
+        problem.Run( 0 ); //threadnum
     
-    double elapsed = CliGetKeyrateForProblemNoSave( &problem );
-    //printf("%s Core %d: %f\n",contestid ? "DES" : "RC5",whichcrunch,elapsed);
+        double elapsed = CliGetKeyrateForProblemNoSave( &problem );
+        //printf("%s Core %d: %f\n",contestid ? "DES" : "RC5",whichcrunch,elapsed);
     
-    if (fastcoretest[contestid] < 0 || elapsed < fasttime[contestid])
-    {
-        fastcoretest[contestid] = whichcrunch; fasttime[contestid] = elapsed;
-    }
+        if (fastcoretest[contestid] < 0 || elapsed < fasttime[contestid])
+          {
+          fastcoretest[contestid] = whichcrunch; fasttime[contestid] = elapsed;
+          }
+        }
       }
-  }
-  cputype = (8-(fastcoretest[0] + ((fastcoretest[1]&1)<<2)))&7;
-  if (cputype == 1)
-  {
+    cputype = (8-(fastcoretest[0] + ((fastcoretest[1]&1)<<2)))&7;
+    if (cputype == 1)
       cputype = 3;
-  }
-  else if (cputype > 3)
-  {
+    else if (cputype > 3)
       cputype = 1;
-  }
+    detectedtype = cputype;
     }
-    LogScreenRaw("Selecting %s code.\n",GetCoreNameFromCoreType(cputype));
+  LogScreen("Selecting %s code.\n",GetCoreNameFromCoreType(cputype));
     
-    // select the correct core engine
-    switch(cputype)
+  // select the correct core engine
+  switch(cputype)
     {
-    case 0:
-  rc5_unit_func = rc5_unit_func_arm_1;
-  des_unit_func = des_unit_func_arm;
-  break;
+    case 0: rc5_unit_func = rc5_unit_func_arm_1;
+            des_unit_func = des_unit_func_arm;
+            break;
     default:
-    case 1:
-  rc5_unit_func = rc5_unit_func_arm_3;
-  des_unit_func = des_unit_func_strongarm;
-  break;
-    case 2:
-  rc5_unit_func = rc5_unit_func_arm_2;
-  des_unit_func = des_unit_func_strongarm;
-  break;
-    case 3:
-  rc5_unit_func = rc5_unit_func_arm_3;
-  des_unit_func = des_unit_func_arm;
-  break;
+    case 1: rc5_unit_func = rc5_unit_func_arm_3;
+            des_unit_func = des_unit_func_strongarm;
+            break;
+    case 2: rc5_unit_func = rc5_unit_func_arm_2;
+            des_unit_func = des_unit_func_strongarm;
+    break;
+    case 3: rc5_unit_func = rc5_unit_func_arm_3;
+            des_unit_func = des_unit_func_arm;
+            break;
     }
-   
 #else
   cputype = 0;
 #endif
+
+  last_cputype = cputype;
   return 0;
 }
 
