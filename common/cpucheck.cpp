@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.74 2001/05/22 12:36:16 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.75 2001/07/14 11:44:10 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -937,6 +937,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0620,  0x109, "K7-2"     },
           {  0x0630,  0x109, "K7-3" }, //spitfire, socket+128K on-die 
           {  0x0640,  0x109, "K7-4" }, //thunderbird, 256K on-die cache
+          {  0x0660,  0x109, "K7-6" }, //athlon
+          {  0x0670,  0x109, "K7-7" }, //duron 
           //next-gen chip is athlon core + 2MB on-die cache (Mustang)
           {  0x0000,     -1, NULL       }
           }; internalxref = &amdxref[0];
@@ -978,8 +980,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           /* Cely: 660: Mendocino A80523 (0.25um, 128 KB On-Die L2 Cache) */
           {  0x0670,  0x102, "Pentium III" }, /* Katmai (0.25um/0.18um), 512KB, KNI */
           {  0x0680,  0x102, "Pentium III" },
-          {  0x0690,  0x102, "Pentium III/Timna" }, /* 6547:0692 */
+          {  0x0690,  0x102, "Pentium III" }, /* Timna:6547:0692 */
           {  0x06A0,  0x102, "Pentium III" }, //0.18 um w/ 1/2MB on-die L2
+          {  0x06B0,  0x102, "Pentium III" }, /* Tulatin:6547:46B1 */
           {  0x0700,  0x105, "Itanium" }, /* 6547:0701. #5 == RG RISC-rotate II */
           {  0x0F00,  0x10B, "Pentium 4" }, /* #11 = 4 Pipeline P4 core */
           {  0x0000,     -1, NULL }
