@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.45  1998/09/28 03:44:16  cyp
+// Added no-support wrapper around shutdown()
+//
 // Revision 1.44  1998/09/25 04:32:09  pct
 // DEC Ultrix port changes
 //
@@ -116,7 +119,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.44 1998/09/25 04:32:09 pct Exp $"; }
+return "@(#)$Id: network.cpp,v 1.45 1998/09/28 03:44:16 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -133,6 +136,8 @@ extern "C"
 {
 #include <errno.h>     // for errno and EINTR
 };
+#elif (CLIENT_OS == OS_DOS) /* sockerrno != errno */ || (CLIENT_OS == OS_WIN32)
+#  define ERRNO_IS_UNUSABLE 
 #else
 #include <errno.h>     // for errno and EINTR
 #endif
@@ -525,7 +530,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         LogScreen( "[%s] Connect to host %s:%u failed.\n",
            Time(),  __inet_ntoa__(lastaddress), (unsigned int)(lastport));
         }
-      #if (CLIENT_OS == OS_WIN32) //blagh! some don't have errno
+      #ifdef ERRNO_IS_UNUSABLE 
         {
         lastaddress = 0; //so reset
         }
@@ -1225,7 +1230,9 @@ int Network::LowLevelCloseSocket(void)
    if ( sock != INVALID_SOCKET )
      {
      LowLevelConditionSocket( CONDSOCK_BLOCKING_ON );
+     #if (defined(AF_INET) && defined(SOCK_STREAM))  
      shutdown( sock, 2 );
+     #endif
      int retcode = (int)close( sock );
      sock = INVALID_SOCKET;
      return (retcode);
