@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.149  1998/12/30 07:46:57  cramer
+# removed a redundant 'rm' from distclean
+#
 # Revision 1.148  1998/12/29 20:59:01  silby
 # Removed guistuff.cpp
 #
@@ -1566,7 +1569,6 @@ echo "	find . -name '*~' -exec rm {} \\;" >> Makefile
 echo "" >> Makefile
 
 echo "distclean: superclean $0" >> Makefile
-echo "	rm -f \${BUILDNAME}" >> Makefile
 echo "	find . -name '.#*' -exec rm {} \\;" >> Makefile
 echo "	rm -f \`egrep \"^[ ]*\\*\" $0 | sed -e 's/\(^.*\*\)\(.*\)\().*\$\$\)/\2/'\`" >> Makefile
 echo "" >> Makefile
