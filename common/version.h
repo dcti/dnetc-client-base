@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version.h,v $
+// Revision 1.32  1999/01/02 06:12:13  silby
+// Er, now we're at 2.7103.425
+//
 // Revision 1.31  1999/01/02 06:11:01  silby
 // 2.7103.425, happy new year.
 //
@@ -116,8 +119,8 @@
 #define CLIENT_BUILD        03
 #define CLIENT_BUILD_FRAC   425
 
-#define CLIENT_VERSIONSTRING    "v2.7102.425"
-#define CLIENT_VERSIONSTRING2   "2.7102.425"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7103.425"
+#define CLIENT_VERSIONSTRING2   "2.7103.425"        // no leading "v"
 
 // When releasing a beta client, please set the expiration time to
 // about two weeks into the future; that should be an adequate beta
