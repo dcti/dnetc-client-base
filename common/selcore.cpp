@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.15 2003/01/23 20:50:50 pfeffi Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.16 2003/02/12 01:00:57 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -880,6 +880,16 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
       selcorestatics.user_cputype[cont_i] = -1;
       selcorestatics.corenum[cont_i] = -1;
     }
+    #if defined(HAVE_OGR_CORES) && defined(HAVE_MULTICRUNCH_VIA_FORK)
+    // HACK! for bug #3006
+    // call the functions once to initialize the static tables before the client forks
+    #if CLIENT_OS == OS_LINUX
+    ogr_get_dispatch_table();
+    ogr_get_dispatch_table_nobsr();
+    #else
+      #error FIXME! call all your *ogr_get_dispatch_table* functions here once
+    #endif
+    #endif
   }
   if (coretypes)
   {

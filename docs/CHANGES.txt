@@ -21,13 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.9 2003/02/06 23:30:53 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.10 2003/02/12 01:00:57 andreasb Exp $
 ==========================================================================
 
 2.9000
 ------
 
-2.9003-481
+2.9003-481  fix: smp via fork: 2nd process died after switching to project
+                               ogr (added workaround for #3006)
 
 2.9003-480  new: x86: rc5-72 core by Gnatiuc Ianos (Athlon optimized)
             chg: all: -numcpu 0 disables use of shared memory (if any)
