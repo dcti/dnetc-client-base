@@ -1,11 +1,15 @@
 #
-# $Id: crunch_lintilla_296-604.ppc.s,v 1.1.2.1 2000/06/07 23:18:56 oliver Exp $
+# $Id: crunch_lintilla_296-604.ppc.s,v 1.1.2.2 2000/06/20 15:09:30 oliver Exp $
 #
 # modified version of crunch_lintilla_296.ppc.s - optimized for 604e (original
 # lintilla is still faster on 603e, at least). Optimized by Roberto Ragusa
 # (robertoragusa@technologist.com)
 #
 # $Log: crunch_lintilla_296-604.ppc.s,v $
+# Revision 1.1.2.2  2000/06/20 15:09:30  oliver
+# ensure main loop starts on 8-byte boundary for optimum cache performance (on
+# a 603e, at least, but can do no harm for other PPC processors too)
+#
 # Revision 1.1.2.1  2000/06/07 23:18:56  oliver
 # new core optimized for 604 series by Roberto Ragusa, based on lintilla_296
 #
@@ -528,6 +532,10 @@ label3:
 
  lwz	Sr0,Sr_0(SP)
  lwz	Sr1,Sr_1(SP)
+
+# ensure main loop starts on 8-byte boundary, for optimum cache performance
+# (pad with nop if necessary)
+.balignl	8,0x60000000
 
 loop:
 

@@ -1,5 +1,9 @@
 #
 # $Log: crunch_lintilla_296.ppc.s,v $
+# Revision 1.3.2.3  2000/06/20 15:08:54  oliver
+# ensure main loop starts on 8-byte boundary for optimum cache performance (on
+# a 603e, at least, but can do no harm for other PPC processors too)
+#
 # Revision 1.3.2.2  2000/01/03 14:34:37  patrick
 #
 # EGCS on AIX needs the defines. Please keep 'em.
@@ -518,6 +522,10 @@ label3:
 
  lwz	Sr0,Sr_0(SP)
  lwz	Sr1,Sr_1(SP)
+
+# ensure main loop starts on 8-byte boundary, for optimum cache performance
+# (pad with nop if necessary)
+.balignl	8,0x60000000
 
 loop:
 
