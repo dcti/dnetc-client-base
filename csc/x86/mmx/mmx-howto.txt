@@ -1,0 +1,14 @@
+Add a configure target such as this one :
+
+    *x86-freebsd-elf-mmx)       # [remi] elf - MMX CSC
+	TARGET_CC="gcc295 -pipe"
+	TARGET_AS="gcc295 -c"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -ansi -DMMX_RC5 -DLURK -DHAVE_CSC_CORES"
+	TARGET_ADDSRCS="common/lurk.cpp \
+	                csc/csc-common-mmx.cpp \
+			csc/csc-6b-mmx.cpp csc/csc-6b-i-mmx.cpp \
+			csc/csc-1k-mmx.cpp csc/csc-1k-i-mmx.cpp \
+			csc/convcsc.cpp"
+	TARGET_ADDASMS="platforms/x86ident.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	;;
