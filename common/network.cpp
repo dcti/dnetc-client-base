@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.19 2000/01/03 02:59:52 jlawson Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.20 2000/01/07 18:58:23 snake Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -2071,7 +2071,8 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
     int which;
     for (which = 0; which < 2; which++ )
     {
-      #if (defined(__GLIBC__) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_MACOS)
+      #if (defined(__GLIBC__) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_MACOS) \
+        || (CLIENT_OS == OS_NETBSD)
       #define SOCKLEN_T socklen_t
       #elif ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION > 199701))
       #define SOCKLEN_T size_t
