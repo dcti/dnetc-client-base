@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.176  1999/01/23 21:53:26  patrick
+#
+# target x86-os2-gcc: -i des/mmx-bitslice/ was missing
+#
 # Revision 1.175  1999/01/21 05:02:41  pct
 # Minor updates for Digital Unix clients.
 #
@@ -1941,7 +1945,7 @@ case "$1" in
 	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm $NASM_DESMMX_SRCS"
-        TARGET_NASMFLAGS="-i rc5/nasm/ -f aout"
+        TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -f aout"
         TARGET_LIBS="-lsocket"
         TARGET_OS=OS2
         ;;
