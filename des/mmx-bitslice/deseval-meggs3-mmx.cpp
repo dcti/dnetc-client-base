@@ -18,6 +18,10 @@
 
 //
 // $Log: deseval-meggs3-mmx.cpp,v $
+// Revision 1.9  1999/01/23 21:39:05  patrick
+//
+// OS2 also needs call functions with a leading '_'
+//
 // Revision 1.8  1998/11/08 12:57:19  silby
 // Changes to make client buildable on freebsd 2.x boxes as well as 3.x boxes.
 //
@@ -47,7 +51,7 @@
 //
 // Revision 1.2  1998/07/08 23:37:35  remi
 // Added support for aout targets (.align).
-// Tweaked $Id: deseval-meggs3-mmx.cpp,v 1.8 1998/11/08 12:57:19 silby Exp $.
+// Tweaked $Id: deseval-meggs3-mmx.cpp,v 1.9 1999/01/23 21:39:05 patrick Exp $.
 //
 // Revision 1.1  1998/07/08 15:49:36  remi
 // MMX bitslicer integration.
@@ -56,7 +60,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_mmx_cpp(void) {
-return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.8 1998/11/08 12:57:19 silby Exp $"; }
+return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.9 1999/01/23 21:39:05 patrick Exp $"; }
 #endif
 
 #include <stdlib.h>
@@ -198,7 +202,8 @@ do { \
 //#define xs8(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) do { load_params (a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3); mmxs8 (mmxParams); } while (0)
 
 // CYGWIN32 because it's my debugging & benchmarking platform
-#if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_NETWARE) || \
+#if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOSWIN16) || \
+     (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_OS2) || \
     (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)) && !defined(__ELF__)) || defined(__CYGWIN32__))
 #define CALL(sfunc) "call _"#sfunc
 #else
