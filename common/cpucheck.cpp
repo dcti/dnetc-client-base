@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.23 2003/08/06 18:48:08 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.24 2003/08/09 12:50:37 mweiser Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -78,6 +78,15 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       struct host_basic_info  info;
       count = HOST_BASIC_INFO_COUNT;
       if (host_info(mach_host_self(), HOST_BASIC_INFO, (host_info_t)&info,
+          &count) == KERN_SUCCESS)
+         cpucount=info.avail_cpus;
+    }
+    #elif (CLIENT_OS == OS_NEXTSTEP)
+    {
+      unsigned int    count;
+      struct host_basic_info  info;
+      count = HOST_BASIC_INFO_COUNT;
+      if (host_info(host_self(), HOST_BASIC_INFO, (host_info_t)&info,
           &count) == KERN_SUCCESS)
          cpucount=info.avail_cpus;
     }
@@ -301,6 +310,36 @@ static long __GetRawProcessorID(const char **cpuname)
         case gestalt68040: detectedtype = 68040L;  break;
         default:           detectedtype = -1L;     break;
       }
+    }
+  }
+  #elif (CLIENT_OS == OS_NEXTSTEP)
+  if (detectedtype == -2)
+  {
+    struct host_basic_info info;
+    unsigned int count = HOST_BASIC_INFO_COUNT;
+
+    if (host_info(host_self(), HOST_BASIC_INFO,
+                  (host_info_t)&info, &count) == KERN_SUCCESS &&
+        info.cpu_type == CPU_TYPE_MC680x0)
+    {
+      switch (info.cpu_subtype)
+      {
+          /* MC68030_ONLY shouldn't be returned since it's only used
+          ** to mark 68030-only executables in the mach-o
+          ** fileformat */
+        case CPU_SUBTYPE_MC68030_ONLY:
+        case CPU_SUBTYPE_MC68030:      detectedtype = 68030L; break;
+        case CPU_SUBTYPE_MC68040:      detectedtype = 68040L; break;
+
+          /* black hardware from NeXT only had 680[34]0 processors so
+          ** there are no defines for the others *shrug* */
+        default:                       detectedtype = -1;     break;
+      }
+    } else {
+      /* something went really wrong here if cpu_type doesn't match -
+      ** can we be compiled for NeXTstep on 68k but run on something
+      ** else? */
+      detectedtype = -1;
     }
   }
   #elif (CLIENT_OS == OS_LINUX)
