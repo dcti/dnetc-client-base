@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.31 1999/11/06 05:58:09 ivo Exp $
+# @(#)$Id: configure,v 1.222.2.32 1999/11/06 06:05:50 ivo Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -151,7 +151,7 @@ OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
 OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86"
 OPTS_GCC272_X86="$OPTS_GCC272 -O6 -m486 -DASM_X86"
 
-OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentiumpro -malign-functions=4 -DASM_X86"
+OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentiumpro -malign-functions=4 -malign-loops=4 -DASM_X86"
 
 #-- DYNIX
 
@@ -1152,7 +1152,7 @@ case "$1" in
 
     *x86-linux-mt-gcc-ogr-asmcsc)		 # mt, static, gcc, ogr, asm csc
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
 			-DMULTITHREAD -DSMC -DLURK \
 			$OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
