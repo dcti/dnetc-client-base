@@ -11,6 +11,10 @@
 // ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.119  1999/03/01 07:54:52  gregh
+// Change FileEntry to a union that contains crypto (RC5/DES) data and OGR
+// data overlaid on the same bytes.
+//
 // Revision 1.118  1999/02/21 21:44:58  cyp
 // tossed all redundant byte order changing. all host<->net order conversion
 // as well as scram/descram/checksumming is done at [get|put][net|disk] points
@@ -305,12 +309,13 @@
 #define __CLIBASICS_H__
 
 #include "cputypes.h"
+#include "stub.h"
 
 // --------------------------------------------------------------------------
 
 #define PACKET_VERSION      0x03
 #define MAXBLOCKSPERBUFFER  500
-#define CONTEST_COUNT       3 /* 3 contests */
+#define CONTEST_COUNT       2 /* 3 contests, only 2 right now (no OGR) */
 
 // --------------------------------------------------------------------------
 
@@ -370,12 +375,19 @@ typedef struct
 
 typedef struct
 {
-  u64  key;               // starting key
-  u64  iv;                // initialization vector
-  u64  plain;             // plaintext we're searching for
-  u64  cypher;            // cyphertext
-  u64  keysdone;          // iterations done (also current position in block)
-  u64  iterations;        // iterations to do
+  union {
+    struct {
+      u64  key;               // starting key
+      u64  iv;                // initialization vector
+      u64  plain;             // plaintext we're searching for
+      u64  cypher;            // cyphertext
+      u64  keysdone;          // iterations done (also current position in block)
+      u64  iterations;        // iterations to do
+    } crypto;
+   struct {
+     Stub stub;
+   } ogr;
+  } data;
   u32  op;                // (out)OP_SUCCESS, (out)OP_DONE, or (in)OP_DATA
   char id[59];            // email address of original worker...
   u8   contest;           //
