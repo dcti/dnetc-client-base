@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.168  1998/11/19 23:36:26  cyp
+// PrintBanner() now gets its level and restart flag from ::Main()
+//
 // Revision 1.167  1998/11/19 23:11:52  cyp
 // Logging is now initialized with time stamping and logfile/mail logs
 // enabled. This will probably break stuff, but logging -update etc to file
@@ -114,7 +117,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.167 1998/11/19 23:11:52 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.168 1998/11/19 23:36:26 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -241,97 +244,96 @@ static const char *GetBuildOrEnvDescription(void)
 
 // --------------------------------------------------------------------------
 
-static void PrintBanner(const char *dnet_id)
+static void PrintBanner(const char *dnet_id,int level,int restarted)
 {
-  static unsigned int level = 0; //incrementing so messages are not repeated
-            //0 = show copyright/version,  1 = show startup message
- 
-  if (level == 0)
-    {
-    level++; //will never print this message again
-
-    LogScreenRaw( "\nRC5DES " CLIENT_VERSIONSTRING 
-               " client - a project of distributed.net\n"
-               "Copyright 1997-1998 distributed.net\n" );
-    
-    #if (CLIENT_CPU == CPU_68K)
-    LogScreenRaw( "RC5 68K assembly by John Girvin\n");
-    #endif
-    #if (CLIENT_CPU == CPU_POWERPC)
-    LogScreenRaw( "PowerPC assembly by Dan Oetting at USGS\n");
-    #endif
-    #if defined(KWAN) && defined(MEGGS)
-    LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n" 
-                  "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
-    #elif defined(KWAN) 
-    LogScreenRaw( "DES search routines Copyright 1997-1998, Matthew Kwan\n" );
-    #endif
-    #if (CLIENT_CPU == CPU_X86)
-    LogScreenRaw( "DES search routines Copyright 1997-1998, Svend Olaf Mikkelsen\n");
-    #endif
-    #if (CLIENT_OS == OS_DOS)  
-    LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
-    #endif
-    LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n"
-               "%s\n",
-            #if (CLIENT_OS == OS_RISCOS)
-            guiriscos ?
-            "Interactive help is available, or select 'Help contents' from the menu for\n"
-            "detailed client information.\n" :
-            #endif
-            "Start the client with '-help' for a list of valid command line options.\n"
-            );
-    #if (CLIENT_OS == OS_DOS)
-      dosCliCheckPlatform(); //show warning if pure DOS client is in win/os2 VM
-    #endif
-
-    #if ((CLIENT_OS==OS_DOS) || (CLIENT_OS==OS_WIN16) || \
-         (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_OS2) || \
-         ((CLIENT_OS==OS_WIN32) && !defined(NEEDVIRTUALMETHODS)))
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-    int major=0;
-    w32ConGetWinVersion(&major,NULL);
-    if ((major%20) <= 3) /* >=20 == NT */
-    #endif   
-    if (getenv("TZ") == NULL)
-      {
-      LogScreenRaw("Warning: The TZ= variable is not set in the environment. "
-       "The client will\nprobably display the wrong time and/or select the "
-       "wrong keyserver.\n");
-      putenv("TZ=GMT+0"); //use local time.
-      }
-    #endif
-    }
+  //level = 0 = show copyright/version,  1 = show startup message
   
-  if ( level == 1 )
-    {  
-    level++; //will never print this message again
-    LogRaw("\nRC5DES Client %s for %s started.\n", CLIENT_VERSIONSTRING,
-                                                   CLIENT_OS_NAME );
-    const char *msg = GetBuildOrEnvDescription();
-    if (msg && *msg) LogRaw( "%s\n", msg );
-
-    LogRaw( "Using distributed.net ID %s\n\n", dnet_id );
-    
-    #if defined(BETA) && defined(BETA_EXPIRATION_TIME) && (BETA_EXPIRATION_TIME != 0)
-    timeval currenttime;
-    timeval expirationtime;
-
-    CliTimer(&currenttime);
-    expirationtime.tv_usec= 0;
-    expirationtime.tv_sec = BETA_EXPIRATION_TIME;
-
-    if (currenttime.tv_sec > expirationtime.tv_sec ||
-      currenttime.tv_sec < (BETA_EXPIRATION_TIME - 1814400))
+  if (!restarted)
+    {
+    if (level == 0)
       {
-      ; //nothing - start run, recover checkpoints and _then_ exit.
-      } 
-    else
-      {
-      LogScreenRaw("Notice: This is a beta release and expires on %s\n\n",
-       CliGetTimeString(&expirationtime,1) );
+      LogScreenRaw( "\nRC5DES " CLIENT_VERSIONSTRING 
+                 " client - a project of distributed.net\n"
+                 "Copyright 1997-1998 distributed.net\n" );
+      
+      #if (CLIENT_CPU == CPU_68K)
+      LogScreenRaw( "RC5 68K assembly by John Girvin\n");
+      #endif
+      #if (CLIENT_CPU == CPU_POWERPC)
+      LogScreenRaw( "PowerPC assembly by Dan Oetting at USGS\n");
+      #endif
+      #if defined(KWAN) && defined(MEGGS)
+      LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n" 
+                    "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
+      #elif defined(KWAN) 
+      LogScreenRaw( "DES search routines Copyright 1997-1998, Matthew Kwan\n" );
+      #endif
+      #if (CLIENT_CPU == CPU_X86)
+      LogScreenRaw( "DES search routines Copyright 1997-1998, Svend Olaf Mikkelsen\n");
+      #endif
+      #if (CLIENT_OS == OS_DOS)  
+      LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
+      #endif
+      LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n"
+                 "%s\n",
+              #if (CLIENT_OS == OS_RISCOS)
+              guiriscos ?
+              "Interactive help is available, or select 'Help contents' from the menu for\n"
+              "detailed client information.\n" :
+              #endif
+              "Start the client with '-help' for a list of valid command line options.\n"
+              );
       }
-    #endif // BETA
+    else if ( level == 1 )
+      {  
+      #if (CLIENT_OS == OS_DOS)
+        dosCliCheckPlatform(); //show warning if pure DOS client is in win/os2 VM
+      #endif
+  
+      #if ((CLIENT_OS==OS_DOS) || (CLIENT_OS==OS_WIN16) || \
+           (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_OS2) || \
+           ((CLIENT_OS==OS_WIN32) && !defined(NEEDVIRTUALMETHODS)))
+      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+      int major=0;
+      w32ConGetWinVersion(&major,NULL);
+      if ((major%20) <= 3) /* >=20 == NT */
+      #endif   
+      if (getenv("TZ") == NULL)
+        {
+        LogScreenRaw("Warning: The TZ= variable is not set in the environment. "
+         "The client will\nprobably display the wrong time and/or select the "
+         "wrong keyserver.\n");
+        putenv("TZ=GMT+0"); //use local time.
+        }
+      #endif
+
+      LogRaw("\nRC5DES Client %s for %s started.\n", CLIENT_VERSIONSTRING,
+                                                     CLIENT_OS_NAME );
+      const char *msg = GetBuildOrEnvDescription();
+      if (msg && *msg) LogRaw( "%s\n", msg );
+  
+      LogRaw( "Using distributed.net ID %s\n\n", dnet_id );
+      
+      #if defined(BETA) && defined(BETA_EXPIRATION_TIME) && (BETA_EXPIRATION_TIME != 0)
+      timeval currenttime;
+      timeval expirationtime;
+  
+      CliTimer(&currenttime);
+      expirationtime.tv_usec= 0;
+      expirationtime.tv_sec = BETA_EXPIRATION_TIME;
+  
+      if (currenttime.tv_sec > expirationtime.tv_sec ||
+        currenttime.tv_sec < (BETA_EXPIRATION_TIME - 1814400))
+        {
+        ; //nothing - start run, recover checkpoints and _then_ exit.
+        } 
+      else
+        {
+        LogScreenRaw("Notice: This is a beta release and expires on %s\n\n",
+         CliGetTimeString(&expirationtime,1) );
+        }
+      #endif // BETA
+      }
     }
   return;
 }
@@ -359,7 +361,7 @@ int DeinitializeConnectivity(void)
 //------------------------------------------------------------------------
 
 
-int Client::Main( int argc, const char *argv[], int /* restarted */ )
+int Client::Main( int argc, const char *argv[], int restarted )
 {
   int retcode = 0;
   int domodes = 0;
@@ -375,7 +377,7 @@ int Client::Main( int argc, const char *argv[], int /* restarted */ )
         if (InitializeConsole(quietmode,domodes) == 0)
           {
           InitializeLogging(1);
-          PrintBanner(id); //tracks restart state itself
+          PrintBanner(id,0,restarted);
           ParseCommandline( 1, argc, argv, NULL, (quietmode==0)); //show overrides
         
           if (domodes)
@@ -384,7 +386,7 @@ int Client::Main( int argc, const char *argv[], int /* restarted */ )
             }
           else
             {
-            PrintBanner( id );
+            PrintBanner(id,1,restarted);
             SelectCore( 0 );
             retcode = Run();
             }
