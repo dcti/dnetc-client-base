@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.5 1999/06/11 13:26:08 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.6 1999/06/17 12:57:35 cyp Exp $
 ==========================================================================  
 2.7111.443  new: FreeBSD: crunchers are now SMP aware (FBSD 3.0 and greater)
                  "active processor count detection" also works.
@@ -37,12 +37,12 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.5 1999/06/11 13:26:08 cyp Exp $
 2.7109.441  fix: win32cli shutdown if not hidden and not service :)
 2.7109.440  fix: win32cli shutdown for win95 if hidden or service
             fix: all: proxified HTTP works again
-            new: all: Big block (>8*2^28) support (requires proxy 306 or 
-                 newer). Support is enabled only if the 'preferred-block-size' 
-                 is greater than 31.
+            new: all: Big packet (>8*2^28) support (requires proxy 306 or 
+                 newer). Support is enabled only if the 'preferred-
+                 packet-size' is greater than 31.
                  *Warning*: do not share buffers between clients that have
-                 the use of big blocks enabled and clients older than
-                 2.7109.440 since older clients will truncate the blocks.
+                 the use of big packets enabled and clients older than
+                 2.7109.440 since older clients will truncate the packets.
             new: infrastructure for new/more contests
             chg: |- includes partial .ini restructuring
             chg: |- tracking contest open/closed states is no longer necessary
