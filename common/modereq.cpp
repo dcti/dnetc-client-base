@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.25 1999/04/11 00:13:51 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.26 1999/04/11 20:45:49 cyp Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -166,26 +166,26 @@ int ModeReqRun(Client *client)
       }
       if ((bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART)) != 0)
       {
-        Client *newclient = new Client;
-        if (!newclient)
-          LogScreen("Unable to configure. (Insufficient memory)");
-        else
+        if (client)
         {
-          int i;
-          for (i=0;client->inifilename[i];i++)
-            newclient->inifilename[i]=client->inifilename[i];
-          newclient->inifilename[i]=0;  
-          if ( ReadConfig(newclient) == 0 ) /* ini not missing */
+          Client *newclient = new Client;
+          if (!newclient)
+            LogScreen("Unable to configure. (Insufficient memory)");
+          else
           {
-            if ( newclient->Configure() == 1 )
+            strcpy(newclient->inifilename, client->inifilename );
+            if ( ReadConfig(newclient) >= 0 ) /* no or non-fatal error */
             {
-              WriteConfig(newclient,1); //full new build
-              if ((bits & MODEREQ_CONFRESTART) != 0)
-                restart = 1;
-              retval |= (bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART));
+              if ( newclient->Configure() == 1 )
+              {
+                WriteConfig(newclient,1); //full new build
+                if ((bits & MODEREQ_CONFRESTART) != 0)
+                  restart = 1;
+                retval |= (bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART));
+              }
             }
+            delete newclient;
           }
-          delete newclient;
         }
         modereq.reqbits &= ~(MODEREQ_CONFIG | MODEREQ_CONFRESTART);
       }
@@ -194,7 +194,7 @@ int ModeReqRun(Client *client)
         if (client)
         {
           int domode = 0;
-                int interactive = ((bits & MODEREQ_FQUIET) == 0);
+          int interactive = ((bits & MODEREQ_FQUIET) == 0);
           domode  = ((bits & MODEREQ_FETCH) ? BUFFERUPDATE_FETCH : 0);
           domode |= ((bits & MODEREQ_FLUSH) ? BUFFERUPDATE_FLUSH : 0);
           domode = client->BufferUpdate( domode, interactive );
