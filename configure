@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222 1999/05/07 20:54:27 remi Exp $
+# @(#)$Id: configure,v 1.223 1999/06/04 22:32:17 silby Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -61,13 +61,14 @@ OPTS_GCC272_SPARC1="$OPTS_GCC272 -O6 -mcypress -DASM_SPARC"
 
 # (sparc/v8 [SS5+]      gcc)
 OPTS_GCC_SPARC="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
+OPTS_EGCS_SPARC="$OPTS_EGCS -O6 -msupersparc -DASM_SPARC"
 OPTS_GCC272_SPARC="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC"
 
 # (sparc/v9 [Ultra]     gcc)
 OPTS_GCC_ULTRA="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
 OPTS_GCC272_ULTRA="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC"
 OPTS_EGCS_ULTRA="OPTS_GCC -Os -mtune=ultrasparc -fforce-mem -mvis \
-		-fstrict-aliasing -fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
+		-fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
 OPTS_GAS_ULTRA="-Av9a"
 OPTS_AS_ULTRA="-xarch=v8plusa"
 
@@ -536,51 +537,31 @@ case "$1" in
 
     #####
 
-    *sparc-solaris-gcc-mt)	# slower rc5, slower des
+     *sparc-solaris-egcs)       # supersparc, non-mt 
+        RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
+        TARGET_CC="g++"
+        TARGET_CCFLAGS="$OPTS_EGCS_SPARC -Dsolaris \
+                        -DBIT_32 -DKWAN -DMEGGS"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+        TARGET_LIBS="-lnsl -lsocket -ldl"
+        ;;
+
+
+    *sparc-solaris-egcs-mt)	# supersparc, mt
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
-	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 \
-			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
-	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
-	;;
-
-    *sparc-solaris-gcc-crunch-mt)    # fastest rc5, slower des
-	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 \
-			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
-	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
-	;;
-
-    *sparc-solaris-gcc-crunch-slice)   # fastest rc5 & des for ultra
-	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc -pipe"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DPIPELINE_COUNT=2 \
-			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
-	TARGET_LIBS="-lnsl -lsocket -ldl"
-	;;
-
-    *sparc-solaris-gcc-crunch-slice-mt)   # fastest rc5 & des for ultra
-	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc -pipe"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 \
-			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+	TARGET_CC="g++"
+	TARGET_CCFLAGS="$OPTS_EGCS_SPARC -Dsolaris \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
-    *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
+    *sparc-solaris-gcc-crunch-asmslice-mt) # ultrasparc, mt
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1"
+			-DMULTITHREAD -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
  	TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
 	TARGET_ASFLAGS="$OPTS_AS_ULTRA"
