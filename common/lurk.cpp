@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.cpp,v $
+// Revision 1.13  1999/01/01 10:09:07  silby
+// Changed logic in CheckIfConnectRequested to make slightly more sense.
+//
 // Revision 1.12  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -33,7 +36,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.12 1999/01/01 02:45:15 cramer Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.13 1999/01/01 10:09:07 silby Exp $"; }
 #endif
 
 /* --------------------------------- */
@@ -199,16 +202,14 @@ s32 Lurk::CheckIfConnectRequested(void) //Get possible values of connectrequeste
         Log(" - Connections will not be initiated by the client.");
          // lurkonly needs a live connect - also, don't
          // interfere if offlinemode already ==1 or ==2
-        connectrequested = 0; // cancel any connection requests
         };
       Log("\n");
       }
-    else
-      connectrequested=0;
+    connectrequested=0; // No, don't try to connect.
     }
   else // We're connected!
     {
-    connectrequested=2;// Trigger an update
+    connectrequested=1;// Trigger an update
     if(oldlurkstatus != 1) // We previously weren't connected
       {
       // Only put out message the first time.
