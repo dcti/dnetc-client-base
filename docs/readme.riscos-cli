@@ -44,6 +44,16 @@
     invisible. Stop it by killing it via the task manager or by
     creating a file "exitrc5/now" in the client's directory.
  
+    Starting in version 2.7104.428, the client contains support
+    for Dominic Plunkett's RC5PC module, which allows a RiscPC 2nd
+    CPU card (x86) to crack alongside the ARM. To use the card,
+    you need to RMLoad the RC5PC module and issue a *RC5PC On command,
+    prior to starting the main client. You should also set the number
+    of CPUs in the machine to either 2, if you expect the client to
+    use the x86 card all the time, or -1 if you wish the client to
+    auto-detect the number of CPUs at startup. -1 is the preferred
+    option.
+
     You may alternatively wish to install the RISC OS GUI client.
 
     For help with the RISC OS client, you can either ask through
