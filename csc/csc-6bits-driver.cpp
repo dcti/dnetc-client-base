@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6bits-driver.cpp,v $
+// Revision 1.2.2.7  1999/10/30 15:02:27  remi
+// Hrmm, I can't program in C :(
+// if (blah & 15 != 0)
+// 	slap(remi);
+// if ((blah & 15) != 0)
+// 	pets(remi);
+//
 // Revision 1.2.2.6  1999/10/24 23:54:54  remi
 // Use Problem::core_membuffer instead of stack for CSC cores.
 // Align frequently used memory to 16-byte boundary in CSC cores.
@@ -42,7 +49,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-driver.cpp,v 1.2.2.6 1999/10/24 23:54:54 remi Exp $"; }
+return "@(#)$Id: csc-6bits-driver.cpp,v 1.2.2.7 1999/10/30 15:02:27 remi Exp $"; }
 #endif
 
 /*
@@ -72,7 +79,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   // align buffer on a 16-byte boundary
   assert(sizeof(void*) == sizeof(unsigned long));
   char *membuffer = (char*)membuff;
-  if( (unsigned)membuffer & 15 != 0)
+  if( ((unsigned)membuffer & 15) != 0)
     membuffer = (char*)(((unsigned long)(membuffer+15) & ~((unsigned long)15)));
 
   //ulong key[2][64];
