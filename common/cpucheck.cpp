@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.24 2003/08/09 12:50:37 mweiser Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.25 2003/09/12 13:25:16 mweiser Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -407,83 +407,85 @@ static long __GetRawProcessorID(const char **cpuname)
 
 /* ---------------------------------------------------------------------- */
 
-#if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+#if (CLIENT_CPU == CPU_POWERPC)
+
+/* note: Non-PVR based numbers start at 0x10000 (real PVR numbers are 16bit) */
+# define NONPVR(x) ((1L << 16) + (x))
+
 static long __GetRawProcessorID(const char **cpuname)
 {
   /* ******* detected type reference is (PVR value >> 16) *********** */
   static long detectedtype = -2L; /* -1 == failed, -2 == not supported */
-  static int ispower = 0, isaltivec = 0;
+  static int isaltivec = 0;
   static const char *detectedname = NULL;
   static char namebuf[30];
-  static struct { long rid; const char *name; } cpuridtable[] = {
-    //note: if the name is not prefixed with "Power", it defaults to "PowerPC"
-    //note: Non-PVR based numbers start at 0x10000 (real PVR numbers are 16bit)
-    //note: always use PVR IDs http://e-www.motorola.com/collateral/PPCPVR.pdf
-                {    0x0001,   "601"                   },
-                {    0x0003,   "603"                   },
-                {    0x0004,   "604"                   },
-                {    0x0006,   "603e"                  },
-                {    0x0007,   "603r/603ev"            }, //ev=0x0007, r=0x1007
-                {    0x0008,   "740/750 (G3)"          },
-                {    0x0009,   "604e"                  },
-                {    0x000A,   "604ev"                 },
-                {    0x000C,   "7400 (G4)"             },
-                {    0x0020,   "403G/403GC/403GCX"     },
-                {    0x0039,   "970 (G5)"              },
-                {    0x0050,   "821"                   },
-                {    0x0080,   "860"                   },
-                {    0x0081,   "8240"                  },
-                {    0x4011,   "405GP"                 },
-                {    0x8000,   "7450 (G4)"             },
-                {    0x8001,   "7455 (G4)"             },
-                {    0x8002,   "7457 (G4)"             },
-                {    0x800C,   "7410 (G4)"             },
-                {(1L<<16)+1,   "Power RS"              }, //not PVR based
-                {(1L<<16)+2,   "Power RS2 Superchip"   }, //not PVR based
-                {(1L<<16)+3,   "Power RS2"             }, //not PVR based
-                {(1L<<16)+4,   "620"                   }, //not PVR based
-                {(1L<<16)+5,   "630"                   }, //not PVR based
-                {(1L<<16)+6,   "A35"                   }, //not PVR based
-                {(1L<<16)+7,   "RS64II"                }, //not PVR based
-                {(1L<<16)+8,   "RS64III"               }, //not PVR based
-                };
+
+  /* note: "PowerPC" will be prepended to the name
+  ** note: always use PVR IDs http://e-www.motorola.com/collateral/PPCPVR.pdf */
+  struct { long rid;
+           const char *name; }
+    cpuridtable[] = {
+      {    0x0001, "601"               },
+      {    0x0003, "603"               },
+      {    0x0004, "604"               },
+      {    0x0006, "603e"              },
+      {    0x0007, "603r/603ev"        }, //ev=0x0007, r=0x1007
+      {    0x0008, "740/750 (G3)"      },
+      {    0x0009, "604e"              },
+      {    0x000A, "604ev"             },
+      {    0x000C, "7400 (G4)"         },
+      {    0x0020, "403G/403GC/403GCX" },
+      {    0x0039, "970 (G5)"          },
+      {    0x0050, "821"               },
+      {    0x0080, "860"               },
+      {    0x0081, "8240"              },
+      {    0x4011, "405GP"             },
+      {    0x8000, "7450 (G4)"         },
+      {    0x8001, "7455 (G4)"         },
+      {    0x8002, "7457 (G4)"         },
+      {    0x800C, "7410 (G4)"         },
+      { NONPVR(1), "620"               }, //not PVR based
+      { NONPVR(2), "630"               }, //not PVR based
+      { NONPVR(3), "A35"               }, //not PVR based
+      { NONPVR(4), "RS64II"            }, //not PVR based
+      { NONPVR(5), "RS64III"           }, //not PVR based
+    };
+
   #if (CLIENT_OS == OS_AIX)
-  if (detectedtype == -2L)
-  { 
-    static struct { long imp;   long rid; } cpumap[] = {
-    /* imp constants from src/bos/kernel/sys/POWER/systemcfg.h 1.12 */
-                  { 0x0008   ,            1 }, /* POWER_601 */
-                  { 0x0020   ,            3 }, /* POWER_603 */
-                  { POWER_604,            4 }, /* POWER_604 */
-                  { 0x0001   ,   (1L<<16)+1 }, /* POWER_RS1 */
-                  { 0x0002   ,   (1L<<16)+2 }, /* POWER_RSC */
-                  { 0x0004   ,   (1L<<16)+3 }, /* POWER_RS2 */
-                  { 0x0040   ,   (1L<<16)+4 }, /* POWER_620 */
-                  { 0x0080   ,   (1L<<16)+5 }, /* POWER_630 */
-                  { 0x0100   ,   (1L<<16)+6 }, /* POWER_A35 */
-                  { 0x0200   ,   (1L<<16)+7 }, /* POWER_RS64II */
-                  { 0x0400   ,   (1L<<16)+8 }, /* POWER_RS64III */
-                  };
-    unsigned int imp_i;
-    detectedtype = -1L; /* assume failed */
-    if ( _system_configuration.architecture == POWER_RS ) 
-      ispower = 1;
-    for (imp_i = 0; imp_i < (sizeof(cpumap)/sizeof(cpumap[0])); imp_i++)
-    {
-      if (cpumap[imp_i].imp == _system_configuration.implementation )
-      {
-        detectedtype = cpumap[imp_i].rid;
-        break;
+  if (detectedtype == -2L) {
+    if (_system_configuration.architecture != POWER_RS) {
+      unsigned int i;
+      struct { long imp;
+               long rid; }
+        cpumap[] = {
+          { POWER_601,             1 },
+          { POWER_603,             3 },
+          { POWER_604,             4 },
+          { POWER_620,     NONPVR(1) },
+          { POWER_630,     NONPVR(2) },
+          { POWER_A35,     NONPVR(3) },
+          { POWER_RS64II,  NONPVR(4) },
+          { POWER_RS64III, NONPVR(5) }};
+
+      /* assume failed */
+      detectedtype = -1L;
+
+      for (i = 0; i < (sizeof(cpumap)/sizeof(cpumap[0])); i++) {
+        if (cpumap[i].imp == _system_configuration.implementation ) {
+          detectedtype = cpumap[i].rid;
+          break;
+        }
       }
-    }
-    if (detectedtype == -1L) /* ident failed */
-    {
-      sprintf( namebuf, "impl:0x%lX", _system_configuration.implementation );
-      detectedname = (const char *)&namebuf[0];
-      if (ispower) /* if POWER CPU, then don't let ident fail */
-      {            /*   - we need the power bit in the retval */
-        detectedtype = (1L<<16)+_system_configuration.implementation;
+
+      if (detectedtype == -1L) {
+        /* identification failed */
+        sprintf(namebuf, "impl:0x%X", _system_configuration.implementation);
+        detectedname = (const char *)&namebuf[0];
       }
+    } else {
+      /* just signal that we've got a Power CPU here */
+      detectedtype = (1 << 24);
+      detectedname = "Power";
     }
   }
   #elif (CLIENT_OS == OS_MACOS)
@@ -686,7 +688,7 @@ static long __GetRawProcessorID(const char **cpuname)
       case CPUF_603E: detectedtype = 0x0006; break;
       case CPUF_604:  detectedtype = 0x0004; break;
       case CPUF_604E: detectedtype = 0x0009; break;
-      case CPUF_620:  detectedtype = 0x0004 + (1<<16); break;
+      case CPUF_620:  detectedtype = NONPVR(1); break;
       case CPUF_G3:   detectedtype = 0x0008; break;
       case CPUF_G4:   detectedtype = 0x8000; break;
       default: // some PPC processor that we don't know about
@@ -723,20 +725,14 @@ static long __GetRawProcessorID(const char **cpuname)
   }
   #endif
   
-  if (detectedtype > 0 && detectedname == NULL )
-  {
+  if (detectedtype > 0 && detectedname == NULL) {
     unsigned int n;
     detectedname = "";
-    for (n = 0; n < (sizeof(cpuridtable)/sizeof(cpuridtable[0])); n++ )
-    {
-      if (cpuridtable[n].rid == detectedtype )
-      {
-        if (strlen( cpuridtable[n].name )>=6 &&
-            memcmp( cpuridtable[n].name, "Power ", 6 )==0)
-          namebuf[0] = '\0';
-        else
-          strcpy( namebuf, "PowerPC ");
-        strcat( namebuf, cpuridtable[n].name );
+
+    for (n = 0; n < (sizeof(cpuridtable)/sizeof(cpuridtable[0])); n++) {
+      if (cpuridtable[n].rid == detectedtype) {
+        strcpy(namebuf, "PowerPC ");
+        strcat(namebuf, cpuridtable[n].name);
         detectedname = (const char *)&namebuf[0];
         break;
       }
@@ -745,16 +741,88 @@ static long __GetRawProcessorID(const char **cpuname)
   
   if (cpuname)
     *cpuname = detectedname;
-  if (detectedtype > 0)
-  {
-    if (ispower)    
-      return ((1L<<24)|detectedtype);
-    if (isaltivec) /* *OS* supports altivec */
-      return ((1L<<25)|detectedtype);
+
+  if (detectedtype > 0 && isaltivec) {
+    /* *OS* supports altivec */
+    detectedtype |= (1L << 25);
   }
+
   return detectedtype;
 }
-#endif /* (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) */
+
+# undef NONPVR
+#endif /* (CLIENT_CPU == CPU_POWERPC) */
+
+#if (CLIENT_CPU == CPU_POWER)
+static long __GetRawProcessorID(const char **cpuname) {
+  /* -1 == failed, -2 == not supported */
+  static long detectedtype = -2L;
+  static const char *detectedname = NULL;
+  static char namebuf[30];
+  struct { long id;
+           const char *name; }
+    cpuidtable[] = {
+      { 1, "RS"            },
+      { 2, "RS2 Superchip" },
+      { 3, "RS2"           }};
+
+# if (CLIENT_OS == OS_AIX)
+  if (detectedtype == -2L) {
+    if (_system_configuration.architecture == POWER_RS) {
+      unsigned int i;
+      struct { long imp;
+               long id; }
+        cpumap[] = {
+          { POWER_RS1, 1 },
+          { POWER_RSC, 2 },
+          { POWER_RS2, 3 }};
+
+      /* assume failed */
+      detectedtype = -1L;
+
+      for (i = 0; i < (sizeof(cpumap)/sizeof(cpumap[0])); i++) {
+        if (cpumap[i].imp == _system_configuration.implementation ) {
+          detectedtype = cpumap[i].id;
+          break;
+        }
+      }
+
+      if (detectedtype == -1L) {
+        /* identification failed */
+        sprintf( namebuf, "impl:0x%X", _system_configuration.implementation );
+        detectedname = (const char *)&namebuf[0];
+      }
+    } else {
+      /* just signal that we've got a PowerPC CPU here */
+      detectedtype = (1 << 24);
+      detectedname = "PowerPC";
+    }
+
+    detectedtype = 3;
+    detectedname = NULL;
+  }
+# endif
+
+  if (detectedtype > 0 && detectedname == NULL) {
+    unsigned int n;
+    detectedname = "";
+
+    for (n = 0; n < (sizeof(cpuidtable)/sizeof(cpuidtable[0])); n++) {
+      if (cpuidtable[n].id == detectedtype) {
+        strcpy(namebuf, "Power ");
+        strcat(namebuf, cpuidtable[n].name);
+        detectedname = (const char *)&namebuf[0];
+        break;
+      }
+    }
+  }
+
+  if (cpuname)
+    *cpuname = detectedname;
+
+  return detectedtype;
+}
+#endif /* CLIENT_CPU == CPU_POWER */
 
 /* ---------------------------------------------------------------------- */
 
@@ -1839,9 +1907,9 @@ long GetProcessorType(int quietly)
   long retval = -1L;
   const char *apd = "Automatic processor type detection ";
   #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
-      (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_X86) || \
-      (CLIENT_CPU == CPU_ARM)     || (CLIENT_CPU == CPU_MIPS) || \
-      (CLIENT_CPU == CPU_SPARC)
+      (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
+      (CLIENT_CPU == CPU_X86)     || (CLIENT_CPU == CPU_ARM) || \
+      (CLIENT_CPU == CPU_MIPS)    || (CLIENT_CPU == CPU_SPARC)
   {
     const char *cpuname = NULL;
     long rawid = __GetRawProcessorID(&cpuname);
@@ -1889,9 +1957,9 @@ long GetProcessorID()
 {
   long retval = -1L;
   #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
-      (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_X86) || \
-      (CLIENT_CPU == CPU_ARM)     || (CLIENT_CPU == CPU_MIPS) || \
-      (CLIENT_CPU == CPU_SPARC)
+      (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
+      (CLIENT_CPU == CPU_X86)     || (CLIENT_CPU == CPU_ARM) || \
+      (CLIENT_CPU == CPU_MIPS)    || (CLIENT_CPU == CPU_SPARC)
   {
     long rawid = __GetRawProcessorID(NULL);
     if (rawid < 0)
@@ -1934,9 +2002,10 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
   const char *maxcpu_s, *foundcpu_s, *cpuid_s;
 
 #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
-    (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_X86) || \
-    (CLIENT_CPU == CPU_ARM)     || (CLIENT_CPU == CPU_MIPS) || \
-    (CLIENT_CPU == CPU_SPARC)      
+    (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
+    (CLIENT_CPU == CPU_X86)     || (CLIENT_CPU == CPU_ARM) || \
+    (CLIENT_CPU == CPU_MIPS)    || (CLIENT_CPU == CPU_SPARC)
+
   long rawid = __GetRawProcessorID(&cpuid_s);
   if (rawid < 0)
     cpuid_s = ((rawid==-1)?("?\n\t(identification failed)"):

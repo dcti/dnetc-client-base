@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_rc5_cpp(void) {
-return "@(#)$Id: core_rc5.cpp,v 1.1.2.4 2003/09/02 00:48:54 mweiser Exp $"; }
+return "@(#)$Id: core_rc5.cpp,v 1.1.2.5 2003/09/12 13:25:16 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -102,21 +102,18 @@ return "@(#)$Id: core_rc5.cpp,v 1.1.2.4 2003/09/02 00:48:54 mweiser Exp $"; }
     // rc5/68k/crunch.68k.a.o
     extern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
   #endif
-#elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-  #if (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
-    #if (CLIENT_OS != OS_WIN32) //NT has poor PPC assembly
-      // rc5/ppc/rc5_*.cpp
-      // although Be OS isn't supported on 601 machines and there is
-      // is no 601 PPC board for the Amiga, lintilla depends on allitnil,
-      // so we have both anyway, we may as well support both.
-      // rc5ansi_2-rg.cpp for AIX is allready prototyped above
-      extern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
-      extern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
-      extern "C" u32 rc5_unit_func_lintilla_604_compat( RC5UnitWork *, u32 );
-      #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
-        extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
-        extern "C" u32 rc5_unit_func_vec_7450_compat( RC5UnitWork *, u32 );
-      #endif
+#elif (CLIENT_CPU == CPU_POWERPC)
+  #if (CLIENT_OS != OS_WIN32) //NT has poor PPC assembly
+    /* rc5/ppc/rc5_*.cpp
+    ** although Be OS isn't supported on 601 machines and there is is
+    ** no 601 PPC board for the Amiga, lintilla depends on allitnil,
+    ** so we have both anyway, we may as well support both. */
+    extern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
+    extern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
+    extern "C" u32 rc5_unit_func_lintilla_604_compat( RC5UnitWork *, u32 );
+    #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+      extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
+      extern "C" u32 rc5_unit_func_vec_7450_compat( RC5UnitWork *, u32 );
     #endif
   #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
@@ -129,8 +126,8 @@ return "@(#)$Id: core_rc5.cpp,v 1.1.2.4 2003/09/02 00:48:54 mweiser Exp $"; }
   #endif
 #elif (CLIENT_CPU == CPU_UNKNOWN)   || (CLIENT_CPU == CPU_S390) || \
       (CLIENT_CPU == CPU_S390X)     || (CLIENT_CPU == CPU_IA64) || \
-      (CLIENT_CPU == CPU_SH4)       || (CLIENT_CPU == CPU_88K)     \
-      (CLIENT_CPU == CPU_VAX)
+      (CLIENT_CPU == CPU_SH4)       || (CLIENT_CPU == CPU_88K)  || \
+      (CLIENT_CPU == CPU_VAX)       || (CLIENT_CPU == CPU_POWER)
   // only use already prototyped ansi cores
 #else
   #error "How did you get here?"
@@ -261,14 +258,12 @@ const char **corenames_for_contest_rc564()
       #else
       "axp bmeyer",
       #endif
-  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+  #elif (CLIENT_CPU == CPU_POWERPC)
       /* lintilla depends on allitnil, and since we need both even on OS's
-         that don't support the 601, we may as well "support" them visually.
-      */
+      ** that don't support the 601, we may as well "support" them visually.  */
       "allitnil",
       "lintilla",
       "lintilla-604",    /* Roberto Ragusa's core optimized for PPC 604e */
-      "Power RS",        /* _AIXALL only */
       "crunch-vec",      /* altivec only */
       "crunch-vec-7450", /* altivec only */
   #elif (CLIENT_CPU == CPU_SPARC)
@@ -313,68 +308,48 @@ const char **corenames_for_contest_rc564()
 */
 int apply_selcore_substitution_rules_rc564(int cindex)
 {
-  #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-  {
-    /* AIX note:
-    ** A power-only client running on PPC will never get here. So, at this
-    ** point its either a power-only client running on power, or a ppc-only
-    ** client (no power core) running on PPC or power, or _AIXALL client
-    ** running on either power or PPC.
-    */
-    int have_vec = 0;
-    int have_pwr = 0;
+#if (CLIENT_CPU == CPU_POWERPC)
+  int have_vec = 0;
 
-    #if defined(_AIXALL) || defined(__VEC__) || defined(__ALTIVEC__) /* only these two need detection*/
-    long det = GetProcessorType(1);
-    #endif
-    #if defined(_AIXALL)                /* is a power/PPC hybrid client */
-    have_pwr = (det >= 0 && (det & 1L<<24)!=0);
-    #elif (CLIENT_CPU == CPU_POWER)     /* power only */
-    have_pwr = 1;                       /* see note above */
-    #endif
-    #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
-    have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
-    #endif
+  /* OS+compiler support altivec */
+# if defined(__VEC__) || defined(__ALTIVEC__)
+  long det = GetProcessorType(1);
+  have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
+# endif
 
-      if (have_pwr)
-        cindex = 3;                     /* "PowerRS" */
-      if (!have_pwr && cindex == 3)     /* "PowerRS" */
-        cindex = 1;                     /* "lintilla" */
-      if (!have_vec && cindex == 4)     /* "crunch-vec" */
-        cindex = 1;                     /* "lintilla" */
-      if (!have_vec && cindex == 5)     /* "crunch-vec-7450" */
-        cindex = 1;                     /* "lintilla" */
-  #elif (CLIENT_CPU == CPU_X86)
-  {
-    long det = GetProcessorType(1);
-    int have_mmx = (det >= 0 && (det & 0x100)!=0);
-    int have_3486 = (det >= 0 && (det & 0xff)==1);
-    int have_smc = 0;
-    int have_nasm = 0;
+  /* no crunch-vec or crunch-vec-7450 on non-altivec machine */
+  if (!have_vec && (cindex == 3 || cindex == 4))
+    cindex = 1;                         /* force lintilla */
+# elif (CLIENT_CPU == CPU_X86)
+  long det = GetProcessorType(1);
+  int have_mmx = (det >= 0 && (det & 0x100)!=0);
+  int have_3486 = (det >= 0 && (det & 0xff)==1);
+  int have_smc = 0;
+  int have_nasm = 0;
 
-    #if !defined(HAVE_NO_NASM)
-    have_nasm = 1;
-    #endif
-    #if defined(SMC)
-    have_smc = (x86_smc_initialized > 0);
-    #endif
+# if !defined(HAVE_NO_NASM)
+  have_nasm = 1;
+# endif
+# if defined(SMC)
+  have_smc = (x86_smc_initialized > 0);
+# endif
 
-      if (!have_nasm && cindex == 6)    /* "RG/HB re-pair II" */
-        cindex = ((have_3486 && have_smc)?(7):(3)); /* "RG self-mod" or
-                                                       "RG/HB re-pair I" */
-      if (!have_smc && cindex == 7)     /* "RG self-modifying" */
-        cindex = 1;                     /* "RG class 3/4" */
-      if (have_smc && cindex == 7 && GetManagedProblemCount() > 1)
+  if (!have_nasm && cindex == 6)        /* "RG/HB re-pair II" */
+    cindex = ((have_3486 && have_smc)?(7):(3)); /* "RG self-mod" or
+                                                   "RG/HB re-pair I" */
+  if (!have_smc && cindex == 7)         /* "RG self-modifying" */
+    cindex = 1;                         /* "RG class 3/4" */
+  if (have_smc && cindex == 7 && GetManagedProblemCount() > 1)
                                         /* "RG self-modifying" */
-        cindex = 1;                     /* "RG class 3/4" */
-      if (!have_nasm && cindex == 8)    /* "AK Class 7" */
-        cindex = 2;                     /* "RG Class 6" */
-      if (!have_mmx && cindex == 9)     /* "jasonp P5/MMX" */
-        cindex = 0;                     /* "RG Class 5" */
-      if (!have_nasm && cindex == 9)    /* "jasonp P5/MMX" */
-        cindex = 0;                     /* "RG Class 5" */
-  }
-  #endif
+    cindex = 1;                         /* "RG class 3/4" */
+  if (!have_nasm && cindex == 8)        /* "AK Class 7" */
+    cindex = 2;                         /* "RG Class 6" */
+  if (!have_mmx && cindex == 9)         /* "jasonp P5/MMX" */
+    cindex = 0;                         /* "RG Class 5" */
+  if (!have_nasm && cindex == 9)        /* "jasonp P5/MMX" */
+    cindex = 0;                         /* "RG Class 5" */
+#endif
+
   return cindex;
 }
 
@@ -411,7 +386,7 @@ int selcoreGetPreselectedCoreForProject_rc564()
       #endif
     }
   // ===============================================================
-  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+  #elif (CLIENT_CPU == CPU_POWERPC)
     if (detected_type > 0)
     {
       switch ( detected_type & 0xffff) // only compare the low PVR bits
@@ -428,12 +403,6 @@ int selcoreGetPreselectedCoreForProject_rc564()
 //        case 0x000C: cindex = 1; break; // 7400 (G4)      == lintilla
         default:     cindex =-1; break; // no default (used to be lintilla)
       }
-      #if defined(_AIXALL)             /* Power/PPC hybrid */
-      if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER?
-        cindex = 3;                    /* "PowerRS" */
-      #elif (CLIENT_CPU == CPU_POWER)  /* Power only */
-        cindex = 3;                    /* "PowerRS" */
-      #endif
       #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
       if (( detected_type & (1L<<25) ) != 0) //altivec?
         {
@@ -752,17 +721,17 @@ int selcoreSelectCore_rc564(unsigned int threadindex,
       pipeline_count = 1; //the default is 2
       coresel = 0;
     }
-    #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+    #elif (CLIENT_CPU == CPU_POWER)
     {
-      #if (CLIENT_CPU == CPU_POWER) && !defined(_AIXALL) //not hybrid
-      {
-        // rc5/ansi/rc5ansi_2-rg.cpp
-        //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
-        unit_func.rc5 = rc5_unit_func_ansi_2_rg; //POWER CPU
-        pipeline_count = 2;
-        coresel = 3;
-      }
-      #elif (CLIENT_OS == OS_WIN32)
+      /* rc5/ansi/rc5ansi_2-rg.cpp
+      ** extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 ); */
+      unit_func.rc5 = rc5_unit_func_ansi_2_rg; //POWER CPU
+      pipeline_count = 2;
+      coresel = 0;
+    }
+    #elif (CLIENT_CPU == CPU_POWERPC)
+    {
+      #if (CLIENT_OS == OS_WIN32)
       {
         //  rc5/ansi/rc5ansi_2-rg.cpp
         //  xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32  );
@@ -772,7 +741,6 @@ int selcoreSelectCore_rc564(unsigned int threadindex,
       }
       #else
       {
-        client_cpu = CPU_POWERPC;
         if (coresel == 0)         // G1 (PPC 601)
         {
           unit_func.rc5 = rc5_unit_func_allitnil_compat;
@@ -783,21 +751,13 @@ int selcoreSelectCore_rc564(unsigned int threadindex,
           unit_func.rc5 = rc5_unit_func_lintilla_604_compat;
           pipeline_count = 1;
         }
-        #if defined(_AIXALL) // POWER/POWERPC hybrid client
-        else if (coresel == 3)    // PowerRS
-        {
-          client_cpu = CPU_POWER;
-          unit_func.rc5 = rc5_unit_func_ansi_2_rg; //rc5/ansi/rc5ansi_2-rg.cpp
-          pipeline_count = 2;
-        }
-        #endif
         #if defined(__VEC__) || defined(__ALTIVEC__)
-        else if (coresel == 4)    // G4 (PPC 7400/7410)
+        else if (coresel == 3)    // G4 (PPC 7400/7410)
         {
           unit_func.rc5 = rc5_unit_func_vec_compat;
           pipeline_count = 1;
         }
-        else if (coresel == 5)    // G4 (PPC 7450)
+        else if (coresel == 4)    // G4 (PPC 7450)
         {
           unit_func.rc5 = rc5_unit_func_vec_7450_compat;
           pipeline_count = 1;

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.5 2003/09/02 00:48:53 mweiser Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.6 2003/09/12 13:25:16 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -50,21 +50,18 @@ extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_060_mh_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_030_mh_1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_040_mh_1( RC5_72UnitWork *, u32 *, void *);
-#elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-  #if (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
-    #if (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_MACOS)
+#elif (CLIENT_CPU == CPU_POWERPC) && \
+      (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_MACOS)
 extern "C" s32 CDECL rc5_72_unit_func_ppc_mh_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_mh603e_addi( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_mh604e_addi( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS2pipes( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS604e( RC5_72UnitWork *, u32 *, void *);
-      #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+# if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
 extern "C" s32 CDECL rc5_72_unit_func_KKS7400( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS7450( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS970( RC5_72UnitWork *, u32 *, void *);
-      #endif
-    #endif
-  #endif
+# endif
 #elif (CLIENT_CPU == CPU_SPARC)
 extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_anbe_1( RC5_72UnitWork *, u32 *, void * );
@@ -124,17 +121,15 @@ const char **corenames_for_contest_rc572()
       "MH 1-pipe 68020/030",
       "MH 1-pipe 68000/040",
       "MH 2-pipe 68060",
-  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-      "ANSI 4-pipe",
-      "ANSI 2-pipe",
-      "ANSI 1-pipe",
-      "MH 2-pipe",     /* gas and OSX format */
-      "KKS 2-pipe",    /* gas and OSX format */
-      "KKS 604e",      /* gas and OSX format */
+  #elif (CLIENT_CPU == CPU_POWERPC) && \
+        (CLIENT_OS != OS_WIN32 || CLIENT_OS != OS_MACOS)
+      "MH 2-pipe",     /* gas, TOC and OSX formats */
+      "KKS 2-pipe",    /* gas, TOC and OSX formats */
+      "KKS 604e",      /* gas, TOC and OSX format */
       "KKS 7400",      /* gas and OSX format, AltiVec only */
       "KKS 7450",      /* gas and OSX format, AltiVec only */
-      "MH 1-pipe",     /* gas and OSX format */
-      "MH 1-pipe 604e",/* gas and OSX format */
+      "MH 1-pipe",     /* gas, TOC and OSX format */
+      "MH 1-pipe 604e",/* gas, TOC and OSX format */
       "KKS 970",       /* gas and OSX format, AltiVec only */
   #elif (CLIENT_CPU == CPU_SPARC)
       "ANSI 4-pipe",
@@ -181,52 +176,28 @@ const char **corenames_for_contest_rc572()
 */
 int apply_selcore_substitution_rules_rc572(int cindex)
 {
-  #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-  {
-    /* AIX note:
-    ** A power-only client running on PPC will never get here. So, at this
-    ** point its either a power-only client running on power, or a ppc-only
-    ** client (no power core) running on PPC or power, or _AIXALL client
-    ** running on either power or PPC.
-    */
-    int have_vec = 0;
-    int have_pwr = 0;
+#if (CLIENT_CPU == CPU_POWERPC)
+  int have_vec = 0;
 
-    #if defined(_AIXALL) || defined(__VEC__) || defined(__ALTIVEC__) /* only these two need detection*/
-    long det = GetProcessorType(1);
-    #endif
-    #if defined(_AIXALL)                /* is a power/PPC hybrid client */
-    have_pwr = (det >= 0 && (det & 1L<<24)!=0);
-    #elif (CLIENT_CPU == CPU_POWER)     /* power only */
-    have_pwr = 1;                       /* see note above */
-    #endif
-    #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
-    have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
-    #endif
+# if defined(__VEC__) || defined(__ALTIVEC__)
+  /* OS+compiler support altivec */
+  long det = GetProcessorType(1);
+  have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
+# endif
 
-
-    #if (CLIENT_OS == OS_AMIGAOS) && defined(__POWERUP__)
-        /* PowerUp cannot use the KKS cores, since they modify gpr2 */
-        if ((cindex >= 4) && (cindex <= 7))
-          cindex = 8;			/* "MH 1-pipe" */
-    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOS)
-        /* Classic Mac OS doenst have assembly cores yet; Windows never had */
-        if (cindex > 2)                 /* asm cores */
-          cindex = 0;                   /* "ANSI 4-pipe" */
-    #else
-        if (have_pwr && cindex > 2)     /* asm cores */
-          cindex = 0;                   /* "ANSI 4-pipe" */
-        if (!have_pwr && cindex <= 2)   /* ANSI cores */
-          cindex = 8;                   /* "MH 1-pipe" */
-        if (!have_vec && cindex == 6)   /* "KKS 7400" */
-          cindex = 4;                   /* "KKS 2pipes" */
-        if (!have_vec && cindex == 7)   /* "KKS 7450" */
-          cindex = 5;                   /* "KKS 604e" */
-        if (!have_vec && cindex == 10)  /* "KKS 970" */
-            cindex = 4;                 /* "KKS 2pipes", see micro-bench in #3310 */
-    #endif
-  }
-  #elif (CLIENT_CPU == CPU_X86)
+# if (CLIENT_OS == OS_AMIGAOS) && defined(__POWERUP__)
+  /* PowerUp cannot use the KKS cores, since they modify gpr2 */
+  if ((cindex >= 1) && (cindex <= 4))
+    cindex = 5;			  /* MH 1-pipe */
+# else
+  if (!have_vec && cindex == 3)   /* KKS 7400 */
+    cindex = 1;                   /* KKS 2pipes */
+  if (!have_vec && cindex == 4)   /* KKS 7450 */
+    cindex = 2;                   /* KKS 604e */
+  if (!have_vec && cindex == 7)   /* KKS 970 */
+    cindex = 1;                   /* KKS 2pipes, see micro-bench in #3310 */
+# endif
+#elif (CLIENT_CPU == CPU_X86)
   {
     long det = GetProcessorType(1);
     //int have_mmx = (det >= 0 && (det & 0x100)!=0);
@@ -238,7 +209,8 @@ int apply_selcore_substitution_rules_rc572(int cindex)
     #endif
 
   }
-  #endif
+#endif
+
   return cindex;
 }
 
@@ -297,35 +269,30 @@ int selcoreGetPreselectedCoreForProject_rc572()
       #endif
     }
   // ===============================================================
-  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+  #elif (CLIENT_CPU == CPU_POWERPC)
     if (detected_type > 0)
     {
       switch ( detected_type & 0xffff) // only compare the low PVR bits
       {
-        case 0x0003: cindex = 8; break; // 603            == MH 1-pipe
-        case 0x0004: cindex = 9; break; // 604            == MH 1-pipe 604e
-        case 0x0006: cindex = 8; break; // 603e           == MH 1-pipe
-        case 0x0007: cindex = 8; break; // 603r/603ev     == MH 1-pipe
-        case 0x0008: cindex = 8; break; // 740/750 (G3)   == MH 1-pipe
-        case 0x0009: cindex = 9; break; // 604e           == MH 1-pipe 604e
-        case 0x000A: cindex = 9; break; // 604ev          == MH 1-pipe 604e
+        case 0x0003: cindex = 5; break; // 603            == MH 1-pipe
+        case 0x0004: cindex = 6; break; // 604            == MH 1-pipe 604e
+        case 0x0006: cindex = 5; break; // 603e           == MH 1-pipe
+        case 0x0007: cindex = 5; break; // 603r/603ev     == MH 1-pipe
+        case 0x0008: cindex = 5; break; // 740/750 (G3)   == MH 1-pipe
+        case 0x0009: cindex = 6; break; // 604e           == MH 1-pipe 604e
+        case 0x000A: cindex = 6; break; // 604ev          == MH 1-pipe 604e
         default:     cindex =-1; break; // no default
       }
-      #if defined(_AIXALL)             /* Power/PPC hybrid */
-      if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER?
-        cindex = -1;                   /* one of the ANSI cores */
-      #elif (CLIENT_CPU == CPU_POWER)  /* Power only */
-      cindex = -1;                     /* one of the ANSI cores */
-      #endif
+
       #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
       if (( detected_type & (1L<<25) ) != 0) //altivec?
       {
         switch ( detected_type & 0xffff) // only compare the low PVR bits
         {
-            case 0x000C: cindex = 6; break; // 7400 (G4)   == KKS 7400
-            case 0x8000: cindex = 7; break; // 7450 (G4+)  == KKS 7450
-            case 0x8001: cindex = 7; break; // 7455 (G4+)  == KKS 7450
-            case 0x800C: cindex = 6; break; // 7410 (G4)   == KKS 7400
+            case 0x000C: cindex = 3; break; // 7400 (G4)   == KKS 7400
+            case 0x8000: cindex = 4; break; // 7450 (G4+)  == KKS 7450
+            case 0x8001: cindex = 4; break; // 7455 (G4+)  == KKS 7450
+            case 0x800C: cindex = 3; break; // 7410 (G4)   == KKS 7400
             //case 0x0039: cindex = 10; break; // 970 (G5)   == KKS 970
             default:     cindex =-1; break; // no default
         }
@@ -526,73 +493,46 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_ss_2;
         pipeline_count = 2;
         break;
-     #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-      #if (CLIENT_CPU == CPU_POWER) || defined(_AIXALL) \
-         || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOS)
+    #elif (CLIENT_CPU == CPU_POWERPC) && \
+          (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_MACOS)
       case 0:
-        unit_func.gen_72 = rc5_72_unit_func_ansi_4;
-        pipeline_count = 4;
-        #if defined(_AIXALL)
-        client_cpu = CPU_POWER;
-        #endif
-        break;
-      case 1:
-        unit_func.gen_72 = rc5_72_unit_func_ansi_2;
-        pipeline_count = 2;
-        #if defined(_AIXALL)
-        client_cpu = CPU_POWER;
-        #endif
-        break;
-      case 2:
-        unit_func.gen_72 = rc5_72_unit_func_ansi_1;
-        pipeline_count = 1;
-        #if defined(_AIXALL)
-        client_cpu = CPU_POWER;
-        #endif
-        break;
-      #endif
-      #if ((CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)) \
-           && (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_MACOS)
-      case 3:
           unit_func.gen_72 = rc5_72_unit_func_ppc_mh_2;
           pipeline_count = 2;
           break;
-      case 4:
+      case 1:
           unit_func.gen_72 = rc5_72_unit_func_KKS2pipes;
           pipeline_count = 2;
           break;
-      case 5:
+      case 2:
           unit_func.gen_72 = rc5_72_unit_func_KKS604e;
           pipeline_count = 2;
           break;
       #if defined(__VEC__) || defined(__ALTIVEC__)
-      case 6:
+      case 3:
           unit_func.gen_72 = rc5_72_unit_func_KKS7400;
           pipeline_count = 4;
           break;
-      case 7:
+      case 4:
           unit_func.gen_72 = rc5_72_unit_func_KKS7450;
           pipeline_count = 4;
           break;
       #endif
-      case 8:
+      case 5:
       default:
         unit_func.gen_72 = rc5_72_unit_func_mh603e_addi;
         pipeline_count = 1;
-        coresel = 8;
+        coresel = 5;
         break;
-      case 9:
+      case 6:
         unit_func.gen_72 = rc5_72_unit_func_mh604e_addi;
         pipeline_count = 1;
         break;
       #if defined(__VEC__) || defined(__ALTIVEC__)
-      case 10:
+      case 7:
           unit_func.gen_72 = rc5_72_unit_func_KKS970;
           pipeline_count = 4;
           break;
       #endif
-      #endif
-
      #else /* the ansi cores */
       case 0:
         unit_func.gen_72 = rc5_72_unit_func_ansi_4;

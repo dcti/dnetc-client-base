@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.5 2003/09/01 22:27:06 mweiser Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.6 2003/09/12 13:25:16 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -31,11 +31,8 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.5 2003/09/01 22:27:06 mweiser Exp $"; }
    note2: if you need some 'cdecl' value define it in selcore.h to CDECL */
 
 
-#if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+#if (CLIENT_CPU == CPU_POWERPC)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
-    #if defined(_AIXALL)      /* AIX hybrid client */
-    extern "C" CoreDispatchTable *ogr_get_dispatch_table_power(void);
-    #endif
     #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
     extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
     #endif
@@ -136,9 +133,8 @@ const char **corenames_for_contest_ogr()
   #elif (CLIENT_CPU == CPU_ALPHA)
       "GARSP 5.13",
       "GARSP 5.13-CIX",
-  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+  #elif (CLIENT_CPU == CPU_POWERPC)
       "GARSP 5.13 Scalar",
-      "GARSP 5.13 PowerRS",  /* _AIXALL only */
       "GARSP 5.13 Vector",   /* altivec only */
   #elif (CLIENT_CPU == CPU_SPARC)
       "GARSP 5.13",
@@ -176,43 +172,25 @@ const char **corenames_for_contest_ogr()
 */
 int apply_selcore_substitution_rules_ogr(int cindex)
 {
-  #if (CLIENT_CPU == CPU_ALPHA)
-    long det = GetProcessorType(1);
-    if (det <  11) cindex = 0;
-  #elif (CLIENT_CPU == CPU_68K)
-    long det = GetProcessorType(1);
-    if (det == 68000) cindex = 0;
-  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-  {
-    /* AIX note:
-    ** A power-only client running on PPC will never get here. So, at this
-    ** point its either a power-only client running on power, or a ppc-only
-    ** client (no power core) running on PPC or power, or _AIXALL client
-    ** running on either power or PPC.
-    */
-    int have_vec = 0;
-    int have_pwr = 0;
+# if (CLIENT_CPU == CPU_ALPHA)
+  long det = GetProcessorType(1);
+  if (det <  11) cindex = 0;
+# elif (CLIENT_CPU == CPU_68K)
+  long det = GetProcessorType(1);
+  if (det == 68000) cindex = 0;
+# elif (CLIENT_CPU == CPU_POWERPC)
+  int have_vec = 0;
 
-    #if defined(_AIXALL) || defined(__VEC__) || defined(__ALTIVEC__) /* only these two need detection*/
-    long det = GetProcessorType(1);
-    #endif
-    #if defined(_AIXALL)                /* is a power/PPC hybrid client */
-    have_pwr = (det >= 0 && (det & 1L<<24)!=0);
-    #elif (CLIENT_CPU == CPU_POWER)     /* power only */
-    have_pwr = 1;                       /* see note above */
-    #endif
-    #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
-    have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
-    #endif
+# if defined(__VEC__) || defined(__ALTIVEC__)
+  /* OS+compiler support altivec */
+  long det = GetProcessorType(1);
+  have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
+# endif
 
-      if (have_pwr)
-        cindex = 1;                     /* "PowerRS" */
-      if (!have_pwr && cindex == 1)     /* "PowerRS" */
-        cindex = 0;                     /* "PPC-scalar" */
-      if (!have_vec && cindex == 2)     /* "PPC-vector" */
-        cindex = 0;                     /* "PPC-scalar" */
-  }
-  #endif
+  if (!have_vec && cindex == 1)     /* PPC-vector */
+    cindex = 0;                     /* force PPC-scalar */
+#endif
+
   return cindex;
 }
 
@@ -260,26 +238,22 @@ int selcoreGetPreselectedCoreForProject_ogr()
         cindex = 0;
     }
   // ===============================================================
-  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+  #elif (CLIENT_CPU == CPU_POWER)
+    cindex = 0;                         /* only one OGR core on Power */
+  #elif (CLIENT_CPU == CPU_POWERPC)
     if (detected_type > 0)
     {
       cindex = 0;                       /* PPC-scalar */
 
-      #if defined (_AIXALL)             /* Power/PPC hybrid */
-      if (( detected_type & (1L<<24) ) != 0) /* ARCH_IS_POWER? */
-        cindex = 1;                     /* PowerRS */
-      #elif (CLIENT_CPU == CPU_POWER)   /* Power only */
-        cindex = 1;                     /* "PowerRS" */
-      #endif
       #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
       if (( detected_type & (1L<<25) ) != 0) //altivec?
       {
         switch ( detected_type & 0xffff) // only compare the low PVR bits
         {
-          case 0x000C: cindex = 2; break; // 7400 (G4)   == PPC-vector
+          case 0x000C: cindex = 1; break; // 7400 (G4)   == PPC-vector
           case 0x8000: cindex = 0; break; // 7450 (G4+)  == PPC-scalar
           case 0x8001: cindex = 0; break; // 7455 (G4+)  == PPC-scalar
-          case 0x800C: cindex = 2; break; // 7410 (G4)   == PPC-vector
+          case 0x800C: cindex = 1; break; // 7410 (G4)   == PPC-vector
           default:     cindex =-1; break; // no default
         }
       }
@@ -365,71 +339,64 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
 
   /* ================================================================== */
 
-    #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-      //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
-      //extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
-      //extern "C" CoreDispatchTable *ogr_get_dispatch_power(void);
-      #if defined(_AIXALL)                       /* maybe ARCH_IS_POWER */
-      if (coresel == 1)                          /* "PowerRS" */
-        unit_func.ogr = ogr_get_dispatch_table_power();
-      #endif
-      #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler+OS supports AltiVec */
-      if (coresel == 2)                           /* "PPC-vector" */
-        unit_func.ogr = vec_ogr_get_dispatch_table();
-      #endif
-      if (!unit_func.ogr)
-      {
-        unit_func.ogr = ogr_get_dispatch_table(); /* "PPC-scalar" */
-        coresel = 0;
-      }
-    #elif (CLIENT_CPU == CPU_68K)
-      //extern CoreDispatchTable *ogr_get_dispatch_table_000(void);
-      //extern CoreDispatchTable *ogr_get_dispatch_table_020(void);
-      //extern CoreDispatchTable *ogr_get_dispatch_table_030(void);
-      //extern CoreDispatchTable *ogr_get_dispatch_table_040(void);
-      //extern CoreDispatchTable *ogr_get_dispatch_table_060(void);
-      if (coresel == 4)
-        unit_func.ogr = ogr_get_dispatch_table_060();
-      else if (coresel == 3)
-        unit_func.ogr = ogr_get_dispatch_table_040();
-      else if (coresel == 2)
-        unit_func.ogr = ogr_get_dispatch_table_030();
-      else if (coresel == 1)
-        unit_func.ogr = ogr_get_dispatch_table_020();
-      else
-      {
-        unit_func.ogr = ogr_get_dispatch_table_000();
-        coresel = 0;
-      }
-    #elif (CLIENT_CPU == CPU_ALPHA)
-      if (coresel == 1)
-        unit_func.ogr = ogr_get_dispatch_table_cix();
-      else
-        unit_func.ogr = ogr_get_dispatch_table();
-    #elif (CLIENT_CPU == CPU_X86)
-      if (coresel == 0) //A
-        unit_func.ogr = ogr_get_dispatch_table(); //A
-      else
-      {
-        unit_func.ogr = ogr_get_dispatch_table_nobsr(); //B
-        coresel = 1;
-      }
-    #elif (CLIENT_CPU == CPU_X86_64)
-      unit_func.ogr = ogr_get_dispatch_table();
-      coresel = 0;
-    #elif (CLIENT_CPU == CPU_ARM)
-      if (coresel == 0)
-        unit_func.ogr = ogr_get_dispatch_table_arm1();
-      else
-      {
-        unit_func.ogr = ogr_get_dispatch_table_arm2();
-        coresel = 1;
-      }
-    #else
-      //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
-      unit_func.ogr = ogr_get_dispatch_table();
-      coresel = 0;
-    #endif
+#if (CLIENT_CPU == CPU_POWERPC)
+# if defined(__VEC__) || defined(__ALTIVEC__) /* compiler+OS supports AltiVec */
+  if (coresel == 2)                           /* "PPC-vector" */
+    unit_func.ogr = vec_ogr_get_dispatch_table();
+# endif
+
+  if (!unit_func.ogr) {
+    unit_func.ogr = ogr_get_dispatch_table(); /* "PPC-scalar" */
+    coresel = 0;
+  }
+#elif (CLIENT_CPU == CPU_68K)
+  //extern CoreDispatchTable *ogr_get_dispatch_table_000(void);
+  //extern CoreDispatchTable *ogr_get_dispatch_table_020(void);
+  //extern CoreDispatchTable *ogr_get_dispatch_table_030(void);
+  //extern CoreDispatchTable *ogr_get_dispatch_table_040(void);
+  //extern CoreDispatchTable *ogr_get_dispatch_table_060(void);
+  if (coresel == 4)
+    unit_func.ogr = ogr_get_dispatch_table_060();
+  else if (coresel == 3)
+    unit_func.ogr = ogr_get_dispatch_table_040();
+  else if (coresel == 2)
+    unit_func.ogr = ogr_get_dispatch_table_030();
+  else if (coresel == 1)
+    unit_func.ogr = ogr_get_dispatch_table_020();
+  else
+  {
+    unit_func.ogr = ogr_get_dispatch_table_000();
+    coresel = 0;
+  }
+#elif (CLIENT_CPU == CPU_ALPHA)
+  if (coresel == 1)
+    unit_func.ogr = ogr_get_dispatch_table_cix();
+  else
+    unit_func.ogr = ogr_get_dispatch_table();
+#elif (CLIENT_CPU == CPU_X86)
+  if (coresel == 0) //A
+    unit_func.ogr = ogr_get_dispatch_table(); //A
+  else
+  {
+    unit_func.ogr = ogr_get_dispatch_table_nobsr(); //B
+    coresel = 1;
+  }
+#elif (CLIENT_CPU == CPU_X86_64)
+  unit_func.ogr = ogr_get_dispatch_table();
+  coresel = 0;
+#elif (CLIENT_CPU == CPU_ARM)
+  if (coresel == 0)
+    unit_func.ogr = ogr_get_dispatch_table_arm1();
+  else
+  {
+    unit_func.ogr = ogr_get_dispatch_table_arm2();
+    coresel = 1;
+  }
+#else
+  //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
+  unit_func.ogr = ogr_get_dispatch_table();
+  coresel = 0;
+#endif
 
   /* ================================================================== */
 
