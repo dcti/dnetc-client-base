@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.195  1999/03/01 03:56:45  foxyloxy
+# Several changes to allow sparc-solaris-gcc-crunch-asmslice-mt to compile
+# again, and compile tweaks for an extra 200Kkey/sec DES.
+#
 # Revision 1.194  1999/02/23 22:24:00  remi
 # Added a NetBSD/VAX target. Anyone to compile the client ?
 #
@@ -721,7 +725,10 @@ OPTS_GCC272_SPARC="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC"
 # (sparc/v9 [Ultra]     gcc)
 OPTS_GCC_ULTRA="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
 OPTS_GCC272_ULTRA="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC"
+OPTS_EGCS_ULTRA="OPTS_GCC -Os -mtune=ultrasparc -fforce-mem -mvis \
+		-fstrict-aliasing -fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
 OPTS_GAS_ULTRA="-Av9a"
+OPTS_AS_ULTRA="-xarch=v8plusa"
 
 # (sparc/v8 [SS5+]     egcs)
 OPTS_EGCS_NONULTRA_SPARC="$OPTS_EGCS -O6 -mtune=supersparc -DASM_SPARC"
@@ -831,9 +838,10 @@ OPTS_DES_ULTRA_ASM="-DINTSIZES=442 -DASM_SPARC -DIN_DCTI_CLIENT \
 		    -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE -DBIT_64 \
 		    -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL \
 		    -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc \
-		    -fstrength-reduce -funroll-loops \
+		    -mtune=ultrasparc -fforce-mem -fstrict-aliasing\
 		    -Wall -Icommon -Irc5 -Ides -Iplatforms \
-		    -O6 -mv8 -mepilogue -Wa,-xarch=v8plusa -mno-flat"
+		    -mv8plus -mvis -mepilogue -Wa,-xarch=v8plusa -mflat \
+		    -Os -fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
 
 #-- MMX/DES
 
@@ -920,23 +928,23 @@ DESMMX_SRCS="des/des-slice-meggs.cpp"
 NASM_DESMMX_SRCS="des/mmx-bitslice/deseval-mmx.asm"
 
 
-DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp \
-		 platforms/ultrasparc/simple.c \
-		 platforms/ultrasparc/des_ultra_crunch.c \
-		 platforms/ultrasparc/kwan_from_to.c \
-		 platforms/ultrasparc/do_all.c \
-		 platforms/ultrasparc/do_all_fancy.c \
-		 platforms/ultrasparc/do_s1.c \
-		 platforms/ultrasparc/do_s1_s3.c \
-		 platforms/ultrasparc/do_s2.c \
-		 platforms/ultrasparc/do_s3.c \
-		 platforms/ultrasparc/do_s4.c \
-		 platforms/ultrasparc/do_s5.c \
-		 platforms/ultrasparc/do_s6.c \
-		 platforms/ultrasparc/do_s7.c \
-		 platforms/ultrasparc/do_s8.c"
-DESULTRA_SRCS_ASM="platforms/ultrasparc/des-slice-ultrasparc.cpp \
-		   platforms/ultrasparc/des_ultra_crunch.c"
+DESULTRA_SRCS_C="des/ultrasparc/des-slice-ultrasparc.cpp \
+		 des/ultrasparc/simple.c \
+		 des/ultrasparc/des_ultra_crunch.c \
+		 des/ultrasparc/kwan_from_to.c \
+		 des/ultrasparc/do_all.c \
+		 des/ultrasparc/do_all_fancy.c \
+		 des/ultrasparc/do_s1.c \
+		 des/ultrasparc/do_s1_s3.c \
+		 des/ultrasparc/do_s2.c \
+		 des/ultrasparc/do_s3.c \
+		 des/ultrasparc/do_s4.c \
+		 des/ultrasparc/do_s5.c \
+		 des/ultrasparc/do_s6.c \
+		 des/ultrasparc/do_s7.c \
+		 des/ultrasparc/do_s8.c"
+DESULTRA_SRCS_ASM="des/ultrasparc/des-slice-ultrasparc.cpp \
+		   des/ultrasparc/des_ultra_crunch.c"
 
 #
 # Define the default compilation options
@@ -1214,8 +1222,8 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
- 	TARGET_ADDASMS="platforms/ultrasparc/simple.handopt.s"
-	TARGET_ASFLAGS="$OPTS_GAS_ULTRA"
+ 	TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
+	TARGET_ASFLAGS="$OPTS_AS_ULTRA"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
