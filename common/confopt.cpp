@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.39 2000/06/28 19:37:25 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.40 2000/08/22 13:27:13 oliver Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -127,6 +127,9 @@ struct optionstruct conf_options[] = {
   #elif (CLIENT_OS == OS_MACOS)
   "The name of a process must match its name in the application menu on the far\n"
   "right. For example 'QuickTime Player|Disk First Aid'.\n"
+  #elif (CLIENT_OS == OS_AMIGAOS)
+  "The name of a process must match the internal task name exactly, and note\n"
+  "that it's also case-sensistive.  For example 'DiskSalv|Quake'.\n"
   #else
   "This option is not supported on all platforms\n"
   #endif
@@ -789,19 +792,33 @@ struct optionstruct conf_options[] = {
    CFGTXT("Use a specific DUN profile to connect with?"),
    #elif ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
    CFGTXT("Load/unload Winsock to initiate/hangup net connections?"),
+   #elif (CLIENT_OS == OS_AMIGAOS)
+   CFGTXT("Automatically go online via Miami, MiamiDx or Genesis?"),
    #else
    CFGTXT("Use scripts to initiate/hangup dialup connections?"),
    #endif
-   "0",CFGTXT(
+   "no",CFGTXT(
    "Select 'yes' to have the client control how network connections\n"
    "are initiatiated if none is active.\n"
    ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 { 
   CONF_CONNPROFILE             , /* CONF_MENU_NET */
-  CFGTXT("Dial-up Connection Profile"),"",
+  #if (CLIENT_OS == OS_AMIGAOS)
+  CFGTXT("Dial-up Interface Name"),
+  #else
+  CFGTXT("Dial-up Connection Profile"),
+  #endif
+  "",
   #if (CLIENT_OS == OS_WIN32)
   CFGTXT("Select the DUN profile to use when dialing-as-needed.\n")
+  #elif (CLIENT_OS == OS_AMIGAOS)
+  CFGTXT(
+  "Select which interface name to put online, when dial-up access is\n"
+  "necessary. This may be the actual interface name, or the alias that you\n"
+  "have assigned to it. This option is only relevant to MiamiDx and Genesis\n"
+  "users - Miami users should leave this setting blank.\n\n"
+  "If you specify no name, the default interface will be used.\n")
   #else
   CFGTXT("")
   #endif
