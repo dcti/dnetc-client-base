@@ -4,9 +4,9 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi2_cpp(void) {
-return "@(#)$Id: rc5ansi2.cpp,v 1.11 2002/10/16 20:56:56 jlawson Exp $"; }
+return "@(#)$Id: rc5ansi2.cpp,v 1.12 2002/10/17 12:01:31 andreasb Exp $"; }
 
-#include "problem.h"
+#include "ccoreio.h"
 #include "rotate.h"
 
 #define P 0xB7E15163
@@ -65,37 +65,37 @@ u32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
 #define ROTL_BLOCK(i,j) ROTL_BLOCK_j##j (i)
 
 #define ROTL_BLOCK_i0_j1 \
-    S1[0] = ROTL(S1[0]+(S1[25]+L1[0]),3); \
-    S2[0] = ROTL(S2[0]+(S2[25]+L2[0]),3); \
+    S1[0] = ROTL3(S1[0]+(S1[25]+L1[0])); \
+    S2[0] = ROTL3(S2[0]+(S2[25]+L2[0])); \
     L1[1] = ROTL(L1[1]+(S1[0]+L1[0]),(S1[0]+L1[0])); \
     L2[1] = ROTL(L2[1]+(S2[0]+L2[0]),(S2[0]+L2[0])); \
 
 #define ROTL_BLOCK_i0_j2 \
-    S1[0] = ROTL(S1[0]+(S1[25]+L1[1]),3); \
-    S2[0] = ROTL(S2[0]+(S2[25]+L2[1]),3); \
+    S1[0] = ROTL3(S1[0]+(S1[25]+L1[1])); \
+    S2[0] = ROTL3(S2[0]+(S2[25]+L2[1])); \
     L1[2] = ROTL(L1[2]+(S1[0]+L1[1]),(S1[0]+L1[1])); \
     L2[2] = ROTL(L2[2]+(S2[0]+L2[1]),(S2[0]+L2[1])); \
 
 #define ROTL_BLOCK_j0(i) \
-    S1[i] = ROTL(S1[i]+(S1[i-1]+L1[2]),3); \
-    S2[i] = ROTL(S2[i]+(S2[i-1]+L2[2]),3); \
+    S1[i] = ROTL3(S1[i]+(S1[i-1]+L1[2])); \
+    S2[i] = ROTL3(S2[i]+(S2[i-1]+L2[2])); \
     L1[0] = ROTL(L1[0]+(S1[i]+L1[2]),(S1[i]+L1[2])); \
     L2[0] = ROTL(L2[0]+(S2[i]+L2[2]),(S2[i]+L2[2])); \
 
 #define ROTL_BLOCK_j1(i) \
-    S1[i] = ROTL(S1[i]+(S1[i-1]+L1[0]),3); \
-    S2[i] = ROTL(S2[i]+(S2[i-1]+L2[0]),3); \
+    S1[i] = ROTL3(S1[i]+(S1[i-1]+L1[0])); \
+    S2[i] = ROTL3(S2[i]+(S2[i-1]+L2[0])); \
     L1[1] = ROTL(L1[1]+(S1[i]+L1[0]),(S1[i]+L1[0])); \
     L2[1] = ROTL(L2[1]+(S2[i]+L2[0]),(S2[i]+L2[0])); \
 
 #define ROTL_BLOCK_j2(i) \
-    S1[i] = ROTL(S1[i]+(S1[i-1]+L1[1]),3); \
-    S2[i] = ROTL(S2[i]+(S2[i-1]+L2[1]),3); \
+    S1[i] = ROTL3(S1[i]+(S1[i-1]+L1[1])); \
+    S2[i] = ROTL3(S2[i]+(S2[i-1]+L2[1])); \
     L1[2] = ROTL(L1[2]+(S1[i]+L1[1]),(S1[i]+L1[1])); \
     L2[2] = ROTL(L2[2]+(S2[i]+L2[1]),(S2[i]+L2[1])); \
 
-    S1[0] = ROTL(S1[0],3);
-    S2[0] = ROTL(S2[0],3);
+    S1[0] = ROTL3(S1[0]);
+    S2[0] = ROTL3(S2[0]);
     L1[0] = ROTL(L1[0]+S1[0],S1[0]);
     L2[0] = ROTL(L2[0]+S2[0],S2[0]); 
 
@@ -257,6 +257,7 @@ u32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
         }
       }
     }
+    #undef key
   }
   return kiter;
 }

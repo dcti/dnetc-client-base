@@ -4,9 +4,9 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi1_cpp(void) {
-return "@(#)$Id: rc5ansi1.cpp,v 1.7 2002/10/16 20:56:56 jlawson Exp $"; }
+return "@(#)$Id: rc5ansi1.cpp,v 1.8 2002/10/17 12:01:31 andreasb Exp $"; }
 
-#include "problem.h"
+#include "ccoreio.h"
 #include "rotate.h"
 
 #define P 0xB7E15163
@@ -64,26 +64,26 @@ u32 rc5_72_unit_func_ansi_1 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
 #define ROTL_BLOCK(i,j) ROTL_BLOCK_j##j (i)
 
 #define ROTL_BLOCK_i0_j1 \
-    S[0] = ROTL(S[0]+(S[25]+L[0]),3); \
+    S[0] = ROTL3(S[0]+(S[25]+L[0])); \
     L[1] = ROTL(L[1]+(S[0]+L[0]),(S[0]+L[0])); \
 
 #define ROTL_BLOCK_i0_j2 \
-    S[0] = ROTL(S[0]+(S[25]+L[1]),3); \
+    S[0] = ROTL3(S[0]+(S[25]+L[1])); \
     L[2] = ROTL(L[2]+(S[0]+L[1]),(S[0]+L[1])); \
 
 #define ROTL_BLOCK_j0(i) \
-    S[i] = ROTL(S[i]+(S[i-1]+L[2]),3); \
+    S[i] = ROTL3(S[i]+(S[i-1]+L[2])); \
     L[0] = ROTL(L[0]+(S[i]+L[2]),(S[i]+L[2])); \
 
 #define ROTL_BLOCK_j1(i) \
-    S[i] = ROTL(S[i]+(S[i-1]+L[0]),3); \
+    S[i] = ROTL3(S[i]+(S[i-1]+L[0])); \
     L[1] = ROTL(L[1]+(S[i]+L[0]),(S[i]+L[0])); \
 
 #define ROTL_BLOCK_j2(i) \
-    S[i] = ROTL(S[i]+(S[i-1]+L[1]),3); \
+    S[i] = ROTL3(S[i]+(S[i-1]+L[1])); \
     L[2] = ROTL(L[2]+(S[i]+L[1]),(S[i]+L[1])); \
 
-    S[0] = ROTL(S[0],3);
+    S[0] = ROTL3(S[0]);
     L[0] = ROTL(L[0]+S[0],S[0]);
 
     ROTL_BLOCK(1,1);
@@ -232,6 +232,7 @@ u32 rc5_72_unit_func_ansi_1 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
         }
       }
     }
+    #undef key
   }
   return kiter;
 }

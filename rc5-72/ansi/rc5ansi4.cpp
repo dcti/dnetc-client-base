@@ -4,9 +4,9 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi4_cpp(void) {
-return "@(#)$Id: rc5ansi4.cpp,v 1.12 2002/10/17 02:16:54 acidblood Exp $"; }
+return "@(#)$Id: rc5ansi4.cpp,v 1.13 2002/10/17 12:01:31 andreasb Exp $"; }
 
-#include "problem.h"
+#include "ccoreio.h"
 #include "rotate.h"
 
 #define P 0xB7E15163
@@ -68,59 +68,59 @@ u32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
 #define ROTL_BLOCK(i,j) ROTL_BLOCK_j##j (i)
 
 #define ROTL_BLOCK_i0_j1 \
-    S1[0] = ROTL(S1[0]+(S1[25]+L1[0]),3); \
-    S2[0] = ROTL(S2[0]+(S2[25]+L2[0]),3); \
-    S3[0] = ROTL(S3[0]+(S3[25]+L3[0]),3); \
-    S4[0] = ROTL(S4[0]+(S4[25]+L4[0]),3); \
+    S1[0] = ROTL3(S1[0]+(S1[25]+L1[0])); \
+    S2[0] = ROTL3(S2[0]+(S2[25]+L2[0])); \
+    S3[0] = ROTL3(S3[0]+(S3[25]+L3[0])); \
+    S4[0] = ROTL3(S4[0]+(S4[25]+L4[0])); \
     L1[1] = ROTL(L1[1]+(S1[0]+L1[0]),(S1[0]+L1[0])); \
     L2[1] = ROTL(L2[1]+(S2[0]+L2[0]),(S2[0]+L2[0])); \
     L3[1] = ROTL(L3[1]+(S3[0]+L3[0]),(S3[0]+L3[0])); \
     L4[1] = ROTL(L4[1]+(S4[0]+L4[0]),(S4[0]+L4[0])); 
 
 #define ROTL_BLOCK_i0_j2 \
-    S1[0] = ROTL(S1[0]+(S1[25]+L1[1]),3); \
-    S2[0] = ROTL(S2[0]+(S2[25]+L2[1]),3); \
-    S3[0] = ROTL(S3[0]+(S3[25]+L3[1]),3); \
-    S4[0] = ROTL(S4[0]+(S4[25]+L4[1]),3); \
+    S1[0] = ROTL3(S1[0]+(S1[25]+L1[1])); \
+    S2[0] = ROTL3(S2[0]+(S2[25]+L2[1])); \
+    S3[0] = ROTL3(S3[0]+(S3[25]+L3[1])); \
+    S4[0] = ROTL3(S4[0]+(S4[25]+L4[1])); \
     L1[2] = ROTL(L1[2]+(S1[0]+L1[1]),(S1[0]+L1[1])); \
     L2[2] = ROTL(L2[2]+(S2[0]+L2[1]),(S2[0]+L2[1])); \
     L3[2] = ROTL(L3[2]+(S3[0]+L3[1]),(S3[0]+L3[1])); \
     L4[2] = ROTL(L4[2]+(S4[0]+L4[1]),(S4[0]+L4[1])); 
 
 #define ROTL_BLOCK_j0(i) \
-    S1[i] = ROTL(S1[i]+(S1[i-1]+L1[2]),3); \
-    S2[i] = ROTL(S2[i]+(S2[i-1]+L2[2]),3); \
-    S3[i] = ROTL(S3[i]+(S3[i-1]+L3[2]),3); \
-    S4[i] = ROTL(S4[i]+(S4[i-1]+L4[2]),3); \
+    S1[i] = ROTL3(S1[i]+(S1[i-1]+L1[2])); \
+    S2[i] = ROTL3(S2[i]+(S2[i-1]+L2[2])); \
+    S3[i] = ROTL3(S3[i]+(S3[i-1]+L3[2])); \
+    S4[i] = ROTL3(S4[i]+(S4[i-1]+L4[2])); \
     L1[0] = ROTL(L1[0]+(S1[i]+L1[2]),(S1[i]+L1[2])); \
     L2[0] = ROTL(L2[0]+(S2[i]+L2[2]),(S2[i]+L2[2])); \
     L3[0] = ROTL(L3[0]+(S3[i]+L3[2]),(S3[i]+L3[2])); \
     L4[0] = ROTL(L4[0]+(S4[i]+L4[2]),(S4[i]+L4[2])); 
 
 #define ROTL_BLOCK_j1(i) \
-    S1[i] = ROTL(S1[i]+(S1[i-1]+L1[0]),3); \
-    S2[i] = ROTL(S2[i]+(S2[i-1]+L2[0]),3); \
-    S3[i] = ROTL(S3[i]+(S3[i-1]+L3[0]),3); \
-    S4[i] = ROTL(S4[i]+(S4[i-1]+L4[0]),3); \
+    S1[i] = ROTL3(S1[i]+(S1[i-1]+L1[0])); \
+    S2[i] = ROTL3(S2[i]+(S2[i-1]+L2[0])); \
+    S3[i] = ROTL3(S3[i]+(S3[i-1]+L3[0])); \
+    S4[i] = ROTL3(S4[i]+(S4[i-1]+L4[0])); \
     L1[1] = ROTL(L1[1]+(S1[i]+L1[0]),(S1[i]+L1[0])); \
     L2[1] = ROTL(L2[1]+(S2[i]+L2[0]),(S2[i]+L2[0])); \
     L3[1] = ROTL(L3[1]+(S3[i]+L3[0]),(S3[i]+L3[0])); \
     L4[1] = ROTL(L4[1]+(S4[i]+L4[0]),(S4[i]+L4[0])); 
 
 #define ROTL_BLOCK_j2(i) \
-    S1[i] = ROTL(S1[i]+(S1[i-1]+L1[1]),3); \
-    S2[i] = ROTL(S2[i]+(S2[i-1]+L2[1]),3); \
-    S3[i] = ROTL(S3[i]+(S3[i-1]+L3[1]),3); \
-    S4[i] = ROTL(S4[i]+(S4[i-1]+L4[1]),3); \
+    S1[i] = ROTL3(S1[i]+(S1[i-1]+L1[1])); \
+    S2[i] = ROTL3(S2[i]+(S2[i-1]+L2[1])); \
+    S3[i] = ROTL3(S3[i]+(S3[i-1]+L3[1])); \
+    S4[i] = ROTL3(S4[i]+(S4[i-1]+L4[1])); \
     L1[2] = ROTL(L1[2]+(S1[i]+L1[1]),(S1[i]+L1[1])); \
     L2[2] = ROTL(L2[2]+(S2[i]+L2[1]),(S2[i]+L2[1])); \
     L3[2] = ROTL(L3[2]+(S3[i]+L3[1]),(S3[i]+L3[1])); \
     L4[2] = ROTL(L4[2]+(S4[i]+L4[1]),(S4[i]+L4[1])); 
 
-    S1[0] = ROTL(S1[0],3);
-    S2[0] = ROTL(S2[0],3);
-    S3[0] = ROTL(S3[0],3);
-    S4[0] = ROTL(S4[0],3);
+    S1[0] = ROTL3(S1[0]);
+    S2[0] = ROTL3(S2[0]);
+    S3[0] = ROTL3(S3[0]);
+    S4[0] = ROTL3(S4[0]);
     L1[0] = ROTL(L1[0]+S1[0],S1[0]);
     L2[0] = ROTL(L2[0]+S2[0],S2[0]);
     L3[0] = ROTL(L3[0]+S3[0],S3[0]);
@@ -313,6 +313,7 @@ u32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
         }
       }
     }
+    #undef key
   }
   return kiter;
 }
