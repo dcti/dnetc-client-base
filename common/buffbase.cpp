@@ -1,22 +1,10 @@
-/* Copyright distributed.net 1997 - All Rights Reserved
+/* 
+ * Copyright distributed.net 1997 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
- * $Log: buffbase.cpp,v $
- * Revision 1.2  1999/04/01 03:08:57  cyp
- * Cleared an unused variable warning.
- *
- * Revision 1.1  1999/04/01 01:49:55  cyp
- * Created BufferFetchFile()/BufferFlushFile() to fetch/flush from/to remote/
- * alternate buffers.
- *
- *
 */
-
-#if (!defined(lint) && defined(__showids__))
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.2 1999/04/01 03:08:57 cyp Exp $"; }
-#endif
+return "@(#)$Id: buffbase.cpp,v 1.3 1999/04/04 17:37:23 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -31,7 +19,6 @@ return "@(#)$Id: buffbase.cpp,v 1.2 1999/04/01 03:08:57 cyp Exp $"; }
 #include "problem.h"  //Resultcode enum
 #include "buffwork.h" //our defines
 #define __iter2norm( iterlo, iterhi ) ((iterlo >> 28) + (iterhi << 4))
-
 
 /* --------------------------------------------------------------------- */
 
@@ -256,7 +243,7 @@ int BufferZapFileRecords( const char *filename )
   if (!IsFilenameValid( filename ))
     return 0;
   filename = GetFullPathForFilename( filename );
-  if (access( filename, 0 )!=0) //file doesn't exist, which is ok
+  if (!DoesFileExist( filename )) //file doesn't exist, which is ok
     return 0;
   file = BUFFERCREATE( filename ); //truncate the file to zero length
   if (!file)
@@ -279,7 +266,7 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
 
   filename = GetFullPathForFilename( filename );
 
-  if (access( filename, 0 ) != 0) // file doesn't exist, so create it
+  if (!DoesFileExist( filename )) // file doesn't exist, so create it
   {
     if ((file = BUFFERCREATE( filename ))==NULL)
       failed = 1;
@@ -289,7 +276,7 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
   }
   if (failed == 0)
   {
-    if (access( filename, 0 )!=0) // file still doesn't exist
+    if (!DoesFileExist( filename )) // file still doesn't exist
     {
       Log("Error opening buffer file... Access was denied.\n" );
       return NULL;
