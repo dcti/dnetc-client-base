@@ -4,6 +4,9 @@
 // torment.ntr.net K6 233 sean@ntr.net
 //
 // $Log: rc5-6x86-rg.cpp,v $
+// Revision 1.5  1998/06/16 08:25:29  remi
+// rc5_unit_func_6x86 should not be made "static".
+//
 // Revision 1.4  1998/06/14 10:03:55  skand
 // define and use a preprocessor macro to hide the .balign directive for
 // ancient assemblers
@@ -83,7 +86,7 @@
 // PR150 = 120		PR200 = 166
 // PR133 = 110		PR166 = 150
 
-static char *id="@(#)$Id: rc5-6x86-rg.cpp,v 1.4 1998/06/14 10:03:55 skand Exp $";
+static char *id="@(#)$Id: rc5-6x86-rg.cpp,v 1.5 1998/06/16 08:25:29 remi Exp $";
 
 #define CORE_INCREMENTS_KEY
 
@@ -373,7 +376,6 @@ leal 12345678(%%edx,%%eax), %%eax takes two cycles and isn't pairable
 // Even worse, if '-fomit-frame-pointer' isn't used, gcc will compile
 // this function with local variables referenced with %ebp (!!).
 
-static
 u32 rc5_unit_func_6x86( RC5UnitWork * rc5unitwork, u32 timeslice )
 {
     work_struct work;
