@@ -1,82 +1,10 @@
 // Hey, Emacs, this a -*-C++-*- file !
 //
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
 // INI file reading/processing class for C++
-//
-// $Log: iniread.h,v $
-// Revision 1.25  1999/02/28 03:14:16  jlawson
-// added alternate iniread options for proxy compiles.
-//
-// Revision 1.24  1999/01/31 20:19:09  cyp
-// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
-//
-// Revision 1.23  1999/01/29 19:19:13  jlawson
-// changed some int vars to bool.
-//
-// Revision 1.22  1999/01/28 00:51:49  cyp
-// fixed end of string check in IniString == operator.
-//
-// Revision 1.21  1999/01/27 22:55:57  silby
-// *** empty log message ***
-//
-// Revision 1.19  1999/01/27 17:41:47  cyp
-// ANSIfied (cleaned up clib/os specific stuff)
-//
-// Revision 1.18  1999/01/27 00:55:26  jlawson
-// committed iniread from proxy again.  now uses INIREAD_SINGLEVALUE and
-// new INIREAD_WIN32_LIKE for client compiles.  the win32-like interface
-// functions all end with B, rather than A, since the global-namespace
-// is already used by the A versions in msvc.
-//
-// Revision 1.14  1999/01/26 06:56:44  jlawson
-// added changes to allow SINGLEINIVALUE to be defined, which allows
-// iniread to parse an ini file, but without splitting each ini key
-// by commas into an IniStringList.
-//
-// Revision 1.13  1999/01/24 23:31:50  trevorh
-// IBM VACPP complains about definitions of IniList template
-//
-// Revision 1.12  1999/01/22 09:25:12  jlawson
-// will no longer add quotes around a string that already has quotes.
-//
-// Revision 1.11  1999/01/04 12:30:48  jlawson
-// added a deep-copy assignment operator for IniList template.  resolves
-// crash in master when updating proxystatus list.
-//
-// Revision 1.10  1999/01/02 07:30:32  jlawson
-// functions that directly manipulate values[0] now verify that at least
-// one entry in the list exists.
-//
-// Revision 1.9  1998/12/27 11:08:49  jlawson
-// added extra inline keywords.  added more addrecord() functions for
-// different parameter types.  fixed setkey() functions to add the record
-// if it doesn't already exist.
-//
-// Revision 1.8  1998/12/26 21:52:29  jlawson
-// corrected is_null
-//
-// Revision 1.7  1998/12/26 21:48:21  jlawson
-// modified is_null() to only return true on blank or null strings.
-//
-// Revision 1.6  1998/12/26 00:12:03  jlawson
-// changed some delete operations to array deletions.  corrected string
-// terminations to correct length, eliminating corruption issues.
-//
-// Revision 1.5  1998/12/24 04:53:15  jlawson
-// added handling for HAVE_SNPRINTF.  GetProfileString() functions renamed
-// to GetProfileStringA() since Windows headers sometimes define them such.
-//
-// Revision 1.4  1998/08/22 08:41:23  jlawson
-// added new iniread code
-//
-// Revision 1.12  1998/06/29 06:58:04  jlawson
-// added new platform OS_WIN32S to make code handling easier.
-//
-// Revision 1.11  1998/06/26 07:13:53  daa
-// move strcmpi and strncmpi defs to cmpidefs.h
-//
-// Revision 1.10  1998/06/14 08:12:55  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
 //
 
 #ifndef __INIREAD_H__

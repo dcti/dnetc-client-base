@@ -7,102 +7,10 @@
 // Created by Jeff Lawson.
 // ----------------------------------------------------------------------
 //
-// $Log: iniread.cpp,v $
-// Revision 1.25  1999/03/04 09:11:38  jlawson
-// WritePrivateProfileStringB properly handles return code from writeinifile
-//
-// Revision 1.24  1999/03/03 01:32:48  jlawson
-// ReadIniFile and WriteIniFile now return < 0 on error, for consistency.
-//
-// Revision 1.23  1999/02/14 04:42:46  cyp
-// strip leading and trailing quotes when reading.
-//
-// Revision 1.22  1999/02/04 10:38:05  cyp
-// fixed a bad charp[index] in GetPrivateProfileInt()
-//
-// Revision 1.21  1999/01/31 20:19:09  cyp
-// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
-//
-// Revision 1.20  1999/01/29 19:18:46  jlawson
-// fixed formatting.  changed some int vars to bool.
-//
-// Revision 1.19  1999/01/28 00:51:50  cyp
-// fixed end of string check in IniString == operator.
-//
-// Revision 1.18  1999/01/27 22:52:36  silby
-// Reverted back to pre-ANSIfication.  ANSIficiation
-// is all great, but it didn't work under
-// MSVC, Watcom, or egcs after the changes.
-// (Minor problem.)
-// 
-// Revision 1.17  1999/01/27 17:41:47  cyp
-// ANSIfied (cleaned up clib/os specific stuff)
-// 
-// Revision 1.16  1999/01/27 02:15:55  jlawson
-// corrected return value checks
-// 
-// Revision 1.15  1999/01/27 00:55:26  jlawson
-// committed iniread from proxy again.  now uses INIREAD_SINGLEVALUE and
-// new INIREAD_WIN32_LIKE for client compiles.  the win32-like interface
-// functions all end with B, rather than A, since the global-namespace
-// is already used by the A versions in msvc.
-// 
-// Revision 1.11  1999/01/26 06:56:44  jlawson
-// added changes to allow SINGLEINIVALUE to be defined, which allows
-// iniread to parse an ini file, but without splitting each ini key
-// by commas into an IniStringList.
-// 
-// Revision 1.10  1999/01/22 09:26:38  jlawson
-// quoted values that have their closing quote in the middle with
-// trailing garbage before the next separator/eol, will now have
-// the garbage discarded.
-// 
-// Revision 1.9  1999/01/22 08:56:30  jlawson
-// added parsing for double-quotes around keyname.  fixed parsing of
-// null values in equating lines.  fixed parsing of double-quoted
-// values in equating lines.
-// 
-// Revision 1.8  1998/12/27 22:17:50  jlawson
-// fixed numerous code style and syntax weaknesses caught by lint checker.
-// 
-// Revision 1.7  1998/12/25 02:04:38  jlawson
-// changed usage of ltoa to only Win32
-// 
-// Revision 1.6  1998/12/24 04:53:15  jlawson
-// added handling for HAVE_SNPRINTF.  GetProfileString() functions renamed
-// to GetProfileStringA() since Windows headers sometimes define them such.
-// 
-// Revision 1.5  1998/09/06 20:08:45  jlawson
-// corrected numerous compilation warnings under gcc
-// 
-// Revision 1.4  1998/08/22 08:41:21  jlawson
-// added new iniread code
-// 
-// Revision 1.10  1998/07/07 21:55:41  cyruspatel
-// client.h has been split into client.h and baseincs.h 
-// 
-// Revision 1.9  1998/06/29 08:44:11  jlawson
-// More OS_WIN32S/OS_WIN16 differences and long constants added.
-// 
-// Revision 1.8  1998/06/29 06:58:02  jlawson
-// added new platform OS_WIN32S to make code handling easier.
-// 
-// Revision 1.7  1998/06/15 12:03:59  kbracey
-// Lots of consts.
-// 
-// Revision 1.6  1998/06/14 08:26:49  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-// 
-// Revision 1.5  1998/06/14 08:12:53  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
 
 
-#if (!defined(lint) && defined(__showids__))
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.25 1999/03/04 09:11:38 jlawson Exp $"; }
-#endif
+return "@(#)$Id: iniread.cpp,v 1.26 1999/04/04 14:40:30 jlawson Exp $"; }
 
 #define COMPILING_INIREAD
 #include "iniread.h"
