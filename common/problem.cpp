@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.75 2000/10/31 03:07:32 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.76 2000/10/31 11:47:36 oliver Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -1242,7 +1242,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
 }
 
 /* ----------------------------------------------------------------------- */
-/* support functions for Problem::GetInfo()                                */
+/* support functions for Problem::GetProblemInfo()                         */
 /* ----------------------------------------------------------------------- */
 
 static void __u64mul( u32 _ahi, u32 _alo, u32 _bhi, u32 _blo,
@@ -1553,19 +1553,19 @@ static unsigned int __compute_permille(unsigned int cont_i, ContestWork *work)
 /* tcount = totalnumberofiterationstodo. tcountbuf="nn*2^28" for crypto */
 /* ccount = numberofiterationdonethistime. ccountbuf="nnn,nnn,nnn" done ever */
 /* counts are unbiased (adjustment for DES etc already done) */
-int Problem::GetInfo(unsigned int *cont_id, const char **cont_name, 
-                     u32 *elapsed_secsP, u32 *elapsed_usecsP, 
-                     unsigned int *swucount, int pad_strings,
-                     const char **unit_name, 
-                     unsigned int *c_permille, unsigned int *s_permille,
-                     int permille_only_if_exact,
-                     char *sigbuf, unsigned int sigbufsz,
-                     u32 *ratehi, u32 *ratelo, 
-                     char *ratebuf, unsigned int ratebufsz,
-                     u32 *ubtcounthi, u32 *ubtcountlo, 
-                     char *tcountbuf, unsigned int tcountbufsz,
-                     u32 *ubccounthi, u32 *ubccountlo, 
-                     char *ccountbuf, unsigned int ccountbufsz)
+int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name, 
+                            u32 *elapsed_secsP, u32 *elapsed_usecsP, 
+                            unsigned int *swucount, int pad_strings,
+                            const char **unit_name, 
+                            unsigned int *c_permille, unsigned int *s_permille,
+                            int permille_only_if_exact,
+                            char *sigbuf, unsigned int sigbufsz,
+                            u32 *ratehi, u32 *ratelo, 
+                            char *ratebuf, unsigned int ratebufsz,
+                            u32 *ubtcounthi, u32 *ubtcountlo, 
+                            char *tcountbuf, unsigned int tcountbufsz,
+                            u32 *ubccounthi, u32 *ubccountlo, 
+                            char *ccountbuf, unsigned int ccountbufsz)
 {
   int rescode = last_resultcode;
   if (initialized && rescode >= 0)

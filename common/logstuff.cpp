@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.32 2000/10/31 03:07:32 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.33 2000/10/31 11:47:35 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -697,7 +697,7 @@ void LogScreenPercent( unsigned int load_problem_count )
       if (use_alt_fmt && (!buffer[0] || prob_i == selprob_i))
       {
         char blkdone[32], blksig[32]; const char *contname;
-        girc = selprob->GetInfo(&cont_i, &contname, 0, 0, 0, 0, 0, 
+        girc = selprob->GetProblemInfo(&cont_i, &contname, 0, 0, 0, 0, 0, 
                          &permille, &startpermille, 0,
                          blksig, sizeof(blksig), 0, 0, 0, 0, 0,0,0, 0,0,0,
                          blkdone, sizeof(blkdone) );
@@ -712,7 +712,7 @@ void LogScreenPercent( unsigned int load_problem_count )
       }
       else
       {
-        girc = selprob->GetInfo(&cont_i, 0, 0, 0, 0, 0, 0,
+        girc = selprob->GetProblemInfo(&cont_i, 0, 0, 0, 0, 0, 0,
                          &permille, &startpermille, 0,
                          0, 0, 0, 0, 0, 0, 0,0,0, 0,0,0, 0, 0 );
       }

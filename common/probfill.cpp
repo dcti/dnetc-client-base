@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.45 2000/10/31 03:07:32 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.46 2000/10/31 11:47:35 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -176,18 +176,18 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           action_msg = ((finito)?("Completed"):("Saved"));
       }
 
-      if (thisprob->GetInfo( 0, &contname, 
-                             &secs, &usecs,
-                             &swucount, 1, 
-                             &unitname, 
-                             &permille, 0, 1,
-                             pktid, sizeof(pktid),
-                             0, 0, 
-                             ratebuf, sizeof(ratebuf),
-                             0, 0, 
-                             0, 0,
-                             &ccounthi, &ccountlo,
-                             ccountbuf, sizeof(ccountbuf) ) != -1)
+      if (thisprob->GetProblemInfo( 0, &contname, 
+                                    &secs, &usecs,
+                                    &swucount, 1, 
+                                    &unitname, 
+                                    &permille, 0, 1,
+                                    pktid, sizeof(pktid),
+                                    0, 0, 
+                                    ratebuf, sizeof(ratebuf),
+                                    0, 0, 
+                                    0, 0,
+                                    &ccounthi, &ccountlo,
+                                    ccountbuf, sizeof(ccountbuf) ) != -1)
       {
         tv.tv_sec = secs; tv.tv_usec = usecs;
 
@@ -233,7 +233,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           /* of iters we did _this_ time and never the total number of iters */
           /* in the packet */
         }
-      } /* if (thisprob->GetInfo( ... ) != -1) */
+      } /* if (thisprob->GetProblemInfo( ... ) != -1) */
     
       /* we can purge the object now */
       /* we don't wait when aborting. thread might be hung */
@@ -390,17 +390,17 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       {
         unsigned int permille;
         const char *contname; char pktid[32]; 
-        if (thisprob->GetInfo( loaded_for_contest, &contname, 
-                               0, 0,
-                               0, 1, 
-                               0, 
-                               0, &permille, 1,
-                               pktid, sizeof(pktid),
-                               0, 0, 0, 0,
-                               0, 0, 
-                               0, 0,
-                               0, 0,
-                               0, 0 ) != -1)
+        if (thisprob->GetProblemInfo( loaded_for_contest, &contname, 
+                                      0, 0,
+                                      0, 1, 
+                                      0, 
+                                      0, &permille, 1,
+                                      pktid, sizeof(pktid),
+                                      0, 0, 0, 0,
+                                      0, 0, 
+                                      0, 0,
+                                      0, 0,
+                                      0, 0 ) != -1)
         {
           const char *extramsg = ""; 
           char perdone[20]; 
@@ -416,7 +416,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
           Log("Loaded %s %s%s%s\n",
                contname, ((thisprob->is_random)?("random "):("")), 
                pktid, extramsg );
-        } /* if (thisprob->GetInfo(...) != -1) */
+        } /* if (thisprob->GetProblemInfo(...) != -1) */
       } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
     } /* if (LoadState(...) != -1) */
   } /* if (*load_needed == 0) */

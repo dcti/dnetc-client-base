@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.42 2000/10/31 03:04:51 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.43 2000/10/31 11:47:35 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -127,8 +127,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
            && problem->runtime_sec >= ((u32)(2+non_preemptive_os.did_adjust)))
         {
           u32 newtslice;
-          if (problem->GetInfo(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                               &ratelo, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ) == -1)
+          if (problem->GetProblemInfo(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                      &ratelo, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ) == -1)
           {
             run = -1;
             break;
@@ -200,14 +200,14 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
       if (permille == 1000) /* time is up or ran out of work */
       {
         char ratebuf[32]; u32 secs, usecs;
-        if (problem->GetInfo(0, 0, /* cont_id, cont_name */
-                             &secs, &usecs, 
-                             0, 0, 0, /* swucount, pad_strings, unit_name */
-                             0, 0, 0, /* currpermille, startperm, poie */
-                             0, 0,    /* idbuf, idbufsz */
-                             &ratehi, &ratelo, 
-                             ratebuf, sizeof(ratebuf),
-                             0, 0, 0, 0,   0, 0, 0, 0 ) == -1)
+        if (problem->GetProblemInfo(0, 0, /* cont_id, cont_name */
+                                    &secs, &usecs, 
+                                    0, 0, 0, /* swucount, pad_strings, unit_name */
+                                    0, 0, 0, /* currpermille, startperm, poie */
+                                    0, 0,    /* idbuf, idbufsz */
+                                    &ratehi, &ratelo, 
+                                    ratebuf, sizeof(ratebuf),
+                                    0, 0, 0, 0,   0, 0, 0, 0 ) == -1)
         {
           run = -1;
           break;

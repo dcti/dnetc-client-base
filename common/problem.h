@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.38 2000/10/31 03:07:33 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.39 2000/10/31 11:47:37 oliver Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -195,7 +195,7 @@ public: /* anything public must be thread safe */
   // more than you'll ever care to know :) any arg can be 0/null */
   // returns RESULT_* or -1 if bad state
   // *tcount* == total (n/a if not finished), *ccount* == numdone so far
-  int GetInfo(unsigned int *cont_id, const char **cont_name, 
+  int GetProblemInfo(unsigned int *cont_id, const char **cont_name, 
                      u32 *elapsed_secs, u32 *elapsed_usecs, 
                      unsigned int *swucount, int pad_strings,
                      const char **unit_name, 
