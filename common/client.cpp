@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.72 2000/05/06 22:00:32 mfeiri Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.73 2000/05/11 12:15:40 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -513,7 +513,7 @@ static int ClientMain( int argc, char *argv[] )
                 TRACE_OUT((+1,"modereqrun\n"));
                 ModeReqRun( client );
                 TRACE_OUT((-1,"modereqrun\n"));
-                restart = CheckRestartRequestTrigger();
+                restart = 0; /* *never* restart when doing modes */
               }
               else if (!utilCheckIfBetaExpired(1)) /* prints message */
               {
