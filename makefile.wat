@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.18 2000/10/28 15:02:42 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.19 2000/10/31 15:22:41 cyp Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -45,7 +45,6 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
             output\checkpt.obj  &
             output\random.obj   &
             output\clicdata.obj &
-            output\clisrate.obj &
             output\base64.obj   &
             output\netbase.obj  &
             output\netconn.obj  &

@@ -1,7 +1,7 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
-# $Id: makefile.bcc,v 1.23.2.19 2000/10/28 15:02:42 cyp Exp $
+# $Id: makefile.bcc,v 1.23.2.20 2000/10/31 15:22:41 cyp Exp $
 #
 # As of Feb 2000, Borland C++ 5.5 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
@@ -79,7 +79,6 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/clievent.obj   \
         $(OUTPUTPATH)/cliident.obj   \
         $(OUTPUTPATH)/clirun.obj     \
-        $(OUTPUTPATH)/clisrate.obj   \
         $(OUTPUTPATH)/clitime.obj    \
         $(OUTPUTPATH)/cmdline.obj    \
         $(OUTPUTPATH)/confmenu.obj   \
@@ -222,6 +221,17 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
 
 # --------------------------------------------
 
+clean:
+        @if exist $(OUTPUTPATH)\*.obj erase $(OUTPUTPATH)\*.obj 
+        @if exist $(OUTPUTPATH)\*.res erase $(OUTPUTPATH)\*.res 
+        @if exist $(DEF_FILE) erase $(DEF_FILE) 
+        @if exist $(RES_FILE) erase $(RES_FILE)
+        @if exist $(BASENAME).il? erase $(BASENAME).il?
+        @if exist $(BASENAME).tds erase $(BASENAME).tds
+        @if exist $(BASENAME).exe erase $(BASENAME).exe
+
+# --------------------------------------------
+
 # Target rule to produce the compiled resource file.
 
 $(RES_FILE):    $(RC_FILE)
@@ -264,11 +274,3 @@ c0w32.obj $(ALLCLIENTOBJS:/=\),$(BASENAME:/=\).exe,,$(CLI_LIBS),$(DEF_FILE),$(RE
 |
 
 # --------------------------------------------
-
-# Remove all rebuildable and temporary files.
-# You will need a rm command (e.g. from cygwin) and support for long command lines.
-
-clean:
-        rm -f $(ALLCLIENTOBJS:/=\) $(BASENAME:/=\).exe $(DEF_FILE) $(RES_FILE) \
-            $(BASENAME).ilc $(BASENAME).ild $(BASENAME).ilf $(BASENAME).ils \
-            $(BASENAME).tds

@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.31 2000/10/28 15:02:42 cyp Exp $
+# $Id: makefile.vc,v 1.56.2.32 2000/10/31 15:22:41 cyp Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -99,7 +99,6 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/clievent.obj   \
         $(OUTPUTPATH)/cliident.obj   \
         $(OUTPUTPATH)/clirun.obj     \
-        $(OUTPUTPATH)/clisrate.obj   \
         $(OUTPUTPATH)/clitime.obj    \
         $(OUTPUTPATH)/cmdline.obj    \
         $(OUTPUTPATH)/confmenu.obj   \
