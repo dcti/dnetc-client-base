@@ -24,7 +24,6 @@ platforms/amiga/_tzset.o_ppc\
 platforms/amiga/amiga_version.o_ppc\
 
 COMMON_OBJS_PPC =\
-common/cliconfig.o_ppc\
 common/selftest.o_ppc\
 common/cmdline.o_ppc\
 common/cliident.o_ppc\
@@ -56,7 +55,10 @@ common/probfill.o_ppc\
 common/bench.o_ppc\
 common/console.o_ppc\
 common/modereq.o_ppc\
-common/setprio.o_ppc
+common/setprio.o_ppc\
+common/confrwv.o_ppc\
+common/confopt.o_ppc\
+common/confmenu.o_ppc
 
 RC5_OBJS_PPC	=\
 common/problem.o_ppc\
@@ -97,7 +99,6 @@ common/convdes.o_68k\
 common/cpucheck.o_68k\
 common/pathwork.o_68k\
 common/disphelp.o_68k\
-common/cliconfig.o_68k\
 common/selftest.o_68k\
 common/cmdline.o_68k\
 common/logstuff.o_68k\
@@ -112,7 +113,10 @@ common/probfill.o_68k\
 common/bench.o_68k\
 common/console.o_68k\
 common/modereq.o_68k\
-common/setprio.o_68k
+common/setprio.o_68k\
+common/confrwv.o_68k\
+common/confopt.o_68k\
+common/confmenu.o_68k
 
 RC5_OBJS_68K	=\
 common/problem.o_68k\
@@ -186,7 +190,9 @@ core_objs.o_ppc	:	$(RC5_OBJS_PPC) $(DES_OBJS_PPC)
 
 platforms/amiga/_tzset.o_ppc	:	platforms/amiga/_tzset.c
 platforms/amiga/amiga_version.o_ppc	:	platforms/amiga/amiga_version.c common/client.h
-common/cliconfig.o_ppc	:	common/cliconfig.cpp
+common/confrwv.o_ppc	:	common/confrwv.cpp
+common/confopt.o_ppc	:	common/confopt.cpp
+common/confmenu.o_ppc	:	common/confmenu.cpp
 common/selftest.o_ppc	:	common/selftest.cpp
 common/cmdline.o_ppc	:	common/cmdline.cpp
 common/cliident.o_ppc	:	common/cliident.cpp
@@ -242,7 +248,9 @@ platforms/amiga/usleep.o_ppc	:	platforms/amiga/usleep.c
  
 platforms/amiga/_tzset.o_68k	:	platforms/amiga/_tzset.c
 platforms/amiga/amiga_version.o_68k	:	platforms/amiga/amiga_version.c common/client.h
-common/cliconfig.o_68k	:	common/cliconfig.cpp
+common/confrwv.o_68k	:	common/confrwv.cpp
+common/confopt.o_68k	:	common/confopt.cpp
+common/confmenu.o_68k	:	common/confmenu.cpp
 common/selftest.o_68k	:	common/selftest.cpp
 common/cmdline.o_68k	:	common/cmdline.cpp
 common/cliident.o_68k	:	common/cliident.cpp
