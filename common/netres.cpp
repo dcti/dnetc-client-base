@@ -6,7 +6,7 @@
  *
 */
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.25.2.8 2000/03/06 00:01:30 gregh Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.25.2.9 2000/04/22 16:20:57 cyp Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
@@ -228,12 +228,12 @@ static struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host ord
 
 #if (CLIENT_OS == OS_LINUX)
 #include <dlfcn.h>
-static struct hostent *__ExtraLowlevelGethostbyname( const char *hostname )
+static struct hostent *__linux_gethostbyname_shim( const char *hostname )
 {
   static struct { const char *lib, *sym; } libsyms[] = {
          { "/usr/lib/libresolv.so", "res_gethostbyname" },
          { "/usr/lib/libc.so",      "gethostbyname"     }    };
-  struct hostent *hp = (struct hostent *)0;
+  struct hostent *hp = gethostbyname(hostname);
   int libsym;
 
   for (libsym=0; !hp && libsym<int(sizeof(libsyms)/sizeof(libsyms[0])); libsym++)
@@ -313,16 +313,11 @@ static struct hostent *__ExtraLowlevelGethostbyname( const char *hostname )
       dlclose(plib);
     }
   }
-  if (hp != NULL)
-    return hp;
-  else
-    return gethostbyname(hostname);
+  return hp;
 }
-
 // remap calls to our replacement shim.
 #undef gethostbyname
-#define gethostbyname(xx) __ExtraLowlevelGethostbyname(xx)
-
+#define gethostbyname(xx) __linux_gethostbyname_shim(xx)
 #endif
 
 //-----------------------------------------------------------------------
@@ -404,13 +399,27 @@ int NetResolve( const char *host, int resport, int resauto,
     hostname[pos]=0;
     host = hostname;
 
-    if (!hostname[0])
+    if (pos == 0) /* len == 0 */
       resauto = 1;
-    else
+    else 
     {
-      addrlist[0] = (u32)(inet_addr(hostname));
+      addrlist[0] = 0xFFFFFFFFL;
+      if (pos > 13 && strcmp(&hostname[pos-13],".in-addr.arpa")==0)
+      {
+        hostname[pos-=13]='\0';
+        addrlist[0] = (u32)(inet_addr(hostname));
+        if (addrlist[0] != 0xFFFFFFFFL)
+          addrlist[0] = ((addrlist[0]>>24)&0xff)|((addrlist[0]>>8)&0xff00)|
+                        ((addrlist[0]&0xff)<<24)|((addrlist[0]&0xff00)<<8);
+      }
+      else
+      {
+        addrlist[0] = (u32)(inet_addr(hostname));
+      }  
       if (addrlist[0] != 0xFFFFFFFFL)
       {
+        if (addrlist[0] == 0)
+          return -1;
         if (resolve_hostname_sz)
         {
           host = (const char *)(addrlist);
@@ -493,8 +502,8 @@ int NetResolve( const char *host, int resport, int resauto,
           {
             if (resolve_hostname[0] == '\0')
             {
-              strncpy( resolve_hostname, plist->proxies[pos],
-                                          resolve_hostname_sz);
+              strncpy(resolve_hostname,plist->proxies[pos],
+                      resolve_hostname_sz);
               resolve_hostname[resolve_hostname_sz-1]='\0';
             }
           }
@@ -511,7 +520,7 @@ int NetResolve( const char *host, int resport, int resauto,
           else
             strncpy( resolve_hostname, hostname, resolve_hostname_sz );
           resolve_hostname[resolve_hostname_sz-1]='\0';
-        }
+        }  
       }
     }
   }
@@ -521,6 +530,8 @@ int NetResolve( const char *host, int resport, int resauto,
     return -1;
   return (int)foundaddrcount;
 }
+
+//-----------------------------------------------------------------------
 
 #if 0
 int Network::Resolve(const char *host, u32 *hostaddress, int resport )
