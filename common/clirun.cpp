@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.24 1999/12/13 06:16:28 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.25 1999/12/15 06:19:35 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -132,7 +132,7 @@ static void __thread_yield__(void)
     NonPolledUSleep( 0 ); /* yield */
     #endif
   #elif (CLIENT_OS == OS_MACOS)
-    DoYieldToMain(0);
+    NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OPENBSD)
