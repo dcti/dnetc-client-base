@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.62 2004/07/16 18:01:13 oliver Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.63 2004/07/17 17:42:56 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -37,6 +37,7 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.62 2004/07/16 18:01:13 oliver Exp $"; }
 #  include <sys/types.h>
 #  include <sys/processor.h>
 #elif (CLIENT_OS == OS_MORPHOS)
+#  include <exec/resident.h>
 #  include <exec/system.h>
 #endif
 
@@ -795,7 +796,6 @@ static long __GetRawProcessorID(const char **cpuname)
   if (detectedtype == -2L)
   {
     /* MorphOS */
-    #include <exec/resident.h>
     ULONG cpu = 0;
     NewGetSystemAttrsA(&cpu, sizeof(cpu), SYSTEMINFOTYPE_PPC_CPUVERSION, NULL);
 
@@ -2137,6 +2137,13 @@ unsigned int GetProcessorFrequency()
     #else
       freq = PPCGetAttr(PPCINFOTAG_CPUCLOCK);
     #endif
+  #elif (CLIENT_OS == OS_MORPHOS)
+    UQUAD freqhz;
+    if (NewGetSystemAttrsA(&freqhz, sizeof(freqhz),
+                           SYSTEMINFOTYPE_PPC_CPUCLOCK, NULL))
+    {
+      freq = (freqhz + 500000) / 1000000;
+    }
   #endif
 
   return freq;
