@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.49  1999/01/05 22:44:34  cyp
+// Resolve() copies the hostname being resolved (first if from a list) to a
+// buffer in the network object. This is later used by SOCKS5 if lookup fails.
+//
 // Revision 1.48  1999/01/04 04:47:55  cyp
 // Minor fixes for platforms without network support.
 //
@@ -387,6 +391,8 @@ protected:
   s16  fwall_hostport;
   u32  fwall_hostaddr;
   char fwall_userpass[128]; //username+password
+  char resolve_hostname[64]; //last hostname Resolve() did a lookup on.
+                          //used by socks5 if the svc_hostname doesn't resolve
 
   char *svc_hostname;  //name of the final dest (server_name or rrdns_name)
   s16  svc_hostport;   //the port of the final destination

@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.12  1999/01/05 22:44:34  cyp
+// Resolve() copies the hostname being resolved (first if from a list) to a
+// buffer in the network object. This is later used by SOCKS5 if lookup fails.
+//
 // Revision 1.11  1999/01/03 06:20:32  cyp
 // Cleared an unused variable notice.
 //
@@ -41,7 +45,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.11 1999/01/03 06:20:32 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.12 1999/01/05 22:44:34 cyp Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -289,26 +293,42 @@ int Network::Resolve(const char *host, u32 *hostaddress, int resport )
   unsigned int proxypos, maxaddr, addrpos, addrcount;
   struct hostent *hp;
   int resauto = autofindkeyserver;
+  char hostname[64];
 
-  if (!host || !*host)
+  resolve_hostname[0]=0; //last used name we tried to lookup (used by socks5)
+
+  if (!host)
     return -1;
-
+  
+  int i=0;
+  while (*host && isspace(*host))
+    host++;
+  while (*host && !isspace(*host) && isprint(*host) && *host!='\r' && *host!='\n')
+    hostname[i++]=(char)tolower(*host++);
+  hostname[i]=0;
+  host = hostname;
+    
   #if (CLIENT_OS == OS_MACOS)
-    *hostaddress = inet_addr((char*)host).s_addr;
+    *hostaddress = inet_addr(hostname).s_addr;
   #else
-    *hostaddress = inet_addr((char*)host);
+    *hostaddress = inet_addr(hostname);
   #endif
   if (*hostaddress != 0xFFFFFFFFL)
+    {
+    char *p = (char *)(hostaddress);
+    sprintf(resolve_hostname, "%d.%d.%d.%d.in-addr.arpa", 
+                  (p[3]&255),(p[2]&255),(p[1]&255),(p[0]&255) );
     return 0;
+    }
 
   #ifdef RESDEBUG
-    printf("host:=%s:%d autofindkeyserver=%d\n", host, (int)resport, (int)resauto );
+    printf("host:=%s:%d autofindkeyserver=%d\n", hostname, (int)resport, (int)resauto );
   #endif
 
   if ( resauto && !resport )
     return -1;
 
-  if ( resauto && (!*host || IsHostnameDNetKeyserver( host, NULL )))
+  if ( resauto && (!hostname[0] || IsHostnameDNetKeyserver( hostname, NULL )))
     {
     #ifdef RESDEBUGZONE
     plist = GetApplicableProxyList( resport, RESDEBUGZONE*60 ); 
@@ -339,6 +359,9 @@ int Network::Resolve(const char *host, u32 *hostaddress, int resport )
 
     if ((hp = gethostbyname((char*)(plist->proxies[proxypos]))) != NULL) 
       {
+      if (resolve_hostname[0]==0)
+        strcpy( resolve_hostname, plist->proxies[proxypos] );
+      
       maxaddr = addrcount + 1;
       #ifdef NAMESERVERS_DONT_ROTATE
       maxaddr = (sizeof(addrlist)/sizeof(addrlist[0]));
@@ -351,6 +374,14 @@ int Network::Resolve(const char *host, u32 *hostaddress, int resport )
         addrcount++;
         }
       }
+    }
+
+  if (resolve_hostname[0]==0)
+    {
+    if ( plist->numproxies >=1 )
+      strcpy( resolve_hostname, plist->proxies[0] );
+    else
+      strcpy( resolve_hostname, hostname );
     }
 
   if (addrcount < 1)
