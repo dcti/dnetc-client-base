@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.68  1998/07/01 10:52:04  ziggyb
+// Fixed the problem of a mail message being attemped when run in offline mode
+// after the main thread is quit.
+//
 // Revision 1.67  1998/07/01 03:12:42  blast
 // AmigaOS changes...
 //
@@ -91,7 +95,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.67 1998/07/01 03:12:42 blast Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.68 1998/07/01 10:52:04 ziggyb Exp $";
 #endif
 
 #include "client.h"
@@ -280,7 +284,7 @@ Client::Client()
 #endif
 #if (CLIENT_OS == OS_OS2)
 	 os2hidden=0;
-	 connectstatus=0;
+	 connectstatus=-1;      // Trigger the lurk the first time client is run
 #endif
   contestdone[0]=contestdone[1]=0;
   srand( time( NULL ) );
@@ -2630,7 +2634,7 @@ PreferredIsDone1:
     // Has -runbuffers exhausted all buffers?
     //----------------------------------------
 
-    if (nonewblocks == load_problem_count)
+    if (nonewblocks > 0)
     {
       TimeToQuit = 1;
       exitcode = 4;
@@ -3356,10 +3360,13 @@ int main( int argc, char *argv[] )
     client.Run();
     if (client.randomchanged) client.WriteContestandPrefixConfig();
     client.mailmessage.quietmode=client.quietmode;
-    if ((!client.offlinemode) || (client.messagelen > 0))
-      client.mailmessage.checktosend(1);
+//  No use trying to send a message when we know the system is offline right?
+//  if ((!client.offlinemode) || (client.messagelen > 0))
     if (!client.offlinemode)
-    NetworkDeinitialize();
+      {
+      client.mailmessage.checktosend(1);
+      NetworkDeinitialize();
+      }
     retcode = ( UserBreakTriggered ? -1 : 0 );
   } //if (retcode == OK_TO_RUN)
 
