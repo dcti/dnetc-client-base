@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Peter Teichmann <dnet@peter-teichmann.de>
-; $Id: ogr_arm2-gccsdk.s,v 1.1.2.1 2003/02/24 12:18:59 teichp Exp $
+; $Id: ogr_arm2-gccsdk.s,v 1.1.2.2 2004/06/02 19:26:12 teichp Exp $
 ;
 ; Stack:
 ; int *pnodes
@@ -349,6 +349,23 @@ ogr_get_dispatch_table_arm2
 	stmia	r4!,{r1-r3}
 	sub	r0, r4, #24
 	ldmia	r13!, {r4, pc}
+
+;-----------------------------------------------------------------------------
+
+	EXPORT	ogr_p2_get_dispatch_table_arm2
+ogr_p2_get_dispatch_table_arm2
+	stmdb	r13!, {r4, r14}
+	bl	ogr_p2_get_dispatch_table
+	ldr	r4, pdispatch_table
+	ldmia	r0!,{r1-r3}
+	ldr	r3, pogr_cycle
+	stmia	r4!,{r1-r3}
+	ldmia	r0!,{r1-r3}
+	stmia	r4!,{r1-r3}
+	sub	r0, r4, #24
+	ldmia	r13!, {r4, pc}
+
+;-----------------------------------------------------------------------------
 
 pdispatch_table
 	DCD	dispatch_table
