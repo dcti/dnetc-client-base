@@ -3,6 +3,10 @@
 
 
   $Log: iniread.cpp,v $
+  Revision 1.13  1998/12/08 05:42:38  dicamillo
+  Add EOLCHAR symbol for end-of-line character.  For the MacOS, use
+  \r for EOLCHAR instead of \n.
+
   Revision 1.12  1998/10/04 11:35:39  remi
   Id tags fun.
 
@@ -42,11 +46,16 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.12 1998/10/04 11:35:39 remi Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.13 1998/12/08 05:42:38 dicamillo Exp $"; }
 #endif
 
 #include "iniread.h"
 
+#if (CLIENT_OS == OS_MACOS)
+  #define EOLCHAR '\r'
+#else
+  #define EOLCHAR '\n'
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 IniString &IniString::operator= (const char *value)
@@ -398,13 +407,13 @@ bool IniSection::ReadIniFile(const char *Filename, const IniString & Section, lo
       IniString h;
 
       while ((peekch = fgetc(inf)) != EOF &&
-        peekch != '\n' && peekch != ']' && peekch != ';')
+        peekch != EOLCHAR && peekch != ']' && peekch != ';')
           if (isprint(peekch)) h.append((char)peekch);
 
       if (peekch == ']') sect = h;
 
       // absorb to EOL or EOF
-      while (peekch != EOF && peekch != '\n') peekch = fgetc(inf);
+      while (peekch != EOF && peekch != EOLCHAR) peekch = fgetc(inf);
 
     } else {
       // []-----------------------[]
@@ -416,11 +425,11 @@ bool IniSection::ReadIniFile(const char *Filename, const IniString & Section, lo
 #if (CLIENT_OS != OS_NETWARE)
       ungetc(peekch, inf);
 #else
-      if (peekch != EOF && peekch != '\n' && peekch != '=' && peekch != ';')
+      if (peekch != EOF && peekch != EOLCHAR && peekch != '=' && peekch != ';')
       if (isprint(peekch)) key.append((char)peekch);
 #endif
       while ((peekch = fgetc(inf)) != EOF &&
-        peekch != '\n' && peekch != '=' && peekch != ';')
+        peekch != EOLCHAR && peekch != '=' && peekch != ';')
           if (isprint(peekch)) key.append((char)peekch);
 
 #ifndef __WATCOMC__
@@ -441,7 +450,7 @@ bool IniSection::ReadIniFile(const char *Filename, const IniString & Section, lo
         {
           IniString value;
           while ((peekch = fgetc(inf)) != EOF)
-            if (peekch == '\n' || !isspace(peekch))
+            if (peekch == EOLCHAR || !isspace(peekch))
             {
 #if (CLIENT_OS != OS_NETWARE)
                 ungetc(peekch, inf);
@@ -458,11 +467,11 @@ bool IniSection::ReadIniFile(const char *Filename, const IniString & Section, lo
             if (quoted && peekch == '"')
             {
               while ((peekch = fgetc(inf)) != EOF &&
-                  peekch != ',' && peekch != '\n' && peekch != ';');
+                  peekch != ',' && peekch != EOLCHAR && peekch != ';');
               goto ValueReady;
-            } else if (quoted && peekch == '\n') {
+            } else if (quoted && peekch == EOLCHAR) {
               goto ValueReady;
-            } else if (!quoted && (peekch == ',' || peekch == ';' || peekch == '\n')) {
+            } else if (!quoted && (peekch == ',' || peekch == ';' || peekch == EOLCHAR)) {
               // strip trailing whitespace
               char *p = strchr((char*)value.c_str(), 0) - 1;
               while (isspace(*p) && p >= value.c_str()) *p-- = 0;
@@ -478,11 +487,11 @@ bool IniSection::ReadIniFile(const char *Filename, const IniString & Section, lo
             if (quoted && peekch == '"')
             {
               while ((peekch = fgetc(inf)) != EOF &&
-                  peekch != ',' && peekch != '\n' && peekch != ';');
+                  peekch != ',' && peekch != EOLCHAR && peekch != ';');
               break;
-            } else if (quoted && peekch == '\n') {
+            } else if (quoted && peekch == EOLCHAR) {
               break;
-            } else if (!quoted && (peekch == ',' || peekch == ';' || peekch == '\n')) {
+            } else if (!quoted && (peekch == ',' || peekch == ';' || peekch == EOLCHAR)) {
               // strip trailing whitespace
               char *p = strchr((char*)value.c_str(), 0) - 1;
               while (isspace(*p) && p >= value.c_str()) *p-- = 0;
@@ -499,17 +508,17 @@ ValueReady:
           args.Add(value);
 
           // if we stopped because of a comment, then ignore to EOL
-          if (peekch == ';') while ((peekch = fgetc(inf)) != EOF && peekch != '\n');
+          if (peekch == ';') while ((peekch = fgetc(inf)) != EOF && peekch != EOLCHAR);
 
           // break if this was the end of the line
-          if (peekch == '\n') break;
+          if (peekch == EOLCHAR) break;
         }
 
         // store this key/value pair
         this->addrecord(sect, key, args);
       } else if (peekch == ';') {
         // if we stopped because of a comment, then ignore to EOL
-        while ((peekch = fgetc(inf)) != EOF && peekch != '\n');
+        while ((peekch = fgetc(inf)) != EOF && peekch != EOLCHAR);
       }
     }
   }
