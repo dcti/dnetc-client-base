@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.45  1998/10/07 18:41:51  silby
+// Removed the extra "v" that was being prepended to the version string in the help display.
+//
 // Revision 1.44  1998/10/05 02:43:28  cyp
 // Removed "-nommx" from the option list. -nommx is/will be undocumented and
 // for internal/developer use only.
@@ -142,7 +145,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.44 1998/10/05 02:43:28 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.45 1998/10/07 18:41:51 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -387,7 +390,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
 
   static const char *helpheader[] =
   {
-  "RC5DES v" CLIENT_VERSIONSTRING " client - a project of distributed.net",
+  "RC5DES " CLIENT_VERSIONSTRING " client - a project of distributed.net",
   "Visit http://www.distributed.net/FAQ/ for in-depth command line help",
   "-------------------------------------------------------------------------"
   };
