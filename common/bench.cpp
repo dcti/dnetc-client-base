@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.56.2.4 2003/12/13 12:57:14 kakace Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.56.2.5 2004/06/24 21:06:56 kakace Exp $"; }
 
 //#define TRACE
 
@@ -28,6 +28,15 @@ return "@(#)$Id: bench.cpp,v 1.56.2.4 2003/12/13 12:57:14 kakace Exp $"; }
   #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 7")
 #endif
 unsigned long bestrate_tab[CONTEST_COUNT] = {0,0,0,0,0,0,0};
+
+/* -------------------------------------------------------------------- */
+
+void BenchResetStaticVars(void)
+{
+  int contest;
+  for (contest = 0; contest < CONTEST_COUNT; contest++)
+    bestrate_tab[contest] = 0;
+}
 
 /* -------------------------------------------------------------------- */
 

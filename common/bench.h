@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __BENCH_H__
-#define __BENCH_H__ "@(#)$Id: bench.h,v 1.12.4.1 2003/01/19 22:49:49 snake Exp $"
+#define __BENCH_H__ "@(#)$Id: bench.h,v 1.12.4.2 2004/06/24 21:06:56 kakace Exp $"
 
 /* returns "rate", or -1 if core error/^C, or 0 if not supported */
 long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags );
@@ -14,5 +14,6 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags );
 // do not use 0x80, it's internal to TBenchmark
 //#define TBENCHMARK_CALIBRATION 0x80
 unsigned long BenchGetBestRate(unsigned int contestid);
+void BenchResetStaticVars(void);
 
 #endif /* __BENCH_H__ */

@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.35.2.3 2003/12/13 12:57:14 kakace Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.35.2.4 2004/06/24 21:06:56 kakace Exp $"; }
 
 //#define TRACE
 
@@ -55,6 +55,19 @@ static struct contestInfo
 #if (CONTEST_COUNT != 7)
   #error PROJECT_NOT_HANDLED("conStats[]: static initializer expects CONTEST_COUNT == 7")
 #endif
+
+/* ----------------------------------------------------------------------- */
+
+// Reset benchmark infos to allow for accurate results in case the client
+// gets restarted with new settings.
+void CliResetStaticVars(void)
+{
+  int contest;
+  for (contest = 0; contest < CONTEST_COUNT; contest++) {
+    conStats[contest].BestTime = 0;
+    conStats[contest].BestTimeWasForced = 0;
+  }
+}
 
 /* ----------------------------------------------------------------------- */
 
