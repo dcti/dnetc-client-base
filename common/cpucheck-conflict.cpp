@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.72  1999/04/01 01:05:37  cyp
+// brought (hopefully correctly) Alpha detection into line with all the
+// others. This module is not the easiest code to maintain, so would porters
+// please look around when adding support? Many thanks.
+//
 // Revision 1.71  1999/02/23 04:45:35  silby
 // Added Pentium III to x86 cpu list.
 //
@@ -257,7 +262,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.71 1999/02/23 04:45:35 silby Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.72 1999/04/01 01:05:37 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -269,9 +274,7 @@ return "@(#)$Id: cpucheck-conflict.cpp,v 1.71 1999/02/23 04:45:35 silby Exp $"; 
 #include <unistd.h>    // cramer - sysconf()
 #elif (CLIENT_OS == OS_IRIX)
 #include <sys/prctl.h>
-#elif ( (CLIENT_OS == OS_DEC_UNIX) && defined(OS_SUPPORTS_SMP) )
-// We really only want to do this for multithreaded clients.
-// Earlier versions of the Digital Unix don't support this.
+#elif (CLIENT_OS == OS_DEC_UNIX)
 #include <unistd.h>
 #include <sys/sysinfo.h>
 #include <machine/hal_sysinfo.h>
@@ -300,42 +303,43 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   static int cpucount = -2;
 
   if (cpucount == -2)
-    {
+  {
     cpucount = -1;
     #if (CLIENT_OS == OS_BEOS)
-      {
+    {
       system_info the_info;
       get_system_info(&the_info);
       cpucount = the_info.cpu_count;
-      }
+    }
     #elif (CLIENT_OS == OS_WIN32)
-      {
+    {
       SYSTEM_INFO systeminfo;
       GetSystemInfo(&systeminfo);
       cpucount = systeminfo.dwNumberOfProcessors;
       if (cpucount < 1)
         cpucount = -1;
-      }
+    }
     #elif (CLIENT_OS == OS_NETWARE)
-      {
+    {
       cpucount = nwCliGetNumberOfProcessors();
-      }
+    }
     #elif (CLIENT_OS == OS_OS2)
-      {
+    {
       int rc = (int) DosQuerySysInfo(QSV_NUMPROCESSORS, QSV_NUMPROCESSORS,
                   &cpucount, sizeof(cpucount));
       if (rc != 0 || cpucount < 1)
         cpucount = -1;
-      }
+    }
     #elif (CLIENT_OS == OS_LINUX)
-      {
-      // CRAMER -- Yes, this is cheating, but it's the only way...
-      char buffer[256];
+    {
+      FILE *cpuinfo;
       cpucount = 0;
-      if (FILE *cpuinfo = fopen("/proc/cpuinfo", "r"))
+      if (( cpuinfo = fopen("/proc/cpuinfo", "r")) != ((FILE *)0))
+      {
+        char buffer[256];
+        while(fgets(buffer, sizeof(buffer), cpuinfo))
         {
-        while(fgets(buffer, 256, cpuinfo))
-          {
+          buffer[sizeof(buffer)-1]='\0';
           #if (CLIENT_CPU == CPU_X86 || CLIENT_CPU == CPU_POWERPC)
           if (strstr(buffer, "processor") == buffer)
             cpucount++;
@@ -348,77 +352,79 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
             cpucount = 1;
           // 2.0.x smp kernels (at least 2.0.35)
           else if (strstr( buffer, "        CPU0\t\tCPU1\t\tCPU2\t\tCPU3\n" ) == buffer)
-            {
+          {
             fgets( buffer, 256, cpuinfo );
             for (char *p = strtok( buffer+7, "\t \n" ); p;
                     p = strtok( NULL, "\t \n" ))
-              {
+            {
               if (strstr( p, "online" ) || strstr( p, "akp"))
                 cpucount++;
-              }
             }
-          #elif (CLIENT_CPU == CPU_ALPHA)
-          cpucount = 1;
-          while(fgets(buffer, 256, cpuinfo))
-            {
-            // Search for SMP data (2.1+)
-            // [CPUs probed %d active %d ...]
-            if (strcmp(buffer, "CPUs probed") == 0)
-              for (char *p = strtok(buffer+12, "\t \n"); p;
-                  p = strtok(NULL, "\t \n"))
-                if (strstr(p, "active" ))
-                  {
-                  cpucount = atoi(strtok(NULL, "\t \n"));
-                  break;
-                  }
-            }
-          #endif
           }
-        fclose(cpuinfo);
+          #elif (CLIENT_CPU == CPU_ALPHA)
+          // Search for SMP data (2.1+) - "CPUs probed %d active %d ..."
+          if (memcmp(buffer, "CPUs probed", 11) == 0 && 
+                    (buffer[11]=='\t' || buffer[11]==' '))
+          {
+            char *p = strstr( buffer, "active" );
+            if (p && (p[6] == '\t' || p[6]==' '))
+            {
+              p+=6; while (*p && !isdigit(*p)) p++;
+              cpucount = atoi(p);
+            }
+          }
+          #else
+          cpucount = -1;
+          break;
+          #endif    
         }
+        fclose(cpuinfo);
       }
+    }
     #elif (CLIENT_OS == OS_IRIX)
-      {
+    {
       cpucount = (int)prctl( PR_MAXPPROCS, 0, 0);
-      }
+    }
     #elif (CLIENT_OS == OS_SOLARIS)
-      {
+    {
       cpucount = sysconf(_SC_NPROCESSORS_ONLN);
-      }
+    }
     #elif (CLIENT_OS == OS_AIX)
-      {
+    {
       cpucount = sysconf(_SC_NPROCESSORS_ONLN);
-      }
+    }
     #elif (CLIENT_OS == OS_RISCOS)
-      {
+    {
       cpucount = riscos_count_cpus();
-      }
+    }
     #elif (CLIENT_OS == OS_QNX)
-      {
+    {
       cpucount = 1;
-      }
+    }
     #elif (CLIENT_OS == OS_MACOS)
-      {
+    {
       cpucount = 1;
       if (haveMP)
         cpucount = MPProcessors();
-        }
+    }
     #elif ( (CLIENT_OS == OS_DEC_UNIX) && defined(OS_SUPPORTS_SMP))
-        {
-        int status = 0;
-        struct cpu_info buf;
-        int st = 0;
-
-        status = getsysinfo(GSI_CPU_INFO, (char *) &buf, sizeof(buf), st, NULL,NULL);
-        if (status == -1)
-          cpucount = -1;
-        else
-          cpucount = buf.cpus_in_box;
-        }
+    {
+      // We really only want to do this for multithreaded clients.
+      // Earlier versions of the Digital Unix don't support this.
+      int status = 0;
+      struct cpu_info buf;
+      int st = 0;
+      status = getsysinfo(GSI_CPU_INFO, (char *) &buf, sizeof(buf), st, NULL,NULL);
+      if (status == -1)
+        cpucount = -1;
+      else
+        cpucount = buf.cpus_in_box;
+    }
     #endif
     if (cpucount < 1)  //not supported
       cpucount = -1;
-    }
+  }
+
   return cpucount;
 }
 
@@ -438,57 +444,35 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
   // select cpu logic.
   //--------------------
 
+  if (detected_count == -2)  // returns -1 if no hardware detection
+    detected_count = GetNumberOfDetectedProcessors(); 
+
   if (numcpu < 0)                //numcpu == 0 implies force non-mt;
-    {                            //numcpu < 0  implies autodetect
-    if (detected_count == -2)
-      {
-      detected_count = GetNumberOfDetectedProcessors();
-      // returns -1 if no hardware detection
-      if ( detected_count < 1 )
-        {
-        if (!quietly)
-          LogScreen( CLIENT_OS_NAME " does not support SMP or\n"
-                    "does not support processor count detection.\n"
-                    /* "Automatic processor count detection failed.\n" */
-                    "A single processor machine is assumed.\n");
-        detected_count = 1;
-        }
-      else
-        {
-        if (!quietly)
-          {
-          LogScreen("Automatic processor detection found %d processor%s.\n",
-             detected_count, ((detected_count==1)?(""):("s")) );
-          }
-        }
-      }
+  {                              //numcpu < 0  implies autodetect
+    if ( detected_count < 1 )
+    {
+      if (!quietly)
+        LogScreen( CLIENT_OS_NAME " does not support SMP or\n"
+                  "does not support processor count detection.\n"
+                  /* "Automatic processor count detection failed.\n" */
+                  "A single processor machine is assumed.\n");
+      detected_count = 1;
+    }
+    else if (!quietly)
+    {
+      LogScreen("Automatic processor detection found %d processor%s.\n",
+                detected_count, ((detected_count==1)?(""):("s")) );
+    }
     numcpu = detected_count;
     if (numcpu < 0) //zero is legal (implies force-single-threaded)
       numcpu = 0;
-    }
-#if (CLIENT_OS == OS_RISCOS)
-  detected_count = GetNumberOfDetectedProcessors();
-  if (numcpu > detected_count)
-    numcpu = detected_count;
-#endif
+  }
+
+  if (((unsigned int)(numcpu)) > GetNumberOfSupportedProcessors())
+    numcpu = (int)GetNumberOfSupportedProcessors();
+
   return (unsigned int)numcpu;
 }
-
-// --------------------------------------------------------------------------
-
-#if (CLIENT_CPU != CPU_X86) && \
-    (CLIENT_CPU != CPU_68K) && \
-    (CLIENT_CPU != CPU_POWERPC) && \
-    (CLIENT_CPU != CPU_ARM) && \
-    ((CLIENT_CPU != CPU_ALPHA) || (CLIENT_OS != OS_DEC_UNIX))
-int GetProcessorType(int quietly)
-{
-  if (!quietly)
-    LogScreen("Automatic processor detection is not supported.\n");
-  return -1;
-}
-#define CPU_AUTODETECT_IS_UNSUPPORTED
-#endif
 
 // --------------------------------------------------------------------------
 
@@ -499,7 +483,7 @@ static int __GetRaw68KIdentification(const char **cpuname)
   static char descr[8];
 
   if (detectedtype == -2)
-    {
+  {
     #if (CLIENT_OS == OS_AMIGAOS)
     long flags = (long)(SysBase->AttnFlags);
 
@@ -523,51 +507,34 @@ static int __GetRaw68KIdentification(const char **cpuname)
     // System 7. (For more info, see Gestalt.h)
     long result;
     if (Gestalt(gestaltProcessorType, &result) == noErr)
-      {
+    {
       switch(result)
-        {
+      {
         case gestalt68000: detectedtype = 0;  break;
         case gestalt68010: detectedtype = 1;  break;
         case gestalt68020: detectedtype = 2;  break;
         case gestalt68030: detectedtype = 3;  break;
         case gestalt68040: detectedtype = 4;  break;
         default:           detectedtype =-1;  break; //(should never happen)
-        }
       }
-    #endif
     }
+    #endif
+  }
 
   if (cpuname)
-    {
+  {
     if (detectedtype < 0)
       *cpuname = "unknown";
     else
-      {
+    {
       int x68k = detectedtype; if (x68k == 5) x68k = 6;
       sprintf(descr, "680%d0", x68k);
       *cpuname = (const char *)(&descr[0]);
-      }
     }
+  }
   return detectedtype;
 }
 
-int GetProcessorType(int quietly)
-{
-  const char *cpuname;
-  int rawid = __GetRaw68KIdentification(&cpuname);
-  int coretouse = -1;
-
-  if (!quietly)
-    {
-    if (rawid < 0)
-      LogScreen("Automatic processor detection %s.\n",
-                        ((rawid == -1)?("failed"):("is not supported")) );
-    else
-      LogScreen("Automatic processor detection found\na Motorola %s\n",cpuname);
-    }
-  coretouse = ((rawid < 0) ? (-1) : (rawid));
-  return (coretouse);
-}
 #endif /* (CLIENT_CPU == CPU_68K) */
 
 // --------------------------------------------------------------------------
@@ -578,35 +545,42 @@ static int __GetRawPPCIdentification(const char **cpuname)
   static int detectedtype = -2; /* -1 == failed, -2 == not supported */
 
   if (detectedtype == -2)
-    {
+  {
+    detectedtype = -1;
     #if (CLIENT_OS == OS_MACOS)
-    // Note: need to use gestaltNativeCPUtype in order to get the correct
-    // value for G3 upgrade cards in a 601 machine.
-    // The value for detectedtype is the Gestalt result - 0x101 (gestaltCPU601).
-    long result;
-	if (Mac_PPC_prototype) detectedtype = 0;  // old developer machines
-    else if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
+    {
+      // Note: need to use gestaltNativeCPUtype in order to get the correct
+      // value for G3 upgrade cards in a 601 machine. The value for 
+      // detectedtype is the Gestalt result - 0x101 (gestaltCPU601).
+      long result;
+      if (Mac_PPC_prototype) 
+        detectedtype = 0;  // old developer machines
+      else if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
       {
-      switch(result)
+        switch(result)
         {
-        case gestaltCPU601:   detectedtype = 0; break; // IBM 601
-        case gestaltCPU603:   detectedtype = 2; break;
-        case gestaltCPU604:   detectedtype = 3; break;
-        case gestaltCPU603e:  detectedtype = 5; break;
-        case gestaltCPU603ev: detectedtype = 6; break;
-        case gestaltCPU750:   detectedtype = 7; break;
-        case gestaltCPU604e:  detectedtype = 8; break;
-        case gestaltCPU604ev: detectedtype = 9; break;
-        default:              detectedtype =-1; break;
+          case gestaltCPU601:   detectedtype = 0; break; // IBM 601
+          case gestaltCPU603:   detectedtype = 2; break;
+          case gestaltCPU604:   detectedtype = 3; break;
+          case gestaltCPU603e:  detectedtype = 5; break;
+          case gestaltCPU603ev: detectedtype = 6; break;
+          case gestaltCPU750:   detectedtype = 7; break;
+          case gestaltCPU604e:  detectedtype = 8; break;
+          case gestaltCPU604ev: detectedtype = 9; break;
+          default:              detectedtype =-1; break;
         }
       }
-	else detectedtype = -1;
+    }
     #elif (CLIENT_OS == OS_LINUX)
-      // see cramer's comment above -- RGA
-      char buffer[256];
-      if (FILE *cpuinfo = fopen("/proc/cpuinfo", "r")) {
-        while(fgets(buffer, 256, cpuinfo)) {
-          if (strstr(buffer, "cpu\t\t: ") == buffer)    {
+    {
+      FILE *cpuinfo
+      if ((cpuinfo = fopen("/proc/cpuinfo", "r")) != NULL)
+      {
+        char buffer[256];
+        while(fgets(buffer, 256, cpuinfo)) 
+        {
+          if (strstr(buffer, "cpu\t\t: ") == buffer)    
+          {
             // note that the order of the pseudo-switch is important
             if (strstr(buffer, "601") != NULL)
               detectedtype = 0;
@@ -627,16 +601,17 @@ static int __GetRawPPCIdentification(const char **cpuname)
             else
               detectedtype = -1;
           }
+        fclose(cpuinfo);
         }
-      fclose(cpuinfo);
       }
-    #endif
     }
+    #endif
+  }
 
   if (cpuname)
-    {
+  {
     switch (detectedtype)
-      {
+    {
       case 0:  *cpuname = "601"; break;
       case 2:  *cpuname = "603"; break;
       case 3:  *cpuname = "604"; break;
@@ -645,36 +620,13 @@ static int __GetRawPPCIdentification(const char **cpuname)
       case 7:  *cpuname = "740/750/G3"; break;
       case 8:  *cpuname = "604e"; break;
       case 9:  *cpuname = "604ev/Mach5"; break;
-      default: *cpuname = "unknown";
-      }
+      default: *cpuname = NULL;
     }
+  }
 
   return detectedtype;
 }
 
-int GetProcessorType(int quietly)
-{
-  const char *cpu_desc = NULL;
-  int rawid = __GetRawPPCIdentification(&cpu_desc);
-  int coretouse = -1; /* use manual detection */
-
-  if (!quietly)
-    {
-    if (rawid < 0)
-      LogScreen("Automatic processor detection %s.\n",
-              (rawid == -1 ? "failed" : "is not supported") );
-    else
-      LogScreen("Automatic processor detection found\n"
-                "a PowerPC %s\n", cpu_desc);
-    }
-  if (rawid < 0)
-    coretouse = -1;
-  else if (rawid == 0)
-    coretouse = 0; /* 601 */
-  else
-    coretouse = 1; /* 603/604/750 */
-  return (coretouse);
-}
 #endif /* (CLIENT_CPU == CPU_POWERPC) */
 
 // --------------------------------------------------------------------------
@@ -707,6 +659,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
   u32 detectedvalue = x86ident(); //must be interpreted
   int vendorid = (int)(detectedvalue >> 16);
   int cpuidb  = (int)(detectedvalue & 0xffff);
+  int cpuidbmask = 0xfff0; //what we mask cpuidb with to find it in the table
 
   if (cpuidbP) *cpuidbP = cpuidb;
   if (vendoridP) *vendoridP = vendorid;
@@ -715,7 +668,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     {
     article = "a";
     vendorname = "Cyrix";
-    cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
+    cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
         {    0x40, 0512,     0, "486"       }, // use Pentium core
         {  0x0440, 0512,     0, "MediaGX" },
@@ -730,10 +683,10 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     {
     article = "a";
     vendorname = "Centaur/IDT";
-    cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
+    cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
         {  0x0540, 1200,0x100, "C6"          }, // use Pentium core
-        {  0x0585, 1200,0x100, "WinChip 2" }, // ditto
+        {  0x0585, 1200,0x102, "WinChip 2"   }, // pentium Pro (I think)
         {  0x0000, 1200,    0, NULL          }  // default core == Pentium
         }; cpuxref = &__cpuxref[0];
     }
@@ -741,7 +694,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     {
     article = "an";
     vendorname = "AMD";
-    cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
+    cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
         {  0x0040, 0512,     0, "486"        },   // "Pentium, Pentium MMX, Cyrix 486/5x86/MediaGX, AMD 486",
         {  0x0430, 0512,     0, "486DX2"     },
@@ -767,7 +720,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     vendorname = "Intel";
     if ((cpuidb == 0x30) || (cpuidb == 0x40))
       vendorname = ""; //generic 386/486
-    cpuidb &= 0x0ff0; //strip last 4 bits, don't need stepping info
+    cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
         {  0x0030, 0426,     1, "80386"      },   // generic 386/486 core
         {  0x0040, 0512,     1, "80486"      },
@@ -806,191 +759,261 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     for (pos=0 ; ; pos++)
       {
       if (( (cpuxref[pos].cpuname)==NULL ) ||
-            ( cpuidb == (cpuxref[pos].cpuidb)) )
+            ( (cpuidb & cpuidbmask) == ((cpuxref[pos].cpuidb & cpuidbmask))) )
         return (&(cpuxref[pos]));
       }
     }
   return NULL;
 }
+#endif /* X86 */
 
 // --------------------------------------------------------------------------
-
-int GetProcessorType(int quietly)
-{
-  int coretouse;
-  int vendorid, cpuidb;
-  char *article, *vendorname;
-  struct _cpuxref *cpuxref =
-          __GetProcessorXRef( &cpuidb, &vendorid, &article, &vendorname );
-
-  const char *apd = "Automatic processor detection";
-  if ( cpuxref == NULL ) // fell through
-    {
-    if (!quietly)
-      LogScreen( "%s failed. (id: %04X:%04X)\n", apd, vendorid, cpuidb );
-    coretouse = 0;
-    }
-  else if ( cpuxref->cpuname == NULL )  // fell through to last element
-    {
-    coretouse = (cpuxref->coretouse);
-    if (!quietly)
-      LogScreen("%s found an unrecognized %s processor. (id: %04X)\n", apd,
-                                                    vendorname, cpuidb );
-    }
-  else // if ( cpuidb == (cpuxref->cpuidb))
-    {
-    coretouse = (cpuxref->coretouse);
-    if (!quietly)
-      {
-      if ( !vendorname || !*vendorname )  // generic type - no vendor name
-        LogScreen( "%s found %s %s.\n", apd, article, (cpuxref->cpuname));
-      else
-        LogScreen( "%s found %s %s %s.\n", apd, article,
-                   vendorname, (cpuxref->cpuname) );
-      }
-    }
-  return coretouse;
-}
-#endif // client_cpu == x86 or not
-
-// --------------------------------------------------------------------------
-
-#if (CLIENT_CPU == CPU_ARM)
-
-#if (CLIENT_OS != OS_RISCOS)
-static u32 __GetARMIdentification(void)
-{ return 0x0; }
-#define CPU_AUTODETECT_IS_UNSUPPORTED
-#endif
-
 
 #if (CLIENT_OS == OS_RISCOS)
-
 #include <setjmp.h>
 static jmp_buf ARMident_jmpbuf;
 static void ARMident_catcher(int)
 {
   longjmp(ARMident_jmpbuf, 1);
 }
+#endif
 
-static u32 __GetARMIdentification(void)
+#if (CLIENT_CPU == CPU_ARM)
+static int __GetRawARMIdentification(const char **cpuname)
 {
-  static u32 detectedvalue = 0x0;
-
-  if ( detectedvalue != 0x0 )
-    return detectedvalue;
-
-  // ARMident() will throw SIGILL on an ARM 2 or ARM 250, because
-  // they don't have the system control coprocessor. (We ignore the
-  // ARM 1 because I'm not aware of any existing C++ compiler that
-  // targets it...)
-
-  signal(SIGILL, ARMident_catcher);
-
-  if (setjmp(ARMident_jmpbuf))
+  static int detectedtype = -2; /* -1 == failed, -2 == not supported */
+  if ( detectedvalue == -2 )
+  {
+    #if (CLIENT_OS == OS_RISCOS)
     {
-    detectedvalue = 0x2000;
-    }
-  else
+      // ARMident() will throw SIGILL on an ARM 2 or ARM 250, because
+      // they don't have the system control coprocessor. (We ignore the
+      // ARM 1 because I'm not aware of any existing C++ compiler that
+      // targets it...)
+      signal(SIGILL, ARMident_catcher);
+      if (setjmp(ARMident_jmpbuf))
+        detectedvalue = 0x2000;
+      else
+        detectedvalue = ARMident();
+      signal(SIGILL, SIG_DFL);
+
+      detectedvalue = (detectedvalue >> 4) & 0xfff; // extract part number field
+
+      if ((detectedvalue & 0xf00) == 0)
+      {
+        //old-style ID (ARM 3 or prototype ARM 600) - shift it into the new form
+        detectedvalue <<= 4;
+      }
+      if (detectedvalue == 0x300)
+      {
+        detectedvalue = 3;
+      }
+      else if (detectedvalue == 0x710)
+      {
+        // the ARM 7500 returns an ARM 710 ID - need to look at its
+        // integral IOMD unit to spot the difference
+        u32 detectediomd = IOMDident();
+        detectediomd &= 0xff00; // just want most significant byte
+        if (detectediomd == 0x5b00)
+          detectedvalue = 0x7500;
+        else if (detectediomd == 0xaa00)
+          detectedvalue = 0x7500FE;
+      }
+    } 
+    #endif /* RISCOS */
+  }
+  if ( cpuname )
+  {
+    *cpuname = NULL;
+    if (detectedvalue > 0)
     {
-    detectedvalue = ARMident();
-    }
-
-  signal(SIGILL, SIG_DFL);
-
-  detectedvalue = (detectedvalue >> 4) & 0xfff; // extract part number field
-
-  if ((detectedvalue & 0xf00) == 0)
-    {
-    // an old-style ID (ARM 3 or prototype ARM 600) - shift it into the new form
-    detectedvalue <<= 4;
-    }
-
-  if (detectedvalue == 0x300)
-    {
-    detectedvalue = 3;
-    }
-  else if (detectedvalue == 0x710)
-    {
-    // the ARM 7500 returns an ARM 710 ID - need to look at its
-    // integral IOMD unit to spot the difference
-    u32 detectediomd = IOMDident();
-    detectediomd &= 0xff00; // just want most significant byte
-
-    if (detectediomd == 0x5b00)
-      detectedvalue = 0x7500;
-    else if (detectediomd == 0xaa00)
-      detectedvalue = 0x7500FE;
-    }
+      static char cpunamebuf[60];
+      switch (detectedvalue)
+      {
+        case 0x3:
+        case 0x600:
+        case 0x610:
+        case 0x700:
+        case 0x7500:
+        case 0x7500FE:
+        case 0x710:
+        case 0x810: sprintf( cpunamebuf, "%lX", (long)detectedvalue );
+                    *cpuname = ((const char *)&(cpunamebuf[0]));
+                    break;
+        case 0x200: *cpuname = "2 or 250"; break;
+        case 0xA10: *cpuname = "110 (StrongARM)"; break;
+        /* the rest result in "unknown" */
+      }
+    }  
+  }
   return detectedvalue;
+}  
+#endif
+
+// --------------------------------------------------------------------------
+
+#if (CLIENT_CPU == CPU_ALPHA)
+static int __GetRawAlphaIdentification(const char **cpuname)
+{
+  static int detectedtype = -2; /* -1 == failed, -2 == not supported */
+  if (detectedtype == -2)
+  {
+  #if (CLIENT_OS == OS_DEC_UNIX)
+    long buf;
+    int  st = 0;
+    detectedtype = -1;
+    if (-1 != getsysinfo(GSI_PROC_TYPE, (char *) &buf, sizeof(buf), st, NULL,NULL))
+      detectedtype = buf & 0xffff;
+  #endif
+  }
+  if (cpuname)
+  {
+    const char * names[] = 
+    { NULL,
+      "EV3",
+      "EV4 (21064)",
+      NULL,
+      "LCA4 (21066/21068)",
+      "EV5 (21164)",
+      "EV4.5 (21064)",
+      "EV5.6 (21164A)",
+      "EV6 (21264)",
+      "EV5.6 (21164PC)" 
+    };
+    *cpuname = NULL;
+    if (detectedtype>=0 && detectedtype<(sizeof(names)/sizeof(names[0])))
+      *cpuname = names[detectedtype];
+  }
+  return detectedtype;
 }
-#endif /* OS_RISCOS */
+#endif
+
+// --------------------------------------------------------------------------
 
 int GetProcessorType(int quietly)
 {
-  u32 detectedvalue = __GetARMIdentification(); //must be interpreted
-  int coretouse = -1; // the core the client should use
-  char apd[40];
-
-  apd[0] = 0;
-  switch (detectedvalue)
+  int coretouse = -1;
+  const char *apd = "Automatic processor detection ";
+  #if (CLIENT_CPU == CPU_ALPHA)
+  {
+    const char *cpuname = NULL;
+    int rawid = __GetRawAlphaIdentification(&cpuname);
+    if (!quietly)
     {
-    case 0x200:
-      strcpy(apd, "found an ARM 2 or ARM 250.");
-      coretouse = 2;
-      break;
-    case 0x3:
-    case 0x600:
-    case 0x610:
-    case 0x700:
-    case 0x7500:
-    case 0x7500FE:
-      coretouse = 0;
-      break;
-    case 0x710:
-      coretouse = 3;
-      break;
-    case 0x810:
-      coretouse = 1;
-      break;
-    case 0xA10:
-      strcpy(apd, "found a StrongARM 110." );
-      coretouse = 1;
-      break;
-    default:
-      sprintf(apd, "failed. (id: %08X)", detectedvalue);
+      if (rawid < 0)
+        LogScreen("%s%s.\n", apd, ((rawid == -1)?("failed"):("is not supported")));
+      else if (cpuname == NULL)
+        LogScreen("%sfound\nan unrecognized Alpha processor (id: %d)\n",apd, rawid);
+      else
+        LogScreen("%sfound\nan Alpha %s processor.\n",apd, cpuname);
+    }
+    coretouse = ((rawid < 0) ? (-1) : (rawid));
+  }
+  #elif (CLIENT_CPU == CPU_68K)
+  {
+    const char *cpuname;
+    int rawid = __GetRaw68KIdentification(&cpuname);
+
+    if (!quietly)
+    {
+      if (rawid < 0)
+        LogScreen("%s%s.\n", apd, ((rawid == -1)?("failed"):("is not supported")) );
+      else
+        LogScreen("%sfound\na Motorola %s\n",apd, cpuname);
+    }
+    coretouse = ((rawid < 0) ? (-1) : (rawid));
+  }
+  #elif (CLIENT_CPU == CPU_POWERPC)
+  {
+    const char *cpu_desc = NULL;
+    int rawid = __GetRawPPCIdentification(&cpu_desc);
+
+    if (!quietly)
+    {
+      if (rawid < 0)
+        LogScreen("%s%s.\n", apd, (rawid == -1 ? "failed" : "is not supported") );
+      else if (cpu_desc == NULL)
+        LogScreen("%sfound\nan unrecognized PowerPC (id: %d)\n", rawid );
+      else
+        LogScreen("%sfound\na PowerPC %s\n", msg, cpu_desc);
+    }
+    if (rawid < 0)
       coretouse = -1;
-      break;
-    }
-  if (!quietly)
+    else if (rawid == 0)
+      coretouse = 0; /* 601 */
+    else
+      coretouse = 1; /* 603/604/750 */
+  }
+  #elif (CLIENT_CPU == CPU_X86)
+  {
+    int vendorid, cpuidb;
+    char *article, *vendorname;
+    struct _cpuxref *cpuxref =
+          __GetProcessorXRef( &cpuidb, &vendorid, &article, &vendorname );
+
+    if ( cpuxref == NULL ) // fell through
     {
-    if (!apd[0]) sprintf(apd, "found an ARM %X.", detectedvalue);
-    LogScreen( "Automatic processor detection %s\n", apd );
+      if (!quietly)
+        LogScreen( "%sfailed. (id: %04X:%04X)\n", apd, vendorid, cpuidb );
+      coretouse = 0;
     }
-  return coretouse;
+    else if ( cpuxref->cpuname == NULL )  // fell through to last element
+    {
+      coretouse = (cpuxref->coretouse);
+      if (!quietly)
+        LogScreen("%sfound an unrecognized %s processor. (id: %04X)\n", apd,
+                                                    vendorname, cpuidb );
+    }
+    else // if ( cpuidb & mask == (cpuxref->cpuidb & mask))
+    {
+      coretouse = (cpuxref->coretouse);
+      if (!quietly)
+      {
+        if ( !vendorname || !*vendorname )  // generic type - no vendor name
+          LogScreen( "%sfound %s %s.\n", apd, article, (cpuxref->cpuname));
+        else
+          LogScreen( "%sfound %s %s %s.\n", apd, article,
+                   vendorname, (cpuxref->cpuname) );
+      }
+    }
+  }
+  #elif (CLIENT_CPU == CPU_ARM)
+  {
+    const char *cpuname = NULL;
+    int rawid = __GetRawARMIdentification(&cpuname);
+    if (!quietly)
+    {
+      if (rawid < 0)
+        LogScreen("%s%s.\n", apd, ((rawid == -1)?("failed"):("is not supported")));
+      else if (cpuname == NULL)
+        LogScreen("%sfound\nan unrecognized ARM processor (id: %X)\n",apd, rawid);
+      else
+        LogScreen("%sfound\nan ARM %s processor.\n",apd, cpuname);
+    }
+    if (rawid < 0)               
+      coretouse = -1;
+    else if (rawid == 0x200)     
+      coretouse = 2;
+    else if (rawid == 0x710)     
+      coretouse = 3;
+    else if (rawid == 0x3   || rawid == 0x600  || rawid == 0x610 || 
+             rawid == 0x700 || rawid == 0x7500 || rawid == 0x7500FE)
+      coretouse = 0;
+    else if (rawid == 0x810 || rawid == 0xA10) 
+      coretouse = 1;
+    else
+      coretouse = -1;
+  }
+  #else
+  {
+    if (!quietly)
+      LogScreen("%sis not supported.\n", apd );
+    coretouse = -1;
+  }
+  #endif
+
+  return (coretouse);
 }
-
-#endif /* CLIENT_CPU == CPU_ARM */
-
-#if ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX))
-
-#include <sys/sysinfo.h>
-#include <machine/hal_sysinfo.h>
-#include <machine/cpuconf.h>
-
-int GetProcessorType(int quietly)
-{
-  int     status = 0;
-  long    buf;
-  int     st = 0;
-
-  status = getsysinfo(GSI_PROC_TYPE, (char *) &buf, sizeof(buf), st, NULL,NULL);
-  if (status == -1)
-	return -1;
-  return (buf & 0xffff);
-}
-#endif /* ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX)) */
-
 
 // --------------------------------------------------------------------------
 
@@ -1025,38 +1048,59 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
 {
   const char *maxcpu_s, *foundcpu_s, *cpuid_s;
 
-#if defined(CPU_AUTODETECT_IS_UNSUPPORTED)
-  cpuid_s = "none\n\t(client does not support identification)";
-#elif (CLIENT_CPU == CPU_X86)
+#if (CLIENT_CPU == CPU_X86)
   static char cpuid_b[12];
   int vendorid, cpuidb;
   __GetProcessorXRef( &cpuidb, &vendorid, NULL, NULL );
   sprintf( cpuid_b, "%04X:%04X", vendorid, cpuidb );
   cpuid_s = ((const char *)(&cpuid_b[0]));
-#elif ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS))
-  static char cpuid_b[50];
-  u32 cpuidb = __GetARMIdentification();
-  if (cpuidb == 0x0200)
-    strcpy(cpuid_b, "ARM 2 or ARM 250");
-  else if (cpuidb == 0x0A10)
-    strcpy(cpuid_b, "StrongARM 110");
-  else
-    sprintf( cpuid_b, "%X", cpuidb );
-  if (riscos_count_cpus() == 2)
-    strcat(cpuid_b,riscos_x86_determine_name());
-  cpuid_s = ((const char *)(&cpuid_b[0]));
+#elif (CLIENT_CPU == CPU_ARM)
+  int cpuidb = __GetRawARMIdentification(&cpuid_s);
+  if (cpuidb < 0)
+    cpuid_s = ((cpuidb==-1)?("?\n\t(identification failed)"):
+              ("none\n\t(client does not support identification)"));
+  else 
+  {
+    static char cpuid_b[50];
+    if (cpuid_s == NULL)
+      sprintf( cpuid_b, "unrecognized id: %X ", cpuidb );
+    else
+      sprintf( cpuid_b, "ARM %s (id: %X) ", cpuid_s, cpuidb );
+    #if (CLIENT_OS == OS_RISCOS)
+    if (riscos_count_cpus() == 2)
+      strcat(cpuid_b,riscos_x86_determine_name());
+    #endif
+    cpuid_s = ((const char *)(&cpuid_b[0]));
+  }
 #elif (CLIENT_CPU == CPU_POWERPC)
   int cpuidb = __GetRawPPCIdentification(&cpuid_s);
   if (cpuidb < 0)
     cpuid_s = ((cpuidb==-1)?("?\n\t(identification failed)"):
               ("none\n\t(client does not support identification)"));
+  else if (cpuid_s == NULL)
+  {
+    static char cpuid_b[20];
+    sprintf( cpuid_b, "unrecognized id: 0x%04x", cpuidb );
+    cpuid_s = ((const char *)(&cpuid_b[0]));
+  }    
 #elif (CLIENT_CPU == CPU_68K)
   int cpuidb = __GetRaw68kIdentification(&cpuid_s);
   if (cpuidb < 0)
     cpuid_s = ((cpuidb==-1)?("?\n\t(identification failed)"):
               ("none\n\t(client does not support identification)"));
-#else
-  cpuid_s = "?";
+#elif (CLIENT_CPU == CPU_ALPHA)
+  int cpuidb = __GetRawAlphaIdentification(&cpuid_s);
+  if (cpuidb < 0)
+    cpuid_s = ((cpuidb==-1)?("?\n\t(identification failed)"):
+              ("none\n\t(client does not support identification)"));
+  else if (cpuid_s == NULL)
+  {
+    static char cpuid_b[20];
+    sprintf( cpuid_b, "unrecognized id: 0x%X ", cpuidb );
+    cpuid_s = ((const char *)(&cpuid_b[0]));
+  }    
+#else    
+  cpuid_s = "none\n\t(client does not support identification)";
 #endif
 
   #if defined(CLIENT_SUPPORTS_SMP)
@@ -1075,11 +1119,11 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
   if (cpucount < 1)
     foundcpu_s = "1\n\t(OS does not support detection)";
   else
-    {
+  {
     static char foundcpu_b[6];
     sprintf( foundcpu_b, "%d", cpucount );
     foundcpu_s = ((const char *)(&foundcpu_b[0]));
-    }
+  }
 
   if ( scpuid ) *scpuid = cpuid_s;
   if ( smaxscpus ) *smaxscpus = maxcpu_s;
