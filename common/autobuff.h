@@ -1,34 +1,18 @@
 // Hey, Emacs, this a -*-C++-*- file !
-
+//
 // Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-// 
+//
 // ----------------------------------------------------------------------
 // Dynamicly growing buffering class oriented for containing
 // arbitrary binary data for network communications.
 // Created by Jeff Lawson.
 // ----------------------------------------------------------------------
 // 
-// $Log: autobuff.h,v $
-// Revision 1.9  1999/02/28 02:29:04  jlawson
-// merged stepline functionality from proxy codebase.
-//
-// Revision 1.8  1999/01/31 20:19:07  cyp
-// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
-//
-// Revision 1.7  1999/01/01 02:45:14  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.6  1998/07/07 21:54:59  cyruspatel
-// client.h has been split into client.h and baseincs.h 
-//
-// Revision 1.5  1998/06/14 08:12:26  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-// 
+
 #ifndef __AUTOBUFF_H__
-#define __AUTOBUFF_H__
+#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.9.2.1 1999/04/13 19:45:09 jlawson Exp $"
 
 #ifndef AUTOBUFFER_INCREMENT
 #define AUTOBUFFER_INCREMENT 100
@@ -62,7 +46,5 @@ public:
   bool StepLine(AutoBuffer &line, u32 &offset) const;
 };
 
-
-
-#endif
+#endif /* __AUTOBUFF_H__ */
 

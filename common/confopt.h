@@ -1,59 +1,12 @@
-// Hey, Emacs, this a -*-C++-*- file !
-
-// Copyright distributed.net 1997-1998 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: confopt.h,v $
-// Revision 1.13  1999/04/01 03:20:40  cyp
-// Updated to reflect changed [in|out]_buffer_[file->basename] semantics.
-//
-// Revision 1.12  1999/03/18 03:59:09  cyp
-// new "Project priority" option.
-//
-// Revision 1.11  1999/02/20 03:07:17  gregh
-// Add OGR options to configuration data.
-//
-// Revision 1.10  1999/02/07 16:00:09  cyp
-// Lurk changes: genericified variable names, made less OS-centric.
-//
-// Revision 1.9  1999/02/06 09:08:08  remi
-// Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
-// to watch for online/offline status. If this list is empty (the default), any
-// interface up and running (besides the lookback one) will trigger the online
-// status.
-//
-// Revision 1.8  1999/02/04 10:44:19  cyp
-// Added support for script-driven dialup. (currently linux only)
-//
-// Revision 1.7  1999/01/04 02:47:30  cyp
-// Cleaned up menu options and handling.
-//
-// Revision 1.5  1998/12/23 00:41:45  silby
-// descontestclosed and scheduledupdatetime now read from the .ini file.
-//
-// Revision 1.3  1998/12/21 00:21:01  silby
-// Universally scheduled update time is now retrieved from the proxy,
-// and stored in the .ini file.  Not yet used, however.
-//
-// Revision 1.2  1998/12/20 23:00:35  silby
-// Descontestclosed value is now stored and retrieved from the ini file,
-// additional updated of the .ini file's contest info when fetches and
-// flushes are performed are now done.  Code to throw away old des blocks
-// has not yet been implemented.
-//
-// Revision 1.1  1998/11/22 15:16:19  cyp
-// Split from cliconfig.cpp; Changed runoffline/runbuffers/blockcount handling
-// (runbuffers is now synonymous with blockcount=-1; offlinemode is always
-// 0/1); changed 'frequent' context to describe what it does better: check
-// buffers frequently and not connect frequently. Removed outthreshold[0] as
-// well as both DES thresholds from the menu. Removed 'processdes' from the menu.
-// Fixed various bugs. Range validation is always based on the min/max values in
-// the option table.
-//
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1998 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.13.2.1 1999/04/13 19:45:20 jlawson Exp $"
 
 #define CONF_ID                    0 /* CONF_MENU_BUFF */
 #define CONF_NODISK                1 /* CONF_MENU_BUFF */
@@ -135,14 +88,9 @@ struct optionstruct
   s32 choicemax;               //maximum choice number
   const char *disabledtext;    //is NULL if not disabled
   };
-
-/* ---------------------------------------------------------------- */
-
 extern struct optionstruct conf_options[CONF_OPTION_COUNT];
-extern int                 confopt_IsHostnameDNetHost( const char * hostname );
-extern int                 confopt_isstringblank( const char *string );
-extern void                confopt_killwhitespace( char *string );
 
 /* ---------------------------------------------------------------- */
 
-#endif /* #ifndef __CONFOPT_H__ */
+#endif /* __CONFOPT_H__ */
+

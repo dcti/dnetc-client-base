@@ -1,191 +1,12 @@
 // Hey, Emacs, this a -*-C++-*- file !
-
+//
 // Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
-// $Log: cputypes.h,v $
-// Revision 1.54  1999/03/03 01:27:49  jlawson
-// changed sunos sparc detection macro since sun's workshop compiler only
-// defines __sparc and not __sparc__.  removed inappropriate use of
-// ignoreunknowncpuos for dynix.
-//
-// Revision 1.53  1999/02/28 02:44:55  jlawson
-// fixed lint warning messages.
-//
-// Revision 1.52  1999/02/23 22:26:41  remi
-// Added support for NetBSD/VAX. Anyone to compile the client ?
-//
-// Revision 1.51  1999/02/04 23:03:47  foxyloxy
-// Very small cosmetic change in comments.
-//
-// Revision 1.50  1999/01/31 20:18:08  cyp
-// Discarded all 'bool' type wierdness. If a variable name and usage does not
-// clearly identify it as being 0 or !0, no amount of declaration as bool
-// is going to help. And if a variable name /does/ clearly identify purpose, we
-// don't need to typedef it, do we?
-//
-// Revision 1.49  1999/01/27 00:40:01  jlawson
-// some cleanup and additions of more cpu detection macros commonly
-// defined automatically by some compilers.
-//
-// Revision 1.48  1999/01/20 20:25:10  patrick
-// OS2 EMX has threadid in stdlib
-//
-// Revision 1.47  1999/01/19 09:38:03  patrick
-// added recognition of OS2-EMX
-//
-// Revision 1.46  1999/01/17 13:01:25  cyp
-// CPU_UNKNOWN/OS_UNKOWN is defined only if CLIENT_CPU/CLIENT_OS is unknown.
-// _both_ were being defined if either CLIENT_CPU _or_ CLIENT_OS was unknown.
-//
-// Revision 1.45  1999/01/15 09:55:21  jlawson
-// added DES Cracker os and cpu type.
-//
-// Revision 1.44  1999/01/15 01:32:46  snake
-// fixed CLIENT_OS_NAME entry for BSD/OS (it's not BSDI Unix)
-//
-// Revision 1.43  1999/01/13 01:07:14  snake
-// fixed OpenBSD CLIENT_OS_NAME stuff
-//
-// Revision 1.42  1999/01/11 23:38:53  michmarc
-// Add SMP support for Alpha/Win32.  [Are Alpha/unix cores also SMP safe?]
-//
-// Revision 1.41  1999/01/06 06:04:02  cramer
-// cleaned up some of the solaris/sunos updates
-//
-// Revision 1.40  1999/01/01 02:45:15  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.39  1998/12/28 21:37:54  cramer
-// Misc. cleanups for the disappearing RC5CORECOPY junk and minor stuff to
-// get a solaris client to build.
-//
-// Revision 1.38  1998/12/14 05:15:44  dicamillo
-// Mac OS updates to eliminate use of MULTITHREAD and have a singe client
-// for MT and non-MT machines.
-//
-// Revision 1.37  1998/12/01 19:49:14  cyp
-// Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
-// then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
-// are CORE_SUPPORTS_SMP, OS_SUPPORTS_SMP. If both CORE_* and OS_* support
-// SMP, then CLIENT_SUPPORTS_SMP is defined as well. This should keep thread
-// strangeness (as foxy encountered it) out of the picture. threadcd.h
-// (and threadcd.cpp) are no longer used, so those two can disappear as well.
-// Editorial note: The term "multi-threaded" is (and has always been)
-// virtually meaningless as far as the client is concerned. The phrase we
-// should be using is "SMP-aware".
-//
-// Revision 1.36  1998/11/25 06:04:17  dicamillo
-// Update for BeOS R4 for Intel- defined constants changed.
-//
-// Revision 1.35  1998/11/17 01:34:12  cyp
-// Fixed a missing \"
-//
-// Revision 1.34  1998/11/16 23:22:35  remi
-// Fixed an unterminated string.
-//
-// Revision 1.33  1998/11/16 22:30:05  cyp
-// Added CLIENT_OS_NAME
-//
-// Revision 1.32  1998/11/12 22:58:28  remi
-// Reworked a bit AIX ppc & power defines, based on Patrick Hildenbrand
-// <patrick@de.ibm.com> advices.
-//
-// Revision 1.31  1998/11/10 09:33:03  silby
-// Added AIX POWER 
-//
-// Revision 1.30  1998/09/29 07:56:57  remi
-// #if defined(SPARCLINUX) is redundant.
-//
-// Revision 1.29  1998/09/25 04:30:32  pct
-// DEC Ultrix port changes
-//
-// Revision 1.28  1998/08/10 20:09:34  cyruspatel
-// Added a warning for the VMS porter that NO!NETWORK is now obsolete
-//
-// Revision 1.27  1998/07/16 20:18:52  nordquist
-// DYNIX port changes.
-//
-// Revision 1.26  1998/07/15 05:50:33  ziggyb
-// removed the need for a fake bool when I upgraded my 
-// version of Watcom to version 11
-//
-// Revision 1.25  1998/07/01 09:06:36  daa
-// add HPUX_M68
-//
-// Revision 1.24  1998/06/29 10:42:13  jlawson
-// swapped OS_WIN32S and OS_WIN16 values, since Win32s clients were
-// previously classified as win16
-//
-// Revision 1.23  1998/06/29 07:59:42  ziggyb
-// Need Fake Bool on my older version of Watcom
-//
-// Revision 1.22  1998/06/29 06:58:00  jlawson
-// added new platform OS_WIN32S to make code handling easier.
-//
-// Revision 1.21  1998/06/22 09:25:18  cyruspatel
-// Added __WATCOMC__ check for bool support. 'true' was incorrectly defined
-// as (1). Changed to be (!false). As of this writing, this should have no
-// impact on the anything (I checked).
-//
-// Revision 1.20  1998/06/17 00:29:45  snake
-// #ifdefs for OpenBSD on Sparc were in the Linux section instead of the
-// OpenBSD section of 'configure'. Fixed by moving it to the right position.
-//
-// Revision 1.19  1998/06/15 00:13:09  skand
-// define NetBSD/alpha
-//
-// Revision 1.18  1998/06/13 21:46:52  friedbait
-// 'Log' keyword added such that we can easily track the change history
-//
-// 
 
-#if ( !defined(_CPU_32BIT_) && !defined(_CPU_64BIT_) )
-#define _CPU_32BIT_
-#endif
-
-#ifndef _CPUTYPES_H_
-#define _CPUTYPES_H_
-
-/* ----------------------------------------------------------------- */
-
-#if !defined(INTSIZES)
-#define INTSIZES 442
-#endif
-
-#if (INTSIZES == 422)       // (16-bit DOS/WIN):  long=32, int=16, short=16
-  typedef unsigned long u32;
-  typedef signed long s32;
-  typedef unsigned short u16;
-  typedef signed short s16;
-#elif (INTSIZES == 442)     // (typical):  long=32, int=32, short=16
-  typedef unsigned long u32;
-  typedef signed long s32;
-  typedef unsigned short u16;
-  typedef signed short s16;
-#elif (INTSIZES == 842)     // (Alphas and 64bit MIPS): long=64, int=32, short=16
-  typedef unsigned int u32;
-  typedef signed int s32;
-  typedef unsigned short u16;
-  typedef signed short s16;
-#else
-  #error "Invalid INTSIZES"
-#endif
-
-typedef unsigned char u8;
-typedef signed char s8;
-typedef double f64;
-typedef float f32;
-
-struct fake_u64 { u32 hi, lo; };
-struct fake_s64 { s32 hi, lo; };
-
-typedef struct fake_u64 u64;
-typedef struct fake_s64 s64;
-
-struct u128 { u64 hi, lo; };
-struct s128 { s64 hi, lo; };
+#ifndef __CPUTYPES_H__
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.54.2.1 1999/04/13 19:45:21 jlawson Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -198,14 +19,14 @@ struct s128 { s64 hi, lo; };
 #define CPU_PA_RISC     5
 #define CPU_68K         6
 #define CPU_SPARC       7
-#define CPU_JAVA_VM     8
+//#define CPU_UNUSED_1  8
 #define CPU_POWER       9
 #define CPU_VAX         10
 #define CPU_ARM         11
 #define CPU_88K         12
 #define CPU_KSR1        13
 #define CPU_S390        14
-#define CPU_MASPAR      15
+//#define CPU_UNUSED_2  15
 #define CPU_DESCRACKER  16  // eff descracker
 
 // Major OS Architectures.
@@ -226,14 +47,14 @@ struct s128 { s64 hi, lo; };
 #define OS_SUNOS        14
 #define OS_SOLARIS      15
 #define OS_OS9          16
-#define OS_JAVA_VM      17
+//#define OS_UNUSED_1   17    // was java-vm
 #define OS_BSDI         18
 #define OS_NEXTSTEP     19
 #define OS_SCO          20
 #define OS_QNX          21
 #define OS_OSF1         22    // oldname for DEC UNIX
-#define OS_MINIX        23
-#define OS_MACH10       24
+//#define OS_UNUSED_2   23    // was minix
+//#define OS_UNUSED_3   24    // was mach10
 #define OS_AIX          25
 #define OS_AUX          26
 #define OS_RHAPSODY     27
@@ -242,14 +63,14 @@ struct s128 { s64 hi, lo; };
 #define OS_NETWARE      30
 #define OS_MVS          31
 #define OS_ULTRIX       32
-#define OS_NEWTON       33
+#define OS_OS400        33
 #define OS_RISCOS       34
 #define OS_DGUX         35
 #define OS_WIN32S       36    // windows 3.1, 3.11, wfw (32-bit Win32s)
 #define OS_SINIX        37
 #define OS_DYNIX        38
 #define OS_OS390        39
-#define OS_MASPAR       40
+//#define OS_UNUSED4    40    // os_maspar
 #define OS_WIN16        41    // windows 3.1, 3.11, wfw (16-bit)
 #define OS_DESCRACKER   42    // eff des cracker
 
@@ -257,7 +78,6 @@ struct s128 { s64 hi, lo; };
 
 // determine current compiling platform
 #if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
-  
   #define CLIENT_OS_NAME "Win32"
   #if defined(NTALPHA)
     #define CLIENT_OS     OS_WIN32
@@ -406,13 +226,6 @@ struct s128 { s64 hi, lo; };
   #if defined(__ALPHA)
     #define CLIENT_CPU    CPU_ALPHA
   #endif
-
-  #error NONETWORK define is obsolete. (see top of [high up in] network.cpp)
-
-  #if !defined(__VMS_UCX__) && !defined(NONETWORK) && !defined(MULTINET)
-    #define MULTINET 1
-  #endif
-
 #elif defined(_HPUX) || defined(__hpux) || defined(__hpux__)
   #define CLIENT_OS_NAME  "HP/UX"
   #define CLIENT_OS       OS_HPUX
@@ -427,7 +240,9 @@ struct s128 { s64 hi, lo; };
   #define CLIENT_CPU      CPU_88K
 #elif defined(_AIX)
   #define CLIENT_OS_NAME   "AIX"
-  #if (defined(_ARCH_PPC) || defined(ASM_PPC))
+// AIXALL hides itself as POWER, it's more easy copy with this problem
+// in the POWER tree, because this is used on AIX only
+  #if defined(_ARCH_PPC) || defined(ASM_PPC) || defined(_AIXALL)
     #define CLIENT_OS     OS_AIX
     #define CLIENT_CPU    CPU_POWERPC
   #elif (defined(_ARCH_PWR) || defined(_ARCH_PWR2) || defined(ASM_POWER))
@@ -524,12 +339,8 @@ struct s128 { s64 hi, lo; };
   typedef unsigned long THREADID;
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_OS2)
-  #if defined(__EMX__)
-    #include <stdlib.h>
-  #else
-    //Headers defined elsewhere in a separate file.
-    typedef long THREADID;
-  #endif
+  //Headers defined elsewhere in a separate file.
+  typedef long THREADID;
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_NETWARE)
   #include <process.h>
@@ -566,6 +377,7 @@ struct s128 { s64 hi, lo; };
 
 /* ----------------------------------------------------------------- */
 
+#ifdef PROXYTYPE
 // Some compilers/platforms don't yet support bool internally.
 // When creating new rules here, please try to use compiler-specific
 // macro tests since not all compilers on a specific platform (or even
@@ -577,7 +389,7 @@ struct s128 { s64 hi, lo; };
   #define NEED_FAKE_BOOL
 #elif defined(__IBMCPP__)
   #define NEED_FAKE_BOOL
-#elif defined(__WATCOMC__)
+#elif defined(__WATCOMC__) && (__WATCOMC__ < 1100)
   //nothing - bool is defined
 #elif defined(__xlc) || defined(__xlC) || defined(__xlC__) || defined(__XLC121__)
   #define NEED_FAKE_BOOL
@@ -590,14 +402,205 @@ struct s128 { s64 hi, lo; };
 #elif (defined(_SEQUENT_) && !defined(__GNUC__))
   #define NEED_FAKE_BOOL
 #endif
-
 #if defined(NEED_FAKE_BOOL)
     typedef int bool;
     #define true 1
     #define false 0
 #endif
+#endif
 
 /* ----------------------------------------------------------------- */
 
+#ifdef __cplusplus 
+extern "C" {
+#endif
+#include <limits.h>
+#ifdef __cplusplus
+}
 #endif
 
+#if !defined(SIZEOF_LONG) || !defined(SIZEOF_SHORT) || !defined(SIZEOF_INT)
+  #if (!defined(UINT_MAX) || !defined(ULONG_MAX))
+    #error your limits.h appears to be borked (UINT_MAX or ULONG_MAX are undefined)
+  #elif (ULONG_MAX < UINT_MAX)
+    #error your limits.h is borked. ULONG_MAX can never be less than UINT_MAX
+  #else
+    #if (defined(USHRT_MAX) && !defined(USHORT_MAX))
+      #define USHORT_MAX USHRT_MAX
+    #endif
+    #if !defined(SIZEOF_SHORT) && defined(USHORT_MAX)
+      #if (USHORT_MAX == 0xFFUL)
+        #define SIZEOF_SHORT 1
+      #elif (USHORT_MAX == 0xFFFFUL)
+        #define SIZEOF_SHORT 2
+      #elif (USHORT_MAX == 0xFFFFFFFFUL)    
+        #define SIZEOF_SHORT 4
+      #elif (USHORT_MAX == 0xFFFFFFFFFFFFFFFFUL)
+        #define SIZEOF_SHORT 8
+      #else
+        #fixme: sizeof(unsigned short) !=1 and !=2 and !=4 and !=8?
+      #endif	
+    #endif
+    #if defined(SIZEOF_INT)
+      #ifndef SIZEOF_SHORT
+        #if (SIZEOF_INT < 4)
+          #define SIZEOF_SHORT SIZEOF_INT
+        #elif (SIZEOF_INT > 4)
+          #define SIZEOF_SHORT (SIZEOF_INT>>1)
+        #else 
+          #define SIZEOF_SHORT 2
+        #endif
+      #endif
+      #ifndef SIZEOF_LONG
+        #define SIZEOF_LONG (SIZEOF_INT<<1)
+      #endif
+    #elif (UINT_MAX == 0xFFUL)
+      #ifndef SIZEOF_SHORT
+        #define SIZEOF_SHORT 1
+      #endif
+      #define SIZEOF_INT   1
+      #ifndef SIZEOF_LONG
+        #if (ULONG_MAX > UINT_MAX)
+          #define SIZEOF_LONG  2
+        #else
+          #define SIZEOF_LONG  1
+        #endif
+      #endif
+    #elif (UINT_MAX == 0xFFFFUL)
+      #ifndef SIZEOF_SHORT
+        #define SIZEOF_SHORT 2
+      #endif
+      #define SIZEOF_INT   2
+      #ifndef SIZEOF_LONG
+        #if (ULONG_MAX > UINT_MAX)
+          #define SIZEOF_LONG  4
+        #else
+          #define SIZEOF_LONG  2
+        #endif
+      #endif
+    #elif (UINT_MAX == 0xFFFFFFFFUL)
+      #ifndef SIZEOF_SHORT
+        #define SIZEOF_SHORT 2
+      #endif
+      #define SIZEOF_INT   4
+      #ifndef SIZEOF_LONG
+        #if (ULONG_MAX > UINT_MAX)
+          #define SIZEOF_LONG  8
+        #else
+          #define SIZEOF_LONG  4
+        #endif
+      #endif
+    #elif (UINT_MAX == 0xFFFFFFFFFFFFFFFFUL)
+      #ifndef SIZEOF_SHORT
+        #define SIZEOF_SHORT 4
+      #endif
+      #define SIZEOF_INT   8
+      #ifndef SIZEOF_LONG
+        #if (ULONG_MAX > UINT_MAX)
+          #define SIZEOF_LONG  16
+        #else
+          #define SIZEOF_LONG  8
+        #endif
+      #endif
+    #else
+      #error fixme: sizeof(int) > 8? what would sizeof(short) be?
+    #endif
+  #endif /* ULONG_MAX >= UINT_MAX */
+#endif
+      
+#if (defined(SIZEOF_SHORT) && (SIZEOF_SHORT == 2))
+  typedef unsigned short u16;
+//typedef signed short s16;
+#elif (defined(SIZEOF_SHORT) && (SIZEOF_INT == 2))
+  typedef unsigned int u16;
+//typedef signed int s16;
+#elif (defined(SIZEOF_LONG) && (SIZEOF_LONG == 2))
+  typedef unsigned long u16;
+//typedef signed long s16;
+#else
+  #error types u16 is undefined (try wchar_t)
+#endif
+#if (defined(SIZEOF_SHORT) && (SIZEOF_SHORT == 4))
+  typedef unsigned short u32;
+  typedef signed short s32;
+#elif (defined(SIZEOF_INT) && (SIZEOF_INT == 4))
+  typedef unsigned int u32;
+  typedef signed int s32;
+#elif (defined(SIZEOF_LONG) && (SIZEOF_LONG == 4))
+  typedef unsigned long u32;
+  typedef signed long s32;
+#else
+  #error types u32/s32 is undefined
+#endif
+#if (defined(SIZEOF_SHORT) && (SIZEOF_SHORT == 8))
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned short ui64;
+  typedef signed short si64;
+#elif (defined(SIZEOF_INT) && (SIZEOF_INT == 8))
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned int ui64;
+  typedef signed int si64;
+#elif (defined(SIZEOF_LONG) && (SIZEOF_LONG == 8))
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned int ui64;
+  typedef signed int si64;
+#elif defined(__GCC__) || defined(__GNUC__)
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned long long ui64;
+  typedef signed long long si64;
+#elif (defined(__WATCOMC__) && (__WATCOMC__ >= 11))
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned __int64 ui64;
+  typedef __int64 si64;
+#elif (defined(_MSC_VER) && (_MSC_VER >= 11)) // VC++ >= 5.0  
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned __int64 ui64;
+  typedef __int64 si64;
+#elif (CLIENT_OS == OS_MACOS)
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned long long ui64;
+  typedef signed long long si64;
+#elif (CLIENT_OS == OS_AMIGAOS)
+  #error to enable 64bit integer math, please typedef your 64 bit int by compiler
+#endif  
+
+#if 0
+#if !defined(INTSIZES)
+    #define INTSIZES 442
+#endif
+#if (INTSIZES == 422)       // (16-bit DOS/WIN):  long=32, int=16, short=16
+  typedef unsigned long u32;
+  typedef signed long s32;
+  typedef unsigned short u16;
+  typedef signed short s16;
+#elif (INTSIZES == 442)     // (typical):  long=32, int=32, short=16
+  typedef unsigned long u32;
+  typedef signed long s32;
+  typedef unsigned short u16;
+  typedef signed short s16;
+#elif (INTSIZES == 842)     // (Alphas and 64bit MIPS): long=64, int=32, short=16
+  typedef unsigned int u32;
+  typedef signed int s32;
+  typedef unsigned short u16;
+  typedef signed short s16;
+#else
+  #error "Invalid INTSIZES"
+#endif
+#endif
+
+typedef unsigned char u8;
+typedef struct fake_u64 { u32 hi, lo; } u64;
+
+//typedef signed char s8;
+//typedef struct fake_u64 { s32 hi, lo; } s64;
+//struct u128 { u64 hi, lo; };
+//struct s128 { s64 hi, lo; };
+
+#endif /* __CPUTYPES_H__ */

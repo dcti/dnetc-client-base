@@ -2,29 +2,16 @@
 ** memfile.cpp created 1998/08/16 Cyrus Patel <cyp@fb14.uni-mainz.de>
 **
 ** This code is POSIXly correct. Please keep it that way.
+**
+** This is a posix stream interface to memory, standard FILE functions are
+** emulated. Multiple 'files' can be open simultaneously. The size of a 'file' 
+** is limited only by available memory. The following functions are available: 
+** mfopen(), mfread(), mfwrite(), mfeof(), mftell(), mfseek(), mrewind(), 
+** mflush[all](), mfclose[all](), mfileno(), mfilelength(), mftruncate(), 
+** mdup(). The stream object used/created by these functions is a MEMFILE *. 
 */
-/*
-  This is a posix stream interface to memory, standard FILE functions are
-  emulated. Multiple 'files' can be open simultaneously. The size of a 'file' 
-  is limited only by available memory. The following functions are available: 
-  mfopen(), mfread(), mfwrite(), mfeof(), mftell(), mfseek(), mrewind(), 
-  mflush[all](), mfclose[all](), mfileno(), mfilelength(), mftruncate(), 
-  mdup(). The stream object used/created by these functions is a MEMFILE *. 
-*/
-/*
-** $Log: memfile.cpp,v $
-** Revision 1.3  1998/10/04 11:35:44  remi
-** Id tags fun.
-**
-** Revision 1.2  1998/10/03 05:34:28  sampo
-** comment out <malloc.h> for MacOS builds.
-**
-** Revision 1.1  1998/08/20 19:21:50  cyruspatel
-** Created
-**
-**
-**
-*/
+const char *memfile_cpp(void) {
+return "@(#)$Id: memfile.cpp,v 1.3.2.1 1999/04/13 19:45:25 jlawson Exp $"; }
 
 #include <stdio.h>
 #include <string.h>
@@ -32,14 +19,6 @@
 #include <malloc.h>
 #endif
 #include "memfile.h" /* thats us */
-
-/* ====================================================================== */
-
-#if (!defined(lint) && defined(__showids__))
-const char *memfile_cpp(void) {
-return "@(#)$Id: memfile.cpp,v 1.3 1998/10/04 11:35:44 remi Exp $"; }
-#endif
-
 /* #define TEST */
 
 /* ====================================================================== */

@@ -1,71 +1,16 @@
-// Hey, Emacs, this a -*-C++-*- file !
-//
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// ----------------------------------------------------------------------
-// Generic strcmpi and strncmpi macros
-// ----------------------------------------------------------------------
-//
-// $Log: cmpidefs.h,v $
-// Revision 1.18  1999/01/29 18:59:28  jlawson
-// fixed formatting.
-//
-// Revision 1.17  1999/01/28 00:11:19  trevorh
-// Added support for IBM VA C++
-//
-// Revision 1.16  1999/01/27 00:36:58  jlawson
-// added sys/types.h for riscos
-//
-// Revision 1.15  1999/01/19 12:49:28  patrick
-//
-// forgot to change define re: strings.h
-//
-// Revision 1.14  1999/01/19 09:41:32  patrick
-//
-// added OS2-EMX defines for strcmpi...
-// moved AIX include for strings.h to basincs.h
-//
-// Revision 1.13  1999/01/09 19:31:14  cyp
-// synchronized cmpidefs.h in client and proxy source trees
-//
-// Revision 1.12  1999/01/01 02:45:15  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.11  1998/12/22 15:58:24  jcmichot
-// QNX port changes
-//
-// Revision 1.10  1998/12/08 05:38:18  dicamillo
-// Add defines for MacOS.
-//
-// Revision 1.9  1998/09/25 04:29:12  pct
-// DEC Ultrix port changes
-//
-// Revision 1.8  1998/08/27 00:43:28  cyp
-// DOS change: strncmpi() now defined.
-//
-// Revision 1.7  1998/07/16 21:23:03  nordquist
-// More DYNIX port changes.
-//
-// Revision 1.6  1998/07/13 12:40:28  kbracey
-// RISC OS update. Added -noquiet option.
-//
-// Revision 1.5  1998/07/05 07:04:26  jlawson
-// changes for Win32s
-//
-// Revision 1.4  1998/07/01 03:12:45  blast
-// AmigaOS changes...
-//
-// Revision 1.3  1998/06/29 07:58:39  ziggyb
-// strncmpi(x,y,n) doesn't seem to be defined in my older version of watcom.
-//
-// Revision 1.2  1998/06/26 10:02:49  cyruspatel
-// Fixed cmpidefs.h to be platform-centric instead of compiler-centric.
-//
-// Revision 1.1  1998/06/26 07:11:55  daa
-// move macro defs for strcmpi and strncmpi to a seperate header file
-//
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ----------------------------------------------------------------------
+ * Generic strcmpi() and strncmpi() macros
+ * ----------------------------------------------------------------------
+*/ 
+
+#ifndef __CMPIDEFS_H__
+#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.18.2.1 1999/04/13 19:45:19 jlawson Exp $"
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16)
   #if defined(__TURBOC__)
@@ -146,4 +91,7 @@
     extern "C" int strcasecmp(const char *s1, const char *s2);
     extern "C" int strncasecmp(const char *s1, const char *s2, int);
   #endif
-#endif
+#endif 
+
+#endif /* __CMPIDEFS_H__ */
+

@@ -1,294 +1,26 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
+/*
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/
+const char *cpucheck_cpp(void) {
+return "@(#)$Id: cpucheck.cpp,v 1.74.2.1 1999/04/13 19:45:21 jlawson Exp $"; }
+
+/* ------------------------------------------------------------------------ */
 /*
    Implementing long __GetRawProcessorID( const char **cpuname ):
    
-   if identification failed: 
-               return -1L, set cpuname to NULL 
-   if identification is not supported:
-               return -2L, set cpuname to NULL 
-   if we have an ID and a name:
-               return ID and fully formatted name (eg "Alpha EV5.6 (21164PC)")
-   if we have an ID but no name: 
-               return ID, set cpuname to ""
-   if we have a name, but no ID: 
-               return ID==0, and set cpuname to the raw name (eg "PCA56" )
+   if identification failed:           return ID==-1L, and set cpuname
+                                       to NULL 
+   if identification is not supported: return ID==-2L, and set cpuname
+                                       to NULL 
+   if we have a name, but no ID:       return ID==0, set cpuname to the 
+                                       raw name (eg "PCA56" )
+   if we have an ID and a name:        return ID and fully formatted 
+                                       name (eg "Alpha EV5.6 (21164PC)")
+   if we have an ID but no name:       return ID, set cpuname to ""
+                                                   -  cyp April/03/1999
 */
-// $Log: cpucheck.cpp,v $
-// Revision 1.75  1999/04/03 20:30:36  sampo
-// Fixed some typos, removed codenames from end of some PowerPC processor names.
-//
-// Revision 1.74  1999/04/02 20:56:41  jlawson
-// standardized naming of raw cpu type identification functions and cleaned
-// many other aspects and formatting of common cpu reporting.
-//
-// Revision 1.73  1999/04/01 07:16:24  jlawson
-// cleaned formatting. alpha linux now defaults to 1 processor instead of
-// returning 0 on non-smp kernels.
-//
-// Revision 1.72  1999/04/01 01:05:37  cyp
-// brought (hopefully correctly) Alpha detection into line with all the
-// others. This module is not the easiest code to maintain, so would porters
-// please look around when adding support? Many thanks.
-//
-// Revision 1.71  1999/02/23 04:45:35  silby
-// Added Pentium III to x86 cpu list.
-//
-// Revision 1.70  1999/01/31 20:19:08  cyp
-// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
-//
-// Revision 1.69  1999/01/29 18:52:30  jlawson
-// fixed formatting.  changed some int vars to bool.
-//
-// Revision 1.68  1999/01/29 04:15:35  pct
-// Updates for the initial attempt at a multithreaded/multicored Digital
-// Unix Alpha client.  Sorry if these changes cause anyone any grief.
-//
-// Revision 1.67  1999/01/21 19:34:52  michmarc
-// changes to the #ifdef around GetProcessorType broke the link setp on
-// some platforms. ((CLIENT_CPU != CPU_ALPHA) && (CLIENT_OS != OS_DEC_UNIX))
-// to  ((CLIENT_CPU != CPU_ALPHA) || (CLIENT_OS != OS_DEC_UNIX))
-// It should be using the stub except on Alpha/Dec, and the logical inverse
-// of (Alpha && DecUnix) is (!Alpha || !DecUnix)
-// [Maybe this time it will actually link on all platforms.]
-//
-// Revision 1.66  1999/01/19 12:13:17  patrick
-// changes to the #ifdef around GetProcessorType broke the link setp on some
-// platforms. Changed therefore
-// ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS != CPU_DIGITAL_UNIX))
-// to ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX))
-// I hope this was the intention of the one who originally introduced this.
-//
-// Revision 1.65  1999/01/19 09:54:35  patrick
-// move AIX include <unistd.h> to basincs.h
-//
-// Revision 1.64  1999/01/18 12:12:34  cramer
-// - Added code for ncpu detection for linux/alpha
-// - Corrected the alpha RC5 core handling (support "timeslice")
-// - Changed the way selftest runs... it will not stop if a test fails,
-//     but will terminate at the end of each contest selftest if any test
-//     failed.  Interrupting the test is seen as the remaining tests
-//     having failed (to be fixed later)
-//
-// Revision 1.63  1999/01/18 00:33:19  remi
-// Arrg!
-//
-// Revision 1.62  1999/01/18 00:24:42  remi
-// Added IDT WinChip 2 to the list.
-//
-// Revision 1.61  1999/01/15 20:22:49  michmarc
-// Fix GetProcessorType for Non-Digital-Unix Alpha platforms
-//
-// Revision 1.60  1999/01/14 23:02:12  pct
-// Updates for Digital Unix alpha client and ev5 related code.  This also
-// includes inital code for autodetection of CPU type and SMP.
-//
-// Revision 1.59  1999/01/13 15:17:02  kbracey
-// Fixes to RISC OS processor detection and scheduling
-//
-// Revision 1.58  1999/01/13 10:46:15  cramer
-// Cosmetic update (comments and indenting)
-//
-// Revision 1.57  1999/01/12 16:36:13  cyp
-// Made failed cpu count detection message sound, uh, less severe.
-//
-// Revision 1.56  1999/01/11 20:55:04  patrick
-// numCPU support for AIX enabled
-//
-// Revision 1.55  1999/01/06 22:17:36  dicamillo
-// Support PPC prototype Macs  some developers still have.
-//
-// Revision 1.54  1999/01/01 02:45:15  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.53  1998/12/23 10:54:37  myshkin
-// Added code to _GetRawPPCIdentification to read /proc/cpuinfo on linux-ppc.
-// Added *ppc-gcc272 entry to configure (until I successfully upgrade to egcs).
-//
-// Revision 1.52  1998/12/22 15:58:24  jcmichot
-// QNX change: _x86ident vs x86ident.
-//
-// Revision 1.51  1998/12/14 05:15:08  dicamillo
-// Mac OS updates to eliminate use of MULTITHREAD and have a singe client
-// for MT and non-MT machines.
-//
-// Revision 1.50  1998/12/09 07:41:56  dicamillo
-// fixed log comment.
-//
-// Revision 1.49  1998/12/09 07:34:15  dicamillo
-// Added constant for number of processors Mac client supports; fixed typos
-// which prevented compilation.
-//
-// Revision 1.48  1998/12/04 12:09:01  chrisb
-// fixed typo
-//
-// Revision 1.47  1998/12/04 16:44:30  cyp
-// Noticed and fixed MacOS's returning raw cpu type numbers to SelectCore().
-// Fixed a long description header in ProcessorIndentification stuff. Tried
-// to make cpu detection stuff more cpu- and less os- centric.
-//
-// Revision 1.46  1998/12/01 19:49:14  cyp
-// Cleaned up MULT1THREAD #define. See cputypes.h log entry for details.
-//
-// Revision 1.45  1998/12/01 11:24:11  chrisb
-// more riscos x86 changes
-//
-// Revision 1.44  1998/11/25 09:23:32  chrisb
-// various changes to support x86 coprocessor under RISC OS
-//
-// Revision 1.43  1998/11/08 00:48:35  sampo
-// fix a few typos to enable it to compile.
-//
-// Revision 1.42  1998/11/06 18:50:39  cyp
-// Cleaned up tabs and macos cpu detection logic.
-//
-// Revision 1.41  1998/11/04 22:55:09  dicamillo
-// change Mac cpu_description text to be static
-//
-// Revision 1.40  1998/11/04 22:35:42  dicamillo
-// additional updates to Mac CPU detection code
-//
-// Revision 1.39  1998/11/04 20:02:42  sampo
-// Fix for cpu detection on macs with a 601 processor upgraded to 750.
-//
-// Revision 1.38  1998/11/03 22:26:46  remi
-// Attempt to auto-detect the number of cpus on Linux/Sparc machines.
-//
-// Revision 1.37  1998/11/01 01:12:54  sampo
-// Added MacOS 68k detection stuff
-//
-// Revision 1.36  1998/10/31 21:53:55  silby
-// Fixed a typo from previous commit.
-//
-// Revision 1.35  1998/10/30 19:43:39  sampo
-// Added MacOS PowerPC detection stuff
-//
-// Revision 1.34  1998/10/30 00:07:19  foxyloxy
-// Rectify some deviations from the standard of "-1" means detection
-// failed.
-//
-// Revision 1.33  1998/10/11 00:43:20  cyp
-// Implemented 'quietly' in SelectCore() and ValidateProcessorCount()
-//
-// Revision 1.32  1998/10/09 12:25:21  cyp
-// ValidateProcessorCount() is no longer a client method [is now standalone].
-//
-// Revision 1.31  1998/10/09 01:39:27  blast
-// Added selcore.h to list of includes. Changed 68k print to use
-// GetCoreNameFromCoreType(). Added Celeron-A to the CPU list so that
-// it finally uses the right cores .. :) instead of being unknown :)
-//
-// Revision 1.30  1998/10/08 21:23:04  blast
-// Fixed Automatic CPU detection that cyp had written a little strangely
-// for 68K CPU's under AmigaOS. It was good thinking but it would've
-// reported the wrong cpu type, and also, there is no 68050, cyp :)
-//
-// Revision 1.29  1998/10/08 16:47:17  cyp
-// Fixed a missing ||
-//
-// Revision 1.28  1998/10/08 11:05:26  cyp
-// Moved AmigaOS 68k hardware detection code from selcore.cpp to cpucheck.cpp
-//
-// Revision 1.27  1998/10/08 10:04:21  cyp
-// GetProcessorType() is now standalone (no longer a Client::method).
-//
-// Revision 1.26  1998/09/28 02:44:47  cyp
-// removed non-mt limit; removed references to MAXCPUS; turned static function
-// __GetProcessorCount() into public GetNumberOfDetectedProcessors(); created
-// GetNumberOfSupportedProcessors() ["supported" by the client that is]
-//
-// Revision 1.24  1998/08/14 00:05:03  silby
-// Changes for rc5 mmx core integration.
-//
-// Revision 1.23  1998/08/10 20:15:04  cyruspatel
-// Setting cpunum to zero on multi-threading platforms now forces the client
-// to run in non-mt mode.
-//
-// Revision 1.22  1998/08/05 18:41:12  cyruspatel
-// Converted more printf()s to LogScreen()s, changed some Log()/LogScreen()s
-// to LogRaw()/LogScreenRaw()s, ensured that DeinitializeLogging() is called,
-// and InitializeLogging() is called only once (*before* the banner is shown)
-//
-// Revision 1.21  1998/08/05 16:40:53  cberry
-// fixed typo in ARM part of GetProcessorInformationStrings()
-//
-// Revision 1.20  1998/08/02 16:17:53  cyruspatel
-// Completed support for logging.
-//
-// Revision 1.19  1998/07/18 17:05:39  cyruspatel
-// Lowered the TimesliceBaseline for 486's from 1024 to 512. The high tslice
-// was causing problems on 486s with 3com and other poll-driven NICs.
-//
-// Revision 1.17  1998/07/13 23:39:33  cyruspatel
-// Added functions to format and display raw cpu info for better management
-// of the processor detection functions and tables. Well, not totally raw,
-// but still less cooked than SelectCore(). All platforms are supported, but
-// the data may not be meaningful on all. The info is accessible to the user
-// though the -cpuinfo switch.
-//
-// Revision 1.16  1998/07/12 00:40:15  cyruspatel
-// Corrected a cosmetic boo-boo. ("... failed to detect an processor")
-//
-// Revision 1.15  1998/07/11 09:47:18  cramer
-// Added support for solaris numcpu auto detection.
-//
-// Revision 1.14  1998/07/11 02:34:49  cramer
-// Added automagic number of cpu detection for linux.  If it cannot detect the
-// number of processors, a warning is issued and we assume it's only got one.
-// (Note to Linus: add num_cpus to struct sysinfo.)
-//
-// Revision 1.13  1998/07/09 03:22:54  silby
-// Changed so that IDT winchip WILL use mmx now also.
-//
-// Revision 1.12  1998/07/08 09:50:36  remi
-// Added support for the MMX bitslicer.
-// GetProcessorType() & 0x100 != 0 if we should use the MMX DES core.
-// GetProcessorType() & 0x200 != 0 if we should use the MMX RC5 core.
-//
-// Revision 1.11  1998/07/07 21:55:37  cyruspatel
-// client.h has been split into client.h and baseincs.h
-//
-// Revision 1.10  1998/07/06 09:17:23  jlawson
-// eliminated unused value assignment warning.
-//
-// Revision 1.9  1998/07/05 12:42:40  cyruspatel
-// Created cpucheck.h to support makefiles that rely on autodependancy info
-// to detect file changes.
-//
-// Revision 1.8  1998/07/05 06:55:06  silby
-// Change to the bitmask for intel CPUIDs so that secondary CPUs will be id'd correctly.
-//
-// Revision 1.7  1998/06/28 19:48:13  silby
-// Changed default amd 486 core selection to pentium core and changed strings to reflect that.
-//
-// Revision 1.6  1998/06/23 20:22:05  cyruspatel
-// Added new function: GetTimesliceBaseline() returns a value that the
-// ideal RC5 keyrate (kKeys per Mhz) would be IF a machine were running
-// at peak efficiency. For non-preemptive systems, it is thus a good
-// indicator of how low we can set the timeslice/rate-of-yield without
-// losing efficiency. Or inversely, at what point OS responsiveness starts
-// to suffer - which also applies to preemptive but non-mt systems handling
-// of a break request. - Currently only supports all the x86 OS's.
-//
-// Revision 1.5  1998/06/22 10:28:22  kbracey
-// Just tidying
-//
-// Revision 1.4  1998/06/22 09:37:47  cyruspatel
-// Fixed another cosmetic bug.
-//
-// Revision 1.3  1998/06/22 03:40:23  cyruspatel
-// Fixed a numcputemp/cpu_count variable mixup.
-//
-// Revision 1.1  1998/06/21 17:12:02  cyruspatel
-// Created
-//
-//
-#if (!defined(lint) && defined(__showids__))
-const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.75 1999/04/03 20:30:36 sampo Exp $"; }
-#endif
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -304,9 +36,25 @@ return "@(#)$Id: cpucheck.cpp,v 1.75 1999/04/03 20:30:36 sampo Exp $"; }
 #include <sys/sysinfo.h>
 #include <machine/hal_sysinfo.h>
 #include <machine/cpuconf.h>
+#elif (CLIENT_OS == OS_AIX)
+#include <sys/systemcfg.h>
+/* if compiled on older versions of 4.x ... */
+#ifndef POWER_620
+#define POWER_620 0x0040
+#endif
+#ifndef POWER_630
+#define POWER_630 0x0080
+#endif
+#ifndef POWER_A35
+#define POWER_A35 0x0100
+#endif
+#ifndef POWER_RS64II
+#define POWER_RS64II    0x0200          /* RS64-II class CPU */
 #endif
 
-// --------------------------------------------------------------------------
+#endif /* (CLIENT_OS == OS_AIX) */
+
+/* ------------------------------------------------------------------------ */
 
 unsigned int GetNumberOfSupportedProcessors( void )
 {
@@ -321,7 +69,7 @@ unsigned int GetNumberOfSupportedProcessors( void )
 #endif
 }
 
-// -------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
 int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
 {
@@ -420,6 +168,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     #elif (CLIENT_OS == OS_AIX)
     {
       cpucount = sysconf(_SC_NPROCESSORS_ONLN);
+//    cpucount = _system_configuration.ncpus; should work the same way but might go
     }
     #elif (CLIENT_OS == OS_RISCOS)
     {
@@ -456,7 +205,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   return cpucount;
 }
 
-// --------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
 unsigned int ValidateProcessorCount( int numcpu, int quietly )
 {
@@ -502,7 +251,7 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
   return (unsigned int)numcpu;
 }
 
-// --------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_68K)
 static long __GetRawProcessorID(const char **cpuname)
@@ -622,9 +371,77 @@ static long __GetRawProcessorID(const char **cpuname)
 
 #endif /* (CLIENT_CPU == CPU_68K) */
 
-// --------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
-#if (CLIENT_CPU == CPU_POWERPC)
+#if (CLIENT_OS == OS_AIX)
+
+#define ARCH_IS_POWER 0x20
+
+static long __GetRawProcessorID( const char **cpuname )
+{
+  long arch_id;
+
+// we treat the PPC as the default platform
+  if ( _system_configuration.architecture == POWER_RS ) {
+    arch_id=ARCH_IS_POWER;
+  } else {
+    arch_id=0;
+  }
+
+  switch (_system_configuration.implementation) {
+  case POWER_601:
+    *cpuname="PowerPC 601";
+    return (0x01 | arch_id);
+    break;
+  case POWER_603:
+    *cpuname="PowerPC 603";
+    return (0x02 | arch_id);
+    break;
+  case POWER_604:
+    *cpuname="PowerPC 604";
+    return (0x03 | arch_id);
+    break;
+  case POWER_620:
+    *cpuname="PowerPC 620";
+    return (0x04 | arch_id);
+    break;
+  case POWER_630:
+    *cpuname="PowerPC 630";
+    return (0x05 | arch_id);
+    break;
+  case POWER_A35:
+    *cpuname="PowerPC A35"; // this should be an AS/400 !!!! (65-bit)
+    return (0x05 | arch_id);
+    break;
+  case POWER_RS64II:
+    *cpuname="PowerPC RS64II"; // nameing not correct but how
+    return (0x06 | arch_id);
+    break;
+  case POWER_RS1:
+    *cpuname="POWER RS";
+    return (0x10 | arch_id);
+    break;
+  case POWER_RSC:
+    *cpuname="POWER RS2 Superchip"; // nameing ??
+    return (0x11 | arch_id);
+    break;
+  case POWER_RS2:
+    *cpuname="POWER RS2";
+    return (0x12 | arch_id);
+    break;
+  default:
+    *cpuname=NULL;
+    return -1;
+    break;
+  }
+
+}
+
+#endif /* (CLIENT_OS == OS_AIX) */
+
+/* ---------------------------------------------------------------------- */
+
+#if (CLIENT_CPU == CPU_POWERPC) && !defined(_AIXALL)
 static long __GetRawProcessorID(const char **cpuname)
 {
   /* ******* detected type reference is (PVR value >> 16) *********** */
@@ -727,7 +544,7 @@ static long __GetRawProcessorID(const char **cpuname)
 }
 #endif /* (CLIENT_CPU == CPU_POWERPC) */
 
-// --------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_X86)
 
@@ -841,7 +658,7 @@ static long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       vendorname = "Intel "; 
       if ((cpuid == 0x30) || (cpuid == 0x40))
         vendorname = ""; //not for generic 386/486
-      cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
+      cpuidbmask = 0x0ff0; //strip type AND stepping bits.
     }
   
     if (internalxref != NULL) /* we know about this vendor */
@@ -879,7 +696,7 @@ static long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
 }
 #endif /* X86 */
 
-// --------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
 #if (CLIENT_OS == OS_RISCOS)
 #include <setjmp.h>
@@ -900,10 +717,11 @@ static long __GetRawProcessorID(const char **cpuname )
   if ( detectedvalue == -2L )
   {
     static char namebuf[60];
-    // ARMident() will throw SIGILL on an ARM 2 or ARM 250, because
-    // they don't have the system control coprocessor. (We ignore the
-    // ARM 1 because I'm not aware of any existing C++ compiler that
-    // targets it...)
+    /*
+       ARMident() will throw SIGILL on an ARM 2 or ARM 250, because they 
+       don't have the system control coprocessor. (We ignore the ARM 1 
+       because I'm not aware of any existing C++ compiler that targets it...)
+     */
     signal(SIGILL, ARMident_catcher);
     if (setjmp(ARMident_jmpbuf))
       detectedvalue = 0x2000;
@@ -958,7 +776,7 @@ static long __GetRawProcessorID(const char **cpuname )
 }  
 #endif
 
-// --------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_MIPS)
 static long __GetRawProcessorID(const char **cpuname)
@@ -1050,7 +868,7 @@ static long __GetRawProcessorID(const char **cpuname)
 }
 #endif
 
-// --------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_SPARC)
 static long __GetRawProcessorID(const char **cpuname)
@@ -1149,7 +967,7 @@ static long __GetRawProcessorID(const char **cpuname)
 }
 #endif
 
-// --------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_ALPHA)
 static long __GetRawProcessorID(const char **cpuname)
@@ -1256,7 +1074,7 @@ static long __GetRawProcessorID(const char **cpuname)
 }
 #endif
 
-// --------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
 int GetProcessorType(int quietly)
 {
@@ -1265,7 +1083,7 @@ int GetProcessorType(int quietly)
   #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
       (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_X86) || \
       (CLIENT_CPU == CPU_ARM)     || (CLIENT_CPU == CPU_MIPS) || \
-      (CLIENT_CPU == CPU_SPARC)
+      (CLIENT_CPU == CPU_SPARC)   || (CLIENT_OS == OS_AIX)
   {
     const char *cpuname = NULL;
     long rawid = __GetRawProcessorID(&cpuname);
@@ -1286,6 +1104,14 @@ int GetProcessorType(int quietly)
       coretouse = 5; /* remap 68060 to 68050 */
     #elif (CLIENT_CPU == CPU_ALPHA)
     coretouse = ((rawid <= 0) ? (-1) : ((int)rawid));
+    #elif defined(_AIXALL)
+    if (rawid == 1) {           // PPC 601 ?
+	coretouse=0;
+    } else if (rawid && ARCH_IS_POWER) {
+        coretouse=2;            // POWER
+    } else {
+        coretouse=1;            // PowerPC 604 and up
+    } /* endif */
     #elif (CLIENT_CPU == CPU_POWERPC)
     coretouse = ((rawid < 0) ? (-1) : ((rawid==1L)?(0/*601*/):(1)));
     #elif (CLIENT_CPU == CPU_X86) /* way too many cpu<->core combinations */
@@ -1311,7 +1137,7 @@ int GetProcessorType(int quietly)
   return (coretouse);
 }
 
-// --------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
 // GetTimesliceBaseline() returns a value that the ideal RC5 keyrate (kKeys
 // per Mhz) would be IF a machine were running at peak efficiency. For
@@ -1332,7 +1158,7 @@ unsigned int GetTimesliceBaseline(void)
 #endif
 }
 
-// --------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
 // Originally intended as tool to assist in managing the processor ID table
 // for x86, I now (after writing it) realize that it could also get users on
@@ -1406,7 +1232,7 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
   return;
 }
 
-// --------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
 void DisplayProcessorInformation(void)
 {
@@ -1420,5 +1246,5 @@ void DisplayProcessorInformation(void)
   return;
 }
 
-// --------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 

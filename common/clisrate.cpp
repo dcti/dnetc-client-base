@@ -1,161 +1,14 @@
-// Copyright distributed.net 1998 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// ----------------------------------------------------------------------
-// This file contains functions for formatting keyrate/time/summary data
-// statistics obtained from clirate.cpp into strings suitable for display.
-// ----------------------------------------------------------------------
-//
-// $Log: clisrate.cpp,v $
-// Revision 1.39  1999/03/18 03:57:45  cyp
-// #included "util.h" which is the temporary home of ogr stubstr()
-//
-// Revision 1.38  1999/03/09 07:15:45  gregh
-// Various OGR changes.
-//
-// Revision 1.37  1999/02/21 21:44:59  cyp
-// tossed all redundant byte order changing. all host<->net order conversion
-// as well as scram/descram/checksumming is done at [get|put][net|disk] points
-// and nowhere else.
-//
-// Revision 1.36  1999/02/21 10:33:20  silby
-// Update for large block support.
-//
-// Revision 1.35  1999/01/29 19:04:31  jlawson
-// fixed formatting.
-//
-// Revision 1.34  1999/01/26 17:50:06  dbaker
-// changes for freebsd4 to allow smp threads or whatever
-//
-// Revision 1.33  1998/10/06 21:28:07  cyp
-// Removed timestamps.
-//
-// Revision 1.32  1998/10/04 11:35:28  remi
-// Id tags fun.
-//
-// Revision 1.31  1998/08/07 19:57:33  cyruspatel
-// By popular demand: GetMessageForProblemCompleted() displays the normalized
-// keycount (x*2^28) instead of the numeric value.
-//
-// Revision 1.30  1998/08/07 17:49:15  cyruspatel
-// Modified CliGetMessageForFileEntryLoaded() to handle blocksize x*2^28
-// normalization (eg 4*2^28 rather than 1*2^30)
-//
-// Revision 1.29  1998/07/13 18:01:23  friedbait
-// fixed some typos in 'num_sep()'
-//
-// Revision 1.28  1998/07/13 03:29:54  cyruspatel
-// Added 'const's or 'register's where the compiler was complaining about
-// ambiguities. ("declaration/type or an expression")
-//
-// Revision 1.27  1998/07/12 11:20:11  friedbait
-// added side effect description to 'num_sep' function.
-//
-// Revision 1.26  1998/07/11 02:10:15  cyruspatel
-// Umm, fixed call to __CliGetKeyrateAsString() - third argument is now a
-// double not an unsigned int (caused a compiler warning)
-//
-// Revision 1.25  1998/07/11 01:53:19  silby
-// Change in logging statements - all have full timestamps now so they
-// look correct in the win32gui.
-//
-// Revision 1.24  1998/07/10 20:56:59  cyruspatel
-// The summary line creation code now generates the keyrate as a factor of
-// 1000, and uses the saved space to write "kkeys/sec" instead of "k/s".
-// This also works around a potential line-wrap problem.
-//
-// Revision 1.23  1998/07/09 21:09:45  friedbait
-// added some simple logic to display keyrates like: [657,661.45 k/s]
-// which means I have added a number separater ',' to separate groups
-// of 3 digits from the right.
-//
-// Revision 1.22  1998/07/08 08:11:07  cyruspatel
-// Added '#include "network.h"' for n.tohl()/h.tonl() prototypes.
-//
-// Revision 1.21  1998/07/07 21:55:25  cyruspatel
-// client.h has been split into client.h and baseincs.h 
-//
-// Revision 1.20  1998/07/05 21:49:30  silby
-// Modified logging so that manual wrapping is not done on win32gui,
-// as it looks terrible in a non-fixed spaced font.
-//
-// Revision 1.19  1998/06/29 08:44:04  jlawson
-// More OS_WIN32S/OS_WIN16 differences and long constants added.
-//
-// Revision 1.18  1998/06/29 06:57:51  jlawson
-// added new platform OS_WIN32S to make code handling easier.
-//
-// Revision 1.17  1998/06/24 21:53:45  cyruspatel
-// Created CliGetMessageForProblemCompletedNoSave() in clisrate.cpp. It
-// is similar to its non-nosave pendant but doesn't affect cumulative
-// statistics.  Modified Client::Benchmark() to use the function.
-//
-// Revision 1.16  1998/06/15 12:03:53  kbracey
-// Lots of consts.
-//
-// Revision 1.15  1998/06/14 08:26:43  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.14  1998/06/14 08:12:41  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-// Revision 1.13  1998/06/12 09:12:44  kbracey
-// Tidied up progress display some more: capitalisation of Block/block
-// standardised to block, pluralisation sorted out, ensured that
-// "Retrieved/sent n xxx blocks from/to server" lines fully blank out
-// "n% transferred" lines.
-//
-// Revision 1.12  1998/06/09 12:35:06  kbracey
-// Changed to print (3.29% done) instead of (03.29% done).
-//
-// Revision 1.11  1998/06/09 10:17:05  kbracey
-// Cleared up Bovine's commit of Cyrus' stuff. Mostly putting all the consts
-// back. Also updated RISC OS GUI.
-//
-// Revision 1.10  1998/06/09 08:54:27  jlawson
-// Committed Cyrus' changes: phrase "keys/s" is changed back to "k/s" in
-// CliGetSummaryStringForContest. That line has exactly 3 characters to 
-// spare, and >9 blocks (or >9 days, or >999Kk/s) will cause line to wrap.
-//
-// Revision 1.9  1998/06/08 15:47:06  kbracey
-// Added lots of "const"s and "static"s to reduce compiler warnings, and
-// hopefully improve output code, too.
-//
-// Revision 1.8  1998/06/08 14:10:33  kbracey
-// Changed "Kkeys to kkeys"
-//
-// Revision 1.7  1998/05/29 08:01:07  bovine
-// copyright update, indents
-//
-// Revision 1.6  1998/05/27 18:21:27  bovine
-// SGI Irix warnings and configure fixes
-//
-// Revision 1.5  1998/05/26 15:18:51  bovine
-// fixed compile warnings for g++/linux
-//
-// Revision 1.4  1998/05/25 07:16:45  bovine
-// fixed warnings on g++/solaris
-//
-// Revision 1.3  1998/05/25 05:58:32  bovine
-// fixed warnings for Borland C++
-//
-// Revision 1.2  1998/05/25 02:54:18  bovine
-// fixed indents
-//
-// Revision 1.1  1998/05/24 14:25:49  daa
-// Import 5/23/98 client tree
-//
-// Revision 0.0  1998/05/01 05:01:08  cyruspatel
-// Created
-//
-// ==============================================================
-
-#if (!defined(lint) && defined(__showids__))
+/* Copyright distributed.net 1998 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ----------------------------------------------------------------------
+ * This file contains functions for formatting keyrate/time/summary data
+ * statistics obtained from clirate.cpp into strings suitable for display.
+ * ----------------------------------------------------------------------
+*/ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.39 1999/03/18 03:57:45 cyp Exp $"; }
-#endif
+return "@(#)$Id: clisrate.cpp,v 1.39.2.1 1999/04/13 19:45:18 jlawson Exp $"; }
 
 #include "cputypes.h"  // u64
 #include "problem.h"   // Problem class
@@ -254,24 +107,24 @@ static char *__CliGetKeyrateAsString( char *buffer, double rate, double limit )
   if (rate<=((double)(0)))  // unfinished (-2) or error (-1) or impossible (0)
     strcpy( buffer, "---.-- " );
   else
-    {
+  {
     unsigned int t1, t2 = 0;
     const char *t3[]={"","k","M","G","T"}; // "", "kilo", "mega", "giga", "tera"
     while (t2<=5 && (((double)(rate))>=((double)(limit))) )
-      {
+    {
       t2++;
       rate = ((double)(rate)) / ((double)(1000));
-      }
+    }
     if (t2 > 4)
       strcpy( buffer, "***.** " ); //overflow (rate>1.0 TKeys. Str>25 chars)
     else
-      {
+    {
       t1 = (unsigned int)(rate);
       sprintf( buffer, "%u.%02u %s", t1,
          ((unsigned int)((((double)(rate-((double)(t1)))))*((double)(100)))),
          t3[t2] );
-      }
     }
+  }
   return buffer;
 }
 
@@ -294,20 +147,20 @@ const char *CliGetSummaryStringForContest( int contestid )
   struct timeval ttime;
 
   if ( CliIsContestIDValid( contestid ) ) //clicdata.cpp
-    {
+  {
     CliGetContestInfoBaseData( contestid, &name, NULL ); //clicdata.cpp
     CliGetContestInfoSummaryData( contestid, &packets, NULL, &ttime ); //ditto
     keyrateP=__CliGetKeyrateAsString(keyrate,
           CliGetKeyrateForContest(contestid),((double)(1000)));
-    }
+  }
   else
-    {
+  {
     name = "???";
     packets = 0;
     ttime.tv_sec = 0;
     ttime.tv_usec = 0;
     keyrateP = "---.-- ";
-    }
+  }
 
   sprintf(str, "%d %s packet%s %s%c- [%skeys/s]", 
        packets, name, ((packets==1)?(""):("s")),
@@ -338,10 +191,10 @@ const char *CliGetU64AsString( u64 *u, int /*inNetOrder*/, int contestid )
   norm.lo = (unsigned int)(d - (((double)(norm.hi))*1000000000.0));
   d = d / 1000000000.0;
   if (d > 0)
-    {
+  {
     i = (unsigned int)(d / 1000000000.0);
     norm.hi = (unsigned int)(d - (((double)(i))*1000000000.0));
-    }
+  }
 
   if (i)            sprintf( str, "%u%09u%09u", (unsigned) i, (unsigned) norm.hi, (unsigned) norm.lo );
   else if (norm.hi) sprintf( str, "%u%09u", (unsigned) norm.hi, (unsigned) norm.lo );
@@ -360,42 +213,47 @@ const char *CliGetU64AsString( u64 *u, int /*inNetOrder*/, int contestid )
 static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave )
 {
   static char str[160];
-  RC5Result rc5result;
-  struct timeval tv;
+  ContestWork work;
+  struct timeval tv = {0,0};
   char keyrate[32];
   unsigned int /* size=1, count=32, */ itermul;
-  unsigned int mulfactor;
-  const char *keyrateP, *name;
-  int contestid = prob->GetResult( &rc5result );
+  unsigned int mulfactor, contestid = 0;
+  const char *keyrateP = "---.-- ", *name = "???";
+  int resultcode = prob->RetrieveState( &work, &contestid, 0 );
 
-  if (CliGetContestInfoBaseData( contestid, &name, &mulfactor )==0) //clicdata
-    {
-    keyrateP = CliGetKeyrateAsString( keyrate, 
-        ((doSave) ? ( CliGetKeyrateForProblem( prob ) ) :
-                    ( CliGetKeyrateForProblemNoSave( prob ) ))  );
-    }
+  if (resultcode != RESULT_NOTHING && resultcode != RESULT_FOUND)
+    memset((void *)&work,0,sizeof(work));
   else
+  {
+    if (CliGetContestInfoBaseData( contestid, &name, &mulfactor )==0) //clicdata
     {
-    keyrateP = "---.-- ";
-    name = "???";
+      keyrateP = CliGetKeyrateAsString( keyrate, 
+          ((doSave) ? ( CliGetKeyrateForProblem( prob ) ) :
+                      ( CliGetKeyrateForProblemNoSave( prob ) ))  );
     }
-
-  tv.tv_sec = prob->timehi;
-  tv.tv_usec = prob->timelo;
-  CliTimerDiff( &tv, &tv, NULL );
-
-  switch (prob->contest) {
+    /*  
+    tv.tv_sec = prob->timehi;
+    tv.tv_usec = prob->timelo;
+    CliTimerDiff( &tv, &tv, NULL );
+    */
+    tv.tv_sec = prob->runtime_sec;
+    tv.tv_usec = prob->runtime_usec;
+  }
+  
+  switch (contestid) 
+  {
     case 0: // RC5
     case 1: // DES
+    case 3: // CSC
 //"Completed one RC5 packet 00000000:00000000 (4*2^28 keys)\n"
 //"%s - [%skeys/sec]\n"
-      itermul = (((rc5result.iterations.lo) >> 28) +
-                 ((rc5result.iterations.hi) * 16) );
+      itermul = (((work.crypto.iterations.lo) >> 28) +
+                 ((work.crypto.iterations.hi) <<  4) );
       sprintf( str, "Completed one %s packet %08lX:%08lX (%u*2^28 keys)\n"
                     "%s - [%skeys/sec]\n",  
                     name, 
-                    (unsigned long) ( rc5result.key.hi ) ,
-                    (unsigned long) ( rc5result.key.lo ),
+                    (unsigned long) ( work.crypto.key.hi ) ,
+                    (unsigned long) ( work.crypto.key.lo ),
                     (unsigned int)(itermul),
                     CliGetTimeString( &tv, 2 ),
                     keyrateP );
@@ -406,13 +264,12 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
       sprintf( str, "Completed one %s stub %s (%u nodes)\n"
                     "%s - [%snodes/sec]\n",  
                     name, 
-                    ogr_stubstr(&prob->contestwork.ogr.stub),
+                    ogr_stubstr( &work.ogr.stub ),
                     0, // node count
                     CliGetTimeString( &tv, 2 ),
                     keyrateP );
       break;
   }
-
   return str;
 }
 

@@ -1,12 +1,10 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-
-#if (!defined(lint) && defined(__showids__))
+/* 
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/ 
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.24.2.1 1999/04/04 13:43:29 jlawson Exp $"; }
-#endif
+return "@(#)$Id: netres.cpp,v 1.24.2.2 1999/04/13 19:45:26 jlawson Exp $"; }
 
 //---------------------------------------------------------------------
 

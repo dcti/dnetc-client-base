@@ -1,28 +1,29 @@
-/* Hey, Emacs, this a -*-C++-*- file !
- *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
- * For use in distributed.net projects only.
- * Any other distribution or use of this source violates copyright.
- * 
- * $Log: random.h,v $
- * Revision 1.1  1999/03/20 07:04:46  cyp
- * Split random/randomizing functions to stand alone.
- *
-*/ 
+// Hey, Emacs, this a -*-C++-*- file !
+//
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
+// ----------------------------------------------------------------
+// Random(const u32 *u32data, unsigned int u32count) is similar to
+// the standard C rand(), but returns a u32 (vs rand()'s 15/31/63 bits), 
+// and it seeds itself. It can also slightly mangles the seed with data.
+// ----------------------------------------------------------------
 
 #ifndef __RANDOM_H__
-#define __RANDOM_H__
+#define __RANDOM_H__ "@(#)$Id: random.h,v 1.1.2.1 1999/04/13 19:45:29 jlawson Exp $"
 
-u32  Random( u32 * data, u32 length );
-  // length = # of u32s of data...
+u32  Random( const u32 * u32data, unsigned int u32count );
+  // count = # of u32s of data...
   // calling it with ( NULL, 0 ) is OK...
+  // calls InitRandom() and/or InitRandom2() if they haven't been called yet 
   // Returns: a random u32, mangled slightly with data...
 
-void InitRandom();
+void InitRandom(void);
   // Initialize random number generator (added 12.15.97)
 
-void InitRandom2(char *p);
+void InitRandom2(const char *p);
   // Initialize random number generator, using string p to 
   // influence seed value.
 
-#endif
+#endif /* __RANDOM_H__ */

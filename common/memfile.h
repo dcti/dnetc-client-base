@@ -1,27 +1,19 @@
-/*
+/* Hey, Emacs, this a -*-C++-*- file !
+**
 ** memfile.c created 1998/08/16 Cyrus Patel <cyp@fb14.uni-mainz.de>
 **
 ** This code is POSIXly correct. Please keep it that way.
-*/
-/*
-  This is a posix stream interface to memory, standard FILE functions are
-  emulated. Multiple 'files' can be open simultaneously. The size of a 'file' 
-  is limited only by available memory. The following functions are available: 
-  mfopen(), mfread(), mfwrite(), mfeof(), mftell(), mfseek(), mrewind(), 
-  mflush[all](), mfclose[all](), mfileno(), mfilelength(), mftruncate(), 
-  mdup(). The stream object used/created by these functions is a MEMFILE *. 
-*/
-/*
-** $Log: memfile.h,v $
-** Revision 1.1  1998/08/20 19:21:52  cyruspatel
-** Created
 **
-**
+** This is a posix stream interface to memory, standard FILE functions are
+** emulated. Multiple 'files' can be open simultaneously. The size of a 'file' 
+** is limited only by available memory. The following functions are available: 
+** mfopen(), mfread(), mfwrite(), mfeof(), mftell(), mfseek(), mrewind(), 
+** mflush[all](), mfclose[all](), mfileno(), mfilelength(), mftruncate(), 
+** mdup(). The 'stream' object used/created by these functions is a MEMFILE *. 
 **
 */
-
 #ifndef __MEMFILE_H__
-#define __MEMFILE_H__
+#define __MEMFILE_H__ "@(#)$Id: memfile.h,v 1.1.2.1 1999/04/13 19:45:25 jlawson Exp $"
 
 #include <stdio.h>   /* required for the size_t typedef */
 
@@ -65,4 +57,5 @@ extern int     mdup( int mfd );
 extern MEMFILE *mfopen( const char *name, const char *cmode );
 extern size_t  _mfsetgrowincrement( MEMFILE *mp, size_t growby );
 
-#endif //__MEMFILE_H__
+#endif /* __MEMFILE_H__ */
+

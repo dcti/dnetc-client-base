@@ -1,3 +1,13 @@
+// Hey, Emacs, this a -*-C++-*- file !
+//
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
+
+#ifndef __RSADATA_H__
+#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.5.2.1 1999/04/13 19:45:29 jlawson Exp $"
+
 // RC5-56:
 // Contest identifier: RC5-32/12/7 
 // Cipher: RC5-32/12/7 (RC5 with 32-bit wordsize, 12 rounds, and
@@ -95,4 +105,6 @@
 // distributed.net signals used to indiciate contest closure.
 #define RC5CLOSEDCODE 0x1337F00DL
 #define DESCLOSEDCODE 0xBEEFF00DL
+
+#endif /* __RSADATA_H__ */
 

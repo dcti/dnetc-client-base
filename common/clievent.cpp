@@ -1,52 +1,39 @@
-// Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
-//
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// ----------------------------------------------------------------------
-// This is an amazingly trivial :p event handling mechanism for client 
-// platforms that do something when a special condition arises. 
-//
-// Event posting to listeners is currently synchronous (blocking) only,
-// although asynchronous posting could be implemented with a minimum of
-// effort (should the need ever arise).
-//
-// Since the listener queue is a static resource, and it is in everyone's 
-// best interest to keep the queue small, platforms that implement 
-// an event listener that 'lives' for the clients entire lifetime should do 
-// so in a cascaded fashion, ie with one wrapper function that branches to 
-// subfunctions. Register that wrapper function with event_id == -1 to
-// listen for all events and branch internally as appropriate.
-//
-// If you need to add a new event id that requires more than a long as a
-// parameter FIRST make sure that that information cannot be obtained any 
-// other way and THEN declare a struct in clievent.h, fill it in the code
-// and pass the pointer to the struct as the parm. Keep the structures 
-// generic so that they can be used by other events as well. For example:
-// struct struct_EVENT_ll { long l1, l2; };
-// ----------------------------------------------------------------------
-//
-// $Log: clievent.cpp,v $
-// Revision 1.9  1999/01/29 19:34:30  jlawson
-// added typecast to eliminate unsigned comparison warning.
-//
-// Revision 1.8  1999/01/29 19:17:04  jlawson
-// fixed formatting.
-//
-// Revision 1.7  1999/01/25 14:40:19  cyp
-// Re-created
-//
-//
-
-#if (!defined(lint) && defined(__showids__))
+/* Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ----------------------------------------------------------------------
+ * This is an amazingly trivial :p event handling mechanism for client 
+ * platforms that do something when a special condition arises. 
+ *
+ * Event posting to listeners is currently synchronous (blocking) only,
+ * although asynchronous posting could be implemented with a minimum of
+ * effort (should the need ever arise).
+ *
+ * Since the listener queue is a static resource, and it is in everyone's 
+ * best interest to keep the queue small, platforms that implement 
+ * an event listener that 'lives' for the clients entire lifetime should do 
+ * so in a cascaded fashion, ie with one wrapper function that branches to 
+ * subfunctions. Register that wrapper function with event_id == -1 to
+ * listen for all events and branch internally as appropriate.
+ *
+ * Currently, 3 event listeners are reserved for client common code.
+ *
+ * If you need to add a new event id that requires more than a long as a
+ * parameter FIRST make sure that that information cannot be obtained any 
+ * other way and THEN declare a struct in clievent.h, fill it in the code
+ * and pass the pointer to the struct as the parm. Keep the structures 
+ * generic so that they can be used by other events as well. For example:
+ * struct struct_EVENT_ll { long l1, l2; };
+ * ----------------------------------------------------------------------
+*/
 const char *clievent_cpp(void) {
-return "@(#)$Id: clievent.cpp,v 1.9 1999/01/29 19:34:30 jlawson Exp $"; }
-#endif
+return "@(#)$Id: clievent.cpp,v 1.9.2.1 1999/04/13 19:45:16 jlawson Exp $"; }
 
 #include "baseincs.h"   /* NULL, memset */
 #include "clievent.h"   /* keep prototypes in sync */
-
 
 #ifndef MAX_EVENT_LISTENERS
 #define MAX_EVENT_LISTENERS 4

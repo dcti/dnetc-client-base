@@ -1,19 +1,13 @@
-// Hey, Emacs, this a -*-C++-*- file !
-
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-
-#ifndef __BENCHMARK_H__
-#define __BENCHMARK_H__
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/ 
+#ifndef __BENCH_H__
+#define __BENCH_H__ "@(#)$Id: bench.h,v 1.5.4.2 1999/04/13 19:45:11 jlawson Exp $"
 
 /* returns keys/sec or 0 if break */
 u32 Benchmark( unsigned int contest, u32 numkeys, int cputype, int *numblocks );
 
-/* determines optimal buffer sizes based on benchmarked rate */
-void AutoSetThreshold( Client *clientp, unsigned int contest,
-                       unsigned int inbuffer, unsigned int outbuffer );
-
-
-#endif /* __BENCHMARK_H__ */
+#endif /* __BENCH_H__ */

@@ -1,304 +1,12 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: problem.cpp,v $
-// Revision 1.94  1999/04/01 07:14:34  jlawson
-// non-decunix alpha targets now use function pointers for all cores.
-//
-// Revision 1.93  1999/03/31 22:31:03  cyp
-// grr. when will gcc learn that whitespace following a '\' (#if continuation)
-// can be ignored?
-//
-// Revision 1.92  1999/03/31 22:01:43  cyp
-// a) Created separate (internal) Run_RC5(), Run_DES() and Run_OGR() sub-
-// functions. b) Folded AlignTimeslice() method into Run_RC5() since its only
-// useful there. c) key+=keysdone on RESULT_FOUND is now done from Run_*
-// and not from SelfTest() and problem loader. c) Removed all pipeline_count
-// gunk from DES code.
-//
-// Revision 1.91  1999/03/22 02:45:11  gregh
-// Add a 'finished = 1;' into the OGR 'not found' handler.
-//
-// Revision 1.90  1999/03/20 19:32:38  gregh
-// Update OGR processing code.
-//
-// Revision 1.89  1999/03/18 03:49:24  cyp
-// a) discarded intermediate rc5result state/structures; b) Modified
-// RetrieveState() to return the core's resultcode; c) #if 0'd all Log()
-// calls from Problem::Run();  d) Some OGR changes
-//
-// Revision 1.88  1999/03/09 07:15:45  gregh
-// Various OGR changes.
-//
-// Revision 1.87  1999/03/08 02:46:00  sampo
-// #if (CLIENT_CPU = CPU_ALPHA) should be CLIENT_CPU == CPU_ALPHA
-//
-// Revision 1.86  1999/03/04 01:28:41  cyp
-// Merged various identical sections in Problem::Run().
-// Added nice big #error section outlining how the cores need to go.
-//
-// Revision 1.85  1999/03/01 08:19:44  gregh
-// Changed ContestWork to a union that contains crypto (RC5/DES) and OGR data.
-//
-// Revision 1.84  1999/03/01 06:50:28  foxyloxy
-// Prototype correction.... crunch() declared extern "C++" instead of "C".
-//
-// Revision 1.83  1999/02/21 21:44:59  cyp
-// tossed all redundant byte order changing. all host<->net order conversion
-// as well as scram/descram/checksumming is done at [get|put][net|disk] points
-// and nowhere else.
-//
-// Revision 1.82  1999/02/20 14:38:37  remi
-// - In ::Run(), rc5unitwork and refL0 are in host byte order, not in
-//   network byte order, so deleted all n.tohl/h.tonl in Log() calls.
-// - Modified IncrementKey() (now __IncrementKey) to allow it to
-//   increment by more than 2^8 iters. Created __SwitchRC5Format().
-// - Added an RC5 key incrementation check.
-//
-// Revision 1.81  1999/02/19 03:29:04  silby
-// Updated hppa support, keyincrement for des does not
-// care about endianness now.
-//
-// Revision 1.80  1999/02/17 19:09:13  remi
-// Fix for non-x86 targets : an RC5 key should always be 'mangle-incremented',
-// whatever endianess we have. But h.tonl()/n.tohl() does work for DES, so I
-// added a contest parameter to IncrementKey().
-//
-// Revision 1.79  1999/02/17 07:49:43  gregh
-// Added OGR placeholder.
-//
-// Revision 1.78  1999/02/16 08:45:41  silby
-// Fix for .cpp cores.
-//
-// Revision 1.77  1999/02/15 09:10:01  silby
-// Fixed bug in last change.
-//
-// Revision 1.76  1999/02/15 06:26:36  silby
-// Complete rewrite of Problem::Run to make it 64-bit
-// compliant and begin combination of all processor
-// types into common code.  Additional checks to
-// ensure that cores are performing properly have also been
-// added.  Porters should verify that their core is
-// working properly with these changes.
-//
-// Revision 1.75  1999/02/06 22:38:43  foxyloxy
-// Some core prototype updating.
-//
-// Revision 1.74  1999/02/05 14:20:10  chrisb
-// fixed one last high-word inc problem in the riscos/x86 stuff
-//
-// Revision 1.73  1999/01/29 04:15:35  pct
-// Updates for the initial attempt at a multithreaded/multicored Digital
-// Unix Alpha client.  Sorry if these changes cause anyone any grief.
-//
-// Revision 1.72  1999/01/27 02:48:21  silby
-// If there's a kiter error, client will now shut down.
-//
-// Revision 1.71  1999/01/26 17:28:27  michmarc
-// Updated Alpha/Win32 driver for DWORZ DES engine
-//
-// Revision 1.70  1999/01/21 05:02:41  pct
-// Minor updates for Digital Unix clients.
-//
-// Revision 1.69  1999/01/18 12:12:35  cramer
-// - Added code for ncpu detection for linux/alpha
-// - Corrected the alpha RC5 core handling (support "timeslice")
-// - Changed the way selftest runs... it will not stop if a test fails,
-//     but will terminate at the end of each contest selftest if any test
-//     failed.  Interrupting the test is seen as the remaining tests
-//     having failed (to be fixed later)
-//
-// Revision 1.68  1999/01/17 22:55:10  silby
-// Change casts to make msvc happy.
-//
-// Revision 1.67  1999/01/17 21:38:52  cyp
-// memblock for bruce ford's deseval-mmx is now passed from the problem object.
-//
-// Revision 1.65  1999/01/11 20:59:34  patrick
-// updated to not raise an error if RC5ANSICORE is defined
-//
-// Revision 1.64  1999/01/11 05:45:10  pct
-// Ultrix modifications for updated client.
-//
-// Revision 1.63  1999/01/08 02:59:29  michmarc
-// Added support for Alpha/NT architecture.
-//
-// Revision 1.62  1999/01/06 09:54:29  chrisb
-// fixes to the RISC OS timeslice stuff for DES - now runs about 2.5 times as fast
-//
-// Revision 1.61  1999/01/01 02:45:16  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.60  1998/12/28 21:37:54  cramer
-// Misc. cleanups for the disappearing RC5CORECOPY junk and minor stuff to
-// get a solaris client to build.
-//
-// Revision 1.59  1998/12/26 21:19:28  cyp
-// Fixed condition where x86/mt/non-mmx would default to slice.
-//
-// Revision 1.58  1998/12/25 03:08:57  cyp
-// x86 Bryd is runnable on upto 4 threads (threads 3 and 4 use the two
-// non-optimal cores, ie pro cores on a p5 machine and vice versa).
-// Made some non-core related stuff u64 clean.
-//
-// Revision 1.57  1998/12/22 15:58:24  jcmichot
-// QNX changes.
-//
-// Revision 1.56  1998/12/19 04:30:23  chrisb
-// fixed a broken comment which was giving errors
-//
-// Revision 1.55  1998/12/15 03:08:46  dicamillo
-// Changed "whichcrunch" to "cputype" in PowerPC Run code.
-//
-// Revision 1.54  1998/12/14 12:48:59  cyp
-// This is the final revision of problem.cpp/problem.h before the class goes
-// 'u64 clean'. Please check/declare all core prototypes.
-//
-// Revision 1.53  1998/12/14 09:38:59  snake
-// Re-integrated non-nasm x86 cores, cause nasm doesn't support all x86 cores.
-// Sorry, no bye-bye to .cpp cores. Moved RC5X86_SRCS to NASM_RC5X86_SRCS and 
-// corrected other targets.
-//
-// Revision 1.52  1998/12/14 05:16:10  dicamillo
-// Mac OS updates to eliminate use of MULTITHREAD and have a singe client
-// for MT and non-MT machines.
-//
-// Revision 1.51  1998/12/09 07:38:40  dicamillo
-// Fixed missing // in log comment (MacCVS Pro bug!).
-//
-// Revision 1.50  1998/12/09 07:36:34  dicamillo
-// Added support for MacOS client scheduling, and info needed
-// by MacOS GUI.
-//
-// Revision 1.49  1998/12/07 15:21:23  chrisb
-// more riscos/x86 changes
-//
-// Revision 1.48  1998/12/06 03:06:11  cyp
-// Define STRESS_THREADS_AND_BUFFERS to configure problem.cpp for 'dummy
-// crunching', ie problems are finished before they even start. You will be
-// warned (at runtime) if you define it.
-//
-// Revision 1.47  1998/12/01 11:24:11  chrisb
-// more riscos x86 changes
-//
-// Revision 1.46  1998/11/28 19:43:17  cyp
-// Def'd out two LogScreen()s
-//
-// Revision 1.45  1998/11/25 09:23:36  chrisb
-// various changes to support x86 coprocessor under RISC OS
-//
-// Revision 1.44  1998/11/25 06:05:48  dicamillo
-// Use parenthesis when calling a function via a pointer.  Gcc in BeOS R4
-// for Intel requires this.
-//
-// Revision 1.43  1998/11/16 16:44:07  remi
-// Allow some targets to use deseval.cpp instead of Meggs' bitslicers.
-//
-// Revision 1.42  1998/11/14 14:12:05  cyp
-// Fixed assignment of -1 to an unsigned variable.
-//
-// Revision 1.41  1998/11/14 13:56:15  cyp
-// Fixed pipeline_count for x86 clients (DES cores were running with 4
-// pipelines). Fixed unused parameter warning in LoadState(). Problem manager
-// saves its probman_index in the Problem object (needed by chrisb's x86
-// copro board code.)
-//
-// Revision 1.40  1998/11/12 22:58:31  remi
-// Reworked a bit AIX ppc & power defines, based on Patrick Hildenbrand
-// <patrick@de.ibm.com> advice.
-//
-// Revision 1.39  1998/11/10 09:18:13  silby
-// Added alpha-linux target, should use axp-bmeyer core.
-//
-// Revision 1.38  1998/11/08 22:25:48  silby
-// Fixed RC5_MMX pipeline count selection, was incorrect.
-//
-// Revision 1.37  1998/10/02 16:59:03  chrisb
-// lots of fiddling in a vain attempt to get the NON_PREEMPTIVE_OS_PROFILING
-// to be a bit sane under RISC OS
-//
-// Revision 1.36  1998/09/29 22:03:00  blast
-// Fixed a bug I introduced with generic core usage, and removed
-// a few old comments that weren't valid anymore (for 68k)
-//
-// Revision 1.35  1998/09/25 11:31:18  chrisb
-// Added stuff to support 3 cores in the ARM clients.
-//
-// Revision 1.34  1998/09/23 22:05:20  blast
-// Multi-core support added for m68k. Autodetection of cores added for 
-// AmigaOS. (Manual selection possible of course). Two new 68k cores are 
-// now added. rc5-000_030-jg.s and rc5-040_060-jg.s Both made by John Girvin.
-//
-// Revision 1.33  1998/08/24 04:43:26  cyruspatel
-// timeslice is now rounded up to be multiple of PIPELINE_COUNT and even.
-//
-// Revision 1.32  1998/08/22 08:00:40  silby
-// added in pipeline_count=2 "just in case" for x86
-//
-// Revision 1.31  1998/08/20 19:34:28  cyruspatel
-// Removed that terrible PIPELINE_COUNT hack: Timeslice and pipeline count
-// are now computed in Problem::LoadState(). Client::SelectCore() now saves
-// core type to Client::cputype.
-//
-// Revision 1.30  1998/08/14 00:05:07  silby
-// Changes for rc5 mmx core integration.
-//
-// Revision 1.29  1998/08/05 16:43:29  cberry
-// ARM clients now define PIPELINE_COUNT=2, and RC5 cores return number of 
-// keys checked, rather than number of keys left to check
-//
-// Revision 1.28  1998/08/02 16:18:27  cyruspatel
-// Completed support for logging.
-//
-// Revision 1.27  1998/07/13 12:40:33  kbracey
-// RISC OS update. Added -noquiet option.
-//
-// Revision 1.26  1998/07/13 03:31:52  cyruspatel
-// Added 'const's or 'register's where the compiler was complaining about
-// "declaration/type or an expression" ambiguities.
-//
-// Revision 1.25  1998/07/07 21:55:50  cyruspatel
-// client.h has been split into client.h and baseincs.h 
-//
-// Revision 1.24  1998/07/06 09:21:26  jlawson
-// added lint tags around cvs id's to suppress unused variable warnings.
-//
-// Revision 1.23  1998/06/17 02:14:47  blast
-// Added code to test a new 68030 core which I got from an outside
-// source ... Commented out of course ...
-//
-// Revision 1.22  1998/06/16 21:53:28  silby
-// Added support for dual x86 DES cores (p5/ppro)
-//
-// Revision 1.21  1998/06/15 12:04:05  kbracey
-// Lots of consts.
-//
-// Revision 1.20  1998/06/15 06:18:37  dicamillo
-// Updates for BeOS
-//
-// Revision 1.19  1998/06/15 00:12:24  skand
-// fix id marker so it won't interfere when another .cpp file is 
-// #included here
-//
-// Revision 1.18  1998/06/14 10:13:43  skand
-// use #if 0 (or 1) to turn on some debugging info, rather than // on each line
-//
-// Revision 1.17  1998/06/14 08:26:54  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.16  1998/06/14 08:13:04  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-// Revision 1.15  1998/06/14 00:06:07  remi
-// Added $Log.
-//
-
-#if (!defined(lint) && defined(__showids__))
+/*
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.94 1999/04/01 07:14:34 jlawson Exp $"; }
-#endif
+return "@(#)$Id: problem.cpp,v 1.94.2.1 1999/04/13 19:45:27 jlawson Exp $"; }
+
+/* ------------------------------------------------------------- */
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -314,13 +22,7 @@ return "@(#)$Id: problem.cpp,v 1.94 1999/04/01 07:14:34 jlawson Exp $"; }
 extern "C" void riscos_upcall_6(void);
 #endif
 
-/* ------------------------------------------------------------- */
-
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
-
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
 
 /* ------------------------------------------------------------- */
 
@@ -368,7 +70,13 @@ extern "C" void riscos_upcall_6(void);
   extern u32 p2des_unit_func_pro( RC5UnitWork * , u32 nbbits );
   extern u32 des_unit_func_mmx( RC5UnitWork * , u32 nbbits, char *coremem );
   extern u32 des_unit_func_slice( RC5UnitWork * , u32 nbbits );
-#elif (CLIENT_CPU == CPU_POWERPC)
+#elif (CLIENT_OS == OS_AIX)     // this has to stay BEFORE CPU_POWERPC
+  extern "C" s32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice );
+  extern "C" s32 crunch_allitnil( RC5UnitWork *work, u32 iterations);
+  extern "C" s32 crunch_lintilla( RC5UnitWork *work, u32 iterations);
+
+  extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
+#elif (CLIENT_CPU == CPU_POWERPC) 
   #if (CLIENT_OS == OS_WIN32)   // NT PPC doesn't have good assembly
   extern u32 rc5_unit_func( RC5UnitWork *  ); //rc5ansi2-rg.cpp
   #else
@@ -450,9 +158,8 @@ Problem::Problem(long _threadindex /* defaults to -1L */)
 //LogScreen("Problem created. threadindex=%u\n",threadindex);
 
   initialized = 0;
-  finished = 0;
   started = 0;
-
+  
 #ifdef STRESS_THREADS_AND_BUFFERS 
   static int runlevel = 0;
   if (runlevel != -12345)
@@ -541,20 +248,58 @@ static void __IncrementKey(u64 *key, u32 iters, int contest)
 {                                                                   
   switch (contest)                                                  
   {                                                                 
-    case 0: /* RC5 */                                               
+    case 0: // RC5
       __SwitchRC5Format (key);                                      
       key->lo += iters;                                             
       if (key->lo < iters) key->hi++;                               
       __SwitchRC5Format (key);                                      
       break;                                                        
-    case 1: /* DES */                                               
+    case 1: // DES
+    case 3: // CSC
       key->lo += iters;                                             
       if (key->lo < iters) key->hi++; /* Account for carry */       
       break;                                                        
-    case 2: /* OGR */                                               
+    case 2: // OGR
       /* This should never be called for OGR */                     
       break;                                                        
   }                                                                 
+}
+
+/* ------------------------------------------------------------- */
+
+u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%. */
+{ 
+  u32 retpermille = 0;
+  if (initialized && last_resultcode >= 0)
+  {
+    if (!started)
+      retpermille = startpermille;
+    else if (last_resultcode != RESULT_WORKING)
+      retpermille = 1000;
+    else
+    {
+      switch (contest)
+      {
+        case 0: //RC5
+        case 1: //DES
+        case 3: //CSC
+                {
+                retpermille = (u32)( ((double)(1000.0)) *
+                (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
+                             ((double)(contestwork.crypto.keysdone.lo))) /
+                ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
+                             ((double)(contestwork.crypto.iterations.lo)))) ); 
+                break;
+                }
+        case 2: //OGR
+                retpermille = 0;
+                break;
+      }
+    }
+    if (retpermille > 1000)
+      retpermille = 1000;
+  }
+  return retpermille;
 }
 
 /* ------------------------------------------------------------------- */
@@ -562,11 +307,26 @@ static void __IncrementKey(u64 *key, u32 iters, int contest)
 int Problem::LoadState( ContestWork * work, unsigned int _contest, 
                               u32 _timeslice, int _cputype )
 {
+  unsigned int sz = sizeof(int);
+  if (sz < sizeof(u32)) /* need to do it this way to suppress compiler warnings. */
+  {
+    LogScreen("FATAL: sizeof(int) < sizeof(u32)\n");
+    //#error "everything assumes a 32bit CPU..."
+    RaiseExitRequestTrigger();
+    return -1;
+  }
+  last_resultcode = -1;
+  started = initialized = 0;
+  timehi = timelo = 0;
+  runtime_sec = runtime_usec = 0;
+  last_runtime_sec = last_runtime_usec = 0;
+  memset((void *)&profiling, 0, sizeof(profiling));
+  startpermille = permille = 0;
   loaderflags = 0;
   contest = _contest;
   cputype = _cputype;
-  runtime_sec = runtime_usec = 0;
-
+  tslice = _timeslice;
+    
   if (contest >= CONTEST_COUNT)
     return -1;
 
@@ -625,8 +385,39 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   des_unit_func = des_unit_func_alpha_dworz;
   #endif
 #endif
+#if (CLIENT_OS == OS_AIX)
+  #ifdef _AIXALL
+  static int detectedtype = -1;
+  if (detectedtype == -1)
+    detectedtype = GetProcessorType(1 /* quietly */);
 
-#if (CLIENT_CPU == CPU_POWERPC)
+  switch (detectedtype) {
+  case 0:                  // PPC 601
+    rc5_unit_func = crunch_allitnil;
+    pipeline_count = 1;
+    break;
+  case 1:                  // other PPC
+    rc5_unit_func = crunch_lintilla;
+    pipeline_count = 1;
+    break;
+  case 2:                  // that's POWER
+  default:
+    rc5_unit_func = rc5_ansi_2_rg_unit_func ;
+    pipeline_count = 2;
+    break;
+  } /* endswitch */
+  #elif (CLIENT_CPU == CPU_POWER)
+    rc5_unit_func = rc5_ansi_2_rg_unit_func;
+    pipeline_count = 2;
+  #elif (CLIENT_CPU == CPU_POWERPC)
+    pipeline_count = 1;
+    if (cputype == 0)
+      rc5_unit_func = crunch_allitnil;
+    else
+      rc5_unit_func = crunch_lintilla;
+  #endif
+// keep the next an ELIF !!!!
+#elif (CLIENT_CPU == CPU_POWERPC)
   if (contest == 0)
   {
     rc5_unit_func = crunch_lintilla;
@@ -735,6 +526,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   {
     case 0: // RC5
     case 1: // DES
+    case 3: // CSC - CSC_TEST
 
       // copy over the state information
       contestwork.crypto.key.hi = ( work->crypto.key.hi );
@@ -769,6 +561,15 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
         __SwitchRC5Format (&(rc5unitwork.L0));
 
       refL0 = rc5unitwork.L0;
+
+      if (contestwork.crypto.keysdone.lo!=0 || contestwork.crypto.keysdone.hi!=0 )
+      {
+        startpermille = (u32)( ((double)(1000.0)) *
+        (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
+                           ((double)(contestwork.crypto.keysdone.lo))) /
+        ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
+                        ((double)(contestwork.crypto.iterations.lo)))) );
+      }     
       break;
 
     case 2: // OGR
@@ -789,29 +590,8 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
       #endif
 
   }
-  resultcode = RESULT_WORKING;
 
   //---------------------------------------------------------------
-  
-  tslice = _timeslice;
-
-  //--------------------------------------------------------------- 
- 
-  startpercent = (u32)( ((double)(100000.0)) *
-        (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
-                           ((double)(contestwork.crypto.keysdone.lo))) /
-        ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
-                        ((double)(contestwork.crypto.iterations.lo)))) );
-  percent=0;
-  restart = ( contestwork.crypto.keysdone.lo!=0 || contestwork.crypto.keysdone.hi!=0 );
-
-  initialized = 1;
-  finished = 0;
-  started = 0;
-
-
-  //-------------------------------------------------------------------
-
 #if (CLIENT_OS == OS_RISCOS)
   if (threadindex == 1 /*x86 thread*/)
   {
@@ -848,25 +628,10 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   }
 #endif
 
-    return( 0 );
-}
+  last_resultcode = RESULT_WORKING;
+  initialized = 1;
 
-/* ------------------------------------------------------------------- */
-
-s32 Problem::GetResult( RC5Result * result )
-{
-  if ( !initialized )
-    return ( -1 );
-
-  result->key.hi = contestwork.crypto.key.hi;
-  result->key.lo = contestwork.crypto.key.lo;
-  result->keysdone.hi = contestwork.crypto.keysdone.hi;
-  result->keysdone.lo = contestwork.crypto.keysdone.lo;
-  result->iterations.hi = contestwork.crypto.iterations.hi;
-  result->iterations.lo = contestwork.crypto.iterations.lo;
-  result->result = resultcode;
-
-  return ( contest );
+  return( 0 );
 }
 
 /* ------------------------------------------------------------------- */
@@ -880,12 +645,13 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
   if (contestid)
     *contestid = contest;
   if (dopurge)
-    initialized = finished = 0;
-  return( resultcode );
+    initialized = 0;
+  if (last_resultcode < 0)
+    return -1;
+  return ( last_resultcode );
 }
 
 /* ------------------------------------------------------------- */
-
 
 u32 rc5_singlestep_core_wrapper( RC5UnitWork * rc5unitwork, u32 timeslice,
                 int pipeline_count, auto u32 (*unit_func)( RC5UnitWork *) )
@@ -913,7 +679,7 @@ u32 rc5_singlestep_core_wrapper( RC5UnitWork * rc5unitwork, u32 timeslice,
 
 /* ------------------------------------------------------------- */
 
-int Problem::Run_RC5(u32 *timesliceP)
+int Problem::Run_RC5(u32 *timesliceP, int *resultcode)
 {
   u32 kiter = 0;
   u32 timeslice = *timesliceP;
@@ -958,7 +724,7 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
     {
       if (runtime_sec == 0 && runtime_usec == 0) /* first time */
       {                          /* load the work onto the coprocessor */
-        return 0; /* ... or -1 if load failed */
+        return RESULT_WORKING; /* ... or -1 if load failed */
         /* runtime_* will remain 0 as long as -1 is returned */
       }
       /* otherwise copy the state of the copro back to contestwork */
@@ -992,6 +758,7 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
         "Debug Information: %08x:%08x - %08x:%08x\n",
         rc5unitwork.L0.hi, rc5unitwork.L0.lo, refL0.hi, refL0.lo);
     #endif
+    *resultcode = -1;
     return -1;
   };
 
@@ -1008,9 +775,8 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
     contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
     if (contestwork.crypto.key.lo < keylo) 
       contestwork.crypto.key.hi++; // wrap occured ?
-    resultcode = RESULT_FOUND;
-    finished = 1;
-    return( 1 );
+    *resultcode = RESULT_FOUND;
+    return RESULT_FOUND;
   }
   else if (kiter != timeslice)
   {
@@ -1020,6 +786,7 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
         "Debug Information: %08x:%08x - %08x:%08x\n", kiter, timeslice,
         rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
     #endif
+    *resultcode = -1;
     return -1;
   };
 
@@ -1028,20 +795,75 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
        ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
   {
     // done with this block and nothing found
-    resultcode = RESULT_NOTHING;
-    finished = 1;
-    return 1;
+    *resultcode = RESULT_NOTHING;
+    return RESULT_NOTHING;
   }
 
   // more to do, come back later.
-  resultcode = RESULT_WORKING;
-  finished = 0;
-  return 0;            // Done with this round
+  *resultcode = RESULT_WORKING;
+  return RESULT_WORKING;    // Done with this round
 }  
 
 /* ------------------------------------------------------------- */
 
-int Problem::Run_DES(u32 *timesliceP)
+int Problem::Run_CSC(u32 *timesliceP, int *resultcode)
+{
+#ifndef CSC_TEST
+  timesliceP = timesliceP;
+  *resultcode = -1;
+  return -1;
+#else  
+  s32 rescode = scs_ansi_unit_func(&rc5unitwork, timesliceP, (void *)0 );
+  if (rescode < 0) /* "kiter" error */
+  {
+    *resultcode = -1;
+    return -1;
+  }
+  *resultcode = (int)rescode;
+
+  // Increment reference key count
+  __IncrementKey (&refL0, *timesliceP, contest);
+
+  // Compare ref to core key incrementation
+  if ((refL0.hi != rc5unitwork.L0.hi) || (refL0.lo != rc5unitwork.L0.lo))
+  { 
+    #ifdef DEBUG_CSC_CORE /* can you spell "thread safe"? */
+    Log("CSC incrementation mismatch:\n"
+        "expected %08x:%08x, got %08x:%08x\n"
+  refL0.lo, refL0.hi, rc5unitwork.L0.lo, rc5unitwork.L0.hi );
+    #endif
+    *resultcode = -1;
+    return -1;
+  }
+
+  // Checks passed, increment keys done count.
+  contestwork.crypto.keysdone.lo += *timesliceP;
+  if (contestwork.crypto.keysdone.lo < *timesliceP)
+    contestwork.crypto.keysdone.hi++;
+
+  // Update data returned to caller
+  if (*resultcode == RESULT_FOUND)
+  {
+    u32 keylo = contestwork.crypto.key.lo;
+    contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
+    contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
+    if (contestwork.crypto.key.lo < keylo) 
+      contestwork.crypto.key.hi++; // wrap occured ?
+    return RESULT_FOUND;
+  }
+  if (*resultcode == RESULT_NOTHING) // done with this block and nothing found
+  {
+    return RESULT_NOTHING;
+  }
+  // more to do, come back later.
+  *resultcode = RESULT_WORKING;
+  return RESULT_WORKING; // Done with this round
+#endif  
+}
+
+/* ------------------------------------------------------------- */
+
+int Problem::Run_DES(u32 *timesliceP, int *resultcode)
 {
   u32 kiter = 0;
   u32 timeslice = *timesliceP;
@@ -1101,6 +923,7 @@ int Problem::Run_DES(u32 *timesliceP)
         "Debug Information: %08x:%08x - %08x:%08x\n",
         rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
     #endif
+    *resultcode = -1;
     return -1;
   };
 
@@ -1118,9 +941,8 @@ int Problem::Run_DES(u32 *timesliceP)
     contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
     if (contestwork.crypto.key.lo < keylo) 
       contestwork.crypto.key.hi++; // wrap occured ?
-    resultcode = RESULT_FOUND;
-    finished = 1;
-    return( 1 );
+    *resultcode = RESULT_FOUND;
+    return RESULT_FOUND;
   }
   else if (kiter != timeslice)
   {
@@ -1130,6 +952,7 @@ int Problem::Run_DES(u32 *timesliceP)
         "Debug Information: %08x:%08x - %08x:%08x\n", kiter, timeslice,
         rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
     #endif
+    *resultcode = -1; /* core error */
     return -1;
   };
 
@@ -1138,20 +961,18 @@ int Problem::Run_DES(u32 *timesliceP)
      ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
   {
     // done with this block and nothing found
-    resultcode = RESULT_NOTHING;
-    finished = 1;
-    return 1;
+    *resultcode = RESULT_NOTHING;
+    return RESULT_NOTHING;
   }
 
   // more to do, come back later.
-  resultcode = RESULT_WORKING;
-  finished = 0;
-  return 0; // Done with this round
+  *resultcode = RESULT_WORKING;
+  return RESULT_WORKING; // Done with this round
 }
 
 /* ------------------------------------------------------------- */
 
-int Problem::Run_OGR(u32 *timesliceP)
+int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
 {
 #ifndef GREGH  
   timesliceP = timesliceP;
@@ -1173,16 +994,15 @@ int Problem::Run_OGR(u32 *timesliceP)
       if (r == CORE_S_OK) 
       {
         ogrstate = NULL;
-        resultcode = RESULT_NOTHING;
-        finished = 1;
-        return 1;
+        *resultcode = RESULT_NOTHING;
+        return RESULT_NOTHING;
       }
       break;
     }
     case CORE_S_CONTINUE:
     {
-      resultcode = RESULT_WORKING;
-      return 0;
+      *resultcode = RESULT_WORKING;
+      return RESULT_WORKING;
     }
     case CORE_S_SUCCESS:
     {
@@ -1190,89 +1010,125 @@ int Problem::Run_OGR(u32 *timesliceP)
       if (ogr->getresult(ogrstate, &result, sizeof(result)) == CORE_S_OK)
       {
         Log("OGR Success!\n");
-        resultcode = RESULT_FOUND;
-        finished = 1;
-        return 1;
+        *resultcode = RESULT_FOUND;
+        return RESULT_FOUND;
       }
       break;
     }
   }
   /* Something bad happened */
 #endif
+ *resultcode = -1; /* this will cause the problem to be discarded */
  return -1;
 }
 
 /* ------------------------------------------------------------- */
 
-s32 Problem::Run( u32 /*unused*/ )
+int Problem::Run(void) /* returns RESULT_*  or -1 */
 {
   struct timeval stop, start;
-  int retcode;
+  int retcode, core_resultcode;
   u32 timeslice;
 
   if ( !initialized )
     return ( -1 );
 
-  if ( finished )
-    return ( 1 );
-
+  if ( last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
+    return ( last_resultcode );
+    
   CliTimer(&start);
   if (!started)
   {
-    timehi = start.tv_sec;
-    timelo = start.tv_usec;
+    timehi = start.tv_sec; timelo = start.tv_usec;
     runtime_sec = runtime_usec = 0;
+    memset((void *)&profiling, 0, sizeof(profiling));
     started=1;
 
 #ifdef STRESS_THREADS_AND_BUFFERS 
+    contest = 0;
+    contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
     contestwork.crypto.keysdone.hi = contestwork.crypto.iterations.hi;
     contestwork.crypto.keysdone.lo = contestwork.crypto.iterations.lo;
-    runtime_usec = 1;
-    resultcode = RESULT_NOTHING;
-    finished = 1;
-    return 1;
+    runtime_usec = 1; /* ~1Tkeys for a 2^20 packet */
+    last_resultcode = RESULT_NOTHING;
+    return RESULT_NOTHING;
 #endif    
   }
 
-  timeslice = tslice;
-  retcode = -1;
-
   /* 
     On return from the Run_XXX contestwork must be in a state that we
-    can put away to disk - that is, do not expect the loader to fiddle
-    with iterations or key or whatever.
+    can put away to disk - that is, do not expect the loader (probfill 
+    et al) to fiddle with iterations or key or whatever.
+    
+    The Run_XXX functions do *not* update problem.last_resultcode, they use
+    core_resultcode instead. This is so that members of the problem object
+    that are updated after the resultcode has been set will not be out of
+    sync when the main thread gets it with RetrieveState(). 
+    
+    note: although the value returned by Run_XXX is usually the same as 
+    the core_resultcode it is not always so. For instance, if 
+    post-LoadState() initialization  failed, but can be deferred, Run_XXX 
+    may choose to return -1, but keep core_resultcode at RESULT_WORKING.
   */
+
+  timeslice = tslice;
+  last_runtime_usec = last_runtime_sec = 0;
+  core_resultcode = last_resultcode;
+  retcode = -1;
 
   switch (contest)
   {
-    case 0: retcode = Run_RC5( &timeslice );
-            break;
-    case 1: retcode = Run_DES( &timeslice );
-            break;
-    case 2: retcode = Run_OGR( &timeslice );
-            break;
+    case 0:  retcode = Run_RC5( &timeslice, &core_resultcode );
+             break;
+    case 1:  retcode = Run_DES( &timeslice, &core_resultcode );
+             break;
+    case 2:  retcode = Run_OGR( &timeslice, &core_resultcode );
+             break;
+    case 3:  retcode = Run_CSC( &timeslice, &core_resultcode );
+             break;
+    default: retcode = core_resultcode = last_resultcode = -1;
+       break;
   }
 
   
   if (retcode < 0) /* don't touch tslice or runtime as long as < 0!!! */
+  {
     return -1;
-  
-  tslice = timeslice;
-  
-  CliTimer(&stop);
-  if (stop.tv_usec < start.tv_usec)
-  {
-    stop.tv_sec--;
-    stop.tv_usec+=1000000L;
   }
-  runtime_sec += stop.tv_sec - start.tv_sec;
-  if ((runtime_usec += (stop.tv_usec - start.tv_usec)) > 1000000L )
+  
+  core_run_count++;
+  CliTimer(&stop);
+  if ( core_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING */
   {
-    runtime_sec++;
-    runtime_usec-=1000000L;
+    runtime_sec = runtime_usec = 0;
+    start.tv_sec = timehi;
+    start.tv_usec = timelo;
+  }
+  if (stop.tv_sec < start.tv_sec || 
+     (stop.tv_sec == start.tv_sec && stop.tv_usec <= start.tv_usec))
+  {
+    //AIEEE! clock is whacky (or unusably inaccurate if ==)
+  }
+  else
+  {
+    if (stop.tv_usec < start.tv_usec)
+    {
+      stop.tv_sec--;
+      stop.tv_usec+=1000000L;
+    }
+    runtime_usec += (last_runtime_usec = (stop.tv_usec - start.tv_usec));
+    runtime_sec  += (last_runtime_sec = (stop.tv_sec - start.tv_sec));
+    if (runtime_usec > 1000000L)
+    {
+      runtime_sec++;
+      runtime_usec-=1000000L;
+    }
   }
 
-  return retcode;
+  tslice = timeslice;
+
+  last_resultcode = core_resultcode;
+  return last_resultcode;
 }
 
 /* ======================================================================= */
@@ -1337,7 +1193,6 @@ s32 Problem::Run( u32 /*unused*/ )
         if (contestwork.crypto.key.lo < keylo) 
           contestwork.crypto.key.hi++; // wrap occured ?
         resultcode = RESULT_FOUND;
-        finished = 1;
         return( 1 );
         }
 #if (CLIENT_OS == OS_RISCOS)
@@ -1385,7 +1240,6 @@ s32 Problem::Run( u32 /*unused*/ )
               if (contestwork.crypto.key.lo < keylo) 
                 contestwork.crypto.key.hi++; // wrap occured ?
               resultcode = RESULT_FOUND;
-              finished = 1;
               return( 1 );
             }
             else

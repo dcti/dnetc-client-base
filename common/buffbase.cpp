@@ -1,12 +1,10 @@
-// Copyright distributed.net 1997,1998,1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-
-#if (!defined(lint) && defined(__showids__))
+/* 
+ * Copyright distributed.net 1997 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.2.2.1 1999/04/04 09:48:28 jlawson Exp $"; }
-#endif
+return "@(#)$Id: buffbase.cpp,v 1.2.2.2 1999/04/13 19:45:11 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -21,7 +19,6 @@ return "@(#)$Id: buffbase.cpp,v 1.2.2.1 1999/04/04 09:48:28 jlawson Exp $"; }
 #include "problem.h"  //Resultcode enum
 #include "buffwork.h" //our defines
 #define __iter2norm( iterlo, iterhi ) ((iterlo >> 28) + (iterhi << 4))
-
 
 /* --------------------------------------------------------------------- */
 
@@ -246,7 +243,7 @@ int BufferZapFileRecords( const char *filename )
   if (!IsFilenameValid( filename ))
     return 0;
   filename = GetFullPathForFilename( filename );
-  if (access( filename, 0 )!=0) //file doesn't exist, which is ok
+  if (!DoesFileExist( filename )) //file doesn't exist, which is ok
     return 0;
   file = BUFFERCREATE( filename ); //truncate the file to zero length
   if (!file)
@@ -269,7 +266,7 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
 
   filename = GetFullPathForFilename( filename );
 
-  if (access( filename, 0 ) != 0) // file doesn't exist, so create it
+  if (!DoesFileExist( filename )) // file doesn't exist, so create it
   {
     if ((file = BUFFERCREATE( filename ))==NULL)
       failed = 1;
@@ -279,7 +276,7 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
   }
   if (failed == 0)
   {
-    if (access( filename, 0 )!=0) // file still doesn't exist
+    if (!DoesFileExist( filename )) // file still doesn't exist
     {
       Log("Error opening buffer file... Access was denied.\n" );
       return NULL;
@@ -428,10 +425,7 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
   {
     contest_i = (unsigned int)loadorder_map[i];
     loaderflags_map[i] = 0;
-#ifndef GREGH
-    if (contest_i == 2) 
-      contest_i|=0x80;
-#endif
+
     if (contest_i >= CONTEST_COUNT) /* disabled */
     {
       /* retrieve the original contest number from the load order */
@@ -859,14 +853,19 @@ long Client::GetBufferCount( unsigned int contest, int use_out_file, unsigned lo
 
 /* import records from source, return -1 if err, or number of recs imported. */
 /* On success, source is truncated/deleted. Used by checkpt and --import */
-long BufferImportFileRecords( Client *client, const char *source_file )
+long BufferImportFileRecords( Client *client, const char *source_file, int interactive )
 {
   unsigned long remaining, lastremaining = 0;
-  unsigned recovered = 0;
+  unsigned int recovered = 0; 
+  int errs = 0;
   WorkRecord data; 
 
   if ( !DoesFileExist( source_file ) )
+  {
+    if (interactive)
+      LogScreen("Import error: Source '%s' doesn't exist\n", source_file );
     return -1L;
+  }
   
   while (BufferGetFileRecord( source_file, &data, &remaining ) == 0) 
                            //returns <0 on ioerr/corruption, > 0 if norecs
@@ -875,6 +874,10 @@ long BufferImportFileRecords( Client *client, const char *source_file )
     {
       if (lastremaining <= remaining)
       {
+        if (interactive)
+	  LogScreen("Import error: something bad happened.\n"
+	            "The source file isn't getting smaller.\n"); 
+        errs = 1;
         recovered = 0;
         break;
       }
@@ -887,7 +890,11 @@ long BufferImportFileRecords( Client *client, const char *source_file )
   }
   if (recovered > 0)
     BufferZapFileRecords( source_file );
-  return recovered;
+  if (recovered > 0 && interactive)
+    LogScreen("Import::%ld records successfully imported.\n", recovered);
+  else if (errs == 0 && recovered == 0 && interactive)
+    LogScreen("Import::No buffer records could be imported.\n");
+  return (long)recovered;
 }
 
 /* --------------------------------------------------------------------- */

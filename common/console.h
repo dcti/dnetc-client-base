@@ -1,51 +1,15 @@
-// Hey, Emacs, this a -*-C++-*- file !
-//
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: console.h,v $
-// Revision 1.27  1999/01/28 00:21:26  trevorh
-// Added #include for conio.h
-//
-// Revision 1.26  1999/01/12 15:01:41  cyp
-// Created an itty-bitty ConBeep(). (used by Client::Configure())
-//
-// Revision 1.25  1999/01/07 02:15:57  cyp
-// ConInStr() now has a special 'boolean' mode. woohoo!
-//
-// Revision 1.24  1999/01/01 02:45:15  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.23  1998/11/10 21:36:01  cyp
-// Changed InitializeConsole() so that terms know in advance whether the
-// client will be running "modes" or not. This is needed for platforms where
-// the client uses a different screen for "modes" or for others that wait
-// with a "Press any key..." message before destroying the screen/window.
-//
-// Revision 1.22  1998/11/08 19:05:03  cyp
-// Created new function ConGetSize(int *width, int *height) from stuff in
-// DisplayHelp().
-//
-// Revision 1.21  1998/10/26 02:52:46  cyp
-// Remved IS_A_TTY() macros.
-//
-// Revision 1.2  1998/10/11 05:24:31  cyp
-// Implemented ConIsScreen(): a real (not a macro) isatty wrapper.
-//
-// Revision 1.1  1998/10/03 05:34:47  cyp
-// Created.
-
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/ 
 #ifndef __CONSOLE_H__
-#define __CONSOLE_H__
+#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.27.2.1 1999/04/13 19:45:20 jlawson Exp $"
 
 #include "version.h"
 #define CLICONS_SHORTNAME  "RC5DES"
-#define CLICONS_LONGNAME "Distributed.Net RC5/DES Client " CLIENT_VERSIONSTRING ""
-
-#if ((CLIENT_OS == OS_OS2) && defined(__WATCOMC__))
-  #include <conio.h>
-#endif
+#define CLICONS_LONGNAME "distributed.net RC5/DES client " CLIENT_VERSIONSTRING ""
 
 // ConIsScreen() returns true (!0) if console (both stdin and stdout)
 // represents the screen. also returns 0 if the console is not initialized.

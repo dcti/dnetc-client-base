@@ -2,233 +2,21 @@
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
- *
- * ****************** THIS IS WORLD-READABLE SOURCE *********************
- *
- * $Log: confrwv.cpp,v $
- * Revision 1.49  1999/04/01 03:20:40  cyp
- * Updated to reflect changed [in|out]_buffer_[file->basename] semantics.
- *
- * Revision 1.48  1999/03/18 18:53:42  cyp
- * old split-personality [parameters]offlinemode is now [networking]disabled
- * ie, no-networking means /absolutely/ no networking. The old value is
- * precompensated by the lurk/lurkonly flags before it is converted.
- *
- * Revision 1.47  1999/03/18 07:38:02  gregh
- * Add #ifdef GREGH blocks so we can safely leave CONTEST_COUNT at 2 for
- * current builds (until OGR is ready).
- *
- * Revision 1.46  1999/03/18 03:06:26  cyp
- * This module is OGR ready. Minor fixes to reflect client class changes as
- * well as reassignment of some ini keys to new sections.
- *
- * Revision 1.45  1999/02/21 21:44:59  cyp
- * tossed all redundant byte order changing. all host<->net order conversion
- * as well as scram/descram/checksumming is done at [get|put][net|disk] points
- * and nowhere else.
- *
- * Revision 1.44  1999/02/20 03:07:17  gregh
- * Add OGR options to configuration data.
- *
- * Revision 1.43  1999/02/09 03:16:41  remi
- * ReadConfig() now calls dialup.GetDefaultIFaceMask() to get
- * the default value of connifacemask[].
- * WriteConfig() will always write it in the .ini
- *
- * Revision 1.42  1999/02/08 23:19:39  remi
- * The right default for interface-to-watch is "ppp0:sl0" not "\0"
- * (at least on Linux).
- * FreeBSD now supports lurk mode also.
- *
- * Revision 1.41  1999/02/07 16:00:08  cyp
- * Lurk changes: genericified variable names, made less OS-centric.
- *
- * Revision 1.40  1999/02/06 10:42:55  remi
- * - the default for dialup.ifacestowatch is now 'ppp0:sl0'.
- * - #ifdef'ed dialup.ifacestowatch (only Linux at the moment)
- * - modified a bit the help text in confopt.cpp
- *
- * Revision 1.39  1999/02/06 09:08:08  remi
- * Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
- * to watch for online/offline status. If this list is empty (the default), any
- * interface up and running (besides the lookback one) will trigger the online
- * status.
- * Fixed formating in lurk.cpp.
- *
- * Revision 1.38  1999/02/04 10:44:19  cyp
- * Added support for script-driven dialup. (currently linux only)
- *
- * Revision 1.37  1999/01/29 19:06:37  jlawson
- * fixed formatting.
- *
- * Revision 1.36  1999/01/27 16:40:34  cyp
- * changed conditional write of 'hours'. Also 'keyproxy'=="auto" (which one
- * previous config had accidentally written to the ini) wasn't being discarded.
- *
- * Revision 1.35  1999/01/27 00:58:33  jlawson
- * changed ini functions to use B versions instead of A versions.
- *
- * Revision 1.34  1999/01/26 20:19:15  cyp
- * adapted for new ini stuff.
- *
- * Revision 1.33  1999/01/21 21:49:02  cyp
- * completed toss of ValidateConfig().
- *
- * Revision 1.32  1999/01/19 09:45:17  patrick
- * LURK: changed to not copy connection name for OS2.
- *
- * Revision 1.31  1999/01/17 15:57:32  cyp
- * priority is now properly written to file. ValidateConfig() has poofed -
- * Very little was being properly validated there. Individual subsystems
- * are now (as always have been) responsible for their own variables.
- *
- * Revision 1.30  1999/01/15 05:18:15  cyp
- * disable ini i/o once we know that ini writes fail.
- *
- * Revision 1.29  1999/01/11 07:01:24  dicamillo
- * Fixed incorrect test in ValidateConfig for priority.  It can now exceed 0.
- *
- * Revision 1.28  1999/01/10 15:17:48  remi
- * Added "network.h" to the list of includes (needed for h.tonl() and n.tohl())
- *
- * Revision 1.27  1999/01/09 00:52:12  silby
- * descontestclosed and scheduledupdate time back
- * to network byte order.
- *
- * Revision 1.26  1999/01/08 20:27:44  silby
- * Fixed scheduledupdatetime and descontestclosed not being
- * read from the ini.
- *
- * Revision 1.25  1999/01/07 20:14:55  cyp
- * fixed priority=. Readini quote handling _really_ needs rewriting.
- *
- * Revision 1.24  1999/01/06 07:28:45  dicamillo
- * Add (apparently missing) code to ReadConfig to set cputype.
- *
- * Revision 1.23  1999/01/06 03:07:00  remi
- * Last minute patch from cyp.
- *
- * Revision 1.22  1999/01/05 09:02:02  silby
- * Fixed bug in writeconfig - processdes=0 was being set, but
- * not deleted.
- *
- * Revision 1.21  1999/01/04 02:47:30  cyp
- * Cleaned up menu options and handling.
- *
- * Revision 1.20  1999/01/03 02:49:53  cyp
- * Removed x86-specific hack I introduced in 1.13. This is now covered in
- * confmenu. Removed autofindkeyserver perversion introducted a couple of
- * versions ago. Removed keyport validation (default to zero).
- *
- * Revision 1.19  1999/01/02 08:00:16  silby
- * Default scheduledupdatetime is now jan 2nd 17:15:00.
- *
- * Revision 1.18  1999/01/02 01:43:26  silby
- * processdes option read/written again.
- *
- * Revision 1.17  1999/01/01 02:45:15  cramer
- * Part 1 of 1999 Copyright updates...
- *
- * Revision 1.15  1998/12/28 03:32:47  silby
- * WIN32GUI internalread/writeconfig procedures are back.
- *
- * Revision 1.14  1998/12/28 03:03:40  silby
- * Fixed problem with filenames having whitespace stripped from them.
- *
- * Revision 1.13  1998/12/27 03:27:08  cyp
- * long pending x86-specific hack against ConfigureGeneral() crashes: on
- * iniread, convert cputype 6 (non-existant type "Pentium MMX") into type 0
- * ("Pentium"). See comment in code for possible (discounted) solutions.
- *
- * Revision 1.12  1998/12/25 05:30:28  silby
- * Temporary commenting out of InternalRead/Write/Validate
- *
- * Revision 1.11  1998/12/25 02:32:11  silby
- * ini writing functions are now not part of client object.
- * This allows the win32 (and other) guis to have
- * configure modules that act on a dummy client object.
- * (Client::Configure should be seperated as well.)
- * Also fixed bug with spaces being taken out of pathnames.
- *
- * Revision 1.10  1998/12/23 03:24:56  silby
- * Client once again listens to keyserver for next contest start time,
- * tested, it correctly updates.  Restarting after des blocks have
- * been recieved has not yet been implemented, I don't have a clean
- * way to do it yet.  Writing of contest data to the .ini has been
- * moved back to confrwv with its other ini friends.
- *
- * Revision 1.9  1998/12/23 00:41:45  silby
- * descontestclosed and scheduledupdatetime now read from the .ini file.
- *
- * Revision 1.8  1998/12/21 19:06:08  cyp
- * Removed 'unused'/'unimplemented' sil[l|b]yness added in recent version.
- * See client.h for full comment.
- *
- * Revision 1.7  1998/12/21 01:21:39  remi
- * Recommitted to get the right modification time.
- *
- * Revision 1.6  1998/12/21 14:23:57  remi
- * Fixed the weirdness of proxy, keyport, uuehttpmode etc... handling :
- * - if keyproxy ends in .distributed.net, keyport and uuehttpmode are
- *   kept in sync in ::ValidateConfig()
- * - if uuehttpmode == 2|3, keyport = 80 and can't be changed
- *   (port 80 is hardwired in the http code somewhere in network.cpp)
- * - do not delete uuehttpmode from the .ini file when it's > 1 (!!)
- *   this bug makes client <= 422 difficult to use with http or socks...
- * - write keyport in the .ini only if it differs from the default
- *   (2064 | 80 | 23) for a given uuehttmode
- * - fixed bugs in ::ConfigureGeneral() related to autofindkeyserver,
- *   uuehttpmode, keyproxy, and keyport.
- *
- * Revision 1.5  1998/12/21 00:21:01  silby
- * Universally scheduled update time is now retrieved from the proxy,
- * and stored in the .ini file.  Not yet used, however.
- *
- * Revision 1.4  1998/12/20 23:00:35  silby
- * Descontestclosed value is now stored and retrieved from the ini file,
- * additional updated of the .ini file's contest info when fetches and
- * flushes are performed are now done.  Code to throw away old des blocks
- * has not yet been implemented.
- *
- * Revision 1.3  1998/11/26 22:24:51  cyp
- * Fixed blockcount validation (<0 _is_ valid). (b) WriteConfig() sets ini
- * entries only if they already exist or they are not equal to the default.
- * (c) WriteFullConfig() is now WriteConfig(1) [default arg is 0] (d) Threw
- * out CheckforcedKeyport()/CheckforcedKeyproxy() [were unused/did not work]
- *
- * Revision 1.2  1998/11/26 06:52:59  cyp
- * Fixed a couple of type warnings and threw out WriteContestAndPrefixConfig()
- *
- * Revision 1.1  1998/11/22 15:16:15  cyp
- * Split from cliconfig.cpp; Changed runoffline/runbuffers/blockcount handling
- * (runbuffers is now synonymous with blockcount=-1; offlinemode is always
- * 0/1); changed 'frequent' context to describe what it does better: check
- * buffers frequently and not connect frequently. Removed outthreshold[0] as
- * well as both DES thresholds from the menu. Removed 'processdes' from the menu.
- * Fixed various bugs. Range validation is always based on the min/max values in
- * the option table.
- *
 */
-
-#if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.49 1999/04/01 03:20:40 cyp Exp $"; }
-#endif
+return "@(#)$Id: confrwv.cpp,v 1.49.2.1 1999/04/13 19:45:20 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
 #include "baseincs.h"  // atoi() etc
-#include "iniread.h"   // 
+#include "iniread.h"   // [Get|Write]Profile[Int|String]()
 #include "pathwork.h"  // GetFullPathForFilename()
 #include "util.h"      // projectmap_*()
 #include "lurk.h"      // lurk stuff
 #include "cpucheck.h"  // GetProcessorType() for mmx stuff
-#include "confopt.h"   // conf_option table
 #include "triggers.h"  // RaiseRestartRequestTrigger()
-#include "clicdata.h"  // CliClearContestData()
 #include "cmpidefs.h"  // strcmpi()
-#include "confrwv.h"   // Outselves
+#include "confrwv.h"   // Ourselves
 
 /* ------------------------------------------------------------------------ */
 
@@ -249,8 +37,8 @@ static int __remapObsoleteParameters( const char *fn ) /* returns <0 if failed *
              "contestdone" /* now in "rc564" */, "contestdone2", 
              "contestdone3", "contestdoneflags", "descontestclosed",
              "scheduledupdatetime" /* now in OPTSECT_NET */,
-             "processdes", "usemmx", "runoffline", 
-             "in","out","in2","out2","in3","out3","nodisk" };
+             "processdes", "usemmx", "runoffline", "in","out","in2","out2",
+             "in3","out3","nodisk", "dialwhenneeded","connectionname" };
   char buffer[128];
   int i, modfail = 0;
 
@@ -260,6 +48,13 @@ static int __remapObsoleteParameters( const char *fn ) /* returns <0 if failed *
       i = 0;
     else
       modfail += (!WritePrivateProfileStringB( OPTSECT_BUFFERS, "buffer-only-in-memory", "yes", fn ));
+  }
+  if ((i = GetPrivateProfileIntB( OPTION_SECTION, "descontestclosed", 0, fn )) != 0)
+  {
+    if (GetPrivateProfileStringB( OPTION_SECTION, "in2", "", buffer, sizeof(buffer), fn ))
+      unlink( GetFullPathForFilename( buffer ) );
+    if (GetPrivateProfileStringB( OPTION_SECTION, "out2", "", buffer, sizeof(buffer), fn ))
+      unlink( GetFullPathForFilename( buffer ) );
   }
   if (i == 0)
   {
@@ -291,6 +86,16 @@ static int __remapObsoleteParameters( const char *fn ) /* returns <0 if failed *
     }  
   }
 
+  if (GetPrivateProfileIntB( OPTION_SECTION, "dialwhenneeded", 0, fn ) &&
+    (i=GetPrivateProfileIntB( OPTSECT_NET, "enable-start-stop", -123, fn ))==-123)
+  {
+    modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "enable-start-stop", "yes", fn ));
+  }   
+  if (GetPrivateProfileStringB( OPTSECT_MISC, "connectionname", "", buffer, 1, fn ))
+  {
+    modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "dialup-profile", buffer, fn ));
+  }
+
   if ((i = GetPrivateProfileIntB( OPTION_SECTION, "runbuffers", -123, fn )) != -123)
     modfail += (!WritePrivateProfileStringB( OPTION_SECTION, "count", "-1", fn ));
 
@@ -307,7 +112,7 @@ static int __remapObsoleteParameters( const char *fn ) /* returns <0 if failed *
           break;
         }
       }
-      modfail += (!WritePrivateProfileStringB( OPTSECT_MISC, "project-priority", NULL, fn ));
+      modfail += (!WritePrivateProfileStringB( OPTSECT_MISC, "project-priority", projectmap_expand(buffer), fn ));
     }
   }
 
@@ -329,6 +134,26 @@ static int __remapObsoleteParameters( const char *fn ) /* returns <0 if failed *
   return 0;
 }  
 
+
+/* ------------------------------------------------------------------------ */
+
+static int confopt_IsHostnameDNetHost( const char * hostname )
+{
+  unsigned int len;
+  const char sig[]="distributed.net";
+
+  if (!hostname || !*hostname)
+    return 1;
+  if (isdigit( *hostname )) //IP address
+    return 0;
+  len = strlen( hostname );
+  return (len > (sizeof( sig )-1) &&
+      strcmpi( &hostname[(len-(sizeof( sig )-1))], sig ) == 0);
+}
+
+
+/* ------------------------------------------------------------------------ */
+
 int ReadConfig(Client *client) 
 {
   char buffer[64];
@@ -340,9 +165,10 @@ int ReadConfig(Client *client)
 
   const char *fn = client->inifilename;
   fn = GetFullPathForFilename( fn );
-  if ( access( fn, 0 )!=0 ) 
-    return +1; /* non-fatal error */
 
+  if ( access( fn, 0 ) != 0 ) 
+    return +1; /* fall into config */
+    
   if (__remapObsoleteParameters( fn ) < 0)
   {
     ConOutErr("Config load failed. Unable to upgrade .ini.\n");
@@ -454,9 +280,6 @@ int ReadConfig(Client *client)
   if ((i & CONNECT_DOD)!=0)
   {
     dialup.dialwhenneeded = GetPrivateProfileIntB( OPTSECT_NET, "enable-start-stop", 0, fn );
-    #if (CLIENT_OS == OS_WIN32) /* old format */
-    dialup.dialwhenneeded |= GetPrivateProfileIntB( sect, "dialwhenneeded", 0, fn );
-    #endif
     if ((i & CONNECT_DODBYSCRIPT)!=0)
     {
       GetPrivateProfileStringB( OPTSECT_NET, "dialup-start-cmd", dialup.connstartcmd, dialup.connstartcmd, sizeof(dialup.connstartcmd), fn );
@@ -603,11 +426,14 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileInt( sect, "nofallback", client->nofallback, fn, 0, 1);
 
     char *af=NULL, *host=client->keyproxy, *port = buffer;
-    if (confopt_isstringblank(host) || client->autofindkeyserver)
+    i = 0; while (host[i] && isspace(host[i])) i++;
+    if (host[i]=='\0' || client->autofindkeyserver)
       host = NULL; //delete keys so that old inis stay compatible and default.
     else if (confopt_IsHostnameDNetHost(host)) //make clear that name==port
         { af = "0"; if (client->keyport != 3064) port = NULL; }
-    if (port!=NULL) sprintf(port,"%ld",client->keyport);
+    if (port!=NULL && client->keyport==0 && !GetPrivateProfileIntB(sect,"keyport",0,fn))
+      port = NULL;
+    if (port!=NULL) sprintf(port,"%d",((int)(client->keyport)));
     WritePrivateProfileStringB( OPTSECT_NET, "autofindkeyserver", af, fn );
     WritePrivateProfileStringB( sect, "keyport", port, fn );
     WritePrivateProfileStringB( sect, "keyproxy", host, fn );
@@ -624,14 +450,9 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       __XSetProfileStr( OPTSECT_NET, "interfaces-to-watch", dialup.connifacemask, fn, NULL );
     if ((i & CONNECT_DOD) != 0)
     {
-      #if (CLIENT_OS == OS_WIN32)
-      __XSetProfileInt( sect, "dialwhenneeded", dialup.dialwhenneeded, fn, 0, 1 );
-      __XSetProfileStr( sect, "connectionname", dialup.connprofile, fn, NULL );
-      #else
       __XSetProfileInt( OPTSECT_NET, "enable-start-stop", (dialup.dialwhenneeded!=0), fn, 0, 'n' );
       if ((i & CONNECT_DODBYPROFILE) != 0)
         __XSetProfileStr( OPTSECT_NET, "dialup-profile", dialup.connprofile, fn, NULL );
-      #endif
       if ((i & CONNECT_DODBYSCRIPT) != 0)
       {
         __XSetProfileStr( OPTSECT_NET, "dialup-start-cmd", dialup.connstartcmd, fn, NULL );
@@ -696,6 +517,4 @@ void RefreshRandomPrefix( Client *client )
   }
   return;
 }
-
-// -----------------------------------------------------------------------
 

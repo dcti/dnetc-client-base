@@ -1,149 +1,12 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: confmenu.cpp,v $
-// Revision 1.35.2.1  1999/04/04 07:25:26  jlawson
-// network.h no longer needed.
-//
-// Revision 1.35  1999/04/01 03:20:39  cyp
-// Updated to reflect changed [in|out]_buffer_[file->basename] semantics.
-//
-// Revision 1.34  1999/03/18 07:38:02  gregh
-// Add #ifdef GREGH blocks so we can safely leave CONTEST_COUNT at 2 for
-// current builds (until OGR is ready).
-//
-// Revision 1.33  1999/03/18 06:06:44  cyp
-// fixed: threshold and preferred packet size are nodiskbuffers dependancies,
-// and not of offlinemode.
-//
-// Revision 1.32  1999/03/18 03:32:57  cyp
-// This module is now OGR ready. Moved base64 routines to base64.cpp so that
-// Client::Configure() does not have to be a virtual method for !cli clients.
-//
-// Revision 1.31  1999/02/20 03:08:08  gregh
-// Add OGR options to configuration menu.
-//
-// Revision 1.30  1999/02/14 03:58:32  silby
-// Fixed httpid the correct way.
-//
-// Revision 1.29  1999/02/14 03:50:08  silby
-// Fixed base64 encoding.
-//
-// Revision 1.28  1999/02/14 02:57:46  silby
-// Fixed two bugs with httpid handling.
-//
-// Revision 1.27  1999/02/10 03:46:32  cyp
-// dialup script/profile options are now disabled if dialwhenneeded is off.
-//
-// Revision 1.26  1999/02/09 23:57:26  cyp
-// The CONNECT_IFACEMASK default is now internal to lurk.
-//
-// Revision 1.25  1999/02/09 23:06:40  remi
-// CONF_IFACEMASK default is now set by calling dialup.GetDefaultIFaceMask().
-//
-// Revision 1.24  1999/02/07 16:00:09  cyp
-// Lurk changes: genericified variable names, made less OS-centric.
-//
-// Revision 1.23  1999/02/06 09:08:08  remi
-// Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
-// to watch for online/offline status. If this list is empty (the default), any
-// interface up and running (besides the lookback one) will trigger the online
-// status.
-//
-// Revision 1.22  1999/02/04 10:44:19  cyp
-// Added support for script-driven dialup. (currently linux only)
-//
-// Revision 1.21  1999/01/29 19:04:03  jlawson
-// fixed formatting.  removed unused function.
-//
-// Revision 1.20  1999/01/21 21:52:34  cyp
-// fixed nettimeout >=0 but <5 range validation.
-//
-// Revision 1.19  1999/01/19 09:43:38  patrick
-// changed confmenu to display LURK network selections only for Win32 and 
-// not for OS2
-//
-// Revision 1.18  1999/01/17 13:50:11  cyp
-// buffer thresholds must be volatile.
-//
-// Revision 1.17  1999/01/12 14:57:35  cyp
-// -1 is a legal nettimeout value (force blocking net i/o).
-//
-// Revision 1.16  1999/01/12 14:37:42  cyp
-// re-prompt the user on range error.
-//
-// Revision 1.15  1999/01/07 02:20:35  cyp
-// Greatly improved "yes"/"no" editing with my rad ConInStr() bool mode. :)
-//
-// Revision 1.14  1999/01/04 19:02:25  chrisb
-// fixed an erroneous implicit cast
-//
-// Revision 1.13  1999/01/04 04:49:17  cyp
-// Cleared a 'potential integer truncation' warning.
-//
-// Revision 1.12  1999/01/04 02:47:30  cyp
-// Cleaned up menu options and handling.
-//
-// Revision 1.11  1999/01/03 02:28:27  cyp
-// Added bounds check before displaying an optionlist.
-//
-// Revision 1.10  1999/01/01 02:45:15  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.9  1998/12/30 19:19:28  cyp
-// Fixed broken offlinemode (not being able to change).
-//
-// Revision 1.8  1998/12/28 03:03:39  silby
-// Fixed problem with filenames having whitespace stripped from them.
-//
-// Revision 1.7  1998/12/21 18:40:12  cyp
-// Removed 'unused'/'unimplemented' sil[l|b]yness committed in 1.3/1.4
-//
-// Revision 1.6  1998/12/21 01:21:39  remi
-// Recommitted to get the right modification time.
-//
-// Revision 1.5  1998/12/21 14:23:58  remi
-// Fixed the weirdness of proxy, keyport, uuehttpmode etc... handling :
-// - if keyproxy ends in .distributed.net, keyport and uuehttpmode are
-//   kept in sync in ::ValidateConfig()
-// - if uuehttpmode == 2|3, keyport = 80 and can't be changed
-//   (port 80 is hardwired in the http code somewhere in network.cpp)
-// - do not delete uuehttpmode from the .ini file when it's > 1 (!!)
-//   this bug makes client <= 422 difficult to use with http or socks...
-// - write keyport in the .ini only if it differs from the default
-//   (2064 | 80 | 23) for a given uuehttmode
-// - fixed bugs in ::ConfigureGeneral() related to autofindkeyserver,
-//   uuehttpmode, keyproxy, and keyport.
-//
-// Revision 1.4  1998/12/21 00:21:01  silby
-// Universally scheduled update time is now retrieved from the proxy,
-// and stored in the .ini file.  Not yet used, however.
-//
-// Revision 1.3  1998/12/20 23:00:35  silby
-// Descontestclosed value is now stored and retrieved from the ini file,
-// additional updated of the .ini file's contest info when fetches and
-// flushes are performed are now done.  Code to throw away old des blocks
-// has not yet been implemented.
-//
-// Revision 1.2  1998/11/26 22:30:36  cyp
-// Fixed an implied signed/unsigned comparison in ::Configure.
-//
-// Revision 1.1  1998/11/22 15:16:17  cyp
-// Split from cliconfig.cpp; Changed runoffline/runbuffers/blockcount handling
-// (runbuffers is now synonymous with blockcount=-1; offlinemode is always
-// 0/1); changed 'frequent' context to describe what it does better: check
-// buffers frequently and not connect frequently. Removed outthreshold[0] as
-// well as both DES thresholds from the menu. Removed 'processdes' from the 
-// menu. Fixed various bugs. Range validation is always based on the min/max 
-// values in the option table.
-//
-
-
-#if (!defined(lint) && defined(__showids__))
+/*
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.35.2.1 1999/04/04 07:25:26 jlawson Exp $"; }
-#endif
+return "@(#)$Id: confmenu.cpp,v 1.35.2.2 1999/04/13 19:45:19 jlawson Exp $"; }
+
+/* ----------------------------------------------------------------------- */
 
 #include "cputypes.h" // CLIENT_OS, s32
 #include "console.h"  // ConOutErr()
@@ -158,24 +21,14 @@ return "@(#)$Id: confmenu.cpp,v 1.35.2.1 1999/04/04 07:25:26 jlawson Exp $"; }
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
 #include "confopt.h"  // the option table
 
-// --------------------------------------------------------------------------
+/* ----------------------------------------------------------------------- */
 
 #define MAX_MENUENTRIESPERSCREEN 18 /* max menu entries per screen */
-
 static const char *CONFMENU_CAPTION="RC5DES Client Configuration: %s\n"
-"-------------------------------------------------------------------\n";
+"-----------------------------------------------------------------------\n";
+
+/* ----------------------------------------------------------------------- */
        
-static const char *menutable[] =
-{
-  "Project and Buffer Options",
-  "Logging Options",
-  "Network and Communication Options",
-  "Performance and Processor Options",
-  "Miscellaneous Options"
-};
-
-// --------------------------------------------------------------------------
-
 static int findmenuoption( int menu, unsigned int menuposition )
     // Returns the id of the option that matches the menu and option
     // requested. Will return -1 if not found.
@@ -200,7 +53,51 @@ static int findmenuoption( int menu, unsigned int menuposition )
   return -1;
 }
 
-// --------------------------------------------------------------------------
+/* ------------------------------------------------------------------------ */
+
+static int confopt_isstringblank( const char *string )
+{
+  register int len = ( string ? ( strlen( string )+1 ) : 0 );
+
+  while (len)
+    {
+    len--;
+    if ( isprint( string[len] ) && !isspace( string[len] ) )
+      return 0;
+    }
+  return 1;
+}
+
+/* ----------------------------------------------------------------------- */
+
+static void confopt_killwhitespace( char *string )
+{
+  char *opos, *ipos;
+  ipos = opos = string;
+  while ( *ipos )
+    {
+    if ( !isspace( *ipos ) )
+      *opos++ = *ipos;
+    ipos++;
+    }
+  *opos = 0;
+  if ( strcmpi(string, "none") == 0 )
+    string[0]=0;
+  return;
+}
+
+/* ------------------------------------------------------------------------ */
+
+static const char *menutable[] =
+{
+  "Project and Buffer Options",
+  "Logging Options",
+  "Network and Communication Options",
+  "Performance and Processor Options",
+  "Miscellaneous Options"
+};
+
+/* ----------------------------------------------------------------------- */
 
 int Client::Configure( void )
 //A return of 1 indicates to save the changed configuration
@@ -210,10 +107,10 @@ int Client::Configure( void )
   int returnvalue = 0;
 
   if (!ConIsScreen())
-    {
+  {
     ConOutErr("Can't configure when stdin or stdout is redirected.\n");
     return -1;
-    }
+  }
     
   // ---- Set all stuff that doesn't change during config ----   
   // note that some options rely on others, so watch the init order
@@ -932,3 +829,4 @@ int Client::Configure( void )
     
   return returnvalue;
 }
+

@@ -1,12 +1,11 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-
-#if (!defined(lint) && defined(__showids__))
+/* 
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+*/ 
 const char *base64_cpp(void) {
-return "@(#)$Id: base64.cpp,v 1.1.2.1 1999/04/04 09:44:33 jlawson Exp $"; }
-#endif
+return "@(#)$Id: base64.cpp,v 1.1.2.2 1999/04/13 19:45:09 jlawson Exp $"; }
 
 static unsigned char base64table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
                                      "ghijklmnopqrstuvwxyz0123456789+/";

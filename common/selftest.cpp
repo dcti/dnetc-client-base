@@ -1,82 +1,15 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: selftest.cpp,v $
-// Revision 1.44  1999/03/31 22:39:40  cyp
-// gcc squawks about '''s in comments within #if 0 sections. fixed.
-//
-// Revision 1.43  1999/03/31 21:47:45  cyp
-// a) Add of keysdone to key on RESULT_FOUND is done in Problem::Run() (where
-// it should have been in the first place), and not here. b) Cleaned up a bit.
-//
-// Revision 1.42  1999/03/01 08:19:44  gregh
-// Changed ContestWork to a union that contains crypto (RC5/DES) and OGR data.
-//
-// Revision 1.41  1999/02/21 21:44:59  cyp
-// tossed all redundant byte order changing. all host<->net order conversion
-// as well as scram/descram/checksumming is done at [get|put][net|disk] points
-// and nowhere else.
-//
-// Revision 1.40  1999/01/26 17:28:50  michmarc
-// Made the failed test message look nicer.
-//
-// Revision 1.39  1999/01/18 12:12:35  cramer
-// - Added code for ncpu detection for linux/alpha
-// - Corrected the alpha RC5 core handling (support "timeslice")
-// - Changed the way selftest runs... it will not stop if a test fails,
-//     but will terminate at the end of each contest selftest if any test
-//     failed.  Interrupting the test is seen as the remaining tests
-//     having failed (to be fixed later)
-//
-// Revision 1.38  1999/01/09 08:53:15  remi
-// Fixed my comment's formating.
-//
-// Revision 1.37  1999/01/08 10:05:42  chrisb
-// Added 'threadindex' parameter (defaults to -1L, as with
-// Problem::Problem) to SelfTest(). Allows RISC OS to self test the
-// x86 core.
-//
-// Revision 1.36  1999/01/01 02:45:16  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.35  1998/12/28 21:23:09  cyp
-// Added event support.
-//
-// Revision 1.34  1998/12/23 11:33:42  remi
-// Expressed doubts on the ARM cores, please look at the comments.
-//
-// Revision 1.33  1998/12/22 19:34:07  chrisb
-// ARM cores don't handle high-word increments, so the tests for this 
-// are modified on ARM.
-//
-// Revision 1.32  1998/11/30 00:57:03  remi
-// Added key incrementation system check.
-//
-// Revision 1.31  1998/10/26 03:14:27  cyp
-// Version fun.
-//
-// Revision 1.3  1998/10/20 07:24:08  silby
-// Change an unsigned int to an int so that a type conversion was not
-// necessary on the return.
-//
-// Revision 1.2  1998/10/11 00:45:31  cyp
-// SelfTest() is now standalone. Modified to use the same contest numbering
-// conventions used everywhere else, ie 0==RC5, 1==DES.
-//
-// Revision 1.1  1998/08/28 21:28:59  cyp
-// Spun off from client.cpp - this code very rarely changes.
-//
-//
-
-#if (!defined(lint) && defined(__showids__))
+/* 
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.44 1999/03/31 22:39:40 cyp Exp $"; }
-#endif
+return "@(#)$Id: selftest.cpp,v 1.44.2.1 1999/04/13 19:45:30 jlawson Exp $"; }
 
 // --------------------------------------------------------------------------
 
 #include "cputypes.h"
+#include "client.h"    // CONTEST_COUNT
 #include "baseincs.h"  // standard #includes
 #include "problem.h"   // Problem class
 #include "convdes.h"   // convert_key_from_des_to_inc 
@@ -171,13 +104,22 @@ int SelfTest( unsigned int contest, int cputype )
 {
   int threadpos, threadcount = 1;
   int successes = 0;
-  const char *contname = CliGetContestNameFromID( contest );
+  const char *contname;
 
+  if (contest >= CONTEST_COUNT)
+  {
+    LogScreen("test::error. invalid contest %u\n", contest );
+    return -TEST_CASE_COUNT;
+  }
+  if (contest != 0 && contest != 1)
+    return 0;
+  
 #if (CLIENT_OS == OS_RISCOS)
   if (contest == 0 && GetNumberOfDetectedProcessors() == 2)
     threadcount = 2;
 #endif    
 
+  contname = CliGetContestNameFromID( contest );
   for ( threadpos = 0; successes >= 0 && threadpos < threadcount; threadpos++ )
   {
     unsigned int testnum;
@@ -190,7 +132,7 @@ int SelfTest( unsigned int contest, int cputype )
 
     for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ )
     {
-      const u32 (*test_cases)[TEST_CASE_COUNT][8];
+      const u32 (*test_cases)[TEST_CASE_COUNT][8] = NULL;
       int resultcode; const char *resulttext = NULL;
       u64 expectedsolution;
       ContestWork contestwork;
@@ -199,26 +141,7 @@ int SelfTest( unsigned int contest, int cputype )
       if (CheckExitRequestTriggerNoIO())
         break;
 
-      // load test case
-      if (contest == 1)   // DES
-      {
-        test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&des_test_cases[0][0];
-        expectedsolution.lo = (*test_cases)[testnum][0];
-        expectedsolution.hi = (*test_cases)[testnum][1];
-
-        convert_key_from_des_to_inc ( (u32 *) &expectedsolution.hi, 
-                                      (u32 *) &expectedsolution.lo);
-
-        // to test also success on complementary keys
-        if (expectedsolution.hi & 0x00800000L)
-        {
-          expectedsolution.hi ^= 0x00FFFFFFL;
-          expectedsolution.lo = ~expectedsolution.lo;
-        }
-        contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
-        contestwork.crypto.key.hi = expectedsolution.hi;
-      }
-      else //if (contest == 0) /* RC5-64 */
+      if (contest == 0) /* RC5-64 */
       { 
         test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&rc5_test_cases[0][0];
         expectedsolution.lo = (*test_cases)[testnum][0];
@@ -283,6 +206,25 @@ int SelfTest( unsigned int contest, int cputype )
             contestwork.crypto.key.hi--;
         }
       }
+      else if (contest == 1)   // DES
+      {
+        test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&des_test_cases[0][0];
+        expectedsolution.lo = (*test_cases)[testnum][0];
+        expectedsolution.hi = (*test_cases)[testnum][1];
+
+        convert_key_from_des_to_inc ( (u32 *) &expectedsolution.hi, 
+                                      (u32 *) &expectedsolution.lo);
+
+        // to test also success on complementary keys
+        if (expectedsolution.hi & 0x00800000L)
+        {
+          expectedsolution.hi ^= 0x00FFFFFFL;
+          expectedsolution.lo = ~expectedsolution.lo;
+        }
+        contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
+        contestwork.crypto.key.hi = expectedsolution.hi;
+      }
+      
       contestwork.crypto.iv.lo =  ( (*test_cases)[testnum][2] );
       contestwork.crypto.iv.hi =  ( (*test_cases)[testnum][3] );
       contestwork.crypto.plain.lo = ( (*test_cases)[testnum][4] );
@@ -298,7 +240,7 @@ int SelfTest( unsigned int contest, int cputype )
   
       ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)((Problem *)(&problem)) );
   
-      while ( problem.Run( 0 ) == 0 ) //threadnum
+      while ( problem.Run() == RESULT_WORKING )
       {
         #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
         Yield();

@@ -3,13 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 
+const char *network_cpp(void) {
+return "@(#)$Id: network2.cpp,v 1.1.2.3 1999/04/13 19:45:26 jlawson Exp $"; }
+
 #include "cputypes.h"
 #include "dcticonn.h"         // DCTIConnServer class
 #include "network2.h"         // ourself
 #include "logstuff.h"         // LogScreen()/Log()
 #include "triggers.h"         // CheckExitRequestTriggerNoIO()
-
-
 
 ////////////////////////////////////////////////////////////////////////////
 
