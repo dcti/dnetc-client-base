@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.76  1999/02/04 07:48:04  cyp
+// added lurk.h
+//
 // Revision 1.75  1999/02/01 23:29:28  silby
 // Removed call to CloseHandle for win32 thread
 // destruction: Handle is already destroyed by
@@ -288,7 +291,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.75 1999/02/01 23:29:28 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.76 1999/02/04 07:48:04 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -303,6 +306,7 @@ return "@(#)$Id: clirun.cpp,v 1.75 1999/02/01 23:29:28 silby Exp $"; }
 #include "triggers.h" //[Check|Raise][Pause|Exit]RequestTrigger()
 #include "sleepdef.h" //sleep(), usleep()
 #include "setprio.h"  //SetThreadPriority(), SetGlobalPriority()
+#include "lurk.h"     //dialup object
 #include "buffwork.h"
 #include "clirate.h"
 #include "clitime.h"   //CliTimer(), Time()/(CliGetTimeString(NULL,1))

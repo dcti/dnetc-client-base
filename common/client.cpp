@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.191  1999/02/04 07:48:05  cyp
+// added lurk.h
+//
 // Revision 1.190  1999/02/03 17:49:38  cyp
 // Cleaned up CLIENT_VERSIONSTRING #define
 //
@@ -189,7 +192,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.190 1999/02/03 17:49:38 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.191 1999/02/04 07:48:05 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -201,6 +204,7 @@ return "@(#)$Id: client.cpp,v 1.190 1999/02/03 17:49:38 cyp Exp $"; }
 #include "scram.h"     // InitRandom() 
 #include "pathwork.h"  // EXTN_SEP
 #include "clitime.h"   // CliTimer()
+#include "lurk.h"      // dialup object
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()

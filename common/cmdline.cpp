@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.122  1999/02/04 07:48:05  cyp
+// added lurk.h
+//
 // Revision 1.121  1999/01/31 20:19:08  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -152,7 +155,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.121 1999/01/31 20:19:08 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.122 1999/02/04 07:48:05 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -160,6 +163,7 @@ return "@(#)$Id: cmdline.cpp,v 1.121 1999/01/31 20:19:08 cyp Exp $"; }
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "pathwork.h"  // InitWorkingDirectoryFromSamplePaths();
+#include "lurk.h"      // dialup object
 #include "modereq.h"   // get/set/clear mode request bits
 #include "console.h"   // ConOutErr()
 #include "clitime.h"   // CliTimer() for -until setting
