@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.28.2.2 1999/04/24 07:34:58 jlawson Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.28.2.3 1999/04/25 05:38:38 jlawson Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -530,5 +530,24 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "network connection previously initiated with the script/command specified\n"
   "in the \"Command/script to start dialup\" option.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL}
+
+#if 0
+//52
+{ CFGTXT("Firewall connection string"), "",
+  CFGTXT(
+  "Specify the connection string to use when connecting to your\n"
+  "generic proxy.  The term \"generic proxy\" refers to any ASCII protocol\n"
+  "method that is usable to establish an outgoing TCP/IP connection through\n"
+  "an indirect machine, such as a WinGate telnet proxy, or by telnetting\n"
+  "out from a gateway machine.  Connection strings are vertical-pipe (\"|\")\n"
+  "delimited strings specifying pairs of text items to send and wait for.\n"
+  "The tags \\n, \\t, \\r, \\1 (keyserver address), and \\2 (keyserver port)\n"
+  "can only be used in send strings.  One example for a gateway machine is:\n"
+  "   \"|login:|bovine\\n|Password:|moocow\\n|%|telnet \\1 \\2\\n\"\n"
+  "An example for a WinGate telnet proxy is:\n"
+  "   \"|WinGate>|\\1 \\2\\r\\n\"\n"
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+#endif
+  
 };
 
