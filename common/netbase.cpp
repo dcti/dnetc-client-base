@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.17 2001/03/19 18:06:57 cyp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.18 2001/03/24 17:03:21 cyp Exp $"; }
 
 #define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -3173,7 +3173,7 @@ int net_resolve( const char *hostname, u32 *addr_list, unsigned int *max_addrs)
             for ( pos = 0; hp->h_addr_list[pos]; pos++)
             {
               unsigned int dupcheck = 0;
-              addr = *((u32 *)(hp->h_addr_list[pos]));
+              memcpy( &addr, hp->h_addr_list[pos], sizeof(addr) ); 
               while (dupcheck < foundcount)
               {
                 if (addr == addr_list[dupcheck])

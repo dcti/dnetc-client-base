@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.111 2001/03/22 10:56:09 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.112 2001/03/24 17:03:22 cyp Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -34,6 +34,15 @@ return "@(#)$Id: problem.cpp,v 1.108.2.111 2001/03/22 10:56:09 cyp Exp $"; }
 #include "clisync.h"  //synchronisation primitives
 #include "coremem.h"  //cmem_alloc() and cmem_free()
 #include "problem.h"  //ourselves
+
+#if (CLIENT_OS == OS_QNX) || (CLIENT_OS == OS_RISCOS)
+  #undef offsetof
+  #define offsetof(__typ,__id) ((size_t)&(((__typ*)0)->__id))
+#else
+  #include <stddef.h> /* offsetof */
+#endif
+
+/* ------------------------------------------------------------------- */
 
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
 
@@ -180,7 +189,27 @@ Problem *ProblemAlloc(void)
   SuperProblem *thisprob = (SuperProblem *)0;
   int err = 0;
 
+  err = offsetof(Problem, pub_data);
+  if (err != 0)
+  {
+    Log("alignment error: offsetof(Problem, pub_data) != 0 [%d]\n", err);
+    err = 1;
+  }
+  err = offsetof(InternalProblem, pub_data);
+  if (err != 0)
+  {
+    Log("alignment error: offsetof(InternalProblem, pub_data) != 0 [%d]\n",err);
+    err = 1;
+  }
+  err = offsetof(SuperProblem, iprobs[0]);
+  if (err != 0)
+  {
+    Log("alignment error: offsetof(SuperProblem, iprobs[0]) != 0 [%d]\n",err);
+    err = 1;
+  }
+
   #ifdef STRESS_THREADS_AND_BUFFERS
+  if (err == 0)
   {
     static int runlevel = 0;
     if (runlevel == 0)
@@ -220,16 +249,6 @@ Problem *ProblemAlloc(void)
       /* Ensure that the core data is going to be aligned */
       Log("priv_data.rc5unitwork for problem %d is misaligned!\n", __problem_counter);
       err = 1;
-    }
-    else 
-    {
-      /* Ensure that what we return as 'Problem *' is valid */
-      if ( ((Problem *)thisprob) != 
-        ((Problem *)&(thisprob->iprobs[PICKPROB_MAIN].pub_data)) )
-      {
-        Log("Ack! Phui! Problem != Problem\n");
-        err = 1;
-      }  
     }
   }      
 
@@ -273,7 +292,10 @@ Problem *ProblemAlloc(void)
     cmem_free((void *)thisprob);
     thisprob = (SuperProblem *)0;
   }
-  return (Problem *)thisprob;
+  /* the first member of thisprob is InternalProblem[PICKPROB_MAIN], and
+     the first member of an InternalProblem is a Problem.
+  */     
+  return (Problem *)((void *)thisprob);
 }
 
 static InternalProblem *__pick_probptr(void *__thisprob, unsigned int which)
