@@ -7,7 +7,7 @@
  * Specify 'build_dependancies' as argument 
  * (which is all this needs to do anymore)
  *
- * $Id: testplat.cpp,v 1.4.2.7 2001/04/07 16:15:39 cyp Exp $
+ * $Id: testplat.cpp,v 1.4.2.8 2001/04/07 16:19:31 cyp Exp $
 */ 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -55,9 +55,13 @@ static void __fixup_pathspec_for_makefile(char *foundbuf)
 
 static int is_trace_checked(const char *filename)
 {
-  return 0;
-  //return (strcmp(filename,"ogr/x86/ogr-a.cpp") == 0 
-  //     || strcmp(filename,"ogr/x86/ogr-b.cpp") == 0);
+  filename = filename;
+#if 0  
+  if (strcmp(filename,"ogr/x86/ogr-a.cpp") == 0 
+      || strcmp(filename,"ogr/x86/ogr-b.cpp") == 0);
+    return 1;
+#endif    
+  return 0;      
 }
 
 static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
