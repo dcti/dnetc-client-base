@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.32 1999/04/22 01:53:09 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.33 1999/05/04 04:12:09 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -481,7 +481,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   ),CONF_MENU_NET,CONF_TYPE_INT,NULL,&lurkmodetable[0],0,2,NULL},
 //47
 { CFGTXT("Interfaces to watch"), "",
-  CFGTXT(
+  /* CFGTXT( */
   "Colon-separated list of interface names to monitor for a connection,\n"
   "For example: \"ppp0:ppp1:eth1\". Wildcards are permitted, ie \"ppp*\".\n"
   "1) An empty list implies all interfaces that are identifiable as dialup,\n"
@@ -490,11 +490,19 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "2) if you have an intermittent ethernet connection through which you can\n"
   "   access the Internet, put the corresponding interface name in this list,\n"
   "   typically 'eth0'\n"
-  "3) To include all devices, as might be preferrable for portable computers\n"
-  "   which access the Internet via a LAN in one location but via a modem\n"
-  "   in another, set this option to '*'.\n"
-  "The command line equivalent of this option is --interfaces-to-watch\n"
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+  "3) To include all devices, set this option to '*'.\n"
+  #if (CLIENT_OS == OS_WIN32)
+  "** Win32 specific note: While dialup adapters are easy enough to identify\n"
+  "   when offline, they morph when online and can thus end up with different\n"
+  "   names: a 'ppp?' adapter will become 'sl?' when a SLIP connection is\n"
+  "   established, and may become 'eth?' if the PPP link is not also tunneling\n"
+  "   another protocol. However, all network adapters (regardless of medium;\n"
+  "   dialup/non-dialup) also have a unique unchanging alias: 'lan0', 'lan1'\n"
+  "   and so on. Both naming conventions can be used simultaneously.\n"
+  #else
+  "** The command line equivalent of this option is --interfaces-to-watch\n"
+  #endif
+  /* ) */,CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //48
 { /*dialwhenneeded*/ 
    #if (CLIENT_OS == OS_WIN32)
