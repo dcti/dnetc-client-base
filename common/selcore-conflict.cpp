@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.20.2.7  1999/01/17 12:46:21  remi
+// Synced with :
+//
+//  Revision 1.27  1999/01/14 23:02:12  pct
+//  Updates for Digital Unix alpha client and ev5 related code.  This also
+//  includes inital code for autodetection of CPU type and SMP.
+//
 // Revision 1.20.2.6  1999/01/09 11:46:25  remi
 // Synced with :
 //
@@ -39,7 +46,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.20.2.6 1999/01/09 11:46:25 remi Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.20.2.7 1999/01/17 12:46:21 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -100,6 +107,21 @@ static const char *cputypetable[]=
   {
   "Motorola 68000", "Motorola 68010", "Motorola 68020", "Motorola 68030",
   "Motorola 68040", "Motorola 68060"
+  };
+#elif ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX))
+#include <machine/cpuconf.h>
+static const char *cputypetable[]=
+  {
+    "unknown",
+    "EV3",
+    "EV4 (21064)",
+    "unknown",
+    "LCA4 (21066/21068)",
+    "EV5 (21164)",
+    "EV4.5 (21064)",
+    "EV5.6 (21164A)",
+    "EV6 (21264)",
+    "EV5.6 (21164PC)"
   };
 #else
   #define NO_CPUTYPE_TABLE
@@ -401,6 +423,18 @@ int Client::SelectCore(int quietly)
             des_unit_func = des_unit_func_arm;
             break;
     }
+#elif ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX))
+  if (!quietly)
+  {
+    int	tmpcputype;
+
+    LogScreen("Detected a %s type Alpha.\n",GetCoreNameFromCoreType(cputype));
+    tmpcputype = cputype;
+    GET_CPU_FAMILY(&tmpcputype);
+    if (tmpcputype != EV5_CPU)
+	LogScreen("Warning:  This client is optimised for the EV5 family.\n"
+		"There may be a faster client than this for your machine.\n");
+  }
 #else
   cputype = 0;
 #endif
