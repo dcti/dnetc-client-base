@@ -5,6 +5,28 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.23  1999/02/04 23:01:09  remi
+# Synced with :
+#
+#  Revision 1.184  1999/02/04 22:56:09  remi
+#  Fixed a typo in alpha-linux.
+#
+#  Revision 1.183  1999/02/04 22:44:22  remi
+#  Replaced Meggs' bitslicer by DWorz's one in
+#  alpha-{gcc,linux,openbsd,netbsd} targets.
+#
+#  Revision 1.182  1999/02/03 18:20:12  cyp
+#  Removed ./common/dctistrg.[cpp|h]
+#
+#  Revision 1.181  1999/01/31 13:57:57  snake
+#  target bsdi4 with ELF and MMX support adapted, no mt yet
+#
+#  Revision 1.179  1999/01/28 07:29:04  skand
+#  NetBSD/i386 fixes.
+#
+#  Revision 1.176  1999/01/23 21:53:26  patrick
+#  target x86-os2-gcc: -i des/mmx-bitslice/ was missing
+#
 # Revision 1.113.2.22  1999/01/30 15:41:47  remi
 # - Deleted ${BUILDNAME}, not needed in the public configure / makefile
 # - Added TARGET_AS="gcc -c" in the x86-solaris entry
@@ -497,6 +519,8 @@ KWAN_SLICE_SRCS4="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan4.cpp"
 MEGGS_SLICE_SRCS1="des/deseval-meggs2.cpp des/des-slice-meggs.cpp"
 MEGGS_SLICE_SRCS2="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
 
+DWORZ_SLICE_SRCS="des/deseval-dworz3.S des/des-slice-dworz.cpp"
+
 DESX86_SRCS="des/des-x86.cpp"
 
 DESMMX_SRCS="des/des-slice-meggs.cpp"
@@ -528,7 +552,7 @@ TARGET_CC="g++"
 TARGET_CCFLAGS="$OPTS_GCC"
 TARGET_LDFLAGS=""
 TARGET_LIBS=""
-TARGET_AS="gas"
+TARGET_AS="as"
 TARGET_NASM="nasm"
 TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -d__ELF__ -f elf"
 TARGET_ASFLAGS=""
@@ -794,14 +818,6 @@ case "$1" in
 	TARGET_LIBS="-non_shared"
 	;;
 
-    *alpha-gcc-ev5-digital_unix)
-	RC5CORECOPY="rc5/rc5-alpha-osf.cpp"
-	TARGET_CC="g++"
-	TARGET_CCFLAGS="-Wa,-02 -mcpu=ev5 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DALPHA_EV5_CORE"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
-	TARGET_LIBS=""
-	;;
-
     *alpha-cc)
 	RC5CORECOPY="rc5/rc5ansi2-bo2.cpp"
 	TARGET_CC="cxx"
@@ -814,8 +830,9 @@ case "$1" in
 	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 \
-			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+			-DBIT_64 -DKWAN -DDWORZ"
+	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS"
+	TARGET_LDFLAGS="-static"
 	TARGET_LIBS=""
 	;;
 
@@ -823,27 +840,27 @@ case "$1" in
 	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 \
-			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+			-DBIT_64 -DKWAN -DDWORZ"
+	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS"
 	TARGET_LIBS="-ltermcap"
 	;;
 
     *alpha-openbsd)
 	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
+	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 \
-			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+			-DBIT_64 -DKWAN -DDWORZ"
+	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS"
 	TARGET_LIBS="-ltermcap"
 	;;
 
     *alpha-linux)
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="-O2 -fno-schedule-insns -fno-handle-exceptions -fno-rtti \
-	                -Wall -Icommon -Irc5 -Ides -Iplatforms -DASM_ALPHA -static \
-                        -DPIPELINE_COUNT=2 -DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="des/deseval-dworz2.c des/des-slice-dworz.cpp \
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=2 \
+			-DBIT_64 -DKWAN -DDWORZ"
+	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS \
 			rc5/alphaasm/axp-bmeyer.cpp \
 			rc5/alphaasm/axp-bmeyer.s"
 	;;
@@ -1022,12 +1039,42 @@ case "$1" in
 	TARGET_LIBS="-lc_r"
 	;;
 
+<<<<<<< configure
+=======
+    *x86-freebsd-mt-elf)
+	TARGET_AS="gcc -c"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
+			-DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
+			platforms/x86ident.S \
+			des/p1bdespro.S des/p2bdespro.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+	TARGET_LIBS="-lc_r"
+	;;
+
+    *x86-freebsd4-mt-elf)
+        TARGET_AS="gcc -c"
+        TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
+                        -DPIPELINE_COUNT=2 -DMULTITHREAD -DCLIENT_OS_MINOR=4"
+        TARGET_LDFLAGS="-static"
+        TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+        TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
+                        platforms/x86ident.S \
+                        des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+        TARGET_LIBS="-lc_r"
+        ;;
+
+>>>>>>> 1.183
     *x86-netbsd)
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -d__AOUT__ -f aoutb"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	;;
 
@@ -1056,15 +1103,18 @@ case "$1" in
 
 ####### BSD/OS 4.0 with ELF format
     *x86-bsdi4)
+<<<<<<< configure
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
+=======
+	TARGET_AS="g++ -c"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
+>>>>>>> 1.183
 			-DPIPELINE_COUNT=2 -D__ELF__"
+	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
-			  -d__showids__ -d__ELF__ \
-			  -f elf"
        ;;
 
 ####### Intel X86 SCO5
@@ -1232,12 +1282,12 @@ case "$1" in
         }
 	TARGET_AS="gcc -c"
         TARGET_CC="gcc"
-	TARGET_CCFLAGS="-Zmts -pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -D__showids__"
-	TARGET_LDFLAGS="-Zmts"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
+	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -D__showids__"
+	TARGET_LDFLAGS="-Zmt"
+	TARGET_ADDSRCS="common/lurk.cpp rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm $NASM_DESMMX_SRCS"
-        TARGET_NASMFLAGS="-i rc5/nasm/ -f aout"
+        TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -d__showids__ -f aout "
         TARGET_LIBS="-lsocket"
         TARGET_OS=OS2
         ;;
@@ -1300,6 +1350,16 @@ if [ -n "${TARGET_ADDNASMS}" ]; then
   done
 fi
 
+if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
+  echo "Scanning additional Digital Unix Sources"
+  for target in ${TARGET_DIGITAL_UNIX_EV5_SRCS}; do
+      TARGETOBJECT=output/`basename $target .cpp`.o
+      SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
+      echo "  ${target} -> ${TARGETOBJECT} (${SAFENAME})"
+      eval "DEPEND_${SAFENAME}=${target}"
+      TARGET_DUEV5OBJS="${TARGET_DUEV5OBJS} ${TARGETOBJECT}"
+  done
+fi
 
 #
 # Build the test program
@@ -1344,6 +1404,9 @@ echo "CLIENT_CPU = $CLIENTCPUNAME ($CLIENTCPU)"
 echo "CLIENT_OS = $CLIENTOSNAME ($CLIENTOS)"
 echo "INTSIZES = $INTSIZES"
 TARGET_CCFLAGS="-DINTSIZES=${INTSIZES} -DBUILDNAME=\${BUILDNAME} ${TARGET_CCFLAGS}"
+if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
+TARGET_EV5_CCFLAGS="-DINTSIZES=${INTSIZES} -DBUILDNAME=\${BUILDNAME} ${TARGET_EV5_CCFLAGS}"
+fi
 
 
 #
@@ -1368,7 +1431,12 @@ echo "AS = ${TARGET_AS}" >> Makefile
 echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
 echo "NASM = ${TARGET_NASM}" >> Makefile
 echo "NASMFLAGS = ${TARGET_NASMFLAGS}" >> Makefile
+<<<<<<< configure
 echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS}" >> Makefile
+=======
+echo "STRIP = ${TARGET_STRIP}" >> Makefile
+echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS} ${TARGET_DUEV5OBJS}" >> Makefile
+>>>>>>> 1.183
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "" >> Makefile
@@ -1462,6 +1530,18 @@ if [ -n "${TARGET_ALLNASMOBJS}" ]; then
     eval TARGETSRC=$`echo DEPEND_$SAFENAME`
     echo "$target:	${TARGETSRC}" >> Makefile
     echo "	\${NASM} \${NASMFLAGS} ${TARGETSRC} -o $target" >> Makefile
+    echo "" >> Makefile
+  done
+fi
+
+if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
+  echo "Generating Makefile Digital Unix EV5 dependency targets..."
+  for target in ${TARGET_DUEV5OBJS}; do
+    SAFENAME=`echo $target | tr -d ${DELETECHARS}`
+    eval TARGETSRC=$`echo DEPEND_$SAFENAME`
+    TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
+    echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
+    echo "	\${CC} -c $TARGET_EV5_CCFLAGS ${TARGETSRC} -o $target" >> Makefile
     echo "" >> Makefile
   done
 fi
