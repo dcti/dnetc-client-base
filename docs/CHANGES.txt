@@ -27,7 +27,7 @@ Version change log:
 2.7110.442  new: win32: ioctl-driven network adapter online state detection.
                  primarily for use with non-RAS net devs (heads up! AOL users)
                  includes device masking support ala Linux/FreeBSD
-	    new: unix: ps will always show the client as 'rc5des'. This is
+	    new: unix: ps will always see the client as 'rc5des'. This is
 	         to facilitate scripted or system-wide shutdowns/restarts.
 2.7110.441  new: log-to-file options/types/limits
 	    imp: made --config menus more intuitive
@@ -47,7 +47,7 @@ Version change log:
 	    new: --import option to merge buffer files
 	    chg: checkpting interval is now the greater of 10min/10% change
 	    chg: coalescing flush is no longer supported
-	    imp: socket buffer size is increased if necessary improving
+	    imp: socket buffer size is increased if necessary which improves
 	         network throughput on non-unix platforms
 2.7106.436  fix: win32gui:Percent bar in hidden mode reenabled
             fix: win32gui:Log Grapher now allows end date to be set
@@ -87,6 +87,10 @@ Version change log:
 2.7102.419  fix: Complete cmdline option cleanup.
             new: creation of portable (encapsulated) console i/o.
                  Many terminal issues fixed.
+	    new: the number of threads is now unlimited
+	    new: "non-threaded" clients are now threaded :)
+	         non-threaded clients use an internal round-robin
+		 mechanism but are not SMP-aware. 
 2.7100.418  fix: Randomprefix is now changed from buffer
                  files; offline clients will now generate
                  from the "correct" randomprefix.
