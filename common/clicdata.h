@@ -4,7 +4,18 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
+/*
+   This file contains functions for obtaining contest constants as 
+   well as name, id, iteration-to-keycount-multiplication-factor or 
+   obtaining/adding to contest summary data (totalblocks, totaliterations, 
+   totaltime. The data itself is hidden from other modules to protect 
+   integrity and ease maintenance. 
+*/
 // $Log: clicdata.h,v $
+// Revision 1.12  1998/12/21 18:52:53  cyp
+// Added RC5 iv/cypher/plain *here*. Read the 'what this is' at the top of
+// the file to see why. Also, this file has an 8.3 filename.
+//
 // Revision 1.11  1998/07/28 11:44:50  blast
 // Amiga specific changes
 //
@@ -12,16 +23,7 @@
 // included the header baseincs.h because that's where timeval is and it won't compile without it being defined
 //
 // Revision 1.9  1998/07/07 21:55:08  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.
 //
 // Revision 1.8  1998/06/29 06:57:29  jlawson
 // added new platform OS_WIN32S to make code handling easier.
@@ -37,19 +39,15 @@
 // 'Log' keywords added to maintain automatic change history
 //
 
-// This file contains functions for obtaining contest constants (name, id,
-// iteration-to-keycount-multiplication-factor) or obtaining/adding to
-// contest summary data (totalblocks, totaliterations, totaltime).
-// The data itself is hidden from other modules to protect integrity and
-// ease maintenance. 
-
 #ifndef _CLICDATA_H_
 #define _CLICDATA_H_
-#include "baseincs.h"   // for timeval
-#if (CLIENT_OS == OS_AMIGAOS)
-#include <sys/time.h> // This is to make it compile, there was a define in there
-                      // that was needed 'cause someone changed the source tree :)
-#endif
+
+#define RC564_IVLO     0xD5D5CE79L /* these constants are in net byte order */
+#define RC564_IVHI     0xFCEA7550L
+#define RC564_CYPHERLO 0x550155BFL
+#define RC564_CYPHERHI 0x4BF226DCL
+#define RC564_PLAINLO  0x20656854L
+#define RC564_PLAINHI  0x6E6B6E75L
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestID);
@@ -60,7 +58,10 @@ int CliGetContestIDFromName( char *name );
 
 // obtain constant data for a contest. name/iter2key may be NULL
 // returns 0 if success, !0 if error (bad contestID).
-int CliGetContestInfoBaseData( int contestid, const char **name, unsigned int *iter2key );
+int CliGetContestInfoBaseData( int contestid, const char **name, 
+                                              unsigned int *iter2key );
+
+struct timeval; /* forward ref */
 
 // obtain summary data for a contest. unrequired args may be NULL
 // returns 0 if success, !0 if error (bad contestID).
