@@ -14,6 +14,10 @@
 
 */
 // $Log: lurk.cpp,v $
+// Revision 1.36  1999/03/09 07:04:29  silby
+// Win32 RAS is only initted/deinitted once.  Initialization on the fly
+// is causing too many complaints.
+//
 // Revision 1.35  1999/03/08 16:16:52  jlawson
 // symlinked lurk.cpp/h and w32svc.cpp/h and w32ras.cpp with those from client.
 //
@@ -116,7 +120,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.35 1999/03/08 16:16:52 jlawson Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.36 1999/03/09 07:04:29 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -133,6 +137,10 @@ Lurk dialup;
 
 int Lurk::Stop(void) // also called from constructor/destructor
 {
+  #if (CLIENT_OS == OS_WIN32)
+  int DeinitRasAPIProcs(void);
+  DeinitRasAPIProcs();
+  #endif
   islurkstarted = lastcheckshowedconnect = dohangupcontrol = 0;
   lurkmode = dialwhenneeded = 0;
   conndevice[0] = connprofile[0] = connifacemask[0] = 0;
