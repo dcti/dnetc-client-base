@@ -2,17 +2,20 @@
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
-; @(#)$Id: csc-mac.inc,v 1.1.2.2 1999/11/07 01:31:23 remi Exp $
+; @(#)$Id: csc-mac.inc,v 1.1.2.3 1999/11/07 19:48:55 cyp Exp $
 ;
 
-%ifdef OMF
+%ifdef __OMF__
 [SECTION _DATA CLASS=DATA USE32 FLAT PUBLIC ALIGN=16] 
-[SECTION _TEXT CLASS=CODE USE32 FLAT PUBLIC ALIGN=32] 
+[SECTION _TEXT CLASS=CODE USE32 FLAT PUBLIC ALIGN=16] ;8,16,256,512,...
 %define __DATASECT__ [SECTION _DATA]
 %define __CODESECT__ [SECTION _TEXT]
-%else
+%elifdef __ELF__
 [SECTION .data align=16]
 [SECTION .text align=32]
+%define __DATASECT__ [SECTION .data]
+%define __CODESECT__ [SECTION .text]
+%else
 %define __DATASECT__ [SECTION .data]
 %define __CODESECT__ [SECTION .text]
 %endif
