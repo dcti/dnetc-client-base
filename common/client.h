@@ -652,7 +652,7 @@ public:
 #endif
     // runs the interactive configuration setup
 
-  s32  ConfigureGeneral( int currentmenu );
+  s32  ConfigureGeneral( s32 currentmenu );
     // part of the interactive setup
 
   s32 yesno(char *str);
