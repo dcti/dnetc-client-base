@@ -8,12 +8,11 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.83 2002/09/02 00:35:42 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.84 2002/10/09 20:30:05 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
 /* Major CPU architectures, we don't need (or want) very fine resolution */
-/* We only have 4 bits to store the CLIENT_CPU in, so please recycle! */
 #define CPU_UNKNOWN     0
 #define CPU_X86         1
 #define CPU_POWERPC     2
@@ -31,7 +30,6 @@
 #define CPU_S390        14
 /* #define CPU_UNUSED_3 15 - please recycle */
 #define CPU_DESCRACKER  16  /* eff descracker */
-/* **** We only have 4 bits to store the CLIENT_CPU in ******* */
 
 /* Major OS Architectures. */
 #define OS_UNKNOWN      0
@@ -587,12 +585,14 @@
 #elif (CLIENT_OS != OS_MACOS) /* MacOS APIs (UniversalInterfaces) need bool */
   /* puke before others have to deal with errant code */
   /* IT IS NOT SUFFICIENT TO 'typedef int bool'!! */
+ #if (!defined(HAVE_DES_CORES)) /* old DES cores use bool - so don't use them ;-) */
   #undef true
   #define true  bool_type_is_not_portable
   #undef false
   #define false bool_type_is_not_portable
   #undef bool
   #define bool  bool_type_is_not_portable
+ #endif
   #undef class
   /* There is a reference to 'class' in the Win32 unknwn.h header, */
   /* so don't break the class keyword in this case. */
