@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.15 2000/01/03 02:59:42 jlawson Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.16 2000/01/04 16:54:32 chrisb Exp $"
 
 #include "cputypes.h"
 
@@ -78,16 +78,30 @@ extern "C" {
     #include <machine/endian.h>
     #include <sys/time.h>
     #include <swis.h>
+
+    int riscos_check_taskwindow(void);
+//static const char *riscos_x86_ident(void);
+//static unsigned int riscos_hsleep(unsigned long hsecs);
+    int riscos_get_filesize(const char *filename, unsigned long *fsizeP);
+    int riscos_get_filelength(int fd, unsigned long *fsizeP);
+    int riscos_chsize(int fd, unsigned long newsize);
+    const char *riscos_x86_determine_name(void);
+    int riscos_count_cpus(void);
+    void riscos_clear_screen(void);
+    void riscos_backspace(void);
+//static const char *riscos_get_local_directory(const char *appname);
+    const char *riscos_localise_filename(const char *filename);
+    int riscos_find_local_directory(const char *progname);
+    
+    unsigned int sleep(unsigned int s); /* unistd replacement */
+    void usleep(unsigned int us);  /* unistd replacement */
+    
+    int ftruncate(int fd, off_t size);  /* unistd replacement */
+    void sched_yield(void); /* if (riscos_check_taskwindow()) riscos_upcall_6(); */
     extern unsigned int ARMident(), IOMDident();
-    extern void riscos_clear_screen();
-    extern int riscos_check_taskwindow();
-    extern void riscos_backspace();
-    extern int riscos_count_cpus();
-    extern char *riscos_x86_determine_name();
-    extern int riscos_find_local_directory(const char *argv0);
-    extern char *riscos_localise_filename(const char *filename);
     extern void riscos_upcall_6(void); //yield
     extern int getch();
+
     #define fileno(f) ((f)->__file)
     #define isatty(f) ((f) == 0)
   }

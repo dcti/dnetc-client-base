@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.13 2000/01/03 02:59:43 jlawson Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.14 2000/01/04 16:54:32 chrisb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -161,6 +161,11 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
     struct stat statbuf;
     if ( fstat(file->handle, &statbuf ) != 0) return -1;
     *length = (u32)statbuf.st_size;
+  #elif (CLIENT_OS == OS_RISCOS)
+    if (riscos_get_filelength(fileno(file),(unsigned long *)length) != 0)
+    {
+	return -1;
+    }
   #else
     struct stat statbuf;
     #if (CLIENT_OS == OS_NETWARE)

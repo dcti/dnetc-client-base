@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.25 1999/12/31 20:03:01 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.26 2000/01/04 16:54:33 chrisb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1290,7 +1290,7 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     if (rawid != 0) /* if rawid == 0, then cpuid_s == "%lX" */
       sprintf( namebuf, "%lX\n\tname: ", rawid );
     strcat( namebuf, cpuid_s ); /* always valid */
-    #if (CLIENT_OS == OS_RISCOS)
+    #if (CLIENT_OS == OS_RISCOS && defined(HAVE_X86_CARD_SUPPORT))
     if (riscos_count_cpus() == 2)
       strcat(strcat(namebuf,"\n\t+ "),riscos_x86_determine_name());
     #endif
