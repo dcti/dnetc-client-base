@@ -3,6 +3,17 @@
 # see http://www.distributed.net/
 
 # $Log: makefile.vc,v $
+# Revision 1.37.2.5  1999/01/23 14:26:32  remi
+# Synced with :
+#
+#  Revision 1.49
+#  date: 1999/01/13 18:21:18;  author: silby;  state: Exp;  lines: +0 -3
+#  Cleanup.
+#
+#  Revision 1.48
+#  date: 1999/01/12 08:16:49;  author: silby;  state: Exp;  lines: +5 -4
+#  Updated for new deseval-mmx
+#
 # Revision 1.37.2.4  1999/01/04 03:12:45  remi
 # Synced with :
 #
@@ -107,9 +118,8 @@ PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/p1bdespro.obj  \
 	$(OUTPUTPATH)/p2bdespro.obj  \
 	$(OUTPUTPATH)/x86ident.obj  \
-	$(OUTPUTPATH)/sboxes-mmx.obj \
 	$(OUTPUTPATH)/rc5mmx.obj \
-	$(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
+        $(OUTPUTPATH)/deseval-mmx.obj \
 	$(OUTPUTPATH)/deseval.obj \
 	$(OUTPUTPATH)/des-slice.obj \
 	$(OUTPUTPATH)/sboxes-kwan4.obj
@@ -124,11 +134,8 @@ RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
 {$(DESPATH)/brydmasm}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /i$(DESPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
 
-{$(DESPATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
-	nasm -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\nasm\ $(**:/=\)
-
-{$(DESPATH)/mmx-bitslice}.obj{$(OUTPUTPATH)}.gcc:
-	copy $(**:/=\), $(@:/=\)
+{$(DESPATH)/mmx-bitslice}.asm{$(OUTPUTPATH)}.obj:
+	nasm -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\mmx-bitslice\ $(**:/=\)
 
 {$(RC5PATH)}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
