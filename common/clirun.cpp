@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.21 1999/12/11 07:34:23 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.22 1999/12/12 02:03:11 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -698,8 +698,13 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     {
       thrparams->realthread = 0;            /* int */
       thrparams->dyn_timeslice_table = &(default_dyn_timeslice_table[0]);
+      #if (CLIENT_OS == OS_MACOS)
+      thrparams->threadID = (GUSIContext*)RegPolledProcedure(Go_mt,
+                                (void *)thrparams , NULL, 0 );
+      #else
       thrparams->threadID = RegPolledProcedure(Go_mt,
                                 (void *)thrparams , NULL, 0 );
+      #endif
       success = ((int)thrparams->threadID != -1);
     }
 
