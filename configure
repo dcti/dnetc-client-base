@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.40 2003/02/17 01:53:58 mfeiri Exp $
+# @(#)$Id: configure,v 1.288.2.41 2003/02/18 01:44:34 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2095,6 +2095,7 @@ case "$1" in
         TARGET_LIBS=""
         TARGET_TARBALL="linux-${inferred_arch}-${TARGET_NASM_FMT}"
         TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
+        TARGET_USES_GNUMAKE="yes"
         add_sources "linux" "x86" $isaout
         ;;
 
@@ -2468,6 +2469,7 @@ case "$1" in
         TARGET_TARBALL="os2-x86-emx"
         TARGET_BINNAME_SUFFIX=".exe"
         TARGET_GENMAN=                               #no manpage
+        TARGET_USES_GNUMAKE="yes"
         add_sources "os2" "x86"
         ;;
 
@@ -2726,9 +2728,13 @@ echo "ALLOBJS = ${TARGET_ALLOBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
-echo "BUILDNUM = \`grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9\`" >>Makefile
-# GNUMake $(shell ) evaluates only once - but this isn't supported by BSD make etc ...
-#echo "BUILDNUM:= \$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9)" >>Makefile
+if [ "$TARGET_USES_GNUMAKE" = "yes" ]; then
+  # GNUMake $(shell ) evaluates only once - but this isn't supported by BSD make etc ...
+  echo "BUILDNUM:= \$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9)" >>Makefile
+else
+  # this should work with every make ... hmm, except gnumake under os/2
+  echo "BUILDNUM = \`grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9\`" >>Makefile
+fi
 echo "" >> Makefile
 
 
