@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.286 2002/10/24 02:19:29 acidblood Exp $
+# @(#)$Id: configure,v 1.287 2002/11/03 22:58:31 pfeffi Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2279,13 +2279,14 @@ case "$1" in
         TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -fexceptions -pedantic -Wno-long-long -I. -I${C_INCLUDE_PATH}"
         TARGET_LDFLAGS="-Zmt"
         TARGET_NASM_FMT="aout"
-        TARGET_STRIP="touch"
-        TARGET_ARCTYPE="zipflat"
+        TARGET_STRIP="emxbind -s"
+        TARGET_ARCTYPE="zip"
         TARGET_NASM="nasm.exe"
         TARGET_LIBS="-lsocket -lvideo"
         TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
         TARGET_TARBALL="os2-x86"
         TARGET_BINNAME_SUFFIX=".exe"
+        TARGET_GENMAN=                               #no manpage
         add_sources "os2" "x86"
         ;;
 
@@ -2508,7 +2509,7 @@ fi
 #
 TARGET_RESBIND_CMD=""
 if [ "$BUILDNAME" = "x86-os2" ]; then
-  TARGET_RESBIND_CMD="emxbind -b -r plat/os2/${TARGET_BINNAME}.res \${BUILDNAME}"
+  TARGET_RESBIND_CMD="rc output\\${TARGET_BINNAME}.res ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}"
 fi
 
 # remove superfluous tabs and spaces             ( v-- that's a tab ! )
@@ -2545,13 +2546,9 @@ echo "ALLOBJS = ${TARGET_ALLOBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
-if [ "$BUILDNAME" = "x86-os2" ]; then
-  echo "BUILDNUM:=\$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|tr -dc 0-9)" >>Makefile
-else
-  #echo "BUILDNUM:= \`grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9\`" >>Makefile
-  # only $(shell ) evaluates only once -- 2002-09-27 anbe x86/linux make 3.79.1
-  echo "BUILDNUM:= \$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9)" >>Makefile
-fi
+#echo "BUILDNUM:= \`grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9\`" >>Makefile
+# only $(shell ) evaluates only once -- 2002-09-27 anbe x86/linux make 3.79.1
+echo "BUILDNUM:= \$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9)" >>Makefile
 echo "" >> Makefile
 
 
@@ -2564,12 +2561,17 @@ echo "# Regular targets follow" >> Makefile
 #
 # Generate the main client binary target.
 #
-echo "${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
+if [ "$BUILDNAME" = "x86-os2" ]; then
+        # should be more generic... pfeffi 2002-11-03
+        echo "${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}:	\${ALLOBJS} \${ADDOBJS} output/dnetc.res" >> Makefile
+else
+        echo "${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
+fi
 echo "	\${LD} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
+echo "	\${STRIP} ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 if [ -n "$TARGET_RESBIND_CMD" ]; then
   echo "	$TARGET_RESBIND_CMD" >> Makefile
 fi
-echo "	\${STRIP} ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 if [ -n "$TARGET_GENMAN" ]; then
   echo "	./${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} -genman" >> Makefile
 fi
@@ -2809,12 +2811,10 @@ if [ "$TARGET_OGR_MULTI" = "68k" ]; then
 fi
 
 if [ "$BUILDNAME" = "x86-os2" ]; then
-  echo "Generating rules for .res and .rc"
-  echo "output/${TARGET_BINNAME}.rc:"         >>Makefile
-  echo "	cd plat\os2"                  >>Makefile
-  echo "	rc rc5des.rc ..\..\dnetc.exe" >>Makefile
-  echo "	cd ..\.."                     >>Makefile
-  echo "" >> Makefile
+ echo "Generating rules for .res and .rc"
+ echo "output/${TARGET_BINNAME}.res:"         >>Makefile
+ echo "	rc -r plat\os2\dnetc.rc output\\${TARGET_BINNAME}.res" >>Makefile
+ echo "" >> Makefile
 fi
 
 
@@ -2832,5 +2832,3 @@ fi
 rm -f testplat
 echo ""
 exit 0
-
-
