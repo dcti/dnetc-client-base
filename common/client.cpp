@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206 1999/05/08 19:05:30 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.1 1999/05/17 18:45:02 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -442,6 +442,74 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int 
 }
 #elif ((CLIENT_OS == OS_OS2) && defined(OS2_PM))
 // nothing
+#elif defined(__unix__)
+int main( int argc, char *argv[] )
+{
+  if (argv && argv[0])
+  {
+    char defname[]={('r'^80),('c'^80),('5'^80),('d'^80),('e'^80),('s'^80),0};
+    unsigned int len;  char *p;
+    for (len=0;defname[len];len++)
+      defname[len]^=80; /* obfusciation 101 */
+    p = strrchr( argv[0], '/' );
+    if (p) 
+      p++; 
+    else 
+      p = argv[0];
+    if (strcmp( p, defname )!=0)
+    {
+      char ininame[sizeof(Client::inifilename)+5];
+      char *new_argv[128];
+      int new_argc = 0;
+      int have_ini = 0;
+
+      new_argv[new_argc++]=defname;
+      
+      for (len=1;len<((unsigned int)argc);len++)
+      {
+        p = argv[len];
+        if (*p == '-')
+        {
+          if (p[1]=='-') 
+            p++;
+          if (strcmp(p,"-ini")==0)
+          {
+            have_ini++;
+            break;
+          }
+        }
+      }
+      
+      if (!have_ini)
+      {
+        strncpy( ininame, argv[0], sizeof(ininame) );
+        ininame[sizeof(ininame)-5]='\0';
+        strcat(ininame,".ini");
+        new_argv[new_argc++]="-ini";
+        new_argv[new_argc++]=ininame;
+      } 
+      
+      for (len=1;len<((unsigned int)argc);len++)
+      {
+        new_argv[new_argc++]=argv[len];
+        if (new_argc == (int)((sizeof(new_argv)/sizeof(new_argv[0]))-1))
+        {
+          if (*argv[len]=='-')
+            new_argc--;
+          break;
+        }
+      }
+      new_argv[new_argc]=NULL;
+      if ( execvp( argv[0], &new_argv[0] ) == -1)
+      {
+        ConOutErr("Unable to restart self");
+        return -1;
+      }
+      return 0;
+    }
+  }    
+  return realmain( argc, argv );
+}      
 #else
 int main( int argc, char *argv[] )
 {
