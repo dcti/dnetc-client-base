@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.58  1999/02/03 03:41:56  cyp
+// InitializeConnectivity()/DeinitializeConnectivity() are now in netinit.cpp
+//
 // Revision 1.57  1999/02/01 18:02:44  cyp
 // undid last SillyB change. (so, whats new?)
 //
@@ -269,6 +272,9 @@ extern "C" {
 #endif
 
 ////////////////////////////////////////////////////////////////////////////
+
+int InitializeConnectivity(void);   //per instance initialization
+int DeinitializeConnectivity(void);
 
 class Network
 {

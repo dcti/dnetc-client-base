@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.188  1999/02/03 03:41:56  cyp
+// InitializeConnectivity()/DeinitializeConnectivity() are now in netinit.cpp
+//
 // Revision 1.187  1999/01/27 16:34:23  cyp
 // if one variable wasn't being initialized, there could have been others.
 // Consequently, added priority that had been missing as well.
@@ -180,22 +183,23 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.187 1999/01/27 16:34:23 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.188 1999/02/03 03:41:56 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
-#include "client.h"    // Packet, FileHeader, Client class, etc
-#include "scram.h"     // InitRandom() 
 #include "baseincs.h"  // basic (even if port-specific) #includes
+#include "client.h"    // Client class
+#include "scram.h"     // InitRandom() 
 #include "pathwork.h"  // EXTN_SEP
-#include "triggers.h"  // RestartRequestTrigger()
-#include "clitime.h"   // CliTimer(), Time()/(CliGetTimeString(NULL,1))
-#include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
-#include "console.h"   // [De]InitializeConsole(), ConOutErr()
+#include "clitime.h"   // CliTimer()
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
+#include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
+#include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
+#include "console.h"   // [De]InitializeConsole(), ConOutErr()
+#include "network.h"   // [De]InitializeConnectivity()
 
 // --------------------------------------------------------------------------
 
@@ -309,6 +313,17 @@ static const char *GetBuildOrEnvDescription(void)
   #endif
 }  
 
+int ClientIsGUI(void)
+{
+  #if defined(WIN32GUI) || defined(MAC_GUI) || defined(OS2GUI)
+  return 1;
+  #elif (CLIENT_OS == OS_RISCOS)
+  return (guiriscos!=0);
+  #else
+  return 0;
+  #endif
+}
+
 // --------------------------------------------------------------------------
 
 void PrintBanner(const char *dnet_id,int level,int restarted)
@@ -388,8 +403,9 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       const char *msg = GetBuildOrEnvDescription();
       if (msg == NULL) msg="";
 
-      LogRaw("\nRC5DES Client %s for %s%s%s%s started.\n",CLIENT_VERSIONSTRING,
-             CLIENT_OS_NAME, ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
+      LogRaw("\nRC5DES %sClient %s for %s%s%s%s started.\n",CLIENT_VERSIONSTRING,
+              ((ClientIsGUI())?("GUI "):("")), CLIENT_OS_NAME, 
+              ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
   
       LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n", dnet_id );
       
@@ -419,26 +435,6 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
 
 //------------------------------------------------------------------------
 
-int InitializeConnectivity(void)
-{
-  #ifdef LURK
-  dialup.Start();
-  #endif
-  return 0;
-}
-
-//------------------------------------------------------------------------
-
-int DeinitializeConnectivity(void)
-{
-  #ifdef LURK
-  dialup.Stop();
-  #endif
-  return 0;
-}
-
-//------------------------------------------------------------------------
-
 
 int Client::Main( int argc, const char *argv[] )
 {
@@ -460,7 +456,7 @@ int Client::Main( int argc, const char *argv[] )
                               domodes)?(NULL):(exit_flag_file)),
                               ((domodes)?(NULL):(pausefile)) )==0)
         {
-        if (InitializeConnectivity() == 0)
+        if (InitializeConnectivity() == 0) //do global initialization
           {
           if (InitializeConsole(quietmode,domodes) == 0)
             {
@@ -485,7 +481,7 @@ int Client::Main( int argc, const char *argv[] )
             DeinitializeLogging();
             DeinitializeConsole();
             }
-          DeinitializeConnectivity();
+          DeinitializeConnectivity(); //netinit.cpp
           }
         DeinitializeTriggers();
         }
