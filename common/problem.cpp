@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.81 2000/11/12 17:18:17 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.82 2000/11/17 16:43:28 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -1478,31 +1478,37 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
 {
   /* numstring_style: 
    * -1=unformatted, 
-   *  0=commas, 
+   *  0=commas, magna
    *  1=0+space between magna and number (or at end if no magnitude char)
    *  2=1+numstr_suffix
   */
   if (buffer && buflen)
   {
     char numbuf[32]; /* U64MAX is "18,446,744,073,709,551,615" (len=26) */
-    unsigned int suffix_len;
-
+    unsigned int suffixstr_len;
+    unsigned int suffix_len = 0;
+    /* buffer = [buflen:digits,comma,dot][suffix_len:space,magna][suffixstr_len:keys/nodes/...][\0] */
+    
+    --buflen; // buffer[buflen] = '\0'
     if (numstr_style != 2 || !numstr_suffix)
       numstr_suffix = ""; 
-    suffix_len = strlen( numstr_suffix );
-    if (numstr_style == 2 && suffix_len == 0)
+    suffixstr_len = strlen( numstr_suffix );
+    if (numstr_style == 2 && suffixstr_len == 0)
       numstr_style = 1;
     if (numstr_style == 1 || numstr_style == 2) 
-      suffix_len++; 
-    if (buflen > suffix_len)
-      buflen -= suffix_len;
+    {
+      ++suffix_len; /* space after number */
+      --buflen;
+    }
+    if (buflen > suffixstr_len)
+      buflen -= suffixstr_len;
     else if (buflen >= 5) /* so that it falls into next part */
       buflen = 4;
 
     if (buflen < 5)
     {
       strcpy( numbuf, "***" );
-      suffix_len = 0;
+      suffixstr_len = 0;
       numstr_style = 0;
     }
     else
@@ -1536,6 +1542,7 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
         }
       }
       #endif
+      //printf("numl = %2d  ", len);
       if (numstr_style != -1 && len > 3) /* at least one comma separator */
       {
         char fmtbuf[sizeof(numbuf)];
@@ -1552,9 +1559,12 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
             *--w = ',';
         }
         len = strlen(strcpy( numbuf, w )); 
-        if (len >= buflen)
+        //printf("commal = %2d  ", len);
+        if (len > buflen)
         {
-          len = buflen-5; /* ".nnX\0" */ /* buflen contains the space between number and magna */
+          ++suffix_len; /* magna char */
+          --buflen;
+          len = buflen - 3;  /* rightmost location for decimal point */
           while (len > 0 && numbuf[len] != ',') /* find a spot for a dec pt */
             len--;
           if (len == 0) /* bufsz < 7 and "nnn,nn..." or "nn,nn..." */
@@ -1576,14 +1586,18 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
           } 
         }
       } /* len > 3 */
+      //printf("truncl = %2d  ", len);
       if (numstr_style == 1 || numstr_style == 2)
         numbuf[len++] = ' ';
       if (magna)
         numbuf[len++] = magna_tab[magna];
       numbuf[len] = '\0';
+      //printf("l = %2d  bufl = %2d  sl = %2d  ss_l = %2d\n", len, buflen, suffix_len, suffixstr_len);
     } /* buflen >= 5 */
-    strncpy( buffer, numbuf, buflen ); 
-    buffer[buflen-1] = '\0';
+    if (strlen(numbuf) > (buflen + suffix_len))
+      strcpy( numbuf, "***" );
+    strncpy( buffer, numbuf, (buflen + suffix_len) ); 
+    buffer[buflen+suffix_len] = '\0';
     if (numstr_style == 2) /* buflen has already been checked to ensure */
       strcat(buffer, numstr_suffix); /* this strcat() is ok */
   }
