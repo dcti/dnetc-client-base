@@ -7,7 +7,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.1.2.1 2001/01/21 15:10:24 cyp Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.1.2.2 2001/01/24 19:00:01 cyp Exp $"; }
 
 #define TRACE
 //define any/all/some of the following to TRACE_OUT(x) for sectional tracing
@@ -95,8 +95,8 @@ return "@(#)$Id: w32cons.cpp,v 1.1.2.1 2001/01/21 15:10:24 cyp Exp $"; }
    #define WMCMD_HELP_BUG             (1+WMCMD_HELP_FAQ)        /* 526 */ 
    #define WMCMD_HELP_MAILTO          (1+WMCMD_HELP_BUG)        /* 527 */ 
    #define WMCMD_BENCHMARK            (1+WMCMD_HELP_MAILTO)     /* 528 */ 
-   #define WMCMD_EVENT                (1+WMCMD_BENCHMARK)       /* 529 */
-   #define WMCMD_CONFIG               (1+WMCMD_EVENT+1+(CONTEST_COUNT*2))
+   #define WMCMD_CONFIG               (1+WMCMD_BENCHMARK+1+(CONTEST_COUNT*2))
+   #define WMCMD_EVENT                (1+WMCMD_CONFIG)
    #define WMCMD_PASTE   WM_PASTE     /* 0x0302 */
    #define WMCMD_COPY    WM_COPY
    #define WMCMD_RESTORE SC_RESTORE   /* 0xF120 */
@@ -186,8 +186,6 @@ typedef struct W16ConsoleStruc
 #define W16CONS_ERR_GETINST      6
 #define W16CONS_ERR_NOSLOT       7
 #define W16CONS_ERR_NCCREATE     8
-
-/* ------------------------------------------------ */
 
 /* ------------------------------------------------ */
 
@@ -1661,15 +1659,15 @@ static HMENU __w16WindowConstructMenu(W16CONP console, HWND hwnd,
         {
           unsigned int contest;
           int mpos = WMCMD_BENCHMARK;
-          AppendMenu(hbench, MF_ENABLED, mpos++, "All long" );
-          AppendMenu(hbench, MF_ENABLED, mpos++, "All short" );
+          AppendMenu(hbench, MF_ENABLED, mpos++, "All projects - all cores" );
+          AppendMenu(hbench, MF_ENABLED, mpos++, "All projects - selected cores" );
           for (contest = 0;contest < CONTEST_COUNT; contest++)
           {
             int ok2bench = (IsProblemLoadPermitted(-1,contest)?(MF_ENABLED):(MF_GRAYED));
             oplabelp = CliGetContestNameFromID(contest);
-            sprintf(oplabel,"%s long", oplabelp );
+            sprintf(oplabel,"%s - all cores", oplabelp );
             AppendMenu(hbench, ok2bench, mpos++, oplabel );
-            sprintf(oplabel,"%s short", oplabelp );
+            sprintf(oplabel,"%s - selected core", oplabelp );
             AppendMenu(hbench, ok2bench, mpos++, oplabel );
           }
         }
@@ -4820,6 +4818,17 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
         return __w16Handle_NCLBUTTONDOWN(console, hwnd, message, wParam, lParam);
       return DefWindowProc(hwnd, message, wParam, lParam);
     }
+    case WM_SHOWWINDOW:
+    {
+      if (wParam && console)
+      {
+        if (console->nCmdShow == SW_HIDE)
+        {
+          return 0; 
+        }
+      }
+      return DefWindowProc(hwnd, message, wParam, lParam);
+    }
     case WM_SIZE:
     {
       if (console)
@@ -4985,14 +4994,16 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       }
       else if (wParam == WMCMD_CONFIG)
       {
-        __clear_marked(console);
+        if (console)
+          __clear_marked(console);
         ModeReqSet(MODEREQ_CONFIG | MODEREQ_CONFRESTART);
         if (IsIconic(hwnd)) /* by popular request */
           PostMessage(hwnd, WM_COMMAND, WMCMD_RESTORE, 0 );
       }
       else if (wParam == WMCMD_SVCINSTALL)
       {
-        __clear_marked(console);
+        if (console)
+          __clear_marked(console);
         #if (CLIENT_OS == OS_WIN32)
         win32CliInstallService(0); // == 0) /* no err */
         {
@@ -5011,29 +5022,33 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       }
       else if (wParam == WMCMD_FETCH)
       {
-        __clear_marked(console);
+        if (console)
+          __clear_marked(console);
         ModeReqSet(MODEREQ_FETCH);
         postmenuchange = 1;
       }
       else if (wParam == WMCMD_FLUSH)
       {
-        __clear_marked(console);
+        if (console)
+          __clear_marked(console);
         ModeReqSet(MODEREQ_FLUSH);
         postmenuchange = 1;
       }
       else if (wParam == WMCMD_UPDATE)
       {
-        __clear_marked(console);
+        if (console)
+          __clear_marked(console);
         ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH);
         postmenuchange = 1;
       }
       else if (wParam >= WMCMD_BENCHMARK &&
                wParam <  (WMCMD_BENCHMARK+2+(CONTEST_COUNT*2)))
       {
-        int do_mode = MODEREQ_BENCHMARK;
+        int do_mode = MODEREQ_BENCHMARK_ALLCORE;
         if (((wParam - WMCMD_BENCHMARK) & 1) != 0)
-          do_mode = MODEREQ_BENCHMARK_QUICK;
-        __clear_marked(console);
+          do_mode = MODEREQ_BENCHMARK;
+        if (console)
+          __clear_marked(console);
         ModeReqSet(do_mode);
         if (wParam >= (WMCMD_BENCHMARK+2))
           ModeReqLimitProject(do_mode, (wParam-(WMCMD_BENCHMARK+2))>>1);
