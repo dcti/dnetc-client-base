@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.28  1998/10/08 11:05:26  cyp
+// Moved AmigaOS 68k hardware detection code from selcore.cpp to cpucheck.cpp
+//
 // Revision 1.27  1998/10/08 10:04:21  cyp
 // GetProcessorType() is now standalone (no longer a Client::method).
 //
@@ -100,7 +103,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.27 1998/10/08 10:04:21 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.28 1998/10/08 11:05:26 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -251,14 +254,38 @@ void Client::ValidateProcessorCount( void )
 
 // --------------------------------------------------------------------------
 
-#if (!((CLIENT_CPU == CPU_X86) || \
+#if (!((CLIENT_CPU == CPU_X86) || 
+      ((CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS))
       ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS)) ))
 int GetProcessorType(int quietly)
 { 
   if (!quietly)
-    LogScreen("Hardware/processor detection is not supported.\n");
+    LogScreen("Processor detection is not supported.\n");
   return -1; 
 }
+#endif
+
+// --------------------------------------------------------------------------
+
+#if ((CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS))
+int GetProcessorType(int quietly)
+{    
+  static int detectedtype = -1;
+  long flags;
+  if (detectedtype == -1)
+    {
+    flags = (long)(SysBase->AttnFlags);
+    detectedtype = 0; /* assume a 000 */
+    if (flags & AFF_68010) detectedtype = 1;
+    if (flags & AFF_68020) detectedtype = 2;
+    if (flags & AFF_68030) detectedtype = 3;
+    if (flags & AFF_68040) detectedtype = 4;
+    if (flags & (1L<<7))   detectedtype = 6; //Cyberstorm et al.
+    }
+  if (!quietly)
+    LogScreen("Automatic processor detection found a 680%u0\n", detectedtype);
+  return (detectedtype);
+}    
 #endif
 
 // --------------------------------------------------------------------------

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.14  1998/10/08 11:05:28  cyp
+// Moved AmigaOS 68k hardware detection code from selcore.cpp to cpucheck.cpp
+//
 // Revision 1.13  1998/10/08 10:12:17  cyp
 // Modified SelectCore(): (a) simply returns 0 if the cputype hasn't changed
 // between calls; (b) autodetection never runs more than once; (c) x86
@@ -60,7 +63,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.13 1998/10/08 10:12:17 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.14 1998/10/08 11:05:28 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -207,40 +210,29 @@ s32 Client::SelectCore(void)
   #endif
   whichcrunch = cputype;
   
-  LogScreen( "Selected code optimized for the %s.\n", GetCoreNameFromCoreType(cputype) ); 
+  LogScreen( "Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
 #elif (CLIENT_CPU == CPU_68K)
-    
-  #if (CLIENT_OS == OS_AMIGAOS)
-  if (cputype == -1)
-    {
-    if (SysBase->AttnFlags & AFF_68040) // Means we have either 040 or 060
-      cputype=4;
-    else
-      cputype=0;
-    }
-  #elif (CLIENT_OS == OS_MACOS)
-  if (cputype == -1)
-    {
-    #error cpu detection is missing    
-    }
-  #else
-  if (cputype == -1)
-    {
-    //blah blah - cpu detection goes here
-    #error cpu detection is missing    
-    }
-  #endif
+  static int detectedtype = -1;
 
-  const char *corename = NULL;
-  if (cputype == 0 || cputype == 1 || cputype == 2 || cputype == 3)
+  if (cputype == -1)
     {
-    rc5_unit_func = rc5_unit_func_000_030;
-    corename = "000/010/020/030";
+    if (detectedtype == -1)
+      detectedtype = GetProcessorType(0);
+    if (detectedtype == -1)
+      detectedtype = 0;
+    cputype = (s32)detectedtype;
     }
-  else //if (cputype == 4 || cputype == 5 || cputype == 6 )
+    
+  const char *corename = NULL;
+  if (cputype == 4 || cputype == 5 || cputype == 6 )
     {
     rc5_unit_func = rc5_unit_func_040_060;
     corename = "040/050/060";
+    }
+  else //if (cputype == 0 || cputype == 1 || cputype == 2 || cputype == 3)
+    {
+    rc5_unit_func = rc5_unit_func_000_030;
+    corename = "000/010/020/030";
     }
   LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename ); 
 
