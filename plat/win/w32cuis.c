@@ -16,7 +16,7 @@
  * The pipe shim itself is generic and will work without changes with any
  * backend that SetStdHandle()s the 'advertised' pipe ends.
  *
- * $Id: w32cuis.c,v 1.2 2002/09/02 00:35:53 andreasb Exp $
+ * $Id: w32cuis.c,v 1.2.4.1 2004/06/27 22:01:26 jlawson Exp $
 */
 
 /* #define HAVE_EXEC_AS_TEMPFILE */  /* davehart's solution */
@@ -719,7 +719,7 @@ static DWORD __exec_with_pipes(const char *filename) /* cyp's solution */
           while (filename[ok] && filename[ok]!='.')
             buffer[wpos++] = filename[ok++];
           lstrcpy( &buffer[wpos], ".apipe.in" );
-          wsprintf(&buffer[sizeof(buffer)-64],"%ld",(long)clientIn);
+          wsprintf(&buffer[sizeof(buffer)-64],"%ld",HandleToLong(clientIn));
           ok = 0;
           if (SetEnvironmentVariable(buffer,&buffer[sizeof(buffer)-64]))
           {
