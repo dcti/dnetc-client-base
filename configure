@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.133  1998/12/05 19:45:21  daa
+# fic for sun3 - rc5/   added to path to crunch_sun68k
+#
 # Revision 1.132  1998/12/01 22:29:28  silby
 # Recommitted.
 #
@@ -781,12 +784,12 @@ case "$1" in
 
     *sun3-gcc)
 	TARGET_CCFLAGS="$OPTS_GCC_SUN68K -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS crunch.sun68k.gcc.s"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch.sun68k.gcc.s"
 	;;
 
     *sun2-sunos3-gcc)
 	TARGET_CCFLAGS="$OPTS_GCC_SUN68K -D_SUNOS3_ -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS crunch.sun68k.gcc.s"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch.sun68k.gcc.s"
 	;;
     *m68k-linux-gcc)
         TARGET_CFLAGS="$(OPTS_GCC_M68K) -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
