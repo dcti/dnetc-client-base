@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.7 1999/09/19 16:01:13 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.8 1999/09/28 12:53:05 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -1133,7 +1133,8 @@ int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
       if (ogr->getresult(ogrstate, &contestwork.ogr.workstub, sizeof(WorkStub)) == CORE_S_OK)
       {
         //Log("OGR Success!\n");
-        contestwork.ogr.workstub.stub.length = contestwork.ogr.workstub.worklength;
+        contestwork.ogr.workstub.stub.length = 
+                  (short)(contestwork.ogr.workstub.worklength);
         *resultcode = RESULT_FOUND;
         return RESULT_FOUND;
       }
