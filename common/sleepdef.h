@@ -21,6 +21,10 @@
 */
 //
 // $Log: sleepdef.h,v $
+// Revision 1.13  1998/09/28 02:05:38  cyp
+// Modified for use with pollsys. Fixed (?) IRIX's lack of usleep() to use
+// sginap().
+//
 // Revision 1.12  1998/09/25 04:32:15  pct
 // DEC Ultrix port changes
 //
@@ -73,8 +77,8 @@
   #define usleep(x) Sleep((x)/1000)
 #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   // Win16 doesn't have any form of sleep available
-  #define sleep(x)
-  #define usleep(x)
+  #define sleep(x)  delay((x)*1000)
+  #define usleep(x) delay((x)/1000)
 #elif (CLIENT_OS == OS_DOS)
   #include "platforms/dos/clidos.h"
   #define sleep(x) dosCliSleep((x))
@@ -113,11 +117,20 @@
        nanosleep(&interval, &remainder); }
   #else // HP-UX 9.x doesn't have nanosleep() or usleep()
     #define usleep(x) sleep(1)
+    #define USLEEP_IS_SLEEP
   #endif
 #elif (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
-  #ifdef _irix5_
-    #define usleep(x) sleep(1) //will use nanosleep() in next revision
+  #if 1
+    #ifndef usleep
+      #include <limits.h>
+      #define usleep(x) sginap((x)*(1000000L/CLK_TCK))
+    #endif
+  #else
+    #ifdef _irix5_
+      #define usleep(x) sleep(1) //will use nanosleep() in next revision
+      #define USLEEP_IS_SLEEP
+    #endif
   #endif
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
@@ -130,12 +143,21 @@
 #elif (CLIENT_OS == OS_DYNIX)
   // DYNIX doesn't have nanosleep() or usleep()
   #define usleep(x) sleep(1)
+  #define USLEEP_IS_SLEEP
 #elif (CLIENT_OS == OS_ULTRIX)
   #define usleep(x) { struct timeval tv = {0,(x)}; \
-		           select(0,NULL,NULL,NULL,&tv); }
+                      select(0,NULL,NULL,NULL,&tv); }
 #else
   #include <unistd.h> //gcc has both sleep() and usleep()
 #endif
 
-#endif
 
+#ifndef __SLEEP_FOR_POLLING__
+#include "pollsys.h"
+#undef  sleep
+#define sleep(x) PolledSleep(x)
+#undef  usleep
+#define usleep(x) PolledUSleep(x)
+#endif /* __SLEEP_FOR_POLLING__ */
+
+#endif /* __SLEEPDEF_H__ */
