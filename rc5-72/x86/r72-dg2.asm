@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.13.2.2 2002/11/28 08:09:02 stream Exp $
+; $Id: r72-dg2.asm,v 1.13.2.3 2002/12/28 12:45:05 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -118,10 +118,10 @@ defwork save_ebp
 ;       S1[i+1] L2[j]
 
 %macro KEYSETUP_BLOCK_CONSTANTS 2
-        lea     shiftreg, [A1 + B1]
         add     B1, A1
         lea     A2, [A2 + B2 + S_not(%1)]
 
+        mov     shiftreg, B1
         add     B1, L1(%2)
 
         rol     B1, shiftcount
@@ -131,10 +131,10 @@ defwork save_ebp
         mov     S2(%1), A2
 
 
-        lea     shiftreg, [A2 + B2]
         add     B2, A2
         lea     A1, [A1 + B1 + S_not(%1+1)]
 
+        mov     shiftreg, B2
         add     B2, L2(%2)
 
         rol     B2, shiftcount
@@ -306,9 +306,9 @@ key_setup_1:
 ;       S1[0]  L2[1]
 
 key_setup_2:
-        lea     shiftreg, [A1 + B1]
         add     B1, A1
         add     A2, S_not(25)
+        mov     shiftreg, B1
 
         add     B1, L1(1)
         add     A2, B2
