@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.131 2002/03/27 22:46:52 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.132 2002/03/27 23:36:46 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -27,6 +27,7 @@ return "@(#)$Id: selcore.cpp,v 1.47.2.131 2002/03/27 22:46:52 andreasb Exp $"; }
   #include <setjmp.h>
 #endif
 #if (CLIENT_CPU == CPU_X86) && defined(SMC)
+  #include "probman.h" // GetManagedProblemCount()
   #if defined(__unix__)
     #include <sys/types.h>
     #include <sys/mman.h>
@@ -311,6 +312,9 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
         cindex = ((have_3486 && have_smc)?(7):(3)); /* "RG self-mod" or
                                                        "RG/HB re-pair I" */
       if (!have_smc && cindex == 7)     /* "RG self-modifying" */
+        cindex = 1;                     /* "RG class 3/4" */
+      if (have_smc && cindex == 7 && GetManagedProblemCount() > 1)     
+                                        /* "RG self-modifying" */
         cindex = 1;                     /* "RG class 3/4" */
       if (!have_nasm && cindex == 8)    /* "AK Class 7" */
         cindex = 2;                     /* "RG Class 6" */
