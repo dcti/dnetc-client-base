@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.39 2001/01/03 22:58:52 teichp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.40 2001/01/03 23:20:20 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -191,10 +191,10 @@ static const u32 csc_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
 // ---------------------------------------------------------------------------
 
 // returns 0 if not supported, <0 on failed or break
-int SelfTest( unsigned int contest )
+long SelfTest( unsigned int contest )
 {
   int threadpos, threadcount = 1;
-  int successes = 0;
+  long successes = 0L;
   const char *contname;
   int userbreak = 0;
   unsigned long runtime_sec, runtime_usec;
@@ -211,15 +211,15 @@ int SelfTest( unsigned int contest )
     return 0;
 
   contname = CliGetContestNameFromID( contest );
-  for ( threadpos = 0;
-        !userbreak && successes >= 0 && threadpos < threadcount;
+  for ( threadpos = 0; 
+        !userbreak && successes >= 0L && threadpos < threadcount;
         threadpos++ )
   {
     char lastmsg[100];
     unsigned int testnum;
 
     ClientEventSyncPost( CLIEVENT_SELFTEST_STARTED, (long)contest );
-    successes = 0;
+    successes = 0L;
     lastmsg[0] = '\0';
 
     runtime_sec = runtime_usec = 0;
@@ -524,19 +524,19 @@ int SelfTest( unsigned int contest )
     } /* for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ ) */
 
     if (userbreak)
-      successes = -1;
-    else
+      successes = -1L;
+    else  
     {
-      if (successes > 0)
+      if (successes > 0L)
       {
-        Log( "%s: %d/%d Tests Passed (%lu.%06lu seconds)\n", contname,
-          (int) successes, (int) TEST_CASE_COUNT, runtime_sec, runtime_usec );
+        Log( "%s: %ld/%ld Tests Passed (%lu.%06lu seconds)\n", contname,
+           successes, (long) TEST_CASE_COUNT, runtime_sec, runtime_usec );
       }
-      if (successes != TEST_CASE_COUNT)
+      if (successes != ((long)TEST_CASE_COUNT))
       {
-        Log( "%s: WARNING WARNING WARNING: %d Tests FAILED!!!\n",
-          contname, (int) (TEST_CASE_COUNT - successes) );
-          successes=-successes;
+        Log( "%s: WARNING WARNING WARNING: %ld Tests FAILED!!!\n", 
+          contname, (((long)TEST_CASE_COUNT) - successes) );
+        successes=-successes;
       }
     }
 
