@@ -16,6 +16,9 @@
 // -----------------------------------------------------------------------
 //
 // $Log: triggers.cpp,v $
+// Revision 1.9  1998/11/25 06:09:39  dicamillo
+// Update for BeOS R4.  Changes so that SIGHUP is not intercepted for BeOS.
+//
 // Revision 1.8  1998/11/02 04:43:42  cyp
 // win16 no longer polls for ^C. Created [Raise|Clear]PauseRequestTrigger().
 //
@@ -42,7 +45,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.8 1998/11/02 04:43:42 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.9 1998/11/25 06:09:39 dicamillo Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -430,6 +433,13 @@ void CliSetupSignals( void )
     signal( SIGSTOP, CliSignalHandler );
     //workaround NW 3.x bug - printf "%f" handler is in mathlib not clib, which
     signal( SIGABRT, CliSignalHandler ); //raises abrt if mathlib isn't loaded
+  #elif (CLIENT_OS == OS_BEOS)
+    // SIGHUP can't be used, because detach processes get SIGHUP when
+    // started from Terminal and Terminal quits.
+    signal( SIGQUIT, CliSignalHandler );
+    signal( SIGTERM, CliSignalHandler );
+    signal( SIGINT, CliSignalHandler );
+    signal( SIGSTOP, CliSignalHandler );
   #else
     signal( SIGHUP, CliSignalHandler );
     signal( SIGQUIT, CliSignalHandler );
