@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.29 2000/03/23 20:41:45 jbaker Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.30 2000/04/14 18:03:16 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -56,7 +56,7 @@
 #define OS_NEXTSTEP     19
 #define OS_SCO          20
 #define OS_QNX          21
-#define OS_NTO2		22
+#define OS_NTO2         22 /* QNX Neutrino */
 /* #define OS_UNUSED_4  23 */ /* never used. was minix */
 /* #define OS_UNUSED_5  24 */ /* never used. was mach10 */
 #define OS_AIX          25
@@ -157,6 +157,8 @@
   #define CLIENT_OS     OS_FREEBSD
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
+  #elif defined(__alpha__) || defined(ASM_ALPHA)
+    #define CLIENT_CPU    CPU_ALPHA
   #endif
 #elif defined(__NetBSD__)
   #ifndef __unix__ /* should already be defined */
@@ -188,57 +190,6 @@
   #elif defined(__sparc__)
     #define CLIENT_CPU    CPU_SPARC
   #endif
-#elif defined(__QNX__)
-  #ifndef __unix__ /* should already be defined */
-  #define __unix__
-  #endif
-  #if defined(__QNXNTO__)
-    #define CLIENT_OS_NAME "Neutrino"
-    #define CLIENT_OS	    OS_NTO2
-    #if defined(__i386__) || defined(ASM_X86)
-      #define CLIENT_CPU    CPU_X86
-    #elif defined(ASM_PPC)
-      #define CLIENT_CPU    CPU_POWERPC
-    #elif defined(ASM_MIPS) || defined(ASM_MIPS)
-      #define CLIENT_CPU    CPU_MIPS
-    #elif defined(ASM_ARM)
-      #define CLIENT_CPU    CPU_ARM
-    #elif defined(ASM_SH4)
-      #define CLIENT_CPU    CPU_SH4
-    #endif
-  #else
-    #define CLIENT_OS_NAME  "QNX"
-    #define CLIENT_OS       OS_QNX
-    #if defined(__i386__) || defined(ASM_X86)
-      #define CLIENT_CPU    CPU_X86
-    #endif
-  #endif
-  #if defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_CPU    CPU_X86
-  #endif
-#elif defined(solaris) || defined(sun)
-  #ifndef __unix__ /* should already be defined */
-  #define __unix__
-  #endif
-  #if defined(sunos)
-    #define CLIENT_OS_NAME  "SunOS"
-    #define CLIENT_OS       OS_SUNOS
-  #else
-    #define CLIENT_OS_NAME  "Solaris"
-    #define CLIENT_OS       OS_SOLARIS
-  #endif
-  #if defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_CPU    CPU_X86
-  #elif defined(__sparc) || defined(ASM_SPARC)
-    #define CLIENT_CPU    CPU_SPARC
-  #endif
-#elif defined(_SUN68K_)
-  #ifndef __unix__ /* should already be defined */
-  #define __unix__
-  #endif
-  #define CLIENT_OS_NAME  "SunOS"
-  #define CLIENT_OS       OS_SUNOS
-  #define CLIENT_CPU      CPU_68K
 #elif defined(bsdi)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
@@ -247,6 +198,46 @@
   #define CLIENT_OS       OS_BSDOS
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
+  #endif
+#elif defined(__QNX__)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
+  #if defined(__QNXNTO__)
+    #define CLIENT_OS_NAME "Neutrino"
+    #define CLIENT_OS	    OS_NTO2
+  #else  
+    #define CLIENT_OS_NAME  "QNX"
+    #define CLIENT_OS       OS_QNX
+  #endif
+  #if defined(__i386__) || defined(ASM_X86)
+    #define CLIENT_CPU    CPU_X86
+  #elif defined(ASM_PPC)
+    #define CLIENT_CPU    CPU_POWERPC
+  #elif defined(ASM_MIPS) || defined(ASM_MIPS)
+    #define CLIENT_CPU    CPU_MIPS
+  #elif defined(ASM_ARM)
+    #define CLIENT_CPU    CPU_ARM
+  #elif defined(ASM_SH4)
+    #define CLIENT_CPU    CPU_SH4
+  #endif
+#elif defined(solaris) || defined(sun) || defined(_SUN68K_)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
+  #if defined(sunos) || defined(_SUN68K_)
+    #define CLIENT_OS_NAME  "SunOS"
+    #define CLIENT_OS       OS_SUNOS
+  #else
+    #define CLIENT_OS_NAME  "Solaris"
+    #define CLIENT_OS       OS_SOLARIS
+  #endif
+  #if defined(_SUN68K_) || defined(ASM_68K)
+    #define CLIENT_CPU    CPU_68K
+  #elif defined(__i386__) || defined(ASM_X86)
+    #define CLIENT_CPU    CPU_X86
+  #elif defined(__sparc) || defined(ASM_SPARC)
+    #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(sco5)
   #ifndef __unix__ /* should already be defined */
@@ -453,23 +444,44 @@
   #include <Multiprocessing.h>
   typedef MPTaskID THREADID;
   #define OS_SUPPORTS_SMP
+#elif  ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
+  /* Uses LWP instead of pthreads */  
+  #include <thread.h>
+  typedef thread_t THREADID;
+  #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_FREEBSD)
+  /* Uses rfork() instead of pthreads */  
   typedef int /*pid_t*/ THREADID;
   #define OS_SUPPORTS_SMP
-// can we just use if defined(_POSIX_THREADS), as this is often defined if POSIX
-// threads are supported ?? Patrick Hildenbrand (patrick@mail4you.de)
+  #include <sys/wait.h>     /* wait() */
+  #include <sys/time.h>     /* required for resource.h */
+  #include <sys/resource.h> /* WIF*() macros */
+  #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
+  #include <sys/mman.h>     /* minherit() */
 #elif defined(MULTITHREAD)
+  /* 
+  Q: can't we simply use if defined(_POSIX_THREADS), as this is often defined
+     if POSIX threads are supported. Patrick Hildenbrand (patrick@mail4you.de)
+  A: yes and no. :)
+     no: _POSIX_THREADS may have been defined by an include file, but the
+         compiler might generate unsafe code. This is usually made clear with 
+         the absence/presence of _THREAD_SAFE.
+     yes: to keep the number of downloadable binaries to a minimum, clients  
+          should always be built with thread support (the only reason why two
+          binaries might be necessary is when threading depends on a lib that 
+          is not installed everywhere and a static build is not possible).
+          Users can always force non-threadedness by setting numcpu=0.  -cyp
+  */
   #include <pthread.h>
   typedef pthread_t THREADID;
   #define OS_SUPPORTS_SMP
   /* egcs always includes pthreads.h, so use something other than PTHREAD_H */
   #define _POSIX_THREADS_SUPPORTED
-
   #if (CLIENT_OS == OS_DGUX)
     #define PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_GLOBAL
     #define pthread_sigmask(a,b,c)
   #elif (CLIENT_OS == OS_AIX)
-	// only for AIX 4.1 ???
+	/* only for AIX 4.1??? */
     #define pthread_sigmask(a,b,c) sigthreadmask(a,b,c)
   #endif
 #else 
@@ -485,36 +497,36 @@
 /* ----------------------------------------------------------------- */
 
 #ifdef PROXYTYPE
-/*
- Some compilers/platforms don't yet support bool internally.
- When creating new rules here, please try to use compiler-specific
- macro tests since not all compilers on a specific platform (or even
- a newer version of your own compiler) may be missing bool.
-*/
-#if defined(__VMS) || defined(__SUNPRO_CC) || defined(__DECCXX) || defined(__MVS__)
-  #define NEED_FAKE_BOOL
-#elif defined(_HPUX) || defined(_OLD_NEXT_)
-  #define NEED_FAKE_BOOL
-#elif defined(__IBMCPP__)
-  #define NEED_FAKE_BOOL
-#elif defined(__WATCOMC__) && (__WATCOMC__ < 1100)
-  /* nothing - bool is defined */
-#elif defined(__xlc) || defined(__xlC) || defined(__xlC__) || defined(__XLC121__)
-  #define NEED_FAKE_BOOL
-#elif (defined(__mips) && __mips < 3 && !defined(__GNUC__))
-  #define NEED_FAKE_BOOL
-#elif (defined(__TURBOC__) && __TURBOC__ <= 0x400)
-  #define NEED_FAKE_BOOL
-#elif (defined(_MSC_VER) && _MSC_VER < 1100)
-  #define NEED_FAKE_BOOL
-#elif (defined(_SEQUENT_) && !defined(__GNUC__))
-  #define NEED_FAKE_BOOL
-#endif
-#if defined(NEED_FAKE_BOOL)
+  /*
+  Some compilers/platforms don't yet support bool internally.
+  *** When creating new rules here, USE COMPILER-SPECIFIC TESTS ***
+  (since not all compilers on a specific platform or even
+  a newer version of your own compiler may require the hack).
+  */
+  /* *** When creating new rules here, USE COMPILER-SPECIFIC TESTS *** */
+  #if defined(__GNUC__) && (__GNUC__ < 2)
+    #define NEED_FAKE_BOOL
+  #elif defined(__WATCOMC__) && (__WATCOMC__ < 1100) 
+    #define NEED_FAKE_BOOL
+  #elif defined(__TURBOC__) && (__TURBOC__ <= 0x400)
+    #define NEED_FAKE_BOOL
+  #elif defined(_MSC_VER) && (_MSC_VER < 1100)
+    #define NEED_FAKE_BOOL
+  #elif defined(__SUNPRO_CC)   
+    #define NEED_FAKE_BOOL
+  #elif defined(__IBMCPP__)
+    #define NEED_FAKE_BOOL
+  #elif defined(__DECCXX)
+    #define NEED_FAKE_BOOL
+  #elif defined(__xlc) || defined(__xlC) || defined(__xlC__) || defined(__XLC121__)
+    #define NEED_FAKE_BOOL
+  #endif
+  /* *** When creating new rules here, USE COMPILER-SPECIFIC TESTS *** */
+  #if defined(NEED_FAKE_BOOL)
     typedef int bool;
     #define true 1
     #define false 0
-#endif
+  #endif
 #endif
 
 /* ----------------------------------------------------------------- */
