@@ -21,51 +21,43 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.43 2000/04/18 20:35:52 jlawson Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.44 2000/04/21 13:12:48 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
 
-2.8008.459  new: all: new rc5 K7 core thanks to
-                   Sean Stanek <vulture@iastate.edu>
-                 all: -btime <pn> <n>    command line option
-                 all: exit flagfile filename now configurable (exitrc5.now)
-                 all: the "update frequently (-frequent)" has been replaced
-                   with "additional buffer-level checking" that allows the
-                   conditions for updating to be specified (in-buffer not
-                   full, out-buffer not empty, or both).  Also a new mode
-                   "update on per-project in-buffer empty" to prevent
-                   rotation between open contests.
-                 all: out-buffer thresholds have been removed entirely;
-                   you can use the "additional buffer-level checking" to
-                   support updating/flushing that is more frequent than
-                   exhaustion of in-buffers.
+2.8008.459  new: x86: new rc5 K7 core thanks to
+                 Sean Stanek <vulture@iastate.edu>
+            new: all: the "update frequently (-frequent)" has been superceded
+                 by "additional buffer-level checking". The new option
+                 provides better control and supports one new mode
+                 "update on per-project buffer exhaustion" which enables
+                 old-style single-contest crunching (disables rotation).
+            new: all: out-buffer thresholds have been removed entirely;
+                 use the "additional buffer-level checking" to support
+                 updating/flushing more frequently than buffer exhaustion.
+            chg: all: time threshold uses fetch work threshold > 0 as minimum
+                 number of workunits to be fetched.
+            new: all: -btime <pn> <n> complements time-driven threshold
+            chg: all: -b[in] <pn> <n> now clears time threshold for <pn>.
             chg: macos: now supports all variants of System 7
-                 Linux: now attempts to explicitly load resolv libraries for
-                   dns resolution for greater glibc/libc cross compatibility.
-                 all: checkpointing now done at 10% or 10 minute intervals,
-                   instead of 10% with 10 minute minimum.
-                 winnt4: pause on process handling optimized and rewritten
-                   to use a more efficient alternate technique.
-                 all: now logs, if exitfile was found during startup.
-                 all: time threshold uses fetch work threshold > 0 as minimum
-                   number of workunits to be fetched.
-                 all: -b[in] <pn> <n> now clears time threshold for <pn>.
-                 all: rotating between projects before fetching can now be
-                   controlled (see the -frequent change above for the
-                   "update on per-project in-buffer empty" option).
-                 all: will now flush to a proxy/server that is empty.
-            fix: all: OGR -> RC5 / CSC -> RC5 switchover hang.
-                 all: OGR nodecount network packet ordering fixed.
-                 all: setting clock back during network ops could hang.
-                 all: block counts during fetching do not fluctuate anymore.
-                 Freebsd: timezone detection for automatic proxy pick works.
-                 many: better file system locking on buffers done now.
-                 all: reported OGR noderate when completing a resumed stub is 
-                   now the correct rate (was displayed as unacceptably high).
-                 all: now finishes partial OGR stubs before starting new ones.
-                 all: wrong flush threshold selection.
+            fix: Linux: dynamic import of dns resolution functions for better
+                 glibc/libc cross compatibility (one shoe fits all again).
+            chg; all: checkpointing now done at 10% or 10 minute intervals,
+                 instead of 10% with 10 minute minimum.
+            fix: winnt4: pause on process handling optimized and rewritten.
+            new: all: exit flagfile filename is now configurable 
+            fix: all: now logs a message if exitfile was found during startup.
+            fix: all: will now flush to a proxy/server that is empty.
+            fix: all: project switchover no longer 'hangs'.
+            fix: all: OGR nodecount network packet ordering fixed.
+            fix: all: setting clock back during network ops could hang.
+            fix: all: block counts during fetching do not fluctuate anymore.
+            fix: Freebsd: timezone detection for automatic proxy pick works.
+            chg: many: file system locking on buffers where supported.
+            fix: all: reported OGR noderate is no longer unacceptably high.
+            fix: all: partially complete OGR stubs are now loaded first. 
 
 2.8007.458  fix: all: the annoying OGR 1 node bug finally fixed
             new: all: client can be configured a) to restart itself
