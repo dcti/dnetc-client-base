@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.82  1999/02/20 14:38:37  remi
+// - In ::Run(), rc5unitwork and refL0 are in host byte order, not in
+//   network byte order, so deleted all ntohl/htonl in Log() calls.
+// - Modified IncrementKey() (now __IncrementKey) to allow it to
+//   increment by more than 2^8 iters. Created __SwitchRC5Format().
+// - Added an RC5 key incrementation check.
+//
 // Revision 1.81  1999/02/19 03:29:04  silby
 // Updated hppa support, keyincrement for des does not
 // care about endianness now.
@@ -162,7 +169,8 @@
 // Fixed RC5_MMX pipeline count selection, was incorrect.
 //
 // Revision 1.37  1998/10/02 16:59:03  chrisb
-// lots of fiddling in a vain attempt to get the NON_PREEMPTIVE_OS_PROFILING to be a bit sane under RISC OS
+// lots of fiddling in a vain attempt to get the NON_PREEMPTIVE_OS_PROFILING
+// to be a bit sane under RISC OS
 //
 // Revision 1.36  1998/09/29 22:03:00  blast
 // Fixed a bug I introduced with generic core usage, and removed
@@ -243,7 +251,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.81 1999/02/19 03:29:04 silby Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.82 1999/02/20 14:38:37 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -432,6 +440,68 @@ Problem::~Problem()
 
 /* ------------------------------------------------------------------- */
 
+// for some odd reasons, the RC5 algorithm requires keys in reversed order
+//         key.hi   key.lo
+// ie key 01234567:89ABCDEF is sent to rc5_unit_func like that :
+//        EFCDAB89:67452301
+// This function switch from one format to the other.
+//
+// [Even if it looks like a little/big endian problem, it isn't. Whatever
+//  endianess the underlying system has, we must swap every byte in the key
+//  before sending it to rc5_unit_func()]
+//
+// Note that DES has a similiar but far more complex system, but everything
+// is handled by des_unit_func().
+
+static void __SwitchRC5Format (u64 &key)
+{
+    u64 tempkey;
+
+    tempkey.lo = 
+      ((key.hi >> 24) & 0x000000FFL) |
+      ((key.hi >>  8) & 0x0000FF00L) |
+      ((key.hi <<  8) & 0x00FF0000L) |
+      ((key.hi << 24) & 0xFF000000L);
+    tempkey.hi = 
+      ((key.lo >> 24) & 0x000000FFL) |
+      ((key.lo >>  8) & 0x0000FF00L) |
+      ((key.lo <<  8) & 0x00FF0000L) |
+      ((key.lo << 24) & 0xFF000000L);
+    
+    key.lo = tempkey.lo;
+    key.hi = tempkey.hi;
+}
+
+/* ------------------------------------------------------------------- */
+
+// Input:  - an RC5 key in 'mangled' (reversed) format or a DES key
+//         - an incrementation count
+//         - a contest identifier (0==RC5 1==DES 2==OGR)
+//
+// Output: the key incremented
+
+static void __IncrementKey (u64 &key, u32 iters, int contest)
+{
+  if (contest == 2) // OGR
+    {
+    // Let's the Master of Kangaroo's handle this stuff ;-)
+    }
+  else if (contest == 1) // DES
+    {
+    key.lo += iters;
+    if (key.lo < iters) key.hi++; // Account for carry
+    }
+  else if (contest == 0) // RC5
+    {
+    __SwitchRC5Format (key);    
+    key.lo += iters;
+    if (key.lo < iters) key.hi++;
+    __SwitchRC5Format (key);
+    }
+}
+
+/* ------------------------------------------------------------------- */
+
 int Problem::LoadState( ContestWork * work, unsigned int _contest, 
                               u32 _timeslice, int _cputype )
 {
@@ -608,26 +678,12 @@ ConInKey(-1);
   rc5unitwork.cypher.hi = contestwork.cypher.hi;
   rc5unitwork.cypher.lo = contestwork.cypher.lo;
 
+  rc5unitwork.L0.lo = key.lo;
+  rc5unitwork.L0.hi = key.hi;
   if (contest == 0)
-    {
-    rc5unitwork.L0.lo = 
-      ((key.hi >> 24) & 0x000000FFL) |
-      ((key.hi >>  8) & 0x0000FF00L) |
-      ((key.hi <<  8) & 0x00FF0000L) |
-      ((key.hi << 24) & 0xFF000000L);
-    rc5unitwork.L0.hi = 
-      ((key.lo >> 24) & 0x000000FFL) |
-      ((key.lo >>  8) & 0x0000FF00L) |
-      ((key.lo <<  8) & 0x00FF0000L) |
-      ((key.lo << 24) & 0xFF000000L);
-    } 
-  else 
-    {
-    rc5unitwork.L0.lo = key.lo;
-    rc5unitwork.L0.hi = key.hi;
-    }
+    __SwitchRC5Format (rc5unitwork.L0);
 
-  refL0=rc5unitwork.L0;
+  refL0 = rc5unitwork.L0;
 
   // set up the current result state
   rc5result.key.hi = contestwork.key.hi;
@@ -877,7 +933,7 @@ if (contest == 0) // RC5
       else
         {
         // "mangle-increment" the key number by the number of pipelines
-        IncrementKey (rc5unitwork.L0, pipeline_count, contest);
+        __IncrementKey (rc5unitwork.L0, pipeline_count, contest);
         kiter += pipeline_count;
         };
       };
@@ -895,14 +951,24 @@ if (contest == 0) // RC5
       else
         {
         // "mangle-increment" the key number by the number of pipelines
-        IncrementKey(rc5unitwork.L0, pipeline_count, contest);
+        __IncrementKey (rc5unitwork.L0, pipeline_count, contest);
         kiter += pipeline_count;
         };
       };
   #endif
 
-  IncrementKey(refL0, timeslice*pipeline_count, contest);
+  __IncrementKey (refL0, timeslice*pipeline_count, contest);
     // Increment reference key count
+
+  if (((refL0.hi != rc5unitwork.L0.hi) ||  // Compare ref to core
+      (refL0.lo != rc5unitwork.L0.lo)) &&  // key incrementation
+      (kiter == timeslice*pipeline_count))
+    {
+    Log("Internal Client Error #23: Please contact help@distributed.net\n"
+        "Debug Information: %08x:%08x - %08x:%08x\n",
+        rc5unitwork.L0.hi, rc5unitwork.L0.lo, refL0.hi, refL0.lo);
+    return -1;
+    };
 
   contestwork.keysdone.lo += kiter;
   if (contestwork.keysdone.lo < kiter)
@@ -928,9 +994,8 @@ if (contest == 0) // RC5
     {
     Log("Internal Client Error #24: Please contact help@distributed.net\n"
         "Debug Information: k: %x t: %x\n"
-        "Debug Information: %x:%x - %x:%x\n", kiter, timeslice,
-        ntohl(rc5unitwork.L0.lo), ntohl(rc5unitwork.L0.hi),
-        ntohl(refL0.lo), ntohl(refL0.hi));
+        "Debug Information: %08x:%08x - %08x:%08x\n", kiter, timeslice,
+        rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
     return -1;
     };
 
@@ -1088,16 +1153,16 @@ else if (contest == 1) // DES
     kiter = des_unit_func ( &rc5unitwork, nbits );
   #endif
 
-  IncrementKey(refL0, timeslice*pipeline_count, contest);
+  __IncrementKey (refL0, timeslice*pipeline_count, contest);
     // Increment reference key count
 
   if (((refL0.hi != rc5unitwork.L0.hi) ||  // Compare ref to core
       (refL0.lo != rc5unitwork.L0.lo)) &&  // key incrementation
-      (kiter >= timeslice*pipeline_count))
+      (kiter == timeslice*pipeline_count))
     {
     Log("Internal Client Error #23: Please contact help@distributed.net\n"
-        "Debug Information: %x:%x - %x:%x\n",ntohl(rc5unitwork.L0.lo),
-        ntohl(rc5unitwork.L0.hi), ntohl(refL0.lo), ntohl(refL0.hi));
+        "Debug Information: %08x:%08x - %08x:%08x\n",
+        rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
     return -1;
     };
 
@@ -1125,9 +1190,8 @@ else if (contest == 1) // DES
     {
     Log("Internal Client Error #24: Please contact help@distributed.net\n"
         "Debug Information: k: %x t: %x\n"
-        "Debug Information: %x:%x - %x:%x\n", kiter, timeslice,
-        ntohl(rc5unitwork.L0.lo), ntohl(rc5unitwork.L0.hi),
-        ntohl(refL0.lo), ntohl(refL0.hi));
+        "Debug Information: %08x:%08x - %08x:%08x\n", kiter, timeslice,
+        rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
     return -1;
     };
 
@@ -1342,53 +1406,4 @@ printf("DES: kiter is %d\n",kiter);
 
   return( finished );
 #endif
-}
-
-void IncrementKey(u64 &key, u32 iters, int contest)
-{
-  if (contest == 1) // DES
-    {
-    u64 tempkey;
-    tempkey.hi=key.hi;
-    tempkey.lo=key.lo;
-
-    tempkey.lo+=iters; // Add dword
-    if (tempkey.lo < iters) tempkey.hi++; // Account for carry
-  
-    key.hi=tempkey.hi; 
-    key.lo=tempkey.lo;
-    }
-  else
-    {
-    key.hi = (key.hi + (iters << 24)) & 0xFFFFFFFF;
-    if (!(key.hi & 0xFF000000)) 
-      {
-      key.hi = (key.hi + 0x00010000) & 0x00FFFFFF;
-      if (!(key.hi & 0x00FF0000)) 
-	{
-	key.hi = (key.hi + 0x00000100) & 0x0000FFFF;
-	if (!(key.hi & 0x0000FF00)) 
-	  {
-	  key.hi = (key.hi + 0x00000001) & 0x000000FF;
-	  if (!(key.hi & 0x000000FF)) 
-	    {
-	    key.hi = 0x00000000;
-	    key.lo = key.lo + 0x01000000;
-	    if (!(key.lo & 0xFF000000)) 
-	      {
-	      key.lo = (key.lo + 0x00010000) & 0x00FFFFFF;
-	      if (!(key.lo & 0x00FF0000)) 
-		{
-		key.lo = (key.lo + 0x00000100) & 0x0000FFFF;
-		if (!(key.lo & 0x0000FF00)) 
-		  {
-		  key.lo = (key.lo + 0x00000001) & 0x000000FF;
-		  }
-		}
-	      }
-	    }
-	  }
-	}
-      }
-    }
 }
