@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.22 2000/02/11 20:06:04 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.23 2000/02/12 23:24:53 gregh Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -101,17 +101,15 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "WinNT5/Win9x: path and extension are optional (that is, if you don't provide\n"
   "              a path or extension here, then those components of the filename\n"
   "              will not influence a comparison).\n"
-  "WinNT3/WinNT4:comparison by filename is not supported. (see alternative below)\n"
-  #if 0
   "WinNT3/WinNT4:path and extension are accepted, but ignored (neither\n"
   "              component has any influence on the outcome of a comparison)\n"
-  #endif
   "Win32s/Win16: extension is optional and path is ignored.\n"
   "\n"
   "Clients that are not running as a service can also detect by window title\n"
   "and/or by window class. To specify a window title, prefix it with '*', for\n"
   "example, \"*Backup Exec\". Prefix class names with '#'. Searching by window\n"
   "title and/or class name is exact, ie sensitive to case and name length.\n"
+  "Note that enabling this option may affect client performance.\n"
   #else
   "This option is not supported on all platforms\n"
   #endif

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.14 2000/02/11 20:06:04 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.15 2000/02/12 23:24:53 gregh Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -993,6 +993,10 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                                      (LPCWSTR)foundname, -1, foundname_ansi,
                                      sizeof(foundname_ansi), NULL, NULL );
                     foundname = foundname_ansi;
+                    if (dwBytes > 0)
+                    {
+                      dwBytes--; /* WCTMB return value includes trailing null */
+                    }
                     #undef foundname_ansi
 
 //LogScreen("getpidlist 3b: got name='%s'\n", foundname );
