@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.28  1998/11/06 04:23:16  cyp
+// Fixed incorrect thread data * index in pthread startup code. This may
+// be the cause for the FreeBSD crashes.
+//
 // Revision 1.27  1998/11/03 04:23:54  cyp
 // Added missing #if ... defined(MULTITHREAD) to def out pthread_sigmask
 //
@@ -110,7 +114,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.27 1998/11/03 04:23:54 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.28 1998/11/06 04:23:16 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -830,7 +834,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         SetGlobalPriority( 9 ); //back to normal
       #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD)
         if (pthread_create( &(thrparams->threadID), NULL, 
-           (void *(*)(void*)) Go_mt, (void *)thrparams[thread_i] ) == 0 )
+           (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0 )
           success = 1;
       #else
         use_poll_process = 1;
@@ -845,8 +849,8 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       if (timeslice > (1<<12)) 
         thrparams->timeslice = (1<<12);
       thrparams->threadID = RegPolledProcedure(Go_mt, 
-                              (void *)thrparams , NULL, 0 );
-      success = (thrparams[thread_i].threadID != (THREADID)(-1));
+                                (void *)thrparams , NULL, 0 );
+      success = (thrparams->threadID != -1);
       }
         
     if (success)
@@ -977,7 +981,7 @@ int Client::Run( void )
   if (!TimeToQuit)
     {
     if (load_problem_count > 1)
-      Log( "Loading one block per thread...\n" );
+      Log( "Loading one block per cruncher...\n" );
     load_problem_count = LoadSaveProblems( load_problem_count, 0 );
     if (load_problem_count == 0)
       {
@@ -993,8 +997,8 @@ int Client::Run( void )
 
   if (!TimeToQuit && contestdone[0] && contestdone[1])
     {
-    Log( "Both contests are marked as closed. This may mean that\n"
-         "the contests are over. Check at http://www.distributed.net/\n" );
+    Log( "Both contests are marked as closed. This may mean that the\n"
+         "contests are over. Check at http://www.distributed.net/\n" );
     TimeToQuit = 1;
     exitcode = -2;
     }
@@ -1115,7 +1119,9 @@ int Client::Run( void )
   //------------------------------------
 
   if (!TimeToQuit && !percentprintingoff)
+    {
     LogScreenPercent( load_problem_count ); //logstuff.cpp
+    }      
 
   //============================= MAIN LOOP =====================
   //now begin looping until we have a reason to quit
