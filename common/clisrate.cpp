@@ -6,6 +6,9 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.34  1999/01/26 17:50:06  dbaker
+// changes for freebsd4 to allow smp threads or whatever
+//
 // Revision 1.33  1998/10/06 21:28:07  cyp
 // Removed timestamps.
 //
@@ -132,7 +135,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.33 1998/10/06 21:28:07 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.34 1999/01/26 17:50:06 dbaker Exp $"; }
 #endif
 
 #include "cputypes.h"  // for u64
@@ -462,6 +465,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
                 (unsigned int)(itermul),
                 CliGetTimeString( &tv, 2 ),
                 keyrateP );
+
 
   return str;
 }

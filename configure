@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.177  1999/01/26 17:50:05  dbaker
+# changes for freebsd4 to allow smp threads or whatever
+#
 # Revision 1.176  1999/01/23 21:53:26  patrick
 #
 # target x86-os2-gcc: -i des/mmx-bitslice/ was missing
@@ -1722,6 +1725,19 @@ case "$1" in
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lc_r"
 	;;
+
+    *x86-freebsd4-mt-elf)
+        TARGET_AS="gcc -c"
+        TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
+                        -DPIPELINE_COUNT=2 -DMULTITHREAD -DCLIENT_OS_MINOR=4"
+        TARGET_LDFLAGS="-static"
+        TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+        TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
+                        platforms/x86ident.S \
+                        des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+        TARGET_LIBS="-lc_r"
+        ;;
 
     *x86-netbsd)
 	TARGET_AS="g++ -c -DNO_BALIGN"

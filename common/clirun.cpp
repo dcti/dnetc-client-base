@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.71  1999/01/26 17:50:05  dbaker
+// changes for freebsd4 to allow smp threads or whatever
+//
 // Revision 1.70  1999/01/14 23:02:11  pct
 // Updates for Digital Unix alpha client and ev5 related code.  This also
 // includes inital code for autodetection of CPU type and SMP.
@@ -270,7 +273,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.70 1999/01/14 23:02:11 pct Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.71 1999/01/26 17:50:05 dbaker Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -1201,7 +1204,7 @@ int Client::Run( void )
     force_no_realthreads = 0; /* this is a hint. it does not reflect capability */
     unsigned int numcrunchers = (unsigned int)numcpu;
 
-    #if (CLIENT_OS == OS_FREEBSD)
+    #if (CLIENT_OS == OS_FREEBSD && CLIENT_OS_MINOR != 4)
     if (numcrunchers > 1)
       {
       LogScreen("FreeBSD threads are not SMP aware (do not automatically\n"
