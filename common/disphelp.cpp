@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.20  1998/06/21 02:41:53  silby
+// This is a much improved way of disabling the pager.  It looks decent. :)
+//
 // Revision 1.19  1998/06/21 02:36:26  silby
 // Made changes so that the help display would detect if it was piped and not wait for user input.  It's ugly and could use work, but it prevents the former problem of the help screen appearing to lock up.
 //
@@ -27,7 +30,7 @@
 // call DisplayHelp() from main with the 'unrecognized option' argv[x]
 // or NULL or "-help" or "help" (or whatever)
 
-static const char *id="@(#)$Id: disphelp.cpp,v 1.19 1998/06/21 02:36:26 silby Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.20 1998/06/21 02:41:53 silby Exp $";
 
 #include "client.h"
 
@@ -230,7 +233,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
                   CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC );
   helpheader[0] = whoami;
 
-#if defined(NOPAGER)
+if (!isatty(fileno(stdout)))
   {
     int i;
     for (i = 0; i < headerlines; i++)
@@ -238,7 +241,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
     for (i = 0; i < bodylines; i++)
       printf("%s\n", helpbody[i] );
   }
-#else
+else
   while (true)
   {
     int i;
@@ -256,13 +259,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
     else
       printf("\nPress '+' or '-' for the next/previous page, or any other key to quit... ");
 
-    if (isatty(fileno(stdout)))
       i = readkeypress();
-    else // we're piped, don't wait for keys!
-      if (startline >= ((bodylines-maxpagesize)-1))
-        i = 'q';// we hit the end, terminate
-      else
-        i = '\r';
     if (i == '+' || i == '=' || i == ' ' ||
         i == 'f' || i == '\r' || i == '\n')
     {
@@ -281,7 +278,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
       break;
     }
   }
-#endif
+
   printf("\n\n");
   return;
 }
