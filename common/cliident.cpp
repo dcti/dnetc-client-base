@@ -11,6 +11,9 @@
 */ 
 //
 // $Log: cliident.cpp,v $
+// Revision 1.10  1998/12/26 21:23:05  cyp
+// Removed threadcd.
+//
 // Revision 1.9  1998/11/22 14:56:25  cyp
 // Removed cliconfig.cpp; Added confopt.cpp, confrwv.cpp
 //
@@ -42,7 +45,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.9 1998/11/22 14:56:25 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.10 1998/12/26 21:23:05 cyp Exp $"; } 
 #endif
 
 //-----------------------------------------------------------------------
@@ -62,7 +65,6 @@ extern const char *autobuff_cpp(void);
 extern const char *buffwork_cpp(void);
 extern const char *iniread_cpp(void);
 extern const char *scram_cpp(void);
-extern const char *threadcd_cpp(void);
 extern const char *clitime_cpp(void);
 extern const char *cliident_cpp(void);
 extern const char *confopt_cpp(void);
@@ -102,7 +104,6 @@ autobuff_cpp,
 buffwork_cpp,
 iniread_cpp,
 scram_cpp,
-threadcd_cpp,
 clitime_cpp,
 cliident_cpp,
 confopt_cpp,
@@ -134,7 +135,7 @@ probman_cpp,
 console_cpp
 };
 
-//"@(#)$Id: cliident.cpp,v 1.9 1998/11/22 14:56:25 cyp Exp $"
+//"@(#)$Id: cliident.cpp,v 1.10 1998/12/26 21:23:05 cyp Exp $"
 
 void CliIdentifyModules(void)
 {
