@@ -1,5 +1,5 @@
-PROGNAME_PPC = rc5des_PPC
-PROGNAME_68K = rc5des_68K
+PROGNAME_PPC = rc5des_ppc
+PROGNAME_68K = rc5des_68k
 
 DEBUG    = 
 OPTIMIZE = optimize optsched
