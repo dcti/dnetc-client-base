@@ -1,11 +1,16 @@
-/* Created by Oliver Roberts <oliver@futaura.co.uk>
-**
-** $Id: amNetwork.c,v 1.1.2.2 2001/03/19 19:18:55 oliver Exp $
-**
-** ----------------------------------------------------------------------
-** This file contains Amiga specific networking code, including socket
-** lib init and dial-on-demand.
-** ----------------------------------------------------------------------
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: amNetwork.c,v 1.1.2.3 2002/04/11 11:23:36 oliver Exp $
+ *
+ * Created by Oliver Roberts <oliver@futaura.co.uk>
+ *
+ * ----------------------------------------------------------------------
+ * This file contains Amiga specific networking code, including socket
+ * lib init and dial-on-demand.
+ * ----------------------------------------------------------------------
 */
 
 #include "amiga.h"
@@ -41,6 +46,7 @@ BOOL GenesisIsOnline(LONG flags);
 struct Library *SocketBase = NULL;
 struct Library *MiamiBase = NULL;
 struct Library *GenesisBase = NULL;
+static struct Library *TSocketBase = NULL;
 
 static int SocketRefCnt = 0;
 
@@ -52,7 +58,7 @@ BOOL amigaOpenSocketLib(void)
 {
    BOOL success = TRUE;
 
-   if (SocketRefCnt == 0) {
+   if (SocketRefCnt == 0 && !SocketBase) {
       BOOL libnotinmem = FALSE;
 
       #ifdef PREVENT_SOCKETLIB_DISKIO
@@ -84,10 +90,10 @@ BOOL amigaOpenSocketLib(void)
 /*
 ** Close bsdsocket.library - must be paired with successful amigaOpenSocketLib()
 */
-void amigaCloseSocketLib(void)
+void amigaCloseSocketLib(BOOL delayedclose)
 {
    if (SocketRefCnt > 0) {
-      if (--SocketRefCnt == 0) {
+      if ((--SocketRefCnt == 0) && !delayedclose) {
          CloseLibrary(SocketBase);
          SocketBase = NULL;
       }
@@ -103,6 +109,9 @@ void amigaCloseSocketLib(void)
 int amigaNetworkingInit(BOOL notlurking)
 {
    int success = 1;
+
+   // used to detect whether TermiteTCP is in use
+   TSocketBase = OpenLibrary("tsocket.library",0UL);
 
    if (notlurking) {
       MiamiBase = OpenLibrary((unsigned char *)"miami.library",11UL);
@@ -121,7 +130,7 @@ int amigaNetworkingInit(BOOL notlurking)
 
 void amigaNetworkingDeinit(void)
 {
-   amigaCloseSocketLib();
+   amigaCloseSocketLib(FALSE);
 
    if (GenesisBase) {
       CloseLibrary(GenesisBase);
@@ -131,6 +140,15 @@ void amigaNetworkingDeinit(void)
       CloseLibrary(MiamiBase);
       MiamiBase = NULL;
    }
+   if (TSocketBase) {
+      CloseLibrary(TSocketBase);
+      TSocketBase = NULL;
+   }
+}
+
+BOOL amigaIsTermiteTCP(void)
+{
+   return(TSocketBase != NULL);
 }
 
 /*
