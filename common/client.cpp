@@ -1464,7 +1464,7 @@ s32 Client::Run( void )
   totkeyscount[0] = totkeyscount[1] = 0;
 #endif
 
-  s32 count = 0, ckminutes = 0;
+  s32 count = 0, nextcheckpointtime = 0;
   s32 TimeToQuit = 0, getbuff_errs = 0;
 
 #if defined(MULTITHREAD)
@@ -2558,9 +2558,13 @@ PreferredIsDone1:
       if ( ((strcmp(checkpoint_file[0],"none") != 0) || (strcmp(checkpoint_file[1],"none") != 0))
            && (!nodiskbuffers) && (!pausefilefound))
       {
-        if ( (!TimeToQuit ) && ( ( (s32) time( NULL ) ) > ( (s32) ( timeStarted + 60*ckminutes ) ) ) )
+        if ( (!TimeToQuit ) && ( ( (s32) time( NULL ) ) > ( (s32) nextcheckpointtime ) ) )
+
         {
-          ckminutes += checkpoint_min ;
+          nextcheckpointtime=time(NULL)+checkpoint_min*60;
+          //Checkpoints may be slightly late (a few seconds). However,
+          //this eliminates checkpoint catchup due to pausefiles/clock
+          //changes/other nasty things that change the clock
           DoCheckpoint();
         }
       } // Checkpointing
