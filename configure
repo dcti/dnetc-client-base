@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.185  1999/02/05 01:15:44  snake
+#
+# alpha-openbsd doesn't need libtermcap, removed
+#
 # Revision 1.184  1999/02/04 22:56:09  remi
 # Fixed a typo in alpha-linux.
 #
@@ -1289,7 +1293,6 @@ case "$1" in
 			-DBIT_64 -DKWAN -DDWORZ"
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS"
 	TARGET_LDFLAGS="-static"
-	#TARGET_LIBS="-ltermcap"
 	;;
 
     *alpha-linux)
