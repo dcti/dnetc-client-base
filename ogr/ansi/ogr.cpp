@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.21 2001/01/03 22:54:02 teichp Exp $
+ * $Id: ogr.cpp,v 1.1.2.22 2001/01/04 20:50:58 teichp Exp $
  */
 #include "baseincs.h"
 #include <stdio.h>  /* printf for debugging */
@@ -2644,11 +2644,11 @@ static int ogr_cycle_non_preemptive(void *state, int *pnodes)
 #endif
   for (;;) {
 
+    oState->marks[depth-1] = lev->cnt2;
+
     if (nodes >= nodeslimit) {
       break;
     }
-
-    oState->marks[depth-1] = lev->cnt2;
 #ifdef OGR_DEBUG
     if (oState->LOGGING) dump_ruler(oState, depth);
 #endif
