@@ -5,6 +5,12 @@
 ;
 ; Optimised for ARM by Chris Berry and Steve Lee,
 ; based on deseval.c from Matthew Kwan's bitslicing DES key search.
+;
+; $Log: des-slice-sa.s,v $
+; Revision 1.3  1998/06/14 10:40:59  friedbait
+; 'Log' keywords added
+;
+;
 
         AREA    fastdesarea, CODE
 

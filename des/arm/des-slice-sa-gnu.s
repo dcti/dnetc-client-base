@@ -1,4 +1,10 @@
-
+/*
+ * $Log: des-slice-sa-gnu.s,v $
+ * Revision 1.2  1998/06/14 10:40:57  friedbait
+ * 'Log' keywords added
+ *
+ *
+ */
 
 	.text
 	.global _convert_key_from_des_to_inc__FPUlT0
