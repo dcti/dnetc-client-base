@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.53 2001/05/06 11:01:06 teichp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.54 2002/03/25 00:16:22 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -670,7 +670,9 @@ int CliGetMonotonicClock( struct timeval *tv )
       tv->tv_sec = ts.tv_sec;
       tv->tv_usec = ts.tv_nsec / 1000;
     }
-    #elif defined(CLOCK_REALTIME) /* POSIX 1003.1b-1993 but not 1003.1-1990 */
+    #elif defined(CLOCK_REALTIME) || (CLIENT_OS == OS_HPUX)
+    /* HP_UX 11.x only supports CLOCK_REALTIME */
+    /* POSIX 1003.1b-1993 but not 1003.1-1990  */
     {
       struct timespec ts;
       if (clock_gettime(CLOCK_REALTIME, &ts))

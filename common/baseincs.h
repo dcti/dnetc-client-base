@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.54 2001/07/27 08:09:27 mfeiri Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.55 2002/03/25 00:16:21 sampo Exp $"
 
 #include "cputypes.h"
 
@@ -39,6 +39,7 @@
   #include <fcntl.h>
   #include <sys/param.h>
   #include <sys/pstat.h>
+  #include <sched.h>
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_OS2)
   #if defined(__WATCOMC__)
