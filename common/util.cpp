@@ -1,31 +1,42 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: util.cpp,v $
-// Revision 1.3  1999/03/18 17:31:48  gregh
-// Initialize the default preferred contest map appropriately
-// based on the number of contests.
-//
-// Revision 1.2  1999/03/18 07:52:47  gregh
-// Cast short to int when passing to printf(%d).
-//
-// Revision 1.1  1999/03/18 03:51:18  cyp
-// Created.
-//
-//
+/* Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ****************** THIS IS WORLD-READABLE SOURCE *********************
+ *
+ * $Log: util.cpp,v $
+ * Revision 1.4  1999/03/20 07:32:42  cyp
+ * moved IsFilenameValid() and DoesFileExist() to utils.cpp
+ *
+ * Revision 1.3  1999/03/18 17:31:48  gregh
+ * Initialize the default preferred contest map appropriately
+ * based on the number of contests.
+ *
+ * Revision 1.2  1999/03/18 07:52:47  gregh
+ * Cast short to int when passing to printf(%d).
+ *
+ * Revision 1.1  1999/03/18 03:51:18  cyp
+ * Created.
+ *
+*/
 
 #if (!defined(lint) && defined(__showids__))
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.3 1999/03/18 17:31:48 gregh Exp $"; }
+return "@(#)$Id: util.cpp,v 1.4 1999/03/20 07:32:42 cyp Exp $"; }
 #endif
 
 #include "baseincs.h" /* string.h */
 #include "client.h"   /* CONTEST_COUNT, stub definition */
 #include "clicdata.h" /* CliGetContestNameFromID() */
+#include "pathwork.h" /* GetFullPathForFilename() */
 #include "util.h"     /* ourselves */
 
 /* ------------------------------------------------------------------- */
+
+unsigned long ogr_nodecount(const struct Stub * /* stub */)
+{
+  return 1;
+}  
 
 const char *ogr_stubstr(const struct Stub *stub)
 {
@@ -97,11 +108,7 @@ const char *projectmap_expand( const char *map )
 
 const char *projectmap_build( char *buf, const char *strtomap )
 {
-#if CONTEST_COUNT == 3
   static char default_map[CONTEST_COUNT] = { 1,2,0 };
-#else
-  static char default_map[CONTEST_COUNT] = { 1,0 };
-#endif
   static char map[CONTEST_COUNT];
   unsigned int map_pos, i;
   int contestid;
@@ -193,5 +200,23 @@ const char *projectmap_build( char *buf, const char *strtomap )
   if (buf)
     memcpy((void *)buf, (void *)&map[0], CONTEST_COUNT );
   return map;
+}
+
+/* ------------------------------------------------------------------ */
+
+int IsFilenameValid( const char *filename )
+{ 
+  if (!filename) 
+    return 0;
+  while (*filename && isspace(*filename))
+    filename++;
+  return (*filename && strcmp( filename, "none" ) != 0); /* case sensitive */
+}
+
+int DoesFileExist( const char *filename )
+{
+  if ( !IsFilenameValid( filename ) )
+    return 0;
+  return ( access( GetFullPathForFilename( filename ), 0 ) == 0 );
 }
 
