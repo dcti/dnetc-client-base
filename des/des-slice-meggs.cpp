@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.15  1998/07/13 03:48:48  cyruspatel
+// Converted an 'if (sizeof(BASIC_SLICE_TYPE)!=8)' check to an assert() to
+// squelch a compiler warning.
+//
 // Revision 1.14  1998/07/12 23:52:14  foxyloxy
 // Fixed typo (changed NOTSZERO to NOTZERO) to allow compile to work on IRIX
 // (and probably other platforms).
@@ -38,12 +42,13 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-return "@(#)$Id: des-slice-meggs.cpp,v 1.14 1998/07/12 23:52:14 foxyloxy Exp $"; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.15 1998/07/13 03:48:48 cyruspatel Exp $"; }
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "problem.h"
 #include "convdes.h"
 
@@ -112,15 +117,17 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
     // this should be phased out by an optimizing compiler
     // if the right BIT_xx is defined
 #ifdef BIT_32
-    if (sizeof(BASIC_SLICE_TYPE) != 4) {
-  printf ("Bad BIT_32 define !\n");
-  exit (-1);
-    }
+   assert( sizeof(BASIC_SLICE_TYPE) == 4);
+   //  if (sizeof(BASIC_SLICE_TYPE) != 4) {
+   //printf ("Bad BIT_32 define !\n");
+   //exit (-1);
+   // }
 #elif BIT_64
-    if (sizeof(BASIC_SLICE_TYPE) != 8) {
-  printf ("Bad BIT_64 define !\n");
-  exit (-1);
-    }
+   assert( sizeof(BASIC_SLICE_TYPE) == 8);
+   // if (sizeof(BASIC_SLICE_TYPE) != 8) {
+   // printf ("Bad BIT_64 define !\n");
+   // exit (-1);
+   // }
 #endif
 
     // check nbbits
