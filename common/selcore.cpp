@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.39 2000/01/04 14:49:58 chrisb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.40 2000/01/04 16:43:54 dakidd Exp $"; }
 
 
 #include "cputypes.h"
@@ -820,7 +820,10 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
   #endif
 #elif (CLIENT_CPU == CPU_68K)
-  #if (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS) temporarily fall back to ansi
+  #if (CLIENT_OS == OS_MACOS)
+    // rc5/ansi/rc5ansi_2-rg.cpp
+    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
+  #elif(CLIENT_OS == OS_AMIGAOS)
     // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
     extern "C" u32 rc5_unit_func_000_030( RC5UnitWork *, u32 );
     extern "C" u32 rc5_unit_func_040_060( RC5UnitWork *, u32 );
@@ -1049,7 +1052,17 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #elif (CLIENT_CPU == CPU_68K)
     {
-      #if (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS) temorarily fall back to ansi
+      #if (CLIENT_OS == OS_MACOS) /* Take 68K Macs back to ANSI core *for now*
+                                     due to the fact that the old assembly core 
+                                     won't compile under Codewarrior */
+      {
+        // rc5/ansi/rc5ansi_2-rg.cpp
+        //xtern u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32);
+        unit_func.rc5 = rc5_unit_func_ansi_2_rg;
+        pipeline_count = 2;
+      }
+
+      #elif (CLIENT_OS == OS_AMIGAOS)
       {
         // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
         //xtern "C" u32 rc5_unit_func_000_030( RC5UnitWork *, u32 );
