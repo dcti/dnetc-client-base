@@ -1,3 +1,8 @@
+// Copyright distributed.net 1997-1998 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+
+
 // For WinNT Service:
 //#define WINNTSERVICE "bovrc5nt"
 // For Win32 hidden console:
@@ -10,9 +15,6 @@
 //#define PERCBAR_ON_ONE_LINE //prints percs for all (max 16) threads on one line
                      //platform must support "\r" to return to start of line
 
-// Copyright distributed.net 1997 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
 
 #ifndef CLIENT_H
 #define CLIENT_H

@@ -1,4 +1,4 @@
-// Copyright distributed.net 1998 - All Rights Reserved
+// Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
@@ -18,7 +18,7 @@
 
 // ---------------------------------------------------------------------------
 
-   //return (cumulative) keyrate for a particular contest
+// return (cumulative) keyrate for a particular contest
 double CliGetKeyrateForContest( int contestid )
 {
   struct timeval totaltime;
@@ -37,7 +37,7 @@ double CliGetKeyrateForContest( int contestid )
 // ---------------------------------------------------------------------------
 
 
-   //return keyrate for a single problem. Problem must be finished.
+// return keyrate for a single problem. Problem must be finished.
 double CliGetKeyrateForProblem( Problem *prob )
 {
   static struct { u64 key; char contest; } addedqueue[MAXCPUS*2];
@@ -106,3 +106,4 @@ double CliGetKeyrateForProblem( Problem *prob )
 }
 
 // ---------------------------------------------------------------------------
+

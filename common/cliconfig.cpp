@@ -1,4 +1,4 @@
-// Copyright distributed.net 1997 - All Rights Reserved
+// Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
@@ -826,7 +826,7 @@ while (returnvalue == 0)
 
    }
 
-return returnvalue;
+  return returnvalue;
 }
 
 //----------------------------------------------------------------------------
@@ -836,13 +836,13 @@ s32 Client::yesno(char *str)
 // Returns 1=yes, 0=no, -1=unknown
 
 {
-s32 returnvalue;
+  s32 returnvalue;
 
-returnvalue=-1;
-if (strcmpi(str, "yes")==0) returnvalue=1;
-if (strcmpi(str, "no")==0) returnvalue=0;
-fflush( stdin );
-return returnvalue;
+  returnvalue=-1;
+  if (strcmpi(str, "yes")==0) returnvalue=1;
+  if (strcmpi(str, "no")==0) returnvalue=0;
+  fflush( stdin );
+  return returnvalue;
 }
 
 //----------------------------------------------------------------------------
@@ -852,7 +852,6 @@ void Client::clearscreen( void )
 
 {
 #if (CLIENT_OS == OS_WIN32)
-//works under MSVC, may not work under watcom/borland
   HANDLE hStdout;
   CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
   DWORD nLength;
@@ -2577,7 +2576,7 @@ void Client::ParseCommandlineOptions(int argc, char *argv[], s32 &inimissing)
 void Client::PrintBanner(char * clname)
 {
   LogScreenf( "\nRC5DES v2.%d.%d client - a project of distributed.net\n"
-          "Copyright distributed.net 1997\n"
+          "Copyright distributed.net 1997-1998\n"
 #if (CLIENT_CPU == CPU_X86)
           "DES Search routines Copyright Svend Olaf Mikkelsen\n"
 #endif

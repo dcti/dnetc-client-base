@@ -1,5 +1,5 @@
 // Created by Tim Charron (tcharron@interlog.com) 97.9.17
-// Copyright Tim Charron & distributed.net 1997 - All Rights Reserved
+// Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
