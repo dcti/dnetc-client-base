@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.41 2000/11/17 07:44:25 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.42 2000/11/22 18:20:29 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -22,7 +22,10 @@ return "@(#)$Id: logstuff.cpp,v 1.37.2.41 2000/11/17 07:44:25 cyp Exp $"; }
 #include "clitime.h"   // CliGetTimeString(NULL,1)
 #include "pathwork.h"  // GetFullPathForFilename(), GetWorkingDirectory()
 #include "problem.h"   // Problem object for logscreenpercent
-#include "probman.h"   // GetProblemPointerFromIndex() for LogScreenPercent
+#include "probman.h"   // GetProblemPointerFromIndex() for logscreenpercent
+#include "bench.h"     // BenchGetBestRate() for logscreenpercent
+#include "cpucheck.h"  // GetNumberOfDetectedProcessors() for logscreenpercent
+#include "clicdata.h"  // CliGetContestNameFromID() for logscreenpercent
 #include "console.h"   // for ConOut(), ConIsScreen(), ConIsGUI()
 #include "util.h"      // TRACE
 #include "logstuff.h"  // keep the prototypes in sync
@@ -709,6 +712,176 @@ const char *LogGetCurrentLogFilename(char *buffer, unsigned int buflen)
 
 // ---------------------------------------------------------------------------
 
+/* the following could be anywhere since it doesn't touch static data - */ 
+/* it doesn't really belong in logstuff.cpp, but its currently only used */
+/* from here (the matching public is LogGetContestLiveRate()), and has */
+/* special handling when used from LogScreenPercent() */
+static int __ContestGetLiveRate(unsigned int contest_i,
+                                int called_from_logscreenpercent,
+                                int *some_doneP,
+                                u32 *ratehiP, u32 *rateloP,
+                                u32 *walltime_hiP, u32 *walltime_loP,
+                                u32 *coretime_hiP, u32 *coretime_loP)
+{
+  int probcount = -1;
+  if (contest_i < CONTEST_COUNT)
+  {
+    int numprobs = ProblemCountLoaded(-1); /* total */
+    if (numprobs > 0)
+    {
+      struct timeval tv;
+      if (CliGetMonotonicClock(&tv) == 0)
+      {            
+        int numdone = 0;
+        int prob_i, tab_sel = ((called_from_logscreenpercent)?(0):(1));
+        u32 oldest_sec = 0, oldest_usec = 0;
+        u32 tccount_hi = 0, tccount_lo = 0;
+        u32 tctime_hi = 0,  tctime_lo = 0;
+        u32 c_sec, c_usec;
+        probcount = 0;
+
+        for (prob_i = 0; prob_i < numprobs; prob_i++)
+        {
+          Problem *selprob = GetProblemPointerFromIndex(prob_i);
+          if (selprob)
+          { 
+            int isinit = ProblemIsInitialized(selprob);
+            if (!isinit)
+              continue;
+            if (isinit > 0) /* completed (any contest) */
+              numdone++;
+            if (selprob->pub_data.contest == contest_i)
+            {
+              u32 ccounthi, ccountlo;
+              if (ProblemGetInfo(selprob, 0, 0,
+                                 0, 0,
+                                 0, 0, 
+                                 0, 
+                                 0, 0, 
+                                 0, 
+                                 0, 0, 
+                                 0, 0, 0, 0,
+                                 0, 0, 0, 0,
+                                 &ccounthi, &ccountlo, 0, 0,
+                                 0, 0, 0, 0 ) >= 0)
+              {
+                int gotit = 0;
+                u32 last_ccounthi = 0, last_ccountlo = 0; 
+                u32 last_ctimehi = 0, last_ctimelo = 0; 
+                u32 last_utimehi = 0, last_utimelo = 0; 
+                c_sec = selprob->pub_data.runtime_sec;
+                c_usec = selprob->pub_data.runtime_usec;
+                if (selprob->pub_data.live_rate[tab_sel].init)
+                {
+                  last_ccounthi= selprob->pub_data.live_rate[tab_sel].ccounthi; 
+                  last_ccountlo= selprob->pub_data.live_rate[tab_sel].ccountlo; 
+                  last_ctimehi = selprob->pub_data.live_rate[tab_sel].ctimehi; 
+                  last_ctimelo = selprob->pub_data.live_rate[tab_sel].ctimelo; 
+                  last_utimehi = selprob->pub_data.live_rate[tab_sel].utimehi;   
+                  last_utimelo = selprob->pub_data.live_rate[tab_sel].utimelo;   
+                  gotit = 1;
+                }
+                selprob->pub_data.live_rate[tab_sel].ccounthi = ccounthi; 
+                selprob->pub_data.live_rate[tab_sel].ccountlo = ccountlo; 
+                selprob->pub_data.live_rate[tab_sel].ctimehi = c_sec; 
+                selprob->pub_data.live_rate[tab_sel].ctimelo = c_usec; 
+                selprob->pub_data.live_rate[tab_sel].utimehi = tv.tv_sec;   
+                selprob->pub_data.live_rate[tab_sel].utimelo = tv.tv_usec;   
+                selprob->pub_data.live_rate[tab_sel].init = 1;
+                if (gotit)
+                {
+                  u32 temp = ccountlo;
+                  ccountlo -= last_ccountlo;
+                  if (ccountlo > temp)
+                    ccounthi--;   
+                  ccounthi -= last_ccounthi;  
+
+                  tccount_hi += ccounthi;
+                  temp = tccount_lo + ccountlo;
+                  if (temp < tccount_lo)
+                    tccount_hi++;
+                  tccount_lo = temp;
+
+                  if (probcount == 0 || last_utimehi < oldest_sec || 
+                     (last_utimehi == oldest_sec && 
+                      last_utimelo == oldest_usec))
+                  {
+                    oldest_sec = last_utimehi;
+                    oldest_usec = last_utimelo;
+                  }
+                  if (c_usec < last_ctimelo)
+                  {
+                    c_sec--;
+                    c_usec += 1000000;
+                  }
+                  tctime_hi += (c_sec - last_ctimehi);
+                  tctime_lo += (c_usec - last_ctimelo); 
+                  if (tctime_lo >= 1000000)
+                  {
+                    tctime_hi++;
+                    tctime_lo -= 1000000;
+                  }
+                  probcount++;
+                }
+              } /* if ProblemGetInfo() */
+            } /* if (selprob->pub_data.contest == contest_i) */
+          } /* if (selprob) */
+        } /* for (prob_i = 0; prob_i < numprobs; prob_i++) */
+        if (probcount > 0)
+        {
+          c_sec = tv.tv_sec;
+          c_usec = tv.tv_usec;
+          if (c_sec < oldest_sec || 
+             (c_sec == oldest_sec && c_usec < oldest_usec))
+          {
+            probcount = -1;
+          }
+          else 
+          {
+            if (c_usec < oldest_usec)
+            {
+              c_sec--;
+              c_usec += 1000000;
+            }
+            c_sec -= oldest_sec;
+            c_usec -= oldest_usec;
+            if (some_doneP)
+              *some_doneP = numdone;
+            if (coretime_hiP)
+              *coretime_hiP = tctime_hi;
+            if (coretime_loP)
+              *coretime_loP = tctime_lo;
+            if (walltime_hiP)
+              *walltime_hiP = c_sec;
+            if (walltime_loP)
+              *walltime_loP = c_usec;
+            if (ratehiP || rateloP)
+            {
+              ProblemComputeRate( contest_i, c_sec, c_usec, 
+                                  tccount_hi, tccount_lo, 
+                                  ratehiP, rateloP, 0, 0);
+            } /* if (ratehiP || rateloP) */
+          } /* time is valid */
+        } /* if (probcount > 0) */
+      } /* if (CliGetMonotonicClock(&tv) == 0) */
+    } /* if (numprobs > 0) */
+  } /* if (contest_i < CONTEST_COUNT) */
+  return probcount;
+}
+
+int LogGetContestLiveRate(unsigned int contest_i,
+                          u32 *ratehiP, u32 *rateloP,
+                          u32 *walltime_hiP, u32 *walltime_loP,
+                          u32 *coretime_hiP, u32 *coretime_loP)
+{
+  return __ContestGetLiveRate(contest_i, 0, 0, ratehiP, rateloP, 
+                              walltime_hiP, walltime_loP, 
+                              coretime_hiP, coretime_loP );
+}
+
+// ---------------------------------------------------------------------------
+
+
 //#define NO_PERCENTOMATIC_BATON
 
 void LogScreenPercent( unsigned int load_problem_count )
@@ -716,85 +889,193 @@ void LogScreenPercent( unsigned int load_problem_count )
   unsigned int percent, restartperc, endperc, prob_i, cont_i;
   unsigned int selprob_i = logstatics.perc_callcount % load_problem_count;
   char buffer[128]; unsigned char pbuf[52]; /* 'a'-'z','A'-'Z' */
-  int use_alt_fmt; unsigned int prob_count[CONTEST_COUNT];
+  int disp_format, active_contests = 0;
+  unsigned int prob_count[CONTEST_COUNT];
 
   if (!logstatics.crunchmeter || ( logstatics.loggingTo & LOGTO_SCREEN ) == 0 )
     return;
 
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+  {
     prob_count[cont_i] = ProblemCountLoaded(cont_i); /* -1=all contests */
+    if (prob_count[cont_i]) 
+      active_contests++;
+  }
+  if (active_contests == 0)
+    return;
 
-  use_alt_fmt = 0;
-  if (logstatics.crunchmeter == 1)
-    use_alt_fmt = +1; 
-  else if (logstatics.crunchmeter < 0 && logstatics.stdoutisatty &&
+  #define DISPFORMAT_AUTO  -1
+  #define DISPFORMAT_PERC   0
+  #define DISPFORMAT_COUNT  1
+  #define DISPFORMAT_RATE   2
+
+  disp_format = DISPFORMAT_PERC;
+  if (logstatics.stdoutisatty)
+  {
+    if (logstatics.crunchmeter == 1) /* absolute */
+      disp_format = DISPFORMAT_COUNT; 
+    else if (logstatics.crunchmeter == 3) /* rate */
+      disp_format = DISPFORMAT_RATE;
+    else if (logstatics.crunchmeter < 0 &&
      (prob_count[OGR] > 0 || load_problem_count >= sizeof(pbuf)))
-    use_alt_fmt = -1;      
+      disp_format = DISPFORMAT_RATE; //or DISPFORMAT_AUTO for count;
+    /* anything else is percent */
+  }
 
   buffer[0] = '\0';
   endperc = restartperc = 0;
-  for (prob_i = 0; prob_i < load_problem_count; prob_i++)
-  {
-    Problem *selprob = GetProblemPointerFromIndex(prob_i);
-    pbuf[prob_i] = 0;
-    if (selprob)
-    {
-      unsigned int permille = 0, startpermille = 0;  int girc = -1;
-      cont_i = 0;
 
-      if (use_alt_fmt && (!buffer[0] || prob_i == selprob_i))
+  if (disp_format == DISPFORMAT_RATE) /* live rate */
+  {
+    u32 ratehi, ratelo, wtimehi, wtimelo, ctimehi, ctimelo;
+    int some_done; unsigned int i, x;
+    cont_i = logstatics.perc_callcount % active_contests;
+
+    for (x = 0, i = 0; x < CONTEST_COUNT; x++)
+    {
+      if (prob_count[x]) 
       {
-        char blkdone[32], blksig[32]; const char *contname;
-        girc = ProblemGetInfo(selprob, &cont_i, &contname, 0, 0, 0, 0, 0, 
-                         &permille, &startpermille, 0,
-                         blksig, sizeof(blksig), 0, 0, 0, 0, 0,0,0, 0,0,0,
-                         0, 0, 0, 0, blkdone, sizeof(blkdone) );
-        if (permille == 1000 &&  use_alt_fmt < 0) /* auto */
-          use_alt_fmt = 0;
-        else if (girc != -1)
+        if (i == cont_i)
         {
-          sprintf(buffer, "#%u: %s:%s [%s]", 
-                  prob_i+1, contname, blksig, blkdone );
-          //there isn't enough space for percent so don't even think about it
+          cont_i = x;
+          break;
         }
+        i++;
       }
-      else
+    }
+    if (__ContestGetLiveRate(cont_i, 1, /* <= YES, called from LogScreen... */
+                             &some_done, &ratehi, &ratelo, 
+                             &wtimehi, &wtimelo, &ctimehi, &ctimelo) < 1)
+    {
+      return; /* no rate available yet */
+    }
+    if (some_done)
+    {
+      endperc = 100;
+    }
+    else
+    {
+      i = sprintf(buffer,"\r%s: rate: ", CliGetContestNameFromID(cont_i));
+      ProblemComputeRate( cont_i, 0, 0, ratehi, ratelo, 0, 0,
+                          &buffer[i], sizeof(buffer)-i );
+      strcat(buffer, "/sec");
+      //if (CliGetThreadUserTime(0)==0) /* thread time supported */
+      { 
+        unsigned long efficiency = 0;
+        wtimelo = (wtimelo / 1000)+(wtimehi * 1000);
+        ctimelo = ((ctimelo+499) / 1000)+(ctimehi * 1000);
+        if (wtimelo)
+        {
+          /* note that efficiency can be greater than 100% 
+          ** due to scheduler hickups or SMP or OS's clock rounding.
+          ** This is perfectly normal or all OSs.
+          */
+          unsigned long effmax = GetNumberOfDetectedProcessors()*1000;
+          efficiency = (((unsigned long)ctimelo) * 1000ul)/wtimelo;
+          if (efficiency > effmax)
+            efficiency = effmax;
+        }
+        sprintf(&buffer[strlen(buffer)], " (%lu.%01lu%% efficient)", 
+                                          efficiency/10, efficiency%10);
+      }
+#if 0 /* is this useful/meaningful? */
+      else 
       {
-        girc = ProblemGetInfo(selprob, &cont_i, 0, 0, 0, 0, 0, 0,
-                                       &permille, &startpermille, 0,
-                                       0, 0, 0, 0, 0, 0, 
-                                       0,0,0, 0,0,0, 0, 0, 0, 0, 0, 0 );
-      }
-      if (girc != -1)
+        unsigned long benchrate = BenchGetBestRate(cont_i);
+        int bestperm = -1;
+        if (benchrate)
+        {
+          #if (ULONG_MAX > 0xfffffffful)
+          unsigned long r = (((unsigned long)ratehi)<<32)+ratelo)*100;
+          bestperm = (int)(r/benchrate);
+          #else
+          if (!ratehi)
+          {
+            unsigned long r = ratelo * 100;
+            if (r < ratelo)
+            {
+              r = ratelo;
+              benchrate /= 100;
+            }
+            bestperm = (int)(r/benchrate);
+          }
+          #endif
+        }
+        if (bestperm >= 0)
+        {
+          sprintf(&buffer[strlen(buffer)], " (%d.%02d%%)", 
+                                            bestperm/100, bestperm%100);
+        }
+      }    
+#endif
+    }   
+  }
+  else
+  {
+    for (prob_i = 0; prob_i < load_problem_count; prob_i++)
+    {
+      Problem *selprob = GetProblemPointerFromIndex(prob_i);
+      pbuf[prob_i] = 0;
+      if (selprob)
       {
-        percent = (permille+((permille < 995)?(5):(0)))/10;
-        if (load_problem_count == 1 && percent != 100)
-        {   /* don't do 'R' if multiple-problems */
-          restartperc = (startpermille)/10;
-          restartperc = (!restartperc || percent == 100) ? 0 :
-              ( restartperc - ((restartperc > 90) ? (restartperc & 1) :
-              (1 - (restartperc & 1))) );
-        }
-        if (percent > endperc)
+        unsigned int permille = 0, startpermille = 0;  int girc = -1;
+        cont_i = 0;
+ 
+        if (disp_format != DISPFORMAT_PERC &&
+            (!buffer[0] || prob_i == selprob_i))
         {
-          endperc = percent;
-          if (endperc == 100 && use_alt_fmt < 0) /* auto */
-            use_alt_fmt = 0;
+          char blkdone[32], blksig[32]; const char *contname;
+          girc = ProblemGetInfo(selprob, &cont_i, &contname, 0, 0, 0, 0, 0, 
+                           &permille, &startpermille, 0,
+                           blksig, sizeof(blksig), 0, 0, 0, 0, 0,0,0, 0,0,0,
+                           0, 0, 0, 0, blkdone, sizeof(blkdone) );
+          if (permille == 1000 && disp_format == DISPFORMAT_AUTO)
+            disp_format = DISPFORMAT_PERC;
+          else if (girc != -1)
+          {
+            sprintf(buffer, "#%u: %s:%s [%s]", 
+                    prob_i+1, contname, blksig, blkdone );
+            //there isn't enough space for percent so don't even think about it
+          }
         }
-        if (percent && ((percent>90)?((percent&1)!=0):((percent&1)==0)))
+        else
         {
-          percent--;  /* make sure that it is visible */
+          girc = ProblemGetInfo(selprob, &cont_i, 0, 0, 0, 0, 0, 0,
+                                         &permille, &startpermille, 0,
+                                         0, 0, 0, 0, 0, 0, 
+                                         0,0,0, 0,0,0, 0, 0, 0, 0, 0, 0 );
         }
-        if (prob_i < sizeof(pbuf)) /* a-z,A-Z */
+        if (girc != -1)
         {
-          pbuf[prob_i] = (unsigned char)(percent);
-          prob_count[cont_i]++;
+          percent = (permille+((permille < 995)?(5):(0)))/10;
+          if (load_problem_count == 1 && percent != 100)
+          {   /* don't do 'R' if multiple-problems */
+            restartperc = (startpermille)/10;
+            restartperc = (!restartperc || percent == 100) ? 0 :
+                ( restartperc - ((restartperc > 90) ? (restartperc & 1) :
+                (1 - (restartperc & 1))) );
+          }
+          if (percent > endperc)
+          {
+            endperc = percent;
+            if (endperc == 100 && disp_format == DISPFORMAT_AUTO)
+              disp_format = DISPFORMAT_PERC;
+          }
+          if (percent && ((percent>90)?((percent&1)!=0):((percent&1)==0)))
+          {
+            percent--;  /* make sure that it is visible */
+          }
+          if (prob_i < sizeof(pbuf)) /* a-z,A-Z */
+          {
+            pbuf[prob_i] = (unsigned char)(percent);
+            prob_count[cont_i]++;
+          }
         }
-      }
-    }      
+      }      
+    }
   }
 
-  if (buffer[0] && use_alt_fmt)
+  if (buffer[0] && disp_format != DISPFORMAT_PERC)
   {
     #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_POWERPC)
     // temporary fix - updating the progress every 5 seconds is not a good idea

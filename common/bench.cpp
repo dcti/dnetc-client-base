@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.48 2000/11/17 16:16:14 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.49 2000/11/22 18:20:28 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -20,6 +20,49 @@ return "@(#)$Id: bench.cpp,v 1.27.2.48 2000/11/17 16:16:14 cyp Exp $"; }
 
 #define TBENCHMARK_CALIBRATION 0x80
 
+#if (CONTEST_COUNT != 4)
+  #error static initializer expects CONTEST_COUNT == 4
+#endif
+unsigned long bestrate_tab[CONTEST_COUNT] = {0,0,0,0};
+
+/* -------------------------------------------------------------------- */
+
+/* BenchGetBestRate() is always per-processor */
+unsigned long BenchGetBestRate(unsigned int contestid)
+{
+  if (contestid < CONTEST_COUNT)
+  { 
+    if (bestrate_tab[contestid] == 0)
+    { 
+      // This may trigger a mini-benchmark, which will get the speed
+      // we need and not waste time.
+      selcoreGetSelectedCoreForContest( contestid );
+    }
+    if (bestrate_tab[contestid] == 0)
+    { 
+      TBenchmark(contestid, 2, 
+                 TBENCHMARK_CALIBRATION|TBENCHMARK_QUIET|TBENCHMARK_IGNBRK);
+    }
+    return bestrate_tab[contestid];
+  }
+  return 0;
+}
+
+/* -------------------------------------------------------------------- */
+
+static void __BenchSetBestRate(unsigned int contestid, unsigned long rate)
+{
+  if (contestid < CONTEST_COUNT)
+  { 
+    if (rate > bestrate_tab[contestid])
+      bestrate_tab[contestid] = rate;
+  }
+  return;
+}
+
+/* -------------------------------------------------------------------- */
+
+/* TBenchmark() is always per-processor */
 long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 {
   /* non-preemptive os minimum yields per second */
@@ -91,8 +134,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     //  LogScreen("\rCalibrating ... done. (%lu)\n", (unsigned long)tslice );
     if (non_preemptive_os.yps)
       tslice /= non_preemptive_os.yps;
-    else
-      tslice <<= 1; /* try for two second steps */
+//  else
+//    tslice <<= 1; /* try for two second steps */
   }
   if (tslice == 0)
   { 
@@ -110,7 +153,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
                              contestid, tslice, 0, 0, 0, 0) == 0)
     {
       const char *contname = CliGetContestNameFromID(contestid);
-      int silent = 1, run = RESULT_WORKING; u32 bestlo = 0;
+      int silent = 1, run = RESULT_WORKING; u32 bestlo = 0, besthi = 0;
       unsigned long last_permille = 1001;
 
       //ClientEventSyncPost(CLIEVENT_BENCHMARK_STARTED, (long)thisprob );
@@ -170,15 +213,23 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           ProblemComputeRate( contestid, thisprob->pub_data.runtime_sec, 
                                          thisprob->pub_data.runtime_usec,
                               donehi, donelo, &ratehi, &ratelo, 0, 0 );
-          if (!ratehi && ratelo > bestlo)
+
+          tslice = thisprob->pub_data.tslice;
+          if (ratehi > besthi || (ratehi == besthi && ratelo > bestlo))
+          {
             bestlo = ratelo; 
+            besthi = ratehi;
+//printf("\noldtslice=%u, newtslice=%u %s\n", tslice, ratelo, "BEST!");
+          }
+          else
+          { 
+            ratehi = besthi;
+            ratelo = bestlo;
+//printf("\noldtslice=%u, newtslice=%u %s\n", tslice, ratelo, "");
+          }
           if (ratehi)
             ratelo = 0x0fffffff;
-          tslice = thisprob->pub_data.tslice;
-//printf("\noldtslice=%u, newtslice=%u %s\n", tslice, ratelo, ((bestlo==ratelo)?("BEST!"):("")));
-          if (bestlo > ratelo)
-            ratelo = bestlo;
-          if (ratelo > tslice)
+          if (ratelo > tslice || contestid == OGR)
             tslice = thisprob->pub_data.tslice = ratelo;
         }
         run = ProblemRun(thisprob);
@@ -227,12 +278,16 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
             run = -4;
             break;
           }
-          if (bestlo)
+          if (bestlo || besthi)
           {
-            ProblemComputeRate( contestid, 0, 0, 0, bestlo, &ratehi, 
+            ProblemComputeRate( contestid, 0, 0, besthi, bestlo, &ratehi, 
                                 &ratelo, ratebuf, sizeof(ratebuf) );                                       
           }
           retvalue = (long)ratelo;
+          #if (ULONG_MAX > 0xfffffffful)
+          retvalue = (long)((ratehi << 32)+(ratelo));
+          #endif
+          __BenchSetBestRate(contestid, retvalue);
           if (!silent)
           {
             struct timeval tv; 

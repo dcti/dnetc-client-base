@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.47 2000/11/03 16:47:48 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.48 2000/11/22 18:20:29 cyp Exp $"; }
 
 //#define TRACE
 
@@ -1196,7 +1196,7 @@ int ConfigRead(Client *client)
   int foundinifile = 1;
   char buffer[64];
   const char *cont_name;
-  unsigned int cont_i;
+  unsigned int i, cont_i;
   const char *fn;
 
   /* must actually go through settings even if file doesn't exist */
@@ -1233,27 +1233,24 @@ int ConfigRead(Client *client)
   /* --------------------- */
 
   client->quietmode = GetPrivateProfileIntB( OPTSECT_DISPLAY, "detached", client->quietmode, fn );
-  client->crunchmeter = -1; /* default */
+  client->crunchmeter = -1; /* auto */
   if (GetPrivateProfileStringB( OPTSECT_DISPLAY, "progress-indicator", "", buffer, sizeof(buffer), fn ))
   {
-    client->crunchmeter = atoi(buffer);
-    if (client->crunchmeter || buffer[0]=='0')
-    {
-      if (client->crunchmeter > 2 || client->crunchmeter < 0)
-        client->crunchmeter = -1; /* default */
-    }
-    else if (buffer[0] == 'a' || buffer[0] == 'A') /* "abs[olute]" */
+    for (i=0; i < 3; i++)
+      buffer[i] = tolower(buffer[i]);
+    if (memcmp(buffer,"aut",3)==0) /* "aut[o-sense]" */
+      client->crunchmeter = -1;
+    else if (isdigit(buffer[0]) && atoi(buffer) == 0) /* 0 == off, the rest must be */
+      client->crunchmeter = 0;                   /* names for forward compatibility */
+    else if (memcmp(buffer,"off",3)==0) /* "off" */    
+      client->crunchmeter = 0;
+    else if (memcmp(buffer,"abs",3)==0) /* "abs[olute]" */
       client->crunchmeter = 1;
-    else if (buffer[0] == 'r' || buffer[0] == 'R') /* "rel[ative]" */
+    else if (memcmp(buffer,"rel",3)==0) /* "rel[ative]" */
       client->crunchmeter = 2;
-    else if (buffer[0] != 'o' && buffer[0] != 'O')
-      client->crunchmeter = -1; /* default */
-    else if (buffer[1] == 'f' || buffer[1] == 'F') /* "off" */
-      client->crunchmeter = 0; /* off */
-    else
-      client->crunchmeter = -1; /* default */
+    else if (memcmp(buffer,"rat",3)==0) /* "rat[e]" */
+      client->crunchmeter = 3;
   }
-  //client->percentprintingoff = !GetPrivateProfileIntB( OPTSECT_DISPLAY, "progress-indicator", !(client->percentprintingoff), fn );
 
   /* --------------------- */
 
@@ -1496,10 +1493,13 @@ int ConfigWrite(Client *client)
     __XSetProfileInt( OPTSECT_TRIGGERS, "pause-on-high-cpu-temp", client->watchcputempthresh, fn, 0, 'n' );
     __XSetProfileStr( OPTSECT_TRIGGERS, "cpu-temperature-thresholds", client->cputempthresh, fn, NULL );
     __XSetProfileInt( OPTSECT_DISPLAY, "detached", client->quietmode, fn, 0, 'y' );
-    static const char *meterstyle[]={"off","abs","rel"};
-    p = ((client->crunchmeter<0 || client->crunchmeter>2)?(NULL):(meterstyle[client->crunchmeter]));
+    p = NULL;
+    if      (client->crunchmeter  < 0)  p = "auto-sense"; /* -1 */
+    else if (client->crunchmeter == 0)  p = "off";        /* 0 */
+    else if (client->crunchmeter == 1)  p = "absolute";   /* 1 */
+    else if (client->crunchmeter == 2)  p = "relative";   /* 2 */
+    else if (client->crunchmeter == 3)  p = "rate";       /* 3 */
     __XSetProfileStr( OPTSECT_DISPLAY, "progress-indicator", p, fn, NULL );
-    //__XSetProfileInt( OPTSECT_DISPLAY, "progress-indicator", !client->percentprintingoff, fn, 1, 'o' );
 
     /* --- CONF_MENU_PERF -- */
 

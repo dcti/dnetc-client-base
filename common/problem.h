@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.44 2000/11/12 17:18:17 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.45 2000/11/22 18:20:30 cyp Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -150,8 +150,16 @@ struct problem_publics
   u32 core_run_count; /* used by go_mt and other things */
 
   struct
-  { u32 avg_coretime_usecs;
+  { 
+    u32 avg_coretime_usecs;
   } profiling;                   /* -- managed by non-preemptive OSs     */
+  struct
+  {
+    u32 ccounthi, ccountlo;
+    u32 ctimehi,  ctimelo;
+    u32 utimehi,  utimelo;
+    int init;
+  } live_rate[2];                /* -- payload for ContestGetLiveRate    */
 
   u32 startpermille;             /* -,                                   */
   struct {u32 hi,lo;} startkeys;
@@ -169,6 +177,7 @@ struct problem_publics
   unit_func_union unit_func;
   int use_generic_proto; /* RC5/DES unit_func prototype is generic form */
   int cruncher_is_asynchronous; /* on a co-processor or similar */
+
 };
 
 typedef struct
@@ -209,7 +218,9 @@ int ProblemRetrieveState( void *__thisprob,
                           ContestWork * work, unsigned int *contestid, 
                           int dopurge, int dontwait );
 
+
 // is the problem initialized? (LoadState() successful, no RetrieveState yet)
+// returns > 0 if completed (RESULT_xxx), < 0 if still working
 int ProblemIsInitialized(void *__thisprob);
 
 // Runs calling unit_func for iterations times...

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.84 2000/11/21 19:25:33 teichp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.85 2000/11/22 18:20:30 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -122,7 +122,16 @@ int ProblemIsInitialized(void *__thisprob)
 { 
   InternalProblem *thisprob = __validate_probptr(__thisprob);
   if (thisprob)
-    return (thisprob->priv_data.initialized!=0); 
+  {
+    int init = thisprob->priv_data.initialized;
+    int rescode = thisprob->priv_data.last_resultcode;
+    if (init)
+    {
+      if (rescode <= 0) /* <0 = error, 0 = RESULT_WORKING */
+        return -1;
+      return rescode; /* 1==RESULT_NOTHING, 2==RESULT_FOUND */
+    } 
+  }
   return 0;
 }
 
@@ -426,9 +435,9 @@ int ProblemLoadState( void *__thisprob,
   thisprob->pub_data.runtime_sec = thisprob->pub_data.runtime_usec = 0;
   thisprob->pub_data.last_runtime_sec = thisprob->pub_data.last_runtime_usec = 0;
   thisprob->pub_data.last_runtime_is_invalid = 1;
+  memset((void *)&thisprob->pub_data.live_rate[0], 0, sizeof(thisprob->pub_data.live_rate));
   memset((void *)&thisprob->pub_data.profiling, 0, sizeof(thisprob->pub_data.profiling));
   thisprob->pub_data.startpermille = 0;
-// unused:  permille = 0;
   thisprob->pub_data.startkeys.lo = 0;
   thisprob->pub_data.startkeys.hi = 0;
   thisprob->pub_data.loaderflags = 0;
@@ -2073,3 +2082,4 @@ int ProblemGetInfo(void *__thisprob,
   } /* if (rescode >= 0) */
   return rescode;
 }
+

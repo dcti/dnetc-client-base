@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.47 2000/11/21 19:25:34 teichp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.48 2000/11/22 18:20:28 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -211,23 +211,36 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
 },
 { 
   CONF_CRUNCHMETER              , /* CONF_MENU_MISC */
-  CFGTXT("Crunch-o-meter (progress indicator) style"),"-1",
+  CFGTXT("Crunch-o-meter (progress indicator) style"),"-1 (auto-sense)",
   /*CFGTXT(*/
 #if 1
-  "-1) default:   Use the 'absolute style' when an OGR cruncher is active\n"
-  "               or there are more than 26 crunchers (a...z), otherwise\n"
-  "               use the 'relative style'.\n"
-  " 0) disabled:  Disable the crunch-o-meter entirely.\n"
-  " 1) absolute:  Always display the current position within the packet.\n"
-  " 2) relative:  Always display the current position as a percentage\n"
-  "               relative to the total amount of work in the packet.\n"
-  "               Since the total amount of work in a packet is known in\n"
-  "               advance only for linear, orthogonal projects such as\n"
-  "               RC5, DES and CSC, forcing the 'relative style' for projects\n"
-  "               other than those mentioned above may result in a display\n"
-  "               that may be confusing or may simply be too crude an\n"
-  "               approximation to be useful.\n"
-  /*)*/,CONF_MENU_MISC,CONF_TYPE_INT,NULL,NULL,-1,2,NULL,NULL
+  "-1) auto-sense: Use the 'live-rate style' when an OGR cruncher is active or\n"
+  "                there are more than 26 crunchers (a...z), otherwise use the\n"
+  "                'relative style'.\n"
+  " 0) disabled:   Disable the crunch-o-meter entirely.\n"
+  " 1) absolute:   Always display the current position within the packet.\n"
+  " 2) relative:   Always display the current position as a percentage relative\n"
+  "                to the total amount of work in the packet.\n"
+  "                Since the total amount of work in a packet is known in advance\n"
+  "                only for linear, orthogonal projects such as RC5, DES and CSC,\n"
+  "                forcing the 'relative style' for projects other than those\n"
+  "                mentioned above may result in a display that may be confusing\n"
+  "                or may simply be too crude an approximation to be useful.\n"
+  " 3) live-rate:  Display a per-project 'live' crunch rate and, if supported,\n"
+  "                the crunchers' efficiency. "
+#if 0
+                                              "Note: 'efficiency' may occasionally\n"
+  "                exceed 100% even on non-SMP machines due to regular, periodic\n"
+  "                clock (time-of-day) adjustments made by the OS."
+   /*"adjustments that if you need an explanation 
+      would be futile to try to explain." :) */
+#endif
+  "\n"
+#if 0
+  "Note: The 'absolute' and 'live-rate' styles may negatively influence\n"
+  "      performance on some platforms since they imply frequent screen updates.\n"
+#endif
+  /*)*/,CONF_MENU_MISC,CONF_TYPE_INT,NULL,NULL,-1,3,NULL,NULL
 #else
   "When left enabled, the client will display an indicator that reflects the\n"
   "approximate position of each of the first 26 crunchers (a...z) relative\n"
