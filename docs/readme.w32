@@ -1,0 +1,182 @@
+
+ RC5-DES Client for for Win32 CLI (Win9x/WinNT) and Win9x/WinNT service.
+ document revision $Id: readme.w32,v 1.2 1999/06/03 20:38:32 cyp Exp $
+
+ Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
+
+ This document covers information specific to the client for Win32.
+ Refer to the enclosed rc5des.txt or browse the online FAQ at
+ http://www.distributed.net/FAQ for non-platform-specific documentation.
+
+    1.0  Getting started
+    2.0  Win32 CLI specific notes
+    3.0  Win32 CLI specific FAQ
+   
+ 1.0  Getting started ------------------------------------------------
+
+    Just unpack the client in a directory of your choice and fire it up
+    with [path]RC5DES.EXE
+
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done, the 
+    configuration file will be saved in the same directory as the 
+    client. Then, simply restart the client. From that point on it will 
+    use the saved configuration.
+
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the '-config' option.
+    A list of command line options is available by starting the client 
+    with '-help'.
+
+    A detailed guide to the various configuration options is available
+    online at http://www.distributed.net/FAQ/
+
+
+    1.1   Running the client as a Win9x/WinNT Service ----------------
+
+    A Win9x/WinNT service is a process that starts running when the 
+    computer is powered up, and does not stop until the computer is powered
+    down. Unlike normal processes, services will continue to run even when
+    a user logs out.
+
+    To install the client as a service, run the client with the -install
+    switch. This will cause it to register itself with the service handler,
+    which will in turn automatically start the client the next time the
+    computer is powered up. To deinstall a client previously installed as
+    a service, start it with the -uninstall switch.
+
+ 2.0  Notes: ---------------------------------------------------------
+
+    Beginning with v2.2702.419, the win32 CLI client consolidates the
+    rc5des.exe (normal cli client), rc5desh.exe (hidden client) and
+    rc5dessvc.exe (service mode client) in one executable. It no longer 
+    runs as a 'native' console session, but emulates a "console" in a GUI 
+    window.
+    
+    (a) the client can be started "hidden";
+    (b) conagent is not loaded which cuts down the overhead; 
+    (c) the client is more efficient;
+    (d) the client is not susceptible to misconfigured "DOS" settings
+    (e) the client can be shutdown with "close" and will shutdown 
+        automatically if not running as a service when a user 
+        logs out - these features did not work correctly on Win9x due 
+        to bugs in Win9x's console implementation; 
+    (f) it gets rid of the "DOS box" and persistant icon on taskbar;
+    (g) the client can be minimized to the systray;
+    (h) most importantly, the client uses exactly the same source code base 
+        as all the other clients on all the other platforms. This enhances 
+        the client's stability since the chances that a bug will remain 
+        undetected for long are greatly reduced.
+    (i) The client is capable of asyncronously executing client
+        "modes", ie -fetch, -flush, -update and so on. Clicking with 
+        right mouse button on the client window will bring up a "mode" menu.
+        
+    The client can also be started as a native console process by renaming
+    it to rc5des.com (or anything with a .com extension).
+
+    Beginning with v2.2706.425, it is no longer mandatory to have 
+    winsock.dll/wsock32.dll installed. 
+
+ 3.0  FAQ: -----------------------------------------------------------
+
+    Q: What are the changes in this version of the client?
+    A: Read CHANGES.txt as included with this distribution!
+
+    Q: So where is the GUI version of the client?
+    A: this client is taking over much of the functionality of the 
+       traditional gui client, while simultaneously staying in-sync with
+       the common code base and thus allowing the client to always stay
+       up-to-date and be released together with all the other clients. 
+       All gui client features except for the moo sound, log grapher and 
+       gui config are already in the client - Sound and log grapher 
+       functionality are on the way.
+
+    Q: Is it possible to start the client as a service and yet keep it
+       visible on the desktop or taskbar?
+    A: Services are not supposed to be interactive. Services are a hair 
+       above device drivers, and on NT many 'devices' are indeed implemented 
+       as services (RAS for instance). There is a special category of 
+       interactive services, but they are rare (like kernel debuggers), 
+       and NT only. Some 'interactive' functionality may be achieved by 
+       enabling logging to file and by using the client's command line 
+       -shutdown, -restart, -pause and -unpause options.
+
+    Q: How do I check that the client is infact running hidden/as a service?
+    A: On NT, service status can be determined in the service manager and 
+       the task manager will show the client taking up lots of cpu time. 
+       Win9x does not have a service manager or a task manager, so you will 
+       need to either enable logging or use 'wintop' or similar utility.
+       
+    Q: What are the client's service keys/ID? 
+    A: if you use NT, it will be in the service manager. The client's 
+       service ID (shortname) is "rc5desnt" or "bovrc5nt". 
+       On win9x (win9x doesn't have a service manager), the client
+       is registered with the registry as "bovwin32" or "distributed.net 
+       client" under HKEY_LOCAL_MACHINE in
+       \Software\Microsoft\Windows\CurrentVersion\RunService
+
+    Q: How do I stop the service from the command line? 
+    A: With 'rc5des --shutdown' or (NT only) with 'net stop rc5desnt'
+     
+    Q: I use LITESTEP (or other alternative shell) and get a warning 
+       when I try to install the client as a service. Whats the deal?
+    A: A user suggested: "I don't know about other shells, but LITESTEP 
+       (as of 0.24.4) appears to not completely adhere to the Microsoft 
+       specifications of what tasks a shell should fulfill. Installing 
+       the LiteMAN module fixes whatever it is in Litestep thats broken. 
+       Here's the link: http://www.litestep.org/binaries/liteman-b3.zip
+       
+    Q: I want to run the RC5DES client and XXX simultaneously, but XXX
+       destroys my crunch rate. What can I do?
+    A: Uninstall XXX :)
+    
+    Q: I want to run the RC5DES client as a screen saver. How do I do this?
+    A: The client currently cannot be started as a screen saver. It is
+       however a work in progress. Suggestions (and source) are welcome.
+       Send to Cyrus Patel <cyp@distributed.net> or <cyp@fb14.uni-mainz.de>
+       
+    Q: I want to run the RC5DES client at a higher priority than zero/idle.
+       This functionality was removed in some past version, but I *really*,
+       *really* need it or my other XXX program will simply hog the CPU.
+       What can I do?
+    A: It never went away. Only the help text said it did. :) 
+       Hovever, be *very* careful. Windows' thread scheduling/priority 
+       assignment is brain dead beyond belief. Read the text in the 
+       config screen before you fiddle with the priority setting! 
+       
+    Q: What is the 'Dialup interfaces' option I see in the config?
+    A: Dial-up detection was previously available only the RAS (Remote
+       Access Service) API. Beginning with 2.7110.440, the Win32 client
+       is capable of detecting 'UP' state on non-RAS devices such as ISDN
+       adapters or AOL's proprietary modem adapter which appear as network 
+       cards and not as modems, and are as such not managed by RAS. 
+       The 'Dialup interfaces' list then allows you to mask or mask-out
+       those devices you do not want the client to 'see'. 
+
+    Q: Can I share my win32 client's buffers with non-win32 clients?
+       ["sharing" is simultaneous access via file-sharing, but also manual 
+       transfer of the buffer files from one machine to another]
+    A: Theoretically, yes. It is however a good idea to ensure that clients 
+       sharing buffers all have the same version number. For instance, if 
+       you share buffers between 2.7110.440 and other older clients, you 
+       must ensure that the client newer than 2.7109 do not request 
+       "big-block"s from the keyservers (ensure 'preferred-packet-size' is 
+       less than 32). Read the general FAQ for specificities.
+
+    Q: How can I get the client to update itself from over the net?
+    A: That is not possible since the rc5des.exe file is open when it
+       is running. [You can't manually update the client while it is 
+       running either, can you?] So, the only option would be to
+       restart the entire system and that requires manual intervention
+       anyway. Besides, such a "feature" is beyond the scope of what a 
+       utility should do. 
+
+    Q: Ok, does distributed.net provide a method of quickly finding out
+       whether a new win32 client is available?
+    A: http://n0cgi.distributed.net/cgi/select.cgi?platform=win32
+
+    Q: How do I completely remove the this client from my system?
+    A: First run 'rc5des -uninstall' to ensure that it is not installed
+       as a service. Then, simply delete all files in the client's 
+       directory.
+
