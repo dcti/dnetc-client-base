@@ -12,7 +12,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.26.2.2 1999/12/02 13:41:23 mfeiri Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.26.2.3 1999/12/08 00:41:51 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -179,7 +179,7 @@ static int __netInitAndDeinit( int doWhat )
       if ((++net_init_level)==1) //don't initialize more than once
       {
         #if defined(LURK)
-        if ( dialup.DialIfNeeded(1) != 0 )
+        if (dialup.DialIfNeeded(1) != 0 ) /* not connected and dialup failed */
           success = 0;
         #endif
       }
@@ -231,10 +231,6 @@ static int __globalInitAndDeinit( int doWhat )
       if ( WSAStartup( 0x0101, &wsaData ) != 0 )
         global_is_init = 0;
       #endif
-      #ifdef LURK
-      if (global_is_init != 0)
-        dialup.Start();
-      #endif
     }
     success = (global_is_init != 0);
   }
@@ -242,9 +238,6 @@ static int __globalInitAndDeinit( int doWhat )
   {
     if (global_is_init != 0)
     {
-      #ifdef LURK
-      dialup.Stop();
-      #endif
       #if (CLIENT_OS == OS_WIN32)
       WSACleanup();
       #endif
@@ -271,12 +264,12 @@ int NetCheckIsOK(void)
 int NetClose( Network *net )
 {
   if ( net )
-    {
+  {
     delete net;
 
     // do platform specific network deinit
     return __netInitAndDeinit( -1 );
-    }
+  }
   return 0;
 }
 

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __BENCH_H__
-#define __BENCH_H__ "@(#)$Id: bench.h,v 1.7.2.3 1999/11/28 14:20:29 remi Exp $"
+#define __BENCH_H__ "@(#)$Id: bench.h,v 1.7.2.4 1999/12/08 00:41:37 cyp Exp $"
 
 /* returns "rate", or -1 if core error/^C, or 0 if not supported */
 long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags );

@@ -4,11 +4,14 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.7 1999/11/28 15:15:23 remi Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.8 1999/12/08 00:41:58 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
 #include "client.h"   /* CONTEST_COUNT, stub definition */
+#include "logstuff.h" /* Log() */
+#include "clitime.h"  /* CliTimer(), Time()/(CliGetTimeString(NULL,1)) */
+#include "cliident.h" /* CliIsDevelVersion() */
 #include "clicdata.h" /* CliGetContestNameFromID() */
 #include "pathwork.h" /* GetFullPathForFilename() */
 #include "util.h"     /* ourselves */
@@ -58,6 +61,34 @@ void trace_out( int indlevel, const char *format, ... )
     indentlevel += 2;
   return;
 }  
+
+/* ------------------------------------------------------------------- */
+
+int utilCheckIfBetaExpired(int print_msg)
+{
+  if (CliIsDevelVersion()) /* cliident.cpp */
+  {
+    timeval expirationtime;
+
+    #ifndef BETA_PERIOD
+    #define BETA_PERIOD (7L*24L*60L*60L) /* one week from build date */
+    #endif    /* where "build date" is time of newest module in ./common/ */
+    expirationtime.tv_sec = CliGetNewestModuleTime() + (time_t)BETA_PERIOD;
+    expirationtime.tv_usec= 0;
+
+    if ((CliTimer(NULL)->tv_sec) > expirationtime.tv_sec)
+    {
+      if (print_msg)
+      {
+        Log("This beta release expired on %s. Please\n"
+            "download a newer beta, or run a standard-release client.\n",
+            CliGetTimeString(&expirationtime,1) );
+      }
+      return 1;
+    }
+  }
+  return 0;
+}
 
 /* ------------------------------------------------------------------- */
 
@@ -508,7 +539,7 @@ const char *utilSetAppName(const char *newname)
   if (initialized > 0) /* always true */
     return (const char *)&appname[0];
 
-  /* put the asciiz name here so the user has something to patch */
+  /* put the asciiz name here so the user has something to patch :) */
   #if (CLIENT_CONTEST < 80)
   return "rc5des";
   #else

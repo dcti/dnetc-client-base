@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.6 1999/11/29 00:29:40 lyndon Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.7 1999/12/08 00:41:40 cyp Exp $"
 
 
 enum {
@@ -16,7 +16,9 @@ enum {
 };
 #define CONTEST_COUNT       4  /* RC5,DES,OGR,CSC */
 
-#include "problem.h"          /* ContestWork structure */
+#include "problem.h"           /* ContestWork structure */
+#include "lurk.h"              /* client structure copy of lurk_conf */
+
 #ifndef MIPSpro
 #pragma pack(1)               /* no padding allowed */
 #endif /* ! MIPSpro */
@@ -95,6 +97,9 @@ public:
     char httpid[MINCLIENTOPTSTRLEN*2];
   int  noupdatefromfile;
     char remote_update_dir[MINCLIENTOPTSTRLEN*2];
+  #ifdef LURK 
+  struct dialup_conf lurk_conf;
+  #endif
   int  connectoften;
   int inthreshold[CONTEST_COUNT]; 
   int outthreshold[CONTEST_COUNT];

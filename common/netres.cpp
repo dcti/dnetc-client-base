@@ -6,7 +6,7 @@
  *
 */ 
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.25.2.3 1999/12/02 10:51:23 mfeiri Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.25.2.4 1999/12/08 00:41:51 cyp Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving

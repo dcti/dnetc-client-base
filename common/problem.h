@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.12 1999/11/30 00:04:52 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.13 1999/12/08 00:41:56 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -45,22 +45,6 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
   
 /* ---------------------------------------------------------------------- */
 
-#if !defined(MEGGS) && !defined(DES_ULTRA) && !defined(DWORZ)
-  #define MIN_DES_BITS  8
-  #define MAX_DES_BITS 24
-#else
-  #if defined(BIT_32)
-    #define MIN_DES_BITS 19
-    #define MAX_DES_BITS 19
-  #elif (defined(BIT_64) && defined(BITSLICER_WITH_LESS_BITS) && !defined(DWORZ))
-    #define MIN_DES_BITS 16
-    #define MAX_DES_BITS 16
-  #elif defined(BIT_64)
-    #define MIN_DES_BITS 20
-    #define MAX_DES_BITS 20
-  #endif
-#endif
-
 typedef union
 {
   struct {
@@ -89,9 +73,7 @@ protected: /* these members *must* be protected for thread safety */
   ContestWork contestwork;
   CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */
-  #ifdef MAX_MEM_REQUIRED_BY_CORE
   char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
-  #endif
   u32 timehi, timelo;
   int last_resultcode; /* the rescode the last time contestwork was stable */
   int started;
@@ -109,6 +91,7 @@ public: /* anything public must be thread safe */
   u32 startpermille;             /* -,                                   */
   unsigned int contest;          /*  |__ assigned in LoadState()         */
   int coresel;                   /*  |                                   */
+  int client_cpu;                /*  | effective CLIENT_CPU              */
   u32 tslice;                    /* -' -- adjusted by non-preemptive OSs */
 
   u32 permille;    /* used by % bar */
@@ -118,49 +101,39 @@ public: /* anything public must be thread safe */
   int threadindex_is_valid; /* 0 if the problem is not managed by probman*/
 
   /* this is our generic prototype */
-  s32 (*unit_func)( RC5UnitWork *, u32 *timeslice, void *memblk );
+  s32 (*unit_func)( RC5UnitWork *, u32 *iterations, void *memblk );
   
-  #if (CLIENT_CPU == CPU_X86)
-  u32 (*x86_unit_func)( RC5UnitWork * , u32 timeslice );
-  #endif
-  #if (CLIENT_CPU == CPU_68K)
-  extern "C" __asm u32 (*rc5_unit_func)
-       ( register __a0 RC5UnitWork * , register __d0 u32 timeslice);
+  #if ((CLIENT_CPU == CPU_68K) && \
+    ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)))
+    __asm u32 (*rc5_unit_func)(register __a0 RC5UnitWork *, register __d0 u32);
   #elif (CLIENT_CPU == CPU_ARM)
-  u32 (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
-  u32 (*des_unit_func)( RC5UnitWork * , unsigned long iterations );
-  #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX)
-  u32 (*rc5_unit_func)( RC5UnitWork * );
-  u32 (*des_unit_func)( RC5UnitWork * , u32 nbits );
+    u32 (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
   #elif (CLIENT_CPU == CPU_ALPHA)
-  u32 (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
-  u32 (*des_unit_func)( RC5UnitWork * , u32 nbits );
-  #elif (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
-    #if (CLIENT_OS == OS_AIX)     //straight lintilla (or even ansi for POWER)
-    s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
-    #elif (CLIENT_OS == OS_WIN32) //ansi core
-    s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
-    #else                         //lintilla wrappers
-    s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 *timeslice );
-    #endif
-  #elif (CLIENT_CPU == CPU_POWER) //POWER must always be _after_ PPC
-  s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+    u32 (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
+  #else
+    u32 (*rc5_unit_func)( RC5UnitWork * , u32 iterations );
   #endif
 
-  int Run_RC5(u32 *timeslice,int *core_retcode); /* \  run for n timeslices.                */
-  int Run_DES(u32 *timeslice,int *core_retcode); /*  > set actual number of slices that ran */
-  int Run_OGR(u32 *timeslice,int *core_retcode); /* /  returns RESULT_* or -1 if error      */
-  int Run_CSC(u32 *timeslice,int *core_retcode); /* /                                       */
+#if defined(HAVE_DES_CORES)
+  u32 (*des_unit_func)( RC5UnitWork * , u32 *iterations, char *membuf );
+#endif  
+
+  int Run_RC5(u32 *iterations,int *core_retcode); /* \  run for n iterations.              */
+  int Run_DES(u32 *iterations,int *core_retcode); /*  > set actual number of iter that ran */
+  int Run_OGR(u32 *iterations,int *core_retcode); /* /  returns RESULT_* or -1 if error    */
+  int Run_CSC(u32 *iterations,int *core_retcode); /* /                                     */
 
   Problem(long _threadindex = -1L);
   ~Problem();
 
   int IsInitialized() { return (initialized!=0); }
 
-  int LoadState( ContestWork * work, unsigned int _contest, 
-     u32 _timeslice, int _cputype );
+  int LoadState( ContestWork * work, unsigned int _contest, u32 _iterations, 
+     int _unused );
     // Load state into internal structures.
     // state is invalid (will generate errors) until this is called.
+    // expected_[core|cpu|buildnum] are those loaded with the workunit
+    //   and allow LoadState to reset the problem if deemed necessary.
     // returns: -1 on error, 0 is OK
 
   int RetrieveState( ContestWork * work, unsigned int *contestid, int dopurge );
@@ -169,7 +142,7 @@ public: /* anything public must be thread safe */
     // Returns RESULT_* or -1 if error.
 
   int Run(void);
-    // Runs calling rc5_unit for timeslice times...
+    // Runs calling rc5_unit for iterations times...
     // Returns RESULT_* or -1 if error.
 
   u32 CalcPermille();
@@ -179,5 +152,4 @@ public: /* anything public must be thread safe */
 #endif /* __cplusplus */
 
 #endif /* __PROBLEM_H__ */
-
 

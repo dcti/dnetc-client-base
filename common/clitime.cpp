@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.11 1999/11/29 22:47:29 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.12 1999/12/08 00:41:42 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc

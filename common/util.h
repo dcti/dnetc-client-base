@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.3 1999/10/17 22:56:02 cyp Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.4 1999/12/08 00:41:59 cyp Exp $"
 
 void trace_out( int indlevel, const char *fmt, ... );
 #ifdef TRACE
@@ -43,6 +43,8 @@ const char *BufferGetDefaultFilename( unsigned int proj, int is_out_type,
 
 const char *utilGetAppName(void); /* "rc5 des" or "dnetc" or whatever */
 const char *utilSetAppName(const char *newname); /* shouldn't be needed */
+
+int utilCheckIfBetaExpired(int print_msg); /* prints message if appropriate */
 
 #endif /* __UTIL_H__ */
 

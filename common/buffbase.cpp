@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.10 1999/11/29 22:47:24 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.11 1999/12/08 00:41:37 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class

@@ -4,7 +4,7 @@
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.37.2.2 1999/12/06 19:58:58 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.37.2.3 1999/12/08 00:41:50 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc

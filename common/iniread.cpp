@@ -20,7 +20,7 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.27.2.4 1999/11/28 14:54:41 remi Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.27.2.5 1999/12/08 00:41:49 cyp Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */

@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.13 1999/12/02 11:00:07 mfeiri Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.14 1999/12/08 00:41:51 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 

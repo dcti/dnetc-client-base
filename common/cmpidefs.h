@@ -10,7 +10,7 @@
 */ 
 
 #ifndef __CMPIDEFS_H__
-#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.22.2.1 1999/11/29 22:47:29 cyp Exp $"
+#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.22.2.2 1999/12/08 00:41:44 cyp Exp $"
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16)
   #if defined(__TURBOC__)

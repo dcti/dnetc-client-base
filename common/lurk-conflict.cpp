@@ -18,11 +18,12 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.43.2.8 1999/12/04 23:32:00 mfeiri Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.43.2.9 1999/12/08 00:41:50 cyp Exp $"; }
 
 /* ---------------------------------------------------------- */
 
 #include <stdio.h>
+#include <string.h>
 #include "cputypes.h"
 #include "lurk.h"
 #ifdef PROXYTYPE
@@ -37,21 +38,37 @@ Lurk dialup;        // publicly exported class instance.
 
 /* ---------------------------------------------------------- */
 
-Lurk::Lurk()
+int Lurk::Stop(void)
 {
   islurkstarted = lastcheckshowedconnect = dohangupcontrol = 0;
-  lurkmode = dialwhenneeded = 0;
-  conndevice[0] = connprofile[0] = connifacemask[0] = 0;
-  connstartcmd[0] = connstopcmd[0] = ifacemaskcopy[0]=0;
+  conf.lurkmode = conf.dialwhenneeded = 0;
+  conf.connprofile[0] = conf.connifacemask[0] = 0;
+  conf.connstartcmd[0] = conf.connstopcmd[0] = 
+  ifacemaskcopy[0] = conndevice[0] = 0;
   ifacestowatch[0] = (const char *)0;
+  return 0;
 }
-Lurk::~Lurk() {  islurkstarted = 0; }
+
+Lurk::Lurk()  { Stop(); }
+Lurk::~Lurk() { Stop(); }
+int Lurk::IsWatching(void) 
+{ 
+  if (!islurkstarted)
+    return 0;
+  return (conf.lurkmode & (CONNECT_LURKONLY|CONNECT_LURK));
+}
+int Lurk::IsWatcherPassive(void)
+{
+  if (!islurkstarted)
+    return 0;
+  return (conf.lurkmode & CONNECT_LURKONLY);
+}
 
 /* ---------------------------------------------------------- */
 
 int Lurk::CheckIfConnectRequested(void) //yes/no
 {
-  if ((lurkmode & (CONNECT_LURKONLY|CONNECT_LURK)) == 0)
+  if ((conf.lurkmode & (CONNECT_LURKONLY|CONNECT_LURK)) == 0)
     return 0; // We're not supposed to lurk!
 
   if (IsConnected()) //we are connected!
@@ -70,7 +87,7 @@ int Lurk::CheckIfConnectRequested(void) //yes/no
   {
     char *msg = "";
     lastcheckshowedconnect = 0;        // So we know next time through this loop
-    if (lurkmode == CONNECT_LURKONLY) // Lurk-only mode
+    if (conf.lurkmode == CONNECT_LURKONLY) // Lurk-only mode
       msg = " and will not be re-initiated";
     LogScreen("Connection lost%s.\n",msg);
   }
@@ -81,7 +98,7 @@ int Lurk::CheckIfConnectRequested(void) //yes/no
 
 int Lurk::CheckForStatusChange(void) //returns -1 if connection dropped
 {
-  if ( (lurkmode == 0) && (!dialwhenneeded) )
+  if ( (conf.lurkmode == 0) && (!conf.dialwhenneeded) )
     return 0; // We're not lurking.
   if ( lastcheckshowedconnect && !IsConnected() ) //if (Status() < oldlurkstatus)
     return -1;  // we got disconnected!
@@ -94,16 +111,17 @@ int Lurk::CheckForStatusChange(void) //returns -1 if connection dropped
 /* ================================================================== */
 
 
-#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_MACOS)
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
+    (CLIENT_OS == OS_MACOS)
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
-#include <net/if.h> // linux/if.h
+#include <net/if.h>
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <ctype.h>
 
@@ -116,9 +134,9 @@ static HINSTANCE hWinsockInst = NULL;
 #elif (CLIENT_OS == OS_WIN32)
 
 #include <windows.h>
+#include <string.h>
 #include <ras.h>
 #include <raserror.h>
-#include <string.h>
 
 static HRASCONN hRasDialConnHandle = NULL; /* conn we opened with RasDial */
 
@@ -129,8 +147,8 @@ static HRASCONN hRasDialConnHandle = NULL; /* conn we opened with RasDial */
 
 #define TCPIPV4               //should also work with V3 though
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 #include <ctype.h>
 #if defined(__EMX__)
   #include <sys/process.h>
@@ -172,18 +190,6 @@ struct ifact
 #endif
 
 /* ========================================================== */
-
-int Lurk::Stop(void)
-{
-  islurkstarted= lastcheckshowedconnect= dohangupcontrol=0;
-  lurkmode = dialwhenneeded = 0;
-  conndevice[0] = connprofile[0] = connifacemask[0] = 0;
-  connstartcmd[0] = connstopcmd[0] = ifacemaskcopy[0]=0;
-  ifacestowatch[0] = (const char *)0;
-  return 0;
-}
-
-/* ---------------------------------------------------------- */
 
 int Lurk::GetCapabilityFlags(void)
 {
@@ -250,7 +256,8 @@ int Lurk::GetCapabilityFlags(void)
         what |= CONNECT_DODBYPROFILE;
     }
   }
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_MACOS)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
+      (CLIENT_OS == OS_MACOS)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
 #elif (CLIENT_OS == OS_OS2)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
@@ -311,120 +318,170 @@ const char **Lurk::GetConnectionProfileList(void)
 
 /* ---------------------------------------------------------- */
 
-int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
-{
-  int flags = GetCapabilityFlags();
+int Lurk::Start(int nonetworking,struct dialup_conf *params) 
+{                             // Initializes Lurk Mode. returns 0 on success.
+
+  Stop(); //zap variables/state
 
   TRACE_OUT((+1,"Lurk::Start()\n"));
-
-  if (lurkmode != CONNECT_LURKONLY && lurkmode != CONNECT_LURK)
-    lurkmode = 0;           /* can only be one or the other */
-
-  if (lurkmode || dialwhenneeded)
+  if (!nonetworking)
   {
-    if (lurkmode && (flags & (CONNECT_LURK|CONNECT_LURKONLY))==0)
-    {              //only happens if user used -lurk on the command line
-      lurkmode = 0;
-      #if (CLIENT_OS == OS_WIN32)
-      //LogScreen( "Dial-up must be installed for lurk/lurkonly/dialing\n" );
-      dialwhenneeded = 0; //if we can't support lurk, we can't support dod either
-      #elif (CLIENT_OS == OS_WIN16)
-      LogScreen("Winsock must be available for -lurk/-lurkonly.\n");
-      dialwhenneeded = 0; //if we can't support lurk, we can't support dod either
-      #else
-      LogScreen("-lurk/-lurkonly is not supported. Option ignored.\n");
-      #endif
-    }
-    if (dialwhenneeded && (flags & (CONNECT_DOD))==0)
-    {               //should never happen since dod is not a cmdline option
-      dialwhenneeded = 0;
-      #if (CLIENT_OS == OS_WIN32)
-      LogScreen( "Dial-up-Networking must be installed for demand dialing\n" );
-      #elif (CLIENT_OS == OS_WIN16)
-      LogScreen("Demand dialing is only supported with Trumpet Winsock.\n");
-      #else
-      LogScreen("Demand dialing is currently unsupported.\n");
-      #endif
-    }
-  }
+    int flags = GetCapabilityFlags();
 
-  if (connprofile[0]!=0)
-  {
-    int n=0, pos=0;
-    while (connprofile[pos] && isspace(connprofile[pos]))
-      pos++;
-    while (connprofile[pos])
-      connprofile[n++] = connprofile[pos++];
-    while (n>0 && isspace(connprofile[n-1]))
-      --n;
-    connprofile[n]=0;
-  }
-
-  mask_include_all = mask_default_only = 0;
-  ifacestowatch[0]=NULL;
-  ifacemaskcopy[0]=0;
-
-  if ((flags & CONNECT_IFACEMASK)==0)
-    mask_include_all = 1;
-  else if (connifacemask[0]==0)
-    mask_default_only = 1;
-  else if (strcmp(connifacemask,"*")==0)
-    mask_include_all = 1;
-  else
-  {
-    // Parse connifacemask[] and store each iface name in *ifacestowatch[]
-    int ptrindex = 0, stindex = 0;
-    char *c = &(connifacemask[0]);
-    do{
-      while (*c && (isspace(*c) || *c==':'))
-        c++;
-      if (*c)
-      {
-        char *p = &ifacemaskcopy[stindex];
-        while (*c && !isspace(*c) && *c!=':')
-          ifacemaskcopy[stindex++] = *c++;
-        ifacemaskcopy[stindex++]='\0';
-        if (strcmp( p, "*" )==0)
-        {
-          ptrindex = 0;
-          mask_include_all = 1;
-          break;
-        }
-        #if (CLIENT_OS == OS_OS2)  //convert 'eth*' names to 'lan*'
-        if (*p=='e' && p[1]=='t' && p[2]=='h' && (isdigit(p[3]) || p[3]=='*'))
-        {*p='l'; p[1]='a'; p[2]='n'; }
-        #elif (CLIENT_OS == OS_WIN32)
-        if (*p=='s' && p[1]=='l' && (isdigit(p[2]) || p[2]=='*'))
-        {                          //convert 'sl*' names to 'ppp*'
-          char buf[sizeof(ifacemaskcopy)];
-          strcpy(buf,p+2);strcat(strcpy(p,"ppp"),buf);
-          stindex++;
-        }
+    conf.lurkmode = conf.dialwhenneeded = 0;  
+    if (params->lurkmode || params->dialwhenneeded)
+    {
+      int lurkmode = params->lurkmode;
+      int dialwhenneeded = params->dialwhenneeded;
+      if (lurkmode != CONNECT_LURKONLY && lurkmode != CONNECT_LURK)
+        lurkmode = 0;    /* can only be one or the other */
+      if (lurkmode && (flags & (CONNECT_LURK|CONNECT_LURKONLY))==0)
+      {              //only happens if user used -lurk on the command line
+        lurkmode = 0;
+        #if (CLIENT_OS == OS_WIN32)
+        //LogScreen( "Dial-up must be installed for lurk/lurkonly/dialing\n" );
+        dialwhenneeded = 0; //if we can't support lurk, we can't support dod either
+        #elif (CLIENT_OS == OS_WIN16)
+        LogScreen("Winsock must be available for -lurk/-lurkonly.\n");
+        dialwhenneeded = 0; //if we can't support lurk, we can't support dod either
+        #else
+        LogScreen("-lurk/-lurkonly is not supported. Option ignored.\n");
         #endif
-        ifacestowatch[ptrindex++] = (const char *)p;
       }
-    } while (*c);
-    if (ptrindex == 0 && !mask_include_all) //nothing in list
+      if (dialwhenneeded && (flags & (CONNECT_DOD))==0)
+      {               //should never happen since dod is not a cmdline option
+        dialwhenneeded = 0;
+        #if (CLIENT_OS == OS_WIN32)
+        LogScreen( "Dial-up-Networking must be installed for demand dialing\n" );
+        #elif (CLIENT_OS == OS_WIN16)
+        LogScreen("Demand dialing is only supported with Trumpet Winsock.\n");
+        #else
+        LogScreen("Demand dialing is currently unsupported.\n");
+        #endif
+      }
+      conf.lurkmode = lurkmode;
+      conf.dialwhenneeded = dialwhenneeded;
+
+      TRACE_OUT((0,"lurkmode=%d dialwhenneeded=%d\n",conf.lurkmode,conf.dialwhenneeded));
+    }
+  
+    conf.connprofile[0] = 0;
+    if (conf.dialwhenneeded && params->connprofile[0]!=0)
+    {
+      int n=0, pos=0;
+      while (params->connprofile[pos] && isspace(params->connprofile[pos]))
+        pos++;
+      while (params->connprofile[pos])
+        conf.connprofile[n++] = params->connprofile[pos++];
+      while (n>0 && isspace(conf.connprofile[n-1]))
+        n--;
+      conf.connprofile[n]=0;
+    }
+  
+    mask_include_all = mask_default_only = 0;
+    conf.connifacemask[0] = ifacemaskcopy[0]=0; ifacestowatch[0]=NULL;
+    if ((conf.lurkmode || conf.dialwhenneeded) && params->connifacemask[0])
+    {
+      int n=0, pos=0;
+      while (params->connifacemask[pos] && isspace(params->connifacemask[pos]))
+        pos++;
+      while (params->connifacemask[pos])
+        conf.connifacemask[n++] = params->connifacemask[pos++];
+      while (n>0 && isspace(conf.connifacemask[n-1]))
+        n--;
+      conf.connifacemask[n]=0;
+    }
+    if ((flags & CONNECT_IFACEMASK)==0)
+      mask_include_all = 1;
+    else if (conf.connifacemask[0] == '\0')
       mask_default_only = 1;
-    ifacestowatch[ptrindex] = NULL;
+    else if (conf.connifacemask[0]=='*' && conf.connifacemask[1]=='\0')
+      mask_include_all = 1;
+    else
+    {
+      // Parse connifacemask[] and store each iface name in *ifacestowatch[]
+      unsigned int ptrindex = 0, stindex = 0;
+      char *c = &(conf.connifacemask[0]);
+      do 
+      {
+        while (*c && (isspace(*c) || *c==':'))
+          c++;
+        if (*c)
+        {
+          char *p = &ifacemaskcopy[stindex];
+          while (*c && !isspace(*c) && *c!=':')
+            ifacemaskcopy[stindex++] = *c++;
+          ifacemaskcopy[stindex++]='\0';
+          if (p[0] == '*' && p[1]=='\0')
+          {
+            ptrindex = 0;
+            mask_include_all = 1;
+            break;
+          }
+          #if (CLIENT_OS == OS_OS2)  //convert 'eth*' names to 'lan*'
+          if (*p=='e' && p[1]=='t' && p[2]=='h' && (isdigit(p[3]) || p[3]=='*'))
+          {*p='l'; p[1]='a'; p[2]='n'; }
+          #elif (CLIENT_OS == OS_WIN32)
+          if (*p=='s' && p[1]=='l' && (isdigit(p[2]) || p[2]=='*'))
+          {                          //convert 'sl*' names to 'ppp*'
+            char buf[sizeof(ifacemaskcopy)];
+            strcpy(buf,p+2);strcat(strcpy(p,"ppp"),buf);
+            stindex++;
+          }
+          #endif
+          ifacestowatch[ptrindex++] = (const char *)p;
+          if (ptrindex == ((sizeof(ifacestowatch)/sizeof(ifacestowatch[0]))-1))
+            break;
+        }
+      } while (*c);
+      if (ptrindex == 0 && !mask_include_all) //nothing in list
+        mask_default_only = 1;
+      ifacestowatch[ptrindex] = NULL;
+
+      #ifdef TRACE
+      TRACE_OUT((0,"mask flags: include_all=%d, defaults_only=%d\niface list:\n",
+                   mask_include_all, mask_default_only ));
+      for (int ptrindex=0;ifacestowatch[ptrindex];ptrindex++)
+        TRACE_OUT((0,"  %d) '%s'\n",ptrindex+1,ifacestowatch[ptrindex]));
+      #endif
+    }
+  
+    conf.connstartcmd[0] = 0;
+    if (conf.dialwhenneeded && params->connstartcmd[0])
+    {
+      int n=0, pos=0;
+      while (params->connstartcmd[pos] && isspace(params->connstartcmd[pos]))
+        pos++;
+      while (params->connstartcmd[pos])
+        conf.connstartcmd[n++] = params->connstartcmd[pos++];
+      while (n>0 && isspace(conf.connstartcmd[n-1]))
+        n--;
+      conf.connstartcmd[n]=0;
+    }
+    
+    conf.connstopcmd[0] = 0;
+    if (conf.dialwhenneeded && params->connstopcmd[0])
+    {
+      int n=0, pos=0;
+      while (params->connstopcmd[pos] && isspace(params->connstopcmd[pos]))
+        pos++;
+      while (params->connstopcmd[pos])
+        conf.connstopcmd[n++] = params->connstopcmd[pos++];
+      while (n>0 && isspace(conf.connstopcmd[n-1]))
+        n--;
+      conf.connstopcmd[n]=0;
+    }
+    
+    islurkstarted=1;
   }
-  #ifdef TRACE
-  TRACE_OUT((0,"mask flags: include_all=%d, defaults_only=%d\niface list:\n",
-               mask_include_all, mask_default_only ));
-  for (int ptrindex=0;ifacestowatch[ptrindex];ptrindex++)
-    TRACE_OUT((0,"  %d) '%s'\n",ptrindex+1,ifacestowatch[ptrindex]));
-  TRACE_OUT((0,"lurkmode=%d dialwhenneeded=%d\n",lurkmode,dialwhenneeded));
-  #endif
-
-  islurkstarted=1;
-
   TRACE_OUT((-1,"Lurk::Start()\n"));
   return 0;
 }
 
 /* ---------------------------------------------------------- */
 
-#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOS)
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
+    (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOS)
 static int __MatchMask( const char *ifrname, int mask_include_all,
                        int mask_default_only, const char *ifacestowatch[] )
 {
@@ -446,11 +503,11 @@ static int __MatchMask( const char *ifrname, int mask_include_all,
     wildmask[maskpos]='\0';
     if (mask_default_only)
     {
-      ismatched = (strcmp(wildmask,"ppp*")==0 || strcmp(wildmask,"sl*")==0);
+      ismatched = (strcmp(wildmask,"ppp*")==0 
       #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_MACOS)
-      if (!ismatched && strcmp(wildmask,"dun*")==0)
-        ismatched = 1;
+      || strcmp(wildmask,"dun*")==0
       #endif
+      || strcmp(wildmask,"sl*")==0);
       matchedname = ((!ismatched)?(NULL):((const char *)(&wildmask[0])));
     }
     else
@@ -473,11 +530,8 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
   conndevice[0]=0;
 
   if (!islurkstarted)
-  {
-    if (Start() != 0)
-      return 0;
-  }
-  if (!lurkmode && !dialwhenneeded)
+    return 0;
+  if (!conf.lurkmode && !conf.dialwhenneeded)
     return 1;
 
 #if (CLIENT_OS == OS_WIN16)
@@ -740,7 +794,8 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
      return 1;
    conndevice[0]=0;
 
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_MACOS)// maybe other *BSD systems
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
+      (CLIENT_OS == OS_MACOS)
    struct ifconf ifc;
    struct ifreq *ifr;
    int n, foundif = 0;
@@ -852,13 +907,13 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
   if (!islurkstarted)
     return -1; // Lurk can't be started, evidently
 
-  if (!dialwhenneeded)           // We don't handle dialing
+  if (!conf.dialwhenneeded)           // We don't handle dialing
     return 0;
 
   if (IsConnected()) // We're already connected
     return 0;
 
-  if (lurkmode == CONNECT_LURKONLY && !force)
+  if (conf.lurkmode == CONNECT_LURKONLY && !force)
     return -1; // lurk-only, we're not allowed to connect unless forced
 
 #if (CLIENT_OS == OS_WIN16)
@@ -886,7 +941,7 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
     BOOL passwordretrieved;
     DWORD returnvalue;
     char buffer[260]; /* maximum registry key length */
-    const char *connname = (const char *)(&connprofile[0]);
+    const char *connname = (const char *)(&conf.connprofile[0]);
 
     dohangupcontrol = 0;           // whether we do HangupIfNeeded() or not
 
@@ -968,18 +1023,19 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
   }
   return -1;
 
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_MACOS)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || \
+     (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_MACOS)
 
   dohangupcontrol = 0;
-  if (connstartcmd[0] == 0)  /* we don't do dialup */
+  if (conf.connstartcmd[0] == 0)  /* we don't do dialup */
   {
     LogScreen("Dial Error. No dial-start-command specified.\n");
-    dialwhenneeded = 0; //disable it!
+    conf.dialwhenneeded = 0; //disable it!
     return -1;
   }
-  if (system( connstartcmd ) == 127 /*exec error */)
+  if (system( conf.connstartcmd ) == 127 /*exec error */)
   {                                        //pppstart of whatever
-    LogScreen("Unable to exec '%s'\n%s\n", connstartcmd, strerror(errno));
+    LogScreen("Unable to exec '%s'\n%s\n", conf.connstartcmd, strerror(errno));
     return -1;
   }
   int retry;
@@ -992,8 +1048,8 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
       return 0;
     }
   }
-  if (connstopcmd[0] != 0)
-    system( connstopcmd );
+  if (conf.connstopcmd[0] != 0)
+    system( conf.connstopcmd );
   return -1;
 
 #else
@@ -1010,7 +1066,7 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
 
   if (!islurkstarted)      // Lurk can't be started, evidently
     return -1;
-  if (!dialwhenneeded)     // We don't handle dialing
+  if (!conf.dialwhenneeded)     // We don't handle dialing
     return 0;
 
   isconnected = IsConnected();
@@ -1081,15 +1137,16 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
   dohangupcontrol = 0;
   return 0;
 
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_MACOS)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || \
+      (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_MACOS)
 
   if (isconnected)
   {
     int droppedconn = 0;
-    if (connstopcmd[0] == 0) //what can we do?
+    if (conf.connstopcmd[0] == 0) //what can we do?
       droppedconn = 1;
-    else if (system( connstopcmd ) == 127 /* exec error */)
-      LogScreen("Unable to exec '%s'\n%s\n", connstopcmd, strerror(errno));
+    else if (system( conf.connstopcmd ) == 127 /* exec error */)
+      LogScreen("Unable to exec '%s'\n%s\n", conf.connstopcmd, strerror(errno));
     else
     {
       int retry = 0;

@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.9 1999/12/05 17:31:28 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.10 1999/12/08 00:41:49 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 

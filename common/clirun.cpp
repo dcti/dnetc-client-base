@@ -2,14 +2,14 @@
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.18 1999/11/29 22:47:27 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.19 1999/12/08 00:41:40 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
-//#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
-#include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
+#include "client.h"    // Client structure
 #include "problem.h"   // Problem class
 #include "triggers.h"  // [Check|Raise][Pause|Exit]RequestTrigger()
 #include "sleepdef.h"  // sleep(), usleep()
@@ -18,13 +18,12 @@ return "@(#)$Id: clirun.cpp,v 1.98.2.18 1999/11/29 22:47:27 cyp Exp $"; }
 #include "lurk.h"      // dialup object
 #include "buffupd.h"   // BUFFERUPDATE_* constants
 #include "buffbase.h"  // GetBufferCount()
-#include "cliident.h"  // CliIsDevelVersion()
 #include "clitime.h"   // CliTimer(), Time()/(CliGetTimeString(NULL,1))
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "clicdata.h"  // CliGetContestNameFromID()
-//#include "selcore.h"   // selcoreGetSelectedCoreForContest()
+#include "util.h"      // utilCheckIfBetaExpired()
 #include "checkpt.h"   // CHECKPOINT_[OPEN|CLOSE|REFRESH|_FREQ_[SECS|PERC]DIFF]
-#include "cpucheck.h"  // GetTimesliceBaseline(), GetNumberOfSupportedProcessors()
+#include "cpucheck.h"  // GetNumberOfDetectedProcessors()
 #include "probman.h"   // GetProblemPointerFromIndex()
 #include "probfill.h"  // LoadSaveProblems(), FILEENTRY_xxx macros
 #include "modereq.h"   // ModeReq[Set|IsSet|Run]()
@@ -42,12 +41,6 @@ return "@(#)$Id: clirun.cpp,v 1.98.2.18 1999/11/29 22:47:27 cyp Exp $"; }
 // --------------------------------------------------------------------------
 
 //#define DYN_TIMESLICE_SHOWME
-
-static struct
-{
-  volatile int refillneeded;
-} runstatics = {0};
-//#define DYN_TIMESLICE_SHOWME 1
 
 struct __dyn_timeslice_struct
 {
@@ -67,31 +60,6 @@ static struct __dyn_timeslice_struct
 
 // =====================================================================
 
-static int checkifbetaexpired(void)
-{
-  if (CliIsDevelVersion()) /* cliident.cpp */
-  {
-    timeval expirationtime;
-
-    #ifndef BETA_PERIOD
-    #define BETA_PERIOD (7L*24L*60L*60L) /* one week from build date */
-    #endif    /* where "build date" is time of newest module in ./common/ */
-    expirationtime.tv_sec = CliGetNewestModuleTime() + (time_t)BETA_PERIOD;
-    expirationtime.tv_usec= 0;
-
-    if ((CliTimer(NULL)->tv_sec) > expirationtime.tv_sec)
-    {
-      Log("This beta release expired on %s. Please\n"
-          "download a newer beta, or run a standard-release client.\n",
-          CliGetTimeString(&expirationtime,1) );
-      return 1;
-    }
-  }
-  return 0;
-}
-
-// ----------------------------------------------------------------------
-
 struct thread_param_block
 {
   #if (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
@@ -109,6 +77,7 @@ struct thread_param_block
   unsigned int numthreads;
   int realthread;
   unsigned int priority;
+  int refillneeded;
   int do_suspend;
   int do_refresh;
   int is_suspended;
@@ -200,13 +169,17 @@ void Go_mt( void * parm )
   Problem *thisprob = NULL;
   unsigned int threadnum = thrparams->threadnum;
 
-#if (CLIENT_OS == OS_RISCOS)
-/*if (threadnum == 1)
+#if (CLIENT_OS == OS_RISCOS) 
+  #if defined(HAVE_X86_CARD_SUPPORT)
+  thisprob = GetProblemPointerFromIndex(threadnum);
+  if (!thisprob) /* riscos has no real threads */
+    return;      /* so this is a polled job and we can just return */
+  if (thisprob->client_cpu == CPU_X86) /* running on x86card */
   {
-    thisprob = GetProblemPointerFromIndex(threadnum);
     thisprob->Run();
     return;
-  } */
+  }
+  #endif
 #elif (CLIENT_OS == OS_WIN32)
   if (thrparams->realthread)
   {
@@ -267,13 +240,13 @@ void Go_mt( void * parm )
     {
 //printf("run: isnull? %08x, ispausereq? %d, issusp? %d\n", thisprob, CheckPauseRequestTriggerNoIO(), thrparams->do_suspend);
       if (thisprob == NULL)  // this is a bad condition, and should not happen
-        runstatics.refillneeded = 1;// ..., ie more threads than problems
+        thrparams->refillneeded = 1;// ..., ie more threads than problems
       if (thrparams->realthread)
         __thread_sleep__(1); // don't race in this loop
     }
     else if (!thisprob->IsInitialized())
     {
-      runstatics.refillneeded = 1;
+      thrparams->refillneeded = 1;
       if (thrparams->realthread)
         __thread_yield__();
     }
@@ -327,7 +300,7 @@ void Go_mt( void * parm )
       didwork = (last_count != thisprob->core_run_count);
       if (run != RESULT_WORKING)
       {
-        runstatics.refillneeded = 1;
+        thrparams->refillneeded = 1;
         if (!didwork && thrparams->realthread)
           __thread_yield__();
       }
@@ -423,11 +396,14 @@ void Go_mt( void * parm )
     }
   }
 
+  if (thrparams->realthread)
+    SetThreadPriority( 9 ); /* 0-9 */
+
   thrparams->threadID = 0; //the thread is dead
 
   #if (CLIENT_OS == OS_BEOS)
   if (thrparams->realthread)
-    exit(0);
+    _exit(0);
   #endif
 }
 
@@ -455,7 +431,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         #elif (CLIENT_OS == OS_NETWARE)
         while (thrparams->threadID) delay(100);
         #elif (CLIENT_OS == OS_FREEBSD)
-        while (thrparams->threadID) NonPolledUSleep(1000);
+        while (thrparams->threadID) NonPolledUSleep(100000);
         #endif
       }
     }
@@ -486,9 +462,6 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     thrparams->priority = priority;       /* unsigned int */
     thrparams->is_non_preemptive_os = is_non_preemptive_os; /* int */
     thrparams->do_suspend = 0;
-#if (CLIENT_OS == OS_RISCOS)
-    thrparams->do_suspend = /*thread_i?1:*/0;
-#endif
     thrparams->is_suspended = 0;
     thrparams->do_refresh = 1;
     thrparams->thread_data1 = 0;          /* ulong, free for thread use */
@@ -568,8 +541,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
             extern int TBF_MakeTriggersVMInheritable(void); /* probman.cpp */
             extern int TBF_MakeProblemsVMInheritable(void); /* triggers.cpp */
             if (TBF_MakeTriggersVMInheritable()!=0 ||
-                TBF_MakeProblemsVMInheritable()!=0 ||
-                minherit((void *)&runstatics, sizeof(runstatics), 0)==0)
+                TBF_MakeProblemsVMInheritable()!=0)
               assertedvms = +1; //success
           }
           #else
@@ -741,8 +713,35 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
   return thrparams;
 }
 
+/* ----------------------------------------------------------------------- */
 
-// -----------------------------------------------------------------------
+static int __CheckClearIfRefillNeeded(struct thread_param_block *thrparam,
+                                      int doclear)
+{
+  int refillneeded = 0;
+  while (thrparam)
+  {
+    if (thrparam->refillneeded)
+      refillneeded++;
+    if (doclear)
+      thrparam->refillneeded = 0;
+    thrparam = thrparam->next;
+  }
+  return refillneeded;
+}  
+
+/* ----------------------------------------------------------------------- */
+
+static int GetMaxCrunchersPermitted( void )
+{
+#if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
+  if (GetNumberOfDetectedProcessors() > 1)
+    return 2; /* thread 0 is ARM, thread 1 is x86 */
+#endif
+  return ( 128 ); /* just some arbitrary number */
+}
+
+/* ---------------------------------------------------------------------- */
 
 // returns:
 //    -2 = exit by error (all contests closed)
@@ -794,13 +793,13 @@ int ClientRun( Client *client )
   // 4. F  Load (or try to load) that many problems (needs number of problems)
   // 5. F  Initialize polling process (needed by threads)
   // 6. F  Spin up threads
-  // 7.    Unload over-loaded problems (problems for which we have no worker)
+  // 7.    Unload excess problems (problems for which we have no worker)
   //
   // Run...
   //
   // Deinitialization:
   // 8.    Shut down threads
-  // 9.    Deinitialize polling process
+  // 9.   Deinitialize polling process
   // 10.   Unload problems
   // 11.   Deinitialize problem table
   // 12.   Throw away checkpoints
@@ -818,44 +817,54 @@ int ClientRun( Client *client )
       checkpointsDisabled = 1;
     }
   }
-
-  // --------------------------------------
-  // BETA check
-  // --------------------------------------
-
-  if (!TimeToQuit && checkifbetaexpired()) //prints a message
-  {
-    TimeToQuit = 1;
-    exitcode = -1;
-  }
-
+  
   // --------------------------------------
   // Determine the number of problems to work with. Number is used everywhere.
   // --------------------------------------
 
   if (!TimeToQuit)
   {
-    unsigned int numcrunchers;
+    int numcrunchers = client->numcpu; /* assume this till we know better */
     force_no_realthreads = 0; /* this is a hint. it does not reflect capability */
-    numcrunchers = ValidateProcessorCount( client->numcpu, 0 /* notquietly */); 
-    //numcrunchers can be zero (==run without threads) //cpucheck.cpp
+
+    if (numcrunchers == 0) /* force single threading */
+    {
+      numcrunchers = 1;
+      force_no_realthreads = 1;
+      #if defined(CLIENT_SUPPORTS_SMP)
+      LogScreen( "Client will run single-threaded.\n" );
+      #endif
+    }
+    else if (numcrunchers < 0) /* autoselect */
+    {
+      numcrunchers = GetNumberOfDetectedProcessors(); /* cpucheck.cpp */
+      if (numcrunchers < 1)
+      {
+        LogScreen( CLIENT_OS_NAME " does not support SMP or\n"
+                  "does not support processor count detection.\n"
+                  "A single processor machine is assumed.\n");
+        numcrunchers = 1;
+      }
+      else
+      {
+        LogScreen("Automatic processor detection found %d processor%s.\n",
+                   numcrunchers, ((numcrunchers==1)?(""):("s")) );
+      }
+    }  
+    if (numcrunchers > GetMaxCrunchersPermitted())
+    {
+      numcrunchers = GetMaxCrunchersPermitted();
+    }
 
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_BEOS)
-    if (numcrunchers == 0) // must run with real threads because the
-      numcrunchers = 1;    // main thread runs at normal priority
+    force_no_realthreads = 0; // must run with real threads because the
+                              // main thread runs at normal priority
     #endif
     #if (CLIENT_OS == OS_NETWARE)
     //if (numcrunchers == 1) // NetWare client prefers non-threading
-    //  numcrunchers = 0;    // if only one thread/processor is to used
+    //  force_no_realthreads = 1; // if only one thread/processor is to used
     #endif
 
-    if (numcrunchers < 1) /* == 0 = user requested non-mt */
-    {
-      force_no_realthreads = 1;
-      numcrunchers = 1;
-    }
-    if (numcrunchers > GetNumberOfSupportedProcessors()) //max by cli instance
-      numcrunchers = GetNumberOfSupportedProcessors();   //not by platform
     load_problem_count = numcrunchers;
   }
 
@@ -954,7 +963,7 @@ int ClientRun( Client *client )
         }
         #elif (CLIENT_OS == OS_MACOS) /* just default numbers - Mindmorph */
           default_dyn_timeslice_table[tsinitd].optimal = 2048;      
-      	 default_dyn_timeslice_table[tsinitd].usec = 10000*(client->priority+1);  
+          default_dyn_timeslice_table[tsinitd].usec = 10000*(client->priority+1);
         #elif (CLIENT_OS == OS_NETWARE) 
         /* The switchcount<->runtime ratio is inversely proportionate. 
            By definition, 1000ms == 1.0 switchcounts/sec. In real life it
@@ -966,11 +975,11 @@ int ClientRun( Client *client )
            and 3ms as min (about the finest monotonic res we can squeeze 
            from the timer on a 386)
         */
-        default_dyn_timeslice_table[tsinitd].optimal = GetTimesliceBaseline();
-        default_dyn_timeslice_table[tsinitd].usec = 500 * (client->priority+1);
+        default_dyn_timeslice_table[tsinitd].optimal = 1024;
+        default_dyn_timeslice_table[tsinitd].usec = 512 * (client->priority+1);
         #else /* x86 */
         default_dyn_timeslice_table[tsinitd].usec = 27500; /* 55/2 ms */
-        default_dyn_timeslice_table[tsinitd].optimal = GetTimesliceBaseline();
+        default_dyn_timeslice_table[tsinitd].optimal = 512 * (client->priority+1);
         #endif
       }
     }
@@ -1079,7 +1088,7 @@ int ClientRun( Client *client )
       {
         int i = 0;
         while ((i++)<5
-              && !runstatics.refillneeded
+              && !__CheckClearIfRefillNeeded(thread_data_table,0) 
               && !CheckExitRequestTriggerNoIO()
               && ModeReqIsSet(-1)==0)
           sleep(1);
@@ -1124,20 +1133,6 @@ int ClientRun( Client *client )
     // Check for user break
     //----------------------------------------
     
-    #if (CLIENT_OS == OS_DOS)   
-    { // DOS4G signal handling is broken: ^C doesn't get through if the keyb 
-      // buffer isn't empty. But we can't do this in triggers.cpp because
-      // we may need normal keyb handling for config.
-      if (kbhit())
-      {
-        int c = getch();
-        if (c == 0)
-          c |= getch() << 8;
-        if (c == 0x03)
-          RaiseExitRequestTrigger();
-      }
-    }
-    #endif
     if (!TimeToQuit && CheckExitRequestTrigger())
     {
       Log( "%s...\n",
@@ -1145,7 +1140,7 @@ int ClientRun( Client *client )
       TimeToQuit = 1;
       exitcode = 1;
     }
-    if (!TimeToQuit && checkifbetaexpired()) /* prints a message */
+    if (!TimeToQuit && utilCheckIfBetaExpired(1)) /* prints a message */
     {
       TimeToQuit = 1;
       exitcode = -1;
@@ -1176,7 +1171,7 @@ int ClientRun( Client *client )
       if (!client->percentprintingoff)
         LogScreenPercent( load_problem_count ); //logstuff.cpp
       anychanged = LoadSaveProblems(client,load_problem_count,PROBFILL_ANYCHANGED);
-      runstatics.refillneeded = 0;
+      __CheckClearIfRefillNeeded(thread_data_table,1);
 
       if (CheckExitRequestTriggerNoIO())
         continue;
@@ -1281,7 +1276,7 @@ int ClientRun( Client *client )
 
     local_connectoften = (client->connectoften != 0);
     #if defined(LURK)
-    if (dialup.lurkmode)
+    if (dialup.IsWatching()) /* is lurk or lurkonly enabled? */
     {
       client->connectoften = 0;
       local_connectoften = (!TimeToQuit && 
@@ -1378,10 +1373,6 @@ int ClientRun( Client *client )
   }
 
   ClientEventSyncPost( CLIEVENT_CLIENT_RUNFINISHED, 0 );
-
-  #if (CLIENT_OS == OS_VMS)
-    nice(0);
-  #endif
 
   return exitcode;
 }

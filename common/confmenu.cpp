@@ -9,23 +9,20 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.13 1999/11/23 22:48:29 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.14 1999/12/08 00:41:44 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
 //#define TRACE
 //#define PLAINTEXT_PW
 
-//#include "cputypes.h" // CLIENT_OS
 #include "console.h"  // ConOutErr()
 #include "client.h"   // client->members, MINCLIENTOPTSTRLEN
 #include "baseincs.h" // strlen() etc
-#include "cmpidefs.h" // strcmpi()
 #include "logstuff.h" // LogScreenRaw()
 #include "selcore.h"  // GetCoreNameFromCoreType()
 #include "clicdata.h" // GetContestNameFromID()
 #include "util.h"     // projectmap_*()
-#include "lurk.h"     // lurk stuff
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
 #include "confopt.h"  // the option table
 #include "confmenu.h" // ourselves
@@ -92,8 +89,6 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 
   /* ------------------- CONF_MENU_MISC ------------------ */  
 
-  if (strcmpi(client->id,"rc5@distributed.net") == 0)
-    client->id[0] = 0; /*is later converted back to 'rc5@distributed.net' */
   conf_options[CONF_ID].thevariable=&(client->id[0]);
   conf_options[CONF_COUNT].thevariable=&(client->blockcount);
   conf_options[CONF_HOURS].thevariable=&(client->minutes);
@@ -220,36 +215,26 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 
   #if defined(LURK)
   int dupcap = dialup.GetCapabilityFlags();
-  int lurkmode = dialup.lurkmode;
-  int dialwhenneeded = dialup.dialwhenneeded;
-  char connifacemask[sizeof(dialup.connifacemask)];
-  char connstartcmd[sizeof(dialup.connstartcmd)];
-  char connstopcmd[sizeof(dialup.connstopcmd)];
-  char connprofile[sizeof(dialup.connprofile)];
-  strcpy(connifacemask, dialup.connifacemask);
-  strcpy(connstartcmd, dialup.connstartcmd);
-  strcpy(connstopcmd, dialup.connstopcmd);
-  strcpy(connprofile, dialup.connprofile);
   if ((dupcap & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
   {
-    conf_options[CONF_LURKMODE].thevariable=&lurkmode;
+    conf_options[CONF_LURKMODE].thevariable=&(client->lurk_conf.lurkmode);
   }
   if ((dupcap & CONNECT_IFACEMASK)!=0)
   {
-    conf_options[CONF_CONNIFACEMASK].thevariable=&connifacemask[0];
+    conf_options[CONF_CONNIFACEMASK].thevariable=&(client->lurk_conf.connifacemask[0]);
   }
   if ((dupcap & CONNECT_DOD)!=0)
   {
-    conf_options[CONF_DIALWHENNEEDED].thevariable=&dialwhenneeded;
+    conf_options[CONF_DIALWHENNEEDED].thevariable=&(client->lurk_conf.dialwhenneeded);
     if ((dupcap & CONNECT_DODBYSCRIPT)!=0)
     {
-      conf_options[CONF_CONNSTARTCMD].thevariable=&connstartcmd[0];
-      conf_options[CONF_CONNSTOPCMD].thevariable=&connstopcmd[0];
+      conf_options[CONF_CONNSTARTCMD].thevariable=&(client->lurk_conf.connstartcmd[0]);
+      conf_options[CONF_CONNSTOPCMD].thevariable=&(client->lurk_conf.connstopcmd[0]);
     }
     if ((dupcap & CONNECT_DODBYPROFILE)!=0)
     {
       const char **connectnames = dialup.GetConnectionProfileList();
-      conf_options[CONF_CONNPROFILE].thevariable=&connprofile[0];
+      conf_options[CONF_CONNPROFILE].thevariable=&(client->lurk_conf.connprofile[0]);
       conf_options[CONF_CONNPROFILE].choicemin = 
       conf_options[CONF_CONNPROFILE].choicemax = 0;
       if (connectnames) 
@@ -399,21 +384,27 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
         conf_options[CONF_KEYSERVNAME].disabledtext = "n/a [autoselected]";
       }
       #ifdef LURK
-      if (lurkmode!=CONNECT_LURK && lurkmode!=CONNECT_LURKONLY)
       {
         conf_options[CONF_CONNIFACEMASK].disabledtext=
-        conf_options[CONF_DIALWHENNEEDED].disabledtext=
-        conf_options[CONF_CONNPROFILE].disabledtext=
-        conf_options[CONF_CONNSTARTCMD].disabledtext=
-        conf_options[CONF_CONNSTOPCMD].disabledtext=
-        "n/a [Dialup detection is off]";
-      }
-      else if (!dialwhenneeded || conf_options[CONF_DIALWHENNEEDED].thevariable==NULL)
-      {
-        conf_options[CONF_CONNPROFILE].disabledtext=
-        conf_options[CONF_CONNSTARTCMD].disabledtext=
-        conf_options[CONF_CONNSTOPCMD].disabledtext=
-        "n/a [Demand-dial is off/not supported]";
+                                         "n/a [Requires Lurk|lurkony or DOD]";
+        if ((client->lurk_conf.lurkmode)==CONNECT_LURK || (client->lurk_conf.lurkmode)==CONNECT_LURKONLY)
+          conf_options[CONF_CONNIFACEMASK].disabledtext= NULL;
+        #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)  
+        else //win16 and win32 dialwhenneeded depends on lurk being available
+          conf_options[CONF_DIALWHENNEEDED].disabledtext= 
+                             "n/a [Dialup detection is off]";
+        #endif
+        if (client->lurk_conf.dialwhenneeded && 
+            conf_options[CONF_DIALWHENNEEDED].thevariable &&
+            conf_options[CONF_DIALWHENNEEDED].disabledtext==NULL) 
+          conf_options[CONF_CONNIFACEMASK].disabledtext= NULL;
+        else
+        {
+          conf_options[CONF_CONNPROFILE].disabledtext=
+          conf_options[CONF_CONNSTARTCMD].disabledtext=
+          conf_options[CONF_CONNSTOPCMD].disabledtext=
+          "n/a [Dialup detection is off]";
+        }
       }
       #endif
     }
@@ -1044,9 +1035,6 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 
   if (returnvalue != -1)
   {
-    //if (client->id[0] == 0)
-    //  strcpy(client->id, "rc5@distributed.net");
-
     if (logtype >=0 && logtype < (int)(sizeof(logtypes)/sizeof(logtypes[0])))
     {
       if (logtype == LOGFILETYPE_ROTATE)
@@ -1064,15 +1052,6 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
       client->nettimeout = -1;
     else if (client->nettimeout < 5)
       client->nettimeout = 5;
-
-    #ifdef LURK
-    dialup.lurkmode = lurkmode;
-    dialup.dialwhenneeded = dialwhenneeded;
-    strcpy(dialup.connifacemask, connifacemask);
-    strcpy(dialup.connstartcmd, connstartcmd);
-    strcpy(dialup.connstopcmd, connstopcmd);
-    strcpy(dialup.connprofile, connprofile);
-    #endif
 
     projectmap_build(client->loadorder_map, loadorder );
 

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.31 1999/12/02 08:49:16 mfeiri Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.32 1999/12/08 00:41:39 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -19,7 +19,7 @@ return "@(#)$Id: client.cpp,v 1.206.2.31 1999/12/02 08:49:16 mfeiri Exp $"; }
 #include "random.h"    // InitRandom()
 #include "pathwork.h"  // EXTN_SEP
 #include "clitime.h"   // CliTimer()
-#include "util.h"      // projectmap_build() and trace
+#include "util.h"      // projectmap_build(), trace, utilCheckIfBetaExpired
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
 #include "cmdline.h"   // ParseCommandLine() and load config
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
@@ -82,6 +82,7 @@ void ResetClientData(Client *client)
   client->noupdatefromfile = 0;
     client->remote_update_dir[0] = '\0';
   client->connectoften=0;
+  //memset(&(client->lurk_conf),0,sizeof(client->lurk_conf));
   for (contest=0; contest<CONTEST_COUNT; contest++)
   {
     client->inthreshold[contest] = BUFTHRESHOLD_DEFAULT;
@@ -296,6 +297,9 @@ static int ClientMain( int argc, char *argv[] )
                                     (client->quietmode==0)); //show overrides
             TRACE_OUT((-1,"parsecmdline(1)\n"));
             InitRandom2( client->id );
+            #ifdef LURK
+            dialup.Start(client->offlinemode, &(client->lurk_conf));
+            #endif
             TRACE_OUT((+1,"initcoretable\n"));
             InitializeCoreTable( &(client->coretypes[0]) );
             TRACE_OUT((-1,"initcoretable\n"));
@@ -307,6 +311,8 @@ static int ClientMain( int argc, char *argv[] )
               ModeReqRun( client );
               TRACE_OUT((-1,"modereqrun\n"));
             }
+            else if (utilCheckIfBetaExpired(1)) /* prints message */
+              con_waitforuser = 1;
             else
             {
               PrintBanner(client->id,1,restarted);
@@ -318,6 +324,9 @@ static int ClientMain( int argc, char *argv[] )
 
             TRACE_OUT((0,"deinit coretable\n"));
             DeinitializeCoreTable();
+            #ifdef LURK
+            dialup.Stop();
+            #endif
             TRACE_OUT((0,"deinitialize logging\n"));
             DeinitializeLogging();
             TRACE_OUT((0,"deinitialize console\n"));
@@ -345,7 +354,8 @@ static int ClientMain( int argc, char *argv[] )
 #if (CLIENT_OS == OS_MACOS)
 int main( void )
 {
-  /* init toolbox etc, synthesise command line and callback */
+  //extern int client_boot( int (*)(int argc, char *argv[]) );
+/* init toolbox etc, synthesise command line and callback */
   return client_boot(ClientMain); 
 }
 #elif (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
