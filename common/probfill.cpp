@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.87.2.5 2003/09/02 00:48:54 mweiser Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.87.2.6 2003/12/07 22:56:19 kakace Exp $"; }
 
 //#define TRACE
 
@@ -135,14 +135,15 @@ static struct {
   long threshold;
   unsigned int till_completion;
 } buffer_counts[CONTEST_COUNT] = {
-  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
-  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
-  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
-  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
-  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
-  { { { 0, 0 }, { 0, 0 } }, 0, 0 }
-  #if (CONTEST_COUNT != 6)
-    #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 6")
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* RC5 */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* DES */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* OGR */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* CSC */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* OGR_NEXTGEN_SOMEDAY */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* RC5_72 */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 }      /* OGR_24_P2 */
+  #if (CONTEST_COUNT != 7)
+    #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 7")
   #endif
 };
 
@@ -157,7 +158,7 @@ int ProbfillGetBufferCounts( unsigned int contest, int is_out_type,
     if (threshold)
       *threshold = buffer_counts[contest].threshold;
     if (thresh_in_swu)
-      *thresh_in_swu = (contest != OGR);
+      *thresh_in_swu = (contest != OGR && contest != OGR_24_P2);
     if (till_completion)
       *till_completion = buffer_counts[contest].till_completion;
     if (is_out_type)
@@ -214,6 +215,7 @@ unsigned int ClientGetInThreshold(Client *client,
 
   // OGR time threshold NYI
   client->timethreshold[OGR] = 0;
+  client->timethreshold[OGR_24_P2] = 0;
 
   if (contestid >= CONTEST_COUNT)
   {

@@ -21,11 +21,12 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.40 2003/11/04 16:36:52 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.41 2003/12/07 22:56:41 kakace Exp $
 ==========================================================================
 
 2.9000
 ------
+2.9008-487  all: OGR-24 phase 2
 
 2.9007-486  imp: nextstep: include assembler cores on x86
             imp: nextstep: fix console handling for config menu

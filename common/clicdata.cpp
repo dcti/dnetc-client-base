@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.35.2.1 2003/01/19 22:49:49 snake Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.35.2.2 2003/12/07 22:56:19 kakace Exp $"; }
 
 //#define TRACE
 
@@ -49,10 +49,11 @@ static struct contestInfo
                   { /*"CSC",    "keys", */ CSC,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { /*"OGR_NG", "nodes",*/ OGR_NEXTGEN_SOMEDAY,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { /*"RC5-72", "keys", */ RC5_72,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { /*"OGR-P2", "nodes",*/ OGR_24_P2, 1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { /* NULL,    NULL,   */ -1,      0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
 // obsolete projects may be omitted
-#if (CONTEST_COUNT != 6)
-  #error PROJECT_NOT_HANDLED("conStats[]: static initializer expects CONTEST_COUNT == 6")
+#if (CONTEST_COUNT != 7)
+  #error PROJECT_NOT_HANDLED("conStats[]: static initializer expects CONTEST_COUNT == 7")
 #endif
 
 /* ----------------------------------------------------------------------- */

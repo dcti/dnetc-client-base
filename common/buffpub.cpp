@@ -9,7 +9,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.6.2.1 2003/01/19 22:49:49 snake Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.6.2.2 2003/12/07 22:56:19 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -219,6 +219,7 @@ static void __switch_byte_order( WorkRecord *dest, const WorkRecord *source,
       break;
     }
     #if defined(HAVE_OGR_CORES)
+    case OGR_24_P2:
     case OGR:
     {
       dest->work.ogr.workstub.stub.marks  = (u16)ntohs(dest->work.ogr.workstub.stub.marks);

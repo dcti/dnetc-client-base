@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.85.2.2 2003/01/28 04:58:00 andreasb Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.85.2.3 2003/12/07 22:56:19 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -398,7 +398,7 @@ long SelfTest( unsigned int contest )
       }
 #endif
 #if defined(HAVE_OGR_CORES)
-      if (contest == OGR)
+      if (contest == OGR || contest == OGR_24_P2)
       {
         test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])ogr_test_cases;
         expectedsolution_lo = (*test_cases)[testnum][0];
@@ -461,6 +461,7 @@ long SelfTest( unsigned int contest )
         }
         #endif
         #if defined(HAVE_OGR_CORES)
+        case OGR_24_P2:
         case OGR: 
         {
           int tcd;
@@ -534,7 +535,7 @@ long SelfTest( unsigned int contest )
               userbreak = 1;
               break;
             }
-            if (contest == OGR) /* show /some/ activity (the time changes) */
+            if (contest == OGR || contest == OGR_24_P2) /* show /some/ activity (the time changes) */
               LogScreen("\r%s: Test %02d working...", contname, testnum + 1 );
           } while ( ProblemRun(thisprob) == RESULT_WORKING );
 
@@ -664,6 +665,7 @@ long SelfTest( unsigned int contest )
               }
               #endif
               #ifdef HAVE_OGR_CORES
+              case OGR_24_P2:
               case OGR:
               {
                 if (expectedsolution_lo & 0x80000000)  // no solution

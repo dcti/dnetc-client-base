@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.61 2003/09/12 13:19:45 mweiser Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.62 2003/12/07 22:56:19 kakace Exp $"; }
 
 //#define TRACE
 
@@ -53,6 +53,7 @@ const char **corenames_for_contest( unsigned int cont_i )
       return corenames_for_contest_des();
 #endif
 #ifdef HAVE_OGR_CORES
+    case OGR_24_P2:
     case OGR:
       return corenames_for_contest_ogr();
 #endif
@@ -102,6 +103,7 @@ int apply_selcore_substitution_rules(unsigned int contestid, int cindex)
       return apply_selcore_substitution_rules_des(cindex);
 #endif
 #ifdef HAVE_OGR_CORES
+    case OGR_24_P2:
     case OGR:
       return apply_selcore_substitution_rules_ogr(cindex);
 #endif
@@ -236,13 +238,15 @@ int DeinitializeCoreTable( void )  /* ClientMain calls this */
   #ifdef HAVE_OGR_CORES
   DeinitializeCoreTable_ogr();
   #endif
+  #ifdef HAVE_OGR24_PASS2
+  DeinitializeCoreTable_ogr24_p2();
+  #endif
   #ifdef HAVE_DES_CORES
   DeinitializeCoreTable_des();
   #endif
   #ifdef HAVE_CSC_CORES
   DeinitializeCoreTable_csc();
   #endif
-
 
   selcore_initlev--;
   return 0;
@@ -297,6 +301,9 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
   #endif
   #ifdef HAVE_OGR_CORES
   if (InitializeCoreTable_ogr(first_time) < 0) return -1;
+  #endif
+  #ifdef HAVE_OGR24_PASS2
+  if (InitializeCoreTable_ogr24_p2(first_time) < 0) return -1;
   #endif
   #ifdef HAVE_DES_CORES
   if (InitializeCoreTable_des(first_time) < 0) return -1;
@@ -454,6 +461,7 @@ int selcoreGetPreselectedCoreForProject(unsigned int projectid)
       return selcoreGetPreselectedCoreForProject_des();
 #endif
 #ifdef HAVE_OGR_CORES
+    case OGR_24_P2:
     case OGR:
       return selcoreGetPreselectedCoreForProject_ogr();
 #endif
@@ -611,6 +619,10 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
 #ifdef HAVE_DES_CORES
     case DES:
       return selcoreSelectCore_des( threadindex, client_cpuP, selinfo );
+#endif
+#ifdef HAVE_OGR24_PASS2
+    case OGR_24_P2:
+      return selcoreSelectCore_ogr24_p2( threadindex, client_cpuP, selinfo );
 #endif
 #ifdef HAVE_OGR_CORES
     case OGR:

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.56.2.2 2003/05/24 23:09:36 andreasb Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.56.2.3 2003/12/07 22:56:19 kakace Exp $"; }
 
 //#define TRACE
 
@@ -24,10 +24,10 @@ return "@(#)$Id: bench.cpp,v 1.56.2.2 2003/05/24 23:09:36 andreasb Exp $"; }
 
 #define TBENCHMARK_CALIBRATION 0x80
 
-#if (CONTEST_COUNT != 6)
-  #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 6")
+#if (CONTEST_COUNT != 7)
+  #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 7")
 #endif
-unsigned long bestrate_tab[CONTEST_COUNT] = {0,0,0,0,0,0};
+unsigned long bestrate_tab[CONTEST_COUNT] = {0,0,0,0,0,0,0};
 
 /* -------------------------------------------------------------------- */
 
@@ -257,7 +257,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           }
           if (ratehi)
             ratelo = 0x0fffffff;
-          if (ratelo > tslice || contestid == OGR)
+          if (ratelo > tslice || contestid == OGR || contestid == OGR_24_P2)
             tslice = thisprob->pub_data.tslice = ratelo;
         }
         run = ProblemRun(thisprob);
