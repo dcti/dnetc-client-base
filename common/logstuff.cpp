@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.24 2000/06/13 00:22:32 mfeiri Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.25 2000/06/15 23:02:18 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -128,8 +128,7 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
        CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
        CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN32S )
     #define ftruncate( fd, sz )  chsize( fd, sz )
-  #elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_AMIGAOS) || \
-        (CLIENT_OS == OS_MACOS)
+  #elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_AMIGAOS)
     #define ftruncate( fd, sz ) //nada, not supported
     #define FTRUNCATE_NOT_SUPPORTED
   #endif
