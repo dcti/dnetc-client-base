@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.57 1999/04/22 01:51:44 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.58 1999/04/24 22:44:32 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -162,7 +162,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
     {
       client->offlinemode = 1;
       if (GetPrivateProfileIntB( OPTION_SECTION, "lurkonly", 0, fn ) ||
-          GetPrivateProfileIntB( OPTION_SECTION, "lurk", 0, fn ) );
+          GetPrivateProfileIntB( OPTION_SECTION, "lurk", 0, fn ) )
         client->offlinemode = 0;
       if (client->offlinemode)
         modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "disabled", "yes", fn ));
