@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.130 1999/12/04 15:58:47 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.131 1999/12/06 19:11:10 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -92,31 +92,29 @@ return "@(#)$Id: problem.cpp,v 1.130 1999/12/04 15:58:47 cyp Exp $"; }
   // rc5/ansi/rc5ansi1-b2.cpp
   extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
 #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-  #if (CLIENT_CPU == CPU_POWER)
+  #if (CLIENT_CPU == CPU_POWER) || defined(_AIXALL)
     // rc5/ansi/2-rg.c
-    extern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *, u32, void *);
-  #endif /* not else ! */
-  #if (CLIENT_CPU == CPU_POWERPC)
+    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+  #endif
+  #if (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
     #if (CLIENT_OS == OS_WIN32) //NT has poor PPC assembly
-      // rc5/ansi/2-rg.c
-      extern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *, u32, void *);
-      #define rc5_unit_func_g2_g3  rc5_ansi_rg_unified_form
-      #define rc5_unit_func_g1     rc5_unit_func_g2_g3
-      #define rc5_unit_func_vec    rc5_unit_func_g2_g3
-    #elif (CLIENT_OS == OS_AIX)
-      extern "C" u32 rc5_unit_func_g1( RC5UnitWork *, u32 *, void *);
-      extern "C" u32 rc5_unit_func_g2_g3( RC5UnitWork *, u32 *, void *);
-      #define rc5_unit_func_vec    rc5_unit_func_g2_g3
-    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_BEOS)
-      // Be OS isn't supported on 601 machines
-      // There is no 601 PPC board for the Amiga
-      extern "C" u32 rc5_unit_func_g2_g3( RC5UnitWork *, u32 *, void *);
-      #define rc5_unit_func_g1     rc5_unit_func_g2_g3
-      #define rc5_unit_func_vec    rc5_unit_func_g2_g3
+      //rc5/ansi/2-rg.c
+      extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+      #define rc5_unit_func_lintilla_compat rc5_ansi_2_rg_unit_func
+      #define rc5_unit_func_allitnil_compat rc5_ansi_2_rg_unit_func
+      #define rc5_unit_func_vec_compat      rc5_ansi_2_rg_unit_func
     #else
-      extern "C" s32 rc5_unit_func_g1( RC5UnitWork *, u32 *, void *);
-      extern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *, u32 *, void *);
-      extern "C" s32 rc5_unit_func_vec( RC5UnitWork *, u32 *, void *);
+      // rc5/ppc/rc5_*.cpp
+      // although Be OS isn't supported on 601 machines and there is
+      // is no 601 PPC board for the Amiga, lintilla depends on allitnil,
+      // so we have both anyway, we may as well support both.
+      extern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
+      extern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
+      #if (CLIENT_OS == OS_MACOS)
+        extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
+      #else /* MacOS currently is the only one to support altivec cores */
+        #define rc5_unit_func_vec_compat  rc5_unit_func_lintilla_compat
+      #endif
     #endif
   #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
@@ -319,33 +317,31 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       #if (CLIENT_CPU == CPU_POWER) && !defined(_AIXALL) //not hybrid
       {
         // rc5/ansi/2-rg.c
-        //xtern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *, u32, void *);
-        problem->unit_func = rc5_ansi_rg_unified_form ; //POWER cpu
-        problem->pipeline_count = 1; //unified form doesn't need this
+        //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+        problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ; //POWER cpu
+        problem->pipeline_count = 2;
       }
       #else //((CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL))
       { 
-        #if (CLIENT_OS == OS_WIN32)
-          // rc5/ansi/2-rg.c
-          //xtern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *, u32, void *);
-          //#define rc5_unit_func_g2_g3  rc5_ansi_rg_unified_form
-          //#define rc5_unit_func_g1     rc5_unit_func_g2_g3
-          //#define rc5_unit_func_vec    rc5_unit_func_g2_g3
-        #elif (CLIENT_OS == OS_AIX)
-          //xtern "C" u32 rc5_unit_func_g1( RC5UnitWork *, u32 *, void *);
-          //xtern "C" u32 rc5_unit_func_g2_g3( RC5UnitWork *, u32 *, void *);
-          //#define rc5_unit_func_vec   rc5_unit_func_g2_g3
-        #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_BEOS)
-          // Be OS isn't supported on 601 machines
-          // There is no 601 PPC board for the Amiga
-          //xtern "C" u32 rc5_unit_func_g2_g3( RC5UnitWork *, u32 *, void *);
-          //#define rc5_unit_func_g1 rc5_unit_func_g2_g3
-          //#define rc5_unit_func_vec rc5_unit_func_g2_g3
-        #else
-          //xtern "C" s32 rc5_unit_func_g1( RC5UnitWork *, u32 *, void *);
-          //xtern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *, u32 *, void *);
-          //xtern "C" s32 rc5_unit_func_vec( RC5UnitWork *, u32 *, void *);
-        #endif
+        //#if (CLIENT_OS == OS_WIN32) //NT has poor PPC assembly
+        //  //rc5/ansi/2-rg.c
+        //  xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+        //  #define rc5_unit_func_lintilla_compat rc5_ansi_2_rg_unit_func
+        //  #define rc5_unit_func_allitnil_compat rc5_ansi_2_rg_unit_func
+        //  #define rc5_unit_func_vec_compat      rc5_ansi_2_rg_unit_func
+        //#else
+        //  // rc5/ppc/rc5_*.cpp
+        //  // although Be OS isn't supported on 601 machines and there is
+        //  // is no 601 PPC board for the Amiga, lintilla depends on allitnil,
+        //  // so we have both anyway, we may as well support both.
+        //  xtern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
+        //  xtern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
+        //  #if (CLIENT_OS == OS_MACOS)
+        //    extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
+        //  #else /* MacOS currently is the only one to support altivec cores */
+        //    #define rc5_unit_func_vec_compat  rc5_unit_func_lintilla_compat
+        //  #endif
+        //#endif
         int gotcore = 0;
 
         problem->client_cpu = CPU_POWERPC;
@@ -353,35 +349,28 @@ static int __core_picker(Problem *problem, unsigned int contestid)
         if (((GetProcessorType(1) & 0x02000000) != 0)) //ARCH_IS_POWER
         {
           problem->client_cpu = CPU_POWER;
-          // our coresel numbers have different meanings, depending on what
-          // architecture we are running on. By default, the coresel values
-          // (ie, what selcore returns) are the same as "normal" PPC.
-          if (coresel == 0) //core #0 is "RG AIXALL" on POWER, 
-          {                 //           and lintilla on PPC
-            // rc5/ansi/2-rg.c
-            problem->unit_func = rc5_ansi_rg_unified_form ; //POWER cpu
-            problem->pipeline_count = 1; //unified form doesn't need this
-            gotcore = 1;
-            coresel = 0;
-          }
+          problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ; // rc5/ansi/2-rg.c
+          problem->pipeline_count = 2;
+          coresel = 0; //core #0 is "RG AIXALL" on POWER, and allitnil on PPC
+          gotcore = 1;
         }
         #endif
         if (!gotcore && coresel == 0)     // G1 (PPC 601)
         {  
-          problem->unit_func = rc5_unit_func_g1;
-          problem->pipeline_count = 1; //unified form doesn't need this
+          problem->rc5_unit_func = rc5_unit_func_allitnil_compat;
+          problem->pipeline_count = 1;
           gotcore = 1;
         }  
         else if (!gotcore && coresel == 2) // G4 (PPC 7500)
         {
-          problem->unit_func = rc5_unit_func_vec;
-          problem->pipeline_count = 1; //unified form doesn't need this
+          problem->rc5_unit_func = rc5_unit_func_vec_compat;
+          problem->pipeline_count = 1;
           gotcore = 1;
         }
         if (!gotcore)                     // the rest (G2/G3)
         {
-          problem->unit_func = rc5_unit_func_g2_g3;
-          problem->pipeline_count = 1; //unified form doesn't need this
+          problem->rc5_unit_func = rc5_unit_func_lintilla_compat;
+          problem->pipeline_count = 1;
           coresel = 1;
         }
       }
@@ -1050,9 +1039,6 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
 
   #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
     kiter = (iterations*pipeline_count)-(*rc5_unit_func)(&rc5unitwork,iterations);
-  #elif (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC)
-    kiter = iterations; 
-    *resultcode = (*unit_func)( &rc5unitwork, &kiter, core_membuffer );
   #else
     kiter = (*rc5_unit_func)(&rc5unitwork, iterations);
   #endif

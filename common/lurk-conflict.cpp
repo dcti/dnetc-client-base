@@ -18,7 +18,7 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.55 1999/12/05 15:34:50 cyp Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.56 1999/12/06 19:11:09 cyp Exp $"; }
 
 /* ---------------------------------------------------------- */
 
@@ -111,12 +111,13 @@ int Lurk::CheckForStatusChange(void) //returns -1 if connection dropped
 /* ================================================================== */
 
 
-#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
+    (CLIENT_OS == OS_MACOS)
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
-#include <net/if.h> // linux/if.h
+#include <net/if.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -255,7 +256,8 @@ int Lurk::GetCapabilityFlags(void)
         what |= CONNECT_DODBYPROFILE;
     }
   }
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
+      (CLIENT_OS == OS_MACOS)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
 #elif (CLIENT_OS == OS_OS2)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
@@ -478,7 +480,8 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
 
 /* ---------------------------------------------------------- */
 
-#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
+    (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOS)
 static int __MatchMask( const char *ifrname, int mask_include_all,
                        int mask_default_only, const char *ifacestowatch[] )
 {
@@ -500,11 +503,11 @@ static int __MatchMask( const char *ifrname, int mask_include_all,
     wildmask[maskpos]='\0';
     if (mask_default_only)
     {
-      ismatched = (strcmp(wildmask,"ppp*")==0 || strcmp(wildmask,"sl*")==0);
-      #if (CLIENT_OS == OS_FREEBSD)
-      if (!ismatched && strcmp(wildmask,"dun*")==0)
-        ismatched = 1;
+      ismatched = (strcmp(wildmask,"ppp*")==0 
+      #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_MACOS)
+      || strcmp(wildmask,"dun*")==0
       #endif
+      || strcmp(wildmask,"sl*")==0);
       matchedname = ((!ismatched)?(NULL):((const char *)(&wildmask[0])));
     }
     else
@@ -791,7 +794,8 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
      return 1;
    conndevice[0]=0;
 
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)  // maybe other *BSD systems
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
+      (CLIENT_OS == OS_MACOS)
    struct ifconf ifc;
    struct ifreq *ifr;
    int n, foundif = 0;
@@ -826,7 +830,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
 
      if (ifc.ifc_len)
      {
-       #if (CLIENT_OS == OS_LINUX)
+       #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOS)
        for (n = 0, ifr = ifc.ifc_req; n < ifc.ifc_len; n += sizeof(struct ifreq), ifr++)
        {
          if (__MatchMask(ifr->ifr_name,mask_include_all,
@@ -1019,7 +1023,8 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
   }
   return -1;
 
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_FREEBSD)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || \
+     (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_MACOS)
 
   dohangupcontrol = 0;
   if (conf.connstartcmd[0] == 0)  /* we don't do dialup */
@@ -1132,7 +1137,8 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
   dohangupcontrol = 0;
   return 0;
 
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_FREEBSD)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || \
+      (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_MACOS)
 
   if (isconnected)
   {

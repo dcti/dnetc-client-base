@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.74 1999/12/03 00:02:51 sampo Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.75 1999/12/06 19:11:07 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -194,11 +194,8 @@ extern "C" {
 #elif (CLIENT_OS == OS_MACOS)
   #include <sys/time.h> /* Mindmorph */
   #include <unistd.h> /* Mindmorph */
-  #include <console.h> /* Mindmorph */
   #include <Gestalt.h> /* Mindmorph */
-  #include "socket_glue.h"
-  #include "client_refs.h" /* support stuff */
-  extern "C" int fileno(__std(FILE) *stream); /* hh 990124 fixed __std 2 places */
+  #include "client_defs.h" /* support stuff */
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
 #endif

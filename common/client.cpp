@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.232 1999/12/04 18:13:06 sampo Exp $"; }
+return "@(#)$Id: client.cpp,v 1.233 1999/12/06 19:11:07 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -354,7 +354,7 @@ static int ClientMain( int argc, char *argv[] )
 #if (CLIENT_OS == OS_MACOS)
 int main( void )
 {
-  extern int client_boot( int (*)(int argc, char *argv[]) );
+  //extern int client_boot( int (*)(int argc, char *argv[]) );
 /* init toolbox etc, synthesise command line and callback */
   return client_boot(ClientMain); 
 }

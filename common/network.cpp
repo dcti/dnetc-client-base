@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.109 1999/12/04 13:07:48 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.110 1999/12/06 19:11:09 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -27,6 +27,12 @@ return "@(#)$Id: network.cpp,v 1.109 1999/12/04 13:07:48 cyp Exp $"; }
 
 #if (CLIENT_OS == OS_DOS)
 #define ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG
+#endif
+
+#if ((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_MACOS)
+#define SOCKLEN_T socklen_t
+#else
+#define SOCKLEN_T int
 #endif
 
 extern int NetCheckIsOK(void); // used before doing i/o
@@ -1763,9 +1769,6 @@ int Network::LowLevelPut(const char *ccdata,int length)
   #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32S)
   if (sendquota > 0x7FFF)  /* 16 bit OS but int is 32 bits */
     sendquota = 0x7FFF;
-  #elif (CLIENT_OS == OS_MACOS)
-  if (sendquota > 0xFFFF)  /* Mac network library uses "unsigned short" */
-    sendquota = 0xFFFF;
   #else
   if (sendquota > INT_MAX)
     sendquota = INT_MAX;
@@ -1936,9 +1939,6 @@ int Network::LowLevelGet(char *data,int length)
   #elif ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
   if (rcvquota > 0x7FFF)
     rcvquota = 0x7FFF;
-  #elif (CLIENT_OS == OS_MACOS)
-  if (rcvquota > 0xFFFF)  /* Mac network library uses "unsigned short" */
-    rcvquota = 0xFFFF;
   #else
   if (rcvquota > INT_MAX)
     rcvquota = INT_MAX;
@@ -2070,22 +2070,11 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
     int which;
     for (which = 0; which < 2; which++ )
     {
-      #if ((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_AIX)
-        //nothing, socklen_t is defined
-        typedef char * OPTVAL_T ;
-      #elif (CLIENT_OS == OS_MACOS)
-        typedef unsigned int socklen_t ;
-        typedef void * OPTVAL_T ;
-      #else
-        typedef int socklen_t ;
-        typedef char * OPTVAL_T ;
-      #endif
       int type = ((which == 0)?(SO_RCVBUF):(SO_SNDBUF));
       int sz = 0;
-      socklen_t szint = (socklen_t)sizeof(int);
-      
-      if (getsockopt(sock, SOL_SOCKET, type, (OPTVAL_T)&sz, &szint)<0)
-        ; /* nothing. call failed */
+      SOCKLEN_T szint = (SOCKLEN_T)sizeof(int);
+      if (getsockopt(sock, SOL_SOCKET, type, (char *)&sz, &szint)<0)
+        ;
       else if (sz < parm)
       {
         sz = parm;
@@ -2126,11 +2115,6 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
       return IoctlSocket(sock, FIONBIO, &flagon);
     #elif (CLIENT_OS == OS_DOS)
       return ((parm == 0 /* off */)?(0):(-1)); //always non-blocking
- /* <Dakidd> This #elif not needed under GUSI. Let things act like standard BSD sockets
-    #elif (CLIENT_OS == OS_MACOS)
-      char flagon = ((parm == 0 ) ? (1): (0));
-      return socket_ioctl(sock, FIONBIO, &flagon);
- 	</Dakidd> */
     #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
     {
       int flag, res, arg;

@@ -6,7 +6,7 @@
  *
 */ 
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.29 1999/12/03 21:53:51 dakidd Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.30 1999/12/06 19:11:09 cyp Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
@@ -121,10 +121,8 @@ static int calc_tzmins(void)
   if (saved_tz != -12345)
     return saved_tz;
 
-  #if (CLIENT_OS != OS_MACOS)
-    tzset();
-  #endif /* <Dakidd> I suspect this ought to be done as part of the localtime() call */
-         /* Gonna leave it alone for right now, though. */
+  tzset();
+
   timenow = time(NULL);
   tmP = localtime( (const time_t *) &timenow);
   if ((haveloctime = (tmP != NULL))!=0)
@@ -259,11 +257,7 @@ int NetResolve( const char *host, int resport, int resauto,
       resauto = 1;
     else
     {
-      #if (CLIENT_OS == OS_MACOS)
-      addrlist[0] = (u32)(inet_addr(hostname)).s_addr;
-      #else
       addrlist[0] = (u32)(inet_addr(hostname));
-      #endif
       if (addrlist[0] != 0xFFFFFFFFL)
       {
         if (resolve_hostname_sz)

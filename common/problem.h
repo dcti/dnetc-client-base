@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.71 1999/12/04 15:58:47 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.72 1999/12/06 19:11:10 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -129,8 +129,6 @@ public: /* anything public must be thread safe */
     u32 (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
   #elif (CLIENT_CPU == CPU_ALPHA)
     u32 (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
-  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) 
-    //uses generic form
   #else
     u32 (*rc5_unit_func)( RC5UnitWork * , u32 iterations );
   #endif
@@ -155,10 +153,12 @@ public: /* anything public must be thread safe */
 
   int IsInitialized() { return (initialized!=0); }
 
-  int LoadState( ContestWork * work, unsigned int _contest, 
-     u32 _iterations, int _cputype );
+  int LoadState( ContestWork * work, unsigned int _contest, u32 _iterations, 
+     int expected_coresel, int expected_client_cpu, int expected_buildnum);
     // Load state into internal structures.
     // state is invalid (will generate errors) until this is called.
+    // expected_[core|cpu|buildnum] are those loaded with the workunit
+    //   and allow LoadState to reset the problem if deemed necessary.
     // returns: -1 on error, 0 is OK
 
   int RetrieveState( ContestWork * work, unsigned int *contestid, int dopurge );
@@ -178,3 +178,4 @@ public: /* anything public must be thread safe */
 
 #endif /* __PROBLEM_H__ */
 
+

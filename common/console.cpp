@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.63 1999/12/02 05:15:00 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.64 1999/12/06 19:11:08 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -311,7 +311,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         if (ch == EOF) ch = 0;
       }
       #elif (CLIENT_OS == OS_MACOS)
-       ch = getchar(); /* sometimes we do console input ;-) - Mindmorph */
+       ch = getch(); /* sometimes we do console input ;-) - Mindmorph */
       #else
       {
         setvbuf(stdin, (char *)NULL, _IONBF, 0);
@@ -735,7 +735,7 @@ int ConClear(void)
       return 0;
     #elif (CLIENT_OS == OS_DOS)
       return dosCliConClear();
-    #elif (CLIENT_OS == OS_NETWARE)
+    #elif (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS)
       clrscr();
       return 0;
     #elif (CLIENT_OS == OS_RISCOS)

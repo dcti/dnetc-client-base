@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.72 1999/12/02 05:15:02 cyp Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.73 1999/12/06 19:11:10 cyp Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -136,9 +136,7 @@ extern "C" {
   #include <fcntl.h>
   #include <netdb.h>
   typedef int SOCKET;
-  #if (CLIENT_OS == OS_MACOS)
-    #include <machine/endian.h>
-  #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_ALPHA)
+  #if (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_ALPHA)
     #include <asm/byteorder.h>
   #elif (CLIENT_OS == OS_QNX)
     #include <sys/select.h>

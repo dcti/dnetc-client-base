@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.62 1999/12/04 18:16:09 sampo Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.63 1999/12/06 19:11:10 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -102,13 +102,13 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_OS == OS_POWER)
     { /* RC5 */
-      /* on OS's that don't support the 601 (core #0), core #0 and #1 are 
-         equivalent.
-         on POWER/PowerPC hybrid clients ("_AIXALL"), running on a POWER
+      /* lintilla depends on allitnil, and since we need both even on OS's 
+         that don't support the 601, we may as well "support" them visually.
+         On POWER/PowerPC hybrid clients ("_AIXALL"), running on a POWER
          CPU, core #0 becomes "RG AIXALL", and core #1 disappears.
        */
-      "allitnil", /* aka rc5_unit_func_g1() wrapper */
-      "lintilla", /* aka rc5_unit_func_g2_g3() wrapper */
+      "allitnil",
+      "lintilla",
       NULL, /* this may become the G4 vector core at runtime */
       NULL
     },
@@ -493,13 +493,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   }
   else if (contestid == RC5)
   {
-    #if ((CLIENT_OS == OS_BEOS) || \
-         (CLIENT_OS == OS_AMIGAOS) || \
-         (CLIENT_OS == OS_WIN32))
-      // BeOS and Win32 aren't supported on 601 machines
-      // There is no 601 PPC board for the Amiga
-      selcorestatics.corenum[RC5] = 1; //allitnil (aka g2_g3)
-    #else
+    /* lintilla depends on allitnil, and since we need both even on OS's 
+       that don't support the 601, we may as well "support" them visually.
+    */
     selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
     if (selcorestatics.corenum[RC5] < 0 && detected_type >= 0)
     {
@@ -520,7 +516,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       }
       selcorestatics.corenum[RC5] = cindex;
     }
-    #endif
   }
   else if (contestid == CSC)
   {
@@ -534,9 +529,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       {
         long det = (detected_type & 0x00ffffffL);
         if (det == 1)       //PPC 601
-          cindex = 1;       // G1: 16k L1 cache
+          cindex = 2;       // G1: 16k L1 cache - 1 key inline
         else if (det == 12) //PPC 7400
-          cindex = 0;       // G4: L1 cache 64k
+          cindex = 0;       // G4: L1 cache 64k - 6 bit inline
         //don't know about the rest
       }
       selcorestatics.corenum[CSC] = cindex;
