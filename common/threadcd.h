@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------------
 */
 #ifndef __THREADCD_H__
-#define __THREADCD_H__ "@(#)$Id: threadcd.h,v 1.15 1999/04/06 11:55:44 cyp Exp $"
+#define __THREADCD_H__ "@(#)$Id: threadcd.h,v 1.15.12.1 2003/01/19 22:49:51 snake Exp $"
 
 #include "cputypes.h" /* THREADID typedef */
 

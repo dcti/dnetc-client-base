@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -31,7 +31,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clievent_cpp(void) {
-return "@(#)$Id: clievent.cpp,v 1.11 2002/09/02 00:35:41 andreasb Exp $"; }
+return "@(#)$Id: clievent.cpp,v 1.11.4.1 2003/01/19 22:49:49 snake Exp $"; }
 
 #include "baseincs.h"   /* NULL, memset */
 #include "clievent.h"   /* keep prototypes in sync */

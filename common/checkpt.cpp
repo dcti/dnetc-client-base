@@ -1,5 +1,5 @@
 /* 
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -14,7 +14,7 @@
  * -----------------------------------------------------------------
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.21 2002/10/08 09:30:11 andreasb Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.21.2.1 2003/01/19 22:49:49 snake Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()

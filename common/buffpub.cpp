@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,7 +9,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.6 2002/09/23 01:54:06 acidblood Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.6.2.1 2003/01/19 22:49:49 snake Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class

@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
 */
 
 #ifndef __NETCONN_H__
-#define __NETCONN_H__ "@(#)$Id: netconn.h,v 1.2 2002/09/02 00:35:42 andreasb Exp $"
+#define __NETCONN_H__ "@(#)$Id: netconn.h,v 1.2.4.1 2003/01/19 22:49:50 snake Exp $"
 
 /* netconn_open(): create a new connection. Returns a 'handle' for
  * subsequent netconn_xxx() operations or NULL on error.

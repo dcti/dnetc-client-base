@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.2 2003/01/04 21:21:33 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.3 2003/01/19 22:49:50 snake Exp $"
 
 /* ----------------------------------------------------------------- */
 

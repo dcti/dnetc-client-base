@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2000-2002 - All Rights Reserved
+ * Copyright distributed.net 2000-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.3 2003/01/19 14:33:56 andreasb Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.4 2003/01/19 22:49:50 snake Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */

@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  * 
- * Copyright distributed.net 2001-2002 - All Rights Reserved
+ * Copyright distributed.net 2001-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -18,7 +18,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.2 2002/12/21 22:44:31 sod75 Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.3 2003/01/19 22:49:50 snake Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */

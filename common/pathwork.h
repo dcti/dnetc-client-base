@@ -1,12 +1,12 @@
 /* Hey, Emacs, this is a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 #ifndef __PATHWORK_H__
-#define __PATHWORK_H__ "@(#)$Id: pathwork.h,v 1.7 2002/09/02 00:35:43 andreasb Exp $"
+#define __PATHWORK_H__ "@(#)$Id: pathwork.h,v 1.7.4.1 2003/01/19 22:49:50 snake Exp $"
 
 /* -------------------------------------------------------------------
  * Get the working directory previously initialized with 

@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37 2002/10/09 22:22:15 andreasb Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37.2.1 2003/01/19 22:49:51 snake Exp $"
 
 #include "cputypes.h"
 

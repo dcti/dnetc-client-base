@@ -1,11 +1,11 @@
 /* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
 */ 
 const char *convdes_cpp(void) {
-return "@(#)$Id: convdes.cpp,v 1.14 1999/04/05 20:02:35 patrick Exp $"; }
+return "@(#)$Id: convdes.cpp,v 1.14.12.1 2003/01/19 22:49:50 snake Exp $"; }
 
 /* DES convertion routines */
 

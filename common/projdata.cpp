@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *projdata_cpp(void) {
-return "@(#)$Id: projdata.cpp,v 1.2 2002/10/13 08:09:46 jlawson Exp $"; }
+return "@(#)$Id: projdata.cpp,v 1.2.2.1 2003/01/19 22:49:50 snake Exp $"; }
 
 #include "cputypes.h"
 #include "projdata.h"

@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __TRIGGERS_H__
-#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.9.4.1 2002/11/17 21:00:33 pfeffi Exp $"
+#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.9.4.2 2003/01/19 22:49:51 snake Exp $"
 
 #if defined(SIGCONT) && defined(SIGTSTP)
   /* These constants define symbolically the signal names used by the

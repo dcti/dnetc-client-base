@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.18.2.1 2003/01/13 01:18:35 andreasb Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.18.2.2 2003/01/19 22:49:51 snake Exp $"
 
 void trace_out( int indlevel, const char *fmt, ... );
 void trace_setsrc( const char *src_filename );

@@ -1,13 +1,13 @@
 /* -*-C++-*-
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * This file should be shared between client and proxynet some day ...
  */
 #ifndef __PROJDATA_H__
-#define __PROJDATA_H__ "@(#)$Id: projdata.h,v 1.1 2002/10/06 19:25:44 andreasb Exp $"
+#define __PROJDATA_H__ "@(#)$Id: projdata.h,v 1.1.2.1 2003/01/19 22:49:50 snake Exp $"
 
 #include "cputypes.h"   // u32 ...
 

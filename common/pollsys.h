@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __POLLSYS_H__
-#define __POLLSYS_H__ "@(#)$Id: pollsys.h,v 1.4 1999/04/06 10:20:48 cyp Exp $"
+#define __POLLSYS_H__ "@(#)$Id: pollsys.h,v 1.4.12.1 2003/01/19 22:49:50 snake Exp $"
 
 #include "clitime.h"  /* needed for timeval struct */
 

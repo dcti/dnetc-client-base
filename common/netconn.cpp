@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.3.2.1 2002/11/25 16:48:39 stream Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.3.2.2 2003/01/19 22:49:50 snake Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET

@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __SETPRIO_H__
-#define __SETPRIO_H__ "@(#)$Id: setprio.h,v 1.3 1999/04/06 10:20:48 cyp Exp $"
+#define __SETPRIO_H__ "@(#)$Id: setprio.h,v 1.3.12.1 2003/01/19 22:49:51 snake Exp $"
 
 // 'prio' is a value on the scale of 0 to 9, where 0 is the lowest
 // priority and 9 is the highest priority [9 is what the priority would 
