@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.85  1999/03/18 17:01:18  silby
+// Sorry, telnet and http are ports 23 and 80, not port 2064.
+// Change from 1.83 reinstated. Perhaps the documentation
+// in Open needs to be changed, since it is obviously wrong.
+//
 // Revision 1.84  1999/03/18 04:25:37  cyp
 // a) Created new method Reset(); b) undid change from 1.83 - the reason why
 // it does what it does are (and always have been) documented in Open().
@@ -186,7 +191,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.84 1999/03/18 04:25:37 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.85 1999/03/18 17:01:18 silby Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -571,13 +576,11 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         }
       if (svc_hostport == 0)
         {
-        #if 0                             //2064 also accepts http/uue - cyp
         if ((startmode & MODE_HTTP) != 0)
           svc_hostport = 80;
         else if ((startmode & MODE_UUE) != 0)
           svc_hostport = 23;
         else
-        #endif
           svc_hostport = DEFAULT_PORT;
         }
 
