@@ -8,7 +8,7 @@
  * 
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.5 1999/10/07 18:39:00 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.6 1999/10/08 01:41:31 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -346,21 +346,26 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   else if (contestid == CSC)
   {
     selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
+    int user_selected = 1;
+#if 0 /* we don't support hardware detection yet, but this is how we would */
     if (selcorestatics.corenum[CSC] < 0)
     {
       int cpu2core = detected_type & 0xff;
       if (cpu2core == 2) // Ppro/PII/PIII
         selcorestatics.corenum[CSC] = 1; //6bit - called
       /*
-      else
-        ....
+      else if (cpu2core == ....
+        ...
       */
+      user_selected = 0;
     }
+#endif
     if (selcorestatics.corenum[CSC] >= 0)
     {
-      LogScreen( "%s: selecting %s (#%d) core.\n", contname, 
-                selcoreGetDisplayName( CSC, selcorestatics.corenum[CSC] ),
-                selcorestatics.corenum[CSC]  );
+      LogScreen( "%s: %s core #%d (%s)\n", contname, 
+                 ((user_selected)?("using"):("auto-selected")),
+  	             selcorestatics.corenum[CSC],
+                 selcoreGetDisplayName( CSC, selcorestatics.corenum[CSC] ) );
     }
   }
   #elif (CLIENT_CPU == CPU_ARM)
