@@ -1,7 +1,7 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
-# $Id: makefile.bcc,v 1.23.2.8 2000/03/10 03:10:39 jlawson Exp $
+# $Id: makefile.bcc,v 1.23.2.9 2000/03/11 02:58:57 andreasb Exp $
 #
 # As of Feb 2000, Borland C++ 5.5 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
@@ -24,7 +24,7 @@ RC5PATH = rc5
 CSCPATH = csc
 OGRPATH = ogr
 CHIPSRCPATH = platforms
-PLATSRCPATH = platforms/win32cli
+PLATSRCPATH = platforms\win32cli
 
 
 # define variable to existence to enable debugging.
@@ -38,24 +38,37 @@ HAVE_OGR_CORES=1
 
 
 # Main compilation and linking options
-BCCOPTS = /a4 /Vv /x- /xd- /RT- /r /k- /d /w /O2 /O /OS /tWM \
-	/I$(BCCINCLUDE) /I$(COMMONPATH) /I$(PLATSRCPATH) \
-	/I$(OGRPATH) /I$(CSCPATH) /D_CPU_32BIT_ /DMULTITHREAD /DLURK
 
+# We can't do anything against the following warnings, so let's ignore them:
+#   /w-aus disables "'identifier' is assigned a value that is never used" warning (8004)
+#   /w-par disables "Parameter 'parameter' is never used" warning (8057)
+BCCOPTS = /a4 /Vv /x- /xd- /RT- /r /k- /d /O2 /O /OS /tWM \
+        /w /w-aus /w-par \
+        /I$(BCCINCLUDE) /I$(COMMONPATH) /I$(PLATSRCPATH) \
+        /I$(OGRPATH) /I$(CSCPATH) /D_CPU_32BIT_ /DMULTITHREAD /DLURK
 
-NASMOPTS = -f obj
+NASMOPTS = -f obj -D__OMF__
 
-TLINKOPTS = /aa /x /Tpe /n /B:0x400000 /L$(BCCLIBRARY)
+TLINKOPTS = /aa /x /Tpe /n /Gn /B:0x400000 /L$(BCCLIBRARY)
 
 
 !ifdef DEBUG
-BCCOPTS = /v $(BCCOPTS) /D__showids__ /DDEBUG
+BCCOPTS = /v $(BCCOPTS) /D__showids__ /DDEBUG /Tkh10000
 TASMOPTS = /zi $(TASMOPTS)
 TLINKOPTS = /v $(TLINKOPTS)
 NASMOPTS = $(NASMOPTS) -D__showids__
 !else
 BCCOPTS = $(BCCOPTS) /DNDEBUG
 !endif
+
+!ifdef TRACE
+BCCOPTS = $(BCCOPTS) /DTRACE
+!endif
+
+!ifdef BETA
+BCCOPTS = $(BCCOPTS) /DBETA
+!endif
+
 
 !ifdef MMXRC5
 BCCOPTS = $(BCCOPTS) /DMMX_RC5
@@ -67,11 +80,11 @@ BCCOPTS = $(BCCOPTS) /DMMX_BITSLICER /DBIT_64 /DMEGGS /DKWAN
 
 
 .path.asm = $(RC5PATH)\x86\nasm;$(DESPATH)\mmx-bitslice;$(CSCPATH)\x86;$(CSCPATH)\x86\mmx;$(CHIPSRCPATH)
-.path.cpp = $(COMMONPATH);$(RC5PATH);$(DESPATH);$(OGRPATH);$(PLATSRCPATH)
 # do not add $(CSCPATH) to .path.cpp - everything is in .path.asm
+.path.cpp = $(COMMONPATH);$(RC5PATH);$(DESPATH);$(OGRPATH);$(PLATSRCPATH)
 .path.obj = $(OUTPUTPATH)
 
-all:	$(BASENAME).exe
+all:    $(BASENAME).exe
 
 # --------------------------------------------
 
@@ -79,7 +92,7 @@ DEF_FILE = $(OUTPUTPATH)\dnetc.def
 RES_FILE = $(OUTPUTPATH)\$(BASENAME).res
 RC_FILE = $(PLATSRCPATH)\w32cons.rc
 
-COMMON_OBJS =                    \
+COMMON_OBJS =                        \
         $(OUTPUTPATH)/autobuff.obj   \
         $(OUTPUTPATH)/base64.obj     \
         $(OUTPUTPATH)/bench.obj      \
@@ -161,6 +174,7 @@ BCCOPTS = $(BCCOPTS) -DMMX_RC5
 
 # --------------------------------- DES ----------------------------
 
+# untested!
 !ifndef HAVE_DES_CORES
 DES_OBJS =
 !else
@@ -177,7 +191,7 @@ DES_OBJS =                                   \
         $(OUTPUTPATH)/p2bdespro.obj          \
         $(OUTPUTPATH)/sboxes-kwan4.obj       \
 #       $(OUTPUTPATH)/sboxes-mmx.obj
-BCCOPTS = $(BCCOPTS) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN 
+BCCOPTS = $(BCCOPTS) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN
 !endif
 
 # --------------------------------- CSC ----------------------------
@@ -210,32 +224,30 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
 
 # --------------------------------------------
 
-OMF32ASM = platforms\omf32.asm
-
-{$(CSCPATH)\x86\mmx\;$(CSCPATH)\x86\}.asm{$(OUTPUTPATH:/=\)}.obj:
-        nasmw $(NASMOPTS) -i $(CSCPATH)\x86\ -p $(OMF32ASM) $(<:/=\) -o $(@:/=\)
+{$(CSCPATH)\x86\;$(CSCPATH)\x86\mmx\}.asm{$(OUTPUTPATH:/=\)}.obj:
+        nasmw $(NASMOPTS) -i $(CSCPATH)\x86\ $(<:/=\) -o $(@:/=\)
 
 .asm.obj:
         nasmw $(NASMOPTS) -DOS2 -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
 
 .cpp.obj:
         bcc32 -q -c @&&|
-	-P $(BCCOPTS) -n$(OUTPUTPATH)
-| $< 
+        -P $(BCCOPTS) -n$(OUTPUTPATH)
+| $<
 
 
 .c.obj:
         bcc32 -q -c @&&|
 -P $(BCCOPTS) -n$(OUTPUTPATH)
-| $< 
+| $<
 
 
 # --------------------------------------------
 
 # Target rule to produce the compiled resource file.
 
-$(RES_FILE):	$(RC_FILE)
-	brcc32 -32 -i$(BCCINCLUDE) -i$(COMMONPATH) -fo$(RES_FILE:/=\) $(RC_FILE:/=\)
+$(RES_FILE):    $(RC_FILE)
+        brcc32 -32 -i$(BCCINCLUDE) -i$(COMMONPATH) -fo$(RES_FILE:/=\) $(RC_FILE:/=\)
 
 
 ### Unfortunately, the Borland C++ 5.5 initial public release does not
@@ -250,15 +262,15 @@ $(RES_FILE):	$(RC_FILE)
 # for our exe, since ILINK32 says it contains "Additional segments".
 
 $(DEF_FILE):
-	if exist $(DEF_FILE:/=\) del $(DEF_FILE:/=\)
-	copy &&|
-CODE	PRELOAD MOVEABLE DISCARDABLE
-DATA	PRELOAD MOVEABLE MULTIPLE
-HEAPSIZE	4096
-STACKSIZE	1048576
+        if exist $(DEF_FILE:/=\) del $(DEF_FILE:/=\)
+        copy &&|
+CODE    PRELOAD MOVEABLE DISCARDABLE
+DATA    PRELOAD MOVEABLE MULTIPLE
+HEAPSIZE        4096
+STACKSIZE       1048576
 SEGMENTS
-	_TEXT
-	_DATA
+        _TEXT
+        _DATA
 | $(DEF_FILE:/=\)
 
 # --------------------------------------------
@@ -266,16 +278,19 @@ SEGMENTS
 # This is the main client exe compilation target rule.
 
 ALLCLIENTOBJS = $(COMMON_OBJS) $(PLAT_OBJS) $(CHIP_OBJS) \
-		$(RC5_OBJS) $(DES_OBJS) $(CSC_OBJS) $(OGR_OBJS)
+                $(RC5_OBJS) $(DES_OBJS) $(CSC_OBJS) $(OGR_OBJS)
 
 $(BASENAME).exe:   $(DEF_FILE) $(RES_FILE) $(ALLCLIENTOBJS)
-        ilink32 /ap $(TLINKOPTS) @&&|
+        ilink32 /q $(TLINKOPTS) @&&|
 c0w32.obj $(ALLCLIENTOBJS:/=\),$(BASENAME:/=\).exe,,$(CLI_LIBS),$(DEF_FILE),$(RES_FILE)
 |
 
 # --------------------------------------------
 
+# Remove all rebuildable and temporary files.
+# You will need a rm command (e.g. from cygwin) and support for long command lines.
+
 clean:
-# you will need a rm command (e.g. from cygwin) and support for long command lines
         rm -f $(ALLCLIENTOBJS:/=\) $(BASENAME:/=\).exe $(DEF_FILE) $(RES_FILE) \
-        $(BASENAME).ilc $(BASENAME).ild $(BASENAME).ilf $(BASENAME).ils $(BASENAME).tds
+            $(BASENAME).ilc $(BASENAME).ild $(BASENAME).ilf $(BASENAME).ils \
+            $(BASENAME).tds
