@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.11 2004/06/27 22:16:02 jlawson Exp $
+# $Id: makefile.vc,v 1.83.2.12 2004/06/27 22:43:02 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -483,6 +483,9 @@ rebuild: clean all
 
 makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr docs/readme.1st docs/readme.win32.html docs/dnetc.txt docs/CHANGES.txt
 	zip dnetcXXX-win32-x86.zip $**
+!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win64-amd64.zip
+!else
 	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win32-x86.zip
-
+!endif
 
