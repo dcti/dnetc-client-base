@@ -5,6 +5,34 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.17  1999/01/17 11:58:54  remi
+# Synced with :
+#
+#  Revision 1.160  1999/01/11 05:45:09  pct
+#  Ultrix modifications for updated client.
+#
+#  Revision 1.159  1999/01/10 11:00:53  cramer
+#  Added targets for 601/604/860 linux-PPC builds (mt and non-mt.)  Only the
+#  604 build appears to work on my 7200/75 (601) machine.
+#  ${BUILDNAME} is no long striped, but ${EXENAME} (rc5des) is.
+#
+#  Revision 1.158  1999/01/08 10:02:24  chrisb
+#  removed OLDRESOLVE from riscos
+#
+#  Revision 1.157  1999/01/08 08:07:12  myshkin
+#  Added support for PPC 821/860 target. Thanks to Cort Dougan
+#    (cort@persephone.cs.nmt.edu) for the gcc command-line arguments.
+#
+#  Revision 1.156  1999/01/08 07:25:08  cramer
+#  Added Solaris/Sparc/non-mt target
+#
+#  Revision 1.155  1999/01/06 21:37:24  cramer
+#  Changes sparc-solaris targets to TARGET_CC="gcc" to avoid g++ stupidly
+#  linking in libs that it doesn't need.
+#
+#  Revision 1.154  1999/01/06 07:32:02  cramer
+#  Fixed configure for sparc-linux (oops)
+#
 # Revision 1.113.2.16  1999/01/17 11:51:37  remi
 # Synced with :
 #
@@ -214,8 +242,8 @@ OPTS_EGCS='-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer \
 OPTS_CC_SPARC='-fast -xO4 -xtarget=ultra1/140 -DASM_SPARC'
 
 # (sparc/v7 [SS1/2/IPX] gcc)
-OPTS_GCC_SPARC="$OPTS_GCC -O6 -mcypress -DASM_SPARC"
-OPTS_GCC272_SPARC="$OPTS_GCC272 -O6 -mcypress -DASM_SPARC"
+OPTS_GCC_SPARC1="$OPTS_GCC -O6 -mcypress -DASM_SPARC"
+OPTS_GCC272_SPARC1="$OPTS_GCC272 -O6 -mcypress -DASM_SPARC"
 
 # (sparc/v8 [SS5+]      gcc)
 OPTS_GCC_SPARC="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
@@ -264,8 +292,15 @@ OPTS_GCC_DGUX="$OPTS_GCC -O6 -D_DGUX -DPIPELINE_COUNT=2 \
 
 OPTS_GCC_PPC601="$OPTS_GCC -O6 -DASM_PPC -mcpu=601"
 OPTS_GCC_PPC="$OPTS_GCC -O6 -DASM_PPC -mcpu=604"
+OPTS_GCC_PPC860="$OPTS_GCC -O6 -DASM_PPC -mcpu=860 -msoft-float"
 OPTS_GCC272_PPC="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604"
+OPTS_GCC272_PPC860="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=860 -msoft-float"
 OPTS_GCC_POWER="$OPTS_GCC -O6 -DASM_POWER -mcpu=power"
+
+OPTS_EGCS_PPC601="$OPTS_EGCS -O6 -DASM_PPC -mcpu=601"
+OPTS_EGCS_PPC604="$OPTS_EGCS -O6 -DASM_PPC -mcpu=604"
+OPTS_EGCS_PPC860="$OPTS_EGCS -O6 -DASM_PPC -mcpu=860 -msoft-float"
+OPTS_EGCS_POWER="$OPTS_EGCS -O6 -DASM_POWER -mcpu=power"
 
 OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC -Icommon"
 OPTS_XLC_PPC="$OPTS_XLC -qarch=ppc -qtune=604 -D_AIX -D_ARCH_PPC -Icommon"
@@ -506,6 +541,7 @@ case "$1" in
 	;;
 
     *mips-gcc-ultrix)	# For mips based DEC Ultrix machines
+	DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DKWAN -DMEGGS"
@@ -560,7 +596,7 @@ case "$1" in
 
     *sparc-linux)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -fno-inline-functions \
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC \
 			-DPIPELINE_COUNT=2 \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
@@ -612,6 +648,7 @@ case "$1" in
 
     *sparc-solaris-gcc)           # slower rc5, slower des
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DPIPELINE_COUNT=2 \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
@@ -621,6 +658,7 @@ case "$1" in
 
     *sparc-solaris-gcc-crunch)       # fastest rc5, slower des
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
+	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DPIPELINE_COUNT=2 \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
@@ -628,23 +666,24 @@ case "$1" in
 	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
-    *sparc-solaris-gcc-crunch-slice)      # fastest rc5 & des for ultra
+    *sparc-solaris-gcc-crunch-slice)   # fastest rc5 & des for ultra
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
+	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DPIPELINE_COUNT=2 \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
     *sparc-solaris-gcc-crunch-asmslice)      # fastest rc5 & VIS DES
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
+	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
 			-DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
  	TARGET_ADDASMS="platforms/ultrasparc/simple.handopt.s"
 	TARGET_ASFLAGS="$OPTS_GAS_ULTRA"
-	TARGET_CC="gcc"
 	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
@@ -727,12 +766,34 @@ case "$1" in
 
   ### generic targets
 
-    *ppc-gcc)              # generic PPC target
-	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch_allitnil_552.ppc.s rc5/crunch_lintilla_296.ppc.s"
+    *ppc-601-linux-egcs)		# [cramer] PPC 601 target
+	TARGET_CC="gcc -pipe -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC601 -DPIPELINE_COUNT=1 \
+			-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+			rc5/crunch_allitnil_552.ppc.s \
+			rc5/crunch_lintilla_296.ppc.s"
 	;;
 
-    *ppc-gcc)	      # generic PPC target
+    *ppc-604-linux-egcs)		# [cramer] PPC 604 target
+	TARGET_CC="gcc -pipe -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC604 -DPIPELINE_COUNT=1 \
+			-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+			rc5/crunch_allitnil_552.ppc.s \
+			rc5/crunch_lintilla_296.ppc.s"
+	;;
+
+    *ppc-860-linux-egcs)		# [cramer] PPC 860 target
+	TARGET_CC="gcc -pipe -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC860 -DPIPELINE_COUNT=1 \
+			-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+			rc5/crunch_allitnil_552.ppc.s \
+			rc5/crunch_lintilla_296.ppc.s"
+	;;
+
+    *ppc-gcc)		# generic PPC target
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
@@ -740,8 +801,24 @@ case "$1" in
 			rc5/crunch_lintilla_296.ppc.s"
 	;;
 
-    *ppc-gcc272)	   # generic PPC target, gcc 2.7.2
+    *ppc860-gcc)	# PPC 821/860 target
+	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 \
+			-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+			rc5/crunch_allitnil_552.ppc.s \
+			rc5/crunch_lintilla_296.ppc.s"
+	;;
+
+    *ppc-gcc272)	# generic PPC target, gcc 2.7.2
 	TARGET_CCFLAGS="$OPTS_GCC272_PPC -DPIPELINE_COUNT=1 \
+			-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+			rc5/crunch_allitnil_552.ppc.s \
+			rc5/crunch_lintilla_296.ppc.s"
+	;;
+
+    *ppc860-gcc272)	# PPC 821/860 target, gcc 2.7.2
+	TARGET_CCFLAGS="$OPTS_GCC272_PPC860 -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			rc5/crunch_allitnil_552.ppc.s \
@@ -974,7 +1051,7 @@ case "$1" in
 			-I/home/cberry/play/riscoslib/OSLib \
 			-I/home/cberry/play/riscoslib/TCPIPLibs \
 			-J/home/cberry/play/riscoslib/CLib \
-			-DOLDRESOLVE \
+			-D__showids__ \
 			-DCOMPAT_INET4 -D__riscos \
 			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="platforms/riscos/riscos.cpp"
@@ -1100,6 +1177,7 @@ if [ $1 = riscos ]; then
   #tum-te-tum
   rsh starman "cd rc5/src/client; gcc common/testplat.cpp -o testplat"
 else
+    echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
   sh -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
   if [ $? -ne 0 ]; then
     echo "Compilation failed.  Check your target options."
@@ -1166,13 +1244,13 @@ echo "" >> Makefile
 echo "Generating Makefile production targets..."
 echo "# Regular targets follow" >> Makefile
 
-echo "${EXENAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
-echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${EXENAME}" >> Makefile
+echo "${EXENAME}:	\${BUILDNAME}" >> Makefile
+echo "	\${CP} \${BUILDNAME} ${EXENAME}" >> Makefile
+echo "	\${STRIP} ${EXENAME}" >> Makefile
 echo "" >> Makefile
 
 echo "\${BUILDNAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
 echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o \${BUILDNAME}" >> Makefile
-echo "	\${STRIP} \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
 
 echo "clean:" >> Makefile
