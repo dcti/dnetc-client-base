@@ -12,6 +12,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.65  1998/07/08 09:22:48  remi
+// Added support for the MMX bitslicer.
+// Wrapped $Log comments to some reasonable value.
+//
 // Revision 1.64  1998/07/08 05:19:26  jlawson
 // updates to get Borland C++ to compile under Win32.
 //
@@ -53,7 +57,10 @@
 // to detect file changes.
 //
 // Revision 1.57  1998/07/04 21:05:34  silby
-// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong should be fixed.
+// Changes to lurk code; win32 and os/2 code now uses the same variables,
+// and has been integrated into StartLurk and LurkStatus functions so they
+// now act the same.  Additionally, problems with lurkonly clients trying to
+// connect when contestdone was wrong should be fixed.
 //
 // Revision 1.56  1998/07/02 13:09:28  kbracey
 // A couple of RISC OS fixes - printf format specifiers made long.
@@ -72,10 +79,12 @@
 // added new platform OS_WIN32S to make code handling easier.
 //
 // Revision 1.51  1998/06/28 23:40:23  silby
-// Changes to path handling code so that path validation+adding to filenames will be more reliable (especially on win32).
+// Changes to path handling code so that path validation+adding to filenames
+// will be more reliable (especially on win32).
 //
 // Revision 1.50  1998/06/25 04:43:32  silby
-// Changes to Internalgetfilename for win32 (+ other platforms in the future) to make path handling better (now it won't miss / and : on win32)
+// Changes to Internalgetfilename for win32 (+ other platforms in the future)
+// to make path handling better (now it won't miss / and : on win32)
 //
 // Revision 1.49  1998/06/25 03:02:32  blast
 // Moved the version #defines from client.h to version.h and added a version
@@ -307,6 +316,9 @@ public:
 #if (CLIENT_OS == OS_OS2)
   s32 os2hidden;
 //  s32 connectstatus;          // 0 is not connected, 1 is connected
+#endif
+#if defined(MMX_BITSLICER)
+  s32 usemmx;
 #endif
 
 

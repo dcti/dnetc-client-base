@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.84  1998/07/08 09:22:52  remi
+// Added support for the MMX bitslicer.
+// Wrapped $Log comments to some reasonable value.
+//
 // Revision 1.83  1998/07/08 05:19:23  jlawson
 // updates to get Borland C++ to compile under Win32.
 //
@@ -19,16 +23,20 @@
 // anticipation of global log functions.
 //
 // Revision 1.81  1998/07/07 02:52:57  silby
-// Another slight change to logging where date will now be shown for proper alignment in the win32gui.
+// Another slight change to logging where date will now be shown for proper
+// alignment in the win32gui.
 //
 // Revision 1.80  1998/07/07 02:12:14  silby
-// Removed an over-zealous #if DONT_USE_PATHWORK - was preventing .inis from following the executible's name.
+// Removed an over-zealous #if DONT_USE_PATHWORK - was preventing .inis from
+// following the executible's name.
 //
 // Revision 1.79  1998/07/07 01:14:09  silby
-// Fixed a bug where the default rc5 out buffer was buff-out.des. 413 needs to be recalled now.
+// Fixed a bug where the default rc5 out buffer was buff-out.des. 413 needs
+// to be recalled now.
 //
 // Revision 1.78  1998/07/05 21:49:15  silby
-// Modified logging so that manual wrapping is not done on win32gui, as it looks terrible in a non-fixed spaced font.
+// Modified logging so that manual wrapping is not done on win32gui, as it
+// looks terrible in a non-fixed spaced font.
 //
 // Revision 1.77  1998/07/05 15:53:58  cyruspatel
 // Implemented EraseCheckpointFile() and TruncateBufferFile() in buffwork.cpp;
@@ -49,10 +57,14 @@
 // #define DONT_USE_PATHWORK if you don't want to use these functions.
 //
 // Revision 1.74  1998/07/04 22:05:53  silby
-// Fixed problem found by peterd in which message mailing would have overridden offlinemode.
+// Fixed problem found by peterd in which message mailing would have
+// overridden offlinemode
 //
 // Revision 1.73  1998/07/04 21:05:30  silby
-// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong should be fixed.
+// Changes to lurk code; win32 and os/2 code now uses the same variables, and
+// has been integrated into StartLurk and LurkStatus functions so they now act
+// the same.  Additionally, problems with lurkonly clients trying to connect
+// when contestdone was wrong should be fixed.
 //
 // Revision 1.72  1998/07/04 10:30:10  jlawson
 // fixed printing of info of invalid block when -runbuffers consumes
@@ -162,7 +174,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-static const char *id="@(#)$Id: client.cpp,v 1.83 1998/07/08 05:19:23 jlawson Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.84 1998/07/08 09:22:52 remi Exp $";
 return id; }
 #endif
 
@@ -391,6 +403,9 @@ Client::Client()
   contestdone[0]=contestdone[1]=0;
   srand( time( NULL ) );
   InitRandom();
+#ifdef MMX_BITSLICER
+  usemmx = 1;
+#endif
 }
 
 
@@ -1895,7 +1910,7 @@ PreferredIsDone1:
             if (have_loaded_buffers[tmpc]) //load any of this type?
             {
               int in = CountBufferInput((u8) tmpc), out = CountBufferOutput((u8) tmpc);
-              Log( "[%s] %d %s block%s remain%s in file %s\n", CliGetTimeString(NULL,1),
+              Log( " %s  %d %s block%s remain%s in file %s\n", CliGetTimeString(NULL,1),
                 in,
                 CliGetContestNameFromID(tmpc),
                 in == 1 ? "" : "s",
@@ -1906,7 +1921,7 @@ PreferredIsDone1:
 #else                
                 in_buffer_file[tmpc]));
 #endif                
-              Log( "[%s] %d %s block%s %s in file %s\n", CliGetTimeString(NULL,1),
+              Log( " %s  %d %s block%s %s in file %s\n", CliGetTimeString(NULL,0),
                 out,
                 CliGetContestNameFromID(tmpc),
                 out == 1 ? "" : "s",
@@ -3115,10 +3130,30 @@ int main( int argc, char *argv[] )
         client.LogScreenf( "\n%d/%d DES Tests Passed\n", (int) j, (int) TEST_CASE_COUNT);
       retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
     }
+    else if ( strcmp( argv[i], "-benchmark2rc5" ) == 0 )
+    {
+      client.Benchmark(1, 1000000L);
+      retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
+    }
+    else if ( strcmp( argv[i], "-benchmark2des" ) == 0 )
+    {
+      client.Benchmark(2, 1000000L);
+      retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
+    }
     else if ( strcmp( argv[i], "-benchmark2" ) == 0 )
     {
       client.Benchmark(1, 1000000L);
       client.Benchmark(2, 1000000L);
+      retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
+    }
+    else if ( strcmp( argv[i], "-benchmarkrc5" ) == 0 )
+    {
+      client.Benchmark(1, 0);
+      retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
+    }
+    else if ( strcmp( argv[i], "-benchmarkdes" ) == 0 )
+    {
+      client.Benchmark(2, 0);
       retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
     }
     else if ( strcmp( argv[i], "-benchmark" ) == 0 )
