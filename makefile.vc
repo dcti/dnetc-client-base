@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.40 2001/03/27 17:34:25 cyp Exp $
+# $Id: makefile.vc,v 1.56.2.41 2001/04/16 17:58:51 cyp Exp $
 #
 
 BASENAME = dnetc
@@ -16,7 +16,7 @@ PLATSRCPATH = plat/win
 
 #HAVE_DES_CORES=1
 #HAVE_CSC_CORES=1
-#HAVE_OGR_CORES=1
+HAVE_OGR_CORES=1
 
 # --------------------------------------------
 
@@ -256,10 +256,17 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_CSC_CORES
 
 !ifndef HAVE_OGR_CORES
 OGR_OBJS =
-!else
-OGR_OBJS =                        \
-        $(OUTPUTPATH)/ogr.obj     \
-        $(OUTPUTPATH)/ogr_dat.obj \
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
+OGR_OBJS =                           \
+        $(OUTPUTPATH)/ogr.obj        \
+        $(OUTPUTPATH)/ogr_dat.obj    \
+        $(OUTPUTPATH)/ogr_sup.obj
+OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH) -DHAVE_OGR_CORES
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
+OGR_OBJS =                           \
+        $(OUTPUTPATH)/ogr-a.obj      \
+        $(OUTPUTPATH)/ogr-b.obj      \
+        $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
 OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH) -DHAVE_OGR_CORES
 !endif
@@ -297,7 +304,7 @@ $(VC_CHECK):
         nasmw -o $(@:/=\) -f win32 -i $(RC5SRCPATH:/=\)\x86\ $(**:/=\)
 
 {$(DESSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        tasm32 /t /m /ml /dmodelnum=2 /i$(DESSRCPATH:/=\)\x86 $(**:/=\), $(@:/=\)
+        tasm32 /t /m /ml /i$(DESSRCPATH:/=\)\x86 $(**:/=\), $(@:/=\)
 
 {$(DESSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\x86\ $(**:/=\)
@@ -313,6 +320,9 @@ $(VC_CHECK):
 
 {$(OGRSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(OGRSRCPATH:/=\)\x86\ $(**:/=\)
+
+{$(OGRSRCPATH)/x86}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 !endif
 
