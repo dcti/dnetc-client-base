@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: cmdline.cpp,v $
+// Revision 1.92.2.9  1999/01/30 16:26:00  remi
+// Fixed the previous merge.
+//
 // Revision 1.92.2.8  1999/01/17 12:31:08  remi
 // In sync with 1.115
 //
@@ -49,7 +52,7 @@
 /* -------------------------------------- */
 
 int Client::ParseCommandline( int run_level, int argc, const char *argv[], 
-                              int *retcodeP, int logging_is_initialized )
+                              int *retcodeP, bool logging_is_initialized )
 {
   int inimissing, pos, skip_next, terminate_app, havemode;
   const char *thisarg, *nextarg;
