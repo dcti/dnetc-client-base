@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.25 2001/01/11 04:58:14 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.26 2001/01/11 14:38:22 cyp Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -209,8 +209,11 @@
 */
 #define OGROPT_IGNORE_TIME_CONSTRAINT_ARG
 #if defined(macintosh) || defined(__riscos) || \
-    (defined(ASM_X86) && defined(GENERATING_ASM))
-    /* x86 asm is optimized by hand anyway */
+    defined(ASM_X86)
+    /* ASM_X86: the ogr core used by all x86 platforms is a hand optimized */
+    /* .S/.asm version of this core - If we're compiling for asm_x86 then */
+    /* we're either generating an .S for later optimization, or compiling */
+    /* for comparison with an existing .S */
   #undef OGROPT_IGNORE_TIME_CONSTRAINT_ARG
 #endif  
 
@@ -266,7 +269,7 @@ static int init_load_choose(void);
 static int found_one(const struct State *oState);
 static int ogr_init(void);
 static int ogr_create(void *input, int inputlen, void *state, int statelen);
-static int ogr_cycle(void *state, int *pnodes);
+static int ogr_cycle(void *state, int *pnodes, int with_time_constraints);
 static int ogr_getresult(void *state, void *result, int resultlen);
 static int ogr_destroy(void *state);
 #if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
