@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.256 2001/07/21 18:24:57 mfeiri Exp $
+# @(#)$Id: configure,v 1.222.2.257 2001/08/07 09:37:54 mfeiri Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -365,26 +365,26 @@ add_sources() # $1=os, $2=arch, $3=custom
   #-----------------------------------------------------------------  
   elif [ "$2" = "ppc" -o "$2" = "power" ]; then
     XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
-		   rc5/ppc/crunch_allitnil_552.ppcxlc.s"
-    RC5PPC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.s \
-       rc5/ppc/crunch_lintilla_296-604.ppc.s \
-	     rc5/ppc/crunch_allitnil_552.ppc.s \
+	     rc5/ppc/crunch_allitnil.ppcxlc.s"
+    RC5PPC_SRCS="rc5/ppc/crunch_lintilla.ppcgas.s \
+        rc5/ppc/crunch_lintilla_604e.ppcgas.s \
+	     rc5/ppc/crunch_allitnil.ppcgas.s \
 	     rc5/ppc/rc5_unit_func_lintilla.cpp \
-	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
+	     rc5/ppc/rc5_unit_func_lintilla_604e.cpp \
 	     rc5/ppc/rc5_unit_func_allitnil.cpp"
-    RC5PPC_MWCC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.c \
-       rc5/ppc/crunch_lintilla_296-604.ppc.c \
-	     rc5/ppc/crunch_allitnil_552.ppc.c \
+    RC5PPC_MWCC_SRCS="rc5/ppc/crunch_lintilla.ppcmpw.s \
+        rc5/ppc/crunch_lintilla_604e.ppcmpw.s \
+	     rc5/ppc/crunch_allitnil.ppcmpw.s \
 	     rc5/ppc/rc5_unit_func_lintilla.cpp \
-	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
+	     rc5/ppc/rc5_unit_func_lintilla_604e.cpp \
 	     rc5/ppc/rc5_unit_func_allitnil.cpp"
-    RC5PPC_APPLE_SRCS="rc5/ppc/crunch_lintilla_296_apple.ppc.s \
-       rc5/ppc/crunch_lintilla_296-604_a.ppc.s \
-	     rc5/ppc/crunch_allitnil_552_apple.ppc.s \
+    RC5PPC_APPLE_SRCS="rc5/ppc/crunch_lintilla.ppcosx.s \
+        rc5/ppc/crunch_lintilla_604e.ppcosx.s \
+	     rc5/ppc/crunch_allitnil.ppcosx.s \
 	     rc5/ppc/rc5_unit_func_lintilla.cpp \
-	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
+	     rc5/ppc/rc5_unit_func_lintilla_604e.cpp \
 	     rc5/ppc/rc5_unit_func_allitnil.cpp"
-    RC5ALTIVEC_SRCS="rc5/ppc/rc5loopX.s \
+    RC5ALTIVEC_SRCS="rc5/ppc/crunch_vec.ppcosx.s \
 		   rc5/ppc/rc5_unit_func_vec.cpp"
        
     if [ "$2" = "power" ]; then
@@ -396,9 +396,9 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_MWCC_SRCS"
     elif [ "$TARGET_CC" = "xlC" ]; then
       if [ "X$3" = "aix32" ]; then
-        TARGET_ADDASMS="$TARGET_ADDASMS rc5/ppc/crunch_allitnil_552.ppc.s \
-                                        rc5/ppc/crunch_lintilla_296.ppc.s \
-                                        rc5/ppc/crunch_lintilla_296-604.ppc.s"
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5/ppc/crunch_allitnil.ppcgas.s \
+                                        rc5/ppc/crunch_lintilla.ppcgas.s \
+                                        rc5/ppc/crunch_lintilla_604e.ppcgas.s"
       else # aix4
         TARGET_ADDASMS="$TARGET_ADDASMS $XLC_LINTILLA_ASMS"
       fi  
