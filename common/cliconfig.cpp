@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.141  1998/07/09 03:21:20  silby
+// Changed autodetect so that autodetection on x86 is always done, and mmx cores are forced if usemmx=1 no matter which core is selected. (prevents costly des keyrate loss)
+//
 // Revision 1.140  1998/07/09 03:13:20  remi
 // Fixed -nommx message for x86 clients without the MMX bitslicer.
 //
@@ -235,7 +238,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.140 1998/07/09 03:13:20 remi Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.141 1998/07/09 03:21:20 silby Exp $";
 return id; }
 #endif
 
@@ -401,7 +404,7 @@ static optionstruct options[OPTION_COUNT]=
     "65536",
 #endif
     CFGTXT("\nThe lower the value, the less impact the client will have on your system, but\n"
-    "the slower it will go. Values from 200 to 65536 are good."),4,2,4,NULL},
+    "the slower it will go. Values from 200 to 65536 are good."),4,2,5,NULL},
 //8
 { "niceness", CFGTXT("Level of niceness to run at"), "0",
   CFGTXT("\n\nExtremely Nice will not slow down other running programs.\n"
@@ -2254,13 +2257,26 @@ s32 Client::SelectCore(void)
 #elif (CLIENT_CPU == CPU_X86)
   // benchmark all cores
   s32 fastcore = cputype;
-  if (fastcore == -1) fastcore = GetProcessorType();  //was x86id(); now in cpucheck.cpp
-    // Will return 0 if unable to identify.
+  s32 detectedtype;
+  detectedtype=GetProcessorType(); // run autodetect
+  if (fastcore != -1) // if specified by user
+    LogScreen("Overriding autodetect - ");
+  else
+    fastcore=detectedtype; // use autodetect
 
-  // Old "try every code" speed detect removed; it was never right, and
-  // x86id gets almost all processors now anyway.
+#ifdef MMX_BITSLICER
+  if ((usemmx==1) && (detectedtype & 0x100 == 0x100))
+    fastcore=(fastcore & 0xFF) + 0x100;
+    // turn on mmx even if wrong core is chosen manually
+#endif
+
   LogScreenf("Selecting %s code\n", cputypetable[(int)(fastcore & 0xFF)+1]);
 
+#ifdef MMX_BITSLICER
+  if ((usemmx==1) && (fastcore & 0x100 == 0x100))
+    LogScreen("Using MMX DES cores\n");
+    LogScreen("\n");
+#endif
   // select the correct core engine
   #if (defined(KWAN) || defined(MEGGS)) && !defined(MMX_BITSLICER)
     #define DESUNITFUNC51 des_unit_func_slice
