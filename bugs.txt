@@ -6,6 +6,13 @@ Bugs Listing
   This is a text file that lists any bugs that have been found by either
   the coders, or by users.
 
+06-11-98 - Kevin Bracey
+  During autodetect x86 and ARM cores will say "Automatically selecting
+  fastest core... This is just a guess based on a small test of each core.
+  If you know what CPU this machine has, then run 'rc5des -config', select
+  option 17, and set it". It's not option 17 any more, and GUI builds
+  shouldn't talk about rc5des -config.
+
 06-11-98 - Mike Silbersack
 
   I just verified a report that x86ident on linux w/build 408

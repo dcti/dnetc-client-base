@@ -8,7 +8,7 @@
 
         AREA    fastdesarea, CODE
 
-        EXPORT  des_unit_func__FP11RC5UnitWorkUl
+        EXPORT  des_unit_func_strongarm
         EXPORT  convert_key_from_des_to_inc__FPUlT1
         EXPORT  convert_key_from_inc_to_des__FPUlT1
 
@@ -1343,7 +1343,7 @@ L000384
 L000388
         DCD      0xf0f0f0f0
 
-des_unit_func__FP11RC5UnitWorkUl
+des_unit_func_strongarm
 |L000000.J2|
         MOV      r12,r13
         STMDB    r13!,{r0,r1,r4-r9,r11,r12,lr,pc}

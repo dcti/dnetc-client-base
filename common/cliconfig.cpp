@@ -31,11 +31,13 @@ static char cputypetable[7][60]=
   "AMD K6",
   };
 #elif (CLIENT_CPU == CPU_ARM)
-static char cputypetable[3][60]=
+static char cputypetable[5][60]=
   {
   "Autodetect",
-  "ARM",
-  "StrongARM",
+  "ARM 3, ARM 610, ARM 700, ARM 7500, ARM 7500FE",
+  "ARM 810, StrongARM 110",
+  "ARM 2, ARM 250",
+  "ARM 710",
   };
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
 static char cputypetable[3][60]=
@@ -173,7 +175,7 @@ static optionstruct options[OPTION_COUNT]=
       CFGTXT("\n"),4,2,3,NULL,CFGTXT(&cputypetable[1][0]),-1,5},
 #elif (CLIENT_CPU == CPU_ARM)
 { "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
-      CFGTXT("\n"),4,2,3,NULL,CFGTXT(&cputypetable[1][0]),-1,1},
+      CFGTXT("\n"),4,2,3,NULL,CFGTXT(&cputypetable[1][0]),-1,3},
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
 //16
 { "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
@@ -1221,7 +1223,9 @@ void Client::ValidateConfig( void )
   if ( uuehttpmode < 0 || uuehttpmode > 5 ) uuehttpmode = 0;
 #if (CLIENT_CPU == CPU_X86)
   if ( cputype < -1 || cputype > 5) cputype = -1;
-#elif ((CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
+#elif (CLIENT_CPU == CPU_ARM)
+  if ( cputype < -1 || cputype > 3) cputype = -1;
+#elif ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX)) )
   if ( cputype < -1 || cputype > 1) cputype = -1;
 #endif
   if ( messagelen < 0) messagelen = 0;
@@ -2247,13 +2251,15 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
   if (fastcore == -1)
   {
     const int benchsize = 50000;
-    double fasttime = 0;
+    double fasttime[2] = { 0, 0 };
+    int fastcoretest[2] = { -1, -1 };
 
     LogScreen("Automatically selecting fastest core...\n");
     LogScreen("This is just a guess based on a small test of each core.  If you know what CPU\n");
     LogScreenf("this machine has, then run 'rc5des -config', select option %d, and set it\n",CONF_CPUTYPE+1);
     fflush(stdout);
 //    for (int i = 0; i < 6; i++)
+    for (int j = 0; j < 2; j++)
     for (int i = 0; i < 2; i++)
     {
       Problem problem;
@@ -2265,40 +2271,52 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
       contestwork.keysdone.lo = contestwork.keysdone.hi = htonl( 0 );
       contestwork.iterations.lo = htonl( benchsize );
       contestwork.iterations.hi = htonl( 0 );
-      problem.LoadState( &contestwork , 0 ); // RC5 core selection
+      problem.LoadState( &contestwork , j ); // DES or RC5 core selection
 
       // select the correct core engine
       switch(i)
       {
-        case 1: rc5_unit_func = rc5_unit_func_strongarm; break;
-        default: rc5_unit_func = rc5_unit_func_arm; break;
+        case 1:  rc5_unit_func = rc5_unit_func_strongarm; des_unit_func = des_unit_func_strongarm; break;
+        default: rc5_unit_func = rc5_unit_func_arm;       des_unit_func = des_unit_func_arm;       break;
       }
 
       struct timeval start, stop;
-      struct timezone dummy;
-      gettimeofday( &start, &dummy );
+      gettimeofday( &start, NULL );
       problem.Run( benchsize / PIPELINE_COUNT , 0 );
-      gettimeofday( &stop, &dummy );
+      gettimeofday( &stop, NULL );
       double elapsed = (stop.tv_sec - start.tv_sec) +
                        (((double)stop.tv_usec - (double)start.tv_usec)/1000000.0);
-//printf("Core %d: %f\n",i,elapsed);
+//printf("%s Core %d: %f\n",i & 2 ? "DES" : "RC5",i,elapsed);
 
-      if (fastcore < 0 || elapsed < fasttime)
-        {fastcore = i; fasttime = elapsed;}
+
+      if (fastcoretest[j] < 0 || elapsed < fasttime[j])
+        {fastcoretest[j] = i; fasttime[j] = elapsed;}
     }
+
+    fastcore = (4-(fastcoretest[0] + (fastcoretest[1]<<1)))&3;
   }
+
+LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
+
   // select the correct core engine
   switch(fastcore)
   {
     case 0:
-      LogScreen("Selecting ARM code\n");
       rc5_unit_func = rc5_unit_func_arm;
       des_unit_func = des_unit_func_arm;
       break;
+    case 1:
     default:
-      LogScreen("Selecting StrongARM code\n");
       rc5_unit_func = rc5_unit_func_strongarm;
       des_unit_func = des_unit_func_strongarm;
+      break;
+    case 2:
+      rc5_unit_func = rc5_unit_func_arm;
+      des_unit_func = des_unit_func_strongarm;
+      break;
+    case 3:
+      rc5_unit_func = rc5_unit_func_strongarm;
+      des_unit_func = des_unit_func_arm;
       break;
   }
 
@@ -3370,29 +3388,32 @@ int Client::ARMid()
   switch (detectedvalue)
   {
     case 0x200:
-      LogScreen("Detected an ARM 2 or ARM 250; ");
-      coretouse=0;
+      LogScreen("Detected an ARM 2 or ARM 250\n");
+      coretouse=2;
       break;
     case 0x3:
     case 0x600:
     case 0x610:
     case 0x700:
-    case 0x710:
     case 0x7500:
     case 0x7500FE:
-      LogScreenf("Detected an ARM %X; ", detectedvalue);
+      LogScreenf("Detected an ARM %X\n", detectedvalue);
       coretouse=0;
       break;
+    case 0x710:
+      LogScreenf("Detected an ARM %X\n", detectedvalue);
+      coretouse=3;
+      break;
     case 0x810:
-      LogScreenf("Detected an ARM %X; ", detectedvalue);
+      LogScreenf("Detected an ARM %X\n", detectedvalue);
       coretouse=1;
       break;
     case 0xA10:
-      LogScreen("Detected a StrongARM 110; ");
+      LogScreen("Detected a StrongARM 110\n");
       coretouse=1;
       break;
     default:
-      LogScreen("Detected an unknown processor; ");
+      LogScreen("Detected an unknown processor\n");
       coretouse=-1;
       break;
   }
