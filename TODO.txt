@@ -1,5 +1,5 @@
 
-$Id: TODO.txt,v 1.5 1999/04/06 14:01:05 cyp Exp $"
+$Id: TODO.txt,v 1.6 1999/04/10 14:02:31 cyp Exp $"
 
 This file contains a list of mini-projects. Submissions as well as 
 volunteers :) are welcome. 
@@ -14,7 +14,6 @@ with 'bug' or 'feature request) here.
 If you have the expertise but lack the time to handle a project, 
 please post your willingness to assist to coders@lists.distributed.net.
 Perhaps someone else has what you don't. :)
-
 
 1. Add support for GSSAPI authentication to the client's SOCKS5 handler.
    GSSAPI support is *required* according to the SOCKS5 rfc. Priority: Medium
@@ -45,6 +44,9 @@ Perhaps someone else has what you don't. :)
    c) The buffer format must support FIFO. The current FIFO scheme 
       uses a "find one more suitable than default" scheme. It works 
       well and has a low overhead. 
+   d) The buffer format should allow variable record size or sufficient
+      per record padding that we can add fields without having to 
+      redesign the whole mess again soon.
 
 4. Write a routine to import/export uuencoded buffers for/from users
    that can only update their buffers via mail. The functions to
@@ -56,11 +58,15 @@ Perhaps someone else has what you don't. :)
     
 6. Write a small routine to obtain a list of the local host's UP af_inet 
    if's by using SNMP or ... Use ioctl() to do the same (for your port).
-                                                           Priority: Low
-
+   Linux/OS/2/FreeBSD/OpenBSD are already implemented      Priority: Low
+							   
 7. Modify client to use an ini file format with more varied sections
    to classify the option categories better.               Priority: Low
 
 8. Split network.cpp into netio primitives and high-level/wrapper handling
    functions. Something along the lines of whats used in the proxy would
    be nice, but without the bloat please.                  Priority: Low
+
+9. Convert all references to u64 structures (fake u64 that is) from {hi,lo} 
+   to u32 hi; u32 lo; (discard structure).                 Priority: Low
+   
