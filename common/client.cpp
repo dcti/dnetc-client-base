@@ -268,7 +268,7 @@ s32 Client::ForceFetch( u8 contest, Network *netin )
     ret = Fetch(contest, netin);
     temp2 = temp1;
     temp1 = CountBufferInput(contest);
-    LogScreenf("[%s] %d blocks remain in %s\n",Time(),temp1,in_buffer_file[contest]);
+    LogScreenf("[%s] %d blocks remain in %s\n",Time(),temp1,ini_in_buffer_file[contest]);
   }
   return ret;
 }
@@ -624,7 +624,7 @@ s32 Client::ForceFlush( u8 contest , Network *netin )
     ret = Flush(contest, netin);
     temp2 = temp1;
     temp1 = CountBufferOutput(contest);
-    Log("[%s] %d blocks remain in %s\n",Time(), temp1,out_buffer_file[contest]);
+    Log("[%s] %d blocks remain in %s\n",Time(), temp1,ini_out_buffer_file[contest]);
   }
   return ret;
 }
@@ -1685,11 +1685,11 @@ PreferredIsDone1:
               Log( "[%s] %d %s Blocks remain in file %s\n", CliGetTimeString(NULL,1),
                 CountBufferInput((u8) tmpc),
                 CliGetContestNameFromID(tmpc),
-                (nodiskbuffers ? "(memory-in)" : in_buffer_file[tmpc]));
+                (nodiskbuffers ? "(memory-in)" : ini_in_buffer_file[tmpc]));
               Log( " %s  %d %s Blocks are in file %s\n", CliGetTimeString(NULL,0),
                 CountBufferOutput((u8) tmpc),
                 CliGetContestNameFromID(tmpc),
-                (nodiskbuffers ? "(memory-out)" : out_buffer_file[tmpc]) );
+                (nodiskbuffers ? "(memory-out)" : ini_out_buffer_file[tmpc]) );
             }
           }
         }
@@ -1707,8 +1707,8 @@ PreferredIsDone1:
              "[%s] %d Blocks are in file %s\n",
              Time(), (fileentry.contest == 1 ? "DES":"RC5"),tmpblkcnt,tmpblksize,
                  ntohl( fileentry.key.hi ), ntohl( fileentry.key.lo ),
-             Time(), count, (nodiskbuffers? "(memory-in)":in_buffer_file[fileentry.contest]),
-             Time(), CountBufferOutput(fileentry.contest), (nodiskbuffers? "(memory-out)":out_buffer_file[fileentry.contest]) );
+             Time(), count, (nodiskbuffers? "(memory-in)":ini_in_buffer_file[fileentry.contest]),
+             Time(), CountBufferOutput(fileentry.contest), (nodiskbuffers? "(memory-out)":ini_out_buffer_file[fileentry.contest]) );
         gettimeofday( &stop, &dummy );
         (problem[cpu_i]).timehi = stop.tv_sec;
         (problem[cpu_i]).timelo = stop.tv_usec;
@@ -2333,8 +2333,8 @@ PreferredIsDone1:
                               CliGetMessageForFileentryLoaded( &fileentry ) );
             Log( "[%s] %d %s Blocks remain in file %s\n"
                  " %s  %d %s Blocks are in file %s\n",
-                 CliGetTimeString(NULL,1), count, CliGetContestNameFromID(fileentry.contest),(nodiskbuffers? "(memory-in)":in_buffer_file[fileentry.contest]),
-                 CliGetTimeString(NULL,0), CountBufferOutput(fileentry.contest), CliGetContestNameFromID(fileentry.contest), (nodiskbuffers? "(memory-out)":out_buffer_file[fileentry.contest]) );
+                 CliGetTimeString(NULL,1), count, CliGetContestNameFromID(fileentry.contest),(nodiskbuffers? "(memory-in)":ini_in_buffer_file[fileentry.contest]),
+                 CliGetTimeString(NULL,0), CountBufferOutput(fileentry.contest), CliGetContestNameFromID(fileentry.contest), (nodiskbuffers? "(memory-out)":ini_out_buffer_file[fileentry.contest]) );
 
           }
           #else
@@ -2347,8 +2347,8 @@ PreferredIsDone1:
                  "[%s] %d Blocks are in file %s\n",
                  Time(), (fileentry.contest == 1 ? "DES":"RC5"),tmpblkcnt,tmpblksize,
                  ntohl( fileentry.key.hi ), ntohl( fileentry.key.lo ),
-                 Time(), count, (nodiskbuffers? "(memory-in)":in_buffer_file[fileentry.contest]),
-                 Time(), CountBufferOutput(fileentry.contest), (nodiskbuffers? "(memory-out)":out_buffer_file[fileentry.contest]),
+                 Time(), count, (nodiskbuffers? "(memory-in)":ini_in_buffer_file[fileentry.contest]),
+                 Time(), CountBufferOutput(fileentry.contest), (nodiskbuffers? "(memory-out)":ini_out_buffer_file[fileentry.contest]),
                  ((load_problem_count>1)?("ready to process"):("being processed")));
 
             gettimeofday( &stop, &dummy );
