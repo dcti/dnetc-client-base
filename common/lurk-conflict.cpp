@@ -18,7 +18,7 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.44 1999/05/11 17:38:15 cyp Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.45 1999/05/11 17:42:20 cyp Exp $"; }
 
 /* ---------------------------------------------------------- */
 #include <stdio.h>
@@ -26,6 +26,7 @@ return "@(#)$Id: lurk-conflict.cpp,v 1.44 1999/05/11 17:38:15 cyp Exp $"; }
 #include "lurk.h"
 #ifdef PROXYTYPE
 #include "globals.h"
+#define TRACE_OUT(x) /* nothing */
 #else
 #include "logstuff.h"
 #include "util.h" //trace
