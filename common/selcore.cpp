@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.84 2002/09/24 00:26:33 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.85 2002/09/24 00:33:05 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1494,6 +1494,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
 
   /* -------------------------------------------------------------- */
 
+#ifdef HAVE_OLD_CRYPTO
   if (contestid == RC5) /* avoid switch */
   {
     #if (CLIENT_CPU == CPU_UNKNOWN)
@@ -1805,7 +1806,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #endif
   } /* if (contestid == RC5) */
-  
+
+  #endif  // HAVE_OLD_CRYPTO
+
   /* ================================================================== */
   
   #ifdef HAVE_DES_CORES
