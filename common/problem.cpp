@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.158 2002/09/24 01:57:25 acidblood Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.159 2002/09/24 11:14:54 acidblood Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -93,7 +93,6 @@ typedef struct
 // TODO: acidblood/trashover
 #ifdef HAVE_OLD_CRYPTO
     RC5UnitWork rc5unitwork; /* MUST BE longword (64bit) aligned */
-    struct {u32 hi,lo;} refL0;
 #endif
     RC5_72UnitWork rc5_72unitwork;
     struct {u32 hi,mid,lo;} refL0;
@@ -547,6 +546,7 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
   {
   #ifdef HAVE_OLD_CRYPTO
   case RC5:
+  {
     u32 randomprefix = last_rc5_prefix;
     if (last_rc5_prefix == -1) /* no random prefix determined yet */
       last_rc5_prefix = randomprefix = 100+(rnd % (0xff-100));
@@ -564,6 +564,7 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
     work->crypto.iterations.lo = 1L<<28;
     work->crypto.iterations.hi = 0;
     break;
+  }
   #endif
   case RC5_72:
     work->bigcrypto.key.lo  = 0;
