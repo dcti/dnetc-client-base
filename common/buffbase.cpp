@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.15 1999/08/09 17:05:46 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.16 1999/10/11 17:06:21 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class

@@ -5,9 +5,9 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __SELFTEST_H__
-#define __SELFTEST_H__ "@(#)$Id: selftest.h,v 1.5 1999/04/05 13:43:23 cyp Exp $"
+#define __SELFTEST_H__ "@(#)$Id: selftest.h,v 1.6 1999/10/11 17:06:30 cyp Exp $"
 
 /* returns number of tests if all passed or negative number if a test failed */
-int SelfTest( unsigned int contest, int cputype );
+int SelfTest( unsigned int contest );
 
 #endif /* __SELFTEST_H__ */

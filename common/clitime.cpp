@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.40 1999/08/22 12:44:54 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.41 1999/10/11 17:06:23 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -33,13 +33,31 @@ static int __GetTimeOfDay( struct timeval *tv )
 {
   if (tv)
   {
-    #if (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_SOLARIS) || \
-       (CLIENT_OS==OS_VMS)
+    #if (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_VMS) || \
+        (CLIENT_OS==OS_SOLARIS) || (CLIENT_OS == OS_NETWARE)
     {     
       struct timeb tb;
       ftime(&tb);
       tv->tv_sec = tb.time;
       tv->tv_usec = tb.millitm*1000;
+    }
+    #elif (CLIENT_OS == OS_WIN32)
+    {
+      unsigned __int64 now, epoch;
+      FILETIME ft;
+      SYSTEMTIME st;
+      GetSystemTime(&st);
+      SystemTimeToFileTime(&st, &ft);
+      //epoch.dwHighDate = 27111902UL;
+      //epoch.dwLowDate = 3577643008UL; 
+      epoch = 116444736000000000ui64;
+      now = ft.dwHighDateTime;
+      now <<= 32;
+      now += ft.dwLowDateTime;
+      now -= epoch;
+      now /= 10UL;
+      tv->tv_usec = (now % 1000000UL);
+      tv->tv_sec = (now / 1000000UL);
     }
     #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
     {
@@ -53,10 +71,6 @@ static int __GetTimeOfDay( struct timeval *tv )
       }
       tv->tv_usec = (ticks%1000)*1000;
       tv->tv_sec = basetime + (time_t)(ticks/1000);
-    }
-    #elif (CLIENT_OS == OS_NETWARE)
-    {
-      nwCliGetTimeOfDay( tv );
     }
     #elif (CLIENT_OS == OS_AMIGAOS)
     {
@@ -72,13 +86,51 @@ static int __GetTimeOfDay( struct timeval *tv )
   return 0;
 }
 
+/*
+ * Unlike __GetTimeOfDay(), which may change when the user changes
+ * the day/date, __GetMonotonicClock should return a monotonic time.
+ * This is particularly critical for timing on non-preemptive systems.
+*/ 
+static int __GetMonotonicClock( struct timeval *tv )
+{
+  #if (CLIENT_OS == OS_NETWARE) /* use hardware clock */
+  /* we have two time sources at our disposal: a low res (software) one
+   * which is (often) network adjusted, and a high res one, which is a
+   * raw read of the hardware clock but is liable to drift.
+   * NetWare is a non-preemptive OS and dynamically adjusts timeslice, for
+   * which it needs a high res timesource. So, we use the ftime() for
+   * "displayable" time and the hardware clock for core timing since 
+   * hwclock skew hardly figures when measuring elapsed time, but
+   * is quite visible if we were to use it for "displayable time". 
+  */  
+  return nwCliGetHardwareClock(tv); /* hires but not sync'd with time() */
+  #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+  /* with win16 this is not soooo critical since its a single user system */
+  static DWORD lastcheck = 0;
+  static unsigned long basetime = 0;
+  DWORD ticks = GetTickCount(); /* millisecs elapsed since OS start */
+  if (lastcheck == 0 || (ticks < lastcheck))
+  {
+    __GetTimeOfDay(tv);
+    lastcheck = ticks;
+    basetime = ((unsigned long)tv->tv_sec)-(((unsigned long)ticks)/1000UL);
+  }
+  tv->tv_usec = ((ticks%1000UL)*1000UL);
+  tv->tv_sec = (time_t)(basetime + (ticks/1000UL));
+  return 0;
+  #else
+  return __GetTimeOfDay(tv); /* should optimize into a jump :) */
+  #endif
+}
+
+
 static int __GetMinutesWest(void) /* see CliTimeGetMinutesWest() for descr */
 {
   int minwest;
 #if (CLIENT_OS == OS_NETWARE) || ((CLIENT_OS == OS_OS2) && !defined(EMX)) || \
     (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   /* ANSI rules :) */
-  minwest = timezone/60;
+  minwest = ((int)timezone)/60;
   if (daylight)
     minwest += 60;
   minwest = -minwest;      /* UTC = localtime + (timezone/60) */
@@ -113,7 +165,6 @@ static int __GetMinutesWest(void) /* see CliTimeGetMinutesWest() for descr */
 // ---------------------------------------------------------------------
   
 static int precalced_minuteswest = -1234;
-static struct timeval cliclock = {0,0};  //base time for CliClock()
 static int adj_time_delta = 0;
 static const char *monnames[]={ "Jan","Feb","Mar","Apr","May","Jun",
                                 "Jul","Aug","Sep","Oct","Nov","Dec"};
@@ -143,36 +194,40 @@ int CliTimeGetMinutesWest(void)
 }
 
 /*
- * Get the time since first call to CliTimer (pass NULL if storage not reqd)
+ * Get time elapsed since start. (used from cores. Thread safe.)
 */
 struct timeval *CliClock( struct timeval *tv )
 {
+  static struct timeval base_tv = {-1,0};  /* base time for CliClock() */
   static struct timeval stv = {0,0};
-  if (cliclock.tv_sec == 0)
-  {
-    CliTimer( NULL ); //set cliclock to current time
-    stv.tv_usec = 21; //just something (the meaning of life)
-    stv.tv_sec = 0;
+
+
+  /* initialization is not thread safe, (see ctor above) */
+  if (base_tv.tv_sec == -1) /* CliClock() not initialized */
+  {                         
+    __GetMonotonicClock(&base_tv); /* set cliclock to current time */
+    base_tv.tv_sec--;       /* we've been running 1 second. :) */
   }
-  else
+
+  if ( !tv )                /* if we have an arg, we can run thread safe */
+    tv = &stv;              /* ... otherwise use the static */
+  __GetMonotonicClock(tv);  /* get the current time */
+
+  if ( ((unsigned long)tv->tv_usec) < ((unsigned long)base_tv.tv_usec) )
   {
-    __GetTimeOfDay( &stv );
-    if (stv.tv_usec < cliclock.tv_usec )
-    {
-      stv.tv_usec += 1000000L;
-      stv.tv_sec--;
-    }
-    stv.tv_usec -= cliclock.tv_usec;
-    stv.tv_sec -= cliclock.tv_sec;
+    tv->tv_usec += 1000000L;
+    tv->tv_sec--;
   }
-  if (tv)
-  {
-    tv->tv_sec = stv.tv_sec;
-    tv->tv_usec = stv.tv_usec;
-    return tv;
-  }
-  return (&stv);
+  tv->tv_usec -= base_tv.tv_usec;
+  tv->tv_sec -= base_tv.tv_sec;
+  return (tv);
 }
+static class _clockinit_  /* we use a static constructor to */
+{                         /* ensure initialization before thread spin up */
+  public:
+    _clockinit_()  { CliClock(NULL); }
+   ~_clockinit_()  { }
+} _clockinit;
 
 // ---------------------------------------------------------------------
 
@@ -185,11 +240,6 @@ struct timeval *CliTimer( struct timeval *tv )
   {
     stv.tv_sec = ttv.tv_sec;
     stv.tv_usec = ttv.tv_usec;
-    if (cliclock.tv_sec == 0) //CliClock() not initialized
-    {
-      cliclock.tv_sec = ttv.tv_sec;
-      cliclock.tv_usec = ttv.tv_usec;
-    }
     stv.tv_sec += adj_time_delta;
   }
   if (tv)
@@ -221,7 +271,7 @@ int CliTimerAdd( struct timeval *result, const struct timeval *tv1, const struct
     }
     result->tv_sec = tv1->tv_sec + tv2->tv_sec;
     result->tv_usec = tv1->tv_usec + tv2->tv_usec;
-    if (result->tv_usec > 1000000L)
+    if (result->tv_usec >= 1000000L)
     {
       result->tv_sec += result->tv_usec / 1000000L;
       result->tv_usec %= 1000000L;

@@ -12,7 +12,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.28 1999/07/09 14:09:38 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.29 1999/10/11 17:06:28 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"

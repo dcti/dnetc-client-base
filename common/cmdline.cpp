@@ -1,12 +1,11 @@
 /* Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
  * -------------------------------------------------------------------
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>                         
+ *
  * *All* option handling is performed by ParseCommandLine(), including
  * options loaded from an external .ini.
- *
- * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>                         
  *
  * Note to porters: your port can be expected to break frequently if your 
  * implementation does not call this or does start the client via the 
@@ -14,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.139 1999/10/10 23:45:57 gregh Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.140 1999/10/11 17:06:23 cyp Exp $"; }
 
 //#define TRACE
 
@@ -24,7 +23,7 @@ return "@(#)$Id: cmdline.cpp,v 1.139 1999/10/10 23:45:57 gregh Exp $"; }
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "pathwork.h"  // InitWorkingDirectoryFromSamplePaths();
 #include "lurk.h"      // dialup object
-#include "util.h"      // trace
+#include "util.h"      // trace, utilGetAppName()
 #include "sleepdef.h"  // usleep()
 #include "modereq.h"   // get/set/clear mode request bits
 #include "console.h"   // ConOutErr()
@@ -38,6 +37,33 @@ return "@(#)$Id: cmdline.cpp,v 1.139 1999/10/10 23:45:57 gregh Exp $"; }
 #include <dirent.h> /* for direct read of /proc/ */
 #endif
     
+/* -------------------------------------- */
+
+static int __arg2cname(const char *arg,int def_on_fail)
+{
+  if (arg)
+  {
+    char buf[32];
+    unsigned int i=0;
+    while (i<(sizeof(buf)-1) && *arg)
+      buf[i++] = (char)toupper((char)(*arg++));
+    if (i)
+    {
+      buf[i]='\0';
+      for (i=0;i<CONTEST_COUNT;i++)
+      {
+        arg = CliGetContestNameFromID(i);
+        if (arg)
+        {
+          if (strcmp(arg,buf)==0)
+            return (int)i;
+        }
+      }
+    }
+  }
+  return def_on_fail;
+}         
+
 /* -------------------------------------- */
 
 int Client::ParseCommandline( int run_level, int argc, const char *argv[], 
@@ -71,14 +97,18 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
       argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
-      if (argvalue && *argvalue == '-')
-        argvalue = NULL; 
       skip_next = 0;
     
       if ( thisarg == NULL )
         ; //nothing
       else if (*thisarg == 0)
         ; //nothing
+      else if ( strcmp( thisarg, "-genman" ) == 0)
+      {
+        extern void GenerateManPage( void );
+        GenerateManPage();
+        terminate_app = 1;
+      }
       else if ( strcmp( thisarg, "-hide" ) == 0 ||   
                 strcmp( thisarg, "-quiet" ) == 0 )
         loop0_quiet = 1; //used for stuff in this loop
@@ -101,15 +131,30 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                 ( strcmp( thisarg, "-pause" ) == 0 ) ||
                 ( strcmp( thisarg, "-unpause" ) == 0 ) )
       {
-        #if defined(__unix__)
+        #if (CLIENT_OS == OS_NETWARE)
+        {
+          if (!loop0_quiet)
+          {
+            const char *appname = nwCliGetNLMBaseName();
+            ConsolePrintf("%s: %s cannot be used as a load time option.\r\n"
+            "\tPlease use '%s [-quiet] %s'\r\n"
+            "\tinstead of 'LOAD %s [-quiet] %s'\r\n"
+            "\t(note: this is only available when a client is running)\r\n",
+                     appname, thisarg, appname, thisarg, appname, thisarg );
+          }
+          terminate_app = 1;
+        }
+        #elif defined(__unix__)
         {
           char buffer[1024];
           int sig = SIGHUP; char *dowhat_descrip = "-HUP'ed";
           unsigned int kill_ok = 0, kill_failed = 0; 
           int last_errno = 0, kill_found = 0;
           const char *binname = (const char *)strrchr( argv[0], '/' );
-          char altbinname[] = {'r','c','5','d','e','s','\0'};
+          char altbinname[64];
           binname = ((binname==NULL)?(argv[0]):(binname+1));
+          strncpy(altbinname,utilGetAppName(),sizeof(altbinname));
+          altbinname[sizeof(altbinname)-1] = '\0';
             
           if ( strcmp( thisarg, "-kill" ) == 0 ||
                strcmp( thisarg, "-shutdown") == 0 )
@@ -133,7 +178,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             size_t len; FILE *file = fopen("/proc/curproc/cmdline","r"); 
             if (file)
             {
-              /* useless for OSs that do argv[0]="rc5des" in client.cpp */
+              /* useless for OSs that set argv[0] in client.cpp */
               len = fread( buffer, 1, sizeof(buffer), file );
               fclose( file );
               if (len!=0) 
@@ -217,14 +262,14 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             while ((count = pstat_getproc(pst, sizeof(pst[0]), 
                           (sizeof(pst)/sizeof(pst[0])), idx)) > 0) 
             {
-              int i;
+              int pspos;
               if (kill_found < 0)
                 kill_found = 0;
-              for (i=0; i < count; i++) 
+              for (pspos=0; pspos < count; pspos++) 
               {
-                //printf("pid: %d, cmd: %s\n",pst[i].pst_pid,pst[i].pst_ucomm);
-                char *procname = (char *)pst[i].pst_ucomm;
-                pid_t thatpid = (pid_t)pst[i].pst_pid;
+                //printf("pid: %d, cmd: %s\n",pst[pspos].pst_pid,pst[pspos].pst_ucomm);
+                char *procname = (char *)pst[pspos].pst_ucomm;
+                pid_t thatpid = (pid_t)pst[pspos].pst_pid;
                 if (thatpid != ourpid && (strcmp(procname,binname) == 0 || 
                     strcmp(procname,altbinname) == 0))
                 {
@@ -255,7 +300,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
                 (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
           pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
-	  #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
+          #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
           pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
           #else
           #error fixme: select an appropriate ps syntax
@@ -310,10 +355,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                     got_output = 1;
                     if (sigd_count != 0)
                     {
-                      unsigned int i;
-                      for (i=0;i<sigd_count;i++)
+                      unsigned int pid_pos;
+                      for (pid_pos=0;pid_pos<sigd_count;pid_pos++)
                       {
-                        if (already_sigd[i] == thatpid)
+                        if (already_sigd[pid_pos] == thatpid)
                         {
                           thatpid = 0;
                           break;
@@ -393,6 +438,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                strcmp( thisarg, "-shutdown") == 0 )
           {
             cmd = IDM_SHUTDOWN;
+            thisarg = "-shutdown";
             dowhat_descrip = "shutdown";
           }
           else if (strcmp( thisarg, "-pause" ) == 0)
@@ -402,6 +448,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else if (strcmp( thisarg, "-unpause" ) == 0)
           {
+            cmd = IDM_UNPAUSE;
             dowhat_descrip = "unpaused";
           }
           
@@ -411,13 +458,14 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           {
             char scratch[128];
             if (rc < 0)
-              sprintf(scratch,"No distributed.net clients are currently running.\n"
+              sprintf(scratch,"No distributed.net clients are currently running. "
                               "None were %s.", dowhat_descrip);
             else if (rc > 0)
-              sprintf(scratch,"A distributed.net client was found but "
-                              "could not be %s.\n", dowhat_descrip);
+              sprintf(scratch,"One or more distributed.net clients were found "
+                              "but one or more could not be %s.\n", dowhat_descrip);
             else
-              sprintf(scratch,"The distributed.net client has been %s.", dowhat_descrip);
+              sprintf(scratch,"One or more distributed.net clients were found "
+                              "and have been requested to %s.", thisarg+1 );
             ConOutModal(scratch);
           }
         }
@@ -428,12 +476,36 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       else if ( strcmp(thisarg, "-install" ) == 0)
       {
         #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-        winInstallClient(loop0_quiet); /*w32pre.cpp*/
+        win32CliInstallService(loop0_quiet); /*w32svc.cpp*/
         terminate_app = 1;
         #elif (CLIENT_OS == OS_OS2)
         extern int os2CliInstallClient(int quiet, const char *exename);
         os2CliInstallClient(loop0_quiet, argv[0]); /* os2inst.cpp */
         terminate_app = 1;
+        #else
+        not_supported = 1;
+        #endif
+      }
+      else if (strcmp(thisarg,"-svcstart") == 0)
+      {
+        #if (CLIENT_OS == OS_WIN32)
+        terminate_app = 1;
+        if (!loop0_quiet)
+        {
+          int isinst = win32CliIsServiceInstalled();/*<0=err,0=no,>0=yes */
+          if (isinst < 0)
+            ConOutErr("Service manager error. Service could not be started.\n");
+          else if (isinst == 0)
+            ConOutErr("Cannot start a service that is not -installed.\n");
+          else
+            terminate_app = 0;
+        }
+        if (!terminate_app) /* no error */
+        {
+          char *xargv[2]; xargv[0] = (char *)argv[0]; xargv[1]=NULL;
+          win32CliStartService( 1, &xargv[0] ); /* *installed* client */  
+          terminate_app = 1;
+        }
         #else
         not_supported = 1;
         #endif
@@ -445,7 +517,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         os2CliUninstallClient(loop0_quiet); /* os2inst.cpp */
         terminate_app = 1;
         #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-        winUninstallClient(loop0_quiet); /*w32pre.cpp*/
+        win32CliUninstallService(loop0_quiet); /*w32svc.cpp*/
         terminate_app = 1;
         #else
         not_supported = 1;
@@ -500,9 +572,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
            strcat( slash, ".ini" );
         }
         if ( inifilename[0] == 0 )
-          strcpy( inifilename, "rc5des.ini" );
+          strcat( strcpy( inifilename, utilGetAppName() ), ".ini" );
         #elif (CLIENT_OS == OS_VMS)
-        strcpy( inifilename, "rc5des" EXTN_SEP "ini" );
+          strcat( strcpy( inifilename, utilGetAppName() ), EXTN_SEP "ini" );
         #else
         strcpy( inifilename, argv[0] );
         strcat( inifilename, EXTN_SEP "ini" );
@@ -545,13 +617,130 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
       argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
-      if (argvalue && *argvalue == '-')
-        argvalue = NULL;
 
       if ( thisarg == NULL )
         ; //nothing
       else if (*thisarg == 0)
         ; //nothing
+      else if ( strcmp( thisarg, "-c" ) == 0 || 
+                strcmp( thisarg, "-blsize" ) == 0 ||
+                strcmp( thisarg, "-b" ) == 0 ||
+                strcmp( thisarg, "-bin" ) == 0 || 
+                strcmp( thisarg, "-bout" ) == 0 ||
+                strcmp( thisarg, "-b2" ) == 0 ||
+                strcmp( thisarg, "-bin2")==0 ||
+                strcmp( thisarg, "-bout2") == 0 )
+      {
+        if (!argvalue)
+          missing_value = 1;
+        else
+        {
+          int n, maxval = 0, minval = 0, isthresh = 0, isblsize = 0;
+          int contest_defaulted = 0;
+          unsigned int contest;
+          const char *op;
+
+          if (strcmp(thisarg,"-blsize")==0)
+            isblsize = 1;
+          else if (strcmp(thisarg,"-bin")==0 || strcmp( thisarg, "-bin2")==0)
+            isthresh = 1;
+          else if (strcmp(thisarg,"-bout")==0 || strcmp(thisarg,"-bout2")==0)
+            isthresh = 2;
+          else if (strcmp( thisarg, "-b" )==0 || strcmp( thisarg, "-b2" )==0)
+            isthresh = 1+2;
+
+          skip_next = 1;
+          op = argvalue;
+          contest = (unsigned int)__arg2cname(argvalue,CONTEST_COUNT);
+          if (contest < CONTEST_COUNT)
+          {
+            skip_next = 2;
+            op = ((pos < (argc-2))?(argv[pos+2]):((char *)NULL));
+          }
+          else
+          {
+            contest = RC5;
+            if (strcmp( thisarg, "-bin2")==0 ||
+                strcmp( thisarg, "-bout2")==0 ||
+                strcmp( thisarg, "-b2")==0)
+              contest = DES;
+            //else if (isblsize)       //-blsize without contest means both
+            //  contest_defaulted = 1; //RC5 and DES
+          }
+          
+          n = -123;
+          if (op != NULL)
+          {
+            n = atoi(op);
+            if (n == 0 && !isdigit(*op))
+              n = -123;
+          }
+
+          if (isblsize)
+          {
+            minval = 28;
+            maxval = 33;
+            if (contest == OGR) /* invalid for ogr */
+              n = -123;
+          }
+          else if (isthresh)
+            maxval = minval = 1;
+          else /* coretype */
+            maxval = minval = -1;
+
+          if (n < minval || ((maxval > minval) && (n > maxval)))
+            missing_value = 1;
+          else if (run_level == 0)
+          {
+            inimissing = 0; // Don't complain if the inifile is missing
+            if (isblsize)
+            {
+              preferred_blocksize[contest] = n;
+              if (contest_defaulted)
+                preferred_blocksize[DES] = n;
+            }
+            else if (isthresh)
+            {
+              if ((isthresh & 1)!=0)
+                inthreshold[contest] = n;
+              if ((isthresh & 2)!=0)
+                outthreshold[contest] = n;
+            }
+            else /* coretype */
+            {
+              coretypes[contest] = n;
+            }
+          }
+          else if (logging_is_initialized)
+          {
+            if (isblsize)
+            {
+              LogScreenRaw("%s preferred packet size set to 2^%d\n", 
+                  CliGetContestNameFromID(contest),
+                  preferred_blocksize[contest] );
+              if (contest_defaulted)
+                LogScreenRaw("DES preferred packet size set to 2^%d\n", 
+                  CliGetContestNameFromID(contest),
+                  preferred_blocksize[DES] );
+            }
+            else if (isthresh)
+            {
+              if ((isthresh & 1)!=0)
+                LogScreenRaw("%s fetch threshold set to %d packets\n", 
+                  CliGetContestNameFromID(contest), inthreshold[contest] );
+              if ((isthresh & 2)!=0)
+                LogScreenRaw("%s flush threshold set to %d packets\n", 
+                  CliGetContestNameFromID(contest), outthreshold[contest] );
+            }
+            else /* coretype */
+            {
+              LogScreenRaw("Default core for %s set to #%d\n",
+                  CliGetContestNameFromID(contest),
+                  coretypes[contest] );
+            }
+          }  
+        }
+      }
       else if ( strcmp( thisarg, "-ini" ) == 0) 
       {
         //we already did this so skip it
@@ -567,17 +756,19 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           guiriscos = 1;
         #endif
       }
-      else if ( strcmp( thisarg, "-guistart" ) == 0) 
-      {
-        #if (CLIENT_OS == OS_WIN32)
-        //handled by GUI command line parser
-        #endif
-      }
       else if ( strcmp( thisarg, "-guirestart" ) == 0) 
       {          // See if are restarting (hence less banners wanted)
         #if (CLIENT_OS == OS_RISCOS)
         if (run_level == 0)
           guirestart = 1;
+        #endif
+      }
+      else if ( strcmp( thisarg, "-multiok" ) == 0 ) /* keep undocumented! */
+      {
+        /* allow multiple instances - keep this undocumented */
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
+            (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_OS2)
+        putenv("dnetc_multiok=1");
         #endif
       }
       else if ( strcmp( thisarg, "-hide" ) == 0 ||   
@@ -699,69 +890,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         }
         else
           connectoften = 1;
-      }
-      else if ( strcmp( thisarg, "-b" ) == 0 || strcmp( thisarg, "-b2" ) == 0 )
-      {
-        if (!argvalue)
-          missing_value = 1;
-        else
-        {
-          skip_next = 1;
-          int conid = (( strcmp( thisarg, "-b2" ) == 0 ) ? (1) : (0));
-          if (run_level != 0)
-          {
-            if (logging_is_initialized)
-              LogScreenRaw("Setting %s buffer thresholds to %u\n",
-                   CliGetContestNameFromID(conid), (unsigned int)inthreshold[conid] );
-          }
-          else if ( atoi( argvalue ) > 0)
-          {
-            inimissing = 0; // Don't complain if the inifile is missing
-            outthreshold[conid] = inthreshold[conid] = (s32) atoi( argvalue );
-          }
-        }
-      }
-      else if ( strcmp( thisarg, "-bin" ) == 0 || strcmp( thisarg, "-bin2")==0)
-      {
-        if (!argvalue)
-          missing_value = 1;
-        else
-        {
-          skip_next = 1;
-          int conid = (( strcmp( thisarg, "-bin2" ) == 0 ) ? (1) : (0));
-          if (run_level != 0)
-          {
-            if (logging_is_initialized)
-              LogScreenRaw("Setting %s in-buffer threshold to %u\n",
-                 CliGetContestNameFromID(conid), (unsigned int)inthreshold[conid] );
-          }
-          else if ( atoi( argvalue ) > 0)
-          {
-            inimissing = 0; // Don't complain if the inifile is missing
-            inthreshold[conid] = (s32) atoi( argvalue );
-          }
-        }
-      }
-      else if ( strcmp( thisarg, "-bout" ) == 0 || strcmp( thisarg, "-bout2")==0)
-      {
-        if (!argvalue)
-          missing_value = 1;
-        else
-        {
-          skip_next = 1;
-          int conid = (( strcmp( thisarg, "-bout2" ) == 0 ) ? (1) : (0));
-          if (run_level != 0)
-          {
-            if (logging_is_initialized)
-              LogScreenRaw("Setting %s out-buffer threshold to %u\n",
-                  CliGetContestNameFromID(conid), (unsigned int)outthreshold[conid] );
-          }
-          else if ( atoi( argvalue ) > 0)
-          {
-            inimissing = 0; // Don't complain if the inifile is missing
-            outthreshold[conid] = (s32) atoi( argvalue );
-          }
-        }
       }
       else if ( strcmp( thisarg, "-inbase" ) == 0 || strcmp( thisarg, "-outbase")==0 )
       {
@@ -1034,46 +1162,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           /* obsolete */
         }
       }
-      else if ( strcmp( thisarg, "-c" ) == 0 || strcmp( thisarg, "-cputype" ) == 0)
-      {
-        if (!argvalue)
-          missing_value = 1;
-        else
-        {
-          skip_next = 1;
-          if (run_level != 0)
-          {
-            if (logging_is_initialized)
-              LogScreenRaw("Setting cputype to %d\n", (int)cputype);
-          }
-          else
-          {
-            cputype = (s32) atoi( argvalue );
-            inimissing = 0; // Don't complain if the inifile is missing
-          }
-        }
-      }
-#ifdef CSC_TEST
-      else if ( strcmp( thisarg, "-csccore" ) == 0)
-      {
-        if (!argvalue)
-          missing_value = 1;
-        else
-        {
-          skip_next = 1;
-          if (run_level != 0)
-          {
-            if (logging_is_initialized)
-              LogScreenRaw("Setting csc core to %d\n", csc_core);
-          }
-          else
-          {
-            csc_core = atoi( argvalue );
-            inimissing = 0; // Don't complain if the inifile is missing
-          }
-        }
-      }
-#endif
       else if ( strcmp( thisarg, "-nice" ) == 0 ) // Nice level
       {
         if (!argvalue)
@@ -1267,24 +1355,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
         }
       }
-      else if ( strcmp( thisarg, "-blsize" ) == 0)
-      {
-        if (!argvalue)
-          missing_value = 1;
-        else
-        {
-          skip_next = 1;
-          if (run_level != 0)
-          {
-            if (logging_is_initialized)
-              LogScreenRaw("Setting preferred blocksize to 2^%d\n",preferred_blocksize);
-          }
-          else
-          {
-            preferred_blocksize = (s32) atoi(argvalue);
-          }
-        }
-      }
       else if (( strcmp( thisarg, "-fetch"  ) == 0 ) || 
           ( strcmp( thisarg, "-forcefetch"  ) == 0 ) || 
           ( strcmp( thisarg, "-flush"       ) == 0 ) || 
@@ -1292,12 +1362,22 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           ( strcmp( thisarg, "-update"      ) == 0 ) ||
           ( strcmp( thisarg, "-ident"       ) == 0 ) ||
           ( strcmp( thisarg, "-cpuinfo"     ) == 0 ) ||
-          ( strcmp( thisarg, "-test"        ) == 0 ) ||
-          ( strcmp( thisarg, "-config"      ) == 0 ) ||
-          ( strncmp( thisarg, "-benchmark", 10 ) == 0))
+          ( strcmp( thisarg, "-config"      ) == 0 ) )
       {
         havemode = 1; //nothing - handled in next loop
       }
+      else if ( strcmp( thisarg, "-benchmark"   ) == 0  ||
+                strcmp( thisarg, "-benchmark2"  ) == 0 ||
+                strcmp( thisarg, "-bench"  ) == 0 ||
+                strcmp( thisarg, "-test" ) == 0 )
+      {
+        havemode = 1;
+        if (argvalue)
+        {
+          if (__arg2cname(argvalue,CONTEST_COUNT) < CONTEST_COUNT)
+            skip_next = 1;
+        }
+      }        
       else if (( strcmp( thisarg, "-forceunlock" ) == 0 ) ||
                ( strcmp( thisarg, "-import" ) == 0 ))
       {
@@ -1343,8 +1423,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
       argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
-      if (argvalue && *argvalue == '-')
-        argvalue = NULL;
       skip_next = 0;
   
       if ( thisarg == NULL )
@@ -1390,47 +1468,32 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         ModeReqSet( MODEREQ_CPUINFO );
         break;
       }
-      else if ( strcmp( thisarg, "-test" ) == 0 )
+      else if ( strcmp( thisarg, "-benchmark" ) == 0  ||
+                strcmp( thisarg, "-bench" ) == 0 ||
+                strcmp( thisarg, "-benchmark2" ) == 0 ||
+                strcmp( thisarg, "-test" ) == 0 )
       {
-        quietmode = 0;
-        inimissing = 0; // Don't complain if the inifile is missing
-        ModeReqClear(-1); //clear all - only do -test
-        ModeReqSet( MODEREQ_TEST );
-        break;
-      }
-      else if (strncmp( thisarg, "-benchmark", 10 ) == 0)
-      {
-        quietmode = 0;
-        int do_mode = 0;
-        thisarg += 10;
-
-        if (*thisarg == '2')
-        {
-          do_mode |= MODEREQ_BENCHMARK_QUICK;
-          thisarg++;
-        }
-        if ( strcmp( thisarg, "rc5" ) == 0 )  
-          do_mode |= MODEREQ_BENCHMARK_RC5;
-        else if ( strcmp( thisarg, "des" ) == 0 )
-           do_mode |= MODEREQ_BENCHMARK_DES;
-#ifdef OGR_TEST
-        else if ( strcmp( thisarg, "ogr" ) == 0 )
-           do_mode |= MODEREQ_BENCHMARK_OGR;
-#endif
-#ifdef CSC_TEST
-        else if ( strcmp( thisarg, "csc" ) == 0 )
-           do_mode |= MODEREQ_BENCHMARK_CSC;
-#endif
-        else 
-#ifndef CSC_TEST
-          do_mode |= (MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5);
-#else
-          do_mode |= MODEREQ_BENCHMARK_ALL;
-#endif
+        int do_mode = MODEREQ_BENCHMARK;
+        if (strcmp( thisarg, "-benchmark2"  ) == 0)
+          do_mode = MODEREQ_BENCHMARK_QUICK;
+        else if (strcmp( thisarg, "-bench"  ) == 0)
+          do_mode = MODEREQ_BENCHMARK_ALLCORE;
+        else if (strcmp( thisarg, "-test"  ) == 0)
+          do_mode = MODEREQ_TEST_ALLCORE;
 
         inimissing = 0; // Don't complain if the inifile is missing
-        ModeReqClear(-1); //clear all - only do benchmark
+        ModeReqClear(-1); //clear all - only do benchmark/test
         ModeReqSet( do_mode );
+
+        if (argvalue)
+        {
+          int contest = __arg2cname(argvalue,CONTEST_COUNT);
+          if (contest < CONTEST_COUNT)
+          {
+            skip_next = 1;
+            ModeReqLimitProject(do_mode, contest);
+          }
+        }
         break;
       }
       else if ( strcmp( thisarg, "-forceunlock" ) == 0 )

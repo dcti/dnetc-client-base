@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.68 1999/07/26 04:24:04 sampo Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.69 1999/10/11 17:06:21 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -206,7 +206,6 @@ extern "C" {
   #define _UTIME
   #include <unix.mac.h>
   #include "mac_extras.h"
-  #include "macConsole.h"
   #include <console.h>
   #include <Multiprocessing.h>
   void macConOut(char *msg);

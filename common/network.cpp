@@ -5,11 +5,12 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.100 1999/07/25 23:13:39 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.101 1999/10/11 17:06:28 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
 //#define TRACE
+//#define DEBUGTHIS
 
 #include "cputypes.h"
 #include "baseincs.h"  // standard stuff
@@ -145,7 +146,7 @@ const char *__print_packet( const char *label, const char *apacket, unsigned int
       *q++ = (char)c;
     }
     *q = '\0';
-    LogRaw("%s\n",buffer);
+    LogRaw("\n%s\n",buffer);
   }
   LogRaw("%s total len: %d\n",label, alen);
   return "";
@@ -253,6 +254,11 @@ Network::Network( const char * servname, int servport, int _nofallback,
   fwall_hostaddr = svc_hostaddr = conn_hostaddr = 0;
   fwall_hostname[0] = fwall_userpass[0] = 0;
 
+  #ifndef HTTPUUE_WORKS /* a lie */
+  if (_enctype == 3 ) /*http+uue*/
+  _enctype = 2; /* http only */
+  #endif
+
   mode = startmode = 0;
   if (_enctype == 1 /*uue*/ || _enctype == 3 /*http+uue*/)
   {
@@ -288,7 +294,10 @@ Network::Network( const char * servname, int servport, int _nofallback,
 
   autofindkeyserver = __fixup_dnethostname(server_name,&server_port,startmode);
 
-  isnonblocking = 0;      /* whether the socket could be set non-blocking */
+  isnonblocking = 0;      /* could be set non-blocking? */
+#if (CLIENT_OS == OS_NETWARE)
+  //iotimeout = -1;
+#endif    
   if (iotimeout < 0)
     iotimeout = -1;
   else if (iotimeout < 5)
@@ -428,7 +437,14 @@ int Network::Open( void )               // returns -1 on error, 0 on success
     if (!success)
     {
       if (verbose_level > 0)
+      {
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+        LogScreen("Network::failed to create network socket. (err=%d)\n",
+                   WSAGetLastError());
+        #else
         LogScreen("Network::failed to create network socket.\n");
+        #endif
+      }
       break; /* return -1; */
     }
 
@@ -538,8 +554,10 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       if (iotimeout > 0)
       {
         isnonblocking = ( LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 0 ) == 0 );
-        TRACE_OUT((0,"Debug::Connecting with %sblocking socket.\n",
-              ((isnonblocking) ? ("non-") : ("")) ));
+        #ifdef DEBUGTHIS
+        Log("Debug::Connecting with %sblocking socket.\n",
+              ((isnonblocking) ? ("non-") : ("")) );
+        #endif
       }
       #endif
 
@@ -549,8 +567,10 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       if (success && iotimeout > 0)
       {
         isnonblocking = ( LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 0 ) == 0 );
-        TRACE_OUT((0,"Debug::Connected (%sblocking).\n",
-            ((isnonblocking) ? ("non-") : ("")) ));
+        #ifdef DEBUGTHIS
+        Log("Debug::Connected (%sblocking).\n",
+            ((isnonblocking) ? ("non-") : ("")) );
+        #endif
       }
       #endif
 
@@ -563,18 +583,20 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       {
         if (verbose_level > 0)
         {
-          LogScreen( "Connect to host %s:%u failed.\n",
-             __inet_ntoa__(conn_hostaddr), (unsigned int)(conn_hostport));
-
-        #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
-          int err = errno; /* connect copies it from WSAGetLastError(); */
-          const char *msg = "unrecognized error";
+          char errreasonbuf[100];
+          const char *msg = (const char *)0;
+          int err = 0;
+          #if (defined(ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG))
+          /* nothing */
+          #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+          err = errno; /* connect copies it from WSAGetLastError(); */
+          msg = "unrecognized error";
           if      (err == WSAEADDRINUSE)
             msg = "The specified address is already in use";
           else if (err == WSAEADDRNOTAVAIL)
             msg = "The specified address is not available from the local machine";
           else if (err == WSAECONNREFUSED)
-            msg = "The attempt to connect was rejected. Destination may be busy.";
+            msg = "Connect was rejected. Destination may be busy.";
           else if (err == WSAEISCONN)
             msg = "The socket is already connected"; //udp only?
           else if (err == WSAENETUNREACH)
@@ -583,21 +605,55 @@ int Network::Open( void )               // returns -1 on error, 0 on success
             msg = "No buffer space is currently available";
           else if (err == WSAETIMEDOUT)
             msg = "Attempt to connect timed out";
-          LogScreen( " %s  Error %d (%s)\n",
-                     CliGetTimeString(NULL,0), err, msg );
-        #elif (!defined(ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG))
-          if (NetCheckIsOK()) //use errno only if netcheck says ok.
+          #elif defined(_TIUSER_)
+          char tlookerr[100];
+          err = t_errno;
+          msg = "undefined error";
+          if (err == TLOOK)
           {
-            #if defined(_TIUSER_)
-              LogScreen( " %s  Error %d (%s)\n",
-                  CliGetTimeString(NULL, 0), t_errno,
-                ((t_errno >= t_nerr) ? ("undefined error") : (t_errlist[t_errno])) );
-            #else
-              LogScreen( " %s  Error %d (%s)\n",CliGetTimeString(NULL,0),
-                                      errno, strerror(errno) );
-            #endif
+            static int looknums[] = {
+            T_LISTEN,T_CONNECT,T_DATA,T_EXDATA,T_DISCONNECT,T_ORDREL,
+            T_UDERR,T_GODATA,T_GOEXDATA };
+            static const char *looknames[] = {
+            "t_listen","t_connect","t_data","t_exdata","t_disconnect",
+            "t_ordrel","t_uderr","t_godata","t_goexdata"};
+            int look = t_look(sock);
+            msg = "";
+            for (err=0;err<(int)(sizeof(looknums)/sizeof(looknums[0]));err++)
+            {
+              if (looknums[err] == look)
+              {
+                msg = looknames[err];
+                break;
+              }
+            }
+            err = TLOOK;
+            sprintf(tlookerr, "asynchronous event %d %s%s%soccurred", 
+              look, ((*msg)?("("):("")), msg, ((*msg)?(") "):("")) );
+            msg = (const char *)&tlookerr[0];
           }
-        #endif
+          else if (err == TSYSERR)
+          {
+            err = errno;
+            msg = strerror(errno);
+          }
+          else if (err > 0 && err < t_nerr)
+            msg = t_errlist[t_errno];
+          #else
+          err = errno;
+          msg = strerror(errno);
+          #endif
+          errreasonbuf[0]='\0';
+          if (msg)
+          {
+            int ml = sprintf(errreasonbuf,"Error %d (",err);
+            strncpy(&errreasonbuf[ml], msg, (sizeof(errreasonbuf)-1)-ml);
+            errreasonbuf[sizeof(errreasonbuf)-1] = '\0';
+            strcat(errreasonbuf,")\n");
+          }
+          LogScreen( "Connect to host %s:%u failed.\n%s",
+             __inet_ntoa__(conn_hostaddr), (unsigned int)(conn_hostport),
+             errreasonbuf );
         }
       } //connect failed
     } // resolve succeeded
@@ -634,8 +690,18 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         break; /* can't fallback further than a fullserver */
       server_name[0] = '\0'; /* fallback */
     }
+    if (CheckExitRequestTriggerNoIO())
+      break;
     LogScreen( "Network::Open Error - sleeping for 3 seconds\n" );
-    sleep( 3 );
+    sleep(1);
+    if (CheckExitRequestTriggerNoIO())
+      break;
+    sleep(1);
+    if (CheckExitRequestTriggerNoIO())
+      break;
+    sleep(1);
+    if (CheckExitRequestTriggerNoIO())
+      break;
   } while (triesleft > 0 /* forever true */);
 
   return -1;
@@ -930,7 +996,7 @@ int Network::Get( char * data, int length )
   int tmp_isnonblocking = (isnonblocking != 0); //we handle timeout ourselves
   isnonblocking = 0;                 //so stop LowLevelGet() from doing it.
 
-  while (netbuffer.GetLength() < (u32)length)
+  while (netbuffer.GetLength() < (u32)length && !CheckExitRequestTrigger())
   {
     int nothing_done = 1;
 
@@ -967,7 +1033,9 @@ int Network::Get( char * data, int length )
           if (!(Resolve( line + 13, &newaddr, svc_hostport ) < 0))
             {
             svc_hostaddr = newaddr;
-            TRACE_OUT((0,"X-Keyserver: %s\n", __inet_ntoa__(svc_hostaddr)));
+            #ifdef DEBUGTHIS
+            Log("Debug:X-Keyserver: %s\n", __inet_ntoa__(svc_hostaddr));
+            #endif
             }
         }
         else if (line.GetLength() < 1)
@@ -1117,6 +1185,8 @@ int Network::Get( char * data, int length )
       #else
         usleep( 100000 );  // Prevent racing on error (1/10 second)
       #endif
+      if (CheckExitRequestTriggerNoIO())
+        break;
     }
   } // while (netbuffer.GetLength() < blah)
 
@@ -1133,10 +1203,14 @@ int Network::Get( char * data, int length )
   {
     memmove(data, netbuffer.GetHead(), bytesfilled);
     netbuffer.RemoveHead((u32)bytesfilled);
-    TRACE_OUT((0,__print_packet("Get", data, bytesfilled )));
+    #ifdef DEBUGTHIS
+    Log(__print_packet("Get", data, bytesfilled ));
+    #endif
   }
 
-  TRACE_OUT((0,"Get: toread:%d read:%d\n", length, bytesfilled ));
+  #ifdef DEBUGTHIS
+  Log("Get: toread:%d read:%d\n", length, bytesfilled );
+  #endif
 
   return bytesfilled;
 }
@@ -1181,7 +1255,6 @@ int Network::Put( const char * data, int length )
         *b++ = UU_ENC((char)(((data[1] << 2) & 074) | ((data[2] >> 6) & 03)));
         *b++ = UU_ENC((char)(data[2] & 077));
       }
-
       if (n != 0)
       {
         char c2 = (char)(n == 1 ? 0 : data[1]);
@@ -1224,12 +1297,16 @@ int Network::Put( const char * data, int length )
     puthttpdone = 1;
   }
 
-  TRACE_OUT((0,__print_packet("Put", outbuf, outbuf.GetLength() )));
+  #ifdef DEBUGTHIS
+  Log(__print_packet("Put", outbuf, outbuf.GetLength() ));
+  #endif
 
   int towrite = (int)outbuf.GetLength();
   int written = LowLevelPut(outbuf,towrite);
 
-  TRACE_OUT((0,"Put: towrite:%d written:%d success:%d\n", towrite, written, (towrite==written) ));
+  #ifdef DEBUGTHIS
+  Log("Put: towrite:%d written:%d success:%d\n", towrite, written, (towrite==written) );
+  #endif
 
   return ((towrite == written)?(requested_length):(-1));
 }
@@ -1293,21 +1370,21 @@ int Network::LowLevelCloseSocket(void)
 {
 #if defined( _TIUSER_ )                                //TLI
   if ( sock != INVALID_SOCKET )
-    {
+  {
     t_blocking( sock ); /* turn blocking back on */
     if ( t_getstate( sock ) != T_UNBND )
-      {
-      t_sndrel( sock );   /* initiate close */
+    {
       t_rcvrel( sock );   /* wait for conn release by peer */
+      t_sndrel( sock );   /* initiate close */
       t_unbind( sock );   /* close our own socket */
-      }
+    }
     int rc = t_close( sock );
     sock = INVALID_SOCKET;
     return rc;
-    }
+  }
 #else                                                  //BSD socks
    if ( sock != INVALID_SOCKET )
-     {
+   {
      LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 1 );
      #if (defined(AF_INET) && defined(SOCK_STREAM))
      shutdown( sock, 2 );
@@ -1319,10 +1396,73 @@ int Network::LowLevelCloseSocket(void)
      #endif
      sock = INVALID_SOCKET;
      return (retcode);
-     }
+   }
 #endif
    return 0;
 }
+
+// -----------------------------------------------------------------------
+
+#ifdef _TIUSER_
+#ifndef DEBUGTHIS
+#define debugtli(_x,_y) /* nothing */
+#else
+void debugtli(const char *label, int fd)
+{
+  int err = t_errno;
+  if (err == TLOOK)
+  {
+    static int looknums[] = {
+    T_LISTEN,T_CONNECT,T_DATA,T_EXDATA,T_DISCONNECT,T_ORDREL,
+    T_ERROR,T_UDERR,T_GODATA,T_GOEXDATA,T_EVENTS };
+    static const char *looknames[] = {
+    "T_LISTEN","T_CONNECT","T_DATA","T_EXDATA","T_DISCONNECT","T_ORDREL",
+    "T_ERROR","T_UDERR","T_GODATA","T_GOEXDATA","T_EVENTS"};
+    const char *msg = "";
+    int i, look = t_look(fd);
+    for (i=0;i<(int)(sizeof(looknums)/sizeof(looknums[0]));i++)
+    {
+      if (looknums[i] == look)
+      {
+        msg = looknames[i];
+        break;
+      }
+    }
+    Log("%s: TLOOK: \"%s\" (%d)\n", label, msg, look );
+  }
+  else if (err == TOUTSTATE)
+  {
+    static int nums[] = {T_UNBND,T_IDLE,T_OUTCON,T_INCON,T_DATAXFER,T_OUTREL};
+    static const char *names[] = {"T_UNBND","T_IDLE","T_OUTCON","T_INCON","T_DATAXFER","T_OUTREL"};
+    const char *msg = "unknown";
+    int i, state = t_getstate(fd);
+    t_errno = err;
+    if (state != -1)
+    {
+      for (i=0;i<(int)(sizeof(nums)/sizeof(nums[0]));i++)
+      {
+        if (nums[i] == state)
+        {
+          msg = names[i];
+          break;
+        }
+      }
+    }
+    Log("%s: TOUTSTATE: \"primitive issued in wrong sequence\" (%d)."
+           "currstate: %s (%d)\n", label, err, msg, state);
+  }
+  else if (err == TSYSERR)
+    Log("%s: TSYSERR: \"%s\" (%d)\n", label, strerror(errno), errno);
+  else if (err == 0)
+    ;
+  else if (err > 0 && err < t_nerr)
+    Log("%s: t_error: \"%s\" (%d)\n", label, t_errlist[err], err);
+  else 
+    Log("%s: unknown error %d\n", label, err );
+  return;
+}  
+#endif
+#endif    
 
 // -----------------------------------------------------------------------
 
@@ -1340,29 +1480,80 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
   if ( t_bind( sock, NULL, NULL ) != -1 )
   {
     struct t_call *sndcall = (struct t_call *)t_alloc(sock, T_CALL, T_ADDR);
-    if ( sndcall != NULL )
+    time_t stoptime = time(NULL) + 2;
+    #if 0
+    while (sndcall != ((struct t_call *)0) && t_getstate(sock) == T_UNBND)  
     {
+      if (time(NULL) > stoptime)
+      {
+        t_free((char *)sndcall, T_CALL);
+        sndcall = (struct t_call *)0;
+      }
+    }  
+    #endif
+    if ( sndcall != ((struct t_call *)0) )
+    {
+      struct sockaddr_in *sin = (struct sockaddr_in *) sndcall->addr.buf;
       sndcall->addr.len  = sizeof(struct sockaddr_in);
       sndcall->opt.len   = 0;
       sndcall->udata.len = 0;
-      struct sockaddr_in *sin = (struct sockaddr_in *) sndcall->addr.buf;
       sin->sin_addr.s_addr = that_address;
       sin->sin_family = AF_INET;
       sin->sin_port = htons( that_port );
+      
       rc = t_connect( sock, sndcall, NULL);
-      if (isnonblocking && rc == -1 && t_errno == TNODATA)
+      t_free((char *)sndcall, T_CALL);
+      if (rc < 0)
       {
-        time_t stoptime = time(NULL) + (time_t)iotimeout;
-        while (rc == -1 && t_errno == TNODATA && time(NULL) <= stoptime)
+        int err = t_errno;
+        debugtli("t_connect1", sock);
+        if (isnonblocking && err == TNODATA)
         {
-          if (CheckExitRequestTriggerNoIO())
-            break;
-          usleep(250000);
-          if (t_rcvconnect(sock, NULL) != -1)
+          stoptime = time(NULL) + (time_t)iotimeout;
+          while (rc < 0 && err == TNODATA && time(NULL) <= stoptime)
+          {
+            if (CheckExitRequestTriggerNoIO())
+              break;
+            usleep(250000);
+            rc = t_rcvconnect(sock, NULL);
+            if (rc < 0) 
+            {
+              err = t_errno;
+              debugtli("t_connect2", sock);
+              if (err == TLOOK)
+              {
+                if (t_look(sock) == T_CONNECT)
+                  rc = 0;
+              }
+            }
+          }
+        }
+        if (rc < 0 && err == TLOOK)
+        {
+          int look = t_look(sock);
+          if (look == T_CONNECT)
             rc = 0;
+          else if (look == T_DISCONNECT)
+          {
+            struct t_discon tdiscon;
+            tdiscon.udata.buf = (char *)0;
+            tdiscon.udata.maxlen = 0;
+            tdiscon.udata.len = 0;
+            if (t_rcvdis(sock, &tdiscon) < 0)
+              tdiscon.reason = ECONNREFUSED;
+            t_errno = TSYSERR;
+            errno = tdiscon.reason;
+          }
         }
       }
-      t_free((char *)sndcall, T_CALL);
+      #if 0
+      if (rc == 0)
+      {
+        int state = t_getstate(sock);
+        if ( state != T_DATAXFER && state != T_OUTCON )
+          rc = -1;
+      }
+      #endif
     }
   }
   return rc;
@@ -1380,10 +1571,10 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
 
   // set timeout for connect
   if (iotimeout > 0)
-    {
+  {
     // timeout for this call must be >0 to not have default used
     socket_set_conn_timeout(sock, iotimeout);
-    }
+  }
 
   return(connect(sock, (struct sockaddr *)&sin, sizeof(sin)));
 
@@ -1454,6 +1645,8 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
     }
     sleep(1);
     rc = -1;
+    if (CheckExitRequestTriggerNoIO())
+      break;
   } while (isnonblocking); /* always 1 */
 
   return rc;
@@ -1504,13 +1697,11 @@ int Network::LowLevelPut(const char *data,int length)
     else if (info.tsdu == -1) /* no limit */
       sendquota = length;
     else if (info.tsdu == 0) /* no boundaries */
-      sendquota = 1;
+      sendquota = 1500;
     else //if (info.tsdu == -2) /* normal send not supp'd (ever happens?)*/
       return -1;
   }
-  #endif
-
-  #if (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32S)
+  #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32S)
   if (sendquota > 0x7FFF)  /* 16 bit OS but int is 32 bits */
     sendquota = 0x7FFF;
   #elif (CLIENT_OS == OS_MACOS)
@@ -1519,6 +1710,10 @@ int Network::LowLevelPut(const char *data,int length)
   #else
   if (sendquota > INT_MAX)
     sendquota = INT_MAX;
+  #endif
+
+  #ifdef DEBUGTHIS
+  Log("LLPut: total to send=%d, quota:%d\n", length, sendquota );
   #endif
 
   do
@@ -1531,8 +1726,8 @@ int Network::LowLevelPut(const char *data,int length)
     written = -2;
     while (written == -2)
     {
-      int flag = (((length - towrite)==0) ? (0) : (T_MORE));
-      written = t_snd(sock, (char *)data, (unsigned int)towrite, flag );
+      //int flag = (((length - towrite)==0) ? (0) : (T_MORE));
+      written = t_snd(sock, (char *)data, (unsigned int)towrite, 0 /* flag */ );
       if (written == 0)       /* transport provider accepted nothing */
       {                   /* should never happen unless 'towrite' was 0*/
         if ((++noiocount) < 3)
@@ -1541,8 +1736,10 @@ int Network::LowLevelPut(const char *data,int length)
           usleep(500000); // 0.5 secs
         }
       }
-      else if (written == -1)
+      else if (written < 0)
       {
+        written = -1;
+        debugtli("t_snd", sock);
         if ( t_errno == TFLOW ) /* sending too fast */
         {
           usleep(500000); // 0.5 secs
@@ -1550,7 +1747,14 @@ int Network::LowLevelPut(const char *data,int length)
         }
         else if (t_errno == TLOOK)
         {
-          if (t_look(sock) == T_DISCONNECT)
+          int look = t_look(sock);
+          if ( look == T_ORDREL)
+          {
+             //t_sndrel( sock );
+             //t_rcvrel( sock );
+             written = 0;
+          }
+          if (look == T_DISCONNECT || look == T_UDERR|| look == T_ERROR)
             return 0;
         }
       }
@@ -1650,9 +1854,11 @@ int Network::LowLevelPut(const char *data,int length)
           usleep( sleepdur % 1000000UL );
       }
     }
-  } while (length);
+  } while (length && !CheckExitRequestTriggerNoIO());
 
-  TRACE_OUT((0,"LLPut: towrite=%d, written=%d\n", totaltowrite, totalwritten ));
+  #ifdef DEBUGTHIS
+  Log("LLPut: towrite=%d, written=%d\n", totaltowrite, totalwritten );
+  #endif
   totaltowrite = totaltowrite; //squash compiler warning
   return ((totalwritten != 0) ? ((int)totalwritten) : (-1));
 }
@@ -1670,43 +1876,71 @@ int Network::LowLevelGet(char *data,int length)
     return -1;
 
   u32 totalread = 0;
-  u32 writequota = 1500;
+  u32 rcvquota = 1500;
   time_t timenow = 0, stoptime = 0;
   int sleptcount = 0; /* ... in a row */
   int sleepms = 250; /* sleep time in millisecs. adjust here if needed */
   int sockclosed = 0;
 
+  #if defined(_TIUSER_)
+  rcvquota = 512;
+  struct t_info info;
+  if ( t_getinfo( sock, &info ) < 0)
+    info.tsdu = 0; /* assume tdsu not suppported */
+  else if (info.tsdu > 0)
+    rcvquota = info.tsdu;
+  else if (info.tsdu == -1) /* no limit */
+    rcvquota = length;
+  else if (info.tsdu == 0) /* no boundaries */
+    rcvquota = 1500;
+  else //if (info.tsdu == -2) /* normal send not supp'd (ever happens?)*/
+    return -1;
+  #elif ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
+  if (rcvquota > 0x7FFF)
+    rcvquota = 0x7FFF;
+  #elif (CLIENT_OS == OS_MACOS)
+  if (rcvquota > 0xFFFF)  /* Mac network library uses "unsigned short" */
+    rcvquota = 0xFFFF;
+  #else
+  if (rcvquota > INT_MAX)
+    rcvquota = INT_MAX;
+  #endif
+
   if (isnonblocking)
     stoptime = (time(NULL))+(time_t)iotimeout;
 
-  #if ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
-  if (writequota > 0x7FFF)
-    writequota = 0x7FFF;
-  #elif (CLIENT_OS == OS_MACOS)
-  if (writequota > 0xFFFF)  /* Mac network library uses "unsigned short" */
-    writequota = 0xFFFF;
-  #else
-  if (writequota > INT_MAX)
-    writequota = INT_MAX;
+  #ifdef DEBUGTHIS
+  Log("LLGet: total to recv=%d, quota:%d\n", length, rcvquota );
   #endif
 
-//LogScreen("beginning recv loop (total to recv=%d)\n", length );
   do
   {
-    int toread = (int)((((u32)length)>((u32)writequota))?(writequota):(length));
+    int toread = (int)((((u32)length)>((u32)rcvquota))?(rcvquota):(length));
     int bytesread = 0;
 
     #if defined(_TIUSER_)                               //OSI/TLI/XTI
+    int flags = 0; /* T_MORE, T_EXPEDITED etc */
+    bytesread = t_rcv( sock, data, toread, &flags );
+    if (bytesread == 0) /* peer sent a zero byte message */
+      bytesread = -1; /* treat as none waiting */
+    else if (bytesread < 0) 
     {
-      int flags;
-      bytesread = t_rcv( sock, data, toread, &flags );
-      if (bytesread == -1)
-      {
-        if ( t_errno != TNODATA ) /* TLOOK (async event) or TSYSERR */
-          bytesread = 0; /* set as socket closed */
+      int look, err = t_errno;
+      bytesread = -1;
+      debugtli("t_rcv", sock);
+      if (err == TNODATA )
+        bytesread = -1; /* fall through */
+      else if (err != TLOOK) /* TSYSERR et al */
+        bytesread = 0; /* set as socket closed */
+      else if ((look = t_look(sock)) == T_ORDREL)
+      {                /* connection closing... */
+        t_rcvrel( sock ); 
+        bytesread = 0; /* treat as closed */
       }
-      else if (bytesread == 0) /* should never happen? */
-        bytesread = -1; /* set as none waiting */
+      else if (look == T_DISCONNECT || look == T_ERROR )
+        bytesread = 0; /* treat as closed */
+      else /* else T_DATA (Normal data received), and T_GODATA and family */
+        bytesread = -1;
     }
     #elif (CLIENT_OS == OS_MACOS)
     // Note: MacOS client does not use XTI, and the socket emulation
@@ -1741,7 +1975,9 @@ int Network::LowLevelGet(char *data,int length)
     }
     #endif /* TLI/XTI or BSD */
 
-    TRACE_OUT((0,"LLGet: read(%d)-> %d\n", toread, bytesread ));
+    #ifdef DEBUGTHIS
+    Log("LLGet: read(%d)-> %d\n", toread, bytesread );
+    #endif
 
     if (bytesread == 0) /* sock closed */
     {
@@ -1764,6 +2000,8 @@ int Network::LowLevelGet(char *data,int length)
         break;
       if (time(&timenow) > stoptime)
         break;
+      if (CheckExitRequestTrigger())
+        break;
       ++sleptcount;
     }
     unsigned long sleepdur = ((unsigned long)(sleptcount+1)) * sleepms;
@@ -1771,10 +2009,12 @@ int Network::LowLevelGet(char *data,int length)
       sleep( sleepdur / 1000000UL );
     if ((sleepdur % 1000000UL) != 0)
       usleep( sleepdur % 1000000UL );
-  } while (length);
+  } while (length && !CheckExitRequestTriggerNoIO());
 
-  TRACE_OUT((0,"LLGet: got %u (requested %u) sockclosed:%s\n",
-              totalread, totalread+length, ((sockclosed)?("yes"):("no"))));
+  #ifdef DEBUGTHIS
+  Log("LLGet: got %u (requested %u) sockclosed:%s\n",
+              totalread, totalread+length, ((sockclosed)?("yes"):("no")));
+  #endif
 
   if (totalread!=0)
     return (int)totalread;

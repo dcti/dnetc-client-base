@@ -14,19 +14,21 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.56 1999/07/26 04:24:20 sampo Exp $"; }
+return "@(#)$Id: console.cpp,v 1.57 1999/10/11 17:06:25 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
-
 
 #include "cputypes.h"
 #include "baseincs.h"
 #include "network.h"
+#include "version.h"  //CLIENT_VERSIONSTRING
 #include "clitime.h"
 #include "triggers.h"
-#include "console.h" //also has CLICONS_SHORTNAME, CLICONS_LONGNAME
 #include "modereq.h"
-#include "sleepdef.h" //usleep
+#include "util.h"     //utilGetAppName()
+#include "sleepdef.h" //usleep()
+#include "console.h"  //ourselves
+
 #if (CLIENT_OS==OS_AIX)
 #include <sys/select.h>   // only needed if compiled on AIX 4.1
 #endif
@@ -72,9 +74,7 @@ int DeinitializeConsole(void)
     #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
     os2CliDeinitializeConsole(constatics.pauseonclose);
     #elif (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-    #ifdef CLIENT_17
-    macCliDeinitializeUI(constatics.pauseonclose);
-    #endif
+    macosCliDeinitializeUI(constatics.pauseonclose);
     #endif
   }
   constatics.initlevel--;
@@ -101,9 +101,7 @@ int InitializeConsole(int runhidden,int doingmodes)
     #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
     retcode = os2CliInitializeConsole(constatics.runhidden,doingmodes);
     #elif (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-    #ifdef CLIENT_17
-    retcode = macCliInitializeUI(constatics.runhidden,doingmodes);
-    #endif
+    retcode = macosCliInitializeUI(constatics.runhidden,doingmodes);
     #endif
     
     if (retcode != 0)
@@ -195,15 +193,16 @@ int ConOut(const char *msg)
 ** ConOutModal() should only be used when the console is known to be
 ** uninitialized and should be avoided. Not affected by -hidden/-quiet mode
 */
-
 int ConOutModal(const char *msg)
 {
   #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-     MessageBox( NULL, msg, CLICONS_LONGNAME,
-           MB_OK | MB_ICONINFORMATION );
+    w32ConOutModal(msg);
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
     WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, msg,
-       CLICONS_LONGNAME, NULL, MB_OK | MB_INFORMATION | MB_MOVEABLE );
+       "distributed.net client " CLIENT_VERSIONSTRING "",
+       NULL, MB_OK | MB_INFORMATION | MB_MOVEABLE );
+  #elif (CLIENT_OS == OS_NETWARE)
+    ConsolePrintf( "%s\r\n", msg );
   #else
     fprintf( stderr, "%s\n", msg );
     fflush( stderr );
@@ -214,22 +213,22 @@ int ConOutModal(const char *msg)
 /* ---------------------------------------------------- */
 
 /*
-** ConOutErr() does what fprintf(stderr "\nRC5DES: %s\n",msg) would do.
-** Can be blocking. Note the leading and trailing newlines.
+** ConOutErr() does what fprintf(stderr, "APPNAME: %s\n",msg) would do.
+** Can be blocking. Note the trailing newline.
 */
 
 int ConOutErr(const char *msg)
 {
   #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-    MessageBox( NULL, msg, CLICONS_LONGNAME,
-                 MB_OK | MB_TASKMODAL | MB_ICONSTOP /*MB_ICONERROR*/ );
+    w32ConOutErr(msg);
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
      WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, (PSZ)msg,
-           CLICONS_LONGNAME,  NULL, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
+           "distributed.net client " CLIENT_VERSIONSTRING "",
+           NULL, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
-    ConsolePrintf( "%s: %s\r\n", CLICONS_SHORTNAME, msg );
+    ConsolePrintf( "%s: %s\r\n", utilGetAppName(), msg );
   #else
-    fprintf( stderr, "%s: %s\n", CLICONS_SHORTNAME, msg );
+    fprintf( stderr, "%s: %s\n", utilGetAppName(), msg );
     fflush( stderr );
   #endif
   return 0;
@@ -275,7 +274,16 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
             ch = (w32ConGetch() << 8);
         }
       }
-      #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) || \
+      #elif (CLIENT_OS == OS_NETWARE)
+      {
+        if (nwCliKbHit())
+        {
+          ch = nwCliGetCh();
+          if (!ch)
+            ch = (nwCliGetCh()<<8);
+        }
+      }
+      #elif (CLIENT_OS == OS_DOS) || \
          ( (CLIENT_OS == OS_OS2) && !defined(__EMX__)  )
       {
         fflush(stdout);
@@ -514,15 +522,23 @@ int ConGetPos( int *col, int *row )  /* zero-based */
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     return w32ConGetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
-    short x, y;
-    GetOutputCursorPosition( &x, &y );
-    if (row) *row = (int)y; if (col) *col = (int)x;
+    unsigned short r, c;
+    if (GetPositionOfOutputCursor( &r, &c ) == 0)
+    {
+      if (row) *row = (int)r; 
+      if (col) *col = (int)c;
+    }
     return 0;
     #elif (CLIENT_OS == OS_DOS)
     return dosCliConGetPos( col, row );
     #elif (CLIENT_OS == OS_OS2)
-    return ((VioGetCurPos( (USHORT*)&row, (USHORT*)&col,
-                 0 /*handle*/) != 0)?(-1):(0));
+    USHORT r, c;
+    if (VioGetCurPos( &r, &c, 0 /*handle*/) == 0)
+    {
+      if (row) *row = (int)r; 
+      if (col) *col = (int)c;
+      return 0;
+    }
     #else
     return ((row == NULL && col == NULL) ? (0) : (-1));
     #endif
@@ -542,8 +558,7 @@ int ConSetPos( int col, int row )  /* zero-based */
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     return w32ConSetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
-    short c = col, r = row;
-    gotoxy( c, r );
+    gotoxy( ((unsigned short)col), ((unsigned short)row) );
     return 0;
     #elif (CLIENT_OS == OS_DOS)
     return dosCliConSetPos( col, row );
@@ -586,9 +601,9 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     if ( w32ConGetSize(&width,&height) < 0 )
       height = width = 0;
   #elif (CLIENT_OS == OS_NETWARE)
-    WORD ht, wdth;
-    GetSizeOfScreen( &ht, &wt );
-    height = ht; width = wt;
+    unsigned short h, w;
+    if (GetSizeOfScreen( &h, &w ) == 0)
+      height = h; width = w;
   #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SOLARIS) || \
         (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_IRIX) || \
         (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX)

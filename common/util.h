@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.6 1999/05/08 19:07:50 cyp Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.7 1999/10/11 17:06:32 cyp Exp $"
 
 void trace_out( int indlevel, const char *fmt, ... );
 #ifdef TRACE
@@ -22,6 +22,10 @@ const char *projectmap_expand( const char *map );
 const char *projectmap_build( char *buf, const char *strtomap );
 //char *strfproj( char *buffer, const char *fmt, WorkRecord *work );
 
+const char *utilGatherOptionArraysToList( int *table1, int *table2 );
+int utilScatterOptionListToArrays( const char *oplist, 
+                           int *table1, int *table2, int defaultval );
+
 const char *ogr_stubstr(const struct Stub *stub);
 unsigned long ogr_nodecount( const struct Stub *stub );
 
@@ -31,5 +35,9 @@ int DoesFileExist( const char *filename );
 /* convert a basename to a real buffer file name */
 const char *BufferGetDefaultFilename( unsigned int proj, int is_out_type,
                                                     const char *basename );
+
+const char *utilGetAppName(void); /* "rc5 des" or "dnetc" or whatever */
+const char *utilSetAppName(const char *newname); /* shouldn't be needed */
+
 #endif /* __UTIL_H__ */
 

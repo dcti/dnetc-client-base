@@ -21,17 +21,14 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.15 1999/05/09 03:41:01 silby Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.16 1999/10/11 17:06:28 cyp Exp $"; }
 
 #include <stdio.h>
 #include <string.h>
 #include "cputypes.h"
 #include "pathwork.h"
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16)
-  #define WIN32_LEAN_AND_MEAN
-  #include <windows.h>
-#elif (CLIENT_OS == OS_DOS) ||  ( (CLIENT_OS == OS_OS2) && !defined(__EMX__) )
+#if (CLIENT_OS == OS_DOS) ||  ( (CLIENT_OS == OS_OS2) && !defined(__EMX__) )
   #include <dos.h>  //drive functions
   #include <ctype.h> //toupper
   #if defined(__WATCOMC__)
@@ -93,12 +90,11 @@ unsigned int GetFilenameBaseOffset( const char *fullpath )
 /* ------------------------------------------------------------------------ */
 
 static char cwdBuffer[MAX_FULLPATH_BUFFER_LENGTH+1];
-static unsigned int cwdBufferLength = 0xFFFFFFFFL;
+static int cwdBufferLength = -1; /* not initialized */
 
 /* ------------------------------------------------------------------------ */
 /* the working directory is the app's directory, unless the ini filename    */
 /* contains a dirspec, in which case the path to the ini file is used.      */
-/* Exception to the rule: win32/win16 which always use the app's directory. */
 /* ------------------------------------------------------------------------ */
 
 int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppath )
@@ -106,6 +102,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
   if ( inipath == NULL ) inipath = "";
   if ( apppath == NULL ) apppath = "";
 
+  cwdBuffer[0] = '\0';
   #if (CLIENT_OS == OS_MACOS)
   {
     strcpy( cwdBuffer, inipath );
@@ -138,7 +135,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
     if (slash2 > slash) slash = slash2;
     if ( slash == NULL )
     {
-      if ( strlen( cwdBuffer ) < 2 || cwdBuffer[1] != ':' )
+      if ( strlen( cwdBuffer ) < 2 || cwdBuffer[1] != ':' ) /* dos partn */
       {
         strcpy( cwdBuffer, apppath );
         slash = strrchr(cwdBuffer, '/');
@@ -163,9 +160,11 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
     if ( slash == NULL )
     {
       strcpy( cwdBuffer, apppath );
-      if ( *apppath == 0 )
-        GetModuleFileName(NULL, cwdBuffer, sizeof(cwdBuffer));
-      slash = strrchr(cwdBuffer, '\\');
+      slash = strrchr(cwdBuffer, '/');
+      slash2 = strrchr(cwdBuffer, '\\');
+      if (slash2 > slash) slash = slash2;
+      slash2 = strrchr(cwdBuffer, ':');
+      if (slash2 > slash) slash = slash2;
     }
     if (slash != NULL) *(slash+1) = 0;
     else cwdBuffer[0] = 0;
@@ -279,17 +278,12 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
 const char *GetWorkingDirectory( char *buffer, unsigned int maxlen )
 {
   if ( buffer == NULL )
-    return NULL;  //could do a malloc() here. naah.
+    return buffer; //could do a malloc() here. naah.
   if ( maxlen == 0 )
     return "";
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
-     (CLIENT_OS == OS_WIN32S)
-  if ( cwdBufferLength == 0xFFFFFFFFL )
-    InitWorkingDirectoryFromSamplePaths( "", "" );
-  #endif
-  if ( cwdBufferLength == 0xFFFFFFFFL ) //not initialized
+  if ( cwdBufferLength <= 0 ) /* not initialized or zero len */
     buffer[0] = 0;
-  else if ( cwdBufferLength > maxlen )
+  else if ( ((unsigned int)cwdBufferLength) > maxlen )
     return NULL;
   else
     strcpy( buffer, cwdBuffer );
@@ -304,21 +298,20 @@ const char *GetFullPathForFilename( const char *filename )
 {
   const char *outpath;
 
-  if ( filename == NULL || filename[0] == 0 )
+  if ( filename == NULL )
     outpath = "";
-  else if ( GetFilenameBaseOffset( filename ) != 0 )
+  else if ( !*filename )
+    outpath = filename;
+  else if ( GetFilenameBaseOffset( filename ) != 0 ) /* already pathified */
     outpath = filename;
   else if ( GetWorkingDirectory( pathBuffer, sizeof( pathBuffer ) )==NULL )
     outpath = "";
+  else if (pathBuffer[0] == '\0') /* no need to cat */
+    outpath = filename;
   else if (strlen(pathBuffer)+strlen(filename)+1 > sizeof(pathBuffer))
     outpath = "";
   else
-    {
-    if (*pathBuffer)
-      outpath = strcat(pathBuffer, filename);
-    else
-      outpath = filename;
-    }
+    outpath = strcat(pathBuffer, filename);
 
   #ifdef DEBUG_PATHWORK
   printf( "got \"%s\" returning \"%s\"\n", filename, outpath );

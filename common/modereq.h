@@ -10,54 +10,30 @@
  * clear/run the modes when appropriate.
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
- *
- * This is a bridge module. Do not muck with the prototypes.
  * --------------------------------------------------------------------     
 */ 
 
 #ifndef __MODEREQ_H__
-#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.13 1999/07/23 03:16:55 fordbr Exp $"
+#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.14 1999/10/11 17:06:28 cyp Exp $"
 
-#ifndef CSC_TEST
-#define MODEREQ_IDENT              0x0001    
-#define MODEREQ_CPUINFO            0x0002
-#define MODEREQ_TEST               0x0004
-#define MODEREQ_CONFIG             0x0008
-#define MODEREQ_FETCH              0x0010
-#define MODEREQ_FLUSH              0x0020
-#define MODEREQ_FQUIET             0x0040 /* fetch/flush quietly */
-#define MODEREQ_CONFRESTART        0x0080 /* set restart flag after successful config? */
-#define MODEREQ_BENCHMARK_RC5      0x0100
-#define MODEREQ_BENCHMARK_DES      0x0200
-#define MODEREQ_BENCHMARK_ALL      (MODEREQ_BENCHMARK_DES|MODEREQ_BENCHMARK_RC5)
-#define MODEREQ_BENCHMARK_QUICK    0x0400
-#define MODEREQ_CMDLINE_HELP       0x0800
-#define MODEREQ_UNLOCK             0x1000
-#define MODEREQ_IMPORT             0x2000
-#define MODEREQ_RESTART            0x8000 /* restart client after mode processing */
-#define MODEREQ_ALL                0xBFFF /* mask of all - needed internally */
-#else
 #define MODEREQ_IDENT              0x00000001
 #define MODEREQ_CPUINFO            0x00000002
-#define MODEREQ_TEST               0x00000004
-#define MODEREQ_CONFIG             0x00000008
+#define MODEREQ_CONFIG             0x00000004
+#define MODEREQ_CONFRESTART        0x00000008 /* restart if config ok */
 #define MODEREQ_FETCH              0x00000010
 #define MODEREQ_FLUSH              0x00000020
 #define MODEREQ_FQUIET             0x00000040 /* fetch/flush quietly */
-#define MODEREQ_CONFRESTART        0x00000080 /* set restart flag after successful config? */
-#define MODEREQ_BENCHMARK_RC5      0x00000100
-#define MODEREQ_BENCHMARK_DES      0x00000200
-#define MODEREQ_BENCHMARK_OGR      0x00000400
-#define MODEREQ_BENCHMARK_CSC      0x00000800
-#define MODEREQ_BENCHMARK_ALL      (MODEREQ_BENCHMARK_DES|MODEREQ_BENCHMARK_RC5|\
-                                    MODEREQ_BENCHMARK_CSC|MODEREQ_BENCHMARK_OGR)
-#define MODEREQ_BENCHMARK_QUICK    0x00001000
-#define MODEREQ_CMDLINE_HELP       0x00002000
-#define MODEREQ_UNLOCK             0x00004000
-#define MODEREQ_IMPORT             0x00008000
-#define MODEREQ_RESTART            0x00010000 /* restart client after mode processing */
-#define MODEREQ_ALL                0x0001FFFF /* mask of all - needed internally */
-#endif
+#define MODEREQ_CMDLINE_HELP       0x00000080
+#define MODEREQ_BENCHMARK          0x00000100 /* "long" benchmark */
+#define MODEREQ_BENCHMARK_QUICK    0x00000200 /* "quick" benchmark */
+#define MODEREQ_BENCHMARK_ALLCORE  0x00000400 /* all cores for (each) contest */
+#define MODEREQ_UNLOCK             0x00000800
+#define MODEREQ_IMPORT             0x00001000
+#define MODEREQ_TEST               0x00002000 /* normal test */
+#define MODEREQ_TEST_ALLCORE       0x00004000 /* all cores for (each) contest */
+#define MODEREQ_RESTART            0x00008000 /* restart client after mode processing */
+#define MODEREQ_ALL                0x0000FFFF /* mask of all - needed internally */
+
 
 /* get mode bit(s). if modemask is -1, all bits are returned */
 extern int ModeReqIsSet(int modemask);
@@ -68,7 +44,13 @@ extern int ModeReqSet(int modemask);
 /* clear mode bit(s). if modemask is -1, all bits are cleared */
 extern int ModeReqClear(int modemask);
 
-/* returns !0 if Client::ModeReqRun(void) is currently running */
+/* limit bench/selftest to contest_i (additive) */
+int ModeReqLimitProject(int mode, unsigned int contest_i);
+
+/* is bench/selftest being restricted to contest_i? */
+int ModeReqIsProjectLimited(int mode, unsigned int contest_i);
+
+/* returns !0 if ModeReqRun(Client *) is currently running */
 extern int ModeReqIsRunning(void);
 
 /* set an optional argument * for a mode. The mode must support it */

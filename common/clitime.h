@@ -11,7 +11,7 @@
  *
 */ 
 #ifndef __CLITIME_H__
-#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.20 1999/08/09 16:56:04 cyp Exp $"
+#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.21 1999/10/11 17:06:23 cyp Exp $"
 
 #include "baseincs.h" /* struct timeval */
 

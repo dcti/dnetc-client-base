@@ -3,339 +3,582 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * ----------------------------------------------------------------------
- * PORTER NOTE: when adding support for a new processor family, add each
- * major processor type individually - *even_if_one_core_covers_more_than_
- * one_processor*. This is to avoid having obsolete cputype entries
- * in inis when more cores become available.                   - cyp
- * ----------------------------------------------------------------------
+ * -------------------------------------------------------------------
+ * program (pro'-gram) [vi]: To engage in a pastime similar to banging
+ * one's head against a wall but with fewer opportunities for reward.
+ * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.49 1999/09/16 21:37:27 remi Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.50 1999/10/11 17:06:30 cyp Exp $"; }
 
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
-//#include "version.h"
 #include "problem.h"   // problem class
 #include "cpucheck.h"  // cpu selection, GetTimesliceBaseline()
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
+#include "clicdata.h"  // GetContestNameFromID()
+#include "bench.h"     // TBenchmark()
+#include "selftest.h"  // SelfTest()
 #include "selcore.h"   // keep prototypes in sync
 
 /* ------------------------------------------------------------------------ */
 
-//************************************
-//"--------- max width = 34 ---------" (35 including terminating '\0')
-//************************************
-
-#if (CLIENT_CPU == CPU_X86)
-static const char *cputypetable[]=
+static const char **__corenames_for_contest( unsigned int cont_i )
+{
+  /* 
+   When selecting corenames, use names that describe how (what optimization)
+   they are different from their predecessor(s). If only one core,
+   use the obvious "MIPS optimized" or similar.
+  */
+  #define LARGEST_SUBLIST 7 /* including the terminating null */
+  static const char *corenames_table[CONTEST_COUNT][LARGEST_SUBLIST]= 
+  #undef LARGEST_SUBLIST
   {
-  "Pentium, Am486, Cx486/5x86/MediaGX",
-  "80386 & 80486",
-  "Pentium Pro & Pentium II",
-  "Cyrix 6x86/6x86MX/M2",
-  "AMD K5",
-  "AMD K6"
-  //core 6 is "reserved" (was Pentium MMX)
-  };
-#elif ((CLIENT_CPU == CPU_ALPHA) && ((CLIENT_OS == OS_DEC_UNIX) || \
-     (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_LINUX)))
-static const char *cputypetable[]=
-{
-  "unknown",
-  "EV3",
-  "EV4 (21064)",
-  "unknown",
-  "LCA4 (21066/21068)",
-  "EV5 (21164)",
-  "EV4.5 (21064)",
-  "EV5.6 (21164A)",
-  "EV6 (21264)",
-  "EV5.6 (21164PC)"
-};
-#elif (CLIENT_CPU == CPU_ARM)
-static const char *cputypetable[]=
-{
-  "ARM 3, 610, 700, 7500, 7500FE",
-  "ARM 810, StrongARM 110",
-  "ARM 2, 250",
-  "ARM 710"
-};
-#elif (CLIENT_OS == OS_AIX) || ((CLIENT_CPU == CPU_POWERPC) && \
-      ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOS)))
-static const char *cputypetable[]=
-{
-  #if (CLIENT_OS == OS_AIX)
-  "POWER CPU",
-  #endif
-  "PowerPC 601",
-  "PowerPC 603/604/750"
-};
-#elif (CLIENT_CPU == CPU_68K)
-static const char *cputypetable[]=
+  #if (CLIENT_CPU == CPU_X86)
+    { /* RC5 */
+      /* we should be using names that tell us how the cores are different
+         (just like "bryd" and "movzx bryd")
+      */
+      "RG/BRF class 5", /* (P5/Am486/Cx486) - may become P5MMX at runtime*/
+      "RG class 3/4",   /* (autofor 386/486) may become SMC at runtime */
+      "RG class 6",     /* (autofor PPro/II/III/AMD K7) */
+      "RG Cx re-pair",  /* Cyrix 6x86[MX]/M2 */
+      "RG RISC-rotate I", /* K5 */
+      "RG RISC-rotate II", /* K6, may become mmx-k6-2 at runtime */
+      NULL
+    },
+    { /* DES */
+      "byte Bryd",
+      "movzx Bryd",
+      #if defined(MMX_BITSLICER) || defined(CLIENT_SUPPORTS_SMP) 
+      "Kwan/Bitslice", /* may become MMX bitslice at runtime */
+      #endif
+      NULL
+    },
+  #elif (CLIENT_CPU == CPU_ARM)
+    { /* RC5 */
+      "Series A core", /* (autofor for ARM 3/6xx/7xxx) "ARM 3, 610, 700, 7500, 7500FE" */
+      "Series B core", /* (autofor ARM 8xx/StrongARM) "ARM 810, StrongARM 110" */
+      "Series C core", /* (autofor ARM 2xx) "ARM 2, 250" */
+      NULL             /* "ARM 710" */
+    },
+    { /* DES */
+      "Standard ARM core", /* "ARM 3, 610, 700, 7500, 7500FE" or  "ARM 710" */
+      "StrongARM optimized core", /"ARM 810, StrongARM 110" or "ARM 2, 250" */
+      NULL
+    },
+  #elif (CLIENT_CPU == CPU_68K)
+    { /* RC5 */
+      "Motorola 68000", "Motorola 68010", "Motorola 68020", "Motorola 68030",
+      "Motorola 68040", "Motorola 68060", /* will never change :) */
+      NULL
+    },
+    { /* DES */
+      "Generic DES core", 
+      NULL
+    },
+  #elif (CLIENT_CPU == CPU_ALPHA) 
+    { /* RC5 */
+      #if (CLIENT_OS == OS_DEC_UNIX)
+      "ev3 and ev4 optimized",
+      "ev5 and ev6 optimized",
+      #elif (CLIENT_OS == OS_WIN32)
+      "michmarch series A",  /* :) */
+      #else
+      "axp bmeyer",
+      #endif
+      NULL
+    },
+    { /* DES */
+      #if (CLIENT_OS == OS_DEC_UNIX)
+      "ev3 and ev4 optimized",
+      "ev5 and ev6 optimized",
+      #else
+      "dworz/amazing core",
+      #endif
+      NULL
+    },
+  #elif (CLIENT_CPU == CPU_POWERPC)
+    { /* RC5 */
+      #if (CLIENT_OS == OS_WIN32)
+      "RG ansi2",
+      #else
+        #if (CLIENT_OS == OS_AIX)
+        "RG AIXALL (Power CPU)",
+        #endif
+        "allitnil", /* aka rc5_unit_func_g1() wrapper */
+        "lintilla", /* aka rc5_unit_func_g2_g3() wrapper */
+      #endif
+      NULL
+    },
+    { /* DES */
+      "Generic DES core", 
+      NULL
+    },
+  #else
+    { /* RC5 */
+      "Generic RC5 core",
+      NULL
+    },
+    { /* DES */
+      "Generic DES core",
+      NULL
+    },
+  #endif  
+    { /* OGR */
+      "Standard OGR core",
+      NULL
+    },
+    { /* CSC */
+      "6 bit - inline", 
+      "6 bit - called", 
+      "1 key - inline", 
+      "1 key - called",
+      NULL
+    }
+  };  
+  static int fixed_up = -1;
+  if (fixed_up < 0)
   {
-  "Motorola 68000", "Motorola 68010", "Motorola 68020", "Motorola 68030",
-  "Motorola 68040", "Motorola 68060"
-  };
-#else
-  #define NO_CPUTYPE_TABLE
-#endif
+    #if (CLIENT_CPU == CPU_X86)
+    {
+      long det = GetProcessorType(1);
+      #ifdef SMC /* actually only for the first thread */
+      corenames_table[RC5][1] = "RG self-modifying";
+      #endif
+      if ((det & 0x100)!=0)
+      {
+        #if defined(MMX_RC5)
+        corenames_table[RC5][0] = "jasonp P5/MMX"; /* slower on a PII/MMX */
+        #endif
+        #if defined(MMX_RC5_AMD)
+        corenames_table[RC5][5] = "BRF Kx/MMX"; /* is this k6-2 only? */
+        #endif
+        #ifdef MMX_BITSLICER
+        corenames_table[DES][2] = "MMX bitslice"; 
+        #endif
+      }
+    }
+    #endif
+    fixed_up = 1;  
+  }
+  if (cont_i < CONTEST_COUNT)
+  {
+    return (const char **)(&(corenames_table[cont_i][0]));
+  }
+  return ((const char **)0);
+}  
 
-/* ----------------------------------------------------------------------
- * PORTER NOTE: when adding support for a new processor family, add each
- * major processor type individually - *even_if_one_core_covers_more_than_
- * one_processor*. This is to avoid having obsolete cputype entries
- * in inis when more cores become available.                   - cyp
- * ----------------------------------------------------------------------
-*/ 
+/* -------------------------------------------------------------------- */
 
+static unsigned int __corecount_for_contest( unsigned int cont_i )
+{
+  const char **cnames = __corenames_for_contest( cont_i );
+  if (cnames)
+  {
+    cont_i = 0;
+    while (cnames[cont_i])
+      cont_i++;
+    return cont_i;
+  }
+  return 0;  
+}
+
+/* ===================================================================== */
+
+void selcoreEnumerateWide( int (*proc)(
+                            const char **corenames, int idx, void *udata ),
+                       void *userdata )
+{
+  if (proc)
+  {
+    unsigned int corenum;
+    for (corenum = 0;;corenum++)
+    {
+      const char *carray[CONTEST_COUNT];
+      int have_one = 0;
+      unsigned int cont_i;
+      for (cont_i = 0; cont_i < CONTEST_COUNT;cont_i++)
+      {
+        carray[cont_i] = (const char *)0;
+        if (corenum < __corecount_for_contest( cont_i ))
+        {
+          const char **names = __corenames_for_contest( cont_i );
+          carray[cont_i] = names[corenum];
+          have_one++;
+        }
+      }
+      if (!have_one)
+        break;
+      if (! ((*proc)( &carray[0], (int)corenum, userdata )) )
+        break;
+    }
+  }  
+  return;
+}
+  
 /* ---------------------------------------------------------------------- */
 
-const char *GetCoreNameFromCoreType( unsigned int coretype )
+void selcoreEnumerate( int (*proc)(unsigned int cont, 
+                            const char *corename, int idx, void *udata ),
+                       void *userdata )
 {
-  #if (defined(NO_CPUTYPE_TABLE))
-    if (coretype) return ""; //dummy to suppress unused variable warnings
-  #else
-    if (coretype<(sizeof(cputypetable)/sizeof(cputypetable[0])))
-      return cputypetable[coretype];
-  #endif
+  if (proc)
+  {
+    int stoploop = 0;
+    unsigned int cont_i;
+    for (cont_i = 0; !stoploop && cont_i < CONTEST_COUNT; cont_i++)
+    {
+      unsigned int corecount = __corecount_for_contest( cont_i );
+      if (corecount)
+      {
+        unsigned int coreindex;
+        const char **corenames = __corenames_for_contest(cont_i);
+        for (coreindex = 0; !stoploop && coreindex < corecount; coreindex++)
+          stoploop = (! ((*proc)(cont_i, 
+                      corenames[coreindex], (int)coreindex, userdata )) );
+      }
+    }
+  }
+  return;
+}  
+
+/* --------------------------------------------------------------------- */
+
+int selcoreValidateCoreIndex( unsigned int cont_i, int index )
+{
+  /* To enable future expansion, we return -1 if there is only one core */
+  if (index >= 0 && index < ((int)__corecount_for_contest( cont_i )))
+    return index;
+  return -1;
+}
+
+/* --------------------------------------------------------------------- */
+
+const char *selcoreGetDisplayName( unsigned int cont_i, int index )
+{
+  if (index >= 0 && index < ((int)__corecount_for_contest( cont_i )))
+  {
+     const char **names = __corenames_for_contest( cont_i );
+     return names[index];
+  }
   return "";
 }
 
+/* ===================================================================== */
+
+static struct
+{
+  int user_cputype[CONTEST_COUNT]; /* what the user has in the ini */
+  int corenum[CONTEST_COUNT]; /* what we map it to */
+} selcorestatics;
+
 /* ---------------------------------------------------------------------- */
 
-/* *REPEATED WARNING* - cputype *must* be valid on return from SelectCore() */
+int DeinitializeCoreTable( void ) { return 0; }
 
-int Client::SelectCore(int quietly)
+int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 {
-  static s32 last_cputype = -123;
-#ifdef CSC_TEST
-  static s32 last_csccore = -123;
-#endif
-  static int detectedtype = -123;
-  unsigned int corecount = 0; /* number of cores available */
-
-  numcpu = ValidateProcessorCount( numcpu, quietly ); //in cpucheck.cpp
-
-  if (cputype == last_cputype 
-#ifdef CSC_TEST
-      && csc_core == last_csccore
-#endif
-                             ) //no change, so don't bother reselecting
-    return 0;                  //(cputype can change when restarted)
-
-  #ifdef NO_CPUTYPE_TABLE
-  cputype = 0;
-  #else
-  corecount = (sizeof(cputypetable)/sizeof(cputypetable[0]));
-  #endif
-  
-  if (cputype<0 || cputype>=((int)corecount))
-    cputype = -1;
-  if (cputype == -1)
+  static int initialized = -1;
+  unsigned int cont_i;
+  if (initialized < 0)
   {
-    if (detectedtype == -123) 
-      detectedtype = GetProcessorType(quietly);//returns -1 if unable to detect
-    if (detectedtype < 0)
-      detectedtype = -1;
-    else if ((cputype = ((s32)(detectedtype & 0xff))) >=((s32)corecount))
-    { 
-      detectedtype = -1; 
-      cputype = -1; 
-    }
-  }
-    
-#if (CLIENT_CPU == CPU_68K)
-  if (cputype == -1)
-    cputype = 0;
-  if (!quietly)
-  {
-    const char *corename = NULL;
-    if (cputype == 4 || cputype == 5 ) // there is no 68050, so type5=060
-      corename = "040/060";
-    else //if (cputype == 0 || cputype == 1 || cputype == 2 || cputype == 3)
-      corename = "000/010/020/030";
-    LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename ); 
-  }
-#elif (CLIENT_CPU == CPU_X86)
-  int selppro_des = 0;
-#ifndef CSC_TEST
-  const char *selmsg_rc5 = NULL, *selmsg_des = NULL;
-#else
-  const char *selmsg_rc5 = NULL, 
-             *selmsg_des = NULL,
-             *selmsg_csc = NULL;
-#endif
-    
-  if (detectedtype < 0) /* user provided a #, but we need to detect for mmx */
-    detectedtype = GetProcessorType(1); /* but do it quietly */
-  
-  if (cputype == 6) /* Pentium MMX */
-    cputype = 0;    /* but we need backwards compatability */
-
-  if (cputype == 1) // Intel 386/486
-  {
-    #if defined(SMC) 
+    for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
     {
-      #if defined(CLIENT_SUPPORTS_SMP)
-      if (numcpu < 2)
-      #endif
-        selmsg_rc5 = "80386 & 80486 self modifying";
+      selcorestatics.user_cputype[cont_i] = -1;
+      selcorestatics.corenum[cont_i] = -1;
     }
-    #endif
+    initialized = 0;
   }
-  else if (cputype == 2) // Ppro/PII
-    selppro_des = 1;
-  else if (cputype == 3) // 6x86(mx)
-    selppro_des = 1;
-  else if (cputype == 4) // K5
-    ;
-  else if (cputype == 5) // K6/K6-2
-    selppro_des = 1;
-  else // Pentium (0/6) + others
+  if (coretypes)
   {
-    cputype = 0;
-    #if defined(MMX_RC5)
-    if (detectedtype == 0x106) /* Pentium MMX only! */
-      selmsg_rc5 = "Pentium MMX";
-    #endif
-  }
-
-  #if defined(MMX_BITSLICER)
-  if ((detectedtype & 0x100) != 0)   // use the MMX DES core ?
-    selmsg_des = "MMX bitslice";
-  #endif
-
-#ifdef CSC_TEST
-  switch( csc_core ) {
-    case 0 : 
-      selmsg_csc = "6 bit - inline";
-      break;
-    case 1 :
-      selmsg_csc = "6 bit - called";
-      break;
-    default:
-    case 2 :
-      selmsg_csc = "1 key - inline";
-      break;
-    case 3 :
-      selmsg_csc = "1 key - called";
-      break;
-  }
-#endif
-
-  if (!selmsg_des)
-    selmsg_des = ((selppro_des)?("PentiumPro optimized BrydDES"):("BrydDES"));
-  if (!selmsg_rc5)
-    selmsg_rc5 = GetCoreNameFromCoreType(cputype);
-    
-  if (!quietly)
-    LogScreen( "DES: selecting %s core.\n"
-#ifndef CSC_TEST
-               "RC5: selecting %s core.\n", selmsg_des, selmsg_rc5 );
-#else
-               "RC5: selecting %s core.\n"
-               "CSC: selecting %s core.\n", selmsg_des, selmsg_rc5, selmsg_csc );
-#endif
-      
-#elif (CLIENT_CPU == CPU_ARM)
-  if (cputype == -1)
-  {
-    const u32 benchsize = 100000;
-    unsigned long fasttime[2] = { 0, 0 };
-    unsigned int contestid;
-    int whichcrunch;
-    int fastcoretest[2] = { -1, -1 };
-  
-    if (!quietly)
-      LogScreen("Manually selecting fastest core...\n");
-    for ( contestid = 0; contestid < CONTEST_COUNT; contestid++)
+    int verbosedetect = 0;
+    for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
     {
-      for ( whichcrunch = 0; whichcrunch < 3; whichcrunch++)
+      int gotchange = 0, index = 0;
+      if (__corecount_for_contest( cont_i ) > 1)
+        index = selcoreValidateCoreIndex( cont_i, coretypes[cont_i] );
+      gotchange = (!initialized ||
+                   index != selcorestatics.user_cputype[cont_i]);
+      if (gotchange)
+        selcorestatics.corenum[cont_i] = -1;
+      if (!verbosedetect)
+        verbosedetect = (index == -1);
+      selcorestatics.user_cputype[cont_i] = index;
+    }
+    initialized = 1;
+  }
+  if (initialized > 0)
+    return 0;
+  return -1;
+}  
+
+/* ---------------------------------------------------------------------- */
+
+static long __bench_or_test( int which, 
+                            unsigned int cont_i, unsigned int benchsecs )
+{
+  long rc = -1;
+  
+  if (InitializeCoreTable(((int *)0)) < 0) /* ACK! selcoreInitialize() */
+    return -1;                             /* hasn't been called */
+
+  if (cont_i < CONTEST_COUNT)
+  {
+    /* save current state */
+    int user_cputype = selcorestatics.user_cputype[cont_i]; 
+    int corenum = selcorestatics.corenum[cont_i];
+    unsigned int coreidx, corecount = __corecount_for_contest( cont_i );
+    rc = 0;
+    for (coreidx = 0; coreidx < corecount; coreidx++)
+    {
+      selcorestatics.user_cputype[cont_i] = coreidx; /* as if user set it */
+      selcorestatics.corenum[cont_i] = -1; /* reset to show name */
+      if (which == 's') /* bench */
       {
-        Problem *problem = new Problem();
-        ContestWork contestwork;
-	unsigned long elapsed;
-        //!! This should probably be addressed for OGR, zero data is not valid input.
-	memset( (void *)&contestwork, 0, sizeof(contestwork));
-        contestwork.crypto.iterations.lo = benchsize;
-        problem->LoadState( &contestwork , contestid, benchsize, whichcrunch );
-        problem->Run();
-    
-        elapsed = (((unsigned long)problem->runtime_sec) * 1000000UL)+
-	          (((unsigned long)problem->runtime_usec));
-        //printf("%s Core %d: %lu usec\n", CliGetContestName(contestid),whichcrunch,elapsed);
-    
-        if (fastcoretest[contestid] < 0 || elapsed < fasttime[contestid])
+        int irc = SelfTest( cont_i );
+        if (irc <= 0) /* failed or not supported */
         {
-          fastcoretest[contestid] = whichcrunch; 
-	  fasttime[contestid] = elapsed;
+          rc = (long)irc;
+          break; /* test failed. stop */
         }
-	delete problem;
       }
+      else if ((rc = TBenchmark( cont_i, benchsecs, 0 )) <= 0)
+        break; /* failed/not supported for this contest */
     }
-    cputype = (fastcoretest[0] + ((fastcoretest[1]&1)<<2));
-    if (cputype == 6)
-      cputype = 1;
-    else if (cputype == 5)
-      cputype = 2;
-    else if (cputype == 2)
-      cputype = 3;
-    else
-      cputype = 0;
-    detectedtype = cputype;
+    selcorestatics.user_cputype[cont_i] = user_cputype; 
+    selcorestatics.corenum[cont_i] = corenum;
   }
-  if (!quietly)
-    LogScreen("Selecting %s code.\n",
-              GetCoreNameFromCoreType(cputype));
-#elif (CLIENT_CPU == CPU_POWERPC)
-  #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_AMIGAOS))
-    // Be OS isn't supported on 601 machines
-    // There is no 601 PPC board for the Amiga
-    cputype = 1; //"PowerPC 603/604/750"
-  #elif (CLIENT_OS == OS_WIN32)
-    //actually not supported, but just in case
-    cputype = 1;
-  #endif
-#endif
+  return rc;
+}
 
-  if (cputype == -1)
-  {
-    unsigned long fasttime = 0;
-    int whichcrunch;
-    if (!quietly)
-        LogScreen("Manually selecting fastest core...\n");
-    for (whichcrunch = 0; whichcrunch < ((int)corecount); whichcrunch++ )
-    {
-      const u32 benchsize = 500000L;
-      Problem *problem = new Problem();
-      ContestWork contestwork;
-      unsigned long elapsed;
-      memset( (void *)&contestwork, 0, sizeof(contestwork));
-      contestwork.crypto.iterations.lo = benchsize;
-      problem->LoadState( &contestwork , 0 /* RC5 */, benchsize, whichcrunch );
-      problem->Run();  //threadnum
-      elapsed = (((unsigned long)problem->runtime_sec) * 1000000UL)+
-                 (((unsigned long)problem->runtime_usec));
-      if (cputype < 0 || elapsed < fasttime)
-        {cputype = whichcrunch; fasttime = elapsed;}
-      delete problem;
-    }
-    detectedtype = cputype;
-    if (!quietly)
-      LogScreen( "Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
-  }
+int selcoreBenchmark( unsigned int cont_i, unsigned int secs )
+{
+  return __bench_or_test( 'b', cont_i, secs );
+}
 
-  if (cputype == -1)
-    cputype = 0;
-  last_cputype = cputype;
-#ifdef CSC_TEST
-  last_csccore = csc_core;
-#endif
-  return 0;
+int selcoreSelfTest( unsigned int cont_i )
+{
+  return (int)__bench_or_test( 's', cont_i, 0 );
 }
 
 /* ---------------------------------------------------------------------- */
+
+/* this is called from Problem::LoadState() */
+int selcoreGetSelectedCoreForContest( unsigned int contestid )
+{
+  static long detected_type = -123;
+  const char *contname = CliGetContestNameFromID(contestid);
+  if (!contname) /* no such contest */
+    return -1;
+
+  if (InitializeCoreTable(((int *)0)) < 0) /* ACK! selcoreInitialize() */
+    return -1;                             /* hasn't been called */
+
+  if (__corecount_for_contest(contestid) == 1) /* only one core? */
+    return 0;
+    
+  if (selcorestatics.corenum[contestid] >= 0) /* already selected one? */
+    return selcorestatics.corenum[contestid];
+
+  if (detected_type == -123) /* haven't autodetected yet? */
+  {
+    detected_type = GetProcessorType(1 /* quietly */);
+    if (detected_type < 0)
+      detected_type = -1;
+    else
+    {
+      int quietly = 1;
+      unsigned int cont_i;
+      for (cont_i = 0; quietly && cont_i < CONTEST_COUNT; cont_i++)
+      {
+        if (__corecount_for_contest(cont_i) < 2)
+          ; /* nothing */
+        else if (selcorestatics.user_cputype[cont_i] < 0)
+          quietly = 0;
+      }
+      if (!quietly)
+        GetProcessorType(0);
+    }
+  }
+
+  #if (CLIENT_CPU == CPU_ALPHA)
+  if (contestid == RC5 || contestid == DES) /* old style */
+  {
+    selcorestatics.corenum[contestid] = selcorestatics.user_cputype[contestid];
+    if (selcorestatics.corenum[contestid] < 0)
+    {
+      /* this is only useful if more than one core, which is currently
+         only OSF/DEC-UNIX. If only one core, then that will have been 
+         handled in the generic code above, but we play it safe anyway.
+      */
+      if (detected_type == 5 /*EV5*/ || detected_type == 7 /*EV56*/ ||
+          detected_type == 8 /*EV6*/ || detected_type == 9 /*PCA56*/)
+        selcorestatics.corenum[contestid] = 1;
+      else /* ev3 and ev4 (EV4, EV4, LCA4, EV45) */
+        selcorestatics.corenum[contestid] = 0;
+    }    
+    if (selcorestatics.corenum[contestid] < 0 || 
+      selcorestatics.corenum[contestid] >= __corecount_for_contest(contestid))
+    {
+      selcorestatics.corenum[contestid] = 0;
+    }  
+    LogScreen( "%s: using \"%s\" core.\n", contname, 
+      selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] );
+  }
+  #elif (CLIENT_CPU == CPU_68K)
+  if (contestid == RC5 || contestid == DES) /* old style */
+  {
+    const char *corename = NULL;
+    selcorestatics.corenum[DES] = 0;  /* only one DES core */
+    selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
+    if (selcorestatics.corenum[RC5] < 0)
+      selcorestatics.corenum[RC5] = detected_type;
+    if (selcorestatics.corenum[RC5] < 0)
+      selcorestatics.corenum[RC5] = 0;
+    if (selcorestatics.corenum[RC5] == 4 || selcorestatics.corenum[RC5] == 5 ) 
+      corename = "040/060";  // there is no 68050, so type5=060
+    else //if (cputype == 0 || cputype == 1 || cputype == 2 || cputype == 3)
+      corename = "000/010/020/030";
+    LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename );
+  }
+  #elif (CLIENT_CPU == CPU_POWERPC)
+  if (contestid == RC5 || contestid == DES) /* old style */
+  {
+    selcorestatics.corenum[DES] = 0; /* only one DES core */
+    #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_AMIGAOS))
+      // Be OS isn't supported on 601 machines
+      // There is no 601 PPC board for the Amiga
+      selcorestatics.corenum[RC5] = 1; //"PowerPC 603/604/750"
+    #elif (CLIENT_OS == OS_WIN32)
+      //actually win32/ppc isn't supported, but just in case
+      selcorestatics.corenum[RC5] = 1;
+    #endif
+  }
+  #elif (CLIENT_CPU == CPU_X86)
+  {
+    int user_selected = 1;
+    if (contestid == RC5)
+    {
+      selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
+      if (selcorestatics.corenum[RC5] < 0)
+      {
+        selcorestatics.corenum[RC5] = (int)(detected_type & 0xff);
+        user_selected = 0;
+      }
+    }     
+    else if (contestid == DES)
+    {  
+      selcorestatics.corenum[DES] = selcorestatics.user_cputype[DES];
+      if (selcorestatics.corenum[DES] < 0)
+      {
+        user_selected = 0;
+        if ((detected_type & 0x100) != 0 && /* have mmx */
+           __corecount_for_contest(contestid) > 2) /* have mmx-bitslicer */
+          selcorestatics.corenum[DES] = 2; /* mmx bitslicer */
+        else
+        {
+          int det = (int)(detected_type & 0xff);
+          if (det == 0 /*P5*/ || det == 1 /*386/486 */ || det == 4 /*K5*/)
+            selcorestatics.corenum[DES] = 0; /* standard Bryd */
+          else
+            selcorestatics.corenum[DES] = 1; /* movzx Bryd */
+        }
+      }
+    }
+    else if (contestid == CSC)
+    {
+      selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
+      if (selcorestatics.corenum[CSC] < 0)
+      {
+  #if 0
+        int cpu2core = detected_type & 0xff;
+        /* note: because these are C cores, crunch efficacy can swing
+           wildly. For instance (here PII/400):
+           Watcom 10      VC 5.0
+           core0: 130     354
+           core1: 344     441
+           core2: 121     508
+           core3: 334     418
+           We need to find the best generated asm for each core and nasmify it.
+        */
+        if (cpu2core == 3) // Ppro/PII/PIII
+          selcorestatics.corenum[CSC] = 1; //6bit - called
+        /*
+        else if (cpu2core == ....
+          ...
+        */
+  #endif
+      }
+    }
+    if (selcorestatics.corenum[contestid] >= 0)
+    {
+      LogScreen( "%s: %s core #%d (%s)\n", contname, 
+        ((user_selected)?("using"):("auto-selected")),
+        selcorestatics.corenum[contestid],
+       selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
+    }
+  }
+  #elif (CLIENT_CPU == CPU_ARM)
+  if (contestid == RC5 || contestid == DES)
+  {
+    selcorestatics.corenum[contestid] = selcorestatics.user_cputype[contestid];
+    if (selcorestatics.corenum[contestid] < 0)
+    {
+      if (detected_type >= 0)
+        selcorestatics.corenum[contestid] = (int)detected_type;
+    }
+    if (selcorestatics.corenum[contestid] >= 0)
+    {
+      LogScreen( "%s: selecting %s optimized code.\n", contname, 
+       selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid]));
+    }
+    /* otherwise fall into bench */
+  }
+  #endif
+
+
+  if (selcorestatics.corenum[contestid] < 0) /* ok, bench it then */
+  {
+    int corecount = (int)__corecount_for_contest(contestid);
+    selcorestatics.corenum[contestid] = 0;
+    if (corecount > 0)
+    {
+      int whichcrunch;
+      int fastestcrunch = -1;
+      unsigned long fasttime = 0;
+      Problem *problem = new Problem();
+      const u32 benchsize = 100000;
+
+      LogScreen("%s: Manually selecting fastest core...\n", contname);
+      for (whichcrunch = 0; whichcrunch < corecount; whichcrunch++)
+      {
+        ContestWork contestwork;
+        unsigned long elapsed;
+        selcorestatics.corenum[contestid] = whichcrunch;
+        memset( (void *)&contestwork, 0, sizeof(contestwork));
+        contestwork.crypto.iterations.lo = benchsize;
+        problem->LoadState( &contestwork, contestid, benchsize, whichcrunch );
+        problem->Run();
+    
+        elapsed = (((unsigned long)problem->runtime_sec) * 1000000UL)+
+                  (((unsigned long)problem->runtime_usec));
+        //printf("%s Core %d: %lu usec\n", contname,whichcrunch,elapsed);
+    
+        if (fastestcrunch < 0 || elapsed < fasttime)
+        {
+          fastestcrunch = whichcrunch; 
+          fasttime = elapsed;
+        }
+      }
+      selcorestatics.corenum[contestid] = fastestcrunch;
+      LogScreen("%s: selected core #%d (%s).\n", contname, fastestcrunch, 
+                     selcoreGetDisplayName( contestid, fastestcrunch ) );
+    }
+  }
+  
+  return selcorestatics.corenum[contestid];
+}
 

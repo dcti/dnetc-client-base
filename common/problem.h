@@ -6,11 +6,18 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.65 1999/07/23 03:16:56 fordbr Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.66 1999/10/11 17:06:29 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
 #include "ogr.h"     /* OGR core stuff */
+
+/* ---------------------------------------------------------------------- */
+
+int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
+/* result depends on #ifdefs, threadsafety issues etc */
+
+/* ----------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_X86)
   #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
@@ -59,7 +66,6 @@ protected: /* these members *must* be protected for thread safety */
   CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */
   void *ogrstate;
-  unsigned int pipeline_count;
   #ifdef MAX_MEM_REQUIRED_BY_CORE
   char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
   #endif
@@ -68,6 +74,7 @@ protected: /* these members *must* be protected for thread safety */
   int started;
   int initialized;
 public: /* anything public must be thread safe */
+  unsigned int pipeline_count;
   u32 runtime_sec, runtime_usec; /* ~total time spent in core */
   u32 last_runtime_sec, last_runtime_usec; /* time spent in core in last run */
   u32 core_run_count; /* used by go_mt and other things */
@@ -86,10 +93,14 @@ public: /* anything public must be thread safe */
 
   unsigned int threadindex; /* index of this problem in the problem table */
   int threadindex_is_valid; /* 0 if the problem is not managed by probman*/
+
+  /* this is our generic prototype */
+  s32 (*unit_func)( RC5UnitWork *, u32 *timeslice, void *memblk );
   
   #if (CLIENT_CPU == CPU_X86)
-  u32 (*unit_func)( RC5UnitWork * , u32 timeslice );
-  #elif (CLIENT_CPU == CPU_68K)
+  u32 (*x86_unit_func)( RC5UnitWork * , u32 timeslice );
+  #endif
+  #if (CLIENT_CPU == CPU_68K)
   extern "C" __asm u32 (*rc5_unit_func)
        ( register __a0 RC5UnitWork * , register __d0 u32 timeslice);
   #elif (CLIENT_CPU == CPU_ARM)
@@ -104,12 +115,8 @@ public: /* anything public must be thread safe */
   #elif (CLIENT_OS == OS_AIX)
   s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
   #elif (CLIENT_CPU == CPU_POWERPC)
-  s32 (*unit_func)( RC5UnitWork * rc5unitwork, u32 *timeslice );
+  s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 *timeslice );
   #endif
-
-#ifdef CSC_TEST
-  s32 (*csc_unit_func)( RC5UnitWork *, u32 *timeslice, void *membuff );
-#endif
 
   int Run_RC5(u32 *timeslice,int *core_retcode); /* \  run for n timeslices.                */
   int Run_DES(u32 *timeslice,int *core_retcode); /*  > set actual number of slices that ran */

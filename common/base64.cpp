@@ -10,7 +10,7 @@
  *
 */ 
 const char *base64_cpp(void) {
-return "@(#)$Id: base64.cpp,v 1.3 1999/08/09 17:01:49 cyp Exp $"; }
+return "@(#)$Id: base64.cpp,v 1.4 1999/10/11 17:06:21 cyp Exp $"; }
 
 static unsigned char base64table[64] = 
 {
@@ -75,7 +75,7 @@ int base64_decode(char *outbuf, const char *inbuf,
   for (c = 0; c < ((int)sizeof(decoder)); c++)
     decoder[c] = '\0';
   for (c = (sizeof(base64table)-1); c >= 0 ; c--) 
-    decoder[base64table[c]] = ((unsigned char)(c))+1;
+    decoder[base64table[c]] = ((unsigned char)(c+1));
 
   while (!errors)
   {

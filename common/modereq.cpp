@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.32 1999/10/10 23:45:57 gregh Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.33 1999/10/11 17:06:28 cyp Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -24,6 +24,7 @@ return "@(#)$Id: modereq.cpp,v 1.32 1999/10/10 23:45:57 gregh Exp $"; }
 #include "disphelp.h" //"mode" DisplayHelp()
 #include "cpucheck.h" //"mode" DisplayProcessorInformation()
 #include "cliident.h" //"mode" CliIdentifyModules();
+#include "selcore.h"  //"mode" selcoreSelftest(), selcoreBenchmark()
 #include "selftest.h" //"mode" SelfTest()
 #include "bench.h"    //"mode" Benchmark()
 #include "buffwork.h" //"mode" UnlockBuffer(), ImportBuffer()
@@ -39,7 +40,50 @@ static struct
   const char *filetounlock;
   const char *filetoimport;
   const char *helpoption;
-} modereq = {0,0,(const char *)0,(const char *)0,(const char *)0};
+  unsigned long bench_projbits;
+  unsigned long test_projbits;
+} modereq = {0,0,(const char *)0,(const char *)0,(const char *)0,0,0};
+
+/* --------------------------------------------------------------- */
+
+int ModeReqIsProjectLimited(int mode, unsigned int contest_i)
+{
+  unsigned long l = 0;
+  if (contest_i < CONTEST_COUNT)
+  {
+    if (mode == MODEREQ_BENCHMARK || 
+        mode == MODEREQ_BENCHMARK_QUICK ||
+        mode == MODEREQ_BENCHMARK_ALLCORE )
+      l = modereq.bench_projbits;
+    else if (mode == MODEREQ_TEST ||
+          mode == MODEREQ_TEST_ALLCORE )
+      l = modereq.test_projbits;
+    l &= (1L<<contest_i);
+  }
+  return (l != 0);
+}
+
+/* --------------------------------------------------------------- */
+
+int ModeReqLimitProject(int mode, unsigned int contest_i)
+{
+  unsigned long l;
+  if (contest_i > CONTEST_COUNT) 
+    return -1;
+  l = 1<<contest_i;
+  if (l == 0) /* wrapped */
+    return -1;
+  if (mode == MODEREQ_BENCHMARK || 
+      mode == MODEREQ_BENCHMARK_QUICK ||
+      mode == MODEREQ_BENCHMARK_ALLCORE )
+    modereq.bench_projbits |= l;
+  else if (mode == MODEREQ_TEST ||
+           mode == MODEREQ_TEST_ALLCORE )
+    modereq.test_projbits |= l;
+  else
+    return -1;
+  return 0;
+}
 
 /* --------------------------------------------------------------- */
 
@@ -85,7 +129,7 @@ int ModeReqClear(int modemask)
   if (modemask == -1)
   {
     oldmask = modereq.reqbits;
-    modereq.reqbits = 0;
+    memset( &modereq, 0, sizeof(modereq));
   }
   else
   {
@@ -117,59 +161,36 @@ int ModeReqRun(Client *client)
     while ((modereq.reqbits & MODEREQ_ALL)!=0)
     {
       unsigned int bits = modereq.reqbits;
-      if ((bits & (MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5 | 
-#ifdef CSC_TEST
-                   MODEREQ_BENCHMARK_CSC |
-#endif
-                                           MODEREQ_BENCHMARK_ALL)) != 0)
+      if ((bits & (MODEREQ_BENCHMARK | 
+                   MODEREQ_BENCHMARK_QUICK |
+                   MODEREQ_BENCHMARK_ALLCORE )) != 0)
       {
-        if (client)
+        do
         {
-          client->SelectCore( 0 /* not quietly */ );
-          u32 benchsize = (1L<<23); /* long bench: 8388608 instead of 100000000 */
+          unsigned int contest, benchsecs = 16;
+          unsigned long sel_contests = modereq.bench_projbits;
+          modereq.bench_projbits = 0;
+
           if ((bits & (MODEREQ_BENCHMARK_QUICK))!=0)
-            benchsize = (1L<<20); /* short bench: 1048576 instead of 10000000 */
-          if ((bits & MODEREQ_BENCHMARK_ALL) == MODEREQ_BENCHMARK_ALL)
+            benchsecs = 8;
+          for (contest = 0; contest < CONTEST_COUNT; contest++)
           {
-            unsigned int contest;
-            for (contest = 0; contest < CONTEST_COUNT; contest++)
+            if (CheckExitRequestTriggerNoIO())
+              break;
+            if (sel_contests == 0 /*none set==all set*/
+             || (sel_contests & (1L<<contest)) != 0)
             {
-              if (CheckExitRequestTriggerNoIO())
-                break;
-#ifndef CSC_TEST
-              Benchmark( contest, benchsize, client->cputype, NULL );
-#else
-              Benchmark( contest, benchsize, contest == CSC ? client->csc_core : client->cputype, NULL );
-#endif
+              if ((bits & (MODEREQ_BENCHMARK_ALLCORE))!=0)
+                selcoreBenchmark( contest, benchsecs );
+              else
+                TBenchmark( contest, benchsecs, 0 );
             }
           }
-          else
-          {
-            if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_RC5)!=0) 
-              Benchmark( RC5, benchsize, client->cputype, NULL );
-            if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0) 
-              Benchmark( DES, benchsize, client->cputype, NULL );
-#ifdef OGR_TEST
-            if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_OGR)!=0)
-              Benchmark( OGR, benchsize, client->cputype, NULL );
-#endif
-#ifdef CSC_TEST
-            if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_CSC)!=0)
-              Benchmark( CSC, benchsize, client->csc_core, NULL );
-#endif
-          }
-        }
-        retval |= (modereq.reqbits & (MODEREQ_BENCHMARK_DES | 
-                 MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_ALL | 
-#ifdef CSC_TEST
-                 MODEREQ_BENCHMARK_CSC |
-#endif
-                 MODEREQ_BENCHMARK_QUICK ));
-        modereq.reqbits &= ~(MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5 | 
-#ifdef CSC_TEST
-                 MODEREQ_BENCHMARK_CSC |
-#endif
-                 MODEREQ_BENCHMARK_ALL | MODEREQ_BENCHMARK_QUICK );
+        } while (!CheckExitRequestTriggerNoIO() && modereq.bench_projbits);
+        retval |= (bits & (MODEREQ_BENCHMARK_QUICK | MODEREQ_BENCHMARK |
+                           MODEREQ_BENCHMARK_ALLCORE));
+        modereq.reqbits &= ~(MODEREQ_BENCHMARK_QUICK | MODEREQ_BENCHMARK |
+                             MODEREQ_BENCHMARK_ALLCORE);
       }
       if ((bits & MODEREQ_CMDLINE_HELP) != 0)
       {
@@ -211,7 +232,7 @@ int ModeReqRun(Client *client)
           int interactive = ((bits & MODEREQ_FQUIET) == 0);
           domode  = ((bits & MODEREQ_FETCH) ? BUFFERUPDATE_FETCH : 0);
           domode |= ((bits & MODEREQ_FLUSH) ? BUFFERUPDATE_FLUSH : 0);
-          domode = client->BufferUpdate( domode, interactive );
+          domode = BufferUpdate( client, domode, interactive );
           if (domode & BUFFERUPDATE_FETCH)
             retval |= MODEREQ_FETCH;
           if (domode & BUFFERUPDATE_FLUSH)
@@ -253,24 +274,37 @@ int ModeReqRun(Client *client)
         modereq.reqbits &= ~(MODEREQ_CPUINFO);
         retval |= (MODEREQ_CPUINFO);
       }
-      if ((bits & MODEREQ_TEST)!=0)
+      if ((bits & (MODEREQ_TEST | MODEREQ_TEST_ALLCORE))!=0)
       {
-        if (client)
+        int testfailed = 0;
+        do
         {
-          unsigned int contestid = 0;
-          client->SelectCore( 0 /* not quietly */ );
-          for (contestid = 0; contestid < CONTEST_COUNT; contestid++ ) 
+          unsigned int contest; 
+          unsigned long sel_contests = modereq.test_projbits;
+          modereq.test_projbits = 0;
+
+          for (contest = 0; !testfailed && contest < CONTEST_COUNT; contest++)
           {
-#ifndef CSC_TEST
-            if ( SelfTest(contestid, client->cputype ) < 0 ) 
-#else
-            if ( SelfTest(contestid, contestid == CSC ? client->csc_core : client->cputype ) < 0 ) 
-#endif
+            if (CheckExitRequestTriggerNoIO())
+            {
+              testfailed = 1;
               break;
+            }
+            if (sel_contests == 0 /*none set==all set*/
+             || (sel_contests & (1L<<contest)) != 0)
+            {
+              if ((bits & (MODEREQ_TEST_ALLCORE))!=0)
+              {
+                if (selcoreSelfTest( contest ) < 0)
+                  testfailed = 1;
+              }
+              else if ( SelfTest( contest ) < 0 ) 
+                 testfailed = 1;
+            }
           }
-        }
-        retval |= (MODEREQ_TEST);
-        modereq.reqbits &= ~(MODEREQ_TEST);
+        } while (!testfailed && modereq.test_projbits);
+        retval |= (MODEREQ_TEST|MODEREQ_TEST_ALLCORE);
+        modereq.reqbits &= ~(MODEREQ_TEST|MODEREQ_TEST_ALLCORE);
       }
       if (CheckExitRequestTriggerNoIO())
       {

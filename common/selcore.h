@@ -5,9 +5,25 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3 1999/04/04 16:28:04 cyp Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.4 1999/10/11 17:06:30 cyp Exp $"
 
-/* returns name for core number (0...) or "" if no such core */
-const char *GetCoreNameFromCoreType( unsigned int coretype ); 
+/* this is called from Problem::LoadState() */
+int selcoreGetSelectedCoreForContest( unsigned int contestid );
+
+/* conf calles these */
+int selcoreValidateCoreIndex( unsigned int cont_i, int index );
+void selcoreEnumerate( int (*proc)(unsigned int cont, 
+                            const char *corename, int idx, void *udata ),
+                       void *userdata );
+void selcoreEnumerateWide( int (*proc)(
+                            const char **corenames, int idx, void *udata ),
+                       void *userdata );
+/* benchmark/test each core */
+int selcoreBenchmark( unsigned int cont_i, unsigned int secs );
+int selcoreSelfTest( unsigned int cont_i );
+
+/* ClientMain() calls these */
+int InitializeCoreTable( int *coretypes );
+int DeinitializeCoreTable( void );
 
 #endif /* __SELCORE_H__ */

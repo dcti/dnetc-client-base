@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.134 1999/07/23 03:16:52 fordbr Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.135 1999/10/11 17:06:22 cyp Exp $"
 
 
 enum {
@@ -85,17 +85,15 @@ public:
   s32  noupdatefromfile;
     char remote_update_dir[128];
   s32  connectoften;
-  s32  preferred_blocksize;
-  volatile s32 inthreshold[CONTEST_COUNT];
-  volatile s32 outthreshold[CONTEST_COUNT];
+  int inthreshold[CONTEST_COUNT]; 
+  int outthreshold[CONTEST_COUNT];
+  int preferred_blocksize[CONTEST_COUNT];
 
   /* -- perf -- */
   s32  numcpu;
-  s32  cputype;
+  s32  cputype; /* old stuff, unused */
   s32  priority;
-#ifdef CSC_TEST
-  s32  csc_core;
-#endif
+  int  coretypes[CONTEST_COUNT];
 
   /* -- log -- */
   char logname[128];
@@ -116,9 +114,6 @@ public:
   Client();
   ~Client() {};
 
-  int Main( int argc, const char *argv[] );
-    // encapsulated main().  client.Main() may restart itself
-
   int ParseCommandline( int runlevel, int argc, const char *argv[], 
                         int *retcodeP, int logging_is_initialized );
     // runlevel=0 = parse cmdline, >0==exec modes && print messages for init'd cmdline options
@@ -133,19 +128,6 @@ public:
 
   int Run( void );
     // run the loop, do the work
-
-  int BufferUpdate( int updatereq_flags, int interactive );
-    // pass flags ORd with BUFFERUPDATE_FETCH/*_FLUSH. 
-    // if interactive, prints "Input buffer full. No fetch required" etc.
-    // returns updated flags or < 0 if offlinemode!=0 or NetOpen() failed.
-
-  int SelectCore(int quietly);
-    // always returns zero.
-    // to configure for cpu. called before Run() from main(), or for 
-    // "modes" (Benchmark()/Test()) from ParseCommandLine().
-
-  unsigned int LoadSaveProblems(unsigned int load_problem_count, int retmode);
-    // returns number of actually loaded problems 
 
 };
 

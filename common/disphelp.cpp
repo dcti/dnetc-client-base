@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.67 1999/07/23 03:16:54 fordbr Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.68 1999/10/11 17:06:27 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -13,19 +13,348 @@ return "@(#)$Id: disphelp.cpp,v 1.67 1999/07/23 03:16:54 fordbr Exp $"; }
 #include "baseincs.h" //generic include
 #include "triggers.h" //CheckExitRequestTriggerNoIO()
 #include "logstuff.h" //LogScreenRaw()
+#include "util.h"     //UtilGetAppName()
 #include "console.h"  //ConClear(), ConInkey()
 
-#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)  || \
-    (CLIENT_OS == OS_BEOS)  || (CLIENT_OS == OS_SOLARIS) || \
-    (CLIENT_OS == OS_IRIX)  || (CLIENT_OS == OS_FREEBSD) || \
-    (CLIENT_OS == OS_BSDI)  || (CLIENT_OS == OS_AIX)     || \
-    (CLIENT_OS == OS_OS390) || (CLIENT_OS == OS_NEXT)    || \
-    (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_MACH)    || \
-    (CLIENT_OS == OS_SCO)   || (CLIENT_OS == OS_OPENBSD) || \
-    (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_HPUX)    || \
-    (CLIENT_OS == OS_DGUX)  || (CLIENT_OS == OS_ULTRIX)
+#if defined(__unix__)
   #define NO_INTERNAL_PAGING  //internal paging is very un-unix-ish
 #endif  
+
+/* ------------------------------------------------------------------------ */
+
+static const char *helpbody[] =
+{
+  "Special Options: (the client will execute the option and then exit)",
+  "-config            start the configuration menu",
+  "-flush             flush all output buffers",
+  "-fetch             fill all input buffers",
+  "-update            fetch + flush",
+  "-benchmark [pn]    16-20 sec speed check [optional: only project pn]",
+  "-benchmark2 [pn]   half (8-10 sec) and slightly inaccurate -benchmark",
+	"-bench [pn]        -benchmark all cores [optional: only project pn]",
+  "-test [pn]         tests for core errors [optional: only project pn]",
+  "-restart           restart all active clients (equivalent to -hup)",
+  "-shutdown          gracefully shut down all active clients",
+  "-pause             pause all active clients",
+  "-unpause           unpause all active clients",
+#if (CLIENT_OS == OS_WIN32)
+  "-install           install the client as a service",
+  "-uninstall         uninstall the client previously -installed",
+  "-svcstart          start a previously -installed client-as-service",
+  "                   equivalent to NT's 'net start ...'",
+#endif
+#if (CLIENT_OS == OS_OS2)
+  "-install           install the client in the startup folder",
+  "-uninstall         remove the client from the startup folder",
+#endif
+//"-import <fn> [cnt] import [cnt] packets from file <fn> into client buffers",
+  "-import <fn>       import packets from file <fn> into client buffers",
+  "-forceunlock <fn>  unlock buffer file <fn>",
+  "-help              display this text",
+  "",
+/*"------------------------------------ max width == 77 ------------------------" */
+  "Project and buffer related options:",
+  "",
+  "-ini <filename>    override default name of INI file",
+  "-e <address>       the email id by which you are known to distributed.net",
+  "-nodisk            don't use disk buffer files",
+  "-n <count>         packets to complete. -1 forces exit when buffer is empty.",
+  "-runbuffers        set -n == -1 (exit when buffers are empty)",
+  "-frequent          frequently check for empty buffers",
+  "-inbase <fname>    input buffer basename (ie without 'extension'/suffix)",
+  "-outbase <fname>   output buffer basename (ie without 'extension'/suffix)",
+  "-ckpoint <fname>   set the name of the checkpoint file",
+  "-blsize <pn> <n>   set preferred packet size (2^n keys/packet)",
+  "-bin <pn> <n>      set fetch buffer threshold to <n> packets",
+  "-bout <pn> <n>     set flush buffer threshold to <n> packets",
+  "-b <pn> <n>        set both buffer thresholds to <n> packets",
+  "                   If not specified, project name <pn> defaults to RC5",
+  "",
+  "Network update related options:",
+  "",
+  "-runoffline        disable network access",
+  "-runonline         enable network access",
+  "-nettimeout <secs> set the network timeout. Use -1 to force blocking mode",
+  "-a <address>       keyserver name or IP address",
+  "-p <port>          keyserver port number",
+  "-nofallback        don't fallback to a distributed.net keyserver",
+  "-u <method>        use this UUE/HTTP encoding method (see -config)",
+  "-ha <address>      http/socks proxy name or IP address",
+  "-hp <port>         http/socks proxy port",
+#ifdef LURK
+  "-lurk              automatically detect modem connections",
+  "-lurkonly          perform buffer updates only when a connection is detected",
+  "-interfaces <list> limit the interfaces to monitor for online/offline status",
+#endif
+  "",
+  "Performance related options:",
+  "",
+  "-c <pn> <n>        core number (run -config for a list of valid core numbers)",
+  "                   project name \"pn\" defaults to RC5",
+  "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
+  "-priority <0-9>    scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
+  "",
+  "Logging options:",
+  "",
+  "-l <filename>      name of the log file",
+  "-smtplen <len>     max size (in bytes) of a mail message (0 means no mail)",
+  "-smtpsrvr <host>   name or IP address of mail (SMTP) server",
+  "-smtpport <port>   mail (SMTP) server port number",
+  "-smtpfrom <id>     who the client should say is sending the message",
+  "-smtpdest <id>     who the client should send mail to",
+  "",
+  "Miscellaneous runtime options:",
+  "",
+  "-h <hours>         time limit in hours",
+  "-until <HH:MM>     quit at HH:MM (eg 07:30)",
+  "-noexitfilecheck   don't check for a 'exitrc5.now' command file",
+  "-pausefile <fn>    name of file that causes the client to pause",
+  "-percentoff        don't display work completion as a running percentage",
+  "-quiet/-hide       suppress screen output (== detach for some clients)",
+  "-noquiet           don't suppress screen output (override ini quiet setting)"
+};
+
+/* ------------------------------------------------------------------------ */
+
+#define _istrofspecial(_c) (!(!strchr("\\-[]\"<>",_c)))
+
+void GenerateManPage( void )
+{
+  #if defined(__unix__) || defined(__GNUC__)
+  char buffer[80];
+  const char *appname = utilGetAppName();
+  FILE *manp;
+
+  strncpy(buffer,appname,sizeof(buffer));
+  buffer[sizeof(buffer)-1] = '\0';
+  strcpy( buffer, buffer );
+  strcat( buffer, ".1" );
+  
+  manp = fopen(buffer,"w");
+  if (!manp)
+    fprintf(stderr,"Unable to create %s", buffer );
+  else
+  {
+    unsigned int linelen, pos;
+    char *p; const char *cp;
+    time_t t = time(NULL);
+    struct tm *gmt = gmtime(&t);
+  
+    fprintf(manp, ".\\\" Copyright (c) 1996-%d\n", gmt->tm_year+1900 );
+    fprintf(manp, ".\\\"         distributed.net. All rights reserved.\n" );
+    fprintf(manp, ".\\\"\n");
+    fprintf(manp, ".\\\" %s\n",disphelp_cpp());
+    fprintf(manp, ".\\\"\n");
+    fprintf(manp, ".Dd %s", ctime(&t));
+    strncpy(buffer, appname,sizeof(buffer));
+    buffer[sizeof(buffer)-1] = '\0';
+    for (pos=0;buffer[pos];pos++)  
+      buffer[pos]=(char)toupper(buffer[pos]);
+    fprintf(manp, ".Dt %s 1\n", buffer );
+    //fprintf(manp, ".Os "CLIENT_OS_NAME"\n");
+    fprintf(manp, ".Sh NAME\n");
+    fprintf(manp, ".Nm %s\n", appname);
+    fprintf(manp, ".Nd distributed.net distributed computing client for "
+                    CLIENT_OS_NAME"\n" );
+
+    fprintf(manp, ".Sh SYNOPSIS\n");
+    fprintf(manp, ".Nm %s\n", appname);
+    for (pos=0;pos<(sizeof(helpbody)/sizeof(helpbody[0]));pos++)
+    {
+      cp = helpbody[pos];
+      if (*cp == '-')
+      {
+        strncpy(buffer,helpbody[pos]+1,sizeof(buffer));
+        buffer[sizeof(buffer)-1]='\0';
+        p = &buffer[0];
+        while (*p && *p!=' ')
+          p++;
+        while (*p==' ' && (p[1]=='<' || p[1]=='['))
+        {
+          while (*p && *p!='>' && *p!=']')
+            p++;
+          while (*p && *p!=' ')
+            p++;
+        }
+        *p='\0';
+        fprintf(manp,".Op \"\\-");
+        for (linelen=0;buffer[linelen];linelen++)
+        {
+          if (buffer[linelen]=='\"')
+            buffer[linelen] = '\'';
+          else if (_istrofspecial(buffer[linelen]))
+            fputc('\\', manp);
+          fputc(buffer[linelen],manp);
+        }
+        fprintf(manp,"\"\n");
+      }
+    }
+
+    fprintf(manp, ".Sh DESCRIPTION\n");
+    fprintf(manp, 
+      ".Ar %s\nis a distributed computing client that coordinates with servers\n"
+      "operated by\n.Ar distributed.net\nto cooperate with other network-connected\n"
+      "computers to work on a common task.  It communicates over public networks\n"
+      "and processes work assigned by the\n.Ar distributed.net\nkeyservers.\n"
+      "It is designed to run in idle time so as to not impact the normal operation\n"
+      "of the computer.\n", appname);
+
+    fprintf(manp, ".Sh INSTALLATION\n");
+    fprintf(manp, 
+      "Since you are already reading this, I assume you know how to\n"
+      "unpack an archive (don't laugh!) into a directory of your\n"
+      "choice.\n"
+      ".sp 1\n"
+      "Now, simply fire up the client...\n"
+      ".sp 1\n"
+      "If you have never run the client before, it will initiate the\n"
+      "menu-driven configuration. Save and quit when done, the configuration\n"
+      "file will be saved \\fBin the same directory as the client.\\fP \n"
+      "Now, simply restart the client. From that point on it will use the\n"
+      "saved configuration.\n"
+      ".sp 1\n"
+      "The configuration options are fairly self-explanatory and can be run\n"
+      "at any time by starting the client with the '-config' option.\n"
+      "A list of command line options is listed below.\n"
+      );
+
+    fprintf(manp, ".Sh COMMAND LINE OPTIONS\n");
+
+    for (pos=0;pos<(sizeof(helpbody)/sizeof(helpbody[0]));pos++)
+    {
+      cp = helpbody[pos];
+      if (*cp=='-')
+      {
+        fprintf(manp,".sp 0\n" );
+        fprintf(manp,"\\fB");
+        while (*cp && *cp != ' ')
+        {
+          if (*cp == '\"')
+          {
+            cp++;
+            fputc('\'', manp);
+          }  
+          else
+          {
+            if (_istrofspecial(*cp))
+              fputc('\\', manp);
+            fputc(*cp++,manp);
+          }
+        }
+        fprintf(manp,"\\fP");
+        while (*cp == ' ')
+          cp++;
+        while (*cp == '<' || *cp == '[')
+        {
+          const char closure = ((*cp == '<')?('>'):(']'));
+          cp++;
+          fprintf(manp," \\fI");
+          while (*cp && *cp!=closure)
+          {
+            if (*cp == '\"')
+            {
+              cp++;
+              fputc('\'', manp);
+            }  
+            else
+            {
+              if (_istrofspecial(*cp))
+                fputc('\\', manp);
+              fputc(*cp++,manp);
+            }
+          }
+          fprintf(manp,"\\fP");
+          if (*cp == closure)
+            cp++;
+          while (*cp == ' ')
+            cp++;
+        }
+        fprintf(manp,"\n");
+        if (*cp)
+        {
+          fprintf(manp,".sp 0\n");
+          while (*cp)
+          {
+            if (*cp == '\"')
+            {
+              cp++;
+              fputc('\'', manp);
+            }  
+            else
+            {
+              if (_istrofspecial(*cp))
+                fputc('\\', manp);
+              fputc(*cp++,manp);
+            }
+          }
+          fprintf(manp,"\n");
+        }
+      }
+      else if (*cp == ' ') /* continuation */
+      {
+        while (*cp && *cp==' ')
+          cp++;
+        if (*cp)
+        {
+          while (*cp)
+          {
+            if (*cp == '\"')
+            {
+              cp++;
+              fputc('\'', manp);
+            }  
+            else
+            {
+              if (_istrofspecial(*cp))
+                fputc('\\', manp);
+              fputc(*cp++,manp);
+            }
+          }
+          fprintf(manp,"\n");
+        }
+      }
+      else if (*cp) /* new section */
+      {
+        fprintf(manp, ".Pp\n" );
+        fprintf(manp,"\\fB");
+        while (*cp)
+        {
+          if (*cp == '\"')
+          {
+            cp++;
+            fputc('\'', manp);
+          }  
+          else
+          {
+            if (_istrofspecial(*cp))
+              fputc('\\', manp);
+            fputc(*cp++,manp);
+          }
+        }
+        fprintf(manp,"\\fP\n");
+        fprintf(manp,".sp 1\n");
+      }
+    }
+
+    #if 0
+    fprintf(manp,".Sh ENVIRONMENT\n"
+                 ".Pp\N"
+                 ".Ip \\\"RC5INI\\\"\n"
+                 "Full path to alternate .ini file\n");
+    #endif
+    fprintf(manp,".Sh SEE ALSO\n"
+                 ".Pp\n"
+                 "Client documentation: %s.txt and http://www.distributed.net/FAQ/\n",
+                 appname);
+    fprintf(manp,".Sh AUTHOR\n"
+                 "distributed.net\n"
+                 "http://www.distributed.net/\n");
+                 
+    fclose(manp);
+  }
+  #endif /* __unix__ */
+  return;
+}
 
 /* ------------------------------------------------------------------------ */
 
@@ -34,101 +363,12 @@ return "@(#)$Id: disphelp.cpp,v 1.67 1999/07/23 03:16:54 fordbr Exp $"; }
 
 void DisplayHelp( const char * unrecognized_option )
 {
-#if !defined(NOCONFIG)
   static const char *valid_help_requests[] =
   { "-help", "--help", "help", "-h", "/h", "/?", "-?", "?", "/help" };
 
-  static const char *helpbody[] =
-  {
-    "Special Options: (the client will execute the option and then exit)",
-    "-config            start the configuration menu",
-    "-test              tests for core errors",
-    "-flush             flush all output buffers",
-    "-fetch             fill all input buffers",
-    "-update            fetch + flush",
-    "-forceunlock <fn>  unlock buffer file <fn>",
-    "-benchmark         tests the client speed",
-    "-benchmark2        quick (but slightly inaccurate) client speed test",
-    "-restart, -hup     restart all active clients",
-    "-shutdown, -kill   gracefully shut down all active clients",
-    "-pause             pause all (-unpause is equivalent to -restart)",
-  #if (CLIENT_OS == OS_WIN32)
-    "-install           install the client as a service",
-    "-uninstall         uninstall the client if running as a service",
-  #endif
-  #if (CLIENT_OS == OS_OS2)
-    "-install           install the client in the startup folder",
-    "-uninstall         remove the client from the startup folder",
-  #endif
-//  "-import <fn> [cnt] import [cnt] packets from file <fn> into client buffers",
-    "-import <fn>       import packets from file <fn> into client buffers",
-    "-help              display this text",
-    "",
-/*  "------------------------------------ max width == 77 ------------------------" */
-    "Project and buffer related options:",
-    "",
-    "-ini <filename>    override default name of INI file",
-    "-e <address>       the email id by which you are known to distributed.net",
-    "-nodisk            don't use disk buffer files",
-    "-n <count>         packets to complete. -1 forces exit when buffer is empty.",
-    "-runbuffers        set -n == -1 (exit when buffers are empty)",
-    "-frequent          frequently check for empty buffers",
-    "-blsize <n>        set a preferred packet size (2^n keys/packet)",
-    "-b <n>             set in-buffer threshold to <n> packets",
-    "-b2 <n>            set out-buffer threshold to <n> packets",
-    "-inbase <filename> input buffer basename (ie without 'extension'/suffix)",
-    "-outbase <filename> output buffer basename (ie without 'extension'/suffix)",
-    "-ckpoint <fname>   set the name of the checkpoint file",
-    "",
-    "Network update related options:",
-    "",
-    "-runoffline        disable network access",
-    "-runonline         enable network access",
-    "-nettimeout <secs> set the network timeout. Use -1 to force blocking mode",
-    "-a <address>       keyserver name or IP address",
-    "-p <port>          keyserver port number",
-    "-nofallback        don't fallback to a distributed.net keyserver",
-    "-u <method>        use this UUE/HTTP encoding method (see -config)",
-    "-ha <address>      http/socks proxy name or IP address",
-    "-hp <port>         http/socks proxy port",
-  #ifdef LURK
-    "-lurk              automatically detect modem connections",
-    "-lurkonly          perform buffer updates only when a connection is detected",
-    "-interfaces <list> limit the interfaces to monitor for online/offline status",
-  #endif
-    "",
-    "Performance related options:",
-    "",
-    "-c <cputype>       cpu type (run -config for a list of valid cputype numbers)",
-    "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
-    "-priority <[0-9]>  scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
-#ifdef CSC_TEST
-    "-csccore <[0-3]>   run CSC with various types of core",
-#endif
-    "",
-    "Logging options:",
-    "",
-    "-l <filename>      name of the log file",
-    "-smtplen <len>     max size (in bytes) of a mail message (0 means no mail)",
-    "-smtpsrvr <host>   name or IP address of mail (SMTP) server",
-    "-smtpport <port>   mail (SMTP) server port number",
-    "-smtpfrom <id>     who the client should say is sending the message",
-    "-smtpdest <id>     who the client should send mail to",
-    "",
-    "Miscellaneous runtime options:",
-    "",
-    "-h <hours>         time limit in hours",
-    "-until <HH:MM>     quit at HH:MM (eg 07:30)",
-    "-noexitfilecheck   don't check for a 'exitrc5.now' command file",
-    "-pausefile <fn>    name of file that causes the client to pause",
-    "-percentoff        don't display work completion as a running percentage",
-    "-quiet or -hide    suppress screen output (== detach for some clients)",
-    "-noquiet           don't suppress screen output (override ini quiet setting)"
-  };
-  
   static const char *helpheader[] =
   {
-    "RC5DES v" CLIENT_VERSIONSTRING " client - a project of distributed.net",
+    "distributed.net v" CLIENT_VERSIONSTRING " client for " CLIENT_OS_NAME,
     "Visit http://www.distributed.net/FAQ/ for in-depth command line help",
     "-------------------------------------------------------------------------"
   };
@@ -261,6 +501,5 @@ void DisplayHelp( const char * unrecognized_option )
   } while (key >= 0);
       
   return;
-#endif
 }
 

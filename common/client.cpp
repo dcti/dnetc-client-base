@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.214 1999/08/09 17:05:46 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.215 1999/10/11 17:06:22 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -23,6 +23,7 @@ return "@(#)$Id: client.cpp,v 1.214 1999/08/09 17:05:46 cyp Exp $"; }
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
+#include "selcore.h"   // [De]InitializeCoreTable()
 #include "network.h"   // [De]InitializeConnectivity()
 
 /* ------------------------------------------------------------------------ */
@@ -78,14 +79,18 @@ static void __initialize_client_object(Client *client)
   client->noupdatefromfile = 0;
     client->remote_update_dir[0] = '\0';
   client->connectoften=0;
-  client->preferred_blocksize=31;
   for (contest=0; contest<CONTEST_COUNT; contest++)
+  {
     client->inthreshold[contest] = client->outthreshold[contest] = 10;
+    client->preferred_blocksize[contest] = 31;
+  }
 
   /* -- perf -- */
   client->numcpu = -1;
   client->cputype = -1;
   client->priority = 0;
+  for (contest=0; contest<CONTEST_COUNT; contest++)
+    client->coretypes[contest] = -1;
 
   /* -- log -- */
   client->logname[0]= 0;
@@ -119,6 +124,22 @@ static const char *GetBuildOrEnvDescription(void)
   static char buffer[32]; long ver = winGetVersion(); /* w32pre.cpp */
   sprintf(buffer,"Windows%s %u.%u", (ver>=2000)?("NT"):(""), (ver/100)%20, ver%100 );
   return buffer;
+#elif (CLIENT_OS == OS_NETWARE)
+  static char buffer[40];
+  const char *speshul = "";
+  int major, minor, servType, loaderType;
+  major = GetFileServerMajorVersionNumber();
+  if ((minor = GetFileServerMinorVersionNumber()) < 10) /* .02 => .20 */
+    minor *= 10;
+  GetServerConfigurationInfo(&servType, &loaderType);
+  if (servType == 0 && loaderType > 1)
+    speshul = " (nondedicated)";
+  else if (servType == 1)
+    speshul = " (SFT III IOE)";
+  else if (servType == 2)
+    speshul = " (SFT III MSE)";
+  sprintf(buffer, "NetWare%s %u.%u", speshul, major, minor );
+  return buffer;                  
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
   if (uname(&ut)==0) {
@@ -142,9 +163,8 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
   {
     if (level == 0)
     {
-      LogScreenRaw( "\nRC5DES client - a project of distributed.net\n"
-                    "Copyright 1997-1999 distributed.net\n");
-
+      LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
+                    "Copyright 1997-1999, distributed.net\n");
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
       #endif
@@ -216,7 +236,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
 
 /* ---------------------------------------------------------------------- */
 
-int Client::Main( int argc, const char *argv[] )
+static int ClientMain( Client *client, int argc, const char *argv[] )
 {
   int retcode = 0;
   int restart = 0;
@@ -227,60 +247,73 @@ int Client::Main( int argc, const char *argv[] )
     int restarted = restart;
     restart = 0;
 
-    __initialize_client_object(this); /* reset everything in the object */
+    __initialize_client_object(client); /* reset everything in the object */
     //ReadConfig() and parse command line - returns !0 if shouldn't continue
 
     TRACE_OUT((0,"Client.parsecmdline restarted?: %d\n", restarted));
-    if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
+    if (client->ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
     {
       int domodes = (ModeReqIsSet(-1) != 0);
       TRACE_OUT((0,"initializetriggers\n"));
-      if (InitializeTriggers(((noexitfilecheck ||
+      if (InitializeTriggers(((client->noexitfilecheck ||
                               domodes)?(NULL):("exitrc5" EXTN_SEP "now")),
-                              ((domodes)?(NULL):(pausefile)) )==0)
+                              ((domodes)?(NULL):(client->pausefile)) )==0)
       {
         TRACE_OUT((0,"initializeconnectivity\n"));
         if (InitializeConnectivity() == 0) //do global initialization
         {
           TRACE_OUT((0,"initializeconsole\n"));
-          if (InitializeConsole(quietmode,domodes) == 0)
+          if (InitializeConsole(client->quietmode,domodes) == 0)
           {
             TRACE_OUT((+1,"initializelogging\n"));
-            InitializeLogging( (quietmode!=0), (percentprintingoff!=0),
-                               logname, logfiletype, logfilelimit, 
-                               messagelen, smtpsrvr, smtpport, smtpfrom, 
-                               smtpdest, id );
+            InitializeLogging( (client->quietmode!=0), 
+                               (client->percentprintingoff!=0),
+                               client->logname, 
+                               client->logfiletype, 
+                               client->logfilelimit, 
+                               client->messagelen, 
+                               client->smtpsrvr, 
+                               client->smtpport, 
+                               client->smtpfrom, 
+                               client->smtpdest, 
+                               client->id );
             TRACE_OUT((-1,"initializelogging\n"));
-            PrintBanner(id,0,restarted);
+            PrintBanner(client->id,0,restarted);
             TRACE_OUT((+1,"parsecmdline(1)\n"));
-            ParseCommandline( 1, argc, argv, NULL, (quietmode==0)); //show overrides
+            client->ParseCommandline( 1, argc, argv, NULL, 
+                                    (client->quietmode==0)); //show overrides
             TRACE_OUT((-1,"parsecmdline(1)\n"));
-            InitRandom2( id );
+            InitRandom2( client->id );
+            TRACE_OUT((+1,"initcoretable\n"));
+            InitializeCoreTable( &(client->coretypes[0]) );
+            TRACE_OUT((-1,"initcoretable\n"));
 
             if (domodes)
             {
               TRACE_OUT((+1,"modereqrun\n"));
-              ModeReqRun( this );
+              ModeReqRun( client );
               TRACE_OUT((-1,"modereqrun\n"));
             }
             else
             {
-              PrintBanner(id,1,restarted);
-              TRACE_OUT((+1,"selectcore\n"));
-              SelectCore( 0 );
-              TRACE_OUT((-1,"selectcore\n"));
+              PrintBanner(client->id,1,restarted);
               TRACE_OUT((+1,"client.run\n"));
-              retcode = Run();
+              retcode = client->Run();
               TRACE_OUT((-1,"client.run\n"));
               restart = CheckRestartRequestTrigger();
             }
+
+            TRACE_OUT((0,"deinit coretable\n"));
+            DeinitializeCoreTable();
+            TRACE_OUT((0,"deinitialize logging\n"));
             DeinitializeLogging();
+            TRACE_OUT((0,"deinitialize console\n"));
             DeinitializeConsole();
           }
-          TRACE_OUT((0,"deinitializeconsole\n"));
+          TRACE_OUT((0,"deinitialize connectivity\n"));
           DeinitializeConnectivity(); //netinit.cpp
         }
-        TRACE_OUT((0,"deinitializeconnectivity\n"));
+        TRACE_OUT((0,"deinitialize triggers\n"));
         DeinitializeTriggers();
       }
     }
@@ -317,6 +350,7 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
   }
   #endif
 
+  TRACE_OUT((+0,"realmain: 1 (%d)\n",init_success));
   //-----------------------------
 
   if ( init_success )
@@ -331,14 +365,15 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
       ConOutErr( "Unable to create client object. Out of memory." );
   }
 
+  TRACE_OUT((+0,"realmain: 2 (%d)\n",init_success));
   //----------------------------
 
-  #if (CLIENT_OS == OS_NETWARE)
-  //set cwd etc. save ptr to client for fnames/niceness
+  #if (CLIENT_OS == OS_NETWARE) //set cwd etc.
   if ( init_success )
-    init_success = ( nwCliInitClient( argc, argv, clientP ) == 0);
+    init_success = ( nwCliInitClient( argc, argv ) == 0);
   #endif
 
+  TRACE_OUT((+0,"realmain: 3 (%d)\n",init_success));
   //----------------------------
 
   #if (CLIENT_OS==OS_WIN16 || CLIENT_OS==OS_WIN32S || CLIENT_OS==OS_WIN32)
@@ -346,6 +381,7 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
     w32ConSetClientPointer( clientP ); // save the client * so we can bail out
   #endif                               // when we get a WM_ENDSESSION message
 
+  TRACE_OUT((+0,"realmain: 4 (%d)\n",init_success));
   //----------------------------
 
   #if (CLIENT_OS == OS_MACOS)
@@ -353,19 +389,22 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
     macCliSetClientPointer( clientP ); // load it when appropriate
   #endif
 
+  TRACE_OUT((+0,"realmain: 5 (%d)\n",init_success));
   //----------------------------
 
   if ( init_success )
   {
-    retcode = clientP->Main( argc, (const char **)argv );
+    retcode = ClientMain( clientP, argc, (const char **)argv );
   }
 
+  TRACE_OUT((+0,"realmain: 6 (%d)\n",init_success));
   //------------------------------
 
   #if (CLIENT_OS == OS_AMIGAOS)
   if (retcode) retcode = 5; // 5 = Warning
   #endif // (CLIENT_OS == OS_AMIGAOS)
 
+  TRACE_OUT((+0,"realmain: 7 (%d)\n",init_success));
   //------------------------------
 
   #if (CLIENT_OS == OS_NETWARE)
@@ -373,12 +412,14 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
     nwCliExitClient(); // destroys AES process, screen, polling procedure
   #endif
 
+  TRACE_OUT((+0,"realmain: 8 (%d)\n",init_success));
   //------------------------------
 
   #if (CLIENT_OS==OS_WIN16 || CLIENT_OS==OS_WIN32S || CLIENT_OS==OS_WIN32)
   w32ConSetClientPointer( NULL ); // clear the client *
   #endif
 
+  TRACE_OUT((+0,"realmain: 9 (%d)\n",init_success));
   //------------------------------
 
   #if (CLIENT_OS == OS_MACOS)
@@ -386,6 +427,7 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
     macCliSetClientPointer( NULL ); // clear the client *
   #endif
 
+  TRACE_OUT((+0,"realmain: 10 (%d)\n",init_success));
   //------------------------------
 
   if (clientP)
@@ -408,7 +450,7 @@ void main(void)
   return;                 /* UI will be initialized later via console.cpp */
 }  
 #endif
-#elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+#elif (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16) //|| (CLIENT_OS==OS_WIN32)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* parse the command line and call the bootstrap */
   TRACE_OUT((+1,"WinMain()\n"));
@@ -420,7 +462,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int 
 int main( int argc, char *argv[] )
 {
   /* the SPT_* constants refer to sendmail source (conf.[c|h]) */
-  char defname[]={('r'),('c'),('5'),('d'),('e'),('s'),0};
+  const char *defname = utilGetAppName(); /* 'rc5/des' or 'dnetc' etc */
   int needchange = 0;
   if (argv && argv[0])
   {
@@ -431,7 +473,7 @@ int main( int argc, char *argv[] )
   if (needchange)
   {
     union pstun pst;
-    pst.pst_command = &defname[0];
+    pst.pst_command = (char *)defname;
     pstat(PSTAT_SETCMD,pst,strlen(defname),0,0);
   }
   #elif (CLIENT_OS == OS_SCO)                        //SPT_TYPE == SPT_SCO
@@ -461,7 +503,7 @@ int main( int argc, char *argv[] )
   if (needchange)
   {
     PS_STRINGS->ps_nargvstr = 1;
-    PS_STRINGS->ps_argvstr = defname;
+    PS_STRINGS->ps_argvstr = (char *)defname;
   }
   #elif 0                                     /*  SPT_TYPE == SPT_SYSMIPS */
   if (needchange)
@@ -472,7 +514,7 @@ int main( int argc, char *argv[] )
         //|| SPT_REUSEARGV (the rest)
   /* [Net|Free|Open|BSD[i]] are of type SPT_BUILTIN, ie use setproctitle() 
      which is a stupid smart-wrapper for SPT_PSSTRINGS (see above). The result
-     is exactly the same as when we reexec(): ps will show "rc5des (filename)"
+     is exactly the same as when we reexec(): ps will show "appname (filename)"
      so we gain nothing other than avoiding the exec() call, but the way /we/ 
      would use it is non-standard, so we'd better leave it be:
      __progname = defname; setproctitle(NULL); //uses default, ie __progname
@@ -543,7 +585,7 @@ int main( int argc, char *argv[] )
     }
       
     p = argv[0];
-    argv[0] = defname;
+    argv[0] = (char *)defname;
     if ((strlen(p) + 5) < sizeof(buffer))
     {
       char *s;
@@ -567,6 +609,50 @@ int main( int argc, char *argv[] )
   #endif
   return _realmain( argc, argv );
 }      
+#elif (CLIENT_OS == OS_WIN32)
+int main( int /*argc*/, char */*argv[]*/ )
+{
+  char *cmdline = (char *)GetCommandLine();
+  char appName[20+MAX_PATH+1];
+  int nameLen, evarLen;
+  STARTUPINFO su;
+ 
+  nameLen = evarLen = strlen(strcpy( appName, "dnetc.exe=" ));
+
+  if (!cmdline)  /* should never happen */
+    cmdline = "";
+  else
+  {
+    while (*cmdline == ' ' || *cmdline == '\t')
+      cmdline++;
+    if (*cmdline == '\"' || *cmdline == '\'')
+    {
+      char c = *cmdline++;
+      while (*cmdline && *cmdline != c)
+        appName[nameLen++] = *cmdline++;
+      if (*cmdline)
+        cmdline++;
+    }  
+    else 
+    {
+      while (*cmdline && *cmdline!=' ' && *cmdline != '\t')
+        appName[nameLen++] = *cmdline++;
+    }
+    while (*cmdline == ' ' || *cmdline == '\t')
+      cmdline++;
+  }
+  appName[nameLen] = '\0';
+  if (nameLen == evarLen)
+    GetModuleFileName(NULL, &appName[evarLen], (sizeof(appName)-evarLen));
+  putenv( appName );
+
+  su.cb = sizeof(STARTUPINFO);
+  GetStartupInfo(&su);
+  if ((su.dwFlags & STARTF_USESHOWWINDOW) == 0)
+    su.wShowWindow = SW_SHOWDEFAULT;
+  return winClientPrelude( GetModuleHandle(NULL), 0, 
+                           cmdline, su.wShowWindow, _realmain );
+}
 #else
 int main( int argc, char *argv[] )
 {

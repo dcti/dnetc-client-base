@@ -4,50 +4,57 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11 1999/05/08 19:07:51 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.12 1999/10/11 17:06:32 cyp Exp $"; }
 
-#include "baseincs.h" /* string.h */
+#include "baseincs.h" /* string.h, time.h */
 #include "client.h"   /* CONTEST_COUNT, stub definition */
 #include "clicdata.h" /* CliGetContestNameFromID() */
 #include "pathwork.h" /* GetFullPathForFilename() */
 #include "util.h"     /* ourselves */
 
+#define MAX_CONTEST_NAME_LEN 3
+
 /* ------------------------------------------------------------------- */
 
-void trace_out( int indlevel, const char *fmt, ... )
+void trace_out( int indlevel, const char *format, ... )
 {
-  static int indentlevel = 0;
+  static int indentlevel = -1; /* uninitialized */
+  const char *tracefile = "trace"EXTN_SEP"out";
+  FILE *file;
   va_list arglist; 
-  FILE *file = fopen("trace"EXTN_SEP"out","a");
-  va_start (arglist, fmt); 
-  if (indlevel < 0 && indentlevel > 0)
-    indentlevel-=2;
+  va_start (arglist, format);
+
+  if (indentlevel == -1) /* uninitialized */
+  {
+    remove(tracefile);
+    indentlevel = 0;
+  }
+  
+  if (indlevel < 0)
+    indentlevel -= 2;
+  file = fopen( tracefile, "a" );
   if (file)
   {
-    int spaces = indentlevel - 2;
-    if (spaces > 0)
+    char buffer[64];
+    time_t t = time(NULL);
+    struct tm *lt = localtime( &t );
+    fprintf(file, "%02d:%02d:%02d: ", lt->tm_hour, lt->tm_min, lt->tm_sec);
+    if (indentlevel > 0)
     {
-      char scratch[128];
-      memset( scratch, ' ', sizeof(scratch));
-      do
-      { int spaces2 = (((int)sizeof(scratch))-1);
-        if (spaces < spaces2)
-          spaces2 = spaces;
-        spaces -= spaces;
-        scratch[spaces2] = '\0';
-        fprintf(file, scratch ); 
-      } while (spaces);
+      size_t spcs = ((size_t)indentlevel);
+      memset((void *)(&buffer[0]),' ',sizeof(buffer));
+      while (sizeof(buffer) == fwrite( buffer, 1, 
+         ((spcs>sizeof(buffer))?(sizeof(buffer)):(spcs)), file ))
+        spcs -= sizeof(buffer);
     }
-    if (indlevel > 0)
-      fprintf(file,"beg: ");
-    else if (indlevel < 0)
-      fprintf(file,"end: ");
-    vfprintf(file, fmt, arglist); 
-    fclose(file);
+    if (indlevel != 0)
+      fwrite((void *)((indlevel < 0)?("end: "):("beg: ")), 1, 5, file );
+    vfprintf(file, format, arglist);
+    fflush( file );
+    fclose( file );
   }
-  va_end( arglist ); 
   if (indlevel > 0)
-    indentlevel+=2;
+    indentlevel += 2;
   return;
 }  
 
@@ -83,30 +90,158 @@ const char *ogr_stubstr(const struct Stub *stub)
 
 /* ------------------------------------------------------------------- */
 
-#if 0
-char *strfproj( char *buffer, const char *fmt, WorkRecord *data )
+const char *utilGatherOptionArraysToList( int *table1, int *table2 )
 {
-//"Completed one RC5 packet 00000000:00000000 (4*2^28 keys)\n"
-//          123:45:67:89 - [987654321 keys/sec]\n"
-// Completed RC5 packet 68E0D85A:A0000000 (123456789 keys)
-//          123:45:67:89 - [987654321 keys/s]
-// Completed OGR stub 22/1-3-5-7 (123456789 nodes)
-//          123:45:67:89 - [987654321 nodes/s]
-// Summary: 4 RC5 packets 12:34:56.78 - [234.56 Kkeys/s]" 
-
-%i == identifier (key # or stubstr)
-%C == contest name (upper case)
-%c == contest name (lower case)
-%u == number of units (keys/nodes) in workrecord *data
-%U == name of unit ("keys"/"nodes")
-%t == time to complete WorkRecord 
-
+  static char buffer[(CONTEST_COUNT+1)*(MAX_CONTEST_NAME_LEN+10)];
+  unsigned int contest, pos = 0;
+  const char *delim = "";
+  buffer[0] = '\0';
+  for (contest = 0; contest < CONTEST_COUNT; contest++)
+  {
+    /* HACK: OGR doesn't a member in the preferred_blocksize/coretype arrays */
+    if (table2 || (contest != OGR)) /* HACK! OGR only for threshold arrays */
+    {
+      const char *p = CliGetContestNameFromID(contest);
+      if (p)
+      {
+        char single[(MAX_CONTEST_NAME_LEN+1+(sizeof(int)*3)+1+(sizeof(int)*3)+1)];
+        unsigned int len = 0;
+        if (table2)
+          len = sprintf(single,"%s%s=%d:%d",delim, p,
+                        (int)table1[contest],(int)table2[contest]);
+        else
+          len = sprintf(single,"%s%s=%d",delim, p, (int)table1[contest] );
+        if (len <= (MAX_CONTEST_NAME_LEN+10))
+        {
+          strcpy( &buffer[pos], single );
+          pos += len;
+          delim = ",";
+        }
+      }
+    }
+  }
+  return (const char *)&buffer[0];
 }
-#endif
 
-/* ------------------------------------------------------------------- */
-
-#define MAX_CONTEST_NAME_LEN 3
+int utilScatterOptionListToArrays( const char *oplist, 
+                                   int *table1, int *table2, int defaultval )
+{
+  unsigned int cont_i;
+  for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+  {
+    table1[cont_i] = defaultval;
+    if (table2)
+      table2[cont_i] = defaultval;
+  }
+  
+  while (*oplist)
+  {
+    while (*oplist && !isalpha(*oplist)) /*contestname must begin with alpha*/
+      oplist++;
+    if (*oplist)
+    {
+      char buffer[64];
+      unsigned int len = 0;
+      int needbreak = 0, kwpos = 0, precspace = 0;
+      unsigned int contest = CONTEST_COUNT;
+      int havenondig = 0, haveval1 = 0, haveval2 = 0;
+      int value1 = defaultval, value2 = defaultval;
+      while (!needbreak && len<sizeof(buffer)-1)
+      {
+        char c = buffer[len] = (char)(*oplist++);
+        buffer[len+1] = '\0';
+        if (c==',' || c==';' || !c)
+        {
+          c=':';
+          needbreak = 1;
+          oplist--;
+        }
+        if (c==':' || c=='=')
+        {
+          buffer[len] = '\0';
+          precspace = 0;
+          if (len != 0)
+          {  
+            kwpos++;
+            if (kwpos == 1)
+            {
+              for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+              {
+                const char *cname = CliGetContestNameFromID(cont_i);
+                if (cname)
+                {
+                  if (strcmp(cname, buffer)==0)
+                  {
+                    contest = cont_i;
+                    break;
+                  }
+                }
+              }
+              if (contest >= CONTEST_COUNT)
+                break;
+            }
+            else if (kwpos == 2)
+            {
+              if (havenondig)
+                break;
+              value1 = atoi(buffer);
+              haveval1 = 1;
+            }
+            else if (kwpos == 3 && table2)
+            {
+              if (havenondig)
+                break;
+              value2 = atoi(buffer);
+              haveval2 = 1;
+            }
+            else
+            {
+              break;
+            }
+            len = 0;
+            havenondig = 0;
+          }
+        }
+        else if (c == ' ' || c=='\t') /* may only be followed by [=:;,\0] */
+        {
+          if (len != 0) /* otherwise ignore it */
+            precspace = 1;
+        }
+        else if (isalpha(c))
+        {
+          if (kwpos || precspace)
+            break;
+          buffer[len] = (char)toupper(c);
+          havenondig = 1;
+          len++;
+        }
+        else if (isdigit(c))
+        {
+          if (precspace)
+            break;
+          len++;
+        }
+        else if (c == '+' || c=='-')
+        {
+          if (len!=0 || !isdigit(*oplist))
+            break;
+          len++;
+        }
+      }
+      if (contest < CONTEST_COUNT && haveval1)
+      {
+        table1[contest] = value1;
+        if (!haveval2)
+          value2 = value1;
+        if (table2)
+          table2[contest] = value2;
+      }
+      while (*oplist && *oplist!=',' && *oplist!=';')
+        oplist++;
+    }
+  }
+  return 0;
+}
 
 const char *projectmap_expand( const char *map )
 {
@@ -123,7 +258,7 @@ const char *projectmap_expand( const char *map )
       strcat( buffer, "," );
     strcat( buffer, CliGetContestNameFromID( map[id] & 0x7f ) );
     if (( map[id] & 0x80 ) != 0)
-      strcat( buffer,":0" );
+      strcat( buffer,"=0" );
   }
   return buffer;
 }
@@ -132,6 +267,9 @@ const char *projectmap_expand( const char *map )
 
 const char *projectmap_build( char *buf, const char *strtomap )
 {
+  #if (CONTEST_COUNT != 4)
+    #error static table needs fixing. (CONTEST_COUNT is not 4).
+  #endif
   static char default_map[CONTEST_COUNT] = { 1,3,2,0 };
   static char map[CONTEST_COUNT];
   unsigned int map_pos, i;
@@ -315,3 +453,74 @@ const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
 }
 
 /* --------------------------------------------------------------------- */
+
+const char *utilSetAppName(const char *newname)
+{
+  static int initialized = -1;
+  static char appname[32];
+  unsigned int len;
+  if (newname)
+  {
+    const char *sep = EXTN_SEP;
+    while (*newname == ' ' || *newname == '\t')
+      newname++;
+    len = 0;
+    while (*newname && *newname != ' ' && *newname != '\t' && 
+           *newname != *sep && (len < (sizeof(appname)-1)))
+      appname[len++] = (char)tolower(*newname++);
+    appname[len] = '\0';
+    if (len && initialized < 0)
+      initialized = 1;
+  }
+  #if (CLIENT_OS == OS_NETWARE)
+  if (initialized < 0)
+  {
+    initialized = 0; /* protect against recursion */
+    strncpy( appname, nwCliGetNLMBaseName(), sizeof(appname));
+    appname[sizeof(appname)-1] = '\0';
+    for (len = 0; appname[len] && (len < (sizeof(appname)-1));len++)
+      appname[len] = (char)tolower(appname[len]);
+    if (len)
+      initialized = 1;
+  }  
+  #elif 0 //(CLIENT_OS == OS_WIN32)
+  if (initialized < 0)
+  {
+    char buff[MAX_PATH+1];
+    len = GetModuleFileName(NULL,buff,sizeof(buff));
+    while (len && buff[len] != '\\' && buff[len]!= '/' && buff[len]!= ':')
+      len--;
+    if (len)
+    {
+      newname = (const char *)&buff[++len];
+      len = 0;
+      while (*newname && *newname != ' ' && *newname != '\t' && 
+             *newname != '.' && (len < (sizeof(appname)-1)))
+        appname[len++] = (char)tolower(*newname++);
+      appname[len] = '\0';
+      if (len && initialized < 0)
+        initialized = 1;
+    }
+  }
+  #endif
+  if (initialized > 0)
+    return (const char *)&appname[0];
+  /* --- */
+  #if defined(__unix__) /* obfusciation 101 for argv[0] stuffing */
+  if (initialized <= 0) /* dummy if to suppress compiler warning */
+  {
+    appname[0] = 'r'; appname[1] = 'c'; appname[2] = '5'; 
+    appname[3] = 'd'; appname[4] = 'e'; appname[5] = 's';
+    appname[6] = '\0';
+    initialized = 1;
+    return (const char *)&appname[0];
+  }  
+  #endif
+  return "rc5des";
+}
+
+const char *utilGetAppName(void) 
+{
+  return utilSetAppName((const char *)0);
+}
+

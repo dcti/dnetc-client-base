@@ -15,7 +15,7 @@
  *
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.13 1999/07/09 14:09:35 cyp Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.14 1999/10/11 17:06:22 cyp Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()

@@ -5,11 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CONSOLE_H__
-#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.29 1999/07/25 23:13:38 cyp Exp $"
-
-#include "version.h"
-#define CLICONS_SHORTNAME  "RC5DES"
-#define CLICONS_LONGNAME "distributed.net RC5/DES client " CLIENT_VERSIONSTRING ""
+#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.30 1999/10/11 17:06:26 cyp Exp $"
 
 // ConIsScreen() returns non-zero if console represents the screen
 // also returns 0 if the console is not initialized.
@@ -23,7 +19,7 @@ int ConIsGUI(void);
 // writes only if stdout is a tty. (or equivalent)
 int ConOut(const char *str);
 
-// ConOutErr() does what fprintf(stderr "\nRC5DES: %s\n",msg) would do.
+// ConOutErr() does what fprintf(stderr "\nAPPNAME: %s\n",msg) would do.
 // Can be blocking. Note the leading and trailing newlines.
 int ConOutErr(const char *msg); //Can be used at any time. Always succeeds.
 

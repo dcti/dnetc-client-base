@@ -5,9 +5,11 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __BENCH_H__
-#define __BENCH_H__ "@(#)$Id: bench.h,v 1.7 1999/04/06 11:55:43 cyp Exp $"
+#define __BENCH_H__ "@(#)$Id: bench.h,v 1.8 1999/10/11 17:06:21 cyp Exp $"
 
-/* returns keys/sec or 0 if break */
-u32 Benchmark( unsigned int contest, u32 numkeys, int cputype, int *numblocks );
+/* returns "rate", or -1 if core error/^C, or 0 if not supported */
+long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags );
+#define TBENCHMARK_QUIET  0x01
+#define TBENCHMARK_IGNBRK 0x02
 
 #endif /* __BENCH_H__ */

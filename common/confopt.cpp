@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.36 1999/07/09 14:09:37 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.37 1999/10/11 17:06:24 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -36,13 +36,13 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
 //1
 { CFGTXT("Your email address (distributed.net ID)"), "",
   CFGTXT(
-  "Completed packets sent back to distributed.net are tagged with the email\n"
-  "address of the person whose machine completed those packets. That address\n"
+  "Completed work sent back to distributed.net are tagged with the email\n"
+  "address of the person whose machine completed that work. That address\n"
   "is used as a unique 'account' identifier in three ways: (a) this is how\n"
   "distributed.net will contact the owner of the machine that submits the\n"
   "winning key; (b) The owner of that address receives credit for completed\n"
-  "packets which may then be transferred to a team account; (c) The number of\n"
-  "packets completed may be used as votes in the selection of a recipient of\n"
+  "work which may then be transferred to a team account; (c) The number of\n"
+  "work-units completed may be used as votes in the selection of a recipient of\n"
   "the prize-money reserved for a non-profit organization.\n"
   ),CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //2
@@ -63,19 +63,19 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
 //4
 { CFGTXT("Pausefile Path/Name"),"",
   CFGTXT(
-  "While running, the client will occasionally look for the the presence of this\n"
-  "file. If it exists, the client will immediately suspend itself and will continue\n"
-  "to remain suspended as long as the file is present.\n"
+  "While running, the client will occasionally look for the the presence of\n"
+  "this file. If it exists, the client will immediately suspend itself and\n"
+  "will continue to remain suspended as long as the file is present.\n"
   ),CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //5
 { CFGTXT("Disable all screen output? (quiet mode)"),"0",
   CFGTXT(
-  "When enabled, this option will cause the client to suppress all screen output\n"
-  "and detach itself (run in the background). Because the client is essentially\n"
-  "invisible, distributed.net strongly encourages the use of logging to file if\n"
-  "you choose to run the client with disabled screen output. This option is\n"
-  "synonymous with the -runhidden and -quiet command line switches and can be\n"
-  "overridden with the -noquiet switch.\n"
+  "When enabled, this option will cause the client to suppress all screen\n"
+  "output and detach itself (run in the background). Because the client is\n"
+  "essentially invisible, distributed.net strongly encourages the use of\n"
+  "logging to file if you choose to run the client with disabled screen\n"
+  "output. This option is synonymous with the -hide and -quiet command line\n"
+  "switches and can be overridden with the -noquiet switch.\n"
   ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
 //6
 { CFGTXT("Disable exit file checking?"),"0",
@@ -92,8 +92,8 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
 { CFGTXT("Project Priority"), "DES,CSC,OGR,RC5",
   CFGTXT(
   "Enter the order in which the client will search for work, for instance\n"
-  "the oder \"OGR,RC5\" specifies that OGR packets (if available) will be\n"
-  "crunched before RC5 packets.\n"
+  "the oder \"OGR,RC5\" specifies that OGR work (if available) will be\n"
+  "crunched before RC5 work.\n"
   "To disable a project, append \":0\" (or \"=0\") to project's name. For\n"
   "example, \"DES,OGR=0,RC5\" will disable the client's OGR support.\n"
   "Project names not found on the list when the client starts will be\n"
@@ -112,53 +112,55 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
 { CFGTXT("Buffer and Buffer Update Options"),"",
   CFGTXT(""),CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_BUFF,0,NULL},
 //10
-{  CFGTXT("Buffer packets in RAM only? (no disk I/O)"),"0",
+{  CFGTXT("Buffer in RAM only? (no disk I/O)"),"0",
    CFGTXT(
    "This option is for machines with permanent connections to a keyserver\n"
    "but without local disks. Note: This option will cause all buffered,\n"
-   "unflushable packets to be lost by a client shutdown.\n"
+   "unflushable work to be lost by a client shutdown.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
 //11
 { CFGTXT("In-Buffer Filename Prefix"), BUFFER_DEFAULT_IN_BASENAME,
   CFGTXT(
-  "Enter the prefix (the base name, ie a filename without an 'extension') of the\n"
-  "buffer files where unfinished work will be stored. The default is \""BUFFER_DEFAULT_IN_BASENAME"\".\n"
-  "The name of the project will concatenated internally to this base name name\n"
-  "to construct the full name of the buffer file. Thus, \""BUFFER_DEFAULT_IN_BASENAME"\" will become\n"
-  "\""BUFFER_DEFAULT_IN_BASENAME""EXTN_SEP"rc5\" for the RC5 input buffer, \""BUFFER_DEFAULT_IN_BASENAME""EXTN_SEP"des\"\n"
-  "for the DES input buffer and \""BUFFER_DEFAULT_IN_BASENAME""EXTN_SEP"ogr\" for the OGR input\n"
-  "buffer. Note: if a path is not specified, the files will be created in the\n"
-  "same directory as the .ini file, which is - by default - created in the same\n"
-  "directory as rc5des itself.\n"
-  "*Note*: A new buffer file format is forthcoming. The new format will have\n"
-  "native support for First-In-First-Out packets (this functionality is currently\n"
-  "available but is not efficient when used with large buffers); improved locking\n"
-  "semantics; all buffers for all projects will be contained in a single file.\n"
+  "Enter the prefix (the base name, ie a filename without an 'extension') of\n"
+  "the buffer files where unfinished work will be stored. The default is\n"
+  "\""BUFFER_DEFAULT_IN_BASENAME"\". The name of the project will concatenated\n"
+  "internally to this base name name to construct the full name of the buffer\n"
+  "file. For example, \""BUFFER_DEFAULT_IN_BASENAME"\" becomes \""BUFFER_DEFAULT_IN_BASENAME""EXTN_SEP"rc5\"\n"
+  "for the RC5 input buffer\n"
+  "Note: if a path is not specified, the files will be created in the same\n"
+  "directory as the .ini file, which, by default, is created in the same\n"
+  "directory as the client itself.\n"
+  "(A new buffer file format is forthcoming. The new format will have native\n"
+  "support for First-In-First-Out packets (this functionality is currently\n"
+  "available but is not efficient when used with large buffers); improved\n"
+  "locking semantics; all buffers for all projects will be contained in a\n"
+  "single file).\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //12
 { CFGTXT("Out-Buffer Filename Prefix"), BUFFER_DEFAULT_OUT_BASENAME,
   CFGTXT(
-  "Enter the prefix (the base name, ie a filename without an 'extension') of the\n"
-  "buffer files where finished work will be stored. The default is \""BUFFER_DEFAULT_OUT_BASENAME"\".\n"
-  "The name of the project will concatenated internally to this base name name\n"
-  "to construct the full name of the buffer file. Thus, \""BUFFER_DEFAULT_OUT_BASENAME"\" will become\n"
-  "\""BUFFER_DEFAULT_OUT_BASENAME""EXTN_SEP"rc5\" for the RC5 output buffer, \""BUFFER_DEFAULT_OUT_BASENAME""EXTN_SEP"des\"\n"
-  "for the DES output buffer and \""BUFFER_DEFAULT_OUT_BASENAME""EXTN_SEP"ogr\" for the OGR output\n"
-  "buffer. Note: if a path is not specified, the files will be created in the\n"
-  "same directory as the .ini file, which is - by default - created in the same\n"
-  "directory as rc5des itself.\n"
-  "*Note*: this option will eventually disappear. Refer to the \"In-Buffer\n"
-  "Filename Prefix\" option for details.\n"
+  "Enter the prefix (the base name, ie a filename without an 'extension') of\n"
+  "the buffer files where finished work will be stored. The default is\n"
+  "\""BUFFER_DEFAULT_OUT_BASENAME"\". The name of the project will concatenated\n"
+  "internally to this base name name to construct the full name of the buffer\n"
+  "file. For example, \""BUFFER_DEFAULT_OUT_BASENAME"\" becomes \""BUFFER_DEFAULT_OUT_BASENAME""EXTN_SEP"rc5\"\n"
+  "for the RC5 output buffer\n"
+  "Note: if a path is not specified, the files will be created in the same\n"
+  "directory as the .ini file, which, by default, is created in the same\n"
+  "directory as the client itself.\n"
+  "(This option will eventually disappear. Refer to the \"In-Buffer\n"
+  "Filename Prefix\" option for details).\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //13
 { CFGTXT("Checkpoint Filename"),"",
   CFGTXT(
   "This option sets the location of the checkpoint file. The checkpoint is\n"
-  "where the client writes its progress to disk so that it can recover partially\n"
-  "completed work if the client had previously failed to shutdown normally.\n"
-  "DO NOT SHARE CHECKPOINTS BETWEEN CLIENTS. Avoid the use of checkpoints unless\n"
-  "your client is running in an environment where it might not be able to shutdown\n"
-  "properly.\n"
+  "where the client writes its progress to disk so that it can recover\n"
+  "partially completed work if the client had previously failed to shutdown\n"
+  "normally.\n"
+  "DO NOT SHARE CHECKPOINTS BETWEEN CLIENTS. Avoid the use of checkpoints\n"
+  "unless your client is running in an environment where it might not be able\n"
+  "to shutdown properly.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //14
 { CFGTXT("Disable buffer updates from/to a keyserver"),"0",
@@ -200,27 +202,21 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "be updated frequently while a connection is detected.\n" 
   ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
 //19
-{ CFGTXT("Preferred RC5 packet size (2^X keys/packet)"),"31 (default)",
+{ CFGTXT("Preferred packet size (2^X keys/packet)"),"" /*31 (default)" */,
   CFGTXT(
-  "When fetching RC5 packets from a keyserver, the client will request\n"
-  "packets with the size you specify in this option. Running the client with\n"
-  "the -benchmark switch will give you a hint as to what the best packet size\n"
-  "for this machine might be. Packet sizes are specified as powers of 2.\n"
-  "The minimum and maximum packet sizes are 28 and 33 respectively.\n"
-  "Note: the number you specify is the *preferred* size. Although the keyserver\n"
-  "will do its best to serve that size, there is no guarantee that it will\n"
-  "always do so.\n"
+  "When fetching key-based packets from a server, the client will request\n"
+  "packets with the size you specify in this option. Packet sizes are\n"
+  "specified as powers of 2. The minimum and maximum packet sizes are 28\n"
+  "and 33 respectively.\n"
+  "Note: the number you specify is the *preferred* size. Although the\n"
+  "keyserver will do its best to serve that size, there is no guarantee that\n"
+  "it will always do so.\n"
   "*Warning*: clients older than v2.7106 do not know how to deal with packets\n"
   "larger than 2^31 keys. Do not share buffers with such a client if you set\n"
   "the preferred packet size to a value greater than 31.\n"
-  "*Note*: Currently, the preferred packet size for DES is always 31 if the RC5\n"
-  "preferred packet size is less than or equal to 31, and is always 33 if the\n"
-  "RC5 preferred packet size is greater than 31. This is temporary: future\n"
-  "client releases will select the DES preferred packet size based on the\n"
-  "RC5:DES crunch speed ratio.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_INT,NULL,NULL,28,33,NULL},
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,28,33,NULL},
 //20
-{ CFGTXT("Packet fetch/flush threshold"), "10 (default)",
+{ CFGTXT("Fetch:flush threshold"), "" /*10 (default)" */,
   CFGTXT(
   "This option specifies how many packets your client will buffer between\n"
   "communications with a keyserver. The client operates directly on packets\n"
@@ -230,13 +226,12 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "and send in all completed packets. Keep the number of packets to buffer low\n"
   "if you have a fixed (static) connection to the internet, or the cost of your\n"
   "dialup connection is negligible.\n"
+  "Thresholds as displayed here are in the form \"fetch:flush\", and the 'flush\n"
+  "setting' defaults to the 'fetch setting' if not explicitely set.\n"
   "In general, you should not buffer more than your client(s) can complete in\n"
   "one day (running the client with -benchmark will give you a hint).\n"
   "You may also force a buffer exchange by starting the client with -update.\n"
-  "*Note*: this option is scheduled to disappear. It will be replaced by a\n"
-  "time-based option, ie something along the lines of \"Number of work-hours\n"
-  "to buffer\".\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_INT,NULL,NULL,1,MAXBLOCKSPERBUFFER,NULL},
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,1,MAXBLOCKSPERBUFFER,NULL},
 
 /* ------------------------------------------------------------ */
 
@@ -244,13 +239,13 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
 { CFGTXT("Performance and Processor Options"),"",
   CFGTXT(""),CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_PERF,0,NULL},
 //22
-{ CFGTXT("Processor type"), "-1 (autodetect)",
+{ CFGTXT("Processor type"), "" /* "-1 (autodetect)" */,
   CFGTXT(
-  "This option determines which processor the client will optimize operations\n"
-  "for.  While auto-detection is preferrable for most processor families, you may\n"
-  "wish to set the processor type manually if detection fails or your machine's\n"
-  "processor is detected incorrectly.\n"
-  ),CONF_MENU_PERF,CONF_TYPE_INT,NULL,NULL,0,0,NULL},
+  "This option determines core selection. Auto-select is usually best since\n"
+  "it allows the client to pick other cores as they become available. Please\n"
+  "let distributed.net know if you find the client auto-selecting a core that\n"
+  "manual benchmarking shows to be less than optimal.\n"
+  ),CONF_MENU_PERF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //23
 { CFGTXT("Number of crunchers to run simultaneously"), "-1 (autodetect)",
   /* CFGTXT( */
@@ -266,7 +261,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   /*) */,CONF_MENU_PERF,CONF_TYPE_INT,NULL,NULL,-1,128,NULL},
 //24
 { CFGTXT("Priority level to run at"), "0 (lowest/at-idle)",
-#if (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS)
+#if (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_MACOS)
   CFGTXT(
   "The priority option is ignored on this machine. The distributed.net client\n"
   "for "CLIENT_OS_NAME" dynamically adjusts its process priority.\n"
@@ -276,6 +271,17 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "The priority option is ignored on this machine. distributed.net clients\n"
   "for Windows always run at lowest ('idle') priority.\n"
   )
+#elif (CLIENT_OS==OS_NETWARE)
+  CFGTXT(
+  "The priority option for the distributed.net client for NetWare is directly\n"
+  "proportionate to the rate at which the client yields. While the formula\n"
+  "itself is simple, (priority+1)*500 microseconds (ie priority 0 == 0.5\n"
+  "milliseconds), which translates to a nominal rate of 1000 yields per\n"
+  "millisecond, the actual yield rate is far higher and varies from environment\n"
+  "to environment. Thus, it is a really a matter of experimentation to find the\n"
+  "best \"priority\" for your machine, and while \"priority\" zero will probably\n"
+  "give you a less-than-ideal crunch rate, it will never be \"wrong\".\n" 
+  )
 #else
   /* CFGTXT( */
   "The higher the client's priority, the greater will be its demand for\n"
@@ -283,9 +289,9 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "the demands of other processes with a higher or equal priority are fulfilled\n"
   "first. At priority zero, the client will get processing time only when all\n"
   "other processes are idle (give up their chance to run). At priority nine, the\n"
-  "client will always get CPU time unless there is a time-critical process waiting\n"
-  "to be run - this is obviously not a good idea unless the client is running on\n"
-  "a machine that does nothing else.\n"
+  "client will always get CPU time unless there is a time-critical process\n"
+  "waiting to be run - this is obviously not a good idea unless the client is\n"
+  "running on a machine that does nothing else.\n"
   "On *nix'ish OSs, the higher the priority, the less nice(1) the process.\n"
   #if (CLIENT_OS == OS_WIN32)
   "*Warning*: Running the Win32 client at any priority level other than zero is\n"
