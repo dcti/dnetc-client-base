@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.78 2000/06/07 23:22:16 oliver Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.79 2000/06/12 20:08:20 lyndon Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -408,6 +408,18 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
                 "\n* =========================================================================="
                 "\n", utilGetAppName());
       LogRaw("\n");
+      #if CLIENT_OS == OS_IRIX
+      /*
+       * Irix 6.5 has a kernel bug that will cause the system
+       * to freeze if we're running as root on a multi-processor
+       * machine and we try to use more than one CPU.
+       */
+      if (geteuid() == 0) {
+	LogScreenRaw("* Cannot run as the superuser on Irix.\n"
+		     "* Please run the client under a non-zero uid.\n\n");
+	exit(1);
+      }
+      #endif /* CLIENT_OS == OS_IRIX */
 
       if (CliIsTimeZoneInvalid()) /*clitime.cpp (currently DOS,OS/2,WIN[16] only)*/
       {
