@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.4 2003/03/07 17:25:23 oliver Exp $
+ * $Id: ogr.cpp,v 1.2.4.5 2003/03/30 19:44:42 snikkel Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -110,9 +110,14 @@
   #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
   #define OGR_NON_STATIC_FOUND_ONE
 #elif defined(ASM_SPARC)
-    #define OGROPT_BITOFLIST_DIRECT_BIT           0
-    #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
-    #define OGROPT_COPY_LIST_SET_BIT_JUMPS 0
+  #define OGROPT_BITOFLIST_DIRECT_BIT           1  /* default */
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0  /* default */
+  #define OGROPT_COPY_LIST_SET_BIT_JUMPS        1  /* default */
+  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2  /* default */
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE         1  /* default */
+  #define OGROPT_ALTERNATE_CYCLE                0  /* default */
+  #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0  /* irrelevant */    
+  #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
 #endif
 
 /* -- various optimization option defaults ------------------------------- */
