@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.144  1998/12/23 10:54:37  myshkin
+# Added code to _GetRawPPCIdentification to read /proc/cpuinfo on linux-ppc.
+# Added *ppc-gcc272 entry to configure (until I successfully upgrade to egcs).
+#
 # Revision 1.143  1998/12/22 15:41:26  jcmichot
 #
 # client/configure
@@ -573,6 +577,7 @@ OPTS_GCC_DGUX="$OPTS_GCC -O6 -D_DGUX -DPIPELINE_COUNT=2 \
 
 OPTS_GCC_PPC601="$OPTS_GCC -O6 -DASM_PPC -mcpu=601"
 OPTS_GCC_PPC="$OPTS_GCC -O6 -DASM_PPC -mcpu=604"
+OPTS_GCC272_PPC="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604"
 OPTS_GCC_POWER="$OPTS_GCC -O6 -DASM_POWER -mcpu=power"
 
 OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC -Icommon"
@@ -970,6 +975,11 @@ case "$1" in
 
     *ppc-gcc)              # generic PPC target
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch_allitnil_552.ppc.s rc5/crunch_lintilla_296.ppc.s"
+	;;
+
+    *ppc-gcc272)           # generic PPC target, gcc 2.7.2
+	TARGET_CCFLAGS="$OPTS_GCC272_PPC -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch_allitnil_552.ppc.s rc5/crunch_lintilla_296.ppc.s"
 	;;
 

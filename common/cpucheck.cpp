@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.53  1998/12/23 10:54:37  myshkin
+// Added code to _GetRawPPCIdentification to read /proc/cpuinfo on linux-ppc.
+// Added *ppc-gcc272 entry to configure (until I successfully upgrade to egcs).
+//
 // Revision 1.52  1998/12/22 15:58:24  jcmichot
 // *** empty log message ***
 //
@@ -183,7 +187,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.52 1998/12/22 15:58:24 jcmichot Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.53 1998/12/23 10:54:37 myshkin Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -257,7 +261,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         {
         while(fgets(buffer, 256, cpuinfo))
           {
-          #if (CLIENT_CPU == CPU_X86)
+          #if (CLIENT_CPU == CPU_X86 || CLIENT_CPU == CPU_POWERPC)
           if (strstr(buffer, "processor") == buffer)
             cpucount++;
           #elif (CLIENT_CPU == CPU_SPARC)
@@ -484,6 +488,35 @@ static int __GetRawPPCIdentification(const char **cpuname)
         case gestaltCPU604ev: detectedtype = 9; break;
         default:              detectedtype =-1; break;
               }
+      }
+    #elif (CLIENT_OS == OS_LINUX)
+      // see cramer's comment above -- RGA
+      char buffer[256];
+      if (FILE *cpuinfo = fopen("/proc/cpuinfo", "r")) {
+        while(fgets(buffer, 256, cpuinfo)) {
+          if (strstr(buffer, "cpu\t\t: ") == buffer)  {
+            // note that the order of the pseudo-switch is important 
+            if (strstr(buffer, "601") != NULL) 
+              detectedtype = 0;
+            else if (strstr(buffer, "603ev") != NULL)
+              detectedtype = 6;
+            else if (strstr(buffer, "603e") != NULL)
+              detectedtype = 5;
+            else if (strstr(buffer, "603") != NULL)
+              detectedtype = 2;
+            else if (strstr(buffer, "604ev5 (MachV)") != NULL)
+              detectedtype = 9;
+            else if (strstr(buffer, "604e") != NULL)
+              detectedtype = 8;
+            else if (strstr(buffer, "604") != NULL)
+              detectedtype = 3;
+            else if (strstr(buffer, "750 (Arthur)") != NULL)
+              detectedtype = 7;
+            else
+              detectedtype = -1;
+          }
+        }
+        fclose(cpuinfo);
       }
     #endif
     }
