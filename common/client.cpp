@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.cpp,v $
+// Revision 1.152.2.12  1999/01/09 11:14:52  remi
+// Synced with :
+//  Revision 1.182  1999/01/06 22:16:10  dicamillo
+//  Changed credit for Dan Oetting at his request.
+//
 // Revision 1.152.2.11  1999/01/09 11:09:45  remi
 // Fixed the previous merge.
 //
@@ -161,7 +166,7 @@ void PrintBanner(const char */*dnet_id*/,int level,int restarted)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
       #endif
       #if (CLIENT_CPU == CPU_POWERPC)
-      LogScreenRaw( "PowerPC assembly by Dan Oetting at USGS\n");
+      LogScreenRaw( "PowerPC assembly by Dan Oetting\n");
       #endif
 
       #if (CLIENT_CPU == CPU_ARM)
