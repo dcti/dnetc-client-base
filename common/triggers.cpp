@@ -16,8 +16,12 @@
 // -----------------------------------------------------------------------
 //
 // $Log: triggers.cpp,v $
+// Revision 1.3  1998/09/17 15:11:33  cyp
+// Implemented -HUP handling. (See main() for implementation details)
+//
 // Revision 1.2  1998/09/06 21:01:04  silby
-// Changes to make deinittriggers clear all info so a subsequent call to inittriggers will be fruitful.
+// Changes to make deinittriggers clear all info so a subsequent call to 
+// inittriggers will be fruitful.
 //
 // Revision 1.1  1998/08/10 20:12:15  cyruspatel
 // Created
@@ -26,7 +30,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.2 1998/09/06 21:01:04 silby Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.3 1998/09/17 15:11:33 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -60,6 +64,7 @@ static struct
   int isinit;
   struct trigstruct exittrig;
   struct trigstruct pausetrig;
+  struct trigstruct huptrig;
 } trigstatics = {0};
 
 // -----------------------------------------------------------------------
@@ -73,10 +78,24 @@ int RaiseExitRequestTrigger(void)
   return (oldstate);
 }  
 
+int RaiseRestartRequestTrigger(void) 
+{ 
+  if (!trigstatics.isinit)
+    InitializeTriggers( NULL, NULL );
+  int oldstate = trigstatics.huptrig.trigger;
+  trigstatics.exittrig.trigger = 1;
+  trigstatics.huptrig.trigger = 1;
+  return (oldstate);
+}  
+
 int CheckExitRequestTriggerNoIO(void) 
 { return (trigstatics.exittrig.trigger); } 
 int CheckPauseRequestTriggerNoIO(void) 
 { return (trigstatics.pausetrig.trigger); }
+int CheckRestartRequestTriggerNoIO(void) 
+{ return (trigstatics.huptrig.trigger); }
+int CheckRestartRequestTrigger(void) 
+{ return (trigstatics.huptrig.trigger); }
 
 // -----------------------------------------------------------------------
 
@@ -173,8 +192,9 @@ int CheckPauseRequestTrigger(void)
 int DeinitializeTriggers(void)  //whats there to do?
 {
   trigstatics.isinit=0;
+  int huptrig = trigstatics.huptrig.trigger;
   memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
-    // Make sure it's reinited later for clients that init/deinit (guis)
+  trigstatics.huptrig.trigger = huptrig;
   return 0;
 }  
 
@@ -312,12 +332,23 @@ void CliPollDrivenBreakCheck( void )
 // -----------------------------------------------------------------------
 
 #ifndef CLISIGHANDLER_IS_SPECIAL
-void CliSignalHandler( int )
+void CliSignalHandler
+  (
+#ifdef SIGHUP
+  int sig
+#else 
+  int
+#endif 
+  )
 {
+#ifdef SIGHUP
+  if (sig == SIGHUP)
+    RaiseRestartRequestTrigger();
+#endif
   RaiseExitRequestTrigger();
   CliSetupSignals(); //reset the signal handlers
-}
-#endif
+}  
+#endif //ifndef CLISIGHANDLER_IS_SPECIAL
 
 // -----------------------------------------------------------------------
 

@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: triggers.h,v $
+// Revision 1.2  1998/09/17 15:11:31  cyp
+// Implemented -HUP handling. (See main() for implementation details)
+//
 // Revision 1.1  1998/08/10 20:12:16  cyruspatel
 // Created
 //
@@ -23,8 +26,11 @@ extern int InitializeTriggers(const char *exitfile, const char *pausefile);
 //deinitialize...
 extern int DeinitializeTriggers(void);
 
-//set the exit trigger (don't worry: it doesn't use raise())
+//set the exit trigger ONLY (don't worry: it doesn't use raise())
 extern int RaiseExitRequestTrigger(void); 
+
+//set the restart AND exit triggers
+extern int RaiseRestartRequestTrigger(void); 
 
 //refresh/get the exit trigger state
 //preferred method for main thread 
@@ -33,6 +39,10 @@ extern int CheckExitRequestTrigger(void);
 //refresh/get the pause trigger state
 //preferred method for main thread 
 extern int CheckPauseRequestTrigger(void); 
+
+//refresh/get the restart trigger state
+//implemented as do { main() } while CheckRestartRequestTrigger
+extern int CheckRestartRequestTrigger(void); 
 
 //just return the exit trigger state (no poll cycle) 
 //preferred method for child threads 
