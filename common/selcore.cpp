@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.138 2002/03/31 00:52:25 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.139 2002/03/31 13:10:45 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -63,7 +63,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "RG class 6",            /* 2. PPro/II/III */
       "RG re-pair I",          /* 3. Cyrix 486/6x86[MX]/MI */
       "RG RISC-rotate I",      /* 4. K5 */
-      "RG RISC-rotate II",     /* 5. K6 - may become mmx-k6-2 core at runtime */
+      "RG RISC-rotate II",     /* 5. K6 */
       "RG/DG re-pair III",     /* 6. K7 Athlon and Cx-MII, based on Cx re-pair */
       "RG/BRF self-mod",       /* 7. SMC */
       "AK class 7",            /* 8. P4 */
@@ -1041,7 +1041,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x02: cindex = 0; break; // PII/PIII     == with BSR (A)
             case 0x03: cindex = 0; break; // Cx6x86       == with BSR (A)
             case 0x04: cindex = 1; break; // K5           == without BSR (B)
-            case 0x05: cindex = 0; break; // K6/K6-2/K6-3 == without BSR (B)
+            case 0x05: cindex = 1; break; // K6/K6-2/K6-3 == without BSR (B)  #2228
             case 0x06: cindex = 1; break; // Cyrix 486    == without BSR (B)
             case 0x07: cindex = 0; break; // orig Celeron == with BSR (A)
             case 0x08: cindex = 0; break; // PPro         == with BSR (A)
