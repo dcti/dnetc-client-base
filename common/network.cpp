@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.16 1999/12/13 17:01:05 dakidd Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.17 1999/12/31 19:56:29 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -27,14 +27,6 @@ return "@(#)$Id: network.cpp,v 1.97.2.16 1999/12/13 17:01:05 dakidd Exp $"; }
 
 #if (CLIENT_OS == OS_DOS)
 #define ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG
-#endif
-
-#if ((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_MACOS)
-#define SOCKLEN_T socklen_t
-#elif ((CLIENT_OS == OS_BSDI) && (_BSDI_VERSION > 199701))
-#define SOCKLEN_T size_t
-#else
-#define SOCKLEN_T int
 #endif
 
 extern int NetCheckIsOK(void); // used before doing i/o
@@ -2072,6 +2064,13 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
     int which;
     for (which = 0; which < 2; which++ )
     {
+      #if (defined(__GLIBC__) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_MACOS)
+      #define SOCKLEN_T socklen_t
+      #elif ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION > 199701))
+      #define SOCKLEN_T size_t
+      #else
+      #define SOCKLEN_T int
+      #endif
       int type = ((which == 0)?(SO_RCVBUF):(SO_SNDBUF));
       int sz = 0;
       SOCKLEN_T szint = (SOCKLEN_T)sizeof(int);

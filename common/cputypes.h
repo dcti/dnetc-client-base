@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.15 1999/12/29 22:24:21 snake Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.16 1999/12/31 19:56:29 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -136,23 +136,20 @@
   #define __unix__
   #endif
   #define CLIENT_OS_NAME "Linux"
+  #define CLIENT_OS     OS_LINUX
   #if defined(__alpha__) || defined(ASM_ALPHA)
-    #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_ALPHA
   #elif defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_X86
+  #elif defined(__S390__)  
+    #define CLIENT_CPU    CPU_S390
   #elif defined(ARM)
-    #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_ARM
   #elif defined(__sparc__) || defined(ASM_SPARC)
-    #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_SPARC
   #elif defined(ASM_PPC)
-    #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_POWERPC
   #elif defined(ASM_68K)
-    #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_68K
   #endif
 #elif defined(__FreeBSD__)
@@ -160,8 +157,8 @@
   #define __unix__
   #endif
   #define CLIENT_OS_NAME "FreeBSD"
+  #define CLIENT_OS     OS_FREEBSD
   #if defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_OS     OS_FREEBSD
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(__NetBSD__)
@@ -224,7 +221,7 @@
   #define __unix__
   #endif
   #define CLIENT_OS_NAME  "BSD/OS"
-  #define CLIENT_OS       OS_BSDI
+  #define CLIENT_OS       OS_BSDOS
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
   #endif
@@ -307,22 +304,20 @@
   #define __unix__
   #endif
   #define CLIENT_OS_NAME   "AIX"
+  #define CLIENT_OS     OS_AIX
   /* AIXALL hides itself as POWER, it's more easy copy with this problem */
   /* in the POWER tree, because this is used on AIX only */
   #if defined(_ARCH_PPC) || defined(ASM_PPC) || defined(_AIXALL)
-    #define CLIENT_OS     OS_AIX
     #define CLIENT_CPU    CPU_POWERPC
   #elif (defined(_ARCH_PWR) || defined(_ARCH_PWR2) || defined(ASM_POWER))
-    #define CLIENT_OS     OS_AIX
     #define CLIENT_CPU    CPU_POWER
   #endif
 #elif defined(macintosh)
   #define CLIENT_OS_NAME   "Mac OS"
+  #define CLIENT_OS     OS_MACOS
   #if __POWERPC__
-    #define CLIENT_OS     OS_MACOS
     #define CLIENT_CPU    CPU_POWERPC
   #elif __MC68K__
-    #define CLIENT_OS     OS_MACOS
     #define CLIENT_CPU    CPU_68K
   #endif
 #elif defined(__BEOS__) || defined(__be_os)
@@ -350,17 +345,14 @@
   #define CLIENT_CPU    CPU_ARM
 #elif defined(_NeXT_)
   #define CLIENT_OS_NAME   "NextStep"
+  #define CLIENT_OS     OS_NEXTSTEP
   #if defined(ASM_X86)
-    #define CLIENT_OS     OS_NEXTSTEP
     #define CLIENT_CPU    CPU_X86
   #elif defined(ASM_68K)
-    #define CLIENT_OS     OS_NEXTSTEP
     #define CLIENT_CPU    CPU_68K
   #elif defined(ASM_HPPA)
-    #define CLIENT_OS     OS_NEXTSTEP
     #define CLIENT_CPU    CPU_PA_RISC
   #elif defined(ASM_SPARC)
-    #define CLIENT_OS     OS_NEXTSTEP
     #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(__MVS__)

@@ -4,13 +4,13 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.41 1999/12/21 04:56:01 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.42 1999/12/31 19:56:27 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
 //#define TRACE
 
-#include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
+//#include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "client.h"    // Client class
@@ -139,26 +139,6 @@ static const char *GetBuildOrEnvDescription(void)
     speshul = " (SFT III MSE)";
   sprintf(buffer, "NetWare%s %u.%u", speshul, major, minor );
   return buffer;                  
-#elif (CLIENT_OS == OS_MACOS)
-  const char *osname = "Mac OS";
-  long osversion;
-  if ( Gestalt( gestaltAUXVersion, &osversion ) != noErr)
-    osversion = 0;
-  if (osversion != 0)
-    osname = "A/UX";
-  else if ( Gestalt( gestaltSystemVersion, &osversion ) != noErr)
-    osversion = 0;
-  if ((osversion & 0xffff) != 0)
-  {    
-    static char buffer[40];
-    sprintf( buffer, "%s %d.%d%c%d", osname,
-                                     (int)((osversion&0xff00)>>8), 
-                                     (int)((osversion&0x00f0)>>4),
-                                                             (((osversion & 0x000f) == 0)?(0):('.')),
-                                                             (int)((osversion&0x000f)) );
-    return buffer;                                
-  }
-  return "";                          
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
   if (uname(&ut)==0) {
@@ -173,87 +153,83 @@ static const char *GetBuildOrEnvDescription(void)
 
 /* ---------------------------------------------------------------------- */
 
-static void PrintBanner(const char *dnet_id,int level,int doingmodes)
+static void PrintBanner(const char *dnet_id,int level,int restarted)
 {
-  /* level = 0 = show copyrights,  
-             1 = show version and id
-  */
-  if (level == 0)
+  /* level = 0 = show copyright/version,  1 = show startup message */
+  restarted = 0; /* yes, always show everything */
+  
+  if (!restarted)
   {
-    LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
-                  "Copyright 1997-1999, distributed.net\n");
-    #if (CLIENT_CPU == CPU_68K)
-    LogScreenRaw( "RC5 68K assembly by John Girvin\n");
-    #endif
-    #if (CLIENT_CPU == CPU_POWERPC)
-    LogScreenRaw( "RC5 PowerPC and AltiVec assembly by Dan Oetting\n");
-    #endif
-    #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-    LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
-    #endif
-    #if (CLIENT_CPU == CPU_ARM)
-    LogScreenRaw( "ARM assembly by Steve Lee\n");
-    #if (CLIENT_OS == OS_RISCOS)
-    LogScreenRaw( "RISCOS/PC Card support by Dominic Plunkett\n");
-    #endif
-    #endif
-    #if defined(HAVE_DES_CORES)
-    #if defined(KWAN) && defined(MEGGS)
-    LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n"
-                  "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
-    #elif defined(KWAN) && defined(DWORZ)
-    LogScreenRaw( "DES bitslice driver Copyright 1999, Christoph Dworzak\n"
-                  "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
-    #elif defined(KWAN)
-    LogScreenRaw( "DES search routines Copyright 1997-1998, Matthew Kwan\n" );
-    #endif
-    #if (CLIENT_CPU == CPU_X86)
-    LogScreenRaw( "DES search routines Copyright 1997-1998, Svend Olaf Mikkelsen\n");
-    #endif
-    #endif
-    #if (CLIENT_OS == OS_DOS)
-    LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
-    #endif
-
-    LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n");
-    #if (!CLIENT_OS == OS_MACOS)
-    LogScreenRaw( "Start the client with '-help' for a list of valid command line options.\n" );
-    #endif
-    LogScreenRaw( "\n" );
-  }
-  else if ( level == 1 )
-  {
-    const char *msg = GetBuildOrEnvDescription();
-    if (msg == NULL) msg="";
-
-    LogRaw("\n%s%s%s%s.\n",
-           CliGetFullVersionDescriptor(), /* cliident.cpp */
-           ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
-    LogScreenRaw( "Please provide the *entire* version descriptor "
-                  "when submitting bug reports.\n");
-    LogScreenRaw( "The distributed.net bug report pages are at "
-                  "http://www.distributed.net/bugs/\n");
-    if (dnet_id[0] == '\0' || strcmp(dnet_id,"rc5@distributed.net")==0)
+    if (level == 0)
     {
-      /* id has no affect on modes */
-      if (doingmodes)
-        LogRaw( "\n\n" );
-      else
-      {
+      LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
+                    "Copyright 1997-1999, distributed.net\n");
+      #if (CLIENT_CPU == CPU_68K)
+      LogScreenRaw( "RC5 68K assembly by John Girvin\n");
+      #endif
+      #if (CLIENT_CPU == CPU_POWERPC)
+      LogScreenRaw( "RC5 PowerPC and AltiVec assembly by Dan Oetting\n");
+      #endif
+      #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
+      LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
+      #endif
+      #if (CLIENT_CPU == CPU_ARM)
+      LogScreenRaw( "ARM assembly by Steve Lee\n");
+      #if (CLIENT_OS == OS_RISCOS)
+      LogScreenRaw( "RISCOS/PC Card support by Dominic Plunkett\n");
+      #endif
+      #endif
+      #if defined(HAVE_DES_CORES)
+      #if defined(KWAN) && defined(MEGGS)
+      LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n"
+                    "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
+      #elif defined(KWAN) && defined(DWORZ)
+      LogScreenRaw( "DES bitslice driver Copyright 1999, Christoph Dworzak\n"
+                    "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
+      #elif defined(KWAN)
+      LogScreenRaw( "DES search routines Copyright 1997-1998, Matthew Kwan\n" );
+      #endif
+      #if (CLIENT_CPU == CPU_X86)
+      LogScreenRaw( "DES search routines Copyright 1997-1998, Svend Olaf Mikkelsen\n");
+      #endif
+      #endif
+      #if (CLIENT_OS == OS_DOS)
+      LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
+      #endif
+
+      LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n");
+      #if (!CLIENT_OS == OS_MACOS)
+      LogScreenRaw( "Start the client with '-help' for a list of valid command line options.\n" );
+      #endif
+      LogScreenRaw( "\n" );
+    }
+    else if ( level == 1 )
+    {
+      const char *msg = GetBuildOrEnvDescription();
+      if (msg == NULL) msg="";
+
+      LogRaw("\n%s%s%s%s.\n",
+             CliGetFullVersionDescriptor(), /* cliident.cpp */
+             ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
+      LogScreenRaw( "Please provide the *entire* version descriptor "
+                    "when submitting bug reports.\n");
+      LogScreenRaw( "The distributed.net bug report pages are at "
+                    "http://www.distributed.net/bugs/\n");
+      if (dnet_id[0] == '\0' || strcmp(dnet_id,"rc5@distributed.net")==0)
         LogRaw( "\n* =========================================================================="
                 "\n* The client is not configured with your email address (distributed.net ID) "
                 "\n* Work done cannot be credited until it is set. Please run '%s -config'"
                 "\n* =========================================================================="
                 "\n\n", utilGetAppName());
-      }          
-    }          
-    else              
-      LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n",dnet_id);
-    if (CliIsTimeZoneInvalid()) /*clitime.cpp (currently DOS,OS/2,WIN[16] only)*/
-    {
-      LogScreenRaw("Warning: The TZ= variable is not set in the environment. "
-       "The client will\nprobably display the wrong time and/or select the "
-       "wrong keyserver.\n");
+      else              
+        LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n",dnet_id);
+
+      if (CliIsTimeZoneInvalid()) /*clitime.cpp (currently DOS,OS/2,WIN[16] only)*/
+      {
+        LogScreenRaw("Warning: The TZ= variable is not set in the environment. "
+         "The client will\nprobably display the wrong time and/or select the "
+         "wrong keyserver.\n");
+      }
     }
   }
   return;
@@ -290,7 +266,7 @@ static int ClientMain( int argc, char *argv[] )
     TRACE_OUT((0,"Client.parsecmdline restarted?: %d\n", restarted));
     if (ParseCommandline(client,0,argc,(const char **)argv,&retcode,0)==0)
     {
-      int domodes = ModeReqIsSet(-1);
+      int domodes = (ModeReqIsSet(-1) != 0);
       TRACE_OUT((0,"initializetriggers\n"));
       if (InitializeTriggers(((client->noexitfilecheck ||
                               domodes)?(NULL):("exitrc5" EXTN_SEP "now")),
@@ -317,23 +293,22 @@ static int ClientMain( int argc, char *argv[] )
                                client->smtpdest, 
                                client->id );
             TRACE_OUT((-1,"initializelogging\n"));
-            PrintBanner(client->id,0,domodes);
+            PrintBanner(client->id,0,restarted);
             TRACE_OUT((+1,"parsecmdline(1)\n"));
             ParseCommandline( client, 1, argc, (const char **)argv, NULL, 
                                     (client->quietmode==0)); //show overrides
             TRACE_OUT((-1,"parsecmdline(1)\n"));
             InitRandom2( client->id );
-            TRACE_OUT((+1,"initcoretable\n"));
-            InitializeCoreTable( &(client->coretypes[0]) );
-            TRACE_OUT((-1,"initcoretable\n"));
             #ifdef LURK
             dialup.Start(client->offlinemode, &(client->lurk_conf));
             #endif
+            TRACE_OUT((+1,"initcoretable\n"));
+            InitializeCoreTable( &(client->coretypes[0]) );
+            TRACE_OUT((-1,"initcoretable\n"));
 
-            PrintBanner(client->id,1,domodes);
             if (domodes)
             {
-              con_waitforuser = ((domodes & MODEREQ_CONFIG)==0);
+              con_waitforuser = (ModeReqIsSet(MODEREQ_CONFIG)==0);
               TRACE_OUT((+1,"modereqrun\n"));
               ModeReqRun( client );
               TRACE_OUT((-1,"modereqrun\n"));
@@ -342,17 +317,18 @@ static int ClientMain( int argc, char *argv[] )
               con_waitforuser = 1;
             else
             {
+              PrintBanner(client->id,1,restarted);
               TRACE_OUT((+1,"client.run\n"));
               retcode = ClientRun(client);
               TRACE_OUT((-1,"client.run\n"));
               restart = CheckRestartRequestTrigger();
             }
 
+            TRACE_OUT((0,"deinit coretable\n"));
+            DeinitializeCoreTable();
             #ifdef LURK
             dialup.Stop();
             #endif
-            TRACE_OUT((0,"deinit coretable\n"));
-            DeinitializeCoreTable();
             TRACE_OUT((0,"deinitialize logging\n"));
             DeinitializeLogging();
             TRACE_OUT((0,"deinitialize console\n"));
@@ -367,7 +343,6 @@ static int ClientMain( int argc, char *argv[] )
     }
     ClientEventSyncPost( CLIEVENT_CLIENT_FINISHED, (long)restart );
     TRACE_OUT((0,"client.parsecmdline restarting?: %d\n", restart));
-    restarted = restarted; /* unused if !trace */
   } while (restart);
 
   free((void *)client);
@@ -381,6 +356,7 @@ static int ClientMain( int argc, char *argv[] )
 #if (CLIENT_OS == OS_MACOS)
 int main( void )
 {
+  extern void MacInitToolbox(void);
   char *argv[2]; 
   ((const char **)argv)[0] = utilGetAppName();
   argv[1] = (char *)0;
@@ -465,7 +441,8 @@ int main( int argc, char *argv[] )
   {
     char *q = "RC5PROG";
     int didset = 0;
-    #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX)
+    #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
+	(CLIENT_OS == OS_AIX)
     char *m = (char *)malloc( strlen(q)+1+strlen(argv[0])+1 );
     if (m) {
       didset=(0==putenv(strcat(strcat(strcpy(m,q),"="),argv[0]))); //BSD4.3
@@ -514,7 +491,8 @@ int main( int argc, char *argv[] )
         strncpy( &buffer[7], argv[0], sizeof(buffer)-7 );
         buffer[sizeof(buffer)-5]='\0';
         strcat( buffer, ".ini" );
-        #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX)
+        #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
+            (CLIENT_OS == OS_AIX)
         putenv( buffer );                 //BSD4.3
         #else
         setenv("RC5INI", &buffer[7], 1 ); //SYSV7 and posix
