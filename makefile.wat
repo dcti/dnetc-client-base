@@ -2,10 +2,13 @@
 ## Makefile for use with *ALL* Watcom platforms.
 ##
 ##   Run as WMAKE <platform>
-##   where <platform> is one of [dos | netware | os2 | w32 | w_h | wsv ]
-##                       or anything else defined at the end of this makefile
+##   where <platform> is one of [dos | netware | os2 | w32 ]
+##                or anything else with a section at the end of this file
 ##
 ## $Log: makefile.wat,v $
+## Revision 1.26  1999/02/22 02:16:44  cyp
+## adjusted for new rc5 core location
+##
 ## Revision 1.25  1999/01/01 02:45:14  cramer
 ## Part 1 of 1999 Copyright updates...
 ##
@@ -31,9 +34,9 @@
 ## This neato file can build the nt service!
 ##
 ## Revision 1.15  1998/07/07 14:51:51  ziggyb
-## Added the pathwork.cpp file to the link objs and the make process. Also moved
-## the Cyrix core around, it seems to speed up the core a bit. Well at least it
-## prevented it from being slowed down, in OS/2 at least.
+## Added the pathwork.cpp file to the link objs and the make process. Also 
+## moved the Cyrix core around, it seems to speed up the core a bit. Well 
+## at least it prevented it from being slowed down, in OS/2 at least.
 ##
 ## Revision 1.14  1998/06/21 17:10:20  cyruspatel
 ## Fixed some NetWare smp problems. Merged duplicate numcpu validation code
@@ -99,11 +102,8 @@
 ## Import 5/23/98 client tree
 ## 
 
-## $Id: makefile.wat,v 1.25 1999/01/01 02:45:14 cramer Exp $
+## $Id: makefile.wat,v 1.26 1999/02/22 02:16:44 cyp Exp $
 
-%VERMINOR = 418b      # for zip - fixit if not the same as version.h
-%VERMAJOR = 7100      # for NetWare copyright: v2.$(%VERMAJOR).$(%VERMINOR)
-%FILEVER  = 71.00     # for when the binary has an embedded version #
 
 %EXTOBJS  = #extra objs (made elsewhere) but need linking here
 %DEFALL   = /DPIPELINE_COUNT=2 /DBRYD /D__showids__
@@ -111,34 +111,44 @@
 %SYMALIAS = # symbols that need redefinition 
 %LINKOBJS = output\p1bdespro.obj output\bdeslow.obj   &  
             output\des-x86.obj   output\convdes.obj   output\problem.obj  &
-            output\rg-486.obj    output\rg-k5.obj     output\rg-k6.obj    &
-            output\rc5p5brf.obj  output\rg-p6.obj     output\rg-6x86.obj  &
-            output\cliconfig.obj output\autobuff.obj  output\buffwork.obj &
+            output\rg486.obj     output\rc5-rgk5.obj  output\rc5-rgk6.obj &
+            output\brfp5.obj     output\rc5-rgp6.obj  output\rg6x86.obj   &
+            output\confrwv.obj   output\autobuff.obj  output\buffwork.obj &
             output\mail.obj      output\client.obj    output\disphelp.obj &
             output\iniread.obj   output\network.obj   output\scram.obj    &
             output\clitime.obj   output\clicdata.obj  output\clirate.obj  &
             output\clisrate.obj  output\cpucheck.obj  output\pathwork.obj &
-            output\cliident.obj  output\threadcd.obj  output\x86ident.obj &
+            output\cliident.obj  output\checkpt.obj   output\x86ident.obj &
             output\logstuff.obj  output\triggers.obj  output\buffupd.obj  &
             output\selcore.obj   output\netinit.obj   output\cmdline.obj  &
             output\selftest.obj  output\pollsys.obj   output\probman.obj  &
-            output\probfill.obj  output\guistuff.obj  output\bench.obj    &
+            output\probfill.obj  output\clievent.obj  output\bench.obj    &
             output\clirun.obj    output\setprio.obj   output\console.obj  &
-            output\modereq.obj
+            output\modereq.obj   output\confmenu.obj  output\confopt.obj
+            
+
             # this list can be added to in the platform specific section
+            # 47 std OBJ's (+3 desmmx, +1 rc5mmx, +2 mt, +x plat specific)
 
-            # 45 std OBJ's (+3 desmmx, +1 rc5mmx, +2 mt, +x plat specific)
-
+#---
+%rc5smc_LINKOBJS = output\rc5-486-smc-rg.o
+#---
 %rc5mmx_LINKOBJS = output\rc5mmx.obj 
 %rc5mmx_DEFALL   = /DMMX_RC5 
-%desmmx_LINKOBJS = output\sboxmmx.o output\desm3mmx.o &
-                   output\des-slice-meggs.obj 
-#%desmmx_LINKOBJS = output\sboxes-mmx.obj output\deseval-meggs3-mmx.obj &
-#                   output\des-slice-meggs.obj 
-%desmmx_DEFALL   = /DMMX_BITSLICER /DBIT_64 /DBITSLICER_WITH_LESS_BITS 
-%desmmx_SYMALIAS = whack16=_whack16 _malloc=malloc _free=free
-%mt_LINKOBJS     = output\p2bdespro.obj output\bbdeslow.obj 
-%mt_DEFALL       = /DMULTITHREAD
+#---
+%desmmx_LINKOBJS = output\des-slice-meggs.obj output\deseval-mmx.obj
+%desmmx_DEFALL   = /DMEGGS /DMMX_BITSLICER /DBIT_64 #/DBITSLICER_WITH_LESS_BITS
+%desmmx_SYMALIAS = #
+#---
+%brydmt_LINKOBJS = output\p2bdespro.obj output\bbdeslow.obj 
+%brydmt_DEFALL   = #
+#---
+%kwan_LINKOBJS   = output\des-slice.obj output\deseval.obj output\sboxes-kwan4.obj
+%kwan_DEFALL     = /DKWAN #/DBIT_32
+#---
+%mt_LINKOBJS     = $(%brydmt_LINKOBJS) $(%kwan_LINKOBJS)
+%mt_DEFALL       = /DMULTITHREAD $(%kwan_DEFALL) $(%brydmt_DEFALL) 
+#---
 
 #-----------------------------------------------------------------------
 
@@ -148,7 +158,7 @@
 LNKbasename = rc5des       # for 'rc564'.err 'rc564'.lnk 'rc5des'.err etc
 
 %NASMEXE  = nasm           #point this to nasm (don't call the envvar 'NASM'!)
-%NASMFLAGS= -f coff -s     #nothing special required
+%NASMFLAGS= -f coff -s     #nothing special required #elf/win32/as86/aout
 %TASMEXE  =                #point this to tasm in your section if you have it
 %TFLAGS   = /ml /m9 /q /t  #if TASMEXE.==. then wasm will be executed
 %STACKSIZE= 32K            #may be redefined in the platform specific section
@@ -158,6 +168,7 @@ LNKbasename = rc5des       # for 'rc564'.err 'rc564'.lnk 'rc5des'.err etc
 %OPT_SIZE = /s /os         #may be redefined in the platform specific section
 %OPT_SPEED= /oneatx /oh /oi+ #redefine in platform specific section
 %LIBPATH  =                #may be defined in the platform specific section
+%DEBUG    =                #@%make debug to enable debugging
 %LIBFILES =                #may be defined in the platform specific section
 %MODULES  =                #may be defined in the platform specific section
 %IMPORTS  =                #may be defined in the platform specific section
@@ -168,14 +179,13 @@ LNKbasename = rc5des       # for 'rc564'.err 'rc564'.lnk 'rc5des'.err etc
 %ERRDIROP = /fr=$$[:       #Puts the .err files in the right directories
 %dependall= # makefile.wat common/version.h  # remake everything if these change
 
-%ZIPFILE  = # eg $(LNKbasename)-$(%VERMINOR)-dos-x86-cli or blank for auto
+%ZIPFILE  = # eg -dos-x86-cli or blank for auto
 %DOCFILES =                #list of files in ./docs to include in the zip
-%PORTER   =                # your name and email address
 %ZIPPER   = zip.exe        # a zip file won't be made if not defined
 %ZIPOPTS  = #-u -9 -o -i -v 
                            
 #.silent
-.nocheck
+#.nocheck
 
 #-----------------------------------------------------------------------
 
@@ -189,128 +199,129 @@ noplatform: .symbolic
 
 #-----------------------------------------------------------------------
 
-clean : 
+clean :  .symbolic
   @set dirlist = output common des rc5
   @for %i in ($(%dirlist)) do @if exist %i\*.obj @del %i\*.obj 
   @for %i in ($(%dirlist)) do @if exist %i\*.bak @del %i\*.bak 
+  @for %i in ($(%dirlist)) do @if exist %i\*.~?? @del %i\*.~??
   @for %i in ($(%dirlist)) do @if exist %i\*.err @del %i\*.err 
   @if not exist .\$(LNKbasename)*.* @%quit
   @for %i in (.\$(LNKbasename)*.*) do @del %i
 
-zip :
+zip :  .symbolic
   @if $(%ZIPPER).==.  @echo Error(E02): ZIPPER is not defined
   @if $(%ZIPPER).==.  @%abort
-  @if $(%ZIPFILE).==. @set ZIPFILE=$(LNKbasename)-$(%VERMINOR)-$(OSNAME)-x86-cli
+  @if $(%ZIPFILE).==. @set ZIPFILE=$(LNKbasename)-$(OSNAME)-x86-cli
   
   @if exist $(%ZIPFILE).zip @del $(%ZIPFILE).zip >nul:
   @%write con 
   @echo Generating $(%ZIPFILE).zip...
   @$(%ZIPPER) $(%ZIPOPTS) $(%ZIPFILE).zip $(%BINNAME) $(%DOCFILES)
-  @if $(%PORTER).==. @set PORTER= 
-  @echo Generating $(%ZIPFILE).readme... 
-                        @echo Uploaded...>$(%ZIPFILE).readme 
-  @%append $(%ZIPFILE).readme 
-  @%append $(%ZIPFILE).readme     $(%ZIPFILE).zip 
-  @%append $(%ZIPFILE).readme     $(%ZIPFILE).readme (this file) 
-  @%append $(%ZIPFILE).readme
-  @%append $(%ZIPFILE).readme $(%PORTER)
-  @%append $(%ZIPFILE).readme
+
+debug : .symbolic
+  @set DEBUG=1
 
 #-----------------------------------------------------------------------
 
-declare_for_desmmx : 
+declare_for_desmmx : .symbolic
   @set LINKOBJS = $(%desmmx_LINKOBJS) $(%LINKOBJS)
   @set DEFALL   = $(%desmmx_DEFALL) $(%DEFALL) 
   @set SYMALIAS = $(%desmmx_SYMALIAS) $(%SYMALIAS) 
-  
-declare_for_rc5mmx :  
+
+declare_for_rc5mmx : .symbolic
   @set LINKOBJS = $(%rc5mmx_LINKOBJS) $(%LINKOBJS)
   @set DEFALL   = $(%rc5mmx_DEFALL) $(%DEFALL) 
 
-declare_for_multithread : 
+declare_for_multithread : .symbolic
   @set LINKOBJS = $(%mt_LINKOBJS) $(%LINKOBJS)
   @set DEFALL   = $(%mt_DEFALL) $(%DEFALL) 
 
+declare_for_rc5smc : .symbolic
+  @set LINKOBJS = $(%rc5smc_LINKOBJS) $(%LINKOBJS)
+  #@set DEFALL   = $(%rc5smc_DEFALL) $(%DEFALL) 
+
 #-----------------------------------------------------------------------
 
-output\rg-486.obj : rc5\rg-486.asm $(%dependall)
-  @if $(%TASMEXE).==. *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @if not $(%TASMEXE).==. $(%TASMEXE) $(%TFLAGS) /i$[: $[@,$^@
+output\rc5-486-smc-rg.o : rc5\x86\rc5-486-smc-rg.o
+  @if not exist $[@ @%write con File not found: $[@
+  @if not exist $[@ @%quit
+  copy $[@ $^@ >nul: 
+  wtouch $^@
+  @echo Updated $^@ from $[@
   @set isused=1
 
-output\rg-6x86.obj : rc5\rg-6x86.asm $(%dependall)
-  @if $(%TASMEXE).==. *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @if not $(%TASMEXE).==. $(%TASMEXE) $(%TFLAGS) /i$[: $[@,$^@
-  @set isused=1
-
-output\rc5p5brf.obj : rc5\rc5p5brf.asm $(%dependall)
-  @if $(%TASMEXE).==. *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @if not $(%TASMEXE).==. $(%TASMEXE) $(%TFLAGS) /i$[: $[@,$^@
-  @set isused=1
-
-output\rg-p5.obj : rc5\rg-p5.asm $(%dependall)
-  @if $(%TASMEXE).==. *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @if not $(%TASMEXE).==. $(%TASMEXE) $(%TFLAGS) /i$[: $[@,$^@
-  @set isused=1
-
-output\rg-p6.obj : rc5\rg-p6.asm $(%dependall)
-  @if $(%TASMEXE).==. *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @if not $(%TASMEXE).==. $(%TASMEXE) $(%TFLAGS) /i$[: $[@,$^@
-  @set isused=1
-
-output\rg-k5.obj : rc5\rg-k5.asm $(%dependall)
-  @if $(%TASMEXE).==. *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @if not $(%TASMEXE).==. $(%TASMEXE) $(%TFLAGS) /i$[: $[@,$^@
-  @set isused=1
-
-output\rg-k6.obj : rc5\rg-k6.asm $(%dependall)
-  @if $(%TASMEXE).==. *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @if not $(%TASMEXE).==. $(%TASMEXE) $(%TFLAGS) /i$[: $[@,$^@
-  @set isused=1
-
-output\rc5mmx.obj : rc5\nasm\rc5mmx.asm $(%dependall) 
+output\rg486.obj : rc5\x86\nasm\rg486.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
-output\desm3mmx.o : .symbolic #des\desm3mmx.cpp $(%dependall) .autodepend
-  @set x=des\mmx-bits\desm3mmx.o
-  @if not exist $(%x) @%write con File not found: $(%x) 
-  @if not exist $(%x) @%quit
-  @copy $(%x) $^@ >nul: 
-  #wtouch $^@
-  @echo Updated $^@ from $(%x)
+output\rc5-rgk5.obj : rc5\x86\nasm\rc5-rgk5.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
-output\sboxmmx.o : .symbolic #des\sboxmmx.cpp $(%dependall) .autodepend
-  @set x=des\mmx-bits\sboxmmx.o 
-  @if not exist $(%x) @%write con File not found: $(%x) 
-  @if not exist $(%x) @%quit
-  @copy $(%x) $^@ >nul: 
-  #wtouch $^@
-  @echo Updated $^@ from $(%x)
+output\rc5-rgk6.obj : rc5\x86\nasm\rc5-rgk6.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
-output\deseval-meggs3-mmx.obj : des\deseval-meggs3-mmx.cpp $(%dependall) .autodepend
-  @set x=des\mmx-bitslice\$[&.obj
-  @if not exist $(%x) @%write con File not found: $(%x) 
-  @if not exist $(%x) @%quit
-  @copy $(%x) $^@ >nul: 
-  wtouch $^@
-  @echo Updated $^@ from $(%x)
+output\brfp5.obj : rc5\x86\nasm\brfp5.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
-output\sboxes-mmx.obj : des\sboxes-mmx.cpp $(%dependall) .autodepend
-  @set x=des\mmx-bitslice\$[&.obj
-  @if not exist $(%x) @%write con File not found: $(%x) 
-  @if not exist $(%x) @%quit
-  @copy $(%x) $^@ >nul: 
-  wtouch $^@
-  @echo Updated $^@ from $(%x)
+output\rc5-rgp6.obj : rc5\x86\nasm\rc5-rgp6.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
-output\des-slice-meggs.obj : des\des-slice-meggs.cpp $(%dependall) .autodepend
+output\rg6x86.obj : rc5\x86\nasm\rg6x86.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+  @set isused=1
+
+#output\rg-p5.obj : rc5\rg-p5.asm $(%dependall)
+#  @if $(%TASMEXE).==. *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+#  @if not $(%TASMEXE).==. $(%TASMEXE) $(%TFLAGS) /i$[: $[@,$^@
+#  @set isused=1
+
+output\rc5mmx.obj : rc5\x86\nasm\rc5mmx.asm $(%dependall) 
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+  @set isused=1
+
+output\des-slice-meggs.obj : des\des-slice-meggs.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
+
+output\deseval-mmx.obj : des\mmx-bitslice\deseval-mmx.asm $(%dependall) 
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+  @set isused=1
+
+#output\des-mmx.obj : des\mmx-bitslice\des-mmx.asm $(%dependall) 
+#  *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+#  @set isused=1
+
+#-----------------------------------------
+
+output\des-slice.obj : des\des-slice.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\x86-slic.obj : des\x86-slic.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\deseval.obj : des\deseval.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\sboxes-kwan4.obj : des\sboxes-kwan4.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\sboxes-k.obj : des\sboxes-k.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\sboxes-kwan3.obj : des\sboxes-kwan3.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+#-----------------------------------------
 
 output\p1bdespro.obj : des\brydmasm\p1bdespro.asm $(%dependall)
   @if "$(%TASMEXE)"=="" @set x=$[*.obj
@@ -356,191 +367,195 @@ output\x86ident.obj : platforms\x86ident.asm $(%dependall)
   *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\cliconfig.obj : common\cliconfig.cpp $(%dependall) .autodepend
+output\confrwv.obj : common\confrwv.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\pollsys.obj : common\pollsys.cpp $(%dependall) .autodepend
+output\confopt.obj : common\confopt.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\probman.obj : common\probman.cpp $(%dependall) .autodepend
+output\confmenu.obj : common\confmenu.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\probfill.obj : common\probfill.cpp $(%dependall) .autodepend
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\guistuff.obj : common\guistuff.cpp $(%dependall) .autodepend
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\bench.obj : common\bench.cpp $(%dependall) .autodepend
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\clirun.obj : common\clirun.cpp $(%dependall) .autodepend
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\setprio.obj : common\setprio.cpp $(%dependall) .autodepend
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\console.obj : common\console.cpp $(%dependall) .autodepend
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\cpucheck.obj : common\cpucheck.cpp $(%dependall) .autodepend
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\client.obj : common\client.cpp  $(%dependall) .autodepend
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\cmdline.obj : common\cmdline.cpp  $(%dependall) .autodepend
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\buffupd.obj : common\buffupd.cpp $(%dependall) .autodepend
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\selcore.obj : common\selcore.cpp $(%dependall) .autodepend
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\selftest.obj : common\selftest.cpp $(%dependall) .autodepend
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\problem.obj : common\problem.cpp $(%dependall) .autodepend
+output\pollsys.obj : common\pollsys.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\convdes.obj : common\convdes.cpp $(%dependall) .autodepend
+output\probman.obj : common\probman.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\probfill.obj : common\probfill.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\bench.obj : common\bench.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\clirun.obj : common\clirun.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\checkpt.obj : common\checkpt.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\setprio.obj : common\setprio.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\console.obj : common\console.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\cpucheck.obj : common\cpucheck.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\client.obj : common\client.cpp  $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\cmdline.obj : common\cmdline.cpp  $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\buffupd.obj : common\buffupd.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\selcore.obj : common\selcore.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\selftest.obj : common\selftest.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\problem.obj : common\problem.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\disphelp.obj : common\disphelp.cpp $(%dependall) .autodepend
+output\convdes.obj : common\convdes.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\disphelp.obj : common\disphelp.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\clitime.obj : common\clitime.cpp $(%dependall) .autodepend
+output\clitime.obj : common\clitime.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\clicdata.obj : common\clicdata.cpp $(%dependall) .autodepend
+output\clicdata.obj : common\clicdata.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\clirate.obj : common\clirate.cpp $(%dependall) .autodepend
+output\clirate.obj : common\clirate.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\clisrate.obj : common\clisrate.cpp $(%dependall) .autodepend
+output\clisrate.obj : common\clisrate.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\clistime.obj : common\clistime.cpp $(%dependall) .autodepend
+output\clistime.obj : common\clistime.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\pathwork.obj : common\pathwork.cpp $(%dependall) .autodepend
+output\pathwork.obj : common\pathwork.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\autobuff.obj : common\autobuff.cpp $(%dependall) .autodepend
+output\autobuff.obj : common\autobuff.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\network.obj : common\network.cpp $(%dependall) .autodepend
+output\network.obj : common\network.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\netinit.obj : common\netinit.cpp $(%dependall) .autodepend
+output\netinit.obj : common\netinit.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\iniread.obj : common\iniread.cpp $(%dependall) .autodepend
+output\iniread.obj : common\iniread.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\scram.obj : common\scram.cpp $(%dependall) .autodepend
+output\scram.obj : common\scram.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\mail.obj : common\mail.cpp $(%dependall) .autodepend
+output\mail.obj : common\mail.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\buffwork.obj : common\buffwork.cpp $(%dependall) .autodepend
+output\buffwork.obj : common\buffwork.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: 
   @set isused=1
 
-output\cliident.obj : common\cliident.cpp $(%dependall) .autodepend
+output\cliident.obj : common\cliident.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\threadcd.obj : common\threadcd.cpp $(%dependall) .autodepend
+output\clievent.obj : common\clievent.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\triggers.obj : common\triggers.cpp $(%dependall) .autodepend
+output\triggers.obj : common\triggers.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\modereq.obj : common\modereq.cpp $(%dependall) .autodepend
+output\modereq.obj : common\modereq.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\logstuff.obj : common\logstuff.cpp $(%dependall) .autodepend
+output\logstuff.obj : common\logstuff.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\des-x86.obj : des\des-x86.cpp $(%dependall) .autodepend
+output\des-x86.obj : des\des-x86.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\netware.obj : platforms\netware\netware.cpp $(%dependall) .autodepend
+output\netware.obj : platforms\netware\netware.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\hbyname.obj : platforms\netware\hbyname.cpp $(%dependall) .autodepend
+output\hbyname.obj : platforms\netware\hbyname.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\clidos.obj : platforms\dos\clidos.cpp $(%dependall) .autodepend
+output\clidos.obj : platforms\dos\clidos.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32svc.obj : platforms\win32cli\w32svc.cpp $(%dependall) .autodepend
+output\w32svc.obj : platforms\win32cli\w32svc.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32cons.obj : platforms\win32cli\w32cons.cpp $(%dependall) .autodepend
+output\w32cons.obj : platforms\win32cli\w32cons.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32pre.obj : platforms\win32cli\w32pre.cpp $(%dependall) .autodepend
+output\w32pre.obj : platforms\win32cli\w32pre.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32sock.obj : platforms\win32cli\w32sock.cpp $(%dependall) .autodepend
+output\w32sock.obj : platforms\win32cli\w32sock.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\dod.obj : platforms\os2cli\dod.cpp $(%dependall) .autodepend
+output\os2inst.obj : platforms\os2cli\os2inst.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\clearscr.obj : platforms\dos\clearscr.asm $(%dependall)
-  *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\lurk.obj : common\lurk.cpp $(%dependall) .autodepend
+output\lurk.obj : common\lurk.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
@@ -572,11 +587,11 @@ dolink : .symbolic
   @for %i in ($(%LIBPATH))   do @%append $(LNKbasename).lnk Libpath %i
   @for %i in ($(%MODULES))   do @%append $(LNKbasename).lnk Module %i
   @for %i in ($(%IMPORTS))   do @%append $(LNKbasename).lnk Import %i
-  @for %i in ($(%WLINKOPS))  do @%append $(LNKbasename).lnk Op %i
   @for %i in ($(%SYMALIAS))  do @%append $(LNKbasename).lnk Alias %i
-  @set isused=
-  @for %i in ($(%FILEVER))  do @set isused=1
-  @if not $(%isused).==. @%append $(LNKbasename).lnk Op Version=$(%FILEVER)
+  @for %i in ($(%WLINKOPS))  do @%append $(LNKbasename).lnk Op %i
+  @if not $(%DEBUG).==. @%append $(LNKbasename).lnk debug all
+  @if not $(%DEBUG).==. @%append $(LNKbasename).lnk Op map
+  @if not $(%DEBUG).==. @%append $(LNKbasename).lnk Op verbose
   @set isused=
   @for %i in ($(%LIBFILES))  do @set isused=1
   @if not $(%isused).==. @%append $(LNKbasename).lnk Library $(%LIBFILES)
@@ -598,17 +613,28 @@ dolink : .symbolic
   @del $(%BINNAME)
   @echo Target '$(%BINNAME)' deleted.
 
-postlink:
+postlink: .symbolic
   @if $(%OSNAME).==netware.  @\develop\sdkcdall\nlmdump\nlm_dos.exe *$(LNKbasename).nlm /b:$(LNKbasename).map 
   #@if $(%OSNAME).==netware. @\develop\sdkcd13\nwsdk\tools\nlmpackx $(LNKbasename).nlm $(LNKbasename).nlx
   #@if $(%OSNAME).==netware. @del $(LNKbasename).nlm
   #@if $(%OSNAME).==netware. @ren $(LNKbasename).nlx $(LNKbasename).nlm
+
   @if $(%OSNAME).==dos.      @\develop\pmodew\pmwlite.exe /C4 /S\develop\pmodew\pmodew.exe $(%BINNAME)
   @if $(%OSNAME).==dos.      @\develop\pmodew\pmwsetup.exe /b0 /q $(%BINNAME)
-  @if $(%OSNAME).==win16.    copy $(%BINNAME) *.rex #>nul:
+
+  @if exist $(LNKbasename).rex @del $(LNKbasename).rex
+  @if $(%OSNAME).==win16.    @ren $(LNKbasename).exe $(LNKbasename).rex 
+  #@if $(%OSNAME).==win16.   @wbind rc5des -n
+  #@if $(%OSNAME).==win16.   @echo "1 ICON platforms\win32gui\cowhead.ico" > $(LNKbasename).rc
   @if $(%OSNAME).==win16.    @wrc -r -i=. -fo=.\$(LNKbasename).res -bt=windows -30 platforms\win32cli\w32cons.rc
   @if $(%OSNAME).==win16.    @wbind $(LNKbasename) -R $(LNKbasename).res
+  @if exist $(LNKbasename).rex @del $(LNKbasename).rex
+
+  #@if $(%OSNAME).==win32.   @echo "1 ICON platforms\win32gui\cowhead.ico" > $(LNKbasename).rc
   @if $(%OSNAME).==win32.    @wrc /bt=nt platforms\win32cli\w32cons.rc $(%BINNAME)
+
+  #@if exist $(LNKbasename).rc @del $(LNKbasename).rc >nul:
+  #@if exist $(LNKbasename).res @del $(LNKbasename).res >nul:
 
 #---------------------- platform specific settings come here ----------
 
@@ -619,24 +645,26 @@ dos: .symbolic                                       # DOS/PMODE
      @set NASMEXE   = \develop\nasm\nasm.exe
      @set LIBPATH   = $(%watcom)\lib386 $(%watcom)\lib386\dos 
      @set WLINKOPS  = dosseg eliminate map # stub=\develop\pmodew\pmodew.exe
-                                           #stub=platform/dos/d4GwStUb.CoM 
-     @set LFLAGS    = symtrace printf # symtrace whack16 
+                                           #stub=platforms/dos/d4GwStUb.CoM 
+     @set LFLAGS    = symtrace printf symtrace whack16 
      @set FORMAT    = os2 le
-     @set CFLAGS    = /zp8 /wx /we /wcd=604 /wcd=594 /6s /fp3 /fpc /zm /ei /mf /bt=dos /d__MSDOS__ /I$(%watcom)\h #/Iplatforms\dos\libtcp 
+     @set CFLAGS    = /zp8 /wx /we /6s /fp3 /fpc /zm /ei /mf &
+                      /wcd=604 /wcd=594 /wcd=7 /bt=dos /d__MSDOS__ &
+                      /iplatforms/dos /I$(%watcom)\h #/Iplatforms\dos\libtcp 
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oneatx /oh /oi+ 
-     @set LINKOBJS  = $(%LINKOBJS) output\clearscr.obj output\clidos.obj
+     @set LINKOBJS  = $(%LINKOBJS) output\clidos.obj
      @set LIBFILES  = #platforms\dos\libtcp\libtcp.a
      @set MODULES   =
      @set IMPORTS   =
      @set ZIPPER    = c:\util\pkzip
      @set ZIPOPTS   = -exo
-     @set PORTER    = Cyrus 'cyp' Patel (cyp@fb14.uni-mainz.de)
      @set DOCFILES  = docs\readme.dos docs\rc5des.txt docs\readme.txt
-     @set ZIPFILE   = $(LNKbasename)-$(%VERMINOR)-dos-x86-cli
+     @set ZIPFILE   = $(LNKbasename)-dos-x86-cli
      @set BINNAME   = $(LNKbasename).com
+     #@%make declare_for_rc5smc
      @%make declare_for_rc5mmx
-     #@%make declare_for_desmmx
+     @%make declare_for_desmmx
      @%make platform
 
 d16: .symbolic                                       # DOS/large model
@@ -647,10 +675,11 @@ d16: .symbolic                                       # DOS/large model
      @set NASMEXE   = \develop\nasm\nasm.exe
      @set LIBPATH   = $(%watcom)\lib286 $(%watcom)\lib286\dos 
      @set WLINKOPS  = dosseg eliminate map # stub=\develop\pmodew\pmodew.exe
-                                           #stub=platform/dos/d4GwStUb.CoM 
-     @set LFLAGS    = symtrace printf # symtrace whack16 
+                                           #stub=platforms/dos/d4GwStUb.CoM 
+     @set LFLAGS    = symtrace printf symtrace whack16 
      @set FORMAT    = dos
-     @set CFLAGS    = /zp1 /3 /wx /we /fpc /zc /zt1 /ei /ml /d__MSDOS__ /i$(%watcom)\h
+     @set CFLAGS    = /zp1 /3 /wx /we /fpc /zc /zt1 /ei /ml /d__MSDOS__ &
+                      /iplatforms/dos /i$(%watcom)\h
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oneatx /oh /oi+ 
      @set LINKOBJS  = $(%LINKOBJS) output\clearscr.obj output\clidos.obj
@@ -659,9 +688,8 @@ d16: .symbolic                                       # DOS/large model
      @set IMPORTS   =
      @set ZIPPER    = c:\util\pkzip
      @set ZIPOPTS   = -exo
-     @set PORTER    = Cyrus 'cyp' Patel (cyp@fb14.uni-mainz.de)
      @set DOCFILES  = docs\readme.dos docs\rc5des.txt docs\readme.txt
-     @set ZIPFILE   = $(LNKbasename)-$(%VERMINOR)-dos-x86-cli
+     @set ZIPFILE   = $(LNKbasename)-dos-x86-cli
      @set BINNAME   = $(LNKbasename).com
      #@%make declare_for_rc5mmx
      #@%make declare_for_desmmx
@@ -669,21 +697,20 @@ d16: .symbolic                                       # DOS/large model
 
 os2: .symbolic                                       # OS/2
      @set OSNAME    = os2
-     @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
+     @set AFLAGS    = /5s /fp5 /bt=OS2 /mf
      @set TASMEXE   = tasm32.exe
      @set LFLAGS    = sys os2v2
-     @set CFLAGS    = /zp8 /5s /fp5 /bm /mf /bt=os2 /DOS2
-     @set OPT_SIZE  = /oantrlexi 
+     @set CFLAGS    = /zp8 /5s /fp5 /bm /mf /bt=os2 /DOS2 /DLURK
+     @set OPT_SIZE  = /s /os
      @set OPT_SPEED = /oantrlexi 
      @set LIBFILES  = so32dll.lib,tcp32dll.lib
      @set MODULES   =
      @set IMPORTS   =
-     @set PORTER    = Oscar 'ZiggyB' Chang (oscar@divideby0.com)
-     @set DOCFILES  = docs\rc5des.txt docs\readme.txt
-     @set ZIPFILE   = $(LNKbasename)-$(%VERMINOR)-os2-x86-cli
+     @set DOCFILES  = docs\readme.os2 docs\rc5des.txt docs\readme.txt
+     @set ZIPFILE   = $(LNKbasename)-os2-x86-cli
      @set BINNAME   = $(LNKbasename).exe
      @set STACKSIZE = 32K  # 16384        #Will slow down client if it's 32k
-     @set LINKOBJS  = $(%LINKOBJS) output\dod.obj output\lurk.obj
+     @set LINKOBJS  = output\os2inst.obj  output\lurk.obj
      @set OBJDIROP  = /fo=output\
      @set ERRDIROP  =                      # no /fr= option for Watcom 10.0
      @%make declare_for_multithread
@@ -698,12 +725,13 @@ w16: .symbolic                                       # Windows/16
      @set TASMEXE   = \develop\tasm32\tasm32.exe
      @set LFLAGS    = system win386 #debug all op de 'RC5DES Client for Windows'
      @set CFLAGS    = /3s /w4 /zW /bt=windows /d_Windows &
-                      /i$(%watcom)\h;$(%watcom)\h\win /iplatforms/win32cli 
+                      /i$(%watcom)\h;$(%watcom)\h\win /iplatforms/win32cli &
+                      /DBITSLICER_WITH_LESS_BITS 
                       #/d2
                       #/zp8 /6s /fp3 /fpc /zm /ei /mf /bt=dos /d_Windows &
                       #/d_ENABLE_AUTODEPEND /d__WINDOWS_386__ &
                       #/bw (bw causes default windowing lib to be linked)
-     @set OPT_SIZE  = /oaxt #/s /os 
+     @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oaxt #/oneatx /oh /oi+ 
      @set LINKOBJS  = $(%LINKOBJS) &
                       output\w32cons.obj output\w32pre.obj output\w32sock.obj
@@ -711,13 +739,12 @@ w16: .symbolic                                       # Windows/16
      @set LIBFILES  =
      @set MODULES   =
      @set IMPORTS   =
-     @set FILEVER   = #Version not recognized for win16 executable
      @set ZIPPER    = c:\util\pkzip
      @set ZIPOPTS   = -exo
-     @set PORTER    = Cyrus 'cyp' Patel (cyp@fb14.uni-mainz.de)
      @set DOCFILES  = docs\rc5des.txt docs\readme.txt
-     @set ZIPFILE   = $(LNKbasename)-$(%VERMINOR)-win16-x86-cli
+     @set ZIPFILE   = $(LNKbasename)-win16-x86-cli
      @set BINNAME   = $(LNKbasename).exe
+     @if exist $(LNKbasename).rex @del $(LNKbasename).rex
      #@%make declare_for_multithread
      @%make declare_for_rc5mmx
      #@%make declare_for_desmmx
@@ -728,25 +755,27 @@ w32: .symbolic                               # win32
      @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
      @set TASMEXE   = \develop\tasm32\tasm32.exe
      @set NASMEXE   = \develop\nasm\nasm.exe
+     @set WLINKOPS  = map #alignment=16 objalign=16
      @set LFLAGS    = sys nt_win op de 'RC5DES Client for Windows' #nt
-     @set CFLAGS    = /zp8 /fpd /5s /fp3 /bm /mf /bt=nt /DWIN32 &
+     @set CFLAGS    = /zp8 /fpd /6s /fp3 /bm /mf /bt=nt /DWIN32 /DLURK &
                       /iplatforms/win32cli /i$(%watcom)\h;$(%watcom)\h\nt
-     @set OPT_SIZE  = /s /os
-     @set OPT_SPEED = /oneatx /oi+ 
+     @set OPT_SIZE  = /oneatx /oh /oi+  #/s /os
+     @set OPT_SPEED = /oneatx /oh /oi+ /ei #/oneatx /oh /oi+ 
      @set LINKOBJS  = $(%LINKOBJS) output\lurk.obj &
-                      output\w32svc.obj output\w32cons.obj output\w32pre.obj 
+                      output\w32svc.obj output\w32cons.obj &
+                      output\w32pre.obj output\w32sock.obj 
      @set LIBFILES  =
      @set MODULES   =
      @set IMPORTS   =
-     @set PORTER    = Cyrus 'cyp' Patel (cyp@fb14.uni-mainz.de)
      @set DOCFILES  = docs\rc5des.txt docs\readme.txt
      @set ZIPPER    = c:\util\pkzip
      @set ZIPOPTS   = -exo
-     @set ZIPFILE   = $(LNKbasename)-$(%VERMINOR)-win32-x86-cli
+     @set ZIPFILE   = $(LNKbasename)-win32-x86-cli
      @set BINNAME   = $(LNKbasename).exe
-     @%make declare_for_multithread
+     #@%make debug
+     @%make declare_for_desmmx
      @%make declare_for_rc5mmx
-     #@%make declare_for_desmmx
+     @%make declare_for_multithread
      @%make platform
 
 netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
@@ -757,14 +786,16 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
      @set NASMEXE   = \develop\nasm\nasm.exe
      @set WLINKOPS  = xdcdata=platforms/netware/rc5des.xdc &
                       multiload nod map #osdomain
-     @set LFLAGS    = op scr 'none' op osname='NetWare NLM' #symtrace systemConsoleScreen #sys netware
+     @set LFLAGS    = op scr 'none' op version=0.0 op osname='NetWare NLM' #symtrace systemConsoleScreen #sys netware
      @set OPT_SIZE  = /os /s  
      @set OPT_SPEED = /oneatx /oh /oi+  
-     @set CFLAGS    = /zp1 /zm /6s /fp3 /ei /ms /d__NETWARE__ /i$(inc_386) #/fpc /bt=netware /i$(%watcom)\novh #/bm
+     @set CFLAGS    = /zp1 /zm /6s /fp3 /ei /ms /d__NETWARE__ &
+                      /DBITSLICER_WITH_LESS_BITS /bt=netware &
+                      /i$(inc_386) #/fpc /bt=netware /i$(%watcom)\novh #/bm
      @set LIBFILES  = nwwatemu,plib3s #plibmt3s,clib3s,math387s,emu387
      @set MODULES   = clib a3112 tli # tcpip netdb
      @set LINKOBJS  = $(%LINKOBJS) output\netware.obj output\hbyname.obj 
-     @set EXTOBJS   = $(%EXTOBJS) platform\netware\watavoid\i8s.obj
+     @set EXTOBJS   = $(%EXTOBJS) platforms\netware\watavoid\i8s.obj
      @set IMPORTS   = GetNestedInterruptLevel AllocateResourceTag UngetKey &
                       GetCurrentTime OutputToScreenWithPointer OutputToScreen &
                       ActivateScreen ImportPublicSymbol UnImportPublicSymbol &
@@ -774,19 +805,16 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
                       ConvertSecondsToTicks NWSMPThreadToMP &
                       @$(%watcom)\novi\clib.imp @$(%watcom)\novi\tli.imp
                       # @$(%watcom)\novi\mathlib.imp
-     @set LIBPATH   = platform\netware\watavoid $(%watcom)\lib386 $(%watcom)\lib386\netware
-     @set PORTER    = Cyrus 'cyp' Patel (cyp@fb14.uni-mainz.de)
-     @set ZIPFILE   = $(LNKbasename)-$(%VERMINOR)-netware-x86-cli
+     @set LIBPATH   = platforms\netware\watavoid $(%watcom)\lib386 $(%watcom)\lib386\netware
+     @set ZIPFILE   = $(LNKbasename)-netware-x86-cli
      @set ZIPPER    = c:\util\pkzip
      @set DOCFILES  = docs\readme.nw docs\rc5des.txt docs\readme.txt
      @set BINNAME   = $(LNKbasename).nlm
      @set COPYRIGHT = 'Copyright 1997-1999 distributed.net\r\n  Visit http://www.distibuted.net/ for more information'
-     @set FILEVER   = 0.0   # don't tag with version #
-     @set FORMAT    = Novell NLM 'RC5DES Client for NetWare' #'RC5DES v2.$(%VERMAJOR).$(%VERMINOR) Client for NetWare'
-
+     @set FORMAT    = Novell NLM 'RC5DES Client for NetWare'
      @set %dependall=
-     @%make declare_for_multithread
+     #@%make declare_for_desmmx
      @%make declare_for_rc5mmx
-     #@%make declare_for_desmmx 
+     @%make declare_for_multithread
      @%make platform
 
