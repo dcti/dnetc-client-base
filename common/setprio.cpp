@@ -9,7 +9,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.50.2.4 2000/01/08 23:23:32 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.50.2.5 2000/01/18 23:06:48 lyndon Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -227,29 +227,15 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       setprio( 0, prio-3 );
     }
   }
-  #elif (CLIENT_OS == OS_IRIX)
-  {
-    if ( set_for_thread )
-    {
-      //nothing - priority is set when created.
-    }
-    else if (prio == 0)
-    {
-      schedctl( NDPRI, 0, NDPLOMIN );
-      schedctl( RENICE, 0, 39);
-    } 
-    else if (prio < 9)
-      schedctl( NDPRI, 0, (NDPLOMIN - NDPNORMMIN)/prio);
-  }
   #else // all other UNIX-like environments
   {
     #if (CLIENT_OS == OS_FREEBSD)
-    #ifndef PRI_OTHER_MAX
-    #define PRI_OTHER_MAX 10
-    #endif
-    #ifndef PRI_OTHER_MIN
-    #define PRI_OTHER_MIN 20
-    #endif
+      #ifndef PRI_OTHER_MAX
+      #define PRI_OTHER_MAX 10
+      #endif
+      #ifndef PRI_OTHER_MIN
+      #define PRI_OTHER_MIN 20
+      #endif
     #endif
     if ( set_for_thread )
     {
@@ -270,6 +256,7 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     }
     else 
     {
+
       static int oldnice = -1;
       int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
       if (oldnice != -1)
