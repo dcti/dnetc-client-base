@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.74  1998/07/04 22:05:53  silby
+// Fixed problem found by peterd in which message mailing would have overridden offlinemode.
+//
 // Revision 1.73  1998/07/04 21:05:30  silby
 // Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong should be fixed.
 //
@@ -113,7 +116,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.73 1998/07/04 21:05:30 silby Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.74 1998/07/04 22:05:53 silby Exp $";
 #endif
 
 #include "client.h"
@@ -3328,7 +3331,7 @@ int main( int argc, char *argv[] )
     #if defined(NONETWORK)
       client.offlinemode=1;
     #endif
-    if ((!client.offlinemode) || (client.messagelen > 0)) NetworkInitialize();
+    if (!client.offlinemode) NetworkInitialize();
 #if (CLIENT_OS == OS_RISCOS)
     if (!guirestart)
 #endif
