@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.6 1999/11/29 22:47:24 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.7 1999/12/02 08:47:45 mfeiri Exp $"
 
 #include "cputypes.h"
 
@@ -194,9 +194,8 @@ extern "C" {
 #elif (CLIENT_OS == OS_MACOS)
   #include <sys/time.h> /* Mindmorph */
   #include <unistd.h> /* Mindmorph */
-  #include <console.h> /* Mindmorph */
   #include <Gestalt.h> /* Mindmorph */
-  #include "platforms/macos/client_defs.h" /* support stuff */
+  #include "client_defs.h" /* support stuff */
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
 #endif
