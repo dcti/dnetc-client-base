@@ -3,8 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
-// Revision 1.19  1999/01/19 09:43:38  patrick
+// Revision 1.20  1999/01/21 21:52:34  cyp
+// fixed nettimeout >=0 but <5 range validation.
 //
+// Revision 1.19  1999/01/19 09:43:38  patrick
 // changed confmenu to display LURK network selections only for Win32 and not
 // for OS2
 //
@@ -86,7 +88,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.19 1999/01/19 09:43:38 patrick Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.20 1999/01/21 21:52:34 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -500,7 +502,6 @@ int Client::Configure( void )
         else if (whichmenu == CONF_MENU_NET)
           {
           conf_options[CONF_NOFALLBACK].optionscreen= //can't fallback to self
-          conf_options[CONF_NETTIMEOUT].optionscreen = /* 60 if auto */
           conf_options[CONF_KEYSERVNAME].optionscreen = 
                       ((autofindks || offlinemode)?(0):(CONF_MENU_NET));
 
