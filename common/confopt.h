@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16 1999/04/22 01:51:45 cyp Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16.2.1 1999/10/17 22:58:12 cyp Exp $"
 
 #define CONF_MENU_MISC_PLACEHOLDER  0
 #define CONF_ID                     1 /* CONF_MENU_MISC */
@@ -82,6 +82,7 @@
 #define CONF_TYPE_BOOL             3
 #define CONF_TYPE_TIMESTR          4
 #define CONF_TYPE_PASSWORD         5
+#define CONF_TYPE_IARRAY           6
 
 /* ---------------------------------------------------------------- */
 
@@ -95,9 +96,10 @@ struct optionstruct
   void *thevariable;           //pointer to the variable
   const char **choicelist;     //pointer to the char* array of choices
                                //(used for numeric responses)
-  s32 choicemin;               //minimum choice number
-  s32 choicemax;               //maximum choice number
+  int choicemin;               //minimum choice number
+  int choicemax;               //maximum choice number
   const char *disabledtext;    //is NULL if not disabled
+  int *iarray;                 //int array, one int per contest, in cont order
 };
 extern struct optionstruct conf_options[CONF_OPTION_COUNT];
 
