@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.109  1998/06/24 03:50:23  silby
+// Changes needed to get the NT service to compile under MSVC made, NT Service text strings modded to say "distributed.net", and message about having to set the service to automatic changed to say "check", since it's already done automatically.
+//
 // Revision 1.108  1998/06/24 03:29:45  silby
 // Switched the order of timeslice and cputype so most oses wouldn't have the gap in the #2 menu spot in the performance menu
 //
@@ -100,7 +103,11 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.108 1998/06/24 03:29:45 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.109 1998/06/24 03:50:23 silby Exp $";
+#endif
+
+#if defined(WINNTSERVICE)
+  #define NTSERVICEID "rc5desnt"
 #endif
 
 // --------------------------------------------------------------------------
@@ -1770,7 +1777,7 @@ static Client *mainclient;
 void ServiceMain(DWORD Argc, LPTSTR *Argv)
 {
   SERVICE_STATUS serviceStatus;
-  serviceStatusHandle = RegisterServiceCtrlHandler(WINNTSERVICE,
+  serviceStatusHandle = RegisterServiceCtrlHandler(NTSERVICEID,
       ServiceCtrlHandler);
 
   // update our status to running
@@ -1842,7 +1849,7 @@ s32 Client::Install()
   scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
   if (scm)
   {
-    myService = CreateService(scm, WINNTSERVICE,
+    myService = CreateService(scm, NTSERVICEID,
         "Distributed.Net RC5/DES Service Client",
         SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
         SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
@@ -1850,8 +1857,8 @@ s32 Client::Install()
     if (myService)
     {
       LogScreen("Windows NT Service installation complete.\n"
-          "Click on the 'Services' icon in 'Control Panel' and mark the\n"
-          "Bovine RC5/DES service to startup automatically.\n");
+          "Click on the 'Services' icon in 'Control Panel' and ensure that the\n"
+          "Distributed.Net RC5/DES Service Client is set to startup automatically.\n");
       CloseServiceHandle(myService);
     } else {
       LogScreen("Error creating service entry.\n");
@@ -1936,7 +1943,7 @@ s32 Client::Uninstall(void)
   scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
   if (scm)
   {
-    myService = OpenService(scm, WINNTSERVICE,
+    myService = OpenService(scm, NTSERVICEID,
         SERVICE_ALL_ACCESS | DELETE);
     if (myService)
     {
@@ -2063,7 +2070,7 @@ s32 Client::RunStartup(void)
   LogScreen("Attempting to start up NT service.\n");
   mainclient = this;
   SERVICE_TABLE_ENTRY serviceTable[] = {
-    {WINNTSERVICE, (LPSERVICE_MAIN_FUNCTION) ServiceMain},
+    {NTSERVICEID, (LPSERVICE_MAIN_FUNCTION) ServiceMain},
     {NULL, NULL}};
   if (!StartServiceCtrlDispatcher(serviceTable))
   {
