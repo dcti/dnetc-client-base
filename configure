@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.108 2000/01/24 19:56:36 chrisb Exp $
+# @(#)$Id: configure,v 1.222.2.109 2000/01/24 20:02:03 petermack Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1402,22 +1402,21 @@ case "$1" in
 ###### NeXT (x86, m68k, sparc, hppa)
 
     *x86-next)
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D_NeXT_ \
-			"
-	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
-	TARGET_ADDNASMS="$RC5X86_SRCS $NASM_DESMMX_SRCS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_AS="gcc -c -DNO_BALIGN"
+	TARGET_CC="gcc -static"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -D_NeXT_ -DNO_BALIGN -DHAVE_OGR_CORES"
+	TARGET_ADDSRCS="$RC5X86_SRCS $OGR_ANSI_SRCS"
+	TARGET_ADDASMS="platforms/x86ident.S"
+	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="next-x86"
 	;;
 
     *m68k-next-gcc)
-	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_NEXT_M68K -D_NeXT_ \
-			 -DKWAN"
-	TARGET_ADDSRCS="rc5/68k/crunch.68k.gcc.s $KWAN_SLICE_SRCS4"
+	TARGET_CC="gcc -static"
+	TARGET_CCFLAGS="$OPTS_NEXT_M68K -D_NeXT_ -DHAVE_OGR_CORES"
+	TARGET_ADDSRCS="rc5/68k/crunch.68k.gcc.s $OGR_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="next-m68k"
 	;;
 
     *m68k-next)
