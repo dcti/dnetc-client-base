@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.83  1998/10/06 21:17:08  cyp
+// Changed prototype of InitializeLogging() to take an argument.
+//
 // Revision 1.82  1998/10/05 05:13:09  cyp
 // Fixed missing #ifdef MMX_RC5 for client.usemmx
 //
@@ -321,7 +324,7 @@ public:
   char smtpfrom[128];
   char smtpdest[128];
 
-  void InitializeLogging(void); //copy the mail/log specific settings over
+  void InitializeLogging(int spool_on);
   void DeinitializeLogging(void); 
 
 #ifdef DONT_USE_PATHWORK
