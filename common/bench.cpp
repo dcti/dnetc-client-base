@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.17 1999/12/08 00:41:36 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.18 1999/12/09 13:16:17 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -41,6 +41,15 @@ static void __show_notbest_msg(unsigned int contestid)
     {
       #if (!defined(MMX_RC5))        /* all non-nasm platforms (bsdi etc) */
         not_supported = "RC5/P5/MMX";
+      #endif
+    }
+  }
+  else if (contestid == CSC)
+  {
+    if ((detectedtype & 0x100) != 0) /* mmx */
+    {
+      #if (!defined(MMX_CSC))
+        not_supported = "CSC/MMX bitslice";
       #endif
     }
   }
@@ -102,7 +111,7 @@ static double __calc_rate( unsigned int contestid, ContestWork *contestwork,
                  (((double)(totalruntime->tv_usec))/((double)(1000000L))));
       if (print_it)
       {
-        LogScreen("Completed in %s [%skeys/sec]\n",  
+        LogScreen("\rCompleted in %s [%skeys/sec]\n",  
                  CliGetTimeString( totalruntime, 2 ),
                  CliGetKeyrateAsString( ratestr, rate ) );
       }
@@ -119,7 +128,7 @@ static double __calc_rate( unsigned int contestid, ContestWork *contestwork,
               (((double)(totalruntime->tv_usec))/((double)(1000000L))));
       if (print_it)
       {
-        LogScreen("Completed in %s [%snodes/sec]\n",
+        LogScreen("\rCompleted in %s [%snodes/sec]\n",
                  CliGetTimeString( totalruntime, 2 ),
                  CliGetKeyrateAsString( ratestr, rate ) );
       }
@@ -381,7 +390,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     run = -1; /* core error */
   else if (problem->RetrieveState(&contestwork, NULL, 0) < 0)
     run = -1; /* core error */
-  if (scropen > 0)
+  if (scropen > 0 && run < 0)
     LogScreen("\n");
   delete problem;
   
