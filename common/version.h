@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version.h,v $
+// Revision 1.10  1998/07/22 04:28:49  jlawson
+// updated version to 417
+//
 // Revision 1.9  1998/07/12 09:09:24  silby
 // updates to 416
 //
@@ -46,10 +49,10 @@
 
 #define CLIENT_CONTEST      71
 #define CLIENT_BUILD        00
-#define CLIENT_BUILD_FRAC   416
+#define CLIENT_BUILD_FRAC   417
 
-#define CLIENT_VERSIONSTRING    "v2.7100.416"
-#define CLIENT_VERSIONSTRING2   "2.7100.416"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7100.417"
+#define CLIENT_VERSIONSTRING2   "2.7100.417"        // no leading "v"
 
 #endif // _VERSION_H
 
