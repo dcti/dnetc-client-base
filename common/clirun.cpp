@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.20  1998/10/30 12:00:20  cyp
+// Fixed a missing do_suspend=0 initialization.
+//
 // Revision 1.19  1998/10/27 22:22:27  remi
 // Added a missing '\'.
 //
@@ -88,7 +91,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.19 1998/10/27 22:22:27 remi Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.20 1998/10/30 12:00:20 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -793,15 +796,18 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
   if (thrparams)
     {
     // Start the thread for this cpu
-    thrparams->next = NULL;
+    memset( (void *)(thrparams), 0, sizeof( struct thread_param_block ));
     thrparams->threadID = (THREADID)(0);  /* whatever type */
-    thrparams->threadnum = thread_i;      /* unsigned int */
     thrparams->numthreads = numthreads;   /* s32 */
+    thrparams->threadnum = thread_i;      /* unsigned int */
+    thrparams->realthread = 1;            /* int */
     thrparams->timeslice = timeslice;     /* s32 */
     thrparams->priority = priority;       /* unsigned int */
-    thrparams->realthread = 1;            /* int */
-    thrparams->thread_data1 = 0; /* ulong, free for thread use */
-    thrparams->thread_data2 = 0; /* ulong, free for thread use */
+    thrparams->do_suspend = thrparams->is_suspended = 0;
+    thrparams->do_refresh = 1;            
+    thrparams->thread_data1 = 0;          /* ulong, free for thread use */
+    thrparams->thread_data2 = 0;          /* ulong, free for thread use */
+    thrparams->next = NULL;
   
     #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && \
        (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC))
