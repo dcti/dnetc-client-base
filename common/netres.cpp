@@ -3,6 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.4  1998/08/10 21:53:56  cyruspatel
+// Two major changes to work around a lack of a method to detect if the network
+// availability state had changed (or existed to begin with) and also protect
+// against any re-definition of client.offlinemode. (a) The NO!NETWORK define is
+// now obsolete. Whether a platform has networking capabilities or not is now
+// a purely network.cpp thing. (b) NetworkInitialize()/NetworkDeinitialize()
+// are no longer one-shot-and-be-done-with-it affairs. ** Documentation ** is
+// in netinit.cpp.
+//
 // Revision 1.3  1998/08/03 19:37:51  jlawson
 // changed order of "static" to eliminate gcc warning
 //
@@ -12,16 +21,9 @@
 // Revision 1.1  1998/07/26 12:34:46  cyruspatel
 // Created.
 //
-// 
-//
-
-#if defined(NONETWORK)
-#define OLDRESOLVE
-#endif
 
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.3 1998/08/03 19:37:51 jlawson Exp $";
-}
+return "@(#)$Id: netres.cpp,v 1.4 1998/08/10 21:53:56 cyruspatel Exp $"; }
 
 //---------------------------------------------------------------------
 //#define TEST  //standalone test
@@ -41,6 +43,12 @@ return "@(#)$Id: netres.cpp,v 1.3 1998/08/03 19:37:51 jlawson Exp $";
 #include "cputypes.h"
 #include "network.h"
 #include <ctype.h> //tolower()
+#endif
+
+//------------------------------------------------------------------------
+
+#ifdef STUBIFY_ME    //ooookay. do what it asks
+#define OLDRESOLVE   //and don't drag in the statics
 #endif
 
 //------------------------------------------------------------------------
@@ -216,7 +224,7 @@ struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host order*/
 
    //nothing
 
-#elif defined(NONETWORK)
+#elif defined(STUBIFY_ME) //ooookay...
 
 s32 Network::Resolve(const char * , u32 & )
 { return -1; }
@@ -336,7 +344,7 @@ s32 Network::Resolve(const char *host, u32 &hostaddress )
   return 0;
 }
 
-#endif //OLDRESOLVE | NONETWORK | TEST
+#endif //OLDRESOLVE | stub | TEST
 
 //-----------------------------------------------------------------------
 

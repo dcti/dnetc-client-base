@@ -5,6 +5,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.35  1998/08/10 21:53:51  cyruspatel
+// Two major changes to work around a lack of a method to detect if the network
+// availability state had changed (or existed to begin with) and also protect
+// against any re-definition of client.offlinemode. (a) The NO!NETWORK define is
+// now obsolete. Whether a platform has networking capabilities or not is now
+// a purely network.cpp thing. (b) NetworkInitialize()/NetworkDeinitialize()
+// are no longer one-shot-and-be-done-with-it affairs. ** Documentation ** is
+// in netinit.cpp.
+//
 // Revision 1.34  1998/08/07 20:27:10  cyruspatel
 // Added timestamps to network messages.
 //
@@ -18,29 +27,21 @@
 // constructor extended to take this as an argument.
 //
 // Revision 1.31  1998/07/18 05:53:10  ziggyb
-// Removed a unneeded return 0, which was causing a 'unreachable code' warning in Watcom
+// Removed a unneeded return 0, which was causing a 'unreachable code' 
+// warning in Watcom
 //
 // Revision 1.30  1998/07/13 23:54:25  cyruspatel
-// Cleaned up NONETWORK handling.
+// Cleaned up NO!NETWORK handling.
 //
 // Revision 1.29  1998/07/13 03:30:07  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
-// ambiguities. ("declaration/type or an expression")
+// "declaration/type or an expression" ambiguities.
 //
 // Revision 1.28  1998/07/08 09:24:54  jlawson
 // eliminated integer size warnings on win16
 //
 // Revision 1.27  1998/07/07 21:55:46  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 // Revision 1.26  1998/06/29 06:58:06  jlawson
 // added new platform OS_WIN32S to make code handling easier.
@@ -49,12 +50,13 @@
 // Updates for 16-bit Win16 support
 //
 // Revision 1.24  1998/06/26 06:56:38  daa
-// convert all the strncmp's in the http code with strncmpi to deal with proxy's case shifting HTML
+// convert all the strncmp's in the http code with strncmpi to 
+// deal with proxy's case shifting HTML
 //
 // Revision 1.23  1998/06/22 01:04:58  cyruspatel
 // DOS changes. Fixes various compile-time errors: removed extraneous ')' in
 // sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
-// (is now inline asm), added NONETWORK wrapper around Network::Resolve()
+// (is now inline asm), added NO!NETWORK wrapper around Network::Resolve()
 //
 // Revision 1.22  1998/06/15 12:04:03  kbracey
 // Lots of consts.
@@ -79,9 +81,10 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-static const char *id="@(#)$Id: network.cpp,v 1.34 1998/08/07 20:27:10 cyruspatel Exp $";
-return id; }
+return "@(#)$Id: network.cpp,v 1.35 1998/08/10 21:53:51 cyruspatel Exp $"; }
 #endif
+
+//----------------------------------------------------------------------
 
 #include "cputypes.h"
 #include "network.h"
@@ -91,21 +94,37 @@ return id; }
 #include "logstuff.h"   //LogScreen()
 #include "clitime.h"    //CliGetTimeString(NULL,1);
 #define Time() (CliGetTimeString(NULL,1))
-
-#define VERBOSE_OPEN //print cause of ::Open() errors
-
 #include <stddef.h> // for offsetof
-#include <assert.h> // asserts present should be optimised out, so no need for NDEBUG
 #include <errno.h>
 
+//----------------------------------------------------------------------
+
+#ifdef NONETWORK
+#error NONETWORK define is obsolete. Networking capability is now a purely network.cpp thing.
+#endif
+
+// I had to do this to work around the general misuse of client.offlinemode 
+// and the lack of a method to detect if the network availability state had 
+// changed. See NetworkInitialize() [at end] for more info. -cyp 09 Aug 1998
+
+#if ((CLIENT_OS == OS_VMS) && (!defined(MULTINET)) && (!defined(__VMS_UCX__)))
+   #define STUBIFY_ME //previously NO!NETWORK. Now local to network.cpp
+#elif (CLIENT_OS == OS_DOS)
+   #define STUBIFY_ME //until fixed
+#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+   #define STUBIFY_ME //previously NO!NETWORK. Now local to network.cpp
+#elif (defined(TEST_NO_NETWORK_CAPS_CODE))
+   #define STUBIFY_ME //for testing
+#endif
+
+//----------------------------------------------------------------------
+
+#define VERBOSE_OPEN //print cause of ::Open() errors
 #define UU_DEC(Ch) (char) (((Ch) - ' ') & 077)
 #define UU_ENC(Ch) (char) (((Ch) & 077) != 0 ? ((Ch) & 077) + 0x20 : '`')
+static int QueryInitializationLevel(void); //static in netinit.cpp
 
-#if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_DOS)
-  #include <varargs.h> //cannot use in network.h (client.h uses stdarg.h)
-#elif (CLIENT_OS == OS_AMIGAOS)
-  static struct Library *SocketBase;
-#endif
+//----------------------------------------------------------------------
 
 #pragma pack(1)               // no padding allowed
 
@@ -117,11 +136,15 @@ typedef struct _socks4 {
   char USERID[1];             // variable size, null terminated
 } SOCKS4;
 
+//----------------------------------------------------------------------
+
 typedef struct _socks5methodreq {
   unsigned char ver;          // version == 5
   unsigned char nMethods;     // number of allowable methods following
   unsigned char Methods[2];   // this program will request at most two
 } SOCKS5METHODREQ;
+
+//----------------------------------------------------------------------
 
 typedef struct _socks5methodreply {
   unsigned char ver;          // version == 1
@@ -129,11 +152,15 @@ typedef struct _socks5methodreply {
   char end;
 } SOCKS5METHODREPLY;
 
+//----------------------------------------------------------------------
+
 typedef struct _socks5userpwreply {
   unsigned char ver;          // version == 1
   unsigned char status;       // 0 == success
   char end;
 } SOCKS5USERPWREPLY;
+
+//----------------------------------------------------------------------
 
 typedef struct _socks5 {
   unsigned char ver;          // version == 5
@@ -146,6 +173,8 @@ typedef struct _socks5 {
 } SOCKS5;
 
 #pragma pack()
+
+//----------------------------------------------------------------------
 
 const char *Socks5ErrorText[9] =
 {
@@ -160,7 +189,7 @@ const char *Socks5ErrorText[9] =
   "Address type not supported"
 };
 
-//////////////////////////////////////////////////////////////////////////////
+//======================================================================
 
 class NetTimer
 {
@@ -170,58 +199,9 @@ public:
   operator u32 (void) {return time(NULL) - start;}
 };
 
-//////////////////////////////////////////////////////////////////////////////
+//======================================================================
 
-void NetworkInitialize(void)
-{
-#if !defined(NONETWORK)
-  // perform platform specific socket initialization
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-    WSADATA wsaData;
-    WSAStartup(0x0101, &wsaData);
-  #elif defined(DJGPP) || (CLIENT_OS == OS_OS2)
-    sock_init();
-  #elif (CLIENT_OS == OS_AMIGAOS)
-    #define SOCK_LIB_NAME "bsdsocket.library"
-    SocketBase = OpenLibrary((unsigned char *)SOCK_LIB_NAME, 4UL);
-    __assert((int)SocketBase, "Failed to open " SOCK_LIB_NAME "\n",
-        __FILE__, __LINE__);
-  #endif
-  #ifdef SOCKS
-    LIBPREFIX(init)("rc5-client");
-  #endif
-
-  // check that the packet structures have been correctly packed
-  // do it here to make sure the asserts go off
-  // if all is correct, the asserts should get totally optimised out :)
-  assert(offsetof(SOCKS4, USERID[0]) == 8);
-  assert(offsetof(SOCKS5METHODREQ, Methods[0]) == 2);
-  assert(offsetof(SOCKS5METHODREPLY, end) == 2);
-  assert(offsetof(SOCKS5USERPWREPLY, end) == 2);
-  assert(offsetof(SOCKS5, end) == 10);
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void NetworkDeinitialize(void)
-{
-#if !defined(NONETWORK)
-  // perform platform specific socket deinitialization
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-    WSACleanup();
-  #elif (CLIENT_OS == OS_AMIGAOS)
-  if (SocketBase) {
-    CloseLibrary(SocketBase);
-    SocketBase = NULL;
-  }
-  #endif
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-#if defined(NONETWORK)
+#if defined(STUBIFY_ME)
 
 Network::Network( const char * , const char * , s16, int ) 
 { retries = 0; return; } 
@@ -245,7 +225,7 @@ Network::Network( const char * Preferred, const char * Roundrobin,
   httpid[0] = 0;
 }
 
-#endif //NONETWORK
+#endif //STUBIFY_ME
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -335,7 +315,28 @@ void Network::SetModeSOCKS5(const char *sockshost, s16 socksport,
 
 //////////////////////////////////////////////////////////////////////////////
 
-#if defined(NONETWORK)
+int Network::GetHostName( char *buffer, unsigned int len )
+{  
+  #if defined(STUBIFY_ME)
+    {
+    if (!buffer || !len)
+      return 0;
+    if (len >= sizeof( "localhost" ))
+      {
+      strcpy( buffer, "localhost" );
+      return (int)(sizeof( "localhost" ));
+      }
+    buffer[0]=0;
+    return 0;
+    }
+  #else
+    return gethostname( buffer, len );
+  #endif
+}  
+
+//////////////////////////////////////////////////////////////////////////////
+
+#if defined(STUBIFY_ME)
 
 s32 Network::Open( SOCKET ) { return -1; }
 
@@ -357,11 +358,11 @@ s32 Network::Open( SOCKET insock)
   return 0;
 }
 
-#endif //NONETWORK
+#endif //STUBIFY_ME
 
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef NONETWORK
+#ifndef STUBIFY_ME
 static const char *fixupdisplayedhostname(const char *hostname,int autofindkeyserver)
 {
   const char *p = strchr( hostname, '.' );
@@ -379,12 +380,19 @@ static const char *fixupdisplayedhostname(const char *hostname,int autofindkeyse
 // returns -1 on error, 0 on success
 s32 Network::Open( void )
 {
-#if defined(NONETWORK)
+#if defined(STUBIFY_ME)
   return -1;
 #else  
   Close();
-  mode = startmode;
 
+  if (!QueryInitializationLevel())
+    {
+    Log("[%s] Network::Open when not initialized. RTFM...\n", Time());
+    //*I* think we should we delete ourselves here. heh, heh
+    return -1;
+    }
+  
+  mode = startmode;
 
   // create a new socket
   if ((int)(sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -756,14 +764,14 @@ Socks5Failure:
   MakeNonBlocking(sock, true);
 
   return 0;
-#endif //NONETWORK
+#endif //STUBIFY_ME
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 s32 Network::Close(void)
 {
-#if defined(NONETWORK)
+#if defined(STUBIFY_ME)
   return -1;
 #else  
   if ( sock )
@@ -776,12 +784,12 @@ s32 Network::Close(void)
     uubuffer.Clear();
   }
   return 0;
-#endif //NONETWORK
+#endif //STUBIFY_ME
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-#if defined(NONETWORK)
+#if defined(STUBIFY_ME)
 
 s32 Network::Get( u32 , char *, u32 ) { return -1; }
 
@@ -982,11 +990,11 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
   return bytesfilled;
 }
 
-#endif //NONETWORK
+#endif //STUBIFY_ME
 
 //////////////////////////////////////////////////////////////////////////////
 
-#if defined(NONETWORK)
+#if defined(STUBIFY_ME)
 
 s32 Network::Put( u32 , const char * ) { return -1; }
 
@@ -1089,14 +1097,14 @@ s32 Network::Put( u32 length, const char * data )
   return (LowLevelPut(outbuf.GetLength(), outbuf) != -1 ? 0 : -1);
 }
 
-#endif //NONETWORK
+#endif //STUBIFY_ME
 
 //////////////////////////////////////////////////////////////////////////////
 
 // Returns length of read buffer
 //    or 0 if connection closed
 //    or -1 if no data waiting
-#if !defined(NONETWORK)
+#if !defined(STUBIFY_ME)
 s32 Network::LowLevelGet(u32 length, char *data)
 {
   #if defined(SELECT_FIRST)
@@ -1123,7 +1131,7 @@ s32 Network::LowLevelGet(u32 length, char *data)
 
 // returns length of sent data
 //    or -1 on error
-#if !defined(NONETWORK)
+#if !defined(STUBIFY_ME)
 s32 Network::LowLevelPut(u32 length, const char *data)
 {
   u32 writelen = write(sock, (char*)data, length);
@@ -1140,7 +1148,7 @@ void Network::MakeBlocking()
 
 //////////////////////////////////////////////////////////////////////////////
 
-#if defined(NONETWORK)
+#if defined(STUBIFY_ME)
 
 void MakeNonBlocking( SOCKET , bool )  { return; }
 
@@ -1175,7 +1183,7 @@ void MakeNonBlocking(SOCKET socket, bool nonblocking)
 #endif
 }
 
-#endif //NONETWORK
+#endif //STUBIFY_ME
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1220,4 +1228,5 @@ char * Network::base64_encode(char *username, char *password)
 
 //////////////////////////////////////////////////////////////////////////////
 
+#include "netinit.cpp"
 #include "netres.cpp"

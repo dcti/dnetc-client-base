@@ -5,6 +5,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.32  1998/08/10 21:53:59  cyruspatel
+// Two major changes to work around a lack of a method to detect if the network
+// availability state had changed (or existed to begin with) and also protect
+// against any re-definition of client.offlinemode. (a) The NO!NETWORK define is
+// now obsolete. Whether a platform has networking capabilities or not is now
+// a purely network.cpp thing. (b) NetworkInitialize()/NetworkDeinitialize()
+// are no longer one-shot-and-be-done-with-it affairs. ** Documentation ** is
+// in netinit.cpp.
+//
 // Revision 1.31  1998/08/02 16:18:22  cyruspatel
 // Completed support for logging.
 //
@@ -57,7 +66,7 @@
 // Revision 1.19  1998/06/22 01:05:01  cyruspatel
 // DOS changes. Fixes various compile-time errors: removed extraneous ')' in
 // sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
-// (is now inline asm), added NONETWORK wrapper around Network::Resolve()
+// (is now inline asm), added NO!NETWORK wrapper around Network::Resolve()
 //
 // Revision 1.18  1998/06/15 09:12:54  jlawson
 // moved more sleep defines into sleepdef.h
@@ -83,7 +92,6 @@
 // warn if macros are not the same)
 //
 
-//#define NONETWORK         // define to eliminate network functionality
 //#define SELECT_FIRST      // define to perform select() before reading
 //#define __VMS_UCX__       // define for UCX instead of Multinet on VMS
 
@@ -130,7 +138,7 @@ extern "C" {
   #define SOCKET int
   }
 #elif (CLIENT_OS == OS_DOS) 
-  //generally NONETWORK, but to be safe we...
+  //generally NO!NETWORK, but to be safe we...
   #include "platform/dos/clidos.h" 
 #elif (CLIENT_OS == OS_VMS)
   #include <signal.h>
@@ -246,22 +254,8 @@ extern "C" {
     }
   #endif
   #if (CLIENT_OS == OS_NETWARE)
-    #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
-    #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
-    #ifdef gethostbyname     //this is in "hbyname.cpp"
-    #undef gethostbyname
-    #endif
-    extern struct hostent *gethostbyname( char *hostname );
-    #ifdef inet_ntoa         //this is also in "hbyname.cpp"
-    #undef inet_ntoa
-    #endif
-    extern char *inet_ntoa( struct in_addr addr );
-    #ifdef inet_addr         //this is also in "hbyname.cpp"
-    #undef inet_addr         //also bad proto in netware sdk13
-    #endif                   
-    extern long my_inet_addr( char *aaddr );
-    #define inet_addr(x) my_inet_addr(x)
-  #endif
+    #include "platforms/netware/netware.h" //symbol redefinitions
+  #endif  
 #endif
 
 ///////////////////////////////////////////////////////////////////////////
@@ -274,8 +268,8 @@ extern "C" {
 #define DEFAULT_RRDNS   "us.v27.distributed.net"
 #define DEFAULT_PORT    2064
 
-extern void NetworkInitialize(void);
-extern void NetworkDeinitialize(void);
+extern int NetworkInitialize(void);  //you better check the return code
+extern int NetworkDeinitialize(void);
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -375,6 +369,9 @@ public:
 
   void MakeBlocking();
     // makes the socket operate in blocking mode.
+    
+  int GetHostName( char *buffer, unsigned int len ); //used by mail.
+    // like gethostname() 
 };
 
 ///////////////////////////////////////////////////////////////////////////
