@@ -5,6 +5,12 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.5  1998/11/12 23:05:40  remi
+# Synced with :
+#  Revision 1.124  1998/11/12 22:58:34  remi
+#  Reworked a bit AIX ppc & power defines, based on Patrick Hildenbrand
+#  <patrick@de.ibm.com> advices.
+#
 # Revision 1.113.2.4  1998/11/11 19:16:48  remi
 # Synced with :
 #   Revision 1.122  1998/11/11 19:08:19  remi
@@ -115,17 +121,15 @@ OPTS_GCC_DGUX="$OPTS_GCC -O6 -D_DGUX -DPIPELINE_COUNT=2 \
 
 OPTS_GCC_PPC601="$OPTS_GCC -O6 -DASM_PPC -mcpu=601"
 OPTS_GCC_PPC="$OPTS_GCC -O6 -DASM_PPC -mcpu=604"
-OPTS_GCC_POWER="$OPTS_GCC -O6 -DASM_POWER"
+OPTS_GCC_POWER="$OPTS_GCC -O6 -DASM_POWER -mcpu=power"
 
 OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC -Icommon"
 OPTS_XLC_PPC="$OPTS_XLC -qarch=ppc -qtune=604 -D_AIX -D_ARCH_PPC -Icommon"
 OPTS_XLC_POWER="$OPTS_XLC -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
-OPTS_XLC_POWER2="$OPTS_XLC -qarch=pwr2 -qtune=pwr2 -D_AIX"
+OPTS_XLC_POWER2="$OPTS_XLC -qarch=pwr2 -qtune=pwr2 -D_AIX -D_ARCH_PWR2"
 
 OPTS_XLC3_PPC601="$OPTS_XLC3 -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
 OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
-
-OPTS_GCC_AIX="$OPTS_GCC -O6 -D_ARCH_PPC -D_AIX"
 
 #--
 
@@ -452,17 +456,21 @@ case "$1" in
 
 ###### PowerPC/POWER
 
-    *ppc-gcc)
+  ### generic targets
+
+    *ppc-gcc)              # generic PPC target
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch_allitnil_552.ppc.s rc5/crunch_lintilla_296.ppc.s"
 	;;
 
-    *power-gcc)
+    *power-gcc)            # generic POWER target
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
-    *aix-ppc)       # This is the fastest build for AIX 4.x PPC machines
+  ### AIX PPC targets
+
+    *aix4-ppc-xlc)         # This is the fastest build for AIX 4.x PPC machines
 	TARGET_CC="xlC"
 	TARGET_CCFLAGS="$OPTS_XLC_PPC -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
@@ -470,7 +478,7 @@ case "$1" in
 	TARGET_LIBS="-lCns"
 	;;
 
-    *aix-ppc601)    # AIX 4.x PPC, 601 chip
+    *aix4-ppc601-xlc)      # AIX 4.x PPC, 601 chip
 	TARGET_CC="xlC"
 	TARGET_CCFLAGS="$OPTS_XLC_PPC601 -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
@@ -478,7 +486,7 @@ case "$1" in
 	TARGET_LIBS="-lCns"
 	;;
 
-    *aix32-ppc)     # AIX 3.2.x PPC
+    *aix32-ppc-xlc)        # AIX 3.2.x PPC
 	TARGET_CC="xlC"
 	TARGET_CCFLAGS="$OPTS_XLC3_PPC601 -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN -DNO_STRCASECMP"
 	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
@@ -486,15 +494,17 @@ case "$1" in
 	TARGET_LIBS="-lCns"
 	;;
 
-    *aix-gcc)      # possibly useful for POWER machines
+  ### AIX POWER targets
+
+    *aix-power-gcc-pipe1)  # AIX POWER with PIPELINE_COUNT=1
 	RC5CORECOPY="rc5/rc5ansi1-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_AIX -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
-    *aix-gcc2)     # possibly useful for POWER machines
+    *aix-power-gcc-pipe2)  # AIX POWER with PIPELINE_COUNT=2
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_AIX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
