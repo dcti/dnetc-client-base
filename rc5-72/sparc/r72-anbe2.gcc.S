@@ -4,16 +4,20 @@
 !
 ! Author: Andreas Beckmann <andreasb@distributed.net>
 !
-! $Id: r72-anbe2.gcc.S,v 1.1.2.10 2003/04/19 17:49:12 andreasb Exp $
+! $Id: r72-anbe2.gcc.S,v 1.1.2.11 2003/04/25 20:36:04 andreasb Exp $
 !
 ! This 2 pipeline core is optimized for a sparc processor that is able to 
 ! dispatch two integer instructions (but only one shift, which must be the 
-! first of the two) and one load/store instruction per cycle.
-! The sceduling works optimally on an UltraSPARC processor, both integer units
-! are always busy. The mainloop (per key: 1067 instructions: 956 integer, 
-! 111 load/store and 478 cycles, 2.23 instr/cycle) is maximally optimized, but
-! exceeds the size of the L1I cache by ~350 bytes.
-! Tested on an UltraSPARC II processor with 16 KB L1I.
+! first of the two) and one load/store instruction per cycle. The branches
+! have been scheduled to be at least 4 instructions apart for improved
+! UltraSPARC-III performance.
+! The scheduling works optimally on an UltraSPARC-I/II processor, both integer
+! units are always busy. The mainloop (per key: 1067 instructions: 954 integer,
+! 111 load/store, 2 branch and 477.5 cycles, 2.23 instr/cycle) is maximally 
+! optimized, but exceeds the size of the L1I cache by ~350 bytes.
+! Tested on an UltraSPARC-II processor with 16 KB L1I cache.
+! Tested on an UltraSPARC-III processor with 32 KB L1I cache, but there the
+! core runs a cycle slower at 478.5 cycles/key.
 !
 
 // use the following command to build r72-anbe2.s from this file:
@@ -292,6 +296,18 @@ CALCULATE_RGLmid_DEPS(init)
 INLINE_ROUND1_L_i2_j2:
 /*2-2*/	add	RGLhi,RGL1S2,Tc /* from BeginOfLoop */
 
+/*2-2*/	sll	Tc,RGL1S2,T1b
+/*2-2*/	neg	RGL1S2,T2a			// constant, but slot is free anyway
+
+/*2-2*/	srl	Tc,T2a,R1L(2)
+/*2-2*/	add	Tc,1,R2L(2)
+
+/*2-2*/	sll	R2L(2),RGL1S2,T2b
+/*2-2*/	or	R1L(2),T1b,R1L(2)
+
+/*2-2*/	srl	R2L(2),T2a,R2L(2)
+/*3-0*/	add	RGS2S3,R1L(2),R1SS /* from below */
+
 	b	mainloop
 	nop
 .align	16
@@ -460,21 +476,21 @@ ROUND1_L_i##i##_j##j:				\
 */
 /*2-2*/	/* add	RGLhi,RGL1S2,Tc */ /* to EndOfLoop */
 
-/*2-2*/	sll	Tc,RGL1S2,T1b
-/*2-2*/	neg	RGL1S2,T2a			// constant, but slot is free anyway
+/*2-2*/	/* sll	Tc,RGL1S2,T1b */
+/*2-2*/	/* neg	RGL1S2,T2a */			// constant, but slot is free anyway
 
-/*2-2*/	srl	Tc,T2a,R1L(2)
-/*2-2*/	add	Tc,1,R2L(2)
+/*2-2*/	/* srl	Tc,T2a,R1L(2) */
+/*2-2*/	/* add	Tc,1,R2L(2) */
 
-/*2-2*/	sll	R2L(2),RGL1S2,T2b
-/*2-2*/	or	R1L(2),T1b,R1L(2)
+/*2-2*/	/* sll	R2L(2),RGL1S2,T2b */
+/*2-2*/	/* or	R1L(2),T1b,R1L(2) */
 
-/*2-2*/	srl	R2L(2),T2a,R2L(2)
-/*3-0*/	add	RGS2S3,R1L(2),R1SS /* from below */
+/*2-2*/	/* srl	R2L(2),T2a,R2L(2) */
+/*3-0*/	/* add	RGS2S3,R1L(2),R1SS */ /* from below */
 
 /*2-2*/	/* or	R2L(2),T2b,R2L(2) */ /* to below */
 
-INLINE_ROUND1_S_i3_j0:
+!INLINE_ROUND1_S_i3_j0:
 /*3-0*/	/* add	RGS2S3,R1L(2),R1SS */ /* to up */
 
 /*3-0*/	sll	R1SS,3,T1a
@@ -1102,7 +1118,7 @@ INLINE_ROUND3_i0_j1___i1_j2:
 	ROUND3ODD (21,1)
 	ROUND3EVEN(22,2)
 	ROUND3ODD (23,0)
-#define RGcypher_lo T1x
+#define RGcypher_lo T2x
 #undef PRELOAD_SLOT
 #define PRELOAD_SLOT ld	[s_uw(r72unitwork_cypher_lo)],RGcypher_lo
 	ROUND3EVEN(24,1)
@@ -1113,27 +1129,47 @@ INLINE_ROUND3_i0_j1___i1_j2:
 
 ! ############################################################################
 
+	! For optimal UltraSPARC-III performance, branches should be at least
+	! 4 instructions apart.
+	! Predict 'NOT complex_increment' and start operations of the next
+	! iteration, to put them between the branch instructions.
+	! In case of a mispredict (prob: 1/256 keys) redo these ops at the
+	! end of complex_increment with updated values of RGLhi, RGL1S2 etc.
+
 	// ld	[s_uw(r72unitwork_cypher_lo)],RGcypher_lo /* moved to PRELOAD_SLOT */
 test_pipe_1:
 	cmp	R1A,RGcypher_lo
-	add	RGLhi,PIPELINES,RGLhi /* from further down */
 	be	partial_success
-!test_pipe_2:
-	 cmp	R2A,RGcypher_lo
+	 add	RGLhi,PIPELINES,RGLhi /* from further down */
+
+test_pipe_2:
+	cmp	R2A,RGcypher_lo
+	! redo the following 3 ops after partial_success
+/*2-2*/	add	RGLhi,RGL1S2,Tc /* from BeginOfLoop */
+
+/*2-2*/	sll	Tc,RGL1S2,T1b
 	be	partial_success
-	 andcc	RGLhi,0xff,RGLhi /* from further down */
-	
+/*2-2*/	 neg	RGL1S2,T2a			// constant, but slot is free anyway
+
 increment_key:
 	/* add	RGLhi,PIPELINES,RGLhi */    /* moved up */
 	/* andcc	RGLhi,0xff,RGLhi */ /* moved up and repeated in delay
 	                                       slots from partial_success: */
+/*2-2*/	srl	Tc,T2a,R1L(2)
+	andcc	RGLhi,0xff,RGLhi /* from further down */
+	
+/*2-2*/	add	Tc,1,R2L(2)
 	bz	complex_increment
 	 subcc	RGiterations,PIPELINES,RGiterations /* from further down */
-increment_key_done:
 
+increment_key_done:
+/*2-2*/	sll	R2L(2),RGL1S2,T2b
+/*2-2*/	or	R1L(2),T1b,R1L(2)
+
+/*2-2*/	srl	R2L(2),T2a,R2L(2)
 	/* subcc	RGiterations,PIPELINES,RGiterations */ /* moved up */
 	bnz	mainloop
-/*2-2*/	 add	RGLhi,RGL1S2,Tc /* from BeginOfLoop */
+/*3-0*/	 add	RGS2S3,R1L(2),R1SS /* from below */
 
 ! ############################################################################
 
@@ -1173,28 +1209,28 @@ complex_increment:
 	andn	RI0x0000FFFF,0xff,RI0x0000FF00
 	and	RGLmid,RI0x0000FFFF,RGLmid
 	btst	RI0x0000FF00,RGLmid
-	bnz,a	update_RGLmid
+	bnz	update_RGLmid
 	 nop
 	add	RGLmid,0x01,RGLmid
 	andcc	RGLmid,0xff,RGLmid
-	bnz,a	update_RGLmid
+	bnz	update_RGLmid
 	 nop
 
 	! increment RGLlo
 	add	RGLlo,RI0x01000000,RGLlo
 	btst	RI0xFF000000,RGLlo
-	bnz,a	update_RGLlo
+	bnz	update_RGLlo
 	 nop
 	add	RGLlo,RI0x00010000,RGLlo
 	!and	RGLlo,RI0x00FFFFFF,RGLlo
 	andn	RGLlo,RI0xFF000000,RGLlo
 	btst	RI0x00FF0000,RGLlo
-	bnz,a	update_RGLlo
+	bnz	update_RGLlo
 	 nop
 	add	RGLlo,0x0100,RGLlo
 	and	RGLlo,RI0x0000FFFF,RGLlo
 	btst	RI0x0000FF00,RGLlo
-	bnz,a	update_RGLlo
+	bnz	update_RGLlo
 	 nop
 	add	RGLlo,0x01,RGLlo
 	and	RGLlo,0xff,RGLlo
@@ -1212,6 +1248,22 @@ update_RGLmid:
 	! update precalculated values RGL1, RGS2
 
 	CALCULATE_RGLmid_DEPS(increment)
+
+	! redo operations from begin-of-mainloop that have been moved to the
+	! end of the loop to bring the branches more apart
+	! because they have been calculated before complex_increment and we
+	! are in complex_increment, the prediction has been wrong and we have
+	! to redo a bit of work ...
+/*2-2*/	add	RGLhi,RGL1S2,Tc /* from BeginOfLoop */
+/*2-2*/	sll	Tc,RGL1S2,T1b
+/*2-2*/	neg	RGL1S2,T2a			// constant, but slot is free anyway
+/*2-2*/	srl	Tc,T2a,R1L(2)
+/*2-2*/	add	Tc,1,R2L(2)
+/*2-2*/	!sll	R2L(2),RGL1S2,T2b
+/*2-2*/	!or	R1L(2),T1b,R1L(2)
+/*2-2*/	!srl	R2L(2),T2a,R2L(2)
+/*3-0*/	!add	RGS2S3,R1L(2),R1SS /* from below */
+	
 	b	increment_key_done
 	 subcc	RGiterations,0,RGiterations
 
@@ -1232,12 +1284,11 @@ test_pipe_1_lo_success:
 	st	RGLlo,[s_uw(r72unitwork_check_lo)]
 	!st	RGLhi,[s_uw(r72unitwork_check_hi)]
 	st	T2a,[s_uw(r72unitwork_check_hi)]
-	!ld	[s_uw(r72unitwork_cypher_hi)],T1b
 	cmp	R1B,T1b
 	be	test_pipe_1_lohi_success
 	 cmp	R2A,RGcypher_lo
-	bne	increment_key
-	 andcc	RGLhi,0xff,RGLhi
+	bne	only_partial_success
+	 nop
 test_pipe_2_lo_success:
 	ld	[s_uw(r72unitwork_check_count)],T2a
 	inc	T2a
@@ -1247,11 +1298,9 @@ test_pipe_2_lo_success:
 	st	RGLlo,[s_uw(r72unitwork_check_lo)]
 	!st	RGLhi,[s_uw(r72unitwork_check_hi)]
 	st	T2a,[s_uw(r72unitwork_check_hi)]
-	!ld	[s_uw(r72unitwork_cypher_hi)],T2b
-	ld	[s_uw(r72unitwork_cypher_hi)],T1b
 	cmp	R2B,T1b
-	bne	increment_key
-	 andcc	RGLhi,0xff,RGLhi
+	bne	only_partial_success
+	 nop
 test_pipe_2_lohi_success:
 	ld	[s_save_iterationsP],T2a
 	ld	[T2a],T2b
@@ -1260,6 +1309,14 @@ test_pipe_2_lohi_success:
 	st	T2b,[T2a]
 	b	finish
 	 mov	RESULT_FOUND,%i0
+only_partial_success:
+	! redo these three ops here because they were skipped because of
+	! partial_success or the registers have been reused for other stuff 
+	! during handling of partial_success
+/*2-2*/	add	RGLhi,RGL1S2,Tc /* from BeginOfLoop */
+/*2-2*/	sll	Tc,RGL1S2,T1b
+	b	increment_key
+/*2-2*/	 neg	RGL1S2,T2a			// constant, but slot is free anyway
 test_pipe_1_lohi_success:
 	ld	[s_save_iterationsP],T1a
 	ld	[T1a],T1b
