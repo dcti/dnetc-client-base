@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.88 2000/01/10 05:30:23 lyndon Exp $
+# @(#)$Id: configure,v 1.222.2.89 2000/01/10 14:37:57 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -766,9 +766,9 @@ case "$1" in
 
     *sparc-openbsd)                   # snake, now without DES
 	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1  -DHAVE_CSC_CORES \
-                    $CSC_ANSI_CCOPTS"
+                    $CSC_ANSI_CCOPTS -DLURK"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $CSC_ANSI_SRCS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c common/lurk.cpp $CSC_ANSI_SRCS"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="openbsd-sparc-aout"
 	;;
@@ -890,9 +890,9 @@ case "$1" in
     *alpha-openbsd)                  # snake
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA  -DKWAN -DDWORZ -DHAVE_CSC_CORES"
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA  -DKWAN -DDWORZ -DHAVE_CSC_CORES -DLURK"
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS rc5/alpha/axp-bmeyer.cpp \
-             ${CSC_ANSI_SRCS}"
+             common/lurk.cpp ${CSC_ANSI_SRCS}"
 	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -1273,10 +1273,10 @@ case "$1" in
     *x86-openbsd)
 	TARGET_AS="g++ -c"
 	TARGET_CCFLAGS="$OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
-	                -DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
+	                -DHAVE_CSC_CORES -DHAVE_DES_CORES -DLURK" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-	                " #$OGR_ANSI_SRCS
+	                common/lurk.cpp" #$OGR_ANSI_SRCS
 	TARGET_NASM_FMT="aoutb"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
 	                des/brydgnu/p1bdespro.S"
