@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.14 2004/01/07 02:50:51 piru Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.15 2004/01/08 19:56:15 oliver Exp $"; }
 
 //#define TRACE
 
@@ -194,25 +194,12 @@ int apply_selcore_substitution_rules_rc572(int cindex)
   have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
 # endif
 
-# if (CLIENT_OS == OS_AMIGAOS) && defined(__POWERUP__)
-  /* PowerUp cannot use the KKS cores, since they modify gpr2 */
-  if ((cindex >= 1) && (cindex <= 4))
-    cindex = 5;			  /* MH 1-pipe */
-# elif (CLIENT_OS == OS_MORPHOS)
-  if (!have_vec && cindex == 3)   /* KKS 7400 */
-    cindex = 1;                   /* KKS 2pipes */
-  if (!have_vec && cindex == 4)   /* KKS 7450 */
-    cindex = 2;                   /* KKS 604e */
-  if (cindex == 7)                /* KKS 970 */
-    cindex = 1;                   /* KKS 2pipes, see micro-bench in #3310 */
-# else
   if (!have_vec && cindex == 3)   /* KKS 7400 */
     cindex = 1;                   /* KKS 2pipes */
   if (!have_vec && cindex == 4)   /* KKS 7450 */
     cindex = 2;                   /* KKS 604e */
   if (!have_vec && cindex == 7)   /* KKS 970 */
     cindex = 1;                   /* KKS 2pipes, see micro-bench in #3310 */
-# endif
 #elif (CLIENT_CPU == CPU_X86)
   {
     long det = GetProcessorType(1);
