@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.27 1999/12/23 21:45:26 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.28 2000/01/21 22:14:41 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -250,6 +250,7 @@ int SelfTest( unsigned int contest )
       tslice = 2048;
       #endif
 
+      expectedsolution_lo = expectedsolution_hi = 0; /* shaddup compiler */
       if (contest == RC5)
       { 
         test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])rc5_test_cases;
