@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.38.2.2 2003/03/01 10:32:16 andreasb Exp $
+## $Id: makefile.wat,v 1.38.2.3 2003/03/01 10:40:11 andreasb Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -114,7 +114,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %rc572std_LINKOBJS = output\r72ansi1.obj output\r72ansi2.obj output\r72ansi4.obj &
                    output\r72-ses1.obj output\r72-ses2.obj output\r72-dg2.obj &
                    output\r72-dg3.obj output\r72-dg3a.obj output\r72-ss2.obj
-%rc572std_DEFALL   = /DHAVE_RC5_72_CORES /DHAVE_RC5_72_ASM_CORES
+%rc572std_DEFALL   = /DHAVE_RC5_72_CORES
 %rc572std_SYMALIAS = #
 #---
 %desmmx_LINKOBJS = output\des-slice-meggs.obj output\deseval-mmx.obj
