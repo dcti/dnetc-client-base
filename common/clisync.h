@@ -7,7 +7,7 @@
  *
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.10 2001/03/22 14:42:55 cyp Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.11 2001/03/22 14:52:06 cyp Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -400,7 +400,7 @@
     }
   }
 
-#elif (CLIENT_OS == OS_SPARC) && defined(__GNUC__)
+#elif (CLIENT_CPU == CPU_SPARC) && defined(__GNUC__)
 
   #error "please check this"
 
