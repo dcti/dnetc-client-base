@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.12  1998/11/30 23:41:12  cyp
+// Probfill now handles blockcount limits; can resize the loaded problem
+// table; closes checkpoint files when the problem table is closed; can
+// be called asynchronously from Client::Run() in the event that the client
+// is shutdown by an 'external' source such as the win16 message handler.
+//
 // Revision 1.11  1998/11/29 14:38:04  cyp
 // Fixed missing outthreshold check. Added connectoften support (haven't
 // tested yet). But why, why, why isn't the inthreshold check code working?
@@ -49,29 +55,27 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.11 1998/11/29 14:38:04 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.12 1998/11/30 23:41:12 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
-#include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
+#include "client.h"    // CONTEST_COUNT, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "problem.h"   // Problem class
 #include "scram.h"     // Descramble()
 #include "network.h"   // sheesh... htonl()/ntohl()
-#include "buffwork.h"  // 
-#include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
+#include "logstuff.h"  // Log()/LogScreen()
 #include "clitime.h"   // CliGetTimeString()
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
-#include "clisrate.h"
+#include "clisrate.h"  // CliGetMessageFor... et al.
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "clirate.h"   // CliGetKeyrateForProblem()
 #include "probman.h"   // GetProblemPointerFromIndex()
-#include "checkpt.h"   // 
-#include "buffupd.h"   // BUFFERUPDATE_FETCH define
+#include "checkpt.h"   // CHECKPOINT_CLOSE define
+#include "triggers.h"  // RaiseExitRequestTrigger()
+#include "buffupd.h"   // BUFFERUPDATE_FETCH/_FLUSH define
 #include "probfill.h"  // ourselves.
-
-#define CONTEST_COUNT (2)
 
 // =======================================================================
 // each individual problem load+save generates 4 or more messages lines 
@@ -95,6 +99,40 @@ static unsigned long __iter2norm( unsigned long iter )
   return iter;
 }  
 
+// -----------------------------------------------------------------------
+
+static const char *__WrapOrTruncateLogLine( char *buffer, int dowrap )
+{
+  char *stop, *start = buffer;
+  unsigned int maxlen = 55;
+  int dotruncate = (dowrap == 0);
+
+  if (dowrap)
+    {
+    while ( strlen(buffer) > maxlen )
+      {
+      stop = buffer+maxlen;
+      while (stop > buffer && *stop!='\n' && *stop!=' ' && *stop!='\t')
+        stop--;
+      if (stop == buffer && *stop != '\n')
+        {
+        dotruncate = 1;
+        break;
+        }
+      *stop = '\n';
+      buffer = ++stop;
+      }
+    }
+  if (dotruncate)
+    {
+    if ( strlen(buffer) > maxlen )
+      {
+      buffer[maxlen-4]=0;
+      strcat(buffer, " ...");
+      }
+    }
+  return start;
+}  
 
 // -----------------------------------------------------------------------
 
@@ -108,14 +146,20 @@ static void __RefreshRandomPrefix( Client *client )
     {
     const char *OPTION_SECTION = "parameters";
     IniSection ini;
+    unsigned int cont_i;
+    char buffer[32];
     s32 tmpconfig = ini.ReadIniFile( 
                     GetFullPathForFilename( client->inifilename ) );
 
     if (client->randomchanged)
       {
-      ini.setrecord(OPTION_SECTION,"randomprefix",IniString((s32)(client->randomprefix)));
-      ini.setrecord(OPTION_SECTION, "contestdone", IniString(client->contestdone[0]));
-      ini.setrecord(OPTION_SECTION, "contestdone2", IniString(client->contestdone[1]));
+      ini.setrecord(OPTION_SECTION, "randomprefix", IniString((s32)(client->randomprefix)));
+      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+        {
+        if (cont_i==0) strcpy(buffer,"contestdone");
+        else sprintf(buffer,"contestdone%u", cont_i );
+        ini.setrecord(OPTION_SECTION, buffer, IniString((s32)(client->contestdone[cont_i])));
+        }
       ini.WriteIniFile( GetFullPathForFilename( client->inifilename ) );
       client->randomchanged = 0;
       }
@@ -123,10 +167,13 @@ static void __RefreshRandomPrefix( Client *client )
       {  
       tmpconfig=ini.getkey(OPTION_SECTION, "randomprefix", "0")[0];
       if (tmpconfig) client->randomprefix = tmpconfig;
-      tmpconfig=ini.getkey(OPTION_SECTION, "contestdone", "0")[0];
-      client->contestdone[0] = (tmpconfig != 0);
-      tmpconfig=ini.getkey(OPTION_SECTION, "contestdone2", "0")[0];
-      client->contestdone[1]= (tmpconfig != 0);
+      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+        {
+        if (cont_i==0) strcpy(buffer,"contestdone");
+        else sprintf(buffer,"contestdone%u", cont_i );
+        tmpconfig=ini.getkey(OPTION_SECTION, buffer, "0")[0];
+        client->contestdone[cont_i] = (tmpconfig != 0);
+        }
       }
     }
   return;
@@ -358,8 +405,8 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         longcount = client->GetBufferRecord( &fileentry, contest_selected, 0 );
         if (longcount >= 0)
           {
-	  if (longcount == 0)
-	    *bufupd_pending |= BUFFERUPDATE_FETCH;
+          if (longcount == 0)
+            *bufupd_pending |= BUFFERUPDATE_FETCH;
           didload = 1;
           break;
           }
@@ -463,26 +510,24 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   if (didload) /* success */
     {
     *load_needed = 0;
+    *contest = (unsigned int)(fileentry.contest);
+    thisprob->LoadState( (ContestWork *) &fileentry , 
+          (u32) (fileentry.contest), client->timeslice, client->cputype );
+
     if (load_problem_count <= COMBINEMSG_THRESHOLD)
       {
-      const char *name;
+      const char *cont_name = CliGetContestNameFromID(*contest);
       unsigned long iter = ntohl(fileentry.iterations.lo);
-      unsigned int startpercent = (unsigned int) ( (double) 10000.0 *
-           ( (double) (ntohl(fileentry.keysdone.lo)) / (double)(iter) ) );
-      if (CliGetContestInfoBaseData( fileentry.contest, &name, NULL )!=0) 
-        name = "???";
+      unsigned int startpercent = (unsigned int)( thisprob->startpercent/10 );
       norm_key_count = (unsigned int)__iter2norm( iter );
       
       Log("Loaded %s%s %u*2^28 block %08lX:%08lX%c(%u.%02u%% done)",
-              name, ((didrandom)?(" random"):("")), norm_key_count,
+              cont_name, ((didrandom)?(" random"):("")), norm_key_count,
               (unsigned long) ntohl( fileentry.key.hi ),
               (unsigned long) ntohl( fileentry.key.lo ),
-              ((startpercent)?(' '):(0)),
-              (unsigned)(startpercent/100), (unsigned)(startpercent%100) );
+              ((startpercent!=0 && startpercent<=10000)?(' '):(0)),
+              (startpercent/100), (startpercent%100) );
       }
-    thisprob->LoadState( (ContestWork *) &fileentry , 
-          (u32) (fileentry.contest), client->timeslice, client->cputype );
-    *contest = (unsigned int)(fileentry.contest);
     } 
 
   return norm_key_count;
@@ -492,7 +537,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 
 unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 {
-  static unsigned int done_initial_load = 0; 
+  static unsigned int previous_load_problem_count = 0; 
 
   Problem *thisprob;
   int load_needed, changed_flag;
@@ -503,26 +548,32 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   unsigned int loaded_normalized_key_count[CONTEST_COUNT];
   unsigned int saved_problems_count[CONTEST_COUNT];
   unsigned int saved_normalized_key_count[CONTEST_COUNT];
+  unsigned long totalBlocksDone; /* all contests */
   
   char buffer[100+sizeof(in_buffer_file[0])];
   unsigned int total_problems_loaded, total_problems_saved;
   unsigned int getbuff_errs;
 
   getbuff_errs = 0;
-  changed_flag = (done_initial_load == 0);
+  changed_flag = (previous_load_problem_count == 0);
   total_problems_loaded = 0;
   total_problems_saved = 0;
   bufupd_pending = 0;
+  totalBlocksDone = 0;
   
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
    {
+   unsigned int blocksdone;
+   if (CliGetContestInfoSummaryData( cont_i, &blocksdone, NULL, NULL )==0)
+     totalBlocksDone += blocksdone;
+   
    loaded_problems_count[cont_i]=loaded_normalized_key_count[cont_i]=0;
    saved_problems_count[cont_i] =saved_normalized_key_count[cont_i]=0;
    }
 
-  // ====================================================
+  /* ============================================================= */
 
-  if (done_initial_load == 0)
+  if (previous_load_problem_count == 0)
     {
     prob_step = 1;
 
@@ -543,12 +594,23 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   else
     {
     if (load_problem_count == 0)
-      load_problem_count = done_initial_load;
+      load_problem_count = previous_load_problem_count;
     prob_step = -1;
     }
 
+  /* ============================================================= */
 
-  for (prob_for=0; prob_for<load_problem_count; prob_for++)
+  prob_for = 0;
+
+  if (mode == PROBFILL_RESIZETABLE && previous_load_problem_count)
+    {
+    prob_for = load_problem_count;
+    load_problem_count = previous_load_problem_count;
+    }
+    
+  /* ============================================================= */
+
+  for (; prob_for<load_problem_count; prob_for++)
     {
     prob_i= (prob_step < 0) ? ((load_problem_count-1)-prob_for) : (prob_for);
 
@@ -563,14 +625,14 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
     // -----------------------------------
 
     load_needed = 0;
-    if (done_initial_load == 0) 
+    if (previous_load_problem_count == 0) 
       {
       if ( mode != PROBFILL_UNLOADALL )  
         load_needed = 1;
       }
     else
       {
-      if (mode == PROBFILL_UNLOADALL)
+      if (mode == PROBFILL_UNLOADALL || mode == PROBFILL_RESIZETABLE )
         {
         norm_key_count = __IndividualProblemUnload( thisprob, prob_i, this, 
           &load_needed, load_problem_count, &cont_i, &bufupd_pending );
@@ -582,14 +644,16 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
         norm_key_count = __IndividualProblemSave( thisprob, prob_i, this, 
           &load_needed, load_problem_count, &cont_i, &bufupd_pending );
         if (load_needed)
+          {
           changed_flag = 1;
+          }
         }
       if (norm_key_count)
         {
         total_problems_saved++;
         saved_normalized_key_count[cont_i] += norm_key_count;
         saved_problems_count[cont_i]++;
-        totalBlocksDone[cont_i]++; //client class
+        totalBlocksDone++;
         }
       }
 
@@ -597,8 +661,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
     if (load_needed)
       {
-      if (blockcount > 0 && 
-        ((u32)(totalBlocksDone[0]+totalBlocksDone[1]) >= (u32)(blockcount)))
+      if (blockcount>0 && totalBlocksDone>=((unsigned long)(blockcount)))
         {
         ; //nothing
         }
@@ -621,14 +684,21 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
     
     } //for (prob_i = 0; prob_i < load_problem_count; prob_i++ )
 
-  // ====================================
+  /* ============================================================= */
+
+  if (mode == PROBFILL_UNLOADALL && nodiskbuffers)
+    bufupd_pending = BUFFERUPDATE_FLUSH;
+
+  /* ============================================================= */
 
   for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
     {
     if (bufupd_pending == 0 && connectoften)
       {
-      if ((GetBufferCount( cont_i, 0, NULL ) <= (unsigned long)inthreshold[cont_i]) ||
-          (GetBufferCount( cont_i, 1, NULL ) != 0))
+      long block_count = GetBufferCount( cont_i, 0, NULL );
+      if (block_count >= 0 && block_count < ((long)(inthreshold[cont_i])))
+        bufupd_pending = BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH;
+      else if ((GetBufferCount( cont_i, 1, NULL ) > 0))
         bufupd_pending = BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH;
       }    
     if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
@@ -637,120 +707,125 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
       if (loaded_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD )
         {
-        sprintf(buffer, "Loaded %u %s block%s (%u*2^28 keys) from %s", 
+        Log( "Loaded %u %s block%s (%u*2^28 keys) from %s\n", 
               loaded_problems_count[cont_i], cont_name,
               ((loaded_problems_count[cont_i]==1)?(""):("s")),
               loaded_normalized_key_count[cont_i],
               (nodiskbuffers ? "(memory-in)" : in_buffer_file[cont_i]) );
-        if (strlen(buffer) > 78)
-          {
-          buffer[75] = 0;
-          strcat( buffer, "..." );
-          }
-        Log( "%s\n", buffer );
         }
 
       if (saved_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD)
         {
-        sprintf(buffer, "Saved %u %s block%s (%u*2^28 keys) to %s", 
+        Log( "Saved %u %s block%s (%u*2^28 keys) to %s\n", 
               saved_problems_count[cont_i], cont_name,
               ((saved_problems_count[cont_i]==1)?(""):("s")),
               saved_normalized_key_count[cont_i],
               (mode == PROBFILL_UNLOADALL)?
                 (nodiskbuffers ? "(memory-in)" : in_buffer_file[cont_i]) :
                 (nodiskbuffers ? "(memory-out)" : out_buffer_file[cont_i]) );
-        if (strlen(buffer) > 78)
-          {
-          buffer[75] = 0;
-          strcat( buffer, "..." );
-          }
-        Log( "%s\n", buffer );
         }
 
       // To suppress "odd" problem completion count summaries (and not be
       // quite so verbose) we only display summaries if the number of
       // completed problems is even divisible by the number of processors.
       // Requires a working GetNumberOfDetectedProcessors() [cpucheck.cpp]
+      // also check randomchanged in case a contest was closed/opened and
+      // statistics haven't been reset
 
-      if ((i = GetNumberOfDetectedProcessors()) < 1)
-        i = 1;
-      if (load_problem_count > ((unsigned int)(i)))
-        i = (int)load_problem_count;
-
-      if ( ( totalBlocksDone[cont_i] > 0 ) && 
-        (totalBlocksDone[cont_i] % ((unsigned int)(i)) ) == 0 )
+      if (totalBlocksDone > 0 && randomchanged == 0)
         {
-        Log( "Summary: %s\n", CliGetSummaryStringForContest(cont_i) );
+        if ((i = GetNumberOfDetectedProcessors()) < 1)
+          i = 1;
+        if (load_problem_count > ((unsigned int)(i)))
+          i = (int)load_problem_count;
+        if (((totalBlocksDone)%((unsigned int)(i))) == 0 )
+          {
+          Log( "Summary: %s\n", CliGetSummaryStringForContest(cont_i) );
+          }
         }
       } //if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
-    } //for ( cont_i = 0; cont_i < 2; cont_i++)
+    } //for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
 
-  // ====================================
-    
+  /* ============================================================ */
+
+
   if (bufupd_pending)
     {
     if ((bufupd_pending = BufferUpdate(bufupd_pending,0)) < 0)
       bufupd_pending = 0;
     }
+  if (randomchanged)
+    __RefreshRandomPrefix(this); //get/put an up-to-date prefix 
 
-  // ====================================
+
+  /* ============================================================ */
+
     
   for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
     {
-    if (bufupd_pending || loaded_problems_count[cont_i] || saved_problems_count[cont_i])
+    const char *cont_name = CliGetContestNameFromID(cont_i);
+    if (contestdone[cont_i]==0 && 
+      (bufupd_pending || loaded_problems_count[cont_i] || saved_problems_count[cont_i]))
       {
-      const char *cont_name = CliGetContestNameFromID(cont_i);
-
-      unsigned long in, norm_in, out, norm_out;
-      in = GetBufferCount( cont_i, 0, &norm_in );
-      out = GetBufferCount( cont_i, 1, &norm_out );
-      const char *msg = "%lu %s block%s (%lu*2^28 keys) %s in %s\n";
-	            
-      sprintf(buffer, msg, in, cont_name, in == 1 ? "" : "s",  norm_in,
-            ((mode == PROBFILL_UNLOADALL)?(in==1?"is":"are"):
-                                          (in==1?"remains":"remain")),
-            (nodiskbuffers ? "(memory-in)" : in_buffer_file[cont_i]));
-            
-      if (( strlen(buffer) + sizeof("[Nov 09 20:10:10 GMT] ") ) > 77 )
+      unsigned int inout;
+      for (inout=0;inout<=1;inout++)
         {
-        char *p = strrchr( buffer, ' ' );
-        if (p) *p = '\n';
-        }
-      Log( "%s", buffer );
-
-      sprintf(buffer, msg, out, cont_name, out == 1 ? "" : "s", norm_out,
-            out == 1 ? "is" : "are",
-            (nodiskbuffers ? "(memory-out)" : out_buffer_file[cont_i]));
-      
-      if (( strlen(buffer) + sizeof("[Nov 09 20:10:10 GMT] ") ) > 77 )
-        {
-        char *p = strrchr( buffer, ' ' );
-        if (p) *p = '\n';
-        }
-      Log( "%s", buffer );
-
+        unsigned long norm_count;
+        long block_count = GetBufferCount( cont_i, inout, &norm_count );
+        if (block_count >= 0)
+          {
+          sprintf(buffer, 
+              "%ld %s block%s (%lu*2^28 keys) %s in %s",
+              block_count, 
+              cont_name, 
+              ((block_count == 1)?(""):("s")),  
+              norm_count,
+              ((inout!= 0 || mode == PROBFILL_UNLOADALL)?
+                 ((block_count==1)?("is"):("are")):
+                 ((block_count==1)?("remains"):("remain"))),
+              ((inout== 0)?
+                 ((nodiskbuffers)?("(memory-in)"):(in_buffer_file[cont_i])):
+                 ((nodiskbuffers)?("(memory-out)"):(out_buffer_file[cont_i])))
+              );
+          Log( "%s\n", __WrapOrTruncateLogLine( buffer, 1 ));
+          } //if (block_count >= 0)
+        } //  for (inout=0;inout<=1;inout++)
       } //if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
-    } //for ( cont_i = 0; cont_i < 2; cont_i++)
+    } //for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
 
- if (randomchanged)
-   __RefreshRandomPrefix(this); //get/put an up-to-date prefix 
+  /* ============================================================ */
 
- if (mode == PROBFILL_UNLOADALL)
+
+  /* ============================================================ 
+     close up shop if unloading all.
+     ------------------------------------------------------------ */
+
+  if (mode == PROBFILL_UNLOADALL)
    {
-   done_initial_load = 0;
+   previous_load_problem_count = 0;
+   if (nodiskbuffers == 0)
+    CheckpointAction( CHECKPOINT_CLOSE, 0 );
    DeinitializeProblemManager();
-   if (!nodiskbuffers)                        
-     CheckpointAction( CHECKPOINT_CLOSE, 0 );
-   else
-     BufferUpdate(BUFFERUPDATE_FLUSH,0);
    return total_problems_saved;
    }
 
-  done_initial_load = load_problem_count;
+  /* ============================================================
+     save the number of active problems, so that we can bail out
+     in an "emergency". Some platforms call us asynchronously when they
+     need to abort [win16 for example]
+     ------------------------------------------------------------ */
 
-  if (blockcount > 0 && 
-    ((u32)(totalBlocksDone[0]+totalBlocksDone[1]) >= (u32)(blockcount)))
+  previous_load_problem_count = load_problem_count;
+
+  /* =============================================================
+     if we are running a limited number of blocks then check if we have
+     exceeded that number. If we have, but one or more crunchers are
+     still at work, bump the limit. 
+     ------------------------------------------------------------- */
+
+  if (blockcount > 0 && (totalBlocksDone >= (unsigned long)(blockcount)))
     {
+    int limitsexceeded = 1;
     for (prob_i = 0; prob_i < load_problem_count; prob_i++ )
       {
       thisprob = GetProblemPointerFromIndex( prob_i );
@@ -758,12 +833,23 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
         {
         if (thisprob->IsInitialized()) /* still have probs open */
           {
-          blockcount = 1 + ((u32)(totalBlocksDone[0]+totalBlocksDone[1]));
+          limitsexceeded = 0;
+          blockcount = 1 + (u32)(totalBlocksDone);
           break;
           }
         }
       }    
+    //----------------------------------------
+    // Reached the -b limit?
+    //----------------------------------------
+    if (limitsexceeded)
+      {
+      Log( "Shutdown - block limit exceeded.\n" );
+      RaiseExitRequestTrigger();
+      }
     }
+
+  /* ============================================================= */
 
   if (mode == PROBFILL_GETBUFFERRS) 
     return getbuff_errs;
