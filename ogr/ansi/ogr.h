@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.12 2004/03/12 07:08:54 snikkel Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.13 2004/06/16 18:11:43 kakace Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -98,7 +98,7 @@ typedef struct {
    */
   int (*destroy)(void *state);
 
-#if 0
+#if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
   /*
    * Return the number of bytes needed to serialize this state.
    */
@@ -169,10 +169,18 @@ struct WorkStub { /* size is 28 */
 
 typedef u32 U;
 
+#ifdef __VEC__
+typedef union {
+  vector unsigned int v;
+  u32 u[4];
+} VECTOR;
+#endif
+
 struct Level {
   /* If AltiVec is possible we must reserve memory, just in case */
   #ifdef __VEC__   // unused if OGROPT_ALTERNATE_CYCLE == 0 || == 1
-  vector unsigned int listV0, listV1, compV0, compV1;
+  VECTOR listV0, listV1, compV;
+  U list0, comp0, pad1, pad2;
   #endif
   U list[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 2
   U dist[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 1 || 2
@@ -180,9 +188,10 @@ struct Level {
   int cnt1;        // unused if OGROPT_ALTERNATE_CYCLE == 1 || == 2
   int cnt2;        // always needed
   int limit;       // always needed
+  int pad3, pad4;
 };
 
-#define OGR_LEVEL_SIZE ((128*4)+((4*BITMAPS)*3)+(OGR_INT_SIZE*3))
+#define OGR_LEVEL_SIZE ((16*3)+(4*4)+((4*BITMAPS)*3)+(OGR_INT_SIZE*5))
 
 struct State {
   #if 0 /* unused - see notes for ogr_cycle() above */
@@ -220,15 +229,16 @@ struct State {
   #endif
   /* If AltiVec is possible we must reserve memory, just in case */
   #ifdef __VEC__     /* only used by OGROPT_ALTERNATE_CYCLE == 2 */
-    vector unsigned int distV0, distV1;
+    U dist0, pad1;
+    VECTOR distV;
   #endif
-  U dist[BITMAPS];   /* only used by OGROPT_ALTERNATE_CYCLE == 1 */
   struct Level Levels[MAXDEPTH];
+  U dist[BITMAPS];   /* only used by OGROPT_ALTERNATE_CYCLE == 1 */
 };
 
-#define OGR_PROBLEM_SIZE (/*16+*/(6*OGR_INT_SIZE)+(OGR_INT_SIZE*(MAXDEPTH+1))+ \
-                         (4*OGR_INT_SIZE)+(128*2)+(OGR_INT_SIZE*BITMAPS)+ \
-                         (OGR_LEVEL_SIZE*MAXDEPTH)+64)
+#define OGR_PROBLEM_SIZE (/*8+*/(6*OGR_INT_SIZE)+(OGR_INT_SIZE*(MAXDEPTH+1))+ \
+                         (3*OGR_INT_SIZE)+/*4+2*4+8*4+*/(8+16)+\
+                         (OGR_LEVEL_SIZE*MAXDEPTH)+(OGR_INT_SIZE*BITMAPS)+16)
                          /* sizeof(struct State) */
 
 unsigned long ogr_nodecount(const struct Stub *);
