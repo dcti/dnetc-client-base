@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.69 2001/01/17 00:11:05 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.70 2001/01/22 14:16:35 cyp Exp $"; }
 
 //#define TRACE
 
@@ -125,11 +125,19 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       {
         if (!argvalue)
           retcode = 3;
-        else
+        else 
         {
-          got_ini_switch = 1;
           skip_next = 1;
-          strcpy( client->inifilename, argvalue );
+          if (strlen(argvalue) >= (sizeof(client->inifilename)-1))
+          {               
+            ConOutErr("Ignored -ini argument for size\n");
+            retcode = 3;
+          }
+          else
+          {
+            strcpy( client->inifilename, argvalue );
+            got_ini_switch = 1;
+          }
         }
       }
       else if ( ( strcmp( thisarg, "-restart" ) == 0) ||
@@ -716,55 +724,76 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
     if (client->inifilename[0]==0) // determine the filename of the ini file
     {
       char * inienvp = getenv( "RC5INI" );
-      if ((inienvp != NULL) && (strlen( inienvp ) < sizeof(client->inifilename)))
-        strcpy( client->inifilename, inienvp );
+      int path_ok = 0;
+      if (inienvp != NULL)
+      {  
+        if (strlen(inienvp) < (sizeof(client->inifilename)-1))
+        {
+          strcpy( client->inifilename, inienvp );
+          path_ok = 1;
+        }
+      }
       else
       {
-        #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || \
-            (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2) || \
-            (CLIENT_OS == OS_WIN32)
-        //not really needed for netware (appname in argv[0] won't be anything
-        //except what I tell it to be at link time.)
-        client->inifilename[0] = 0;
-        if (argv[0]!=NULL && ((strlen(argv[0])+5) < sizeof(client->inifilename)))
+        strcat( strcpy( client->inifilename, utilGetAppName() ), EXTN_SEP "ini" );
+        path_ok = 1;
+        #if (CLIENT_OS != OS_VMS)
+        if (argv[0])
         {
-          strcpy( client->inifilename, argv[0] );
-          char *slash = strrchr( client->inifilename, '/' );
-          char *slash2 = strrchr( client->inifilename, '\\');
-          if (slash2 > slash ) slash = slash2;
-          slash2 = strrchr( client->inifilename, ':' );
-          if (slash2 > slash ) slash = slash2;
-          if ( slash == NULL ) slash = client->inifilename;
-          if ( ( slash2 = strrchr( slash, '.' ) ) != NULL ) // ie > slash
-            strcpy( slash2, ".ini" );
-          else if ( strlen( slash ) > 0 )
-           strcat( slash, ".ini" );
+          path_ok = 0;
+          if ((strlen(argv[0])+5) < sizeof(client->inifilename))
+          {          
+            #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || \
+                (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2) || \
+                (CLIENT_OS == OS_WIN32)
+            //not really needed for netware (appname in argv[0] won't be anything
+            //except what I tell it to be at link time.)
+            strcpy( client->inifilename, argv[0] );
+            char *slash = strrchr( client->inifilename, '/' );
+            char *slash2 = strrchr( client->inifilename, '\\');
+            if (slash2 > slash ) slash = slash2;
+            slash2 = strrchr( client->inifilename, ':' );
+            if (slash2 > slash ) slash = slash2;
+            if ( slash == NULL ) slash = client->inifilename;
+            if ( ( slash2 = strrchr( slash, '.' ) ) != NULL ) // ie > slash
+              strcpy( slash2, ".ini" );
+            else if ( strlen( slash ) > 0 )
+              strcat( slash, ".ini" );
+            #else
+            strcpy( client->inifilename, argv[0] );
+            strcat( client->inifilename, EXTN_SEP "ini" );
+            #endif
+            path_ok = 1;
+          }
         }
-        if ( client->inifilename[0] == 0 )
-          strcat( strcpy( client->inifilename, utilGetAppName() ), ".ini" );
-        #elif (CLIENT_OS == OS_VMS)
-          strcat( strcpy( client->inifilename, utilGetAppName() ), EXTN_SEP "ini" );
-        #else
-        strcpy( client->inifilename, argv[0] );
-        strcat( client->inifilename, EXTN_SEP "ini" );
-        #endif
+        #endif /* (CLIENT_OS != OS_VMS) */
+      }
+      if (!path_ok)
+      {
+        ConOutErr(".ini determination failed. Path too long.\n");
+        client->inifilename[0] = '\0';
+        retcode = 3;
+        *inimissing = 1; 
       }
     } // if (inifilename[0]==0)
 
-    TRACE_OUT((+1,"InitWorkingDirectoryFromSamplePaths()\n"));
-    InitWorkingDirectoryFromSamplePaths( client->inifilename, argv[0] );
-    TRACE_OUT((-1,"InitWorkingDirectoryFromSamplePaths()\n"));
-
-    if ((pos = ConfigRead(client)) == 0)
-      *inimissing = 0;
-    else if (pos < 0) /* fatal */
-      retcode = 3;
-    else
+    if (client->inifilename[0])
     {
-      //client->stopiniio = 1; /* client class */
-      //ModeReqSet( MODEREQ_CONFIG );
-      *inimissing = 1;
-    }
+      TRACE_OUT((+1,"InitWorkingDirectoryFromSamplePaths()\n"));
+      InitWorkingDirectoryFromSamplePaths( client->inifilename, argv[0] );
+      TRACE_OUT((-1,"InitWorkingDirectoryFromSamplePaths()\n"));
+
+      if ((pos = ConfigRead(client)) == 0)
+        *inimissing = 0;
+      else if (pos < 0) /* fatal */
+        retcode = 3;
+      else
+      {
+        //client->stopiniio = 1; /* client class */
+        //ModeReqSet( MODEREQ_CONFIG );
+        *inimissing = 1;
+      }
+    } /* if (client->inifilename[0]) */
   }
 
   //-----------------------------------
@@ -1174,10 +1203,15 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         else
         {
           skip_next = 1;
-          if (run_level != 0)
+          if (strlen(argvalue) >= (sizeof(client->keyproxy)-1))
+          {
+            if (run_level != 0) 
+              LogScreenRaw("Ignored -a argument for size\n");
+          }
+          else if (run_level != 0)
           {
             /* if (logging_is_initialized) */
-              LogScreenRaw("Setting keyserver to %s\n", client->keyproxy );
+             LogScreenRaw("Setting keyserver to %s\n", client->keyproxy );
           }
           else
           {
@@ -1214,11 +1248,15 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         else
         {
           skip_next = 1;
-          if (run_level != 0)
+          if (strlen(argvalue) >= (sizeof(client->httpproxy)-1))
+          {               
+            if (run_level != 0) 
+              LogScreenRaw("Ignored -ha argument for size\n");
+          }
+          else if (run_level != 0)
           {
             /* if (logging_is_initialized) */
-              LogScreenRaw("Setting SOCKS/HTTP proxy to %s\n",
-              client->httpproxy);
+              LogScreenRaw("Setting SOCKS/HTTP proxy to %s\n", client->httpproxy);
           }
           else
           {
@@ -1247,7 +1285,12 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         else
         {
           skip_next = 1;
-          if (run_level != 0)
+          if (strlen(argvalue) >= (sizeof(client->logname)-1))
+          {               
+            if (run_level != 0) 
+              LogScreenRaw("Ignored -l argument for size\n");
+          }
+          else if (run_level != 0)
           {
             /* if (logging_is_initialized) */
               LogScreenRaw("Setting log file to %s\n", client->logname );
@@ -1297,7 +1340,12 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         else
         {
           skip_next = 1;
-          if (run_level != 0)
+          if (strlen(argvalue) >= (sizeof(client->smtpsrvr)-1))
+          {               
+            if (run_level != 0) 
+              LogScreenRaw("Ignored -smtpsrvr argument for size\n");
+          }
+          else if (run_level != 0)
           {
             /* if (logging_is_initialized) */
               LogScreenRaw("Setting SMTP relay host to %s\n", client->smtpsrvr);
@@ -1315,7 +1363,12 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         else
         {
           skip_next = 1;
-          if (run_level != 0)
+          if (strlen(argvalue) >= (sizeof(client->smtpfrom)-1))
+          {               
+            if (run_level != 0) 
+              LogScreenRaw("Ignored -smtpfrom argument for size\n");
+          }
+          else if (run_level != 0)
           {
             /* if (logging_is_initialized) */
               LogScreenRaw("Setting mail 'from' address to %s\n",
@@ -1332,7 +1385,12 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         else
         {
           skip_next = 1;
-          if (run_level != 0)
+          if (strlen(argvalue) >= (sizeof(client->smtpdest)-1))
+          {               
+            if (run_level != 0) 
+              LogScreenRaw("Ignored -smtpdest argument for size\n");
+          }
+          else if (run_level != 0)
           {
             /* if (logging_is_initialized) */
               LogScreenRaw("Setting mail 'to' address to %s\n", client->smtpdest );
@@ -1350,7 +1408,12 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         else
         {
           skip_next = 1;
-          if (run_level != 0)
+          if (strlen(argvalue) >= (sizeof(client->id)-1))
+          {               
+            if (run_level != 0) 
+              LogScreenRaw("Ignored -e argument for size\n");
+          }
+          else if (run_level != 0)
           {
             /* if (logging_is_initialized) */
               LogScreenRaw("Setting distributed.net ID to %s\n", client->id );
