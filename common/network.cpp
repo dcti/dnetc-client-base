@@ -154,8 +154,8 @@ Network::Network( const char * Preferred, const char * Roundrobin, s16 Port)
 {
 #if !defined(NONETWORK)
   // intialize communication parameters
-  strncpy(server_name, (Preferred ? Preferred : DEFAULT_RRDNS), sizeof(server_name));
-  strncpy(rrdns_name, (Roundrobin ? Roundrobin : DEFAULT_RRDNS), sizeof(rrdns_name));
+  strncpy(server_name, (Preferred ? Preferred : ""), sizeof(server_name));
+  strncpy(rrdns_name, (Roundrobin ? Roundrobin : ""), sizeof(rrdns_name));
   port = (s16) (Port ? Port : DEFAULT_PORT);
   mode = startmode = 0;
   retries = 0;
@@ -190,7 +190,11 @@ Network::~Network(void)
 
 void Network::SetModeUUE( bool enabled )
 {
-  if (enabled) startmode |= MODE_UUE;
+  if (enabled)
+  {
+    startmode &= ~(MODE_SOCKS4 | MODE_SOCKS5);
+    startmode |= MODE_UUE;
+  }
   else startmode &= ~MODE_UUE;
 }
 
@@ -199,8 +203,9 @@ void Network::SetModeUUE( bool enabled )
 void Network::SetModeHTTP( const char *httpproxyin, s16 httpportin,
     const char *httpidin)
 {
-  if (httpproxyin && !(startmode & (MODE_SOCKS4 | MODE_SOCKS5)))
+  if (httpproxyin && httpproxyin[0])
   {
+    startmode &= ~(MODE_SOCKS4 | MODE_SOCKS5);
     startmode |= MODE_HTTP;
     httpport = httpportin;
     strncpy(httpid, httpidin, 128);
@@ -215,8 +220,9 @@ void Network::SetModeHTTP( const char *httpproxyin, s16 httpportin,
 void Network::SetModeSOCKS4(const char *sockshost, s16 socksport,
       const char * socksusername )
 {
-  if (sockshost && !(startmode & (MODE_HTTP | MODE_SOCKS5)))
+  if (sockshost && sockshost[0])
   {
+    startmode &= ~(MODE_HTTP | MODE_SOCKS5 | MODE_UUE);
     startmode |= MODE_SOCKS4;
     httpport = socksport;
     strncpy(httpproxy, sockshost, sizeof(httpproxy));
@@ -239,8 +245,9 @@ void Network::SetModeSOCKS4(const char *sockshost, s16 socksport,
 void Network::SetModeSOCKS5(const char *sockshost, s16 socksport,
       const char * socksusernamepw )
 {
-  if (sockshost && !(startmode & (MODE_HTTP | MODE_SOCKS4)))
+  if (sockshost && sockshost[0])
   {
+    startmode &= ~(MODE_HTTP | MODE_SOCKS4 | MODE_UUE);
     startmode |= MODE_SOCKS5;
     httpport = socksport;
     strncpy(httpproxy, sockshost, sizeof(httpproxy));
@@ -265,10 +272,6 @@ s32 Network::Resolve(const char *host, u32 &hostaddress)
 {
 #if !defined(NONETWORK)
 
-#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
-  hostaddress = resolve((char*)host);
-  if (hostaddress == 0) return -1;
-#else
   if ((hostaddress = inet_addr((char*)host)) == 0xFFFFFFFFL)
   {
     struct hostent *hp;
@@ -279,7 +282,7 @@ s32 Network::Resolve(const char *host, u32 &hostaddress)
     memcpy((void*) &hostaddress, hp->h_addr, sizeof(u32));
 #else
     int addrcount;
-#if ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
+  #if ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K))
     // struct hostent is seriously broken when returned from gethostbyname()
     // on sun3/SunOS 4.1.1. The h_addr_list member does NOT point to an array
     // of pointers to IP addresses, it points to an array of the IP addresses
@@ -291,7 +294,8 @@ s32 Network::Resolve(const char *host, u32 &hostaddress)
                         (hp->h_addr_list[addrcount] != (char *)hp->h_addr_list);
          addrcount++) ;
     hp->h_addr_list += addrcount;
-#endif
+  #endif
+    
     // randomly select one
     for (addrcount = 0; hp->h_addr_list[addrcount]; addrcount++);
     int index = rand() % addrcount;
@@ -300,7 +304,6 @@ s32 Network::Resolve(const char *host, u32 &hostaddress)
   }
 #endif
 
-#endif
   return 0;
 }
 
@@ -340,30 +343,11 @@ s32 Network::Open( SOCKET insock)
 // returns -1 on error, 0 on success
 s32 Network::Open( void )
 {
-  char * hostname;
 #if !defined(NONETWORK)
   Close();
   mode = startmode;
 
-#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
-  int status;
-  if (lastaddress == 0)
-  {
-    if (Resolve((retries < 4 ? server_name : rrdns_name), lastaddress) < 0)
-    {
-      lastaddress = 0;
-      retries++;
-      return (-1);
-    }
-  }
-  if (tcp_open(sock, 0, lastaddress, port, NULL) == 0)
-  {
-    lastaddress = 0;
-    retries++;
-    return (-1);
-  }
-  sock_wait_established(sock, sock_delay, NULL, &status);
-#else
+  
   // create a new socket
   if ((int)(sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
   {
@@ -380,14 +364,25 @@ s32 Network::Open( void )
 #endif
 
 
-  // set up the address structure
-  struct sockaddr_in sin;
+  // resolve the address of keyserver, or if performing a proxied
+  // connection, the address of the proxy gateway server.
   if (lastaddress == 0)
-  {
-    hostname = (retries < 4 ? server_name : rrdns_name);
-    if ((mode & MODE_PROXIED) && httpproxy[0] ) hostname = httpproxy;
+  {    
+    const char * hostname;
+    if (mode & MODE_PROXIED) hostname = httpproxy;
+    else
+    {
+      hostname = (retries < 4 ? server_name : rrdns_name);    
+      if (!hostname[0]) {
+        hostname = DEFAULT_RRDNS;
+        lastport = DEFAULT_PORT;
+      } else lastport = port;
+    }
+      
+#ifdef VERBOSE_OPEN
     sprintf(logstr,"Connecting to %s...\n",hostname);
     LogScreen(logstr);
+#endif
     if (Resolve(hostname, lastaddress) < 0)
     {
       lastaddress = 0;
@@ -401,31 +396,50 @@ s32 Network::Open( void )
       return (-1);
     }
   }
-  if ((mode & MODE_PROXIED) && httpproxy[0] && (lasthttpaddress == 0))
+
+
+  // if we are doing a proxied connection, resolve the actual destination
+  if ((mode & MODE_PROXIED) && (lasthttpaddress == 0))
   {
+    const char * hostname;
     hostname = (retries < 4 ? server_name : rrdns_name);
+    if (!hostname[0]) {
+      hostname = DEFAULT_RRDNS;
+      lastport = DEFAULT_PORT;
+    } else lastport = port;
+    
+#ifdef VERBOSE_OPEN
     sprintf(logstr,"Connecting to %s...\n",hostname);
     LogScreen(logstr);
-    if (Resolve(hostname, lasthttpaddress) < 0) {
+#endif
+    if (Resolve(hostname, lasthttpaddress) < 0)
+    {
       lasthttpaddress = 0;
-      if (mode & (MODE_SOCKS4 | MODE_SOCKS5)) {
+      
+      if (mode & (MODE_SOCKS4 | MODE_SOCKS5))
+      {
         // socks needs the address to resolve now.
         lastaddress = 0;
         close(sock);
         sock = 0;
         retries++;
 #ifdef VERBOSE_OPEN
-      sprintf(logstr,"Network::failed to resolve hostname \"%s\"\n", hostname);
-      LogScreen(logstr);
+        sprintf(logstr,"Network::failed to resolve hostname \"%s\"\n", hostname);
+        LogScreen(logstr);
 #endif
         return (-1);
       }
     }
   }
+
+
+  // set up the address structure
+  struct sockaddr_in sin;
   memset((void *) &sin, 0, sizeof(sin));
   sin.sin_family = AF_INET;
-  sin.sin_port = htons((mode & MODE_PROXIED) ? httpport : port);
+  sin.sin_port = htons((mode & MODE_PROXIED) ? httpport : lastport);
   sin.sin_addr.s_addr = lastaddress;
+
 
   // try connecting
   if ((int) connect(sock, (struct sockaddr *) &sin, sizeof(sin)) < 0)
@@ -491,7 +505,7 @@ s32 Network::Open( void )
 
     psocks4->VN = 4;
     psocks4->CD = 1;  // CONNECT
-    psocks4->DSTPORT = htons(port);
+    psocks4->DSTPORT = htons(lastport);
     psocks4->DSTIP = lasthttpaddress;
     strncpy(psocks4->USERID, httpid, sizeof(httpid));
 
@@ -633,7 +647,7 @@ Socks4Failure:
     psocks5->rsv = 0;   // must be zero
     psocks5->atyp = 1;  // IPv4
     psocks5->addr = lasthttpaddress;
-    psocks5->port = htons(port);
+    psocks5->port = htons(lastport);
 
     len = sizeof(*psocks5);
     if (LowLevelPut(len, socksreq) < 0)
@@ -670,13 +684,7 @@ Socks5Failure:
 
 
 #endif
-#endif
   return 0;
-
-#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
-sock_err:
-  return -1;
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -686,13 +694,7 @@ s32 Network::Close(void)
 #if !defined(NONETWORK)
   if ( sock )
   {
-#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
-    int status;
-    sock_close(sock);
-    sock_wait_closed(sock, sock_delay, NULL, &status);
-#else
     close( sock );
-#endif
     sock = 0;
     retries = 0;
     gethttpdone = puthttpdone = false;
@@ -701,11 +703,6 @@ s32 Network::Close(void)
   }
 #endif
   return 0;
-
-#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
-sock_err:
-  return -1;
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -996,9 +993,6 @@ s32 Network::Put( u32 length, const char * data )
   if (mode & MODE_HTTP)
   {
     char header[500], ipbuff[64];
-#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
-    inet_ntoa(ipbuff, lasthttpaddress);
-#else
     if (lasthttpaddress) {
       in_addr addr;
       addr.s_addr = lasthttpaddress;
@@ -1006,7 +1000,6 @@ s32 Network::Put( u32 length, const char * data )
     } else {
       strncpy(ipbuff, server_name, sizeof(ipbuff));
     }
-#endif
 
     if ( httpid[0] ) {
       sprintf(header, "POST http://%s:%li/cgi-bin/rc5.cgi HTTP/1.0\r\n"
@@ -1014,14 +1007,14 @@ s32 Network::Put( u32 length, const char * data )
          "Proxy-Connection: Keep-Alive\r\n"
          "Content-Type: application/octet-stream\r\n"
          "Content-Length: %lu\r\n\r\n",
-         ipbuff, (long) port,
+         ipbuff, (long) lastport,
          httpid,
          (unsigned long) outbuf.GetLength());
     } else {
       sprintf(header, "POST http://%s:%li/cgi-bin/rc5.cgi HTTP/1.0\r\n"
          "Content-Type: application/octet-stream\r\n"
          "Content-Length: %lu\r\n\r\n",
-         ipbuff, (long) port,
+         ipbuff, (long) lastport,
          (unsigned long) outbuf.GetLength());
     }
 #if (CLIENT_OS == OS_OS390)
@@ -1045,25 +1038,12 @@ s32 Network::Put( u32 length, const char * data )
 #if !defined(NONETWORK)
 s32 Network::LowLevelGet(u32 length, char *data)
 {
-#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
-  //if (!sock_sselect(sock, SOCKESTABLISHED)) return 0;
-  if (!sock_dataready(sock))
-  {
-    int status;
-    sock_tick(sock, &status);
-    return -1;
-  }
-  return sock_read(sock, (unsigned char*)data, length);
-
-sock_err:
-  return -1;
-#else
   #if defined(SELECT_FIRST)
     fd_set rs;
     timeval tv = {0,0};
     FD_ZERO(&rs);
     FD_SET(sock, &rs);
-    select(0, &rs, NULL, NULL, &tv);
+    select(sock + 1, &rs, NULL, NULL, &tv);
     if (!FD_ISSET(sock, &rs)) return -1;
   #endif
   #if (CLIENT_OS == OS_BEOS)
@@ -1079,7 +1059,6 @@ sock_err:
   #endif
 
   return numRead;
-#endif
 }
 #endif
 
@@ -1090,14 +1069,8 @@ sock_err:
 #if !defined(NONETWORK)
 s32 Network::LowLevelPut(u32 length, const char *data)
 {
-#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
-  sock_write(sock, (unsigned char*) data, length);
-  sock_flush(sock);
-  return (s32) length;
-#else
   u32 writelen = write(sock, (char*)data, length);
   return (s32) (writelen != length ? -1 : (s32)writelen);
-#endif
 }
 #endif
 
@@ -1126,8 +1099,6 @@ void MakeNonBlocking(SOCKET socket, bool nonblocking)
     unsigned long flagon = nonblocking;
     socket_ioctl(socket, FIONBIO, &flagon);
   #endif
-#elif (CLIENT_OS == OS_DOS) && defined(DJGPP)
-  // nothing.  WATTCP is always nonblocking
 #elif (CLIENT_OS == OS_RISCOS)
     {
       int one=1;
@@ -1292,109 +1263,5 @@ char * Network::base64_encode(char *username, char *password)
   return out;
 }
 
-// --------------------------------------------------------------------------
-
-
-
-#ifdef NETWORKSERVER
-
-NetworkServer::NetworkServer( )
-{
-  listener = 0;
-}
-
-NetworkServer::~NetworkServer()
-{
-  StopListening();
-}
-
-// returns -1 on error, 0 on success
-s32 NetworkServer::StartListening( s16 myport, u32 myaddress, u32 backlog)
-{
-#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
-// HERE--code
-#else
-  // open socket on which this process will listen for input
-  if( (listener = socket(AF_INET, SOCK_STREAM, 0)) == -1 ) return (-1);
-
-  // set to reuse the socket
-  int mytrue = 1;
-  setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, (char*)&mytrue, sizeof(int));
-
-  // change socket to non-blocking
-  MakeNonBlocking(listener, true);
-
-  // set up the address we will listen on
-  sockaddr_in listenaddr;
-  memset((void*) &listenaddr, (unsigned char)0, sizeof(sockaddr_in));
-  listenaddr.sin_family = PF_INET;
-  listenaddr.sin_addr.s_addr = myaddress;
-  listenaddr.sin_port = htons(myport);
-
-  // bind socket to the port specified
-  if ((int) bind(listener, (sockaddr*)&listenaddr, sizeof(sockaddr_in)) == -1)
-  {
-    close(listener);
-    listener = 0;
-    return (-1);
-  }
-
-  // start listening
-  if (listen(listener, backlog) != 0)
-  {
-    close(listener);
-    listener = 0;
-    return (-1);
-  }
-#endif
-  return 0;
-}
-
-
-// returns -1 on error, 0 on success
-s32 NetworkServer::StopListening(void)
-{
-  if (listener)
-  {
-#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
-// HERE--code
-#else
-    close(listener);
-#endif
-    listener = 0;
-  }
-  return 0;
-}
-
-
-// returns -1 on error, or 0 on success
-s32 NetworkServer::Connect(Network *connection, u32 *peeraddress, u32 Timeout)
-{
-  NetTimer timer;
-  connection->Close();
-  if (!listener) return -1;
-  while (timer <= Timeout)
-  {
-#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
-// HERE--code
-#else
-    struct sockaddr_in addr;
-    int addrlen = sizeof(sockaddr_in);
-    SOCKET sock = accept(listener, (struct sockaddr*) &addr, &addrlen);
-    if ((int) sock > 0) {
-      connection->Open( sock );
-      if (peeraddress) *peeraddress = addr.sin_addr.s_addr;
-      return 0;
-    }
-#endif
-    sleep( 1 );
-  }
-  return -1;
-}
-
-
-#endif  // NETWORKSERVER
-
-// --------------------------------------------------------------------------
-
+//////////////////////////////////////////////////////////////////////////////
 

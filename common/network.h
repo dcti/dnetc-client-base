@@ -3,7 +3,6 @@
 // Any other distribution or use of this source violates copyright.
 
 //#define NONETWORK         // define to eliminate network functionality
-//#define NETWORKSERVER     // define for NetworkServer:: functions
 //#define SELECT_FIRST      // define to perform select() before reading
 //#define __VMS_UCX__       // define for UCX instead of Multinet on VMS
 
@@ -34,12 +33,6 @@ extern "C" {
   #if defined(_MSC_VER)
     #define sleep(x) Sleep(1000*x)
   #endif
-#elif (CLIENT_OS == OS_DOS) && defined(DJGPP)
-  #define gethostname xxxx
-  #include <tcp.h>
-  #undef gethostname
-  #include <unistd.h>
-  typedef tcp_Socket* SOCKET;
 #elif (CLIENT_OS == OS_RISCOS)
   #include <sys/types.h>
   #define SOCKET int
@@ -218,6 +211,7 @@ protected:
   SOCKET sock;          // socket file handle
   s32  retries;         // 3 retries, then do RRDNS lookup
   u32  lastaddress;
+  s16  lastport;
 
   // http related
   char httpproxy[64];   // also used for socks4
@@ -321,37 +315,6 @@ public:
   void LogScreen( const char * txt);
 
 };
-
-///////////////////////////////////////////////////////////////////////////
-
-#ifdef NETWORKSERVER
-
-class NetworkServer
-{
-  SOCKET listener;      // listener socket file handle
-
-  friend void MakeNonBlocking(SOCKET sock, bool nonblocking = true);
-
-public:
-  NetworkServer( );
-
-  ~NetworkServer();
-
-  s32  StartListening( s16 myport, u32 myaddress = INADDR_ANY, u32 backlog = 3 );
-    // start listening
-    // returns -1 on error, 0 on success
-
-  s32  StopListening( void );
-    // stop listening
-    // returns -1 on error, 0 on success
-
-  s32  Connect ( Network *connection, u32 *peeraddress, u32 Timeout = 10);
-    // wait for an incoming connection
-    // returns -1 on error, 0 on success
-
-};
-
-#endif  // NETWORKSERVER
 
 ///////////////////////////////////////////////////////////////////////////
 

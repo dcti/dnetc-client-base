@@ -1498,8 +1498,13 @@ Name: Internet Gate v1.30 for OS/2.
 Connection method: Direct port mapping
 
 Name: Microsoft Proxy Server 2.0
-Connection method: http proxy
+Connection method: HTTP proxy
 Notes: userid + password are the normal NT domain login and password
+
+Name: Novell BorderManager web proxy
+Connection method: HTTP proxy
+
+
 
 13.  Flushing and fetching buffers via e-mail
 ---------------------------------------------
