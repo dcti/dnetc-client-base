@@ -2535,8 +2535,8 @@ bool Client::CheckForcedKeyport(void)
 {
   bool Forced = false;
   char *dot = strchr(keyproxy, '.');
-  if (dot && (strcmpi(dot, ".v27.distributed.net") != 0 ||
-      strcmpi(dot, ".distributed.net") != 0))
+  if (dot && (strcmpi(dot, ".v27.distributed.net") == 0 ||
+      strcmpi(dot, ".distributed.net") == 0))
   {
     int foundport = 2064;
     for (char *p = keyproxy; p < dot; p++)
