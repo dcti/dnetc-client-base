@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.157 2000/06/07 23:28:37 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.158 2000/06/13 01:18:53 mfeiri Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -89,6 +89,10 @@ COMMON_SRCS="common/client.cpp \
 	     common/base64.cpp \
 	     common/netres.cpp"
 
+#	     common/minihttp.cpp \
+#	     common/netio.cpp \
+#	     common/xmlserve.cpp"
+
 #
 # Include standard/public files source files too.
 #
@@ -111,20 +115,27 @@ XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
 		   rc5/ppc/crunch_allitnil_552.ppcxlc.s"
 
 RC5PPC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.s \
-             rc5/ppc/crunch_lintilla_296-604.ppc.s \
+        rc5/ppc/crunch_lintilla_296-604.ppc.s \
 	     rc5/ppc/crunch_allitnil_552.ppc.s \
 	     rc5/ppc/rc5_unit_func_lintilla.cpp \
 	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
 	     rc5/ppc/rc5_unit_func_allitnil.cpp"
              
 RC5PPC_MWCC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.c \
-             rc5/ppc/crunch_lintilla_296-604.ppc.c \
+        rc5/ppc/crunch_lintilla_296-604.ppc.c \
 	     rc5/ppc/crunch_allitnil_552.ppc.c \
 	     rc5/ppc/rc5_unit_func_lintilla.cpp \
 	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
 	     rc5/ppc/rc5_unit_func_allitnil.cpp"
 
-RC5ALTIVEC_SRCS="rc5/ppc/crunch-vec.s \
+RC5PPC_APPLE_SRCS="rc5/ppc/crunch_lintilla_296_apple.ppc.s \
+        rc5/ppc/crunch_lintilla_296-604_a.ppc.s \
+	     rc5/ppc/crunch_allitnil_552_apple.ppc.s \
+	     rc5/ppc/rc5_unit_func_lintilla.cpp \
+	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
+	     rc5/ppc/rc5_unit_func_allitnil.cpp"
+
+RC5ALTIVEC_SRCS="rc5/ppc/rc5loopX.s \
 		 rc5/ppc/rc5_unit_func_vec.cpp"
 
 NASM_RC5X86_SRCS="rc5/x86/nasm/rg486.asm \
@@ -1063,14 +1074,21 @@ case "$1" in
 
   ### MacOSX PPC targets
 
-    *ppc-macosx)     # [mfeiri] MacOSX (including MacOSX Server and Darwin)
+    *ppc-macosx-server) # [mfeiri] (MACH 2.x based: MXS 1.x, Darwin 0.x, Rhapsody)
 	TARGET_CC="cc"
-	TARGET_CCFLAGS="$OPTS_EGCS2_PPC -DHAVE_OGR_CORES"
-	TARGET_ADDSRCS="$RC5PPC_SRCS $OGR_ANSI_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC272_PPC -DHAVE_OGR_CORES"
+	TARGET_ADDSRCS="$RC5PPC_APPLE_SRCS $OGR_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="macosx-ppc"
+	TARGET_TARBALL="macosx-server-ppc"
 	;;
 
+    *ppc-macosx)        # [mfeiri] (MACH 3.x based: MacOSXDP, Darwin 1.0)
+	TARGET_CC="cc"
+	TARGET_CCFLAGS="$OPTS_GCC295_PPC -DHAVE_OGR_CORES -DMULTITHREAD -D__unix__ -faltivec -DLURK" # -DXMLSERVE
+	TARGET_ADDSRCS="$RC5PPC_APPLE_SRCS $OGR_ANSI_SRCS $RC5ALTIVEC_SRCS common/lurk.cpp" #
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="macosx-ppc-mt"
+	;;
 
   ### AIX PPC targets
 	# classes are buggy with AIX !
