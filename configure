@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.36  1998/06/15 00:11:17  skand
+# For some reason, NetBSD/alpha wants -ltermcap...
+#
 # Revision 1.35  1998/06/14 15:14:17  remi
 # Line-up longer file names in 'make ident'.
 #
@@ -428,6 +431,13 @@ case "$1" in
 	TARGET_LIBS="-lpthread"
 	;;
 
+    *alpha-netbsd)
+	RC5CORECOPY="rc5ansi1-b2.cpp"
+	TARGET_CC="g++"
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-ltermcap"
+	;;
 
 ###### PowerPC/POWER
 
