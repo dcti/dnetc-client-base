@@ -13,6 +13,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: console.cpp,v $
+// Revision 1.43  1999/02/21 00:56:17  trevorh
+// Correct typing error compiling os2gui
+//
 // Revision 1.42  1999/02/19 03:32:56  silby
 // Uses termios for hpux now.
 //
@@ -163,7 +166,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.42 1999/02/19 03:32:56 silby Exp $"; }
+return "@(#)$Id: console.cpp,v 1.43 1999/02/21 00:56:17 trevorh Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -182,7 +185,7 @@ return "@(#)$Id: console.cpp,v 1.42 1999/02/19 03:32:56 silby Exp $"; }
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || \
     (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
     || (CLIENT_OS==OS_FREEBSD) || defined(__EMX__) || (CLIENT_OS==OS_AIX) \
-    || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==OS_HPUX) ) 
+    || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==OS_HPUX) )
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
@@ -358,7 +361,7 @@ int ConOutModal(const char *msg)
            MB_OK | MB_ICONINFORMATION );
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
     WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, msg,
-       CLICONS_LONGNAME, (PSZ)NULL, MB_OK | MB_INFORMATION | MB_MOVEABLE );
+       CLICONS_LONGNAME, NULL, MB_OK | MB_INFORMATION | MB_MOVEABLE );
   #else
     fprintf( stderr, "%s\n", msg );
     fflush( stderr );
@@ -380,7 +383,7 @@ int ConOutErr(const char *msg)
                  MB_OK | MB_TASKMODAL | MB_ICONSTOP /*MB_ICONERROR*/ );
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
      WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, (PSZ)msg,
-           CLICONS_LONGNAME,  (PSZ)NULL, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
+           CLICONS_LONGNAME,  NULL, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
     ConsolePrintf( "%s: %s\r\n", CLICONS_SHORTNAME, msg );
   #else
