@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.37 2001/04/12 14:48:05 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.38 2001/05/13 17:58:37 cyp Exp $"; }
 
 //#define TRACE
 
@@ -691,9 +691,10 @@ int LurkStart(int nonetworking,struct dialup_conf *params)
         lurker.mask_default_only = 1;
 
       TRACE_OUT((0,"total ifaces=%d\n", ptrindex));
-      TRACE_OUT((0,"mask flags: include_all=%d, defaults_only=%d\n",
-                   lurker.mask_include_all, lurker.mask_default_only ));
     }
+    TRACE_OUT((0,"using iface mask?=>%s\n",lurker.ifacestowatch[0]?"yes":"no"));
+    TRACE_OUT((0,"mask flags: include_all=%d, defaults_only=%d\n",
+                 lurker.mask_include_all, lurker.mask_default_only ));
 
     lurker.conf.connstartcmd[0] = 0;
     if (lurker.conf.dialwhenneeded && params->connstartcmd[0])
@@ -732,19 +733,32 @@ int LurkStart(int nonetworking,struct dialup_conf *params)
 #if (!((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2) && !defined(__EMX__) || \
       (CLIENT_OS == OS_MACOS)))
 /* needed by all except win16 and non-emx-os/2 and macos*/
-static int __MatchMask( const char *ifrname, int mask_include_all,
-                       int mask_default_only, const char *ifacestowatch[] )
+static int __MatchMask( const char *ifrname,  int is_dialup_dev_for_sure,
+                        int mask_include_all, int mask_default_only, 
+                        const char *ifacestowatch[] )
 {
   int ismatched = 0;
-  char wildmask[32+4]; //should be sizeof((struct ifreq.ifr_name)+4
   const char *matchedname = "*";
+  char wildmask[sizeof(lurker.ifacemaskcopy)+4]; 
+                         //should be sizeof((struct ifreq.ifr_name)+4
 
-  TRACE_OUT((+1,"__MatchMask(ifrname='%s',lurker.mask_include_all=%d,"
-                "lurker.mask_default_only=%d,lurker.ifacestowatch=%p)\n",
-                ifrname,mask_include_all,mask_default_only,ifacestowatch));
+  TRACE_OUT((+1,"__MatchMask(ifrname='%s',is_dialup_dev_for_sure=%d,"\
+                             "lurker.mask_include_all=%d," \
+                             "lurker.mask_default_only=%d,"\
+                             "lurker.ifacestowatch=%p)\n",
+                             ifrname, is_dialup_dev_for_sure,
+                             mask_include_all,
+                             mask_default_only,
+                             ifacestowatch));
 
   if (mask_include_all) //mask was "*"
     ismatched = 1;
+  else if (mask_default_only /* mask was "", ie any dialup dev matches */
+    && is_dialup_dev_for_sure) /* this could be determined by other means */
+  {
+    ismatched = 1;
+    matchedname = ifrname;
+  }
   else
   {
     int maskpos=0;
@@ -758,7 +772,8 @@ static int __MatchMask( const char *ifrname, int mask_include_all,
     wildmask[maskpos]='\0';
     if (mask_default_only) //user didn't specify a mask, so default is any
     {                      //dialup device
-      ismatched = (strcmp(wildmask,"ppp*")==0
+      ismatched = is_dialup_dev_for_sure
+      || (strcmp(wildmask,"ppp*")==0
       #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
         (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
         ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__))
@@ -1023,6 +1038,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
 
                 if ((if_flags & IFF_LOOPBACK)==0 && if_addr != 0x0100007ful)
                 {
+                  int is_dialup_dev_for_sure = 0;
                   char seqname[20], devname[20];
                   wsprintf(seqname,"lan%u",pppdev+ethdev+slipdev);
                   if (if_addr==0 && (if_flags & IFF_POINTTOPOINT)==0)
@@ -1034,16 +1050,24 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
                   }
                   if ((if_flags & IFF_POINTTOPOINT)!=IFF_POINTTOPOINT)
                     wsprintf(devname,"eth%u",ethdev++);
-                  //else if ((if_flags & (IFF_BROADCAST|IFF_MULTICAST))==0)
-                  //  wsprintf(devname,"sl%u",slipdev++);
                   else
-                    wsprintf(devname,"ppp%u",pppdev++);
+                  {
+                    is_dialup_dev_for_sure = 1;  
+                    //if ((if_flags & (IFF_BROADCAST|IFF_MULTICAST))==0)
+                    //  wsprintf(devname,"sl%u",slipdev++);
+                    //else
+                      wsprintf(devname,"ppp%u",pppdev++);
+                  }
                   TRACE_OUT((0,"stage7: not lo. up?=%s, seqname=%s devname=%s\n", ((if_flags & IFF_UP)?"yes":"no"), seqname, devname ));
                   if ((if_flags & IFF_UP)==IFF_UP &&
-                     (__MatchMask(devname,lurker.mask_include_all,
-                         lurker.mask_default_only, &lurker.ifacestowatch[0] ) ||
-                      __MatchMask(seqname,lurker.mask_include_all,
-                         lurker.mask_default_only, &lurker.ifacestowatch[0] )))
+                     (__MatchMask( devname, is_dialup_dev_for_sure,
+                                   lurker.mask_include_all,
+                                   lurker.mask_default_only, 
+                                   &lurker.ifacestowatch[0] ) 
+                   || __MatchMask( seqname, is_dialup_dev_for_sure,
+                                   lurker.mask_include_all,
+                                   lurker.mask_default_only, 
+                                   &lurker.ifacestowatch[0] )))
                   {
                     upcount++;
                     isup = 1;
@@ -1143,7 +1167,17 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
         {
           RASCONNSTATUS rasconnstatus;
           rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
-           if (RasGetConnectStatus(rasconnp[whichconn].hrasconn,
+          TRACE_OUT((+1,"RasEnumConnections result [idx=%d]:\n",whichconn));
+          TRACE_OUT((0,"_RASCONN[%d].szEntryName='%s'\n",whichconn,
+                         rasconnp[whichconn].szEntryName));
+          /* szDeviceType eg: "modem","pad","switch","isdn","null","VPN" */
+          TRACE_OUT((0,"_RASCONN[%d].szDeviceType='%s'\n",whichconn,
+                         rasconnp[whichconn].szDeviceType));
+          /* szDeviceName eg: "Hayes Smartmodem", "WAN Miniport (PPTP)" */
+          TRACE_OUT((0,"_RASCONN[%d].szDeviceName='%s'\n",whichconn,
+                         rasconnp[whichconn].szDeviceName));
+          TRACE_OUT((-1,"--\n"));
+          if (RasGetConnectStatus(rasconnp[whichconn].hrasconn,
                                   &rasconnstatus) != 0)
           {
             TRACE_OUT((0,"RasGetConnectStatus() failed\n"));
@@ -1175,7 +1209,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
     {
       const char *connname = rasentriesp[whichentry].szEntryName;
       if (rasentriesp[whichentry].dwSize /* connection is online */
-          && __MatchMask( connname,
+          && __MatchMask( connname, 1 /* "always" a dialup dev */,
                           lurker.mask_include_all,
                           lurker.mask_default_only, 
                           &lurker.ifacestowatch[0]) )
@@ -1373,8 +1407,10 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
        #if (CLIENT_OS == OS_LINUX) || ((CLIENT_OS == OS_OS2) && defined(__EMX__))
        for (n = 0, ifr = ifc.ifc_req; n < ifc.ifc_len; n += sizeof(struct ifreq), ifr++)
        {
-         if (__MatchMask(ifr->ifr_name,lurker.mask_include_all,
-                         lurker.mask_default_only, &lurker.ifacestowatch[0] ))
+         if (__MatchMask(ifr->ifr_name,0 /*dunno if its a dialup dev or not*/,
+                         lurker.mask_include_all,
+                         lurker.mask_default_only, 
+                         &lurker.ifacestowatch[0] ))
          {
            char devname[64];
            strncpy(devname,ifr->ifr_name,sizeof(devname));
@@ -1423,8 +1459,10 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
          int sa_len = sa->sa_len;
          if (sa->sa_family == AF_INET)  // filter-out anything other than AF_INET
          {                            // (in fact this filter-out AF_LINK)
-           if (__MatchMask(ifr->ifr_name,lurker.mask_include_all,
-                           lurker.mask_default_only, &lurker.ifacestowatch[0] ))
+           if (__MatchMask(ifr->ifr_name, 0 /*dunno if its a dialup dev or not*/,
+                           lurker.mask_include_all,
+                           lurker.mask_default_only, 
+                           &lurker.ifacestowatch[0] ))
            {
              int isup = 0;
              char devname[64];
