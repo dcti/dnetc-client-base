@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.200 2000/11/08 00:15:34 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.201 2000/11/09 22:50:17 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -51,6 +51,7 @@ BUILDNAME=$1
 # Define the default compilation options
 #
 TARGET_CC="cc"
+TARGET_CP="cp"
 TARGET_CCFLAGS=""
 TARGET_LD=""          # blank implies TARGET_CC
 TARGET_LDFLAGS=""
@@ -60,7 +61,6 @@ TARGET_NASM="nasm"     #<- set this to "" if you have no nasm
 TARGET_NASM_FMT="elf"  #<- set this to "" if you have no nasm
 TARGET_ASFLAGS=""
 TARGET_STRIP="strip"
-TARGET_CP="cp"
 TARGET_OS=""           #<-may be needed for cross-compile or special handling
 
 TARGET_ADDSRCS=""
@@ -113,10 +113,11 @@ add_sources() # $1=os, $2=arch, $3=custom
                  platforms/amiga/amConsole.c \
                  ${COMMON_SRCS}"
   elif [ "$1" = "linux" ]; then 
-    COMMON_SRCS="platforms/linux/resolv.c \
-    	           platforms/linux/li_inst.c
-                 ${COMMON_SRCS}"
-    #(unneeded) TARGET_CCFLAGS="$TARGET_CCFLAGS -DUNIVERSALRESOLVER"
+    COMMON_SRCS="platforms/linux/li_inst.c ${COMMON_SRCS}"
+    if [ "$2" = "x86" ]; then #maybe others as well
+      #(obsolete) TARGET_CCFLAGS="$TARGET_CCFLAGS -DUNIVERSALRESOLVER"
+      COMMON_SRCS="platforms/linux/resolv.c ${COMMON_SRCS}"
+    fi
   elif [ "$1" = "riscos" ]; then
     COMMON_SRCS="platforms/riscos/riscos_sup.cpp \
                  platforms/riscos/riscos_x86.cpp \
@@ -281,17 +282,19 @@ add_sources() # $1=os, $2=arch, $3=custom
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $SLICE_SRCS3"
   #-----------------------------------------------------------------  
   elif [ "$2" = "alpha" ]; then
-    if [ "${1}-${3}" = "digital-unix-ev4" ]; then
-      TARGET_ADDSRCS="rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
-      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMEGGS -DKWAN"
-      ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-    else
-      TARGET_ADDSRCS="rc5/alpha/axp-bmeyer.cpp"
-      if [ "${1}" = "digital-unix" ]; then
-        TARGET_ADDASMS="rc5/alpha/axp-bmeyer-osf.s"
-      else  
-        TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
+    if [ "${1}" = "digital-unix" ]; then  
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alpha/axp-bmeyer.cpp"
+      TARGET_ADDASMS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer-osf.s"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
+      if [ "${1}-${3}" = "digital-unix-mt" ]; then  
+        TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alphaasm/rc5-digital-unix-alpha-ev5.cpp"
+        ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -Ddes_alpha_osf_ev5=des_alpha_osf_ev4"
       fi  
+      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMEGGS -DKWAN -DHAVE_DES_CORES"
+      ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
+    else  
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alpha/axp-bmeyer.cpp"
+      TARGET_ADDASMS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer.s"
       #DWORZ_SLICE_SRCS="des/alpha-asm/deseval-dworz3.S des/alpha-asm/des-slice-dworz.cpp"
       ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DDWORZ -DHAVE_DES_CORES"
       ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DWORZ_SLICE_SRCS"
@@ -409,6 +412,7 @@ OPTS_GAS=""   # for TARGET_ASFLAGS, constructed from generate_gcc_opts()
 
 gccver=0
 gcc_get_ver() {
+
   gccver=0
   if [ "${1}X" = "X" ]; then
     if [ "${TARGET_CC}X" = "X" ]; then  # should not happen
@@ -432,12 +436,12 @@ gcc_get_ver() {
         else
           if [ "$ver_word" = "version" ]; then
             if [ "$lastwas" = "driver" ]; then
-	      lastwas="driver"
-	    else  
-	      lastwas="version"
-	    fi
+	            lastwas="driver"
+      	    else  
+	            lastwas="version"
+      	    fi
           else
-	    lastwas="$ver_word"
+	          lastwas="$ver_word"
           fi
         fi
       fi	
@@ -1107,17 +1111,16 @@ case "$1" in
         add_sources "hpux" "68k"
         ;;
 
-    *dgux-gcc)     # DGUX (Data General Unix)
+    *88k-dgux)     # DGUX (Data General Unix)
         TARGET_CC="/usr/local/bin/g++"
         generate_gcc_opts "88k" "dgux"
-        TARGET_CCFLAGS="$OPTS_GCC -D_POSIX4A_DRAFT6_SOURCE \
-			                -D_DGUX -DOS_ID=OS_DGUX -DMULTITHREAD"
+        TARGET_CCFLAGS="$OPTS_GCC -D_POSIX4A_DRAFT6_SOURCE -D_DGUX -DMULTITHREAD"
         TARGET_LIBS="-lthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "hpux" "88k"
         ;;
 
-###### Sparc/UltraSparc or Sun/SunOS/Solaris
+###### Sparc/UltraSparc
 
     *sparc-openbsd)                   # snake, now without DES
         TARGET_CC="g++"
@@ -1214,31 +1217,25 @@ case "$1" in
 ###### Alpha
 
 
-    *alpha-gcc-digital_unix-mt)
+    *alpha-digital_unix-mt)
         TARGET_CC="g++"
         generate_gcc_opts "alpha" "decunix"
-        TARGET_DIGITAL_UNIX_EV5_SRCS="rc5/alphaasm/rc5-digital-unix-alpha-ev5.cpp"
-        TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT \
-                             -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT \
-                             -Ddes_alpha_osf_ev5=des_alpha_osf_ev4"
-        TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
-        TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
+        TARGET_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT \
+                        -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT"
         TARGET_LIBS="-lpthread -lexc"
-        TARGET_OS="DIGITAL_UNIX"
+        TARGET_OS="DIGITAL_UNIX" # need to treat some cores specially
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "digital-unix" "alpha" "ev4"
+        add_sources "digital-unix" "alpha" "mt"
         ;;
 
     *alpha-digital_unix)
         TARGET_CC="g++"
         TARGET_AS="as"
         generate_gcc_opts "alpha" "decunix"
-        TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT"
-        TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
-        TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
+        TARGET_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT"
         TARGET_LIBS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_OS="DIGITAL_UNIX"
+        TARGET_OS="DIGITAL_UNIX" # need to treat some cores specially
         TARGET_TARBALL="digital_unix-alpha"
         add_sources "digital-unix" "alpha"
         ;;
@@ -1282,19 +1279,18 @@ case "$1" in
     *ppc-linux)		             # [myshkin] linux-ppc
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DNO_ALTIVEC -DMULTITHREAD"
+        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD"
         TARGET_LDFLAGS="-static"
         TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-ppc"
-        OPTS_NOOPT="-O0"
         add_sources "linux" "ppc"
 	      ;;
 
     *ppc-macosxserver) # [mfeiri] (MACH 2.x based: MXS 1.x, Darwin 0.x, Rhapsody)
 	      TARGET_CC="cc"
         #generate_gcc_opts "ppc" "macosx"
-        TARGET_CCFLAGS="-O6 -D__unix__"
+        TARGET_CCFLAGS="-O6"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="macosxserver-ppc"
         add_sources "macosx" "ppc" "mach2"
@@ -1303,7 +1299,7 @@ case "$1" in
     *ppc-macosx)       # [mfeiri] (MACH 3.x based: MacOSXDP, Darwin 1.0)
         TARGET_CC="cc"
         generate_gcc_opts "ppc" "macosx"
-        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD -D__unix__ -faltivec" # -DXMLSERVE
+        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD -faltivec" # -DXMLSERVE
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="macosx-ppc"
         add_sources "macosx" "ppc"
@@ -1359,16 +1355,14 @@ case "$1" in
         # WARNING: the code will show a PPC CPU even though also POWER
         # CPUs are supported !
         TARGET_CC="g++"
-        AIXALL=TRUE
-        ALLCORES="-I./common -I./rc5 -I./des -I./ogr -I./csc -mthreads -D_AIX -DBIT32"
         generate_gcc_opts "power" "aix"
-        AIXPOWERFLAGS="$OPTS_GCC $ALLCORES"
+        AIXPOWERFLAGS="$OPTS_GCC -mthreads -D_AIX"
         generate_gcc_opts "ppc" "aix"
-        AIXPPC601FLAGS="$OPTS_GCC $ALLCORES"
+        AIXPPC601FLAGS="$OPTS_GCC -mthreads -D_AIX"
         generate_gcc_opts "ppc604" "aix"
-        AIXPPC604FLAGS="$OPTS_GCC $ALLCORES"
+        AIXPPC604FLAGS="$OPTS_GCC -mthreads -D_AIX"
         generate_gcc_opts "aixcommon" "aix"
-        TARGET_CCFLAGS="$OPTS_GCC -mthreads -mcpu=common -D_AIX -D_AIXALL"
+        TARGET_CCFLAGS="$OPTS_GCC -mthreads -D_AIX -mcpu=common -D_AIXALL"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_LIBS=$TARGET_LIBS
         TARGET_LDFLAGS="$TARGET_LDFLAGS -mthreads"
@@ -1445,6 +1439,24 @@ case "$1" in
         TARGET_NASM_FMT="elf"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-elf"
+        add_sources "linux" "x86" 
+	      ;;
+
+    *x86-linux-pthread)         # not for distribution
+        TARGET_AS="gcc -c"      
+        TARGET_CC="gcc"
+        generate_gcc_opts "x86" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD"
+        TARGET_NASM_FMT="elf"
+        TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="" # not for distribution
+        TARGET_GENMAN=    # too many unexplainable issues (with glibc?)
+        if [ -f /usr/include/pthread/mit/kthread.h ]; then
+          TARGET_CCFLAGS="$TARGET_CCFLAGS -D_MIT_POSIX_THREADS=1"
+        fi  
+        #TARGET_CCFLAGS="-g $TARGET_CCFLAGS" #for debugging
+        #TARGET_STRIP="touch"                #for debugging
         add_sources "linux" "x86" 
 	      ;;
 
@@ -1689,7 +1701,7 @@ case "$1" in
         TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
         TARGET_AS="armasm"
         TARGET_ASFLAGS="-apcs 3/26bit"
-        TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplatforms -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -J/home/cberry/play/riscoslib/CLib -DCOMPAT_INET4 -D__riscos -DBIT_32 -DHAVE_OGR_CORES"
+        TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplatforms -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -J/home/cberry/play/riscoslib/CLib -DCOMPAT_INET4 -D__riscos -DHAVE_OGR_CORES"
         TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
         TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
         TARGET_STRIP=touch
@@ -1780,8 +1792,7 @@ case "$1" in
         TARGET_CC="gcc"
         TARGET_AS=""
         generate_gcc_opts "s390" "os390"
-        TARGET_CCFLAGS="$OPTS_GCC -D_ALL_SOURCE \
-                        " #-D__STRING_CODE_SET__="ISO8859-1"
+        TARGET_CCFLAGS="$OPTS_GCC -D_ALL_SOURCE" #-D__STRING_CODE_SET__="ISO8859-1"
         TARGET_ADDASMS=""
         TARGET_LIBS="$SOCKS_LIBS"
         TARGET_DOCFILES="docs/readme.os390"   #platform specific docfile
@@ -1909,15 +1920,6 @@ echo "Platform target for \"$1\" recognized."
 
 
 #
-# add things to all
-#
-TARGET_CCFLAGS="$TARGET_CCFLAGS -I./common -I./rc5 -I./des -I./ogr -I./csc"
-##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
-##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-##ogr## TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
-##ogr## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-
-#
 # Build the test program
 #
 if [ "${TARGET_OS}" = "NTO2" -o "${TARGET_OS}" = "OS2" \
@@ -2022,16 +2024,6 @@ if [ -n "${TARGET_ADDNASMS}" ]; then
       TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
   done
 fi
-if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
-  echo "Scanning additional Digital Unix Sources"
-  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} cc-decunix"
-  for target in ${TARGET_DIGITAL_UNIX_EV5_SRCS}; do
-      TARGETOBJECT=output/`basename $target .cpp`.o
-      echo "  ${target} -> ${TARGETOBJECT}"
-      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
-      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
-  done
-fi
 if [ -n "${TARGET_ADDSRCS}" ]; then
   echo "Scanning additional C/C++ dependencies..."
   TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} cc"
@@ -2066,16 +2058,13 @@ echo "" >> Makefile
 
 echo "CC = ${TARGET_CC}" >> Makefile
 echo "CP = ${TARGET_CP}" >> Makefile
-echo "CCFLAGS = ${TARGET_CCFLAGS}" >> Makefile
-if [ -n "$AIXALL" ]; then
-  echo "PPC601FLAGS = ${AIXPPC601FLAGS}" >> Makefile
-  echo "PPC604FLAGS = ${AIXPPC604FLAGS}" >> Makefile
-  echo "POWERFLAGS = ${AIXPOWERFLAGS}" >> Makefile
+echo "HPATHS = -I./common -I./rc5 -I./des -I./ogr -I./csc" >> Makefile
+echo "CCFLAGS = ${TARGET_CCFLAGS} \${HPATHS}" >> Makefile
+if [ "${BUILDNAME}" = "aix-all" ]; then
+  echo "PPC601FLAGS = ${AIXPPC601FLAGS} \${HPATHS}" >> Makefile
+  echo "PPC604FLAGS = ${AIXPPC604FLAGS} \${HPATHS}" >> Makefile
+  echo "POWERFLAGS = ${AIXPOWERFLAGS} \${HPATHS}" >> Makefile
 fi
-if [ -n "$OPTS_NOOPT" ]; then
-  echo "OPTS_NOOPT = ${OPTS_NOOPT}" >> Makefile
-fi
-
 echo "LD = ${TARGET_LD}" >> Makefile
 echo "LDFLAGS = ${TARGET_LDFLAGS}" >> Makefile
 echo "LIBS = ${TARGET_LIBS}" >> Makefile
@@ -2214,8 +2203,6 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "cc" ]; then
       TARGETTYP="$target"
-    elif [ "${target}" = "cc-decunix" ]; then
-      TARGETTYP="$target"
     elif [ "${target}" = "as" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "nasm" ]; then  
@@ -2224,7 +2211,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
     elif [ "${TARGETSRC}X" = "X" ]; then
       TARGETSRC="$target"
     # ------------------------------------  
-    elif [ "${TARGETTYP}" = "cc" ]; then
+    elif [ "${TARGETTYP}" = "cc" -o "${TARGETTYP}" = "cc-decunix" ]; then
       TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
       has_problem_h=0
       has_client_h=0
@@ -2264,9 +2251,34 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
           deplist="$deplist ogr/ansi/ogr.h"
         fi
       fi    
-      TARGET_HDEPS="$deplist"
-      echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
-      echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
+      #----------------
+      CCFLAGS_SELECT="\${CCFLAGS}"
+      if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
+        if [ "$target" = "output/rc5-digital-unix-alpha-ev5.o" ]; then
+          CCFLAGS_SELECT="-mcpu=ev5 ${CCFLAGS_SELECT}"
+        else
+          CCFLAGS_SELECT="-mcpu=ev4 ${CCFLAGS_SELECT}"
+        fi  
+      elif [ "$TARGET_OS" = "AMIGAOS_PPC" -o "$BUILDNAME" = "ppc-linux" ]; then
+        # get around gcc2.8/gcc2.9/egcs bugs
+        if [ "$target" = "output/problem.o" \
+          -o "$target" = "output/rc5_unit_func_lintilla.o" \
+          -o "$target" = "output/rc5_unit_func_lintilla-604.o" \
+          -o "$target" = "output/rc5_unit_func_allitnil.o" ]; then
+          CCFLAGS_SELECT="${CCFLAGS_SELECT} -O0"
+        fi
+      elif [ "${BUILDNAME}" = "aix-all" ]; then
+        if [ "$target" = "output/rc5ansi_2-rg.o" ]; then
+          CCFLAGS_SELECT="\${POWERFLAGS}"
+        elif [ "$target" = "output/allitnil_552.ppc.o" ]; then
+          CCFLAGS_SELECT="\${PPC601FLAGS}"
+        elif [ "$target" = "output/lintilla_296.ppc.o" \
+            -o "$target" = "output/lintilla_296-604.ppc.o" ]; then
+          CCFLAGS_SELECT="\${PPC604FLAGS}"
+        fi
+      fi    
+      echo "$target:	${TARGETSRC} ${deplist}" >> Makefile
+      echo "	\${CC} -c ${CCFLAGS_SELECT} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------  
@@ -2279,13 +2291,6 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
     elif [ "${TARGETTYP}" = "nasm" ]; then
       echo "$target:	${TARGETSRC}" >> Makefile
       echo "	\${NASM} \${NASMFLAGS} ${TARGETSRC} -o $target" >> Makefile
-      echo "" >> Makefile
-      TARGETSRC=""
-    # ------------------------------------  
-    elif [ "${TARGETTYP}" = "cc-decunix" ]; then
-      TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
-      echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
-      echo "	\${CC} -c $TARGET_EV5_CCFLAGS ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------  
@@ -2317,44 +2322,6 @@ if [ "$TARGET_OS" = "OS2" ]; then
   echo "output/${TARGET_BINNAME}.res: output/${TARGET_BINNAME}.rc" >> Makefile
   echo "	rc -r output\\${TARGET_BINNAME}.rc output\\${TARGET_BINNAME}.res" >> Makefile
   echo "" >> Makefile
-fi
-
-#
-# Other ugly platform specific manipulations on final Makefile.
-#
-if [ -n "$AIXALL" ]; then
-  echo "Patching compiler settings in Makefile for the cores"
-  mv Makefile Makefile.tmp
-  awk '
-/allitnil_552.ppc.s -o/ { print "\t\${CC} -c ${PPC601FLAGS} " $4 " " $5 " " $6 ; next }
-/lintilla_296.ppc.s -o/ { print "\t\${CC} -c ${PPC604FLAGS} " $4 " " $5 " " $6 ; next }
-/lintilla_296-604.ppc.s -o/ { print "\t\${CC} -c ${PPC604FLAGS} " $4 " " $5 " " $6 ; next }
-/rc5ansi_2-rg.cpp -o/ { print "\t\${CC} -c ${POWERFLAGS} " $4 " " $5 " " $6 ; next }
-{ print $0 }' Makefile.tmp > Makefile
-  rm Makefile.tmp
-fi
-
-if [ -n "$OPTS_NOOPT" ]; then
-  echo "Removing optimization flags in Makefile for linux-ppc compilation..."
-  mv Makefile Makefile.tmp
-  awk '
-/problem.cpp -o/ { print "\t${CC} -c ${CCFLAGS} ${OPTS_NOOPT} common/problem.cpp -o output/problem.o"; next }
-/confmenu.cpp -o/ { print "\t${CC} -c ${CCFLAGS} ${OPTS_NOOPT} common/confmenu.cpp -o output/confmenu.o"; next }
-/rc5_unit_func_lintilla.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_lintilla.cpp -o output/rc5_unit_func_lintilla.o"; next }
-/rc5_unit_func_lintilla-604.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_lintilla-604.cpp -o output/rc5_unit_func_lintilla-604.o"; next }
-/rc5_unit_func_allitnil.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_allitnil.cpp -o output/rc5_unit_func_allitnil.o"; next }
-{ print $0 }' Makefile.tmp > Makefile
-  rm Makefile.tmp
-fi
-
-if [ "$TARGET_OS" = "AMIGAOS_PPC" ]; then
-  echo "Removing optimization flags in Makefile for amigaos-ppc compilation..."
-  mv Makefile Makefile.tmp
-  awk '
-/problem.cpp -o/ { print "\t${CC} -c ${CCFLAGS} -O0 common/problem.cpp -o output/problem.o"; next }
-/rc5_unit_func_allitnil.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} -O0 rc5/ppc/rc5_unit_func_allitnil.cpp -o output/rc5_unit_func_allitnil.o"; next }
-{ print $0 }' Makefile.tmp > Makefile
-  rm Makefile.tmp
 fi
 
 
