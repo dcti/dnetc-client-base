@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.cpp,v $
+// Revision 1.152.2.7  1998/11/18 15:57:15  remi
+// Another clean-up.
+//
 // Revision 1.152.2.6  1998/11/18 15:41:51  remi
 // Cleaned-up the mess I put in the last night... sorry folks !
 //
@@ -73,28 +76,6 @@ Client::Client()
 
 // --------------------------------------------------------------------------
 
-static const char *GetBuildOrEnvDescription(void)
-{
-  /*
-  <cyp> hmm. would it make sense to have the client print build data 
-  when starting? running OS, static/dynamic, libver etc? For idiots who
-  send us log extracts but don't mention the OS they are running on.
-  Only useful for win-weenies I suppose. 
-  */
-
-  #if ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
-  static char buffer[64];
-  int major, minor;
-  w32ConGetWinVersion(&major,&minor);
-  sprintf(buffer,"Running under Windows%s %u.%u", (major>20)?(" NT"):(""), major%20, minor );
-  return buffer;
-  #else
-  return "";
-  #endif
-}  
-
-// --------------------------------------------------------------------------
-
 static void PrintBanner(void)
 {
   static unsigned int level = 0; //incrementing so messages are not repeated
@@ -152,11 +133,8 @@ static void PrintBanner(void)
   if ( level == 1 )
     {  
     level++; //will never print this message again
-    LogRaw("\nRC5DES Client %s for %s started.\n", CLIENT_VERSIONSTRING,
+    LogRaw("\nRC5DES Client %s for %s started.\n\n", CLIENT_VERSIONSTRING,
                                                    CLIENT_OS_NAME );
-    const char *msg = GetBuildOrEnvDescription();
-    if (msg && *msg) LogRaw( "%s\n", msg );
-
     }
   return;
 }
