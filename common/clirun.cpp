@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.97 1999/05/04 04:12:50 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98 1999/05/08 01:49:44 dicamillo Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -748,8 +748,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         #elif (CLIENT_OS == OS_NETWARE)
         while (thrparams->threadID) delay(100);
         #elif (CLIENT_OS == OS_MACOS)
-        #error use while (thrparams->threadID) tick_sleep(60); here
-        while (ThreadIsDone[thrparams->threadnum] == 0) tick_sleep(60);
+        while (thrparams->threadID) tick_sleep(60);
         #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
         pthread_join( thrparams->threadID, (void **)NULL);
         #endif
@@ -830,21 +829,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           new_threadid = NULL;
         else
           success = 1;
-
         thrparams->threadID = new_threadid;
-        #if defined(MAC_GUI)
-        #error please change this to use event posted in the if (success) section below
-        #error CalcPercent() and GetKeysdone() may return unexpected results
-        if (success)
-        {
-          Problem *thisprob;
-          thisprob = GetProblemPointerFromIndex( thread_i );
-          MakeGUIThread(thisprob->contest, thread_i);
-          InitializeThreadProgress(thread_i, thisprob->CalcPercent(),
-                     thisprob->GetKeysDone());
-          UpdateClientInfo(&client_info);
-        }
-        #endif
       #elif defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
         #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
           SetGlobalPriority( thrparams->priority );
@@ -882,18 +867,6 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     if (success)
     {
       ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTARTED, (long)thread_i );
-      #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-      {
-        #error please change this to use event posted in the if (success) section above
-        #error CalcPercent() and GetKeysdone() may return unexpected results
-        Problem *thisprob;
-        thisprob = GetProblemPointerFromIndex( 0 );
-        MakeGUIThread(thisprob->contest, 0);
-        InitializeThreadProgress(0, thisprob->CalcPermille(),
-                  thisprob->GetKeysDone());
-        UpdateClientInfo(&client_info);
-      }
-      #endif
       yield_pump(NULL);   //let the thread start
     }
     else
