@@ -9,7 +9,7 @@
  * and are therefore intended to behave more like spinlocks than mutexes.
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.3 2001/01/28 14:31:25 cyp Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.4 2001/02/05 01:13:36 oliver Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -125,8 +125,89 @@
      }
    }
 
-#elif (CLIENT_OS == OS_AMIGAOS)
-   #error Help! I need somebodys help! Heeeelp!
+#elif (CLIENT_CPU == CPU_POWERPC) && defined(__GNUC__)
+
+  typedef struct { volatile int spl; } mutex_t;
+  #define DEFAULTMUTEX {0}
+  static __inline__ void mutex_unlock(mutex_t *m)
+  { 
+    int t;
+    __asm__ __volatile__( /* atomic decrement */
+            "1: lwarx   %0,0,%2\n"         \
+            "   addic   %0,%0,-1\n"        \
+            "   stwcx.  %0,0,%2\n"         \
+            "   bne     1b"                \
+            : "=&r" (t), "=m" (m->spl)     \
+            : "r" (m), "m" (m->spl)        \
+            : "cc");
+    return;
+  }
+  static __inline__ int mutex_try_lock(mutex_t *m)
+  {
+    int t;
+    __asm__ __volatile__(  /* atomic increment */
+            "1: lwarx   %0,0,%2\n"        \
+            "   addic   %0,%0,1\n"        \
+            "   stwcx.  %0,0,%2\n"        \
+            "   bne-    1b"               \
+            : "=&r" (t), "=m" (m->spl)    \
+            : "r" (m), "m" (m->spl)       \
+            : "cc");
+    if (t != 1) {          /* count is not 1? */
+       mutex_unlock(m); /* undo the increment */
+       t = 0;
+    }
+    return t;
+  }
+  static __inline__ void mutex_lock(mutex_t *m)
+  {
+    while (mutex_try_lock(m) <= 0)
+    {
+      #if (CLIENT_OS == OS_AMIGAOS)
+      NonPolledUSleep(1);
+      #else
+      #error "What's up Doc?"
+      #endif
+    }
+  }
+
+#elif (CLIENT_CPU == CPU_68K) && defined(__GNUC__)
+
+  /* IMPORTANT: has to be a char (not an int) since when the destination for
+  ** BTST is a memory location, the operation must be a byte operation
+  */
+  typedef struct { volatile char spl; } mutex_t;
+  #define DEFAULTMUTEX {0}
+  static __inline__ void mutex_unlock(mutex_t *m)
+  { 
+    /* m->spl = 0; */
+    __asm__  __volatile__ (
+             "clr.b %0"         \
+             : "=m"  (m->spl)   \
+             :  "0"  (m->spl));
+  }
+  static __inline__ char mutex_try_lock(mutex_t *m)
+  {
+    char lacquired;
+    __asm__  __volatile__ (
+             "bset #0,%1\n"      \
+             "sne %0"            \
+             : "=d" (lacquired)  \
+             :  "m" (m->spl));
+    return lacquired;  // -1 = acquired, 0 = not aquired
+  }
+  static __inline__ void mutex_lock(mutex_t *m)
+  {
+    while (mutex_try_lock(m) == 0)
+    {
+      #if (CLIENT_OS == OS_AMIGAOS)
+      NonPolledUSleep(1);
+      #else
+      #error "What's up Doc?"
+      #endif
+    }
+  }
+
 #else
    #error How did you get here?
 #endif
