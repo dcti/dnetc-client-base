@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.78 2001/10/06 22:57:20 mfeiri Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.79 2002/03/21 18:04:22 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -941,7 +941,6 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0640,  0x109, "K7-4" }, //thunderbird, 256K on-die cache
           {  0x0660,  0x109, "K7-6" }, //athlon
           {  0x0670,  0x109, "K7-7" }, //duron 
-          //next-gen chip is athlon core + 2MB on-die cache (Mustang)
           {  0x0000,     -1, NULL       }
           }; internalxref = &amdxref[0];
       vendorname = "AMD";
@@ -984,9 +983,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0680,  0x102, "Pentium III" },
           {  0x0690,  0x102, "Pentium III" }, /* Timna:6547:0692 */
           {  0x06A0,  0x102, "Pentium III" }, //0.18 um w/ 1/2MB on-die L2
-          {  0x06B0,  0x102, "Pentium III" }, /* Tulatin:6547:46B1 */
+          {  0x06B0,  0x102, "Pentium III" }, /* Tualatin:6547:46B1 */
           {  0x0700,  0x105, "Itanium" }, /* 6547:0701. #5 == RG RISC-rotate II */
-          {  0x0F00,  0x10B, "Pentium 4" }, /* #11 = 4 Pipeline P4 core */
+          {  0x0F00,  0x10B, "Pentium 4" },  /* 1.3 - 1.5GHz P4 (0.18u) */
+          {  0x0F10,  0x10B, "Pentium 4" },  /* 1.4 - 2.0GHz P4 (0.18u) */
+          {  0x0F20,  0x10B, "Pentium 4" }, /* >=2.0GHz P4-512k (0.13u) */
           {  0x0000,     -1, NULL }
           }; internalxref = &intelxref[0];
       vendorname = "Intel"; 
@@ -1008,12 +1009,25 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
                          chipname_override = "Celeron-A (Coppermine)";
                        break;
           case 0x2000: chipname_override = "Pentium III"; break;
+          case 0x3000: chipname_override = "Celeron (Tualatin)"; break;
           case 0x4000: if ((cpuid & 0x0f00) < 0x0700)
                          chipname_override = "Pentium II Xeon";
                        else
                          chipname_override = "Pentium III Xeon"; 
                        break;
+          case 0x6000: chipname_override = "Pentium III-M"; break;
           case 0x8000: chipname_override = "Pentium 4"; break;
+          case 0x9000: chipname_override = "Pentium 4 (Northwood)"; break;
+          case 0xB000: if ((cpuid & 0x00f0) == 0x0010)
+                         chipname_override = "Xeon MP";
+                       else
+                         chipname_override = "Xeon DP";
+                       break;
+          case 0xE000: if ((cpuid & 0x00f0) == 0x0020 )
+                         chipname_override = "Pentium 4-M";
+                       else
+                         chipname_override = "Xeon";
+                       break;
           default:     chipname_override = NULL;
         }
       }
