@@ -561,7 +561,7 @@ s32 Client::Fetch( u8 contest, Network *netin )
       u32 percent2 = ((count*10000)/((inthreshold[contest]-more)+count));
       LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
           CliGetTimeString(NULL,1), count, ((inthreshold[contest]-more)+count),
-                    percent2/105900, percent2%100 );
+                    percent2/100, percent2%100 );
 #if !defined(NOMAIN)           // these two must match
     } else {                 // use simple output for redirected stdout
       Log( "<" );
