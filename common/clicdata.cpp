@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.18.2.7 2000/09/21 18:07:36 cyp Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.18.2.8 2000/09/24 13:40:12 andreasb Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
@@ -97,6 +97,8 @@ int CliClearContestInfoSummaryData( int contestid )
   conInfo->BlocksDone = 0;
   conInfo->IterDone = (double)(0);
   conInfo->TimeDone.tv_sec = conInfo->TimeDone.tv_usec = 0;
+  conInfo->UnitsDone = 0;
+  conInfo->BestTime = 0;
   return 0;
 }  
 
