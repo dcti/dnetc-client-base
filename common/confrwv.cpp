@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.90 2002/10/13 08:10:08 jlawson Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.91 2002/10/17 16:51:35 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -182,10 +182,15 @@ static int _readwrite_hostname_and_port( int aswrite, const char *fn,
               portnum = 0;
             len = pos;  
           }
-          if (foundport == 0)
-            foundport = portnum;
+          if (strcmp(hostbuf,"*")==0 || strcmp(hostbuf,"auto")==0)
+          {
+            /* default port */
+            if (foundport == 0)
+              foundport = portnum;
+            len = 0;
+          }
         }  
-        if (len && strcmp(hostbuf,"*")!=0 && strcmp(hostbuf,"auto")!=0)
+        if (len)
         {
           /* update .v27. proxy names to .v29. */
           if (len > 20 && strcmp(&hostbuf[len-20], ".v27.distributed.net") == 0)
@@ -226,77 +231,32 @@ static int _readwrite_hostname_and_port( int aswrite, const char *fn,
     }
     if (!hostname)
       hostname = "";
-    if (!foundport) /* no port to tack on, just sanitize */
+    len = 0;
+    hostbuf[len] = '\0';
+    if (foundport)
     {
-      len = 0;
-      while (*hostname && isspace(*hostname))
-        hostname++;
-      len = 0;
-      while (*hostname && len < (sizeof(hostbuf)-1))
-      {
-        if (*hostname == ',' || *hostname == ';')
-        {
-          if (!multiple)
-            break;
-          hostbuf[len++] = ';';
-        }  
-        else if (!isspace(*hostname))
-          hostbuf[len++] = *hostname;
-        else if (!multiple)
-          break;  
-        hostname++;
-      }
-      hostbuf[len] = '\0';
-      hostname = hostbuf;        
+      sprintf(hostbuf, "*:%d;", foundport);
+      len = strlen(hostbuf);
     }
-    else /* tack port on to first hostname (if it doesn't already have one) */
-    {    
-      char *p = hostname;
-      len = 0; 
-      while (*p && (isspace(*p) || *p == ';' || *p == ','))
-        p++;
-      while (*p && !isspace(*p) && *p != ';' && *p != ',')
-        hostbuf[len++] = *p++;
-      hostbuf[len] = '\0';
-      if (!len)
+    /* sanitize hostname */
+    while (*hostname && isspace(*hostname))
+      hostname++;
+    while (*hostname && len < (sizeof(hostbuf)-1))
+    {
+      if (*hostname == ',' || *hostname == ';')
       {
-        strcpy(hostbuf,"*");
-        len = 1;
+        if (!multiple)
+          break;
+        hostbuf[len++] = ';';
       }
-      else
-      {
-        pos = 0;
-        while (hostbuf[pos] && hostbuf[pos]!=':')
-          pos++;
-        if (hostbuf[pos] == ':')
-          len = 0;
-      }      
-      if (len) /* doesn't already have a port */
-      {
-        sprintf(&hostbuf[len], ":%d", foundport);
-        if (multiple)
-        {
-          len = strlen(hostbuf);
-          while (*p && (isspace(*p) || *p == ';' || *p == ','))
-            p++;
-          if (*p)
-          {
-            strcat(hostbuf, ";");
-            len++;
-            while (*p && len < (sizeof(hostbuf)-1))
-            {
-              if (*p == ',')
-                hostbuf[len++] = ';';
-              else if (!isspace(*p))
-                hostbuf[len++] = *p;
-              p++;
-            }
-            hostbuf[len] = '\0';
-          }    
-        }  
-        hostname = hostbuf;
-      }  
-    } /* if need to tack on port to first name */     
+      else if (!isspace(*hostname))
+        hostbuf[len++] = *hostname;
+      else if (!multiple)
+        break;
+      hostname++;
+    }
+    hostbuf[len] = '\0';
+    hostname = hostbuf;        
 TRACE_OUT((0,"host:'%s'\n",hostname));
     pos = 0;
     if (*hostname || GetPrivateProfileStringB( sect, opt, "", buffer, 2, fn ))
