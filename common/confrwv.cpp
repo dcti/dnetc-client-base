@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.34 2000/05/09 13:48:33 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.35 2000/05/11 15:49:09 cyp Exp $"; }
 
 //#define TRACE
 
@@ -938,6 +938,8 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
     #else
     static const char *obskeys[]={ /* all in "parameters" section */
              "runhidden", "os2hidden", "win95hidden", "checkpoint2",
+             "firemode", "checkpointfile2", "randomprefix", /*now in rc5*/
+             "preferredcontest", "cktime", "exitfilechecktime",
              "niceness", "processdes", "timeslice", "runbuffers",
              "contestdone" /* now in "rc564" */, "contestdone2",
              "contestdone3", "contestdoneflags", "descontestclosed",
