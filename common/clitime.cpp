@@ -17,6 +17,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: clitime.cpp,v $
+// Revision 1.29  1999/03/10 11:54:48  cyp
+// Fixed win32 returning minutes east.
+//
 // Revision 1.28  1999/03/04 02:22:04  silby
 // Fixed typo.
 //
@@ -79,13 +82,13 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.28 1999/03/04 02:22:04 silby Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.29 1999/03/10 11:54:48 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
 #include "sleepdef.h" // usleep for amiga and where gettimeofday is supported
-#include "clitime.h"  // just to keep the prototypes in sync
+#include "clitime.h"  // keep the prototypes in sync
 
 // ---------------------------------------------------------------------
 
@@ -109,7 +112,7 @@ int CliTimerSetDelta( int delta )
 
 /*
  * timezone offset after compensating for dst (west of utc > 0, east < 0)
- * so that the number returned is constant for any time of year
+ * such that the number returned is constant for any time of year
  */
 int CliTimeGetMinutesWest(void)
 {
@@ -126,9 +129,9 @@ int CliTimeGetMinutesWest(void)
   precalced_minuteswest = minwest;
 #elif (CLIENT_OS == OS_WIN32)
   TIME_ZONE_INFORMATION TZInfo;
-  if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFF)
+  if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
     return 0;
-  minwest = -(TZInfo.Bias + TZInfo.DaylightBias);
+  minwest = TZInfo.Bias; /* sdk doc is wrong. .Bias is always !dst */
   precalced_minuteswest = minwest;
 #elif (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_AMIGA) || \
   (CLIENT_OS==OS_MACOS) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET)) || \
