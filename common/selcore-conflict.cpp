@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.7  1998/10/03 03:22:07  cyp
+// Moved 68k core kudos to PrintBanner() [client.cpp]
+//
 // Revision 1.6  1998/09/25 11:31:23  chrisb
 // Added stuff to support 3 cores in the ARM clients.
 //
@@ -31,7 +34,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.6 1998/09/25 11:31:23 chrisb Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.7 1998/10/03 03:22:07 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -66,7 +69,8 @@ static const char *cputypetable[]=
   "ARM 2, 250",
   "ARM 710"
   };
-#elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
+#elif ((CLIENT_CPU == CPU_POWERPC) && \
+      ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX)))
 static const char *cputypetable[]=
   {
   "PowerPC 601",
@@ -131,7 +135,7 @@ s32 Client::SelectCore(void)
         Problem problem;
         ContestWork contestwork;
 
-	contestwork.key.lo = contestwork.key.hi = htonl( 0 );
+        contestwork.key.lo = contestwork.key.hi = htonl( 0 );
         contestwork.iv.lo = contestwork.iv.hi = htonl( 0 );
         contestwork.plain.lo = contestwork.plain.hi = htonl( 0 );
         contestwork.cypher.lo = contestwork.cypher.hi = htonl( 0 );
@@ -155,24 +159,21 @@ s32 Client::SelectCore(void)
   
   LogScreenRaw( "| Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
 #elif (CLIENT_CPU == CPU_68K)
-  LogScreenRaw( "| RC5 68K assembly by John Girvin\n");
   #if (CLIENT_OS == OS_AMIGAOS)
-//  if (cputype<0 || cputype>=(int)(sizeof(cputypetable)/sizeof(cputypetable[0])))
-//    cputype=-1;
   if (cputype==-1)
-  {
+    {
     if (SysBase->AttnFlags & AFF_68040) // Means we have either 040 or 060
       cputype=0;
     else
       cputype=1;
-  }
+    }
   #endif
   if (cputype == 1)
     rc5_unit_func = rc5_unit_func_000_030;
   else //if (cputype == 0)
     rc5_unit_func = rc5_unit_func_040_060;
 
-  LogScreenRaw( "| Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
+  LogScreenRaw( "Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
 
 #elif (CLIENT_CPU == CPU_X86)
 
@@ -283,87 +284,87 @@ s32 Client::SelectCore(void)
 #elif (CLIENT_CPU == CPU_ARM)
 #if (CLIENT_OS == OS_RISCOS)
     if (cputype<0 || cputype>=(int)(sizeof(cputypetable)/sizeof(cputypetable[0])))
-	cputype = -1;
+  cputype = -1;
     if (cputype == -1)              //was ArmID(). Now in cpucheck.cpp
-	cputype = GetProcessorType(); // will return -1 if unable to identify
+  cputype = GetProcessorType(); // will return -1 if unable to identify
 #endif
     if (cputype == -1)
     {
-	const s32 benchsize = 50000*2; // pipeline count is 2
-	double fasttime[2] = { 0, 0 };
-	s32 fastcoretest[2] = { -1, -1 };
-	
-	LogScreenRaw("Automatically selecting fastest core...\n"
-		     "This is just a guess based on a small test of each core. If you know what\n"
-		     "processor this machine has, then please set it in the Performance section\n"
-		     "of the client configuration.\n");
-	
+  const s32 benchsize = 50000*2; // pipeline count is 2
+  double fasttime[2] = { 0, 0 };
+  s32 fastcoretest[2] = { -1, -1 };
+  
+  LogScreenRaw("Automatically selecting fastest core...\n"
+         "This is just a guess based on a small test of each core. If you know what\n"
+         "processor this machine has, then please set it in the Performance section\n"
+         "of the client configuration.\n");
+  
 
-	for (int contestid = 0; contestid < 2; contestid++)
-	{
-	    for (int whichcrunch = 0; whichcrunch < 3; whichcrunch++)
-	    {
-		Problem problem;
-		ContestWork contestwork;
-		contestwork.key.lo = contestwork.key.hi = htonl( 0 );
-		contestwork.iv.lo = contestwork.iv.hi = htonl( 0 );
-		contestwork.plain.lo = contestwork.plain.hi = htonl( 0 );
-		contestwork.cypher.lo = contestwork.cypher.hi = htonl( 0 );
-		contestwork.keysdone.lo = contestwork.keysdone.hi = htonl( 0 );
-		contestwork.iterations.lo = htonl( benchsize );
-		contestwork.iterations.hi = htonl( 0 );
-		problem.LoadState( &contestwork , contestid, benchsize, whichcrunch ); 
+  for (int contestid = 0; contestid < 2; contestid++)
+  {
+      for (int whichcrunch = 0; whichcrunch < 3; whichcrunch++)
+      {
+    Problem problem;
+    ContestWork contestwork;
+    contestwork.key.lo = contestwork.key.hi = htonl( 0 );
+    contestwork.iv.lo = contestwork.iv.hi = htonl( 0 );
+    contestwork.plain.lo = contestwork.plain.hi = htonl( 0 );
+    contestwork.cypher.lo = contestwork.cypher.hi = htonl( 0 );
+    contestwork.keysdone.lo = contestwork.keysdone.hi = htonl( 0 );
+    contestwork.iterations.lo = htonl( benchsize );
+    contestwork.iterations.hi = htonl( 0 );
+    problem.LoadState( &contestwork , contestid, benchsize, whichcrunch ); 
 
-		if (contestid == 0)
-		{
-		    // there are now 3 RC5 cores from which to choose
-		    // probably be a 4th one soon
-		    switch(whichcrunch)
-		    {
-		    case 1:
-			rc5_unit_func = rc5_unit_func_arm_2;
-			break;
-		    case 2:
-			rc5_unit_func = rc5_unit_func_arm_3;
-			break;
-		    default:
-			rc5_unit_func = rc5_unit_func_arm_1;
-			break;
-		    }
-		}
-		else
-		{
-		    // select the correct DES core engine
-		    switch(whichcrunch)
-		    {
-		    case 1:
-			des_unit_func = des_unit_func_strongarm;
-			break;
-		    default:
-			des_unit_func = des_unit_func_arm;
-			break;
-		    }
-		}
-		problem.Run( 0 ); //threadnum
-		
-		double elapsed = CliGetKeyrateForProblemNoSave( &problem );
-		//printf("%s Core %d: %f\n",contestid ? "DES" : "RC5",whichcrunch,elapsed);
-		
-		if (fastcoretest[contestid] < 0 || elapsed < fasttime[contestid])
-		{
-		    fastcoretest[contestid] = whichcrunch; fasttime[contestid] = elapsed;
-		}
-	    }
-	}
-	cputype = (8-(fastcoretest[0] + ((fastcoretest[1]&1)<<2)))&7;
-	if (cputype == 1)
-	{
-	    cputype = 3;
-	}
-	else if (cputype > 3)
-	{
-	    cputype = 1;
-	}
+    if (contestid == 0)
+    {
+        // there are now 3 RC5 cores from which to choose
+        // probably be a 4th one soon
+        switch(whichcrunch)
+        {
+        case 1:
+      rc5_unit_func = rc5_unit_func_arm_2;
+      break;
+        case 2:
+      rc5_unit_func = rc5_unit_func_arm_3;
+      break;
+        default:
+      rc5_unit_func = rc5_unit_func_arm_1;
+      break;
+        }
+    }
+    else
+    {
+        // select the correct DES core engine
+        switch(whichcrunch)
+        {
+        case 1:
+      des_unit_func = des_unit_func_strongarm;
+      break;
+        default:
+      des_unit_func = des_unit_func_arm;
+      break;
+        }
+    }
+    problem.Run( 0 ); //threadnum
+    
+    double elapsed = CliGetKeyrateForProblemNoSave( &problem );
+    //printf("%s Core %d: %f\n",contestid ? "DES" : "RC5",whichcrunch,elapsed);
+    
+    if (fastcoretest[contestid] < 0 || elapsed < fasttime[contestid])
+    {
+        fastcoretest[contestid] = whichcrunch; fasttime[contestid] = elapsed;
+    }
+      }
+  }
+  cputype = (8-(fastcoretest[0] + ((fastcoretest[1]&1)<<2)))&7;
+  if (cputype == 1)
+  {
+      cputype = 3;
+  }
+  else if (cputype > 3)
+  {
+      cputype = 1;
+  }
     }
     LogScreenRaw("Selecting %s code.\n",GetCoreNameFromCoreType(cputype));
     
@@ -371,22 +372,22 @@ s32 Client::SelectCore(void)
     switch(cputype)
     {
     case 0:
-	rc5_unit_func = rc5_unit_func_arm_1;
-	des_unit_func = des_unit_func_arm;
-	break;
+  rc5_unit_func = rc5_unit_func_arm_1;
+  des_unit_func = des_unit_func_arm;
+  break;
     default:
     case 1:
-	rc5_unit_func = rc5_unit_func_arm_3;
-	des_unit_func = des_unit_func_strongarm;
-	break;
+  rc5_unit_func = rc5_unit_func_arm_3;
+  des_unit_func = des_unit_func_strongarm;
+  break;
     case 2:
-	rc5_unit_func = rc5_unit_func_arm_2;
-	des_unit_func = des_unit_func_strongarm;
-	break;
+  rc5_unit_func = rc5_unit_func_arm_2;
+  des_unit_func = des_unit_func_strongarm;
+  break;
     case 3:
-	rc5_unit_func = rc5_unit_func_arm_3;
-	des_unit_func = des_unit_func_arm;
-	break;
+  rc5_unit_func = rc5_unit_func_arm_3;
+  des_unit_func = des_unit_func_arm;
+  break;
     }
     
 #else
