@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.23 2000/04/21 08:55:34 jlawson Exp $
+# $Id: makefile.vc,v 1.56.2.24 2000/04/29 04:52:49 gentleps Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -141,7 +141,7 @@ PLAT_OBJS =                          \
         $(OUTPUTPATH)/w32svc.obj     \
         $(OUTPUTPATH)/w32exe.obj     \
         $(OUTPUTPATH)/w32ini.obj     \
-        $(OUTPUTPATH)/w32pid.obj     \
+        $(OUTPUTPATH)/w32snapp.obj   \
         $(OUTPUTPATH)/w32util.obj
 
 SCR_OBJS =                           \
