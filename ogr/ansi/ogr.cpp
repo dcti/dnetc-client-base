@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.16 2000/11/09 14:29:14 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.17 2000/11/09 23:31:53 oliver Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -1413,7 +1413,7 @@ static int found_one(const struct State *oState)
 #elif defined(__PPC__) || defined(ASM_PPC) || defined (__POWERPC__)/* CouNT Leading Zeros Word */
   #if defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
-    { i = ~i; __asm__ ("cntlzw %0,%1" : "=r" (i) : "r" (i)); return i+1; }
+    { i = ~i; __asm__ ("cntlzw %0,%0" : "=r" (i) : "0" (i)); return ++i; }
   #elif (__MWERKS__) || (__MRC__)
     #define LOOKUP_FIRSTBLANK(x) (__cntlzw(~((unsigned int)(x)))+1)
   #else
@@ -1477,7 +1477,7 @@ static int found_one(const struct State *oState)
   #endif
 #elif defined(ASM_68K) && defined(__GNUC__) /* Bit field find first one set (020+) */
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
-  { i = ~i; __asm__ ("bfffo %1,0,0,%0" : "=d" (i) : "d" (i)); return ++i; }  
+  { i = ~i; __asm__ ("bfffo %0,0,0,%0" : "=d" (i) : "0" (i)); return ++i; }  
 #else
   #error OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM is defined, and no code to match
 #endif
