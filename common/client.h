@@ -91,6 +91,7 @@ extern "C" {
     #include <machine/endian.h>
     #include <kernel.h>
     extern unsigned int ARMident(), IOMDident();
+    extern void riscos_clear_screen();
     extern bool riscos_check_taskwindow();
     extern int riscos_find_local_directory(const char *argv0);
     extern char *riscos_localise_filename(const char *filename);
@@ -533,24 +534,24 @@ public:
   s32  ConfigureGeneral( s32 currentmenu );
     // part of the interactive setup
 
-  s32 yesno(char *str);
+  static s32 yesno(char *str);
     // Checks whether user typed yes or no, used in interactive setup
     // Returns 1=yes, 0=no, -1=unknown
 
-  s32 findmenuoption( s32 menu, s32 option);
+  static s32 findmenuoption( s32 menu, s32 option);
     // Returns the id of the option that matches the menu and option
     // requested. Will return -1 if not found.
 
   void setupoptions( void );
     // Sets all the pointers/etc for optionstruct options
 
-  void killwhitespace( char *string );
+  static void killwhitespace( char *string );
     // Removes all spaces from a string
 
-  int isstringblank( char *string );
+  static int isstringblank( char *string );
     // returns 1 if a string is blank (or null), 0 if it is not
 
-  void clearscreen( void );
+  static void clearscreen( void );
     // Clears the screen. (Platform specific ifdefs go inside of it.)
 
   s32  ReadConfig( void );
