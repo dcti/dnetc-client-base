@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.24 2000/10/19 13:45:52 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.25 2000/10/24 19:36:13 oliver Exp $"; }
 
 //#define TRACE
 
@@ -308,13 +308,18 @@ struct ifact
 
 #elif (CLIENT_OS == OS_AMIGAOS)
 #include "baseincs.h"
-#include "network.h"
 #include "sleepdef.h"
 #include "triggers.h"
 #include <net/if.h>
 #include <fcntl.h>
 #include <proto/miami.h>
-
+#include "platforms/amiga/amiga.h"
+#define _KERNEL
+#include <sys/socket.h>
+#undef _KERNEL
+#include <proto/socket.h>
+#include <sys/ioctl.h>
+#define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
 #define ioctl(a,b,c) IoctlSocket(a,b,(char *)c)
 #define close(a) CloseSocket(a)
 #endif
