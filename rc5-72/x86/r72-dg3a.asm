@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3a.asm,v 1.2.2.2 2002/11/28 08:09:02 stream Exp $
+; $Id: r72-dg3a.asm,v 1.2.2.3 2003/01/17 21:48:30 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -72,9 +72,9 @@ defwork save_ebp
 %define L1(N)                   [work_L1+((N)*4)]
 %define L2(N)                   [work_L2+((N)*4)]
 %define L3(N)                   [work_L3+((N)*4)]
-%define L1backup(N)             [work_L1+((N)*4)]
-%define L2backup(N)             [work_L2+((N)*4)]
-%define L3backup(N)             [work_L3+((N)*4)]
+%define L1backup(N)             [work_backup_L1+((N)*4)]
+%define L2backup(N)             [work_backup_L2+((N)*4)]
+%define L3backup(N)             [work_backup_L3+((N)*4)]
 
 %macro k7nop 1
     %if %1>3
