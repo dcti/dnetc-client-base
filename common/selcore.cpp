@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.47 2003/04/20 00:41:15 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.48 2003/04/27 22:35:26 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -1594,35 +1594,37 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
     {
       switch (detected_type)
       {
-        case  1: cindex =-1; break; // SPARCstation SLC == ?
-        case  2: cindex =-1; break; // SPARCstation ELC == ?
-        case  3: cindex =-1; break; // SPARCstation IPC == ?
-        case  4: cindex =-1; break; // SPARCstation IPX == ?
-        case  5: cindex =-1; break; // SPARCstation 1   == ?
-        case  6: cindex =-1; break; // SPARCstation 1+  == ?
-        case  7: cindex =-1; break; // SPARCstation 2   == ? 
-        case  8: cindex =-1; break; // microSPARC       == ?
-        case  9: cindex = 3; break; // microSPARC II    == KKS 2-pipe
+        case  1: cindex = 4; break; // SPARCstation SLC == AnBe 1-pipe
+        case  2: cindex = 4; break; // SPARCstation ELC == AnBe 1-pipe
+        case  3: cindex = 4; break; // SPARCstation IPC == AnBe 1-pipe
+        case  4: cindex = 4; break; // SPARCstation IPX == AnBe 1-pipe
+        case  5: cindex = 4; break; // SPARCstation 1   == AnBe 1-pipe
+        case  6: cindex = 4; break; // SPARCstation 1+  == AnBe 1-pipe
+        case  7: cindex = 4; break; // SPARCstation 2   == AnBe 1-pipe
+        case  8: cindex = 4; break; // microSPARC       == AnBe 1-pipe
+        case  9: cindex = 4; break; // microSPARC II    == AnBe 1-pipe
         case 10: cindex =-1; break; // TurboSPARC       == ?
-        case 11: cindex =-1; break; // SuperSPARC       == ?
-        case 12: cindex = 3; break; // SuperSPARC SC    == KKS 2-pipe
+        case 11: cindex =-1; break; // SuperSPARC       == AnBe 2-pipe
+        case 12: cindex = 5; break; // SuperSPARC SC    == AnBe 2-pipe
+                                    // SuperSPARC-II is missing in this list !
         case 13: cindex =-1; break; // hyperSPARC       == ?
         case 14: cindex =-1; break; // hyperSPARC       == ?
-        case 15: cindex = 3; break; // UltraSPARC-I     == KKS 2-pipe
-        case 16: cindex = 3; break; // UltraSPARC-II    == KKS 2-pipe
-        case 17: cindex = 3; break; // UltraSPARC-IIi   == KKS 2-pipe
-        case 18: cindex = 3; break; // UltraSPARC-IIe   == KKS 2-pipe
-        case 19: cindex = 3; break; // UltraSPARC-III   == KKS 2-pipe
+        case 15: cindex = 5; break; // UltraSPARC-I     == AnBe 2-pipe
+        case 16: cindex = 5; break; // UltraSPARC-II    == AnBe 2-pipe
+        case 17: cindex = 5; break; // UltraSPARC-IIi   == AnBe 2-pipe
+        case 18: cindex = 5; break; // UltraSPARC-IIe   == AnBe 2-pipe
+        case 19: cindex = 5; break; // UltraSPARC-III   == AnBe 2-pipe
         default: cindex =-1; break; // no default 
       }
     }
     #else /* non-Solaris */
-    /* there is currently only one asm core and this is the fastest core
-       on all systems benchmarked so far ...
-       ... so we currently don't need to care about cpu detection (linux
-       only) and just pre-select KKS 2-pipe everywhere
+    /* cpu detection and core preselection for all the SPARC OSes needs a
+       complete overhaul and generalization
+       sparc v8: impl = %psr[31..28], vers = %psr[27..24]
+       sparc v9: manufacturer = %ver[63..48], impl = %ver[47..32]
+       should be used for the cpu id number (detected_type) and preselection
+       derived from this value
     */
-    cindex = 3; // == KKS 2-pipe
     #endif
   }
   #elif (CLIENT_OS == OS_PS2LINUX) // OUCH !!!! SELECT_BY_CPU !!!!! FIXME
