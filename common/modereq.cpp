@@ -8,6 +8,10 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.10  1998/11/15 11:00:17  remi
+// Moved client->SelectCore() for -test and -benchmark* from cmdline.cpp to
+// modereq.cpp and told it to not be quiet.
+//
 // Revision 1.9  1998/11/10 23:01:28  silby
 // Fixed a & that should've been a && - was breaking updates.
 //
@@ -38,7 +42,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.9 1998/11/10 23:01:28 silby Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.10 1998/11/15 11:00:17 remi Exp $"; }
 #endif
 
 #include "client.h"   //client class
@@ -148,6 +152,7 @@ int ModeReqRun(Client *client)
         {
         if (client)
           {
+          client->SelectCore( 0 /* not quietly */ );
           u32 benchsize = (1L<<23); /* long bench: 8388608 instead of 100000000 */
           if ((bits & (MODEREQ_BENCHMARK_QUICK))!=0)
             benchsize = (1L<<20); /* short bench: 1048576 instead of 10000000 */
@@ -283,6 +288,7 @@ int ModeReqRun(Client *client)
         {
         if (client)
           {
+          client->SelectCore( 0 /* not quietly */ );
           if ( SelfTest(0, client->cputype ) > 0 ) 
             SelfTest(1, client->cputype );
           }

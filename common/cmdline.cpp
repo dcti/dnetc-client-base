@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.98  1998/11/15 11:00:16  remi
+// Moved client->SelectCore() for -test and -benchmark* from cmdline.cpp to
+// modereq.cpp and told it to not be quiet.
+//
 // Revision 1.97  1998/11/14 13:51:07  cyp
 // -hidden/-quiet spawn of a new process for unix hosts is done here instead
 // of from main.
@@ -64,7 +68,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.97 1998/11/14 13:51:07 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.98 1998/11/15 11:00:16 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -944,7 +948,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         inimissing = 0; // Don't complain if the inifile is missing
         ModeReqClear(-1); //clear all - only do -test
         ModeReqSet( MODEREQ_TEST );
-        SelectCore( 1 /* quietly */ );
         break;
         }
       else if (strncmp( thisarg, "-benchmark", 10 ) == 0)
@@ -968,7 +971,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         inimissing = 0; // Don't complain if the inifile is missing
         ModeReqClear(-1); //clear all - only do benchmark
         ModeReqSet( do_mode );
-        SelectCore( 1 /* quietly */ );
         break;
         }
       else if ( strcmp( thisarg, "-forceunlock" ) == 0 )
