@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.115 2001/04/09 01:33:03 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.116 2001/04/11 16:17:58 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2092,237 +2092,238 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
   if (thisprob)
   {  
     rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
-  }
-  if (rescode >= 0)
-  {
-    u32 e_sec = 0, e_usec = 0;
 
-    info->name = CliGetContestNameFromID(contestid);
-    info->unit = CliGetContestUnitFromID(contestid);
-    info->is_test_packet = contestid == RC5 && 
-                           work.crypto.iterations.lo == 0x00100000 &&
-                           work.crypto.iterations.hi == 0;
-    info->stats_units_are_integer = (contestid != OGR);
-    info->show_exact_iterations_done = (contestid == OGR);
-
-    if (flags & (P_INFO_E_TIME | P_INFO_RATE | P_INFO_RATEBUF))
+    if (rescode >= 0)
     {
-      if (thisprob->pub_data.elapsed_time_sec != 0xfffffffful)
+      u32 e_sec = 0, e_usec = 0;
+  
+      info->name = CliGetContestNameFromID(contestid);
+      info->unit = CliGetContestUnitFromID(contestid);
+      info->is_test_packet = contestid == RC5 && 
+                             work.crypto.iterations.lo == 0x00100000 &&
+                             work.crypto.iterations.hi == 0;
+      info->stats_units_are_integer = (contestid != OGR);
+      info->show_exact_iterations_done = (contestid == OGR);
+  
+      if (flags & (P_INFO_E_TIME | P_INFO_RATE | P_INFO_RATEBUF))
       {
-        // problem finished, elapsed time has already calculated by Run()
-        e_sec  = thisprob->pub_data.elapsed_time_sec;
-        e_usec = thisprob->pub_data.elapsed_time_usec;
-      }     
-      else /* compute elapsed wall clock time since loadtime */
-      {
-        u32 start_sec  = thisprob->priv_data.loadtime_sec;
-        u32 start_usec = thisprob->priv_data.loadtime_usec;
-
-        if (start_sec != 0xfffffffful) /* our start time was not invalid */
+        if (thisprob->pub_data.elapsed_time_sec != 0xfffffffful)
         {
-          struct timeval clock_now;
-          if (CliGetMonotonicClock(&clock_now) != 0)
+          // problem finished, elapsed time has already calculated by Run()
+          e_sec  = thisprob->pub_data.elapsed_time_sec;
+          e_usec = thisprob->pub_data.elapsed_time_usec;
+        }     
+        else /* compute elapsed wall clock time since loadtime */
+        {
+          u32 start_sec  = thisprob->priv_data.loadtime_sec;
+          u32 start_usec = thisprob->priv_data.loadtime_usec;
+  
+          if (start_sec != 0xfffffffful) /* our start time was not invalid */
           {
+            struct timeval clock_now;
             if (CliGetMonotonicClock(&clock_now) != 0)
-              start_sec = 0xfffffffful; /* no current time, so make start invalid */
+            {
+              if (CliGetMonotonicClock(&clock_now) != 0)
+                start_sec = 0xfffffffful; /* no current time, so make start invalid */
+            }
+            if (start_sec != 0xfffffffful)
+            {
+              e_sec  = clock_now.tv_sec;
+              e_usec = clock_now.tv_usec;
+            }
           }
-          if (start_sec != 0xfffffffful)
+          if (start_sec == 0xfffffffful || /* start time is invalid */
+              e_sec <  start_sec || (e_sec == start_sec && e_usec < start_usec ))
           {
-            e_sec  = clock_now.tv_sec;
-            e_usec = clock_now.tv_usec;
+            /* either start time is invalid, or current-time < start-time */
+            /* both are BadThing(TM)s - have to use the per-run total */
+            e_sec  = thisprob->pub_data.runtime_sec;
+            e_usec = thisprob->pub_data.runtime_usec;
+          }
+          else /* start and 'now' time are ok */
+          {
+            if (e_usec < start_usec)
+            {
+              e_usec += 1000000UL;
+              e_sec  --;
+            }
+            e_sec  -= start_sec;
+            e_usec -= start_usec;
           }
         }
-        if (start_sec == 0xfffffffful || /* start time is invalid */
-            e_sec <  start_sec || (e_sec == start_sec && e_usec < start_usec ))
+        if (flags & P_INFO_E_TIME)
         {
-          /* either start time is invalid, or current-time < start-time */
-          /* both are BadThing(TM)s - have to use the per-run total */
-          e_sec  = thisprob->pub_data.runtime_sec;
+          info->elapsed_secs = e_sec;
+          info->elapsed_usecs = e_usec;
+        }
+        if (thisprob->pub_data.is_benchmark && (thisprob->pub_data.runtime_sec || thisprob->pub_data.runtime_usec))
+        {
+          e_sec = thisprob->pub_data.runtime_sec;
           e_usec = thisprob->pub_data.runtime_usec;
         }
-        else /* start and 'now' time are ok */
-        {
-          if (e_usec < start_usec)
-          {
-            e_usec += 1000000UL;
-            e_sec  --;
-          }
-          e_sec  -= start_sec;
-          e_usec -= start_usec;
-        }
-      }
-      if (flags & P_INFO_E_TIME)
+      } // if (flags & (P_INFO_E_TIME | P_INFO_RATE | P_INFO_RATEBUF))
+      if ( flags & (P_INFO_C_PERMIL | P_INFO_S_PERMIL | P_INFO_RATE   |
+                    P_INFO_RATEBUF  | P_INFO_SIGBUF   | P_INFO_CWPBUF |
+                    P_INFO_SWUCOUNT | P_INFO_TCOUNT   | P_INFO_CCOUNT |
+                    P_INFO_DCOUNT) )
       {
-        info->elapsed_secs = e_sec;
-        info->elapsed_usecs = e_usec;
-      }
-      if (thisprob->pub_data.is_benchmark && (thisprob->pub_data.runtime_sec || thisprob->pub_data.runtime_usec))
-      {
-        e_sec = thisprob->pub_data.runtime_sec;
-        e_usec = thisprob->pub_data.runtime_usec;
-      }
-    } // if (flags & (P_INFO_E_TIME | P_INFO_RATE | P_INFO_RATEBUF))
-    if ( flags & (P_INFO_C_PERMIL | P_INFO_S_PERMIL | P_INFO_RATE   |
-                  P_INFO_RATEBUF  | P_INFO_SIGBUF   | P_INFO_CWPBUF |
-                  P_INFO_SWUCOUNT | P_INFO_TCOUNT   | P_INFO_CCOUNT |
-                  P_INFO_DCOUNT) )
-    {
-        u32 hi, lo;
-        u32 tcounthi=0, tcountlo=0; /*total 'iter' (n/a if not finished)*/
-        u32 ccounthi=0, ccountlo=0; /*'iter' done (so far, this start) */
-        u32 dcounthi=0, dcountlo=0; /*'iter' done (so far, all starts) */
-        unsigned long rate2wuspeed = 0;
-
-        switch (contestid)
-        {
-          case RC5:
-          case DES:
-          case CSC:
-          { 
-            unsigned int units, twoxx;
-            rate2wuspeed = 1UL<<28;
-
-            ccounthi = thisprob->pub_data.startkeys.hi;
-            ccountlo = thisprob->pub_data.startkeys.lo;
-            tcounthi = work.crypto.iterations.hi;
-            tcountlo = work.crypto.iterations.lo;
-            dcounthi = work.crypto.keysdone.hi;
-            dcountlo = work.crypto.keysdone.lo;
-            if (contestid == DES)
-            {
-              tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
-              dcounthi <<= 1; dcounthi |= (dcountlo >> 31); dcountlo <<= 1; 
-              ccounthi <<= 1; ccounthi |= (ccountlo >> 31); ccountlo <<= 1;
-            }
-            /* current = donecount - startpos */
-            ccountlo = dcountlo - ccountlo;
-            ccounthi = dcounthi - ccounthi;
-            if (ccountlo > dcountlo)
-              ccounthi--;
-
-            units = ((tcountlo >> 28)+(tcounthi << 4)); 
-            twoxx = 28;
-            if (!units) /* less than 2^28 packet (eg test) */
-            {
-              units = tcountlo >> 20;
-              twoxx = 20;
-            }
-            if (rescode != RESULT_NOTHING && rescode != RESULT_FOUND)
-            {
-              tcounthi = 0;
-              tcountlo = 0;
-            }
-            if (flags & P_INFO_SIGBUF)
-            {
-              sprintf( info->sigbuf, "%08lX:%08lX:%u*2^%u", 
-                       (unsigned long) ( work.crypto.key.hi ),
-                       (unsigned long) ( work.crypto.key.lo ),
-                       units, twoxx );
-            }
-            if (flags & P_INFO_CWPBUF)
-            {
-              // ToDo: do something different here - any ideas for a cwp for crypto packets?
-              sprintf( info->cwpbuf, "%08lX:%08lX:%u*2^%u", 
-                       (unsigned long) ( work.crypto.key.hi ),
-                       (unsigned long) ( work.crypto.key.lo ),
-                       units, twoxx );
-            }
-            if ((flags & P_INFO_SWUCOUNT) && (tcounthi || tcountlo)) /* only if finished */
-            {
-              /* note that we return zero for test packets */
-              info->swucount = ((tcountlo >> 28)+(tcounthi << 4))*100;
-            }
-          } /* case: crypto */
-          break;
-#ifdef HAVE_OGR_CORES
-          case OGR:
+          u32 hi, lo;
+          u32 tcounthi=0, tcountlo=0; /*total 'iter' (n/a if not finished)*/
+          u32 ccounthi=0, ccountlo=0; /*'iter' done (so far, this start) */
+          u32 dcounthi=0, dcountlo=0; /*'iter' done (so far, all starts) */
+          unsigned long rate2wuspeed = 0;
+  
+          switch (contestid)
           {
-            rate2wuspeed = 0;
-            dcounthi = work.ogr.nodes.hi;
-            dcountlo = work.ogr.nodes.lo;
-            if (rescode == RESULT_NOTHING || rescode == RESULT_FOUND)
+            case RC5:
+            case DES:
+            case CSC:
+            { 
+              unsigned int units, twoxx;
+              rate2wuspeed = 1UL<<28;
+  
+              ccounthi = thisprob->pub_data.startkeys.hi;
+              ccountlo = thisprob->pub_data.startkeys.lo;
+              tcounthi = work.crypto.iterations.hi;
+              tcountlo = work.crypto.iterations.lo;
+              dcounthi = work.crypto.keysdone.hi;
+              dcountlo = work.crypto.keysdone.lo;
+              if (contestid == DES)
+              {
+                tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
+                dcounthi <<= 1; dcounthi |= (dcountlo >> 31); dcountlo <<= 1; 
+                ccounthi <<= 1; ccounthi |= (ccountlo >> 31); ccountlo <<= 1;
+              }
+              /* current = donecount - startpos */
+              ccountlo = dcountlo - ccountlo;
+              ccounthi = dcounthi - ccounthi;
+              if (ccountlo > dcountlo)
+                ccounthi--;
+  
+              units = ((tcountlo >> 28)+(tcounthi << 4)); 
+              twoxx = 28;
+              if (!units) /* less than 2^28 packet (eg test) */
+              {
+                units = tcountlo >> 20;
+                twoxx = 20;
+              }
+              if (rescode != RESULT_NOTHING && rescode != RESULT_FOUND)
+              {
+                tcounthi = 0;
+                tcountlo = 0;
+              }
+              if (flags & P_INFO_SIGBUF)
+              {
+                sprintf( info->sigbuf, "%08lX:%08lX:%u*2^%u", 
+                         (unsigned long) ( work.crypto.key.hi ),
+                         (unsigned long) ( work.crypto.key.lo ),
+                         units, twoxx );
+              }
+              if (flags & P_INFO_CWPBUF)
+              {
+                // ToDo: do something different here - any ideas for a cwp for crypto packets?
+                sprintf( info->cwpbuf, "%08lX:%08lX:%u*2^%u", 
+                         (unsigned long) ( work.crypto.key.hi ),
+                         (unsigned long) ( work.crypto.key.lo ),
+                         units, twoxx );
+              }
+              if ((flags & P_INFO_SWUCOUNT) && (tcounthi || tcountlo)) /* only if finished */
+              {
+                /* note that we return zero for test packets */
+                info->swucount = ((tcountlo >> 28)+(tcounthi << 4))*100;
+              }
+            } /* case: crypto */
+            break;
+  #ifdef HAVE_OGR_CORES
+            case OGR:
             {
-              tcounthi = dcounthi;
-              tcountlo = dcountlo;
-            }
-            /* current = donecount - startpos */
-            ccountlo = dcountlo - thisprob->pub_data.startkeys.lo;
-            ccounthi = dcounthi - thisprob->pub_data.startkeys.hi;
-            if (ccountlo > dcountlo)
-              ccounthi--;
-
-            if (flags & P_INFO_SIGBUF)
-            {
-              ogr_stubstr_r( &work.ogr.workstub.stub, info->sigbuf, sizeof(info->sigbuf), 0);
-            }
-            if (flags & P_INFO_CWPBUF)
-            {
-              ogr_stubstr_r( &work.ogr.workstub.stub, info->cwpbuf, sizeof(info->sigbuf), work.ogr.workstub.worklength);
-            }
-            if ((flags & P_INFO_SWUCOUNT) && (tcounthi || tcountlo)) /* only if finished */
-            {
-              /* ogr stats unit is Gnodes */
-              __u64div( tcounthi, tcountlo, 0, 1000000000ul, 0, &hi, 0, &lo);
-              info->swucount = (hi * 100)+(lo / 10000000ul);
-            }
-            if (flags & P_INFO_EXACT_PE)
-            {
-              if (flags & P_INFO_C_PERMIL)
-                info->c_permille = 0;
-              if (flags & P_INFO_S_PERMIL)
-                info->s_permille = 0;
-            }
-          } /* OGR */      
-          break;
-#endif /* HAVE_OGR_CORES */
-          default:
-          break;  
-        } /* switch() */
-
-        if (flags & (P_INFO_RATE | P_INFO_RATEBUF))
-        {
-          if (!(flags & P_INFO_RATEBUF))
+              rate2wuspeed = 0;
+              dcounthi = work.ogr.nodes.hi;
+              dcountlo = work.ogr.nodes.lo;
+              if (rescode == RESULT_NOTHING || rescode == RESULT_FOUND)
+              {
+                tcounthi = dcounthi;
+                tcountlo = dcountlo;
+              }
+              /* current = donecount - startpos */
+              ccountlo = dcountlo - thisprob->pub_data.startkeys.lo;
+              ccounthi = dcounthi - thisprob->pub_data.startkeys.hi;
+              if (ccountlo > dcountlo)
+                ccounthi--;
+  
+              if (flags & P_INFO_SIGBUF)
+              {
+                ogr_stubstr_r( &work.ogr.workstub.stub, info->sigbuf, sizeof(info->sigbuf), 0);
+              }
+              if (flags & P_INFO_CWPBUF)
+              {
+                ogr_stubstr_r( &work.ogr.workstub.stub, info->cwpbuf, sizeof(info->sigbuf), work.ogr.workstub.worklength);
+              }
+              if ((flags & P_INFO_SWUCOUNT) && (tcounthi || tcountlo)) /* only if finished */
+              {
+                /* ogr stats unit is Gnodes */
+                __u64div( tcounthi, tcountlo, 0, 1000000000ul, 0, &hi, 0, &lo);
+                info->swucount = (hi * 100)+(lo / 10000000ul);
+              }
+              if (flags & P_INFO_EXACT_PE)
+              {
+                if (flags & P_INFO_C_PERMIL)
+                  info->c_permille = 0;
+                if (flags & P_INFO_S_PERMIL)
+                  info->s_permille = 0;
+              }
+            } /* OGR */      
+            break;
+  #endif /* HAVE_OGR_CORES */
+            default:
+            break;  
+          } /* switch() */
+  
+          if (flags & (P_INFO_RATE | P_INFO_RATEBUF))
           {
-            info->rate.ratebuf = 0;
-            info->rate.size = 0;
+            if (!(flags & P_INFO_RATEBUF))
+            {
+              info->rate.ratebuf = 0;
+              info->rate.size = 0;
+            }
+            ProblemComputeRate( contestid, e_sec, e_usec, ccounthi, ccountlo,
+                                &hi, &lo, info->rate.ratebuf, info->rate.size );
+            if (rate2wuspeed && lo)
+            {
+              CliSetContestWorkUnitSpeed( contestid, (unsigned int)
+                                          ((1+rate2wuspeed) / lo) );     
+            }
+            info->ratehi = hi;
+            info->ratelo = lo;
           }
-          ProblemComputeRate( contestid, e_sec, e_usec, ccounthi, ccountlo,
-                              &hi, &lo, info->rate.ratebuf, info->rate.size );
-          if (rate2wuspeed && lo)
+          if (flags & P_INFO_C_PERMIL)
           {
-            CliSetContestWorkUnitSpeed( contestid, (unsigned int)
-                                        ((1+rate2wuspeed) / lo) );     
+            if (!thisprob->priv_data.started)
+              info->c_permille = thisprob->pub_data.startpermille;
+            else if (rescode != RESULT_WORKING) /* _FOUND or _NOTHING */
+              info->c_permille = 1000;
+            else
+              info->c_permille = __compute_permille(contestid, &work); 
           }
-          info->ratehi = hi;
-          info->ratelo = lo;
-        }
-        if (flags & P_INFO_C_PERMIL)
-        {
-          if (!thisprob->priv_data.started)
-            info->c_permille = thisprob->pub_data.startpermille;
-          else if (rescode != RESULT_WORKING) /* _FOUND or _NOTHING */
-            info->c_permille = 1000;
-          else
-            info->c_permille = __compute_permille(contestid, &work); 
-        }
-        if (flags & P_INFO_S_PERMIL)
-          info->s_permille = thisprob->pub_data.startpermille;
-        if (flags & P_INFO_DCOUNT)
-        {
-          info->dcounthi = dcounthi;
-          info->dcountlo = dcountlo;
-        }
-        if (flags & P_INFO_CCOUNT)
-        {
-          info->ccounthi = ccounthi;
-          info->ccountlo = ccountlo;
-        }
-        if (flags & P_INFO_TCOUNT)
-        {
-          info->tcounthi = tcounthi;
-          info->tcountlo = tcountlo;
-        }
-    } /* if (sigbuf || ... ) */
-  } /* if (rescode >= 0) */
+          if (flags & P_INFO_S_PERMIL)
+            info->s_permille = thisprob->pub_data.startpermille;
+          if (flags & P_INFO_DCOUNT)
+          {
+            info->dcounthi = dcounthi;
+            info->dcountlo = dcountlo;
+          }
+          if (flags & P_INFO_CCOUNT)
+          {
+            info->ccounthi = ccounthi;
+            info->ccountlo = ccountlo;
+          }
+          if (flags & P_INFO_TCOUNT)
+          {
+            info->tcounthi = tcounthi;
+            info->tcountlo = tcountlo;
+          }
+      } /* if (sigbuf || ... ) */
+    } /* if (rescode >= 0) */
+  } /* if thisprob != 0 */
   return rescode;
 }
