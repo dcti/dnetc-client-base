@@ -5,6 +5,16 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.20  1999/01/23 14:19:17  remi
+# Synced with :
+#
+#  Revision 1.175  1999/01/21 05:02:41  pct
+#  Minor updates for Digital Unix clients.
+#
+#  Revision 1.174  1999/01/18 18:49:35  remi
+#  Integration of Christoph Dworzak's alpha bitslicer.
+#  Currently only on alpha-linux.
+#
 # Revision 1.113.2.19  1999/01/17 12:14:00  remi
 # Synced with :
 #
@@ -779,7 +789,7 @@ case "$1" in
     *alpha-gcc-ev5-digital_unix-mt)
 	RC5CORECOPY="rc5/rc5-alpha-osf.cpp"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="-Wa,-02 -mcpu=ev5 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT"
+	TARGET_CCFLAGS="-Wa,-02 -mcpu=ev5 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT -DALPHA_EV5_CORE"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LDFLAGS=""
 	TARGET_LIBS="-lpthread -lexc"
@@ -788,7 +798,7 @@ case "$1" in
     *alpha-gcc-ev5-digital_unix-static)
 	RC5CORECOPY="rc5/rc5-alpha-osf.cpp"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="-Wa,-02 -mcpu=ev5 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="-Wa,-02 -mcpu=ev5 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DALPHA_EV5_CORE"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS=""
@@ -830,11 +840,12 @@ case "$1" in
 	;;
 
     *alpha-linux)
-	TARGET_AS="g++ -c"
-	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=2 \
-			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="-O2 -fno-schedule-insns -fno-handle-exceptions -fno-rtti \
+	                -Wall -Icommon -Irc5 -Ides -Iplatforms -DASM_ALPHA -static \
+                        -DPIPELINE_COUNT=2 -DBIT_64 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="des/deseval-dworz2.c des/des-slice-dworz.cpp \
 			rc5/alphaasm/axp-bmeyer.cpp \
 			rc5/alphaasm/axp-bmeyer.s"
 	;;
