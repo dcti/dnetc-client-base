@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.172  1998/08/14 00:04:48  silby
+// Changes for rc5 mmx core integration.
+//
 // Revision 1.171  1998/08/10 23:02:22  cyruspatel
 // Four changes: (a) xxxTrigger and pausefilefound flags are now wrapped in
 // functions in trigger.cpp (b) NetworkInitialize()/NetworkDeinitialize()
@@ -182,7 +185,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.171 1998/08/10 23:02:22 cyruspatel Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.172 1998/08/14 00:04:48 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -234,15 +237,16 @@ static const char *OPTION_SECTION="parameters"; //#define OPTION_SECTION "parame
 // --------------------------------------------------------------------------
 
 #if (CLIENT_CPU == CPU_X86)
-static char cputypetable[7][60]=
+static char cputypetable[8][60]=
   {
   "Autodetect",
-  "Pentium, Pentium MMX, Cyrix 486/5x86/MediaGX, AMD 486",
+  "Pentium Classic, Cyrix 486/5x86/MediaGX, AMD 486",
   "Intel 80386 & 80486",
   "Pentium Pro & Pentium II",
   "Cyrix 6x86/6x86MX/M2",
   "AMD K5",
   "AMD K6",
+  "Pentium MMX"
   };
 #elif (CLIENT_CPU == CPU_ARM)
 static char cputypetable[5][60]=
@@ -385,7 +389,7 @@ static optionstruct options[OPTION_COUNT]=
 #if (CLIENT_CPU == CPU_X86)
 //16
 { "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
-      CFGTXT("\n"),4,2,2,NULL,CFGTXT(&cputypetable[1][0]),-1,5},
+      CFGTXT("\n"),4,2,2,NULL,CFGTXT(&cputypetable[1][0]),-1,6},
 #elif (CLIENT_CPU == CPU_ARM)
 { "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
       CFGTXT("\n"),4,2,2,NULL,CFGTXT(&cputypetable[1][0]),-1,3},
@@ -1563,7 +1567,7 @@ void Client::ValidateConfig( void )
   if ( niceness < 0 || niceness > 2 ) niceness = 0;
   if ( uuehttpmode < 0 || uuehttpmode > 5 ) uuehttpmode = 0;
 #if (CLIENT_CPU == CPU_X86)
-  if ( cputype < -1 || cputype > 5) cputype = -1;
+  if ( cputype < -1 || cputype > 6) cputype = -1;
 #elif (CLIENT_CPU == CPU_ARM)
   if ( cputype < -1 || cputype > 3) cputype = -1;
 #elif ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX)) )
@@ -2307,6 +2311,13 @@ s32 Client::SelectCore(void)
   if (fastcore == -1)
     fastcore = detectedtype; //use autodetect
 
+  if ((fastcore == 6) && ((detectedtype & 0x100) != 0x100) )
+    {
+    fastcore=detectedtype;
+    LogScreenRaw("Your processor is not mmx capable, "
+                 "the pentium mmx core can not be used.\n");
+    };
+
   LogScreenRaw("Selecting %s code.\n", cputypetable[(int)(fastcore & 0xFF)+1]);
 
   // select the correct core engine
@@ -2329,33 +2340,37 @@ s32 Client::SelectCore(void)
       #define DESUNITFUNC62 NULL
     #endif
 
-    case 1:
+    case 0: // Pentium Classic + others
+      rc5_unit_func = rc5_unit_func_p5;
+      des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
+      des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
+    case 1: // Intel 386/486
       rc5_unit_func = rc5_unit_func_486;
       des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
       des_unit_func2 = DESUNITFUNC52; //p2des_unit_func_p5;
       break;
-    case 2:
+    case 2: // Ppro/PII
       rc5_unit_func = rc5_unit_func_p6;
       des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
       des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
       break;
-    case 3:
+    case 3: // 6x86(mx)
       rc5_unit_func = rc5_unit_func_6x86;
       des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
       des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
       break;
-    case 4:
+    case 4: // K5
       rc5_unit_func = rc5_unit_func_k5;
       des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
       des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
       break;
-    case 5:
+    case 5: // K6/K6-2
       rc5_unit_func = rc5_unit_func_k6;
       des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
       des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
       break;
-    default:
-      rc5_unit_func = rc5_unit_func_p5;
+    case 6: // Pentium MMX ONLY
+      rc5_unit_func = rc5_unit_func_p5_mmx;
       des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
       des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
       break;
@@ -2364,7 +2379,10 @@ s32 Client::SelectCore(void)
     #undef DESUNITFUNC62
     #undef DESUNITFUNC51
     #undef DESUNITFUNC52
-    } //switch(fastcore & 0xff)
+    }
+
+  PIPELINE_COUNT=pipelinecounts[fastcore & 0xff];
+    // Set the rc5 pipeline count - differs for mmx core from rest
 
   #ifdef MMX_BITSLICER
   if ((detectedtype & 0x100) && usemmx)   // use the MMX DES core ?

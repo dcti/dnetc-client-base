@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.124  1998/08/14 00:04:53  silby
+// Changes for rc5 mmx core integration.
+//
 // Revision 1.123  1998/08/13 00:24:17  silby
 // Change to a NOMAIN definition so that the win32gui will compile.
 //
@@ -322,7 +325,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.123 1998/08/13 00:24:17 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.124 1998/08/14 00:04:53 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -2198,7 +2201,7 @@ int main( int argc, char *argv[] )
     if (!guirestart)
     #endif
     LogRaw("\nRC5DES Client v2.%d.%d started.\n"
-             "Using %s as distributed.net ID.\n\n",
+             "Using distributed.net ID %s\n\n",
              CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,client.id);
 
     client.Run();

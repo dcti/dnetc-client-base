@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.30  1998/08/14 00:05:07  silby
+// Changes for rc5 mmx core integration.
+//
 // Revision 1.29  1998/08/05 16:43:29  cberry
 // ARM clients now define PIPELINE_COUNT=2, and RC5 cores return number of keys checked, rather than number of keys left to check
 //
@@ -64,7 +67,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-static const char *id="@(#)$Id: problem.cpp,v 1.29 1998/08/05 16:43:29 cberry Exp $";
+static const char *id="@(#)$Id: problem.cpp,v 1.30 1998/08/14 00:05:07 silby Exp $";
 return id; }
 #endif
 
@@ -80,6 +83,7 @@ return id; }
 #endif
 
 #if (CLIENT_CPU == CPU_X86)
+  int PIPELINE_COUNT=0;
   u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
   u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
   u32 (*des_unit_func2)( RC5UnitWork * rc5unitwork, u32 timeslice );
@@ -112,13 +116,6 @@ return id; }
 #elif (CLIENT_CPU == CPU_X86)
 #else
 extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
-#endif
-
-#if (CLIENT_CPU == CPU_X86)
-//  extern u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
-//  extern u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
-//  extern u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
-//  extern u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
 #endif
 
 #if (CLIENT_OS == OS_RISCOS)

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.24  1998/08/14 00:05:03  silby
+// Changes for rc5 mmx core integration.
+//
 // Revision 1.23  1998/08/10 20:15:04  cyruspatel
 // Setting cpunum to zero on multi-threading platforms now forces the client
 // to run in non-mt mode.
@@ -89,7 +92,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.23 1998/08/10 20:15:04 cyruspatel Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.24 1998/08/14 00:05:03 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -339,9 +342,9 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
       {  0x0510, 1416,     0, "Pentium" },    
       {  0x0520, 1416,     0, "Pentium" },
       {  0x0530, 1416,     0, "Pentium Overdrive" },
-      {  0x0540, 1432, 0x100, "Pentium MMX" },
+      {  0x0540, 1432, 0x106, "Pentium MMX" },
       {  0x0570, 1416,     0, "Pentium" },
-      {  0x0580, 1432, 0x100, "Pentium MMX" },
+      {  0x0580, 1432, 0x106, "Pentium MMX" },
       {  0x0600, 2785,     2, "Pentium Pro" },
       {  0x0610, 2785,     2, "Pentium Pro" },
       {  0x0630, 2785, 0x102, "Pentium II" },

@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.19  1998/08/14 00:05:11  silby
+// Changes for rc5 mmx core integration.
+//
 // Revision 1.18  1998/08/05 16:42:15  cberry
 // ARM clients now define PIPELINE_COUNT=2
 //
@@ -53,7 +56,7 @@
 
 #include "cputypes.h"
 
-#ifndef PIPELINE_COUNT
+#if (!defined(PIPELINE_COUNT) & !(CLIENT_CPU==CPU_X86))
  #define PIPELINE_COUNT  2  // normally 1, but 2+ if we do more then one unit in parallel
 #endif
 
@@ -110,9 +113,18 @@ typedef enum
 
 
 #if (CLIENT_CPU == CPU_X86)
-  #if (PIPELINE_COUNT != 2)
-  #error "Expecting PIPELINE_COUNT=2"
-  #endif
+  const int pipelinecounts[7]=
+    {
+    2, // Core 0 - P5 + others
+    2, // Core 1 - Intel 386/486
+    2, // Core 2 - Ppro/PII
+    2, // Core 3 - 6x86(mx)
+    2, // Core 4 - K5
+    2, // Core 5 - K6
+    4  // Core 6 - PMMX (uses MMX)
+    };
+
+  extern int PIPELINE_COUNT;
 
   #ifdef __WATCOMC__
     #define rc5_unit_func_486 _rc5_unit_func_486
@@ -132,6 +144,7 @@ typedef enum
   extern "C" u32 rc5_unit_func_6x86( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" u32 rc5_unit_func_k5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" u32 rc5_unit_func_k6( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
 #if defined(MULTITHREAD)
