@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.11  1999/01/03 02:28:27  cyp
+// Added bounds check before displaying an optionlist.
+//
 // Revision 1.10  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -58,7 +61,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.10 1999/01/01 02:45:15 cramer Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.11 1999/01/03 02:28:27 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -343,14 +346,16 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
             }
           else if (conf_options[choice].type==2)
             {
-            if (conf_options[choice].choicelist != NULL)
-              strcpy(parm,conf_options[choice].choicelist[
-                ((long)*(s32 *)conf_options[choice].thevariable)]);
-            else if ((long)*(s32 *)conf_options[choice].thevariable == 
-                (long)(atoi(conf_options[choice].defaultsetting)))
+            long thevar = ((long)*(s32 *)conf_options[choice].thevariable);
+            long themin = conf_options[choice].choicemin;
+            long themax = conf_options[choice].choicemax;
+            if (conf_options[choice].choicelist != NULL &&
+                thevar >= themin && thevar <= themax)
+              strcpy(parm,conf_options[choice].choicelist[thevar]);
+            else if (thevar == (long)(atoi(conf_options[choice].defaultsetting)))
               strcpy(parm,conf_options[choice].defaultsetting);
             else
-              sprintf(parm,"%li",(long)*(s32 *)conf_options[choice].thevariable);
+              sprintf(parm,"%li",thevar );
             LogScreenRaw("%s\n",parm);
             }
           else if (conf_options[choice].type==3)
