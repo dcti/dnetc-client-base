@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.29 1999/12/20 01:21:35 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.30 1999/12/23 13:04:00 chrisb Exp $"; }
 
 
 #include "cputypes.h"
@@ -131,9 +131,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
     { /* CSC */
+#if (CLIENT_CPU != CPU_ARM)
       "6 bit - inline", 
-      "6 bit - called", 
+      "6 bit - called",
       "1 key - inline", 
+#endif
       "1 key - called",
       NULL, /* room for the MMX bitslicer */
       NULL
@@ -900,9 +902,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
 #if defined(HAVE_CSC_CORES)
   extern "C" s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *iterations, void *membuff );
+  #if (CLIENT_CPU != CPU_ARM) // ARM only has one CSC core
   extern "C" s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *iterations, void *membuff );
   extern "C" s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
   extern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
+  #endif
   #if (CLIENT_CPU == CPU_X86) && defined(MMX_CSC)
   extern "C" s32 csc_unit_func_6b_mmx ( RC5UnitWork *, u32 *iterations, void *membuff );
   #endif
@@ -1363,6 +1367,10 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     //xtern "C" s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *iterations, void *membuff );
     //xtern "C" s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
     //xtern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
+   #if (CLIENT_CPU == CPU_ARM)
+    coresel = 0;
+    unit_func.gen = csc_unit_func_1k;
+   #else
 
     switch( coresel ) 
     {
@@ -1380,6 +1388,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       case 3 : unit_func.gen = csc_unit_func_1k;
                break;
     }
+   #endif
   }
   #endif /* #ifdef HAVE_CSC_CORES */
 
