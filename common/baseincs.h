@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.11 2003/10/15 03:03:23 jr_brady Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.12 2003/11/02 19:55:00 pfeffi Exp $"
 
 #include "cputypes.h"
 
@@ -44,6 +44,7 @@
   #if defined(__WATCOMC__)
     #include "os2defs.h"
     #include <direct.h>
+    #include <dos.h>
   #else
     #include "plat/os2/os2defs.h"
   #endif
