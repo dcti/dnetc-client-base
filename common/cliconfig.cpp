@@ -31,16 +31,16 @@ char cputypetable[7][60]=
 #elif (CLIENT_CPU == CPU_ARM)
 char cputypetable[3][60]=
   {
-  "Autodetect"
-  "ARM"
-  "StrongARM"
+  "Autodetect",
+  "ARM",
+  "StrongARM",
   };
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
 char cputypetable[3][60]=
   {
-  "Autodetect"
-  "PowerPC 601"
-  "PowerPC 603/604/750"
+  "Autodetect",
+  "PowerPC 601",
+  "PowerPC 603/604/750",
   };
 #endif
 
@@ -148,18 +148,12 @@ optionstruct options[OPTION_COUNT]=
 { "cputype", "Optimize performance for CPU type", "Autodetect",
       "\n",1,2,8,NULL,&cputypetable[1][0],-1,5},
 #elif (CLIENT_CPU == CPU_ARM)
-  { "cputype", "Optimize performance for CPU type", "-1",
-      "\n   mode -1) Autodetect\n"
-      "   mode 0) ARM\n"
-      "   mode 1) StrongARM\n"
-      ,1,2,8,NULL,&cputypetable[1][0],-1,1},
+  { "cputype", "Optimize performance for CPU type", "Autodetect",
+      "\n",1,2,8,NULL,&cputypetable[1][0],-1,1},
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
 //16
-{ "cputype", "Optimize performance for CPU type", "-1",
-      "\n   mode -1) Autodetect\n"
-      "   mode 0) PowerPC 601\n"
-      "   mode 1) PowerPC 603/604/750\n"
-  ,1,2,8,NULL,&cputypetable[1][0],-1,1},
+{ "cputype", "Optimize performance for CPU type", "Autodetect",
+      "\n",1,2,8,NULL,&cputypetable[1][0],-1,1},
 #else
 //16
 { "cputype", "CPU type...not applicable in this client", "-1", "(default -1)",1,2,8,
@@ -431,7 +425,7 @@ for ( temp2=1; choice != -1; temp2++ )
            && (options[choice].optionscreen==currentmenu)
           )
           {
-          printf("%d)  %s ==> ",
+          printf("%2d) %s ==> ",
                   options[choice].menuposition, options[choice].description);
 
           if (options[choice].type==1)
@@ -451,7 +445,7 @@ for ( temp2=1; choice != -1; temp2++ )
              };
           };
     }
-    printf("\n0)  Return to main menu\n");
+    printf("\n 0) Return to main menu\n");
 
 
     // get choice from user
@@ -527,7 +521,7 @@ for ( temp2=1; choice != -1; temp2++ )
            for ( temp = options[choice].choicemin;
                  temp < options[choice].choicemax+1; temp++)
              {
-             printf("   %d) %s\n",temp,options[choice].choicelist+temp*60);
+             printf("  %2d) %s\n",temp,options[choice].choicelist+temp*60);
              }
            printf("\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
                   options[choice].defaultsetting,options[choice].choicelist+
@@ -886,12 +880,12 @@ while (returnvalue == 0)
    clearscreen();
    printf("Distributed.Net RC5/DES Client build v2.70%i.%i config menu\n",CLIENT_BUILD,CLIENT_BUILD_FRAC);
    printf("------------------------------------------------------------\n\n");
-   printf("1) %s\n",menutable[0]);
-   printf("2) %s\n",menutable[1]);
-   printf("3) %s\n",menutable[2]);
-   printf("4) %s\n\n",menutable[3]);
-   printf("9) Discard settings and exit\n");
-   printf("0) Save settings and exit\n\n");
+   printf(" 1) %s\n",menutable[0]);
+   printf(" 2) %s\n",menutable[1]);
+   printf(" 3) %s\n",menutable[2]);
+   printf(" 4) %s\n\n",menutable[3]);
+   printf(" 9) Discard settings and exit\n");
+   printf(" 0) Save settings and exit\n\n");
    printf("Choice --> ");
 
    fflush( stdout );
@@ -941,7 +935,7 @@ s32 temp;
 for (temp=0; temp < OPTION_COUNT; temp++)
   {
   if ((options[temp].optionscreen==menu) &&
-      (options[temp].menuposition==option)) 
+      (options[temp].menuposition==option))
 
      returnvalue=temp;
   };
