@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.145  1998/10/06 22:28:53  cyp
+// Changed initialization order so that initialization that requires filenames
+// follows the second ParseCommandLine().
+//
 // Revision 1.144  1998/10/05 05:21:30  cyp
 // Added PPC core attribute to PrintBanner()
 //
@@ -34,7 +38,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.144 1998/10/05 05:21:30 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.145 1998/10/06 22:28:53 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -258,11 +262,9 @@ int Client::Main( int argc, const char *argv[], int restarted )
     if (ParseCommandline( 0, argc, argv, NULL, &retcode, 0 ) == 0) //change defaults
       {
       int inimissing = (ReadConfig() != 0); //reads using defaults
-      InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile);
-
-      InitializeLogging(); //let -quiet take affect
       if (InitializeConsole(runhidden||quietmode) == 0) //create console (if required)
         {
+        InitializeLogging(0); //enable only screen logging for now
         PrintBanner(id); //tracks restart state itself
 
         if ( ParseCommandline( 2, argc, argv, &inimissing, &retcode, 1 )==0 )
@@ -272,16 +274,19 @@ int Client::Main( int argc, const char *argv[], int restarted )
             if (Configure() ==1 ) 
               WriteFullConfig(); //full new build
             }
-          else
+          else 
             {
             ValidateConfig();
-            PrintBanner(id);  //tracks restart state itself
+            InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile);
+            InitializeLogging(1);   //enable timestamps and file/mail logging
+            
+            PrintBanner(id);
             retcode = Run();
             }
           }
+        DeinitializeLogging();
         DeinitializeConsole();
         }
-      DeinitializeLogging();
       }
     DeinitializeTriggers();
     }
