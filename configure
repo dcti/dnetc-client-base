@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.196 2000/10/28 14:42:17 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.197 2000/10/31 12:20:39 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -718,7 +718,6 @@ COMMON_SRCS="\
 	     common/mail.cpp     \
 	     common/convdes.cpp  \
 	     common/clicdata.cpp \
-	     common/clisrate.cpp \
 	     common/clitime.cpp  \
 	     common/disphelp.cpp \
 	     common/clievent.cpp \
