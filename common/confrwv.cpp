@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.13  1998/12/27 03:27:08  cyp
+// long pending x86-specific hack against ConfigureGeneral() crashes: on
+// iniread, convert cputype 6 (non-existant type "Pentium MMX") into type 0
+// ("Pentium"). See comment in code for possible (discounted) solutions.
+//
 // Revision 1.12  1998/12/25 05:30:28  silby
 // Temporary commenting out of InternalRead/Write/Validate
 //
@@ -75,7 +80,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.12 1998/12/25 05:30:28 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.13 1998/12/27 03:27:08 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -213,7 +218,14 @@ int ReadConfig(Client *client)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
     }
 
   if (INIFIND(CONF_CPUTYPE) != NULL)
-  client->cputype = INIGETKEY(CONF_CPUTYPE);
+    {
+    client->cputype = INIGETKEY(CONF_CPUTYPE);
+    #if (CLIENT_CPU == CPU_X86) //HACK alert. - cyp    Convert "Pentium MMX"
+    if (client->cputype == 6) //into normal Pentium against ConfigureGeneral() crashes.
+      client->cputype = 0;    //Generic tablesize checks are not a viable solution 
+    #endif         //(no/wrong default) and dummifying type 6 is senseless ATM.
+    }
+  
   if (INIFIND(CONF_NUMCPU) != NULL)
   client->numcpu = INIGETKEY(CONF_NUMCPU);
 
@@ -768,4 +780,5 @@ void RefreshRandomPrefix( Client *client )
 }
 
 // -----------------------------------------------------------------------
+
 
