@@ -7,7 +7,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.1.2.5 2001/03/10 16:18:52 andreasb Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.1.2.6 2001/03/26 17:54:31 cyp Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -3313,7 +3313,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                 }
                 else
                 {
-                  last_y = -1; //y;
+                  last_y = ((unsigned long)-1); //y;
                   polys[donecount].x = rect.left + ((UINT)x);
                   polys[donecount].y = rect.top + height - ((UINT)y);
                   donecount++;
@@ -6710,7 +6710,6 @@ LRESULT CALLBACK __w32ShimWatcherWProc(HWND hwnd, UINT message, WPARAM wParam,
 }
 static void __win32ShimWatcher(void *) /* lives as long as the client */
 {
-  int normalstop = 0;
   HINSTANCE hInstance = winGetInstanceHandle(); /* w32pre.cpp */
 
   if (hInstance)
@@ -7179,7 +7178,7 @@ int w32InitializeConsole(int runhidden, int runmodes)
       for (sig = 0; sig < 255; sig++)
         signal(sig, __w32SigTriggerControl );
       #endif
-      dwConMode = ~ENABLE_WINDOW_INPUT;
+      dwConMode = ((DWORD)(~ENABLE_WINDOW_INPUT));
       //if (GetConsoleMode( GetStdHandle(STD_INPUT_HANDLE),&dwConMode))
       {
         //if ((dwConMode & ENABLE_PROCESSED_INPUT)==0)
