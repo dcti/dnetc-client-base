@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.28 2000/11/12 04:31:19 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.29 2000/11/12 21:27:29 cyp Exp $"; }
 
 //#define TRACE
 
@@ -398,7 +398,7 @@ int LurkGetCapabilityFlags(void)
   TRACE_OUT((+1,"Lurk::GetCapabilityFlags() ras check.\n"));
   //if ( RasHangUp( (HRASCONN)-1 ) == ERROR_INVALID_HANDLE )
   //  what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DODBYPROFILE);
-  if (GetConnectionProfileList() != NULL)
+  if (LurkGetConnectionProfileList() != NULL)
     what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DODBYPROFILE);
   TRACE_OUT((-1,"ras checked. caps=0x%08x\n",what));
 #elif (CLIENT_OS == OS_WIN16)
@@ -885,8 +885,8 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
     return 1;
   }
 #elif (CLIENT_OS == OS_WIN32)
-  if ((GetCapabilityFlags() & CONNECT_IFACEMASK) != 0 /* have working WS2_32 */
-   && (!lurker.mask_default_only || (GetCapabilityFlags() & CONNECT_DODBYPROFILE)==0))
+  if ((LurkGetCapabilityFlags() & CONNECT_IFACEMASK) != 0 /* have working WS2_32 */
+   && (!lurker.mask_default_only || (LurkGetCapabilityFlags() & CONNECT_DODBYPROFILE)==0))
   {
     TRACE_OUT((+1,"ioctl InternalIsConnected()\n"));
     HINSTANCE ws2lib = LoadLibrary( "WS2_32.DLL" );
@@ -1050,7 +1050,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
       return 1;
     }
   }
-  if ((GetCapabilityFlags() & CONNECT_DODBYPROFILE)!=0) /* have ras */
+  if ((LurkGetCapabilityFlags() & CONNECT_DODBYPROFILE)!=0) /* have ras */
   {
     RASCONN rasconn;
     RASCONN *rasconnp = NULL;
@@ -1483,7 +1483,7 @@ int LurkDialIfNeeded(int force /* !0== override lurk-only */ )
 
 #elif (CLIENT_OS == OS_WIN32)
 
-  if ((GetCapabilityFlags() & CONNECT_DODBYPROFILE) != 0) /* have ras */
+  if ((LurkGetCapabilityFlags() & CONNECT_DODBYPROFILE) != 0) /* have ras */
   {
     RASDIALPARAMS dialparameters;
     BOOL passwordretrieved;
@@ -1511,7 +1511,7 @@ int LurkDialIfNeeded(int force /* !0== override lurk-only */ )
       if (*connname == 0)
       {
         TRACE_OUT((0,"No default, getting first on list\n"));
-        const char **connlist = GetConnectionProfileList();
+        const char **connlist = LurkGetConnectionProfileList();
         TRACE_OUT((0,"GetConnectionProfileList() => %p\n", connlist));
         if (connlist)
         {
