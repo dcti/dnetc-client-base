@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.46 2004/03/09 05:51:26 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.47 2004/03/12 15:11:09 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -63,8 +63,7 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.46 2004/03/09 05:51:26 snikkel Exp $"; }
 #else
 #if defined(__WATCOMC__)
   // x86ident() can destroy all registers except ebx/esi/edi/ebp =>
-  // must be declared as "cdecl" to allow compiler save necessary
-registers.
+  // must be declared as "cdecl" to allow compiler save necessary registers.
   extern "C" u32 __cdecl x86ident( void );
   extern "C" u32 __cdecl x86features( void );
   extern "C" u32 __cdecl x86htcount( void );
