@@ -10,6 +10,9 @@
 */
 //
 // $Log: netinit.cpp,v $
+// Revision 1.10  1998/12/08 05:49:51  dicamillo
+// Add initialization for MacOS networking.
+//
 // Revision 1.9  1998/10/26 02:55:03  cyp
 // win16 changes
 //
@@ -43,7 +46,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.9 1998/10/26 02:55:03 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.10 1998/12/08 05:49:51 dicamillo Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -56,6 +59,9 @@ return "@(#)$Id: netinit.cpp,v 1.9 1998/10/26 02:55:03 cyp Exp $"; }
 #include "triggers.h" //for break checks
 #include "lurk.h"
 
+#if (CLIENT_OS == OS_MACOS)
+  Boolean myNetInit(void);
+#endif
 //--------------------------------------------------------------------------
 
 /*
@@ -96,6 +102,30 @@ static int __netInitAndDeinit( int doWhat )
   #define DOWHAT_WAS_HANDLED
   #endif
       
+  //----------------------------
+
+  #if (CLIENT_OS == OS_MACOS)
+  if (success)
+    {
+    if ( doWhat == 0 )     //query online mode
+      {
+      return true;			// for now, always online
+      }
+    else if (doWhat > 0)   //init request
+      {
+      success = myNetInit();
+      if (success)
+        ++initializationlevel;
+      }
+    else                   //de-init request
+      {
+      success = 1;
+      --initializationlevel;
+      }
+    }
+  #define DOWHAT_WAS_HANDLED
+  #endif
+
   //----------------------------
 
   #if (CLIENT_OS == OS_NETWARE)
