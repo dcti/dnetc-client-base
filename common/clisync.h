@@ -14,7 +14,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.19 2001/11/22 08:50:21 sampo Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.20 2002/03/27 22:55:46 sampo Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -30,14 +30,12 @@
 
 #elif (CLIENT_CPU == CPU_ALPHA) && defined(__GNUC__)
 
-  #error "please check this"
-
-  typedef { volatile unsigned int spl; } fastlock_t __attribute__ ((__aligned__ (32)));
+  typedef struct { volatile unsigned int spl; } fastlock_t __attribute__ ((__aligned__ (32)));
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *v)
   {
-    __asm__ __volatile__("mb": : :"memory")
+    __asm__ __volatile__("mb": : :"memory");
     v->spl = 0;  
   }
   /* http://lxr.linux.no/source/include/asm-alpha/bitops.h?v=2.4.0#L92 */
@@ -70,7 +68,7 @@
       return +1;
     return 0;
   }
-  static __inline__ void fastlock_lock(volatile fastlock_t *m)
+  static __inline__ void fastlock_lock(fastlock_t *m)
   {
     while (fastlock_trylock(m) <= 0)
     {

@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.52 2002/03/22 21:05:08 andreasb Exp $
+ * $Id: ogr.cpp,v 1.1.2.53 2002/03/27 22:55:47 sampo Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -139,7 +139,7 @@
       (defined(__WATCOMC__) && defined(__386__)) || \
       (defined(__MWERKS__) && defined(__INTEL__)) || \
       (defined(__ICC)) /* icc is Intel only (duh!) */ || \
-      (defined(__GNUC__) && (defined(ASM_ALPHA) \
+      (defined(__GNUC__) && ((defined(ASM_ALPHA) && defined(ALPHA_CIX)) \
                              || defined(ASM_X86) \
                              || (defined(ASM_68K) && (defined(mc68020) \
                              || defined(mc68030) || defined(mc68040) \
@@ -2183,9 +2183,8 @@ static int found_one(const struct State *oState)
     #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   #endif
 #elif defined(ASM_ALPHA) && defined(__GNUC__)
-  #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
-  { i = ~i; __asm__ ("cntlzw %0,%0" : "=r"(i) : "0" (i)); return i+1; }
+  { register unsigned long j = ~((unsigned long)i) << 32;  __asm__ ("ctlz %0,%0" : "=r"(j) : "0" (j)); return (int)(j & 0x1f)+1; }
 #elif defined(ASM_X86) && defined(__GNUC__) || \
       defined(__386__) && defined(__WATCOMC__) || \
       defined(__INTEL__) && defined(__MWERKS__) || \
