@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.27 1999/04/17 13:14:56 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.28 1999/04/19 21:32:14 cyp Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -181,10 +181,10 @@ int ModeReqRun(Client *client)
               if ( newclient->Configure() == 1 )
               {
                 WriteConfig(newclient,1); //full new build
-                if ((bits & MODEREQ_CONFRESTART) != 0)
-                  restart = 1;
                 retval |= (bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART));
               }
+              if ((bits & MODEREQ_CONFRESTART) != 0)
+                restart = 1;
             }
             delete newclient;
           }
