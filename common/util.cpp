@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29.2.1 2002/11/10 12:15:43 pfeffi Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29.2.2 2003/01/13 01:18:35 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -1250,4 +1250,140 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
   } /* if (procname) */
 
   return num_found;
+}
+
+/* ------------------------------------------------------------------------ */
+
+static int __utilIsUserIDAValidEmailAddress(const char *userid)
+{
+  const char *c = userid, *domain = NULL;
+  int username_length = 0;
+  int domain_length = 0, domain_has_non_digits = 0, subdomains = 0;
+  int last_was_dash = 0, last_was_dot = 0;
+  int rfc_violation = 0;
+  
+  if (!c || !*c)
+    return 0;
+
+  // username part
+  // ToDo: check for '\' escaped characters, if someone complains :)
+  for (; *c; ++c)
+  {
+    if (*c == '@')
+    {
+      break;
+    }
+    if (*c <= 32) // control or space
+      return 0;
+
+    // for now, every other char is allowed in the username part
+    ++username_length;
+  }
+
+  if (*c == '@')
+  {
+    domain = ++c;
+    last_was_dot = 1; // the '@' is a separator, too
+    subdomains = 1;
+  }
+
+  // domain part
+  for (; *c; ++c)
+  {
+    if (*c == '.')
+    {
+      if (last_was_dot)
+        return 0;
+      if (last_was_dash)
+        ++rfc_violation;
+      ++subdomains;
+    }
+    else if (*c == '-')
+    {
+      if (last_was_dot)
+        ++rfc_violation;
+      domain_has_non_digits = 1;
+    }
+    else if ('0' <= *c && *c <= '9')
+    {
+      // digits are ok
+    }
+    else if (('a' <= *c && *c <= 'z') || ('A' <= *c && *c <= 'Z'))
+    {
+      // letters too
+      domain_has_non_digits = 1;
+    }
+    else
+    {
+      return 0; // unexpected character
+    }
+
+    ++domain_length;
+    last_was_dot  = (*c == '.');
+    last_was_dash = (*c == '-');
+  }
+  if (last_was_dash || last_was_dot || rfc_violation)
+    return 0;
+
+  if (!domain_has_non_digits)
+  {
+    // use of IP addresses is discouraged
+    if (subdomains != 4)
+      return 0;
+  }
+
+  if (username_length == 0 || domain_length == 0 || subdomains < 2)
+    return 0;
+
+  return 1;
+}
+
+/* XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX where X is a hex digit,
+   may be enclosed in braces */
+static int __utilIsUserIDAValidGUID(const char *userid)
+{
+  int has_braces = 0;
+  int i;
+  const char *c = userid;
+  
+  if (!c || !*c)
+    return 0;
+
+  if (*c == '{')
+  {
+    has_braces = 1;
+    ++c;
+  }
+
+  for (i = 0; i < 32 && *c; ++i, ++c)
+  {
+    if (i == 8 || i == 12 || i == 16 || i == 20) // there is a dash before this digit
+    {
+      if (*c++ != '-')
+        return 0; // no dash here ?
+    }
+    if (!*c || !(('0' <= *c && *c <= '9') || ('a' <= *c && *c <= 'f') || ('A' <= *c && *c <= 'F')))
+      return 0; // it's not a hexdigit
+  }
+  if (i != 32)
+    return 0; // found less than 32 digits
+
+  if (has_braces)
+  {
+    if (*c != '}')
+      return 0; // there was an opening brace but no closing one
+    ++c;
+  }
+
+  if (*c) // still more characters?
+    return 0;
+
+  return 1; // all tests passed :)
+}
+
+/* returns 1 = valid, 0 = invalid */
+int utilIsUserIDValid(const char *userid)
+{
+  return __utilIsUserIDAValidEmailAddress(userid) ||
+         __utilIsUserIDAValidGUID(userid);
 }
