@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.6  1998/10/08 20:54:39  cyp
+// Added buffwork.h to include list for UnlockBuffer() prototype.
+//
 // Revision 1.5  1998/10/04 20:38:45  remi
 // -benchmark shouldn't ask for something.
 //
@@ -26,7 +29,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.5 1998/10/04 20:38:45 remi Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.6 1998/10/08 20:54:39 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -35,10 +38,11 @@ return "@(#)$Id: cmdline.cpp,v 1.5 1998/10/04 20:38:45 remi Exp $"; }
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "pathwork.h"
 #include "iniread.h"
-#include "cliident.h"  // CliIdentifyModules()
-#include "sleepdef.h"  // usleep()
+#include "console.h"   // ConInKey()
 #include "triggers.h"  // CheckExitRequestTrigger()
-#include "cpucheck.h"  // GetTimesliceBaseline()
+#include "cliident.h"  // CliIdentifyModules()
+#include "cpucheck.h"  // DisplayProcessorInformation()
+#include "buffwork.h"  // UnlockBuffer()
 
 /* ------------------------------------------------------------------------
  * runlevel == 0 = pre-anything    (-quiet, -ini, -guistart etc done here)
@@ -293,8 +297,8 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         {
         #if (CLIENT_CPU == CPU_X86) && (defined(MMX_BITSLICER) || defined(MMX_RC5))
         usemmx=0;
-        if (logging_is_initialized)
-          LogScreenRaw("Won't use MMX instructions\n");
+	//we don't print a message because usemmx is internal/undocumented
+	//and for developer use only
         #endif
         }
       else if ( strcmp( thisarg, "-b" ) == 0 || strcmp( thisarg, "-b2" ) == 0 )
@@ -776,33 +780,30 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
 	else			//one of them failed
 	  retcode = 1; 
 	}
-      else if (( strcmp( thisarg, "-benchmark2rc5" ) == 0 ) ||
-               ( strcmp( thisarg, "-benchmark2des" ) == 0 ) ||
-               ( strcmp( thisarg, "-benchmark2" ) == 0 ) ||
-               ( strcmp( thisarg, "-benchmarkrc5" ) == 0 ) ||
-               ( strcmp( thisarg, "-benchmarkdes" ) == 0 ) ||
-               ( strcmp( thisarg, "-benchmark" ) == 0 ))
+      else if (strncmp( thisarg, "-benchmark", 10 ) == 0)
         {
         quietmode = runhidden = 0;
         do_break = 1;
 	inimissing = 0; // Don't complain if the inifile is missing
-        int dobench;
-              if ( strcmp( thisarg, "-benchmark2rc5" ) == 0 )  dobench = 2;
-        else  if ( strcmp( thisarg, "-benchmark2des" ) == 0 )  dobench = 3;
-        else  if ( strcmp( thisarg, "-benchmarkrc5"  ) == 0 )  dobench = 5;
-        else  if ( strcmp( thisarg, "-benchmarkdes"  ) == 0 )  dobench = 6;
-        else  if ( strcmp( thisarg, "-benchmark2"    ) == 0 )  dobench = 1;
-        else/*if ( strcmp( thisarg, "-benchmark"     ) == 0 )*/dobench = 4;
-
-        if ( !CheckExitRequestTrigger() && ( dobench == 1 || dobench == 2 ))
-          Benchmark(1, 1<<20 ); //1048576 instead of 1000000
-        if ( !CheckExitRequestTrigger() && ( dobench == 1 || dobench == 3 ))
-          Benchmark(2, 1<<20 ); //1048576 instead of 1000000
-        if ( !CheckExitRequestTrigger() && ( dobench == 4 || dobench == 5 ))
-          Benchmark(1, 0 );
-        if ( !CheckExitRequestTrigger() && ( dobench == 4 || dobench == 6 ))
-          Benchmark(2, 0 );
-        retcode = ( CheckExitRequestTrigger() ? -1 : 0 ); //and break out of loop
+        u32 dobench = 0;
+	thisarg += 10;
+	
+	//minimum bench size is 1<<20
+	//short bench is 1048576 (1<<20) instead of  10000000
+	//long  bench is 8388608 (1<<23) instead of 100000000
+	
+              if ( strcmp( thisarg, "2rc5" ) == 0 )  dobench=(1L<<20)|(0x01);
+        else  if ( strcmp( thisarg, "2des" ) == 0 )  dobench=(1L<<20)|(0x02);
+        else  if ( strcmp( thisarg, "2"    ) == 0 )  dobench=(1L<<20)|(0x03);
+        else  if ( strcmp( thisarg, "rc5"  ) == 0 )  dobench=(1L<<23)|(0x01);
+        else  if ( strcmp( thisarg, "des"  ) == 0 )  dobench=(1L<<23)|(0x02);
+        else/*if ( strcmp( thisarg, ""     ) == 0 )*/dobench=(1L<<23)|(0x03);
+	
+	if ( !CheckExitRequestTrigger() && ( dobench & 0x01 ) != 0)
+          Benchmark( 0, (dobench & 0xFFFFFF00) );
+	if ( !CheckExitRequestTrigger() && ( dobench & 0x02 ) != 0)
+          Benchmark( 1, (dobench & 0xFFFFFF00) );
+        retcode = ( CheckExitRequestTrigger() ? -1 : 0 ); 
         }
       else if ( strcmp( thisarg, "-forceunlock" ) == 0 )
         {
@@ -811,7 +812,8 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           quietmode = runhidden = 0;
           do_break = 1;
           retcode = -1;
-          retcode = UnlockBuffer(nextarg);
+	  if (nextarg)
+            retcode = UnlockBuffer(nextarg);
           }
         }
       else if ( strcmp( thisarg, "-config" ) == 0 )
