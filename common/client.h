@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.95  1998/11/08 18:52:07  cyp
+// DisplayHelp() is no longer a client method.
+//
 // Revision 1.94  1998/11/07 14:15:15  cyp
 // InternalCountBuffer() (optionally) returns the number of 2^28 blocks in a
 // buffer.
@@ -230,8 +233,6 @@
 // --------------------------------------------------------------------------
 
 #define PACKET_VERSION      0x03
-
-//#define MAXCPUS             16   -- OBSOLETE --
 #define FETCH_RETRY         10
 
 // --------------------------------------------------------------------------
@@ -475,9 +476,6 @@ public:
 
   int DoCheckpoint( unsigned int load_problem_count );
     // Make the checkpoint file represent current blocks being worked on
-
-  void DisplayHelp( const char * unrecognized_option );
-    // Displays the interactive command line help screen.
 
 #if defined(NEEDVIRTUALMETHODS)
   virtual s32  Configure( void );
