@@ -5,8 +5,25 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
-# Revision 1.142  1998/12/22 02:38:39  snake
+# Revision 1.143  1998/12/22 15:41:26  jcmichot
 #
+# client/configure
+# client/builder.txt
+# client/common/baseincs.h
+# client/common/client.cpp
+# client/common/clirun.cpp
+# client/common/cmdline.cpp
+# client/common/cmpidefs.h
+# client/common/console.cpp
+# client/common/cpucheck.cpp
+# client/common/cputypes.h
+# client/common/network.h
+# client/common/setprio.cpp
+#
+# Revision 1.143  1998/12/21 16:18:23  jcmichot
+# Add qnx4 support.
+#
+# Revision 1.142  1998/12/22 02:38:39  snake
 # EPROTO doesn't exist on some systems
 #
 # Revision 1.141  1998/12/14 23:24:39  remi
@@ -1231,6 +1248,13 @@ case "$1" in
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	;;
+
+    *x86-qnx4)
+	TARGET_AS="g++ -c -DNO_BALIGN"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4"
+	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	;;
 
     *x86-openbsd)
