@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29.2.10 2003/09/02 00:48:54 mweiser Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29.2.11 2003/09/12 13:16:47 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -20,7 +20,7 @@ return "@(#)$Id: util.cpp,v 1.29.2.10 2003/09/02 00:48:54 mweiser Exp $"; }
 #include "clicdata.h" /* CliGetContestNameFromID() */
 #include "pathwork.h" /* GetFullPathForFilename() */
 #include "sleepdef.h" /* usleep() */
-#include "util.h"     /* ourselves, DNETC_UNUSED_* */
+#include "util.h"     /* ourselves */
 #define MAX_CONTEST_NAME_LEN 6
 // PROJECT_NOT_HANDLED("is MAX_CONTEST_NAME_LEN still ok?")
 // OK!
@@ -1028,23 +1028,22 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #elif defined(__unix__)
     {
-      char *p, *foundname;
-      pid_t thatpid, ourpid = getpid();
+      char *foundname;
+      pid_t ourpid = getpid();
       size_t linelen; char buffer[1024];
       int usefullpathcmp = (strchr( procname, '/' ) != ((char *)0));
-
-      DNETC_UNUSED(thatpid);
 
       #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
           (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
           (CLIENT_OS == OS_PS2LINUX)
       {
         DIR *dirp = opendir("/proc");
-        if (dirp)
-        {
+
+        if (dirp) {
+          pid_t thatpid;
           struct dirent *dp;
-          while ((dp = readdir(dirp)) != ((struct dirent *)0))
-          {
+
+          while ((dp = readdir(dirp)) != ((struct dirent *)0)) {
             FILE *file;
             thatpid = (pid_t)atoi(dp->d_name);
             if (num_found < 0)
@@ -1058,6 +1057,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
             fclose( file );
             if (linelen != 0)
             {
+              char *p;
+
               if (linelen == sizeof(buffer))
                 linelen--;
               buffer[linelen] = '\0';
@@ -1165,13 +1166,18 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
               if (linelen < (sizeof(buffer)-1)) /* otherwise line is unusable */
               {
                 char *p;
+
                 buffer[linelen]='\0';
                 foundname = &buffer[0];
+
                 while (*foundname && isspace(*foundname))
                   foundname++;
+
                 p = foundname;
+
                 while (isdigit(*foundname))
                   foundname++;
+
                 if (p == foundname) /* no digits found. can't be pid */
                 {
                   /* both linelen and buffer are about to be reset,
@@ -1180,10 +1186,14 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                 }
                 else /* got a pid */
                 {
+                  pid_t thatpid;
+
                   *foundname++ = '\0';
                   thatpid = (pid_t)atol(p);
+
                   if (num_found < 0)
                     num_found = 0;
+
                   #if (CLIENT_OS == OS_BEOS)
                   if (fullpath[0])
                   {
@@ -1252,8 +1262,6 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         } /* if (file != ((FILE *)NULL)) */
       }
       #endif /* spawn ps */
-
-      p=p;
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #endif /* #if (defined(__unix__)) */
