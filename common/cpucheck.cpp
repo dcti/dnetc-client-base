@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.21 2003/07/15 02:23:25 mfeiri Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.22 2003/08/05 19:58:17 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1555,8 +1555,9 @@ static long __GetRawProcessorID(const char **cpuname)
   {12, "TMS390Z55", "SuperSPARC SC"},
   {13, "TMS390Z50", "SuperSPARC II"},
   {14, "TMS390Z55", "SuperSPARC II SC"},
-  {15, "RT620", "hyperSPARC"},  
+  {15, "RT620", "hyperSPARC"},	/* used? */  
   {16, "RT625", "hyperSPARC"},
+  {16, "RT626", "hyperSPARC"},
   /* sun4d */
   /* sun4u */
   {17, "UltraSPARC", "UltraSPARC-I"},
