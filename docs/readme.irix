@@ -1,63 +1,7 @@
-$Id: readme.irix,v 1.1.2.3 2000/01/18 23:24:22 lyndon Exp $
+$Id: readme.irix,v 1.1.2.4 2000/09/18 03:18:21 lyndon Exp $
 
-		Choosing the correct Irix client.
+Additional information for Irix clients.
+========================================
 
-As of release 2.8002, system specific builds of the client are
-available. These builds are targetted at particular SGI motherboard/CPU
-pairings. Choosing the correct client for your system will ensure you
-get the best performance available.
-
-The distributions are named dnetcNNN-irix6-mips-ipXX.tar.gz for 32 bit
-clients, and dnetcNNN-irix6-mips-ipXX-64.tar.gz for 64 bit clients.
-NNN represents the client build number, and NN is a model number for a
-specific SGI system. Not all models have 64 bit clients available.
-
-Select your client based on your system model type and OS architecture.
-To determine the model:
-
-% uname -m
-IP27
-
-The model number is IP27.
-
-Next, determine if you are running a 64 bit version of Irix:
-
-% uname -s
-IRIX64
-
-This indicates a 64 bit kernel. If you see 'IRIX' then you have a 32
-bit kernel.
-
-The example system is an IP27 running a 64 bit kernel, therefore you
-should download dnetcNNN-mips-ip27-64.tar.gz. If there is no -64
-distribution, download dnetcNNN-irix6-mips-ip27.tar.gz.
-
-The clients should run on any Irix 6.X release.
-
-If you can't find a build tailored to your specific SGI system, please
-contact lyndon@distributed.net.
-
-===================================================================
-Irix client build information (for *-irix6-mips-ipXX packages only).
-
-2.8005
-------
-The Irix specific scheduling code has been removed. If you want to
-run the client 'weightless' you can launch it with:
-
-	npri -w dnetc ...
-
-Note: If you launch the client using npri you'll have to use -9
-to kill it. (This means you'll lose any work in progress when the
-system shuts down, since the client won't see the SIGTERM and
-therefore won't clean itself up.)
-
-2.8002
-------
-Built using MIPSpro 7.3 compilers. All clients have multithread
-support.
-
-The IPxx targetted builds use the ANSI (2-rg) RC5 core. This is slower
-than the mips-crunch core used in earlier builds. For MP systems this
-is offset by the increase gained by adding thread support back in. Work
-is ongoing to speed up the RC5 core.
+The 2.8XXX series of clients are built on Irix 6.5. They will not run
+on Irix releases prior to 6.5.
