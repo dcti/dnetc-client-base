@@ -9,11 +9,14 @@
 */
 //  
 // $Log: cmpidefs.h,v $
+// Revision 1.13  1999/01/09 19:31:14  cyp
+// synchronized cmpidefs.h in client and proxy source trees
+//
 // Revision 1.12  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
 // Revision 1.11  1998/12/22 15:58:24  jcmichot
-// *** empty log message ***
+// QNX port changes
 //
 // Revision 1.10  1998/12/08 05:38:18  dicamillo
 // Add defines for MacOS.
