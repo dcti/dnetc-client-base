@@ -1,10 +1,10 @@
-/* 
+/*
  * Copyright distributed.net 1998-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_csc_cpp(void) {
-return "@(#)$Id: core_csc.cpp,v 1.1.2.2 2003/09/01 19:27:36 jlawson Exp $"; }
+return "@(#)$Id: core_csc.cpp,v 1.1.2.3 2003/09/01 21:40:15 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -27,7 +27,7 @@ return "@(#)$Id: core_csc.cpp,v 1.1.2.2 2003/09/01 19:27:36 jlawson Exp $"; }
 /* ======================================================================== */
 
 /* all the core prototypes
-   note: we may have more prototypes here than cores in the client 
+   note: we may have more prototypes here than cores in the client
    note2: if you need some 'cdecl' value define it in selcore.h to CDECL */
 
 
@@ -65,12 +65,12 @@ const char **corenames_for_contest_csc()
    they are different from their predecessor(s). If only one core,
    use the obvious "MIPS optimized" or similar.
   */
-  static const char *corenames_table[] = 
+  static const char *corenames_table[] =
     {
   /* ================================================================== */
-      "6 bit - inline", 
+      "6 bit - inline",
       "6 bit - called",
-      "1 key - inline", 
+      "1 key - inline",
       "1 key - called",
   /* ================================================================== */
       NULL
@@ -82,7 +82,7 @@ const char **corenames_for_contest_csc()
 
 /* -------------------------------------------------------------------- */
 
-/* 
+/*
 ** Apply substition according to the same rules enforced by
 ** selcoreSelectCore() [ie, return the cindex of the core actually used
 ** after applying appropriate OS/architecture/#define limitations to
@@ -90,13 +90,13 @@ const char **corenames_for_contest_csc()
 **
 ** This is necessary when the list of cores is a superset of the
 ** cores supported by a particular build. For example, all x86 clients
-** display the same core list for RC5, but as not all cores may be 
-** available in a particular client/build/environment, this function maps 
+** display the same core list for RC5, but as not all cores may be
+** available in a particular client/build/environment, this function maps
 ** between the ones that aren't available to the next best ones that are.
 **
 ** Note that we intentionally don't do very intensive validation here. Thats
 ** selcoreGetSelectedCoreForContest()'s job when the user chooses to let
-** the client auto-select. If the user has explicitely specified a core #, 
+** the client auto-select. If the user has explicitely specified a core #,
 ** they have to live with the possibility that the choice will at some point
 ** no longer be optimal.
 */
@@ -214,7 +214,7 @@ int selcoreSelectCore_csc( unsigned int threadindex,
   /* ================================================================== */
 
 
-  if (coresel >= 0 && unit_func.gen && 
+  if (coresel >= 0 && unit_func.gen &&
      coresel < ((int)corecount_for_contest(CSC)))
   {
     if (client_cpuP)
