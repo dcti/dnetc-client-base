@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.36  1998/07/20 00:28:36  silby
+// Change to combine NT Service and 95 CLI.
+//
 // Revision 1.35  1998/07/13 12:40:30  kbracey
 // RISC OS update.
 // Added -noquiet option.
@@ -123,7 +126,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-static const char *id="@(#)$Id: disphelp.cpp,v 1.35 1998/07/13 12:40:30 kbracey Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.36 1998/07/20 00:28:36 silby Exp $";
 return id; }
 #endif
 
@@ -403,12 +406,9 @@ void Client::DisplayHelp( const char * unrecognized_option )
   "-frequent          attempt updates often",
   "-blsize <n>        set a preferred blocksize (2^n)",
 #if (CLIENT_OS == OS_WIN32)
-  #if defined(WINNTSERVICE)
-  "-install           install the client as an NT service",
-  "-uninstall         uninstall the client if running as an NT service",
-  #else
+  "-install           install the client as a service",
+  "-uninstall         uninstall the client if running as a service",
   "-hide              hide the client from the desktop",
-  #endif
 #endif
 #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
   "-lurk              automatically detect modem connections",
