@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.45  1999/01/15 09:55:21  jlawson
+// added DES Cracker os and cpu type.
+//
 // Revision 1.44  1999/01/15 01:32:46  snake
 //
 // fixed CLIENT_OS_NAME entry for BSD/OS (it's not BSDI Unix)
@@ -183,6 +186,7 @@ struct s128 { s64 hi, lo; };
 #define CPU_KSR1        13
 #define CPU_S390        14
 #define CPU_MASPAR      15
+#define CPU_DESCRACKER  16
 
 // Major OS Architectures.
 #define OS_UNKNOWN      0
@@ -227,6 +231,7 @@ struct s128 { s64 hi, lo; };
 #define OS_OS390        39
 #define OS_MASPAR       40
 #define OS_WIN16        41    // windows 3.1, 3.11, wfw (16-bit)
+#define OS_DESCRACKER   42
 
 // determine current compiling platform
 #if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
@@ -277,7 +282,7 @@ struct s128 { s64 hi, lo; };
   #if defined(ASM_ALPHA)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_ALPHA
-  #elif defined(ASM_X86)
+  #elif defined(__i386__) || defined(ASM_X86)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_X86
   #elif defined(ARM)
