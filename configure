@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.146 2000/03/23 20:43:24 jbaker Exp $
+# @(#)$Id: configure,v 1.222.2.147 2000/04/19 20:09:12 jlawson Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1212,7 +1212,7 @@ case "$1" in
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
 			##$NASM_DESMMX_SRCS $CSC_ASM_SRCS
 	TARGET_NASM_FMT="elf"
-	TARGET_LIBS="-lpthread"
+	TARGET_LIBS="-lpthread -ldl"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-glibc2"
 	;;
