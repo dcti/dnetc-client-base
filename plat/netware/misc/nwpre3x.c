@@ -7,23 +7,23 @@
  * This file contains startup code similar to what crt0 does elsewhere.
  * Written August 1997 Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * $Id: nwpre3x.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $
+ * $Id: nwpre3x.c,v 1.2.4.1 2003/09/02 00:08:45 mweiser Exp $
  *
- * Unlike Novell's prelude, its in source, is backwards compatible with 
- * NetWare 3.x, zeroes the BSS segment, and supports Watcom c/cpp lib 
+ * Unlike Novell's prelude, its in source, is backwards compatible with
+ * NetWare 3.x, zeroes the BSS segment, and supports Watcom c/cpp lib
  * startup/exit code.
  *
- * Unlike Watcom's prelude, its in source and it doesn't have half a ton 
+ * Unlike Watcom's prelude, its in source and it doesn't have half a ton
  * of gunk in it to get most of the pseudo-static clib pulled in.
  * (This prelude helps make Watcom's static lib (plib[mt]3s) unneccesary)
  * ***************************************************************
- * THIS MUST BE COMPILED WITH WATCOM C IF LINKING WITH WATCOM LIBs 
+ * THIS MUST BE COMPILED WITH WATCOM C IF LINKING WITH WATCOM LIBs
  * ***************************************************************
  *
  * An NLM's startup/shutdown sequence is something like this:
- * 
- * (All function names in quotes are in prelude. "_Prelude" and "_Stop" are 
- * simply the default names and may be redefined with the appropriate linker 
+ *
+ * (All function names in quotes are in prelude. "_Prelude" and "_Stop" are
+ * simply the default names and may be redefined with the appropriate linker
  * command. Everything else (except functionality marked "(OS)") is in CLIB)
  *
  * The sequence DestroyThreads->DestroyThreadGroup->atexit->AtUnload as
@@ -36,8 +36,8 @@
  *        |         |                              |     |          ^  ^
  *       _StartNLM(...)                           _TerminateNLM()   |  |
  *           |                                     |          |     |  |
- *    (BeginThreadGroup())                         |          |     |  |    
- *           |                                     |          |     |  | 
+ *    (BeginThreadGroup())                         |          |     |  |
+ *           |                                     |          |     |  |
  *           |   ,-----exit(),------------------, raise(6);   |     |  |
  *           |   |     |     |                  |  |          ^     ^  ^
  *      "_cstart_()"   |     `--<--, ,-> (DestroyThreads)     |     |  |
@@ -50,15 +50,15 @@
  *         ---->- ExitThread() ->-'| |    |     |  `-AtUnload-'     |  |
  *         ---->- exit() ------->--' |    |     `-------------------'  |
  *         ---->- _exit() ----->-----'    `----------------------------'
- * 
+ *
  *
  * however, I have modified the flow slightly. exit() as well as atexit()
  * are in prelude rather than in CLIB so that atexit() handling is called
  * before ExitThread(). That way destructors (if any) are handled within
- * thread group context. Naturally, this means that calling ExitThread() 
+ * thread group context. Naturally, this means that calling ExitThread()
  * directly will bypass atexit(). #define EXIT_IN_CLIB if you want it
  * the otherway (destructors won't have threadgroup context)
- * 
+ *
  * Furthermore, this prelude provides a PreludeSetOnStopHook(void (*)(void)),
  * that can be used for customizing signal handling (or whatever). The
  * hook will be called *before* prelude passes the request-to-unload to
@@ -68,12 +68,12 @@
 
 #ifdef __cplusplus
   #error Error: This needs to be a 'C' not 'CPP' file.
-#endif   
+#endif
 
 extern void CYieldUntilIdle(void);
 extern void CYieldWithDelay(void);
 extern void ConsolePrintf(const char *,...);
-extern int GetThreadGroupID(void); 
+extern int GetThreadGroupID(void);
 extern int SetThreadGroupID(int );
 typedef long wchar_t; /* unicode char */
 
@@ -85,7 +85,7 @@ typedef long wchar_t; /* unicode char */
 
 /* --------------------------------------------------------------------- */
 
-struct __exitcallback { void (*func)(void); int threadGroupID; };  
+struct __exitcallback { void (*func)(void); int threadGroupID; };
 static struct
 {
   void *nlmHandle;
@@ -98,7 +98,7 @@ static struct
 
 #ifdef EXIT_IN_CLIB
 #define __atexitstuff(m, f) /* nothing */
-extern int atexit(void (*)(void)); 
+extern int atexit(void (*)(void));
 extern void exit(int);
 #else
 static int __atexitstuff(int mode, void (*func) (void))
@@ -127,7 +127,7 @@ static int __atexitstuff(int mode, void (*func) (void))
         SetThreadGroupID(tgid);
       }
     }
-  }  
+  }
   else if (mode > 0)
   {
     if (hookCount < ((int)(sizeof(hookList)/sizeof(hookList[0]))) )
@@ -146,10 +146,10 @@ static int __atexitstuff(int mode, void (*func) (void))
   }
   DEBUGPRINTF(("ended atexit mode: %d\r\n", mode));
   return hookCount;
-}  
-int atexit(void (*func) (void)) 
-{ 
-  return __atexitstuff(+1, func); 
+}
+int atexit(void (*func) (void))
+{
+  return __atexitstuff(+1, func);
 }
 extern void ExitThread( int action_code, int status );
 extern int GetThreadID(void);
@@ -183,7 +183,7 @@ void exit(int retcode)
 /* ---------------------------------------------------------------------- */
 
 #if defined(__WATCOMC__) /* for compatability with Watcom's libraries. */
-   
+
 void __InitRtns(unsigned);
 #pragma aux __InitRtns "*" parm [eax]
 void __FiniRtns(unsigned,unsigned);
@@ -206,7 +206,7 @@ struct ib_data _Start_YI = { 0, 0, _initfini_nop };
 struct ib_data _End_YI = { 0, 0, _initfini_nop };
 #pragma data_seg ( "_DATA" );
 
-static void __InitFiniRtns(volatile struct ib_data *vectb,  
+static void __InitFiniRtns(volatile struct ib_data *vectb,
                            volatile struct ib_data *vecte,
                            volatile unsigned int priob,
                            volatile unsigned int prioe )
@@ -226,9 +226,9 @@ static void __InitFiniRtns(volatile struct ib_data *vectb,
         if (proc)
         {
           //DEBUGPRINTF(("  begin initrtns %d (ib=%p) proc=%p\r\n", priob, ibb, proc));
-          CYieldUntilIdle(); 
+          CYieldUntilIdle();
           (*proc)();
-          CYieldUntilIdle(); 
+          CYieldUntilIdle();
           //DEBUGPRINTF(("  end initrtns %d %p\r\n", priob, proc));
         }
         ibb->resfield = 2;
@@ -239,8 +239,8 @@ static void __InitFiniRtns(volatile struct ib_data *vectb,
     priob++;
   }
   return;
-}  
-  
+}
+
 void __FiniRtns(unsigned priob, unsigned prioe)
 {
   if (priob > 255) priob = 0;
@@ -266,7 +266,7 @@ void __InitRtns(unsigned prioe)
 /* ---------------------------------------------------------------------- */
 
 /*
- * Try very hard to minimize #including anything. 
+ * Try very hard to minimize #including anything.
  * (Just in case Novell changes even this simple api)
 */
 
@@ -289,7 +289,7 @@ typedef struct NLMInfo
   unsigned int sizeof_wchar_t;     /* size_t */
 } NLMInfo;
 
-static NLMInfo kNLMInfo = 
+static NLMInfo kNLMInfo =
                 {{TRADITIONAL_NLM_INFO_SIGNATURE}, /* or 0x494D4C4E 'NLMI' */
                   TRADITIONAL_FLAVOR,   /* 0 */
                   LIBERTY_VERSION,   /* 1, 0=TRADITIONAL_VERSION */
@@ -298,16 +298,16 @@ static NLMInfo kNLMInfo =
 
 /* ---------------------------------------------------------------------- */
 
-/* _cstart_ (called userStartFunc() in Novell documentation) is called 
-   from _StartNLM. It in turn calls the first program function, which 
+/* _cstart_ (called userStartFunc() in Novell documentation) is called
+   from _StartNLM. It in turn calls the first program function, which
    in the ANSI C "hosted" execution model is main(int argc, char *argv[]).
 
-   Since the NetWare CLIB has a function for setting up argc and argv, 
+   Since the NetWare CLIB has a function for setting up argc and argv,
    there is no need to set the command line here, and we call the CLIB
    function (_SetupArgV()) to do the work for us. There is a special
-   _SetupArgV() in NetWare 4.11 that handles STDIN/STDOUT redirection 
-   called _SetupArgV_411, otherwise we have to handle redirection ourselves. 
-   
+   _SetupArgV() in NetWare 4.11 that handles STDIN/STDOUT redirection
+   called _SetupArgV_411, otherwise we have to handle redirection ourselves.
+
    _SetupArgV() calls main() (or whatever) with argc and argv and then
    returns the errorcode returned by main().
 */
@@ -323,6 +323,7 @@ int _argc = 0;  char **_argv = 0;
 static int _pre_main( int argc, char *argv[] )
 {
   int rc;
+
   preludestatics.main_threadGroupID = GetThreadGroupID();
   DEBUGPRINTF(("premain: got here\r\n"));
   _argc = argc; _argv = argv;
@@ -333,10 +334,11 @@ static int _pre_main( int argc, char *argv[] )
   exit(rc);
   DEBUGPRINTF(("premain: PANIC! exit() came back!\r\n"));
   preludestatics.main_threadGroupID = -1;
-  return 0; /* shaddup compiler */
-}  
 
-int _cstart_()  
+  return 0;
+}
+
+int _cstart_()
 {
   //DEBUGPRINTF(("beginning _cstart_\r\n"));
   return _SetupArgv( _pre_main );
@@ -345,19 +347,19 @@ int _cstart_()
 
 /* ---------------------------------------------------------------------- */
 
-/* _Prelude is the default "name" of start function called from the OS 
+/* _Prelude is the default "name" of start function called from the OS
    The OS doesn't load by name, but by whatever the linker set the "start"
-   (see linker OPTION START) function address to. 
-   
-   Special note on "custom data":  NetWare allows modules to read custom 
-   data into system memory during initialization. This data can be anything 
-   that might be required. For example, the driver may need to read in 
-   firmware to be loaded into a co-processor board. To define the custom 
-   file, use the CUSTOM keyword in the driver's definition file followed by 
+   (see linker OPTION START) function address to.
+
+   Special note on "custom data":  NetWare allows modules to read custom
+   data into system memory during initialization. This data can be anything
+   that might be required. For example, the driver may need to read in
+   firmware to be loaded into a co-processor board. To define the custom
+   file, use the CUSTOM keyword in the driver's definition file followed by
    the file's name (custom files are simply appended to the NLM/DSK/NAM/LAN
-   file). NetWare passes the custom data file's handle, starting offset, 
-   size, and the Read routine address to the Initialize routine, where it 
-   should be saved upon entry. Initialize Driver can read the file into 
+   file). NetWare passes the custom data file's handle, starting offset,
+   size, and the Read routine address to the Initialize routine, where it
+   should be saved upon entry. Initialize Driver can read the file into
    memory by calling the Read routine using the syntax shown below:
    ReadCustomDataRoutine( LONG CustomDataFileHandle, LONG CustomDataOffset,
                            BYTE *CustomDataDestination, LONG CustomDataSize);
@@ -366,7 +368,7 @@ int _cstart_()
    Of Interest: The stack frame size is [ebp-esp] (at the start of _Prelude).
 */
 
-extern unsigned long _StartNLM( void *NLMHandle, void *initErrorScreenID, 
+extern unsigned long _StartNLM( void *NLMHandle, void *initErrorScreenID,
    unsigned char *cmdLineP, unsigned char *loadDirectoryPath,
    unsigned long uninitializedDataLength, unsigned long NLMFileHandle,
    unsigned long (*readRoutineP)(), unsigned long customDataOffset,
@@ -382,21 +384,21 @@ unsigned long _Prelude( void *NLMHandle, void *initErrorScreenID,
    extern char _edata, _end;
    register unsigned char *q = &_end;   /* end of BSS (start of stack?) */
    register unsigned char *p = &_edata; /* end of DATA (start of BSS) */
-   while (p < q) *p++=0; 
+   while (p < q) *p++=0;
    p = (char *)(&preludestatics);
    q = p+sizeof(preludestatics);
    while (p < q) *p++=0;
 
    preludestatics.nlmHandle = NLMHandle;
 
-   return _StartNLM( NLMHandle, initErrorScreenID, cmdLineP, 
+   return _StartNLM( NLMHandle, initErrorScreenID, cmdLineP,
      loadDirectoryPath,  uninitializedDataLength, NLMFileHandle, readRoutineP,
      customDataOffset, customDataSize, &kNLMInfo, _cstart_ );
 }
 
 /* ---------------------------------------------------------------------- */
 
-/* _Stop is the default "name" of stop function called from the OS 
+/* _Stop is the default "name" of stop function called from the OS
    The OS doesn't load by name, but by whatever the linker set the "stop"
    (see linker OPTION STOP) function address to. */
 
@@ -413,18 +415,18 @@ void (*PreludeSetOnStopHook(void (*func) (void)))(void)
   return oldfunc;
 }
 
-extern void *signal(int, void *); 
+extern void *signal(int, void *);
 extern int BeginThread( void (*)(void *), void *, unsigned int, void *);
 extern unsigned long GetCurrentTime(void);
 
-void _Stop( void ) 
+void _Stop( void )
 {
   int tgid;
   preludestatics.in_stop = 1;
 
 #ifndef EXIT_IN_CLIB
   DEBUGPRINTF(("_stop(): beginning. entry from OS console process\r\n" ));
-  if (preludestatics.main_threadGroupID != -1 && 
+  if (preludestatics.main_threadGroupID != -1 &&
       preludestatics.main_threadGroupID != 0)
   {
     void *sighdlr;
@@ -441,7 +443,7 @@ void _Stop( void )
       unsigned long lasttime = 0;
       unsigned int ticks = (20*182)/10; /* 20 seconds */
       DEBUGPRINTF(("_stop(): beginning \"wait for exit\" loop\r\n"));
-      while (ticks && preludestatics.main_threadGroupID != -1 && 
+      while (ticks && preludestatics.main_threadGroupID != -1 &&
                       preludestatics.main_threadGroupID != 0)
       {
         unsigned long timenow = GetCurrentTime();
@@ -455,25 +457,25 @@ void _Stop( void )
   }
 
   if (preludestatics.OnStopHook.func &&
-      preludestatics.main_threadGroupID != -1 && 
+      preludestatics.main_threadGroupID != -1 &&
       preludestatics.main_threadGroupID != 0) /* main didn't return */
   {
     int tgid = SetThreadGroupID(preludestatics.OnStopHook.threadGroupID);
     (*preludestatics.OnStopHook.func)();
     SetThreadGroupID(tgid);
   }
-  if (preludestatics.main_threadGroupID != -1 && 
+  if (preludestatics.main_threadGroupID != -1 &&
       preludestatics.main_threadGroupID != 0) /* main didn't return */
   {
     __atexitstuff( -1, 0 );
   }
 #endif /* EXIT_IN_CLIB */
   DEBUGPRINTF(("_stop(): calling _TerminateNLM(). (Should come back to us)\r\n"));
-  _TerminateNLM( kNLMInfo.sig.ID, TERMINATE_BY_EXTERNAL_THREAD /* 0 */ , 
+  _TerminateNLM( kNLMInfo.sig.ID, TERMINATE_BY_EXTERNAL_THREAD /* 0 */ ,
                                   TERMINATE_BY_UNLOAD  /* 5 */ );
   DEBUGPRINTF(("_stop(): finished. Returning to OS.\r\n"));
   return;
-}                                      
+}
 
 /* --------------------------------------------------------------------- */
 
