@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.56 1999/04/30 23:51:59 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.57 1999/05/01 04:42:25 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -798,7 +798,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
       int req = MODEREQ_FLUSH; // always flush while fetching
       if ((bufupd_pending & BUFFERUPDATE_FETCH)!=0)
         req |= MODEREQ_FETCH;
-      ModeReqSet( req ); /* delegate it to the client.run loop */
+      ModeReqSet( req|MODEREQ_FQUIET ); /* delegate to the client.run loop */
     }
 
     if (!allclosed && mode != PROBFILL_RESIZETABLE)
