@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.21 2004/03/29 17:58:16 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.22 2004/04/02 21:57:16 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -338,7 +338,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         #if !defined(HAVE_NO_NASM)
         switch (detected_type & 0xff) // FIXME remove &0xff
         {
-          case 0x00: cindex = (have_mmx?4   // P5 MMX     == DG 3-pipe alt (#3233)
+          case 0x00: cindex = (have_mmx?7   // P5 MMX     == SGP 3-pipe (#3625)
                                        :2); // P5         == DG 2-pipe
 		                 break;
           case 0x01: cindex = 0; break; // 386/486        == SES 1-pipe
