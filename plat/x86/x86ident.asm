@@ -7,7 +7,7 @@
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.3.2.1 2002/11/25 17:52:22 stream Exp $
+; $Id: x86ident.asm,v 1.3.2.2 2002/11/25 18:03:56 stream Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -55,7 +55,7 @@
 %define __CODESECT__ [SECTION .text]
 %endif
 
-global          x86ident,_x86ident,x86ident_
+global          x86ident,_x86ident
 global          x86ident_haveioperm, _x86ident_haveioperm
 
 __DATASECT__
