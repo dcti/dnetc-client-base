@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.61 2002/06/11 02:32:12 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.62 2002/06/22 21:11:36 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -260,7 +260,7 @@
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME  "SCO Unix"
+  #define CLIENT_OS_NAME  "SCO OpenServer"
   #define CLIENT_OS       OS_SCO
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
@@ -319,7 +319,7 @@
   typedef unsigned long long uint64_t;
   typedef unsigned int uint32_t;
   typedef long long int64_t;
-  #define CLIENT_OS_NAME  "HP/UX"
+  #define CLIENT_OS_NAME  "HP-UX"
   #define CLIENT_OS       OS_HPUX
   #if defined(__hppa) || defined(__hppa__) || defined(ASM_HPPA)
     #define CLIENT_CPU    CPU_PA_RISC
@@ -389,7 +389,7 @@
     #define CLIENT_CPU CPU_X86
   #endif
 #elif defined(AMIGA)
-  #define CLIENT_OS_NAME   "AmigaOS"
+  #define CLIENT_OS_NAME   "Amiga OS"
   #define CLIENT_OS     OS_AMIGAOS
   #ifdef __PPC__
     #define CLIENT_CPU    CPU_POWERPC
@@ -414,7 +414,7 @@
     #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(__MVS__)
-  #define CLIENT_OS_NAME   "OS390"
+  #define CLIENT_OS_NAME   "OS/390"
   #define CLIENT_OS     OS_OS390
   #define CLIENT_CPU    CPU_S390
 #elif defined(_SEQUENT_)
