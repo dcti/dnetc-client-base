@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.142 2002/05/31 18:22:35 jt Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.143 2002/07/26 02:37:32 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1062,7 +1062,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x08: cindex = 0; break; // PPro         == with BSR (A)
             case 0x09: cindex = 0; break; // AMD K7       == with BSR (A)
             case 0x0A: cindex = 1; break; // Centaur C6   == without BSR (B)
+            #if defined(__GNUC__) || defined(__ICC)
+            case 0x0B: cindex = 0; break; // Pentium 4    == with BSR (A)
+            #elif defined(_MSC_VER) || defined(__WATCOMC__) || defined(__BORLANDC__)
             case 0x0B: cindex = 1; break; // Pentium 4    == without BSR (B)
+            #else
+            #warning "FIXME: no OGR core autoselected on a P4 for your compiler"
+            #endif
             default:   cindex =-1; break; // no default
           }
           selcorestatics.corenum[OGR] = cindex;
