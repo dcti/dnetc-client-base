@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.1 1999/05/11 02:03:38 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.2 1999/05/20 16:02:33 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -316,8 +316,8 @@ void CliSetupSignals( void ) {}
 #ifndef CLISIGHANDLER_IS_SPECIAL
 extern "C" void CliSignalHandler( int sig )
 {
-  #if defined(SIGSTOP) && defined(SIGCONT) //&& defined(__unix__)
-  if (sig == SIGSTOP)
+  #if defined(SIGTSTP) && defined(SIGCONT) //&& defined(__unix__)
+  if (sig == SIGTSTP)
   {
     signal(sig,CliSignalHandler);
     RaisePauseRequestTrigger();
@@ -359,7 +359,7 @@ extern "C" void CliSignalHandler( int sig )
 void CliSetupSignals( void )
 {
   #if (CLIENT_OS == OS_SOLARIS)
-  // SIGPIPE is a fatal error in Solaris?
+  #error why/where is the client getting SIGPIPE?
   signal( SIGPIPE, SIG_IGN );
   #endif
   #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
@@ -371,14 +371,15 @@ void CliSetupSignals( void )
   #if defined(SIGHUP)
   signal( SIGHUP, CliSignalHandler );   //restart
   #endif
+  #if defined(SIGCONT) && defined(SIGTSTP)
+  signal( SIGTSTP, CliSignalHandler );  //pause
+  signal( SIGCONT, CliSignalHandler );  //continue
+  #endif
   #if defined(SIGQUIT)
   signal( SIGQUIT, CliSignalHandler );  //shutdown
   #endif
   #if defined(SIGSTOP)
-  signal( SIGSTOP, CliSignalHandler );  //pause
-  #endif
-  #if defined(SIGCONT)
-  signal( SIGCONT, CliSignalHandler );  //continue
+  signal( SIGSTOP, CliSignalHandler );  //shutdown, may not be maskable
   #endif
   #if defined(SIGABRT)
   signal( SIGABRT, CliSignalHandler );  //shutdown
