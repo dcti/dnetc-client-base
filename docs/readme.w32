@@ -1,6 +1,6 @@
 
  distributed.net client for Win32 (Win9x/WinNT/Win32s)
- document revision $Id: readme.w32,v 1.1.2.7 1999/12/29 18:25:41 cyp Exp $
+ document revision $Id: readme.w32,v 1.1.2.8 2000/06/10 18:29:42 cyp Exp $
 
  Welcome to the distributed.net client.
 
@@ -153,9 +153,7 @@
     A: The "GUI" features not in the non-"GUI" client, are/will be
        release as portable, separate utilities. The code will be 
        "Open Source". As always, user contribution will be much 
-       appreciated. 
-       The source for the log grapher (useless though it may now be) 
-       is available at http://www.distributed.net/addons.html
+       appreciated. See http://www.distributed.net/download/addons.html
 
     Q: Is it possible to start the client as a service and yet keep it
        visible on the desktop or taskbar?
@@ -166,6 +164,8 @@
        debuggers), and NT only. Some 'interactive' functionality may be 
        achieved by enabling logging to file and by using the client's 
        command line -shutdown, -restart, -pause and -unpause options.
+       An attempt to force a client installed as an NT service to 
+       "interact with [the] desktop" will not work as expected.
 
     Q: How do I check that the client is in fact running hidden/as
        a service?
@@ -229,7 +229,7 @@
     A: Beginning with v2.7112.444, the client release archive includes a
        screensaver multiplexor. When activated, it will launch a client 
        in the background and _another_ screen saver of your choice in the 
-       foreground. Documentation is elsewhere in this document.
+       foreground. Documentation is elsewhere in this file.
        
     Q: I want to run the client at a higher priority than zero/idle.
        This functionality was removed in some past version, but I *really*,
