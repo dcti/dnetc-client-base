@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.20 2000/03/02 12:59:12 snake Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.21 2000/03/02 19:38:03 jlawson Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -615,8 +615,7 @@ const char *utilGetAppName(void)
 /*
     This will work on Windows NT 3.x/4.x and Windows 2000, though
     on Win2k it's easier to use the Pshelper APIs.  This function
-    assumes that the leading path has already been stripped, not
-    not necessarily the file extension.
+    ignores the leading path and file extension, if they are given.
 */
 static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int maxnumpids )
 {
@@ -624,10 +623,10 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
   //    http://msdn.microsoft.com/library/psdk/pdh/perfdata_9feb.htm
   //    http://support.microsoft.com/support/kb/articles/Q119/1/63.asp
   int num_found = -1;
-  char szIndex_PROCESS[260];
-  DWORD dwIndex_IDPROCESS;
-  HKEY hKeyIndex; DWORD dwBytes;
+  static DWORD dwIndex_PROCESS = (DWORD) -1;
+  static DWORD dwIndex_IDPROCESS = (DWORD) -1;
   unsigned int procname_baselen;
+
 
   // find and remove the pathname prefix.
   unsigned int basenamepos = strlen(procname);
@@ -647,81 +646,79 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
   // strip procname of extension.
   if ((procname_baselen = strlen(procname)) > 3)
   {
-    if (strcmpi(&procname[procname_baselen-4],".com")==0 ||
-        strcmpi(&procname[procname_baselen-4],".exe")==0)
+    if (strcmpi(&procname[procname_baselen-4], ".com") == 0 ||
+        strcmpi(&procname[procname_baselen-4], ".exe") == 0)
     {
       procname_baselen -= 4;
     }
   }
 
-  szIndex_PROCESS[0] = '\0';
-  dwIndex_IDPROCESS = (DWORD)-1;
-
-  if (procname_baselen != 0) /* length of procname (sans path/ext) */
+  
+  
+  //
+  // On the first time through, we need to identify the name/index of the
+  // performance counters that we are interested in later querying.
+  // Since this information should not change until next reboot, we can
+  // keep this information in static variables and reuse them next time.
+  //
+  if (dwIndex_PROCESS == (DWORD) -1 || dwIndex_IDPROCESS == (DWORD) -1)
   {
+    HKEY hKeyIndex; 
     if (RegOpenKeyEx( HKEY_LOCAL_MACHINE,
          "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Perflib\\009",
           0, KEY_READ, &hKeyIndex ) == ERROR_SUCCESS)
     {
       // Get the size of the counter.
-      dwBytes = 0;
+      DWORD dwBytes = 0;
       if (RegQueryValueEx( hKeyIndex, "Counter",
                    NULL, NULL, NULL,  &dwBytes ) == ERROR_SUCCESS)
       {
         char *pszBuffer = NULL;
-        if (dwBytes)
+        if (dwBytes != 0)
           pszBuffer = (char *)HeapAlloc( GetProcessHeap(),
                                        HEAP_ZERO_MEMORY, dwBytes );
-        if (pszBuffer)
+        if (pszBuffer != NULL)
         {
-          /* Get the titles and counters. (REG_MULTI_SZ) */
+          // Get the titles and counters. (REG_MULTI_SZ).  This registry
+          // key is an alternating set of names and corresponding integers
+          // that represent them.  We look for the ones we want by name.
           if (RegQueryValueEx( hKeyIndex, "Counter", NULL, NULL,
                     (LPBYTE)pszBuffer, &dwBytes ) == ERROR_SUCCESS )
           {
-            int foundcount = 0;
             DWORD pos = 0;
 
-            while( pos < dwBytes && foundcount < 2)
+            while( dwIndex_PROCESS == (DWORD) -1 ||
+                  dwIndex_IDPROCESS == (DWORD) -1 )
             {
+              // save the current position in "valpos", and skip to the
+              // end of the first string (the numeric value), while also
+              // counting the length of it in "vallen".
               DWORD valpos = pos, vallen = 0;
               while (pos < dwBytes && pszBuffer[pos] != '\0')
               {
                 pos++;
                 vallen++;
               }
-              if (pos < dwBytes)
+              if (pos >= dwBytes) break;
+
+              // save the position of the start of the name in "cmpppos"
+              // and then skip to the end of the string.
+              DWORD cmppos = (++pos); /* skip the '\0' */
+              while (pos < dwBytes && pszBuffer[pos] != '\0')
+                pos++;
+              if (pos >= dwBytes) break;
+              pos++; /* skip the '\0' */
+
+              // See if this value is one that we are looking for.              
+              if (strcmpi( &pszBuffer[cmppos], "Process") == 0 )
               {
-                DWORD cmppos = (++pos); /* skip the '\0' */
-                while (pos < dwBytes && pszBuffer[pos] != '\0')
-                  pos++;
-                if (pos < dwBytes)
-                {
-                  char *selbuf = NULL;
-                  pos++; /* skip the '\0' */
-                  if (pos < dwBytes) /* why is this needed? */
-                  {
-                    if (pszBuffer[pos] == '\0')
-                      pos++;
-                  }
-                  if (strcmpi( &pszBuffer[cmppos], "Process") == 0 )
-                  {
-                    if ( szIndex_PROCESS[0] == '\0' )
-                    {
-                      if ( vallen >= (sizeof( szIndex_PROCESS )-1) )
-                        break; /* error, not long enough */
-                      strcpy( szIndex_PROCESS, &pszBuffer[valpos] );
-                      foundcount++;
-                    }
-                  }
-                  else if (strcmpi( &pszBuffer[cmppos],"ID Process") == 0)
-                  {
-                    if (dwIndex_IDPROCESS == ((DWORD)-1))
-                    {
-                      dwIndex_IDPROCESS = (DWORD)atoi(&pszBuffer[valpos]);
-                      ++foundcount;
-                    }
-                  }
-                }
+                if (dwIndex_PROCESS == (DWORD)-1)
+                  dwIndex_PROCESS = (DWORD)atoi(&pszBuffer[valpos]);
+              }
+              else if (strcmpi( &pszBuffer[cmppos],"ID Process") == 0)
+              {
+                if (dwIndex_IDPROCESS == (DWORD)-1)
+                  dwIndex_IDPROCESS = (DWORD)atoi(&pszBuffer[valpos]);
               }
 
             }
@@ -731,64 +728,82 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
       }
       RegCloseKey( hKeyIndex );
     }
-//LogScreen("szIndex_PROCESS='%s', dwIndex_IDPROCESS=0x%x\n",szIndex_PROCESS,dwIndex_IDPROCESS);
   }
 
-  if (szIndex_PROCESS[0] != '\0' && dwIndex_IDPROCESS != ((DWORD)-1))
+
+  //
+  // Now that we have identified the performance counter that we are
+  // interested in, actually do the query to retrieve the data
+  // associated with it so that we can get the list of processes.
+  //
+  if (procname_baselen != 0 &&
+      dwIndex_PROCESS != (DWORD)-1 &&
+      dwIndex_IDPROCESS != (DWORD)-1)
   {
+    static dwStartingBytes = 8192;
+    DWORD dwBytes = dwStartingBytes;
     PPERF_DATA_BLOCK pdb = NULL;
     LONG lResult = ERROR_MORE_DATA;
+    char szWorkbuffer[260];
 
-    dwBytes = 8192;
     pdb = (PPERF_DATA_BLOCK)HeapAlloc( GetProcessHeap(),
                                        HEAP_ZERO_MEMORY, dwBytes );
-    /* read in all object table/counters/instrecords for "Process" */
+
+    // Read in all object table/counters/instrecords for "Process".
     if (pdb != NULL)
     {
-      /* we call RegQueryValueEx in a loop because "If hKey specifies
-      HKEY_PERFORMANCE_DATA and the lpData buffer is too small,
-      RegQueryValueEx returns ERROR_MORE_DATA but lpcbData does not
-      return the required buffer size. This is because the size of
-      the performance data can change from one call to the next. In
-      this case, you must increase the buffer size and call
-      RegQueryValueEx again passing the updated buffer size in the
-      lpcbData parameter. Repeat this until the function succeeds"
-      */
+      // We call RegQueryValueEx in a loop because "If hKey specifies
+      // HKEY_PERFORMANCE_DATA and the lpData buffer is too small,
+      // RegQueryValueEx returns ERROR_MORE_DATA but lpcbData does not
+      // return the required buffer size. This is because the size of
+      // the performance data can change from one call to the next. In
+      // this case, you must increase the buffer size and call
+      // RegQueryValueEx again passing the updated buffer size in the
+      // lpcbData parameter. Repeat this until the function succeeds"
+      wsprintf(szWorkbuffer, "%d", dwIndex_PROCESS);
       do
       {
-        /*
-        The SDK says "lpcbData does not return the required buffer
-        size" (see above), but NT4 has a bug, and returns lpcbData
-        set to HALF of what it was before. See...
-        http://support.microsoft.com/support/kb/articles/Q226/3/71.ASP
-        */
+        // The SDK says "lpcbData does not return the required buffer
+        // size" (see above), but NT4 has a bug, and returns lpcbData
+        // set to HALF of what it was before. See...
+        // http://support.microsoft.com/support/kb/articles/Q226/3/71.ASP
+
         DWORD dwLastSize = dwBytes; /* save last size (see note above)*/
-        Sleep(0); /* let system update the data */
-//LogScreen("RegQueryValueEx 2a. mem size=%u\n", dwBytes);
+        Sleep(10); /* let system update the data */
         lResult = RegQueryValueEx(HKEY_PERFORMANCE_DATA,
-                            (LPTSTR)szIndex_PROCESS, NULL, NULL,
+                            (LPTSTR)szWorkbuffer, NULL, NULL,
                             (LPBYTE)pdb, &dwBytes);
         if (lResult == ERROR_SUCCESS)
         {
-//LogScreen("RegQueryValueEx 2b == ERROR_SUCCESS\n");
-          RegCloseKey( HKEY_PERFORMANCE_DATA );
+          // Remember the required size as the starting buffer size for
+          // next time (minus a little bit).  This allows us to more
+          // quickly identify the right buffer size, while not forever
+          // assuming that we need to use a buffer that large.
+          dwStartingBytes = (dwBytes > 8192 ? dwBytes - 128 : dwBytes);
           break;
         }
         else if (lResult == ERROR_MORE_DATA)
         {
           LPVOID newmem;
           dwBytes = dwLastSize + 4096;
-          if (dwBytes < dwLastSize) /* o'flow */
+          if (dwBytes < dwLastSize) /* overflow */
             break;
           newmem = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                        (LPVOID)pdb, dwBytes );
-//LogScreen("HeapReAlloc. size=%u =>%p\n", dwBytes, newmem);
-          if (newmem == NULL) /* couldn't realloc */
+          if (newmem == NULL) {
+            // couldn't realloc.  free and abort.
+            HeapFree( GetProcessHeap(), 0, (LPVOID) pdb);
+            pdb = NULL;
             break;
+          }
           pdb = (PPERF_DATA_BLOCK)newmem;
         }
       } while (lResult == ERROR_MORE_DATA);
     }
+
+
+    // Now walk through the retrieved buffer and look for the processes
+    // we are interested in identifying.
     if (pdb != NULL)
     {
       if (lResult == ERROR_SUCCESS)
@@ -802,6 +817,7 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
 
         /* Get the PERF_OBJECT_TYPE. */
         pot = (PPERF_OBJECT_TYPE)(((PBYTE)pdb) + pdb->HeaderLength);
+
         /* Get the first counter definition. */
         pcd = (PPERF_COUNTER_DEFINITION)(((PBYTE)pot) + pot->HeaderLength);
 
@@ -819,7 +835,7 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
         }
 
         /* Get the first process instance definition */
-        piddef= (PPERF_INSTANCE_DEFINITION)(((PBYTE)pot) + pot->DefinitionLength);
+        piddef = (PPERF_INSTANCE_DEFINITION)(((PBYTE)pot) + pot->DefinitionLength);
 
 //LogScreen("getpidlist 3: numpids = %u\n", pot->NumInstances );
 
@@ -836,6 +852,7 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
           foundname = (char *) (((PBYTE)piddef) + piddef->NameOffset);
           if ( ((DWORD *)(((PBYTE)piddef) + piddef->NameLength)) == 0)
             foundname = NULL; /* name has zero length */
+
           /* we have all the data we need, skip to the next pid */
           piddef = (PPERF_INSTANCE_DEFINITION) (((PBYTE)pcb) + pcb->ByteLength);
 
@@ -847,17 +864,15 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
           }
           if (foundname && thatpid != 0 && thatpid != ourpid)
           {
-            /* misuse the szIndex_Process buffer (no longer needed) */
-            #define foundname_ansi szIndex_PROCESS
+            /* convert the unicode name into ansi */
             dwBytes = (DWORD)WideCharToMultiByte( CP_ACP, 0,
-                             (LPCWSTR)foundname, -1, foundname_ansi,
-                             sizeof(foundname_ansi), NULL, NULL );
-            foundname = foundname_ansi;
+                             (LPCWSTR)foundname, -1, szWorkbuffer,
+                             sizeof(szWorkbuffer), NULL, NULL );
+            foundname = szWorkbuffer;
             if (dwBytes > 0)
             {
               dwBytes--; /* WCTMB return value includes trailing null */
             }
-            #undef foundname_ansi
 
 //LogScreen("getpidlist 3b: got name='%s'\n", foundname );
 
@@ -883,7 +898,8 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
 
       HeapFree(GetProcessHeap(), 0, (LPVOID)pdb );
     } /* if (pdb != NULL) */
-  } /* if (szIndex_PROCESS[0] && szIndex_ID_PROCESS[0]) */
+
+  } /* if (dwIndex_PROCESS && dwIndex_IDPROCESS && procname_base) */
 
   return num_found;
 }
