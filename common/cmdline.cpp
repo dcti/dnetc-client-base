@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.15 1999/07/10 14:00:47 ivo Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.16 1999/07/10 15:57:35 ivo Exp $"; }
 
 //#define TRACE
 
@@ -218,9 +218,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
           //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */
           #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
-                (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX) || \
-		(CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
+                (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
           pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
+	  #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
+          pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4}' 2>/dev/null";
           #else
           #error fixme: select an appropriate ps syntax
           #endif
