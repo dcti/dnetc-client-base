@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.62  1999/04/03 16:41:01  cyp
+// added code to a) force blocking i/o if using packet wrappers. This greatly
+// improves throughput b) ensure a minimum SO_[SND|RCV]BUF of /at least/ 2K
+//
 // Revision 1.61  1999/03/31 22:27:30  cyp
 // Created ::ShowConnection() so that the connected host can be shown later
 // on get/put and not simply when the connection is established.
@@ -213,10 +217,6 @@ extern "C" {
   #define read(sock, buff, len) recv(sock, (unsigned char*)buff, len, 0)
   #define close(sock) closesocket(sock)
 #else
-
-#if (CLIENT_OS == OS_QNX)
-  #include <sys/select.h>
-#endif
   #include <sys/types.h>
   #include <sys/socket.h>
   #include <netinet/in.h>
@@ -228,16 +228,14 @@ extern "C" {
   typedef int SOCKET;
   #if (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_ALPHA)
     #include <asm/byteorder.h>
+  #elif (CLIENT_OS == OS_QNX)
+    #include <sys/select.h>
   #elif (CLIENT_OS == OS_DYNIX) && defined(NTOHL)
     #define ntohl(x)  NTOHL(x)
     #define htonl(x)  HTONL(x)
     #define ntohs(x)  NTOHS(x)
     #define htons(x)  HTONS(x)
-  #endif
-  #if (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_DYNIX)
-    #include <errno.h>
-  #endif
-  #if ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
+  #elif ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
     #if defined(_SUNOS3_)
       #define _SOCKET_H_ALREADY_
       extern "C" int fcntl(int, int, int);
@@ -247,15 +245,13 @@ extern "C" {
     int setsockopt(int, int, int, char *, int);
     int connect(int, struct sockaddr *, int);
     }
-  #endif
-  #if (CLIENT_OS == OS_ULTRIX)
+  #elif (CLIENT_OS == OS_ULTRIX)
     extern "C" {
       int socket(int, int, int);
       int setsockopt(int, int, int, char *, int);
       int connect(int, struct sockaddr *, int);
     }
-  #endif
-  #if (CLIENT_OS == OS_NETWARE)
+  #elif (CLIENT_OS == OS_NETWARE)
     #include "platforms/netware/netware.h" //symbol redefinitions
     extern "C" {
     #pragma pack(1)
@@ -267,17 +263,16 @@ extern "C" {
 
 ////////////////////////////////////////////////////////////////////////////
 
-#define MODE_UUE        1
-#define MODE_HTTP       2
-#define MODE_SOCKS4     4
-#define MODE_PROXIED    (MODE_HTTP | MODE_SOCKS4 | MODE_SOCKS5)
-#define MODE_SOCKS5     8
-#define DEFAULT_RRDNS   ""
-#define DEFAULT_PORT    2064
-#define CONDSOCK_BLOCKING_ON     0x0011
-#define CONDSOCK_BLOCKING_OFF    0x0010
-#define CONDSOCK_KEEPALIVE_ON    0x0021
-#define CONDSOCK_KEEPALIVE_OFF   0x0020
+#define MODE_UUE              0x01
+#define MODE_HTTP             0x02
+#define MODE_SOCKS4           0x04
+#define MODE_PROXIED          (MODE_HTTP | MODE_SOCKS4 | MODE_SOCKS5)
+#define MODE_SOCKS5           0x08
+#define DEFAULT_RRDNS           ""
+#define DEFAULT_PORT          2064
+#define CONDSOCK_BLOCKMODE       1
+#define CONDSOCK_KEEPALIVE       2   
+#define CONDSOCK_SETMINBUFSIZE   3
 #ifndef INVALID_SOCKET
 #define INVALID_SOCKET  ((SOCKET)(-1))
 #endif
@@ -333,7 +328,7 @@ protected:
   int LowLevelConnectSocket( u32 that_address, u16 that_port ); 
     // connect to address:port.  Return < 0 if error
 
-  int LowLevelConditionSocket( unsigned long cond_type );
+  int LowLevelSetSocketOption( int cond_type, int parm );
     // Returns < 0 if error - see CONDSOCK... defines above
 
   int LowLevelGet(char *data, int length);
@@ -352,12 +347,6 @@ protected:
 
   int  Close( void );
     // close the connection
-
-  int MakeBlocking(void) // make the socket operate in blocking mode.
-      { return LowLevelConditionSocket( CONDSOCK_BLOCKING_ON ); }
-
-  int MakeNonBlocking(void) //the other shortcut
-      { return LowLevelConditionSocket( CONDSOCK_BLOCKING_OFF ); };
 
   int  Open( SOCKET insock);
     // reset http/uue settings and reconnect the socket

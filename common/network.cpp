@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.91  1999/04/03 16:41:01  cyp
+// added code to a) force blocking i/o if using packet wrappers. This greatly
+// improves throughput b) ensure a minimum SO_[SND|RCV]BUF of /at least/ 2K
+//
 // Revision 1.90  1999/03/31 22:27:30  cyp
 // Created ::ShowConnection() so that the connected host can be shown later
 // on get/put and not simply when the connection is established.
@@ -207,7 +211,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.90 1999/03/31 22:27:30 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.91 1999/04/03 16:41:01 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -444,6 +448,7 @@ Network::Network( const char * servname, int servport, int _nofallback,
   reconnected = 0;
   nofallback = _nofallback;
   sock = INVALID_SOCKET;
+  iotimeout = _iotimeout; /* if iotimeout is <0, use blocking calls */
 
   gotuubegin = gothttpend = 0;
   httplength = 0;
@@ -454,10 +459,12 @@ Network::Network( const char * servname, int servport, int _nofallback,
   mode = startmode = 0;
   if (_enctype == 1 /*uue*/ || _enctype == 3 /*http+uue*/)
   {
+    iotimeout = -1;
     startmode |= MODE_UUE;
   }
   if (_enctype == 2 /*http*/ || _enctype == 3 /*http+uue*/)
   {
+    iotimeout = -1;
     startmode |= MODE_HTTP;
     if (_fwallhost && _fwallhost[0])
     {
@@ -485,7 +492,6 @@ Network::Network( const char * servname, int servport, int _nofallback,
   autofindkeyserver = __fixup_dnethostname(server_name,&server_port,startmode);
 
   isnonblocking = 0;      /* whether the socket could be set non-blocking */
-  iotimeout = _iotimeout; /* if iotimeout is <0, use blocking calls */
   if (iotimeout < 0)
     iotimeout = -1;
   else if (iotimeout < 5)
@@ -581,6 +587,8 @@ void Network::ShowConnection(void)
 
 int Network::Open( void )               // returns -1 on error, 0 on success
 {
+  int triesleft = 3; /* two for preferred, one for fallback (if permitted) */
+
   gethttpdone = puthttpdone = 0;
   netbuffer.Clear();
   uubuffer.Clear();
@@ -588,13 +596,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
   httplength = 0;
   mode = startmode;
 
-  unsigned int retries = 0;
-  unsigned int maxtries = 5; /* 3 for preferred server, 2 for fallback */
-  unsigned int preftries = 3;
-  if (nofallback || fwall_hostname[0]) 
-    maxtries = preftries;
-
-  while (retries < maxtries) 
+  do
   {
     int success = 0;
     const char *netcheckfailed =
@@ -603,15 +605,15 @@ int Network::Open( void )               // returns -1 on error, 0 on success
     if (CheckExitRequestTriggerNoIO())
       break; /* return -1; */
 
-    if ((startmode & (MODE_SOCKS4 | MODE_SOCKS5)) != 0 &&
-        (fwall_hostname[0] == 0 || fwall_hostport == 0))
+    if ((fwall_hostname[0] != 0 && fwall_hostport != 0) &&
+       ((startmode & (MODE_SOCKS4 | MODE_SOCKS5)) != 0) )
     {
       Log("Network::Invalid %s proxy hostname or port.\n"
           "Connect cancelled.\n",
           ((startmode & MODE_HTTP) ? ("HTTP") : ("SOCKS")));
       break; /* return -1; */
     }
-
+    
     if (!NetCheckIsOK()) /* connection broken */
     {
       LogScreen(netcheckfailed);
@@ -639,7 +641,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         svc_hostname = server_name;
         svc_hostport = server_port;
 
-        if (svc_hostname[0] == 0 || retries > (preftries - 1)) /* fallback*/
+        if (svc_hostname[0] == 0)
         {
           svc_hostaddr = 0; 
           svc_hostname = "rc5proxy.distributed.net"; /* special name for resolve */
@@ -667,7 +669,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       if (!NetCheckIsOK())
       {
         success = 0;
-        retries = maxtries;
+        triesleft = 0;
         LogScreen(netcheckfailed);
       }
       else if ((startmode & MODE_PROXIED) != 0 && fwall_hostname[0] != 0)
@@ -689,7 +691,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
                        resolve_hostname );
 
           // unrecoverable error. retry won't help
-          retries = maxtries;
+          triesleft = 0;
         }
         else if (svc_hostaddr == 0) /* always 1 unless http */
         {
@@ -734,7 +736,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       #ifndef ENSURE_CONNECT_WITH_BLOCKING_SOCKET
       if (iotimeout > 0)
       {
-        isnonblocking = ( MakeNonBlocking() == 0 );
+        isnonblocking = ( LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 0 ) == 0 );
         if (verbose_level > 1) //debug
         {
           LogScreen("Debug::Connecting with %sblocking socket.\n", 
@@ -748,7 +750,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       #ifdef ENSURE_CONNECT_WITH_BLOCKING_SOCKET
       if (success && iotimeout > 0)
       {
-        isnonblocking = ( MakeNonBlocking() == 0 );
+        isnonblocking = ( LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 0 ) == 0 );
         if (verbose_level > 1) //debug
         {
           LogScreen("Debug::Connected (%sblocking).\n", 
@@ -810,7 +812,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       if (rc != 0)
         success = 0;
       if (rc < 0)           /* unrecoverable error (negotiation failure) */
-        retries = maxtries; /* so don't retry */
+        triesleft = 0; /* so don't retry */
     }
 
     /* ---- clean up ---- */
@@ -819,14 +821,20 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       return 0;
       
     Close();
-    retries++;
-
-    if (retries < maxtries)
+    
+    if ((--triesleft) <= 0)
+      break;
+    if (triesleft == 1) /* last try */
     {
-      LogScreen( "Network::Open Error - sleeping for 3 seconds\n" );
-      sleep( 3 );
+      if (nofallback || (fwall_hostname[0] != 0 && fwall_hostport != 0))
+        break; /* can't fall back */
+      if (server_name[0] == '\0' || strstr(server_name,".distributed.net"))
+        break; /* can't fallback further than a fullserver */
+      server_name[0] = '\0'; /* fallback */
     }
-  }
+    LogScreen( "Network::Open Error - sleeping for 3 seconds\n" );
+    sleep( 3 );
+  } while (triesleft > 0 /* forever true */); 
     
   return -1;
 }  
@@ -848,7 +856,7 @@ int Network::InitializeConnection(void)
 
   if (startmode & MODE_HTTP)
   {
-    LowLevelConditionSocket(CONDSOCK_KEEPALIVE_ON);
+    LowLevelSetSocketOption( CONDSOCK_KEEPALIVE, 1 );
   }
   else if (startmode & MODE_SOCKS5)
   {
@@ -1471,14 +1479,11 @@ int Network::LowLevelCreateSocket(void)
   #if (defined(AF_INET) && defined(SOCK_STREAM)) //BSD socks
   sock = socket(AF_INET, SOCK_STREAM, 0);
   if ( !(( (int)(sock) ) < 0 ) )
-    {
-    #if (CLIENT_OS == OS_RISCOS)
-      // allow blocking socket calls to preemptively multitask
-      int on = 1;
-      ioctl(sock, FIOSLEEPTW, &on);
-    #endif
+  {
+    LowLevelSetSocketOption( CONDSOCK_SETMINBUFSIZE, 2048/* at least this */);
+    LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 1 ); /* really only needed for RISCOS */
     return 0; //success
-    }
+  }
   #endif
   sock = INVALID_SOCKET;
   return -1;
@@ -1506,7 +1511,7 @@ int Network::LowLevelCloseSocket(void)
 #else                                                  //BSD socks
    if ( sock != INVALID_SOCKET )
      {
-     LowLevelConditionSocket( CONDSOCK_BLOCKING_ON );
+     LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 1 );
      #if (defined(AF_INET) && defined(SOCK_STREAM))  
      shutdown( sock, 2 );
      #endif
@@ -1977,62 +1982,72 @@ int Network::LowLevelGet(char *data,int length)
 
 // ----------------------------------------------------------------------
 
-int Network::LowLevelConditionSocket( unsigned long cond_type )
+int Network::LowLevelSetSocketOption( int cond_type, int parm )
 {  
   if ( sock == INVALID_SOCKET )
     return -1;
 
-  if ( cond_type == CONDSOCK_KEEPALIVE_ON ||
-       cond_type == CONDSOCK_KEEPALIVE_OFF )
+  if ( cond_type == CONDSOCK_KEEPALIVE )
   {       
     #if defined(SOL_SOCKET) && defined(SO_KEEPALIVE)
-    int flag = 1;
-    if ( cond_type == CONDSOCK_KEEPALIVE_ON )
-      flag = 0;
-    if (!setsockopt(sock,SOL_SOCKET,SO_KEEPALIVE,(char *)&flag, sizeof(flag)))
+    int on = ((parm == 0/* off */)?(0):(1));
+    if (!setsockopt(sock,SOL_SOCKET,SO_KEEPALIVE,(char *)&on, sizeof(on)))
       return 0;
     #endif
     return -1;
   }
-  else if ( cond_type == CONDSOCK_BLOCKING_ON ||
-       cond_type == CONDSOCK_BLOCKING_OFF )
+  else if ( cond_type == CONDSOCK_SETMINBUFSIZE )
+  {
+    #if (defined(SOL_SOCKET) && defined(SO_RCVBUF) && defined(SO_SNDBUF))
+    int which;
+    for (which = 0; which < 2; which++ )
+    {
+      int type = ((which == 0)?(SO_RCVBUF):(SO_SNDBUF));
+      int sz = 0, szint = sizeof(int);
+      if (getsockopt(sock, SOL_SOCKET, type, (char *)&sz, &szint)<0)
+        ;
+      else if (sz < parm)
+      {
+        sz = parm; szint = sizeof(int);
+        setsockopt(sock, SOL_SOCKET, type, (char *)&sz, szint);
+      }
+    }
+    return 0;
+    #endif
+  }
+  else if ( cond_type == CONDSOCK_BLOCKMODE )
   {
     #if defined(_TIUSER_)                                    //TLI
-      if ( cond_type == CONDSOCK_BLOCKING_ON )
+      if ( parm != 0 ) /* blocking on */
         return ( t_blocking( sock ) );
       else
         return ( t_nonblocking( sock ) );
     #elif (!defined(FIONBIO) && !(defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK))))
       return -1;
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-      unsigned long flagon = ((cond_type == CONDSOCK_BLOCKING_OFF)?(1):(0));
+      unsigned long flagon = ((parm == 0/* off */)?(1):(0));
       return ioctlsocket(sock, FIONBIO, &flagon);
     #elif ((CLIENT_OS == OS_VMS) && defined(__VMS_UCX__))
       // nonblocking sockets not directly supported by UCX
       // - DIGITAL's work around requires system privileges to use
       return -1;
     #elif ((CLIENT_OS == OS_VMS) && defined(MULTINET))
-      unsigned long flagon = ((cond_type == CONDSOCK_BLOCKING_OFF)?(1):(0));
+      unsigned long flagon = ((parm == 0 /* off */)?(1):(0));
       return socket_ioctl(sock, FIONBIO, &flagon);
     #elif (CLIENT_OS == OS_RISCOS)
-      int flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
-      int ok = ioctl(sock, FIONBIO, &flagon);
-      if (ok && !flagon)
-        {
-        int on = 1;
-        // allow blocking socket calls to preemptively multitask
-        ioctl(sock, FIOSLEEPTW, &on);
-        }
+      int flagon = ((parm == 0 /* off */) ? (1): (0));
+      if (ioctl(sock, FIONBIO, &flagon) && !flagon) // allow blocking socket calls 
+      { flagon = 1; ioctl(sock, FIOSLEEPTW, &flagon); } //to preemptively multitask
     #elif (CLIENT_OS == OS_OS2)
-      int flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
+      int flagon = ((parm == 0 /* off */) ? (1): (0));
       return ioctl(sock, FIONBIO, (char *) &flagon, sizeof(flagon));
     #elif (CLIENT_OS == OS_AMIGAOS)
-      char flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
+      char flagon = ((parm == 0 /* off */) ? (1): (0));
       return IoctlSocket(sock, FIONBIO, &flagon);
     #elif (CLIENT_OS == OS_DOS)
-      return ((cond_type==CONDSOCK_BLOCKING_OFF)?(0):(-1)); //always non-blocking
+      return ((parm == 0 /* off */)?(0):(-1)); //always non-blocking
     #elif (CLIENT_OS == OS_MACOS)
-      char flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
+      char flagon = ((parm == 0 /* off */) ? (1): (0));
       return ioctl(sock, FIONBIO, &flagon);    
     #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
     {
@@ -2042,7 +2057,7 @@ int Network::LowLevelConditionSocket( unsigned long cond_type )
       #else
         flag = O_NONBLOCK;
       #endif
-      arg = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (flag): (0) );
+      arg = ((parm == 0 /* off */) ? (flag): (0) );
 
       if (( res = fcntl(sock, F_GETFL, flag ) ) == -1)
         return -1;
