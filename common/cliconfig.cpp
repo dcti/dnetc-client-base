@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.92  1998/06/17 10:39:14  kbracey
+// Capitalised RC5 and DES wherever printed.
+//
 // Revision 1.91  1998/06/16 21:52:39  silby
 // Added x86 des core selection routines.  They're set based off of how the rc5 core is set.
 //
@@ -30,7 +33,7 @@
 
 #include "client.h"
 
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.91 1998/06/16 21:52:39 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.92 1998/06/17 10:39:14 kbracey Exp $";
 
 // --------------------------------------------------------------------------
 
@@ -2704,7 +2707,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         if ( (s32) atoi( Argv[i+1] ) > 0)
            outthreshold[0] = inthreshold[0]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreenf("Setting rc5 buffer size to %d\n",outthreshold[0]);
+        LogScreenf("Setting RC5 buffer size to %d\n",outthreshold[0]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2714,7 +2717,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         if ( (s32) atoi( Argv[i+1] ) > 0)
            outthreshold[1] = inthreshold[1]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreenf("Setting des buffer size to %d\n",outthreshold[0]);
+        LogScreenf("Setting DES buffer size to %d\n",outthreshold[0]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2724,7 +2727,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         if ( (s32) atoi( Argv[i+1] ) > 0)
            inthreshold[0]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreenf("Setting rc5 input buffer size to %d\n",inthreshold[0]);
+        LogScreenf("Setting RC5 input buffer size to %d\n",inthreshold[0]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2734,7 +2737,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         if ( (s32) atoi( Argv[i+1] ) > 0)
            inthreshold[1]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreenf("Setting des input buffer size to %d\n",inthreshold[1]);
+        LogScreenf("Setting DES input buffer size to %d\n",inthreshold[1]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2744,7 +2747,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         if ( (s32) atoi( Argv[i+1] ) > 0)
            outthreshold[0]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreenf("Setting rc5 output buffer size to %d\n",outthreshold[0]);
+        LogScreenf("Setting RC5 output buffer size to %d\n",outthreshold[0]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2754,7 +2757,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         if ( (s32) atoi( Argv[i+1] ) > 0)
            outthreshold[1]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
-        LogScreenf("Setting des output buffer size to %d\n",outthreshold[1]);
+        LogScreenf("Setting DES output buffer size to %d\n",outthreshold[1]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2770,7 +2773,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       }
       else if ( strcmp(Argv[i], "-in" ) == 0)
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting rc5 buffer input file to %s\n",Argv[i+1]);
+        LogScreenf("Setting RC5 buffer input file to %s\n",Argv[i+1]);
         strcpy(in_buffer_file[0], Argv[i+1]);
         strcpy(ini_in_buffer_file[0], Argv[i+1]);
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2778,7 +2781,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       }
       else if ( strcmp(Argv[i], "-in2" ) == 0)
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting des buffer input file to %s\n",Argv[i+1]);
+        LogScreenf("Setting DES buffer input file to %s\n",Argv[i+1]);
         strcpy(in_buffer_file[1], Argv[i+1]);
         strcpy(ini_in_buffer_file[1], Argv[i+1]);
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2786,7 +2789,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       }
       else if ( strcmp(Argv[i], "-out" ) == 0)
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting rc5 buffer output file to %s\n",Argv[i+1]);
+        LogScreenf("Setting RC5 buffer output file to %s\n",Argv[i+1]);
         strcpy(out_buffer_file[0], Argv[i+1]);
         strcpy(ini_out_buffer_file[0], Argv[i+1]);
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2794,7 +2797,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       }
       else if ( strcmp(Argv[i], "-out2" ) == 0)
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting des buffer output file to %s\n",Argv[i+1]);
+        LogScreenf("Setting DES buffer output file to %s\n",Argv[i+1]);
         strcpy(out_buffer_file[1], Argv[i+1]);
         strcpy(ini_out_buffer_file[1], Argv[i+1]);
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2966,7 +2969,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
   #endif
       else if ( strcmp(Argv[i], "-ckpoint" ) == 0)
       {
-        LogScreenf("Setting rc5 checkpoint file to %s\n",Argv[i+1]);
+        LogScreenf("Setting RC5 checkpoint file to %s\n",Argv[i+1]);
         strcpy(checkpoint_file[0], Argv[i+1]);
         strcpy(ini_checkpoint_file[0], Argv[i+1]);
         Argv[i][0] = Argv[i+1][0] = 0;
@@ -2974,7 +2977,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       }
       else if ( strcmp(Argv[i], "-ckpoint2" ) == 0)
       {
-        LogScreenf("Setting des checkpoint file to %s\n",Argv[i+1]);
+        LogScreenf("Setting DES checkpoint file to %s\n",Argv[i+1]);
         strcpy(checkpoint_file[1], Argv[i+1]);
         strcpy(ini_checkpoint_file[1], Argv[i+1]);
         Argv[i][0] = Argv[i+1][0] = 0;
