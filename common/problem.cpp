@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.102 1999/04/16 07:22:35 gregh Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.103 1999/04/17 05:42:08 gregh Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -1022,8 +1022,7 @@ int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
     }
     case CORE_S_SUCCESS:
     {
-      Stub result;
-      if (ogr->getresult(ogrstate, &result, sizeof(result)) == CORE_S_OK)
+      if (ogr->getresult(ogrstate, &contestwork.ogr.stub, sizeof(contestwork.ogr.stub)) == CORE_S_OK)
       {
         Log("OGR Success!\n");
         *resultcode = RESULT_FOUND;
