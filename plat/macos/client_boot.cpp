@@ -5,7 +5,7 @@
 */
 
 const char *client_boot_cpp(void) {
-return "@(#)$Id: client_boot.cpp,v 1.1.2.1 2001/01/21 15:15:06 cyp Exp $"; }
+return "@(#)$Id: client_boot.cpp,v 1.1.2.2 2001/02/07 07:49:08 mfeiri Exp $"; }
 
 #pragma mark -
 
@@ -104,7 +104,6 @@ enum
 	/*iBenchCSC			= 6  */
 };
 
-
 /* ================================================================== */
 
 pascal OSErr DoOpenAppEvent (const AppleEvent *message, AppleEvent *reply, long refcon)
@@ -159,6 +158,33 @@ pascal OSErr DoResumeEvent (const AppleEvent *message, AppleEvent *reply, long r
 }
 
 #pragma mark -
+
+void DoInstallSystemPtr( OSType t, void *p )
+{
+	OSErr err;
+	long res;
+	
+	unsigned short proc[] = {
+		0x206f, 0x0004,			// move.l	4(sp),a0
+		0x20bc, (unsigned long)p >> 16, (unsigned long)p & 0xffff,	// move.l	#p,(a0)
+		0x426f, 0x000a,			// clr.w	10(sp)
+		0x2057,					// move.l	(sp),a0
+		0xdffc, 0x0000, 0x000c, // add.l	#12,sp
+		0x4ed0					// jmp		(a0)
+	};
+	Ptr code = NewPtrSys( sizeof(proc) );
+	if (!code) return;
+	BlockMove( proc, code, sizeof(proc) );
+	
+	err = Gestalt( t, &res );
+	if (err == gestaltUndefSelectorErr) {
+		NewGestalt( t, (SelectorFunctionUPP)code );
+	} else {
+		SelectorFunctionUPP trash;
+		ReplaceGestalt( t, (SelectorFunctionUPP)code, &trash );
+		DisposePtr( (Ptr)trash );
+	}
+}
 
 void DoSetDirectory(void)
 {
@@ -469,13 +495,11 @@ void my_menucommand_handler( long menuResult )
          {
            ClearPauseRequestTrigger();
            CheckItem(GetMenuHandle( mFile ),iPause,false);
-           //ShowWindow((WindowPtr)SIOUXTextWindow);
          }
          else
          {
            RaisePauseRequestTrigger();
            CheckItem(GetMenuHandle( mFile ),iPause,true);
-           //HideWindow((WindowPtr)SIOUXTextWindow);
          }
          break;
 		  case iQuit:
@@ -506,7 +530,7 @@ void my_menucommand_handler( long menuResult )
          ModeReqSet(MODEREQ_TEST_ALLCORE); /* request -test. */
          break;
       case iConfig:
-         ShowWindow((WindowPtr)SIOUXTextWindow); // just in case
+         ShowWindow((WindowPtr)SIOUXTextWindow->window); // just in case
          ModeReqClear(-1);  /* clear all pending */
          ModeReqSet(MODEREQ_CONFIG|MODEREQ_CONFRESTART); /* request -config */
          break;
@@ -1106,7 +1130,7 @@ int macosInitializeConsole(int runhidden, int runmodes)
   InstallConsole(0);
   
   if (!runmodes && runhidden) // better write a real SIOUX Initializer
-     HideWindow((WindowPtr)SIOUXTextWindow);
+     HideWindow((WindowPtr)SIOUXTextWindow->window);
   
   SetCursor(&qd.arrow); // just in case
   
@@ -1279,3 +1303,8 @@ char * strdup(char * str)
 
    return(newstring);
 }
+
+#pragma mark -
+
+
+
