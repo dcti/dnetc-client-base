@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.45 2000/06/28 18:30:53 bernd Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.46 2000/06/28 19:18:35 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -307,7 +307,11 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 #include <machine/apmvar.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
+#elif (CLIENT_OS == OS_FREEBSD) && (CLIENT_CPU == CPU_X86)
+#include <fcntl.h>
+#include <machine/apm_bios.h>
 #endif
+
 static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 {
   if (trigstatics.pause_if_no_mains_power)
@@ -395,7 +399,62 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       {
         trigstatics.pause_if_no_mains_power = 0;
       }
-    }
+    } /* #if (linux) */
+    #elif (CLIENT_OS == OS_FREEBSD) && (CLIENT_CPU == CPU_X86)
+    {
+      /* This is sick and sooo un-BSD like! Tatsumi Hokosawa must have
+         been dealing too much with linux and forgot all about sysctl. :)
+      */
+      int disableme = 1; /* assume further apm checking should be disabled */
+      int fd = open("/dev/apm", O_RDONLY);
+      if (fd != -1)
+      {
+        #if (__FreeBSD < 3)
+        struct apm_info info;
+        int whichioctl = APMIO_GETINFO;
+        #else
+        struct apm_info_old info;
+        int whichioctl = APMIO_GETINFO_OLD;
+        #endif
+        disableme = 0;
+        
+        memset( &info, 0, sizeof(info));
+        if (ioctl(fd, whichioctl, (caddr_t)&info, 0 )!=0)
+        {
+          disableme = 1;
+          info.ai_acline = 255; /* what apm returns for "unknown" */
+        }  
+        else
+        {
+          TRACE_OUT((+1,"APM check\n"));
+          TRACE_OUT((0,"aiop->ai_major = %d\n", info.ai_major));
+	    		TRACE_OUT((0,"aiop->ai_minor = %d\n", info.ai_minor));
+		    	TRACE_OUT((0,"aiop->ai_acline = %d\n",  info.ai_acline));
+			    TRACE_OUT((0,"aiop->ai_batt_stat = %d\n", info.ai_batt_stat));
+    			TRACE_OUT((0,"aiop->ai_batt_life = %d\n", info.ai_batt_life));
+	    		TRACE_OUT((0,"aiop->ai_status = %d\n", info.ai_status));
+          TRACE_OUT((-1,"conclusion: AC line state: %s\n", ((info.ai_acline==0)?
+                 ("offline"):((info.ai_acline==1)?("online"):("unknown"))) ));
+        }
+        close(fd);
+        
+        if (info.ai_acline == 1)
+          return 0; /* We have AC power */
+        if (info.ai_acline == 0)
+          return 1; /* no AC power */  
+      }  
+      if (disableme)
+      {
+        /* possible causes for a disable are
+	         EPERM: no permission to open /dev/apm) or 
+  	       ENXIO: apm device not configured, or disabled [kern default],
+                  or (for ioctl()) real<->pmode transition or bios error.
+       	*/   
+        TRACE_OUT((0,"pause_if_no_mains_power check error: %s\n", strerror(errno)));
+        TRACE_OUT((0,"disabling further pause_if_no_mains_power checks\n"));
+        trigstatics.pause_if_no_mains_power = 0;
+      }
+    } /* freebsd */     
     #elif (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_X86)
     {
       struct apm_power_info buff;
