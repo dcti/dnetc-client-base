@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.43  1998/12/01 00:14:47  cyp
+// Cleared an unused variable warning.
+//
+// Revision 1.42  1998/12/01 23:25:31  cyp
+// Fixed count bug when one or more threads failed to start, but more than
+// one succeeded. blockcount limit is now checked by probfill (which bumps
+// the limit if one or more threads is still crunching).
+//
 // Revision 1.41  1998/11/26 22:17:04  dicamillo
 // Restore BeOS priority ranging from 1 to 10.
 //
@@ -157,7 +165,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.41 1998/11/26 22:17:04 dicamillo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.43 1998/12/01 00:14:47 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -254,7 +262,7 @@ struct thread_param_block
 
 #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS) || \
     (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_WIN32S) || \
-      (CLIENT_OS == OS_WIN16)
+    (CLIENT_OS == OS_WIN16)
 
 #define NON_PREEMPTIVE_OS
 
@@ -295,7 +303,7 @@ struct thread_param_block
   #define MIN_SANE_TIMESLICE_DES     (GetTimesliceBaseline())
   #define MAX_SANE_TIMESLICE_RC5   16384
   #define MAX_SANE_TIMESLICE_DES   16384
-#elif (CLIENT_OS == OS_DOS)
+#elif (CLIENT_OS == OS_DOS) /* ineffective - used by cyp for testing */
   #define TIMER_GRANULARITY       500000 /* has horrible timer resolution */
   #define MIN_RUNS_PER_TIME_GRAIN     3 // 9 /* 18 times/sec */
   #define MAX_RUNS_PER_TIME_GRAIN     5 //18
@@ -809,7 +817,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
          int no_realthreads )
 {
   int success = 0, use_poll_process = 0;
-  
+
   struct thread_param_block *thrparams = (struct thread_param_block *)
                          malloc( sizeof(struct thread_param_block) );
   if (thrparams)
@@ -857,8 +865,8 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       #elif (CLIENT_OS == OS_BEOS)
         char thread_name[32];
         long be_priority = thrparams->priority+1; 
-	// Be OS priority for rc5des should be adjustable from 1 to 10
-	// 1 is lowest, 10 is higest for non-realtime and non-system tasks
+  // Be OS priority for rc5des should be adjustable from 1 to 10
+  // 1 is lowest, 10 is higest for non-realtime and non-system tasks
         sprintf(thread_name, "RC5DES crunch#%d", thread_i + 1);
         thrparams->threadID = spawn_thread((long (*)(void *)) Go_mt, 
                thread_name, be_priority, (void *)thrparams );
@@ -922,7 +930,6 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
 //     4 = exit by block count expiration
 int Client::Run( void )
 {
-  FileEntry fileentry;
   unsigned int cont_i, prob_i;
   int force_no_realthreads = 0;
   struct thread_param_block *thread_data_table = NULL;
@@ -1001,20 +1008,25 @@ int Client::Run( void )
     force_no_realthreads = 0; /* this is a hint. it does not reflect capability */
     unsigned int numcrunchers = (unsigned int)numcpu;
 
-    #if (CLIENT_OS == OS_FREEBSD) //FreeBSD multithreading will not span
-                                  //processors yet
+    #if (CLIENT_OS == OS_FREEBSD)
     if (numcrunchers > 1)
-      LogScreen("POSIX threads are not fully implemented in FreeBSD.\n"
-                "Only one processor can be used per running copy\n"
-                "of the distributed.net client; please run\n"
-                "one copy of the client per processor.\n");
+      {
+      LogScreen("FreeBSD threads are not SMP aware (do not automatically\n"
+                "migrate to distribute processor load). Please run one\n"
+                "client per processor.\n");
+      numcrunchers = 1;
+      }
+    #endif
+    #if (CLIENT_OS == OS_WIN32)
+    if (numcrunchers == 0) // win32 must run with real threads because the
+      numcrunchers = 1;    // main thread must run at normal priority
     #endif
     #if (CLIENT_OS == OS_NETWARE)
     if (numcrunchers == 1) // NetWare client prefers non-threading  
       numcrunchers = 0;    // if only one thread/processor is to used
     #endif
 
-    if (numcrunchers <= 1) /* == 0 = user requested non-mt */
+    if (numcrunchers < 1) /* == 0 = user requested non-mt */
       {
       force_no_realthreads = 1;
       numcrunchers = 1;
@@ -1095,11 +1107,12 @@ int Client::Run( void )
     struct thread_param_block *thrparamslast = thread_data_table;
     char srange[20];
     unsigned int planned_problem_count = load_problem_count;
+    load_problem_count = 0;
 
-    for ( prob_i = 0; prob_i < load_problem_count; prob_i++ )
+    for ( prob_i = 0; prob_i < planned_problem_count; prob_i++ )
       {
       struct thread_param_block *thrparams = 
-         __StartThread( prob_i, load_problem_count, 
+         __StartThread( prob_i, planned_problem_count, 
                         timeslice, priority, force_no_realthreads );
       if ( thrparams )
         {
@@ -1108,10 +1121,10 @@ int Client::Run( void )
         else
           thrparamslast->next = thrparams;
         thrparamslast = thrparams;
+        load_problem_count++;
         }
       else
         {
-        load_problem_count = prob_i+1;
         break;
         }
       }
@@ -1137,31 +1150,14 @@ int Client::Run( void )
              ((load_problem_count < planned_problem_count)?('('):(0)),
              (planned_problem_count - load_problem_count) );
       }
-      
+
     // resize the problem table if we've loaded too much
     if (load_problem_count < planned_problem_count)
       {
-      prob_i = (TimeToQuit)?(0):(load_problem_count+1);
-      for (; prob_i <= planned_problem_count; prob_i++ )
-        {
-        Problem *thisprob = GetProblemPointerFromIndex( prob_i );
-        if (thisprob && thisprob->IsInitialized())
-          {
-          cont_i = (unsigned int)thisprob->RetrieveState( 
-                                           (ContestWork *) &fileentry, 1 );
-          fileentry.contest = (u8)(cont_i);
-          fileentry.op      = htonl( OP_DATA );
-          fileentry.cpu     = FILEENTRY_CPU;
-          fileentry.os      = FILEENTRY_OS;
-          fileentry.buildhi = FILEENTRY_BUILDHI; 
-          fileentry.buildlo = FILEENTRY_BUILDLO;
-          fileentry.checksum =
-             htonl( Checksum( (u32 *) &fileentry, (sizeof(FileEntry)/4)-2));
-          Scramble( ntohl( fileentry.scramble ),
-              (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-          PutBufferRecord(&fileentry);
-          }
-        }
+      if (TimeToQuit)
+        LoadSaveProblems(planned_problem_count,PROBFILL_UNLOADALL);
+      else
+        LoadSaveProblems(load_problem_count, PROBFILL_RESIZETABLE);
       }
     }
   
@@ -1201,7 +1197,7 @@ int Client::Run( void )
     else 
       {
       int i=0;
-      while ((i++)<3
+      while ((i++)<5
             && !runstatics.refillneeded 
             && !CheckExitRequestTriggerNoIO()
             && ModeReqIsSet(-1)==0)
@@ -1231,8 +1227,8 @@ int Client::Run( void )
     #endif
     if (!TimeToQuit && CheckExitRequestTrigger())
       {
-      Log( "Received %s request...\n",
-           (CheckRestartRequestTrigger()?("restart"):("shutdown")) );
+      Log( "%s...\n",
+         (CheckRestartRequestTrigger()?("Restarting"):("Shutting down")) );
       TimeToQuit = 1;
       exitcode = 1;
       }
@@ -1260,8 +1256,10 @@ int Client::Run( void )
       {
       if (!percentprintingoff)
         LogScreenPercent( load_problem_count ); //logstuff.cpp
-      getbuff_errs += LoadSaveProblems(load_problem_count, PROBFILL_GETBUFFERRS);
+      getbuff_errs+=LoadSaveProblems(load_problem_count,PROBFILL_GETBUFFERRS);
       runstatics.refillneeded = 0;
+      if (CheckExitRequestTriggerNoIO())
+        continue;
       }
 
     //------------------------------------
@@ -1301,26 +1299,30 @@ int Client::Run( void )
     // Check for 32 consecutive solutions
     //----------------------------------------
 
-    for (int tmpc = 0; tmpc < 2; tmpc++)
+    unsigned int closed_count=0;
+    for (cont_i=0; cont_i < CONTEST_COUNT; cont_i++)
       {
-      const char *contname = CliGetContestNameFromID( tmpc ); //clicdata.cpp
-      if ((consecutivesolutions[tmpc] >= 32) && !contestdone[tmpc])
+      const char *contname = CliGetContestNameFromID( cont_i ); //clicdata.cpp
+      if ((consecutivesolutions[cont_i] >= 32) && contestdone[cont_i]==0)
         {
-        contestdone[tmpc] = 1;
-        randomchanged = 1;
+        contestdone[cont_i] = 1;
+        if (keyport != 3064)
+          randomchanged = 1;
         if (!TimeToQuit)
           {
           Log( "Too many consecutive %s solutions detected.\n"  
           "Either the contest is over, or this client is pointed at a test port.\n"
           "Marking contest as closed. Further %s blocks will not be processed.\n", 
-          contname, contname );
+            contname, contname );
           }
         }
+      if (contestdone[cont_i])
+        closed_count++;
       }
-    if (!TimeToQuit && contestdone[0] && contestdone[1])
+    if (!TimeToQuit && closed_count>=CONTEST_COUNT)
       {
       TimeToQuit = 1;
-      Log( "Both RC5 and DES are marked as closed.\n");
+      Log( "All contests are marked as closed. Quitting...\n");
       exitcode = -2;
       }
 
@@ -1332,20 +1334,6 @@ int Client::Run( void )
     if (!TimeToQuit && nonewblocks > 0 && 
       ((unsigned int)getbuff_errs >= load_problem_count))
       {  
-      TimeToQuit = 1;
-      exitcode = 4;
-      }
-
-    //----------------------------------------
-    // Reached the -b limit?
-    //----------------------------------------
-
-    // Done enough blocks?
-    if (!TimeToQuit && blockcount > 0 && 
-         ( totalBlocksDone[0]+totalBlocksDone[1] >= (u32) blockcount ) )
-      {
-      Log( "Shutdown - %d blocks completed\n", 
-                           (u32)totalBlocksDone[0]+totalBlocksDone[1] );
       TimeToQuit = 1;
       exitcode = 4;
       }
