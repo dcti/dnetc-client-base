@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.13 2002/10/23 06:39:07 acidblood Exp $
+; $Id: r72-dg2.asm,v 1.13.2.1 2002/11/21 23:55:19 andreasb Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -102,9 +102,9 @@ defwork save_ebp
         %else
             jmp short %%alend
             align %1
-            %%alend:
         %endif
     %endif
+    %%alend:
 %endmacro
 
 ; register allocation for the key setup blocks

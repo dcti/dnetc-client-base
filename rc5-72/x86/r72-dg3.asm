@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3.asm,v 1.3 2002/10/24 15:37:56 acidblood Exp $
+; $Id: r72-dg3.asm,v 1.3.2.1 2002/11/21 23:55:19 andreasb Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -107,9 +107,9 @@ defwork save_ebp
         %else
             jmp short %%alend
             align %1
-            %%alend:
         %endif
     %endif
+    %%alend:
 %endmacro
 
 %define A1         eax
