@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.54 2001/01/16 19:06:02 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.55 2001/02/27 00:37:22 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -731,7 +731,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 },
 { 
   CONF_NOFALLBACK              , /* CONF_MENU_NET */
-  CFGTXT("Disable fallback to a distributed.net keysever?"),"no",
+  CFGTXT("Disable fallback to a distributed.net keyserver?"),"no",
   CFGTXT(
   "If the keyserver that your client will be connecting to is a personal\n"
   "proxy inside a protected LAN (inside a firewall), set this option to 'yes'.\n"
