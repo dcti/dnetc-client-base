@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.12 2004/06/27 22:43:02 jlawson Exp $
+# $Id: makefile.vc,v 1.83.2.12.2.1 2004/08/09 06:25:25 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -19,7 +19,7 @@ PLATSRCPATH = plat/win
 HAVE_RC5_72_CORES=1
 #HAVE_DES_CORES=1
 #HAVE_CSC_CORES=1
-HAVE_OGR_CORES=1
+#HAVE_OGR_CORES=1
 HAVE_OGR_PASS2=1
 
 # --------------------------------------------
@@ -332,31 +332,35 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_CSC_CORES
 
 # --------------------------------- OGR ----------------------------
 
-!ifndef HAVE_OGR_CORES
+!if !defined(HAVE_OGR_CORES) && !defined(HAVE_OGR_PASS2)
 OGR_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr.obj        \
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
-OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH) -DHAVE_OGR_CORES
+OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr.obj      \
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
-OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH) -DHAVE_OGR_CORES
+OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr-a.obj      \
         $(OUTPUTPATH)/ogr-b.obj      \
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
-OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH) -DHAVE_OGR_CORES
+OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
 !else
 !error No OGR cores for this architecture.
 !endif
 
+
+!ifdef HAVE_OGR_CORES
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
+!endif
 !ifdef HAVE_OGR_PASS2
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_PASS2
 !endif
