@@ -5,8 +5,8 @@
  *
  */
 
-const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ev4.cpp,v 1.1.2.4 2003/12/13 12:57:46 kakace Exp $"; }
+const char *ogr_ev4_cpp(void) {
+return "@(#)$Id: ev4.cpp,v 1.1.2.5 2004/01/24 07:16:07 bdragon Exp $"; }
 
 #if defined(__GNUC__)
   #define OGROPT_BITOFLIST_DIRECT_BIT           1 /* seems to be a win */
@@ -23,9 +23,9 @@ return "@(#)$Id: ev4.cpp,v 1.1.2.4 2003/12/13 12:57:46 kakace Exp $"; }
   #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* nope              */
 #endif
 
-#define ALPHA_CIX
-#define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table_cix
-#define OGR_P2_GET_DISPATCH_TABLE_FXN ogr_p2_get_dispatch_table_cix
+//#define ALPHA_CIX
+#define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table_ev4
+#define OGR_P2_GET_DISPATCH_TABLE_FXN ogr_p2_get_dispatch_table_ev4
 #define OVERWRITE_DEFAULT_OPTIMIZATIONS
 
 #include "ansi/ogr.cpp"

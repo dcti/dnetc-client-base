@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.121 2004/01/24 05:16:35 lightning Exp $
+# @(#)$Id: configure,v 1.288.2.122 2004/01/24 07:16:07 bdragon Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -451,6 +451,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       # this is just an addition to the default ansi core
       # maybe this should be moved in to specific targets ?
       TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev4.cpp"
     fi # HAVE_OGR
   #-----------------------------------------------------------------
   elif [ "$2" = "ppc" ]; then
@@ -3196,6 +3197,17 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
         else
           # works for NetBSD/FreeBSD and probably also OpenBSD
           CCFLAGS_SELECT="-Wa,-mev6 ${CCFLAGS_SELECT}"
+        fi
+      elif [ "$target" = "output/ev4.o" ]; then
+        if [ $gccver -ge 3000000 ]; then # works only for gcc > 3 
+          if [ "$TARGET_CC" = "g++" ] ; then
+            CCFLAGS_SELECT="${CCFLAGS_SELECT} -mcpu=ev4"
+          else
+            CCFLAGS_SELECT="${CCFLAGS_SELECT} -march=ev4"
+          fi
+        else
+          # works for NetBSD/FreeBSD and probably also OpenBSD
+          CCFLAGS_SELECT="-Wa,-mev4 ${CCFLAGS_SELECT}"
         fi
       elif [ "${BUILDNAME}" = "aix-powerandppc" ]; then
         if [ "$target" = "output/problem.o" ]; then 
