@@ -6,6 +6,9 @@
 ; based on deseval.c from Matthew Kwan's bitslicing DES key search.
 ;
 ; $Log: des-slice-sa.s,v $
+; Revision 1.7  1998/06/24 08:51:44  kbracey
+; New DES code from Steve Lee
+;
 ; Revision 1.6  1998/06/23 13:56:03  kbracey
 ; New ARM DES cores - calling convention changed to add a few %
 ;
@@ -22,7 +25,7 @@
 
 	AREA	fastdesarea, CODE, READONLY
 
-        DCB     "@(#)$Id: des-slice-sa.s,v 1.6 1998/06/23 13:56:03 kbracey Exp $", 0
+        DCB     "@(#)$Id: des-slice-sa.s,v 1.7 1998/06/24 08:51:44 kbracey Exp $", 0
         ALIGN
 
         EXPORT	des_unit_func_strongarm
@@ -49,7 +52,7 @@ __rt_stkovf_split_big	B	startofcode - &2c000 + &1bc8c
  ]
 
 
-; these functions do not follow APCS.
+; these functiona do not follow APCS.
 ; a1-a6 (r0-r5) are the inputs.
 ; x1-x6 are same registers as a1-a6. Considered available for
 ;       general use after last access of a1-a6.
@@ -78,71 +81,34 @@ t7 RN 12
 t8 RN 14
 
 
-
 	MACRO
-	s_start	$s, $inp1, $inp2, $inp3, $inp4
+	s_start	$s, $inp1
 	LCLS	reglist
 	LCLS	reg
 	LCLS	reg2
 	LCLA	i
-	LCLL	split
 s$s
  [ $inp1 = 0
-reglist	SETS	"t1,"
+	STMFD	r13!,{t1,r14}
  |
-reglist	SETS	""
+	STR	r14,[r13,#-4]!
  ]
- [ $inp2 = 0
-reglist	SETS	reglist:CC:"t2,"
- ]
- [ $inp3 = 0
-reglist	SETS	reglist:CC:"t3,"
- ]
- [ $inp4 = 0
-reglist	SETS	reglist:CC:"t4,"
- ]
-	STMFD	r13!,{$reglist r14}
-split	SETL	{FALSE}
- [ :LEN:reglist = 12
-reglist	SETS	reglist:CC:"t5,t6"
- |
-  [ :LEN:reglist = 9
-reglist	SETS	reglist:CC:"t5,t6,t7"
-  |
-   [ :LEN:reglist = 6 :LAND: $s <> 8
-reglist	SETS	reglist:CC:"t5,t6,t7,t8"
-   |
-reglist	SETS	"t5,t6,t8"
-split	SETL	{TRUE}
-   ]
-  ]
- ]
+
+reglist	SETS	"t2,t3,t4,t5,t6,t7"
+
  [ $s = 1
 reg	SETS	reglist:LEFT:2
 	LDR	$reg,[t7,#4*31]
-  [ split
-reg	SETS	reglist:RIGHT:5
-	LDMIA	t7!,{$reg}
-  |
 reg	SETS	reglist:RIGHT:14
 	LDMIA	t7,{$reg}
-  ]
  |
   [ $s = 8
-   [ split
-	LDMIA	t7!,{$reglist}
-   |
 reg	SETS	reglist:LEFT:14
 	LDMIA	t7,{$reg}
 reg	SETS	reglist:RIGHT:2
 	LDR	$reg,[t7,#4*(-27)]
-   ]
   |
-   [ split
-	LDMIA	t7!,{$reglist}
-   |
 	LDMIA	t7,{$reglist}
-   ]
   ]
  ]
 
@@ -150,15 +116,6 @@ reglist	SETS	reglist:CC:","
 i	SETA	1
 
 	WHILE	i <= 6
- [ i = 3 :LAND: split
-  [ $s = 8
-	LDMIA	t7,{t5,t6}
-	LDR	t7,[t7,#4*(-27-3)]
-  |
-	LDMIA	t7,{t5,t6,t7}
-  ]
-reglist	SETS	reglist:CC:"t5,t6,t7,"
- ]
 reg	SETS	"a":CC:("$i":RIGHT:1)
 reg2	SETS	reglist:LEFT:2
 reglist	SETS	reglist:RIGHT:(:LEN:reglist - 3)
@@ -202,11 +159,11 @@ got4_$s	SETA	$got4
 	ADD	t7,r13,#4*($s*4-5)
   ]
  ]
-	ADD	t1,r13,#4*($o1)
-	ADD	t2,r13,#4*($o2)
-	ADD	t3,r13,#4*($o3)
 	LDR	t8,[r13,#4*(64+1)]
-	ADD	t4,r13,#4*($o4)
+	ADD	t1,r13,#4*($o1)
+;	ADD	t2,r13,#4*($o2)
+;	ADD	t3,r13,#4*($o3)
+;	ADD	t4,r13,#4*($o4)
 	LDR	a1,[t8,#4*$i1]
 	LDR	a2,[t8,#4*$i2]
 	LDR	a3,[t8,#4*$i3]
@@ -221,6 +178,7 @@ got4_$s	SETA	$got4
 	check	$s, $coff, $r1, $r2, $r3, $r4
 
 	LDR	a2,[r13,#4*64]
+	LDR	a1,[r13,#4*(64+2)]
  [ got1_$s = 0
 	LDR	t5,[r13,#4*($r1)]
  ]
@@ -237,7 +195,6 @@ got4_$s	SETA	$got4
 	ADD	a2,a2,#($coff*4)
  ]
 	LDMIA	a2,{t1,t2,t3,t4}
-	LDR	a1,[r13,#4*(64+2)]
 	EOR	a3,t8,t1
 	BIC	a1,a1,a3
 	EOR	a3,t7,t2
@@ -252,6 +209,18 @@ got4_$s	SETA	$got4
  ]
 	MEND
 
+
+
+
+
+
+
+
+
+
+;        AREA |C$$code|, CODE, READONLY
+
+;|x$codeseg| DATA
 
 convert_key_from_des_to_inc__FPUlT1
         STMDB    r13!,{r4,lr}
@@ -389,7 +358,7 @@ convert_key_from_inc_to_des__FPUlT1
         STR      r12,[r1,#0]
         LDR      r3,[r0,#0]
         AND      r12,r3,#&7f
-        ADRL     r2,odd_parity
+        ADRL      r2,odd_parity
         LDRB     lr,[r2,r12,LSL #1]
         AND      r12,r3,#&3f80
         LDRB     r12,[r2,r12,LSR #6]

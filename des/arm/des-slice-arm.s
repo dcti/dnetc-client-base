@@ -5,6 +5,9 @@
 ; based on deseval.c from Matthew Kwan's bitslicing DES key search.
 ;
 ; $Log: des-slice-arm.s,v $
+; Revision 1.11  1998/06/24 08:51:41  kbracey
+; New DES code from Steve Lee
+;
 ; Revision 1.10  1998/06/23 13:56:00  kbracey
 ; New ARM DES cores - calling convention changed to add a few %
 ;
@@ -20,7 +23,7 @@
 
 	AREA	fastdesarea, CODE, READONLY
 
-        DCB     "@(#)$Id: des-slice-arm.s,v 1.10 1998/06/23 13:56:00 kbracey Exp $", 0
+        DCB     "@(#)$Id: des-slice-arm.s,v 1.11 1998/06/24 08:51:41 kbracey Exp $", 0
         ALIGN
 
         EXPORT	des_unit_func_arm
@@ -47,7 +50,7 @@ __rt_stkovf_split_big	B	startofcode - &2c000 + &1bc8c
  ]
 
 
-; these functions do not follow APCS.
+; these functiona do not follow APCS.
 ; a1-a6 (r0-r5) are the inputs.
 ; x1-x6 are same registers as a1-a6. Considered available for
 ;       general use after last access of a1-a6.
@@ -78,69 +81,33 @@ t8 RN 14
 
 
 	MACRO
-	s_start	$s, $inp1, $inp2, $inp3, $inp4
+	s_start	$s, $inp1
 	LCLS	reglist
 	LCLS	reg
 	LCLS	reg2
 	LCLA	i
-	LCLL	split
 s$s
  [ $inp1 = 0
-reglist	SETS	"t1,"
+	STMFD	r13!,{t1,t4}
  |
-reglist	SETS	""
+	STR	t4,[r13,#-4]!
  ]
- [ $inp2 = 0
-reglist	SETS	reglist:CC:"t2,"
- ]
- [ $inp3 = 0
-reglist	SETS	reglist:CC:"t3,"
- ]
- [ $inp4 = 0
-reglist	SETS	reglist:CC:"t4,"
- ]
-	STMFD	r13!,{$reglist t6}
-split	SETL	{FALSE}
- [ :LEN:reglist = 12
-reglist	SETS	reglist:CC:"t5,t6"
- |
-  [ :LEN:reglist = 9
-reglist	SETS	reglist:CC:"t5,t6,t7"
-  |
-   [ :LEN:reglist = 6 :LAND: $s <> 8
-reglist	SETS	reglist:CC:"t5,t6,t7,t8"
-   |
-reglist	SETS	"t5,t6,t8"
-split	SETL	{TRUE}
-   ]
-  ]
- ]
+
+reglist	SETS	"t2,t3,t4,t5,t6,t7"
+
  [ $s = 1
 reg	SETS	reglist:LEFT:2
 	LDR	$reg,[t7,#4*31]
-  [ split
-reg	SETS	reglist:RIGHT:5
-	LDMIA	t7!,{$reg}
-  |
 reg	SETS	reglist:RIGHT:14
 	LDMIA	t7,{$reg}
-  ]
  |
   [ $s = 8
-   [ split
-	LDMIA	t7!,{$reglist}
-   |
 reg	SETS	reglist:LEFT:14
 	LDMIA	t7,{$reg}
 reg	SETS	reglist:RIGHT:2
 	LDR	$reg,[t7,#4*(-27)]
-   ]
   |
-   [ split
-	LDMIA	t7!,{$reglist}
-   |
 	LDMIA	t7,{$reglist}
-   ]
   ]
  ]
 
@@ -148,15 +115,6 @@ reglist	SETS	reglist:CC:","
 i	SETA	1
 
 	WHILE	i <= 6
- [ i = 3 :LAND: split
-  [ $s = 8
-	LDMIA	t7,{t5,t6}
-	LDR	t7,[t7,#4*(-27-3)]
-  |
-	LDMIA	t7,{t5,t6,t7}
-  ]
-reglist	SETS	reglist:CC:"t5,t6,t7,"
- ]
 reg	SETS	"a":CC:("$i":RIGHT:1)
 reg2	SETS	reglist:LEFT:2
 reglist	SETS	reglist:RIGHT:(:LEN:reglist - 3)
@@ -170,7 +128,7 @@ i	SETA	i+1
 	MACRO
 	s_end	$s, $got1, $got2, $got3, $got4
 
-	LDR	t6,[r13],#4
+	LDR	t4,[r13],#4
 	B	s_call_loop
 
 	GBLA	got1_$s
@@ -183,6 +141,16 @@ got3_$s	SETA	$got3
 got4_$s	SETA	$got4
 
 	MEND
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -672,11 +640,11 @@ deseval
 ; 1-6    : bits for i1-i6
 ; 0      : identification bit
 
-	ADR	t6, s_param_table
+	ADR	t4, s_param_table
 
 s_call_loop
 
-	LDR	t3,[t6],#4
+	LDR	t3,[t4],#4
 
 ; is this an s-box call or a check?
 	TST	t3,#&80000000
@@ -695,22 +663,22 @@ donecheck
 	LDR	a4,[t8,a4,LSR #4]
 	AND	a5,t3,#&3f
 	LDR	a5,[t8,a5,LSL #2]
-	LDR	t5,[t6],#4
+	LDR	t5,[t4],#4
 	AND	a6,t5,#&3f
 	LDR	a6,[t8,a6,LSL #2]
 
 ; calculate addresses of outputs
 	AND	t1,t5,#&1f800000
 	ADD	t1,r13,t1,LSR #21
-	AND	t2,t5,#&007E0000
-	ADD	t2,r13,t2,LSR #15
-	AND	t3,t5,#&1f800
-	ADD	t3,r13,t3,LSR #9
-	AND	t4,t5,#&07C0
-       	ADD	t4,r13,t4,LSR #4
+;	AND	t2,t5,#&007E0000
+;	ADD	t2,r13,t2,LSR #15
+;	AND	t3,t5,#&1f800
+;	ADD	t3,r13,t3,LSR #9
+;	AND	t4,t5,#&07C0
+;	ADD	t4,r13,t4,LSR #4
 
 	ANDS	t7,t5,#&10000000
-	ADDNE	t4,t4,#32*4
+;	ADDNE	t4,t4,#32*4
 
 ; create pointer to callee loaded stuff
 	MOVNE	t7,r13
@@ -753,9 +721,9 @@ value	SETA	(1<<31)+(($coff/4)<<27)+((($r1)>>5)<<26)
  [ got1_$s = 0
 value	SETA	value+((($r1):OR:32)<<20)
  ]
-; [ got2_$s = 0
+ [ got2_$s = 0
 value	SETA	value+((($r2):OR:32)<<14)
-; ]
+ ]
  [ got3_$s = 0
 value	SETA	value+((($r3):OR:32)<<8)
  ]
@@ -782,10 +750,8 @@ do_check
 	MOVNE	a6,r13
 	ANDS	a5,t3,#&03f00000
 	LDRNE	t5,[a6,a5,LSR #18]
-; Use t1 to stand in for t6, as t6 used for other purposes.
-; NB 'check' macro above also modified.
-	AND	a5,t3,#&000fc000
-	LDR	t1,[a6,a5,LSR #12]
+	ANDS	a5,t3,#&000fc000
+	LDRNE	t6,[a6,a5,LSR #12]
 	ANDS	a5,t3,#&3f00
 	LDRNE	t7,[a6,a5,LSR #6]
 	ANDS	a5,t3,#&00fc
@@ -798,7 +764,7 @@ do_check
 	LDR	a1,[r13,#4*(64+2)]
 	EOR	a3,t2,t5
 	BIC	a1,a1,a3
-	EOR	a3,a6,t1
+	EOR	a3,a6,t6
 	BIC	a1,a1,a3
 	EOR	a3,a5,t7
 	BIC	a1,a1,a3
@@ -807,7 +773,7 @@ do_check
 	BEQ	gotresult
 
 	STR	a1,[r13,#4*(64+2)]
-	LDR	t3,[t6],#4
+	LDR	t3,[t4],#4
 	TST	t3,#&80000000
 	BEQ	donecheck
 
