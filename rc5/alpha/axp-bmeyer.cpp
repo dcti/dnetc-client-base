@@ -2,7 +2,7 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
-// @(#)$Id: axp-bmeyer.cpp,v 1.3.2.1 1999/12/08 02:08:05 cyp Exp $
+// @(#)$Id: axp-bmeyer.cpp,v 1.3.2.2 2000/02/13 14:55:36 dworz Exp $
 
 // dual-key, mixed round 3 and encryption, A1/A2 use for last value,
 // non-arrayed S1/S2 tables
@@ -15,9 +15,8 @@
 
 #include "problem.h" /* RC5UnitWork */
 
-extern "C" {
-  u32 rc5_unit_func_axp_bmeyer_asm( RC5UnitWork *, unsigned long iter);
-}
+extern "C" u32 rc5_unit_func_axp_bmeyer_asm( RC5UnitWork *, unsigned long iter);
+extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
 
 u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *work, u32 iter )
 {
