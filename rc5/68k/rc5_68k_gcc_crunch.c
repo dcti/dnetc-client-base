@@ -1,6 +1,6 @@
 /*
  * This is the wrapper around rc5_unit_func
- * @(#)$Id: rc5_68k_gcc_crunch.c,v 1.1.2.1 1999/12/08 01:27:56 cyp Exp $
+ * @(#)$Id: rc5_68k_gcc_crunch.c,v 1.1.2.2 1999/12/08 01:56:33 cyp Exp $
 */
 
 #include "cputypes.h"
@@ -25,6 +25,7 @@ u32 rc5_68k_crunch_unit_func ( RC5UnitWork * rc5unitwork, u32 iterations )
   //LogScreenf ("rc5unitwork = %08X:%08X (%X)\n", rc5unitwork.L0.hi, rc5unitwork.L0.lo, keycount);
   while ( keycount-- ) // iterations ignores the number of pipelines
   {
+    u32 result = rc5_unit_func( rc5unitwork );
     if ( result )
     {
       kiter += result-1;
