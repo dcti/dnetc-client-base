@@ -12,14 +12,14 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.78  1998/08/28 22:31:09  cyp
+// Added prototype for Client::Main().
+//
 // Revision 1.77  1998/08/10 22:02:25  cyruspatel
-// Removed prototypes for xxxTriggered and pausefilefound flags (these are
-// now functions in trigger.cpp) and path-related #defines (now in pathwork.h)
+// Removed xxxTriggered and pausefilefound statics (now f() in triggers.cpp)
 //
 // Revision 1.76  1998/08/05 18:28:47  cyruspatel
-// Converted more printf()s to LogScreen()s, changed some Log()/LogScreen()s
-// to LogRaw()/LogScreenRaw()s, ensured that DeinitializeLogging() is called,
-// and InitializeLogging() is called only once (*before* the banner is shown)
+// Converted more printf()s to LogScreen()s
 //
 // Revision 1.75  1998/08/02 16:17:47  cyruspatel
 // Completed support for logging.
@@ -28,13 +28,15 @@
 // Slight logging changes to bring win32gui in sync with rest of tree.
 //
 // Revision 1.73  1998/08/02 03:16:42  silby
-// Major reorganization:  Log,LogScreen, and LogScreenf are now in logging.cpp, and are global functions - client.h #includes logging.h, which is all you need to use those functions.  Lurk handling has been added into the Lurk class, which resides in lurk.cpp, and is auto-included by client.h if lurk is defined as well. baseincs.h has had lurk-specific win32 includes moved to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of printf. client.cpp has had variable names changed as well, etc.
+// Log,LogScreen, and LogScreenf are now in logging.cpp
 //
 // Revision 1.72  1998/07/30 05:09:08  silby
-// Fixed DONT_USE_PATHWORK handling, ini_etc strings were still being included, now they are not. Also, added the logic for dialwhenneeded, which is a new lurk feature.
+// Fixed DONT_USE_PATHWORK handling, ini_etc strings were still being included
+// , now they are not. Also, added the logic for dialwhenneeded, which is a 
+// new lurk feature.
 //
 // Revision 1.71  1998/07/29 05:14:49  silby
-// Changes to win32 so that LurkInitiateConnection now works - required the addition of a new .ini key connectionname=.  Username and password are automatically retrieved based on the connectionname.
+// Changes to win32 so that LurkInitiateConnection now works 
 //
 // Revision 1.70  1998/07/26 12:46:04  cyruspatel
 // new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
@@ -62,16 +64,7 @@
 // updates to get Borland C++ to compile under Win32.
 //
 // Revision 1.63  1998/07/07 21:55:18  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 // Revision 1.62  1998/07/06 03:15:31  jlawson
 // prototype for InternalGetLocalFilename no longer defined by default.
@@ -348,17 +341,11 @@ public:
   s32 preferred_blocksize;
   s32 contestdone[2];
 
-#if ( (CLIENT_OS==OS_WIN32) && (!defined(WINNTSERVICE)) )
-  s32 win95hidden;
-#endif
-#if (CLIENT_OS == OS_OS2)
-  s32 os2hidden;
-//  s32 connectstatus;          // 0 is not connected, 1 is connected
-#endif
+  s32 runhidden;      // previously win95hidden, os2hidden, netwarehidden...
+  
 #if defined(MMX_BITSLICER)
   s32 usemmx;
 #endif
-
 
 protected:
   char proxymessage[64];
@@ -437,8 +424,25 @@ public:
   Client();
   ~Client();
 
-  void ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing);
-    // parses commandline options, setting parsed items to NULL
+
+  int Main( int argc, const char *argv[] );
+  //encapsulated main().  client.Main() is restartable
+
+  int ParseCommandline( int runlevel, int argc, const char *argv[], 
+                    int *inimissP, int *retcodeP, int show_set_messages );
+  //runlevel == 0 = pre-anything    (-quiet, -ini, -guistart etc done here)
+  //         >= 1 = post-readconfig (override ini options)
+  //         == 2 = run "modes"
+
+  void PrintBanner(int level); 
+    //level=0=show copyright/version, 1=show startup message
+
+  s32 RunStartup(void);
+    // to be called before calling Run() for the first time
+    // returns: non-zero on failure
+
+  s32 RunShutdown(void) {return 0;}
+    // undo Runstartup
 
   s32 CkpointToBufferInput(u8 contest);
     // Copies info in checkpint file back to input buffer
@@ -476,6 +480,9 @@ public:
   s32  WriteConfig( void );
     // returns -1 on error, 0 otherwise
 
+  s32  WriteFullConfig( void ); 
+    // returns -1 on error, 0 otherwise
+
   s32  WriteContestandPrefixConfig( void );
     // returns -1 on error, 0 otherwise
     // only writes contestdone and randomprefix .ini entries
@@ -497,12 +504,6 @@ public:
     //     2 = exit by exit file check
     //     3 = exit by time limit expiration
     //     4 = exit by block count expiration
-
-  int  RunCommandlineModes( int argc, char *argv[], int *retcode );
-    // Parse the command line for special commands. Returns 0 if it did 
-    // nothing. -update, -[force]fetch, -[force]flush, -ident, -test, 
-    // -cpuinfo, -benchmark[2], -config, -install, -uninstall, -forceunlock
-    // and co. are all handled here. Calls DisplayHelp() on invalid arg/-help
 
   s32  Fetch( u8 contest, Network *netin = 0, s32 quietness = 0, s32 force = 0 );
     // fills up all of the input buffers
@@ -550,17 +551,6 @@ public:
     // removes the client from autolaunch configuration
     // returns: non-zero on failure
 
-  s32 RunStartup(void);
-    // to be called before calling Run() for the first time
-    // returns: non-zero on failure
-
-  s32 SelectCore(void);
-    // to be called before Run(), Benchmark(), or Test() to configure for cpu
-    // returns: non-zero on failure
-
-  s32 UnlockBuffer( const char *filename );
-    // unlock buffer 'filename'
-
   int GetProcessorType();  //was x86id(); and ARMid(); nullfunction otherwise
   // Identify CPU type by hardware check - in cpucheck.cpp
 
@@ -571,8 +561,13 @@ public:
     // Set the contest state appropriately based on packet information
     // Returns 1 if a change to contest state was detected
 
-  void PrintBanner(const char *dummy); 
-    //show version/copyright banner
+  s32 SelectCore(void);
+    // to be called before Run(), Benchmark(), or Test() to configure for cpu
+    // returns: non-zero on failure
+
+  s32 UnlockBuffer( const char *filename );
+    // unlock buffer 'filename'
+
 };
 
 // --------------------------------------------------------------------------
