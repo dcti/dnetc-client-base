@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.43  1998/11/08 00:48:35  sampo
+// fix a few typos to enable it to compile.
+//
 // Revision 1.42  1998/11/06 18:50:39  cyp
 // Cleaned up tabs and macos cpu detection logic.
 //
@@ -150,7 +153,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.42 1998/11/06 18:50:39 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.43 1998/11/08 00:48:35 sampo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -382,7 +385,7 @@ int GetProcessorType(int quietly)
       case gestaltCPU603:
              detectedtype = 2; cpu_description = "603"; break;
       case gestaltCPU604:
-             detectedtype = 3; cpu_description = "604"; break
+             detectedtype = 3; cpu_description = "604"; break;
       case gestaltCPU603e:
              detectedtype = 5; cpu_description = "603e"; break;
       case gestaltCPU603ev:
@@ -392,7 +395,7 @@ int GetProcessorType(int quietly)
       case gestaltCPU604e:
              detectedtype = 8; cpu_description = "604e"; break;
       case gestaltCPU604ev:
-             detectedtype = 9; cpu_description = "604ev/Mach5";break
+             detectedtype = 9; cpu_description = "604ev/Mach5"; break;
       default:
              detectedtype =-1; cpu_description = NULL; break;
       }
