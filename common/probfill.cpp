@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.32 2000/04/11 14:43:38 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.33 2000/04/11 14:48:19 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -70,7 +70,10 @@ static int __check_outbufthresh_limit( Client *client, unsigned int cont_i,
   if ((*bufupd_pending & BUFFERUPDATE_FLUSH) == 0)
   {
     unsigned int thresh = ClientGetOutThreshold( client, cont_i, 0 );
-    /* + if the outthreshold is <=0, then outthreshold is not checked
+    /*
+       *** Documentation on how rotation/failover works is in 
+       *** ClientGetOutThreshold()
+       + if the outthreshold is <=0, then outthreshold is not checked
          because <=0 is not a valid outthreshold. 
          Result: Only inthreshold is effective and outthresh 
          doesn't need to be checked.
@@ -91,6 +94,8 @@ static int __check_outbufthresh_limit( Client *client, unsigned int cont_i,
        = if any of the above applies, ClientGetOutThreshold()
          will return outthresh=0 for simplicity. see client.cpp  
        * Inthreshold is handled in __IndividualProblemLoad()
+       *** Documentation on how rotation/failover works is in 
+       *** ClientGetOutThreshold()
     */
     if (thresh > 0) /* threshold _does_ need to be checked. */
     {               
