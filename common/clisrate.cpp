@@ -281,7 +281,7 @@ const char *CliReformatMessage( char *header, char *message )
     bptr = strspace;                 //convert non-breaking space
     while (*bptr) 
     {
-      if (*bptr == 0xFF)
+      if (*bptr == (char) 0xFF)
         *bptr = ' ';
       bptr++;
     }

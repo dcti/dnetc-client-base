@@ -543,7 +543,7 @@ Socks4Failure:
     // Otherwise we ask for no authentication only.
 
     psocks5mreq->ver = 5;
-    psocks5mreq->nMethods = httpid[0] ? 2 : 1;
+    psocks5mreq->nMethods = (unsigned char) (httpid[0] ? 2 : 1);
     psocks5mreq->Methods[0] = 0;  // no authentication
     psocks5mreq->Methods[0] = 2;  // username/password
 
@@ -596,10 +596,10 @@ Socks4Failure:
 
       len = 0;
       socksreq[len++] = 1;    // username/pw subnegotiation version
-      socksreq[len++] = userlen;
+      socksreq[len++] = (char) userlen;
       memcpy(socksreq + len, username, userlen);
       len += userlen;
-      socksreq[len++] = pwlen;
+      socksreq[len++] = (char) pwlen;
       memcpy(socksreq + len, password, pwlen);
       len += pwlen;
 

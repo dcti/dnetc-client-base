@@ -1,28 +1,37 @@
 # RC5 client makefile (Borland C++ for Win32)
 # see http://www.distributed.net/
 
+.autodepend
 
-OPTS_BORLAND = -DPIPELINE_COUNT=2 -D_CPU_32BIT_ -O -tWM -DMULTITHREAD
+.path.cpp = common;des
+.path.obj = output;platforms/win32-os2
+
+
+BCCOPTS = -w -Icommon -DPIPELINE_COUNT=2 -D_CPU_32BIT_ -O -tWM -DMULTITHREAD
 
 # --------------------------------------------
 
 EXENAME = rc5des.exe
 
-RC5_SRCS = common\client.cpp common\problem.cpp common\autobuff.cpp \
-	common\iniread.cpp common\network.cpp common\scram.cpp common\mail.cpp
-	common\cliconfig.cpp common\buffwork.cpp des\des-x86.cpp des\convdes.obj
+BASESRCS = client.cpp problem.cpp autobuff.cpp iniread.cpp \
+  network.cpp scram.cpp mail.cpp cliconfig.cpp buffwork.cpp \
+  clicdata.cpp clirate.cpp clisrate.cpp clitime.cpp \
+	convdes.cpp des-x86.cpp
 
-RC5_OBJS = platforms\win32-os2\rg-486.obj platforms\win32-os2\rg-6x86.obj &
-	platforms\win32-os2\rg-k5.obj platforms\win32-os2\rg-k6.obj &
-	platforms\win32-os2\rc5p5brf.obj platforms\win32-os2\rg-p6.obj &
-	platforms\win32-os2\bdeslow.obj platforms\win32-os2\bbdeslow.obj &
-	platforms\win32-os2\x86ident.obj
+BASEOBJS = rg-486.obj rg-6x86.obj rg-k5.obj rg-k6.obj \
+  rc5p5brf.obj rg-p6.obj bdeslow.obj bbdeslow.obj x86ident.obj
 
 # --------------------------------------------
 
-rc5v2: $(RC5_SRCS) $(RC5_OBJS)
+.cpp.obj:
+  bcc32 -c -P $(BCCOPTS) -noutput $<
+
+
+# --------------------------------------------
+
+$(EXENAME):   $(BASESRCS:.cpp=.obj) $(BASEOBJS)
 	bcc32 @&&|
-$(OPTS_BORLAND) -e$(EXENAME) $**
+$(BCCOPTS) -e$(EXENAME) $**
 |
 
 # --------------------------------------------

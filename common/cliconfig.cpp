@@ -838,7 +838,6 @@ void Client::ValidateConfig( void )
 s32 Client::WriteConfig(void)
 {
   IniSection ini;
-  IniRecord *ptr=NULL;
   char buffer[64];
 
   ini.ReadIniFile(inifilename);
@@ -895,6 +894,7 @@ s32 Client::WriteConfig(void)
   if (uuehttpmode <= 1)
   {
     // wipe out httpproxy and httpport & httpid
+    IniRecord *ptr;
     ptr = INIFIND( CONF_HTTPPROXY );
     if (ptr) ptr->values.Erase();
     ptr = INIFIND( CONF_HTTPPORT );
@@ -906,6 +906,7 @@ s32 Client::WriteConfig(void)
   if (firemode < 4)
   {
     // wipe keyproxy and keyport
+    IniRecord *ptr;
     ptr = INIFIND( CONF_KEYPROXY );
     if (ptr) ptr->values.Erase();
     ptr = INIFIND( CONF_KEYPORT );
@@ -915,6 +916,7 @@ s32 Client::WriteConfig(void)
   if (firemode < 5)
   {
     // wipe uuehttpmode
+    IniRecord *ptr;
     ptr = INIFIND( CONF_UUEHTTPMODE );
     if (ptr) ptr->values.Erase();
   }

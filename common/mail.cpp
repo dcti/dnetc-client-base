@@ -132,73 +132,75 @@ void MailMessage::addtomessage(char *txt ) {
    }
 }
 
-int MailMessage::inittext(int out) {
-   time_t time_of_day;
-   char dttext[255];
-
-   if (messagelen != 0) {
-      if (messagelen<500) {
-         messagelen=500;
-      }
-      if (messagelen>MAXMAILSIZE) {
-         messagelen=MAXMAILSIZE;
-      }
-   }
-   if (out == 1) {
-      printf("Mail server:port is %s:%d\n",smtp,port);
-      printf("Mail id is %s\n",fromid);
-      printf("Destination is %s\n",destid);
-      printf("Message length set to %d\n",messagelen);
-      printf("RC5id set to %s\n",rc5id);
-   }
+int MailMessage::inittext(int out)
+{
+  if (messagelen != 0) {
+    if (messagelen<500) {
+       messagelen=500;
+    }
+    if (messagelen>MAXMAILSIZE) {
+       messagelen=MAXMAILSIZE;
+    }
+  }
+  if (out == 1) {
+    printf("Mail server:port is %s:%d\n",smtp,port);
+    printf("Mail id is %s\n",fromid);
+    printf("Destination is %s\n",destid);
+    printf("Message length set to %d\n",messagelen);
+    printf("RC5id set to %s\n",rc5id);
+  }
 
 #ifndef NONETWORK
-   gethostname(my_hostname, 255);   //This should be in network.cpp
+  gethostname(my_hostname, 255);   //This should be in network.cpp
 #else
-   strcpy(my_hostname, "No Network");
+  strcpy(my_hostname, "No Network");
 #endif
 
 #ifndef GEN_HEADER_AT_SEND
+  char dttext[255];
+  time_t time_of_day;
 
-   time_of_day = time( NULL );
-#if defined(_SUNOS3_)
-   {
+  time_of_day = time( NULL );
+  #if defined(_SUNOS3_)
+    {
       struct tm *now = localtime(&time_of_day);
       const char *day;
       const char *month;
-      switch (now->tm_wday) {
-         case 0: day = "Sun"; break;
-         case 1: day = "Mon"; break;
-         case 2: day = "Tue"; break;
-         case 3: day = "Wed"; break;
-         case 4: day = "Thu"; break;
-         case 5: day = "Fri"; break;
-         default:
-         case 6: day = "Sat"; break;
+      switch (now->tm_wday)
+      {
+        case 0: day = "Sun"; break;
+        case 1: day = "Mon"; break;
+        case 2: day = "Tue"; break;
+        case 3: day = "Wed"; break;
+        case 4: day = "Thu"; break;
+        case 5: day = "Fri"; break;
+        default:
+        case 6: day = "Sat"; break;
       }
-      switch (now->tm_mon) {
-         case 0: month = "Jan"; break;
-         case 1: month = "Feb"; break;
-         case 2: month = "Mar"; break;
-         case 3: month = "Apr"; break;
-         case 4: month = "May"; break;
-         case 5: month = "Jun"; break;
-         case 6: month = "Jul"; break;
-         case 7: month = "Aug"; break;
-         case 8: month = "Sep"; break;
-         case 9: month = "Oct"; break;
-         case 10: month = "Nov"; break;
-         default:
-         case 11: month = "Dec"; break;
+      switch (now->tm_mon)
+      {
+        case 0: month = "Jan"; break;
+        case 1: month = "Feb"; break;
+        case 2: month = "Mar"; break;
+        case 3: month = "Apr"; break;
+        case 4: month = "May"; break;
+        case 5: month = "Jun"; break;
+        case 6: month = "Jul"; break;
+        case 7: month = "Aug"; break;
+        case 8: month = "Sep"; break;
+        case 9: month = "Oct"; break;
+        case 10: month = "Nov"; break;
+        default:
+        case 11: month = "Dec"; break;
       }
       sprintf(dttext, "%s, %02d %s %04d %02d:%02d:%02d", day, now->tm_mday,
               month, (now->tm_year+1900), now->tm_hour, now->tm_min,
               now->tm_sec);
-   }
-#else
-   strftime( dttext, 80, "%a, %d %b %Y %H:%M:%S",
-              localtime( &time_of_day ) );
-#endif
+    }
+  #else
+     strftime( dttext, 80, "%a, %d %b %Y %H:%M:%S",
+                localtime( &time_of_day ) );
+  #endif
 
    strcpy(messagetext,"Subject: RC5-64 stats (");
    strcat(messagetext,my_hostname);
@@ -220,23 +222,24 @@ int MailMessage::inittext(int out) {
 }
 
 #ifndef NONETWORK
-int MailMessage::sendmessage() {
-   // Get the SMTP server name, destination mailid from the INI file...
-   s32 retry;
-   Network *net;
-   char *temptime;
+int MailMessage::sendmessage()
+{
+  // Get the SMTP server name, destination mailid from the INI file...
+  s32 retry;
+  Network *net;
 
 #if (CLIENT_OS == OS_NETWARE)          
-   if ( !CliIsNetworkAvailable(0) )    //This should be made a generic
-     return 0;                         //function in network.cpp
+  if ( !CliIsNetworkAvailable(0) )    //This should be made a generic
+    return 0;                         //function in network.cpp
 #endif  
 
 
 #ifndef GEN_HEADER_AT_SEND
 // First, update the time in the header.  Otherwise, it will have the time that
 // composition of the message started, instead of now.
-   temptime = rfc822Date();
-   for (u32 i=0;i<29;i++) messagetext[timeoffset+i] = *(temptime+i);
+  char *temptime = rfc822Date();
+  for (u32 i = 0; i < 29; i++)
+    messagetext[timeoffset+i] = *(temptime+i);
 #endif
 
 //   printf("Server: %s\n",smtp);
@@ -244,46 +247,50 @@ int MailMessage::sendmessage() {
 //   printf("From:   %s\n",fromid);
 //   printf("Dest:   %s\n",destid);
 
-   if (messagelen != 0) {
-      net = new Network( (const char *) smtp , (const char *) smtp, (s16) port );
-      net->quietmode = quietmode;
+  if (messagelen != 0)
+  {
+    net = new Network( (const char *) smtp , (const char *) smtp, (s16) port );
+    net->quietmode = quietmode;
 
-      retry=0;
-      while ((net->Open()) && retry++ < 3) {
-         if (retry == 3) {
+    retry=0;
+    while ((net->Open()) && retry++ < 3)
+    {
+      if (retry == 3)
+      {
 #ifndef FIFO_ON_BUFF_OVERFLOW
-            strcpy(messagetext,"");
+        strcpy(messagetext,"");
 #endif
-            delete net;
-            return(-1);
-         }
-         printf("Network::MailMessage %d - Unable to open connection to smtp server\n", retry );
-         sleep( 3 );
-         // Unable to open network.
+        delete net;
+        return(-1);
       }
+      printf("Network::MailMessage %d - Unable to open connection to smtp server\n", retry );
+      sleep( 3 );
+      // Unable to open network.
+    }
 
-      net->MakeBlocking(); // This message is sent byte-by-byte -- there's no reason to be non-blocked
+    net->MakeBlocking(); // This message is sent byte-by-byte -- there's no reason to be non-blocked
 
-      if (prepare_smtp_message(net) != -1) {
-         if (0 == send_smtp_edit_data(net))
-         {
-            finish_smtp_message(net);
-            printf("Mail message has been sent.\n");
-            net->Close();
-            delete net;
-            return(0);
-         } else {
-            net->Close();
-            delete net;
-            return(-1);
-         }
+    if (prepare_smtp_message(net) != -1)
+    {
+      if (0 == send_smtp_edit_data(net))
+      {
+        finish_smtp_message(net);
+        printf("Mail message has been sent.\n");
+        net->Close();
+        delete net;
+        return(0);
       } else {
-         printf("Error in prepare_smtp_message\n");
-         net->Close();
-         return(-1);
+        net->Close();
+        delete net;
+        return(-1);
       }
-   }
-   return(0);
+    } else {
+      printf("Error in prepare_smtp_message\n");
+      net->Close();
+      return(-1);
+    }
+  }
+  return(0);
 }
 
 // 'destination' is the address the message is to be sent to

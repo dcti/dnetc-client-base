@@ -178,7 +178,6 @@ s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
 s32 Problem::Run( u32 timeslice , u32 threadnum )
 {
   struct timeval stop;
-  u32 result;
 
   if ( !initialized )
     return ( -1 );
@@ -300,6 +299,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   else if ( kiter != timeslice * PIPELINE_COUNT )
   {
     printf("kiter wrong %ld %d\n", kiter, timeslice*PIPELINE_COUNT);
+  }
 }
 #elif (CLIENT_CPU == CPU_SPARC) && (ULTRA_CRUNCH == 1)
 {
@@ -438,7 +438,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   if (contest == 0) {
     while ( timeslice-- ) // timeslice ignores the number of pipelines
     {
-      result = rc5_unit_func( &rc5unitwork );
+      u32 result = rc5_unit_func( &rc5unitwork );
       if ( result )
       {
       // found it?
@@ -490,7 +490,9 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
         contestwork.keysdone.lo += PIPELINE_COUNT;
       }
     }
-  } else {
+  }
+  else
+  {
     timeslice *= PIPELINE_COUNT;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
     

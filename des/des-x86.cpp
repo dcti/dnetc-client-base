@@ -66,42 +66,46 @@ static bool Bkey_is_found;
 // ------------------------------------------------------------------
 // in case we find the key
 extern "C" void bryd_key_found (u8 *bytekey);
-void bryd_key_found (u8 *bytekey) {
+void bryd_key_found (u8 *bytekey)
+{
 #ifdef DEBUG
-    printf ("key found!\n");
+  printf ("key found!\n");
 #endif
-    memcpy (key_found, bytekey, 8);
-    key_is_found = true;
-    return;
+  memcpy (key_found, bytekey, 8);
+  key_is_found = true;
+  return;
 }
 
 extern "C" void bbryd_key_found (u8 *bytekey);
-void bbryd_key_found (u8 *bytekey) {
+void bbryd_key_found (u8 *bytekey)
+{
 #ifdef DEBUG
-    printf ("key found!\n");
+  printf ("key found!\n");
 #endif
-    memcpy (Bkey_found, bytekey, 8);
-    Bkey_is_found = true;
-    return;
+  memcpy (Bkey_found, bytekey, 8);
+  Bkey_is_found = true;
+  return;
 }
 
 // ------------------------------------------------------------------
 // Called before keys are tested, and each time 2^16 (65536) keys are tested.
 // (in fact, it depends on the bitmask used...)
 extern "C" int bryd_continue (void);
-int bryd_continue (void) {
+int bryd_continue (void)
+{
 #ifdef DEBUG
-    printf ("bryd_continue_called\n");
+  printf ("bryd_continue_called\n");
 #endif
-    return key_is_found ? 0 : 1;
+  return key_is_found ? 0 : 1;
 }
 
 extern "C" int bbryd_continue (void);
-int bbryd_continue (void) {
+int bbryd_continue (void)
+{
 #ifdef DEBUG
-    printf ("Bbryd_continue_called\n");
+  printf ("Bbryd_continue_called\n");
 #endif
-    return Bkey_is_found ? 0 : 1;
+  return Bkey_is_found ? 0 : 1;
 }
 
 // ------------------------------------------------------------------
@@ -114,195 +118,204 @@ int bbryd_continue (void) {
 
 u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
 {
-    const u8 *bitmask;
-    u8 key[8];
-    u8 plain[8];
-    u8 cypher[8];
-    u8 iv[8] =	{0,0,0,0,0,0,0,0}; // fake IV, plaintext already xor'ed with it
-    u32 i;
+  const u8 *bitmask;
+  u8 key[8];
+  u8 plain[8];
+  u8 cypher[8];
+  u8 iv[8] = {0,0,0,0,0,0,0,0}; // fake IV, plaintext already xor'ed with it
+  u32 i;
 
-      // convert the starting key from incrementable format
-      // to DES format
-    u32 keyhi = rc5unitwork->L0.hi;
-    u32 keylo = rc5unitwork->L0.lo;
-    convert_key_from_inc_to_des (&keyhi, &keylo);
+  // convert the starting key from incrementable format
+  // to DES format
+  u32 keyhi = rc5unitwork->L0.hi;
+  u32 keylo = rc5unitwork->L0.lo;
+  convert_key_from_inc_to_des (&keyhi, &keylo);
 
-      // adjust bitmask
-    bitmask = &(bitmasks[nbbits-8][0]);
+  // adjust bitmask
+  bitmask = &(bitmasks[nbbits-8][0]);
 
-      // convert key, plaintext and cyphertext to bryddes flavor
-    u32 kk = keylo;
-    u32 pp = rc5unitwork->plain.lo;
-    u32 cc = rc5unitwork->cypher.lo;
-    for (i=0; i<8; i++) {
-	key[7-i] = (u8) kk & 0xFF; kk >>= 8;
-	plain[7-i] = (u8) pp & 0xFF; pp >>= 8;
-	cypher[7-i] = (u8) cc & 0xFF; cc >>= 8;
-	if (i == 3) {
-	    kk = keyhi;
-	    pp = rc5unitwork->plain.hi;
-	    cc = rc5unitwork->cypher.hi;
-	}
+  // convert key, plaintext and cyphertext to bryddes flavor
+  u32 kk = keylo;
+  u32 pp = rc5unitwork->plain.lo;
+  u32 cc = rc5unitwork->cypher.lo;
+  for (i=0; i<8; i++)
+  {
+    key[7-i] = (u8) (kk & 0xFF); kk >>= 8;
+    plain[7-i] = (u8) (pp & 0xFF); pp >>= 8;
+    cypher[7-i] = (u8) (cc & 0xFF); cc >>= 8;
+    if (i == 3)
+    {
+      kk = keyhi;
+      pp = rc5unitwork->plain.hi;
+      cc = rc5unitwork->cypher.hi;
     }
-      // key[] is now in 64 bits, DES ordering format
+  }
+  // key[] is now in 64 bits, DES ordering format
 
 #ifdef DEBUG
-    printf (" plain  = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
-	    plain[0],plain[1],plain[2],plain[3],plain[4],plain[5],plain[6],plain[7]);
-    printf (" cypher = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
-	    cypher[0],cypher[1],cypher[2],cypher[3],cypher[4],cypher[5],cypher[6],cypher[7]);
-    printf ("key     = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
-	    key[0],key[1],key[2],key[3],key[4],key[5],key[6],key[7]);
-    printf ("bitmask = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
-	    bitmask[0],bitmask[1],bitmask[2],bitmask[3],bitmask[4],bitmask[5],bitmask[6],bitmask[7]);
+  printf (" plain  = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
+    plain[0],plain[1],plain[2],plain[3],plain[4],plain[5],plain[6],plain[7]);
+  printf (" cypher = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
+    cypher[0],cypher[1],cypher[2],cypher[3],cypher[4],cypher[5],cypher[6],cypher[7]);
+  printf ("key     = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
+    key[0],key[1],key[2],key[3],key[4],key[5],key[6],key[7]);
+  printf ("bitmask = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
+    bitmask[0],bitmask[1],bitmask[2],bitmask[3],bitmask[4],bitmask[5],bitmask[6],bitmask[7]);
 #endif
 
-      // launch bryddes
-    key_is_found = false;
-    int result = bryd_des (plain, cypher, iv, key, bitmask);
+  // launch bryddes
+  key_is_found = false;
+  int result = bryd_des (plain, cypher, iv, key, bitmask);
 
-      // have we found something ?
-    if (result == 0 || key_is_found) {
+  // have we found something ?
+  if (result == 0 || key_is_found)
+  {
+  #ifdef DEBUG
+      printf ("found = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
+        key_found[0],key_found[1],key_found[2],key_found[3],
+        key_found[4],key_found[5],key_found[6],key_found[7]);
+  #endif
 
-#ifdef DEBUG
-	printf ("found = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
-		key_found[0],key_found[1],key_found[2],key_found[3],
-		key_found[4],key_found[5],key_found[6],key_found[7]);
-#endif
-
-	  // have we found the complementary key ?
-	  // we can test key_found[3] or key_found[4]
-	  // but no other bytes
-	if ((u32)key_found[3] == (~keyhi & 0xFF)) {
-	      // report it as beeing on the non-complementary key
-	    *(u32*)(&key_found[0]) = ~(*(u32*)(&key_found[0]));
-	    *(u32*)(&key_found[4]) = ~(*(u32*)(&key_found[4]));
-	}
-
-	  // convert key from 64 bits DES ordering with parity
-	  // to incrementable format (to do arithmetic on it)
-	keyhi =
-	    (key_found[0] << 24) |
-	    (key_found[1] << 16) |
-	    (key_found[2] <<  8) |
-	    (key_found[3]      );
-	keylo =
-	    (key_found[4] << 24) |
-	    (key_found[5] << 16) |
-	    (key_found[6] <<  8) |
-	    (key_found[7]      );
-	convert_key_from_des_to_inc (&keyhi, &keylo);
-	
-#ifdef DEBUG
-	printf ("found = %08X:%08X\n",keyhi, keylo);
-#endif
-	u32 nbkeys = keylo - rc5unitwork->L0.lo;
-	rc5unitwork->L0.lo = keylo;
-	rc5unitwork->L0.hi = keyhi;
-
-	return nbkeys;
-
-    } else {
-	rc5unitwork->L0.lo += 1 << nbbits;
-	return 1 << nbbits;
+    // have we found the complementary key ?
+    // we can test key_found[3] or key_found[4]
+    // but no other bytes
+    if ((u32)key_found[3] == (~keyhi & 0xFF))
+    {
+      // report it as beeing on the non-complementary key
+      *(u32*)(&key_found[0]) = ~(*(u32*)(&key_found[0]));
+      *(u32*)(&key_found[4]) = ~(*(u32*)(&key_found[4]));
     }
+
+    // convert key from 64 bits DES ordering with parity
+    // to incrementable format (to do arithmetic on it)
+    keyhi =
+        (key_found[0] << 24) |
+        (key_found[1] << 16) |
+        (key_found[2] <<  8) |
+        (key_found[3]      );
+    keylo =
+        (key_found[4] << 24) |
+        (key_found[5] << 16) |
+        (key_found[6] <<  8) |
+        (key_found[7]      );
+    convert_key_from_des_to_inc (&keyhi, &keylo);
+
+  #ifdef DEBUG
+    printf ("found = %08X:%08X\n",keyhi, keylo);
+  #endif
+    u32 nbkeys = keylo - rc5unitwork->L0.lo;
+    rc5unitwork->L0.lo = keylo;
+    rc5unitwork->L0.hi = keyhi;
+
+    return nbkeys;
+
+  } else {
+    rc5unitwork->L0.lo += 1 << nbbits;
+    return 1 << nbbits;
+  }
 }
 
-
+// ------------------------------------------------------------------
 
 u32 Bdes_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
 {
-    const u8 *bitmask;
-    u8 key[8];
-    u8 plain[8];
-    u8 cypher[8];
-    u8 iv[8] =	{0,0,0,0,0,0,0,0}; // fake IV, plaintext already xor'ed with it
-    u32 i;
+  const u8 *bitmask;
+  u8 key[8];
+  u8 plain[8];
+  u8 cypher[8];
+  u8 iv[8] = {0,0,0,0,0,0,0,0}; // fake IV, plaintext already xor'ed with it
+  u32 i;
 
-      // convert the starting key from incrementable format
-      // to DES format
-    u32 keyhi = rc5unitwork->L0.hi;
-    u32 keylo = rc5unitwork->L0.lo;
-    convert_key_from_inc_to_des (&keyhi, &keylo);
+  // convert the starting key from incrementable format
+  // to DES format
+  u32 keyhi = rc5unitwork->L0.hi;
+  u32 keylo = rc5unitwork->L0.lo;
+  convert_key_from_inc_to_des (&keyhi, &keylo);
 
-      // adjust bitmask
-    bitmask = &(bitmasks[nbbits-8][0]);
+  // adjust bitmask
+  bitmask = &(bitmasks[nbbits-8][0]);
 
-      // convert key, plaintext and cyphertext to bryddes flavor
-    u32 kk = keylo;
-    u32 pp = rc5unitwork->plain.lo;
-    u32 cc = rc5unitwork->cypher.lo;
-    for (i=0; i<8; i++) {
-	key[7-i] = (u8) kk & 0xFF; kk >>= 8;
-	plain[7-i] = (u8) pp & 0xFF; pp >>= 8;
-	cypher[7-i] = (u8) cc & 0xFF; cc >>= 8;
-	if (i == 3) {
-	    kk = keyhi;
-	    pp = rc5unitwork->plain.hi;
-	    cc = rc5unitwork->cypher.hi;
-	}
+  // convert key, plaintext and cyphertext to bryddes flavor
+  u32 kk = keylo;
+  u32 pp = rc5unitwork->plain.lo;
+  u32 cc = rc5unitwork->cypher.lo;
+  for (i=0; i<8; i++)
+  {
+    key[7-i] = (u8) (kk & 0xFF); kk >>= 8;
+    plain[7-i] = (u8) (pp & 0xFF); pp >>= 8;
+    cypher[7-i] = (u8) (cc & 0xFF); cc >>= 8;
+    if (i == 3)
+    {
+      kk = keyhi;
+      pp = rc5unitwork->plain.hi;
+      cc = rc5unitwork->cypher.hi;
     }
-      // key[] is now in 64 bits, DES ordering format
+  }
+  // key[] is now in 64 bits, DES ordering format
 
 #ifdef DEBUG
-    printf (" plain  = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
-	    plain[0],plain[1],plain[2],plain[3],plain[4],plain[5],plain[6],plain[7]);
-    printf (" cypher = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
-	    cypher[0],cypher[1],cypher[2],cypher[3],cypher[4],cypher[5],cypher[6],cypher[7]);
-    printf ("key     = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
-	    key[0],key[1],key[2],key[3],key[4],key[5],key[6],key[7]);
-    printf ("bitmask = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
-	    bitmask[0],bitmask[1],bitmask[2],bitmask[3],bitmask[4],bitmask[5],bitmask[6],bitmask[7]);
+  printf (" plain  = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
+    plain[0],plain[1],plain[2],plain[3],plain[4],plain[5],plain[6],plain[7]);
+  printf (" cypher = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
+    cypher[0],cypher[1],cypher[2],cypher[3],cypher[4],cypher[5],cypher[6],cypher[7]);
+  printf ("key     = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
+    key[0],key[1],key[2],key[3],key[4],key[5],key[6],key[7]);
+  printf ("bitmask = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
+    bitmask[0],bitmask[1],bitmask[2],bitmask[3],bitmask[4],bitmask[5],bitmask[6],bitmask[7]);
 #endif
 
-      // launch bryddes
-    Bkey_is_found = false;
-    int result = bbryd_des (plain, cypher, iv, key, bitmask);
+  // launch bryddes
+  Bkey_is_found = false;
+  int result = bbryd_des (plain, cypher, iv, key, bitmask);
 
-      // have we found something ?
-    if (result == 0 || Bkey_is_found) {
+  // have we found something ?
+  if (result == 0 || Bkey_is_found)
+  {
 
-#ifdef DEBUG
-	printf ("found = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
-		Bkey_found[0],Bkey_found[1],Bkey_found[2],Bkey_found[3],
-		Bkey_found[4],Bkey_found[5],Bkey_found[6],Bkey_found[7]);
-#endif
+  #ifdef DEBUG
+    printf ("found = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
+      Bkey_found[0],Bkey_found[1],Bkey_found[2],Bkey_found[3],
+      Bkey_found[4],Bkey_found[5],Bkey_found[6],Bkey_found[7]);
+  #endif
 
-	  // have we found the complementary key ?
-	  // we can test key_found[3] or key_found[4]
-	  // but no other bytes
-	if ((u32)Bkey_found[3] == (~keyhi & 0xFF)) {
-	      // report it as beeing on the non-complementary key
-	    *(u32*)(&Bkey_found[0]) = ~(*(u32*)(&Bkey_found[0]));
-	    *(u32*)(&Bkey_found[4]) = ~(*(u32*)(&Bkey_found[4]));
-	}
-
-	  // convert key from 64 bits DES ordering with parity
-	  // to incrementable format (to do arithmetic on it)
-	keyhi =
-	    (Bkey_found[0] << 24) |
-	    (Bkey_found[1] << 16) |
-	    (Bkey_found[2] <<  8) |
-	    (Bkey_found[3]      );
-	keylo =
-	    (Bkey_found[4] << 24) |
-	    (Bkey_found[5] << 16) |
-	    (Bkey_found[6] <<  8) |
-	    (Bkey_found[7]      );
-	convert_key_from_des_to_inc (&keyhi, &keylo);
-	
-#ifdef DEBUG
-	printf ("found = %08X:%08X\n",keyhi, keylo);
-#endif
-	u32 nbkeys = keylo - rc5unitwork->L0.lo;
-	rc5unitwork->L0.lo = keylo;
-	rc5unitwork->L0.hi = keyhi;
-
-	return nbkeys;
-
-    } else {
-	rc5unitwork->L0.lo += 1 << nbbits;
-	return 1 << nbbits;
+    // have we found the complementary key ?
+    // we can test key_found[3] or key_found[4]
+    // but no other bytes
+    if ((u32)Bkey_found[3] == (~keyhi & 0xFF))
+    {
+      // report it as beeing on the non-complementary key
+      *(u32*)(&Bkey_found[0]) = ~(*(u32*)(&Bkey_found[0]));
+      *(u32*)(&Bkey_found[4]) = ~(*(u32*)(&Bkey_found[4]));
     }
+
+    // convert key from 64 bits DES ordering with parity
+    // to incrementable format (to do arithmetic on it)
+    keyhi =
+      (Bkey_found[0] << 24) |
+      (Bkey_found[1] << 16) |
+      (Bkey_found[2] <<  8) |
+      (Bkey_found[3]      );
+    keylo =
+      (Bkey_found[4] << 24) |
+      (Bkey_found[5] << 16) |
+      (Bkey_found[6] <<  8) |
+      (Bkey_found[7]      );
+    convert_key_from_des_to_inc (&keyhi, &keylo);
+
+  #ifdef DEBUG
+    printf ("found = %08X:%08X\n",keyhi, keylo);
+  #endif
+    u32 nbkeys = keylo - rc5unitwork->L0.lo;
+    rc5unitwork->L0.lo = keylo;
+    rc5unitwork->L0.hi = keyhi;
+
+    return nbkeys;
+
+  } else {
+    rc5unitwork->L0.lo += 1 << nbbits;
+    return 1 << nbbits;
+  }
 }
+
+// ------------------------------------------------------------------
 

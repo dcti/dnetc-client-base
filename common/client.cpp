@@ -273,7 +273,6 @@ s32 Client::Fetch( u8 contest, Network *netin )
   s32 retry;
   u32 thisrandomprefix;
   u8 tmpcontest;
-  u32 detect;
 
   if (offlinemode
 #if (CLIENT_OS == OS_NETWARE)
@@ -1050,8 +1049,6 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
 
 u32 Client::Benchmark( u8 contest, u32 numk )
 {
-  struct timeval stop;
-  double lenlo,lenhi,len;
   u32 numkeys = 10000000L;
   u32 percent2;
 
@@ -1085,6 +1082,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
 
 #ifndef NEW_STATS_AND_LOGMSG_STUFF  //this is not req'd anyway because ::Run() will do it
   struct timezone dummy;
+  struct timeval stop;
   gettimeofday( &stop, &dummy );
   (problem[0]).timehi = stop.tv_sec;
   (problem[0]).timelo = stop.tv_usec;
@@ -1118,10 +1116,11 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   LogScreenf("\nCompleted %s\n", CliGetSummaryStringForContest( contest-1 ) );
   return rate;
 #else //old_timing here
-  lenhi = (double) ((problem[0]).timehi);
-  lenlo = (double) ((problem[0]).timelo);
+  double lenhi = (double) ((problem[0]).timehi);
+  double lenlo = (double) ((problem[0]).timelo);
   if ( gettimeofday( &stop, &dummy ) < 0 ) return( 0 );
-  len = max(.01, ((double)stop.tv_sec - lenhi) + ((double)stop.tv_usec - lenlo)/1000000.0 );
+  double len = max(.01, ((double)stop.tv_sec - lenhi) + \
+      ((double)stop.tv_usec - lenlo)/1000000.0 );
 
   // DES cores *might* check more keys than asked
   // for small benchmarks it could be problematic
@@ -1604,8 +1603,8 @@ PreferredIsDone1:
       if (fileentry.contest != 1) 
         fileentry.contest=0;
 
-          // If this is a partial DES block, and completed by a different cpu/os/build, then
-          // reset the keysdone to 0...
+      // If this is a partial DES block, and completed by a different cpu/os/build, then
+      // reset the keysdone to 0...
       if (fileentry.contest == 1) 
       {
         if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) ) 
@@ -1648,11 +1647,11 @@ PreferredIsDone1:
             if (have_loaded_buffers[tmpcontest]) //load any of this type?
             {
               Log( "[%s] %d %s Blocks remain in file %s\n", CliGetTimeString(NULL,1), 
-                CountBufferInput(tmpcontest), 
+                CountBufferInput((u8) tmpcontest), 
                 CliGetContestNameFromID(tmpcontest),
                 (nodiskbuffers? "(memory-in)":in_buffer_file[tmpcontest]));
               Log( " %s  %d %s Blocks are in file %s\n", CliGetTimeString(NULL,0), 
-                CountBufferOutput(tmpcontest), 
+                CountBufferOutput((u8) tmpcontest), 
                 CliGetContestNameFromID(tmpcontest),
                 (nodiskbuffers? "(memory-out)":out_buffer_file[tmpcontest]) );
             }
@@ -2017,7 +2016,7 @@ PreferredIsDone1:
       // Did any threads finish a block???
       if ((problem[cpu_i]).finished == 1)
       {
-        tmpcontest = (problem[cpu_i]).GetResult( &rc5result );
+        (problem[cpu_i]).GetResult( &rc5result );
 
         //-----------------
         //only do something if RESULT_FOUND or RESULT_NOTHING
@@ -2913,12 +2912,13 @@ int main( int argc, char *argv[] )
       NetworkInitialize();
       client.ValidateConfig();
 
+      int retcode2;
       if ( strcmp( argv[i], "-fetch" ) == 0 ) {
-        retcode = client.Fetch(0); // RC5 Fetch
+        retcode2 = client.Fetch(0); // RC5 Fetch
       } else {
-        retcode = client.ForceFetch(0); // RC5 Fetch
+        retcode2 = client.ForceFetch(0); // RC5 Fetch
       }
-      if (client.contestdone[0]) retcode=0;
+      if (client.contestdone[0]) retcode2 = 0;
       if (client.randomchanged) client.WriteConfig();
 
       if ( strcmp( argv[i], "-fetch" ) == 0 ) {
@@ -2928,62 +2928,78 @@ int main( int argc, char *argv[] )
       }
       if (client.contestdone[1]) retcode=1;
 
-      client.mailmessage.quietmode=client.quietmode;
+      client.mailmessage.quietmode = client.quietmode;
       client.mailmessage.checktosend(1);
       NetworkDeinitialize();
-      if (retcode < 0 )
+      if (retcode < 0 || retcode2 < 0)
+      {
         client.LogScreen( "\nAn error occured trying to fetch.  Please try again later\n" );
+        if (retcode2 < retcode) retcode = retcode2;
+        //retcode = retcode; //and break out of loop
+      }
       else
         client.LogScreen( "Fetch completed.\n" );
-      //retcode = retcode; //and break out of loop
     }
     else if (( strcmp( argv[i], "-flush" ) == 0 ) || ( strcmp( argv[i], "-forceflush" ) == 0 ))
     {
-      client.offlinemode=0;
+      client.offlinemode = 0;
       NetworkInitialize();
       client.ValidateConfig();
 
+      int retcode2;
       if ( strcmp( argv[i], "-flush" ) == 0 ) {
-        retcode = client.Flush(0); // RC5 Flush
+        retcode2 = client.Flush(0); // RC5 Flush
       } else {
-        retcode = client.ForceFlush(0); // RC5 Flush
+        retcode2 = client.ForceFlush(0); // RC5 Flush
       }
-      if (client.contestdone[0]) retcode=0;
+      if (client.contestdone[0]) retcode2 = 0;
 
       if ( strcmp( argv[i], "-flush" ) == 0 ) {
         retcode = client.Flush(1); // DES Flush
       } else {
         retcode = client.ForceFlush(1); // DES Flush
       }
-      if (client.contestdone[1]) retcode=0;
+      if (client.contestdone[1]) retcode = 0;
 
       client.mailmessage.quietmode=client.quietmode;
       client.mailmessage.checktosend(1);
       NetworkDeinitialize();
-      if (retcode < 0 )
+      if (retcode < 0 || retcode2 < 0)
+      {
         client.LogScreen( "\nAn error occured trying to flush the files out.\n"
                 "Please try again later\n" );
+        if (retcode2 < retcode) retcode = retcode2;
+        //retcode = retcode; //and break out of loop
+      }
       else
         client.LogScreen( "Flush completed.\n" );
 
-      //retcode = retcode; //and break out of loop
     }
     else if ( strcmp( argv[i], "-update" ) == 0 )
     {
-      client.offlinemode=0;
+      client.offlinemode = 0;
       NetworkInitialize();
       client.ValidateConfig();
-      retcode = client.Update(1 ,1,1); // RC5 We care about both the fetch & flush errors.
+      
+      // RC5 We care about both the fetch & flush errors.
+      int retcode2 = client.Update(1,1,1);
       if (client.randomchanged) client.WriteConfig();
-      retcode = client.Update(0 ,1,1); // DES We care about both the fetch & flush errors.
-      client.mailmessage.quietmode=client.quietmode;
+
+      // DES We care about both the fetch & flush errors.
+      retcode = client.Update(0,1,1);
+      
+      client.mailmessage.quietmode = client.quietmode;
       client.mailmessage.checktosend(1);
       NetworkDeinitialize();
-      if (retcode < 0)
+      
+      if (retcode < 0 || retcode2 < 0)
+      {
         client.LogScreen( "\nAn error occured during the update.\n" );
+        if (retcode2 < retcode) retcode = retcode2;
+        //retcode = retcode; //and break out of loop
+      }
       else
         client.LogScreen( "Update completed.\n" );
-      //retcode = retcode; //and break out of loop
     }
     else if ( strcmp( argv[i], "-config" ) == 0 )
     {
