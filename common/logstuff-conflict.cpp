@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.7  1998/09/07 18:10:34  blast
+// Changed a typo and added AMIGAOS to list of OS'es without ftruncate().
+//
 // Revision 1.6  1998/09/06 02:01:28  cyp
 // Added isstable check to LogFlush() to suppress an unneccesary linefeed.
 //
@@ -32,7 +35,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.6 1998/09/06 02:01:28 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.7 1998/09/07 18:10:34 blast Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -70,7 +73,7 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.6 1998/09/06 02:01:28 cyp Exp $"; }
      CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
      CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN32S )
   #define ftruncate( fd, sz )  chsize( fd, sz )
-#elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_RISCOS || CLIENT_OS == OS_RISCOS)
+#elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_RISCOS || CLIENT_OS == OS_AMIGAOS)
   #define ftruncate( fd, sz ) //nada, not supported
   #define FTRUNCATE_NOT_SUPPORTED
 #endif  
@@ -268,7 +271,7 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
             next_top += msglen;
             filelen += msglen;
             }
-          ftruncate( fileno( logstream ), filelen );
+          ftruncate( fileno( logstream ), filelen ); // We don't have ftruncate()
           }
         fclose( logstream );
         }
