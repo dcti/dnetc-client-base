@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.57 2001/04/14 14:24:47 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.58 2002/03/25 00:31:09 sampo Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -309,6 +309,9 @@
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
+  typedef unsigned long long uint64_t;
+  typedef unsigned int uint32_t;
+  typedef long long int64_t;
   #define CLIENT_OS_NAME  "HP/UX"
   #define CLIENT_OS       OS_HPUX
   #if defined(__hppa) || defined(__hppa__) || defined(ASM_HPPA)
