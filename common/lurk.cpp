@@ -14,6 +14,10 @@
 
 */
 // $Log: lurk.cpp,v $
+// Revision 1.34  1999/03/05 21:39:33  patrick
+//
+// added define for SIOSTATAT, defined solcose to be close for OS2-EMX target
+//
 // Revision 1.33  1999/02/14 02:48:58  silby
 // Switch back to old win32 naming convention for RAS procs.
 //
@@ -109,7 +113,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.33 1999/02/14 02:48:58 silby Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.34 1999/03/05 21:39:33 patrick Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -224,6 +228,8 @@ static HRASCONN hRasDialConnHandle = NULL; /* conn we opened with RasDial */
 #if defined(__EMX__)
 #include <sys/process.h>
 #include <sys/types.h>
+#define MAXSOCKETS 2048
+#define soclose(s) close(s)     //handled by EMX
 #else //IBM distributed OS/2 developers toolkit
 #include <process.h>
 #include <types.h>  
@@ -237,6 +243,7 @@ extern "C" {
 
 #ifndef SIOSTATIF
 #define SIOSTATIF  _IOR('n', 48, struct ifmib)
+#define SIOSTATAT  _IOR('n', 49, struct ifmib)
 #endif
 #ifndef ULONG
   typedef unsigned long ULONG;
