@@ -7,7 +7,7 @@
 */
 
 const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.1.2.5 2001/05/14 15:24:38 cyp Exp $"; }
+return "@(#)$Id: w32ss.cpp,v 1.1.2.6 2001/05/14 16:23:28 cyp Exp $"; }
 
 #include "cputypes.h"
 #define INCLUDE_COMMDLG_H
@@ -505,23 +505,6 @@ static int SSGetFileData(const char *filename, int *verp, int *isguip,
 
 /* ---------------------------------------------------- */
 
-static UINT SSRunMessageLoop(void)
-{
-  UINT rc = 0; MSG msg;
-  while (PeekMessage(&msg, NULL, 0, 0, (/*PM_NOYIELD|*/PM_NOREMOVE)))
-  {
-    GetMessage(&msg,NULL,0,0);
-    rc = msg.message; 
-    if (msg.message == WM_QUIT)
-      break;
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
-  }
-  return rc;
-}
-
-/* ---------------------------------------------------- */
-
 struct w16ProcessTrack { HINSTANCE hInst; HMODULE hModule; };
 
 #if (CLIENT_OS == OS_WIN32)
@@ -939,9 +922,26 @@ static int SSVerifyFileExists( const char *filename )
 /* ---------------------------------------------------- */
 
 #if 1
-static int SSSetiControl(const char *) { return 0 };
+static int SSSetiControl(const char *) { return 0; }
 /* thankfully no longer necessary (sez bug 2195) */
 #else
+static UINT SSRunMessageLoop(void)
+{
+  UINT rc = 0; MSG msg;
+  while (PeekMessage(&msg, NULL, 0, 0, (/*PM_NOYIELD|*/PM_NOREMOVE)))
+  {
+    GetMessage(&msg,NULL,0,0);
+    rc = msg.message; 
+    if (msg.message == WM_QUIT)
+      break;
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+  }
+  return rc;
+}
+
+/* ---------------------------------------------------- */
+
 static int SSSetiControl(const char *ssname) 
 { 
   /* I wish, oh, I wish this wasn't needed.
