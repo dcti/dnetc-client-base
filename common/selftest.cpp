@@ -3,8 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.38  1999/01/09 08:53:15  remi
+// Fixed my comment's formating.
+//
 // Revision 1.37  1999/01/08 10:05:42  chrisb
-// Added 'threadindex' parameter (defaults to -1L, as with Problem::Problem) to SelfTest(). Allows RISC OS to self test the x86 core.
+// Added 'threadindex' parameter (defaults to -1L, as with
+// Problem::Problem) to SelfTest(). Allows RISC OS to self test the
+// x86 core.
 //
 // Revision 1.36  1999/01/01 02:45:16  cramer
 // Part 1 of 1999 Copyright updates...
@@ -26,7 +31,8 @@
 // Version fun.
 //
 // Revision 1.3  1998/10/20 07:24:08  silby
-// Change an unsigned int to an int so that a type conversion was not necessary on the return.
+// Change an unsigned int to an int so that a type conversion was not
+// necessary on the return.
 //
 // Revision 1.2  1998/10/11 00:45:31  cyp
 // SelfTest() is now standalone. Modified to use the same contest numbering
@@ -39,7 +45,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.37 1999/01/08 10:05:42 chrisb Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.38 1999/01/09 08:53:15 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -206,8 +212,8 @@ int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to 
 
 /*  if test case N fails, then key & K insn't properly incremented when key & W wrap :
 
-    N   K     W
-           (hi:lo)         (hi:lo)
+    N         K                 W
+           (hi:lo)           (hi:lo)
 
     2 00000000:00FF0000 00000000:0000FFFF
     3 00000000:FF000000 00000000:00FF0000
@@ -217,22 +223,22 @@ int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to 
     7 FF000000:00000000 00FF0000:00000000
 
   another way of explaining this algorithm :
-                 __
+                                         __
     2 the solution is :       7602EDDB:C3A303DB
       we're starting from :   7602EDDB:C3A20000
-               __
+                                       __
     3 the solution is :       59DA3369:8A00EAE3
       we're starting from :   59DA3369:89FF0000
-                  __
+                                    __
     4 the solution is :       A2098FD6:0000348F
       we're starting from :   A2098FD5:FFFF0000
-                __
+                                  __
     5 the solution is :       28A00B00:0000E77F
       we're starting from :   28A00AFF:FFFF0000
-              __
+                                __
     6 the solution is :       47FC0000:000076B5
       we're starting from :   47FBFFFF:FFFF0000
-            __
+                              __
     7 the solution is :       AE000000:0000ECBB
       we're starting from :   ADFFFFFF:FFFF0000
 
