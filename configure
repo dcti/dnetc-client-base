@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.178  1999/01/27 20:13:16  patrick
+#
+# added lurk code to os2-emx
+#
 # Revision 1.177  1999/01/26 17:50:05  dbaker
 # changes for freebsd4 to allow smp threads or whatever
 #
@@ -1956,12 +1960,12 @@ case "$1" in
         }
 	TARGET_AS="gcc -c"
         TARGET_CC="gcc"
-	TARGET_CCFLAGS="-Zmts -pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -D__showids__"
-	TARGET_LDFLAGS="-Zmts"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
+	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -D__showids__"
+	TARGET_LDFLAGS="-Zmt"
+	TARGET_ADDSRCS="common/lurk.cpp rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm $NASM_DESMMX_SRCS"
-        TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -f aout"
+        TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -d__showids__ -f aout "
         TARGET_LIBS="-lsocket"
         TARGET_OS=OS2
         ;;
