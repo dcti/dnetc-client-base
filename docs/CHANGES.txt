@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.108 2002/03/29 14:24:15 mfeiri Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.109 2002/03/29 23:38:34 zebe Exp $
 ==========================================================================
 
 2.8000
@@ -29,20 +29,20 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.108 2002/03/29 14:24:15 mfeiri Exp 
 
 2.8017.471  new: x86: P4 RC5 core (ak-p7)
             new: x86: Athlon RC5 core (re-pair III)
-            imp: sparc: improved OGR core. (#2480)
-            fix: macosx: leak in battery checking code on OS X. (#2465)
-            fix: all: client ignores "--" on command line by itself. (#2474)
-            imp: x86: better intel and amd chip identification. (#2448, #2424)
-            fix: ppc: linux kernel cpu string additions. (#2407)
+            imp: x86: better intel and AMD chip identification. (#2448, #2424)
             fix: x86: Win2K, WinXP: disabled crashing RC5 SMC core. (#2399)
-            fix: hpux: threading, timing fixes (#2371)
-            new: macosx: platform-specific read me for OS X (#2580)
-            fix: fbsd: Client doesn't respond to SIG(INT/TERM) occasionally (#1985)
+            imp: sparc: improved OGR core. (#2480)
+            fix: all: client ignores "--" on command line by itself. (#2474)
             fix: all: Errors in generated man page (#2451)
             new: all: configurable frequent update failure retry interval.
+            fix: hpux: threading, timing fixes (#2371)
+            fix: fbsd: occasionally not responding to SIG(INT/TERM) (#1985)
             fix: linux: no alpha SMP support (#2142)
             new: alpha: OGR core for processors supporting the CIX extension.
-            new: macosx: now supports -[un]install for /Libary/StartupItems/
+            fix: ppc: linux kernel cpu string additions. (#2407)
+            new: macosx: platform-specific read me doc (#2580)
+            new: macosx: now supports -[un]install for /Library/StartupItems/
+            fix: macosx: mem leaks in pause-if-on-battery code. (#2465)
 
 2.8016.470  new: ppc: new AltiVec RC5 core for the PPC 7450 by Dan Oetting.
             fix: all: flushed when 1 packet was left in in-buffer (#2209).
@@ -231,7 +231,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.108 2002/03/29 14:24:15 mfeiri Exp 
             fix: all: will now flush to a proxy/server that is empty.
             fix: all: setting clock back during network ops could hang.
             fix: all: block counts during fetching do not fluctuate anymore.
-            fix: FreeBsd: timezone use for automatic keyserver pick works.
+            fix: fbsd: timezone use for automatic keyserver pick works.
             chg: many: file system locking on buffers where supported.
 
 2.8007.458  fix: all: the annoying OGR 1 node bug finally fixed
