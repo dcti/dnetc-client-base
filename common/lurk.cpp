@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.61.4.3 2003/04/03 21:56:24 oliver Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.61.4.4 2003/05/11 07:59:03 pfeffi Exp $"; }
 
 //#define TRACE
 
@@ -1429,18 +1429,31 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
            #else
            if (((ifr->ifr_flags & (IFF_UP | IFF_POINTOPOINT))            == (IFF_UP | IFF_POINTOPOINT)) || \
                ((ifr->ifr_flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK)) ==     (IFF_UP | IFF_RUNNING)))
-           #endif
            {
-             foundif = (n / sizeof(struct ifreq)) + 1;
+             /* when using "slattach" or "Dial Other Internet Providers" IFF_UP is already set while dialing,
+                so we need more tests. address family seems to be a good choice, it is set to AF_INET only
+                while connected. */
+             ioctl (fd, SIOCGIFADDR, ifr); // get address
+             if (ifr->ifr_addr.sa_family == AF_INET)
+           #endif
+             {
+               foundif = (n / sizeof(struct ifreq)) + 1;
+               #ifdef LURK_MULTIDEV_TRACK
+               if (__insdel_devname(devname,1,lurker.conndevices,sizeof(lurker.conndevices))!=0)
+                 break; /* table is full */
+               #else
+               strncpy( lurker.conndevice, devname, sizeof(lurker.conndevice) );
+               lurker.conndevice[sizeof(lurker.conndevice)-1]=0;
+               break;
+               #endif
+             }
+           #ifdef __EMX__
              #ifdef LURK_MULTIDEV_TRACK
-             if (__insdel_devname(devname,1,lurker.conndevices,sizeof(lurker.conndevices))!=0)
-               break; /* table is full */
-             #else
-             strncpy( lurker.conndevice, devname, sizeof(lurker.conndevice) );
-             lurker.conndevice[sizeof(lurker.conndevice)-1]=0;
-             break;
+             else
+               __insdel_devname(devname,0,lurker.conndevices,sizeof(lurker.conndevices));
              #endif
-           }  
+           } /* AF_INET */
+           #endif
            #ifdef LURK_MULTIDEV_TRACK
            else
              __insdel_devname(devname,0,lurker.conndevices,sizeof(lurker.conndevices));
