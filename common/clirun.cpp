@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.95 1999/04/26 01:17:18 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.96 1999/05/01 00:06:31 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -914,8 +914,8 @@ int Client::Run( void )
   unsigned int load_problem_count = 0;
   unsigned int getbuff_errs = 0;
 
-  time_t timeNow;
-  time_t timeRun=0, timeLast=0, timeNextConnect=0, timeNextCheckpoint = 0;
+  time_t timeNow,timeRun=0,timeLast=0; /* Last is also our "firstloop" flag */
+  time_t timeNextConnect=0, timeNextCheckpoint = 0;
 
   time_t last_scheduledupdatetime = 0; /* we reset the next two vars on != */
   //unsigned int flush_scheduled_count = 0; /* used for exponential staging */
@@ -924,7 +924,8 @@ int Client::Run( void )
 
   int checkpointsDisabled = (nodiskbuffers != 0);
   unsigned int checkpointsPercent = 0;
-  int isPaused=0, wasPaused=0;
+  int dontSleep=0, isPaused=0, wasPaused=0;
+  
 
   ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0 );
 
@@ -939,19 +940,20 @@ int Client::Run( void )
   // Initialization: (order is important, 'F' denotes code that can fail)
   // 1.    UndoCheckpoint() (it is not affected by TimeToQuit)
   // 2.    Determine number of problems
-  // 3. F  Load (or try to load) that many problems (needs number of problems)
-  // 4. F  Initialize polling process (needed by threads)
-  // 5. F  Spin up threads
-  // 6.    Unload over-loaded problems (problems for which we have no worker)
-  // 7.    Initialize percent bar (needs final problem table size)
+  // 3. F  Create problem table (InitializeProblemManager())
+  // 4. F  Load (or try to load) that many problems (needs number of problems)
+  // 5. F  Initialize polling process (needed by threads)
+  // 6. F  Spin up threads
+  // 7.    Unload over-loaded problems (problems for which we have no worker)
   //
   // Run...
   //
   // Deinitialization:
-  // 8. Shut down threads
-  // 9. Deinitialize polling process
-  // 10. Unload problems
-  // 11. Throw away checkpoints
+  // 8.    Shut down threads
+  // 9.    Deinitialize polling process
+  // 10.   Unload problems
+  // 11.   Deinitialize problem table
+  // 12.   Throw away checkpoints
   // =======================================
 
   // --------------------------------------
@@ -1150,14 +1152,6 @@ int Client::Run( void )
     }
   }
 
-  //------------------------------------
-  // display the percent bar so the user sees some action
-  //------------------------------------
-
-  if (!TimeToQuit && !percentprintingoff)
-  {
-    LogScreenPercent( load_problem_count ); //logstuff.cpp
-  }
 
   //============================= MAIN LOOP =====================
   //now begin looping until we have a reason to quit
@@ -1173,6 +1167,9 @@ int Client::Run( void )
   //             truely exhausted.  The magic below is there to let
   //             the client finish processing those blocks before exiting.
 
+  dontSleep = 1; // don't sleep in the first loop 
+                 // (do percbar, connectoften, checkpt first)
+
   // Start of MAIN LOOP
   while (TimeToQuit == 0)
   {
@@ -1180,19 +1177,24 @@ int Client::Run( void )
     //sleep, run or pause...
     //------------------------------------
 
-    SetGlobalPriority( priority );
-    if (isPaused)
-      sleep(3);
+    if (dontSleep)
+      dontSleep = 0; //for the next round
     else
-    {
-      int i = 0;
-      while ((i++)<5
-            && !runstatics.refillneeded
-            && !CheckExitRequestTriggerNoIO()
-            && ModeReqIsSet(-1)==0)
-        sleep(1);
+    {             
+      SetGlobalPriority( priority );
+      if (isPaused)
+        sleep(3);
+      else
+      {
+        int i = 0;
+        while ((i++)<5
+              && !runstatics.refillneeded
+              && !CheckExitRequestTriggerNoIO()
+              && ModeReqIsSet(-1)==0)
+          sleep(1);
+      }
+      SetGlobalPriority( 9 );
     }
-    SetGlobalPriority( 9 );
 
     //------------------------------------
     // Fixup timers
@@ -1207,7 +1209,7 @@ int Client::Run( void )
     // Check for time limit...
     //----------------------------------------
 
-    if ( !TimeToQuit && (minutes > 0) && (timeRun > (time_t)( minutes*60 )))
+    if ( !TimeToQuit && (minutes > 0) && (timeRun >= (time_t)( minutes*60 )))
     {
       Log( "Shutdown - reached time limit.\n" );
       TimeToQuit = 1;
@@ -1340,7 +1342,7 @@ int Client::Run( void )
 
     if (!TimeToQuit && !checkpointsDisabled && !CheckPauseRequestTrigger())
     {
-      if (timeRun > timeNextCheckpoint)
+      if (timeRun >= timeNextCheckpoint)
       {
         unsigned long perc_now = 0;
         unsigned int probs_counted = 0;
@@ -1379,8 +1381,8 @@ int Client::Run( void )
     {
       connectoften = 0;
       local_connectoften = (!TimeToQuit && 
-      !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) &&
-      dialup.CheckIfConnectRequested());
+                            !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) &&
+                            dialup.CheckIfConnectRequested());
     }
     #endif
 
@@ -1388,33 +1390,36 @@ int Client::Run( void )
     //handle 'connectoften' requests
     //------------------------------------
 
-    if (!TimeToQuit && local_connectoften && timeRun > timeNextConnect)
+    if (!TimeToQuit && local_connectoften && timeRun >= timeNextConnect)
     {
       int doupd = 1;
       if (timeNextConnect != 0)
       {
-        int i;
+        int i, have_non_empty = 0, have_one_full = 0;
         for (i = 0; i < CONTEST_COUNT; i++ )
         {
           unsigned cont_i = (unsigned int)loadorder_map[i];
           if (cont_i < CONTEST_COUNT) /* not disabled */
           {
             if (GetBufferCount( cont_i, 1, NULL ) > 0) 
-              break;  /* at least one out-buffer is not empty */
-            if (GetBufferCount( cont_i, 0, NULL ) >= 
-               ((long)(inthreshold[cont_i]))) /*at least one in-buffer is full*/
-            { 
-              doupd = 0;
+            {
+              have_non_empty = 1; /* at least one out-buffer is not empty */
               break;
+            }
+            if (GetBufferCount( cont_i, 0, NULL ) >= 
+               ((long)(inthreshold[cont_i]))) 
+            {         
+              have_one_full = 1; /* at least one in-buffer is full */
             }
           }
         }
+        doupd = (have_non_empty || !have_one_full);
       }
       if ( doupd )
       {
         ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
       }
-      timeNextConnect = timeRun + 60;
+      timeNextConnect = timeRun + 30;
     }
 
     //----------------------------------------
@@ -1428,6 +1433,7 @@ int Client::Run( void )
       //not the case, then benchmarks are going to return wrong results.
       //The messy way around that is to suspend the threads.
       ModeReqRun(this);
+      dontSleep = 1; //go quickly through the loop
     }
   }  // End of MAIN LOOP
 
