@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.26 2001/01/11 14:38:22 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.27 2001/01/12 12:12:55 andreasb Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -2208,7 +2208,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
     return CORE_E_FORMAT;
   }
 
-  oState->max = OGR[oState->maxdepth-1];
+  oState->max = OGR[oState->maxdepthm1];
 
   /* Note, marks are labled 0, 1...  so mark @ depth=1 is 2nd mark */
   oState->half_depth2 = oState->half_depth = ((oState->maxdepth+1) >> 1) - 1;
@@ -2241,6 +2241,13 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
     if (n > STUB_MAX) {
       return CORE_E_FORMAT;
     }
+
+    /* // level 0 - already done by memset
+    lev = &oState->Levels[0];
+    lev->cnt1 = lev->cnt2 = oState->marks[0] = 0;
+    lev->limit = lev->maxlimit = 0;
+    */
+    
     lev = &oState->Levels[1];
     for (i = 0; i < n; i++) {
       int limit;
@@ -2257,9 +2264,16 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
       }
       lev->limit = limit;
       register int s = workstub->stub.diffs[i];
+      
+      if (s <= (32*5))
+        if (lev->dist[(s-1)>>5] & BITOFLIST(s))
+          return CORE_E_STUB;
+
       //dump(oState->depth, lev, 0);
       oState->marks[i+1] = oState->marks[i] + s;
-      lev->cnt2 += s;
+      if ((lev->cnt2 += s) > limit)
+        return CORE_E_STUB;
+
       register int t = s;
       while (t >= 32) {
         COMP_LEFT_LIST_RIGHT_32(lev);
@@ -2284,8 +2298,8 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
   {
     int i, n;
     struct Level *lev = &oState->Levels[0];
-   SETUP_TOP_STATE(oState,lev);
-   lev++;
+    SETUP_TOP_STATE(oState,lev);
+    lev++;
     n = workstub->worklength;
 
     if (n < workstub->stub.length) {

@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.h,v 1.1.2.7 2001/01/11 14:25:25 cyp Exp $
+ * $Id: ogr.h,v 1.1.2.8 2001/01/12 12:12:55 andreasb Exp $
 */
 #ifndef __OGR_H__
 #define __OGR_H__ 
@@ -36,6 +36,7 @@
 #define CORE_E_IO       (-2)
 #define CORE_E_FORMAT   (-3)
 #define CORE_E_STOPPED  (-4)
+#define CORE_E_STUB     (-5)
 
 #ifndef MIPSpro
 #pragma pack(1)
@@ -90,7 +91,7 @@ typedef struct {
    */
   int (*destroy)(void *state);
 
-#if 0
+#if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
   /*
    * Return the number of bytes needed to serialize this state.
    */
@@ -184,7 +185,7 @@ struct State {
   int marks[MAXDEPTH+1];          /* current length */
   int startdepth;
   int depth;
-  int limit;
+//  int limit; // unused
   #ifdef OGR_DEBUG
     int LOGGING;
   #endif
