@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.68  1999/01/11 20:53:18  patrick
+// AIX uses NonPolledUSleep
+//
 // Revision 1.67  1999/01/11 05:45:10  pct
 // Ultrix modifications for updated client.
 //
@@ -260,7 +263,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.67 1999/01/11 05:45:10 pct Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.68 1999/01/11 20:53:18 patrick Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -473,8 +476,11 @@ static void yield_pump( void *tv_p )
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_QNX)
     NonPolledUSleep( 0 ); /* yield */
+  #elif (CLIENT_OS == OS_AIX) // maybe all pthread systems ?
+    NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_ULTRIX)
     NonPolledUSleep( 0 ); /* yield */
+>>>>>>> 1.67
   #else
     #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */
