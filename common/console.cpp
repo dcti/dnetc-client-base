@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.75.2.3 2003/06/08 09:06:19 pfeffi Exp $"; }
+return "@(#)$Id: console.cpp,v 1.75.2.4 2003/06/11 11:29:56 pfeffi Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -41,9 +41,8 @@ return "@(#)$Id: console.cpp,v 1.75.2.3 2003/06/08 09:06:19 pfeffi Exp $"; }
   || (CLIENT_OS==OS_DYNIX)) || (CLIENT_OS == OS_PS2LINUX)
 #include <termios.h>
 #define HAVE_TERMIOS
-#endif
-#if (CLIENT_OS == OS_SCO)
-#define _SVID3
+#elif (CLIENT_OS == OS_SCO)
+#define _SVID3 /* need it for ECHOPRT and ECHOCTL */
 #include <termios.h>
 #define HAVE_TERMIOS
 #endif
