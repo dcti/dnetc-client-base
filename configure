@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.77  1998/07/16 17:44:16  nordquist
+# Make sure static-link options are passed to the HP-UX CC linker.
+#
 # Revision 1.76  1998/07/15 06:23:22  cramer
 # added -fno-handle-exceptions for gcc targets.  That should work for any gcc.
 # Those that support the new naming (-fno-exceptions) will emit a warning
@@ -328,7 +331,8 @@ OPTS_GCC_ALPHA="$OPTS_GCC -O6 -DASM_ALPHA -static"
 
 #--
 
-OPTS_CC_HPUX='+A +a1 +O3 -D_HPUX -DASM_HPPA +DA2.0 -Icommon -Ides -Irc5'
+LDFLAGS_CC_HPUX='+A +DA2.0'
+OPTS_CC_HPUX="$LDFLAGS_CC_HPUX +a1 +O3 -D_HPUX -DASM_HPPA -Icommon -Ides -Irc5"
 OPTS_GCC_HPUX="$OPTS_GCC -O6 -DASM_HPPA -static"
 OPTS_GCC_HPUX_M68K="$OPTS_GCC -D_HPUX_M68K -static"
 
@@ -499,6 +503,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_HPUX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="platforms/parisc.s $MEGGS_SLICE_SRCS"
+	TARGET_LDFLAGS="$LDFLAGS_CC_HPUX"
 	;;
 
     *hpux-gcc)
