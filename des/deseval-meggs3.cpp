@@ -1,5 +1,8 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.7  1998/12/13 21:53:33  dicamillo
+// Mac OS change for compilation and Mac client scheduling.
+//
 // Revision 1.6  1998/07/14 10:43:40  remi
 // Added support for a minimum timeslice value of 16 instead of 20 when
 // using BIT_64, which is needed by MMX_BITSLICER. Will help some platforms
@@ -28,12 +31,14 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.6 1998/07/14 10:43:40 remi Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.7 1998/12/13 21:53:33 dicamillo Exp $"; }
 #endif
 
+#if (CLIENT_OS != OS_MACOS)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#endif
 
 /* Bitslice driver copyright (C) 1998 Andrew Meggs / casa de la cabeza explosiva */
 /* All rights reserved. A non-transferrable, royalty free license to this code   */
@@ -45,6 +50,13 @@ return "@(#)$Id: deseval-meggs3.cpp,v 1.6 1998/07/14 10:43:40 remi Exp $"; }
 
 #include "kwan-sboxes.h"
 #define WORD_TYPE unsigned long
+
+#if (CLIENT_OS == OS_MACOS)
+#define TICKS ((unsigned long *)0x16a)
+extern void YieldToMain(char force_events);
+extern unsigned long DES_ticks_to_use;
+extern unsigned long DES_yield_ticks;
+#endif
 
 static void
 s1 (
@@ -1004,6 +1016,13 @@ slice whack16(slice *P, slice *C, slice *K)
 				break;
 			}
 			// now step the tail
+            #if (CLIENT_OS == OS_MACOS)
+		      if (DES_yield_ticks < *TICKS) {
+	            DES_yield_ticks = *TICKS + DES_ticks_to_use;
+			    YieldToMain(1);
+			  }
+            #endif
+
 			hs = 0;
 			K[49] = ~K[49];
 			++ts;
