@@ -251,7 +251,7 @@ Distributed.Net RC5/DES Client build vX.XXXX.XXX config menu
 Choice -->
 
 As the screen suggests, only the options under "Required Options" are
-necessary to configure for most users. If you are new to the rc5/des
+necessary to configure for most users. If you are new to the RC5/DES
 client, you may wish to hold off configuring within the other menus
 until you are familiar with the client's operation, and have read the
 documentation completely.
@@ -374,10 +374,10 @@ Choice -->
 3) [keyport] This determines the port on the keyserver to which the
    client will try to connect.
 
-(options 4->6 will only appear if uuehttpmode is set to http or socks
+(options 4->6 will only appear if uuehttpmode is set to HTTP or SOCKS
 mode.)
 
-4) [httpproxy] This tells the client the address of the http/socks proxy
+4) [httpproxy] This tells the client the address of the HTTP/SOCKS proxy
    which it should attempt to connect through.
 
 5) [httpport] This determines the port on the proxy server which the
@@ -711,7 +711,7 @@ usually be the fastest, so unless there is a misdetection (as may occur
 with Cyrix processors), you need not manually set a core.
 
 For x86 and PPC, cputype changes the RC5 core only. On the ARM, cputype
-selects a combination of 
+selects a permutation of the two RC5 and two DES cores.
 
 x86 CPU types:
      -1  : Auto detect
@@ -860,6 +860,7 @@ communications mode the client will use. The types of modes are:
    2  : HTTP encoding
    3  : HTTP+UUE encoding
    4  : SOCKS4 proxy
+   5  : SOCKS5 proxy
 
 The operation of these modes is influenced greatly by the other related
 options.
