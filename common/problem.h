@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.87 2002/09/23 12:01:32 acidblood Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.88 2002/09/23 16:58:36 acidblood Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -94,14 +94,14 @@ typedef union
   } crypto;        /* 48 bytes */
   #endif
   struct {
-    struct {u32 hi,lo; u16 vlo;} key;     // starting key
+    struct {u32 hi,mid,lo;} key;          // starting key
     struct {u32 hi,lo;} iv;               // initialization vector
     struct {u32 hi,lo;} plain;            // plaintext we're searching for
     struct {u32 hi,lo;} cypher;           // cyphertext
     struct {u32 hi,lo;} keysdone;         // iterations done (also current position in block)
     struct {u32 hi,lo;} iterations;       // iterations to do
-    struct {u16 count; u32 hi,lo; u16 vlo;} check;   // keyid of last found counter-measure check.
-  } bigcrypto;     /* 62 bytes */
+    struct {u32 count; u32 hi,mid,lo;} check;   // keyid of last found counter-measure check.
+  } bigcrypto;     /* 68 bytes */
 // OK!
   #if defined(HAVE_OGR_CORES)
   struct {

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.152 2002/09/23 01:54:06 acidblood Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.153 2002/09/23 16:58:36 acidblood Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -91,8 +91,12 @@ typedef struct
     /* the following must be protected for thread safety */
     /* --------------------------------------------------------------- */
 // TODO: acidblood/trashover
+#ifdef HAVE_OLD_CRYPTO
     RC5UnitWork rc5unitwork; /* MUST BE longword (64bit) aligned */
     struct {u32 hi,lo;} refL0;
+#endif
+    RC5_72UnitWork rc5_72unitwork;
+    struct {u32 hi,mid,lo;} refL0;
     ContestWork contestwork;
     /* --------------------------------------------------------------- */
     void *core_membuffer; /* aligned pointer to __core_membuffer_space */
@@ -361,10 +365,6 @@ static inline void __copy_internal_problem( InternalProblem *dest,
 //
 // Note that DES has a similiar but far more complex system, but everything
 // is handled by des_pub_data.unit_func().
-// Doesn't need to be changed for RC5-72, since the high byte is kept in a
-// separate variable and doesn't need client-side incrementing, given that
-// the keymaster isn't allowed to generate keys on 64-bit boundaries.
-// OK!
 
 static void  __SwitchRC5Format(u32 *hi, u32 *lo)
 {
@@ -383,6 +383,29 @@ static void  __SwitchRC5Format(u32 *hi, u32 *lo)
       ((tempkeyhi << 24) & 0xFF000000L);
 }
 
+// Here's the same mangling for RC5-72:
+//            key.hi key.mid  key.lo
+// unmangled      AB:CDEFGHIJ:KLMNOPQR
+// mangled        QR:OPMNKLIJ:GHEFCDAB
+
+static void  __SwitchRC5_72Format(u32 *hi, u32 *mid, u32 *lo)
+{
+    register u32 tempkeylo = *lo;
+    register u32 tempkeymid = *mid;
+    register u32 tempkeyhi = *hi;
+
+    *lo  = ((tempkeyhi)        & 0x000000FFL) |
+           ((tempkeymid >> 16) & 0x0000FF00L) |
+           ((tempkeymid)       & 0x00FF0000L) |
+           ((tempkeymid << 16) & 0xFF000000L);
+    *mid = ((tempkeymid)       & 0x000000FFL) |
+           ((tempkeylo >> 16)  & 0x0000FF00L) |
+           ((tempkeylo)        & 0x00FF0000L) |
+           ((tempkeylo << 16)  & 0xFF000000L);
+    *hi  = ((tempkeylo)        & 0x000000FFL);
+}
+
+
 /* ------------------------------------------------------------------- */
 
 // Input:  - an RC5 key in 'mangled' (reversed) format or a DES key
@@ -392,11 +415,16 @@ static void  __SwitchRC5Format(u32 *hi, u32 *lo)
 // Output: the key incremented
 // OK!
 
-static void __IncrementKey(u32 *keyhi, u32 *keylo, u32 iters, int contest)
+static void __IncrementKey(u32 *keyhi, u32 *keymid, u32 *keylo, u32 iters, int contest)
 {
   switch (contest)
   {
     case RC5_72:
+      __SwitchRC5_72Format(keyhi,keymid,keylo);
+      *keylo = *keylo + iters;
+      if (*keylo < iters) *keymid = *keymid + 1;
+      if (*keymid == 0) *keyhi = *keyhi + 1;
+      __SwitchRC5_72Format(keyhi,keymid,keylo);
     case RC5:
       __SwitchRC5Format(keyhi,keylo);
       *keylo = *keylo + iters;
@@ -449,8 +477,8 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
     case RC5_72:
     {
       work->bigcrypto.key.lo = ( 0 );
+      work->bigcrypto.key.mid = ( 0 );
       work->bigcrypto.key.hi = ( 0 );
-      work->bigcrypto.key.vhi = ( 0 );
       work->bigcrypto.iv.lo = ( 0 );
       work->bigcrypto.iv.hi = ( 0 );
       work->bigcrypto.plain.lo = ( 0 );
@@ -493,8 +521,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
 
 /* ------------------------------------------------------------------- */
 
-#ifdef HAVE_RC564_CORES
-static int last_rc5_prefix = -1;
+static int last_rc5_72_prefix = -1, last_rc5_prefix;
 
 static int __gen_random_work(unsigned int contestid, ContestWork * work)
 {
@@ -503,28 +530,52 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
   // make one up in the event that no block was every loaded.
 
   u32 rnd = Random(NULL,0);
-  u32 randomprefix = last_rc5_prefix;
-  if (last_rc5_prefix == -1) /* no random prefix determined yet */
-    last_rc5_prefix = randomprefix = 100+(rnd % (0xff-100));
 
-  contestid = RC5; 
-  work->crypto.key.lo   = (rnd & 0xF0000000L);
-  work->crypto.key.hi   = (rnd & 0x00FFFFFFL) + (last_rc5_prefix<<24);
+  switch (contestid)
+  {
+  #ifdef HAVE_OLD_CRYPTO
+  case RC5:
+    u32 randomprefix = last_rc5_prefix;
+    if (last_rc5_prefix == -1) /* no random prefix determined yet */
+      last_rc5_prefix = randomprefix = 100+(rnd % (0xff-100));
+    work->crypto.key.lo   = (rnd & 0xF0000000L);
+    work->crypto.key.hi   = (rnd & 0x00FFFFFFL) + (last_rc5_prefix<<24);
 // TODO: acidblood/trashover
-  //constants are in rsadata.h
-  work->crypto.iv.lo     = ( RC564_IVLO );     //( 0xD5D5CE79L );
-  work->crypto.iv.hi     = ( RC564_IVHI );     //( 0xFCEA7550L );
-  work->crypto.cypher.lo = ( RC564_CYPHERLO ); //( 0x550155BFL );
-  work->crypto.cypher.hi = ( RC564_CYPHERHI ); //( 0x4BF226DCL );
-  work->crypto.plain.lo  = ( RC564_PLAINLO );  //( 0x20656854L );
-  work->crypto.plain.hi  = ( RC564_PLAINHI );  //( 0x6E6B6E75L );
-  work->crypto.keysdone.lo = 0;
-  work->crypto.keysdone.hi = 0;
-  work->crypto.iterations.lo = 1L<<28;
-  work->crypto.iterations.hi = 0;
+    //constants are in rsadata.h
+    work->crypto.iv.lo     = ( RC564_IVLO );     //( 0xD5D5CE79L );
+    work->crypto.iv.hi     = ( RC564_IVHI );     //( 0xFCEA7550L );
+    work->crypto.cypher.lo = ( RC564_CYPHERLO ); //( 0x550155BFL );
+    work->crypto.cypher.hi = ( RC564_CYPHERHI ); //( 0x4BF226DCL );
+    work->crypto.plain.lo  = ( RC564_PLAINLO );  //( 0x20656854L );
+    work->crypto.plain.hi  = ( RC564_PLAINHI );  //( 0x6E6B6E75L );
+    work->crypto.keysdone.lo = 0;
+    work->crypto.keysdone.hi = 0;
+    work->crypto.iterations.lo = 1L<<28;
+    work->crypto.iterations.hi = 0;
+    break;
+  #endif
+  case RC5_72:
+    u32 randomprefix = last_rc5_72_prefix;
+    if (last_rc5_72_prefix == -1) /* no random prefix determined yet */
+      last_rc5_72_prefix = randomprefix = 100+(rnd % (0xff-100));
+    work->bigcrypto.key.lo  = 0;
+    work->bigcrypto.key.mid = rnd;
+    work->bigcrypto.key.hi  = last_rc5_72_prefix;
+    //constants are in rsadata.h
+    work->bigcrypto.iv.lo     = ( RC572_IVLO );
+    work->bigcrypto.iv.hi     = ( RC572_IVHI );
+    work->bigcrypto.cypher.lo = ( RC572_CYPHERLO );
+    work->bigcrypto.cypher.hi = ( RC572_CYPHERHI );
+    work->bigcrypto.plain.lo  = ( RC572_PLAINLO );
+    work->bigcrypto.plain.hi  = ( RC572_PLAINHI );
+    work->bigcrypto.keysdone.lo = 0;
+    work->bigcrypto.keysdone.hi = 0;
+    work->bigcrypto.iterations.lo = 0;
+    work->bigcrypto.iterations.hi = 1;
+    break;
+  }
   return contestid;
 }
-#endif
 
 /* ------------------------------------------------------------------- */
 
@@ -591,12 +642,13 @@ static int __InternalLoadState( InternalProblem *thisprob,
   if (work == CONTESTWORK_MAGIC_RANDOM) /* ((const ContestWork *)0) */
   {
 // TODO?: acidblood/trashover
-#ifdef HAVE_RC564_CORES
+//#ifdef HAVE_RC564_CORES
     contestid = __gen_random_work(contestid, &for_magic);
     work = &for_magic;
     genned_random = 1;
-#else
-    return -2;
+//#else
+//    return -2;
+// OK!
 #endif
   }
   else if (work == CONTESTWORK_MAGIC_BENCHMARK) /* ((const ContestWork *)1) */
@@ -738,8 +790,8 @@ static int __InternalLoadState( InternalProblem *thisprob,
   case RC5_72:
     {
       // copy over the state information
-      thisprob->priv_data.contestwork.bigcrypto.key.vlo = ( work->bigcrypto.key.vlo );
       thisprob->priv_data.contestwork.bigcrypto.key.hi = ( work->bigcrypto.key.hi );
+      thisprob->priv_data.contestwork.bigcrypto.key.mid = ( work->bigcrypto.key.mid );
       thisprob->priv_data.contestwork.bigcrypto.key.lo = ( work->bigcrypto.key.lo );
       thisprob->priv_data.contestwork.bigcrypto.iv.hi = ( work->bigcrypto.iv.hi );
       thisprob->priv_data.contestwork.bigcrypto.iv.lo = ( work->bigcrypto.iv.lo );
@@ -752,9 +804,9 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->priv_data.contestwork.bigcrypto.iterations.hi = ( work->bigcrypto.iterations.hi );
       thisprob->priv_data.contestwork.bigcrypto.iterations.lo = ( work->bigcrypto.iterations.lo );
       thisprob->priv_data.contestwork.bigcrypto.check.count = ( work->bigcrypto.check.count );
-      thisprob->priv_data.contestwork.bigcrypto.check.lo = ( work->bigcrypto.check.lo );
       thisprob->priv_data.contestwork.bigcrypto.check.hi = ( work->bigcrypto.check.hi );
-      thisprob->priv_data.contestwork.bigcrypto.check.vhi = ( work->bigcrypto.check.vhi );
+      thisprob->priv_data.contestwork.bigcrypto.check.mid = ( work->bigcrypto.check.mid );
+      thisprob->priv_data.contestwork.bigcrypto.check.lo = ( work->bigcrypto.check.lo );
       
       if (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo || thisprob->priv_data.contestwork.bigcrypto.keysdone.hi)
         {
@@ -763,8 +815,8 @@ static int __InternalLoadState( InternalProblem *thisprob,
             {
               thisprob->priv_data.contestwork.bigcrypto.keysdone.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.hi = 0;
               thisprob->priv_data.contestwork.bigcrypto.check.count = 0;
-              thisprob->priv_data.contestwork.bigcrypto.check.hi = thisprob->priv_data.contestwork.bigcrypto.check.lo = 0;
-              thisprob->priv_data.contestwork.bigcrypto.check.vlo = 0;
+              thisprob->priv_data.contestwork.bigcrypto.check.hi = thisprob->priv_data.contestwork.bigcrypto.check.mid = 0;
+              thisprob->priv_data.contestwork.bigcrypto.check.lo = 0;
               thisprob->pub_data.was_reset = 1;
             }
         }
@@ -1032,7 +1084,7 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
       //we _do_ need to care that the keystocheck and starting key are aligned.
 
       *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
-      rescode = (*(thisprob->pub_data.unit_func.gen))(&thisprob->priv_data.rc5unitwork,keyscheckedP,thisprob->priv_data.core_membuffer);
+      rescode = (*(thisprob->pub_data.unit_func.gen))(&thisprob->priv_data.rc5_72unitwork,keyscheckedP,thisprob->priv_data.core_membuffer);
 
       if (rescode >= 0 && thisprob->pub_data.cruncher_is_asynchronous) /* co-processor or similar */
       {
@@ -1065,7 +1117,7 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
     }
     else /* old style */
     {
-      *keyscheckedP = (*(thisprob->pub_data.unit_func.rc5))(&thisprob->priv_data.rc5unitwork,(keystocheck/thisprob->pub_data.pipeline_count));
+      *keyscheckedP = (*(thisprob->pub_data.unit_func.rc5))(&thisprob->priv_data.rc5_72unitwork,(keystocheck/thisprob->pub_data.pipeline_count));
       //don't use the next few lines as a guide for conversion to unified
       //prototypes!  look at the end of rc5/ansi/rc5ansi_2-rg.cpp instead.
       if (*keyscheckedP < keystocheck)
@@ -1086,7 +1138,7 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
   *resultcode = (int)rescode;
 
   // Increment reference key count
-  __IncrementKey(&thisprob->priv_data.refL0.hi, &thisprob->priv_data.refL0.lo, *keyscheckedP, thisprob->pub_data.contest);
+  __IncrementKey(&thisprob->priv_data.refL0.hi, &thisprob->priv_data.refL0.mid, &thisprob->priv_data.refL0.lo, *keyscheckedP, thisprob->pub_data.contest);
 
   // Compare ref to core key incrementation
   if (((thisprob->priv_data.refL0.hi != thisprob->priv_data.rc5unitwork.L0.hi) || (thisprob->priv_data.refL0.lo != thisprob->priv_data.rc5unitwork.L0.lo))
@@ -1096,8 +1148,9 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
         thisprob->priv_data.contestwork.crypto.iterations.lo == 0x20000) /* test case */
     {
       Log("RC5 incrementation mismatch:\n"
-          "Debug Information: %08x:%08x - %08x:%08x\n",
-          thisprob->priv_data.rc5unitwork.L0.hi, thisprob->priv_data.rc5unitwork.L0.lo, thisprob->priv_data.refL0.hi, thisprob->priv_data.refL0.lo);
+          "Debug Information: %02x:%08x:%08x - %02x:%08x:%08x\n",
+          thisprob->priv_data.rc5_72unitwork.L0.hi, thisprob->priv_data.rc5_72unitwork.L0.mid, thisprob->priv_data.rc5_72unitwork.L0.lo,
+          thisprob->priv_data.refL0.hi, thisprob->priv_data.refL0.mid, thisprob->priv_data.refL0.lo);
     }
     *resultcode = -1;
     return -1;
@@ -1113,10 +1166,15 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
   {
     // found it!
     u32 keylo = thisprob->priv_data.contestwork.crypto.key.lo;
-    thisprob->priv_data.contestwork.crypto.key.lo += thisprob->priv_data.contestwork.crypto.keysdone.lo;
-    thisprob->priv_data.contestwork.crypto.key.hi += thisprob->priv_data.contestwork.crypto.keysdone.hi;
+    thisprob->priv_data.contestwork.crypto.key.lo  += thisprob->priv_data.contestwork.crypto.keysdone.lo;
+    thisprob->priv_data.contestwork.crypto.key.mid += thisprob->priv_data.contestwork.crypto.keysdone.mid;
+    thisprob->priv_data.contestwork.crypto.key.hi  += thisprob->priv_data.contestwork.crypto.keysdone.hi;
     if (thisprob->priv_data.contestwork.crypto.key.lo < keylo)
-      thisprob->priv_data.contestwork.crypto.key.hi++; // wrap occured ?
+    {
+      thisprob->priv_data.contestwork.crypto.key.mid++; // wrap occured ?
+      if (thisprob->priv_data.contestwork.crypto.key.mid == 0)
+        thisprob->priv_data.contestwork.crypto.key.hi++;
+    }
     return RESULT_FOUND;
   }
 
@@ -1130,10 +1188,12 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
   }
 
   #ifdef STRESS_THREADS_AND_BUFFERS
-  if (core_prob->priv_data.contestwork.crypto.key.hi ||
+  if (core_prob->priv_data.contestwork.crypto.key.hi  ||
+      core_prob->priv_data.contestwork.crypto.key.mid ||
       core_prob->priv_data.contestwork.crypto.key.lo) /* not bench */
   {
     core_prob->priv_data.contestwork.crypto.key.hi = 0;
+    core_prob->priv_data.contestwork.crypto.key.mid = 0;
     core_prob->priv_data.contestwork.crypto.key.lo = 0;
     core_prob->priv_data.contestwork.crypto.keysdone.hi = 
       core_prob->priv_data.contestwork.crypto.iterations.hi;
@@ -2151,6 +2211,7 @@ int WorkGetSWUCount( const ContestWork *work,
     switch (contestid)
     {
 // TODO: acidblood/trashover
+      case RC5_72:
       case RC5:
       case DES:
       case CSC:
@@ -2170,6 +2231,11 @@ int WorkGetSWUCount( const ContestWork *work,
             ((tcounthi != 0) || (tcounthi == 0 && tcountlo != 0x00100000UL)))
         {   
           last_rc5_prefix = ((work->crypto.key.hi >> 24) & 0xFF);
+        }
+        if (contestid == RC5_72 && rescode != RESULT_WORKING &&
+            ((tcounthi != 0) || (tcounthi == 0 && tcountlo != 0x00100000UL)))
+        {
+          last_rc5_72_prefix = work->crypto.key.hi;
         }
       }
       break;
