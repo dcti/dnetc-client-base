@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.28.2.9 2000/09/17 11:46:32 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.28.2.10 2000/11/12 22:57:59 cyp Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -202,11 +202,13 @@ int ModeReqRun(Client *client)
       if ((bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART)) != 0)
       {
 	/* cmdline_config is set if there is an explicit --config on the cmdline */
-	if (Configure(client,(!(!modereq.cmdline_config))/* nottycheck */)>0)
-	{ /* Configure() returns <0=error,0=exit+nosave,>0=exit+save */
-          if ((bits & MODEREQ_CONFRESTART) != 0)
-            restart = 1;
-        }
+	/* Configure() returns <0=error,0=exit+nosave,>0=exit+save */
+	Configure(client,(!(!modereq.cmdline_config))/* nottycheck */);
+        /* it used to be such that restart would only be posted on an exit+save */
+        /* but now we restart for other retvals too, otherwise the GUI windows */
+        /* end up with half-assed content */
+        if ((bits & MODEREQ_CONFRESTART) != 0)
+          restart = 1;
         modereq.cmdline_config = 0;
         modereq.reqbits &= ~(MODEREQ_CONFIG | MODEREQ_CONFRESTART);
         retval |= (bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART));
