@@ -48,11 +48,6 @@
 
     This client is not optimized for speed but for "niceness".
 
-    Note: the DOS, NetWare and Win16 clients do not support MMX for DES.
-    This is due to a technical problem with the porter's linker and will
-    hopefully be fixed soon. As you can probably well imagine, it is not 
-    particularly high priority.
-    
     Note: DOS, Win16 and OS/2 ports may squawk about a missing TZ= variable
     in the environment. Set it in your autoexec (or wherever). For example:
     "SET TZ=EST+5" for eastern standard time or "SET TZ=EST+5DST" when 
