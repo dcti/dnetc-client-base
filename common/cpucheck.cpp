@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.72 2001/05/09 21:38:14 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.73 2001/05/15 01:07:53 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -709,6 +709,69 @@ static long __GetRawProcessorID(const char **cpuname)
 /* ---------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_X86)
+static u32 __os_x86ident_fixup(u32 x86ident_result)
+{
+  #if (CLIENT_OS == OS_LINUX)
+  if (x86ident_result == 0x79430400) /* Cyrix indeterminate */
+  {
+    FILE *file = fopen("/proc/cpuinfo", "r");
+    if (file)
+    {
+      int vendor_id = 0, family = 0, model = 0;
+      char buf[128]; 
+      while (fgets(buf, sizeof(buf)-1, file))
+      {
+        char *p; int c;
+        buf[sizeof(buf)-1] = '\0';
+        p = strchr(buf, '\n');
+        if (p) 
+          *p = '\0';
+        else
+        {
+          c = 1;
+          while (c != EOF && c != '\n')
+            c = fgetc(file);
+          p = &buf[sizeof(buf-1)]; /* "" */
+        }      
+        c = 0;
+        while (buf[c] && buf[c] != ':')
+          c++;
+        if (buf[c] == ':') 
+          p = &buf[c+1];
+        while (c > 0 && (buf[c-1]==' ' || buf[c-1] == '\t'))
+          c--;
+        buf[c] = '\0';
+        while (*p == ' ' || *p == '\t')
+          p++;
+        c = 0;
+        /* printf("key='%s', val='%s'\n", buf, p); */
+        while (p[c] && p[c] != ' ' && p[c] != '\t')
+          c++;
+        p[c] = '\0';  
+
+        if (strcmp(buf,"vendor_id") == 0)
+        {
+          if (strcmp(p,"CyrixInstead") == 0) /* we only care about this one */
+            vendor_id = 0x7943;
+          else
+            break;
+        }  
+        else if (strcmp(buf, "model name")==0)
+        {
+          if (strncmp(p, "5x86", 4)!=0)
+            break;
+          family = 4; model = 9; 
+          /* linux simulates 5x86 as fam=4,mod=1,step=5, x86ident() as 4,9,x */
+        }  
+      }
+      fclose(file);
+      if (vendor_id == 0x7943 && family == 4 && model == 9)
+        return 0x79430490;
+    } /* if (file) */
+  } /* if (cyrix indeterminate) */
+  #endif /* (CLIENT_OS == OS_LINUX) */
+  return x86ident_result;
+}  
 
 #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
   extern "C" u32 x86ident( void ) asm ("x86ident");
@@ -732,15 +795,21 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     struct cpuxref { int cpuid, simpleid; 
                      const char *cpuname; } *internalxref = NULL;
 
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     if (winGetVersion() < 2000) /* win95 permits inb()/outb() */
       x86ident_haveioperm = 1;
-    #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
-          (CLIENT_OS == OS_NETWARE) /* netware client runs at IOPL 0 */
-      x86ident_haveioperm = 1;
+    #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) 
+      x86ident_haveioperm = 1;        /* netware client runs at IOPL 0 */
+    #elif (CLIENT_OS == OS_LINUX)
+    //if (x86ident() == 0x79430400 && geteuid()==0)
+    //  x86ident_haveioperm = (ioperm(0x22, 2, 1)==0);
+    #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
+          (CLIENT_OS == OS_NETBSD)
+    //if (x86ident() == 0x79430400 && geteuid()==0)
+    //  x86ident_haveioperm = (i386_set_ioperm(0x22, 2, 1)==0);
     #endif
 
-    dettype     = x86ident();
+    dettype     = __os_x86ident_fixup(x86ident());
     cpuidbmask  = 0xfff0; /* mask with this to find it in the table */
     cpuid       = (((int)dettype) & 0xffff);
     vendorid    = (((int)(dettype >> 16)) & 0xffff);
@@ -774,7 +843,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0540,      0, "TM5400"    },
           {  0x0000,     -1, NULL        }
           }; internalxref = &transmeta_xref[0];
-      vendorname = "Transmeta ";
+      vendorname = "Transmeta";
       cpuidbmask = 0x0ff0;
     }
     else if ( vendorid == 0x7943 /* 'yC' */ ) /* CyrixInstead */
@@ -789,8 +858,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0600,  0x109, "6x86MX/MII"},
           /* The VIA Cyrix III is CentaurHauls */
           {  0x0000,     -1, NULL        }
-          }; internalxref = &cyrixxref[0];
-      vendorname = "Cyrix ";
+          }; internalxref = &cyrixxref[0]; 
+      vendorname = "Cyrix";
       cpuidbmask = 0x0ff0;
     }
     else if ( vendorid == 0x6F43 /* 'eM' */)
@@ -799,7 +868,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0535,      0, "VPC586" },
           {  0x0000,     -1, NULL     }
           }; internalxref = &vpc[0];
-      vendorname = "Connectix ";
+      vendorname = "Connectix";
       cpuidbmask = 0x0ff0;
     }
     else if ( vendorid == 0x6543 /* 'eC' */ ) /* "CentaurHauls" */
@@ -811,9 +880,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0660,  0x109, "Samuel (Cyrix III)" }, /* THIS IS NOT A P6 !!! */
           {  0x0000,     -1, NULL          }
           }; internalxref = &centaurxref[0];
-      vendorname = "Centaur/IDT ";
+      vendorname = "Centaur/IDT";
       if (cpuid >= 0x0600)
-        vendorname = "VIA ";
+        vendorname = "VIA";
       cpuidbmask = 0xfff0;
     }
     else if ( vendorid == 0x6952 /* 'iR' */  ) /* "RiseRiseRiseRise" */
@@ -823,7 +892,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0500,   0xFF, "mP6" }, /* (0.18 æm) - dunno which core */
           {  0x0000,     -1, NULL  }
           }; internalxref = &risexref[0];
-      vendorname = "Rise ";
+      vendorname = "Rise";
       cpuidbmask = 0xfff0;
     }
     else if ( vendorid == 0x654E /* 'eN' */  ) //"NexGenDriven"
@@ -832,7 +901,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0500,      1, "Nx586" }, //386/486 core
           {  0x0000,     -1, NULL  } //no such thing
           }; internalxref = &nexgenxref[0];
-      vendorname = "NexGen ";
+      vendorname = "NexGen";
       cpuidbmask = 0xfff0;
     }
     else if ( vendorid == 0x4D55 /* 'MU' */  ) //"UMC UMC UMC "
@@ -842,7 +911,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0420,      0, "U5S" },
           {  0x0400,     -1, NULL  }
           }; internalxref = &umcxref[0];
-      vendorname = "UMC ";
+      vendorname = "UMC";
       cpuidbmask = 0xfff0;
     }
     else if ( vendorid == 0x7541 /* 'uA' */ ) // "AuthenticAMD"
@@ -871,9 +940,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           //next-gen chip is athlon core + 2MB on-die cache (Mustang)
           {  0x0000,     -1, NULL       }
           }; internalxref = &amdxref[0];
-      vendorname = "AMD ";
+      vendorname = "AMD";
       if (cpuid == 0x0400)          /* no such AMD ident */
-        vendorname = "Intel/AMD ";  /* identifies AMD or Intel 486 */
+        vendorname = "Intel/AMD";  /* identifies AMD or Intel 486 */
       cpuidbmask = 0x0ff0;
     }
     else if ( vendorid == 0x6547 /* 'eG' */ ) // "GenuineIntel"
@@ -914,7 +983,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0F00,  0x10B, "Pentium 4" }, /* #11 = 4 Pipeline P4 core */
           {  0x0000,     -1, NULL }
           }; internalxref = &intelxref[0];
-      vendorname = "Intel "; 
+      vendorname = "Intel"; 
       cpuidbmask = 0x0ff0; //strip brand/type AND stepping bits.
       if ((cpuid & 0x0f00) == 0x0F00) /* end of the road */
         cpuid &= 0x0f00;
@@ -953,6 +1022,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           if ( internalxref[pos].cpuname )
           {
             strcpy( namebuf, vendorname );
+            if (namebuf[0])
+              strcat( namebuf, " ");
             if (chipname_override)
               strcat( namebuf, chipname_override );
             else
