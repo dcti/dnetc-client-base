@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.7.2.8 2002/04/11 12:05:04 oliver Exp $
+ Document revision $Id: readme.amiga,v 1.7.2.9 2002/04/11 20:21:58 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -17,7 +17,7 @@
          3.3 Packets and work units?
          3.4 Dial-up detection caveats
     4.0  GUI for AmigaOS clients
-         4.1 GUI usage and options
+         4.1 Preferences and options
          4.2 ARexx commands 
          4.3 Myzar - MUI front-end for the client
     5.0  Credits & thank yous
@@ -143,36 +143,18 @@
     controlled by the menus.  If running both 68k and PPC clients, the
     clients will automatically share the same window.
 
-  4.1  GUI usage and options -----------------------------------------
+  4.1  Preferences and options ---------------------------------------
 
-    Use the tooltypes in the client's icon to configure the following
-    options:
+    The GUI maybe be configured to your liking by using the preferences
+    window, which can be accessed from the settings menu.  Additionally,
+    the following tooltypes can be used in the client's icon:
 
-    ICONIFY
+    HIDE
 
       Specify this tooltype to cause the client to not open a window on
-      startup, and show an icon on the Workbench instead (which may be
-      clicked to open the window).
-
-    FONTNAME (e.g. FONTNAME=topaz.font)
-
-      Specify the name of the font that you'd like to use for the GUI's
-      representation of the console output.  Defaults to the current
-      screen font if not specified.
-
-    FONTSIZE (e.g. FONTSIZE=8)
-
-      Specify the size of font that you'd like to use for the GUI's
-      representation of the console output.  Defaults to 8 if not
-      specified, and FONTNAME is specified.
-
-    WINWIDTH (e.g. WINWIDTH=535)
-
-      Width of the window.  Defaults to 535 if not specified.
-
-    WINHEIGHT (e.g. WINHEIGHT=160)
-
-      Height of the window.  Defaults to 160 if not specified.
+      startup, and show an icon and/or tools menu item (defaults to
+      both, but may be changed in the preferences) on the Workbench
+      instead.
 
   4.2  ARexx commands
 
