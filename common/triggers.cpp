@@ -18,7 +18,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.5 2003/07/06 01:38:46 bdragon Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.6 2003/07/21 00:59:14 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -619,13 +619,11 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 
 // -----------------------------------------------------------------------
 
-
-#if (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
-#include <mach/mach.h>
-#include <mach/mach_error.h>
+#if (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY)
+extern "C" int macosx_cputemp();
 #endif
 
-static int __CPUTemperaturePoll(void)
+static int __CPUTemperaturePoll(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 {
   int lowthresh = (int)trigstatics.cputemp.lothresh;
   int highthresh = (int)trigstatics.cputemp.hithresh;
@@ -639,32 +637,8 @@ static int __CPUTemperaturePoll(void)
     int cputemp = -1;
     #if (CLIENT_OS == OS_MACOS)
       cputemp = macosCPUTemp();
-    #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
-      kern_return_t          ret;
-      natural_t              processorCount;
-      processor_info_array_t processorInfoList;
-      mach_msg_type_number_t processorInfoCount;
-
-      // pass a message to the kernel that we need some info
-      ret = host_processor_info( mach_host_self(), // get info from this host
-                                 PROCESSOR_TEMPERATURE, // want temperature
-                                 &processorCount,	// get processor count
-                                 &processorInfoList,
-                                 &processorInfoCount);
-
-      if (ret==KERN_SUCCESS) {
-          // get temperature for 1st processor, -1 on failure
-          cputemp = ((int*)processorInfoList)[0];
-          if (vm_deallocate(mach_task_self(),
-                            (vm_address_t)processorInfoList,
-                            processorInfoCount)!=KERN_SUCCESS) {
-              //deallocation failed?
-              cputemp = -1;
-          }
-          if (cputemp!=-1) {
-              cputemp += 273/*.15*/; /* C -> K */
-          }
-      }
+      #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+      cputemp = macosx_cputemp();
     #elif (CLIENT_OS == OS_DEC_UNIX)
       FILE *file;
       char buf[256];
@@ -708,7 +682,7 @@ static int __CPUTemperaturePoll(void)
       cputemp = fooyaddablahblahbar();
     #endif
     if (cputemp < 0) /* error */
-      ; 
+      return -1; 
     else if (cputemp >= highthresh)
       trigstatics.cputemp.marking_high = 1;
     else if (cputemp < lowthresh)
@@ -895,12 +869,16 @@ int CheckPauseRequestTrigger(void)
       else if (isbat == 0)
         trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_SRCBATTERY;  
       /* otherwise error/unknown, so don't change anything */  
-    }    
-    if (__CPUTemperaturePoll())
-      trigstatics.pausetrig.trigger |= TRIGPAUSEBY_CPUTEMP;
-    else
-      trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_CPUTEMP;  
-
+    }
+    {
+        int cputemp = __CPUTemperaturePoll(); /* <0=unknown/err, 0=no, >0=yes */
+        if (cputemp > 0)
+            trigstatics.pausetrig.trigger |= TRIGPAUSEBY_CPUTEMP;
+        else if (cputemp == 0)
+            trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_CPUTEMP;
+        /* otherwise error/unknown, so don't change anything */
+    }
+     
     __PollExternalTrigger( &trigstatics.pausetrig, 1 );
     
     /* +++ */
