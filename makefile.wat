@@ -6,9 +6,9 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.27.2.3 1999/11/09 18:36:05 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.4 1999/11/15 04:09:36 cyp Exp $
 
-BASENAME = rc5des
+BASENAME = dnetc
 
 %EXTOBJS  = #extra objs (made elsewhere) but need linking here
 %DEFALL   = /DDYN_TIMESLICE /D__showids__ /IOGR
@@ -42,7 +42,8 @@ BASENAME = rc5des
                    output\csc-6b-i.obj output\csc-6b.obj &
                    output\convcsc.obj output\csc-common.obj
 %cscstd_DEFALL   = -DHAVE_CSC_CORES -Icsc
-%cscstd_SYMALIAS =
+%cscstd_SYMALIAS = 
+#                  csc_unit_func_1k=_csc_unit_func_1k
 #                  csc_unit_func_6b_i=_csc_unit_func_6b_i &
 #                  csc_unit_func_1k=_csc_unit_func_1k &
 #                  csc_unit_func_6b=_csc_unit_func_6b
@@ -92,7 +93,7 @@ BASENAME = rc5des
 %LINK=wlink #\develop\watcom\binnt\wlink.exe
 
 %NASMEXE  = nasm           #point this to nasm (don't call the envvar 'NASM'!)
-%NASMFLAGS= -f obj -D__OMF__ -DOS2 -s
+%NASMFLAGS= -f win32 -s #-f obj -D__OMF__ -DOS2 -s
 %TASMEXE  =                #point this to tasm in your section if you have it
 %TFLAGS   = /ml /m9 /q /t  #if TASMEXE.==. then wasm will be executed
 %STACKSIZE= 32K            #may be redefined in the platform specific section
@@ -523,7 +524,7 @@ output\csc-1k.obj : csc\x86\csc-1k.asm $(%dependall) .AUTODEPEND
   @if exist $[*.obj copy $[*.obj $^@ >nul: 
   @if exist $[*.obj wtouch $^@
   @if exist $[*.obj @echo Updated $^@ from $[*.obj
-  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -l $[*.lst -i $[: $[@ 
   @set isused=1
 
 output\csc-1k-i.obj : csc\x86\csc-1k-i.asm $(%dependall) .AUTODEPEND
@@ -670,7 +671,7 @@ output\os2inst.obj : platforms\os2cli\os2inst.cpp $(%dependall) .AUTODEPEND
 #-----------------------------------------------------------------------
 
 platform: .symbolic
-  @set CFLAGS    = $(%CFLAGS) /zq -DBETA      ## compile quietly
+  @set CFLAGS    = $(%CFLAGS) /zq #-DBETA      ## compile quietly
   @set AFLAGS    = $(%AFLAGS) /q              ## assemble quietly
   @set CFLAGS    = $(%CFLAGS) $(%DEFALL)      ## tack on global defines
   @set isused=0
@@ -867,7 +868,7 @@ w32: .symbolic                               # win32
      @set ZIPOPTS   = -exo
      @set ZIPFILE   = #$(BASENAME)-win32-x86-cli
      @set BINNAME   = $(BASENAME).exe
-     @set EXECOMPRESSOR=\develop\upx\upxw.exe -9 --compress-resources=0
+     #@set EXECOMPRESSOR=\develop\upx\upxw.exe -9 --compress-resources=0
      @%make declare_for_des
      @%make declare_for_desmt
      @%make declare_for_desmmx
