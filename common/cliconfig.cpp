@@ -322,18 +322,18 @@ printf("------------------------------------------------------------\n\n");
           if (options[choice].type==1)
              {
              if (options[choice].thevariable != NULL)
-               printf("%d)  %s ==> %s\n",
+               printf("%ld)  %s ==> %s\n",
                       choice + 1, options[choice].description,
                       (char *)options[choice].thevariable);
              }
           else if (options[choice].type==2)
-             printf("%d)  %s ==> %i\n",
+             printf("%ld)  %s ==> %li\n",
                     choice + 1, options[choice].description,
                     *(s32 *)options[choice].thevariable);
           else if (options[choice].type==3)
              {
              sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
-             printf("%d)  %s ==> %s\n",
+             printf("%ld)  %s ==> %s\n",
                     choice + 1, options[choice].description,
                     str);
              };
@@ -397,7 +397,7 @@ printf("------------------------------------------------------------\n\n");
               options[choice].description, options[choice].comments, 
               options[choice].defaultsetting, (char *)options[choice].thevariable);
     else if (options[choice].type==2)
-      printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %i\nNew Setting --> ",
+      printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %li\nNew Setting --> ",
               options[choice].description, options[choice].comments, 
               options[choice].defaultsetting, *(s32 *)options[choice].thevariable);
     else if (options[choice].type==3)
