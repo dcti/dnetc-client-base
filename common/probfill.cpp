@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.20 2000/01/08 23:18:11 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.21 2000/01/09 20:30:22 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -44,41 +44,6 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.20 2000/01/08 23:18:11 cyp Exp $"; }
 #define COMBINEMSG_THRESHOLD 4 // anything above this and we don't show 
                                // individual load/save messages
 // =======================================================================   
-
-static const char *__WrapOrTruncateLogLine( char *buffer, int dowrap )
-{
-  char *stop, *start = buffer;
-  unsigned int maxlen = 55;
-  int dotruncate = (dowrap == 0);
-
-  if (dowrap)
-  {
-    while ( strlen(buffer) > maxlen )
-    {
-      stop = buffer+maxlen;
-      while (stop > buffer && *stop!='\n' && *stop!=' ' && *stop!='\t')
-        stop--;
-      if (stop == buffer && *stop != '\n')
-      {
-        dotruncate = 1;
-        break;
-      }
-      *stop = '\n';
-      buffer = ++stop;
-    }
-  }
-  if (dotruncate)
-  {
-    if ( strlen(buffer) > maxlen )
-    {
-      buffer[maxlen-4]=0;
-      strcat(buffer, " ...");
-    }
-  }
-  return start;
-}  
-
-/* ----------------------------------------------------------------------- */
 
 int SetProblemLoaderFlags( const char *loaderflags_map )
 {
@@ -180,23 +145,23 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         if (cont_i != OGR)
         {
           double rate = CliGetKeyrateForProblemNoSave( thisprob );
-		  if (rate > 0.0)
+                  if (rate > 0.0)
             CliSetContestWorkUnitSpeed(cont_i, (int)((1<<28)/rate + 0.5));
         }
 
         {
-	  unsigned int thresh = ClientGetOutThreshold( client, cont_i, 0 );
-	  if (thresh > 0) /* zero means ignore output buffer threshold */
-	  {
+          unsigned int thresh = ClientGetOutThreshold( client, cont_i, 0 );
+          if (thresh > 0) /* zero means ignore output buffer threshold */
+          {
             unsigned long count;
             if (GetBufferCount( client, cont_i, 1, &count ) > 0)
-	    {
+            {
               if ((unsigned long)(count) >= ((unsigned long)thresh))
                 *bufupd_pending |= BUFFERUPDATE_FLUSH;
-	    }
-	  }    	
+            }
+          }     
         }
-	
+        
       }
       ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
     }
@@ -761,12 +726,12 @@ unsigned int LoadSaveProblems(Client *pass_client,
         long block_count = GetBufferCount( client, cont_i, inout, &norm_count );
         if (block_count >= 0) /* no error */
         {
-          char buffer[200+128 /*sizeof(client->in_buffer_basename)*/];
+          char buffer[128+sizeof(client->in_buffer_basename)];
           if (inout != 0)                              /* out-buffer */
           {
-	    unsigned int thresh = ClientGetOutThreshold(client, cont_i, 0);
-	    /* a zero outbuffer threshold means 'don't check it' */
-	    if (thresh > 0 && norm_count > thresh)
+            unsigned int thresh = ClientGetOutThreshold(client, cont_i, 0);
+            /* a zero outbuffer threshold means 'don't check it' */
+            if (thresh > 0 && norm_count > thresh)
               bufupd_pending |= BUFFERUPDATE_FLUSH;
           }
           else                                         /* in-buffer */
@@ -775,7 +740,7 @@ unsigned int LoadSaveProblems(Client *pass_client,
               bufupd_pending |= BUFFERUPDATE_FETCH;
           }
           sprintf(buffer, 
-              "%ld %s packet%s (%lu work unit%s) %s in %s",
+              "%ld %s packet%s (%lu work unit%s) %s in\n%s",
               block_count, 
               cont_name, 
               ((block_count == 1)?(""):("s")),  
@@ -785,30 +750,43 @@ unsigned int LoadSaveProblems(Client *pass_client,
                  ((block_count==1)?("is"):("are")):
                  ((block_count==1)?("remains"):("remain"))),
               ((inout== 0)?
-                (client->nodiskbuffers ? "(memory-in)" : 
-                  BufferGetDefaultFilename( cont_i, 0, 
-                                            client->in_buffer_basename ) ) :
-                (client->nodiskbuffers ? "(memory-out)": 
-                  BufferGetDefaultFilename( cont_i, 1, 
-                                            client->out_buffer_basename ) ))
-              );
-
+                  (client->nodiskbuffers ? "(memory-in)" : 
+                   BufferGetDefaultFilename( cont_i, 0, 
+                   client->in_buffer_basename ) ) :
+                   (client->nodiskbuffers ? "(memory-out)": 
+                   BufferGetDefaultFilename( cont_i, 1, 
+                   client->out_buffer_basename ) ))
+             );
+          if (strlen(buffer) < 55) /* fits on a single line, so unwrap */
+          {
+            char *nl = strrchr( buffer, '\n' );
+            if (nl) *nl = ' ';
+          }               
+          Log( "%s\n", buffer );
+          
           if (inout == 0)  /* in */
+          {
+            /* compute number of processors _in_use_ */
+            int proc = GetNumberOfDetectedProcessors();
+            if (proc < 1)
+              proc = 1;
+            if (load_problem_count < proc)
+              proc = load_problem_count;
+            if (proc > 0)
             {
-            int proc = (client->numcpu == -1) ?
-                        GetNumberOfDetectedProcessors() :
-                        client->numcpu;
-            if (proc <= 0) proc = 1;
+              extern void ClientSetNumberOfProcessorsInUse(int num);
+              timeval tv;
+              ClientSetNumberOfProcessorsInUse(proc); /* client.cpp */
+              tv.tv_usec = 0;
+              tv.tv_sec = norm_count * 
+                        CliGetContestWorkUnitSpeed( cont_i, 1 ) / 
+                        proc;
+              if (tv.tv_sec > 0)          
+                Log("Projected ideal time to completion: %s\n", 
+                             CliGetTimeString( &tv, 2));
+            }
+          }
 
-            timeval tv;
-            tv.tv_usec = 0;
-            if ((tv.tv_sec = norm_count * CliGetContestWorkUnitSpeed( cont_i, true ) / proc) > 0)
-              sprintf(buffer+strlen(buffer) /* sprintfcat */,
-                "\nProjected time to completion: %s", CliGetTimeString( &tv, 2));
-            };
-
-          Log( "%s\n", __WrapOrTruncateLogLine( buffer, 1 ));
-             
         } //if (block_count >= 0)
       } //  for (inout=0;inout<=1;inout++)
     } //if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
