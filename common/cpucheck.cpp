@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.45 2004/03/04 17:23:58 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.46 2004/03/09 05:51:26 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1104,8 +1104,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       static struct cpuxref cyrixxref[]={
           {  0x0400, CPU_F_I486,       6, "486SLC/DLC/SR/DR" },
           {  0x0410, CPU_F_I486,       6, "486S/Se/S2/DX/DX2" },
-          {  0x0440, CPU_F_I586,       0, "GX/MediaGX" },
-          {  0x0490, CPU_F_I586,       0, "5x86"      },
+          {  0x0440, CPU_F_I586,       3, "GX/MediaGX" },
+          {  0x0490, CPU_F_I586,       3, "5x86"      },
           {  0x0520, CPU_F_I586,       3, "6x86/MI"   },
           {  0x0540, CPU_F_I586,       3, "GX/GXm"       },
           {  0x0600, CPU_F_I586,       3, "6x86MX/MII"},
