@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mac_client.cpp,v $
+// Revision 1.8  1999/03/01 16:14:21  sampo
+// Update to accomadate change in ContestWork union
+//
 // Revision 1.7  1999/01/16 22:00:41  sampo
 // change for fba (#include "clirate.h") so it will compile.
 //
@@ -27,7 +30,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *mac_client_cpp(void) {
-return "@(#)$Id: mac_client.cpp,v 1.7 1999/01/16 22:00:41 sampo Exp $"; }
+return "@(#)$Id: mac_client.cpp,v 1.8 1999/03/01 16:14:21 sampo Exp $"; }
 #endif
 
 // This file contains the routines added to the Client class for the Mac_Client
@@ -116,13 +119,13 @@ double Mac_Client::TimeCore(u32 numk, short core)
 Problem problem;
 ContestWork contestwork;
 
-contestwork.key.lo = contestwork.key.hi = htonl( 0 );
-contestwork.iv.lo = contestwork.iv.hi = htonl( 0 );
-contestwork.plain.lo = contestwork.plain.hi = htonl( 0 );
-contestwork.cypher.lo = contestwork.cypher.hi = htonl( 0 );
-contestwork.keysdone.lo = contestwork.keysdone.hi = htonl( 0 );
-contestwork.iterations.lo = htonl( numk );
-contestwork.iterations.hi = htonl( 0 );
+contestwork.crypto.key.lo = contestwork.crypto.key.hi = htonl( 0 );
+contestwork.crypto.iv.lo = contestwork.crypto.iv.hi = htonl( 0 );
+contestwork.crypto.plain.lo = contestwork.crypto.plain.hi = htonl( 0 );
+contestwork.crypto.cypher.lo = contestwork.crypto.cypher.hi = htonl( 0 );
+contestwork.crypto.keysdone.lo = contestwork.crypto.keysdone.hi = htonl( 0 );
+contestwork.crypto.iterations.lo = htonl( numk );
+contestwork.crypto.iterations.hi = htonl( 0 );
 problem.LoadState( &contestwork, 0, numk, core ); // RC5 core selection
 problem.Run( 0 ); //threadnum
 
