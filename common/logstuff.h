@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.3 2000/10/05 18:25:41 cyp Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.4 2000/11/17 07:44:25 cyp Exp $"
 
 /* this is shared with Configure() */
 #define LOGFILETYPE_NONE    0 //no logging to file
@@ -44,9 +44,9 @@ extern void LogTo( int towhat, const char *format, ... );
 //display percent bar. (bar is now always compound form)
 extern void LogScreenPercent( unsigned int load_problem_count );
 
-//Return name of last accessed logfile, or NULL if not logging to file, 
+//Return name of current logfile, or NULL if not logging to file,
 //or "" if logfile hasn't been accessed yet.
-extern const char *LogGetCurrentLogFilename( void );
+extern const char *LogGetCurrentLogFilename(char *buffer, unsigned int len);
 
 //init/deinit prototypes
 void DeinitializeLogging(void);

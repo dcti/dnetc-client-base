@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.45 2000/11/03 16:47:48 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.46 2000/11/17 07:44:24 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -600,10 +600,16 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
   CFGTXT("File to log to"), "",
   CFGTXT(
   "The log file name is required for all log types except \"rotate\", for which it\n"
-  "is optional. The effective file name used for the \"rotate\" log file type is\n"
-  "constructed from a unique identifier for the period (time limit) concatenated\n"
-  "to whatever you specify here. Thus, if the interval is weekly, the name of the\n"
-  "log file used will be [file_to_log_to]yearweek"EXTN_SEP"log.\n"
+  "is optional.\n"
+  "\n"
+  "The effective file name used for the \"rotate\" log file type is constructed\n"
+  "from a unique identifier for the period (time limit) concatenated to whatever\n"
+  "you specify here. Thus, if the interval is weekly, the name of the log file used\n"
+  "will be [file_to_log_to]yearweek"EXTN_SEP"log.\n"
+  "\n"
+  "If the rotate interval was specified as a number of days, then the name of the\n"
+  "log file used will be [file_to_log_to]YYMMDD"EXTN_SEP"log, where YYMMDD is the\n"
+  "date of the first day of that 'interval'.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 

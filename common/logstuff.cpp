@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.40 2000/11/14 15:56:28 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.41 2000/11/17 07:44:25 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -58,14 +58,13 @@ static struct
 
   void *mailmessage;         //handle returned from smtp_construct_message()
   char basedir[256];         //filled if user's 'logfile' is not qualified
-  char logfile[128+20];      //fname when LOGFILETYPE_RESTART or _FIFO
-                             //lastused fname when LOGFILETYPE_ROTATE
-  FILE *logstream;           //open logfile
-
-  unsigned int logfilebaselen;//len of the log fname without ROTATE suffix
+  char logfile[128];         //filename from user
+  FILE *logstream;           //open logfile if /dev/* and "no-limit"
   int  logfileType;          //rotate, restart, fifo, none
   unsigned int logfileLimit; //days when rotating or kbyte when fifo/restart
-  unsigned int logfilestarted; // 1 after the first logfile write
+  unsigned int logfilestarted; // non-zero after the first logfile write 
+                             //also used to mark len of the log fname without 
+                             // ROTATE suffix
 
   int stdoutisatty;         //log screen can handle lines not ending in '\n'
   int stableflag;           //last log screen did end in '\n'
@@ -83,7 +82,6 @@ static struct
   {0},    // basedir[]
   {0},    // logfile[]
   NULL,   // logstream
-  0,      // logfilebaselen
   LOGFILETYPE_NONE, // logfileType
   0,      // logfileLimit
   0,      // logfilestarted
@@ -128,278 +126,321 @@ static FILE *__fopenlog( const char *fn, const char *mode )
   return file;
 }
 
+/* returns NULL if logging is (either implicitely or explicitely) disabled */
+/* logfiletype is LOGFILETYPE_[ROTATE|RESTART|FIFO|NOLIMIT|NONE] */
+/* loglimit is in kilobytes for RESTART and FIFO, in days for ROTATE. */
+/* Note to people writing log parsers: the 'limit' in the .ini may be */
+/* on a different scale, for example in Mb, you'll need to convert if so. */
+static const char *__get_logname( int logfileType, int logfileLimit,
+                                  char *buffer, unsigned int buflen )
+{
+  if (buffer && buflen)
+  {
+    int gotit = 0;
+    switch (logfileType)
+    {
+      case LOGFILETYPE_ROTATE:
+      {
+        int tm_year = 0, tm_mon = 0, tm_mday = 0, tm_yday = 0;
+        if (logfileLimit > 0 )
+        {
+          time_t ttime = time(NULL);
+          struct tm *currtm = localtime( &ttime );
+          if (currtm)
+          {
+            if (currtm->tm_mon  >= 0  && currtm->tm_mon  < 12 &&
+                currtm->tm_year >= 70 && currtm->tm_year <= (9999-1900) &&
+                currtm->tm_mday >= 1  && currtm->tm_mday <= 31 &&
+                currtm->tm_yday >= 0  && currtm->tm_yday <= 366)
+            {
+              tm_year = currtm->tm_year; /* years since 1900*/  
+              tm_mon = currtm->tm_mon;   /* months since January [0,11]*/ 
+              tm_mday = currtm->tm_mday; /* day of the month [1,31]*/ 
+              tm_yday = currtm->tm_yday; /* days since January 1 [0, 365]*/ 
+            }
+          }
+        }
+        if (tm_mday != 0)
+        {
+          unsigned int len;
+          char rotsuffix[20];
+          rotsuffix[0] = '\0';
+        
+          if (logfileLimit >= 28 && logfileLimit <= 31) /* monthly */
+          {
+            static const char *monnames[] = {
+               "jan","feb","mar","apr","may","jun",
+               "jul","aug","sep","oct","nov","dec" };
+            sprintf( rotsuffix, "%02d%s", (tm_year%100), monnames[tm_mon] );
+          }
+          else if (logfileLimit == 365) /* annually */
+          {
+            sprintf( rotsuffix, "%04d", tm_year+1900 );
+          }
+          else if (logfileLimit == 7) /* weekly */
+          {
+            /* we intentionally don't use tm_wday. Technically, week 1 is 
+            ** the first week with a monday in it, but we don't care about 
+            ** that here.
+            */
+            sprintf( rotsuffix, "%02dw%02d", (tm_year%100), (tm_yday+1+6)/7 );
+          }
+          else /* anything else: daily = 1, fortnightly = 14 etc */
+          {
+            int year  = tm_year+ 1900;
+            int month = tm_mon + 1;
+            int day   = tm_mday;
+            if (logfileLimit > 1) /* not daily - so date stamp may be in the */
+            {                     /* past. Use jdn to move back to that date.*/
+              /*
+              ** What is 'jdn'?: Julian Day Numbers (JDN) are used by
+              ** astronomers as a date/time measure independent of calendars and
+              ** convenient for computing the elapsed time between dates.  The JDN
+              ** for any date/time is the number of days (including fractional
+              ** days) elapsed since noon, 1 Jan 4713 BC.  Julian Day Numbers were
+              ** originated by Joseph Justus Scaliger (1540-1609) in 1582 and named
+              ** after his father Julius, not after Julius Caesar.  They are not 
+              ** related to the Julian calendar. Note that some people use the 
+              ** term "Julian day number" to refer to any numbering of days. The US
+              ** government, for example, uses the term to denote the number of days 
+              ** since 1 January of the current year.
+              **
+              ** The macros used below assume a Gregorian calendar.
+              **
+              ** Based on formulae originally posted by
+              ** Tom Van Flandern metares@well.sf.ca.us in sci.astro
+              ** http://www.deja.com/dnquery.xp?QRY=julian+sci.astro+calculating&ST=MS
+              ** http://world.std.com/FAQ/Other/calendar-FAQ.txt
+              **
+              ** Check date is 1 Jan 2000 ==> JDN 2451545
+              */ 
+              #define _ymd2jdn( yy, mm, dd, __j ) {   \
+                long __m = (mm); /*signed!*/          \
+                long __a = (14-(__m))/12;             \
+                long __y = (yy)+4800-__a;             \
+                __m = __m + 12*__a - 3;               \
+                __j = ((long)(dd)) + (153*__m+2)/5 +  \
+                      __y*365 + __y/4 - __y/100 +     \
+                      __y/400 - 32045L;               \
+                }
+              #define _jdn2ymd( __j, yy, mm, dd ) {   \
+                  long __a = (__j) + 32044L;          \
+                  long __b = (4*__a+3)/146097L;       \
+                  long __c = __a - (__b*146097L)/4;   \
+                  long __d = (4*__c+3)/1461L;         \
+                  long __e = __c - (1461L*__d)/4;     \
+                  long __f = (5*__e+2)/153L;          \
+                  dd = __e - (153L*__f+2)/5 + 1;      \
+                  mm = __f + 3 - 12*(__f/10);         \
+                  yy = __b*100 + __d - 4800 + __f/10; \
+              }
+              unsigned long jdn;
+              _ymd2jdn( year, month, day, jdn );
+              jdn -= (jdn % logfileLimit); /* backoff to beginning of period */
+              _jdn2ymd( jdn, year, month, day );
+            } /* not daily */
+            sprintf( rotsuffix, "%02d%02d%02d", (year%100), month, day );
+          }
+          strcat(rotsuffix, EXTN_SEP"log");
+          strncpy(buffer, logstatics.logfile, buflen );
+          buffer[buflen-1] = '\0';
+          len = strlen(buffer);
+          strncpy(&buffer[len], rotsuffix, buflen-len );
+          buffer[buflen-1] = '\0';
+          gotit = 1;
+        } /* if (tm_mday != 0) */
+        break;
+      } /* case LOGFILETYPE_ROTATE */
+      case LOGFILETYPE_RESTART:
+        if (logfileLimit < 1)
+          break;
+      /* fallthrough */
+      case LOGFILETYPE_FIFO: /* limit defaults to 100K if < 100K */
+      case LOGFILETYPE_NOLIMIT: 
+        if (logstatics.logfile[0])
+        {
+          strncpy(buffer, logstatics.logfile, buflen );
+          buffer[buflen-1] = '\0';
+          gotit = 1;
+        }
+        break;
+      default:
+        break;
+    } /* switch */
+    if (gotit)
+      return buffer;
+  }
+  return (const char *)0;
+}
+
 //this can ONLY be called from LogWithPointer.
 static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*flags*/ )
 {
   #if (CLIENT_OS == OS_NETWARE || CLIENT_OS == OS_DOS || \
        CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
-       CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN32S )
+       CLIENT_OS == OS_WIN32)
     #define ftruncate( fd, sz )  chsize( fd, sz )
   #elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_AMIGAOS)
     #define ftruncate( fd, sz ) //nada, not supported
     #define FTRUNCATE_NOT_SUPPORTED
   #endif
-
   int logfileType = logstatics.logfileType;
   unsigned int logfileLimit = logstatics.logfileLimit;
+  char logname[sizeof(logstatics.logfile)+32];
 
-  if ( !msglen || msgbuffer[msglen-1] != '\n')
-    return;
-  if ( logfileType == LOGFILETYPE_NONE || logstatics.spoolson==0 ||
-       (logstatics.loggingTo & LOGTO_FILE) == 0)
-    return;
-
-  if ( logfileType == LOGFILETYPE_RESTART)
+  if ( !msglen || msgbuffer[msglen-1] != '\n' ||
+       !logstatics.spoolson || (logstatics.loggingTo & LOGTO_FILE) == 0)
   {
-    if ( logstatics.logfile[0] == 0 )
-      return;
-    if ( logfileLimit < 1 ) /* no size specified */
-      return;
-    if (!logstatics.logstream)
+    logfileType = LOGFILETYPE_NONE;
+  }
+
+  if ( logfileType == LOGFILETYPE_NONE)
+  {
+    ; /* nothing */    
+  }
+  else if ( logfileType == LOGFILETYPE_RESTART)
+  {
+    if (__get_logname( logfileType, logfileLimit, logname, sizeof(logname) ))
     {
-      logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
-    }
-    if ( logstatics.logstream )
-    {
-      long filelen;
-      fseek( logstatics.logstream, 0, SEEK_END );
-      filelen = (long)ftell( logstatics.logstream );
-      if (filelen != (long)(-1))
+      FILE *file = __fopenlog( logname, "a" );
+      if ( file )
       {
-        //filelen += msglen;
-        if ( ((unsigned int)(filelen >> 10)) > logfileLimit )
+        long filelen;
+        fseek( file, 0, SEEK_END );
+        filelen = (long)ftell( file );
+        if (filelen != (long)(-1))
         {
-          int truncated = 1;
-          fclose( logstatics.logstream );
-          logstatics.logstream = __fopenlog( logstatics.logfile, "w" );
-          if (logstatics.logstream && truncated)
+          //filelen += msglen;
+          if ( ((unsigned int)(filelen >> 10)) > logfileLimit )
           {
-            fprintf( logstatics.logstream,
-               "[%s] Log file exceeded %uKbyte limit. Restarted...\n\n",
-                CliGetTimeString( NULL, 1 ),
-               (unsigned int)( logstatics.logfileLimit ));
+            fclose( file );
+            file = __fopenlog( logname, "w" );
+            if (file)
+            {
+              fprintf( file,
+                 "[%s] Log file exceeded %uKbyte limit. Restarted...\n\n",
+                  CliGetTimeString( NULL, 1 ),
+                 (unsigned int)( logstatics.logfileLimit ));
+            }
           }
         }
       }
-      if (logstatics.logstream)
+      if (file)
       {
         logstatics.logfilestarted = 1;
-        fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
-        fclose( logstatics.logstream );
-        logstatics.logstream = NULL;
+        fwrite( msgbuffer, sizeof( char ), msglen, file );
+        fclose( file );
+        file = NULL;
       }
     }
   }
   else if ( logfileType == LOGFILETYPE_ROTATE )
   {
-    static unsigned logfilebaselen = 0;
-    static unsigned int last_year = 0, last_mon = 0, last_day = 0;
-    time_t ttime = time(NULL);
-    struct tm *currtmP = localtime( &ttime );
-    int abortwrite = 0;
-
-    if (!logstatics.logfilestarted)
-      logfilebaselen = strlen( logstatics.logfile );
-
-    if ( logfileLimit >= 28 && logfileLimit <= 31 ) /* monthly */
+    if (__get_logname( logfileType, logfileLimit, logname, sizeof(logname) ))
     {
-      if (currtmP != NULL)
+      FILE *file = __fopenlog( logname, "a" );
+      if (file)
       {
-        last_year = currtmP->tm_year+ 1900;
-        last_mon  = currtmP->tm_mon + 1;
+        fwrite( msgbuffer, sizeof( char ), msglen, file );
+        fclose( file );
+        file = NULL;
       }
-      if (last_mon == 0)
-        abortwrite = 1;
-      else if (last_mon <= 12)
-      {
-        static const char *monnames[] = { "jan","feb","mar","apr","may","jun",
-                                          "jul","aug","sep","oct","nov","dec" };
-        sprintf( logstatics.logfile+logfilebaselen,
-                 "%02d%s"EXTN_SEP"log", (int)(last_year%100),
-                  monnames[last_mon-1] );
-      }
-    }
-    else if (logfileLimit == 365 ) /* annually */
-    {
-      if (currtmP != NULL)
-        last_year = currtmP->tm_year+ 1900;
-      if (last_year == 0)
-        abortwrite = 1;
-      else
-      {
-        sprintf( logstatics.logfile+logfilebaselen,
-                 "%04d"EXTN_SEP"log", (int)last_year );
-      }
-    }
-    else if (logfileLimit == 7 ) /* weekly */
-    {
-      /* technically, week 1 is the first week with a monday in it.
-         But we don't care about that here.                 - cyp
-      */
-      if (currtmP != NULL)
-      {
-        last_year = currtmP->tm_year + 1900;
-        last_day  = currtmP->tm_yday + 1; /* note */
-      }
-      if (last_day == 0)
-        abortwrite = 1;
-      else
-      {
-        sprintf( logstatics.logfile+logfilebaselen,
-                 "%02dw%02d"EXTN_SEP"log", (int)(last_year%100),
-                  ((last_day+6)/7) );
-      }
-    }
-    else /* anything else: daily = 1, fortnightly = 14 etc */
-    {
-      if (currtmP != NULL )
-      {
-        static unsigned long last_jdn = 0;
-        unsigned int curr_year = currtmP->tm_year+ 1900;
-        unsigned int curr_mon  = currtmP->tm_mon + 1;
-        unsigned int curr_day  = currtmP->tm_mday;
-        #define _jdn( y, m, d ) ( (long)((d) - 32076) + 1461L * \
-          ((y) + 4800L + ((m) - 14) / 12) / 4 + 367 * \
-          ((m) - 2 - ((m) - 14) / 12 * 12) / 12 - 3 * \
-          (((y) + 4900L + ((m) - 14) / 12) / 100) / 4 + 1 )
-        unsigned long curr_jdn = _jdn( curr_year, curr_mon, curr_day );
-        #undef _jdn
-        if (( curr_jdn - last_jdn ) > logfileLimit )
-        {
-          last_jdn  = curr_jdn;
-          last_year = curr_year;
-          last_mon  = curr_mon;
-          last_day  = curr_day;
-        }
-      }
-      if (last_day == 0)
-        abortwrite = 1;
-      else
-      {
-        sprintf( logstatics.logfile+logfilebaselen,
-               "%02d%02d%02d"EXTN_SEP"log", (int)(last_year%100),
-               (int)(last_mon), (int)(last_day) );
-      }
-    }
-    if (!abortwrite)
-    {
-      static char lastfilename[sizeof(logstatics.logfile)] = {0};
-      if (logstatics.logstream)
-      {
-        if ( strcmp( lastfilename, logstatics.logfile ) != 0 )
-        {
-          fclose( logstatics.logstream );
-          logstatics.logstream = NULL;
-        }
-      }
-      if (!logstatics.logstream)
-      {
-        strcpy( lastfilename, logstatics.logfile );
-        logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
-      }
-      if ( logstatics.logstream )
-      {
-        fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
-        fclose( logstatics.logstream );
-        logstatics.logstream = NULL;
-      }
-      logstatics.logfilestarted = 1;
     }
   }
   #ifndef FTRUNCATE_NOT_SUPPORTED
   else if ( logfileType == LOGFILETYPE_FIFO )
   {
-    unsigned long filelen = 0;
-    if ( logstatics.logfile[0] == 0 )
-      return;
-    if ( logfileLimit < 100 )
-      logfileLimit = 100;
+    if (__get_logname( logfileType, logfileLimit, logname, sizeof(logname) ))
+    {
+      FILE *file = __fopenlog( logname, "a" );
+      unsigned long filelen = 0;
+      if ( logfileLimit < 100 )
+        logfileLimit = 100;
 
-    if (!logstatics.logstream)
-    {
-      logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
-    }
-    if ( logstatics.logstream )
-    {
-      fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
-      if (((long)(filelen = ftell( logstatics.logstream ))) == ((long)(-1)))
-        filelen = 0;
-      fclose( logstatics.logstream );
-      logstatics.logstream = NULL;
-    }
-    if ( filelen > (((unsigned long)(logfileLimit))<<10) )
-    {    /* careful: file must be read/written without translation - cyp */
-      unsigned int maxswapsize = 1024*4; //assumed dpage/sector size
-      char *swapbuffer = (char *)malloc( maxswapsize );
-      if (swapbuffer)
+      if ( file )
       {
-        if (!logstatics.logstream)
-          logstatics.logstream = __fopenlog( logstatics.logfile, "r+b" );
-        if ( logstatics.logstream )
+        fwrite( msgbuffer, sizeof( char ), msglen, file );
+        if (((long)(filelen = ftell( file ))) == ((long)(-1)))
+          filelen = 0;
+        fclose( file );
+        file = NULL;
+      }
+      if ( filelen > (((unsigned long)(logfileLimit))<<10) )
+      {    /* careful: file must be read/written without translation - cyp */
+        unsigned int maxswapsize = 1024*4; //assumed dpage/sector size
+        char *swapbuffer = (char *)malloc( maxswapsize );
+        if (swapbuffer)
         {
-          unsigned long next_top = filelen - /* keep last 90% */
-                                 ((((unsigned long)(logfileLimit))<<10)*9)/10;
-          if ( fseek( logstatics.logstream, next_top, SEEK_SET ) == 0 &&
-            ( msglen = fread( swapbuffer, sizeof( char ), maxswapsize,
-                      logstatics.logstream ) ) != 0 )
+          file = __fopenlog( logname, "r+b" );
+          if ( file )
           {
-            /* skip to the beginning of the next line */
-            filelen = 0;
-            while (filelen < (msglen-1))
+            unsigned long next_top = filelen - /* keep last 90% */
+                                   ((((unsigned long)(logfileLimit))<<10)*9)/10;
+            if ( fseek( file, next_top, SEEK_SET ) == 0 &&
+              ( msglen = fread( swapbuffer, sizeof( char ), maxswapsize,
+                        file ) ) != 0 )
             {
-              if (swapbuffer[filelen]=='\r' || swapbuffer[filelen]=='\n')
-              {
-                while (filelen < (msglen-1) &&
-                  (swapbuffer[filelen]=='\r' || swapbuffer[filelen]=='\n'))
-                  filelen++;
-                next_top += filelen;
-                break;
+              /* skip to the beginning of the next line */
+              filelen = 0;
+              while (filelen < (msglen-1))
+              {     
+                if (swapbuffer[filelen]=='\r' || swapbuffer[filelen]=='\n')
+                {
+                  while (filelen < (msglen-1) &&
+                    (swapbuffer[filelen]=='\r' || swapbuffer[filelen]=='\n'))
+                    filelen++;
+                  next_top += filelen;
+                  break;
+                }
+                filelen++;
               }
-              filelen++;
+     
+              filelen = 0;
+              while ( fseek( file, next_top, SEEK_SET ) == 0 &&
+                 ( msglen = fread( swapbuffer, sizeof( char ), maxswapsize,
+                        file ) ) != 0 &&
+                    fseek( file, filelen, SEEK_SET ) == 0 &&
+                 ( msglen == fwrite( swapbuffer, sizeof( char ), msglen,
+                         file ) ) )
+              {
+                next_top += msglen;
+                filelen += msglen;
+              }
+              ftruncate( fileno( file ), filelen );
             }
-
-            filelen = 0;
-            while ( fseek( logstatics.logstream, next_top, SEEK_SET ) == 0 &&
-               ( msglen = fread( swapbuffer, sizeof( char ), maxswapsize,
-                      logstatics.logstream ) ) != 0 &&
-                  fseek( logstatics.logstream, filelen, SEEK_SET ) == 0 &&
-               ( msglen == fwrite( swapbuffer, sizeof( char ), msglen,
-                       logstatics.logstream ) ) )
-            {
-              next_top += msglen;
-              filelen += msglen;
-            }
-            ftruncate( fileno( logstatics.logstream ), filelen );
+            fclose( file );
+            file = NULL;
           }
+          free((void *)swapbuffer);
+        }
+      }
+      logstatics.logfilestarted = 1;
+    }
+  }
+  #endif
+  else /* logfileType == LOGFILETYPE_NOLIMIT or no ftruncate() */
+  {
+    if (__get_logname( logfileType, logfileLimit, logname, sizeof(logname) ))
+    {
+      if (!logstatics.logstream)
+        logstatics.logstream = __fopenlog( logname, "a" );
+      if (logstatics.logstream)
+      {
+        fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
+        #if defined(__unix__) /* don't close it if /dev/tty* */
+        if (isatty(fileno(logstatics.logstream)))
+        {
+          fflush( logstatics.logstream );
+        }
+        else
+        #endif
+        {
           fclose( logstatics.logstream );
           logstatics.logstream = NULL;
         }
-        free((void *)swapbuffer);
       }
+      logstatics.logfilestarted = 1;
     }
-    logstatics.logfilestarted = 1;
-  }
-  #endif
-  else /* if ( logfileType == LOGFILETYPE_NOLIMIT ) */
-  {
-    if ( logstatics.logfile[0] == 0 )
-      return;
-    if (!logstatics.logstream)
-      logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
-    if (logstatics.logstream)
-    {
-      fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
-      #if defined(__unix__) /* don't close it if /dev/tty* */
-      if (isatty(fileno(logstatics.logstream)))
-        fflush( logstatics.logstream );
-      else
-      #endif
-      {
-        fclose( logstatics.logstream );
-        logstatics.logstream = NULL;
-      }
-    }
-    logstatics.logfilestarted = 1;
   }
   return;
 }
@@ -652,14 +693,18 @@ void LogTo( int towhat, const char *format, ... )
   return;
 }
 
-const char *LogGetCurrentLogFilename( void )
+/* return NULL if logging to file is implicitely or explicitely disabled,
+** or "" if logging hasn't started yet, else ptr to buffer 
+*/
+const char *LogGetCurrentLogFilename(char *buffer, unsigned int buflen)
 {
   if ((logstatics.loggingTo & LOGTO_FILE) == 0 ||
     logstatics.logfileType == LOGFILETYPE_NONE )
     return NULL;
   if ( !logstatics.logfilestarted )
     return "";
-  return logstatics.logfile;
+  return __get_logname( logstatics.logfileType, logstatics.logfileLimit,
+                         buffer, buflen );
 }
 
 // ---------------------------------------------------------------------------
@@ -751,19 +796,18 @@ void LogScreenPercent( unsigned int load_problem_count )
 
   if (buffer[0] && use_alt_fmt)
   {
-    void (*print_it)(const char *,...) = LogScreen;
     #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_POWERPC)
     // temporary fix - updating the progress every 5 seconds is not a good idea
     // since it causes a number of context-switches to the 68K, which in turn
     // slows the 68K client down quite dramatically if both clients are running
     // in parallel.  So, we only do it once per minute, minus the time display.
-    print_it = (void (*)(const char *,...))0;
     if (!logstatics.lastwasperc || (logstatics.perc_callcount % 12) == 0)
-      print_it = LogScreenRaw;
-    #endif  
-    if (print_it)  
     {
-      (*print_it)( "\r%s", buffer, NULL );
+      LogScreenRaw( "\r%s", buffer, NULL );
+    #else
+    {
+      LogScreen( "\r%s", buffer, NULL );
+    #endif
       logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
       logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
       /* simple, eh? :) */
@@ -828,9 +872,7 @@ void LogScreenPercent( unsigned int load_problem_count )
     if (endperc < 100 && logstatics.percbaton)
     { /* implies conistty and !gui (window repaints are _expensive_) */
       static const char batonchars[] = {'|','/','-','\\'};
-      if (bufptr == &buffer[0]) /* didn't prepend '\r' */
-        *bufptr++ = '\r';       /* so do it now */
-      *bufptr++ = (char)batonchars[logstatics.perc_callcount%sizeof(batonchars)];
+      *bufptr++=(char)batonchars[logstatics.perc_callcount%sizeof(batonchars)];
     }  
     #endif
     *bufptr = '\0';
@@ -884,8 +926,8 @@ void DeinitializeLogging(void)
 
 static int fixup_logfilevars( const char *stype, const char *slimit,
                               int *type, unsigned int *limit,
-                              const char *userslogname, char *logname,
-                              unsigned int maxlognamelen,
+                              const char *userslogname, 
+                              char *logname, unsigned int maxlognamelen,
                               char *logbasedir, unsigned int maxlogdirlen )
 {
   unsigned int len;
@@ -1043,8 +1085,8 @@ void InitializeLogging( int noscreen, int crunchmeterstyle, int nopercbaton,
 
   fixup_logfilevars( logfiletype, logfilelimit,
                      &logstatics.logfileType, &logstatics.logfileLimit,
-                     logfilename, logstatics.logfile,
-                     (sizeof(logstatics.logfile)-10),
+                     logfilename, 
+                     logstatics.logfile, sizeof(logstatics.logfile),
                      logstatics.basedir, sizeof(logstatics.basedir));
   if (logstatics.logfileType != LOGFILETYPE_NONE)
   {
