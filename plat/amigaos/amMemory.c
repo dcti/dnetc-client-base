@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amMemory.c,v 1.2.4.2 2004/01/08 21:00:48 oliver Exp $
+ * $Id: amMemory.c,v 1.2.4.3 2004/04/17 18:49:38 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -136,7 +136,7 @@ void free(void *ptr)
 VOID MemDeinit(VOID)
 {
    if (MemPool) {
-      #ifdef __amigaos4__
+      #if defined(__amigaos4__)
       ObtainSemaphore(&MemPoolLock);
       DeletePool(MemPool); /* OS4 */
       ReleaseSemaphore(&MemPoolLock);
@@ -169,6 +169,8 @@ VOID MemDeinit(VOID)
                         asm(".stabs \"___EXIT_LIST__\",20,0,0," #pri "+128")
 #endif
 
+#ifndef __amigaos4__
 ADD2EXIT(MemDeinit,-50);
+#endif
 
 #endif /* !defined(__POWERUP__) && !defined(__amigaos4__) && !defined(__MORPHOS__) */
