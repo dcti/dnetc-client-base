@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.201 1999/04/10 22:34:04 trevorh Exp $"; }
+return "@(#)$Id: client.cpp,v 1.202 1999/04/11 19:52:06 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -134,6 +134,8 @@ static const char *GetBuildOrEnvDescription(void)
   static char buffer[32]; long ver = winGetVersion(); /* w32pre.cpp */
   sprintf(buffer,"under Windows%s %u.%u", (ver>=2000)?(" NT"):(""), (ver/100)%20, ver%100 );
   return buffer;
+  #elif defined(BDESCRIP)
+  return BDESCRIP;
   #else
   return "";
   #endif
@@ -159,11 +161,7 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
   {
     if (level == 0)
     {
-      LogScreenRaw( "\nRC5DES v" CLIENT_VERSIONSTRING 
-                    #if (defined(BETA) || defined(BETA_PERIOD))
-		    "-BETA"
-		    #endif
-                    " client - a project of distributed.net\n"
+      LogScreenRaw( "\nRC5DES client - a project of distributed.net\n"
                     "Copyright 1997-1999 distributed.net\n");
 
       #if (CLIENT_CPU == CPU_68K)
@@ -230,11 +228,27 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       const char *msg = GetBuildOrEnvDescription();
       if (msg == NULL) msg="";
 
-      LogRaw("\nRC5DES v%s %sClient for %s%s%s%s started.\n",
-            CLIENT_VERSIONSTRING, ((ClientIsGUI())?("GUI "):("")),
+      struct timeval tv; tv.tv_usec = 0; tv.tv_sec = CliTimeGetBuildDate();
+      LogRaw("\nRC5DES v" CLIENT_VERSIONSTRING "-"
+		       "%c" /* GUI == "G", CLI == "C" */
+		       #ifdef CLIENT_SUPPORTS_SMP
+		       "T" /* threads */
+		       #else
+		       "P" /* polling */
+		       #endif
+                       #if (defined(BETA) || defined(BETA_PERIOD))
+		       "L" /* limited release */
+		       #else
+		       "R" /* public release */
+		       #endif
+                       "-%s " /* date is in bugzilla format yymmddhh */ 
+		       "client for %s%s%s%s started.\n",
+	    ((ClientIsGUI())?('G'):('C')),  CliGetTimeString(&tv,4),
             CLIENT_OS_NAME, ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
-      time_t builddate = CliTimeGetBuildDate();
-      LogRaw("Build date: %s", ctime(&builddate) /* CliGetTimeString(&tv,3) */ );
+      LogScreenRaw( "Please provide the *entire* version descriptor "
+		    "when submitting bug reports.\n");
+      LogScreenRaw( "The distributed.net bug report pages are at "
+                    "http://www.distributed.net/bugs/\n");
       LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n", dnet_id );
     }
   }
@@ -314,21 +328,21 @@ int realmain( int argc, char *argv[] )
 
   #if (CLIENT_OS == OS_RISCOS)
   if (init_success) //protect ourselves
-    {
+  {
     riscos_in_taskwindow = riscos_check_taskwindow();
     if (riscos_find_local_directory(argv[0]))
       init_success = 0;
-    }
+  }
   #endif
 
   //-----------------------------
 
   if ( init_success )
-    {
+  {
     init_success = (( clientP = new Client() ) != NULL);
     if (!init_success)
       ConOutErr( "Unable to create client object. Out of memory." );
-    }
+  }
 
   //----------------------------
 
@@ -348,9 +362,9 @@ int realmain( int argc, char *argv[] )
   //----------------------------
 
   if ( init_success )
-    {
+  {
     retcode = clientP->Main( argc, (const char **)argv );
-    }
+  }
 
   //------------------------------
 
