@@ -1300,7 +1300,7 @@ void Client::ValidateConfig( void )
   // generate the paths of the other files based on the ini filename
 #else
   char buffer[200];
-  strcpy( buffer,client.inifilename );
+  strcpy( buffer,inifilename );
   char *slash = strrchr(buffer, PATH_SEP_C);
   if (slash == NULL)
     {
