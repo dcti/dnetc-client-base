@@ -3,6 +3,9 @@
 
 
   $Log: iniread.cpp,v $
+  Revision 1.16  1999/01/27 02:15:55  jlawson
+  corrected return value checks
+
   Revision 1.15  1999/01/27 00:55:26  jlawson
   committed iniread from proxy again.  now uses INIREAD_SINGLEVALUE and
   new INIREAD_WIN32_LIKE for client compiles.  the win32-like interface
@@ -72,7 +75,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *iniread_cpp(void) {
-static const char *id="@(#)$Id: iniread.cpp,v 1.15 1999/01/27 00:55:26 jlawson Exp $";
+static const char *id="@(#)$Id: iniread.cpp,v 1.16 1999/01/27 02:15:55 jlawson Exp $";
 return id; }
 #endif
 
@@ -520,7 +523,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
   buffer[0] = 0;
   if (buffsize == 1)
     return 0;
-  if ( inifile.ReadIniFile( filename ) == 0 )
+  if ( inifile.ReadIniFile( filename ) )
   {
     if ((inisect = inifile.findsection( sect )) != NULL)
     {
@@ -580,7 +583,7 @@ int WritePrivateProfileStringB( const char *sect, const char *key,
   }
   if (changed)
   {
-    if ( inifile.WriteIniFile())
+    if ( !inifile.WriteIniFile() )
       return 0;
   }
   return 1; //success
