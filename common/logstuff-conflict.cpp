@@ -4,6 +4,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.11  1998/10/05 01:58:05  cyp
+// Implemented automatic time stamping. Added LogSetTimeStampingMode(int) to
+// enable timestamps once the ::Run has started.
+//
 // Revision 1.10  1998/10/03 04:05:46  cyp
 // Removed CliClearScreen() [now in console.cpp], InternalLogScreen() now
 // calls ConOut() [likewise in console.cpp]
@@ -47,7 +51,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.10 1998/10/03 04:05:46 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.11 1998/10/05 01:58:05 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -80,8 +84,7 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.10 1998/10/03 04:05:46 cyp Exp $"; }
 
 #define MAX_LOGENTRY_LEN 1024 //don't make this smaller than 1K!
 
-//#define ASSERT_DATE_STAMP   //make any non-stamped message a stamped one
-//#define ASSERT_WIDTH_80     //show where badly formatted lines are cropping up
+#define ASSERT_WIDTH_80     //show where badly formatted lines are cropping up
 
 #if (CLIENT_OS == OS_NETWARE || CLIENT_OS == OS_DOS || \
      CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
@@ -109,6 +112,8 @@ static struct
   int  logfileType;          //rotate, restart, fifo, none
   unsigned int logfileLimit; //days when rotating or kbyte when fifo/restart
   unsigned int logfilestarted; // 1 after the first logfile write
+
+  char stamptime;            // time stamping is on/off.
   
   char stdoutisatty;         //log screen can handle lines not ending in '\n'
   char stableflag;           //last log screen didn't end in '\n'
@@ -301,10 +306,10 @@ static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*f
 void LogWithPointer( int loggingTo, const char *format, va_list argptr ) 
 {
   char msgbuffer[MAX_LOGENTRY_LEN];
-  unsigned int head, msglen = 0;
-  char *buffptr;
+  unsigned int msglen = 0;
+  char *buffptr, *obuffptr;
   const char *timestamp;
-  int old_loggingTo = loggingTo;
+  int sel, old_loggingTo = loggingTo;
   
   msgbuffer[0]=0;
   loggingTo &= (logstatics.loggingTo|LOGTO_RAWMODE);
@@ -336,44 +341,80 @@ void LogWithPointer( int loggingTo, const char *format, va_list argptr )
 
   if (loggingTo != LOGTO_NONE && (old_loggingTo & LOGTO_RAWMODE) == 0)
     {
-    buffptr = &msgbuffer[0];
-    while (*buffptr == '\r' || *buffptr=='\n' )
-      buffptr++;
-    if (*buffptr && *buffptr!='[' && *buffptr != ' ') /* no timestamp */
+    if (logstatics.stamptime)
       {
-      timestamp = CliGetTimeString( NULL, 1 );
-      memmove( buffptr+(strlen(timestamp)+3), 
-                 buffptr, strlen( buffptr )+1 );
-      *buffptr++='[';
-      while (*timestamp) 
-        *buffptr++ = *timestamp++;
-      *buffptr++=']';
-      *buffptr=' ';
+      buffptr = &msgbuffer[0];
+      sel = 1;
+      do{
+        while (*buffptr == '\r' || *buffptr=='\n' )
+          buffptr++;
+        if (*buffptr && *buffptr!=((sel)?('['):(' ')))  /* no timestamp */
+          {
+          timestamp = CliGetTimeString( NULL, sel );
+          memmove( buffptr+(strlen(timestamp)+3), 
+                   buffptr, strlen( buffptr )+1 );
+          *buffptr++=((sel)?('['):(' '));
+          while (*timestamp) 
+            *buffptr++ = *timestamp++;
+          *buffptr++=((sel)?(']'):(' '));
+          *buffptr=' ';
+          }
+        sel = 0;
+        while (*buffptr && *buffptr != '\n' && *buffptr != '\r')
+           *buffptr++;
+        } while (*buffptr);
       msglen = strlen( msgbuffer );
       }
     }
 
+  #ifdef ASSERT_WIDTH_80  //"show" where badly formatted lines are cropping up
+  if (loggingTo != LOGTO_NONE)
+    {
+    buffptr = &msgbuffer[0];
+    do{
+      while (*buffptr == '\r' || *buffptr=='\n' )
+         buffptr++;
+      obuffptr = buffptr;
+      while (*buffptr && *buffptr != '\r' && *buffptr != '\n' )
+        {
+        buffptr++;
+        if ((buffptr-obuffptr) == 79)
+          {
+          obuffptr = buffptr;
+          while (*buffptr && *buffptr != '\r' && *buffptr != '\n' )
+            buffptr++;
+          if (obuffptr != buffptr)
+            memmove( obuffptr, buffptr, strlen(buffptr)+1 );
+          buffptr = obuffptr;
+          }
+        }
+      } while (*buffptr);
+    }      
+  #endif
+
   if (( loggingTo & LOGTO_SCREEN ) != 0)
     {
-    head = 0;
+    buffptr = &msgbuffer[0];
     if ((loggingTo & LOGTO_RAWMODE)==0)
       {
-      if (msgbuffer[0]=='\n' && logstatics.stableflag) 
+      if (*buffptr=='\n' && logstatics.stableflag) 
         {
-        head++;
+        buffptr++;
         msglen--;
         }
-      else if (msgbuffer[0]!='\n' && !logstatics.stableflag) 
+      else if (*buffptr!='\r' && *buffptr!='\n' && !logstatics.stableflag) 
         {
-        InternalLogScreen( "\n", 1, 0 );
+        msglen++;
+        memmove( msgbuffer+1, msgbuffer, msglen );
+        msgbuffer[0] = '\n';
         logstatics.stableflag = 1;
         }
       }  
     if (msglen)
       {
       logstatics.lastwasperc = 0; //perc bar looks for this
-      logstatics.stableflag = ( msgbuffer[head+(msglen-1)] == '\n' );
-      InternalLogScreen( msgbuffer+head, msglen, 0 );
+      logstatics.stableflag = ( buffptr[(msglen-1)] == '\n' );
+      InternalLogScreen( buffptr, msglen, 0 );
       }
     }
   
@@ -461,7 +502,7 @@ const char *LogGetCurrentLogFilename( void )
     return "";
   return logstatics.logfile;
 }  
-    
+
 // ---------------------------------------------------------------------------
 
 #include "probman.h"
@@ -712,18 +753,27 @@ void Client::DeinitializeLogging(void)
 
 // ---------------------------------------------------------------------------
 
+int LogSetTimeStampingMode(int turn_on)
+{
+  int retval = (logstatics.stamptime!=0);
+  logstatics.stamptime = (turn_on != 0);
+  return retval;
+}
+    
+// ---------------------------------------------------------------------------
+
 void Client::InitializeLogging(void)
 {
   DeinitializeLogging();
   logstatics.loggingTo = LOGTO_NONE;
   logstatics.lastwasperc = 0;
+  logstatics.stamptime = 0;
 
   if ( !quietmode && !runhidden )
     {
     logstatics.loggingTo |= LOGTO_SCREEN;
     logstatics.stableflag = 0;   //assume next log screen needs a '\n' first
     }
-
 
   if (!logstatics.mailmessage && messagelen && !offlinemode)
     logstatics.mailmessage = new MailMessage();

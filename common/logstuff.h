@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.h,v $
+// Revision 1.5  1998/10/05 01:58:07  cyp
+// Implemented automatic time stamping. Added LogSetTimeStampingMode(int) to
+// enable timestamps once the ::Run has started.
+//
 // Revision 1.4  1998/10/03 17:00:30  sampo
 // Finished the ConClear() replacement of CliScreenClear.
 //
@@ -24,6 +28,9 @@
 
 #ifndef __LOGSTUFF_H__
 #define __LOGSTUFF_H__
+
+//Turn on/off automatic timestamps. Returns old mode.
+extern int LogSetTimeStampingMode(int turn_on);
 
 //Flush mail and if last screen write didn't end with a LF then do that now. 
 extern void LogFlush( int forceflush );
