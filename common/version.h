@@ -1,8 +1,9 @@
-/* Hey, Emacs, this a -*-C++-*- file !
- *
+/* Hey, Emacs, this a -*-C-*- file !
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * DO NOT USE C++ style comments ('//') in this file! 
  *
  * ---------------------------------------------------------------------
  * Version bump guide: 
@@ -23,10 +24,12 @@
  * ---------------------------------------------------------------------
 */
 #ifndef __VERSION_H__
-#define __VERSION_H__ "@(#)$Id: version.h,v 1.52.2.7 1999/12/12 14:11:43 cyp Exp $"
+#define __VERSION_H__ "@(#)$Id: version.h,v 1.52.2.8 1999/12/12 14:24:18 cyp Exp $"
 
 /* BETA etc is handled internally/at-runtime by cliident.cpp. */
-/* Do not adjust anything here. */
+/* Do not adjust for BETA here, particularly CLIENT_VERSIONSTRING. */
+
+/* DO NOT USE C++ style comments ('//') in this file! */
 
 #define CLIENT_MAJOR_VER     2
 #define CLIENT_CONTEST       80
@@ -35,3 +38,4 @@
 #define CLIENT_VERSIONSTRING "2.8003-448"
 
 #endif /* __VERSION_H__ */
+
