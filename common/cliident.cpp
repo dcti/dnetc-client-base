@@ -16,7 +16,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.11 2000/03/28 00:12:05 andreasb Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.12 2000/04/15 14:18:32 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -36,7 +36,6 @@ return "@(#)$Id: cliident.cpp,v 1.17.2.11 2000/03/28 00:12:05 andreasb Exp $"; }
 #include "clisrate.h"
 #include "clitime.h"
 #include "cmdline.h"
-#include "cmpidefs.h"
 #include "confopt.h"
 #include "confrwv.h"
 #include "console.h"
@@ -84,7 +83,6 @@ static const char *h_ident_table[] =
   (const char *)__CLISRATE_H__,
   (const char *)__CLITIME_H__,
   (const char *)__CMDLINE_H__,
-  (const char *)__CMPIDEFS_H__,
   (const char *)__CONFOPT_H__,
   (const char *)__CONFRWV_H__,
   (const char *)__CONSOLE_H__,

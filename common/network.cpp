@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.30 2000/03/20 14:27:55 jbaker Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.31 2000/04/15 14:18:32 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -16,7 +16,6 @@ return "@(#)$Id: network.cpp,v 1.97.2.30 2000/03/20 14:27:55 jbaker Exp $"; }
 #include "baseincs.h"  // standard stuff
 #include "sleepdef.h"  // Fix sleep()/usleep() macros there! <--
 #include "autobuff.h"  // Autobuffer class
-#include "cmpidefs.h"  // strncmpi(), strcmpi()
 #include "logstuff.h"  // LogScreen()
 #include "base64.h"    // base64_encode()
 #include "clitime.h"   // CliGetTimeString(NULL,1);
@@ -405,12 +404,18 @@ void Network::ShowConnection(void)
 {
   if (verbose_level > 0 && !shown_connection)
   {
-    const char *targethost = svc_hostname;
-    unsigned int len = strlen( targethost );
-    const char sig[]=".distributed.net";
+    unsigned int len = strlen( svc_hostname );
+    char sig[]=".distributed.net";
     char scratch[sizeof(sig) + 20];
+    char *targethost = svc_hostname;
+    while (*targethost) 
+    { 
+      *targethost = (char)tolower(*targethost);
+      targethost++;
+    }
+    targethost = svc_hostname;
     if ((len > (sizeof( sig ) - 1) && autofindkeyserver &&
-      strcmpi( &targethost[(len-(sizeof( sig )-1))], sig ) == 0))
+      strcmp( &targethost[(len-(sizeof( sig )-1))], sig ) == 0))
     {
       targethost = sig + 1;
       if (svc_hostaddr)
@@ -1119,6 +1124,18 @@ int Network::Close(void)
 
 // -----------------------------------------------------------------------
 
+#if defined(__TURBOC__)
+  #define strncasecmp(x,y,z) strncmpi(x,y,z)
+#elif defined(_MSC_VER)
+  #define strncasecmp(x,y,n)  _strnicmp(x,y,n)
+#elif defined(__WATCOMC__) || defined(__IBMCPP__) || defined(__SASC__)
+  #define strncasecmp(x,y,n)  strnicmp(x,y,n)
+#elif (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_MACOS) || \
+      (CLIENT_OS == OS_ULTRIX)
+  extern "C" int strcasecmp(const char *s1, const char *s2);
+  extern "C" int strncasecmp(const char *s1, const char *s2, size_t);
+#endif
+
 // Receives data from the connection with any necessary decoding.
 // Returns length of read buffer.
 
@@ -1127,6 +1144,7 @@ int Network::Get( char * data, int length )
   time_t starttime = 0;
   int need_close = 0;
   int timed_out = 0;    //only used with blocking sockets
+  char lcbuf[32]; unsigned int lcbufpos;
 
   int tmp_isnonblocking = (isnonblocking != 0); //we handle timeout ourselves
   isnonblocking = 0;                 //so stop LowLevelGet() from doing it.
@@ -1160,12 +1178,18 @@ int Network::Get( char * data, int length )
       while (uubuffer.RemoveLine(&line))
       {
         nothing_done = 0;
-        if (strncmpi(line, "Content-Length: ", 16) == 0)
+
+        strncpy( lcbuf, line, sizeof(lcbuf) );
+        lcbuf[sizeof(lcbuf)-1] = '\0';
+        for (lcbufpos=0;lcbuf[lcbufpos] && lcbufpos<sizeof(lcbuf);lcbufpos++)
+          lcbuf[lcbufpos] = (char)tolower(lcbuf[lcbufpos]);
+        
+        if (memcmp(lcbuf, "content-length: ", 16) == 0) //"Content-Length: "
         {
           httplength = atoi((const char*)line + 16);
         }
         else if ( (svc_hostaddr == 0) &&
-          (strncmpi(line, "X-KeyServer: ", 13) == 0))
+          (memcmp(lcbuf, "x-keyserver: ", 13) == 0)) //"X-KeyServer: "
         {
           u32 newaddr = 0;
           char newhostname[64];
@@ -1186,7 +1210,7 @@ int Network::Get( char * data, int length )
           // got blank line separating header from body
           gothttpend = 1;
           if (uubuffer.GetLength() >= 6 &&
-            strncmpi(uubuffer.GetHead(), "begin ", 6) == 0)
+            memcmp(uubuffer.GetHead(), "begin ", 6) == 0)
           {
             mode |= MODE_UUE;
             gotuubegin = 0;
@@ -1228,9 +1252,14 @@ int Network::Get( char * data, int length )
       {
         nothing_done = 0;
 
-        if (strncmpi(line, "begin ", 6) == 0) gotuubegin = 1;
-        else if (strncmpi(line, "POST ", 5) == 0) mode |= MODE_HTTP;
-        else if (strncmpi(line, "end", 3) == 0)
+        strncpy( lcbuf, line, sizeof(lcbuf) );
+        lcbuf[sizeof(lcbuf)-1] = '\0';
+        for (lcbufpos=0;lcbuf[lcbufpos] && lcbufpos<sizeof(lcbuf);lcbufpos++)
+          lcbuf[lcbufpos] = (char)tolower(lcbuf[lcbufpos]);
+
+        if (memcmp(lcbuf, "begin ", 6) == 0) gotuubegin = 1;
+        else if (memcmp(lcbuf, "post ", 5) == 0) mode |= MODE_HTTP; //"POST "
+        else if (memcmp(lcbuf, "end", 3) == 0)
         {
           gotuubegin = gothttpend = 0;
           httplength = 0;
@@ -1299,16 +1328,21 @@ int Network::Get( char * data, int length )
           if (httplength == 0) nothing_done = gethttpdone = 1;
         }
 
+        if ((lcbufpos = tempbuffer.GetLength()) > sizeof(lcbuf))
+          lcbufpos = sizeof(lcbuf);
+        strncpy( lcbuf, tempbuffer.GetHead(), lcbufpos );
+        lcbuf[sizeof(lcbuf)-1] = '\0';
+        for (lcbufpos=0;lcbuf[lcbufpos] && lcbufpos<sizeof(lcbuf);lcbufpos++)
+          lcbuf[lcbufpos] = (char)tolower(lcbuf[lcbufpos]);
+
         // see if we should upgrade to different mode
-        if (tempbuffer.GetLength() >= 6 &&
-            strncmpi(tempbuffer.GetHead(), "begin ", 6) == 0)
+        if ( memcmp( lcbuf, "begin ",  6 ) == 0)
         {
           mode |= MODE_UUE;
           uubuffer = tempbuffer;
           gotuubegin = 0;
         }
-        else if (tempbuffer.GetLength() >= 5 &&
-            strncmpi(tempbuffer.GetHead(), "POST ", 5) == 0)
+        else if ( memcmp( lcbuf, "post ",  5 ) == 0)
         {
           mode |= MODE_HTTP;
           uubuffer = tempbuffer;

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.55 2000/03/18 12:14:22 jlawson Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.56 2000/04/15 14:18:33 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -136,7 +136,7 @@ Problem::Problem(void)
       char getyes[10];
       ConInStr(getyes,4,0);
       ClearPauseRequestTrigger();
-      if (strcmpi(getyes,"yes") != 0)
+      if (strcmp( getyes, "yes" ) == 0)
       {
         runlevel = +12345;
         RaiseExitRequestTrigger();

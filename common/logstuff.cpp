@@ -11,7 +11,7 @@
  * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.16 2000/02/10 17:27:53 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.17 2000/04/15 14:18:33 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -20,7 +20,6 @@ return "@(#)$Id: logstuff.cpp,v 1.37.2.16 2000/02/10 17:27:53 cyp Exp $"; }
 #include "clitime.h"   // CliGetTimeString(NULL,1)
 #include "pathwork.h"  // GetFullPathForFilename( x )
 #include "problem.h"   // needed for logscreenpercent
-#include "cmpidefs.h"  // strcmpi()
 #include "console.h"   // for ConOut() and ConIsScreen()
 #include "triggers.h"  // don't print percbar if pause/exit/restart triggered
 #include "logstuff.h"  // keep the prototypes in sync

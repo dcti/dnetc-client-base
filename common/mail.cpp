@@ -7,14 +7,13 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.32.2.6 2000/02/11 16:22:49 cyp Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.32.2.7 2000/04/15 14:18:32 cyp Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
 
 #include "baseincs.h"
 #include "network.h"
 #include "version.h"
-#include "cmpidefs.h"
 #include "logstuff.h"
 #include "triggers.h"
 #include "util.h"
@@ -1044,7 +1043,10 @@ int smtp_deinitialize_message( struct mailmessage *msg )
 
 static void cleanup_field( int atype, char *addr, const char *default_addr )
 {
+  const char sig[]="distributed.net";
   char *p = addr;
+  unsigned int len;
+  
   while (*addr && isspace(*addr))
     addr++;
   if (addr != p)
@@ -1057,17 +1059,29 @@ static void cleanup_field( int atype, char *addr, const char *default_addr )
     *p = 0;
   }
 
-  unsigned int len = strlen( addr );
+  len = strlen( addr );
   while (len > 0 && isspace(addr[len-1]))
     addr[--len]=0;
 
-  const char sig[]="distributed.net";
-  if (len>=(sizeof(sig)-1) && strcmpi(&(addr[(len-(sizeof(sig)-1))]),sig)==0)
+  /* reject if lc "^distributed.net$" or "*[\@|\.]distributed.net$" */ 
+  if (len>=(sizeof(sig)-1))
   {
-    if (len==(sizeof(sig)-1))
-      len = 0;
-    else if (addr[(len-(sizeof(sig)-1))-1]=='.' || addr[(len-(sizeof(sig)-1))-1]=='@')
-      len = 0;
+    char scratch[sizeof(sig)+1];
+    strncpy(scratch,&(addr[(len-(sizeof(sig)-1))]),sizeof(scratch));
+    scratch[sizeof(scratch)-1] = '\0';
+    p = scratch;
+    while (*p) 
+    {
+      *p = (char)tolower(*p);
+      p++;
+    }  
+    if ( strcmp( sig, scratch ) == 0 )
+    {  
+      if (len==(sizeof(sig)-1))
+        len = 0;
+      else if (addr[(len-(sizeof(sig)-1))-1]=='.' || addr[(len-(sizeof(sig)-1))-1]=='@')
+        len = 0;
+    }    
   }
 
   if (len == 0)
