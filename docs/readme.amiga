@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.10.4.3 2004/04/20 09:30:56 oliver Exp $
+ Document revision $Id: readme.amiga,v 1.10.4.4 2004/07/18 17:53:51 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -83,14 +83,14 @@
 
  3.0  Notes ----------------------------------------------------------
 
-    If you want to contribute to the Amiga RC5 Team Effort, visit the effort
+    If you want to contribute to the Distributed Amiga team, visit the effort
     homepage at http://distributed.amiga.org/, it contains all the necessary
     info along with extensive information on usage, configuration, trouble
     shooting etc. 
     
     IMPORTANT: the client's default distributed.net ID is rc5@distributed.net.
     Unless you change this your work is wasted effort.
-    The usage section on the Amiga effort pages contains all you need to
+    The usage section on the Distributed Amiga pages contains all you need to
     know to change this.
 
   3.1  Ensuring stack size is large enough ---------------------------
@@ -204,9 +204,9 @@
        - Stefan Smietanowski (for porting previous clients to the Amiga -
          some crucial parts of his code are used in this version)
        - Dirk Stoecker (laborious testing of PowerUp client betas)
-       - Thomas Tavoly (coordinator of the Amiga RC5 Team)
+       - Thomas Tavoly (coordinator of the Distributed Amiga team)
 
-    -- The whole Amiga RC5 Team
+    -- The whole Distributed Amiga team
        Without you there wouldn't be much of a point in doing the client, 
        so keep on cracking! Maybe YOU can find the key with the client.
 
