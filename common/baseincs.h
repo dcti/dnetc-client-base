@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.4  1998/07/12 13:05:11  cyruspatel
+// NetWare changes.
+//
 // Revision 1.3  1998/07/08 05:19:16  jlawson
 // updates to get Borland C++ to compile under Win32.
 //
@@ -139,12 +142,12 @@ extern "C" {
 // nothing  #include <share.h>
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_NETWARE)
-  #include <sys/time.h>
-  #include <process.h>
-  #include <conio.h>
-  #include <direct.h>
-  #include <share.h>
-  #include <fcntl.h>
+  #include <sys/time.h> //timeval
+  #include <unistd.h> //isatty, chdir, getcwd, access, unlink, chsize, O_...
+  #include <conio.h> //ConsolePrintf(), clrscr()
+  #include <share.h> //SH_DENYNO
+  #include <nwfile.h> //sopen()
+  #include <fcntl.h> //O_... constants
   #include "platforms/netware/netware.h" //for stuff in netware.cpp
 #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
   #include <fcntl.h>
