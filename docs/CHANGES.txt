@@ -21,29 +21,31 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.8 2003/01/31 14:37:09 mfeiri Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.9 2003/02/06 23:30:53 andreasb Exp $
 ==========================================================================
 
 2.9000
 ------
 
-2.9003.480  new: x86: rc5-72 core by Gnatiuc Ianos (Athlon optimized)
+2.9003-481
+
+2.9003-480  new: x86: rc5-72 core by Gnatiuc Ianos (Athlon optimized)
             chg: all: -numcpu 0 disables use of shared memory (if any)
             fix: macosx: changed -install to work on Mac OS X 10.2 
 
-2.9002.479  new: ppc: rc5-72 core by Malcolm Howell (603e optimized)
+2.9002-479  new: ppc: rc5-72 core by Malcolm Howell (603e optimized)
             new: ppc: rc5-72 cores by Didier Levet (AltiVec optimized)
             new: amigaos: optimized 68k rc5-72 cores by Malcolm Howell
             fix: amigaos: PowerUp compiler linklib no longer trashes memory
             imp: amigaos: added G3/G4 cpu detection
 
-2.9001.478  new: os2: enabled command line options: -pause, -unpause, -restart
+2.9001-478  new: os2: enabled command line options: -pause, -unpause, -restart
             imp: all: write checkpoint files before client suspends
             fix: all: correctly round summary rate and OGR stats units (#3041)
             new: s390: support Linux on s390/s390x platforms
             new: arm: rc5-72 assembly cores by Peter Teichmann
 
-2.9001.477  fix: os2: installation complete rewritten (#2061)
+2.9001-477  fix: os2: installation complete rewritten (#2061)
             fix: os2: keyboard hangs, random colors after -config or -help
                       in OS/2 fullscreen session
             new: os2: "pause-when-running" enabled
@@ -51,7 +53,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.8 2003/01/31 14:37:09 mfeiri Exp $
             new: x86: rc5-72 assembly cores by Samuel Seay
             new: x86: rc5-72 assembly cores by Décio Luiz Gazzoni Filho
 
-2.9000.475  new: all: contest rc5-72
+2.9000-475  new: all: contest rc5-72
             chg: all: new buffer format (incompatible with previous 
                       clients and proxies)
             fix: all: "pause-when-running": whitespaces between program
