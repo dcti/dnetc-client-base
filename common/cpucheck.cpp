@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.55 2000/10/23 17:25:24 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.56 2000/10/24 16:40:08 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -772,6 +772,15 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0000,     -1, NULL        }
           }; internalxref = &cyrixxref[0];
       vendorname = "Cyrix ";
+      cpuidbmask = 0x0ff0;
+    }
+    else if ( vendorid == 0x6F43 /* 'eM' */)
+    {
+      static struct cpuxref vpc[]={
+          {  0x0535,      0, "586 (emulated)" },
+          {  0x0000,     -1, NULL             }
+          }; internalxref = &vpc[0];
+      vendorname = "Motorola ";
       cpuidbmask = 0x0ff0;
     }
     else if ( vendorid == 0x6543 /* 'eC' */ ) /* "CentaurHauls" */
