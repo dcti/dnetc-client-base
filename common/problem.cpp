@@ -298,7 +298,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   }
   else if ( kiter != timeslice * PIPELINE_COUNT )
   {
-    printf("kiter wrong %ld %d\n", kiter, timeslice*PIPELINE_COUNT);
+    printf("kiter wrong %ld %d\n", kiter, (int)(timeslice*PIPELINE_COUNT));
   }
 }
 #elif (CLIENT_CPU == CPU_SPARC) && (ULTRA_CRUNCH == 1)

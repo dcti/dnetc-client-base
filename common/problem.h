@@ -2,8 +2,8 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
-#ifndef RC5_H
-#define RC5_H
+#ifndef _PROBLEM_H_
+#define _PROBLEM_H_
 
 #include "cputypes.h"
 

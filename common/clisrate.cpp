@@ -139,10 +139,11 @@ const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
   #else
            "Started",
   #endif           
-           name, count, size,
-           ntohl( fileentry->key.hi ), ntohl( fileentry->key.lo ),
+           name, (int) count, (int)size,
+           (unsigned long) ntohl( fileentry->key.hi ), 
+           (unsigned long) ntohl( fileentry->key.lo ),
            ((startpercent)?(' '):(0)), 
-           startpercent/100, startpercent%100 );
+           (unsigned)(startpercent/100), (unsigned)(startpercent%100) );
   return str;
 }
 
@@ -173,7 +174,8 @@ const char *CliGetMessageForProblemCompleted( Problem *prob )
   sprintf( str, "Completed %s block %08lX:%08lX (%s keys)\n"
                 " %s  %s - [%skeys/sec]\n",
                 name,
-                ntohl( rc5result.key.hi ) , ntohl( rc5result.key.lo ),
+                (unsigned long) ntohl( rc5result.key.hi ) ,
+                (unsigned long) ntohl( rc5result.key.lo ),
                 CliGetU64AsString( &(rc5result.iterations), 1, contestid ),
                 CliGetTimeString( NULL, 0 ),
                 CliGetTimeString( &tv, 2 ),

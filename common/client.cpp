@@ -1744,10 +1744,10 @@ PreferredIsDone1:
           pthread_attr_setscope(&thread_sched[cpu_i],PTHREAD_SCOPE_SYSTEM);
           pthread_attr_setinheritsched(&thread_sched[cpu_i],PTHREAD_INHERIT_SCHED);
           if (pthread_create( &threadid[cpu_i], &thread_sched[cpu_i], (void *(*)(void*)) Go_mt, thstart[cpu_i]) )
-            threadid[cpu_i] = NULL; //0
+            threadid[cpu_i] = (pthread_t) NULL; //0
 #else
           if (pthread_create( &threadid[cpu_i], NULL, (void *(*)(void*)) Go_mt, thstart[cpu_i]) )
-            threadid[cpu_i] = NULL; //0
+            threadid[cpu_i] = (pthread_t) NULL; //0
 #endif
 
           if ( !threadid[cpu_i] )
