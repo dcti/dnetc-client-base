@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.145 2000/06/02 06:24:58 jlawson Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.146 2000/07/11 01:03:17 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -886,7 +886,7 @@ static void __compute_run_times(Problem *problem,
   /* ++++++++++++++++++++++++++ */
 
   /* do we need to compute elapsed wall clock time for this packet? */
-  if ( core_resultcode == RESULT_WORKING ) /* no, not yet */ 
+//  if ( core_resultcode == RESULT_WORKING ) /* no, not yet */ 
   {
     if (clock_stop_is_time_now /* we have determined 'now' */
     && *probstart_secs == 0xfffffffful) /* our start time was invalid */
@@ -895,7 +895,7 @@ static void __compute_run_times(Problem *problem,
       *probstart_usecs = clock_stop.tv_usec;
     }
   }
-  else /* _FOUND/_NOTHING. run is finished, compute elapsed wall clock time */
+//  else /* _FOUND/_NOTHING. run is finished, compute elapsed wall clock time */
   {
     timehi = *probstart_secs;
     timelo = *probstart_usecs;
