@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.11 2003/07/28 06:09:47 jlawson Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.12 2003/08/09 12:51:53 mweiser Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -418,9 +418,11 @@
   #define CLIENT_OS_NAME   "RISC OS"
   #define CLIENT_OS     OS_RISCOS
   #define CLIENT_CPU    CPU_ARM
-#elif defined(_NeXT_)
-  #undef __unix__ /* just in case */
-  #define CLIENT_OS_NAME   "NextStep"
+#elif defined(__NeXT__)
+  #ifndef __unix__
+  #define __unix__ /* just in case */
+  #endif
+  #define CLIENT_OS_NAME   "NeXTstep"
   #define CLIENT_OS     OS_NEXTSTEP
   #if defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
