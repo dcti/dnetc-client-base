@@ -249,8 +249,8 @@
        and setup of the client is to connect to an EFNet IRC server and 
        join the channel #distributed. Although there are dozens of EFNet
        servers world-wide, the following should give you a starting point:
-       In the U.S: irc.cs.cmu.edu:6667, ingenue.eecs.berkeley.edu:6667,
-       piglet.cc.utexas.edu:6667. In Europe: irc.ec-lille.fr:6667, 
+       In the U.S: irc.cs.cmu.edu:6667, irc.idle.net:6667,
+       irc.frontiernet.net:6667. In Europe: irc.ec-lille.fr:6667, 
        irc.nijenrode.nl:6667, or efnet.demon.co.uk:6667 
 
      - If you need further assistance with client use or operation, refer 
