@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.10 1999/10/16 22:47:28 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.11 1999/10/22 17:57:05 michmarc Exp $"; }
 
 
 #include "cputypes.h"
@@ -416,12 +416,27 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         selcorestatics.corenum[contestid] = 0;
     }    
     if (selcorestatics.corenum[contestid] < 0 || 
-      selcorestatics.corenum[contestid] >= __corecount_for_contest(contestid))
+      selcorestatics.corenum[contestid] >= (int)__corecount_for_contest(contestid))
     {
       selcorestatics.corenum[contestid] = 0;
     }  
-    LogScreen( "%s: using \"%s\" core.\n", contname, 
-      selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] );
+  }
+  else if (contestid == CSC)
+  {
+    selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
+    if (selcorestatics.corenum[CSC] < 0)
+    {
+  #if 0
+    // Who knows?  Just benchmark them all below
+  #endif
+    }
+  }
+  if (selcorestatics.corenum[contestid] >= 0)
+  {
+    LogScreen( "%s: %s core #%d (%s)\n", contname, 
+      ((selcorestatics.user_cputype[contestid] >= 0)?("Using"):("Auto-selected")),
+      selcorestatics.corenum[contestid],
+     selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
   }
   #elif (CLIENT_CPU == CPU_68K)
   if (contestid == RC5 || contestid == DES) /* old style */
