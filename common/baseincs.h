@@ -11,6 +11,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.56  1999/03/05 20:59:36  patrick
+//
+// timeval is found in sys/time.h for OS/2-EMX (somehow got removed)
+//
 // Revision 1.55  1999/02/04 07:34:06  cyp
 // Removed lurk.h from win32/16,os/2 sections. It is now included where ref'd.
 //
@@ -243,6 +247,7 @@ extern "C" {
   #include "platforms/os2cli/os2defs.h"
   #if !defined(__EMX__)               // supported in Watcom
   #include <net/if.h>
+  #include <sys/time.h>               //timeval
   #include "platforms/os2cli/dod.h"   // needs to be included after Client
   #endif
   #include "platforms/os2cli/os2inst.h" //-install/-uninstall functionality
