@@ -12,8 +12,15 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.80  1998/09/28 02:36:13  cyp
+// new method LoadSaveProblems() [probfill.cpp]; removed MAXCPUS [obsolete];
+// removed SetNiceness() [SetPriority() setprio.cpp]; removed DisplayBanner()
+// [static function with restart-tracking in client.cpp]; removed RunStartup()
+// [static function in client.cpp]; changed return value of ::Run() from
+// s32 to int since this is the client's exit code.
+//
 // Revision 1.79  1998/09/19 08:50:20  silby
-// Added in beta test client timeouts.  Enabled/controlled from version.h by defining BETA, and setting the expiration time.
+// Added in beta test client timeouts.  Enabled/controlled from version.h by 
 //
 // Revision 1.78  1998/08/28 22:31:09  cyp
 // Added prototype for Client::Main().
@@ -173,7 +180,7 @@
 
 #define PACKET_VERSION      0x03
 
-#define MAXCPUS             16
+//#define MAXCPUS             16   -- OBSOLETE --
 #define FETCH_RETRY         10
 
 // --------------------------------------------------------------------------
@@ -372,9 +379,6 @@ protected:
     // pause for other tasks
 #endif
 
-  void RandomWork( FileEntry * data );
-    // returns a random block.
-
   // these put/get data blocks to the file buffers
   // and trigger Fetch/Flush when needed
   s32  PutBufferInput( const FileEntry * data );  // hidden
@@ -388,11 +392,12 @@ protected:
 public:
   s32  CountBufferInput(u8 contest);
     // returns number of blocks currently in input buffer
-protected:
+
   s32  PutBufferOutput( const FileEntry * data );  // "user"
     // dump an entry into output buffer
     // Returns: -1 on error, otherwise number of entries now in file.
 
+protected:
   s32  GetBufferOutput( FileEntry * data , u8 contest);       // hidden
     // get work from output buffer
     // Returns: -1 on error, otherwise number of blocks now in file.
@@ -400,7 +405,6 @@ protected:
 public:
   s32  CountBufferOutput(u8 contest);
     // returns number of blocks currently in output buffer
-protected:
 
   s32 InternalPutBuffer( const char *filename, const FileEntry * data );
   s32 InternalGetBuffer( const char *filename, FileEntry * data, u32 *optype , u8 contest);
@@ -420,15 +424,12 @@ protected:
   bool CheckForcedKeyport(void);
   bool CheckForcedKeyproxy(void);
 
-  void SetNiceness(void);
-    // set the client niceness
-
 public:
   Client();
-  ~Client();
+  ~Client() {};
 
 
-  int Main( int argc, const char *argv[] );
+  int Main( int argc, const char *argv[], int restarted );
   //encapsulated main().  client.Main() is restartable
 
   int ParseCommandline( int runlevel, int argc, const char *argv[], 
@@ -437,20 +438,13 @@ public:
   //         >= 1 = post-readconfig (override ini options)
   //         == 2 = run "modes"
 
-  void PrintBanner(int level); 
-    //level=0=show copyright/version, 1=show startup message
-
-  s32 RunStartup(void);
-    // to be called before calling Run() for the first time
-    // returns: non-zero on failure
-
-  s32 RunShutdown(void) {return 0;}
-    // undo Runstartup
-
   s32 CkpointToBufferInput(u8 contest);
     // Copies info in checkpint file back to input buffer
 
-  void DoCheckpoint( int load_problem_count );
+  void RandomWork( FileEntry * data );
+    // returns a random block.
+
+  void DoCheckpoint( unsigned int load_problem_count );
     // Make the checkpoint file represent current blocks being worked on
 
   void DisplayHelp( const char * unrecognized_option );
@@ -491,13 +485,13 @@ public:
     // only writes contestdone and randomprefix .ini entries
 
   u32  Benchmark( u8 contest, u32 numk );
-    // returns keys/second
+    // returns keys/second or zero if break
 
   s32  SelfTest( u8 contest );
     // run all the test keys
     // Returns: number of tests passed, or negative number of test that failed
 
-  s32 Run( void );
+  int Run( void );
     // run the loop, do the work
     // returns:
     //    -2 = exit by error (all contests closed)
@@ -524,11 +518,8 @@ public:
 
   s32  Flush( u8 contest, Network *netin = 0, s32 quietness = 0, s32 force = 0 );
     // flushes out result buffers, useful when a SUCCESS happens
-    // Also remove buffer file stub if done
-    // this is for sneakernet support
     // Returns: number of buffers sent, negative if some error occured
     // If quietness > 1, it will not display the proxymessage.
-    // in the future, 1 could make it not show # of blocks transferred
     // If force > 0, a flush will be attempted no matter the offline
     // mode/etc. - -flush and GUIs should call with this 1. Automated
     // fetches by the client will all use 0 of course.
@@ -546,11 +537,11 @@ public:
     // mode/etc. - -update and GUIs should call with this 1. Automated
     // fetches by the client will all use 0 of course.
 
-  s32 Install();
+  int Install();
     // installs the clients into autolaunch configuration
     // returns: non-zero on failure
 
-  s32 Uninstall(void);
+  int Uninstall(void);
     // removes the client from autolaunch configuration
     // returns: non-zero on failure
 
@@ -571,7 +562,8 @@ public:
   s32 UnlockBuffer( const char *filename );
     // unlock buffer 'filename'
 
-
+  unsigned int LoadSaveProblems(unsigned int load_problem_count, int retmode);
+    // returns actually loaded problems 
 };
 
 // --------------------------------------------------------------------------
