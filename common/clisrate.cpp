@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.8 2000/01/31 15:01:18 ivo Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.9 2000/01/31 15:54:12 ivo Exp $"; }
 
 #include "cputypes.h"  // u32
 #include "problem.h"   // Problem class
@@ -242,7 +242,7 @@ const char *CliGetSummaryStringForContest( int contestid )
            packets, name, ((packets==1)?(""):("s")), totalnodesP,
            CliGetTimeString( &ttime, 2 ), ((!packets)?(0):(' ')), keyrateP,
            contestid == OGR ? "nodes" : "keys" );
-printf("DEBUG: %.0f\n", totaliter);
+      //printf("DEBUG: %.0f\n", totaliter);
       break;
     }
   }
