@@ -37,7 +37,7 @@ _des_unit_func_arm:
 	STR     R0,[R13,#0]
 	MOV     R1,R13
 	ADD     R0,R13,#4
-	BL      _convert_key_from_inc_to_des__FPUlT0
+	BL      _convert_key_from_inc_to_des__FPUiT0
 	MOV     R5,#1
 	MOV     R6,#0
 	LDMIA   R13,{R7,R8}
@@ -535,7 +535,7 @@ L000310J60:
 L00033cJ62:
 	MOV     R1,R13
 	ADD     R0,R13,#4
-	BL      _convert_key_from_des_to_inc__FPUlT0
+	BL      _convert_key_from_des_to_inc__FPUiT0
 	LDR     R0,[R4,#20]
 	LDR     R1,[R13,#0]
 	SUB     R0,R1,R0
