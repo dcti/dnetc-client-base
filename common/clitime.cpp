@@ -13,11 +13,18 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.27 2000/05/31 01:39:08 trevorh Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.28 2000/06/01 16:03:27 michmarc Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
 #include "clitime.h"  // keep the prototypes in sync
+
+#if (CLIENT_OS == OS_WIN32) && (CLIENT_CPU == CPU_ALPHA)
+extern "C" int _AcquireSpinLockCount(long *, int);
+#pragma intrinsic(_AcquireSpinLockCount)
+extern "C" void _ReleaseSpinLock(long *);
+#pragma intrinsic(_ReleaseSpinLock)
+#endif
 
 #if defined(__unix__) && !defined(__EMX__)
   #define HAVE_GETRUSAGE
