@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.41 2000/08/25 06:09:54 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.42 2000/10/20 21:18:14 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -107,18 +107,17 @@
   #include <fcntl.h>
   #include <types.h>
   #define unlink remove
+  #ifdef __VMS_UCX__
+    #include <netinet/in.h> //ntohl/htonl/ntohs/htons
+  #elif defined(MULTINET)
+    #include "multinet_root:[multinet.include.netinet]in.h"
+  #endif
 #elif (CLIENT_OS == OS_SCO)
   #include <fcntl.h>
   #include <sys/time.h>
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-  #if (CLIENT_OS == OS_WIN32) || !defined(__WINDOWS_386__)
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
-    #include <winsock.h>      // timeval
-  #else
-    #include <windows.h>
-    #include "w32sock.h"
-  #endif
+  #include <windows.h>
   #include <sys/timeb.h>
   #include <process.h>
   #include <conio.h>
@@ -134,6 +133,7 @@
   #ifndef SH_DENYNO
     #include <share.h>
   #endif
+  #include "w32sock.h"      //ntohl/htonl/ntohs/htons/timeval
   #include "w32util.h"
   #include "w32svc.h"       // service
   #include "w32cons.h"      // console
@@ -182,6 +182,7 @@
   #include <share.h> //SH_DENYNO
   #include <nwfile.h> //sopen()
   #include <fcntl.h> //O_... constants
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
   #include "platforms/netware/netware.h" //for stuff in netware.cpp
 #elif (CLIENT_OS == OS_SUNOS)
   #include <fcntl.h>
