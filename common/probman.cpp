@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probman.cpp,v $
+// Revision 1.5  1998/11/13 21:08:49  cyp
+// Changed DeinitializeProblemManager() for chrisb's x86 option board support
+// so that the index is still valid when the problem is destroyed. This
+// change does not affect DeinitializeProblemManager()s functionality.
+//
 // Revision 1.4  1998/11/12 18:50:57  cyp
 // Created GetProblemIndexFromPointer(). Note that the function returns -1 if
 // the pointer is not to an object managed by ProblemManager (ie was created
@@ -24,7 +29,7 @@
 // 
 #if (!defined(lint) && defined(__showids__))
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.4 1998/11/12 18:50:57 cyp Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.5 1998/11/13 21:08:49 cyp Exp $"; }
 #endif
 
 #include "baseincs.h"  // malloc()/NULL/memset()
@@ -111,21 +116,22 @@ int InitializeProblemManager(unsigned int maxnumproblems)
 
 int DeinitializeProblemManager(void)
 {
-  unsigned int i, tablesize = probmanstatics.tablesize;
   Problem **probtable = probmanstatics.probtable;
-  probmanstatics.tablesize = 0;
-  probmanstatics.probtable = NULL;
-  probmanstatics.probcount = 0;
 
   if (probtable!= NULL)
     {
-    for (i=0;i<tablesize;i++)
+    for (;probmanstatics.probcount>0;probmanstatics.probcount--)
       {
-      if (probtable[i])
-        delete probtable[i];
+      if (probtable[probmanstatics.probcount-1])
+        delete probtable[probmanstatics.probcount-1];
+      probtable[probmanstatics.probcount-1] = NULL;
       }
     free((void *)probtable);
     }
+
+  probmanstatics.probcount = 0;
+  probmanstatics.tablesize = 0;
+  probmanstatics.probtable = NULL;
   return 0;
 }
 
