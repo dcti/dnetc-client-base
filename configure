@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.95  1998/09/08 21:36:45  silby
+# Added guistuff to the tree - now all GUIs can hook at once place, so that the common tree doesn't become a mess.
+#
 # Revision 1.94  1998/09/03 15:30:46  cyp
 # configure now appends the appropriate .h filenames to .cpp dependancies.
 # 'make clean' now also builds a new Makefile.
@@ -449,7 +452,7 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/threadcd.cpp common/cpucheck.cpp common/pathwork.cpp
     common/cliident.cpp common/logstuff.cpp common/buffupd.cpp
     common/triggers.cpp common/selcore.cpp common/netinit.cpp
-    common/cmdline.cpp common/selftest.cpp"
+    common/cmdline.cpp common/selftest.cpp common/guistuff.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"

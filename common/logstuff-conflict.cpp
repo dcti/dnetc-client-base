@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.8  1998/09/08 21:36:52  silby
+// Added guistuff to the tree - now all GUIs can hook at once place, so that the common tree doesn't become a mess.
+//
 // Revision 1.7  1998/09/07 18:10:34  blast
 // Changed a typo and added AMIGAOS to list of OS'es without ftruncate().
 //
@@ -35,7 +38,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.7 1998/09/07 18:10:34 blast Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.8 1998/09/08 21:36:52 silby Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -49,6 +52,7 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.7 1998/09/07 18:10:34 blast Exp $"; }
 #include "problem.h"   // needed for logscreenpercent
 #include "cmpidefs.h"  // strcmpi()
 #include "logstuff.h"  // keep the prototypes in sync
+#include "guistuff.h"  // Hooks for the GUIs
 
 //-------------------------------------------------------------------------
 
@@ -532,7 +536,8 @@ void LogScreenPercent( unsigned int load_problem_count )
       specperc=0;
       for (selthread = 0; selthread < numthreads; selthread++)    
         {
-        GetPercDataForThread(selthread,numthreads, &percent, NULL, &restartperc);
+        GetPercDataForThread(selthread,numthreads, &percent, &lastperc, &restartperc);
+        if (percent != lastperc) UpdatePercentBar();// Trigger GUI percent bar to update
         if (percent > specperc)
           specperc = percent;
         if (percent && ((percent>90)?((percent&1)!=0):((percent&1)==0)))
