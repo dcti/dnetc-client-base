@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.55 1999/07/25 23:13:38 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.56 1999/07/26 04:24:20 sampo Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -72,7 +72,9 @@ int DeinitializeConsole(void)
     #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
     os2CliDeinitializeConsole(constatics.pauseonclose);
     #elif (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-    macosCliDeinitializeUI(constatics.pauseonclose);
+    #ifdef CLIENT_17
+    macCliDeinitializeUI(constatics.pauseonclose);
+    #endif
     #endif
   }
   constatics.initlevel--;
@@ -99,7 +101,9 @@ int InitializeConsole(int runhidden,int doingmodes)
     #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
     retcode = os2CliInitializeConsole(constatics.runhidden,doingmodes);
     #elif (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-    retcode = macosCliInitializeUI(constatics.runhidden,doingmodes);
+    #ifdef CLIENT_17
+    retcode = macCliInitializeUI(constatics.runhidden,doingmodes);
+    #endif
     #endif
     
     if (retcode != 0)

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.212 1999/07/25 23:13:38 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.213 1999/07/26 04:24:12 sampo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -371,7 +371,7 @@ static int realmain( int argc, char *argv[] ) /* YES, *STATIC* */
 
   #if (CLIENT_OS == OS_MACOS)
   if ( init_success )                    // save the client * so we can 
-    macosCliSetClientPointer( clientP ); // load it when appropriate
+    macCliSetClientPointer( clientP ); // load it when appropriate
   #endif
 
   //----------------------------
@@ -404,7 +404,7 @@ static int realmain( int argc, char *argv[] ) /* YES, *STATIC* */
 
   #if (CLIENT_OS == OS_MACOS)
   if ( init_success )                    
-    macosCliSetClientPointer( NULL ); // clear the client *
+    macCliSetClientPointer( NULL ); // clear the client *
   #endif
 
   //------------------------------
@@ -421,12 +421,13 @@ static int realmain( int argc, char *argv[] ) /* YES, *STATIC* */
 /* ----------------------------------------------------------------- */
 
 #if (CLIENT_OS == OS_MACOS)
+#ifdef CLIENT_17
 void main(void)
 {
-  //extern void macosCliMain(int (*)(int,char **));
   macosCliMain(realmain); /* sythesise a command line for realmain */
   return;                 /* UI will be initialized later via console.cpp */
-}  
+}
+#endif  
 #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* parse the command line and call the bootstrap */
