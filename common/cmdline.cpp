@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: cmdline.cpp,v $
+// Revision 1.92.2.8  1999/01/17 12:31:08  remi
+// In sync with 1.115
+//
 // Revision 1.92.2.7  1999/01/04 02:12:00  remi
 // Synced with :
 //
@@ -11,6 +14,7 @@
 //
 // Revision 1.92.2.6  1998/12/28 14:32:39  remi
 // Merge with 1.111 :
+//
 //  Revision 1.101  1998/11/21 13:08:09  remi
 //  Fixed "Setting cputype to" when cputype < 0.
 //
