@@ -236,7 +236,7 @@ static int ogr_init()
   /* first zero bit in 16 bits */
   k = 0; m = 0x8000;
   for (i = 1; i <= 16; i++) {
-    for (j = k; j < k+m; j++) first[j] = i;
+    for (j = k; j < k+m; j++) first[j] = (char)i;
     k += m;
     m >>= 1;
   }
@@ -260,7 +260,7 @@ static int ogr_create(void *input, int inputlen, void **state)
   struct State *State;
   struct WorkStub *workstub = (struct WorkStub *)input;
 
-  if (input == NULL) {
+  if (input == NULL || inputlen != sizeof(struct WorkStub)) {
     return CORE_E_FORMAT;
   }
 
@@ -394,7 +394,7 @@ static int ogr_cycle(void *state, int *pnodes)
   U comp0;
 
   //State->LOGGING = 1;
-  while (1) {
+  for (;;) {
 
     State->marks[depth-1] = lev->cnt2;
     if (State->LOGGING) dump_ruler(State, depth);
@@ -492,10 +492,10 @@ static int ogr_getresult(void *state, void *result, int resultlen)
   if (resultlen != sizeof(struct WorkStub)) {
     return CORE_E_FORMAT;
   }
-  workstub->stub.marks = State->maxdepth;
-  workstub->stub.length = State->startdepth - 1;
+  workstub->stub.marks = (u16)State->maxdepth;
+  workstub->stub.length = (u16)(State->startdepth - 1);
   for (i = 0; i < STUB_MAX; i++) {
-    workstub->stub.diffs[i] = State->marks[i+1] - State->marks[i];
+    workstub->stub.diffs[i] = (u16)(State->marks[i+1] - State->marks[i]);
   }
   workstub->worklength = State->depth;
   if (workstub->worklength > STUB_MAX) {
