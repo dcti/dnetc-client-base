@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.53 1999/07/09 14:09:37 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.54 1999/07/25 16:19:09 sampo Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -122,6 +122,15 @@ int InitializeConsole(int runhidden,int doingmodes)
     retcode = w32InitializeConsole(runhidden,doingmodes);
     #ifdef WIN32GUI
     runhidden=0;
+    #endif
+    #endif
+
+    #if (CLIENT_OS == OS_MACOS)
+    #ifdef CLIENT_17
+    retcode = macInitializeConsole(runhidden,doingmodes);
+    #ifdef MAC_GUI
+    runhidden=0;
+    #endif
     #endif
     #endif
     
