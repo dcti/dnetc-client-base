@@ -15,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.53.4.1 2003/01/19 22:49:50 snake Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.53.4.2 2003/08/10 17:14:27 mweiser Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -887,6 +887,9 @@ int LogGetContestLiveRate(unsigned int contest_i,
 // ---------------------------------------------------------------------------
 
 //#define NO_PERCENTOMATIC_BATON
+#ifndef NO_PERCENTOMATIC_BATON
+static const char batonchars[] = {'|','/','-','\\'};
+#endif
 
 static int __do_crunchometer( int event_disp_format, 
                               unsigned int load_problem_count )
@@ -1165,7 +1168,6 @@ static int __do_crunchometer( int event_disp_format,
     #ifndef NO_PERCENTOMATIC_BATON
     if (endperc < 100 && logstatics.percbaton)
     { /* implies conistty and !gui (window repaints are _expensive_) */
-      static const char batonchars[] = {'|','/','-','\\'};
       if (bufptr == &buffer[0]) /* didn't prepend '\r' */
         *bufptr++ = '\r';       /* so do it now */
       *bufptr++=(char)batonchars[logstatics.perc_callcount%sizeof(batonchars)];
