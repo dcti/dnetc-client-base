@@ -355,7 +355,6 @@ public:
   char exename[64];
   char exepath[128];
   char inifilename[128];
-
   char id[64];
   s32  inthreshold[2];
   s32  outthreshold[2];
@@ -364,7 +363,8 @@ public:
   s32  minutes;
   s32  timeslice;
   s32  niceness;
-  char logname[128];
+  char logname[128];// Logfile name as used by the client
+  char ini_logname[128];// Logfile name as is in the .ini
   char keyproxy[64];
   s32  keyport;
   char httpproxy[64];
@@ -379,11 +379,15 @@ public:
   char smtpdest[128];
   s32  offlinemode;
   char in_buffer_file[2][128];
+  char ini_in_buffer_file[2][128];
   char out_buffer_file[2][128];
+  char ini_out_buffer_file[2][128];
   char exit_flag_file[128];
+  char ini_exit_flag_file[128];
   MailMessage mailmessage;
   s32  numcpu, numcputemp;
   char checkpoint_file[2][128];
+  char ini_checkpoint_file[2][128];
   s32 checkpoint_min;
   s32 percentprintingoff;
   s32 connectoften;
@@ -410,6 +414,7 @@ public:
   s32 connectstatus;          // 0 is not connected, 1 is connected
 #endif
   char pausefile[128];
+  char ini_pausefile[128];
   s32 preferred_contest_id;  // 0 for RC564, 1 for DESII (unlike config)
   s32 preferred_blocksize;
   s32 contestdone[2];
