@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.122 2000/02/01 23:03:30 ivo Exp $
+# @(#)$Id: configure,v 1.222.2.123 2000/02/09 16:31:11 ivo Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -702,18 +702,16 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *mips-irix)     # [ivo] generic mips-irix target (note: Ivo no longer porter!)
+    *mips-irix-nomt)     # [ivo] generic mips-irix5 target (note: Ivo no longer porter!)
         DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc"
         TARGET_CCFLAGS="$OPTS_GCC_MIPS   \
-                        -DHAVE_DES_CORES -DHAVE_CSC_CORES \
-                         -DKWAN -DMEGGS"
-        TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2 \
-                        $CSC_ANSI_SRCS"
+                        -DHAVE_OGR_CORES "
+        TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $OGR_ANSI_SRCS "
         #TARGET_LIBS="-lpthread"
         #TARGET_LDFLAGS="-mips3"
-	TARGET_STRIP="touch"
-	TARGET_TARBALL="mips-irix5"
+        TARGET_STRIP="touch"
+        TARGET_TARBALL="mips-irix5-nomt"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
