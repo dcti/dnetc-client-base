@@ -1190,7 +1190,6 @@ void Client::ValidateConfig( void )
   system_info the_info;
   static bool did_detect_message = false;
 #endif
-  char *slash;
 
   killwhitespace(id);
   killwhitespace(keyproxy);
