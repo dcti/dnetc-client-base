@@ -9,7 +9,7 @@
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.3.4.10 2004/08/15 21:20:08 piru Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.3.4.11 2004/08/18 10:49:01 piru Exp $"; }
 
 #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
 
@@ -101,6 +101,7 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.10 2004/08/15 21:20:08 piru Exp $"; }
     ** It's much faster to load the corresponding vector (Varray[s]) from
     ** memory (data cache) than to convert an integer to a splatted vector.
     */
+    #if !defined (__GNUC__) || (__GNUC__ >= 3)
     static const v8_t Varray[32] = {
       BYTE_VECTOR_DEF(0),
       BYTE_VECTOR_DEF(1),
@@ -135,7 +136,49 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.10 2004/08/15 21:20:08 piru Exp $"; }
       BYTE_VECTOR_DEF(30),
       BYTE_VECTOR_DEF(31)
     };
-
+    #else
+    /*
+    ** gcc 2.95.3-altivec doesn't seem to like this, and uses altivec insts
+    ** in static constructor breaking things if there's no altivec or altivec
+    ** is disabled. Workaround with having the data in aligned char array.
+    */
+    static const unsigned char Varray_data[32 * 16] __attribute__ ((aligned (16))) = {
+      #define UCHAR_VECTOR_DEF(x) x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x
+      UCHAR_VECTOR_DEF(0),
+      UCHAR_VECTOR_DEF(1),
+      UCHAR_VECTOR_DEF(2),
+      UCHAR_VECTOR_DEF(3),
+      UCHAR_VECTOR_DEF(4),
+      UCHAR_VECTOR_DEF(5),
+      UCHAR_VECTOR_DEF(6),
+      UCHAR_VECTOR_DEF(7),
+      UCHAR_VECTOR_DEF(8),
+      UCHAR_VECTOR_DEF(9),
+      UCHAR_VECTOR_DEF(10),
+      UCHAR_VECTOR_DEF(11),
+      UCHAR_VECTOR_DEF(12),
+      UCHAR_VECTOR_DEF(13),
+      UCHAR_VECTOR_DEF(14),
+      UCHAR_VECTOR_DEF(15),
+      UCHAR_VECTOR_DEF(16),
+      UCHAR_VECTOR_DEF(17),
+      UCHAR_VECTOR_DEF(18),
+      UCHAR_VECTOR_DEF(19),
+      UCHAR_VECTOR_DEF(20),
+      UCHAR_VECTOR_DEF(21),
+      UCHAR_VECTOR_DEF(22),
+      UCHAR_VECTOR_DEF(23),
+      UCHAR_VECTOR_DEF(24),
+      UCHAR_VECTOR_DEF(25),
+      UCHAR_VECTOR_DEF(26),
+      UCHAR_VECTOR_DEF(27),
+      UCHAR_VECTOR_DEF(28),
+      UCHAR_VECTOR_DEF(29),
+      UCHAR_VECTOR_DEF(30),
+      UCHAR_VECTOR_DEF(31)
+    };
+    const v8_t *Varray = (const v8_t *) Varray_data;
+    #endif
 
     /* define the local variables used for the top recursion state */
     #define SETUP_TOP_STATE(lev)                            \
