@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.202  1999/03/04 19:54:50  silby
+# removed PIPELINE_COUNT from freebsd targets.
+#
 # Revision 1.201  1999/03/04 01:20:11  cyp
 # Remove -DPIPELINE_COUNT=2 from OPTS_{GCC|EGCS}_X86=
 #
@@ -1781,7 +1784,7 @@ case "$1" in
     *x86-freebsd)
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DPIPELINE_COUNT=2 -DLURK"
+			-DLURK"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
@@ -1793,7 +1796,7 @@ case "$1" in
     *x86-freebsd-mt)
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DPIPELINE_COUNT=2 -DMULTITHREAD -DLURK"
+			-DMULTITHREAD -DLURK"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
@@ -1807,7 +1810,7 @@ case "$1" in
     *x86-freebsd-elf)
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DPIPELINE_COUNT=2 -D__ELF__ -DLURK"
+			-D__ELF__ -DLURK"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
@@ -1819,7 +1822,7 @@ case "$1" in
     *x86-freebsd-mt-elf)
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DPIPELINE_COUNT=2 -DMULTITHREAD -DLURK"
+			-DMULTITHREAD -DLURK"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
@@ -1832,7 +1835,7 @@ case "$1" in
     *x86-freebsd4-mt-elf)
         TARGET_AS="gcc -c"
         TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DLURK \
-                        -DPIPELINE_COUNT=2 -DMULTITHREAD -DCLIENT_OS_MINOR=4"
+                        -DMULTITHREAD -DCLIENT_OS_MINOR=4"
         TARGET_LDFLAGS="-static"
         TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
         TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
