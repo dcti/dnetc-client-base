@@ -3,8 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.118  1999/01/22 18:48:56  cyp
+// ignore a missing .ini if -nodisk
+//
 // Revision 1.117  1999/01/21 21:44:00  cyp
-// cleaned up behind 1.115
+// cleaned up behind 1.116
 //
 // Revision 1.116  1999/01/21 03:01:39  silby
 // Made -uninstall and -install "modes" so that they could honor
@@ -140,7 +143,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.117 1999/01/21 21:44:00 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.118 1999/01/22 18:48:56 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -560,7 +563,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         {
         if (run_level == 0)
           nodiskbuffers=1;              // No disk buff-*.rc5 files.
-        }
+        inimissing = 0; // Don't complain if the inifile is missing        
+	}
       else if ( strcmp(thisarg, "-frequent" ) == 0)
         {
         if (run_level!=0)
