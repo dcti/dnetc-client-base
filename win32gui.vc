@@ -2,6 +2,13 @@
 # feel free to generalize to do Win32 Alpha as well
 # see http://www.distributed.net/
 
+VCPATH = "C:/Program Files/Microsoft Visual Studio/VC98
+CC = $(VCPATH)/Bin/cl"
+INCLUDE = $(VCPATH)/Include"
+LIB = $(VCPATH)/Lib"
+
+RCPATH = c:/bc5/sdktools/
+NASM_PATH = c:/nasm
 VWCL_PATH = c:\bc5\vwcl
 EXENAMEG = rc5desg.exe
 OUTPUTPATH = output
@@ -9,16 +16,24 @@ COMMONPATH = common
 DESPATH = des
 RC5PATH = rc5
 OGRPATH = ogr
+!ifdef CSC
+CSCPATH = csc
+RC_CSC = -dCSC_TEST
+!endif
 PLATPATH = platforms
 W32CLIPATH = platforms/win32cli
 WIN32GUI = platforms/win32gui
 
-OPTS_MSVCG = -nologo -W3 -O1 -I$(RC5PATH) -I$(DESPATH) \
+OPTS_MSVCG = -nologo -W3 -I$(RC5PATH) -I$(DESPATH) \
   -I$(COMMONPATH) -I$(VWCL_PATH) -I$(W32CLIPATH) -I$(WIN32GUI) \
   -I$(OGRPATH) -D_CPU_32BIT_ -D__WIN32__ -DNOMAIN -DNOCONFIG \
   -DNEEDVIRTUALMETHODS -GR- -GX- -GA -GF \
   -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN -DWIN32GUI \
-  -DLURK -DMMX_RC5
+  -DLURK -DMMX_RC5 -I$(INCLUDE) 
+
+!ifdef CSC
+OPTS_MSVCG = $(OPTS_MSVCG) -I$(CSCPATH) -DCSC_TEST
+!endif
 
 !ifdef WIN32S
 OPTS_MSVCG = -ML $(OPTS_MSVCG)
@@ -107,15 +122,26 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/des-slice.obj \
 	$(OUTPUTPATH)/sboxes-kwan4.obj \
 	$(OUTPUTPATH)/guicons.obj \
-!ifndef WIN32S
-	$(OUTPUTPATH)/p2bdespro.obj \
-	$(OUTPUTPATH)/bbdeslow.obj \
-!endif
 	$(OUTPUTPATH)/convdes.obj    \
 	$(OUTPUTPATH)/des-x86.obj    \
 	$(OUTPUTPATH)/bdeslow.obj  \
 	$(OUTPUTPATH)/des-slice-meggs.obj \
 	$(OUTPUTPATH)/p1bdespro.obj
+!ifndef WIN32S
+BASE_OBJS = $(BASE_OBJS)        \
+	$(OUTPUTPATH)/p2bdespro.obj \
+	$(OUTPUTPATH)/bbdeslow.obj
+!endif
+
+!ifdef CSC
+BASE_OBJS = $(BASE_OBJS)        \
+	$(OUTPUTPATH)/convcsc.obj    \
+	$(OUTPUTPATH)/csc-common.obj \
+	$(OUTPUTPATH)/csc-1k.obj     \
+	$(OUTPUTPATH)/csc-1k-i.obj   \
+	$(OUTPUTPATH)/csc-6b.obj     \
+	$(OUTPUTPATH)/csc-6b-i.obj
+!endif
 
 GUI_LIBS = wsock32.lib advapi32.lib user32.lib shell32.lib gdi32.lib comdlg32.lib winmm.lib
 
@@ -125,7 +151,7 @@ GUI_LIBS = wsock32.lib advapi32.lib user32.lib shell32.lib gdi32.lib comdlg32.li
 	tasm32 /t /m /ml /i$(DESPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
 
 {$(DESPATH)/mmx-bitslice}.asm{$(OUTPUTPATH)}.obj:
-	nasmw -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\mmx-bitslice\ $(**:/=\)
+	$(NASM_PATH)/nasmw -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\mmx-bitslice\ $(**:/=\)
 
 {$(PLATPATH)}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
@@ -134,41 +160,44 @@ GUI_LIBS = wsock32.lib advapi32.lib user32.lib shell32.lib gdi32.lib comdlg32.li
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
 
 {$(RC5PATH)/x86/nasm}.asm{$(OUTPUTPATH)}.obj:
-       nasmw -o $(@:/=\) -f win32 -i $(RC5PATH:/=\)\x86\nasm\ $(**:/=\)
+       $(NASM_PATH)/nasmw -o $(@:/=\) -f win32 -i $(RC5PATH:/=\)\x86\nasm\ $(**:/=\)
 
 {$(DESPATH)}.cpp{$(OUTPUTPATH)}.obj:
-	cl -c $(OPTS_MSVCG) -Fo$@ $**
+	$(CC) -c -O1 $(OPTS_MSVCG) -Fo$@ $**
+
+{$(CSCPATH)}.cpp{$(OUTPUTPATH)}.obj:
+	$(CC) -c -Ox -G6 $(OPTS_MSVCG) -Fo$@ $**
 
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj:
-	cl -c $(OPTS_MSVCG) -Fo$@ $**
+	$(CC) -c -O1 $(OPTS_MSVCG) -Fo$@ $**
 
 {$(OGRPATH)}.c{$(OUTPUTPATH)}.obj:
-	cl -c $(OPTS_MSVCG) -Fo$@ $**
+	$(CC) -c -O1 $(OPTS_MSVCG) -Fo$@ $**
 	      
 {$(WIN32GUI)}.cpp{$(OUTPUTPATH)}.obj:
-	cl -c $(OPTS_MSVCG) -Fo$@ $**
+	$(CC) -c -O1 $(OPTS_MSVCG) -Fo$@ $**
 
 {$(W32CLIPATH)}.cpp{$(OUTPUTPATH)}.obj:
-	cl -c $(OPTS_MSVCG) -Fo$@ $**
+	$(CC) -c -O1 $(OPTS_MSVCG) -Fo$@ $**
 
 $(OUTPUTPATH)/vWindowAppCore.obj:   $(VWCL_PATH)/vWindowAppCore.cpp
-	cl -c $(OPTS_MSVCG) -Fo$@ $**
+	$(CC) -c -O1 $(OPTS_MSVCG) -Fo$@ $**
 
 !ifdef WIN32S
 $(OUTPUTPATH)/guiwin32s.res:    $(WIN32GUI)/guiwin16.rc $(WIN32GUI)/guiwin.rc $(WIN32GUI)/resource.h $(OUTPUTPATH)/rc5start.exe
-	rc -d_Windows -d_M_IX86 -i $(COMMONPATH) -fo$@ $(WIN32GUI)/guiwin16.rc
+	$(RCPATH)rc -d_Windows -d_M_IX86 $(RC_CSC) -i $(INCLUDE) -i $(COMMONPATH) -fo$@ $(WIN32GUI)/guiwin16.rc
 
 $(OUTPUTPATH)/rc5start.exe:     rc5start.cpp
 	make -B -f makefile.bcc16 rc5start
 !else
 $(OUTPUTPATH)/guiwin32.res:    $(WIN32GUI)/guiwin32.rc $(WIN32GUI)/guiwin.rc $(WIN32GUI)/resource.h
-	rc -d_Windows -d_M_IX86 -i $(COMMONPATH) -fo$@ $(WIN32GUI)/guiwin32.rc
+	$(RCPATH)rc -d_Windows -d_M_IX86 $(RC_CSC) -i $(INCLUDE) -i $(COMMONPATH) -fo$@ $(WIN32GUI)/guiwin32.rc
 !endif
 
 # --------------------------------------------
 
 rc5desg: $(BASE_OBJS) $(GUI_OBJS) $(RES_FILE)
-	cl $(OPTS_MSVCG) -Fe$(EXENAMEG) $(GUI_LIBS) $** $(OPTS_MSVCGPOST)
+	$(CC) $(OPTS_MSVCG) -Fe$(EXENAMEG) $(GUI_LIBS) $** $(OPTS_MSVCGPOST)
 
 clean:
 	del $(BASE_OBJS:/=\) $(GUI_OBJS:/=\) $(PREBUILT_OBJS:/=\)
@@ -179,4 +208,3 @@ superclean: clean
 rebuild: clean all
 
 # --------------------------------------------
-
