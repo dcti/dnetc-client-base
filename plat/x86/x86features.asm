@@ -110,7 +110,6 @@ Cyrix:
   ; Extended CPUID supported, so get extended features
   mov eax, 80000001h
   cpuid
-  mov edx, eax
 
   test edx, 01000000h  ; Test for Cyrix Ext'd MMX
   jz Extended_Checks
@@ -129,7 +128,6 @@ TryExtended:
   ; Extended CPUID supported, so get extended features
   mov eax, 80000001h
   cpuid
-  mov edx, eax
 
 Extended_Checks:
 
