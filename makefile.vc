@@ -57,7 +57,6 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/bench.obj      \
 	$(OUTPUTPATH)/w32cons.obj    \
 	$(OUTPUTPATH)/w32svc.obj     \
-	$(OUTPUTPATH)/w32pre.obj     \
 	$(OUTPUTPATH)/console.obj    \
 	$(OUTPUTPATH)/setprio.obj    \
 	$(OUTPUTPATH)/modereq.obj
