@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.36 2000/09/20 18:01:06 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.37 2000/09/24 12:55:47 cyp Exp $"; }
 
 //#define PROFILE_DISK_HITS
 
@@ -922,6 +922,10 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
 */   
 int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
 {
+  #define PROJECTFLAGS_CLOSED_TTL 0 //(7*24*60*60) /* 7 days */
+  /* set PROJECTFLAGS_CLOSED_TTL to zero if closed flags are never to expire 
+     (only a buffer update will set/clear them)
+  */
   int check_flush, check_fetch, need_flush, need_fetch;
   int closed_expired, pos, cont_start, cont_count;
   int ignore_closed_flags, fill_even_if_not_totally_empty, either_or;
@@ -988,16 +992,18 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
           {  
             closed_expired = 1;
           }  
+          #if defined(PROJECTFLAGS_CLOSED_TTL) && \
+              (PROJECTFLAGS_CLOSED_TTL > 0) /* any expiry time at all? */
           else if (CliClock(&tv)==0)
           {
-            #define PROJECTFLAGS_CLOSED_EXPIRY (90*60) /* 90 minutes */
             if (((unsigned long)tv.tv_sec) > 
-              (unsigned long)(client->last_buffupd_time+PROJECTFLAGS_CLOSED_EXPIRY)) 
+              (unsigned long)(client->last_buffupd_time+PROJECTFLAGS_CLOSED_TTL)) 
             {  
               closed_expired = 1;
             }  
           }      
-        }  
+          #endif
+        } /* if (closed_expired < 0) (undetermined) */
         if (!closed_expired)
           isclosed = 1;
       }	  
@@ -1022,14 +1028,14 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
             else if (fill_even_if_not_totally_empty &&
                  wucount < (unsigned int)ClientGetInThreshold( client, cont_i, 0 ))
             {     
-	            need_fetch = 1;
+              need_fetch = 1;
             }  
-	        }      
+          }      
           if (need_fetch && either_or) /* either criterion satisfied ... */
             need_flush = 1;            /* ... fulfills both criteria */
         }
-	      if (need_flush && need_fetch)
-	        break;
+        if (need_flush && need_fetch)
+          break;
       } /* if (!isclosed) */
     } /* if (i < CONTEST_COUNT) */ /* not disabled */
   } /* for (;cont_i < cont_count; cont_i++) */
