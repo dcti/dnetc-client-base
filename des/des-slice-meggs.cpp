@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.9  1998/07/08 10:02:46  remi
+// Declare whack16() with "C" linkage. Will help MS platforms.
+//
 // Revision 1.8  1998/07/08 10:00:31  remi
 // Added support for the MMX bitslicer.
 //
@@ -17,7 +20,7 @@
 
 // encapsulate Meggs' bitslicer
 
-static char *id="@(#)$Id: des-slice-meggs.cpp,v 1.8 1998/07/08 10:00:31 remi Exp $";
+static char *id="@(#)$Id: des-slice-meggs.cpp,v 1.9 1998/07/08 10:02:46 remi Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,7 +51,7 @@ static char *id="@(#)$Id: des-slice-meggs.cpp,v 1.8 1998/07/08 10:00:31 remi Exp
 #error "You must define BIT_32 or BIT_64"
 #endif
 
-#if (CLIENT_OS == OS_BEOS)
+#if (CLIENT_OS == OS_BEOS) || defined(MMX_BITSLICER)
 extern "C" BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
 			      BASIC_SLICE_TYPE *cypher,
 			      BASIC_SLICE_TYPE *key);
