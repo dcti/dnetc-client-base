@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.108 1999/11/27 08:14:42 sampo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.109 1999/11/27 09:20:45 sampo Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -172,7 +172,8 @@ static void __thread_yield__(void)
     // to know the contest
     // MP code yields here because it can do only pure computing
     // (no toolbox or mixed-mode calls)
-    NonPolledUSleep( 0 ); /* yield */
+    /* tick_sleep(0); Mindmorph */ /* yield */
+    DoYieldToMain(0);
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OPENBSD)
@@ -495,8 +496,8 @@ static int __StopThread( struct thread_param_block *thrparams )
         wait_for_thread(thrparams->threadID, &be_exit_value);
         #elif (CLIENT_OS == OS_NETWARE)
         while (thrparams->threadID) delay(100);
-        #elif (CLIENT_OS == OS_MACOS)
-        while (thrparams->threadID) tick_sleep(60);
+        /*#elif (CLIENT_OS == OS_MACOS) Mindmorph */
+        /*while (thrparams->threadID) tick_sleep(60); Mindmorph */
         #elif (CLIENT_OS == OS_FREEBSD)
         while (thrparams->threadID) NonPolledUSleep(1000);
         #endif
@@ -990,7 +991,7 @@ int ClientRun( Client *client )
     is_non_preemptive_os = 0;  /* assume this until we know better */
     #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
         (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_NETWARE) || \
-        (CLIENT_OS == OS_WIN32) /* need to check for win32s */
+        (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOS) /* need to check for win32s */
     is_non_preemptive_os = 1; /* assume this until we know better */
     #if (CLIENT_OS == OS_WIN32)                /* only if win32s */
     if (winGetVersion()>=400)
@@ -1015,6 +1016,9 @@ int ClientRun( Client *client )
           default_dyn_timeslice_table[tsinitd].usec = 1000000;
           default_dyn_timeslice_table[tsinitd].optimal = 131072;
         }
+        #elif (CLIENT_OS == OS_MACOS) /* just default numbers - Mindmorph */
+          default_dyn_timeslice_table[tsinitd].optimal = 2048;      
+      	 default_dyn_timeslice_table[tsinitd].usec = 10000*(client->priority+1);  
         #elif (CLIENT_OS == OS_NETWARE) 
         /* The switchcount<->runtime ratio is inversely proportionate. 
            By definition, 1000ms == 1.0 switchcounts/sec. In real life it

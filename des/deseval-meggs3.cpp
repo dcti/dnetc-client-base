@@ -1,5 +1,8 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.18  1999/11/27 09:21:37  sampo
+// make the mac client yield using _thread_yield and DoYieldToMain()...this work contributed by Michael Feiri with patches to DoYieldToMain by me
+//
 // Revision 1.17  1999/11/27 08:15:03  sampo
 // round one of the mac command-line client changes
 //
@@ -62,7 +65,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.17 1999/11/27 08:15:03 sampo Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.18 1999/11/27 09:21:37 sampo Exp $"; }
 #endif
 
 #include <cputypes.h>		/* Isn't this needed for using CLIENT_OS defines? */
@@ -88,11 +91,11 @@ return "@(#)$Id: deseval-meggs3.cpp,v 1.17 1999/11/27 08:15:03 sampo Exp $"; }
 #include "kwan-sboxes.h"
 
 #if (CLIENT_OS == OS_MACOS)
-#define TICKS ((unsigned long *)0x16a)
+//#define TICKS ((unsigned long *)0x16a)
 #define slice unsigned long
-extern void DoYieldToMain(char);
-unsigned long DES_ticks_to_use = 6; /* hardcode 100ms for now */
-unsigned long DES_yield_ticks = 0;
+//extern void DoYieldToMain(char);
+//unsigned long DES_ticks_to_use = 6; /* hardcode 100ms for now */
+//unsigned long DES_yield_ticks = 0;
 #endif
 
 static void
@@ -1057,13 +1060,14 @@ SliceType whack16(SliceType *P, SliceType *C, SliceType *K)
 				break;
 			}
 			// now step the tail
+            /*
             #if (CLIENT_OS == OS_MACOS)
 		    if (DES_yield_ticks < *TICKS) {
 	            DES_yield_ticks = *TICKS + DES_ticks_to_use;
 			    DoYieldToMain(true);
 			}
             #endif
-
+			*/
 			hs = 0;
 			K[49] = ~K[49];
 			++ts;

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.125 1999/11/27 08:16:07 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.126 1999/11/27 09:22:00 sampo Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -910,9 +910,9 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
 
   // Mac OS needs to yield here, since yielding works differently
   // depending on the core
-  #if (CLIENT_OS == OS_MACOS)
-    DoYieldToMain(0);
-  #endif
+  //#if (CLIENT_OS == OS_MACOS)		// We now yield in _thread_yield
+  //  DoYieldToMain(0);				// like everyone else
+  //#endif
 
   timeslice *= pipeline_count;
   *timesliceP = timeslice;
@@ -995,9 +995,9 @@ int Problem::Run_CSC(u32 *timesliceP, int *resultcode)
 
   // Mac OS needs to yield here, since yielding works differently
   // depending on the core
-  #if (CLIENT_OS == OS_MACOS)
-    DoYieldToMain(0);
-  #endif
+  //#if (CLIENT_OS == OS_MACOS)
+  //  DoYieldToMain(0);
+  //#endif
 
   // Increment reference key count
   __IncrementKey (&refL0, *timesliceP, contest);
