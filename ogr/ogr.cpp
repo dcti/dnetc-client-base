@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * @(#)$Id: ogr.cpp,v 1.3.2.10 2000/01/23 18:15:32 remi Exp $
+ * @(#)$Id: ogr.cpp,v 1.3.2.11 2000/01/24 16:09:13 gregh Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -217,6 +217,7 @@ static int ogr_init()
   return CORE_S_OK;
 }
 
+#ifdef OGR_DEBUG
 static void dump(int depth, struct Level *lev, int limit)
 {
   printf("--- depth %d\n", depth);
@@ -226,6 +227,7 @@ static void dump(int depth, struct Level *lev, int limit)
   printf("cnt1=%d cnt2=%d limit=%d\n", lev->cnt1, lev->cnt2, limit);
   //sleep(1);
 }
+#endif
 
 static int ogr_create(void *input, int inputlen, void *state, int statelen)
 {
@@ -344,6 +346,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
   return CORE_S_OK;
 }
 
+#ifdef OGR_DEBUG
 static void dump_ruler(struct State *oState, int depth)
 {
   int i;
@@ -353,6 +356,7 @@ static void dump_ruler(struct State *oState, int depth)
   }
   printf("\n");
 }
+#endif
 
 static int ogr_cycle(void *state, int *pnodes)
 {
@@ -367,11 +371,15 @@ static int ogr_cycle(void *state, int *pnodes)
   int s;
   U comp0;
 
+#ifdef OGR_DEBUG
   //oState->LOGGING = 1;
+#endif
   for (;;) {
 
     oState->marks[depth-1] = lev->cnt2;
+#ifdef OGR_DEBUG
     if (oState->LOGGING) dump_ruler(oState, depth);
+#endif
     if (depth <= oState->half_depth2) {
       if (depth <= oState->half_depth) {
         //dump_ruler(oState, depth);
@@ -388,14 +396,18 @@ static int ogr_cycle(void *state, int *pnodes)
       limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - depth);
     }
 
+#ifdef OGR_DEBUG
     if (oState->LOGGING) dump(depth, lev, limit);
+#endif
 
     nodes++;
 
     /* Find the next available mark location for this level */
 stay:
     comp0 = lev->comp[0];
+#ifdef OGR_DEBUG
     if (oState->LOGGING) printf("comp0=%08x\n", comp0);
+#endif
     if (comp0 < 0xffff0000) {
       s = first[comp0 >> 16];
     } else {
@@ -410,7 +422,9 @@ stay:
         goto skip_out;
       }
     }
+#ifdef OGR_DEBUG
     if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
+#endif
     if ((lev->cnt2 += s) > limit) goto up; /* no spaces left */
 
     COMP_LEFT_LIST_RIGHT(lev, s);

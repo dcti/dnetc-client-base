@@ -22,6 +22,9 @@
   #error "What's up Doc?"
 #endif  
 
+// define this to enable LOGGING code
+#undef OGR_DEBUG
+
 #define STUB_MAX 10 /* change ogr_packet_t in packets.h when changing this */
 
 struct Stub { /* size is 24 */
@@ -68,7 +71,9 @@ struct State {
   int startdepth;
   int depth;
   int limit;
+#ifdef OGR_DEBUG
   int LOGGING;
+#endif
   struct Level Levels[MAXDEPTH];
 };
 
