@@ -5,6 +5,9 @@
  * ****************** THIS IS WORLD-READABLE SOURCE *********************
  *
  * $Log: util.cpp,v $
+ * Revision 1.5  1999/03/31 11:43:09  cyp
+ * created BufferGetDefaultFilename
+ *
  * Revision 1.4  1999/03/20 07:32:42  cyp
  * moved IsFilenameValid() and DoesFileExist() to utils.cpp
  *
@@ -22,7 +25,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.4 1999/03/20 07:32:42 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.5 1999/03/31 11:43:09 cyp Exp $"; }
 #endif
 
 #include "baseincs.h" /* string.h */
@@ -64,18 +67,22 @@ const char *ogr_stubstr(const struct Stub *stub)
 /* ------------------------------------------------------------------- */
 
 #if 0
-char *strfproj( char *buffer, const char *fmt, FileEntry *data )
+char *strfproj( char *buffer, const char *fmt, WorkRecord *data )
 {
-// Completed RC5 packet 68E0D85A:A0000000 (123456789 keys)
-//          123:45:67:89 - [987654321 keys/s]
 //"Completed one RC5 packet 00000000:00000000 (4*2^28 keys)\n"
-//"%s - [%skeys/sec]\n"
+//          123:45:67:89 - [987654321 keys/sec]\n"
 // Completed RC5 packet 68E0D85A:A0000000 (123456789 keys)
 //          123:45:67:89 - [987654321 keys/s]
 // Completed OGR stub 22/1-3-5-7 (123456789 nodes)
 //          123:45:67:89 - [987654321 nodes/s]
 // Summary: 4 RC5 packets 12:34:56.78 - [234.56 Kkeys/s]" 
 
+%i == identifier (key # or stubstr)
+%C == contest name (upper case)
+%c == contest name (lower case)
+%u == number of units (keys/nodes) in workrecord *data
+%U == name of unit ("keys"/"nodes")
+%t == time to complete WorkRecord 
 
 }
 #endif
@@ -220,3 +227,40 @@ int DoesFileExist( const char *filename )
   return ( access( GetFullPathForFilename( filename ), 0 ) == 0 );
 }
 
+/* ------------------------------------------------------------------ */
+
+const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
+                                                       const char *basename )
+{
+  static char filename[128]; 
+  const char *suffix = CliGetContestNameFromID( project );
+  unsigned int len, n;
+  
+  filename[0] = '\0';
+  if (*basename)
+  {
+    while (*basename && isspace(*basename))
+      basename++;
+    if (*basename)
+    {
+      strncpy( filename, basename, sizeof(filename));
+      filename[sizeof(filename)-1]='\0';
+      len = strlen( filename );
+      while (len && isspace( filename[len-1] ) )
+        filename[--len] = '\0';
+    }
+  }
+  
+  if (filename[0] == 0)
+    strcpy( filename, ((is_out_type) ? "buff-out" : "buff-in" ) );
+  
+  filename[sizeof(filename)-5]='\0';
+  strcat( filename, EXTN_SEP );
+  len = strlen( filename );
+  for (n=0;suffix[n] && n<3;n++)
+    filename[len++] = (char)tolower(suffix[n]);
+  filename[len]='\0';
+  return filename;
+}
+
+/* --------------------------------------------------------------------- */
