@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.56  1998/06/23 20:19:52  cyruspatel
+// Adjusted NetWare specific stuff in ::Benchmark to obtain the timeslice
+// from the new GetTimesliceBaseline()
+//
 // Revision 1.55  1998/06/22 03:25:30  silby
 // changed so that pausefile is only checked every exitfilechecktime now.
 //
@@ -42,7 +46,7 @@
 //
 //
 
-static const char *id="@(#)$Id: client.cpp,v 1.55 1998/06/22 03:25:30 silby Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.56 1998/06/23 20:19:52 cyruspatel Exp $";
 
 #include "client.h"
 
@@ -1191,7 +1195,8 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   //A normal .Run() with such a large timeslice would cause the OS to
   //suspend this thread for hogging the CPU, so we run with a small
   //timeslice and yield frequently.
-  while ( (problem[0]).Run( 2000 / PIPELINE_COUNT , 0 ) == 0 )
+  unsigned int tslice = GetTimesliceBaseline(); //in cpucheck.cpp
+  while ( (problem[0]).Run( tslice, 0 ) == 0 ) //was 2000/PIPELINE_COUNT 
   {                             //normal ThreadSwitch on NetWare 3.x
     CliThreadSwitchLowPriority(); //or ThreadSwitchLowPriority on NetWare 4.x
 #else
