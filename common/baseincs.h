@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.12 1999/12/18 15:58:32 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.13 1999/12/19 10:08:38 mfeiri Exp $"
 
 #include "cputypes.h"
 
@@ -173,6 +173,7 @@ extern "C" {
   #include <sys/time.h>
   #include <unistd.h>
   #include <sched.h>
+  #include "client_defs.h"
 #elif (CLIENT_OS == OS_FREEBSD)  
   #include <sys/time.h>
   #include <unistd.h>
