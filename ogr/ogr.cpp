@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * @(#)$Id: ogr.cpp,v 1.3.2.8 1999/11/07 18:27:13 cyp Exp $
+ * @(#)$Id: ogr.cpp,v 1.3.2.9 1999/12/04 13:04:50 cyp Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
