@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.15  1998/07/11 09:47:18  cramer
+// Added support for solaris numcpu auto detection.
+//
 // Revision 1.14  1998/07/11 02:34:49  cramer
 // Added automagic number of cpu detection for linux.  If it cannot detect the
 // number of processors, a warning is issued and we assume it's only got one.
@@ -66,7 +69,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-static const char *id="@(#)$Id: cpucheck.cpp,v 1.14 1998/07/11 02:34:49 cramer Exp $";
+static const char *id="@(#)$Id: cpucheck.cpp,v 1.15 1998/07/11 09:47:18 cramer Exp $";
 return id; }
 #endif
 
@@ -74,6 +77,10 @@ return id; }
 #include "baseincs.h"  // for platform specific header files
 #include "client.h"    // for the client class
 #include "cpucheck.h"  //just to keep the prototypes in sync.
+
+#if (CLIENT_OS == OS_SOLARIS)
+#include <unistd.h>    // cramer - sysconf()
+#endif
 
 // --------------------------------------------------------------------------
 
@@ -113,7 +120,7 @@ static int __GetProcessorCount()  //returns -1 if not supported
         cpucount = 1;
       }
     #elif (CLIENT_OS == OS_LINUX)
-      {
+      { // cramer -- yes, I'm cheating, but it's the only way...
       char buffer[256];
 
       cpucount = 0;
@@ -121,6 +128,10 @@ static int __GetProcessorCount()  //returns -1 if not supported
         while(fgets(buffer, 256, cpuinfo))
           if (strstr(buffer, "processor") == buffer)
             cpucount++;
+      }
+    #elif (CLIENT_OS == OS_SOLARIS)
+      {
+      cpucount = sysconf(_SC_NPROCESSORS_ONLN);
       }
     #endif
     if (cpucount < 1)  //not supported
