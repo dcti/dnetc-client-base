@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.91 2001/01/12 04:34:15 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.92 2001/01/13 15:43:03 cyp Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -542,6 +542,7 @@ int ProblemLoadState( void *__thisprob,
     #if defined(HAVE_OGR_CORES)
     case OGR:
     {
+      int r;
       thisprob->priv_data.contestwork.ogr = work->ogr;
       if (thisprob->priv_data.contestwork.ogr.nodes.hi != 0 || thisprob->priv_data.contestwork.ogr.nodes.lo != 0)
       {
@@ -554,13 +555,34 @@ int ProblemLoadState( void *__thisprob,
         }
       }
       //thisprob->pub_data.unit_func.ogr = [xxx_]ogr_get_dispatch_table(); was done by selcore
-      int r = (thisprob->pub_data.unit_func.ogr)->init();
+
+      r = (thisprob->pub_data.unit_func.ogr)->init();
+      if (r == CORE_S_OK)
+        r = (thisprob->pub_data.unit_func.ogr)->create(&thisprob->priv_data.contestwork.ogr.workstub,
+                        sizeof(WorkStub), thisprob->priv_data.core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
       if (r != CORE_S_OK)
+      {
+        /* this is a really silly way to deal with errors. 
+        ** By simply discarding the stub, the proxy network will simply
+        ** reissue it eventually. Oh well, andreas wants it this way.
+        **
+        ** It is apparently impossible for keyservers to filter these
+        ** bad-stub errors (_E_FORMAT and _E_STUB) in the first place, so 
+        ** what what ogr_create() really _should_ do is delegate these errors 
+        ** (and perhaps all errors) to some later stage, which in turn
+        ** would "truncate" the stub (sets total number of nodes done to zero) 
+        ** and return RESULT_NOTHING. RetrieveState() could then optionally
+        ** print the appropriate error message.
+        */
+        const char *msg = "Unknown error";
+        if (r == CORE_E_MEMORY)       msg = "CORE_E_MEMORY: Insufficient memory";
+        else if (r == CORE_E_IO)      msg = "CORE_E_IO: I/O error";
+        else if (r == CORE_E_FORMAT)  msg = "CORE_E_FORMAT: Format or range error";
+        else if (r == CORE_E_STOPPED) msg = "CORE_E_STOPPED:";
+        else if (r == CORE_E_STUB)    msg = "CORE_E_STUB: Stub is not golomb";
+        Log("OGR stub load failure: %s\n", msg );
         return -1;
-      r = (thisprob->pub_data.unit_func.ogr)->create(&thisprob->priv_data.contestwork.ogr.workstub,
-                      sizeof(WorkStub), thisprob->priv_data.core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
-      if (r != CORE_S_OK)
-        return -1;
+      }
       if (thisprob->priv_data.contestwork.ogr.workstub.worklength > (u32)thisprob->priv_data.contestwork.ogr.workstub.stub.length)
       {
         thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.ogr.nodes.hi;
