@@ -1,88 +1,12 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-//
-// $Log: des-x86.cpp,v $
-// Revision 1.25  1999/04/09 19:48:12  patrick
-//
-// removed check for CPU_32BIT
-//
-// Revision 1.24  1999/02/21 09:51:39  silby
-// Changes for large block support.
-//
-// Revision 1.23  1998/12/25 03:23:43  cyp
-// Bryd now supports upto 4 processors. The third and fourth processor will
-// use the two (otherwise idle) cores, ie pro on a p5 machine and vice versa.
-// For non-mt builds the second cores (bbryd_des and bbryd_des_pro) are
-// aliased to the first two cores (bryd_des and bryd_des_pro) which should
-// make #ifdef checks around p2des_unit_func_[p5|pro]() obsolete.
-//
-// Revision 1.22  1998/12/22 15:58:24  jcmichot
-// Added QNX to list of OSs that need underscores prepended to extern "C"s.
-//
-// Revision 1.21  1998/12/02 20:56:42  silby
-// Changed Multithread -> CLIENT_SUPPORTS_SMP
-//
-// Revision 1.20  1998/11/28 19:21:40  silby
-// Fixed nasty define that broke win32 (and others?)
-//
-// Revision 1.19  1998/11/25 06:12:54  dicamillo
-// Update for BeOS R4 for Intel because elf format is used now.
-//
-// Revision 1.18  1998/11/07 08:29:46  remi
-// Changed a #ifdef to be a bit more human-readable.
-//
-// Revision 1.17  1998/10/19 00:32:08  daa
-// add a FREEBSD/X86/ELF set to the bryd-* defines
-//
-// Revision 1.16  1998/10/07 17:46:44  snake
-//
-// Modified for BSD/OS 4.0 and ELF
-//
-// Revision 1.15  1998/07/08 23:42:08  remi
-// Added support for CliIdentifyModules().
-//
-// Revision 1.14  1998/07/08 18:53:06  remi
-// Added function for CliIdentifyModules().
-//
-// Revision 1.13  1998/07/07 07:42:20  jlawson
-// added lint tags around cvs id to supress unused variable warning
-//
-// Revision 1.12  1998/06/23 21:59:08  remi
-// Use only two x86 DES cores (P5 & PPro) when not multithreaded.
-//
-// Revision 1.11  1998/06/18 00:18:26  silby
-// p1bdespro.asm and p2bdespro.asm aren't being removed.
-//
-// Revision 1.9  1998/06/17 22:12:51  remi
-// No need of more than two bryd_key_found and bryd_continue C routines.
-//
-// Revision 1.8  1998/06/17 21:56:07  remi
-// Fixed p?bryd_des routines naming.
-//
-// Revision 1.7  1998/06/16 22:12:29  silby
-// fixed second pro thread not working right
-//
-// Revision 1.5  1998/06/16 21:49:46  silby
-// Added p1bdespro and p2bdespro, really the "old" p5 bryddes cores until
-// the pro ones are ported to .s
-//
-// des-x86.cpp has been modified for the dual x86 core support (p5/pro)
-//
-// Revision 1.4  1998/06/14 08:27:04  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.3  1998/06/14 08:13:19  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
 
 // encapsulate the BrydDES library
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_x86_cpp(void) {
-return "@(#)$Id: des-x86.cpp,v 1.25 1999/04/09 19:48:12 patrick Exp $"; }
+return "@(#)$Id: des-x86.cpp,v 1.25.2.1 1999/11/28 14:31:50 remi Exp $"; }
 #endif
 
 
@@ -279,37 +203,37 @@ static u32 which_bryd(RC5UnitWork * rc5unitwork, u32 nbbits, int launch_index)
   // have we found something ?
   if (result == 0 || (launch_data[launch_index].key_is_found))
   {
-    register u8 *which_key_found = &(launch_data[launch_index].key_found[0]);
+    register u8 *key_found = &(launch_data[launch_index].key_found[0]);
   
     #ifdef DEBUG
         printf ("found = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
-          which_key_found[0],which_key_found[1],which_key_found[2],
-          which_key_found[3],which_key_found[4],which_key_found[5],
-          which_key_found[6],which_key_found[7]);
+          key_found[0],key_found[1],key_found[2],
+          key_found[3],key_found[4],key_found[5],
+          key_found[6],key_found[7]);
     #endif
 
     // have we found the complementary key ?
     // we can test key_found[3] or key_found[4]
     // but no other bytes
-    if ((u32)which_key_found[3] == (~keyhi & 0xFF))
+    if ((u32)key_found[3] == (~keyhi & 0xFF))
     {
       // report it as beeing on the non-complementary key
-      *(u32*)(&which_key_found[0]) = ~(*(u32*)(&which_key_found[0]));
-      *(u32*)(&which_key_found[4]) = ~(*(u32*)(&which_key_found[4]));
+      *(u32*)(&key_found[0]) = ~(*(u32*)(&key_found[0]));
+      *(u32*)(&key_found[4]) = ~(*(u32*)(&key_found[4]));
     }
 
     // convert key from 64 bits DES ordering with parity
     // to incrementable format (to do arithmetic on it)
     keyhi =
-        (which_key_found[0] << 24) |
-        (which_key_found[1] << 16) |
-        (which_key_found[2] <<  8) |
-        (which_key_found[3]      );
+        (key_found[0] << 24) |
+        (key_found[1] << 16) |
+        (key_found[2] <<  8) |
+        (key_found[3]      );
     keylo =
-        (which_key_found[4] << 24) |
-        (which_key_found[5] << 16) |
-        (which_key_found[6] <<  8) |
-        (which_key_found[7]      );
+        (key_found[4] << 24) |
+        (key_found[5] << 16) |
+        (key_found[6] <<  8) |
+        (key_found[7]      );
     convert_key_from_des_to_inc (&keyhi, &keylo);
 
   #ifdef DEBUG
