@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.140  1998/07/09 03:13:20  remi
+// Fixed -nommx message for x86 clients without the MMX bitslicer.
+//
 // Revision 1.139  1998/07/09 01:44:16  silby
 // Added ifdefs so a non-mmx x86 build was still possible.
 //
@@ -232,7 +235,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.139 1998/07/09 01:44:16 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.140 1998/07/09 03:13:20 remi Exp $";
 return id; }
 #endif
 
@@ -2701,6 +2704,8 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
 #if (CLIENT_CPU == CPU_X86) && defined(MMX_BITSLICER)
       LogScreenf("Won't use MMX instructions\n");
       usemmx=0;
+#elif (CLIENT_CPU == CPU_X86) // && !defined(MMX_BITSLICER)
+      LogScreenf("-nommx argument ignored on this client.\n");
 #else
       LogScreenf("-nommx argument ignored on this non-x86 processor.\n");
 #endif
