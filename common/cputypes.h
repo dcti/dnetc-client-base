@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.27 2004/10/13 20:28:38 jbgill Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.28 2004/11/01 17:39:53 jbgill Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -515,6 +515,7 @@
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_NETWARE6)
   #define HAVE_POSIX_THREADS
+  #define _POSIX_THREADS_SUPPORTED
   #include <pthread.h>
   typedef pthread_t THREADID;
   #define OS_SUPPORTS_SMP
