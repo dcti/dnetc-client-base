@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.100  1998/06/21 02:48:46  silby
+// Added sixth menu with just filesnames/paths to make misc smaller, and (hopefully) reduce confusion.
+//
 // Revision 1.99  1998/06/21 01:37:56  silby
 // Furthur changes in validation of options (validations are all being moved to ValidateConfig, which is now used much more liberally), fixed isstringblank to say that "   " is a blank string, and fixed a bug with buff-in.des being set wrong if a blank string was put into buff-out.des.
 //
@@ -59,7 +62,7 @@
 #include "client.h"
 
 #if (!defined(lint) && !defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.99 1998/06/21 01:37:56 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.100 1998/06/21 02:48:46 silby Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -107,13 +110,14 @@ static char cputypetable[3][60]=
 // --------------------------------------------------------------------------
 
 #if !defined(NOCONFIG)
-static const char *menutable[5]=
+static const char *menutable[6]=
   {
   "Required Options",
   "Logging Options",
   "Communication Options",
   "Performance Options",
-  "Miscellaneous Options"
+  "Miscellaneous Options",
+  "Filenames & Path Options"
   };
 
 static char nicenesstable[3][60]=
@@ -259,13 +263,13 @@ static optionstruct options[OPTION_COUNT]=
 #endif
 ,4,2,2,NULL},
 //23
-{ "checkpointfile", CFGTXT("RC5 Checkpoint filename"),"none",
+{ "checkpointfile", CFGTXT("RC5 Checkpoint Path/Name"),"none",
   CFGTXT("\n(Non-shared file required.  ckpoint" EXTN_SEP "rc5 recommended.  'none' to disable)\n")
-  ,1,1,4,NULL},
+  ,6,1,1,NULL},
 //24
-{ "checkpointfile2", "DES Checkpoint filename","none",
+{ "checkpointfile2", "DES Checkpoint Path/Name","none",
   CFGTXT("\n(Non-shared file required.  ckpoint" EXTN_SEP "des recommended.  'none' to disable)\n")
-  ,1,1,5,NULL},
+  ,6,1,2,NULL},
 //25
 { "randomprefix", CFGTXT("High order byte of random blocks"),"100",CFGTXT("Do not change this"),0,2,0,NULL},
 //26
@@ -323,11 +327,11 @@ static optionstruct options[OPTION_COUNT]=
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n"),
   3,2,10,NULL,CFGTXT(&lurkmodetable[0][0]),0,2},
-{ "in",  CFGTXT("RC5 In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "rc5",CFGTXT(""),5,1,14,NULL},
-{ "out", CFGTXT("RC5 Out-Buffer Path/Name"), "buff-out" EXTN_SEP "rc5",CFGTXT(""),5,1,15,NULL},
-{ "in2", CFGTXT("DES In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "des",CFGTXT(""),5,1,16,NULL},
-{ "out2",CFGTXT("DES Out-Buffer Path/Name"), "buff-out" EXTN_SEP "des",CFGTXT(""),5,1,17,NULL},
-{ "pausefile",CFGTXT("Pausefile name"),"none",CFGTXT("(blank = no pausefile)"),5,1,13,NULL}
+{ "in",  CFGTXT("RC5 In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "rc5",CFGTXT(""),6,1,4,NULL},
+{ "out", CFGTXT("RC5 Out-Buffer Path/Name"), "buff-out" EXTN_SEP "rc5",CFGTXT(""),6,1,5,NULL},
+{ "in2", CFGTXT("DES In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "des",CFGTXT(""),6,1,6,NULL},
+{ "out2",CFGTXT("DES Out-Buffer Path/Name"), "buff-out" EXTN_SEP "des",CFGTXT(""),6,1,7,NULL},
+{ "pausefile",CFGTXT("Pausefile Path/Name"),"none",CFGTXT("(blank = no pausefile)"),6,1,3,NULL}
 };
 
 #define CONF_ID 0
@@ -756,13 +760,12 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         case CONF_CHECKPOINT2:
           strncpy( ini_checkpoint_file[1] , parm, sizeof(ini_checkpoint_file)/2 -1 );
-
-          if (isstringblank(ini_checkpoint_file[1])) strcpy (ini_checkpoint_file[1],"none");
+          ValidateConfig();
           break;
         case CONF_PREFERREDBLOCKSIZE:
-          preferred_blocksize = atoi(parm);
-          if (preferred_blocksize < 28) preferred_blocksize = 28;
-          if (preferred_blocksize > 31) preferred_blocksize = 31;
+          choice=atoi(parm);
+          if (choice > 0) preferred_blocksize = choice;
+          ValidateConfig();
           break;
         case CONF_PROCESSDES:
           preferred_contest_id = yesno(parm);
@@ -800,8 +803,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         case CONF_NETTIMEOUT:
           choice=atoi(parm);
-          choice=min(300,max(30,choice));
-          *(s32 *)options[CONF_NETTIMEOUT].thevariable=choice;
+          if (choice > 0) *(s32 *)options[CONF_NETTIMEOUT].thevariable=choice;
+          ValidateConfig();
           break;
         case CONF_EXITFILECHECKTIME:
           choice=atoi(parm);
@@ -882,7 +885,8 @@ s32 Client::Configure( void )
     printf(" 2) %s\n",menutable[1]);
     printf(" 3) %s\n",menutable[2]);
     printf(" 4) %s\n",menutable[3]);
-    printf(" 5) %s\n\n",menutable[4]);
+    printf(" 5) %s\n",menutable[4]);
+    printf(" 6) %s\n\n",menutable[5]);
     printf(" 9) Discard settings and exit\n");
     printf(" 0) Save settings and exit\n\n");
     if (strcmpi(id,"rc5@distributed.net")==0)
@@ -901,6 +905,7 @@ s32 Client::Configure( void )
       case 3: ConfigureGeneral(3);break;
       case 4: ConfigureGeneral(4);break;
       case 5: ConfigureGeneral(5);break;
+      case 6: ConfigureGeneral(6);break;
       case 0: returnvalue=1;break; //Breaks and tells it to save
       case 9: returnvalue=-1;break; //Breaks and tells it NOT to save
     };
@@ -1309,6 +1314,8 @@ void Client::ValidateConfig( void )
     else if (checkpoint_min > 30) checkpoint_min=30;
   if (exitfilechecktime < 5) exitfilechecktime=5;
     else if (exitfilechecktime > 600) exitfilechecktime=600;
+  nettimeout=min(300,max(30,nettimeout));
+
   // Check for blank filenames, fix if so
   if (isstringblank(ini_in_buffer_file[0]))
     strcpy(ini_in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
