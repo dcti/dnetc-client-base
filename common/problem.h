@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.33 2000/10/05 22:39:00 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.34 2000/10/26 15:32:46 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -174,9 +174,13 @@ public: /* anything public must be thread safe */
     //   and allow LoadState to reset the problem if deemed necessary.
     // returns: -1 on error, 0 is OK
 
-  int RetrieveState( ContestWork * work, unsigned int *contestid, int dopurge );
+  int RetrieveState( ContestWork * work, unsigned int *contestid, 
+                     int dopurge, int dontwait );
     // Retrieve state from internal structures.
     // state is invalid (will generate errors) once the state is purged.
+    // 'dontwait' signifies that the purge need not wait for the cruncher
+    // to be in a stable state before purging. *not* waiting is necessary
+    // when the client is aborting (in which case threads may be hung).
     // Returns RESULT_* or -1 if error.
 
   int Run(void);

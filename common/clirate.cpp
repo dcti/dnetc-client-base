@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.24.2.6 2000/09/24 13:36:31 andreasb Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.24.2.7 2000/10/26 15:32:44 cyp Exp $"; }
 
 #include "baseincs.h" //timeval
 #include "client.h"   //for project constants
@@ -56,7 +56,7 @@ double CliGetKeyrateForProblem( Problem *prob /*, int doSave */ )
   if (!prob)
     return ((double)(-1));
 
-  resultcode = prob->RetrieveState( &work, &contestid, 0 ); 
+  resultcode = prob->RetrieveState( &work, &contestid, 0, 0 ); 
   if (resultcode != RESULT_NOTHING && resultcode != RESULT_FOUND)
     return ((double)(-2)); // not initialized or core error or not finished
 

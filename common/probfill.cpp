@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.41 2000/09/21 18:07:36 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.42 2000/10/26 15:32:45 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -93,7 +93,8 @@ static int __check_outbufthresh_limit( Client *client, unsigned int cont_i,
 static unsigned int __IndividualProblemSave( Problem *thisprob, 
                 unsigned int prob_i, Client *client, int *is_empty, 
                 unsigned load_problem_count, unsigned int *contest,
-                int *bufupd_pending, int unconditional_unload )
+                int *bufupd_pending, int unconditional_unload,
+                int abortive_action )
 {                    
   unsigned int norm_key_count = 0;
   *contest = 0;
@@ -110,7 +111,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     int resultcode;
     unsigned int cont_i;
     memset( (void *)&wrdata, 0, sizeof(WorkRecord));
-    resultcode = thisprob->RetrieveState( &wrdata.work, &cont_i, 0 );
+    resultcode = thisprob->RetrieveState( &wrdata.work, &cont_i, 0, 0 );
 
     if (resultcode == RESULT_FOUND || resultcode == RESULT_NOTHING )
     {
@@ -191,7 +192,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       wrdata.os         = FILEENTRY_OS;      //CLIENT_OS
       wrdata.buildhi    = FILEENTRY_BUILDHI; //(CLIENT_BUILDFRAC >> 8)
       wrdata.buildlo    = FILEENTRY_BUILDLO; //CLIENT_BUILDFRAC & 0xff
-
+      
       if ((thisprob->loaderflags & PROBLDR_DISCARD)!=0)
       {
         msg = "Discarded (project disabled/closed)";
@@ -266,7 +267,10 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     } /* unconditional unload */
     
     if (*is_empty) /* we can purge the object now */
-      thisprob->RetrieveState( NULL, NULL, 1 );
+    {
+      /* we don't wait when aborting. thread might be hung */
+      thisprob->RetrieveState( NULL, NULL, 1, abortive_action /*==dontwait*/ );
+    }
   }
 
   return norm_key_count;
@@ -536,18 +540,19 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 
 // --------------------------------------------------------------------
 
-unsigned int LoadSaveProblems(Client *pass_client,
+unsigned int LoadSaveProblems(Client *client,
                               unsigned int load_problem_count,int mode)
 {
   /* Some platforms need to stop asynchronously, for example, Win16 which
      gets an ENDSESSION message and has to exit then and there. So also 
      win9x when running as a service where windows suspends all threads 
      except the window thread. For these (and perhaps other platforms)
-     we save our last state so calling with (NULL,0,PROBFILL_UNLOADALL)
-     saves the problem states.
+     we save our last state so calling with (NULL,0,0) will save the
+     problem states (without hanging). see 'abortive_action' below.
   */
-  static Client *client = (Client *)NULL;
+  static Client *previous_client = (Client *)NULL;
   static unsigned int previous_load_problem_count = 0, reentrant_count = 0;
+  static int abortive_action = 0;
 
   unsigned int retval = 0;
   int changed_flag;
@@ -574,10 +579,19 @@ unsigned int LoadSaveProblems(Client *pass_client,
 
   /* ============================================================= */
 
-  if (pass_client)
-    client = pass_client;
-  if (!client)
-    return 0;
+  if (abortive_action) /* already aborted once */
+  {                    /* no probfill action can happen again */
+    return 0;          
+  }
+  if (!client)             /* abnormal end */
+  {
+    client = previous_client;
+    if (!client)
+      return 0;
+    abortive_action = 1;
+    mode = PROBFILL_UNLOADALL;
+  }
+  previous_client = client;
   if ((++reentrant_count) > 1)
   {
     --reentrant_count;
@@ -655,7 +669,8 @@ unsigned int LoadSaveProblems(Client *pass_client,
     load_needed = 0;
     norm_key_count = __IndividualProblemSave( thisprob, prob_i, client, 
           &load_needed, load_problem_count, &cont_i, &bufupd_pending,
-          (mode == PROBFILL_UNLOADALL || mode == PROBFILL_RESIZETABLE ) );
+          (mode == PROBFILL_UNLOADALL || mode == PROBFILL_RESIZETABLE ),
+          abortive_action );
     if (load_needed)
       empty_problems++;
     if (norm_key_count)
@@ -709,24 +724,85 @@ unsigned int LoadSaveProblems(Client *pass_client,
 
   /* ============================================================= */
 
-  // close checkpoint file immediately after saving the problems to disk
   if (mode == PROBFILL_UNLOADALL)
   {
     previous_load_problem_count = 0;
     if (client->nodiskbuffers == 0)
+    {
+      // close checkpoint file immediately after saving the problems to disk
       CheckpointAction( client, CHECKPOINT_CLOSE, 0 );
-    else {
+    }
+    else /* no disk buffers */
+    {
       BufferUpdate(client,BUFFERUPDATE_FLUSH,0);
-      for(int i = 0; i < CONTEST_COUNT; i++)
+      /* in case the flush fails, empty the membuf table manually */
+      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
       {
-        for(unsigned long j = 0; j < client->membufftable[i].in.count; j++)
-          free(client->membufftable[i].in.buff[j]);
-        for(unsigned long k = 0; k < client->membufftable[i].out.count; k++)
-          free(client->membufftable[i].out.buff[k]);
+        WorkRecord data;
+        while (GetBufferCount(client, cont_i, 0, 0)>0)
+          GetBufferRecord( client, &data, cont_i, 0 );
+        while (GetBufferCount(client, cont_i, 0, 0)>0)
+          GetBufferRecord( client, &data, cont_i, 1);
       }
     }
     retval = total_problems_saved;
   }
+  else /* if (mode != PROBFILL_UNLOADALL) */
+  {
+    /* 
+    =============================================================
+    // save the number of active problems, so that we can bail out
+    // in an "emergency". Some platforms call us asynchronously when they
+    // need to abort [win16/win32 for example]
+    -------------------------------------------------------------
+    */
+
+    previous_load_problem_count = load_problem_count;
+
+    if (bufupd_pending && client->blockcount >= 0)
+    {
+      int req = MODEREQ_FLUSH; // always flush while fetching
+      if (!CheckExitRequestTriggerNoIO()) //((bufupd_pending & BUFFERUPDATE_FETCH)!=0)
+        req |= MODEREQ_FETCH;
+      ModeReqSet( req|MODEREQ_FQUIET ); /* delegate to the client.run loop */
+    }
+
+    if (!allclosed && mode != PROBFILL_RESIZETABLE)
+    {
+      /* 
+       =============================================================
+       if we are running a limited number of blocks then check if we have
+       exceeded that number. If we have, but one or more crunchers are
+       still at work, bump the limit. 
+       ------------------------------------------------------------- 
+      */
+      int limitsexceeded = 0;
+      if (client->blockcount < 0 && norandom_count >= load_problem_count)
+        limitsexceeded = 1;
+      if (client->blockcount > 0 && 
+         (totalBlocksDone >= (unsigned long)(client->blockcount)))
+      {
+        if (empty_problems >= load_problem_count)
+          limitsexceeded = 1;
+        else
+          client->blockcount = ((u32)(totalBlocksDone))+1;
+      }
+      if (limitsexceeded)
+      {
+        Log( "Shutdown - packet limit exceeded.\n" );
+        RaiseExitRequestTrigger();
+      }  
+    }
+
+    if (mode == PROBFILL_RESIZETABLE)
+      retval = total_problems_saved;
+    else if (mode == PROBFILL_GETBUFFERRS) 
+      retval = getbuff_errs;
+    else if (mode == PROBFILL_ANYCHANGED)
+      retval = changed_flag;
+    else  
+      retval = total_problems_loaded;
+  }  
 
   /* ============================================================= */
 
@@ -748,7 +824,8 @@ unsigned int LoadSaveProblems(Client *pass_client,
                                         client->in_buffer_basename )) );
       }
 
-      if (saved_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD)
+      if (saved_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD
+       && (client->nodiskbuffers == 0 || (mode != PROBFILL_UNLOADALL)))
       {
         Log( "Saved %u %s packet%s (%u work unit%s) to %s\n", 
               saved_problems_count[cont_i], cont_name,
@@ -828,7 +905,7 @@ unsigned int LoadSaveProblems(Client *pass_client,
           }               
           Log( "%s\n", buffer );
           
-          if (inout == 0)  /* in */
+          if (inout == 0 && /* in */ (mode != PROBFILL_UNLOADALL))
           {
             /* compute number of processors _in_use_ */
             int proc = GetNumberOfDetectedProcessors();
@@ -858,63 +935,11 @@ unsigned int LoadSaveProblems(Client *pass_client,
 
   /* ============================================================ */
 
-  if (mode != PROBFILL_UNLOADALL)
+  if (mode == PROBFILL_UNLOADALL)
   {
-    /* 
-    =============================================================
-    // save the number of active problems, so that we can bail out
-    // in an "emergency". Some platforms call us asynchronously when they
-    // need to abort [win16/win32 for example]
-    -------------------------------------------------------------
-    */
-
-    previous_load_problem_count = load_problem_count;
-
-    if (bufupd_pending && client->blockcount >= 0)
-    {
-      int req = MODEREQ_FLUSH; // always flush while fetching
-      if (!CheckExitRequestTriggerNoIO()) //((bufupd_pending & BUFFERUPDATE_FETCH)!=0)
-        req |= MODEREQ_FETCH;
-      ModeReqSet( req|MODEREQ_FQUIET ); /* delegate to the client.run loop */
-    }
-
-    if (!allclosed && mode != PROBFILL_RESIZETABLE)
-    {
-      /* 
-       =============================================================
-       if we are running a limited number of blocks then check if we have
-       exceeded that number. If we have, but one or more crunchers are
-       still at work, bump the limit. 
-       ------------------------------------------------------------- 
-      */
-      int limitsexceeded = 0;
-      if (client->blockcount < 0 && norandom_count >= load_problem_count)
-        limitsexceeded = 1;
-      if (client->blockcount > 0 && 
-         (totalBlocksDone >= (unsigned long)(client->blockcount)))
-      {
-        if (empty_problems >= load_problem_count)
-          limitsexceeded = 1;
-        else
-          client->blockcount = ((u32)(totalBlocksDone))+1;
-      }
-      if (limitsexceeded)
-      {
-        Log( "Shutdown - packet limit exceeded.\n" );
-        RaiseExitRequestTrigger();
-      }  
-    }
-
-    if (mode == PROBFILL_RESIZETABLE)
-      retval = total_problems_saved;
-    else if (mode == PROBFILL_GETBUFFERRS) 
-      retval = getbuff_errs;
-    else if (mode == PROBFILL_ANYCHANGED)
-      retval = changed_flag;
-    else  
-      retval = total_problems_loaded;
-  }  
-  
+    previous_load_problem_count = 0;
+    previous_client = (Client *)0;
+  }
   --reentrant_count;
 
   return retval;

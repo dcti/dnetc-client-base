@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.37 2000/08/03 22:05:47 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.38 2000/10/26 15:32:44 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -277,7 +277,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   while (((unsigned int)totalruntime.tv_sec) < numsecs)
   {
     run = RESULT_WORKING;
-    problem->RetrieveState(&tmp_work, NULL, 1); //unload state (if previous)
+    problem->RetrieveState(&tmp_work, NULL, 1, 0); //unload state (if previous)
     if ( problem->LoadState( &contestwork, contestid, tslice, 0, 0, 0, 0) != 0)
       run = -1;
     else if ((flags & TBENCHMARK_QUIET) == 0 && scropen < 0)
@@ -293,7 +293,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         if (non_preemptive_os.did_adjust < 30 /* don't do this too often */
            && totalruntime.tv_sec >= (2+non_preemptive_os.did_adjust))
         {
-          if (problem->RetrieveState(&tmp_work, NULL, 0) >= 0)
+          if (problem->RetrieveState(&tmp_work, NULL, 0, 0) >= 0)
           {
             double rate = __calc_rate(contestid, &tmp_work, run, 
                                       keysdone_hi, keysdone_lo, 
@@ -356,7 +356,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         }
         if ( run != RESULT_WORKING) /* finished this block */
         {
-          if ( problem->RetrieveState(&tmp_work, NULL, 0) >= 0 )
+          if ( problem->RetrieveState(&tmp_work, NULL, 0, 0) >= 0 )
           {
             u32 old_lo, frag_hi = 0, frag_lo = 0;
             switch( contestid ) 
@@ -412,11 +412,11 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   }
   if (run < 0) /* errors or ^C */
     run = -1; /* core error */
-  else if (problem->RetrieveState(&contestwork, NULL, 0) < 0)
+  else if (problem->RetrieveState(&contestwork, NULL, 0, 0) < 0)
     run = -1; /* core error */
   if (scropen > 0 && run < 0)
     LogScreen("\n");
-  problem->RetrieveState(&tmp_work, NULL, 1); //unload state (regardless of 'run')
+  problem->RetrieveState(&tmp_work, NULL, 1, 0); //unload state (regardless of 'run')
 
   /* --------------------------- */
   

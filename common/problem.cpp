@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.70 2000/10/16 13:42:40 oliver Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.71 2000/10/26 15:32:45 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -445,7 +445,8 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
 /* LoadState() and RetrieveState() work in pairs. A LoadState() without
    a previous RetrieveState(,,purge) will fail, and vice-versa.
 */
-int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dopurge )
+int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, 
+                            int dopurge, int dontwait )
 {
   if (!initialized)
     return -1;
@@ -470,8 +471,11 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
   if (dopurge)
   {
     initialized = 0;
-    while (running) /* need to guarantee that no Run() will occur on a */
-      usleep(1000); /* purged problem. */
+    if (!dontwait) /* normal state is to wait. But we can't wait when aborting */
+    {
+      while (running) /* need to guarantee that no Run() will occur on a */
+        usleep(1000); /* purged problem. */
+    }
   }
   if (last_resultcode < 0)
     return -1;

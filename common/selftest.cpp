@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.34 2000/10/05 11:14:12 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.35 2000/10/26 15:32:46 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -414,7 +414,7 @@ int SelfTest( unsigned int contest )
       resultcode = RESULT_WORKING;
       if (!userbreak)
       {
-        resultcode = problem->RetrieveState( &contestwork, NULL, 1 );
+        resultcode = problem->RetrieveState( &contestwork, NULL, 1, 0 );
 
         runtime_sec += problem->runtime_sec;
         runtime_usec += problem->runtime_usec;

@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.16 2000/09/24 13:36:31 andreasb Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.17 2000/10/26 15:32:44 cyp Exp $"; }
 
 //#define TRACE
 
@@ -286,7 +286,7 @@ int CliRecordProblemCompleted( Problem *prob, int do_postmsg )
   int rc = -1;
   ContestWork work;
   unsigned int contestid = 0;
-  int resultcode = prob->RetrieveState( &work, &contestid, 0 );
+  int resultcode = prob->RetrieveState( &work, &contestid, 0, 0 );
 
   if (resultcode == RESULT_NOTHING || resultcode == RESULT_FOUND)
   {
