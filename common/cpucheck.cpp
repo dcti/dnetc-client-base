@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.76 2001/07/21 23:18:56 mfeiri Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.77 2001/10/05 19:58:35 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -372,6 +372,7 @@ static long __GetRawProcessorID(const char **cpuname)
   static struct { long rid; const char *name; } cpuridtable[] = {
     //note: if the name is not prefixed with "Power", it defaults to "PowerPC"
     //note: Non-PVR based numbers start at 0x10000 (real PVR numbers are 16bit)
+    //note: always use PVR IDs http://e-www.motorola.com/collateral/PPCPVR.pdf
                 {    0x0001,   "601"                   },
                 {    0x0003,   "603"                   },
                 {    0x0004,   "604"                   },
@@ -380,12 +381,13 @@ static long __GetRawProcessorID(const char **cpuname)
                 {    0x0008,   "740/750 (G3)"          },
                 {    0x0009,   "604e"                  },
                 {    0x000A,   "604ev"                 },
-                {    0x000C,   "7400 (G4)"             },
+                {    0x000C,   "7400/7410 (G4)"        }, //7400=0x000C, 7410=0x800C
                 {    0x0020,   "403G/403GC/403GCX"     },
                 {    0x0050,   "821"                   },
                 {    0x0080,   "860"                   },
                 {    0x0081,   "8240"                  },
                 {    0x4011,   "405GP"                 },
+                {    0x8000,   "7450 (G4)"             },
                 {(1L<<16)+1,   "Power RS"              }, //not PVR based
                 {(1L<<16)+2,   "Power RS2 Superchip"   }, //not PVR based
                 {(1L<<16)+3,   "Power RS2"             }, //not PVR based
@@ -393,7 +395,7 @@ static long __GetRawProcessorID(const char **cpuname)
                 {(1L<<16)+5,   "630"                   }, //not PVR based
                 {(1L<<16)+6,   "A35"                   }, //not PVR based
                 {(1L<<16)+7,   "RS64II"                }, //not PVR based
-		{(1L<<16)+8,   "RS64III"	       }, //not PVR based
+                {(1L<<16)+8,   "RS64III"               }, //not PVR based
                 };
   #if (CLIENT_OS == OS_AIX)
   if (detectedtype == -2L)
@@ -445,6 +447,9 @@ static long __GetRawProcessorID(const char **cpuname)
     detectedtype = -1;
     if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
     {
+      if (result == gestaltCPUG47450) /* gestaltCPUG47450 = 0x0110 */
+        result = 0x8100L /* Apples ID makes sense but we prefer pure PVR */
+    
       detectedtype = result - 0x100L; // PVR!!
       if (Gestalt( gestaltSystemVersion, &result ) == noErr)
       {   
@@ -481,7 +486,7 @@ static long __GetRawProcessorID(const char **cpuname)
         case CPU_SUBTYPE_POWERPC_604e: detectedtype = 0x0009; break;
         case CPU_SUBTYPE_POWERPC_750:  detectedtype = 0x0008; break;
         case CPU_SUBTYPE_POWERPC_7400: detectedtype = 0x000C; break;
-        case CPU_SUBTYPE_POWERPC_7450: detectedtype = 0x000C; break;
+        case CPU_SUBTYPE_POWERPC_7450: detectedtype = 0x8000; break;
         default: // some PPC processor that we don't know about
                  // set the tag (so that the user can tell us), but return 0
         sprintf(namebuf, "0x%x", info.cpu_subtype );
