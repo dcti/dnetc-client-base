@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.110 1999/12/06 19:11:09 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.111 1999/12/26 20:48:03 patrick Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ return "@(#)$Id: network.cpp,v 1.110 1999/12/06 19:11:09 cyp Exp $"; }
 #define ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG
 #endif
 
-#if ((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_MACOS)
+#if ((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_MACOS)
 #define SOCKLEN_T socklen_t
 #else
 #define SOCKLEN_T int
