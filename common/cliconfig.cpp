@@ -1812,12 +1812,12 @@ void ServiceMain(DWORD Argc, LPTSTR *Argv)
 
 s32 Client::Install()
 {
-#if (!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32)
+#if (!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32) && !defined(NOMAIN)
   HKEY srvkey=NULL;
   DWORD dwDisp=NULL;
   char mypath[200];
   GetModuleFileName(NULL, mypath, sizeof(mypath));
-
+  
   strcat( mypath, " -hide" );
 
   // register a Win95 "RunService" item
@@ -1830,17 +1830,17 @@ s32 Client::Install()
     RegCloseKey(srvkey);
   }
 
-  // register a Win95 "Run" item
-  if (RegCreateKeyEx(HKEY_LOCAL_MACHINE,
-            "Software\\Microsoft\\Windows\\CurrentVersion\\Run",0,"",
-            REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,
-            &srvkey,&dwDisp) == ERROR_SUCCESS)
+  // unregister a Win95 "Run" item
+  if (RegOpenKey(HKEY_LOCAL_MACHINE,
+      "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      &srvkey) == ERROR_SUCCESS)
   {
-    RegSetValueEx(srvkey, "bovwin32", 0, REG_SZ, (unsigned const char *)mypath, strlen(mypath) + 1);
+    RegDeleteValue(srvkey, "bovwin32");
     RegCloseKey(srvkey);
   }
+
   LogScreen("Win95 Service installation complete.\n");
-#elif defined(WINNTSERVICE)
+#elif defined(WINNTSERVICE) && (CLIENT_OS == OS_WIN32)
   char mypath[200];
   GetModuleFileName(NULL, mypath, sizeof(mypath));
   SC_HANDLE myService, scm;
@@ -1914,7 +1914,7 @@ s32 Client::Install()
 
 s32 Client::Uninstall(void)
 {
-#if (!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32)
+#if (!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32) && !defined(NOMAIN)
   HKEY srvkey;
 
   // unregister a Win95 "RunService" item
@@ -1935,7 +1935,7 @@ s32 Client::Uninstall(void)
     RegCloseKey(srvkey);
   }
   LogScreen("Win95 Service uninstallation complete.\n");
-#elif defined(WINNTSERVICE)
+#elif defined(WINNTSERVICE) && (CLIENT_OS == OS_WIN32)
   SC_HANDLE myService, scm;
   SERVICE_STATUS status;
   scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
