@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.92 2000/01/12 06:39:10 remi Exp $
+# @(#)$Id: configure,v 1.222.2.93 2000/01/13 11:41:49 friedbait Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -359,10 +359,20 @@ OPTS_GCC_ARM="$OPTS_GCC $OPT_FLAGS -DARM"
 OPTS_GCC_VAX="$OPTS_GCC272 -O2 -DASM_VAX"
 OPTS_EGCS_VAX="$OPTS_EGCS -O2 -DASM_VAX"
 
-#-- OS/390
+#-- S390 - Linux
+
+OPTS_EGCS_S390_LINUX="$OPTS_EGCS -fno-caller-saves -D__S390__"
+OPTS_RC5_S390_LINUX=""
+OPTS_DES_S390_LINUX="-DKWAN -DMEGGS -DHAVE_DES_CORES"
+OPTS_CSC_S390_LINUX="-DHAVE_CSC_CORES"
+
+#-- S390 - OS/390
 
 #-D__STRING_CODE_SET__="ISO8859-1"
-OPTS_OS390="-D_ALL_SOURCE"
+OPTS_S390_OS390="-D_ALL_SOURCE"
+OPTS_RC5_S390_OS390=""
+OPTS_DES_S390_OS390="-DKWAN -DMEGGS -DHAVE_DES_CORES"
+OPTS_CSC_S390_OS390="-DHAVE_CSC_CORES"
 
 #-- UltraSparc
 #
@@ -1468,18 +1478,47 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
-###### OS390
-    *os390)
+###### s390-linux
+    *s390-linux-glibc2)	        # [friedbait]  fb@baiti.net
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_EGCS_S390_LINUX -D__showids__ \
+                        $OPTS_CSC_S390_LINUX  \
+                        $OPTS_DES_S390_LINUX  \
+                        $OPTS_RC5_S390_LINUX  \
+			-DMULTITHREAD -DLURK"
+	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
+	TARGET_ADDSRCS="common/lurk.cpp \
+                        rc5/ansi/rc5ansi_2-rg.cpp \
+                        $CSC_ANSI_SRCS \
+                        $OGR_ANSI_SRCS \
+                        $MEGGS_SLICE_SRCS2 \
+			" # $KWAN_SLICE_SRCS4
+	TARGET_ADDASMS=""
+	TARGET_ADDNASMS=""
+	TARGET_NASM_FMT="elf"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-s390-glibc2"
+	;;
+
+###### s390-os390
+    *os390)                     # [friedbait]  fb@baiti.net
 	TARGET_CC="gcc"
 	TARGET_AS=""
-	TARGET_CCFLAGS="$OPTS_OS390 -D__showids__ \
-			 -DKWAN -DMEGGS -DHAVE_DES_CORES"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_CCFLAGS="$OPTS_S390_OS390 -D__showids__ \
+                        $OPTS_CSC_S390_OS390  \
+                        $OPTS_DES_S390_OS390  \
+                        $OPTS_RC5_S390_OS390"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.c \
+                        $CSC_ANSI_SRCS \
+                        $OGR_ANSI_SRCS \
+                        $MEGGS_SLICE_SRCS2"
 	TARGET_ADDASMS=""
 	TARGET_LIBS="$SOCKS_LIBS"
         TARGET_DOCFILES="docs/readme.os390"   #platform specific docfile
+        TARGET_TARBALL="os390-s390"
 	;;
-
 ###### Be OS (x86, PPC)
     *x86-beos)
 	TARGET_AS="gcc -c"
