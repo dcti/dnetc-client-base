@@ -1506,10 +1506,10 @@ The original (v2.6401) version of this document was prepared by Daniel
 Kiddo (alex) helped dbaker with some of the command line options.
 
 Mike "Silby" Silbersack (silby@execpc.com) updated and greatly expanded
-this document on 13/2/1998.
+this document on 2/13/1998.
 
 Paul Gentle (gentleps@muohio.edu) converted this document to a windows
 help file.
 
 Mike "Silby" Silbersack (silby@execpc.com) updated this document and
-added information about specific platforms on 13/05/1998
+added information about specific platforms on 05/13/1998
