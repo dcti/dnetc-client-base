@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.48 1999/07/23 03:16:57 fordbr Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.49 1999/07/23 15:04:41 remi Exp $"; }
 
 // --------------------------------------------------------------------------
 
@@ -273,6 +273,20 @@ int SelfTest( unsigned int contest, int cputype )
         contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
         contestwork.crypto.key.hi = expectedsolution.hi;
       }
+#ifdef CSC_TEST
+      else if (contest == CSC) // CSC
+      {
+        test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&csc_test_cases[0][0];
+        expectedsolution.lo = (*test_cases)[testnum][0];
+        expectedsolution.hi = (*test_cases)[testnum][1];
+
+        convert_key_from_csc_to_inc ( (u32 *) &expectedsolution.hi,
+                                      (u32 *) &expectedsolution.lo);
+
+        contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
+        contestwork.crypto.key.hi = expectedsolution.hi;
+      }
+#endif
       
       contestwork.crypto.iv.lo =  ( (*test_cases)[testnum][2] );
       contestwork.crypto.iv.hi =  ( (*test_cases)[testnum][3] );
@@ -327,20 +341,6 @@ int SelfTest( unsigned int contest, int cputype )
         } 
         #endif
       }
-#ifdef CSC_TEST
-      else if (contest == CSC) // CSC
-      {
-        test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&csc_test_cases[0][0];
-        expectedsolution.lo = (*test_cases)[testnum][0];
-        expectedsolution.hi = (*test_cases)[testnum][1];
-
-        convert_key_from_csc_to_inc ( (u32 *) &expectedsolution.hi,
-                                      (u32 *) &expectedsolution.lo);
-
-        contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
-        contestwork.crypto.key.hi = expectedsolution.hi;
-      }
-#endif
 
       LogScreen( "%s Test %02d %s: %08X:%08X - %08X:%08X\n", 
          contname, testnum + 1, resulttext,
