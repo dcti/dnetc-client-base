@@ -15,7 +15,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.1 1999/08/09 16:11:51 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.2 1999/09/07 02:52:50 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -192,7 +192,7 @@ static const char * (*ident_table[])() =
 //memfile_cpp,
   modereq_cpp,
   netinit_cpp,
-  netres_cpp,
+//netres_cpp,
   network_cpp,
   pathwork_cpp,
   pollsys_cpp,
