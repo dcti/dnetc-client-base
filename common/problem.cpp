@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.68 2000/06/24 23:18:48 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.69 2000/09/24 13:36:30 andreasb Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -29,34 +29,34 @@ return "@(#)$Id: problem.cpp,v 1.108.2.68 2000/06/24 23:18:48 andreasb Exp $"; }
 #include "cpucheck.h" //hardware detection
 #include "console.h"  //ConOutErr
 #include "triggers.h" //RaiseExitRequestTrigger()
-#include "sleepdef.h" //sleep() 
+#include "sleepdef.h" //sleep()
 
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
 
 #ifndef MINIMUM_ITERATIONS
 #define MINIMUM_ITERATIONS 24
-/* 
-   MINIMUM_ITERATIONS determines minimum number of iterations that will 
+/*
+   MINIMUM_ITERATIONS determines minimum number of iterations that will
    be requested, as well as the boundary on which number of iterations will
    be aligned. This then automatically implies keysdone alignment as well.
    [This applies to partially completed work loaded from disk as well,
-   since partially completed work will (should!) never end up on a cruncher 
-   that it did not originate on because core cpu, core #, client os and 
-   client version are saved in partially completed work, and work is reset 
+   since partially completed work will (should!) never end up on a cruncher
+   that it did not originate on because core cpu, core #, client os and
+   client version are saved in partially completed work, and work is reset
    by LoadState if any of them don't match.
    24 was chosen because it is evenly divisible by any/all the
    pipeline_counts currently in use (1,2,3,4[,6?])
-*/   
+*/
 #endif
 
 /* ------------------------------------------------------------------- */
 
-static unsigned int __problem_counter = 0; 
-/* 
-   problem_counter is what we copy as threadindex and then increment 
-   for the next problem. Its addressed/incremented in the constructor 
-   and addressed/decremented in the destructor, both of which are 
-   'thread safe' in the sense that they are never called from the 
+static unsigned int __problem_counter = 0;
+/*
+   problem_counter is what we copy as threadindex and then increment
+   for the next problem. Its addressed/incremented in the constructor
+   and addressed/decremented in the destructor, both of which are
+   'thread safe' in the sense that they are never called from the
    actual crunching threads themselves.
 */
 
@@ -95,32 +95,32 @@ Problem::Problem(void)
     }
     else
     {
-      /* 
+      /*
        this next part is essential for alpha, but is probably beneficial to
-       all platforms. If it fails for your os/cpu, we may need to redesign 
+       all platforms. If it fails for your os/cpu, we may need to redesign
        how objects are allocated/how rc5unitwork is addressed, so let me know.
                                                          -cyp Jun 14 1999
       */
       RC5UnitWork *w = &rc5unitwork;
       unsigned long ww = ((unsigned long)w);
-    
+
       #if (CLIENT_CPU == CPU_ALPHA) /* sizeof(long) can be either 4 or 8 */
       ww &= 0x7; /* (sizeof(longword)-1); */
       #else
       ww &= (sizeof(int)-1); /* int alignment */
-      #endif        
-      if (ww) 
+      #endif
+      if (ww)
       {
         Log("rc5unitwork for problem %d is misaligned!\n", threadindex);
         RaiseExitRequestTrigger();
         return;
-      }  
+      }
     }
   }
 
 //LogScreen("Problem created. threadindex=%u\n", threadindex);
 
-  #ifdef STRESS_THREADS_AND_BUFFERS 
+  #ifdef STRESS_THREADS_AND_BUFFERS
   {
     static int runlevel = 0;
     if (runlevel != -12345)
@@ -137,7 +137,7 @@ Problem::Problem(void)
       char getyes[10];
       ConInStr(getyes,4,0);
       ClearPauseRequestTrigger();
-      if (strcmp( getyes, "yes" ) == 0)
+      if (strcmp( getyes, "yes" ) == 0)  FIXME: exit if entered 'yes' ?!
       {
         runlevel = +12345;
         RaiseExitRequestTrigger();
@@ -146,7 +146,7 @@ Problem::Problem(void)
       runlevel = -12345;
     }
   }
-  #endif    
+  #endif
 }
 
 /* ------------------------------------------------------------------- */
@@ -165,21 +165,21 @@ Problem::Problem(void)
 // is handled by des_unit_func().
 
 static void  __SwitchRC5Format(u32 *hi, u32 *lo)
-{                                                                       
-    register u32 tempkeylo = *hi; /* note: we switch the order */  
-    register u32 tempkeyhi = *lo;                                  
-                                                                        
-    *lo =                                                          
-      ((tempkeylo >> 24) & 0x000000FFL) |                               
-      ((tempkeylo >>  8) & 0x0000FF00L) |                               
-      ((tempkeylo <<  8) & 0x00FF0000L) |                               
-      ((tempkeylo << 24) & 0xFF000000L);                                
-    *hi =                                                          
-      ((tempkeyhi >> 24) & 0x000000FFL) |                               
-      ((tempkeyhi >>  8) & 0x0000FF00L) |                               
-      ((tempkeyhi <<  8) & 0x00FF0000L) |                               
-      ((tempkeyhi << 24) & 0xFF000000L);                                
-}                                                                       
+{
+    register u32 tempkeylo = *hi; /* note: we switch the order */
+    register u32 tempkeyhi = *lo;
+
+    *lo =
+      ((tempkeylo >> 24) & 0x000000FFL) |
+      ((tempkeylo >>  8) & 0x0000FF00L) |
+      ((tempkeylo <<  8) & 0x00FF0000L) |
+      ((tempkeylo << 24) & 0xFF000000L);
+    *hi =
+      ((tempkeyhi >> 24) & 0x000000FFL) |
+      ((tempkeyhi >>  8) & 0x0000FF00L) |
+      ((tempkeyhi <<  8) & 0x00FF0000L) |
+      ((tempkeyhi << 24) & 0xFF000000L);
+}
 
 /* ------------------------------------------------------------------- */
 
@@ -189,31 +189,31 @@ static void  __SwitchRC5Format(u32 *hi, u32 *lo)
 //
 // Output: the key incremented
 
-static void __IncrementKey(u32 *keyhi, u32 *keylo, u32 iters, int contest)        
-{                                                                   
-  switch (contest)                                                  
-  {                                                                 
+static void __IncrementKey(u32 *keyhi, u32 *keylo, u32 iters, int contest)
+{
+  switch (contest)
+  {
     case RC5:
-      __SwitchRC5Format(keyhi,keylo);                                      
-      *keylo = *keylo + iters;                                             
+      __SwitchRC5Format(keyhi,keylo);
+      *keylo = *keylo + iters;
       if (*keylo < iters) *keyhi = *keyhi + 1;
-      __SwitchRC5Format (keyhi,keylo);                                      
-      break;                                                        
+      __SwitchRC5Format (keyhi,keylo);
+      break;
     case DES:
     case CSC:
-      *keylo = *keylo + iters;                                             
+      *keylo = *keylo + iters;
       if (*keylo < iters) *keyhi = *keyhi + 1; /* Account for carry */
-      break;                                                        
+      break;
     case OGR:
-      /* This should never be called for OGR */                     
-      break;                                                        
-  }                                                                 
+      /* This should never be called for OGR */
+      break;
+  }
 }
 
 /* ------------------------------------------------------------- */
 
 u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%. */
-{ 
+{
   u32 retpermille = 0;
   if (initialized && last_resultcode >= 0)
   {
@@ -233,7 +233,7 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
                 (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
                              ((double)(contestwork.crypto.keysdone.lo))) /
                 ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
-                             ((double)(contestwork.crypto.iterations.lo)))) ); 
+                             ((double)(contestwork.crypto.iterations.lo)))) );
                 break;
                 }
         #if defined(HAVE_OGR_CORES)
@@ -258,8 +258,8 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
 /* LoadState() and RetrieveState() work in pairs. A LoadState() without
    a previous RetrieveState(,,purge) will fail, and vice-versa.
 */
-int Problem::LoadState( ContestWork * work, unsigned int contestid, 
-              u32 _iterations, int expected_cputype, 
+int Problem::LoadState( ContestWork * work, unsigned int contestid,
+              u32 _iterations, int expected_cputype,
               int expected_corenum, int expected_os,
               int expected_buildfrac )
 {
@@ -269,15 +269,17 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
     Log("BUG! LoadState() without previous RetrieveState(,,purge)!\n");
     return -1;
   }
-  
+
   last_resultcode = -1;
   started = initialized = 0;
-  timehi = timelo = 0;
+  loadtime_sec = loadtime_usec = 0;
+  elapsed_time_sec = elapsed_time_usec = 0;
   runtime_sec = runtime_usec = 0;
-  completion_timelo = completion_timehi = 0;
   last_runtime_sec = last_runtime_usec = 0;
+  last_runtime_is_invalid = 1;
   memset((void *)&profiling, 0, sizeof(profiling));
-  startpermille = permille = 0;
+  startpermille = 0;
+// unused:  permille = 0;
   startkeys.lo = startkeys.hi = 0;
   loaderflags = 0;
   contest = contestid;
@@ -294,18 +296,18 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   coresel = selcoreSelectCore( contestid, threadindex, &client_cpu, this );
   if (coresel < 0)
     return -1;
-    
+
   //----------------------------------------------------------------
 
-  switch (contest) 
+  switch (contest)
   {
-    case RC5: 
+    case RC5:
     if ((MINIMUM_ITERATIONS % pipeline_count) != 0)
     {
       LogScreen("(MINIMUM_ITERATIONS % pipeline_count) != 0)\n");
       return -1;
-    }  
-    /* fallthrough */  
+    }
+    /* fallthrough */
     #if defined(HAVE_DES_CORES)
     case DES:
     #endif
@@ -331,10 +333,10 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       {
         if (client_cpu != expected_cputype || coresel != expected_corenum ||
             CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
-        { 
+        {
           contestwork.crypto.keysdone.lo = contestwork.crypto.keysdone.hi = 0;
           was_reset = 1;
-        }  
+        }
       }
 
       #if 0
@@ -342,7 +344,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       //doesn't look valid anymore
       if (((wrdata.work.crypto.iterations.lo) & 0x00000001L) == 1)
       {
-        // If packet was finished with an 'odd' number of keys done, 
+        // If packet was finished with an 'odd' number of keys done,
         // then make redo the last key
         wrdata.work.crypto.iterations.lo = wrdata.work.crypto.iterations.lo & 0xFFFFFFFEL;
         wrdata.work.crypto.key.lo = wrdata.work.crypto.key.lo & 0xFEFFFFFFL;
@@ -350,8 +352,8 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       #endif
 
       //determine starting key number. accounts for carryover & highend of keysdone
-      rc5unitwork.L0.hi = contestwork.crypto.key.hi + contestwork.crypto.keysdone.hi + 
-         ((((contestwork.crypto.key.lo & 0xffff) + (contestwork.crypto.keysdone.lo & 0xffff)) + 
+      rc5unitwork.L0.hi = contestwork.crypto.key.hi + contestwork.crypto.keysdone.hi +
+         ((((contestwork.crypto.key.lo & 0xffff) + (contestwork.crypto.keysdone.lo & 0xffff)) +
            ((contestwork.crypto.key.lo >> 16) + (contestwork.crypto.keysdone.lo >> 16))) >> 16);
       rc5unitwork.L0.lo = contestwork.crypto.key.lo + contestwork.crypto.keysdone.lo;
       if (contest == RC5)
@@ -374,7 +376,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
                         ((double)(contestwork.crypto.iterations.lo)))) );
         startkeys.hi = contestwork.crypto.keysdone.hi;
         startkeys.lo = contestwork.crypto.keysdone.lo;
-      }     
+      }
       break;
     }
     #if defined(HAVE_OGR_CORES)
@@ -385,17 +387,17 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       {
         if (client_cpu != expected_cputype || coresel != expected_corenum ||
             CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
-        { 
+        {
           was_reset = 1;
           contestwork.ogr.workstub.worklength = contestwork.ogr.workstub.stub.length;
           contestwork.ogr.nodes.hi = contestwork.ogr.nodes.lo = 0;
-        }  
+        }
       }
-      //unit_func.org = [xxx_]ogr_get_dispatch_table(); was done by selcore
+      //unit_func.ogr = [xxx_]ogr_get_dispatch_table(); was done by selcore
       int r = (unit_func.ogr)->init();
       if (r != CORE_S_OK)
         return -1;
-      r = (unit_func.ogr)->create(&contestwork.ogr.workstub, 
+      r = (unit_func.ogr)->create(&contestwork.ogr.workstub,
                       sizeof(WorkStub), core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
       if (r != CORE_S_OK)
         return -1;
@@ -408,31 +410,30 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
         startkeys.lo = contestwork.ogr.nodes.lo;
       }
       break;
-    }  
+    }
     #endif
-    default:  
+    default:
       return -1;
   }
 
   //---------------------------------------------------------------
 
-  completion_timelo = completion_timehi = 0;
-  runtime_sec = runtime_usec = 0;
-  memset((void *)&profiling, 0, sizeof(profiling));
   {
-    timehi = 0;
+    // set timers
+    loadtime_sec = 0;
     struct timeval tv;
     if (CliGetMonotonicClock(&tv) != 0)
     {
       if (CliGetMonotonicClock(&tv) != 0)
-        timehi = 0xfffffffful;
+        loadtime_sec = 0xfffffffful;
     }
-    if (timehi == 0)
+    if (loadtime_sec == 0)
     {
-      timehi = tv.tv_sec; 
-      timelo = tv.tv_usec;
+      loadtime_sec = tv.tv_sec;
+      loadtime_usec = tv.tv_usec;
     }
-  }  
+    elapsed_time_sec = 0xfffffffful; // invalid while RESULT_WORKING
+  }
 
   last_resultcode = RESULT_WORKING;
   initialized = 1;
@@ -471,7 +472,7 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
     initialized = 0;
     while (running) /* need to guarantee that no Run() will occur on a */
       usleep(1000); /* purged problem. */
-  }    
+  }
   if (last_resultcode < 0)
     return -1;
   return ( last_resultcode );
@@ -486,7 +487,7 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
   /* a brace to ensure 'keystocheck' is not referenced in the common part */
   {
     u32 keystocheck = *keyscheckedP;
-    // don't allow a too large of a keystocheck be used ie (>(iter-keysdone)) 
+    // don't allow a too large of a keystocheck be used ie (>(iter-keysdone))
     // (technically not necessary, but may save some wasted time)
     if (contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi)
     {
@@ -503,7 +504,7 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
     #if 0
     LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
               "suggested iterations: %lu (0x%lx)\n"
-              "pipeline_count = %lu, iterations%%pipeline_count = %lu\n", 
+              "pipeline_count = %lu, iterations%%pipeline_count = %lu\n",
               (unsigned long)keystocheck, (unsigned long)keystocheck,
               (unsigned long)(*keyscheckedP), (unsigned long)(*keyscheckedP),
               pipeline_count, keystocheck%pipeline_count );
@@ -511,7 +512,7 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
 
     if (use_generic_proto)
     {
-      //we don't care about pipeline_count when using unified cores. 
+      //we don't care about pipeline_count when using unified cores.
       //we _do_ need to care that the keystocheck and starting key are aligned.
 
       *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
@@ -521,17 +522,17 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
       {
         keystocheck = *keyscheckedP; /* always so */
         /* how this works:
-         - for RESULT_FOUND, we don't need to do anything, since keyscheckedP 
+         - for RESULT_FOUND, we don't need to do anything, since keyscheckedP
            has the real count of iters done. If we were still using old style
-           method of determining RESULT_FOUND by (keyscheckedP < keystocheck), 
+           method of determining RESULT_FOUND by (keyscheckedP < keystocheck),
            then we would simply need to set 'keystocheck = 1 + *keyscheckedP'
            to make it greater.
          - for RESULT_NOTHING/RESULT_WORKING
            unlike normal cores, where RESULT_NOTHING and RESULT_WORKING
            are synonymous (RESULT_NOTHING from the core's perspective ==
-           RESULT_WORKING from the client's perspective), async cores tell 
-           us which-is-which through the keyscheckedP pointer. As long as 
-           they are _WORKING, the *keyscheckedP (ie iterations_done) will be 
+           RESULT_WORKING from the client's perspective), async cores tell
+           us which-is-which through the keyscheckedP pointer. As long as
+           they are _WORKING, the *keyscheckedP (ie iterations_done) will be
            zero. (And of course, incrementations checks will pass as long
            as iterations_done is zero :).
         */
@@ -543,11 +544,11 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
           rescode = *resultcode = RESULT_NOTHING; //assume we know something
           if (*keyscheckedP == 0)  /* still working */
             rescode = *resultcode = RESULT_WORKING;
-        }  
+        }
       }
     }
     else /* old style */
-    {  
+    {
       *keyscheckedP = (*(unit_func.rc5))(&rc5unitwork,(keystocheck/pipeline_count));
       //don't use the next few lines as a guide for conversion to unified
       //prototypes!  look at the end of rc5/ansi/rc5ansi_2-rg.cpp instead.
@@ -555,8 +556,8 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
         rescode = RESULT_FOUND;
       else if (*keyscheckedP == keystocheck)
         rescode = RESULT_WORKING; /* synonymous with RESULT_NOTHING */
-      else 
-        rescode = -1;  
+      else
+        rescode = -1;
     }
   } /* brace to ensure that 'keystocheck' is not referenced beyond here */
   /* -- the code from here on down is identical to that of CSC -- */
@@ -581,7 +582,7 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
       Log("RC5 incrementation mismatch:\n"
           "Debug Information: %08x:%08x - %08x:%08x\n",
           rc5unitwork.L0.hi, rc5unitwork.L0.lo, refL0.hi, refL0.lo);
-    }      
+    }
     *resultcode = -1;
     return -1;
   };
@@ -598,7 +599,7 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
     u32 keylo = contestwork.crypto.key.lo;
     contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
     contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
-    if (contestwork.crypto.key.lo < keylo) 
+    if (contestwork.crypto.key.lo < keylo)
       contestwork.crypto.key.hi++; // wrap occured ?
     return RESULT_FOUND;
   }
@@ -614,7 +615,7 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
   // more to do, come back later.
   *resultcode = RESULT_WORKING;
   return RESULT_WORKING;    // Done with this round
-}  
+}
 
 /* ------------------------------------------------------------- */
 
@@ -624,7 +625,7 @@ int Problem::Run_CSC(u32 *iterationsP, int *resultcode)
   *iterationsP = 0;
   *resultcode = -1;
   return -1;
-#else  
+#else
   s32 rescode = (*(unit_func.gen))( &rc5unitwork, iterationsP, core_membuffer );
 
   if (rescode < 0) /* "kiter" error */
@@ -639,7 +640,7 @@ int Problem::Run_CSC(u32 *iterationsP, int *resultcode)
 
   // Compare ref to core key incrementation
   if ((refL0.hi != rc5unitwork.L0.hi) || (refL0.lo != rc5unitwork.L0.lo))
-  { 
+  {
     if (contestwork.crypto.iterations.hi == 0 &&
         contestwork.crypto.iterations.lo == 0x20000) /* test case */
     {
@@ -662,7 +663,7 @@ int Problem::Run_CSC(u32 *iterationsP, int *resultcode)
     u32 keylo = contestwork.crypto.key.lo;
     contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
     contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
-    if (contestwork.crypto.key.lo < keylo) 
+    if (contestwork.crypto.key.lo < keylo)
       contestwork.crypto.key.hi++; // wrap occured ?
     return RESULT_FOUND;
   }
@@ -677,7 +678,7 @@ int Problem::Run_CSC(u32 *iterationsP, int *resultcode)
   // more to do, come back later.
   *resultcode = RESULT_WORKING;
   return RESULT_WORKING; // Done with this round
-#endif  
+#endif
 }
 
 /* ------------------------------------------------------------- */
@@ -721,7 +722,7 @@ int Problem::Run_DES(u32 *iterationsP, int *resultcode)
     u32 keylo = contestwork.crypto.key.lo;
     contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
     contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
-    if (contestwork.crypto.key.lo < keylo) 
+    if (contestwork.crypto.key.lo < keylo)
       contestwork.crypto.key.hi++; // wrap occured ?
     *resultcode = RESULT_FOUND;
     return RESULT_FOUND;
@@ -775,12 +776,12 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
   }
   contestwork.ogr.nodes.lo = newnodeslo;
 
-  switch (r) 
+  switch (r)
   {
     case CORE_S_OK:
     {
       r = (unit_func.ogr)->destroy(core_membuffer);
-      if (r == CORE_S_OK) 
+      if (r == CORE_S_OK)
       {
         *resultcode = RESULT_NOTHING;
         return RESULT_NOTHING;
@@ -797,7 +798,7 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
       if ((unit_func.ogr)->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub)) == CORE_S_OK)
       {
         //Log("OGR Success!\n");
-        contestwork.ogr.workstub.stub.length = 
+        contestwork.ogr.workstub.stub.length =
                   (u16)(contestwork.ogr.workstub.worklength);
         *resultcode = RESULT_FOUND;
         return RESULT_FOUND;
@@ -813,7 +814,7 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
 
 /* ------------------------------------------------------------- */
 
-static void __compute_run_times(Problem *problem, 
+static void __compute_run_times(Problem *problem,
                                 u32 runstart_secs, u32 runstart_usecs,
                                 u32 *probstart_secs, u32 *probstart_usecs,
                                 int using_ptime, volatile int *s_using_ptime,
@@ -821,7 +822,7 @@ static void __compute_run_times(Problem *problem,
 {
   struct timeval clock_stop;
   int last_runtime_is_invalid = 0;
-  int clock_stop_is_time_now = 0;  
+  int clock_stop_is_time_now = 0;
   u32 timehi, timelo, elapsedhi, elapsedlo;
   clock_stop.tv_sec = 0;
 
@@ -847,7 +848,7 @@ static void __compute_run_times(Problem *problem,
   }
   else if (CliGetThreadUserTime(&clock_stop) < 0)
   {
-    *s_using_ptime = 0; 
+    *s_using_ptime = 0;
     last_runtime_is_invalid = 1;
   }
   if (!last_runtime_is_invalid)
@@ -874,7 +875,7 @@ static void __compute_run_times(Problem *problem,
       elapsedhi -= timehi;
       elapsedlo -= timelo;
       problem->last_runtime_sec = elapsedhi;
-      problem->last_runtime_usec = elapsedlo; 
+      problem->last_runtime_usec = elapsedlo;
 
       elapsedhi += problem->runtime_sec;
       elapsedlo += problem->runtime_usec;
@@ -890,14 +891,14 @@ static void __compute_run_times(Problem *problem,
   if (last_runtime_is_invalid)
   {
     problem->last_runtime_sec = 0;
-    problem->last_runtime_usec = 0; 
+    problem->last_runtime_usec = 0;
   }
   problem->last_runtime_is_invalid = last_runtime_is_invalid;
 
   /* ++++++++++++++++++++++++++ */
 
   /* do we need to compute elapsed wall clock time for this packet? */
-  if ( core_resultcode == RESULT_WORKING ) /* no, not yet */ 
+  if ( core_resultcode == RESULT_WORKING ) /* no, not yet */
   {
     if (clock_stop_is_time_now /* we have determined 'now' */
     && *probstart_secs == 0xfffffffful) /* our start time was invalid */
@@ -916,7 +917,7 @@ static void __compute_run_times(Problem *problem,
     {
       if (CliGetMonotonicClock(&clock_stop) != 0)
       {
-        if (CliGetMonotonicClock(&clock_stop) != 0) 
+        if (CliGetMonotonicClock(&clock_stop) != 0)
           timehi = 0xfffffffful; /* no stop time, so make start invalid */
       }
     }
@@ -941,8 +942,8 @@ static void __compute_run_times(Problem *problem,
       elapsedhi -= timehi;
       elapsedlo -= timelo;
     }
-    problem->completion_timehi = elapsedhi;
-    problem->completion_timelo = elapsedlo;
+    problem->elapsed_time_sec  = elapsedhi;
+    problem->elapsed_time_usec = elapsedlo;
   }
 
   return;
@@ -953,54 +954,55 @@ static void __compute_run_times(Problem *problem,
 int Problem::Run(void) /* returns RESULT_*  or -1 */
 {
   static volatile int s_using_ptime = -1;
-  struct timeval tv; int retcode, core_resultcode;
+  struct timeval tv;
+  int retcode, core_resultcode;
   u32 iterations, runstart_secs, runstart_usecs;
   int using_ptime;
 
   last_runtime_is_invalid = 1; /* haven't changed runtime fields yet */
 
-  if ( !initialized ) 
+  if ( !initialized )
   {
     return ( -1 );
-  }  
+  }
   if ((++running) > 1)
   {
     --running;
     return -1;
-  }  
+  }
 
-#ifdef STRESS_THREADS_AND_BUFFERS 
+#ifdef STRESS_THREADS_AND_BUFFERS
   if (contest == RC5 && !started)
   {
     contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
     contestwork.crypto.keysdone.hi = contestwork.crypto.iterations.hi;
     contestwork.crypto.keysdone.lo = contestwork.crypto.iterations.lo;
     runtime_usec = 1; /* ~1Tkeys for a 2^20 packet */
-    completion_timelo = 1;
+    elapsed_time_usec = 1;
     last_resultcode = RESULT_NOTHING;
     started = 1;
-  }  
+  }
 #endif
 
   if ( last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
   {
     running--;
     return ( last_resultcode );
-  }  
+  }
 
-  /* 
+  /*
     On return from the Run_XXX contestwork must be in a state that we
-    can put away to disk - that is, do not expect the loader (probfill 
+    can put away to disk - that is, do not expect the loader (probfill
     et al) to fiddle with iterations or key or whatever.
-    
+
     The Run_XXX functions do *not* update problem.last_resultcode, they use
     core_resultcode instead. This is so that members of the problem object
     that are updated after the resultcode has been set will not be out of
-    sync when the main thread gets it with RetrieveState(). 
-    
-    note: although the value returned by Run_XXX is usually the same as 
-    the core_resultcode it is not always the case. For instance, if 
-    post-LoadState() initialization  failed, but can be deferred, Run_XXX 
+    sync when the main thread gets it with RetrieveState().
+
+    note: although the value returned by Run_XXX is usually the same as
+    the core_resultcode it is not always the case. For instance, if
+    post-LoadState() initialization  failed, but can be deferred, Run_XXX
     may choose to return -1, but keep core_resultcode at RESULT_WORKING.
   */
 
@@ -1008,14 +1010,14 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   last_runtime_usec = last_runtime_sec = 0;
   runstart_secs = 0xfffffffful;
   using_ptime = s_using_ptime;
-  if (using_ptime) 
+  if (using_ptime)
   {
     if (CliGetThreadUserTime(&tv) != 0)
       using_ptime = 0;
     else
       runstart_secs = 0;
-  }    
-  if (!using_ptime) 
+  }
+  if (!using_ptime)
   {
     runstart_secs = 0;
     if (CliGetMonotonicClock(&tv) != 0)
@@ -1057,9 +1059,9 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   {
     core_resultcode = -1; // "Discarded (core error)": discard the purged block
   }
-  
+
   core_run_count++;
-  __compute_run_times( this, runstart_secs, runstart_usecs, &timehi, &timelo,
+  __compute_run_times( this, runstart_secs, runstart_usecs, &loadtime_sec, &loadtime_usec,
                        using_ptime, &s_using_ptime, core_resultcode );
   tslice = iterations;
   last_resultcode = core_resultcode;
@@ -1086,14 +1088,14 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
   #endif
   #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS) || \
       (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_RISCOS)
-  /* Cannot run (long-running) OGR on non-preemptive OSs on low end 
-     hardware. OGR has significant per-call overhead which ultimately 
-     prevents frequent yielding no matter how small the timeslice. 
+  /* Cannot run (long-running) OGR on non-preemptive OSs on low end
+     hardware. OGR has significant per-call overhead which ultimately
+     prevents frequent yielding no matter how small the timeslice.
      Examples (486/66, NetWare, 3c5x9 polling NIC):
      16 nodes per call: max achievable yield rate: 13-15/sec
-     Server is extremely laggy. 
+     Server is extremely laggy.
      256 nodes per call: max achievable yield rate ALSO 13-15/sec
-     For the fun of it, I then tried 1024 nodes per call: NetWare 
+     For the fun of it, I then tried 1024 nodes per call: NetWare
      started dropping packets, clients disconnected, the profiler
      froze - I couldn't switch back to the console to unload the
      client and had to power-cycle.
@@ -1103,7 +1105,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
     #if (CLIENT_CPU == CPU_68K)
     return 0;
     #elif (CLIENT_CPU == CPU_ARM)
-    if (riscos_check_taskwindow())    
+    if (riscos_check_taskwindow())
       return 0;
     #else
     static int should_not_do = -1;
@@ -1137,10 +1139,10 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
   }
   #endif
 
-  
+
   switch (contest_i)
   {
-    case RC5: 
+    case RC5:
     {
       return 1;
     }
@@ -1170,6 +1172,68 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
     }
   }
   return 0;
+}
+
+/* ----------------------------------------------------------------------- */
+
+// Calculates elapsed wall clock time between loadtime and now/finishtime
+// Stores the result in *elapsed and returns last_resultcode or -1 if error
+int Problem::GetElapsedTime(struct timeval *elapsed) const
+{
+  if (!elapsed)
+    return -1;
+  if (!initialized || last_resultcode < 0)
+  {
+    elapsed->tv_sec = elapsed->tv_usec = 0;
+    return -1;
+  }
+
+  if (elapsed_time_sec != 0xfffffffful)
+  {
+    /* problem finished, elapsed time has already calculated by Run() */
+    elapsed->tv_sec  = elapsed_time_sec;
+    elapsed->tv_usec = elapsed_time_usec;
+  }
+  else /* compute elapsed wall clock time since loadtime */
+  {
+    u32 start_sec  = loadtime_sec;
+    u32 start_usec = loadtime_usec;
+    struct timeval clock_now;
+
+    if (start_sec != 0xfffffffful) /* our start time was not invalid */
+    {
+      if (CliGetMonotonicClock(&clock_now) != 0)
+      {
+        if (CliGetMonotonicClock(&clock_now) != 0)
+          start_sec = 0xfffffffful; /* no current time, so make start invalid */
+      }
+    }
+    u32 elapsed_sec  = clock_now.tv_sec;
+    u32 elapsed_usec = clock_now.tv_usec;
+
+    if (start_sec == 0xfffffffful || /* start time is invalid */
+        elapsed_sec <  start_sec || (elapsed_sec == start_sec && elapsed_usec < start_usec ))
+    {
+      /* either start time is invalid, or current-time < start-time */
+      /* both are BadThing(TM)s - have to use the per-run total */
+      elapsed_sec  = runtime_sec;
+      elapsed_usec = runtime_usec;
+    }
+    else /* start and 'now' time are ok */
+    {
+      if (elapsed_usec < start_usec)
+      {
+        elapsed_usec += 1000000UL;
+        elapsed_sec  --;
+      }
+      elapsed_sec  -= start_sec;
+      elapsed_usec -= start_usec;
+    }
+    elapsed->tv_sec  = elapsed_sec;
+    elapsed->tv_usec = elapsed_usec;
+  }
+
+  return last_resultcode;
 }
 
 /* ----------------------------------------------------------------------- */

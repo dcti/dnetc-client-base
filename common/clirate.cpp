@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.24.2.5 2000/09/21 18:07:37 cyp Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.24.2.6 2000/09/24 13:36:31 andreasb Exp $"; }
 
 #include "baseincs.h" //timeval
 #include "client.h"   //for project constants
@@ -71,8 +71,9 @@ double CliGetKeyrateForProblem( Problem *prob /*, int doSave */ )
 
   //tv.tv_usec = prob->runtime_usec; /* actual core crunch time */
   //tv.tv_sec = prob->runtime_sec;
-  tv.tv_usec = prob->completion_timelo; /* real clock time between start/finish */
-  tv.tv_sec = prob->completion_timehi; /* including suspended/paused time */
+  //tv.tv_usec = prob->elapsed_time_usec; /* real clock time between start/finish */
+  //tv.tv_sec  = prob->elapsed_time_sec;  /* including suspended/paused time */
+  prob->GetElapsedTime(&tv);              // wall clock time
 
   if (!tv.tv_sec && !tv.tv_usec)
     tv.tv_usec = 1; //don't divide by zero
@@ -91,10 +92,10 @@ double CliGetKeyrateForProblem( Problem *prob /*, int doSave */ )
       break;
   }
 
-  if (count>1) //iteration-to-keycount-multiplication-factor
-    keys = (keys)*((double)(count));
   if (prob->startkeys.hi || prob->startkeys.lo) 
     keys = (keys)-U64TODOUBLE(prob->startkeys.hi,prob->startkeys.lo);
+  if (count>1) //iteration-to-keycount-multiplication-factor
+    keys = (keys)*((double)(count));
   if (keys==((double)(0))) //no keys done? should never happen.
     return ((double)(0));
 

@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.31 2000/07/01 13:43:29 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.32 2000/09/24 13:36:30 andreasb Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -85,10 +85,10 @@ typedef union
     #endif
     #if defined(HAVE_DES_CORES)
     u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );
-    #endif  
+    #endif
     #if defined(HAVE_OGR_CORES)
     CoreDispatchTable *ogr;
-    #endif  
+    #endif
 } unit_func_union;
 
 
@@ -99,13 +99,13 @@ class Problem
 protected: /* these members *must* be protected for thread safety */
   /* --------------------------------------------------------------- */
   RC5UnitWork rc5unitwork; /* MUST BE longword (64bit) aligned */
-  struct {u32 hi,lo;} refL0;               
+  struct {u32 hi,lo;} refL0;
   ContestWork contestwork;
   /* --------------------------------------------------------------- */
   char __core_membuffer_space[(MAX_MEM_REQUIRED_BY_CORE+(1UL<<CORE_MEM_ALIGNMENT)-1)];
   void *core_membuffer; /* aligned pointer to __core_membuffer_space */
   /* --------------------------------------------------------------- */
-  u32 timehi, timelo;
+  u32 loadtime_sec, loadtime_usec; /* LoadState() time */
   int last_resultcode; /* the rescode the last time contestwork was stable */
   int started;
   int initialized;
@@ -113,7 +113,8 @@ protected: /* these members *must* be protected for thread safety */
   volatile int running; /* RetrieveState(,,purge) has to wait while Run()ning */
 
 public: /* anything public must be thread safe */
-  u32 completion_timehi, completion_timelo; /* wall clock time between start/finish */
+  u32 elapsed_time_sec, elapsed_time_usec; /* wall clock time between
+        start/finish, only valid after Run() returned RESULT_NOTHING/_FOUND */
   u32 runtime_sec, runtime_usec; /* ~total user time spent in core */
   u32 last_runtime_sec, last_runtime_usec; /* time spent in core in last run */
   int last_runtime_is_invalid; /* last_runtime was bad (clock change etc) */
@@ -131,7 +132,7 @@ public: /* anything public must be thread safe */
   u32 tslice;                    /* -' -- adjusted by non-preemptive OSs */
   int was_reset;                 /* set if loadstate reset the block     */
 
-  u32 permille;    /* used by % bar */
+// unused:  u32 permille;    /* used by % bar */
   int loaderflags; /* used by problem loader (probfill.cpp) */
 
   unsigned int pipeline_count;
@@ -151,9 +152,9 @@ public: /* anything public must be thread safe */
 
   // LoadState() and RetrieveState() work in pairs. A LoadState() without
   // a previous RetrieveState(,,purge) will fail, and vice-versa.
-  
-  int LoadState( ContestWork * work, unsigned int _contest, u32 _iterations, 
-     int expected_cpunum, int expected_corenum, 
+
+  int LoadState( ContestWork * work, unsigned int _contest, u32 _iterations,
+     int expected_cpunum, int expected_corenum,
      int expected_os, int expected_buildfrac );
     // Load state into internal structures.
     // state is invalid (will generate errors) until this is called.
@@ -171,7 +172,11 @@ public: /* anything public must be thread safe */
     // Returns RESULT_* or -1 if error.
 
   u32 CalcPermille();
-    /* Return the % completed in the current block, to nearest 0.1%. */
+    // Return the % completed in the current block, to nearest 0.1%.
+
+  int GetElapsedTime(struct timeval *elapsed) const;
+    // Calculates elapsed wall clock time between loadtime and now/finishtime
+    // Stores the result in *elapsed and returns last_resultcode or -1 if error
 };
 
 /* ------------------------------------------------------------------- */

@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.15 2000/09/21 18:07:37 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.16 2000/09/24 13:36:31 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -308,8 +308,9 @@ int CliRecordProblemCompleted( Problem *prob, int do_postmsg )
 
         //tv.tv_sec = prob->runtime_sec;  //thread user time
         //tv.tv_usec = prob->runtime_usec;
-        tv.tv_sec = prob->completion_timehi;  //wall clock time
-        tv.tv_usec = prob->completion_timelo;
+        //tv.tv_sec  = prob->elapsed_time_sec;  //wall clock time
+        //tv.tv_usec = prob->elapsed_time_usec;
+        prob->GetElapsedTime(&tv);              // wall clock time
  
         switch (contestid) 
         {
