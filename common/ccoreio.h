@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.13.2.1 2003/01/15 22:55:01 andreasb Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.13.2.2 2003/03/01 11:12:49 andreasb Exp $"
 
 #include "cputypes.h"   /* u32 etc. used here and in the cores */
 
@@ -30,6 +30,8 @@
   #define CDECL cdecl
 #elif  (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
   #define CDECL __regargs
+#elif (CLIENT_OS == OS_WIN16) && defined(__WATCOMC__)
+  #define CDECL __cdecl
 #endif
 #ifndef CDECL
   #define CDECL /* nothing */
