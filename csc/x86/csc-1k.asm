@@ -3,6 +3,9 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; $Log: csc-1k.asm,v $
+; Revision 1.1.2.2  1999/11/07 01:31:17  remi
+; Increased code alignment.
+;
 ; Revision 1.1.2.1  1999/11/06 00:26:14  cyp
 ; they're here! (see also bench.res for 'ideal' combination)
 ;
@@ -16,10 +19,10 @@ extern         convert_key_from_inc_to_csc, convert_key_from_csc_to_inc
 %include "csc-mac.inc"
 
 __DATASECT__
-    db  "@(#)$Id: csc-1k.asm,v 1.1.2.1 1999/11/06 00:26:14 cyp Exp $",0
+    db  "@(#)$Id: csc-1k.asm,v 1.1.2.2 1999/11/07 01:31:17 remi Exp $",0
 
 __CODESECT__
-   align 16
+   align 32
 cscipher_bitslicer_1k:
     sub       esp,0x00000140
     mov       edx,dword ptr [esp+0x144]
@@ -2373,7 +2376,7 @@ X$5:
     ret       
 
 __CODESECT__
-   align 16
+   align 32
 csc_unit_func_1k:
 _csc_unit_func_1k:
     mov       eax,dword ptr [esp+0xc]
@@ -2641,5 +2644,5 @@ X$25:
     ret       
 
 __CODESECT__
-    align 16
+    align 32
 

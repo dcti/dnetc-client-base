@@ -3,6 +3,9 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; $Log: csc-6b.asm,v $
+; Revision 1.1.2.3  1999/11/07 01:31:19  remi
+; Increased code alignment.
+;
 ; Revision 1.1.2.2  1999/11/06 05:41:56  gregh
 ; Remove 'near' specifier on some jumps for compatibility with nasm 0.97.
 ; It appears that nasm 0.98 ignores superfluous near specifiers.
@@ -20,10 +23,10 @@ extern         convert_key_from_inc_to_csc,convert_key_from_csc_to_inc
 %include "csc-mac.inc"
 
 __DATASECT__
-    db  "@(#)$Id: csc-6b.asm,v 1.1.2.2 1999/11/06 05:41:56 gregh Exp $",0
+    db  "@(#)$Id: csc-6b.asm,v 1.1.2.3 1999/11/07 01:31:19 remi Exp $",0
 
 __CODESECT__
-    align 16
+    align 32
 cscipher_bitslicer_6b:
     sub       esp,0x0000015c
     mov       eax,dword ptr [esp+0x160]
@@ -4406,7 +4409,7 @@ X$27:
     ret       
 
 __CODESECT__
-    align 16
+    align 32
 csc_unit_func_6b:
 _csc_unit_func_6b:
     mov       eax,dword ptr [esp+0xc]
@@ -4758,5 +4761,5 @@ X$48:
     ret       
 
 __CODESECT__
-    align 16
+    align 32
 

@@ -3,6 +3,9 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; $Log: csc-comm.asm,v $
+; Revision 1.1.2.2  1999/11/07 01:31:21  remi
+; Increased code alignment.
+;
 ; Revision 1.1.2.1  1999/11/06 00:26:17  cyp
 ; they're here! (see also bench.res for 'ideal' combination)
 ;
@@ -14,7 +17,7 @@ global          csc_transP
 %include "csc-mac.inc"
 
 __DATASECT__
-    db  "@(#)$Id: csc-comm.asm,v 1.1.2.1 1999/11/06 00:26:17 cyp Exp $",0
+    db  "@(#)$Id: csc-comm.asm,v 1.1.2.2 1999/11/07 01:31:21 remi Exp $",0
 
 
 __DATASECT__
@@ -414,7 +417,7 @@ csc_tabp:
     db  0xfe, 0xf9, 0x24, 0xb0, 0xba, 0xfd, 0xf8, 0x55
 
 __CODESECT__
-    align 16
+    align 32
 csc_transP:
     push      ebx
     push      ebp
@@ -526,4 +529,4 @@ csc_transP:
     ret       
 
 __CODESECT__
-    align 16
+    align 32
