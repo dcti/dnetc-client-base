@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.227 1999/06/23 07:53:35 myshkin Exp $
+# @(#)$Id: configure,v 1.228 1999/06/25 07:18:39 chrisb Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -1319,10 +1319,11 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_ARM -Dlinux \
-			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
+			-DBIT_32 -DKWAN"
 	TARGET_ADDSRCS=""
-	TARGET_ADDASMS="rc5/arm/rc5-sa-gnu.s rc5/arm/rc5-arm-gnu.s \
-			des/des-slice-sa-gnu.s des/des-slice-arm-gnu.s"
+	TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu.s rc5/arm/rc5-arm-2-gnu.s \
+			rc5/arm/rc5-arm-3-gnu.s \
+			des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
 	;;
 
@@ -1331,8 +1332,9 @@ case "$1" in
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_ARM -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS=""
-	TARGET_ADDASMS="rc5/arm/rc5-sa-gnu.s rc5/arm/rc5-arm-gnu.s \
-			des/des-slice-sa-gnu.s des/des-slice-arm-gnu.s"
+	TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu.s rc5/arm/rc5-arm-2-gnu.s \
+			rc5/arm/rc5-arm-3-gnu.s \
+			des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
 	;;
 
