@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.246 2001/04/07 16:17:25 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.247 2001/04/16 18:02:55 cyp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -130,6 +130,8 @@ add_sources() # $1=os, $2=arch, $3=custom
     TARGET_ADDASMS="$TARGET_ADDASMS plat/riscos/riscos_asm.s"
   elif [ "$1" = "os2" ]; then
     COMMON_SRCS="plat/os2/os2inst.cpp ${COMMON_SRCS}"
+  elif [ "$1" = "macosx" ]; then
+    COMMON_SRCS="plat/macosx/c_install.c ${COMMON_SRCS}"
   fi  
 
   # -------------------------------------------------------------------
