@@ -13,6 +13,13 @@
 // ----------------------------------------------------------------------
 //
 // $Log: console.cpp,v $
+// Revision 1.40  1999/02/04 14:50:34  patrick
+//
+// added TERMIOS support for AIX, now the menues work again. There seams to be
+// a problem with non-termios unix clients and the cursor postioning though.
+// The initial position is at pos 1 (for integers between 1 and 9 at least).
+// This pos is counted as zero though. Thus the old value can not be erased.
+//
 // Revision 1.39  1999/01/31 20:19:08  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -150,7 +157,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.39 1999/01/31 20:19:08 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.40 1999/02/04 14:50:34 patrick Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -168,7 +175,8 @@ return "@(#)$Id: console.cpp,v 1.39 1999/01/31 20:19:08 cyp Exp $"; }
 
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || \
     (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
-    || (CLIENT_OS==OS_FREEBSD) || defined(__EMX__) || (CLIENT_OS==OS_DEC_UNIX))
+    || (CLIENT_OS==OS_FREEBSD) || defined(__EMX__) || (CLIENT_OS==OS_AIX) \
+    || (CLIENT_OS==OS_DEC_UNIX)) 
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
@@ -762,6 +770,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
           "/usr/share/terminfo",       // ncurses 1.9.9g defaults
           "/usr/local/share/terminfo", //
           "/usr/lib/terminfo",         // Debian 1.3x use this one
+	  "/usr/share/lib/terminfo",   // ex. AIX (has a link to /usr/lib)
           "/usr/local/lib/terminfo",   // variation
           "/etc/terminfo",             // found something here on my machine, doesn't hurt
           "~/.terminfo",               // last resort
