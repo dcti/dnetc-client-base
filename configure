@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.66 1999/11/29 00:29:37 lyndon Exp $
+# @(#)$Id: configure,v 1.222.2.67 1999/11/29 19:37:54 lyndon Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -45,187 +45,6 @@ fi
 TARGET_BINNAME="dnetc"
 TARGET_BINNAME_SUFFIX=""
 BUILDNAME=$1
-
-#
-# Platform specific docfiles to be included in the tarball. You only need
-# to specify platform specific files. Generic ones are added automatically.
-#
-TARGET_DOCFILES="docs/readme._ix" # override where appropriate
-TARGET_GENMAN=1 # do we generate a man page or not
-
-#
-# Target specific tarball options. 
-#
-TARGET_TARBALL=""     # 'binnameNNN-' is auto prepended, ".tar.gz" is appended
-TARGET_TARBALL_COMMENT="" # special comments for tarball.readme (if needed)
-TARGET_ARCTYPE="tgz"  # or "zip"
-
-#
-# warn as much as we can for maximum portability
-#
-OPTS_WARN="-Wall -Wtraditional -Wpointer-arith -Wcast-align \
-	  -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes \
-	  -Wconversion -Winline -Werror -Waggregate-return -Wcast-qual \
-	  -Woverloaded-virtual -Wnested-externs -Wredundant-decls"
-#
-# Common compiler options
-#
-OPTS_GCC="-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
-	  -fexpensive-optimizations -fomit-frame-pointer \
-	  -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
-	  -funroll-loops -fno-inline-functions -fno-handle-exceptions \
-	  $OPTS_WARN"
-OPTS_GCC272="-fomit-frame-pointer -fno-inline-functions \
-	     -fno-exceptions -fno-rtti $OPTS_WARN"
-OPTS_XLC3="-O3 -qansialias -qlibansi"
-OPTS_EGCS="-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer $OPTS_WARN"
-#OPTS_EGCS="-O2 -fno-exceptions -fomit-frame-pointer $OPTS_WARN"
-
-#
-# Common platform compiler options
-#
-
-#-- Sparc
-
-OPTS_CC_SPARC='-fast -xO4 -xtarget=ultra1/140 -DASM_SPARC'
-
-# (sparc/v7 [SS1/2/IPX] gcc)
-OPTS_GCC_SPARC1="$OPTS_GCC -O6 -mcypress -DASM_SPARC"
-OPTS_GCC272_SPARC1="$OPTS_GCC272 -O6 -mcypress -DASM_SPARC"
-
-# (sparc/v8 [SS5+]      gcc)
-OPTS_GCC_SPARC="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
-OPTS_GCC272_SPARC="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC"
-
-# (sparc/v9 [Ultra]     gcc)
-OPTS_GCC_ULTRA="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
-OPTS_GCC272_ULTRA="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC"
-OPTS_EGCS_ULTRA="OPTS_GCC -Os -mtune=ultrasparc -fforce-mem -mvis \
-		-fstrict-aliasing -fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
-OPTS_GAS_ULTRA="-Av9a"
-OPTS_AS_ULTRA="-xarch=v8plusa"
-
-# (sparc/v8 [SS5+]     egcs)
-OPTS_EGCS_NONULTRA_SPARC="$OPTS_EGCS -mtune=supersparc -DASM_SPARC"
-
-#-- SUN 68k
-
-OPTS_GCC_SUN68K="$OPTS_GCC -O2 -DASM_68K -D_SUN68K_"
-
-#-- MIPS
-
-# Irix with MIPSpro compilers
-OPTS_CC_MIPS="-n32 -O3 -INLINE:all -LNO:opt=1 -IPA -OPT:Olimit=0 -xansi -DMIPSpro -DASM_MIPS"
-OPTS_LD_MIPS="-n32 -IPA"
-OPTS_CC_MIPS64="-64 -O3 -INLINE:all -LNO:opt=1 -IPA -OPT:Olimit=0 -xansi -DMIPSpro -DASM_MIPS"
-OPTS_LD_MIPS64="-64 -IPA"
-
-OPTS_GCC_MIPS="$OPTS_GCC -O6 -DASM_MIPS"
-OPTS_EGCS_MIPS="$OPTS_EGCS -Os -DASM_MIPS" 
-
-#-- Alpha
-
-OPTS_CC_ALPHA_EV4='-O4 -tune ev4 -inline all'
-OPTS_CC_ALPHA_EV5='-O4 -tune ev5 -inline all'
-OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all'
-
-OPTS_GCC_ALPHA="$OPTS_GCC -O6 -DASM_ALPHA -static"
-OPTS_EGCS_ALPHA="$OPTS_EGCS -Os -DASM_ALPHA -static"
-
-#-- HPUX
-
-OPTS_CC_HPUX="$LDFLAGS_CC_HPUX +a1 +O3 -D_HPUX -DASM_HPPA"
-LDFLAGS_CC_HPUX='+A +DA2.0'
-
-OPTS_GCC_HPUX="$OPTS_GCC -O6 -DASM_HPPA -static"
-OPTS_GCC_HPUX_M68K="$OPTS_GCC -D_HPUX_M68K -static"
-
-#-- DGUX
-
-OPTS_GCC_DGUX="$OPTS_GCC -O6 -D_DGUX -DCPU_ID=CPU_88K -DOS_ID=OS_DGUX"
-
-#-- PPC
-
-OPTS_GCC_PPC601="$OPTS_GCC -O6 -DASM_PPC -mcpu=601"
-OPTS_GCC_PPC="$OPTS_GCC -O6 -DASM_PPC -mcpu=604"
-OPTS_GCC_PPC860="$OPTS_GCC -O6 -DASM_PPC -mcpu=860 -msoft-float"
-OPTS_GCC272_PPC="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604"
-OPTS_GCC272_PPC860="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=860 -msoft-float"
-OPTS_GCC_POWER="$OPTS_GCC -O6 -DASM_POWER -mcpu=power"
-
-OPTS_EGCS_PPC601="$OPTS_EGCS -O6 -DASM_PPC -mcpu=601"
-OPTS_EGCS_PPC604="$OPTS_EGCS -O6 -DASM_PPC -mcpu=604"
-OPTS_EGCS_PPC860="$OPTS_EGCS -O6 -DASM_PPC -mcpu=860 -msoft-float"
-OPTS_EGCS_POWER="$OPTS_EGCS -O6 -DASM_POWER -mcpu=power"
-
-OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
-OPTS_XLC_PPC="$OPTS_XLC -qarch=ppc -qtune=604 -D_AIX -D_ARCH_PPC"
-OPTS_XLC_POWER="$OPTS_XLC -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
-OPTS_XLC_POWER2="$OPTS_XLC -qarch=pwr2 -qtune=pwr2 -D_AIX -D_ARCH_PWR2"
-
-OPTS_XLC3_PPC601="$OPTS_XLC3 -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
-OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
-
-#-- X86
-
-OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86"
-OPTS_GCC272_X86="$OPTS_GCC272 -O6 -m486 -DASM_X86"
-
-OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentiumpro -malign-functions=4 -malign-loops=4 -DASM_X86"
-
-#-- DYNIX
-
-OPTS_EPC_DYNIX="-relax -D_SEQUENT_"
-
-OPTS_GCC_DYNIX="-D_SEQUENT_"
-
-#-- NeXT
-
-OPTS_GCC_M68K="$OPTS_GCC -m68040 -DASM_68K"
-OPTS_GAS_M68K="-v -V --register-prefix-optional -m68040"
-
-OPTS_GCC_M68030K="$OPTS_GCC -m68030 -DASM_68K"
-OPTS_GAS_M68030K="-v -V --register-prefix-optional -m68030"
-
-OPTS_NEXT_M68K="$OPTS_GCC -O6 -m68040 -DASM_68K"
-OPTS_NEXT_SPARC="$OPTS_GCC -O6 -DASM_SPARC -D_OLD_NEXT_"
-OPTS_NEXT_HPPA="$OPTS_GCC -O6 -DASM_HPPA -D_OLD_NEXT_"
-
-#-- ARM
-
-OPTS_GCC_ARM="$OPTS_GCC $OPT_FLAGS -DARM"
-
-#-- NetBSD/vax
-
-OPTS_GCC_VAX="$OPTS_GCC272 -O2 -DASM_VAX"
-OPTS_EGCS_VAX="$OPTS_EGCS -O2 -DASM_VAX"
-
-#-- OS/390
-
-#-D__STRING_CODE_SET__="ISO8859-1"
-OPTS_OS390="-D_ALL_SOURCE"
-
-#-- UltraSparc
-#
-# See Also: platforms/ultrasparc/s_paramaters.h
-#
-OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT \
-		  -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION -DBIT_32 \
-		  -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
-# a bit hairy, isn't it ? ;-)
-OPTS_DES_ULTRA_ASM="-DASM_SPARC -DIN_DCTI_CLIENT \
-		    -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID -DASM \
-		    -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE -DBIT_64 \
-		    -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL \
-		    -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc \
-		    -mtune=ultrasparc -fforce-mem -fstrict-aliasing\
-		    $OPTS_WARN \
-		    -mv8plus -mvis -mepilogue -Wa,-xarch=v8plusa -mflat \
-		    -Os -fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
-
-#-- MMX/DES
-
-OPTS_DES_MMX="-DMMX_BITSLICER -DKWAN -DMEGGS -DBIT_64"
 
 #
 # Source C++ files making up the base client code
@@ -348,12 +167,209 @@ CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp \
                csc/csc-6b-i.cpp csc/csc-6b.cpp"
 #if adding CSC, also -DHAVE_CSC_CORES
 
-CSC_ASM_SRCS="csc/x86/convcsc.asm  \
+CSC_ASM_SRCS="csc/x86/convcsc.asm \
 		csc/x86/csc-1k-i.asm \
 		csc/x86/csc-1k.asm \
 		csc/x86/csc-6b-i.asm \
 		csc/x86/csc-6b.asm \
 		csc/x86/csc-comm.asm"
+
+#
+# Define characters to delete to form a safe name
+#     [WARNING: this is a GNU-ism]
+DELETECHARS="'[:punct:]'"
+
+#
+# Platform specific docfiles to be included in the tarball. You only need
+# to specify platform specific files. Generic ones are added automatically.
+#
+TARGET_DOCFILES="docs/readme._ix" # override where appropriate
+TARGET_GENMAN=1 # do we generate a man page or not
+
+#
+# Target specific tarball options. 
+#
+TARGET_TARBALL=""     # 'binnameNNN-' is auto prepended, ".tar.gz" is appended
+TARGET_TARBALL_COMMENT="" # special comments for tarball.readme (if needed)
+TARGET_ARCTYPE="tgz"  # or "zip"
+
+#
+# warn as much as we can for maximum portability
+#
+OPTS_WARN="-Wall -Wtraditional -Wpointer-arith -Wcast-align \
+	  -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes \
+	  -Wconversion -Winline -Werror -Waggregate-return -Wcast-qual \
+	  -Woverloaded-virtual -Wnested-externs -Wredundant-decls"
+#
+# Common compiler options
+#
+OPTS_GCC="-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
+	  -fexpensive-optimizations -fomit-frame-pointer \
+	  -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
+	  -funroll-loops -fno-inline-functions -fno-handle-exceptions \
+	  $OPTS_WARN"
+OPTS_GCC272="-fomit-frame-pointer -fno-inline-functions \
+	     -fno-exceptions -fno-rtti $OPTS_WARN"
+OPTS_XLC3="-O3 -qansialias -qlibansi"
+OPTS_EGCS="-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer $OPTS_WARN"
+#OPTS_EGCS="-O2 -fno-exceptions -fomit-frame-pointer $OPTS_WARN"
+
+#
+# Common platform compiler options
+#
+
+#-- Sparc
+
+OPTS_CC_SPARC='-fast -xO4 -xtarget=ultra1/140 -DASM_SPARC'
+
+# (sparc/v7 [SS1/2/IPX] gcc)
+OPTS_GCC_SPARC1="$OPTS_GCC -O6 -mcypress -DASM_SPARC"
+OPTS_GCC272_SPARC1="$OPTS_GCC272 -O6 -mcypress -DASM_SPARC"
+
+# (sparc/v8 [SS5+]      gcc)
+OPTS_GCC_SPARC="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
+OPTS_GCC272_SPARC="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC"
+
+# (sparc/v9 [Ultra]     gcc)
+OPTS_GCC_ULTRA="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
+OPTS_GCC272_ULTRA="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC"
+OPTS_EGCS_ULTRA="OPTS_GCC -Os -mtune=ultrasparc -fforce-mem -mvis \
+		-fstrict-aliasing -fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
+OPTS_GAS_ULTRA="-Av9a"
+OPTS_AS_ULTRA="-xarch=v8plusa"
+
+# (sparc/v8 [SS5+]     egcs)
+OPTS_EGCS_NONULTRA_SPARC="$OPTS_EGCS -mtune=supersparc -DASM_SPARC"
+
+#-- SUN 68k
+
+OPTS_GCC_SUN68K="$OPTS_GCC -O2 -DASM_68K -D_SUN68K_"
+
+#-- MIPS
+
+## Irix with MIPSpro compilers
+
+OPTS_CC_MIPSPRO="-O3 -INLINE:all -LNO:opt=1 -IPA -OPT:Olimit=0 -xansi -DMIPSpro -DASM_MIPS"
+OPTS_LD_MIPSPRO="-IPA"
+OPTS_LD_MIPSPRO_64="${OPTS_LD_MIPSPRO} -64"
+
+# Common across all MIPSpro compiles:
+OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD -DKWAN -DMEGGS"
+OPTS_MIPSPRO_SRCS="rc5/ansi/2-rg.c ${MEGGS_SLICE_SRCS2} ${CSC_ANSI_SRCS}"
+OPTS_MIPSPRO_DOCS="docs/readme._ix"
+
+# Common to a specific ABI:
+OPTS_MIPSPRO_CCFLAGS_32="${OPTS_MIPSPRO_CCFLAGS} -n32 -DBIT_32"
+OPTS_MIPSPRO_CCFLAGS_64="${OPTS_MIPSPRO_CCFLAGS}  -64 -DBIT_64"
+
+## GNU
+
+OPTS_GCC_MIPS="$OPTS_GCC -O6 -DASM_MIPS"
+OPTS_EGCS_MIPS="$OPTS_EGCS -Os -DASM_MIPS" 
+
+#-- Alpha
+
+OPTS_CC_ALPHA_EV4='-O4 -tune ev4 -inline all'
+OPTS_CC_ALPHA_EV5='-O4 -tune ev5 -inline all'
+OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all'
+
+OPTS_GCC_ALPHA="$OPTS_GCC -O6 -DASM_ALPHA -static"
+OPTS_EGCS_ALPHA="$OPTS_EGCS -Os -DASM_ALPHA -static"
+
+#-- HPUX
+
+OPTS_CC_HPUX="$LDFLAGS_CC_HPUX +a1 +O3 -D_HPUX -DASM_HPPA"
+LDFLAGS_CC_HPUX='+A +DA2.0'
+
+OPTS_GCC_HPUX="$OPTS_GCC -O6 -DASM_HPPA -static"
+OPTS_GCC_HPUX_M68K="$OPTS_GCC -D_HPUX_M68K -static"
+
+#-- DGUX
+
+OPTS_GCC_DGUX="$OPTS_GCC -O6 -D_DGUX -DCPU_ID=CPU_88K -DOS_ID=OS_DGUX"
+
+#-- PPC
+
+OPTS_GCC_PPC601="$OPTS_GCC -O6 -DASM_PPC -mcpu=601"
+OPTS_GCC_PPC="$OPTS_GCC -O6 -DASM_PPC -mcpu=604"
+OPTS_GCC_PPC860="$OPTS_GCC -O6 -DASM_PPC -mcpu=860 -msoft-float"
+OPTS_GCC272_PPC="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604"
+OPTS_GCC272_PPC860="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=860 -msoft-float"
+OPTS_GCC_POWER="$OPTS_GCC -O6 -DASM_POWER -mcpu=power"
+
+OPTS_EGCS_PPC601="$OPTS_EGCS -O6 -DASM_PPC -mcpu=601"
+OPTS_EGCS_PPC604="$OPTS_EGCS -O6 -DASM_PPC -mcpu=604"
+OPTS_EGCS_PPC860="$OPTS_EGCS -O6 -DASM_PPC -mcpu=860 -msoft-float"
+OPTS_EGCS_POWER="$OPTS_EGCS -O6 -DASM_POWER -mcpu=power"
+
+OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
+OPTS_XLC_PPC="$OPTS_XLC -qarch=ppc -qtune=604 -D_AIX -D_ARCH_PPC"
+OPTS_XLC_POWER="$OPTS_XLC -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
+OPTS_XLC_POWER2="$OPTS_XLC -qarch=pwr2 -qtune=pwr2 -D_AIX -D_ARCH_PWR2"
+
+OPTS_XLC3_PPC601="$OPTS_XLC3 -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
+OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
+
+#-- X86
+
+OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86"
+OPTS_GCC272_X86="$OPTS_GCC272 -O6 -m486 -DASM_X86"
+
+OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentiumpro -malign-functions=4 -malign-loops=4 -DASM_X86"
+
+#-- DYNIX
+
+OPTS_EPC_DYNIX="-relax -D_SEQUENT_"
+
+OPTS_GCC_DYNIX="-D_SEQUENT_"
+
+#-- NeXT
+
+OPTS_GCC_M68K="$OPTS_GCC -m68040 -DASM_68K"
+OPTS_GAS_M68K="-v -V --register-prefix-optional -m68040"
+
+OPTS_GCC_M68030K="$OPTS_GCC -m68030 -DASM_68K"
+OPTS_GAS_M68030K="-v -V --register-prefix-optional -m68030"
+
+OPTS_NEXT_M68K="$OPTS_GCC -O6 -m68040 -DASM_68K"
+OPTS_NEXT_SPARC="$OPTS_GCC -O6 -DASM_SPARC -D_OLD_NEXT_"
+OPTS_NEXT_HPPA="$OPTS_GCC -O6 -DASM_HPPA -D_OLD_NEXT_"
+
+#-- ARM
+
+OPTS_GCC_ARM="$OPTS_GCC $OPT_FLAGS -DARM"
+
+#-- NetBSD/vax
+
+OPTS_GCC_VAX="$OPTS_GCC272 -O2 -DASM_VAX"
+OPTS_EGCS_VAX="$OPTS_EGCS -O2 -DASM_VAX"
+
+#-- OS/390
+
+#-D__STRING_CODE_SET__="ISO8859-1"
+OPTS_OS390="-D_ALL_SOURCE"
+
+#-- UltraSparc
+#
+# See Also: platforms/ultrasparc/s_paramaters.h
+#
+OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT \
+		  -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION -DBIT_32 \
+		  -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
+# a bit hairy, isn't it ? ;-)
+OPTS_DES_ULTRA_ASM="-DASM_SPARC -DIN_DCTI_CLIENT \
+		    -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID -DASM \
+		    -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE -DBIT_64 \
+		    -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL \
+		    -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc \
+		    -mtune=ultrasparc -fforce-mem -fstrict-aliasing\
+		    $OPTS_WARN \
+		    -mv8plus -mvis -mepilogue -Wa,-xarch=v8plusa -mflat \
+		    -Os -fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
+
+#-- MMX/DES
+
+OPTS_DES_MMX="-DMMX_BITSLICER -DKWAN -DMEGGS -DBIT_64"
 
 #
 # Define the default compilation options
@@ -375,11 +391,6 @@ TARGET_ADDNASMS=""
 TARGET_ADDOBJS=""
 
 #
-# Define characters to delete to form a safe name
-#     [WARNING: this is a GNU-ism]
-DELETECHARS="'[:punct:]'"
-
-#
 # Determine the platform specific options for this target
 #
 case "$1" in
@@ -390,12 +401,8 @@ case "$1" in
 #
 # The following targets generate builds targetted to specific
 # SGI platforms, taking into account CPU type, L1/L2 cache
-# sizes, etc. All builds are to the n32 ABI.
-#
-# Note that we lose out on a lot of optimization capability because
-# the dnetc code calls itself C++ when it's in fact C. Optimizing
-# C++ is much tougher for the compilers, but hey! cool is more
-# important than correct :-P
+# sizes, etc. Targets ending in -64 are for the 64 bit ABI,
+# otherwise the build is for the n32 ABI.
 #
 # The code currently compiles multithreaded, however I expect to
 # be able to get performance as good as (or better than) the
@@ -413,175 +420,170 @@ case "$1" in
 # Run "hinv -c processor" to see which binary is applicable for
 # your platform.
 #
-# lyndon@orthanc.ab.ca (Sun Nov 28 14:04:16 MST 1999)
+# lyndon@orthanc.ab.ca (Nov 28, 1999)
 
     *mips-cc-ip19)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip19 \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS}"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip19 \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP19\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip19"
 	;;
 
     *mips-cc-ip20)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip20 \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS}"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip20 \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP20\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip20"
 	;;
 
     *mips-cc-ip21)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip21 \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS}"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip21 \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP21\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip21"
 	;;
 
     *mips-cc-ip22_4k)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip22_4k \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS}"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip22_4k \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP22/R4K\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip22_4k"
 	;;
 
     *mips-cc-ip22_5k)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip22_5k \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS}"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip22_5k \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP22/R5K\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip22_5k"
 	;;
 
     *mips-cc-ip24)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip24 \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS}"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip24 \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP24\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip24"
 	;;
 
     *mips-cc-ip25)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip25 \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS}"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip25 \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP25\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip25"
 	;;
 
     *mips-cc-ip26)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip26 \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS}"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip26 \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP26\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip26"
 	;;
 
     *mips-cc-ip27)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip27 \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS}"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip27 \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP27\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip27"
+	;;
+
+    *mips-cc-ip27-64)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} -TARG:platform=ip27 \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP27-64\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip27-64"
 	;;
 
     *mips-cc-ip28)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip28 \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS}"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip28 \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP28\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip28"
 	;;
 
     *mips-cc-ip30)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip30 \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS}"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip30 \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP30\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip30"
 	;;
 
     *mips-cc-ip32_5k)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip32_5k \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS}"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip32_5k \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip32_5k"
 	;;
 
     *mips-cc-ip32_10k)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="-ISA -LNO $OPTS_CC_MIPS -TARG:platform=ip32_10k \
-			-DCLIENT_OS_NAME=\"\\\"Irix (IP32/R10K)\\\"\" \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS}"
+	TARGET_CCFLAGS="-ISA -LNO ${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip32_10k \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip32_10k"
 	;;
 
     *mips-cc-ip32_10k-64)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS64 -TARG:platform=ip32_10k \
-			-DCLIENT_OS_NAME=\"\\\"Irix (IP32/R10K/64bit)\\\"\" \
-			-DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD \
-			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
-	TARGET_LDFLAGS="${OPTS_LD_MIPS64}"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} -TARG:platform=ip32_10k \
+			-DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K-64\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
 	TARGET_TARBALL="irix6-mips-ip32_10k-64"
 	;;
 
@@ -609,7 +611,7 @@ case "$1" in
     *mips-cc-64)	     # For 64bit MIPS processors
 	#  mips-crunch.cpp doesn't yet compile with CC
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -O3 -r5000 -IPA -64 -mips4 \
+	TARGET_CCFLAGS="$OPTS_CC_MIPSPRO -O3 -r5000 -IPA -64 -mips4 \
 			-DBIT_64 -DKWAN -DMEGGS"
 	TARGET_LDFLAGS="-static -64 -IPA -mips4"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
@@ -619,7 +621,7 @@ case "$1" in
     *mips5-cc)		# IRIX CC is slower than mips-gcc targets
 	#  mips-crunch.cpp doesn't compile with CC
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -D_irix5_ \
+	TARGET_CCFLAGS="$OPTS_CC_MIPSPRO -D_irix5_ \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -629,7 +631,7 @@ case "$1" in
 	#  mips-crunch.cpp doesn't compile with CC
 	TARGET_CC="CC"
 	TARGET_LDFLAGS="-n32"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -n32 -DMULTITHREAD \
+	TARGET_CCFLAGS="$OPTS_CC_MIPSPRO -n32 -DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
