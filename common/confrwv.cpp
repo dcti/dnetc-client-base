@@ -5,9 +5,9 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.41 2000/09/17 11:46:29 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.42 2000/09/17 12:25:57 cyp Exp $"; }
 
-#define TRACE
+//#define TRACE
 
 #include "cputypes.h"
 #include "client.h"    // Client class
