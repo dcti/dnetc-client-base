@@ -88,6 +88,8 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/console.obj    \
 	$(OUTPUTPATH)/clievent.obj   \
 	$(OUTPUTPATH)/checkpt.obj    \
+	$(OUTPUTPATH)/random.obj     \
+	$(OUTPUTPATH)/util.obj       \
 	$(OUTPUTPATH)/x86ident.obj    \
 	$(OUTPUTPATH)/rc5-rgp6.obj    \
 	$(OUTPUTPATH)/rg486.obj   \
@@ -128,8 +130,8 @@ GUI_LIBS = wsock32.lib advapi32.lib user32.lib shell32.lib gdi32.lib comdlg32.li
 {$(RC5PATH)}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
 
-{$(RC5PATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
-       nasm -o $(@:/=\) -f win32 -i $(RC5PATH:/=\)\nasm\ $(**:/=\)
+{$(RC5PATH)/x86/nasm}.asm{$(OUTPUTPATH)}.obj:
+       nasm -o $(@:/=\) -f win32 -i $(RC5PATH:/=\)\x86\nasm\ $(**:/=\)
 
 {$(DESPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVCG) -Fo$@ $**
@@ -137,6 +139,9 @@ GUI_LIBS = wsock32.lib advapi32.lib user32.lib shell32.lib gdi32.lib comdlg32.li
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVCG) -Fo$@ $**
 
+{$(OGRPATH)}.c{$(OUTPUTPATH)}.obj:
+	cl -c $(OPTS_MSVCG) -Fo$@ $**
+	      
 {$(WIN32GUI)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVCG) -Fo$@ $**
 
