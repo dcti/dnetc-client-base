@@ -6,6 +6,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5ansi_2-rg.cpp,v $
+// Revision 1.3  1999/12/31 00:42:17  friedbait
+// - added support for Linux/390
+// - removed '-Werror' from warnings because neither linux-x86 nor
+//   linux-s390 didn't compile otherwise.
+// - switched from 2-rg.c to rc5ansi_2-rg.cpp, needed to touch the
+//   latter because function ansi_increment() was missing. Reused
+//   previous nested-if case to perform that function explicitly
+//
 // Revision 1.2  1999/12/27 12:45:36  patrick
 //
 // incorporated changes to 2-rg.c from cyp
@@ -60,7 +68,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi_2_rg_cpp (void) {
-return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.2 1999/12/27 12:45:36 patrick Exp $"; }
+return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.3 1999/12/31 00:42:17 friedbait Exp $"; }
 #endif
 
 #define PIPELINE_COUNT 2
@@ -345,7 +353,39 @@ u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *rc5unitwork, u32 tslice)
   	      ROTL3(S2_25 + A2 + ROTL(Llo2 + A2 + Lhi2, A2 + Lhi2))) return ++kiter;
     }
     // "mangle-increment" the key number by the number of pipelines
-    ansi_increment(rc5unitwork);
+    // ansi_increment(rc5unitwork);
+    #define key rc5unitwork->L0
+    key.hi = (key.hi + ( 2 << 24)) & 0xFFFFFFFF;
+    if (!(key.hi & 0xFF000000))
+      {
+      key.hi = (key.hi + 0x00010000) & 0x00FFFFFF;
+      if (!(key.hi & 0x00FF0000))
+        {
+        key.hi = (key.hi + 0x00000100) & 0x0000FFFF;
+        if (!(key.hi & 0x0000FF00))
+          {
+          key.hi = (key.hi + 0x00000001) & 0x000000FF;
+        // we do not need to mask here, was done above
+          if (!(key.hi))
+            {
+            key.lo = key.lo + 0x01000000;
+            if (!(key.lo & 0xFF000000))
+              {
+              key.lo = (key.lo + 0x00010000) & 0x00FFFFFF;
+              if (!(key.lo & 0x00FF0000))
+                {
+                key.lo = (key.lo + 0x00000100) & 0x0000FFFF;
+                if (!(key.lo & 0x0000FF00))
+                  {
+                  key.lo = (key.lo + 0x00000001) & 0x000000FF;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
     kiter += PIPELINE_COUNT;
   }
   return kiter;

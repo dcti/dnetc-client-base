@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.74 1999/12/13 05:39:46 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.75 1999/12/31 00:42:16 friedbait Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -138,6 +138,9 @@
   #if defined(__alpha__) || defined(ASM_ALPHA)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_ALPHA
+  #elif defined(__S390__)
+    #define CLIENT_OS     OS_LINUX
+    #define CLIENT_CPU    CPU_S390
   #elif defined(__i386__) || defined(ASM_X86)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_X86

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.139 1999/12/27 12:16:03 patrick Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.140 1999/12/31 00:42:16 friedbait Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -50,7 +50,14 @@ return "@(#)$Id: problem.cpp,v 1.139 1999/12/27 12:16:03 patrick Exp $"; }
   extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * , u32 );
 #elif (CLIENT_CPU == CPU_S390)
   //rc5/ansi/2-rg.c
-  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+//extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+  extern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
+                             u32 *timeslice, void *scratch_area );
+             //returns RESULT_FOUND,RESULT_WORKING or -1,
+ 
+  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 timeslice );
+             //returns timeslice
+
 #elif (CLIENT_CPU == CPU_PA_RISC)
   // rc5/parisc/parisc.cpp encapulates parisc.s, 2 pipelines
   extern "C" u32 rc5_parisc_unit_func( RC5UnitWork *, u32 );
@@ -227,7 +234,8 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     {
       //rc5/ansi/2-rg.c
       //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-      problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
+//    problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
+      problem->rc5_unit_func = rc5_unit_func_ansi_2_rg;
       problem->pipeline_count = 2;
       coresel = 0;
     }
