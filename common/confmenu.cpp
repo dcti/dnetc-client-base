@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.30  1999/02/14 03:58:32  silby
+// Fixed httpid the correct way.
+//
 // Revision 1.29  1999/02/14 03:50:08  silby
 // Fixed base64 encoding.
 //
@@ -118,7 +121,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.29 1999/02/14 03:50:08 silby Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.30 1999/02/14 03:58:32 silby Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -175,7 +178,7 @@ static unsigned char base64table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
 
 int base64_encode(char *outbuf, const char *inbuf) //outbuff must be at least
 {                                                 //(strlen(inbuf))*4/3) bytes  
-  unsigned int length = strlen(inbuf)-1;           
+  unsigned int length = strlen(inbuf);           
   
   #define B64_ENC(Ch) (char) (base64table[(char)(Ch) & 63])
 
@@ -385,14 +388,11 @@ int Client::Configure( void )
       userpass.username[0]=0;
     else if (base64_decode(userpass.username, httpid )!=0) 
       userpass.username[0]=0;                         /* bit errors */
-    else if (userpass.username[strlen(userpass.username)-1]!='\n')
-      userpass.username[0]=0;                         /* wrong format */
     else if ((p = strchr( userpass.username, ':' )) == NULL)
       userpass.username[0]=0;                         /* wrong format */
     else
       {
       *p++ = 0;
-      p[strlen(p)-1] = 0;
       strcpy(userpass.password,p);
       }
     }
@@ -949,7 +949,6 @@ int Client::Configure( void )
         {
         strcat(userpass.username,":");
         strcat(userpass.username,userpass.password);
-        strcat(userpass.username,"\n");
         base64_encode(httpid,userpass.username);
         }
       }
