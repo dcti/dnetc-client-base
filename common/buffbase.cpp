@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.37 2000/09/24 12:55:47 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.38 2000/09/24 13:46:25 andreasb Exp $"; }
 
 //#define PROFILE_DISK_HITS
 
@@ -500,12 +500,12 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
   WorkRecord data;
 
   #ifdef PROFILE_DISK_HITS
-  LogScreen("Diskhit: access() <- GetImportFileRecords()\n");
+  LogScreen("Diskhit: access() <- BufferImportFileRecords()\n");
   #endif
   if ( access( GetFullPathForFilename(source_file), 0 )!=0 )
   {
     if (interactive)
-      LogScreen("Import error: '%s' not found.\n", source_file );
+      Log("Import error: '%s' not found.\n", source_file );
     return -1L;
   }
 
@@ -521,8 +521,8 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
       if (lastremaining <= remaining)
       {
         if (interactive)
-          LogScreen("Import error: something bad happened.\n"
-                    "The source file isn't getting smaller.\n");
+          Log("Import error: something bad happened.\n"
+              "The source file isn't getting smaller.\n");
         errs = 1;
         recovered = 0;
         break;
@@ -542,9 +542,9 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
     BufferZapFileRecords( source_file );
   }
   if (recovered > 0 && interactive)
-    LogScreen("Import::%ld records successfully imported.\n", recovered);
+    Log("Import: %ld records successfully imported.\n", recovered);
   else if (errs == 0 && recovered == 0 && interactive)
-    LogScreen("Import::No buffer records could be imported.\n");
+    Log("Import: No buffer records could be imported.\n");
   return (long)recovered;
 }
 
@@ -981,6 +981,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
         if (closed_expired < 0) /* undetermined */
         {
           struct timeval tv;
+	  tv.tv_sec = 0; // shaddup compiler
           closed_expired = 0;
           if (client->last_buffupd_time == 0)
           {
