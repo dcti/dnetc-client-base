@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.11  1998/11/26 07:20:36  cyp
+// Changed Fetch()/Flush()/Update() to use new BufferUpdate() method.
+//
 // Revision 1.10  1998/11/15 11:00:17  remi
 // Moved client->SelectCore() for -test and -benchmark* from cmdline.cpp to
 // modereq.cpp and told it to not be quiet.
@@ -42,7 +45,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.10 1998/11/15 11:00:17 remi Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.11 1998/11/26 07:20:36 cyp Exp $"; }
 #endif
 
 #include "client.h"   //client class
@@ -58,7 +61,7 @@ return "@(#)$Id: modereq.cpp,v 1.10 1998/11/15 11:00:17 remi Exp $"; }
 #include "selftest.h" //"mode" SelfTest()
 #include "bench.h"    //"mode" Benchmark()
 #include "buffwork.h" //"mode" UnlockBuffer()
-
+#include "buffupd.h"  //"mode" BufferUpdate() flags
 
 /* --------------------------------------------------------------- */
 
@@ -205,61 +208,16 @@ int ModeReqRun(Client *client)
         }
       if ((bits & (MODEREQ_FETCH | MODEREQ_FLUSH))!=0)
         {
-        int dofetch = (bits & (MODEREQ_FETCH));
-        int doflush = (bits & (MODEREQ_FLUSH));
-        int doforce = (bits & (MODEREQ_FFORCE));
-        s32 oldofflinemode; 
-        unsigned char contest;
-        int runcode, retcode = 0;
-
         if (client)
           {
-          oldofflinemode = client->offlinemode;
-          client->offlinemode=0;
-          for (contest=0;contest<2;contest++)
-            {
-            if (!(client->contestdone[contest]))
-              {
-              runcode = 0;
-              if ( dofetch && doflush )
-                runcode=(int)(client->Update(contest ,1,1, doforce));
-              else if ( dofetch )
-                runcode=(int)((doforce)?(client->ForceFetch(contest)):(client->Fetch(contest)));
-              else
-                runcode=(int)((doforce)?(client->ForceFlush(contest)):(client->Flush(contest)));
-              if (client->randomchanged) 
-                client->WriteContestandPrefixConfig();
-              if (!(client->contestdone[contest]) && runcode < retcode) 
-                retcode = runcode;
-              if (runcode == -2) //no network
-                break;
-              }
-            }
-          client->offlinemode = oldofflinemode;
+          int domode = 0;
+          domode  = ((bits & (MODEREQ_FETCH))?(BUFFERUPDATE_FETCH):(0));
+          domode |= ((bits & (MODEREQ_FLUSH))?(BUFFERUPDATE_FLUSH):(0));
+          domode = client->BufferUpdate( domode, 1 /* verbose */ );
+          if (domode & BUFFERUPDATE_FETCH)             retval|=MODEREQ_FETCH;
+          if (domode & BUFFERUPDATE_FLUSH)             retval|=MODEREQ_FLUSH;
+          if (domode!=0 && (bits & MODEREQ_FFORCE)!=0) retval|=MODEREQ_FFORCE;
           }
-     
-        if (retcode < 0)
-          {
-          //unless it was a network error, fetch/flush/update will already
-          //have printed the cause for the "error", so don't say anything here.
-          if (retcode == -2)
-            {
-            LogScreen( "Network services are not available or not supported.\n"
-                       "TCP/IP network services are required for the flush,\n"
-                       "forceflush, fetch, forcefetch or update options." );
-            }
-          retcode = -1;
-          }
-        else
-          {
-          //fetch/flush/update will already have said something.
-          //thisarg[1] = (char)toupper(thisarg[1]);
-          //LogScreen( "%s completed.\n", thisarg+1 );
-          retcode = 0;
-          }
-  
-        retval |= (modereq.reqbits & (MODEREQ_FETCH | MODEREQ_FLUSH | 
-                               MODEREQ_FFORCE));
         modereq.reqbits &= ~(MODEREQ_FETCH | MODEREQ_FLUSH | MODEREQ_FFORCE);
         }
       if ((bits & MODEREQ_IDENT)!=0)    
