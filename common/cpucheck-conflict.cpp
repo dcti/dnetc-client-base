@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.2 1999/06/06 13:35:48 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.3 1999/06/07 00:01:33 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -584,7 +584,7 @@ static long __GetRawProcessorID(const char **cpuname)
   extern "C" u32 x86ident( void );
 #endif
 
-static long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
+long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
 {
   static long detectedtype = -2L;
   static const char *detectedname = NULL;
@@ -610,7 +610,7 @@ static long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     {
       static struct cpuxref cyrixxref[]={
           {    0x40, 0512,     0, "486"       }, // use Pentium core
-          {  0x0440, 0512,     0, "MediaGX" },
+          {  0x0440, 0512,     0, "MediaGX"   },
           {  0x0490, 1185,     0, "5x86"      },
           {  0x0520, 2090,     3, "6x86"      }, // "Cyrix 6x86/6x86MX/M2"
           {  0x0540, 1200,     0, "GXm"       }, // use Pentium core here too
@@ -618,6 +618,9 @@ static long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0000, 2115,     3, NULL        } //default core == 6x86
           }; internalxref = &cyrixxref[0];
       vendorname = "Cyrix ";
+      #if defined(SMC)            //self modifying core
+      cyrixxref[0].coretouse = 1; // /bugs/ #99  pentium -> 486smc
+      #endif                      // des is unaffected. both 0/1 use p5 core
       cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
     }
     else if ( vendorid == 0x6543 ) //centaur/IDT cpu
