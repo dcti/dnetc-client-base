@@ -5,6 +5,12 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.68  1998/07/09 04:26:17  nordquist
+# Fixes for OPTS_XLC_PPC* (AIX 4.x with xlC compiler) and OPTS_CC_HPUX
+# (HP-UX with CC compiler).
+#
+# Brent J. Nordquist <bjn@visi.com>
+#
 # Revision 1.67  1998/07/08 23:34:37  remi
 # Added the MMX bitslicer to all x86 targets.
 # Cleared an obvious error in DESULTRA_SRCS_C (who has an editor which can't
@@ -279,7 +285,7 @@ OPTS_GCC_ALPHA="$OPTS_GCC -O6 -DASM_ALPHA -static"
 
 #--
 
-OPTS_CC_HPUX='+A +a1 +O3 -D_HPUX -DCPU_ID=CPU_PA_RISC -DOS_ID=OS_HPUX'
+OPTS_CC_HPUX='+A +a1 +O3 -D_HPUX -DASM_HPPA +DA2.0 -Icommon -Ides -Irc5'
 OPTS_GCC_HPUX="$OPTS_GCC -O6 -DASM_HPPA -static"
 OPTS_GCC_HPUX_M68K="$OPTS_GCC -D_HPUX_M68K -static"
 
@@ -294,8 +300,8 @@ OPTS_GCC_PPC601="$OPTS_GCC -O6 -DASM_PPC -mcpu=601"
 OPTS_GCC_PPC="$OPTS_GCC -O6 -DASM_PPC -mcpu=604"
 OPTS_GCC_POWER="$OPTS_GCC -O6 -DASM_POWER"
 
-OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
-OPTS_XLC_PPC="$OPTS_XLC -qarch=ppc -qtune=604 -D_AIX -D_ARCH_PPC"
+OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC -Icommon"
+OPTS_XLC_PPC="$OPTS_XLC -qarch=ppc -qtune=604 -D_AIX -D_ARCH_PPC -Icommon"
 OPTS_XLC_POWER="$OPTS_XLC -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
 OPTS_XLC_POWER2="$OPTS_XLC -qarch=pwr2 -qtune=pwr2 -D_AIX"
 
@@ -360,7 +366,7 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
 KWAN_SLICE_SRCS4="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan4.cpp"
 MEGGS_SLICE_SRCS="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
-XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s rc5/crunch_allitnil.ppcxlc.s"
+XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s rc5/crunch_allitnil_552.ppcxlc.s"
 RC5X86_SRCS="rc5/rc5-486-rg.cpp rc5/rc5-6x86-rg.cpp rc5/rc5p5brf.cpp rc5/rc5-p6-rg.cpp rc5/rc5-k5-rg.cpp rc5/rc5-k6-rg.cpp"
 DESX86_SRCS="des/des-x86.cpp"
 DESMMX_SRCS="des/deseval-meggs3-mmx.cpp des/sboxes-mmx.cpp des/des-slice-meggs.cpp"
@@ -646,6 +652,13 @@ case "$1" in
 	TARGET_LIBS="-lCns"
 	;;
 
+    *aix-ppc601)    # AIX 4.x PPC, 601 chip
+	TARGET_CC="xlC"
+	TARGET_CCFLAGS="$OPTS_XLC_PPC601 -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-lCns"
+	;;
 
     *aix32-ppc)     # AIX 3.2.x PPC
 	TARGET_CC="xlC"
