@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.29 2000/03/11 02:59:35 andreasb Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.30 2000/03/11 20:53:01 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -241,6 +241,7 @@ int CheckExitRequestTrigger(void)
     }
     --trigstatics.exittrig.incheck;
   }
+  TRACE_OUT((0, "CheckExitRequestTrigger() = %d\n", trigstatics.exittrig.trigger));
   return( trigstatics.exittrig.trigger );
 }  
 
