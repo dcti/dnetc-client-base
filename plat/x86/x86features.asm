@@ -33,6 +33,7 @@ global          x86features,_x86features
 %define CPU_F_SSE             00002000h
 %define CPU_F_SSE2            00004000h
 %define CPU_F_SSE3            00008000h
+%define CPU_F_HYPERTHREAD     00010000h
 
 __CODESECT__
 _x86features:            
@@ -170,8 +171,14 @@ SSE2_test:
   or esi, CPU_F_SSE2    ; SSE2 Supported
 SSE3_test:
   test ecx, 00000001h   ; Test for SSE3
-  jz Return             ; SSE3 Not supported
+  jz HT_test            ; SSE3 Not supported
   or esi, CPU_F_SSE3    ; SSE3 Supported
+HT_test:
+  test edx, 10000000h   ; Test for Hyper-Threading support
+  jz Return
+  test ebx, 00FF0000h   ; Check if Hyper-Threading enabled
+  jz Return
+  or esi, CPU_F_HYPERTHREAD ; Hyper-Threading supported and enabled
   jmp Return
 
 ; Nothing supported
