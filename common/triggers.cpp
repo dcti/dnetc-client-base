@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.42 2000/05/29 21:45:08 friedbait Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.43 2000/06/04 11:12:09 oliver Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -698,9 +698,9 @@ int CheckPauseRequestTrigger(void)
 // =======================================================================
 
 #if (CLIENT_OS == OS_AMIGAOS)
-extern "C" void __regargs __chkabort(void) 
+extern "C" void __chkabort(void) 
 { 
-  /* Disable SAS/C CTRL-C handing */
+  /* Disable SAS/C / GCC CTRL-C handing */
   return;
 }
 #define CLISIGHANDLER_IS_SPECIAL
