@@ -16,14 +16,13 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.4 1999/06/08 18:45:16 nsayer Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.5 1999/07/20 03:41:50 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "pathwork.h"  // GetFullPathForFilename()
-#include "clitime.h"   // CliGetTimeString(NULL,1)
 #include "logstuff.h"  // LogScreen()
 #include "triggers.h"  // for xxx_CHECKTIME defines
 
@@ -123,12 +122,40 @@ void *RegisterPollDrivenBreakCheck( register void (*proc)(void) )
 
 // -----------------------------------------------------------------------
 
-static void InternalPollForFlagFiles(struct trigstruct *trig, int undoable)
+static void InternalPollExternalTrigger(struct trigstruct *trig, int undoable)
 {
-  time_t now;
-  
+  #if (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN32S)
+  // we treat a running defrag as another flagfile (we need to ensure
+  // that two 'external' type checks don't cancel each other out.)
+  if (trig == &trigstatics.pausetrig)
+  {
+    static int defrag_set_it = 0;
+    if (FindWindow("MSDefragWClass1",NULL))
+    {
+      if (!defrag_set_it)
+      {
+        defrag_set_it = 1;
+        if (trig->trigger) /*was already paused */
+          defrag_set_it++;
+        trig->trigger = TRIGSETBY_EXTERNAL; 
+        Log("Found defrag to be running.%s..\n",
+           ((defrag_set_it>1)?(" Pause level raised."):("")) );
+      }
+      return;
+    } 
+    else if (defrag_set_it) /* we set it, we clear it */
+    {
+      Log("Defrag is no longer running.%s..\n",
+          ((defrag_set_it>1)?(" Pause level lowered."):("")) );
+      if (defrag_set_it < 2) /* it wasn't paused before */ 
+        trig->trigger = 0;
+      defrag_set_it = 0;
+    }
+  }
+  #endif
   if ((undoable || !trig->trigger) && trig->flagfile)
   {
+    time_t now;
     if ((now = time(NULL)) >= trig->nextcheck) 
     {
       if ( access( GetFullPathForFilename( trig->flagfile ), 0 ) == 0 )
@@ -163,7 +190,7 @@ int CheckExitRequestTrigger(void)
         (*trigstatics.exittrig.pollproc)();
     }
     if ( !trigstatics.exittrig.trigger )
-      InternalPollForFlagFiles( &trigstatics.exittrig, 0 );
+      InternalPollExternalTrigger( &trigstatics.exittrig, 0 );
     if ( trigstatics.exittrig.trigger )
     {
       LogScreen("*Break*%s\n", 
@@ -190,7 +217,7 @@ int CheckPauseRequestTrigger(void)
        trigstatics.pausetrig.trigger != TRIGSETBY_INTERNAL )
   {
     ++trigstatics.pausetrig.incheck;
-    InternalPollForFlagFiles( &trigstatics.pausetrig, 1 );
+    InternalPollExternalTrigger( &trigstatics.pausetrig, 1 );
     --trigstatics.pausetrig.incheck;
   }
   return( trigstatics.pausetrig.trigger );
@@ -262,6 +289,9 @@ void __PollDrivenBreakCheck( void ) /* not static */
     RaiseExitRequestTrigger();
   #elif (CLIENT_OS == OS_NETWARE)
     nwCliCheckForUserBreak(); //in netware.cpp
+  #elif (CLIENT_OS == OS_DOS)
+    _asm mov ah,0x0b  /* benign dos call (kbhit()) */
+    _asm int 0x21     /* to keep int23h (^C) handling alive */
   #endif
   return;  
 }      
@@ -285,20 +315,25 @@ void CliSetupSignals( void )
 // -----------------------------------------------------------------------
 
 #if (CLIENT_OS == OS_WIN32)
-BOOL CliSignalHandler(DWORD dwCtrlType)
+BOOL WINAPI CliSignalHandler(DWORD dwCtrlType)
 {
-  if ( dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_BREAK_EVENT ||
-       dwCtrlType == CTRL_CLOSE_EVENT || dwCtrlType == CTRL_SHUTDOWN_EVENT)
+  if ( dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_CLOSE_EVENT || 
+       dwCtrlType == CTRL_SHUTDOWN_EVENT)
   {
     RaiseExitRequestTrigger();
+    return TRUE;
+  }
+  else if (dwCtrlType == CTRL_BREAK_EVENT)
+  {
+    RaiseRestartRequestTrigger();
     return TRUE;
   }
   return FALSE;
 }
 #define CLISIGHANDLER_IS_SPECIAL
-void CliSetupSignals( void )
+void CliSetupSignals( void ) 
 {
-  //SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CliSignalHandler, TRUE );
+  SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, TRUE );
 }
 #endif
 
@@ -330,8 +365,7 @@ extern "C" void CliSignalHandler( int sig )
     return;
   }
   #endif  
-  #if defined(SIGHUP) //&& (CLIENT_OS != OS_BEOS)
-  // according to peter dicamillo, BeOS' bash sends _only_ a sighup. Uh, huh.
+  #if defined(SIGHUP)
   if (sig == SIGHUP)
   {
     signal(sig,CliSignalHandler);
@@ -366,11 +400,21 @@ void CliSetupSignals( void )
   #endif
   #if (CLIENT_OS == OS_DOS)
   break_on(); //break on any dos call, not just term i/o
+  RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
   #endif
   #if defined(SIGHUP)
   signal( SIGHUP, CliSignalHandler );   //restart
   #endif
   #if defined(SIGCONT) && defined(SIGTSTP)
+  #if defined(__unix__)
+  // stop the shell from seeing SIGTSTP and putting the client
+  // into the background when we '-pause' it.
+  // porters : those calls are POSIX.1, 
+  // - on BSD you might need to change setpgid(0,0) to setpgrp()
+  // - on SYSV you might need to change getpgrp() to getpgid(0)
+  if( getpgrp() != getpid() )
+    setpgid( 0, 0 );
+  #endif
   signal( SIGTSTP, CliSignalHandler );  //pause
   signal( SIGCONT, CliSignalHandler );  //continue
   #endif
@@ -378,7 +422,7 @@ void CliSetupSignals( void )
   signal( SIGQUIT, CliSignalHandler );  //shutdown
   #endif
   #if defined(SIGSTOP)
-  signal( SIGSTOP, CliSignalHandler );  //shutdown, may not be maskable
+  signal( SIGSTOP, CliSignalHandler );  //shutdown, maskable some places
   #endif
   #if defined(SIGABRT)
   signal( SIGABRT, CliSignalHandler );  //shutdown
