@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.17  1998/10/19 00:32:08  daa
+// add a FREEBSD/X86/ELF set to the bryd-* defines
+//
 // Revision 1.16  1998/10/07 17:46:44  snake
 //
 // Modified for BSD/OS 4.0 and ELF
@@ -50,7 +53,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_x86_cpp(void) {
-return "@(#)$Id: des-x86.cpp,v 1.16 1998/10/07 17:46:44 snake Exp $"; }
+return "@(#)$Id: des-x86.cpp,v 1.17 1998/10/19 00:32:08 daa Exp $"; }
 #endif
 
 
@@ -66,7 +69,7 @@ return "@(#)$Id: des-x86.cpp,v 1.16 1998/10/07 17:46:44 snake Exp $"; }
 //#define DEBUG
 
 
-#if defined(__WATCOMC__) || ((CLIENT_OS == OS_SOLARIS) && (CLIENT_CPU == CPU_X86)) || ((CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86) && defined(__ELF__)) || ((CLIENT_OS == OS_BSDI) && (CLIENT_CPU == CPU_X86) && defined(__ELF__))
+#if defined(__WATCOMC__) || ((CLIENT_OS == OS_SOLARIS) && (CLIENT_CPU == CPU_X86)) || ((CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86) && defined(__ELF__)) || ((CLIENT_OS == OS_BSDI) && (CLIENT_CPU == CPU_X86) && defined(__ELF__)) || ((CLIENT_OS == OS_FREEBSD) && (CLIENT_CPU == CPU_X86) && defined(__ELF__))
  #define bryd_des _bryd_des
  #define bbryd_des _bbryd_des
  #define p1bryd_des _p1bryd_des
