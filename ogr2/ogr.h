@@ -10,6 +10,17 @@
 #include "cputypes.h"
 #endif
 #include "client2.h"
+#include <limits.h>
+
+#if (UINT_MAX == 0xffff)
+  #define OGR_INT_SIZE 2
+#elif (UINT_MAX == 0xffffffff)
+  #define OGR_INT_SIZE 4
+#elif (UINT_MAX == 0xffffffffffffffff)
+  #define OGR_INT_SIZE 8
+#else
+  #error "What's up Doc?"
+#endif  
 
 #define STUB_MAX 10 /* change ogr_packet_t in packets.h when changing this */
 
@@ -43,6 +54,8 @@ struct Level {
   int limit;
 };
 
+#define OGR_LEVEL_SIZE (((4*BITMAPS)*3)+(OGR_INT_SIZE*3))
+
 struct State {
   double Nodes;                   /* counts "tree branches" */
   int max;                        /* maximum length of ruler */
@@ -59,6 +72,8 @@ struct State {
   struct Level Levels[MAXDEPTH];
 };
 
-#define OGR_PROBLEM_SIZE sizeof(struct State)
+#define OGR_PROBLEM_SIZE (16+ (6*OGR_INT_SIZE)+(OGR_INT_SIZE*(MAXDEPTH+1))+ \
+                         (4*OGR_INT_SIZE)+(OGR_LEVEL_SIZE*MAXDEPTH) + 64)
+                         //sizeof(struct State)
 
 #endif
