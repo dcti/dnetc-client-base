@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.53 2001/03/19 15:34:25 andreasb Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.54 2001/03/29 21:59:52 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -599,10 +599,16 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
       {
         if (*buffptr == '\r')  /* curr print expects to overwrites previous */
         {                      /* so ensure the old line is clear */
+          #if (CLIENT_OS == OS_AMIGAOS)
+          memmove( msgbuffer+4, msgbuffer+1, msglen );
+          msglen += 3;
+          memcpy(msgbuffer+1,"\x9b" "K\r",3); // ANSI erase to end of line
+          #else
           memmove( &msgbuffer[scrwidth], msgbuffer, msglen+1 );
           msglen += scrwidth;
           memset( msgbuffer, ' ', scrwidth );
           msgbuffer[0] = '\r';
+          #endif
         }
         else if (*buffptr!='\n') /* curr print expects to be on a newline */
         {                        /* so ensure it is */
