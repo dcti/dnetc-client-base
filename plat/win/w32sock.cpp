@@ -39,7 +39,7 @@
  *   #endif
 */
 const char *w32sock_cpp(void) {
-return "@(#)$Id: w32sock.cpp,v 1.1.2.2 2001/03/26 18:00:55 cyp Exp $"; }
+return "@(#)$Id: w32sock.cpp,v 1.1.2.3 2001/06/08 07:04:17 cyp Exp $"; }
 
 #include <windows.h>
 #include "w32sock.h" // <windows.h> and <winsock.h> as documented above.
@@ -380,7 +380,7 @@ int PASCAL FAR gethostname(char FAR * name, int namelen)
           if (maxlen < (DWORD)namelen)
             namelen = maxlen;
           for (i = 0; i < (DWORD)(namelen-1); i++)
-            *name++ = buffer[i++];
+            *name++ = buffer[i];
           *name++ = '\0';
           return 0;
         }
