@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.56 1999/11/14 19:00:48 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.57 1999/11/16 19:26:06 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -148,7 +148,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       #ifdef SMC /* actually only for the first thread */
       corenames_table[RC5][1] = "RG self-modifying";
       #endif
-      if ((det & 0x100)!=0)
+      if (det >= 0 && (det & 0x100)!=0)
       {
         #if defined(MMX_RC5)
         corenames_table[RC5][0] = "jasonp P5/MMX"; /* slower on a PII/MMX */
@@ -467,8 +467,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
       if (selcorestatics.corenum[RC5] < 0)
       {
-        selcorestatics.corenum[RC5] = (int)(detected_type & 0xff);
-        user_selected = 0;
+        if (detected_type >= 0)
+        {
+          selcorestatics.corenum[RC5] = (int)(detected_type & 0xff);
+          user_selected = 0;
+        }
       }
     }     
     else if (contestid == DES)
@@ -476,17 +479,20 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       selcorestatics.corenum[DES] = selcorestatics.user_cputype[DES];
       if (selcorestatics.corenum[DES] < 0)
       {
-        user_selected = 0;
-        if ((detected_type & 0x100) != 0 && /* have mmx */
-           __corecount_for_contest(contestid) > 2) /* have mmx-bitslicer */
-          selcorestatics.corenum[DES] = 2; /* mmx bitslicer */
-        else
+        if (detected_type >= 0)
         {
-          int det = (int)(detected_type & 0xff);
-          if (det == 0 /*P5*/ || det == 1 /*386/486 */ || det == 4 /*K5*/)
-            selcorestatics.corenum[DES] = 0; /* standard Bryd */
+          user_selected = 0;
+          if ((detected_type & 0x100) != 0 && /* have mmx */
+             __corecount_for_contest(contestid) > 2) /* have mmx-bitslicer */
+            selcorestatics.corenum[DES] = 2; /* mmx bitslicer */
           else
-            selcorestatics.corenum[DES] = 1; /* movzx Bryd */
+          {
+            int det = (int)(detected_type & 0xff);
+            if (det == 0 /*P5*/ || det == 1 /*386/486 */ || det == 4 /*K5*/)
+              selcorestatics.corenum[DES] = 0; /* standard Bryd */
+            else
+              selcorestatics.corenum[DES] = 1; /* movzx Bryd */
+          }
         }
       }
     }
@@ -495,21 +501,24 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
       if (selcorestatics.corenum[CSC] < 0)
       {
-        // this is only valid for nasm'd cores or GCC 2.95 and up
-        switch( detected_type & 0xff ) 
+        if (detected_type >= 0)
         {
-        case 0:  // P5
-        case 1:  // 386/486
-          selcorestatics.corenum[CSC] = 3; // 1key - called
-          break;
-        case 2:  // Ppro/PII/Celeron/PIII
-        case 4:  // K5
-          selcorestatics.corenum[CSC] = 2; // 1key - inline
-          break;
-        case 3:  // Cx6x86, AMD K7
-        case 5:  // K6/K6-2/K6-3
-          selcorestatics.corenum[CSC] = 0; // 6bit - inline
-          break;
+          // this is only valid for nasm'd cores or GCC 2.95 and up
+          switch( detected_type & 0xff ) 
+          {
+          case 0:  // P5
+          case 1:  // 386/486
+            selcorestatics.corenum[CSC] = 3; // 1key - called
+            break;
+          case 2:  // Ppro/PII/Celeron/PIII
+          case 4:  // K5
+            selcorestatics.corenum[CSC] = 2; // 1key - inline
+            break;
+          case 3:  // Cx6x86, AMD K7
+          case 5:  // K6/K6-2/K6-3
+            selcorestatics.corenum[CSC] = 0; // 6bit - inline
+            break;
+          }
         }
       }
     }

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.88 1999/11/14 19:00:48 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.89 1999/11/16 19:26:05 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -594,7 +594,7 @@ static long __GetRawProcessorID(const char **cpuname)
 
 long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
 {
-  static long detectedtype = -2L;
+  static long detectedtype = -2L;  /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
   static int  kKeysPerMhz = 512; /* default rate if not found */
   static int  coretouse   = 0;   /* default core if not found */
@@ -609,10 +609,13 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     int cpuidbmask  = 0xfff0; /* mask with this to find it in the table */
     int cpuid       = (((int)dettype) & 0xffff);
     int vendorid    = (((int)(dettype >> 16)) & 0xffff);
+
+    if (vendorid == 0x6E49 ) /* 'nI': broken x86ident */
+      vendorid = 0x6547; /* 'eG' */
   
     sprintf( namebuf, "%04X:%04X", vendorid, cpuid );
     detectedname = (const char *)&namebuf[0];
-    detectedtype = 0; /* assume not found */
+    detectedtype = -1; /* assume not found */
   
     if ( vendorid == 0x7943 /* 'yC' */ ) // Cyrix CPU
     {
@@ -623,7 +626,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0520, 2090,     3, "6x86"      }, // "Cyrix 6x86/6x86MX/M2"
           {  0x0540, 1200,     0, "GXm"       }, // use Pentium core here too
           {  0x0600, 2115, 0x103, "6x86MX"    },
-          {  0x0000, 2115,     3, NULL        } //default core == 6x86
+          {  0x0000, 2115,    -1, NULL        }
           }; internalxref = &cyrixxref[0];
       vendorname = "Cyrix ";
       #if defined(SMC)            //self modifying core
@@ -636,7 +639,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       static struct cpuxref risexref[]={
           {  0x0500, 1500,     0, "mP6" }, /* (0.25 æm) */
           {  0x0500, 1500,     0, "mP6" }, /* (0.18 æm) */
-          {  0x0000, 2115,     0, NULL  } //default core == P5
+          {  0x0000, 2115,    -1, NULL  }
           }; internalxref = &risexref[0];
       vendorname = "Rise ";
       cpuidbmask = 0xfff0;
@@ -646,7 +649,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       static struct cpuxref centaurxref[]={
           {  0x0540, 1200,0x100, "C6"          }, // use Pentium core
           {  0x0585, 1346,0x102, "WinChip 2"   }, // pentium Pro (I think)
-          {  0x0000, 1346,    0, NULL          }  // default core == Pentium
+          {  0x0000, 1346,   -1, NULL          }
           }; internalxref = &centaurxref[0];
       vendorname = "Centaur/IDT ";
       cpuidbmask = 0xfff0;
@@ -655,7 +658,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     {   
       static struct cpuxref nexgenxref[]={
           {  0x0300, 1500,     1, "Nx586" }, //386/486 core
-          {  0x0000, 1500,     1, NULL  } //no such thing
+          {  0x0000, 1500,    -1, NULL  } //no such thing
           }; internalxref = &nexgenxref[0];
       vendorname = "NexGen ";
       cpuidbmask = 0xfff0;
@@ -665,7 +668,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       static struct cpuxref umcxref[]={
           {  0x0410, 1500,     0, "U5D" },
           {  0x0420, 1500,     0, "U5S" },
-          {  0x0400, 1500,     0, NULL  }
+          {  0x0400, 1500,    -1, NULL  }
           }; internalxref = &umcxref[0];
       vendorname = "UMC ";
       cpuidbmask = 0xfff0;
@@ -697,7 +700,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
              series K7 (7541:062x). Needs checking.
           */
           {  0x0620, 3400, 0x103, "K7-2"     },
-          {  0x0000, 4096,     2, NULL       } // default core = P6 (?)
+          {  0x0000, 4096,    -1, NULL       }
           }; internalxref = &amdxref[0];
       vendorname = "AMD ";
       cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
@@ -727,9 +730,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0610, 2785,     2, "Pentium Pro" },
           {  0x0630, 2785, 0x102, "Pentium II" },
           {  0x0650, 2785, 0x102, "Pentium II" },
-          {  0x0660, 2785, 0x102, "Celeron-A" },
+          {  0x0660, 2785, 0x102, "Pentium II" }, //or Celeron-A or Xeon
           {  0x0670, 2785, 0x102, "Pentium III" },
-          {  0x0000, 4096,     2, NULL           }  // default core = PPro/PII
+          {  0x0000, 4096,    -1, NULL }
           }; internalxref = &intelxref[0];
       vendorname = "Intel "; 
       if ((cpuid == 0x30) || (cpuid == 0x40))
@@ -749,6 +752,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           kKeysPerMhz  = internalxref[pos].kKeysPerMhz;
           coretouse    = internalxref[pos].coretouse;
           detectedtype = dettype;
+          if (detectedtype < 0)
+            detectedtype = -1;
           if ( internalxref[pos].cpuname )
           {
             strcpy( namebuf, vendorname );
@@ -1307,7 +1312,11 @@ int GetProcessorType(int quietly)
     #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX)
     coretouse = ((rawid < 0) ? (-1) : ((rawid==1L)?(0/*601*/):(1)));
     #elif (CLIENT_CPU == CPU_X86) /* way too many cpu<->core combinations */
-    if (( rawid = __GetRawProcessorID(NULL,'c')) >= 0) coretouse = (int)rawid;
+    if (rawid >= 0) 
+    {
+      if (( rawid = __GetRawProcessorID(NULL,'c')) >= 0) 
+        coretouse = (int)rawid;
+    }
     #elif (CLIENT_CPU == CPU_ARM)
     if (rawid <= 0)                                coretouse =-1;
     else if (rawid == 0x3    || rawid == 0x600 ||
