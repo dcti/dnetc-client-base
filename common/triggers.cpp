@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.19 2000/01/24 18:16:59 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.20 2000/01/24 20:29:51 petermack Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -398,7 +398,7 @@ static void __init_signal_handlers( int doingmodes )
   #if defined(TRIGGER_PAUSE_SIGNAL)  // signal-based pause/unpause mechanism?
   if (!doingmodes)
   {
-    #if defined(__unix__) && (CLIENT_OS != OS_BEOS)
+    #if defined(__unix__) && (CLIENT_OS != OS_BEOS) && (CLIENT_OS != OS_NEXTSTEP)
     // stop the shell from seeing SIGTSTP and putting the client
     // into the background when we '-pause' it.
     // porters : those calls are POSIX.1, 
