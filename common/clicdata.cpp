@@ -1,14 +1,15 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
-// This file contains functions for obtaining contest constants (name, id,
-// iteration-to-keycount-multiplication-factor) or obtaining/adding to
-// contest summary data (totalblocks, totaliterations, totaltime).
-// The data itself is hidden from other modules to protect integrity and
-// ease maintenance.
 //
 // $Log: clicdata.cpp,v $
+// Revision 1.8  1998/06/22 11:25:44  cyruspatel
+// Created new function in clicdata.cpp: CliClearContestSummaryData(int c)
+// Needed to flush/clear accumulated statistics for a particular contest.
+// Inserted into all ::SelectCore() sections that use a benchmark to select
+// the fastest core. Would otherwise skew the statistics for any subsequent
+// completed problem.
+//
 // Revision 1.7  1998/06/15 12:03:45  kbracey
 // Lots of consts.
 //
@@ -19,14 +20,16 @@
 // Revision 1.5  1998/06/14 08:12:30  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
-//
 
+// This file contains functions for obtaining contest constants (name, id,
+// iteration-to-keycount-multiplication-factor) or obtaining/adding to
+// contest summary data (totalblocks, totaliterations, totaltime).
+// The data itself is hidden from other modules to protect integrity and
+// ease maintenance. Created 01 May 1998 Cyrus Patel <cyp@fb14.uni-mainz.de>
 
-/* module history:
-   01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
-*/
-
-static const char *id="@(#)$Id: clicdata.cpp,v 1.7 1998/06/15 12:03:45 kbracey Exp $";
+#if (!defined(lint) && defined(__showids__))
+static const char *id="@(#)$Id: clicdata.cpp,v 1.8 1998/06/22 11:25:44 cyruspatel Exp $";
+#endif
 
 #include "clicdata.h" //includes client.h for timeval and NULL definitions
 
@@ -92,6 +95,22 @@ int CliGetContestInfoBaseData( int contestid, const char **name, unsigned int *i
   if (iter2key) *iter2key = (conInfo->Iter2KeyFactor<=1)?(1):(conInfo->Iter2KeyFactor);
   return 0;
 }
+
+// ---------------------------------------------------------------------------
+
+// reset the contest summary data for a contest
+int CliClearContestInfoSummaryData( int contestid )
+{
+  struct contestInfo *conInfo =
+                      __internalCliGetContestInfoVectorForID( contestid );
+  if (!conInfo)
+    return -1;
+  conInfo->BlocksDone = 0;
+  conInfo->IterDone = (double)(0);
+  conInfo->TimeDone.tv_sec = conInfo->TimeDone.tv_usec = 0;
+  conInfo->TimeStart.tv_sec = conInfo->TimeStart.tv_usec = 0;
+  return 0;
+}  
 
 // ---------------------------------------------------------------------------
 

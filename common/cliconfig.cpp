@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.105  1998/06/22 11:25:48  cyruspatel
+// Created new function in clicdata.cpp: CliClearContestSummaryData(int c)
+// Needed to flush/clear accumulated statistics for a particular contest.
+// Inserted into all ::SelectCore() sections that use a benchmark to select
+// the fastest core. Would otherwise skew the statistics for any subsequent
+// completed problem.
+//
 // Revision 1.104  1998/06/22 10:28:16  kbracey
 // Just tidying
 //
@@ -10,7 +17,8 @@
 // Fixed problem with x86 cpu type detection not working.
 //
 // Revision 1.102  1998/06/22 00:55:25  silby
-// Removed no longer needed variable in ValidateConfig (due to moving of cpuchecking into seperate file.)
+// Removed no longer needed variable in ValidateConfig (due to moving 
+// of cpuchecking into separate file.)
 //
 // Revision 1.101  1998/06/21 17:10:21  cyruspatel
 // Fixed some NetWare smp problems. Merged duplicate numcpu validation code
@@ -83,7 +91,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.104 1998/06/22 10:28:16 kbracey Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.105 1998/06/22 11:25:48 cyruspatel Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -1194,15 +1202,6 @@ s32 Client::ReadConfig(void)
 
 void Client::ValidateConfig( void )
 {
-#if (CLIENT_OS == OS_WIN32)
-  static bool did_detect_message = false;
-#elif (CLIENT_OS == OS_BEOS)
-  system_info the_info;
-  static bool did_detect_message = false;
-#elif (CLIENT_OS == OS_OS2)
-  static bool did_detect_message = false;
-#endif
-
   killwhitespace(id);
   killwhitespace(keyproxy);
   killwhitespace(httpproxy);
@@ -2134,6 +2133,8 @@ previouscputype=cputype;// Set this so we know next time this proc is run.
       if (fastcore < 0 || elapsed < fasttime)
           {fastcore = whichcrunch; fasttime = elapsed;}
     }
+    CliClearContestInfoSummaryData( 0 ); //clear the totals for contest 0
+    CliClearContestInfoSummaryData( 1 ); //clear the totals for contest 1
   }
   whichcrunch = fastcore;
   LogScreenf( "| Using v%d.\n\n", whichcrunch );
@@ -2255,6 +2256,8 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
     }
 
     fastcore = (4-(fastcoretest[0] + (fastcoretest[1]<<1)))&3;
+    CliClearContestInfoSummaryData( 0 ); //clear the totals for contest 0
+    CliClearContestInfoSummaryData( 1 ); //clear the totals for contest 1
   }
 
 LogScreenf("Selecting %s code.\n",cputypetable[fastcore+1]);
