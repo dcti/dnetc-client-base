@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore.cpp,v $
+// Revision 1.32  1999/01/31 14:02:28  snake
+//
+// prepare alpha OpenBSD for multiple cores when available
+//
 // Revision 1.31  1999/01/30 12:13:29  snake
 //
 // added multiple core selection for OpenBSD Alpha
@@ -122,7 +126,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.31 1999/01/30 12:13:29 snake Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.32 1999/01/31 14:02:28 snake Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -504,7 +508,8 @@ int Client::SelectCore(bool quietly)
             des_unit_func = des_unit_func_arm;
             break;
   }
-#elif ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX))
+#elif ((CLIENT_CPU == CPU_ALPHA) && ((CLIENT_OS == OS_DEC_UNIX) || \
+  (CLIENT_OS == OS_OPENBSD)))
   if (!quietly)
   {
     if (detectedtype != -2)
