@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.44  1998/11/25 06:05:48  dicamillo
+// Use parenthesis when calling a function via a pointer.  Gcc in BeOS R4
+// for Intel requires this.
+//
 // Revision 1.43  1998/11/16 16:44:07  remi
 // Allow some targets to use deseval.cpp instead of Meggs' bitslicers.
 //
@@ -107,7 +111,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.43 1998/11/16 16:44:07 remi Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.44 1998/11/25 06:05:48 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -398,7 +402,7 @@ s32 Problem::Run( u32 threadnum )
   unsigned long kiter;
   if (contest == 0)
     {
-    kiter = rc5_unit_func ( &rc5unitwork, timeslice );
+    kiter = (rc5_unit_func) ( &rc5unitwork, timeslice );
     }
   else
     {
@@ -411,9 +415,9 @@ s32 Problem::Run( u32 threadnum )
     timeslice = (1ul << nbits) / pipeline_count;
 
     if (threadnum == 0) //both are the same on non_mt
-      kiter = des_unit_func ( &rc5unitwork, nbits );
+      kiter = (des_unit_func) ( &rc5unitwork, nbits );
     else
-      kiter = des_unit_func2 ( &rc5unitwork, nbits );
+      kiter = (des_unit_func2) ( &rc5unitwork, nbits );
     }
 
   contestwork.keysdone.lo += kiter;
