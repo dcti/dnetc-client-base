@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.2 1999/09/16 21:27:19 remi Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.3 1999/09/17 17:13:23 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -15,15 +15,17 @@ return "@(#)$Id: bench.cpp,v 1.27.2.2 1999/09/16 21:27:19 remi Exp $"; }
 #include "client.h"    // needed for fileentry which is needed by clisrate.h
 #include "clisrate.h"  // CliGetKeyrateAsString()
 #include "clicdata.h"  // GetContestNameFromID()
-#include "cpucheck.h"  // GetTimesliceBaseline()
+#include "cpucheck.h"  // GetNumberOfSupportedProcessors()
 #include "logstuff.h"  // LogScreen()
 #include "console.h"   // ConIsScreen()
 #include "clievent.h"  // event post etc.
 #include "bench.h"     // ourselves
 #include "confrwv.h"   // Read/Validate/WriteConfig()
+#define FAKE_MULTI_CPU_BENCHMARK /* fake it, or not... */
 
 // --------------------------------------------------------------------------
 
+#if 0
 //Sets buffer thresholds
 void AutoSetThreshold( Client *clientp, unsigned int contestid,
                        unsigned int /*inbuffer*/, unsigned int /*outbuffer*/ )
@@ -81,7 +83,7 @@ void AutoSetThreshold( Client *clientp, unsigned int contestid,
   }
   return;
 }
-
+#endif
 
 /* ----------------------------------------------------------------- */
 
@@ -92,15 +94,22 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
   Problem *problem = new Problem();
 
   int run;
+  u32 tslice;
   const char *sm4;
   char cm1, cm2, cm3;
+  int cpucount = 1;
   unsigned int itersize;
   unsigned int keycountshift;
   unsigned int percent;
   unsigned int recommendedblockcount=0;
   unsigned int hourstobuffer = 0;
-  u32 tslice;
   const char *contname = CliGetContestNameFromID(contestid);
+
+  #ifdef FAKE_MULTI_CPU_BENCHMARK
+  cpucount = GetNumberOfDetectedProcessors();
+  if (cpucount < 1)
+    cpucount = 1;
+  #endif
 
   if (numkeys == 0)
     itersize = 23;            //8388608 instead of 10000000L;
@@ -135,6 +144,7 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
   tslice = 0x10000;
 
   #if (CLIENT_OS == OS_NETWARE)
+  if (GetFileServerMajorVersionNumber() < 5)
     tslice = GetTimesliceBaseline(); //in cpucheck.cpp
   #endif
 
@@ -214,8 +224,8 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
       }
       ClientEventSyncPost( CLIEVENT_BENCHMARK_BENCHING, (long)(problem));
 
-      LogScreen( "%cBenchmarking %s with 1*2^%d tests (%u keys):%s%c%u%%",
-          cm1, contname, itersize+keycountshift,
+      LogScreen( "%cBenchmarking %s with %d*2^%d tests (%u keys):%s%c%u%%",
+          cm1, contname, itersize+keycountshift, cpucount /* LIE! */,
           (unsigned int)(1<<(itersize+keycountshift)), sm4, cm2, 
           (unsigned int)(percent) );
     }
@@ -250,8 +260,10 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
   tv.tv_usec = problem->runtime_usec;
   ClientEventSyncPost( CLIEVENT_BENCHMARK_FINISHED, (long)((double *)(&rate)));
 
+  rate *= cpucount; /* effective only if FAKE_MULTI_CPU_BENCHMARK */
   LogScreen("Completed in %s [%skeys/sec]\n",  CliGetTimeString( &tv, 2 ),
                     CliGetKeyrateAsString( ratestr, rate ) );
+  rate /= cpucount; /* undo the lie! */
 
   itersize += keycountshift;
   while ((tv.tv_sec < (60*60) && itersize < 33) || (itersize < 28))
@@ -270,15 +282,15 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
   LogScreen( "The preferred %s blocksize for this machine should be\n"
              "set to %d (%d*2^28 keys). At the benchmarked keyrate\n"
              "(ie, under ideal conditions) each processor would finish\n"
-             "a block of that size in approximately %s.\n"
-             "Your buffer thresholds should be set to %u blocks,\n"
-             "enough for approximately %u %s.\n", 
-             CliGetContestNameFromID(contestid), 
-             (unsigned int)itersize, 
-             (1<<(itersize-28)),
-             CliGetTimeString( &tv, 2 ),recommendedblockcount,
+             "a work unit of that size in approximately %s.\n"
+             "Your buffer thresholds should be set to %u work units\n"
+             "per processor, enough for approximately %u %s.\n",
+             CliGetContestNameFromID(contestid),  
+             (unsigned int)itersize, (1<<(itersize-28)),  
+             CliGetTimeString( &tv, 2 ),
+             recommendedblockcount,
              ((hourstobuffer > 24)?(hourstobuffer/24):(hourstobuffer)),
-             ((hourstobuffer > 24)?("days"):("hours")) );
+             ((hourstobuffer > 24)?("days"):("hours"))  );
 
   delete problem;
   return (u32)(itersize);
