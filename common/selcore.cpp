@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.111 2002/10/24 02:27:56 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112 2002/10/28 16:40:23 rick Exp $"; }
 
 //#define TRACE
 
@@ -1506,17 +1506,30 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
 // These are the standard ANSI cores that are available for all platforms.
 
+#if (CLIENT_OS == OS_QNX) && !defined(__QNXNTO__)
+  extern "C" s32 cdecl rc5_72_unit_func_ansi_4( RC5_72UnitWork *, u32 *, void * );
+  extern "C" s32 cdecl rc5_72_unit_func_ansi_2( RC5_72UnitWork *, u32 *, void * );
+  extern "C" s32 cdecl rc5_72_unit_func_ansi_1( RC5_72UnitWork *, u32 *, void * );
+#else
   extern "C" s32 rc5_72_unit_func_ansi_4( RC5_72UnitWork *, u32 *, void * );
   extern "C" s32 rc5_72_unit_func_ansi_2( RC5_72UnitWork *, u32 *, void * );
   extern "C" s32 rc5_72_unit_func_ansi_1( RC5_72UnitWork *, u32 *, void * );
-
+#endif
 // These are assembly-optimized versions for each platform.
   #if (CLIENT_CPU == CPU_X86) && defined(HAVE_RC5_72_ASM_CORES)
+    #if (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ )
+      extern "C" s32 cdecl rc5_72_unit_func_ses( RC5_72UnitWork *, u32 *, void *);
+      extern "C" s32 cdecl rc5_72_unit_func_ses_2( RC5_72UnitWork *, u32 *, void *);
+      extern "C" s32 cdecl rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
+      extern "C" s32 cdecl rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
+      extern "C" s32 cdecl rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
+    #else
       extern "C" s32 rc5_72_unit_func_ses( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_ses_2( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
+    #endif
   #endif
 #endif
 

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.15 2002/10/19 22:13:11 andreasb Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16 2002/10/28 16:40:22 rick Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -41,8 +41,11 @@ typedef union
   #endif
 
   /* generic prototype: RC5-72 */
+  #if (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__)
+  s32 cdecl (*gen_72)( RC5_72UnitWork *, u32 *iterations, void *memblk );
+  #else
   s32 (*gen_72)( RC5_72UnitWork *, u32 *iterations, void *memblk );
-
+  #endif
   #if 0
   PROJECT_NOT_HANDLED("in unit_func_union");
   #endif
