@@ -7,7 +7,7 @@
 */
 
 const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.1.2.4 2001/04/13 17:16:57 cyp Exp $"; }
+return "@(#)$Id: w32ss.cpp,v 1.1.2.5 2001/05/14 15:24:38 cyp Exp $"; }
 
 #include "cputypes.h"
 #define INCLUDE_COMMDLG_H
@@ -938,6 +938,10 @@ static int SSVerifyFileExists( const char *filename )
 
 /* ---------------------------------------------------- */
 
+#if 1
+static int SSSetiControl(const char *) { return 0 };
+/* thankfully no longer necessary (sez bug 2195) */
+#else
 static int SSSetiControl(const char *ssname) 
 { 
   /* I wish, oh, I wish this wasn't needed.
@@ -1060,6 +1064,7 @@ static int SSSetiControl(const char *ssname)
   }
   return 0;
 }    
+#endif
 
 /* ---------------------------------------------------- */
 
