@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.21 2004/01/07 02:50:50 piru Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.22 2004/01/10 10:11:32 pstadt Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -496,7 +496,7 @@
                  : : "a" (l) : "memory", "cc" );
   }
 
-  static inline int fastlock_trylock(fastlock_t *lp) {
+  static inline int fastlock_trylock(fastlock_t *l) {
     unsigned long result, reg;
 
     asm volatile("        slr   %0,%0 \n" \
