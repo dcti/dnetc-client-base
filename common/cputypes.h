@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.24  1998/06/29 10:42:13  jlawson
+// swapped OS_WIN32S and OS_WIN16 values, since Win32s clients were
+// previously classified as win16
+//
 // Revision 1.23  1998/06/29 07:59:42  ziggyb
 // Need Fake Bool on my older version of Watcom
 //
@@ -130,12 +134,12 @@ struct s128 { s64 hi, lo; };
 #define OS_NEWTON       33
 #define OS_RISCOS       34
 #define OS_DGUX         35
-#define OS_WIN16        36    // windows 3.1, 3.11, wfw
+#define OS_WIN32S       36    // windows 3.1, 3.11, wfw (32-bit Win32s)
 #define OS_SINIX        37
 #define OS_DYNIX        38
 #define OS_OS390        39
 #define OS_MASPAR       40
-#define OS_WIN32S       41    // windows 3.1, 3.11, wfw (32-bit Win32s)
+#define OS_WIN16        41    // windows 3.1, 3.11, wfw (16-bit)
 
 // determine current compiling platform
 #if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
