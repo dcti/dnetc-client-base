@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.10 2003/08/25 08:32:07 mweiser Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.11 2003/08/25 16:41:24 mweiser Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -166,11 +166,11 @@ return "@(#)$Id: netbase.cpp,v 1.5.2.10 2003/08/25 08:32:07 mweiser Exp $"; }
     }
   #elif (CLIENT_OS == OS_NETWARE)
     extern "C" {
-    #pragma pack(1)
+    #include "pack1.h"
     #include <tiuser.h> //using TLI
     #include <poll.h>
     #define HAVE_POLL_SYSCALL
-    #pragma pack()
+    #include "pack0.h"
     }
   #elif (CLIENT_OS == OS_RISCOS)    
     #include <sys/select.h>

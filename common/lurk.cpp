@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.61.4.5 2003/05/16 23:25:54 bdragon Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.61.4.6 2003/08/25 16:41:24 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -328,7 +328,7 @@ extern "C" {
 #ifndef ULONG
   typedef unsigned long ULONG;
 #endif
-#pragma pack(2)
+#include "pack2.h"
 struct ifact
 {
   short ifNumber;
@@ -338,9 +338,9 @@ struct ifact
     short  ifIndex;
     ULONG ifa_netm;
     ULONG ifa_brdcast;
-  } iftable[IFMIB_ENTRIES];
-};
-#pragma pack()
+  } DNETC_PACKED iftable[IFMIB_ENTRIES];
+} DNETC_PACKED;
+#include "pack0.h"
 
 #elif (CLIENT_OS == OS_AMIGAOS)
 #include "baseincs.h"
@@ -979,26 +979,28 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
 
             TRACE_OUT((0,"ioctl InternalIsConnected() [4]\n"));
 
-            #pragma pack(1)
+            #include "pack1.h"
             struct if_info_v4 /* 4+(3*16) */
             {
               u_long   iiFlags;
-              struct { short   sin_family; /* AF_INET */
-                       u_short sin_port;
-                       u_long  sin_addr;
-                       char    sin_zero[8];
-                     } iiAddress, iiBroadcastaddress, iiNetmask;
-            };
+              struct DNETC_PACKED {
+                short   sin_family; /* AF_INET */
+                u_short sin_port;
+                u_long  sin_addr;
+                char    sin_zero[8];
+              } iiAddress, iiBroadcastaddress, iiNetmask;
+            } DNETC_PACKED;
             struct if_info_v6  /* 4+(3*24) */
             {
               u_long   iiFlags;
-              struct { short   sin6_family; /* AF_INET6 */
-                       u_short sin6_port;
-                       u_long  sin6_flowinfo;
-                       u_char  sin6_addr[16];
-                     } iiAddress, iiBroadcastaddress, iiNetmask;
-            };
-            #pragma pack()
+              struct DNETC_PACKED {
+                short   sin6_family; /* AF_INET6 */
+                u_short sin6_port;
+                u_long  sin6_flowinfo;
+                u_char  sin6_addr[16];
+              } iiAddress, iiBroadcastaddress, iiNetmask;
+            } DNETC_PACKED;
+            #include "pack0.h"
             char if_info[sizeof(struct if_info_v6)*10]; // Assume no more than 10 IP interfaces
             memset((void *)(&if_info[0]),0,sizeof(if_info));
 

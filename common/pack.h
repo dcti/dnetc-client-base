@@ -6,7 +6,7 @@
 */
 
 #ifndef __PACK_H__
-#define __PACK_H__  "@(#)$Id: pack.h,v 1.1.2.1 2003/08/25 08:37:59 mweiser Exp $"
+#define __PACK_H__  "@(#)$Id: pack.h,v 1.1.2.2 2003/08/25 16:41:24 mweiser Exp $"
 
 #if (!defined(__GNUC__) || (__GNUC__ < 2) || \
      ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91)))
@@ -19,12 +19,14 @@
 # endif
 
 # define DNETC_PACKED1
+# define DNETC_ALIGNED2
 # define DNETC_ALIGNED4
 # define DNETC_ALIGNED8
 # define DNETC_ALIGNED16
 # define DNETC_ALIGNED32
 #else
 # define DNETC_PACKED1   __attribute__((packed))
+# define DNETC_ALIGNED2  __attribute__((aligned(2)))
 # define DNETC_ALIGNED4  __attribute__((aligned(4)))
 # define DNETC_ALIGNED8  __attribute__((aligned(8)))
 # define DNETC_ALIGNED16 __attribute__((aligned(16)))
