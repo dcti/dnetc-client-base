@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.36  1998/09/29 22:03:00  blast
+// Fixed a bug I introduced with generic core usage, and removed
+// a few old comments that weren't valid anymore (for 68k)
+//
 // Revision 1.35  1998/09/25 11:31:18  chrisb
 // Added stuff to support 3 cores in the ARM clients.
 //
@@ -81,7 +85,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.35 1998/09/25 11:31:18 chrisb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.36 1998/09/29 22:03:00 blast Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -118,7 +122,6 @@ return "@(#)$Id: problem.cpp,v 1.35 1998/09/25 11:31:18 chrisb Exp $"; }
 #elif (CLIENT_CPU == CPU_68K)
   extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" __asm u32 (*rc5_unit_func)( register __a0 RC5UnitWork *work, register __d0 u32 timeslice);
-// Testing a new 68040/68060 core which might be used later...
 #elif (CLIENT_CPU == CPU_ARM)
   u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations  );
   u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
@@ -622,9 +625,7 @@ s32 Problem::Run( u32 threadnum )
   if (contest == 0) {
     while ( timeslice-- ) // timeslice ignores the number of pipelines
     {
-//      u32 result = rc5_unit_func( &rc5unitwork );
-      u32 result = rufmdu( &rc5unitwork, timeslize );
-// for testing new 68030 core .. Look above...
+      u32 result = rc5_unit_func( &rc5unitwork );
       if ( result )
       {
       // found it?
