@@ -66,14 +66,14 @@ IniString &IniString::operator= (char value)
 #ifdef NO_STRCASECMP
 int strcasecmp(const char *s1, const char *s2)
 {
-	while (*s1 && *s2) {
-		if (toupper(*s1) != toupper(*s2)) {
-			return (*s1 < *s2) ? -1 : 1;
-		}
-		s1++;
-		s2++;
-	}
-	return *s2 ? -1 : (*s1 ? 1 : 0);
+  while (*s1 && *s2) {
+    if (toupper(*s1) != toupper(*s2)) {
+      return (*s1 < *s2) ? -1 : 1;
+    }
+    s1++;
+    s2++;
+  }
+  return *s2 ? -1 : (*s1 ? 1 : 0);
 }
 #endif
 /////////////////////////////////////////////////////////////////////////////
@@ -386,8 +386,8 @@ bool IniSection::ReadIniFile(const char *Filename, const IniString &Section, lon
 #if (CLIENT_OS != OS_NETWARE)
       ungetc(peekch, inf);
 #else
-	  if (peekch != EOF && peekch != '\n' && peekch != '=' && peekch != ';')
-		  if (isprint(peekch)) key.append((char)peekch);
+      if (peekch != EOF && peekch != '\n' && peekch != '=' && peekch != ';')
+      if (isprint(peekch)) key.append((char)peekch);
 #endif
       while ((peekch = fgetc(inf)) != EOF &&
         peekch != '\n' && peekch != '=' && peekch != ';')
@@ -423,8 +423,8 @@ bool IniSection::ReadIniFile(const char *Filename, const IniString &Section, lon
 #if (CLIENT_OS != OS_NETWARE)
           if (quoted) fgetc(inf);
 #else
-		  if (peekch != EOF)
-		  {
+          if (peekch != EOF)
+          {
             if (quoted && peekch == '"')
             {
               while ((peekch = fgetc(inf)) != EOF &&
@@ -439,8 +439,8 @@ bool IniSection::ReadIniFile(const char *Filename, const IniString &Section, lon
               goto ValueReady;
             } else {
               if (isprint(peekch)) value.append((char)peekch);
-            }		
-		  }
+            }
+          }
 #endif
 
           while ((peekch = fgetc(inf)) != EOF)

@@ -23,32 +23,33 @@
            (((double)(_U32LimitDouble_))+((double)(1))))+((double)(lo))))
 #endif
 
-   //returns keyrate as string (maxlen=26) "nnnn.nn ['K'|'M'|'G'|'T']"
-   //return value is a pointer to buffer.
+// returns keyrate as string (maxlen=26) "nnnn.nn ['K'|'M'|'G'|'T']"
+// return value is a pointer to buffer.
 char *CliGetKeyrateAsString( char *buffer, double rate );
 
-   //return iter/keysdone/whatever as string. set inNetOrder if 'u' 
-   //needs ntohl()ing first, set contestID = -1 to have the ID ignored
+// return iter/keysdone/whatever as string. set inNetOrder if 'u' 
+// needs ntohl()ing first, set contestID = -1 to have the ID ignored
 const char *CliGetU64AsString( u64 *u, int inNetOrder, int contestID );
 
-   //combines CliGetKeyrateForProblem() and CliGetKeyrateAsString()
+// combines CliGetKeyrateForProblem() and CliGetKeyrateAsString()
 const char *CliGetKeyrateStringForProblem( Problem *prob );
 
-   //combines CliGetKeyrateForContest() and CliGetKeyrateAsString()
+// combines CliGetKeyrateForContest() and CliGetKeyrateAsString()
 const char *CliGetKeyrateStringForContest( int contestid );
 
-   // "4 RC5 Blocks 12:34:56.78 - [123456789 kps]"
+// "4 RC5 Blocks 12:34:56.78 - [123456789 kps]"
 const char *CliGetSummaryStringForContest( int contestid );
 
-   //[time] Queued RC5 1*2^30 block 68E0D85A:A0000000 (10.25% done)
+// [time] Queued RC5 1*2^30 block 68E0D85A:A0000000 (10.25% done)
 const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry );
 
-   //[time] Completed RC5 block 68E0D85A:A0000000 (123456789 keys)
-   //          123:45:67:89 - [987654321 kps]
+// [time] Completed RC5 block 68E0D85A:A0000000 (123456789 keys)
+//           123:45:67:89 - [987654321 kps]
 const char *CliGetMessageForProblemCompleted( Problem *problem );
 
-   //breaks 'message' into (max) two lines with correct word wrap
-   //forced newlines ('\n') and non-breaking space ('\xFF') are supported
+// breaks 'message' into (max) two lines with correct word wrap
+// forced newlines ('\n') and non-breaking space ('\xFF') are supported
 const char *CliReformatMessage( char *header, char *message );
 
 #endif // ifdef _CLICSTAT_H_
+

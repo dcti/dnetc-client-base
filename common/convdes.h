@@ -16,3 +16,4 @@ extern void convert_key_from_des_to_inc (u32 *deshi, u32 *deslo);
 extern void convert_key_from_inc_to_des (u32 *deshi, u32 *deslo);
 
 #endif
+

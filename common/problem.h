@@ -86,9 +86,9 @@ typedef enum
   extern "C" u32 rc5_unit_func_k5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" u32 rc5_unit_func_k6( RC5UnitWork * rc5unitwork, u32 timeslice );
 #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-	#if (PIPELINE_COUNT != 1)
-	#error "Expecting PIPELINE_COUNT=1"
-	#endif
+  #if (PIPELINE_COUNT != 1)
+  #error "Expecting PIPELINE_COUNT=1"
+  #endif
 #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_WIN32)
   #if (PIPELINE_COUNT != 1)
   #error "Expecting PIPELINE_COUNT=1"
@@ -157,6 +157,7 @@ public:
   u32 CalcPercent();
     // Return the % completed in the current block, to nearest 1%.
 
-  };
+};
 
 #endif
+

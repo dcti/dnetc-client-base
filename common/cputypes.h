@@ -86,7 +86,7 @@ struct s128 { s64 hi, lo; };
 #define OS_MVS          31
 #define OS_ULTRIX       32
 #define OS_NEWTON       33
-#define OS_RISCOS	      34
+#define OS_RISCOS       34
 #define OS_DGUX         35
 #define OS_WIN16        36
 #define OS_SINIX        37
@@ -260,8 +260,8 @@ struct s128 { s64 hi, lo; };
         #define CLIENT_CPU    CPU_SPARC
     #endif
 #elif defined(__MVS__)
-    #define CLIENT_OS	OS_OS390
-    #define CLIENT_CPU	CPU_S390
+    #define CLIENT_OS     OS_OS390
+    #define CLIENT_CPU    CPU_S390
 #endif
 
 #if !defined(CLIENT_OS) || !defined(CLIENT_CPU) || (CLIENT_OS == OS_UNKNOWN) || (CLIENT_CPU == CPU_UNKNOWN)
@@ -294,5 +294,5 @@ struct s128 { s64 hi, lo; };
 #endif
 
 
-
 #endif
+

@@ -31,9 +31,9 @@ extern "C" {
   #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
   #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
   #define close(sock) closesocket(sock);
-	#if defined(_MSC_VER)
-		#define sleep(x) Sleep(1000*x)
-	#endif
+  #if defined(_MSC_VER)
+    #define sleep(x) Sleep(1000*x)
+  #endif
 #elif (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
   #define gethostname xxxx
   #include <tcp.h>
@@ -105,10 +105,10 @@ extern "C" {
   #include <gusi.h>
   typedef int SOCKET;
 #elif (CLIENT_OS == OS_OS2)
-	#include <dos.h>
-	#include <process.h>
+  #include <dos.h>
+  #include <process.h>
   #include <io.h>
-	#if defined(__WATCOMC__)
+  #if defined(__WATCOMC__)
     #include <i86.h>
     #define INCL_DOSPROCESS         /* For Disk functions */
     #define INCL_DOSFILEMGR         /* For Dos_Delete */
@@ -135,11 +135,11 @@ extern "C" {
 #elif (CLIENT_OS == OS_AMIGA)
   #include "amiga.h"
   #include <assert.h>
-	#include <clib/socket_protos.h>
-	#include <pragmas/socket_pragmas.h>
-	#include <sys/ioctl.h>
-	#include <sys/time.h>
-	#include <netdb.h>
+  #include <clib/socket_protos.h>
+  #include <pragmas/socket_pragmas.h>
+  #include <sys/ioctl.h>
+  #include <sys/time.h>
+  #include <netdb.h>
   extern struct Library *SocketBase;
   #define write(sock, buff, len) send(sock, (unsigned char*)buff, len, 0)
   #define read(sock, buff, len) recv(sock, (unsigned char*)buff, len, 0)
@@ -192,13 +192,13 @@ extern "C" {
 
 ///////////////////////////////////////////////////////////////////////////
 
-#define MODE_UUE	1
-#define MODE_HTTP	2
+#define MODE_UUE        1
+#define MODE_HTTP       2
 #define MODE_SOCKS4     4
 #define MODE_PROXIED    (MODE_HTTP | MODE_SOCKS4 | MODE_SOCKS5)
 #define MODE_SOCKS5     8
-#define DEFAULT_RRDNS	"us.v27.distributed.net"
-#define DEFAULT_PORT	2064
+#define DEFAULT_RRDNS   "us.v27.distributed.net"
+#define DEFAULT_PORT    2064
 
 extern void NetworkInitialize(void);
 extern void NetworkDeinitialize(void);
@@ -232,16 +232,13 @@ protected:
 
 #if (CLIENT_OS == OS_OS2)
   // Dial on Demand support
-  int	DOD_On,
-//      DOD_Retries,
-		DOD_Sleeptime,
-		nl;
+  int DOD_On, DOD_Sleeptime, nl;
 
   char netstring[25];   // for testing to see if OS/2 is online
 
   int rweonline();
-	  // Checking to see if we're connected
-	  // Returns 1 if online, 0 if not
+    // Checking to see if we're connected
+    // Returns 1 if online, 0 if not
 
   void ensureonline();
     // establishes connection if not connected already.

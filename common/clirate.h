@@ -16,11 +16,11 @@
 #include "clicdata.h" //Cli[Add|Get]ContestInfoSummaryData, CliGetContestInfoBaseData
 #include "clitime.h" //CliTimerDiff
 
-   //return (cumulative) keyrate for a particular contest
+// return (cumulative) keyrate for a particular contest
 double CliGetKeyrateForContest( int contestid );
 
-   //return keyrate for a single problem. Problem must be finished.
-   //Sets bit 0x80 in problem->finished to prevent repeated additions to total
+// return keyrate for a single problem. Problem must be finished.
+// Sets bit 0x80 in problem->finished to prevent repeated additions to total
 double CliGetKeyrateForProblem( Problem *problem );
 
 #ifndef _U32LimitDouble_

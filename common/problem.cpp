@@ -68,16 +68,15 @@ Problem::~Problem()
 
 s32 Problem::IsInitialized()
 {
-   if (initialized) {
-      return 1;
-   } else {
-      return 0;
-   }
+  if (initialized) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 s32 Problem::LoadState( ContestWork * work , u32 contesttype )
 {
-
   contest = contesttype;
 //printf("loadstate contest: %d %d \n",contesttype,contest);
 
@@ -113,18 +112,19 @@ s32 Problem::LoadState( ContestWork * work , u32 contesttype )
   rc5unitwork.plain.lo = contestwork.plain.lo ^ contestwork.iv.lo;
   rc5unitwork.cypher.hi = contestwork.cypher.hi;
   rc5unitwork.cypher.lo = contestwork.cypher.lo;
-  if (contesttype == 0) {
-      rc5unitwork.L0.lo = ((key.hi >> 24) & 0x000000FFL) |
-	  ((key.hi >>  8) & 0x0000FF00L) |
-	  ((key.hi <<  8) & 0x00FF0000L) |
-	  ((key.hi << 24) & 0xFF000000L);
-      rc5unitwork.L0.hi = ((key.lo >> 24) & 0x000000FFL) |
-	  ((key.lo >>  8) & 0x0000FF00L) |
-	  ((key.lo <<  8) & 0x00FF0000L) |
-	  ((key.lo << 24) & 0xFF000000L);
+  if (contesttype == 0)
+  {
+    rc5unitwork.L0.lo = ((key.hi >> 24) & 0x000000FFL) |
+        ((key.hi >>  8) & 0x0000FF00L) |
+        ((key.hi <<  8) & 0x00FF0000L) |
+        ((key.hi << 24) & 0xFF000000L);
+    rc5unitwork.L0.hi = ((key.lo >> 24) & 0x000000FFL) |
+        ((key.lo >>  8) & 0x0000FF00L) |
+        ((key.lo <<  8) & 0x00FF0000L) |
+        ((key.lo << 24) & 0xFF000000L);
   } else {
-      rc5unitwork.L0.lo = key.lo;
-      rc5unitwork.L0.hi = key.hi;
+    rc5unitwork.L0.lo = key.lo;
+    rc5unitwork.L0.hi = key.hi;
   }
 
   // set up the current result state
@@ -168,8 +168,8 @@ s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
   work->iterations.lo = htonl( contestwork.iterations.lo );
 #endif
   if (setflags) {
-     initialized = 0;
-     finished = 0;
+    initialized = 0;
+    finished = 0;
   }
 //printf("retrievestate contest: %d \n",contest);
   return( contest );
@@ -187,16 +187,16 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     return ( 1 );
 
   if (!started) 
-    {
-    #ifdef NEW_STATS_AND_LOGMSG_STUFF
-      CliTimer(&stop);
-    #else
-      struct timezone dummy;
-     gettimeofday( &stop, &dummy );
-    #endif
-     timehi = stop.tv_sec;
-     timelo = stop.tv_usec;
-     started=1;
+  {
+#ifdef NEW_STATS_AND_LOGMSG_STUFF
+    CliTimer(&stop);
+#else
+    struct timezone dummy;
+    gettimeofday( &stop, &dummy );
+#endif
+    timehi = stop.tv_sec;
+    timelo = stop.tv_usec;
+    started=1;
   }
 
   // don't allow a too large of a timeslice be used
@@ -208,8 +208,8 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
 
 #if (CLIENT_CPU == CPU_POWERPC)
 {
-	unsigned long kiter = 0;
-	if (contest == 0) {
+  unsigned long kiter = 0;
+  if (contest == 0) {
 #if (CLIENT_OS != OS_BEOS)
     if (whichcrunch == 0)
       kiter = crunch_allitnil( &rc5unitwork, timeslice );
@@ -224,15 +224,16 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
           kiter++;
         }
       } while (kiter < timeslice);
-	}
-	else
-	{
-      // protect the innocent
-      timeslice *= PIPELINE_COUNT;
-      u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-           if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
-      else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
-      timeslice = (1ul << nbits) / PIPELINE_COUNT;
+  }
+  else
+  {
+    // protect the innocent
+    timeslice *= PIPELINE_COUNT;
+    u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
+    
+    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
+    else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
+    timeslice = (1ul << nbits) / PIPELINE_COUNT;
 #if (CLIENT_OS == OS_BEOS)
     if (threadnum == 0) {
       kiter = des_unit_func ( &rc5unitwork, nbits );
@@ -240,12 +241,12 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
       kiter = Bdes_unit_func ( &rc5unitwork, nbits );
     }
 #else
-      kiter = des_unit_func ( &rc5unitwork, nbits );
+    kiter = des_unit_func ( &rc5unitwork, nbits );
 #endif
-	}
+  }
 
-	contestwork.keysdone.lo += kiter;
-	
+  contestwork.keysdone.lo += kiter;
+
   if (kiter < timeslice)
   {
     // found it?
@@ -272,7 +273,8 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     // protect the innocent
     timeslice *= PIPELINE_COUNT;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-         if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
+    
+    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
     if (threadnum == 0) {
@@ -308,7 +310,8 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     // protect the innocent
     timeslice *= PIPELINE_COUNT;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-         if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
+    
+    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
     kiter = des_unit_func ( &rc5unitwork, nbits );
@@ -341,7 +344,8 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     // protect the innocent
     timeslice *= PIPELINE_COUNT;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-         if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
+    
+    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
     kiter = des_unit_func ( &rc5unitwork, nbits );
@@ -370,13 +374,13 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   unsigned long kiter;
 #if (CLIENT_OS == OS_RISCOS)
   if (_kernel_escape_seen())
-    {
+  {
       CliSignalHandler(SIGINT);
-    }
+  }
   if (riscos_in_taskwindow)
-    {
+  {
       riscos_upcall_6();
-    }
+  }
 #endif
 
   if (contest == 0)
@@ -388,18 +392,18 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     contestwork.keysdone.lo += timeslice;
     if (kiter)
     {
-        // found it?
-        contestwork.keysdone.lo -= kiter;
+      // found it?
+      contestwork.keysdone.lo -= kiter;
 
-        rc5result.key.hi = contestwork.key.hi;
-        rc5result.key.lo = contestwork.key.lo;
-        rc5result.keysdone.hi = contestwork.keysdone.hi;
-        rc5result.keysdone.lo = contestwork.keysdone.lo;
-        rc5result.iterations.hi = contestwork.iterations.hi;
-        rc5result.iterations.lo = contestwork.iterations.lo;
-        rc5result.result = RESULT_FOUND;
-        finished = 1;
-        return( 1 );
+      rc5result.key.hi = contestwork.key.hi;
+      rc5result.key.lo = contestwork.key.lo;
+      rc5result.keysdone.hi = contestwork.keysdone.hi;
+      rc5result.keysdone.lo = contestwork.keysdone.lo;
+      rc5result.iterations.hi = contestwork.iterations.hi;
+      rc5result.iterations.lo = contestwork.iterations.lo;
+      rc5result.result = RESULT_FOUND;
+      finished = 1;
+      return( 1 );
     }
   }
   else
@@ -407,7 +411,8 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     // protect the innocent
     timeslice *= PIPELINE_COUNT;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-         if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
+    
+    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
     kiter = des_unit_func_strongarm ( &rc5unitwork, nbits );
@@ -429,7 +434,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   }
 }
 #else
-	unsigned long kiter = 0;
+  unsigned long kiter = 0;
   if (contest == 0) {
     while ( timeslice-- ) // timeslice ignores the number of pipelines
     {
@@ -486,38 +491,40 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
       }
     }
   } else {
-      timeslice *= PIPELINE_COUNT;
-      u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-           if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
-      else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
-      timeslice = (1ul << nbits) / PIPELINE_COUNT;
+    timeslice *= PIPELINE_COUNT;
+    u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
+    
+    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
+    else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
+    timeslice = (1ul << nbits) / PIPELINE_COUNT;
 #if (CLIENT_OS != OS_OS390)
-      kiter = des_unit_func ( &rc5unitwork, nbits );
+    kiter = des_unit_func ( &rc5unitwork, nbits );
 #else
-      kiter = 0;
+    kiter = 0;
 #endif
-      contestwork.keysdone.lo += kiter;
-      if (kiter < ( timeslice * PIPELINE_COUNT ) ) {
-	    // found it?
-	  rc5result.key.hi = contestwork.key.hi;
-	  rc5result.key.lo = contestwork.key.lo;
-	  rc5result.keysdone.hi = contestwork.keysdone.hi;
-	  rc5result.keysdone.lo = contestwork.keysdone.lo;
-	  rc5result.iterations.hi = contestwork.iterations.hi;
-	  rc5result.iterations.lo = contestwork.iterations.lo;
-	  rc5result.result = RESULT_FOUND;
-	  finished = 1;
-	  return( 1 );
-      }
-      else if (kiter != (timeslice * PIPELINE_COUNT))
-          printf("kiter wrong %ld %ld\n",
-                 (long) kiter, (long)(timeslice*PIPELINE_COUNT));
+    contestwork.keysdone.lo += kiter;
+    if (kiter < ( timeslice * PIPELINE_COUNT ) )
+    {
+      // found it?
+      rc5result.key.hi = contestwork.key.hi;
+      rc5result.key.lo = contestwork.key.lo;
+      rc5result.keysdone.hi = contestwork.keysdone.hi;
+      rc5result.keysdone.lo = contestwork.keysdone.lo;
+      rc5result.iterations.hi = contestwork.iterations.hi;
+      rc5result.iterations.lo = contestwork.iterations.lo;
+      rc5result.result = RESULT_FOUND;
+      finished = 1;
+      return( 1 );
+    }
+    else if (kiter != (timeslice * PIPELINE_COUNT))
+        printf("kiter wrong %ld %ld\n",
+               (long) kiter, (long)(timeslice*PIPELINE_COUNT));
   }
 #endif
 
   if ( ( contestwork.keysdone.hi > contestwork.iterations.hi ) ||
        ( ( contestwork.keysdone.hi == contestwork.iterations.hi ) &&
-	 ( contestwork.keysdone.lo >= contestwork.iterations.lo ) ) )
+       ( contestwork.keysdone.lo >= contestwork.iterations.lo ) ) )
   {
     // done with this block and nothing found
     rc5result.key.hi = contestwork.key.hi;
@@ -565,7 +572,7 @@ s32 Problem::GetResult( RC5Result * result )
 
 u32 Problem::CalcPercent()
 {
-   return (u32) ( (double) 100.0 *
+  return (u32) ( (double) 100.0 *
                   ( ((double) rc5result.keysdone.lo) /
                     ((double) rc5result.iterations.lo) ) );
 }

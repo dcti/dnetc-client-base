@@ -7,7 +7,7 @@
 
 // --------------------------------------------------------------------------
 
-#define OPTION_COUNT	27
+#define OPTION_COUNT    27
 
 char * options[OPTION_COUNT][4] = //name, desc, default, additional comments
 {
@@ -277,44 +277,44 @@ s32 Client::Configure( void )
         case CONF_ID:
           strncpy( id, parm, sizeof(id) - 1 );
           break;
-      case CONF_THRESHOLD:
-        inthreshold[0]=atoi(parm);
-        printf("Output (max 1000)?--> ");
-        fflush( stdout );
-        fgets(parm2, sizeof(parm2), stdin);
-        for ( p = parm2; *p; p++ )
-        {
-          if ( !isprint(*p) )
-           {
-            *p = 0;
-            break;
+        case CONF_THRESHOLD:
+          inthreshold[0]=atoi(parm);
+          printf("Output (max 1000)?--> ");
+          fflush( stdout );
+          fgets(parm2, sizeof(parm2), stdin);
+          for ( p = parm2; *p; p++ )
+          {
+            if ( !isprint(*p) )
+             {
+              *p = 0;
+              break;
+            }
           }
-        }
-        outthreshold[0]=atoi(parm2);
-        if ( inthreshold[0] < 1   ) inthreshold[0] = 1;
-        if ( inthreshold[0] > 1000 ) inthreshold[0] = 1000;
-        if ( outthreshold[0] < 1   ) outthreshold[0] = 1;
-        if ( outthreshold[0] > 1000 ) outthreshold[0] = 1000;
-        break;
-      case CONF_THRESHOLD2:
-        inthreshold[1]=atoi(parm);
-        printf("Output (max 1000)?--> ");
-        fflush( stdout );
-        fgets(parm2, sizeof(parm2), stdin);
-        for ( p = parm2; *p; p++ )
-        {
-          if ( !isprint(*p) )
-           {
-            *p = 0;
-            break;
+          outthreshold[0]=atoi(parm2);
+          if ( inthreshold[0] < 1   ) inthreshold[0] = 1;
+          if ( inthreshold[0] > 1000 ) inthreshold[0] = 1000;
+          if ( outthreshold[0] < 1   ) outthreshold[0] = 1;
+          if ( outthreshold[0] > 1000 ) outthreshold[0] = 1000;
+          break;
+        case CONF_THRESHOLD2:
+          inthreshold[1]=atoi(parm);
+          printf("Output (max 1000)?--> ");
+          fflush( stdout );
+          fgets(parm2, sizeof(parm2), stdin);
+          for ( p = parm2; *p; p++ )
+          {
+            if ( !isprint(*p) )
+             {
+              *p = 0;
+              break;
+            }
           }
-        }
-        outthreshold[1]=atoi(parm2);
-        if ( inthreshold[1] < 1   ) inthreshold[1] = 1;
-        if ( inthreshold[1] > 1000 ) inthreshold[1] = 1000;
-        if ( outthreshold[1] < 1   ) outthreshold[1] = 1;
-        if ( outthreshold[1] > 1000 ) outthreshold[1] = 1000;
-        break;
+          outthreshold[1]=atoi(parm2);
+          if ( inthreshold[1] < 1   ) inthreshold[1] = 1;
+          if ( inthreshold[1] > 1000 ) inthreshold[1] = 1000;
+          if ( outthreshold[1] < 1   ) outthreshold[1] = 1;
+          if ( outthreshold[1] > 1000 ) outthreshold[1] = 1000;
+          break;
         case CONF_COUNT:
           blockcount = atoi(parm);
           if (blockcount < 0)
@@ -381,7 +381,7 @@ s32 Client::Configure( void )
              else                    // http
                strcpy(httpid,Network::base64_encode(parm, parm2));
           }
-         break;
+          break;
         case CONF_UUEHTTPMODE:
           uuehttpmode = atoi(parm);
           if ( uuehttpmode < 0 || uuehttpmode > 5 )
@@ -432,85 +432,86 @@ s32 Client::Configure( void )
         case CONF_NUMCPU:
           numcpu = atoi(parm);
   #if (CLIENT_OS == OS_BEOS)
-		  if (numcpu == -1) {
-             get_system_info(&the_info);
-             numcputemp = the_info.cpu_count;
-			 if (numcputemp < 1) {
-			    numcputemp = 1;
-			 }
-			 else if (numcputemp > MAXCPUS) {
-				numcputemp = MAXCPUS;
-			 }
-	         if (numcputemp == the_info.cpu_count) {
-                LogScreenf("Detected %d cpu(s)\n", numcputemp);
-	         }
-	         else {
-                LogScreenf("Detected %d cpu(s); using %d cpu(s)\n",
-                           the_info.cpu_count, numcputemp);
-	         }
-		  } else if (numcpu < 1) {
-		     numcputemp = numcpu = 1;
-		  } else if (numcpu > MAXCPUS) {
-			   numcputemp = numcpu = MAXCPUS;
-		  } else {
-			   numcputemp = numcpu;
-		  }
-  #else
-    numcputemp = numcpu;
-    #if (CLIENT_OS == OS_WIN32)
-          if (numcpu == -1) {
-             GetSystemInfo(&systeminfo);
-             numcputemp=systeminfo.dwNumberOfProcessors;
-             LogScreenf("Detected %d cpu(s)\n",numcputemp);
+          if (numcpu == -1)
+          {
+            get_system_info(&the_info);
+            numcputemp = the_info.cpu_count;
+            if (numcputemp < 1) {
+              numcputemp = 1;
+            }
+            else if (numcputemp > MAXCPUS) {
+              numcputemp = MAXCPUS;
+            }
+            if (numcputemp == the_info.cpu_count) {
+              LogScreenf("Detected %d cpu(s)\n", numcputemp);
+            }
+            else {
+              LogScreenf("Detected %d cpu(s); using %d cpu(s)\n",
+              the_info.cpu_count, numcputemp);
+            }
+          } else if (numcpu < 1) {
+            numcputemp = numcpu = 1;
+          } else if (numcpu > MAXCPUS) {
+            numcputemp = numcpu = MAXCPUS;
           } else {
-             numcputemp=numcpu;
+            numcputemp = numcpu;
           }
-    #elif (CLIENT_OS == OS_OS2)
-   		  if (numcpu == -1)
-				  {
-				  int rc = DosQuerySysInfo(QSV_NUMPROCESSORS, QSV_NUMPROCESSORS,
-													&numcputemp, sizeof(numcputemp));
-              // check if call is valid if not, default to one
-				  if(rc!=0 || numcputemp < 1 || numcputemp > MAXCPUS)
-					  numcputemp = numcpu;
-				  LogScreenf("Detected %d cpu(s)\n", numcputemp);
-				  }
-    #elif ((CLIENT_OS == OS_NETWARE) && (CLIENT_CPU == CPU_X86))
+  #else
+          numcputemp = numcpu;
+      #if (CLIENT_OS == OS_WIN32)
+          if (numcpu == -1) {
+            GetSystemInfo(&systeminfo);
+            numcputemp=systeminfo.dwNumberOfProcessors;
+            LogScreenf("Detected %d cpu(s)\n",numcputemp);
+          } else {
+            numcputemp=numcpu;
+          }
+      #elif (CLIENT_OS == OS_OS2)
+          if (numcpu == -1)
+          {
+            int rc = DosQuerySysInfo(QSV_NUMPROCESSORS, QSV_NUMPROCESSORS,
+                    &numcputemp, sizeof(numcputemp));
+            // check if call is valid if not, default to one
+            if(rc!=0 || numcputemp < 1 || numcputemp > MAXCPUS)
+              numcputemp = numcpu;
+            LogScreenf("Detected %d cpu(s)\n", numcputemp);
+          }
+      #elif ((CLIENT_OS == OS_NETWARE) && (CLIENT_CPU == CPU_X86))
           numcputemp = numcpu = CliValidateProcessorCount( numcpu );
-    #endif
+      #endif
           if ( numcputemp < 1 )
             numcputemp = 1;
           if ( numcputemp > MAXCPUS )
             numcputemp = MAXCPUS;
-    #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && (CLIENT_CPU != CPU_SPARC))
+      #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && (CLIENT_CPU != CPU_SPARC))
           if ( numcputemp > 1 )
           {
             numcputemp = 1;
             LogScreen("Core routines not yet updated for thread safe operation.  Using 1 cpu.\n");
           }
-    #endif
+      #endif
           //numcputemp=numcpu;
   #endif
           break;
 #endif
-      case CONF_CHECKPOINT:
-        strncpy( checkpoint_file[0] , parm, sizeof(checkpoint_file)/2 -1 );
-        break;
-      case CONF_CHECKPOINT2:
-        strncpy( checkpoint_file[1] , parm, sizeof(checkpoint_file)/2 -1 );
-        break;
-      case CONF_PREFERREDBLOCKSIZE:
-        preferred_blocksize = atoi(parm);
-        if (preferred_blocksize < 28) preferred_blocksize = 28;
-        if (preferred_blocksize > 31) preferred_blocksize = 31;
-        break;
-      case CONF_PREFERREDCONTEST:
-        preferred_contest_id = atoi(parm) - 1;
-        if ((preferred_contest_id < 0) || (preferred_contest_id > 1))
-           preferred_contest_id = 1;
-        break;
-      default:
-        break;
+        case CONF_CHECKPOINT:
+          strncpy( checkpoint_file[0] , parm, sizeof(checkpoint_file)/2 -1 );
+          break;
+        case CONF_CHECKPOINT2:
+          strncpy( checkpoint_file[1] , parm, sizeof(checkpoint_file)/2 -1 );
+          break;
+        case CONF_PREFERREDBLOCKSIZE:
+          preferred_blocksize = atoi(parm);
+          if (preferred_blocksize < 28) preferred_blocksize = 28;
+          if (preferred_blocksize > 31) preferred_blocksize = 31;
+          break;
+        case CONF_PREFERREDCONTEST:
+          preferred_contest_id = atoi(parm) - 1;
+          if ((preferred_contest_id < 0) || (preferred_contest_id > 1))
+             preferred_contest_id = 1;
+          break;
+        default:
+          break;
       }
     }
   }
@@ -536,20 +537,20 @@ s32 Client::ReadConfig(void)
   INIGETKEY(CONF_THRESHOLD).copyto(buffer, sizeof(buffer));
   p = strchr( buffer, ':' );
   if (p == NULL) {
-     outthreshold[0]=inthreshold[0]=atoi(buffer);
+    outthreshold[0]=inthreshold[0]=atoi(buffer);
   } else {
-     outthreshold[0]=atoi(p+1);
-     *p=0;
-     inthreshold[0]=atoi(buffer);
+    outthreshold[0]=atoi(p+1);
+    *p=0;
+    inthreshold[0]=atoi(buffer);
   }
   INIGETKEY(CONF_THRESHOLD2).copyto(buffer, sizeof(buffer));
   p = strchr( buffer, ':' );
   if (p == NULL) {
-     outthreshold[1]=inthreshold[1]=atoi(buffer);
+    outthreshold[1]=inthreshold[1]=atoi(buffer);
   } else {
-     outthreshold[1]=atoi(p+1);
-     *p=0;
-     inthreshold[1]=atoi(buffer);
+    outthreshold[1]=atoi(p+1);
+    *p=0;
+    inthreshold[1]=atoi(buffer);
   }
   blockcount = INIGETKEY(CONF_COUNT);
   INIGETKEY(CONF_HOURS).copyto(hours, sizeof(hours));
@@ -583,10 +584,10 @@ s32 Client::ReadConfig(void)
 
   tempconfig=ini.getkey(OPTION_SECTION, "runbuffers", "0")[0];
   if (tempconfig) {
-	  offlinemode=2;
+    offlinemode=2;
   } else {
-  	tempconfig=ini.getkey(OPTION_SECTION, "runoffline", "0")[0];
-  	if (tempconfig) offlinemode=1;
+    tempconfig=ini.getkey(OPTION_SECTION, "runoffline", "0")[0];
+    if (tempconfig) offlinemode=1;
   }
   ini.getkey(OPTION_SECTION,"in",in_buffer_file[0])[0].copyto(in_buffer_file[0],sizeof(in_buffer_file)/2);
   ini.getkey(OPTION_SECTION,"out",out_buffer_file[0])[0].copyto(out_buffer_file[0],sizeof(out_buffer_file)/2);
@@ -707,124 +708,128 @@ void Client::ValidateConfig( void )
   mailmessage.port=smtpport;
 
 #if (CLIENT_OS == OS_BEOS)
-  if (numcpu == -1) {
-     get_system_info(&the_info);
-     numcputemp = the_info.cpu_count;
-	 if (numcputemp < 1) {
-		numcputemp = 1;
-	 }			
-	 else if (numcputemp > MAXCPUS) {
-		numcputemp = MAXCPUS;
-	 }
-	 if (!did_detect_message) {
-	    if (numcputemp == the_info.cpu_count) {
-           LogScreenf("Detected %d cpu(s)\n", numcputemp);
-	    }
-	    else {
-           LogScreenf("Detected %d cpu(s); using %d cpu(s)\n",
-              the_info.cpu_count, numcputemp);
-	    }
-	    did_detect_message = true;
-	 }
-  }
-  else if (numcpu < 1) {
-	 numcputemp = numcpu = 1;
-  }	
-  else if (numcpu > MAXCPUS) {
-	 numcputemp = numcpu = MAXCPUS;
-  }
-  else {
-	 numcputemp = numcpu;
+  if (numcpu == -1)
+  {
+    get_system_info(&the_info);
+    numcputemp = the_info.cpu_count;
+    if (numcputemp < 1) {
+      numcputemp = 1;
+    }
+    else if (numcputemp > MAXCPUS) {
+      numcputemp = MAXCPUS;
+    }
+    if (!did_detect_message) {
+      if (numcputemp == the_info.cpu_count)
+      {
+        LogScreenf("Detected %d cpu(s)\n", numcputemp);
+      }
+      else
+      {
+        LogScreenf("Detected %d cpu(s); using %d cpu(s)\n",
+          the_info.cpu_count, numcputemp);
+      }
+      did_detect_message = true;
+    }
+  } else if (numcpu < 1) {
+    numcputemp = numcpu = 1;
+  } else if (numcpu > MAXCPUS) {
+    numcputemp = numcpu = MAXCPUS;
+  } else {
+    numcputemp = numcpu;
   }
 #elif ((CLIENT_OS == OS_NETWARE) && (CLIENT_CPU == CPU_X86))
-    numcputemp = numcpu = CliValidateProcessorCount( numcpu );
+  numcputemp = numcpu = CliValidateProcessorCount( numcpu );
 #else
   numcputemp = numcpu;
   #if (CLIENT_OS == OS_WIN32)
-  if (numcpu == -1) {
+    if (numcpu == -1) {
       GetSystemInfo(&systeminfo);
       numcputemp=systeminfo.dwNumberOfProcessors;
-      if (!did_detect_message) {
+      if (!did_detect_message)
+      {
         LogScreenf("Detected %d cpu(s)\n",numcputemp);
         did_detect_message = true;
       }
-  } else {
-     numcputemp=numcpu;
-  }
+    } else {
+      numcputemp=numcpu;
+    }
   #elif (CLIENT_OS == OS2)
-  if (numcpu == -1)
-	  {
-	  int rc = DosQuerySysInfo(QSV_NUMPROCESSORS, QSV_NUMPROCESSORS,
-								  &numcputemp, sizeof(numcputemp));
-	  // check if call is valid if not, default to one
-	  if(rc!=0 || numcputemp < 1 || numcputemp > MAXCPUS)
-		  numcputemp = numcpu;
-	  if (!did_detect_message)
-		  {
-		  LogScreenf("Detected %d cpu(s)\n", numcputemp);
-		  did_detect_message = true;
-		  }
-	  }
- #endif
+    if (numcpu == -1)
+    {
+      int rc = DosQuerySysInfo(QSV_NUMPROCESSORS, QSV_NUMPROCESSORS,
+                &numcputemp, sizeof(numcputemp));
+      // check if call is valid if not, default to one
+      if(rc!=0 || numcputemp < 1 || numcputemp > MAXCPUS)
+        numcputemp = numcpu;
+      if (!did_detect_message)
+      {
+        LogScreenf("Detected %d cpu(s)\n", numcputemp);
+        did_detect_message = true;
+      }
+    }
+  #endif
   if ( numcputemp < 1)
      numcputemp = 1;
   if ( numcputemp > MAXCPUS)
      numcputemp = MAXCPUS;
- #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC))
-  if ( numcpu > 1 )
-  {
-    numcpu = numcputemp = 1;
-    LogScreen("Core routines not yet updated for thread safe operation.  Using 1 cpu.\n");
-  }
- #endif
- #if !defined(MULTITHREAD)
+
+  #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC))
+    if ( numcpu > 1 )
+    {
+      numcpu = numcputemp = 1;
+      LogScreen("Core routines not yet updated for thread safe operation.  Using 1 cpu.\n");
+    }
+  #endif
+    
+  #if !defined(MULTITHREAD)
   if ( numcpu > 1) {
-     numcpu = numcputemp = 1;
+    numcpu = numcputemp = 1;
   }
- #endif
+  #endif
   //numcputemp=numcpu;
 #endif
 #if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) & defined(NOMAIN)
   InternalValidateConfig();
 #elif (CLIENT_OS == OS_NETWARE)
   {
-  //      (destbuff, destsize, defaultvalue, changetoNONEifempty, source)
+    //    (destbuff, destsize, defaultvalue, changetoNONEifempty, source)
 
-  CliValidateSinglePath( inifilename, sizeof(inifilename), 
-                                     "rc5des.ini", 0, inifilename );
-  if (!nodiskbuffers)
+    CliValidateSinglePath( inifilename, sizeof(inifilename), 
+                             "rc5des.ini", 0, inifilename );
+    if (!nodiskbuffers)
     {
-    CliValidateSinglePath( in_buffer_file[0], sizeof(in_buffer_file[0]), 
-                                     "buff-in.rc5", 0, in_buffer_file[0] );
-    CliValidateSinglePath( out_buffer_file[0], sizeof(out_buffer_file[0]), 
-                                     "buff-out.rc5", 0, out_buffer_file[0] );
-    CliValidateSinglePath( in_buffer_file[1], sizeof(in_buffer_file[1]), 
-                                     "buff-out.des", 0, in_buffer_file[1] );
-    CliValidateSinglePath( out_buffer_file[1], sizeof(out_buffer_file[1]), 
-                                     "buff-out.des", 0, out_buffer_file[1] );
+      CliValidateSinglePath( in_buffer_file[0], sizeof(in_buffer_file[0]), 
+                                       "buff-in.rc5", 0, in_buffer_file[0] );
+      CliValidateSinglePath( out_buffer_file[0], sizeof(out_buffer_file[0]), 
+                                       "buff-out.rc5", 0, out_buffer_file[0] );
+      CliValidateSinglePath( in_buffer_file[1], sizeof(in_buffer_file[1]), 
+                                       "buff-out.des", 0, in_buffer_file[1] );
+      CliValidateSinglePath( out_buffer_file[1], sizeof(out_buffer_file[1]), 
+                                       "buff-out.des", 0, out_buffer_file[1] );
     }
-  if (strcmp(exit_flag_file,"none")!=0)
-    CliValidateSinglePath( exit_flag_file, sizeof(exit_flag_file), 
+    if (strcmp(exit_flag_file,"none")!=0)
+      CliValidateSinglePath( exit_flag_file, sizeof(exit_flag_file), 
                                      "exitrc5.now", 1, exit_flag_file);
-  if (strcmp(pausefile,"none")!=0)
-    CliValidateSinglePath( pausefile, sizeof(pausefile), 
+    if (strcmp(pausefile,"none")!=0)
+      CliValidateSinglePath( pausefile, sizeof(pausefile), 
                                      "none", 1, pausefile);
-  if (strcmp(checkpoint_file[0],"none")!=0)
-    CliValidateSinglePath( checkpoint_file[0], sizeof(checkpoint_file[0]), 
-                                     "ckpoint.rc5", 1, checkpoint_file[0]);
-  if (strcmp(checkpoint_file[1],"none")!=0)
-    CliValidateSinglePath( checkpoint_file[1], sizeof(checkpoint_file[1]), 
-                                     "ckpoint.des", 1, checkpoint_file[1]);
-  if (strlen(logname)!=0)
-    CliValidateSinglePath( logname, sizeof(logname), "", 0, logname);
+    if (strcmp(checkpoint_file[0],"none")!=0)
+      CliValidateSinglePath( checkpoint_file[0], sizeof(checkpoint_file[0]), 
+                                       "ckpoint.rc5", 1, checkpoint_file[0]);
+    if (strcmp(checkpoint_file[1],"none")!=0)
+      CliValidateSinglePath( checkpoint_file[1], sizeof(checkpoint_file[1]), 
+                                       "ckpoint.des", 1, checkpoint_file[1]);
+    if (strlen(logname)!=0)
+      CliValidateSinglePath( logname, sizeof(logname), "", 0, logname);
   }
 #endif
   InitRandom2( id );
 
-  if ( contestdone[0] && contestdone[1]) {
-     Log( "[%s] Both contests are marked as over.  Correct the ini file and restart\n", Time() );
-     Log( "[%s] This may mean the contests are over.  Check at http://www.distributed.net/rc5/\n", Time() );
-     exit(-1);
+  if ( contestdone[0] && contestdone[1])
+  {
+    Log( "[%s] Both contests are marked as over.  Correct the ini file and restart\n", Time() );
+    Log( "[%s] This may mean the contests are over.  Check at http://www.distributed.net/rc5/\n", Time() );
+    exit(-1);
   }
 }
 
@@ -847,7 +852,7 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_THRESHOLD2, buffer );
   INISETKEY( CONF_COUNT, blockcount );
   sprintf(hours,"%u.%02u", (unsigned)(minutes/60), 
-	  (unsigned)(minutes%60)); //1.000000 hours looks silly
+    (unsigned)(minutes%60)); //1.000000 hours looks silly
   INISETKEY( CONF_HOURS, hours );
   INISETKEY( CONF_TIMESLICE, timeslice );
   INISETKEY( CONF_NICENESS, niceness );
@@ -1001,101 +1006,101 @@ void ServiceMain(DWORD argc, LPTSTR *argv)
 s32 Client::Install()
 {
 #if (!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32)
-      HKEY srvkey=NULL;
-      DWORD dwDisp=NULL;
-      char mypath[200];
-      GetModuleFileName(NULL, mypath, sizeof(mypath));
+  HKEY srvkey=NULL;
+  DWORD dwDisp=NULL;
+  char mypath[200];
+  GetModuleFileName(NULL, mypath, sizeof(mypath));
 
-      strcat( mypath, " -hide" );
+  strcat( mypath, " -hide" );
 
-      // register a Win95 "RunService" item
-      if (RegCreateKeyEx(HKEY_LOCAL_MACHINE,
-          "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",0,"",
-                REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,
-                &srvkey,&dwDisp) == ERROR_SUCCESS)
-      {
-        RegSetValueEx(srvkey, "bovwin32", 0, REG_SZ, (unsigned const char *)mypath, strlen(mypath) + 1);
-        RegCloseKey(srvkey);
-      }
+  // register a Win95 "RunService" item
+  if (RegCreateKeyEx(HKEY_LOCAL_MACHINE,
+      "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",0,"",
+            REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,
+            &srvkey,&dwDisp) == ERROR_SUCCESS)
+  {
+    RegSetValueEx(srvkey, "bovwin32", 0, REG_SZ, (unsigned const char *)mypath, strlen(mypath) + 1);
+    RegCloseKey(srvkey);
+  }
 
-      // register a Win95 "Run" item
-      if (RegCreateKeyEx(HKEY_LOCAL_MACHINE,
-                "Software\\Microsoft\\Windows\\CurrentVersion\\Run",0,"",
-                REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,
-                &srvkey,&dwDisp) == ERROR_SUCCESS)
-      {
-        RegSetValueEx(srvkey, "bovwin32", 0, REG_SZ, (unsigned const char *)mypath, strlen(mypath) + 1);
-        RegCloseKey(srvkey);
-      }
-      LogScreen("Win95 Service installation complete.\n");
+  // register a Win95 "Run" item
+  if (RegCreateKeyEx(HKEY_LOCAL_MACHINE,
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Run",0,"",
+            REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,
+            &srvkey,&dwDisp) == ERROR_SUCCESS)
+  {
+    RegSetValueEx(srvkey, "bovwin32", 0, REG_SZ, (unsigned const char *)mypath, strlen(mypath) + 1);
+    RegCloseKey(srvkey);
+  }
+  LogScreen("Win95 Service installation complete.\n");
 #elif defined(WINNTSERVICE)
-      char mypath[200];
-      GetModuleFileName(NULL, mypath, sizeof(mypath));
-      SC_HANDLE myService, scm;
-      scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
-      if (scm)
-      {
-        myService = CreateService(scm, WINNTSERVICE,
-            "Distributed.Net RC5/DES Service Client",
-            SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
-            SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
-            mypath, 0, 0, 0, 0, 0);
-        if (myService)
-        {
-          LogScreen("Windows NT Service installation complete.\n"
-              "Click on the 'Services' icon in 'Control Panel' and mark the\n"
-              "Bovine RC5/DES service to startup automatically.\n");
-          CloseServiceHandle(myService);
-        } else {
-          LogScreen("Error creating service entry.\n");
-        }
-        CloseServiceHandle(scm);
-      } else {
-        LogScreen("Error opening service control manager.\n");
-      }
+  char mypath[200];
+  GetModuleFileName(NULL, mypath, sizeof(mypath));
+  SC_HANDLE myService, scm;
+  scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
+  if (scm)
+  {
+    myService = CreateService(scm, WINNTSERVICE,
+        "Distributed.Net RC5/DES Service Client",
+        SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
+        SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
+        mypath, 0, 0, 0, 0, 0);
+    if (myService)
+    {
+      LogScreen("Windows NT Service installation complete.\n"
+          "Click on the 'Services' icon in 'Control Panel' and mark the\n"
+          "Bovine RC5/DES service to startup automatically.\n");
+      CloseServiceHandle(myService);
+    } else {
+      LogScreen("Error creating service entry.\n");
+    }
+    CloseServiceHandle(scm);
+  } else {
+    LogScreen("Error opening service control manager.\n");
+  }
 #elif (CLIENT_OS == OS_OS2)
-		int rc;
-		const int len = 4068;
+  int rc;
+  const int len = 4068;
 
-		char   pszClassName[] = "WPProgram";
-		char   pszTitle[] = "RC5-DES Cracking Client";
-		char   pszLocation[] = "<WP_START>";    // Startup Folder
-		ULONG ulFlags = 0;
+  char   pszClassName[] = "WPProgram";
+  char   pszTitle[] = "RC5-DES Cracking Client";
+  char   pszLocation[] = "<WP_START>";    // Startup Folder
+  ULONG ulFlags = 0;
 
-		char   pszSetupString[len] =
-         "OBJECTID=<RC5DES-CLI>;"
-			"MINIMIZED=YES;"
-			"PROGTYPE=WINDOWABLEVIO;";
+  char   pszSetupString[len] =
+            "OBJECTID=<RC5DES-CLI>;"
+            "MINIMIZED=YES;"
+            "PROGTYPE=WINDOWABLEVIO;";
 
-		// Add full path of the program
-		strncat(pszSetupString, "EXENAME=",len);
+  // Add full path of the program
+  strncat(pszSetupString, "EXENAME=",len);
 
-		if(os2hidden == 1)   // Run detached
-			{
-			strncat(pszSetupString, "CMD.EXE;", len);     // command processor
-			strncat(pszSetupString, "PARAMETERS=/c detach ", len);   // detach
-			}
+  if(os2hidden == 1)   // Run detached
+  {
+    strncat(pszSetupString, "CMD.EXE;", len);     // command processor
+    strncat(pszSetupString, "PARAMETERS=/c detach ", len);   // detach
+  }
 
-      // Add exepath and exename
-		strncat(pszSetupString, exepath, len);
-		strncat(pszSetupString, exename, len);
-		strncat(pszSetupString, ";", len);
+  // Add exepath and exename
+  strncat(pszSetupString, exepath, len);
+  strncat(pszSetupString, exename, len);
+  strncat(pszSetupString, ";", len);
 
-		// Add on Working Directory
-      strncat(pszSetupString, "STARTUPDIR=", len);
-		strncat(pszSetupString, exepath, len);
-      strncat(pszSetupString, ";", len);
+  // Add on Working Directory
+  strncat(pszSetupString, "STARTUPDIR=", len);
+  strncat(pszSetupString, exepath, len);
+  strncat(pszSetupString, ";", len);
 
-		rc = WinCreateObject(pszClassName, pszTitle, pszSetupString,
-									pszLocation, ulFlags);
-		if(rc == NULLHANDLE)
-			LogScreen("ERROR: RC5-DES Program object could not be added "
-						 "into your Startup Folder\n"
-						 "RC5-DES is probably already installed\n");
-		else
-			LogScreen("RC5-DES Program object has been added into your Startup Folder\n");
+  rc = WinCreateObject(pszClassName, pszTitle, pszSetupString,
+              pszLocation, ulFlags);
+  if(rc == NULLHANDLE)
+    LogScreen("ERROR: RC5-DES Program object could not be added "
+            "into your Startup Folder\n"
+            "RC5-DES is probably already installed\n");
+  else
+    LogScreen("RC5-DES Program object has been added into your Startup Folder\n");
 #endif
-      return 0;
+  return 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -1103,80 +1108,80 @@ s32 Client::Install()
 s32 Client::Uninstall(void)
 {
 #if (!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32)
-      HKEY srvkey;
+  HKEY srvkey;
 
-      // unregister a Win95 "RunService" item
-      if (RegOpenKey(HKEY_LOCAL_MACHINE,
-          "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",
-          &srvkey) == ERROR_SUCCESS)
-      {
-        RegDeleteValue(srvkey, "bovwin32");
-        RegCloseKey(srvkey);
-      }
+  // unregister a Win95 "RunService" item
+  if (RegOpenKey(HKEY_LOCAL_MACHINE,
+      "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",
+      &srvkey) == ERROR_SUCCESS)
+  {
+    RegDeleteValue(srvkey, "bovwin32");
+    RegCloseKey(srvkey);
+  }
 
-      // unregister a Win95 "Run" item
-      if (RegOpenKey(HKEY_LOCAL_MACHINE,
-          "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-          &srvkey) == ERROR_SUCCESS)
-      {
-        RegDeleteValue(srvkey, "bovwin32");
-        RegCloseKey(srvkey);
-      }
-      LogScreen("Win95 Service uninstallation complete.\n");
+  // unregister a Win95 "Run" item
+  if (RegOpenKey(HKEY_LOCAL_MACHINE,
+      "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      &srvkey) == ERROR_SUCCESS)
+  {
+    RegDeleteValue(srvkey, "bovwin32");
+    RegCloseKey(srvkey);
+  }
+  LogScreen("Win95 Service uninstallation complete.\n");
 #elif defined(WINNTSERVICE)
-      SC_HANDLE myService, scm;
-      SERVICE_STATUS status;
-      scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
-      if (scm)
+  SC_HANDLE myService, scm;
+  SERVICE_STATUS status;
+  scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
+  if (scm)
+  {
+    myService = OpenService(scm, WINNTSERVICE,
+        SERVICE_ALL_ACCESS | DELETE);
+    if (myService)
+    {
+      if (QueryServiceStatus(myService, &status) &&
+        status.dwCurrentState != SERVICE_STOPPED)
       {
-        myService = OpenService(scm, WINNTSERVICE,
-            SERVICE_ALL_ACCESS | DELETE);
-        if (myService)
-        {
-          if (QueryServiceStatus(myService, &status) &&
-            status.dwCurrentState != SERVICE_STOPPED)
-          {
-            LogScreen("Service currently active.  Stopping service...\n");
-            if (!ControlService(myService, SERVICE_CONTROL_STOP, &status))
-              LogScreen("Failed to stop service!\n");
-          }
-          if (DeleteService(myService))
-          {
-            LogScreen("Windows NT Service uninstallation complete.\n");
-          } else {
-            LogScreen("Error deleting service entry.\n");
-          }
-          CloseServiceHandle(myService);
-        }
-        CloseServiceHandle(scm);
-      } else {
-        LogScreen("Error opening service control manager.\n");
+        LogScreen("Service currently active.  Stopping service...\n");
+        if (!ControlService(myService, SERVICE_CONTROL_STOP, &status))
+          LogScreen("Failed to stop service!\n");
       }
+      if (DeleteService(myService))
+      {
+        LogScreen("Windows NT Service uninstallation complete.\n");
+      } else {
+        LogScreen("Error deleting service entry.\n");
+      }
+      CloseServiceHandle(myService);
+    }
+    CloseServiceHandle(scm);
+  } else {
+    LogScreen("Error opening service control manager.\n");
+  }
 #elif (CLIENT_OS == OS_OS2)
-		int rc;
-		const int len = 4068;
-		char *cwd;
-		
-		char      pObjectID[len];
-		HOBJECT  hObject;
+  int rc;
+  const int len = 4068;
+  char *cwd;
 
-		hObject = WinQueryObject("<RC5DES-CLI>");
+  char pObjectID[len];
+  HOBJECT hObject;
 
-		if(hObject == NULLHANDLE)
-			LogScreen("ERROR: RC5-DES Client object was not found\nNo RC5-DES "
-						 "client installed in the Startup folder\n");
-		else
-			{
-			LogScreen("RC5-DES Client object found in Startup Folder... ");
+  hObject = WinQueryObject("<RC5DES-CLI>");
 
-			rc = WinDestroyObject(hObject);
-			if(rc == TRUE)
-				LogScreen("Object removed\n");
-			else
-				LogScreen("Object NOT removed\n");
-			}
+  if(hObject == NULLHANDLE)
+    LogScreen("ERROR: RC5-DES Client object was not found\n"
+          "No RC5-DES client installed in the Startup folder\n");
+  else
+  {
+    LogScreen("RC5-DES Client object found in Startup Folder... ");
+
+    rc = WinDestroyObject(hObject);
+    if(rc == TRUE)
+      LogScreen("Object removed\n");
+    else
+      LogScreen("Object NOT removed\n");
+  }
 #endif
-      return 0;
+  return 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -1184,74 +1189,74 @@ s32 Client::Uninstall(void)
 s32 Client::RunStartup(void)
 {
 #if (CLIENT_OS == OS_WIN32)
-   LPVOID lpMsgBuf;
-   OSVERSIONINFO osver;
+  LPVOID lpMsgBuf;
+  OSVERSIONINFO osver;
 
-   if (lurk && (!rasenumconnections || !rasgetconnectstatus))
-   {
-      HINSTANCE hinstance;
-      hinstance=LoadLibrary("RASAPI32.dll");
-      if (hinstance == NULL)
-      {
-         LogScreen("Couldn't load rasapi32.dll\n");
-         LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
-         return -1;
-      }
-      rasenumconnections = (rasenumconnectionsT) GetProcAddress(hinstance,"RasEnumConnectionsA");
-      if (rasenumconnections==NULL)
-      {
-         FormatMessage(
-            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-            NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-            (LPTSTR) &lpMsgBuf,0,NULL);
-         LogScreenf("%s\n",lpMsgBuf);
-         LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
-         LocalFree( lpMsgBuf );
-         return -1;
-      }
-      rasgetconnectstatus = (rasgetconnectstatusT) GetProcAddress(hinstance,"RasGetConnectStatusA");
-      if (rasgetconnectstatus==NULL)
-      {
-         FormatMessage(
-            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-            NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-            (LPTSTR) &lpMsgBuf,0,NULL);
-         LogScreenf("%s\n",lpMsgBuf);
-         LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
-         LocalFree( lpMsgBuf );
-         return -1;
-      }
-   }
+  if (lurk && (!rasenumconnections || !rasgetconnectstatus))
+  {
+    HINSTANCE hinstance;
+    hinstance=LoadLibrary("RASAPI32.dll");
+    if (hinstance == NULL)
+    {
+      LogScreen("Couldn't load rasapi32.dll\n");
+      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
+      return -1;
+    }
+    rasenumconnections = (rasenumconnectionsT) GetProcAddress(hinstance,"RasEnumConnectionsA");
+    if (rasenumconnections==NULL)
+    {
+      FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        (LPTSTR) &lpMsgBuf,0,NULL);
+      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
+      LocalFree( lpMsgBuf );
+      return -1;
+    }
+    rasgetconnectstatus = (rasgetconnectstatusT) GetProcAddress(hinstance,"RasGetConnectStatusA");
+    if (rasgetconnectstatus==NULL)
+    {
+      FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        (LPTSTR) &lpMsgBuf,0,NULL);
+      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
+      LocalFree( lpMsgBuf );
+      return -1;
+    }
+  }
 #endif
 #if ((!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32))
   // register ourself as a Win95 service
   if (win95hidden)
   {
-      HMODULE kernl = GetModuleHandle("KERNEL32");
-      if (kernl)
-      {
-         typedef DWORD (CALLBACK *ULPRET)(DWORD,DWORD);
-         ULPRET func = (ULPRET) GetProcAddress(kernl, "RegisterServiceProcess");
-         if (func) (*func)(0, 1);
-      }
+    HMODULE kernl = GetModuleHandle("KERNEL32");
+    if (kernl)
+    {
+      typedef DWORD (CALLBACK *ULPRET)(DWORD,DWORD);
+      ULPRET func = (ULPRET) GetProcAddress(kernl, "RegisterServiceProcess");
+      if (func) (*func)(0, 1);
+    }
 
-      // free the console window
-      osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
-      GetVersionEx(&osver);
-      if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
-      {
-        LogScreen("\n This is not recommended under NT.  Please use the NT Service client"
-                  "\n (There have been cases of this conflicting with system process csrss.exe)\n"
-                  "Continuing...\n");
-        sleep(2);
-      }
-      FreeConsole();
+    // free the console window
+    osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
+    GetVersionEx(&osver);
+    if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
+    {
+      LogScreen("\n This is not recommended under NT.  Please use the NT Service client"
+            "\n (There have been cases of this conflicting with system process csrss.exe)\n"
+            "Continuing...\n");
+      sleep(2);
+    }
+    FreeConsole();
 
-      // only allow one running instance
-      CreateMutex(NULL, TRUE, "Bovine RC5/DES Win32 Client");
-      if (GetLastError()) return -1;
-   }
-   return 0;
+    // only allow one running instance
+    CreateMutex(NULL, TRUE, "Bovine RC5/DES Win32 Client");
+    if (GetLastError()) return -1;
+  }
+  return 0;
 #elif defined(WINNTSERVICE)
   LogScreen("Attempting to start up NT service.\n");
   mainclient = this;
@@ -1269,7 +1274,6 @@ s32 Client::RunStartup(void)
 #else
   return 0;
 #endif
-
 }
 
 // ---------------------------------------------------------------------------
@@ -1294,7 +1298,8 @@ s32 Client::SelectCore(void)
   int fastcore = cputype;
   if (fastcore == -1)
   {
-    for (whichcrunch = 0; whichcrunch < 2; whichcrunch++) {
+    for (whichcrunch = 0; whichcrunch < 2; whichcrunch++)
+    {
       Problem problem;
       ContestWork contestwork;
       contestwork.key.lo = contestwork.key.hi = htonl( 0 );
@@ -1539,7 +1544,7 @@ void Client::SetNiceness(void)
 #elif (CLIENT_OS == OS_RISCOS)
   // nothing
 #elif (CLIENT_OS == OS_QNX)
-	setprio( 0, getprio(0)-1 );
+  setprio( 0, getprio(0)-1 );
 #else
   nice( 19 );
 #endif
@@ -1564,7 +1569,7 @@ void Client::SetNiceness(void)
 #elif (CLIENT_OS == OS_RISCOS)
   // nothing
 #elif (CLIENT_OS == OS_QNX)
-	setprio( 0, getprio(0)+1 );
+  setprio( 0, getprio(0)+1 );
 #else
   nice( 10 );
 #endif
@@ -1726,10 +1731,10 @@ int gettimeofday(struct timeval *tv, struct timezone *)
   tv->tv_sec = (time_t)(timebase + secs);
   tv->tv_usec = ((picsnow + (ticksnow << 16))*1000)/(PCLOCKS_PER_SEC/1000);
   if (tv->tv_usec > 1000000)
-    {
+  {
     tv->tv_sec += (tv->tv_usec/1000000);
     tv->tv_usec = (tv->tv_usec%1000000);
-    }
+  }
   return 0;
 */
   unsigned int picsnow = rawclock();
@@ -1763,7 +1768,8 @@ const char * Client::Time( void )
 #else
   gmt = gmtime(&timenow );
 #endif
-  if (gmt) {
+  if (gmt)
+  {
     if (gmt->tm_year > 99) {
     sprintf( timestring, "%02d/%02d/%02d %02d:%02d:%02d GMT", gmt->tm_mon + 1,
         gmt->tm_mday, gmt->tm_year - 100, gmt->tm_hour, gmt->tm_min, gmt->tm_sec );
@@ -1816,9 +1822,9 @@ void Client::ParseCommandlineOptions(int argc, char *argv[], s32 &inimissing)
     {
       quietmode=1;
 #if (CLIENT_OS == OS_OS2)
-	  os2hidden=1;
+      os2hidden=1;
 #else
-    win95hidden=1;
+      win95hidden=1;
 #endif
       argv[i][0] = 0;
     }
@@ -2493,3 +2499,6 @@ bool Client::CheckForcedKeyport(void)
   }
   return Forced;
 }
+
+// --------------------------------------------------------------------------
+

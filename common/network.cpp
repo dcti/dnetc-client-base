@@ -42,7 +42,7 @@
   #include <netdb.h>
   #include <sys/socket.h>
   #include <netinet/in.h>
-	};
+  };
 #endif
 
 #pragma pack(1)               // no padding allowed
@@ -143,7 +143,7 @@ void NetworkDeinitialize(void)
   if (SocketBase) {
     CloseLibrary(SocketBase);
     SocketBase = NULL;
-	}
+  }
   #endif
 #endif
 }
@@ -302,6 +302,17 @@ s32 Network::Resolve(const char *host, u32 &hostaddress)
 
 #endif
   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Network::LogScreen ( const char * text)
+{
+#if (CLIENT_OS == OS_NETWARE)
+  if (!quietmode) printf("%s", text );
+#else
+  if (!quietmode) fwrite(text, 1, strlen(text), stdout);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1329,7 +1340,8 @@ s32 NetworkServer::StartListening( s16 myport, u32 myaddress, u32 backlog)
   }
 
   // start listening
-  if (listen(listener, backlog) != 0) {
+  if (listen(listener, backlog) != 0)
+  {
     close(listener);
     listener = 0;
     return (-1);
@@ -1383,12 +1395,6 @@ s32 NetworkServer::Connect(Network *connection, u32 *peeraddress, u32 Timeout)
 
 #endif  // NETWORKSERVER
 
-void Network::LogScreen ( const char * text)
-{
-#if (CLIENT_OS == OS_NETWARE)
-  if (!quietmode) printf("%s", text );
-#else
-  if (!quietmode) fwrite(text, 1, strlen(text), stdout);
-#endif
-}
+// --------------------------------------------------------------------------
+
 

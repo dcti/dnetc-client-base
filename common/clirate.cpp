@@ -13,9 +13,7 @@
 
 // ---------------------------------------------------------------------------
 
-//#define ConsolePrintf(f,x,y,z) printf(f,x,y,z)
-
-   //return (cumulative) keyrate for a particular contest
+// return (cumulative) keyrate for a particular contest
 double CliGetKeyrateForContest( int contestid )
 {
   struct timeval totaltime;
@@ -34,7 +32,7 @@ double CliGetKeyrateForContest( int contestid )
 // ---------------------------------------------------------------------------
 
 
-   //return keyrate for a single problem. Problem must be finished.
+// return keyrate for a single problem. Problem must be finished.
 double CliGetKeyrateForProblem( Problem *prob )
 {
   static u64 addedqueue[MAXCPUS*2];
@@ -71,21 +69,21 @@ double CliGetKeyrateForProblem( Problem *prob )
 
   additive = 1;
   for (int i=0;i<(MAXCPUS*2);i++)
-    {
+  {
     if (addedqpos==-1)
-      { addedqueue[i].lo = addedqueue[i].hi = 0;
+    { addedqueue[i].lo = addedqueue[i].hi = 0;
         if (i==((MAXCPUS*2)-1)) addedqpos = 0;
-      }
+    }
     else if (addedqueue[i].hi==rc5result.key.hi && 
         addedqueue[i].lo==rc5result.key.lo)
-      {
+    {
       additive=0;
       break;
-      }
     }
+  }
 
   if (additive)
-    {
+  {
     addedqueue[addedqpos].hi=rc5result.key.hi; 
     addedqueue[addedqpos].lo=rc5result.key.lo;
     if ((++addedqpos)>=(MAXCPUS*2))
@@ -93,7 +91,7 @@ double CliGetKeyrateForProblem( Problem *prob )
 
     count = 1; //number of blocks to add to clicdata.cpp information
     CliAddContestInfoSummaryData( contestid, &count, &keys, &tv );
-    }
+  }
     
   return ((double)(keys))/
        (((double)(tv.tv_sec))+(((double)(tv.tv_usec))/((double)(1000000))));

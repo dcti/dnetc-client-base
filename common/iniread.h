@@ -22,11 +22,9 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #if (CLIENT_OS == OS_RISCOS)
-extern "C"
-{
 #include <sys/types.h>
-};
 #endif
 
 #include <sys/stat.h>
@@ -151,66 +149,66 @@ public:
     const IniString &v4, const IniString &v5, const IniString &v6)
     : list(NULL), count(0) {Add(v1); Add(v2); Add(v3); Add(v4); Add(v5); Add(v6);}
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7) : list(NULL), count(0) {Add(v1); Add(v2);
-		Add(v3); Add(v4); Add(v5); Add(v6); Add(v7);}
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7) : list(NULL), count(0) {Add(v1); Add(v2);
+    Add(v3); Add(v4); Add(v5); Add(v6); Add(v7);}
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8)
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8)
     : list(NULL), count(0) {Add(v1); Add(v2); Add(v3); Add(v4);
     Add(v5); Add(v6);
     Add(v7); Add(v8);}
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9)
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9)
     : list(NULL), count(0) {Add(v1); Add(v2); Add(v3); Add(v4);
     Add(v5); Add(v6); Add(v7); Add(v8); Add(v9);}
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10 )
     : list(NULL), count(0) {Add(v1); Add(v2); Add(v3); Add(v4);
     Add(v5); Add(v6); Add(v7); Add(v8); Add(v9); Add(v10); }
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11 )
     : list(NULL), count(0) {Add(v1); Add(v2); Add(v3); Add(v4);
     Add(v5); Add(v6); Add(v7); Add(v8); Add(v9); Add(v10); Add(v11); }
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12 )
     : list(NULL), count(0) {Add(v1); Add(v2); Add(v3); Add(v4);
     Add(v5); Add(v6); Add(v7); Add(v8); Add(v9); Add(v10); Add(v11);
     Add(v12); }
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13 )
     : list(NULL), count(0) {Add(v1); Add(v2); Add(v3); Add(v4);
     Add(v5); Add(v6); Add(v7); Add(v8); Add(v9); Add(v10); Add(v11);
     Add(v12); Add(v13); }
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14 )
     : list(NULL), count(0) {Add(v1); Add(v2); Add(v3); Add(v4);
     Add(v5); Add(v6); Add(v7); Add(v8); Add(v9); Add(v10); Add(v11);
     Add(v12); Add(v13); Add(v14); }
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14, const IniString &v15 )
     : list(NULL), count(0) {Add(v1); Add(v2); Add(v3); Add(v4);
     Add(v5); Add(v6); Add(v7); Add(v8); Add(v9); Add(v10); Add(v11);
     Add(v12); Add(v13); Add(v14); Add(v15); }
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14, const IniString &v15,
     const IniString &v16 )
@@ -219,8 +217,8 @@ public:
     Add(v12); Add(v13); Add(v14); Add(v15);
     Add(v16);}
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14, const IniString &v15,
     const IniString &v16, const IniString &v17 )
@@ -229,8 +227,8 @@ public:
     Add(v12); Add(v13); Add(v14); Add(v15);
     Add(v16); Add(v17);}
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14, const IniString &v15,
     const IniString &v16, const IniString &v17, const IniString &v18 )
@@ -239,8 +237,8 @@ public:
     Add(v12); Add(v13); Add(v14); Add(v15);
     Add(v16); Add(v17); Add(v18); }
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14, const IniString &v15,
     const IniString &v16, const IniString &v17, const IniString &v18,
@@ -250,8 +248,8 @@ public:
     Add(v12); Add(v13); Add(v14); Add(v15);
     Add(v16); Add(v17); Add(v18); Add(v19); }
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14, const IniString &v15,
     const IniString &v16, const IniString &v17, const IniString &v18,
@@ -261,8 +259,8 @@ public:
     Add(v12); Add(v13); Add(v14); Add(v15);
     Add(v16); Add(v17); Add(v18); Add(v19); Add(v20);}
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14, const IniString &v15,
     const IniString &v16, const IniString &v17, const IniString &v18,
@@ -272,8 +270,8 @@ public:
     Add(v12); Add(v13); Add(v14); Add(v15);
     Add(v16); Add(v17); Add(v18); Add(v19); Add(v20); Add(v21); }
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14, const IniString &v15,
     const IniString &v16, const IniString &v17, const IniString &v18,
@@ -285,8 +283,8 @@ public:
     Add(v16); Add(v17); Add(v18); Add(v19); Add(v20); Add(v21);
     Add(v22); }
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14, const IniString &v15,
     const IniString &v16, const IniString &v17, const IniString &v18,
@@ -298,8 +296,8 @@ public:
     Add(v16); Add(v17); Add(v18); Add(v19); Add(v20); Add(v21);
     Add(v22); Add(v23);}
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14, const IniString &v15,
     const IniString &v16, const IniString &v17, const IniString &v18,
@@ -311,8 +309,8 @@ public:
     Add(v16); Add(v17); Add(v18); Add(v19); Add(v20); Add(v21);
     Add(v22); Add(v23); Add(v24);}
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14, const IniString &v15,
     const IniString &v16, const IniString &v17, const IniString &v18,
@@ -325,8 +323,8 @@ public:
     Add(v16); Add(v17); Add(v18); Add(v19); Add(v20); Add(v21);
     Add(v22); Add(v23); Add(v24); Add(v25);}
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14, const IniString &v15,
     const IniString &v16, const IniString &v17, const IniString &v18,
@@ -339,8 +337,8 @@ public:
     Add(v16); Add(v17); Add(v18); Add(v19); Add(v20); Add(v21);
     Add(v22); Add(v23); Add(v24); Add(v25); Add(v26);}
   IniStringList(const IniString &v1, const IniString &v2, const IniString &v3,
-		const IniString &v4, const IniString &v5, const IniString &v6,
-		const IniString &v7, const IniString &v8, const IniString &v9,
+    const IniString &v4, const IniString &v5, const IniString &v6,
+    const IniString &v7, const IniString &v8, const IniString &v9,
     const IniString &v10, const IniString &v11, const IniString &v12,
     const IniString &v13, const IniString &v14, const IniString &v15,
     const IniString &v16, const IniString &v17, const IniString &v18,

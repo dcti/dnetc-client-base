@@ -70,15 +70,15 @@ void convert_key_from_des_to_inc (u32 *deshi, u32 *deslo)
 
 // strip parity bits
     *deshi =
-	((*deshi & 0x000000FE) >> 1) |
-	((*deshi & 0x0000FE00) >> 2) |
-	((*deshi & 0x00FE0000) >> 3) |
-	((*deshi & 0xFE000000) >> 4);
-    *deslo =
-	((*deslo & 0x000000FE) >> 1) |
-	((*deslo & 0x0000FE00) >> 2) |
-	((*deslo & 0x00FE0000) >> 3) |
-	((*deslo & 0xFE000000) >> 4);
+      ((*deshi & 0x000000FE) >> 1) |
+      ((*deshi & 0x0000FE00) >> 2) |
+      ((*deshi & 0x00FE0000) >> 3) |
+      ((*deshi & 0xFE000000) >> 4);
+   *deslo =
+      ((*deslo & 0x000000FE) >> 1) |
+      ((*deslo & 0x0000FE00) >> 2) |
+      ((*deslo & 0x00FE0000) >> 3) |
+      ((*deslo & 0xFE000000) >> 4);
 // there is now 28 bits in *deshi, and 28 bits in *deslo
 #ifdef DEBUG
     printf ("              to %07X:%07X (strip parity bits)\n",*deshi,*deslo);
@@ -97,12 +97,12 @@ void convert_key_from_des_to_inc (u32 *deshi, u32 *deslo)
 //            f   e  d dd c   b  a     original position
 //                          fedd dcba  new position
 
-	((*deslo & 0x0000008) >> 3) |  // 'a' bit
-	((*deslo & 0x0000020) >> 4) |  // 'b' bit
-	((*deslo & 0x0000100) >> 6) |  // 'c' bit
-	((*deslo & 0x0001C00) >> 7) |  // 'd' bits
-	((*deslo & 0x0008000) >> 9) |  // 'e' bit
-	((*deslo & 0x0040000) >>11) |  // 'f' bit
+      ((*deslo & 0x0000008) >> 3) |  // 'a' bit
+      ((*deslo & 0x0000020) >> 4) |  // 'b' bit
+      ((*deslo & 0x0000100) >> 6) |  // 'c' bit
+      ((*deslo & 0x0001C00) >> 7) |  // 'd' bits
+      ((*deslo & 0x0008000) >> 9) |  // 'e' bit
+      ((*deslo & 0x0040000) >>11) |  // 'f' bit
 
 // to be compatible with Meggs' bitslice code we also need
 // to move these bits from deshi to deslo
@@ -113,9 +113,9 @@ void convert_key_from_des_to_inc (u32 *deshi, u32 *deslo)
 //          cc   bb  aaaa                original position (in deshi)
 //                   ccbb aaaa **** **** new position      (in deslo)
 
-	((*deshi & 0x000F000) >> 4) |  // 'a' bits
-	((*deshi & 0x0060000) >> 5) |  // 'b' bits
-	((*deshi & 0x0600000) >> 7) |  // 'c' bits
+      ((*deshi & 0x000F000) >> 4) |  // 'a' bits
+      ((*deshi & 0x0060000) >> 5) |  // 'b' bits
+      ((*deshi & 0x0600000) >> 7) |  // 'c' bits
 
 // shift all other bits to the left
 //
@@ -125,13 +125,13 @@ void convert_key_from_des_to_inc (u32 *deshi, u32 *deslo)
 // .... .... g ff  ee    d  cc b  aaa  original position
 // gffe edcc baaa ---- ---- **** ****  new position
 
-	((*deslo & 0x0000007) <<16) |  // 'a' bits
-	((*deslo & 0x0000010) <<15) |  // 'b' bit
-	((*deslo & 0x00000C0) <<14) |  // 'c' bits
-	((*deslo & 0x0000200) <<13) |  // 'd' bit
-	((*deslo & 0x0006000) <<10) |  // 'e' bits
-	((*deslo & 0x0030000) << 9) |  // 'f' bits
-	((*deslo & 0x0080000) << 8);   // 'g' bits
+      ((*deslo & 0x0000007) <<16) |  // 'a' bits
+      ((*deslo & 0x0000010) <<15) |  // 'b' bit
+      ((*deslo & 0x00000C0) <<14) |  // 'c' bits
+      ((*deslo & 0x0000200) <<13) |  // 'd' bit
+      ((*deslo & 0x0006000) <<10) |  // 'e' bits
+      ((*deslo & 0x0030000) << 9) |  // 'f' bits
+      ((*deslo & 0x0080000) << 8);   // 'g' bits
 
 // To be compatible with Meggs' bitslice code we also need
 // to move these bits
@@ -143,10 +143,10 @@ void convert_key_from_des_to_inc (u32 *deshi, u32 *deslo)
 //    #### #ccb aaaa aaaa aaaa .... .... new position
 
     u32 temphi =
-	((*deshi & 0x0000FFF) << 8) |  // 'a' bits
-	((*deshi & 0x0010000) << 4) |  // 'b' bits
-	((*deshi & 0x0180000) << 2) |  // 'c' bits
-	((*deshi & 0xF800000)     ) |  // '#' bits (not moved)
+      ((*deshi & 0x0000FFF) << 8) |  // 'a' bits
+      ((*deshi & 0x0010000) << 4) |  // 'b' bits
+      ((*deshi & 0x0180000) << 2) |  // 'c' bits
+      ((*deshi & 0xF800000)     ) |  // '#' bits (not moved)
 
 // and also these bits moved from deslo to deshi :
 //
@@ -156,7 +156,7 @@ void convert_key_from_des_to_inc (u32 *deshi, u32 *deslo)
 // aaaa aaaa                           original position (in deslo)
 //                          aaaa aaaa  new position (in deshi)
 
-	((*deslo & 0xFF00000) >> 20);
+    ((*deslo & 0xFF00000) >> 20);
 
     *deshi = temphi;
     *deslo = templo;
@@ -207,11 +207,11 @@ void convert_key_from_inc_to_des (u32 *deshi, u32 *deslo)
 
     u32 templo =
         ((*deslo & 0x00000001) << 3) |  // 'a' bit
-	((*deslo & 0x00000002) << 4) |  // 'b' bit
-	((*deslo & 0x00000004) << 6) |  // 'c' bit
-	((*deslo & 0x00000038) << 7) |  // 'd' bits
-	((*deslo & 0x00000040) << 9) |  // 'e' bit
-	((*deslo & 0x00000080) <<11) |  // 'f' bit
+        ((*deslo & 0x00000002) << 4) |  // 'b' bit
+        ((*deslo & 0x00000004) << 6) |  // 'c' bit
+        ((*deslo & 0x00000038) << 7) |  // 'd' bits
+        ((*deslo & 0x00000040) << 9) |  // 'e' bit
+        ((*deslo & 0x00000080) <<11) |  // 'f' bit
 
 // shift all other bits to the right
 //
@@ -221,13 +221,13 @@ void convert_key_from_inc_to_des (u32 *deshi, u32 *deslo)
 // gffe edcc baaa           **** ****  current position
 // .... .... g ff  ee    d  cc b  aaa  original position
 
-	((*deslo & 0x0070000) >>16) |  // 'a' bits
-	((*deslo & 0x0080000) >>15) |  // 'b' bit
-	((*deslo & 0x0300000) >>14) |  // 'c' bits
-	((*deslo & 0x0400000) >>13) |  // 'd' bit
-	((*deslo & 0x1800000) >>10) |  // 'e' bits
-	((*deslo & 0x6000000) >> 9) |  // 'f' bits
-	((*deslo & 0x8000000) >> 8) |  // 'g' bit
+        ((*deslo & 0x0070000) >>16) |  // 'a' bits
+        ((*deslo & 0x0080000) >>15) |  // 'b' bit
+        ((*deslo & 0x0300000) >>14) |  // 'c' bits
+        ((*deslo & 0x0400000) >>13) |  // 'd' bit
+        ((*deslo & 0x1800000) >>10) |  // 'e' bits
+        ((*deslo & 0x6000000) >> 9) |  // 'f' bits
+        ((*deslo & 0x8000000) >> 8) |  // 'g' bit
 
 // and also these bits from deshi to deslo
 //
@@ -237,7 +237,7 @@ void convert_key_from_inc_to_des (u32 *deshi, u32 *deslo)
 //                          aaaa aaaa current position (in deshi)
 // aaaa aaaa                          original position (in deslo)
 
-	((*deshi & 0x00000FF) << 20);  // 'a' bits
+        ((*deshi & 0x00000FF) << 20);  // 'a' bits
 
 // To be compatible with Meggs' bitslice code we also need
 // to move these bits
@@ -249,10 +249,10 @@ void convert_key_from_inc_to_des (u32 *deshi, u32 *deslo)
 // #### #  c c  b      aaaa aaaa aaaa original position
 
     u32 temphi =
-	((*deshi & 0x00FFF00) >> 8) |  // 'a' bits
-	((*deshi & 0x0100000) >> 4) |  // 'b' bit
-	((*deshi & 0x0600000) >> 2) |  // 'c' bits
-	((*deshi & 0xF800000)     ) |  // '#' bits (not moved)
+        ((*deshi & 0x00FFF00) >> 8) |  // 'a' bits
+        ((*deshi & 0x0100000) >> 4) |  // 'b' bit
+        ((*deshi & 0x0600000) >> 2) |  // 'c' bits
+        ((*deshi & 0xF800000)     ) |  // '#' bits (not moved)
 
 // to be compatible with Meggs' bitslice code we also need
 // to move these bits from deslo to deshi
@@ -263,9 +263,9 @@ void convert_key_from_inc_to_des (u32 *deshi, u32 *deslo)
 //                ccbb aaaa **** **** current position  (in deslo)
 //       cc   bb  aaaa                original position (in deshi)
 
-	((*deslo & 0x0000F00) << 4) |  // 'a' bits
-	((*deslo & 0x0003000) << 5) |  // 'b' bits
-	((*deslo & 0x000C000) << 7);
+        ((*deslo & 0x0000F00) << 4) |  // 'a' bits
+        ((*deslo & 0x0003000) << 5) |  // 'b' bits
+        ((*deslo & 0x000C000) << 7);
 
     *deshi = temphi;
     *deslo = templo;
@@ -277,18 +277,20 @@ void convert_key_from_inc_to_des (u32 *deshi, u32 *deslo)
 // now add parity bits
 // take each group of 7 bits, and add parity bit with a table lookup
     *deshi =
-	((odd_parity[(*deshi & 0x0000007F) << 1]) << 0) |
-	((odd_parity[(*deshi & 0x00003F80) >> 6]) << 8) |
-	((odd_parity[(*deshi & 0x001FC000) >>13]) <<16) |
-	((odd_parity[(*deshi & 0x0FE00000) >>20]) <<24);
+        ((odd_parity[(*deshi & 0x0000007F) << 1]) << 0) |
+        ((odd_parity[(*deshi & 0x00003F80) >> 6]) << 8) |
+        ((odd_parity[(*deshi & 0x001FC000) >>13]) <<16) |
+        ((odd_parity[(*deshi & 0x0FE00000) >>20]) <<24);
     *deslo =
-	((odd_parity[(*deslo & 0x0000007F) << 1]) << 0) |
-	((odd_parity[(*deslo & 0x00003F80) >> 6]) << 8) |
-	((odd_parity[(*deslo & 0x001FC000) >>13]) <<16) |
-	((odd_parity[(*deslo & 0x0FE00000) >>20]) <<24);
+        ((odd_parity[(*deslo & 0x0000007F) << 1]) << 0) |
+        ((odd_parity[(*deslo & 0x00003F80) >> 6]) << 8) |
+        ((odd_parity[(*deslo & 0x001FC000) >>13]) <<16) |
+        ((odd_parity[(*deslo & 0x0FE00000) >>20]) <<24);
 
 #ifdef DEBUG
     printf ("              to %08X:%08X (with parity)\n",*deshi,*deslo);
 #endif
 }
+
+// ------------------------------------------------------------------
 
