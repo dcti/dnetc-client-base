@@ -20,7 +20,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.14 2000/06/02 18:58:55 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.15 2000/10/20 21:10:38 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -51,7 +51,8 @@ return "@(#)$Id: cliident.cpp,v 1.17.2.14 2000/06/02 18:58:55 cyp Exp $"; }
 #include "mail.h"
 #include "memfile.h"
 #include "modereq.h"
-#include "network.h"
+#include "netbase.h"
+#include "netconn.h"
 #include "pathwork.h"
 #include "pollsys.h"
 #include "probfill.h"
@@ -98,7 +99,8 @@ static const char *h_ident_table[] =
   (const char *)__MAIL_H__,
 //(const char *)__MEMFILE_H__,
   (const char *)__MODEREQ_H__,
-  (const char *)__NETWORK_H__,
+  (const char *)__NETBASE_H__,
+  (const char *)__NETCONN_H__,
   (const char *)__PATHWORK_H__,
   (const char *)__POLLSYS_H__,
   (const char *)__PROBFILL_H__,
@@ -144,8 +146,8 @@ extern const char *mail_cpp(void);
 extern const char *memfile_cpp(void);
 extern const char *modereq_cpp(void);
 extern const char *netinit_cpp(void);
-extern const char *netres_cpp(void);
-extern const char *network_cpp(void);
+extern const char *netbase_cpp(void);
+extern const char *netconn_cpp(void);
 extern const char *pathwork_cpp(void);
 extern const char *pollsys_cpp(void);
 extern const char *probfill_cpp(void);
@@ -190,8 +192,8 @@ static const char * (*ident_table[])() =
 //memfile_cpp,
   modereq_cpp,
   netinit_cpp,
-  netres_cpp,
-  network_cpp,
+  netbase_cpp,
+  netconn_cpp,
   pathwork_cpp,
   pollsys_cpp,
   probfill_cpp,
