@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.27.2.4 2003/02/22 12:55:40 andreasb Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.27.2.5 2003/08/25 09:32:45 mweiser Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -53,6 +53,11 @@ return "@(#)$Id: cliident.cpp,v 1.27.2.4 2003/02/22 12:55:40 andreasb Exp $"; }
 #include "modereq.h"
 #include "netbase.h"
 #include "netconn.h"
+#include "pack.h"       /* careful: order is important here */
+#include "pack1.h"      /* switches on packing */
+#include "pack4.h"
+#include "pack8.h"
+#include "pack0.h"      /* switch packing off again */
 #include "pathwork.h"
 #include "pollsys.h"
 #include "probfill.h"
@@ -74,6 +79,9 @@ return "@(#)$Id: cliident.cpp,v 1.27.2.4 2003/02/22 12:55:40 andreasb Exp $"; }
 #include "w32pre.h"
 #include "w32util.h"
 #include "w32svc.h"
+#endif
+#if (CLIENT_OS == OS_NEXTSTEP)
+#include "next_sup.h"
 #endif
 
 static const char *h_ident_table[] = 
@@ -107,6 +115,11 @@ static const char *h_ident_table[] =
   (const char *)__MODEREQ_H__,
   (const char *)__NETBASE_H__,
   (const char *)__NETCONN_H__,
+  (const char *)__PACK_H__,
+  (const char *)__PACK1_H__,
+  (const char *)__PACK4_H__,
+  (const char *)__PACK8_H__,
+  (const char *)__PACK0_H__,
   (const char *)__PATHWORK_H__,
   (const char *)__POLLSYS_H__,
   (const char *)__PROBFILL_H__,
@@ -131,6 +144,9 @@ static const char *h_ident_table[] =
   #endif
   #if (CLIENT_OS == OS_OS2)
   (const char *)__OS2DEFS_H__,
+  #endif
+  #if (CLIENT_OS == OS_NEXTSTEP)
+  (const char *)__NEXT_SUP_H__,
   #endif
   (const char *)0
 };
@@ -182,6 +198,9 @@ extern const char *w32svc_cpp(void);
 #endif
 #if (CLIENT_OS == OS_OS2)
 extern const char *os2inst_cpp(void);
+#endif
+#if (CLIENT_OS == OS_NEXTSTEP)
+extern const char *next_sup_cpp(void);
 #endif
 
 static const char * (*ident_table[])(void) = 
@@ -235,6 +254,9 @@ static const char * (*ident_table[])(void) =
   #endif
   #if (CLIENT_OS == OS_OS2)
   os2inst_cpp,
+  #endif
+  #if (CLIENT_OS == OS_NEXTSTEP)
+  next_sup_cpp,
   #endif
   ((const char * (*)(void))0)  
 };
