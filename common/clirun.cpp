@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.18 2004/05/25 09:22:16 oliver Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.19 2004/06/24 21:05:43 kakace Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -34,6 +34,7 @@ return "@(#)$Id: clirun.cpp,v 1.129.2.18 2004/05/25 09:22:16 oliver Exp $"; }
 #include "modereq.h"   // ModeReq[Set|IsSet|Run]()
 #include "clievent.h"  // ClientEventSyncPost() and constants
 #include "coremem.h"   // cmem_alloc(), cmem_free()
+#include "bench.h"     // BenchResetStaticVars()
 
 // --------------------------------------------------------------------------
 
@@ -456,7 +457,12 @@ void Go_mt( void * parm )
     {
       thrparams->refillneeded = 1;
       if (thrparams->realthread) // don't race in the loop
-        __cruncher_yield__(thrparams);
+        __cruncher_sleep__(thrparams);
+        /* was :
+        ** __cruncher_yield__(thrparams);
+        ** but that caused the client to busy-wait if no other process/thread
+        ** needs the CPU (see bug #3618, for instance).
+        */
     }
     else
     {
@@ -1337,6 +1343,14 @@ static void __dyn_timeslice_showme(struct thread_param_block *thrparam)
 }
 #endif
 
+// We need to reset some static variables to their initial state before
+// restarting the crunchers (#3495)
+static void __resetStaticVars(void)
+{
+  BenchResetStaticVars();
+  CliResetStaticVars();
+}
+
 /* ----------------------------------------------------------------------- */
 
 static int GetMaxCrunchersPermitted( void )
@@ -1382,6 +1396,7 @@ int ClientRun( Client *client )
   int dontSleep=0, isPaused=0, wasPaused=0, timeMonoError = 0;
 
   ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0, 0 );
+  __resetStaticVars();
 
   // =======================================
   // Notes:
