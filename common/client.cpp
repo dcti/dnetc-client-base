@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.152  1998/11/08 01:01:41  silby
+// Buncha hacks to get win32gui to compile, lots of cleanup to do.
+//
 // Revision 1.151  1998/11/04 21:28:01  cyp
 // Removed redundant ::hidden option. ::quiet was always equal to ::hidden.
 //
@@ -57,7 +60,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.151 1998/11/04 21:28:01 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.152 1998/11/08 01:01:41 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -377,6 +380,7 @@ int realmain( int argc, char *argv[] )
 
 
 /* ----------------------------------------------------------------- */
+#if !((CLIENT_OS==OS_WIN32) && defined(NEEDVIRTUALMETHODS))
 
 #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, 
@@ -389,4 +393,5 @@ int main( int argc, char *argv[] )
 { 
   return realmain( argc, argv ); 
 }
+#endif
 #endif

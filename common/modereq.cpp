@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.6  1998/11/08 01:01:47  silby
+// Buncha hacks to get win32gui to compile, lots of cleanup to do.
+//
 // Revision 1.5  1998/11/03 16:08:31  cyp
 // config mode changed so that it isn't affected by active command line options.
 //
@@ -26,7 +29,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.5 1998/11/03 16:08:31 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.6 1998/11/08 01:01:47 silby Exp $"; }
 #endif
 
 #include "client.h"   //client class
@@ -143,8 +146,11 @@ int ModeReqRun(Client *client)
             newclient = client;
             nodestroy = 1;
             }
+#if !((CLIENT_OS==OS_WIN32) && defined(NEEDVIRTUALMETHODS))
+// configure is awkward with the GUI at the moment
           if ( newclient->Configure() == 1 )
             newclient->WriteFullConfig(); //full new build
+#endif
           if (!nodestroy)
             delete newclient;
           if ((bits & MODEREQ_CONFRESTART) != 0)
