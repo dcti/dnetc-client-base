@@ -7,7 +7,7 @@
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.3.2.3 2005/03/07 21:18:10 snikkel Exp $
+; $Id: x86ident.asm,v 1.3.2.4 2005/03/07 21:30:58 snikkel Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -248,7 +248,11 @@ _neTM:          xchg    edx,eax         ; make edx=maxlevel,eax=vendor id
                 cmp     cx,0f00h        ; less than K8?
                 jnz     _inEX           ; neither brand nor cache bits needed
                 or      dl,dl           ; have brand bits?
-                jnz     _brand          ; continue if so
+                jz      _inEX           ; continue if not
+                or      dl,f0h          ; 'Brand' msn->brand msn
+                or      ah,dl           ; 0/fam/mod/step -> brand/fam/mod/step
+                or      dl,dl           ; did we have brand bits?
+                jnz     _end            ; exit if so
 
                 ;On a PII and above we take extra steps to differentiate
                 ;between a Celeron/Covington, PII, Celeron-A/Mendocino, Xeon.
