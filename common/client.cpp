@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.83 2000/06/22 09:15:39 oliver Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.84 2000/06/23 13:29:57 oliver Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -322,14 +322,14 @@ static const char *GetBuildOrEnvDescription(void)
   static char buffer[40];
   #ifdef __PPC__
     #ifdef __POWERUP__
-    sprintf(buffer,"%s, PowerUp %ld.%ld",amigaGetOSVersion(),PPCVersion(),PPCRevision());
+    sprintf(buffer,"OS %s, PowerUp %ld.%ld",amigaGetOSVersion(),PPCVersion(),PPCRevision());
     #else
     #define LIBVER(lib) *((UWORD *)(((UBYTE *)lib)+20))
     #define LIBREV(lib) *((UWORD *)(((UBYTE *)lib)+22))
-    sprintf(buffer,"%s, WarpOS %d.%d",amigaGetOSVersion(),LIBVER(PowerPCBase),LIBREV(PowerPCBase));
+    sprintf(buffer,"OS %s, WarpOS %d.%d",amigaGetOSVersion(),LIBVER(PowerPCBase),LIBREV(PowerPCBase));
     #endif
   #else
-  sprintf(buffer,"%s, 68K",amigaGetOSVersion());
+  sprintf(buffer,"OS %s, 68K",amigaGetOSVersion());
   #endif
   return buffer;
 #elif defined(__unix__) /* uname -sr */
