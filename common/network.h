@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.22  1998/06/26 09:19:40  jlawson
+// removed inclusion of dos.h for win32
+//
 // Revision 1.21  1998/06/26 07:13:56  daa
 // move strcmpi and strncmpi defs to cmpidefs.h
 //
@@ -68,7 +71,6 @@ extern "C" {
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #include <winsock.h>
-  #include <dos.h>
   #include <io.h>
   #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
   #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
