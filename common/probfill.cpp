@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.35 2000/04/15 16:57:11 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.36 2000/06/25 14:01:18 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -428,8 +428,6 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
        BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
     if (!(didupdate < 0))
     {
-      if (client->randomchanged)        
-        RefreshRandomPrefix( client );
       if (didupdate!=0)
         *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
       if ((didupdate & BUFFERUPDATE_FETCH) != 0) /* fetched successfully */
@@ -442,6 +440,9 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   if (bufcount >= 0) /* load from file succeeded */
   {
     int client_cpu = 0, coresel;
+
+    if (client->randomchanged)        
+      RefreshRandomPrefix( client );
 
     /* if the total number of packets in buffers is less than the number 
        of crunchers running then try to fetch *now*. This means that the
