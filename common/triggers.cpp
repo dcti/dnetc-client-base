@@ -18,7 +18,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.1 2002/11/16 21:30:42 gavin Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.2 2002/11/17 21:00:33 pfeffi Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -1140,6 +1140,11 @@ static void __init_signal_handlers( int doingmodes )
     SETSIGNAL( TRIGGER_PAUSE_SIGNAL, CliSignalHandler );  //pause
     SETSIGNAL( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue
   }
+  #else /* defined(__unix__) && defined(TRIGGER_PAUSE_SIGNAL) */
+    #if (CLIENT_OS == OS_OS2)
+      SETSIGNAL( TRIGGER_PAUSE_SIGNAL, CliSignalHandler );  //pause
+      SETSIGNAL( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue
+    #endif
   #endif /* defined(__unix__) && defined(TRIGGER_PAUSE_SIGNAL) */
   #if defined(SIGQUIT)
   SETSIGNAL( SIGQUIT, CliSignalHandler );  //shutdown

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __TRIGGERS_H__
-#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.9 2002/09/02 00:35:43 andreasb Exp $"
+#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.9.4.1 2002/11/17 21:00:33 pfeffi Exp $"
 
 #if defined(SIGCONT) && defined(SIGTSTP)
   /* These constants define symbolically the signal names used by the
@@ -23,6 +23,12 @@
   #else
     #define TRIGGER_PAUSE_SIGNAL SIGTSTP
     #define TRIGGER_UNPAUSE_SIGNAL SIGCONT
+  #endif
+#else
+  #if (CLIENT_OS == OS_OS2)
+    /* EMX does not have SIGCONT and SIGSTP */
+    #define TRIGGER_PAUSE_SIGNAL SIGUSR1
+    #define TRIGGER_UNPAUSE_SIGNAL SIGUSR2
   #endif
 #endif
 
