@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.101  1998/11/21 13:08:09  remi
+// Fixed "Setting cputype to" when cputype < 0.
+//
 // Revision 1.100  1998/11/19 20:48:53  cyp
 // Rewrote -until/-h handling. Did away with useless client.hours (time-to-die
 // is handled by client.minutes anyway). -until/-h/hours all accept "hh:mm"
@@ -76,7 +79,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.100 1998/11/19 20:48:53 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.101 1998/11/21 13:08:09 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -658,7 +661,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           if (run_level!=0)
             {
             if (logging_is_initialized)
-              LogScreenRaw("Setting cputype to %u\n", (unsigned int)(cputype));
+              LogScreenRaw("Setting cputype to %d\n", (int)cputype);
             }
           else
             {
