@@ -10,6 +10,11 @@
  */ 
 //
 // $Log: clievent.h,v $
+// Revision 1.4  1998/12/29 20:36:23  silby
+// Added new event to cause GUIs to update their percent bars.
+// (Assumes percent bar routines have their own logic
+// similar to logscreen_percent.)
+//
 // Revision 1.3  1998/12/29 19:18:24  cyp
 // Added ..._PROBLEM_TFILL[STARTED|FINISHED] for client.LoadSaveProblems()
 //
@@ -35,6 +40,7 @@
 #define CLIEVENT_PROBLEM_FINISHED      0x0102 /* ...problem id */
 #define CLIEVENT_PROBLEM_TFILLSTARTED  0x0103 /* ...# of problems to check */
 #define CLIEVENT_PROBLEM_TFILLFINISHED 0x0104 /* ...# of problems changed */
+#define CLIEVENT_PROBLEM_CONTINUED     0x0105 /* ...0 (update % bar)*/
 #define CLIEVENT_BUFFER_FETCHBEGIN     0x0201 /* ...(long)(&proxymsg) */
 #define CLIEVENT_BUFFER_FETCHFETCHED   0x0202 /* ...sequence # */
 #define CLIEVENT_BUFFER_FETCHEND       0x0203 /* ...total fetched */

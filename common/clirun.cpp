@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.59  1998/12/29 20:36:23  silby
+// Added new event to cause GUIs to update their percent bars.
+// (Assumes percent bar routines have their own logic
+// similar to logscreen_percent.)
+//
 // Revision 1.58  1998/12/29 19:29:26  cyp
 // Cleaned up ::scheduledupdatetime: (a) clear scheduled time after a
 // successful fetch in that period [should really be in fetch/flush itself],
@@ -227,7 +232,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.58 1998/12/29 19:29:26 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.59 1998/12/29 20:36:23 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -1395,6 +1400,7 @@ int Client::Run( void )
 
     if (!TimeToQuit && !isPaused)
       {
+      ClientEventSyncPost(0x0105,0); // Update GUI percent bars
       if (!percentprintingoff)
         LogScreenPercent( load_problem_count ); //logstuff.cpp
       getbuff_errs+=LoadSaveProblems(load_problem_count,PROBFILL_GETBUFFERRS);
