@@ -11,6 +11,9 @@
 */ 
 //
 // $Log: cliident.cpp,v $
+// Revision 1.8  1998/11/02 04:41:25  cyp
+// Removed references to netres_cpp.
+//
 // Revision 1.7  1998/10/04 20:46:11  remi
 // LogScreen -> LogScreenRaw
 //
@@ -36,7 +39,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.7 1998/10/04 20:46:11 remi Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.8 1998/11/02 04:41:25 cyp Exp $"; } 
 #endif
 
 //-----------------------------------------------------------------------
@@ -69,7 +72,7 @@ extern const char *problem_cpp(void);
 extern const char *logstuff_cpp(void);
 //extern const char *lurk_cpp(void);
 extern const char *clisrate_cpp(void);
-extern const char *netres_cpp(void);
+//extern const char *netres_cpp(void);
 extern const char *triggers_cpp(void);
 //extern const char *memfile_cpp(void);
 extern const char *selcore_cpp(void);
@@ -108,7 +111,7 @@ problem_cpp,
 logstuff_cpp,
 //lurk_cpp,
 clisrate_cpp,
-netres_cpp,
+//netres_cpp,
 triggers_cpp,
 //memfile_cpp,
 selcore_cpp,
@@ -126,7 +129,7 @@ probman_cpp,
 console_cpp
 };
 
-//"@(#)$Id: cliident.cpp,v 1.7 1998/10/04 20:46:11 remi Exp $"
+//"@(#)$Id: cliident.cpp,v 1.8 1998/11/02 04:41:25 cyp Exp $"
 
 void CliIdentifyModules(void)
 {
@@ -157,7 +160,7 @@ void CliIdentifyModules(void)
         }
       *p2 = 0;
       if ( p2 != &buffer[0] )
-        LogScreenRaw( "%s\n", buffer );
+        LogScreen( "%s\n", buffer );
       }  
     }
   return;
@@ -167,7 +170,7 @@ void CliIdentifyModules(void)
 
 void CliIdentifyModules(void)
 {
-  LogScreenRaw( "No support for -ident in this client.\n" );
+  LogScreen( "No support for -ident in this client.\n" );
 }
   
 #endif //#if defined(__showids__)
