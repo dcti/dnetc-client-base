@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.68 2000/06/20 18:21:54 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.69 2000/06/27 13:43:24 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -49,7 +49,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "RG RISC-rotate I",  /* K5 */
       "RG RISC-rotate II", /* K6 - may become mmx-k6-2 core at runtime */
       #ifdef MMX_RC5
-      "RG/SS ath",         /* K7 Athlon */
+      "RG/HB ath",         /* K7 Athlon */
       #endif
       NULL
     },
