@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.66  1998/07/01 00:06:27  cyruspatel
+// Added full buffering to ::LogScreenPercentSingle() so that the write is
+// done in one go, regardless of whether stdout is buffered or not.
+//
 // Revision 1.65  1998/06/30 05:57:33  jlawson
 // benchmark will exit before status message is printed if SignalTriggered
 // is already set on function entry.
@@ -84,7 +88,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.65 1998/06/30 05:57:33 jlawson Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.66 1998/07/01 00:06:27 cyruspatel Exp $";
 #endif
 
 #include "client.h"
@@ -2918,16 +2922,24 @@ void Client::LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted
 #ifdef NEW_LOGSCREEN_PERCENT_SINGLE
   // fixes the problem of "100%" running off an 80 column screen and
   // also gives a '.' sooner for new blocks.
-  u32 restartpercent =
+  char buffer[88];
+  unsigned int p, pos = 0;      
+  unsigned int restartpercent =
               (!restarted || percent==100) ? 0 :
               ( percent - ((percent>90)?(percent&1):(1-(percent&1))) );
-  for ( u32 p = (lastpercent + 1) ; p < (percent+1) ; p++ )
+  buffer[0]=0;        
+  for ( p = (lastpercent + 1) ; (pos < 80) && (p < (percent+1)) ; p++ )
   {
-    if ( p == 100 ) LogScreen("100");
-    else if ( p == restartpercent ) LogScreen("R");
-    else if ( ( p % 10 ) == 0 ) LogScreenf("%d%%",p);
-    else if ( ( p<90 && p&1 ) || ( p>90 && (!(p&1)) ) ) LogScreen(".");
+    if ( p == 100 ) 
+      { strcat( buffer, "100" ); pos+=3; } //LogScreen("100");
+    else if ( p == restartpercent ) 
+      { strcat( buffer, "R" ); pos++; } // LogScreen("R");
+    else if ( ( p % 10 ) == 0 ) 
+      { sprintf( (buffer+pos), "%d%%",p ); pos+=3; } //LogScreenf("%d%%",p);
+    else if ( ( p<90 && p&1 ) || ( p>90 && (!(p&1)) ) ) 
+      { strcat( buffer, "." ); pos++; } //LogScreen(".");
   }
+  LogScreen( buffer );
   return;
 #else
   for ( u32 p = lastpercent + 1 ; p < percent + 1 ; p++ )
