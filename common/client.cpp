@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.158  1998/11/12 13:13:17  silby
+// Lurk mode is initialized in the main loop now.
+//
 // Revision 1.157  1998/11/11 06:04:31  cyp
 // Added a win version check <=3.x before asserting TZ= validity
 //
@@ -78,7 +81,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.157 1998/11/11 06:04:31 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.158 1998/11/12 13:13:17 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -325,6 +328,9 @@ int Client::Main( int argc, const char *argv[], int restarted )
           {
           InitializeLogging(0); //enable only screen logging for now
           PrintBanner(id); //tracks restart state itself
+          #ifdef LURK
+          dialup.Start();
+          #endif
           ParseCommandline( 1, argc, argv, NULL, 1 ); //show cmdline overrides
       
           if (domodes)
@@ -338,6 +344,9 @@ int Client::Main( int argc, const char *argv[], int restarted )
             SelectCore( 0 );
             retcode = Run();
             }
+          #ifdef LURK
+          dialup.Stop();
+          #endif
           DeinitializeLogging();
           DeinitializeConsole();
           }
