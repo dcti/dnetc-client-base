@@ -5,11 +5,16 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.26 2000/02/17 10:16:31 chrisb Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.27 2000/03/08 08:34:55 jlawson Exp $"
 
 #include "cputypes.h"
 
+// ------------------
+
+#if (CLIENT_OS == OS_RISCOS)
 extern "C" {
+#endif
+  
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -24,7 +29,12 @@ extern "C" {
 #if defined(__unix__)
 #include <sys/utsname.h> /* uname() */
 #endif
+
+#if (CLIENT_OS == OS_RISCOS)
 }
+#endif
+
+// ------------------
 
 #if (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
@@ -120,14 +130,21 @@ extern "C" {
   #include "w32svc.h"       // service
   #include "w32cons.h"      // console
   #include "w32pre.h"       // prelude
-  #ifdef _MSC_VER
-  // msc equivalents of file perm flags
-  #define R_OK 04
-  #define W_OK 02
-  #define S_IRUSR _S_IREAD
-  #define S_IWUSR _S_IWRITE
-  #define S_IRGRP _S_IREAD
-  #define S_IWGRP _S_IWRITE
+  #if defined(_MSC_VER)
+    // msc equivalents of file perm flags
+    #define R_OK 04
+    #define W_OK 02
+    #define S_IRUSR _S_IREAD
+    #define S_IWUSR _S_IWRITE
+    #define S_IRGRP _S_IREAD
+    #define S_IWGRP _S_IWRITE
+  #elif defined(__BORLANDC__)
+    #define R_OK 04
+    #define W_OK 02
+    //#define S_IRUSR S_IREAD
+    //#define S_IWUSR S_IWRITE
+    #define S_IRGRP S_IREAD
+    #define S_IWGRP S_IWRITE
   #endif
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>

@@ -16,7 +16,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.8 1999/12/16 19:24:27 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.9 2000/03/08 08:34:55 jlawson Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -388,7 +388,7 @@ int CliIsDevelVersion(void)
   static int isdevel = -1;
   if (isdevel == -1)
   {
-    char *p = strchr( cliident_cpp(), ',' );
+    char *p = strchr( (char*)cliident_cpp(), ',' );
     isdevel = 0;
     if (p)
     {

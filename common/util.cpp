@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.21 2000/03/02 19:38:03 jlawson Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.22 2000/03/08 08:34:55 jlawson Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -161,7 +161,7 @@ int utilGatherOptionArraysToList( char *buffer, unsigned int buflen,
       if (p)
       {
         char single[(MAX_CONTEST_NAME_LEN+1+(sizeof(int)*3)+1+(sizeof(int)*3)+1)];
-        unsigned int len = 0;
+        unsigned int len;
         if (table2)
           len = sprintf(single,"%s%s=%d:%d",delim, p,
                         (int)table1[contest],(int)table2[contest]);
@@ -742,7 +742,7 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
   {
     static dwStartingBytes = 8192;
     DWORD dwBytes = dwStartingBytes;
-    PPERF_DATA_BLOCK pdb = NULL;
+    PPERF_DATA_BLOCK pdb;
     LONG lResult = ERROR_MORE_DATA;
     char szWorkbuffer[260];
 
