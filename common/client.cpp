@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.35 1999/12/15 17:14:50 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.36 1999/12/16 16:35:35 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -153,83 +153,87 @@ static const char *GetBuildOrEnvDescription(void)
 
 /* ---------------------------------------------------------------------- */
 
-static void PrintBanner(const char *dnet_id,int level,int restarted)
+static void PrintBanner(const char *dnet_id,int level,int doingmodes)
 {
-  /* level = 0 = show copyright/version,  1 = show startup message */
-  restarted = 0; /* yes, always show everything */
-  
-  if (!restarted)
+  /* level = 0 = show copyrights,  
+             1 = show version and id
+  */
+  if (level == 0)
   {
-    if (level == 0)
-    {
-      LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
-                    "Copyright 1997-1999, distributed.net\n");
-      #if (CLIENT_CPU == CPU_68K)
-      LogScreenRaw( "RC5 68K assembly by John Girvin\n");
-      #endif
-      #if (CLIENT_CPU == CPU_POWERPC)
-      LogScreenRaw( "RC5 PowerPC and AltiVec assembly by Dan Oetting\n");
-      #endif
-      #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-      LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
-      #endif
-      #if (CLIENT_CPU == CPU_ARM)
-      LogScreenRaw( "ARM assembly by Steve Lee\n");
-      #if (CLIENT_OS == OS_RISCOS)
-      LogScreenRaw( "RISCOS/PC Card support by Dominic Plunkett\n");
-      #endif
-      #endif
-      #if defined(HAVE_DES_CORES)
-      #if defined(KWAN) && defined(MEGGS)
-      LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n"
-                    "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
-      #elif defined(KWAN) && defined(DWORZ)
-      LogScreenRaw( "DES bitslice driver Copyright 1999, Christoph Dworzak\n"
-                    "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
-      #elif defined(KWAN)
-      LogScreenRaw( "DES search routines Copyright 1997-1998, Matthew Kwan\n" );
-      #endif
-      #if (CLIENT_CPU == CPU_X86)
-      LogScreenRaw( "DES search routines Copyright 1997-1998, Svend Olaf Mikkelsen\n");
-      #endif
-      #endif
-      #if (CLIENT_OS == OS_DOS)
-      LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
-      #endif
+    LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
+                  "Copyright 1997-1999, distributed.net\n");
+    #if (CLIENT_CPU == CPU_68K)
+    LogScreenRaw( "RC5 68K assembly by John Girvin\n");
+    #endif
+    #if (CLIENT_CPU == CPU_POWERPC)
+    LogScreenRaw( "RC5 PowerPC and AltiVec assembly by Dan Oetting\n");
+    #endif
+    #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
+    LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
+    #endif
+    #if (CLIENT_CPU == CPU_ARM)
+    LogScreenRaw( "ARM assembly by Steve Lee\n");
+    #if (CLIENT_OS == OS_RISCOS)
+    LogScreenRaw( "RISCOS/PC Card support by Dominic Plunkett\n");
+    #endif
+    #endif
+    #if defined(HAVE_DES_CORES)
+    #if defined(KWAN) && defined(MEGGS)
+    LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n"
+                  "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
+    #elif defined(KWAN) && defined(DWORZ)
+    LogScreenRaw( "DES bitslice driver Copyright 1999, Christoph Dworzak\n"
+                  "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
+    #elif defined(KWAN)
+    LogScreenRaw( "DES search routines Copyright 1997-1998, Matthew Kwan\n" );
+    #endif
+    #if (CLIENT_CPU == CPU_X86)
+    LogScreenRaw( "DES search routines Copyright 1997-1998, Svend Olaf Mikkelsen\n");
+    #endif
+    #endif
+    #if (CLIENT_OS == OS_DOS)
+    LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
+    #endif
 
-      LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n");
-      #if (!CLIENT_OS == OS_MACOS)
-      LogScreenRaw( "Start the client with '-help' for a list of valid command line options.\n" );
-      #endif
-      LogScreenRaw( "\n" );
-    }
-    else if ( level == 1 )
-    {
-      const char *msg = GetBuildOrEnvDescription();
-      if (msg == NULL) msg="";
+    LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n");
+    #if (!CLIENT_OS == OS_MACOS)
+    LogScreenRaw( "Start the client with '-help' for a list of valid command line options.\n" );
+    #endif
+    LogScreenRaw( "\n" );
+  }
+  else if ( level == 1 )
+  {
+    const char *msg = GetBuildOrEnvDescription();
+    if (msg == NULL) msg="";
 
-      LogRaw("\n%s%s%s%s.\n",
-             CliGetFullVersionDescriptor(), /* cliident.cpp */
-             ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
-      LogScreenRaw( "Please provide the *entire* version descriptor "
-                    "when submitting bug reports.\n");
-      LogScreenRaw( "The distributed.net bug report pages are at "
-                    "http://www.distributed.net/bugs/\n");
-      if (dnet_id[0] == '\0' || strcmp(dnet_id,"rc5@distributed.net")==0)
+    LogRaw("\n%s%s%s%s.\n",
+           CliGetFullVersionDescriptor(), /* cliident.cpp */
+           ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
+    LogScreenRaw( "Please provide the *entire* version descriptor "
+                  "when submitting bug reports.\n");
+    LogScreenRaw( "The distributed.net bug report pages are at "
+                  "http://www.distributed.net/bugs/\n");
+    if (dnet_id[0] == '\0' || strcmp(dnet_id,"rc5@distributed.net")==0)
+    {
+      /* id has no affect on modes */
+      if (doingmodes)
+        LogRaw( "\n\n" );
+      else
+      {
         LogRaw( "\n* =========================================================================="
                 "\n* The client is not configured with your email address (distributed.net ID) "
                 "\n* Work done cannot be credited until it is set. Please run '%s -config'"
                 "\n* =========================================================================="
                 "\n\n", utilGetAppName());
-      else              
-        LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n",dnet_id);
-
-      if (CliIsTimeZoneInvalid()) /*clitime.cpp (currently DOS,OS/2,WIN[16] only)*/
-      {
-        LogScreenRaw("Warning: The TZ= variable is not set in the environment. "
-         "The client will\nprobably display the wrong time and/or select the "
-         "wrong keyserver.\n");
-      }
+      }          
+    }          
+    else              
+      LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n",dnet_id);
+    if (CliIsTimeZoneInvalid()) /*clitime.cpp (currently DOS,OS/2,WIN[16] only)*/
+    {
+      LogScreenRaw("Warning: The TZ= variable is not set in the environment. "
+       "The client will\nprobably display the wrong time and/or select the "
+       "wrong keyserver.\n");
     }
   }
   return;
@@ -266,7 +270,7 @@ static int ClientMain( int argc, char *argv[] )
     TRACE_OUT((0,"Client.parsecmdline restarted?: %d\n", restarted));
     if (ParseCommandline(client,0,argc,(const char **)argv,&retcode,0)==0)
     {
-      int domodes = (ModeReqIsSet(-1) != 0);
+      int domodes = ModeReqIsSet(-1);
       TRACE_OUT((0,"initializetriggers\n"));
       if (InitializeTriggers(((client->noexitfilecheck ||
                               domodes)?(NULL):("exitrc5" EXTN_SEP "now")),
@@ -293,7 +297,7 @@ static int ClientMain( int argc, char *argv[] )
                                client->smtpdest, 
                                client->id );
             TRACE_OUT((-1,"initializelogging\n"));
-            PrintBanner(client->id,0,restarted);
+            PrintBanner(client->id,0,domodes);
             TRACE_OUT((+1,"parsecmdline(1)\n"));
             ParseCommandline( client, 1, argc, (const char **)argv, NULL, 
                                     (client->quietmode==0)); //show overrides
@@ -307,9 +311,10 @@ static int ClientMain( int argc, char *argv[] )
                          &(client->lurk_conf));
             #endif
 
+            PrintBanner(client->id,1,domodes);
             if (domodes)
             {
-              con_waitforuser = (ModeReqIsSet(MODEREQ_CONFIG)==0);
+              con_waitforuser = ((domodes & MODEREQ_CONFIG)==0);
               TRACE_OUT((+1,"modereqrun\n"));
               ModeReqRun( client );
               TRACE_OUT((-1,"modereqrun\n"));
@@ -318,7 +323,6 @@ static int ClientMain( int argc, char *argv[] )
               con_waitforuser = 1;
             else
             {
-              PrintBanner(client->id,1,restarted);
               TRACE_OUT((+1,"client.run\n"));
               retcode = ClientRun(client);
               TRACE_OUT((-1,"client.run\n"));
