@@ -6,6 +6,10 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.30  1998/08/07 17:49:15  cyruspatel
+// Modified CliGetMessageForFileEntryLoaded() to handle blocksize x*2^28
+// normalization (eg 4*2^28 rather than 1*2^30)
+//
 // Revision 1.29  1998/07/13 18:01:23  friedbait
 // fixed some typos in 'num_sep()'
 //
@@ -125,7 +129,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-static const char *id="@(#)$Id: clisrate.cpp,v 1.29 1998/07/13 18:01:23 friedbait Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.30 1998/08/07 17:49:15 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -334,11 +338,15 @@ const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
 {
   static char str[84];
   const char *name;
-  unsigned int size=1, count=32;
+  unsigned int size, count;
   u32 iter = ntohl(fileentry->iterations.lo);
   unsigned int startpercent = (unsigned int) ( (double) 10000.0 *
            ( (double) (ntohl(fileentry->keysdone.lo)) / (double)(iter) ) );
 
+
+  /*                       old format: eg 1*2^30
+  size = 1;
+  count = 32;
   if (iter)
   {
     count = 1;
@@ -347,12 +355,32 @@ const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
       { size++; count <<= 1; }
     count = iter / (1<<size);
   }
+  */
+  
+  //iter = 268435456L;  //1<<28  //2^28 
+  //iter = 536870912L;  //1<<29  //2^29
+  //iter =1073741824L;  //1<<30  //2^30
+  //iter =2147483648L;  //1<<31  //2^31
+  
+  if (!iter)                  /* new format 4*2^28 */
+    {
+    count = 16;
+    size  = 28;
+    }
+  else
+    {
+    size =  0;
+    while (iter>1 && size<28)
+      { size++; iter>>=1; }
+    count = iter;
+    }
+
   if (CliGetContestInfoBaseData( fileentry->contest, &name, NULL )!=0) //clicdata
     name = "???";
 
   sprintf( str, "%s %s %d*2^%d block %08lX:%08lX%c(%u.%02u%% done)",
            "Loaded",
-           name, (int) count, (int)size,
+           name, (int) count, (int)size,  
            (unsigned long) ntohl( fileentry->key.hi ),
            (unsigned long) ntohl( fileentry->key.lo ),
            ((startpercent)?(' '):(0)),
