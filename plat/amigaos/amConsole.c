@@ -1,11 +1,16 @@
-/* Created by Oliver Roberts <oliver@futaura.co.uk>
-**
-** $Id: amConsole.c,v 1.1.2.1 2001/01/21 15:10:27 cyp Exp $
-**
-** ----------------------------------------------------------------------
-** This file contains the Amiga specific console code, and support for
-** the Myzar GUI.
-** ----------------------------------------------------------------------
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: amConsole.c,v 1.1.2.2 2002/04/11 11:21:24 oliver Exp $
+ *
+ * Created by Oliver Roberts <oliver@futaura.co.uk>
+ *
+ * ----------------------------------------------------------------------
+ * This file contains the Amiga specific console code, and support for
+ * the Myzar GUI.
+ * ----------------------------------------------------------------------
 */
 
 #ifdef __PPC__
@@ -25,9 +30,11 @@
 
 #include <ctype.h>
 #include "amiga.h"
-#include "common/triggers.h"
+#include "triggers.h"
+#include "util.h"
+#include "modereq.h"
 
-#if (defined __PPC__) && (defined __POWERUP__)
+#if defined(__PPC__) && defined(__POWERUP__)
 #undef Read
 #undef Write
 #define Read(a,b,c) PPCRead(a,b,c)
@@ -39,7 +46,22 @@ static struct {
    BPTR Output;
    BOOL InputIsInteractive;
    BOOL OutputIsInteractive;
+
+   #ifndef NOGUI
+   BPTR NewConsole;
+   BPTR OldInput;
+   BPTR OldOutput;
+   #endif
 } ConStatics;
+
+extern struct Library *DnetcBase;
+
+extern unsigned long *__stdfiledes;
+
+#ifndef NOGUI
+/* default console for WB startup (libnix) */
+char __stdiowin[] = "NIL:";
+#endif
 
 int amigaInitializeConsole(int runhidden, int runmodes)
 {
@@ -52,15 +74,115 @@ int amigaInitializeConsole(int runhidden, int runmodes)
       ConStatics.OutputIsInteractive = (IsInteractive(ConStatics.Output) == DOSTRUE);
 
    // Workbench "Execute Command" output windows refuse to close without this!
+   #ifndef NOGUI
+   if (!DnetcBase) {
+      printf("\r");
+      fflush(stdout);
+   }
+   #else
    printf("\r");
+   fflush(stdout);
+   #endif
+
+   return 0;
+}
+
+#ifndef NOGUI
+BPTR amigaOpenNewConsole(char *conname)
+{
+   if (!ConStatics.NewConsole) {
+      BPTR con = Open(conname,MODE_OLDFILE);
+      if (con) {
+         ConStatics.OldInput = SelectInput(con);
+         ConStatics.OldOutput = SelectOutput(con);
+         __stdfiledes[0] = __stdfiledes[1] = con;
+         ConStatics.NewConsole = con;
+         amigaInitializeConsole(0,0);
+      }
+   }
+
+   return(ConStatics.NewConsole);
+}
+
+void amigaCloseNewConsole(void)
+{
+   if (ConStatics.NewConsole) {
+      Close(ConStatics.NewConsole);
+      SelectInput(ConStatics.OldInput);
+      SelectOutput(ConStatics.OldOutput);
+      __stdfiledes[0] = ConStatics.OldInput;
+      __stdfiledes[1] = ConStatics.OldOutput;
+      ConStatics.NewConsole = NULL;
+      amigaInitializeConsole(0,0);
+   }
+}
+#endif
+
+int amigaConOut(const char *msg)
+{
+   #ifndef NOGUI
+   static int forcecon = 0;
+   if (DnetcBase) {
+      if (ModeReqIsSet(MODEREQ_CONFIG|MODEREQ_CONFRESTART)) {
+         if (!forcecon) {
+            amigaOpenNewConsole("CON://630/200/distributed.net client configuration");
+            forcecon = 1;
+	 }
+      }
+      else {
+         if (forcecon) {
+            amigaCloseNewConsole();
+            forcecon = 0;
+	 }
+         amigaGUIOut((char *)msg);
+         return 0;
+      }
+   }
+   #endif
+
+   fwrite( msg, sizeof(char), strlen(msg), stdout);
    fflush(stdout);
 
    return 0;
 }
 
-int MyzarIsRunning(void)
+int amigaConOutModal(const char *msg)
+{
+   #ifndef NOGUI
+   if (DnetcBase) {
+      amigaGUIOut((char *)msg);
+   }
+   else
+   #endif
+   {
+      fprintf( stderr, "%s\n", msg );
+      fflush( stderr );
+   }
+   return 0;
+}
+
+int amigaConOutErr(const char *msg)
+{
+   #ifndef NOGUI
+   if (DnetcBase) {
+      amigaGUIOut((char *)msg);
+   }
+   else
+   #endif
+   {
+      fprintf( stderr, "%s: %s\n", utilGetAppName(), msg );
+      fflush( stderr );
+   }
+   return 0;
+}
+
+int amigaConIsGUI(void)
 {
    static int running = -1;
+
+   #ifndef NOGUI
+   if (DnetcBase) return 1;
+   #endif
 
    // only run this code once (reduces overhead)
    if (running == -1) {
@@ -111,7 +233,7 @@ int amigaConIsScreen(void)
          ** visible and is not covered by the above since our output handle is
          ** actually a pipe (IsInteractive == FALSE)
          */
-         visible = MyzarIsRunning();
+         visible = amigaConIsGUI();
       }
    }
 
@@ -178,8 +300,14 @@ static int __ReadCtrlSeqResponse(char *cmd, int cmdlen, char matchchar1,
 
 int amigaConGetSize(int *width, int *height)
 {
-   // WINDOW STATUS REQUEST
-   return __ReadCtrlSeqResponse("\x9b" "0 q",4,'r',' ',width,height);
+   if (amigaConIsGUI() && !ConStatics.NewConsole) {
+      *width = 200;
+      return 0;
+   }
+   else {
+      // WINDOW STATUS REQUEST
+      return __ReadCtrlSeqResponse("\x9b" "0 q",4,'r',' ',width,height);
+   }
 }
 
 int amigaConGetPos(int *col, int *row)
