@@ -1,7 +1,7 @@
 
  distributed.net client for MorphOS (PPC)
  Released by Harry Sintonen <sintonen@iki.fi>
- Document revision $Id: readme.morphos,v 1.1.2.1 2004/01/07 02:50:50 piru Exp $
+ Document revision $Id: readme.morphos,v 1.1.2.2 2004/01/09 22:43:27 piru Exp $
 
  Welcome to the distributed.net client.
 
@@ -15,10 +15,9 @@
          3.1 Setting the time zone
          3.2 Packets and work units?
          3.3 Dial-up detection caveats
-    4.0  GUI for AmigaOS clients
+    4.0  GUI for MorphOS client
          4.1 Preferences and options
          4.2 ARexx commands
-         4.3 Myzar - MUI front-end for the client
     5.0  Credits & thank yous
 
  1.0  System requirements --------------------------------------------
@@ -28,8 +27,6 @@
      - Altivec cores require G4 and MorphOS 1.5.
      - A TCP stack compatible with AmiTCP 3.0 or newer.
        There are several, such as Miami(Dx) or Genesis.
-     - ClassAct or ReAction GUI classes are required in order to use the
-       built-in GUI (will use shell output if not present).
 
  2.0  Getting started ------------------------------------------------
 
@@ -96,10 +93,7 @@
     work), you will need to be using Genesis. This feature is not
     supported for other TCP/IP stack software.
 
- 4.0  GUI for MorphOS clients-----------------------------------------
-
-    MorphOS client can use the AmigaOS client GUI libraries. You need
-    to install ClassAct/ReAction before you can use it.
+ 4.0  GUI for MorphOS client -----------------------------------------
 
     The client built-in GUI is enabled when running the client from
     Ambient (e.g. by double-clicking its' icon).  If starting the client
@@ -107,11 +101,19 @@
     the console output will be shown in the GUI, and the client may be
     controlled by the menus.
 
+    MorphOS client can also use the classic AmigaOS client GUI
+    library, if preferred.  You need to install ClassAct/ReAction if
+    you wish to use it.  To use it, replace the included
+    dnetcgui.library with a library from the Classic AmigaOS client
+    release.
+
   4.1  Preferences and options ---------------------------------------
 
-    The GUI maybe be configured to your liking by using the preferences
-    window, which can be accessed from the settings menu.  Additionally,
-    the following tooltypes can be used in the client's icon:
+    The GUI maybe be configured to your liking by using the MUI
+    settings.  To edit choose "Project/MUI settings..." from menu.
+    To configure the listview, choose External from the left top
+    cyclegadget, and select NListviews.  Additionally, the following
+    tooltypes can be used in the client's icon:
 
     HIDE
 
@@ -135,16 +137,11 @@
     FLUSH   - Flush the client(s) buffers
     RESTART - Restart the clients(s)
 
-  4.3  Myzar - alternative front-end for the client ------------------
-
-    Myzar is a front-end for the client, and uses MUI.  Myzar preceded
-    the built-in GUI, and if you prefer to use Myzar then it will still
-    work fine with the new GUI enabled clients.  Myzar can be downloaded
-    from http://www.crosswinds.net/~myzar/ . Note that the console output
-    of the current clients isn't fully compatible with Myzar.
-
  5.0  Credits & thank yous--------------------------------------------
+
+    -- Ilkka Lehtoranta (MUI dnetcgui.library)
 
     -- MorphOS client is based on the AmigaOS port:
        - Oliver Roberts (AmigaOS port) and all who contributed to
          AmigaOS client.
+

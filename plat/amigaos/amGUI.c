@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amGUI.c,v 1.2.4.4 2004/01/09 12:08:39 piru Exp $
+ * $Id: amGUI.c,v 1.2.4.5 2004/01/09 22:43:27 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -234,6 +234,7 @@ void amigaHandleGUI(void *timer, ULONG timesig)
       #ifndef __OS3PPC__
       sigr = Wait(waitsigs);
       if (sigr & timesig) {
+         sigr &= ~timesig;
          done = TRUE;
          WaitIO((struct IORequest *)tr);
       }
