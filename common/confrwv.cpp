@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.29  1999/01/11 07:01:24  dicamillo
+// Fixed incorrect test in ValidateConfig for priority.  It can now exceed 0.
+//
 // Revision 1.28  1999/01/10 15:17:48  remi
 // Added "network.h" to the list of includes (needed for htonl() and ntohl())
 //
@@ -127,7 +130,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.28 1999/01/10 15:17:48 remi Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.29 1999/01/11 07:01:24 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -355,7 +358,7 @@ void ValidateConfig(Client *client) //DO NOT PRINT TO SCREEN HERE!
   if (( client->preferred_contest_id < 0 ) || ( client->preferred_contest_id > 1 )) 
     client->preferred_contest_id = 1;
 
-  if (client->priority     > conf_options[CONF_NICENESS].choicemin || 
+  if (client->priority     < conf_options[CONF_NICENESS].choicemin || 
       client->priority     > conf_options[CONF_NICENESS].choicemax )
     client->priority       = conf_options[CONF_NICENESS].choicemin;
   if (client->uuehttpmode  < conf_options[CONF_UUEHTTPMODE].choicemin || 
