@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.69 2000/04/16 19:28:55 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.70 2000/04/28 04:37:08 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -446,36 +446,40 @@ static int ClientMain( int argc, char *argv[] )
                              ((domodes)?(0):(client->restartoninichange)),
                              client->inifilename ) == 0) 
       {
-        TRACE_OUT((0,"initializeconnectivity\n"));
-        if (InitializeConnectivity() == 0) //do global initialization
+        TRACE_OUT((0,"CheckExitRequestTrigger()=%d\n",CheckExitRequestTrigger()));
+        // no messages from the following CheckExitRequestTrigger() will
+        // ever be seen. Tough cookies. We're not about to implement pre-mount
+        // type kernel msg logging for the few people with exit flagfile.
+        if (!CheckExitRequestTrigger())
         {
-          #ifdef LURK /* start must come just after initializeconnectivity */
-          TRACE_OUT((0,"dialup.Start()\n")); /*and always before initlogging*/
-          dialup.Start(client->offlinemode, &(client->lurk_conf));
-          #endif
-          TRACE_OUT((0,"initializeconsole\n"));
-          if (InitializeConsole(client->quietmode,domodes) == 0)
+          TRACE_OUT((0,"initializeconnectivity\n"));
+          if (InitializeConnectivity() == 0) //do global initialization
           {
-            //some plats need to wait for user input before closing the screen
-            int con_waitforuser = 0; //only used if doing modes (and !-config)
-
-            TRACE_OUT((+1,"initializelogging\n"));
-            InitializeLogging( (client->quietmode!=0),
-                               (client->percentprintingoff!=0),
-                               client->logname,
-                               client->logfiletype,
-                               client->logfilelimit,
-                               ((domodes)?(0):(client->messagelen)),
-                               client->smtpsrvr,
-                               client->smtpport,
-                               client->smtpfrom,
-                               client->smtpdest,
-                               client->id );
-            TRACE_OUT((-1,"initializelogging\n"));
-            PrintBanner(client->id,0,restarted);
-            con_waitforuser = 1;
-            if (CheckExitRequestTrigger() == 0)
+            #ifdef LURK /* start must come just after initializeconnectivity */
+            TRACE_OUT((0,"dialup.Start()\n")); /*and always before initlogging*/
+            dialup.Start(client->offlinemode, &(client->lurk_conf));
+            #endif
+            TRACE_OUT((0,"initializeconsole\n"));
+            if (InitializeConsole(client->quietmode,domodes) == 0)
             {
+              //some plats need to wait for user input before closing the screen
+              int con_waitforuser = 0; //only used if doing modes (and !-config)
+  
+              TRACE_OUT((+1,"initializelogging\n"));
+              InitializeLogging( (client->quietmode!=0),
+                                 (client->percentprintingoff!=0),
+                                 client->logname,
+                                 client->logfiletype,
+                                 client->logfilelimit,
+                                 ((domodes)?(0):(client->messagelen)),
+                                 client->smtpsrvr,
+                                 client->smtpport,
+                                 client->smtpfrom,
+                                 client->smtpdest,
+                                 client->id );
+              TRACE_OUT((-1,"initializelogging\n"));
+              PrintBanner(client->id,0,restarted);
+
               TRACE_OUT((+1,"parsecmdline(1)\n"));
               ParseCommandline( client, 1, argc, (const char **)argv, NULL,
                                       (client->quietmode==0)); //show overrides
@@ -507,19 +511,20 @@ static int ClientMain( int argc, char *argv[] )
               ClientSetNumberOfProcessorsInUse(-1); /* reset */
               TRACE_OUT((0,"deinit coretable\n"));
               DeinitializeCoreTable();
-            }
-            TRACE_OUT((0,"deinitialize logging\n"));
-            DeinitializeLogging();
-            TRACE_OUT((0,"deinitialize console\n"));
-            DeinitializeConsole(con_waitforuser);
-          }
-          #ifdef LURK
-          TRACE_OUT((0,"dialup.Stop()\n"));
-          dialup.Stop(); /* just before DeinitializeConnectivity() */
-          #endif
-          TRACE_OUT((0,"deinitialize connectivity\n"));
-          DeinitializeConnectivity(); //netinit.cpp
-        }
+
+              TRACE_OUT((0,"deinitialize logging\n"));
+              DeinitializeLogging();
+              TRACE_OUT((0,"deinitialize console (waitforuser? %d)\n",con_waitforuser));
+              DeinitializeConsole(con_waitforuser);
+            } /* if (InitializeConsole() == 0) */
+            #ifdef LURK
+            TRACE_OUT((0,"dialup.Stop()\n"));
+            dialup.Stop(); /* just before DeinitializeConnectivity() */
+            #endif
+            TRACE_OUT((0,"deinitialize connectivity\n"));
+            DeinitializeConnectivity(); //netinit.cpp
+          } /* if (InitializeConnectivity() == 0) */
+        } /* if (!CheckExitRequestTrigger()) */
         TRACE_OUT((0,"deinitialize triggers\n"));
         DeinitializeTriggers();
       }
