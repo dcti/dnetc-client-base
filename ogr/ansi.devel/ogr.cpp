@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.29 2001/01/14 19:56:19 andreasb Exp $
+ * $Id: ogr.cpp,v 1.1.2.30 2001/01/15 01:25:24 andreasb Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -2610,7 +2610,9 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 {
   struct State *oState = (struct State *)state;
+  /* oState->depth is the level of the last placed mark */
   int depth = oState->depth+1;      /* the depth of recursion */
+  /* our depth is the level where the next mark will be placed */
   struct Level *lev = &oState->Levels[depth];
   struct Level *lev2;
   int nodes = 0;
@@ -2623,8 +2625,6 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   oState->LOGGING = 1;
 #endif
   for (;;) {
-
-    oState->marks[depth-1] = lev->cnt2;
 
     if (with_time_constraints) { /* if (...) is optimized away if unused */
        #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
@@ -2701,16 +2701,20 @@ stay:
     COPY_LIST_SET_BIT(lev2, lev, lev->cnt2-lev->cnt1);
     COPY_DIST_COMP(lev2, lev);
 #endif
+    oState->marks[depth] = lev->cnt2;
     lev2->cnt1 = lev->cnt2;
     lev2->cnt2 = lev->cnt2;
     lev->limit = limit;
+    oState->depth = depth;
     lev++;
     depth++;
+
     continue;
 
 up:
     lev--;
     depth--;
+    oState->depth = depth-1;
     if (depth <= oState->startdepth) {
       retval = CORE_S_OK;
       break;
