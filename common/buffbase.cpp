@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.5 1999/08/08 17:11:04 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.6 1999/10/30 17:08:38 remi Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -408,14 +408,14 @@ int BufferPutFileRecord( const char *filename, const WorkRecord * data,
   
 /* --------------------------------------------------------------------- */
 
-int Client::BufferUpdate( int updatereq_flags, int interactive )
+int BufferUpdate( Client *client, int updatereq_flags, int interactive )
 { 
   char loaderflags_map[CONTEST_COUNT];
   int failed, dofetch, doflush, didfetch, didflush, dontfetch, dontflush;
   unsigned int i, contest_i;
   const char *ffmsg="--fetch and --flush services are not available.\n";
 
-  if (noupdatefromfile || remote_update_dir[0] == '\0')
+  if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
   {
     if (interactive)
       LogScreen( "%sThis client has been configured to run without\n"
@@ -432,7 +432,7 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
   dofetch = doflush = 0;  
   for (i = 0; i < CONTEST_COUNT; i++)
   {
-    contest_i = (unsigned int)loadorder_map[i];
+    contest_i = (unsigned int)(client->loadorder_map[i]);
     loaderflags_map[i] = 0;
 
     if (contest_i >= CONTEST_COUNT) /* disabled */
@@ -446,23 +446,23 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
     {
       if (!dofetch && !dontfetch)
       {
-        long count = GetBufferCount( contest_i, 0, NULL );
+        long count = client->GetBufferCount( contest_i, 0, NULL );
         if (count >= 0) /* no error */
         {
-          if (count < ((long)(inthreshold[contest_i])) )
+          if (count < ((long)(client->inthreshold[contest_i])) )
           {
-            if (count <= 1 || connectoften || interactive)
+            if (count <= 1 || client->connectoften || interactive)
               dofetch = 1;
           }
         }
       }
       if (!doflush && !dontflush)
       {
-        long count = GetBufferCount( contest_i, 1 /* use_out_file */, NULL );
+        long count = client->GetBufferCount( contest_i, 1 /* use_out_file */, NULL );
         if (count >= 0) /* no error */
         {
-          if ( count > 0 /* count >= ((long)(outthreshold[contest_i])) || 
-            ( connectoften && count > 0) || (interactive && count > 0) */)
+          if ( count > 0 /* count >= ((long)(client->outthreshold[contest_i])) || 
+            ( client->connectoften && count > 0) || (interactive && count > 0) */)
           {
             doflush = 1;
           }
@@ -474,11 +474,11 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
   failed = didfetch = didflush = 0;
   if ((doflush || dofetch) && CheckExitRequestTriggerNoIO() == 0)
   {
-    if (!noupdatefromfile && remote_update_dir[0] != '\0')
+    if (!client->noupdatefromfile && client->remote_update_dir[0] != '\0')
     {
       if (failed == 0 && !dontfetch && CheckExitRequestTriggerNoIO() == 0)
       {
-        long transferred = BufferFetchFile( this, &loaderflags_map[0] );
+        long transferred = BufferFetchFile( client, &loaderflags_map[0] );
         if (transferred < 0)
         {
           failed = 1;
@@ -490,7 +490,7 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
       }
       if (failed == 0 && !dontflush && CheckExitRequestTriggerNoIO() == 0)
       {
-        long transferred = BufferFlushFile( this, &loaderflags_map[0] );
+        long transferred = BufferFlushFile( client, &loaderflags_map[0] );
         if (transferred < 0)
         {
           failed = 1;
