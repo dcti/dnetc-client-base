@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.11 1999/10/10 23:50:05 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.12 1999/10/11 00:16:14 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -183,17 +183,19 @@ Problem::Problem(long _threadindex /* defaults to -1L */)
      how objects are allocated/how rc5unitwork is addressed, so let me know.
                                                        -cyp Jun 14 1999
   */
-#if ((CLIENT_CPU != CPU_ARM) && \
-      ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)))
   RC5UnitWork *w = &rc5unitwork;
   unsigned long ww = ((unsigned long)w);
-  if ((ww & 0x7)!=0) 
+  #if (CLIENT_CPU == CPU_ALPHA) /* needs to be longword aligned */
+  ww &= 0x7; /* (sizeof(longword)-1); */
+  #else
+  ww &= (sizeof(int)-1); /* int alignment */
+  #endif	
+  if (ww) 
   {
-    Log("rc5unitwork for problem %d is not 64bit aligned!\n", threadindex);
+    Log("rc5unitwork for problem %d is misaligned!\n", threadindex);
     RaiseExitRequestTrigger();
     return;
   }  
-#endif
 //LogScreen("Problem created. threadindex=%u\n",threadindex);
 
   initialized = 0;
