@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.35  1998/12/14 05:05:04  dicamillo
+// MacOS updates to eliminate MULTITHREAD and have a singe client for MT// and non-MT machines
+//
 // Revision 1.34  1998/12/08 05:27:51  dicamillo
 // Add includes for MacOS
 //
@@ -289,18 +292,17 @@ extern "C" {
   #include <unix.mac.h>
   #include "mac_extras.h"
   #include <console.h>
+  #include <Multiprocessing.h>
   void YieldToMain(char force_events);
   u32 GetTimesliceToUse(u32 contestid);
   void tick_sleep(unsigned long tickcount);
+  extern Boolean haveMP;
   extern short MP_active;
+  extern "C" unsigned long mp_sleep(unsigned long seconds);
+  extern MPCriticalRegionID MP_count_region;
+  extern volatile s32 ThreadIsDone[2*MAC_MAXCPUS];
   #if defined(MAC_GUI)
     #include "gui_incs.h"
-  #endif
-  #if defined(MULTITHREAD)
-    #include <Multiprocessing.h>
-    extern "C" unsigned long mp_sleep(unsigned long seconds);
-    extern MPCriticalRegionID MP_count_region;
-	extern volatile s32 ThreadIsDone[2*MAC_MAXCPUS];
   #endif
 #endif
 
