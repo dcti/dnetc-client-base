@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.4 2002/10/23 06:21:57 pfeffi Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5 2002/11/03 15:07:16 pfeffi Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -1621,7 +1621,9 @@ static int net_ioctl( SOCKET sock, unsigned long opt, int *i_optval )
     #ifdef __WATCOMC__
       if (ioctl(sock, opt, (char*)i_optval, sizeof(*i_optval)) != 0) return ps_stdneterr;
     #else /* EMX */
-      if (ioctl(sock, opt, i_optval) != 0) return ps_stdneterr;
+      int optval = (int)*i_optval;
+      if (ioctl(sock, opt, &optval) != 0) return ps_stdneterr;
+      *i_optval = optval;
     #endif
     return 0;
   #elif (CLIENT_OS == OS_AMIGAOS)
