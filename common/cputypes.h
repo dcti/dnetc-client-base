@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.40 2000/12/04 23:43:49 snake Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.41 2001/01/04 15:17:28 gregh Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -562,7 +562,11 @@
   #undef bool
   #define bool  bool_type_is_not_portable
   #undef class
-  #define class the_client_is_class_free /* phew! */
+  /* There is a reference to 'class' in the Win32 unknwn.h header, */
+  /* so don't break the class keyword in this case. */
+  #if !defined(_MSC_VER) || (_MSC_VER < 1200)
+    #define class the_client_is_class_free /* phew! */
+  #endif
 #endif
 
 /* ----------------------------------------------------------------- */
