@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.28 1999/12/19 19:23:26 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.29 1999/12/20 01:21:35 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -515,9 +515,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
        that don't support the 601, we may as well "support" them visually.
     */
     selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
-    if (cindex == 2 && detected_type != 12) /* vector core */
-      
-    
     if (selcorestatics.corenum[RC5] < 0 && detected_type >= 0)
     {
       int cindex = -1;
