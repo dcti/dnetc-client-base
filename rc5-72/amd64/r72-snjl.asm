@@ -7,7 +7,7 @@
 ;     Jeff Lawson <bovine@distributed.net>
 ;
 ; Based off of the r72-dg3.asm core by Décio Luiz Gazzoni Filho.
-; $Id: r72-snjl.asm,v 1.1.2.6 2004/03/28 06:18:34 jlawson Exp $
+; $Id: r72-snjl.asm,v 1.1.2.7 2004/06/27 20:32:40 jlawson Exp $
 
 [SECTION .text]
 BITS 64
@@ -202,6 +202,7 @@ _rc5_72_unit_func_snjl:
         ;; Windows requires that rsi and rdi also be preserved by callee!
         mov     [save_rsi], rsi
         mov     [save_rdi], rdi
+        mov     rsi,rdx         ; rsi points to iterations
 %else
         ;; Linux, FreeBSD, and other UNIX platforms
         mov     [RC5_72UnitWork],rdi ; 1st argument is passed in rdi
