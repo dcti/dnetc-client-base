@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.133  1998/08/24 04:56:26  cyruspatel
+// enforced rc5 fileentry cpu/os/build checks for all platforms, not just x86.
+//
 // Revision 1.132  1998/08/21 18:18:22  cyruspatel
 // Failure to start a thread will no longer force a client to exit. ::Run
 // will continue with a reduced number of threads or switch to non-threaded
@@ -132,7 +135,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.132 1998/08/21 18:18:22 cyruspatel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.133 1998/08/24 04:56:26 cyruspatel Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -999,11 +1002,8 @@ PreferredIsDone1:
       if (fileentry.contest != 1)
         fileentry.contest=0;
 
-      // If this is a partial DES block, and completed by a different cpu/os/build, then
+      // If this is a partial block, and completed by a different cpu/os/build, then
       // reset the keysdone to 0...
-      #if (CLIENT_CPU != CPU_X86)
-      if (fileentry.contest == 1)
-      #endif
       {
         if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) )
         {
@@ -1013,8 +1013,8 @@ PreferredIsDone1:
              (fileentry.buildlo != FILEENTRY_BUILDLO))
           {
             fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
-            LogScreen("Read partial DES block from another cpu/os/build.\n");
-            LogScreen("Marking entire block as unchecked.\n");
+            LogScreen("[%s] Read partial block from another cpu/os/build.\n",Time());
+            LogScreen("[%s] Marking entire block as unchecked.\n",Time());
           }
         }
       }
@@ -1540,11 +1540,8 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
             if (fileentry.contest != 1)
               fileentry.contest=0;
 
-            // If this is a partial DES block, and completed by a different
+            // If this is a partial block, and completed by a different
             // cpu/os/build, then reset the keysdone to 0...
-            #if (CLIENT_CPU != CPU_X86)
-            if (fileentry.contest == 1)
-            #endif
             {
               if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) )
               {
@@ -1554,8 +1551,8 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
                     (fileentry.buildlo != FILEENTRY_BUILDLO))
                 {
                   fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
-                  LogScreen("Read partial DES block from another cpu/os/build.\n");
-                  LogScreen("Marking entire block as unchecked.\n");
+                  LogScreen("[%s] Read partial block from another cpu/os/build.\n",Time());
+                  LogScreen("[%s] Marking entire block as unchecked.\n",Time());
                 }
               }
             }
