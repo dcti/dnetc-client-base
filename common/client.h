@@ -12,6 +12,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.99  1998/11/26 22:15:54  cyp
+// ::WriteFullConfig() is now ::WriteConfig(1) [default is 0]; threw out
+// useless ::CheckForcedKeyport() and ::CheckForcedKeyproxy()
+//
 // Revision 1.98  1998/11/26 07:27:34  cyp
 // Updated to reflect deleted/new buffwork and buffupd methods.
 //
@@ -246,7 +250,6 @@
 // --------------------------------------------------------------------------
 
 #define PACKET_VERSION      0x03
-#define FETCH_RETRY         10
 #define MAXBLOCKSPERBUFFER  500
 
 // --------------------------------------------------------------------------
@@ -421,7 +424,7 @@ public:
   s32 nonewblocks;
   s32 nettimeout;
   s32 noexitfilecheck;
-  s32 preferred_contest_id;  // 0 for RC564, 1 for DESII (unlike config)
+  s32 preferred_contest_id;  // 0 for RC564, 1 for DESII 
   s32 preferred_blocksize;
   s32 contestdone[2];
 
@@ -447,9 +450,6 @@ public:
   virtual void InternalValidateConfig( void) {};
   virtual void InternalWriteConfig( IniSection &ini ) {};
 #endif
-
-  bool CheckForcedKeyport(void);
-  bool CheckForcedKeyproxy(void);
 
   Client();
   ~Client() {};
@@ -486,12 +486,9 @@ public:
   void ValidateConfig( void );
     // verifies configuration and forces valid values
 
-  int  WriteConfig( void );
+  int  WriteConfig( int writeeverything = 0 );
+    // if 'writeeverything' is !=0, *all* options are overwritten
     // returns -1 on error, 0 otherwise
-
-  int  WriteFullConfig( void ); 
-    // returns -1 on error, 0 otherwise
-
 
   int Run( void );
     // run the loop, do the work
@@ -515,9 +512,6 @@ public:
 
   unsigned int LoadSaveProblems(unsigned int load_problem_count, int retmode);
     // returns actually loaded problems 
-    
-  void RefreshRandomPrefix(void);
-    // write .ini randomprefix/contestdone if randomchanged!=0, else read.
     
 };
 
