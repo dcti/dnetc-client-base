@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: gentests72.cpp,v 1.4 2002/09/25 02:15:46 acidblood Exp $
+ * $Id: gentests72.cpp,v 1.5 2002/09/25 13:23:36 acidblood Exp $
 */
 /**************************************************************************/
 /*                                                                        */
@@ -140,9 +140,9 @@ int main ()
          bigcipher[1]= Random( ) & 0xFFFFFFFF;
       }
 
-      printf("  {"); printrevword(key[8]);
-         printf(","); printrevword((key[4]<<24) + (key[5]<<16) + (key[6]<<8) + key[7]);
-         printf(","); printrevword((key[0]<<24) + (key[1]<<16) + (key[2]<<8) + key[3]); printf(",");
+      printf("  {"); printrevword((key[5]<<24) + (key[6]<<16) + (key[7]<<8) + key[8]);
+         printf(","); printrevword((key[1]<<24) + (key[2]<<16) + (key[3]<<8) + key[4]);
+         printf(","); printrevword(key[0]); printf(",");
       printrevword(iv[0]); printf(","); printrevword(iv[1]); printf(",");
 
       // Setup the S / L values...
