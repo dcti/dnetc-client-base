@@ -21,11 +21,17 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.89 2001/04/13 12:33:43 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.90 2001/04/14 13:48:37 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
+
+2.8015.469  new: x86: two OGR cores now.
+            new: x86/win16/win32/netware: added support for the RC5 SMC core.
+            new: win32: RAS profile names are now supported in the
+                      "Interfaces to Watch" list.
+            new: *ix: support for shell-style tilde expansion for filenames.
 
 2.8014.468  fix: all: bad results caused by build .466.
             fix: all: packets were saved and reloaded after buffer update.
@@ -33,10 +39,6 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.89 2001/04/13 12:33:43 cyp Exp $
             fix: all: exited without crunching with "-n 1" option.
             new: *ix: all clients for unix are inherently SMP capable, 
                       even if the OS does not have/support threads.
-            new: x86/win32/netware: added support for the RC5 SMC core.
-            new: win32: RAS profile names are now supported in the
-                      "Interfaces to Watch" list.
-            new: *ix: support for shell-style tilde expansion for filenames.
                       
 2.8013.467  new: 68k: new, faster RC5 cores (previously only available in
                  the AmigaOS client)
