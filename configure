@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.80 1999/12/22 17:18:31 chrisb Exp $
+# @(#)$Id: configure,v 1.222.2.81 1999/12/23 13:03:03 chrisb Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1424,24 +1424,12 @@ case "$1" in
 ###### ARM
 
     *riscos)
-	TARGET_CC="armcpp -aif -nodebug -littleend \
-		   -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas \
-		   -l/home/cberry/play/riscoslib/CLib/stubs.o"
+	TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
 	TARGET_AS="armasm -apcs 3/26bit"
-	TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplatforms \
-			-I/home/cberry/play/riscoslib/OSLib \
-			-I/home/cberry/play/riscoslib/TCPIPLibs \
-			-J/home/cberry/play/riscoslib/CLib \
-			-D__showids__ \
-			-DCOMPAT_INET4 -D__riscos \
-			  -DKWAN"
-	TARGET_ADDSRCS="platforms/riscos/riscos.cpp"
-	TARGET_ADDASMS="platforms/riscos/riscosasm.s \
-			rc5/arm/rc5-arm-1.s rc5/arm/rc5-arm-2.s rc5/arm/rc5-arm-3.s \
-			des/des-slice-arm.s des/des-slice-sa.s"
-	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o \
-		     /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o \
-		     /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
+	TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplatforms -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -J/home/cberry/play/riscoslib/CLib -D__showids__ -DCOMPAT_INET4 -D__riscos -DBIT_32 -DKWAN -DHAVE_CSC_CORES"
+	TARGET_ADDSRCS="platforms/riscos/riscos_sup.cpp csc/csc-1k.cpp csc/convcsc.cpp csc/csc-common.cpp"
+	TARGET_ADDASMS="platforms/riscos/riscos_asm.s rc5/arm/rc5-arm-1.s rc5/arm/rc5-arm-2.s rc5/arm/rc5-arm-3.s des/arm/des-slice-arm.s des/arm/des-slice-sa.s"
+	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
         TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
 	TARGET_STRIP=touch
 	TARGET_BINNAME_SUFFIX=",ff8"
@@ -1638,7 +1626,7 @@ fi
 echo "Building test program..."
 if [ $1 = riscos ]; then
   #tum-te-tum
-  rsh starman "cd rc5/src/client; gcc common/testplat.cpp -o testplat"
+  gcc common/testplat.cpp -o testplat
 else
     echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
   sh -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
