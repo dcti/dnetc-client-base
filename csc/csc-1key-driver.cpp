@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-1key-driver.cpp,v $
+// Revision 1.3  1999/07/28 23:15:29  trevorh
+// Fixed compilation error on Watcom OS/2
+//
 // Revision 1.2  1999/07/25 13:28:51  remi
 // Fix for 64-bit processors.
 //
@@ -21,7 +24,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-driver.cpp,v 1.2 1999/07/25 13:28:51 remi Exp $"; }
+return "@(#)$Id: csc-1key-driver.cpp,v 1.3 1999/07/28 23:15:29 trevorh Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
@@ -80,12 +83,12 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   #define CSC_BITSLICER_BITS 6
 #endif
 
-  u32 nbits = CSC_BITSLICER_BITS; 
+  u32 nbits = CSC_BITSLICER_BITS;
   while (*timeslice > (1ul << nbits)) nbits++;
 
   // Zero out all the bits that are to be varied
   {
-  for (u32 i=0; i<nbits-CSC_BITSLICER_BITS; i++) 
+  for (u32 i=0; i<nbits-CSC_BITSLICER_BITS; i++)
     key[0][csc_bit_order[i+CSC_BITSLICER_BITS]] = 0;
   }
 
@@ -94,7 +97,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   ulong result;
   u32 bkey = 0;
   for( ;; ) {
-    result = PASTE(cscipher_bitslicer_,CSC_SUFFIX) ( key, plain, cipher );
+    result = PASTE(cscipher_bitslicer_,CSC_SUFFIX) ( (unsigned long const (* )[64])key, plain, cipher );
     if( result )
       break;
     if( ++bkey >= (1ul << (nbits - CSC_BITSLICER_BITS) ) )
@@ -129,7 +132,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
       *timeslice = unitwork->L0.lo - keylo;
     else
       *timeslice = keylo - unitwork->L0.lo;
-    
+
     unitwork->L0.lo = keylo;
     unitwork->L0.hi = keyhi;
 
