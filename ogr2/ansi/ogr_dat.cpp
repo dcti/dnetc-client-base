@@ -1,15 +1,17 @@
 /*
  * static choose table used by ogr core(s).
- * 
- * $Id: ogr_dat.cpp,v 1.1.2.3 2001/02/02 13:41:03 cyp Exp $
  *
-*/
+ */                                                                                                                    
+
+const char *ogr_dat_cpp(void) {
+return "@(#)$Id: ogr_dat.cpp,v 1.1.2.4 2001/02/07 16:50:11 andreasb Exp $"; }
+
 #include "ogr.h"
 
-const int choose_version     = 1;
-const int choose_distbits    = 12;
-const int choose_max_marks   = 13;
-const int choose_align_marks = 16;
+const int choose_version   = 1;
+const int choose_dist_bits = 12;
+const int choose_max_depth = 12;
+const int choose_alignment = 16;
 
 const unsigned char ogr_choose_dat2[] = {
 /* 000000000000 */    0,   1,   3,   6,  11,  17,  25,  34,  44,  55,  72,  85, 106,   0,   0,   0,
