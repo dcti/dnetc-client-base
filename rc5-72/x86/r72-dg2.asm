@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.9 2002/10/23 04:11:33 acidblood Exp $
+; $Id: r72-dg2.asm,v 1.10 2002/10/23 05:34:49 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -619,22 +619,12 @@ test_key_1:
         mov     ecx, [work_iterations_ebp]
         mov     esi, [iterations]
 
-        mov     edi, [esi]
-
         shl     ecx, 1
-        mov     ebx, [save_ebx]
 
-        sub     edi, ecx
-
-        mov     [esi], edi
-        mov     esi, [save_esi]
-
-        mov     edi, [save_edi]
-        mov     ebp, [save_ebp]
+        sub     [esi], ecx
         mov     eax, RESULT_FOUND
-        add     esp, work_size
 
-        ret
+        jmp     finished
 
 ;    if (A2 == rc5_72unitwork->cypher.lo)
 ;    {
@@ -671,24 +661,14 @@ test_key_2:
         mov     ecx, [work_iterations_ebp]
         mov     esi, [iterations]
 
-        mov     edi, [esi]
-
         shl     ecx, 1
 
         sub     ecx, 1
-        mov     ebx, [save_ebx]
 
-        sub     edi, ecx
-
-        mov     [esi], edi
-        mov     esi, [save_esi]
-
-        mov     edi, [save_edi]
-        mov     ebp, [save_ebp]
+        sub     [esi], ecx
         mov     eax, RESULT_FOUND
-        add     esp, work_size
 
-        ret
+        jmp     finished
 
 k7align 16
 inc_key:
@@ -710,13 +690,13 @@ inc_key:
 
         mov     L1(1), ecx
         mov     L2(1), ecx
-        mov     L1(0), ebx
 
-        mov     L2(0), ebx
         mov     [RC5_72UnitWork_L0mid], ecx
         mov     [RC5_72UnitWork_L0lo], ebx
 
         jnz     key_setup_1
+
+        mov     eax, RESULT_NOTHING
 
 finished:
         mov     ebx, [save_ebx]
@@ -724,7 +704,6 @@ finished:
 
         mov     edi, [save_edi]
         mov     ebp, [save_ebp]
-        mov     eax, RESULT_NOTHING
         add     esp, work_size
 
         ret
