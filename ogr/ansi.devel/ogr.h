@@ -3,16 +3,13 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.14 2001/01/26 16:54:00 cyp Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.15 2001/02/05 23:43:39 andreasb Exp $"
 
 // define this for compiling with .asm
 //#define OLD_STATE
 
 // define this to use the new struct Stub
 //#define OGR_NEW_STUB_FORMAT
-
-// enable ogr_name()
-#define OGR_CORE_HAS_NAME
 
 // stubmap generation
 //#define OGR_CALLBACK
@@ -98,12 +95,15 @@ typedef struct {
    */
   int (*init)(void);
 
-#ifdef OGR_CORE_HAS_NAME
   /*
    * Returns the core name.
    */
   const char* (*name)(void);
-#endif
+
+  /*
+   * Returns the cores RCS Id list
+   */
+  const char* (*core_id)(void);
   
   /*
    * Create a new work unit, called once for each thread.
@@ -130,7 +130,7 @@ typedef struct {
 
   /*
    * If cycle returns CORE_S_SUCCESS, call getresult to get the successful
-   * result. If called at other times, returns the current state of the 
+   * result. If called at other times, returns the last stable state of the 
    * search.
    */
   int (*getresult)(void *state, void *result, int resultlen);

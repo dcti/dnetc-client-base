@@ -7,9 +7,9 @@
  * - routines common to all cores
  * - it #includes all neccessary .cor (core functions/macros), 
  *   .mac (general macros), .inc (general stuff) files
- *
- * $Id: ogr.cpp,v 1.1.2.38 2001/02/02 13:41:02 cyp Exp $
  */
+#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.39 2001/02/05 23:43:39 andreasb Exp $"
+
 #include <stdio.h>      /* printf for debugging */
 #include <stdlib.h>     /* malloc (if using non-static choose dat) */
 #include <string.h>     /* memset */
@@ -177,6 +177,7 @@
    OGROPT_ALTERNATE_CYCLE == 0 -> default (GARSP) ogr_cycle()
    OGROPT_ALTERNATE_CYCLE == 1 -> tuned (for ppc [only?]) ogr_cycle() by dan and chris
    OGROPT_ALTERNATE_CYCLE == 2 -> vectorized ogr_cycle() contibuted by dan and chris
+   OGROPT_ALTERNATE_CYCLE == 3 -> devel core by andreasb
 */
 #ifndef OGROPT_ALTERNATE_CYCLE
 #define OGROPT_ALTERNATE_CYCLE 0 /* 0 (GARSP) or 1 or 2 */
@@ -306,6 +307,7 @@ static int init_load_choose(void);
 static int found_one(const struct State *oState);
 static int ogr_init(void);
 static const char* ogr_name(void);
+static const char* ogr_core_id(void);
 static int ogr_create(void *input, int inputlen, void *state, int statelen);
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints);
 static int ogr_getresult(void *state, void *result, int resultlen);
@@ -539,8 +541,21 @@ static int ogr_init(void)
   }
   #endif
 
+  {
+    static int printed = 0;
+    if (printed == 0) {
+      printf("%s\n%s\n", ogr_name(), ogr_core_id());
+      printed = 1;
+    }
+  }
   return CORE_S_OK;
 }
+
+
+static const char* ogr_core_id() {
+  return __OGR_H__ "\n" __OGR_CPP__ "\n" __OGR_FB_MAC__ "\n" __OGR_CORE__ "\n";
+}
+
 
 
 #if 0 // old version
@@ -664,9 +679,8 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
 {
   static CoreDispatchTable dispatch_table;
   dispatch_table.init      = ogr_init;
-#if defined(OGR_CORE_HAS_NAME)
   dispatch_table.name      = ogr_name;
-#endif
+  dispatch_table.core_id   = ogr_core_id;
   dispatch_table.create    = ogr_create;
   dispatch_table.cycle     = ogr_cycle;
   dispatch_table.getresult = ogr_getresult;

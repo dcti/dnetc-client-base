@@ -7,13 +7,11 @@
  * of GARSP 5.13 to 
  * - use the processor cache better when many registers are available
  * - support altivec
- *
- * $Id: ogr_o_c.cor,v 1.1.2.5 2001/02/02 13:41:05 cyp Exp $
  */
+#define __OGR_CORE__ "@(#)$Id: ogr_o_c.cor,v 1.1.2.6 2001/02/05 23:43:39 andreasb Exp $"
 
 #if ( (OGROPT_ALTERNATE_CYCLE == 1) || (OGROPT_ALTERNATE_CYCLE == 2))
 
-#if defined(OGR_CORE_HAS_NAME)
 const char* ogr_name()
 {
   #if (OGROPT_ALTERNATE_CYCLE == 1)
@@ -22,7 +20,6 @@ const char* ogr_name()
   return "DO/CC Vector";
   #endif
 }
-#endif
 
 
 /***********************************************************************************

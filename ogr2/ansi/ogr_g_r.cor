@@ -5,17 +5,15 @@
  * This file (ogr_g_r.cor) contains the core for OGROPT_ALTERNATE_CYCLE == 0.
  * This is based on GARSP 5.13 "Garry's adaptions of Rado's search principles".
  * There were many modifications ... can anyone tell?
- *
- * $Id: ogr_g_r.cor,v 1.1.2.7 2001/02/02 13:41:05 cyp Exp $
  */
+#define __OGR_CORE__ "@(#)$Id: ogr_g_r.cor,v 1.1.2.8 2001/02/05 23:43:39 andreasb Exp $"
+
 #if (OGROPT_ALTERNATE_CYCLE == 0)
 
-#if defined(OGR_CORE_HAS_NAME)
 const char* ogr_name()
 {
   return "GARSP 5.13 dnet";
 }
-#endif
 
 
 #define COMP_LEFT_LIST_RIGHT(lev,s)                             \

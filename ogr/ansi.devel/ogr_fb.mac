@@ -4,9 +4,8 @@
  *
  * This file (ogr_fb.mac) contains all the macros etc. for LOOKUP_FIRSTBLANK
  * on all the different architectures.
- *
- * $Id: ogr_fb.mac,v 1.1.2.1 2001/01/19 01:26:05 andreasb Exp $
  */
+#define __OGR_FB_MAC__ "@(#)$Id: ogr_fb.mac,v 1.1.2.2 2001/02/05 23:43:39 andreasb Exp $"
 
 #if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
   static const char ogr_first_blank_8bit[256] = {
