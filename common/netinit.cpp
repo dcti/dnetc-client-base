@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.26.2.13 2000/09/22 16:11:17 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.26.2.14 2000/09/23 10:26:30 oliver Exp $"; }
 
 //#define TRACE
 
@@ -121,11 +121,11 @@ static int __netInitAndDeinit( int doWhat )
       #if (!defined(AF_INET) || !defined(SOCK_STREAM))
         rc = -1;  //no networking capabilities
       #elif (CLIENT_OS == OS_AMIGAOS)
-        int libsloaded = 0;
+        int openalllibs = 1;
         #if defined(LURK)
-        libsloaded = dialup.IsWatching(); // some libs not needed if lurking
+        openalllibs = !dialup.IsWatching(); // some libs not needed if lurking
         #endif
-        if (!amigaSocketInit(libsloaded))
+        if (!amigaSocketInit(openalllibs))
           rc = -1;
       #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
         WSADATA wsaData;
