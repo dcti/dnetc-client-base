@@ -3,6 +3,19 @@ Dual mode (RC5DES) clients
 
 2.7100
 ------
+2.7106.436 99.02.14 Windows GUI changes:
+                    -Percent bar in hidden mode reenabled
+                    -Log Grapher now allows end date to be set
+                    -Window/Logger settings now saved at shutdown
+                    -Log File only reread when required now
+2.7106.436 99.02.14 Windows 95/NT general changes:
+                    -Fixed problem with mutex not being created on restart
+                    -Fixed problem with thread destruction (may have
+                     been causing crashes on shutdown)
+                    -TCP/IP related problem with NT service which caused
+                     spurious shutdowns during fetches/flushes fixed.
+                    -HTTP authentication works correctly once again.
+2.7106.436 99.02.14 Randomprefix incrementation problem fixed.
 2.7106.435 99.02.06 Added lurk fonctionnality in x86-Linux clients.
 2.7105.432 99.01.21 OS2-EMX and lurk mode changes. -(un)install honors -quiet
                     Network send errors fixed
