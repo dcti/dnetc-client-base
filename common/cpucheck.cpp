@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.68 2001/03/19 18:06:56 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.69 2001/03/20 21:08:44 ephraim Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -28,6 +28,8 @@ return "@(#)$Id: cpucheck.cpp,v 1.79.2.68 2001/03/19 18:06:56 cyp Exp $"; }
 #  include <sys/systemcfg.h>
 #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
 #  include <mach/mach.h>
+#elif (CLIENT_OS == OS_DYNIX)
+#  include <sys/tmp_ctl.h>
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -222,6 +224,12 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     }
     #elif (CLIENT_CPU == CPU_68K) // no such thing as 68k/mp
       cpucount = 1;               // that isn't covered above
+    #elif (CLIENT_OS == OS_DYNIX)
+      int nprocs = tmp_ctl(TMP_NENG, 0);
+      int i;
+      cpucount = 0;
+      for (i = 0; i < nprocs; i++)
+	if (TMP_ENG_ONLINE == tmp_ctl(TMP_QUERY, i)) cpucount++;
     #endif
     if (cpucount < 1)  //not supported
       cpucount = -1;
