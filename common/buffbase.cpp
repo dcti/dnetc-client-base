@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.36.2.3 2003/09/01 07:12:21 jlawson Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.36.2.4 2004/06/16 18:37:00 kakace Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -414,6 +414,31 @@ long GetBufferRecord( Client *client, WorkRecord* data,
 
 /* --------------------------------------------------------------------- */
 
+static unsigned long __get_threshold_limit(unsigned int contest)
+{
+  static unsigned int nominal_rate = 0;
+
+  if (nominal_rate == 0) {
+    /* Allow for 14 days of work */
+    unsigned int rate;
+    rate = nominal_rate_for_contest(contest) * 14;
+    if (rate == 0)
+      rate = 1000;
+    else {
+      /* A bit of rounding */
+      if (rate < 100)
+        rate = 10 * ((rate + 5) / 10);
+      else if (rate < 1000)
+        rate = 50 * ((rate + 25) / 50);
+      else
+        rate = 100 * ((rate + 50) / 100);
+    }
+    nominal_rate = rate;
+  }
+
+  return nominal_rate;
+}
+
 int BufferAssertIsBufferFull( Client *client, unsigned int contest )
 {
   int isfull = 0;
@@ -430,7 +455,7 @@ int BufferAssertIsBufferFull( Client *client, unsigned int contest )
       if (BufferCountFileRecords( filename, contest, &reccount, NULL ) != 0)
         isfull = 1;
       else
-        isfull = (reccount >= 1000); /* yes, hardcoded. */
+        isfull = (reccount >= __get_threshold_limit(contest));
       /* This function should be the only place where maxlimit is checked */
     }
     else
@@ -591,6 +616,9 @@ unsigned long BufferReComputeUnitsToFetch(Client *client, unsigned int contest)
     {
       /* get threshold in *stats units* */
       unsigned int swuthresh = ClientGetInThreshold( client, contest, 1 /* force */ );
+      unsigned int maxthresh = __get_threshold_limit(contest) * 100;
+      if (swuthresh > maxthresh)
+        swuthresh = maxthresh;
       if (swucount == 0)
         swucount = packets*100; /* >= 1.00 stats units per packet */
       if (swucount < swuthresh)
