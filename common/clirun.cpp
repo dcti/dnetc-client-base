@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.60 2000/06/12 18:40:05 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.61 2000/06/13 00:58:00 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -75,7 +75,7 @@ struct thread_param_block
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
   #elif (CLIENT_OS == OS_MACOS)
-    MPTaskID /*long*/ threadID; /* MPTaskID but we cast */
+    MPTaskID threadID;
   #else
     int threadID;
   #endif
@@ -102,7 +102,7 @@ static void __cruncher_sleep__(int /*is_non_preemptive_cruncher*/)
 {
   #if (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
     /* only real threads sleep and all our real threads are MP threads */
-    MPYield(); MPYield(); MPYield(); MPYield(); 
+    MPYield();
   #elif (CLIENT_OS == OS_NETWARE)
     __MPKDelayThread(1000);  /* one second sleep (millisecs) */
   #else
@@ -157,6 +157,8 @@ static void __cruncher_yield__(int is_non_preemptive_cruncher)
     #endif
       macosSmartYield();
   #elif (CLIENT_OS == OS_MACOSX)
+    sched_yield();
+  #elif (CLIENT_OS == OS_RHAPSODY)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
@@ -214,11 +216,13 @@ void Go_mt( void * parm )
   }
   #endif
 #elif (CLIENT_OS == OS_MACOS)
-  if (is_non_preemptive_cruncher)   /* preemptive threads may as well use */
+  if (!is_non_preemptive_cruncher)   /* preemptive threads may as well use */
   {                                 /* ... (a copy of) the default_dyn_tt */
+    #if 0
     memcpy( (void *)(thrparams->dyn_timeslice_table),
             default_dyn_timeslice_table,
             sizeof(default_dyn_timeslice_table));
+    #endif
   }
   else      /* only non-realthreads are non-preemptive */
   {         /* non-realthreads have a shared thrparams->dyn_timeslice_table */
@@ -233,6 +237,7 @@ void Go_mt( void * parm )
       }
       thrparams->priority = priority;
     }  
+    //printf("usec:%d, thrprio:%d \n",thrparams->dyn_timeslice_table[0].usec,thrparams->priority);
     #endif
   }
 #elif (CLIENT_OS == OS_WIN32)
