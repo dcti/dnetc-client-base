@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.109 2001/04/06 16:11:15 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.110 2001/04/10 00:47:22 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -228,7 +228,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
           if (h)
           {
             DWORD old = 0;
-            if (VirtualProtectEx(h,&rc5_unit_func_486_smc,4096*3,
+            if (VirtualProtectEx(h, rc5_unit_func_486_smc, 4096*3,
                                  PAGE_EXECUTE_READWRITE, &old))
               x86_smc_initialized = +1;
             CloseHandle(h);
@@ -338,14 +338,14 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
       #if defined(SMC)
       if (x86_smc_initialized <= 0)
       #endif
-        return 1; /* 386/486 */
+        cindex = 1; /* 386/486 */
     }    
-    else if (cindex == 6) /* "RG/HB re-pair II" */ 
-    {
-      #if defined(HAVE_NO_NASM)
-      return 3; /* "RG/HB re-pair II" */
-      #endif
-    }  
+    #if defined(HAVE_NO_NASM)
+    if (cindex == 6)   /* "RG/HB re-pair II" */ 
+      cindex = 3;      /* "RG/HB re-pair I" */
+    if (cindex == 8)   /* "NB Class 7" */
+      cindex = 2;      /* "RG Class 6" */
+    #endif
   }
   else if (contestid == DES)
   {
@@ -802,50 +802,36 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         {
           int cindex = -1; 
           int have_smc = 0;
+          int dettype = (int)(detected_type & 0xff); 
           #if defined(SMC)
           have_smc = (x86_smc_initialized > 0);
           #endif
-          switch ( detected_type & 0xff )
+          switch (detected_type & 0xff)
           {
-            case 0x00: cindex = 0; break; // P5 ("RG/BRF class 5")
-            case 0x01:                    // 386/486
-            {
-              cindex = 1; // 386/486 ("RG class 3/4")
-              #if !defined(HAVE_NO_NASM)
-              cindex = 6; // 386/486 ("RG/HB re-pair II") (#1939)
-              #endif
-              if (have_smc)
-                cindex = 7; // 386/486 uses SMC if avail (bug #99)
-              break;
-            }    
-            case 0x02: cindex = 2; break; // PII/PIII ("RG class 6")
-            case 0x03: cindex = 3; break; // Cx6x86/MII ("RG re-pair I") (#1913)
-            case 0x04: cindex = 4; break; // K5 ("RG RISC-rotate I")
-            case 0x05: cindex = 5; break; // K6/K6-2/K6-3 ("RG RISC-rotate II")
-            case 0x06:                    // cx486
-            {
-              cindex = 3; // ("RG re-pair I") (bug #804)
-              #if !defined(HAVE_NO_NASM)
-              cindex = 6; // ("RG/HB re-pair II") if avail
-              #endif
-              if (have_smc)
-                cindex = 7; // SMC (bug #99)
-              break;
-            }    
-            case 0x07: cindex = 2; break; // Celeron
-            case 0x08: cindex = 2; break; // PPro
-            case 0x09:                    // AMD>=K7/Cx>MII
-            case 0x0A:                    // Centaur C6 - Bug #2082
-            {
-              cindex = 3; // ("RG re-pair I")
-              #if !defined(HAVE_NO_NASM)
-              cindex = 6; //  ("RG/HB re-pair II")
-              #endif
-              break;
-            }  
-            case 0x0B: cindex = 8; break; // P4
-            //no default
+            case 0x00: cindex = 0; break; // P5         == RG/BRF class 5
+            case 0x01: cindex = ((have_smc)?(7 /*#99*/):(6 /*#1939*/)); break; // 386/486
+            case 0x02: cindex = 2; break; // PII/PIII   == RG class 6
+            case 0x03: cindex = 3; break; // Cx6x86/MII == RG re-pair I (#1913)
+            case 0x04: cindex = 4; break; // K5         == RG RISC-rotate I
+            case 0x05: cindex = 5; break; // K6-1/2/3   == RG RISC-rotate II
+            case 0x06: cindex = ((have_smc)?(7 /*#99*/):(6 /*#804*/)); break; // cx486
+            case 0x07: cindex = 2; break; // Celeron    == RG class 6
+            case 0x08: cindex = 2; break; // PPro       == RG class 6
+            case 0x09: cindex = 6; break; // AMD>=K7/Cx>MII == RG/HB re-pair II
+            case 0x0A: cindex = 6; break; // Centaur C6 == RG/HB re-pair II (#2082)
+            case 0x0B: cindex = 8; break; // P4         == nb/P4 
+            default:   cindex =-1; break; // no default
           }
+          #if defined(HAVE_NO_NASM)
+          if (cindex == 6) //  ("RG/HB re-pair II")
+          {   
+            cindex = 3;    // ("RG re-pair I")
+            if ((detected_type & 0xff) == 0x01) // 386/486
+              cindex = 1;  // 386/486 ("RG class 3/4")
+          }
+          else if (cindex == 8) //P4
+            cindex = 2; // PII/PIII ("RG class 6")
+          #endif
           selcorestatics.corenum[RC5] = cindex;
         }
       }
@@ -858,28 +844,26 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         if (detected_type >= 0)
         {
           int cindex = -1;
+          switch ( detected_type & 0xff )
+          {
+            case 0x00: cindex = 0; break; // P5             == standard Bryd
+            case 0x01: cindex = 0; break; // 386/486        == standard Bryd
+            case 0x02: cindex = 1; break; // PII/PIII       == movzx Bryd
+            case 0x03: cindex = 1; break; // Cx6x86         == movzx Bryd
+            case 0x04: cindex = 0; break; // K5             == standard Bryd
+            case 0x05: cindex = 1; break; // K6             == movzx Bryd
+            case 0x06: cindex = 0; break; // Cx486          == movzx Bryd
+            case 0x07: cindex = 1; break; // orig Celeron   == movzx Bryd
+            case 0x08: cindex = 1; break; // PPro           == movzx Bryd
+            case 0x09: cindex = 1; break; // AMD K7         == movzx Bryd
+            case 0x0A: cindex = 0; break; // Centaur C6
+            case 0x0B: cindex = 1; break; // Pentium 4
+            default:   cindex =-1; break; // no default
+          }
           #ifdef MMX_BITSLICER
           if ((detected_type & 0x100) != 0) /* have mmx */
             cindex = 2; /* mmx bitslicer */
-          else 
           #endif
-          {
-            switch ( detected_type & 0xff )
-            {
-              case 0x00: cindex = 0; break; // P5             == standard Bryd
-              case 0x01: cindex = 0; break; // 386/486        == standard Bryd
-              case 0x02: cindex = 1; break; // PII/PIII       == movzx Bryd
-              case 0x03: cindex = 1; break; // Cx6x86         == movzx Bryd
-              case 0x04: cindex = 0; break; // K5             == standard Bryd
-              case 0x05: cindex = 1; break; // K6             == movzx Bryd
-              case 0x06: cindex = 0; break; // Cx486          == movzx Bryd
-              case 0x07: cindex = 1; break; // orig Celeron   == movzx Bryd
-              case 0x08: cindex = 1; break; // PPro           == movzx Bryd
-              case 0x09: cindex = 1; break; // AMD K7         == movzx Bryd
-              //se 0x0A: cindex = ?; break; // Centaur C6
-              //no default
-            }
-          }
           selcorestatics.corenum[DES] = cindex;
         }
       }
@@ -892,30 +876,56 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         if (detected_type >= 0)
         {
           int cindex = -1; 
+          // this is only valid for nasm'd cores or GCC 2.95 and up
+          switch ( detected_type & 0xff )
+          {
+            case 0x00: cindex = 3; break; // P5           == 1key - called
+            case 0x01: cindex = 3; break; // 386/486      == 1key - called
+            case 0x02: cindex = 2; break; // PII/PIII     == 1key - inline
+            case 0x03: cindex = 3; break; // Cx6x86       == 1key - called
+            case 0x04: cindex = 2; break; // K5           == 1key - inline
+            case 0x05: cindex = 0; break; // K6/K6-2/K6-3 == 6bit - inline
+            case 0x06: cindex = 3; break; // Cyrix 486    == 1key - called
+            case 0x07: cindex = 3; break; // orig Celeron == 1key - called
+            case 0x08: cindex = 3; break; // PPro         == 1key - called
+            case 0x09: cindex = 0; break; // AMD K7       == 6bit - inline
+            case 0x0A: cindex = 3; break; // Centaur C6
+            case 0x0B: cindex = 0; break; // Pentium 4
+            default:   cindex =-1; break; // no default
+          }
           #if !defined(HAVE_NO_NASM)
           if ((detected_type & 0x100) != 0) /* have mmx */
             cindex = 1; /* == 6bit - called - MMX */
-          else
           #endif
-          {
-            // this is only valid for nasm'd cores or GCC 2.95 and up
-            switch ( detected_type & 0xff )
-            {
-              case 0x00: cindex = 3; break; // P5           == 1key - called
-              case 0x01: cindex = 3; break; // 386/486      == 1key - called
-              case 0x02: cindex = 2; break; // PII/PIII     == 1key - inline
-              case 0x03: cindex = 3; break; // Cx6x86       == 1key - called
-              case 0x04: cindex = 2; break; // K5           == 1key - inline
-              case 0x05: cindex = 0; break; // K6/K6-2/K6-3 == 6bit - inline
-              case 0x06: cindex = 3; break; // Cyrix 486    == 1key - called
-              case 0x07: cindex = 3; break; // orig Celeron == 1key - called
-              case 0x08: cindex = 3; break; // PPro         == 1key - called
-              case 0x09: cindex = 0; break; // AMD K7       == 6bit - inline
-              //se 0x0A: cindex = ?; break; // Centaur C6
-              //no default
-            }
-          }
           selcorestatics.corenum[CSC] = cindex;
+        }
+      }
+    }
+    else if (contestid == OGR)
+    {
+      selcorestatics.corenum[OGR] = selcorestatics.user_cputype[OGR];
+      if (selcorestatics.corenum[OGR] < 0)
+      {
+        if (detected_type >= 0)
+        {
+          int cindex = -1; 
+          switch ( detected_type & 0xff )
+          {
+            case 0x00: cindex = 1; break; // P5           == without BSR (B)
+            case 0x01: cindex = 1; break; // 386/486      == without BSR (B)
+            case 0x02: cindex = 0; break; // PII/PIII     == with BSR (A)
+            case 0x03: cindex = 1; break; // Cx6x86       == without BSR (B)
+            case 0x04: cindex = 1; break; // K5           == without BSR (B)
+            case 0x05: cindex = 1; break; // K6/K6-2/K6-3 == without BSR (B)
+            case 0x06: cindex = 1; break; // Cyrix 486    == without BSR (B)
+            case 0x07: cindex = 0; break; // orig Celeron == with BSR (A)
+            case 0x08: cindex = 0; break; // PPro         == with BSR (A)
+            case 0x09: cindex = 1; break; // AMD K7       == without BSR (B)
+            case 0x0A: cindex = 1; break; // Centaur C6   == without BSR (B)
+            case 0x0B: cindex = 0; break; // Pentium 4    == with BSR (A)
+            default:   cindex =-1; break; // no default
+          }
+          selcorestatics.corenum[OGR] = cindex;
         }
       }
     }
