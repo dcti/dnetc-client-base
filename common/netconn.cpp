@@ -13,7 +13,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.1.2.8 2001/01/03 19:06:32 cyp Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.1.2.9 2001/03/28 08:58:18 cyp Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -270,7 +270,7 @@ static int __init_connection(NETSTATE *netstate)
   const char *proto_init_error_msg = "protocol initialization error";
   int rc = 0;
   char socksreq[600];  // SOCKS5: sizeof(SOCKS5)+large username/pw (255 max each)
-                       // SOCKS4: sizeof(SOCKS4)+passwd
+                       // SOCKS4: sizeof(SOCKS4)+passwd+hostname
 
   TRACE_OUT((+1,"__init_connection()\n"));
 
@@ -500,6 +500,25 @@ static int __init_connection(NETSTATE *netstate)
           if (psocks5->atyp == 1)  // IPv4
             netstate->svc_hostaddr = psocks5->addr;
         }
+        else if (netstate->svc_hostaddr != 0 /* we used an IP address */
+             && (psocks5->cmdORrep == 3 || /*"Network unreachable"*/
+                 psocks5->cmdORrep == 4 || /*"Host unreachable"   */
+                 psocks5->cmdORrep == 5))  /*"Connection refused"*/
+        {
+          recoverable = 1; /* retry using a different IP address */
+          if (netstate->verbose_level > 0)
+          {
+            const char *failcause = "refused.";
+            if (psocks5->cmdORrep == 3)
+              failcause = "failed. (network unreachable)";
+            else if (psocks5->cmdORrep == 4)
+              failcause = "failed. (host unreachable)";
+            LogScreen("SOCKS5: connect to %s:%u %s\n",
+                        net_ntoa(netstate->svc_hostaddr),
+                        (unsigned int)netstate->svc_hostport, 
+                        failcause );
+          }
+        }
         else if (netstate->verbose_level > 0)
         {
           const char *p = ((psocks5->cmdORrep >=
@@ -509,7 +528,8 @@ static int __init_connection(NETSTATE *netstate)
                     "connecting to %s:%u\n",
                    ((int)(psocks5->cmdORrep)),
                    ((*p) ? (" (") : ("")), p, ((*p) ? (")") : ("")),
-                   netstate->svc_hostname, (unsigned int)netstate->svc_hostport );
+                   netstate->svc_hostname, 
+                   (unsigned int)netstate->svc_hostport );
         }
       }
     } //if (authaccepted)
@@ -529,13 +549,30 @@ static int __init_connection(NETSTATE *netstate)
     // transact a request to the SOCKS4 proxy giving the
     // destination ip/port and username and process its reply.
 
+    //+----+----+----+----+----+----+----+----+----+----+....+----+
+    //| VN | CD | DSTPORT |      DSTIP        | USERID       |NULL|
+    //+----+----+----+----+----+----+----+----+----+----+....+----+
+    //  1    1      2              4           variable       1
+
     psocks4->VN = 4;
     psocks4->CD = 1;  // CONNECT
     psocks4->DSTPORT = (u16)htons((u16)netstate->svc_hostport); //(u16)htons((server_name[0]!=0)?((u16)port):((u16)DEFAULT_PORT));
-    psocks4->DSTIP = netstate->svc_hostaddr;   //lasthttpaddress;
-    strncpy(psocks4->USERID, netstate->fwall_userpass, sizeof(netstate->fwall_userpass));
+    psocks4->DSTIP = netstate->svc_hostaddr;
+    strcpy( psocks4->USERID, netstate->fwall_userpass );
+    len = (sizeof(*psocks4) - 1) + strlen(psocks4->USERID) + 1;
 
-    len = sizeof(*psocks4) - 1 + strlen(netstate->fwall_userpass) + 1;
+    if (psocks4->DSTIP == 0) /* no IP address - so use hostname (socks4a) */
+    {
+      //+----+----+----+----+----+----+----+----+----+----+....+----+----+----+....+----+
+      //| VN | CD | DSTPORT |  0    0    0   x  | USERID       |NULL| HOSTNAME     |NULL|
+      //+----+----+----+----+----+----+----+----+----+----+....+----+----+----+....+----+
+      //  1    1      2              4           variable       1    variable        1
+
+      ((char *)&(psocks4->DSTIP))[3] = 1; /* address == 0.0.0.x */
+      strcpy( &(psocks4->USERID[strlen(psocks4->USERID)+1]),
+              netstate->svc_hostname );
+      len += strlen( netstate->svc_hostname ) + 1;
+    }      
 
     len2 = len;
     rc = net_write(netstate->sock,socksreq,&len,netstate->conn_hostaddr,netstate->conn_hostport,netstate->iotimeout);
@@ -580,7 +617,7 @@ static int __init_connection(NETSTATE *netstate)
         {
           LogScreen("SOCKS4: request rejected%s.\n",
             (psocks4->CD == 91)
-             ? ""
+             ? " or failed"
              :
              (psocks4->CD == 92)
              ? ", no identd response"
@@ -705,9 +742,16 @@ static int __open_connection(void *cookie)
       if ((netstate->startmode & MODE_HTTP) == 0)
       {
         netstate->svc_hostaddr = 0; /* always pick another hostaddress unless http. */
-      }            
+      }    
       if (!netstate->reconnected || netstate->svc_hostaddr == 0)
       {
+        /* target address resolution is optional when using socks4/5/http
+        ++ (although such support is not defined in the original socks4 spec,
+        ++ it is supported in the socks4a (SOCKS 4.3) protocol, which is what
+        ++ we implement here (with backwards compatibility)
+        ++ socks 4: http://www.socks.nec.com/protocol/socks4.protocol
+        ++ socks 4a: http://www.socks.nec.com/protocol/socks4a.protocol
+        */
         if (netstate->resolve_addrcount < 1)
         {
           unsigned int count;
@@ -717,9 +761,11 @@ static int __open_connection(void *cookie)
           count = sizeof(netstate->resolve_addrlist)/sizeof(netstate->resolve_addrlist[0]);
           rc = net_resolve( netstate->svc_hostname, &netstate->resolve_addrlist[0], &count);
           if (rc == 0)
+          {
             maxtries = netstate->resolve_addrcount = count;
-          else if (!is_fwalled || (netstate->startmode & (MODE_SOCKS4))!=0)
-          {                      // socks4 needs the address to resolve first.
+          }
+          else if (!is_fwalled) //resolution _must_ complete only if not fwalled
+          {                      
             success = 0; 
             netstate->svc_hostaddr = 0;
             if (!netstate->reconnected && netstate->verbose_level > 0)
