@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.95 2003/08/05 21:01:55 snikkel Exp $
+# @(#)$Id: configure,v 1.288.2.96 2003/08/09 12:30:25 mweiser Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -402,7 +402,14 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5-72/68k/r72-040-mh.s \
                                         rc5-72/68k/r72-060-mh.s \
                                         rc5-72/68k/r72-0x0-common-mh.s"
+      elif [ "$1" = "next" ]; then
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/68k/r72-030-mh.ns.s \
+                                        rc5-72/68k/r72-040-mh.ns.s \
+                                        rc5-72/68k/r72-060-mh.ns.s \
+                                        rc5-72/68k/r72-0x0-common-mh.ns.s"
+        TARGET_ASFLAGS="$TARGET_ASFLAGS -Irc5-72/68k"
       else
+        DEFAULT_RC5_72="0"
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/68k/r72-030-mh.gas.s \
                                         rc5-72/68k/r72-040-mh.gas.s \
                                         rc5-72/68k/r72-060-mh.gas.s \
@@ -739,6 +746,7 @@ gcc_get_ver() {
     #gcc_v="Reading specs from blah\ngcc version 2.9-hppa-991112"
     #gcc_v="Apple Computer, Inc. version gcc-926, based on gcc version 2.95.2 19991024 (release)"
     #gcc_v="Reading specs from blah\nConfigured with: blah\nThread model: blah\ngcc version 3.2"
+    #gcc_v="NeXT Computer, Inc. version cc-437.2.6, gcc version 2.5.8"
     #gcc_v="Apple Computer, Inc. GCC version 1175, based on gcc version 3.1 20020420 (prerelease)"
 
     gccver_line=`echo $gcc_v|tail -1|tr '-' ' '`
@@ -751,7 +759,7 @@ gcc_get_ver() {
         if [ "$lastwas" = "version" ]; then
           if [ "$ver_word" = "egcs" -o "$ver_word" = "pgcc" ]; then
             lastwas="version"
-          elif [ "$ver_word" = "gcc" ]; then
+          elif [ "$ver_word" = "gcc" -o "$ver_word" = "cc" ]; then
             lastwas="ignoreme"
           elif [ "$ver_word" = "specific" ]; then # --enable-version-specific-runtime-libs
             lastwas="ignoreme"
@@ -792,6 +800,7 @@ gcc_get_ver() {
     if [ -z "$a4" ]; then
       a4=0
     fi
+    #2.5.8   = 2000000 +  50000 +  800 + 1 = 2050800
     #2.7.2.1 = 2000000 +  70000 +  200 + 1 = 2070201
     #2.95.1  = 2000000 + 950000 +  100     = 2950100
     #2.91.66 = 2000000 + 910000 + 6600     = 2916600
@@ -804,17 +813,21 @@ gcc_get_ver() {
 generate_gcc_opts() {
 
 # GCC: warn as much as we can for maximum portability
-  OPTS_GCC_WARN="-W -Wall -Wtraditional -Wpointer-arith -Wcast-align \
-                 -Wmissing-declarations -Wmissing-prototypes \
+  OPTS_GCC258_WARN="-W -Wall -Wtraditional -Wpointer-arith -Wcast-align \
+                 -Wmissing-prototypes \
                  -Wstrict-prototypes -Wconversion -Winline \
                  -Waggregate-return -Wcast-qual -Woverloaded-virtual \
                  -Wnested-externs" #-Wshadow shows std header errors
+  OPTS_GCC272_WARN="$OPTS_GCC258_WARN -Wmissing-declarations"
   OPTS_GCC310_WARN="-W -Wall -Wpointer-arith -Wcast-align \
                  -Wmissing-prototypes \
                  -Wstrict-prototypes -Wconversion -Winline \
                  -Waggregate-return -Wcast-qual -Woverloaded-virtual"
   OPTS_GCC_BASE="-fcaller-saves -fomit-frame-pointer \
                  -fno-inline-functions"
+  # g++-2.5.8 has -fno-rtti and -fno-handle-exceptions is on by default but
+  # the gcc/cc-wrapper doesn't recognise them and will complain
+  OPTS_258_PLUS=""
   OPTS_272_PLUS="-fno-handle-exceptions -fno-rtti"
   #WARNING WARNING: 2.95.x (at least x<=.3) will cause problem.cpp to mis-
   # compile if using -fno-exceptions and/or -fno-rtti. On x86 selftest will
@@ -822,10 +835,10 @@ generate_gcc_opts() {
   #WARNING WARNING: don't use 2.8.x at all.
   OPTS_295_PLUS="-fstrict-aliasing" #-fno-exceptions -fno-rtti
   OPTS_310_PLUS="-fstrict-aliasing -fno-exceptions -fno-rtti"
-  OPTS_GCC272="${OPTS_GCC_WARN} ${OPTS_GCC_BASE} ${OPTS_272_PLUS}"
-  OPTS_GCC295="${OPTS_GCC_WARN} ${OPTS_GCC_BASE} ${OPTS_295_PLUS}"
+  OPTS_GCC258="${OPTS_GCC258_WARN} ${OPTS_GCC_BASE} ${OPTS_258_PLUS}"
+  OPTS_GCC272="${OPTS_GCC272_WARN} ${OPTS_GCC_BASE} ${OPTS_272_PLUS}"
+  OPTS_GCC295="${OPTS_GCC272_WARN} ${OPTS_GCC_BASE} ${OPTS_295_PLUS}"
   OPTS_GCC310="${OPTS_GCC310_WARN} ${OPTS_GCC_BASE} ${OPTS_310_PLUS}"
-
 
   #this is a list of which -O does what for 2.72.x - 2.95.2
   #(see <gccsrc>/gcc/toplev.c; grep for "optimize ")
@@ -860,6 +873,7 @@ generate_gcc_opts() {
 
   # ------
 
+  opts258=""
   opts272=""
   opts295=""
   opts310=""
@@ -954,6 +968,7 @@ generate_gcc_opts() {
         ;;
 
     *internal-68k) #the 68k targets all have different -m68xxx switches
+	opts258="$OPTS_GCC258 -O6 -DASM_68K -funroll-loops"
         opts272="$OPTS_GCC272 -O6 -DASM_68K -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -DASM_68K -funroll-loops"
         opts310="$OPTS_GCC310 -O2 -DASM_68K -funroll-loops"
@@ -1026,7 +1041,8 @@ generate_gcc_opts() {
   esac
 
   # undefine everything we used locally
-  OPTS_GCC_WARN=
+  OPTS_GCC258_WARN=
+  OPTS_GCC272_WARN=
   OPTS_GCC310_WARN=
   OPTS_GCC_BASE=
   OPTS_272_PLUS=
@@ -1046,6 +1062,9 @@ generate_gcc_opts() {
     gccopts="$opts295"
     if [ $gccver -lt 2900000 ]; then
       gccopts="$opts272"
+      if [ $gccver -lt 2070200 ]; then
+        gccopts="$opts258"
+      fi
     fi
   fi
   OPTS_GCC="$gccopts"
@@ -2399,16 +2418,6 @@ case "$1" in
 
 ###### NeXT (x86, m68k, sparc, hppa)
 
-    *x86-next)
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "x86" "next"
-        TARGET_CCFLAGS="-static $OPTS_GCC -D_NeXT_ -Iplat/next"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="next-x86"
-        add_sources "next" "x86"
-        ;;
-
     *x86-macosx)
         # this one's for X86-Rhapsody which is quite similar to NeXTstep
         # but not completely identical     - snake
@@ -2421,11 +2430,17 @@ case "$1" in
         add_sources "macosx" "x86"
         ;;
 
+    *x86-next)
+        generate_gcc_opts "x86" "next"
+        TARGET_CCFLAGS="-static $OPTS_GCC -arch i386 -Iplat/next"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="next-x86"
+        add_sources "next" "x86"
+        ;;
+
     *m68k-next)
-        TARGET_CC="gcc"
         generate_gcc_opts "68k" "next"
-        TARGET_CCFLAGS="-static $OPTS_GCC -m68040 -D_NeXT_ -Iplat/next"
-        TARGET_ASFLAGS="$OPTS_GAS"
+        TARGET_CCFLAGS="-static $OPTS_GCC -arch m68k -Iplat/next"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="next-m68k"
         add_sources "next" "68k"
@@ -2434,7 +2449,7 @@ case "$1" in
     *sparc-next)
         TARGET_CC="cc++"
         generate_gcc_opts "generic" "next"
-        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_SPARC -arch sparc -D_NeXT_ -D_OLD_NEXT_ -Iplat/next"
+        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_SPARC -arch sparc -Iplat/next"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "next" "sparc"
         ;;
@@ -2442,7 +2457,7 @@ case "$1" in
     *hppa-next)
         TARGET_CC="cc++"
         generate_gcc_opts "generic" "next"
-        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_HPPA -arch hppa -D_NeXT_ -D_OLD_NEXT_ -Iplat/next"
+        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_HPPA -arch hppa -Iplat/next"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "next" "hppa"
         ;;
@@ -3004,7 +3019,7 @@ echo "" >> Makefile
 #  Clean, Superclean, Distclean, and Ident targets.
 #
 echo "clean:" >> Makefile
-echo "	rm -f \${ALLOBJS}" >> Makefile
+echo "	rm -f \${ALLOBJS} \${ADDOBJS}" >> Makefile
 if [ "$BUILDNAME" = "x86-os2" ]; then
   echo "	rm -f output/dnetc.res" >> Makefile
 fi
@@ -3184,12 +3199,26 @@ if [ "$TARGET_OGR_MULTI" = "68k" ]; then
   OGR68K="000 020 030 040 060"
   for targetext in ${OGR68K}; do
     echo "output/ogr${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
-    if [ "$targetext" = "020" -o "$targetext" = "030" ]; then
-      echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -fno-unroll-loops -c -o output/ogr${targetext}.o $OGR/ansi/ogr.cpp \\" >> Makefile
+    echo "	\$(CC) \$(CCFLAGS) -DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext} \\" >>Makefile
+
+    # fake 68060 optimisation with gcc < 2.95 - easiest way for now
+    # still defines mc68060 (see below) so that some optimisation will still be done
+    if [ "$gccver" -ne "0" -a "$gccver" -lt "2950000" -a "$targetext" = "060" ]; then
+      echo "		-m68040 \\" >> Makefile
     else
-      echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -c -o output/ogr${targetext}.o $OGR/ansi/ogr.cpp \\" >> Makefile
+      echo "		-m68${targetext} \\" >> Makefile
     fi
-    echo "	-DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext}" >> Makefile
+
+    if [ "$targetext" = "020" -o "$targetext" = "030" ]; then
+      echo "		-fno-unroll-loops \\" >> Makefile
+    fi
+
+    # gcc on NeXTstep doesn't define mc680x0 so we've got to do it ourselves
+    if [ "$BUILDNAME" = "m68k-next" ]; then
+      echo "		-Dmc68${targetext} \\" >> Makefile
+    fi
+
+    echo "		-c -o output/ogr${targetext}.o $OGR/ansi/ogr.cpp" >> Makefile
     echo "" >> Makefile
   done
 fi
