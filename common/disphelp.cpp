@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.41  1998/10/03 22:57:56  remi
+// Added a line for the "-nommx" option.
+//
 // Revision 1.40  1998/10/03 05:43:33  cyp
 // Genericified to use ConClear() and ConGetKey(). Why on earth do we
 // "avoid_bad_interaction_with_external_pagers"? We should be avoiding the
@@ -129,7 +132,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-static const char *id="@(#)$Id: disphelp.cpp,v 1.40 1998/10/03 05:43:33 cyp Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.41 1998/10/03 22:57:56 remi Exp $";
 return id; }
 #endif
 
@@ -320,6 +323,9 @@ void Client::DisplayHelp( const char * unrecognized_option )
   "-e <address>       the email id by which you are known to distributed.net",
   "-nice <[0-2]>      niceness",
   "-c <cputype>       cpu type (run -config for a list of valid cputype numbers)",
+  #if defined(MMX_BITSLICER) || defined(MMX_RC5)
+  "-nommx             don't use MMX instructions",
+  #endif
   #ifdef MULTITHREAD
   "-numcpu <n>        run simultaneously on <n> CPUs",
   #else
