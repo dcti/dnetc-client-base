@@ -5,8 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.13  1998/12/28 16:54:10  remi
+# Fixed the previous comment.
+#
 # Revision 1.113.2.12  1998/12/28 16:53:19  remi
-# Added common/pollsys.cpp to COMMON_SRCS (needed by logstuff.cpp).
+# Added common/pollsys.cpp to COMMON_SRCS (needed by sleepdefs.cpp).
 #
 # Revision 1.113.2.11  1998/12/28 16:00:24  remi
 # Synced with :
