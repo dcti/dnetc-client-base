@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.111 2001/04/10 17:27:15 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.112 2001/04/14 13:18:35 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -30,6 +30,9 @@ return "@(#)$Id: selcore.cpp,v 1.47.2.111 2001/04/10 17:27:15 sampo Exp $"; }
   #if defined(__unix__)
     #include <sys/types.h>
     #include <sys/mman.h>
+  #elif defined(USE_DPMI)
+    extern "C" smc_dpmi_ds_alias_alloc(void);
+    extern "C" smc_dpmi_ds_alias_free(void);
   #endif
   extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
   static int x86_smc_initialized = -1;
@@ -44,7 +47,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
    they are different from their predecessor(s). If only one core,
    use the obvious "MIPS optimized" or similar.
   */
-  #define LARGEST_SUBLIST 10 /* including the terminating null */
+  #define LARGEST_SUBLIST 11 /* including the terminating null */
   static const char *corenames_table[CONTEST_COUNT][LARGEST_SUBLIST]= 
   #undef LARGEST_SUBLIST
   /* ================================================================== */
@@ -54,21 +57,23 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       /* we should be using names that tell us how the cores are different
          (just like "bryd" and "movzx bryd")
       */
-      "RG/BRF class 5",        /* 0. P5/Am486 - may become P5MMX at runtime*/
+      "RG/BRF class 5",        /* 0. P5/Am486 */
       "RG class 3/4",          /* 1. 386/486 */
       "RG class 6",            /* 2. PPro/II/III */
       "RG re-pair I",          /* 3. Cyrix 486/6x86[MX]/MI */
       "RG RISC-rotate I",      /* 4. K5 */
       "RG RISC-rotate II",     /* 5. K6 - may become mmx-k6-2 core at runtime */
       "RG/HB re-pair II",      /* 6. K7 Athlon and Cx-MII, based on Cx re-pair */
-      "RG/BRF self-modifying", /* 7. SMC */
+      "RG/BRF self-mod",       /* 7. SMC */
       "NB class 7",            /* 8. P4 */
+      "jasonp P5/MMX",         /* 9. P5/MMX *only* - slower on PPro+ */
       NULL
     },
     { /* DES */
       "byte Bryd",
       "movzx Bryd",
-      "Kwan/Bitslice", /* may become MMX bitslice at runtime */
+      "Kwan/Bitslice",
+      "MMX/Bitslice",
       NULL
     },
     { /* OGR */
@@ -85,7 +90,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
     { /* DES */
       "Standard ARM core", /* "ARM 3, 610, 700, 7500, 7500FE" or  "ARM 710" */
-      "StrongARM optimized core", /* "ARM 810, StrongARM 110" or "ARM 2, 250" */
+      "StrongARM core", /* "ARM 810, StrongARM 110" or "ARM 2, 250" */
       NULL
     },
     { /* OGR */
@@ -135,19 +140,14 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
     { /* RC5 */
-      #define NUM_CORE_RC5 3		/* default number of RC5 cores. */
-      #define NUM_CORE_OGR 1		/* PowerPC defaults to one core */  
       /* lintilla depends on allitnil, and since we need both even on OS's 
          that don't support the 601, we may as well "support" them visually.
       */
       "allitnil",
       "lintilla",
       "lintilla-604", /* Roberto Ragusa's core optimized for PPC 604e */
-    #if defined(_AIXALL)
-	#define NUM_CORE_RC5 4
-      "Power RS",
-    #endif
-      NULL, /* this may become the G4 vector core at runtime */
+      "Power RS",     /* _AIXALL only */
+      "crunch-vec";   /* altivec only */
       NULL
     },
     { /* DES */
@@ -155,12 +155,9 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
     { /* OGR */
-      "GARSP 5.13 PowerPC",
-      #if defined(_AIXALL)
-        #define NUM_CORE_OGR 2
-      "GARSP 5.13 PowerRS",
-      #endif
-      NULL, /* possibly used by "GARSP 5.13-vec" */
+      "GARSP 5.13 PPC-scalar",
+      "GARSP 5.13 PowerRS",    /* _AIXALL only */
+      "GARSP 5.13 PPC-vector", /* altivec only */
       NULL
     },
   #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_LINUX)
@@ -202,78 +199,6 @@ static const char **__corenames_for_contest( unsigned int cont_i )
   };
   /* ================================================================== */
 
-  static int fixed_up = -1;
-  if (fixed_up < 0)
-  {
-    #if (CLIENT_CPU == CPU_X86)
-    {
-      long det = GetProcessorType(1);
-      #ifdef SMC /* actually only for the first thread */
-      if (x86_smc_initialized < 0)
-      {
-        #if defined(__unix__)
-        char *addr = (char *)&rc5_unit_func_486_smc;
-        addr -= (((unsigned long)addr) & (4096-1));
-        if (mprotect( addr, 4096*3, PROT_READ|PROT_WRITE|PROT_EXEC )==0)
-          x86_smc_initialized = +1;
-        #elif (CLIENT_OS == OS_DOS) && defined(USE_DPMI) /* dos client */
-          x86_smc_initialized = +1;
-        #elif (CLIENT_OS == OS_NETWARE) /* kernel module, all pages are xrw */
-          if (GetFileServerMajorVersionNumber() <= 4)
-            x86_smc_initialized = +1;
-        #elif (CLIENT_OS == OS_WIN32)
-        {
-          HANDLE h = OpenProcess(PROCESS_VM_OPERATION,
-                                 FALSE,GetCurrentProcessId());
-          if (h)
-          {
-            DWORD old = 0;
-            if (VirtualProtectEx(h, rc5_unit_func_486_smc, 4096*3,
-                                 PAGE_EXECUTE_READWRITE, &old))
-              x86_smc_initialized = +1;
-            CloseHandle(h);
-          }  
-        }
-        #endif
-        if (x86_smc_initialized < 0)
-          x86_smc_initialized = 0;
-      }      
-      #endif
-      if (det >= 0 && (det & 0x100)!=0) /* ismmx */
-      {
-        #if !defined(HAVE_NO_NASM)
-        corenames_table[RC5][0] = "jasonp P5/MMX"; /* slower on a PII/MMX */
-        #endif
-        #if !defined(HAVE_NO_NASM)
-        //rc5mmx-k6-2.asm fails test
-        //corenames_table[RC5][5] = "BRF Kx/MMX"; /* is this k6-2 only? */
-        #endif
-        #ifdef MMX_BITSLICER
-        corenames_table[DES][2] = "BRF MMX bitslice";
-        #endif
-        #if !defined(HAVE_NO_NASM)
-        corenames_table[CSC][1] = "6 bit - bitslice";//replaces '6 bit - called'
-        #endif
-      }
-    }
-    #elif ((CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)) && \
-          (CLIENT_OS != OS_AMIGAOS)
-    {
-      long det = GetProcessorType(1);
-      if (det < 0) 
-        ; /* error */
-      else if (( det & (1L<<25) ) != 0) //have altivec
-      {
-        corenames_table[RC5][NUM_CORE_RC5] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
-        corenames_table[RC5][NUM_CORE_RC5+1] = NULL;
-        corenames_table[OGR][0] = "GARSP 5.13-scalar"; /* rename */
-        corenames_table[OGR][NUM_CORE_OGR] = "GARSP 5.13-vector"; /* aka vec_ogr_get_dispatch_table() */
-        corenames_table[OGR][NUM_CORE_OGR+1] = NULL;
-      }
-    }
-    #endif
-    fixed_up = 1;  
-  }
   if (cont_i < CONTEST_COUNT)
   {
     return (const char **)(&(corenames_table[cont_i][0]));
@@ -292,7 +217,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
 ** This is necessary when the list of cores is a superset of the
 ** cores supported by a particular build. For example, all x86 clients
 ** display the same core list for RC5, but as not all cores may be 
-** available by a particular client/build, this function maps 
+** available in a particular client/build/environment, this function maps 
 ** between the ones that aren't available to the next best ones that are.
 **
 ** Note that we intentionally don't do very intensive validation here. Thats
@@ -304,8 +229,6 @@ static const char **__corenames_for_contest( unsigned int cont_i )
 static int __apply_selcore_substitution_rules(unsigned int contestid, 
                                               int cindex)
 {
-  contestid = contestid; /* possibly unused */
-  
   #if (CLIENT_CPU == CPU_ARM)
   if (contestid == CSC)
   {
@@ -329,34 +252,93 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     }
     if (cindex > max)
       return max;
-  }    
-  #elif (CLIENT_CPU == CPU_X86)
-  if (contestid == RC5)
-  {
-    if (cindex == 7) /* SMC */
-    {
-      #if defined(SMC)
-      if (x86_smc_initialized <= 0)
-      #endif
-        cindex = 1; /* 386/486 */
-    }    
-    #if defined(HAVE_NO_NASM)
-    if (cindex == 6)   /* "RG/HB re-pair II" */ 
-      cindex = 3;      /* "RG/HB re-pair I" */
-    if (cindex == 8)   /* "NB Class 7" */
-      cindex = 2;      /* "RG Class 6" */
-    #endif
   }
-  else if (contestid == DES)
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
   {
-    if (cindex == 2) /* Kwan/Bitslice or MMX/Bitslice */
+    /* AIX note:
+    ** A power-only client running on PPC will never get here. So, at this 
+    ** point its either a power-only client running on power, or a ppc-only
+    ** client (no power core) running on PPC or power, or _AIXALL client 
+    ** running on either power or PPC.
+    */
+    int have_vec = 0;
+    int have_pwr = 0;
+
+    #if defined(_AIXALL) || defined(__VEC__) /* only these two need detection*/
+    long det = GetProcessorType(1);
+    #endif
+    #if defined(_AIXALL)                /* is a power/PPC hybrid client */
+    have_pwr = (det >= 0 && (det & 1L<<24)!=0);
+    #elif (CLIENT_CPU == CPU_POWER)     /* power only */
+    have_pwr = 1;                       /* see note above */  
+    #endif
+    #if defined(__VEC__)                /* OS+compiler support altivec */ 
+    have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
+    #endif
+
+    if (contestid == RC5)
     {
-      #if !(defined(MMX_BITSLICER) || defined(CLIENT_SUPPORTS_SMP))
-      cindex = 0;
+      if (have_pwr)
+        cindex = 3;                     /* "PowerRS" */
+      if (!have_pwr && cindex == 3)     /* "PowerRS" */
+        cindex = 1;                     /* "allitnil" */
+      if (!have_vec && cindex == 4)     /* "crunch-vec" */
+        cindex = 1;                     /* "allitnil" */
+    }
+    else if (contestid == OGR)
+    {
+      if (have_pwr)
+        cindex = 1;                     /* "PowerRS" */
+      if (!have_pwr && cindex == 1)     /* "PowerRS" */
+        cindex = 0;                     /* "PPC-scalar" */
+      if (!have_vec && cindex == 2)     /* "PPC-vector" */
+        cindex = 0;                     /* "PPC-scalar" */
+    }
+  }  
+  #elif (CLIENT_CPU == CPU_X86)
+  {
+    long det = GetProcessorType(1);
+    int have_mmx = (det >= 0 && (det & 0x100)!=0);
+    int have_3486 = (det >= 0 && (det & 0xff)==1);
+    int have_smc = 0;
+    int have_nasm = 0;
+
+    #if !defined(HAVE_NO_NASM)
+    have_nasm = 1;
+    #endif
+    #if defined(SMC)
+    have_smc = (x86_smc_initialized > 0);
+    #endif
+
+    if (contestid == RC5)
+    {
+      if (!have_nasm && cindex == 6)    /* "RG/HB re-pair II" */ 
+        cindex = ((have_3486)?(7):(3)); /* "RG self-mod" or "RG/HB re-pair I" */
+      if (!have_smc && cindex == 7)     /* "RG self-modifying" */
+        cindex = 1;                     /* "RG class 3/4" */
+      if (!have_nasm && cindex == 8)    /* "NB Class 7" */
+        cindex = 2;                     /* "RG Class 6" */
+      if (!have_mmx && cindex == 9)     /* "jasonp P5/MMX" */
+        cindex = 0;                     /* "RG Class 5" */
+      if (!have_nasm && cindex == 9)    /* "jasonp P5/MMX" */
+        cindex = 0;                     /* "RG Class 5" */
+    }
+    else if (contestid == DES)
+    {
+      #if !defined(CLIENT_SUPPORTS_SMP)
+      if (cindex == 2)                /* "Kwan/Bitslice" */
+        cindex = 1;                   /* "movzx Bryd" */
       #endif
-    }  
+      #if !defined(MMX_BITSLICER)
+      if (cindex == 3)                /* "BRF MMX bitslice */
+        cindex = 1;                   /* "movzx Bryd" */
+      #endif
+      if (!have_mmx && cindex == 3)   /* "BRF MMX bitslice */
+        cindex = 1;                   /* "movzx Bryd" */ 
+    }
   }
   #endif         
+  contestid = contestid; /* possibly unused */
   return cindex;
 }
 
@@ -465,23 +447,128 @@ static struct
   int user_cputype[CONTEST_COUNT]; /* what the user has in the ini */
   int corenum[CONTEST_COUNT]; /* what we map it to */
 } selcorestatics;
+static int selcore_initlev = -1; /* not initialized yet */
+
+
+int DeinitializeCoreTable( void )  /* ClientMain calls this */
+{ 
+  if (selcore_initlev <= 0)
+  {
+    Log("ACK! DeinitializeCoreTable() called for uninitialized table\n");
+    return -1;
+  }
+
+  #if (CLIENT_CPU == CPU_X86) && defined(SMC)
+  {          /* self-modifying code may need deinitialization */
+    #if defined(USE_DPMI) && ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16))
+    if (x86_smc_initialized > 0)
+    {
+      smc_dpmi_ds_alias_free();
+      x86_smc_initialized = -1;
+    }
+    #endif
+  }
+  #endif /* ifdef SMC */
+
+  selcore_initlev--;
+  return 0; 
+}
 
 /* ---------------------------------------------------------------------- */
 
-int DeinitializeCoreTable( void ) { return 0; }
-
 int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 {
-  static int initialized = -1;
+  int first_time = 0;
   unsigned int cont_i;
-  if (initialized < 0)
+
+  if (selcore_initlev > 0)
+  {
+    Log("ACK! InitializeCoreTable() called more than once!\n");
+    return -1;
+  }
+  if (selcore_initlev < 0)
+  {
+    first_time = 1;
+    selcore_initlev = 0;
+  }
+
+  #if (CLIENT_CPU == CPU_X86) && defined(SMC)
+  {                      /* self-modifying code needs initialization */
+   
+    #if defined(USE_DPMI) && ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16))
+    /* 
+    ** Unlike all other targets, the dpmi based ones need to initialize on
+    ** InitializeCoreTable(), and deinitialize on DeinitializeCoreTable()
+    */ 
+    if (x86_smc_initialized < 0) /* didn't fail before */
+    {
+      if (smc_dpmi_ds_alias_alloc() > 0)
+        x86_smc_initialized = +1;
+    }
+    #elif defined(__unix__)
+    if (x86_smc_initialized < 0) /* one shot */
+    {
+      char *addr = (char *)&rc5_unit_func_486_smc;
+      addr -= (((unsigned long)addr) & (4096-1));
+      if (mprotect( addr, 4096*3, PROT_READ|PROT_WRITE|PROT_EXEC )==0)
+        x86_smc_initialized = +1;
+    }
+    #elif (CLIENT_OS == OS_NETWARE) 
+    if (x86_smc_initialized < 0) /* one shot */
+    {
+      if (GetFileServerMajorVersionNumber() <= 4)
+        x86_smc_initialized = +1; /* kernel module, all pages are xrw */
+    }
+    #elif (CLIENT_OS == OS_WIN32)
+    if (x86_smc_initialized < 0) /* one shot */
+    {
+      HANDLE h = OpenProcess(PROCESS_VM_OPERATION,
+                             FALSE,GetCurrentProcessId());
+      if (h)
+      {
+        DWORD old = 0;
+        if (VirtualProtectEx(h, rc5_unit_func_486_smc, 4096*3,
+                                 PAGE_EXECUTE_READWRITE, &old))
+          x86_smc_initialized = +1;
+        CloseHandle(h);
+      }  
+    }
+    #endif
+    if (x86_smc_initialized < 0)
+      x86_smc_initialized = 0;
+  }      
+  #endif /* ifdef SMC */
+
+  #if (CLIENT_OS == OS_AIX) && (!defined(_AIXALL)) //not a PPC/POWER hybrid client?
+  if (first_time) /* we only want to do this once */
+  {
+    long detected_type = GetProcessorType(1);
+    if (detected_type > 0)
+    {
+      #if (CLIENT_CPU == CPU_POWER)
+      if ((detected_type & (1L<<24)) == 0 ) //not power?
+      {
+        Log("PANIC::Can't run a Power client on PowerPC architecture.\n");
+        return -1;
+      }
+      #else /* PPC */
+      if ((detected_type & (1L<<24)) != 0 ) //is power?
+      {
+        Log("WARNING::Running a PowerPC client on Power\n"
+            "architecture will result in bad performance.\n");
+      }
+      #endif
+    }
+  }  
+  #endif
+
+  if (first_time) /* we only want to do this once */
   {
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
     {
       selcorestatics.user_cputype[cont_i] = -1;
       selcorestatics.corenum[cont_i] = -1;
     }
-    initialized = 0;
   }
   if (coretypes)
   {
@@ -494,15 +581,14 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
         if (idx < 0 || idx >= ((int)__corecount_for_contest( cont_i )))
           idx = -1;
       }      
-      if (!initialized || idx != selcorestatics.user_cputype[cont_i])
+      if (first_time || idx != selcorestatics.user_cputype[cont_i])
         selcorestatics.corenum[cont_i] = -1; /* got change */
       selcorestatics.user_cputype[cont_i] = idx;
     }
-    initialized = 1;
   }
-  if (initialized > 0)
-    return 0;
-  return -1;
+
+  selcore_initlev++;
+  return 0;
 }  
 
 /* ---------------------------------------------------------------------- */
@@ -526,7 +612,7 @@ static long __bench_or_test( int which,
   sigaction(SIGILL, &invop, &old_handler);
   #endif
  
-  if (InitializeCoreTable(((int *)0)) >= 0 /* core table is initialized? */
+  if (selcore_initlev > 0                  /* core table is initialized? */
       && cont_i < CONTEST_COUNT)           /* valid contest id? */
   {
     /* save current state */
@@ -627,7 +713,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     return -1;
   if (!IsProblemLoadPermitted(-1 /*any thread*/, contestid))
     return -1; /* no cores available */
-  if (InitializeCoreTable(((int *)0)) < 0) /* ACK! selcoreInitialize() */
+  if (selcore_initlev <= 0)                /* ACK! selcoreInitialize() */
     return -1;                             /* hasn't been called */
 
   if (__corecount_for_contest(contestid) == 1) /* only one core? */
@@ -719,24 +805,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     }
   }
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-  #if (!defined(_AIXALL)) //not a PPC/POWER hybrid client?
-  if (detected_type > 0)
-  {
-    #if (CLIENT_CPU == CPU_POWER)
-    if ((detected_type & (1L<<24)) == 0 ) //not power?
-    {
-      Log("PANIC::Can't run a PowerPC client on Power architecture.\n");
-      return -1; //this is a good place to abort()
-    }
-    #else /* PPC */
-    if ((detected_type & (1L<<24)) != 0 ) //is power?
-    {
-      Log("WARNING::Running a PowerPC client on Power architecture will "
-          "result in bad performance.\n");
-    }
-    #endif
-  }  
-  #endif
   if (contestid == DES)
   {
     selcorestatics.corenum[DES] = 0; /* only one DES core */
@@ -750,18 +818,28 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     if (selcorestatics.corenum[RC5] < 0 && detected_type > 0)
     {
       int cindex = -1;
-      if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER
-        cindex = NUM_CORE_RC5-1; 
-      else if (( detected_type & (1L<<25) ) != 0) //OS supports altivec
-        cindex = NUM_CORE_RC5;             // vector
-      else if (detected_type == 1 ) //PPC 601
-        cindex = 0;                 // allitnil
-      else if (detected_type == 4 || //PPC 604
-               detected_type == 9 || //PPC 604e
-               detected_type == 10 ) //PPC 604ev
-        cindex = 2;                 // lintilla-604
-      else                          //the rest
-        cindex = 1;                 // lintilla
+      long det = detected_type & 0xff;
+
+      if (det == 1 )                   /* PPC 601 */
+        cindex = 0;                    /*  "allitnil" */
+      else if (det == 4 ||             /* PPC 604   */
+               det == 9 ||             /* PPC 604e  */
+               det == 10 )             /* PPC 604ev */
+        cindex = 2;                    /*   "lintilla-604" */
+      else                             /* the rest */
+        cindex = 1;                    /*   "lintilla" */
+
+      #if defined(_AIXALL)             /* Power/PPC hybrid */
+      if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER?
+        cindex = 3;                    /* "PowerRS" */
+      #elif (CLIENT_CPU == CPU_POWER)  /* Power only */
+        cindex = 3;                    /* "PowerRS" */
+      #endif
+      #if defined(__VEC__)             /* OS+compiler support altivec */
+      if (( detected_type & (1L<<25) ) != 0) //altivec?
+        cindex = 4;                    /* "crunch-vec" */
+      #endif
+
       selcorestatics.corenum[RC5] = cindex;
     }
   }
@@ -779,14 +857,18 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     selcorestatics.corenum[OGR] = selcorestatics.user_cputype[OGR];
     if (selcorestatics.corenum[OGR] < 0 && detected_type > 0)
     {
-      int cindex = 0; //scalar
-      #if defined (_AIXALL)		// there is also a POWER core
-      if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER
-        cindex = NUM_CORE_OGR-1;
-      else 
+      int cindex = 0;                   /* PPC-scalar */
+
+      #if defined (_AIXALL)		/* Power/PPC hybrid */
+      if (( detected_type & (1L<<24) ) != 0) /* ARCH_IS_POWER? */
+        cindex = 1;                     /* PowerRS */ 
+      #elif (CLIENT_CPU == CPU_POWER)   /* Power only */
+        cindex = 1;                     /* "PowerRS" */
       #endif
-      if (( detected_type & (1L<<25) ) != 0) //OS supports altivec
-        cindex = NUM_CORE_OGR;                 // vector
+      #if defined(__VEC__)              /* OS+compiler support altivec */
+      if (( detected_type & (1L<<25) ) != 0) /* proc supports altivec? */
+        cindex = 2;                     /* PPC-vector */
+      #endif
 
       selcorestatics.corenum[OGR] = cindex;
     }
@@ -802,12 +884,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         {
           int cindex = -1; 
           int have_smc = 0;
+          int have_mmx = ((detected_type & 0x100)!=0);
           #if defined(SMC)
           have_smc = (x86_smc_initialized > 0);
           #endif
           switch (detected_type & 0xff)
           {
-            case 0x00: cindex = 0; break; // P5         == RG/BRF class 5
+            case 0x00: cindex = ((have_mmx)?(9):(0)); break; // P5 == RG/BRF class 5
             case 0x01: cindex = ((have_smc)?(7 /*#99*/):(6 /*#1939*/)); break; // 386/486
             case 0x02: cindex = 2; break; // PII/PIII   == RG class 6
             case 0x03: cindex = 3; break; // Cx6x86/MII == RG re-pair I (#1913)
@@ -822,14 +905,16 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             default:   cindex =-1; break; // no default
           }
           #if defined(HAVE_NO_NASM)
-          if (cindex == 6) //  ("RG/HB re-pair II")
+          if (cindex == 6)   /* ("RG/HB re-pair II") */
           {   
-            cindex = 3;    // ("RG re-pair I")
-            if ((detected_type & 0xff) == 0x01) // 386/486
-              cindex = 1;  // 386/486 ("RG class 3/4")
+            cindex = 3;      /* ("RG re-pair I") */
+            if ((detected_type & 0xff) == 0x01) /* 386/486 */
+              cindex = 1;    /* "RG class 3/4" */
           }
-          else if (cindex == 8) //P4
-            cindex = 2; // PII/PIII ("RG class 6")
+          if (cindex == 8)   /* "NB Class 7" */
+            cindex = 2;      /* "RG class 6" */
+          if (cindex == 9)   /* "jasonp P5/MMX" */
+            cindex = 0;      /* "RG Class 5" */
           #endif
           selcorestatics.corenum[RC5] = cindex;
         }
@@ -1153,9 +1238,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     #if (CLIENT_OS == OS_WIN32) //NT has poor PPC assembly
       // rc5/ansi/rc5ansi_2-rg.cpp
       extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-      #define rc5_unit_func_lintilla_compat rc5_ansi_2_rg_unit_func
-      #define rc5_unit_func_allitnil_compat rc5_ansi_2_rg_unit_func
-      #define rc5_unit_func_vec_compat      rc5_ansi_2_rg_unit_func
     #else
       // rc5/ppc/rc5_*.cpp
       // although Be OS isn't supported on 601 machines and there is
@@ -1165,11 +1247,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       extern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
       extern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
       extern "C" u32 rc5_unit_func_lintilla_604_compat( RC5UnitWork *, u32 );
-      #if (CLIENT_OS == OS_MACOS) || \
-          ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) && defined(__VEC__)
+      #if defined(__VEC__) /* OS+compiler support altivec */
         extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
-      #else /* MacOS currently is the only one to support altivec cores */
-        #define rc5_unit_func_vec_compat  rc5_unit_func_lintilla_compat
       #endif
     #endif
   #endif
@@ -1231,15 +1310,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 /* ------------------------------------------------------------- */
 
 #if defined(HAVE_OGR_CORES)
-  #if (CLIENT_CPU == CPU_POWERPC)
+  #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
       extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
       #if defined(_AIXALL)      /* AIX hybrid client */
       extern "C" CoreDispatchTable *ogr_get_dispatch_table_power();
       #endif
       #if defined(__VEC__)      /* compilor supports AltiVec */
       extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
-      #else 
-      #define vec_ogr_get_dispatch_table ogr_get_dispatch_table
       #endif
   #elif (CLIENT_CPU == CPU_68K)
       extern "C" CoreDispatchTable *ogr_get_dispatch_table_000(void);
@@ -1260,14 +1337,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
                        int *client_cpuP, struct selcore *selinfo )
 {                               
-  #if (CLIENT_CPU == CPU_X86) //most projects have an mmx core
-  static int ismmx = -1; 
-  if (ismmx == -1) 
-  { 
-    long det = GetProcessorType(1 /* quietly */);
-    ismmx = (det >= 0) ? (det & 0x100) : 0;
-  }    
-  #endif
   int use_generic_proto = 0; /* if rc5/des unit_func proto is generic */
   unit_func_union unit_func; /* declared in problem.h */
   int cruncher_is_asynchronous = 0; /* on a co-processor or similar */
@@ -1472,59 +1541,45 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
         unit_func.rc5 = rc5_unit_func_ansi_2_rg; //POWER CPU
         pipeline_count = 2;
+        coresel = 3;
       }
-      #else //((CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL))
-      { 
-        //#if (CLIENT_OS == OS_WIN32) //NT has poor PPC assembly
+      #elif (CLIENT_OS == OS_WIN32) 
+      {
         //  rc5/ansi/rc5ansi_2-rg.cpp
         //  xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32  );
-        //  #define rc5_unit_func_lintilla_compat rc5_ansi_2_rg_unit_func
-        //  #define rc5_unit_func_allitnil_compat rc5_ansi_2_rg_unit_func
-        //  #define rc5_unit_func_vec_compat      rc5_ansi_2_rg_unit_func
-        //#else
-        //  // rc5/ppc/rc5_*.cpp
-        //  // although Be OS isn't supported on 601 machines and there is
-        //  // is no 601 PPC board for the Amiga, lintilla depends on allitnil,
-        //  // so we have both anyway, we may as well support both.
-        //  xtern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
-        //  xtern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
-        //  #if (CLIENT_OS == OS_MACOS)
-        //    extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
-        //  #else /* MacOS currently is the only one to support altivec cores */
-        //    #define rc5_unit_func_vec_compat  rc5_unit_func_lintilla_compat
-        //  #endif
-        //#endif
-        int gotcore = 0;
-
+        unit_func.rc5 = rc5_unit_func_ansi_2_rg;
+        pipeline_count = 2;
+        coresel = 3;
+      }
+      #else
+      { 
         client_cpu = CPU_POWERPC;
+        if (coresel == 0)         // G1 (PPC 601)
+        {  
+          unit_func.rc5 = rc5_unit_func_allitnil_compat;
+          pipeline_count = 1;
+        }
+        else if (coresel == 2)    // G2 (PPC 604/604e/604ev only)
+        {
+          unit_func.rc5 = rc5_unit_func_lintilla_604_compat;
+          pipeline_count = 1;
+        }
         #if defined(_AIXALL) // POWER/POWERPC hybrid client
-        if (!gotcore && coresel == NUM_CORE_RC5-1)
+        else if (coresel == 3)    // PowerRS
         {
           client_cpu = CPU_POWER;
           unit_func.rc5 = rc5_unit_func_ansi_2_rg; //rc5/ansi/rc5ansi_2-rg.cpp
           pipeline_count = 2;
-          gotcore = 1;
         }
         #endif
-        if (!gotcore && coresel == 0)     // G1 (PPC 601)
-        {  
-          unit_func.rc5 = rc5_unit_func_allitnil_compat;
-          pipeline_count = 1;
-          gotcore = 1;
-        }
-        else if (!gotcore && coresel == 2) // G2 (PPC 604/604e/604ev only)
-        {
-          unit_func.rc5 = rc5_unit_func_lintilla_604_compat;
-          pipeline_count = 1;
-          gotcore = 1;
-        }
-        else if (!gotcore && coresel == NUM_CORE_RC5) // G4 (PPC 7400)
+        #if defined(__VEC__)
+        else if (coresel == 4)    // G4 (PPC 7400)
         {
           unit_func.rc5 = rc5_unit_func_vec_compat;
           pipeline_count = 1;
-          gotcore = 1;
         }
-        if (!gotcore)                     // the rest (G2/G3)
+        #endif
+        else                      // the rest (G2/G3)
         {
           unit_func.rc5 = rc5_unit_func_lintilla_compat;
           pipeline_count = 1;
@@ -1536,67 +1591,35 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     #elif (CLIENT_CPU == CPU_X86)
     {
       pipeline_count = 2; /* most cases */
-      switch( coresel )
-      {
-        case 0: // Pentium
-          unit_func.rc5 = rc5_unit_func_p5;
-          #if !defined(HAVE_NO_NASM)
-          if (ismmx)
-          { 
-            unit_func.rc5 = rc5_unit_func_p5_mmx;
-            pipeline_count = 4; // RC5 MMX core is 4 pipelines
-          }
-          #endif
-          break;
-        case 1: // Intel 386/486
-          unit_func.rc5 = rc5_unit_func_486;
-          break;
-        case 2: // Ppro/PII
-          unit_func.rc5 = rc5_unit_func_p6;
-          break;
-        case 3: // 6x86(mx)
-          unit_func.rc5 = rc5_unit_func_6x86;
-          break;
-        case 4: // K5
-          unit_func.rc5 = rc5_unit_func_k5;
-          break;
-        case 5: // K6/K6-2
-          unit_func.rc5 = rc5_unit_func_k6;
-          #if 0 //!defined(HAVE_NO_NASM) //rc5mmx-k6-2.asm fails test
-          if (ismmx)
-          { 
-            unit_func.rc5 = rc5_unit_func_k6_mmx;
-            pipeline_count = 4;
-          }
-          #endif
-          break;
-        case 6: // K7
-          unit_func.rc5 = rc5_unit_func_6x86; /* K7 core is based on 6x86 core */
-          #if !defined(HAVE_NO_NASM)
-          unit_func.rc5 = rc5_unit_func_k7;
-          #endif
-  	      break;
-        case 7: // SMC
-          unit_func.rc5 = rc5_unit_func_486;
-          #if defined(SMC)  /* first thread or benchmark/test */
-          if (x86_smc_initialized > 0 && threadindex == 0)
-            unit_func.rc5 = rc5_unit_func_486_smc;
-          #endif
-          break;
-        case 8:
-          unit_func.rc5 = rc5_unit_func_p6; /* P4 core is based on the P3 core */
-          #if !defined(HAVE_NO_NASM)
-          unit_func.rc5 = rc5_unit_func_p7;
-          pipeline_count = 4; // RC5 P4 core is 4 pipelines
-          #endif
-          break;
-        default: // hmm!
-        {
-          unit_func.rc5 = rc5_unit_func_p5;
-          coresel = 0;
-          break;
-        }  
-      } /* switch */
+      if (coresel == 0)
+        unit_func.rc5 = rc5_unit_func_p5;
+      else if (coresel == 1) // Intel 386/486
+        unit_func.rc5 = rc5_unit_func_486;
+      else if (coresel == 2) // Ppro/PII
+        unit_func.rc5 = rc5_unit_func_p6;
+      else if (coresel == 3) // 6x86(mx)
+        unit_func.rc5 = rc5_unit_func_6x86;
+      else if (coresel == 4) // K5
+        unit_func.rc5 = rc5_unit_func_k5;
+      else if (coresel == 5)
+        unit_func.rc5 = rc5_unit_func_k6;
+      #if !defined(HAVE_NO_NASM)
+      else if (coresel == 6)
+        unit_func.rc5 = rc5_unit_func_k7;
+      #endif
+      #if defined(SMC) /* plus first thread or benchmark/test cap */
+      else if (coresel == 7 && x86_smc_initialized > 0 && threadindex == 0)
+         unit_func.rc5 = rc5_unit_func_486_smc;
+      #endif
+      #if !defined(HAVE_NO_NASM)
+      else if (coresel == 8) // RC5 P4 core is 4 pipelines
+        { unit_func.rc5 = rc5_unit_func_p7; pipeline_count = 4; }
+      #endif
+      #if !defined(HAVE_NO_NASM)
+      else if (coresel == 9)
+        { unit_func.rc5 = rc5_unit_func_p5_mmx; pipeline_count = 4; }
+      #endif
+      /* no default since we already validated the 'coresel' */
     }
     #elif (CLIENT_CPU == CPU_ALPHA)
     {
@@ -1658,21 +1681,32 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       //xtern u32 p2des_unit_func_pro( RC5UnitWork * , u32 *, char * );
       //xtern u32 des_unit_func_mmx( RC5UnitWork * , u32 *, char * );
       //xtern u32 des_unit_func_slice( RC5UnitWork * , u32 *, char * );
-      u32 (*slicit)(RC5UnitWork *,u32 *,char *) = 
+
+      u32 (*kwan)(RC5UnitWork *,u32 *,char *) = 
                    ((u32 (*)(RC5UnitWork *,u32 *,char *))0);
+      u32 (*mmxslice)(RC5UnitWork *,u32 *,char *) = 
+                   ((u32 (*)(RC5UnitWork *,u32 *,char *))0);
+      u32 (*bryd_fallback)(RC5UnitWork *,u32 *,char *) = 
+                   ((u32 (*)(RC5UnitWork *,u32 *,char *))0);
+
       #if defined(CLIENT_SUPPORTS_SMP)
-      slicit = des_unit_func_slice; //kwan
+      bryd_fallback = kwan = des_unit_func_slice; //kwan
       #endif
       #if defined(MMX_BITSLICER) 
       {
-        if (ismmx) 
-          slicit = des_unit_func_mmx;
+        long det = GetProcessorType(1 /* quietly */);
+        if ((det >= 0 && (det & 0x100)!=0)) /* ismmx */
+          bryd_fallback = mmxslice = des_unit_func_mmx;
       }
       #endif  
-      if (slicit && coresel > 1) /* not standard bryd and not ppro bryd */
-      {                /* coresel=2 is valid only if we have a slice core */
-        coresel = 2;
-        unit_func.des = slicit;
+
+      if (coresel == 3 && mmxslice)
+      {
+        unit_func.des = mmxslice; 
+      }
+      else if (coresel == 2 && kwan) /* Kwan */
+      {
+        unit_func.des = kwan; 
       }
       else if (coresel == 1) /* movzx bryd */
       {
@@ -1686,8 +1720,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
             unit_func.des = p1des_unit_func_p5;
           else if (threadindex == 3) /* fourth thread */
             unit_func.des = p2des_unit_func_p5;
-          else                    /* fifth...nth thread */
-            unit_func.des = slicit;
+          else                           /* fifth...nth thread */
+            unit_func.des = bryd_fallback; /* kwan */
         }
         #endif /* if defined(CLIENT_SUPPORTS_SMP)  */
       }
@@ -1698,14 +1732,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         #if defined(CLIENT_SUPPORTS_SMP) 
         if (threadindex > 0)  /* not first thread */
         {
-          if (threadindex == 1)  /* second thread */
+          if (threadindex == 1)          /* second thread */
             unit_func.des = p2des_unit_func_p5;
-          else if (threadindex == 2) /* third thread */
+          else if (threadindex == 2)     /* third thread */
             unit_func.des = p1des_unit_func_pro;
-          else if (threadindex == 3) /* fourth thread */
+          else if (threadindex == 3)     /* fourth thread */
             unit_func.des = p2des_unit_func_pro;
-          else                    /* fifth...nth thread */
-            unit_func.des = slicit;
+          else                           /* fifth...nth thread */
+            unit_func.des = bryd_fallback;
         }
         #endif /* if defined(CLIENT_SUPPORTS_SMP)  */
       }
@@ -1727,18 +1761,23 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
   #if defined(HAVE_OGR_CORES)
   if (contestid == OGR)
   {
-    #if (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AMIGAOS)
+    #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
       //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
       //extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
-      unit_func.ogr = ogr_get_dispatch_table(); //default
-      #if defined(_AIXALL)
-      if (coresel == NUM_CORE_OGR-1)    // power core
+      //extern "C" CoreDispatchTable *ogr_get_dispatch_power(void);
+      #if defined(_AIXALL)                       /* maybe ARCH_IS_POWER */
+      if (coresel == 1)                          /* "PowerRS" */
         unit_func.ogr = ogr_get_dispatch_table_power();
       #endif
-      #if defined(__VEC__)      /* compilor supports AltiVec */
-      if (coresel == NUM_CORE_OGR)    // our vec_ogr core
+      #if defined(__VEC__)          /* compiler+OS supports AltiVec */
+      if (coresel == 2)                           /* "PPC-vector" */
         unit_func.ogr = vec_ogr_get_dispatch_table();
       #endif
+      if (!unit_func.ogr)
+      {
+        unit_func.ogr = ogr_get_dispatch_table(); /* "PPC-scalar" */
+        coresel = 0;
+      }   
     #elif (CLIENT_CPU == CPU_68K)
       //extern CoreDispatchTable *ogr_get_dispatch_table_000(void);
       //extern CoreDispatchTable *ogr_get_dispatch_table_020(void);
@@ -1792,10 +1831,13 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     {
       case 0 : unit_func.gen = csc_unit_func_6b_i;
                break;
-      case 1 : unit_func.gen = csc_unit_func_6b;
+      case 1 : unit_func.gen = csc_unit_func_6b;      
                #if (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
-               if (ismmx) //6b-non-mmx isn't used (by default) on x86
-                 unit_func.gen = csc_unit_func_6b_mmx;
+               {               //6b-non-mmx isn't used (by default) on x86
+                 long det = GetProcessorType(1 /* quietly */);
+                 if ((det >= 0 && (det & 0x100)!=0)) /* ismmx */
+                   unit_func.gen = csc_unit_func_6b_mmx;
+               }
                #endif     
                break;
       default: coresel = 2;
