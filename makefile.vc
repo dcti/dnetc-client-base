@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.3 1999/10/30 17:31:01 cyp Exp $
+# $Id: makefile.vc,v 1.56.2.4 1999/10/30 17:32:35 cyp Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -11,7 +11,7 @@ PROCESSOR_ARCHITECTURE = x86
 ALPHA=1
 !endif
 
-BASENAME = dnetc
+BASENAME = rc5des
 OUTPUTPATH = output
 COMMONPATH = common
 RC5SRCPATH = rc5
