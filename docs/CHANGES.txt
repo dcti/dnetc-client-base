@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.123 2002/07/21 22:33:54 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.124 2002/07/22 15:42:02 oliver Exp $
 ==========================================================================
 
 2.8000
@@ -33,6 +33,9 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.123 2002/07/21 22:33:54 andreasb Ex
             imp: x86: improved P4 RC5 core (ak-p7) (#2542)
             chg: linux: enable /proc/apm support for non-x86 (#2643)
             fix: all: processed RC5 random blocks even if RC5 was disabled
+            fix: amigaos: fixed problems with font requester opening in
+                          GUI prefs window when clicking other gadgets
+            imp: amigaos: can be shutdown by pressing escape key in GUI
 
 2.8018.472  fix: macosx: fix crash in battery pause code from #2465 (#2615)
             fix: macosx: config menu displayed erroneous message that pause
