@@ -1,0 +1,635 @@
+/*  GVANT.C   Version 2.04 */
+
+/*----------------------------------------------------------------------\
+|              "C" program to find solutions to Golomb Rulers           |
+|   Finds the shortest ruler, with marks placed at different unit       |
+|   distances from each other, such that no distance between any two    |
+|   marks is the same as that for any other set of marks.               |
+|-----------------------------------------------------------------------|
+| Copyright, 1996/7 by David Vanderschel and Mark Garry.  This program  |
+| and the accompanying documentation were originally developed by David |
+| Vanderschel and Mark Garry.   Users are allowed to copy or modify the |
+| program as required to use the program on their own operating system. |
+| However, this copyright notice may not be removed.   All other rights |
+| are reserved.                                                         |
+\----------------------------------------------------------------------*/
+
+/*---------------
+   Updates - Post Re-Distribution, March, 1997
+
+   ----  Matt Thomlinson added class=idle switches for Win95/NT machines
+
+   2.04  Corrected possible bug when ban<minlast, some k's skipped
+         Added STUB_MAKER ifdef's to allow only stubs to be printed
+         Added fflush(stdout) after "send.dat" updates
+
+   2.03  Corrected infinite loops when save.dat has invalid stubs
+
+   2.02  Added old_node_hi(lo) = node_hi(lo) fix when reading save.dat
+          -Thanks to Mike Kessler for finding the above node count bug
+         Added ability to stop at predetermined stub (see readme notes)
+
+   2.01  For add'l clarity, moved IO routines into seperate subroutines 
+         Altered the IO format to look a little better.
+         Changed cumulative node count in save.dat to discrete counts
+---------------*/
+/* #define MATTT_TIMING_TEST */
+
+/*-----DEFINES-----*/
+#define VERSION "2.04"          /* GVANT version # */
+#define SA 21                   /* maximum number of marks */
+#define LA 350                  /* sizes for large and small arrays */
+#define KTEST 1                 /* to optimize k1,k2 search patterns */
+#define MAX(i,j) ( ( (i) > (j) ) ? (i) : (j) )
+#undef  NDEBUG                  /* assert function used for integrity */
+
+/*-----INCLUDES----*/
+#ifdef WIN32
+#include <windows.h>
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <assert.h>
+
+/*-----GLOBALS-----*/
+FILE     *save_file;            /* file pointer for storage file */
+FILE     *send_file;            /* file pointer for permanent file */
+FILE     *stub_file;            /* file pointer for stubs file */
+
+int       n;                    /* number of marks */
+int       p[SA + 1];            /* mark locations.  p[1] is leftmost. */
+int       q[SA + 1];            /* diff's (lengths) between marks.
+                                   q[i] = p[i]-p[i-1].  q[2] is first */
+int       td[LA + 1];           /* list indicating taken differences.
+                                   If <0, diff is taken; If >0, it is
+                                   an AvDf (Available Difference) &
+                                   value is (pointer to) next AvDf.
+                                   td[0] = 1st AvDf */
+int       bp[LA + 2];           /* back pointers of td */
+int       ban;                  /* best p[n] found so far for ruler n */
+int       bq[SA + 1];           /* copy of a "best" (so far) solution */
+int       nholes;               /* number of holes in best solution. */
+int       fhole=-99; /*not used now, was... first hole in best solution */
+int       nb;                   /* count of best solutions */
+int       fhd;                  /* final head difference. The "head" is
+                                   the first n-i AvDfs on the "td" list.
+                                   fhd is the last such. */
+int       lf;                   /* least finish.  Sum of the head. */
+int       halfn;                /* half of n+1 */
+int       bs[25];               /* resets ban after rt. side moved in */
+int       lim;                  /* lower limit of q[] to test if ban is
+                                   valid; chosen to maximize speed */
+int       ruler[SA + 1];        /* Sets up the restart locations. */
+int       irestart=2;           /* counter for resetting stored data */
+
+time_t    timer1, timer2;       /* for measuring elapsed time */
+long int  tottime;              /* counts time used */
+long int  nodes;                /* counts nodes visited for save file */
+long int  nodes_hi;             /* counts 10^6 nodes visited for CCF */
+long int  nodes_lo;             /* count <10^6 nodes visited for CCF */
+long int  old_hi_nodes;         /* to print to save.dat file when needed*/
+long int  old_lo_nodes;         /* to print to save.dat file when needed*/
+                                /* CCF == central control faciltiy */
+                                /* CCF helps confirm that runs are ok */
+int       n4;                   /* n/4= length of stubs to print */
+int       k1;                   /* ruler in 3 parts: 0-k1-k2-n */
+int       k2;                   /* ruler in 3 parts: 0-k1-k2-n */
+int       k3;                   /* k3=k2+1 ... used to improve speed */
+int       ak1;                  /* ak1=p[k1]+1 used to calc "need" */
+int       stop_stub[9];         /* last stub to examine */
+int       stop_count;           /* marks in the stop_stub */
+
+                                /* best "array" size (=p[n]) so far */
+int       ba[] = {0, 0, 1, 3, 6, 11, 17, 25, 34, 44, 55, 72, 85,
+                  106, 127, 151, 177, 199, 216, 246, 283, 333};
+          /* Note: ba[21]=333 is not known to be optimal. */
+
+#ifdef MATTT_TIMING_TEST
+unsigned long     dwTickStart;
+#endif
+
+/*---SUBROUTINES---*/
+#ifdef WIN32
+void      __fastcall place();
+#else
+void      place();
+#endif
+void      Print_Perm();
+void      Print_Temp();
+void      Print_OGR();
+void      Read_Temp();
+
+
+/*---------------
+   The following parsing code contributed by Stephen Adams (with
+   add'l minor changes) facilitates running on file server systems.
+---------------*/
+
+char *save_file_name = "save.dat";
+char *send_file_name = "send.dat";
+int   save_option = 1;          /* 1,0 ; 0 means no send.dat updates */
+
+void
+parse_arguments (int argc, char **argv)
+{
+  int i = 1;
+
+  while (i < argc) {
+    char *arg = argv[i];
+    if (strcmp(arg,"-save") == 0) {
+      save_file_name = argv[i+1];
+      i += 2;
+    } else if (strcmp (arg, "-send") == 0) {
+      send_file_name = argv[i+1];
+      i += 2;
+    } else if (strcmp (arg, "-nosave") == 0) {
+      save_option = 0;
+      i += 1;
+    } else {
+      fprintf (stderr, "Illegal command line option:  %s\n", arg);
+      fprintf (stderr, " options:  -save xxxx  xxxx=savefile\n");
+      fprintf (stderr, "           -send xxxx  xxxx=sendfile\n");
+      fprintf (stderr, "           -nosave     no interim saves\n");
+      exit (1);
+    }
+  }
+}
+
+
+
+/*-----MAIN--------*/
+int main(int argc, char *argv[])
+{
+  time_t    start, finish;      /* used to time search for each n */
+  int       nstart=5;           /* smallest ruler to look for */
+  int       j;
+
+  /* bump priority into idle class -- let others get CPU first */
+#ifdef WIN32
+  SetPriorityClass(GetCurrentProcess(), IDLE_PRIORITY_CLASS);
+  SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_IDLE);
+#endif 
+
+#ifdef STUB_SERVER
+  stub_file = fopen ("stubs.dat", "w");
+#endif
+
+#ifdef MATTT_TIMING_TEST
+    dwTickStart = GetTickCount();
+#endif
+
+  printf(" Output from ... %s (Version %s)\n", argv[0], VERSION);
+
+  parse_arguments (argc, argv);
+
+  p[1] = q[0] = q[1] = 0;       /* Initialize */
+  nodes_lo = nodes_hi = tottime = 0;
+
+  /* nstart and nb may also be reinitialized from temp file */
+  Read_Temp(&nstart);           /* Read in prior results if avail */
+
+  printf("\n Continuing after: n=%d ban=%d ", n, ban);
+  for (j = 1; j <= n4; j++) printf(" %d", ruler[j]);
+  printf("\n");
+
+  for (n = nstart; n <= SA; ++n) {
+    nodes = 0;
+    n4 = n / 4;
+    ban = ba[n];                /* Known Ruler (not necessarily OGR) */
+    k1 = (n + 1) / 2 - KTEST;   /* KTEST can be varied to find opt */
+    k2 = (n + 2) / 2 + KTEST;   /* k2>k1 are mark indices symmetrical
+                                   about 'middle' mark. Mark indices
+                                   start at 1 (at left ruler edge). */
+    k3 = k2 + 1;
+    if (n > nstart) nb = 0;     /* reset: ban may be an OGR. */
+    for (j = 0; j <= LA; ++j) { /* Initialize pointers */
+      td[j]   = j+1;
+      bp[j+1] = j;
+    }
+    lf = n * (n - 1) / 2;       /* sum of (n-1) smallest AvDfs */
+    fhd = n - 1;                /* fhd = (n-1)th smallest AvDf */
+    time (&start);
+    time (&timer1);
+    place (2, 0, 0);            /* Begin Recursions */
+    time (&finish);
+    for (j = 2; j <= n; ++j)
+      p[j] = p[j - 1] + bq[j];
+    printf ("\nn=%3d  optimum= %3d%4d such%4d ", n, ban, nb, nholes);
+    printf ("holes (first= %2d) %10ld sec\n", fhole, (finish - start));
+    for (j = 1; j <= n; ++j)
+      printf("%4d", p[j]);
+    printf("\n  ");
+    for (j = 2; j <= n; ++j)
+      printf("%4d", bq[j]);
+    printf("\n");
+    fflush (stdout);
+  }
+  return 0;
+}
+
+
+#ifdef WIN32
+void __fastcall place(
+#else
+void place(
+#endif
+           int i,               /* index of mark to be placed: 1->n */
+           int pl,              /* position last-placed= sum(q[z]),z<i*/
+           int minlast          /* minimum position for last mark */
+           )
+  /* Place is a recursive function that tries to place a given mark, the
+     i'th, following the length already placed, pl, to the (i-1)'th.  */
+{
+  int       s, t;               /* temporary counters */
+  int       nf;                 /* needed to finish. lf cannot exceed */
+  int       j, b;               /* temporary indices */
+  /*----The following need to survive deeper recursive calls----*/
+  int       need;               /* length from p[0] to p[i-1] plus the
+                                   min length needed to get from p[i] to
+                                   p[n]; used to limit search */
+  int       tlf, tfhd;          /* head, and largest number in head */
+  int       k;                  /* temporary index = q[i] */
+  int       big;                /* Largest # that can exist in q[i+1]
+                                   thru q[n] */
+
+  /* If STUB_SERVER defined this prints out all possible stubs */
+  /* Can put within "l7" loop for speed, but reads better here */
+#ifdef STUB_SERVER
+  if(i==n4){
+    for(t=1;t<n4;t++)
+      fprintf(stub_file,"%d ",q[t]);
+    fprintf(stub_file,"0\n");
+    return;
+  }
+#endif
+
+  nodes++;
+  bs[i] = ban;
+  k = 0;
+  tlf = lf - fhd;               /* shorten head */
+  tfhd = bp[fhd];               /* biggest number in head */
+
+  need = pl + MAX( ba[n - i + 1] ,  tlf );
+
+  /* remove reversal symmetry by forcing the average of two marks,
+     numbered equally different from the middle, to be left of center */
+
+  if(i <= k3) {
+   if(i <= k2) {                   /* skip in last part of ruler */
+    if(i <= k1 + 1){
+      nodes_lo += nodes;
+      nodes = 0L;
+      nodes_hi += nodes_lo / 1000000L;
+      nodes_lo -= 1000000L * (nodes_lo / 1000000L);
+      ak1 = pl + 1;
+      if(i == irestart) {          /* skip redundancy for restarts */
+        irestart++;
+        k = ruler[i];
+        if(i < n4) {
+          nodes--;                 /* correct node count if restart */
+          k = bp[k];
+        }
+        if( td[k] <= 0 ) {
+          printf(" Error: invalid stub in save.dat file \n");
+          exit(3);
+        }
+      }
+    }
+    need = MAX( need , pl + ba[k2 - i + 1] + ak1 );
+   }
+   minlast = pl + ak1;
+  }
+
+/* -------------( BIG LOOP TO TRY NEW VALUES FOR q[i] )-------------- */
+l7:
+  k = td[k];
+  if(k <= ban - need){          /* note ban can change in loop */
+    if(td[s=k+q[i-1]] < 0) goto l7;   /* works MUCH faster */
+    for(j = i - 2; ; --j){      /* Can elim j>=3 if desired */
+      s += q[j];
+      if(td[s] < 0)             /* Are new diff's avail? */
+        goto l7;                /* CONTINUE LOOP if not */
+      if(s+s > pl + k ) break;  /* Based on Principle-1 */
+    }
+
+    q[i] = k;                   /* try k as q[i] */
+    nf = ban - pl - k;             /* smallest length not used yet */
+
+    /*- Adjust head, and confirm no violations */
+    lf = tlf;                   /* restore head */
+    fhd = tfhd;                 /* restore head */
+    if(k <= fhd){               /* using # less than head ? */
+      for(t = 0, j = i; j >= 2; --j){
+        t += q[j];              /* check all new diffs < fhd */
+        if(t > fhd) break;      /* when past head, exit loop */
+        fhd = td[fhd];          /* if removing element, extend */
+        lf += fhd - t;          /* Increase lf for lost low #s */
+        if(lf > nf) goto l7;    /* if too little slack, skip */
+      }
+    }
+    /*----------------------------------------------------------------
+      limit symmetry on right side ... decrease BAN if symmetrical
+
+      Step 1:  can we use a AvDf > head?
+               If not, we know head contains all remaining q[]'s
+
+      Step 2:  Is the current distance to BAN a AvDf?
+               If not, then we can decrease BAN and test again
+    ---------------------------------------------------------------- */
+
+    b = lf + td[fhd] - fhd;     /* how much slack would we need ? */
+l12:
+    if(b > nf){                 /* can we use a # past head? */
+      if( td[lf] < 0 ) goto l7; /* if not, and lf != AvDf, new 1-diff */
+      nf = lf;                  /* if not, the head contains all q[] */
+    }
+    if(td[nf] < 0){             /* is "nf" not an AvDf ? Then "--nf" */
+      if(lf > --nf)             /* is least finish > new "nf"? */
+        goto l7;                /* if yes, we must try new q[i] */
+      goto l12;                 /* otherwise test again with new "nf" */
+    }
+    if(td[nf+k] < 0){           /* is "nf" not an AvDf ? Then "--nf" */
+      if(lf > --nf)             /* is least finish > new "nf"? */
+        goto l7;                /* if yes, we must try new q[i] */
+      goto l12;                 /* otherwise test again with new "nf" */
+    }
+    if( minlast > nf+pl+k )     /* violating lower limit for last mark */
+      goto l7;                  /* so pick next entry */
+
+    /* "k" candidate is OK ... proceed to recursive routines */
+    ban = nf + pl + k;          /* Set new BAN based on the new "nf" */
+    big = nf - lf + fhd;        /* largest "1st diff" still possible */
+    s = 0;
+    for(j = i; j >= 2; j--){
+      s += q[j];                /* remove new differences */
+      if(s > big){              /* Skip "other" pointers */
+        if(s > nf) break;       /* Based on Principle-2 */
+        td[s] = -td[s];         /* mark "in use" */
+        for(j--; j >= 2; --j){
+          s += q[j];
+          if(s > nf) break;     /* Based on Principle-2 */
+          td[s] = -td[s];
+        }
+        break;
+      }
+      b = bp[s];
+      td[b] = t = td[s];        /* unlink removed difference */
+      bp[t] = b;
+      td[s] = -t;
+    }
+
+
+    /*--- Go Deeper ---*/
+    if(i < n) {
+      place (i + 1, pl + k, minlast);    /* if not finished, keep going */
+      if( i <= n4 ) {                    /* Print results */
+        nodes_lo += nodes;
+        nodes_hi += nodes_lo / 1000000L;
+        nodes_lo -= 1000000L * (nodes_lo / 1000000L);
+        nodes = 0;
+        time(&timer2);
+#ifdef __WATCOMC__
+        if(timer2<timer1) timer2 += 86400; /* Watcom bug fix */
+#endif
+        if(i < n4 ) {Print_Perm(i);}  else {  /* Save permanent data */
+          if(save_option==1) Print_Temp(i);}  /* Save temp data */
+      }
+    } else { Print_OGR( pl + k ); }               /* print OGR */
+
+    /*--- Go Shallow & Reset Variables ---*/
+    s = 0;
+    for(j = i; j >= 2; j--) {  /* replace new differences */
+      s += q[j];
+      if(s > big) {             /* Skip Links */
+        if(s > nf) break;       /* Based on Principle-2 */
+        td[s] = -td[s];         /* available again */
+        for(j--; j >= 2; --j) {
+          s += q[j];
+          if(s > nf) break;     /* Based on Principle-2 */
+          td[s] = -td[s];
+        }
+        break;
+      }
+      td[s] = t = -td[s];       /* available again */
+      bp[t] = td[bp[s]] = s;    /* relink */
+    }
+
+    ban = bs[i];
+    goto l7;
+  }
+}
+
+
+/* Subroutine that writes permanent SEND.DAT file data */
+void Print_Perm( int i )
+{
+#ifndef MATTT_TIMING_TEST
+  int j;
+  /* On exiting recursions, node count is constant & timer2~=timer1 */
+  tottime += timer2 - timer1;
+  timer1 = timer2;
+
+  /* Print to Screen */
+  printf(" >>> Completed %d %d 0", n, bs[i]);
+  for(j = 2; j <= i ; j++) printf("-%d", q[j]);
+  if( i == n4-1 ) {
+    printf(" in %lu seconds, nodes= %lu %lu", tottime, nodes_hi, nodes_lo);
+
+    /* Print to Permanent File */
+    send_file = fopen (send_file_name, "a");
+    fprintf(send_file, "%d %d", n, bs[i]);
+    for(j = 2; j <= n4 - 1; j++) fprintf(send_file, " %d", q[j]);
+    fprintf(send_file, " %lu %lu %lu \n", tottime, nodes_hi, nodes_lo);
+    fclose (send_file);
+
+    /* Reset Temporary Backup File */
+    save_file = fopen (save_file_name, "w");
+    fprintf(save_file, "%d %d", n, bs[i]);
+    for(j = 1; j <= n4 - 2; j++) fprintf(save_file, " %d", q[j]);
+    fprintf(save_file, " %d 0 0 0 0\n", -td[q[n4-1]] );
+    if( stop_count > 0 ) {
+      for( j=1; j <= stop_count; j++ )
+        fprintf(save_file, " -%d", stop_stub[j]);
+      fprintf(save_file, "\n");
+    }
+    fclose (save_file);
+  }
+  printf("\n");
+
+  fflush(stdout);
+  old_hi_nodes = old_lo_nodes = nodes_lo = nodes_hi = tottime = 0;
+
+  /* Stopping point ?   note: 1st elements are q[2] & stop_stub[1] */
+  if( i == stop_count+1 ) {
+    for( j=1; j<= stop_count; j++ )
+      if( stop_stub[j] > q[j+1] ) return;
+    exit(1);
+  }
+#endif
+}
+
+
+/* Subroutine that writes temporary SAVE.DAT file data */
+void Print_Temp( int i )
+{
+#ifndef MATTT_TIMING_TEST
+  int j;
+  save_file = fopen (save_file_name, "a");
+  fprintf(save_file, "%d %d ", n, bs[i]);
+  printf("%d %d ", n, bs[i]);
+  for(j = 1; j <= n4; j++) {
+    fprintf(save_file, " %d", q[j]);
+    printf(" %d", q[j]);
+  }
+  old_hi_nodes = nodes_hi - old_hi_nodes;
+  old_lo_nodes = nodes_lo - old_lo_nodes;
+  while ( old_lo_nodes < 0 ) {
+    old_lo_nodes += 1000000;
+    old_hi_nodes -= 1;
+  }
+  fprintf(save_file, " %lu %ld %ld \n", timer2 - timer1,
+                                        old_hi_nodes, old_lo_nodes);
+  printf("  %lu %ld %ld \n", timer2 - timer1, old_hi_nodes, old_lo_nodes);
+  old_hi_nodes = nodes_hi;
+  old_lo_nodes = nodes_lo;
+  fclose (save_file);
+  fflush (stdout);
+
+  tottime += timer2 - timer1;
+  timer1 = timer2;
+#else
+    printf("%d ms, %d%d nodes\n", GetTickCount()-dwTickStart, nodes_hi, nodes_lo);
+    printf("Orig: 137266 ms, 93543145 nodes\n");
+    exit(0);
+#endif
+}
+
+
+/* Subroutine that writes Golomb solutions */
+void Print_OGR( int soln )
+{
+      int j;
+      for(j = 1; j <= n; ++j)
+        bs[j] = soln;
+      if(nb == 0 || soln < ba[n]) {
+        nb = 0;
+        ban = ba[n] = soln;
+        nholes = ban - (n * (n - 1)) / 2;
+      }
+      for(j = 1; j <= n; j++)
+        bq[j] = q[j];
+      nb++;                     /* count solutions (OGRs) */
+
+      printf("Golomb ruler found; saving in %s file\n", send_file_name);
+      send_file = fopen (send_file_name, "a");    
+      fprintf(send_file, "0 %d %d %d %d", n, nb, nholes, fhole);
+      for(j = 2; j <= n; j++)
+        fprintf(send_file, " %d", q[j]);
+      fprintf(send_file, "\n");
+      fclose (send_file);
+      fflush (stdout);
+}
+
+
+/* Subroutine that *reads* temporary SAVE.DAT file data */
+/* This routine does not need to be optimized, only called once */
+void Read_Temp( int *nstart )
+{
+  int j,temp;
+  int lastn=0;                /* used to check if series continues */
+  int lastruler=0;            /* used to check if series continues */
+  int readin;                 /* verifies save.dat integrity */
+  save_file = fopen(save_file_name, "r");
+  if (save_file) {
+    while(1){
+      if( fscanf(save_file, "%d", &temp) != 1)
+        break;
+      if(temp < 0) {            /* Stopping Point Stub */
+        stop_stub[++stop_count]=-temp;
+      } else {
+        long int n_1,n_2;
+        n=temp;                 /* Line describes tested nodes */
+        fscanf (save_file, "%d", &ban);
+        if( ba[n] != ban ) ba[n] = ban;  /* CAUTION --- TAKE CARE !!! */
+        for (j = 1; j <= n / 4; j++){
+          readin = fscanf(save_file, "%d", &ruler[j]);
+          assert (readin == 1);
+        }
+        readin = fscanf (save_file, "%ld %ld %ld ", &timer1, &n_1, &n_2);
+        assert (readin == 3);
+        if (n != lastn || lastruler != ruler[ n/4 - 1 ]) {
+          lastn = n;
+          lastruler = ruler[n / 4 - 1];
+          nodes_lo = nodes_hi = tottime = 0;
+        }
+        nodes_lo += n_2;
+        nodes_hi += n_1;
+        tottime += timer1;
+      }
+    }
+    *nstart = n;
+    n4 = n / 4;
+    fclose (save_file);
+    fflush (stdout);
+    if( stop_count > n4-2 ) {
+      printf("Error: too many entries for stopping stub. Halting\n");
+      printf(" Working on ruler with %d marks ... \n",n);
+      printf(" Max allowed stub entries = %d \n",n4-2);
+      printf(" Entries in starting file = %d \n",stop_count);
+      exit(2);
+    }
+
+    save_file = fopen (save_file_name, "a");   /* 3 lines added 7/15/96 */
+    fprintf(save_file, "\n");   /* Ensure output begins on new line */
+    fclose (save_file);         /* execute only if SAVE.DAT existed */
+  }
+  for(j = n4 + 1; j <= SA; j++)
+    ruler[j] = 0;               /* clear remaining marks just in case */
+
+  send_file = fopen(send_file_name, "a");
+  fprintf(send_file, "-99 Version %s continuing after 0", VERSION);
+  for (j = 2; j <= n4; j++)
+    fprintf(send_file,"-%d", ruler[j]);
+  fprintf(send_file, " (n=%d ban=%d)\n", n, ban);
+  fclose(send_file);
+  fflush (stdout);
+
+  old_hi_nodes = nodes_hi;      /* Needed for save.dat */ 
+  old_lo_nodes = nodes_lo;      /* Needed for save.dat */
+}
+
+
+/*----------------------------------------------------------------
+The following notes are based on suggestions by Roland Adorni (Rado)
+
+Principle-1
+
+ If two 'spans' [a,b] and [c,d] have the same length and overlap, then
+ the two non-overlapping segments [a,c] and [b,d] must also be equal:
+
+       a---------------b
+             c---------------d
+       a-----c         b-----d
+
+ If GVANT has tested the non-overlapping segments [a,c] and [b,d] and
+ found them not equal, there is no need to test the larger segments.
+
+ Implication: Since GVANT works sequentially from the left side of the
+ ruler we can see that if d is a new candidate mark position, then we
+ need never consider (as a possible repeated difference) any difference
+ d-c, where c is a placed mark position and c < d/2.
+
+Principle-2
+
+ Let nf represent the largest possible span from the most recently
+ placed mark to the right edge of the ruler.  Based on Principle-1,
+ we know that the largest possible (non-overlapping) distance that
+ we will need to check going forward from here is nf.
+
+ Implication: when placing a mark, there is no need to account for
+ any newly introduced differences in excess of nf, as we need never
+ (subsequently) test against such differences.
+----------------------------------------------------------------*/
+
