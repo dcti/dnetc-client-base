@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.57 2000/05/11 12:25:59 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.58 2000/07/08 03:15:45 cyp Exp $"; }
 
 //#define TRACE
 
@@ -263,17 +263,54 @@ int ParseCommandline( Client *client,
                 {
                   if (strcmp(procname,binnames[bin_index])==0)
                   {
-                    kill_found++;
-                    if ( kill( thatpid, sig ) == 0)
+                    int dont_count_it = 0;
+                    #if (CLIENT_OS == OS_LINUX)
+                    sprintf( buffer, "/proc/%s/status", dp->d_name );
+                    file = fopen( buffer, "r" );
+                    if (file)
                     {
-                      if (sigd_count < (sizeof(already_sigd)/sizeof(pid_t)-1))
-                        already_sigd[sigd_count++] = thatpid;
-                      kill_ok++;
+                      pid_t ppid = 0;
+                      while (fgets(buffer, sizeof(buffer), file))
+                      {
+                        buffer[sizeof(buffer)-1] = '\0';
+                        if (memcmp( buffer, "PPid:\t", 6 ) == 0)
+                        {
+                          ppid = (pid_t)atoi(&buffer[6]);
+                          break;
+                        } 
+                      }
+                      fclose(file);
+                      if (ppid != 0)
+                      {
+                        unsigned int nn;
+                        for (nn = 0; nn < sigd_count; nn++)
+                        {
+                          if (already_sigd[nn] == ppid)
+                          {
+                            dont_count_it = 1;
+                            break; 
+                          }
+                        }
+                      }
                     }
-                    else if ((errno != ESRCH) && (errno != ENOENT))
+                    #endif
+                    if (thatpid)
                     {
-                      kill_failed++;
-                      last_errno = errno;
+                      if (!dont_count_it)
+                        kill_found++;
+                      if ( kill( thatpid, sig ) == 0)
+                      {
+                        if (sigd_count < (sizeof(already_sigd)/sizeof(pid_t)-1))
+                          already_sigd[sigd_count++] = thatpid;
+                        if (!dont_count_it)
+                          kill_ok++;
+                      }
+                      else if (!dont_count_it &&
+                              (errno != ESRCH) && (errno != ENOENT))
+                      {
+                        kill_failed++;
+                        last_errno = errno;
+                      }
                     }
                     break;
                   }
