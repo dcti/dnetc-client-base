@@ -21,9 +21,11 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log:   $Id: CHANGES.txt,v 1.3 1999/05/06 18:35:50 cyp Exp $
+Version change log:   $Id: CHANGES.txt,v 1.4 1999/05/08 19:15:06 cyp Exp $
 ==========================================================================  
 
+2.7110.443  new: win/*nix: support -pause and -unpause (the latter is an
+                 equivalent to -restart). Used like -restart/-shutdown etc.
 2.7110.442  new: win32: ioctl-driven network adapter online state detection.
                  primarily for use with non-RAS net devs (heads up! AOL users)
                  includes device masking support ala Linux/FreeBSD
@@ -54,12 +56,11 @@ Version change log:   $Id: CHANGES.txt,v 1.3 1999/05/06 18:35:50 cyp Exp $
             fix: win32gui:Window/Logger settings now saved at shutdown
             fix: win32gui:Log File only reread when required now
 2.7106.436  fix: Randomprefix incrementation problem fixed.
-2.7106.435  new: Generalized lurk functionality+added FreeBSD support.
-2.7106.435  new: Added lurk functionality for Linux.
+2.7106.435  new: Linux/FreeBSD: Added lurk functionality
 	         Includes device (eth*,ppp*,sl*) masking support
-2.7105.432  fix: OS2 EMX & lurk mode changes. 
+2.7105.432  fix: OS2: EMX & lurk mode changes. 
             fix: -(un)install honors -quiet
-2.7105.432  new: Connection error message support added for win16/32
+2.7105.432  new: win16/32: Connection error message support added for 
 2.7105.432  new: -1 for nettimeout forces blocking network I/O
 2.7105.432  new: IDT WinChip 2 added to CPU list. 
             new: 4% faster MMX DES core added.
@@ -72,10 +73,10 @@ Version change log:   $Id: CHANGES.txt,v 1.3 1999/05/06 18:35:50 cyp Exp $
 2.7102.422  imp: Improved menu and ini file handling of uuehttpmode,
                  keyproxy, and keyport
 2.7102.422  new: scheduledupdatetime, for coordinating project switching
-2.7102.421  imp: More MacOS changes, to merge MT and non-MT clients.
-2.7102.421  imp: Many, many MacOS changes. FreeBSD, RISC OS x86 fixes.
+2.7102.421  imp: MacOS: Many, many changes to merge MT and non-MT clients.
+2.7102.421  imp: FreeBSD, RISC OS x86 fixes.
 2.7102.421  new: "Coalescing" flush added, with notable speed increase.
-            new: -kill/-shutdown, -hup/-restart for win32/win16/*nix
+            new: win32/win16/*nix: -kill/-shutdown, -hup/-restart 
 2.7102.421  fix: IRIX MT fixed. 
             imp: Many RISC OS x86 changes. 
 	    fix: MacOS Block count and processor id bug fixed.
