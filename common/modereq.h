@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.h,v $
+// Revision 1.6  1998/11/08 19:03:20  cyp
+// -help (and invalid command line options) are now treated as "mode" requests.
+//
 // Revision 1.5  1998/11/02 04:46:09  cyp
 // Added check for user break after each mode is processed. Added code to
 // automatically trip a restart after mode processing (for use with config).
@@ -39,8 +42,9 @@
 #define MODEREQ_BENCHMARK_RC5      0x0100
 #define MODEREQ_BENCHMARK_DES      0x0200
 #define MODEREQ_BENCHMARK_QUICK    0x0400
+#define MODEREQ_CMDLINE_HELP       0x0800
 #define MODEREQ_RESTART            0x8000 /* restart client after mode processing */
-#define MODEREQ_ALL                0x87FF /* needed internally */
+#define MODEREQ_ALL                0x8FFF /* needed internally */
 
 /* get mode bit(s). if modemask is -1, all bits are returned */
 extern int ModeReqIsSet(int modemask);

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.93  1998/11/08 19:03:22  cyp
+// -help (and invalid command line options) are now treated as "mode" requests.
+//
 // Revision 1.92  1998/11/04 21:28:19  cyp
 // Removed redundant ::hidden option. ::quiet was always equal to ::hidden.
 //
@@ -44,7 +47,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.92 1998/11/04 21:28:19 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.93 1998/11/08 19:03:22 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -54,6 +57,7 @@ return "@(#)$Id: cmdline.cpp,v 1.92 1998/11/04 21:28:19 cyp Exp $"; }
 #include "pathwork.h"  // InitWorkingDirectoryFromSamplePaths();
 #include "buffwork.h"  // UnlockBuffer()
 #include "modereq.h"   // get/set/clear mode request bits
+#include "cmdline.h"   //ourselves
 
 /* ------------------------------------------------------------------------
  * runlevel == 0 = pre-anything    (-quiet, -ini, -guistart etc done here)
@@ -86,6 +90,13 @@ return "@(#)$Id: cmdline.cpp,v 1.92 1998/11/04 21:28:19 cyp Exp $"; }
  *     }
  *   
  *------------------------------------------------------------------------ */
+
+static const char *invalid_option = NULL;
+
+const char *CmdLineFindInvalidOption(void)
+{
+  return invalid_option;
+}  
 
 int Client::ParseCommandline( int runlevel, int argc, const char *argv[], 
                               int *retcodeP, int logging_is_initialized )
@@ -698,8 +709,10 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
       else if (runlevel > 0)
         {
         quietmode = 0;
-        DisplayHelp(thisarg);
-        retcode = 1;
+        invalid_option = thisarg;
+        ModeReqClear(-1); /* clear all */
+        ModeReqSet( MODEREQ_CMDLINE_HELP );
+        retcode = 0;
         do_break = 1;
         }
       }

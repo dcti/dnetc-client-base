@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.7  1998/11/08 19:03:21  cyp
+// -help (and invalid command line options) are now treated as "mode" requests.
+//
 // Revision 1.6  1998/11/08 01:01:47  silby
 // Buncha hacks to get win32gui to compile, lots of cleanup to do.
 //
@@ -29,7 +32,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.6 1998/11/08 01:01:47 silby Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.7 1998/11/08 19:03:21 cyp Exp $"; }
 #endif
 
 #include "client.h"   //client class
@@ -39,6 +42,8 @@ return "@(#)$Id: modereq.cpp,v 1.6 1998/11/08 01:01:47 silby Exp $"; }
 #include "triggers.h" //RaiseRestartRequestTrigger/CheckExitRequestTriggerNoIO
 #include "console.h"  //Clear the screen after config if restarting
 
+#include "disphelp.h" //"mode" DisplayHelp()
+#include "cmdline.h"  //CmdLineFindInvalidOption()
 #include "cpucheck.h" //"mode" DisplayProcessorInformation()
 #include "cliident.h" //"mode" CliIdentifyModules();
 #include "selftest.h" //"mode" SelfTest()
@@ -129,8 +134,15 @@ int ModeReqRun(Client *client)
         modereq.reqbits &= ~(MODEREQ_BENCHMARK_DES | 
                  MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_QUICK );
         }
+      if ((bits & MODEREQ_CMDLINE_HELP) != 0)
+        {
+        DisplayHelp(CmdLineFindInvalidOption()); 
+        modereq.reqbits &= ~(MODEREQ_CMDLINE_HELP);        
+        }
       if ((bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART)) != 0)
         {
+#if !((CLIENT_OS==OS_WIN32) && defined(NEEDVIRTUALMETHODS))
+        // configure is awkward with the GUI at the moment
         Client *newclient = new Client;
         if (!newclient)
           LogScreen("Unable to configure. (Insufficient memory)");
@@ -146,17 +158,15 @@ int ModeReqRun(Client *client)
             newclient = client;
             nodestroy = 1;
             }
-#if !((CLIENT_OS==OS_WIN32) && defined(NEEDVIRTUALMETHODS))
-// configure is awkward with the GUI at the moment
           if ( newclient->Configure() == 1 )
             newclient->WriteFullConfig(); //full new build
-#endif
           if (!nodestroy)
             delete newclient;
           if ((bits & MODEREQ_CONFRESTART) != 0)
             restart = 1;
           retval |= (bits & (MODEREQ_CONFIG|MODEREQ_CONFRESTART));
           }
+#endif
         modereq.reqbits &= ~(MODEREQ_CONFIG|MODEREQ_CONFRESTART);
         }
       if ((bits & (MODEREQ_FETCH | MODEREQ_FLUSH))!=0)
