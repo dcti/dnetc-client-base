@@ -11,7 +11,7 @@
  * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.6 2000/01/03 02:59:51 jlawson Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.7 2000/01/08 16:40:05 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -49,7 +49,7 @@ return "@(#)$Id: logstuff.cpp,v 1.37.2.6 2000/01/03 02:59:51 jlawson Exp $"; }
 
 #if (CLIENT_OS == OS_NETWARE || CLIENT_OS == OS_DOS || \
      CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
-     CLIENT_OS == OS_WIN32 )
+     CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN32S )
   #define ftruncate( fd, sz )  chsize( fd, sz )
 #elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_RISCOS || \
      CLIENT_OS == OS_AMIGAOS || CLIENT_OS == OS_MACOS)
@@ -122,9 +122,9 @@ static void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int /
 
 // ------------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
-    (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) || \
-    (CLIENT_OS == OS_OS2)
+#if 0 //(CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
+      //(CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) || \
+      //(CLIENT_OS == OS_OS2)
 static FILE *__fopenlog( const char *fn, const char *mode )
 {
   FILE *file;
@@ -311,7 +311,7 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
                   ((last_day+6)/7) );
       }
     }
-    else /* daily */
+    else /* anything else: daily = 1, fortnightly = 14 etc */
     {
       if (currtmP != NULL ) 
       {
@@ -744,17 +744,16 @@ void LogScreenPercent( unsigned int load_problem_count )
     displevel=0;
   lastperc = endperc;
 
+  *bufptr = '\0';
   if ( (buffer[0]==0) || (buffer[0]=='\r' && buffer[1]==0) )
     ;
   else
   {
     int doit = 1;
-    *bufptr = 0;
     if (logstatics.lastwasperc)
     {
       static char lastbuffer[sizeof(buffer)] = {0};
-      doit = strcmp( lastbuffer, buffer );
-      if (doit)
+      if ((doit = strcmp( lastbuffer, buffer )) != 0)
         strcpy( lastbuffer, buffer );
     }
     if (doit)
