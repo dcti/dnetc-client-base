@@ -17,7 +17,7 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.18 2000/06/13 00:20:44 mfeiri Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.19 2000/08/22 13:19:26 oliver Exp $"; }
 
 /* ---------------------------------------------------------- */
 
@@ -242,6 +242,18 @@ struct ifact
   } iftable[IFMIB_ENTRIES];
 };
 #pragma pack()
+
+#elif (CLIENT_OS == OS_AMIGAOS)
+#include "baseincs.h"
+#include "network.h"
+#include "sleepdef.h"
+#include "triggers.h"
+#include <net/if.h>
+#include <fcntl.h>
+#include <proto/miami.h>
+
+#define ioctl(a,b,c) IoctlSocket(a,b,(char *)c)
+#define close(a) CloseSocket(a)
 #endif
 
 /* ========================================================== */
@@ -319,6 +331,8 @@ int Lurk::GetCapabilityFlags(void)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
 #elif (CLIENT_OS == OS_OS2)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
+#elif (CLIENT_OS == OS_AMIGAOS)
+  what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYPROFILE | CONNECT_IFACEMASK);
 #endif
 
   TRACE_OUT((-1,"Lurk::GetCapabilityFlags() [1]. what=0x%08x\n",(u32)what));
@@ -370,6 +384,33 @@ const char **Lurk::GetConnectionProfileList(void)
       configptrs[index] = NULL;
       return (const char **)(&configptrs[0]);
     }
+  #elif (CLIENT_OS == OS_AMIGAOS)
+    static const char *firstentry = ""; //the first entry is blank, ie use default
+    static char namestorage[8][IFNAMSIZ];
+    static const char *configptrs[10];
+    struct Library *MiamiBase;
+    configptrs[0] = NULL;
+    if ((MiamiBase = OpenLibrary((unsigned char *)"miami.library",11)))
+    {
+      struct if_nameindex *name,*nameindex;
+      if ((nameindex = if_nameindex())) {
+        int cnt = 0;
+        name = nameindex;
+        configptrs[cnt++] = firstentry;
+        while (!(name->if_index == 0 && name->if_name == NULL) && cnt < 8) {
+          if (strncmp(name->if_name,"lo",2) != 0 && strncmp(name->if_name,"mi",2) != 0) {
+            strcpy(namestorage[cnt-1],name->if_name);
+            configptrs[cnt] = (const char *)&namestorage[cnt-1];
+            cnt++;
+          }
+          name++;
+        }
+        configptrs[cnt] = NULL;
+        if_freenameindex(nameindex);
+      }
+      CloseLibrary(MiamiBase);
+    }
+    return configptrs;
   #endif
   return NULL;
 }
@@ -540,7 +581,8 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_WIN32) || \
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
-    (CLIENT_OS == OS_MACOSX) || ((CLIENT_OS == OS_OS2) && defined(__EMX__))
+    (CLIENT_OS == OS_MACOSX) || ((CLIENT_OS == OS_OS2) && defined(__EMX__)) || \
+    (CLIENT_OS == OS_AMIGAOS)
 static int __MatchMask( const char *ifrname, int mask_include_all,
                        int mask_default_only, const char *ifacestowatch[] )
 {
@@ -567,6 +609,8 @@ static int __MatchMask( const char *ifrname, int mask_include_all,
         (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
         (CLIENT_OS == OS_MACOSX)
       || strcmp(wildmask,"dun*")==0
+      #elif (CLIENT_OS == OS_AMIGAOS)
+      || strcmp(wildmask,"mi*")==0  // required for Miami (not MiamiDx or Genesis)
       #endif
       || strcmp(wildmask,"sl*")==0);
       matchedname = ((!ismatched)?(NULL):((const char *)(&wildmask[0])));
@@ -602,6 +646,17 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
     TRACE_OUT((-1,"(!conf.lurkmode && !conf.dialwhenneeded) returning 1\n"));
     return 1;
   }
+
+#if (CLIENT_OS == OS_AMIGAOS)
+  int closesocklib = 0;
+  if (!SocketBase)
+  {
+    if (!(SocketBase = OpenLibrary("bsdsocket.library",4)))
+      return 0;
+    closesocklib = 1;
+  }
+#endif
+
 #if (CLIENT_OS == OS_WIN16)
   if ( GetModuleHandle("WINSOCK") )
   {
@@ -890,7 +945,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
       (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
       (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX) || \
-      ((CLIENT_OS == OS_OS2) && defined(__EMX__))
+      ((CLIENT_OS == OS_OS2) && defined(__EMX__) || (CLIENT_OS == OS_AMIGAOS))
    struct ifconf ifc;
    struct ifreq *ifr;
    int n, foundif = 0;
@@ -949,7 +1004,8 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
        }
        // maybe other *BSD systems
        #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
-         (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_MACOSX)
+             (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_NETBSD || \
+             (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_AMIGAOS))
        for (n = ifc.ifc_len, ifr = ifc.ifc_req; n >= (int)sizeof(struct ifreq); )
        {
          /*
@@ -961,6 +1017,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
           * 17 bytes while sizeof(struct ifreq) is 32.
           */
          struct sockaddr *sa = &(ifr->ifr_addr);
+         int sa_len = sa->sa_len;
          if (sa->sa_family == AF_INET)  // filter-out anything other than AF_INET
          {                            // (in fact this filter-out AF_LINK)
            if (__MatchMask(ifr->ifr_name,mask_include_all,
@@ -969,8 +1026,22 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
              strncpy( conndevice, ifr->ifr_name, sizeof(conndevice) );
              conndevice[sizeof(conndevice)-1] = 0;
              ioctl (fd, SIOCGIFFLAGS, ifr); // get iface flags
+             #if (CLIENT_OS == OS_AMIGAOS)
+             if (strcmp(ifr->ifr_name,"mi0") == 0) // IFF_UP is always set for mi0
+             {
+               struct Library *MiamiBase;
+               if ((MiamiBase = OpenLibrary((unsigned char *)"miami.library",11)))
+               {
+                 foundif = MiamiIsOnline("mi0");
+                 CloseLibrary(MiamiBase);
+                 break;
+               }
+             }
+             if ((ifr->ifr_flags & (IFF_UP | IFF_LOOPBACK)) == IFF_UP)
+             #else
              if ((ifr->ifr_flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK))
                  == (IFF_UP | IFF_RUNNING))
+             #endif
              {
                foundif = (n / sizeof(struct ifreq)) + 1;
                break;
@@ -978,7 +1049,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
            }
          }
          // calculate the length of this entry and jump to the next
-         int ifrsize = IFNAMSIZ + sa->sa_len;
+         int ifrsize = IFNAMSIZ + sa_len;
          ifr = (struct ifreq *)((caddr_t)ifr + ifrsize);
          n -= ifrsize;
        }
@@ -990,6 +1061,14 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
        free (ifc.ifc_buf);
      close (fd);
    }
+
+   #if (CLIENT_OS == OS_AMIGAOS)
+   if (closesocklib)
+   {
+     CloseLibrary(SocketBase);
+     SocketBase = NULL;
+   }
+   #endif
 
    if (foundif)
    {
@@ -1152,6 +1231,32 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
   TRACE_OUT((-1,"DialIfNeeded() => -1\n"));
   return -1;
 
+#elif (CLIENT_OS == OS_AMIGAOS)
+
+  if (strlen(conf.connprofile) > 0)
+    LogScreen("Attempting to put '%s' online...\n",conf.connprofile);
+  else
+    LogScreen("Attempting to put default interface online...\n");
+
+  int async, connected = 0;
+  if ((async = amigaOnOffline(TRUE,conf.connprofile)))
+  {
+    int retry = 0, maxretry = (async == 2) ? 40 : 1; // 40s max to connect with a modem
+    while (((connected = IsConnected()) == 0) && ((++retry)<maxretry))
+    {
+      sleep(1);
+      if (CheckExitRequestTriggerNoIO()) break;
+    }
+  }
+  if (!connected)
+  {
+    TRACE_OUT((-1,"DialIfNeeded() => -1\n"));
+    return -1;
+  }
+  dohangupcontrol = 1;  // we should also control hangup
+  TRACE_OUT((-1,"DialIfNeeded() => 0\n"));
+  return 0;
+
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || \
      (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
      (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
@@ -1302,6 +1407,31 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
 
   TRACE_OUT((-1,"returning 0\n"));
   hRasDialConnHandle = NULL;
+  dohangupcontrol = 0;
+  return 0;
+
+#elif (CLIENT_OS == OS_AMIGAOS)
+
+  if (isconnected)
+  {
+    int droppedconn = 0, async;
+    if ((async = amigaOnOffline(FALSE,conf.connprofile)))
+    {
+      int retry = 0, maxretry = (async == 2) ? 10 : 1;
+      while (((droppedconn = (!IsConnected())) == 0) && ((++retry)<maxretry))
+      {
+        sleep(1);
+        if (CheckExitRequestTriggerNoIO()) break;
+      }
+    }
+    if (!droppedconn)
+    {
+      TRACE_OUT((-1,"DialIfNeeded() => -1\n"));
+      return -1;
+    }
+  }
+
+  TRACE_OUT((-1,"HangupIfNeeded() => 0\n"));
   dohangupcontrol = 0;
   return 0;
 
