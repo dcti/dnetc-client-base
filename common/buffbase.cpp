@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.7 1999/11/02 14:14:36 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.8 1999/11/12 11:12:12 remi Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -446,7 +446,7 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
     {
       if (!dofetch && !dontfetch)
       {
-        long count = client->GetBufferCount( contest_i, 0, NULL );
+        long count = GetBufferCount( client, contest_i, 0, NULL );
         if (count >= 0) /* no error */
         {
           if (count < ((long)(client->inthreshold[contest_i])) )
@@ -458,7 +458,7 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
       }
       if (!doflush && !dontflush)
       {
-        long count = client->GetBufferCount( contest_i, 1 /* use_out_file */, NULL );
+        long count = GetBufferCount( client, contest_i, 1 /* use_out_file */, NULL );
         if (count >= 0) /* no error */
         {
           if ( count > 0 /* count >= ((long)(client->outthreshold[contest_i])) || 
