@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.117  1998/11/09 09:03:42  remi
+# sparc-linux-mt-egcs is now -static, 'cause the stock RH 5.1 glibc2 is
+# not thread friendly.
+#
 # Revision 1.116  1998/11/08 21:35:42  silby
 # Removed second processor source from freebsd-elf nonmt build.
 #
@@ -681,8 +685,9 @@ case "$1" in
 
     *sparc-linux-mt-egcs)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -D__showids__ -fno-inline-functions -DMULTITHREAD -DPIPELINE_COUNT=2 -DKWAN -DMEGGS -DBIT_32"
+	TARGET_CCFLAGS="-static $OPTS_EGCS_NONULTRA_SPARC -D__showids__ -fno-inline-functions -DMULTITHREAD -DPIPELINE_COUNT=2 -DKWAN -DMEGGS -DBIT_32"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-lpthread"
 	;;
 
