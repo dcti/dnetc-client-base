@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.13 1999/10/11 03:02:57 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.14 1999/10/11 16:51:48 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -1164,7 +1164,7 @@ int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
       {
         //Log("OGR Success!\n");
         contestwork.ogr.workstub.stub.length = 
-                  (short)(contestwork.ogr.workstub.worklength);
+                  (u16)(contestwork.ogr.workstub.worklength);
         *resultcode = RESULT_FOUND;
         return RESULT_FOUND;
       }
