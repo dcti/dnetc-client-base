@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.17 1999/11/08 05:16:52 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.18 1999/11/11 02:28:36 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -375,7 +375,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
   if (__corecount_for_contest(contestid) == 1) /* only one core? */
     return 0;
-    
   if (selcorestatics.corenum[contestid] >= 0) /* already selected one? */
     return selcorestatics.corenum[contestid];
 
@@ -429,14 +428,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     {
       ; // Who knows?  Just benchmark them all below
     }
-  }
-  if (selcorestatics.corenum[contestid] >= 0)
-  {
-    LogScreen( "%s: %s core #%d (%s)\n", contname, 
-      ((selcorestatics.user_cputype[contestid] >= 0)?("Using"):("Auto-selected")),
-      selcorestatics.corenum[contestid],
-     selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
-    corename_printed = 1;
   }
   #elif (CLIENT_CPU == CPU_68K)
   if (contestid == RC5 || contestid == DES) /* old style */
@@ -507,6 +498,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         // this is only valid for nasm'd cores or GCC 2.95 and up
         switch( detected_type & 0xff ) 
         {
+        case 0:  // P5
         case 1:  // 386/486
           selcorestatics.corenum[CSC] = 3; // 1key - called
           break;
@@ -514,19 +506,12 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         case 4:  // K5
           selcorestatics.corenum[CSC] = 2; // 1key - inline
           break;
+        case 3:  // Cx6x86
         case 5:  // K6/K6-2/K6-3
           selcorestatics.corenum[CSC] = 0; // 6bit - inline
           break;
         }
       }
-    }
-    if (selcorestatics.corenum[contestid] >= 0)
-    {
-      LogScreen( "%s: %s core #%d (%s)\n", contname, 
-        ((user_selected)?("using"):("auto-selected")),
-        selcorestatics.corenum[contestid],
-       selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
-      corename_printed = 1;
     }
   }
   #elif (CLIENT_CPU == CPU_ARM)
@@ -538,12 +523,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       if (detected_type >= 0)
         selcorestatics.corenum[contestid] = (int)detected_type;
     }
-    if (selcorestatics.corenum[contestid] >= 0)
-    {
-      LogScreen( "%s: selecting %s optimized code.\n", contname, 
-       selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid]));
-      corename_printed = 1;
-    }
     /* otherwise fall into bench */
   }
   #endif
@@ -554,8 +533,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   if (selcorestatics.corenum[contestid] >= 0) 
   { 
     if (!corename_printed)
-      LogScreen("%s: selected core #%d (%s).\n", contname, selcorestatics.corenum[contestid], 
-                selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
+    {
+      LogScreen("%s: using core #%d (%s).\n", contname, 
+         selcorestatics.corenum[contestid], 
+         selcoreGetDisplayName(contestid, selcorestatics.corenum[contestid]) );
+     }
   }
   else /* ok, bench it then */
   {
@@ -581,7 +563,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         {
           if (!saidmsg)
           {
-            LogScreen("%s: Manually selecting fastest core...\n", contname);
+            LogScreen("%s: Running micro-bench to select fastest core...\n", 
+                      contname);
             saidmsg = 1;
           }                                
           problem->Run();
@@ -600,13 +583,15 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       delete problem;
 
       if (fastestcrunch < 0) /* all failed */
+      { 
         selcorestatics.corenum[contestid] = 0; /* don't bench again */
+      }
       else
       {
         selcorestatics.corenum[contestid] = fastestcrunch;
         LogScreen("%s: selected core #%d (%s).\n", contname, fastestcrunch, 
                        selcoreGetDisplayName( contestid, fastestcrunch ) );
-              corename_printed = 1;
+        corename_printed = 1;
       }
     }
   }
