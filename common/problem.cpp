@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.45  1998/11/25 09:23:36  chrisb
+// various changes to support x86 coprocessor under RISC OS
+//
 // Revision 1.44  1998/11/25 06:05:48  dicamillo
 // Use parenthesis when calling a function via a pointer.  Gcc in BeOS R4
 // for Intel requires this.
@@ -111,7 +114,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.44 1998/11/25 06:05:48 dicamillo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.45 1998/11/25 09:23:36 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -158,6 +161,7 @@ return "@(#)$Id: problem.cpp,v 1.44 1998/11/25 06:05:48 dicamillo Exp $"; }
 #endif
 
 #if (CLIENT_OS == OS_RISCOS)
+#include "../platforms/riscos/riscos_x86.h"
 extern "C" void riscos_upcall_6(void);
 extern void CliSignalHandler(int);
 #endif
@@ -175,6 +179,20 @@ Problem::Problem()
 Problem::~Problem()
 {
   started = 0; // nothing to do. - suppress compiler warning
+#if (CLIENT_OS == OS_RISCOS)
+  if (GetProblemIndexFromPointer(this) == 1)
+  {
+      _kernel_swi_regs r;
+
+      r.r[0] = 1;
+      _kernel_swi(RC5PC_RetriveBlock,&r,&r);
+      LogScreen("Retrieved block from x86 card");
+      _kernel_swi(RC5PC_Off,&r,&r);
+  }
+  LogScreen("Killing problem");
+  
+#endif
+
 }
 
 s32 Problem::IsInitialized()
@@ -187,6 +205,15 @@ s32 Problem::LoadState( ContestWork * work, u32 _contest,
 {
   contest = (_cputype != 0); //use up variable
   contest = _contest;
+
+#if (CLIENT_OS == OS_RISCOS)
+   bool x86thread=0; 
+   if (GetProblemPointerFromIndex(1) == this)
+   {
+       x86thread = 1;
+   } 
+#endif
+
 
 #ifdef _CPU_32BIT_
   // copy over the state information
@@ -272,7 +299,7 @@ s32 Problem::LoadState( ContestWork * work, u32 _contest,
   tslice = (( pipeline_count + 1 ) & ( ~1L ));
   if ( _timeslice > tslice )
     tslice = ((_timeslice + (tslice - 1)) & ~(tslice - 1));
-          
+
   //--------------------------------------------------------------- 
 
   startpercent = (u32) ( (double) 100000.0 *
@@ -284,6 +311,42 @@ s32 Problem::LoadState( ContestWork * work, u32 _contest,
   initialized = 1;
   finished = 0;
   started = 0;
+
+
+#if (CLIENT_OS == OS_RISCOS)
+  if (x86thread == 1)
+  {
+      RC5PCstruct rc5pc;
+      _kernel_swi_regs r;
+
+      rc5pc.key.hi = contestwork.key.hi;
+      rc5pc.key.lo = contestwork.key.lo;
+      rc5pc.iv.hi = contestwork.iv.hi;
+      rc5pc.iv.lo = contestwork.iv.lo;
+      rc5pc.plain.hi = contestwork.plain.hi;
+      rc5pc.plain.lo = contestwork.plain.lo;
+      rc5pc.cypher.hi = contestwork.cypher.hi;
+      rc5pc.cypher.lo = contestwork.cypher.lo;
+      rc5pc.keysdone.hi = contestwork.keysdone.hi;
+      rc5pc.keysdone.lo = contestwork.keysdone.lo;
+      rc5pc.iterations.hi = contestwork.iterations.hi;
+      rc5pc.iterations.lo = contestwork.iterations.lo;
+      rc5pc.timeslice = tslice;
+
+      r.r[1] = (int)&rc5pc;
+      _kernel_swi(RC5PC_AddBlock,&r,&r);
+      if (r.r[0] == -1)
+      {
+	  LogScreen("Failed to add block to x86 cruncher\n");
+      }
+
+      else
+      {
+	  LogScreen("Added block to x86 cruncher. %d slots left\n",r.r[0]);
+      }
+
+  }
+#endif
 
   return( 0 );
 }
@@ -313,10 +376,10 @@ s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
   return( contest );
 }
 
+
 s32 Problem::Run( u32 threadnum )
 {
   u32 timeslice;
-
   if ( !initialized )
     return ( -1 );
 
@@ -521,43 +584,101 @@ s32 Problem::Run( u32 threadnum )
 
   if (contest == 0)
   {
-//    printf("timeslice = %d\n",timeslice);
-    if ((rc5_unit_func == rc5_unit_func_arm_2)&&( rc5unitwork.L0.hi&(1<<24)))
-    {
-  rc5unitwork.L0.hi -= 1<<24;
-  if (contestwork.keysdone.lo & 1)
-  {
-      contestwork.keysdone.lo--;
-  }
-  else
-  {
-      LogScreen("Something really bad has happened - the number of keys looks wrong.\n");
-      for(;;); // probably a bit bogus, but hey.
-  }
-    }
 
-    /*
-        Now returns number of keys processed!
-  (Since 5/8/1998, SA core 1.5, ARM core 1.6).
-    */
-    kiter = rc5_unit_func(&rc5unitwork, timeslice);
-    contestwork.keysdone.lo += kiter;
+#if (CLIENT_OS == OS_RISCOS)
+      if (threadnum == 0)
+      {
+#endif
 
+
+#ifdef DEBUG
+	  static u32 ts;
+	  if ((ts < timeslice-500) ||
+	      (ts > timeslice+500))
+	  {
+	      ts = timeslice;
+	      printf("timeslice = %d\n",timeslice);
+	  }
+#endif
+//	  printf("ARM thread running, ts=%08lx\n",timeslice);
+	  if ((rc5_unit_func == rc5_unit_func_arm_2)&&( rc5unitwork.L0.hi&(1<<24)))
+	  {
+	      rc5unitwork.L0.hi -= 1<<24;
+	      if (contestwork.keysdone.lo & 1)
+	      {
+		  contestwork.keysdone.lo--;
+	      }
+	      else
+	      {
+		  LogScreen("Something really bad has happened - the number of keys looks wrong.\n");
+		  for(;;); // probably a bit bogus, but hey.
+	      }
+	  }
+	  
+	  /*
+	    Now returns number of keys processed!
+	    (Since 5/8/1998, SA core 1.5, ARM core 1.6).
+	  */
+	  kiter = rc5_unit_func(&rc5unitwork, timeslice);
+	  contestwork.keysdone.lo += kiter;
+	  
 //    printf("kiter is %d\n",kiter);
-    if (kiter != (timeslice*pipeline_count))
-    {
-      // found it?
+	  if (kiter != (timeslice*pipeline_count))
+	  {
+	      // found it?
+	      
+	      rc5result.key.hi = contestwork.key.hi;
+	      rc5result.key.lo = contestwork.key.lo;
+	      rc5result.keysdone.hi = contestwork.keysdone.hi;
+	      rc5result.keysdone.lo = contestwork.keysdone.lo;
+	      rc5result.iterations.hi = contestwork.iterations.hi;
+	      rc5result.iterations.lo = contestwork.iterations.lo;
+	      rc5result.result = RESULT_FOUND;
+	      finished = 1;
+	      return( 1 );
+	  }
+#if (CLIENT_OS == OS_RISCOS)
+      }
+      else // threadnum == 1
+      {
+	  /*
+	    This is the RISC OS specific x86 2nd thread magic.
+	  */
+	  _kernel_swi_regs r;
+	  volatile RC5PCstruct *rc5pcr;
+	  _kernel_swi(RC5PC_BufferStatus,&r,&r);
 
-      rc5result.key.hi = contestwork.key.hi;
-      rc5result.key.lo = contestwork.key.lo;
-      rc5result.keysdone.hi = contestwork.keysdone.hi;
-      rc5result.keysdone.lo = contestwork.keysdone.lo;
-      rc5result.iterations.hi = contestwork.iterations.hi;
-      rc5result.iterations.lo = contestwork.iterations.lo;
-      rc5result.result = RESULT_FOUND;
-      finished = 1;
-      return( 1 );
-    }
+	  rc5pcr = (volatile RC5PCstruct *)r.r[1];
+	  contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+LogScreen("x86: Keysdone %08lx",contestwork.keysdone.lo);
+
+	  if (r.r[2]==1)
+	  {
+	      /*
+		block finished
+	      */
+LogScreen("x86: Finished (%08lx)",contestwork.keysdone.lo);
+
+	      r.r[0] = 0;
+	      _kernel_swi(RC5PC_RetriveBlock,&r,&r);
+	      rc5pcr = (volatile RC5PCstruct *)r.r[1];
+
+	      if (rc5pcr->result == RESULT_FOUND)
+	      {
+LogScreen("x86: Found it (%08lx)!",contestwork.keysdone.lo);
+		  rc5result.key.hi = contestwork.key.hi;
+		  rc5result.key.lo = contestwork.key.lo;
+		  rc5result.keysdone.hi = contestwork.keysdone.hi;
+		  rc5result.keysdone.lo = contestwork.keysdone.lo;
+		  rc5result.iterations.hi = contestwork.iterations.hi;
+		  rc5result.iterations.lo = contestwork.iterations.lo;
+		  rc5result.result = RESULT_FOUND;
+		  finished = 1;
+		  return( 1 );
+	      }
+	  }
+      }
+#endif
   }
   else
   {
@@ -731,6 +852,7 @@ s32 Problem::Run( u32 threadnum )
        ( contestwork.keysdone.lo >= contestwork.iterations.lo ) ) )
   {
     // done with this block and nothing found
+LogScreen("Thread %d: Didn't find the key",threadnum);
     rc5result.key.hi = contestwork.key.hi;
     rc5result.key.lo = contestwork.key.lo;
     rc5result.keysdone.hi = contestwork.keysdone.hi;
@@ -744,6 +866,8 @@ s32 Problem::Run( u32 threadnum )
   else
   {
     // more to do, come back later.
+if (threadnum == 1)
+LogScreen("working... %08lx",contestwork.keysdone.lo);
     rc5result.key.hi = contestwork.key.hi;
     rc5result.key.lo = contestwork.key.lo;
     rc5result.keysdone.hi = contestwork.keysdone.hi;

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.44  1998/11/25 09:23:32  chrisb
+// various changes to support x86 coprocessor under RISC OS
+//
 // Revision 1.43  1998/11/08 00:48:35  sampo
 // fix a few typos to enable it to compile.
 //
@@ -153,7 +156,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.43 1998/11/08 00:48:35 sampo Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.44 1998/11/25 09:23:32 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -251,6 +254,11 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       {
       cpucount = sysconf(_SC_NPROCESSORS_ONLN);
       }
+    #elif (CLIENT_OS == OS_RISCOS)
+      {
+      cpucount = riscos_count_cpus();
+      }
+
     #endif
     if (cpucount < 1)  //not supported
       cpucount = -1;
@@ -774,17 +782,24 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
   sprintf( cpuid_b, "%04X:%04X", vendorid, cpuidb );
   cpuid_s = ((const char *)(&cpuid_b[0]));      
 #elif ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS))
-  static char cpuid_b[10];
+  static char cpuid_b[50];
   u32 cpuidb = GetARMIdentification();
   if (cpuidb == 0x0200)
-    cpuid_s = "ARM 2 or ARM 250";
+    strcpy(cpuid_b, "ARM 2 or ARM 250");
   else if (cpuidb == 0x0A10)
-    cpuid_s = "StrongARM 110";
+    strcpy(cpuid_b, "StrongARM 110");
   else
     {
     sprintf( cpuid_b, "%X", cpuidb );
-    cpuid_s = ((const char *)(&cpuid_b[0]));      
     }
+
+  if (riscos_count_cpus() == 2)
+  {
+      strcat(cpuid_b,riscos_x86_determine_name());
+  }
+
+  cpuid_s = ((const char *)(&cpuid_b[0]));      
+  
 #else
   cpuid_s = "none (client does not support identification)";
 #endif    
@@ -797,7 +812,8 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
   #elif defined(OS_SUPPORTS_THREADING) //from threadcd.h
     maxcpu_s = "1 (threading is emulated - client built without thread support)";
   #elif ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && \
-        (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC))
+        (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC) && \
+        (CLIENT_CPU != CPU_ARM))
     maxcpu_s = "1 (threading is emulated - cores are not thread-safe)";
   #else
     maxcpu_s = "1 (threading is emulated - OS does not support threads)";

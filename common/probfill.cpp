@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.8  1998/11/25 09:23:34  chrisb
+// various changes to support x86 coprocessor under RISC OS
+//
 // Revision 1.7  1998/11/07 14:55:46  cyp
 // Now also displays the normalized keycount (in addition to the number of
 // blocks) in buffer files.
@@ -34,7 +37,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.7 1998/11/07 14:55:46 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.8 1998/11/25 09:23:34 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -130,7 +133,7 @@ static unsigned long __iter2norm( unsigned long iter )
 // -----------------------------------------------------------------------
 
 static unsigned int __IndividualProblemUnload( Problem *thisprob, 
-                unsigned int /*prob_i*/, Client *client, int *load_needed, 
+                unsigned int prob_i, Client *client, int *load_needed, 
                       unsigned load_problem_count, unsigned int *contest )
 {
   FileEntry fileentry;
@@ -142,6 +145,9 @@ static unsigned int __IndividualProblemUnload( Problem *thisprob,
 
   *contest = 0;
   *load_needed = 0;
+#if (CLIENT_OS != OS_RISCOS)
+  prob_i = prob_i; //get rid of warning
+#endif
 
   if (thisprob && thisprob->IsInitialized())
     {
@@ -159,7 +165,14 @@ static unsigned int __IndividualProblemUnload( Problem *thisprob,
 
     cputype           = client->cputype; /* needed for FILEENTRY_CPU macro */
     fileentry.op      = htonl( OP_DATA );
+
+
+#if (CLIENT_OS == OS_RISCOS)
+    fileentry.cpu = (prob_i == 0)?FILEENTRY_CPU:FILEENTRY_RISCOS_X86_CPU;
+#else
     fileentry.cpu     = FILEENTRY_CPU;
+#endif
+
     fileentry.os      = FILEENTRY_OS;
     fileentry.buildhi = FILEENTRY_BUILDHI; 
     fileentry.buildlo = FILEENTRY_BUILDLO;
@@ -195,14 +208,17 @@ static unsigned int __IndividualProblemUnload( Problem *thisprob,
 // -----------------------------------------------------------------------
 
 static unsigned int __IndividualProblemSave( Problem *thisprob, 
-                unsigned int /*prob_i*/, Client *client, int *load_needed, 
+                unsigned int prob_i, Client *client, int *load_needed, 
                        unsigned load_problem_count, unsigned int *contest )
 {                    
   FileEntry fileentry;
   RC5Result rc5result;
   unsigned int cont_i;
   unsigned int norm_key_count = 0;
-  
+#if (CLIENT_OS != OS_RISCOS)
+  prob_i = prob_i; //get rid of warning
+#endif
+
   if ( thisprob->IsInitialized() && thisprob->GetResult( &rc5result ) != -1 &&
     (rc5result.result==RESULT_FOUND || rc5result.result==RESULT_NOTHING))
     {
@@ -238,8 +254,13 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       fileentry.op = htonl( OP_DONE_MULTI );
       }
 
-    fileentry.os      = CLIENT_OS;
+#if (CLIENT_OS == OS_RISCOS)
+    fileentry.cpu = (prob_i == 1)?CPU_X86:CPU_ARM;
+#else
     fileentry.cpu     = CLIENT_CPU;
+#endif
+
+    fileentry.os      = CLIENT_OS;
     fileentry.buildhi = CLIENT_CONTEST;
     fileentry.buildlo = CLIENT_BUILD;
     strncpy( fileentry.id, client->id , sizeof(fileentry.id)-1); // set owner's id
@@ -318,6 +339,17 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     }
   #endif
 
+  #if (CLIENT_OS == OS_RISCOS)
+  /*
+    RISC OS x86 thread currently only supports RC5
+   */
+  if (prob_i == 1)
+  {
+      contest_preferred = contest_alternate = 0;
+      contest_count     = 1;
+  }
+  #endif
+
   count = -1;
   for (cont_i = 0;count < 0 && cont_i < contest_count; cont_i++)
     {
@@ -387,10 +419,15 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       {
       // If this is a partial block, and completed by a different 
       // cpu/os/build, then reset the keysdone to 0...
+#if (CLIENT_OS == OS_RISCOS)
+      if (((prob_i == 0) && (fileentry.cpu != FILEENTRY_CPU)) ||
+	  ((prob_i == 1) && (fileentry.cpu != FILEENTRY_RISCOS_X86_CPU)) ||
+#else
       if ((fileentry.cpu     != FILEENTRY_CPU) ||
-          (fileentry.os      != FILEENTRY_OS) ||
-          (fileentry.buildhi != FILEENTRY_BUILDHI) || 
-          (fileentry.buildlo != FILEENTRY_BUILDLO))
+#endif
+	  (fileentry.os      != FILEENTRY_OS) ||
+	  (fileentry.buildhi != FILEENTRY_BUILDHI) || 
+	  (fileentry.buildlo != FILEENTRY_BUILDLO))
         {
         fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
         //LogScreen("Read partial block from another cpu/os/build.\n"
@@ -456,7 +493,9 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
     i = InitializeProblemManager(load_problem_count);
     if (i<=0)
+    {
       return 0;
+    }
     load_problem_count = (unsigned int)i;
     }
   else
@@ -468,7 +507,6 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   for (prob_for=0; prob_for<load_problem_count; prob_for++)
     {
     prob_i= (prob_step < 0) ? ((load_problem_count-1)-prob_for) : (prob_for);
-
     thisprob = GetProblemPointerFromIndex( prob_i );
     if (thisprob == NULL)
       {

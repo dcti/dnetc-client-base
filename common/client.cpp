@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.171  1998/11/25 09:23:27  chrisb
+// various changes to support x86 coprocessor under RISC OS
+//
 // Revision 1.170  1998/11/24 22:41:25  silby
 // Commented out winmain for win32gui - it will call realmain from its own code.
 //
@@ -123,7 +126,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.170 1998/11/24 22:41:25 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.171 1998/11/25 09:23:27 chrisb Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -268,6 +271,15 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       #if (CLIENT_CPU == CPU_POWERPC)
       LogScreenRaw( "PowerPC assembly by Dan Oetting at USGS\n");
       #endif
+
+      #if (CLIENT_CPU == CPU_ARM)
+      LogScreenRaw( "ARM assembly by Steve Lee\n");
+      #if (CLIENT_OS == OS_RISCOS)
+      LogScreenRaw( "PC Card support by Dominic Plunkett\n");
+      #endif
+      #endif
+
+
       #if defined(KWAN) && defined(MEGGS)
       LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n" 
                     "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.39  1998/11/25 09:23:30  chrisb
+// various changes to support x86 coprocessor under RISC OS
+//
 // Revision 1.38  1998/11/25 06:01:26  dicamillo
 // Update for BeOS priorities and NonPolledUSleep for BeOS.
 //
@@ -147,7 +150,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.38 1998/11/25 06:01:26 dicamillo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.39 1998/11/25 09:23:30 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -657,6 +660,16 @@ void Go_mt( void * parm )
   Problem *thisprob = NULL;
   unsigned int threadnum = targ->threadnum;
   u32 run;
+#if (CLIENT_OS == OS_RISCOS)
+/*
+  if (threadnum == 1)
+  {
+      thisprob = GetProblemPointerFromIndex(threadnum);
+      thisprob->Run( threadnum ); 
+      return;
+  }
+*/
+#endif
 
 #if (CLIENT_OS == OS_WIN32)
 if (targ->realthread)
@@ -705,46 +718,47 @@ if (targ->realthread)
 
   while (!CheckExitRequestTriggerNoIO())
     {
-    if (targ->do_refresh)
-      thisprob = GetProblemPointerFromIndex(threadnum);
-    run = 1; //assume didn't run
-    if (thisprob && thisprob->IsInitialized() && !thisprob->finished && 
-       !CheckPauseRequestTriggerNoIO() && !targ->do_suspend)
-      {
-      #ifdef NON_PREEMPTIVE_OS_PROFILING
-      thisprob->tslice = do_ts_profiling( thisprob->tslice, 
-                          thisprob->contest, threadnum );
-      #endif
-
-      targ->is_suspended = 0;
-      // This will return without doing anything if uninitialized...
-      run = thisprob->Run( threadnum ); 
-      targ->is_suspended = 1;
-      
-      #if (CLIENT_OS == OS_NETWARE)
-      yield_pump(NULL);
-      #endif
-      }
-    if (run != 0)
-      {
-      if (thisprob == NULL || !thisprob->IsInitialized() || thisprob->finished)
-        {
-        runstatics.refillneeded = 1;
-        yield_pump(NULL);
-        }
-      else //(CheckPauseRequestTriggerNoIO() || targ->do_suspend)
-        NonPolledSleep(1); // don't race in this loop
-      #ifdef NON_PREEMPTIVE_OS_PROFILING
-      reset_ts_profiling();
-      #endif
-      targ->do_refresh = 1;
-      }
-    if (!targ->realthread)
-      {
-      RegPolledProcedure( Go_mt, parm, NULL, 0 );
-      runstatics.nonmt_ran = 1;
-      break;
-      }
+	if (targ->do_refresh)
+	    thisprob = GetProblemPointerFromIndex(threadnum);
+	run = 1; //assume didn't run
+	if (thisprob && thisprob->IsInitialized() && !thisprob->finished && 
+	    !CheckPauseRequestTriggerNoIO() && !targ->do_suspend)
+	{
+#ifdef NON_PREEMPTIVE_OS_PROFILING
+	    thisprob->tslice = do_ts_profiling( thisprob->tslice, 
+						thisprob->contest, threadnum );
+#endif
+	    
+	    targ->is_suspended = 0;
+	    // This will return without doing anything if uninitialized...
+	    run = thisprob->Run( threadnum ); 
+	    targ->is_suspended = 1;
+	    
+#if (CLIENT_OS == OS_NETWARE)
+	    yield_pump(NULL);
+#endif
+	}
+	if (run != 0)
+	{
+	    if (thisprob == NULL || !thisprob->IsInitialized() || thisprob->finished)
+	    {
+		runstatics.refillneeded = 1;
+		yield_pump(NULL);
+	    }
+	    else //(CheckPauseRequestTriggerNoIO() || targ->do_suspend)
+		if (!targ->realthread)
+		    NonPolledSleep(1); // don't race in this loop
+#ifdef NON_PREEMPTIVE_OS_PROFILING
+	    reset_ts_profiling();
+#endif
+	    targ->do_refresh = 1;
+	}
+	if (!targ->realthread)
+	{
+	    RegPolledProcedure( Go_mt, parm, NULL, 0 );
+	    runstatics.nonmt_ran = 1;
+	    break;
+	}
     }
   
   targ->threadID = 0; //the thread is dead
@@ -812,7 +826,12 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     thrparams->realthread = 1;            /* int */
     thrparams->timeslice = timeslice;     /* s32 */
     thrparams->priority = priority;       /* unsigned int */
-    thrparams->do_suspend = thrparams->is_suspended = 0;
+#if (CLIENT_OS == OS_RISCOS)
+    thrparams->do_suspend = /*thread_i?1:*/0;
+#else
+    thrparams->do_suspend = 0;
+#endif
+    thrparams->is_suspended = 0;
     thrparams->do_refresh = 1;            
     thrparams->thread_data1 = 0;          /* ulong, free for thread use */
     thrparams->thread_data2 = 0;          /* ulong, free for thread use */
@@ -1029,6 +1048,7 @@ int Client::Run( void )
     if (load_problem_count > 1)
       Log( "Loading one block per cruncher...\n" );
     load_problem_count = LoadSaveProblems( load_problem_count, 0 );
+
     if (load_problem_count == 0)
       {
       Log("Unable to load any blocks. Quitting...\n");
@@ -1110,7 +1130,6 @@ int Client::Run( void )
         break;
         }
       }
-
     if (load_problem_count == 0)
       {
       Log("Unable to initialize cruncher(s). Quitting...\n");
@@ -1200,6 +1219,8 @@ int Client::Run( void )
             && !runstatics.refillneeded 
             && !CheckExitRequestTriggerNoIO()
             && ModeReqIsSet(-1)==0)
+        sleep(1);
+      if (!runstatics.refillneeded)
         sleep(1);
       }
     SetGlobalPriority( 9 );

@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.33  1998/11/25 09:23:26  chrisb
+// various changes to support x86 coprocessor under RISC OS
+//
 // Revision 1.32  1998/11/25 05:59:36  dicamillo
 // Header changes for BeOS R4.
 //
@@ -185,11 +188,13 @@ extern "C" {
     extern unsigned int ARMident(), IOMDident();
     extern void riscos_clear_screen();
     extern bool riscos_check_taskwindow();
+    extern void riscos_backspace();
+    extern int riscos_count_cpus();
+    extern char *riscos_x86_determine_name();
     extern int riscos_find_local_directory(const char *argv0);
     extern char *riscos_localise_filename(const char *filename);
     extern void riscos_upcall_6(void); //yield
     extern int getch();
-
     #define fileno(f) ((f)->__file)
     #define isatty(f) ((f) == 0)
   }

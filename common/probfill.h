@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.h,v $
+// Revision 1.2  1998/11/25 09:23:36  chrisb
+// various changes to support x86 coprocessor under RISC OS
+//
 // Revision 1.1  1998/09/28 01:16:09  cyp
 // Spun off from client.cpp
 //
@@ -25,6 +28,11 @@
 #endif    
 
 #define FILEENTRY_CPU    ((u8)(((cputype & 0x0F)<<4) | (CLIENT_CPU & 0x0F)))
+
+#if (CLIENT_OS == OS_RISCOS)
+#define FILEENTRY_RISCOS_X86_CPU    ((u8)(((cputype & 0x0F)<<4) | (CPU_X86 & 0x0F)))
+#endif
+
 #define FILEENTRY_OS      ((CLIENT_OS & 0x3F) | ((CLIENT_CPU & 0x10) << 3) | \
                            (((CLIENT_BUILD_FRAC>>8)&2)<<5))
 #define FILEENTRY_BUILDHI ((((CLIENT_CONTEST-64)&0x0F)<<4) | \

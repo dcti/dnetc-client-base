@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.28  1998/11/25 09:23:37  chrisb
+// various changes to support x86 coprocessor under RISC OS
+//
 // Revision 1.27  1998/11/14 14:07:54  cyp
 // Removed trailing ^Z
 //
@@ -221,7 +224,7 @@ public:
   unsigned int probman_index; /* index of this problem in the problem table */
                               /* -1 if the problem is not managed by probman*/
   
-protected:
+// protected: ahem.
   u32 initialized;
   ContestWork contestwork;
   RC5UnitWork rc5unitwork;
