@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.30  1998/11/09 18:01:25  cyp
+// Fixed timeRun adjustment. (checkpoints were always being updated every 3 secs)
+//
 // Revision 1.29  1998/11/09 01:15:54  remi
 // Linux/aout doesn't have sched_yield(), replaced by NonPolledUSleep( 0 );
 //
@@ -117,7 +120,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.29 1998/11/09 01:15:54 remi Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.30 1998/11/09 18:01:25 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -1170,7 +1173,7 @@ int Client::Run( void )
     //------------------------------------
 
     timeNow = CliTimer(NULL)->tv_sec;
-    if (timeLast!=0 && (timeNow < (timeLast+(600))) && (timeNow > timeLast))
+    if (timeLast!=0 && timeNow > timeLast)
       timeRun += timeLast - timeNow; //make sure time is monotonic
     timeLast = timeNow;
 
