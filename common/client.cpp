@@ -3203,7 +3203,7 @@ int main( int argc, char *argv[] )
               "-percentoff  No percentage progress      -nodisk      No disk buffer files\n"
               "-frequent    Attempt updates often       -quiet       Don't print screen output\n"
               "-forceunlock fn  Unlock file 'fn'        -nofallback  Don't fallback to r.d.n\n"
-              "-prefer x    Preferred ctst 1=RC5, 2=DES -blsize n    Preferred blksize (2^n)\n"
+              "-processdes x Process DES? 1=yes, 0=no   -blsize n    Preferred blksize (2^n)\n"
               , argv[0]);
     #endif //not-netware
     retcode = 0;
