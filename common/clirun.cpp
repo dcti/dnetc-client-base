@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.90 1999/04/17 19:03:43 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.91 1999/04/22 01:55:53 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -604,10 +604,10 @@ if (targ->realthread)
       static struct 
       {  unsigned int contest; u32 msec, max, min; volatile u32 optimal;
       } dyn_timeslice[CONTEST_COUNT] = {
-        {  RC5,  500,  0x80000,  0x00100,  0x10000 },
-        {  DES,  500,  0x80000,  0x00100,  0x10000 },
+        {  RC5, 1000, 0x80000000,  0x00100,  0x10000 },
+        {  DES, 1000, 0x80000000,  0x00100,  0x10000 },
         {  OGR,    OGR_TIMESLICE_MSEC, OGR_TIMESLICE_MAX, 0x0100,  0x1000 },
-        {  CSC,  500,  0x80000,  0x00100,  0x10000 }
+        {  CSC, 1000, 0x80000000,  0x00100,  0x10000 }
       };  
       int run; u32 optimal_timeslice = 0; u32 runtime_ms;
       unsigned int contest_i = thisprob->contest;
@@ -1341,8 +1341,8 @@ int Client::Run( void )
 
 //LogScreen("ckpoint refresh check. %d%% dif\n", 
 //                           abs((int)(checkpointsPercent - ((int)perc_now))));
-        if ( abs((int)(checkpointsPercent - ((unsigned int)perc_now))) 
-                                                >= CHECKPOINT_FREQ_PERCDIFF )
+        if ( ( timeNextCheckpoint == 0 ) || ( CHECKPOINT_FREQ_PERCDIFF < 
+          abs((int)(checkpointsPercent - ((unsigned int)perc_now))) ) )
         {
           checkpointsPercent = (unsigned int)perc_now;
           if (CheckpointAction( CHECKPOINT_REFRESH, load_problem_count ))
