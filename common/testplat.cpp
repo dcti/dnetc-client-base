@@ -7,7 +7,7 @@
  * Specify 'build_dependancies' as argument 
  * (which is all this needs to do anymore)
  *
- * $Id: testplat.cpp,v 1.4.2.4 2001/01/28 00:57:05 cyp Exp $
+ * $Id: testplat.cpp,v 1.4.2.5 2001/01/28 14:31:55 cyp Exp $
 */ 
 #include <stdio.h>
 #include <string.h>
@@ -115,13 +115,12 @@ static unsigned int build_dependancies( char *cppname ) /* ${TARGETSRC} */
                 //fprintf(stderr, "%d) '%s'\n", l, foundbuf);
               }
             }
-            if ( !fileexists( foundbuf ) )
+            if ( fileexists( foundbuf ) )
             {
-              strcpy(foundbuf,linebuf);
-            }
-            __fixup_pathspec_for_makefile(foundbuf);
-            printf( "%s%s", ((count!=0)?(" "):("")), foundbuf );
-            count++;
+              __fixup_pathspec_for_makefile(foundbuf);
+              printf( "%s%s", ((count!=0)?(" "):("")), foundbuf );
+              count++;
+            }  
           }
         }
       }
