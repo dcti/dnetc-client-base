@@ -16,6 +16,9 @@
 // -----------------------------------------------------------------------
 //
 // $Log: triggers.cpp,v $
+// Revision 1.2  1998/09/06 21:01:04  silby
+// Changes to make deinittriggers clear all info so a subsequent call to inittriggers will be fruitful.
+//
 // Revision 1.1  1998/08/10 20:12:15  cyruspatel
 // Created
 //
@@ -23,7 +26,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.1 1998/08/10 20:12:15 cyruspatel Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.2 1998/09/06 21:01:04 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -169,6 +172,9 @@ int CheckPauseRequestTrigger(void)
 
 int DeinitializeTriggers(void)  //whats there to do?
 {
+  trigstatics.isinit=0;
+  memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
+    // Make sure it's reinited later for clients that init/deinit (guis)
   return 0;
 }  
 
