@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.49 2000/06/28 15:12:53 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.50 2000/07/06 18:50:15 ctate Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -586,7 +586,7 @@ static long __GetRawProcessorID(const char **cpuname)
   if (detectedtype == -2L)
   {
     system_info sInfo;
-    sInfo.cpu_type = 0;
+    sInfo.cpu_type = (cpu_type) 0;
     get_system_info(&sInfo);
     detectedtype = -1;
     if (sInfo.cpu_type) /* didn't fail */
