@@ -6,7 +6,7 @@
 //
 
 #ifndef __RSADATA_H__
-#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.10 2002/09/23 12:01:32 acidblood Exp $"
+#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.11 2002/09/25 10:26:18 acidblood Exp $"
 
 // RC5-56:
 // Contest identifier: RC5-32/12/7 
@@ -64,7 +64,7 @@
 #define RC572_CYPHERLO 0xBEFCAFE7L
 #define RC572_CYPHERHI 0xA6EC745FL
 #define RC572_PLAINLO 0x20656854L
-#define RC572_PLAINHI 0x636B6E75L
+#define RC572_PLAINHI 0x6E6B6E75L
 
 // DES-II-1:
 // Contest Identifier: DES-II-1
