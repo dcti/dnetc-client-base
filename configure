@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.87  1998/08/20 03:37:18  silby
+# Added NASM includes to all x86 makefiles.
+#
 # Revision 1.86  1998/08/20 02:37:08  silby
 # Fixed configure, now works properly with NASM rc5 mmx cores.
 #
@@ -656,6 +659,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -Dsolaris -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="output/bdeslow.S output/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
@@ -663,6 +667,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="output/bdeslow.S output/bbdeslow.S output/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
@@ -775,6 +780,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lncurses"
 	;;
 
@@ -785,6 +791,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lncurses"
 	;;
 
@@ -794,6 +801,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lncurses"
 	;;
 
@@ -803,6 +811,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	;;
 
     *x86-linux-egcs-debug)        # debug version of x86-linux-egcs
@@ -811,6 +820,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -D__showids__"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_STRIP="touch"
 	TARGET_LIBS="-lncurses"
 	;;
@@ -821,6 +831,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -D__showids__"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_STRIP="touch"
 	TARGET_LIBS="-lncurses"
 	;;
@@ -831,6 +842,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -D__showids__"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_STRIP="touch"
 	TARGET_LIBS="-lncurses"
 	;;
@@ -842,6 +854,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ $OPTS_DES_ULTRA_C"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
 	TARGET_ADDASMS="platforms/x86ident.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lncurses"
 	TARGET_STRIP="touch"
 	;;
@@ -853,6 +866,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ $OPTS_DES_ULTRA_C"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
 	TARGET_ADDASMS="platforms/x86ident.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lncurses"
 	TARGET_STRIP="touch"
 	;;
@@ -864,6 +878,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lncurses"
 	;;
 
@@ -874,6 +889,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lncurses"
 	;;
 
@@ -884,6 +900,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lpthread -lncurses"
 	;;
 
@@ -894,6 +911,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lpthread -lncurses"
 	;;
 
@@ -913,6 +931,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="platforms/x86ident.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lpthread -lncurses"
 	;;
 
@@ -923,6 +942,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	;;
 
     *x86-freebsd-mt)
@@ -930,6 +950,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lc_r"
 	;;
 
@@ -938,6 +959,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	;;
 
     *x86-openbsd)
@@ -945,6 +967,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	;;
 
     *x86-bsdi)
@@ -952,6 +975,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
        ;;
 
 ####### Intel X86 SCO5
@@ -961,6 +985,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2 -belf -Dsco5"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lsocket"
 	;;
 
@@ -971,6 +996,7 @@ case "$1" in
 	TARGET_CC="ec++"
 	TARGET_CCFLAGS="$OPTS_EPC_DYNIX -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$OLDER_MEGGS_SLICE_SRCS"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lsocket -lnsl -lseq -L/opt/epc/ec++/lib -lec++"
 	;;
 
@@ -978,6 +1004,7 @@ case "$1" in
 	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_DYNIX -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LDFLAGS="-L."
 	# Don't panic; -lXbsd is for gettimeofday()
 	TARGET_LIBS="-lsocket -linet -lnsl -lXbsd -lseq"
@@ -991,6 +1018,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -D_NeXT_ -DPIPELINE_COUNT=2 -DBIT_32"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	;;
 
     *m68k-next-gcc)
