@@ -6,11 +6,14 @@
  * Marco.Walther@mch.sni.de
  *
  * $Log: mips-crunch.cpp,v $
+ * Revision 1.8  1998/07/14 08:41:30  remi
+ * Cleaned-up the extra $Log
+ *
  * Revision 1.7  1998/07/12 23:17:37  foxyloxy
  * Stripped some ctrl-Ls that were scattered about the whitespace...
  *
  * Revision 1.6  1998/07/08 22:59:31  remi
- * Lots of $Id: mips-crunch.cpp,v 1.7 1998/07/12 23:17:37 foxyloxy Exp $ stuff.
+ * Lots of $Id stuff.
  *
  * Revision 1.5  1998/06/14 08:27:13  friedbait
  * 'Id' tags added in order to support 'ident' command to display a bill of
@@ -29,7 +32,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mips_crunch_cpp(void) {
-return "@(#)$Id: mips-crunch.cpp,v 1.7 1998/07/12 23:17:37 foxyloxy Exp $"; }
+return "@(#)$Id: mips-crunch.cpp,v 1.8 1998/07/14 08:41:30 remi Exp $"; }
 #endif
 
 
