@@ -6,7 +6,7 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.27.2.13 2000/06/27 13:38:22 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.14 2000/07/02 17:14:51 cyp Exp $
 
 BASENAME = dnetc
 
@@ -44,14 +44,9 @@ BASENAME = dnetc
                    output\csc-mmx.obj
 %cscstd_DEFALL   = -DHAVE_CSC_CORES -Icsc -DMMX_CSC
 %cscstd_SYMALIAS = 
-#                  csc_unit_func_1k=_csc_unit_func_1k
-#                  csc_unit_func_6b_i=_csc_unit_func_6b_i &
-#                  csc_unit_func_1k=_csc_unit_func_1k &
-#                  csc_unit_func_6b=_csc_unit_func_6b
-#                  csc_unit_func_1k_i=_csc_unit_func_1k_i &                   
-#                  
 #---
-%ogrstd_LINKOBJS = output\ogr.obj output\choosedat.obj output\crc32.obj 
+%ogrstd_LINKOBJS = output\ogr.obj output\ogr_sup.obj &
+                   output\choosedat.obj output\crc32.obj 
 %ogrstd_DEFALL   = -DHAVE_OGR_CORES -Iogr
 %ogrstd_SYMALIAS = #
 #---

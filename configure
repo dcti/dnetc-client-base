@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.168 2000/07/01 10:43:44 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.169 2000/07/02 17:14:51 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -194,10 +194,10 @@ DESULTRA_SRCS_ASM="des/ultrasparc/des-slice-ultrasparc.cpp \
 #
 # Source files making up the OGR core code
 #
-OGR_ANSI_SRCS="ogr/ogr.cpp ogr/crc32.cpp ogr/choosedat.cpp"
+OGR_ANSI_SRCS="ogr/ogr.cpp ogr/ogr_sup.cpp ogr/crc32.cpp ogr/choosedat.cpp"
 #if adding OGR, also -DHAVE_OGR_CORES
 
-OGR_PPC_SRCS="ogr/ppc/ogr-ppc.cpp ogr/crc32.cpp ogr/choosedat.cpp"
+OGR_PPC_SRCS="ogr/ppc/ogr-ppc.cpp ogr/ogr_sup.cpp ogr/crc32.cpp ogr/choosedat.cpp"
 
 OGR_ALTIVEC_SRCS="ogr/ppc/ogr-vec.cpp"
 
