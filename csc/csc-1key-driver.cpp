@@ -12,7 +12,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-driver.cpp,v 1.3.2.10 1999/12/22 01:05:30 trevorh Exp $"; }
+return "@(#)$Id: csc-1key-driver.cpp,v 1.3.2.11 1999/12/31 20:26:57 michmarc Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
@@ -31,7 +31,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   // align buffer on a 16-byte boundary
   assert(sizeof(void*) == sizeof(unsigned long));
   char *membuffer = (char*)membuff;
-  if( (unsigned long)membuffer & 15 != 0)
+  if( ((unsigned long)membuffer & 15) != 0)
     membuffer = (char*)(((unsigned long)(membuffer+15) & ~((unsigned long)15)));
 
   //ulong key[2][64];
@@ -107,7 +107,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   ulong result;
   u32 bkey = 0;
   for( ;; ) {
-    result = PASTE(cscipher_bitslicer_,CSC_SUFFIX) ( (unsigned long const (* )[64])*key, *plain, *cipher, membuffer );
+    result = PASTE(cscipher_bitslicer_,CSC_SUFFIX) ( (ulong const (* )[64])*key, *plain, *cipher, membuffer );
     if( result )
       break;
     if( ++bkey >= (1ul << (nbits - CSC_BITSLICER_BITS) ) )
