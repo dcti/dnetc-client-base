@@ -11,7 +11,7 @@
 
 /* include files for version 2 code */
 #include "problem.h"
-#include "rotate.h"
+#include "../rc5/rotate.h"
 
 #if (PIPELINE_COUNT != 2)
 #error "Expecting pipeline count of 2"

@@ -34,7 +34,7 @@
 
 
 #include "problem.h"
-#include "rotate.h"
+#include "../rc5/rotate.h"
 
 
 #if (PIPELINE_COUNT != 2)
