@@ -5,16 +5,20 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.50  1999/01/31 20:18:08  cyp
+// Discarded all 'bool' type wierdness. If a variable name and usage does not
+// clearly identify it as being 0 or !0, no amount of declaration as bool
+// is going to help. And if a variable name /does/ clearly identify purpose, we
+// don't need to typedef it, do we?
+//
 // Revision 1.49  1999/01/27 00:40:01  jlawson
 // some cleanup and additions of more cpu detection macros commonly
 // defined automatically by some compilers.
 //
 // Revision 1.48  1999/01/20 20:25:10  patrick
-//
 // OS2 EMX has threadid in stdlib
 //
 // Revision 1.47  1999/01/19 09:38:03  patrick
-//
 // added recognition of OS2-EMX
 //
 // Revision 1.46  1999/01/17 13:01:25  cyp
@@ -239,7 +243,7 @@ struct s128 { s64 hi, lo; };
 
 // determine current compiling platform
 #if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
-
+  
   #define CLIENT_OS_NAME "Win32"
   #if defined(NTALPHA)
     #define CLIENT_OS     OS_WIN32
@@ -546,37 +550,6 @@ struct s128 { s64 hi, lo; };
    #define CLIENT_SUPPORTS_SMP
 #endif  
 #undef MULTITHREAD //undef it to avoid 'unsafe' meaning
-
-/* ----------------------------------------------------------------- */
-
-// Some compilers/platforms don't yet support bool internally.
-// When creating new rules here, please try to use compiler-specific macro tests
-// since not all compilers on a specific platform (or even a newer version of
-// your own compiler) may be missing bool.
-//
-#if defined(__VMS) || defined(__SUNPRO_CC) || defined(__DECCXX) || defined(__MVS__)
-  #define NEED_FAKE_BOOL
-#elif defined(_HPUX) || defined(_OLD_NEXT_)
-  #define NEED_FAKE_BOOL
-#elif defined(__WATCOMC__)
-  //nothing - bool is defined
-#elif defined(__xlc) || defined(__xlC) || defined(__xlC__) || defined(__XLC121__)
-  #define NEED_FAKE_BOOL
-#elif (defined(__mips) && __mips < 3 && !defined(__GNUC__))
-  #define NEED_FAKE_BOOL
-#elif (defined(__TURBOC__) && __TURBOC__ <= 0x400)
-  #define NEED_FAKE_BOOL
-#elif (defined(_MSC_VER) && _MSC_VER < 1100)
-  #define NEED_FAKE_BOOL
-#elif (defined(_SEQUENT_) && !defined(__GNUC__))
-  #define NEED_FAKE_BOOL
-#endif
-
-#if defined(NEED_FAKE_BOOL)
-    typedef int bool;
-    #define true (!0)
-    #define false (0)
-#endif
 
 /* ----------------------------------------------------------------- */
 
