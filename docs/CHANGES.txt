@@ -21,12 +21,13 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.79 2004/07/13 22:26:17 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.80 2004/07/14 01:57:05 piru Exp $
 ==========================================================================
 
 2.9000
 ------
-2.9008-493  new: macosx: ASM-optimized GARSP-5 cores (KOGE Scalar/Hybrid)
+2.9008-493  new: ppc: Enabled KOGE cores for MorphOS and linux-ppc
+            new: macosx: ASM-optimized GARSP-5 cores (KOGE Scalar/Hybrid)
             fix: all: Fixed an issue with -runbuffers (= -runoffline -n -1)
                       that caused the client to wait for ever.
 
