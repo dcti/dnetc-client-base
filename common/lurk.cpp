@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.29 2000/11/12 21:27:29 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.30 2000/12/17 02:49:56 mfeiri Exp $"; }
 
 //#define TRACE
 
@@ -438,7 +438,7 @@ int LurkGetCapabilityFlags(void)
           int canlurk = 1; 
           #ifdef LURK_LISTENER
           canlurk = 0;
-          if( fEndPoint->InstallNotifier((OTNotifyProcPtr)__OTListener,this) == kOTNoError) 
+          if( fEndPoint->InstallNotifier((OTNotifyProcPtr)__OTListener,nil) == kOTNoError) 
           {
             OTSetAsynchronous(fEndPoint);
             if(OTIoctl(fEndPoint, I_OTGetMiscellaneousEvents, (void*)1) == kOTNoError )
