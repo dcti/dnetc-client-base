@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.37 1999/05/05 00:26:56 remi Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.37.2.1 1999/09/18 18:00:19 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -820,9 +820,16 @@ void InitializeLogging( int noscreen, int nopercent, const char *logfilename,
     logstatics.mailmessage = new MailMessage();
   if (logstatics.mailmessage)
   {
-    logstatics.loggingTo |= LOGTO_MAIL;
-    logstatics.mailmessage->Initialize( mailmsglen, smtpsrvr, smtpport,
-                                        smtpfrom, smtpdest, id );
+    if (logstatics.mailmessage->Initialize( mailmsglen, smtpsrvr, smtpport,
+                                           smtpfrom, smtpdest, id ) == 0)
+    {
+      logstatics.loggingTo |= LOGTO_MAIL;
+    }
+    else
+    {                                           
+      delete logstatics.mailmessage;
+      logstatics.mailmessage = NULL;
+    }
   }
   return;
 }  
