@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.4 1999/06/06 00:11:48 remi Exp $
+# @(#)$Id: configure,v 1.222.2.5 1999/06/06 15:36:36 cyp Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -976,8 +976,7 @@ case "$1" in
 
   ### Other targets
 
-    *x86-linux-gcc)			# nomt, static, gcc/pipe
-        #used by cyp <cyp@fb14.uni-mainz.de>
+    *x86-linux-gcc)			# [cyp] nomt, static, gcc/pipe
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -pipe \
@@ -1115,60 +1114,74 @@ case "$1" in
 	TARGET_LIBS="-lpthread"
 	;;
 
-###### Intel X86 FreeBSD/NetBSD/OpenBSD
+###### Intel X86 FreeBSD
 
-    *x86-freebsd)
+    *x86-freebsd)             # [dbaker] aout
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-DLURK"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
-	TARGET_LIBS="-lc_r"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -f aoutb"
-	;;
-
-    *x86-freebsd-mt)
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DMULTITHREAD -DLURK"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lc_r"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -f aoutb"
 	;;
 
-    *x86-freebsd-elf)
+    *x86-freebsd-mt)         # [dbaker] aout + pthread
+        echo "The x86-freebsd-mt target is obsolete. Its identical to the x86-freebsd target."
+        echo "The only difference is the -DMULTITHREAD switch and thats not needed"
+        echo "since we no longer use pthreads"
+        exit 1
+        TARGET_AS="gcc -c"
+ 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
+ 			-DMULTITHREAD -DLURK"
+ 	TARGET_LDFLAGS="-static"
+ 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+ 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
+ 			platforms/x86ident.S \
+ 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
+ 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+ 	TARGET_LIBS="-lc_r"
+ 	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -f aoutb"
+ 	;;
+
+    *x86-freebsd-elf)       # [dbaker] elf
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-D__ELF__ -DLURK"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASM="/usr/local/bin/nasm"
-	TARGET_LIBS="-lc_r"
-	;;
-
-    *x86-freebsd-mt-elf)
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DMULTITHREAD -DLURK"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lc_r"
 	;;
+ 
+    *x86-freebsd-mt-elf)    # [dbaker] elf + pthread
+        echo "The x86-freebsd-mt-elf target is obsolete. (identical to x86-freebsd-elf)"
+        echo "The only difference is the -DMULTITHREAD switch and thats not needed"
+        echo "since we no longer use pthreads"
+        exit 1
+        TARGET_AS="gcc -c"
+        TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
+ 		       -D__ELF__ -DMULTITHREAD -DLURK"
+        TARGET_LDFLAGS="-static"
+        TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+        TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
+ 		        platforms/x86ident.S \
+ 		        des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
+        TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+        TARGET_LIBS="-lc_r"
+        ;;
 
-    *x86-freebsd4-mt-elf)
+    *x86-freebsd4-mt-elf)    # [dbaker] elf + pthread + fbsd4
+        echo "The x86-freebsd4-mt-elf target is obsolete. (identical to x86-freebsd-elf)"
+        echo "The FreeBSD version is detected at runtime."
+        exit 1
         TARGET_AS="gcc -c"
         TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -DLURK \
                         -DMULTITHREAD -DCLIENT_OS_MINOR=4"
@@ -1181,6 +1194,8 @@ case "$1" in
         TARGET_LIBS="-lc_r"
         ;;
 
+###### Intel X86 NetBSD
+
     *x86-netbsd)
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5"
@@ -1191,13 +1206,7 @@ case "$1" in
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	;;
 
-    *x86-qnx4)
-	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
-	;;
+###### Intel X86 OpenBSD
 
     *x86-openbsd)
 	TARGET_AS="g++ -c"
@@ -1209,6 +1218,8 @@ case "$1" in
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	;;
 
+###### Intel X86 BSDI
+
     *x86-bsdi)                        # snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC272_X86 -DKWAN -D_CPU_32BIT_"
@@ -1217,8 +1228,7 @@ case "$1" in
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
        ;;
 
-####### BSD/OS 4.0 with ELF format
-    *x86-bsdi4)                       # snake
+    *x86-bsdi4)                       # BSD/OS 4.0 with ELF format -snake
 	TARGET_AS="g++ -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__ELF__"
 	TARGET_LDFLAGS="-static"
@@ -1226,6 +1236,16 @@ case "$1" in
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
        ;;
+
+####### Intel X86 QNX
+
+    *x86-qnx4)
+	TARGET_AS="g++ -c -DNO_BALIGN"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4"
+	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
+	;;
 
 ####### Intel X86 SCO5
 
