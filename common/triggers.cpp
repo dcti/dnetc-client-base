@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16 1999/05/07 04:27:14 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.1 1999/05/11 02:03:38 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -316,22 +316,22 @@ void CliSetupSignals( void ) {}
 #ifndef CLISIGHANDLER_IS_SPECIAL
 extern "C" void CliSignalHandler( int sig )
 {
-  #if defined(SIGUSR1) && defined(SIGUSR2)
-  if (sig == SIGUSR1)
+  #if defined(SIGSTOP) && defined(SIGCONT) //&& defined(__unix__)
+  if (sig == SIGSTOP)
   {
     signal(sig,CliSignalHandler);
     RaisePauseRequestTrigger();
     return;
   }
-  if (sig == SIGUSR2)
+  if (sig == SIGCONT)
   {
     signal(sig,CliSignalHandler);
     ClearPauseRequestTrigger();
     return;
   }
   #endif  
-  #if defined(SIGHUP) && (CLIENT_OS != OS_BEOS)
-  // according to peter dicamillo, BeOS' shell's sends _only_ a sighup. Uh, huh.
+  #if defined(SIGHUP) //&& (CLIENT_OS != OS_BEOS)
+  // according to peter dicamillo, BeOS' bash sends _only_ a sighup. Uh, huh.
   if (sig == SIGHUP)
   {
     signal(sig,CliSignalHandler);
@@ -369,17 +369,16 @@ void CliSetupSignals( void )
   break_on(); //break on any dos call, not just term i/o
   #endif
   #if defined(SIGHUP)
-  signal( SIGHUP, CliSignalHandler );   //restart (or for beos==shutdown)
-  #endif
-  #if defined(SIGUSR1) && defined(SIGUSR2)
-  signal( SIGUSR1, CliSignalHandler );  //pause
-  signal( SIGUSR2, CliSignalHandler );  //unpause
+  signal( SIGHUP, CliSignalHandler );   //restart
   #endif
   #if defined(SIGQUIT)
   signal( SIGQUIT, CliSignalHandler );  //shutdown
   #endif
   #if defined(SIGSTOP)
-  signal( SIGSTOP, CliSignalHandler );  //shutdown
+  signal( SIGSTOP, CliSignalHandler );  //pause
+  #endif
+  #if defined(SIGCONT)
+  signal( SIGCONT, CliSignalHandler );  //continue
   #endif
   #if defined(SIGABRT)
   signal( SIGABRT, CliSignalHandler );  //shutdown

@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133 1999/05/08 19:03:51 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.1 1999/05/11 02:03:37 cyp Exp $"; }
 
 //#define TRACE
 
@@ -44,16 +44,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
 
   TRACE_OUT((+1,"ParseCommandline(%d,%d)\n",run_level,argc));
 
-  #if ((CLIENT_OS == OS_DEC_UNIX)    || (CLIENT_OS == OS_HPUX)    || \
-       (CLIENT_OS == OS_QNX)         || (CLIENT_OS == OS_OSF1)    || \
-       (CLIENT_OS == OS_BSDI)        || (CLIENT_OS == OS_SOLARIS) || \
-       (CLIENT_OS == OS_IRIX)        || (CLIENT_OS == OS_SCO)     || \
-       (CLIENT_OS == OS_LINUX)       || (CLIENT_OS == OS_NETBSD)  || \
-       (CLIENT_OS == OS_UNIXWARE)    || (CLIENT_OS == OS_DYNIX)   || \
-       (CLIENT_OS == OS_MINIX)       || (CLIENT_OS == OS_MACH10)  || \
-       (CLIENT_OS == OS_AIX)         || (CLIENT_OS == OS_AUX)     || \
-       (CLIENT_OS == OS_OPENBSD)     || (CLIENT_OS == OS_SUNOS)   || \
-       (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX))
+  #if defined(__unix__)
   {
     static int doneunhider = 0;
     if (!doneunhider)
@@ -149,17 +140,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                 ( strcmp( thisarg, "-pause" ) == 0 ) ||
                 ( strcmp( thisarg, "-unpause" ) == 0 ) )
       {
-        #if ((CLIENT_OS == OS_DEC_UNIX)    || (CLIENT_OS == OS_HPUX)    || \
-             (CLIENT_OS == OS_QNX)         || (CLIENT_OS == OS_OSF1)    || \
-             (CLIENT_OS == OS_BSDI)        || (CLIENT_OS == OS_SOLARIS) || \
-             (CLIENT_OS == OS_IRIX)        || (CLIENT_OS == OS_SCO)     || \
-             (CLIENT_OS == OS_LINUX)       || (CLIENT_OS == OS_NETBSD)  || \
-             (CLIENT_OS == OS_UNIXWARE)    || (CLIENT_OS == OS_DYNIX)   || \
-             (CLIENT_OS == OS_MINIX)       || (CLIENT_OS == OS_MACH10)  || \
-             (CLIENT_OS == OS_AIX)         || (CLIENT_OS == OS_AUX)     || \
-             (CLIENT_OS == OS_OPENBSD)     || (CLIENT_OS == OS_SUNOS)   || \
-             (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX))
+        #if defined(__unix__)
         {
+	  //could some kind person please convert this to use popen()?
           terminate_app = 1;
           char buffer[1024];
           int sig = 0;
@@ -173,13 +156,13 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else if (strcmp( thisarg, "-pause" ) == 0)
           {
-            sig = SIGUSR1;
+            sig = SIGSTOP;
             dowhat_descrip = "paused";
           }
           else if (strcmp( thisarg, "-unpause" ) == 0)
           {
-            sig = SIGHUP;
-            dowhat_descrip = "unpaused (by restart)";
+            sig = SIGCONT;
+            dowhat_descrip = "unpaused";
           }
           else
           {
@@ -1260,16 +1243,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
     quietmode = 0;
     ModeReqSet( MODEREQ_CONFIG );
   }
-  #if ((CLIENT_OS == OS_DEC_UNIX)    || (CLIENT_OS == OS_HPUX)    || \
-       (CLIENT_OS == OS_QNX)         || (CLIENT_OS == OS_OSF1)    || \
-       (CLIENT_OS == OS_BSDI)        || (CLIENT_OS == OS_SOLARIS) || \
-       (CLIENT_OS == OS_IRIX)        || (CLIENT_OS == OS_SCO)     || \
-       (CLIENT_OS == OS_LINUX)       || (CLIENT_OS == OS_NETBSD)  || \
-       (CLIENT_OS == OS_UNIXWARE)    || (CLIENT_OS == OS_DYNIX)   || \
-       (CLIENT_OS == OS_MINIX)       || (CLIENT_OS == OS_MACH10)  || \
-       (CLIENT_OS == OS_AIX)         || (CLIENT_OS == OS_AUX)     || \
-       (CLIENT_OS == OS_OPENBSD)     || (CLIENT_OS == OS_SUNOS)   || \
-       (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX))
+  #if defined(__unix__)
   else if (!terminate_app && run_level==0 && (ModeReqIsSet(-1)==0) && quietmode)
   {
     pid_t x = fork();
@@ -1278,6 +1252,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       terminate_app = 1;
       if (x == -1) //Error
         ConOutErr("fork() failed.  Unable to start quiet/hidden.");
+    }
+    else /* child */
+    {    /* don't/can't use these anymore */
+      if (isatty(fileno(stdin)))
+        fclose(stdin);   
+      if (isatty(fileno(stdout)))
+        fclose(stdout);
+      if (isatty(fileno(stderr)))
+        fclose(stderr);
     }
   }
   #endif
