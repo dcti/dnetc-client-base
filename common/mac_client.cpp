@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mac_client.cpp,v $
+// Revision 1.7  1999/01/16 22:00:41  sampo
+// change for fba (#include "clirate.h") so it will compile.
+//
 // Revision 1.6  1999/01/07 03:19:06  dicamillo
 // Add ReInitializeClient method.
 //
@@ -24,7 +27,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *mac_client_cpp(void) {
-return "@(#)$Id: mac_client.cpp,v 1.6 1999/01/07 03:19:06 dicamillo Exp $"; }
+return "@(#)$Id: mac_client.cpp,v 1.7 1999/01/16 22:00:41 sampo Exp $"; }
 #endif
 
 // This file contains the routines added to the Client class for the Mac_Client
@@ -44,6 +47,7 @@ return "@(#)$Id: mac_client.cpp,v 1.6 1999/01/07 03:19:06 dicamillo Exp $"; }
 #include "logstuff.h"
 #include "Mac_Client.h"
 #include "String.h"
+#include "clirate.h"
 #if defined(MAC_GUI)
 #include "DrawGUI.h"
 #endif
