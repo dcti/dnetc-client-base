@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.14 1999/10/14 18:09:43 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.15 1999/10/16 16:40:12 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -869,7 +869,7 @@ int Client::Run( void )
 
   if (!checkpointsDisabled) //!nodiskbuffers
   {
-    if (CheckpointAction( CHECKPOINT_OPEN, 0 )) //-> !0 if checkpts disabled
+    if (CheckpointAction( this, CHECKPOINT_OPEN, 0 )) //-> !0 if checkpts disabled
     {
       checkpointsDisabled = 1;
     }
@@ -1324,7 +1324,7 @@ int Client::Run( void )
           abs((int)(checkpointsPercent - ((unsigned int)perc_now))) ) )
         {
           checkpointsPercent = (unsigned int)perc_now;
-          if (CheckpointAction( CHECKPOINT_REFRESH, load_problem_count ))
+          if (CheckpointAction( this, CHECKPOINT_REFRESH, load_problem_count ))
             checkpointsDisabled = 1;
           timeNextCheckpoint = timeRun + (time_t)(CHECKPOINT_FREQ_SECSDIFF);
         }
@@ -1429,7 +1429,7 @@ int Client::Run( void )
   if (probmanIsInit)
   {
     LoadSaveProblems( this,load_problem_count, PROBFILL_UNLOADALL );
-    CheckpointAction( CHECKPOINT_CLOSE, 0 ); /* also done by LoadSaveProb */
+    CheckpointAction( this, CHECKPOINT_CLOSE, 0 ); /* also done by LoadSaveProb */
     DeinitializeProblemManager();
   }
 

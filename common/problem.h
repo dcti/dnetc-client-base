@@ -6,7 +6,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.5 1999/10/07 18:39:00 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.6 1999/10/16 16:40:10 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -85,7 +85,7 @@ public: /* anything public must be thread safe */
 
   u32 startpermille;             /* -,                                   */
   unsigned int contest;          /*  |__ assigned in LoadState()         */
-  int cputype;                   /*  |                                   */
+  int coresel;                   /*  |                                   */
   u32 tslice;                    /* -' -- adjusted by non-preemptive OSs */
 
   u32 permille;    /* used by % bar */
