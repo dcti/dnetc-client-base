@@ -5,8 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
-# Revision 1.185  1999/02/05 01:15:44  snake
+# Revision 1.186  1999/02/06 09:16:15  remi
+# Added -DLURK and common/lurk.cpp into linux-* targets.
 #
+# Revision 1.185  1999/02/05 01:15:44  snake
 # alpha-openbsd doesn't need libtermcap, removed
 #
 # Revision 1.184  1999/02/04 22:56:09  remi
@@ -1462,9 +1464,9 @@ case "$1" in
 	TARGET_AS="i486-pc-linux-gnulibc1-gcc -c"
 	TARGET_CC="i486-pc-linux-gnulibc1-gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -pipe \
-			-D__showids__ -DSMC"
+			-D__showids__ -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1478,9 +1480,9 @@ case "$1" in
 	TARGET_AS="i486-pc-linux-gnuaout-gcc -c"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-D__showids__ -DSMC"
+			-D__showids__ -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1494,9 +1496,9 @@ case "$1" in
 	TARGET_AS="i486-pc-linux-gnulibc1-gcc -c"
 	TARGET_CC="i486-pc-linux-gnulibc1-gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-D__showids__ -DSMC -DMULTITHREAD"
+			-D__showids__ -DSMC -DMULTITHREAD -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
@@ -1512,9 +1514,9 @@ case "$1" in
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-D__showids__ -DSMC -DMULTITHREAD"
+			-D__showids__ -DSMC -DMULTITHREAD -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
@@ -1532,9 +1534,9 @@ case "$1" in
 	TARGET_AS="egcs -c"
 	TARGET_CC="egcs"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-D__showids__ -DSMC"
+			-D__showids__ -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1548,9 +1550,9 @@ case "$1" in
 	TARGET_AS="egcs -c"
 	TARGET_CC="egcs -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-D__showids__ -DSMC"
+			-D__showids__ -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1566,8 +1568,8 @@ case "$1" in
 	TARGET_CC="egcs"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-D__showids__ -DSMC -DMULTITHREAD"
-	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_LDFLAGS="-static -Xlinker -omagic -DLURK"
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
@@ -1586,9 +1588,9 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -pipe \
-			-D__showids__ -DSMC"
+			-D__showids__ -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1602,9 +1604,9 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc -g"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DSMC"
+			-DSMC -DLURK"
 	TARGET_LDFLAGS="-Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
@@ -1620,9 +1622,9 @@ case "$1" in
     *x86-linux-mt-gcc)		 # mt, static, gcc
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DSMC"
+			-DMULTITHREAD -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
@@ -1638,8 +1640,8 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -D__showids__ -pipe \
 			-DMULTITHREAD -DBIT_32 -DKWAN -DMEGGS -DSMC"
-	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_LDFLAGS="-static -Xlinker -omagic -DLURK"
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
@@ -1655,9 +1657,9 @@ case "$1" in
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DSMC"
+			-DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1671,9 +1673,9 @@ case "$1" in
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++ -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DSMC"
+			-DSMC -DLURK"
 	TARGET_LDFLAGS="-Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1688,9 +1690,9 @@ case "$1" in
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DSMC"
+			-DMULTITHREAD -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
