@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.22 2001/01/21 18:19:09 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.23 2001/01/21 18:31:02 cyp Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -124,7 +124,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %CCASM    =wasm
 %LINK     =wlink
 %NASMEXE  =nasm           #point this to nasm (don't call the envvar 'NASM'!)
-%NASMFLAGS=-f obj -D__OMF__ -DOS2 -s
+%NASMFLAGS=-f obj -D__OMF__ -s
 %TASMEXE  =                #point this to tasm in your section if you have it
 %TFLAGS   =/ml /m9 /q /t  #if TASMEXE.==. then wasm will be executed
 %STACKSIZE=48K            #may be redefined in the platform specific section
@@ -918,6 +918,7 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @if $(%OSNAME).==dos. @set DOS4GW_STUB=#
      @set OSNAME=dos
 
+     @set NASMFLAGS = $(%NASMFLAGS) -DUSE_DPMI
      @set AFLAGS    = /5s /fp3 /bt=dos /mf
      @set TASMEXE   = tasm32.exe
      @set LIBPATH   = $(%watcom)\lib386 $(%watcom)\lib386\dos 
@@ -928,6 +929,7 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @set CFLAGS    = /zp8 /wx /we /6s /fp3 /fpc /zm /ei /mf &
                       /bt=dos /d__MSDOS__ /wcd=604 /wcd=594 /wcd=7 &
                       /DINIT_TIMESLICE=0x40000 /DDYN_TIMESLICE &
+                      /DUSE_DPMI /DSMC &
                       /Iplat\dos /I$(%watcom)\h #;plat\dos\libtcp
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oneatx /oh /oi+ 

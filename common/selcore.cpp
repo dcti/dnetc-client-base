@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.90 2001/01/17 00:21:24 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.91 2001/01/21 18:31:03 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -27,10 +27,12 @@ return "@(#)$Id: selcore.cpp,v 1.47.2.90 2001/01/17 00:21:24 cyp Exp $"; }
   #include <setjmp.h>
 #endif
 #if (CLIENT_CPU == CPU_X86) && defined(SMC)
-#include <sys/types.h>
-#include <sys/mman.h>
-extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
-static int x86_smc_initialized = -1;
+  #if defined(__unix__)
+    #include <sys/types.h>
+    #include <sys/mman.h>
+  #endif
+  extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
+  static int x86_smc_initialized = -1;
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -194,11 +196,15 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       #ifdef SMC /* actually only for the first thread */
       if (x86_smc_initialized < 0)
       {
+        #if defined(__unix__)
         char *addr = (char *)&rc5_unit_func_486_smc;
         addr -= (((unsigned long)addr) & (4096-1));
         if (mprotect( addr, 4096*3, PROT_READ|PROT_WRITE|PROT_EXEC )==0)
           x86_smc_initialized = +1;
-        else  
+        #elif defined(USE_DPMI) /* dos client */
+          x86_smc_initialized = +1;
+        #endif
+        if (x86_smc_initialized < 0)
           x86_smc_initialized = 0;
       }      
       #endif
