@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.96 2001/01/01 20:38:24 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.97 2001/01/03 23:00:29 teichp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -75,9 +75,9 @@ static const char *GetBuildOrEnvDescription(void)
   minor = GetFileServerMinorVersionNumber();
   revision = GetFileServerRevisionNumber();
   #if 0 /* hmm, this is wrong. NetWare 4.02 != 4.2 */
-  if (minor < 10) 
+  if (minor < 10)
     minor *= 10; /* .02 => .20 */
-  #endif  
+  #endif
   revision = ((revision == 0 || revision > 26)?(0):(revision + ('a'-1)));
   GetServerConfigurationInfo(&servType, &loaderType);
   if (servType == 0 && loaderType > 1) /* OS/2/UnixWare/etc loader */
@@ -123,7 +123,7 @@ static const char *GetBuildOrEnvDescription(void)
   return buffer;
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
-  if (uname(&ut)==0) 
+  if (uname(&ut)==0)
   {
     #if (CLIENT_OS == OS_AIX)
     // on AIX version is the major and release the minor
@@ -167,7 +167,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       #endif
       #if (CLIENT_CPU == CPU_ARM)
       LogScreenRaw( "RC5 ARM assembly by Steve Lee\n");
-      #if (CLIENT_OS == OS_RISCOS)
+      #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
       LogScreenRaw( "RISCOS/PC Card support by Dominic Plunkett\n");
       #endif
       #endif
@@ -263,8 +263,8 @@ static int ClientMain( int argc, char *argv[] )
   }
   srand( (unsigned) time(NULL) );
   InitRandom();
-  
-  do    
+
+  do
   {
     int restarted = restart;
     restart = 0;
@@ -275,10 +275,10 @@ static int ClientMain( int argc, char *argv[] )
 
     TRACE_OUT((0,"Client.parsecmdline restarted?: %d\n", restarted));
     if (!ParseCommandline(client,0,argc,(const char **)argv,&retcode,restarted))
-    {                               
+    {
       int domodes = ModeReqIsSet(-1); /* get current flags */
       TRACE_OUT((0,"initializetriggers\n"));
-      if (InitializeTriggers(domodes, 
+      if (InitializeTriggers(domodes,
                              ((domodes)?(""):(client->exitflagfile)),
                              client->pausefile,
                              client->pauseplist,
@@ -305,7 +305,7 @@ static int ClientMain( int argc, char *argv[] )
             {
               //some plats need to wait for user input before closing the screen
               int con_waitforuser = 0; //only used if doing modes (and !-config)
-  
+
               TRACE_OUT((+1,"initializelogging\n"));
               InitializeLogging( (client->quietmode!=0),
                                  client->crunchmeter,
@@ -324,11 +324,11 @@ static int ClientMain( int argc, char *argv[] )
                 PrintBanner(client->id,0,restarted,0);
 
                 TRACE_OUT((+1,"parsecmdline(1)\n"));
-                if (!client->quietmode) 
+                if (!client->quietmode)
                 {                 //show overrides
                   ParseCommandline( client, 1, argc, (const char **)argv,
-                                    &retcode, restarted ); 
-                }                      
+                                    &retcode, restarted );
+                }
                 TRACE_OUT((-1,"parsecmdline(1)\n"));
               }
               InitRandom2( client->id );
@@ -339,7 +339,7 @@ static int ClientMain( int argc, char *argv[] )
               if (domodes)
               {
                 con_waitforuser = ((domodes & ~MODEREQ_CONFIG)!=0);
-                if ((domodes & MODEREQ_CONFIG)==0) 
+                if ((domodes & MODEREQ_CONFIG)==0)
                 { /* avoid printing/logging banners for nothing */
                   PrintBanner(client->id,1,restarted,((domodes & MODEREQ_CMDLINE_HELP)!=0));
                 }
@@ -437,9 +437,9 @@ int main( int argc, char *argv[] )
           needchange = 1;
           break;
         }
-      } 
-    }   
-    #endif  
+      }
+    }
+    #endif
   }
   #if (CLIENT_OS == OS_HPUX)                         //SPT_TYPE == SPT_PSTAT
   if (needchange)
@@ -606,7 +606,7 @@ int main( int argc, char *argv[] )
 {
   int rc = 20;
   if (amigaInit())
-  {  
+  {
     rc = ClientMain( argc, argv );
     if (rc) rc = 5; //Warning
     amigaExit();
