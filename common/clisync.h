@@ -18,7 +18,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.1 2002/12/21 00:56:38 pstadt Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.2 2002/12/21 22:44:31 sod75 Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -379,16 +379,16 @@
   */
   #include <sys/atomic_op.h>
 
-  typdef struct { int lock; } fastlock_t __attribute__ ((aligned (8)));  
+  typedef struct { int lock; } fastlock_t __attribute__ ((aligned (8)));  
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *v)
   {
     /* Atomically writes a single word variable, issuing */
     /* an export fence for multiprocessor systems */
-    _clear_lock ( &(v->lock), 0)
+    _clear_lock ( &(v->lock), 0);
   } 
-  static __inline__ void fastlock_trylock(fastlock_t *v)
+  static __inline__ int fastlock_trylock(fastlock_t *v)
   {
     /* Conditionally updates a single word variable atomically, */
     /* issuing an import fence for multiprocessor systems. */
