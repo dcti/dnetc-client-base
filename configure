@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.235 1999/10/11 17:56:16 cyp Exp $
+# @(#)$Id: configure,v 1.236 1999/10/15 23:30:09 cyp Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -233,6 +233,7 @@ COMMON_SRCS="common/client.cpp \
 	     common/buffupd.cpp \
 	     common/triggers.cpp \
 	     common/selcore.cpp \
+	     common/netres.cpp \
 	     common/netinit.cpp \
 	     common/cmdline.cpp \
 	     common/selftest.cpp \
