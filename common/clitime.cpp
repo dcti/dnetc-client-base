@@ -13,15 +13,11 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.33 2000/06/15 23:06:33 mfeiri Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.34 2000/06/18 15:02:02 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
 #include "clitime.h"  // keep the prototypes in sync
-
-#if (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_RHAPSODY)
-  #include <sys/sysctl.h>
-#endif
 
 #if defined(__unix__) && !defined(__EMX__)
   #define HAVE_GETRUSAGE
@@ -150,8 +146,10 @@ static int __GetMinutesWest(void)
   if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
     return 0;
   minwest = TZInfo.Bias; /* sdk doc is wrong. .Bias is always !dst */
-#elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_SCO) || \
-      (CLIENT_OS == OS_VMS)
+#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_VMS) || \
+      (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD) || \
+      (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_BSDOS) || \
+      (CLIENT_OS == OS_MACOSX) /* *BSDs don't set timezone in gettimeofday() */
   time_t timenow;
   struct tm * tmP;
   struct tm loctime, utctime;
@@ -195,7 +193,6 @@ static int __GetMinutesWest(void)
   minwest = -tzdiff;
 #else
   /* POSIX rules :) */
-  /* FreeBSD does not provide timezone information with gettimeofday */
   struct timezone tz; struct timeval tv;
   if ( gettimeofday(&tv, &tz) )
     return 0;
