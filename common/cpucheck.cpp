@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.66 2004/08/18 20:18:30 piru Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.67 2004/08/20 16:32:43 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1242,8 +1242,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
 /* !!! */ {  0x2680, CPU_F_I686, 0x0E, "Mobile Pentium III" },
           {  0x3680, CPU_F_I686, 0x0E, "Pentium III Xeon" },
           {  0x0690, CPU_F_I686, 0x0E, "Pentium III (Timna)" }, /* Timna:6547:0692 */
-          {  0x6690, CPU_F_I686, 0x0D, "Pentium M" }, /* brand id 0x16 ? */ /* #3323 */
+          {  0x2690, CPU_F_I686, 0x0E, "Celeron M" },
+          {  0x6690, CPU_F_I686, 0x0D, "Pentium M" }, /* 0.13 um 0.5 or 1MB L2, brand id 0x16 ? */ /* #3323 */
         //{  0x06A0, CPU_F_I686, 0x0E, "Pentium III" }, //0.18 um w/ 1/2MB on-die L2
+          {  0x26D0, CPU_F_I686, 0x0D, "Celeron M ULV" },
+          {  0x66D0, CPU_F_I686, 0x0D, "Pentium M" }, /* 0.09 um 0.5 or 2MB L2 (#3745) */
           {  0x36A0, CPU_F_I686, 0x0E, "Pentium III Xeon" },
         //{  0x06B0, CPU_F_I686, 0x0E, "Pentium III" }, /* Tualatin:6547:46B1 */
           {  0x16B0, CPU_F_I686, 0x0E, "Celeron (Tualatin)" },
@@ -1256,20 +1259,23 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         //{  0x0F10, CPU_F_I686, 0x0B, "Pentium 4" }, /* 1.4 - 2.0GHz P4  (0.18u) */
         //{  0x0F20, CPU_F_I686, 0x0B, "Pentium 4" }, /* >=2.0GHz P4-512k (0.13u) */
         //{  0x0F30, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.09u) */
-          {  0x8F00, CPU_F_I686, 0x0B, "Pentium 4" },
-          {  0xEF00, CPU_F_I686, 0x0B, "Xeon" },
-          {  0x8F10, CPU_F_I686, 0x0B, "Pentium 4" },
-          {  0xAF10, CPU_F_I686, 0x0B, "Celeron 4" },
-          {  0xBF10, CPU_F_I686, 0x0B, "Xeon MP" },
-          {  0xEF10, CPU_F_I686, 0x0B, "Xeon" },
-          {  0x8F20, CPU_F_I686, 0x0B, "Mobile Celeron 4" },
+          {  0x8F00, CPU_F_I686, 0x0B, "Pentium 4 (Willamette)" },
+          {  0xEF00, CPU_F_I686, 0x0B, "Xeon (Foster)" },
+          {  0x8F10, CPU_F_I686, 0x0B, "Pentium 4 (Willamette)" },
+          {  0xAF10, CPU_F_I686, 0x0B, "Celeron 4 (Willamette)" },
+          {  0xBF10, CPU_F_I686, 0x0B, "Xeon MP (Foster)" },
+          {  0xEF10, CPU_F_I686, 0x0B, "Xeon (Foster)" },
           {  0x9F20, CPU_F_I686, 0x0B, "Pentium 4 (Northwood)" },
           {  0xAF20, CPU_F_I686, 0x0B, "Celeron 4 (Northwood)" },
           {  0xBF20, CPU_F_I686, 0x0B, "Xeon" },
           {  0xCF20, CPU_F_I686, 0x0B, "Xeon MP" },
-          {  0xEF20, CPU_F_I686, 0x0B, "Mobile Pentium 4-M" },
-          {  0xFF20, CPU_F_I686, 0x0B, "Mobile Celeron 4" },
-          {  0x0F30, CPU_F_I686, 0x0B, "Pentium 4" },
+          {  0xEF20, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Northwood)" },
+          {  0xFF20, CPU_F_I686, 0x0B, "Mobile Celeron 4 (Northwood)" },
+          {  0x0F30, CPU_F_I686, 0x0B, "Pentium 4 (Prescott)" }, /* (#3627) */
+          {  0x9F30, CPU_F_I686, 0x0B, "Pentium 4 (Prescott)" },
+          {  0xAF30, CPU_F_I686, 0x0B, "Celeron 4 (Prescott)" },
+          {  0xBF30, CPU_F_I686, 0x0B, "Xeon" }
+          {  0xEF30, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Prescott)" },
           {  0x0000, 0,               -1, NULL }
           }; internalxref = &intelxref[0];
       vendorname = "Intel"; 
@@ -2306,6 +2312,12 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     }
     if (x86features & CPU_F_SSE3) {   
       strcat( namebuf, "SSE3 " );   
+    }
+    if (x86features & CPU_F_AMD64) {
+      strcat( namebuf, "AMD64 " );
+    }
+    if (x86features & CPU_F_EM64T) {
+      strcat( namebuf, "EM64T " );
     }
     if (x86features & CPU_F_HYPERTHREAD) {   
       static char htbuf[60];

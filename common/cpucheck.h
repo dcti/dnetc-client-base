@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.8 2004/08/14 23:32:00 kakace Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.9 2004/08/20 16:32:43 snikkel Exp $"
 
 // cpu feature flags (use by selcore.cpp)
 
@@ -25,6 +25,8 @@
   #define CPU_F_SSE2            (0x00004000L)
   #define CPU_F_SSE3            (0x00008000L)
   #define CPU_F_HYPERTHREAD     (0x00010000L)	/* supported and enabled */
+  #define CPU_F_AMD64           (0x00020000L)
+  #define CPU_F_EM64T           (0x00040000L)
 #endif
 
 #if (CLIENT_CPU == CPU_POWERPC)

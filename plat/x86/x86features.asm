@@ -13,7 +13,7 @@
 ;
 ; Modified for distributed.net by Steven Nikkel, Nov 2003
 ;
-; $Id: x86features.asm,v 1.1.2.13 2004/01/06 18:17:29 snikkel Exp $
+; $Id: x86features.asm,v 1.1.2.14 2004/08/20 16:32:43 snikkel Exp $
 ;
 ; return u32
 
@@ -44,6 +44,8 @@ global          x86features,_x86features
 %define CPU_F_SSE2            00004000h
 %define CPU_F_SSE3            00008000h
 %define CPU_F_HYPERTHREAD     00010000h
+%define CPU_F_AMD64           00020000h
+%define CPU_F_EM64T           00040000h
 
 __CODESECT__
 _x86features:            
@@ -156,8 +158,12 @@ ThreeDNow_test:
   or esi, CPU_F_3DNOW   ; 3DNow! also supported
 ThreeDNowPlus_test:
   test edx, 40000000h   ; Test for 3DNow!+
-  jz Standard
+  jz AMD64_test
   or esi, CPU_F_3DNOW_PLUS  ; 3DNow!+ also supported
+AMD64_test:
+  test edx, 20000000h   ; Test for AMD64
+  jz Standard   
+  or esi, CPU_F_AMD64   ; AMD64 supported
 
 Intel:
 Standard:
@@ -181,8 +187,12 @@ SSE2_test:
   or esi, CPU_F_SSE2    ; SSE2 Supported
 SSE3_test:
   test ecx, 00000001h   ; Test for SSE3
-  jz HT_test            ; SSE3 Not supported
+  jz EM64T_test         ; SSE3 Not supported
   or esi, CPU_F_SSE3    ; SSE3 Supported
+EM64T_test:
+  test edx, 20000000h   ; Test for EM64T
+  jz HT_test
+  or esi, CPU_F_EM64T   ; EM64T supported
 HT_test:
   test edx, 10000000h   ; Test for Hyper-Threading support
   jz Return
