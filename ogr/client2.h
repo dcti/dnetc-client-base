@@ -1,7 +1,12 @@
-/*
- * Generic interface to distributed type cores.
- * Greg Hewgill 1998-11-28
- */
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
+// $Log: client2.h,v $
+// Revision 1.2  1999/03/18 07:49:52  gregh
+// Add getresult() function, remove result() callback.
+//
+//
 
 /*
  * Constants for return values from all the below functions.
@@ -10,6 +15,7 @@
  */
 #define CORE_S_OK       0
 #define CORE_S_CONTINUE 1
+#define CORE_S_SUCCESS  2
 #define CORE_E_MEMORY   (-1)
 #define CORE_E_IO       (-2)
 #define CORE_E_FORMAT   (-3)
@@ -45,6 +51,12 @@ typedef struct {
   int (*cycle)(void *state, int *nodes);
 
   /*
+   * If cycle returns CORE_S_SUCCESS, call getresult to get the successful
+   * result.
+   */
+  int (*getresult)(void *state, void *result, int resultlen);
+
+  /*
    * Clean up state structure.
    */
   int (*destroy)(void *state);
@@ -73,13 +85,4 @@ typedef struct {
    */
   int (*cleanup)();
 
-  /*
-   * Result callback, filled in by client.
-   * If anything other than CORE_S_OK is returned, the result was
-   * NOT saved.
-   * On failure, the core should not proceed further and should return
-   * CORE_E_STOPPED on further calls to cycle().
-   * The format of result is defined by the core.
-   */
-  int (*result)(void *state, void *result, int resultlen);
 } CoreDispatchTable;
