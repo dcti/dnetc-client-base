@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.46 2000/06/28 19:18:35 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.47 2000/06/28 20:02:59 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -409,12 +409,12 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       int fd = open("/dev/apm", O_RDONLY);
       if (fd != -1)
       {
-        #if (__FreeBSD < 3)
+        #if defined(APMIO_GETINFO_OLD) /* (__FreeBSD__ >= 3) */
+        struct apm_info_old info;      /* want compatibility for 2.2 */
+        int whichioctl = APMIO_GETINFO_OLD;
+        #else
         struct apm_info info;
         int whichioctl = APMIO_GETINFO;
-        #else
-        struct apm_info_old info;
-        int whichioctl = APMIO_GETINFO_OLD;
         #endif
         disableme = 0;
         
