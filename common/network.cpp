@@ -44,14 +44,12 @@ typedef struct _socks4 {
   u16 DSTPORT;                // destination port, network order
   u32 DSTIP;                  // destination IP, network order
   char USERID[1];             // variable size, null terminated
-  char end;
 } SOCKS4;
 
 typedef struct _socks5methodreq {
   unsigned char ver;          // version == 5
   unsigned char nMethods;     // number of allowable methods following
   unsigned char Methods[2];   // this program will request at most two
-  char end;
 } SOCKS5METHODREQ;
 
 typedef struct _socks5methodreply {
@@ -121,6 +119,15 @@ void NetworkInitialize(void)
   #ifdef SOCKS
     LIBPREFIX(init)("rc5-client");
   #endif
+
+  // check that the packet structures have been correctly packed
+  // do it here to make sure the asserts go off
+  // if all is correct, the asserts should get totally optimised out :)
+  assert(offsetof(SOCKS4, USERID) == 8);
+  assert(offsetof(SOCKS5METHODREQ, Methods) == 2);
+  assert(offsetof(SOCKS5METHODREPLY, end) == 2);
+  assert(offsetof(SOCKS5USERPWREPLY, end) == 2);
+  assert(offsetof(SOCKS5, end) == 10);
 #endif
 }
 
@@ -570,14 +577,9 @@ Socks4Failure:
     psocks5mreq->Methods[0] = 0;  // no authentication
     psocks5mreq->Methods[1] = 2;  // username/password
 
-    assert(offsetof(SOCKS5METHODREQ, Methods) == 2);
-    assert(offsetof(SOCKS5METHODREQ, end) == 4);
-
     len = 2 + psocks5mreq->nMethods;
     if (LowLevelPut(len, socksreq) < 0)
       goto Socks5Failure;
-
-    assert(offsetof(SOCKS5METHODREPLY, end) == 2);
 
     if ((u32)LowLevelGet(2, socksreq) != 2)
       goto Socks5Failure;
@@ -632,8 +634,6 @@ Socks4Failure:
       if (LowLevelPut(len, socksreq) < 0)
         goto Socks5Failure;
 
-      assert(offsetof(SOCKS5USERPWREPLY, end) == 2);
-
       if ((u32)LowLevelGet(2, socksreq) != 2)
         goto Socks5Failure;
 
@@ -661,8 +661,6 @@ Socks4Failure:
     psocks5->atyp = 1;  // IPv4
     psocks5->addr = lasthttpaddress;
     psocks5->port = htons(lastport);
-
-    assert(offsetof(SOCKS5, end) == 10);
 
     if (LowLevelPut(10, socksreq) < 0)
       goto Socks5Failure;
