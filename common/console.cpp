@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.3 1999/06/10 23:31:47 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.4 1999/06/11 19:37:17 patrick Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -594,7 +594,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     height = ht; width = wt;
   #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SOLARIS) || \
         (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_IRIX) || \
-        (CLIENT_OS == OS_HPUX)
+        (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX)
     /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
