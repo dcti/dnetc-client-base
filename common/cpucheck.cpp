@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.57 2000/10/25 18:56:36 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.58 2000/10/28 16:22:52 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -73,8 +73,8 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
           &count) == KERN_SUCCESS)
          cpucount=info.avail_cpus;
     }
-    #elif (CLIENT_OS == OS_HPUX)
-    {
+    #elif (CLIENT_OS == OS_HPUX) && defined(OS_SUPPORTS_SMP)
+    {                          //multithreaded clients are special
       struct pst_dynamic psd;
       if (pstat_getdynamic(&psd, sizeof(psd), (size_t)1, 0) !=-1)
       cpucount = (int)psd.psd_proc_cnt;
@@ -186,16 +186,11 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     {
       cpucount = _syspage_ptr->num_cpu;
     }
-    #elif (CLIENT_OS == OS_MACOS)
+    #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
     {
-      #if (CLIENT_CPU == CPU_POWERPC)
+      cpucount = 1;
       if (MPLibraryIsLoaded())
         cpucount = MPProcessors();
-      else
-        cpucount = 1;
-      #elif (CLIENT_CPU == CPU_68K) // no MP support on 68k CPUs
-        cpucount = 1;
-      #endif
     }
     #elif (CLIENT_OS == OS_AMIGAOS)
     {
@@ -214,6 +209,8 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       else
         cpucount = buf.cpus_in_box;
     }
+    #elif (CLIENT_CPU == CPU_68K) // no such thing as 68k/mp
+      cpucount = 1;               // that isn't covered above
     #endif
     if (cpucount < 1)  //not supported
       cpucount = -1;
