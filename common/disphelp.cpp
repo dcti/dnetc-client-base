@@ -1,10 +1,11 @@
-// Hey, Emacs, this a -*-C++-*- file !
-
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.38  1998/08/10 20:08:00  cyruspatel
+// Removed reference to NO!NETWORK
+//
 // Revision 1.37  1998/08/02 16:17:58  cyruspatel
 // Completed support for logging.
 //
@@ -12,8 +13,7 @@
 // Change to combine NT Service and 95 CLI.
 //
 // Revision 1.35  1998/07/13 12:40:30  kbracey
-// RISC OS update.
-// Added -noquiet option.
+// RISC OS update. Added -noquiet option.
 //
 // Revision 1.34  1998/07/13 03:29:59  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
@@ -129,16 +129,17 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-static const char *id="@(#)$Id: disphelp.cpp,v 1.37 1998/08/02 16:17:58 cyruspatel Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.38 1998/08/10 20:08:00 cyruspatel Exp $";
 return id; }
 #endif
 
 #include "cputypes.h"
 #include "version.h"  //CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
-#include "client.h"   //client class and signaltriggered/userbreaktriggered
+#include "client.h"   //client class
 #include "baseincs.h"
 #include "cmpidefs.h" //strcmpi()
 #include "sleepdef.h"
+#include "triggers.h" //[Check|Raise]ExitRequestTrigger()
 #include "logstuff.h" //Log()/LogScreen()/CliScreenClear()
 
 // --------------------------------------------------------------------------
@@ -169,6 +170,28 @@ return id; }
 
 // --------------------------------------------------------------------------
 
+#if ((defined(NOCURSES) || defined(NOTERMIOS)) && ((CLIENT_OS == OS_LINUX) || \
+   (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD)))
+#include "network.h"
+int InKey(void)         //added Aug 09 1998 - cyp
+{
+  fd_set readfds;
+  struct timeval tv;
+
+  do
+    {
+    FD_ZERO(&readfds);
+    FD_SET(0,&readfds);
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000; //1/10 sec
+    if (select( 1, &readfds, NULL, NULL, &tv ) )
+      return getchar();
+    } while (!CheckExitRequestTrigger());
+
+  return 0x03;
+}
+#endif
+
 #if !defined(NOCONFIG)
 // read a single keypress, without waiting for an Enter if possible
 static int readkeypress()
@@ -179,7 +202,7 @@ static int readkeypress()
 #elif (CLIENT_OS == OS_WIN32)
   // Tested under Win32. May work under OS2 too. Not sure with DOS or Netware.
   for (;;) {
-    if (SignalTriggered || UserBreakTriggered)
+    if (CheckExitRequestTrigger())
       return -1;
     if (kbhit()) {
       ch = getch();
@@ -194,9 +217,8 @@ static int readkeypress()
   (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_NETWARE)
   ch = getch();
   if (!ch) ch = (getch() << 8);
-  if (ch == 0x03) { // ^C
-    SignalTriggered = UserBreakTriggered = 1;
-  }
+  if (ch == 0x03) // ^C
+    RaiseExitRequestTrigger();
 
 #elif (CLIENT_OS == OS_RISCOS)
   ch = _swi(OS_ReadC, _RETURN(0));
@@ -252,8 +274,8 @@ static int readkeypress()
   /* Restore the original settings */
   tcsetattr(0,TCSANOW,&stored);
 
-#else
-  ch = getchar();
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD)
+  ch = InKey(); //getchar();  //see above - cyp
 #endif
 
   return ch;
@@ -430,23 +452,13 @@ void Client::DisplayHelp( const char * unrecognized_option )
 
   static const char *helpheader[] =
   {
-  NULL, // "RC5DES v2.%d.%d client - a project of distributed.net" goes here
-  #if (CLIENT_OS == OS_VMS)
-    #if defined(MULTINET)
-      "Compiled for OpenVMS with Multinet support",
-    #elif defined(__VMS_UCX__)
-      "Compiled for OpenVMS with UCX support",
-    #elif defined(NONETWORK)
-      "Compiled for OpenVMS with no network support",
-    #endif
-  #endif
+  "RC5DES v" CLIENT_VERSIONSTRING " client - a project of distributed.net",
   "Visit http://www.distributed.net/FAQ/ for in-depth command line help",
   "-------------------------------------------------------------------------"
   };
 
   int headerlines, bodylines, footerlines;
   int startline, maxscreenlines, maxpagesize;
-  char whoami[64];
   int foundhelprequest = 0;
 
   int nostdin, forcenopagemode = 0; //forcenopagemode is "--More--" mode
@@ -474,10 +486,6 @@ void Client::DisplayHelp( const char * unrecognized_option )
     teestream = NULL;
     }
 
-  sprintf(whoami, "RC5DES v2.%d.%d client - a project of distributed.net",
-                  CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC );
-  helpheader[0] = whoami;
-
   if (unrecognized_option && *unrecognized_option)
     {
     for (int i = 0; ((!foundhelprequest) && (i < (int)
@@ -499,7 +507,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
       if (!nostdin && !forcenopagemode)
         {
         int i = readkeypress();
-        if (SignalTriggered || UserBreakTriggered)
+        if (CheckExitRequestTrigger())
           return;
         fprintf( outstream, "\n" );
         if (i != '\n' && i != '\r' && i != ' ')
@@ -544,7 +552,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
               fprintf( outstream, "--More--" );
               fflush( outstream );
               readkeypress();
-              if (SignalTriggered || UserBreakTriggered)
+              if (CheckExitRequestTrigger())
                 break;
               fprintf( outstream, "\r" ); //overwrite the --More--
               #endif
@@ -589,7 +597,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
 
       fflush( outstream );
       i = readkeypress();
-      if (SignalTriggered || UserBreakTriggered)
+      if (CheckExitRequestTrigger())
         break;
       fprintf( outstream, "\r");
 
