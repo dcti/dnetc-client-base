@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.39 1999/08/09 16:56:04 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.40 1999/08/22 12:44:54 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -345,7 +345,7 @@ const char *CliGetTimeString( const struct timeval *tv, int strtype )
     return hourstring;
   }
 
-  if (longtime && (longtime != timelast) && (lasttype != strtype))
+  if (longtime && ((longtime != timelast) || (lasttype != strtype)))
   {
     time_t timenow = tv->tv_sec;
     struct tm *gmt = (struct tm *)0;
