@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.72.4.2 2003/01/22 04:17:26 andreasb Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.72.4.3 2003/03/29 20:15:38 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -61,6 +61,9 @@ static const char *helpbody[] =
 #elif (CLIENT_OS == OS_AMIGAOS)
   "-install           install the client in the WBStartup drawer",
   "-uninstall         remove the client from the WBStartup drawer",
+#elif (CLIENT_OS == OS_MACOSX)
+  "-install           install the client in the StartupItems folder",
+  "-uninstall         remove the client from the StartupItems folder",
 #endif
 //"-import <fn> [cnt] import [cnt] packets from file <fn> into client buffers",
   "-import <filename> import packets from file <filename> into client buffers",
