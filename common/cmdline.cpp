@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.44 2000/02/21 11:34:36 jlawson Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.45 2000/02/21 11:41:14 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -515,8 +515,7 @@ int ParseCommandline( Client *client,
         not_supported = 1;
         #endif
       }
-      else if (strcmp(thisarg,"-svcstart") == 0 || 
-               strcmp(thisarg, "-svcrun") == 0)
+      else if (strcmp(thisarg,"-svcstart") == 0)
       {
         #if (CLIENT_OS == OS_WIN32)
         terminate_app = 1;
