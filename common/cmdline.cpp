@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.115  1999/01/13 09:56:21  cramer
+// Fixed the -kill/hup/etc signal handling.
+// Fixed the "ps" command for Solaris -- other SysV's can follow.
+// Reworked that wicked "ps" command line as well.
+//
 // Revision 1.114  1999/01/13 09:48:56  cramer
 // Fixed a few compiler warnings (NULL ain't always a char *)
 // Reworked the -quiet handling for UNIX -- system() is VERY evil.
@@ -128,7 +133,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.114 1999/01/13 09:48:56 cramer Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.115 1999/01/13 09:56:21 cramer Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -267,12 +272,14 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             binname = ((binname==NULL)?(argv[0]):(binname+1));
 	    
             sprintf(buffer, "%s %s [%lu] `"
-//#if (CLIENT_OS == OS_LINUX)
-//                          "pidof %s"
-//#else
-                            "ps aux|grep \"%s \" |tr -s \' \'"
-                            "|cut -d\' \' -f2|tr \'\\n\' \' \'"
-//#endif
+#if (CLIENT_OS == OS_SOLARIS)
+			    // CRAMER - /usr/bin/ps or /usr/ucb/ps?
+                            "/usr/bin/ps -ef|grep \"%s\"|awk '{print$2}'"
+#else
+                            "ps auxwww|grep \"%s\"|awk '{print$2}'"
+                            // "ps auxwww|grep \"%s\" |tr -s \' \'"
+                            // "|cut -d\' \' -f2|tr \'\\n\' \' \'"
+#endif
 			    "`", argv[0], thisarg,
                             (unsigned long)(getpid()), binname );
             if (system( buffer ) != 0)
