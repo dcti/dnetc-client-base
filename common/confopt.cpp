@@ -5,7 +5,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.1 1998/11/22 15:16:13 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.2 1998/11/26 06:47:25 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -83,9 +83,9 @@ struct optionstruct conf_options[OPTION_COUNT]=
   "buffer exchange by starting the client with the -update option.  Do not\n"
   "buffer more than what might be accomplished in one week; you might not\n"
   "receive credit for them. The maximum number of blocks that can be buffered\n"
-  "is 1000.\n" /* The number of blocks defined for the flush threshold should\n"
+  "is 500.\n" /* The number of blocks defined for the flush threshold should\n"
   "generally be the same as what is defined for the fetch threshold.\n" */
-  ),1,2,2,NULL},
+  ),1,2,2,NULL,NULL,1,500},
 //2
 { "threshold", "" /*CFGTXT("RC5 block flush threshold")*/, "10",
   "" /*options[CONF_THRESHOLDI].comments*/,/* obsolete 1*/0,2,3,NULL},
@@ -243,7 +243,7 @@ struct optionstruct conf_options[OPTION_COUNT]=
   CFGTXT(
   "Specify the port on the SMTP host to which the client's mail subsystem should\n"
   "connect when sending mail logs. The default is port 25.\n"
-  ),2,2,4,NULL},
+  ),2,2,4,NULL,NULL,1,0xFFFF},
 //20
 { "smtpfrom", CFGTXT("E-mail address that logs will be mailed from"), 
   "" /* *((const char *)(options[CONF_ID].thevariable)) */, 
@@ -264,7 +264,7 @@ struct optionstruct conf_options[OPTION_COUNT]=
   "available or to -1 to have the client attempt to auto-detect the number of\n"
   "processors. Multi-threaded clients can be forced to run single-threaded by\n" 
   "setting this option to zero.\n"
-  ),4,2,3,NULL},
+  ),4,2,3,NULL,NULL,-1,128},
 //23
 { "checkpointfile", CFGTXT("Checkpoint Filename"),"",
   CFGTXT(
@@ -305,19 +305,19 @@ struct optionstruct conf_options[OPTION_COUNT]=
   "you choose to run the client with disabled screen output. This option is\n"
   "synonymous with the -runhidden and -quiet command line switches and can be\n"
   "overridden with the -noquiet switch.\n"
-  ),5,3,5,NULL},
+  ),5,3,5,NULL,NULL,0,1},
 //29
 { "noexitfilecheck", CFGTXT("Disable exit file checking?"),"0",
   CFGTXT(
   "When disabled, this option will cause the client to watch for a file named\n"
   "\"exitrc5.now\", the presence of which being a request to the client to\n"
   "shut itself down. (The name of the exit flag file may be set in the ini.)\n"
-  ),5,3,7,NULL},
+  ),5,3,7,NULL,NULL,0,1},
 //30
 { "percentoff", CFGTXT("Disable the block completion indicator?"),"0",
   CFGTXT(
   ""
-  ),5,3,6,NULL},
+  ),5,3,6,NULL,NULL,0,1},
 //31
 { "frequent", CFGTXT("Frequently check for empty buffers?"),"0",
   CFGTXT(
@@ -325,21 +325,21 @@ struct optionstruct conf_options[OPTION_COUNT]=
   "every few minutes or so. You might want to use this if you have a\n"
   "single computer with a network connecting \"feeding\" other clients via\n"
   "a common buff-in.* file so that the buffer never reaches empty.\n"
-  ),1,3,15,NULL},
+  ),1,3,15,NULL,NULL,0,1},
 //32
 { "nodisk", CFGTXT("Buffer blocks in RAM only? (no disk I/O)"),"0",
    CFGTXT(
    "This option is for machines with permanent connections to a keyserver\n"
    "but without local disks. Note: This option will cause all buffered,\n"
    "unflushable blocks to be lost by a client shutdown.\n"
-   ),1,3,7,NULL},
+   ),1,3,7,NULL,NULL,0,1},
 //33
 { "nofallback", CFGTXT("Disable fallback to a distributed.net keyserver?"),"0",
   CFGTXT(
   "If the host you specify in the 'preferred keyserver' option is not\n"
   "reachable, the client normally falls back to a distributed.net keyserver.\n"
   ),
-  3,3,7,NULL},
+  3,3,7,NULL,NULL,0,1},
 //34
 { "" /* "cktime" */, "","5", "", /* obsolete */ 0,2,0,NULL},
 //35
@@ -387,7 +387,7 @@ struct optionstruct conf_options[OPTION_COUNT]=
 { "pausefile",CFGTXT("Pausefile Path/Name"),"",CFGTXT(""),5,1,3,NULL},
 //44
 { "dialwhenneeded", CFGTXT("Dial the Internet when needed?"),"0",
-  CFGTXT(""),3,3,11,NULL},
+  CFGTXT(""),3,3,11,NULL,NULL,0,1},
 //45  
 { "connectionname", CFGTXT("Dial-up Connection Name"),
   "Your Internet Connection",CFGTXT(""),3,1,12,NULL}
