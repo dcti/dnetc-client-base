@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.43 2002/03/04 18:39:13 acidblood Exp $
+# $Id: makefile.vc,v 1.56.2.44 2002/03/13 10:21:39 acidblood Exp $
 #
 
 BASENAME = dnetc
@@ -197,7 +197,7 @@ RC5_OBJS =                           \
         $(OUTPUTPATH)/brf-smc.obj    \
         $(OUTPUTPATH)/rg-6x86.obj    \
         $(OUTPUTPATH)/dg-k7.obj      \
-        $(OUTPUTPATH)/nb-p7.obj	
+        $(OUTPUTPATH)/ak-p7.obj	
 OPTS_MSVC = $(OPTS_MSVC) -DSMC
 !endif
 

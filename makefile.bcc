@@ -12,7 +12,7 @@
 # (replace ?? with a two letter country code, eg 'de', 'us', 'uk' etc)
 # A list of all mirrors is at http://www.kernel.org/mirrors/
 #
-# $Id: makefile.bcc,v 1.23.2.28 2002/03/04 18:39:13 acidblood Exp $
+# $Id: makefile.bcc,v 1.23.2.29 2002/03/13 10:21:39 acidblood Exp $
 
 BASENAME = dnetc
 OUTPUTPATH = output
@@ -161,7 +161,7 @@ RC5_OBJS =                           \
         $(OUTPUTPATH)/rg-486.obj     \
         $(OUTPUTPATH)/rg-6x86.obj    \
         $(OUTPUTPATH)/dg-k7.obj      \
-        $(OUTPUTPATH)/nb-p7.obj      \
+        $(OUTPUTPATH)/ak-p7.obj      \
         $(OUTPUTPATH)/brf-smc.obj
 BCCOPTS = $(BCCOPTS) -DSMC 
 

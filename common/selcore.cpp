@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.123 2002/03/04 18:39:14 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.124 2002/03/13 10:21:41 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -65,7 +65,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "RG RISC-rotate II",     /* 5. K6 - may become mmx-k6-2 core at runtime */
       "RG/DG re-pair III",     /* 6. K7 Athlon and Cx-MII, based on Cx re-pair */
       "RG/BRF self-mod",       /* 7. SMC */
-      "NB class 7",            /* 8. P4 */
+      "AK class 7",            /* 8. P4 */
       "jasonp P5/MMX",         /* 9. P5/MMX *only* - slower on PPro+ */
       NULL
     },
@@ -311,7 +311,7 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
         cindex = ((have_3486)?(7):(3)); /* "RG self-mod" or "RG/HB re-pair I" */
       if (!have_smc && cindex == 7)     /* "RG self-modifying" */
         cindex = 1;                     /* "RG class 3/4" */
-      if (!have_nasm && cindex == 8)    /* "NB Class 7" */
+      if (!have_nasm && cindex == 8)    /* "AK Class 7" */
         cindex = 2;                     /* "RG Class 6" */
       if (!have_mmx && cindex == 9)     /* "jasonp P5/MMX" */
         cindex = 0;                     /* "RG Class 5" */
@@ -902,7 +902,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x08: cindex = 2; break; // PPro       == RG class 6
             case 0x09: cindex = 6; break; // AMD>=K7/Cx>MII == RG/DG re-pair III
             case 0x0A: cindex = 6; break; // Centaur C6 == RG/DG re-pair III (#2082)
-            case 0x0B: cindex = 8; break; // P4         == nb/P4 
+            case 0x0B: cindex = 8; break; // P4         == ak/P4 
             default:   cindex =-1; break; // no default
           }
           #if defined(HAVE_NO_NASM)
@@ -912,7 +912,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             if ((detected_type & 0xff) == 0x01) /* 386/486 */
               cindex = 1;    /* "RG class 3/4" */
           }
-          if (cindex == 8)   /* "NB Class 7" */
+          if (cindex == 8)   /* "AK Class 7" */
             cindex = 2;      /* "RG class 6" */
           if (cindex == 9)   /* "jasonp P5/MMX" */
             cindex = 0;      /* "RG Class 5" */
