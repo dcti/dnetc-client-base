@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.46 2000/01/21 22:12:08 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.47 2000/01/23 00:13:25 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -59,9 +59,9 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #elif (CLIENT_CPU == CPU_ARM)
     { /* RC5 */
-      "Series A core", /* (autofor for ARM 3/6xx/7xxx) "ARM 3, 610, 700, 7500, 7500FE" */
-      "Series B core", /* (autofor ARM 8xx/StrongARM) "ARM 810, StrongARM 110" */
-      "Series C core", /* (autofor ARM 2xx) "ARM 2, 250" */
+      "Series A", /* (autofor for ARM 3/6xx/7xxx) "ARM 3, 610, 700, 7500, 7500FE" */
+      "Series B", /* (autofor ARM 8xx/StrongARM) "ARM 810, StrongARM 110" */
+      "Series C", /* (autofor ARM 2xx) "ARM 2, 250" */
       NULL             /* "ARM 710" */
     },
     { /* DES */
@@ -71,18 +71,18 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #elif (CLIENT_CPU == CPU_68K)
     { /* RC5 */
-    #if (CLIENT_OS == OS_AMIGAOS)
+      #if (CLIENT_OS == OS_AMIGAOS)
       "loopy",    /* 68000/10/20/30 */
       "unrolled", /* 40/60 */
-    #elif defined(__GCC__) || defined(__GNUC__) || (CLIENT_OS == OS_MACOS)
+      #elif defined(__GCC__) || defined(__GNUC__) || (CLIENT_OS == OS_MACOS)
       "68k asm cruncher",
-    #else
-      "Generic RC5 core",
-    #endif
+      #else
+      "Generic",
+      #endif
       NULL
     },
     { /* DES */
-      "Generic DES core", 
+      "Generic", 
       NULL
     },
   #elif (CLIENT_CPU == CPU_ALPHA) 
@@ -99,8 +99,8 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
     { /* DES */
       #if (CLIENT_OS == OS_DEC_UNIX)
-      "ev3 and ev4 optimized",
-      "ev5 and ev6 optimized",
+      "ev3/ev4 optimized",
+      "ev5/ev6 optimized",
       #else
       "dworz/amazing",
       #endif
@@ -133,15 +133,13 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #endif  
     { /* OGR */
-      "Standard OGR core",
+      "GARSP 5.13",
       NULL
     },
     { /* CSC */
-#if (CLIENT_CPU != CPU_ARM)
       "6 bit - inline", 
       "6 bit - called",
       "1 key - inline", 
-#endif
       "1 key - called",
       NULL, /* room */
       NULL
@@ -150,7 +148,12 @@ static const char **__corenames_for_contest( unsigned int cont_i )
   static int fixed_up = -1;
   if (fixed_up < 0)
   {
-    #if (CLIENT_CPU == CPU_X86)
+    #if (CLIENT_CPU == CPU_ARM)
+    {
+      corenames_table[CSC][0] = "1 key - called";
+      corenames_table[CSC][1] = NULL;
+    }
+    #elif (CLIENT_CPU == CPU_X86)
     {
       long det = GetProcessorType(1);
       #ifdef SMC /* actually only for the first thread */
@@ -183,13 +186,13 @@ static const char **__corenames_for_contest( unsigned int cont_i )
         corenames_table[RC5][0] = "RG AIXALL (Power CPU)",
         corenames_table[RC5][1] = NULL;
       }
-      #if (CLIENT_OS == OS_MACOS)
-      if (macosAltiVecPresent())
+      else if (( det & (1L<<25) ) != 0) //have altivec
       {
+        #if (CLIENT_OS == OS_MACOS) //altivec support is currently macos only
         corenames_table[RC5][2] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
         corenames_table[RC5][3] = NULL;
+        #endif
       }
-      #endif
     }
     #endif
     fixed_up = 1;  
@@ -417,9 +420,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   int corename_printed = 0;
   static long detected_type = -123;
   const char *contname = CliGetContestNameFromID(contestid);
+
   if (!contname) /* no such contest */
     return -1;
-
+  if (!IsProblemLoadPermitted(-1 /*any thread*/, contestid))
+    return -1; /* no cores available */
   if (InitializeCoreTable(((int *)0)) < 0) /* ACK! selcoreInitialize() */
     return -1;                             /* hasn't been called */
 
@@ -498,7 +503,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   }
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
   #if (!defined(_AIXALL)) //not a PPC/POWER hybrid client?
-  if (detected_type >= 0)
+  if (detected_type > 0)
   {
     #if (CLIENT_CPU == CPU_POWER)
     if ((detected_type & (1L<<24)) == 0 ) //not power?
@@ -525,19 +530,19 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
        that don't support the 601, we may as well "support" them visually.
     */
     selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
-    if (selcorestatics.corenum[RC5] < 0 && detected_type >= 0)
+    if (selcorestatics.corenum[RC5] < 0 && detected_type > 0)
     {
       int cindex = -1;
       if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER
         cindex = 0;                 //only one core - (ansi)
-      else if (detected_type == 1 )    //PPC 601
-        cindex = 0;               // lintilla
       #if (CLIENT_OS == OS_MACOS) /* vec core is currently macos only */
-      if (macosAltiVecPresent())
-        cindex = 2;               // vector
+      else if (( detected_type & (1L<<25) ) != 0) //OS supports altivec
+        cindex = 2;                 // vector
       #endif
-      else                        //the rest
-        cindex = 1;               // allitnil
+      else if (detected_type == 1 ) //PPC 601
+        cindex = 0;                 // lintilla
+      else                          //the rest
+        cindex = 1;                 // allitnil
       selcorestatics.corenum[RC5] = cindex;
     }
   }
@@ -547,27 +552,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     if (selcorestatics.corenum[CSC] < 0 && detected_type > 0)
     {
       int cindex = -1;
-      if ((detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER
-        ; //don't know yet
-      else 
-      {
-        /*
-         * The perfomance of the CSC cores seems to be quite compiler specific.
-         * Because I dunno about the differences of gcc vs. MacOS compilers regarding
-         * optimized PowerPC code I insert my PowerPC core preselction for MacOS only and 
-         * leave the rest of the preselections as is. Who did these other preselections?
-         */
-        #if (CLIENT_OS == OS_MACOS)
-        cindex = 1; // 6 bit called for all known PowerPC CPUs
-        #else
-        long det = (detected_type & 0x00ffffffL);
-        if (det == 1)       //PPC 601
-          cindex = 2;       // G1: 16k L1 cache - 1 key inline
-        else if (det == 12) //PPC 7400
-          cindex = 1;       // G4: 64k L1 cache - 6 bit called
-        //don't know about the rest
-        #endif
-      }
+      #if (CLIENT_OS == OS_MACOS) /* avoid micro benchmark */
+      cindex = 1; //6 bit called seems to be the "RightThing" for all PPCs
+      #endif
       selcorestatics.corenum[CSC] = cindex;
     }
   }
@@ -756,7 +743,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   }
 
   if (selcorestatics.corenum[contestid] >= 0 && !corename_printed)
-  { 
+  {  
     Log("%s: using core #%d (%s).\n", contname, 
          selcorestatics.corenum[contestid], 
          selcoreGetDisplayName(contestid, selcorestatics.corenum[contestid]) );
