@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.40 2004/01/09 01:23:32 piru Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.41 2004/01/24 05:07:08 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -290,7 +290,7 @@ int GetNumberOfLogicalProcessors ( void )
 int GetNumberOfPhysicalProcessors ( void )
 {
 #if (CLIENT_CPU == CPU_X86)
-  if (GetProcessorFeatureFlags() && CPU_F_HYPERTHREAD) {
+  if (GetProcessorFeatureFlags() & CPU_F_HYPERTHREAD) {
     if ((GetNumberOfLogicalProcessors() % x86htcount()) != 0) {
       return -1;
     } else {
