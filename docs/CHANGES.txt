@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.34 2003/07/21 01:01:18 mfeiri Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.35 2003/08/09 23:22:54 mweiser Exp $
 ==========================================================================
 
 2.9000
@@ -32,6 +32,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.34 2003/07/21 01:01:18 mfeiri Exp 
             imp: macosx: use latest gcc 3.3 to compile client and OGR cores
             new: macosx: properly recongize the PowerPC 970 (G5) (#3310)
             new: ppc: new rc5-72 core for PowerPC 970 (G5) by Didier Levet
+            new: nextstep: revived port with OGR and RC5-72 support
 
 2.9005-484  new: x86: detect Athlon with Barton core (#3227)
             new: x86: detect Celeron with Tualatin core / brand id 1 (#3246)
