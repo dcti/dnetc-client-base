@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.28 2000/04/21 18:28:33 jlawson Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.29 2000/04/22 11:01:59 cyp Exp $"; }
 
 //#define TRACE
 
@@ -33,20 +33,6 @@ static const char *OPTSECT_DISPLAY  = "display";
 static const char *DEFAULT_EXITFLAGFILENAME = "exitrc5"EXTN_SEP"now";
 
 /* ------------------------------------------------------------------------ */
-
-static int __STRCASECMP(const char *s1, const char *s2)
-{
-  for (;;)
-  {
-    if (tolower(*s1) != tolower(*s2))
-      return *s1 - *s2;
-    if (!*s1)
-      break;
-    s1++; s2++;
-  }
-  return 0;
-}
-
 
 static const char *__getprojsectname( unsigned int ci )
 {
@@ -379,39 +365,6 @@ static int __parse_timestring(const char *source, int oldstyle_hours_compat )
 
 /* ------------------------------------------------------------------------ */
 
-// Analyzes a hostname and determines if it is a distributed.net round-robin.
-// Returns the following values:
-//     <0 = not applicable, non-distributed.net servername.
-//      0 = unacceptable distributed.net servername (or blank)
-//     >0 = acceptable distributed.net servername.
-static int confopt_IsHostnameDNetHost( const char * hostname )
-{
-  unsigned int len;
-  const char sig[]="distributed.net";
-  const char sig2[]=".proxy.distributed.net";
-  const char sig3[]=".v27.distributed.net";
-
-  if (!hostname || !*hostname)
-    return 0;
-  if (isdigit( *hostname )) //assume IP address. not technically correct, but
-    return -1;              //oh, well. assume its not a d.net box.
-  len = strlen( hostname );
-  if (len < (sizeof( sig ) - 1) ||
-      __STRCASECMP( &hostname[(len-(sizeof( sig )-1))], sig ) != 0)
-    return -1; /* not a d.net host */
-  if (len > (sizeof( sig2 ) - 1) &&
-      __STRCASECMP( &hostname[(len - (sizeof( sig2 ) - 1))], sig2 ) == 0)
-    return +1; /* is an acceptable d.net host */
-  if (len > (sizeof( sig3 ) - 1) &&
-      __STRCASECMP( &hostname[(len - (sizeof( sig3 ) - 1))], sig3 ) == 0)
-    return +1; /* is an acceptable d.net host */
-  // otherwise a hostname ending with "distributed.net" supplied, but it is
-  // not under the "proxy" or "v27" subdomains, which we do not support.
-  return 0;
-}
-
-/* ------------------------------------------------------------------------ */
-
 static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if failed */
 {
   char buffer[128];
@@ -707,19 +660,34 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
   }
   if (!GetPrivateProfileStringB( OPTSECT_NET, "keyserver", "", buffer, sizeof(buffer), fn ))
   {
+    client->keyproxy[0] = '\0'; //default
+    client->autofindkeyserver = 1;  //default
+    client->keyport = 0; //default
     if (GetPrivateProfileStringB( OPTION_SECTION, "keyproxy", "", buffer, sizeof(buffer), fn ))
     {
-      if (__STRCASECMP(buffer,"auto")==0 || __STRCASECMP(buffer,"(auto)")==0)
-        buffer[0] = 0; //one config version accidentally wrote "auto" out
-      else if ( confopt_IsHostnameDNetHost( buffer ) == 0 )
-        buffer[0] = 0; //it's an unsupported d.net host, purge it.
-
-      strncpy( client->keyproxy, buffer, sizeof(client->keyproxy) );
-      client->keyproxy[sizeof(client->keyproxy)-1] = '\0';
-
-      WritePrivateProfileStringB( OPTSECT_NET,"autofindkeyserver",
-             (buffer[0] == 0 ? NULL : "no"), fn);
-    }
+      char sig[] = "distributed.net";
+      ui = 0;
+      while (buffer[ui]) {
+        buffer[ui]=(char)tolower(buffer[ui]);
+        ui++;
+      } 
+      if (ui >= 4 && (strcmp(buffer,"auto")==0 || strcmp(buffer,"(auto)")==0))
+        buffer[0] = '\0'; //one config version accidentally wrote "auto" out
+      else if (ui >= (sizeof( sig ) - 1) && 
+               strcmp( &buffer[(ui-(sizeof( sig )-1))], sig )==0)
+      {
+        if (ui == (sizeof(sig)-1)) 
+          buffer[0] = '\0'; /* plain "distributed.net" */
+        else if (buffer[(ui-(sizeof( sig )))] == '.') /*[*].distributed.net*/
+          buffer[0] = '\0'; /* make the hostname require reentry (once) */
+      }    
+      if (buffer[0])
+      {      
+        client->autofindkeyserver = 0;
+        strncpy( client->keyproxy, buffer, sizeof(client->keyproxy) );
+        client->keyproxy[sizeof(client->keyproxy)-1] = '\0';
+      }
+    }  
     if ((i = GetPrivateProfileIntB( OPTION_SECTION, "keyport", 0, fn ))!=0)
     {
       if (i < 0 || i > 0xffff || i == 2064)
@@ -727,7 +695,8 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
       else
         client->keyport = i;
     }
-    if (buffer[0] || i)
+    modfail += WritePrivateProfileStringB( OPTSECT_NET,"autofindkeyserver",((client->autofindkeyserver)?(NULL):("no")), fn);
+    if (client->keyproxy[0] || client->keyport)
     {
       modfail += _readwrite_hostname_and_port( 1, fn,
                                 OPTSECT_NET, "keyserver",
@@ -904,7 +873,9 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
     #if 0 /* faster but causes comment loss */
     if (GetPrivateProfileStringB( OPTION_SECTION, "id", "", buffer, sizeof(buffer), fn ))
     {
-      if ( __STRCASECMP( buffer, "rc5@distributed.net" ) == 0 )
+      for (i=0;buffer[i];i++)
+        buffer[i]=(char)tolower(buffer[i]);
+      if (strcmp( buffer, "rc5@distributed.net" ) == 0)
         buffer[0] = '\0';
     }
     if (WritePrivateProfileStringB( OPTION_SECTION, NULL, "", fn))
@@ -968,8 +939,12 @@ int ReadConfig(Client *client)
 
   if (GetPrivateProfileStringB( OPTION_SECTION, "id", "", client->id, sizeof(client->id), fn ))
   {
-    if (__STRCASECMP( client->id, "rc5@distributed.net" ) == 0)
-      client->id[0] = '\0';
+    strncpy(buffer,client->id,sizeof(buffer));
+    buffer[sizeof(buffer)-1]='\0';
+    for (cont_i=0;buffer[cont_i];cont_i++)
+      buffer[cont_i]=(char)tolower(buffer[cont_i]);
+    if (strcmp( buffer, "rc5@distributed.net" ) == 0)
+      client->id[0]='\0';
   }
 
   /* --------------------- */
@@ -992,26 +967,7 @@ int ReadConfig(Client *client)
                                 client->keyproxy, sizeof(client->keyproxy),
                                 &(client->keyport) );
   //NetOpen() gets (autofindkeyserver)?(""):(client->keyproxy))
-  {
-    // This table specifies the effective client->autofindkeyserver
-    // value, and whether to blank or keep the client->keyproxy.
-    //                          autofind=1    autofind=0   autofind=blank
-    //user-custom address (-1)    1,keep        0,keep        0,keep
-    //blank or bad address (0)    1,blank       1,blank       1,blank
-    //good d.net address (+1)     1,keep        0,keep        0,keep
-
-    int hostnametype = confopt_IsHostnameDNetHost(client->keyproxy);
-    if (hostnametype == 0) // blank or a bad d.net host.
-    {                           
-      client->autofindkeyserver = 1;
-      client->keyproxy[0] = '\0';
-    }
-    else
-    {
-      client->autofindkeyserver = GetPrivateProfileIntB( OPTSECT_NET, 
-                "autofindkeyserver", 0, fn );
-    }
-  }  
+  client->autofindkeyserver = GetPrivateProfileIntB( OPTSECT_NET, "autofindkeyserver", client->autofindkeyserver, fn );
   client->nettimeout = GetPrivateProfileIntB( OPTSECT_NET, "nettimeout", client->nettimeout, fn );
   client->nofallback = GetPrivateProfileIntB( OPTSECT_NET, "nofallback", client->nofallback, fn );
 
@@ -1025,9 +981,9 @@ int ReadConfig(Client *client)
     client->lurk_conf.lurkmode = 0;
     if (GetPrivateProfileStringB( OPTSECT_NET, "dialup-watcher", p, buffer, sizeof(buffer), fn ))
     {
-      if (__STRCASECMP( buffer, "active" ) == 0)
+      if (buffer[0] == 'a' || buffer[0] == 'A')  /*active*/
         client->lurk_conf.lurkmode = CONNECT_LURK;
-      else if (__STRCASECMP( buffer, "passive" ) == 0)
+      else if (buffer[0] == 'p' || buffer[0] == 'P')  /*passive*/
         client->lurk_conf.lurkmode = CONNECT_LURKONLY;
     }
     GetPrivateProfileStringB( OPTSECT_NET, "interfaces-to-watch", client->lurk_conf.connifacemask, client->lurk_conf.connifacemask, sizeof(client->lurk_conf.connifacemask), fn );
@@ -1283,27 +1239,8 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileInt( OPTSECT_NET, "disabled", client->offlinemode, fn, 0, 'n');
     __XSetProfileInt( OPTSECT_NET, "nettimeout", client->nettimeout, fn, 60, 0);
     __XSetProfileInt( OPTSECT_NET, "nofallback", client->nofallback, fn, 0, 't');
-
     _readwrite_fwallstuff( 1, fn, client );
-
-
-    // This table specifies what gets written to the ini file, based
-    // on the client->autofindkeyserver and client->keyproxy values.
-    //                              autofind=1    autofind=0
-    //    user-custom address (-1)   yes,keep       no,keep
-    //    blank or bad address (0)  null,blank    null,blank
-    //    good d.net address (+1)    yes,keep       no,keep
-    // The explicit writing of "no" for those two cases is technically
-    // not necessary due to loading assumptions, but it's clearer.
-
-    p = NULL;
-    if (confopt_IsHostnameDNetHost(client->keyproxy) == 0)
-      client->keyproxy[0] = '\0';        /* d.net host, but invalid */
-    else if (client->autofindkeyserver)
-      p = "yes";
-    else
-      p = "no";
-    WritePrivateProfileStringB( OPTSECT_NET, "autofindkeyserver", p, fn );
+    __XSetProfileInt( OPTSECT_NET, "autofindkeyserver", client->autofindkeyserver, fn, 1, 'y');
     _readwrite_hostname_and_port( 1, fn, OPTSECT_NET, "keyserver",
                                 client->keyproxy, sizeof(client->keyproxy),
                                 &(client->keyport) );
@@ -1339,7 +1276,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
 
     __XSetProfileStr( OPTSECT_LOG, "log-file-limit", client->logfilelimit, fn, NULL );
     __XSetProfileStr( OPTSECT_LOG, "log-file", client->logname, fn, NULL );
-    if ((client->logfiletype[0] && __STRCASECMP(client->logfiletype,"none")!=0) ||
+    if ((client->logfiletype[0] && strcmp(client->logfiletype,"none")!=0) ||
       GetPrivateProfileStringB(OPTSECT_LOG,"log-file-type","",buffer,2,fn))
       WritePrivateProfileStringB( OPTSECT_LOG,"log-file-type", client->logfiletype, fn );
 
