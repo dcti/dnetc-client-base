@@ -5,7 +5,8 @@
 #include "network.h"
 #define VERBOSE_OPEN //print cause of ::Open() errors
 
-
+#include <stddef.h> // for offsetof
+#include <assert.h> // asserts present should be optimised out, so no need for NDEBUG
 #include <errno.h>
 
 #define UU_DEC(Ch) (char) (((Ch) - ' ') & 077)
@@ -33,21 +34,14 @@
   #undef inet_ntoa
   #endif
   #include "netware/hbyname.cpp"  // this is a domain name resolver
-#elif (CLIENT_OS == OS_RISCOS)
-  extern "C"{
-  #include <unistd.h>
-  #include <sys/ioctl.h>
-  #include <sys/filio.h>
-  #include <arpa/inet.h>
-  #include <netdb.h>
-  #include <sys/socket.h>
-  #include <netinet/in.h>
-  };
 #endif
 
+#if (CLIENT_OS != OS_RISCOS)
 #pragma pack(1)               // no padding allowed
+#define __packed
+#endif
 
-typedef struct _socks4 {
+typedef __packed struct _socks4 {
   unsigned char VN;           // version == 4
   unsigned char CD;           // command code, CONNECT == 1
   u16 DSTPORT;                // destination port, network order
@@ -55,25 +49,25 @@ typedef struct _socks4 {
   char USERID[1];             // variable size, null terminated
 } SOCKS4;
 
-typedef struct _socks5methodreq {
+typedef __packed struct _socks5methodreq {
   unsigned char ver;          // version == 5
   unsigned char nMethods;     // number of allowable methods following
-  unsigned char Methods[1];   // this program will request at most two
+  unsigned char Methods[2];   // this program will request at most two
 } SOCKS5METHODREQ;
 
-typedef struct _socks5methodreply {
+typedef __packed struct _socks5methodreply {
   unsigned char ver;          // version == 1
   unsigned char Method;       // server chose method ...
 } SOCKS5METHODREPLY;
 
-typedef struct _socks5userpwreply {
+typedef __packed struct _socks5userpwreply {
   unsigned char ver;          // version == 1
   unsigned char status;       // 0 == success
 } SOCKS5USERPWREPLY;
 
-typedef struct _socks5 {
+typedef __packed struct _socks5 {
   unsigned char ver;          // version == 5
-  union {
+  __packed union {
     unsigned char cmd;        // 1 == connect
     unsigned char rep;        // 0 == success
   };
@@ -83,7 +77,9 @@ typedef struct _socks5 {
   u16 port;                   // network order
 } SOCKS5;
 
+#if (CLIENT_OS != OS_RISCOS)
 #pragma pack()
+#endif
 
 char *Socks5ErrorText[9] =
 {
@@ -575,12 +571,15 @@ Socks4Failure:
     psocks5mreq->ver = 5;
     psocks5mreq->nMethods = (unsigned char) (httpid[0] ? 2 : 1);
     psocks5mreq->Methods[0] = 0;  // no authentication
-    psocks5mreq->Methods[0] = 2;  // username/password
+    psocks5mreq->Methods[1] = 2;  // username/password
 
-    len = sizeof(*psocks5mreq) +
-          ((psocks5mreq->nMethods - 1) * sizeof(psocks5mreq->Methods[0]));
+    assert(offsetof(SOCKS5METHODREQ, Methods) == 2);
+
+    len = 2 + psocks5mreq->nMethods;
     if (LowLevelPut(len, socksreq) < 0)
       goto Socks5Failure;
+
+    assert(sizeof *psocks5mreply == 2);
 
     len = sizeof(*psocks5mreply);
     if ((u32)LowLevelGet(len, socksreq) != len)
@@ -636,6 +635,8 @@ Socks4Failure:
       if (LowLevelPut(len, socksreq) < 0)
         goto Socks5Failure;
 
+      assert(sizeof *psocks5userpwreply == 2);
+
       len = sizeof(*psocks5userpwreply);
       if ((u32)LowLevelGet(len, socksreq) != len)
         goto Socks5Failure;
@@ -664,6 +665,9 @@ Socks4Failure:
     psocks5->atyp = 1;  // IPv4
     psocks5->addr = lasthttpaddress;
     psocks5->port = htons(lastport);
+
+    assert(offsetof(SOCKS5, port) == 8);
+    assert(sizeof(SOCKS5) == 10);
 
     len = sizeof(*psocks5);
     if (LowLevelPut(len, socksreq) < 0)

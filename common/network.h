@@ -34,7 +34,12 @@ extern "C" {
     #define sleep(x) Sleep(1000*x)
   #endif
 #elif (CLIENT_OS == OS_RISCOS)
-  #include <sys/types.h>
+  #include <socklib.h>
+  #include <inetlib.h>
+  #include <unixlib.h>
+  #include <sys/ioctl.h>
+  #include <unistd.h>
+  #include <netdb.h>
   #define SOCKET int
 #elif (CLIENT_OS == OS_DOS) && defined(DOS4G)
   #define SOCKET int
