@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: autobuff.cpp,v $
+// Revision 1.9  1998/07/08 23:30:33  remi
+// Cleared a GCC warning.
+// Tweaked $Id$.
+//
 // Revision 1.8  1998/07/08 09:23:17  jlawson
 // eliminated integer type warnings on win16
 //
@@ -35,8 +39,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *autobuff_cpp(void) {
-static const char *id="@(#)$Id: autobuff.cpp,v 1.8 1998/07/08 09:23:17 jlawson Exp $";
-return id; }
+return "@(#)$Id: autobuff.cpp,v 1.9 1998/07/08 23:30:33 remi Exp $"; }
 #endif
 
 #include <string.h>
@@ -155,7 +158,7 @@ bool AutoBuffer::RemoveLine(AutoBuffer &line)
   line.GetHead()[eol] = 0;      // end with a null, but don't include...
   line.MarkUsed(eol);           // ...as part of allocated buffer
   if (GetHead()[eol] == '\r' &&
-      GetLength() > eol + 1 &&
+      (int)GetLength() > eol + 1 &&
       GetHead()[eol + 1] == '\n') RemoveHead(eol + 2);
   else RemoveHead(eol + 1);
   return true;

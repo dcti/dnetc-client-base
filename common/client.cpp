@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.86  1998/07/08 23:31:27  remi
+// Cleared a GCC warning.
+// Tweaked $Id$.
+//
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
 //
@@ -177,8 +181,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-static const char *id="@(#)$Id: client.cpp,v 1.85 1998/07/08 09:28:10 jlawson Exp $";
-return id; }
+return "@(#)$Id: client.cpp,v 1.86 1998/07/08 23:31:27 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -2907,7 +2910,7 @@ void Client::LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted
     else if ( p == restartpercent )
       { strcat( buffer, "R" ); pos++; } // LogScreen("R");
     else if ( ( p % 10 ) == 0 )
-      { sprintf( (buffer+pos), "%d%%",p ); pos+=3; } //LogScreenf("%d%%",p);
+      { sprintf( (buffer+pos), "%ld%%",p ); pos+=3; } //LogScreenf("%ld%%",p);
     else if ( ( p<90 && p&1 ) || ( p>90 && (!(p&1)) ) )
       { strcat( buffer, "." ); pos++; } //LogScreen(".");
   }
