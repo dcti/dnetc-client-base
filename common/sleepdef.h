@@ -21,6 +21,9 @@
 */
 //
 // $Log: sleepdef.h,v $
+// Revision 1.18  1998/12/08 06:00:38  dicamillo
+// Add definitions for MacOS.
+//
 // Revision 1.17  1998/10/30 00:06:05  foxyloxy
 //
 // Changed sginap() multiplier to be correct.
@@ -114,6 +117,11 @@
 #elif (CLIENT_OS == OS_BEOS)
   #include <unistd.h>
   #define usleep(x) snooze((x))
+#elif (CLIENT_OS == OS_MACOS)
+  #include <unistd.h>
+  void usleep(unsigned int usecs);
+  #define sleep(x) my_sleep(x)
+  unsigned int my_sleep(unsigned int seconds);
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
   #include <sys/types.h>
