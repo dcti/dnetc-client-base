@@ -10,7 +10,7 @@
 //
 
 const char *autobuff_cpp(void) {
-return "@(#)$Id: autobuff.cpp,v 1.15.2.1 1999/11/23 22:48:24 cyp Exp $"; }
+return "@(#)$Id: autobuff.cpp,v 1.15.2.2 2000/02/06 00:19:00 sampo Exp $"; }
 
 #include <string.h> /* memmove() */
 #include "autobuff.h"
@@ -48,7 +48,7 @@ AutoBuffer::AutoBuffer(const char *chData, unsigned int amount)
 
 AutoBuffer::~AutoBuffer(void)
 {
-  delete buffer;
+  delete [] buffer;
 }
 
 // Ensures that the buffer is large enough to contain at least
@@ -64,7 +64,7 @@ char *AutoBuffer::Reserve(unsigned int amount)
     buffersize = bufferfilled + amount + AUTOBUFFER_INCREMENT;
     buffer = new char[(int)buffersize];
     memmove(buffer, oldbuffer, (int)bufferfilled);
-    delete oldbuffer;
+    delete [] oldbuffer;
   }
   return buffer;
 }
