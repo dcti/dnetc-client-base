@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.92.2.3 2003/05/17 22:13:55 bdragon Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.92.2.4 2003/05/24 23:09:36 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -309,7 +309,7 @@ static int _readwrite_fwallstuff(int aswrite, const char *fn, Client *client)
       }
       TRACE_OUT((0,"new uuehttpmode=%d\n",client->uuehttpmode));
       TRACE_OUT((0,"new httpproxy=\"%s\"\n",client->httpproxy));
-      TRACE_OUT((0,"new httpport=%d\n",client->httpport));
+      //TRACE_OUT((0,"new httpport=%d\n",client->httpport));
       TRACE_OUT((0,"new httpid=\"%s\"\n",client->httpid));
 
       TRACE_OUT((-1,"newform: _readwrite_fwallstuff(asread)\n"));

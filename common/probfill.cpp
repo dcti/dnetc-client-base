@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.87.2.2 2003/01/19 22:49:50 snake Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.87.2.3 2003/05/24 23:09:36 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -680,8 +680,8 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     else  /* using randoms is permitted */
       *load_needed = 0;
 
-    TRACE_OUT((0, "bufcount = %d, load_needed = %d, may_do_randoms = %d\n", bufcount, *load_needed, may_do_random_blocks));
-    TRACE_BUFFUPD((0, "__Indiv...Load: bufcount = %d, load_needed = %d\n", bufcount, *load_needed));
+    TRACE_OUT((0, "bufcount = %ld, load_needed = %d, may_do_randoms = %d\n", bufcount, *load_needed, may_do_random_blocks));
+    TRACE_BUFFUPD((0, "__Indiv...Load: bufcount = %ld, load_needed = %d\n", bufcount, *load_needed));
     if (*load_needed == 0)
     {
       u32 timeslice = 0x10000;
@@ -805,7 +805,7 @@ static int __post_summary_for_contest(unsigned int contestid)
     if (packets)
     {
       char ratebuf[15];
-      TRACE_OUT((0,"pkts=%u, iter=%u:%u, time=%u:%u, swucount=%u\n", packets, 
+      TRACE_OUT((0,"pkts=%u, iter=%u:%u, time=%lu:%lu, swucount=%u\n", packets, 
                     iterhi, iterlo, ttime.tv_sec, ttime.tv_usec, swucount ));
       Log("%s: Summary: %u packet%s (%u.%02u stats units)\n%s%c- [%s/s]\n",
           CliGetContestNameFromID(contestid), 

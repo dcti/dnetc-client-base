@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.8 2003/05/17 21:14:19 bdragon Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.9 2003/05/24 23:09:36 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -754,7 +754,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
   // and load the config from file
   //-----------------------------------
 
-  TRACE_OUT((0,"a) run_level=%d, retcode=%d, misc_call=%d, got_ini_switch=%d\n", 
+  TRACE_OUT((0,"a) run_level=%d, retcode=%d, havemode=%d, misc_call=%d, got_ini_switch=%d\n", 
                run_level, retcode, havemode, misc_call, got_ini_switch));
 
   if (retcode == -12345 && run_level == 0 && (!misc_call || got_ini_switch))
@@ -838,7 +838,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
   // In the next loop we parse the other options
   //-----------------------------------
 
-  TRACE_OUT((0,"b) run_level=%d, retcode=%d, misc_call=%d, *inimissing=%d\n", 
+  TRACE_OUT((0,"b) run_level=%d, retcode=%d, havemode=%d, misc_call=%d, *inimissing=%d\n", 
                run_level, retcode, havemode, misc_call, *inimissing));
 
   if (retcode == -12345)

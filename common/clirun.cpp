@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.7 2003/04/26 15:16:48 pfeffi Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.8 2003/05/24 23:09:36 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1935,7 +1935,7 @@ int ClientRun( Client *client )
                       :((time_t)(client->last_buffupd_failed_time +
                                  client->max_buffupd_retry_interval * 60))) ) )
     {
-      TRACE_OUT((0, "FREQ timeRun=%d  timeNextConnect=%d  local_connectoften=%d\n", timeRun, timeNextConnect, local_connectoften));
+      TRACE_OUT((0, "FREQ timeRun=%lu  timeNextConnect=%lu  local_connectoften=%d\n", timeRun, timeNextConnect, local_connectoften));
       TRACE_OUT((0, "FREQ last_buffupd_time=%d  last_buffupd_time+interval=%d\n", client->last_buffupd_time, client->last_buffupd_time+ client->max_buffupd_interval * 60));
       TRACE_OUT((0, "FREQ last_buffupd_failed_time=%d  last_buffupd_failed_time+interval=%d\n", client->last_buffupd_failed_time, client->last_buffupd_failed_time+ client->max_buffupd_retry_interval * 60));
       timeNextConnect = timeRun + 30; /* never more often than 30 seconds */
