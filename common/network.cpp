@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.10 1999/11/23 22:48:33 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.11 1999/11/29 00:29:40 lyndon Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -51,7 +51,9 @@ extern int NetCheckIsOK(void); // used before doing i/o
 
 //----------------------------------------------------------------------
 
-#pragma pack(1)               // no padding allowed
+#ifndef MIPSpro
+# pragma pack(1)               // no padding allowed
+#endif /* ! MIPSpro */
 
 typedef struct _socks4 {
   unsigned char VN;           // version == 4
@@ -97,7 +99,9 @@ typedef struct _socks5 {
   char end;
 } SOCKS5;
 
-#pragma pack()
+#ifndef MIPSpro
+# pragma pack()
+#endif /* ! MIPSpro */
 
 //----------------------------------------------------------------------
 

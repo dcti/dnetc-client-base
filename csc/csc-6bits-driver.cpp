@@ -12,7 +12,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-driver.cpp,v 1.2.2.8 1999/11/28 20:18:20 remi Exp $"; }
+return "@(#)$Id: csc-6bits-driver.cpp,v 1.2.2.9 1999/11/29 00:29:44 lyndon Exp $"; }
 #endif
 
 /*
@@ -42,7 +42,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   // align buffer on a 16-byte boundary
   assert(sizeof(void*) == sizeof(unsigned long));
   char *membuffer = (char*)membuff;
-  if( ((unsigned)membuffer & 15) != 0)
+  if( ((unsigned long)membuffer & 15) != 0)
     membuffer = (char*)(((unsigned long)(membuffer+15) & ~((unsigned long)15)));
 
   //ulong key[2][64];

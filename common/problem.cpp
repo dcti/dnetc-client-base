@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.28 1999/11/28 17:57:09 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.29 1999/11/29 00:29:43 lyndon Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -92,10 +92,10 @@ extern "C" void riscos_upcall_6(void);
     extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
   #endif
 #elif (CLIENT_CPU == CPU_MIPS)
-  #if (CLIENT_OS == OS_ULTRIX)
+  #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX)
     #define HAVE_ANSI2RG_UNIT_FUNC
     extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-  #elif (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX) || (CLIENT_OS==OS_IRIX)
+  #elif (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX)
     //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
     extern "C" u32 rc5_unit_func_mips_crunch( register RC5UnitWork *, u32 iterations );
   #else
@@ -888,7 +888,7 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
   #elif (CLIENT_CPU == CPU_X86)
     kiter = (*x86_unit_func)( &rc5unitwork, iterations );
   #elif (CLIENT_CPU == CPU_MIPS) && \
-        (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX) || (CLIENT_OS==OS_IRIX)
+        (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX)
     //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
     kiter = rc5_unit_func_mips_crunch( &rc5unitwork, iterations );
   #elif (CLIENT_CPU == CPU_SPARC) && \

@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common.h,v $
+// Revision 1.1.2.6  1999/11/29 00:29:44  lyndon
+// Irix MIPSpro incremental commit:
+//
+// * Adds support for 64 bit builds
+// * Re-enable DES and CSC
+// * Heavy optimizations enabled
+// * Portability fixes in CSC
+//
 // Revision 1.1.2.5  1999/11/28 06:17:05  lyndon
 //
 // Irix builds were botching the ULONG_MAX test, thus the code was defaulting
@@ -30,7 +38,7 @@
 //
 
 #ifndef __CSC_COMMON_H
-#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.1.2.5 1999/11/28 06:17:05 lyndon Exp $"
+#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.1.2.6 1999/11/29 00:29:44 lyndon Exp $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -57,8 +65,11 @@
 #elif defined(_MIPS_SZLONG)
   #if (_MIPS_SZLONG == 32)
     #define CSC_BIT_32
+    typedef unsigned long ulong;
   #elif (_MIPS_SZLONG == 64)
     #define CSC_BIT_64
+    typedef unsigned long ulong;
+    #define CASTNUM64(n) n##ul
   #else
     #error Insane value of _MIPS_SZLONG
   #endif
