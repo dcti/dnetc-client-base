@@ -5,8 +5,15 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.34  1998/06/14 14:01:44  remi
+# UltraSparc assembly DES bitslicer integration.
+# -Added sample sparc-solaris-gcc-crunch-asmslice-mt.
+# -Added sample x86-linux-desultra-egcs-debug for debugging
+# this code under x86.
+#
 # Revision 1.33  1998/06/14 10:15:17  skand
-# Use gcc/g++ -c when possible to assemble .S files.  Other systems than bsdi/NetBSD might need tweaking
+# Use gcc/g++ -c when possible to assemble .S files.  Other systems
+# than bsdi/NetBSD might need tweaking
 #
 # Revision 1.32  1998/06/14 08:45:34  friedbait
 # 'ident' target added, builds a formatted list of a 'bill of material' of the
@@ -183,6 +190,10 @@ OPTS_GCC_ARM="$OPTS_GCC $OPT_FLAGS -DARM"
 #-D__STRING_CODE_SET__="ISO8859-1"
 OPTS_OS390="-D_ALL_SOURCE -I./common -I./rc5 -I./des"
 
+#--
+# look in platforms/ultrasparc/s_paramaters.h for the meaning of all these defines
+OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION -DBIT_32 -Iplatforms/ultrasparc"
+OPTS_DES_ULTRA_ASM="-DIN_DCTI_CLIENT -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID -DASM -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL -DBIT_64 -Iplatforms/ultrasparc"
 
 
 #
@@ -202,6 +213,8 @@ MEGGS_SLICE_SRCS="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
 XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s rc5/crunch_allitnil.ppcxlc.s"
 RC5X86_SRCS="rc5/rc5-486-rg.cpp rc5/rc5-6x86-rg.cpp rc5/rc5p5brf.cpp rc5/rc5-p6-rg.cpp rc5/rc5-k5-rg.cpp rc5/rc5-k6-rg.cpp"
 DESX86_SRCS="des/des-x86.cpp"
+DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.c platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc/do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
+DESULTRA_SRCS_ASM="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.handopt.s platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc/do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
 
 
 #
@@ -350,6 +363,13 @@ case "$1" in
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
+    *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
+	RC5CORECOPY="rc5-ultra-crunch.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1 $OPTS_DES_ULTRA_ASM"
+	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
+	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+	;;
+
     #####
 
     *x86-solaris)
@@ -467,6 +487,16 @@ case "$1" in
 	TARGET_STRIP="touch"
 	;;
 
+    *x86-linux-desultra-egcs-debug)    # to debug UltraSparc DES code integration
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc -g"
+	# -Wno-unused to avoid tons of warnings on some ultra files
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -DPIPELINE_COUNT=2 $OPTS_DES_ULTRA_C"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
+	TARGET_ADDASMS="platforms/x86ident.S"
+	TARGET_STRIP="touch"
+	;;
+
     *x86-linux-old)   # uses standard GCC options plus '-pipe'
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
@@ -548,7 +578,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
-	;;
+       ;;
 
 ####### Intel X86 SCO5
 
