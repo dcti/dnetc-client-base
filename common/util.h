@@ -9,7 +9,14 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.5 1999/04/06 13:02:09 cyp Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.6 1999/05/08 19:07:50 cyp Exp $"
+
+void trace_out( int indlevel, const char *fmt, ... );
+#ifdef TRACE
+#define TRACE_OUT(x) trace_out x
+#else
+#define TRACE_OUT(x) 
+#endif
 
 const char *projectmap_expand( const char *map );
 const char *projectmap_build( char *buf, const char *strtomap );

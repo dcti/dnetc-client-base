@@ -4,13 +4,52 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.10 1999/04/23 06:18:38 gregh Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11 1999/05/08 19:07:51 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h */
 #include "client.h"   /* CONTEST_COUNT, stub definition */
 #include "clicdata.h" /* CliGetContestNameFromID() */
 #include "pathwork.h" /* GetFullPathForFilename() */
 #include "util.h"     /* ourselves */
+
+/* ------------------------------------------------------------------- */
+
+void trace_out( int indlevel, const char *fmt, ... )
+{
+  static int indentlevel = 0;
+  va_list arglist; 
+  FILE *file = fopen("trace"EXTN_SEP"out","a");
+  va_start (arglist, fmt); 
+  if (indlevel < 0 && indentlevel > 0)
+    indentlevel-=2;
+  if (file)
+  {
+    int spaces = indentlevel - 2;
+    if (spaces > 0)
+    {
+      char scratch[128];
+      memset( scratch, ' ', sizeof(scratch));
+      do
+      { int spaces2 = (((int)sizeof(scratch))-1);
+        if (spaces < spaces2)
+          spaces2 = spaces;
+        spaces -= spaces;
+        scratch[spaces2] = '\0';
+        fprintf(file, scratch ); 
+      } while (spaces);
+    }
+    if (indlevel > 0)
+      fprintf(file,"beg: ");
+    else if (indlevel < 0)
+      fprintf(file,"end: ");
+    vfprintf(file, fmt, arglist); 
+    fclose(file);
+  }
+  va_end( arglist ); 
+  if (indlevel > 0)
+    indentlevel+=2;
+  return;
+}  
 
 /* ------------------------------------------------------------------- */
 
