@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.34 2000/05/19 10:42:13 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.35 2000/06/04 11:00:19 oliver Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -788,6 +788,10 @@ int Network::Open( void )
           }
           else if (err > 0 && err < t_nerr)
             msg = t_errlist[t_errno];
+          #elif (CLIENT_OS == OS_AMIGAOS)
+          errno = Errno();
+          err = errno;
+          msg = strerror(errno);
           #else
           err = errno;
           msg = strerror(errno);
@@ -1845,6 +1849,8 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
       errno = EALREADY;
     #elif (CLIENT_OS == OS_OS2) && !defined(__EMX__)
     errno = sock_errno();
+    #elif (CLIENT_OS == OS_AMIGAOS)
+    errno = Errno();
     #endif
 
     if (isnonblocking == 0)
