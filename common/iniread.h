@@ -3,6 +3,10 @@
 // INI file reading/processing class for C++
 // 
 // $Log: iniread.h,v $
+// Revision 1.16  1999/01/20 20:26:57  patrick
+//
+// OS2 _EMX_ requires sys/types.h
+//
 // Revision 1.15  1998/12/15 07:01:30  dicamillo
 // Use "_" instead of "/" in Mac header file names for CVS.
 //
@@ -40,7 +44,8 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 
-#if (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_ULTRIX)
+// WATCOM C on OS2 doesn not require <sys/types.h>
+#if (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_ULTRIX) || defined(__EMX__)
 #include <sys/types.h>
 #endif
 
