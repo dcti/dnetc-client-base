@@ -8,8 +8,8 @@
  * misc functions that don't fit anywhere else
  * ----------------------------------------------------------------
 */ 
-#ifndef __CLIENT_UTIL_H__ 
-#define __CLIENT_UTIL_H__ "@(#)$Id: util.h,v 1.4 1999/04/05 13:56:41 cyp Exp $"
+#ifndef __UTIL_H__ 
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.5 1999/04/06 13:02:09 cyp Exp $"
 
 const char *projectmap_expand( const char *map );
 const char *projectmap_build( char *buf, const char *strtomap );
@@ -24,5 +24,5 @@ int DoesFileExist( const char *filename );
 /* convert a basename to a real buffer file name */
 const char *BufferGetDefaultFilename( unsigned int proj, int is_out_type,
                                                     const char *basename );
-#endif /* __CLIENT_UTIL_H__ */
+#endif /* __UTIL_H__ */
 
