@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.31  1999/02/20 03:08:08  gregh
+// Add OGR options to configuration menu.
+//
 // Revision 1.30  1999/02/14 03:58:32  silby
 // Fixed httpid the correct way.
 //
@@ -121,7 +124,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.30 1999/02/14 03:58:32 silby Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.31 1999/02/20 03:08:08 gregh Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -299,6 +302,8 @@ int Client::Configure( void )
   conf_options[CONF_RC5OUT].thevariable=(char *)(&out_buffer_file[0][0]);
   conf_options[CONF_DESIN].thevariable=(char *)(&in_buffer_file[1][0]);
   conf_options[CONF_DESOUT].thevariable=(char *)(&out_buffer_file[1][0]);
+  conf_options[CONF_OGRIN].thevariable=(char *)(&in_buffer_file[2][0]);
+  conf_options[CONF_OGROUT].thevariable=(char *)(&out_buffer_file[2][0]);
   conf_options[CONF_CHECKPOINT].thevariable=(char *)(&checkpoint_file[0]);
 
   /* ------------------- CONF_MENU_LOG  ------------------ */  
