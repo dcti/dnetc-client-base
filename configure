@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.136 2004/07/16 22:55:23 oliver Exp $
+# @(#)$Id: configure,v 1.288.2.136.2.1 2004/08/08 20:25:03 kakace Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -454,6 +454,8 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
       # this is just an addition to the default ansi core
       # maybe this should be moved in to specific targets ?
+      DEFAULT_OGR="0"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} $OGR_GENERAL_SRCS"
       TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
       TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev4.cpp"
     fi # HAVE_OGR
@@ -519,8 +521,8 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5-72/ppc/r72-KKS2pipes.osx.s \
                                         rc5-72/ppc/r72-KKS604e.osx.s \
                                         rc5-72/ppc/r72-KKS7400.osx.s \
-                                        rc5-72/ppc/r72-KKS7450.osx.s \
-                                        rc5-72/ppc/r72-KKS970.osx.s"
+                                        rc5-72/ppc/r72-KKS7450.osx.s"
+                                        # rc5-72/ppc/r72-KKS970.osx.s
       else
         # generic gas targets
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-ppc-mh-2.gas.s \
@@ -538,7 +540,8 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_72
 
     if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
-      #DEFAULT_OGR="1" # this is just an addition to default core
+      DEFAULT_OGR="0"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ppc/ogr-ppc.cpp"
 
       if [ "$1" = "aix" ]; then
         # No Altivec or KOGE optimized core support yet
@@ -550,10 +553,15 @@ add_sources() # $1=os, $2=arch, $3=custom
         if [ "$TARGET_CC" != "mwcc" ]; then   # CodeWarrior (MacOS)
           # KOGE optimized cores
           HAVE_KOGE_PPC_CORES="1"
-          TARGET_ADDASMS="$TARGET_ADDASMS ogr/ppc/OGR_PPC_scalar.gas.s"
+          TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/OGR_PPC_scalar.gas.s"
           if [ "X$3" = "Xaltivec" ] ; then
-            TARGET_ADDASMS="$TARGET_ADDASMS ogr/ppc/OGR_PPC_hybrid.gas.s"
+            TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/OGR_PPC_hybrid.gas.s"
           fi
+
+        if [ "$HAVE_KOGE_PPC_CORES" = "0" -a "${1}" = "macosx" ]; then
+          # add the 64-bit core to the ANSI cores
+          TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr-64.cpp"
+        fi
         fi
       fi
     fi # HAVE_OGR
@@ -627,6 +635,8 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_72
     if [ "$HAVE_OGR" = 1 -o "$HAVE_OGR_P2" = "1" ]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/arm/ogr-arm.cpp"
+      DEFAULT_OGR="0"
       if [ "$1" = "riscos" ]; then
         if [ "$3" = "gccsdk" ]; then
           TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gccsdk.s \
@@ -2090,7 +2100,7 @@ case "$1" in
 
     *ppc-macosx)       # [mfeiri] (MACH 3.x based: MacOS X, Darwin)
         generate_gcc_opts "ppc" "macosx"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -mcpu=powerpc -faltivec -mdynamic-no-pic"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -faltivec -mdynamic-no-pic"
         TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
         TARGET_DOCFILES="docs/readme.osx.html"   #platform specific docfile
         TARGET_TARBALL="macosx-ppc"
@@ -3271,11 +3281,17 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
           # works for NetBSD/FreeBSD and probably also OpenBSD
           CCFLAGS_SELECT="-Wa,-mev4 ${CCFLAGS_SELECT}"
         fi
+      elif [ "${BUILDNAME}" = "ppc-macosx" ]; then
+        if [ "$target" = "output/ogr-64.o" ]; then
+          CCFLAGS_SELECT="${CCFLAGS_SELECT} -mpowerpc64 -mtune=G5 -O2 -falign-functions=32 -falign-jumps=32 -falign-jumps-max-skip=16 -frename-registers --param max-gcse-passes=5"
+        else
+          CCFLAGS_SELECT="${CCFLAGS_SELECT} -mcpu=powerpc"
+        fi
       elif [ "${BUILDNAME}" = "aix-powerandppc" ]; then
         if [ "$target" = "output/problem.o" ]; then 
           CCFLAGS_SELECT="\${POWERFLAGS}" 
         fi
-        if [ "$target" = "output/ogr.o" ]; then
+        if [ "$target" = "output/ogr-ppc.o" ]; then
           # default is to compile for a POWERPC based CPU,
           # we have to add POWER here
           echo "output/ogr_power.o:    ${TARGETSRC} ${deplist}" >> Makefile
@@ -3290,7 +3306,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
         elif [ "$target" != "${target%%lintilla*}" ]; then
           CCFLAGS_SELECT="\${PPC604FLAGS}"
         fi
-        if [ "$target" = "output/ogr.o" ]; then
+        if [ "$target" = "output/ogr-ppc.o" ]; then
           # default is to compile for a POWERPC based CPU, 
           # we have to add POWER here
           echo "output/ogr_power.o:    ${TARGETSRC} ${deplist}" >> Makefile
@@ -3355,16 +3371,12 @@ fi
 
 if [ "$TARGET_OGR_MULTI" = "68k" ]; then
   echo "Generating Makefile 68k multi-core OGR dependency targets..."
-  TARGETSRC="$OGR/ansi/ogr.cpp"
+  TARGETSRC="$OGR/68k/ogr-68k.cpp"
   TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
   OGR68K="000 020 030 040 060"
   for targetext in ${OGR68K}; do
     echo "output/ogr${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
     echo "	\$(CC) \$(CCFLAGS) -DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext} \\" >>Makefile
-
-    if [ "$HAVE_OGR_P2" = "1" ]; then
-      echo "	    -DOGR_P2_GET_DISPATCH_TABLE_FXN=ogr_p2_get_dispatch_table_${targetext} \\" >>Makefile
-    fi
 
     # fake 68060 optimisation with gcc < 2.95 - easiest way for now
     # still defines mc68060 (see below) so that some optimisation will still be done
