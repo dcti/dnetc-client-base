@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.50 2001/02/27 00:55:40 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.51 2001/03/10 16:25:04 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -582,7 +582,7 @@
   /* platform SDK's (e.g. January 2000) puts the class back in unknwn.h */
   /* Borland C++ 5.5 needs the class keyword in stdlib.h */
   #if (!defined(_MSC_VER) || (_MSC_VER < 1100)) && \
-      (!defined(__BORLANDC__) || (__BORLANDC__ != 0x0550))
+      (!defined(__BORLANDC__)  || ((__BORLANDC__ != 0x0550) && (__BORLANDC__ != 0x0551)))
     #define class the_client_is_class_free /* phew! */
   #endif
 #endif
