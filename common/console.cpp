@@ -11,13 +11,16 @@
    to functions in modules in your own platform/ area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.2  1998/10/04 18:55:58  remi
+// We want to output something, even stdout is redirected, grr...
+//
 // Revision 1.1  1998/10/03 05:34:45  cyp
 // Created.
 //
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.1 1998/10/03 05:34:45 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.2 1998/10/04 18:55:58 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -27,9 +30,11 @@ return "@(#)$Id: console.cpp,v 1.1 1998/10/03 05:34:45 cyp Exp $"; }
 #include "triggers.h"
 #include "console.h" //also has CLICONS_SHORTNAME, CLICONS_LONGNAME
 #include "sleepdef.h" //usleep
+#ifndef NOTERMIOS
 #if (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS)
 #include <termios.h>
 #define USE_TERMIOS_FOR_INKEY
+#endif
 #endif
 
 /* ---------------------------------------------------- */
@@ -87,12 +92,11 @@ int InitializeConsole(int runhidden)
 
 /* 
 ** ConOut() does what printf("%s",str) would do 
-** writes only if stdout is a tty. (or equivalent)
 */ 
 
 int ConOut(const char *msg)
 {
-  if (constatics.initlevel > 0 && constatics.conisatty )
+  if (constatics.initlevel > 0 /*&& constatics.conisatty*/ )
     {
     fwrite( msg, sizeof(char), strlen(msg), stdout);
     fflush(stdout);
