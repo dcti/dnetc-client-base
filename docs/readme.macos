@@ -1,5 +1,5 @@
-distributed.net client for Mac OS
-Prerelease Candidate 3
+distributed.net client for Mac OS 
+Prerelease Candidate 4
 
 Welcome to the distributed.net client.
 
@@ -14,27 +14,26 @@ The first time you launch the client, it will begin a keyboard-driven configurat
 
 To start the client working, just launch it again. if you prefer to have the client start automatically when the computer is powered up, make an alias of the client and place it in your startup items folder (in your system folder). 
 
-The configuration file is saved in the same folder as the client.  From that point on it will use the saved configuration.  It's important never to move the client out of it's folder, or you'll reset the configuration.  
+The configuration file is saved in the same folder as the client, along with various control files.  Unless you need to reset the client, you should never move it from this folder.  The folder itself can go anywhere.
 
 A "Complete Step-by-Step Guide to Running Your First Client" is available at http://distributed.net/docs/run-client.html . 
 
- 2.0  Notes:
+ 2.0  Notes
 
 This is the ninth beta of the distributed.net client for Mac OS. It does not contain the AltiVec CSC core, it doesn't have an edit menu, and lurk mode is inoperative (the client doesn't detect a modem connection). All three of the above will (hopefully) be fixed prior to a release. 
 
 We by and large have the bug situation under control at this point. If you find an issue that you think is outstanding, by all means stick it in bugzilla at http://www.distributed.net/bugs/ . 
 
-The people responsible for the Mac port of the distributed.net client are Michael Feiri and Don Bruder. They deserve your eternal gratitude, but they will accept a nice box of Godiva chocolates. 
+The people responsible for the Mac port of the distributed.net client are Michael Feiri and Don Bruder. They deserve your eternal gratitude, but they will accept a nice box of Godiva chocolates.
 
-This client was built by Evan Vetere. Contact him for all inquiries. 
+Ê
 
-Readme hacked by Joseph, v1.1 1999.12.15
-1.0 Section
-Ported PC lingo to Mac lingo (directory = folder, run = launch, etc) 
-Added keyboard comments, etc, for Revenge of The GUI People
-Colourised aspects
-Made config sound easier
-removed "start client with -help" and other impossibilities
-warned about breaking client link to ini
-clarified where startup items live
-made things generally offensive to talented experts, who fortunately don't pay attention to readmes.
+
+
+
+
+
+
+
+
+
