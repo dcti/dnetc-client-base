@@ -8,7 +8,7 @@
  *
  */
 const char *ogr_core(void) {
-return "@(#)$Id: ogr_g_r.cor,v 1.1.2.4 2001/01/25 18:54:34 andreasb Exp $"; }
+return "@(#)$Id: ogr_g_r.cor,v 1.1.2.5 2001/01/26 16:54:00 cyp Exp $"; }
 
 #if (OGROPT_ALTERNATE_CYCLE == 0)
 
@@ -360,8 +360,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
   }
 
   memset(oState, 0, sizeof(struct State));
-  mutex_t initmux = DEFAULTMUTEX; /* {0} or whatever */
-  memcpy( &(oState->lock), &initmux, sizeof(mutex_t) );
+  /* initialize lock here if we had one */
 
   oState->stub_error = STUB_OK; 
   /* stub_error stores the STUB_E_ error codes. An oState with a non zero 
@@ -595,7 +594,7 @@ stay:
     if (depth == ogr_callback_depth) {
       // update part 2 of oState
       /* ogr_getresult() and ogr_cycle() must interact thread safe */  
-      mutex_lock(&oState->lock);
+      /* lock state lock here if we had one */
 
       oState->depth = depth;
 
@@ -605,7 +604,7 @@ stay:
       
       // don't update oState->nodes[hi|lo] !
 
-      mutex_unlock(&oState->lock);
+      /* unlock state lock here if we had one */
       
       if (ogr_callback(oState) != 0)
         break;
@@ -658,8 +657,7 @@ up:
 
   /* ogr_getresult() and ogr_cycle() must interact thread safe */
 
-  /* lock the changing part of public data (part 2) for updating */
-  mutex_lock(&oState->lock);
+  /* lock the changing part of public data (part 2) for updating here */
 
   oState->depth = depth-1;
 
@@ -671,8 +669,7 @@ up:
   if (oState->nodeslo < (u32)nodes)
     oState->nodeshi++;
 
-  /* release lock */
-  mutex_unlock(&oState->lock);
+  /* release lock here */
 
   *pnodes = nodes;
 

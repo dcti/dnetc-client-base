@@ -10,12 +10,11 @@
  *
  */
 const char *ogr_cpp(void) {
-return "@(#)$Id: ogr.cpp,v 1.1.2.35 2001/01/25 01:26:54 andreasb Exp $"; }
+return "@(#)$Id: ogr.cpp,v 1.1.2.36 2001/01/26 16:54:00 cyp Exp $"; }
 
 #include <stdio.h>      /* printf for debugging */
 #include <stdlib.h>     /* malloc (if using non-static choose dat) */
 #include <string.h>     /* memset */
-#include "clisync.h"    /* mutex_* */
 
 #define HAVE_STATIC_CHOOSEDAT /* choosedat table is static, pre-generated */
 /* #define CRC_CHOOSEDAT_ANYWAY */ /* you'll need to link crc32 if this is defd */
@@ -584,8 +583,7 @@ static int ogr_getresult(void *state, void *result, int resultlen)
 
   /* ogr_getresult() and ogr_cycle() must interact thread safe */
 
-  /* lock the changing part of public data (part 2) for reading */
-  mutex_lock(&oState->lock);
+  /* this is where we would lock the public data (for read) */
 
   workstub->stub.marks = (u16)oState->maxdepth;
   workstub->stub.length = (u16)oState->startdepth;
@@ -610,8 +608,7 @@ static int ogr_getresult(void *state, void *result, int resultlen)
     /* workstub->nodes.hi = workstub->nodes.lo = 0; */
   }
 
-  /* release lock */
-  mutex_unlock(&oState->lock);
+  /* this is where we would release the read lock */
 
   return CORE_S_OK;
 }

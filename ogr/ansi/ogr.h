@@ -3,7 +3,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.13 2001/01/25 01:26:37 andreasb Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.14 2001/01/26 16:54:00 cyp Exp $"
 
 // define this for compiling with .asm
 //#define OLD_STATE
@@ -17,8 +17,6 @@
 // stubmap generation
 //#define OGR_CALLBACK
 
-
-#include "clisync.h"                /* mutex_* */
 
 #ifndef u16
 #include "cputypes.h"
@@ -305,7 +303,6 @@ struct State {
   int depth;                      /* depth of last placed mark */
   int marks[MAXDEPTH];            /* 1.RENAME TO markpos */ /* current positions of the marks */
   u32 nodeshi, nodeslo;           /* our internal nodecounter */
-  mutex_t lock;                   /* part 2 lock for reading/updating */
   
   /* Part 3: Variables that may be used ONLY by ogr_cycle() */
   #ifdef OGR_DEBUG
@@ -362,11 +359,8 @@ struct State {
 #else
   #define OGR_STATE_SIZE_PROFILE 0
 #endif
-/* FIXME: are there some larger ones ?*/
-#define OGR_MUTEX_T_SIZE 8
 #define OGR_PROBLEM_SIZE ((8*OGR_INT_SIZE)+ \
                          (OGR_INT_SIZE)+((MAXDEPTH)*OGR_INT_SIZE)+(2*4)+ \
-                         (OGR_MUTEX_T_SIZE)+ \
                          (OGR_STATE_SIZE_DEBUG)+(OGR_STATE_SIZE_WINDOW)+ \
                          (OGR_STATE_SIZE_PROFILE)+(2*OGR_VEC_SIZE)+ \
                          (BITMAPS*4)+ \
