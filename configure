@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.217 2001/01/02 20:11:03 patrick Exp $
+# @(#)$Id: configure,v 1.222.2.218 2001/01/04 14:16:00 oliver Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -62,6 +62,7 @@ TARGET_NASM_FMT="elf"  #<- set this to "" if you have no nasm
 TARGET_ASFLAGS=""
 TARGET_STRIP="strip"
 TARGET_OS=""           #<-may be needed for cross-compile or special handling
+TARGET_OGR_MULTI=""    #<-can be used to compile ogr.cpp with differing gcc opts
 
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
@@ -266,18 +267,17 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/rc5-000_010-jg.s \
                                       rc5/68k/rc5-020_030-jg.s \
                                       rc5/68k/rc5-040_060-jg.s"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp \
-                                      ogr/ansi/ogr_dat.cpp"
-      TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
-                                      output/ogr030.o output/ogr040.o \
-                                      output/ogr060.o"
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     else
       TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/crunch.68k.gcc.s"
       TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/68k/rc5_68k_gcc_crunch.c"
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
     fi  
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp \
+                                    ogr/ansi/ogr_dat.cpp"
+    TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
+                                    output/ogr030.o output/ogr040.o \
+                                    output/ogr060.o"
+    TARGET_OGR_MULTI="68k"
     ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $SLICE_SRCS3"
   #-----------------------------------------------------------------  
@@ -1973,7 +1973,6 @@ case "$1" in
         TARGET_TARBALL="amigaos-68k"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
         TARGET_BINNAME_SUFFIX="_68k"
-        TARGET_OS="AMIGAOS_68K"
         TARGET_GENMAN=
         TARGET_ARCTYPE="lha"
         add_sources "amigaos" "68k"
@@ -2420,8 +2419,8 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
   done
 fi        
       
-if [ "$TARGET_OS" = "AMIGAOS_68K" ]; then
-  echo "Generating Makefile AmigaOS 68k multi-core OGR dependency targets..."
+if [ "$TARGET_OGR_MULTI" = "68k" ]; then
+  echo "Generating Makefile 68k multi-core OGR dependency targets..."
   TARGETSRC="ogr/ansi/ogr.cpp"
   TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
   OGR68K="000 020 030 040 060"

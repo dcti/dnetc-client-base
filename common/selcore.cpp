@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.85 2001/01/03 23:21:53 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.86 2001/01/04 14:16:01 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -103,15 +103,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
     { /* OGR */
-      #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
       "GARSP 5.13 - 68000",
       "GARSP 5.13 - 68020",
       "GARSP 5.13 - 68030",
       "GARSP 5.13 - 68040",
       "GARSP 5.13 - 68060",
-      #else
-      "GARSP 5.13",
-      #endif
       NULL
     },
   #elif (CLIENT_CPU == CPU_ALPHA) 
@@ -235,16 +231,6 @@ static const char **__corenames_for_contest( unsigned int cont_i )
         corenames_table[OGR][NUM_CORE_OGR+1] = NULL;
       }
     }
-    #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
-      long det = GetProcessorType(1);
-      /* only make available ogr cores <= current cpu */
-      switch (det)
-      {
-        case 68000: corenames_table[OGR][1] = NULL;
-        case 68020: corenames_table[OGR][2] = NULL;
-        case 68030: corenames_table[OGR][3] = NULL;
-        case 68040: corenames_table[OGR][4] = NULL;
-      }
     #endif
     fixed_up = 1;  
   }
@@ -334,7 +320,31 @@ void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont,
 int selcoreValidateCoreIndex( unsigned int cont_i, int idx )
 {
   if (idx >= 0 && idx < ((int)__corecount_for_contest( cont_i )))
+  {
+    #if defined(HAVE_OGR_CORES)
+      #if (CLIENT_CPU == CPU_68K)
+      // only make available ogr cores <= current cpu
+      // (e.g. since the 060 compiled core will crash an 020)
+      if (cont_i == OGR)
+      {
+        long det = GetProcessorType(1);
+        int max;
+        switch (det)
+        {
+          case 68000: max = 0; break;
+          case 68020: max = 1; break;
+          case 68030: max = 2; break;
+          case 68040: max = 3; break;
+          default:    max = idx;
+        }
+        if (idx > max)
+          idx = -1;  // invalidate user selection (auto-detect instead)
+      }
+      #endif
+    #endif
+
     return idx;
+  }
   return -1;
 }
 
@@ -575,7 +585,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     if (selcorestatics.corenum[OGR] < 0 && detected_type > 0)
     {
       int cindex = 0;
-      #if (CLIENT_OS == OS_AMIGAOS)
       if (detected_type >= 68060)
         cindex = 4;
       else if (detected_type == 68040)
@@ -584,7 +593,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         cindex = 2;
       else if (detected_type == 68020)
         cindex = 1;
-      #endif
       selcorestatics.corenum[OGR] = cindex;
     }
   }
@@ -1044,7 +1052,7 @@ n bad performance.\n");
       #else 
       #define vec_ogr_get_dispatch_table ogr_get_dispatch_table
       #endif
-  #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_CPU == CPU_68K)
       extern "C" CoreDispatchTable *ogr_get_dispatch_table_000(void);
       extern "C" CoreDispatchTable *ogr_get_dispatch_table_020(void);
       extern "C" CoreDispatchTable *ogr_get_dispatch_table_030(void);
@@ -1484,7 +1492,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       if (coresel == NUM_CORE_OGR)    // our vec_ogr core
         unit_func.ogr = vec_ogr_get_dispatch_table();
       #endif
-    #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_CPU == CPU_68K)
       //extern CoreDispatchTable *ogr_get_dispatch_table_000(void);
       //extern CoreDispatchTable *ogr_get_dispatch_table_020(void);
       //extern CoreDispatchTable *ogr_get_dispatch_table_030(void);
