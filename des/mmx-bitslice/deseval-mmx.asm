@@ -8,6 +8,10 @@
 ;
 ;
 ; $Log: deseval-mmx.asm,v $
+; Revision 1.6  1999/01/13 07:40:07  fordbr
+; Fixed incorrect pop into eax when key found
+; Removed writeback of unchanged bits when key found
+;
 ; Revision 1.5  1999/01/12 21:03:01  remi
 ; - Added conditional $Id tags in NASM files
 ; - Added -d __showids__ to NASM_FLAGS in targets where __showids_ was
@@ -1429,7 +1433,7 @@ SECTION DATA USE32 ALIGN=16
 %else
 [SECTION .data]
 %endif
-idtag:    db "@(#)$Id: deseval-mmx.asm,v 1.5 1999/01/12 21:03:01 remi Exp $\0"
+idtag:    db "@(#)$Id: deseval-mmx.asm,v 1.6 1999/01/13 07:40:07 fordbr Exp $\0"
 %endif
 
 ; PLATFORM  text segment definition
@@ -1452,6 +1456,7 @@ extern _malloc, _free
 ; amount given by argument and leaves a pointer in eax
    push  dword %1
    call  _malloc
+   pop   edx                 ; remove argument from the stack
 %endmacro
 
 %macro relmem 0
@@ -1671,7 +1676,6 @@ whack16_:
 
    getmem mem_needed
 
-   pop   edx                 ; remove argument from the stack
    push  eax                 ; keep the pointer to allocated memory
 
    add   eax, 7              ; Align eax on a quadword boundary
@@ -3131,128 +3135,44 @@ key_found:
    mov   ebp, [esp+36]
    ; Collect the eax value pushed after the call to _malloc
    ; and save our result
-   pop   eax
+   pop   edi
    push  edx
 
    push  ecx
-   push  eax
+   push  edi
 
-   movq  mm0, [keybit00]
-   movq  mm1, [keybit01]
-   movq  [ebp], mm0
-   movq  mm2, [keybit02]
-   movq  [ebp+8], mm1
    movq  mm0, [keybit03]
-   movq  [ebp+16], mm2
-   movq  mm1, [keybit04]
-   movq  [ebp+24], mm0
-   movq  mm2, [keybit05]
-   movq  [ebp+32], mm1
-   movq  mm0, [keybit06]
-   movq  [ebp+40], mm2
-   movq  mm1, [keybit07]
-   movq  [ebp+48], mm0
+   movq  mm1, [keybit05]
    movq  mm2, [keybit08]
-   movq  [ebp+56], mm1
-   movq  mm0, [keybit09]
+   movq  [ebp+24], mm0
+   movq  mm0, [keybit10]
+   movq  [ebp+40], mm1
+   movq  mm1, [keybit11]
    movq  [ebp+64], mm2
-   movq  mm1, [keybit10]
-   movq  [ebp+72], mm0
-   movq  mm2, [keybit11]
-   movq  [ebp+80], mm1
-   movq  mm0, [keybit12]
-   movq  [ebp+88], mm2
-   movq  mm1, [keybit13]
-   movq  [ebp+96], mm0
-   movq  mm2, [keybit14]
-   movq  [ebp+104], mm1
+   movq  mm2, [keybit12]
+   movq  [ebp+80], mm0
    movq  mm0, [keybit15]
-   movq  [ebp+112], mm2
-   movq  mm1, [keybit16]
+   movq  [ebp+88], mm1
+   movq  mm1, [keybit18]
+   movq  [ebp+96], mm2
+   movq  mm2, [keybit42]
    movq  [ebp+120], mm0
-   movq  mm2, [keybit17]
-   movq  [ebp+128], mm1
-   movq  mm0, [keybit18]
-   movq  [ebp+136], mm2
-   movq  mm1, [keybit19]
-   movq  [ebp+144], mm0
-   movq  mm2, [keybit20]
-   movq  [ebp+152], mm1
-   movq  mm0, [keybit21]
-   movq  [ebp+160], mm2
-   movq  mm1, [keybit22]
-   movq  [ebp+168], mm0
-   movq  mm2, [keybit23]
-   movq  [ebp+176], mm1
-   movq  mm0, [keybit24]
-   movq  [ebp+184], mm2
-   movq  mm1, [keybit25]
-   movq  [ebp+192], mm0
-   movq  mm2, [keybit26]
-   movq  [ebp+200], mm1
-   movq  mm0, [keybit27]
-   movq  [ebp+208], mm2
-   movq  mm1, [keybit28]
-   movq  [ebp+216], mm0
-   movq  mm2, [keybit29]
-   movq  [ebp+224], mm1
-   movq  mm0, [keybit30]
-   movq  [ebp+232], mm2
-   movq  mm1, [keybit31]
-   movq  [ebp+240], mm0
-   movq  mm2, [keybit32]
-   movq  [ebp+248], mm1
-   movq  mm0, [keybit33]
-   movq  [ebp+256], mm2
-   movq  mm1, [keybit34]
-   movq  [ebp+264], mm0
-   movq  mm2, [keybit35]
-   movq  [ebp+272], mm1
-   movq  mm0, [keybit36]
-   movq  [ebp+280], mm2
-   movq  mm1, [keybit37]
-   movq  [ebp+288], mm0
-   movq  mm2, [keybit38]
-   movq  [ebp+296], mm1
-   movq  mm0, [keybit39]
-   movq  [ebp+304], mm2
-   movq  mm1, [keybit40]
-   movq  [ebp+312], mm0
-   movq  mm2, [keybit41]
-   movq  [ebp+320], mm1
-   movq  mm0, [keybit42]
-   movq  [ebp+328], mm2
-   movq  mm1, [keybit43]
-   movq  [ebp+336], mm0
-   movq  mm2, [keybit44]
-   movq  [ebp+344], mm1
-   movq  mm0, [keybit45]
-   movq  [ebp+352], mm2
-   movq  mm1, [keybit46]
-   movq  [ebp+360], mm0
-   movq  mm2, [keybit47]
-   movq  [ebp+368], mm1
-   movq  mm0, [keybit48]
-   movq  [ebp+376], mm2
-   movq  mm1, [keybit49]
-   movq  [ebp+384], mm0
-   movq  mm2, [keybit50]
-   movq  [ebp+392], mm1
-   movq  mm0, [keybit51]
-   movq  [ebp+400], mm2
-   movq  mm1, [keybit52]
-   movq  [ebp+408], mm0
-   movq  mm2, [keybit53]
-   movq  [ebp+416], mm1
-   movq  mm0, [keybit54]
-   movq  [ebp+424], mm2
-   movq  mm1, [keybit55]
-   movq  [ebp+432], mm0
-   movq  [ebp+440], mm1
+   movq  mm0, [keybit43]
+   movq  [ebp+144], mm1
+   movq  mm1, [keybit45]
+   movq  [ebp+336], mm2
+   movq  mm2, [keybit46]
+   movq  [ebp+344], mm0
+   movq  mm0, [keybit49]
+   movq  [ebp+360], mm1
+   movq  mm1, [keybit50]
+   movq  [ebp+368], mm2
+   movq  [ebp+392], mm0
+   movq  [ebp+400], mm1
 
    emms
 
-   call  _free
+   relmem
 
    pop   edx                 ; remove argument from the stack
    pop   eax                 ; retrieve the result
