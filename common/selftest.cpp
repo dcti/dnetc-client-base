@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.43 2001/01/10 14:22:38 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.44 2001/01/12 11:33:55 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -107,7 +107,8 @@ static const u32 des_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
 static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   { 0x000D1B52, 21,  2, 22, 32, 21,  5,  1},
   {~0x0057102A, 21,  1,  2,  4,  5,  8, 10},
-  {~0x00A8EE70, 21,  2, 22, 32, 21,  5,  2},
+//{~0x00A8EE70, 21,  2, 22, 32, 21,  5,  2}, // NOT a Golomb stub !
+  {~0x00639F72, 21,  2, 22, 32, 21,  1,  3},
   {~0x007D1FD7, 22,  1,  2,  4,  5,  8, 10},
   { 0x0015ACEC, 22,  1,  8,  5, 29, 27, 36},
   {~0x001BE4B3, 22,  1,  8,  5, 29, 27, 37},
@@ -122,7 +123,8 @@ static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   {~0x0120C133, 25,  2,  7, 22,  5, 14,  4, 64, 37},
   {~0x0057102A, 21,  1,  2,  4,  5,  8, 10},
   { 0x000D1B52, 21,  2, 22, 32, 21,  5,  1},
-  {~0x00A8EE70, 21,  2, 22, 32, 21,  5,  2},
+//{~0x00A8EE70, 21,  2, 22, 32, 21,  5,  2},
+  {~0x00639F72, 21,  2, 22, 32, 21,  1,  3},
   {~0x007D1FD7, 22,  1,  2,  4,  5,  8, 10},
   { 0x0015ACEC, 22,  1,  8,  5, 29, 27, 36},
   {~0x001BE4B3, 22,  1,  8,  5, 29, 27, 37},
@@ -522,6 +524,9 @@ long SelfTest( unsigned int contest )
 
           ClientEventSyncPost( CLIEVENT_SELFTEST_TESTEND, (long)resultcode );
         } /* if load state ok */
+        else {
+          LogScreen( "\r%s: Test %02d load failed\n", contname, testnum + 1);
+        }
         ProblemFree(thisprob);
       } /* if ProblemAlloc() */
 
