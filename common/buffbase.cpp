@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.30 2000/03/10 03:05:49 jlawson Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.31 2000/03/10 05:30:06 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -544,14 +544,21 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
     {
       long workunits = 0;
 
+      //
+      // Perform a quick verification of the packet op codes.
+      //
       if (( wrdata.resultcode != RESULT_NOTHING &&
             wrdata.resultcode != RESULT_FOUND ) ||
             ((unsigned int)wrdata.contest) != contest)
-      { /* buffer code should have handled this */
+      {
+        /* buffer code should have handled this */
         //Log( "%sError - Bad Data - packet discarded.\n",exchname );
         continue;
       }
 
+      //
+      // Save the new work record into the output file.
+      //
       if ( BufferPutFileRecord( remote_file, &wrdata, NULL ) != 0 )
       {
         PutBufferRecord( client, &wrdata );
@@ -559,6 +566,9 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
         break;
       }
 
+      //
+      // Normalize the number of work units within this block.
+      //
       switch (contest)
       {
         case RC5:
@@ -572,10 +582,16 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
           break;
       }
 
+      //
+      // Update the total transfer counts.
+      //
       projtrans++;
       combinedtrans++;
       combinedworkunits += workunits;
 
+      //
+      // Signal the block transfer event and log screen activity.
+      //
       {
         struct Fetch_Flush_Info ffinfo = {contest, projtrans, combinedtrans};
         unsigned long totrans = (projtrans + (unsigned long)(lefttotrans));
@@ -592,6 +608,9 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
             projtrans, totrans,  percent/100, percent%100 );
       }
 
+      //
+      // Check for user abort signal.
+      //
       if (CheckExitRequestTriggerNoIO())
         break;
 
@@ -686,12 +705,22 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
     int packets;
     char remote_file[128];
 
+    //
+    // Check for user abort signal.
+    //
     if (CheckExitRequestTriggerNoIO())
       break;
 
-    if (loaderflags_map[contest] != 0) /* contest is closed or disabled */
+    //
+    // Skip to next contest if this one is closed or disabled.
+    //
+    if (loaderflags_map[contest] != 0)
       continue;
 
+
+    //
+    // Determine how many packets we should transfer from the remote buffer.
+    //
     if ((packets = GetBufferCount( client, contest, 0, &lefttotrans)) < 0)
       lefttotrans = 0;
     else
@@ -706,6 +735,10 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
         lefttotrans = threshold - lefttotrans;
     }
 
+
+    //
+    // Verify that the remote buffer file exists.
+    //
     if (lefttotrans != 0)
     {
       strncpy( remote_file, BufferGetDefaultFilename(contest,1,basename), sizeof(remote_file));
@@ -724,11 +757,17 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       if (CheckExitRequestTriggerNoIO() != 0 )
         break;
 
+      //
+      // Retrieve a packet from the remote buffer.
+      //
       if ( BufferGetFileRecordNoOpt( remote_file, &wrdata, &remaining ) != 0 )
         break;
       if (remaining == 0)
          lefttotrans = 0;
 
+      //
+      // Save the packet into our local buffers.
+      //
       if (PutBufferRecord( client, &wrdata ) < 0)
       {
         BufferPutFileRecord( remote_file, &wrdata, NULL );
@@ -737,6 +776,9 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
         break;
       }
 
+      //
+      // Normalize the work units contained within the packet.
+      //
       switch (contest)
       {
         case RC5:
@@ -750,6 +792,9 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
           break;
       }
 
+      //
+      // Update the count of work units transferred.
+      //
       projtrans++;
       projworkunits += workunits;
       combinedtrans++;
@@ -759,6 +804,9 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       else
         lefttotrans -= workunits;
 
+      //
+      // Signal the transfer event and update the screen activity.
+      //
       if (combinedtrans == 1)
         ClientEventSyncPost( CLIEVENT_BUFFER_FETCHBEGIN, 0 );
 
