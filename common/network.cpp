@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.93 1999/04/10 22:21:32 remi Exp $"; }
+return "@(#)$Id: network.cpp,v 1.94 1999/04/11 10:23:43 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -1796,8 +1796,7 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
     for (which = 0; which < 2; which++ )
     {
       int type = ((which == 0)?(SO_RCVBUF):(SO_SNDBUF));
-      int sz = 0;
-      unsigned szint = sizeof(int);
+      int sz = 0, szint = (int)sizeof(int);
       if (getsockopt(sock, SOL_SOCKET, type, (char *)&sz, &szint)<0)
         ;
       else if (sz < parm)
@@ -1864,10 +1863,9 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
       if ((arg && res) || (!arg && !res))
         return 0;
     }
-    #else
-      return -1;
     #endif
   }
+  parm = parm; /* shaddup compiler */
   return -1;
 }
 
