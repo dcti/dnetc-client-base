@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.11 2002/12/18 23:18:06 snikkel Exp $
+# @(#)$Id: configure,v 1.288.2.12 2002/12/19 01:47:41 snikkel Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1759,7 +1759,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -mt -Dsolaris"
         TARGET_LIBS="-lnsl -lsocket -ldl -lthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="solaris26-sparc"
+        TARGET_TARBALL="solaris-sparc"
         add_sources "solaris" "sparc" "cc"   
         ;;
 
