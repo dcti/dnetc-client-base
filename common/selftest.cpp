@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.25 1999/12/18 15:56:39 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.26 1999/12/19 19:23:28 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -209,10 +209,6 @@ int SelfTest( unsigned int contest )
   }
   if (!IsProblemLoadPermitted(-1, contest)) /* also checks HAVE_xxx_CORES */
     return 0;
-  #if (CLIENT_OS == OS_RISCOS)
-  if (contest == RC5 && GetNumberOfDetectedProcessors() == 2)
-    threadcount = 2;
-  #endif
 
   contname = CliGetContestNameFromID( contest );
   for ( threadpos = 0; 
@@ -221,9 +217,6 @@ int SelfTest( unsigned int contest )
   {
     char lastmsg[100];
     unsigned int testnum;
-    long threadindex = -1L;
-    if (threadcount > 1)
-      threadindex = (long)threadpos;
 
     ClientEventSyncPost( CLIEVENT_SELFTEST_STARTED, (long)contest );
     successes = 0;
@@ -235,7 +228,7 @@ int SelfTest( unsigned int contest )
       int resultcode; const char *resulttext = NULL;
       u32 expectedsolution_hi, expectedsolution_lo;
       ContestWork contestwork;
-      Problem *problem = new Problem(threadindex);
+      Problem *problem = new Problem();
 
       u32 tslice = 0x1000;
       int non_preemptive_env = 0;
@@ -262,11 +255,6 @@ int SelfTest( unsigned int contest )
         test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])rc5_test_cases;
         expectedsolution_lo = (*test_cases)[testnum][0];
         expectedsolution_hi = (*test_cases)[testnum][1];
-
-        #if (CLIENT_OS == OS_RISCOS)
-        if (threadcount == 2)
-          contname = ((threadpos == 0)?("RC5 ARM"):("RC5 X86"));
-        #endif
 
         /*
         test case 1 is the RSA pseudo-contest solution

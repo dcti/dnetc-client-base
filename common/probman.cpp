@@ -6,7 +6,7 @@
  *
 */ 
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.9.2.1 1999/06/06 13:37:31 cyp Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.9.2.2 1999/12/19 19:23:26 cyp Exp $"; }
 
 #include "baseincs.h"  // malloc()/NULL/memset()
 #include "problem.h"   // Problem class
@@ -38,13 +38,13 @@ int GetProblemIndexFromPointer( Problem *prob )
 {
   unsigned int probindex;
   if (probmanstatics.probcount)
-    {
+  {
     for (probindex = 0; probindex < probmanstatics.probcount; probindex++ )
-      {
+    {
       if (probmanstatics.probtable[probindex] == prob)
         return (int)probindex;
-      }
     }
+  }
   return -1;
 }
 
@@ -70,20 +70,20 @@ int InitializeProblemManager(unsigned int maxnumproblems)
     
   probcount = 0;
   for (i=0;i<maxnumproblems;i++)
-    {
-    probmanstatics.probtable[i]=new Problem(i);
+  {
+    probmanstatics.probtable[i]=new Problem();
     if (probmanstatics.probtable[i]==NULL)
       break;
     probcount++;
-    }
+  }
   if (probcount == 0)
-    {
+  {
     free((void *)probmanstatics.probtable);
     probmanstatics.probtable = NULL;
     probmanstatics.probcount = 0;
     probmanstatics.tablesize = 0;
     return -1;
-    }
+  }
   probmanstatics.probcount = probcount;
   return (int)(probmanstatics.probcount);
 }    
@@ -95,15 +95,15 @@ int DeinitializeProblemManager(void)
   Problem **probtable = probmanstatics.probtable;
 
   if (probtable!= NULL)
-    {
+  {
     for (;probmanstatics.probcount>0;probmanstatics.probcount--)
-      {
+    {
       if (probtable[probmanstatics.probcount-1])
         delete probtable[probmanstatics.probcount-1];
       probtable[probmanstatics.probcount-1] = NULL;
-      }
-    free((void *)probtable);
     }
+    free((void *)probtable);
+  }
 
   probmanstatics.probcount = 0;
   probmanstatics.tablesize = 0;

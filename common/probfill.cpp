@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.15 1999/12/08 00:41:54 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.16 1999/12/19 19:23:23 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -21,6 +21,7 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.15 1999/12/08 00:41:54 cyp Exp $"; }
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
 #include "util.h"      // temporary home for ogr_stubstr()
 #include "random.h"    // Random()
+#include "selcore.h"   // selcoreSelectCore()
 #include "clisrate.h"  // CliGetMessageFor... et al.
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "clirate.h"   // CliGetKeyrateForProblem()
@@ -195,10 +196,10 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       *contest = cont_i;
       *is_empty = 1; /* will soon be */
 
-      int cputype       = thisprob->coresel; /* uh, "coretype" */
       wrdata.contest    = (u8)cont_i;
       wrdata.resultcode = resultcode;
-      wrdata.cpu        = FILEENTRY_CPU; /* combines CLIENT_CPU and coretype */
+      wrdata.cpu        = FILEENTRY_CPU(thisprob->client_cpu,
+                                        thisprob->coresel);
       wrdata.os         = FILEENTRY_OS;
       wrdata.buildhi    = FILEENTRY_BUILDHI; 
       wrdata.buildlo    = FILEENTRY_BUILDLO;
@@ -315,13 +316,110 @@ static long __loadapacket( Client *client, WorkRecord *wrdata,
 
 /* ---------------------------------------------------------------------- */
 
+static int __resetWork( WorkRecord *wrdata )
+{
+  int work_was_reset = -1;
+  switch (wrdata->contest)
+  {
+    case RC5:
+    case DES:
+    case CSC:
+    {
+      work_was_reset = 0;
+      if (wrdata->work.crypto.keysdone.hi != 0 || wrdata->work.crypto.keysdone.lo != 0)
+      {
+        work_was_reset = 1;
+        wrdata->work.crypto.keysdone.hi = wrdata->work.crypto.keysdone.lo = 0;
+      }
+      break;
+    }
+    #if defined(HAVE_OGR_CORES)
+    case OGR:
+    {
+      work_was_reset = 0;
+      #error gregh please fix
+      if (wrdata->work.crypto.keysdone.hi != 0 || wrdata->work.crypto.keysdone.lo != 0)
+      {
+        work_was_reset = 1;
+        wrdata->work.crypto.keysdone.hi = wrdata->work.crypto.keysdone.lo = 0;
+      }
+      break;
+    }
+    #endif
+  }
+  return work_was_reset;
+}
+
+/* ---------------------------------------------------------------------- */
+
 #define NOLOAD_NONEWBLOCKS       -3
 #define NOLOAD_ALLCONTESTSCLOSED -2
 #define NOLOAD_NORANDOM          -1
 
+int __gen_random( Client *client, WorkRecord *wrdata )
+{
+  u32 randomprefix, rnd;
+  int norandom = 1;
+
+  if ((client->rc564closed == 0) && (client->blockcount >= 0))
+  {
+    unsigned int iii;
+    for (iii=0;norandom && iii<CONTEST_COUNT;iii++)
+    {
+      if (client->loadorder_map[iii] == 0 /* rc5 is enabled in map */)
+        norandom = 0;
+    }
+  }  
+  if (norandom)
+    return NOLOAD_NORANDOM; /* -1 */
+  if (client->nonewblocks)
+    return NOLOAD_NONEWBLOCKS; /* -3 */
+
+  /* random blocks permitted */
+  RefreshRandomPrefix(client); //get/put an up-to-date prefix 
+
+  if (client->randomprefix == 0)
+    client->randomprefix = 100;
+
+  randomprefix = ( (u32)(client->randomprefix) + 1 ) & 0xFF;
+  rnd = Random(NULL,0);
+
+#if defined(STRESS_RANDOMGEN) && defined(STRESS_RANDOMGEN_ALL_KEYSPACE)
+  ++client->randomprefix;
+  if (client->randomprefix > 0xff)
+    client->randomprefix = 100
+#endif
+      
+  wrdata->id[0]                 = 0;
+  wrdata->resultcode            = RESULT_WORKING;
+  wrdata->os                    = 0;
+  wrdata->cpu                   = 0;
+  wrdata->buildhi               = 0;
+  wrdata->buildlo               = 0;
+  wrdata->contest               = RC5; // Random blocks are always RC5
+  wrdata->work.crypto.key.lo    = (rnd & 0xF0000000L);
+  wrdata->work.crypto.key.hi    = (rnd & 0x00FFFFFFL) + (randomprefix<<24);
+  //constants are in rsadata.h
+  wrdata->work.crypto.iv.lo     = ( RC564_IVLO );     //( 0xD5D5CE79L );
+  wrdata->work.crypto.iv.hi     = ( RC564_IVHI );     //( 0xFCEA7550L );
+  wrdata->work.crypto.cypher.lo = ( RC564_CYPHERLO ); //( 0x550155BFL );
+  wrdata->work.crypto.cypher.hi = ( RC564_CYPHERHI ); //( 0x4BF226DCL );
+  wrdata->work.crypto.plain.lo  = ( RC564_PLAINLO );  //( 0x20656854L );
+  wrdata->work.crypto.plain.hi  = ( RC564_PLAINHI );  //( 0x6E6B6E75L );
+  wrdata->work.crypto.keysdone.lo = 0;
+  wrdata->work.crypto.keysdone.hi = 0;
+  wrdata->work.crypto.iterations.lo = 1L<<28;
+  wrdata->work.crypto.iterations.hi = 0;
+
+  return 0;
+}
+
+/* ---------------------------------------------------------------------- */
+
 static unsigned int __IndividualProblemLoad( Problem *thisprob, 
                     unsigned int prob_i, Client *client, int *load_needed, 
-                    unsigned load_problem_count, unsigned int *contest,
+                    unsigned load_problem_count, 
+                    unsigned int *loaded_for_contest,
                     int *bufupd_pending )
 {
   int work_was_reset = 0;
@@ -347,127 +445,64 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     }
   }
 #endif
-
+  
   if (bufcount >= 0) /* load from file succeeded */
   {
-    didload = 1;
+    int client_cpu = 0, coresel;
+    
     if (((unsigned long)(bufcount)) < (load_problem_count - prob_i))
       *bufupd_pending |= BUFFERUPDATE_FETCH;
 
-    *load_needed = 0;
-    
-    switch (wrdata.contest) 
+    coresel = selcoreSelectCore( wrdata.contest, prob_i, &client_cpu, NULL );
+    if (coresel < 0)
     {
-      case RC5:
-      case DES:
-      case CSC:
-        if ( ((wrdata.work.crypto.keysdone.lo)!=0) || 
-             ((wrdata.work.crypto.keysdone.hi)!=0) )
-        {
-          //cputype = client->cputype; /* needed for FILEENTRY_CPU macro */
-
-#if 0
-@@@@@@ chrisb needs to fix this
-          #if (CLIENT_OS == OS_RISCOS) /* second thread is x86 */
-          if (wrdata.contest == RC5 && prob_i == 1) cputype = CPU_X86;
-          #endif
-#endif
-          // If this is a partial block, and completed by a different 
-          // cpu/os/build, then reset the keysdone to 0...
-          if ((wrdata.os      != FILEENTRY_OS) ||
-              (wrdata.buildhi != FILEENTRY_BUILDHI) || 
-           /* (wrdata.cpu     != FILEENTRY_CPU) || */ /*CLIENT_CPU+coretype */
-              (wrdata.buildlo != FILEENTRY_BUILDLO))
-          {
-             wrdata.work.crypto.keysdone.lo = 0;
-             wrdata.work.crypto.keysdone.hi = 0;
-             work_was_reset = 1;
-          }
-          else if (((wrdata.work.crypto.iterations.lo) & 0x00000001L) == 1)
-          {
-            // If packet was finished with an 'odd' number of keys done, 
-            // then make redo the last key
-            wrdata.work.crypto.iterations.lo = wrdata.work.crypto.iterations.lo & 0xFFFFFFFEL;
-            wrdata.work.crypto.key.lo = wrdata.work.crypto.key.lo & 0xFEFFFFFFL;
-          }
-        }
-        break;
-      case OGR:
-        break;
+      bufcount = -1; /* core select failed */
+    }
+    else
+    {
+      didload = 1;
+      *load_needed = 0;
+       
+      if (wrdata.cpu     != FILEENTRY_CPU(client_cpu, coresel)
+       || wrdata.os      != FILEENTRY_OS 
+       || wrdata.buildhi != FILEENTRY_BUILDHI
+       || wrdata.buildlo != FILEENTRY_BUILDLO)
+      {
+        if ( __resetWork( &wrdata ) > 0)
+          work_was_reset = 1;
+      }
     }
   } 
-  else /* normal load from buffer failed */
+
+  if (bufcount < 0) /* normal load from buffer failed */
   {
-    int norandom = 1;
-    if ((client->rc564closed == 0) && (client->blockcount >= 0))
+    *load_needed = __gen_random( client, &wrdata );
+    if (load_needed == 0)
     {
-      unsigned int iii;
-      for (iii=0;norandom && iii<CONTEST_COUNT;iii++)
-      {
-        if (client->loadorder_map[iii] == 0 /* rc5 is enabled in map */)
-          norandom = 0;
-      }
-    }  
-    if (norandom)
-      *load_needed = NOLOAD_NORANDOM; /* -1 */
-    else if (client->nonewblocks)
-      *load_needed = NOLOAD_NONEWBLOCKS; /* -3 */
-    else /* random blocks permitted */
-    {
-      *load_needed = 0;
       didload = 1;
       didrandom = 1;
-      RefreshRandomPrefix(client); //get/put an up-to-date prefix 
-
-      if (client->randomprefix == 0)
-        client->randomprefix = 100;
-
-      u32 randomprefix = ( (u32)(client->randomprefix) + 1 ) & 0xFF;
-      u32 rnd = Random(NULL,0);
-
-#if defined(STRESS_RANDOMGEN) && defined(STRESS_RANDOMGEN_ALL_KEYSPACE)
-      ++client->randomprefix;
-      if (client->randomprefix > 0xff)
-        client->randomprefix = 100
-#endif
-      
-      wrdata.id[0]                 = 0;
-      wrdata.resultcode            = RESULT_WORKING;
-      wrdata.os                    = 0;
-      wrdata.cpu                   = 0;
-      wrdata.buildhi               = 0;
-      wrdata.buildlo               = 0;
-      wrdata.contest               = RC5; // Random blocks are always RC5
-      wrdata.work.crypto.key.lo    = (rnd & 0xF0000000L);
-      wrdata.work.crypto.key.hi    = (rnd & 0x00FFFFFFL) + (randomprefix<<24);
-      //constants are in rsadata.h
-      wrdata.work.crypto.iv.lo     = ( RC564_IVLO );     //( 0xD5D5CE79L );
-      wrdata.work.crypto.iv.hi     = ( RC564_IVHI );     //( 0xFCEA7550L );
-      wrdata.work.crypto.cypher.lo = ( RC564_CYPHERLO ); //( 0x550155BFL );
-      wrdata.work.crypto.cypher.hi = ( RC564_CYPHERHI ); //( 0x4BF226DCL );
-      wrdata.work.crypto.plain.lo  = ( RC564_PLAINLO );  //( 0x20656854L );
-      wrdata.work.crypto.plain.hi  = ( RC564_PLAINHI );  //( 0x6E6B6E75L );
-      wrdata.work.crypto.keysdone.lo = 0;
-      wrdata.work.crypto.keysdone.hi = 0;
-      wrdata.work.crypto.iterations.lo = 1L<<28;
-      wrdata.work.crypto.iterations.hi = 0;
     }
   }
 
-#ifdef DEBUG
-Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Success"):("Failed")) );
-#endif
+  #ifdef DEBUG
+  Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Success"):("Failed")) );
+  #endif
+
+  /* ------------------------------- */
     
   if (didload) /* success */
   {
+    char msgbuf[80]; 
     u32 timeslice = 0x10000;
     #if (defined(INIT_TIMESLICE) && (INIT_TIMESLICE > 64))
     timeslice = INIT_TIMESLICE;
     #endif
+    
+    msgbuf[0] = '\0';
     *load_needed = 0;
-    *contest = (unsigned int)(wrdata.contest);
+    *loaded_for_contest = (unsigned int)(wrdata.contest);
 
-    thisprob->LoadState( &wrdata.work, *contest, timeslice, 0 /*unused*/ );
+    thisprob->LoadState( &wrdata.work, *loaded_for_contest, timeslice, 0 /*unused*/ );
     thisprob->loaderflags = 0;
 
     switch (wrdata.contest) 
@@ -480,60 +515,35 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
                                                    (wrdata.work.crypto.iterations.hi));
         if (norm_key_count == 0) /* test block */
           norm_key_count = 1;
-        #if 0
-        if (norm_key_count == 0)
-        {
-          Log("Ouch!: normkeycount == 0 for iter %08x:%08x\n",
-                      wrdata.work.crypto.iterations.hi,
-                      wrdata.work.crypto.iterations.lo);
-          norm_key_count++;
-        }
-        #endif
+        sprintf(msgbuf, "%s %u*2^28 packet %08lX:%08lX", 
+                ((didrandom)?(" random"):("")), norm_key_count,
+                (unsigned long) ( wrdata.work.crypto.key.hi ),
+                (unsigned long) ( wrdata.work.crypto.key.lo ) );
         break;
       }
       case OGR:
       {
         norm_key_count = 1;
+        sprintf(msgbuf," stub %s", ogr_stubstr(&wrdata.work.ogr.workstub.stub) );
         break;
       }
     }
 
+    if (load_problem_count <= COMBINEMSG_THRESHOLD && msgbuf[0])
+    {
+      char perdone[48]; 
+      unsigned int permille = (unsigned int)(thisprob->startpermille);
+      perdone[0]='\0';
+      if (permille!=0 && permille<=1000)
+        sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
+      Log("Loaded %s%s%s\n%s",
+         CliGetContestNameFromID(*loaded_for_contest), msgbuf, perdone,
+           (work_was_reset ? ("Packet was from a different core/"
+           "client cpu/os/build.\n"):("")) );
+    } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
+
     ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
 
-    if (load_problem_count <= COMBINEMSG_THRESHOLD)
-    {
-      char msgbuf[80]; msgbuf[0] = '\0';
-      switch (*contest) 
-      {
-        case RC5:
-        case DES:
-        case CSC:
-        {
-          sprintf(msgbuf, "%s %u*2^28 packet %08lX:%08lX", 
-                  ((didrandom)?(" random"):("")), norm_key_count,
-                  (unsigned long) ( wrdata.work.crypto.key.hi ),
-                  (unsigned long) ( wrdata.work.crypto.key.lo ) );
-          break;
-        }
-        case OGR:
-        {
-          sprintf(msgbuf," stub %s", ogr_stubstr(&wrdata.work.ogr.workstub.stub) );
-          break;
-        }
-      }
-      if (msgbuf[0])
-      {
-        char perdone[48]; 
-        unsigned int permille = (unsigned int)(thisprob->startpermille);
-        perdone[0]='\0';
-        if (permille!=0 && permille<=1000)
-          sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
-        Log("Loaded %s%s%s\n%s",
-           CliGetContestNameFromID(*contest), msgbuf, perdone,
-             (work_was_reset ? ("Packet was from a client "
-             "with another cpu/os/build.\n"):("")) );
-      }
-    } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
   } /* if (didload) */
 
   return norm_key_count;
