@@ -5,15 +5,19 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CONSOLE_H__
-#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.28 1999/04/06 10:20:48 cyp Exp $"
+#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.29 1999/07/25 23:13:38 cyp Exp $"
 
 #include "version.h"
 #define CLICONS_SHORTNAME  "RC5DES"
 #define CLICONS_LONGNAME "distributed.net RC5/DES client " CLIENT_VERSIONSTRING ""
 
-// ConIsScreen() returns true (!0) if console (both stdin and stdout)
-// represents the screen. also returns 0 if the console is not initialized.
+// ConIsScreen() returns non-zero if console represents the screen
+// also returns 0 if the console is not initialized.
 int ConIsScreen(void);
+
+// Are we running under a non-command line oriented UI? 
+// (for cases where GUIishness will have been determined at runtime)
+int ConIsGUI(void);
 
 // ConOut() does what printf("%s",str) would do
 // writes only if stdout is a tty. (or equivalent)
@@ -62,8 +66,7 @@ int ConGetSize( int *width, int *height );
 int DeinitializeConsole(void);
 
 // Initialize console functionality. Returns !0 on failure.
-// doingmodes is used on some platforms to use a separate screen and by
-// others to wait with "Press any key..." before destroying the screen
+// doingmodes is used on some platforms to use a separate screen.
 int InitializeConsole(int runhidden, int doingmodes);
 
 #endif

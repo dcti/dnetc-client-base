@@ -18,7 +18,7 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.47 1999/07/20 04:34:20 cyp Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.48 1999/07/25 23:13:38 cyp Exp $"; }
 
 /* ---------------------------------------------------------- */
 #include <stdio.h>
