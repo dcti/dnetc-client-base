@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.183  1998/10/03 23:46:52  remi
+// Use 'usemmx' .ini setting if any MMX core is compiled in.
+//
 // Revision 1.182  1998/10/03 16:56:43  sampo
 // Finished the ConClear() replacement of CliScreenClear.
 //
@@ -210,7 +213,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.182 1998/10/03 16:56:43 sampo Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.183 1998/10/03 23:46:52 remi Exp $"; }
 #endif
 
 #include "console.h"
@@ -470,8 +473,8 @@ static optionstruct options[OPTION_COUNT]=
 //43
 { "pausefile",CFGTXT("Pausefile Path/Name"),"none",CFGTXT("(blank = no pausefile)"),6,1,3,NULL},
 //44
-#ifdef MMX_BITSLICER
-{ "usemmx",CFGTXT("Use MMX DES cores if possible?"),"1",CFGTXT(""),4,3,4,NULL},
+#if defined(MMX_BITSLICER) || defined(MMX_RC5)
+{ "usemmx",CFGTXT("Use MMX cores if possible?"),"1",CFGTXT(""),4,3,4,NULL},
 #else
 { "usemmx", CFGTXT("Use MMX...not applicable in this client"), "-1", CFGTXT("(default -1)"),0,2,0,
   NULL,NULL,0,0},
@@ -1053,11 +1056,10 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           if (isstringblank(pausefile)) strcpy (pausefile,"none");
           #endif
           break;
-        #ifdef MMX_BITSLICER
+        #if defined(MMX_BITSLICER) || defined(MMX_RC5)
         case CONF_MMX:
           choice = yesno(parm);
-    if (choice>=0) 
-      usemmx = choice;
+          if (choice>=0) usemmx = choice;
           break;
         #endif
         #ifdef LURK
@@ -1244,7 +1246,7 @@ options[CONF_DESOUT].thevariable=(char *)(&out_buffer_file[1][0]);
 options[CONF_PAUSEFILE].thevariable=(char *)(&pausefile[0]);
 #endif
 
-#ifdef MMX_BITSLICER
+#if defined(MMX_BITSLICER) || defined(MMX_RC5)
 options[CONF_MMX].thevariable=&usemmx;
 #endif
 
@@ -1470,7 +1472,7 @@ INIGETKEY(CONF_LOGNAME).copyto(logname, sizeof(logname));
   if (tempconfig) contestdone[0]=1;
   tempconfig=ini.getkey(OPTION_SECTION, "contestdone2", "0")[0];
   if (tempconfig) contestdone[1]=1;
-#ifdef MMX_BITSLICER
+#if defined(MMX_BITSLICER) || defined(MMX_RC5)
   usemmx=INIGETKEY(CONF_MMX);
 #endif
 
@@ -1702,7 +1704,7 @@ INISETKEY( CONF_LOGNAME, logname );
   INISETKEY( CONF_PAUSEFILE, pausefile);
 #endif
 
-#ifdef MMX_BITSLICER
+#if defined(MMX_BITSLICER) || defined(MMX_RC5)
   INISETKEY( CONF_MMX, (s32)(usemmx) );
 #endif
 
