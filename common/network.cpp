@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.63  1999/01/04 16:05:06  silby
+// Fixed byte ordering problem with socks code; Still does not work, however.
+//
 // Revision 1.62  1999/01/04 04:47:55  cyp
 // Minor fixes for platforms without network support.
 //
@@ -181,7 +184,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.62 1999/01/04 04:47:55 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.63 1999/01/04 16:05:06 silby Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -849,7 +852,7 @@ int Network::InitializeConnection(void)
     psocks5->rsv = 0;   // must be zero
     psocks5->atyp = 1;  // IPv4
     psocks5->addr = svc_hostaddr;
-    psocks5->port = svc_hostport; //(u16)(htons((server_name[0]!=0)?((u16)port):((u16)(DEFAULT_PORT))));
+    psocks5->port = (u16)htons(svc_hostport);
 
     if (LowLevelPut(10, socksreq) < 0)
       goto Socks5InitEnd;
@@ -894,7 +897,7 @@ Socks5InitEnd:
 
     psocks4->VN = 4;
     psocks4->CD = 1;  // CONNECT
-    psocks4->DSTPORT = svc_hostport; //(u16)htons((server_name[0]!=0)?((u16)port):((u16)DEFAULT_PORT));
+    psocks4->DSTPORT = (u16)htons(svc_hostport);
     psocks4->DSTIP = svc_hostaddr;   //lasthttpaddress;
     strncpy(psocks4->USERID, fwall_userpass, sizeof(fwall_userpass));
 
@@ -923,6 +926,10 @@ Socks5InitEnd:
              ", unexpected response");
           }
         }
+      else
+        {
+        LogScreen("SOCKS4: No response recieved from SOCKS server.\n");
+        };
       }
     return ((success)?(0):(-1));
     }
