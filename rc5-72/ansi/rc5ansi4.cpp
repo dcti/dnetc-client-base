@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi4_cpp(void) {
-return "@(#)$Id: rc5ansi4.cpp,v 1.11 2002/10/16 20:56:56 jlawson Exp $"; }
+return "@(#)$Id: rc5ansi4.cpp,v 1.12 2002/10/17 02:16:54 acidblood Exp $"; }
 
 #include "problem.h"
 #include "rotate.h"
@@ -271,9 +271,9 @@ u32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
     if (A4 == rc5_72unitwork->cypher.lo)
     {
       ++rc5_72unitwork->check.count;
-      rc5_72unitwork->check.hi = rc5_72unitwork->L0.hi + 0x03;
-      rc5_72unitwork->check.lo = rc5_72unitwork->L0.lo;
-      rc5_72unitwork->check.hi = rc5_72unitwork->L0.hi;
+      rc5_72unitwork->check.hi  = rc5_72unitwork->L0.hi + 0x03;
+      rc5_72unitwork->check.mid = rc5_72unitwork->L0.mid;
+      rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
       if (B4 == rc5_72unitwork->cypher.hi)
         return kiter + 3;
     }
