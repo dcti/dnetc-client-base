@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.68 2000/09/20 18:26:24 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.69 2000/10/11 21:17:44 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -231,7 +231,7 @@ void Go_mt( void * parm )
 #elif (CLIENT_OS == OS_MACOS)
   if (!is_non_preemptive_cruncher)   /* preemptive threads may as well use */
   {                                 /* ... (a copy of) the default_dyn_tt */
-    #if 0
+    #if 1
     memcpy( (void *)(thrparams->dyn_timeslice_table),
             default_dyn_timeslice_table,
             sizeof(default_dyn_timeslice_table));
@@ -432,7 +432,9 @@ void Go_mt( void * parm )
       /* fine tune the timeslice for the *next* round */
       if (optimal_timeslice != 0)
       {
-        optimal_timeslice = thisprob->tslice; /* get the number done back */
+        if (contest_i != OGR) // OGR makes dynamic timeslicing go crazy!
+          optimal_timeslice = thisprob->tslice; /* get the number done back */
+        
         #if defined(DYN_TIMESLICE_SHOWME)
         if (/*!thrparams->realthread &&*/ 
             runtime_usec != 0xfffffffful) /* time was valid */
