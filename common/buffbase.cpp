@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.19 2000/01/24 19:52:04 chrisb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.20 2000/01/30 23:06:42 gregh Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -348,6 +348,9 @@ static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
       dest->work.ogr.workstub.stub.length = ntohs(dest->work.ogr.workstub.stub.length);
       for (int i = 0; i < STUB_MAX; i++) 
         dest->work.ogr.workstub.stub.diffs[i] = ntohs(dest->work.ogr.workstub.stub.diffs[i]);
+      dest->work.ogr.workstub.worklength  = ntohl(dest->work.ogr.workstub.worklength);
+      dest->work.ogr.nodes.hi             = ntohl(dest->work.ogr.nodes.hi);
+      dest->work.ogr.nodes.lo             = ntohl(dest->work.ogr.nodes.lo);
       break;
     }
   }
