@@ -4,6 +4,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.cpp,v $
+// Revision 1.15  1998/10/08 10:15:55  cyp
+// Fixed a bug in line width check. message length was not being recomputed
+// after the line width was adjusted.
+//
 // Revision 1.14  1998/10/07 12:38:45  remi
 // Fixed logstatistics' initializer.
 // Fixed a "computed value is not used" warning.
@@ -62,7 +66,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.14 1998/10/07 12:38:45 remi Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.15 1998/10/08 10:15:55 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -406,23 +410,19 @@ void LogWithPointer( int loggingTo, const char *format, va_list arglist )
     {
     buffptr = &msgbuffer[0];
     do{
-      while (*buffptr == '\r' || *buffptr=='\n' )
+      while (*buffptr == '\r' || *buffptr == '\n' )
          buffptr++;
       obuffptr = buffptr;
       while (*buffptr && *buffptr != '\r' && *buffptr != '\n' )
-        {
         buffptr++;
-        if ((buffptr-obuffptr) == 79)
-          {
-          obuffptr = buffptr;
-          while (*buffptr && *buffptr != '\r' && *buffptr != '\n' )
-            buffptr++;
-          if (obuffptr != buffptr)
-            memmove( obuffptr, buffptr, strlen(buffptr)+1 );
-          buffptr = obuffptr;
-          }
-        }
+      if ((buffptr-obuffptr) > 78)
+        {
+	obuffptr[74] = ' '; obuffptr[75] = obuffptr[76] = obuffptr[77] = '.';
+	memmove( obuffptr+78, buffptr, strlen(buffptr)+1 );
+	buffptr = obuffptr+78;
+	}    
       } while (*buffptr);
+    msglen = strlen( msgbuffer );
     }      
   #endif
 
