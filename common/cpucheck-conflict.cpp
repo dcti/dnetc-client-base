@@ -3,8 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.50  1998/12/09 07:41:56  dicamillo
+// fixed log comment.
+//
 // Revision 1.49  1998/12/09 07:34:15  dicamillo
-// Added constant for number of processors Mac client supports; fixed typos which prevented compilation.
+// Added constant for number of processors Mac client supports; fixed typos
+// which prevented compilation.
 //
 // Revision 1.48  1998/12/04 12:09:01  chrisb
 // fixed typo
@@ -172,7 +176,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.49 1998/12/09 07:34:15 dicamillo Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.50 1998/12/09 07:41:56 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
