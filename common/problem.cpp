@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.52 2000/02/22 10:19:57 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.53 2000/03/06 03:00:15 andreasb Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -29,6 +29,7 @@ return "@(#)$Id: problem.cpp,v 1.108.2.52 2000/02/22 10:19:57 sampo Exp $"; }
 #include "cpucheck.h" //hardware detection
 #include "console.h"  //ConOutErr
 #include "triggers.h" //RaiseExitRequestTrigger()
+#include "sleepdef.h" //sleep() 
 
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
 
@@ -72,6 +73,7 @@ Problem::Problem(void)
   threadindex = __problem_counter++;
   initialized = 0;
   started = 0;
+  running = 0;
 
   //align core_membuffer to 16byte boundary
   {
@@ -255,6 +257,21 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
               int expected_corenum, int expected_os,
               int expected_buildfrac )
 {
+  initialized = 0; /* Run() won't start any more */
+  if (running) 
+  {
+    //Log("LoadState() while Run() ...\n");
+    /* wait until Run() has finished, otherwise Run() will overwrite the new state */
+    for (int i = 0; i < 50 && running; ++i)
+      usleep(100000);
+    if (running) /* don't load the new state if Run() doesn't finish */
+    {
+      //Log("Still Run()ning. LoadState() failed!\n");
+      started = 0; /* let Run() fail */
+      return -1;
+    }
+  }
+  
   last_resultcode = -1;
   started = initialized = 0;
   timehi = timelo = 0;
@@ -785,6 +802,13 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   if ( last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
     return ( last_resultcode );
 
+  if (++running > 1) /* What happened here? Who else called Run(), too? */
+  {
+    Log("Error: Multiple Run() calls ...\n"); /* shouldn't occur */
+    --running;
+    return -1;
+  }
+  
   CliClock(&start);
   if (using_ptime)
   {
@@ -808,6 +832,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     runtime_usec = 1; /* ~1Tkeys for a 2^20 packet */
     completion_timelo = 1;
     last_resultcode = RESULT_NOTHING;
+    --running;
     return RESULT_NOTHING;
 #endif    
   }
@@ -850,6 +875,16 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   
   if (retcode < 0) /* don't touch tslice or runtime as long as < 0!!! */
   {
+    --running;
+    return -1;
+  }
+  
+  if (!started)   /* LoadState was called while we were running - state was overwritten! */
+                  /* shouldn't occur any more */  
+  {
+    //Log( "Error: LoadState() while Run()ning (thread %u)!\n", threadindex );
+    last_resultcode = -1; // "Discarded (core error)": discard the overwritten block
+    --running;
     return -1;
   }
   
@@ -926,6 +961,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   tslice = iterations;
 
   last_resultcode = core_resultcode;
+  --running;
   return last_resultcode;
 }
 

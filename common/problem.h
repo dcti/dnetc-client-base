@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.24 2000/02/22 10:19:58 sampo Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.25 2000/03/06 03:00:17 andreasb Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -108,6 +108,7 @@ protected: /* these members *must* be protected for thread safety */
   int started;
   int initialized;
   unsigned int threadindex; /* 0-n (globally unique identifier) */
+  volatile int running; /* LoadState() has to wait while Run()ning */
 
 public: /* anything public must be thread safe */
   u32 completion_timehi, completion_timelo; /* wall clock time between start/finish */
