@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.37 2003/03/30 18:43:16 gavin Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.38 2003/03/30 19:52:44 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -257,6 +257,8 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.37 2003/03/30 18:43:16 gavin Exp $"; }
     #if defined(__GCC__) || defined(__GNUC__)
       extern "C" s32 CDECL rc5_72_unit_func_ppc_mh_2( RC5_72UnitWork *, u32 *, void *);
     #endif
+  #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_SOLARIS)
+    extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
   #endif
 
 #endif
@@ -490,6 +492,14 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "KKS 7450",      /* gas and OSX format, AltiVec only */
       NULL
     },
+  #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_SOLARIS)
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      "ANSI 1-pipe",
+      "KKS 2-pipe",
+      NULL
+    },  
   #else
     { /* RC5-72 */
       "ANSI 4-pipe",
@@ -1536,6 +1546,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
   }
   else if (projectid == RC5_72)
   {
+    #if (CLIENT_OS == OS_SOLARIS)
     if (detected_type > 0)
     {
       switch (detected_type)
@@ -1546,22 +1557,23 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         case  4: cindex =-1; break; // SPARCstation IPX == ?
         case  5: cindex =-1; break; // SPARCstation 1   == ?
         case  6: cindex =-1; break; // SPARCstation 1+  == ?
-        case  7: cindex = 2; break; // SPARCstation 2   == ANSI 1-pipe 
+        case  7: cindex = 2; break; // SPARCstation 2   == ANSI 1-pipe? 
         case  8: cindex =-1; break; // microSPARC       == ?
-        case  9: cindex = 2; break; // microSPARC II    == ANSI 1-pipe
+        case  9: cindex = 3; break; // microSPARC II    == KKS 2-pipe
         case 10: cindex =-1; break; // TurboSPARC       == ?
         case 11: cindex = 2; break; // SuperSPARC       == ANSI 1-pipe
-        case 12: cindex = 0; break; // SuperSPARC SC    == ANSI 4-pipe
+        case 12: cindex = 3; break; // SuperSPARC SC    == KKS 2-pipe
         case 13: cindex =-1; break; // hyperSPARC       == ?
         case 14: cindex =-1; break; // hyperSPARC       == ?
-        case 15: cindex = 1; break; // UltraSPARC-I     == ANSI 2-pipe
-        case 16: cindex = 1; break; // UltraSPARC-II    == ANSI 2-pipe
-        case 17: cindex = 1; break; // UltraSPARC-IIi   == ANSI 2-pipe
-        case 18: cindex = 1; break; // UltraSPARC-IIe   == ANSI 2-pipe
+        case 15: cindex = 3; break; // UltraSPARC-I     == KKS 2-pipe
+        case 16: cindex = 3; break; // UltraSPARC-II    == KKS 2-pipe
+        case 17: cindex = 3; break; // UltraSPARC-IIi   == KKS 2-pipe
+        case 18: cindex = 3; break; // UltraSPARC-IIe   == KKS 2-pipe
         case 19: cindex = 0; break; // UltraSPARC-III   == ANSI 4-pipe
         default: cindex =-1; break; // no default 
       }
     }
+    #endif
   }
   #elif (CLIENT_OS == OS_PS2LINUX) // OUCH !!!! SELECT_BY_CPU !!!!! FIXME
   #error Please make this decision by CLIENT_CPU!
@@ -2360,6 +2372,11 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         pipeline_count = 2;
         break;
       #endif
+     #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_SOLARIS)
+       case 3:
+         unit_func.gen_72 = rc5_72_unit_func_KKS_2;
+         pipeline_count = 2;
+         break;
      #endif
 
     }

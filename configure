@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.69 2003/03/30 13:44:07 gavin Exp $
+# @(#)$Id: configure,v 1.288.2.70 2003/03/30 19:52:44 snikkel Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -309,6 +309,13 @@ add_sources() # $1=os, $2=arch, $3=custom
         fi
       fi
     fi # HAVE_RC5_64
+
+    if [ "$HAVE_RC5_72" = "1" ]; then
+      if [ "$1" = "solaris" ]; then
+          TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/sparc/r72-kks2.s"
+      fi
+    fi # HAVE_RC5_72
+
     if [ "$HAVE_DES" = "1" ]; then
       DEFAULT_DES="0"
       if [ "X$3" = "Xultra" ]; then
@@ -1892,7 +1899,8 @@ case "$1" in
         TARGET_TR="/usr/xpg4/bin/tr"    # Solaris /usr/bin/tr: 0-9 is not [0-9]
         OPTS_CC_SOLARIS="-fast -xtarget=generic -xarch=generic -DASM_SPARC"
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -mt -Dsolaris"
-        TARGET_LIBS="-ldl -lc -lnsl -lsocket -lthread"    # Omit -lmp for Solaris 2.5 compatibility
+        TARGET_LIBS="-lnsl -lsocket -ldl -lthread"    # Linking and order
+                                       #specific for solaris 2.5 compatibility
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="solaris-sparc"
         add_sources "solaris" "sparc" "cc"   
