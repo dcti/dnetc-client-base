@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.72.4.3 2003/03/29 20:15:38 andreasb Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.72.4.4 2003/05/17 21:14:19 bdragon Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -115,7 +115,9 @@ static const char *helpbody[] =
   "",
   "-c [prj] <n>       core number (run -config for a list of valid core numbers)",
   "                   project name \"prj\" defaults to RC5",
+#if !defined(SINGLE_CRUNCHER_ONLY)
   "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
+#endif
   "-priority <0-9>    scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
   "",
   "Logging options:",

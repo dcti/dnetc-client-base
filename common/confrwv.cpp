@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.92.2.1 2003/01/19 22:49:50 snake Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.92.2.2 2003/05/17 21:14:19 bdragon Exp $"; }
 
 //#define TRACE
 
@@ -1240,7 +1240,9 @@ int ConfigRead(Client *client)
   /* --------------------- */
 
   client->priority = GetPrivateProfileIntB( OPTSECT_CPU, "priority", client->priority, fn );
+  #if !defined(SINGLE_CRUNCHER_ONLY)
   client->numcpu = GetPrivateProfileIntB( OPTSECT_CPU, "max-threads", client->numcpu, fn );
+  #endif /* SINGLE_CRUNCHER_ONLY */
 
   /* --------------------- */
 

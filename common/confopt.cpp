@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.51.4.4 2003/02/18 01:57:14 mfeiri Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.51.4.5 2003/05/17 21:14:19 bdragon Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -536,6 +536,9 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   CONF_NUMCPU                  , /* CONF_MENU_PERF 0 ... */
   CFGTXT("Number of crunchers to run simultaneously"), "-1 (auto-detect)",
   /* CFGTXT( */
+#if defined(SINGLE_CRUNCHER_ONLY)
+  "This client is not multi-threaded. This option will be ignored when set.\n"
+#endif
   "This option specifies the number of threads you want the client to work on.\n"
   "On multi-processor machines this should be set to the number of processors\n"
   "available or to -1 to have the client attempt to auto-detect the number of\n"

@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.26 2003/05/16 23:25:54 bdragon Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.27 2003/05/17 21:14:19 bdragon Exp $
 ==========================================================================
 
 2.9000
@@ -32,6 +32,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.26 2003/05/16 23:25:54 bdragon Exp
             imp: x86: changed some preselected cores (#3233)
             new: sparc: rc5-72 assembly cores by Andreas Beckmann
             new: decunix: initial Lurk support
+            chg: all: single-threaded clients now ignore numcpu/max-threads
 
 2.9005-483  fix: x86: re-added SS-2 core - new version fixes bug #3187
             fix: ppc: no longer coredumps while resolving under Linux (#3213)
