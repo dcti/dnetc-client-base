@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.187  1999/02/09 23:11:38  remi
+# Added lurk mode to sparc-linux targets.
+#
 # Revision 1.186  1999/02/06 09:16:15  remi
 # Added -DLURK and common/lurk.cpp into linux-* targets.
 #
@@ -1070,18 +1073,20 @@ case "$1" in
     *sparc-linux)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -D__showids__ \
-			-DPIPELINE_COUNT=2 \
+			-DPIPELINE_COUNT=2 -DLURK \
 			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
+	TARGET_ADDSRCS="common/lurk.cpp \
+			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
 	TARGET_LDFLAGS="-static"
 	;;
 
     *sparc-linux-mt)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -D__showids__ \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 \
+			-DMULTITHREAD -DPIPELINE_COUNT=2 -DLURK \
 			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
+	TARGET_ADDSRCS="common/lurk.cpp \
+			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-lpthread"
 	;;
@@ -1089,10 +1094,11 @@ case "$1" in
     *sparc-linux-mt-egcs)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -fno-inline-functions \
-			-D__showids__ \
+			-D__showids__ -DLURK \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
+	TARGET_ADDSRCS="common/lurk.cpp \
+			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-lpthread"
 	;;
