@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.24  1998/10/04 01:30:54  silby
+// Removed direct references to platforms/win32cli (makefile handles them)
+//
 // Revision 1.23  1998/10/03 03:47:01  cyp
 // added 3 local header files (w32svc, w32cons, lurk) to the win32 section
 // and 2 header files to os2 (os2inst, lurk)
@@ -194,8 +197,8 @@ extern "C" {
   #include <windows.h>
   #include <winsock.h>      // timeval
   #include "lurk.h"
-  #include "platforms/win32cli/w32svc.h" //service
-  #include "platforms/win32cli/w32cons.h" //console
+  #include "w32svc.h" //service
+  #include "w32cons.h" //console
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
   #include <io.h>
