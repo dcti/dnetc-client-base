@@ -11,6 +11,9 @@
    to functions in modules in your own platform area.   - cyp
 */
 // $Log: console.cpp,v $
+// Revision 1.36  1999/01/28 00:20:18  trevorh
+// Corrected VioCalls for OS/2 and fixed getch() in Watcom!
+//
 // Revision 1.35  1999/01/25 23:49:07  trevorh
 // #ifdef around the WinMessageBox() calls to make them used only when the
 // OS/2 GUI is being compiled. WinMessageBox() is invalid in the CLI.
@@ -135,7 +138,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.35 1999/01/25 23:49:07 trevorh Exp $"; }
+return "@(#)$Id: console.cpp,v 1.36 1999/01/28 00:20:18 trevorh Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -400,7 +403,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
           }
         }
       #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) || \
-         ( (CLIENT_OS == OS_OS2) && !defined(__EMX__) )
+         ( (CLIENT_OS == OS_OS2) && !defined(__EMX__)  )
         {
         fflush(stdout);
         if (kbhit())
@@ -646,12 +649,12 @@ int ConGetPos( int *col, int *row )  /* zero-based */
     #elif (CLIENT_OS == OS_DOS)
     return dosCliConGetPos( col, row );
     #elif (CLIENT_OS == OS_OS2)
-    #if defined(__WATCOMC__)
-    return 0;
-    #else
-    return ((VioGetCurPos( (unsigned int)row, (unsigned int)col,
+//    #if defined(__WATCOMC__)
+//    return 0;
+//    #else
+    return ((VioGetCurPos( (USHORT*)&row, (USHORT*)&col,
                  0 /*handle*/) != 0)?(-1):(0));
-    #endif
+//    #endif
     #else
     return ((row == NULL && col == NULL)?(0):(-1));
     #endif
@@ -675,6 +678,7 @@ int ConSetPos( int col, int row )  /* zero-based */
     return dosCliConSetPos( col, row );
     #elif (CLIENT_OS == OS_OS2)
     return ((VioSetCurPos(row, col, 0 /*handle*/) != 0)?(-1):(0));
+    return 0;
     #else
     return -1;
     #endif
@@ -798,7 +802,7 @@ int ConClear(void)
       return w32ConClear();
     #elif (CLIENT_OS == OS_OS2)
       BYTE space[] = " ";
-      VioScrollUp(0, 0, -1, -1, -1, space, 0);
+      VioScrollUp(0, 0, -1, -1, -1, (char*)&space, 0);
       VioSetCurPos(0, 0, 0);      /* move cursor to upper left */
       return 0;
     #elif (CLIENT_OS == OS_DOS)
