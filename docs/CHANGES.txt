@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.46 2000/05/10 04:46:18 mfeiri Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.47 2000/05/30 22:58:21 cyp Exp $
 ==========================================================================
 
 2.8000
@@ -39,7 +39,9 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.46 2000/05/10 04:46:18 mfeiri Exp $
             new: "pause-if-CPU-temperature-exceeds" (not on all platforms)
             new: "pause-if-running-on-batterypower" (not on all platforms)
             new: macosx: a native (BSD subsystem) client for Server and DPs
-            chg: all: OGR is disabled for slow nonpreemptive systems
+            chg: some: OGR is auto-disabled for non-preemptive OSs running on 
+                 low-end cpus. http://www.distributed.net/faq/cache/188.html
+            fix: most: user changes to time-of-day won't affect "Summary:"
 
 2.8008.459  new: x86: new rc5 K7 core thanks to
                  Sean Stanek <vulture@iastate.edu>
@@ -56,22 +58,22 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.46 2000/05/10 04:46:18 mfeiri Exp $
                  number of workunits to be fetched.
             new: all: -btime <pn> <n> complements time-driven threshold
             chg: all: -b[in] <pn> <n> now clears time threshold for <pn>.
+            new: all: exit flagfile filename is now configurable.
             chg: macos: now supports all variants of System 7
             fix: Linux: dynamic import of dns resolution functions for better
                  glibc/libc cross compatibility (one shoe fits all again).
-            chg; all: checkpointing now done at 10% or 10 minute intervals,
+            fix: winnt: pause on process handling optimized and rewritten.
+            chg: all: checkpointing now done at 10% or 10 minute intervals,
                  instead of 10% with 10 minute minimum.
-            fix: winnt4: pause on process handling optimized and rewritten.
-            new: all: exit flagfile filename is now configurable.
-            fix: all: will now flush to a proxy/server that is empty.
             fix: all: project switchover no longer 'hangs'.
             fix: all: OGR nodecount network packet ordering fixed.
+            fix: all: reported OGR noderate is no longer unacceptably high.
+            fix: all: partially complete OGR stubs are now loaded first. 
+            fix: all: will now flush to a proxy/server that is empty.
             fix: all: setting clock back during network ops could hang.
             fix: all: block counts during fetching do not fluctuate anymore.
             fix: FreeBsd: timezone use for automatic keyserver pick works.
             chg: many: file system locking on buffers where supported.
-            fix: all: reported OGR noderate is no longer unacceptably high.
-            fix: all: partially complete OGR stubs are now loaded first. 
 
 2.8007.458  fix: all: the annoying OGR 1 node bug finally fixed
             new: all: client can be configured a) to restart itself
