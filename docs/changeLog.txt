@@ -1,5 +1,6 @@
 Dual mode (RC5DES) clients
 --------------------------
+v2.7024.409 98.06.15 ARM version of Kwan's latest sboxes - 30% faster
 v2.7024.409 98.06.13 Fixed CPU identification crash under *nix with 486 SX/DX/DX2.
 v2.7021.405 98.05.23 Resolved a number of signal handling problems from Cyrus Patel
 v2.7021.405 98.05.23 Mail doesn't clear buffers on mail send failure from Cyrus Patel
