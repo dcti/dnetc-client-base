@@ -11,6 +11,9 @@
 */ 
 //
 // $Log: cliident.cpp,v $
+// Revision 1.9  1998/11/22 14:56:25  cyp
+// Removed cliconfig.cpp; Added confopt.cpp, confrwv.cpp
+//
 // Revision 1.8  1998/11/02 04:41:25  cyp
 // Removed references to netres_cpp.
 //
@@ -39,7 +42,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.8 1998/11/02 04:41:25 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.9 1998/11/22 14:56:25 cyp Exp $"; } 
 #endif
 
 //-----------------------------------------------------------------------
@@ -62,7 +65,8 @@ extern const char *scram_cpp(void);
 extern const char *threadcd_cpp(void);
 extern const char *clitime_cpp(void);
 extern const char *cliident_cpp(void);
-extern const char *cliconfig_cpp(void);
+extern const char *confopt_cpp(void);
+extern const char *confrwv_cpp(void);
 extern const char *client_cpp(void);
 extern const char *disphelp_cpp(void);
 extern const char *netinit_cpp(void);
@@ -101,7 +105,8 @@ scram_cpp,
 threadcd_cpp,
 clitime_cpp,
 cliident_cpp,
-cliconfig_cpp,
+confopt_cpp,
+confrwv_cpp,
 client_cpp,
 disphelp_cpp,
 netinit_cpp,
@@ -129,7 +134,7 @@ probman_cpp,
 console_cpp
 };
 
-//"@(#)$Id: cliident.cpp,v 1.8 1998/11/02 04:41:25 cyp Exp $"
+//"@(#)$Id: cliident.cpp,v 1.9 1998/11/22 14:56:25 cyp Exp $"
 
 void CliIdentifyModules(void)
 {
