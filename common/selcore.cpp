@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.56 2003/07/28 06:09:47 jlawson Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.57 2003/08/05 20:00:07 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -1659,8 +1659,8 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         case 12: cindex = 5; break; // SuperSPARC SC    == AnBe 2-pipe
         case 13: cindex = 5; break; // SuperSPARC II    == AnBe 2-pipe
         case 14: cindex = 5; break; // SuperSPARC II SC == AnBe 2-pipe 
-        case 15: cindex =-1; break; // hyperSPARC       == ?
-        case 16: cindex =-1; break; // hyperSPARC       == ?
+        case 15: cindex = 4; break; // hyperSPARC       == AnBe 1-pipe
+        case 16: cindex = 4; break; // hyperSPARC       == AnBe 1-pipe
         case 17: cindex = 5; break; // UltraSPARC-I     == AnBe 2-pipe
         case 18: cindex = 5; break; // UltraSPARC-II    == AnBe 2-pipe
         case 19: cindex = 5; break; // UltraSPARC-IIi   == AnBe 2-pipe
