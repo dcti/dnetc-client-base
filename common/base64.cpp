@@ -10,9 +10,9 @@
  *
 */ 
 const char *base64_cpp(void) {
-return "@(#)$Id: base64.cpp,v 1.2.2.5 2000/01/08 23:23:22 cyp Exp $"; }
+return "@(#)$Id: base64.cpp,v 1.2.2.6 2001/02/24 06:12:12 sampo Exp $"; }
 
-static unsigned char base64table[64] = 
+static const unsigned char base64table[64] = 
 {
   'A','B','C','D','E','F','G','H','I','J','K','L','M',
   'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
@@ -25,7 +25,7 @@ int base64_encode(char *outbuf, const char *inbuf,
                   unsigned int outbuflen, unsigned int inbuflen )
 { /* outbuff must be at least (((strlen(inbuf) + 2) / 3) * 4) bytes */
 
-  unsigned int outlen = 0, errors = 0;
+  int outlen = 0, errors = 0;
     
   if (outbuflen < ((inbuflen + 2) / 3) * 4)
     errors++;
@@ -58,10 +58,13 @@ int base64_encode(char *outbuf, const char *inbuf,
       outlen += 4;
     }
   }
-  if (outlen < outbuflen)
+  if ((unsigned int)outlen < outbuflen)
     *outbuf = 0;
 
-  return (errors ? -1 : (int)outlen);
+  if (errors)
+    outlen = -1;
+    
+  return outlen;
 }
 
 
@@ -69,8 +72,9 @@ int base64_decode(char *outbuf, const char *inbuf,
                   unsigned int outbuflen, unsigned int inbuflen )
 { /* outbuf can be same as inbuf */
 
-  unsigned char decoder[256]; unsigned int outlen = 0, read_pos = 0;
-  unsigned long bits = 0; int c, char_count = 0, errors = 0;
+  unsigned char decoder[256];
+  unsigned int read_pos = 0, bits = 0;
+  int c, char_count = 0, outlen = 0, errors = 0;
 
   for (c = 0; c < ((int)sizeof(decoder)); c++)
     decoder[c] = '\0';
@@ -103,7 +107,7 @@ int base64_decode(char *outbuf, const char *inbuf,
         else
         {
           outbuf[outlen++] = (char)(((bits >> 16) & 0xff));
-          outbuf[outlen++] = (char)(((bits >> 8) & 0xff));
+          outbuf[outlen++] = (char)(((bits >>  8) & 0xff));
         }
       }
       break;
@@ -119,8 +123,8 @@ int base64_decode(char *outbuf, const char *inbuf,
           errors++;
         else
         {
-          outbuf[outlen++] = (char)((bits >> 16));
-          outbuf[outlen++] = (char)(((bits >> 8) & 0xff));
+          outbuf[outlen++] = (char)(((bits >> 16) & 0xff));
+          outbuf[outlen++] = (char)(((bits >>  8) & 0xff));
           outbuf[outlen++] = (char)((bits & 0xff));
           bits = 0;
           char_count = 0;
@@ -129,8 +133,11 @@ int base64_decode(char *outbuf, const char *inbuf,
     }
   }
 
-  if (outlen < outbuflen)
+  if ((unsigned int)outlen < outbuflen)
     outbuf[outlen] = '\0';
 
-  return (errors ? -1 : (int)outlen);
+  if (errors)
+    outlen = -1;
+    
+  return outlen;
 }  
