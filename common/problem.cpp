@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.60  1998/12/28 21:37:54  cramer
+// Misc. cleanups for the disappearing RC5CORECOPY junk and minor stuff to
+// get a solaris client to build.
+//
 // Revision 1.59  1998/12/26 21:19:28  cyp
 // Fixed condition where x86/mt/non-mmx would default to slice.
 //
@@ -165,7 +169,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.59 1998/12/26 21:19:28 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.60 1998/12/28 21:37:54 cramer Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -244,13 +248,13 @@ extern void CliSignalHandler(int);
   #error Please verify these core prototypes
 #elif (CLIENT_CPU == CPU_SPARC)
   #if (ULTRA_CRUNCH == 1)
-  extern "C" unsigned long crunch( register RC5UnitWork * rc5unitwork, u32 timeslice);
-  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern "C++" u32 crunch( register RC5UnitWork * rc5unitwork, u32 timeslice);
+  extern "C++" u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
   #else
-  extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
-  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern "C++" u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
+  extern "C++" u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
   #endif
-  #error Please verify these core prototypes
+  // CRAMER // #error Please verify these core prototypes
 #elif (CLIENT_CPU == CPU_MIPS)
   #if (MIPS_CRUNCH == 1)
   extern "C" unsigned long crunch( register RC5UnitWork * rc5unitwork, u32 timeslice);

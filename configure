@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.146  1998/12/28 21:37:53  cramer
+# Misc. cleanups for the disappearing RC5CORECOPY junk and minor stuff to
+# get a solaris client to build.
+#
 # Revision 1.145  1998/12/28 18:17:39  cyp
 # added clievent.cpp
 #
@@ -489,7 +493,6 @@
 #
 #
 
-
 echo ""
 echo "RC5DES client makefile generator"
 echo "originally by Jeff Lawson for distributed.net"
@@ -515,7 +518,7 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
     -fexpensive-optimizations -fomit-frame-pointer \
     -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
     -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
-    -fno-inline-functions -fno-exceptions'
+    -fno-inline-functions -fno-handle-exceptions'
 
 OPTS_GCC272='-fomit-frame-pointer -fno-inline-functions -fno-handle-exceptions \
     -fno-rtti -Wall -Icommon -Irc5 -Ides -Iplatforms '
@@ -668,6 +671,7 @@ TARGET_NASM="nasm"
 TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
 TARGET_ASFLAGS=""
 TARGET_STRIP="strip"
+TARGET_COPY="cp"
 
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
@@ -1509,6 +1513,7 @@ echo "# see http://www.distributed.net/ for details." >> Makefile
 echo "" >> Makefile
 
 echo "CC = ${TARGET_CC}" >> Makefile
+echo "CP = ${TARGET_COPY}" >> Makefile
 echo "CCFLAGS = ${TARGET_CCFLAGS}" >> Makefile
 echo "LDFLAGS = ${TARGET_LDFLAGS}" >> Makefile
 echo "LIBS = ${TARGET_LIBS}" >> Makefile
@@ -1529,9 +1534,13 @@ echo "" >> Makefile
 echo "Generating Makefile production targets..."
 echo "# Regular targets follow" >> Makefile
 
-echo "${EXENAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
-echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${EXENAME}" >> Makefile
-echo "	\${STRIP} ${EXENAME}" >> Makefile
+echo "${EXENAME}:	\${BUILDNAME}" >> Makefile
+echo "	\${CP} \${BUILDNAME} ${EXENAME}" >> Makefile
+echo "" >> Makefile
+
+echo "\${BUILDNAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
+echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o \${BUILDNAME}" >> Makefile
+echo "	\${STRIP} \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
 
 echo "clean:" >> Makefile
@@ -1557,11 +1566,10 @@ for target in ${TARGET_ALLCCOBJS}; do
   SAFENAME=`echo $target | tr -d ${DELETECHARS}`
   eval TARGETSRC=$`echo DEPEND_$SAFENAME`
   if [ -n "${RC5CORECOPY}" -a `basename ${TARGETSRC}` = problem.cpp ]; then
-    echo "$target:	${TARGETSRC} ${RC5CORECOPY}" >> Makefile
-    echo "	rm -f rc5/rc5stub.cpp" >> Makefile
-    echo "	cp ${RC5CORECOPY} rc5/rc5stub.cpp" >> Makefile
-    echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
-    echo "	rm -f rc5/rc5stub.cpp" >> Makefile
+    TARGET_HDEPS1=`./testplat build_dependancies ${TARGETSRC}`
+    TARGET_HDEPS2=`./testplat build_dependancies ${RC5CORECOPY}`
+    echo "$target:	${TARGETSRC} ${TARGET_HDEPS1} ${RC5CORECOPY} ${TARGET_HDEPS2}" >> Makefile
+    echo "	\${CC} -c \${CCFLAGS} -include ${RC5CORECOPY} ${TARGETSRC} -o $target" >> Makefile
   else
     TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
     echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile

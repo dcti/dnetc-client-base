@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.39  1998/12/28 21:37:54  cramer
+// Misc. cleanups for the disappearing RC5CORECOPY junk and minor stuff to
+// get a solaris client to build.
+//
 // Revision 1.38  1998/12/14 05:15:44  dicamillo
 // Mac OS updates to eliminate use of MULTITHREAD and have a singe client
 // for MT and non-MT machines.
@@ -501,6 +505,9 @@ struct s128 { s64 hi, lo; };
   #define OS_SUPPORTS_SMP
   //egcs always includes pthreads.h, so use something other than PTHREAD_H 
   #define _POSIX_THREADS_SUPPORTED
+# if (CLIENT_OS == OS_SOLARIS)
+#  include <unistd.h> // CRAMER
+# endif
 #else 
   typedef int THREADID;
 #endif
