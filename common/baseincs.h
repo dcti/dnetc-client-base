@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: baseincs.h,v $
+// Revision 1.30.2.6  1998/12/29 11:19:32  remi
+// Synced with :
+//
+//  Revision 1.39  1998/12/29 09:27:50  dicamillo
+//  For MacOS, add macConOut routine.
+//
 // Revision 1.30.2.5  1998/12/28 15:29:38  remi
 // Synced with :
 //
@@ -211,6 +217,7 @@ extern "C" {
   #include "mac_extras.h"
   #include <console.h>
   #include <Multiprocessing.h>
+  void macConOut(char *msg);
   void YieldToMain(char force_events);
   u32 GetTimesliceToUse(u32 contestid);
   void tick_sleep(unsigned long tickcount);
