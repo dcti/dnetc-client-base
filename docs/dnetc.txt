@@ -1,6 +1,6 @@
 
   distributed.net client documentation
-  document revision $Id: dnetc.txt,v 1.4.4.3 2005/03/09 22:45:53 jlawson Exp $
+  document revision $Id: dnetc.txt,v 1.4.4.4 2005/03/09 23:56:16 jlawson Exp $
 
   Copyright distributed.net 1997-2005 - All Rights Reserved
   For use in distributed.net projects only.
@@ -68,7 +68,7 @@
     like to have a client for the platform, you can request it at
     http://www.distributed.net/porting/
 
-
+
  3.0  Getting and starting the client --------------------------------
 
     Official clients are generally *only* available from
@@ -113,7 +113,7 @@
      version 2.9xxx or later will only work with personal proxy builds
      of at least build 330 or later.
 
-
+
  5.0  Fetching and flushing work -------------------------------------
  
      The distributed.net client can fetch/flush work using 3 methods:
@@ -260,7 +260,7 @@
      client has its own files. Lock contention is thus minimized and
      they can work without the user having to worry about the network
      (if one exists) between them failing.
-
+
  6.0  Help! ----------------------------------------------------------
 
      If you've having a problem with the client, the first place you 
@@ -305,7 +305,7 @@
        answering your message.
        
 
-     We thank you for running out client and contributing your idle
+     We thank you for running our client and contributing your idle
      computing power to our projects.  If you are feeling especially
      generous, we also appreciate other types of contributions in
      order to support our equipment and networking costs:
