@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.47  1999/01/19 09:38:03  patrick
+//
+// added recognition of OS2-EMX
+//
 // Revision 1.46  1999/01/17 13:01:25  cyp
 // CPU_UNKNOWN/OS_UNKOWN is defined only if CLIENT_CPU/CLIENT_OS is unknown.
 // _both_ were being defined if either CLIENT_CPU _or_ CLIENT_OS was unknown.
@@ -260,7 +264,7 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_OS     OS_NETWARE
     #define CLIENT_CPU    CPU_ALPHA
   #endif
-#elif defined(__OS2__)
+#elif defined(__EMX__) || defined(__OS2__)
   #define CLIENT_OS_NAME "OS/2"
   #define CLIENT_OS     OS_OS2
   #define CLIENT_CPU    CPU_X86
