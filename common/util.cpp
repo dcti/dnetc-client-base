@@ -5,7 +5,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.38 2000/10/13 21:50:23 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.39 2000/10/13 22:12:10 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -59,6 +59,7 @@ void trace_out( int indlevel, const char *format, ... )
 {
   static int indentlevel = -1; /* uninitialized */
   const char *tracefile = "trace"EXTN_SEP"out";
+  int old_errno = errno;
   FILE *file;
   va_list arglist;
   va_start (arglist, format);
@@ -95,6 +96,7 @@ void trace_out( int indlevel, const char *format, ... )
   }
   if (indlevel > 0)
     indentlevel += 2;
+  errno = old_errno;
   return;
 }
 
