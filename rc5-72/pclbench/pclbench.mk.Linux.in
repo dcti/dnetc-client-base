@@ -1,0 +1,17 @@
+# $Id: pclbench.mk.Linux.in,v 1.1.2.1 2003/04/01 15:45:04 andreasb Exp $
+
+BASEDIR	= ../../..
+CC	= gcc
+CFLAGS	= -O2 -I$(BASEDIR)/common -Wall
+LDLIBS	= -lpcl
+
+TARGETS = @TARGETS@
+
+
+all: $(TARGETS)
+
+clean:
+	-rm -f $(TARGETS)
+
+# generated targets follow
+
