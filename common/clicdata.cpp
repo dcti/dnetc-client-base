@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.18.2.6 2000/01/08 23:18:01 cyp Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.18.2.7 2000/09/21 18:07:36 cyp Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
@@ -171,40 +171,38 @@ int CliGetContestWorkUnitSpeed( int contestid, int force)
 {
   struct contestInfo *conInfo =
                        __internalCliGetContestInfoVectorForID( contestid );
-  if (!conInfo)
-    return 0;
-
-  if ((conInfo->BestTime == 0) && force)
+  if (conInfo)
   {
-    // This may trigger a mini-benchmark, which will get the speed
-    // we need and not waste time.
-    selcoreGetSelectedCoreForContest( contestid );
+    if ((conInfo->BestTime == 0) && force)
+    {
+      // This may trigger a mini-benchmark, which will get the speed
+      // we need and not waste time.
+      selcoreGetSelectedCoreForContest( contestid );
 
-    if (conInfo->BestTime == 0)
-      TBenchmark(contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK);
+      if (conInfo->BestTime == 0)
+        TBenchmark(contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK);
+    }
+    return conInfo->BestTime;
   }
-
-  return conInfo->BestTime;
+  return 0;  
 }
 
 // ---------------------------------------------------------------------------
 
-// sets a possible new value for best time; returns true
-// if this speed was a new record
+// set new record speed for a contest, returns !0 on success
 int CliSetContestWorkUnitSpeed( int contestid, unsigned int sec)
 {
   struct contestInfo *conInfo =
                        __internalCliGetContestInfoVectorForID( contestid );
-  if (!conInfo || !sec)
-    return false;
-
-  if ((conInfo->BestTime == 0) || (conInfo->BestTime > sec))
+  if (conInfo && sec)
   {
-    conInfo->BestTime = sec;
-    return true;
-  }
-
-  return false;
+    if ((conInfo->BestTime == 0) || (conInfo->BestTime > sec))
+    {
+      conInfo->BestTime = sec;
+      return 1; /* success */
+    }
+  }  
+  return 0; /* failed */
 }
     
 // ---------------------------------------------------------------------------

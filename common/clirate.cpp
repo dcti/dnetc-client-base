@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.24.2.4 2000/03/09 21:48:34 jlawson Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.24.2.5 2000/09/21 18:07:37 cyp Exp $"; }
 
 #include "baseincs.h" //timeval
 #include "client.h"   //for project constants
@@ -38,23 +38,30 @@ double CliGetKeyrateForContest( int contestid )
 
 /* ---------------------------------------------------------------------- */
 
-//internal - see CliGetKeyrateForProblem() for description
-static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
+#ifndef _U32LimitDouble_
+  #define _U32LimitDouble_ ((double)(0xFFFFFFFFul))
+  #define U64TODOUBLE( hi, lo ) ((double)((((double)(hi))* \
+          (((double)(_U32LimitDouble_))+((double)(1))))+((double)(lo))))
+#endif
+
+// return keyrate for a single problem. Problem must be finished.
+double CliGetKeyrateForProblem( Problem *prob /*, int doSave */ )
 {
   unsigned int count, contestid, units;
   struct timeval tv;
   ContestWork work;
   int resultcode;
-  double keys;
+  double keys, rate;
 
   if (!prob)
     return ((double)(-1));
 
   resultcode = prob->RetrieveState( &work, &contestid, 0 ); 
-  if (resultcode < 0)
-    return ((double)(-2));   // not initialized or core error
-  if (doSave && resultcode != RESULT_NOTHING && resultcode != RESULT_FOUND)
-    return ((double)(-2));   // not finished - completion_time is invalid
+  if (resultcode != RESULT_NOTHING && resultcode != RESULT_FOUND)
+    return ((double)(-2)); // not initialized or core error or not finished
+
+  if (CliGetContestInfoBaseData( contestid, NULL, &count )) //clicdata.cpp
+    return ((double)(0));   //clicdata.cpp says no such contest
     
   /*
   tv.tv_usec = prob->timelo;
@@ -66,9 +73,9 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   //tv.tv_sec = prob->runtime_sec;
   tv.tv_usec = prob->completion_timelo; /* real clock time between start/finish */
   tv.tv_sec = prob->completion_timehi; /* including suspended/paused time */
-  
-  if (CliGetContestInfoBaseData( contestid, NULL, &count )) //clicdata.cpp
-    return ((double)(0));   //clicdata.cpp says no such contest
+
+  if (!tv.tv_sec && !tv.tv_usec)
+    tv.tv_usec = 1; //don't divide by zero
 
   switch (contestid) {
     case RC5:
@@ -91,23 +98,19 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   if (keys==((double)(0))) //no keys done? should never happen.
     return ((double)(0));
 
-  if (!tv.tv_sec && !tv.tv_usec)
-    tv.tv_usec = 1; //don't divide by zero
-    
-  if (doSave)
+  /* if (doSave) */
   {
     count = 1; //number of blocks to add to clicdata.cpp information
     CliAddContestInfoSummaryData( contestid, &count, &keys, &tv, &units );
   }
 
-  return ((double)(keys))/
+  rate = ((double)(keys))/
        (((double)(tv.tv_sec))+(((double)(tv.tv_usec))/((double)(1000000L))));
+       
+  if (contestid != OGR)       
+    CliSetContestWorkUnitSpeed(contestid, (unsigned int)((1<<28)/rate + 0.5));
+
+  return rate;
 }
-
-// return keyrate for a single problem. Problem must be finished.
-double CliGetKeyrateForProblem( Problem *prob )
-{  return __CliGetKeyrateForProblem( prob, 1 ); }
-
-double CliGetKeyrateForProblemNoSave( Problem *prob )
-{  return __CliGetKeyrateForProblem( prob, 0 ); }
+/* ---------------------------------------------------------------------- */
 

@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */ 
 #ifndef __CLICDATA_H__
-#define __CLICDATA_H__ "@(#)$Id: clicdata.h,v 1.19.2.2 2000/01/08 23:18:01 cyp Exp $"
+#define __CLICDATA_H__ "@(#)$Id: clicdata.h,v 1.19.2.3 2000/09/21 18:07:37 cyp Exp $"
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestID);
@@ -26,8 +26,6 @@ int CliGetContestIDFromName( char *name );
 // returns 0 if success, !0 if error (bad contestID).
 int CliGetContestInfoBaseData( int contestid, const char **name, 
                                                unsigned int *iter2key );
-
-struct timeval; /* forward ref */
 
 // obtain summary data for a contest. unrequired args may be NULL
 // returns 0 if success, !0 if error (bad contestID).
@@ -49,7 +47,7 @@ const char *CliGetContestNameFromID(int contestid);
 // returns the expected time to complete a work unit, in seconds
 // if force is true, then a microbenchmark will be done to get the
 // rate if no work on this contest has been completed yet.
-int CliGetContestWorkUnitSpeed( int contestid, int force = 0 );
+int CliGetContestWorkUnitSpeed( int contestid, int do_force );
 
 // sets a possible new value for best time; returns true
 // if this speed was a new record

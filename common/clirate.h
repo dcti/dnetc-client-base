@@ -10,23 +10,12 @@
  * ----------------------------------------------------------------------
 */ 
 #ifndef __CLIRATE_H__
-#define __CLIRATE_H__ "@(#)$Id: clirate.h,v 1.13 1999/04/06 11:55:43 cyp Exp $"
-
-//#include "problem.h" //uses Problem and RC5Result class definitions 
+#define __CLIRATE_H__ "@(#)$Id: clirate.h,v 1.13.2.1 2000/09/21 18:07:37 cyp Exp $"
 
 // return (cumulative) keyrate for a particular contest
 double CliGetKeyrateForContest( int contestid );
 
 // return keyrate for a single problem. Problem must be finished.
 double CliGetKeyrateForProblem( Problem *problem );
-
-//same as CliGetKeyrateForProblem() but doesn't add stats to contest totals
-double CliGetKeyrateForProblemNoSave( Problem *problem );
-
-#ifndef _U32LimitDouble_
-  #define _U32LimitDouble_ ((double)(0xFFFFFFFFul))
-  #define U64TODOUBLE( hi, lo ) ((double)((((double)(hi))* \
-          (((double)(_U32LimitDouble_))+((double)(1))))+((double)(lo))))
-#endif
 
 #endif /* __CLIRATE_H__ */

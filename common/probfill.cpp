@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.40 2000/09/20 20:53:26 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.41 2000/09/21 18:07:36 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -163,21 +163,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         // update the totals for this contest
         //---------------------
 
-        if (load_problem_count <= COMBINEMSG_THRESHOLD)
-        {
-          CliPostMessageForProblemCompleted( thisprob );
-        }
-        else /* stop the log file from being cluttered with load/save msgs */
-        {
-          CliGetKeyrateForProblem( thisprob ); //add to totals
-        }
-
-        if (cont_i != OGR)
-        {
-          double rate = CliGetKeyrateForProblemNoSave( thisprob );
-          if (rate > 0.0)
-            CliSetContestWorkUnitSpeed(cont_i, (int)((1<<28)/rate + 0.5));
-        }
+        CliRecordProblemCompleted( thisprob,
+            (load_problem_count<=COMBINEMSG_THRESHOLD) /* do_postmsg */);
 
         /* adjust bufupd_pending if outthresh has been crossed */
         if (__check_outbufthresh_limit( client, cont_i, -1, 0,bufupd_pending))

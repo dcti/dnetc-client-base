@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.35 2000/09/17 11:46:31 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.36 2000/09/21 18:07:36 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -515,7 +515,7 @@
 
 /* ----------------------------------------------------------------- */
 
-#if defined(PROXY_TYPE) /* only for proxy */
+#if defined(PROXYTYPE) /* only for proxy */
   /*
   ** This is only required for proxy builds since the client source is
   ** designed for maximum portability and don't need/use 'bool'
@@ -544,6 +544,15 @@
     #define false ((bool)0)
     #define true  (!false)
   #endif
+#else /* client - maximize portability. */
+  /* puke before others have to deal with errant code */
+  /* IT IS NOT SUFFICIENT TO 'typedef int bool'!! */
+  #undef true
+  #define true  bool_type_is_not_portable
+  #undef false
+  #define false bool_type_is_not_portable
+  #undef bool
+  #define bool  bool_type_is_not_portable
 #endif
 
 /* ----------------------------------------------------------------- */

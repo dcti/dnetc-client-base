@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.14 2000/09/17 11:46:28 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.15 2000/09/21 18:07:37 cyp Exp $"; }
 
 //#define TRACE
 
@@ -276,108 +276,107 @@ int CliPostSummaryStringForContest( int contestid )
 
 /* ----------------------------------------------------------------------- */
 
-// internal - with or without adjusting cumulative stats
+// adjust cumulative stats with or without "Completed" message
 // Completed RC5 packet 68E0D85A:A0000000 (123456789 keys)
 //          123:45:67:89 - [987654321 keys/s]
 // Completed OGR stub 22/1-3-5-7 (123456789 nodes)
 //          123:45:67:89 - [987654321 nodes/s]
-static int __CliPostMessageForProblemCompleted( Problem *prob, int doSave )
+int CliRecordProblemCompleted( Problem *prob, int do_postmsg )
 {
   int rc = -1;
   ContestWork work;
-  struct timeval tv;
-  char ratestrbuf[64];
-  char countstrbuf[64]; 
   unsigned int contestid = 0;
-  const char *ratestrP = "---.-- ", *name = "???";
   int resultcode = prob->RetrieveState( &work, &contestid, 0 );
 
-
-  if ((resultcode == RESULT_NOTHING || resultcode == RESULT_FOUND) &&
-       CliGetContestInfoBaseData( contestid, &name, NULL ) == 0) //clicdata
+  if (resultcode == RESULT_NOTHING || resultcode == RESULT_FOUND)
   {
-    ratestrP = __double_as_string( ratestrbuf, 
-       ((doSave) ? ( CliGetKeyrateForProblem( prob ) ) :
-                   ( CliGetKeyrateForProblemNoSave( prob ) )),
-                    -1, 2, !0 );
-    //tv.tv_sec = prob->runtime_sec;  //thread user time
-    //tv.tv_usec = prob->runtime_usec;
-    tv.tv_sec = prob->completion_timehi;  //wall clock time
-    tv.tv_usec = prob->completion_timelo;
-  }
-  else
-  {
-    memset((void *)&work,0,sizeof(work));
-    tv.tv_sec = tv.tv_usec = 0;
-  }
+    const char *name;
+    if (CliGetContestInfoBaseData(contestid,&name,0)==0) /*contestid is valid*/
+    { 
+      double rate; 
+      //if (!dosave)
+      //  rate = CliGetKeyrateForProblemNoSave( prob );
+      //else
+      rate = CliGetKeyrateForProblem( prob ); //add to totals
+      rc = 0; /* success */
   
-  switch (contestid) 
-  {
-    case RC5:
-    case DES:
-    case CSC:
-    {
-      //"Completed RC5 packet 00000000:00000000 (4*2^28 keys)\n"
-      //"%s - [%skeys/sec]\n"
-      __iter_as_string(countstrbuf, work.crypto.iterations.hi,
-                                    work.crypto.iterations.lo, contestid );
-      Log( "Completed %s packet %08lX:%08lX (%skeys)\n"
-                    "%s - [%skeys/sec]\n",  
-                    name, 
-                    (unsigned long) ( work.crypto.key.hi ),
-                    (unsigned long) ( work.crypto.key.lo ),
-                    countstrbuf,
-                    CliGetTimeString( &tv, 2 ),
-                    ratestrP );
-      rc = 0;                    
-      break;
-    }  
-    #ifdef HAVE_OGR_CORES
-    case OGR:
-    {
-      //Completed OGR stub 23/21-16-11-31 (17.63 Gnodes)
-      //"%s - [%snodes/sec]\n"
-      __nodecount_as_string( countstrbuf, work.ogr.nodes.hi, 
-                                          work.ogr.nodes.lo );
-      LogTo(LOGTO_SCREEN,
-                 "Completed %s stub %s (%snodes)\n"
-                 "%s - [%snodes/sec]\n",  
-                 name, 
-                 ogr_stubstr( &work.ogr.workstub.stub ),
-                 countstrbuf,
-                 CliGetTimeString( &tv, 2 ),
-                 ratestrP );
-      //Completed OGR stub 23/21-16-11-31 (17,633,305,532 nodes)
-      //"%s - [%snodes/sec]\n"
-      __double_as_string( countstrbuf, ((((double)work.ogr.nodes.hi)*4294967296.0)+
-                                       ((double)work.ogr.nodes.lo)), 3, 2, !0 );
-      LogTo(LOGTO_FILE|LOGTO_MAIL,
-                 "Completed %s stub %s (%snodes)\n"
-                 "%s - [%snodes/sec]\n",  
-                 name, 
-                 ogr_stubstr( &work.ogr.workstub.stub ),
-                 countstrbuf,
-                 CliGetTimeString( &tv, 2 ),
-                 ratestrP );             
-      rc = 0;                    
-      break;
-    }  
-    #endif
-    default:
-    {
-      rc = -1;                    
-      break;
-    }
-  }
+      if (do_postmsg)
+      {
+        struct timeval tv;
+        char ratestrbuf[64];
+        char countstrbuf[64]; 
+
+        //tv.tv_sec = prob->runtime_sec;  //thread user time
+        //tv.tv_usec = prob->runtime_usec;
+        tv.tv_sec = prob->completion_timehi;  //wall clock time
+        tv.tv_usec = prob->completion_timelo;
+ 
+        switch (contestid) 
+        {
+          case RC5:
+          case DES:
+          case CSC:
+          {
+            //"Completed RC5 packet 00000000:00000000 (4*2^28 keys)\n"
+            //"%s - [%skeys/sec]\n"
+            __double_as_string( ratestrbuf, rate, -1, 2, !0 );
+            __iter_as_string( countstrbuf, work.crypto.iterations.hi,
+                                     work.crypto.iterations.lo, contestid );
+            Log( "Completed %s packet %08lX:%08lX (%skeys)\n"
+                 "%s - [%skeys/sec]\n",  
+                        name, 
+                        (unsigned long) ( work.crypto.key.hi ),
+                        (unsigned long) ( work.crypto.key.lo ),
+                        countstrbuf,
+                        CliGetTimeString( &tv, 2 ),
+                        ratestrbuf );
+            break;
+          }  
+          #ifdef HAVE_OGR_CORES
+          case OGR:
+          {
+            //Completed OGR stub 23/21-16-11-31 (17.63 Gnodes)
+            //"%s - [%snodes/sec]\n"
+            __double_as_string( ratestrbuf, rate, -1, 2, !0 );
+            __nodecount_as_string( countstrbuf, work.ogr.nodes.hi, 
+                                                work.ogr.nodes.lo );
+            LogTo(LOGTO_SCREEN,
+                     "Completed %s stub %s (%snodes)\n"
+                     "%s - [%snodes/sec]\n",  
+                     name, 
+                     ogr_stubstr( &work.ogr.workstub.stub ),
+                     countstrbuf,
+                     CliGetTimeString( &tv, 2 ),
+                     ratestrbuf );
+            //Completed OGR stub 23/21-16-11-31 (17,633,305,532 nodes)
+            //"%s - [%snodes/sec]\n"
+            __double_as_string( countstrbuf, 
+                              ((((double)work.ogr.nodes.hi)*4294967296.0)+
+                              ((double)work.ogr.nodes.lo)), 3, 2, !0 );
+            LogTo(LOGTO_FILE|LOGTO_MAIL,
+                     "Completed %s stub %s (%snodes)\n"
+                     "%s - [%snodes/sec]\n",  
+                     name, 
+                     ogr_stubstr( &work.ogr.workstub.stub ),
+                     countstrbuf,
+                     CliGetTimeString( &tv, 2 ),
+                     ratestrbuf );             
+            break;
+          }  
+          #endif /* OGR */
+          default:
+          {
+            //rate = 0.0;                    
+            break;
+          }
+        } /* switch (contestid) */
+      } /* if (postmsg) */
+    } /* name/contestid is valid */  
+  } /* (RESULT_NOTHING || RESULT_FOUND) */
   return rc;
 }
 
 /* ----------------------------------------------------------------------- */
-
-// Completed RC5 packet 68E0D85A:A0000000 (123456789 keys)
-//          123:45:67:89 - [987654321 keys/s]
-int CliPostMessageForProblemCompleted( Problem *prob )
-{ return __CliPostMessageForProblemCompleted( prob, 1 ); }
 
 // returns rate as string "n,nnn.nn ['k'|'M'|'G'|'T']"
 // return value is a pointer to buffer.
