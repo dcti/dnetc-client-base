@@ -80,7 +80,8 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/checkpt.obj    \
 	$(OUTPUTPATH)/clievent.obj   \
 	$(OUTPUTPATH)/util.obj       \
-	$(OUTPUTPATH)/base64.obj
+	$(OUTPUTPATH)/base64.obj     \
+	$(OUTPUTPATH)/random.obj
 
 
 PREBUILT_OBJS =                   \
