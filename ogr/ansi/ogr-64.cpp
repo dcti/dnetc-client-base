@@ -16,7 +16,7 @@
 */
 
 const char *ogr64_cpp(void) {
-return "@(#)$Id: ogr-64.cpp,v 1.1.2.5 2004/08/11 00:40:01 snikkel Exp $"; }
+return "@(#)$Id: ogr-64.cpp,v 1.1.2.6 2004/08/11 16:47:06 bdragon Exp $"; }
 
 #include <stddef.h>
 #include "cputypes.h"
@@ -82,6 +82,13 @@ return "@(#)$Id: ogr-64.cpp,v 1.1.2.5 2004/08/11 00:40:01 snikkel Exp $"; }
     #undef  OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0
   #endif
+#elif (CLIENT_CPU == CPU_ALPHA)
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* 0/1 - 'yes' (default) */
+  #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
+  #define OGROPT_HAVE_OGR_CYCLE_ASM             0 /* 0-2 - 'no'  (default) */
+  #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
+  #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 1 /* 0/1 - register based */
 #else
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
   #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* 0/1 - 'yes' (default) */

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.29.2.3 2004/08/11 01:21:27 snikkel Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.29.2.4 2004/08/11 16:47:06 bdragon Exp $"; }
 
 //#define TRACE
 
@@ -47,6 +47,7 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.29.2.3 2004/08/11 01:21:27 snikkel Exp $";
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix(void);
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_ev4(void);
   #endif
+    extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void);
 #elif (CLIENT_CPU == CPU_68K)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_000(void);
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_020(void);
@@ -102,6 +103,7 @@ int InitializeCoreTable_ogr(int first_time)
            ogr_get_dispatch_table_cix();
            ogr_get_dispatch_table_ev4();
         #endif
+        ogr64_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_VAX)
         ogr_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_SPARC)
@@ -167,6 +169,7 @@ const char **corenames_for_contest_ogr()
       "GARSP 6.0-CIX",
       "GARSP 6.0-EV4",
     #endif
+      "GARSP 6.0-64",
   #elif (CLIENT_CPU == CPU_POWERPC)
     #ifdef HAVE_KOGE_PPC_CORES
       /* Optimized ASM cores */
@@ -452,6 +455,8 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
       unit_func.ogr = ogr_get_dispatch_table_cix();
     else if (coresel == 2)
       unit_func.ogr = ogr_get_dispatch_table_ev4();
+    else if (coresel == 3)
+      unit_func.ogr = ogr64_get_dispatch_table();
     else
   #endif 
       unit_func.ogr = ogr_get_dispatch_table();

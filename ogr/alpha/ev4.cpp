@@ -6,11 +6,11 @@
  */
 
 const char *ogr_ev4_cpp(void) {
-return "@(#)$Id: ev4.cpp,v 1.1.2.5.2.1 2004/08/08 19:29:18 kakace Exp $"; }
+return "@(#)$Id: ev4.cpp,v 1.1.2.5.2.2 2004/08/11 16:47:06 bdragon Exp $"; }
 
 #if defined(__GNUC__)
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
-  #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - 'no'            */
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* 0/1 - 'yes'           */
   #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
   #define OGROPT_HAVE_OGR_CYCLE_ASM             0 /* 0-2 - 'no'  (default) */
   #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */

@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.33.2.2 2004/08/11 00:41:09 snikkel Exp $
+ * $Id: ogr.cpp,v 1.2.4.33.2.3 2004/08/11 16:47:06 bdragon Exp $
  */
 #include <string.h>   /* memset */
 
@@ -539,6 +539,10 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 
 
 /*-------------------------------------------------------------------------*/
+
+#if defined(BYTE_ORDER) && (BYTE_ORDER == LITTLE_ENDIAN)
+  #define FP_CLZ_LITTLEEND 1
+#endif
 
 #if (OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM == 2) && defined(__CNTLZ)
   #define LOOKUP_FIRSTBLANK(x) __CNTLZ(x)
