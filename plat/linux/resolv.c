@@ -13,7 +13,7 @@
  * has 'host', and that too can be bypassed (described below).
  *
  * Created Aug 2 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: resolv.c,v 1.2.4.3 2003/05/14 23:18:05 andreasb Exp $
+ * $Id: resolv.c,v 1.2.4.4 2003/05/25 12:08:31 andreasb Exp $
  *
  * The functions exported from here will first check if a bypass 
  * (described below) has been provided. 
@@ -995,6 +995,11 @@ static int do_nslookup( struct gen_hostent_data *_r_buffer,
         proceed_to_next = 0;                              
       }
     } /* if spoollen */
+    else
+    {
+      /* internal error, e.g. 'host' command not found */
+      proceed_to_next = -2;
+    }
     free( (void *)lubuf );
   } 
   if (proceed_to_next) /* -1=internal error, +1 = none found */

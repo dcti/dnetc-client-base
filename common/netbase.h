@@ -13,7 +13,7 @@
  * module.
 */
 #ifndef __NETBASE_H__
-#define __NETBASE_H__ "@(#)$Id: netbase.h,v 1.2.4.1 2003/01/19 22:49:50 snake Exp $"
+#define __NETBASE_H__ "@(#)$Id: netbase.h,v 1.2.4.2 2003/05/25 12:08:31 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 
@@ -37,7 +37,8 @@
 #define ps_ENODATA     -12 /* Valid name, no data record of requested type */
 #define ps_ENOENT      -13 /* no entry for requested name */
 #define ps_EINPROGRESS -14 
-#define ps_ELASTERR ps_EINPROGRESS
+#define ps_ENOENT_host_cmd  -15 /* "Perhaps the 'host' command was not found?" */
+#define ps_ELASTERR ps_ENOENT_host_cmd
 
 /* all functions that return int, return zero on success or an error code 
    on failure. The error code can then be translated with net_strerror().

@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.8 2003/05/20 20:53:18 andreasb Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.9 2003/05/25 12:08:31 andreasb Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -279,7 +279,8 @@ extern "C" {
 #define ps_ENODATA     -12 /* Valid name, no data record of requested type */
 #define ps_ENOENT      -13 /* no entry for requested name */
 #define ps_EINPROGRESS -14
-#define ps_ELASTERR ps_EINPROGRESS
+#define ps_ENOENT_host_cmd  -15 /* "Perhaps the 'host' command was not found?" */
+#define ps_ELASTERR ps_ENOENT_host_cmd
 
 #endif
 
@@ -762,6 +763,8 @@ static const char *internal_net_strerror(const char *ctx, int ps_errnum, SOCKET 
       case ps_ENOSYS: msg = "ENOSYS: unsupported system call"; break;
       case ps_ENODATA: msg = "ENODATA: no data of requested type"; break;
       case ps_ENOENT: msg = "ENOENT: no entry for requested name"; break;
+      case ps_ENOENT_host_cmd: msg = "ENOENT: No such file or directory\n"
+                           "Perhaps the 'host' command was not found?"; break;
       default: break;
     }
   }
@@ -3251,7 +3254,9 @@ int net_resolve( const char *hostname, u32 *addr_list, unsigned int *max_addrs)
           {
             #if !defined(_TIUSER_) && defined(HOST_NOT_FOUND) && defined(NO_ADDRESS)
             int i = h_errno;
-            if (i < 0) /* NETDB_INTERNAL (see errno). Not always defined */
+            if (i == -2 && errno == ENOENT) /* plat/linux/resolv.c may set h_errno = -2 */
+              rc = ps_ENOENT_host_cmd; /* "Perhaps the 'host' command was not found?" */
+            else if (i < 0) /* NETDB_INTERNAL (see errno). Not always defined */
               rc = ps_stdsyserr;
             else if (i == HOST_NOT_FOUND) /* Authoritative Answer Host not found */
               rc = ps_ENOENT;
