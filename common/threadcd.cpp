@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: threadcd.cpp,v $
+// Revision 1.13  1998/07/14 00:45:29  cyruspatel
+// Added a second define to differenciate between OS_SUPPORTS_THREADING and
+// when special steps must be taken to support it, such as linking special
+// libraries or whatever.
+//
 // Revision 1.12  1998/07/13 03:31:59  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
 // ambiguities. ("declaration/type or an expression")
@@ -49,7 +54,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *threadcd_cpp(void) { 
-static const char *id="@(#)$Id: threadcd.cpp,v 1.12 1998/07/13 03:31:59 cyruspatel Exp $";
+static const char *id="@(#)$Id: threadcd.cpp,v 1.13 1998/07/14 00:45:29 cyruspatel Exp $";
 return id; } 
 #endif
 
@@ -65,7 +70,7 @@ return id; }
 int CliDestroyThread( THREADID cliThreadID )
 {
   int rescode = 0;
-  #if !defined(OS_SUPPORTS_THREADING)
+  #if (!defined(OS_SUPPORTS_THREADING) || !defined(THREADING_IS_AVAILABLE))
      rescode = ((cliThreadID)?(1):(0)); //suppress compiler warning
      rescode = -1;
   #elif (CLIENT_OS == OS_OS2)
@@ -104,7 +109,7 @@ struct __thread_shell_data
   #endif
 };
 
-#ifdef OS_SUPPORTS_THREADING
+#if (defined(OS_SUPPORTS_THREADING) && defined(THREADING_IS_AVAILABLE))
 static void __thread_shell( void *param )
 {
   #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) //what is FLAT then?
@@ -135,7 +140,7 @@ THREADID CliCreateThread( register void (*proc)(void *), void *param )
 {
   THREADID cliThreadID;
 
-  #ifndef OS_SUPPORTS_THREADING
+  #if (!defined(OS_SUPPORTS_THREADING) || !defined(THREADING_IS_AVAILABLE))
     cliThreadID = (param==NULL || proc==NULL); //suppress compiler warns
     cliThreadID = (THREADID) NULL;
   #else

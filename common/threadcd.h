@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: threadcd.h,v $
+// Revision 1.11  1998/07/14 00:45:31  cyruspatel
+// Added a second define to differenciate between OS_SUPPORTS_THREADING and
+// when special steps must be taken to support it, such as linking special
+// libraries or whatever.
+//
 // Revision 1.10  1998/07/13 23:39:37  cyruspatel
 // Added functions to format and display raw cpu info for better management
 // of the processor detection functions and tables. Well, not totally raw,
@@ -50,36 +55,52 @@
 //-----------------------------------------------------------------------
 
 #define OS_SUPPORTS_THREADING  //#undef this IN *YOUR* SECTION if untrue
+#define THREADING_IS_AVAILABLE //special define in case OS_SUPPORTS_THREADING
+                               //is true, but special libs (or whatever) must 
+                               //be linked. see pthread support for example.
 
 #if (CLIENT_OS == OS_WIN32)
   #include <process.h>
   typedef unsigned long THREADID;
+  #define OS_SUPPORTS_THREADING
+  #define THREADING_IS_AVAILABLE
 #elif (CLIENT_OS == OS_OS2)
-// Headers defined elsewhere in a seperate file.
-   typedef long THREADID;
+//Headers defined elsewhere in a separate file.
+  typedef long THREADID;
+  #define OS_SUPPORTS_THREADING
+  #define THREADING_IS_AVAILABLE
 #elif (CLIENT_OS == OS_NETWARE)
   #include <process.h>
   typedef long THREADID;
   extern int CliWaitForThreadExit( int threadID );
+  #define OS_SUPPORTS_THREADING
+  #define THREADING_IS_AVAILABLE
 #elif (CLIENT_OS == OS_BEOS)
   #include <OS.h>
   typedef thread_id THREADID;
+  #define OS_SUPPORTS_THREADING
+  #define THREADING_IS_AVAILABLE
 #elif (CLIENT_OS == OS_DOS)
   typedef int THREADID ; //dummy
   #undef OS_SUPPORTS_THREADING
+  #undef THREADING_IS_AVAILABLE
 #elif (CLIENT_OS == OS_MACOS)
   typedef int THREADID ; //dummy
   #undef OS_SUPPORTS_THREADING
+  #undef THREADING_IS_AVAILABLE
 #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   #include <stdlib.h>
   typedef int THREADID ; //dummy
   #undef OS_SUPPORTS_THREADING
+  #undef THREADING_IS_AVAILABLE
 #elif (CLIENT_OS == OS_RISCOS)
   typedef int THREADID ; //dummy
   #undef OS_SUPPORTS_THREADING
+  #undef THREADING_IS_AVAILABLE
 #else
   #if !defined(MULTITHREAD)
     typedef int THREADID ; //dummy
+    #undef THREADING_IS_AVAILABLE
     #if ((CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_DGUX) && \
         (CLIENT_OS != OS_SOLARIS) && (CLIENT_OS != OS_FREEBSD))
       #undef OS_SUPPORTS_THREADING
@@ -87,6 +108,7 @@
   #else
     #include <pthread.h>
     typedef pthread_t THREADID;
+    #define THREADING_IS_AVAILABLE
   #endif
 #endif
 
