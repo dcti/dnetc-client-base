@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.85 2003/11/01 14:20:12 mweiser Exp $
+# $Id: makefile.vc,v 1.86 2003/11/19 03:29:25 lightning Exp $
 #
 
 BASENAME = dnetc
@@ -13,7 +13,7 @@ DESSRCPATH = des
 OGRSRCPATH = ogr
 CSCSRCPATH = csc
 PLATSRCPATH = plat/win
-EXECOMPRESSOR = upx.exe -9 -qq --compress-resources=0
+# EXECOMPRESSOR = upx.exe -9 -qq --compress-resources=0
 
 #HAVE_RC5_64_CORES=1
 HAVE_RC5_72_CORES=1
@@ -222,7 +222,8 @@ RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-dg2.obj    \
         $(OUTPUTPATH)/r72-dg3.obj    \
         $(OUTPUTPATH)/r72-dg3a.obj   \
-        $(OUTPUTPATH)/r72-ss2.obj
+        $(OUTPUTPATH)/r72-ss2.obj    \
+        $(OUTPUTPATH)/r72-sgp3.obj
 
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
 !endif
