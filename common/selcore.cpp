@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.100 2001/02/18 23:31:18 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.101 2001/02/22 07:54:05 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -94,7 +94,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
   #elif (CLIENT_CPU == CPU_68K)
     { /* RC5 */
       #if defined(__GCC__) || defined(__GNUC__) || \
-          (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MACOS)
+          (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS)
       "68000/010", /* 68000/010 */
       "68020/030", /* 68020/030 */
       "68040/060", /* 68040/060 */
@@ -658,7 +658,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     {
       selcorestatics.corenum[RC5] = 0;
       #if defined(__GCC__) || defined(__GNUC__) || \
-          (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MACOS)
+          (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS)
       if (detected_type >= 68040)
         selcorestatics.corenum[RC5] = 2; /* rc5-060-re-jg.s */
       else if (detected_type >= 68020)
@@ -1078,10 +1078,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   #endif
 #elif (CLIENT_CPU == CPU_68K)
   #if defined(__GCC__) || defined(__GNUC__) || \
-      (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MACOS)
+      (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS)
     extern "C" u32 rc5_unit_func_000_010re( RC5UnitWork *, u32 );
     extern "C" u32 rc5_unit_func_020_030( RC5UnitWork *, u32 );
     extern "C" u32 rc5_unit_func_060re( RC5UnitWork *, u32 );
+  #elif (CLIENT_OS == OS_MACOS)
+    // rc5/68k/crunch.68k.a.o
+    extern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
   #else
     // rc5/ansi/rc5ansi1-b2.cpp
     extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
@@ -1341,7 +1344,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     #elif (CLIENT_CPU == CPU_68K)
     {
       #if defined(__GCC__) || defined(__GNUC__) || \
-          (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MACOS)
+          (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS)
       {
         //xtern "C" u32 rc5_unit_func_000_010re( RC5UnitWork *, u32 );
         //xtern "C" u32 rc5_unit_func_020_030( RC5UnitWork *, u32 );
@@ -1357,6 +1360,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           unit_func.rc5 = rc5_unit_func_000_010re;
           coresel = 0;
         }
+      }
+      #elif (CLIENT_OS == OS_MACOS)
+      {
+        // rc5/68k/crunch.68k.a.o
+        //xtern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
+        unit_func.rc5 = rc5_68k_crunch_unit_func;
+        pipeline_count = 1; //the default is 2
+        coresel = 0;
       }
       #else 
       {
