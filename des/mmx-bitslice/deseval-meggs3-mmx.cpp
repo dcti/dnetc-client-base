@@ -18,9 +18,12 @@
 
 //
 // $Log: deseval-meggs3-mmx.cpp,v $
+// Revision 1.3  1998/07/09 21:01:07  remi
+// Fixed sboxes names in inline assembly for Linux-aout.
+//
 // Revision 1.2  1998/07/08 23:37:35  remi
 // Added support for aout targets (.align).
-// Tweaked $Id$.
+// Tweaked $Id: deseval-meggs3-mmx.cpp,v 1.3 1998/07/09 21:01:07 remi Exp $.
 //
 // Revision 1.1  1998/07/08 15:49:36  remi
 // MMX bitslicer integration.
@@ -29,7 +32,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_mmx_cpp(void) {
-return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.2 1998/07/08 23:37:35 remi Exp $"; }
+return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.3 1998/07/09 21:01:07 remi Exp $"; }
 #endif
 
 #include <stdlib.h>
@@ -141,7 +144,8 @@ do { \
 //#define xs8(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) do { load_params (a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3); mmxs8 (mmxParams); } while (0)
 
 // CYGWIN32 because it's my debugging & benchmarking platform
-#if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_NETWARE) || defined(__CYGWIN32__))
+#if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_NETWARE) || \
+    ((CLIENT_OS == OS_LINUX) && !defined(__ELF__)) || defined(__CYGWIN32__))
 #define CALL(sfunc) "call _"#sfunc
 #else
 #define CALL(sfunc) "call "#sfunc
