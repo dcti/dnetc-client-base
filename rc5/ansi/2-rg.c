@@ -18,8 +18,11 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_rg_cpp (void) {
-return "@(#)$Id: 2-rg.c,v 1.6 1999/12/05 17:22:42 cyp Exp $"; }
+return "@(#)$Id: 2-rg.c,v 1.7 1999/12/27 12:24:34 patrick Exp $"; }
 #endif
+
+#error "This file should no longer be used. Please use rc5ansi_2rg.cpp instead and change your prototypes to use the new syntax: rc5_unit_func_ansi_2_rg. Thank you, Patrick Hildenbrand"
+
 
 #include "cputypes.h"
 #include "ccoreio.h"
