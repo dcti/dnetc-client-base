@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.8 1999/04/17 14:03:48 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.9 1999/04/20 02:47:10 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -408,7 +408,7 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
   unsigned int i, contest_i;
   const char *ffmsg="--fetch and --flush services are not available.\n";
 
-  if (remote_update_dir[0] == 0)
+  if (noupdatefromfile || remote_update_dir[0] == '\0')
   {
     if (interactive)
       LogScreen( "%sThis client has been configured to run without\n"
@@ -467,7 +467,7 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
   failed = didfetch = didflush = 0;
   if ((doflush || dofetch) && CheckExitRequestTriggerNoIO() == 0)
   {
-    if ( remote_update_dir[0] !=0 )
+    if (!noupdatefromfile && remote_update_dir[0] != '\0')
     {
       if (failed == 0 && !dontfetch && CheckExitRequestTriggerNoIO() == 0)
       {
@@ -643,7 +643,7 @@ static void __FixupRandomPrefix( const WorkRecord * data, Client *client )
 
 /* --------------------------------------------------------------------- */
 
-static void __CheckBuffLimits( Client *client )
+static int __CheckBuffLimits( Client *client )
 {
   unsigned int i;
   for (i=0;i<CONTEST_COUNT;i++)
@@ -657,7 +657,17 @@ static void __CheckBuffLimits( Client *client )
     else if ( client->outthreshold[i] > client->inthreshold[i])
       client->outthreshold[i] = client->inthreshold[i];
   }
-  return;
+  if (client->nodiskbuffers == 0 && 
+      client->out_buffer_basename[0] && client->in_buffer_basename[0])
+  {
+    if (strcmp(client->in_buffer_basename, client->out_buffer_basename) == 0)
+    {
+      Log("Fatal: in- and out- buffer prefixes are identical.\n");
+      RaiseExitRequestTrigger();
+      return -1;
+    }
+  }
+  return 0;
 }  
 
 /* --------------------------------------------------------------------- */
@@ -683,16 +693,18 @@ long Client::PutBufferRecord(const WorkRecord *data)
   {
     LogScreen("Discarded packet with unrecognized workstate %ld.\n",workstate);
   }
+  else if (__CheckBuffLimits( this ))
+  {
+    //nothing. message already printed
+  }
   else
   {
     tmp_retcode = 0;
+    tmp_use_out_file = 0;
     count = 0;
     __FixupRandomPrefix( data, this );
-    __CheckBuffLimits( this );
 
-    if (workstate == RESULT_WORKING)
-      tmp_use_out_file = 0;
-    else
+    if (workstate != RESULT_WORKING)
       tmp_use_out_file = 1;
 
     if (nodiskbuffers == 0)
@@ -732,7 +744,8 @@ long Client::GetBufferRecord( WorkRecord* data, unsigned int contest, int use_ou
   unsigned long count;
   int retcode, tmp_retcode, tmp_use_out_file;
 
-  __CheckBuffLimits( this );
+  if (__CheckBuffLimits( this ))
+    return -1;
   
   do
   {
@@ -785,14 +798,16 @@ long Client::GetBufferRecord( WorkRecord* data, unsigned int contest, int use_ou
                (use_out_file && workstate == RESULT_WORKING) ||
                (!use_out_file && workstate != RESULT_WORKING))
       {
-        tmp_use_out_file = (workstate != RESULT_NOTHING);
+        tmp_use_out_file = (workstate != RESULT_WORKING);
         tmp_retcode = 0;
-        LogScreen("Cross-saving packet of another type/contest.\n");
+//      LogScreen("Cross-saving packet of another type/contest.\n");
         if (nodiskbuffers == 0)
         {
+//LogScreen("old cont:%d, type: %d, name %s\n", contest, use_out_file, filename );
           filename = BufferGetDefaultFilename(tmp_contest, tmp_use_out_file,
           ((tmp_use_out_file) ? (out_buffer_basename) :(in_buffer_basename)) );
                    /* returns <0 on ioerr, >0 if norecs */
+//LogScreen("new cont:%d, type: %d, name %s\n", tmp_contest, tmp_use_out_file, filename );
           tmp_retcode = BufferPutFileRecord( filename, data, NULL );
         }
         else
@@ -828,9 +843,11 @@ long Client::GetBufferCount( unsigned int contest, int use_out_file, unsigned lo
   unsigned long reccount = 0;
   int retcode = -1;
 
-  __CheckBuffLimits( this );
-
-  if (contest < CONTEST_COUNT)
+  if (__CheckBuffLimits( this ) != 0)
+  {
+    //nothing, message already printed
+  }
+  else if (contest < CONTEST_COUNT)
   {
     if (nodiskbuffers == 0)
     {
@@ -910,8 +927,8 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
   unsigned int contest;
   int failed = 0;
   
-  if (client->remote_update_dir[0] == '\0')
-    return -1;
+  if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
+    return 0;
 
   if (client->out_buffer_basename[0] == '\0')
   {
@@ -1018,8 +1035,8 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
   unsigned int contest;
   int failed = 0;
 
-  if (client->remote_update_dir[0] == '\0')
-    return -1;
+  if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
+    return 0;
 
   if (client->in_buffer_basename[0] == '\0')
   {
