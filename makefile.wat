@@ -6,8 +6,8 @@
 ##                or anything else with a section at the end of this file
 ##
 ## $Log: makefile.wat,v $
-## Revision 1.26  1999/02/22 02:16:44  cyp
-## adjusted for new rc5 core location
+## Revision 1.27  1999/05/01 00:07:17  cyp
+## refreshed
 ##
 ## Revision 1.25  1999/01/01 02:45:14  cramer
 ## Part 1 of 1999 Copyright updates...
@@ -102,17 +102,18 @@
 ## Import 5/23/98 client tree
 ## 
 
-## $Id: makefile.wat,v 1.26 1999/02/22 02:16:44 cyp Exp $
+## $Id: makefile.wat,v 1.27 1999/05/01 00:07:17 cyp Exp $
 
 
 %EXTOBJS  = #extra objs (made elsewhere) but need linking here
-%DEFALL   = /DPIPELINE_COUNT=2 /DBRYD /D__showids__
+%DEFALL   = /DBRYD /DDYN_TIMESLICE /D__showids__ /IOGR
             #defines used everywhere
 %SYMALIAS = # symbols that need redefinition 
-%LINKOBJS = output\p1bdespro.obj output\bdeslow.obj   &  
-            output\des-x86.obj   output\convdes.obj   output\problem.obj  &
-            output\rg486.obj     output\rc5-rgk5.obj  output\rc5-rgk6.obj &
-            output\brfp5.obj     output\rc5-rgp6.obj  output\rg6x86.obj   &
+%COREOBJS = output\p1bdespro.obj output\bdeslow.obj   output\des-x86.obj  &
+            output\convdes.obj   output\rg486.obj     output\rc5-rgk5.obj &
+            output\rc5-rgk6.obj  output\brfp5.obj     output\rc5-rgp6.obj &
+            output\rg6x86.obj
+%LINKOBJS = output\problem.obj  &
             output\confrwv.obj   output\autobuff.obj  output\buffwork.obj &
             output\mail.obj      output\client.obj    output\disphelp.obj &
             output\iniread.obj   output\network.obj   output\scram.obj    &
@@ -124,11 +125,11 @@
             output\selftest.obj  output\pollsys.obj   output\probman.obj  &
             output\probfill.obj  output\clievent.obj  output\bench.obj    &
             output\clirun.obj    output\setprio.obj   output\console.obj  &
-            output\modereq.obj   output\confmenu.obj  output\confopt.obj
-            
+            output\modereq.obj   output\confmenu.obj  output\confopt.obj  &
+            output\util.obj      output\base64.obj    output\random.obj
 
             # this list can be added to in the platform specific section
-            # 47 std OBJ's (+3 desmmx, +1 rc5mmx, +2 mt, +x plat specific)
+            # 49 std OBJ's (+3 desmmx, +1 rc5mmx, +2 mt, +x plat specific)
 
 #---
 %rc5smc_LINKOBJS = output\rc5-486-smc-rg.o
@@ -208,10 +209,11 @@ clean :  .symbolic
   @if not exist .\$(LNKbasename)*.* @%quit
   @for %i in (.\$(LNKbasename)*.*) do @del %i
 
-zip :  .symbolic
+zip: .symbolic  
+  #that $(%ZIPPER) is not "" should already have been done
   @if $(%ZIPPER).==.  @echo Error(E02): ZIPPER is not defined
-  @if $(%ZIPPER).==.  @%abort
-  @if $(%ZIPFILE).==. @set ZIPFILE=$(LNKbasename)-$(OSNAME)-x86-cli
+  @if $(%ZIPPER).==.  @%quit
+  @if $(%ZIPFILE).==. @set ZIPFILE=$(LNKbasename)-$(%OSNAME)-x86-cli
   
   @if exist $(%ZIPFILE).zip @del $(%ZIPFILE).zip >nul:
   @%write con 
@@ -224,21 +226,21 @@ debug : .symbolic
 #-----------------------------------------------------------------------
 
 declare_for_desmmx : .symbolic
-  @set LINKOBJS = $(%desmmx_LINKOBJS) $(%LINKOBJS)
+  @set COREOBJS = $(%desmmx_LINKOBJS) $(%COREOBJS)
   @set DEFALL   = $(%desmmx_DEFALL) $(%DEFALL) 
   @set SYMALIAS = $(%desmmx_SYMALIAS) $(%SYMALIAS) 
 
 declare_for_rc5mmx : .symbolic
-  @set LINKOBJS = $(%rc5mmx_LINKOBJS) $(%LINKOBJS)
+  @set COREOBJS = $(%rc5mmx_LINKOBJS) $(%COREOBJS)
   @set DEFALL   = $(%rc5mmx_DEFALL) $(%DEFALL) 
+
+declare_for_rc5smc : .symbolic
+  @set COREOBJS = $(%COREOBJS) $(%rc5smc_LINKOBJS) 
+  #@set DEFALL   = $(%rc5smc_DEFALL) $(%DEFALL) 
 
 declare_for_multithread : .symbolic
   @set LINKOBJS = $(%mt_LINKOBJS) $(%LINKOBJS)
   @set DEFALL   = $(%mt_DEFALL) $(%DEFALL) 
-
-declare_for_rc5smc : .symbolic
-  @set LINKOBJS = $(%rc5smc_LINKOBJS) $(%LINKOBJS)
-  #@set DEFALL   = $(%rc5smc_DEFALL) $(%DEFALL) 
 
 #-----------------------------------------------------------------------
 
@@ -376,6 +378,18 @@ output\confopt.obj : common\confopt.cpp $(%dependall) .AUTODEPEND
   @set isused=1
 
 output\confmenu.obj : common\confmenu.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\util.obj : common\util.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\base64.obj : common\base64.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\random.obj : common\random.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
@@ -531,7 +545,23 @@ output\hbyname.obj : platforms\netware\hbyname.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\clidos.obj : platforms\dos\clidos.cpp $(%dependall) .AUTODEPEND
+output\cdoscon.obj : platforms\dos\cdoscon.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\cdosidle.obj : platforms\dos\cdosidle.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\cdostime.obj : platforms\dos\cdostime.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\cdosemu.obj : platforms\dos\cdosemu.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\cdosinet.obj : platforms\dos\cdosinet.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
@@ -567,6 +597,7 @@ platform: .symbolic
   @set AFLAGS    = $(%AFLAGS) /q              ## assemble quietly
   @set CFLAGS    = $(%CFLAGS) $(%DEFALL)      ## tack on global defines
   @set isused=0
+  @set LINKOBJS= $(%COREOBJS) $(%LINKOBJS) 
   @if not exist $(%BINNAME) @set isused=1
   @for %i in ($(%LINKOBJS)) do @%make %i
   @if $(%isused).==0. @%write con All targets are up to date
@@ -575,7 +606,7 @@ platform: .symbolic
   @if not exist $(%BINNAME) @%quit
   @%make postlink
   @if not exist $(%BINNAME) @%quit
-  @%make zip
+  @if not $(%ZIPPER).==.  @%make zip
 
 dolink : .symbolic
   @if exist  $(%BINNAME) @del $(%BINNAME)
@@ -646,18 +677,20 @@ dos: .symbolic                                       # DOS/PMODE
      @set LIBPATH   = $(%watcom)\lib386 $(%watcom)\lib386\dos 
      @set WLINKOPS  = dosseg eliminate map # stub=\develop\pmodew\pmodew.exe
                                            #stub=platforms/dos/d4GwStUb.CoM 
-     @set LFLAGS    = symtrace printf symtrace whack16 
+     @set LFLAGS    = #symtrace printf symtrace whack16 
      @set FORMAT    = os2 le
      @set CFLAGS    = /zp8 /wx /we /6s /fp3 /fpc /zm /ei /mf &
-                      /wcd=604 /wcd=594 /wcd=7 /bt=dos /d__MSDOS__ &
-                      /iplatforms/dos /I$(%watcom)\h #/Iplatforms\dos\libtcp 
+                      /bt=dos /d__MSDOS__ /wcd=604 /wcd=594 /wcd=7 &
+                      /DINIT_TIMESLICE=0x40000 /DDYN_TIMESLICE &
+                      /iplatforms/dos /I$(%watcom)\h #/Iplatforms\dos\libtcp
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oneatx /oh /oi+ 
-     @set LINKOBJS  = $(%LINKOBJS) output\clidos.obj
+     @set LINKOBJS  = $(%LINKOBJS) output\cdostime.obj output\cdosidle.obj &
+                      output\cdoscon.obj output\cdosemu.obj output\cdosinet.obj
      @set LIBFILES  = #platforms\dos\libtcp\libtcp.a
      @set MODULES   =
      @set IMPORTS   =
-     @set ZIPPER    = c:\util\pkzip
+     @set ZIPPER    = #c:\util\pkzip
      @set ZIPOPTS   = -exo
      @set DOCFILES  = docs\readme.dos docs\rc5des.txt docs\readme.txt
      @set ZIPFILE   = $(LNKbasename)-dos-x86-cli
@@ -682,11 +715,12 @@ d16: .symbolic                                       # DOS/large model
                       /iplatforms/dos /i$(%watcom)\h
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oneatx /oh /oi+ 
-     @set LINKOBJS  = $(%LINKOBJS) output\clearscr.obj output\clidos.obj
+     @set LINKOBJS  = $(%LINKOBJS) output\cdostime.obj output\cdosidle.obj &
+                      output\cdoscon.obj output\cdosemu.obj output\cdosinet.obj
      @set LIBFILES  =
      @set MODULES   =
      @set IMPORTS   =
-     @set ZIPPER    = c:\util\pkzip
+     @set ZIPPER    = #c:\util\pkzip
      @set ZIPOPTS   = -exo
      @set DOCFILES  = docs\readme.dos docs\rc5des.txt docs\readme.txt
      @set ZIPFILE   = $(LNKbasename)-dos-x86-cli
@@ -735,11 +769,10 @@ w16: .symbolic                                       # Windows/16
      @set OPT_SPEED = /oaxt #/oneatx /oh /oi+ 
      @set LINKOBJS  = $(%LINKOBJS) &
                       output\w32cons.obj output\w32pre.obj output\w32sock.obj
-                      #output\clearscr.obj output\clidos.obj &
      @set LIBFILES  =
      @set MODULES   =
      @set IMPORTS   =
-     @set ZIPPER    = c:\util\pkzip
+     @set ZIPPER    = #c:\util\pkzip
      @set ZIPOPTS   = -exo
      @set DOCFILES  = docs\rc5des.txt docs\readme.txt
      @set ZIPFILE   = $(LNKbasename)-win16-x86-cli
@@ -757,20 +790,21 @@ w32: .symbolic                               # win32
      @set NASMEXE   = \develop\nasm\nasm.exe
      @set WLINKOPS  = map #alignment=16 objalign=16
      @set LFLAGS    = sys nt_win op de 'RC5DES Client for Windows' #nt
-     @set CFLAGS    = /zp8 /fpd /6s /fp3 /bm /mf /bt=nt /DWIN32 /DLURK &
-                      /iplatforms/win32cli /i$(%watcom)\h;$(%watcom)\h\nt
-     @set OPT_SIZE  = /oneatx /oh /oi+  #/s /os
+     @set CFLAGS    = /zp8 /s /fpd /6s /fp3 /bm /mf /bt=nt /DWIN32 /DLURK &
+                      /iplatforms/win32cli /i$(%watcom)\h;$(%watcom)\h\nt &
+                      /DINIT_TIMESLICE=0x40000 /DDYN_TIMESLICE
+     @set OPT_SIZE  = /s /os
      @set OPT_SPEED = /oneatx /oh /oi+ /ei #/oneatx /oh /oi+ 
      @set LINKOBJS  = $(%LINKOBJS) output\lurk.obj &
                       output\w32svc.obj output\w32cons.obj &
                       output\w32pre.obj output\w32sock.obj 
-     @set LIBFILES  =
+     @set LIBFILES  = 
      @set MODULES   =
      @set IMPORTS   =
      @set DOCFILES  = docs\rc5des.txt docs\readme.txt
-     @set ZIPPER    = c:\util\pkzip
+     @set ZIPPER    = #c:\util\pkzip
      @set ZIPOPTS   = -exo
-     @set ZIPFILE   = $(LNKbasename)-win32-x86-cli
+     @set ZIPFILE   = #$(LNKbasename)-win32-x86-cli
      @set BINNAME   = $(LNKbasename).exe
      #@%make debug
      @%make declare_for_desmmx
@@ -778,7 +812,7 @@ w32: .symbolic                               # win32
      @%make declare_for_multithread
      @%make platform
 
-netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
+netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24 '98)
      @set OSNAME    = netware
      @set STACKSIZE = 32K #16384
      @set AFLAGS    = /5s /fp3 /bt=netware /ms
@@ -807,7 +841,7 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
                       # @$(%watcom)\novi\mathlib.imp
      @set LIBPATH   = platforms\netware\watavoid $(%watcom)\lib386 $(%watcom)\lib386\netware
      @set ZIPFILE   = $(LNKbasename)-netware-x86-cli
-     @set ZIPPER    = c:\util\pkzip
+     @set ZIPPER    = #c:\util\pkzip
      @set DOCFILES  = docs\readme.nw docs\rc5des.txt docs\readme.txt
      @set BINNAME   = $(LNKbasename).nlm
      @set COPYRIGHT = 'Copyright 1997-1999 distributed.net\r\n  Visit http://www.distibuted.net/ for more information'
@@ -817,4 +851,3 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
      @%make declare_for_rc5mmx
      @%make declare_for_multithread
      @%make platform
-
