@@ -5,6 +5,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.26  1998/06/23 19:48:50  remi
+// - Fixed pager crashing when terminal has more lines than help text
+// - Fixed off by one bug in pageup/pagedown logic
+//   (shows up when we can scroll by only one line)
+// - Don't need to test ^C in Win32, signal handler catch it for us
+//   when we usleep()
+// - Fixed stupid #ifdef bug (it's "defined(TERMIOS)" and not "!defined()")
+//
 // Revision 1.25  1998/06/23 18:41:36  cyruspatel
 // Removed fprintf(stderr,"**Break**") and SHELL_INSERT_NL_AT_END for NetWare
 // and DOS. IMO, this is getting ridiculous!
@@ -71,7 +79,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: disphelp.cpp,v 1.25 1998/06/23 18:41:36 cyruspatel Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.26 1998/06/23 19:48:50 remi Exp $";
 #endif
 
 #include "client.h"
@@ -114,10 +122,6 @@ static int readkeypress()
     if (kbhit()) {
       ch = getch();
       if (!ch) ch = (getch() << 8);
-      if (ch == 0x03) { // ^C
-        SignalTriggered = UserBreakTriggered = 1;
-        fprintf( stderr, "*Break*\n" );
-      }
       break;
     } else
       usleep (50*1000); // with a 50ms delay, no visible processor activity
@@ -458,6 +462,13 @@ void Client::DisplayHelp( const char * unrecognized_option )
 	}
       }
     }
+  else if (maxpagesize >= bodylines) { // enough lines in a single screen ?
+    int i;
+    for (i = 0; i < headerlines; i++)
+      fprintf( outstream, "%s\n", helpheader[i] );
+    for (i = startline; i < bodylines; i++)
+      fprintf( outstream, "%s\n", helpbody[i] );
+  }
   else  //stdout may or may not be redirected
     {
     int i = 1;
@@ -496,11 +507,11 @@ void Client::DisplayHelp( const char * unrecognized_option )
         i == 'f' || i == '\r' || i == '\n')
         {
         i = 0; //assume no refresh required
-        if (startline < ((bodylines-maxpagesize) - 1))
+        if (startline <= ((bodylines-maxpagesize) - 1))
           {
           startline += maxpagesize;
           if ( startline >= (bodylines-maxpagesize))
-            startline = (bodylines-maxpagesize) - 1;
+            startline = (bodylines-maxpagesize);
           i = 1; //signal refresh required
           }
         //else if (teestream) //stdout is redirected, so clean up after getch()
@@ -524,7 +535,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
         i = -1; //unknown keystroke, so quit
         }
       } while (i >= 0);
-#if !defined(SHELL_INSERT_NL_AT_END) && !defined(TERMIOSPAGER)
+#if !defined(SHELL_INSERT_NL_AT_END) && (defined(TERMIOSPAGER) || (CLIENT_OS == OS_RISCOS))
       // clear end of line (pager line)
       // put spaces in case ANSI is not supported
       #if (CLIENT_OS == OS_RISCOS)
