@@ -3,9 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
-// Revision 1.66  1999/01/14 23:02:12  pct
-// Updates for Digital Unix alpha client and ev5 related code.  This also
-// includes inital code for autodetection of CPU type and SMP.
+// Revision 1.67  1999/01/17 21:38:52  cyp
+// memblock for bruce ford's deseval-mmx is now passed from the problem object.
 //
 // Revision 1.65  1999/01/11 20:59:34  patrick
 // updated to not raise an error if RC5ANSICORE is defined
@@ -188,7 +187,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.66 1999/01/14 23:02:12 pct Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.67 1999/01/17 21:38:52 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -229,7 +228,7 @@ extern void CliSignalHandler(int);
   extern u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits );
   extern u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 nbbits );
   extern u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits );
-  extern u32 des_unit_func_mmx( RC5UnitWork * rc5unitwork, u32 nbbits );
+  extern u32 des_unit_func_mmx( RC5UnitWork * rc5unitwork, u32 nbbits, char *coremem );
   extern u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, u32 nbbits );
   #if (PIPELINE_COUNT != 2)
   #error "Expecting PIPELINE_COUNT=2"
@@ -298,6 +297,7 @@ extern void CliSignalHandler(int);
   #else
      extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
      extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+     #error Please verify these core prototypes
   #endif
 #else
   extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
@@ -424,7 +424,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     #if defined(MMX_RC5)  /* someone added this. why? - cyp */
     if ((detectedtype & 0x100) != 0)
       {
-      unit_func = des_unit_func_mmx;
+      unit_func = (u32 (*)(RC5UnitWork *,u32))des_unit_func_mmx;
       }
     else
     #endif
@@ -852,13 +852,19 @@ s32 Problem::Run( u32 /*unused*/ )
     u32 max_bits = 24; /* these are the defaults if !MEGGS && !DES_ULTRA */
 
     #if defined(MMX_BITSLICER)
-    if (unit_func == des_unit_func_mmx)
+    #if defined(MMX_RC5)
+    if (unit_func == ((u32 (*)(RC5UnitWork *,u32))(des_unit_func_mmx)))
       {
-      min_bits = MIN_DES_BITS;/* meggs driver has equal MIN and MAX */
-      max_bits = min_bits;
+      #if defined(BITSLICER_WITH_LESS_BITS)
+      min_bits = 16;
+      #else
+      min_bits = 20;
+      #endif
+      max_bits = min_bits; /* meggs driver has equal MIN and MAX */
       }
     #endif
-    
+    #endif
+
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 //LogScreen("x86: nbits %lu, min %lu, max %lu\n", nbits, min_bits, max_bits );
 
@@ -866,6 +872,13 @@ s32 Problem::Run( u32 /*unused*/ )
     else if (nbits > max_bits) nbits = max_bits;
     timeslice = (1ul << nbits) / pipeline_count;
 
+    #if defined(MMX_BITSLICER)
+    #if defined(MMX_RC5)
+    if (unit_func == ((u32 (*)(RC5UnitWork *,u32))(des_unit_func_mmx)))
+      kiter = des_unit_func_mmx( &rc5unitwork, nbits, core_membuffer );
+    else
+    #endif
+    #endif
     kiter = (*unit_func)( &rc5unitwork, nbits );
     }
 

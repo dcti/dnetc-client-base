@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.35  1999/01/17 21:38:52  cyp
+// memblock for bruce ford's deseval-mmx is now passed from the problem object.
+//
 // Revision 1.34  1999/01/01 02:45:16  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -106,6 +109,10 @@
 
 #include "cputypes.h"
 
+#if (CLIENT_CPU == CPU_X86)
+  #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
+#endif
+
 #ifndef PIPELINE_COUNT
  #define PIPELINE_COUNT  2  // normally 1, but 2+ if we do more then one unit in parallel
 #endif
@@ -125,6 +132,7 @@
     #define MAX_DES_BITS 20
   #endif
 #endif
+
 
 typedef struct
 {
@@ -176,6 +184,10 @@ public:
 
   unsigned int pipeline_count;
   u32 tslice; 
+
+  #ifdef MAX_MEM_REQUIRED_BY_CORE
+  char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
+  #endif
 
   unsigned int threadindex; /* index of this problem in the problem table */
   int threadindex_is_valid; /* 0 if the problem is not managed by probman*/
