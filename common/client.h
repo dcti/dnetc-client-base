@@ -12,6 +12,15 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.91  1998/10/26 03:02:50  cyp
+// Version tag party.
+//
+// Revision 1.90  1998/10/21 12:50:09  cyp
+// Promoted u8 contestids in Fetch/Flush/Update to unsigned ints.
+//
+// Revision 1.89  1998/10/19 12:29:51  cyp
+// completed implementation of 'priority'.
+//
 // Revision 1.88  1998/10/11 00:49:46  cyp
 // Removed Benchmark(), SelfTest() [both are now standalone] and
 // CkpointToBufferInput() which has been superceded by UndoCheckpoint()
@@ -329,7 +338,11 @@ public:
   char hours[64];
   s32  minutes;
   s32  timeslice;
+  #ifdef OLDNICENESS
   s32  niceness;
+  #else
+  s32  priority;
+  #endif
   char keyproxy[64];
   s32  keyport;
   char httpproxy[64];
@@ -510,7 +523,7 @@ public:
     //     3 = exit by time limit expiration
     //     4 = exit by block count expiration
 
-  s32  Fetch( u8 contest, Network *netin = 0, s32 quietness = 0, s32 force = 0 );
+  s32  Fetch( unsigned int contest, Network *netin = 0, s32 quietness = 0, s32 force = 0 );
     // fills up all of the input buffers
     // this is for sneakernet support amung other things
     // Returns: number of buffers received, negative if some error occured
@@ -520,11 +533,11 @@ public:
     // mode/etc. - -fetch and GUIs should call with this 1. Automated
     // fetches by the client will all use 0 of course.
 
-  s32  ForceFetch( u8 contest, Network *netin = 0 );
+  s32  ForceFetch( unsigned int contest, Network *netin = 0 );
     // Like fetch, but keeps trying until done or until buffer size doesn't get bigger
     // Basically, ignores premature disconnection.
 
-  s32  Flush( u8 contest, Network *netin = 0, s32 quietness = 0, s32 force = 0 );
+  s32  Flush( unsigned int contest, Network *netin = 0, s32 quietness = 0, s32 force = 0 );
     // flushes out result buffers, useful when a SUCCESS happens
     // Returns: number of buffers sent, negative if some error occured
     // If quietness > 1, it will not display the proxymessage.
@@ -532,11 +545,11 @@ public:
     // mode/etc. - -flush and GUIs should call with this 1. Automated
     // fetches by the client will all use 0 of course.
 
-  s32  ForceFlush( u8 contest, Network *netin = 0 );
+  s32  ForceFlush( unsigned int contest, Network *netin = 0 );
     // Like flush, but keeps trying until done or until buffer size doesn't get smaller
     // Basically, ignores '31' and '32' type errors -- bad buffer file entry problems.
 
-  s32 Update( u8 contest, s32 fetcherr, s32 flusherr, s32 force = 0);
+  s32 Update( unsigned int contest, s32 fetcherr, s32 flusherr, s32 force = 0);
     // flushes out buffer, and fills input buffers
     // returns: number of buffers sent, negative if some error occurred
     // Return value is the return from fetch*fetcherr +
