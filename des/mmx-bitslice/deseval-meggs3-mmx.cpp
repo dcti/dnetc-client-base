@@ -18,6 +18,10 @@
 
 //
 // $Log: deseval-meggs3-mmx.cpp,v $
+// Revision 1.2  1998/07/08 23:37:35  remi
+// Added support for aout targets (.align).
+// Tweaked $Id$.
+//
 // Revision 1.1  1998/07/08 15:49:36  remi
 // MMX bitslicer integration.
 //
@@ -25,13 +29,20 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_mmx_cpp(void) {
-static const char *id="@(#)$Id: deseval-meggs3-mmx.cpp,v 1.1 1998/07/08 15:49:36 remi Exp $";
-return id; }
+return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.2 1998/07/08 23:37:35 remi Exp $"; }
 #endif
 
 #include <stdlib.h>
 #include "cputypes.h"
 #include "sboxes-mmx.h"
+
+#if defined(__ELF__)
+	#define ALIGN4  ".align 4"
+	#define ALIGN16 ".align 16"
+#else
+	#define ALIGN4  ".align 2"
+	#define ALIGN16 ".align 4"
+#endif
 
 #define load_params(_a1,_a2,_a3,_a4,_a5,_a6,_i0,_o0,_i1,_o1,_i2,_o2,_i3,_o3) \
 	mmxParams->older.a1 = _a1;		\
@@ -422,19 +433,19 @@ static void partialround( slice S[32], slice M[32], slice D[32], slice K[56], in
 	jz	__and_0x80
 "	load	("31","0","1","2","3","4",  "0","1","2","3","4","5",  "8","16","22","30")
 "	"CALL(mmxs1)"
-.align 4
+"ALIGN4"
 __and_0x80:
 	testb	$0x40, %1
 	jz	__and_0x40
 "	load	("3","4","5","6","7","8",  "6","7","8","9","10","11",  "12","27","1","17")
 "	"CALL(mmxs2)"
-.align 4
+"ALIGN4"
 __and_0x40:
 	testb	$0x20, %1
 	jz	__and_0x20
 "	call_kwan (mmxs3_kwan,"7","8","9","10","11","12",  "12","13","14","15","16","17", "23","15","29","5")"
 "	save_kwan3 ("23","15","29","5")"
-.align 4
+"ALIGN4"
 __and_0x20:
 	addl	$11*8, %%ebx		# helps reduce code size
 "	call_kwan (mmxs4_kwan,"0","1","2","3","4","5",  "18","19","20","21","22","23",  "25","19","9","0")"
@@ -444,27 +455,27 @@ __and_0x20:
 	jz	__and_0x08
 "	call_kwan (mmxs5_kwan,"4","5","6","7","8","9",  "24","25","26","27","28","29",  "7","13","24","2")"
 "	save_kwan5 ("7","13","24","2")"
-.align 4
+"ALIGN4"
 __and_0x08:
 	addl	$30*4, %%edi		# helps reduce code size
 	testb	$0x04, %1
 	jz	__and_0x04
 "	call_kwan (mmxs6_kwan,"8","9","10","11","12","13",  "0","1","2","3","4","5",  "3","28","10","18")"
 "	save_kwan6 ("3","28","10","18")"
-.align 4
+"ALIGN4"
 __and_0x04:
 	addl	$12*8, %%ebx		# helps reduce code size
 	testb	$0x02, %1
 	jz	__and_0x02
 "	load	("0","1","2","3","4","5",  "6","7","8","9","10","11",  "31","11","21","6")"
 "	CALL(mmxs7)"
-.align 4
+"ALIGN4"
 __and_0x02:
 	testb	$0x01, %1
 	jz	__and_0x01
 "	call_kwan (mmxs8_kwan, "4","5","6","7","8","-23",  "12","13","14","15","16","17",  "4","26","14","20")"
 "	save_kwan8 ("4","26","14","20")"
-.align 4
+"ALIGN4"
 __and_0x01:
 
 	movl	%0, %%ebp \n"
@@ -546,7 +557,7 @@ static void multiround( slice S[32], slice N[32], slice M[32], slice D[32], slic
 
 	movl	$7, %0		# i = 7
 
-.align 16
+"ALIGN16"
 __loop_multiround:
  
 "	load ("31", "0", "1", "2", "3", "4",   "0", "1", "2", "3", "4", "5",   "8","16","22","30")"
