@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.43 1999/12/31 20:25:23 michmarc Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.44 2000/01/01 12:45:21 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -139,6 +139,24 @@ static const char *GetBuildOrEnvDescription(void)
     speshul = " (SFT III MSE)";
   sprintf(buffer, "NetWare%s %u.%u", speshul, major, minor );
   return buffer;                  
+#elif (CLIENT_OS == OS_MACOS)
+  const char *osname = "Mac OS";
+  long osversion;
+  if ( Gestalt( gestaltAUXVersion, &osversion ) != noErr)
+    osversion = 0;
+  if (osversion != 0)
+    osname = "A/UX";
+  else if ( Gestalt( gestaltSystemVersion, &osversion ) != noErr)
+    osversion = 0;
+  if ((osversion & 0xffff) != 0)
+  {    
+    static char buffer[40];
+    sprintf( buffer, "%s %d.%d%c%d", osname,
+      (int)((osversion&0xff00)>>8), (int)((osversion&0x00f0)>>4),
+      (((osversion & 0x000f) == 0)?(0):('.')), (int)((osversion&0x000f)) );
+    return buffer;                                
+  }
+  return "";                          
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
   if (uname(&ut)==0) {
@@ -442,7 +460,7 @@ int main( int argc, char *argv[] )
     char *q = "RC5PROG";
     int didset = 0;
     #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
-	(CLIENT_OS == OS_AIX)
+        (CLIENT_OS == OS_AIX)
     char *m = (char *)malloc( strlen(q)+1+strlen(argv[0])+1 );
     if (m) {
       didset=(0==putenv(strcat(strcat(strcpy(m,q),"="),argv[0]))); //BSD4.3
