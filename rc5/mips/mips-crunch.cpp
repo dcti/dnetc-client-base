@@ -6,8 +6,11 @@
  * Marco.Walther@mch.sni.de
  *
  * $Log: mips-crunch.cpp,v $
+ * Revision 1.7  1998/07/12 23:17:37  foxyloxy
+ * Stripped some ctrl-Ls that were scattered about the whitespace...
+ *
  * Revision 1.6  1998/07/08 22:59:31  remi
- * Lots of $Id$ stuff.
+ * Lots of $Id: mips-crunch.cpp,v 1.7 1998/07/12 23:17:37 foxyloxy Exp $ stuff.
  *
  * Revision 1.5  1998/06/14 08:27:13  friedbait
  * 'Id' tags added in order to support 'ident' command to display a bill of
@@ -26,7 +29,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mips_crunch_cpp(void) {
-return "@(#)$Id: mips-crunch.cpp,v 1.6 1998/07/08 22:59:31 remi Exp $"; }
+return "@(#)$Id: mips-crunch.cpp,v 1.7 1998/07/12 23:17:37 foxyloxy Exp $"; }
 #endif
 
 
@@ -295,7 +298,7 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
     return ret;
 }
 #endif /* KEEP_OLD_CODE */
-
+
 /* musings and macros from Butcher start here
  *
  * the big picture:
@@ -628,7 +631,7 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
     macro_tmp2 = whole_sum2 >> right_dist2;		/* -22 */ 	\
     D2 = D2 | macro_tmp2;		/* left var */	/* -23 */ 	\
 }
-
+
 /* NOTE cycle counts are fake, because I don't have an Ultra book */
 
 /* precondition: C, D valid upon entry */
@@ -703,7 +706,7 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
     D2 = macro_tmp2 | whole_sum2;	/* -17 */			\
     whole_sum = D + part_sum;				/* 2 */		\
 }
-
+
 /* NOTE cycle counts are fake, because I don't have an Ultra book */
 
 /* precondition: C, D valid upon entry */
@@ -793,7 +796,7 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
     whole_sum = D + part_sum;				/* 2 */ 	\
     D2 = D2 | macro_tmp2;		/* left var */	/* -22 */ 	\
 }
-
+
 /* NOTE cycle counts are fake, because I don't have an Ultra book */
 
 /* precondition: C, D valid upon entry */
@@ -840,7 +843,7 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
          \
       enc_word21 = enc_word21 + A2;			/* -11 */ 	\
 }
-
+
 /* NOTE cycle counts are fake, because I don't have an Ultra book */
 
 /* precondition: C, D valid upon entry */
@@ -938,7 +941,7 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
 #define LB_RC5_ROUND3_PARTIAL2_NO_XOR_C(index,index2,Input_Array)	\
     LB_RC5_ROUND3_PARTIAL2_C(index,index2,Input_Array)
 
-
+
 #define ASM_ADD(res, op1, op2)		\
   __asm__ volatile ("addu %0, %1, %2" : "=r" (res) : "r" (op1), "r" (op2));
 #define ASM_SUB(res, opp1, opm2)	\
@@ -1048,7 +1051,7 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
          \
 /* end of tricky pipelined code fixup */				\
 }
-
+
 /* precondition: C, D valid upon entry */
 /* precondition: pipelined_read valid upon entry */
 
@@ -1151,7 +1154,7 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
     ASM_OR (D2, D2, macro_tmp2);	/* left var */	/* -22 */ 	\
          \
 }
-
+
 /* NOTE cycle counts are fake, because I don't have an Ultra book */
 
 /* precondition: C, D valid upon entry */
@@ -1272,7 +1275,7 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
     ASM_ADD (whole_sum, D, part_sum);			/* 2 */ 	\
     ASM_OR (D2, D2, macro_tmp2);	/* left var */	/* -23 */ 	\
 }
-
+
 /* NOTE cycle counts are fake, because I don't have an Ultra book */
 
 /* precondition: C, D valid upon entry */
@@ -1357,7 +1360,7 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
     ASM_ADD (whole_sum, D, part_sum);			/* 2 */ 	\
     ASM_OR (D2, D2, macro_tmp2);	/* left var */	/* -23 */ 	\
 }
-
+
 /* NOTE cycle counts are fake, because I don't have an Ultra book */
 
 /* precondition: C, D valid upon entry */
@@ -1404,7 +1407,7 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
          \
       enc_word21 = enc_word21 + A2;			/* -11 */ 	\
 }
-
+
 /* NOTE cycle counts are fake, because I don't have an Ultra book */
 
 /* precondition: C, D valid upon entry */
@@ -1486,7 +1489,7 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
          \
     D2 = D2 | macro_tmp2;		/* left var */	/* -23 */ 	\
 }
-
+
 /* code from Butcher starts here */
 
 static char LB_VERSION[] = "Lawrence Butcher 16/9/97 lbutcher@eng.sun.com  LB Version 1.3";
@@ -1540,7 +1543,7 @@ static u32 S0_INIT[60] =  { (SHL(S0_00,3) | SHR(S0_00,3)), S0_01,
  *int RC5_KEY_CHECK_INNER (u32 L_0, u32 L_1,
  *			 u32 L_2, u32 L_3)
  */
-
+
 /* but NOOO, much fancier to use C++ */
 static /* __inline__ */
 u32 crunch(register RC5UnitWork * rc5unitwork, u32 iterations )
