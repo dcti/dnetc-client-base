@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.2  1998/11/26 06:52:59  cyp
+// Fixed a couple of type warnings and threw out WriteContestAndPrefixConfig()
+//
 // Revision 1.1  1998/11/22 15:16:15  cyp
 // Split from cliconfig.cpp; Changed runoffline/runbuffers/blockcount handling
 // (runbuffers is now synonymous with blockcount=-1; offlinemode is always
@@ -16,7 +19,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.1 1998/11/22 15:16:15 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.2 1998/11/26 06:52:59 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -228,9 +231,9 @@ int Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   ini.getkey(OPTION_SECTION,"pausefile",pausefile)[0].copyto(pausefile,sizeof(pausefile));
 
   tempconfig=ini.getkey(OPTION_SECTION, "contestdone", "0")[0];
-  if (tempconfig) contestdone[0]=1;
+  contestdone[0] = (tempconfig != 0);
   tempconfig=ini.getkey(OPTION_SECTION, "contestdone2", "0")[0];
-  if (tempconfig) contestdone[1]=1;
+  contestdone[1]= (tempconfig != 0);
 
   #if defined(MMX_BITSLICER) || defined(MMX_RC5)
     usemmx=ini.getkey(OPTION_SECTION, "usemmx", "1")[0];
@@ -296,8 +299,8 @@ void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
   if ( uuehttpmode < conf_options[CONF_UUEHTTPMODE].choicemin || 
        uuehttpmode > conf_options[CONF_UUEHTTPMODE].choicemax ) 
     uuehttpmode = 0;
-  if ( randomprefix < conf_options[CONF_RANDOMPREFIX].choicemin || 
-       randomprefix > conf_options[CONF_RANDOMPREFIX].choicemax) 
+  if ( (u32)randomprefix < (u32)conf_options[CONF_RANDOMPREFIX].choicemin || 
+       (u32)randomprefix > (u32)conf_options[CONF_RANDOMPREFIX].choicemax) 
     randomprefix=100;
   if (smtpport < 0 || smtpport > 65535L) 
     smtpport=25;
@@ -426,7 +429,7 @@ int Client::WriteFullConfig(void) //construct a brand-spanking-new config
   INISETKEY( CONF_NOEXITFILECHECK, noexitfilecheck );
   INISETKEY( CONF_PERCENTOFF, percentprintingoff );
   INISETKEY( CONF_FREQUENT, connectoften );
-  INISETKEY( CONF_NODISK, nodiskbuffers );
+  INISETKEY( CONF_NODISK, IniString((nodiskbuffers)?("1"):("0")) );
   INISETKEY( CONF_NOFALLBACK, nofallback );
   INISETKEY( CONF_NETTIMEOUT, nettimeout );
   INISETKEY( CONF_LOGNAME, logname );
@@ -562,31 +565,6 @@ int Client::WriteFullConfig(void) //construct a brand-spanking-new config
 
   #if defined(NEEDVIRTUALMETHODS)
     InternalWriteConfig(ini);
-  #endif
-
-  return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
-}
-
-// --------------------------------------------------------------------------
-
-s32 Client::WriteContestandPrefixConfig(void)
-    // returns -1 on error, 0 otherwise
-    // only writes contestdone and randomprefix .ini entries
-{
-  IniSection ini;
-
-  if (nodiskbuffers)
-    return 0;
-
-  ini.ReadIniFile( GetFullPathForFilename( inifilename ) );
-
-  INISETKEY( CONF_RANDOMPREFIX, randomprefix );
-
-  ini.setrecord(OPTION_SECTION, "contestdone",  IniString(contestdone[0]));
-  ini.setrecord(OPTION_SECTION, "contestdone2", IniString(contestdone[1]));
-
-  #if defined(NEEDVIRTUALMETHODS)
-  InternalWriteConfig(ini);
   #endif
 
   return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
