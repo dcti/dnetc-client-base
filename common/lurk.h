@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.h,v $
+// Revision 1.6  1998/11/12 13:09:03  silby
+// Added a stop function, made start and stop public.
+//
 // Revision 1.5  1998/10/03 03:24:36  cyp
 // Fixed a broken #endif (had trailing comment without //). Added
 // #ifndef __LURK_H__ /#define __LURK_H__ /#endif nesting.
@@ -64,10 +67,13 @@ s32 HangupIfNeeded(void);
   // Hangs up the connection if current parameters allow it.
   // return values - 0 is the only return as of now.
 
-protected:
-
 s32 Start(void);
-  // Initializes Lurk Mode -> 0=success, -1 = failed
+  // Initializes Lurk Mode -> 0=success, -1 = failure
+
+s32 Stop(void);
+  // Terminates Lurk Mode -> 0=success, -1 = failure
+
+protected:
 
 s32 InitiateConnection(void);
   // Initiates a dialup connection

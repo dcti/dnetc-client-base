@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.cpp,v $
+// Revision 1.9  1998/11/12 13:09:01  silby
+// Added a stop function, made start and stop public.
+//
 // Revision 1.8  1998/11/01 20:35:11  cyp
 // Adjusted so that attempts to LoadLibrary("RASAPI.DLL") don't put the client
 // into an infinite loop on NT/Win32s. Note to Silby: lurk never de-initializes
@@ -13,7 +16,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.8 1998/11/01 20:35:11 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.9 1998/11/12 13:09:01 silby Exp $"; }
 #endif
 
 /* --------------------------------- */
@@ -334,6 +337,21 @@ s32 Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
 }
 
 /* ---------------------------------------------------------- */
+
+s32 Lurk::Stop(void)// DeInitializes Lurk Mode. returns 0 on success.
+{
+  if (islurkstarted)
+    {
+    #if (CLIENT_OS==OS_WIN32)
+    DeinitializeRASAPI();
+    #endif
+    islurkstarted=0;
+    };
+  return 0;
+}
+
+/* ---------------------------------------------------------- */
+
 
 s32 Lurk::Status(void)// Checks status of connection
 {
