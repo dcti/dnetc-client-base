@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1999-2002 - All Rights Reserved
+ * Copyright distributed.net 1999-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-ppc.cpp,v 1.3 2002/09/02 00:35:47 andreasb Exp $"; }
+return "@(#)$Id: ogr-ppc.cpp,v 1.3.4.1 2003/02/25 12:30:23 snake Exp $"; }
 
 #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
   #if (__MWERKS__)

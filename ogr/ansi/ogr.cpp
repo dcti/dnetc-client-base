@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1999-2002 - All Rights Reserved
+ * Copyright distributed.net 1999-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.2 2003/02/24 12:18:59 teichp Exp $
+ * $Id: ogr.cpp,v 1.2.4.3 2003/02/25 12:30:23 snake Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
