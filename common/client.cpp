@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.86 2000/07/05 03:09:43 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.87 2000/07/12 14:01:34 oliver Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -323,7 +323,8 @@ static const char *GetBuildOrEnvDescription(void)
   static char buffer[40];
   #ifdef __PPC__
     #ifdef __POWERUP__
-    sprintf(buffer,"OS %s, PowerUp %ld.%ld",amigaGetOSVersion(),PPCVersion(),PPCRevision());
+    #define PPCINFOTAG_EMULATION (TAG_USER + 0x1f0ff)
+    sprintf(buffer,"OS %s, PowerUp%s %ld.%ld",amigaGetOSVersion(),((PPCGetAttr(PPCINFOTAG_EMULATION) == 'WARP') ? " Emu" : ""),PPCVersion(),PPCRevision());
     #else
     #define LIBVER(lib) *((UWORD *)(((UBYTE *)lib)+20))
     #define LIBREV(lib) *((UWORD *)(((UBYTE *)lib)+22))
