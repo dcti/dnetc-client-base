@@ -9,7 +9,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.50.2.5 2000/01/18 23:06:48 lyndon Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.50.2.6 2000/01/28 04:56:26 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -129,7 +129,7 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
   {
     if ( set_for_thread )
     {
-      // nothing
+      return macosSetThreadPrio(prio);
     }
     else
     {
