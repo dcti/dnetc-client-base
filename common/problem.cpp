@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.176 2002/10/22 15:35:43 acidblood Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177 2002/10/24 00:15:22 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -815,10 +815,14 @@ static int __InternalLoadState( InternalProblem *thisprob,
         }
 
       //determine starting key number. accounts for carryover & highend of keysdone
-      thisprob->priv_data.rc5unitwork.L0.hi = thisprob->priv_data.contestwork.crypto.key.hi + thisprob->priv_data.contestwork.crypto.keysdone.hi +
-        ((((thisprob->priv_data.contestwork.crypto.key.lo & 0xffff) + (thisprob->priv_data.contestwork.crypto.keysdone.lo & 0xffff)) +
-          ((thisprob->priv_data.contestwork.crypto.key.lo >> 16) + (thisprob->priv_data.contestwork.crypto.keysdone.lo >> 16))) >> 16);
-      thisprob->priv_data.rc5unitwork.L0.lo = thisprob->priv_data.contestwork.crypto.key.lo + thisprob->priv_data.contestwork.crypto.keysdone.lo;
+      thisprob->priv_data.rc5unitwork.L0.hi =
+          thisprob->priv_data.contestwork.crypto.key.hi +
+          thisprob->priv_data.contestwork.crypto.keysdone.hi +
+      thisprob->priv_data.rc5unitwork.L0.lo =
+          thisprob->priv_data.contestwork.crypto.key.lo +
+          thisprob->priv_data.contestwork.crypto.keysdone.lo;
+      if (thisprob->priv_data.rc5unitwork.L0.lo < thisprob->priv_data.contestwork.crypto.keysdone.lo)
+        ++thisprob->priv_data.rc5unitwork.L0.hi;
       #if defined(HAVE_RC5_64_CORES)
       if (thisprob->pub_data.contest == RC5)
         __SwitchRC564Format(&(thisprob->priv_data.rc5unitwork.L0.hi), &(thisprob->priv_data.rc5unitwork.L0.lo));
@@ -884,10 +888,21 @@ static int __InternalLoadState( InternalProblem *thisprob,
         }
 
       thisprob->priv_data.rc5_72unitwork.L0.hi  = thisprob->priv_data.contestwork.bigcrypto.key.hi;
-      thisprob->priv_data.rc5_72unitwork.L0.mid = thisprob->priv_data.contestwork.bigcrypto.key.mid + thisprob->priv_data.contestwork.bigcrypto.keysdone.hi +
-        ((((thisprob->priv_data.contestwork.bigcrypto.key.lo & 0xffff) + (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo & 0xffff)) +
-          ((thisprob->priv_data.contestwork.bigcrypto.key.lo >> 16) + (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo >> 16))) >> 16);
-      thisprob->priv_data.rc5_72unitwork.L0.lo = thisprob->priv_data.contestwork.bigcrypto.key.lo + thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
+      thisprob->priv_data.rc5_72unitwork.L0.mid = 
+          thisprob->priv_data.contestwork.bigcrypto.key.mid +
+          thisprob->priv_data.contestwork.bigcrypto.keysdone.hi;
+      if (thisprob->priv_data.rc5_72unitwork.L0.mid < thisprob->priv_data.contestwork.bigcrypto.keysdone.hi)
+        ++thisprob->priv_data.rc5_72unitwork.L0.hi;
+      thisprob->priv_data.rc5_72unitwork.L0.lo = 
+          thisprob->priv_data.contestwork.bigcrypto.key.lo + 
+          thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
+      if (thisprob->priv_data.rc5_72unitwork.L0.lo < thisprob->priv_data.contestwork.bigcrypto.keysdone.lo)
+      {
+        ++thisprob->priv_data.rc5_72unitwork.L0.mid;
+        if (thisprob->priv_data.rc5_72unitwork.L0.mid == 0)
+          ++thisprob->priv_data.rc5_72unitwork.L0.hi;
+      }
+      thisprob->priv_data.rc5_72unitwork.L0.hi &= 0xff;
       __SwitchRC572Format(&(thisprob->priv_data.rc5_72unitwork.L0.hi), &(thisprob->priv_data.rc5_72unitwork.L0.mid), &(thisprob->priv_data.rc5_72unitwork.L0.lo));
       thisprob->priv_data.refL0.lo  = thisprob->priv_data.rc5_72unitwork.L0.lo;
       thisprob->priv_data.refL0.mid = thisprob->priv_data.rc5_72unitwork.L0.mid;
