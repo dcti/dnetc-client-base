@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.24 2004/06/02 18:49:20 teichp Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.25 2004/06/16 18:23:12 kakace Exp $"; }
 
 //#define TRACE
 
@@ -233,7 +233,7 @@ const char **corenames_for_contest_ogr()
     #endif
   #elif (CLIENT_CPU == CPU_POWERPC)
       "GARSP 5.14 Scalar",
-      "GARSP 5.14 Vector",   /* altivec only */
+      "GARSP 5.15 Vector",   /* altivec only */
   #elif (CLIENT_CPU == CPU_SPARC)
       "GARSP 5.13",
   #elif (CLIENT_OS == OS_PS2LINUX)
@@ -281,8 +281,7 @@ int apply_selcore_substitution_rules_ogr(int cindex)
 
 # if defined(__VEC__) || defined(__ALTIVEC__)
   /* OS+compiler support altivec */
-  long det = GetProcessorType(1);
-  have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
+  have_vec = GetProcessorFeatureFlags() & CPU_F_ALTIVEC; /* have altivec */
 # endif
 
   if (!have_vec && cindex == 1)     /* PPC-vector */
@@ -344,19 +343,22 @@ int selcoreGetPreselectedCoreForProject_ogr()
       cindex = 0;                       /* PPC-scalar */
 
       #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
-      if (( detected_type & (1L<<25) ) != 0) //altivec?
+      if ((detected_flags & CPU_F_ALTIVEC) != 0) //altivec?
       {
         switch ( detected_type & 0xffff) // only compare the low PVR bits
         {
-          case 0x000C: cindex = 1; break; // 7400      (G4)  == PPC-vector
           case 0x0039: // PPC 970
           case 0x003C: // PPC 970FX (XServe G5)
+              cindex = 0; break;      // PPC-scalar
+          case 0x000C: // 7400
+          case 0x800C: // 7410
           case 0x8000: // 7441/7450/7451
           case 0x8001: // 7445/7455
           case 0x8002: // 7447/7457
-          case 0x8003: cindex = 0; break; // 744x/745x (G4+) == PPC-scalar
-          case 0x800C: cindex = 1; break; // 7410      (G4)  == PPC-vector
-          default:     cindex =-1; break; // no default
+          case 0x8003: // 744x/745x
+              cindex = 1; break;      // PPC-vector
+          default:
+              cindex =-1; break;      // default : micro-bench
         }
       }
       #endif
@@ -647,6 +649,62 @@ int selcoreSelectCore_ogr_p2(unsigned int threadindex,
   return -1; /* core selection failed */
 }
 #endif /* HAVE_OGR_PASS2 */
+/* ------------------------------------------------------------- */
+
+unsigned int estimate_nominal_rate_ogr()
+{
+  unsigned int rate = 0;
+
+  #if (CLIENT_CPU == CPU_POWERPC)
+    static long detected_type = -123;
+    static int  cpu_count = 0;
+    static unsigned long detected_flags = 0;
+    static unsigned int  frequency = 0;
+    unsigned int noderate = 0;   /* nodes/s/MHz */
+
+    if (detected_type == -123) {
+      detected_type  = GetProcessorType(1);
+      detected_flags = GetProcessorFeatureFlags();
+      frequency      = GetProcessorFrequency();
+      cpu_count      = GetNumberOfDetectedProcessors();
+    }
+
+    if (detected_type > 0) {
+      switch (detected_type & 0xffff) { // only compare the low PVR bits
+        case 0x0001:      // 601
+          noderate = 5000; break;
+        case 0x0003:      // 603
+        case 0x0004:      // 604
+        case 0x0006:      // 603e
+        case 0x0007:      // 603r/603ev
+        case 0x0008:      // 740/750
+        case 0x0009:      // 604e
+        case 0x000A:      // 604ev
+        case 0x7000:      // 750FX
+          noderate = 12000; break;
+        case 0x000C:      // 7400
+        case 0x800C:      // 7410
+          noderate = (detected_flags & CPU_F_ALTIVEC) ? 14000: 13000; break;
+        case 0x8000:      // 7450
+        case 0x8001:      // 7455
+        case 0x8002:      // 7457/7447
+        case 0x8003:      // 7447A
+          noderate = (detected_flags & CPU_F_ALTIVEC) ? 16000 : 14000; break;
+        case 0x0039:      // 970
+        case 0x003C:      // 970FX
+          noderate = (detected_flags & CPU_F_ALTIVEC) ? 16000 : 16000; break;
+      }
+
+      if (cpu_count > 0) {
+        /* Assume 70 GNodes per packet */
+        rate = (noderate * frequency * cpu_count) / 810000;  /* 810000 = 70E9 / 86400 */
+      }
+    }
+  #endif
+
+  return rate;
+}
+
 /* ------------------------------------------------------------- */
 
 #endif // defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
