@@ -1,13 +1,13 @@
-                                                    
+
  RC5-DES Client for Win16 (MS-Windows,WINE or whatever) 3.1 and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
-                                                          
+
  Welcome to the new RC5-DES (Project Monarch) Client for Win16.
 
     1.0  Getting started
     2.0  Win16 specific notes
     3.0  Help! 
-   
+
  1.0  Getting started ------------------------------------------------
  
     Just unpack the client in a directory of your choice and fire it up
@@ -18,7 +18,7 @@
     configuration file will be saved in the same directory as the 
     client. Then, simply restart the client. From that point on it will 
     use the saved configuration.
-    
+
     The configuration options are fairly self-explanatory and can be run
     at any time by starting the client with the '-config' option.
     A list of command line options is available by starting the client 
@@ -58,4 +58,5 @@
     the mailing list at <rc5@lists.distributed.net> (To subscribe to the 
     mailing list, send a message to <majordomo@lists.distributed.net> with 
     "subscribe rc5" as the message text).
+
 

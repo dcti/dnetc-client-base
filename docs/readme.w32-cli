@@ -18,7 +18,7 @@
     configuration file will be saved in the same directory as the 
     client. Then, simply restart the client. From that point on it will 
     use the saved configuration.
-    
+
     The configuration options are fairly self-explanatory and can be run
     at any time by starting the client with the '-config' option.
     A list of command line options is available by starting the client 
@@ -40,7 +40,7 @@
     which will in turn automatically start the client the next time the
     computer is powered up. To deinstall a client previously installed as
     a service, start it with the -uninstall switch.
-    
+
  2.0  Notes: ---------------------------------------------------------
 
     Beginning with v2.2702.419, the win32 CLI client no longer runs
@@ -50,12 +50,12 @@
     client is more efficient. (d) the client can be shutdown with "close";
     (e) the client will shutdown automatically (if not running as a service)
     when Windows ends; (f) it gets rid of the "DOS box" and start bar.
-    
+
     Most importantly, the client uses exactly the same source code base 
     as all the other clients on all the other platforms. This enhances 
     the client's stability since the chances that a bug will remain 
     undetected for long are greatly reduced.
-    
+
     The new CLI client is also capable of asyncronously executing client
     "modes", ie -fetch, -flush, -update and so on. Clicking with right 
     mouse button on the client window will bring up a "mode" menu.
@@ -94,3 +94,4 @@
     port maintainer as listed on http://www.distributed.net/credits.html
     Don't fret if you don't get a response, right away.
     
+
