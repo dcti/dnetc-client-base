@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.135 2000/02/21 01:03:39 trevorh Exp $
+# @(#)$Id: configure,v 1.222.2.136 2000/02/21 01:16:34 trevorh Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1649,7 +1649,7 @@ case "$1" in
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
 	TARGET_NASM_FMT="aout"
 TARGET_NASM="nasm097.exe"
-        TARGET_LIBS="-lsocket"
+        TARGET_LIBS="-lsocket -lvideo"
         TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
         TARGET_OS=OS2
         ;;

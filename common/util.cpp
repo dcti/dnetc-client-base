@@ -1,10 +1,10 @@
-/* 
+/*
  * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.18 2000/02/20 14:34:52 jlawson Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.19 2000/02/21 01:16:35 trevorh Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -24,7 +24,7 @@ void trace_out( int indlevel, const char *format, ... )
   static int indentlevel = -1; /* uninitialized */
   const char *tracefile = "trace"EXTN_SEP"out";
   FILE *file;
-  va_list arglist; 
+  va_list arglist;
   va_start (arglist, format);
 
   if (indentlevel == -1) /* uninitialized */
@@ -32,7 +32,7 @@ void trace_out( int indlevel, const char *format, ... )
     remove(tracefile);
     indentlevel = 0;
   }
-  
+
   if (indlevel < 0)
     indentlevel -= 2;
   file = fopen( tracefile, "a" );
@@ -46,7 +46,7 @@ void trace_out( int indlevel, const char *format, ... )
     {
       size_t spcs = ((size_t)indentlevel);
       memset((void *)(&buffer[0]),' ',sizeof(buffer));
-      while (sizeof(buffer) == fwrite( buffer, 1, 
+      while (sizeof(buffer) == fwrite( buffer, 1,
          ((spcs>sizeof(buffer))?(sizeof(buffer)):(spcs)), file ))
         spcs -= sizeof(buffer);
     }
@@ -59,7 +59,7 @@ void trace_out( int indlevel, const char *format, ... )
   if (indlevel > 0)
     indentlevel += 2;
   return;
-}  
+}
 
 /* ------------------------------------------------------------------- */
 
@@ -111,19 +111,19 @@ u32 __iter2norm( u32 iterlo, u32 iterhi )
   iterlo = ((iterlo >> 28) + (iterhi << 4));
   if (!iterlo)
     iterlo++;
-  return iterlo;    
+  return iterlo;
 }
 
 unsigned long ogr_nodecount(const struct Stub * /* stub */)
 {
   return 1;
-}  
+}
 
 const char *ogr_stubstr(const struct Stub *stub)
 {
   static char buf[80];
   int i, len = (int)stub->length;
-  
+
   if (len > STUB_MAX) {
     sprintf(buf, "(error:%d/%d)", (int)stub->marks, len);
     return buf;
@@ -184,8 +184,8 @@ int utilGatherOptionArraysToList( char *buffer, unsigned int buflen,
   return donelen;
 }
 
-int utilScatterOptionListToArraysEx( const char *oplist, 
-                                   int *table1, int *table2, 
+int utilScatterOptionListToArraysEx( const char *oplist,
+                                   int *table1, int *table2,
                                    const int *default1, const int *default2 )
 {
   unsigned int cont_i;
@@ -197,7 +197,7 @@ int utilScatterOptionListToArraysEx( const char *oplist,
     if (table2 && default2)
       table2[cont_i] = default2[cont_i];
   }
-  
+
   while (*oplist)
   {
     while (*oplist && !isalpha(*oplist)) /*contestname must begin with alpha*/
@@ -224,7 +224,7 @@ int utilScatterOptionListToArraysEx( const char *oplist,
           buffer[len] = '\0';
           precspace = 0;
           if (len != 0)
-          {  
+          {
             kwpos++;
             if (kwpos == 1)
             {
@@ -306,14 +306,14 @@ int utilScatterOptionListToArraysEx( const char *oplist,
   return 0;
 }
 
-int utilScatterOptionListToArrays( const char *oplist, 
+int utilScatterOptionListToArrays( const char *oplist,
                                    int *table1, int *table2, int defaultval )
 {
   int defarray[CONTEST_COUNT];
   unsigned int cont_i;
   for (cont_i = 0;cont_i < CONTEST_COUNT; cont_i++)
     defarray[cont_i] = defaultval;
-  return utilScatterOptionListToArraysEx( oplist, 
+  return utilScatterOptionListToArraysEx( oplist,
                                  table1, table2, &defarray[0], &defarray[0]);
 }
 
@@ -357,7 +357,7 @@ const char *projectmap_build( char *buf, const char *strtomap )
   }
 
 //printf("\nreq order: %s\n", strtomap );
-  
+
   map_pos = 0;
   do
   {
@@ -389,9 +389,9 @@ const char *projectmap_build( char *buf, const char *strtomap )
       strtomap++;
     }
     scratch[i]='\0';
-    
+
     contestid = -1;
-    
+
     if (i > 0)
     {
       for (i=0;i<CONTEST_COUNT;i++)
@@ -403,20 +403,20 @@ const char *projectmap_build( char *buf, const char *strtomap )
         }
       }
     }
-        
+
     for (i=0; contestid != -1 && i< map_pos; i++)
     {
       if (contestid == (((int)(map[i])) & 0x7f))
         contestid = -1;
     }
-   
+
     if (contestid != -1)
     {
       if (disabled)
         contestid |= 0x80;
       map[map_pos++]=(char)contestid;
     }
-    
+
   } while ((map_pos < CONTEST_COUNT) && *strtomap );
 
   for (i=0;(map_pos < CONTEST_COUNT) && (i < CONTEST_COUNT);i++)
@@ -448,7 +448,7 @@ const char *projectmap_build( char *buf, const char *strtomap )
             break;
           }
         }
-      }     
+      }
       if (inspos == -1) /* didn't find it */
         map[map_pos++] = default_map[i]; /* so tack it on at the end */
       else
@@ -456,13 +456,13 @@ const char *projectmap_build( char *buf, const char *strtomap )
         for ( n = (CONTEST_COUNT-1); n>((unsigned int)inspos); n--)
           map[n] = map[n-1];
         map[inspos] = default_map[i];
-        map_pos++; 
+        map_pos++;
       }
     }
   }
 
 //printf("\nresult order: %s\n", projectmap_expand( &map[0] ) );
-  
+
   if (buf)
     memcpy((void *)buf, (void *)&map[0], CONTEST_COUNT );
   return map;
@@ -471,8 +471,8 @@ const char *projectmap_build( char *buf, const char *strtomap )
 /* ------------------------------------------------------------------ */
 
 int IsFilenameValid( const char *filename )
-{ 
-  if (!filename) 
+{
+  if (!filename)
     return 0;
   while (*filename && isspace(*filename))
     filename++;
@@ -491,10 +491,10 @@ int DoesFileExist( const char *filename )
 const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
                                                        const char *basename )
 {
-  static char filename[128]; 
+  static char filename[128];
   const char *suffix = CliGetContestNameFromID( project );
   unsigned int len, n;
-  
+
   filename[0] = '\0';
   if (*basename)
   {
@@ -509,14 +509,14 @@ const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
         filename[--len] = '\0';
     }
   }
-  
+
   if (filename[0] == 0)
   {
-    strcpy( filename, ((is_out_type) ? 
-       BUFFER_DEFAULT_OUT_BASENAME /* "buff-out" */: 
+    strcpy( filename, ((is_out_type) ?
+       BUFFER_DEFAULT_OUT_BASENAME /* "buff-out" */:
        BUFFER_DEFAULT_IN_BASENAME  /* "buff-in" */  ) );
-  } 
-  
+  }
+
   filename[sizeof(filename)-5]='\0';
   strcat( filename, EXTN_SEP );
   len = strlen( filename );
@@ -544,7 +544,7 @@ const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
                 will be copied to the static buffer that is returned.
                 If this argument is not supplied, then the string returned
                 will be "rc5des" or "dnetc"
-    
+
 */
 
 const char *utilSetAppName(const char *newname)
@@ -559,7 +559,7 @@ const char *utilSetAppName(const char *newname)
     while (*newname == ' ' || *newname == '\t')
       newname++;
     len = 0;
-    while (*newname && *newname != ' ' && *newname != '\t' && 
+    while (*newname && *newname != ' ' && *newname != '\t' &&
            *newname != *sep && (len < (sizeof(appname)-1)))
       appname[len++] = (char)tolower(*newname++);
     if (len != 0) {
@@ -570,15 +570,15 @@ const char *utilSetAppName(const char *newname)
   if (initialized <= 0) /* obfusciation 101 for argv[0] stuffing */
   {
     #if (CLIENT_CONTEST < 80)
-    appname[0] = 'r'; appname[1] = 'c'; appname[2] = '5'; 
+    appname[0] = 'r'; appname[1] = 'c'; appname[2] = '5';
     appname[3] = 'd'; appname[4] = 'e'; appname[5] = 's';
     appname[6] = '\0';
     #else
-    appname[0] = 'd'; appname[1] = 'n'; appname[2] = 'e'; 
+    appname[0] = 'd'; appname[1] = 'n'; appname[2] = 'e';
     appname[3] = 't'; appname[4] = 'c'; appname[5] = '\0';
     #endif
     initialized = 1;
-  }  
+  }
   if (initialized > 0) /* always true */
     return (const char *)&appname[0];
 
@@ -590,7 +590,7 @@ const char *utilSetAppName(const char *newname)
   #endif
 }
 
-const char *utilGetAppName(void) 
+const char *utilGetAppName(void)
 {
   return utilSetAppName((const char *)0);
 }
@@ -624,7 +624,7 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
   //    http://msdn.microsoft.com/library/psdk/pdh/perfdata_9feb.htm
   //    http://support.microsoft.com/support/kb/articles/Q119/1/63.asp
   int num_found = -1;
-  char szIndex_PROCESS[260]; 
+  char szIndex_PROCESS[260];
   DWORD dwIndex_IDPROCESS;
   HKEY hKeyIndex; DWORD dwBytes;
   unsigned int procname_baselen;
@@ -634,7 +634,7 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
   while (basenamepos > 0)
   {
     basenamepos--;
-    if (procname[basenamepos] == '\\' || 
+    if (procname[basenamepos] == '\\' ||
         procname[basenamepos] == '/' ||
         procname[basenamepos] == ':')
     {
@@ -679,7 +679,7 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
                     (LPBYTE)pszBuffer, &dwBytes ) == ERROR_SUCCESS )
           {
             int foundcount = 0;
-            DWORD pos = 0; 
+            DWORD pos = 0;
 
             while( pos < dwBytes && foundcount < 2)
             {
@@ -723,8 +723,8 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
                   }
                 }
               }
-              
-            }  
+
+            }
           }
           HeapFree( GetProcessHeap(), 0, (LPVOID)pszBuffer );
         }
@@ -733,32 +733,32 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
     }
 //LogScreen("szIndex_PROCESS='%s', dwIndex_IDPROCESS=0x%x\n",szIndex_PROCESS,dwIndex_IDPROCESS);
   }
-    
+
   if (szIndex_PROCESS[0] != '\0' && dwIndex_IDPROCESS != ((DWORD)-1))
   {
     PPERF_DATA_BLOCK pdb = NULL;
     LONG lResult = ERROR_MORE_DATA;
 
     dwBytes = 8192;
-    pdb = (PPERF_DATA_BLOCK)HeapAlloc( GetProcessHeap(), 
+    pdb = (PPERF_DATA_BLOCK)HeapAlloc( GetProcessHeap(),
                                        HEAP_ZERO_MEMORY, dwBytes );
     /* read in all object table/counters/instrecords for "Process" */
     if (pdb != NULL)
     {
-      /* we call RegQueryValueEx in a loop because "If hKey specifies 
-      HKEY_PERFORMANCE_DATA and the lpData buffer is too small, 
-      RegQueryValueEx returns ERROR_MORE_DATA but lpcbData does not 
-      return the required buffer size. This is because the size of 
-      the performance data can change from one call to the next. In 
-      this case, you must increase the buffer size and call 
-      RegQueryValueEx again passing the updated buffer size in the 
+      /* we call RegQueryValueEx in a loop because "If hKey specifies
+      HKEY_PERFORMANCE_DATA and the lpData buffer is too small,
+      RegQueryValueEx returns ERROR_MORE_DATA but lpcbData does not
+      return the required buffer size. This is because the size of
+      the performance data can change from one call to the next. In
+      this case, you must increase the buffer size and call
+      RegQueryValueEx again passing the updated buffer size in the
       lpcbData parameter. Repeat this until the function succeeds"
       */
       do
       {
         /*
-        The SDK says "lpcbData does not return the required buffer 
-        size" (see above), but NT4 has a bug, and returns lpcbData 
+        The SDK says "lpcbData does not return the required buffer
+        size" (see above), but NT4 has a bug, and returns lpcbData
         set to HALF of what it was before. See...
         http://support.microsoft.com/support/kb/articles/Q226/3/71.ASP
         */
@@ -766,7 +766,7 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
         Sleep(0); /* let system update the data */
 //LogScreen("RegQueryValueEx 2a. mem size=%u\n", dwBytes);
         lResult = RegQueryValueEx(HKEY_PERFORMANCE_DATA,
-                            (LPTSTR)szIndex_PROCESS, NULL, NULL, 
+                            (LPTSTR)szIndex_PROCESS, NULL, NULL,
                             (LPBYTE)pdb, &dwBytes);
         if (lResult == ERROR_SUCCESS)
         {
@@ -790,21 +790,21 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
       } while (lResult == ERROR_MORE_DATA);
     }
     if (pdb != NULL)
-    { 
+    {
       if (lResult == ERROR_SUCCESS)
-      { 
+      {
         LONG i, totalcount;
         DWORD ourpid = GetCurrentProcessId();
         PPERF_OBJECT_TYPE         pot;
-        PPERF_COUNTER_DEFINITION  pcd; 
+        PPERF_COUNTER_DEFINITION  pcd;
         PPERF_INSTANCE_DEFINITION piddef;
         DWORD dwProcessIdOffset = 0;
-        
+
         /* Get the PERF_OBJECT_TYPE. */
         pot = (PPERF_OBJECT_TYPE)(((PBYTE)pdb) + pdb->HeaderLength);
         /* Get the first counter definition. */
         pcd = (PPERF_COUNTER_DEFINITION)(((PBYTE)pot) + pot->HeaderLength);
-        
+
         /* walk the counters to find the offset to the ProcessID */
         totalcount = pot->NumCounters;
         for ( i=0; i < totalcount; i++ )
@@ -822,15 +822,15 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
         piddef= (PPERF_INSTANCE_DEFINITION)(((PBYTE)pot) + pot->DefinitionLength);
 
 //LogScreen("getpidlist 3: numpids = %u\n", pot->NumInstances );
-     
+
         /* now walk the process definitions */
         totalcount = pot->NumInstances;
         for ( i = 0; i < totalcount; i++ )
         {
           PPERF_COUNTER_BLOCK pcb;
-          char * foundname; 
+          char * foundname;
           DWORD thatpid;
-       
+
           pcb = (PPERF_COUNTER_BLOCK) (((PBYTE)piddef) + piddef->ByteLength);
           thatpid = *((DWORD *) (((PBYTE)pcb) + dwProcessIdOffset));
           foundname = (char *) (((PBYTE)piddef) + piddef->NameOffset);
@@ -849,7 +849,7 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
           {
             /* misuse the szIndex_Process buffer (no longer needed) */
             #define foundname_ansi szIndex_PROCESS
-            dwBytes = (DWORD)WideCharToMultiByte( CP_ACP, 0, 
+            dwBytes = (DWORD)WideCharToMultiByte( CP_ACP, 0,
                              (LPCWSTR)foundname, -1, foundname_ansi,
                              sizeof(foundname_ansi), NULL, NULL );
             foundname = foundname_ansi;
@@ -860,7 +860,7 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
             #undef foundname_ansi
 
 //LogScreen("getpidlist 3b: got name='%s'\n", foundname );
-        
+
             /* foundname and procname are both in ansi and are both
                just the basename (no path, no extension)
             */
@@ -898,7 +898,7 @@ static int __utilGetPidUsingPshelper(const char *procname, long *pidlist, int ma
   while (basenamepos > 0)
   {
     basenamepos--;
-    if (procname[basenamepos] == '\\' || 
+    if (procname[basenamepos] == '\\' ||
         procname[basenamepos] == '/' ||
         procname[basenamepos] == ':')
     {
@@ -926,7 +926,7 @@ static int __utilGetPidUsingPshelper(const char *procname, long *pidlist, int ma
     static Process32NextT fnProcess32Next =
            (Process32NextT)GetProcAddress(hKernel32, "Process32Next");
 
-    if (fnCreateToolhelp32Snapshot != NULL && 
+    if (fnCreateToolhelp32Snapshot != NULL &&
         fnProcess32First != NULL &&
         fnProcess32Next != NULL)
     {
@@ -950,7 +950,7 @@ static int __utilGetPidUsingPshelper(const char *procname, long *pidlist, int ma
               procnamelen -=4;
             }
           }
-        
+
           do
           {
             if (pe.szExeFile[0])
@@ -975,8 +975,8 @@ static int __utilGetPidUsingPshelper(const char *procname, long *pidlist, int ma
                   while (len > 0)
                   {
                     len--;
-                    if (foundname[len]=='\\' || 
-                        foundname[len]=='/' || 
+                    if (foundname[len]=='\\' ||
+                        foundname[len]=='/' ||
                         foundname[len]==':')
                     {
                       foundname += len+1;
@@ -986,20 +986,20 @@ static int __utilGetPidUsingPshelper(const char *procname, long *pidlist, int ma
                 }
                 cmpresult = strcmpi( procname, foundname );
 
-                /* if no extension was provided, then allow 
-                   match if basenames (sans-ext) are equal 
+                /* if no extension was provided, then allow
+                   match if basenames (sans-ext) are equal
                 */
                 if ( cmpresult && procsufxlen == 0)
                 {
                   len = strlen( foundname );
                   if (len > 3)
                   {
-                    if ( strcmpi( &foundname[len-4], ".exe" ) == 0 
+                    if ( strcmpi( &foundname[len-4], ".exe" ) == 0
                       || strcmpi( &foundname[len-4], ".com" ) == 0 )
                     {
                       if ((len-4) == procnamelen)
                       {
-                        cmpresult = memicmp( foundname, 
+                        cmpresult = memicmp( foundname,
                                          procname, procnamelen );
                       }
                     }
@@ -1033,7 +1033,7 @@ static int __utilGetPidUsingPshelper(const char *procname, long *pidlist, int ma
 
 
 /*
-    get list of pid's for procname. if procname has a path, then search 
+    get list of pid's for procname. if procname has a path, then search
     for exactly that, else compare with basename. if pidlist is NULL
     or maxnumpids is 0, then return found count, else return number of
     pids now in list. On error return < 0.
@@ -1053,8 +1053,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #if (CLIENT_OS == OS_BEOS)
     {
-      team_info tInfo; 
-      team_id ourteam; 
+      team_info tInfo;
+      team_id ourteam;
       int32 team;
       thread_info thisThread;
 
@@ -1078,8 +1078,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           int32 image = 0;
           char * foundname;
           /* get the app binary's full path */
-          get_next_image_info(tInfo.team, &image, &iInfo);  
-        
+          get_next_image_info(tInfo.team, &image, &iInfo);
+
           foundname = iInfo.name; /* if procname is a basename, use only */
           if (!usefullpathcmp)    /* the basename from the app's path */
           {
@@ -1089,7 +1089,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           }
           /* does the team name match? */
           if (strcmp( procname, foundname ) == 0)
-          {  
+          {
             if (pidlist) /* save the team number (pid) only if we have */
             {            /* someplace to save it to */
               pidlist[num_found] = (long)tInfo.team;
@@ -1111,10 +1111,10 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       int usefullpathcmp = (strchr( procname, '/' ) != ((char *)0));
       int count, idx = 0; /* index within the context */
       num_found = -1; /* assume all failed */
-    
+
       /* loop until count == 0, will occur all have been returned */
-      while ((count = pstat_getproc(pst, sizeof(pst[0]), 
-                       (sizeof(pst)/sizeof(pst[0])), idx)) > 0) 
+      while ((count = pstat_getproc(pst, sizeof(pst[0]),
+                       (sizeof(pst)/sizeof(pst[0])), idx)) > 0)
       {
         int pspos;
         if (num_found < 0)
@@ -1122,7 +1122,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           num_found = 0;
         }
         idx = pst[count-1].pst_idx + 1; /* start of next */
-        for (pspos=0; pspos < count; pspos++) 
+        for (pspos=0; pspos < count; pspos++)
         {
           //printf("pid: %d, cmd: %s\n",pst[pspos].pst_pid,pst[pspos].pst_ucomm);
           pid_t thatpid = (pid_t)pst[pspos].pst_pid;
@@ -1136,7 +1136,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                 foundname = p+1;
             }
             if (strcmp( procname, foundname ) == 0)
-            {  
+            {
               if (pidlist)
               {
                 pidlist[num_found] = (long)thatpid;
@@ -1154,7 +1154,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           break; /* while pstat_getproc() > 0 */
         }
       }
-    }  
+    }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     {
@@ -1211,7 +1211,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       {
         /* match by process executable name */
 
-        #if (CLIENT_OS == OS_WIN32) 
+        #if (CLIENT_OS == OS_WIN32)
         if (winGetVersion() >= 2000 && winGetVersion() < 2500) /* NT3/NT4 */
         {
           num_found = __utilGetPidUsingPerfCaps(procname, pidlist, maxnumpids);
@@ -1235,7 +1235,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
             num_found++;
           }
         }
-      }  
+      }
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #elif (CLIENT_OS == OS_NETWARE)
@@ -1249,7 +1249,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         num_found++;
       }
     }
-    #elif (defined(__unix__)) && (CLIENT_OS != OS_NEXTSTEP)
+    #elif (defined(__unix__)) && (CLIENT_OS != OS_NEXTSTEP) && !defined(__EMX__)
     {
       char *p, *foundname;
       pid_t thatpid, ourpid = getpid();
@@ -1257,7 +1257,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       int usefullpathcmp = (strchr( procname, '/' ) != ((char *)0));
       #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
           (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
-      {    
+      {
         DIR *dirp = opendir("/proc");
         if (dirp)
         {
@@ -1268,7 +1268,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
             pid_t thatpid = (pid_t)atoi(dp->d_name);
             if (num_found < 0)
               num_found = 0;
-            if (thatpid == 0 /* .,..,curproc,etc */ || thatpid == ourpid) 
+            if (thatpid == 0 /* .,..,curproc,etc */ || thatpid == ourpid)
               continue;
             sprintf( buffer, "/proc/%s/cmdline", dp->d_name );
             if (( file = fopen( buffer, "r" ) ) == ((FILE *)0))
@@ -1297,7 +1297,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                   foundname = p+1;
               }
               if (strcmp( procname, foundname ) == 0)
-              {  
+              {
                 if (pidlist)
                 {
                   pidlist[num_found] = (long)thatpid;
@@ -1311,7 +1311,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
             } /* if (len != 0) */
           } /* while readdir */
           closedir(dirp);
-        }  
+        }
       }
       #endif
       #if (CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_HPUX)
@@ -1377,7 +1377,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                 if (p == foundname) /* no digits found. can't be pid */
                 {
                   /* both linelen and buffer are about to be reset,
-                     so we can misuse them here 
+                     so we can misuse them here
                   */
                 }
                 else /* got a pid */
@@ -1398,7 +1398,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                   {
                     while (*foundname && isspace(*foundname))
                       foundname++;
-                    p = foundname;  
+                    p = foundname;
                     while (*p && !isspace(*p))
                       p++;
                     *p = '\0';
@@ -1448,7 +1448,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
               eof_count = 0;
               if (linelen < (sizeof(buffer)-1))
                 buffer[linelen++] = ch;
-            } 
+            }
           } /* while (file) */
           pclose(file);
         } /* if (file != ((FILE *)NULL)) */
@@ -1457,7 +1457,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
     }
     #endif /* #if (defined(__unix__)) */
   } /* if (procname) */
-  
+
   return num_found;
 }
 

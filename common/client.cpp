@@ -1,10 +1,10 @@
-/* 
+/*
  * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.61 2000/02/19 21:04:31 patrick Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.62 2000/02/21 01:16:35 trevorh Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -34,9 +34,9 @@ return "@(#)$Id: client.cpp,v 1.206.2.61 2000/02/19 21:04:31 patrick Exp $"; }
 
 void ResetClientData(Client *client)
 {
-  /* everything here should also be validated in the appropriate subsystem, 
-     so if zeroing here causes something to break elsewhere, the subsystem 
-     init needs fixing. 
+  /* everything here should also be validated in the appropriate subsystem,
+     so if zeroing here causes something to break elsewhere, the subsystem
+     init needs fixing.
      Variables are initialized in the same order that they are declared in
      the client object. Keep it that way to ensure we don't miss something.
    */
@@ -128,16 +128,16 @@ int ClientGetInThreshold(Client *client, int contestid, int force)
   int thresh = BUFTHRESHOLD_DEFAULT;
 
   // OGR time threshold NYI
-  client->timethreshold[OGR] = 0; 
+  client->timethreshold[OGR] = 0;
 
   if (contestid < CONTEST_COUNT)
   {
-    thresh = client->inthreshold[contestid];  
-    if (thresh <= 0) 
+    thresh = client->inthreshold[contestid];
+    if (thresh <= 0)
       thresh = BUFTHRESHOLD_DEFAULT; /* default (if time is also zero) */
 
     if (client->timethreshold[contestid] > 0) /* use time */
-    { 
+    {
       int proc;
       unsigned int sec;
       proc = GetNumberOfDetectedProcessors();
@@ -149,20 +149,20 @@ int ClientGetInThreshold(Client *client, int contestid, int force)
       if (sec != 0) /* we have a rate */
         thresh = 1 + (client->timethreshold[contestid] * 3600 * proc/sec);
     }
-  }  
+  }
   return thresh;
-}      
-    
+}
+
 int ClientGetOutThreshold(Client *client, int contestid, int /* force */)
 {                                  /* out threshold is never time driven */
-  int outthresh = 0; 
+  int outthresh = 0;
   if (contestid < CONTEST_COUNT)
   {
     outthresh = client->outthreshold[contestid];
     /*if outthresh is 0, don't do outthresh checking, (let load_order kick in)*/
     if (outthresh <= 0)
       outthresh = 0; /* outthreshold is ignorable */
-    else  
+    else
     {
       int inthresh = client->inthreshold[contestid];
       /* if both thresholds are non-zero, make sure outthresh <= inthresh */
@@ -175,8 +175,8 @@ int ClientGetOutThreshold(Client *client, int contestid, int /* force */)
         else
           outthresh = inthresh;
       }
-    }   
-  }    
+    }
+  }
   return outthresh;
 }
 
@@ -211,7 +211,7 @@ static const char *GetBuildOrEnvDescription(void)
   else if (servType == 2)
     speshul = " (SFT III MSE)";
   sprintf(buffer, "NetWare%s %u.%u", speshul, major, minor );
-  return buffer;                  
+  return buffer;
 #elif (CLIENT_OS == OS_MACOS)
   const char *osname = "Mac OS";
   long osversion;
@@ -222,14 +222,14 @@ static const char *GetBuildOrEnvDescription(void)
   else if ( Gestalt( gestaltSystemVersion, &osversion ) != noErr)
     osversion = 0;
   if ((osversion & 0xffff) != 0)
-  {    
+  {
     static char buffer[40];
     sprintf( buffer, "%s %d.%d%c%d", osname,
       (int)((osversion&0xff00)>>8), (int)((osversion&0x00f0)>>4),
       (((osversion & 0x000f) == 0)?(0):('.')), (int)((osversion&0x000f)) );
-    return buffer;                                
+    return buffer;
   }
-  return "";       
+  return "";
 #elif (CLIENT_OS == OS_NEXTSTEP)
   return "";
 #elif defined(__unix__) /* uname -sr */
@@ -255,7 +255,7 @@ static const char *GetBuildOrEnvDescription(void)
 static void PrintBanner(const char *dnet_id,int level,int restarted)
 {
   restarted = 0; /* yes, always show everything */
-  
+
   if (!restarted)
   {
     if (level == 0)
@@ -351,7 +351,7 @@ static int ClientMain( int argc, char *argv[] )
     ConOutErr( "Unable to initialize client. Out of memory." );
     return -1;
   }
-  
+
   do
   {
     int restarted = restart;
@@ -387,21 +387,21 @@ static int ClientMain( int argc, char *argv[] )
             int con_waitforuser = 0; //only used if doing modes (and !-config)
 
             TRACE_OUT((0,"initializelogging\n"));
-            InitializeLogging( (client->quietmode!=0), 
+            InitializeLogging( (client->quietmode!=0),
                                (client->percentprintingoff!=0),
-                               client->logname, 
-                               client->logfiletype, 
-                               client->logfilelimit, 
+                               client->logname,
+                               client->logfiletype,
+                               client->logfilelimit,
                                ((domodes)?(0):(client->messagelen)),
-                               client->smtpsrvr, 
-                               client->smtpport, 
-                               client->smtpfrom, 
-                               client->smtpdest, 
+                               client->smtpsrvr,
+                               client->smtpport,
+                               client->smtpfrom,
+                               client->smtpdest,
                                client->id );
             TRACE_OUT((-1,"initializelogging\n"));
             PrintBanner(client->id,0,restarted);
             TRACE_OUT((+1,"parsecmdline(1)\n"));
-            ParseCommandline( client, 1, argc, (const char **)argv, NULL, 
+            ParseCommandline( client, 1, argc, (const char **)argv, NULL,
                                     (client->quietmode==0)); //show overrides
             TRACE_OUT((-1,"parsecmdline(1)\n"));
             InitRandom2( client->id );
@@ -437,7 +437,7 @@ static int ClientMain( int argc, char *argv[] )
             TRACE_OUT((0,"deinitialize console\n"));
             DeinitializeConsole(con_waitforuser);
           }
-          #ifdef LURK 
+          #ifdef LURK
           TRACE_OUT((0,"dialup.Stop()\n"));
           dialup.Stop(); /* just before DeinitializeConnectivity() */
           #endif
@@ -463,7 +463,7 @@ static int ClientMain( int argc, char *argv[] )
 #if (CLIENT_OS == OS_MACOS)
 int main( void )
 {
-  char *argv[2]; 
+  char *argv[2];
   ((const char **)argv)[0] = utilGetAppName();
   argv[1] = (char *)0;
   macosInitialize();
@@ -478,7 +478,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int 
   TRACE_OUT((-1,"WinMain()\n"));
   return rc;
 }
-#elif defined(__unix__)
+#elif defined(__unix__) && !defined(__EMX__)
 int main( int argc, char *argv[] )
 {
   /* the SPT_* constants refer to sendmail source (conf.[c|h]) */
@@ -504,7 +504,7 @@ int main( int argc, char *argv[] )
     #endif
     int kmem = open(_PATH_KMEM, O_RDWR, 0);
     if (kmem >= 0)
-    {  
+    {
       //pid_t kmempid = getpid();
       struct user u;
       off_t seek_off;
@@ -532,10 +532,10 @@ int main( int argc, char *argv[] )
   }
   #else //SPT_TYPE == SPT_CHANGEARGV (mach) || SPT_NONE (OS_DGUX|OS_DYNIX)
         //|| SPT_REUSEARGV (the rest)
-  /* [Net|Free|Open|BSD[i]] are of type SPT_BUILTIN, ie use setproctitle() 
+  /* [Net|Free|Open|BSD[i]] are of type SPT_BUILTIN, ie use setproctitle()
      which is a stupid smart-wrapper for SPT_PSSTRINGS (see above). The result
      is exactly the same as when we reexec(): ps will show "appname (filename)"
-     so we gain nothing other than avoiding the exec() call, but the way /we/ 
+     so we gain nothing other than avoiding the exec() call, but the way /we/
      would use it is non-standard, so we'd better leave it be:
      __progname = defname; setproctitle(NULL); //uses default, ie __progname
   */
@@ -552,7 +552,7 @@ int main( int argc, char *argv[] )
     char *m = (char *)malloc( strlen(q)+1+strlen(argv[0])+1 );
     if (m) {
       didset=(0==putenv(strcat(strcat(strcpy(m,q),"="),argv[0]))); //BSD4.3
-      free((void *)m); 
+      free((void *)m);
     }
     #elif (CLIENT_OS != OS_NEXTSTEP)
     didset = (setenv( q, argv[0], 1 ) == 0); //SYSV7 and posix
@@ -582,7 +582,7 @@ int main( int argc, char *argv[] )
         p = argv[len];
         if (*p == '-')
         {
-          if (p[1]=='-') 
+          if (p[1]=='-')
             p++;
           if (strcmp(p,"-ini")==0)
           {
@@ -605,7 +605,7 @@ int main( int argc, char *argv[] )
         #endif
       }
     }
-      
+
     p = argv[0];
     ((const char **)argv)[0] = defname;
     if ((strlen(p) + 5) < sizeof(buffer))
@@ -630,7 +630,7 @@ int main( int argc, char *argv[] )
   }
   #endif
   return ClientMain( argc, argv );
-}      
+}
 #elif (CLIENT_OS == OS_RISCOS)
 int main( int argc, char *argv[] )
 {
@@ -648,7 +648,7 @@ int main( int argc, char *argv[] )
   rc = ClientMain( argc, argv );
   nwCliExitClient(); // destroys AES process, screen, polling procedure
   return rc;
-}  
+}
 #elif (CLIENT_OS == OS_AMIGAOS)
 int main( int argc, char *argv[] )
 {
