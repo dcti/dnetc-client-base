@@ -1,6 +1,8 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
+# $Id: makefile.bcc,v 1.23.2.7 2000/03/09 14:56:58 andreasb Exp $
+#
 # As of Feb 2000, Borland C++ 5.5 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
 # ftp://ftpd.inprise.com/download/bcppbuilder/FreeCommandLineTools.exe
@@ -37,8 +39,8 @@ HAVE_OGR_CORES=1
 
 # Main compilation and linking options
 BCCOPTS = /a4 /Vv /x- /xd- /RT- /r /k- /d /w /O2 /O /OS /tWM \
-	/I$(BCCINCLUDE) /I$(COMMONPATH) /I$(PLATPATH)\win32cli \
-	/I$(OGRPATH) /D_CPU_32BIT_ /DMULTITHREAD
+	/I$(BCCINCLUDE) /I$(COMMONPATH) /I$(PLATSRCPATH) \
+	/I$(OGRPATH) /I$(CSCPATH) /D_CPU_32BIT_ /DMULTITHREAD /DLURK
 
 
 NASMOPTS = -f obj
@@ -47,9 +49,10 @@ TLINKOPTS = /aa /x /Tpe /n /B:0x400000 /L$(BCCLIBRARY)
 
 
 !ifdef DEBUG
-BCCOPTS = /v $(BCCOPTS)
+BCCOPTS = /v $(BCCOPTS) /D__showids__ /DDEBUG
 TASMOPTS = /zi $(TASMOPTS)
 TLINKOPTS = /v $(TLINKOPTS)
+NASMOPTS = $(NASMOPTS) -D__showids__
 !else
 BCCOPTS = $(BCCOPTS) /DNDEBUG
 !endif
@@ -63,8 +66,9 @@ BCCOPTS = $(BCCOPTS) /DMMX_BITSLICER /DBIT_64 /DMEGGS /DKWAN
 !endif
 
 
-.path.asm = $(RC5PATH)\x86\nasm;$(DESPATH)\mmx-bitslice;$(CSCPATH)\x86;$(CHIPSRCPATH)
-.path.cpp = $(COMMONPATH);$(RC5PATH);$(DESPATH);$(CSCPATH);$(OGRPATH);$(PLATSRCPATH)
+.path.asm = $(RC5PATH)\x86\nasm;$(DESPATH)\mmx-bitslice;$(CSCPATH)\x86;$(CSCPATH)\x86\mmx;$(CHIPSRCPATH)
+.path.cpp = $(COMMONPATH);$(RC5PATH);$(DESPATH);$(OGRPATH);$(PLATSRCPATH)
+# do not add $(CSCPATH) to .path.cpp - everything is in .path.asm
 .path.obj = $(OUTPUTPATH)
 
 all:	$(BASENAME).exe
@@ -205,18 +209,22 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
 
 # --------------------------------------------
 
+OMF32ASM = platforms\omf32.asm
+
+{$(CSCPATH)\x86\mmx\;$(CSCPATH)\x86\}.asm{$(OUTPUTPATH:/=\)}.obj:
+        nasmw $(NASMOPTS) -i $(CSCPATH)\x86\ -p $(OMF32ASM) $(<:/=\) -o $(@:/=\)
+
 .asm.obj:
         nasmw $(NASMOPTS) -DOS2 -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
 
-
 .cpp.obj:
-        bcc32 -c @&&|
--P $(BCCOPTS) -n$(OUTPUTPATH)
+        bcc32 -q -c @&&|
+	-P $(BCCOPTS) -n$(OUTPUTPATH)
 | $< 
 
 
 .c.obj:
-        bcc32 -c @&&|
+        bcc32 -q -c @&&|
 -P $(BCCOPTS) -n$(OUTPUTPATH)
 | $< 
 
@@ -231,8 +239,9 @@ $(RES_FILE):	$(RC_FILE)
 
 ### Unfortunately, the Borland C++ 5.5 initial public release does not
 ### include any of the include\*.rh files necessary to compile resources.
-### So we will skip the resources for now.
-RES_FILE=
+### [andreasb] Workaround: unzip platform/bcc55-rh.zip to bccinstallpath\include.
+### The zip contains four one-line xxx.rh files including the xxx.h file.
+### This is enough to compile the client's .res file. I don't know about other progs.
 
 # --------------------------------------------
 
@@ -265,3 +274,7 @@ c0w32.obj $(ALLCLIENTOBJS:/=\),$(BASENAME:/=\).exe,,$(CLI_LIBS),$(DEF_FILE),$(RE
 
 # --------------------------------------------
 
+clean:
+# you will need a rm command (e.g. from cygwin) and support for long command lines
+        rm -f $(ALLCLIENTOBJS:/=\) $(BASENAME:/=\).exe $(DEF_FILE) $(RES_FILE) \
+        $(BASENAME).ilc $(BASENAME).ild $(BASENAME).ilf $(BASENAME).ils $(BASENAME).tds
