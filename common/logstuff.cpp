@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.39 2000/11/12 02:00:14 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.40 2000/11/14 15:56:28 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -751,18 +751,19 @@ void LogScreenPercent( unsigned int load_problem_count )
 
   if (buffer[0] && use_alt_fmt)
   {
+    void (*print_it)(const char *,...) = LogScreen;
     #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_POWERPC)
     // temporary fix - updating the progress every 5 seconds is not a good idea
     // since it causes a number of context-switches to the 68K, which in turn
     // slows the 68K client down quite dramatically if both clients are running
     // in parallel.  So, we only do it once per minute, minus the time display.
+    print_it = (void (*)(const char *,...))0;
     if (!logstatics.lastwasperc || (logstatics.perc_callcount % 12) == 0)
+      print_it = LogScreenRaw;
+    #endif  
+    if (print_it)  
     {
-      LogScreenRaw( "\r%s", buffer, NULL );
-    #else
-    {
-      LogScreen( "\r%s", buffer, NULL );
-    #endif
+      (*print_it)( "\r%s", buffer, NULL );
       logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
       logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
       /* simple, eh? :) */
@@ -827,7 +828,9 @@ void LogScreenPercent( unsigned int load_problem_count )
     if (endperc < 100 && logstatics.percbaton)
     { /* implies conistty and !gui (window repaints are _expensive_) */
       static const char batonchars[] = {'|','/','-','\\'};
-      *bufptr++=(char)batonchars[logstatics.perc_callcount%sizeof(batonchars)];
+      if (bufptr == &buffer[0]) /* didn't prepend '\r' */
+        *bufptr++ = '\r';       /* so do it now */
+      *bufptr++ = (char)batonchars[logstatics.perc_callcount%sizeof(batonchars)];
     }  
     #endif
     *bufptr = '\0';
