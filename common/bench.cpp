@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.55 2002/10/17 02:29:08 andreasb Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.56 2002/10/17 15:17:47 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -34,6 +34,7 @@ unsigned long bestrate_tab[CONTEST_COUNT] = {0,0,0,0,0,0};
 /* BenchGetBestRate() is always per-processor */
 unsigned long BenchGetBestRate(unsigned int contestid)
 {
+  TRACE_OUT((+1, "BenchGetBestRate(%d)\n", contestid));
   if (contestid < CONTEST_COUNT)
   { 
     if (bestrate_tab[contestid] == 0)
@@ -47,8 +48,10 @@ unsigned long BenchGetBestRate(unsigned int contestid)
       TBenchmark(contestid, 2, 
                  TBENCHMARK_CALIBRATION|TBENCHMARK_QUIET|TBENCHMARK_IGNBRK);
     }
+    TRACE_OUT((-1, "BenchGetBestRate(%d) => %d\n", contestid, bestrate_tab[contestid]));
     return bestrate_tab[contestid];
   }
+  TRACE_OUT((-1, "BenchGetBestRate(%d) => 0\n", contestid));
   return 0;
 }
 

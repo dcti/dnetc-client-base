@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.93 2002/10/08 09:30:11 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94 2002/10/17 15:17:48 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -307,5 +307,8 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
 
 /* result depends on #ifdefs, threadsafety issues etc */
 int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
+
+// this is a bit misplaced here, but we need u64-ops
+int ProjectSetSpeed(int projectid, u32 speedhi, u32 speedlo);
 
 #endif /* __PROBLEM_H__ */

@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.34 2002/10/17 02:29:08 andreasb Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.35 2002/10/17 15:17:47 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -108,12 +108,23 @@ int CliGetContestWorkUnitSpeed( int contestid, int force, int *was_forced)
   {
     if ((conInfo->BestTime == 0) && force)
     {
+      unsigned long benchrate;
       // This may trigger a mini-benchmark, which will get the speed
       // we need and not waste time.
       selcoreGetSelectedCoreForContest( contestid );
 
       if (conInfo->BestTime == 0)
-        TBenchmark(contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK);
+      {
+        benchrate = BenchGetBestRate(contestid);
+        if (benchrate)
+          ProjectSetSpeed(contestid, 0, benchrate);
+      }
+      if (conInfo->BestTime == 0)
+      {
+        benchrate = TBenchmark(contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK);
+        if (benchrate)
+          ProjectSetSpeed(contestid, 0, benchrate);
+      }
       if (conInfo->BestTime)
         conInfo->BestTimeWasForced = 1;
     }

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.173 2002/10/16 21:37:18 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.174 2002/10/17 15:17:47 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2682,7 +2682,6 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
           u32 tcounthi=0, tcountlo=0; /*total 'iter' (n/a if not finished)*/
           u32 ccounthi=0, ccountlo=0; /*'iter' done (so far, this start) */
           u32 dcounthi=0, dcountlo=0; /*'iter' done (so far, all starts) */
-          unsigned long rate2wuspeed = 0;
   
           switch (contestid)
           {
@@ -2693,7 +2692,6 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
             case CSC:
             { 
               unsigned int units, twoxx;
-              rate2wuspeed = 1UL<<28;
   
               ccounthi = thisprob->pub_data.startkeys.hi;
               ccountlo = thisprob->pub_data.startkeys.lo;
@@ -2751,7 +2749,6 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
   #ifdef HAVE_OGR_CORES
             case OGR:
             {
-              rate2wuspeed = 0;
               dcounthi = work.ogr.nodes.hi;
               dcountlo = work.ogr.nodes.lo;
               if (rescode == RESULT_NOTHING || rescode == RESULT_FOUND)
@@ -2795,7 +2792,6 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
             case RC5_72:
             { 
               unsigned int units, twoxx;
-              rate2wuspeed = 0; // FIXME: 2^32 doesn't fit here
   
               ccounthi = thisprob->pub_data.startkeys.hi;
               ccountlo = thisprob->pub_data.startkeys.lo;
@@ -2861,11 +2857,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
             }
             ProblemComputeRate( contestid, e_sec, e_usec, ccounthi, ccountlo,
                                 &hi, &lo, info->rate.ratebuf, info->rate.size );
-            if (rate2wuspeed && lo)
-            {
-              CliSetContestWorkUnitSpeed( contestid, (unsigned int)
-                                          ((1+rate2wuspeed) / lo) );     
-            }
+            ProjectSetSpeed(contestid, hi, lo);
             info->ratehi = hi;
             info->ratelo = lo;
           }
@@ -2899,4 +2891,40 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
     } /* if (rescode >= 0) */
   } /* if thisprob != 0 */
   return rescode;
+}
+
+// this is a bit misplaced here, but we need u64-ops
+// speed is in units per second
+int ProjectSetSpeed(int projectid, u32 speedhi, u32 speedlo)
+{
+  TRACE_OUT((0, "ProjectSetSpeed(prj=%d, hi=%d, lo=%d)\n", projectid, speedhi, speedlo));
+  u32 wusizehi = 0, wusizelo = 0;
+  u32 sechi = 0, seclo = 0; // we calculate seconds per work unit
+  switch(projectid) {
+    case RC5:
+    case DES:
+    case CSC:
+      /* 2^28 */
+      wusizehi = 0;
+      wusizelo = 1UL<<28;
+      break;
+    case OGR:
+      /* unknown */
+      wusizehi = wusizelo = 0;
+      break;
+    case RC5_72:
+      /* 2^32 */
+      wusizehi = 1;
+      wusizelo = 0;
+      break;
+    default:
+      PROJECT_NOT_HANDLED(projectid);
+      return -1;
+  }
+  if ((speedhi|speedlo) == 0)
+    speedlo = 1;
+  __u64div( wusizehi, wusizelo, speedhi, speedlo, &sechi, &seclo, 0, 0);
+  if (seclo && !sechi)
+    return CliSetContestWorkUnitSpeed( projectid, seclo );
+  return 0;
 }
