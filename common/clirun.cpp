@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.39 2000/02/13 04:21:11 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.40 2000/02/13 23:35:41 snake Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -589,8 +589,8 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           #if defined(ONLY_NEEDED_VMPAGES_INHERITABLE)
           {
             //children are faster, main is slower
-            extern int TBF_MakeTriggersVMInheritable(void); /* probman.cpp */
-            extern int TBF_MakeProblemsVMInheritable(void); /* triggers.cpp */
+            extern int TBF_MakeTriggersVMInheritable(void); /* triggers.cpp */
+            extern int TBF_MakeProblemsVMInheritable(void); /* probman.cpp */
             //fprintf(stderr, "beginning TBF_MakeProblemsVMInheritable()\n" );
             if (TBF_MakeProblemsVMInheritable() == 0 )
             {
