@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.53 2000/07/11 04:19:06 mfeiri Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.54 2000/09/01 19:09:34 patrick Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -305,7 +305,9 @@ int CliClock(struct timeval *tv)
 }
 
 /* --------------------------------------------------------------------- */
-
+// the following does not compile on AIX but also isn't used for
+// CLOCK_REALTIME anyway
+#if !defined(CLOCK_REALTIME)
 // __clks2tv() is called/inline'd from CliGetMonotonicClock() and converts
 // 'ticks' (ticks/clks/whatever: whatever it is that your time-since-whenever
 // function returns) to secs/usecs. 'hz' is that function's equivalent of
@@ -327,6 +329,7 @@ inline void __clks2tv( unsigned long hz, register unsigned long ticks,
   tv->tv_usec = (long)( ( (ticks % hz) + wadj) * ((1000000ul+(hz>>1))/hz) );
   return;
 }
+#endif // !defined(CLOCK_REALTIME)
 
 /* --------------------------------------------------------------------- */
 
