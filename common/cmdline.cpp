@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.117  1999/01/21 21:44:00  cyp
+// cleaned up behind 1.115
+//
 // Revision 1.116  1999/01/21 03:01:39  silby
 // Made -uninstall and -install "modes" so that they could honor
 // -quiet (to facilitate quiet installs in login scripts, etc.)
@@ -137,7 +140,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.116 1999/01/21 03:01:39 silby Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.117 1999/01/21 21:44:00 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -172,6 +175,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
     {
     inifilename[0] = 0; //so we know when it changes
     ModeReqClear(-1);   // clear all mode request bits
+    int loop0_quiet = 0;
 
     skip_next = 0;
     for (pos = 1;((terminate_app==0) && (pos<argc));pos+=(1+skip_next))
@@ -187,6 +191,11 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         ; //nothing
       else if (*thisarg == 0)
         ; //nothing
+      else if ( strcmp( thisarg, "-hide" ) == 0 ||   
+                strcmp( thisarg, "-quiet" ) == 0 )
+        loop0_quiet = 1; //used for stuff in this loop
+      else if ( strcmp( thisarg, "-noquiet" ) == 0 )      
+        loop0_quiet = 0; //used for stuff in this loop
       else if ( strcmp(thisarg, "-ini" ) == 0)
         {
         if (nextarg)
@@ -226,23 +235,24 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             pos+=2;
             if (!(pos<argc && argv[pos]!=NULL && isdigit(argv[pos][0])))
               {
-              ConOutErr( ((pos==argc || argv[pos]==NULL)?
-                   ("Unable to get pid list."):(argv[pos])) );
+              if (loop0_quiet == 0)
+                ConOutErr( ((pos==argc || argv[pos]==NULL)?
+                     ("Unable to get pid list."):(argv[pos])) );
               }
             else 
               {
               unsigned int kill_ok = 0;
               unsigned int kill_failed = 0;
               int last_errno = 0;
-	      buffer[0]=0;
+              buffer[0]=0;
               do{
                 pid_t tokill = atol( argv[pos++] );
                 if (tokill!=ourpid[0] && tokill!=ourpid[1] && tokill!=0)
                   {
                   if ( kill( tokill, sig ) == 0)
-		    {
+                    {
                     kill_ok++;
-		    }
+                    }
                   else if ((errno != ESRCH) && (errno != ENOENT))
                     {
                     kill_failed++;
@@ -250,15 +260,17 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                     }
                   }
                 } while (pos<argc && argv[pos]!=NULL && isdigit(argv[pos][0]));
-              if ((kill_ok + kill_failed) == 0)    
+              if (loop0_quiet == 0)
                 {
-                sprintf(buffer,"No distributed.net clients are currently running.\n"
-                               "None were %s.", ((dokill)?("killed"):("-HUP'ed")));
-                ConOutErr(buffer);
-                }
-              else 
-                {
-                sprintf(buffer,"%u distributed.net client%s %s. %u failure%s%s%s%s.",
+                if ((kill_ok + kill_failed) == 0)    
+                  {
+                  sprintf(buffer,"No distributed.net clients are currently running.\n"
+                                 "None were %s.", ((dokill)?("killed"):("-HUP'ed")));
+                  ConOutErr(buffer);
+                  }
+                else 
+                  {
+                  sprintf(buffer,"%u distributed.net client%s %s. %u failure%s%s%s%s.",
                            kill_ok, 
                            ((kill_ok==1)?(" was"):("s were")),
                            ((dokill)?("killed"):("-HUP'ed")), 
@@ -266,7 +278,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                            ((kill_failed==0)?(""):(" (")),
                            ((kill_failed==0)?(""):(strerror(last_errno))),
                            ((kill_failed==0)?(""):(")")) );
-                ConOutErr(buffer);
+                  ConOutErr(buffer);
+                  }
                 }
               }
             }
@@ -274,23 +287,28 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             {
             const char *binname = (const char *)strrchr( argv[0], '/' );
             binname = ((binname==NULL)?(argv[0]):(binname+1));
-	    
-            sprintf(buffer, "%s %s [%lu] `"
+            
+            sprintf(buffer, "%s %s %s [%lu] `"
 #if (CLIENT_OS == OS_SOLARIS)
-			    // CRAMER - /usr/bin/ps or /usr/ucb/ps?
+                            // CRAMER - /usr/bin/ps or /usr/ucb/ps?
                             "/usr/bin/ps -ef|grep \"%s\"|awk '{print$2}'"
 #else
                             "ps auxwww|grep \"%s\"|awk '{print$2}'"
                             // "ps auxwww|grep \"%s\" |tr -s \' \'"
                             // "|cut -d\' \' -f2|tr \'\\n\' \' \'"
 #endif
-			    "`", argv[0], thisarg,
+                            "`", argv[0], 
+                            ((loop0_quiet)?(" -quiet"):("")),
+                            thisarg,
                             (unsigned long)(getpid()), binname );
             if (system( buffer ) != 0)
               {
-              //ConOutErr( buffer ); /* show the command */
-              sprintf(buffer, "%s failed. Unable to get pid list.", thisarg );
-              ConOutErr( buffer );
+              if (loop0_quiet == 0)
+                {
+                //ConOutErr( buffer ); /* show the command */
+                sprintf(buffer, "%s failed. Unable to get pid list.", thisarg );
+                ConOutErr( buffer );
+                }
               }
             }
           }
@@ -303,18 +321,48 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           thisarg = ((dokill)?("shut down"):("restarted"));
           if (w32ConSendIDMCommand( ((dokill)?(IDM_SHUTDOWN):(IDM_RESTART)) )!=0)
             {
-            sprintf(scratch,"No distributed.net clients are currently running.\n"
-                            "None were %s.", thisarg);
-            ConOutErr(scratch);
+            if (loop0_quiet == 0)
+              {
+              sprintf(scratch,"No distributed.net clients are currently running.\n"
+                              "None were %s.", thisarg);
+              ConOutErr(scratch);
+              }
             }
           else
             {
-            sprintf(scratch,"The distributed.net client has been %s.", thisarg);
-            ConOutModal(scratch);
+            if (loop0_quiet == 0)
+              {
+              sprintf(scratch,"The distributed.net client has been %s.", thisarg);
+              ConOutModal(scratch);
+              }
             }
           }
         #else
           not_supported = 1;
+        #endif
+        }
+      else if ( strcmp(thisarg, "-install" ) == 0)
+        {
+        #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+        winInstallClient(loop0_quiet); /*w32pre.cpp*/
+        terminate_app = 1;
+        #elif (CLIENT_OS == OS_OS2)
+        os2CliInstallClient(loop0_quiet);
+        terminate_app = 1;
+        #else
+        not_supported = 1;
+        #endif
+        }
+      else if ( strcmp(thisarg, "-uninstall" ) == 0)
+        {
+        #if (CLIENT_OS == OS_OS2)
+        os2CliUninstallClient(loop0_quiet);
+        terminate_app = 1;
+        #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+        winUninstallClient(loop0_quiet); /*w32pre.cpp*/
+        terminate_app = 1;
+        #else
+        not_supported = 1;
         #endif
         }
       if (not_supported)
@@ -1089,8 +1137,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           ( strcmp( thisarg, "-cpuinfo"     ) == 0 ) ||
           ( strcmp( thisarg, "-test"        ) == 0 ) ||
           ( strcmp( thisarg, "-config"      ) == 0 ) ||
-          ( strcmp( thisarg, "-install"     ) == 0 ) ||
-          ( strcmp( thisarg, "-uninstall"   ) == 0 ) ||
           ( strncmp( thisarg, "-benchmark", 10 ) == 0))
         {
         ; //nothing - handled in next loop
@@ -1113,7 +1159,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         break;
         }
       }
-    ValidateConfig(this);
     }
         
   //-----------------------------------
@@ -1227,30 +1272,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         inimissing = 1; //force run config
         break;
         }
-      else if ( strcmp(thisarg, "-install" ) == 0)
-        {
-        #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-        winInstallClient(quietmode); /*w32pre.cpp*/
-        terminate_app = 1;
-        #elif (CLIENT_OS == OS_OS2)
-        os2CliInstallClient(0);
-        terminate_app = 1;
-        #else
-        not_supported = 1;
-        #endif
-        }
-      else if ( strcmp(thisarg, "-uninstall" ) == 0)
-        {
-        #if (CLIENT_OS == OS_OS2)
-        os2CliUninstallClient(0);
-        terminate_app = 1;
-        #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-        winUninstallClient(quietmode); /*w32pre.cpp*/
-        terminate_app = 1;
-        #else
-        not_supported = 1;
-        #endif
-        }
       }
     }
 
@@ -1276,14 +1297,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
        (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX))
   else if (run_level == 0 && (ModeReqIsSet(-1) == 0) && quietmode)
     {
-    int pid;
-    if ((pid = fork()))
+    terminate_app = 1;
+    if (fork() == -1)
       { // Parrent || Error
-      terminate_app = 1;
-      if (pid == -1)
-        { // Error
-        ConOutErr("fork() failed.  Unable to start quiet/hidden.");
-        }
+      ConOutErr("fork() failed.  Unable to start quiet/hidden.");
       }
     }
   #endif
@@ -1292,4 +1309,3 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
     *retcodeP = 0;
   return terminate_app;
 }
-
