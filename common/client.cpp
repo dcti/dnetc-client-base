@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.40 1999/12/20 01:55:28 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.41 1999/12/21 04:56:01 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -154,11 +154,11 @@ static const char *GetBuildOrEnvDescription(void)
     sprintf( buffer, "%s %d.%d%c%d", osname,
                                      (int)((osversion&0xff00)>>8), 
                                      (int)((osversion&0x00f0)>>4),
-				                             (((osversion & 0x000f) == 0)?(0):('.')),
-				                             (int)((osversion&0x000f)) );
-    return buffer;				  
+                                                             (((osversion & 0x000f) == 0)?(0):('.')),
+                                                             (int)((osversion&0x000f)) );
+    return buffer;                                
   }
-  return "";			      
+  return "";                          
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
   if (uname(&ut)==0) {
@@ -327,8 +327,7 @@ static int ClientMain( int argc, char *argv[] )
             InitializeCoreTable( &(client->coretypes[0]) );
             TRACE_OUT((-1,"initcoretable\n"));
             #ifdef LURK
-            dialup.Start(((domodes)?(0):(client->offlinemode)), 
-                         &(client->lurk_conf));
+            dialup.Start(client->offlinemode, &(client->lurk_conf));
             #endif
 
             PrintBanner(client->id,1,domodes);

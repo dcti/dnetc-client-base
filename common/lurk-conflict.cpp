@@ -18,7 +18,7 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.43.2.9 1999/12/08 00:41:50 cyp Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.43.2.10 1999/12/21 04:56:02 cyp Exp $"; }
 
 /* ---------------------------------------------------------- */
 
@@ -320,11 +320,10 @@ const char **Lurk::GetConnectionProfileList(void)
 
 int Lurk::Start(int nonetworking,struct dialup_conf *params) 
 {                             // Initializes Lurk Mode. returns 0 on success.
-
   Stop(); //zap variables/state
 
   TRACE_OUT((+1,"Lurk::Start()\n"));
-  if (!nonetworking)
+  if (!nonetworking) //no networking equals 'everything as default'.
   {
     int flags = GetCapabilityFlags();
 
@@ -471,10 +470,10 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
         n--;
       conf.connstopcmd[n]=0;
     }
-    
-    islurkstarted=1;
   }
   TRACE_OUT((-1,"Lurk::Start()\n"));
+
+  islurkstarted=1;
   return 0;
 }
 
