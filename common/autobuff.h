@@ -4,7 +4,16 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
+// ----------------------------------------------------------------------
+// Dynamicly growing buffering class oriented for containing
+// arbitrary binary data for network communications.
+// Created by Jeff Lawson.
+// ----------------------------------------------------------------------
+// 
 // $Log: autobuff.h,v $
+// Revision 1.9  1999/02/28 02:29:04  jlawson
+// merged stepline functionality from proxy codebase.
+//
 // Revision 1.8  1999/01/31 20:19:07  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -48,8 +57,9 @@ public:
   void Clear(void) {bufferfilled = 0;}
   void operator+= (const AutoBuffer &that);
   void operator= (const AutoBuffer &that);
-  AutoBuffer operator+ (const AutoBuffer &that);
-  int RemoveLine(AutoBuffer &line);
+  AutoBuffer operator+ (const AutoBuffer &that) const;
+  bool RemoveLine(AutoBuffer &line);
+  bool StepLine(AutoBuffer &line, u32 &offset) const;
 };
 
 

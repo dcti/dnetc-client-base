@@ -2,7 +2,16 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
+// ----------------------------------------------------------------------
+// Dynamicly growing buffering class oriented for containing
+// arbitrary binary data for network communications.
+// Created by Jeff Lawson.
+// ----------------------------------------------------------------------
+//
 // $Log: autobuff.cpp,v $
+// Revision 1.12  1999/02/28 02:29:04  jlawson
+// merged stepline functionality from proxy codebase.
+//
 // Revision 1.11  1999/01/31 20:19:07  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -11,7 +20,7 @@
 //
 // Revision 1.9  1998/07/08 23:30:33  remi
 // Cleared a GCC warning.
-// Tweaked $Id: autobuff.cpp,v 1.11 1999/01/31 20:19:07 cyp Exp $.
+// Tweaked $Id: autobuff.cpp,v 1.12 1999/02/28 02:29:04 jlawson Exp $.
 //
 // Revision 1.8  1998/07/08 09:23:17  jlawson
 // eliminated integer type warnings on win16
@@ -36,7 +45,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *autobuff_cpp(void) {
-return "@(#)$Id: autobuff.cpp,v 1.11 1999/01/31 20:19:07 cyp Exp $"; }
+return "@(#)$Id: autobuff.cpp,v 1.12 1999/02/28 02:29:04 jlawson Exp $"; }
 #endif
 
 #include <string.h>
@@ -79,6 +88,8 @@ AutoBuffer::~AutoBuffer(void)
   delete buffer;
 }
 
+// Ensures that the buffer is large enough to contain at least
+// the indicated number of characters, enlarging it if necessary.
 char *AutoBuffer::Reserve(u32 amount)
 {
   if (!buffer) {
@@ -95,11 +106,15 @@ char *AutoBuffer::Reserve(u32 amount)
   return buffer;
 }
 
+// Indicates that the specified number of characters beyond the
+// currently used tail have now been occupied.
 void AutoBuffer::MarkUsed(u32 amount)
 {
   if (buffersize >= amount + bufferfilled) bufferfilled += amount;
 }
 
+// Deallocates the indicated number of characters starting from the
+// front of the buffer.
 void AutoBuffer::RemoveHead(u32 amount)
 {
   if (bufferfilled >= amount) {
@@ -108,11 +123,15 @@ void AutoBuffer::RemoveHead(u32 amount)
   }
 }
 
+// Deallocates the indicated number of characters starting from
+// the end of the currently allocated buffer.
 void AutoBuffer::RemoveTail(u32 amount)
 {
   if (bufferfilled >= amount) bufferfilled -= amount;
 }
 
+// appending operator.  redefines the buffer to contain the combined
+// result of the argument buffer.
 void AutoBuffer::operator+= (const AutoBuffer &that)
 {
   Reserve(that.GetLength());
@@ -120,6 +139,8 @@ void AutoBuffer::operator+= (const AutoBuffer &that)
   MarkUsed(that.GetLength());
 }
 
+// assignment operator.  redefines the buffer to contain a copy
+// of the argument buffer.
 void AutoBuffer::operator= (const AutoBuffer &that)
 {
   Clear();
@@ -128,7 +149,8 @@ void AutoBuffer::operator= (const AutoBuffer &that)
   MarkUsed(that.GetLength());
 }
 
-AutoBuffer AutoBuffer::operator+ (const AutoBuffer &that)
+// Returns a dynamic copy of the two combined buffers
+AutoBuffer AutoBuffer::operator+ (const AutoBuffer &that) const
 {
   AutoBuffer output;
   output.Reserve(GetLength() + that.GetLength());
@@ -138,25 +160,42 @@ AutoBuffer AutoBuffer::operator+ (const AutoBuffer &that)
   return output;
 }
 
-// returns !0 if a complete line was found
-int AutoBuffer::RemoveLine(AutoBuffer &line)
+// destructively returns a copy of the first whole text line,
+// and removes it from the head of the buffer.
+// returns true if a complete line was found.
+bool AutoBuffer::RemoveLine(AutoBuffer &line)
+{
+  u32 offset = 0;
+  bool result = StepLine(line, offset);
+  if (result) RemoveHead(offset);
+  return result;
+}
+
+// non-destructively returns a copy of the first whole text line.
+// returns true if a complete line was found.
+bool AutoBuffer::StepLine(AutoBuffer &line, u32 &offset) const
 {
   line.Clear();
   int eol = -1;
-  for (int pos = 0; pos < (int)GetLength(); pos++)
+  for (int pos = (int)offset ; pos < (int)GetLength(); pos++)
   {
     char ch = GetHead()[pos];
-    if (ch == 0 || ch == '\r' || ch == '\n') {eol = pos; break;}
+    if (ch == 0 || ch == '\r' || ch == '\n')
+      { eol = (pos - (int)offset); break; }
   }
-  if (eol < 0) return 0;
+  if (eol < 0) return false;
 
   line.Reserve(eol + 1);
-  memmove(line.GetHead(), GetHead(), eol);
-  line.GetHead()[eol] = 0;      // end with a null, but don't include...
-  line.MarkUsed(eol);           // ...as part of allocated buffer
-  if (GetHead()[eol] == '\r' &&
-      (int)GetLength() > eol + 1 &&
-      GetHead()[eol + 1] == '\n') RemoveHead(eol + 2);
-  else RemoveHead(eol + 1);
-  return 1;
+  memmove(line.GetHead(), GetHead() + offset, eol);
+  line.GetHead()[eol] = 0;   // end with a null, but don't include...
+  line.MarkUsed(eol);        // ...as part of allocated buffer
+
+  offset += eol;
+  if (GetHead()[(int)offset] == '\r' &&
+      (int)GetLength() > (int)offset + 1 &&
+      GetHead()[(int)offset + 1] == '\n') offset += 2;
+  else offset++;
+  return true;
 }
+
+
