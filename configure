@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.30 2003/01/23 18:40:09 snake Exp $
+# @(#)$Id: configure,v 1.288.2.31 2003/01/24 05:06:21 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2356,6 +2356,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="netbsd-vax"
         add_sources "netbsd" "vax"
         ;;
 
