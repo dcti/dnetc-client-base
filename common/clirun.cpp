@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.21  1998/10/31 22:36:11  silby
+// Hack to get freebsd-mt to build.  It seems to work fine, but should *really* be looked over by a pthreads familiar person.
+//
 // Revision 1.20  1998/10/30 12:00:20  cyp
 // Fixed a missing do_suspend=0 initialization.
 //
@@ -91,7 +94,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.20 1998/10/30 12:00:20 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.21 1998/10/31 22:36:11 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -866,7 +869,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
               (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0)
           success = 1;
         SetGlobalPriority( 9 ); //back to normal
-      #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD)
+      #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD) && (CLIENT_OS != OS_FREEBSD)
         if (pthread_create( &(thrparams->threadID), NULL, 
            (void *(*)(void*)) Go_mt, (void *)thrparams[thread_i] ) == 0 )
           success = 1;
