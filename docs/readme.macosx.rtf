@@ -1,0 +1,224 @@
+{\rtf1\mac\ansicpg10000\cocoartf100
+{\fonttbl\f0\fswiss\fcharset77 Helvetica-Bold;\f1\fswiss\fcharset77 Helvetica-Oblique;\f2\fswiss\fcharset77 Helvetica;
+}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww9700\viewh11380\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\f0\b\fs36 \cf0 distributed.net client for Mac OS X\
+
+\f1\i\b0\fs24 released by Michael Feiri <mfeiri@distributed.net>, <michael@feiri.de>
+\f2\i0 \
+\
+ Thank you for downloading the distributed.net client (dnetc) for Mac OS X.\
+\
+ This document covers information specific to the client for Mac OS X.\
+ For non-platform specific information, refer to other enclosed \
+ documentation or browse the online FAQ at http://www.distributed.net/FAQ\
+ or http://www.distributed.net/docs/.\
+\
+
+\f0\b     Table of Contents
+\f2\b0 \
+    1.0  Getting started\
+    2.0  Running the client in silent mode\
+    3.0  Frequently Asked Questions on Mac OS X\
+    4.0  Problems and bugs\
+    5.0  Credits and thanks\
+\
+   \
+
+\f0\b\fs28  1.0  Getting started ------------------------------------------------
+\f2\b0\fs24 \
+\
+    The first step is to download the client and unpack the archive.\
+    Presumably, if you are reading this, you have done so. Once \
+    that is complete, you may place the dnetc folder anywhere you\
+    wish on the hard drive.\
+\
+    This client is a command line client. To run it, you will need to\
+    open a Terminal window using Terminal.app. Navigate to the\
+    dnetc folder (you can do this by typing "cd" and then dragging\
+    the dnetc folder to the Terminal window, and hitting Return).\
+\
+    Once there, you can start the client's configuration by typing:\
+        ./dnetc -config\
+\
+    The "./" indicates that you are running a command from the\
+    current directory. The "-config" is a switch which tells dnetc\
+    to start configuration mode. It will do this automatically if you\
+    have never configured it before, but using the switch will\
+    always start config mode.\
+\
+    You will be introduced to a text-driven menu with fairly self-\
+    explanatory options. Primarily, you will want to configure your\
+    distributed.net ID. Again, any of these options can be changed\
+    later by starting dnetc with the -config switch.\
+\
+    When you are finished, save and quit from the menu system.\
+    The client will exit. To begin processing, type:\
+        ./dnetc\
+\
+    You can then hide Terminal, minimize the window to the Dock,\
+    or just leave it there. You can see other command line options\
+    for the client by starting it with the -help switch.\
+\
+    Additional guides to the various configuration options are\
+    available online. http://www.distributed.net/docs/\
+\
+\
+
+\f0\b\fs28  2.0  Running the client in silent mode ------------------
+\f2\b0\fs24 \
+\
+    It may be desirable to run the client in the background; that is,\
+    to close the Terminal window that it is running in, but have it\
+    continue processing.\
+\
+    To do so, first stop any running instances of the client:\
+        ./dnetc -shutdown\
+\
+    Then open the configuration menu:\
+        ./dnetc -config\
+\
+    Select the General Client Options menu, and go to option\
+    number 10. Enable this option. Note that if you are running\
+    the client in silent mode, you may wish to enable logging,\
+    so that you can check its activity. This is option 4 on the main\
+    menu. When you are finished, save and quit.\
+\
+    Finally, start the client using this command:\
+        ./dnetc &\
+\
+    This will start the now-silent client into the background. You\
+    may then close Terminal.app if you wish.\
+\
+\
+
+\f0\b\fs28  3.0  Frequently Asked Questions on Mac OS X  ---------
+\f2\b0\fs24 \
+\
+    Q: What are the changes in this version of the client?\
+    A: Check the CHANGES.txt document included in this distribution.\
+\
+    Q: Where is the (what-used-to-be-) GUI version of the client?\
+    A: Any GUI features not included in this client will be released\
+        as portable, open source add-on utilities. However, since\
+        distributed.net is a volunteer organization, we rely on users\
+        to contribute code. Please contact us if you're interested.\
+        See also http://www.distributed.net/download/addons.html\
+\
+    Q: How do I check if a silent client is running?\
+    A: Open a Terminal window and type: "ps -x | grep dnetc" without\
+        quotes. If you see any processes named "./dnetc" then it is\
+        running. Alternatively, you can check your logfile to see if it is\
+        being updated. (You might type "tail <logfile>" where <logfile>\
+        is the name of your log file.)\
+       \
+    Q: How do I quit the client if it is running?\
+    A: Just type:  ./dnetc -shutdown\
+        The client will report how many clients were found and stopped.\
+        If it fails, you can always use the "kill" command to stop it.\
+\
+    Q: How can I setup the client that it starts up automatically when\
+       I boot up my computer?\
+    A: There are some third party utilities to do this. If you know how\
+        to do it without them, just using Mac OS X, let us know.\
+         \
+    Q: I want to run the client and XYZ simultaneously, but XYZ\
+       destroys my crunch rate. What can I do?\
+    A: Not much.\
+         \
+    Q: The client seems to slow down my application XYZ. What can I do?\
+    A: Open the configuration menu (./dnetc -config) and go to\
+        General Client Options. Select "Pause if running." Type in\
+        the name of your application (e.g. XYZ) and then exit the\
+        client. This will cause the client to pause if it detects that\
+        application is running. Make sure you don't leave it open\
+        all the time, or dnetc will never run :)\
+    \
+    Q: I want to run the client as a screen saver. How do I do this?\
+    A: At this time, there is no screen saver module for the client under\
+        Mac OS X, however this should not be difficult to implement. If\
+        you get around to it before we do, let us know. :)\
+\
+    Q: Can I share my client's buffers with other (non-macos) clients?\
+       ["sharing" is simultaneous access via file-sharing, but also \
+       manual transfer of the buffer files from one machine to another]\
+    A: Theoretically, yes. However, this is not recommended.\
+\
+    Q: How do I completely remove the client from my system?\
+    A: Quit any running instances of the client, and then simply delete\
+        the folder containing the client.\
+\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+
+\f0\b\fs28 \cf0  4.0  Problems and bugs -----------------------------------------
+\f2\b0\fs24 \
+ \
+    If you suspect you have found a bug in the client, here are the steps\
+    you should take to help us diagnose and fix the problem.\
+\
+        1. Visit the client download page and verify that you have the latest\
+             release of the client for Mac OS X.\
+             http://www.distributed.net/download/clients.html\
+\
+        2. See if you can reproduce the problem. How does the bug occur?\
+             What happens when it does? If it is a crash, try enabling Crash\
+             Reporter. You can do this by starting the Mac OS X Console, which\
+             is located in /Applications/Utilities/Console.app. Open it and go\
+             to Preferences, and select the Crashes tab. Check both boxes.\
+             If you receive a crash log, save it, as this may be useful info.\
+\
+        3. Visit distributed.net's Bugzilla system, our bug reporting and\
+             tracking site. Here, you can report your bug and stay in contact\
+             with distributed.net QA and developers as we try to fix your bug.\
+             http://www.distributed.net/bugs/\
+\
+        4. When reporting a bug, please give us as many details as possible.\
+                - What version of Mac OS X are you running?\
+                      
+\f1\i\fs20 (e.g. Mac OS X 10.1.3, build 5Q45)
+\f2\i0\fs24 \
+                - What is the full version descriptor of the client you are running?\
+                      
+\f1\i\fs20 (e.g. dnetc v2.8016-470-CTR-01102322 for Mac OS X (Darwin 5.3))
+\f2\i0\fs24 \
+                - What sort of Mac are you running this on?\
+                      
+\f1\i\fs20 (e.g. Power Mac G4/733 (Gigabit Ethernet), Titanium PowerBook 550, etc)
+\f2\i0\fs24 \
+\
+        The more details you can give us, the easier it will be for us to fix\
+        your bug. Thank you for helping us improve the client!\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural
+\cf0 \
+
+\f0\b\fs28  5.0  Credits and thanks ---------------------------------------------
+\f2\b0\fs24 \
+ \
+    Thanks to everybody involved in the development of the client for\
+    Mac OS X and the beta testing process, who have helped make it what\
+    it is, including (in no particular order):\
+\
+    - Dan Oetting (Fantastic optimizations and other valuable input)\
+    - Chris Cox (OGR optimizations and great help during WWDC 2K)\
+    - Nate "sampo" Begeman (OGR optimizations, XML drafts, bug fixes)\
+    - Cyrus Patel (Lead developer at dnet and an awesome helper)\
+    - Don Bruder (Contributor of code snippets and a logfile grapher)\
+    - Michael Nahrath (Maintainer of JavaVis and ever-encouraging)\
+    - Evan Vetere (Dearly missed "end-user relations" guy)\
+    - Matt "Zebe" Lee (docs, bug fixes, and Bugzilla management)\
+    - Andrew Meggs and Peter DiCamillo (ported previous clients)\
+    - Matthias Neeracher (Author of GUSI2 which is used in dnetc)\
+    - All members of the dmac beta list hosted by Joseph McLean\
+    - Everybody who provides feedback through Bugzilla\
+\
+    And finally, thanks to everyone who runs dnetc on their computers.\
+    Without you there wouldn't be much of a point in doing the client,\
+    so keep on cracking! Maybe YOU can find the key using this client.\
+\
+\
+}
