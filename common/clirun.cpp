@@ -3,16 +3,29 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.18  1998/10/27 19:37:12  cyp
+// Synchronized again.
+//
 // Revision 1.17  1998/10/27 00:43:04  remi
 // OLD_NICENCESS -> OLDNICENESS
 //
 // Revision 1.16  1998/10/27 00:39:24  remi
-// - Added a few #ifdef to allow compilation of a glibc client without threads.
-// - #ifdef'ed the old niceness/priority code
-// - removed Client::SetContestDoneState() (already in buffupd.cpp)
+// Added a few #ifdef to allow compilation of a glibc client without threads.
+// #ifdef'ed the old niceness/priority code - removed ::SetContestDoneState() 
+// (already in buffupd.cpp)
 //
 // Revision 1.15  1998/10/25 11:26:35  silby
 // Added call to yield_pump in go_mt for win32 so that new CLI is responsive.
+//
+// Revision 1.143 1998/10/21 12:50:04  cyp
+// Promoted u8 contestids in Fetch/Flush/Update to unsigned ints.
+//
+// Revision 1.142 1998/10/20 17:26:43  remi
+// Added 3 missing #ifdef(MULTITHREAD) to allow compilation of a non-mt client
+// on glibc-based systems.
+//
+// Revision 1.141 1998/10/18 21:51:26  dbaker
+// added yield for freebsd
 //
 // Revision 1.14  1998/10/24 15:24:37  sampo
 // Added MacOS yielding code
@@ -72,7 +85,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.17 1998/10/27 00:43:04 remi Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.18 1998/10/27 19:37:12 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -99,6 +112,7 @@ return "@(#)$Id: clirun.cpp,v 1.17 1998/10/27 00:43:04 remi Exp $"; }
 #include "probman.h"   //GetProblemPointerFromIndex()
 #include "probfill.h"  //LoadSaveProblems(), RandomWork(), FILEENTRY_xxx macros
 #include "modereq.h"   //ModeReq[Set|IsSet|Run]()
+
 // --------------------------------------------------------------------------
 
 static int IsFilenameValid( const char *filename )
@@ -140,15 +154,14 @@ static int checkifbetaexpired(void)
 
 struct thread_param_block
 {
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) 
+  #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) 
     unsigned long threadID;
   #elif (CLIENT_OS == OS_NETWARE)
     int threadID;
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
-  #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && defined(MULTITHREAD)
-    pthread_t threadID;
-  #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD)
+  #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H) || 
+    defined(_POSIX_THREAD_PRIORITY_SCHEDULING)) && defined(MULTITHREAD)
     pthread_t threadID;
   #else
     int threadID;
@@ -201,7 +214,17 @@ struct thread_param_block
   #define MIN_SANE_TIMESLICE_DES     (GetTimesliceBaseline())
   #define MAX_SANE_TIMESLICE_RC5   16384
   #define MAX_SANE_TIMESLICE_DES   16384
-#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_DOS)
+#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  #define TIMER_GRANULARITY       125000
+  #define MIN_RUNS_PER_TIME_GRAIN     75 //10, 30, 50
+  #define MAX_RUNS_PER_TIME_GRAIN    125 //100
+  #define INITIAL_TIMESLICE_RC5      (GetTimesliceBaseline())
+  #define INITIAL_TIMESLICE_DES      (GetTimesliceBaseline()<<2)
+  #define MIN_SANE_TIMESLICE_RC5     (GetTimesliceBaseline()>>1)
+  #define MIN_SANE_TIMESLICE_DES     (GetTimesliceBaseline())
+  #define MAX_SANE_TIMESLICE_RC5   16384
+  #define MAX_SANE_TIMESLICE_DES   16384
+#elif (CLIENT_OS == OS_DOS)
   #define TIMER_GRANULARITY       500000 /* has horrible timer resolution */
   #define MIN_RUNS_PER_TIME_GRAIN     3 // 9 /* 18 times/sec */
   #define MAX_RUNS_PER_TIME_GRAIN     5 //18
@@ -253,13 +276,15 @@ static struct
 static void yield_pump( void *tv_p )
 {
   #if (CLIENT_OS == OS_MACOS)
-  	EventRecord event;
+    EventRecord event;
   #endif
   static int pumps_without_run = 0;
   runcounters.yield_run_count++;
 
   #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
     thr_yield();
+  #elif (CLIENT_OS == OS_FREEBSD)
+    sched_yield();
   #elif (CLIENT_OS == OS_OS2)
     DosSleep(0);
   #elif (CLIENT_OS == OS_IRIX)
@@ -278,7 +303,7 @@ static void yield_pump( void *tv_p )
   #elif (CLIENT_OS == OS_LINUX)
     sched_yield();
   #elif (CLIENT_OS == OS_MACOS)
-  	WaitNextEvent( everyEvent, &event, 0, nil );
+    WaitNextEvent( everyEvent, &event, 0, nil );
   #else
     #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */
@@ -695,9 +720,9 @@ void Go_mt( void * parm )
           yield_pump(NULL);
           #else
           run = (thrprob[probnum])->Run( threadnum );
-            #if (CLIENT_OS==OS_WIN32) // change to accomodate new CLI
-            yield_pump(NULL);
-            #endif
+          //#if (CLIENT_OS==OS_WIN32) // change to accomodate new CLI
+          //  yield_pump(NULL);
+          //  #endif
           #endif
           targ->is_suspended = 1;
           } 
@@ -735,13 +760,15 @@ static int __StopThread( struct thread_param_block *thrparams )
         DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
         #elif (CLIENT_OS == OS_WIN32)
         WaitForSingleObject((HANDLE)thrparams->threadID, INFINITE);
+        CloseHandle((HANDLE)thrparams->threadID);
         #elif (CLIENT_OS == OS_BEOS)
         static status_t be_exit_value;
         wait_for_thread(thrparams->threadID, &be_exit_value);
         #elif (CLIENT_OS == OS_NETWARE)
         nwCliWaitForThreadExit( thrparams->threadID ); //in netware.cpp
         #elif (defined(_POSIX_THREAD_PRIORITY_SCHEDULING) || \
-              defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD)
+              defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && \
+        defined(MULTITHREAD)
         pthread_join( thrparams->threadID, (void **)NULL);
         #endif
         }
@@ -786,6 +813,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     else
       {
       #if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
+        unsigned int thraddr;
         thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
         success = ( (thrparams->threadID) != 0);
       #elif (CLIENT_OS == OS_OS2) && defined(MULTITHREAD)
@@ -794,12 +822,9 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       #elif (CLIENT_OS == OS_NETWARE) && defined(MULTITHREAD)
         if (!nwCliIsSMPAvailable())
           use_poll_process = 1;
-        else
-          {
-          thrparams->threadID = BeginThread( Go_mt, NULL, 8192, 
-                                 (void *)thrparams );
-          success = ( thrparams->threadID != -1 );
-          }
+        else 
+          success = ((thrparams->threadID = BeginThread( Go_mt, NULL, 8192, 
+                                 (void *)thrparams )) != -1);
       #elif (CLIENT_OS == OS_BEOS) && defined(MULTITHREAD)
         char thread_name[32];
         long be_priority;
@@ -807,7 +832,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         #error "please check be_prio (priority is now 0-9 [9 is highest/normal])"
         be_priority = ((10*(B_LOW_PRIORITY + B_NORMAL_PRIORITY + 1))/
                                      (9-(thrparams->priority)))/10;
-        #if 0
+        #ifdef OLDNICENESS
         switch(niceness)
           {
           case 0: be_priority = B_LOW_PRIORITY; break;
@@ -886,10 +911,10 @@ int Client::Run( void )
 
   struct thread_param_block *thread_data_table = NULL;
 
-#ifdef OLDNICENESS
-  //priority is a temporary hack
+  #ifdef OLDNICENESS //fake priority if 'niceness' is used intead of 'priority'
   unsigned int priority = ((niceness==2)?(9):((niceness==1)?(4):(0)));
-#endif
+  #endif
+
   int TimeToQuit = 0, exitcode = 0, running_threaded = 0;
   unsigned int load_problem_count = 0, planned_problem_count = 0;
   unsigned int getbuff_errs = 0;
@@ -952,15 +977,20 @@ int Client::Run( void )
   if (!TimeToQuit)
     {
     if (numcputemp == 0) //user requests non-mt
+      {
       load_problem_count = numcputemp = 1;
+      #if (CLIENT_OS==OS_WIN32)   // win32 client _has_ to run multithreaded 
+         load_problem_count = 2;  // since the main thread _has_ to run at 
+      #endif                      // normal priority to keep the window responsive
+      }
     #if (CLIENT_OS == OS_NETWARE)
-    else if (numcputemp == 1) //NetWare client prefers non-threading if only one 
-      load_problem_count = 1; //thread/processor is to used
+    else if (numcputemp == 1) // NetWare client prefers non-threading  
+      load_problem_count = 1; // if only one thread/processor is to used
     #endif
     else
       {
       if (((unsigned int)(numcputemp)) > 
-                    GetNumberOfSupportedProcessors()) //max by client instance
+              GetNumberOfSupportedProcessors()) //max by client instance
         numcputemp = (s32)GetNumberOfSupportedProcessors();   //not by platform
       load_problem_count = 2*((unsigned int)(numcputemp));
       }
@@ -1100,12 +1130,11 @@ int Client::Run( void )
   #if defined(NON_PREEMPTIVE_OS) || (CLIENT_OS == OS_WIN32)
   if (!TimeToQuit)
     {
-    static struct timeval tv = {0,10000}; /* 100/s */
-   
-    #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
-    tv.tv_usec = 500;
+    static struct timeval tv = {0,500};
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOS)
+      tv.tv_usec = 1000;
     #endif
-    
+   
     if (RegPolledProcedure(yield_pump, (void *)&tv, (timeval *)&tv, 32 ) == -1)
       {
       Log("Unable to initialize yield pump\n" );
@@ -1208,17 +1237,6 @@ int Client::Run( void )
       timeRun += timeLast - timeNow; //make sure time is monotonic
     timeLast = timeNow;
 
-    //------------------------------------
-    //update the status bar, check all problems for change, do reloading etc
-    //------------------------------------
-
-    if (!TimeToQuit && !CheckPauseRequestTrigger())
-      {
-      if (!percentprintingoff)
-        LogScreenPercent( load_problem_count ); //logstuff.cpp
-      getbuff_errs += LoadSaveProblems(load_problem_count, PROBFILL_GETBUFFERRS);
-      }
-
     //----------------------------------------
     // Check for user break
     //----------------------------------------
@@ -1236,6 +1254,17 @@ int Client::Run( void )
            (CheckRestartRequestTrigger()?("restart"):("shutdown")) );
       TimeToQuit = 1;
       exitcode = 1;
+      }
+
+    //------------------------------------
+    //update the status bar, check all problems for change, do reloading etc
+    //------------------------------------
+
+    if (!TimeToQuit && !CheckPauseRequestTrigger())
+      {
+      if (!percentprintingoff)
+        LogScreenPercent( load_problem_count ); //logstuff.cpp
+      getbuff_errs += LoadSaveProblems(load_problem_count, PROBFILL_GETBUFFERRS);
       }
 
     //------------------------------------
