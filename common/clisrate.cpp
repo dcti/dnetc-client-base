@@ -8,6 +8,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.38  1999/03/09 07:15:45  gregh
+// Various OGR changes.
+//
 // Revision 1.37  1999/02/21 21:44:59  cyp
 // tossed all redundant byte order changing. all host<->net order conversion
 // as well as scram/descram/checksumming is done at [get|put][net|disk] points
@@ -148,7 +151,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.37 1999/02/21 21:44:59 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.38 1999/03/09 07:15:45 gregh Exp $"; }
 #endif
 
 #include "cputypes.h"  // for u64
@@ -159,6 +162,7 @@ return "@(#)$Id: clisrate.cpp,v 1.37 1999/02/21 21:44:59 cyp Exp $"; }
 #include "clirate.h"   // for CliGetKeyrateFor[Problem|Contest]()
 #include "clicdata.h"  // for CliGetContestInfo[Base|Summary]Data()
 #include "clisrate.h"  // included just to keep prototypes accurate
+#include "stubutil.h"  // for stubstr()
 
 /*
  *
@@ -348,6 +352,8 @@ const char *CliGetU64AsString( u64 *u, int /*inNetOrder*/, int contestid )
 // internal - with or without adjusting cumulative stats
 // Completed RC5 block 68E0D85A:A0000000 (123456789 keys)
 //          123:45:67:89 - [987654321 keys/s]
+// Completed OGR stub 22/1-3-5-7 (123456789 nodes)
+//          123:45:67:89 - [987654321 nodes/s]
 static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave )
 {
   static char str[160];
@@ -375,21 +381,34 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   tv.tv_usec = prob->timelo;
   CliTimerDiff( &tv, &tv, NULL );
 
-  itermul = (((rc5result.iterations.lo) >> 28) +
-             ((rc5result.iterations.hi) * 16) );
-
+  switch (prob->contest) {
+    case 0: // RC5
+    case 1: // DES
 //"Completed one RC5 block 00000000:00000000 (4*2^28 keys)\n"
 //"%s - [%skeys/sec]\n"
-
-  sprintf( str, "Completed one %s block %08lX:%08lX (%u*2^28 keys)\n"
-                "%s - [%skeys/sec]\n",  
-                name, 
-                (unsigned long) ( rc5result.key.hi ) ,
-                (unsigned long) ( rc5result.key.lo ),
-                (unsigned int)(itermul),
-                CliGetTimeString( &tv, 2 ),
-                keyrateP );
-
+      itermul = (((rc5result.iterations.lo) >> 28) +
+                 ((rc5result.iterations.hi) * 16) );
+      sprintf( str, "Completed one %s block %08lX:%08lX (%u*2^28 keys)\n"
+                    "%s - [%skeys/sec]\n",  
+                    name, 
+                    (unsigned long) ( rc5result.key.hi ) ,
+                    (unsigned long) ( rc5result.key.lo ),
+                    (unsigned int)(itermul),
+                    CliGetTimeString( &tv, 2 ),
+                    keyrateP );
+      break;
+    case 2: // OGR
+//"Completed one OGR stub 22/1-3-5-7 (123456789 nodes)\n"
+//"%s - [%snodes/sec]\n"
+      sprintf( str, "Completed one %s stub %s (%u nodes)\n"
+                    "%s - [%snodes/sec]\n",  
+                    name, 
+                    stubstr(&prob->contestwork.ogr.stub),
+                    0, // node count
+                    CliGetTimeString( &tv, 2 ),
+                    keyrateP );
+      break;
+  }
 
   return str;
 }

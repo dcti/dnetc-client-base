@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.44  1999/03/09 07:15:45  gregh
+// Various OGR changes.
+//
 // Revision 1.43  1999/03/08 02:54:51  sampo
 // remove 'extern "C"' from PowerPC func call to fix build bustage
 //
@@ -141,6 +144,7 @@
 #define _PROBLEM_H_
 
 #include "cputypes.h"
+#include "client2.h"
 #include "stub.h"
 
 #if (CLIENT_CPU == CPU_X86)
@@ -237,6 +241,8 @@ public:
   RC5UnitWork rc5unitwork;
   RC5Result rc5result;
   u64 refL0;
+  CoreDispatchTable *ogr;
+  void *ogrstate;
 
   #if (CLIENT_CPU == CPU_X86)
   u32 (*unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );

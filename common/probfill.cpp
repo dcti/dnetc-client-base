@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.38  1999/03/09 07:15:45  gregh
+// Various OGR changes.
+//
 // Revision 1.37  1999/03/02 04:51:35  silby
 // Fixed % complete displayed on shutdown.
 //
@@ -153,7 +156,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.37 1999/03/02 04:51:35 silby Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.38 1999/03/09 07:15:45 gregh Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -176,6 +179,7 @@ return "@(#)$Id: probfill.cpp,v 1.37 1999/03/02 04:51:35 silby Exp $"; }
 #include "rsadata.h"   // Get cipher/etc for random blocks
 #include "confrwv.h"   // Needed to trigger .ini to be updated
 #include "clievent.h"  // ClientEventSyncPost( int event_id, long parm )
+#include "stubutil.h"  // stubstr()
 
 // =======================================================================
 // each individual problem load+save generates 4 or more messages lines 
@@ -357,7 +361,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         break;
       }
       case 2: // OGR
-        strcpy(workunit, "stub"); //stubstr(fileentry.data.ogr.stub));
+        strcpy(workunit, stubstr(&fileentry.data.ogr.stub));
         break;
     }
 
@@ -435,9 +439,9 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   didrandom = didload = didupdate = 0;
   resetloop = 1;
 
-/*****/
-  // (for ogr testing) contest_preferred = 2;
-/*****/
+#ifdef GREGH_DEBUG
+  contest_preferred = 2;
+#endif
 
 #ifdef DEBUG
 Log("Loadblock::Start Preferred contest: %u\n", contest_preferred);
@@ -611,7 +615,7 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
         case 2: // OGR
           Log("Loaded %s stub %s (%u.%02u%% done)",
                   cont_name,
-                  "(stub)", //stubstr(fileentry.data.ogr.stub),
+                  stubstr(&fileentry.data.ogr.stub),
                   ((startpercent!=0 && startpercent<=10000)?(' '):(0)),
                   (startpercent/100), (startpercent%100) );
           break;

@@ -11,6 +11,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.122  1999/03/09 07:15:45  gregh
+// Various OGR changes.
+//
 // Revision 1.121  1999/03/05 04:59:46  gregh
 // struct Packet now has a union to hold crypto and OGR data.
 //
@@ -328,7 +331,11 @@
 // compiled like this won't be surprised when OGR suddenly appears from
 // the proxies.
 #define CONFIG_CONTEST_COUNT 3 /* leave room for 3 contests */
+#ifdef GREGH_DEBUG
+#define CONTEST_COUNT       3 /* RC5, DES, OGR */
+#else
 #define CONTEST_COUNT       2 /* ... but only make 2 active (no OGR now) */
+#endif
 
 // --------------------------------------------------------------------------
 

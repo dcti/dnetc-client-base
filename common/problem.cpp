@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.88  1999/03/09 07:15:45  gregh
+// Various OGR changes.
+//
 // Revision 1.87  1999/03/08 02:46:00  sampo
 // #if (CLIENT_CPU = CPU_ALPHA) should be CLIENT_CPU == CPU_ALPHA
 //
@@ -269,7 +272,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.87 1999/03/08 02:46:00 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.88 1999/03/09 07:15:45 gregh Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -412,30 +415,6 @@ extern void CliSignalHandler(int);
 
 /* ------------------------------------------------------------------- */
 
-static const char *stubstr(const Stub &stub)
-{
-  static char buf[80];
-  if (stub.length > 5) {
-    sprintf(buf, "(error:%d/%d)", stub.marks, stub.length);
-    return buf;
-  }
-  sprintf(buf, "%d/", stub.marks);
-  if (stub.length == 0) {
-    strcat(buf, "-");
-    return buf;
-  }
-  int len = stub.length;
-  for (int i = 0; i < len; i++) {
-    sprintf(&buf[strlen(buf)], "%d", stub.stub[i]);
-    if (i+1 < len) {
-      strcat(buf, "-");
-    }
-  }
-  return buf;
-}
-
-/* ------------------------------------------------------------------- */
-
 Problem::Problem(long _threadindex /* defaults to -1L */)
 {
   threadindex_is_valid = (_threadindex!=-1L);
@@ -535,22 +514,21 @@ static void __SwitchRC5Format (u64 &key)
 
 static void __IncrementKey (u64 &key, u32 iters, int contest)
 {
-  if (contest == 2) // OGR
-    {
-    // Let's the Master of Kangaroo's handle this stuff ;-)
-    }
-  else if (contest == 1) // DES
-    {
-    key.lo += iters;
-    if (key.lo < iters) key.hi++; // Account for carry
-    }
-  else if (contest == 0) // RC5
-    {
-    __SwitchRC5Format (key);    
-    key.lo += iters;
-    if (key.lo < iters) key.hi++;
-    __SwitchRC5Format (key);
-    }
+  switch (contest) {
+    case 0: // RC5
+      __SwitchRC5Format (key);    
+      key.lo += iters;
+      if (key.lo < iters) key.hi++;
+      __SwitchRC5Format (key);
+      break;
+    case 1: // DES
+      key.lo += iters;
+      if (key.lo < iters) key.hi++; // Account for carry
+      break;
+    case 2: // OGR
+      // This should never be called for OGR
+      break;
+  }
 }
 
 /* ------------------------------------------------------------------- */
@@ -773,7 +751,17 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
     case 2: // OGR
 
+      extern CoreDispatchTable *ogr_get_dispatch_table();
       contestwork.ogr = work->ogr;
+      ogr = ogr_get_dispatch_table();
+      int r = ogr->init();
+      if (r != CORE_S_OK) {
+        return -1;
+      }
+      r = ogr->create(&contestwork.ogr.stub, sizeof(Stub), &ogrstate);
+      if (r != CORE_S_OK) {
+        return -1;
+      }
       break;
 
   }
@@ -1188,9 +1176,24 @@ else if (contest == 1) // *********************** DES *********************
   }
 else if (contest == 2) // ******************************* OGR ***************
   {
-    Log("OGR stub %s\nOGR not implemented yet in Problem::Run!\n", 
-                     stubstr(contestwork.ogr.stub));
-    return -1;
+    int nodes = 0x10000;
+    int r = ogr->cycle(ogrstate, &nodes);
+    if (r != CORE_S_CONTINUE) {
+      if (r != CORE_S_OK) {
+        // error!
+      } else {
+        r = ogr->destroy(ogrstate);
+        if (r != CORE_S_OK) {
+          // error!
+        }
+        ogrstate = NULL;
+      }
+      rc5result.result = RESULT_NOTHING;
+      finished = 1;
+    } else {
+      rc5result.result = RESULT_WORKING;
+      finished = 0;
+    }
   }
 else
   {
