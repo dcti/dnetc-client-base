@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.58 2000/07/11 03:06:54 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.59 2000/07/15 18:40:27 oliver Exp $
 ==========================================================================
 
 2.8000
@@ -34,6 +34,11 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.58 2000/07/11 03:06:54 cyp Exp $
                  and then splits it locally into sub-packets. Greatly
                  improves network throughput and reduces server load.
             fix: win32: .462 client was taking long to shutdown.
+            chg: AmigaOS: 68060 core is now used on 040s too (it's faster)
+            new: AmigaOS: added support for threads
+            fix: AmigaOS: networking now works in the PowerUp client
+            fix: AmigaOS: fixed timing problems in the PPC clients that
+                 mainly only affected overclocked CPUs
 
 2.8010.462  fix: many: removed os-level file locking introduced in .459,
                  didn't work reliably on some file systems, and was not
