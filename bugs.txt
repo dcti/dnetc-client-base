@@ -7,6 +7,13 @@ Bugs Listing
   the coders, or by users.
 
 06-08-98 - Jeff Lawson
+  Should the -detach option maybe call setsid()?
+     `setsid()' to become a process group and session group leader. Since a
+     controlling terminal is associated with a session, and this new
+     session has not yet acquired a controlling terminal our process now
+     has no controlling terminal, which is a Good Thing for daemons.
+
+06-08-98 - Jeff Lawson
 
   A user reported: (note this occurs under the gui clients where
   client member functions may be run many times, so it's likely that
