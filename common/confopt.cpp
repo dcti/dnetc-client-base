@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.26  1999/03/18 03:59:09  cyp
+// new "Project priority" option.
+//
 // Revision 1.25  1999/03/02 04:26:39  foxyloxy
 // Upped the maximum for preferred block size to 33.
 //
@@ -82,7 +85,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.25 1999/03/02 04:26:39 foxyloxy Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.26 1999/03/18 03:59:09 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -125,52 +128,52 @@ static const char *lurkmodetable[] =
 struct optionstruct conf_options[CONF_OPTION_COUNT]=
 {
 //0
-{ "id", CFGTXT("Your email address (distributed.net ID)"), "",
+{ CFGTXT("Your email address (distributed.net ID)"), "",
   CFGTXT(
-  "Completed blocks sent back to distributed.net are tagged with the email\n"
-  "address of the person whose machine completed those blocks. That address\n"
+  "Completed packets sent back to distributed.net are tagged with the email\n"
+  "address of the person whose machine completed those packets. That address\n"
   "is used as a unique 'account' identifier in three ways: (a) this is how\n"
   "distributed.net will contact the owner of the machine that submits the\n"
   "winning key; (b) The owner of that address receives credit for completed\n"
-  "blocks which may then be transferred to a team account; (c) The number of\n"
-  "blocks completed may be used as votes in the selection of a recipient of\n"
+  "packets which may then be transferred to a team account; (c) The number of\n"
+  "packets completed may be used as votes in the selection of a recipient of\n"
   "the prize-money reserved for a non-profit organization.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,1,NULL,NULL,0,0},
 //1
-{ "nodisk", CFGTXT("Buffer blocks in RAM only? (no disk I/O)"),"0",
+{  CFGTXT("Buffer packets in RAM only? (no disk I/O)"),"0",
    CFGTXT(
    "This option is for machines with permanent connections to a keyserver\n"
    "but without local disks. Note: This option will cause all buffered,\n"
-   "unflushable blocks to be lost by a client shutdown.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_BOOL,3,NULL,NULL,0,1},
+   "unflushable packets to be lost by a client shutdown.\n"
+  ),CONF_MENU_BUFF,CONF_TYPE_BOOL,2,NULL,NULL,0,1},
 //2
-{ "frequent", CFGTXT("Frequently check for empty buffers?"),"0",
+{ CFGTXT("Frequently check for empty buffers?"),"0",
   CFGTXT(
   "Enabling this option will cause the client to check the input buffers\n"
   "every few minutes or so. You might want to use this if you have a\n"
   "single computer with a network connecting \"feeding\" other clients via\n"
   "a common buff-in.* file so that the buffer never reaches empty.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_BOOL,2,NULL,NULL,0,1},
+  ),CONF_MENU_BUFF,CONF_TYPE_BOOL,3,NULL,NULL,0,1},
 //3
-{ "preferredblocksize", CFGTXT("Preferred Block Size (2^X keys/block)"),"31 (default)",
+{ CFGTXT("Preferred RC5/DES packet size (2^X keys/packet)"),"31 (default)",
   CFGTXT(
-  "When fetching blocks from a keyserver, the client will request blocks with\n"
-  "the size you specify in this option. Running the client with the -benchmark\n"
-  "switch will give you a hint as to what the preferred block size for this\n"
-  "machine might be. Block sizes are specified as powers of 2. The minimum and\n"
-  "maximum block sizes are 28 and 33 respectively.\n"
+  "When fetching RC5 or DES packets from a keyserver, the client will request\n"
+  "packets with the size you specify in this option. Running the client with\n"
+  "the -benchmark switch will give you a hint as to what the best packet size\n"
+  "for this machine might be. Packet sizes are specified as powers of 2.\n"
+  "The minimum and maximum packet sizes are 28 and 33 respectively.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_INT,4,NULL,NULL,28,33},
 //4
-{ "threshold", CFGTXT("Block fetch/flush threshold"), "10 (default)",
+{ CFGTXT("Packet fetch/flush threshold"), "10 (default)",
   CFGTXT(
-  "This option specifies how many blocks your client will buffer between\n"
-  "communications with a keyserver. The client operates directly on blocks\n"
-  "stored in the input buffer, and puts finished blocks into the output buffer.\n"
-  "When the number of blocks in the input buffer reaches 0, the client will\n"
+  "This option specifies how many packets your client will buffer between\n"
+  "communications with a keyserver. The client operates directly on packets\n"
+  "stored in the input buffer, and puts finished packets into the output buffer.\n"
+  "When the number of packets in the input buffer reaches 0, the client will\n"
   "attempt to connect to a keyserver, fill the input buffer to the threshold,\n"
-  "and send in all completed blocks. Keep the number of blocks to buffer low\n"
+  "and send in all completed packets. Keep the number of packets to buffer low\n"
   "(10 or less) if you have a fixed (static) connection to the internet. If\n"
-  "you use a dial-up connection buffer as many blocks as you would complete\n"
+  "you use a dial-up connection buffer as many packets as you would complete\n"
   "in a day (running the client with -benchmark will give you a hint as what\n"
   "might be accomplished by this machine in one day). You may also force a\n"
   "buffer exchange by starting the client with the -update option.  Do not\n"
@@ -178,23 +181,31 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "receive credit for them.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_INT,5,NULL,NULL,1,MAXBLOCKSPERBUFFER},
 //5
-{ "in",  CFGTXT("RC5 In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "rc5",
+{ CFGTXT("RC5 In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "rc5",
   CFGTXT(""
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,6,NULL,NULL,0,0},
 //6
-{ "out", CFGTXT("RC5 Out-Buffer Path/Name"), "buff-out" EXTN_SEP "rc5",
+{ CFGTXT("RC5 Out-Buffer Path/Name"), "buff-out" EXTN_SEP "rc5",
   CFGTXT(""
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,7,NULL,NULL,0,0},
 //7
-{ "in2", CFGTXT("DES In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "des",
-  CFGTXT(""
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,8,NULL,NULL,0,0},
-//8
-{ "out2",CFGTXT("DES Out-Buffer Path/Name"), "buff-out" EXTN_SEP "des",
+{ CFGTXT("DES In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "des",
   CFGTXT(""
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,9,NULL,NULL,0,0},
+//8
+{ CFGTXT("DES Out-Buffer Path/Name"), "buff-out" EXTN_SEP "des",
+  CFGTXT(""
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,10,NULL,NULL,0,0},
 //9
-{ "checkpointfile", CFGTXT("Checkpoint Filename"),"",
+{ CFGTXT("OGR In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "ogr",
+  CFGTXT(""
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,11,NULL,NULL,0,0},
+//10
+{ CFGTXT("OGR Out-Buffer Path/Name"), "buff-out" EXTN_SEP "ogr",
+  CFGTXT(""
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,12,NULL,NULL,0,0},
+//11
+{ CFGTXT("Checkpoint Filename"),"",
   CFGTXT(
   "This option sets the location of the checkpoint file. The checkpoint is\n"
   "where the client writes its progress to disk so that it can recover partially\n"
@@ -202,31 +213,31 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "DO NOT SHARE CHECKPOINTS BETWEEN CLIENTS. Avoid the use of checkpoints unless\n"
   "your client is running in an environment where it might not be able to shutdown\n"
   "properly.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,12,NULL,NULL,0,0},
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,13,NULL,NULL,0,0},
 
 /* ------------------------------------------------------------ */
 
-//10
-{ "count", CFGTXT("Complete this many blocks, then exit"), "0 (no limit)",
+//12
+{ CFGTXT("Complete this many packets, then exit"), "0 (no limit)",
   CFGTXT(
   "This option specifies that you wish to have the client exit after it has\n"
-  "crunched a predefined number of blocks. Use 0 (zero) to apply 'no limit',\n"
+  "crunched a predefined number of packets. Use 0 (zero) to apply 'no limit',\n"
   "or -1 to have the client exit when the input buffer is empty (this is the\n"
   "equivalent to the -runbuffers command line option.)\n"
   ),CONF_MENU_MISC,CONF_TYPE_INT,1,NULL,NULL,0,0}, /* no min max here */
-//11
-{ "hours", CFGTXT("Run for this long, then exit"), "0:00 (no limit)",
+//13
+{ CFGTXT("Run for this long, then exit"), "0:00 (no limit)",
   CFGTXT(
   "This option specifies that you wish to have the client exit after it has\n"
   "crunched a predefined number of hours. Use 0:00 (or clear the field) to\n"
   "specify 'no limit'.\n"
   ),CONF_MENU_MISC,CONF_TYPE_TIMESTR,2,NULL,NULL,0,0},
-//12
-{ "pausefile",CFGTXT("Pausefile Path/Name"),"",
+//14
+{ CFGTXT("Pausefile Path/Name"),"",
   CFGTXT(""
   ),CONF_MENU_MISC,CONF_TYPE_ASCIIZ,3,NULL,NULL,0,0},
-//13
-{ "quiet", CFGTXT("Disable all screen output? (quiet mode)"),"0",
+//15
+{ CFGTXT("Disable all screen output? (quiet mode)"),"0",
   CFGTXT(
   "When enabled, this option will cause the client to suppress all screen output\n"
   "and detach itself (run in the background). Because the client is essentially\n"
@@ -235,30 +246,37 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "synonymous with the -runhidden and -quiet command line switches and can be\n"
   "overridden with the -noquiet switch.\n"
   ),CONF_MENU_MISC,CONF_TYPE_BOOL,4,NULL,NULL,0,1},
-//14
-{ "noexitfilecheck", CFGTXT("Disable exit file checking?"),"0",
+//16
+{ CFGTXT("Disable exit file checking?"),"0",
   CFGTXT(
   "When disabled, this option will cause the client to watch for a file named\n"
   "\"exitrc5.now\", the presence of which being a request to the client to\n"
   "shut itself down. (The name of the exit flag file may be set in the ini.)\n"
   ),CONF_MENU_MISC,CONF_TYPE_BOOL,5,NULL,NULL,0,1},
-//15
-{ "percentoff", CFGTXT("Disable the block completion indicator?"),"0",
+//17
+{ CFGTXT("Disable the packet completion indicator?"),"0",
   CFGTXT(""
   ),CONF_MENU_MISC,CONF_TYPE_BOOL,6,NULL,NULL,0,1},
+//18
+{ CFGTXT("Project Priority"), "DES,OGR,RC5",
+  CFGTXT(
+  "Enter the order in which the client will search for active projects,\n"
+  "for instance \"DES,OGR,RC5\" specifies that DES packets (if available) will\n"
+  "be crunched before OGR or RC5 packets.\n"
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,5,NULL,NULL,0,0},
 
 /* ------------------------------------------------------------ */
 
-//16
-{ "cputype", CFGTXT("Processor type"), "-1 (autodetect)",
+//19
+{ CFGTXT("Processor type"), "-1 (autodetect)",
   CFGTXT(
   "This option determines which processor the client will optimize operations\n"
   "for.  While auto-detection is preferrable for most processor families, you may\n"
   "wish to set the processor type manually if detection fails or your machine's\n"
   "processor is detected incorrectly.\n"
   ),CONF_MENU_PERF,CONF_TYPE_INT,1,NULL,NULL,0,0},
-//17
-{ "numcpu", CFGTXT("Number of processors available"), "-1 (autodetect)",
+//20
+{ CFGTXT("Number of processors available"), "-1 (autodetect)",
 #if (CLIENT_OS == OS_RISCOS)
   "This option specifies the number of threads you want the client to work on.\n"
   "On multi-processor machines this should be set to the number of processors\n"
@@ -277,8 +295,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   )
 #endif
   ,CONF_MENU_PERF,CONF_TYPE_INT,2,NULL,NULL,-1,128},
-//18
-{ "", CFGTXT("Priority level to run at"), "0 (lowest/idle)",
+//21
+{ CFGTXT("Priority level to run at"), "0 (lowest/idle)",
 #if (CLIENT_OS == OS_NETWARE)
   CFGTXT(
   "The priority option is ignored on this machine. The distributed.net client\n"
@@ -288,15 +306,15 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   CFGTXT(
   "The priority option is ignored on this machine. distributed.net clients\n"
   "for Windows always run at lowest ('idle') priority.\n"
+  "This does not mean that the client will run slower than at a higher\n"
+  "priority. It simply means that all other processes have a better chance\n"
+  "to get processor time than client. If none of them want/need processor\n"
+  "time, the client will get it.\n"
   )
-#elif (CLIENT_OS == OS_RISCOS)
+#elif (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS)
   CFGTXT(
   "The priority option is ignored on this machine. The distributed.net client\n"
-  "for RISC OS dynamically adjusts its process priority.\n"
-  )
-#elif (CLIENT_OS==OS_MACOS)
-  CFGTXT(
-  "DESCRIPTION IS MISSING\n"
+  "for "CLIENT_OS_NAME" dynamically adjusts its process priority.\n"
   )
 #else
   CFGTXT(
@@ -317,42 +335,42 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
 
 /* ------------------------------------------------------------ */
 
-//19
-{ "logname", CFGTXT("File to log to"), "",
+//22
+{ CFGTXT("File to log to"), "",
   CFGTXT(
   "To enable logging to file you must specify the name of a logfile. The filename\n"
   "is limited a length of 128 characters and may not contain spaces. The file\n"
   "will be created to be in the client's directory unless a path is specified.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,1,NULL,NULL,0,0},
-//20
-{ "messagelen", CFGTXT("Log by mail spool size (bytes)"), "0 (mail disabled)",
+//23
+{ CFGTXT("Log by mail spool size (bytes)"), "0 (mail disabled)",
   CFGTXT(
   "The client is capable of sending you a log of the client's progress by mail.\n"
   "To activate this capability, specify how much you want the client to buffer\n"
   "before sending. The minimum is 2048 bytes, the maximum is approximately 130000\n"
   "bytes. Specify 0 (zero) to disable logging by mail.\n"
   ),CONF_MENU_LOG,CONF_TYPE_INT,2,NULL,NULL,0,125000},
-//21
-{ "smtpsrvr", CFGTXT("SMTP Server to use"), "",
+//24
+{ CFGTXT("SMTP Server to use"), "",
   CFGTXT(
   "Specify the name or DNS address of the SMTP host via which the client should\n"
   "relay mail logs. The default is the hostname component of the email address from\n"
   "which logs will be mailed.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,3,NULL,NULL,0,0},
-//22
-{ "smtpport", CFGTXT("SMTP Port"), "25 (default)",
+//25
+{ CFGTXT("SMTP Port"), "25 (default)",
   CFGTXT(
   "Specify the port on the SMTP host to which the client's mail subsystem should\n"
   "connect when sending mail logs. The default is port 25.\n"
   ),CONF_MENU_LOG,CONF_TYPE_INT,4,NULL,NULL,1,0xFFFF},
-//23
-{ "smtpfrom", CFGTXT("E-mail address that logs will be mailed from"),
+//26
+{ CFGTXT("E-mail address that logs will be mailed from"),
   "" /* *((const char *)(options[CONF_ID].thevariable)) */,
   CFGTXT(
   "(Some servers require this to be a real address)\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,5,NULL,NULL,0,0},
-//24
-{ "smtpdest", CFGTXT("E-mail address to send logs to"),
+//27
+{ CFGTXT("E-mail address to send logs to"),
   "" /* *((const char *)(options[CONF_ID].thevariable)) */,
   CFGTXT(
   "Full name and site eg: you@your.site.  Comma delimited list permitted.\n"
@@ -360,22 +378,22 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
 
 /* ------------------------------------------------------------ */
 
-//25
-{ "runoffline", CFGTXT("Offline operation mode"),"0",
+//28
+{ CFGTXT("Offline operation mode"),"0",
   CFGTXT(
   "Yes: The client will never connect to a keyserver.\n"
   " No: The client will connect to a keyserver as needed.\n"
   ),CONF_MENU_NET,CONF_TYPE_BOOL,1,NULL,NULL,0,1},
-//26
-{ "nettimeout", CFGTXT("Network Timeout (seconds)"), "60 (default)",
+//29
+{ CFGTXT("Network Timeout (seconds)"), "60 (default)",
   CFGTXT(
   "This option determines the amount of time the client will wait for a network\n"
   "read or write acknowledgement before it assumes that the connection has been\n"
   "broken. Any value between 5 and 300 seconds is valid and setting the timeout\n"
   "to -1 forces a blocking connection.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,2,NULL,NULL,-1,300},
-//27
-{ "uuehttpmode", CFGTXT("Firewall Protocol/Communications mode"), "0 (direct connection)",
+//30
+{ CFGTXT("Firewall Protocol/Communications mode"), "0 (direct connection)",
   CFGTXT(
   "This option determines what protocol to use when communicating via a SOCKS\n"
   "or HTTP proxy, or optionally when communicating directly with a keyserver\n"
@@ -383,8 +401,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "connection to either a personal proxy or to a distributed.net keyserver\n"
   "on the internet.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,3,NULL,CFGTXT(&uuehttptable[0]),0,5},
-//28
-{ "", CFGTXT("Automatically select a distributed.net keyserver?"), "1",
+//31
+{ CFGTXT("Automatically select a distributed.net keyserver?"), "1",
   CFGTXT(
   "Set this option to 'Yes' UNLESS your client will not be communicating\n"
   "with a personal proxy (instead of one of the main distributed.net\n"
@@ -392,77 +410,79 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "(firewall) and you have been explicitely advised by distributed.net\n"
   "staff to use a specific IP address.\n"
   ),CONF_MENU_NET,CONF_TYPE_BOOL,4,NULL,NULL,0,1},
-//29
-{ "keyproxy", CFGTXT("Keyserver to communicate with"), "",
+//32
+{ CFGTXT("Keyserver to communicate with"), "",
   CFGTXT(
   "This is the name or IP address of the machine that your client will\n"
-  "obtain keys from and send completed blocks to. Avoid IP addresses\n"
+  "obtain keys from and send completed packets to. Avoid IP addresses\n"
   "if possible unless your client will be communicating through a HTTP\n"
-  "proxy (firewall) and you have trouble fetching or flushing blocks.\n"
+  "proxy (firewall) and you have trouble fetching or flushing packets.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,5,NULL,NULL,0,0},
-//30
-{ "keyport", CFGTXT("Keyserver port to connect to"), "0 (auto select)",
+//33
+{ CFGTXT("Keyserver port to connect to"), "0 (auto select)",
   CFGTXT(
   "This field determines which keyserver port the client should connect to.\n"
-  "Leave this option at zero to have the client automatically select a port\n"
-  "number based on the keyserver hostname and on the firewall communications\n"
-  "mode. If the client is connecting to a specially configured personal\n"
-  "proxy, ensure that this option reflects the port number that that proxy\n"
-  "accepts connections on.\n"
-  "distributed.net keyservers accept connections on port 2064 (direct & SOCKS\n"
-  "connections), port 23 (UUE/Telnet) and port 80 (HTTP/HTTP+UUE).\n"
+  "You should leave this at zero unless:\n"
+  "a) You are connecting to a personal proxy is that is *not* listening on\n"
+  "   port 2064.\n"
+  "b) You are connecting to a keyserver (regardless of type: personal proxy\n"
+  "   or distributed.net host) through a firewall, and the firewall does\n"
+  "   *not* permit connections to port 2064.\n"
+  "\n"
+  "All keyservers (personal proxy as well as distributed.net hosts) accept\n"
+  "all encoding methods (UUE, HTTP, raw) on any/all ports the listen on.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,6,NULL,NULL,0,0xFFFF},
-//31
-{ "nofallback", CFGTXT("Keyserver is a personal proxy on a protected LAN?"),"0",
+//34
+{ CFGTXT("Keyserver is a personal proxy on a protected LAN?"),"0",
   CFGTXT(
   "If the keyserver that your client will be connecting to is a personal\n"
   "proxy inside a protected LAN (inside a firewall), set this option to 'yes'.\n"
   "Otherwise leave it at 'No'.\n"
   ),CONF_MENU_NET,CONF_TYPE_BOOL,7,NULL,NULL,0,1},
-//32
-{ "httpproxy", CFGTXT("HTTP/SOCKS proxy hostname"), "proxy.mydomain.com",
+//35
+{ CFGTXT("HTTP/SOCKS proxy hostname"), "proxy.mydomain.com",
   CFGTXT(
   "This field determines the hostname or IP address of the firewall proxy\n"
   "through which the client should communicate. The proxy is expected to be\n"
   "on a local network.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,8,NULL,NULL,0,0},
-//33
-{ "httpport", CFGTXT("HTTP/SOCKS proxy port"), "" /* note: atol("")==0 */,
+//36
+{ CFGTXT("HTTP/SOCKS proxy port"), "" /* note: atol("")==0 */,
   CFGTXT(
   "This field determines the port number on the firewall proxy to which the\n"
   "the client should connect. The port number must be valid.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,9,NULL,NULL,1,0xFFFF},
-//34
-{ "httpid", CFGTXT("HTTP/SOCKS proxy username"), "",
+//37
+{ CFGTXT("HTTP/SOCKS proxy username"), "",
   CFGTXT(
   "Specify a username in this field if your SOCKS host requires\n"
   "authentication before permitting communication through it.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,10,NULL,NULL,0,0},
-//35
-{ "", CFGTXT("HTTP/SOCKS5 proxy password"), "",
+//38
+{ CFGTXT("HTTP/SOCKS5 proxy password"), "",
   CFGTXT(
   "Specify the password in this field if your SOCKS host requires\n"
   "authentication before permitting communication through it.\n"
   ),CONF_MENU_NET,CONF_TYPE_PASSWORD,11,NULL,NULL,0,0},
-//36
-{ "", CFGTXT("Modem detection options"),"0",
+//39
+{ CFGTXT("Modem detection options"),"0",
   CFGTXT(
-  "Normal mode: the client will send/receive blocks only when it\n"
+  "Normal mode: the client will send/receive packets only when it\n"
   "        empties the in buffer, hits the flush threshold, or the user\n"
   "        specifically requests a flush/fetch.\n"
   "Dial-up detection mode: This acts like mode 0, with the addition\n"
-  "        that the client will automatically send/receive blocks when a\n"
+  "        that the client will automatically send/receive packets when a\n"
   "        dial-up networking connection is established. Modem users\n"
   "        will probably wish to use this option so that their client\n"
-  "        never runs out of blocks.\n"
+  "        never runs out of packets.\n"
   "Dial-up detection ONLY mode: Like the previous mode, this will cause\n"
-  "        the client to automatically send/receive blocks when\n"
-  "        connected. HOWEVER, if the client runs out of blocks,\n"
+  "        the client to automatically send/receive packets when\n"
+  "        connected. HOWEVER, if the client runs out of packets,\n"
   "        it will NOT trigger auto-dial, and will instead work\n"
-  "        on random blocks until a connection is detected.\n"
+  "        on random packets until a connection is detected.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,12,NULL,CFGTXT(&lurkmodetable[0]),0,2},
-//37
-{ "", CFGTXT("Interfaces to watch"), "",
+//40
+{ CFGTXT("Interfaces to watch"), "",
   CFGTXT(
   "Colon-separated list of interface names to monitor for a connection,\n"
   "For example: \"ppp0:ppp1:eth1\". Wildcards are permitted, ie \"ppp*\".\n"
@@ -477,8 +497,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "   in another, set this option to '*'.\n"
   "The command line equivalent of this option is --interfaces-to-watch\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,13,NULL,NULL,0,0},
-//38
-{ "" /*dialwhenneeded*/, 
+//41
+{ /*dialwhenneeded*/ 
    #if (CLIENT_OS == OS_WIN32)
    CFGTXT("Use a specific DUN profile for connecting to the net?"),
    #elif ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
@@ -490,36 +510,28 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
    "Select 'yes' to have the client control how network connections\n"
    "are initiatiated if none is active.\n"
    ),CONF_MENU_NET,CONF_TYPE_BOOL,14,NULL,NULL,0,1},
-//39
-{ "", CFGTXT("Dial-up Connection Profile"),"",
+//42
+{ CFGTXT("Dial-up Connection Profile"),"",
   #if (CLIENT_OS == OS_WIN32)
   CFGTXT("Select the DUN profile to use when dialing-as-needed.\n")
   #else
   CFGTXT("")
   #endif
   ,CONF_MENU_NET,CONF_TYPE_ASCIIZ,15,NULL,NULL,0,0},
-//40
-{ "", CFGTXT("Command/script to start dialup"),"",
+//43
+{ CFGTXT("Command/script to start dialup"),"",
   CFGTXT(
   "Enter any valid shell command or script name to use to initiate a\n"
   "network connection. \"Dial the Internet as needed?\" must be enabled for\n"
   "this to be of any use.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,16,NULL,NULL,0,0},
-//41
-{ "", CFGTXT("Command/script to stop dialup"),"",
+//44
+{ CFGTXT("Command/script to stop dialup"),"",
   CFGTXT(
   "Enter any valid shell command or script name to use to shutdown a\n"
   "network connection previously initiated with the script/command specified\n"
   "in the \"Command/script to start dialup\" option.\n"
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,17,NULL,NULL,0,0},
-//42
-{ "in3", CFGTXT("OGR In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "ogr",
-  CFGTXT(""
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,10,NULL,NULL,0,0},
-//43
-{ "out3",CFGTXT("OGR Out-Buffer Path/Name"), "buff-out" EXTN_SEP "ogr",
-  CFGTXT(""
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,11,NULL,NULL,0,0}
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,17,NULL,NULL,0,0}
 };
 
 // --------------------------------------------------------------------------
