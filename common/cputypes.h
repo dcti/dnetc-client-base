@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.38  1998/12/14 05:15:44  dicamillo
+// Mac OS updates to eliminate use of MULTITHREAD and have a singe client
+// for MT and non-MT machines.
+//
 // Revision 1.37  1998/12/01 19:49:14  cyp
 // Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
 // then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
@@ -487,6 +491,10 @@ struct s128 { s64 hi, lo; };
   #include <OS.h>
   typedef thread_id THREADID;
   #define OS_SUPPORTS_SMP
+#elif (CLIENT_OS == OS_MACOS)
+   #include <Multiprocessing.h>
+   typedef MPTaskID THREADID;
+   #define OS_SUPPORTS_SMP
 #elif defined(MULTITHREAD)
   #include <pthread.h>
   typedef pthread_t THREADID;

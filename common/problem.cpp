@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.52  1998/12/14 05:16:10  dicamillo
+// Mac OS updates to eliminate use of MULTITHREAD and have a singe client
+// for MT and non-MT machines.
+//
 // Revision 1.51  1998/12/09 07:38:40  dicamillo
 // Fixed missing // in log comment (MacCVS Pro bug!).
 //
@@ -135,7 +139,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.51 1998/12/09 07:38:40 dicamillo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.52 1998/12/14 05:16:10 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -509,14 +513,8 @@ s32 Problem::Run( u32 threadnum )
   // DES code yields in the core itself because it can run for a
   // long time (with respect to good user response time) before returning
   #if (CLIENT_OS == OS_MACOS)
-    if (contest == 0) {
-      #if defined(MULTITHREAD)
-	  if (MP_active == 0) {
-		YieldToMain(1);		// cannot do this in real thread!
-		}
-      #else
+    if ((contest == 0) && (MP_active == 0)) {
   	  YieldToMain(1);
-      #endif
   	}
   #endif
 
@@ -902,14 +900,10 @@ s32 Problem::Run( u32 threadnum )
         contestwork.keysdone.lo += pipeline_count;
         }
       }
-	  #ifdef MAC_GUI
-	  #if defined(MULTITHREAD)
-		  if (MP_Active == 0) {			
+	  #if (CLIENT_OS == OS_MACOS)
+		  if (MP_active == 0) {			
 			  YieldToMain(1);
-			  }
-	  #else
-	  	   YieldToMain(1);
-	  #endif
+		  }
 	  #endif
     }
   else

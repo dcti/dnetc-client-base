@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.49  1998/12/14 05:14:21  dicamillo
+// Mac OS updates to eliminate use of MULTITHREAD and have a singe client
+// for MT and non-MT machines.
+//
 // Revision 1.48  1998/12/09 07:31:38  dicamillo
 // Added support for MacOS client scheduling, MP API, and GUI display.
 //
@@ -183,7 +187,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.48 1998/12/09 07:31:38 dicamillo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.49 1998/12/14 05:14:21 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -257,6 +261,8 @@ struct thread_param_block
     int threadID;
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
+  #elif (CLIENT_OS == OS_MACOS)
+    MPTaskID threadID;
   #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
     pthread_t threadID;
   #else
@@ -667,7 +673,7 @@ printf("%u\n", tslice_table[contest] );
 
 // ----------------------------------------------------------------------
 
-#if ((CLIENT_OS == OS_MACOS) && defined(MULTITHREAD))
+#if (CLIENT_OS == OS_MACOS)
   OSStatus Go_mt( void * parm )
 #else
   void Go_mt( void * parm )
@@ -711,7 +717,7 @@ if (targ->realthread)
   }
 #elif (CLIENT_OS == OS_OS2)
 #elif (CLIENT_OS == OS_BEOS)
-#elif ((CLIENT_OS == OS_MACOS) && defined(MULTITHREAD))
+#elif (CLIENT_OS == OS_MACOS)
   if (targ->realthread) {
     MPEnterCriticalRegion(MP_count_region, kDurationForever);
     MP_active++;
@@ -771,7 +777,7 @@ if (targ->realthread)
       else //(CheckPauseRequestTriggerNoIO() || targ->do_suspend)
         {
         //if (targ->realthread)
-          #if ((CLIENT_OS == OS_MACOS) && defined(MULTITHREAD))
+          #if (CLIENT_OS == OS_MACOS)
 		    if (targ->realthread) {
 		      mp_sleep(1);		 // Mac needs special sleep call in MP threads
 		    }
@@ -806,7 +812,7 @@ if (targ->realthread)
     exit(0);
   #endif
 
-  #if ((CLIENT_OS == OS_MACOS) && defined(MULTITHREAD))
+  #if (CLIENT_OS == OS_MACOS)
     if (targ->realthread) {
       ThreadIsDone[threadnum] = 1;
       MPEnterCriticalRegion(MP_count_region, kDurationForever);
@@ -841,7 +847,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         wait_for_thread(thrparams->threadID, &be_exit_value);
         #elif (CLIENT_OS == OS_NETWARE)
         nwCliWaitForThreadExit( thrparams->threadID ); //in netware.cpp
-		#elif ((CLIENT_OS == OS_MACOS) && defined(MULTITHREAD))
+		#elif (CLIENT_OS == OS_MACOS)
 		  while (ThreadIsDone[thrparams->threadnum] == 0) {
 			tick_sleep(60);
           }		
@@ -919,18 +925,21 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         if ( ((thrparams->threadID) >= B_NO_ERROR) &&
              (resume_thread(thrparams->threadID) == B_NO_ERROR) )
           success = 1;
-      #elif ((CLIENT_OS == OS_MACOS) && defined(MULTITHREAD))
+      #elif (CLIENT_OS == OS_MACOS)
         OSErr thread_error;
-        static MPTaskID threadid[MAC_MAXCPUS];
+        MPTaskID new_threadid;
         ThreadIsDone[thread_i] = 0;
         thread_error = MPCreateTask(Go_mt, (void *)thrparams, (unsigned long)0, (OpaqueMPQueueID *)kMPNoID,
-            		(void *)0, (void *)0, (unsigned long)0, &threadid[thread_i]);
+            		(void *)0, (void *)0, (unsigned long)0, &new_threadid);
         if (thread_error != noErr) {
-          threadid[thread_i] = NULL;
+          new_threadid = NULL;
         }
-        else {
-          #if defined(MAC_GUI)
-            {
+		else {
+		  success = 1;
+		}
+		thrparams->threadID = new_threadid;
+        #if defined(MAC_GUI)
+		  if (success) {
 			  Problem *thisprob;
 			  thisprob = GetProblemPointerFromIndex( thread_i );
 			  MakeGUIThread(thisprob->contest, thread_i);
@@ -938,9 +947,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
 									 thisprob->GetKeysDone()); 
 			  UpdateClientInfo(&client_info);
             }
-          #endif
-		  success = 1;
-        }
+        #endif
       #elif defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
         #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
           SetGlobalPriority( thrparams->priority );  
@@ -968,7 +975,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       if (timeslice > (1<<12)) 
         thrparams->timeslice = (1<<12);
 	  #if (CLIENT_OS == OS_MACOS)
-        thrparams->threadID = RegPolledProcedure((void (*)(void *))Go_mt, 
+        thrparams->threadID = (MPTaskID)RegPolledProcedure((void (*)(void *))Go_mt, 
                                 (void *)thrparams , NULL, 0 );
 	  #else
         thrparams->threadID = RegPolledProcedure(Go_mt, 
@@ -1110,6 +1117,10 @@ int Client::Run( void )
       numcrunchers = 0;    // if only one thread/processor is to used
     #endif
 
+    #if (CLIENT_OS == OS_MACOS)
+    if (!haveMP) numcrunchers = 0;	// no real threads if MP not present or not wanted
+    #endif
+    
     if (numcrunchers < 1) /* == 0 = user requested non-mt */
       {
       force_no_realthreads = 1;

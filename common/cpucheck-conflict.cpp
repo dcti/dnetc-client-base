@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.51  1998/12/14 05:15:08  dicamillo
+// Mac OS updates to eliminate use of MULTITHREAD and have a singe client
+// for MT and non-MT machines.
+//
 // Revision 1.50  1998/12/09 07:41:56  dicamillo
 // fixed log comment.
 //
@@ -176,7 +180,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.50 1998/12/09 07:41:56 dicamillo Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.51 1998/12/14 05:15:08 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -197,8 +201,12 @@ unsigned int GetNumberOfSupportedProcessors( void )
 #if (CLIENT_OS == OS_RISCOS)
   return ( 2 ); /* not just some arbitrary number */
 #elif (CLIENT_OS == OS_MACOS)
-  return ( MAC_MAXCPUS ); // Mac constant needed for static arrays;
-  						  // if too large, a lot of memory would be wasted
+  if (haveMP) {
+    return( MAC_MAXCPUS );
+  }
+  else {
+    return(1);
+  }
 #else
   return ( 128 ); /* just some arbitrary number */
 #endif
@@ -284,6 +292,15 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       {
       cpucount = riscos_count_cpus();
       }
+	#elif (CLIENT_OS == OS_MACOS)
+	  {
+	  if (haveMP) {
+        cpucount = MPProcessors();
+	  	}
+	  else {
+		cpucount = 1;
+	  	}
+	  }
 
     #endif
     if (cpucount < 1)  //not supported
