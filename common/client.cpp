@@ -3,12 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.155  1998/11/11 00:32:07  cyp
+// Fixed DoSingleInstanceProtection() for win32. (many thanks davehart)
+//
 // Revision 1.154  1998/11/10 21:51:32  cyp
-// Completely reorganized Client::Main() initialization order so that (a) the
-// client object is completely initialized (both ini file and cmdline) before
-// anything else, (b) whether the client is running "modes" is known from the
-// beginning (c) Single instance protection can occur conditionally (ie only
-// if the client will not be running "modes").
+// Completely reorganized Client::Main() initialization order so that the
+// client object is initialized (read config/command line parse) first.
 //
 // Revision 1.153  1998/11/09 20:05:11  cyp
 // Did away with client.cktime altogether. Time-to-Checkpoint is calculated
@@ -72,7 +72,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.154 1998/11/10 21:51:32 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.155 1998/11/11 00:32:07 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -221,6 +221,16 @@ static void PrintBanner(const char *dnet_id)
     #if (CLIENT_OS == OS_DOS)
       dosCliCheckPlatform(); //show warning if pure DOS client is in win/os2 VM
     #endif
+    #if ((CLIENT_OS==OS_DOS) || (CLIENT_OS==OS_WIN16) || \
+      (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2))
+    if (getenv("TZ") == NULL)
+      {
+      LogScreenRaw("Warning: The TZ= variable is not set in the environment. "
+       "The client will\nprobably display the wrong time and/or select the "
+       "wrong keyserver.\n");
+      putenv("TZ=GMT+0"); //use local time.
+      }
+    #endif
     }
   
   if ( level == 1 )
@@ -256,26 +266,32 @@ static void PrintBanner(const char *dnet_id)
 
 //------------------------------------------------------------------------
 
-int DoSingleInstanceProtection(int level) /* >0 set, <0 unset */
+static int DoSingleInstanceProtection(int level) /* >0 set, <0 unset */
 {
-  #if 0 //(CLIENT_OS == OS_WIN32) -- win32API is fscked. ReleaseMutex() does not work
+  int retcode = 0;
+  #if (CLIENT_OS == OS_WIN32)
   static HANDLE hmutex = NULL;
   if (level > 0)
     {
     SetLastError(0); // only allow one running instance
     hmutex = CreateMutex(NULL, TRUE, "Bovine RC5/DES Win32 Client");
-    return (GetLastError() != 0);
+    if (GetLastError() != 0)
+      {
+      retcode = -1;
+      level = -1; //fall through
+      }
     }
   if (level < 0)
     {
     if (hmutex)
       {
       ReleaseMutex( hmutex );
+      CloseHandle( hmutex );
       hmutex = NULL;
       }
     }
   #endif
-  return 0;
+  return retcode;
 }
 
 //------------------------------------------------------------------------
