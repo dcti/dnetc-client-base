@@ -1,5 +1,9 @@
 #
 # $Log: crunch_allitnil_552.ppc.s,v $
+# Revision 1.3  1999/04/08 18:46:23  patrick
+#
+# bug fixes (double rgister usage and other stuff). Did this ever compile ?
+#
 # Revision 1.2  1998/06/14 10:30:30  friedbait
 # 'Log' keyword added.
 #
@@ -7,10 +11,10 @@
 # allitnil -- the 601 companion for lintilla
  .file	"crunch-ppc.cpp"
 gcc2_compiled.:
- .section	".text"
- .align 2
+ .csect	.text[PR]
+ .align 8
  .globl crunch_allitnil
- .type	 crunch_allitnil,@function
+# .type	 crunch_allitnil,@function
 
 # stratagy: straight code in inner loop, 256 key cycle, load S0_n from
 # pre-calculated constants
@@ -29,7 +33,6 @@ crunch_allitnil:
 .set L0_lo,20
 
 # register name aliases
-.set SP, r1
 .set r0, 0
 .set r1, 1
 .set r2, 2
@@ -40,16 +43,6 @@ crunch_allitnil:
 .set r7, 7
 .set r8, 8
 .set r9, 9
-.set r10, 10
-.set r11, 11
-.set r12, 12
-.set r13, 13
-.set r14, 14
-.set r15, 15
-.set r16, 16
-.set r17, 17
-.set r18, 18
-.set r19, 19
 .set r10, 10
 .set r11, 11
 .set r12, 12
@@ -73,15 +66,15 @@ crunch_allitnil:
 .set r30, 30
 .set r31, 31
 
+.set SP, r1
+
 .set iterations, 28
 .set work_ptr, 24		
 .set save_RTOC, -80
 .set count, -84
-.set save_RTOC, -80
-.set count, -84
 .set P_0, -88
 .set P_1, -92
-.set C_0, -96
+# .set C_0, -96
 .set C_1, -100
 .set L0_0, -104
 .set L0_1, -108

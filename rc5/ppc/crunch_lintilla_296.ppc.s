@@ -1,19 +1,22 @@
 #
 # $Log: crunch_lintilla_296.ppc.s,v $
+# Revision 1.3  1999/04/08 18:49:22  patrick
+#
+# bug fixes (double rgister usage and other stuff). Did this ever compile ?
+#
 # Revision 1.2  1998/06/14 10:30:36  friedbait
 # 'Log' keyword added.
 #
 #
  .file	"crunch-ppc.cpp"
 gcc2_compiled.:
- .section	".text"
- .align 2
+ .csect	.text[PR]
+ .align 8
  .globl crunch_lintilla
- .type	 crunch_lintilla,@function
+# .type	 crunch_lintilla,@function
 crunch_lintilla:
 
 # standard register aliases
-.set SP, r1
 .set r0, 0
 .set r1, 1
 .set r2, 2
@@ -24,16 +27,6 @@ crunch_lintilla:
 .set r7, 7
 .set r8, 8
 .set r9, 9
-.set r10, 10
-.set r11, 11
-.set r12, 12
-.set r13, 13
-.set r14, 14
-.set r15, 15
-.set r16, 16
-.set r17, 17
-.set r18, 18
-.set r19, 19
 .set r10, 10
 .set r11, 11
 .set r12, 12
@@ -56,6 +49,8 @@ crunch_lintilla:
 .set r29, 29
 .set r30, 30
 .set r31, 31
+
+.set SP, r1
 
 # offsets into the RC5UnitWork structure
 .set plain_hi,0     # plaintext, already mixed with IV
