@@ -1,8 +1,10 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.71 1999/12/16 18:18:25 michmarc Exp $
+# $Id: makefile.vc,v 1.72 2000/01/04 01:22:16 michmarc Exp $
 #
+
+#DEBUG=1
 
 !ifndef PROCESSOR_ARCHITECTURE
 PROCESSOR_ARCHITECTURE = x86
@@ -21,9 +23,9 @@ CSCSRCPATH = csc
 CHIPSRCPATH = platforms
 PLATSRCPATH = platforms/win32cli
 
-#HAVE_DES_CORES=1
+HAVE_DES_CORES=1
 HAVE_CSC_CORES=1
-#HAVE_OGR_CORES=1
+HAVE_OGR_CORES=1
 
 # --------------------------------------------
 
@@ -37,7 +39,7 @@ OPTS_M_PLAT = IX86
 !endif
 
 !ifdef DEBUG
-OPTS_CC_DEBUG = -Zi -DDEBUG
+OPTS_CC_DEBUG = -Zi -DDEBUG -Od
 OPTS_LINK_DEBUG = /debug /pdb:none /pdbtype:consolidate
 !else
 OPTS_CC_DEBUG = -DNDEBUG
@@ -76,7 +78,7 @@ OPTS_MSVC = -nologo -I$(COMMONPATH) -I$(PLATSRCPATH) -I$(OGRSRCPATH) \
 OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
 OPTS_LINK = /nologo /incremental:no /version:3.10 \
             /machine:$(OPTS_M_PLAT) $(OPTS_LINK_DEBUG)
-OPTS_RC   = -d_Windows -d_M_{$(OPTS_M_PLAT)}
+OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 
 # --------------------------------------------
 
@@ -250,10 +252,10 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
         asaxp $(OPTS_AS) -Fo$@ $<
 
 {$(DESSRCPATH)/alpha-asm}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+        cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(CSCSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+        cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 !else
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
         tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
@@ -279,19 +281,19 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
 !endif
 
 {$(DESSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+        cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(OGRSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+        cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(PLATSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -O1 -Fo$(OUTPUTPATH)\ $<
+        cl -c -O1 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(PLATSRCPATH)}.c{$(OUTPUTPATH)}.obj::
         cl -c -Zl -O1 -Fo$(OUTPUTPATH)\ $<
 
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -O2 -Fo$(OUTPUTPATH)\ $<
+        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 $(RES_FILE):    $(RC_FILE)
         rc  -i $(OPTS_RC) -I$(COMMONPATH) -fo$@ $(**:/=\)
@@ -319,3 +321,4 @@ rebuild: clean all
 
 # --------------------------------------------
 
+$(COMMONPATH)\buffwork.cpp: $(COMMONPATH)\buffbase.cpp
