@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.56 2000/12/14 19:37:39 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.57 2000/12/14 19:44:11 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -121,12 +121,12 @@ static struct {
   long threshold; 
   unsigned int till_completion; 
 } buffer_counts[CONTEST_COUNT] = {
-  { { 0, 0 }, 0, 0 },
-  { { 0, 0 }, 0, 0 },
-  { { 0, 0 }, 0, 0 },
-  { { 0, 0 }, 0, 0 }
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 }
   #if (CONTEST_COUNT != 4)
-  #error static initializer expects CONTEST_COUNT == 4
+    #error static initializer expects CONTEST_COUNT == 4
   #endif
 };
 
@@ -803,6 +803,7 @@ unsigned int LoadSaveProblems(Client *client,
   prob_first = 0;
   prob_step  = 0;
   prob_last  = 0;
+  first_time = 0;
 
   if (load_problem_count == 0) /* only permitted if unloading all */
   {

@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.48 2000/11/22 18:20:29 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.49 2000/12/14 19:45:57 cyp Exp $"; }
 
 //#define TRACE
 
@@ -1237,7 +1237,7 @@ int ConfigRead(Client *client)
   if (GetPrivateProfileStringB( OPTSECT_DISPLAY, "progress-indicator", "", buffer, sizeof(buffer), fn ))
   {
     for (i=0; i < 3; i++)
-      buffer[i] = tolower(buffer[i]);
+      buffer[i] = (char)tolower(buffer[i]);
     if (memcmp(buffer,"aut",3)==0) /* "aut[o-sense]" */
       client->crunchmeter = -1;
     else if (isdigit(buffer[0]) && atoi(buffer) == 0) /* 0 == off, the rest must be */
