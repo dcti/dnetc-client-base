@@ -3,7 +3,7 @@
  * (the client can also run as a screensaver)
  * For use in distributed.net projects only. YEAH! :)
  *
- * Revision $Id: w32cons.rc,v 1.1.2.2 2001/01/21 16:05:37 cyp Exp $
+ * Revision $Id: w32cons.rc,v 1.1.2.3 2001/04/20 16:13:09 cyp Exp $
 */
 
 #define DNETC_EXE_ICO "plat\\win\\w32cons.ico" //dnet2.ico,w32cons.ico
@@ -66,7 +66,7 @@ SSCONFIG_SSICON ICON LOADONCALL MOVEABLE DISCARDABLE DNETC_SCR_ICO
                        VALUE "FileDescription", SSVI_FILEDESCR "\0"
                        VALUE "FileVersion", SSVI_VERSTRING "\0"
                        VALUE "InternalName", "dnetc\0"
-                       VALUE "LegalCopyright", "Copyright \251 1997-2000. All Rights Reserved.\0"
+                       VALUE "LegalCopyright", "Copyright \251 1997-2001. All Rights Reserved.\0"
                        //VALUE "LegalTrademarks", "distributed.net is a trademark of Distributed Computing Technologies, Inc.\0"
                        VALUE "OriginalFilename", "dnetc.exe\0"
                        VALUE "ProductName", SSVI_FILEDESCR "\0"
@@ -88,7 +88,7 @@ FONT 8, "Helv"
  CONTROL 1, -1, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 14, 11, 18, 20
  CONTROL "distributed.net client - a project of distributed.net", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 9, 195, 8
  CONTROL "", 201, "EDIT", ES_LEFT | ES_NOHIDESEL | ES_READONLY | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 40, 17, 195, 8
- CONTROL "Copyright 1997-2000 distributed.net", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 25, 195, 8
+ CONTROL "Copyright 1997-2001 distributed.net", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 25, 195, 8
  CONTROL "", 202, "STATIC", SS_CENTER | WS_CHILD | WS_VISIBLE | WS_GROUP, 8, 42, 234, 18
  CONTROL "Please send requests for assistance and support to", -1, "STATIC", SS_RIGHT | WS_CHILD | WS_VISIBLE | WS_GROUP, 4, 64, 167, 8
  CONTROL "help@distributed.net", 204, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_GROUP, 173, 64, 75, 8
