@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.17 1999/10/07 18:36:09 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.18 1999/10/11 19:15:48 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -610,7 +610,7 @@ int main( int argc, char *argv[] )
   return _realmain( argc, argv );
 }      
 #elif (CLIENT_OS == OS_WIN32)
-int main( int /*argc*/, char */*argv[]*/ )
+int main( int /*argc*/, char * /*argv[]*/ )
 {
   char *cmdline = (char *)GetCommandLine();
   char appName[20+MAX_PATH+1];
