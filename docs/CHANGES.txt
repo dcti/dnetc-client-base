@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.86 2004/10/14 05:29:48 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.87 2005/03/08 21:40:57 snikkel Exp $
 ==========================================================================
 
 2.9000
@@ -34,6 +34,8 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.86 2004/10/14 05:29:48 snikkel Exp
             imp: x86: Pentium/Celeron M & Pentium 4 Prescott detection (#3745)
             new: amigaos: AltiVec cores enabled for OS4
             new: netware: New port for Netware LibC (Netware 5.1 and up)
+            fix: x86: Cyrix core selection (#3809)
+            imp: x86: K8 and P4 detection (#3799, #3807, #3814)
 
 2.9008-493  new: ppc: Enabled KOGE cores for all PPC targets, except AIX
             new: macosx: ASM-optimized GARSP-5 cores (KOGE Scalar/Hybrid)
