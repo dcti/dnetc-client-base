@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.202 2000/11/10 03:15:23 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.203 2000/11/10 05:05:08 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -490,9 +490,13 @@ generate_gcc_opts() {
 	         -Waggregate-return -Wcast-qual -Woverloaded-virtual \
 	         -Wnested-externs" #-Wshadow shows std header errors
   OPTS_GCC_BASE="-fcaller-saves -fomit-frame-pointer \
-                 -fno-inline-functions -fno-rtti" 
-  OPTS_272_PLUS="-fno-handle-exceptions"
-  OPTS_295_PLUS="-fno-exceptions -fstrict-aliasing"
+                 -fno-inline-functions" 
+  OPTS_272_PLUS="-fno-handle-exceptions -fno-rtti"
+  #WARNING WARNING: 2.95.x (at least x<=.3) will cause problem.cpp to mis-
+  # compile if using -fno-exceptions and/or -fno-rtti. On x86 selftest will
+  # miscompile if using an -O level greater than -O2 _and_ -funroll-loops
+  #WARNING WARNING: don't use 2.8.x at all.
+  OPTS_295_PLUS="-fstrict-aliasing" #-fno-exceptions -fno-rtti
   OPTS_GCC272="${OPTS_GCC_WARN} ${OPTS_GCC_BASE} ${OPTS_272_PLUS}"
   OPTS_GCC295="${OPTS_GCC_WARN} ${OPTS_GCC_BASE} ${OPTS_295_PLUS}"
 
