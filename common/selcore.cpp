@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore.cpp,v $
+// Revision 1.11  1998/10/05 01:53:23  cyp
+// Cleaned up x86 core selection.
+//
 // Revision 1.10  1998/10/04 00:02:34  remi
 // Removed extraneous #if defined(KWAN) && defined(MEGGS). MMX_BITSLICER is now
 // defined only when the MMX DES core is compiled.
@@ -46,7 +49,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.10 1998/10/04 00:02:34 remi Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.11 1998/10/05 01:53:23 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -65,13 +68,13 @@ return "@(#)$Id: selcore.cpp,v 1.10 1998/10/04 00:02:34 remi Exp $"; }
 #if (CLIENT_CPU == CPU_X86)
 static const char *cputypetable[]=
   {
-  "Pentium Classic, Cyrix 486/5x86/MediaGX, AMD 486",
-  "Intel 80386 & 80486",
+  "Pentium, Cyrix 486/5x86/MediaGX, AMD 486",
+  "80386 & 80486",
   "Pentium Pro & Pentium II",
   "Cyrix 6x86/6x86MX/M2",
   "AMD K5",
-  "AMD K6",
-  "Pentium MMX"
+  "AMD K6"
+  //core 6 is "reserved" (was Pentium MMX)
   };
 #elif (CLIENT_CPU == CPU_ARM)
 static const char *cputypetable[]=
@@ -118,8 +121,6 @@ s32 Client::SelectCore(void)
   ValidateProcessorCount(); //in cpucheck.cpp
 
 #if (CLIENT_CPU == CPU_POWERPC)
-  LogScreenRaw( "| RC5 PowerPC assembly by Dan Oetting at USGS\n");
-
   #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_AMIGAOS))
     // Be OS isn't supported on 601 machines
     // There is no 601 PPC board for the Amiga
@@ -136,10 +137,10 @@ s32 Client::SelectCore(void)
       {
       double fasttime = 0;
 
-      LogScreenRaw("\n| Automatically selecting fastest core...\n"
-      "| This is just a guess based on a small test of each core. If you know what\n"
-      "| processor this machine has, then please set it in the Performance section\n"
-      "| of the client configuration.\n\n");
+      LogScreen("Automatically selecting fastest core...\n"
+      "This is just a guess based on a small test of each core. If you know what\n"
+      "processor this machine has, then please set it in the Performance section\n"
+      "of the client configuration.\n");
 
       for (whichcrunch = 0; whichcrunch < 2; whichcrunch++)
         {
@@ -156,7 +157,7 @@ s32 Client::SelectCore(void)
         contestwork.iterations.hi = htonl( 0 );
         problem.LoadState( &contestwork, 0, benchsize, whichcrunch ); // RC5 core selection
 
-        LogScreenRaw("| Benchmarking the %s core... ", ((whichcrunch)?("second"):("first")));
+        LogScreenRaw("Benchmarking the %s core... ", ((whichcrunch)?("second"):("first")));
         problem.Run( 0 ); //threadnum
         double elapsed = CliGetKeyrateForProblemNoSave( &problem );
         LogScreenRaw( "%.1f kkeys/sec\n", (elapsed / 1000.0) );
@@ -169,7 +170,7 @@ s32 Client::SelectCore(void)
   #endif
   whichcrunch = cputype;
   
-  LogScreenRaw( "| Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
+  LogScreenRaw( "Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
 #elif (CLIENT_CPU == CPU_68K)
   #if (CLIENT_OS == OS_AMIGAOS)
   if (cputype==-1)
@@ -191,6 +192,12 @@ s32 Client::SelectCore(void)
 
   s32 detectedtype = GetProcessorType(); //was x86id() now in cpucheck.cpp
   s32 requestedtype = cputype;
+  int ismmx = ((detectedtype & 0x100) != 0);
+  const char *selmsg_rc5 = NULL, *selmsg_des = NULL;
+  int selppro_des = 0;
+
+  if (requestedtype == 6) /* Pentium MMX */
+    requestedtype = 0;    /* but we need autodetect for it */
 
   if (cputype<0 || cputype>=(int)(sizeof(cputypetable)/sizeof(cputypetable[0])))
     {
@@ -198,13 +205,12 @@ s32 Client::SelectCore(void)
     cputype = (requestedtype & 0xFF);
     }
 
-  LogScreenRaw("RC5: Selecting %s core.\n", GetCoreNameFromCoreType(cputype));
-  
   #if ((defined(KWAN) || defined(MEGGS)) && !defined(MMX_BITSLICER))
     #define DESUNITFUNC51 des_unit_func_slice
     #define DESUNITFUNC52 des_unit_func_slice
     #define DESUNITFUNC61 des_unit_func_slice
     #define DESUNITFUNC62 des_unit_func_slice
+    selmsg_des = "Kwan bitslice";
   #elif defined(MULTITHREAD)
     #define DESUNITFUNC51 p1des_unit_func_p5
     #define DESUNITFUNC52 p2des_unit_func_p5
@@ -228,12 +234,14 @@ s32 Client::SelectCore(void)
     rc5_unit_func = rc5_unit_func_p6;
     des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
     des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+    selppro_des = 1;
     }
   else if (cputype == 3) // 6x86(mx)
     {
     rc5_unit_func = rc5_unit_func_6x86;
     des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
     des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+    selppro_des = 1;
     }
   else if (cputype == 4) // K5
     {
@@ -246,47 +254,39 @@ s32 Client::SelectCore(void)
     rc5_unit_func = rc5_unit_func_k6;
     des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
     des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+    selppro_des = 1;
     }
-  #ifdef MMX_RC5
-  else if ( (requestedtype & 0xFF) == 6 ) // Pentium MMX ONLY
-    {
-      if ((detectedtype & 0x100) && usemmx) // use MMX RC5 core ?
-      {
-      rc5_unit_func = rc5_unit_func_p5_mmx;
-      des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
-      des_unit_func2 = DESUNITFUNC52; //p2des_unit_func_p5;
-      }
-    else // not really MMX capable
-      {
-      LogScreenRaw("The processor is not MMX instruction capable.\n"
-            "Reverting to the Pentium Classic core.\n");
-      rc5_unit_func = rc5_unit_func_p5;
-      des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
-      des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
-      };     
-    } 
-  #endif
-  else // Pentium (Classic/MMX) + others
+  else // Pentium (0/6) + others
     {
     rc5_unit_func = rc5_unit_func_p5;
     des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
     des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
     cputype = 0;
+    
+    #if defined(MMX_RC5)
+    if (detectedtype == 0x106) /* Pentium MMX only! */
+      {
+      rc5_unit_func = rc5_unit_func_p5_mmx;
+      selmsg_rc5 = "Pentium MMX";
+      }
+    #endif
     }
 
   #if defined(MMX_BITSLICER)
-  if ((detectedtype & 0x100) && usemmx)   // use the MMX DES core ?
+  if (ismmx && usemmx)   // use the MMX DES core ?
     { 
     des_unit_func = des_unit_func2 = des_unit_func_mmx;
-    LogScreenRaw("DES: Selecting MMX Bitslice core.\n");
+    selmsg_des = "MMX bitslice";
     }
-  else
   #endif
-    {
-    LogScreenRaw(des_unit_func == DESUNITFUNC51 ?
-		 "DES: Selecting Pentium optimized Bryddes core.\n" :
-		 "DES: Selecting Pentium Pro optimized Bryddes core.\n");
-    };
+
+  if (!selmsg_des)
+    selmsg_des = ((selppro_des)?("PentiumPro optimized BrydDES"):("BrydDES"));
+  if (!selmsg_rc5)
+    selmsg_rc5 = GetCoreNameFromCoreType(cputype);
+    
+  LogScreenRaw( "DES: selecting %s core.\n"
+                "RC5: selecting %s core.\n", selmsg_des, selmsg_rc5 );
       
   #undef DESUNITFUNC61
   #undef DESUNITFUNC62
@@ -401,7 +401,7 @@ s32 Client::SelectCore(void)
   des_unit_func = des_unit_func_arm;
   break;
     }
-    
+   
 #else
   cputype = 0;
 #endif
