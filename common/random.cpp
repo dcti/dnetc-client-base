@@ -1,29 +1,24 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// ****************** THIS IS WORLD-READABLE SOURCE *********************
-//
-
+/* 
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ------------------------------------------------------------------
+ * The following is adapted from source in
+ *   "Inner Loops -- A sourcebook for fast 32-bit software development"
+ *                                                      by Rick Booth.
+ * Get a random 32bit number with Random() 
+ * If called continuously, the sequence IL_MixRandom() generates 
+ * wouldn't start to repeat for about 37 trillion years.
+ *
+ *                                - Added by Tim Charron 12.15.1997
+ * -----------------------------------------------------------------
+*/
 const char *random_cpp(void) {
-return "@(#)$Id: random.cpp,v 1.2 1999/04/05 01:31:56 jlawson Exp $"; }
+return "@(#)$Id: random.cpp,v 1.3 1999/04/05 13:08:26 cyp Exp $"; }
 
 #include "cputypes.h" /* u32 */
 #include <time.h>     /* time() */
-
-/* ------------------------------------------------------------------
- * The following is from 
- *   "Inner Loops -- A sourcebook for fast 32-bit software development"
- *                                                      by Rick Booth.
- * Added by Tim Charron 12.15.1997
- *
- * Initialize with InitRandom()
- * Get a random 32bit number with Random() 
- *
- * If called continuously, the sequence IL_MixRandom() generates 
- * wouldn't start to repeat for about 37 trillion years.
- * -----------------------------------------------------------------
-*/
 
 #define IL_RMULT 1103515245L
 static u32 IL_StandardRandom_seed;
@@ -141,7 +136,11 @@ static s32 IL_StandardRandom()
 
 void InitRandom(void)
 {
+  static int random_initialized = 0;
   int i;
+  if (random_initialized)
+    return;
+  random_initialized = 1;
 
   IL_StandardRandom_seed = (u32)time((time_t *)0);  // 32 bit seed value
 
@@ -158,13 +157,17 @@ void InitRandom(void)
   IL_MixRandomSeed( IL_StandardRandom );
 }
 
-void InitRandom2(char *p)
+void InitRandom2(const char *p)
 {
+  static int random_2_initialized = 0;
   int i;
 
-  if (p) 
-    IL_StandardRandom_seed ^= ((p[0]<<24) + (p[1]<<16) + (p[2]<<8) + p[3]);
+  InitRandom(); /* does nothing if already seeded */
+  if (random_2_initialized || !p)
+    return;
+  random_2_initialized = 1;
     
+  IL_StandardRandom_seed ^= ((p[0]<<24) + (p[1]<<16) + (p[2]<<8) + p[3]);
   for ( i=0 ; i< 64 ; i++ )
   {
     IL_MixRandom_seeds.trseed32[i] = -1;
@@ -178,19 +181,18 @@ void InitRandom2(char *p)
   IL_MixRandomSeed( IL_StandardRandom );
 }
 
-u32 Random( u32 * data, u32 length )
+u32 Random( const u32 * u32data, unsigned int u32count )
 {
-  u32 i;
-  u32 tmp;
-
+  register u32 tmp;
+  InitRandom2( (const char *)u32data ); /* does nothing if already seeded */
+  
   tmp = IL_MixRandom();
-
-  if (data && length) 
+  if (u32data && u32count) 
   {
-    for( i = 0 ; i < length ; i++ ) 
-      tmp ^= data[i];
+    register unsigned int i;
+    for( i = 0 ; i < u32count ; i++ ) 
+      tmp ^= u32data[i];
   }
-
   return( tmp );
 }
 
