@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.33  1999/02/13 00:15:13  silby
+// Updated iter2norm to handle 64-bit blocks.
+//
 // Revision 1.32  1999/02/01 02:31:59  cyp
 // Added protection against repetitive unload_all which is possible when a
 // client shuts down asynchronously. (win16/32 clients do this when win ends)
@@ -136,7 +139,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.32 1999/02/01 02:31:59 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.33 1999/02/13 00:15:13 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -170,17 +173,9 @@ return "@(#)$Id: probfill.cpp,v 1.32 1999/02/01 02:31:59 cyp Exp $"; }
                                // individual load/save messages
 // =======================================================================
 
-static unsigned long __iter2norm( unsigned long iter )
+static unsigned long __iter2norm( unsigned long iterlo, unsigned long iterhi )
 {
-  if (!iter)
-    iter = 16;
-  else
-    {
-    unsigned int size =  0;
-    while (iter>1 && size<28)
-      { size++; iter>>=1; }
-    }
-  return iter;
+return (iterlo >> 28) + (iterhi*16);
 }  
 
 // -----------------------------------------------------------------------
@@ -305,7 +300,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         CliGetKeyrateForProblem( thisprob ); //add to totals
         }
       norm_key_count = 
-          (unsigned int)__iter2norm( ntohl(rc5result.iterations.lo) );
+          (unsigned int)__iter2norm( ntohl(rc5result.iterations.lo),
+                                     ntohl(rc5result.iterations.hi) );
 
       ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
       }
@@ -326,7 +322,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                            ((double) ntohl(fileentry.keysdone.lo) /
                             (double) ntohl(fileentry.iterations.lo) ) );
     norm_key_count = 
-       (unsigned int)__iter2norm( ntohl(fileentry.iterations.lo) );
+       (unsigned int)__iter2norm( ntohl(fileentry.iterations.lo),
+                                  ntohl(fileentry.iterations.hi) );
 
     s32 cputype       = client->cputype; /* needed for FILEENTRY_CPU macro */
     #if (CLIENT_OS == OS_RISCOS)
@@ -548,7 +545,8 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
     *contest = (unsigned int)(fileentry.contest);
     thisprob->LoadState( (ContestWork *) &fileentry , 
           (u32) (fileentry.contest), client->timeslice, client->cputype );
-    norm_key_count = (unsigned int)__iter2norm(ntohl(fileentry.iterations.lo));
+    norm_key_count = (unsigned int)__iter2norm(ntohl(fileentry.iterations.lo),
+                                               ntohl(fileentry.iterations.hi));
 
     ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
 
