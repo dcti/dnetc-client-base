@@ -5,8 +5,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.h,v $
+// Revision 1.58  1998/07/05 12:42:37  cyruspatel
+// Created cpucheck.h to support makefiles that rely on autodependancy info
+// to detect file changes.
+//
 // Revision 1.57  1998/07/04 21:05:34  silby
-// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong should be fixed.
+// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong 
+should be fixed.
 //
 // Revision 1.56  1998/07/02 13:09:28  kbracey
 // A couple of RISC OS fixes - printf format specifiers made long.
@@ -98,6 +103,7 @@
 #include "convdes.h"
 #include "sleepdef.h"
 #include "threadcd.h"
+#include "cpucheck.h"
 
 #define OPTION_SECTION "parameters"
 
@@ -732,7 +738,6 @@ extern Problem problem[2*MAXCPUS];
 extern volatile u32 SignalTriggered, UserBreakTriggered;
 extern volatile s32 pausefilefound;
 extern void CliSetupSignals( void );
-extern unsigned int GetTimesliceBaseline(void);
 
 // --------------------------------------------------------------------------
 

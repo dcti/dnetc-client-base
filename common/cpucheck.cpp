@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.9  1998/07/05 12:42:40  cyruspatel
+// Created cpucheck.h to support makefiles that rely on autodependancy info
+// to detect file changes.
+//
 // Revision 1.8  1998/07/05 06:55:06  silby
 // Change to the bitmask for intel CPUIDs so that secondary CPUs will be id'd correctly.
 //
@@ -33,9 +37,10 @@
 //
 
 #include "client.h"
+#include "cpucheck.h" //just to keep the prototypes in sync.
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cpucheck.cpp,v 1.8 1998/07/05 06:55:06 silby Exp $";
+static const char *id="@(#)$Id: cpucheck.cpp,v 1.9 1998/07/05 12:42:40 cyruspatel Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -303,7 +308,7 @@ int Client::GetProcessorType()
   else if ( cpuxref->cpuname == NULL )  // fell through to last element
     {
     coretouse = (cpuxref->coretouse);
-    LogScreenf("found an unrecognized %s processor. (id: %04X)",
+    LogScreenf("found an unrecognized %s processor. (id: %04X)\n",
                                                     vendorname, cpuidb );
     }
   else // if ( cpuidb == (cpuxref->cpuidb))
@@ -427,6 +432,9 @@ int Client::GetProcessorType()
 // set the timeslice/rate-of-yield without losing efficiency. Or inversely, 
 // at what point OS responsiveness starts to suffer - which also applies to 
 // preemptive but non-mt systems handling of a break request. 
+//
+// The function can also be used on non-mt systems to check for an excessive
+// timeslice - on x86 systems an excessive timeslice is > 3*baseline
 
 unsigned int GetTimesliceBaseline(void) 
 { 
