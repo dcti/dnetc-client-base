@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.158  1999/01/08 10:02:24  chrisb
+# removed OLDRESOLVE from riscos
+#
 # Revision 1.157  1999/01/08 08:07:12  myshkin
 # Added support for PPC 821/860 target. Thanks to Cort Dougan
 #   (cort@persephone.cs.nmt.edu) for the gcc command-line arguments.
@@ -1652,7 +1655,7 @@ case "$1" in
 			-I/home/cberry/play/riscoslib/OSLib \
 			-I/home/cberry/play/riscoslib/TCPIPLibs \
 			-J/home/cberry/play/riscoslib/CLib \
-			-DOLDRESOLVE -D__showids__ \
+			-D__showids__ \
 			-DCOMPAT_INET4 -D__riscos \
 			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="platforms/riscos/riscos.cpp"
