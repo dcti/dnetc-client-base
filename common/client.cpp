@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.76 2000/06/03 13:26:51 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.77 2000/06/04 09:48:09 oliver Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -765,8 +765,13 @@ int main( int argc, char *argv[] )
 #elif (CLIENT_OS == OS_AMIGAOS)
 int main( int argc, char *argv[] )
 {
-  int rc = ClientMain( argc, argv );
-  if (rc) rc = 5; //Warning
+  int rc = 20;
+  if (amigaInit())
+  {  
+    rc = ClientMain( argc, argv );
+    if (rc) rc = 5; //Warning
+    amigaExit();
+  }
   return rc;
 }
 #else
