@@ -1,5 +1,8 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.8  1998/12/14 01:56:43  dicamillo
+// MacOS: allow use of extern "C" for whack16.
+//
 // Revision 1.7  1998/12/13 21:53:33  dicamillo
 // Mac OS change for compilation and Mac client scheduling.
 //
@@ -31,7 +34,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.7 1998/12/13 21:53:33 dicamillo Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.8 1998/12/14 01:56:43 dicamillo Exp $"; }
 #endif
 
 #if (CLIENT_OS != OS_MACOS)
@@ -485,7 +488,11 @@ void multiround( unsigned long S[32], unsigned long N[32], unsigned long M[32], 
 
 
 typedef unsigned long slice;
+#if ((CLIENT_OS == OS_MACOS) && defined(MRCPP_FOR_DES))
+extern "C" slice whack16(slice *P, slice *C, slice *K);
+#else
 extern slice whack16(slice *P, slice *C, slice *K);
+#endif
 
 #define DEBUGPRINT 0
 

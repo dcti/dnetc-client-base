@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.19  1998/12/14 01:56:21  dicamillo
+// MacOS: allow use of extern "C" for whack16.
+//
 // Revision 1.18  1998/07/16 08:52:20  cyruspatel
 // The correct path to the #include files is now handled from the makefile,
 // and added an #if (CLIENT_OS == OS_OS2) inside the #if (__WATCOMC__) so
@@ -64,7 +67,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-return "@(#)$Id: des-slice-meggs.cpp,v 1.18 1998/07/16 08:52:20 cyruspatel Exp $"; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.19 1998/12/14 01:56:21 dicamillo Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -105,7 +108,8 @@ return "@(#)$Id: des-slice-meggs.cpp,v 1.18 1998/07/16 08:52:20 cyruspatel Exp $
 #error "You must define BIT_32 or BIT_64"
 #endif
 
-#if (CLIENT_OS == OS_BEOS) || defined(MMX_BITSLICER)
+#if (CLIENT_OS == OS_BEOS) || defined(MMX_BITSLICER) \
+    || ((CLIENT_OS == OS_MACOS) && defined(MRCPP_FOR_DES))
 extern "C" BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
             BASIC_SLICE_TYPE *cypher,
             BASIC_SLICE_TYPE *key);
