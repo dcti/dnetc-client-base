@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.14  1999/01/04 19:02:25  chrisb
+// fixed an erroneous implicit cast
+//
 // Revision 1.13  1999/01/04 04:49:17  cyp
 // Cleared a 'potential integer truncation' warning.
 //
@@ -66,7 +69,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.13 1999/01/04 04:49:17 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.14 1999/01/04 19:02:25 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -551,7 +554,7 @@ int Client::Configure( void )
               }
             else if (conf_options[seloption].type==CONF_TYPE_BOOL)
               {
-              p = ((*(s32 *)conf_options[seloption].thevariable)?("yes"):("no"));
+              p = (char *)(((*(s32 *)conf_options[seloption].thevariable)?("yes"):("no")));
               }
             if (p)
               {
