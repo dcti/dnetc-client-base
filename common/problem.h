@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.21  1998/08/20 01:54:41  silby
+// Chnages to accomodate rc5mmx cores
+//
 // Revision 1.20  1998/08/15 21:30:27  jlawson
 // modified PIPELINE_COUNT definition
 //
@@ -136,7 +139,13 @@ typedef enum
     #define rc5_unit_func_6x86 _rc5_unit_func_6x86
     #define rc5_unit_func_k5 _rc5_unit_func_k5
     #define rc5_unit_func_k6 _rc5_unit_func_k6
+    #define rc5_unit_func_p5_mmx _rc5_unit_func_p5_mmx
   #endif
+
+  #if (CLIENT_OS == OS_LINUX)
+  #define rc5_unit_func_p5_mmx _rc5_unit_func_p5_mmx
+  #endif
+
 
   extern u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern u32 (*des_unit_func2)( RC5UnitWork * rc5unitwork, u32 timeslice );
