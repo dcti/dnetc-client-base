@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.64 2000/10/21 00:43:26 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.65 2000/10/27 17:25:43 cyp Exp $
 ==========================================================================
 
 2.8000
@@ -47,6 +47,13 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.64 2000/10/21 00:43:26 cyp Exp $
             imp: networking layer rewritten from scratch. It is also a lot
                  more chatty, and prints very specific messages on error.
             new: client can be configured with multiple keyserver names.
+            fix: all: no more uneccesary connects when using frequent-checks
+            fix: all: mail sent correctly on shutdown.
+            fix: all: no longer discards work on fetch.
+            fix: win9x: client no longer hangs on sys shutdown
+            new: all: client displays a different crunch-o-meter when the
+                 OGR core is active (an ogr packet is being worked on)
+            chg: all: smtp/firewall hostname settings have different semantics
 
 2.8010.463  fix: linux/x86: resolved various dns lookup, lib and
                  portability issues by building against static libc5
