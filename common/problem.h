@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.10 2004/05/20 21:13:14 kakace Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.10.2.1 2004/08/09 19:34:41 jlawson Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -155,7 +155,7 @@ typedef struct
   u32  core;       /* core used to process the packet */
 } DNETC_PACKED WorkRecord;
 
-#include "pack1.h"
+#include "pack0.h"
 
 /* ---------------------------------------------------------------------- */
 
