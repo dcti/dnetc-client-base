@@ -1,5 +1,12 @@
 Dual mode (RC5DES) clients
 --------------------------
+v2.7100.415 98.10.06 Automatic processor count on Solaris and Linux
+                     have been added.
+v2.7100.415 98.10.06 Bugs with exitfile handling present in 414 have
+                     been fixed.
+v2.7100.415 98.09.06 Added DES MMX cores to x86 clients - thanks go out
+                     to Remi Guyomarch and Bruce Ford who made this
+                     possible.
 v2.7100.413 98.04.06 Fixed problems in 413 with .ini name not following
                      .exe's name and also rc5 outbuffer being set
                      incorrectly to buff-out.des
