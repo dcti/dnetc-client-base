@@ -59,34 +59,40 @@ struct Level {
   	struct {
   		U pad;
   		vector unsigned int vec;
+  	    U pad2[8-BITMAPS];
   	} offset_list_vec;
   	struct {
   		vector unsigned int vec;
-  		U pad;
+  		U pad[9-BITMAPS];
   	} zeroed_list_vec;
 	U list[BITMAPS];
+	U list_pad[8-BITMAPS];
   };
   union {
   	struct {
   		U pad;
   		vector unsigned int vec;
+  	    U pad2[8-BITMAPS];
   	} offset_dist_vec;
   	struct {
   		vector unsigned int vec;
-  		U pad;
+  		U pad[9-BITMAPS];
   	} zeroed_dist_vec;
 	U dist[BITMAPS];
+	U dist_pad[8-BITMAPS];
   };
   union {
   	struct {
   		U pad;
 	  	vector unsigned int vec;
+  	    U pad2[8-BITMAPS];
 	} offset_comp_vec;
   	struct {
   		vector unsigned int vec;
-  		U pad;
+  		U pad[9-BITMAPS];
   	} zeroed_comp_vec;
 	U comp[BITMAPS];
+	U comp_pad[8-BITMAPS];
   };
   int cnt1;
   int cnt2;
