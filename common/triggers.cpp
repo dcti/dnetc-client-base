@@ -16,8 +16,8 @@
 // -----------------------------------------------------------------------
 //
 // $Log: triggers.cpp,v $
-// Revision 1.3  1998/09/17 15:11:33  cyp
-// Implemented -HUP handling. (See main() for implementation details)
+// Revision 1.4  1998/09/17 18:59:16  cyp
+// Implemented -HUP handling. (See main() for implemention details)
 //
 // Revision 1.2  1998/09/06 21:01:04  silby
 // Changes to make deinittriggers clear all info so a subsequent call to 
@@ -30,7 +30,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.3 1998/09/17 15:11:33 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.4 1998/09/17 18:59:16 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -48,6 +48,9 @@ return "@(#)$Id: triggers.cpp,v 1.3 1998/09/17 15:11:33 cyp Exp $"; }
 static void CliSetupSignals( void ); //for forward resolution
 
 // --------------------------------------------------------------------------
+
+#define TRIGSETBY_INTERNAL  1  /* signal or explicit call to raise */ 
+#define TRIGSETBY_EXTERNAL  2  /* flag file */
 
 struct trigstruct 
 {
@@ -74,7 +77,7 @@ int RaiseExitRequestTrigger(void)
   if (!trigstatics.isinit)
     InitializeTriggers( NULL, NULL );
   int oldstate = trigstatics.exittrig.trigger;
-  trigstatics.exittrig.trigger = 1;
+  trigstatics.exittrig.trigger = TRIGSETBY_INTERNAL;
   return (oldstate);
 }  
 
@@ -83,8 +86,8 @@ int RaiseRestartRequestTrigger(void)
   if (!trigstatics.isinit)
     InitializeTriggers( NULL, NULL );
   int oldstate = trigstatics.huptrig.trigger;
-  trigstatics.exittrig.trigger = 1;
-  trigstatics.huptrig.trigger = 1;
+  trigstatics.exittrig.trigger = TRIGSETBY_INTERNAL;
+  trigstatics.huptrig.trigger = TRIGSETBY_INTERNAL;
   return (oldstate);
 }  
 
@@ -121,7 +124,7 @@ static void InternalPollForFlagFiles(struct trigstruct *trig, int undoable)
       if ( access( GetFullPathForFilename( trig->flagfile ), 0 ) == 0 )
         {
         trig->nextcheck = now + (time_t)trig->pollinterval.whenon;
-        trig->trigger = 1;
+        trig->trigger = TRIGSETBY_EXTERNAL;
         }
       else
         {
@@ -150,15 +153,14 @@ int CheckExitRequestTrigger(void)
         (*trigstatics.exittrig.pollproc)();
       }
     if ( !trigstatics.exittrig.trigger )
-      {
       InternalPollForFlagFiles( &trigstatics.exittrig, 0 );
-      if (trigstatics.exittrig.trigger)
-        wasseen = 1;
-      }
     if ( trigstatics.exittrig.trigger )
       {
-      LogScreen("\n[%s] %s Shutting down....\n", CliGetTimeString(NULL,1),
-          (wasseen)?("Exit flag file found."):("*Break*") );
+      LogScreen("\n[%s] *Break*%s\n", CliGetTimeString(NULL,1),
+       (trigstatics.exittrig.trigger == TRIGSETBY_EXTERNAL)?
+         (" (found exit flag file)"): 
+         ((trigstatics.huptrig.trigger)?(" Restarting..."):
+         (" Shutting down...")) );
       wasseen = 1;             
       }
     --trigstatics.exittrig.incheck;
@@ -257,8 +259,13 @@ bool CliSignalHandler(DWORD  dwCtrlType)
 #if (CLIENT_OS == OS_NETWARE)
 void CliSignalHandler( int sig )
 {
-  RaiseExitRequestTrigger();
-  nwCliSignalHandler( sig ); //never to return...
+  if (sig == SIGHUP)
+    RaiseRestartRequestTrigger();
+  else
+    {
+    RaiseExitRequestTrigger();
+    nwCliSignalHandler( sig ); //never to return...
+    }
 }
 #define CLISIGHANDLER_IS_SPECIAL
 #endif
