@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.57.4.1 2001/03/23 20:56:32 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.57.4.2 2001/03/23 21:14:05 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS

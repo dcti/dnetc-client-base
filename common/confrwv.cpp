@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.50.4.1 2001/03/23 20:56:35 andreasb Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.50.4.2 2001/03/23 21:14:02 andreasb Exp $"; }
 
 //#define TRACE
 

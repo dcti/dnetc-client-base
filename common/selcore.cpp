@@ -13,7 +13,7 @@
 #warning currently only core 0 supported
 
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.102.4.1 2001/03/23 20:56:37 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.102.4.2 2001/03/23 21:14:00 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc

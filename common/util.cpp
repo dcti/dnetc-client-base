@@ -5,7 +5,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.46.2.1 2001/03/23 20:56:37 andreasb Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.46.2.2 2001/03/23 21:14:00 andreasb Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */

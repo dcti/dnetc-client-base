@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.90.2.1 2001/03/23 20:56:34 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.90.2.2 2001/03/23 21:14:03 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes

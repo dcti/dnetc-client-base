@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.67.2.1 2001/03/23 20:56:36 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.67.2.2 2001/03/23 21:14:01 andreasb Exp $"; }
 
 //#define TRACE
 
