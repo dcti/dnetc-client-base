@@ -3,11 +3,16 @@
 // Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
+//
+// ----------------------------------------------------------------------
 // This file contains functions for obtaining/formatting/manipulating 
 // the time. 'time' is always stored/passed/returned in timeval format.
+// ----------------------------------------------------------------------
 // 
 // $Log: clitime.h,v $
+// Revision 1.14  1999/01/29 19:02:22  jlawson
+// fixed formatting.
+//
 // Revision 1.13  1999/01/19 09:36:58  patrick
 //
 // OS2-EMX needs sys/time.h

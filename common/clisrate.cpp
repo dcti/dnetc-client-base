@@ -1,11 +1,16 @@
 // Copyright distributed.net 1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
+//
+// ----------------------------------------------------------------------
 // This file contains functions for formatting keyrate/time/summary data
 // statistics obtained from clirate.cpp into strings suitable for display.
+// ----------------------------------------------------------------------
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.35  1999/01/29 19:04:31  jlawson
+// fixed formatting.
+//
 // Revision 1.34  1999/01/26 17:50:06  dbaker
 // changes for freebsd4 to allow smp threads or whatever
 //
@@ -135,7 +140,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.34 1999/01/26 17:50:06 dbaker Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.35 1999/01/29 19:04:31 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h"  // for u64
@@ -187,41 +192,41 @@ return "@(#)$Id: clisrate.cpp,v 1.34 1999/01/26 17:50:06 dbaker Exp $"; }
 static char *num_sep(char *number)
 {
 
-    #define STR_LEN 32
-    static char num_string[STR_LEN + 1];
+  #define STR_LEN 32
+  static char num_string[STR_LEN + 1];
 
-    char *rp, *wp, *xp;             /* read ptr, write ptr, aux ptr */
-    register unsigned int digits;
-    register unsigned int i, j;
+  char *rp, *wp, *xp;             /* read ptr, write ptr, aux ptr */
+  register unsigned int digits;
+  register unsigned int i, j;
 
-    /*
-     * just in case somebody passes a pointer to a long string which
-     * then obviously holds much more than just a number. In this case
-     * we simply return what we got and don't do anything.
-     */
+  /*
+   * just in case somebody passes a pointer to a long string which
+   * then obviously holds much more than just a number. In this case
+   * we simply return what we got and don't do anything.
+   */
 
-    if (strlen(number) >= STR_LEN)
-        return(number);
+  if (strlen(number) >= STR_LEN)
+    return(number);
 
-    strcpy(num_string, number);
-    digits = strlen(num_string);
-    rp = num_string + digits - 1;
-    wp = num_string + STR_LEN;
-    *wp-- = '\0';
-    if ((xp = strchr(num_string, '.')) != NULL) {
-        while (rp >= xp) {
-            *wp-- = *rp--;
-            digits--;
-        }
+  strcpy(num_string, number);
+  digits = strlen(num_string);
+  rp = num_string + digits - 1;
+  wp = num_string + STR_LEN;
+  *wp-- = '\0';
+  if ((xp = strchr(num_string, '.')) != NULL) {
+    while (rp >= xp) {
+      *wp-- = *rp--;
+      digits--;
     }
-    for (i = digits, j = 1; i; i--, j++) {
-        *wp-- = *rp--;
-        if (j && ((j % 3) == 0))
-           *wp-- = ',';
-    }
-    if (wp[1] == ',')
-       wp++;
-    return(wp + 1);
+  }
+  for (i = digits, j = 1; i; i--, j++) {
+    *wp-- = *rp--;
+    if (j && ((j % 3) == 0))
+      *wp-- = ',';
+  }
+  if (wp[1] == ',')
+    wp++;
+  return(wp + 1);
 }
 
 
@@ -240,9 +245,9 @@ static char *__CliGetKeyrateAsString( char *buffer, double rate, double limit )
     while (t2<=5 && (((double)(rate))>=((double)(limit))) )
     {
       t2++;
-      rate=((double)(rate))/((double)(1000));
+      rate = ((double)(rate)) / ((double)(1000));
     }
-    if (t2>4)
+    if (t2 > 4)
       strcpy( buffer, "***.** " ); //overflow (rate>1.0 TKeys. Str>25 chars)
     else
     {
@@ -368,17 +373,17 @@ const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
   //iter =2147483648L;  //1<<31  //2^31
   
   if (!iter)                  /* new format 4*2^28 */
-    {
+  {
     count = 16;
     size  = 28;
-    }
+  }
   else
-    {
+  {
     size =  0;
     while (iter>1 && size<28)
       { size++; iter>>=1; }
     count = iter;
-    }
+  }
 
   if (CliGetContestInfoBaseData( fileentry->contest, &name, NULL )!=0) //clicdata
     name = "???";
@@ -409,16 +414,16 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   int contestid = prob->GetResult( &rc5result );
 
   if (CliGetContestInfoBaseData( contestid, &name, &mulfactor )==0) //clicdata
-    {
+  {
     keyrateP = CliGetKeyrateAsString( keyrate, 
         ((doSave) ? ( CliGetKeyrateForProblem( prob ) ) :
                     ( CliGetKeyrateForProblemNoSave( prob ) ))  );
-    }                    
+  }
   else
-    {
+  {
     keyrateP = "---.-- ";
     name = "???";
-    }
+  }
 
   tv.tv_sec = prob->timehi;
   tv.tv_usec = prob->timelo;
@@ -438,7 +443,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
 
   unsigned int /* size=1, count=32, */ itermul=16;
   if (!rc5result.iterations.hi)
-    {
+  {
     u32 iter = ntohl(rc5result.iterations.lo);
     /*
     count = 1;
@@ -452,7 +457,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
     while (iter > 1 && itermul < 28)
       { iter>>=1; itermul++; }
     itermul = (unsigned int)iter;
-    }
+  }
 
 //"Completed one RC5 block 00000000:00000000 (4*2^28 keys)\n"
 //"%s - [%skeys/sec]\n"

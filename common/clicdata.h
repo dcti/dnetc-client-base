@@ -4,14 +4,18 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-/*
-   This file contains functions for obtaining contest constants as 
-   well as name, id, iteration-to-keycount-multiplication-factor or 
-   obtaining/adding to contest summary data (totalblocks, totaliterations, 
-   totaltime. The data itself is hidden from other modules to protect 
-   integrity and ease maintenance. 
-*/
+// ----------------------------------------------------------------------
+// This file contains functions for obtaining contest constants as 
+// well as name, id, iteration-to-keycount-multiplication-factor or 
+// obtaining/adding to contest summary data (totalblocks, totaliterations, 
+// totaltime. The data itself is hidden from other modules to protect 
+// integrity and ease maintenance. 
+// ----------------------------------------------------------------------
+//
 // $Log: clicdata.h,v $
+// Revision 1.15  1999/01/29 19:05:23  jlawson
+// fixed formatting.
+//
 // Revision 1.14  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //

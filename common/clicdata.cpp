@@ -2,14 +2,19 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
+// ----------------------------------------------------------------------
 // This file contains functions for obtaining contest constants (name, id,
 // iteration-to-keycount-multiplication-factor) or obtaining/adding to
 // contest summary data (totalblocks, totaliterations, totaltime).
 // The data itself is hidden from other modules to protect integrity and
 // ease maintenance.
+// ----------------------------------------------------------------------
 //
 //
 // $Log: clicdata.cpp,v $
+// Revision 1.14  1999/01/29 19:05:08  jlawson
+// fixed formatting.
+//
 // Revision 1.13  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -54,7 +59,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.13 1999/01/01 02:45:14 cramer Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.14 1999/01/29 19:05:08 jlawson Exp $"; }
 #endif
 
 #include "baseincs.h" //for timeval
@@ -141,8 +146,8 @@ int CliClearContestInfoSummaryData( int contestid )
 
 // ---------------------------------------------------------------------------
 
-    //obtain summary data for a contest. unrequired args may be NULL
-    //returns 0 if success, !0 if error (bad contestID).
+// obtain summary data for a contest. unrequired args may be NULL
+// returns 0 if success, !0 if error (bad contestID).
 int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
                                double *totaliter, struct timeval *totaltime)
 {

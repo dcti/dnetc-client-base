@@ -1,11 +1,16 @@
 // Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
+//
+// ----------------------------------------------------------------------
 // This file contains functions for calculating the keyrate for a completed
 // problem and for obtaining the total/average keyrate for an entire contest.
+// ----------------------------------------------------------------------
 //
 // $Log: clirate.cpp,v $
+// Revision 1.18  1999/01/29 18:57:36  jlawson
+// fixed formatting.
+//
 // Revision 1.17  1999/01/22 18:38:39  remi
 // Removed check of duplicate blocks done, since it was bogging
 // the summary line sometimes.
@@ -82,7 +87,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.17 1999/01/22 18:38:39 remi Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.18 1999/01/29 18:57:36 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h" //for u64 define
@@ -110,7 +115,7 @@ double CliGetKeyrateForContest( int contestid )
   if (!totaltime.tv_sec && !totaltime.tv_usec)
     return ((double)(0));
 
-  return ((double)(totaliter))/
+  return ((double)(totaliter)) /
       (((double)(totaltime.tv_sec))+
      (((double)(totaltime.tv_usec))/((double)(1000000L))));
 }

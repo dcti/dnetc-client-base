@@ -4,11 +4,14 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-/*
-* Generic strcmpi and strncmpi macros
-*/
+// ----------------------------------------------------------------------
+// Generic strcmpi and strncmpi macros
+// ----------------------------------------------------------------------
 //
 // $Log: cmpidefs.h,v $
+// Revision 1.18  1999/01/29 18:59:28  jlawson
+// fixed formatting.
+//
 // Revision 1.17  1999/01/28 00:11:19  trevorh
 // Added support for IBM VA C++
 //

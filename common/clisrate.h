@@ -3,11 +3,16 @@
 // Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
+//
+// ----------------------------------------------------------------------
 // This file contains functions for formatting keyrate/time/summary data
 // statistics obtained from clirate.cpp into strings suitable for display.
+// ----------------------------------------------------------------------
 // 
 // $Log: clisrate.h,v $
+// Revision 1.16  1999/01/29 19:04:48  jlawson
+// fixed formatting.
+//
 // Revision 1.15  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //

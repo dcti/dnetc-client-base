@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.16  1999/01/29 18:59:52  jlawson
+// fixed formatting.
+//
 // Revision 1.15  1999/01/29 01:25:59  cyp
 // permitting nettimeout=-1 got lost in one of the last two revs.
 //
@@ -44,7 +47,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.15 1999/01/29 01:25:59 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.16 1999/01/29 18:59:52 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -64,22 +67,22 @@ return "@(#)$Id: confopt.cpp,v 1.15 1999/01/29 01:25:59 cyp Exp $"; }
 
 // --------------------------------------------------------------------------
 
-static const char *uuehttptable[]=
-  {
+static const char *uuehttptable[] =
+{
   "No special encoding",
   "UUE encoding (telnet proxies)",
   "HTTP encoding",
   "HTTP+UUE encoding",
   "SOCKS4 proxy",
   "SOCKS5 proxy"
-  };
+};
 
-static const char *lurkmodetable[]=
-  {
+static const char *lurkmodetable[] =
+{
   "Normal mode",
   "Dial-up detection mode",
   "Dial-up detection ONLY mode"
-  };
+};
 
 
 // --------------------------------------------------------------------------
@@ -456,11 +459,11 @@ int confopt_isstringblank( const char *string )
   register int len = ( string ? ( strlen( string )+1 ) : 0 );
 
   while (len)
-    {
+  {
     len--;
     if ( isprint( string[len] ) && !isspace( string[len] ) )
       return 0;
-    }
+  }
   return 1;
 }
 
@@ -471,13 +474,13 @@ void confopt_killwhitespace( char *string )
   char *opos, *ipos;
   ipos = opos = string;
   while ( *ipos )
-    {
+  {
     if ( !isspace( *ipos ) )
       *opos++ = *ipos;
     ipos++;
-    }
+  }
   *opos = 0;
-  if ( strcmpi(string,"none") == 0 )
+  if ( strcmpi(string, "none") == 0 )
     string[0]=0;
   return;
 }
