@@ -11,22 +11,13 @@
 #define OPTION_COUNT    44
 #define MAXMENUENTRIES  18
 
-#if !defined(NOCONFIG)
-static const char *menutable[5]=
-  {
-  "Required Options",
-  "Logging Options",
-  "Communication Options",
-  "Performance Options",
-  "Miscellaneous Options"
-  };
+#if defined(NOCONFIG)
+  #define CFGTXT(x) NULL
+#else
+  #define CFGTXT(x) x
+#endif
 
-static char nicenesstable[3][60]=
-  {
-  "Extremely Nice",
-  "Nice",
-  "Nasty"
-  };
+// --------------------------------------------------------------------------
 
 #if (CLIENT_CPU == CPU_X86)
 static char cputypetable[7][60]=
@@ -54,6 +45,25 @@ static char cputypetable[3][60]=
   "PowerPC 603/604/750",
   };
 #endif
+
+// --------------------------------------------------------------------------
+
+#if !defined(NOCONFIG)
+static const char *menutable[5]=
+  {
+  "Required Options",
+  "Logging Options",
+  "Communication Options",
+  "Performance Options",
+  "Miscellaneous Options"
+  };
+
+static char nicenesstable[3][60]=
+  {
+  "Extremely Nice",
+  "Nice",
+  "Nasty"
+  };
 
 static char uuehttptable[6][60]=
   {
@@ -99,11 +109,7 @@ struct optionstruct
   s32 choicemax;//maximum choice number
   };
 
-#if defined(NOCONFIG)
-  #define CFGTXT(x) NULL
-#else
-  #define CFGTXT(x) x
-#endif
+// --------------------------------------------------------------------------
 
 static optionstruct options[OPTION_COUNT]=
 {
@@ -141,12 +147,12 @@ static optionstruct options[OPTION_COUNT]=
   "Nasty will cause the client to run at regular user level priority.\n\n"
   "On a completely idle system, all options will result in the same\n"
   "keyrate. For this reason, Extremely Nice is recommended.\n"),4,2,1,NULL,
-  &nicenesstable[0][0],0,2},
+  CFGTXT(&nicenesstable[0][0]),0,2},
 //9
 { "logname", CFGTXT("File to log to"), "none", CFGTXT("(128 characters max, none = no log)\n"),2,1,1,NULL},
 //10
 { "uuehttpmode", CFGTXT("Firewall Communications mode (UUE/HTTP/SOCKS)"), "0",
-  CFGTXT(""),3,2,1,NULL,&uuehttptable[0][0],0,5},
+  CFGTXT(""),3,2,1,NULL,CFGTXT(&uuehttptable[0][0]),0,5},
 //11
 { "keyproxy", CFGTXT("Preferred KeyServer Proxy"), "us.v27.distributed.net",
    CFGTXT("\nThis specifies the DNS or IP address of the keyserver your client will\n"
@@ -164,14 +170,14 @@ static optionstruct options[OPTION_COUNT]=
 #if (CLIENT_CPU == CPU_X86)
 //16
 { "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
-      CFGTXT("\n"),4,2,3,NULL,&cputypetable[1][0],-1,5},
+      CFGTXT("\n"),4,2,3,NULL,CFGTXT(&cputypetable[1][0]),-1,5},
 #elif (CLIENT_CPU == CPU_ARM)
 { "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
-      CFGTXT("\n"),4,2,3,NULL,&cputypetable[1][0],-1,1},
+      CFGTXT("\n"),4,2,3,NULL,CFGTXT(&cputypetable[1][0]),-1,1},
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
 //16
 { "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
-      CFGTXT("\n"),4,2,3,NULL,&cputypetable[1][0],-1,1},
+      CFGTXT("\n"),4,2,3,NULL,CFGTXT(&cputypetable[1][0]),-1,1},
 #else
 //16
 { "cputype", CFGTXT("CPU type...not applicable in this client"), "-1", CFGTXT("(default -1)"),0,2,0,
@@ -242,7 +248,7 @@ static optionstruct options[OPTION_COUNT]=
   "        generate random blocks if the block buffers empty.)\n"
   "Finish Buffers and exit: The client will never connect\n"
   "        to a keyserver, and when the block buffers empty, it will\n"
-  "        terminate.\n"),3,2,9,NULL,&offlinemodetable[0][0],0,2},
+  "        terminate.\n"),3,2,9,NULL,CFGTXT(&offlinemodetable[0][0]),0,2},
 //38
 { "lurk", CFGTXT("Modem detection options"),"0",
   CFGTXT("\nNormal mode: the client will send/receive blocks only when it\n"
@@ -258,7 +264,7 @@ static optionstruct options[OPTION_COUNT]=
   "        connected. HOWEVER, if the client runs out of blocks,\n"
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n"),
-  3,2,10,NULL,&lurkmodetable[0][0],0,2},
+  3,2,10,NULL,CFGTXT(&lurkmodetable[0][0]),0,2},
 { "in",  CFGTXT("RC5 In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "rc5",CFGTXT(""),5,1,14,NULL},
 { "out", CFGTXT("RC5 Out-Buffer Path/Name"), "buff-out" EXTN_SEP "rc5",CFGTXT(""),5,1,15,NULL},
 { "in2", CFGTXT("DES In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "des",CFGTXT(""),5,1,16,NULL},
@@ -795,39 +801,41 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
 
 //----------------------------------------------------------------------------
 
-#if !defined(NOCONFIG)
 s32 Client::Configure( void )
 //A return of 1 indicates to save the changed configuration
 //A return of -1 indicates to NOT save the changed configuration
 {
-
+#if defined(NOCONFIG)
+  return 1;
+#else
   s32 choice;
   char parm[128];
   s32 returnvalue=0;
 
-while (returnvalue == 0)
-   {
-   clearscreen();
-   printf("Distributed.Net RC5/DES Client build v2.70%i.%i config menu\n",CLIENT_BUILD,CLIENT_BUILD_FRAC);
-   printf("------------------------------------------------------------\n\n");
-   printf(" 1) %s\n",menutable[0]);
-   printf(" 2) %s\n",menutable[1]);
-   printf(" 3) %s\n",menutable[2]);
-   printf(" 4) %s\n",menutable[3]);
-   printf(" 5) %s\n\n",menutable[4]);
-   printf(" 9) Discard settings and exit\n");
-   printf(" 0) Save settings and exit\n\n");
-   if (strcmpi(id,"rc5@distributed.net")==0)
-     printf("*Note: You have not yet configured your e-mail address.\n"
+  while (returnvalue == 0)
+  {
+    clearscreen();
+    printf("Distributed.Net RC5/DES Client build v2.70%i.%i config menu\n",
+        CLIENT_BUILD, CLIENT_BUILD_FRAC);
+    printf("------------------------------------------------------------\n\n");
+    printf(" 1) %s\n",menutable[0]);
+    printf(" 2) %s\n",menutable[1]);
+    printf(" 3) %s\n",menutable[2]);
+    printf(" 4) %s\n",menutable[3]);
+    printf(" 5) %s\n\n",menutable[4]);
+    printf(" 9) Discard settings and exit\n");
+    printf(" 0) Save settings and exit\n\n");
+    if (strcmpi(id,"rc5@distributed.net")==0)
+      printf("*Note: You have not yet configured your e-mail address.\n"
             "       Please go to %s and configure it.\n",menutable[0]);
-   printf("Choice --> ");
+    printf("Choice --> ");
 
-   fflush( stdout );
-   fgets(parm, 128, stdin);
-   choice = atoi(parm);
+    fflush( stdout );
+    fgets(parm, 128, stdin);
+    choice = atoi(parm);
 
-   switch (choice)
-      {
+    switch (choice)
+    {
       case 1: ConfigureGeneral(1);break;
       case 2: ConfigureGeneral(2);break;
       case 3: ConfigureGeneral(3);break;
@@ -835,13 +843,12 @@ while (returnvalue == 0)
       case 5: ConfigureGeneral(5);break;
       case 0: returnvalue=1;break; //Breaks and tells it to save
       case 9: returnvalue=-1;break; //Breaks and tells it NOT to save
-      };
-
-   }
+    };
+  }
 
   return returnvalue;
-}
 #endif
+}
 
 //----------------------------------------------------------------------------
 
@@ -986,47 +993,36 @@ if (uuehttpmode > 1)
 
 //----------------------------------------------------------------------------
 
-#if !defined(NOCONFIG)
 void Client::killwhitespace( char *string )
 // Removes all spaces from a string
 {
-char *whitespaceptr;
+  char *whitespaceptr;
 
-while (strchr(string, ' ') != NULL)
+  while ((whitespaceptr = strchr(string, ' ')) != NULL)
   {
-  whitespaceptr=strchr(string, ' ');
-  strncpy(whitespaceptr, whitespaceptr+1,
-  strlen(string)+1-(whitespaceptr+1-string));
+    strcpy(whitespaceptr, whitespaceptr+1);
   };
-
-
 }
-#endif
 
 //----------------------------------------------------------------------------
 
-#if !defined(NOCONFIG)
-
 int Client::isstringblank( char *string )
 {
+  u32 counter, length, summation = 0;
 
-u32 counter, summation=0;
+  if (string == NULL) return 1;
 
-if (string==NULL) return 1;
+  length = strlen(string);
 
-if (strlen(string) == 0) return 1;
-
-for (counter=0;counter!=strlen(string);counter++)
+  for (counter = 0; counter < length; counter++)
   {
-  summation+=isalnum(*(string+counter));
+    summation += isprint(*(string+counter));
   };
 
-if (summation == 0) return 1;
+  if (summation == 0) return 1;
 
-return 0;
+  return 0;
 }
-#endif
-
 
 //----------------------------------------------------------------------------
 
