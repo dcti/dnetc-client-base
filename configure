@@ -3,374 +3,13 @@
 # Copyright distributed.net 1998 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
-#
-# $Log: configure,v $
-# Revision 1.114  1998/11/08 08:27:10  dbaker
-# freebsd elf
-#
-# Revision 1.113  1998/11/06 06:58:02  silby
-# Added additional library to freebsd non_mt target.
-#
-# Revision 1.112  1998/11/04 05:24:31  dbaker
-# nasm elf flags for x86-freebsd-elf target
-#
-# Revision 1.111  1998/10/31 22:11:23  silby
-# Fixed nasm options for freebsd non-elf
-#
-# Revision 1.110  1998/10/30 04:40:01  foxyloxy
-#
-# More MIPS cleanup.
-#
-# Revision 1.109  1998/10/30 00:09:48  foxyloxy
-#
-# Start SGI clean up so it (make rc5des) will work on machines
-# other than my wacky Origin.
-#
-# Revision 1.108  1998/10/19 07:04:46  dbaker
-# freebsd elf target
-#
-# Revision 1.107  1998/10/10 11:43:30  cyp
-# Added modereq.cpp
-#
-# Revision 1.106  1998/10/07 17:39:34  snake
-# added new entry for BSD/OS 4.0 with ELF support, thus MMX support
-#
-# Revision 1.105  1998/10/06 13:19:40  remi
-# Added -D__showids__ to sparc-linux-mt-egcs entry.
-#
-# Revision 1.104  1998/10/03 23:43:44  remi
-# Added -DMMX_RC5 to all entries with the MMX RC5 core.
-#
-# Revision 1.103  1998/10/03 05:49:17  cyp
-# Added console.cpp - do Linux et al really need to link curses just to
-# figure out the terminal height for a function thats never (or rarely) used?
-#
-# Revision 1.102  1998/09/30 22:48:01  remi
-# Added a new x86-linux-glibc2 entry.
-#
-# Revision 1.101  1998/09/30 08:12:27  snake
-#
-# Removed NASM stuff for BSD/OS, nasm does not support the a.out format of
-# BSD/OS.
-#
-# Revision 1.100  1998/09/30 07:41:01  snake
-#
-# BSD/OS also needs <errno.h>, maybe we should include it for all BSD like OS's
-#
-# Revision 1.99  1998/09/29 08:00:41  remi
-# Added a new Sparc-Linux entry.
-#
-# Revision 1.98  1998/09/28 04:41:20  cyp
-# new kids on the block: clirun, pollsys, probman, bench, probfill, setprio
-#
-# Revision 1.97  1998/09/25 11:30:46  chrisb
-# Added stuff to support 3 cores in the ARM clients.
-#
-# Revision 1.96  1998/09/25 04:25:54  pct
-# Added a configuration for Dec Ultrix MIPS processor based machines.
-#
-# Revision 1.95  1998/09/08 21:36:45  silby
-# Added guistuff to the tree - now all GUIs can hook at once place, so that the common tree doesn't become a mess.
-#
-# Revision 1.94  1998/09/03 15:30:46  cyp
-# configure now appends the appropriate .h filenames to .cpp dependancies.
-# 'make clean' now also builds a new Makefile.
-#
-# Revision 1.93  1998/08/30 11:54:15  remi
-# Another tweaking in the x86-linux entries : deleted desultra entries,
-# added some libc5 specific entries to compile a libc5 binary on a glibc2
-# system.
-#
-# Revision 1.92  1998/08/28 22:32:30  cyp
-# Added support for selftest.cpp and cmdline.cpp
-#
-# Revision 1.91  1998/08/25 00:56:39  cyp
-# netinit.cpp is now standalone (was previously #included from network.cpp)
-#
-# Revision 1.90  1998/08/22 08:16:39  silby
-# changed opts_egcs from -f-no-handle-exceptions to -f-no-exceptions to make egcs happy.
-#
-# Revision 1.89  1998/08/21 23:46:52  cyruspatel
-# Spun off Client::SelectCore() from cliconfig.cpp to selcore.cpp
-#
-# Revision 1.88  1998/08/20 20:14:46  cyruspatel
-# Undid changes made in 1.84: -fno-handle-exceptions is back.
-# (also PIPELINE_COUNT hack has been fixed at source level).
-#
-# Revision 1.87  1998/08/20 03:37:18  silby
-# Added NASM includes to all x86 makefiles.
-#
-# Revision 1.86  1998/08/20 02:37:08  silby
-# Fixed configure, now works properly with NASM rc5 mmx cores.
-#
-# Revision 1.85  1998/08/20 01:52:29  silby
-# Adddition of NASM to configure
-#
-# Revision 1.84  1998/08/19 01:31:05  silby
-# Cazatnged -fno-handle-exceptions to -fno-exceptions, since GCC told me that
-# was what to do. <g> Also, removed -DPIPELINE_COUNT for linux x85 builds - 
-# it's now a variable for x86.
-#
-# Revision 1.83  1998/08/10 22:36:53  cyruspatel
-# Added support for triggers.cpp and buffupd.cpp
-#
-# Revision 1.82  1998/08/05 16:42:12  cberry
-# ARM clients now define PIPELINE_COUNT=2
-#
-# Revision 1.81  1998/08/02 16:17:15  cyruspatel
-# Completed support for logging.
-#
-# Revision 1.80  1998/08/02 03:22:02  silby
-# Added logging.cpp as a default source file.
-#
-# Revision 1.79  1998/07/16 21:47:52  nordquist
-# More DYNIX port changes.
-#
-# Revision 1.78  1998/07/16 20:11:26  nordquist
-# Configuration for DYNIX.  Note that testplat needs the LDFLAGS to
-# compile properly.
-#
-# Revision 1.77  1998/07/16 17:44:16  nordquist
-# Make sure static-link options are passed to the HP-UX CC linker.
-#
-# Revision 1.76  1998/07/15 06:23:22  cramer
-# added -fno-handle-exceptions for gcc targets.  That should work for any gcc.
-# Those that support the new naming (-fno-exceptions) will emit a warning
-# and continue processing.
-#
-# Revision 1.75  1998/07/12 16:21:42  cyruspatel
-# Removed -fno-exceptions. This apparently does not work with an older gcc.
-#
-# Revision 1.74  1998/07/11 01:54:53  cyruspatel
-# Added -fno-exceptions to gcc option list. (Checked with Bovine)
-#
-# Revision 1.73  1998/07/10 18:45:00  nordquist
-# Fixed rc5stub.cpp handling for HP-UX (generalized RC5CORECOPY that can
-# come from any subdirectory, not just rc5).
-#
-# Revision 1.72  1998/07/10 10:19:20  remi
-# Added special targets for cramer's non-standard EGCS installation.
-# There is now 15 targets for x86-linux. Is there anyone around here
-# who want to put their own things in Linux-x86 entries ? After all, there
-# is no size limit on shell scripts ...
-#
-# Revision 1.71  1998/07/10 03:50:33  cramer
-# Changed gcc back to egcs for x86-linux*-egcs.
-# gcc is gcc; egcs is egcs.  NEVER ASSUME THE TWO ARE THE SAME.
-# (Read that again.  GCC is not always EGCS.  If you want to build an
-# egcs version, then it should actually use egcs -- or am I just nuts.)
-#
-# Revision 1.70  1998/07/09 18:40:08  remi
-# Reverted most to the previous changes. If you want to compile x86 linux
-# clients using GCC instead of EGCS, please use the *-gcc targets, not the
-# *-egcs ones. Removed -fno-inline-functions from EGCS options, -O2 does 
-# not inline functions, -O3 and up does.
-#
-# Revision 1.69  1998/07/09 07:23:32  cramer
-# Added -fno-inline-functions (on by default) to OPTS_GCC and OPTS_EGCS.
-# This is required to get the MMX des assembly code to build.  (multiple
-# labels). Changed gcc to egcs for the x86-linux egcs builds (never assume 
-# gcc is egcs.)
-#
-# Revision 1.68  1998/07/09 04:26:17  nordquist
-# Fixes for OPTS_XLC_PPC* (AIX 4.x with xlC compiler) and OPTS_CC_HPUX
-# (HP-UX with CC compiler). Brent J. Nordquist <bjn@visi.com>
-#
-# Revision 1.67  1998/07/08 23:34:37  remi
-# Added the MMX bitslicer to all x86 targets. Cleared an obvious error in
-# DESULTRA_SRCS_C (who has an editor which can't deal with >250 chars lines ?)
-#
-# Revision 1.66  1998/07/07 21:54:52  cyruspatel
-# client.h has been split into client.h and baseincs.h
-#
-# Revision 1.65  1998/07/07 07:27:44  jlawson
-# added -static to link options for alpha-gcc
-#
-# Revision 1.64  1998/07/05 13:08:50  cyruspatel
-# Created new pathwork.cpp
-#
-# Revision 1.63  1998/07/02 05:04:40  daa
-# add ;; for hpux m68k entry
-#
-# Revision 1.62  1998/07/01 09:01:39  daa
-# add hpux-m68k
-#
-# Revision 1.61  1998/06/27 21:32:51  jlawson
-# added -lncurses to alpha-gcc and alpha-gcc-mt builds
-#
-# Revision 1.60  1998/06/27 21:17:22  jlawson
-# Made only the first match from the grep for the platform/os identifier
-# get kept by adding head -1
-#
-# Revision 1.59  1998/06/27 12:01:10  friedbait
-# switched os390 from SLICE_SRCS4 to MEGGS_SLICE_SRCS, the old setting
-# didn't compile anymore and didn't have time to figure out why.
-#
-# Revision 1.58  1998/06/26 07:20:26  myshkin
-# Added -lncurses for the ppc-gcc target, per remi's recommendation.
-#
-# Revision 1.57  1998/06/25 21:29:34  remi
-# Switched to -lncurses for x86 Linux targets.
-# Fixed CFLAGS for the Ultra.
-#
-# Revision 1.56  1998/06/25 20:57:05  foxyloxy
-# IRIX5's lack of usleep() rectified temporarily with sleep()... will change
-# to nanosleep() soon. (sleepdef.h) -MIPS4 changed to -mips4 (configure)
-#
-# Revision 1.55  1998/06/25 19:38:35  foxyloxy
-# mips-cc-64 and mips-gcc-irix5-crunch targets added; CCFLAGS tweaked for
-# mips targets; "cp -f ..." changed to "rm -f ...; cp ..." for irix5 compat.
-#
-# Revision 1.54  1998/06/24 16:35:18  remi
-# CFLAGS tweaking for the Ultra client. Should give ~4.1 Mkeys/s on a
-# 167 Mhz Ultra-1.
-#
-# Revision 1.53  1998/06/24 11:00:43  cberry
-# Added -lncurses to arm-linux
-#
-# Revision 1.52  1998/06/24 08:58:59  kbracey
-# Defined __showids__ for RISC OS
-#
-# Revision 1.51  1998/06/23 21:58:48  remi
-# Use only two x86 DES cores (P5 & PPro) when not multithreaded.
-#
-# Revision 1.50  1998/06/23 20:46:51  remi
-# -lcurses should go to TARGET_LIBS, not to TARGET_LDFLAGS.
-# Enabled __showids__ for Linux targets.
-#
-# Revision 1.49  1998/06/23 20:37:01  remi
-# *** empty log message ***
-#
-# Revision 1.48  1998/06/23 09:36:23  remi
-# Added -lcurses to x86-linux entries. Other *nixes porters may want to do the
-# same, see "common/disphelp.cpp".
-#
-# Revision 1.47  1998/06/21 17:10:16  cyruspatel
-# Fixed some NetWare smp problems. Merged duplicate numcpu validation code
-# in ::ReadConfig()/::ValidateConfig() into ::ValidateProcessorCount() and
-# spun that off, together with what used to be ::x86id() or ::ArmId(), into
-# cpucheck.cpp. Adjusted and cleaned up client.h accordingly.
-#
-# Revision 1.46  1998/06/17 21:31:10  remi
-# Renamed p?bdespro.s to p?bdespro.S
-#
-# Revision 1.45  1998/06/16 22:21:26  silby
-# added des/p1bdespro.s des/p2bdespro.s to configure for all bryddes using oses.
-#
-# Revision 1.44  1998/06/16 21:59:26  silby
-# Added p1bdespro.s and p2bdespro.s into configure for x86 linux
-#
-# Revision 1.43  1998/06/16 09:01:46  kbracey
-# Another attempt to fix ident rule in a way that works for everyone.
-#
-# Revision 1.42  1998/06/16 06:27:33  remi
-# - Integrated some patches in the UltraSparc DES code.
-# - Cleaned-up C++ style comments in the UltraSparc DES code.
-# - Replaced "rm `find ..`" by "find . -name ..." in superclean.
-#
-# Revision 1.41  1998/06/15 20:57:49  remi
-# Fixed \n espace sequence in ident: rule.
-#
-# Revision 1.40  1998/06/15 10:11:10  kbracey
-# Fixed escaping and EXENAME in ident rule.
-#
-# Revision 1.39  1998/06/15 04:38:32  remi
-# Added -fno-exceptions to EGCS options : ~200 KB less on the final executable.
-#
-# Revision 1.38  1998/06/15 02:44:26  djones
-# First build of UltraSPARC 64-bit/VIS DES client:
-# - many configure file tweaks: split up C++, ASM and C files; make "gcc" the
-#   compiler.
-# - "tr" on SunOS 4.1.4 goes into endless loop when faced with "..-"; change
-#   to "..\-".
-# - Enable generation of whack16()
-#
-# Revision 1.37  1998/06/15 00:42:03  skand
-# link NetBSD/alpha statically
-#
-# Revision 1.36  1998/06/15 00:11:17  skand
-# For some reason, NetBSD/alpha wants -ltermcap...
-#
-# Revision 1.35  1998/06/14 15:14:17  remi
-# Line-up longer file names in 'make ident'.
-#
-# Revision 1.34  1998/06/14 14:01:44  remi
-# UltraSparc assembly DES bitslicer integration.
-# -Added sample sparc-solaris-gcc-crunch-asmslice-mt.
-# -Added sample x86-linux-desultra-egcs-debug for debugging
-# this code under x86.
-#
-# Revision 1.33  1998/06/14 10:15:17  skand
-# Use gcc/g++ -c when possible to assemble .S files.  Other systems
-# than bsdi/NetBSD might need tweaking
-#
-# Revision 1.32  1998/06/14 08:45:34  friedbait
-# 'ident' target added, builds a formatted list of a 'bill of material' of the
-# rc5des binary executable.
-#
-# Revision 1.31  1998/06/13 10:34:56  remi
-# Added handy x86-linux-egcs-debug target.
-# Removed unused x86-linux-mt-slice-meggs-gcc target.
-#
-# Revision 1.30  1998/06/13 01:01:17  timc
-# SparcBSD changes from Ralf Gebhart <gebhart@snake.de>
-#
-# Revision 1.29  1998/06/11 14:29:09  cberry
-# changes to allow two DES cores to be selected for different ARM variants.
-#
-# Revision 1.28  1998/06/10 22:50:12  timc
-# Robert Au added for PPC targets
-#
-# Revision 1.27  1998/06/09 22:21:56  remi
-# Added testplat to the 'superclean' list
-#
-# Revision 1.26  1998/06/09 20:44:18  friedbait
-# -Icommon -Irc5 -Ides added to OS/390 options
-#
-# Revision 1.25  1998/06/09 18:52:40  jlawson
-# renamed SLICE_SRCS to KWAN_SLICE_SRCS.  clarified naming of some
-# linux-x86 build targets.
-#
-# Revision 1.24  1998/06/09 10:46:27  cberry
-# initialise TARGET_ALLCCOBJS and TARGET_ALLASOBJS to be empty.
-#
-# Revision 1.23  1998/06/09 09:50:40  daa
-# add 2 new files in common/ disphelp.cpp and threadcd.cpp
-#
-# Revision 1.22  1998/06/08 19:31:49  friedbait
-# Reverted the changes to copy the 'stubs' to ./common instead of ./rc5.
-# Per Jeff's suggestion we achieve the same effect with appropriate '-I'
-# compile options.
-#
-# Revision 1.21  1998/06/08 14:38:27  kbracey
-# Disabled stack-limit checks on RISC OS
-#
-# Revision 1.20  1998/06/08 11:07:53  kbracey
-# Added -DCOMPAT_INET4 back to RISC OS C flags so it works with Internet 4
-# and FreeNet stack.
-#
-# Revision 1.19  1998/06/05 17:39:33  bovine
-# generated makefiles list cpu, os, and intsizes in comments.
-#
-# Revision 1.18  1998/06/05 17:34:34  bovine
-# added gcc-alpha-mt configure target.  cleaned up unused buffer in cliconfig's writecontestprefix
-#
-# Revision 1.17  1998/06/01 21:49:05  friedbait
-# added '-DKWAN' for OS/390,
-# changed the copy command for the RC5CORECOPY platforms such that
-# the stub no longer goes to './rc5' but to './common' instead
-#
-# Revision 1.16  1998/06/01 20:29:48  remi
-# cleanup : changed ASM_P6, ASM_P6, ASM_6x86, etc ... to ASM_X86
-#
-# Revision 1.15  1998/06/01 17:39:26  friedbait
-# changed the 'find' command insertion into the superclean target.
-# The backquotes needed to be escaped with backslashes. Also, find's
-# '-print' command doesn't support format specifications, only '-printf'
-# does, therefore changed -print to -printf too.
-#
-#
 
+# $Log: configure,v $
+# Revision 1.113.2.1  1998/11/08 11:01:59  remi
+# Initial (re)import of the public code.
+#
+#
+# Synchonized with official 1.113
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -429,14 +68,14 @@ OPTS_GCC_MIPS="$OPTS_GCC -O6 -DASM_MIPS"
 OPTS_CC_ALPHA_EV4='-O4 -tune ev4 -inline all'
 OPTS_CC_ALPHA_EV5='-O4 -tune ev5 -inline all'
 OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all -Icommon -Ides -Irc5'
-OPTS_GCC_ALPHA="$OPTS_GCC -O6 -DASM_ALPHA -static"
+OPTS_GCC_ALPHA="$OPTS_GCC -O6 -DASM_ALPHA"
 
 #--
 
 LDFLAGS_CC_HPUX='+A +DA2.0'
 OPTS_CC_HPUX="$LDFLAGS_CC_HPUX +a1 +O3 -D_HPUX -DASM_HPPA -Icommon -Ides -Irc5"
-OPTS_GCC_HPUX="$OPTS_GCC -O6 -DASM_HPPA -static"
-OPTS_GCC_HPUX_M68K="$OPTS_GCC -D_HPUX_M68K -static"
+OPTS_GCC_HPUX="$OPTS_GCC -O6 -DASM_HPPA"
+OPTS_GCC_HPUX_M68K="$OPTS_GCC -D_HPUX_M68K"
 
 #--
 
@@ -509,16 +148,13 @@ OPTS_DES_MMX="-DMMX_BITSLICER -DKWAN -DMEGGS -DBIT_64"
 # Source C++ files making up the base client code
 #
 COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
-    common/autobuff.cpp common/iniread.cpp common/network.cpp
-    common/scram.cpp common/buffwork.cpp common/mail.cpp 
     common/convdes.cpp common/clicdata.cpp common/clirate.cpp
-    common/clisrate.cpp common/clitime.cpp common/disphelp.cpp
-    common/threadcd.cpp common/cpucheck.cpp common/pathwork.cpp
-    common/cliident.cpp common/logstuff.cpp common/buffupd.cpp
-    common/triggers.cpp common/selcore.cpp common/netinit.cpp
-    common/cmdline.cpp common/selftest.cpp common/guistuff.cpp
-    common/bench.cpp common/probman.cpp common/clirun.cpp
-    common/probfill.cpp common/pollsys.cpp common/setprio.cpp
+    common/clisrate.cpp common/clitime.cpp
+    common/cpucheck.cpp
+    common/logstuff.cpp common/disphelp.cpp
+    common/triggers.cpp common/selcore.cpp
+    common/cmdline.cpp common/selftest.cpp
+    common/bench.cpp common/probman.cpp
     common/console.cpp common/modereq.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
@@ -544,7 +180,6 @@ TARGET_AS="gas"
 TARGET_NASM="nasm"
 TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
 TARGET_ASFLAGS=""
-TARGET_STRIP="strip"
 
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
@@ -570,7 +205,7 @@ case "$1" in
 	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -O3 -static -r5000 -IPA -64 -mips4 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
-	TARGET_LDFLAGS="-static -64 -IPA -mips4"
+	TARGET_LDFLAGS="-64 -IPA -mips4"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
@@ -578,7 +213,8 @@ case "$1" in
         #  mips-crunch.cpp doesn't compile with CC
 	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -DPIPELINE_COUNT=2 -DBIT_32 -D_irix5_ -DMEGGS -DKWAN"
+	TARGET_LDFLAGS="-n32"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -n32 -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
@@ -586,8 +222,7 @@ case "$1" in
         #  mips-crunch.cpp doesn't compile with CC
 	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
-	TARGET_LDFLAGS="-n32"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -n32 -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
@@ -640,7 +275,6 @@ case "$1" in
 	TARGET_AFLAGS="$OPTS_GAS_M68030K"
 	TARGET_ADDASMS="rc5/crunch.68k.gcc.s"
 	TARGET_ADDSRCS="$SLICE_SRCS3"
-	TARGET_LIBS="-static"
 	echo $TARGET_CCFLAGS
 	;;
 
@@ -648,14 +282,7 @@ case "$1" in
     *dgux-gcc)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CC="/usr/local/bin/g++"
-	TARGET_CCFLAGS="$OPTS_GCC_DGUX -static"
-	;;
-
-    *dgux-gcc-mt)
-	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
-	TARGET_CC="/usr/local/bin/g++"
-	TARGET_CCFLAGS="$OPTS_GCC_DGUX -D_POSIX4A_DRAFT6_SOURCE -DMULTITHREAD"
-	TARGET_LIBS="-lthread"
+	TARGET_CCFLAGS="$OPTS_GCC_DGUX"
 	;;
 
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
@@ -673,11 +300,10 @@ case "$1" in
 	TARGET_LIBS="-ldl"
 	;;
 
-    *sparc-linux-mt-egcs)
+    *sparc-linux-egcs)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -D__showids__ -fno-inline-functions -DMULTITHREAD -DPIPELINE_COUNT=2 -DKWAN -DMEGGS -DBIT_32"
+	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -fno-inline-functions -DPIPELINE_COUNT=2 -DKWAN -DMEGGS -DBIT_32"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
-	TARGET_LIBS="-lpthread -lncurses"
 	;;
 
     *sparc-cc)
@@ -687,10 +313,9 @@ case "$1" in
 	TARGET_LIBS="-lnsl -lsocket"
 	;;
 
-    *sunos-gcc-static)	
+    *sunos-gcc)	
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -DPIPELINE_COUNT=2"
-	TARGET_LIBS="-static"
 	;;
 
     *sun3-gcc)
@@ -707,39 +332,38 @@ case "$1" in
 	TARGET_AFLAGS="$OPTS_GAS_M68K"
  	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
  	TARGET_ADDASMS="crunch.68k.gcc.s"
- 	TARGET_LIBS="-static"
 	;;
     #####
 
-    *sparc-solaris-gcc-mt)        # slower rc5, slower des
+    *sparc-solaris-gcc)           # slower rc5, slower des
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1 -DKWAN"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1 -DKWAN"
 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
-    *sparc-solaris-gcc-crunch-mt)    # fastest rc5, slower des
+    *sparc-solaris-gcc-crunch)       # fastest rc5, slower des
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1 -DKWAN"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1 -DKWAN"
 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
-    *sparc-solaris-gcc-crunch-slice-mt)   # fastest rc5 & des for ultra
+    *sparc-solaris-gcc-crunch-slice)      # fastest rc5 & des for ultra
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
-    *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
+    *sparc-solaris-gcc-crunch-asmslice)      # fastest rc5 & VIS DES
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
-	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1"
+	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris -DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
  	TARGET_ADDASMS="platforms/ultrasparc/simple.handopt.s"
 	TARGET_ASFLAGS="$OPTS_GAS_ULTRA"
 	TARGET_CC="gcc"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
     #####
@@ -752,29 +376,19 @@ case "$1" in
 	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
-    *x86-solaris-mt)
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="output/bdeslow.S output/bbdeslow.S output/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
-	;;
-
 ###### Alpha
-    *alpha-cc-ev5-static)
+    *alpha-cc-ev5)
 	RC5CORECOPY="rc5/rc5ansi2-bo2.cpp"
 	TARGET_CC="cxx"
 	TARGET_CCFLAGS="$OPTS_CC_ALPHA_EV5 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
-	TARGET_LIBS="-non_shared"
 	;;
 
-    *alpha-cc-ev4-static)
+    *alpha-cc-ev4)
 	RC5CORECOPY="rc5/rc5ansi2-bo2.cpp"
 	TARGET_CC="cxx"
 	TARGET_CCFLAGS="$OPTS_CC_ALPHA_EV4 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
-	TARGET_LIBS="-non_shared"
 	;;
 
     *alpha-cc)
@@ -789,17 +403,6 @@ case "$1" in
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
-	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-lncurses"
-	;;
-
-    *alpha-gcc-mt)
-	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
-	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN -DMULTITHREAD"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
-	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-lncurses -lpthread"
 	;;
 
     *alpha-netbsd)
@@ -807,7 +410,6 @@ case "$1" in
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
-	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-ltermcap"
 	;;
 
@@ -816,7 +418,6 @@ case "$1" in
     *ppc-gcc)
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch_allitnil_552.ppc.s rc5/crunch_lintilla_296.ppc.s"
-	TARGET_LIBS="-lncurses"
 	;;
 
     *power-gcc)
@@ -857,7 +458,6 @@ case "$1" in
     *aix-gcc2)     # possibly useful for POWER machines
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_AIX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
-	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
@@ -865,195 +465,30 @@ case "$1" in
     *x86-linux-egcs)              # uses EGCS options
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
-	TARGET_LDFLAGS="-static"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
-	;;
-
-    *x86-linux-egcs-cramer)       # special target for cramer's non-standard installation
-	TARGET_AS="egcs -c"
-	TARGET_CC="egcs"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
 	;;
 
     *x86-linux-gcc)               # uses standard GCC options plus '-pipe'
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
-	TARGET_LDFLAGS="-static"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
-	;;
-
-    *x86-linux-libc5-gcc)         # uses GCC options plus '-pipe' (libc5)
-	TARGET_AS="i486-linuxlibc1-gcc -c"
-	TARGET_CC="i486-linuxlibc1-gcc"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
-	;;
-
-    *x86-linux-gcc-nocurses)      # standard GCC options, no curses/termios, non-static
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ -DNOCURSES -DNOTERMIOS"
-	#TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	;;
-
-    *x86-linux-egcs-debug)        # debug version of x86-linux-egcs
-	TARGET_AS="g++ -c"
-	TARGET_CC="g++ -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_STRIP="touch"
-	TARGET_LIBS="-lncurses"
-	;;
-
-    *x86-linux-egcs-debug-cramer) # debug version of x86-linux-egcs-cramer
-	TARGET_AS="egcs -c"
-	TARGET_CC="egcs -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_STRIP="touch"
-	TARGET_LIBS="-lncurses"
-	;;
-
-    *x86-linux-gcc-debug)         # debug version of x86-linux-gcc
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc -g"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_STRIP="touch"
-	TARGET_LIBS="-lncurses"
-	;;
-
-    *x86-linux-aout-egcs)          # aout version, using EGCS options
-	TARGET_AS="i486-pc-linux-gnuaout-gcc -c"
-	TARGET_CC="i486-pc-linux-gnuaout-gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
-	TARGET_LDFLAGS="-static"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -f aout"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
-	;;
-
-    *x86-linux-aout-egcs-cramer)   # special target for cramer's non-standard installation
-	TARGET_AS="i486-pc-linux-gnuaout-egcs -c"
-	TARGET_CC="i486-pc-linux-gnuaout-egcs"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
-	;;
-
-    *x86-linux-mt-egcs)            # multithreaded build using EGCS options
-	TARGET_AS="g++ -c"
-	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lpthread -lncurses"
-	;;
-
-    *x86-linux-glibc2-mt-egcs)     # multithreaded build using EGCS options (dyn. linked w/glibc2)
-	TARGET_AS="g++ -c"
-	TARGET_CC="g++ -nodefaultlibs"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ -DMULTITHREAD"
-	TARGET_LDFLAGS=""
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lgcc -lc -lm /usr/lib/libpthread.a /usr/lib/libncurses.a"
-	;; # hacked a bit to avoid all dynamic linking but libc.so.6 and libm.so.6
-
-    *x86-linux-mt-egcs-cramer)     # special target for cramer's non-standard installation
-	TARGET_AS="egcs -c"
-	TARGET_CC="egcs"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lpthread -lncurses"
-	;;
-
-    *x86-linux-mt-gcc)             # multithreaded build using GCC options
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lpthread -lncurses"
-	;;
-
-    *x86-linux-libc5-mt-gcc)             # multithreaded build using GCC options (libc5)
-	TARGET_AS="i486-linuxlibc1-gcc -c"
-	TARGET_CC="i486-linuxlibc1-gcc"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lpthread -lncurses"
-	;;
-
-    *x86-linux-mt-slice-kwan-gcc)  # using slice not bryddes
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DMMX_RC5 -D__showids__ -DBIT_32 -DMULTITHREAD -DKWAN"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="platforms/x86ident.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lpthread -lncurses"
 	;;
 
 ###### Intel X86 FreeBSD/NetBSD/OpenBSD
 
     *x86-freebsd)
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_LIBS="-lc_r"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
         TARGET_NASMFLAGS="-i rc5/nasm/ -f aoutb"
-	;;
-
-    *x86-freebsd-mt)
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lc_r"
-        TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
 	;;
 
     *x86-freebsd-elf)
@@ -1063,13 +498,12 @@ case "$1" in
         TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
-        TARGET_NASM="/usr/local/bin/nasm"
         TARGET_LIBS="-lc_r"
         ;;
 
     *x86-netbsd)
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
@@ -1077,7 +511,7 @@ case "$1" in
 
     *x86-openbsd)
 	TARGET_AS="g++ -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
@@ -1085,7 +519,7 @@ case "$1" in
 
     *x86-bsdi)
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
        ;;
@@ -1093,7 +527,7 @@ case "$1" in
 ####### BSD/OS 4.0 with ELF format
     *x86-bsdi4)
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DPIPELINE_COUNT=2 -D__showids__ -D__ELF__"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DPIPELINE_COUNT=2  -D__ELF__"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
@@ -1103,7 +537,7 @@ case "$1" in
 
     *x86-sco5)
 	TARGET_AS="g++ -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -DPIPELINE_COUNT=2 -belf -Dsco5"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DPIPELINE_COUNT=2 -belf -Dsco5"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
@@ -1173,11 +607,10 @@ case "$1" in
     *riscos)
 	TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
 	TARGET_AS="armasm -apcs 3/26bit"
-	TARGET_CCFLAGS="-Icommon -Irc5 -Ides -Iplatforms -J/home/cberry/play/riscoslib/CLib -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -DCOMPAT_INET4 -D__riscos -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -D__showids__ -DOLDRESOLVE"
+	TARGET_CCFLAGS="-Icommon -Irc5 -Ides -Iplatforms -J/home/cberry/play/riscoslib/CLib -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -DCOMPAT_INET4 -D__riscos -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN  -DOLDRESOLVE"
 	TARGET_ADDSRCS="platforms/riscos/riscos.cpp"
 	TARGET_ADDASMS="platforms/riscos/riscosasm.s rc5/rc5-arm-1.s rc5/rc5-arm-2.s rc5/rc5-arm-3.s des/des-slice-arm.s des/des-slice-sa.s"
 	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
-	TARGET_STRIP=touch
 	EXENAME=rc5des,ff8
 	;;
 
@@ -1187,7 +620,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=2 -DBIT_32 -Dlinux -DKWAN"
 	TARGET_ADDSRCS=""
 	TARGET_ADDASMS="rc5/rc5-sa-gnu.s rc5/rc5-arm-gnu.s des/des-slice-sa-gnu.s des/des-slice-arm-gnu.s"
-	TARGET_LIBS="-lm -lncurses"
+	TARGET_LIBS="-lm"
 	;;
 
     *arm-netbsd)
@@ -1204,7 +637,7 @@ case "$1" in
 	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
 	TARGET_CC="gcc"
 	TARGET_AS=""
-	TARGET_CCFLAGS="$OPTS_OS390 -D__showids__ -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -DMEGGS"
+	TARGET_CCFLAGS="$OPTS_OS390 -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	TARGET_ADDASMS=""
 	TARGET_LIBS="$SOCKS_LIBS"
@@ -1271,7 +704,6 @@ if [ $? -ne 0 ]; then
    echo "Compilation failed.  Check your target options."
    exit
 fi
-${TARGET_STRIP} testplat
 
 
 #
@@ -1315,7 +747,6 @@ echo "AS = ${TARGET_AS}" >> Makefile
 echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
 echo "NASM = ${TARGET_NASM}" >> Makefile
 echo "NASMFLAGS = ${TARGET_NASMFLAGS}" >> Makefile
-echo "STRIP = ${TARGET_STRIP}" >> Makefile
 echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
@@ -1330,12 +761,11 @@ echo "# Regular targets follow" >> Makefile
 
 echo "${EXENAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
 echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${EXENAME}" >> Makefile
-echo "	\${STRIP} ${EXENAME}" >> Makefile
 echo "" >> Makefile
 
 echo "clean:" >> Makefile
 echo "	rm -f \${ALLOBJS} ${EXENAME}" >> Makefile
-#echo "	sh $0 \${BUILDNAME}" >> Makefile
+echo "	sh $0 \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
 
 echo "superclean:" >> Makefile
