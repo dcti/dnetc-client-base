@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.36 2000/02/07 02:21:48 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.37 2000/02/07 16:17:37 chrisb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -342,7 +342,7 @@ void Go_mt( void * parm )
           #if (CLIENT_OS==OS_MACOS)
           if (!thrparams->realthread)
           macosTickSleep(0); /* only non-realthreads are non-preemptive */
-          #elif
+          #else
           __thread_yield__();
           #endif
         }
