@@ -8,6 +8,11 @@
 ;
 ;
 ; $Log: deseval-mmx.asm,v $
+; Revision 1.5  1999/01/12 21:03:01  remi
+; - Added conditional $Id tags in NASM files
+; - Added -d __showids__ to NASM_FLAGS in targets where __showids_ was
+;   already defined in CFLAGS
+;
 ; Revision 1.4  1999/01/12 08:42:50  silby
 ; Will learn to spell __ELF__ one of these days.
 ;
@@ -1416,6 +1421,16 @@ global _whack16
 
                               ; 55 clocks for 58 variables
 %endmacro
+
+%ifdef __showids__
+; PLATFORM  data segment definition
+%ifdef BCC
+SECTION DATA USE32 ALIGN=16
+%else
+[SECTION .data]
+%endif
+idtag:    db "@(#)$Id: deseval-mmx.asm,v 1.5 1999/01/12 21:03:01 remi Exp $\0"
+%endif
 
 ; PLATFORM  text segment definition
 %ifdef BCC
