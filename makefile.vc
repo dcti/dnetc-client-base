@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.27 2000/08/09 19:28:19 cyp Exp $
+# $Id: makefile.vc,v 1.56.2.28 2000/09/20 17:53:11 jlawson Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -241,9 +241,9 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_CSC_CORES -DMMX_CSC
 OGR_OBJS =
 !else
 OGR_OBJS =                             \
-        $(OUTPUTPATH)/ansi/ogr.obj     \
-        $(OUTPUTPATH)/ansi/ogr_dat.obj \
-        $(OUTPUTPATH)/ansi/ogr_sup.obj
+        $(OUTPUTPATH)/ogr.obj     \
+        $(OUTPUTPATH)/ogr_dat.obj \
+        $(OUTPUTPATH)/ogr_sup.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
 !endif
 
@@ -283,12 +283,15 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
 {$(CSCSRCPATH)/x86/mmx}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CSCSRCPATH:/=\)\x86\ $(**:/=\)
 
+{$(OGRSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
+        nasmw -o $(@:/=\) -f win32 -i $(OGRSRCPATH:/=\)\x86\ $(**:/=\)
+
 !endif
 
 {$(DESSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
-{$(OGRSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
+{$(OGRSRCPATH)/ansi}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(PLATSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
