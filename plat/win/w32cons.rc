@@ -3,11 +3,11 @@
  * (the client can also run as a screensaver)
  * For use in distributed.net projects only. YEAH! :)
  *
- * Revision $Id: w32cons.rc,v 1.1.2.1 2001/01/21 15:10:25 cyp Exp $
+ * Revision $Id: w32cons.rc,v 1.1.2.2 2001/01/21 16:05:37 cyp Exp $
 */
 
-#define DNETC_EXE_ICO "platforms\\win32cli\\w32cons.ico" //dnet2.ico,w32cons.ico
-#define DNETC_SCR_ICO "platforms\\win32cli\\w32ss.ico"
+#define DNETC_EXE_ICO "plat\\win\\w32cons.ico" //dnet2.ico,w32cons.ico
+#define DNETC_SCR_ICO "plat\\win\\w32ss.ico"
 
 #ifndef NONDCTI_SPECIAL
   #include "..\..\common\version.h"
