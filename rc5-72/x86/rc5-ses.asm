@@ -22,12 +22,14 @@
 %define ebp_save	esp+4		;4 bytes
 %define edi_save	ebp+8		;4 bytes
 %define counter		ebp+12		;4 bytes
-%define LBox		ebp+16		;3 entries, 12 bytes
-%define SBox		ebp+28		;26 entries, 104 bytes
-%define stacksize	132		;make sure to modify if added values
+%define itersleft       ebp+16          ; 4 bytes
+%define LBox		ebp+20		;3 entries, 12 bytes
+%define SBox		ebp+32		;26 entries, 104 bytes
+%define stacksize	136		;make sure to modify if added values
 
 ;variables on the stack we want
-%define timeslice	[ebp+stacksize+8]
+%define scratch         [ebp+stacksize+12] ;not actually used by us.
+%define keystodo	[ebp+stacksize+8]
 %define workunit	[ebp+stacksize+4]
 
 ;define the workunit entries
@@ -121,17 +123,21 @@ rc5_72_unit_func_ses:
 	;save ebx and edi
 	mov [ebx_save], ebx
 	mov [edi_save], edi
-	mov [counter], dword 0
-
+        mov dword [counter], 0
+	
 	;get the structure
 	mov edi, workunit
 
-	inc dword timeslice
+	;find the number of iters to run (for 1-pipe, 1 key==1 iter)
+	mov ebx,keystodo
+	mov eax,dword [ebx]
+	inc eax			; add 1, since we start with a dec.
+	mov [itersleft],eax
 
 timesliceloop:
-	;decrement the amount of time, loop if not at the end
-	dec dword timeslice
-	jz near endloop
+	;decrement the amount of iterations, loop if not at the end
+	dec dword [itersleft]
+	jz near foundnothing
 
 	;do our loops
 
@@ -223,12 +229,12 @@ timesliceloop:
 
 	;if (B == rc5_72unitwork->cypher.hi) return;
 	cmp ebx, workunitcypher(0)
-	je near endloop
+	je near foundsuccess
 
 continuechecks:
 	;now a massive if statement
-	inc dword [counter]
-
+        inc dword [counter]
+	
 	;key.hi = (key.hi + 0x01) & 0x000000FF;
 	;if (!key.hi)
 	inc byte workunitL0Byte(0,0)
@@ -274,13 +280,21 @@ continuechecks:
 	jmp timesliceloop
 
 
+foundsuccess:
+	mov eax,[counter]
+	mov ebx,keystodo
+	mov dword [ebx],eax       ; pass back how many keys done
+	
+	mov eax,2		; return code = RESULT_FOUND
+	jmp short endloop
+
+foundnothing:
+	mov eax,1       	; return code = RESULT_NOTHING
+
 endloop:
 	;restore ebx and edi
 	mov ebx, [ebx_save]
 	mov edi, [edi_save]
-
-	;set eax for the counter
-	mov eax, dword [counter]
 
 	;restore ebp
 	mov ebp, [ebp_save]
