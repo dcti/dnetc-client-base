@@ -1,0 +1,136 @@
+# Project:   Dnetc
+# This makefile is for compiling the distributed.net client under RiscOS
+# using GCC 2.95.2, the original C-Library and the Make utility that came with
+# Acorns C compiler, and Acorns socketlib. Socketlib's header files sometimes
+# need to be modified a bit, but you will see what to modify from the compiler
+# errors. The modified socketlib is expected in the path "Sockets_Dnetc:".
+# Questions to teich-p@rcs.urz.tu-dresden.de please.
+
+# Toolflags:
+GCCflags = -c -O3 -mtune=strongarm -fomit-frame-pointer -fschedule-insns -fschedule-insns2 -fexpensive-optimizations -s -fno-rtti -fno-exceptions -mtune=strongarm -W -Wall -mthrowback -mstubs -mamu -ISockets_Dnetc: -IC: -Icommon -Irc5 -Ides -Iogr -Iplatforms.riscos -D__showids__ -D__riscos -DARM -DASM_ARM -DBIT_32 -DHAVE_OGR_CORES -DBUILDNAME=arm-riscos
+GCClinkflags = -o $@ -mthrowback -mstubs -mamu
+ObjAsmflags = -throwback -NoCache -depend !Depend
+
+
+# Final targets:
+@.Dnetc:   @.o.base64 @.o.bench @.o.buffbase @.o.buffpriv @.o.scram @.o.buffupd \
+        @.o.checkpt @.o.clicdata @.o.client @.o.clievent @.o.cliident @.o.clirun \
+        @.o.clitime @.o.cmdline @.o.confmenu @.o.confopt @.o.confrwv @.o.console \
+        @.o.convdes @.o.cpucheck @.o.disphelp @.o.iniread @.o.logstuff @.o.mail @.o.modereq \
+        @.o.netconn @.o.netbase @.o.pathwork @.o.pollsys @.o.probfill @.o.problem \
+        @.o.probman @.o.random @.o.selcore @.o.selftest @.o.setprio @.o.triggers @.o.util \
+        @.o.ogr_dat @.o.ogr_sup @.o.ogr @.o.rc5-arm-1 @.o.rc5-arm-2 @.o.rc5-arm-3 @.o.riscos_sup \
+        @.o.riscos_x86 @.o.riscos_asm 
+        gcc $(gcclinkflags) @.o.base64 @.o.bench @.o.buffbase @.o.buffpriv \
+        @.o.scram @.o.buffupd @.o.checkpt @.o.clicdata @.o.client @.o.clievent @.o.cliident \
+        @.o.clirun @.o.clitime @.o.cmdline @.o.confmenu @.o.confopt @.o.confrwv \
+        @.o.console @.o.convdes @.o.cpucheck @.o.disphelp @.o.iniread @.o.logstuff @.o.mail \
+        @.o.modereq @.o.netconn @.o.netbase @.o.pathwork @.o.pollsys @.o.probfill \
+        @.o.problem @.o.probman @.o.random @.o.selcore @.o.selftest @.o.setprio @.o.triggers \
+        @.o.util @.o.ogr_dat @.o.ogr_sup @.o.ogr @.o.rc5-arm-1 @.o.rc5-arm-2 @.o.rc5-arm-3 \
+        @.o.riscos_sup @.o.riscos_x86 @.o.riscos_asm Sockets_Dnetc:o.unixlib Sockets_Dnetc:o.inetlib Sockets_Dnetc:o.socklib
+
+
+# User-editable dependencies:
+
+
+# Static dependencies:
+@.o.base64:   @.common.c++.base64
+        g++ $(gccflags) -o @.o.base64 @.common.c++.base64 
+@.o.bench:   @.common.c++.bench
+        g++ $(gccflags) -o @.o.bench @.common.c++.bench 
+@.o.buffbase:   @.common.c++.buffbase
+        g++ $(gccflags) -o @.o.buffbase @.common.c++.buffbase 
+@.o.buffpriv:   @.common.c++.buffpriv
+        g++ $(gccflags) -o @.o.buffpriv @.common.c++.buffpriv 
+@.o.scram:   @.common.c++.scram
+        g++ $(gccflags) -o @.o.scram @.common.c++.scram 
+@.o.buffupd:   @.common.c++.buffupd
+        g++ $(gccflags) -o @.o.buffupd @.common.c++.buffupd 
+@.o.checkpt:   @.common.c++.checkpt
+        g++ $(gccflags) -o @.o.checkpt @.common.c++.checkpt 
+@.o.clicdata:   @.common.c++.clicdata
+        g++ $(gccflags) -o @.o.clicdata @.common.c++.clicdata 
+@.o.client:   @.common.c++.client
+        g++ $(gccflags) -o @.o.client @.common.c++.client 
+@.o.clievent:   @.common.c++.clievent
+        g++ $(gccflags) -o @.o.clievent @.common.c++.clievent 
+@.o.cliident:   @.common.c++.cliident
+        g++ $(gccflags) -o @.o.cliident @.common.c++.cliident 
+@.o.clirate:   @.common.c++.clirate
+        g++ $(gccflags) -o @.o.clirate @.common.c++.clirate 
+@.o.clirun:   @.common.c++.clirun
+        g++ $(gccflags) -o @.o.clirun @.common.c++.clirun
+@.o.clitime:   @.common.c++.clitime
+        g++ $(gccflags) -o @.o.clitime @.common.c++.clitime 
+@.o.cmdline:   @.common.c++.cmdline
+        g++ $(gccflags) -o @.o.cmdline @.common.c++.cmdline 
+@.o.confmenu:   @.common.c++.confmenu
+        g++ $(gccflags) -o @.o.confmenu @.common.c++.confmenu 
+@.o.confopt:   @.common.c++.confopt
+        g++ $(gccflags) -o @.o.confopt @.common.c++.confopt 
+@.o.confrwv:   @.common.c++.confrwv
+        g++ $(gccflags) -o @.o.confrwv @.common.c++.confrwv 
+@.o.console:   @.common.c++.console
+        g++ $(gccflags) -o @.o.console @.common.c++.console 
+@.o.convdes:   @.common.c++.convdes
+        g++ $(gccflags) -o @.o.convdes @.common.c++.convdes 
+@.o.cpucheck:   @.common.c++.cpucheck
+        g++ $(gccflags) -o @.o.cpucheck @.common.c++.cpucheck 
+@.o.disphelp:   @.common.c++.disphelp
+        g++ $(gccflags) -o @.o.disphelp @.common.c++.disphelp 
+@.o.iniread:   @.common.c++.iniread
+        g++ $(gccflags) -o @.o.iniread @.common.c++.iniread 
+@.o.logstuff:   @.common.c++.logstuff
+        g++ $(gccflags) -o @.o.logstuff @.common.c++.logstuff 
+@.o.mail:   @.common.c++.mail
+        g++ $(gccflags) -o @.o.mail @.common.c++.mail 
+@.o.modereq:   @.common.c++.modereq
+        g++ $(gccflags) -o @.o.modereq @.common.c++.modereq 
+@.o.netconn:   @.common.c++.netconn
+        g++ $(gccflags) -o @.o.netconn @.common.c++.netconn 
+@.o.netbase:   @.common.c++.netbase
+        g++ $(gccflags) -o @.o.netbase @.common.c++.netbase 
+@.o.pathwork:   @.common.c++.pathwork
+        g++ $(gccflags) -o @.o.pathwork @.common.c++.pathwork 
+@.o.pollsys:   @.common.c++.pollsys
+        g++ $(gccflags) -o @.o.pollsys @.common.c++.pollsys 
+@.o.probfill:   @.common.c++.probfill
+        g++ $(gccflags) -o @.o.probfill @.common.c++.probfill 
+@.o.problem:   @.common.c++.problem
+        g++ $(gccflags) -o @.o.problem @.common.c++.problem 
+@.o.probman:   @.common.c++.probman
+        g++ $(gccflags) -o @.o.probman @.common.c++.probman 
+@.o.random:   @.common.c++.random
+        g++ $(gccflags) -o @.o.random @.common.c++.random 
+@.o.selcore:   @.common.c++.selcore
+        g++ $(gccflags) -o @.o.selcore @.common.c++.selcore 
+@.o.selftest:   @.common.c++.selftest
+        g++ $(gccflags) -o @.o.selftest @.common.c++.selftest 
+@.o.setprio:   @.common.c++.setprio
+        g++ $(gccflags) -o @.o.setprio @.common.c++.setprio 
+@.o.triggers:   @.common.c++.triggers
+        g++ $(gccflags) -o @.o.triggers @.common.c++.triggers 
+@.o.util:   @.common.c++.util
+        g++ $(gccflags) -o @.o.util @.common.c++.util 
+@.o.ogr_dat:   @.ogr.ansi.c++.ogr_dat
+        g++ $(gccflags) -o @.o.ogr_dat @.ogr.ansi.c++.ogr_dat 
+@.o.ogr_sup:   @.ogr.ansi.c++.ogr_sup
+        g++ $(gccflags) -o @.o.ogr_sup @.ogr.ansi.c++.ogr_sup 
+@.o.ogr:   @.ogr.ansi.c++.ogr
+        g++ $(gccflags) -o @.o.ogr @.ogr.ansi.c++.ogr 
+@.o.rc5-arm-1:   @.rc5.arm.s.rc5-arm-1
+        objasm $(objasmflags) -from @.rc5.arm.s.rc5-arm-1 -to @.o.rc5-arm-1
+@.o.rc5-arm-2:   @.rc5.arm.s.rc5-arm-2
+        objasm $(objasmflags) -from @.rc5.arm.s.rc5-arm-2 -to @.o.rc5-arm-2
+@.o.rc5-arm-3:   @.rc5.arm.s.rc5-arm-3
+        objasm $(objasmflags) -from @.rc5.arm.s.rc5-arm-3 -to @.o.rc5-arm-3
+@.o.riscos_sup:   @.platforms.riscos.c++.riscos_sup
+        g++ $(gccflags) -o @.o.riscos_sup @.platforms.riscos.c++.riscos_sup 
+@.o.riscos_x86:   @.platforms.riscos.c++.riscos_x86
+        g++ $(gccflags) -o @.o.riscos_x86 @.platforms.riscos.c++.riscos_x86 
+@.o.riscos_asm:   @.platforms.riscos.s.riscos_asm
+        objasm $(objasmflags) -from @.platforms.riscos.s.riscos_asm -to @.o.riscos_asm
+
+
+# Dynamic dependencies:
