@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __TRIGGERS_H__
-#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.11 2000/09/17 11:46:34 cyp Exp $"
+#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.12 2000/11/12 21:06:37 cyp Exp $"
 
 #if defined(SIGCONT) && defined(SIGTSTP)
   /* These constants define symbolically the signal names used by the
@@ -67,5 +67,8 @@ extern int CheckPauseRequestTriggerNoIO(void);
 //don't fire the next restart cycle caused by config file change
 //won't prevent a restart if one has already been signalled
 int OverrideNextConffileChangeTrigger(void);
+
+//SIG_BLOCK as appropriate
+int TriggersSetThreadSigMask(void);
 
 #endif //__TRIGGERS_H__

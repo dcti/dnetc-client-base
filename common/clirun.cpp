@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.78 2000/11/12 17:19:28 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.79 2000/11/12 21:06:36 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -238,11 +238,9 @@ void Go_mt( void * parm )
 #elif (CLIENT_OS == OS_MACOS)
   if (!is_non_preemptive_cruncher)   /* preemptive threads may as well use */
   {                                 /* ... (a copy of) the default_dyn_tt */
-    #if 1
     memcpy( (void *)(thrparams->dyn_timeslice_table),
             default_dyn_timeslice_table,
             sizeof(default_dyn_timeslice_table));
-    #endif
   }
   else      /* only non-realthreads are non-preemptive */
   {         /* non-realthreads have a shared thrparams->dyn_timeslice_table */
@@ -320,17 +318,6 @@ void Go_mt( void * parm )
       }
     }
   }
-#elif ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))  
-  if (thrparams->realthread)
-  {
-    sigset_t signals_to_block;
-    sigemptyset(&signals_to_block);
-    sigaddset(&signals_to_block, SIGINT);
-    sigaddset(&signals_to_block, SIGTERM);
-    sigaddset(&signals_to_block, SIGKILL);
-    sigaddset(&signals_to_block, SIGHUP);
-    thr_sigsetmask(SIG_BLOCK, &signals_to_block, NULL);
-  }
 #elif (CLIENT_OS == OS_AMIGAOS)
   if (thrparams->realthread)
   {
@@ -341,21 +328,13 @@ void Go_mt( void * parm )
     thrparams->dyn_timeslice_table[2].usec = 4000000;  // OGR
     #endif
   }
-#elif defined(_POSIX_THREADS_SUPPORTED) /* cputypes.h */
-  if (thrparams->realthread)
-  {
-    sigset_t signals_to_block;
-    sigemptyset(&signals_to_block);
-    sigaddset(&signals_to_block, SIGINT);
-    sigaddset(&signals_to_block, SIGTERM);
-    sigaddset(&signals_to_block, SIGKILL);
-    sigaddset(&signals_to_block, SIGHUP);
-    pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL);
-  }
-#endif
+#endif  
 
   if (thrparams->realthread)
+  {
+    TriggersSetThreadSigMask();
     SetThreadPriority( thrparams->priority ); /* 0-9 */
+  }    
 
   thrparams->hasexited = 0;
   thrparams->is_suspended = 1;

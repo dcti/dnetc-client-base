@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.52 2000/10/20 21:23:04 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.53 2000/11/12 21:06:37 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -935,6 +935,41 @@ extern "C" void CliSignalHandler( int sig )
 
 // -----------------------------------------------------------------------
 
+int TriggersSetThreadSigMask(void)
+{
+#if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) \
+    || ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) \
+    || defined(_POSIX_THREADS_SUPPORTED)
+  sigset_t signals_to_block;
+  sigemptyset(&signals_to_block);
+  sigaddset(&signals_to_block, SIGINT);
+  sigaddset(&signals_to_block, SIGTERM);
+  sigaddset(&signals_to_block, SIGKILL);
+  sigaddset(&signals_to_block, SIGHUP);
+  sigaddset(&signals_to_block, SIGCONT);
+  sigaddset(&signals_to_block, SIGTSTP);
+  sigaddset(&signals_to_block, SIGTTIN);
+  sigaddset(&signals_to_block, SIGTTOU);
+  #if defined(_POSIX_THREADS_SUPPORTED) /* must be first */
+    #if (CLIENT_OS == OS_AIX)
+    sigthreadmask(SIG_BLOCK, &signals_to_block, NULL);
+    #elif ((CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)) \
+      (CLIENT_OS == OS_DGUX) || (CLIENT_OS == OS_MACOSX)
+    /* nothing - no pthread_sigmask() and no alternative */
+    #else  
+    pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL);
+    #endif
+  #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
+  thr_sigsetmask(SIG_BLOCK, &signals_to_block, NULL);
+  #elif ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS))
+  sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
+  #endif
+#endif
+  return 0;
+}  
+
+// -----------------------------------------------------------------------
+
 #ifndef CLISIGHANDLER_IS_SPECIAL
 static void __init_signal_handlers( int doingmodes )
 {
@@ -1239,13 +1274,3 @@ int DeinitializeTriggers(void)
 
 /* ---------------------------------------------------------------- */
 
-#if (CLIENT_OS == OS_FREEBSD)
-#include <sys/mman.h>
-int TBF_MakeTriggersVMInheritable(void)
-{
-  int mflag = 0; /*VM_INHERIT_SHARE*/ /*MAP_SHARED|MAP_INHERIT*/;
-  if (minherit((void*)&trigstatics,sizeof(trigstatics),mflag)!=0)
-    return -1;
-  return 0;
-}  
-#endif
