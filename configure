@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.88 2003/06/24 19:28:59 bdragon Exp $
+# @(#)$Id: configure,v 1.288.2.89 2003/07/08 00:15:56 bdragon Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -980,15 +980,21 @@ generate_gcc_opts() {
         opts310="$OPTS_GCC310 -O6 -DASM_COM -mcpu=common -funroll-loops"
         ;;
 
-    *internal-alpha)
+    *internal-alpha*)
         opts272="$OPTS_GCC272 -O6 -DASM_ALPHA -static -funroll-loops"
-	if [ "$1" = "alpha" -a "$2" = "freebsd" ]; then
+	if [ "$2" = "freebsd" ]; then
 	  # 2.95 optimizer is broken on FreeBSD/alpha :-(
           opts295="$OPTS_GCC295 -O1 -DASM_ALPHA -funroll-loops"
 	else
           opts295="$OPTS_GCC295 -O3 -DASM_ALPHA -funroll-loops"
 	fi
-        opts310="$OPTS_GCC310 -O3 -DASM_ALPHA -funroll-loops -mcpu=ev5"
+        opts310="$OPTS_GCC310 -O3 -DASM_ALPHA -funroll-loops"
+        optarch=`echo "$1" | sed 's/.*alpha/ev/'`
+        if [ "$optarch" != "ev" ]; then
+            opts272="$opts272 -march=""$optarch"
+            opts295="$opts295 -march=""$optarch"
+            opts310="$opts310 -mcpu=""$optarch"
+        fi
         ;;
 
     *internal-x86)
@@ -1193,30 +1199,30 @@ case "$1" in
 
 # Alpha ****************************************************************
 
-    *alpha-digital_unix)
+    *alpha*-digital_unix*) #takes alpha[4|5|67|]-digital_unix[-nonmt|]
+        arch=`echo "$1" | sed 's/^.*alpha/alpha/'| sed 's/-.*$//'`
         TARGET_CC="g++"
         TARGET_AS="as"
-        generate_gcc_opts "alpha" "digital-unix"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -D_REENTRANT"
+        generate_gcc_opts "$arch" "digital-unix"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_ASFLAGS=""
-        TARGET_LDFLAGS="-static-libgcc"
-        TARGET_LIBS="-Wl,-so_archive -lpthread -Wl,-no_so -lrt"
-        TARGET_TARBALL="digital_unix-alpha"
+        TARGET_LDFLAGS=""
+        TARGET_LIBS="-Wl,-no_so -lrt"
+        TARGET_TARBALL="digital_unix-""$arch"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "digital-unix" "alpha"
-        ;;
-
-    *alpha-digital_unix-nonmt)
-        TARGET_CC="g++"
-        TARGET_AS="as"
-        generate_gcc_opts "alpha" "digital-unix"
-        TARGET_CCFLAGS="$OPTS_GCC -DSINGLE_CRUNCHER_ONLY"
-        TARGET_ASFLAGS=""
-        TARGET_LDFLAGS="-static"
-        TARGET_LIBS="-lrt"
-        TARGET_TARBALL="digital_unix-alpha-nonmt"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "digital-unix" "alpha"
+        case "internal-$1" in
+        *internal-*nonmt*)
+            TARGET_CCFLAGS="$TARGET_CCFLAGS -DSINGLE_CRUNCHER_ONLY"
+            TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+            TARGET_TARBALL="$TARGET_TARBALL""-nonmt"
+            ;;
+        *internal-*)
+            TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_POSIX_THREADS -D_REENTRANT"
+            TARGET_LDFLAGS="$TARGET_LDFLAGS -static-libgcc"
+            TARGET_LIBS="$TARGET_LIBS -Wl,-so_archive -lpthread -Wl,-no_so"
+            ;;
+        esac
         ;;
 
     *alpha-linux)       # dworz / jlawson
