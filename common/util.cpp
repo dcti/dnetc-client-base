@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.12 2000/02/04 20:30:58 ctate Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.13 2000/02/06 05:34:15 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -589,6 +589,7 @@ const char *utilGetAppName(void)
 #  include <kernel/image.h>  /* get_next_image_info() */
 #elif (CLIENT_OS == OS_WIN32)
 #  include <tlhelp32.h>      /* toolhelp calls */
+#  include <winperf.h>       /* perf on registry */
 #endif
 #ifdef __unix__
 #  include <fcntl.h>
@@ -607,15 +608,19 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
   {
     #if (CLIENT_OS == OS_BEOS)
     {
+      team_info tInfo; 
+      team_id ourteam; 
+      int32 team;
       thread_info thisThread;
-      get_thread_info(find_thread(NULL), &thisThread);
-      team_id ourteam = thisThread.team;
 
       /* procname is either a basename or a full path; determine which */
       int usefullpathcmp = (strchr( procname, '/' ) != ((char *)0));
-  
-      team_info tInfo;
-      int32 team = 0;
+
+      /* get our own team id, so that we can exclude it later */
+      get_thread_info(find_thread(NULL), &thisThread);
+      ourteam = thisThread.team;
+
+      team = 0; /* begin enumeration here */
       while (get_next_team_info(&team, &tInfo) == B_OK)
       {
         if (num_found < 0) /* our scanner is working */
@@ -706,13 +711,252 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
     }  
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     {
+      unsigned int basenamepos = strlen(procname);
+      while (basenamepos > 0)
+      {
+        basenamepos--;
+        if (procname[basenamepos] == '\\' || 
+            procname[basenamepos] == '/' ||
+            procname[basenamepos] == ':')
+        {
+          basenamepos++;
+          break;
+        }
+      }
+      
       #if (CLIENT_OS == OS_WIN32) 
-      if (winGetVersion() >= 400) /* not win32s please */
+      if (winGetVersion() >= 2000 && winGetVersion() < 2500) /* NT3/NT4 */
+      {
+        //http://msdn.microsoft.com/library/psdk/pdh/perfdata_9feb.htm
+        //http://support.microsoft.com/support/kb/articles/Q119/1/63.asp
+        char szIndex_PROCESS[260]; 
+        DWORD dwIndex_IDPROCESS;
+        HKEY hKeyIndex; DWORD dwBytes;
+        unsigned int procname_baselen;
+
+        /* strip procname of path and extension */
+        procname += basenamepos;
+        if ((procname_baselen = strlen(procname)) > 3)
+        {
+          if (strcmpi(&procname[procname_baselen-4],".com")==0 ||
+              strcmpi(&procname[procname_baselen-4],".exe")==0)
+          {
+            procname_baselen -= 4;
+          }
+        }
+
+        szIndex_PROCESS[0] = '\0';
+        dwIndex_IDPROCESS = (DWORD)-1;
+
+        if (procname_baselen != 0) /* length of procname (sans path/ext) */
+        {
+          if (RegOpenKeyEx( HKEY_LOCAL_MACHINE,
+               "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Perflib\\009",
+                0, KEY_READ, &hKeyIndex ) == ERROR_SUCCESS)
+          {
+            // Get the size of the counter.
+            if (RegQueryValueEx( hKeyIndex, "Counter",
+                         NULL, NULL, NULL,  &dwBytes ) == ERROR_SUCCESS)
+            {
+              char *pszBuffer = NULL;
+              if (dwBytes)
+                pszBuffer = (char *)HeapAlloc( GetProcessHeap(),
+                                             HEAP_ZERO_MEMORY, dwBytes );
+              if (pszBuffer)
+              {
+                /* Get the titles and counters. (REG_MULTI_SZ) */
+                if (RegQueryValueEx( hKeyIndex, "Counter", NULL, NULL,
+                          (LPBYTE)pszBuffer, &dwBytes ) == ERROR_SUCCESS )
+                {
+                  int foundcount = 0;
+                  DWORD pos = 0; 
+  
+                  while( pos < dwBytes && foundcount < 2)
+                  {
+                    DWORD valpos = pos, vallen = 0;
+                    while (pos < dwBytes && pszBuffer[pos] != '\0')
+                    {
+                      pos++;
+                      vallen++;
+                    }
+                    if (pos < dwBytes)
+                    {
+                      DWORD cmppos = (++pos); /* skip the '\0' */
+                      while (pos < dwBytes && pszBuffer[pos] != '\0')
+                        pos++;
+                      if (pos < dwBytes)
+                      {
+                        char *selbuf = NULL;
+                        pos++; /* skip the '\0' */
+                        if (pos < dwBytes) /* why is this needed? */
+                        {
+                          if (pszBuffer[pos] == '\0')
+                            pos++;
+                        }
+                        if (strcmpi( &pszBuffer[cmppos], "Process") == 0 )
+                        {
+                          if ( szIndex_PROCESS[0] == '\0' )
+                          {
+                            if ( vallen >= (sizeof( szIndex_PROCESS )-1) )
+                              break; /* error, not long enough */
+                            strcpy( szIndex_PROCESS, &pszBuffer[valpos] );
+                            foundcount++;
+                          }
+                        }
+                        else if (strcmpi( &pszBuffer[cmppos],"ID Process") == 0)
+                        {
+                          if (dwIndex_IDPROCESS == ((DWORD)-1))
+                          {
+                            dwIndex_IDPROCESS = (DWORD)atoi(&pszBuffer[valpos]);
+                            ++foundcount;
+                          }
+                        }
+                      }
+                    }
+                    
+                  }  
+                }
+                HeapFree( GetProcessHeap(), 0, (LPVOID)pszBuffer );
+              }
+            }
+            RegCloseKey( hKeyIndex );
+          }
+        }
+          
+        if (szIndex_PROCESS[0] != '\0' && dwIndex_IDPROCESS != ((DWORD)-1))
+        {
+          PPERF_DATA_BLOCK pdb = NULL;
+          LONG lResult = ERROR_MORE_DATA;
+
+          /* read in all object table/counters/instrecords for "Process" */
+          do
+          {
+            DWORD dwLastSize;
+            LPVOID newmem = NULL;
+            if (!pdb) /* we haven't done the first round yet */
+            {
+              dwBytes = 8192;
+              newmem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,dwBytes);
+            }
+            else
+            {
+              newmem = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                           (LPVOID)pdb, dwBytes );
+            }
+            if (!newmem)
+              break;
+            pdb = (PPERF_DATA_BLOCK)newmem;
+            dwLastSize = dwBytes; /* workaround for NT4 bug */
+            Sleep(0);
+            lResult = RegQueryValueEx(HKEY_PERFORMANCE_DATA,
+                                (LPTSTR)szIndex_PROCESS, NULL, NULL, 
+                                (LPBYTE)pdb, &dwBytes);
+            if (lResult == ERROR_SUCCESS)
+            {
+              RegCloseKey( HKEY_PERFORMANCE_DATA );
+              break;
+            }
+            else if (lResult == ERROR_MORE_DATA)
+            {
+              if (dwBytes > dwLastSize)
+                dwBytes = dwLastSize;
+              else 
+                dwBytes = dwLastSize + 4096;
+              if (dwBytes < dwLastSize) /* o'flow */
+                break;
+            }
+          } while (lResult == ERROR_MORE_DATA);
+
+          if (pdb != NULL)
+          { 
+            if (lResult == ERROR_SUCCESS)
+            { 
+              LONG i, totalcount;
+              DWORD ourpid = GetCurrentProcessId();
+              PPERF_OBJECT_TYPE         pot;
+              PPERF_COUNTER_DEFINITION  pcd; 
+              PPERF_INSTANCE_DEFINITION piddef;
+              DWORD dwProcessIdOffset = 0;
+              
+              /* Get the PERF_OBJECT_TYPE. */
+              pot = (PPERF_OBJECT_TYPE)(((PBYTE)pdb) + pdb->HeaderLength);
+              /* Get the first counter definition. */
+              pcd = (PPERF_COUNTER_DEFINITION)(((PBYTE)pot) + pot->HeaderLength);
+              
+              /* walk the counters to find the offset to the ProcessID */
+              totalcount = pot->NumCounters;
+              for ( i=0; i < totalcount; i++ )
+              {
+                /* get offset of the processID in the PERF_COUNTER_BLOCKs */
+                if (pcd->CounterNameTitleIndex == dwIndex_IDPROCESS)
+                {
+                  dwProcessIdOffset = pcd->CounterOffset;
+                  break;
+                }
+                pcd = ((PPERF_COUNTER_DEFINITION)(((PBYTE)pcd) + pcd->ByteLength));
+              }
+
+              /* Get the first process instance definition */
+              piddef= (PPERF_INSTANCE_DEFINITION)(((PBYTE)pot) + pot->DefinitionLength);
+           
+              /* now walk the process definitions */
+              totalcount = pot->NumInstances;
+              for ( i = 0; i < totalcount; i++ )
+              {
+                PPERF_COUNTER_BLOCK pcb;
+                char * foundname; 
+                DWORD thatpid;
+             
+                pcb = (PPERF_COUNTER_BLOCK) (((PBYTE)piddef) + piddef->ByteLength);
+                thatpid = *((DWORD *) (((PBYTE)pcb) + dwProcessIdOffset));
+                foundname = (char *) (((PBYTE)piddef) + piddef->NameOffset);
+                if ( ((DWORD *)(((PBYTE)piddef) + piddef->NameLength)) == 0)
+                  foundname = NULL; /* name has zero length */
+                /* we have all the data we need, skip to the next pid */
+                piddef = (PPERF_INSTANCE_DEFINITION) (((PBYTE)pcb) + pcb->ByteLength);
+
+                if (num_found < 0) /* our enumerator is working */
+                {
+                  num_found = 0;
+                }
+                if (foundname && thatpid != 0 && thatpid != ourpid)
+                {
+                  /* misuse the szIndex_Process buffer (no longer needed) */
+                  #define foundname_ansi szIndex_PROCESS
+                  dwBytes = (DWORD)WideCharToMultiByte( CP_ACP, 0, 
+                                   (LPCWSTR)foundname, -1, foundname_ansi,
+                                   sizeof(foundname_ansi), NULL, NULL );
+                  foundname = foundname_ansi;
+                  #undef foundname_ansi
+              
+                  /* foundname and procname are both in ansi and are both
+                     just the basename (no path, no extension)
+                  */
+                  if ( dwBytes != 0 && procname_baselen == dwBytes &&
+                       memicmp( foundname, procname, procname_baselen ) == 0 )
+                  {
+                    if (pidlist)
+                    {
+                      pidlist[num_found] = (long)thatpid;
+                    }
+                    num_found++;
+                    if (pidlist && num_found == maxnumpids)
+                    {
+                      break; /* for ( i = 0; i < pot->NumInstances; i++ ) */
+                    }
+                  }
+                } /* if (thatpid != 0 && thatpid != ourpid) */
+              } /* for ( i = 0; i < pot->NumInstances; i++ ) */
+            } /* if RegQueryValueEx == ERROR_SUCCESS */
+
+            HeapFree(GetProcessHeap(), 0, (LPVOID)pdb );
+          } /* if (pdb != NULL) */
+        } /* if (szIndex_PROCESS[0] && szIndex_ID_PROCESS[0]) */
+      } /* if NT3/NT4 */  
+      else if (winGetVersion() >= 400) /* win9x/NT5 not win32s please */
       {
         HINSTANCE hInst;
         const char *libname = "kernel32.dll";
-        if (winGetVersion() >= 2000 && winGetVersion() < 2500)
-          libname = "toolhelp.dll"; /* NT3.x, NT4 */
         hInst = LoadLibrary( libname ); 
         if (hInst > ((HINSTANCE)32))
         {
@@ -736,47 +980,88 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
               if (hSnapshot)
               {
                 PROCESSENTRY32 pe;
-                int usefullpathcmp = 0;
+                DWORD ourpid = GetCurrentProcessId();
                 const char *p = procname;
-                while (*p && *p != '\\' && *p != '/' && *p != ':')
-                  p++;
-                if (*p)
-                  usefullpathcmp = 1;
                 pe.dwSize = sizeof(pe);
                 if ((*fnProcess32First)(hSnapshot, &pe))
                 {
+                  unsigned int procnamelen = strlen( procname );
+                  unsigned int procsufxlen = 0;
+                  if (procnamelen > 3)
+                  {
+                    if (strcmpi( &procname[procnamelen-4],".com" )==0 ||
+                        strcmpi( &procname[procnamelen-4],".exe" )==0 )
+                    {
+                      procsufxlen = 3;
+                      procnamelen -=4;
+                    }
+                  }
+                
                   do
                   {
                     if (pe.szExeFile[0])
                     {
+                      char *foundname = pe.szExeFile;
+                      DWORD thatpid = pe.th32ProcessID;
                       if (num_found < 0)
                       {
                         num_found = 0;
                       }
-                      p = (const char *)&(pe.szExeFile[0]);
-                      if (!usefullpathcmp)
+                      if (thatpid != 0 && thatpid != ourpid)
                       {
-                        p += strlen( p );
-                        while (p > ((const char *)&(pe.szExeFile[0])))
+                        unsigned int len;
+                        int cmpresult;
+
+                        /* if no path was provided, then allow
+                           match if the rest is equal
+                        */
+                        if (basenamepos == 0)
                         {
-                          --p;
-                          if (*p == '\\' || *p == '/' || *p == ':')
+                          len = strlen( foundname );
+                          while (len > 0)
                           {
-                            p++;
-                            break;
+                            len--;
+                            if (foundname[len]=='\\' || 
+                                foundname[len]=='/' || 
+                                foundname[len]==':')
+                            {
+                              foundname += len+1;
+                              break;
+                            }
                           }
                         }
-                      }
-                      if ( strcmpi( p, procname ) == 0 )
-                      {
-                        if (pidlist)
+                        cmpresult = strcmpi( procname, foundname );
+
+                        /* if no extension was provided, then allow 
+                           match if basenames (sans-ext) are equal 
+                        */
+                        if ( cmpresult && procsufxlen == 0)
                         {
-                          pidlist[num_found] = (long)pe.th32ProcessID;
+                          len = strlen( foundname );
+                          if (len > 3)
+                          {
+                            if ( strcmpi( &foundname[len-4], ".exe" ) == 0 
+                              || strcmpi( &foundname[len-4], ".com" ) == 0 )
+                            {
+                              if ((len-4) == procnamelen)
+                              {
+                                cmpresult = memicmp( foundname, 
+                                                 procname, procnamelen );
+                              }
+                            }
+                          }
                         }
-                        num_found++;
-                        if (pidlist && num_found == maxnumpids)
+                        if ( cmpresult == 0 )
                         {
-                          break; /* while (next) */
+                          if (pidlist)
+                          {
+                            pidlist[num_found] = (long)thatpid;
+                          }
+                          num_found++;
+                          if (pidlist && num_found == maxnumpids)
+                          {
+                            break; /* while (next) */
+                          }
                         }
                       }
                     }
@@ -795,7 +1080,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         /* we should use taskfirst/tasknext, but thats a *bit* ]:)
            cowplicated from within an extender
         */
-        HMODULE hMod = GetModuleHandle(procname);
+        HMODULE hMod = GetModuleHandle(&procname[basenamepos]);
         num_found = 0;
         if (hMod)
         {
