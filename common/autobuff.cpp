@@ -10,7 +10,7 @@
 //
 
 const char *autobuff_cpp(void) {
-return "@(#)$Id: autobuff.cpp,v 1.15.2.3 2000/03/09 01:47:19 jlawson Exp $"; }
+return "@(#)$Id: autobuff.cpp,v 1.15.2.4 2000/05/01 07:57:37 cyp Exp $"; }
 
 #include <string.h> /* memmove() */
 #include <assert.h>
@@ -140,18 +140,18 @@ void AutoBuffer::operator= (const AutoBuffer &that)
 // destructively returns a copy of the first whole text line,
 // and removes it from the head of the buffer.
 // returns true if a complete line was found.
-bool AutoBuffer::RemoveLine(AutoBuffer *line)
+int AutoBuffer::RemoveLine(AutoBuffer *line)
 {
   assert(line != NULL);
   unsigned int offset = 0;
-  bool result = StepLine(line, &offset);
+  int result = StepLine(line, &offset);
   if (result) RemoveHead(offset);
   return result;
 }
 
 // non-destructively returns a copy of the first whole text line.
 // returns true if a complete line was found.
-bool AutoBuffer::StepLine(AutoBuffer *line, unsigned int *offset) const
+int AutoBuffer::StepLine(AutoBuffer *line, unsigned int *offset) const
 {
   assert(line != NULL && offset != NULL);
   line->Clear();
@@ -164,7 +164,7 @@ bool AutoBuffer::StepLine(AutoBuffer *line, unsigned int *offset) const
     if (ch == 0 || ch == '\r' || ch == '\n')
       { eol = (pos - (int)(*offset) ); break; }
   }
-  if (eol < 0) return false;
+  if (eol < 0) return 0; /* false */
 
   // copy the separated line into the target buffer.
   line->Reserve(eol + 1);
@@ -178,7 +178,7 @@ bool AutoBuffer::StepLine(AutoBuffer *line, unsigned int *offset) const
       (int)GetLength() > (int)(*offset) + 1 &&
       GetHead()[(int)(*offset) + 1] == '\n') (*offset) += 2;
   else (*offset)++;
-  return true;
+  return 1; /* true */
 }
 
 
