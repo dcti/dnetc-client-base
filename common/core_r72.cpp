@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.23 2004/05/19 22:49:24 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.24 2004/05/28 15:33:09 kakace Exp $"; }
 
 //#define TRACE
 
@@ -321,8 +321,10 @@ int selcoreGetPreselectedCoreForProject_rc572()
             case 0x800C: cindex = 3; break; // 7410 (G4)   == KKS 7400
             #if 0       // Disabled (kakace)
             case 0x0039: cindex = 7; break; // 970 (G5)    == KKS 970
+            case 0x003C: cindex = 7; break; // 970 FX
             #else
             case 0x0039: cindex = 4; break; // Redirect G5 to KKS 7450
+            case 0x003C: cindex = 4; break; // Ditto
             #endif
             default:     cindex =-1; break; // no default
         }

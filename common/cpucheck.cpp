@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.53 2004/04/23 10:03:45 snake Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.54 2004/05/28 15:33:09 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -486,6 +486,7 @@ static long __GetRawProcessorID(const char **cpuname)
       {    0x000C, "7400 (G4)"           },
       {    0x0020, "403G/403GC/403GCX"   },
       {    0x0039, "970 (G5)"            },
+      {    0x003C, "970FX (G5)"          }, // XServe G5. See bug #3675
       {    0x0050, "821"                 },
       {    0x0080, "860"                 },
       {    0x0081, "8240"                },

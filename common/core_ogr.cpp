@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.22 2004/05/22 10:26:50 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.23 2004/05/28 15:33:09 kakace Exp $"; }
 
 //#define TRACE
 
@@ -350,6 +350,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
         {
           case 0x000C: cindex = 1; break; // 7400      (G4)  == PPC-vector
           case 0x0039: // PPC 970
+          case 0x003C: // PPC 970FX (XServe G5)
           case 0x8000: // 7441/7450/7451
           case 0x8001: // 7445/7455
           case 0x8002: // 7447/7457
