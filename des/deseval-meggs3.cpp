@@ -1,5 +1,8 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.11  1999/01/06 06:54:24  dicamillo
+// Change MacOS yield routine.
+//
 // Revision 1.10  1998/12/14 06:08:26  pct
 // Sorry.  Uploaded the wrong file on previous CVS.  Don't use previous
 // version.
@@ -38,7 +41,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.10 1998/12/14 06:08:26 pct Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.11 1999/01/06 06:54:24 dicamillo Exp $"; }
 #endif
 
 #include <cputypes.h>		/* Isn't this needed for using CLIENT_OS defines? */
@@ -62,7 +65,7 @@ return "@(#)$Id: deseval-meggs3.cpp,v 1.10 1998/12/14 06:08:26 pct Exp $"; }
 
 #if (CLIENT_OS == OS_MACOS)
 #define TICKS ((unsigned long *)0x16a)
-extern void YieldToMain(char force_events);
+extern void DES_YieldToMain(void);
 extern unsigned long DES_ticks_to_use;
 extern unsigned long DES_yield_ticks;
 #endif
@@ -1032,7 +1035,7 @@ slice whack16(slice *P, slice *C, slice *K)
             #if (CLIENT_OS == OS_MACOS)
 		      if (DES_yield_ticks < *TICKS) {
 	            DES_yield_ticks = *TICKS + DES_ticks_to_use;
-			    YieldToMain(1);
+			    DES_YieldToMain();
 			  }
             #endif
 
