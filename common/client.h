@@ -12,6 +12,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.104  1998/12/20 23:57:02  silby
+// Added variable scheduledupdatetime; used to coordinate massive
+// update at start of new contests.
+//
 // Revision 1.103  1998/12/20 23:00:35  silby
 // Descontestclosed value is now stored and retrieved from the ini file,
 // additional updated of the .ini file's contest info when fetches and
@@ -446,6 +450,7 @@ public:
   s32 preferred_blocksize;
   s32 contestdone[CONTEST_COUNT];
   u32 descontestclosed;
+  u32 scheduledupdatetime;
 
 #if defined(MMX_BITSLICER) || defined(MMX_RC5)
   int usemmx;
