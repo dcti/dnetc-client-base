@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3.asm,v 1.2 2002/10/24 01:16:57 acidblood Exp $
+; $Id: r72-dg3.asm,v 1.3 2002/10/24 15:37:56 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -17,9 +17,7 @@
 
 %define P         0xB7E15163
 %define Q         0x9E3779B9
-%define S_not1(N) (P+Q*(N))
-%define S_not2(N) (P+Q*(N))
-%define S_not3(N) (P+Q*(N))
+%define S_not(N)  (P+Q*(N))
 
 %define RESULT_NOTHING 1
 %define RESULT_FOUND   2
@@ -125,48 +123,55 @@ defwork save_ebp
 
 
 %macro KEYSETUP_BLOCK 3
-%ifidn %1,S_not
-        lea     A1, [A1 + B1 + %{1}1(%2)]
-        lea     A2, [A2 + B2 + %{1}2(%2)]
-        lea     A3, [A3 + B3 + %{1}3(%2)]
-%else
-        add     A1, %{1}1(%2)
-        add     A2, %{1}2(%2)
-        add     A3, %{1}3(%2)
-
-        add     A1, B1
-        add     A2, B2
-        add     A3, B3
-%endif
-
         rol     A1, 3
         rol     A2, 3
         rol     A3, 3
 
-        add     B1, A1
-        add     B2, A2
-        add     B3, A3
-
-        mov     shiftreg, B1
+        lea     shiftreg, [A1 + B1]
         add     B1, L1(%3)
+        mov     S1(%2), A1
 
+        add     B1, A1
         rol     B1, shiftcount
+%ifidn %1,S
+        add     A1, S1(%2+1)
+%else
+        lea     A1, [A1 + B1 + S_not(%2+1)]
+%endif
+
+        add     B2, A2
         mov     shiftreg, B2
         add     B2, L2(%3)
 
+        add     B3, A3
+        mov     S2(%2), A2
+        mov     S3(%2), A3
+
         rol     B2, shiftcount
+%ifidn %1,S
+        add     A2, S2(%2+1)
+        add     A1, B1
+%else
+        lea     A2, [A2 + B2 + S_not(%2+1)]
+%endif
+
+        mov     L1(%3), B1
         mov     shiftreg, B3
         add     B3, L3(%3)
 
         rol     B3, shiftcount
+%ifidn %1,S
+        add     A3, S3(%2+1)
+        add     A2, B2
+%else
+        lea     A3, [A3 + B3 + S_not(%2+1)]
+%endif
 
-        mov     S1(%2), A1
-        mov     S2(%2), A2
-        mov     S3(%2), A3
-
-        mov     L1(%3), B1
         mov     L2(%3), B2
         mov     L3(%3), B3
+%ifidn %1,S
+        add     A3, B3
+%endif
 %endmacro
 
 %macro ENCRYPTION_BLOCK 1
@@ -176,9 +181,9 @@ defwork save_ebp
 
         rol     A1, shiftcount
         mov     shiftreg, B2
-        xor     A3, B3
-
         add     A1, S1(2*%1)
+
+        xor     A3, B3
         rol     A2, shiftcount
         mov     shiftreg, B3
 
@@ -190,11 +195,11 @@ defwork save_ebp
         xor     B1, A1
         xor     B2, A2
 
-        xor     B3, A3
         rol     B1, shiftcount
         mov     shiftreg, A2
-
         add     B1, S1(2*%1+1)
+
+        xor     B3, A3
         rol     B2, shiftcount
         mov     shiftreg, A3
 
@@ -267,6 +272,10 @@ key_setup_1:
         mov     A2, A1
         mov     A3, A1
 
+        mov     S1(0), A1
+        mov     S2(0), A1
+        mov     S3(0), A1
+
         add     B1, A1
         add     B2, A1
         add     B3, A1
@@ -275,9 +284,9 @@ key_setup_1:
         rol     B2, 0x1D
         rol     B3, 0x1D
 
-        mov     S1(0), A1
-        mov     S2(0), A1
-        mov     S3(0), A1
+        lea     A1, [A1 + B1 + S_not(1)]
+        lea     A2, [A2 + B2 + S_not(1)]
+        lea     A3, [A3 + B3 + S_not(1)]
 
         mov     L1(0), B1
         mov     L2(0), B2
@@ -307,7 +316,43 @@ key_setup_1:
         KEYSETUP_BLOCK S_not,22,1
         KEYSETUP_BLOCK S_not,23,2
         KEYSETUP_BLOCK S_not,24,0
-        KEYSETUP_BLOCK S_not,25,1
+
+        rol     A1, 3
+        rol     A2, 3
+        rol     A3, 3
+
+        lea     shiftreg, [A1 + B1]
+        add     B1, L1(1)
+        mov     S1(25), A1
+
+        mov     S2(25), A2
+        mov     S3(25), A3
+        add     B1, A1
+
+        add     A1, S1(0)
+        add     B2, A2
+        add     B3, A3
+
+        rol     B1, shiftcount
+        mov     shiftreg, B2
+        add     B2, L2(1)
+
+        add     A2, S2(0)
+        add     A1, B1
+        mov     L1(1), B1
+
+        rol     B2, shiftcount
+        mov     shiftreg, B3
+        add     B3, L3(1)
+
+        add     A3, S3(0)
+        add     A2, B2
+        mov     L2(1), B2
+
+        rol     B3, shiftcount
+
+        mov     L3(1), B3
+        add     A3, B3
 
 key_setup_2:
 
@@ -336,7 +381,43 @@ key_setup_2:
         KEYSETUP_BLOCK S,22,0
         KEYSETUP_BLOCK S,23,1
         KEYSETUP_BLOCK S,24,2
-        KEYSETUP_BLOCK S,25,0
+
+        rol     A1, 3
+        rol     A2, 3
+        rol     A3, 3
+
+        lea     shiftreg, [A1 + B1]
+        add     B1, L1(0)
+        mov     S1(25), A1
+
+        mov     S2(25), A2
+        mov     S3(25), A3
+        add     B1, A1
+
+        add     A1, S1(0)
+        add     B2, A2
+        add     B3, A3
+
+        rol     B1, shiftcount
+        mov     shiftreg, B2
+        add     B2, L2(0)
+
+        add     A2, S2(0)
+        add     A1, B1
+        mov     L1(0), B1
+
+        rol     B2, shiftcount
+        mov     shiftreg, B3
+        add     B3, L3(0)
+
+        add     A3, S3(0)
+        add     A2, B2
+        mov     L2(0), B2
+
+        rol     B3, shiftcount
+
+        mov     L3(0), B3
+        add     A3, B3
 
 key_setup_3:
 
@@ -366,14 +447,6 @@ key_setup_3:
         KEYSETUP_BLOCK S,23,0
         KEYSETUP_BLOCK S,24,1
 
-        add     A1, S1(25)
-        add     A2, S2(25)
-        add     A3, S3(25)
-
-        add     A1, B1
-        add     A2, B2
-        add     A3, B3
-
         rol     A1, 3
         rol     A2, 3
         rol     A3, 3
@@ -381,6 +454,7 @@ key_setup_3:
         mov     S1(25), A1
         mov     S2(25), A2
         mov     S3(25), A3
+
 
 ;    A1 = rc5_72unitwork->plain.lo + S1[0];
 ;    A2 = rc5_72unitwork->plain.lo + S2[0];
