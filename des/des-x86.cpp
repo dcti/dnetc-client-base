@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.15  1998/07/08 23:42:08  remi
+// Added support for CliIdentifyModules().
+//
 // Revision 1.14  1998/07/08 18:53:06  remi
 // Added function for CliIdentifyModules().
 //
@@ -43,8 +46,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_x86_cpp(void) {
-static char *id="@(#)$Id: des-x86.cpp,v 1.14 1998/07/08 18:53:06 remi Exp $";
-return id; }
+return "@(#)$Id: des-x86.cpp,v 1.15 1998/07/08 23:42:08 remi Exp $"; }
 #endif
 
 

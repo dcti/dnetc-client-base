@@ -1,5 +1,8 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.5  1998/07/08 23:42:12  remi
+// Added support for CliIdentifyModules().
+//
 // Revision 1.4  1998/06/15 09:21:53  jlawson
 // eliminated unused label warning
 //
@@ -12,7 +15,10 @@
 //
 //
 
-static char *id="@(#)$Id: deseval-meggs3.cpp,v 1.4 1998/06/15 09:21:53 jlawson Exp $";
+#if (!defined(lint) && defined(__showids__))
+const char *deseval_meggs3_cpp(void) {
+return "@(#)$Id: deseval-meggs3.cpp,v 1.5 1998/07/08 23:42:12 remi Exp $"; }
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.12  1998/07/08 23:42:05  remi
+// Added support for CliIdentifyModules().
+//
 // Revision 1.11  1998/07/08 16:26:22  remi
 // Added support for MS-VC++ 5.0
 //
@@ -28,8 +31,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-static const char *id="@(#)$Id: des-slice-meggs.cpp,v 1.11 1998/07/08 16:26:22 remi Exp $";
-return id; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.12 1998/07/08 23:42:05 remi Exp $"; }
 #endif
 
 #include <stdio.h>

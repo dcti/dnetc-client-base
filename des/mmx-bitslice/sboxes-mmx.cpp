@@ -6,6 +6,9 @@
 
 //
 // $Log: sboxes-mmx.cpp,v $
+// Revision 1.2  1998/07/08 23:42:28  remi
+// Added support for CliIdentifyModules().
+//
 // Revision 1.1  1998/07/08 15:43:52  remi
 // First integration of the MMX bitslicer.
 //
@@ -13,8 +16,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *sboxes_mmx_cpp(void) { 
-static const char *id="@(#)$Id: sboxes-mmx.cpp,v 1.1 1998/07/08 15:43:52 remi Exp $"; 
-return id; }
+return "@(#)$Id: sboxes-mmx.cpp,v 1.2 1998/07/08 23:42:28 remi Exp $"; }
 #endif
 
 #include "sboxes-mmx.h"

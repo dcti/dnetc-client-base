@@ -1,5 +1,8 @@
 //
 // $Log: sboxes-kwan4.cpp,v $
+// Revision 1.4  1998/07/08 23:42:27  remi
+// Added support for CliIdentifyModules().
+//
 // Revision 1.3  1998/06/14 08:27:12  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -9,7 +12,10 @@
 //
 //
 
-static char *id="@(#)$Id: sboxes-kwan4.cpp,v 1.3 1998/06/14 08:27:12 friedbait Exp $";
+#if (!defined(lint) && defined(__showids__))
+const char *sboxes_kwan4_cpp(void) {
+return "@(#)$Id: sboxes-kwan4.cpp,v 1.4 1998/07/08 23:42:27 remi Exp $"; }
+#endif
 
 #include "sboxes.h"
 

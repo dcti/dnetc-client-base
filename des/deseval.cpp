@@ -1,5 +1,8 @@
 //
 // $Log: deseval.cpp,v $
+// Revision 1.4  1998/07/08 23:42:13  remi
+// Added support for CliIdentifyModules().
+//
 // Revision 1.3  1998/06/14 08:27:08  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -9,7 +12,10 @@
 //
 //
 
-static char *id="@(#)$Id: deseval.cpp,v 1.3 1998/06/14 08:27:08 friedbait Exp $";
+#if (!defined(lint) && defined(__showids__))
+const char *deseval_cpp(void) {
+return "@(#)$Id: deseval.cpp,v 1.4 1998/07/08 23:42:13 remi Exp $"; }
+#endif
 
 #include "sboxes.h"
 

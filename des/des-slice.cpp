@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice.cpp,v $
+// Revision 1.6  1998/07/08 23:42:07  remi
+// Added support for CliIdentifyModules().
+//
 // Revision 1.5  1998/07/01 03:12:46  blast
 // AmigaOS changes...
 //
@@ -21,8 +24,10 @@
 //
 
 // encapsulate the bitslice SolNET code
-
-static char *id="@(#)$Id: des-slice.cpp,v 1.5 1998/07/01 03:12:46 blast Exp $";
+#if (!defined(lint) && defined(__showids__))
+const char *des_slice_cpp(void) {
+return "@(#)$Id: des-slice.cpp,v 1.6 1998/07/08 23:42:07 remi Exp $"; }
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
