@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.161  1998/11/13 15:31:45  silby
+// Changed default blocksize to 31 now.
+//
 // Revision 1.160  1998/11/13 12:35:49  remi
 // uuehttpmode set to 0 (no special encoding) instead of 1 (uue encoding)
 // in Client::Client().
@@ -88,7 +91,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.160 1998/11/13 12:35:49 remi Exp $"; }
+return "@(#)$Id: client.cpp,v 1.161 1998/11/13 15:31:45 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -172,7 +175,7 @@ Client::Client()
   nofallback=0;
   randomprefix=100;
   preferred_contest_id = 1;
-  preferred_blocksize=30;
+  preferred_blocksize=31;
   randomchanged=0;
   consecutivesolutions[0]=0;
   consecutivesolutions[1]=0;
