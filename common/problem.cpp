@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.92 2001/01/13 15:43:03 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.93 2001/01/15 01:39:18 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -580,6 +580,7 @@ int ProblemLoadState( void *__thisprob,
         else if (r == CORE_E_FORMAT)  msg = "CORE_E_FORMAT: Format or range error";
         else if (r == CORE_E_STOPPED) msg = "CORE_E_STOPPED:";
         else if (r == CORE_E_STUB)    msg = "CORE_E_STUB: Stub is not golomb";
+        else if (r == CORE_E_CHOOSE)  msg = "CORE_E_CHOOSE: Too much marks";
         Log("OGR stub load failure: %s\n", msg );
         return -1;
       }
