@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.169  1998/11/20 03:43:14  silby
+// Can't call static func (realmain) from a seperate source file.
+//
 // Revision 1.168  1998/11/19 23:36:26  cyp
 // PrintBanner() now gets its level and restart flag from ::Main()
 //
@@ -117,7 +120,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.168 1998/11/19 23:36:26 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.169 1998/11/20 03:43:14 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -403,7 +406,7 @@ int Client::Main( int argc, const char *argv[], int restarted )
 
 // --------------------------------------------------------------------------
 
-static int realmain( int argc, char *argv[] )
+int realmain( int argc, char *argv[] )
 {
   // This is the main client object.  we 'new'/malloc it, rather than make 
   // it static in the hope that people will think twice about using exit()
