@@ -121,7 +121,7 @@ optionstruct options[OPTION_COUNT]=
     "65536",
 #endif
     "(0 = default timeslicing)\n"
-    "DO NOT TOUCH this unless you know what you're doing!!!",4,2,1,NULL},
+    "DO NOT TOUCH this unless you know what you're doing!!!",4,2,4,NULL},
 //8
 { "niceness", "Level of niceness to run at", "0",
      "\n  mode 0) (recommended) Very nice, should not interfere with any other process\n"
@@ -868,6 +868,9 @@ options[CONF_THRESHOLDI2].thevariable=&inthreshold[1];
 options[CONF_THRESHOLDO2].thevariable=&outthreshold[1];
 options[CONF_COUNT].thevariable=&blockcount;
 options[CONF_HOURS].thevariable=&hours;
+#if !((CLIENT_OS==OS_MACOS) || (CLIENT_OS==OS_RISCOS) || (CLIENT_OS==OS_WIN16))
+options[CONF_TIMESLICE].optionscreen=0;
+#endif
 options[CONF_TIMESLICE].thevariable=&timeslice;
 options[CONF_NICENESS].thevariable=&niceness;
 options[CONF_LOGNAME].thevariable=&logname;
