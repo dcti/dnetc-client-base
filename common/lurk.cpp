@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.30 2000/12/17 02:49:56 mfeiri Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.31 2000/12/21 16:50:09 oliver Exp $"; }
 
 //#define TRACE
 
@@ -1229,7 +1229,15 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
    #if (CLIENT_OS == OS_AMIGAOS)
    // not being able to access the socket lib means tcp/ip is unavailable,
    // implying that we must actually be offline
-   if (!amigaOpenSocketLib()) return 0;
+   if (!amigaOpenSocketLib()) {
+      // if user has gone offline and exited their tcp/ip stack before we've had
+      // a chance to detect it properly, make sure it's detected anyway
+      #ifdef LURK_MULTIDEV_TRACK
+      __insdel_devname(NULL,1,lurker.conndevices,sizeof(lurker.conndevices));
+      __insdel_devname(NULL,0,lurker.conndevices,sizeof(lurker.conndevices));
+      #endif
+      return 0;
+   }
    #endif
 
    int fd = socket(PF_INET,SOCK_STREAM,0);
