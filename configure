@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.74 1999/12/13 05:20:09 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.75 1999/12/13 15:04:00 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -768,7 +768,8 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	#TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+    TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="openbsd-sparc-aout"
 	;;
 
     *sparc-linux)	# [remi]
@@ -1310,24 +1311,24 @@ case "$1" in
 
 ###### Intel X86 BSDI
 
+	# somebody is again and again trying to change this to use nasm, but
+	# nasm doesn't support BSD/OS aout format, so please don't do it again!!
     *x86-bsdi)                        # snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -DKWAN $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
-	                -DHAVE_CSC_CORES -DHAVE_DES_CORES"  #-DHAVE_OGR_CORES
+	TARGET_CCFLAGS="$OPTS_GCC272_X86 -DKWAN \
+	                -DHAVE_DES_CORES"  #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4 \
 	                " #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
 	                des/brydgnu/p1bdespro.S"
-	TARGET_NASM_FMT="aoutb"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS \
-	                 $CSC_ASM_SRCS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="bsdi2-x86-aout"
        ;;
 
     *x86-bsdi4)                       # BSD/OS 4.0 with ELF format -snake
 	TARGET_AS="g++ -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
+	TARGET_CCFLAGS="$OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
 	                -DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
@@ -1337,7 +1338,8 @@ case "$1" in
 	TARGET_NASM_FMT="elf"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS \
 	                 $CSC_ASM_SRCS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="bsdi4-x86-elf"
        ;;
 
 ####### Intel X86 QNX

@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.14 1999/12/08 00:41:51 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.15 1999/12/13 15:03:59 snake Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -31,6 +31,8 @@ return "@(#)$Id: network.cpp,v 1.97.2.14 1999/12/08 00:41:51 cyp Exp $"; }
 
 #if ((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_MACOS)
 #define SOCKLEN_T socklen_t
+#elsif ((CLIENT_OS == OS_BSDI) && (_BSDI_VERSION > 199701))
+#define SOCKLEN_T size_t
 #else
 #define SOCKLEN_T int
 #endif
