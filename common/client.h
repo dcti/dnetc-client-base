@@ -12,10 +12,12 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.87  1998/10/09 12:25:23  cyp
+// ValidateProcessorCount() is no longer a client method [is now standalone].
+//
 // Revision 1.86  1998/10/09 00:42:47  blast
 // Benchmark was looking at contest 2=DES, other=RC5 and cmdline.cpp
 // was setting 0=RC5, 1=DES, made it run two rc5 benchmarks. FIXED
-//
 // Changed Calling convention for Benchmark() from u8 to unsigned int.
 //
 // Revision 1.85  1998/10/08 20:57:14  cyp
@@ -557,9 +559,6 @@ public:
     // If force > 0, a update will be attempted no matter the offline
     // mode/etc. - -update and GUIs should call with this 1. Automated
     // fetches by the client will all use 0 of course.
-
-  void ValidateProcessorCount();
-  // validates numcpu (stores result in numcputemp) - in cpucheck.cpp
 
   s32 SetContestDoneState( Packet * packet);
     // Set the contest state appropriately based on packet information

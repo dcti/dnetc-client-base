@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.h,v $
+// Revision 1.5  1998/10/09 12:25:27  cyp
+// ValidateProcessorCount() is no longer a client method [is now standalone].
+//
 // Revision 1.4  1998/10/08 10:04:23  cyp
 // GetProcessorType() is now standalone (no longer a Client::method).
 //
@@ -27,6 +30,12 @@
 
 //get core type by hardware detection
 int GetProcessorType(int quietly);
+
+//-------
+
+//returns the number of cpus (>=0). 
+//Zero is valid and symbolizes 'no-multithreading'.
+unsigned int ValidateProcessorCount(int numcpu);
 
 //-------
 

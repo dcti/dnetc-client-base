@@ -3,11 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore.cpp,v $
+// Revision 1.16  1998/10/09 12:25:25  cyp
+// ValidateProcessorCount() is no longer a client method [is now standalone].
+//
 // Revision 1.15  1998/10/08 21:23:02  blast
 // Fixed Automatic CPU detection that cyp had written a little strangely
-// for 68K CPU's under AmigaOS.
-// It was good thinking but it would've reported the wrong cpu type,
-// and also, there is no 68050, cyp :)
+// for 68K CPU's under AmigaOS. It was good thinking but it would've 
+// reported the wrong cpu type, and also, there is no 68050, cyp :)
 //
 // Revision 1.14  1998/10/08 11:05:28  cyp
 // Moved AmigaOS 68k hardware detection code from selcore.cpp to cpucheck.cpp
@@ -69,7 +71,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.15 1998/10/08 21:23:02 blast Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.16 1998/10/09 12:25:25 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -151,7 +153,7 @@ s32 Client::SelectCore(void)
 {
   static s32 last_cputype = -123;
 
-  ValidateProcessorCount(); //in cpucheck.cpp
+  numcputemp = ValidateProcessorCount( numcpu ); //in cpucheck.cpp
   
   if (cputype == last_cputype) //no change, so don't bother reselecting
     return 0;                  //(cputype can change when restarted)

@@ -3,19 +3,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.32  1998/10/09 12:25:21  cyp
+// ValidateProcessorCount() is no longer a client method [is now standalone].
+//
 // Revision 1.31  1998/10/09 01:39:27  blast
-// Added selcore.h to list of includes
-//
-// Changed 68k print to use GetCoreNameFromCoreType()
-//
-// Added Celeron-A to the CPU list so that it finally uses the right cores .. :)
-// Instead of being unknown :)
+// Added selcore.h to list of includes. Changed 68k print to use 
+// GetCoreNameFromCoreType(). Added Celeron-A to the CPU list so that 
+// it finally uses the right cores .. :) instead of being unknown :)
 //
 // Revision 1.30  1998/10/08 21:23:04  blast
 // Fixed Automatic CPU detection that cyp had written a little strangely
-// for 68K CPU's under AmigaOS.
-// It was good thinking but it would've reported the wrong cpu type,
-// and also, there is no 68050, cyp :)
+// for 68K CPU's under AmigaOS. It was good thinking but it would've 
+// reported the wrong cpu type, and also, there is no 68050, cyp :)
 //
 // Revision 1.29  1998/10/08 16:47:17  cyp
 // Fixed a missing ||
@@ -114,22 +113,19 @@
 // Fixed a numcputemp/cpu_count variable mixup. 
 //
 // Revision 1.1  1998/06/21 17:12:02  cyruspatel
-// Created from code spun off from cliconfig.cpp
+// Created
 //
 //
-
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.31 1998/10/09 01:39:27 blast Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.32 1998/10/09 12:25:21 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
-#include "client.h"    // for the client class
 #include "cpucheck.h"  //just to keep the prototypes in sync.
 #include "threadcd.h"  //for the OS_SUPPORTS_THREADING define
 #include "logstuff.h"  //LogScreen()/LogScreenRaw()
-#include "selcore.h"   //GetCoreNameFromCoreType()
 
 #if (CLIENT_OS == OS_SOLARIS)
 #include <unistd.h>    // cramer - sysconf()
@@ -184,12 +180,16 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     #elif (CLIENT_OS == OS_LINUX)
       { // cramer -- yes, I'm cheating, but it's the only way...
       char buffer[256];
-
       cpucount = 0;
       if (FILE *cpuinfo = fopen("/proc/cpuinfo", "r"))
+        {
         while(fgets(buffer, 256, cpuinfo))
+	  {
           if (strstr(buffer, "processor") == buffer)
             cpucount++;
+	  }
+	fclose(cpuinfo);
+	}
       }
     #elif (CLIENT_OS == OS_IRIX)
       {
@@ -209,21 +209,14 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
 
 // --------------------------------------------------------------------------
 
-void Client::ValidateProcessorCount( void )
+unsigned int ValidateProcessorCount( int numcpu )
 {
+  static int detected_count = -2;
+
   //-------------------------------------------------------------
   // Validate processor/thread count.
   // --------------------
-  // numcpu is the value read/written from the ini/cmdline - we never modify
-  // it. numcputemp is the value actually used/modified internally by the
-  // client and is not written out to the ini.
-  //
-  // The use of -numcpu on the command line is now *not* illegal
-  // for non-mt clients (think of shell scripts used for testing).
-  // The use of numcpu is not illegal in the ini either and is a valid
-  // option in the config menu. (think of shared/cross-configured ini
-  // files, in dos/win for instance).
-  //
+  // The use of -numcpu on the command line is legal for non-mt clients.
   // Simply put, if it ain't MULTITHREAD, there's ain't gonna be a thread,
   // no matter what the user puts on the command line or in the ini file.
   //
@@ -233,41 +226,38 @@ void Client::ValidateProcessorCount( void )
   // The thread data and Problem tables are (or rather, will soon be) grown
   // dynamically.
   //
-  // Whether a CLIENT_CPU (core) is thread safe or not is none of the 
+  // Whether a CLIENT_CPU (core) is thread safe or not the responsibility of
   // select cpu logic either.
   // 
   //--------------------
 
-  numcputemp = numcpu;
-
-  if (numcputemp < 0)                //numcputemp == 0 implies force non-mt
-    {                                //numcputemp < 0  implies autodetect
-    int cpu_count = -2;
-    #ifndef MULTITHREAD  //this is the only place in the config where we
-    cpu_count = 0;       //check this - implies force non-mt
-    #endif
-    
-    if (cpu_count == -2)
+  #ifndef MULTITHREAD           //this is the only place in the config where
+  detected_count = 0;           //we check this - implies force non-mt
+  #endif
+  
+  if (numcpu < 0)                //numcpu == 0 implies force non-mt; 
+    {                            //numcpu < 0  implies autodetect
+    if (detected_count == -2)
       {
-      cpu_count = GetNumberOfDetectedProcessors();
+      detected_count = GetNumberOfDetectedProcessors();
       // returns -1 if no hardware detection
-      if ( cpu_count < 1 )
+      if ( detected_count < 1 )
         {
         LogScreen("Automatic processor count detection failed.\n"
                   "A single processor machine is assumed.\n");
-        cpu_count = 1;
+        detected_count = 1;
         }
       else
         {
-        LogScreen("Automatic processor detection found %d processor%s\n",
-           cpu_count, ((cpu_count==1)?(""):("s")) );
+        LogScreen("Automatic processor detection found %d processor%s.\n",
+           detected_count, ((detected_count==1)?(""):("s")) );
         }
       }
-    numcputemp = cpu_count;
-    if (numcputemp < 0) //zero is legal for multithread (implies force non-mt)
-      numcputemp = 1;
+    numcpu = detected_count;
+    if (numcpu < 0) //zero is legal for multithread (implies force non-mt)
+      numcpu = 1;
     }
-  return;
+  return (unsigned int)numcpu;
 }
 
 // --------------------------------------------------------------------------
@@ -294,20 +284,23 @@ int GetProcessorType(int quietly)
     {
     flags = (long)(SysBase->AttnFlags);
     if ((flags & AFF_68060) && (flags & AFF_68040) && (flags & AFF_68030))
-	detectedtype = 5; // Phase5 060 boards at least report this...
+        detectedtype = 5; // Phase5 060 boards at least report this...
     else if ((flags & AFF_68040) && (flags & AFF_68030))
-	detectedtype = 4; // 68040
+        detectedtype = 4; // 68040
     else if ((flags & AFF_68030) && (flags & AFF_68020))
-	detectedtype = 3; // 68030
+        detectedtype = 3; // 68030
     else if ((flags & AFF_68020) && (flags & AFF_68010))
-	detectedtype = 2; // 68020
+        detectedtype = 2; // 68020
     else if (flags & AFF_68010)
-	detectedtype = 1; // 68010
+        detectedtype = 1; // 68010
     else
-	detectedtype = 0; // Assume a 68000
+        detectedtype = 0; // Assume a 68000
     }
   if (!quietly)
-    LogScreen("Automatic processor detection found a %s\n", GetCoreNameFromCoreType(detectedtype));
+    {
+    int x68k = detectedtype; if (x68k == 5) x68k = 6;
+    LogScreen("Automatic processor detection found a Motorola 680%d0\n",x68k);
+    }
   return (detectedtype);
 }    
 #endif
