@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.5 2004/01/06 19:46:19 snikkel Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.6 2004/01/24 18:25:45 snikkel Exp $"
 
 // cpu feature flags (use by selcore.cpp)
 
@@ -31,6 +31,12 @@
 //return number of processors detected (by the hardware/from the OS)
 //returns -1 if detection is not supported.
 int GetNumberOfDetectedProcessors( void );
+
+//currently returns GetNumberOfDetectedProcessors()
+int GetNumberOfLogicalProcessors ( void );
+
+//if hyperthreading supported and enabled returns number of physical cpus
+int GetNumberOfPhysicalProcessors ( void );
 
 //get (simplified) cpu ident by hardware detection
 long GetProcessorType(int quietly);
