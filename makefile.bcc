@@ -12,7 +12,7 @@
 # (replace ?? with a two letter country code, eg 'de', 'us', 'uk' etc)
 # A list of all mirrors is at http://www.kernel.org/mirrors/
 #
-# $Id: makefile.bcc,v 1.30 2002/10/06 19:26:49 andreasb Exp $
+# $Id: makefile.bcc,v 1.31 2002/10/20 20:55:45 andreasb Exp $
 
 BASENAME = dnetc
 OUTPUTPATH = output
@@ -180,8 +180,10 @@ RC5_72_OBJS =
 RC5_72_OBJS =                        \
         $(OUTPUTPATH)/rc5ansi1.obj   \
         $(OUTPUTPATH)/rc5ansi2.obj   \
-        $(OUTPUTPATH)/rc5ansi4.obj
-BCCOPTS = $(BCCOPTS) -DHAVE_RC5_72_CORES
+        $(OUTPUTPATH)/rc5ansi4.obj   \
+        $(OUTPUTPATH)/rc5-ses-2.obj  \
+        $(OUTPUTPATH)/rc5-ses.obj
+BCCOPTS = $(BCCOPTS) -DHAVE_RC5_72_CORES -DHAVE_RC5_72_ASM_CORES
 !endif
 
 # --------------------------------- DES ----------------------------
@@ -241,7 +243,7 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES -I$(OGRPATH)
 
 .autodepend
 .suffixes: .asm .c .cpp # the order in which files are looked for
-.path.asm = $(RC5PATH)\x86;$(DESPATH)\x86;$(CSCPATH)\x86;$(CSCPATH)\x86\mmx;$(OGRPATH)\x86;$(CHIPSRCPATH)
+.path.asm = $(RC564PATH)\x86;$(DESPATH)\x86;$(CSCPATH)\x86;$(CSCPATH)\x86\mmx;$(OGRPATH)\x86;$(RC572PATH)\x86;$(CHIPSRCPATH)
 .path.cpp = $(COMMONPATH);$(DESPATH);$(OGRPATH)\x86;$(OGRPATH)\ansi;$(RC572PATH)\ansi;$(PLATSRCPATH)
 .path.c   = $(PLATSRCPATH)
 .path.obj = $(OUTPUTPATH)
