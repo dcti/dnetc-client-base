@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.81 2000/11/21 00:09:18 oliver Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.82 2000/12/04 23:43:49 snake Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -884,7 +884,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
 #elif (CLIENT_CPU == CPU_MIPS)
   #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX) || \
-      (CLIENT_OS == OS_LINUX)
+      (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)
     // rc5/ansi/rc5ansi_2-rg.cpp
     extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
   #elif (CLIENT_OS == OS_SINIX)
@@ -1101,7 +1101,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     #elif (CLIENT_CPU == CPU_MIPS)
     {
       #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX) || \
-          (CLIENT_OS == OS_LINUX)
+          (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)
       {
         // rc5/ansi/rc5ansi_2-rg.cpp
         //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );

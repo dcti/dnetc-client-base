@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.211 2000/12/04 16:41:23 snake Exp $
+# @(#)$Id: configure,v 1.222.2.212 2000/12/04 23:43:50 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1045,6 +1045,28 @@ case "$1" in
         add_sources "irix" "mips"
         ;;
 
+    *mipsel-netbsd)
+        TARGET_CC="g++"
+        generate_gcc_opts "mips" "netbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-ltermcap"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-mipsel"
+        add_sources "netbsd" "mips"
+        ;;
+
+    *mipseb-netbsd)
+        TARGET_CC="g++"
+        generate_gcc_opts "mips" "netbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-ltermcap"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-mipseb"
+        add_sources "netbsd" "mips"
+        ;;
+
     #*mips-ultrix-gcc)	# For mips based DEC Ultrix machines
     #    TARGET_CC="g++"
     #    generate_gcc_opts "mips" "irix"
@@ -1132,6 +1154,16 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="openbsd-sparc-aout"
         add_sources "openbsd" "sparc"
+        ;;
+
+    *sparc-netbsd)
+        TARGET_CC="g++"
+        generate_gcc_opts "sparc" "netbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-sparc-elf"
+        add_sources "netbsd"
         ;;
 
     *sparc-linux)	# [remi]
@@ -1288,6 +1320,16 @@ case "$1" in
         TARGET_TARBALL="linux-ppc"
         add_sources "linux" "ppc"
 	      ;;
+
+    *ppc-netbsd)
+        TARGET_CC="g++"
+        generate_gcc_opts "ppc" "netbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-ltermcap"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "netbsd" "ppc"
+        ;;
 
     *ppc-macosxserver) # [mfeiri] (MACH 2.x based: MXS 1.x, Darwin 0.x, Rhapsody)
 	      TARGET_CC="cc"

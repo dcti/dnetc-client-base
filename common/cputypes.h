@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.39 2000/11/12 04:18:04 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.40 2000/12/04 23:43:49 snake Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -165,7 +165,7 @@
   #define CLIENT_OS       OS_NETBSD
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
-  #elif defined(ARM)
+  #elif defined(__arm32__) || defined(ARM)
     #define CLIENT_CPU    CPU_ARM
   #elif defined(__alpha__) || defined(ASM_ALPHA)
     #define CLIENT_CPU    CPU_ALPHA
@@ -173,6 +173,12 @@
     #define CLIENT_CPU    CPU_VAX
   #elif defined(__m68k__) || defined(ASM_68K)
     #define CLIENT_CPU    CPU_68K
+  #elif defined(__mips__) || defined(ASM_MIPS)
+    #define CLIENT_CPU    CPU_MIPS
+  #elif defined(__powerpc__) || defined(ASM_PPC)
+    #define CLIENT_CPU    CPU_POWERPC
+  #elif defined(__sparc__) || defined(ASM_SPARC)
+    #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(__OpenBSD__) || defined(openbsd)
   #ifndef __unix__ /* should already be defined */
