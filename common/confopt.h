@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.h,v $
+// Revision 1.2  1998/12/20 23:00:35  silby
+// Descontestclosed value is now stored and retrieved from the ini file,
+// additional updated of the .ini file's contest info when fetches and
+// flushes are performed are now done.  Code to throw away old des blocks
+// has not yet been implemented.
+//
 // Revision 1.1  1998/11/22 15:16:19  cyp
 // Split from cliconfig.cpp; Changed runoffline/runbuffers/blockcount handling
 // (runbuffers is now synonymous with blockcount=-1; offlinemode is always
@@ -65,7 +71,11 @@
 #define CONF_PAUSEFILE            43
 #define CONF_DIALWHENNEEDED       44
 #define CONF_CONNECTNAME          45
-#define OPTION_COUNT              46
+#define CONF_DESCONTESTCLOSED     46 /* Current DES contest status */
+                                     /* 0xBEEFFOOD means closed,   */
+                                     /* otherwise checksum of      */
+                                     /* ciphertext                 */
+#define OPTION_COUNT              47
 
 /* ---------------------------------------------------------------- */
 

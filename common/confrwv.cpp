@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.4  1998/12/20 23:00:35  silby
+// Descontestclosed value is now stored and retrieved from the ini file,
+// additional updated of the .ini file's contest info when fetches and
+// flushes are performed are now done.  Code to throw away old des blocks
+// has not yet been implemented.
+//
 // Revision 1.3  1998/11/26 22:24:51  cyp
 // Fixed blockcount validation (<0 _is_ valid). (b) WriteConfig() sets ini
 // entries only if they already exist or they are not equal to the default.
@@ -25,7 +31,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.3 1998/11/26 22:24:51 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.4 1998/12/20 23:00:35 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -246,6 +252,8 @@ int Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   #if defined(MMX_BITSLICER) || defined(MMX_RC5)
     usemmx=ini.getkey(OPTION_SECTION, "usemmx", "1")[0];
   #endif
+
+  descontestclosed=ntohl(ini.getkey(OPTION_SECTION, "descontestclosed","1")[0]);
 
   #if defined(NEEDVIRTUALMETHODS)
     InternalReadConfig(ini);
@@ -606,4 +614,5 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
 }
 
 // --------------------------------------------------------------------------
+
 

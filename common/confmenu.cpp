@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.3  1998/12/20 23:00:35  silby
+// Descontestclosed value is now stored and retrieved from the ini file,
+// additional updated of the .ini file's contest info when fetches and
+// flushes are performed are now done.  Code to throw away old des blocks
+// has not yet been implemented.
+//
 // Revision 1.2  1998/11/26 22:30:36  cyp
 // Fixed an implied signed/unsigned comparison in ::Configure.
 //
@@ -20,7 +26,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.2 1998/11/26 22:30:36 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.3 1998/12/20 23:00:35 silby Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -257,7 +263,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       conf_options[CONF_SMTPDEST].optionscreen=0;
       conf_options[CONF_SMTPFROM].optionscreen=0;
       };
-    
+
+conf_options[CONF_DESCONTESTCLOSED].thevariable=(s32*)&descontestclosed;
       
     /* -------------------- end setup options --------------------- */
     

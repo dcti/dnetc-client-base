@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.22  1998/12/20 23:00:35  silby
+// Descontestclosed value is now stored and retrieved from the ini file,
+// additional updated of the .ini file's contest info when fetches and
+// flushes are performed are now done.  Code to throw away old des blocks
+// has not yet been implemented.
+//
 // Revision 1.21  1998/12/20 18:26:43  silby
 // RC5 iv/cipher/plain are pulled from contestdata.h now, made preferred contest
 // setting more truthful.
@@ -90,7 +96,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.21 1998/12/20 18:26:43 silby Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.22 1998/12/20 23:00:35 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -169,179 +175,6 @@ static const char *__WrapOrTruncateLogLine( char *buffer, int dowrap )
     }
   return start;
 }  
-
-// -----------------------------------------------------------------------
-
-#include "iniread.h"
-#include "pathwork.h"
-
-#define TIME_BASED_CONTEST_CHANGE_HINT
-
-// update contestdone and randomprefix .ini entries
-static void __RefreshRandomPrefix( Client *client )
-{       
-  #ifdef TIME_BASED_CONTEST_CHANGE_HINT
-  static struct { /* time is in GMT (PST == GMT-8) */
-    /* 
-       if you don't know the time_t value, leave it at 0. 
-       it will be calc'd and you see the debug output.
-    */
-    int year,mon,day,hour,min; time_t starttime; } timestart[]= {
-      { 1999,  1,  2, 9+8, 00, (time_t)0x368e5090L }, /* des-ii-3 mock */
-      { 1999,  1, 13, 9+8, 00, (time_t)0x369cd110L }, /* des-ii-3 */
-      { 1999,  7, 13, 9+9, 00, (time_t)0x378b7ea0L }  /* des-ii-4 */
-    };
-
-  if (client->contestdone[1]) /* DES only */
-    {
-    unsigned int i;
-    time_t timediff = (time_t)(-1), timenow = 0;
-    for (i=0;i<(sizeof(timestart)/sizeof(timestart[0]));i++)
-      {
-      if (timestart[i].year!=0)
-        {
-        if (timenow == 0)
-          timenow = CliTimer(NULL)->tv_sec;
-        
-        if (timestart[i].starttime == 0)
-          {
-          struct tm tmnow;
-          if (timediff == (time_t)(-1))
-            {
-            memset((void *)&tmnow,0,sizeof(struct tm));
-            tmnow.tm_mday = 2;  tmnow.tm_year = 70;
-            timediff = mktime(&tmnow);
-            timediff = (timediff == (time_t)(-1))?(0):((24*60*60)-timediff);
-            }
-          tmnow.tm_year = timestart[i].year-1900;
-          tmnow.tm_mon  = timestart[i].mon-1;
-          tmnow.tm_mday = timestart[i].day;
-          tmnow.tm_hour = timestart[i].hour;
-          tmnow.tm_min  = timestart[i].min; 
-          tmnow.tm_sec  = tmnow.tm_wday = tmnow.tm_yday = tmnow.tm_isdst = 0;
-          
-          if ((timestart[i].starttime = mktime(&tmnow)) != (time_t)(-1))
-            timestart[i].starttime += timediff;
-
-          if (timestart[i].starttime == ((time_t)(-1)))
-            {
-            timestart[i].starttime = 0;
-            }
-          else if (timenow <= timestart[i].starttime)
-            {
-            /* stuff so that we can set the static time_t s later */
-            timeval tv; tv.tv_usec=0; tv.tv_sec = timestart[i].starttime;
-            LogScreen("DES event scheduled at %s (0x%08x)\n",
-                                  CliGetTimeString(&tv,1), tv.tv_sec);
-            }
-          }
-
-        if (timestart[i].starttime!=0 && timenow > timestart[i].starttime)
-          {
-          timestart[i].year = 0; /* don't do this period again */
-          if ((timestart[i].starttime & 1)==0)
-            {
-            /* add a little space so all clients don't hit simultaneously */
-            timestart[i].starttime += ((time_t)((rand()%(60*60))|1));
-            }
-          if (timenow < (timestart[i].starttime+((time_t)(3*60*60))))
-            {
-            client->contestdone[1] = 0;
-            client->randomchanged = 1;
-            }
-          }
-        }
-      } 
-    }   
-  #endif
-                 
-  if (client->stopiniio == 0 && client->nodiskbuffers == 0)
-    {
-    const char *OPTION_SECTION = "parameters";
-    IniSection ini;
-    unsigned int cont_i;
-    s32 randomprefix, flagbits;
-    int inierror = (ini.ReadIniFile( 
-                       GetFullPathForFilename( client->inifilename ) ) != 0);
-    int inichanged = 0;
-
-    if (client->randomchanged)
-      {
-      randomprefix = (s32)(client->randomprefix);
-      ini.setrecord(OPTION_SECTION, "randomprefix", IniString(randomprefix));
-
-      flagbits = 0;
-      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-        {
-        flagbits |= ((client->contestdone[cont_i])?(1<<cont_i):(0));
-
-        char buffer[32];
-        if (cont_i==0) strcpy(buffer,"contestdone");
-        else sprintf(buffer,"contestdone%u", cont_i+1 );
-        if (client->contestdone[cont_i])
-          {
-//LogScreen("write: client->contestdone[%u] ==> %u\n", cont_i, client->contestdone[cont_i]);
-          ini.setrecord(OPTION_SECTION, buffer, 
-              IniString((client->contestdone[cont_i])?("1"):("0")));
-//LogScreen("write: end\n");
-          }
-        else
-          {
-//LogScreen("erase: client->contestdone[%u] ==> %u\n", cont_i, client->contestdone[cont_i]);
-          IniRecord *inirec;
-          if ((inirec=ini.findfirst(OPTION_SECTION, buffer))!=NULL)
-            inirec->values.Erase();
-//LogScreen("erase: end\n");
-          }
-        }
-      ini.setrecord(OPTION_SECTION, "contestdoneflags", IniString(flagbits));
-      client->randomchanged = 0;
-      inichanged = 1;
-      }
-    else if (!inierror)
-      {  
-      randomprefix = ini.getkey(OPTION_SECTION, "randomprefix", "0")[0];
-      if (randomprefix) client->randomprefix = randomprefix;
-
-      u32 oldflags=0, newflags=0;
-
-      IniRecord *inirec;
-      if ((inirec=ini.findfirst(OPTION_SECTION, "contestdoneflags"))!=NULL)
-        newflags = ini.getkey(OPTION_SECTION, "contestdoneflags", "0")[0];
-      else
-        {
-        for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-          {
-          char buffer[32];
-          if (cont_i==0) strcpy(buffer,"contestdone");
-          else sprintf(buffer,"contestdone%u", cont_i+1 );
-          flagbits = ini.getkey(OPTION_SECTION, buffer, "0")[0];
-          newflags |= ((flagbits)?(1<<cont_i):(0)); 
-          }
-        }
-      oldflags = 0;
-      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-        {
-        oldflags |= ((client->contestdone[cont_i])?(1<<cont_i):(0)); 
-        client->contestdone[cont_i]=(((newflags&(1<<cont_i))==0)?(0):(1));
-//LogScreen("read: client->contestdone[%u] ==> %u\n", cont_i, client->contestdone[cont_i]);
-        }
-      if (newflags != oldflags)
-        {
-        for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-          {
-          if ((newflags & (1<<cont_i)) != (oldflags & (1<<cont_i)))
-            CliClearContestInfoSummaryData( cont_i );
-          }
-        RaiseRestartRequestTrigger();
-        }
-      }   
-    
-    if (inichanged)
-      ini.WriteIniFile( GetFullPathForFilename( client->inifilename ) );
-    }
-  return;
-}
 
 // -----------------------------------------------------------------------
 

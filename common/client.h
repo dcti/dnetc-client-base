@@ -12,6 +12,12 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.103  1998/12/20 23:00:35  silby
+// Descontestclosed value is now stored and retrieved from the ini file,
+// additional updated of the .ini file's contest info when fetches and
+// flushes are performed are now done.  Code to throw away old des blocks
+// has not yet been implemented.
+//
 // Revision 1.102  1998/12/12 02:21:40  daa
 // update to add iterationshi to rc5_packet_t and BIG ops to op enum
 //
@@ -439,6 +445,7 @@ public:
   s32 preferred_contest_id;  // 0 for RC564, 1 for DESII 
   s32 preferred_blocksize;
   s32 contestdone[CONTEST_COUNT];
+  u32 descontestclosed;
 
 #if defined(MMX_BITSLICER) || defined(MMX_RC5)
   int usemmx;
