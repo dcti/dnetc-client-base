@@ -5,12 +5,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.37  1998/08/25 00:06:53  cyp
+// Merged (a) the Network destructor and DeinitializeNetwork() into NetClose()
+// (b) the Network constructor and InitializeNetwork() into NetOpen().
+// These two new functions (in netinit.cpp) are essentially what the static
+// FetchFlushNetwork[Open|Close]() functions in buffupd.cpp used to be.
+//
 // Revision 1.36  1998/08/20 19:27:10  cyruspatel
 // Made the purpose of NetworkInitialize/Deinitialize a little more
 // transparent.
 //
 // Revision 1.35  1998/08/10 21:53:51  cyruspatel
-// Two major changes to work around a lack of a method to detect if the network
+// Two changes to work around a lack of a method to detect if the network
 // availability state had changed (or existed to begin with) and also protect
 // against any re-definition of client.offlinemode. (a) The NO!NETWORK define 
 // is now obsolete. Whether a platform has networking capabilities or not is 
@@ -85,18 +91,19 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.36 1998/08/20 19:27:10 cyruspatel Exp $"; }
+return "@(#)$Id: network.cpp,v 1.37 1998/08/25 00:06:53 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
 
 #include "cputypes.h"
-#include "network.h"
 #include "sleepdef.h"    //  Fix sleep()/usleep() macros there! <--
 #include "autobuff.h"
 #include "cmpidefs.h"
 #include "logstuff.h"   //LogScreen()
 #include "clitime.h"    //CliGetTimeString(NULL,1);
+#include "network.h"
+extern int NetCheckIsOK(void); // - needed before all low level net functions
 #define Time() (CliGetTimeString(NULL,1))
 #include <stddef.h> // for offsetof
 #include <errno.h>
@@ -126,7 +133,6 @@ return "@(#)$Id: network.cpp,v 1.36 1998/08/20 19:27:10 cyruspatel Exp $"; }
 #define VERBOSE_OPEN //print cause of ::Open() errors
 #define UU_DEC(Ch) (char) (((Ch) - ' ') & 077)
 #define UU_ENC(Ch) (char) (((Ch) & 077) != 0 ? ((Ch) & 077) + 0x20 : '`')
-static int NetworkCheckIsOnline(void); // in netinit.cpp
 
 //----------------------------------------------------------------------
 
@@ -215,12 +221,21 @@ Network::Network( const char * Preferred, const char * Roundrobin,
   port = (s16) (Port ? Port : DEFAULT_PORT);
   autofindkeyserver = AutoFindKeyServer;
   mode = startmode = 0;
-  retries = (NetworkCheckIsOnline()?(0):(4));
+  retries = (NetCheckIsOK()?(0):(4));
   sock = 0;
   gotuubegin = gothttpend = false;
   httplength = 0;
   lasthttpaddress = lastaddress = 0;
   httpid[0] = 0;
+
+  // check that the packet structures have been correctly packed
+  size_t dummy;
+  if (((dummy = offsetof(SOCKS4, USERID[0])) != 8) ||
+     ((dummy = offsetof(SOCKS5METHODREQ, Methods[0])) != 2) ||
+     ((dummy = offsetof(SOCKS5METHODREPLY, end)) != 2) ||
+     ((dummy = offsetof(SOCKS5USERPWREPLY, end)) != 2) ||
+     ((dummy = offsetof(SOCKS5, end)) != 10))
+    LogScreenf("[%s] Network::Socks Incorrectly packed structures.\n",Time());
 }
 
 
@@ -376,7 +391,7 @@ s32 Network::Open( void )
 #else  
   Close();
 
-  if (!NetworkCheckIsOnline())
+  if (!NetCheckIsOK())
     return -1;
   
   mode = startmode;
@@ -430,7 +445,7 @@ s32 Network::Open( void )
       }
 
 
-  if (!NetworkCheckIsOnline())
+  if (!NetCheckIsOK())
     {
     close(sock);
     return -1;
@@ -474,7 +489,7 @@ s32 Network::Open( void )
       lastport = DEFAULT_PORT;
       } 
 
-  if (!NetworkCheckIsOnline())
+  if (!NetCheckIsOK())
     {
     close(sock);
     return -1;
@@ -513,7 +528,7 @@ s32 Network::Open( void )
   sin.sin_addr.s_addr = lastaddress;
 
 
-  if (!NetworkCheckIsOnline())
+  if (!NetCheckIsOK())
     {
     close(sock);
     return -1;
@@ -573,7 +588,7 @@ s32 Network::Open( void )
   netbuffer.Clear();
   uubuffer.Clear();
 
-  if (!NetworkCheckIsOnline())
+  if (!NetCheckIsOK())
     {
     close(sock);
     return -1;
@@ -772,7 +787,7 @@ Socks5Failure:
     }
   }
 
-  if (!NetworkCheckIsOnline())
+  if (!NetCheckIsOK())
     {
     close(sock);
     return -1;
@@ -1125,7 +1140,7 @@ s32 Network::Put( u32 length, const char * data )
 #if !defined(STUBIFY_ME)
 s32 Network::LowLevelGet(u32 length, char *data)
 {
-  if (!NetworkCheckIsOnline())
+  if (!NetCheckIsOK())
     return -1;
 
   #if defined(SELECT_FIRST)
@@ -1155,7 +1170,7 @@ s32 Network::LowLevelGet(u32 length, char *data)
 #if !defined(STUBIFY_ME)
 s32 Network::LowLevelPut(u32 length, const char *data)
 {
-  if (!NetworkCheckIsOnline())
+  if (!NetCheckIsOK())
     return -1;
 
   u32 writelen = write(sock, (char*)data, length);
@@ -1252,5 +1267,4 @@ char * Network::base64_encode(char *username, char *password)
 
 //////////////////////////////////////////////////////////////////////////////
 
-#include "netinit.cpp"
 #include "netres.cpp"

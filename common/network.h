@@ -5,14 +5,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.33  1998/08/25 00:06:57  cyp
+// Merged (a) the Network destructor and DeinitializeNetwork() into NetClose()
+// (b) the Network constructor and InitializeNetwork() into NetOpen().
+// These two new functions (in netinit.cpp) are essentially what the static
+// FetchFlushNetwork[Open|Close]() functions in buffupd.cpp used to be.
+//
 // Revision 1.32  1998/08/10 21:53:59  cyruspatel
-// Two major changes to work around a lack of a method to detect if the network
-// availability state had changed (or existed to begin with) and also protect
-// against any re-definition of client.offlinemode. (a) The NO!NETWORK define is
+// Changes: (a) now have a method to determine if net availability state has 
+// changed (or existed to begin with) and (b) also protect against any 
+// re-definition of client.offlinemode (c) The NO!NETWORK define is
 // now obsolete. Whether a platform has networking capabilities or not is now
-// a purely network.cpp thing. (b) NetworkInitialize()/NetworkDeinitialize()
-// are no longer one-shot-and-be-done-with-it affairs. ** Documentation ** is
-// in netinit.cpp.
+// a purely network.cpp thing. ** Documentation ** is in netinit.cpp
 //
 // Revision 1.31  1998/08/02 16:18:22  cyruspatel
 // Completed support for logging.
@@ -37,16 +41,7 @@
 // updates to get Borland C++ to compile under Win32.
 //
 // Revision 1.25  1998/07/07 21:55:48  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 // Revision 1.24  1998/06/29 08:01:13  ziggyb
 // DOD defines
@@ -102,9 +97,9 @@
 
 #define NETTIMEOUT (60)
 
-
 #include "cputypes.h"
 #include "autobuff.h"
+
 
 #if ((CLIENT_OS == OS_AMIGAOS)|| (CLIENT_OS == OS_RISCOS))
 extern "C" {
@@ -268,15 +263,10 @@ extern "C" {
 #define DEFAULT_RRDNS   "us.v27.distributed.net"
 #define DEFAULT_PORT    2064
 
-extern int NetworkInitialize(void);  //you better check the return code
-extern int NetworkDeinitialize(void);
-
 ///////////////////////////////////////////////////////////////////////////
 
 class Network
 {
-public:
-  s32 quietmode;
 protected:
   char server_name[64];
   char rrdns_name[64];
@@ -374,6 +364,18 @@ public:
     // like gethostname() 
 };
 
+//-------------------------------------------------------------------------
+
+// two functions that combine the functionality of NetworkInitialize()+
+// Network::Network() and NetworkDeinitialize()+Network::~Network() 
+// must be called instead of the Network constructor or destructor.
+extern Network *NetOpen(const char *keyserver, s32 keyserverport, 
+                int nofallback = 1, int autofindks = 0, s32 proxytype = 0, 
+                const char *proxyhost = NULL, s32 proxyport = 0, 
+                const char *proxyuid = NULL);
+extern int NetClose( Network *net );
+
 ///////////////////////////////////////////////////////////////////////////
 
 #endif //NETWORK_H
+
