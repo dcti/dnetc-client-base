@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3a.asm,v 1.2.2.4 2003/01/18 21:51:07 acidblood Exp $
+; $Id: r72-dg3a.asm,v 1.2.2.5 2003/01/28 04:24:40 andreasb Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -269,22 +269,31 @@ _rc5_72_unit_func_dg_3a:
 
         mov     [work_iterations], edi
         mov     L1(2), esi
+        mov     L1backup(2), esi
 
         inc     esi
 
         mov     L2(2), esi
+        mov     L2backup(2), esi
 
         inc     esi
 
         mov     L3(2), esi
+        mov     L3backup(2), esi
 
         mov     L1(1), ecx
         mov     L2(1), ecx
         mov     L3(1), ecx
+        mov     L1backup(1), ecx
+        mov     L2backup(1), ecx
+        mov     L3backup(1), ecx
 
         mov     L1(0), ebx
         mov     L2(0), ebx
         mov     L3(0), ebx
+        mov     L1backup(0), ebx
+        mov     L2backup(0), ebx
+        mov     L3backup(0), ebx
 
 k7align 16
 key_setup_1:
