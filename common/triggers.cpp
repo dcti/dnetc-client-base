@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.63 2001/03/26 16:28:24 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.64 2001/03/30 11:18:31 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -940,7 +940,7 @@ static void __init_signal_handlers( int doingmodes )
 // -----------------------------------------------------------------------
 
 #ifndef CLISIGHANDLER_IS_SPECIAL
-#if defined(SA_NOCLDSTOP)
+#if defined(SA_NOCLDSTOP) && (CLIENT_OS != OS_NETWARE)
 static void (*SETSIGNAL(int signo, void (*proc)(int)))(int)
 {
   struct sigaction sa, osa;
@@ -996,22 +996,44 @@ extern "C" void CliSignalHandler( int sig )
 
 // -----------------------------------------------------------------------
 
+#if ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) || \
+   defined(HAVE_MULTICRUNCH_VIA_FORK)
+/* forward all signals to the parent process */
+static void sig_forward_to_parent( int nsig ) 
+{ 
+  kill(getppid(), nsig); 
+}
+#endif
+
 int TriggersSetThreadSigMask(void)
 {
-#if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) \
-    || ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) \
-    || defined(_POSIX_THREADS_SUPPORTED) \
+#if ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) \
     || defined(HAVE_MULTICRUNCH_VIA_FORK)
+  /* setup signal forwarding */
+
+  int sigs[] = { SIGINT, SIGTERM, SIGKILL, SIGHUP, SIGCONT,
+                 SIGTSTP, SIGTTIN, SIGTTOU };
+  unsigned int nsig;
+  for (nsig = 0; nsig < (sizeof(sigs)/sizeof(sigs[0])); nsig++)
+  {
+    SETSIGNAL( sigs[nsig], sig_forward_to_parent );
+  }
+
+#elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) \
+    || defined(_POSIX_THREADS_SUPPORTED)
+
+  int sigs[] = { SIGINT, SIGTERM, SIGKILL, SIGHUP, SIGCONT,
+                 SIGTSTP, SIGTTIN, SIGTTOU };
+  unsigned int nsig;
+
   sigset_t signals_to_block;
   sigemptyset(&signals_to_block);
-  sigaddset(&signals_to_block, SIGINT);
-  sigaddset(&signals_to_block, SIGTERM);
-  sigaddset(&signals_to_block, SIGKILL);
-  sigaddset(&signals_to_block, SIGHUP);
-  sigaddset(&signals_to_block, SIGCONT);
-  sigaddset(&signals_to_block, SIGTSTP);
-  sigaddset(&signals_to_block, SIGTTIN);
-  sigaddset(&signals_to_block, SIGTTOU);
+
+  for (nsig = 0; nsig < (sizeof(sigs)/sizeof(sigs[0])); nsig++)
+  {
+    sigaddset(&signals_to_block, sigs[nsig] );
+  }
+
   #if defined(_POSIX_THREADS_SUPPORTED) /* must be first */
     #if (CLIENT_OS == OS_AIX)
     sigthreadmask(SIG_BLOCK, &signals_to_block, NULL);
