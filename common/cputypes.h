@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.70 1999/12/02 05:15:00 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.71 1999/12/03 00:02:14 sampo Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -628,9 +628,7 @@ extern "C" {
   #define SIZEOF_LONGLONG 8
   typedef unsigned __int64 ui64;
   typedef __int64 si64;
-#elif (CLIENT_OS == OS_MACOS)
-  #error HEY YOU!!! FOR THE ZILLIONTH TIME!!! ***BY**COMPILER**NOT**BY**CLIENT_OS***!!!
-  #error for example, elif defined(__MWERKS__) (if thats what it is)
+#elif (defined(__MWERKS__))
   #define HAVE_I64
   #define SIZEOF_LONGLONG 8
   typedef unsigned long long ui64;
