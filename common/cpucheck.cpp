@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.24 1999/12/18 15:53:56 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.25 1999/12/31 20:03:01 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -403,9 +403,9 @@ static long __GetRawProcessorID(const char **cpuname)
       ispower = 1;
     for (imp_i = 0; imp_i < (sizeof(cpumap)/sizeof(cpumap[0])); imp_i++)
     {
-      if (cpumap[i].imp == _system_configuration.implementation )
+      if (cpumap[imp_i].imp == _system_configuration.implementation )
       {
-        detectedtype = cpumap[i].rid;
+        detectedtype = cpumap[imp_i].rid;
         break;
       }
     }
