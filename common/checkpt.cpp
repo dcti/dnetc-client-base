@@ -15,12 +15,12 @@
  *
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.15 1999/10/16 16:48:09 cyp Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.16 1999/11/08 02:02:35 cyp Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()
 #include "util.h"     // IsFilenameValid(), DoesFileExist()
-#include "buffwork.h" // Buffer[Zap|Put|Import]FileRecord[s]()
+#include "buffbase.h" // Buffer[Zap|Put|Import]FileRecord[s]()
 #include "problem.h"  // Problem class
 #include "probman.h"  // GetProblemPointerFromIndex()
 #include "version.h"  // CLIENT_* defines used by FILEENTRY_* macros

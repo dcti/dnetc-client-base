@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.57 1999/10/11 17:06:25 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.58 1999/11/08 02:02:39 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -24,7 +24,6 @@ return "@(#)$Id: console.cpp,v 1.57 1999/10/11 17:06:25 cyp Exp $"; }
 #include "version.h"  //CLIENT_VERSIONSTRING
 #include "clitime.h"
 #include "triggers.h"
-#include "modereq.h"
 #include "util.h"     //utilGetAppName()
 #include "sleepdef.h" //usleep()
 #include "console.h"  //ourselves
@@ -58,23 +57,28 @@ static struct
   int initlevel;
   int runhidden;
   int conisatty;
-  int pauseonclose;
-} constatics = {0,0,0,0};
+} constatics = {0,0,0};
 
 /* ---------------------------------------------------- */
 
-int DeinitializeConsole(void)
+int DeinitializeConsole(int waitforuser)
 {
+  /* 'waitforuser' is set if client ran modes (so that the user
+     can see the results before the screen/window disappears)
+  */
+  waitforuser = waitforuser;
   if (constatics.initlevel == 1)
   {
+    if (constatics.runhidden || !constatics.conisatty)
+      waitforuser = 0;
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-    w32DeinitializeConsole(constatics.pauseonclose);
+    w32DeinitializeConsole(waitforuser);
     #elif (CLIENT_OS == OS_NETWARE)
-    nwCliDeinitializeConsole(constatics.pauseonclose);
+    nwCliDeinitializeConsole(waitforuser);
     #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
-    os2CliDeinitializeConsole(constatics.pauseonclose);
+    os2CliDeinitializeConsole(waitforuser);
     #elif (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-    macosCliDeinitializeUI(constatics.pauseonclose);
+    macosCliDeinitializeUI(waitforuser);
     #endif
   }
   constatics.initlevel--;
@@ -91,8 +95,7 @@ int InitializeConsole(int runhidden,int doingmodes)
     memset( (void *)&constatics, 0, sizeof(constatics) );
     constatics.initlevel = 1;
     constatics.runhidden = runhidden;
-    constatics.pauseonclose = (!runhidden && doingmodes && 
-                               ModeReqIsSet(MODEREQ_CONFIG)==0);
+    doingmodes = doingmodes; /* possibly unused */
     
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
     retcode = w32InitializeConsole(constatics.runhidden,doingmodes);

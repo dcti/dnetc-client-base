@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.33 1999/10/11 19:48:50 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.34 1999/11/08 02:02:34 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes

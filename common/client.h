@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.138 1999/10/18 02:54:01 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.139 1999/11/08 02:02:36 cyp Exp $"
 
 
 enum {
@@ -51,7 +51,7 @@ struct membuffstruct
   WorkRecord *buff[MAXBLOCKSPERBUFFER];
 };
 
-class Client
+typedef struct
 {
 public:
   /* non-user-configurable */
@@ -111,20 +111,9 @@ public:
   char smtpfrom[MINCLIENTOPTSTRLEN];
   char smtpdest[MINCLIENTOPTSTRLEN];
 
-  /* --------------------------------------------------------------- */
-
-  long PutBufferRecord(const WorkRecord * data);
-  long GetBufferRecord( WorkRecord * data, unsigned int contest, int use_out_file);
-  long GetBufferCount( unsigned int contest, int use_out_file, unsigned long *normcountP );
-
-  Client();
-  ~Client() {};
-
-  int Run( void );
-    // run the loop, do the work
-
-};
+} Client;
 
 void ResetClientData(Client *client); /* reset everything */
+int ClientRun(Client *client);  /* run the loop, do the work */
 
 #endif /* __CLIENT_H__ */

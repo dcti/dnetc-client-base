@@ -10,7 +10,7 @@
 // ----------------------------------------------------------------------
 
 #ifndef __INIREAD_H__
-#define __INIREAD_H__ "@(#)$Id: iniread.h,v 1.33 1999/07/09 14:09:38 cyp Exp $"
+#define __INIREAD_H__ "@(#)$Id: iniread.h,v 1.34 1999/11/08 02:02:40 cyp Exp $"
 
 #ifdef PROXYTYPE      // compiling proxy
   // proxy needs automatic tokenizing of ini values.

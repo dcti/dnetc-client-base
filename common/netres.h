@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETRES_H__
-#define __NETRES_H__ "@(#)$Id: netres.h,v 1.1 1999/10/15 23:31:25 cyp Exp $"
+#define __NETRES_H__ "@(#)$Id: netres.h,v 1.2 1999/11/08 02:02:42 cyp Exp $"
 
 int NetResolve( const char *host, int port, int resauto,
                 u32 *addrlist, unsigned int addrlistcount, 

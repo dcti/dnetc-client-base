@@ -21,7 +21,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.16 1999/10/11 17:06:28 cyp Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.17 1999/11/08 02:02:43 cyp Exp $"; }
 
 #include <stdio.h>
 #include <string.h>

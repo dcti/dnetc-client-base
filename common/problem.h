@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.68 1999/10/17 23:05:44 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.69 1999/11/08 02:02:44 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -21,7 +21,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 
 /* ----------------------------------------------------------------------- */
 
-#if (CLIENT_CPU == CPU_X86)
+#if defined(MMX_BITSLICER) || defined(HAVE_CSC_CORES)
   #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
 #endif
 
@@ -69,7 +69,10 @@ protected: /* these members *must* be protected for thread safety */
   ContestWork contestwork;
   CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */
-  void *ogrstate;
+  union {
+    double __align_64_ogr;
+    char ogrstate[OGR_PROBLEM_SIZE];
+  };
   #ifdef MAX_MEM_REQUIRED_BY_CORE
   char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
   #endif

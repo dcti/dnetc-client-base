@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.20 1999/10/11 17:06:22 cyp Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.21 1999/11/08 02:02:36 cyp Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()

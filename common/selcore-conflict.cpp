@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.53 1999/10/26 17:29:16 michmarc Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.54 1999/11/08 02:02:44 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -85,7 +85,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ev3 and ev4 optimized",
       "ev5 and ev6 optimized",
       #elif (CLIENT_OS == OS_WIN32)
-      "MichMarc A",  /* At least spell it right */
+      "michmarch series A",  /* :) */
       #else
       "axp bmeyer",
       #endif
@@ -364,6 +364,7 @@ int selcoreSelfTest( unsigned int cont_i )
 /* this is called from Problem::LoadState() */
 int selcoreGetSelectedCoreForContest( unsigned int contestid )
 {
+  bool corename_printed = false;
   static long detected_type = -123;
   const char *contname = CliGetContestNameFromID(contestid);
   if (!contname) /* no such contest */
@@ -426,9 +427,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
     if (selcorestatics.corenum[CSC] < 0)
     {
-#if 0
-    // Who knows?  Just benchmark below
-#endif
+  #if 0
+    // Who knows?  Just benchmark them all below
+  #endif
     }
   }
   if (selcorestatics.corenum[contestid] >= 0)
@@ -437,6 +438,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       ((selcorestatics.user_cputype[contestid] >= 0)?("Using"):("Auto-selected")),
       selcorestatics.corenum[contestid],
      selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
+    corename_printed = true;
   }
   #elif (CLIENT_CPU == CPU_68K)
   if (contestid == RC5 || contestid == DES) /* old style */
@@ -453,6 +455,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     else //if (cputype == 0 || cputype == 1 || cputype == 2 || cputype == 3)
       corename = "000/010/020/030";
     LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename );
+    corename_printed = true;
   }
   #elif (CLIENT_CPU == CPU_POWERPC)
   if (contestid == RC5 || contestid == DES) /* old style */
@@ -503,6 +506,28 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
       if (selcorestatics.corenum[CSC] < 0)
       {
+  #if (__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 95))
+	// select the right cores if compiled with GCC 2.95 and up
+	switch( detected_type & 0xff ) {
+	case 1:  // 386/486
+	  selcorestatics.corenum[CSC] = 3; // 1key - called
+	  break;
+	case 2:  // Ppro/PII/Celeron/PIII
+	case 4:  // K5
+	  selcorestatics.corenum[CSC] = 2; // 1key - inline
+	  break;
+	case 5:  // K6/K6-2/K6-3
+	  selcorestatics.corenum[CSC] = 0; // 6bit - inline
+	  break;
+	}
+  #elif defined(_MSC_VER) && (_MSC_VER >= 11)
+	// select the right cores if compiled with MS VC++ 5.0 and up
+	switch( detected_type & 0xff ) {
+	case 2:  // Ppro/PII/Celeron/PIII
+	  selcorestatics.corenum[CSC] = 2; // 1key - inline
+	  break;
+	}
+  #endif
   #if 0
         int cpu2core = detected_type & 0xff;
         /* note: because these are C cores, crunch efficacy can swing
@@ -529,6 +554,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         ((user_selected)?("using"):("auto-selected")),
         selcorestatics.corenum[contestid],
        selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
+      corename_printed = true;
     }
   }
   #elif (CLIENT_CPU == CPU_ARM)
@@ -544,12 +570,22 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     {
       LogScreen( "%s: selecting %s optimized code.\n", contname, 
        selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid]));
+      corename_printed = true;
     }
     /* otherwise fall into bench */
   }
   #endif
 
-  if (selcorestatics.corenum[contestid] < 0) /* ok, bench it then */
+  if (selcorestatics.corenum[contestid] < 0)
+    selcorestatics.corenum[contestid] = selcorestatics.user_cputype[contestid];
+
+  if (selcorestatics.corenum[contestid] >= 0) 
+  { 
+    if (!corename_printed)
+      LogScreen("%s: selected core #%d (%s).\n", contname, selcorestatics.corenum[contestid], 
+		selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
+  }
+  else /* ok, bench it then */
   {
     int corecount = (int)__corecount_for_contest(contestid);
     selcorestatics.corenum[contestid] = 0;
@@ -598,6 +634,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         selcorestatics.corenum[contestid] = fastestcrunch;
         LogScreen("%s: selected core #%d (%s).\n", contname, fastestcrunch, 
                        selcoreGetDisplayName( contestid, fastestcrunch ) );
+	corename_printed = true;
       }
     }
   }

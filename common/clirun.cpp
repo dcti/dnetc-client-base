@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.104 1999/10/16 16:48:10 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.105 1999/11/08 02:02:37 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -17,6 +17,7 @@ return "@(#)$Id: clirun.cpp,v 1.104 1999/10/16 16:48:10 cyp Exp $"; }
 #include "setprio.h"   // SetThreadPriority(), SetGlobalPriority()
 #include "lurk.h"      // dialup object
 #include "buffupd.h"   // BUFFERUPDATE_* constants
+#include "buffbase.h"  // GetBufferCount()
 #include "cliident.h"  // CliIsDevelVersion()
 #include "clitime.h"   // CliTimer(), Time()/(CliGetTimeString(NULL,1))
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
@@ -808,7 +809,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
 //     2 = exit by exit file check
 //     3 = exit by time limit expiration
 //     4 = exit by block count expiration
-int Client::Run( void )
+int ClientRun( Client *client )
 {
   unsigned int prob_i;
   int force_no_realthreads = 0;
@@ -829,7 +830,7 @@ int Client::Run( void )
   unsigned int flush_scheduled_adj   = 0; /*time adjustment to next schedule*/
   time_t ignore_scheduledupdatetime_until = 0; /* ignore schedupdtime until */
 
-  int checkpointsDisabled = (nodiskbuffers != 0);
+  int checkpointsDisabled = (client->nodiskbuffers != 0);
   unsigned int checkpointsPercent = 0;
   int dontSleep=0, isPaused=0, wasPaused=0;
   
@@ -869,7 +870,7 @@ int Client::Run( void )
 
   if (!checkpointsDisabled) //!nodiskbuffers
   {
-    if (CheckpointAction( this, CHECKPOINT_OPEN, 0 )) //-> !0 if checkpts disabled
+    if (CheckpointAction( client, CHECKPOINT_OPEN, 0 )) //-> !0 if checkpts disabled
     {
       checkpointsDisabled = 1;
     }
@@ -893,8 +894,8 @@ int Client::Run( void )
   {
     unsigned int numcrunchers;
     force_no_realthreads = 0; /* this is a hint. it does not reflect capability */
-    numcpu = ValidateProcessorCount( numcpu, 0 /* notquietly */ ); //cpucheck.cpp
-    numcrunchers = (unsigned int)numcpu;
+    numcrunchers = ValidateProcessorCount( client->numcpu, 0 /* notquietly */); 
+    //numcrunchers can be zero (==run without threads) //cpucheck.cpp
 
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_BEOS)
     if (numcrunchers == 0) // must run with real threads because the
@@ -949,7 +950,7 @@ int Client::Run( void )
       //  selcoreGetSelectedCoreForContest( prob_i );      //... out of the way.
       if (load_problem_count > 1)
         Log( "Loading crunchers with work...\n" );
-      load_problem_count = LoadSaveProblems( this, load_problem_count, 0 );
+      load_problem_count = LoadSaveProblems( client, load_problem_count, 0 );
     }
     if (CheckExitRequestTrigger())
     {
@@ -1024,7 +1025,7 @@ int Client::Run( void )
            from the timer on a 386)
         */
         default_dyn_timeslice_table[tsinitd].optimal = GetTimesliceBaseline();
-        default_dyn_timeslice_table[tsinitd].usec = 500 * (priority+1);
+        default_dyn_timeslice_table[tsinitd].usec = 500 * (client->priority+1);
         #else /* x86 */
         default_dyn_timeslice_table[tsinitd].usec = 27500; /* 55/2 ms */
         default_dyn_timeslice_table[tsinitd].optimal = GetTimesliceBaseline();
@@ -1048,7 +1049,7 @@ int Client::Run( void )
     {
       struct thread_param_block *thrparams =
          __StartThread( prob_i, planned_problem_count,
-                        priority, force_no_realthreads,
+                        client->priority, force_no_realthreads,
                         is_non_preemptive_os );
       if ( thrparams )
       {
@@ -1094,9 +1095,9 @@ int Client::Run( void )
     if (load_problem_count < planned_problem_count)
     {
       if (TimeToQuit)
-        LoadSaveProblems(this, planned_problem_count,PROBFILL_UNLOADALL);
+        LoadSaveProblems(client, planned_problem_count,PROBFILL_UNLOADALL);
       else
-        LoadSaveProblems(this, load_problem_count, PROBFILL_RESIZETABLE);
+        LoadSaveProblems(client, load_problem_count, PROBFILL_RESIZETABLE);
     }
   }
 
@@ -1129,7 +1130,7 @@ int Client::Run( void )
       dontSleep = 0; //for the next round
     else
     {             
-      SetGlobalPriority( priority );
+      SetGlobalPriority( client->priority );
       if (isPaused)
         NonPolledSleep(3); //sleep(3);
       else
@@ -1157,7 +1158,8 @@ int Client::Run( void )
     // Check for time limit...
     //----------------------------------------
 
-    if ( !TimeToQuit && (minutes > 0) && (timeRun >= (time_t)( minutes*60 )))
+    if ( !TimeToQuit && (client->minutes > 0) && 
+                        (timeRun >= (time_t)( (client->minutes)*60 )))
     {
       Log( "Shutdown - reached time limit.\n" );
       TimeToQuit = 1;
@@ -1169,7 +1171,7 @@ int Client::Run( void )
     //----------------------------------------
 
     // cramer magic (voodoo)
-    if (!TimeToQuit && nonewblocks > 0 &&
+    if (!TimeToQuit && client->nonewblocks > 0 &&
       ((unsigned int)getbuff_errs >= load_problem_count))
     {
       TimeToQuit = 1;
@@ -1229,9 +1231,9 @@ int Client::Run( void )
     if (!TimeToQuit && !isPaused)
     {
       int anychanged;
-      if (!percentprintingoff)
+      if (!client->percentprintingoff)
         LogScreenPercent( load_problem_count ); //logstuff.cpp
-      anychanged = LoadSaveProblems(this,load_problem_count,PROBFILL_ANYCHANGED);
+      anychanged = LoadSaveProblems(client,load_problem_count,PROBFILL_ANYCHANGED);
       runstatics.refillneeded = 0;
 
       if (CheckExitRequestTriggerNoIO())
@@ -1247,14 +1249,14 @@ int Client::Run( void )
     #define TIME_AFTER_START_TO_UPDATE 10800 // Three hours
     #define UPDATE_INTERVAL 600 // Ten minutes
 
-    if (!TimeToQuit && scheduledupdatetime != 0 && 
+    if (!TimeToQuit && client->scheduledupdatetime != 0 && 
       (((unsigned long)timeNow) < ((unsigned long)ignore_scheduledupdatetime_until)) &&
-      (((unsigned long)timeNow) >= ((unsigned long)scheduledupdatetime)) &&
-      (((unsigned long)timeNow) < (((unsigned long)scheduledupdatetime)+TIME_AFTER_START_TO_UPDATE)) )
+      (((unsigned long)timeNow) >= ((unsigned long)client->scheduledupdatetime)) &&
+      (((unsigned long)timeNow) < (((unsigned long)client->scheduledupdatetime)+TIME_AFTER_START_TO_UPDATE)) )
     {
-      if (last_scheduledupdatetime != ((time_t)scheduledupdatetime))
+      if (last_scheduledupdatetime != ((time_t)client->scheduledupdatetime))
       {
-        last_scheduledupdatetime = (time_t)scheduledupdatetime;
+        last_scheduledupdatetime = (time_t)client->scheduledupdatetime;
         //flush_scheduled_count = 0;
         flush_scheduled_adj = (rand()%UPDATE_INTERVAL);
         Log("Buffer update scheduled in %u minutes %02u seconds.\n",
@@ -1269,7 +1271,7 @@ int Client::Run( void )
                                (rand()%(UPDATE_INTERVAL>>1)));
         
         int desisrunning = 0;
-        if (GetBufferCount(DES, 0/*in*/, NULL) != 0) /* do we have DES blocks? */
+        if (GetBufferCount(client,DES, 0/*in*/, NULL) != 0) /* do we have DES blocks? */
           desisrunning = 1;
         else
         {
@@ -1286,9 +1288,9 @@ int Client::Run( void )
           }
           if (desisrunning == 0)
           {
-            int rc = BufferUpdate( this, BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH, 0 );
+            int rc = BufferUpdate( client, BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH, 0 );
             if (rc > 0 && (rc & BUFFERUPDATE_FETCH)!=0)
-              desisrunning = (GetBufferCount( DES, 0/*in*/, NULL) != 0);
+              desisrunning = (GetBufferCount( client, DES, 0/*in*/, NULL) != 0);
           }
         }  
         if (desisrunning)
@@ -1324,7 +1326,7 @@ int Client::Run( void )
           abs((int)(checkpointsPercent - ((unsigned int)perc_now))) ) )
         {
           checkpointsPercent = (unsigned int)perc_now;
-          if (CheckpointAction( this, CHECKPOINT_REFRESH, load_problem_count ))
+          if (CheckpointAction( client, CHECKPOINT_REFRESH, load_problem_count ))
             checkpointsDisabled = 1;
           timeNextCheckpoint = timeRun + (time_t)(CHECKPOINT_FREQ_SECSDIFF);
         }
@@ -1335,11 +1337,11 @@ int Client::Run( void )
     // Lurking
     //------------------------------------
 
-    local_connectoften = (connectoften != 0);
+    local_connectoften = (client->connectoften != 0);
     #if defined(LURK)
     if (dialup.lurkmode)
     {
-      connectoften = 0;
+      client->connectoften = 0;
       local_connectoften = (!TimeToQuit && 
                             !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) &&
                             dialup.CheckIfConnectRequested());
@@ -1358,16 +1360,16 @@ int Client::Run( void )
         int i, have_non_empty = 0, have_one_full = 0;
         for (i = 0; i < CONTEST_COUNT; i++ )
         {
-          unsigned cont_i = (unsigned int)loadorder_map[i];
+          unsigned cont_i = (unsigned int)client->loadorder_map[i];
           if (cont_i < CONTEST_COUNT) /* not disabled */
           {
-            if (GetBufferCount( cont_i, 1, NULL ) > 0) 
+            if (GetBufferCount( client, cont_i, 1, NULL ) > 0) 
             {
               have_non_empty = 1; /* at least one out-buffer is not empty */
               break;
             }
-            if (GetBufferCount( cont_i, 0, NULL ) >= 
-               ((long)(inthreshold[cont_i]))) 
+            if (GetBufferCount( client, cont_i, 0, NULL ) >= 
+               ((long)(client->inthreshold[cont_i]))) 
             {         
               have_one_full = 1; /* at least one in-buffer is full */
             }
@@ -1392,7 +1394,7 @@ int Client::Run( void )
       //at this point and threads are running at lower priority. If that is
       //not the case, then benchmarks are going to return wrong results.
       //The messy way around that is to suspend the threads.
-      ModeReqRun(this);
+      ModeReqRun(client);
       dontSleep = 1; //go quickly through the loop
     }
   }  // End of MAIN LOOP
@@ -1428,8 +1430,8 @@ int Client::Run( void )
 
   if (probmanIsInit)
   {
-    LoadSaveProblems( this,load_problem_count, PROBFILL_UNLOADALL );
-    CheckpointAction( this, CHECKPOINT_CLOSE, 0 ); /* also done by LoadSaveProb */
+    LoadSaveProblems( client,load_problem_count, PROBFILL_UNLOADALL );
+    CheckpointAction( client, CHECKPOINT_CLOSE, 0 ); /* also done by LoadSaveProb */
     DeinitializeProblemManager();
   }
 
@@ -1443,5 +1445,3 @@ int Client::Run( void )
 }
 
 // ---------------------------------------------------------------------------
-
-

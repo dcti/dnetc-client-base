@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.222 1999/11/01 20:03:29 patrick Exp $"; }
+return "@(#)$Id: client.cpp,v 1.223 1999/11/08 02:02:36 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -15,6 +15,7 @@ return "@(#)$Id: client.cpp,v 1.222 1999/11/01 20:03:29 patrick Exp $"; }
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "client.h"    // Client class
 #include "cliident.h"  // CliGetFullVersionDescriptor()
+#include "clievent.h"  // ClientEventSyncPost(),_CLIENT_STARTED|FINISHED
 #include "random.h"    // InitRandom()
 #include "pathwork.h"  // EXTN_SEP
 #include "clitime.h"   // CliTimer()
@@ -39,6 +40,7 @@ void ResetClientData(Client *client)
    */
 
   int contest;
+  memset((void *)client,0,sizeof(Client));
 
   /* non-user-configurable variables */
   client->nonewblocks=0;
@@ -102,11 +104,6 @@ void ResetClientData(Client *client)
   client->smtpsrvr[0]=0;
   client->smtpfrom[0]=0;
   client->smtpdest[0]=0;
-}
-
-Client::Client()
-{
-  ResetClientData(this);
 }
 
 // --------------------------------------------------------------------------
@@ -173,7 +170,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       LogScreenRaw( "RC5 PowerPC assembly by Dan Oetting\n");
       #endif
       #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-      LogScreenRaw( "RC5 Alpha assembly Copyright 1997-1998, Mike Marcelais\n");
+      LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
       #endif
       #if (CLIENT_CPU == CPU_ARM)
       LogScreenRaw( "ARM assembly by Steve Lee\n");
@@ -244,22 +241,34 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
 
 /* ---------------------------------------------------------------------- */
 
-static int ClientMain( Client *client, int argc, const char *argv[] )
+static int ClientMain( int argc, char *argv[] )
 {
+  Client *client;
   int retcode = 0;
   int restart = 0;
 
+  srand( (unsigned) time(NULL) );
+  InitRandom();
+
   TRACE_OUT((+1,"Client.Main()\n"));
+  client = (Client *)malloc(sizeof(Client));
+  if (!client)
+  {
+    ConOutErr( "Unable to initialize client. Out of memory." );
+    return -1;
+  }
+  
   do
   {
     int restarted = restart;
     restart = 0;
 
     ResetClientData(client); /* reset everything in the object */
+    ClientEventSyncPost( CLIEVENT_CLIENT_STARTED, *((long*)(&client)) );
     //ReadConfig() and parse command line - returns !0 if shouldn't continue
 
     TRACE_OUT((0,"Client.parsecmdline restarted?: %d\n", restarted));
-    if (ParseCommandline( client, 0, argc, argv, &retcode, 0 ) == 0)
+    if (ParseCommandline(client,0,argc,(const char **)argv,&retcode,0)==0)
     {
       int domodes = (ModeReqIsSet(-1) != 0);
       TRACE_OUT((0,"initializetriggers\n"));
@@ -273,6 +282,8 @@ static int ClientMain( Client *client, int argc, const char *argv[] )
           TRACE_OUT((0,"initializeconsole\n"));
           if (InitializeConsole(client->quietmode,domodes) == 0)
           {
+            //some plats need to wait for user input before closing the screen
+            int con_waitforuser = 0; //only used if doing modes (and !-config)
             TRACE_OUT((+1,"initializelogging\n"));
             InitializeLogging( (client->quietmode!=0), 
                                (client->percentprintingoff!=0),
@@ -288,7 +299,7 @@ static int ClientMain( Client *client, int argc, const char *argv[] )
             TRACE_OUT((-1,"initializelogging\n"));
             PrintBanner(client->id,0,restarted);
             TRACE_OUT((+1,"parsecmdline(1)\n"));
-            ParseCommandline( client, 1, argc, argv, NULL, 
+            ParseCommandline( client, 1, argc, (const char **)argv, NULL, 
                                     (client->quietmode==0)); //show overrides
             TRACE_OUT((-1,"parsecmdline(1)\n"));
             InitRandom2( client->id );
@@ -298,6 +309,7 @@ static int ClientMain( Client *client, int argc, const char *argv[] )
 
             if (domodes)
             {
+              con_waitforuser = (ModeReqIsSet(MODEREQ_CONFIG)==0);
               TRACE_OUT((+1,"modereqrun\n"));
               ModeReqRun( client );
               TRACE_OUT((-1,"modereqrun\n"));
@@ -306,7 +318,7 @@ static int ClientMain( Client *client, int argc, const char *argv[] )
             {
               PrintBanner(client->id,1,restarted);
               TRACE_OUT((+1,"client.run\n"));
-              retcode = client->Run();
+              retcode = ClientRun(client);
               TRACE_OUT((-1,"client.run\n"));
               restart = CheckRestartRequestTrigger();
             }
@@ -316,7 +328,7 @@ static int ClientMain( Client *client, int argc, const char *argv[] )
             TRACE_OUT((0,"deinitialize logging\n"));
             DeinitializeLogging();
             TRACE_OUT((0,"deinitialize console\n"));
-            DeinitializeConsole();
+            DeinitializeConsole(con_waitforuser);
           }
           TRACE_OUT((0,"deinitialize connectivity\n"));
           DeinitializeConnectivity(); //netinit.cpp
@@ -325,8 +337,11 @@ static int ClientMain( Client *client, int argc, const char *argv[] )
         DeinitializeTriggers();
       }
     }
+    ClientEventSyncPost( CLIEVENT_CLIENT_FINISHED, (long)restart );
     TRACE_OUT((0,"client.parsecmdline restarting?: %d\n", restart));
   } while (restart);
+
+  free((void *)client);
 
   TRACE_OUT((-1,"Client.Main()\n"));
   return retcode;
@@ -334,127 +349,12 @@ static int ClientMain( Client *client, int argc, const char *argv[] )
 
 /* ---------------------------------------------------------------------- */
 
-static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
-{
-  // This is the main client object.  we 'new'/malloc it, rather than make
-  // it static in the hope that people will think twice about using exit()
-  // or otherwise breaking flow. (wanna bet it'll happen anyway?)
-  // The if (success) thing is for nesting without {} nesting. - cyp
-  Client *clientP = NULL;
-  int retcode = -1, init_success = 1;
-  srand( (unsigned) time(NULL) );
-  InitRandom();
-
-  TRACE_OUT((+1,"realmain()\n"));
-
-  //------------------------------
-
-  #if (CLIENT_OS == OS_RISCOS)
-  if (init_success) //protect ourselves
-  {
-    riscos_in_taskwindow = riscos_check_taskwindow();
-    if (riscos_find_local_directory(argv[0]))
-      init_success = 0;
-  }
-  #endif
-
-  TRACE_OUT((+0,"realmain: 1 (%d)\n",init_success));
-  //-----------------------------
-
-  if ( init_success )
-  {
-    void *mbuf = malloc(sizeof(Client)*2); //use this roundabout way
-    if (mbuf) //to ensure we have enough heap space to create the object
-    {
-      free(mbuf);
-      init_success = (( clientP = new Client() ) != NULL);
-    }
-    if (!init_success)
-      ConOutErr( "Unable to create client object. Out of memory." );
-  }
-
-  TRACE_OUT((+0,"realmain: 2 (%d)\n",init_success));
-  //----------------------------
-
-  #if (CLIENT_OS == OS_NETWARE) //set cwd etc.
-  if ( init_success )
-    init_success = ( nwCliInitClient( argc, argv ) == 0);
-  #endif
-
-  TRACE_OUT((+0,"realmain: 3 (%d)\n",init_success));
-  //----------------------------
-
-  #if (CLIENT_OS==OS_WIN16 || CLIENT_OS==OS_WIN32S || CLIENT_OS==OS_WIN32)
-  if ( init_success )
-    w32ConSetClientPointer( clientP ); // save the client * so we can bail out
-  #endif                               // when we get a WM_ENDSESSION message
-
-  TRACE_OUT((+0,"realmain: 4 (%d)\n",init_success));
-  //----------------------------
-
-  #if (CLIENT_OS == OS_MACOS)
-  if ( init_success )                    // save the client * so we can 
-    macCliSetClientPointer( clientP ); // load it when appropriate
-  #endif
-
-  TRACE_OUT((+0,"realmain: 5 (%d)\n",init_success));
-  //----------------------------
-
-  if ( init_success )
-  {
-    retcode = ClientMain( clientP, argc, (const char **)argv );
-  }
-
-  TRACE_OUT((+0,"realmain: 6 (%d)\n",init_success));
-  //------------------------------
-
-  #if (CLIENT_OS == OS_AMIGAOS)
-  if (retcode) retcode = 5; // 5 = Warning
-  #endif // (CLIENT_OS == OS_AMIGAOS)
-
-  TRACE_OUT((+0,"realmain: 7 (%d)\n",init_success));
-  //------------------------------
-
-  #if (CLIENT_OS == OS_NETWARE)
-  if (init_success)
-    nwCliExitClient(); // destroys AES process, screen, polling procedure
-  #endif
-
-  TRACE_OUT((+0,"realmain: 8 (%d)\n",init_success));
-  //------------------------------
-
-  #if (CLIENT_OS==OS_WIN16 || CLIENT_OS==OS_WIN32S || CLIENT_OS==OS_WIN32)
-  w32ConSetClientPointer( NULL ); // clear the client *
-  #endif
-
-  TRACE_OUT((+0,"realmain: 9 (%d)\n",init_success));
-  //------------------------------
-
-  #if (CLIENT_OS == OS_MACOS)
-  if ( init_success )                    
-    macCliSetClientPointer( NULL ); // clear the client *
-  #endif
-
-  TRACE_OUT((+0,"realmain: 10 (%d)\n",init_success));
-  //------------------------------
-
-  if (clientP)
-    delete clientP;
-
-  TRACE_OUT((-1,"realmain()\n"));
-
-  return (retcode);
-}
-
-
-/* ----------------------------------------------------------------- */
-
 #if (CLIENT_OS == OS_MACOS)
 #ifdef CLIENT_17
 void main(void)
 {
   //extern void macosCliMain(int (*)(int,char **));
-  macosCliMain(_realmain); /* sythesise a command line for realmain */
+  macosCliMain(ClientMain); /* sythesise a command line for ClientMain */
   return;                 /* UI will be initialized later via console.cpp */
 }  
 #endif
@@ -462,7 +362,7 @@ void main(void)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* parse the command line and call the bootstrap */
   TRACE_OUT((+1,"WinMain()\n"));
-  int rc=winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, _realmain);
+  int rc=winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, ClientMain);
   TRACE_OUT((-1,"WinMain()\n"));
   return rc;
 }
@@ -535,8 +435,7 @@ int main( int argc, char *argv[] )
   {
     char *q = "RC5PROG";
     int didset = 0;
-    #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
-	(CLIENT_OS == OS_AIX)
+    #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX)
     char *m = (char *)malloc( strlen(q)+1+strlen(argv[0])+1 );
     if (m) {
       didset=(0==putenv(strcat(strcat(strcpy(m,q),"="),argv[0]))); //BSD4.3
@@ -585,8 +484,7 @@ int main( int argc, char *argv[] )
         strncpy( &buffer[7], argv[0], sizeof(buffer)-7 );
         buffer[sizeof(buffer)-5]='\0';
         strcat( buffer, ".ini" );
-        #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
-	    (CLIENT_OS == OS_AIX)
+        #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX)
         putenv( buffer );                 //BSD4.3
         #else
         setenv("RC5INI", &buffer[7], 1 ); //SYSV7 and posix
@@ -617,14 +515,39 @@ int main( int argc, char *argv[] )
     return 0;
   }
   #endif
-  return _realmain( argc, argv );
+  return ClientMain( argc, argv );
 }      
+#elif (CLIENT_OS == OS_RISCOS)
+int main( int argc, char *argv[] )
+{
+  riscos_in_taskwindow = riscos_check_taskwindow();
+  if (riscos_find_local_directory(argv[0]))
+    return -1;
+  return ClientMain( argc, argv );
+}
+#elif (CLIENT_OS == OS_NETWARE)
+int main( int argc, char *argv[] )
+{
+  int rc = 0;
+  if ( nwCliInitClient( argc, argv ) != 0) /* set cwd etc */
+    return -1;
+  rc = ClientMain( argc, argv );
+  nwCliExitClient(); // destroys AES process, screen, polling procedure
+  return rc;
+}  
+#elif (CLIENT_OS == OS_AMIGAOS)
+int main( int argc, char *argv[] )
+{
+  int rc = ClientMain( argc, argv );
+  if (rc) rc = 5; //Warning
+  return rc;
+}
 #else
 int main( int argc, char *argv[] )
 {
   int rc;
   TRACE_OUT((+1,"main()\n"));
-  rc=_realmain( argc, argv );
+  rc = ClientMain( argc, argv );
   TRACE_OUT((-1,"main()\n"));
   return rc;
 }

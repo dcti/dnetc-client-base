@@ -9,7 +9,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.52 1999/10/11 17:06:30 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.53 1999/11/08 02:02:44 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc

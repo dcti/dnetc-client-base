@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.16 1999/10/11 17:06:21 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.17 1999/11/08 02:02:34 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -19,7 +19,7 @@ return "@(#)$Id: buffbase.cpp,v 1.16 1999/10/11 17:06:21 cyp Exp $"; }
 #include "problem.h"  //Resultcode enum
 #include "probfill.h"
 #include "buffupd.h"  // BUFFERUPDATE_FETCH / BUFFERUPDATE_FLUSH
-#include "buffwork.h" //our defines
+#include "buffbase.h" //ourselves
 #define __iter2norm( iterlo, iterhi ) ((iterlo >> 28) + (iterhi << 4))
 
 /* --------------------------------------------------------------------- */
@@ -408,14 +408,14 @@ int BufferPutFileRecord( const char *filename, const WorkRecord * data,
   
 /* --------------------------------------------------------------------- */
 
-int Client::BufferUpdate( int updatereq_flags, int interactive )
+int BufferUpdate( Client *client, int updatereq_flags, int interactive )
 { 
   char loaderflags_map[CONTEST_COUNT];
   int failed, dofetch, doflush, didfetch, didflush, dontfetch, dontflush;
   unsigned int i, contest_i;
   const char *ffmsg="--fetch and --flush services are not available.\n";
 
-  if (noupdatefromfile || remote_update_dir[0] == '\0')
+  if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
   {
     if (interactive)
       LogScreen( "%sThis client has been configured to run without\n"
@@ -432,7 +432,7 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
   dofetch = doflush = 0;  
   for (i = 0; i < CONTEST_COUNT; i++)
   {
-    contest_i = (unsigned int)loadorder_map[i];
+    contest_i = (unsigned int)(client->loadorder_map[i]);
     loaderflags_map[i] = 0;
 
     if (contest_i >= CONTEST_COUNT) /* disabled */
@@ -446,23 +446,23 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
     {
       if (!dofetch && !dontfetch)
       {
-        long count = GetBufferCount( contest_i, 0, NULL );
+        long count = client->GetBufferCount( contest_i, 0, NULL );
         if (count >= 0) /* no error */
         {
-          if (count < ((long)(inthreshold[contest_i])) )
+          if (count < ((long)(client->inthreshold[contest_i])) )
           {
-            if (count <= 1 || connectoften || interactive)
+            if (count <= 1 || client->connectoften || interactive)
               dofetch = 1;
           }
         }
       }
       if (!doflush && !dontflush)
       {
-        long count = GetBufferCount( contest_i, 1 /* use_out_file */, NULL );
+        long count = client->GetBufferCount( contest_i, 1 /* use_out_file */, NULL );
         if (count >= 0) /* no error */
         {
-          if ( count > 0 /* count >= ((long)(outthreshold[contest_i])) || 
-            ( connectoften && count > 0) || (interactive && count > 0) */)
+          if ( count > 0 /* count >= ((long)(client->outthreshold[contest_i])) || 
+            ( client->connectoften && count > 0) || (interactive && count > 0) */)
           {
             doflush = 1;
           }
@@ -474,11 +474,11 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
   failed = didfetch = didflush = 0;
   if ((doflush || dofetch) && CheckExitRequestTriggerNoIO() == 0)
   {
-    if (!noupdatefromfile && remote_update_dir[0] != '\0')
+    if (!client->noupdatefromfile && client->remote_update_dir[0] != '\0')
     {
       if (failed == 0 && !dontfetch && CheckExitRequestTriggerNoIO() == 0)
       {
-        long transferred = BufferFetchFile( this, &loaderflags_map[0] );
+        long transferred = BufferFetchFile( client, &loaderflags_map[0] );
         if (transferred < 0)
         {
           failed = 1;
@@ -490,7 +490,7 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
       }
       if (failed == 0 && !dontflush && CheckExitRequestTriggerNoIO() == 0)
       {
-        long transferred = BufferFlushFile( this, &loaderflags_map[0] );
+        long transferred = BufferFlushFile( client, &loaderflags_map[0] );
         if (transferred < 0)
         {
           failed = 1;
@@ -686,7 +686,7 @@ static int __CheckBuffLimits( Client *client )
 
 /* --------------------------------------------------------------------- */
 
-long Client::PutBufferRecord(const WorkRecord *data)
+long PutBufferRecord(Client *client,const WorkRecord *data)
 {
   unsigned long workstate;
   unsigned int tmp_contest;
@@ -707,7 +707,7 @@ long Client::PutBufferRecord(const WorkRecord *data)
   {
     LogScreen("Discarded packet with unrecognized workstate %ld.\n",workstate);
   }
-  else if (__CheckBuffLimits( this ))
+  else if (__CheckBuffLimits( client ))
   {
     //nothing. message already printed
   }
@@ -716,23 +716,24 @@ long Client::PutBufferRecord(const WorkRecord *data)
     tmp_retcode = 0;
     tmp_use_out_file = 0;
     count = 0;
-    __FixupRandomPrefix( data, this );
+    __FixupRandomPrefix( data, client );
 
     if (workstate != RESULT_WORKING)
       tmp_use_out_file = 1;
 
-    if (nodiskbuffers == 0)
+    if (client->nodiskbuffers == 0)
     {
       filename = BufferGetDefaultFilename(tmp_contest, tmp_use_out_file,
-        ((tmp_use_out_file) ? (out_buffer_basename) :(in_buffer_basename)) );
+        ((tmp_use_out_file) ? (client->out_buffer_basename) :
+	                      (client->in_buffer_basename)) );
                /* returns <0 on ioerr, >0 if norecs */
       tmp_retcode = BufferPutFileRecord( filename, data, &count );
     }
     else
     {
       membuff = ((tmp_use_out_file) ?
-          (&(membufftable[tmp_contest].out)) :
-          (&(membufftable[tmp_contest].in)));
+          (&(client->membufftable[tmp_contest].out)) :
+          (&(client->membufftable[tmp_contest].in)));
                /* returns <0 on ioerr, >0 if norecs */
       tmp_retcode = BufferPutMemRecord( membuff, data, &count );
     }
@@ -749,7 +750,8 @@ long Client::PutBufferRecord(const WorkRecord *data)
 
 /* --------------------------------------------------------------------- */
 
-long Client::GetBufferRecord( WorkRecord* data, unsigned int contest, int use_out_file)
+long GetBufferRecord( Client *client, WorkRecord* data, 
+                      unsigned int contest, int use_out_file)
 {
   unsigned long workstate;
   unsigned int tmp_contest;
@@ -758,7 +760,7 @@ long Client::GetBufferRecord( WorkRecord* data, unsigned int contest, int use_ou
   unsigned long count;
   int retcode, tmp_retcode, tmp_use_out_file;
 
-  if (__CheckBuffLimits( this ))
+  if (__CheckBuffLimits( client ))
     return -1;
   
   do
@@ -767,10 +769,11 @@ long Client::GetBufferRecord( WorkRecord* data, unsigned int contest, int use_ou
     {
       break; /* return -1 */
     }
-    else if (nodiskbuffers == 0)
+    else if (client->nodiskbuffers == 0)
     {
       filename = BufferGetDefaultFilename(contest, use_out_file,
-          ((use_out_file) ? (out_buffer_basename) :(in_buffer_basename)) );
+          ((use_out_file) ? (client->out_buffer_basename) :
+	                    (client->in_buffer_basename)) );
                  /* returns <0 on ioerr, >0 if norecs */
       retcode = BufferGetFileRecord( filename, data, &count );
 //LogScreen("b:%d\n", retcode);
@@ -778,7 +781,8 @@ long Client::GetBufferRecord( WorkRecord* data, unsigned int contest, int use_ou
     else
     {
       membuff = ((use_out_file)?
-               (&(membufftable[contest].out)):(&(membufftable[contest].in)));
+               (&(client->membufftable[contest].out)):
+	       (&(client->membufftable[contest].in)));
                  /* returns <0 on ioerr, >0 if norecs */
       retcode = BufferGetMemRecord( membuff, data, &count );
     }
@@ -817,19 +821,20 @@ long Client::GetBufferRecord( WorkRecord* data, unsigned int contest, int use_ou
         tmp_use_out_file = (workstate != RESULT_WORKING);
         tmp_retcode = 0;
 //      LogScreen("Cross-saving packet of another type/contest.\n");
-        if (nodiskbuffers == 0)
+        if (client->nodiskbuffers == 0)
         {
 //LogScreen("old cont:%d, type: %d, name %s\n", contest, use_out_file, filename );
           filename = BufferGetDefaultFilename(tmp_contest, tmp_use_out_file,
-          ((tmp_use_out_file) ? (out_buffer_basename) :(in_buffer_basename)) );
-                   /* returns <0 on ioerr, >0 if norecs */
+          ((tmp_use_out_file) ? (client->out_buffer_basename) :
+	                        (client->in_buffer_basename)) );
 //LogScreen("new cont:%d, type: %d, name %s\n", tmp_contest, tmp_use_out_file, filename );
           tmp_retcode = BufferPutFileRecord( filename, data, NULL );
         }
         else
         {
           membuff = ((tmp_use_out_file)?
-           (&(membufftable[tmp_contest].out)):(&(membufftable[tmp_contest].in)));
+           (&(client->membufftable[tmp_contest].out)):
+	   (&(client->membufftable[tmp_contest].in)));
                  /* returns <0 on ioerr, >0 if norecs */
           tmp_retcode = BufferPutMemRecord( membuff, data, NULL );
         }
@@ -840,7 +845,7 @@ long Client::GetBufferRecord( WorkRecord* data, unsigned int contest, int use_ou
       }
       else /* packet is ok */
       {
-        __FixupRandomPrefix( data, this );
+        __FixupRandomPrefix( data, client );
         return (long)count; // all is well, data is a valid entry.
       }
     }
@@ -852,30 +857,32 @@ long Client::GetBufferRecord( WorkRecord* data, unsigned int contest, int use_ou
 
 /* --------------------------------------------------------------------- */
 
-long Client::GetBufferCount( unsigned int contest, int use_out_file, unsigned long *normcountP )
+long GetBufferCount( Client *client, unsigned int contest, 
+                     int use_out_file, unsigned long *normcountP )
 {
   membuffstruct *membuff;
   const char *filename;
   unsigned long reccount = 0;
   int retcode = -1;
 
-  if (__CheckBuffLimits( this ) != 0)
+  if (__CheckBuffLimits( client ) != 0)
   {
     //nothing, message already printed
   }
   else if (contest < CONTEST_COUNT)
   {
-    if (nodiskbuffers == 0)
+    if (client->nodiskbuffers == 0)
     {
       filename = BufferGetDefaultFilename(contest, use_out_file, 
-        ((use_out_file) ? (out_buffer_basename) :(in_buffer_basename)) );
+        ((use_out_file) ? (client->out_buffer_basename) :
+	                  (client->in_buffer_basename)) );
       retcode = BufferCountFileRecords( filename, contest, &reccount, normcountP );
     }
     else
     {
       membuff = ((use_out_file) ?
-               (&(membufftable[contest].out)) :
-               (&(membufftable[contest].in)));
+               (&(client->membufftable[contest].out)) :
+               (&(client->membufftable[contest].in)));
       retcode = BufferCountMemRecords( membuff, contest, &reccount, normcountP );
     }
   }
@@ -919,7 +926,7 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
       }
     }
     lastremaining = remaining;
-    if ( client->PutBufferRecord( &data ) > 0 )
+    if ( PutBufferRecord( client, &data ) > 0 )
     {
       recovered++;
     }
@@ -980,7 +987,7 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
     strncpy( remote_file, BufferGetDefaultFilename(contest,1,basename), sizeof(remote_file));
     remote_file[sizeof(remote_file)-1] = '\0';
 
-    while ((lefttotrans = client->GetBufferRecord( &wrdata, contest, 1 )) >= 0)
+    while ((lefttotrans = GetBufferRecord( client, &wrdata, contest, 1 )) >= 0)
     {
       long workunits = 0;
 
@@ -994,7 +1001,7 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
       
       if ( BufferPutFileRecord( remote_file, &wrdata, NULL ) != 0 )
       {
-        client->PutBufferRecord( &wrdata );
+        PutBufferRecord( client, &wrdata );
         failed = -1;
         break;
       }
@@ -1086,7 +1093,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
     if (loaderflags_map[contest] != 0) /* contest is closed or disabled */
       continue;
 
-    lefttotrans = (long)client->GetBufferCount( contest, 0, NULL );
+    lefttotrans = (long)GetBufferCount( client, contest, 0, NULL );
 
     if ((lefttotrans >= 0) && (((unsigned long)(lefttotrans)) < 
               ((unsigned long)(client->inthreshold[contest]))) ) 
@@ -1117,7 +1124,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       if (remaining < ((unsigned long)(lefttotrans)))
         lefttotrans = remaining;
       
-      if ((lefttotrans = client->PutBufferRecord( &wrdata )) < 0)
+      if ((lefttotrans = PutBufferRecord( client, &wrdata )) < 0)
       {
         BufferPutFileRecord( remote_file, &wrdata, NULL );
         failed = -1;

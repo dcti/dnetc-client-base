@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.69 1999/10/15 23:37:40 cyp Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.70 1999/11/08 02:02:43 cyp Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"

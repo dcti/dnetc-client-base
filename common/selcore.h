@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.4 1999/10/11 17:06:30 cyp Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.5 1999/11/08 02:02:44 cyp Exp $"
 
 /* this is called from Problem::LoadState() */
 int selcoreGetSelectedCoreForContest( unsigned int contestid );

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.67 1999/10/18 02:54:01 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.68 1999/11/08 02:02:39 cyp Exp $"; }
 
 //#define TRACE
 

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CHECKPT_H__
-#define __CHECKPT_H__ "@(#)$Id: checkpt.h,v 1.5 1999/10/16 16:48:09 cyp Exp $"
+#define __CHECKPT_H__ "@(#)$Id: checkpt.h,v 1.6 1999/11/08 02:02:36 cyp Exp $"
 
 /* action flags */
 #define CHECKPOINT_REFRESH 0x00

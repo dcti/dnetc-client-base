@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.118 1999/10/16 16:48:12 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.119 1999/11/08 02:02:43 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -163,14 +163,20 @@ extern "C" void riscos_upcall_6(void);
 #endif
 
 /* ------------------------------------------------------------------- */
+#ifdef HAVE_CSC_CORES
 extern "C" {
-// CSC cores
 s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *timeslice, void *membuff );
 s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *timeslice, void *membuff );
 s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *timeslice, void *membuff );
 s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *timeslice, void *membuff );
 }
+#endif
 /* ------------------------------------------------------------------- */
+#ifdef HAVE_OGR_CORES
+extern CoreDispatchTable *ogr_get_dispatch_table(void);
+#endif
+/* ------------------------------------------------------------------- */
+
 
 
 Problem::Problem(long _threadindex /* defaults to -1L */)
@@ -598,7 +604,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
   }
   #endif /* #ifdef HAVE_DES_CORES */
 
-  #if defined(GREGH) || defined(HAVE_OGR_CORES)
+  #if defined(HAVE_OGR_CORES)
   if (contestid == OGR)
   {
     return 0;
@@ -657,7 +663,8 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   contest = contestid;
   tslice = _timeslice;
   coresel = __core_picker(this, contestid );
-  if (coresel < 0 || coresel != selcoreValidateCoreIndex( contestid, coresel ))
+  if (coresel < 0 || 
+     (coresel > 0 && coresel != selcoreValidateCoreIndex(contestid, coresel)))
     return -1;
 
   //----------------------------------------------------------------
@@ -714,10 +721,9 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
 
     case OGR:
 
-      #if !defined(GREGH) && !defined(HAVE_OGR_CORES)
+      #if !defined(HAVE_OGR_CORES)
       return -1;
       #else
-      extern CoreDispatchTable *ogr_get_dispatch_table();
       contestwork.ogr = work->ogr;
       contestwork.ogr.nodes.lo = 0;
       contestwork.ogr.nodes.hi = 0;
@@ -725,7 +731,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       int r = ogr->init();
       if (r != CORE_S_OK)
         return -1;
-      r = ogr->create(&contestwork.ogr.workstub, sizeof(WorkStub), &ogrstate);
+      r = ogr->create(&contestwork.ogr.workstub, sizeof(WorkStub), ogrstate, sizeof(ogrstate));
       if (r != CORE_S_OK)
         return -1;
       if (contestwork.ogr.workstub.worklength > contestwork.ogr.workstub.stub.length)
@@ -797,10 +803,7 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
         // nothing special needs to be done here
         break;
       case OGR:
-        if (ogrstate != NULL)
-        {
-          ogr->getresult(ogrstate, &contestwork.ogr.workstub, sizeof(WorkStub));
-        }
+        ogr->getresult(ogrstate, &contestwork.ogr.workstub, sizeof(WorkStub));
         break;
     }
     memcpy( (void *)work, (void *)&contestwork, sizeof(ContestWork));
@@ -973,7 +976,7 @@ int Problem::Run_CSC(u32 *timesliceP, int *resultcode)
   *resultcode = -1;
   return -1;
 #else  
-  s32 rescode = (*unit_func)( &rc5unitwork, timesliceP, (void *)0 );
+  s32 rescode = (*unit_func)( &rc5unitwork, timesliceP, core_membuffer );
 
   if (rescode < 0) /* "kiter" error */
   {
@@ -1145,7 +1148,7 @@ int Problem::Run_DES(u32 *timesliceP, int *resultcode)
 
 int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
 {
-#if !defined(GREGH) && !defined(HAVE_OGR_CORES)
+#if !defined(HAVE_OGR_CORES)
   timesliceP = timesliceP;
 #else
   int r, nodes;
@@ -1170,7 +1173,6 @@ int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
       r = ogr->destroy(ogrstate);
       if (r == CORE_S_OK) 
       {
-        ogrstate = NULL;
         *resultcode = RESULT_NOTHING;
         return RESULT_NOTHING;
       }
@@ -1343,7 +1345,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
     }
     case OGR:
     {
-      #if defined(GREGH) || defined(HAVE_OGR_CORES)
+      #ifdef HAVE_OGR_CORES
       return 1;
       #else
       return 0;

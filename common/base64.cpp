@@ -10,7 +10,7 @@
  *
 */ 
 const char *base64_cpp(void) {
-return "@(#)$Id: base64.cpp,v 1.4 1999/10/11 17:06:21 cyp Exp $"; }
+return "@(#)$Id: base64.cpp,v 1.5 1999/11/08 02:02:33 cyp Exp $"; }
 
 static unsigned char base64table[64] = 
 {
@@ -61,7 +61,7 @@ int base64_encode(char *outbuf, const char *inbuf,
   if (outlen < outbuflen)
     *outbuf = 0;
 
-  return (errors ? -1 : outlen);
+  return (errors ? -1 : (int)outlen);
 }
 
 
@@ -132,5 +132,5 @@ int base64_decode(char *outbuf, const char *inbuf,
   if (outlen < outbuflen)
     outbuf[outlen] = '\0';
 
-  return (errors ? -1 : outlen);
+  return (errors ? -1 : (int)outlen);
 }  

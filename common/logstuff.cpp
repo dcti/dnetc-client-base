@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.38 1999/10/11 17:06:27 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.39 1999/11/08 02:02:40 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc

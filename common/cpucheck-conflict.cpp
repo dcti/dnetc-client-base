@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.86 1999/11/03 01:17:21 remi Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.87 1999/11/08 02:02:39 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*

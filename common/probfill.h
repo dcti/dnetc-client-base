@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __PROBFILL_H__
-#define __PROBFILL_H__ "@(#)$Id: probfill.h,v 1.10 1999/10/11 18:47:19 cyp Exp $"
+#define __PROBFILL_H__ "@(#)$Id: probfill.h,v 1.11 1999/11/08 02:02:43 cyp Exp $"
 
 #define PROBFILL_ANYCHANGED  1
 #define PROBFILL_GETBUFFERRS 2

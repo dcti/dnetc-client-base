@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CLIIDENT_H__
-#define __CLIIDENT_H__ "@(#)$Id: cliident.h,v 1.7 1999/10/11 17:06:23 cyp Exp $"
+#define __CLIIDENT_H__ "@(#)$Id: cliident.h,v 1.8 1999/11/08 02:02:37 cyp Exp $"
 
 extern void CliIdentifyModules(void);
 extern time_t CliGetNewestModuleTime(void);
