@@ -1,10 +1,9 @@
 // Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-//
 
 #ifndef __OGR_H__
-#define __OGR_H__
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.3.2.12 2000/06/24 23:19:39 andreasb Exp $"
 
 #ifndef u16
 #include "cputypes.h"
