@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.43 2000/06/04 11:12:09 oliver Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.44 2000/06/27 01:55:17 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -24,6 +24,7 @@ return "@(#)$Id: triggers.cpp,v 1.16.2.43 2000/06/04 11:12:09 oliver Exp $"; }
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "pathwork.h"  // GetFullPathForFilename()
+#include "clitime.h"   // CliClock()
 #include "util.h"      // TRACE and utilxxx()
 #include "logstuff.h"  // LogScreen()
 #include "triggers.h"  // keep prototypes in sync
@@ -164,18 +165,22 @@ static void __PollExternalTrigger(struct trigstruct *trig, int undoable)
   __assert_statics(); 
   if ((undoable || (trig->trigger & TRIGSETBY_FLAGFILE) == 0) && trig->flagfile)
   {
-    time_t now;
-    if ((now = time(NULL)) >= trig->nextcheck) 
+    struct timeval tv;
+    if (CliClock(&tv) == 0)
     {
-      if ( access( trig->flagfile, 0 ) == 0 )
+      time_t now = tv.tv_sec;
+      if (now >= trig->nextcheck) 
       {
-        trig->nextcheck = now + (time_t)trig->pollinterval.whenon;
-        trig->trigger |= TRIGSETBY_FLAGFILE;
-      }
-      else
-      {
-        trig->nextcheck = now + (time_t)trig->pollinterval.whenoff;
-        trig->trigger &= ~TRIGSETBY_FLAGFILE;
+        if ( access( trig->flagfile, 0 ) == 0 )
+        {
+          trig->nextcheck = now + (time_t)trig->pollinterval.whenon;
+          trig->trigger |= TRIGSETBY_FLAGFILE;
+        }
+        else
+        {
+          trig->nextcheck = now + (time_t)trig->pollinterval.whenoff;
+          trig->trigger &= ~TRIGSETBY_FLAGFILE;
+        }
       }
     }
   }
@@ -202,32 +207,36 @@ static void __CheckIniFileChangeStuff(void)
   __assert_statics(); 
   if (trigstatics.inifile[0]) /* have an ini filename? */
   {
-    time_t now = time(NULL);
-    if (now > trigstatics.nextinifilecheck)
+    struct timeval tv;
+    if (CliClock(&tv) == 0)
     {
-      unsigned long filetime = __get_file_time(trigstatics.inifile);
-      trigstatics.nextinifilecheck = now + ((time_t)5);
-      if (filetime)
+      time_t now = tv.tv_sec;
+      if (now > trigstatics.nextinifilecheck)
       {
-        if (trigstatics.overrideinifiletime > 0)
+        unsigned long filetime = __get_file_time(trigstatics.inifile);
+        trigstatics.nextinifilecheck = now + ((time_t)5);
+        if (filetime)
         {
-          trigstatics.currinifiletime = 0;
-          trigstatics.overrideinifiletime--;
-        }
-        else if (!trigstatics.currinifiletime)     /* first time */
-        {
-          trigstatics.currinifiletime = filetime;
-        }  
-        else if (trigstatics.currinifiletime == 1) 
-        {                                   /* got change some time ago */
-          RaiseRestartRequestTrigger();
-          trigstatics.currinifiletime = 0;
-          trigstatics.nextinifilecheck = now + ((time_t)60);
-        }
-        else if (filetime != trigstatics.currinifiletime)
-        {                                                /* mark change */
-          trigstatics.currinifiletime = 1;
-        }
+          if (trigstatics.overrideinifiletime > 0)
+          {
+            trigstatics.currinifiletime = 0;
+            trigstatics.overrideinifiletime--;
+          }
+          else if (!trigstatics.currinifiletime)     /* first time */
+          {
+            trigstatics.currinifiletime = filetime;
+          }  
+          else if (trigstatics.currinifiletime == 1) 
+          {                                   /* got change some time ago */
+            RaiseRestartRequestTrigger();
+            trigstatics.currinifiletime = 0;
+            trigstatics.nextinifilecheck = now + ((time_t)60);
+          }
+          else if (filetime != trigstatics.currinifiletime)
+          {                                                /* mark change */
+            trigstatics.currinifiletime = 1;
+          }
+        } 
       }  
     }
   }
@@ -314,64 +323,50 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       if ((*((BOOL (WINAPI *)(LPSYSTEM_POWER_STATUS))getsps))(&sps))
       {
         TRACE_OUT((0,"sps: ACLineStatus = 0x%02x, BatteryFlag = 0x%02x\n",sps.ACLineStatus,sps.BatteryFlag));
-        if (sps.ACLineStatus == 1) /* we have AC power */
+        if (sps.ACLineStatus == 1) /* AC power is online */
           return 0; /* no, we are not on battery */
-        if (sps.ACLineStatus == 0) /* on battery power */
-        {
-          if ((sps.BatteryFlag & 8)!=0) /* but charging */
-            return 0; /* return not-on-battery */
+        if (sps.ACLineStatus == 0) /* AC power is offline */
           return 1; /* yes, we are on battery */
-        }
+        /* third condition is 0xff ("unknown"), so fall through */
       }
     }
-    #endif
-#if (CLIENT_OS == OS_LINUX)
+    #elif (CLIENT_OS == OS_LINUX)
+    {
+      /*  linux support from 
+       *  Friedemann Baitinger (aka 'friedbait'), fb@baiti.net
+      */
+      #define PROC_APM "/proc/apm"
 
-    /* 
-     * following code fragment added by:
-     *    Friedemann Baitinger (aka 'friedbait'), fb@baiti.net
-     */
+      int disableme = 1; // if this is still set when we get to the end, 
+                         // then disable further apm checking.
+      if (access(PROC_APM, R_OK) == 0) /* have apm support in the kernel? */
+      {
+        FILE *fd = fopen(PROC_APM, "r" );
+        disableme = 0; /* be optimistic */
+        if (fd)
+        {
+          unsigned int kmaj      = 0;
+          unsigned int kmin      = 0;
+          unsigned int amaj      = 0;
+          unsigned int amin      = 0;
+          unsigned int apm_flags = 0;
+          unsigned int line_stat = 0;
+          unsigned int bat_stat  = 0;
+          unsigned int bat_flags = 0;
 
-    #define PROC_APM "/proc/apm"
-
-    unsigned int args      = 0;
-    unsigned int kmaj      = 0;
-    unsigned int kmin      = 0;
-    unsigned int amaj      = 0;
-    unsigned int amin      = 0;
-    unsigned int apm_flags = 0;
-    unsigned int line_stat = 0;
-    unsigned int bat_stat  = 0;
-    unsigned int bat_flags = 0;
-    FILE *fd = NULL;
-
-    /*
-     * first check the /proc filesystem to see whether the kernel
-     * supports apm. If not, there is nothing we can do at all
-     */
-
-    if (access(PROC_APM, R_OK) == 0) {
-        if ((fd = fopen(PROC_APM, "r")) != NULL) {
-
-            /*
-             * Ok, kernel supports apm, and we have successfully
-             * opened the /proc/apm. Let's parse the variables
-             */
-
-            args = fscanf(fd, "%u.%u %u.%u 0x%02x 0x%02x 0x%02x 0x%02x",
-                   &kmaj, &kmin, &amaj, &amin, &apm_flags,
-                   &line_stat, &bat_stat, &bat_flags);
-
-            fclose(fd);
-
-            /*
-             * make sure we've got all variables we want (thanx cyp!)
-             * We want 8 and if we get less, make major version into
-             * something we don't process any further.
-             */
-
-            if (args < 8) kmaj = 0;
-
+          if ( 8 != fscanf(fd, "%u.%u %u.%u 0x%02x 0x%02x 0x%02x 0x%02x",
+                               &kmaj, &kmin, &amaj, &amin, &apm_flags,
+                               &line_stat, &bat_stat, &bat_flags))
+          {
+            /* got less than 8 args. make major version something we
+             * don't want to process further.
+            */
+            kmaj = 0;
+          }
+          fclose(fd);
+          
+          if (kmaj == 1) 
+          {
             /*
              * /proc layout is kernel version dependent. Layout may
              * change but it always starts with a major version number
@@ -380,17 +375,22 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
              * Of course if major goes to '2' we will add a switch/case
              * support the new layout too.
              */
-
-            if (kmaj != 1) return -1;     /* proc layout may have changed */
-
             TRACE_OUT((0,"sps: ACLineStatus = 0x%02x, BatteryFlag = 0x%02x\n",
                        line_stat, bat_stat));
 
             if (line_stat == 1) return 0; /* we have AC power */
             return 1;                     /* we don't have AC */
-        }
-    }
-#endif
+          }
+          disableme = 1; /* unknown major version. disable further checks */
+        } /* if (fd) */
+      } /* if (access) */
+
+      if (disableme) /* disable further checks */
+      {
+        trigstatics.pause_if_no_mains_power = 0;
+      }
+    } /* #if (linux) */
+    #endif
   }  
   return -1; /* unknown */
 }

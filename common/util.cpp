@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.32 2000/06/24 23:18:48 andreasb Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.33 2000/06/27 01:55:18 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -67,7 +67,7 @@ int utilCheckIfBetaExpired(int print_msg)
 {
   if (CliIsDevelVersion()) /* cliident.cpp */
   {
-    timeval expirationtime;
+    struct timeval expirationtime;
     time_t now = (CliTimer(NULL)->tv_sec); /* net adjusted */
 
     #ifndef BETA_PERIOD
@@ -88,16 +88,19 @@ int utilCheckIfBetaExpired(int print_msg)
     }
     else if (print_msg)
     {
-      static time_t last_seen = 0;
-      time_t wtime = time(NULL);
-      if (last_seen == 0)
-        last_seen = 1; //let it through once (print banner)
-      else if (wtime < last_seen || (wtime - last_seen) > 10*60)
+      static time_t last_seen = ((time_t)-1);
+      struct timeval tv;
+      if (CliClock(&tv) == 0)
       {
-        expirationtime.tv_sec -= now;
-        LogScreen("*** This BETA release expires in %s. ***\n",
+        if (last_seen == ((time_t)-1)) //let it through once
+          last_seen = tv.tv_sec;
+        else if (tv.tv_sec < last_seen || (tv.tv_sec - last_seen) > 10*60)
+        {
+          expirationtime.tv_sec -= now;
+          LogScreen("*** This BETA release expires in %s. ***\n",
             CliGetTimeString(&expirationtime,2) );
-        last_seen = wtime;
+          last_seen = tv.tv_sec;
+        }
       }
     }
   }
