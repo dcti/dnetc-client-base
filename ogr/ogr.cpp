@@ -320,7 +320,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
     }
   }
 
-  State->startdepth = workstub->stub.length + 1;
+  State->startdepth = workstub->stub.length;
 
 /*
   printf("sizeof      = %d\n", sizeof(struct State));
@@ -439,7 +439,7 @@ skip_out:
 up:
     lev--;
     depth--;
-    if (depth < State->startdepth) {
+    if (depth <= State->startdepth) {
       retval = CORE_S_OK;
       break;
     }
@@ -466,7 +466,7 @@ static int ogr_getresult(void *state, void *result, int resultlen)
     return CORE_E_FORMAT;
   }
   workstub->stub.marks = (u16)State->maxdepth;
-  workstub->stub.length = (u16)(State->startdepth - 1);
+  workstub->stub.length = (u16)State->startdepth;
   for (i = 0; i < STUB_MAX; i++) {
     workstub->stub.diffs[i] = (u16)(State->marks[i+1] - State->marks[i]);
   }
