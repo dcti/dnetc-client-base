@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.66 2002/04/19 22:31:15 zebe Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.67 2002/07/23 01:10:59 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -641,7 +641,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   CFGTXT(
   "The client is capable of sending you a log of the client's progress by mail.\n"
   "To activate this capability, specify how much you want the client to buffer\n"
-  "before sending. The minimum is 2048 bytes, the maximum is approximately 130000\n"
+  "before sending. The minimum is 2048 bytes, the maximum is approximately 125000\n"
   "bytes. Specify 0 (zero) to disable logging by mail.\n"
   ),CONF_MENU_LOG,CONF_TYPE_INT,NULL,NULL,0,125000,NULL,NULL
 },
