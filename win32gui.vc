@@ -56,7 +56,6 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/selcore.obj    \
 	$(OUTPUTPATH)/lurk.obj \
 	$(OUTPUTPATH)/logstuff.obj \
-	$(OUTPUTPATH)/threadcd.obj   \
 	$(OUTPUTPATH)/cpucheck.obj   \
 	$(OUTPUTPATH)/selftest.obj   \
 	$(OUTPUTPATH)/disphelp.obj   \
