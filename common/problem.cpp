@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.69 2000/09/24 13:36:30 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.70 2000/10/16 13:42:40 oliver Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -304,7 +304,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
     case RC5:
     if ((MINIMUM_ITERATIONS % pipeline_count) != 0)
     {
-      LogScreen("(MINIMUM_ITERATIONS % pipeline_count) != 0)\n");
+      LogScreen("(MINIMUM_ITERATIONS %% pipeline_count) != 0)\n");
       return -1;
     }
     /* fallthrough */
