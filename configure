@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.161 2000/06/15 22:54:27 mfeiri Exp $
+# @(#)$Id: configure,v 1.222.2.162 2000/06/17 06:35:33 bernd Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1450,14 +1450,17 @@ case "$1" in
 
 ###### Intel X86 NetBSD
 
-    *x86-netbsd)
-	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_TARBALL="netbsd-i386"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -DLURK -DHAVE_OGR_CORES"
+    *x86-netbsd-aout)	# NetBSD 1.4.x, aout, no OGR, [bernd]
+	# The OGR test doesn't pass all tests with the supplied compiler,
+	# so you need to build the static elf one on a pre-1.5 or 1.5
+	# system to get OGR support.
+	TARGET_AS="gcc -c -DNO_BALIGN"
+	TARGET_TARBALL="netbsd-i386-aout"
+	TARGET_CCFLAGS="$OPTS_EGCS -m486 -DASM_X86 -DLURK" # -DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="common/lurk.cpp $OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_ADDSRCS="common/lurk.cpp" # $OGR_ANSI_SRCS
+	TARGET_ADDASMS=""
+	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"
 	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS $OPTS_DES_MMX -DHAVE_DES_CORES"
 	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
@@ -1466,6 +1469,24 @@ case "$1" in
 	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
 	TARGET_NASM_FMT="aoutb"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	;;
+
+    *x86-netbsd-elf)       # NetBSD > 1.4.x, elf, [bernd]
+	TARGET_AS="gcc -c -DNO_BALIGN"
+	TARGET_CCFLAGS="$OPTS_GCC295_X86 -Werror -DMMX_RC5 -DLURK -DHAVE_OGR_CORES"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="common/lurk.cpp $OGR_ANSI_SRCS"
+	TARGET_ADDASMS="" #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
+	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"
+	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS $OPTS_DES_MMX -DHAVE_DES_CORES"
+	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
+	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
+	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
+	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
+	TARGET_LIBS="-lc"
+	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="netbsd-i386-elf"
 	;;
 
 ###### Intel X86 OpenBSD
