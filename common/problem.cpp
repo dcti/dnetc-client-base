@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.68  1999/01/17 22:55:10  silby
+// Change casts to make msvc happy.
+//
 // Revision 1.67  1999/01/17 21:38:52  cyp
 // memblock for bruce ford's deseval-mmx is now passed from the problem object.
 //
@@ -187,7 +190,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.67 1999/01/17 21:38:52 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.68 1999/01/17 22:55:10 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -853,7 +856,7 @@ s32 Problem::Run( u32 /*unused*/ )
 
     #if defined(MMX_BITSLICER)
     #if defined(MMX_RC5)
-    if (unit_func == ((u32 (*)(RC5UnitWork *,u32))(des_unit_func_mmx)))
+    if (((u32 (*)(RC5UnitWork *,u32, char *))(unit_func) == des_unit_func_mmx))
       {
       #if defined(BITSLICER_WITH_LESS_BITS)
       min_bits = 16;
@@ -874,7 +877,7 @@ s32 Problem::Run( u32 /*unused*/ )
 
     #if defined(MMX_BITSLICER)
     #if defined(MMX_RC5)
-    if (unit_func == ((u32 (*)(RC5UnitWork *,u32))(des_unit_func_mmx)))
+    if (((u32 (*)(RC5UnitWork *,u32, char *))(unit_func) == des_unit_func_mmx))
       kiter = des_unit_func_mmx( &rc5unitwork, nbits, core_membuffer );
     else
     #endif
