@@ -34,9 +34,9 @@ static char cputypetable[7][60]=
 static char cputypetable[5][60]=
   {
   "Autodetect",
-  "ARM 3, ARM 610, ARM 700, ARM 7500, ARM 7500FE",
+  "ARM 3, 610, 700, 7500, 7500FE",
   "ARM 810, StrongARM 110",
-  "ARM 2, ARM 250",
+  "ARM 2, 250",
   "ARM 710",
   };
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
@@ -354,7 +354,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       if (choice >= 0)
       {
         printf("%2d) %s ==> ",
-               (int)options[choice].menuposition, 
+               (int)options[choice].menuposition,
                options[choice].description);
 
         if (options[choice].type==1)
@@ -2204,9 +2204,9 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
     double fasttime[2] = { 0, 0 };
     int fastcoretest[2] = { -1, -1 };
 
-    LogScreen("Automatically selecting fastest core...\n");
-    LogScreen("This is just a guess based on a small test of each core.  If you know what CPU\n");
-    LogScreenf("this machine has, then run 'rc5des -config', select option %d, and set it\n",CONF_CPUTYPE+1);
+    LogScreen("Automatically selecting fastest core...\n"
+              "This is just a guess based on a small test of each core.  If you know what CPU\n"
+              "this machine has, then set it in the Performance section of the choices.\n");
     fflush(stdout);
 //    for (int i = 0; i < 6; i++)
     for (int j = 0; j < 2; j++)
@@ -2236,7 +2236,7 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
       gettimeofday( &stop, NULL );
       double elapsed = (stop.tv_sec - start.tv_sec) +
                        (((double)stop.tv_usec - (double)start.tv_usec)/1000000.0);
-//printf("%s Core %d: %f\n",i & 2 ? "DES" : "RC5",i,elapsed);
+//printf("%s Core %d: %f\n",j ? "DES" : "RC5",i,elapsed);
 
 
       if (fastcoretest[j] < 0 || elapsed < fasttime[j])
@@ -2246,7 +2246,7 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
     fastcore = (4-(fastcoretest[0] + (fastcoretest[1]<<1)))&3;
   }
 
-LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
+LogScreenf("Selecting %s code.\n",cputypetable[fastcore+1]);
 
   // select the correct core engine
   switch(fastcore)
@@ -2998,20 +2998,20 @@ void Client::PrintBanner(const char * /*clname*/)
   LogScreenf( "\nRC5DES v2.%d.%d client - a project of distributed.net\n"
           "Copyright distributed.net 1997-1998\n"
 #if (CLIENT_CPU == CPU_X86)
-          "DES Search routines Copyright Svend Olaf Mikkelsen\n"
+          "DES search routines Copyright Svend Olaf Mikkelsen\n"
 #endif
 #if defined(KWAN)
-          "DES Search routines Copyright Matthew Kwan\n"
+          "DES search routines Copyright Matthew Kwan\n"
 #endif
           "Please visit http://www.distributed.net/ for up to date contest information.\n"
           "%s\n", CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC,
 #if (CLIENT_OS == OS_NETWARE)
-          "");
+          "\n");
 #else
   #if (CLIENT_OS == OS_RISCOS)
           guiriscos ?
           "Interactive help is available, or select 'Help contents' from the menu for\n"
-          "more detailed client information." :
+          "more detailed client information.\n" :
   #endif
           "Execute with option '-help' for online help, or read rc5des" EXTN_SEP "txt for more\n"
           "detailed client option information.\n");
@@ -3355,7 +3355,7 @@ int Client::ARMid()
   switch (detectedvalue)
   {
     case 0x200:
-      LogScreen("Detected an ARM 2 or ARM 250\n");
+      LogScreen("Detected an ARM 2 or ARM 250. ");
       coretouse=2;
       break;
     case 0x3:
@@ -3364,23 +3364,23 @@ int Client::ARMid()
     case 0x700:
     case 0x7500:
     case 0x7500FE:
-      LogScreenf("Detected an ARM %X\n", detectedvalue);
+      LogScreenf("Detected an ARM %X. ", detectedvalue);
       coretouse=0;
       break;
     case 0x710:
-      LogScreenf("Detected an ARM %X\n", detectedvalue);
+      LogScreenf("Detected an ARM %X. ", detectedvalue);
       coretouse=3;
       break;
     case 0x810:
-      LogScreenf("Detected an ARM %X\n", detectedvalue);
+      LogScreenf("Detected an ARM %X. ", detectedvalue);
       coretouse=1;
       break;
     case 0xA10:
-      LogScreen("Detected a StrongARM 110\n");
+      LogScreen("Detected a StrongARM 110. ");
       coretouse=1;
       break;
     default:
-      LogScreen("Detected an unknown processor\n");
+      LogScreen("Detected an unknown processor. ");
       coretouse=-1;
       break;
   }

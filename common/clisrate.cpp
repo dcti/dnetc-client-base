@@ -51,7 +51,7 @@ char *CliGetKeyrateAsString( char *buffer, double rate )
 
 // ---------------------------------------------------------------------------
 
-// "4 RC5 Blocks 12:34:56.78 - [123456789 k/s]" !!!DONT MAKE IT keys/s!!!
+// "4 RC5 blocks 12:34:56.78 - [123456789 k/s]" !!!DONT MAKE IT keys/s!!!
 const char *CliGetSummaryStringForContest( int contestid )
 {
   static char str[70];
@@ -73,7 +73,7 @@ const char *CliGetSummaryStringForContest( int contestid )
     keyrateP = "---.-- ";
   }
 
-  sprintf(str, "%d %s Block%s %s%c- [%sk/s]", //!!!DON'T MAKE IT longer!
+  sprintf(str, "%d %s block%s %s%c- [%sk/s]", //!!!DON'T MAKE IT longer!
        blocks, name, ((blocks==1)?(""):("s")),
        CliGetTimeString( &ttime, 2 ), ((!blocks)?(0):(' ')), keyrateP );
   return str;

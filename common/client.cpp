@@ -267,7 +267,7 @@ s32 Client::ForceFetch( u8 contest, Network *netin )
     ret = Fetch(contest, netin);
     temp2 = temp1;
     temp1 = CountBufferInput(contest);
-    LogScreenf("[%s] %d blocks remain in %s\n",Time(),temp1,ini_in_buffer_file[contest]);
+    LogScreenf("[%s] %d block%s remain%s in %s\n",Time(),temp1,temp1==1?"":"s",temp1==1?"s":"",ini_in_buffer_file[contest]);
   }
   return ret;
 }
@@ -602,7 +602,7 @@ s32 Client::Fetch( u8 contest, Network *netin )
 
   // close this connection
   if (!netin) delete net;
-  Log( "\r[%s] Retrieved %d %s block(s) from server          \n", Time(), (int) count, (contest == 1 ? "DES":"RC5") );
+  Log( "\r[%s] Retrieved %d %s block%s from server              \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
   return ( count );
 #endif
 }
@@ -621,7 +621,7 @@ s32 Client::ForceFlush( u8 contest , Network *netin )
     ret = Flush(contest, netin);
     temp2 = temp1;
     temp1 = CountBufferOutput(contest);
-    Log("[%s] %d blocks remain in %s\n",Time(), temp1, ini_out_buffer_file[contest]);
+    Log("[%s] %d block%s remain%s in %s\n",Time(), temp1, temp1==1?"":"s", temp1==1?"s":"", ini_out_buffer_file[contest]);
   }
   return ret;
 }
@@ -981,7 +981,7 @@ s32 Client::Flush( u8 contest , Network *netin )
 
   // close this connection
   if (!netin) delete net;
-  Log( "\r[%s] Sent %d %s block(s) to server          \n", Time(), (int) count, (contest == 1 ? "DES":"RC5") );
+  Log( "\r[%s] Sent %d %s block%s to server                \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
   return( count );
 #endif //NONETWORK
 }
@@ -1501,12 +1501,12 @@ s32 Client::Run( void )
   if ( strcmp(checkpoint_file[0],"none") != 0)
   {
     s32 recovered = CkpointToBufferInput(0); // Recover any checkpointed information in case we abnormally quit.
-    if (recovered != 0) Log("Recovered %d blocks from rc5 checkpoint file\n",recovered);
+    if (recovered != 0) Log("Recovered %d blocks from RC5 checkpoint file\n",recovered);
   }
   if ( strcmp(checkpoint_file[1],"none") != 0)
   {
     s32 recovered = CkpointToBufferInput(1); // Recover any checkpointed information in case we abnormally quit.
-    if (recovered != 0) Log("Recovered %d blocks from des checkpoint file\n",recovered);
+    if (recovered != 0) Log("Recovered %d blocks from DES checkpoint file\n",recovered);
   }
 
   // --------------------------------------
@@ -1686,14 +1686,19 @@ PreferredIsDone1:
           {
             if (have_loaded_buffers[tmpc]) //load any of this type?
             {
-              Log( "[%s] %d %s Blocks remain in file %s\n", CliGetTimeString(NULL,1),
-                CountBufferInput((u8) tmpc),
+              int in = CountBufferInput((u8) tmpc), out = CountBufferOutput((u8) tmpc);
+              Log( "[%s] %d %s block%s remain%s in file %s\n", CliGetTimeString(NULL,1),
+                in,
                 CliGetContestNameFromID(tmpc),
+                in == 1 ? "" : "s",
+                in == 1 ? "s" : "",
                 (nodiskbuffers ? "(memory-in)" : ini_in_buffer_file[tmpc]));
-              Log( " %s  %d %s Blocks are in file %s\n", CliGetTimeString(NULL,0),
-                CountBufferOutput((u8) tmpc),
+              Log( " %s  %d %s block%s %s in file %s\n", CliGetTimeString(NULL,0),
+                out,
                 CliGetContestNameFromID(tmpc),
-                (nodiskbuffers ? "(memory-out)" : ini_out_buffer_file[tmpc]) );
+                out == 1 ? "" : "s",
+                out == 1 ? "is" : "are",
+                (nodiskbuffers ? "(memory-out)" : ini_out_buffer_file[tmpc]));
             }
           }
         }
@@ -2174,7 +2179,7 @@ PreferredIsDone1:
           // Figure out which contest block was from, and increment totals
           //----------------------------------------
 
-          tmpcontest = (u8) (problem[cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 ); 
+          tmpcontest = (u8) (problem[cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
 
           totalBlocksDone[tmpcontest]++;
 
@@ -2183,8 +2188,8 @@ PreferredIsDone1:
           //----------------------------------------
 
           // Detect/report any changes to the total completed blocks...
-  
-     
+
+
           #ifdef NEW_STATS_AND_LOGMSG_STUFF
           {
           //display summaries only of contests w/ more than one block done
@@ -2382,13 +2387,16 @@ PreferredIsDone1:
 
           #ifdef NEW_STATS_AND_LOGMSG_STUFF
           {
+            int outcount = CountBufferOutput(fileentry.contest);
             Log( "[%s] %s\n", CliGetTimeString(NULL,1), /* == Time() */
                               CliGetMessageForFileentryLoaded( &fileentry ) );
-            Log( "[%s] %d %s Blocks remain in file %s\n"
-                 " %s  %d %s Blocks are in file %s\n",
+            Log( "[%s] %d %s block%s remain%s in file %s\n"
+                 " %s  %d %s block%s %s in file %s\n",
                  CliGetTimeString(NULL,1), count, CliGetContestNameFromID(fileentry.contest),
+                 count == 1 ? "" : "s", count == 1 ? "s" : "",
                  (nodiskbuffers ? "(memory-in)" : ini_in_buffer_file[fileentry.contest]),
-                 CliGetTimeString(NULL,0), CountBufferOutput(fileentry.contest), CliGetContestNameFromID(fileentry.contest),
+                 CliGetTimeString(NULL,0), outcount, CliGetContestNameFromID(fileentry.contest),
+                 outcount == 1 ? "" : "s", outcount == 1 ? "is" : "are",
                  (nodiskbuffers ? "(memory-out)" : ini_out_buffer_file[fileentry.contest]) );
 
           }
