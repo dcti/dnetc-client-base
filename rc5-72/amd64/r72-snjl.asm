@@ -7,13 +7,13 @@
 ;     Jeff Lawson <bovine@distributed.net>
 ;
 ; Based off of the r72-dg3.asm core by Décio Luiz Gazzoni Filho.
-; $Id: r72-snjl.asm,v 1.1.2.2 2003/10/19 11:49:15 jlawson Exp $
+; $Id: r72-snjl.asm,v 1.1.2.3 2003/10/19 12:09:02 jlawson Exp $
 
 [SECTION .text]
 BITS 64
 
-[GLOBAL _rc5_72_unit_func_dg_3_64]
-[GLOBAL rc5_72_unit_func_dg_3_64]
+[GLOBAL _rc5_72_unit_func_snjl]
+[GLOBAL rc5_72_unit_func_snjl]
 
 %define P         0xB7E15163
 %define Q         0x9E3779B9
@@ -192,9 +192,9 @@ defwork iterations,2		; 2nd argument (64-bit pointer), passed in rsi
 
 align 16
 startseg:
-rc5_72_unit_func_dg_3_64:
-rc5_72_unit_func_dg_3_64_:
-_rc5_72_unit_func_dg_3_64:
+rc5_72_unit_func_snjl:
+rc5_72_unit_func_snjl_:
+_rc5_72_unit_func_snjl:
 
         sub     rsp, work_size
 	mov	[RC5_72UnitWork],rdi ; 1st argument is passed in rdi
