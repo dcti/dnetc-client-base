@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probman.cpp,v $
+// Revision 1.7  1998/12/14 11:47:36  cyp
+// Thread index (probman index) is assigned through the problem constructor.
+//
 // Revision 1.6  1998/11/14 13:57:42  cyp
 // ProbMan saves its index to the Problem object. (needed for chrisb's copro
 // board code)
@@ -33,7 +36,7 @@
 // 
 #if (!defined(lint) && defined(__showids__))
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.6 1998/11/14 13:57:42 cyp Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.7 1998/12/14 11:47:36 cyp Exp $"; }
 #endif
 
 #include "baseincs.h"  // malloc()/NULL/memset()
@@ -99,10 +102,9 @@ int InitializeProblemManager(unsigned int maxnumproblems)
   probcount = 0;
   for (i=0;i<maxnumproblems;i++)
     {
-    probmanstatics.probtable[i]=new Problem;
+    probmanstatics.probtable[i]=new Problem(i);
     if (probmanstatics.probtable[i]==NULL)
       break;
-    (probmanstatics.probtable[i])->probman_index = i;
     probcount++;
     }
   if (probcount == 0)
