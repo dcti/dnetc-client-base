@@ -5,24 +5,15 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.145  1998/12/28 18:17:39  cyp
+# added clievent.cpp
+#
 # Revision 1.144  1998/12/23 10:54:37  myshkin
 # Added code to _GetRawPPCIdentification to read /proc/cpuinfo on linux-ppc.
 # Added *ppc-gcc272 entry to configure (until I successfully upgrade to egcs).
 #
 # Revision 1.143  1998/12/22 15:41:26  jcmichot
-#
-# client/configure
-# client/builder.txt
-# client/common/baseincs.h
-# client/common/client.cpp
-# client/common/clirun.cpp
-# client/common/cmdline.cpp
-# client/common/cmpidefs.h
-# client/common/console.cpp
-# client/common/cpucheck.cpp
-# client/common/cputypes.h
-# client/common/network.h
-# client/common/setprio.cpp
+# QNX changes
 #
 # Revision 1.143  1998/12/21 16:18:23  jcmichot
 # Add qnx4 support.
@@ -643,7 +634,7 @@ COMMON_SRCS="common/client.cpp common/problem.cpp
     common/scram.cpp common/buffwork.cpp common/mail.cpp 
     common/convdes.cpp common/clicdata.cpp common/clirate.cpp
     common/clisrate.cpp common/clitime.cpp common/disphelp.cpp
-    common/threadcd.cpp common/cpucheck.cpp common/pathwork.cpp
+    common/clievent.cpp common/cpucheck.cpp common/pathwork.cpp
     common/cliident.cpp common/logstuff.cpp common/buffupd.cpp
     common/triggers.cpp common/selcore.cpp common/netinit.cpp
     common/cmdline.cpp common/selftest.cpp common/guistuff.cpp
