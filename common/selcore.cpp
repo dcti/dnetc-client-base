@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.89 2002/09/24 11:09:48 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.90 2002/09/24 16:33:59 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -85,11 +85,6 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13-B",
       NULL
     },
-    { /* RC5-72 */
-      "ANSI 4-pipe",
-      "ANSI 2-pipe",
-      NULL
-    },
   #elif (CLIENT_CPU == CPU_ARM)
     { /* RC5 */
       "Series A", /* (autofor for ARM 3/6xx/7xxx) "ARM 3, 610, 700, 7500, 7500FE" */
@@ -104,11 +99,6 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
     { /* OGR */
       "GARSP 5.13",
-      NULL
-    },
-    { /* RC5-72 */
-      "ANSI 4-pipe",
-      "ANSI 2-pipe",
       NULL
     },
   #elif (CLIENT_CPU == CPU_68K)
@@ -135,11 +125,6 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13 68060",
       NULL
     },
-    { /* RC5-72 */
-      "ANSI 4-pipe",
-      "ANSI 2-pipe",
-      NULL
-    },
   #elif (CLIENT_CPU == CPU_ALPHA) 
     { /* RC5 */
       #if (CLIENT_OS == OS_WIN32)
@@ -156,11 +141,6 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     { /* OGR */
       "GARSP 5.13",
       "GARSP 5.13-CIX",
-      NULL
-    },
-    { /* RC5-72 */
-      "ANSI 4-pipe",
-      "ANSI 2-pipe",
       NULL
     },
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
@@ -186,11 +166,6 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13 PPC-vector", /* altivec only */
       NULL
     },
-    { /* RC5-72 */
-      "ANSI 4-pipe",
-      "ANSI 2-pipe",
-      NULL
-    },
   #elif (CLIENT_CPU == CPU_SPARC)
     { /* RC5 */
       #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_LINUX))
@@ -209,11 +184,6 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13",
       NULL
     },
-    { /* RC5-72 */
-      "ANSI 4-pipe",
-      "ANSI 2-pipe",
-      NULL
-    },
   #elif (CLIENT_OS == OS_PS2LINUX)
     { /* RC5 */
       "Generic RC5 core",
@@ -226,11 +196,6 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
     { /* OGR */
       "GARSP 5.13",
-      NULL
-    },
-    { /* RC5-72 */
-      "ANSI 4-pipe",
-      "ANSI 2-pipe",
       NULL
     },
   #else
@@ -246,11 +211,6 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13",
       NULL
     },
-    { /* RC5-72 */
-      "ANSI 4-pipe",
-      "ANSI 2-pipe",
-      NULL
-    },
   #endif  
     { /* CSC */
       "6 bit - inline", 
@@ -259,7 +219,15 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "1 key - called",
       NULL, /* room */
       NULL
-    }
+    },
+    { /* OGR-next gen */
+      NULL
+    },
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      NULL
+    },
   };
   /* ================================================================== */
 
