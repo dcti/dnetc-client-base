@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.5 2000/08/18 16:38:02 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.6 2000/08/22 14:46:35 cyp Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,29 +13,37 @@
 
 /* --- various optimization option overrides ----------------------------- */
 
-/* possible overrides are ...
-#define OGROPT_BITOFLIST_USES_MEMTABLE  0/1       (default is 0 ('no'))
-#define NO_FIND_FIRST_ZERO_BIT_ASM                (default is hw dependant)
-#define OGROPT_COPY_LIST_SET_BIT_JUMPS  0-2       (default is 1)
-#define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0-2 (default is 2)
-*/
-
-#if defined(ASM_68K) 
-  #define OGROPT_BITOFLIST_USES_MEMTABLE 1          /* we want 'yes' */
-#endif
-#if defined(ASM_PPC) || defined(__PPC__)
-  /* I'm not sure whether this is compiler or arch specific, */ 
-  /* it doesn't seem to make any difference for x86/gcc 2.7x  */
-  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0    /* no optimization */
-#endif
+/* baseline/reference == ogr.cpp without optimization == old ogr.cpp */
+#if defined(NO_OGR_OPTIMIZATION) || defined(GIMME_BASELINE_OGR_CPP)
+  #define OGROPT_BITOFLIST_DIRECT_BIT 0           /* 0/1 - default is 1 ('yes')) */
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 0   /* 0/1 - default is hw dependant */
+  #define OGROPT_COPY_LIST_SET_BIT_JUMPS  0       /* 0-2 - default is 1 */
+  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 0-2 - default is 2 */
+#else
+  #if (defined(ASM_X86) || defined(__386__)) && defined(OGR_NOFFZ)
+    /* the bsr instruction is very slow on some cpus */
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 0
+    /* #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table_noffz */
+  #endif
+  #if defined(ASM_68K) 
+    #define OGROPT_BITOFLIST_DIRECT_BIT 0          /* we want 'no' */
+  #endif
+  #if defined(ASM_PPC) || defined(__PPC__)
+    /* I'm not sure whether this is compiler or arch specific, */ 
+    /* it doesn't seem to make any difference for x86/gcc 2.7x  */
+    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0    /* no optimization */
+  #endif
+#endif  
 
 /* -- various optimization option defaults ------------------------------- */
 
-/* optimization for machines where mem access is faster than a shift+and.
+/* optimization for machines where mem access is faster than a shift+sub+and.
    Particularly effective with small data cache.
+   If not set to 1, BITOFLIST will use a pre-computed memtable lookup, 
+   otherwise it will compute the value at runtime (0x80000000>>((x-1)&0x1f))
 */
-#ifndef OGROPT_BITOFLIST_USES_MEMTABLE
-#define OGROPT_BITOFLIST_USES_MEMTABLE 0 /* the default is "no" */
+#ifndef OGROPT_BITOFLIST_DIRECT_BIT
+#define OGROPT_BITOFLIST_DIRECT_BIT 1 /* the default is "yes" */
 #endif
 
 
@@ -43,7 +51,11 @@
    counting from highest bit, ie 0xEFFFFFFF returns 1, and 0xFFFFFFFE => 32 
    This is the second (or first) most effective speed optimization.
 */
-#if !defined(NO_FIND_FIRST_ZERO_BIT_ASM)
+#if defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) && \
+           (OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM == 0)
+  #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
+#else
+  #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
   #if (defined(__PPC__) || defined(ASM_PPC)) || \
       (defined(__WATCOMC__) && defined(__386__)) || \
       (defined(__GNUC__) && (defined(ASM_SPARC) || defined(ASM_ALPHA) \
@@ -51,9 +63,9 @@
                            || (defined(ASM_68K) && (defined(mc68020) \
                            || defined(mc68030) || defined(mc68040) \
                            || defined(mc68060)))))
-    #define HAVE_FIND_FIRST_ZERO_BIT_ASM
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 1
     /* #define FIRSTBLANK_ASM_TEST */ /* define this to test */
-  #endif  
+  #endif
 #endif
 
 
@@ -113,10 +125,10 @@ static const int OGR[] = {
   /* 11 */   72,  85, 106, 127, 151, 177, 199, 216, 246, 283,
   /* 21 */  333, 356, 372, 425, 480, 492, 553, 585, 623
 };
-#if !defined(HAVE_FIND_FIRST_ZERO_BIT_ASM) || defined(FIRSTBLANK_ASM_TEST)
+#if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) || defined(FIRSTBLANK_ASM_TEST)
 static char ogr_first_blank[65537]; /* first blank in 16 bit COMP bitmap, range: 1..16 */
 #endif
-#if (OGROPT_BITOFLIST_USES_MEMTABLE != 0)
+#if (OGROPT_BITOFLIST_DIRECT_BIT == 0)
 static U ogr_bit_of_LIST[200]; /* which bit of LIST to update */
 #endif
 
@@ -172,7 +184,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
   lev->list[1] = lev->list[0];                    \
   lev->list[0] = 0;
 
-#if (OGROPT_BITOFLIST_USES_MEMTABLE != 0)
+#if (OGROPT_BITOFLIST_DIRECT_BIT == 0)
   #define BITOFLIST(x) ogr_bit_of_LIST[x]
 #else
   #define BITOFLIST(x) 0x80000000>>((x-1)&0x1f) /*0x80000000 >> ((x-1) % 32)*/
@@ -373,7 +385,7 @@ static int found_one(struct State *oState)
   return 1;
 }
 
-#if !defined(HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
+#if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
   #define LOOKUP_FIRSTBLANK(x) ((x < 0xffff0000) ? \
       (ogr_first_blank[x>>16]) : (16 + ogr_first_blank[x - 0xffff0000]))
 #elif defined(__PPC__) || defined(ASM_PPC) /* CouNT Leading Zeros Word */
@@ -423,7 +435,7 @@ static int found_one(struct State *oState)
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
   { i = ~i; __asm__ ("bfffo %1,0,0,%0" : "=d" (i) : "d" (i)); return ++i; }  
 #else
-  #error HAVE_FIND_FIRST_ZERO_BIT_ASM is defined, and no code to match
+  #error OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM is defined, and no code to match
 #endif
 	 
 /*
@@ -442,7 +454,7 @@ static int ogr_init(void)
     return r;
   }
 
-  #if (OGROPT_BITOFLIST_USES_MEMTABLE != 0)
+  #if (OGROPT_BITOFLIST_DIRECT_BIT == 0)
   {
     int n;
     ogr_bit_of_LIST[0] = 0;
@@ -452,7 +464,7 @@ static int ogr_init(void)
   }    
   #endif
 
-  #if !defined(HAVE_FIND_FIRST_ZERO_BIT_ASM) || defined(FIRSTBLANK_ASM_TEST)
+  #if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) || defined(FIRSTBLANK_ASM_TEST)
   {
     /* first zero bit in 16 bits */
     int i, j, k = 0, m = 0x8000;
@@ -693,7 +705,7 @@ stay:
 #endif
 
     if (comp0 < 0xfffffffe) {
-      #if defined(HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
+      #if defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
       s = LOOKUP_FIRSTBLANK( comp0 );
       #else
       if (comp0 < 0xffff0000) 
