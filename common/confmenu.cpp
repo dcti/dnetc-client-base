@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.8  1998/12/28 03:03:39  silby
+// Fixed problem with filenames having whitespace stripped from them.
+//
 // Revision 1.7  1998/12/21 18:40:12  cyp
 // Removed 'unused'/'unimplemented' sil[l|b]yness committed in 1.3/1.4
 //
@@ -49,7 +52,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.7 1998/12/21 18:40:12 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.8 1998/12/28 03:03:39 silby Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -493,7 +496,6 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         case CONF_LOGNAME:
           strncpy( logname, parm, sizeof(logname) - 1 );
           logname[sizeof(logname)-1]=0;
-          confopt_killwhitespace(logname);
           if (confopt_isstringblank(logname)) 
             logname[0]=0;
           break;
@@ -667,7 +669,6 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         case CONF_CHECKPOINT:
           strncpy( checkpoint_file[0] , parm, sizeof(checkpoint_file[1]) -1 );
           checkpoint_file[0][sizeof(checkpoint_file[0]) - 1]=0;
-          confopt_killwhitespace(checkpoint_file[0]);
           break;
         case CONF_CHECKPOINT2:
           #if 0 /* obsolete */
@@ -755,35 +756,30 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         case CONF_RC5IN:
           strncpy( in_buffer_file[0] , parm, sizeof(in_buffer_file[0]) -1 );
           in_buffer_file[0][sizeof(in_buffer_file[0]) - 1]=0;
-          confopt_killwhitespace(in_buffer_file[0]);
           if (in_buffer_file[0][0]==0)
             strcpy(in_buffer_file[0],conf_options[CONF_RC5IN].defaultsetting);
           break;
         case CONF_RC5OUT:
           strncpy( out_buffer_file[0] , parm, sizeof(out_buffer_file[0]) -1 );
           out_buffer_file[0][sizeof(out_buffer_file[0]) - 1]=0;
-          confopt_killwhitespace(out_buffer_file[0]);
           if (out_buffer_file[0][0]==0)
             strcpy(out_buffer_file[0],conf_options[CONF_RC5OUT].defaultsetting);
           break;
         case CONF_DESIN:
           strncpy( in_buffer_file[1] , parm, sizeof(in_buffer_file[1]) -1 );
           in_buffer_file[1][sizeof(in_buffer_file[1]) - 1]=0;
-          confopt_killwhitespace(in_buffer_file[1]);
           if (in_buffer_file[1][0]==0)
             strcpy(in_buffer_file[1],conf_options[CONF_DESIN].defaultsetting);
           break;
         case CONF_DESOUT:
           strncpy( out_buffer_file[1] , parm, sizeof(out_buffer_file[1]) -1 );
           out_buffer_file[1][sizeof(out_buffer_file[1]) - 1]=0;
-          confopt_killwhitespace(out_buffer_file[1]);
           if (out_buffer_file[1][0]==0)
             strcpy(out_buffer_file[1],conf_options[CONF_DESOUT].defaultsetting);
           break;
         case CONF_PAUSEFILE:
           strncpy( pausefile, parm, sizeof(pausefile) -1 );
           pausefile[sizeof(pausefile) - 1]=0;
-          confopt_killwhitespace(pausefile);
           if (confopt_isstringblank(pausefile)) 
             pausefile[0]=0;
           break;

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.14  1998/12/28 03:03:40  silby
+// Fixed problem with filenames having whitespace stripped from them.
+//
 // Revision 1.13  1998/12/27 03:27:08  cyp
 // long pending x86-specific hack against ConfigureGeneral() crashes: on
 // iniread, convert cputype 6 (non-existant type "Pentium MMX") into type 0
@@ -80,7 +83,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.13 1998/12/27 03:27:08 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.14 1998/12/28 03:03:40 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -417,14 +420,12 @@ void ValidateConfig(Client *client) //DO NOT PRINT TO SCREEN HERE!
   if (client->id[0]==0)
     strcpy(client->id,"rc5@distributed.net");
 
-  confopt_killwhitespace(client->logname);
   if (client->logname[0]==0 || strcmp(client->logname,"none")==0)
     client->logname[0]=0;
 
   if (confopt_isstringblank(client->pausefile) || strcmp(client->pausefile,"none")==0)
     client->pausefile[0]=0;
 
-  confopt_killwhitespace(client->checkpoint_file[0]);
   if (confopt_isstringblank(client->checkpoint_file[0]) || strcmp(client->checkpoint_file[0],"none")==0)
     client->checkpoint_file[0][0]=0;
 
