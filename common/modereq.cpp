@@ -8,10 +8,12 @@
  * This file contains functions for getting/setting/clearing
  * "mode" requests (--flush,--fetch etc) and the like. Client::Run() will 
  * clear/run the modes when appropriate.
+ *
+ * This is a bridge module. Do not muck with the prototypes.
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.28 1999/04/19 21:32:14 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.29 1999/06/09 15:06:17 cyp Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -36,34 +38,25 @@ static struct
 {
   int isrunning;
   int reqbits;
-  const char *filetounlock;
-  const char *filetoimport;
-  const char *helpoption;
-} modereq = {0,0,(const char *)0,(const char *)0};
+  const void *unlock_arg;
+  const void *import_arg; /* struct { const char *fn,count; } ptr */
+  const void *help_arg;
+} modereq = {0,0, (const void *)0,(const void *)0,(const void *)0};
 
 /* --------------------------------------------------------------- */
 
 int ModeReqSetArg(int mode, void *arg )
 {
   if (mode == MODEREQ_UNLOCK)
-  {
-    ModeReqSet(MODEREQ_UNLOCK);
-    modereq.filetounlock = (const char *)arg;
-    return 0;
-  }
-  if (mode == MODEREQ_IMPORT)
-  {
-    ModeReqSet(MODEREQ_IMPORT);
-    modereq.filetoimport = (const char *)arg;
-    return 0;
-  }
-  if (mode == MODEREQ_CMDLINE_HELP)
-  {
-    ModeReqSet(MODEREQ_CMDLINE_HELP);
-    modereq.helpoption = (const char *)arg;
-    return 0;
-  }
-  return -1;
+    modereq.unlock_arg = arg;
+  else if (mode == MODEREQ_IMPORT)
+    modereq.import_arg = arg;
+  else if (mode == MODEREQ_CMDLINE_HELP)
+    modereq.help_arg = arg;
+  else
+    return -1;
+  ModeReqSet(mode);
+  return 0;
 }  
   
 /* --------------------------------------------------------------- */
@@ -161,8 +154,8 @@ int ModeReqRun(Client *client)
       }
       if ((bits & MODEREQ_CMDLINE_HELP) != 0)
       {
-        DisplayHelp(modereq.helpoption);
-        modereq.helpoption = (const char *)0;
+        DisplayHelp((const char *)modereq.help_arg);
+        modereq.help_arg = (const void *)0;
         modereq.reqbits &= ~(MODEREQ_CMDLINE_HELP);        
         retval |= (MODEREQ_CMDLINE_HELP);
       }
@@ -217,20 +210,25 @@ int ModeReqRun(Client *client)
       }
       if ((bits & MODEREQ_UNLOCK)!=0)
       {
-        if (modereq.filetounlock)
+        if (modereq.unlock_arg)
         {
-          UnlockBuffer(modereq.filetounlock);
-          modereq.filetounlock = (const char *)0;
+          UnlockBuffer((const char *)modereq.unlock_arg);
+          modereq.unlock_arg = (const void *)0;
+          retval |= (MODEREQ_UNLOCK);
         }
         modereq.reqbits &= ~(MODEREQ_UNLOCK);
-        retval |= (MODEREQ_UNLOCK);
       }
       if ((bits & MODEREQ_IMPORT)!=0)
       {
-        if (modereq.filetoimport && client)
+        if (modereq.import_arg && client)
         {
-          BufferImportFileRecords(client, modereq.filetoimport, 1 /* interactive */);
-          modereq.filetoimport = (const char *)0;
+          long count = -1; /* assume all */
+          struct _argstack { const char *fn, *count; } *argstack;
+          argstack = (struct _argstack *)modereq.import_arg;
+          modereq.import_arg = (const void *)0;
+          if (argstack->count && isdigit(*(argstack->count)))
+            count = (long)atoi(argstack->count);
+          BufferImportFileRecords(client, argstack->fn, 1/*interactive*/,count);
           retval |= (MODEREQ_IMPORT);
         }
         modereq.reqbits &= ~(MODEREQ_IMPORT);

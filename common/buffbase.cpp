@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12 1999/04/22 03:54:10 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.13 1999/06/09 15:06:16 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -884,47 +884,139 @@ long Client::GetBufferCount( unsigned int contest, int use_out_file, unsigned lo
 
 /* import records from source, return -1 if err, or number of recs imported. */
 /* On success, source is truncated/deleted. Used by checkpt and --import */
-long BufferImportFileRecords( Client *client, const char *source_file, int interactive )
+/* 'maximp' is the maximum number of packets to import. -1 == import all, 0 == just show count */
+long BufferImportFileRecords( Client *client, const char *source_file, int interactive, long maximp )
 {
   unsigned long remaining, lastremaining = 0;
   unsigned int recovered = 0; 
+  long now_in = 0;
   int errs = 0;
   WorkRecord data; 
 
+  if ( client->nodiskbuffers )
+  {
+    if (interactive)
+      LogScreen("Import error: Client is configured to *not* use disk buffers.\n");
+    return -1L;
+  }
   if ( !DoesFileExist( source_file ) )
   {
     if (interactive)
       LogScreen("Import error: Source '%s' doesn't exist\n", source_file );
     return -1L;
   }
-  
-  while (BufferGetFileRecordNoOpt( source_file, &data, &remaining ) == 0) 
-                           //returns <0 on ioerr/corruption, > 0 if norecs
+
+  if (maximp >= 0)
   {
-    if (lastremaining != 0)
+    while (BufferGetFileRecordNoOpt( source_file, &data, &remaining ) == 0) 
+                             //returns <0 on ioerr/corruption, > 0 if norecs
     {
-      if (lastremaining <= remaining)
+      if (lastremaining != 0)
       {
-        if (interactive)
-          LogScreen("Import error: something bad happened.\n"
-                    "The source file isn't getting smaller.\n"); 
+        if (lastremaining <= remaining)
+        {
+          if (interactive)
+            LogScreen("Import error: something bad happened.\n"
+                      "The source file isn't getting smaller.\n"); 
+          errs = 1;
+          recovered = 0;
+          break;
+        }
+      }
+      lastremaining = remaining;
+      if ( (now_in = client->PutBufferRecord( &data ) ) > 0)
+      {
+        int rewindone = 0;
+        recovered++;
+        if (maximp>0)
+        { 
+          if (((unsigned long)recovered) == ((unsigned long)(maximp)))
+            break;
+        }
+        if (now_in >= MAXBLOCKSPERBUFFER) // can only happen if the buffer 
+        {                               // was already full when we started
+          if (now_in > MAXBLOCKSPERBUFFER)
+            rewindone = 1;
+          if ((remaining || rewindone) && interactive)
+            LogScreen("Import stopped:buffer is full.\n");
+          if (now_in == MAXBLOCKSPERBUFFER)
+            break;
+        }
+        else
+        {
+          long thresh = 0;
+          if (data.resultcode == RESULT_WORKING)
+            thresh = (long)client->inthreshold[(unsigned int)data.contest];
+          else
+            thresh = (long)client->outthreshold[(unsigned int)data.contest];
+          if (now_in > thresh)
+            rewindone = 1;
+          if ((remaining || rewindone) && interactive)
+            LogScreen("Import stopped:buffer threshold (%ld) reached.\n",thresh);
+          if (now_in == thresh)
+            break;
+        }
+        if (rewindone)
+        {  
+          if (client->GetBufferRecord( &data, (unsigned int)data.contest, 
+                                     data.resultcode != RESULT_WORKING) >= 0)
+          { /* get back *a* record from the same buffer, and put it back */
+            BufferPutFileRecord( source_file, &data, NULL );
+            recovered--;
+          }
+          break;
+        }
+      }
+      else
+      {
+        BufferPutFileRecord( source_file, &data, NULL ); //put it back 
         errs = 1;
-        recovered = 0;
         break;
       }
     }
-    lastremaining = remaining;
-    if ( client->PutBufferRecord( &data ) > 0 )
+  }
+  if (interactive)
+  {
+    unsigned int contest;
+    if (recovered > 0)
+      LogScreen("Import::%ld records successfully imported.\n", recovered);
+    else if (errs == 0 && recovered == 0 && maximp > 0)
+      LogScreen("Import::No buffer records could be imported.\n");
+    for (contest=0;contest<CONTEST_COUNT;contest++)
     {
-      recovered++;              
+      unsigned long xcount, ncount, tcount = 0;
+      switch (contest)
+      {
+        case RC5:
+        case DES:
+        case CSC:
+          if (BufferCountFileRecords( source_file, contest,&xcount,&ncount)==0)
+          {
+            if (xcount != 0)
+            {
+              LogScreen("%lu %s records (%lu*2^28 keys) remain in\n'%s'\n", xcount,
+                  CliGetContestNameFromID(contest), ncount, source_file );
+              tcount += xcount;
+            }
+          }
+          break;
+        case OGR:
+          if (BufferCountFileRecords( source_file, contest,&xcount, NULL)==0)
+          {
+            if (xcount != 0)
+            {
+              LogScreen("%lu OGR records remain in\n'%s'\n", xcount, source_file );
+              tcount += xcount;
+            }
+          }         
+          break;
+        default:
+          break;
+      }
+      if (tcount == 0)
+        LogScreen( "0 records remain is %s\n", source_file );
     }
   }
-  if (recovered > 0)
-    BufferZapFileRecords( source_file );
-  if (recovered > 0 && interactive)
-    LogScreen("Import::%ld records successfully imported.\n", recovered);
-  else if (errs == 0 && recovered == 0 && interactive)
-    LogScreen("Import::No buffer records could be imported.\n");
   return (long)recovered;
 }
 

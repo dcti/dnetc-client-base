@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64 1999/05/08 19:18:24 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.65 1999/06/09 15:06:17 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -60,10 +60,10 @@ void DisplayHelp( const char * unrecognized_option )
     "-install           install the client in the startup folder",
     "-uninstall         remove the client from the startup folder",
   #endif
-    "-import <filename> import packets in <filename> into the client's buffers",
+    "-import <fn> [cnt] import [cnt] packets from file <fn> into client buffers",
     "-help              display this text",
     "",
-/* "------------------------------------ max width == 77 ------------------------" */
+/*  "------------------------------------ max width == 77 ------------------------" */
     "Project and buffer related options:",
     "",
     "-ini <filename>    override default name of INI file",
