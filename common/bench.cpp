@@ -4,7 +4,9 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.60 2001/04/09 01:33:02 sampo Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.61 2002/03/27 22:46:52 andreasb Exp $"; }
+
+//#define TRACE
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -18,6 +20,7 @@ return "@(#)$Id: bench.cpp,v 1.27.2.60 2001/04/09 01:33:02 sampo Exp $"; }
 #include "logstuff.h"  // LogScreen()
 #include "clievent.h"  // event post etc.
 #include "bench.h"     // ourselves
+#include "util.h"      // TRACE_OUT
 
 #define TBENCHMARK_CALIBRATION 0x80
 
@@ -75,6 +78,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   if (!IsProblemLoadPermitted(-1 /*any thread*/, contestid))
     return 0;
 
+  TRACE_OUT((+1,"TBenchmark(%u, %u, %d)\n",contestid,numsecs,flags));
+  
   /* ++++++ determine initial 'timeslice' +++++ */
 
   tslice = 0; /* zero means 'use calibrated value' */
@@ -127,7 +132,19 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     if ( res == -1 ) /* LoadState failed */
     {
       if ((flags & TBENCHMARK_QUIET) == 0)
+      {
+      #if ((CLIENT_OS == OS_WIN32) && defined(SMC))
+        // HACK! to ignore failed benchmark for x86 rc5 smc core #7 if
+        // started from menu and another cruncher is active in background.
+        if (contestid == RC5 && selcoreGetSelectedCoreForContest(contestid) == 7)
+          LogScreen("\rCan't benchmark core #7 while another cruncher\nis running in the background.\n");
+        else
+          LogScreen("\rCalibration failed!\n");
+      #else
         LogScreen("\rCalibration failed!\n");
+      #endif
+      }
+      TRACE_OUT((-1,"TBenchmark()=-1 (Calibration failed)\n"));
       return -1;
     }  
     tslice = (((u32)res) + 0xFFF) & 0xFFFFF000;
@@ -173,7 +190,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
       while ( run == RESULT_WORKING )
       {
         unsigned long permille; u32 ratehi, ratelo;
-    
+
         if (non_preemptive_os.yps) /* is this a non-preemptive environment? */
         {
           if (!thisprob->pub_data.last_runtime_is_invalid &&
@@ -323,5 +340,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 
     ProblemFree(thisprob);
   }
+
+  TRACE_OUT((-1,"TBenchmark()=%d\n", retvalue));
   return retvalue;
 }  

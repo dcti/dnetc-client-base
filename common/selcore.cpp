@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.130 2002/03/24 22:03:29 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.131 2002/03/27 22:46:52 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -654,8 +654,20 @@ static long __bench_or_test( int which,
             rc = SelfTest( cont_i );
           else 
             rc = TBenchmark( cont_i, benchsecs, 0 );
+          #if (CLIENT_OS != OS_WIN32 || !defined(SMC))
           if (rc <= 0) /* failed (<0) or not supported (0) */
             break; /* stop */
+          #else
+          // HACK! to ignore failed benchmark for x86 rc5 smc core #7 if
+          // started from menu and another cruncher is active in background.
+          if (rc <= 0) /* failed (<0) or not supported (0) */
+          {
+            if ( which == 'b' &&  cont_i == RC5 && coreidx == 7 )
+              ; /* continue */
+            else
+              break; /* stop */
+          }
+          #endif
         }
       }  
     } /* for (coreidx = 0; coreidx < corecount; coreidx++) */
@@ -684,7 +696,7 @@ static long __bench_or_test( int which,
   } /* if (cont_i < CONTEST_COUNT) */
 
   #if (CLIENT_OS == OS_AIX)
-  sigaction (SIGILL, &old_handler, NULL);	/* reset handler */
+  sigaction (SIGILL, &old_handler, NULL);       /* reset handler */
   #endif
   return rc;
 }
@@ -864,7 +876,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     {
       int cindex = 0;                   /* PPC-scalar */
 
-      #if defined (_AIXALL)		/* Power/PPC hybrid */
+      #if defined (_AIXALL)             /* Power/PPC hybrid */
       if (( detected_type & (1L<<24) ) != 0) /* ARCH_IS_POWER? */
         cindex = 1;                     /* PowerRS */ 
       #elif (CLIENT_CPU == CPU_POWER)   /* Power only */
