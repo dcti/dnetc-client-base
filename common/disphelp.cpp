@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.47  1998/10/26 03:15:21  cyp
+// More tag fun.
+//
+// Revision 1.46  1998/10/19 13:42:53  cyp
+// completed implementation of 'priority'.
+//
 // Revision 1.45  1998/10/07 18:41:51  silby
 // Removed the extra "v" that was being prepended to the version string in the help display.
 //
@@ -145,7 +151,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.45 1998/10/07 18:41:51 silby Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.47 1998/10/26 03:15:21 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -335,7 +341,11 @@ void Client::DisplayHelp( const char * unrecognized_option )
   "-a <address>       proxy server name or IP address",
   "-p <port>          proxy server port number",
   "-e <address>       the email id by which you are known to distributed.net",
+  #ifdef OLDNICENESS
   "-nice <[0-2]>      niceness",
+  #else
+  "-priority <[0-9]>  scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
+  #endif
   "-c <cputype>       cpu type (run -config for a list of valid cputype numbers)",
   "-numcpu <n>        run <n> threads/run on <n> cpus",
   "-h <hours>         time limit in hours",
