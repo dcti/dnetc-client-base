@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.184 2000/08/25 19:42:07 patrick Exp $
+# @(#)$Id: configure,v 1.222.2.185 2000/08/25 20:36:08 patrick Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -280,20 +280,30 @@ generate_gcc_opts() {
         ;;
 
     *internal-ppc)
-         opts272="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=601 -funroll-loops"
-         opts295="$OPTS_GCC295 -O2 -DASM_PPC -mcpu=601 -funroll-loops"
-         #the following were also defined, but weren't in use.
-         #OPTS_GCC_PPC601="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=601"
-         #OPTS_GCC_PPC604="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604"
-         #OPTS_GCC_PPC860="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=860 -msoft-float"
-         #OPTS_EGCS_PPC601="$OPTS_EGCS -O6 -DASM_PPC -mcpu=601"
-         #OPTS_EGCS_PPC604="$OPTS_EGCS -O6 -DASM_PPC -mcpu=604"
-         #OPTS_EGCS_PPC860="$OPTS_EGCS -O6 -DASM_PPC -mcpu=860 -msoft-float"
-         ;;
+        opts272="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=601 -funroll-loops"
+        opts295="$OPTS_GCC295 -O2 -DASM_PPC -mcpu=601 -funroll-loops"
+        #the following were also defined, but weren't in use.
+        #OPTS_GCC_PPC601="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=601"
+        #OPTS_GCC_PPC604="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604"
+        #OPTS_GCC_PPC860="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=860 -msoft-float"
+        #OPTS_EGCS_PPC601="$OPTS_EGCS -O6 -DASM_PPC -mcpu=601"
+        #OPTS_EGCS_PPC604="$OPTS_EGCS -O6 -DASM_PPC -mcpu=604"
+        #OPTS_EGCS_PPC860="$OPTS_EGCS -O6 -DASM_PPC -mcpu=860 -msoft-float"
+        ;;
+
+    *internal-ppc604)
+        opts272="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604 -funroll-loops"
+        opts295="$OPTS_GCC295 -O2 -DASM_PPC -mcpu=604 -funroll-loops"
+	;;
 
     *internal-power)
         opts272="$OPTS_GCC272 -O6 -DASM_POWER -mcpu=power -funroll-loops"
         opts295="$OPTS_GCC295 -O6 -DASM_POWER -mcpu=power -funroll-loops"
+        ;;
+
+    *internal-aixcommon)
+        opts272="$OPTS_GCC272 -O6 -DASM_COM -mcpu=common -funroll-loops"
+        opts295="$OPTS_GCC295 -O6 -DASM_COM -mcpu=common -funroll-loops"
         ;;
 
     *internal-alpha)
