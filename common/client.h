@@ -343,7 +343,6 @@ public:
   s32  timeslice;
   s32  niceness;
   char logname[128];
-  s32  firemode;
   char keyproxy[64];
   s32  keyport;
   char httpproxy[64];
