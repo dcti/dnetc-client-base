@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.89 2002/09/23 21:17:12 jlawson Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.90 2002/09/24 16:34:49 jlawson Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -24,7 +24,6 @@ enum {
   CSC, // http://www.cie-signaux.fr/security/index.htm
   OGR_NEXTGEN_SOMEDAY,
   RC5_72 // http://www.rsasecurity.com/rsalabs/challenges/secretkey/
-// OK!
 };
 #define CONTEST_COUNT       6  /* RC5,DES,OGR,CSC,OGR_NEXTGEN,RC5_72 */
 
@@ -71,9 +70,9 @@ enum {
      #endif
   #endif
 #endif
-#if 0
-PROJECT_NOT_HANDLED("enter your core mem alignment here");
-#endif
+//#if 0
+//PROJECT_NOT_HANDLED("enter your core mem alignment here");
+//#endif
 
 /* ---------------------------------------------------------------------- */
 
@@ -83,7 +82,7 @@ PROJECT_NOT_HANDLED("enter your core mem alignment here");
 
 typedef union
 {
-  #if defined(HAVE_OLD_CRYPTO)
+  #if defined(HAVE_OLD_CRYPTO)  // used by RC5, DES, CSC
   struct {
     struct {u32 hi,lo;} key;              // starting key
     struct {u32 hi,lo;} iv;               // initialization vector
@@ -103,7 +102,6 @@ typedef union
     u16 randomsubspace;                   // subspace for random generation.
     struct {u16 count; u32 hi,mid,lo;} check;   // keyid of last found counter-measure check.
   } bigcrypto;     /* 68 bytes */
-// OK!
   #if defined(HAVE_OGR_CORES)
   struct {
     struct WorkStub workstub;             // stub to work on (28 bytes)
@@ -116,7 +114,6 @@ typedef union
 //  #if 0
 //    PROJECT_NOT_HANDLED("in ContestWork");
 //  #endif
-// OK!
 } ContestWork;
 
 typedef struct
