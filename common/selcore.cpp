@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore.cpp,v $
+// Revision 1.9  1998/10/03 23:19:06  remi
+// usemmx select both DES and RC5 cores.
+// LogScreenRaw instead of LogScreen for DES core selection.
+//
 // Revision 1.8  1998/10/03 05:14:58  sampo
 // minor change for MacOS CVS build
 //
@@ -19,7 +23,8 @@
 // autodetection.
 //
 // Revision 1.4  1998/09/04 06:05:46  silby
-// Made selcore more verbose on x86 so that people would not confused rc5 and des core selections.
+// Made selcore more verbose on x86 so that people would not confused
+// rc5 and des core selections.
 //
 // Revision 1.3  1998/09/01 22:32:22  remi
 // Allow a P5-MMX to use the RC5 MMX core.
@@ -37,7 +42,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.8 1998/10/03 05:14:58 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.9 1998/10/03 23:19:06 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -238,10 +243,10 @@ s32 Client::SelectCore(void)
     des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
     des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
     }
-  #ifdef MMX_BITSLICER
+  #ifdef MMX_RC5
   else if ( (requestedtype & 0xFF) == 6 ) // Pentium MMX ONLY
     {
-    if ((detectedtype & 0x100) == 0x100)
+      if ((detectedtype & 0x100) && usemmx) // use MMX RC5 core ?
       {
       rc5_unit_func = rc5_unit_func_p5_mmx;
       des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
@@ -269,14 +274,14 @@ s32 Client::SelectCore(void)
   if ((detectedtype & 0x100) && usemmx)   // use the MMX DES core ?
     { 
     des_unit_func = des_unit_func2 = des_unit_func_mmx;
-    LogScreen("DES: Selecting MMX Bitslice core.\n");
+    LogScreenRaw("DES: Selecting MMX Bitslice core.\n");
     }
   else
   #endif
     {
-    if (des_unit_func == DESUNITFUNC51)
-      LogScreen("DES: Selecting Pentium optimized Bryddes core.\n");
-    else LogScreen("DES: Selecting Pentium Pro optimized Bryddes core.\n");
+    LogScreenRaw(des_unit_func == DESUNITFUNC51 ?
+		 "DES: Selecting Pentium optimized Bryddes core.\n" :
+		 "DES: Selecting Pentium Pro optimized Bryddes core.\n");
     };
       
   #undef DESUNITFUNC61
