@@ -12,6 +12,14 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.108  1998/12/21 19:12:50  cyp
+// Undid the last couple of sil[lb]y changes. The client is already capable
+// (and has been for minimally six months now) of all these 'enhancements'.
+// Besides, implementing something that isn't used (yet!) or is not supported
+// (yet!) is much like putting the cart before the horse. How is anyone to
+// know whether something is going be applied (or more importantly *how*)
+// until it is actually used?
+//
 // Revision 1.107  1998/12/21 18:53:29  cyp
 // Removed 'unused'/'unimplemented' sil[l|b]yness added in recent version.
 // See client.h for full comment.
@@ -373,8 +381,8 @@ typedef struct Packet
   u32  ip;            // IP Address (proxy filled)             |       |
   u32  iterationshi;  // number of iterations (the high 32bits)|       |
   char other[20];     // extra space                           |       |
-  u32  rc564contestdone; //  set to htonl(0xBEEFF00D) by the proxies if the rc564 contest is finished
-  u32  descontestdone;   //   set to htonl(0xBEEFF00D) by the proxies if current des contest is over
+  u32  rc564contestdone; // ==htonl(0x1337F00D) when finished  |       |
+  u32  descontestdone;   // ==htonl(0xBEEFF00D) when finished  |       |
   u32  contestid;     // contest identifier                    |       |
   u32  build;         // build number                          |       |
   u32  os;            // OS - see defines                      |       |
@@ -444,8 +452,10 @@ public:
   char in_buffer_file[CONTEST_COUNT][128];
   char out_buffer_file[CONTEST_COUNT][128];
   long PutBufferRecord(const FileEntry *data);
-  long GetBufferRecord( FileEntry *data, unsigned int contest, int use_out_file);
-  long GetBufferCount( unsigned int contest, int use_out_file, unsigned long *normcountP );
+  long GetBufferRecord( FileEntry *data, 
+                       unsigned int contest, int use_out_file);
+  long GetBufferCount( unsigned int contest, 
+                       int use_out_file, unsigned long *normcountP );
   
   //s32 membuffcount[2][2];
   //FileEntry *membuff[2][MAXBLOCKSPERBUFFER][2];
