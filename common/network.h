@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.60  1999/03/23 10:17:23  cyp
+// a) changed ::Reset() to take svc address to reset to; b) changed ::Put()
+// to use Reset() instead of Open();
+//
 // Revision 1.59  1999/03/18 04:01:35  cyp
 // new network class method: Reset()
 //
@@ -351,6 +355,9 @@ protected:
   int MakeNonBlocking(void) //the other shortcut
       { return LowLevelConditionSocket( CONDSOCK_BLOCKING_OFF ); };
 
+  int  Open( SOCKET insock);
+    // reset http/uue settings and reconnect the socket
+
   int  Open( void );
     // [re]open the connection using the current settings.
     // returns -1 on error, 0 on success
@@ -389,10 +396,12 @@ public:
     { if (svc_hostaddr == 0) svc_hostaddr = addr; return 0; }
     // used by buffupd when proxies return an address in the scram packet
     
-  int Reset( int fallbacknow );
-    // reset the connection (hard!), with optional immediate fallback
+  int Reset( u32 thataddress );
+    // reset the connection (if thataddress==0, then hard).
     // the old connection is invalid on return (even if reset fails). 
     
+  u32 GetPeerAddress(void)  { return svc_hostaddr; }
+    //for debugging
 };
 
 ///////////////////////////////////////////////////////////////////////////
