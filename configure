@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.201  1999/03/04 01:20:11  cyp
+# Remove -DPIPELINE_COUNT=2 from OPTS_{GCC|EGCS}_X86=
+#
 # Revision 1.200  1999/03/03 02:17:46  foxyloxy
 # Fixed ld flags for mips-egcs-crunch-64
 #
@@ -807,10 +810,10 @@ OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
 
 #-- X86
 
-OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86 -DPIPELINE_COUNT=2"
-OPTS_GCC272_X86="$OPTS_GCC272 -O6 -m486 -DASM_X86 -DPIPELINE_COUNT=2"
+OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86"
+OPTS_GCC272_X86="$OPTS_GCC272 -O6 -m486 -DASM_X86"
 
-OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentium -DASM_X86 -DPIPELINE_COUNT=2"
+OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentium -DASM_X86"
 
 #-- DYNIX
 
@@ -1653,6 +1656,7 @@ case "$1" in
   ### Other targets
 
     *x86-linux-gcc)			# nomt, static, gcc/pipe
+        #used by cyp <cyp@fb14.uni-mainz.de>
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -pipe \
