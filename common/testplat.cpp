@@ -7,7 +7,7 @@
  * Specify 'cpu', 'os', 'intsizes' or 'build_dependancies' as argument.
 */ 
 const char *testplat_cpp(void) { 
-return "@(#)$Id: testplat.cpp,v 1.4 1999/04/05 17:56:52 cyp Exp $"; } 
+return "@(#)$Id: testplat.cpp,v 1.4.2.1 2000/03/11 03:02:44 andreasb Exp $"; } 
 
 static const char *include_dirs[] = { "common", "rc5", "des", "ogr" };
 
@@ -77,7 +77,7 @@ static unsigned int build_dependancies( char *cppname ) /* ${TARGETSRC} */
               {
                 if (l >= (sizeof( include_dirs )/sizeof( include_dirs[0] )))
                   break;
-                strcpy( foundbuf, include_dirs[0] );
+                strcpy( foundbuf, include_dirs[l] );
 		strcat( foundbuf, subdir_sep );
                 strcat( foundbuf, linebuf );
                 l++;
