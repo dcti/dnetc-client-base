@@ -6,8 +6,11 @@
  * Marco.Walther@mch.sni.de
  *
  * $Log: mips-crunch.cpp,v $
- * Revision 1.13  1999/06/09 09:47:11  ivo
- * Some patches to let mips-gcc-irix5-crunch cowpile once again
+ * Revision 1.14  1999/07/09 15:29:15  cyp
+ * sync'd core fixes from release branch.
+ *
+ * Revision 1.12.2.1  1999/06/16 12:22:15  ivo
+ * Fixed some stuff to let Irix compile once again
  *
  * Revision 1.12  1999/02/06 23:00:31  foxyloxy
  * *** empty log message ***
@@ -45,7 +48,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mips_crunch_cpp(void) {
-return "@(#)$Id: mips-crunch.cpp,v 1.13 1999/06/09 09:47:11 ivo Exp $"; }
+return "@(#)$Id: mips-crunch.cpp,v 1.14 1999/07/09 15:29:15 cyp Exp $"; }
 #endif
 
 
