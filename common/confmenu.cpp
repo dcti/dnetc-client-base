@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.35.2.3 1999/04/24 07:34:57 jlawson Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.35.2.4 1999/04/25 05:29:11 jlawson Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -102,61 +102,71 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
 
   /* ------------------- CONF_MENU_NET  ------------------ */  
 
-  conf_options[CONF_NETTIMEOUT].thevariable=&nettimeout;
-  s32 autofindks = (autofindkeyserver!=0);
-  conf_options[CONF_AUTOFINDKS].thevariable=&autofindks;
-  conf_options[CONF_KEYSERVNAME].thevariable=(char *)(&keyproxy[0]);
-  conf_options[CONF_KEYSERVPORT].thevariable=&keyport;
-  conf_options[CONF_NOFALLBACK].thevariable=&nofallback;
+  conf_options[CONF_NETTIMEOUT].thevariable = &nettimeout;
+  s32 autofindks = (autofindkeyserver != 0);
+  conf_options[CONF_AUTOFINDKS].thevariable = &autofindks;
+  conf_options[CONF_KEYSERVNAME].thevariable = (char *)(&keyproxy[0]);
+  conf_options[CONF_KEYSERVPORT].thevariable = &keyport;
+  conf_options[CONF_NOFALLBACK].thevariable = &nofallback;
 
   #define UUEHTTPMODE_UUE      1
   #define UUEHTTPMODE_HTTP     2
   #define UUEHTTPMODE_UUEHTTP  3
   #define UUEHTTPMODE_SOCKS4   4
   #define UUEHTTPMODE_SOCKS5   5
+  #define UUEHTTPMODE_GENERIC  6
+  #define UUEHTTPMODE_UUEGENERIC 7
   static const char *fwall_types[] = { "none/transparent/mapped",
-                                       "HTTP", "SOCKS4", "SOCKS5" };
+                                       "HTTP", "SOCKS4", "SOCKS5",
+                                       "generic" };
   #define FWALL_TYPE_NONE      0
   #define FWALL_TYPE_HTTP      1
   #define FWALL_TYPE_SOCKS4    2
   #define FWALL_TYPE_SOCKS5    3
+  #define FWALL_TYPE_GENERIC   4
   s32 fwall_type = FWALL_TYPE_NONE;
   s32 use_http_regardless = (( uuehttpmode == UUEHTTPMODE_HTTP
                             || uuehttpmode == UUEHTTPMODE_UUEHTTP)
                             && httpproxy[0] == '\0');
   s32 use_uue_regardless =  (  uuehttpmode == UUEHTTPMODE_UUE 
-                            || uuehttpmode == UUEHTTPMODE_UUEHTTP);
+                            || uuehttpmode == UUEHTTPMODE_UUEHTTP
+                            || uuehttpmode == UUEHTTPMODE_UUEGENERIC);
   if (httpproxy[0])
   {                           
     if (uuehttpmode == UUEHTTPMODE_SOCKS4) 
       fwall_type = FWALL_TYPE_SOCKS4;
     else if (uuehttpmode == UUEHTTPMODE_SOCKS5) 
       fwall_type = FWALL_TYPE_SOCKS5;
-    else if (uuehttpmode==UUEHTTPMODE_HTTP || uuehttpmode==UUEHTTPMODE_UUEHTTP)
+    else if (uuehttpmode == UUEHTTPMODE_HTTP ||
+        uuehttpmode == UUEHTTPMODE_UUEHTTP)
       fwall_type = FWALL_TYPE_HTTP;
+    else if (uuehttpmode == UUEHTTPMODE_GENERIC ||
+        uuehttpmode == UUEHTTPMODE_UUEGENERIC)
+      fwall_type = FWALL_TYPE_GENERIC;
   }
-  conf_options[CONF_FORCEHTTP].thevariable=&use_http_regardless;
-  conf_options[CONF_FORCEUUE].thevariable=&use_uue_regardless;
-  conf_options[CONF_FWALLTYPE].thevariable=&fwall_type;
-  conf_options[CONF_FWALLTYPE].choicelist=&fwall_types[0];
-  conf_options[CONF_FWALLTYPE].choicemax=(s32)((sizeof(fwall_types)/sizeof(fwall_types[0]))-1);
+  conf_options[CONF_FORCEHTTP].thevariable = &use_http_regardless;
+  conf_options[CONF_FORCEUUE].thevariable = &use_uue_regardless;
+  conf_options[CONF_FWALLTYPE].thevariable = &fwall_type;
+  conf_options[CONF_FWALLTYPE].choicelist = &fwall_types[0];
+  conf_options[CONF_FWALLTYPE].choicemax = (s32)((sizeof(fwall_types)/sizeof(fwall_types[0]))-1);
   
-  conf_options[CONF_FWALLHOSTNAME].thevariable=(char *)(&httpproxy[0]);
-  conf_options[CONF_FWALLHOSTPORT].thevariable=&httpport;
+  conf_options[CONF_FWALLHOSTNAME].thevariable = (char *)(&httpproxy[0]);
+  conf_options[CONF_FWALLHOSTPORT].thevariable = &httpport;
   struct { char username[128], password[128]; } userpass;
   userpass.username[0] = userpass.password[0] = 0;
   
   if (httpid[0] == 0)
     ; //nothing
-  else if (uuehttpmode==UUEHTTPMODE_UUEHTTP || uuehttpmode==UUEHTTPMODE_HTTP)
+  else if (uuehttpmode == UUEHTTPMODE_UUEHTTP ||
+      uuehttpmode == UUEHTTPMODE_HTTP)
   {
     char *p;
     if (strlen( httpid ) > 80) /* not rfc compliant (max 76) */
-      userpass.username[0]=0;
-    else if (base64_decode(userpass.username, httpid )!=0) 
-      userpass.username[0]=0;                         /* bit errors */
+      userpass.username[0] = 0;
+    else if (base64_decode(userpass.username, httpid ) != 0)
+      userpass.username[0] = 0;                       /* bit errors */
     else if ((p = strchr( userpass.username, ':' )) == NULL)
-      userpass.username[0]=0;                         /* wrong format */
+      userpass.username[0] = 0;                       /* wrong format */
     else
     {
       *p++ = 0;
@@ -164,7 +174,7 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
     }
   }
   else if (uuehttpmode == UUEHTTPMODE_SOCKS4) 
-    strcpy(userpass.username,httpid);
+    strcpy(userpass.username, httpid);
   else if (uuehttpmode == UUEHTTPMODE_SOCKS5)
   {
     strcpy( userpass.username, httpid );
@@ -175,15 +185,20 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
       strcpy( userpass.password, p );
     }
   }
+  else if (uuehttpmode == UUEHTTPMODE_GENERIC ||
+      uuehttpmode == UUEHTTPMODE_UUEGENERIC)
+  {
+    strcpy(userpass.username, httpid);
+  }
   conf_options[CONF_FWALLUSERNAME].thevariable = (char *)(&userpass.username[0]);
   conf_options[CONF_FWALLPASSWORD].thevariable = (char *)(&userpass.password[0]);
 
-  conf_options[CONF_LURKMODE].thevariable=
-  conf_options[CONF_CONNIFACEMASK].thevariable=
-  conf_options[CONF_DIALWHENNEEDED].thevariable=
-  conf_options[CONF_CONNPROFILE].thevariable=
-  conf_options[CONF_CONNSTARTCMD].thevariable=
-  conf_options[CONF_CONNSTOPCMD].thevariable=NULL;
+  conf_options[CONF_LURKMODE].thevariable =
+  conf_options[CONF_CONNIFACEMASK].thevariable =
+  conf_options[CONF_DIALWHENNEEDED].thevariable =
+  conf_options[CONF_CONNPROFILE].thevariable =
+  conf_options[CONF_CONNSTARTCMD].thevariable =
+  conf_options[CONF_CONNSTOPCMD].thevariable = NULL;
 
   #if defined(LURK)
   int dupcap = dialup.GetCapabilityFlags();
@@ -197,26 +212,26 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
   strcpy(connstartcmd, dialup.connstartcmd);
   strcpy(connstopcmd, dialup.connstopcmd);
   strcpy(connprofile, dialup.connprofile);
-  if ((dupcap & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
+  if ((dupcap & (CONNECT_LURK|CONNECT_LURKONLY)) != 0)
   {
-    conf_options[CONF_LURKMODE].thevariable=&lurkmode;
+    conf_options[CONF_LURKMODE].thevariable = &lurkmode;
   }
-  if ((dupcap & CONNECT_IFACEMASK)!=0)
+  if ((dupcap & CONNECT_IFACEMASK) != 0)
   {
-    conf_options[CONF_CONNIFACEMASK].thevariable=&connifacemask[0];
+    conf_options[CONF_CONNIFACEMASK].thevariable = &connifacemask[0];
   }
-  if ((dupcap & CONNECT_DOD)!=0)
+  if ((dupcap & CONNECT_DOD) != 0)
   {
-    conf_options[CONF_DIALWHENNEEDED].thevariable=&dialwhenneeded;
-    if ((dupcap & CONNECT_DODBYSCRIPT)!=0)
+    conf_options[CONF_DIALWHENNEEDED].thevariable = &dialwhenneeded;
+    if ((dupcap & CONNECT_DODBYSCRIPT) != 0)
     {
-      conf_options[CONF_CONNSTARTCMD].thevariable=&connstartcmd[0];
-      conf_options[CONF_CONNSTOPCMD].thevariable=&connstopcmd[0];
+      conf_options[CONF_CONNSTARTCMD].thevariable = &connstartcmd[0];
+      conf_options[CONF_CONNSTOPCMD].thevariable = &connstopcmd[0];
     }
-    if ((dupcap & CONNECT_DODBYPROFILE)!=0)
+    if ((dupcap & CONNECT_DODBYPROFILE) != 0)
     {
       const char **connectnames = dialup.GetConnectionProfileList();
-      conf_options[CONF_CONNPROFILE].thevariable=&connprofile[0];
+      conf_options[CONF_CONNPROFILE].thevariable = &connprofile[0];
       conf_options[CONF_CONNPROFILE].choicemin = 
       conf_options[CONF_CONNPROFILE].choicemax = 0;
       if (connectnames) 
@@ -359,7 +374,8 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
       else
       {
         conf_options[CONF_FORCEHTTP].disabledtext= "n/a";
-        if ( fwall_type != FWALL_TYPE_HTTP )
+        if ( fwall_type != FWALL_TYPE_HTTP &&
+              fwall_type != FWALL_TYPE_GENERIC)
         {
           conf_options[CONF_FORCEUUE].disabledtext=
                 "n/a [not available for this proxy method]";
@@ -371,7 +387,8 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
           conf_options[CONF_FWALLPASSWORD].disabledtext=
                 "n/a [firewall hostname missing]";
         }
-        else if (fwall_type!=FWALL_TYPE_HTTP && fwall_type!=FWALL_TYPE_SOCKS5)
+        else if (fwall_type != FWALL_TYPE_HTTP &&
+            fwall_type != FWALL_TYPE_SOCKS5)
         {
           conf_options[CONF_FWALLPASSWORD].disabledtext=
                 "n/a [proxy method does not support passwords]";
@@ -992,8 +1009,10 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
       uuehttpmode = UUEHTTPMODE_SOCKS4;
     else if (fwall_type == FWALL_TYPE_SOCKS5)
       uuehttpmode = UUEHTTPMODE_SOCKS5;
-    else if (fwall_type == FWALL_TYPE_HTTP || use_http_regardless)
-      uuehttpmode = (use_uue_regardless?UUEHTTPMODE_UUEHTTP:UUEHTTPMODE_HTTP);
+    else if (fwall_type == FWALL_TYPE_HTTP)
+      uuehttpmode = (use_uue_regardless ? UUEHTTPMODE_UUEHTTP : UUEHTTPMODE_HTTP);
+    else if (fwall_type == FWALL_TYPE_GENERIC)
+      uuehttpmode = (use_uue_regardless ? UUEHTTPMODE_UUEGENERIC : UUEHTTPMODE_GENERIC);
     else if (use_uue_regardless)
       uuehttpmode = UUEHTTPMODE_UUE;
     
@@ -1021,6 +1040,11 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
       strcat(userpass.username, userpass.password);
       strncpy( httpid, userpass.username, sizeof( httpid )-1);
       httpid[sizeof( httpid )-1] = 0;
+    }
+    else if (uuehttpmode == UUEHTTPMODE_GENERIC ||
+        uuehttpmode == UUEHTTPMODE_UUEGENERIC)
+    {
+      strcpy( httpid, userpass.username );
     }
   }
 
