@@ -21,11 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.24 2000/01/18 20:32:40 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.25 2000/01/22 00:35:07 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
+
+2.8006.457  fix: BeOS: work not being saved on exit
+						fix: *nix: -config hangs client
 
 2.8006.456  chg: all: OGR cores reactivated.
             upd: BeOS: x86/ppc clients brought up to date
