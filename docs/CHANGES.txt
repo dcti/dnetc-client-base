@@ -21,18 +21,25 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.61 2000/09/07 23:57:09 oliver Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.62 2000/09/17 12:23:50 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
 
-2.8011.464  new: many: OGR cores improved - should now be slightly faster
+2.8011.464  imp: many: OGR cores improved - should now be slightly faster
             new: AmigaOS: added full lurk functionality
             new: AmigaOS: -shutdown, -restart and -(un)pause support added
             new: AmigaOS: "Pause if running" support now enabled
+            new: all: command line options may be passed via a 'dnetc_opt=' 
+                 (or 'DNETC_OPT=') environment variable.
+            new: *nix: command line options may be overridden by a command
+                 file in [/usr/local]/etc/. Refer to the man page for details.
+            new: *nix: optional -multiok=0 switch to prohibit multiple 
+                 instances of the client from running at the same time.
+            chg: rc5: random-prefix is no longer written to the .ini
 
-2.8010.463  fix: linux/x86: resoloved various dns lookup, lib and
+2.8010.463  fix: linux/x86: resolved various dns lookup, lib and
                  portability issues by building against static libc5
                  client runs on all elf kernels, 2.0.x - 2.4.x-preX
             imp: all: client always fetches the largest packet possible
