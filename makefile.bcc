@@ -14,9 +14,9 @@ BCCOPTS = -d -w -Icommon -DPIPELINE_COUNT=2 -D_CPU_32BIT_ -O -tWM -DMULTITHREAD 
 EXENAME = rc5des.exe
 
 BASESRCS = client.cpp problem.cpp autobuff.cpp iniread.cpp \
-  network.cpp scram.cpp mail.cpp cliconfig.cpp buffwork.cpp \
-  clicdata.cpp clirate.cpp clisrate.cpp clitime.cpp threadcd.cpp \
-	convdes.cpp des-x86.cpp
+  network.cpp scram.cpp mail.cpp cliconfig.cpp disphelp.cpp \
+  buffwork.cpp clicdata.cpp clirate.cpp clisrate.cpp \
+  clitime.cpp threadcd.cpp convdes.cpp des-x86.cpp
 
 BASEOBJS = rg-486.obj rg-6x86.obj rg-k5.obj rg-k6.obj \
   rc5p5brf.obj rg-p6.obj bdeslow.obj bbdeslow.obj x86ident.obj
