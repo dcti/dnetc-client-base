@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common-mmx.h,v $
+// Revision 1.1.2.5  1999/12/11 00:34:13  cyp
+// made mmx cores not collide with normal cores
+//
 // Revision 1.1.2.4  1999/12/06 11:21:06  remi
 // Moved csc_transP2() from csc-common-mmx.h to csc-common-mmx.cpp.
 //
@@ -17,12 +20,17 @@
 // Initial commit of MMX'fied CSC cores.
 
 #ifndef __CSC_COMMON_H
-#define __CSC_COMMON_H "@(#)$Id: csc-common-mmx.h,v 1.1.2.4 1999/12/06 11:21:06 remi Exp $"
+#define __CSC_COMMON_H "@(#)$Id: csc-common-mmx.h,v 1.1.2.5 1999/12/11 00:34:13 cyp Exp $"
 
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #include "cputypes.h" /* u32, s32 */
+
+#define csc_tabc csc_mmx_tabc
+#define csc_tabe csc_mmx_tabe
+#define csc_tabp csc_mmx_tabp
+#define csc_transP csc_mmx_transP
 
 #define _FORCE64_
 

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-1k-i-mmx.cpp,v $
+// Revision 1.1.2.3  1999/12/11 00:34:13  cyp
+// made mmx cores not collide with normal cores
+//
 // Revision 1.1.2.2  1999/11/23 23:39:45  remi
 // csc_transP() optimized.
 // modified csc_transP() calling convention.
@@ -20,12 +23,12 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *csc_1k_i_cpp(void) {
-return "@(#)$Id: csc-1k-i-mmx.cpp,v 1.1.2.2 1999/11/23 23:39:45 remi Exp $"; }
+return "@(#)$Id: csc-1k-i-mmx.cpp,v 1.1.2.3 1999/12/11 00:34:13 cyp Exp $"; }
 #endif
 
 #include "problem.h"
 
-#define CSC_SUFFIX 1k_i
+#define CSC_SUFFIX 1k_i_mmx
 
 #define INLINE_TRANSP
 #include "csc-common-mmx.h"
