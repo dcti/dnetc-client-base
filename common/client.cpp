@@ -124,7 +124,8 @@ Client::Client()
   totalBlocksDone[0] = totalBlocksDone[1] = 0;
   old_totalBlocksDone[0] = old_totalBlocksDone[1] = 0;
   timeStarted = 0;
-  logname[0] = 0;
+  strcpy(logname, "none");
+  strcpy(ini_logname, "none");
   cputype=-1;
   offlinemode = 0;
   strcpy(inifilename, InternalGetLocalFilename("rc5des.ini"));
@@ -2731,7 +2732,7 @@ void Client::Log( const char *format, ...)
   // print it out and log it
   LogScreen(logstr);
 
-  if (strlen( logname ) > 0 )
+  if (strcmpi ( logname, "none" ) != 0 )
     {
       FILE *file = fopen ( logname, "a" );
       if (file != NULL)
