@@ -1,6 +1,6 @@
 /* Created by Oliver Roberts <oliver@futaura.co.uk>
 **
-** $Id: amSupport.c,v 1.1.2.1 2001/01/21 15:10:27 cyp Exp $
+** $Id: amSupport.c,v 1.1.2.2 2001/02/01 21:10:31 oliver Exp $
 **
 ** ----------------------------------------------------------------------
 ** This file contains general Amiga specific support code, including
@@ -10,9 +10,12 @@
 
 /*
 ** Bump up the priority of the 68k mirror to 2?  Really not required anymore
-** since we are running threaded (the cruncher task will be bumped to pri 3)
+** since we are running threaded (the cruncher task will always be bumped to
+** pri 3), although it's enabled for PowerUp (stability problems otherwise)
 */
-//#define CHANGE_MIRROR_TASK_PRI
+#ifdef __POWERUP__
+#define CHANGE_MIRROR_TASK_PRI
+#endif
 
 #include "amiga.h"
 #include "sleepdef.h"
