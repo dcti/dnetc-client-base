@@ -9,13 +9,13 @@
  * Currently, starting the client with the '-ident' switch will exec the 
  * function.
  *
- * This file also contains CliTimeGetBuildDate() which returns time_t of the 
- * newest module in the list - useful for asserting beta expiry, that the
+ * This file also contains CliGetNewestModuleTime() which returns time_t of  
+ * the newest module in the list - useful for asserting beta expiry, that the
  * time obtained from proxies is sane etc.
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.15 1999/04/06 19:22:03 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.16 1999/04/09 12:08:32 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -228,8 +228,6 @@ static const char *split_line( char *buffer, const char *p1, unsigned int bufsiz
   return (const char *)0;
 }  
 
-// cliident.cpp,v      1.14      1999/04/05 17:56:51  
-// cliident.h,v        1.4       1999/04/06 10:20:47  
 
 void CliIdentifyModules(void)
 {
@@ -242,4 +240,51 @@ void CliIdentifyModules(void)
       LogScreenRaw( "%s\n", buffer );
   }
   return;
+}  
+
+time_t CliGetNewestModuleTime(void)
+{
+  static time_t newest = (time_t)0;
+  if (newest == (time_t)0)
+  {
+    unsigned int idline;
+    unsigned int cppidcount = (sizeof(ident_table)/sizeof(ident_table[0]));
+    unsigned int hidcount = (sizeof(h_ident_table)/sizeof(h_ident_table[0]));
+    for (idline = 0; idline < (cppidcount + hidcount); idline++)
+    {
+      char buffer[80];
+      const char *p = ((const char *)0);
+      if (idline < cppidcount)
+        p = (*ident_table[idline])();
+      else
+        p = h_ident_table[idline-cppidcount];
+      if ((split_line( buffer, p, sizeof(buffer) )) != ((const char *)0))
+      {
+        struct tm bd;
+        // 0         1         2         3         4
+        // 01234567890123456789012345678901234567890123456789
+        // cliident.cpp,v      1.14      1999/04/05 17:56:51  
+        // cliident.h,v        1.4       1999/04/06 10:20:47  
+        memset((void *)&bd,0,sizeof(bd));
+        bd.tm_year = atoi(&buffer[30])-1900;
+        bd.tm_mon  = atoi(&buffer[35])-1;
+        bd.tm_mday = atoi(&buffer[38]);
+        bd.tm_hour = atoi(&buffer[41]);
+        bd.tm_min  = atoi(&buffer[44]);
+        bd.tm_sec  = atoi(&buffer[47]);
+        if (bd.tm_mon >= 0  && bd.tm_mon  <= 11 && 
+           bd.tm_mday >= 1  && bd.tm_mday <= 31 &&
+           bd.tm_year >= 99 && bd.tm_year <= 132 &&
+	   bd.tm_hour >= 0  && bd.tm_hour <= 23 &&
+	   bd.tm_min  >= 0  && bd.tm_min  <= 59 &&
+	   bd.tm_sec  >= 0  && bd.tm_sec  <= 61 )
+        {
+          time_t bdtime = mktime( &bd );
+	  if (bdtime != ((time_t)-1) && bdtime > newest)
+	    newest = bdtime;
+        }
+      }
+    }
+  }
+  return newest;
 }  
