@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.157  1998/07/18 18:06:36  cyruspatel
+// Fixed a ');' I misplaced.
+//
 // Revision 1.156  1998/07/18 17:10:09  cyruspatel
 // DOS client specific change: PrintBanner now displays PMODE copyright.
 //
@@ -298,7 +301,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.156 1998/07/18 17:10:09 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.157 1998/07/18 18:06:36 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -3127,13 +3130,13 @@ void Client::PrintBanner(const char * /*clname*/)
           #if (CLIENT_CPU == CPU_X86)
           "DES search routines Copyright Svend Olaf Mikkelsen\n"
           #endif
-          );
+          , CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC );
           #if (CLIENT_OS == OS_DOS)
           dosCliShowPmodeCopyrightMsg(); //PMODE (c) string if not win16 
           #endif
   LogScreenf( 
           "Please visit http://www.distributed.net/ for up to date contest information.\n"
-          "%s\n", CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC,
+          "%s\n", 
           #if (CLIENT_OS == OS_RISCOS)
           guiriscos ?
           "Interactive help is available, or select 'Help contents' from the menu for\n"
