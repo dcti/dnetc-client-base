@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.65 2000/06/22 19:26:01 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.66 2000/06/24 09:07:25 andreasb Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -1053,10 +1053,9 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     running--;
     return -1;
   }
-  if (!started || !initialized) /* LoadState() called while we were running */
+  if (!started || !initialized) /* RetrieveState(,,purge) has been called */
   {
-    //Log( "Error: LoadState() while Run()ning (thread %u)!\n", threadindex );
-    core_resultcode = -1; // "Discarded (core error)": discard the overwritten block
+    core_resultcode = -1; // "Discarded (core error)": discard the purged block
   }
   
   core_run_count++;

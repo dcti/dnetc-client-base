@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.29 2000/06/06 14:43:00 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.30 2000/06/24 09:07:24 andreasb Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -111,7 +111,7 @@ protected: /* these members *must* be protected for thread safety */
   int started;
   int initialized;
   unsigned int threadindex; /* 0-n (globally unique identifier) */
-  volatile int running; /* LoadState() has to wait while Run()ning */
+  volatile int running; /* RetrieveState(,,purge) has to wait while Run()ning */
 
 public: /* anything public must be thread safe */
   u32 completion_timehi, completion_timelo; /* wall clock time between start/finish */
@@ -150,6 +150,9 @@ public: /* anything public must be thread safe */
 
   int IsInitialized() { return (initialized!=0); }
 
+  // LoadState() and RetrieveState() work in pairs. A LoadState() without
+  // a previous RetrieveState(,,purge) will fail, and vice-versa.
+  
   int LoadState( ContestWork * work, unsigned int _contest, u32 _iterations, 
      int expected_cpunum, int expected_corenum, 
      int expected_os, int expected_buildfrac );
