@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.21 1999/04/06 19:24:53 cyp Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.22 1999/04/09 13:31:59 cyp Exp $"; }
 
 #include "cputypes.h" //for u64 define
 #include "problem.h"  //uses Problem::RetrieveState()
@@ -48,9 +48,13 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
 
   if (!prob)
     return ((double)(-1));
-  if ((!(prob->finished)) || (!(prob->started)) || (!(prob->IsInitialized())))
-    return ((double)(-2));
 
+  resultcode = prob->RetrieveState( &work, &contestid, 0 ); 
+  if (resultcode < 0)
+    return ((double)(-2));   // not initialized or core error
+  if (resultcode != RESULT_NOTHING && resultcode != RESULT_FOUND)
+    return ((double)(-2));   // not finished
+    
   /*
   tv.tv_usec = prob->timelo;
   tv.tv_sec = prob->timehi;
@@ -60,18 +64,14 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   tv.tv_usec = prob->runtime_usec; /* actual core run time */
   tv.tv_sec = prob->runtime_sec;
   
-  resultcode = prob->RetrieveState( &work, &contestid, 0 ); 
-  if (resultcode < 0)
-    return ((double)(-2));   // not initialized
-    
   if (CliGetContestInfoBaseData( contestid, NULL, &count )) //clicdata.cpp
     return ((double)(0));   //clicdata.cpp says no such contest
 
   keys = U64TODOUBLE(work.crypto.keysdone.hi,work.crypto.keysdone.lo);
   if (count>1) //iteration-to-keycount-multiplication-factor
     keys = (keys)*((double)(count));
-  if (prob->startpercent) //slight misnomer. factor is *100000 not *100
-    keys = (keys)*(((double)(100000L-(prob->startpercent)))/((double)(100000L)));
+  if (prob->startpermille) //0-1000
+    keys = (keys)*(((double)(1000L-(prob->startpermille)))/((double)(1000L)));
   if (keys==((double)(0))) //no keys done? should never happen.
     return ((double)(0));
 

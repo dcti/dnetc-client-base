@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.45 1999/04/08 12:44:26 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.46 1999/04/09 13:31:58 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -144,6 +144,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       {
         case 0: // RC5
         case 1: // DES
+	case 3: // CSC
         {
           norm_key_count = 
              (unsigned int)__iter2norm( (wrdata.work.crypto.iterations.lo),
@@ -182,8 +183,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     else if (unconditional_unload || resultcode < 0 /* core error */ ||
       (thisprob->loaderflags & (PROBLDR_DISCARD|PROBLDR_FORCEUNLOAD)) != 0) 
     {                           
-      unsigned long percent = 0;
-      char workunit[80];
+      unsigned int permille = 0;
       const char *msg = NULL;
 
       *contest = cont_i;
@@ -196,54 +196,39 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       wrdata.buildhi    = FILEENTRY_BUILDHI; 
       wrdata.buildlo    = FILEENTRY_BUILDLO;
 
-      switch (cont_i) 
-      {
-        case 0: // RC5
-        case 1: // DES
-        {
-          percent = (u32) (((double)(10000.0)) *
-          (((((double)(wrdata.work.crypto.keysdone.hi))*((double)(4294967296.0)))+
-                                   ((double)(wrdata.work.crypto.keysdone.lo))) /
-          ((((double)(wrdata.work.crypto.iterations.hi))*((double)(4294967296.0)))+
-                                   ((double)(wrdata.work.crypto.iterations.lo)))) );
-          norm_key_count = 
-             (unsigned int)__iter2norm( (wrdata.work.crypto.iterations.lo),
-                                      (wrdata.work.crypto.iterations.hi) );
-          if (norm_key_count == 0) /* test block */
-            norm_key_count = 1;
-          sprintf(workunit, "%08lX:%08lX", 
-  	(long) ( wrdata.work.crypto.key.hi ),
-  	(long) ( wrdata.work.crypto.key.lo ) );
-          break;
-        }
-        case 2: // OGR
-        {
-          norm_key_count = 1;
-          strcpy(workunit, ogr_stubstr(&wrdata.work.ogr.stub));
-          break;
-        }
-      }
-      
       if ((thisprob->loaderflags & PROBLDR_DISCARD)!=0)
       {
         msg = "Discarded (project disabled/closed)";
         norm_key_count = 0;
-	percent = 0;
       }
       else if (resultcode < 0)
       {
         msg = "Discarded (core error)";
         norm_key_count = 0;
-	percent = 0;
       }
       else if (client->PutBufferRecord( &wrdata ) < 0)  // send it back...
       {
         msg = "Unable to save";
         norm_key_count = 0;
-	percent = 0;
       }
       else
       {
+        switch (cont_i) 
+        {
+          case 0: // RC5
+          case 1: // DES
+          case 3: // CSC
+                  norm_key_count = (unsigned int)__iter2norm( 
+	                              (wrdata.work.crypto.iterations.lo),
+                                      (wrdata.work.crypto.iterations.hi) );
+                  if (norm_key_count == 0) /* test block */
+                    norm_key_count = 1;
+                  break;
+          case 2: // OGR
+                  norm_key_count = 1;
+                  break;
+        }
+        permille = (unsigned int)thisprob->CalcPermille();
         if (client->nodiskbuffers)
           *bufupd_pending |= BUFFERUPDATE_FLUSH;
         if (load_problem_count <= COMBINEMSG_THRESHOLD)
@@ -251,9 +236,22 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       }
       if (msg)
       {
-        Log( "%s packet %s%c(%d.%02d%% complete)\n", msg, workunit,
-	      ((percent == 0)?('\0'):(' ')),
-              (unsigned int)(percent/100), (unsigned int)(percent%100) );
+        char workunit[80];
+	switch (cont_i)
+	{
+	  case 0: //RC5
+	  case 1: //DES
+          case 3: // CSC
+                 sprintf(workunit, "%08lX:%08lX", 
+                       (long) ( wrdata.work.crypto.key.hi ),
+                       (long) ( wrdata.work.crypto.key.lo ) );
+		 break;
+	  case 2: //OGR
+                 strcpy(workunit, ogr_stubstr(&wrdata.work.ogr.stub));
+		 break;
+	}
+        Log( "%s packet %s%c(%u.%u0%% complete)\n", msg, workunit,
+	      ((permille == 0)?('\0'):(' ')), permille/10, permille%10 );
       }
     } /* unconditional unload */
     
@@ -280,6 +278,10 @@ static long __loadapacket( Client *client, WorkRecord *wrdata,
 if (selproject == 2)
   continue;
 #endif  
+#ifndef CSC_TEST
+if (selproject == 3)
+  continue;
+#endif
 
     if (selproject >= CONTEST_COUNT) /* user disabled */
       continue;
@@ -338,13 +340,14 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     {
       case 0: // RC5
       case 1: // DES
+      case 3: // CSC
         if ( ((wrdata.work.crypto.keysdone.lo)!=0) || 
              ((wrdata.work.crypto.keysdone.hi)!=0) )
         {
           s32 cputype = client->cputype; /* needed for FILEENTRY_CPU macro */
 
           #if (CLIENT_OS == OS_RISCOS) /* second thread is x86 */
-          if (prob_i == 1) cputype = CPU_X86;
+          if (wrdata.contest == 0 && prob_i == 1) cputype = CPU_X86;
           #endif
 
           // If this is a partial block, and completed by a different 
@@ -444,6 +447,7 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
     {
       case 0: // RC5
       case 1: // DES
+      case 3: // CSC
       {
         norm_key_count = (unsigned int)__iter2norm((wrdata.work.crypto.iterations.lo),
                                                    (wrdata.work.crypto.iterations.hi));
@@ -472,28 +476,29 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
     if (load_problem_count <= COMBINEMSG_THRESHOLD)
     {
       const char *cont_name = CliGetContestNameFromID(*contest);
-      unsigned int startpercent = (unsigned int)( thisprob->startpercent/10 );
+      unsigned int permille = (unsigned int)(thisprob->startpermille);
 
       switch (*contest) 
       {
         case 0: // RC5
         case 1: // DES
+        case 3: // CSC
         {
-          Log("Loaded %s%s %u*2^28 packet %08lX:%08lX%c(%u.%02u%% done)",
+          Log("Loaded %s%s %u*2^28 packet %08lX:%08lX%c(%u.%u0%% done)",
                   cont_name, ((didrandom)?(" random"):("")), norm_key_count,
                   (unsigned long) ( wrdata.work.crypto.key.hi ),
                   (unsigned long) ( wrdata.work.crypto.key.lo ),
-                  ((startpercent!=0 && startpercent<=10000)?(' '):(0)),
-                  (startpercent/100), (startpercent%100) );
+                  ((permille!=0 && permille<=1000)?(' '):(0)),
+                  (permille/10), (permille%10) );
           break;
         }
         case 2: // OGR
         {
-          Log("Loaded %s stub %s (%u.%02u%% done)",
+          Log("Loaded %s stub %s (%u.%u0%% done)",
                   cont_name,
                   ogr_stubstr(&wrdata.work.ogr.stub),
-                  ((startpercent!=0 && startpercent<=10000)?(' '):(0)),
-                  (startpercent/100), (startpercent%100) );
+                  ((permille!=0 && permille<=1000)?(' '):(0)),
+                  (permille/10), (permille%10) );
           break;
         }
       }
@@ -543,39 +548,39 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   totalBlocksDone = 0;
 
   if (mode == PROBFILL_UNLOADALL)
-    {
+  {
     if (previous_load_problem_count == 0)
       return 0;
     //load_problem_count = previous_load_problem_count;
-    }
+  }
   if ((++reentrant_count) > 1)
-    {
+  {
     --reentrant_count;
     return 0;
-    }
+  }
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-   {
+  {
    unsigned int blocksdone;
    if (CliGetContestInfoSummaryData( cont_i, &blocksdone, NULL, NULL )==0)
      totalBlocksDone += blocksdone;
    
    loaded_problems_count[cont_i]=loaded_normalized_key_count[cont_i]=0;
    saved_problems_count[cont_i] =saved_normalized_key_count[cont_i]=0;
-   }
+  }
 
 
   static time_t nextrandomcheck = (time_t)0;
   time_t timenow = CliTimer(NULL)->tv_sec;
   if (nextrandomcheck <= timenow)
-    {
+  {
     RefreshRandomPrefix(this); //get/put an up-to-date prefix 
     nextrandomcheck = (timenow + (time_t)(10*60));
-    }
+  }
 
   /* ============================================================= */
 
   if (previous_load_problem_count == 0)
-    {
+  {
     prob_step = 1;
 
     #ifdef DEBUG
@@ -584,27 +589,27 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
     i = InitializeProblemManager(load_problem_count);
     if (i<=0)
-      {
+    {
       --reentrant_count;
       return 0;
-      }
+    }
     load_problem_count = (unsigned int)i;
 
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-      {
+    {
       if ( ((unsigned long)(inthreshold[cont_i])) <
          (((unsigned long)(load_problem_count))<<1))
-        {
+      {
         inthreshold[cont_i] = load_problem_count<<1;
-        }
       }
     }
+  }
   else
-    {
+  {
     if (load_problem_count == 0)
       load_problem_count = previous_load_problem_count;
     prob_step = -1;
-    }
+  }
 
   /* ============================================================= */
 
@@ -613,24 +618,24 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   prob_for = 0;
 
   if (mode == PROBFILL_RESIZETABLE && previous_load_problem_count)
-    {
+  {
     prob_for = load_problem_count;
     load_problem_count = previous_load_problem_count;
-    }
+  }
     
   /* ============================================================= */
 
   for (; prob_for<load_problem_count; prob_for++)
-    {
+  {
     prob_i= (prob_step < 0) ? ((load_problem_count-1)-prob_for) : (prob_for);
 
     thisprob = GetProblemPointerFromIndex( prob_i );
     if (thisprob == NULL)
-      {
+    {
       if (prob_step < 0)
         continue;
       break;
-      }
+    }
 
     // -----------------------------------
 
@@ -641,50 +646,50 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
     if (load_needed)
       empty_problems++;
     if (norm_key_count)
-      {
+    {
       changed_flag = 1;
       total_problems_saved++;
       saved_normalized_key_count[cont_i] += norm_key_count;
       saved_problems_count[cont_i]++;
       totalBlocksDone++;
-      }
+    }
 
     //---------------------------------------
 
     if (load_needed && mode!=PROBFILL_UNLOADALL && mode!=PROBFILL_RESIZETABLE)
-      {
+    {
       if (blockcount>0 && totalBlocksDone>=((unsigned long)(blockcount)))
-        {
+      {
         ; //nothing
-        }
+      }
       else
-        {
+      {
         load_needed = 0;
         norm_key_count = __IndividualProblemLoad( thisprob, prob_i, this, 
                 &load_needed, load_problem_count, &cont_i, &bufupd_pending );
         if (load_needed)
-          {
+        {
           getbuff_errs++;
           if (load_needed == NOLOAD_ALLCONTESTSCLOSED)
-            {
+          {
             allclosed = 1;
             break; /* the for ... prob_i ... loop */
-            }
+          }
           else if (load_needed == NOLOAD_NORANDOM)
             norandom_count++;
-          }
+        }
         if (norm_key_count)
-          {
+        {
           empty_problems--;
           total_problems_loaded++;
           loaded_normalized_key_count[cont_i] += norm_key_count;
           loaded_problems_count[cont_i]++;
           changed_flag = 1;
-          }
         }
-      } //if (load_needed)
+      }
+    } //if (load_needed)
     
-    } //for (prob_i = 0; prob_i < load_problem_count; prob_i++ )
+  } //for (prob_i = 0; prob_i < load_problem_count; prob_i++ )
 
   /* ============================================================= */
 
@@ -694,23 +699,23 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   /* ============================================================= */
 
   for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
-    {
+  {
     if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
-      {
+    {
       const char *cont_name = CliGetContestNameFromID(cont_i);
 
       if (loaded_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD )
-        {
+      {
         Log( "Loaded %u %s packet%s (%u*2^28 keys) from %s\n", 
               loaded_problems_count[cont_i], cont_name,
               ((loaded_problems_count[cont_i]==1)?(""):("s")),
               loaded_normalized_key_count[cont_i],
               (nodiskbuffers ? "(memory-in)" : 
               BufferGetDefaultFilename( cont_i, 0, in_buffer_basename )) );
-        }
+      }
 
       if (saved_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD)
-        {
+      {
         Log( "Saved %u %s packet%s (%u*2^28 keys) to %s\n", 
               saved_problems_count[cont_i], cont_name,
               ((saved_problems_count[cont_i]==1)?(""):("s")),
@@ -720,7 +725,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
                 BufferGetDefaultFilename( cont_i, 0, in_buffer_basename ) ) :
                 (nodiskbuffers ? "(memory-out)" : 
                 BufferGetDefaultFilename( cont_i, 1, out_buffer_basename )) );
-        }
+      }
 
       // To suppress "odd" problem completion count summaries (and not be
       // quite so verbose) we only display summaries if the number of
@@ -730,52 +735,52 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
       // statistics haven't been reset
 
       if (totalBlocksDone > 0 && randomchanged == 0)
-        {
+      {
         if ((i = GetNumberOfDetectedProcessors()) < 1)
           i = 1;
         if (load_problem_count > ((unsigned int)(i)))
           i = (int)load_problem_count;
         if (((totalBlocksDone)%((unsigned int)(i))) == 0 )
-          {
+        {
           Log( "Summary: %s\n", CliGetSummaryStringForContest(cont_i) );
-          }
         }
-      } //if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
-    } //for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+      }
+    } //if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
+  } //for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
 
   /* ============================================================ */
 
 
   if (bufupd_pending)
-    {
+  {
     if ((bufupd_pending & BUFFERUPDATE_FETCH)!=0) // always flush while
       bufupd_pending |= BUFFERUPDATE_FLUSH;      // fetching
     else if (mode!=PROBFILL_UNLOADALL)           // if not ending the client
       bufupd_pending |= BUFFERUPDATE_FETCH;      // try to fetch anyway.
     if ((bufupd_pending = BufferUpdate(bufupd_pending,0)) < 0)
       bufupd_pending = 0;
-    }
+  }
   if (randomchanged)
-    {
+  {
     RefreshRandomPrefix(this); //get/put an up-to-date prefix 
     nextrandomcheck = (timenow + (time_t)(10*60));
-    }
+  }
 
   /* ============================================================ */
 
     
   for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
-    {
+  {
     const char *cont_name = CliGetContestNameFromID(cont_i);
     if (bufupd_pending || loaded_problems_count[cont_i] || saved_problems_count[cont_i])
-      {
+    {
       unsigned int inout;
       for (inout=0;inout<=1;inout++)
-        {
+      {
         unsigned long norm_count;
         long block_count = GetBufferCount( cont_i, inout, &norm_count );
         if (block_count >= 0)
-          {
+        {
           sprintf(buffer, 
               "%ld %s packet%s (%lu*2^28 keys) %s in %s",
               block_count, 
@@ -790,10 +795,10 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
                 (nodiskbuffers ? "(memory-out)": BufferGetDefaultFilename( cont_i, 1, out_buffer_basename ) ))
               );
           Log( "%s\n", __WrapOrTruncateLogLine( buffer, 1 ));
-          } //if (block_count >= 0)
-        } //  for (inout=0;inout<=1;inout++)
-      } //if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
-    } //for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+        } //if (block_count >= 0)
+      } //  for (inout=0;inout<=1;inout++)
+    } //if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
+  } //for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
 
   /* ============================================================ */
 
@@ -803,14 +808,14 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   --reentrant_count;
 
   if (mode == PROBFILL_UNLOADALL)
-    {
+  {
     previous_load_problem_count = 0;
     if (nodiskbuffers == 0)
      CheckpointAction( CHECKPOINT_CLOSE, 0 );
     DeinitializeProblemManager();
 
     return total_problems_saved;
-    }
+  }
 
   if (mode == PROBFILL_RESIZETABLE)
     return total_problems_saved;
@@ -830,23 +835,23 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
      ------------------------------------------------------------- */
 
   if (!allclosed)
-    {
+  {
     int limitsexceeded = 0;
     if (blockcount < 0 && norandom_count >= load_problem_count)
       limitsexceeded = 1;
     if (blockcount > 0 && (totalBlocksDone >= (unsigned long)(blockcount)))
-      {
+    {
       if (empty_problems >= load_problem_count)
         limitsexceeded = 1;
       else
         blockcount = ((u32)(totalBlocksDone))+1;
-      }
+    }
     if (limitsexceeded)
-      {
+    {
       Log( "Shutdown - packet limit exceeded.\n" );
       RaiseExitRequestTrigger();
-      }
     }
+  }
 
   /* ============================================================= */
 

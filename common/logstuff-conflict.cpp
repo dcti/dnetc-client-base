@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.31 1999/04/05 17:56:51 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.32 1999/04/09 13:31:59 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -493,69 +493,6 @@ const char *LogGetCurrentLogFilename( void )
 
 #include "probman.h"
 
-#if 0
-static void GetPercDataForThread( unsigned int selthread, unsigned int /*numthreads*/, 
-   unsigned int *percent, unsigned int *lastperc, unsigned int *restartperc )
-{
-  unsigned int percent_i, lastperc_i, startperc_i;
-  Problem *selprob, *altprob;
-
-  selprob = GetProblemPointerFromIndex(selthread+0);
-  altprob = GetProblemPointerFromIndex(selthread+1);
-
-  percent_i = lastperc_i = startperc_i = 0;
-  if (selprob || altprob)
-    {
-    if (!selprob) 
-      {
-      selprob = altprob;
-      altprob = NULL;
-      }
-
-    if (!logstatics.lastwasperc)
-      {
-      if (selprob) selprob->percent = 0;
-      if (altprob) altprob->percent = 0;
-      }
-
-    if ( (altprob) && (!(selprob->started)) && (altprob->started) ) 
-      selprob = altprob;
-
-    startperc_i = selprob->startpercent / 1000;
-    lastperc_i  = selprob->percent;
-    percent_i   = 0;
-
-    if ( selprob->finished )
-      percent_i = 100;
-    else if ( selprob->started )
-      percent_i = selprob->CalcPercent();
-
-#if 0
-    FileEntry fileentry;
-    selprob->RetrieveState( (ContestWork *) &fileentry , 0 );
-    printf("\n %d%c %d%% (%d%%) %08lX:%08lX %d%% \n", 
-           selthread, (selprob==altprob)?('b'):('a'),
-           selprob->CalcPercent(), percent_i, 
-           ntohl( fileentry.key.hi ), ntohl( fileentry.key.lo ), 
-           ntohl(fileentry.keysdone.lo)/ntohl(fileentry.iterations.lo) 
-           );
-#endif
-
-    if ( percent_i == 0 )
-      {
-      percent_i = startperc_i;
-      lastperc_i = 0;
-      }
-    selprob->percent = percent_i;
-    }
-
-  if (restartperc) *restartperc = ((lastperc_i == 0)?(startperc_i):(0));
-  if (percent)   *percent   = percent_i;
-  if (lastperc)  *lastperc  = lastperc_i;
-  return;
-}  
-#endif
-
 void LogScreenPercent( unsigned int load_problem_count )
 {
   static unsigned int lastperc = 0, displevel = 0;
@@ -579,15 +516,12 @@ void LogScreenPercent( unsigned int load_problem_count )
 
     if (selprob && selprob->IsInitialized())
       {
-      if (selprob->finished)
-        percent = 100;
-      else if (selprob->started)
-        percent = selprob->CalcPercent();
+      percent = (selprob->CalcPermille() + 5)/10;
       if (percent == 0)
-        percent = selprob->startpercent / 1000;
+        percent = (selprob->startpermille + 5)/10;
       if (load_problem_count == 1 && percent != 100) 
         {   /* don't do 'R' if multiple-problems */
-        restartperc = selprob->startpercent / 1000;
+        restartperc = (selprob->startpermille + 5)/10;
         restartperc = (!restartperc || percent == 100) ? 0 : 
             ( restartperc - ((restartperc > 90) ? (restartperc & 1) : 
             (1 - (restartperc & 1))) );

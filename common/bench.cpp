@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.24 1999/04/06 19:20:26 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.25 1999/04/09 13:31:59 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -91,11 +91,12 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
   ContestWork contestwork;
   Problem problem;
 
-  u32 run;
+  int run;
   const char *sm4;
   char cm1, cm2, cm3;
   unsigned int itersize;
   unsigned int keycountshift;
+  unsigned int percent;
   unsigned int recommendedblockcount=0;
   unsigned int hourstobuffer = 0;
   u32 tslice;
@@ -156,12 +157,12 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
 
   problem.LoadState( &contestwork, contestid, tslice, cputype );
 
-  problem.percent = 0;
+  percent = 0;
   cm1 = '\n'; 
   cm2 = ((ConIsScreen())?(' '):(0));
   cm3 = ((cm2)?('\r'):(0)); //console.h
   sm4 = ((cm3)?(""):("\n"));
-  run = 0;
+  run = RESULT_WORKING;
 
   #if (CLIENT_CPU == CPU_X86) && \
       (!defined(SMC) || !defined(MMX_RC5) || !defined(MMX_BITSLICER))
@@ -193,14 +194,14 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
   {
     if ( CheckExitRequestTriggerNoIO() )
     {
-      problem.percent = 101;
-      run = 1;
+      percent = 101;
+      run = -1; /* error */
     }
     if (cm1)
     {
-      if (problem.percent >= 100)
+      if (percent >= 100)
       {
-        sm4 = ((problem.percent == 101)?("    \n*Break*\n"):("    \n"));
+        sm4 = ((percent == 101)?("    \n*Break*\n"):("    \n"));
         cm2 = 0;
       }
       ClientEventSyncPost( CLIEVENT_BENCHMARK_BENCHING, (long)((Problem *)(&problem)));
@@ -208,33 +209,25 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
       LogScreen( "%cBenchmarking %s with 1*2^%d tests (%u keys):%s%c%u%%",
           cm1, contname, itersize+keycountshift,
           (unsigned int)(1<<(itersize+keycountshift)), sm4, cm2, 
-          (unsigned int)(problem.percent) );
+          (unsigned int)(percent) );
     }
     cm1 = cm3;
-    problem.percent = 0;
+    percent = 0;
 
-    if ( run == 0 )
+    if ( run == RESULT_WORKING )
     {
       ClientEventSyncPost( CLIEVENT_BENCHMARK_BENCHING, (long)((Problem *)(&problem)));
 
-      run = problem.Run( 0 );  //threadnum
-      if ( run )
-      {
-        if ( problem.finished )
-          problem.percent = 100;
-      }
-      else
-      {
-        problem.percent = problem.CalcPercent();
-        if (problem.percent == 0)
-          problem.percent = 1;
+      run = problem.Run();
+      percent = (problem.CalcPermille() + 5)/10;
+      if (percent == 0)
+        percent = 1;
 
-        #if (CLIENT_OS == OS_NETWARE)   //yield
-          nwCliThreadSwitchLowPriority();
-        #endif
-      }
+      #if (CLIENT_OS == OS_NETWARE)   //yield
+        nwCliThreadSwitchLowPriority();
+      #endif
     }
-  } while (problem.percent != 0);
+  } while (percent != 0);
 
   if ( CheckExitRequestTriggerNoIO() )
   {
@@ -245,11 +238,6 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
   struct timeval tv;
   char ratestr[32];
   double rate = CliGetKeyrateForProblemNoSave( &problem );
-  /*
-  tv.tv_sec = problem.timehi;  //read the time the problem:run started
-  tv.tv_usec = problem.timelo;
-  CliTimerDiff( &tv, &tv, NULL );    //get the elapsed time
-  */
   tv.tv_sec = problem.runtime_sec;  //read the real core time
   tv.tv_usec = problem.runtime_usec;
   ClientEventSyncPost( CLIEVENT_BENCHMARK_FINISHED, (long)((double *)(&rate)));
