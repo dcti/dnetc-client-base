@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.39  1999/03/18 03:07:54  cyp
+// This module is now (mostly) OGR ready. Some Log() msgs still need adjustment.
+//
 // Revision 1.38  1999/03/09 07:15:45  gregh
 // Various OGR changes.
 //
@@ -156,7 +159,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.38 1999/03/09 07:15:45 gregh Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.39 1999/03/18 03:07:54 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -168,6 +171,7 @@ return "@(#)$Id: probfill.cpp,v 1.38 1999/03/09 07:15:45 gregh Exp $"; }
 #include "clitime.h"   // CliGetTimeString()
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
 #include "scram.h"     // Random()
+#include "util.h"      // temporary home for ogr_stubstr()
 #include "clisrate.h"  // CliGetMessageFor... et al.
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "clirate.h"   // CliGetKeyrateForProblem()
@@ -179,21 +183,17 @@ return "@(#)$Id: probfill.cpp,v 1.38 1999/03/09 07:15:45 gregh Exp $"; }
 #include "rsadata.h"   // Get cipher/etc for random blocks
 #include "confrwv.h"   // Needed to trigger .ini to be updated
 #include "clievent.h"  // ClientEventSyncPost( int event_id, long parm )
-#include "stubutil.h"  // stubstr()
 
 // =======================================================================
 // each individual problem load+save generates 4 or more messages lines 
 // (+>=3 lines for every load+save cycle), so we suppress/combine individual 
 // load/save messages if the 'load_problem_count' exceeds COMBINEMSG_THRESHOLD
-// into a single line 'Loaded|Saved n RC5|DES blocks from|to filename'.
+// into a single line 'Loaded|Saved n RC5|DES packets from|to filename'.
 #define COMBINEMSG_THRESHOLD 4 // anything above this and we don't show 
                                // individual load/save messages
 // =======================================================================
 
-static unsigned long __iter2norm( unsigned long iterlo, unsigned long iterhi )
-{
-return (iterlo >> 28) + (iterhi*16);
-}  
+#define __iter2norm( iterlo, iterhi ) ((iterlo>>28)+(iterhi<<4))
 
 // -----------------------------------------------------------------------
 
@@ -232,13 +232,29 @@ static const char *__WrapOrTruncateLogLine( char *buffer, int dowrap )
 
 // -----------------------------------------------------------------------
 
+int SetProblemLoaderFlags( const char *loaderflags_map )
+{
+  unsigned int prob_i = 0;
+  Problem *thisprob;
+  while ((thisprob = GetProblemPointerFromIndex(prob_i)) != NULL)
+  {
+    if (thisprob->IsInitialized())
+      thisprob->loaderflags |= loaderflags_map[thisprob->contest];
+    prob_i++;
+  }
+  return ((prob_i == 0)?(-1):((int)prob_i));
+}  
+
+// -----------------------------------------------------------------------
+
+
 static unsigned int __IndividualProblemSave( Problem *thisprob, 
                 unsigned int prob_i, Client *client, int *is_empty, 
                 unsigned load_problem_count, unsigned int *contest,
                 int *bufupd_pending, int unconditional_unload )
 {                    
   FileEntry fileentry;
-  RC5Result rc5result;
+  int resultcode;
   unsigned int cont_i;
   unsigned int norm_key_count = 0;
   long longcount;
@@ -247,14 +263,13 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
   *contest = 0;
   *is_empty = 0;
 
-  if ( thisprob->IsInitialized()==0 || thisprob->GetResult( &rc5result )==-1)
-    {                                  /* uninitialized */
+  if ( thisprob->IsInitialized()==0 )  
     *is_empty = 1; 
-    }
-  else if (rc5result.result==RESULT_FOUND || rc5result.result==RESULT_NOTHING)
-    {
-    //don't purge the state yet - we need it for stats later
-    cont_i = thisprob->RetrieveState( (ContestWork *)&fileentry, 0 );
+  else if (-1 == ( resultcode = 
+            thisprob->RetrieveState( (ContestWork *)&fileentry, &cont_i, 0 )))
+    *is_empty = 1;                  /* should not have happened */
+  else if (resultcode == RESULT_FOUND || resultcode == RESULT_NOTHING )
+  {
     fileentry.contest = (u8)(cont_i);
     *contest = cont_i;
     *is_empty = 1; /* will soon be */
@@ -264,13 +279,13 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     //---------------------
 
     // make it into a reply
-    if (rc5result.result == RESULT_FOUND)
-      {
-      client->consecutivesolutions[cont_i]++; 
+    if (resultcode == RESULT_FOUND)
+    {
       if (client->keyport == 3064)
-        LogScreen("Test block success detected!\n");
+        LogScreen("Test success detected!\n");
       fileentry.op = ( OP_SUCCESS_MULTI );
-      switch (fileentry.contest) {
+      switch (fileentry.contest) 
+      {
         case 0: // RC5
         case 1: // DES
           fileentry.data.crypto.key.lo += fileentry.data.crypto.keysdone.lo;
@@ -278,13 +293,13 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         case 2: // OGR
           break;
       }
-      }
+    }
     else
-      {
+    {
       if (client->keyport == 3064)
-        LogScreen("Test block success was not detected!\n");
+        LogScreen("Test success was not detected!\n");
       fileentry.op = OP_BIGDONE_MULTI;
-      }
+    }
 
     fileentry.os      = CLIENT_OS;
     fileentry.cpu     = CLIENT_CPU;
@@ -293,18 +308,18 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 #endif
     fileentry.buildhi = CLIENT_CONTEST;
     fileentry.buildlo = CLIENT_BUILD;
-    strncpy( fileentry.id, client->id , sizeof(fileentry.id)); // set owner's id
-    fileentry.id[sizeof(fileentry.id)-1]=0; //in case id>58 bytes, truncate.
+    strncpy( fileentry.id, client->id , sizeof(fileentry.id));
+    fileentry.id[sizeof(fileentry.id)-1]=0;
     fileentry.checksum = 0; // \ filled in by 
     fileentry.scramble = 0; // / PutBufferRecord
 
     // send it back...
     if ( (longcount = client->PutBufferRecord( &fileentry )) < 0)
-      {
+    {
       //Log( "PutBuffer Error\n" ); //error already printed?
-      }
+    }
     else
-      {
+    {
       //---------------------
       // update the totals for this contest
       //---------------------
@@ -312,43 +327,61 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         *bufupd_pending |= BUFFERUPDATE_FLUSH;
 
       if (load_problem_count <= COMBINEMSG_THRESHOLD)
-        {
+      {
         Log( CliGetMessageForProblemCompleted( thisprob ) );
-        }
+      }
       else /* stop the log file from being cluttered with load/save msgs */
-        {
+      {
         CliGetKeyrateForProblem( thisprob ); //add to totals
-        }
-      norm_key_count = 
-          (unsigned int)__iter2norm( rc5result.iterations.lo,
-                                     rc5result.iterations.hi );
-
-      ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
+      }
+      switch (cont_i) 
+      {
+        case 0: // RC5
+        case 1: // DES
+          norm_key_count = 
+            (unsigned int)__iter2norm( fileentry.data.crypto.iterations.lo,
+                                       fileentry.data.crypto.iterations.hi );
+          break;
+        case 2: //OGR
+          norm_key_count = fileentry.data.ogr.stub.marks;
+          break;
       }
 
+      ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
+    }
+
     //we can purge the object now
-    thisprob->RetrieveState( (ContestWork *)&fileentry, 1 );
-    } 
-  else if (unconditional_unload) /* must be RESULT_WORKING */
-    {
-    cont_i = (unsigned int)thisprob->RetrieveState( (ContestWork *) &fileentry , 1 );
+    thisprob->RetrieveState( NULL, NULL, 1 );
+  } 
+  else if (unconditional_unload || 
+    (thisprob->loaderflags & (PROBLDR_DISCARD|PROBLDR_FORCEUNLOAD)) != 0) 
+  {                                       /* must be RESULT_WORKING */
+    const char *msg = NULL;
+    char workunit[80];
+    unsigned long percent = 0;
+    s32 cputype = client->cputype; /* needed for FILEENTRY_CPU macro */
+    #if (CLIENT_OS == OS_RISCOS)
+    if (prob_i == 1) cputype = CPU_X86; 
+    #endif
+
+    thisprob->RetrieveState( (ContestWork *) &fileentry, &cont_i, 1 );
     fileentry.contest = (u8)cont_i;
     *contest = cont_i;
     *is_empty = 1; /* will soon be */
+    fileentry.op      = OP_BIGDATA;
+    fileentry.cpu     = FILEENTRY_CPU; /* uses cputype variable */
+    fileentry.os      = FILEENTRY_OS;
+    fileentry.buildhi = FILEENTRY_BUILDHI; 
+    fileentry.buildlo = FILEENTRY_BUILDLO;
+    fileentry.checksum = 0; // \ filled in by
+    fileentry.scramble = 0; // / PutBufferRecord()
 
-    char workunit[80];
-    unsigned long percent = 0;
-    norm_key_count = 1;
-
-    switch (fileentry.contest) {
+    switch (cont_i) 
+    {
       case 0: // RC5
       case 1: // DES
       {
-        unsigned long keyhi = ( fileentry.data.crypto.key.hi );
-        unsigned long keylo = ( fileentry.data.crypto.key.lo );
-
         percent = (u32) (((double)(10000.0)) *
-    /* Return the % completed in the current block, to nearest 1%. */
         (((((double)(fileentry.data.crypto.keysdone.hi))*((double)(4294967296.0)))+
                                  ((double)(fileentry.data.crypto.keysdone.lo))) /
         ((((double)(fileentry.data.crypto.iterations.hi))*((double)(4294967296.0)))+
@@ -357,49 +390,71 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         norm_key_count = 
            (unsigned int)__iter2norm( (fileentry.data.crypto.iterations.lo),
                                       (fileentry.data.crypto.iterations.hi) );
-        sprintf(workunit, "%08lX:%08lX", keyhi, keylo);
+        sprintf(workunit, "%08lX:%08lX", ( fileentry.data.crypto.key.hi ),
+                                         ( fileentry.data.crypto.key.lo ) );
         break;
       }
       case 2: // OGR
-        strcpy(workunit, stubstr(&fileentry.data.ogr.stub));
+      {
+        norm_key_count = fileentry.data.ogr.stub.marks;
+        strcpy(workunit, ogr_stubstr(&fileentry.data.ogr.stub));
         break;
+      }
     }
 
-    s32 cputype       = client->cputype; /* needed for FILEENTRY_CPU macro */
-    #if (CLIENT_OS == OS_RISCOS)
-    if (prob_i == 1) cputype = CPU_X86; 
-    #endif
-    
-    fileentry.op      = OP_BIGDATA;
-    fileentry.cpu     = FILEENTRY_CPU; /* uses cputype variable */
-    fileentry.os      = FILEENTRY_OS;
-    fileentry.buildhi = FILEENTRY_BUILDHI; 
-    fileentry.buildlo = FILEENTRY_BUILDLO;
-    fileentry.checksum = 0; // } filled in by
-    fileentry.scramble = 0; // } PutBufferRecord()
-
-    const char *msg = NULL;
-    if (client->PutBufferRecord( &fileentry ) < 0)  // send it back...
-      {
+    if ((thisprob->loaderflags & PROBLDR_DISCARD)!=0)
+    {
+      msg = "Discarded (project disabled)";
+      norm_key_count = 0;
+    }
+    else if (client->PutBufferRecord( &fileentry ) < 0)  // send it back...
+    {
       msg = "Unable to save";
       norm_key_count = 0;
-      }
+    }
     else
-      {
+    {
       if (client->nodiskbuffers)
         *bufupd_pending |= BUFFERUPDATE_FLUSH;
       if (load_problem_count <= COMBINEMSG_THRESHOLD)
         msg = "Saved";
-      }
+    }
     if (msg)
-      {
-      Log( "%s block %s (%d.%02d%% complete)\n", msg, workunit,
+    {
+      Log( "%s packet %s (%d.%02d%% complete)\n", msg, workunit,
             (unsigned int)(percent/100), (unsigned int)(percent%100) );
-      }
-    } /* unconditional unload */
+    }
+  } /* unconditional unload */
 
   return norm_key_count;
 }
+
+
+// -----------------------------------------------------------------------
+
+static long __getapacket( Client *client, FileEntry *data, int /*ign_closed*/,
+                          unsigned int prob_i )
+{                    
+  unsigned int cont_i = prob_i; /* consume variable */
+  long bufcount = -1;
+
+  for (cont_i = 0; (bufcount < 0 && cont_i < CONTEST_COUNT); cont_i++ )
+  {
+    unsigned int selproject = (unsigned int)client->loadorder_map[cont_i];
+
+    if (selproject >= CONTEST_COUNT) /* user disabled */
+      continue;
+      
+    #if (CLIENT_OS == OS_RISCOS) /* RISC OS x86 thread only supports RC5 */
+    if (prob_i == 1 && selproject != 0)
+      continue;
+    #endif
+
+    bufcount = client->GetBufferRecord( data, selproject, 0 );
+//printf("trying contest %d count %ld\n", selproject, bufcount );
+  }
+  return bufcount;
+}  
 
 // -----------------------------------------------------------------------
 
@@ -413,141 +468,87 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
                     int *bufupd_pending )
 {
   FileEntry fileentry;
-  unsigned int cont_i;
   unsigned int norm_key_count = 0;
-  unsigned int contest_count, contest_selected;
-  unsigned int contest_preferred, contest_alternate;
-  long longcount;
-  int didupdate, didload, didrandom, resetloop;
-  s32 cputype;
+  int didload = 0, didrandom = 0;
+  long bufcount = __getapacket( client, &fileentry, 1, prob_i );
 
-  contest_preferred = (client->preferred_contest_id == 0)?(0):(1);
-  contest_alternate = (contest_preferred == 0)?(1):(0);
-  contest_count     = CONTEST_COUNT;
-  cputype           = client->cputype; /* needed for FILEENTRY_CPU macro */
-    
-  /* RISC OS x86 thread currently only supports RC5 */
-  #if (CLIENT_OS == OS_RISCOS)
-  if (prob_i == 1)
+  if (bufcount < 0 && client->nonewblocks == 0)
+  {
+    int didupdate = 
+       client->BufferUpdate((BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
+    if (!(didupdate < 0))
     {
-    cputype = CPU_X86;
-    contest_preferred = contest_alternate = 0;
-    contest_count     = 1;
+      if (client->randomchanged)        
+        RefreshRandomPrefix( client );
+      if (didupdate!=0)
+        *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
+      if ((didupdate & BUFFERUPDATE_FETCH) != 0) /* fetched successfully */
+        bufcount = __getapacket( client, &fileentry, 0, prob_i );
     }
-  #endif
+  }
 
-  didrandom = didload = didupdate = 0;
-  resetloop = 1;
+  if (bufcount >= 0) /* load from file succeeded */
+  {
+    didload = 1;
+    if (((unsigned long)(bufcount)) < (load_problem_count - prob_i))
+      *bufupd_pending |= BUFFERUPDATE_FETCH;
 
-#ifdef GREGH_DEBUG
-  contest_preferred = 2;
-#endif
-
-#ifdef DEBUG
-Log("Loadblock::Start Preferred contest: %u\n", contest_preferred);
-#endif
-
-  while (resetloop && didload == 0)
-    {
-    resetloop = 0;
-    for (cont_i = 0;(didload == 0 && cont_i < contest_count); cont_i++)
-      {
-      contest_selected = ((cont_i==0)?(contest_preferred):(contest_alternate));
-
-#ifdef DEBUG
-Log("Loadblock::loop %u (contest %u), isdone: %s\n", cont_i, 
-      contest_selected, (client->contestdone[contest_selected])?"Yes":"No" );
-#endif
-      if ( client->contestdone[contest_selected] == 0)
-        {
-        longcount = client->GetBufferRecord( &fileentry, contest_selected, 0 );
-
-        if (longcount < 0 && didupdate == 0 && client->nonewblocks == 0)
-          {
-          didupdate = 
-            client->BufferUpdate((BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
-          if (client->randomchanged)        
-            RefreshRandomPrefix( client );
-          #ifdef DEBUG
-          Log("Loadblock::fetch([anycontest]) -> %s\n", 
-             (didupdate>0 && (didupdate&BUFFERUPDATE_FETCH)!=0)?("Success"):("Failed") );
-          #endif
-          if (!(didupdate < 0))
-            {
-            if (didupdate!=0)
-              *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
-            if ((didupdate & BUFFERUPDATE_FETCH) != 0) /* fetched successfully */
-              longcount = client->GetBufferRecord( &fileentry, contest_selected, 0 );
-            }
-          didupdate = 1; /* don't try another network update */
-          } 
-
-#ifdef DEBUG
-Log("Loadblock::getfromdisk(contest = %u) -> %s\n",
-             contest_selected, (longcount>=0)?("Success"):("Failed") );
-#endif
-        if (longcount >= 0)
-          {
-          if (((unsigned long)(longcount)) < (load_problem_count - prob_i))
-            *bufupd_pending |= BUFFERUPDATE_FETCH;
-          didload = 1;
-          break;
-          }
-        }
-      }
-    }  
-    
-  if (didload) /* normal load from buffer succeeded */
-    {
     *load_needed = 0;
     
-    switch (fileentry.contest) {
+    switch (fileentry.contest) 
+    {
       case 0: // RC5
       case 1: // DES
         if ( ((fileentry.data.crypto.keysdone.lo)!=0) || 
              ((fileentry.data.crypto.keysdone.hi)!=0) )
-          {
+        {
+          s32 cputype = client->cputype; /* needed for FILEENTRY_CPU macro */
+
+          #if (CLIENT_OS == OS_RISCOS) /* second thread is x86 */
+          if (prob_i == 1) cputype = CPU_X86;
+          #endif
+
           // If this is a partial block, and completed by a different 
           // cpu/os/build, then reset the keysdone to 0...
           if ((fileentry.os      != FILEENTRY_OS) ||
               (fileentry.buildhi != FILEENTRY_BUILDHI) || 
               (fileentry.cpu     != FILEENTRY_CPU) || /* uses 'cputype' variable */
               (fileentry.buildlo != FILEENTRY_BUILDLO))
-            {
+          {
             fileentry.data.crypto.keysdone.lo = fileentry.data.crypto.keysdone.hi = 0;
-            //LogScreen("Read partial block from another cpu/os/build.\n"
-            // "Marking entire block as unchecked.\n");
-            }
+            //LogScreen("Read partial packet from another cpu/os/build.\n"
+            //                     "Marking entire packet as unchecked.\n");
+          }
           else if (((fileentry.data.crypto.iterations.lo) & 0x00000001L) == 1)
-            {
-            // If a block was finished with an 'odd' number of keys done, 
+          {
+            // If packet was finished with an 'odd' number of keys done, 
             // then make redo the last key
             fileentry.data.crypto.iterations.lo = fileentry.data.crypto.iterations.lo & 0xFFFFFFFEL;
             fileentry.data.crypto.key.lo        = fileentry.data.crypto.key.lo & 0xFEFFFFFFL;
-            }
           }
+        }
         break;
       case 2: // OGR
         break;
     }
-    } 
+  } 
   else /* normal load from buffer failed */
-    {
-    if (client->contestdone[contest_preferred] && 
-        client->contestdone[contest_alternate])
-      *load_needed = NOLOAD_ALLCONTESTSCLOSED; /* -2 */
+  {
+    if (client->rc564closed)
+      *load_needed = NOLOAD_NORANDOM; /* -1 */
     else if (client->nonewblocks)
       *load_needed = NOLOAD_NONEWBLOCKS; /* -3 */
     else if (client->blockcount < 0) /* no random blocks permitted */
       *load_needed = NOLOAD_NORANDOM; /* -1 */
     else /* random blocks permitted */
-      {
+    {
       *load_needed = 0;
       didload = 1;
       didrandom = 1;
       RefreshRandomPrefix(client); //get/put an up-to-date prefix 
 
       u32 randomprefix = ( ( (u32)(client->randomprefix) ) + 1 ) & 0xFF;
+      if (randomprefix == 1) randomprefix = 101;
       fileentry.data.crypto.key.lo = Random( NULL, 0 ) & 0xF0000000L;
       fileentry.data.crypto.key.hi = (Random( NULL, 0 ) & 0x00FFFFFFL) + 
                               ( randomprefix << 24); // 64 bits significant
@@ -571,41 +572,54 @@ Log("Loadblock::getfromdisk(contest = %u) -> %s\n",
       fileentry.contest = 0; // Random blocks are always RC5, not DES.
       fileentry.checksum = 0;
       fileentry.scramble = 0;
-      }
     }
+  }
 
 #ifdef DEBUG
 Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Success"):("Failed")) );
 #endif
     
   if (didload) /* success */
-    {
+  {
+    u32 timeslice = 0x10000;
+    #if (defined(INIT_TIMESLICE) && (INIT_TIMESLICE > 64))
+    timeslice = INIT_TIMESLICE;
+    #endif
     *load_needed = 0;
     *contest = (unsigned int)(fileentry.contest);
     thisprob->LoadState( (ContestWork *) &fileentry , 
-          (u32) (fileentry.contest), client->timeslice, client->cputype );
-    norm_key_count = 1;
-    switch (fileentry.contest) {
+          (u32) (fileentry.contest), timeslice, client->cputype );
+    thisprob->loaderflags = 0;
+
+    switch (fileentry.contest) 
+    {
       case 0: // RC5
       case 1: // DES
         norm_key_count = (unsigned int)__iter2norm((fileentry.data.crypto.iterations.lo),
                                                    (fileentry.data.crypto.iterations.hi));
+        if (norm_key_count == 0)
+        {
+          Log("Ouch!: normkeycount == 0 for iter %08x:%08x\n",fileentry.data.crypto.iterations.hi,fileentry.data.crypto.iterations.lo);
+          norm_key_count++;
+        }
         break;
       case 2: // OGR
+        norm_key_count = fileentry.data.ogr.stub.marks;
         break;
     }
 
     ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
 
     if (load_problem_count <= COMBINEMSG_THRESHOLD)
-      {
+    {
       const char *cont_name = CliGetContestNameFromID(*contest);
       unsigned int startpercent = (unsigned int)( thisprob->startpercent/10 );
 
-      switch (fileentry.contest) {
+      switch (fileentry.contest) 
+      {
         case 0: // RC5
         case 1: // DES
-          Log("Loaded %s%s %u*2^28 block %08lX:%08lX%c(%u.%02u%% done)",
+          Log("Loaded %s%s %u*2^28 packet %08lX:%08lX%c(%u.%02u%% done)",
                   cont_name, ((didrandom)?(" random"):("")), norm_key_count,
                   (unsigned long) ( fileentry.data.crypto.key.hi ),
                   (unsigned long) ( fileentry.data.crypto.key.lo ),
@@ -615,13 +629,13 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
         case 2: // OGR
           Log("Loaded %s stub %s (%u.%02u%% done)",
                   cont_name,
-                  stubstr(&fileentry.data.ogr.stub),
+                  ogr_stubstr(&fileentry.data.ogr.stub),
                   ((startpercent!=0 && startpercent<=10000)?(' '):(0)),
                   (startpercent/100), (startpercent%100) );
           break;
       }
-      }
-    } 
+    } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
+  } /* if (didload) */
 
   return norm_key_count;
 }    
@@ -824,7 +838,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
       if (loaded_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD )
         {
-        Log( "Loaded %u %s block%s (%u*2^28 keys) from %s\n", 
+        Log( "Loaded %u %s packet%s (%u*2^28 keys) from %s\n", 
               loaded_problems_count[cont_i], cont_name,
               ((loaded_problems_count[cont_i]==1)?(""):("s")),
               loaded_normalized_key_count[cont_i],
@@ -833,7 +847,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
       if (saved_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD)
         {
-        Log( "Saved %u %s block%s (%u*2^28 keys) to %s\n", 
+        Log( "Saved %u %s packet%s (%u*2^28 keys) to %s\n", 
               saved_problems_count[cont_i], cont_name,
               ((saved_problems_count[cont_i]==1)?(""):("s")),
               saved_normalized_key_count[cont_i],
@@ -887,8 +901,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
     {
     const char *cont_name = CliGetContestNameFromID(cont_i);
-    if (contestdone[cont_i]==0 && 
-      (bufupd_pending || loaded_problems_count[cont_i] || saved_problems_count[cont_i]))
+    if (bufupd_pending || loaded_problems_count[cont_i] || saved_problems_count[cont_i])
       {
       unsigned int inout;
       for (inout=0;inout<=1;inout++)
@@ -898,7 +911,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
         if (block_count >= 0)
           {
           sprintf(buffer, 
-              "%ld %s block%s (%lu*2^28 keys) %s in %s",
+              "%ld %s packet%s (%lu*2^28 keys) %s in %s",
               block_count, 
               cont_name, 
               ((block_count == 1)?(""):("s")),  
@@ -964,7 +977,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
       }
     if (limitsexceeded)
       {
-      Log( "Shutdown - block limit exceeded.\n" );
+      Log( "Shutdown - packet limit exceeded.\n" );
       RaiseExitRequestTrigger();
       }
     }
