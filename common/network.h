@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.61  1999/03/31 22:27:30  cyp
+// Created ::ShowConnection() so that the connected host can be shown later
+// on get/put and not simply when the connection is established.
+//
 // Revision 1.60  1999/03/23 10:17:23  cyp
 // a) changed ::Reset() to take svc address to reset to; b) changed ::Put()
 // to use Reset() instead of Open();
@@ -394,7 +398,7 @@ public:
 
   int SetPeerAddress( u32 addr ) 
     { if (svc_hostaddr == 0) svc_hostaddr = addr; return 0; }
-    // used by buffupd when proxies return an address in the scram packet
+    // used by buffupd when proxies return an address in a packet
     
   int Reset( u32 thataddress );
     // reset the connection (if thataddress==0, then hard).
@@ -402,6 +406,9 @@ public:
     
   u32 GetPeerAddress(void)  { return svc_hostaddr; }
     //for debugging
+
+  void ShowConnection(void);
+    //show who we are connected to. (::Open() no longer does this)
 };
 
 ///////////////////////////////////////////////////////////////////////////

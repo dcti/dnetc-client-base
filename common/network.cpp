@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.90  1999/03/31 22:27:30  cyp
+// Created ::ShowConnection() so that the connected host can be shown later
+// on get/put and not simply when the connection is established.
+//
 // Revision 1.89  1999/03/23 20:17:10  dicamillo
 // Add MacOS code for LowLevelGet and LowLevelPut.
 //
@@ -203,7 +207,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.89 1999/03/23 20:17:10 dicamillo Exp $"; }
+return "@(#)$Id: network.cpp,v 1.90 1999/03/31 22:27:30 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -449,24 +453,24 @@ Network::Network( const char * servname, int servport, int _nofallback,
 
   mode = startmode = 0;
   if (_enctype == 1 /*uue*/ || _enctype == 3 /*http+uue*/)
-    {
+  {
     startmode |= MODE_UUE;
-    }
+  }
   if (_enctype == 2 /*http*/ || _enctype == 3 /*http+uue*/)
-    {
+  {
     startmode |= MODE_HTTP;
     if (_fwallhost && _fwallhost[0])
-      {
+    {
       fwall_hostport = _fwallport;
       if (_fwalluid)
         strncpy( fwall_userpass, _fwalluid, sizeof(fwall_userpass));
       __hostnamecpy( fwall_hostname, _fwallhost, sizeof(fwall_hostname));
-      }
     }
+  }
   else if (_enctype == 4 /*socks4*/ || _enctype == 5 /*socks5*/)
-    {
+  {
     if (_fwallhost && _fwallhost[0])
-      {
+    {
       startmode |= ((_enctype == 4)?(MODE_SOCKS4):(MODE_SOCKS5));
       fwall_hostport = _fwallport;
       __hostnamecpy(fwall_hostname, _fwallhost, sizeof(fwall_hostname));
@@ -474,8 +478,8 @@ Network::Network( const char * servname, int servport, int _nofallback,
         strncpy(fwall_userpass, _fwalluid, sizeof(fwall_userpass));
       if (fwall_hostport == 0)
         fwall_hostport = 1080;
-      }
     }
+  }
   mode = startmode;
 
   autofindkeyserver = __fixup_dnethostname(server_name,&server_port,startmode);
@@ -534,6 +538,44 @@ int Network::Open( SOCKET insock)
 
   return 0;
 }  
+
+/* ----------------------------------------------------------------------- */
+
+void Network::ShowConnection(void)
+{
+  if (verbose_level > 0 && !reconnected)
+  {
+    const char *targethost = svc_hostname;
+    unsigned int len = strlen( targethost );
+    const char sig[]=".distributed.net";
+    char scratch[sizeof(sig) + 20];
+    if ((len > (sizeof( sig ) - 1) && autofindkeyserver &&
+      strcmpi( &targethost[(len-(sizeof( sig )-1))], sig ) == 0))
+    {
+      targethost = sig + 1;
+      if (svc_hostaddr)
+      {
+        sprintf(scratch, "%s %s", sig+1, __inet_ntoa__(svc_hostaddr));
+        targethost = scratch;
+      }
+    }
+        
+    if ((startmode & MODE_PROXIED) == 0 || fwall_hostname[0] == 0 /*http*/)
+    {  
+      LogScreen("Connected to %s:%u...\n", targethost,
+               ((unsigned int)(svc_hostport)) );
+    }
+    else
+    {
+      LogScreen( "Connected to %s:%u\nvia %s proxy %s:%u\n",
+                 targethost, ((unsigned int)(svc_hostport)),
+                 ((startmode & MODE_SOCKS5)?("SOCKS5"):
+                 ((startmode & MODE_SOCKS4)?("SOCKS4"):("HTTP"))),
+            fwall_hostname, (unsigned int)fwall_hostport );
+    }
+  }
+  return;
+}
 
 /* ----------------------------------------------------------------------- */
 
@@ -689,51 +731,6 @@ int Network::Open( void )               // returns -1 on error, 0 on success
 
     if (success)
     {  
-      if (verbose_level > 0 && !reconnected)
-      {
-        const char *targethost = svc_hostname;
-        unsigned int len = strlen( targethost );
-        const char sig[]=".distributed.net";
-        char scratch[sizeof(sig) + 20];
-        if ((len > (sizeof( sig ) - 1) && autofindkeyserver &&
-           strcmpi( &targethost[(len-(sizeof( sig )-1))], sig ) == 0))
-        {
-          targethost = sig + 1;
-          if (svc_hostaddr)
-          {
-            sprintf(scratch, "%s %s", sig+1, __inet_ntoa__(svc_hostaddr));
-            targethost = scratch;
-          }
-        }
-        
-        if ((startmode & MODE_PROXIED) == 0 || fwall_hostname[0] == 0 /*http*/)
-        {  
-          #ifdef DEBUG
-          Log
-          #else
-          LogScreen
-          #endif
-          ("Connecting to %s:%u...\n", targethost,
-               ((unsigned int)(svc_hostport)) );
-        }
-        else
-        {
-          #ifdef DEBUG
-          Log
-          #else
-          LogScreen
-          #endif
-          ( "Connecting to %s:%u\n"
-            "via %s proxy %s:%u\n",
-            targethost,
-            ((unsigned int)(svc_hostport)),
-            ((startmode & MODE_SOCKS5)?("SOCKS5"):
-              ((startmode & MODE_SOCKS4)?("SOCKS4"):
-               ((startmode & MODE_HTTP)?("HTTP"):("???")))),
-            fwall_hostname, (unsigned int)fwall_hostport );
-        }
-      }
-
       #ifndef ENSURE_CONNECT_WITH_BLOCKING_SOCKET
       if (iotimeout > 0)
       {
@@ -1705,7 +1702,7 @@ int Network::LowLevelPut(const char *data,int length)
   #if (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32S)
   if (sendquota > 0x7FFF)  /* 16 bit OS but int is 32 bits */
     sendquota = 0x7FFF;
-  #elif (CLIENT_OS == OS_MACOS)	
+  #elif (CLIENT_OS == OS_MACOS) 
   if (sendquota > 0xFFFF)  /* Mac network library uses "unsigned short" */
     sendquota = 0xFFFF;
   #else
@@ -1875,7 +1872,7 @@ int Network::LowLevelGet(char *data,int length)
   #if ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
   if (writequota > 0x7FFF)
     writequota = 0x7FFF;
-  #elif (CLIENT_OS == OS_MACOS)	
+  #elif (CLIENT_OS == OS_MACOS) 
   if (writequota > 0xFFFF)  /* Mac network library uses "unsigned short" */
     writequota = 0xFFFF;
   #else
