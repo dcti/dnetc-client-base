@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.50  1999/03/31 21:54:28  cyp
+// a) Created separate (internal) Run_RC5(), Run_DES() and Run_OGR() sub-
+// functions. b) Folded AlignTimeslice() method into Run_RC5() since its only
+// useful for RC5.
+//
 // Revision 1.49  1999/03/20 18:14:50  gregh
 // Fix ogr.h includes.
 //
@@ -237,6 +242,7 @@ public:
   int resultcode; /* previously rc5result.result */
   u32 startpercent;
   u32 percent;
+  u32 runtime_sec, runtime_usec; /* ~time spent in core */
   int restart;
   u32 timehi, timelo;
   int started;
@@ -275,6 +281,10 @@ public:
   int (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations );
   #endif
 
+  int Run_RC5(u32 *timeslice); /* \    run for n timeslices.                */
+  int Run_DES(u32 *timeslice); /*  > - set actual number of slices that ran */
+  int Run_OGR(u32 *timeslice); /* /    return same retcode as Run()         */
+
   Problem(long _threadindex = -1L);
   ~Problem();
 
@@ -308,10 +318,6 @@ public:
                                  ((double)(contestwork.crypto.keysdone.lo))) /
         ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
                                  ((double)(contestwork.crypto.iterations.lo)))) ); }
-
-  u32 AlignTimeslice(void);
-     // return a modified ::tslice value that [has been adjusted if 
-     // >(iter-keysdone) and] is an even multiple of pipeline_count and 2 
 
 
 #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
