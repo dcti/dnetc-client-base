@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.h,v $
+// Revision 1.5  1999/01/03 02:32:15  cyp
+// Added an (optional) no_trigger switch to RefreshRandomPrefix().
+//
 // Revision 1.4  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -32,7 +35,7 @@
 int ReadConfig(Client *client);
 void ValidateConfig(Client *client);
 int WriteConfig(Client *client, int writefull /* defaults to 0*/);
-void RefreshRandomPrefix( Client *client );
+void RefreshRandomPrefix( Client *client, int no_trigger = 0 );
 
 #if defined(WIN32GUI)
 void InternalReadConfig( IniSection &ini );
