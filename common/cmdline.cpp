@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.68 2001/01/08 22:57:01 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.69 2001/01/17 00:11:05 cyp Exp $"; }
 
 //#define TRACE
 
@@ -31,7 +31,6 @@ return "@(#)$Id: cmdline.cpp,v 1.133.2.68 2001/01/08 22:57:01 cyp Exp $"; }
 #include "confrwv.h"   // ConfigRead()
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "triggers.h"  // TRIGGER_PAUSE_SIGNAL
-#include "selcore.h"   // selcoreValidateCoreIndex()
 #include "cmdline.h"   // ourselves
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
@@ -903,12 +902,12 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             }  
             else /* coretype */
             {
+              /* note: we cannot use selcoreValidateCoreIndex() from here */
+              /* because the core table isn't initialized yet, and that can't */
+              /* be initialized until we have the user's core selections. */
               if (n < 0)
                 n = -1;
-              if ((n != -1) && (n != selcoreValidateCoreIndex(contest, n)))
-                invalid_value = 1;
-              else  
-                client->coretypes[contest] = n;
+              client->coretypes[contest] = n;
             }
           }
           else /* if (logging_is_initialized) */
@@ -969,11 +968,18 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             }
             else /* coretype */
             {
+              /* the user will be advised of (invalid) core selection when */
+              /* a cruncher attempts to select that core. */
+              #if 0
               n = client->coretypes[contest];
-              strcpy(scratch,"(auto-select)");
-              if (selcoreValidateCoreIndex(contest,n)>=0)
-                sprintf(scratch,"#%d (%s)",n,selcoreGetDisplayName(contest,n));
-              LogScreenRaw("%s preferred core set to %s\n", cname, scratch );
+              if (n < 0 || selcoreValidateCoreIndex(contest,n) == n)
+              {
+                strcpy(scratch,"(auto-select)");
+                if (n >= 0)
+                  sprintf(scratch,"#%d (%s)",n,selcoreGetDisplayName(contest,n));
+                LogScreenRaw("%s preferred core set to %s\n", cname, scratch );
+              }
+              #endif
             }
           }
         }
