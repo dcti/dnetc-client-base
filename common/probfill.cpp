@@ -13,15 +13,17 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.83 2002/09/15 21:45:49 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.84 2002/10/06 19:58:38 andreasb Exp $"; }
 
 //#define TRACE
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
-#include "client.h"    // CONTEST_COUNT, FileHeader, Client class, etc
+#include "projdata.h"  // general project data: ids, flags, states; names, ...
+#include "client.h"    // CONTEST_COUNT, FileHeader, struct Client, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
-#include "problem.h"   // Problem class
+#include "projdata.h"  // project ids, flags, states
+#include "problem.h"   // struct Problem
 #include "logstuff.h"  // Log()/LogScreen()
 #include "clitime.h"   // CliGetTimeString()
 #include "probman.h"   // GetProblemPointerFromIndex()
@@ -564,13 +566,15 @@ static long __loadapacket( Client *client,
                            unsigned int prob_i /* for which 'thread' */, 
                            int return_single_count /* see above */ )
 {                    
-  unsigned int cont_i; 
+  unsigned int proj_i; 
   long bufcount, totalcount = -1;
 
-  for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++ )
+  for (proj_i = 0; proj_i < PROJECT_COUNT; proj_i++ )
   {
-    unsigned int selproject = (unsigned int)client->loadorder_map[cont_i];
-    if (selproject >= CONTEST_COUNT) /* user disabled */
+    unsigned int selproject = client->project_order_map[proj_i];
+    if (ProjectGetFlags(selproject) == PROJECT_UNSUPPORTED)
+      continue;
+    if (client->project_state[selproject] & PROJECTSTATE_USER_DISABLED)
       continue;
     if (!IsProblemLoadPermitted( (long)prob_i, selproject ))
     {
@@ -614,24 +618,29 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   unsigned int did_load = 0;
   int retry_due_to_failed_loadstate = 0;
 
+  TRACE_OUT((+1, "__IndivProbLoad()\n"));
+
   do /* while (retry_due_to_failed_loadstate) */
   {
+    TRACE_OUT((0, "do /* while (retry_due_to_failed_loadstate) */\n"));
     WorkRecord wrdata;
     int update_on_current_contest_exhaust_flag = (client->connectoften & 4);
     long bufcount;
-    int may_do_random_rc5_blocks, cont_i;
+    int may_do_random_blocks, random_project = -1, proj_i;
 
-    may_do_random_rc5_blocks = 0;
-    for (cont_i = 0; cont_i < CONTEST_COUNT; ++cont_i)
+    may_do_random_blocks = 0;
+    for (proj_i = 0; proj_i < PROJECT_COUNT; ++proj_i)
     {
-      if (client->loadorder_map[cont_i] == RC5) {
-        /* RC5 must be enabled to do randoms */
-        may_do_random_rc5_blocks = 1;
+      int projectid = client->project_order_map[proj_i];
+      if ((ProjectGetFlags(projectid) & PROJECTFLAG_RANDOM_BLOCKS) &&
+          ((client->project_state[projectid] & 
+              (PROJECTSTATE_USER_DISABLED | PROJECTSTATE_CLOSED)) == 0))
+      {
+        may_do_random_blocks = 1;
+        random_project = projectid;
         break;
       }
     }
-    if (client->rc564closed)
-      may_do_random_rc5_blocks = 0;
 
     retry_due_to_failed_loadstate = 0;
     bufcount = __loadapacket( client, &wrdata, 1, prob_i, 
@@ -656,13 +665,14 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     *load_needed = 0;
     if (bufcount >= 0) /* load from file suceeded */
       *load_needed = 0;
-    else if (!may_do_random_rc5_blocks || client->blockcount < 0)
+    else if (!may_do_random_blocks || client->blockcount < 0)
       *load_needed = NOLOAD_NORANDOM; /* -1 */
     else if (client->nonewblocks)
       *load_needed = NOLOAD_NONEWBLOCKS;
     else  /* using randoms is permitted */
       *load_needed = 0;
 
+    TRACE_OUT((0, "bufcount = %d, load_needed = %d, may_do_randoms = %d\n", bufcount, *load_needed, may_do_random_blocks));
     TRACE_BUFFUPD((0, "__Indiv...Load: bufcount = %d, load_needed = %d\n", bufcount, *load_needed));
     if (*load_needed == 0)
     {
@@ -679,7 +689,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       if (bufcount < 0) /* normal load from buffer failed */
       {                 /* so generate random */
         work = CONTESTWORK_MAGIC_RANDOM;       
-        *loaded_for_contest = 0; /* don't care. just to initialize */
+        *loaded_for_contest = random_project;
       }
       else
       {
@@ -767,6 +777,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     } /* if (*load_needed == 0) */
   } while (retry_due_to_failed_loadstate);
 
+  TRACE_OUT((-1, "__IndivProbLoad() => %d\n", did_load));
   return did_load;
 }    
 

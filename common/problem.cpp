@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.168 2002/09/28 01:58:06 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.169 2002/10/06 19:58:38 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -19,6 +19,7 @@ return "@(#)$Id: problem.cpp,v 1.168 2002/09/28 01:58:06 andreasb Exp $"; }
 #include "cputypes.h"
 #include "baseincs.h"
 #include "version.h"  //CLIENT_BUILD_FRAC
+#include "projdata.h" //general project data: ids, flags, states; names, ...
 #include "client.h"   //CONTEST_COUNT
 #include "clitime.h"  //CliClock()
 #include "logstuff.h" //LogScreen()
@@ -675,19 +676,17 @@ static int __InternalLoadState( InternalProblem *thisprob,
   //has to be done before anything else
   if (work == CONTESTWORK_MAGIC_RANDOM) /* ((const ContestWork *)0) */
   {
-// TODO?: acidblood/trashover
-//#ifdef HAVE_RC5_64_CORES
-    contestid = __gen_random_work(contestid, &for_magic);
+    if ((int)contestid != __gen_random_work(contestid, &for_magic))
+      return -2; /* ouch! random generation shouldn't fail if random block
+                    availability has been checked before requesting 
+                    CONTESTWORK_MAGIC_RANDOM */
     work = &for_magic;
     genned_random = 1;
-//#else
-//    return -2;
-// OK!
-//#endif
   }
   else if (work == CONTESTWORK_MAGIC_BENCHMARK) /* ((const ContestWork *)1) */
   {
-    contestid = __gen_benchmark_work(contestid, &for_magic);
+    if ((int)contestid != __gen_benchmark_work(contestid, &for_magic))
+      return -2; /* ouch! benchmark generation shouldn't fail */
     work = &for_magic;
     genned_benchmark = 1;
   }
