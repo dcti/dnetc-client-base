@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.43 2000/03/05 21:40:59 patrick Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.44 2000/03/11 03:01:46 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1254,8 +1254,9 @@ int ClientRun( Client *client )
     
     if (!TimeToQuit && CheckExitRequestTrigger())
     {
-      Log( "%s...\n",
-         (CheckRestartRequestTrigger()?("Restarting"):("Shutting down")) );
+      Log( "%s%s...\n",
+           (CheckRestartRequestTrigger()?("Restarting"):("Shutting down")),
+           (CheckExitRequestTriggeredByFlagfileNoIO()?(" (found exit flag file)"):("")) );
       TimeToQuit = 1;
       exitcode = 1;
     }
