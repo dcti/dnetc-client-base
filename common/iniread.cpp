@@ -18,16 +18,16 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.27.2.10 2000/06/18 19:01:08 andreasb Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.27.2.11 2000/06/19 13:43:24 cyp Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
 #include <ctype.h>   /* tolower()/isctrl(). do not use isspace()! */
 #include <stdlib.h>  /* malloc()/free()/atoi() */
 #include <limits.h>  /* UINT_MAX */
-#if defined(__BORLANDC__)
+#if defined(__BORLANDC__) || defined(_MSC_VER) /*don't dare use the 'uni' word*/
 #include <io.h>      /* access() */
-#elif !defined(_MSC_VER) /* ms-c has access() in stdlib.h */
+#else
 #include <unistd.h>  /* access() */
 #endif
 #include "iniread.h"
