@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.13  1999/01/17 23:18:13  silby
+// AutoSetThreshold added.
+//
 // Revision 1.12  1999/01/15 08:06:25  silby
 // Now calculates recommended buffer sizes as well.
 //
@@ -49,7 +52,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.12 1999/01/15 08:06:25 silby Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.13 1999/01/17 23:18:13 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -66,8 +69,54 @@ return "@(#)$Id: bench.cpp,v 1.12 1999/01/15 08:06:25 silby Exp $"; }
 #include "console.h"   // ConIsScreen()
 #include "clievent.h"  // event post etc.
 #include "bench.h"     // ourselves
+#include "confrwv.h"   // Read/Validate/WriteConfig()
 
 // --------------------------------------------------------------------------
+
+//Sets buffer thresholds
+void AutoSetThreshold( Client *clientp, unsigned int contest,
+                       unsigned int inbuffer, unsigned int outbuffer )
+{
+  int blockstobuffer=0;
+  char *contestnames[2]={"RC5","DES"};
+  Client *configclient;
+  int configchanged=0;
+
+  if ((contest > 1) || (contest < 0)) return;
+  if (!clientp) return;
+
+  configclient=new Client;
+  strcpy(configclient->inifilename,clientp->inifilename);
+  ReadConfig(configclient);
+
+  Benchmark(contest,1L<<20,-1,&blockstobuffer);
+
+  LogScreen("Setting %s buffer size to %i blocks.\n",
+            contestnames[contest],blockstobuffer);
+
+  if (inbuffer)
+    {
+    if (configclient->inthreshold[contest] != blockstobuffer)
+      configchanged=1;
+    configclient->inthreshold[contest]=blockstobuffer;
+    clientp->inthreshold[contest]=blockstobuffer;
+    };
+
+  if (outbuffer)
+    {
+    if (configclient->outthreshold[contest] != blockstobuffer)
+      configchanged=1;
+    configclient->outthreshold[contest]=blockstobuffer;
+    clientp->outthreshold[contest]=blockstobuffer;
+    };
+
+  if (configchanged)
+    {
+    ValidateConfig(configclient);
+    WriteConfig(configclient,1);
+    };
+  
+}
 
 //returns preferred block size or 0 if break
 u32 Benchmark( unsigned int contest, u32 numkeys, int cputype, int *numblocks)
