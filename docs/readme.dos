@@ -1,7 +1,7 @@
 
  RC5-DES Client for x86 DOS (PC-,MS-,DR- or whatever) 5.0 and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- document revision $Id: readme.dos,v 1.6 1999/05/06 18:35:51 cyp Exp $
+ document revision $Id: readme.dos,v 1.6.2.1 1999/06/03 15:07:47 cyp Exp $
 
  Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
 
@@ -85,4 +85,3 @@
     if it trapped the timer or idle interrupt, which would make it impossible 
     to use DOS calls (buffer I/O etc), since the DOS kernel is not reentrant 
     and the timer interrupt can fire from within the kernel.
-

@@ -1,8 +1,8 @@
 
  RC5-DES Client for Win16 (MS-Windows 3.1,WINE or whatever) and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- Document revision $Id: readme.w16,v 1.6 1999/05/06 18:35:52 cyp Exp $
-                                                          
+ Document revision $Id: readme.w16,v 1.6.2.1 1999/06/03 15:07:47 cyp Exp $
+
  Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
 
  This document covers information specific to the client for Win16.
@@ -11,7 +11,7 @@
 
     1.0  Getting started
     2.0  Win16 specific notes
-   
+
  1.0  Getting started ------------------------------------------------
  
     Just unpack the client in a directory of your choice and fire it up

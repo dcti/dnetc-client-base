@@ -1,7 +1,7 @@
 
  distributed.net RC5-DES Client for NetWare 3.11 and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- Document revision $Id: readme.nw,v 1.5 1999/05/06 18:35:51 cyp Exp $
+ Document revision $Id: readme.nw,v 1.5.2.1 1999/06/03 15:07:47 cyp Exp $
                                                           
  Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
  This version is a unified client for both SMP and non-SMP machines.
