@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.48  1999/03/18 18:53:42  cyp
+// old split-personality [parameters]offlinemode is now [networking]disabled
+// ie, no-networking means /absolutely/ no networking. The old value is
+// precompensated by the lurk/lurkonly flags before it is converted.
+//
 // Revision 1.47  1999/03/18 07:38:02  gregh
 // Add #ifdef GREGH blocks so we can safely leave CONTEST_COUNT at 2 for
 // current builds (until OGR is ready).
@@ -201,7 +206,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.47 1999/03/18 07:38:02 gregh Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.48 1999/03/18 18:53:42 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -222,10 +227,12 @@ return "@(#)$Id: confrwv.cpp,v 1.47 1999/03/18 07:38:02 gregh Exp $"; }
 
 static const char *OPTION_SECTION="parameters";
 static const char *OPTSECT_NET   ="networking";
-static const char *OPTSECT_RC5   ="rc5";
-static const char *OPTSECT_OGR   ="ogr";
 static const char *OPTSECT_MISC  ="misc";
+static const char *OPTSECT_RC5   ="rc5";
 //static const char *OPTSECT_DES   ="des";
+#ifdef GREGH
+static const char *OPTSECT_OGR   ="ogr";
+#endif
 
 //----------------------------------------------------------------------------
 
@@ -237,7 +244,7 @@ static void __remapObsoleteParameters( const char *fn )
              "contestdone" /* now in "rc564" */, "contestdone2", 
              "contestdone3", "contestdoneflags", "descontestclosed",
              "scheduledupdatetime" /* now in OPTSECT_NET */,
-             "processdes", "usemmx" };
+             "processdes", "usemmx", "runoffline" };
   int i;             
 
   if ((i = GetPrivateProfileIntB( OPTION_SECTION, "runbuffers", -123, fn )) != -123)
@@ -261,6 +268,15 @@ static void __remapObsoleteParameters( const char *fn )
     }
   }
 
+  if ((i = GetPrivateProfileIntB( OPTION_SECTION, "runoffline", -123, fn )) != -123)
+  {
+    if (i!=0 && (GetPrivateProfileIntB( OPTION_SECTION, "lurkonly", 0, fn ) ||
+        GetPrivateProfileIntB( OPTION_SECTION, "lurk", 0, fn )) )
+      i = 0;
+    if (i!=0)
+      WritePrivateProfileStringB( OPTSECT_NET, "disabled", "yes", fn );
+  }
+  
   /* unconditional deletion of obsolete keys */
   for (i = 0; i < (int)(sizeof(obskeys) / sizeof(obskeys[0])); i++)
     WritePrivateProfileStringB( OPTION_SECTION, obskeys[i], NULL, fn );    
@@ -355,7 +371,7 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   if (GetPrivateProfileIntB( sect, "runbuffers", 0, fn ))
     client->blockcount = -1;
   
-  client->offlinemode = GetPrivateProfileIntB( sect, "runoffline", client->offlinemode, fn );
+  client->offlinemode = GetPrivateProfileIntB( OPTSECT_NET, "disabled", client->offlinemode, fn );
   client->percentprintingoff = GetPrivateProfileIntB( sect, "percentoff", client->percentprintingoff, fn );
   client->connectoften = GetPrivateProfileIntB( sect, "frequent", client->connectoften , fn );
   client->nodiskbuffers = GetPrivateProfileIntB( sect, "nodisk", client->nodiskbuffers , fn );
@@ -385,6 +401,9 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
     { dialup.lurkmode = CONNECT_LURKONLY; client->connectoften = 1; }
   else if ((i & CONNECT_LURK)!=0 && GetPrivateProfileIntB( sect, "lurk", 0, fn ))
     dialup.lurkmode = CONNECT_LURK;
+  if (dialup.lurkmode)
+    client->offlinemode = 0;
+  
   if ((i & CONNECT_IFACEMASK)!=0)
     GetPrivateProfileStringB( OPTSECT_NET, "interfaces-to-watch", dialup.connifacemask,
                               dialup.connifacemask, sizeof(dialup.connifacemask), fn );
@@ -526,15 +545,14 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
 
     /* --- CONF_MENU_NET -- */
 
-    __XSetProfileInt( sect, "runoffline", client->offlinemode, fn, 0, 1);
+    __XSetProfileInt( OPTSECT_NET, "disabled", client->offlinemode, fn, 0, 1);
     __XSetProfileInt( sect, "nettimeout", client->nettimeout, fn, 60, 0);
     __XSetProfileInt( sect, "nofallback", client->nofallback, fn, 0, 1);
-    
+
     char *af=NULL, *host=client->keyproxy, *port = buffer;
     if (confopt_isstringblank(host) || client->autofindkeyserver)
-        { //delete keys so that old inis stay compatible and default.
-      host = NULL; if (client->keyport != 3064) port = NULL; }
-    else if (confopt_IsHostnameDNetHost(host))
+      host = NULL; //delete keys so that old inis stay compatible and default.
+    else if (confopt_IsHostnameDNetHost(host)) //make clear that name==port
         { af = "0"; if (client->keyport != 3064) port = NULL; }
     if (port!=NULL) sprintf(port,"%ld",client->keyport);
     WritePrivateProfileStringB( OPTSECT_NET, "autofindkeyserver", af, fn );
@@ -569,7 +587,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
         }
       }
     #endif // defined LURK
-
+    
     /* --- CONF_MENU_LOG -- */
 
     __XSetProfileStr( sect, "logname", client->logname, fn, NULL );
