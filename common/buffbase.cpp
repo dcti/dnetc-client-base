@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.52 2001/01/29 05:03:52 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.53 2001/02/23 00:03:29 sampo Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -303,13 +303,12 @@ long GetBufferRecord( Client *client, WorkRecord* data,
   if (__CheckBuffLimits( client ))
     return -1;
 
+  if (!(contest < CONTEST_COUNT))
+    return -1;
+  
   do
   {
-    if (!(contest < CONTEST_COUNT))
-    {
-      break; /* return -1 */
-    }
-    else if (client->nodiskbuffers == 0)
+    if (client->nodiskbuffers == 0)
     {
       filename = client->in_buffer_basename;
       if (use_out_file)
