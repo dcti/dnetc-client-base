@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.6 1999/07/20 03:36:02 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.7 1999/07/26 16:54:24 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -1104,13 +1104,16 @@ int Client::Run( void )
 
     if (!TimeToQuit && !isPaused)
     {
+      int anychanged;
       if (!percentprintingoff)
         LogScreenPercent( load_problem_count ); //logstuff.cpp
-      getbuff_errs+=LoadSaveProblems(load_problem_count,PROBFILL_GETBUFFERRS);
+      anychanged = LoadSaveProblems(load_problem_count,PROBFILL_ANYCHANGED);
       runstatics.refillneeded = 0;
 
       if (CheckExitRequestTriggerNoIO())
         continue;
+      else if (anychanged)      /* load/save action occurred */
+        timeNextCheckpoint = 0; /* re-checkpoint right away */
     }
 
     //------------------------------------
@@ -1193,8 +1196,6 @@ int Client::Run( void )
         }
         perc_now /= probs_counted;
 
-//LogScreen("ckpoint refresh check. %d%% dif\n", 
-//                           abs((int)(checkpointsPercent - ((int)perc_now))));
         if ( ( timeNextCheckpoint == 0 ) || ( CHECKPOINT_FREQ_PERCDIFF < 
           abs((int)(checkpointsPercent - ((unsigned int)perc_now))) ) )
         {
@@ -1202,11 +1203,10 @@ int Client::Run( void )
           if (CheckpointAction( CHECKPOINT_REFRESH, load_problem_count ))
             checkpointsDisabled = 1;
           timeNextCheckpoint = timeRun + (time_t)(CHECKPOINT_FREQ_SECSDIFF);
-//LogScreen("next refresh in %u secs\n", CHECKPOINT_FREQ_SECSDIFF);
         }
       }
     }
-
+  
     //------------------------------------
     // Lurking
     //------------------------------------
