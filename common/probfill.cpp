@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.47 1999/04/17 07:38:36 gregh Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.48 1999/04/17 21:02:19 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -144,7 +144,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       {
         case RC5:
         case DES:
-	case CSC:
+        case CSC:
         {
           norm_key_count = 
              (unsigned int)__iter2norm( (wrdata.work.crypto.iterations.lo),
@@ -219,7 +219,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           case DES:
           case CSC:
                   norm_key_count = (unsigned int)__iter2norm( 
-	                              (wrdata.work.crypto.iterations.lo),
+                                      (wrdata.work.crypto.iterations.lo),
                                       (wrdata.work.crypto.iterations.hi) );
                   if (norm_key_count == 0) /* test block */
                     norm_key_count = 1;
@@ -237,21 +237,21 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       if (msg)
       {
         char workunit[80];
-	switch (cont_i)
-	{
-	  case RC5:
-	  case DES:
+        switch (cont_i)
+        {
+          case RC5:
+          case DES:
           case CSC:
                  sprintf(workunit, "%08lX:%08lX", 
                        (long) ( wrdata.work.crypto.key.hi ),
                        (long) ( wrdata.work.crypto.key.lo ) );
-		 break;
-	  case OGR:
+                 break;
+          case OGR:
                  strcpy(workunit, ogr_stubstr(&wrdata.work.ogr.stub));
-		 break;
-	}
+                 break;
+        }
         Log( "%s packet %s%c(%u.%u0%% complete)\n", msg, workunit,
-	      ((permille == 0)?('\0'):(' ')), permille/10, permille%10 );
+              ((permille == 0)?('\0'):(' ')), permille/10, permille%10 );
       }
     } /* unconditional unload */
     
@@ -767,14 +767,25 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   }
 
   /* ============================================================ */
-
     
   for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
   {
-    const char *cont_name = CliGetContestNameFromID(cont_i);
+    unsigned int inout;
+    if (bufupd_pending && loaded_problems_count[cont_i]==0 && saved_problems_count[cont_i]==0)
+    {
+      bufupd_pending = 0;
+      for (inout = 0; inout < CONTEST_COUNT; inout++ )
+      {
+        if (((unsigned int)loadorder_map[inout]) == cont_i) /* not disabled */
+        {
+          bufupd_pending = 1;
+          break;
+        }
+      }
+    }
     if (bufupd_pending || loaded_problems_count[cont_i] || saved_problems_count[cont_i])
     {
-      unsigned int inout;
+      const char *cont_name = CliGetContestNameFromID(cont_i);
       for (inout=0;inout<=1;inout++)
       {
         unsigned long norm_count;
