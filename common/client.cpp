@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.183  1999/01/15 00:32:44  cyp
+// changed phrasing of 'distributed.net ID' at Nugget's request.
+//
 // Revision 1.182  1999/01/06 22:16:10  dicamillo
 // Changed credit for Dan Oetting at his request.
 //
@@ -164,7 +167,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.182 1999/01/06 22:16:10 dicamillo Exp $"; }
+return "@(#)$Id: client.cpp,v 1.183 1999/01/15 00:32:44 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -372,7 +375,7 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       LogRaw("\nRC5DES Client %s for %s%s%s%s started.\n",CLIENT_VERSIONSTRING,
              CLIENT_OS_NAME, ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
   
-      LogRaw( "Using distributed.net ID %s\n\n", dnet_id );
+      LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n", dnet_id );
       
       #if defined(BETA) && defined(BETA_EXPIRATION_TIME) && (BETA_EXPIRATION_TIME != 0)
       timeval currenttime;

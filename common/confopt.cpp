@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.14  1999/01/15 00:32:44  cyp
+// changed phrasing of 'distributed.net ID' at Nugget's request.
+//
 // Revision 1.13  1999/01/13 15:17:02  kbracey
 // Fixes to RISC OS processor detection and scheduling
 //
@@ -38,7 +41,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.13 1999/01/13 15:17:02 kbracey Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.14 1999/01/15 00:32:44 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -81,7 +84,7 @@ static const char *lurkmodetable[]=
 struct optionstruct conf_options[CONF_OPTION_COUNT]=
 {
 //0
-{ "id", CFGTXT("Your distributed.net ID"), "",
+{ "id", CFGTXT("Your email address (distributed.net ID)"), "",
   CFGTXT(
   "Completed blocks sent back to distributed.net are tagged with the email\n"
   "address of the person whose machine completed those blocks. That address\n"
