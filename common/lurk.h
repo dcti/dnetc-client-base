@@ -20,33 +20,56 @@ s32 dialwhenneeded;
 char connectionname[100];
   // For win32, name of connection to use, perhaps useful for other lurkers.
 
+Lurk();
+
 s32 CheckIfConnectRequested(void);
   // Returns the possible values of connectrequested
+
+s32 CheckForStatusChange(void);
+  // Checks to see if we've suddenly disconnected
+  // Return values:
+  // 0 = connection has not changed or has just connected
+  // -1 = we just lost the connection
+
+s32 DialIfNeeded(s32 force);
+  // Dials the connection if current parameters allow it.
+  // Force values:
+  // 0 = act normal
+  // 1 = override lurk-only mode and connect anyway.
+  // return values:
+  // 0=Already connected or connect succeeded.
+  // -1=There was an error, we're not connected.
+
+s32 HangupIfNeeded(void);
+  // Hangs up the connection if current parameters allow it.
+  // return values - 0 is the only return as of now.
+
+protected:
+
 s32 Start(void);
   // Initializes Lurk Mode -> 0=success, -1 = failed
-s32 Status(void);
-  // Checks status of connection -> !0 = connected
+
 s32 InitiateConnection(void);
   // Initiates a dialup connection
   // 0 = already connected, 1 = connection started,
   // -1 = connection failed
+
 s32 TerminateConnection(void);
   // -1 = connection did not terminate properly, 0 = connection
   // terminated
-s32 oldlurkstatus;
-  // Status of LurkStatus as of the last check.
+
+s32 Status(void);
+  // Checks status of connection -> !0 = connected
+
 s32 islurkstarted;
   // 0 = lurk functionality has not been initialized
   // 1 = lurk functionality has been initialized
-protected:
 
-friend void Log( const char *format, ...);
-friend void LogScreenf( const char *format, ... );
-#if defined(NEEDVIRTUALMETHODS)
-friend virtual void LogScreen ( const char *text );
-    // logs preformated message to screen only.  can be overriden.
-#else
-friend void LogScreen ( const char *text );
-    // logs preformated message to screen only.  can be overriden.
-#endif
+s32 oldlurkstatus;
+  // Status of LurkStatus as of the last check.
+
+s32 dialstatus;
+  // Tells us if we're in the process of using a dialup connection
+  // 0 = We did not initiate any dialing, don't touch the connect.
+  // 1 = We dialed, you're welcome to hangup.
 };

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.115  1998/08/02 05:36:19  silby
+// Lurk functionality is now fully encapsulated inside the Lurk Class, much less code floating inside client.cpp now.
+//
 // Revision 1.114  1998/08/02 03:16:31  silby
 // Major reorganization:  Log,LogScreen, and LogScreenf are now in logging.cpp, and are global functions - client.h #includes logging.h, which is all you need to use those functions.  Lurk handling has been added into the Lurk class, which resides in lurk.cpp, and is auto-included by client.h if lurk is defined as well. baseincs.h has had lurk-specific win32 includes moved to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of printf. client.cpp has had variable names changed as well, etc.
 //
@@ -101,7 +104,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.114 1998/08/02 03:16:31 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.115 1998/08/02 05:36:19 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -277,7 +280,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.114 1998/08/02 03:16:31 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.115 1998/08/02 05:36:19 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -623,15 +626,6 @@ if (force == 0) // check to see if fetch should be done
           || !nwCliIsNetworkAvailable(0)
       #endif
     ) return( -1 );
-
-  #if defined(LURK)
-    if ( (dialup.lurkmode==2) && (dialup.Status() == 0) )
-      {
-      return -1;
-      };
-      // lurkonly will never connect if we're not online, unless forced
-  #endif
-
   };
 
   if (contestdone[contest]) return( -1 );
@@ -645,11 +639,8 @@ if (force == 0) // check to see if fetch should be done
 
   #if defined(LURK)
   // Check if we need to dial, and if update started this connect or not
-  if (dialup.dialwhenneeded=1 && !netin)
-    {
-    if (dialup.InitiateConnection() < 0) return -1; // We need to dial, but
-      // if the connect fails, error back
-    };
+  if (!netin) // check if update started the connect, or if we must
+    if (dialup.DialIfNeeded(force) < 0) return -1; // connection failed
   #endif
 
 
@@ -706,11 +697,11 @@ if (force == 0) // check to see if fetch should be done
 #endif
 
 #if defined(LURK)
-    if(dialup.lurkmode && (dialup.Status() < dialup.oldlurkstatus))   // lost tcpip connection while trying to fetch
-       {
-       LogScreenf("TCPIP Connection Lost - Aborting fetch\n");
-       return -3;                 // so stop trying and return
-       }
+    if (dialup.CheckForStatusChange() == -1)
+      {
+      LogScreenf("TCPIP Connection Lost - Aborting fetch\n");
+      return -3;                 // so stop trying and return
+      };
 #endif
 
     if ( SignalTriggered )
@@ -965,12 +956,8 @@ if (force == 0) // check to see if fetch should be done
 
   #if defined(LURK)
   // Check if we need to hangup (unless update started this connect)
-  if (dialup.dialwhenneeded=1 && !netin)
-    {
-    if (dialup.oldlurkstatus == 0) // We weren't previously connected,
-                            // but are now
-      dialup.TerminateConnection();     
-    };
+  if (!netin)
+    dialup.HangupIfNeeded();
   #endif
 
   LogScreen( "\n" );
@@ -1036,15 +1023,6 @@ if (force == 0) // Check if flush should be done
           || !nwCliIsNetworkAvailable(0)
     #endif
      ) return( -1 );
-
-  #if defined(LURK)
-    if ( (dialup.lurkmode==2) && (dialup.Status() == 0) )
-      {
-      return -1;
-      };
-      // lurkonly will never connect if we're not online, unless forced
-  #endif
-
   };
 
   if (contestdone[contest]) return( -1 );
@@ -1058,11 +1036,8 @@ if (force == 0) // Check if flush should be done
 
   #if defined(LURK)
   // Check if we need to dial, and if update started this connect or not
-  if (dialup.dialwhenneeded=1 && !netin)
-    {
-    if (dialup.InitiateConnection() < 0) return -1; // We need to dial, but
-      // if the connect fails, error back
-    };
+  if (!netin) // check if update started the connect, or if we must
+    if (dialup.DialIfNeeded(force) < 0) return -1; // connection failed
   #endif
 
   // ready the net
@@ -1116,11 +1091,11 @@ if (force == 0) // Check if flush should be done
     #endif
 
 #if defined(LURK)
-    if(dialup.lurkmode && (dialup.Status() < dialup.oldlurkstatus))   // lost tcpip connection while trying to flush
+    if (dialup.CheckForStatusChange() == -1)
        {
        LogScreenf("TCPIP Connection Lost - Aborting flush\n");
        return -3;                 // so stop trying and return
-       }
+       };
 #endif
 
     if ( 1==SignalTriggered ) return -1;
@@ -1402,12 +1377,8 @@ if (force == 0) // Check if flush should be done
 
   #if defined(LURK)
   // Check if we need to hangup (unless update started this connect)
-  if (dialup.dialwhenneeded=1 && !netin)
-    {
-    if (dialup.oldlurkstatus == 0) // We weren't previously connected,
-                            // but are now
-      dialup.TerminateConnection();     
-    };
+  if (!netin)
+    dialup.HangupIfNeeded();
   #endif
 
   LogScreen( "\n" );
@@ -1431,6 +1402,7 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr, s32 force )
   Network *net;
 
 if (force == 0) // We need to check if we're allowed to connect
+  // If force==1, we don't care about the offline mode
   {
     if (offlinemode
       #if (CLIENT_OS == OS_NETWARE)
@@ -1438,14 +1410,6 @@ if (force == 0) // We need to check if we're allowed to connect
       #endif
     )
     return( -1 );
-
-  #if defined(LURK)
-    if ( (dialup.lurkmode==2) && (dialup.Status() == 0) )
-      {
-      return -1;
-      };
-      // lurkonly will never connect if we're not online, unless forced
-  #endif
   };
 
     mailmessage.quietmode=quietmode;
@@ -1453,14 +1417,10 @@ if (force == 0) // We need to check if we're allowed to connect
        mailmessage.checktosend(0);
 
   // Ready the net
-  #if defined(LURK)
 
+  #if defined(LURK)
   // Check if we need to dial
-  if (dialup.dialwhenneeded=1)
-    {
-    if (dialup.InitiateConnection() < 0) return -1; // We need to dial, but
-      // if the connect fails, error back
-    };
+  if (dialup.DialIfNeeded(force) < 0) return -1; // connection failed
   #endif
 
   net = new Network( (const char *) (keyproxy[0] ? keyproxy : NULL ),
@@ -1519,12 +1479,7 @@ if (force == 0) // We need to check if we're allowed to connect
 
   #if defined(LURK)
   // Check if we need to hangup
-  if (dialup.dialwhenneeded=1)
-    {
-    if (dialup.oldlurkstatus == 0) // We weren't previously connected,
-                            // but are now
-      dialup.TerminateConnection();     
-    };
+  dialup.HangupIfNeeded();
   #endif
 
   if (fetcherr && flusherr) {

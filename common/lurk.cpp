@@ -4,6 +4,7 @@
 
 #include "baseincs.h"
 #include "lurk.h"
+#include "logging.h"
 
 Lurk dialup;
 
@@ -28,10 +29,21 @@ static rasgeterrorstringT rasgeterrorstring = NULL;
 static rasgetentrydialparamsT rasgetentrydialparams = NULL;
 #endif
 
+Lurk::Lurk()
+  // Init lurk internal variables
+{
+islurkstarted=0;
+oldlurkstatus=0;
+
+}
+
 s32 Lurk::CheckIfConnectRequested(void)
   // Returns the possible values of connectrequested
 {
 s32 connectrequested;
+
+if (lurkmode < 1) return 0; // We're not supposed to lurk!
+
 if (Status() == 0) // We're not connected
   {
   if(oldlurkstatus != 0)    // Lost the connection
@@ -61,6 +73,87 @@ if (Status() == 0) // We're not connected
 
 return connectrequested;
 }
+
+s32 Lurk::CheckForStatusChange(void)
+  // Checks to see if we've suddenly disconnected
+  // Return values:
+  // 0 = connection has not changed or has just connected
+  // -1 = we just lost the connection
+{
+
+if ( (lurkmode < 1) && (dialwhenneeded < 1) )return 0; // We're not lurking.
+
+if (Status() < oldlurkstatus) // we got disconnected!
+  return -1;
+return 0;
+}
+
+s32 Lurk::DialIfNeeded(s32 force)
+  // Dials the connection if current parameters allow it.
+  // Force values:
+  // 0 = act normal
+  // 1 = override lurk-only mode and connect anyway.
+  // return values:
+  // 0=Already connected or connect succeeded.
+  // -1=There was an error, we're not connected.
+{
+s32 returnvalue;
+
+if (Status() == 1) // We're already connected
+  {
+  dialstatus=0; // Make sure we won't hangup
+  return 0;
+  };
+
+// Ok, we're not connected, check if we should dial.
+
+// First, check if we're in lurk-only, and if we're allowed to dial.
+
+if (force == 0) // No override
+  if (lurkmode == 2) return -1; // lurk-only mode, we're not allowed to
+                                // connect
+
+if (dialwhenneeded==0) // We'll have to let auto-dial handle this.
+  {
+  dialstatus=0;
+  return 0;
+  }
+else if (dialwhenneeded==1) // Let's dial!
+  {
+  returnvalue=InitiateConnection(); // Go dial! Yeah!
+  switch (returnvalue)
+    {
+    case -1: // Connection failed, error.
+             dialstatus=0;
+             return -1;
+    case 0: // We were already connected.
+            dialstatus=0;
+            return 0;
+    case 1: // We just made a connection.
+            dialstatus=1; // We have to hangup later.
+            return 0;
+    };
+  };
+// I don't know how you'd get here, so it's an error.
+return -1;
+}
+
+s32 Lurk::HangupIfNeeded(void)
+{
+if (dialwhenneeded != 1) return 0; // We don't handle dialing
+
+if (Status() == 0) return 0; // We're already disconnected
+
+if (dialstatus == 1) // We dialed, so we should hangup
+  {
+  dialstatus=0; // Make sure we don't hangup twice.
+  TerminateConnection(); // Hangup.
+  };
+
+return 0;
+
+}
+
 
 s32 Lurk::Start(void)// Initializes Lurk Mode
   // 0 == Successfully started lurk mode
@@ -271,7 +364,7 @@ if (islurkstarted != 1) return -1; // Lurk can't be started, evidently
 if (Status() == 0) return 0; // We're already disconnected
 
 #if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
-if (lurkmode && rasenumconnections && rasgetconnectstatus)
+if (rasenumconnections && rasgetconnectstatus)
   {
   RASCONN rasconn[8];
   DWORD cb;
