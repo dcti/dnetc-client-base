@@ -5,9 +5,16 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3 1999/04/04 16:28:04 cyp Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3.2.1 1999/09/19 16:04:38 cyp Exp $"
 
-/* returns name for core number (0...) or "" if no such core */
-const char *GetCoreNameFromCoreType( unsigned int coretype ); 
+/* returns name for cputype (from .ini), 0... or "" if no such cputype */
+const char *selcoreUserGetCPUNameFromCPUType( int user_cputype );
+#define GetCoreNameFromCoreType(x) selcoreUserGetCPUNameFromCPUType(x)
+
+/* this is called from Client::Main() (or COMPAT: Client::SelectCore()) */
+int selcoreInitialize( int user_cputype );
+
+/* this is called from Problem::LoadState() */
+int selcoreGetSelectedCoreForContest( unsigned int contestid );
 
 #endif /* __SELCORE_H__ */
