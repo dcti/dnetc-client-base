@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.48 1999/04/17 21:02:19 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.49 1999/04/20 23:50:54 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -112,7 +112,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     WorkRecord wrdata;
     int resultcode;
     unsigned int cont_i;
-    s32 cputype = client->cputype; /* needed for FILEENTRY_CPU macro */
+    s32 cputype = CLIENT_CPU; /* needed for FILEENTRY_CPU macro */
     memset( (void *)&wrdata, 0, sizeof(WorkRecord));
     resultcode = thisprob->RetrieveState( &wrdata.work, &cont_i, 0 );
     #if (CLIENT_OS == OS_RISCOS)
