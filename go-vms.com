@@ -1,106 +1,90 @@
-$!==============================================================================
+$ v = f$verify(0)
+$!===========================================================================
+$! Procedure:  go-vms.com
+$! Created:    15-Oct-2003
+$! Author:     Jason Brady
 $!
-$!  Program:  go-vms.com
-$!  Created:  06/19/97
-$!  Author:   David Sowder (davids@cosmic.swau.edu)
+$! Purpose:    Procedure for running the DNETC client program on the OpenVMS
+$!             platform.  See instructions in file readme.vms.
 $!
-$!  Program Summary: A DCL wrapper for RC5 on VMS
+$! Modifications:
+$!   10/15/2003    Jason Brady    Re-wrote David Sowder's RC5 DCL wrapper
+$!                                procedure for the current dnetc client.
+$!===========================================================================
 $!
-$!  Modifications:
-$!    xx/xx/xx      Who            Description of Change
-$!    12/14/97      David Sowder   Added menu for compile and link options
+$! Note:  Before executing this command procedure, modify the following
+$!        three statements (application directory, client executable,
+$!        batch queue name, batch log file name) if necessary.
 $!
-$!==============================================================================
+$   appdir     = "SYS$SYSDEVICE:[DNETC]"
+$   execname   = "DNETC.EXE"
+$   logname    = "DNETC.LOG"
+$   queuename  = "DNETC_BATCH"
+$   jobname    = "DNETC_CLIENT"
 $!
-$ IF P1 .EQS "RECHOOSE" THEN GOTO BUILD
-$ START:
-$ RC564_1 = F$SEARCH( "RC564.EXE;" )
-$ IF RC564_1 .EQS. "" THEN GOTO BUILD
-$ WRITE SYS$OUTPUT "You can now use the 'RC564' command from the $ prompt"
-$ RC564 == "$''RC564_1'"
-$ IF P1 .EQS "RECHOOSE" THEN GOTO DONE
-$ SET PROCESS/PRIORITY=0
-$ DEFINE/USER SYS$INPUT TT:
-$ RC564 'P1
-$ SET PROCESS/PRIORITY=4
-$ GOTO DONE
+$! Command procedure parameters are as follows:
+$!     P1 - INTER for interactive, BATCH for batch.  Default is INTER.
+$!     P2 - Command line options for the client enclosed in double quotes.
 $!
-$ QUIT:
-$ WRITE SYS$OUTPUT "RC5 startup terminated abnormally."
-$ DONE:
-$ EXIT
+$! Initialization
 $!
-$ BUILD:
-$ NET :== ""
-$ NETNAM :== ""
-$ PROCOP :== ""
-$ LNK :== ""
+$   on control_y then goto error_exit
+$   on error then goto error_exit
+$   on warning then continue
 $!
-$ WRITE SYS$OUTPUT "RC564.EXE not found.  Needing to link one."
-$ DEFINE/NOLOG/USER SYS$INPUT TT:
-$ WRITE SYS$OUTPUT "1 - Multinet"
-$ WRITE SYS$OUTPUT "2 - UCX"
-$ WRITE SYS$OUTPUT "3 - No Network"
-$ WRITE SYS$OUTPUT ""
-$ READ/PROMPT="Enter desired network option: " SYS$COMMAND CMD
-$ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT ""
-$ IF CMD .EQ. 1 THEN NET :== "MULTINET"
-$ IF CMD .EQ. 1 THEN NETNAM :== "MULTINET"
-$ IF CMD .EQ. 2 THEN NET :== "__VMS_UCX__"
-$ IF CMD .EQ. 2 THEN NETNAM :== "UCX"
-$ IF CMD .EQ. 3 THEN NET :== "NONETWORK"
-$ IF CMD .EQ. 3 THEN NETNAM :== "NONET"
-$ IF NET .EQS. "" THEN GOTO QUIT
+$   thisproc = f$environment("procedure")
+$   client :== $'appdir''execname
+$   display  = "WRITE SYS$OUTPUT"
 $!
-$ DEFINE/NOLOG/USER SYS$INPUT TT:
-$ WRITE SYS$OUTPUT "1 - EV4"
-$ WRITE SYS$OUTPUT "2 - EV5"
-$ WRITE SYS$OUTPUT ""
-$ READ/PROMPT="Enter desired processor option: " SYS$COMMAND CMD
-$ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT ""
-$ IF CMD .EQ. 1 THEN PROCOP :== "EV4"
-$ IF CMD .EQ. 2 THEN PROCOP :== "EV5"
-$ IF PROCOP .EQS. "" THEN GOTO QUIT
+$! Set directory and branch to appropriate routine
 $!
-$ DEFINE/NOLOG/USER SYS$INPUT TT:
-$ WRITE SYS$OUTPUT "1 - Use Executable"
-$ WRITE SYS$OUTPUT "2 - Link locally to solve shared library problems"
-$ WRITE SYS$OUTPUT ""
-$ READ/PROMPT="Enter desired link option: " SYS$COMMAND CMD
-$ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT ""
-$ IF CMD .EQ. 1 THEN LNK :== "EXEC"
-$ IF CMD .EQ. 2 THEN LNK :== "LIB"
-$ IF LNK .EQS. "" THEN GOTO QUIT
+$   set default 'appdir
 $!
-$ IF LNK .EQS. "LIB" THEN GOTO MAKE_LIBRARY
-$ COPY RC564-'PROCOP'-'NETNAM'.EXE RC564.EXE
-$ PURGE RC564.EXE
-$ GOTO START
+$   if "''p1'" .eqs. "" then goto inter_proc
+$   if "''p1'" .eqs. "RUN" then goto run_proc
+$   if "''p1'" .eqs. "BATCH" then goto batch_proc
+$   if "''p1'" .eqs. "INTER" then goto inter_proc
+$   display " "
+$   display "Invalid option.  Must be INTER or BATCH."
+$   goto success_exit
 $!
-$ MAKE_LIBRARY:
-$ IF NET .EQS. "MULTINET" THEN GOTO MAKE_LIBRARY_MULTINET
-$ LIBRARY/EXTRACT=RC5/OUTPUT=RC5.OBJ RC564-'PROCOP'-'NETNAM'
-$ LINK/EXECUTABLE=RC564 RC5,RC564-'PROCOP'-'NETNAM'/LIBRARY
-$ PURGE RC564.EXE
-$ GOTO START
+$! Routine to run client in batch queue
 $!
-$ MAKE_LIBRARY_MULTINET:
-$ LIBRARY/EXTRACT=RC5/OUTPUT=RC5.OBJ RC564-'PROCOP'-'NETNAM'
-$ LIBRARY/EXTRACT=CLICONFIG/OUTPUT=CLICONFIG.OBJ RC564-'PROCOP'-'NETNAM'
-$ LIBRARY/EXTRACT=CLIENT/OUTPUT=CLIENT.OBJ RC564-'PROCOP'-'NETNAM'
-$ LIBRARY/EXTRACT=AUTOBUFF/OUTPUT=AUTOBUFF.OBJ RC564-'PROCOP'-'NETNAM'
-$ LIBRARY/EXTRACT=INIREAD/OUTPUT=INIREAD.OBJ RC564-'PROCOP'-'NETNAM'
-$ LIBRARY/EXTRACT=NETWORK/OUTPUT=NETWORK.OBJ RC564-'PROCOP'-'NETNAM'
-$ LIBRARY/EXTRACT=SCRAM/OUTPUT=SCRAM.OBJ RC564-'PROCOP'-'NETNAM'
-$ LIBRARY/EXTRACT=BUFFWORK/OUTPUT=BUFFWORK.OBJ RC564-'PROCOP'-'NETNAM'
-$ LIBRARY/EXTRACT=MAIL/OUTPUT=MAIL.OBJ RC564-'PROCOP'-'NETNAM'
-$ LINK/EXECUTABLE=RC564-'PROCOP'-'NETNAM' -
-  	RC5,CLICONFIG,CLIENT,AUTOBUFF,INIREAD,NETWORK,SCRAM,BUFFWORK,MAIL, -
-	MULTINET.OPT/OPT
-$ COPY RC564-'PROCOP'-'NETNAM'.EXE RC564.EXE
-$ PURGE RC564.EXE
-$ GOTO START
-
+$batch_proc:
+$   if f$search("''logname'") .nes. "" then purge/keep=2 'logname
+$   submit/queue='queuename' 'thisproc' -
+          /param=("RUN","''p2'") -
+          /log='appdir''logname' -
+          /name='jobname -
+          /norestart
+$   goto success_exit
+$!
+$! Routine to run the client interactively
+$!
+$inter_proc:
+$   define sys$input sys$command
+$   client 'p2
+$   goto success_exit
+$!
+$! Routine to run the client executable inside batch job
+$!
+$run_proc:
+$   set process/name='jobname
+$   client 'p2
+$   goto success_exit
+$!
+$! Exit Routines
+$!
+$ success_exit:
+$    exit_status = 1
+$    goto exit_proc
+$!
+$ error_exit:
+$    display " "
+$    display "Procedure error occurred."
+$!
+$ exit_proc:
+$    set noon
+$    v = f$verify(v)
+$    exit exit_status
+$!

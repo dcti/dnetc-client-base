@@ -1,164 +1,106 @@
-$!==============================================================================
+$ v = f$verify(0)
+$!===========================================================================
+$! Procedure:  make-vms.com
+$! Created:    15-Oct-2003
+$! Author:     Jason Brady
 $!
-$!  Program:  make-vms.com
-$!  Created:  06/19/97
-$!  Author:   David Sowder (davids@cosmic.swau.edu)
+$! Purpose:    A utility for compiling and linking DNETC client modules on 
+$!             the OpenVMS platform.  See instructions in file readme.vms.
 $!
-$!  Program Summary: A "make" for RC5 on VMS
+$! Modifications:
+$!   10/15/2003    Jason Brady    Re-wrote David Sowder's RC5 procedure for
+$!                                the current dnetc client.
+$!===========================================================================
 $!
-$!  Modifications:
-$!    xx/xx/xx      Who            Description of Change
-$!    12/14/97      David Sowder   Added menu for compile and link options
+$! Note:  Before executing this command procedure, modify the following 
+$!        statements (application and source module directories, client
+$!        executable name) as well as the compile and link statements 
+$!        (modules, defines) if necessary.
 $!
-$!==============================================================================
+$   appdir     = "SYS$SYSDEVICE:[DNETC]"
+$   moddir     = "SYS$SYSDEVICE:[DNETC.MODULES]"
+$   execname   = "DNETC.EXE"
 $!
-$ CYCLECNTRL :== ""
-$ IF P1 .EQS. "MAKEALL" THEN CYCLECNTRL :== "0"
-$ IF P1 .NES. "MAKEALL" THEN GOTO NORMALOPS
+$! Initialization
 $!
-$ CYCLETOP:
+$   on control_y then goto error_exit
+$   on error then goto error_exit
+$   on warning then continue
 $!
-$ IF CYCLECNTRL .EQS. "6" THEN GOTO SUPERDONE
-$ IF CYCLECNTRL .EQS. "5" THEN CYCLECNTRL :== "6"
-$ IF CYCLECNTRL .EQS. "4" THEN CYCLECNTRL :== "5"
-$ IF CYCLECNTRL .EQS. "3" THEN CYCLECNTRL :== "4"
-$ IF CYCLECNTRL .EQS. "2" THEN CYCLECNTRL :== "3"
-$ IF CYCLECNTRL .EQS. "1" THEN CYCLECNTRL :== "2"
-$ IF CYCLECNTRL .EQS. "0" THEN CYCLECNTRL :== "1"
+$   display = "WRITE SYS$OUTPUT"
+$   set default 'appdir
 $!
-$ LNK :== "BOTH"
-$ IF CYCLECNTRL .EQS. "1" THEN NET :== "MULTINET"
-$ IF CYCLECNTRL .EQS. "1" THEN NETNAM :== "MULTINET"
-$ IF CYCLECNTRL .EQS. "1" THEN PROCOP :== "EV4"
-$ IF CYCLECNTRL .EQS. "2" THEN NET :== "MULTINET"
-$ IF CYCLECNTRL .EQS. "2" THEN NETNAM :== "MULTINET"
-$ IF CYCLECNTRL .EQS. "2" THEN PROCOP :== "EV5"
-$ IF CYCLECNTRL .EQS. "3" THEN NET :== "__VMS_UCX__"
-$ IF CYCLECNTRL .EQS. "3" THEN NETNAM :== "UCX"
-$ IF CYCLECNTRL .EQS. "3" THEN PROCOP :== "EV4"
-$ IF CYCLECNTRL .EQS. "4" THEN NET :== "__VMS_UCX__"
-$ IF CYCLECNTRL .EQS. "4" THEN NETNAM :== "UCX"
-$ IF CYCLECNTRL .EQS. "4" THEN PROCOP :== "EV5"
-$! IF CYCLECNTRL .EQS. "5" THEN NET :== "NONETWORK"
-$! IF CYCLECNTRL .EQS. "5" THEN NETNAM :== "NONET"
-$! IF CYCLECNTRL .EQS. "5" THEN PROCOP :== "EV4"
-$! IF CYCLECNTRL .EQS. "6" THEN NET :== "NONETWORK"
-$! IF CYCLECNTRL .EQS. "6" THEN NETNAM :== "NONET"
-$! IF CYCLECNTRL .EQS. "6" THEN PROCOP :== "EV5"
-$ GOTO COMPILE
+$   type/page nl:
+$   display "DNETC Client Module Compile and Link Procedure"
+$   show time
+$   display " "
 $!
-$ NORMALOPS:
-$ NET :== ""
-$ NETNAM :== ""
-$ PROCOP :== ""
-$ LNK :== ""
+$! Compile Modules
 $!
-$ DEFINE/NOLOG/USER SYS$INPUT TT:
-$ WRITE SYS$OUTPUT "1 - Multinet"
-$ WRITE SYS$OUTPUT "2 - UCX"
-$! WRITE SYS$OUTPUT "3 - No Network"
-$ WRITE SYS$OUTPUT ""
-$ READ/PROMPT="Enter desired network option: " SYS$COMMAND CMD
-$ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT ""
-$ IF CMD .EQ. 1 THEN NET :== "MULTINET"
-$ IF CMD .EQ. 1 THEN NETNAM :== "MULTINET"
-$ IF CMD .EQ. 2 THEN NET :== "__VMS_UCX__"
-$ IF CMD .EQ. 2 THEN NETNAM :== "UCX"
-$! IF CMD .EQ. 3 THEN NET :== "NONETWORK"
-$! IF CMD .EQ. 3 THEN NETNAM :== "NONET"
-$ IF NET .EQS. "" THEN GOTO QUIT
+$   set default 'moddir
+$   display "Compiling modules..."
+$   cxx/standard=ms/prefix=all -
+       /define=(HAVE_RC5_72_CORES,HAVE_OGR_CORES) -
+       /optimize=(level=4,inline=all,unroll=50,tune=host) -
+       base64.cpp,bench.cpp,buffbase.cpp,buffpriv.cpp, -
+       buffupd.cpp,checkpt.cpp,clicdata.cpp,client.cpp, -
+       clievent.cpp,cliident.cpp,clirun.cpp,clitime.cpp, -
+       cmdline.cpp,confmenu.cpp,confopt.cpp,confrwv.cpp, -
+       console.cpp,convdes.cpp,coremem.cpp,core_csc.cpp, -
+       core_des.cpp,core_ogr.cpp,core_r72.cpp,core_rc5.cpp, -
+       cpucheck.cpp,disphelp.cpp,iniread.cpp,logstuff.cpp, -
+       lurk.cpp,mail.cpp,memfile.cpp,modereq.cpp,netbase.cpp, -
+       netconn.cpp,ogr.cpp,ogr_dat.cpp,ogr_sup.cpp,pathwork.cpp, -
+       pollsys.cpp,probfill.cpp,problem.cpp,probman.cpp, -
+       projdata.cpp,random.cpp,r72ansi1.cpp,r72ansi2.cpp, -
+       r72ansi4.cpp,r72-ref.cpp,scram.cpp,selcore.cpp, -
+       selftest.cpp,setprio.cpp,threadcd.cpp,triggers.cpp, -
+       util.cpp
 $!
-$ DEFINE/NOLOG/USER SYS$INPUT TT:
-$ WRITE SYS$OUTPUT "1 - EV4"
-$ WRITE SYS$OUTPUT "2 - EV5"
-$ WRITE SYS$OUTPUT "3 - Current Host"
-$ WRITE SYS$OUTPUT ""
-$ READ/PROMPT="Enter desired processor option: " SYS$COMMAND CMD
-$ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT ""
-$ IF CMD .EQ. 1 THEN PROCOP :== "EV4"
-$ IF CMD .EQ. 2 THEN PROCOP :== "EV5"
-$ IF CMD .EQ. 3 THEN PROCOP :== "HOST"
-$ IF PROCOP .EQS. "" THEN GOTO QUIT
+$! Link Modules
 $!
-$ DEFINE/NOLOG/USER SYS$INPUT TT:
-$ WRITE SYS$OUTPUT "1 - Make Executable"
-$ WRITE SYS$OUTPUT "2 - Make Library"
-$ WRITE SYS$OUTPUT "3 - Make Both"
-$ WRITE SYS$OUTPUT ""
-$ READ/PROMPT="Enter desired link option: " SYS$COMMAND CMD
-$ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT ""
-$ IF CMD .EQ. 1 THEN LNK :== "EXEC"
-$ IF CMD .EQ. 2 THEN LNK :== "LIB"
-$ IF CMD .EQ. 3 THEN LNK :== "BOTH"
-$ IF LNK .EQS. "" THEN GOTO QUIT
-$ GOTO COMPILE
+$   display " "
+$   display "Linking modules..."
+$   cxxlink/executable='appdir''execname -
+       base64.obj,bench.obj,buffbase.obj,buffpriv.obj, -
+       buffupd.obj,checkpt.obj,clicdata.obj,client.obj, -
+       clievent.obj,cliident.obj,clirun.obj,clitime.obj, -
+       cmdline.obj,confmenu.obj,confopt.obj,confrwv.obj, -
+       console.obj,convdes.obj,coremem.obj,core_csc.obj, -
+       core_des.obj,core_ogr.obj,core_r72.obj,core_rc5.obj, -
+       cpucheck.obj,disphelp.obj,iniread.obj,logstuff.obj, -
+       lurk.obj,mail.obj,memfile.obj,modereq.obj,netbase.obj, -
+       netconn.obj,ogr.obj,ogr_dat.obj,ogr_sup.obj,pathwork.obj, -
+       pollsys.obj,probfill.obj,problem.obj,probman.obj, -
+       projdata.obj,random.obj,r72ansi1.obj,r72ansi2.obj, -
+       r72ansi4.obj,r72-ref.obj,scram.obj,selcore.obj, -
+       selftest.obj,setprio.obj,threadcd.obj,triggers.obj, -
+       util.obj
 $!
-$ QUIT:
-$ WRITE SYS$OUTPUT "Compile terminated abnormally."
-$ DONE:
-$ IF CYCLECNTRL .NES. "" THEN GOTO CYCLETOP
-$ SUPERDONE:
-$ EXIT
+$! Purge old file versions
 $!
-$ COMPILE:
-$! Some versions of DEC C++ older than 5.0 may not support the TUNE
-$! optimization option.  Remove the TUNE='PROCOP' portion from the
-$! /OPTIMIZE= switch if you experience difficulties.
+$    display " "
+$    display "Purging old file versions..."
+$    purge *.cpp
+$    purge *.obj
 $!
-$ MU SHOW/VER
-$ CXX/STANDARD=MS/VERSION/NOOBJECT NL:
-$ Write sys$output "Compiling..."
-$ IF F$GETSYI( "ARCH_NAME" ) .NES. "Alpha" THEN GOTO NOT_ALPHA_COMPILE
-$ CXX/STANDARD=MS/PREFIX=ALL/DEBUG=NONE/DEFINE='NET' -
-	/OPTIMIZE=(LEVEL=4,UNROLL=50,TUNE='PROCOP') -
-	CLIENT.CPP,INIREAD.CPP
-$ CXX/STANDARD=MS/PREFIX=ALL/DEBUG=NONE/DEFINE='NET' -
-	/OPTIMIZE=(LEVEL=4,INLINE=ALL,UNROLL=50,TUNE='PROCOP') -
-	CLICONFIG.CPP,PROBLEM.CPP,AUTOBUFF.CPP,NETWORK.CPP,SCRAM.CPP, -
-	BUFFWORK.CPP,MAIL.CPP
-$ GOTO LINK
-$ NOT_ALPHA_COMPILE:
-$! If we're still executing here, it's assumed the architecture is VAX
-$! VAX architecture not currently supported
-$! CC/DECC -
-$!	/NOOPTIMIZE -
-$!	CLIENT
-$! CC/DECC -
-$!	/OPTIMIZE=(DISJOINT,INLINE) -
-$!	COMMON,CLIOPS
+$! Exit Routines
 $!
-$ LINK:
-$ Write sys$output "Linking..."
-$ IF LNK .EQS. "BOTH" THEN GOTO MAKE_LIBRARY
-$ IF LNK .EQS. "LIB" THEN GOTO MAKE_LIBRARY
-$ LINKPASSTWOTOP:
-$ IF NET .EQS. "MULTINET" THEN GOTO LINK_MULTINET
-$ IF NET .EQS. "__VMS_UCX__" THEN GOTO LINK_UCX
-$ IF NET .EQS. "NONETWORK" THEN GOTO LINK_NONETWORK
-$ GOTO QUIT
+$ success_exit:
+$    exit_status = 1
+$    goto exit_proc
 $!
-$ MAKE_LIBRARY:
-$ LIBRARY/CREATE RC5DES-'PROCOP'-'NETNAM'
-$ LIBRARY/OBJECT/INSERT RC5DES-'PROCOP'-'NETNAM' PROBLEM.OBJ,CLICONFIG.OBJ, -
-	CLIENT.OBJ,AUTOBUFF.OBJ,INIREAD.OBJ,NETWORK.OBJ,SCRAM.OBJ, -
-	BUFFWORK.OBJ,MAIL.OBJ
-$ PURGE RC5*.OBJ
-$ PURGE RC5DES*.OLB
-$ IF LNK .EQS. "BOTH" THEN GOTO LINKPASSTWOTOP
-$ GOTO DONE
+$ error_exit:
+$    display " "
+$    display "Procedure error occurred."
 $!
-$ LINK_UCX:
-$ LINK_NONETWORK:
-$ LINK/NOTRACEBACK/EXECUTABLE=RC5DES-'PROCOP'-'NETNAM' -
-  	PROBLEM,CLICONFIG,CLIENT,AUTOBUFF,INIREAD,NETWORK,SCRAM,BUFFWORK,MAIL
-$ GOTO DONE
+$ exit_proc:
+$    set default 'appdir
+$    display " "
+$    display "End of compile and link procedure."
+$    display " "
+$    show time
+$    set noon
+$    v = f$verify(v)
+$    exit exit_status
 $!
-$ LINK_MULTINET:
-$ LINK/NOTRACEBACK/EXECUTABLE=RC5DES-'PROCOP'-'NETNAM' -
-  	PROBLEM,CLICONFIG,CLIENT,AUTOBUFF,INIREAD,NETWORK,SCRAM,BUFFWORK,MAIL, -
-	MULTINET.OPT/OPT
-$ GOTO DONE
-
