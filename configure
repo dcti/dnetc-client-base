@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.150 2000/04/23 01:02:50 jlawson Exp $
+# @(#)$Id: configure,v 1.222.2.151 2000/05/01 05:13:01 jlawson Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -220,7 +220,7 @@ TARGET_GENMAN=1 # do we generate a man page or not
 #
 TARGET_TARBALL=""     # 'binnameNNN-' is auto prepended, ".tar.gz" is appended
 TARGET_TARBALL_COMMENT="" # special comments for tarball.readme (if needed)
-TARGET_ARCTYPE="tgz"  # or "zip"
+TARGET_ARCTYPE="tgz"  # or "zip" or "tgzdir"
 
 #
 # GCC: warn as much as we can for maximum portability
@@ -424,7 +424,6 @@ OPTS_CSC_S390_OS390="-DHAVE_CSC_CORES"
 OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT \
 		  -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION  \
 		  -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
-# a bit hairy, isn't it ? ;-)
 OPTS_DES_ULTRA_ASM="-DASM_SPARC -DIN_DCTI_CLIENT \
 		    -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID -DASM \
 		    -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE  \
@@ -444,6 +443,7 @@ OPTS_DES_MMX="-DMMX_BITSLICER -DKWAN -DMEGGS "
 #
 TARGET_CC="g++"
 TARGET_CCFLAGS="$OPTS_GCC"
+TARGET_LD=""          # blank implies TARGET_CC
 TARGET_LDFLAGS=""
 TARGET_LIBS=""
 TARGET_AS="as"
@@ -452,6 +452,8 @@ TARGET_NASM_FMT="elf"
 TARGET_ASFLAGS=""
 TARGET_STRIP="strip"
 TARGET_CP="cp"
+TARGET_TESTPLAT_CPU=""     # non-blank implies a hardcoded value
+TARGET_TESTPLAT_OS=""      # non-blank implies a hardcoded value
 
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
@@ -465,30 +467,32 @@ case "$1" in
 
 ###### MIPS based platforms
 
-# IRIX w/MIPSpro compilers.
-#
-# The following targets generate builds targetted to specific
-# SGI platforms, taking into account CPU type, L1/L2 cache
-# sizes, etc. Targets ending in -64 are for the 64 bit ABI,
-# otherwise the build is for the n32 ABI.
-#
-# The code currently compiles multithreaded, however I expect to
-# be able to get performance as good as (or better than) the
-# rc5 mips-crunch core by running single threaded and using the MIPSpro
-# compiler internal multithreading support against a generic ANSI core.
-# This will require Makefile modifications to allow us to compile
-# C code with the C compiler (vs. running it through the C++ front-end);
-# in order to get the optimizations only available to native C code.
-#
-# The targets assume MIPSpro compilers at release 7.2 or newer,
-# and an Irix 6.3 or newer build platform. All compiler optimizations
-# are guarded with "#ifdef MIPSpro". Use _COMPILER_VERSION if you
-# need to check the exact version of the compiler.
-#
-# Run "hinv -c processor" to see which binary is applicable for
-# your platform.
-#
-# lyndon@orthanc.ab.ca (Nov 28, 1999)
+    # IRIX w/MIPSpro compilers.
+    #
+    # The following targets generate builds targetted to specific
+    # SGI platforms, taking into account CPU type, L1/L2 cache
+    # sizes, etc. Targets ending in -64 are for the 64 bit ABI,
+    # otherwise the build is for the n32 ABI.
+    #
+    # The code currently compiles multithreaded, however I expect to
+    # be able to get performance as good as (or better than) the
+    # rc5 mips-crunch core by running single threaded and using the
+    # MIPSpro compiler internal multithreading support against a
+    # generic ANSI core.  This will require Makefile modifications to
+    # allow us to compile C code with the C compiler (vs. running it
+    # through the C++ front-end); in order to get the optimizations
+    # only available to native C code.
+    #
+    # The targets assume MIPSpro compilers at release 7.2 or newer,
+    # and an Irix 6.3 or newer build platform. All compiler
+    # optimizations are guarded with "#ifdef MIPSpro". Use
+    # _COMPILER_VERSION if you need to check the exact version of the
+    # compiler.
+    #
+    # Run "hinv -c processor" to see which binary is applicable for
+    # your platform.
+    #
+    # lyndon@orthanc.ab.ca (Nov 28, 1999)
 
     *mips-cc-n32)	# [lyndon]
 	TARGET_CC="CC"
@@ -679,8 +683,8 @@ case "$1" in
 
 # END of MIPSpro targets.
 
-# If compiling on Irix 5 you must -D_irix5_ now to get the usleep()
-# replacement.
+    # If compiling on Irix 5 you must -D_irix5_ now to get the usleep()
+    # replacement.
 
     *mips-linux)	# For Cobalt Qube - doesn't work yet - Peter
 	TARGET_CC="gcc"
@@ -784,6 +788,8 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-mipsle"
         TARGET_GENMAN=
+        TARGET_TESTPLAT_CPU="3"        # cross-compilation
+        TARGET_TESTPLAT_OS="22"
         ;;
 
     *mipsbe-nto2)
@@ -799,6 +805,8 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-mipsbe"
         TARGET_GENMAN=
+        TARGET_TESTPLAT_CPU="3"        # cross-compilation
+        TARGET_TESTPLAT_OS="22"
         ;;
 
 ###### HPUX
@@ -811,7 +819,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-   *hpux-hppa-gcc-nomt)  # [ivo]
+    *hpux-hppa-gcc-nomt)  # [ivo]
         #DELETECHARS="'/.\$\-'"
         TARGET_CCFLAGS="$OPTS_GCC272_HPUX  \
                         -DHAVE_OGR_CORES"
@@ -1142,6 +1150,8 @@ case "$1" in
 	TARGET_DOCFILES="docs/readme._ix"
 	TARGET_TARBALL="nto2-ppcbe"
 	TARGET_GENMAN=
+        TARGET_TESTPLAT_CPU="2"        # cross-compilation
+        TARGET_TESTPLAT_OS="22"
 	;;
 
 ###### SH4 platforms
@@ -1161,6 +1171,8 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-sh4le"
         TARGET_GENMAN=
+        TARGET_TESTPLAT_CPU="8"        # cross-compilation
+        TARGET_TESTPLAT_OS="22"
         ;;
 
     *sh4be-nto2)
@@ -1176,6 +1188,8 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-sh4be"
         TARGET_GENMAN=
+        TARGET_TESTPLAT_CPU="8"        # cross-compilation
+        TARGET_TESTPLAT_OS="22"
         ;;
 
 ###### Intel X86 Linux platforms
@@ -1190,7 +1204,7 @@ case "$1" in
   ### a glibc21 machine and verified with "ldd" that it does not have
   ### any dynamic library dependencies.
 
-    *x86-linux-elf)	                   # universal elf
+    *x86-linux-elf)	                   # universal elf <- production target
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DMMX_RC5 -D__showids__ \
@@ -1272,6 +1286,23 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-libc4"
 	;;
+
+    *x86-linux-aout)	              # [jlawson] aout, no threads/smc/lurk
+	#TARGET_AS="gcc -c"
+	TARGET_CC="gcc -x c++"          # old gcc doesn't know .cpp
+	TARGET_CCFLAGS="-O2 -fomit-frame-pointer -DNEED_FAKE_BOOL \
+                        -DMMX_RC5 -D__showids__ -DHAVE_OGR_CORES"
+        TARGET_LD="gcc"
+	TARGET_LDFLAGS=""
+	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
+	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"
+	TARGET_NASM_FMT="aout"
+	TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-x86-aout"
+	;;
+
+
 
     ## *** TEST/DEBUG *** target
 
@@ -1442,6 +1473,8 @@ case "$1" in
 	TARGET_DOCFILES="docs/readme._ix"
 	TARGET_TARBALL="nto2-x86"
 	TARGET_GENMAN=
+        TARGET_TESTPLAT_CPU="1"         # cross-compilation
+        TARGET_TESTPLAT_OS="22"
 	;;
 
 ####### Intel X86 SCO5
@@ -1555,6 +1588,8 @@ case "$1" in
         TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
 	TARGET_STRIP=touch
 	TARGET_BINNAME_SUFFIX=",ff8"
+        TARGET_TESTPLAT_CPU="11"        # cross-compilation
+        TARGET_TESTPLAT_OS="34"
 	;;
 
     *arm-linux-aout)					# chrisb
@@ -1622,6 +1657,8 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-arm"
         TARGET_GENMAN=
+        TARGET_TESTPLAT_CPU="11"        # cross-compilation
+        TARGET_TESTPLAT_OS="22"
         ;;
  
 ###### NetBSD/vax
@@ -1672,6 +1709,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme.os390"   #platform specific docfile
         TARGET_TARBALL="os390-s390"
 	;;
+
 ###### BeOS (x86, PPC)
     *x86-beos)
 	TARGET_AS="gcc -c"
@@ -1683,7 +1721,7 @@ case "$1" in
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
 	TARGET_LIBS=""
-		TARGET_TARBALL="beos-x86"
+        TARGET_TARBALL="beos-x86"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
 	;;
 
@@ -1695,16 +1733,12 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5PPC_MWCC_SRCS $OGR_ANSI_SRCS"
 	TARGET_LIBS=""
 	TARGET_STRIP="touch"
-		TARGET_TARBALL="beos-ppc"
+        TARGET_TARBALL="beos-ppc"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
 	;;
 
 ####### OS/2 (x86, emx)
     # requires EMX, gcc 2.72
-    # if you don't have a basename command, you can use the following script:
-    # just copy it to basename.cmd
-        #@echo off
-        #ksh -c "parm=%1 ; echo ${parm##*[\\/]}"
 
     *x86-os2-gcc)               # [patrick] <patrick@skarabeus.de>
         basename ()
@@ -1723,6 +1757,7 @@ case "$1" in
         TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
         TARGET_OS=OS2
+        TARGET_BINNAME_SUFFIX="exe"
         ;;
 
     *x86-os2-nasm-gcc)          # [patrick] <patrick@skarabeus.de>
@@ -1739,11 +1774,12 @@ case "$1" in
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
 	TARGET_NASM_FMT="aout"
-TARGET_NASM="nasm097.exe"
+        TARGET_NASM="nasm097.exe"
         TARGET_LIBS="-lsocket -lvideo"
         TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
         TARGET_OS=OS2
         TARGET_TARBALL="os2-x86"
+        TARGET_BINNAME_SUFFIX="exe"
         ;;
 
 
@@ -1761,18 +1797,19 @@ TARGET_NASM="nasm097.exe"
 esac
 echo "Platform target for \"$1\" recognized."
 
+
 #
-# add (cough, cough) things to all
+# add things to all
 #
 TARGET_CCFLAGS="$TARGET_CCFLAGS -I./common -I./rc5 -I./des -I./ogr -I./csc"
 #TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS $OGR_ANSI_SRCS"
 #TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES -DHAVE_OGR_CORES"
 
+
 #
 # Generate the list of output objects, making note of what
 # source file it was derrived from.
 #
-
 
 TARGET_ALLCCOBJS=
 TARGET_ALLASOBJS=
@@ -1825,52 +1862,21 @@ fi
 #
 # Build the test program
 #
-echo "Building test program..."
-if [ $1 = riscos ]; then
-  #tum-te-tum
-  gcc common/testplat.cpp -o testplat
-else
-  if [ $1 = x86-nto2 ]; then
-    gcc common/testplat.cpp -o testplat
-  else
-  if [ $1 = ppc-nto2 ]; then
-    gcc common/testplat.cpp -o testplat
-  else
-  if [ $1 = mipsle-nto2 ]; then
-    gcc common/testplat.cpp -o testplat
-  else
-  if [ $1 = mipsbe-nto2 ]; then
-    gcc common/testplat.cpp -o testplat
-  else
-  if [ $1 = sh4le-nto2 ]; then
-    gcc common/testplat.cpp -o testplat
-  else
-  if [ $1 = sh4be-nto2 ]; then
-    gcc common/testplat.cpp -o testplat
-  else
-  if [ $1 = arm-nto2 ]; then
-    gcc common/testplat.cpp -o testplat
-  else
-    echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
+if [ -z "$TARGET_TESTPLAT_OS" -a -z "$TARGET_TESTPLAT_CPU" ]; then
+  echo "Building test program..."
+  echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
   sh -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
   if [ $? -ne 0 ]; then
     echo "Compilation failed.  Check your target options."
     echo " ---------------------------------------------"
     echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
     echo " ---------------------------------------------"
-    exit
+    exit 1
   fi
   if [ "$TARGET_OS" = "OS2" ]; then
      emxbind testplat
   else
      ${TARGET_STRIP} testplat
-  fi
-  fi
-  fi
-  fi
-  fi
-  fi
-  fi
   fi
 fi
 
@@ -1878,66 +1884,56 @@ fi
 #
 # Look up the platform and os types
 #
-if [ $1 = riscos ]; then
-  CLIENTCPU=11
-  CLIENTOS=34
-  INTSIZES=442
-else 
-  if [ $1 = x86-nto2 ]; then
-    CLIENTCPU=1
-    CLIENTOS=22
-    INTSIZES=442
-  else
-    if [ $1 = ppc-nto2 ]; then
-      CLIENTCPU=2
-      CLIENTOS=22
-      INTSIZES=442
-    else
-      if [ $1 = mipsle-nto2 ]; then
-        CLIENTCPU=3
-        CLIENTOS=22
-        INTSIZES=442
-      else
-        if [ $1 = mipsbe-nto2 ]; then
-          CLIENTCPU=3
-          CLIENTOS=22
-          INTSIZES=442
-        else
-          if [ $1 = sh4le-nto2 ]; then
-            CLIENTCPU=8
-            CLIENTOS=22
-            INTSIZES=442
-          else
-            if [ $1 = sh4be-nto2 ]; then
-              CLIENTCPU=8
-              CLIENTOS=22
-              INTSIZES=442
-            else
-              if [ $1 = arm-nto2 ]; then
-                CLIENTCPU=11
-                CLIENTOS=22
-                INTSIZES=442
-              else
-                CLIENTCPU=`./testplat cpu`
-                CLIENTOS=`./testplat os`
-                #INTSIZES=`./testplat intsizes`
-              fi
-            fi
-          fi
-        fi
-      fi
-    fi
-  fi
+if [ -z "$TARGET_TESTPLAT_OS" -a -z "$TARGET_TESTPLAT_CPU" ]; then
+  CLIENTCPU=`./testplat cpu`
+  CLIENTOS=`./testplat os`
+else
+  CLIENTCPU="$TARGET_TESTPLAT_CPU"
+  CLIENTOS="$TARGET_TESTPATH_OS"
 fi
+
+
+#
+# Look up the descriptive name for the CPU and OS
+#
 CLIENTOSNAME=`grep "#define OS_.*\<$CLIENTOS\>" common/cputypes.h | head -1 | cut -d' ' -f2`
 CLIENTCPUNAME=`grep "#define CPU_.*\<$CLIENTCPU\>" common/cputypes.h | head -1 | cut -d' ' -f2`
 echo "CLIENT_CPU = $CLIENTCPUNAME ($CLIENTCPU)"
 echo "CLIENT_OS = $CLIENTOSNAME ($CLIENTOS)"
-#echo "INTSIZES = $INTSIZES"
+
+
+#
+# Append the textual CPU/OS names a compilation defines.
+#
 TARGET_CCFLAGS="-DBUILDNAME=\${BUILDNAME} ${TARGET_CCFLAGS}"
 if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
-TARGET_EV5_CCFLAGS="-DBUILDNAME=\${BUILDNAME} ${TARGET_EV5_CCFLAGS}"
+  TARGET_EV5_CCFLAGS="-DBUILDNAME=\${BUILDNAME} ${TARGET_EV5_CCFLAGS}"
 fi
+
+
+#
+# Finalize the NASM compilation options.
+#
+if [ -z "$TARGET_NASM_FMT" ]; then
+  $TARGET_NASM_FMT="elf"
+fi
+TARGET_NASMFLAGS="-f $TARGET_NASM_FMT \
+                  -i rc5/x86/nasm/ -i des/mmx-bitslice/ -i csc/x86/ \
+		  -d__showids__"
+if [ "$TARGET_NASM_FMT" = "elf" ]; then
+  TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__ELF__"
+else
+  TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__AOUT__" #for both aout and aoutb
+fi
+
+
+#
+# Finalize the LD that will be used.
+#
+if [ -z "$TARGET_LD" ]; then
+  $TARGET_LD="$TARGET_CC"
+fi
+
 
 #
 # Generate full doc file list.
@@ -1950,51 +1946,41 @@ if [ "X$TARGET_GENMAN" = "X1" ]; then
   TARGET_DOCFILES="${TARGET_DOCFILES} ${TARGET_BINNAME}.1"
 fi
 
+
 #
-# Start building the output makefile
+# Start building the output makefile.
 #
 echo "Generating output Makefile prologue code..."
 rm -f Makefile
 
 echo "# Autogenerated $TARGET_BINNAME client makefile ($1)" > Makefile
-if [ "$AIXALL" = "TRUE" ]; then
-echo "#   target cpu --> CPU_POWERPC (2) && CPU_POWER (9)" >> Makefile
+if [ -n "$AIXALL" ]; then
+  echo "#   target cpu --> CPU_POWERPC (2) && CPU_POWER (9)" >> Makefile
 else
-echo "#   target cpu --> $CLIENTCPUNAME ($CLIENTCPU)" >> Makefile
+  echo "#   target cpu --> $CLIENTCPUNAME ($CLIENTCPU)" >> Makefile
 fi
 echo "#    target os --> $CLIENTOSNAME ($CLIENTOS)" >> Makefile
-#echo "#     intsizes --> $INTSIZES" >> Makefile
 echo "# see http://www.distributed.net/ for details." >> Makefile
 echo "" >> Makefile
 
 echo "CC = ${TARGET_CC}" >> Makefile
 echo "CP = ${TARGET_CP}" >> Makefile
 echo "CCFLAGS = ${TARGET_CCFLAGS}" >> Makefile
-if [ "$AIXALL" = "TRUE" ]; then
-echo "PPC601FLAGS = ${AIXPPC601FLAGS}" >> Makefile
-echo "PPC604FLAGS = ${AIXPPC604FLAGS}" >> Makefile
-echo "POWERFLAGS = ${AIXPOWERFLAGS}" >> Makefile
+if [ -n "$AIXALL" ]; then
+  echo "PPC601FLAGS = ${AIXPPC601FLAGS}" >> Makefile
+  echo "PPC604FLAGS = ${AIXPPC604FLAGS}" >> Makefile
+  echo "POWERFLAGS = ${AIXPOWERFLAGS}" >> Makefile
 fi
-if [ "$OPTS_NOOPT" != "" ]; then
-echo "OPTS_NOOPT = ${OPTS_NOOPT}" >> Makefile
+if [ -n "$OPTS_NOOPT" ]; then
+  echo "OPTS_NOOPT = ${OPTS_NOOPT}" >> Makefile
 fi
 
+echo "LD = ${TARGET_LD}" >> Makefile
 echo "LDFLAGS = ${TARGET_LDFLAGS}" >> Makefile
 echo "LIBS = ${TARGET_LIBS}" >> Makefile
 echo "AS = ${TARGET_AS}" >> Makefile
 echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
 echo "NASM = ${TARGET_NASM}" >> Makefile
-if [ "X$TARGET_NASM_FMT" = "X" ]; then
-  $TARGET_NASM_FMT="elf"
-fi
-TARGET_NASMFLAGS="-f $TARGET_NASM_FMT \
-                  -i rc5/x86/nasm/ -i des/mmx-bitslice/ -i csc/x86/ \
-		  -d__showids__"
-if [ "$TARGET_NASM_FMT" = "elf" ]; then
-  TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__ELF__"
-else
-  TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__AOUT__" #for both aout and aoutb
-fi
 echo "NASMFLAGS = ${TARGET_NASMFLAGS}" >> Makefile
 echo "STRIP = ${TARGET_STRIP}" >> Makefile
 echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS} ${TARGET_DUEV5OBJS}" >> Makefile
@@ -2004,6 +1990,7 @@ echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
 echo "BUILDNUM:= \`grep \" CLIENT_BUILD_FRAC \" common/version.h|tr -dc 0-9\`" >>Makefile
 echo "" >> Makefile
 
+
 #
 # Generate the main production targets in the makefile
 #
@@ -2011,71 +1998,105 @@ echo "Generating Makefile production targets..."
 echo "# Regular targets follow" >> Makefile
 
 if [ "$TARGET_OS" = "OS2" ]; then
-
-echo "${TARGET_BINNAME}.exe:	\${BUILDNAME}.exe" >> Makefile
-echo "	\${CP} \${BUILDNAME}.exe ${TARGET_BINNAME}.exe" >> Makefile
-echo "" >> Makefile
-
-echo "\${BUILDNAME}.exe:	\${ALLOBJS} \${ADDOBJS} output/\${BUILDNAME}.res" >> Makefile
-echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o \${BUILDNAME}" >> Makefile
-echo "	emxbind -b -r output/\${BUILDNAME}.res \${BUILDNAME}" >> Makefile
-echo "" >> Makefile
-
-echo "output/\${BUILDNAME}.res: platforms/os2cli/${TARGET_BINNAME}.rc" >> Makefile
-echo "	 platforms\\os2cli\\gcc_rc.cmd \${BUILDNAME}.res" >> Makefile
-echo "" >> Makefile
-
-echo "clean:" >> Makefile
-echo "	rm -f \${ALLOBJS}  ${TARGET_BINNAME}.exe" >> Makefile
-echo "	rm -f output/\${BUILDNAME}.res" >> Makefile
-echo "" >> Makefile
-
-else
-
-#echo "\${BUILDNAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
-#echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o \${BUILDNAME}" >> Makefile
-#echo "" >> Makefile
-#
-#echo "${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}:	\${BUILDNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
-#echo "	\${CP} \${BUILDNAME} ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
-rm -f {BUILDNAME}
-#
-echo "${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
-echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
-echo "	\${STRIP} ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
-if [ "X$TARGET_GENMAN" != "X" ]; then
-    echo "	./${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} -genman" >> Makefile
+  TARGET_RES="output/\${BUILDNAME}.res"
+  TARGET_RESBIND_CMD="emxbind -b -r output/\${BUILDNAME}.res \${BUILDNAME}"
 fi
-if [ "X$TARGET_TARBALL" != "X" ]; then
-  if  [ "$TARGET_ARCTYPE" = "zip" ]; then
-    echo "Zip support is not in place"
-  else     # tgz
-    echo "	tar -cvf - ${TARGET_BINNAME} \${DOCFILES} | gzip > ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.tar.gz" >>Makefile
+
+
+#
+# Generate the main client binary target.
+#
+echo "${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}:	\${ALLOBJS} \${ADDOBJS} ${TARGET_RES}" >> Makefile
+echo "	\${LD} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
+if [ -n "$TARGET_RESBIND_CMD" ]; then
+  echo "	$TARGET_RESBIND_CMD"
+fi
+echo "	\${STRIP} ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
+
+
+#
+# Append the commands for man page generation to the main rule.
+#
+if [ -n "$TARGET_GENMAN" ]; then
+  echo "	./${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} -genman" >> Makefile
+fi
+
+
+#
+# Append the commands for archived file generation to the main rule.
+#
+if [ -n "$TARGET_TARBALL" ]; then
+  FULLTARNAME="${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}"
+  if [ "$TARGET_ARCTYPE" = "zip" ]; then
+    # zip file with flat directory structure.
+    echo "	zip -9 $FULLTARNAME.zip ${TARGET_BINNAME} \${DOCFILES}" >> Makefile
+  elif [ "$TARGET_ARCTYPE" = "tgz" ]; then
+    # tar.gz, with flat directory structure.
+    echo "	tar -cvf - ${TARGET_BINNAME} \${DOCFILES} | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
+  elif [ "$TARGET_ARCTYPE" = "tgzdir" ]; then
+    # tar.gz, with embedded directory structure.
+    echo "	-rm -rf $FULLTARNAME" >> Makefile
+    echo "	mkdir $FULLTARNAME" >> Makefile
+    echo "	cp ${TARGET_BINNAME} \${DOCFILES} $FULLTARNAME" >> Makefile
+    echo "	tar -cvf - $FULLTARNAME | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
+    echo "	rm -rf $FULLTARNAME" >> Makefile
+  else
+    echo "Warning: Unknown TARGET_ARCTYPE ${TARGET_ARCTYPE}"
   fi
   echo "" >> Makefile
+fi
 
-  # make rule to transfer the packaged tarball
+
+
+#
+# Create the rule to ftp the packaged tarball.
+#
+if [ -n "$TARGET_TARBALL" ]; then
   echo "ftp:" >> Makefile
-  if [ "X$TARGET_TARBALL_COMMENT" != "X" ]; then
+  if [ -n "$TARGET_TARBALL_COMMENT" ]; then
     echo "	echo \"${TARGET_TARBALL_COMMENT}\">${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
   fi
   echo "	sh ./upload.sh ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
-  if [ "X$TARGET_TARBALL_COMMENT" != "X" ]; then
+  if [ -n "$TARGET_TARBALL_COMMENT" ]; then
     echo "	rm -f ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
   fi
+  echo "" >> Makefile
 fi
-echo "" >> Makefile
 
+
+#
+# Generate the targets for supplementary resource files.
+#
+if [ "$TARGET_OS" = "OS2" ]; then
+  echo "${TARGET_RES}: platforms/os2cli/${TARGET_BINNAME}.rc" >> Makefile
+  echo "	 platforms\\os2cli\\gcc_rc.cmd \${BUILDNAME}.res" >> Makefile
+  echo "" >> Makefile
+fi
+
+
+#
+# Create the dependencies and reconfigure rules.
+#
 echo "dep: $0" >> Makefile
 echo "	\$(SHELL) $0 \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
 echo "reconfigure: dep" >> Makefile
 echo "" >> Makefile
-echo "clean:" >> Makefile
-echo "	rm -f \${ALLOBJS}  ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} ${TARGET_BINNAME}.1" >> Makefile
-echo "" >> Makefile
 
+
+#
+#  Clean, Superclean, Distclean, and Ident targets.
+#
+echo "clean:" >> Makefile
+echo "	rm -f \${ALLOBJS}" >> Makefile
+echo "	rm -f ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
+if [ -n "$TARGET_RES" ]; then
+  echo "	rm -f ${TARGET_RES}" >> Makefile
 fi
+if [ -n "$TARGET_GENMAN" ]; then
+  echo "	rm -f ${TARGET_BINNAME}.1" >> Makefile
+fi
+echo "" >> Makefile
 
 echo "superclean: clean" >> Makefile
 echo "	rm -f Makefile buff-in.* buff-out.* *.ini testplat" >> Makefile
@@ -2090,29 +2111,6 @@ echo "" >> Makefile
 echo "ident:	${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 echo "	ident ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} | awk '{ printf(\"%-30s %10s %s %s %s %s%c\", \$\$2,\$\$3,\$\$4,\$\$5,\$\$6,\$\$7,10)}'" >> Makefile
 echo "" >> Makefile
-
-## add binary-tarball targets
-#echo "internal-tarpackit:	\${TARGETFILE} \${TAREXTRAS}" >> Makefile
-#echo "	strip \${STRIPFLAGS} \${TARGETFILE}" >> Makefile
-#echo "	-rm -rf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
-#echo "	mkdir \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
-#echo "	cp -f \${TARGETFILE} \${TAREXTRAS} \\" >> Makefile
-#echo "		\${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
-#echo "	tar cvf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar \\" >> Makefile
-#echo "		\${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
-#echo "	rm -rf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
-#echo "	-rm -f \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar.gz" >> Makefile
-#echo "	\${TARCOMPRESS} \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar" >> Makefile
-#echo "	@echo Type \'make ftp\' to upload the tarball to the ftp site." >> Makefile
-#echo "" >> Makefile
-
-# make rule to transfer the packaged tarball
-#echo "ftp:" >> Makefile
-#echo "	echo \"user anonymous -luser@distributed.net#cd /incoming#\\" >> Makefile
-#echo "	binary#mput \${TARBASENAME}*.tar*#bye#\" | \\" >> Makefile
-#echo "	tr \"#\" \"\n\" | ftp -n -i -v upload.distributed.net" >> Makefile
-#echo "" >> Makefile
-
 
 
 #
@@ -2166,18 +2164,23 @@ if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
   done
 fi
 
-if [ "$AIXALL" = "TRUE" ]; then
-  echo "Patching compilersettings in Makefile for the cores"
+
+
+#
+# Other ugly platform specific manipulations on final Makefile.
+#
+if [ -n "$AIXALL" ]; then
+  echo "Patching compiler settings in Makefile for the cores"
   mv Makefile Makefile.tmp
   awk '
 /allitnil_552.ppc.s -o/ { print "\t\${CC} -c ${PPC601FLAGS} " $4 " " $5 " " $6 ; next }
 /lintilla_296.ppc.s -o/ { print "\t\${CC} -c ${PPC604FLAGS} " $4 " " $5 " " $6 ; next }
 /rc5ansi_2-rg.cpp -o/ { print "\t\${CC} -c ${POWERFLAGS} " $4 " " $5 " " $6 ; next }
 { print $0 }' Makefile.tmp > Makefile
-rm Makefile.tmp
+  rm Makefile.tmp
 fi
 
-if [ "$OPTS_NOOPT" != "" ]; then
+if [ -n "$OPTS_NOOPT" ]; then
   echo "Removing optimization flags in Makefile for linux-ppc compilation..."
   mv Makefile Makefile.tmp
   awk '
@@ -2189,10 +2192,15 @@ if [ "$OPTS_NOOPT" != "" ]; then
   rm Makefile.tmp
 fi
 
+
+#
+# Print out successful result and exit without error.
+#
 echo "Makefile auto-generation complete!"
-if [ "X$TARGET_TARBALL" = "X" ]; then
+if [ -z "$TARGET_TARBALL" ]; then
   echo "TARGET_TARBALL was not defined."
   echo "Upload-ready tarballs will not be auto-generated"
   echo "and Makefile does not have an 'ftp' target"
 fi
 echo ""
+exit 0
