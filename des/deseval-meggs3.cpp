@@ -1,20 +1,12 @@
 //
 // $Log: deseval-meggs3.cpp,v $
-// Revision 1.18  1999/11/27 09:21:37  sampo
-// make the mac client yield using _thread_yield and DoYieldToMain()...this work contributed by Michael Feiri with patches to DoYieldToMain by me
+// Revision 1.19  1999/12/07 23:44:25  cyp
+// standardized calling conventions, converted nbbits parameter to iterstodo
+// (cores return effective iterstodo), removed MIN_DES_BITS/MAX_DES_BITS gunk,
+// removed BIT_32/BIT_64 craziness.
 //
-// Revision 1.17  1999/11/27 08:15:03  sampo
-// round one of the mac command-line client changes
-//
-// Revision 1.16  1999/11/27 06:57:34  sampo
-// Mac command-line client checkins round 1...all changes commented with /* Mindmorph */ until everything settles out.
-//
-// Revision 1.15  1999/11/17 21:51:52  sampo
-// remove Dakidd's cvs merge error in previous revision in regards to ambiguous
-// type 'slice'
-//
-// Revision 1.14  1999/10/06 19:37:43  dakidd
-// All occurrences of "slice" changed to "SliceType" to resolve "ambiguous class reference - found slice/std::slice" error under CW pro 5. (Apparently, CWP5 has a "std::slice" class)
+// Revision 1.13.2.1  1999/12/02 13:33:30  mfeiri
+// Removed MacOS yield inside cruncher
 //
 // Revision 1.13  1999/01/09 08:57:41  remi
 // Fixed the previous fix : it's only for alpha/nt + defined(bit_64) + msvc++
@@ -65,10 +57,10 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.18 1999/11/27 09:21:37 sampo Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.19 1999/12/07 23:44:25 cyp Exp $"; }
 #endif
 
-#include <cputypes.h>		/* Isn't this needed for using CLIENT_OS defines? */
+#include "cputypes.h"		/* Isn't this needed for using CLIENT_OS defines? */
 
 #if (CLIENT_OS != OS_MACOS)
 #include <stdio.h>
@@ -89,14 +81,6 @@ return "@(#)$Id: deseval-meggs3.cpp,v 1.18 1999/11/27 09:21:37 sampo Exp $"; }
 #endif
 
 #include "kwan-sboxes.h"
-
-#if (CLIENT_OS == OS_MACOS)
-//#define TICKS ((unsigned long *)0x16a)
-#define slice unsigned long
-//extern void DoYieldToMain(char);
-//unsigned long DES_ticks_to_use = 6; /* hardcode 100ms for now */
-//unsigned long DES_yield_ticks = 0;
-#endif
 
 static void
 f_s1 (
@@ -524,32 +508,32 @@ void multiround( WORD_TYPE S[32], WORD_TYPE N[32], WORD_TYPE M[32], WORD_TYPE D[
 
 
 
-typedef WORD_TYPE SliceType; // dakidd 05-OCT-1999 - original "slice" was choking CW Pro 5 with "ambiguious class reference" errors
+typedef WORD_TYPE slice;
 #if ((CLIENT_OS == OS_MACOS) && defined(MRCPP_FOR_DES))
-extern "C" SliceType whack16(SliceType *P, SliceType *C, SliceType *K);
+extern "C" slice whack16(slice *P, slice *C, slice *K);
 #else
-extern SliceType whack16(SliceType *P, SliceType *C, SliceType *K);
+extern slice whack16(slice *P, slice *C, slice *K);
 #endif
 
 #define DEBUGPRINT 0
 
 // test all combinations of the easily-toggled bits
-SliceType whack16(SliceType *P, SliceType *C, SliceType *K)
+slice whack16(slice *P, slice *C, slice *K)
 {
-	SliceType R14[16][32];
-	SliceType L13[16][32];
+	slice R14[16][32];
+	slice L13[16][32];
 
-	SliceType R12_23[16], R12_15[16], R12_29[16], R12__5[16];
-	SliceType R12__8[16], R12_16[16], R12_22[16], R12_30[16];
+	slice R12_23[16], R12_15[16], R12_29[16], R12__5[16];
+	slice R12__8[16], R12_16[16], R12_22[16], R12_30[16];
 
-	SliceType L1[32];
-	SliceType R2[32];
-	SliceType L3[32];
+	slice L1[32];
+	slice R2[32];
+	slice L3[32];
 
-	SliceType R[32];
-	SliceType L[32];
+	slice R[32];
+	slice L[32];
 
-	SliceType PL[32], PR[32], CL[32], CR[32];
+	slice PL[32], PR[32], CL[32], CR[32];
 	PL[0] = P[6];
 	PL[1] = P[14];
 	PL[2] = P[22];
@@ -823,11 +807,11 @@ SliceType whack16(SliceType *P, SliceType *C, SliceType *K)
 				partialround( R, L, L, K, 480, 0xDE );
 				{ // now we start checking the outputs...
 				// round 12
-					SliceType save = R[29];
-					SliceType result;
+					slice save = R[29];
+					slice result;
 					{
 						SBOX_2_INIT( L[ 7]^K[54], L[ 8]^K[26], L[ 9]^K[34], L[10]^K[ 3], L[11]^K[18], L[12]^K[ 6] );
-						SliceType out;
+						slice out;
 						SBOX_2_BIT_0( R[23], out ); R[23] = out;
 						result  = ~(out ^ R12_23[hs]);
 						SBOX_2_BIT_1( R[15], out ); R[15] = out;
@@ -855,7 +839,7 @@ SliceType whack16(SliceType *P, SliceType *C, SliceType *K)
 					save = R[ 8];
 					{
 						SBOX_0_INIT( L[31]^K[48], L[ 0]^K[12], L[ 1]^K[27], L[ 2]^K[ 4], L[ 3]^K[39], L[ 4]^K[10] );
-						SliceType out;
+						slice out;
 						SBOX_0_BIT_0( R[ 8], out ); R[ 8] = out;
 						result &= ~(out ^ R12__8[hs]);
 						SBOX_0_BIT_1( R[16], out ); R[16] = out;
@@ -875,7 +859,7 @@ SliceType whack16(SliceType *P, SliceType *C, SliceType *K)
 					f_s3( R[ 7]^K[40], save^K[12], R[ 9]^K[20], R[10]^K[46], R[11]^K[ 4], R[12]^K[17],    L[23], L[15], L[29], L[ 5] );
 					
 					// no more cleverness, just finish inv-14 and 12 piece by piece and compare as we go
-					SliceType t1, t2, t3, t4;
+					slice t1, t2, t3, t4;
 					
 					t1 = R14[hs][12];
 					t2 = R14[hs][27];
@@ -1060,14 +1044,7 @@ SliceType whack16(SliceType *P, SliceType *C, SliceType *K)
 				break;
 			}
 			// now step the tail
-            /*
-            #if (CLIENT_OS == OS_MACOS)
-		    if (DES_yield_ticks < *TICKS) {
-	            DES_yield_ticks = *TICKS + DES_ticks_to_use;
-			    DoYieldToMain(true);
-			}
-            #endif
-			*/
+
 			hs = 0;
 			K[49] = ~K[49];
 			++ts;

@@ -6,6 +6,14 @@
 ; based on deseval.c from Matthew Kwan's bitslicing DES key search.
 ;
 ; $Log: des-slice-sa.s,v $
+; Revision 1.10  1999/12/07 23:44:26  cyp
+; standardized calling conventions, converted nbbits parameter to iterstodo
+; (cores return effective iterstodo), removed MIN_DES_BITS/MAX_DES_BITS gunk,
+; removed BIT_32/BIT_64 craziness.
+;
+; Revision 1.9.2.1  1999/11/24 19:11:13  chrisb
+; miscellaneous RISC OS changes
+;
 ; Revision 1.9  1998/06/26 08:19:31  kbracey
 ; Typo fixed.
 ;
@@ -31,12 +39,12 @@
 
 	AREA	fastdesarea, CODE, READONLY
 
-        DCB     "@(#)$Id: des-slice-sa.s,v 1.9 1998/06/26 08:19:31 kbracey Exp $", 0
+        DCB     "@(#)$Id: des-slice-sa.s,v 1.10 1999/12/07 23:44:26 cyp Exp $", 0
         ALIGN
 
-        EXPORT	des_unit_func_strongarm
-        EXPORT  convert_key_from_des_to_inc__FPUlT1
-        EXPORT  convert_key_from_inc_to_des__FPUlT1
+        EXPORT	des_unit_func_strongarm_asm
+        EXPORT  convert_key_from_des_to_inc__FPUiT1
+        EXPORT  convert_key_from_inc_to_des__FPUiT1
 
 	GBLL	patch
 patch	SETL	{FALSE}
@@ -46,7 +54,7 @@ startofcode	; &2c000
 
 	DCD	&b7e15163
 
-	B	des_unit_func_strongarm
+	B	des_unit_func_strongarm_asm
 
 __rt_udiv	B	startofcode - &2c000 + &1b938
 __rt_sdiv	B	startofcode - &2c000 + &1b8d8
@@ -240,7 +248,7 @@ got4_$s	SETA	$got4
 
 ;|x$codeseg| DATA
 
-convert_key_from_des_to_inc__FPUlT1
+convert_key_from_des_to_inc__FPUiT1
         STMDB    r13!,{r4,lr}
         LDR      r2,[r0,#0]
         AND      r3,r2,#&fe
@@ -317,7 +325,7 @@ convert_key_from_des_to_inc__FPUlT1
         STR      r1,[r0,#0]
         LDMIA    r13!,{r4,pc}^
 
-convert_key_from_inc_to_des__FPUlT1
+convert_key_from_inc_to_des__FPUiT1
         STMDB    r13!,{r4,lr}
         LDR      r2,[r1,#0]
         MOV      r2,r2,LSR #28
@@ -414,7 +422,7 @@ lowbits
 	DCD	0xffff0000
 
 
-des_unit_func_strongarm
+des_unit_func_strongarm_asm
         MOV      r12,r13
         STMDB    r13!,{r0,r1,r4-r9,r11,r12,lr,pc}
         SUB      r11,r12,#4
@@ -429,7 +437,7 @@ des_unit_func_strongarm
         STR      r0,[r13,#0]
         MOV      r1,r13
         ADD      r0,r13,#4
-        BL       convert_key_from_inc_to_des__FPUlT1
+        BL       convert_key_from_inc_to_des__FPUiT1
         MOV      r5,#1
         MOV      r6,#0
         LDMIA    r13,{r7,r8}
@@ -823,7 +831,7 @@ foundkey
 |L00033c.J62|
         MOV      r1,r13
         ADD      r0,r13,#4
-        BL       convert_key_from_des_to_inc__FPUlT1
+        BL       convert_key_from_des_to_inc__FPUiT1
         LDR      r0,[r4,#&14]
         LDR      r1,[r13,#0]
         SUB      r0,r1,r0

@@ -11,7 +11,7 @@
         adrli   \dest, \addr, "adrla\@", "adrlb\@", "adrlc\@"
 .endm
 	.text
-	.global	_des_unit_func_arm
+	.global	_des_unit_func_arm_asm
 
 lowbits:
 	.word	0xAAAAAAAA
@@ -20,7 +20,7 @@ lowbits:
 	.word	0xFF00FF00
 	.word	0xFFFF0000
 
-_des_unit_func_arm:
+_des_unit_func_arm_asm:
 	MOV     R12,R13
 	STMDB   R13!,{R0,R1,R4-R9,R11,R12,R14,PC}
 	SUB     R11,R12,#4

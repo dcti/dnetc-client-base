@@ -8,28 +8,31 @@
  * --------------------------------------------------------------
 */
 const char *des_slice_cpp(void) {
-return "@(#)$Id: des-slice.cpp,v 1.11 1999/04/06 07:49:32 cyp Exp $"; }
+return "@(#)$Id: des-slice.cpp,v 1.12 1999/12/07 23:44:25 cyp Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include "problem.h"
 #include "convdes.h"
 
-#if ((CLIENT_CPU == CPU_X86) && !defined(BIT_32)) //x86 platforms probably
-#if defined(BIT_64)                               //have BIT_64 defined for
-#undef BIT_64                                     //use with mmx cores.
-#endif
-#define BIT_32
-#endif
+#if defined(BIT_32) || defined(BIT_64)
+  #error "Remove -DBIT_32/-DBIT_64 from your makefile"
+#endif  
+
+#if (ULONG_MAX == 0xfffffffful)
+#  define BIT_32
+#elif (ULONG_MAX == 0xfffffffffffffffful)
+#  define BIT_64
+#else
+#  error "Something bad happened. Cannot determine BIT_32/BIT_64"
+#endif  
 
 #ifdef BIT_32
-#define BITS_PER_SLICE 32
-#elif BIT_64
-#define BITS_PER_SLICE 64
-#else
-// make sure the size of a "long" was specified
-#error "You must define BIT_32 or BIT_64"
+#  define BITS_PER_SLICE 32
+#else // BIT_64
+#  define BITS_PER_SLICE 64
 #endif
 
 extern unsigned long deseval (const unsigned long *plain,
@@ -37,33 +40,26 @@ extern unsigned long deseval (const unsigned long *plain,
           const unsigned long *key);
 
 // ------------------------------------------------------------------
-// Input : 56 bit key, plain & cypher text, timeslice
-// Output: key incremented, return 'timeslice' if no key found, 'timeslice-something' else
-// note : timeslice will be rounded to the upper power of two
-//        and can't be less than 256
+// Input : 56 bit key, plain & cypher text, pointer to iterations_to_do
+//         rc5unitwork.LO in lo:hi 24+32 incrementable format
+// Output: - iterations_to_do possibly adjusted (rounded to the upper power
+//           of two, not less than 256)
+//         - key incremented
+// Return - iterations_done:
+//            - if no key found: equal to (adjusted) iterations_to_do 
+//            - if key found: less
 
-// rc5unitwork.LO in lo:hi 24+32 incrementable format
-
-u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, u32 nbbits )
+u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, u32 *iterations, char * )
 {
   unsigned long key[56];
   unsigned long plain[64];
   unsigned long cypher[64];
-  u32 i;
-
-  // check if we have the right BIT_xx define
-  i = sizeof(unsigned long);
-#ifdef BIT_32
-  if (i != 4) {
-    printf ("Bad BIT_32 define !\n");
-    exit (-1);
-  }
-#elif BIT_64
-  if (i != 8) {
-    printf ("Bad BIT_64 define !\n");
-    exit (-1);
-  }
-#endif
+  u32 i, nbbits = 8; //minimum is 1<<8 (256)
+  
+  i = *iterations;
+  while (i > (1ul << nbbits))
+    nbbits++;
+  *iterations = (1ul << nbbits);
 
   // convert the starting key from incrementable format
   // to DES format

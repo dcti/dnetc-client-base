@@ -14,7 +14,7 @@
 	.text
 	.global _convert_key_from_des_to_inc__FPUiT0
 	.global _convert_key_from_inc_to_des__FPUiT0
-	.global _des_unit_func_strongarm
+	.global _des_unit_func_strongarm_asm
 
 _convert_key_from_des_to_inc__FPUiT0:
 	STMDB   R13!,{R4,R14}
@@ -189,7 +189,7 @@ lowbits:
 	.word	0xFF00FF00
 	.word	0xFFFF0000
 
-_des_unit_func_strongarm:
+_des_unit_func_strongarm_asm:
 	
 	MOV     R12,R13
 	STMDB   R13!,{R0,R1,R4-R9,R11,R12,R14,PC}
