@@ -3,7 +3,7 @@ PROGNAME_68K = rc5des_68K
 
 DEBUG    = 
 OPTIMIZE = optimize optsched
-CFLAGS   = nostkchk strmerge parms=reg define=LESS_GETENV define=PIPELINE_COUNT=1 define=_CPU_32BIT_ define=BIT_32 define=KWAN define=MEGGS includedir=netinclude: includedir=platforms/ includedir=common/ utillib NOLINK
+CFLAGS   = nostkchk strmerge parms=reg define=LESS_GETENV define=PIPELINE_COUNT=1 define=_CPU_32BIT_ define=BIT_32 define=KWAN define=MEGGS includedir=netinclude: includedir=platforms/ includedir=common/ utillib nover NOLINK
 DISASM   =
 LFLAGS   = #farcode fardata
 
