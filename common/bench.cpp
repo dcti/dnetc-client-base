@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.20 1999/12/12 15:16:30 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.21 1999/12/14 03:04:12 dakidd Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -322,7 +322,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
         w32Yield(); /* pump waiting messages */
         #elif (CLIENT_OS == OS_MACOS)
-        DoYieldToMain(0);
+        NonPolledUSleep(0); // was DoYieldToMain(0);
         #elif (CLIENT_OS == OS_RISCOS)
         riscos_upcall_6();
         #elif (CLIENT_OS == OS_NETWARE)
