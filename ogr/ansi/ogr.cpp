@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.12 2003/11/04 14:00:13 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.13 2003/12/07 23:02:06 kakace Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -381,7 +381,12 @@ static int ogr_cleanup(void);
   #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table
 #endif
 
+#ifndef OGR24_P2_GET_DISPATCH_TABLE_FXN
+  #define OGR24_P2_GET_DISPATCH_TABLE_FXN ogr24_p2_get_dispatch_table
+#endif
+
 extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
+extern CoreDispatchTable * OGR24_P2_GET_DISPATCH_TABLE_FXN (void);
 
 #if defined(__cplusplus)
 }
@@ -3057,6 +3062,7 @@ static int ogr_cleanup(void)
   return CORE_S_OK;
 }
 
+
 /* dispatch_table has to be strictly aligned for SPARC Solaris,
 ** otherwise it'll throw SIGBUS, gcc seems to do it automatically
 ** but SUNPRO has to be told and only does it if dispatch_table
@@ -3084,4 +3090,286 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
 #endif
   dispatch_table.cleanup   = ogr_cleanup;
   return &dispatch_table;
+}
+
+
+/*==========================================================================*/
+/*============================ OGR-24 FINAL STEPS ==========================*/
+/*==========================================================================*/
+/*
+** The method is based upon 3-diffs (4 marks) and 4-diffs (5 marks) stubs :
+** + 3-diffs stubs : Check rulers that have the 5th mark at position >= 80
+**   and the 6th mark at position >= 71.
+** + 4-diffs stubs : Check rulers that have the 6th mark at position >= 71.
+**
+** The code below is derived from the regular OGR cores (minor changes)
+**
+** THIS METHOD IS NOT SUITABLE TO FINALIZE OGR-25
+*/
+
+
+#if (OGROPT_ALTERNATE_CYCLE == 2) || (OGROPT_ALTERNATE_CYCLE == 1)
+static int ogr_cycle_pass2(void *state, int *pnodes, int with_time_constraints)
+{
+   struct State *oState = (struct State *)state;
+   int depth = oState->depth+1;      /* the depth of recursion */
+   struct Level *lev = &oState->Levels[depth];
+   int nodes = 0;
+   int nodeslimit = *pnodes;
+    const int oStateMax = oState->max;
+    const int oStateMaxDepthM1 = oState->maxdepthm1;
+    const int oStateHalfDepth2 = oState->half_depth2;
+    const int oStateHalfDepth = oState->half_depth;
+    const int oStateHalfLength = oState->half_length;
+   struct Level *levHalfDepth = &oState->Levels[oStateHalfDepth];
+   struct Level *levMaxM1 = &oState->Levels[oStateMaxDepthM1];
+   int retval = CORE_S_CONTINUE;
+
+   SETUP_TOP_STATE(oState,lev);
+
+   OGR_CYCLE_CACHE_ALIGN;
+
+   for (;;) {
+
+   //continue:
+      #if (OGROPT_ALTERNATE_CYCLE == 2)
+         U dist0 = VEC_TO_INT(distV0,3);
+      #endif
+
+      int maxMinusDepth = oStateMaxDepthM1 - depth;
+
+      if (with_time_constraints) { /* if (...) is optimized away if unused */
+         #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
+         if (nodes >= nodeslimit) {
+           break;
+         }  
+         #endif  
+      }
+
+      if (depth <= oStateHalfDepth2) {
+         if (depth <= oStateHalfDepth) {
+         
+            if (nodes >= nodeslimit) {
+               break;
+            }
+            
+            limit = oStateMax - OGR[maxMinusDepth];
+            limit = (limit < oStateHalfLength) ? limit : oStateHalfLength;
+         } else {
+            limit = oStateMax - choose(dist0 >> ttmDISTBITS, maxMinusDepth);
+            int tempLimit = oStateMax - levHalfDepth->cnt2 - 1;
+            limit = (limit < tempLimit) ? limit : tempLimit;
+         }
+      } else {
+         limit = oStateMax - choose(dist0 >> ttmDISTBITS, maxMinusDepth);
+      }
+
+      nodes++;
+
+      /* Find the next available mark location for this level */
+
+   stay:
+      #if (OGROPT_ALTERNATE_CYCLE == 2)
+         U comp0 = VEC_TO_INT(compV0,3);
+      #endif
+      if (comp0 < 0xfffffffe) {
+         int s = LOOKUP_FIRSTBLANK( comp0 );
+         if ((cnt2 += s) > limit)   goto up; /* no spaces left */
+         COMP_LEFT_LIST_RIGHT(lev, s);
+      } else { /* s>32 */
+         U comp = comp0;
+         if ((cnt2 += 32) > limit)  goto up; /* no spaces left */
+         COMP_LEFT_LIST_RIGHT_32(lev)
+         if (comp == 0xffffffff)    goto stay;
+      }
+
+      if (depth < 6) {
+        if ( (depth == 4 && cnt2 < 80) || (depth == 5 && cnt2 <= 70))
+          goto stay;
+      }
+
+      /* New ruler? */
+      if (depth == oStateMaxDepthM1) {
+         levMaxM1->cnt2 = cnt2;       /* not placed yet into list arrays! */
+         retval = found_one(oState);
+         if (retval != CORE_S_CONTINUE) {
+            break;
+         }
+         goto stay;
+      }
+
+      /* Go Deeper */
+      PUSH_LEVEL_UPDATE_STATE(lev);
+      lev++;
+      depth++;
+      continue;
+
+   up:
+      lev--;
+      depth--;
+      POP_LEVEL(lev);
+      if (depth <= oState->startdepth) {
+         retval = CORE_S_OK;
+         break;
+      }
+      goto stay; /* repeat this level till done */
+   }
+
+   SAVE_FINAL_STATE(oState,lev);
+   /* oState->Nodes += nodes; (unused, count is returned through *pnodes) */
+   oState->depth = depth-1;
+
+   *pnodes = nodes;
+
+   return retval;
+}
+#else
+static int ogr_cycle_pass2(void *state, int *pnodes, int with_time_constraints)
+{
+  struct State *oState = (struct State *)state;
+  /* oState->depth is the level of the last placed mark */
+  int depth = oState->depth+1;      /* the depth of recursion */
+  /* our depth is the level where the next mark will be placed */
+  struct Level *lev = &oState->Levels[depth];
+  struct Level *lev2;
+  int nodes = 0;
+  int nodeslimit = *pnodes;
+  int retval = CORE_S_CONTINUE;
+  int limit;
+  U comp0;
+
+#ifdef OGR_DEBUG
+  oState->LOGGING = 1;
+#endif
+
+  OGR_CYCLE_CACHE_ALIGN;
+
+  for (;;) {
+
+    if (with_time_constraints) { /* if (...) is optimized away if unused */
+       #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
+       if (nodes >= nodeslimit) {
+         break;
+       }  
+       #endif  
+    }
+
+#ifdef OGR_DEBUG
+    if (oState->LOGGING) dump_ruler(oState, depth);
+#endif
+
+    if (depth <= oState->half_depth2) {
+      if (depth <= oState->half_depth) {
+
+        //dump_ruler(oState, depth);
+        if (nodes >= nodeslimit) {
+          break;
+        }
+
+        limit = oState->max - OGR[oState->maxdepthm1 - depth];
+        limit = limit < oState->half_length ? limit : oState->half_length;
+      } else {
+        limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepthm1 - depth);
+        limit = limit < oState->max - oState->marks[oState->half_depth]-1 ? limit : oState->max - oState->marks[oState->half_depth]-1;
+      }
+    } else {
+      limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepthm1 - depth);
+    }
+
+#ifdef OGR_DEBUG
+    if (oState->LOGGING) dump(depth, lev, limit);
+#endif
+
+    nodes++;
+
+    /* Find the next available mark location for this level */
+stay:
+    comp0 = lev->comp[0];
+#ifdef OGR_DEBUG
+    if (oState->LOGGING) printf("comp0=%08x\n", comp0);
+#endif
+    if (comp0 < 0xfffffffe) {
+      int s = LOOKUP_FIRSTBLANK( comp0 );
+#ifdef OGR_DEBUG
+  if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
+#endif
+      if ((lev->cnt2 += s) > limit) goto up; /* no spaces left */
+      COMP_LEFT_LIST_RIGHT(lev, s);
+    } else {
+      /* s>32 */
+      if ((lev->cnt2 += 32) > limit) goto up; /* no spaces left */
+      COMP_LEFT_LIST_RIGHT_32(lev);
+      if (comp0 == 0xffffffff) goto stay;
+    }
+
+      if (depth < 6) {
+        if ( (depth == 4 && lev->cnt2 < 80) || (depth == 5 && lev->cnt2 <= 70))
+          goto stay;
+      }
+
+    /* New ruler? */
+    if (depth == oState->maxdepthm1) {
+      oState->marks[oState->maxdepthm1] = lev->cnt2;       /* not placed yet into list arrays! */
+      if (found_one(oState)) {
+        retval = CORE_S_SUCCESS;
+        break;
+      }
+      goto stay;
+    }
+
+    /* Go Deeper */
+    lev2 = lev + 1;
+#if (OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP == 1)
+    COPY_LIST_SET_BIT_COPY_DIST_COMP(lev2, lev, lev->cnt2-lev->cnt1);
+#else
+    COPY_LIST_SET_BIT(lev2, lev, lev->cnt2-lev->cnt1);
+    COPY_DIST_COMP(lev2, lev);
+#endif
+    oState->marks[depth] = lev->cnt2;
+    lev2->cnt1 = lev->cnt2;
+    lev2->cnt2 = lev->cnt2;
+    lev->limit = limit;
+    oState->depth = depth;
+    lev++;
+    depth++;
+
+    continue;
+
+up:
+    lev--;
+    depth--;
+    oState->depth = depth-1;
+    if (depth <= oState->startdepth) {
+      retval = CORE_S_OK;
+      break;
+    }
+    limit = lev->limit;
+
+    goto stay; /* repeat this level till done */
+  }
+
+  oState->depth = depth-1;
+
+  *pnodes = nodes;
+
+  return retval;
+}
+#endif
+
+static CoreDispatchTable dispatch_table_pass2;
+
+CoreDispatchTable * OGR24_P2_GET_DISPATCH_TABLE_FXN (void)
+{
+  dispatch_table_pass2.init      = ogr_init;
+  dispatch_table_pass2.create    = ogr_create;
+  dispatch_table_pass2.cycle     = ogr_cycle_pass2;
+  dispatch_table_pass2.getresult = ogr_getresult;
+  dispatch_table_pass2.destroy   = ogr_destroy;
+#if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
+  dispatch_table_pass2.count     = ogr_count;
+  dispatch_table_pass2.save      = ogr_save;
+  dispatch_table_pass2.load      = ogr_load;
+#endif
+  dispatch_table_pass2.cleanup   = ogr_cleanup;
+  return &dispatch_table_pass2;
 }
