@@ -7,13 +7,18 @@
 
 /* module history:
    01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
+
+   revisions:
+   23 May 1998 - corrected CliGetKeyrateForProblem so that blocks
+                 with the same key but different contest ids
+                 are recognized as unique problems.
 */   
 
 #include "clirate.h" //includes client.h, clicdata.h, clitime.h
 
 // ---------------------------------------------------------------------------
 
-// return (cumulative) keyrate for a particular contest
+   //return (cumulative) keyrate for a particular contest
 double CliGetKeyrateForContest( int contestid )
 {
   struct timeval totaltime;
@@ -32,10 +37,10 @@ double CliGetKeyrateForContest( int contestid )
 // ---------------------------------------------------------------------------
 
 
-// return keyrate for a single problem. Problem must be finished.
+   //return keyrate for a single problem. Problem must be finished.
 double CliGetKeyrateForProblem( Problem *prob )
 {
-  static u64 addedqueue[MAXCPUS*2];
+  static struct { u64 key; char contest; } addedqueue[MAXCPUS*2];
   static int addedqpos = -1;
 
   RC5Result rc5result;
@@ -69,29 +74,32 @@ double CliGetKeyrateForProblem( Problem *prob )
 
   additive = 1;
   for (int i=0;i<(MAXCPUS*2);i++)
-  {
-    if (addedqpos==-1)
-    { addedqueue[i].lo = addedqueue[i].hi = 0;
-        if (i==((MAXCPUS*2)-1)) addedqpos = 0;
-    }
-    else if (addedqueue[i].hi==rc5result.key.hi && 
-        addedqueue[i].lo==rc5result.key.lo)
     {
+    if (addedqpos==-1)
+      { addedqueue[i].key.lo = addedqueue[i].key.hi = 0;
+        addedqueue[i].contest = -1;
+        if (i==((MAXCPUS*2)-1)) addedqpos = 0;
+      }
+    else if (addedqueue[i].key.hi==rc5result.key.hi && 
+        addedqueue[i].key.lo==rc5result.key.lo && 
+        addedqueue[i].contest == contestid )
+      {
       additive=0;
       break;
+      }
     }
-  }
 
   if (additive)
-  {
-    addedqueue[addedqpos].hi=rc5result.key.hi; 
-    addedqueue[addedqpos].lo=rc5result.key.lo;
+    {
+    addedqueue[addedqpos].key.hi=rc5result.key.hi; 
+    addedqueue[addedqpos].key.lo=rc5result.key.lo;
+    addedqueue[addedqpos].contest=contestid;
     if ((++addedqpos)>=(MAXCPUS*2))
       addedqpos=0;
 
     count = 1; //number of blocks to add to clicdata.cpp information
     CliAddContestInfoSummaryData( contestid, &count, &keys, &tv );
-  }
+    }
     
   return ((double)(keys))/
        (((double)(tv.tv_sec))+(((double)(tv.tv_usec))/((double)(1000000))));
