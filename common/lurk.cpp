@@ -17,7 +17,7 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.17 2000/02/24 18:49:46 trevorh Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.18 2000/06/13 00:20:44 mfeiri Exp $"; }
 
 /* ---------------------------------------------------------- */
 
@@ -166,7 +166,7 @@ int Lurk::CheckForStatusChange(void) //returns -1 if connection dropped
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-    (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOS)
+    (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX)
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -315,7 +315,7 @@ int Lurk::GetCapabilityFlags(void)
   }
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
       (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-      (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOS)
+      (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
 #elif (CLIENT_OS == OS_OS2)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
@@ -540,7 +540,7 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_WIN32) || \
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
-    (CLIENT_OS == OS_MACOS) || ((CLIENT_OS == OS_OS2) && defined(__EMX__))
+    (CLIENT_OS == OS_MACOSX) || ((CLIENT_OS == OS_OS2) && defined(__EMX__))
 static int __MatchMask( const char *ifrname, int mask_include_all,
                        int mask_default_only, const char *ifacestowatch[] )
 {
@@ -565,7 +565,7 @@ static int __MatchMask( const char *ifrname, int mask_include_all,
       ismatched = (strcmp(wildmask,"ppp*")==0
       #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
         (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
-        (CLIENT_OS == OS_MACOS)
+        (CLIENT_OS == OS_MACOSX)
       || strcmp(wildmask,"dun*")==0
       #endif
       || strcmp(wildmask,"sl*")==0);
@@ -889,7 +889,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
 
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
       (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-      (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOS) || \
+      (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX) || \
       ((CLIENT_OS == OS_OS2) && defined(__EMX__))
    struct ifconf ifc;
    struct ifreq *ifr;
@@ -925,7 +925,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
 
      if (ifc.ifc_len)
      {
-       #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOS) || ((CLIENT_OS == OS_OS2) && defined(__EMX__))
+       #if (CLIENT_OS == OS_LINUX) || ((CLIENT_OS == OS_OS2) && defined(__EMX__))
        for (n = 0, ifr = ifc.ifc_req; n < ifc.ifc_len; n += sizeof(struct ifreq), ifr++)
        {
          if (__MatchMask(ifr->ifr_name,mask_include_all,
@@ -949,7 +949,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
        }
        // maybe other *BSD systems
        #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
-         (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_NETBSD)
+         (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_MACOSX)
        for (n = ifc.ifc_len, ifr = ifc.ifc_req; n >= (int)sizeof(struct ifreq); )
        {
          /*
@@ -1155,7 +1155,7 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || \
      (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
      (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
-     (CLIENT_OS == OS_MACOS)
+     (CLIENT_OS == OS_MACOSX)
 
   dohangupcontrol = 0;
   if (conf.connstartcmd[0] == 0)  /* we don't do dialup */
@@ -1308,7 +1308,7 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || \
       (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
       (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
-      (CLIENT_OS == OS_MACOS)
+      (CLIENT_OS == OS_MACOSX)
 
   if (isconnected)
   {
