@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.7 2003/08/25 16:40:50 mweiser Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.8 2004/01/10 17:09:12 piru Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -143,7 +143,7 @@ struct Stub { /* size is 24 */
 } DNETC_PACKED;
 
 struct WorkStub { /* size is 28 */
-  Stub stub;           /* stub we're working on */
+  struct Stub stub;    /* stub we're working on */
   u32 worklength;      /* depth of current state */
 } DNETC_PACKED;
 

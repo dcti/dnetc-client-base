@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amTime.c,v 1.2.4.4 2004/01/09 12:08:39 piru Exp $
+ * $Id: amTime.c,v 1.2.4.5 2004/01/10 17:09:12 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -279,9 +279,11 @@ BOOL GlobalTimerInit(VOID)
 static struct timerequest *amigaSleepAsync(struct TimerResources *res, unsigned int secs, unsigned int usecs)
 {
    res->tr_TimeReq->tr_node.io_Command = TR_ADDREQUEST;
+   {
    struct timeval *tv = &res->tr_TimeReq->tr_time;
    tv->tv_secs = secs + (usecs / 1000000);
    tv->tv_micro = usecs % 1000000;
+   }
    SendIO((struct IORequest *)res->tr_TimeReq);
 
    return(res->tr_TimeReq);
@@ -356,9 +358,11 @@ void amigaSleep(unsigned int secs, unsigned int usecs)
    #endif
   #endif
    res->tr_TimeReq->tr_node.io_Command = TR_ADDREQUEST;
+   {
    struct timeval *tv = &res->tr_TimeReq->tr_time;
    tv->tv_secs = secs + (usecs / 1000000);
    tv->tv_micro = usecs % 1000000;
+   }
    DoIO((struct IORequest *)res->tr_TimeReq);
 #elif !defined(__POWERUP__)
    /*
