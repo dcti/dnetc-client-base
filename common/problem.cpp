@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.50 2000/01/26 05:38:57 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.51 2000/02/15 03:41:19 sampo Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -374,7 +374,15 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
         }  
       }
       extern CoreDispatchTable *ogr_get_dispatch_table();
+      #if(CLIENT_OS == OS_MACOS)
+      extern CoreDispatchTable *vec_ogr_get_dispatch_table();
+      if(coresel == 1)
+        ogr = vec_ogr_get_dispatch_table();
+      else
+        ogr = ogr_get_dispatch_table();
+      #else
       ogr = ogr_get_dispatch_table();
+      #endif
       int r = ogr->init();
       if (r != CORE_S_OK)
         return -1;

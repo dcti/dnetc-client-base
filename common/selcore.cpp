@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.52 2000/02/14 04:33:38 petermack Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.53 2000/02/15 03:41:20 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -182,6 +182,8 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       {
         corenames_table[RC5][2] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
         corenames_table[RC5][3] = NULL;
+        corenames_table[OGR][2] = "GARSP 5.13-vec"; /* aka vec_ogr_get_dispatch_table() */
+        corenames_table[OGR][3] = NULL;
       }
     }
     #endif
@@ -1293,7 +1295,15 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
 
   #if defined(HAVE_OGR_CORES)
   if (contestid == OGR)
-    coresel = 0;
+    if (CLIENT_CPU == CPU_POWERPC)
+    {
+      if (coresel == 2) // G4 (PPC 7500)
+        coresel = 1;
+      else
+        coresel = 0;
+    }
+    else
+      coresel = 0;
   #endif
 
   /* ================================================================== */
