@@ -3,8 +3,26 @@
 // Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
+//
+// ----------------------------------------------------------------------
+// This file #includes the common header files that the client needs
+// almost everywhere.
+//
+// ------------------------------------------------------------------
+//
 // $Log: baseincs.h,v $
+// Revision 1.30.2.11  1999/01/30 15:52:25  remi
+// Synced with :
+//
+//  Revision 1.52  1999/01/29 19:34:08  jlawson
+//  added limits.h to linux
+//
+//  Revision 1.51  1999/01/29 19:07:16  jlawson
+//  fixed formatting.  added limits.h to win32
+//
+//  Revision 1.50  1999/01/28 00:16:49  trevorh
+//  Minor updates for OS/2 with Watcom
+//
 // Revision 1.30.2.10  1999/01/23 13:57:49  remi
 // Synced with :
 //
@@ -132,16 +150,15 @@ extern "C" {
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_OS2)
   #include <sys/timeb.h>
-  #include <conio.h>
   #include <share.h>
   #if defined(__WATCOMC__)
-    // patrick: not used with gcc (where, whom is this file, WATCOM ?)
     #include <direct.h>
   #endif
   #include <fcntl.h>
   #include <io.h>
   #include "platforms/os2cli/os2defs.h"
-  #if !defined(__EMX__)               // not currently supported (patrick)
+  #if !defined(__EMX__)               // supported in Watcom
+  #include <net/if.h>
   #include "platforms/os2cli/dod.h"   // needs to be included after Client
   #endif
   #include "lurk.h"
@@ -184,20 +201,21 @@ extern "C" {
 #elif (CLIENT_OS == OS_SCO)
   #include <fcntl.h>
   #include <sys/time.h>
-#elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16)
   #if (CLIENT_OS == OS_WIN32) || !defined(__WINDOWS_386__)
-  #define WIN32_LEAN_AND_MEAN
-  #include <windows.h>
-  #include <winsock.h>      // timeval
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+    #include <winsock.h>      // timeval
   #else
-  #include <windows.h>
-  #include "w32sock.h"
-  #endif  
+    #include <windows.h>
+    #include "w32sock.h"
+  #endif
   #include <sys/timeb.h>
   #include <process.h>
   #include <conio.h>
   #include <share.h>
   #include <fcntl.h>
+  #include <limits.h>
   #include <io.h>
   #include "w32svc.h"       // service
   #include "w32cons.h"      // console
@@ -234,11 +252,12 @@ extern "C" {
   extern "C" int gethostname(char *, int);
 #elif (CLIENT_OS == OS_AIX)
   #include <unistd.h>		// nice()
-  #include <strings.h>		// bzero(), strcase..., 
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS==OS_BSDI) || (CLIENT_OS == OS_OPENBSD)
+  #include <strings.h>		// bzero(), strcase...,
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI) || (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
   #include <unistd.h>
-  #if (((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS==OS_FREEBSD) || (CLIENT_OS==OS_BSDI))
+  #include <limits.h>
+  #if (((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI))
     #include <errno.h> // glibc2 has errno only here
   #endif
   #if (((CLIENT_OS == OS_LINUX) && defined(__ELF__)) || \
@@ -303,3 +322,4 @@ extern "C" {
 // --------------------------------------------------------------------------
 
 #endif //__BASEINCS_H__
+
