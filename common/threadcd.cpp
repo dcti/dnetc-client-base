@@ -8,11 +8,12 @@
  * implementation and porting notes are in threadcd.h             - cyp
  *
 */
-const char *threadcd_cpp(void) { 
-return "@(#)$Id: threadcd.cpp,v 1.15 1999/04/05 17:56:52 cyp Exp $"; } 
+const char *threadcd_cpp(void) {
+return "@(#)$Id: threadcd.cpp,v 1.16 1999/04/15 21:57:42 trevorh Exp $"; }
 
 #include <stdio.h>      //NULL
 #include "threadcd.h"   //includes implementation and porting notes.
+#include "baseincs.h"
 #include "sleepdef.h"   //sleep() and usleep()
 
 /* ---------------------------------------------------------------------- */

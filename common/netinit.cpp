@@ -1,20 +1,21 @@
-/* 
+/*
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- * 
+ *
  * -------------------------------------------------------------------
  * The Network constructor and destructor methods are encapsulated in
- * this module, thereby permitting us (a) to set up and tear down non-static 
- * network connections on the fly, (b) to increase portability (c) to 
+ * this module, thereby permitting us (a) to set up and tear down non-static
+ * network connections on the fly, (b) to increase portability (c) to
  * simplify the code and eliminate multiple possible points of failure.
  * - cyp 08. Aug 1998
  * -------------------------------------------------------------------
-*/ 
+*/
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.24 1999/04/05 17:56:52 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.25 1999/04/15 21:56:51 trevorh Exp $"; }
 
 #include "cputypes.h"
+#include "baseincs.h"
 #include "network.h"
 #include "logstuff.h" //for messages
 #include "clitime.h"  //for the time stamp string
@@ -34,12 +35,12 @@ static unsigned int net_init_level = 0;
 
 /*
   __netInitAndDeinit( ... ) combines both init and deinit so statics can
-  be localized. The function is called with (> 0) to init, (< 0) to deinint 
+  be localized. The function is called with (> 0) to init, (< 0) to deinint
   and (== 0) to return the current 'isOK' state.
 */
 
-static int __netInitAndDeinit( int doWhat )  
-{                                            
+static int __netInitAndDeinit( int doWhat )
+{
   int success = 1;
 
   if (( doWhat < 0 ) && ( net_init_level == 0 ))
@@ -64,7 +65,7 @@ static int __netInitAndDeinit( int doWhat )
   }
   #define DOWHAT_WAS_HANDLED
   #endif
-      
+
   //----------------------------
 
   #if (CLIENT_OS == OS_MACOS)
@@ -169,9 +170,9 @@ static int __netInitAndDeinit( int doWhat )
     {
       if ((--net_init_level)!=0) //don't deinitialize more than once
         success = 1;
-      else 
+      else
       {
-        if (SocketBase) 
+        if (SocketBase)
         {
           CloseLibrary(SocketBase);
           SocketBase = NULL;
@@ -190,8 +191,8 @@ static int __netInitAndDeinit( int doWhat )
   {
     if ( doWhat == 0 )     //request to check online mode
     {
-      #if defined(LURK)                  
-      if (dialup.CheckForStatusChange() != 0 ) //- still-online? 
+      #if defined(LURK)
+      if (dialup.CheckForStatusChange() != 0 ) //- still-online?
         return 0;                        //oops, return 0
       #endif
       return 1;            //assume always online once initialized
@@ -202,7 +203,7 @@ static int __netInitAndDeinit( int doWhat )
       if ((++net_init_level)==1) //don't initialize more than once
       {
         #if defined(LURK)
-        if ( dialup.DialIfNeeded(1) != 0 ) 
+        if ( dialup.DialIfNeeded(1) != 0 )
           success = 0;
         #endif
       }
@@ -225,11 +226,11 @@ static int __netInitAndDeinit( int doWhat )
   //----------------------------
 
   return ((success) ? (0) : (-1));
-}  
+}
 
 //======================================================================
 
-//  __globalInitAndDeinit() gets called once (to init) when the 
+//  __globalInitAndDeinit() gets called once (to init) when the
 // client starts and once (to deinit) when the client stops.
 
 static int __globalInitAndDeinit( int doWhat )
@@ -253,7 +254,7 @@ static int __globalInitAndDeinit( int doWhat )
       WSADATA wsaData;
       if ( WSAStartup( 0x0101, &wsaData ) != 0 )
         global_is_init = 0;
-      #endif  
+      #endif
       #ifdef LURK
       if (global_is_init != 0)
         dialup.Start();
@@ -285,9 +286,9 @@ static int __globalInitAndDeinit( int doWhat )
 
 int NetCheckIsOK(void)
 {
-  //get the (platform specific) network state 
-  return __netInitAndDeinit( 0 ); 
-}  
+  //get the (platform specific) network state
+  return __netInitAndDeinit( 0 );
+}
 
 //----------------------------------------------------------------------
 
@@ -298,16 +299,16 @@ int NetClose( Network *net )
     delete net;
 
     // do platform specific network deinit
-    return __netInitAndDeinit( -1 ); 
+    return __netInitAndDeinit( -1 );
     }
   return 0;
-}    
+}
 
 //----------------------------------------------------------------------
 
-Network *NetOpen( const char *servname, int servport, 
-           int _nofallback/*= 1*/, int _iotimeout/*= -1*/, int _enctype/*=0*/, 
-           const char *_fwallhost /*= NULL*/, int _fwallport /*= 0*/, 
+Network *NetOpen( const char *servname, int servport,
+           int _nofallback/*= 1*/, int _iotimeout/*= -1*/, int _enctype/*=0*/,
+           const char *_fwallhost /*= NULL*/, int _fwallport /*= 0*/,
            const char *_fwalluid /*= NULL*/ )
 {
   Network *net;
@@ -316,17 +317,17 @@ Network *NetOpen( const char *servname, int servport,
   //check if connectivity has been initialized
   if (__globalInitAndDeinit( 0 ) < 0)
     return NULL;
-  
+
   // do platform specific socket init
   if ( __netInitAndDeinit( +1 ) < 0)
-    return NULL; 
+    return NULL;
 
-  net = new Network( servname, servport, 
-           _nofallback /*=1*/, _iotimeout/*=-1*/, _enctype /*= 0*/, 
+  net = new Network( servname, servport,
+           _nofallback /*=1*/, _iotimeout/*=-1*/, _enctype /*= 0*/,
            _fwallhost /*= NULL*/, _fwallport /*= 0*/, _fwalluid /*= NULL*/ );
   success = ( net != NULL );
 
-  if (success)    
+  if (success)
     success = ((net->Open()) == 0); //opened ok
 
   if (!success)
@@ -334,13 +335,13 @@ Network *NetOpen( const char *servname, int servport,
     if (net)
       delete net;
     net = NULL;
-    
+
     // do platform specific sock deinit
-    __netInitAndDeinit( -1 ); 
+    __netInitAndDeinit( -1 );
     }
 
   return (net);
-}  
+}
 
 //----------------------------------------------------------------------
 
@@ -349,7 +350,7 @@ int InitializeConnectivity(void)
   __globalInitAndDeinit( +1 );
   return 0; //don't care about errors - NetOpen will handle that
 }
- 
+
 int DeinitializeConnectivity(void)
 {
   __globalInitAndDeinit( -1 );
