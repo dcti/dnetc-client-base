@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.28 2000/01/21 22:14:41 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.29 2000/02/07 01:57:18 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -394,7 +394,7 @@ int SelfTest( unsigned int contest )
           #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
           w32Yield(); /* pump waiting messages */
           #elif (CLIENT_OS == OS_MACOS)
-          sched_yield(); /* posix <sched.h> */
+          macosTickSleep(0);
           #elif (CLIENT_OS == OS_RISCOS)
           riscos_upcall_6();
           #elif (CLIENT_OS == OS_NETWARE)
