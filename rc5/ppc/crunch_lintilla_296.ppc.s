@@ -1,5 +1,11 @@
 #
 # $Log: crunch_lintilla_296.ppc.s,v $
+# Revision 1.4  1999/12/06 18:47:42  cyp
+# fixed externs
+#
+# Revision 1.3.2.1  1999/12/06 09:56:55  myshkin
+# Minor changes to conform to gas syntax (version 980114).
+#
 # Revision 1.3  1999/04/08 18:49:22  patrick
 #
 # bug fixes (double rgister usage and other stuff). Did this ever compile ?
@@ -10,10 +16,10 @@
 #
  .file	"crunch-ppc.cpp"
 gcc2_compiled.:
- .csect	.text[PR]
- .align 8
+# .csect	.text[PR]
+# .align 8
  .globl crunch_lintilla
-# .type	 crunch_lintilla,@function
+ .type	 crunch_lintilla,@function
 crunch_lintilla:
 
 # standard register aliases

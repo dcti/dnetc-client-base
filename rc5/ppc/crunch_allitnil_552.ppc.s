@@ -1,5 +1,11 @@
 #
 # $Log: crunch_allitnil_552.ppc.s,v $
+# Revision 1.4  1999/12/06 18:47:42  cyp
+# fixed externs
+#
+# Revision 1.3.2.1  1999/12/06 09:56:55  myshkin
+# Minor changes to conform to gas syntax (version 980114).
+#
 # Revision 1.3  1999/04/08 18:46:23  patrick
 #
 # bug fixes (double rgister usage and other stuff). Did this ever compile ?
@@ -11,10 +17,10 @@
 # allitnil -- the 601 companion for lintilla
  .file	"crunch-ppc.cpp"
 gcc2_compiled.:
- .csect	.text[PR]
- .align 8
+# .csect	.text[PR]
+# .align 8
  .globl crunch_allitnil
-# .type	 crunch_allitnil,@function
+ .type	 crunch_allitnil,@function
 
 # stratagy: straight code in inner loop, 256 key cycle, load S0_n from
 # pre-calculated constants
