@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.13 2003/04/26 15:16:48 pfeffi Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.14 2003/04/27 22:33:24 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -202,6 +202,9 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
         #if defined(__VEC__) || defined(__ALTIVEC__)
         LogScreenRaw( "RC5-72 Altivec assembly by Didier Levet\n");
         #endif
+      #endif
+      #if (CLIENT_CPU == CPU_SPARC)
+      LogScreenRaw( "RC5-72 SPARC assembly by Didier Levet and Andreas Beckmann\n");
       #endif
 #endif
 #if defined HAVE_OGR_CORES
