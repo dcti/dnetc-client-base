@@ -1501,7 +1501,7 @@ may be some lag in messages getting posted to the list.
 ------------------------------
 
 The original (v2.6401) version of this document was prepared by Daniel
-"dbaker" Baker (dbaker@cuckoo.com).
+"dbaker" Baker (dbaker@distributed.net).
 
 Kiddo (alex) helped dbaker with some of the command line options.
 
