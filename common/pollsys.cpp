@@ -39,7 +39,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.9.2.5 2000/06/24 19:38:17 oliver Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.9.2.6 2000/06/26 19:11:25 oliver Exp $"; }
 
 #include "baseincs.h"  /* NULL, malloc */
 #include "clitime.h"   /* CliTimer() */
@@ -171,7 +171,7 @@ int RegPolledProcedure( auto void (*proc)(void *), void *arg,
           chaintail->next = thisp;
       }
     }
-    if ( !thisp )
+    if ( !thisp || CliGetMonotonicClock( &thisp->execat ) != 0 )
       fd = -1;
     else
     {
@@ -183,7 +183,6 @@ int RegPolledProcedure( auto void (*proc)(void *), void *arg,
       thisp->priority = priority;
       if (priority >= MAX_POLL_RUNLEVEL)
         thisp->priority = MAX_POLL_RUNLEVEL-1;
-      CliTimer( &thisp->execat );
       if (interval)
       {
         thisp->execat.tv_sec += interval->tv_sec;
@@ -243,13 +242,14 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
   void *arg = NULL;
   unsigned int runprio;
   register void (*proc)(void *) = NULL;
-  int reclock, loopend, dorun, adj_time;
+  int reclock, loopend, dorun;
 
   if ((++isrunning) > 1)
   {
     fprintf(stderr, "call to sleep when no sleep allowed!");
   }
-  else if (!pollsysdata.runlist || pollsysdata.regcount==0)
+  else if (!pollsysdata.runlist || pollsysdata.regcount==0 ||
+           CliGetMonotonicClock( &now ) != 0)
   {
     if ( secs )
     {
@@ -262,9 +262,6 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
   }
   else
   {
-    adj_time = CliTimerSetDelta(0);
-    CliTimer( &now );
-    CliTimerSetDelta(adj_time);
     until.tv_usec = now.tv_usec;
     until.tv_sec = now.tv_sec;
     until.tv_usec += usecs;
@@ -348,9 +345,12 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
 
       if (reclock)
       {
-        adj_time = CliTimerSetDelta(0);
-        CliTimer( &now );
-        CliTimerSetDelta(adj_time);
+        if (CliGetMonotonicClock( &now ) != 0)
+        {
+          CliTimerDiff( &now, &until, &overflow );
+          usleep( overflow.tv_sec * 1000000 + overflow.tv_usec );
+          now = until; /* exit loop and ensure overflow gets set to zero */
+        }
       }
     } while (( now.tv_sec < until.tv_sec ) || 
               (( now.tv_sec == until.tv_sec ) && 
