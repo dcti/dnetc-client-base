@@ -8,11 +8,12 @@
 
 #include <time.h>
 #include <string.h>
+#include "client.h"
 
 #define MAX_CONNECTIONS   5
 #define CLIENTIDLETIMEOUT 30
 
-bool ProcessClientPacket(MiniHttpDaemonConnection *client);
+bool ProcessClientPacket(MiniHttpDaemonConnection *httpcon, Client *client);
 
 void __fdsetsockadd(SOCKET sock, fd_set *setname, int *sockmax, int *writecnt);
 
