@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.25 2000/10/31 03:07:31 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.26 2000/11/02 14:36:44 oliver Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -1205,6 +1205,12 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           strncpy( (char *)conf_options[editthis].thevariable, parm, 
                    MINCLIENTOPTSTRLEN );
           ((char *)conf_options[editthis].thevariable)[MINCLIENTOPTSTRLEN-1]=0;
+          if (editthis == CONF_LOADORDER)
+          {
+            projectmap_build(client->loadorder_map, loadorder );
+            conf_options[CONF_LOADORDER].thevariable = 
+              strcpy(loadorder, projectmap_expand( client->loadorder_map ) );
+          }
         }
         else if ( conf_options[editthis].type == CONF_TYPE_IARRAY)
         {
@@ -1308,8 +1314,6 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
       client->nettimeout = -1;
     else if (client->nettimeout < 5)
       client->nettimeout = 5;
-
-    projectmap_build(client->loadorder_map, loadorder );
 
     client->uuehttpmode = 0;
     if (fwall_type == FWALL_TYPE_SOCKS4)
