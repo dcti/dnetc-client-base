@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.20 1999/11/16 19:23:11 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.21 1999/11/19 00:11:23 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -148,7 +148,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       #ifdef SMC /* actually only for the first thread */
       corenames_table[RC5][1] = "RG self-modifying";
       #endif
-      if (det >= 0 && (det & 0x100)!=0)
+      if (det >= 0 && (det & 0x100)!=0) /* ismmx */
       {
         #if defined(MMX_RC5)
         corenames_table[RC5][0] = "jasonp P5/MMX"; /* slower on a PII/MMX */
@@ -249,7 +249,6 @@ void selcoreEnumerate( int (*proc)(unsigned int cont,
 
 int selcoreValidateCoreIndex( unsigned int cont_i, int index )
 {
-  /* To enable future expansion, we return -1 if there is only one core */
   if (index >= 0 && index < ((int)__corecount_for_contest( cont_i )))
     return index;
   return -1;
@@ -461,7 +460,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   }
   #elif (CLIENT_CPU == CPU_X86)
   {
-    int user_selected = 1;
     if (contestid == RC5)
     {
       selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
@@ -469,8 +467,25 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       {
         if (detected_type >= 0)
         {
-          selcorestatics.corenum[RC5] = (int)(detected_type & 0xff);
-          user_selected = 0;
+          int cindex = -1; 
+          switch ( detected_type & 0xff )
+          {
+            case 0: cindex = 0; break; // P5
+            case 1: cindex = 1; break; // 386/486
+            case 2: cindex = 2; break; // PII/PIII
+            case 3: cindex = 3; break; // Cx6x86, AMD K7
+            case 4: cindex = 4; break; // K5
+            case 5: cindex = 5; break; // K6/K6-2/K6-3
+            #if defined(SMC)    
+            case 6: cindex = 1; break; // cyrix 486 uses SMC if available
+            #else 
+            case 6: cindex = 0; break; // else default to P5 (see /bugs/ #99)
+            #endif
+            case 7: cindex = 2; break; // castrated Celeron
+            case 8: cindex = 2; break; // PPro
+            //no default
+          }
+          selcorestatics.corenum[RC5] = cindex;
         }
       }
     }     
@@ -481,18 +496,27 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       {
         if (detected_type >= 0)
         {
-          user_selected = 0;
+          int cindex = -1;
           if ((detected_type & 0x100) != 0 && /* have mmx */
              __corecount_for_contest(contestid) > 2) /* have mmx-bitslicer */
-            selcorestatics.corenum[DES] = 2; /* mmx bitslicer */
-          else
+            cindex = 2; /* mmx bitslicer */
+          else 
           {
-            int det = (int)(detected_type & 0xff);
-            if (det == 0 /*P5*/ || det == 1 /*386/486 */ || det == 4 /*K5*/)
-              selcorestatics.corenum[DES] = 0; /* standard Bryd */
-            else
-              selcorestatics.corenum[DES] = 1; /* movzx Bryd */
+            switch ( detected_type & 0xff )
+            {
+              case 0: cindex = 0; break; // P5             == standard Bryd
+              case 1: cindex = 0; break; // 386/486        == standard Bryd
+              case 2: cindex = 1; break; // PII/PIII       == movzx Bryd
+              case 3: cindex = 1; break; // Cx6x86, AMD K7 == movzx Bryd
+              case 4: cindex = 0; break; // K5             == standard Bryd
+              case 5: cindex = 1; break; // K6             == movzx Bryd
+              case 6: cindex = 0; break; // Cx486          == movzx Bryd
+              case 7: cindex = 1; break; // orig Celeron   == movzx Bryd
+              case 8: cindex = 1; break; // PPro           == movzx Bryd
+              //no default
+            }
           }
+          selcorestatics.corenum[DES] = cindex;
         }
       }
     }
@@ -503,22 +527,22 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       {
         if (detected_type >= 0)
         {
+          int cindex = -1; 
           // this is only valid for nasm'd cores or GCC 2.95 and up
-          switch( detected_type & 0xff ) 
+          switch ( detected_type & 0xff )
           {
-          case 0:  // P5
-          case 1:  // 386/486
-            selcorestatics.corenum[CSC] = 3; // 1key - called
-            break;
-          case 2:  // Ppro/PII/Celeron/PIII
-          case 4:  // K5
-            selcorestatics.corenum[CSC] = 2; // 1key - inline
-            break;
-          case 3:  // Cx6x86, AMD K7
-          case 5:  // K6/K6-2/K6-3
-            selcorestatics.corenum[CSC] = 0; // 6bit - inline
-            break;
+            case 0: cindex = 3; break; // P5             == 1key - called
+            case 1: cindex = 3; break; // 386/486        == 1key - called
+            case 2: cindex = 2; break; // PII/PIII       == 1key - inline
+            case 3: cindex = 0; break; // Cx6x86, AMD K7 == 6bit - inline
+            case 4: cindex = 2; break; // K5             == 1key - inline
+            case 5: cindex = 0; break; // K6/K6-2/K6-3   == 6bit - inline
+            case 6: cindex = 3; break; // Cyrix 486      == 1key - called
+            case 7: cindex = 3; break; // orig Celeron   == 1key - called
+            case 8: cindex = 3; break; // PPro           == 1key - called
+            //no default
           }
+          selcorestatics.corenum[CSC] = cindex;
         }
       }
     }
