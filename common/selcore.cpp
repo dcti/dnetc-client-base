@@ -1,8 +1,8 @@
 /* 
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1998-2001 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ * Written August 1998 by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * -------------------------------------------------------------------
  * program (pro'-gram) [vi]: To engage in a pastime similar to banging
@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.92 2001/02/01 20:46:22 oliver Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.93 2001/02/07 16:15:04 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1046,7 +1046,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     #error "What's up, Doc?"
   #endif
 #elif (CLIENT_CPU == CPU_SPARC)
-  #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
+  #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)) && \
+     (defined(__GCC__) || defined(__GNUC__)) /* doesn't build with sun cc */
     //rc5/ultra/rc5-ultra-crunch.cpp
     extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
   #else
@@ -1283,7 +1284,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #elif (CLIENT_CPU == CPU_SPARC)
     {
-      #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
+      #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)) && \
+        (defined(__GCC__) || defined(__GNUC__)) /* doesn't build with sun cc */
       {
         //rc5/ultra/rc5-ultra-crunch.cpp
         //xtern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
