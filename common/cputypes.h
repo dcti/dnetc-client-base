@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.60 1999/04/10 14:24:02 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.61 1999/04/11 15:37:31 sampo Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -563,7 +563,10 @@ extern "C" {
   typedef unsigned __int64 ui64;
   typedef __int64 si64;
 #elif (CLIENT_OS == OS_MACOS)
-  #error to enable 64bit integer math, please typedef your 64 bit int by compiler
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned long long ui64;
+  typedef signed long long si64;
 #elif (CLIENT_OS == OS_AMIGAOS)
   #error to enable 64bit integer math, please typedef your 64 bit int by compiler
 #endif  
