@@ -277,11 +277,15 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
+#ifdef MULTITHREAD
     if (threadnum == 0) {
       kiter = des_unit_func ( &rc5unitwork, nbits );
     } else {
       kiter = Bdes_unit_func ( &rc5unitwork, nbits );
     }
+#else
+    kiter = des_unit_func ( &rc5unitwork, nbits );
+#endif
   }
   contestwork.keysdone.lo += kiter;
   if ( kiter < timeslice * PIPELINE_COUNT )
