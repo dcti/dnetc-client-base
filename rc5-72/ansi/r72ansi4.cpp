@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72ansi4_cpp(void) {
-return "@(#)$Id: r72ansi4.cpp,v 1.20 2002/10/28 16:40:23 rick Exp $"; }
+return "@(#)$Id: r72ansi4.cpp,v 1.20.2.1 2003/01/15 14:10:19 stream Exp $"; }
 
 #include "ccoreio.h"
 #include "rotate.h"
@@ -13,11 +13,7 @@ return "@(#)$Id: r72ansi4.cpp,v 1.20 2002/10/28 16:40:23 rick Exp $"; }
 #define Q 0x9E3779B9
 
 #ifdef __cplusplus
-#if (CLIENT_OS == OS_QNX) && !defined(__QNXNTO__)
-extern "C" s32 cdecl rc5_72_unit_func_ansi_4 ( RC5_72UnitWork *, u32 *, void * );
-#else
-extern "C" s32 rc5_72_unit_func_ansi_4 ( RC5_72UnitWork *, u32 *, void * );
-#endif
+extern "C" s32 CDECL rc5_72_unit_func_ansi_4 ( RC5_72UnitWork *, u32 *, void * );
 #endif
 
 #if defined(_MSC_VER)
@@ -26,11 +22,7 @@ extern "C" s32 rc5_72_unit_func_ansi_4 ( RC5_72UnitWork *, u32 *, void * );
 #pragma warning 130 9           // arithmetic overflow in a constant expression
 #endif
 
-#if (CLIENT_OS == OS_QNX) && !defined(__QNXNTO__)
-s32 cdecl rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
-#else
-s32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
-#endif
+s32 CDECL rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
   u32 A1, A2, A3, A4, B1, B2, B3, B4;
   u32 S1[26], S2[26], S3[26], S4[26];
