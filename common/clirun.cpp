@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.102 1999/10/14 00:37:00 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.103 1999/10/14 18:37:17 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -21,7 +21,7 @@ return "@(#)$Id: clirun.cpp,v 1.102 1999/10/14 00:37:00 cyp Exp $"; }
 #include "clitime.h"   // CliTimer(), Time()/(CliGetTimeString(NULL,1))
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "clicdata.h"  // CliGetContestNameFromID()
-#include "selcore.h"   // selcoreGetSelectedCoreForContest()
+//#include "selcore.h"   // selcoreGetSelectedCoreForContest()
 #include "checkpt.h"   // CHECKPOINT_[OPEN|CLOSE|REFRESH|_FREQ_[SECS|PERC]DIFF]
 #include "cpucheck.h"  // GetTimesliceBaseline(), GetNumberOfSupportedProcessors()
 #include "probman.h"   // GetProblemPointerFromIndex()
@@ -945,8 +945,8 @@ int Client::Run( void )
   {
     if (load_problem_count != 0)
     {
-      for (prob_i = 0; prob_i < CONTEST_COUNT; prob_i++) //get select core msgs 
-        selcoreGetSelectedCoreForContest( prob_i );      //... out of the way.
+      //for (prob_i = 0; prob_i < CONTEST_COUNT; prob_i++) //get select core msgs 
+      //  selcoreGetSelectedCoreForContest( prob_i );      //... out of the way.
       if (load_problem_count > 1)
         Log( "Loading crunchers with work...\n" );
       load_problem_count = LoadSaveProblems( this, load_problem_count, 0 );

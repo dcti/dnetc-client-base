@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.116 1999/10/11 17:06:29 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.117 1999/10/14 18:37:17 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -189,7 +189,7 @@ Problem::Problem(long _threadindex /* defaults to -1L */)
   ww &= 0x7; /* (sizeof(longword)-1); */
   #else
   ww &= (sizeof(int)-1); /* int alignment */
-  #endif	
+  #endif        
   if (ww) 
   {
     Log("rc5unitwork for problem %d is misaligned!\n", threadindex);
@@ -518,8 +518,8 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     #elif (CLIENT_CPU == CPU_X86)
     {
       u32 (*slicit)(RC5UnitWork *,u32) = ((u32 (*)(RC5UnitWork *,u32))0);
-			#if defined(CLIENT_SUPPORTS_SMP)
-			  slicit = des_unit_func_slice; //kwan
+                        #if defined(CLIENT_SUPPORTS_SMP)
+                          slicit = des_unit_func_slice; //kwan
       #endif
       #if defined(MMX_BITSLICER) 
       {
@@ -530,45 +530,59 @@ static int __core_picker(Problem *problem, unsigned int contestid)
           slicit = (u32 (*)(RC5UnitWork *,u32))des_unit_func_mmx;
       }
       #endif  
-			if (slicit && coresel > 1) /* not standard bryd and not ppro bryd */
+                        if (slicit && coresel > 1) /* not standard bryd and not ppro bryd */
       {                /* coresel=2 is valid only if we have a slice core */
         coresel = 2;
         problem->x86_unit_func = slicit;
       }
-      else if (coresel == 1) /* movzx bryd */
+      else 
       {
-        problem->x86_unit_func = p1des_unit_func_pro;
         #if defined(CLIENT_SUPPORTS_SMP) 
-        if (problem->threadindex > 0)  /* not first thread */
-        {
-          if (problem->threadindex == 1)  /* second thread */
-            problem->x86_unit_func = p2des_unit_func_pro;
-          else if (problem->threadindex == 2) /* third thread */
-            problem->x86_unit_func = p1des_unit_func_p5;
-          else if (problem->threadindex == 3) /* fourth thread */
-            problem->x86_unit_func = p2des_unit_func_p5;
-          else                                /* fifth...nth thread */
-					  problem->x86_unit_func = slicit;
+        // bryd is not thread safe, so make sure that when 
+        // running benchmark/test asychronously (ie from a gui), 
+        // we pick a core that isn't in use.
+        unsigned int thrindex = problem->threadindex;
+        if (thrindex == 0 && !problem->threadindex_is_valid)
+        { /* !threadindex_is_valid==not probman controlled==benchmark/test*/
+          while (GetProblemPointerFromIndex(thrindex))
+            thrindex++;
         }
-        #endif /* if defined(CLIENT_SUPPORTS_SMP)  */
-      }
-      else             /* normal bryd */
-      {
-        coresel = 0;
-        problem->x86_unit_func = p1des_unit_func_p5;
-        #if defined(CLIENT_SUPPORTS_SMP) 
-        if (problem->threadindex > 0)  /* not first thread */
+        #endif
+        if (coresel == 1) /* movzx bryd */
         {
-          if (problem->threadindex == 1)  /* second thread */
-            problem->x86_unit_func = p2des_unit_func_p5;
-          else if (problem->threadindex == 2) /* third thread */
-            problem->x86_unit_func = p1des_unit_func_pro;
-          else if (problem->threadindex == 3) /* fourth thread */
-            problem->x86_unit_func = p2des_unit_func_pro;
-          else                                /* fifth...nth thread */
-            problem->x86_unit_func = slicit;
+          problem->x86_unit_func = p1des_unit_func_pro;
+          #if defined(CLIENT_SUPPORTS_SMP) 
+          if (thrindex > 0)  /* not first thread */
+          {
+            if (thrindex == 1)  /* second thread */
+              problem->x86_unit_func = p2des_unit_func_pro;
+            else if (thrindex == 2) /* third thread */
+              problem->x86_unit_func = p1des_unit_func_p5;
+            else if (thrindex == 3) /* fourth thread */
+              problem->x86_unit_func = p2des_unit_func_p5;
+            else                    /* fifth...nth thread */
+              problem->x86_unit_func = slicit;
+          }
+          #endif /* if defined(CLIENT_SUPPORTS_SMP)  */
         }
-        #endif /* if defined(CLIENT_SUPPORTS_SMP)  */
+        else             /* normal bryd */
+        {
+          coresel = 0;
+          problem->x86_unit_func = p1des_unit_func_p5;
+          #if defined(CLIENT_SUPPORTS_SMP) 
+          if (thrindex > 0)  /* not first thread */
+          {
+            if (thrindex == 1)  /* second thread */
+              problem->x86_unit_func = p2des_unit_func_p5;
+            else if (thrindex == 2) /* third thread */
+              problem->x86_unit_func = p1des_unit_func_pro;
+            else if (thrindex == 3) /* fourth thread */
+              problem->x86_unit_func = p2des_unit_func_pro;
+            else                    /* fifth...nth thread */
+              problem->x86_unit_func = slicit;
+          }
+          #endif /* if defined(CLIENT_SUPPORTS_SMP)  */
+        }
       }
     }
     #endif
@@ -1312,21 +1326,10 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
     }
     case DES:
     {
-      #ifndef HAVE_DES_CORES
-      return 0;
+      #ifdef HAVE_DES_CORES
+      return 1;
       #else
-        #if (CLIENT_CPU == CPU_X86)
-        if (prob_index < 0 /* benchmark/test */
-            && GetProblemPointerFromIndex(0) /* crunchers running? */
-            && selcoreGetSelectedCoreForContest( contest_i ) < 2)  /* bryd */
-          return 0; /* bryd is not thread safe */
-        #endif
-        #if (CLIENT_OS == OS_NETWARE)
-        if (prob_index >= 0 /* not benchmark/test */
-          && selcoreGetSelectedCoreForContest( contest_i ) > 1) /* not bryd */
-          return nwCliIsPreemptiveEnv(); /* mmx bslice needs preemptive env */
-        #endif
-        return 1;
+      return 0;
       #endif
     }
     case OGR:
