@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version.h,v $
+// Revision 1.15  1998/09/23 22:25:43  silby
+// There, now it's int. All better. :)
+//
 // Revision 1.14  1998/09/23 22:20:19  blast
 // Blargh Silby.
 // Changed my #if 0 to //
@@ -67,10 +70,10 @@
 #define CLIENT_VERSIONSTRING    "v2.7100.418-BETA2"
 #define CLIENT_VERSIONSTRING2   "2.7100.418-BETA2"        // no leading "v"
 
-//#define BETA
+#define BETA
 
 #if defined(BETA)
-  s32 checkifbetaexpired(void);
+  int checkifbetaexpired(void);
 #define EXPIRATIONTIME 907394806
 #endif
 
