@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.62.2.10 2003/09/02 00:48:53 mweiser Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.62.2.11 2004/01/05 13:31:19 kakace Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -221,14 +221,14 @@ static int __enumcorenames(unsigned int cont_i, const char *corename,
       len = strlen(label);
       {
         unsigned int maxlen = len;
-        if (maxlen > 75)
-          len = maxlen = 75;
-        else if (maxlen > 50)
-          maxlen = 75;
-        else if (maxlen > 25)
-          maxlen = 50;
+        if (maxlen > 72)
+          len = maxlen = 72;
+        else if (maxlen > 48)
+          maxlen = 72;
+        else if (maxlen > 24)
+          maxlen = 48;
         else
-          maxlen = 25;
+          maxlen = 24;
         for (;len < maxlen; len++)
           label[len] = ' ';
         len = maxlen;
@@ -239,7 +239,7 @@ static int __enumcorenames(unsigned int cont_i, const char *corename,
       if (ecd->linepos != 0)
       {
         if (ecd->cont_i != cont_i ||
-            (ecd->linepos + len) > 78)
+            (ecd->linepos + len) > 72)
         {
           need_pre_lf = 1;
           ecd->linepos = 0;
@@ -250,9 +250,9 @@ static int __enumcorenames(unsigned int cont_i, const char *corename,
       if (ecd->linepos == 0)
       {
         if (ecd->cont_i != cont_i)
-          sprintf(contnamepad, "%-3.3s:", CliGetContestNameFromID(cont_i));
+          sprintf(contnamepad, "%-6.6s:", CliGetContestNameFromID(cont_i));
         else
-          strcpy(contnamepad,"    ");
+          strcpy(contnamepad,"       ");
       }
 
       LogScreenRaw( "%s%s%s", ((need_pre_lf)?("\n"):("")),
