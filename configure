@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.94 2000/01/14 23:12:07 friedbait Exp $
+# @(#)$Id: configure,v 1.222.2.95 2000/01/16 19:51:43 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1224,8 +1224,8 @@ case "$1" in
 
     *x86-freebsd)             # [dbaker] aout
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -DLURK \
-			-DHAVE_CSC_CORES -DMMX_CSC" #-DHAVE_OGR_CORES
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -DLURK"
+			#-DHAVE_CSC_CORES -DMMX_CSC" #-DHAVE_OGR_CORES
                         # -DHAVE_DES_CORES $OPTS_DES_MMX 
         TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp" #$OGR_ANSI_SRCS 
@@ -1235,16 +1235,15 @@ case "$1" in
 			#des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
 	TARGET_LIBS="-lc_r"
 	TARGET_NASM_FMT="aoutb"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $CSC_ASM_SRCS"
-                        #$NASM_DESMMX_SRCS 
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"  #$CSC_ASM_SRCS" $NASM_DESMMX_SRCS 
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="freebsd-x86-aout"
         ;;
 
     *x86-freebsd-elf)       # [dbaker] elf
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -DLURK \
-			-DHAVE_CSC_CORES -DMMX_CSC" #-DHAVE_OGR_CORES
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -Werror -DMMX_RC5 -DLURK"
+			#-DHAVE_CSC_CORES -DMMX_CSC" #-DHAVE_OGR_CORES
                         # -DHAVE_DES_CORES $OPTS_DES_MMX 
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp" #$OGR_ANSI_SRCS
@@ -1252,8 +1251,7 @@ case "$1" in
 	TARGET_ADDASMS="platforms/x86ident.S"
                         #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			#des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $CSC_ASM_SRCS" 
-                        #$NASM_DESMMX_SRCS
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS" #$CSC_ASM_SRCS $NASM_DESMMX_SRCS
 	TARGET_LIBS="-lc_r"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="freebsd-x86-elf"
