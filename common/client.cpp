@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.98  1998/07/13 22:52:29  cramer
+// Fixed Alde's divide by zero error in printing the % for block flush/fetch.
+// (Leave it to NFS to create a race condition!)
+//
 // Revision 1.97  1998/07/13 13:18:45  kbracey
 // Put back in .ini filename selection code. CYP! STOP MESSING ABOUT!
 //
@@ -43,7 +47,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.97 1998/07/13 13:18:45 kbracey Exp $.
+// Tweaked $Id: client.cpp,v 1.98 1998/07/13 22:52:29 cramer Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -219,7 +223,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.97 1998/07/13 13:18:45 kbracey Exp $"; }
+return "@(#)$Id: client.cpp,v 1.98 1998/07/13 22:52:29 cramer Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -854,9 +858,10 @@ s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
     if (isatty(1)) {
 #endif
 #endif
-      u32 percent2 = ((count*10000)/((inthreshold[contest]-more)+count));
+      u32 percent2div = (inthreshold[contest]-more)+count;
+      u32 percent2 = ((count*10000)/(percent2div?percent2div:1));
    LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
-          CliGetTimeString(NULL,1), count, ((inthreshold[contest]-more)+count),
+          CliGetTimeString(NULL,1), count, percent2div?percent2div:1,
           percent2/100, percent2%100 );
 #if !defined(NOMAIN)           // these two must match
     } else {                 // use simple output for redirected stdout
