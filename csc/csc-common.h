@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common.h,v $
+// Revision 1.1.2.5  1999/11/28 06:17:05  lyndon
+//
+// Irix builds were botching the ULONG_MAX test, thus the code was defaulting
+// to 64 bits everywhere. (I don't know why ...)
+//
+// Both the MIPSpro and GNU compilers define _MIPS_SZLONG. If that define
+// is present, use it in preference to the ULONG_MAX-based tests.
+//
 // Revision 1.1.2.4  1999/11/01 17:23:23  cyp
 // renamed transX(...) to csc_transX(...) to avoid potential (future) symbol
 // collisions.
@@ -22,7 +30,7 @@
 //
 
 #ifndef __CSC_COMMON_H
-#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.1.2.4 1999/11/01 17:23:23 cyp Exp $"
+#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.1.2.5 1999/11/28 06:17:05 lyndon Exp $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -45,6 +53,14 @@
     #define CASTNUM64(n) n##ul
   #else
     #error something missing
+  #endif
+#elif defined(_MIPS_SZLONG)
+  #if (_MIPS_SZLONG == 32)
+    #define CSC_BIT_32
+  #elif (_MIPS_SZLONG == 64)
+    #define CSC_BIT_64
+  #else
+    #error Insane value of _MIPS_SZLONG
   #endif
 #elif (ULONG_MAX == 0xfffffffful)
   #define CSC_BIT_32
