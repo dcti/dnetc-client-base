@@ -23,7 +23,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.15.2.5 2001/04/14 14:19:01 cyp Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.15.2.6 2001/04/15 18:23:52 oliver Exp $"; }
 
 #include <stdio.h>
 #include <string.h>
@@ -338,6 +338,8 @@ static int __is_filename_absolute(const char *fname)
   return (*fname == '\\' || *fname == '/' || (*fname && fname[1]==':'));       
   #elif (CLIENT_OS == OS_NETWARE)
   return (*fname == '\\' || *fname == '/' || (strchr(fname,':')));       
+  #elif (CLIENT_OS == OS_AMIGAOS)
+  return (strchr(fname,':') != NULL);       
   #else
   return (*fname == '/');
   #endif
