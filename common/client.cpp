@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.91  1998/07/11 01:53:14  silby
+// Change in logging statements - all have full timestamps now so they look correct in the win32gui.
+//
 // Revision 1.90  1998/07/11 01:36:28  silby
 // switched order of lurk and connectrequested code so that it would work properly with the win32 gui, also fixed a bug with win32gui forced fetches.
 //
@@ -18,7 +21,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.90 1998/07/11 01:36:28 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.91 1998/07/11 01:53:14 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -194,7 +197,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.90 1998/07/11 01:36:28 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.91 1998/07/11 01:53:14 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -1941,7 +1944,7 @@ PreferredIsDone1:
 #else                
                 in_buffer_file[(int) tmpc]));
 #endif                
-              Log( " %s  %d %s block%s %s in file %s\n", CliGetTimeString(NULL,0),
+              Log( "[%s] %d %s block%s %s in file %s\n", CliGetTimeString(NULL,1),
                 out,
                 CliGetContestNameFromID((int) tmpc),
                 out == 1 ? "" : "s",

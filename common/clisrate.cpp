@@ -6,6 +6,9 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.25  1998/07/11 01:53:19  silby
+// Change in logging statements - all have full timestamps now so they look correct in the win32gui.
+//
 // Revision 1.24  1998/07/10 20:56:59  cyruspatel
 // The summary line creation code now generates the keyrate as a factor of
 // 1000, and uses the saved space to write "kkeys/sec" instead of "k/s".
@@ -108,7 +111,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-static const char *id="@(#)$Id: clisrate.cpp,v 1.24 1998/07/10 20:56:59 cyruspatel Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.25 1998/07/11 01:53:19 silby Exp $";
 return id; }
 #endif
 
@@ -363,12 +366,12 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   CliTimerDiff( &tv, &tv, NULL );
 
   sprintf( str, "Completed %s block %08lX:%08lX (%s keys)\n"
-                " %s  %s - [%skeys/sec]\n",
+                "[%s] %s - [%skeys/sec]\n",
                 name,
                 (unsigned long) ntohl( rc5result.key.hi ) ,
                 (unsigned long) ntohl( rc5result.key.lo ),
                 CliGetU64AsString( &(rc5result.iterations), 1, contestid ),
-                CliGetTimeString( NULL, 0 ),
+                CliGetTimeString( NULL, 1 ),
                 CliGetTimeString( &tv, 2 ),
                 keyrateP );
   return str;
