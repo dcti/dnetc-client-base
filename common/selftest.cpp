@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.31  1998/10/26 03:14:27  cyp
+// Version fun.
+//
+// Revision 1.3  1998/10/20 07:24:08  silby
+// Change an unsigned int to an int so that a type conversion was not necessary on the return.
+//
 // Revision 1.2  1998/10/11 00:45:31  cyp
 // SelfTest() is now standalone. Modified to use the same contest numbering
 // conventions used everywhere else, ie 0==RC5, 1==DES.
@@ -14,7 +20,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.2 1998/10/11 00:45:31 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.31 1998/10/26 03:14:27 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -118,7 +124,7 @@ int SelfTest( unsigned int contest, int cputype )
   ContestWork contestwork;
   RC5Result rc5result;
   u64 expectedsolution;
-  unsigned int successes = 0;
+  int successes = 0;
   
   if (contest == 0)
     {
