@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.138  1998/07/08 23:48:33  foxyloxy
+// Typo in des-slice-meggs.cpp fixed to allow non-mmx clients to
+// compile (NOTSZERO changed back to NOTZERO).
+//
 // Revision 1.137  1998/07/08 23:31:51  foxyloxy
 // Added defines to allow non-x86 platforms to compile and properly recognize
 // but ignore the -nommx command line option.
@@ -225,7 +229,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.137 1998/07/08 23:31:51 foxyloxy Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.138 1998/07/08 23:48:33 foxyloxy Exp $";
 return id; }
 #endif
 
@@ -2683,7 +2687,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       LogScreenf("Won't use MMX instructions\n");
       usemmx=0;
 #else
-      LogScreenf("-nommx argument ignored on this non-x86 processor.");
+      LogScreenf("-nommx argument ignored on this non-x86 processor.\n");
 #endif
       Argv[i][0] = 0;
     }
