@@ -62,8 +62,8 @@ RC5_LIBS = wsock32.lib advapi32.lib
 {$(PLATPATH)}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
 
-{$(DESPATH)}.asm{$(OUTPUTPATH)}.obj:
-	tasm32 /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
+{$(DESPATH/brydmasm)}.asm{$(OUTPUTPATH)}.obj:
+	tasm32 /m /ml $(**:/=\), $(@:/=\)
 
 {$(RC5PATH)}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
