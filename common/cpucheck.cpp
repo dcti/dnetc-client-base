@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.51 2004/04/17 18:36:56 oliver Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.52 2004/04/19 13:54:41 sod75 Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -500,6 +500,8 @@ static long __GetRawProcessorID(const char **cpuname)
       { NONPVR(3), "A35"                 }, //not PVR based
       { NONPVR(4), "RS64II"              }, //not PVR based
       { NONPVR(5), "RS64III"             }, //not PVR based
+      {    0x0800, "POWER_4"             }, //not PVR based
+      {    0x2000, "POWER_5"             }, //not PVR based
     };
 
   #if (CLIENT_OS == OS_AIX)
@@ -516,7 +518,9 @@ static long __GetRawProcessorID(const char **cpuname)
           { POWER_630,     NONPVR(2) },
           { POWER_A35,     NONPVR(3) },
           { POWER_RS64II,  NONPVR(4) },
-          { POWER_RS64III, NONPVR(5) }};
+          { POWER_RS64III, NONPVR(5) },
+          { POWER_4,            2048 }, 
+          { POWER_5,            8192 }};
 
       /* assume failed */
       detectedtype = -1L;
