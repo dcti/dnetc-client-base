@@ -6,7 +6,7 @@
 ; if your compiler can generate faster code please send it to me
 ; for disassembly.
 ;
-; $Id: ogr.asm,v 1.1.2.5 2000/11/11 12:38:10 cyp Exp $
+; $Id: ogr.asm,v 1.1.2.6 2000/11/25 15:04:19 friedbait Exp $
 
                global ogr_get_dispatch_table, _ogr_get_dispatch_table
                extern ogr_choose_dat, _ogr_choose_dat
@@ -181,7 +181,7 @@ found_one:
     gas_push      0x00000000
     lea       eax,[esp+0x24]
     gas_push      eax
-    call      near ptr memset
+    call      ptr memset
     mov       edi,0x00000001
     gas_add       esp,0x0000000c
     nop       
@@ -244,7 +244,7 @@ X$7:
 
 __CODESECT__
 ogr_init:
-    call      near ptr init_load_choose
+    call      ptr init_load_choose
     test      eax,eax
     jne       X$8
     xor       eax,eax
@@ -293,7 +293,7 @@ X$11:
     gas_push      0x00000c1c
     gas_push      0x00000000
     gas_push      ebx
-    call      near ptr memset
+    call      ptr memset
     mov       edi,dword ptr [esp+0x30]
     movzx     eax,word ptr [edi]
     mov       dword ptr [ebx+0x4],eax
@@ -647,7 +647,7 @@ X$25:
     inc       dword ptr [ebx+0xc0]
     gas_add       dword ptr [esp+0x18],0x00000004
     inc       dword ptr [esp+0x20]
-    jmp       near ptr X$15
+    jmp       ptr X$15
     CALIGN 4
 X$26:
     dec       dword ptr [ebx+0xc0]
@@ -822,12 +822,12 @@ X$34:
     mov       eax,dword ptr [esi+0x40]
     mov       dword ptr [ebx+edi*4+0x18],eax
     gas_push      ebx
-    call      near ptr found_one
+    call      ptr found_one
     gas_add       esp,0x00000004
     test      eax,eax
     je        near X$32
     mov       dword ptr [esp+0x18],0x00000002
-    jmp       near ptr X$39
+    jmp       ptr X$39
 X$35:
     lea       ecx,[esi+0x48]
     mov       dword ptr [esp+0x14],ecx
@@ -893,7 +893,7 @@ X$36:
     mov       dword ptr [esi+0x44],ebp
     mov       esi,dword ptr [esp+0x14]
     inc       dword ptr [esp+0x24]
-    jmp       near ptr X$27
+    jmp       ptr X$27
     CALIGN 4
 X$37:
     gas_add       esi,0xffffffb8
@@ -902,7 +902,7 @@ X$37:
     gas_cmp       dword ptr [ebx+0xbc],ecx
     jge       X$38
     mov       ebp,dword ptr [esi+0x44]
-    jmp       near ptr X$32
+    jmp       ptr X$32
     nop       
 X$38:
     mov       dword ptr [esp+0x18],0x00000000
