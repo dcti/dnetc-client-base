@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netio.cpp,v $
+// Revision 1.1.2.2  1999/04/14 00:52:08  jlawson
+// removed socket conditioning.
+//
 // Revision 1.1.2.1  1999/04/04 07:24:44  jlawson
 // new wrappers around low-level network operations.
 //
@@ -56,7 +59,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netio_cpp(void) {
-return "@(#)$Id: netio.cpp,v 1.1.2.1 1999/04/04 07:24:44 jlawson Exp $"; }
+return "@(#)$Id: netio.cpp,v 1.1.2.2 1999/04/14 00:52:08 jlawson Exp $"; }
 #endif
 
 #define __NETIO_CPP__ /* suppress redefinitions in netio.h */
@@ -341,17 +344,6 @@ int netio_openlisten(SOCKET &s, u32 addr, u16 port)
     return -1;
   }
 
-  /*
-   * Put the master socket into non-blocking IO mode and set keepalive
-   * mode on.  Setting keepalive on the master socket is probably useless
-   * since it never transmits any data, but oh well.
-   */
-  if (netio_condition_socket(s))
-  {
-    netio_close(s);
-    return -1;
-  }
-
   return 0;
 }
 
@@ -410,15 +402,6 @@ int netio_connect(SOCKET &s, const char *host, u16 port, u32 &addr, u32 listenad
     }
   }
 
-
-  /*
-   * Put the socket into non-blocking IO mode and set keepalive.
-   */
-  if (netio_condition_socket(s))
-  {
-    netio_close(s);
-    return -1;
-  }
 
   /*
    * bind the socket to address and port given
@@ -486,11 +469,6 @@ int netio_accept(SOCKET s, SOCKET &snew, u32 &hostaddress)
     netio_close(snew);
     return -1;
   }      
-  else if (netio_condition_socket(snew))
-  {
-    netio_close(snew);
-    return -1;
-  }
   hostaddress = Sin.sin_addr.s_addr;
   return 0;
 }
