@@ -6,7 +6,7 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.27.2.8 2000/01/16 22:27:14 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.9 2000/03/10 03:10:39 jlawson Exp $
 
 BASENAME = dnetc
 
@@ -17,7 +17,7 @@ BASENAME = dnetc
 %COREOBJS = output\rg486.obj     output\rc5-rgk5.obj  output\rg6x86.obj   &
             output\rc5-rgk6.obj  output\brfp5.obj     output\rc5-rgp6.obj
 %LINKOBJS = output\problem.obj  &
-            output\confrwv.obj   output\autobuff.obj  output\buffwork.obj &
+            output\confrwv.obj   output\autobuff.obj  output\buffbase.obj &
             output\mail.obj      output\client.obj    output\disphelp.obj &
             output\iniread.obj   output\network.obj   output\scram.obj    &
             output\clitime.obj   output\clicdata.obj  output\clirate.obj  &
@@ -30,7 +30,7 @@ BASENAME = dnetc
             output\clirun.obj    output\setprio.obj   output\console.obj  &
             output\modereq.obj   output\confmenu.obj  output\confopt.obj  &
             output\util.obj      output\base64.obj    output\random.obj   &
-            output\netres.obj
+            output\netres.obj    output\buffpriv.obj
             # this list can be added to in the platform specific section
             # 49 std OBJ's (+3 desmmx, +1 rc5mmx, +2 mt, +x plat specific)
 
@@ -396,7 +396,11 @@ output\mail.obj : common\mail.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\buffwork.obj : common\buffwork.cpp $(%dependall) .AUTODEPEND
+output\buffbase.obj : common\buffbase.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: 
+  @set isused=1
+
+output\buffpriv.obj : common\buffpriv.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: 
   @set isused=1
 
