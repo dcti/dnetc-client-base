@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.51  1998/11/19 20:54:00  cyp
+// Updated command line options to reflect changed -until format.
+//
 // Revision 1.50  1998/11/09 20:05:22  cyp
 // Did away with client.cktime altogether. Time-to-Checkpoint is calculated
 // dynamically based on problem completion state and is now the greater of 1
@@ -163,7 +166,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.50 1998/11/09 20:05:22 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.51 1998/11/19 20:54:00 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -234,7 +237,7 @@ void DisplayHelp( const char * unrecognized_option )
   "-numcpu <n>        run <n> threads/run on <n> cpus",
   "-h <hours>         time limit in hours",
   "-n <count>         blocks to complete",
-  "-until <HHMM>      quit at HHMM (eg 0700)",
+  "-until <HH:MM>     quit at HH:MM (eg 07:30)",
   "-u <uuehttp>       use UUE/HTTP mode",
   "-ha <address>      http proxy name or IP address",
   "-hp <port>         http proxy port",
