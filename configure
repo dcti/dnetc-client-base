@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.182 2000/08/09 19:36:26 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.183 2000/08/19 10:42:46 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -159,6 +159,7 @@ gcc_get_ver() {
     fi 
     #2.7.2.1 = 2000000 +  70000 +  200 + 1 = 2070201
     #2.95.1  = 2000000 + 950000 +  100     = 2950100
+    #2.96    = 2000000 + 960000 +    0     = 2960000
     #2.91.66 = 2000000 + 910000 + 6600     = 2916600
     gccver=`echo "($a1 * 1000000)+($a2 * 10000)+($a3 * 100)+$a4" | bc`
     #echo $gccver
@@ -168,11 +169,12 @@ gcc_get_ver() {
 generate_gcc_opts() {  
 
 # GCC: warn as much as we can for maximum portability
-  OPTS_GCC_WARN="-W -Wall -Wtraditional -Wpointer-arith -Wcast-align \
-  	         -Wmissing-declarations -Wmissing-prototypes \
-	         -Wstrict-prototypes -Wconversion -Winline \
+  OPTS_GCC_WARN="-W -Wall -Wpointer-arith -Wcast-align \
+  	         -Wmissing-prototypes -Wconversion -Winline \
 	         -Waggregate-return -Wcast-qual -Woverloaded-virtual \
-	         -Wnested-externs" #-Wshadow needs fixes
+	         " #-Wshadow needs fixes
+                 #-Wtraditional+-Wmissing-declarations+-Wstrict-prototypes+
+                 #-Wnested-externs are not available on 2.96+
   OPTS_GCC_BASE="-fcaller-saves -fomit-frame-pointer \
                  -fno-inline-functions -fno-rtti" 
   OPTS_272_PLUS="-fno-handle-exceptions"
@@ -314,7 +316,7 @@ generate_gcc_opts() {
 
   # ------
 
-  gccopts="$opts295" # 3.0
+  gccopts="$opts295" # 2.96
   if [ $gccver -lt 2960000 ]; then
     gccopts="$opts295"
     if [ $gccver -lt 2900000 ]; then
@@ -2249,7 +2251,8 @@ if [ -n "${TARGET_ADDASMS}" ]; then
   echo "Scanning output AS dependencies..."
   TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} as"
   for target in ${TARGET_ADDASMS}; do
-      TARGETOBJECT=output/`basename $target`.o
+      TARGETOBJECT=`basename $target .s`
+      TARGETOBJECT=output/`basename $TARGETOBJECT .S`.o
       echo "  $target -> $TARGETOBJECT"
       TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
       TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
@@ -2259,7 +2262,7 @@ if [ -n "${TARGET_ADDNASMS}" ]; then
   echo "Scanning output NASM dependencies..."
   TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} nasm"
   for target in ${TARGET_ADDNASMS}; do
-      TARGETOBJECT=output/`basename $target`.o
+      TARGETOBJECT=output/`basename $target .asm`.o
       echo "  $target -> $TARGETOBJECT"
       TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
       TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
