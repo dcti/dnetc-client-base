@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.35 2001/01/21 16:21:59 cyp Exp $
+# $Id: makefile.vc,v 1.56.2.36 2001/01/21 18:19:08 cyp Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -169,14 +169,14 @@ RC5_OBJS =                           \
         $(OUTPUTPATH)/rc5-alpha-nt.obj
 !else
 RC5_OBJS =                           \
-        $(OUTPUTPATH)/brfp5.obj      \
-        $(OUTPUTPATH)/rc5-rgk5.obj   \
-        $(OUTPUTPATH)/rc5-rgk6.obj   \
-        $(OUTPUTPATH)/rc5-rgp6.obj   \
-        $(OUTPUTPATH)/rc5mmx.obj     \
-        $(OUTPUTPATH)/rg486.obj      \
-        $(OUTPUTPATH)/rg6x86.obj     \
-        $(OUTPUTPATH)/rc5-hbk7.obj
+        $(OUTPUTPATH)/brf-p5.obj     \
+        $(OUTPUTPATH)/rg-k5.obj      \
+        $(OUTPUTPATH)/rg-k6.obj      \
+        $(OUTPUTPATH)/rg-p6.obj      \
+        $(OUTPUTPATH)/jp-mmx.obj     \
+        $(OUTPUTPATH)/rg-486.obj     \
+        $(OUTPUTPATH)/rg-6x86.obj    \
+        $(OUTPUTPATH)/hb-k7.obj
 OPTS_MSVC = $(OPTS_MSVC)
 !endif
 
@@ -265,22 +265,22 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
-{$(RC5SRCPATH)/x86/nasm}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(RC5SRCPATH:/=\)\x86\nasm\ $(**:/=\)
+{$(RC5SRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
+        nasmw -o $(@:/=\) -f win32 -i $(RC5SRCPATH:/=\)\x86\ $(**:/=\)
 
-{$(DESSRCPATH)/brydmasm}.asm{$(OUTPUTPATH)}.obj:
-        tasm32 /t /m /ml /dmodelnum=2 /i$(DESSRCPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
+{$(DESSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
+        tasm32 /t /m /ml /dmodelnum=2 /i$(DESSRCPATH:/=\)\x86 $(**:/=\), $(@:/=\)
 
-{$(DESSRCPATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\nasm\ $(**:/=\)
+{$(DESSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
+        nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\x86\ $(**:/=\)
 
-{$(DESSRCPATH)/mmx-bitslice}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\mmx-bitslice\ $(**:/=\)
+{$(DESSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
+        nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\x86\ $(**:/=\)
 
 {$(CSCSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CSCSRCPATH:/=\)\x86\ $(**:/=\)
 
-{$(CSCSRCPATH)/x86/mmx}.asm{$(OUTPUTPATH)}.obj:
+{$(CSCSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CSCSRCPATH:/=\)\x86\ $(**:/=\)
 
 {$(OGRSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:

@@ -1,7 +1,7 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
-# $Id: makefile.bcc,v 1.23.2.21 2001/01/21 16:21:59 cyp Exp $
+# $Id: makefile.bcc,v 1.23.2.22 2001/01/21 18:19:08 cyp Exp $
 #
 # As of Feb 2000, Borland C++ 5.5 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
@@ -59,7 +59,7 @@ NASMOPTS = $(NASMOPTS) -D__showids__
 !endif
 
 
-.path.asm = $(RC5PATH)\x86\nasm;$(DESPATH)\mmx-bitslice;$(CSCPATH)\x86;$(CSCPATH)\x86\mmx;$(OGRPATH)\x86;$(CHIPSRCPATH)
+.path.asm = $(RC5PATH)\x86;$(DESPATH)\x86;$(CSCPATH)\x86;$(CSCPATH)\x86;$(OGRPATH)\x86;$(CHIPSRCPATH)
 # do not add $(CSCPATH) to .path.cpp - everything is in .path.asm
 .path.cpp = $(COMMONPATH);$(RC5PATH);$(DESPATH);$(OGRPATH)\ansi;$(PLATSRCPATH)
 .path.c = $(PLATSRCPATH)
@@ -143,14 +143,14 @@ CLI_LIBS = noeh32.lib cw32mt.lib import32.lib
 # --------------------------------- RC5 ----------------------------
 
 RC5_OBJS =                           \
-        $(OUTPUTPATH)/brfp5.obj      \
-        $(OUTPUTPATH)/rc5-rgk5.obj   \
-        $(OUTPUTPATH)/rc5-rgk6.obj   \
-        $(OUTPUTPATH)/rc5-rgp6.obj   \
-        $(OUTPUTPATH)/rc5mmx.obj     \
-        $(OUTPUTPATH)/rg486.obj      \
-        $(OUTPUTPATH)/rg6x86.obj     \
-        $(OUTPUTPATH)/rc5-hbk7.obj
+        $(OUTPUTPATH)/brf-p5.obj     \
+        $(OUTPUTPATH)/rg-k5.obj      \
+        $(OUTPUTPATH)/rg-k6.obj      \
+        $(OUTPUTPATH)/rg-p6.obj      \
+        $(OUTPUTPATH)/jp-mmx.obj     \
+        $(OUTPUTPATH)/rg-486.obj     \
+        $(OUTPUTPATH)/rg-6x86.obj    \
+        $(OUTPUTPATH)/hb-k7.obj
 BCCOPTS = $(BCCOPTS)
 
 

@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.224 2001/01/21 16:21:58 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.225 2001/01/21 18:19:09 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -153,13 +153,20 @@ add_sources() # $1=os, $2=arch, $3=custom
   if [ "$2" = "x86" ]; then
     # -- des common -- mmx is nasm only
     ##des std## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
-    ##des std## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/p1bdespro.S"
-    ##des std## TARGET_ADDSRCS="$TARGET_ADDSRCS des/des-x86.cpp common/convdes.cpp" 
-    ##des mt##  TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bbdeslow.S des/brydgnu/p2bdespro.S"
+    ##des std## TARGET_ADDASMS="$TARGET_ADDASMS des/x86/bdeslow.S des/x86/p1bdespro.S"
+    ##des std## TARGET_ADDSRCS="$TARGET_ADDSRCS des/x86/des-x86.cpp common/convdes.cpp" 
+    ##des mt##  TARGET_ADDASMS="$TARGET_ADDASMS des/x86/bbdeslow.S des/x86/p2bdespro.S"
     ##des mt##  TARGET_ADDSRCS="$TARGET_ADDSRCS $KWAN_SLICE_SRCS4"
     ##des mt##  TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
+
+    if [ "$1-$3" = "linux-" -o "$1" = "freebsd" -o "$1" = "netbsd" \
+         -o "$1" = "openbsd" -o "bsdos" ]; then # has SMC
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -DSMC"
+        #obsolete linux: TARGET_LDFLAGS="$TARGET_LDFLAGS -static -Xlinker -omagic"
+        #obsolete linux: -Xlinker -omagic implies -static
+    fi
     if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_NO_NASM"  # ****NOTE****
       TARGET_ADDASMS="$TARGET_ADDASMS plat/x86/x86ident.S"
@@ -168,22 +175,15 @@ add_sources() # $1=os, $2=arch, $3=custom
       ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
       # -- non-nasm/rc5 --
       TARGET_ADDSRCS="$TARGET_ADDSRCS \
-                      rc5/x86/rc5-486-rg.cpp rc5/x86/rc5-6x86-rg.cpp \
-                      rc5/x86/rc5p5brf.cpp   rc5/x86/rc5-p6-rg.cpp \
-                      rc5/x86/rc5-k5-rg.cpp  rc5/x86/rc5-k6-rg.cpp"
+                      rc5/x86/rg-486.cpp     rc5/x86/rg-smc.cpp \
+                      rc5/x86/rg-k5.cpp      rc5/x86/brf-p5.cpp \
+                      rc5/x86/rg-k6.cpp      rc5/x86/rg-p6.cpp  \
+                      rc5/x86/rg-6x86.cpp"
       # -- non-nasm/ogr --
       TARGET_ADDASMS="$TARGET_ADDASMS ogr/x86/ogr.S"
     else
       TARGET_ADDNASMS="$TARGET_ADDNASMS plat/x86/x86ident.asm"
       TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_RC5X86_SRCS"
-      if [ "$1-$3" = "linux-" \
-           -o "$1" = "freebsd" -o "$1" = "netbsd" \
-           -o "$1" = "openbsd" -o "bsdos" ]; then # has SMC
-        TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/x86/rc5-486-smc-rg.cpp"
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DSMC"
-        #obsolete linux: TARGET_LDFLAGS="$TARGET_LDFLAGS -static -Xlinker -omagic"
-        #obsolete linux: -Xlinker -omagic implies -static
-      fi
       # -- nasm/des mmx --
       ##des mmx## TARGET_ADDSRCS="$TARGET_ADDSRCS des/des-slice-meggs.cpp"
       ##des mmx## TARGET_ADDNASMS="$TARGET_ADDNASMS des/mmx-bitslice/deseval-mmx.asm"
@@ -196,11 +196,12 @@ add_sources() # $1=os, $2=arch, $3=custom
       #                       csc/x86/csc-6b.asm  csc/x86/csc-comm.asm \
       #                       csc/x86/mmx/csc-mmx.asm"
       # -- nasm/rc5 --
-      TARGET_ADDNASMS="$TARGET_ADDNASMS rc5/x86/nasm/rg486.asm \
-                       rc5/x86/nasm/rc5-rgk5.asm   rc5/x86/nasm/brfp5.asm \
-                       rc5/x86/nasm/rc5-rgk6.asm   rc5/x86/nasm/rc5-rgp6.asm \
-                       rc5/x86/nasm/rg6x86.asm     rc5/x86/nasm/rc5mmx.asm \
-                       rc5/x86/nasm/rc5-hbk7.asm"
+      TARGET_ADDNASMS="$TARGET_ADDNASMS \
+                       rc5/x86/rg-486.asm          rc5/x86/brf-smc.asm \
+                       rc5/x86/rg-k5.asm           rc5/x86/brf-p5.asm \
+                       rc5/x86/rg-k6.asm           rc5/x86/rg-p6.asm \
+                       rc5/x86/rg-6x86.asm         rc5/x86/jp-mmx.asm \
+                       rc5/x86/hb-k7.asm"
       # -- nasm/ogr --
       TARGET_ADDNASMS="$TARGET_ADDNASMS ogr/x86/ogr.asm"
     fi  
@@ -2087,8 +2088,7 @@ fi
 if [ -z "$TARGET_NASM_FMT" ]; then
   TARGET_NASM_FMT="elf"
 fi
-TARGET_NASMFLAGS="-f $TARGET_NASM_FMT \
-                  -i rc5/x86/nasm/ -i des/mmx-bitslice/ -i csc/x86/"
+TARGET_NASMFLAGS="-f $TARGET_NASM_FMT -i rc5/x86/ -i des/x86/ -i csc/x86/"
 if [ "$TARGET_NASM_FMT" = "elf" ]; then
   TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__ELF__"
 else
