@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.118  1998/06/29 07:48:54  ziggyb
+// For OS/2 I added a priority boost to the exit, so it doesn't lag anymore
+// when printing the *Break* and it quits much faster now.
+//
+// A generic change I made was adding ValidateConfig() to the end of the
+// ParseCommandLineOptions() since some bad values (like the cpu core) was
+// getting throught.
+//
 // Revision 1.117  1998/06/29 06:57:31  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -131,7 +139,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.117 1998/06/29 06:57:31 jlawson Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.118 1998/06/29 07:48:54 ziggyb Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -2301,6 +2309,10 @@ void CliSignalHandler( int sig )
     void CliSignalHandler( int )
   #endif
 {
+  #if (CLIENT_OS == OS_OS2)
+  DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, 0, 0);
+  // Give prioirty boost quit works faster
+  #endif
   #if (CLIENT_OS != OS_DOS)
   #if (CLIENT_OS == OS_RISCOS)
   if (!guiriscos)
@@ -2884,6 +2896,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       }
     }
   }
+  ValidateConfig();  // Some bad values are getting through
 }
 
 // --------------------------------------------------------------------------
