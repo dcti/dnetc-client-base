@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.26 2000/03/03 07:27:56 jlawson Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.27 2000/03/05 12:19:05 jlawson Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -43,6 +43,8 @@ extern int NetCheckIsOK(void); // used before doing i/o
 # pragma pack(1)               // no padding allowed
 #endif /* ! MIPSpro */
 
+// SOCKS4 protocol spec:  http://www.socks.nec.com/protocol/socks4.protocol
+
 typedef struct _socks4 {
   unsigned char VN;           // version == 4
   unsigned char CD;           // command code, CONNECT == 1
@@ -52,6 +54,9 @@ typedef struct _socks4 {
 } SOCKS4;
 
 //----------------------------------------------------------------------
+
+// SOCKS5 protocol RFC:  http://www.socks.nec.com/rfc/rfc1928.txt
+// SOCKS5 authentication RFC:  http://www.socks.nec.com/rfc/rfc1929.txt
 
 typedef struct _socks5methodreq {
   unsigned char ver;          // version == 5
@@ -80,8 +85,8 @@ typedef struct _socks5userpwreply {
 typedef struct _socks5 {
   unsigned char ver;          // version == 5
   unsigned char cmdORrep;     // cmd: 1 == connect, rep: 0 == success
-  unsigned char rsv;          // must be 0
-  unsigned char atyp;         // address type we assume IPv4 == 1
+  unsigned char rsv;          // reserved, must be 0
+  unsigned char atyp;         // address type (IPv4 == 1, fqdn == 3)
   u32 addr;                   // network order
   u16 port;                   // network order
   char end;
@@ -821,8 +826,9 @@ int Network::Open( void )
 
 // -----------------------------------------------------------------------
 
-// Internal function used to negotiate the SOCKS4/SOCKS5 connection
-// establishment sequence.  Blocks until the establishment is complete.
+// Internal function used to negotiate the connection establishment
+// sequence (only really does something significant for SOCKS4/SOCKS5
+// connections).  Blocks until the establishment is complete.
 // returns -1 on error, 0 on success
 
 int Network::InitializeConnection(void)
@@ -972,7 +978,7 @@ int Network::InitializeConnection(void)
 
       if (svc_hostaddr == 0)
       {
-        psocks5->atyp = 0x03; //fully qualified domainname
+        psocks5->atyp = 3; //fully qualified domainname
         char *p = (char *)(&psocks5->addr);
         // at this point svc_hostname is a ptr to a resolve_hostname.
         strcpy( p+1, svc_hostname );
@@ -1013,7 +1019,8 @@ int Network::InitializeConnection(void)
         const char *p = ((psocks5->cmdORrep >=
                          (sizeof Socks5ErrorText / sizeof Socks5ErrorText[0]))
                          ? ("") : (Socks5ErrorText[ psocks5->cmdORrep ]));
-        LogScreen("SOCKS5: server error 0x%02x%s%s%s\nconnecting to %s:%u\n",
+        LogScreen("SOCKS5: server error 0x%02x%s%s%s\n"
+                  "connecting to %s:%u\n",
                  ((int)(psocks5->cmdORrep)),
                  ((*p) ? (" (") : ("")), p, ((*p) ? (")") : ("")),
                  svc_hostname, (unsigned int)svc_hostport );
