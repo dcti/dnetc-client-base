@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.46  1998/11/28 19:43:17  cyp
+// Def'd out two LogScreen()s
+//
 // Revision 1.45  1998/11/25 09:23:36  chrisb
 // various changes to support x86 coprocessor under RISC OS
 //
@@ -114,7 +117,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.45 1998/11/25 09:23:36 chrisb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.46 1998/11/28 19:43:17 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -207,11 +210,11 @@ s32 Problem::LoadState( ContestWork * work, u32 _contest,
   contest = _contest;
 
 #if (CLIENT_OS == OS_RISCOS)
-   bool x86thread=0; 
-   if (GetProblemPointerFromIndex(1) == this)
-   {
-       x86thread = 1;
-   } 
+  int x86thread = 0;
+  if (GetProblemPointerFromIndex(1) == this)
+    {
+    x86thread = 1;
+    } 
 #endif
 
 
@@ -315,37 +318,35 @@ s32 Problem::LoadState( ContestWork * work, u32 _contest,
 
 #if (CLIENT_OS == OS_RISCOS)
   if (x86thread == 1)
-  {
-      RC5PCstruct rc5pc;
-      _kernel_swi_regs r;
+    {
+    RC5PCstruct rc5pc;
+    _kernel_swi_regs r;
 
-      rc5pc.key.hi = contestwork.key.hi;
-      rc5pc.key.lo = contestwork.key.lo;
-      rc5pc.iv.hi = contestwork.iv.hi;
-      rc5pc.iv.lo = contestwork.iv.lo;
-      rc5pc.plain.hi = contestwork.plain.hi;
-      rc5pc.plain.lo = contestwork.plain.lo;
-      rc5pc.cypher.hi = contestwork.cypher.hi;
-      rc5pc.cypher.lo = contestwork.cypher.lo;
-      rc5pc.keysdone.hi = contestwork.keysdone.hi;
-      rc5pc.keysdone.lo = contestwork.keysdone.lo;
-      rc5pc.iterations.hi = contestwork.iterations.hi;
-      rc5pc.iterations.lo = contestwork.iterations.lo;
-      rc5pc.timeslice = tslice;
+    rc5pc.key.hi = contestwork.key.hi;
+    rc5pc.key.lo = contestwork.key.lo;
+    rc5pc.iv.hi = contestwork.iv.hi;
+    rc5pc.iv.lo = contestwork.iv.lo;
+    rc5pc.plain.hi = contestwork.plain.hi;
+    rc5pc.plain.lo = contestwork.plain.lo;
+    rc5pc.cypher.hi = contestwork.cypher.hi;
+    rc5pc.cypher.lo = contestwork.cypher.lo;
+    rc5pc.keysdone.hi = contestwork.keysdone.hi;
+    rc5pc.keysdone.lo = contestwork.keysdone.lo;
+    rc5pc.iterations.hi = contestwork.iterations.hi;
+    rc5pc.iterations.lo = contestwork.iterations.lo;
+    rc5pc.timeslice = tslice;
 
-      r.r[1] = (int)&rc5pc;
-      _kernel_swi(RC5PC_AddBlock,&r,&r);
-      if (r.r[0] == -1)
+    r.r[1] = (int)&rc5pc;
+    _kernel_swi(RC5PC_AddBlock,&r,&r);
+    if (r.r[0] == -1)
       {
-	  LogScreen("Failed to add block to x86 cruncher\n");
+      LogScreen("Failed to add block to x86 cruncher\n");
       }
-
-      else
+    else
       {
-	  LogScreen("Added block to x86 cruncher. %d slots left\n",r.r[0]);
+      LogScreen("Added block to x86 cruncher. %d slots left\n",r.r[0]);
       }
-
-  }
+    }
 #endif
 
   return( 0 );
@@ -368,11 +369,11 @@ s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
   work->iterations.hi = htonl( contestwork.iterations.hi );
   work->iterations.lo = htonl( contestwork.iterations.lo );
 #endif
-  if (setflags) {
+  if (setflags) 
+    {
     initialized = 0;
     finished = 0;
-  }
-//LogScreen("retrievestate contest: %d \n",contest);
+    }
   return( contest );
 }
 
@@ -413,26 +414,31 @@ s32 Problem::Run( u32 threadnum )
     timeslice = (( timeslice + (tslice - 1)) & ~(tslice - 1));
 
 #if (CLIENT_CPU == CPU_POWERPC)
-{
+  {
   unsigned long kiter = 0;
-  if (contest == 0) {
+  if (contest == 0) 
+    {
 #if ((CLIENT_OS != OS_BEOS) || (CLIENT_OS != OS_AMIGAOS))
     if (whichcrunch == 0)
       kiter = crunch_allitnil( &rc5unitwork, timeslice );
     else
 #endif
-      do {
+      {
+      do{
         kiter += crunch_lintilla( &rc5unitwork, timeslice - kiter );
-        if (kiter < timeslice) {
-          if (crunch_allitnil( &rc5unitwork, 1 ) == 0) {
+        if (kiter < timeslice) 
+          {
+          if (crunch_allitnil( &rc5unitwork, 1 ) == 0) 
+            {
             break;
-          }
+            }
           kiter++;
-        }
-      } while (kiter < timeslice);
-  }
+          }
+        } while (kiter < timeslice);
+      }
+    }
   else
-  {
+    {
     // protect the innocent
     timeslice *= pipeline_count;
 
@@ -442,12 +448,12 @@ s32 Problem::Run( u32 threadnum )
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / pipeline_count;
     kiter = des_unit_func ( &rc5unitwork, nbits );
-  }
+    }
 
   contestwork.keysdone.lo += kiter;
 
   if (kiter < timeslice)
-  {
+    {
     // found it?
     rc5result.key.hi = contestwork.key.hi;
     rc5result.key.lo = contestwork.key.lo;
@@ -458,10 +464,10 @@ s32 Problem::Run( u32 threadnum )
     rc5result.result = RESULT_FOUND;
     finished = 1;
     return( 1 );
+    }
   }
-}
 #elif (CLIENT_CPU == CPU_X86)
-{
+  {
   unsigned long kiter;
   if (contest == 0)
     {
@@ -501,13 +507,16 @@ s32 Problem::Run( u32 threadnum )
     {
     LogScreen("kiter wrong %ld %d\n", kiter, (int)(timeslice*pipeline_count));
     }
-}
+  }
 #elif (CLIENT_CPU == CPU_SPARC) && (ULTRA_CRUNCH == 1)
-{
+  {
   unsigned long kiter;
-  if (contest == 0) {
+  if (contest == 0) 
+    {
     kiter = crunch( &rc5unitwork, timeslice );
-  } else {
+    } 
+  else 
+    {
     // protect the innocent
     timeslice *= pipeline_count;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
@@ -516,10 +525,10 @@ s32 Problem::Run( u32 threadnum )
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / pipeline_count;
     kiter = des_unit_func ( &rc5unitwork, nbits );
-  }
+    }
   contestwork.keysdone.lo += kiter;
   if (kiter < ( timeslice * pipeline_count ) )
-  {
+    {
     // found it?
     rc5result.key.hi = contestwork.key.hi;
     rc5result.key.lo = contestwork.key.lo;
@@ -530,18 +539,21 @@ s32 Problem::Run( u32 threadnum )
     rc5result.result = RESULT_FOUND;
     finished = 1;
     return( 1 );
-  }
+    }
   else if (kiter != ( timeslice * pipeline_count ) )
-  {
+    {
     LogScreen("kiter wrong %ld %d\n", (long) kiter, (int) (timeslice*pipeline_count));
+    }
   }
-}
 #elif ((CLIENT_CPU == CPU_MIPS) && (MIPS_CRUNCH == 1))
-{
+  {
   unsigned long kiter;
-  if (contest == 0) {
+  if (contest == 0) 
+    {
     kiter = crunch( &rc5unitwork, timeslice );
-  } else {
+    } 
+  else 
+    {
     // protect the innocent
     timeslice *= pipeline_count;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
@@ -550,10 +562,10 @@ s32 Problem::Run( u32 threadnum )
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / pipeline_count;
     kiter = des_unit_func ( &rc5unitwork, nbits );
-  }
+    }
   contestwork.keysdone.lo += kiter;
   if (kiter < ( timeslice * pipeline_count ) )
-  {
+    {
     // found it?
     rc5result.key.hi = contestwork.key.hi;
     rc5result.key.lo = contestwork.key.lo;
@@ -564,124 +576,112 @@ s32 Problem::Run( u32 threadnum )
     rc5result.result = RESULT_FOUND;
     finished = 1;
     return( 1 );
-  }
+    }
   else if (kiter != (timeslice * pipeline_count))
-  {
+    {
     LogScreen("kiter wrong %ld %d\n", kiter, timeslice*pipeline_count);
+    }
   }
-}
 #elif (CLIENT_CPU == CPU_ARM)
-{
+  {
   unsigned long kiter;
 #if (CLIENT_OS == OS_RISCOS)
   if (_kernel_escape_seen())
-  {
-      CliSignalHandler(SIGINT);
-  }
+    {
+    CliSignalHandler(SIGINT);
+    }
 #endif
-//  timeslice *= pipeline_count;
-//  done in the cores.
+  timeslice *= pipeline_count;
+  done in the cores.
 
   if (contest == 0)
-  {
-
+    {
 #if (CLIENT_OS == OS_RISCOS)
-      if (threadnum == 0)
+    if (threadnum == 0)
       {
 #endif
-
-
 #ifdef DEBUG
-	  static u32 ts;
-	  if ((ts < timeslice-500) ||
-	      (ts > timeslice+500))
-	  {
-	      ts = timeslice;
-	      printf("timeslice = %d\n",timeslice);
-	  }
+      static u32 ts;
+      if ((ts < timeslice-500) || (ts > timeslice+500))
+        {
+        ts = timeslice;
+        printf("timeslice = %d\n",timeslice);
+        }
 #endif
-//	  printf("ARM thread running, ts=%08lx\n",timeslice);
-	  if ((rc5_unit_func == rc5_unit_func_arm_2)&&( rc5unitwork.L0.hi&(1<<24)))
-	  {
-	      rc5unitwork.L0.hi -= 1<<24;
-	      if (contestwork.keysdone.lo & 1)
-	      {
-		  contestwork.keysdone.lo--;
-	      }
-	      else
-	      {
-		  LogScreen("Something really bad has happened - the number of keys looks wrong.\n");
-		  for(;;); // probably a bit bogus, but hey.
-	      }
-	  }
-	  
-	  /*
-	    Now returns number of keys processed!
-	    (Since 5/8/1998, SA core 1.5, ARM core 1.6).
-	  */
-	  kiter = rc5_unit_func(&rc5unitwork, timeslice);
-	  contestwork.keysdone.lo += kiter;
-	  
+//    printf("ARM thread running, ts=%08lx\n",timeslice);
+      if ((rc5_unit_func == rc5_unit_func_arm_2)&&( rc5unitwork.L0.hi&(1<<24)))
+        {
+        rc5unitwork.L0.hi -= 1<<24;
+        if (contestwork.keysdone.lo & 1)
+          {
+          contestwork.keysdone.lo--;
+          }
+        else
+          {
+          LogScreen("Something really bad has happened - the number of keys looks wrong.\n");
+          for(;;); // probably a bit bogus, but hey.
+          }
+        }
+      /*
+      Now returns number of keys processed!
+      (Since 5/8/1998, SA core 1.5, ARM core 1.6).
+      */
+      kiter = rc5_unit_func(&rc5unitwork, timeslice);
+      contestwork.keysdone.lo += kiter;
+         
 //    printf("kiter is %d\n",kiter);
-	  if (kiter != (timeslice*pipeline_count))
-	  {
-	      // found it?
-	      
-	      rc5result.key.hi = contestwork.key.hi;
-	      rc5result.key.lo = contestwork.key.lo;
-	      rc5result.keysdone.hi = contestwork.keysdone.hi;
-	      rc5result.keysdone.lo = contestwork.keysdone.lo;
-	      rc5result.iterations.hi = contestwork.iterations.hi;
-	      rc5result.iterations.lo = contestwork.iterations.lo;
-	      rc5result.result = RESULT_FOUND;
-	      finished = 1;
-	      return( 1 );
-	  }
+      if (kiter != (timeslice*pipeline_count))
+        {
+        // found it?
+        rc5result.key.hi = contestwork.key.hi;
+        rc5result.key.lo = contestwork.key.lo;
+        rc5result.keysdone.hi = contestwork.keysdone.hi;
+        rc5result.keysdone.lo = contestwork.keysdone.lo;
+        rc5result.iterations.hi = contestwork.iterations.hi;
+        rc5result.iterations.lo = contestwork.iterations.lo;
+        rc5result.result = RESULT_FOUND;
+        finished = 1;
+        return( 1 );
+        }
 #if (CLIENT_OS == OS_RISCOS)
       }
-      else // threadnum == 1
+    else // threadnum == 1
       {
-	  /*
-	    This is the RISC OS specific x86 2nd thread magic.
-	  */
-	  _kernel_swi_regs r;
-	  volatile RC5PCstruct *rc5pcr;
-	  _kernel_swi(RC5PC_BufferStatus,&r,&r);
+      /* This is the RISC OS specific x86 2nd thread magic. */
+      _kernel_swi_regs r;
+      volatile RC5PCstruct *rc5pcr;
+      _kernel_swi(RC5PC_BufferStatus,&r,&r);
 
-	  rc5pcr = (volatile RC5PCstruct *)r.r[1];
-	  contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+      rc5pcr = (volatile RC5PCstruct *)r.r[1];
+      contestwork.keysdone.lo = rc5pcr->keysdone.lo;
 LogScreen("x86: Keysdone %08lx",contestwork.keysdone.lo);
-
-	  if (r.r[2]==1)
-	  {
-	      /*
-		block finished
-	      */
+      if (r.r[2]==1)
+        {
+        /* block finished */
 LogScreen("x86: Finished (%08lx)",contestwork.keysdone.lo);
+        r.r[0] = 0;
+        _kernel_swi(RC5PC_RetriveBlock,&r,&r);
+        rc5pcr = (volatile RC5PCstruct *)r.r[1];
 
-	      r.r[0] = 0;
-	      _kernel_swi(RC5PC_RetriveBlock,&r,&r);
-	      rc5pcr = (volatile RC5PCstruct *)r.r[1];
-
-	      if (rc5pcr->result == RESULT_FOUND)
-	      {
+        if (rc5pcr->result == RESULT_FOUND)
+          {
 LogScreen("x86: Found it (%08lx)!",contestwork.keysdone.lo);
-		  rc5result.key.hi = contestwork.key.hi;
-		  rc5result.key.lo = contestwork.key.lo;
-		  rc5result.keysdone.hi = contestwork.keysdone.hi;
-		  rc5result.keysdone.lo = contestwork.keysdone.lo;
-		  rc5result.iterations.hi = contestwork.iterations.hi;
-		  rc5result.iterations.lo = contestwork.iterations.lo;
-		  rc5result.result = RESULT_FOUND;
-		  finished = 1;
-		  return( 1 );
-	      }
-	  }
+          rc5result.key.hi = contestwork.key.hi;
+          rc5result.key.lo = contestwork.key.lo;
+          rc5result.keysdone.hi = contestwork.keysdone.hi;
+          rc5result.keysdone.lo = contestwork.keysdone.lo;
+          rc5result.iterations.hi = contestwork.iterations.hi;
+          rc5result.iterations.lo = contestwork.iterations.lo;
+          rc5result.result = RESULT_FOUND;
+          finished = 1;
+          return( 1 );
+          }
+        }
       }
 #endif
-  }
+    }
   else
-  {
+    {
     // protect the innocent
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 
@@ -691,7 +691,7 @@ LogScreen("x86: Found it (%08lx)!",contestwork.keysdone.lo);
     kiter = des_unit_func ( &rc5unitwork, nbits );
     contestwork.keysdone.lo += kiter;
     if (kiter < timeslice)
-    {
+      {
       // found it?
       rc5result.key.hi = contestwork.key.hi;
       rc5result.key.lo = contestwork.key.lo;
@@ -702,17 +702,17 @@ LogScreen("x86: Found it (%08lx)!",contestwork.keysdone.lo);
       rc5result.result = RESULT_FOUND;
       finished = 1;
       return( 1 );
-
+      }
     }
   }
-}
 #elif (CLIENT_CPU == CPU_68K)
   unsigned long kiter = 0;
-  if (contest == 0) {
+  if (contest == 0) 
+    {
     kiter = rc5_unit_func( &rc5unitwork, timeslice );
     if ( kiter < timeslice*pipeline_count )
-    {
-    // found it?
+      {
+      // found it?
       rc5result.key.hi = contestwork.key.hi;
       rc5result.key.lo = contestwork.key.lo;
       rc5result.keysdone.hi = contestwork.keysdone.hi;
@@ -722,13 +722,13 @@ LogScreen("x86: Found it (%08lx)!",contestwork.keysdone.lo);
       rc5result.result = RESULT_FOUND;
       finished = 1;
       return( 1 );
-    }
+      }
     // increment the count of keys done
     // note: doesn't account for carry
     contestwork.keysdone.lo += ((pipeline_count*timeslice) + pipeline_count);
-  }
+    }
   else
-  {
+    {
     timeslice *= pipeline_count;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 
@@ -738,7 +738,7 @@ LogScreen("x86: Found it (%08lx)!",contestwork.keysdone.lo);
     kiter = des_unit_func ( &rc5unitwork, nbits );
     contestwork.keysdone.lo += kiter;
     if (kiter < ( timeslice * pipeline_count ) )
-    {
+      {
       // found it?
       rc5result.key.hi = contestwork.key.hi;
       rc5result.key.lo = contestwork.key.lo;
@@ -749,22 +749,23 @@ LogScreen("x86: Found it (%08lx)!",contestwork.keysdone.lo);
       rc5result.result = RESULT_FOUND;
       finished = 1;
       return( 1 );
-    }
+      }
     else if (kiter != (timeslice * pipeline_count))
-    {
-        LogScreen("kiter wrong %ld %ld\n",
+      {
+      LogScreen("kiter wrong %ld %ld\n",
                (long) kiter, (long)(timeslice*pipeline_count));
+      }
     }
-  }
 #else
   unsigned long kiter = 0;
-  if (contest == 0) {
-    while ( timeslice-- ) // timeslice ignores the number of pipelines
+  if (contest == 0) 
     {
+    while ( timeslice-- ) // timeslice ignores the number of pipelines
+      {
       u32 result = rc5_unit_func( &rc5unitwork );
       if ( result )
-      {
-      // found it?
+        {
+        // found it?
         rc5result.key.hi = contestwork.key.hi;
         rc5result.key.lo = contestwork.key.lo;
         rc5result.keysdone.hi = contestwork.keysdone.hi;
@@ -774,48 +775,48 @@ LogScreen("x86: Found it (%08lx)!",contestwork.keysdone.lo);
         rc5result.result = RESULT_FOUND;
         finished = 1;
         return( 1 );
-      }
+        }
       else
-      {
+        {
         // "mangle-increment" the key number by the number of pipelines
         rc5unitwork.L0.hi = (rc5unitwork.L0.hi + (pipeline_count << 24)) & 0xFFFFFFFF;
-        if (!(rc5unitwork.L0.hi & 0xFF000000)) {
-
+        if (!(rc5unitwork.L0.hi & 0xFF000000)) 
+          {
           rc5unitwork.L0.hi = (rc5unitwork.L0.hi + 0x00010000) & 0x00FFFFFF;
-          if (!(rc5unitwork.L0.hi & 0x00FF0000)) {
-
-             rc5unitwork.L0.hi = (rc5unitwork.L0.hi + 0x00000100) & 0x0000FFFF;
-             if (!(rc5unitwork.L0.hi & 0x0000FF00)) {
-
-                rc5unitwork.L0.hi = (rc5unitwork.L0.hi + 0x00000001) & 0x000000FF;
-                if (!(rc5unitwork.L0.hi & 0x000000FF)) {
-
-                  rc5unitwork.L0.hi = 0x00000000;
-                  rc5unitwork.L0.lo = rc5unitwork.L0.lo + 0x01000000;
-                  if (!(rc5unitwork.L0.lo & 0xFF000000)) {
-
-                    rc5unitwork.L0.lo = (rc5unitwork.L0.lo + 0x00010000) & 0x00FFFFFF;
-                    if (!(rc5unitwork.L0.lo & 0x00FF0000)) {
-
-                      rc5unitwork.L0.lo = (rc5unitwork.L0.lo + 0x00000100) & 0x0000FFFF;
-                      if (!(rc5unitwork.L0.lo & 0x0000FF00)) {
-
-                        rc5unitwork.L0.lo = (rc5unitwork.L0.lo + 0x00000001) & 0x000000FF;
+          if (!(rc5unitwork.L0.hi & 0x00FF0000)) 
+            {
+            rc5unitwork.L0.hi = (rc5unitwork.L0.hi + 0x00000100) & 0x0000FFFF;
+            if (!(rc5unitwork.L0.hi & 0x0000FF00)) 
+              {
+              rc5unitwork.L0.hi = (rc5unitwork.L0.hi + 0x00000001) & 0x000000FF;
+              if (!(rc5unitwork.L0.hi & 0x000000FF)) 
+                {
+                rc5unitwork.L0.hi = 0x00000000;
+                rc5unitwork.L0.lo = rc5unitwork.L0.lo + 0x01000000;
+                if (!(rc5unitwork.L0.lo & 0xFF000000)) 
+                  {
+                  rc5unitwork.L0.lo = (rc5unitwork.L0.lo + 0x00010000) & 0x00FFFFFF;
+                  if (!(rc5unitwork.L0.lo & 0x00FF0000)) 
+                    {
+                    rc5unitwork.L0.lo = (rc5unitwork.L0.lo + 0x00000100) & 0x0000FFFF;
+                    if (!(rc5unitwork.L0.lo & 0x0000FF00)) 
+                      {
+                      rc5unitwork.L0.lo = (rc5unitwork.L0.lo + 0x00000001) & 0x000000FF;
                       }
                     }
                   }
-               }
+                }
+              }
             }
           }
-        }
         // increment the count of keys done
         // note: doesn't account for carry
         contestwork.keysdone.lo += pipeline_count;
+        }
       }
     }
-  }
   else
-  {
+    {
     timeslice *= pipeline_count;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 
@@ -825,7 +826,7 @@ LogScreen("x86: Found it (%08lx)!",contestwork.keysdone.lo);
     kiter = des_unit_func ( &rc5unitwork, nbits );
     contestwork.keysdone.lo += kiter;
     if (kiter < ( timeslice * pipeline_count ) )
-    {
+      {
       // found it?
       rc5result.key.hi = contestwork.key.hi;
       rc5result.key.lo = contestwork.key.lo;
@@ -836,48 +837,46 @@ LogScreen("x86: Found it (%08lx)!",contestwork.keysdone.lo);
       rc5result.result = RESULT_FOUND;
       finished = 1;
       return( 1 );
-    }
+      }
     else if (kiter != (timeslice * pipeline_count))
-    {
-        LogScreen("kiter wrong %ld %ld\n",
+      {
+      LogScreen("kiter wrong %ld %ld\n",
                (long) kiter, (long)(timeslice*pipeline_count));
+      }
     }
-  }
 #endif
-
-
 
   if ( ( contestwork.keysdone.hi > contestwork.iterations.hi ) ||
        ( ( contestwork.keysdone.hi == contestwork.iterations.hi ) &&
        ( contestwork.keysdone.lo >= contestwork.iterations.lo ) ) )
-  {
+    {
     // done with this block and nothing found
-LogScreen("Thread %d: Didn't find the key",threadnum);
-    rc5result.key.hi = contestwork.key.hi;
-    rc5result.key.lo = contestwork.key.lo;
-    rc5result.keysdone.hi = contestwork.keysdone.hi;
-    rc5result.keysdone.lo = contestwork.keysdone.lo;
-    rc5result.iterations.hi = contestwork.iterations.hi;
-    rc5result.iterations.lo = contestwork.iterations.lo;
     rc5result.result = RESULT_NOTHING;
     finished = 1;
-    return( 1 );
-  }
+    }
   else
-  {
+    {
     // more to do, come back later.
-if (threadnum == 1)
-LogScreen("working... %08lx",contestwork.keysdone.lo);
-    rc5result.key.hi = contestwork.key.hi;
-    rc5result.key.lo = contestwork.key.lo;
-    rc5result.keysdone.hi = contestwork.keysdone.hi;
-    rc5result.keysdone.lo = contestwork.keysdone.lo;
-    rc5result.iterations.hi = contestwork.iterations.hi;
-    rc5result.iterations.lo = contestwork.iterations.lo;
     rc5result.result = RESULT_WORKING;
     finished = 0;
-    return( 0 );
-  }
+    }
+
+  rc5result.key.hi = contestwork.key.hi;
+  rc5result.key.lo = contestwork.key.lo;
+  rc5result.keysdone.hi = contestwork.keysdone.hi;
+  rc5result.keysdone.lo = contestwork.keysdone.lo;
+  rc5result.iterations.hi = contestwork.iterations.hi;
+  rc5result.iterations.lo = contestwork.iterations.lo;
+
+
+#if (CLIENT_OS == OS_RISCOS)    
+if (!finished)
+  LogScreen("Thread %d: Didn't find the key",threadnum);
+else if (threadnum == 1)
+  LogScreen("working... %08lx",contestwork.keysdone.lo);
+#endif
+
+  return( finished );
 }
 
 
