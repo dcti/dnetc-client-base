@@ -5,18 +5,20 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __PROBFILL_H__
-#define __PROBFILL_H__ "@(#)$Id: probfill.h,v 1.8.2.7 2000/12/14 19:37:40 cyp Exp $"
+#define __PROBFILL_H__ "@(#)$Id: probfill.h,v 1.8.2.8 2001/03/03 03:58:59 sampo Exp $"
 
 #define PROBFILL_ANYCHANGED  1
 #define PROBFILL_GETBUFFERRS 2
 #define PROBFILL_UNLOADALL   3
 #define PROBFILL_RESIZETABLE 4
 
-#if defined(__CLIENT_H__)
+#include "client.h"
+
 unsigned int LoadSaveProblems(Client *client,
                               unsigned int load_problem_count,int mode);
 /* returns number of actually loaded problems */
-#endif
+
+unsigned int ClientGetInThreshold(Client *client, int contestid, int force );
 
 // --------------------------------------------------------------------------
 
@@ -32,11 +34,9 @@ int ProbfillGetBufferCounts( unsigned int contest, int is_out_type,
                              long *blk_count, long *swu_count, 
                              unsigned int *till_completion );
 
-#if defined(__CLIENT_H__) /* for buffbase */
 int ProbfillCacheBufferCounts( Client *client,
                                unsigned int cont_i, int is_out_type,
                                long blk_count, long swu_count);
-#endif
 
 // --------------------------------------------------------------------------
 

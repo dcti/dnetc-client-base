@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.22 2001/02/17 20:31:40 sampo Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.23 2001/03/03 03:58:58 sampo Exp $"
 
 #include "problem.h" /* WorkRecord, CONTEST_COUNT */
 #include "lurk.h"    /* lurk_conf structure */
@@ -117,10 +117,6 @@ typedef struct
 
 void ResetClientData(Client *client); /* reset everything */
 int ClientRun(Client *client);  /* run the loop, do the work */
-
-/* these next two are actually in probfill.cpp */
-unsigned int ClientGetInThreshold(Client *client, int contestid, int force = 0 );
-//unsigned int ClientGetOutThreshold(Client *client, int contestid, int force = 0 );
 
 // ------------------
 
