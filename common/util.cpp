@@ -5,7 +5,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.44 2001/02/05 18:39:42 ephraim Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.45 2001/03/11 14:57:22 andreasb Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -134,8 +134,9 @@ int utilCheckIfBetaExpired(int print_msg)
       if (CliClock(&tv) == 0)
       {
         if (last_seen == ((time_t)-1)) //let it through once
-          last_seen = tv.tv_sec;
-        else if (tv.tv_sec < last_seen || (tv.tv_sec - last_seen) > 10*60)
+          last_seen = 0;
+        else if (last_seen == 0 || tv.tv_sec < last_seen || 
+                 (tv.tv_sec - last_seen) > 10*60)
         {
           expirationtime.tv_sec -= now;
           LogScreen("*** This BETA release expires in %s. ***\n",
@@ -1040,7 +1041,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         /* lnux: "ps ax --format pid,comm 2>/dev/null"; */ /* bsd + gnu -o */
         #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
               (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX) || \
-	      (CLIENT_OS == OS_DYNIX)
+              (CLIENT_OS == OS_DYNIX)
         pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
         #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
         pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
