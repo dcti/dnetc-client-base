@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.7 2003/01/07 15:40:44 oliver Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.8 2003/01/16 09:35:03 oliver Exp $"; }
 
 //#define TRACE
 
@@ -1225,6 +1225,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         case 0x0004: cindex = 3; break; // 604            == MH 2-pipe
         case 0x0006: cindex = 3; break; // 603e           == MH 2-pipe
         case 0x0007: cindex = 3; break; // 603r/603ev     == MH 2-pipe
+        case 0x0008: cindex = 3; break; // 740/750 (G3)   == MH 2-pipe
         case 0x0009: cindex = 3; break; // 604e           == MH 2-pipe
         case 0x000A: cindex = 3; break; // 604ev          == MH 2-pipe
         default:     cindex =-1; break; // no default
