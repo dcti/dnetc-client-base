@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.12 2003/01/20 00:42:52 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.13 2003/01/21 00:13:29 snake Exp $"; }
 
 //#define TRACE
 
@@ -1099,11 +1099,11 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
       #endif
     }
   }
-  else if (contestid == DES)
+  else if (projectid == DES)
   {
     cindex = 0; // only one core
   }
-  else if (contestid == OGR)
+  else if (projectid == OGR)
   {
     if (detected_type > 0)
     {
