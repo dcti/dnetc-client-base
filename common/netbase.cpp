@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.21 2001/05/06 11:01:09 teichp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.22 2001/10/23 22:23:43 mfeiri Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -2280,6 +2280,13 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
           {
             that_address = 0; that_port = 0;
           }
+          #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_68K)
+          /* The MacTCP implementation of getpeername() in GUSI (up to 2.1.9)
+           * is buggy. My investigation shows that inserting a sleep() might
+           * help but I prefer to just skip getpeername() because it is simply
+           * not a must-have feature.
+           */
+          that_address = 0; that_port = 0;
           #endif
           if (that_address || that_port)
           {
