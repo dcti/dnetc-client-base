@@ -7,9 +7,10 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.1.2.4 2001/02/27 00:45:30 andreasb Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.1.2.5 2001/03/10 16:18:52 andreasb Exp $"; }
 
-#define TRACE
+//define TRACE only if you want to use any TRACE_OUT below
+//#define TRACE
 //define any/all/some of the following to TRACE_OUT(x) for sectional tracing
 #define TRACE_PAINT(x)    //TRACE_OUT(x)
 #define TRACE_FLOW(x)     //TRACE_OUT(x)
@@ -2876,7 +2877,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
               strcat(buffer,"/sec");
               #else
               len = sprintf(buffer, "Core Throughput: %s/sec", avg_ratebuf);
-              if (avg_interval == dd->cdata[rate_cont_i].avgrate_count)
+              if (avg_interval == (int)dd->cdata[rate_cont_i].avgrate_count)
                 sprintf(&buffer[len]," (%d sec sliding average)", avg_interval );
               #endif
             }
@@ -7958,4 +7959,3 @@ int w32PostRemoteWCMD( int cmd ) /* returns <0 if not found, or */
   }
   return rc;
 }
-
