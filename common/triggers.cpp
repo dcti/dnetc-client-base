@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.66 2002/03/22 23:02:06 sampo Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.67 2002/03/25 15:45:24 sampo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -989,7 +989,9 @@ extern "C" void CliSignalHandler( int sig )
 //printf("\ngot sig %d\n", sig);
   RaiseExitRequestTrigger();
 
+#if (CLIENT_OS != OS_FREEBSD)
   SETSIGNAL(sig,SIG_IGN);
+#endif
 }  
 #endif //ifndef CLISIGHANDLER_IS_SPECIAL
 

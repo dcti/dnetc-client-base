@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.101 2002/03/25 01:50:15 zebe Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.102 2002/03/25 15:46:32 sampo Exp $
 ==========================================================================
 
 2.8000
@@ -37,6 +37,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.101 2002/03/25 01:50:15 zebe Exp $
             fix: x86: Win2K, WinXP: disabled crashing RC5 SMC core. (#2399)
             fix: hpux: threading, timing fixes (#2371)
             new: macosx: platform-specific read me for OS X (#2580)
+            fix: fbsd: Client doesn't respond to SIG(INT/TERM) occasionally (#1985)
 
 2.8016.470  new: ppc: new AltiVec RC5 core for the PPC 7450 by Dan Oetting.
 
