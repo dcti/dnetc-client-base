@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version-conflict.h,v $
+// Revision 1.17  1998/10/04 03:23:39  silby
+// Bumped the beta timeout ahead a few days.
+//
 // Revision 1.16  1998/09/28 12:46:26  cyp
 // removed checkifbetaexpired prototype
 //
@@ -65,7 +68,7 @@
 #define CLIENT_VERSIONSTRING2   "2.7100.418-BETA2"        // no leading "v"
 
 #define BETA
-#define BETA_EXPIRATION_TIME    907394806
+#define BETA_EXPIRATION_TIME    907834806
 
 
 #endif // _VERSION_H
