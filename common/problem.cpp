@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.87  1999/03/08 02:46:00  sampo
+// #if (CLIENT_CPU = CPU_ALPHA) should be CLIENT_CPU == CPU_ALPHA
+//
 // Revision 1.86  1999/03/04 01:28:41  cyp
 // Merged various identical sections in Problem::Run().
 // Added nice big #error section outlining how the cores need to go.
@@ -266,7 +269,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.86 1999/03/04 01:28:41 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.87 1999/03/08 02:46:00 sampo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1107,7 +1110,7 @@ else if (contest == 1) // *********************** DES *********************
       #error   And is the incrementation with 2 pipelines correct?
     #endif
 
-    #if (CLIENT_CPU = CPU_ALPHA) && (CLIENT_OS == OS_LINUX)
+    #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_LINUX)
     pipeline_count = 1;
     #endif
     
@@ -1120,7 +1123,7 @@ else if (contest == 1) // *********************** DES *********************
 
     kiter = des_unit_func ( &rc5unitwork, nbits );
 
-    #if (CLIENT_CPU = CPU_ALPHA) && (CLIENT_OS == OS_LINUX)
+    #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_LINUX)
     pipeline_count = 1; //at least thats what configure says
     #endif
   #endif
