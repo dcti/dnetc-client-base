@@ -6,7 +6,7 @@
  *
 */
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.25.2.12 2000/05/06 20:18:23 mfeiri Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.25.2.13 2000/05/25 14:40:56 cyp Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
@@ -322,8 +322,8 @@ static struct hostent *__linux_gethostbyname_shim( const char *hostname )
 
 //-----------------------------------------------------------------------
 
+#ifndef NETRES_STUBS_ONLY
 // Returns -1 if the resolve fails, or 0 on success.
-
 static int __LowLevelGethostbyname(const char *hostname,
     u32 *addrlist, unsigned int addrlistcount,
     unsigned int *foundaddrcount)
@@ -360,6 +360,7 @@ static int __LowLevelGethostbyname(const char *hostname,
   }
   return -1;
 }
+#endif
 
 //-----------------------------------------------------------------------
 

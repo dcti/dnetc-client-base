@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.8 2000/05/06 20:15:42 mfeiri Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.9 2000/05/25 14:40:56 cyp Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -54,7 +54,7 @@ extern "C" {
   }
 #elif (CLIENT_OS == OS_DOS) 
   //ntohl()/htonl() defines are in...
-  #include "platform/dos/clidos.h" 
+  #include "platforms/dos/clidos.h" 
 #elif (CLIENT_OS == OS_VMS)
   #include <signal.h>
   #ifdef __VMS_UCX__
