@@ -1,7 +1,8 @@
-                                                    
+
  RC5-DES Client for OS/2 3.0 and above
- Released by Oscar "ZiggyB" Chang <oscarc@divideby0.com>
-                                                          
+ Released by Trevor Hemsley <Trevor-Hemsley@dial.pipex.com>
+ Previously coded by Oscar "ZiggyB" Chang <oscarc@divideby0.com>
+                                                         
  Welcome to the new RC5-DES (Project Bovine/Project Monarch) Client for OS/2.
 
     1.0  Getting started
@@ -26,7 +27,11 @@
 
     If you prefer to have the client start automatically when the computer
     is powered up, run the client with the -install switch. To remove the
-    client from the startup folder, run the client with -uninstall.
+    client from the startup folder, run the client with -uninstall. If you
+    want the client to run detached when you boot your computer then run 
+    the client with both the -hide and -install switches. If you do this 
+    then you may be wise to setup logging first by running -config and
+    pointing it to a file.
 
     A "Complete Step-by-Step Guide to Running Your First Client" is 
     available at http://distributed.net/FAQ/
