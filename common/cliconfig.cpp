@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.154  1998/07/14 08:03:29  myshkin
+// Added #include "clirate.h" for the appropriate PPC platforms, to declare
+// CliGetKeyrateForProblemNoSave().
+//
 // Revision 1.153  1998/07/13 23:54:19  cyruspatel
 // Cleaned up NONETWORK handling.
 //
@@ -285,7 +289,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.153 1998/07/13 23:54:19 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.154 1998/07/14 08:03:29 myshkin Exp $";
 return id; }
 #endif
 
@@ -310,7 +314,11 @@ return id; }
   #include "network.h" //NetworkInitialize()
 #else
   #include "sleepdef.h" //RunStartup()
+#endif  
 #endif
+
+#if (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS != OS_BEOS && CLIENT_OS != OS_AMIGAOS && CLIENT_OS != OS_WIN32))
+  #include "clirate.h"
 #endif
 
 // --------------------------------------------------------------------------
