@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore.cpp,v $
+// Revision 1.2  1998/08/22 08:01:46  silby
+// Rewrote x86 core selection.
+//
 // Revision 1.1  1998/08/21 23:34:54  cyruspatel
 // Created from code in cliconfig.cpp. x86 SelectCore() works again - clients
 // on P5s are back up to speed. Validation of cputype is now done in SelectCore.
@@ -13,7 +16,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.1 1998/08/21 23:34:54 cyruspatel Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.2 1998/08/22 08:01:46 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -38,7 +41,7 @@ static const char *cputypetable[]=
   "Cyrix 6x86/6x86MX/M2",
   "AMD K5",
   "AMD K6",
-  "Pentium MMX or other MMX capable processor"
+  "Pentium MMX"
   };
 #elif (CLIENT_CPU == CPU_ARM)
 static const char *cputypetable[]=
@@ -169,14 +172,6 @@ s32 Client::SelectCore(void)
     #define DESUNITFUNC62 p1des_unit_func_pro
   #endif
 
-  #if (defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS))
-  if ((detectedtype & 0x100) && usemmx)   // use the MMX DES core ?
-    { 
-    des_unit_func = des_unit_func2 = des_unit_func_mmx;
-    rc5_unit_func = rc5_unit_func_p5_mmx;
-    }
-  else    
-  #endif
   if (cputype == 1) // Intel 386/486
     {
     rc5_unit_func = rc5_unit_func_486;
@@ -207,25 +202,40 @@ s32 Client::SelectCore(void)
     des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
     des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
     }
+  #ifdef MMX_BITSLICER
+  else if ( requestedtype == 6 ) // Pentium MMX ONLY
+    {
+    if ((detectedtype & 0x100) == 0x100)
+      {
+      rc5_unit_func = rc5_unit_func_p5_mmx;
+      des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
+      des_unit_func2 = DESUNITFUNC52; //p2des_unit_func_p5;
+      }
+    else // not really MMX capable
+      {
+      LogScreenRaw("The processor is not MMX instruction capable.\n"
+            "Reverting to the Pentium Classic core.\n");
+      rc5_unit_func = rc5_unit_func_p5;
+      des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
+      des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
+      };     
+    } 
+  #endif
   else // Pentium (Classic/MMX) + others
     {
     rc5_unit_func = rc5_unit_func_p5;
     des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
     des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
-    requestedtype = cputype;
     cputype = 0;
-    #ifdef MMX_BITSLICER
-    if ( requestedtype == 6 ) // Pentium MMX ONLY
-      {
-      if ((detectedtype & 0x100) == 0x100)
-        { rc5_unit_func = rc5_unit_func_p5_mmx;
-	cputype = 6; }
-      else
-        LogScreenRaw("The processor is not MMX instruction capable.\n"
-	             "Reverting to the Pentium Classic core.\n");
-      } 
-    #endif
     }
+
+  #if (defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS))
+  if ((detectedtype & 0x100) && usemmx)   // use the MMX DES core ?
+    { 
+    des_unit_func = des_unit_func2 = des_unit_func_mmx;
+    };
+  #endif
+
       
   #undef DESUNITFUNC61
   #undef DESUNITFUNC62
