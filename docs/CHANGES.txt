@@ -21,11 +21,15 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.78 2004/07/01 17:52:11 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.79 2004/07/13 22:26:17 kakace Exp $
 ==========================================================================
 
 2.9000
 ------
+2.9008-493  new: macosx: ASM-optimized GARSP-5 cores (KOGE Scalar/Hybrid)
+            fix: all: Fixed an issue with -runbuffers (= -runoffline -n -1)
+                      that caused the client to wait for ever.
+
 2.9008-492  imp: ppc: Faster GARSP Vector core
             imp: all: Added an option to rotate log files at local time or UTC
                       time (#2613)

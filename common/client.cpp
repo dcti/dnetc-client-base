@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.23 2004/06/27 21:46:52 jlawson Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.24 2004/07/13 22:26:07 kakace Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -276,7 +276,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
                     "Enhancements for 604e CPUs by Roberto Ragusa\n");
         #if defined(__VEC__) || defined(__ALTIVEC__)
           #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
-            LogScreenRaw( "RC7-72 Altivec assembly and GARSP Vector by Didier Levet\n");
+            LogScreenRaw( "RC7-72 Altivec and OGR assembly by Didier Levet\n");
           #else
             LogScreenRaw( "RC5-72 Altivec assembly by Didier Levet\n");
           #endif

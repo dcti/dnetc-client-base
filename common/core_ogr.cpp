@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.27 2004/06/19 23:23:39 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.28 2004/07/13 22:26:07 kakace Exp $"; }
 
 //#define TRACE
 
@@ -235,8 +235,14 @@ const char **corenames_for_contest_ogr()
       "GARSP 5.13-EV4",
     #endif
   #elif (CLIENT_CPU == CPU_POWERPC)
+    #ifdef HAVE_KOGE_PPC_CORES
+      /* Optimized ASM cores */
+      "KOGE Scalar",    /* KOGE : Kakace's Optimized Garsp Engine */
+      "KOGE Hybrid",    /* altivec only */
+    #else
       "GARSP 5.14 Scalar",
       "GARSP 5.15 Vector",   /* altivec only */
+    #endif
   #elif (CLIENT_CPU == CPU_SPARC)
       "GARSP 5.13",
   #elif (CLIENT_OS == OS_PS2LINUX)
@@ -358,7 +364,12 @@ int selcoreGetPreselectedCoreForProject_ogr()
         {
           case 0x0039: // PPC 970
           case 0x003C: // PPC 970FX (XServe G5)
+            #ifdef HAVE_KOGE_PPC_CORES
+              // Temporary setup for the new KOGE cores.
+              cindex = -1; break;     // Unknown rate yet : micro-bench
+            #else
               cindex = 0; break;      // PPC-scalar
+            #endif
           case 0x000C: // 7400
           case 0x800C: // 7410
           case 0x8000: // 7441/7450/7451

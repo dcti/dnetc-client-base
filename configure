@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.132 2004/06/16 21:39:42 teichp Exp $
+# @(#)$Id: configure,v 1.288.2.133 2004/07/13 22:25:53 kakace Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -531,8 +531,8 @@ add_sources() # $1=os, $2=arch, $3=custom
 
         if [ "X$3" = "Xaltivec" ] ; then
           TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-KKS7400.gas.s \
-                                          rc5-72/ppc/r72-KKS7450.gas.s \
-                                          rc5-72/ppc/r72-KKS970.osx.s"
+                                          rc5-72/ppc/r72-KKS7450.gas.s"
+                                          # "rc5-72/ppc/r72-KKS970.osx.s"
         fi
       fi
     fi # HAVE_RC5_72
@@ -541,6 +541,12 @@ add_sources() # $1=os, $2=arch, $3=custom
       #DEFAULT_OGR="1" # this is just an addition to default core
       if [ "${1}" = "macosx" ]; then
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
+        if [ "$TARGET_CC" != "mwcc" ]; then
+          # KOGE optimized cores
+          HAVE_KOGE_PPC_CORES="1"
+          TARGET_ADDASMS="$TARGET_ADDASMS ogr/ppc/OGR_PPC_scalar.osx.s \
+                                          ogr/ppc/OGR_PPC_hybrid.osx.s"
+        fi
       elif [ "X$3" = "Xaltivec" ] ; then
         if [ $gccver -ge 3000000 ]; then # works only for gcc > 3 
           TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
@@ -697,6 +703,9 @@ add_sources() # $1=os, $2=arch, $3=custom
   fi
   if [ "$HAVE_OGR_P2" = "1" ]; then
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_PASS2"
+    if [ "$HAVE_KOGE_PPC_CORES" = "1" ]; then
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_KOGE_PPC_CORES"
+    fi
   fi
   if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
     TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
@@ -1007,8 +1016,9 @@ generate_gcc_opts() {
         opts272="$OPTS_GCC272 -O6 -DASM_PPC -funroll-loops"
         opts295="$OPTS_GCC295 -O3 -DASM_PPC -funroll-loops"
         opts310="$OPTS_GCC310 -O3 -DASM_PPC -funroll-loops"
-        if [ "${2}" = "macosx" ]; then  # Special flag for AppleGCC 3.3
-          opts330="$OPTS_GCC310 -fastf -DASM_PPC"
+        if [ "${2}" = "macosx" ]; then
+          # All cores are asm-optimized : We don't need strong optimizations.
+          opts330="$OPTS_GCC310 -Os -DASM_PPC"
         fi
         ;;
 
