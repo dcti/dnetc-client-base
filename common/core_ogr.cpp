@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.29.2.4 2004/08/11 16:47:06 bdragon Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.29.2.5 2004/08/13 01:55:39 bdragon Exp $"; }
 
 //#define TRACE
 
@@ -45,9 +45,13 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.29.2.4 2004/08/11 16:47:06 bdragon Exp $";
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
   #if (CLIENT_OS != OS_VMS)    /* Include for other OSes */
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix(void);
-    extern "C" CoreDispatchTable *ogr_get_dispatch_table_ev4(void);
   #endif
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_ev4(void);
     extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_ev4_64(void);
+  #if (CLIENT_OS != OS_VMS)    /* Include for other OSes */
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix_64(void);
+  #endif
 #elif (CLIENT_CPU == CPU_68K)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_000(void);
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_020(void);
@@ -101,9 +105,13 @@ int InitializeCoreTable_ogr(int first_time)
         ogr_get_dispatch_table();
         #if (CLIENT_OS != OS_VMS)         /* Include for other OSes */
            ogr_get_dispatch_table_cix();
-           ogr_get_dispatch_table_ev4();
         #endif
+        ogr_get_dispatch_table_ev4();
         ogr64_get_dispatch_table();
+        ogr_get_dispatch_table_ev4_64();
+        #if (CLIENT_OS != OS_VMS)         /* Include for other OSes */
+        ogr_get_dispatch_table_cix_64();
+        #endif
       #elif (CLIENT_CPU == CPU_VAX)
         ogr_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_SPARC)
@@ -167,9 +175,13 @@ const char **corenames_for_contest_ogr()
       "GARSP 6.0",
     #if (CLIENT_OS != OS_VMS)  /* Include for other OSes */
       "GARSP 6.0-CIX",
-      "GARSP 6.0-EV4",
     #endif
+      "GARSP 6.0-EV4",
       "GARSP 6.0-64",
+      "GARSP 6.0-EV4-64",
+    #if (CLIENT_OS != OS_VMS)  /* Include for other OSes */
+      "GARSP 6.0-CIX-64",
+    #endif
   #elif (CLIENT_CPU == CPU_POWERPC)
     #ifdef HAVE_KOGE_PPC_CORES
       /* Optimized ASM cores */
@@ -221,6 +233,7 @@ int apply_selcore_substitution_rules_ogr(int cindex)
 # if (CLIENT_CPU == CPU_ALPHA)
   long det = GetProcessorType(1);
   if ((det <  11) && (cindex == 1)) cindex = 0;
+  if ((det <  11) && (cindex == 5)) cindex = 3;
 # elif (CLIENT_CPU == CPU_68K)
   long det = GetProcessorType(1);
   if (det == 68000) cindex = 0;
@@ -265,9 +278,11 @@ int selcoreGetPreselectedCoreForProject_ogr()
   #if (CLIENT_CPU == CPU_ALPHA)
     if (detected_type > 0)
     {
+    #if (CLIENT_OS != OS_VMS)  /* Include for other OSes */
       if (detected_type >= 11)
-        cindex = 1;
+        cindex = 5;
       else
+    #endif
         cindex = -1;
     }
   // ===============================================================
@@ -453,12 +468,22 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   #if (CLIENT_OS != OS_VMS)       /* Include for other OSes */
     if (coresel == 1)       
       unit_func.ogr = ogr_get_dispatch_table_cix();
-    else if (coresel == 2)
-      unit_func.ogr = ogr_get_dispatch_table_ev4();
-    else if (coresel == 3)
-      unit_func.ogr = ogr64_get_dispatch_table();
     else
   #endif 
+    if (coresel == 2)
+      unit_func.ogr = ogr_get_dispatch_table_ev4();
+    else
+    if (coresel == 3)
+      unit_func.ogr = ogr64_get_dispatch_table();
+    else
+    if (coresel == 4)
+      unit_func.ogr = ogr_get_dispatch_table_ev4_64();
+    else
+  #if (CLIENT_OS != OS_VMS)       /* Include for other OSes */
+    if (coresel == 5)
+      unit_func.ogr = ogr_get_dispatch_table_cix_64();
+    else
+  #endif
       unit_func.ogr = ogr_get_dispatch_table();
 #elif (CLIENT_CPU == CPU_X86)
   if (coresel == 0) //A
