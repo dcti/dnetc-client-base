@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: cmdline.cpp,v $
+// Revision 1.92.2.10  1999/02/04 23:25:58  remi
+// bool -> int in ParseCommandLine().
+//
 // Revision 1.92.2.9  1999/01/30 16:26:00  remi
 // Fixed the previous merge.
 //
@@ -26,12 +29,14 @@
 //
 // Revision 1.92.2.4  1998/11/15 11:10:52  remi
 // Synced with :
+//
 //  Revision 1.98  1998/11/15 11:00:16  remi
 //  Moved client->SelectCore() for -test and -benchmark* from cmdline.cpp to
 //  modereq.cpp and told it to not be quiet.
 //
 // Revision 1.92.2.3  1998/11/11 03:09:41  remi
 // Synced with :
+//
 //  Revision 1.96  1998/11/10 21:45:59  cyp
 //  ParseCommandLine() is now one-pass. (a second pass is available so that
 //  lusers can see the override messages on the screen)
@@ -52,7 +57,7 @@
 /* -------------------------------------- */
 
 int Client::ParseCommandline( int run_level, int argc, const char *argv[], 
-                              int *retcodeP, bool logging_is_initialized )
+                              int *retcodeP, int logging_is_initialized )
 {
   int inimissing, pos, skip_next, terminate_app, havemode;
   const char *thisarg, *nextarg;
