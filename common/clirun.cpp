@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.40 2000/02/13 23:35:41 snake Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.41 2000/02/16 04:23:50 petermack Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -174,12 +174,14 @@ static void __thread_yield__(void)
   #elif (CLIENT_OS == OS_HPUX)
     sched_yield();
   #elif (CLIENT_OS == OS_DEC_UNIX)
-   #error if you have "MULTITHREAD" defined something is broken. grep for multithread.
    #if defined(MULTITHREAD)
+     #error if you have "MULTITHREAD" defined something is broken. grep for multithread.
      sched_yield();
    #else
      NonPolledUSleep(0);
    #endif
+  #elif (CLIENT_OS == OS_NEXTSTEP)
+    NonPolledUSleep(0);
   #else
     #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */

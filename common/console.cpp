@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.30 2000/02/09 01:46:44 trevorh Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.31 2000/02/16 04:24:50 petermack Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -382,6 +382,10 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
   if (!buffer || !buflen)
     return 0;
 
+#if (CLIENT_OS == OS_NEXTSTEP)
+  flags &= ~CONINSTR_BYEXAMPLE;
+#endif
+
   //if ((flags & CONINSTR_ASPASSWORD) != 0)
   //  flags = CONINSTR_ASPASSWORD;
 
@@ -634,7 +638,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
   #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SOLARIS) || \
         (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_IRIX) || \
         (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX) || \
-        (CLIENT_OS == OS_BEOS)
+        (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
+        (CLIENT_OS == OS_DEC_UNIX)
     /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
