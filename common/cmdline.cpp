@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.83 2002/05/31 18:22:34 jt Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.84 2002/06/29 14:10:45 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -459,6 +459,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           {
             pid_t ourpid = getpid();
             unsigned int linelen = 0;
+            kill_found = kill_ok = kill_failed = 0;
             int got_output = 0, eof_count = 0;
             //ConOutModal(pscmd);
             while (file) /* dummy while */
@@ -491,7 +492,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
                   if (thatpid == ourpid)  /* ignore it */
                   {
                     got_output = 1;
-                    //printf("'%s' ** THIS IS US ** \n",buffer,thatpid);
+                    //printf("'%s' ** THIS IS US (%d) ** \n",buffer,thatpid);
                     thatpid = 0;
                   }
                   else if (thatpid != 0)
