@@ -2923,25 +2923,39 @@ int main( int argc, char *argv[] )
     char buffer[200];
     strcpy( buffer,client.inifilename );
     char *slash = strrchr(buffer, PATH_SEP_C);
-    if (slash == NULL) {
+    if (slash == NULL)
+      {
       strcpy(client.in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
+      strcpy(client.ini_in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
       strcpy(client.out_buffer_file[0],"buff-out" EXTN_SEP "rc5");
+      strcpy(client.ini_out_buffer_file[0],"buff-out" EXTN_SEP "rc5");
       strcpy(client.in_buffer_file[1],"buff-in" EXTN_SEP "des");
+      strcpy(client.ini_in_buffer_file[1],"buff-in" EXTN_SEP "des");
       strcpy(client.out_buffer_file[1],"buff-out" EXTN_SEP "des");
+      strcpy(client.ini_out_buffer_file[1],"buff-out" EXTN_SEP "des");
       strcpy(client.exit_flag_file,"exitrc5" EXTN_SEP "now");
-    } else {
+      strcpy(client.ini_exit_flag_file,"exitrc5" EXTN_SEP "now");
+      }
+    else
+      {
       *(slash+1) = 0;
       strcpy(client.in_buffer_file[0],buffer);
       strcpy(client.out_buffer_file[0],buffer);
       strcpy(client.in_buffer_file[1],buffer);
       strcpy(client.out_buffer_file[1],buffer);
       strcpy(client.exit_flag_file,buffer);
+
       strcat(client.in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
+      strcpy(client.ini_in_buffer_file[0],client.in_buffer_file[0]);
       strcat(client.out_buffer_file[0],"buff-out" EXTN_SEP "rc5");
+      strcpy(client.ini_out_buffer_file[0],out_buffer_file[0]);
       strcat(client.in_buffer_file[1],"buff-in" EXTN_SEP "des");
+      strcpy(client.ini_in_buffer_file[1],in_buffer_file[1]);
       strcat(client.out_buffer_file[1],"buff-out" EXTN_SEP "des");
+      strcpy(client.ini_out_buffer_file[1],out_buffer_file[1]);
       strcat(client.exit_flag_file,"exitrc5" EXTN_SEP "now");
-    }
+      strcpy(client.ini_exit_flag_file,exit_flag_file);
+      }
   }
 #endif
 
