@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.53  1998/12/05 22:19:57  cyp
+// Added -kill (aka -shutdown) and -hup (aka -restart) to the list of switches.
+//
 // Revision 1.52  1998/11/22 14:54:36  cyp
 // Adjusted to reflect changed -runonline, -runoffline, -n behaviour
 //
@@ -169,7 +172,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.52 1998/11/22 14:54:36 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.53 1998/12/05 22:19:57 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -218,9 +221,9 @@ void DisplayHelp( const char * unrecognized_option )
   "-update            fetch + flush",
   "-forceunlock <fn>  unlock buffer file <fn>",
   "-benchmark         tests the client speed",
-//"                   (add rc5 or des to test only one core)",
   "-benchmark2        quick (but slightly inaccurate) client speed test",
-//"                   (add rc5 or des to test only one core)",
+  "-hup, -restart     restart all active clients",
+  "-kill, -shutdown   gracefully shut down all active clients",
   "-help              display these help screens",
   "",
 //----the runoffline/runbuffers lines are the longest a description may get-----#
