@@ -1,5 +1,8 @@
 //
 // $Log: deseval-meggs2-2.cpp,v $
+// Revision 1.3  1998/12/10 18:49:40  remi
+// Fixed the first #ifdef.
+//
 // Revision 1.2  1998/11/16 16:30:46  remi
 // #if defined(BITSLICER_WITH_LESS_BITS)
 //   #error "This core won't work with BITSLICER_WITH_LESS_BITS !"
@@ -24,13 +27,13 @@
 //
 //
 
-#ifdef (BITSLICER_WITH_LESS_BITS)
+#if defined(BITSLICER_WITH_LESS_BITS)
   #error "This core won't work with BITSLICER_WITH_LESS_BITS !"
 #endif
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs2_cpp(void) {
-return "@(#)$Id: deseval-meggs2-2.cpp,v 1.2 1998/11/16 16:30:46 remi Exp $"; }
+return "@(#)$Id: deseval-meggs2-2.cpp,v 1.3 1998/12/10 18:49:40 remi Exp $"; }
 #endif
 
 #include <stdio.h>
