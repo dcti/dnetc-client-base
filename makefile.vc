@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.5 2003/09/01 07:04:27 jlawson Exp $
+# $Id: makefile.vc,v 1.83.2.6 2004/01/24 05:16:35 lightning Exp $
 #
 
 BASENAME = dnetc
@@ -186,7 +186,9 @@ CUI_OBJS =                           \
 !if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 CHIP_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
-CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
+CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj       \
+            $(OUTPUTPATH)/x86features.obj    \
+            $(OUTPUTPATH)/x86htcount.obj
 !endif
 
 # --------------------------------- RC5-64 -------------------------
@@ -222,7 +224,9 @@ RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-dg2.obj    \
         $(OUTPUTPATH)/r72-dg3.obj    \
         $(OUTPUTPATH)/r72-dg3a.obj   \
-        $(OUTPUTPATH)/r72-ss2.obj
+        $(OUTPUTPATH)/r72-ss2.obj    \
+        $(OUTPUTPATH)/r72-go2.obj    \
+        $(OUTPUTPATH)/r72-sgp3.obj
 
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
 !endif

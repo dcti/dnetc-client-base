@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.15 2004/01/08 19:56:15 oliver Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.16 2004/01/24 05:17:28 lightning Exp $"; }
 
 //#define TRACE
 
@@ -47,6 +47,8 @@ extern "C" s32 CDECL rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_ss_2( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_go_2( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_sgp_3( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_AMD64)
 extern "C" s32 CDECL rc5_72_unit_func_snjl( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_ARM)
@@ -111,6 +113,8 @@ const char **corenames_for_contest_rc572()
       "DG 3-pipe",
       "DG 3-pipe alt",
       "SS 2-pipe",
+      "GO 2-pipe",
+      "SGP 3-pipe",
       #else /* no nasm -> only ansi cores */
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -337,7 +341,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x06: cindex = 0; break; // Cx486          == SES 1-pipe
           case 0x07: cindex =-1; break; // orig Celeron   == unused?
           case 0x08: cindex =-1; break; // PPro           == ?
-          case 0x09: cindex = 5; break; // K7             == SS 2-pipe
+          case 0x09: cindex = 6; break; // K7             == GO 2-pipe
           case 0x0A: cindex =-1; break; // Centaur C6     == ?
           case 0x0B: cindex = 3; break; // Pentium 4      == DG 3-pipe
           default:   cindex =-1; break; // no default
@@ -525,6 +529,14 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
       case 5:
         unit_func.gen_72 = rc5_72_unit_func_ss_2;
         pipeline_count = 2;
+        break;
+      case 6:
+        unit_func.gen_72 = rc5_72_unit_func_go_2;
+        pipeline_count = 2;
+        break;
+      case 7:
+        unit_func.gen_72 = rc5_72_unit_func_sgp_3;
+        pipeline_count = 3;
         break;
      // -----------
      #elif (CLIENT_CPU == CPU_AMD64)

@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.38.2.7 2003/10/30 21:56:21 pfeffi Exp $
+## $Id: makefile.wat,v 1.38.2.8 2004/01/24 05:16:35 lightning Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -35,47 +35,49 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %SYMALIAS = # symbols that need redefinition 
 %COREOBJS = # constructed at runtime
 # LINKOBJS is (somewhat) sorted by coherence - speed sentitive stuff first
-%LINKOBJS = output\problem.obj  &
-            output\projdata.obj &
-            output\bench.obj    &
-            output\clirun.obj   &
-            output\pollsys.obj  &
-            output\selftest.obj &
-            output\probman.obj  &
-            output\probfill.obj &
-            output\checkpt.obj  &
-            output\coremem.obj  &
-            output\core_rc5.obj &
-            output\core_r72.obj &
-            output\core_des.obj &
-            output\core_csc.obj &
-            output\core_ogr.obj &
-            output\random.obj   &
-            output\clicdata.obj &
-            output\base64.obj   &
-            output\netbase.obj  &
-            output\netconn.obj  &
-            output\mail.obj     &
-            output\logstuff.obj &
-            output\cpucheck.obj &
-            output\selcore.obj  &
-            output\x86ident.obj &
-            output\util.obj     &
-            output\cliident.obj &
-            output\modereq.obj  &
-            output\client.obj   &
-            output\cmdline.obj  &
-            output\iniread.obj  &
-            output\confrwv.obj  &
-            output\confmenu.obj &
-            output\confopt.obj  &
-            output\console.obj  &
-            output\disphelp.obj &
-            output\triggers.obj &
-            output\clitime.obj  &
-            output\clievent.obj &
-            output\setprio.obj  &
-            output\pathwork.obj &
+%LINKOBJS = output\problem.obj     &
+            output\projdata.obj    &
+            output\bench.obj       &
+            output\clirun.obj      &
+            output\pollsys.obj     &
+            output\selftest.obj    &
+            output\probman.obj     &
+            output\probfill.obj    &
+            output\checkpt.obj     &
+            output\coremem.obj     &
+            output\core_rc5.obj    &
+            output\core_r72.obj    &
+            output\core_des.obj    &
+            output\core_csc.obj    &
+            output\core_ogr.obj    &
+            output\random.obj      &
+            output\clicdata.obj    &
+            output\base64.obj      &
+            output\netbase.obj     &
+            output\netconn.obj     &
+            output\mail.obj        &
+            output\logstuff.obj    &
+            output\cpucheck.obj    &
+            output\selcore.obj     &
+            output\x86ident.obj    &
+            output\x86features.obj &
+            output\x86htcount.obj  &
+            output\util.obj        &
+            output\cliident.obj    &
+            output\modereq.obj     &
+            output\client.obj      &
+            output\cmdline.obj     &
+            output\iniread.obj     &
+            output\confrwv.obj     &
+            output\confmenu.obj    &
+            output\confopt.obj     &
+            output\console.obj     &
+            output\disphelp.obj    &
+            output\triggers.obj    &
+            output\clitime.obj     &
+            output\clievent.obj    &
+            output\setprio.obj     &
+            output\pathwork.obj    &
             output\buffbase.obj
 %PRIVMODS = common\buffpriv.cpp  common\buffupd.cpp   common\scram.cpp
 %PRIVOBJS = output\buffpriv.obj  output\buffupd.obj   output\scram.obj
@@ -117,7 +119,8 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 #%rc564mmxamd_SYMALIAS = #
 #---
 %rc572std_LINKOBJS = output\r72-ses1.obj output\r72-ses2.obj output\r72-dg2.obj &
-                   output\r72-dg3.obj output\r72-dg3a.obj output\r72-ss2.obj
+                   output\r72-dg3.obj output\r72-dg3a.obj output\r72-ss2.obj &
+                   output\r72-go2.obj output\r72-sgp3.obj
 %rc572std_DEFALL   = /DHAVE_RC5_72_CORES
 %rc572std_SYMALIAS = #
 #---
@@ -393,6 +396,16 @@ output\brf-smc.obj : rc5\x86\brf-smc.asm $(%dependall)
 
 # ----------------------------------------------------------------
 output\x86ident.obj : plat\x86\x86ident.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+  #*$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\x86features.obj : plat\x86\x86features.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+  #*$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\x86htcount.obj : plat\x86\x86htcount.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   #*$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
@@ -774,6 +787,14 @@ output\r72-dg3a.obj : rc5-72\x86\r72-dg3a.asm $(%dependall)
   @set isused=1
 
 output\r72-ss2.obj : rc5-72\x86\r72-ss2.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
+  @set isused=1
+
+output\r72-go2.obj : rc5-72\x86\r72-go2.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
+  @set isused=1
+
+output\r72-sgp3.obj : rc5-72\x86\r72-sgp3.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
   @set isused=1
 
