@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.22 2000/10/06 00:52:51 mfeiri Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.23 2000/10/16 13:46:47 oliver Exp $"; }
 
 //#define TRACE
 
@@ -1181,14 +1181,11 @@ int Lurk::InternalIsConnected(void) //must always returns a valid yes/no
    struct ifreq *ifr;
    int n, foundif = 0;
    char *p;
+
    #if (CLIENT_OS == OS_AMIGAOS)
-   int closesocklib = 0;
-   if (!SocketBase)
-   {
-     if (!(SocketBase = OpenLibrary("bsdsocket.library",4)))
-       return 0;
-     closesocklib = 1;
-   }
+   // not being able to access the socket lib means tcp/ip is unavailable,
+   // implying that we must actually be offline
+   if (!amigaOpenSocketLib()) return 0;
    #endif
 
    int fd = socket(PF_INET,SOCK_STREAM,0);
@@ -1337,11 +1334,7 @@ int Lurk::InternalIsConnected(void) //must always returns a valid yes/no
    }
 
    #if (CLIENT_OS == OS_AMIGAOS)
-   if (closesocklib)
-   {
-     CloseLibrary(SocketBase);
-     SocketBase = NULL;
-   }
+   amigaCloseSocketLib();
    #endif
 
    if (foundif)
