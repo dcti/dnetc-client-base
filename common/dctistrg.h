@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: dctistrg.h,v $
+// Revision 1.3  1999/01/29 18:51:14  jlawson
+// changed named of guard define, since it might conflict with a
+// system header.
+//
 // Revision 1.2  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -14,8 +18,8 @@
 //
 
 
-#ifndef __STRING_H__
-#define __STRING_H__
+#ifndef __DCTISTRING_H__
+#define __DCTISTRING_H__
 
 void lowercasestring(char *string);
 
