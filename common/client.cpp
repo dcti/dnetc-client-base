@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.103 2001/05/06 11:01:05 teichp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.104 2001/07/21 21:54:10 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -478,7 +478,7 @@ int main( int argc, char *argv[] )
       /* yes, it stays open */
     }
   }
-  #elif 0 /* eg, Rhapsody */                  /* SPT_TYPE==SPT_PSSTRINGS */
+  #elif (CLIENT_OS == OS_MACOSX)                  /* SPT_TYPE==SPT_PSSTRINGS */
   if (needchange)
   {
     PS_STRINGS->ps_nargvstr = 1;
