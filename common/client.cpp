@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.123  1998/08/13 00:24:17  silby
+// Change to a NOMAIN definition so that the win32gui will compile.
+//
 // Revision 1.122  1998/08/10 23:02:12  cyruspatel
 // Four changes: (a) xxxTrigger and pausefilefound flags are now wrapped in
 // functions in trigger.cpp (b) NetworkInitialize()/NetworkDeinitialize()
@@ -319,7 +322,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.122 1998/08/10 23:02:12 cyruspatel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.123 1998/08/13 00:24:17 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -2224,7 +2227,7 @@ int main( int argc, char *argv[] )
 // ---------------------------------------------------------------------------
 
 #if defined(NOMAIN)  //#if defined(NEEDVIRTUALMETHODS)
-int Client::RunCommandlineModes( int, char *, int * )
+int Client::RunCommandlineModes( int argc, char *argv[], int *retcode )
 {
 return 0;
 }
