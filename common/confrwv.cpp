@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.4 1999/10/08 21:19:19 remi Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.5 1999/10/10 23:10:37 cyp Exp $"; }
 
 //#define TRACE
 
@@ -77,14 +77,16 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
 
   TRACE_OUT((+1,"__remapObsoleteParameters()\n"));
 
-  if (!GetPrivateProfileStringB( __getprojsectname(RC5), "coretype", "", buffer, sizeof(buffer), fn ))
+  #if (CLIENT_CPU != CPU_ALPHA) /* no RC5 cputype->coretype mapping for Alpha */
+  if (!GetPrivateProfileStringB( __getprojsectname(RC5), "core", "", buffer, sizeof(buffer), fn ))
   {
     if ((i = GetPrivateProfileIntB(OPTION_SECTION, "cputype", -1, fn ))!=-1)
     {
       client->coretypes[RC5] = i;
-      modfail += (!WritePrivateProfileIntB( __getprojsectname(RC5), "coretype", i, fn));
+      modfail += (!WritePrivateProfileIntB( __getprojsectname(RC5), "core", i, fn));
     }
   }
+  #endif
 
   if (!GetPrivateProfileStringB( __getprojsectname(RC5), "preferred-blocksize", "", buffer, sizeof(buffer), fn )
    && !GetPrivateProfileStringB( __getprojsectname(DES), "preferred-blocksize", "", buffer, sizeof(buffer), fn ))
@@ -367,7 +369,7 @@ int ReadConfig(Client *client)
       if (cont_i != OGR)
       {                         
         client->coretypes[cont_i] = 
-           GetPrivateProfileIntB(cont_name, "coretype",
+           GetPrivateProfileIntB(cont_name, "core",
                          client->coretypes[cont_i],fn);
         client->preferred_blocksize[cont_i] = 
            GetPrivateProfileIntB(cont_name, "preferred-blocksize",
@@ -572,7 +574,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
         __XSetProfileInt( cont_name, "flush-threshold", client->outthreshold[cont_i], fn, 10, 0 );
         if (cont_i != OGR)
         {
-          __XSetProfileInt( cont_name, "coretype", client->coretypes[cont_i], fn, -1, 0 );
+          __XSetProfileInt( cont_name, "core", client->coretypes[cont_i], fn, -1, 0 );
           __XSetProfileInt( cont_name, "preferred-blocksize", client->preferred_blocksize[cont_i], fn, 31, 0 );
         }
       }
