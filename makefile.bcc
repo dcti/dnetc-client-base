@@ -1,14 +1,28 @@
-# client makefile (Borland C++ for Win32)
-# see http://www.distributed.net/
+# makefile distributed.net client (Borland C++ for Win32).
+# For information about distributed.net, see http://www.distributed.net/
+#
+# As of Feb 2000, Borland C++ 5.5 compiler is free for download.
+# http://www.borland.com/bcppbuilder/freecompiler/
+# ftp://ftpd.inprise.com/download/bcppbuilder/FreeCommandLineTools.exe
 
 .autodepend
 
+
+# Borland library and include paths.
+BCCINCLUDE = c:\borland\bcc55\include
+BCCLIBRARY = c:\borland\bcc55\lib
+
+
+# distributed.net source and compilation paths.
 EXENAME = dnetc.exe
 OUTPUTPATH = output
 COMMONPATH = common
 DESPATH = des
 RC5PATH = rc5
+CSCPATH = csc
+OGRPATH = ogr
 PLATPATH = platforms
+NASMOMFSTUB = rc5\x86\nasm\omf32.asm
 
 
 # define variable to existence to enable debugging
@@ -24,14 +38,13 @@ PLATPATH = platforms
 
 # Main compilation and linking options
 BCCOPTS = /a4 /Vv /x- /xd- /RT- /r /k- /d /w /O2 /O /OS /tWM \
-    /I$(COMMONPATH) /I$(PLATPATH)\win32cli /D_CPU_32BIT_ /DMULTITHREAD
+	/I$(BCCINCLUDE) /I$(COMMONPATH) /I$(PLATPATH)\win32cli \
+	/I$(OGRPATH) /D_CPU_32BIT_ /DMULTITHREAD
 
 
-TASMOPTS = /t /q /m /ml 
+NASMOPTS = -f obj
 
-NASMOPTS = -f obj -p$(RC5PATH)/nasm/omf32.asm
-
-TLINKOPTS = /aa /x /Tpe /n /B:0x400000
+TLINKOPTS = /aa /x /Tpe /n /B:0x400000 /L$(BCCLIBRARY)
 
 
 !ifdef DEBUG
@@ -51,134 +64,165 @@ BCCOPTS = $(BCCOPTS) /DMMX_BITSLICER /DBIT_64 /DMEGGS /DKWAN
 !endif
 
 
-.path.asm = $(RC5PATH);$(DESPATH)/brydmasm;$(PLATPATH)
+.path.asm = $(RC5PATH)\x86\nasm;$(DESPATH)\mmx-bitslice;$(PLATPATH)
 .path.cpp = $(COMMONPATH);$(DESPATH);$(RC5PATH);$(PLATPATH)/win32cli
 .path.obj = $(OUTPUTPATH)
 
-all: dnetc
+all:	$(EXENAME)
 
 # --------------------------------------------
 
 COMMON_OBJS =                    \
-	$(OUTPUTPATH)/client.obj     \
-	$(OUTPUTPATH)/threadcd.obj   \
-	$(OUTPUTPATH)/disphelp.obj   \
-	$(OUTPUTPATH)/autobuff.obj   \
-	$(OUTPUTPATH)/iniread.obj    \
-	$(OUTPUTPATH)/network.obj    \
-	$(OUTPUTPATH)/netinit.obj    \
-	$(OUTPUTPATH)/scram.obj      \
-	$(OUTPUTPATH)/mail.obj       \
-	$(OUTPUTPATH)/confmenu.obj  \
-	$(OUTPUTPATH)/confrwv.obj  \
-	$(OUTPUTPATH)/confopt.obj  \
-	$(OUTPUTPATH)/selftest.obj   \
-	$(OUTPUTPATH)/cmdline.obj    \
-	$(OUTPUTPATH)/clitime.obj    \
-	$(OUTPUTPATH)/clirate.obj    \
-	$(OUTPUTPATH)/clisrate.obj   \
-	$(OUTPUTPATH)/clicdata.obj   \
-	$(OUTPUTPATH)/buffwork.obj   \
-	$(OUTPUTPATH)/convdes.obj    \
-	$(OUTPUTPATH)/problem.obj    \
-	$(OUTPUTPATH)/des-x86.obj    \
-	$(OUTPUTPATH)/cpucheck.obj   \
-	$(OUTPUTPATH)/pathwork.obj   \
-	$(OUTPUTPATH)/cliident.obj   \
-	$(OUTPUTPATH)/lurk.obj \
-	$(OUTPUTPATH)/logstuff.obj   \
-	$(OUTPUTPATH)/buffupd.obj    \
-	$(OUTPUTPATH)/triggers.obj   \
-	$(OUTPUTPATH)/selcore.obj    \
-	$(OUTPUTPATH)/guistuff.obj   \
-	$(OUTPUTPATH)/clirun.obj     \
-	$(OUTPUTPATH)/pollsys.obj    \
-	$(OUTPUTPATH)/probman.obj    \
-	$(OUTPUTPATH)/probfill.obj   \
-	$(OUTPUTPATH)/bench.obj      \
-	$(OUTPUTPATH)/w32cons.obj    \
-	$(OUTPUTPATH)/w32svc.obj     \
-	$(OUTPUTPATH)/w32pre.obj     \
-	$(OUTPUTPATH)/console.obj    \
-	$(OUTPUTPATH)/setprio.obj    \
-	$(OUTPUTPATH)/modereq.obj    \
-	$(OUTPUTPATH)/checkpt.obj
+        $(OUTPUTPATH)/autobuff.obj   \
+        $(OUTPUTPATH)/base64.obj     \
+        $(OUTPUTPATH)/bench.obj      \
+        $(OUTPUTPATH)/buffupd.obj    \
+        $(OUTPUTPATH)/buffwork.obj   \
+        $(OUTPUTPATH)/checkpt.obj    \
+        $(OUTPUTPATH)/clicdata.obj   \
+        $(OUTPUTPATH)/client.obj     \
+        $(OUTPUTPATH)/clievent.obj   \
+        $(OUTPUTPATH)/cliident.obj   \
+        $(OUTPUTPATH)/clirate.obj    \
+        $(OUTPUTPATH)/clirun.obj     \
+        $(OUTPUTPATH)/clisrate.obj   \
+        $(OUTPUTPATH)/clitime.obj    \
+        $(OUTPUTPATH)/cmdline.obj    \
+        $(OUTPUTPATH)/confmenu.obj   \
+        $(OUTPUTPATH)/confopt.obj    \
+        $(OUTPUTPATH)/confrwv.obj    \
+        $(OUTPUTPATH)/console.obj    \
+        $(OUTPUTPATH)/convdes.obj    \
+        $(OUTPUTPATH)/cpucheck.obj   \
+        $(OUTPUTPATH)/disphelp.obj   \
+        $(OUTPUTPATH)/iniread.obj    \
+        $(OUTPUTPATH)/logstuff.obj   \
+        $(OUTPUTPATH)/lurk.obj       \
+        $(OUTPUTPATH)/mail.obj       \
+        $(OUTPUTPATH)/modereq.obj    \
+        $(OUTPUTPATH)/netinit.obj    \
+        $(OUTPUTPATH)/netres.obj     \
+        $(OUTPUTPATH)/network.obj    \
+        $(OUTPUTPATH)/pathwork.obj   \
+        $(OUTPUTPATH)/pollsys.obj    \
+        $(OUTPUTPATH)/probfill.obj   \
+        $(OUTPUTPATH)/problem.obj    \
+        $(OUTPUTPATH)/probman.obj    \
+        $(OUTPUTPATH)/random.obj     \
+        $(OUTPUTPATH)/scram.obj      \
+        $(OUTPUTPATH)/selcore.obj    \
+        $(OUTPUTPATH)/selftest.obj   \
+        $(OUTPUTPATH)/setprio.obj    \
+        $(OUTPUTPATH)/triggers.obj   \
+        $(OUTPUTPATH)/util.obj
 
+PLAT_OBJS =                          \
+        $(OUTPUTPATH)/w32cons.obj    \
+        $(OUTPUTPATH)/w32pre.obj     \
+        $(OUTPUTPATH)/w32ras.obj     \
+        $(OUTPUTPATH)/w32sock.obj    \
+        $(OUTPUTPATH)/w32ss.obj      \
+        $(OUTPUTPATH)/w32svc.obj     \
+        $(OUTPUTPATH)/w32util.obj
 
-NASM_OBJS =          \
-        $(OUTPUTPATH)/rg486.obj   \
-        $(OUTPUTPATH)/rg6x86.obj  \
-        $(OUTPUTPATH)/rc5-rgk5.obj    \
-        $(OUTPUTPATH)/rc5-rgk6.obj    \
-        $(OUTPUTPATH)/brfp5.obj \
-        $(OUTPUTPATH)/rc5-rgp6.obj
+SCR_OBJS =                           \
+        $(OUTPUTPATH)/w32ss.obj      \
+        $(OUTPUTPATH)/w32ssb.obj     \
+        $(OUTPUTPATH)/w32util.obj
 
+CUI_OBJS =                           \
+        $(OUTPUTPATH)/w32cuis.obj
 
-TASM_OBJS =                   \
-        $(OUTPUTPATH)/bdeslow.obj  \
-        $(OUTPUTPATH)/bbdeslow.obj \
-        $(OUTPUTPATH)/p1bdespro.obj \
-        $(OUTPUTPATH)/p2bdespro.obj \
-        $(OUTPUTPATH)/x86ident.obj
 
 CLI_LIBS = noeh32.lib cw32mt.lib import32.lib
 
-# --------------------------------------------
+# --------------------------------- RC5 ----------------------------
 
-!ifdef MMXDES
-COMMON_OBJS = $(COMMON_OBJS) \
-		$(OUTPUTPATH)/des-slice-meggs.obj
-		$(OUTPUTPATH)/des
+RC5_OBJS =                           \
+        $(OUTPUTPATH)/brfp5.obj      \
+        $(OUTPUTPATH)/rc5-rgk5.obj   \
+        $(OUTPUTPATH)/rc5-rgk6.obj   \
+        $(OUTPUTPATH)/rc5-rgp6.obj   \
+        $(OUTPUTPATH)/rc5mmx.obj     \
+        $(OUTPUTPATH)/rg486.obj      \
+        $(OUTPUTPATH)/rg6x86.obj     \
+        $(OUTPUTPATH)/rc5-ssk7.obj
+BCCOPTS = $(BCCOPTS) -DMMX_RC5
+
+
+# --------------------------------- DES ----------------------------
+
+!ifndef HAVE_DES_CORES
+DES_OBJS =
+!else
+DES_OBJS =                                   \
+        $(OUTPUTPATH)/bbdeslow.obj           \
+        $(OUTPUTPATH)/bdeslow.obj            \
+        $(OUTPUTPATH)/des-slice.obj          \
+        $(OUTPUTPATH)/des-slice-meggs.obj    \
+        $(OUTPUTPATH)/des-x86.obj            \
+        $(OUTPUTPATH)/deseval.obj            \
+#       $(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
+        $(OUTPUTPATH)/deseval-mmx.obj        \
+        $(OUTPUTPATH)/p1bdespro.obj          \
+        $(OUTPUTPATH)/p2bdespro.obj          \
+        $(OUTPUTPATH)/sboxes-kwan4.obj       \
+#       $(OUTPUTPATH)/sboxes-mmx.obj
+BCCOPTS = $(BCCOPTS) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN 
 !endif
-!ifdef MMXRC5
-NASM_OBJS = $(NASM_OBJS) \
-		$(OUTPUTPATH)/rc5mmx.obj   \
-		$(OUTPUTPATH)/rc5mmx-k6-2.obj
+
+# --------------------------------- CSC ----------------------------
+
+!ifndef HAVE_CSC_CORES
+CSC_OBJS =
+!else
+CSC_OBJS =                           \
+         $(OUTPUTPATH)/convcsc.obj   \
+         $(OUTPUTPATH)/csc-1k.obj    \
+         $(OUTPUTPATH)/csc-1k-i.obj  \
+         $(OUTPUTPATH)/csc-6b.obj    \
+         $(OUTPUTPATH)/csc-6b-i.obj  \
+         $(OUTPUTPATH)/csc-comm.obj  \
+         $(OUTPUTPATH)/csc-mmx.obj
+BCCOPTS = $(BCCOPTS) -DHAVE_CSC_CORES -DMMX_CSC
+!endif
+
+# --------------------------------- OGR ----------------------------
+
+!ifndef HAVE_OGR_CORES
+OGR_OBJS =
+!else
+OGR_OBJS =                           \
+        $(OUTPUTPATH)/choosedat.obj  \
+        $(OUTPUTPATH)/crc32.obj      \
+        $(OUTPUTPATH)/ogr.obj
+BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
 !endif
 
 # --------------------------------------------
 
 .asm.obj:
-        tasm32 $(TASMOPTS) /i$(<D:/=\) $(<:/=\), $(@:/=\)
+        nasmw $(NASMOPTS) -p$(NASMOMFSTUB) -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
+
 
 .cpp.obj:
         bcc32 -c @&&|
 -P $(BCCOPTS) -n$(OUTPUTPATH)
 | $< 
 
-# --------------------------------------------
 
-$(OUTPUTPATH)/rg486.obj:	$(RC5PATH)/nasm/rg486.asm
-	nasmw $(NASMOPTS) -o $(@:/=\) $(**:/=\)
-
-$(OUTPUTPATH)/rg6x86.obj:	$(RC5PATH)/nasm/rg6x86.asm
-	nasmw $(NASMOPTS) -o $(@:/=\) $(**:/=\)
-
-$(OUTPUTPATH)/rc5-rgk5.obj:	$(RC5PATH)/nasm/rc5-rgk5.asm
-	nasmw $(NASMOPTS) -o $(@:/=\) $(**:/=\)
-
-$(OUTPUTPATH)/rc5-rgk6.obj:	$(RC5PATH)/nasm/rc5-rgk6.asm
-	nasmw $(NASMOPTS) -o $(@:/=\) $(**:/=\)
-
-$(OUTPUTPATH)/brfp5.obj:	$(RC5PATH)/nasm/brfp5.asm
-	nasmw $(NASMOPTS) -o $(@:/=\) $(**:/=\)
-
-$(OUTPUTPATH)/rc5-rgp6.obj:	$(RC5PATH)/nasm/rc5-rgp6.asm
-	nasmw $(NASMOPTS) -o $(@:/=\) $(**:/=\)
-
-$(OUTPUTPATH)/rc5mmx.obj:	$(RC5PATH)/nasm/rc5mmx.asm
-	nasmw $(NASMOPTS) -o $(@:/=\) $(**:/=\)
-
-$(OUTPUTPATH)/rc5mmx-k6-2.obj:	$(RC5PATH)/nasm/rc5mmx-k6-2.asm
-	nasmw $(NASMOPTS) -o $(@:/=\) $(**:/=\)
+.c.obj:
+        bcc32 -c @&&|
+-P $(BCCOPTS) -n$(OUTPUTPATH)
+| $< 
 
 
 # --------------------------------------------
 
-dnetc:   $(COMMON_OBJS) $(NASM_OBJS) $(TASM_OBJS)
-        tlink32 /ap $(TLINKOPTS) @&&|
-c0w32.obj $(COMMON_OBJS:/=\) $(NASM_OBJS:/=\) $(TASM_OBJS:/=\),\
-$(EXENAME:/=\),,$(CLI_LIBS)
+$(EXENAME):   $(COMMON_OBJS) $(PLAT_OBJS) $(RC5_OBJS) \
+		$(DES_OBJS) $(CSC_OBJS) $(OGR_OBJS) $(NASM_OBJS)
+        ilink32 /ap $(TLINKOPTS) @&&|
+c0w32.obj $(**:/=\),$(EXENAME:/=\),,$(CLI_LIBS)
 |
 
 # --------------------------------------------
