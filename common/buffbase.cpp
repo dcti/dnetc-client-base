@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.43 2000/11/03 16:47:46 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.44 2000/11/04 16:26:04 cyp Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -593,6 +593,41 @@ unsigned long BufferReComputeUnitsToFetch(Client *client, unsigned int contest)
 /* ===================================================================== */
 /* Remote buffer fetch/flush                                             */
 
+static int __get_remote_filename(Client *client, int project, int use_out,
+                                 char *buffer, unsigned int buflen)
+{
+  char suffix[10];
+  const char *localname, *defaultname;
+  unsigned int len;
+
+  if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
+    return 0;
+
+  localname = client->in_buffer_basename;
+  defaultname = BUFFER_DEFAULT_IN_BASENAME;
+  if (use_out)
+  {
+    localname = client->out_buffer_basename;
+    defaultname = BUFFER_DEFAULT_OUT_BASENAME;
+  }
+
+  if (*localname)
+    localname += GetFilenameBaseOffset(localname);
+  else
+    localname = defaultname;
+
+  strncpy( buffer, GetFullPathForFilenameAndDir( localname,
+                   client->remote_update_dir ), buflen );
+  buffer[buflen-1] = '\0';
+
+  len = strlen(buffer);
+  strcat( strcpy( suffix, EXTN_SEP ), CliGetContestNameFromID( project ));
+  strncpy( &buffer[len], suffix, buflen-len);
+  buffer[buflen-1] = '\0';
+
+  return strlen(buffer);
+}
+
 /* remote buffer loop detection: Fetch/FlushFile operation stop after
    MAX_REMOTE_BUFFER_WARNINGS (buffer size doesn't in/decrease) */
 
@@ -603,64 +638,38 @@ unsigned long BufferReComputeUnitsToFetch(Client *client, unsigned int contest)
 long BufferFetchFile( Client *client, int break_pending, 
                       const char *loaderflags_map )
 {
-  unsigned long donetrans_total_wu = 0, donetrans_total_pkts = 0;
-  char basename[sizeof(client->remote_update_dir)  +
-                sizeof(client->in_buffer_basename) + 10 ];
-  unsigned int contest;
-  int failed = 0;
-
-  // quit if we aren't configured to do remote buffer updates
-  if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
-    return 0;
-
-  // Generate the full path of the remote buffer.
-  if (client->in_buffer_basename[0] == '\0')
-  {
-    strcpy( basename,
-            GetFullPathForFilenameAndDir( BUFFER_DEFAULT_IN_BASENAME,
-                                          client->remote_update_dir ));
-  }
-  else
-  {
-     strcpy( basename,
-             GetFullPathForFilenameAndDir(
-               &(client->in_buffer_basename[
-                        GetFilenameBaseOffset(client->in_buffer_basename)]),
-             client->remote_update_dir ) );
-
-  }
-  basename[sizeof(basename)-1] = '\0';
-//printf("basename: %s\n",basename);
+  unsigned long totaltrans_wu = 0, totaltrans_pkts = 0;
+  unsigned int contest; int failed = 0;
 
   for (contest = 0; !failed && contest < CONTEST_COUNT; contest++)
   {
     const char *contname;
-    char remote_file[sizeof(basename)+10];
-    unsigned long totrans_wu, donetrans_pkts = 0, donetrans_wu = 0;
-    long inbuffer_count = 0, inbuffer_count_last = -1, inbuffer_count_warnings = 0;
+    char remote_file[sizeof(client->remote_update_dir)  +
+                     sizeof(client->in_buffer_basename) + 10 ];
+    unsigned long lefttotrans_su, projtrans_pkts = 0, projtrans_su = 0;
+    long inbuffer_count = 0, inbuffer_count_last = -1;
+    long inbuffer_count_warnings = 0;
 
     if (!break_pending && CheckExitRequestTriggerNoIO())
       break;
-
     if (loaderflags_map[contest] != 0)
       continue; /* Skip to next contest if this one is closed or disabled. */
     contname = CliGetContestNameFromID(contest);
     if (!contname)
       continue;
+    if (!__get_remote_filename(client, contest, 0, remote_file, sizeof(remote_file)))
+      continue;    
 
-    strncpy( remote_file, BufferGetDefaultFilename(contest,1,basename), sizeof(remote_file));
-    remote_file[sizeof(remote_file)-1] = '\0';
-
-    totrans_wu = 1;
-    while (totrans_wu > 0 )
+    lefttotrans_su = 1;
+    while (lefttotrans_su > 0 )
     {
       if (!break_pending && CheckExitRequestTriggerNoIO())
         break;
 
       /* update the count to fetch - NEVER do this outside the loop */
-      totrans_wu = BufferReComputeUnitsToFetch( client, contest);
+      lefttotrans_su = BufferReComputeUnitsToFetch( client, contest);
 
-      if (totrans_wu > 0)
+      if (lefttotrans_su > 0)
       {
         WorkRecord wrdata;
         unsigned long remaining;
@@ -671,7 +680,7 @@ long BufferFetchFile( Client *client, int break_pending,
         #endif
         if ( BufferGetFileRecordNoOpt( remote_file, &wrdata, &remaining ) != 0 )
         {
-          //totrans_wu = 0; /* move to next contest on file error */
+          //lefttotrans_su = 0; /* move to next contest on file error */
           break; /* move to next contest - error msg has been printed */
           /* if file doesn't exist, no error will be printed. move on as well. */
         }
@@ -683,7 +692,7 @@ long BufferFetchFile( Client *client, int break_pending,
           LogScreen("Diskhit: BufferPutFileRecord() <- BufferFetchFile()\n");
           #endif
           BufferPutFileRecord( remote_file, &wrdata, NULL );
-          //totrans_wu = 0; /* move to next contest on file error */
+          //lefttotrans_su = 0; /* move to next contest on file error */
           break; /* move to next contest - error msg has been printed */
         }
         else if ((inbuffer_count = PutBufferRecord( client, &wrdata )) < 0) /* can't save here? */
@@ -693,14 +702,14 @@ long BufferFetchFile( Client *client, int break_pending,
           #endif
           BufferPutFileRecord( remote_file, &wrdata, NULL );
           failed = -1; /* stop further local buffer I/O */
-          //totrans_wu = 0; /* move to next contest on file error */
+          //lefttotrans_su = 0; /* move to next contest on file error */
           break; /* move to next contest - error msg has been printed */
         }
         else
         {
           unsigned int swucount = 0;
 
-          if (donetrans_pkts > 0 && inbuffer_count_last >= inbuffer_count)
+          if (projtrans_pkts > 0 && inbuffer_count_last >= inbuffer_count)
           {
             // check, whether in-buffer gets larger
             // multiple clients fetching blocks from the in-buffer while fetching
@@ -720,61 +729,70 @@ long BufferFetchFile( Client *client, int break_pending,
           inbuffer_count_last = inbuffer_count;
 
           BufferGetRecordInfo( &wrdata, 0, &swucount );
-          donetrans_pkts++;
-          donetrans_wu += swucount;
+          projtrans_pkts++;
+          projtrans_su += swucount;
 
-          if (donetrans_pkts == 1) /* first pass? */
+          if (projtrans_pkts == 1) /* first pass? */
             ClientEventSyncPost( CLIEVENT_BUFFER_FETCHBEGIN, 0 );
 
+          if (swucount == 0) /* project doesn't support statsunits on unfinished work */
+            swucount = 100; /* 1.00 stats units per packet */    
           if (remaining == 0) /* if no more available, then we've done 100% */
-            totrans_wu = 0;
-          else if (swucount > totrans_wu) /* done >= 100%? */
-            totrans_wu = 0; /* then the # we wanted is the # we got */
-          else if (swucount != 0) /* contest can do count? */
-            totrans_wu -= swucount; /* how many to get for the next while() */
+            lefttotrans_su = 0;
+          else if (swucount > lefttotrans_su) /* done >= 100%? */
+            lefttotrans_su = 0; /* then the # we wanted is the # we got */
+          else
+            lefttotrans_su -= swucount; /* how many to get for the next while() */
         }  /* if BufferGetRecord/BufferPutRecord */
-      }  /* if if (totrans_wu > 0) */
+      }  /* if if (lefttotrans_su > 0) */
 
-      if (donetrans_pkts)
+      if (projtrans_pkts)
       {
-        unsigned long totrans, donesofar = donetrans_pkts;
-        unsigned int percent;
-        const char *unittype = "packet";
-        if (donetrans_wu)
+        unsigned long percent, totrans = 0, donesofar = 0;
+        const char *unittype = "";
+
+        if (projtrans_su) /* project can do stats units for incomplete work */
         {
-          donesofar = donetrans_wu/100;
+          donesofar = projtrans_su/100; /* discard fraction */
+          totrans = (projtrans_su + lefttotrans_su)/100; /* discard fractions */
           unittype = "stats unit";
         }
-        totrans = (donesofar + (unsigned long)(totrans_wu));
+        else /* project can't do stats units on incomplete work */
+        {
+          donesofar = projtrans_pkts;
+          totrans = projtrans_pkts + (lefttotrans_su/100); /*1.00 sus per pkt*/
+          unittype = "packet";
+        }
         percent = ((donesofar*10000)/totrans);
-        LogScreen( "\rRetrieved %s %s %lu of %lu (%u.%02u%% transferred) ",
-                    contname, unittype, donesofar, totrans, percent/100, percent%100 );
-      }
-    }  /* while ( totrans_wu > 0  ) */
 
-    if (donetrans_pkts)
+        LogScreen( "\r%s: Retrieved %s %lu of %lu (%u.%02u%%) ",
+            contname, unittype, donesofar, totrans, percent/100, percent%100 );
+      }
+    }  /* while ( lefttotrans_su > 0  ) */
+
+    if (projtrans_pkts)
     {
       char scratch[64];
-      donetrans_total_wu   += donetrans_wu;
-      donetrans_total_pkts += donetrans_pkts;
+      totaltrans_wu   += projtrans_su;
+      totaltrans_pkts += projtrans_pkts;
 
       scratch[0] = '\0';
-      if (donetrans_wu)
+      if (projtrans_su)
       {
         sprintf(scratch, "(%lu.%02lu stats units) ",
-                         donetrans_wu/100,donetrans_wu%100);
+                         projtrans_su/100,projtrans_su%100);
       }
       LogScreen("\n");
       LogTo(LOGTO_FILE|LOGTO_MAIL,
             "Retrieved %lu %s packet%s %sfrom file.\n",
-                  donetrans_pkts, contname, 
-                  ((donetrans_pkts==1)?(""):("s")), scratch );
+                  projtrans_pkts, contname, 
+                  ((projtrans_pkts==1)?(""):("s")), scratch );
     }
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
 
   if (failed)
-    return -((long)(donetrans_total_pkts+1));
-  return donetrans_total_pkts;
+    return -((long)(totaltrans_pkts+1));
+  return totaltrans_pkts;
 }
 
 /* --------------------------------------------------------------------- */
@@ -782,38 +800,16 @@ long BufferFetchFile( Client *client, int break_pending,
 long BufferFlushFile( Client *client, int break_pending,
                       const char *loadermap_flags )
 {
-  long totaltrans_pkts = 0, totaltrans_wu = 0;
-  char basename[sizeof(client->remote_update_dir)  +
-                sizeof(client->out_buffer_basename) + 10 ];
+  long totaltrans_pkts = 0, totaltrans_su = 0;
   unsigned int contest;
   int failed = 0;
-
-  // If we aren't configured to do remote buffer updating, then quit.
-  if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
-    return 0;
-
-  // Generate the full path of the remote buffer.
-  if (client->out_buffer_basename[0] == '\0')
-  {
-    strcpy( basename,
-            GetFullPathForFilenameAndDir( BUFFER_DEFAULT_OUT_BASENAME,
-                                          client->remote_update_dir ));
-  }
-  else
-  {
-    strcpy( basename,
-           GetFullPathForFilenameAndDir(
-             &(client->out_buffer_basename[
-                        GetFilenameBaseOffset(client->out_buffer_basename)]),
-             client->remote_update_dir ) );
-  }
-  basename[sizeof(basename)-1] = '\0';
 
   for (contest = 0; !failed && contest < CONTEST_COUNT; contest++)
   {
     const char *contname;
-    char remote_file[sizeof(basename)+10];
-    unsigned long projtrans_wu = 0, projtrans_pkts = 0;
+    char remote_file[sizeof(client->remote_update_dir)  +
+                     sizeof(client->out_buffer_basename) + 10 ];
+    unsigned long projtrans_su = 0, projtrans_pkts = 0;
     WorkRecord wrdata;
     long totrans_pkts, totrans_pkts_last, totrans_pkts_warnings;
 
@@ -824,9 +820,8 @@ long BufferFlushFile( Client *client, int break_pending,
     contname = CliGetContestNameFromID(contest);
     if (!contname)
       continue;
-
-    strncpy( remote_file, BufferGetDefaultFilename(contest,1,basename), sizeof(remote_file));
-    remote_file[sizeof(remote_file)-1] = '\0';
+    if (!__get_remote_filename(client, contest, 1, remote_file, sizeof(remote_file)))
+      continue;    
 
     totrans_pkts = 1;
     totrans_pkts_last = -1;
@@ -876,19 +871,13 @@ long BufferFlushFile( Client *client, int break_pending,
       BufferGetRecordInfo( &wrdata, 0, &swucount );
 
       projtrans_pkts++;
-      projtrans_wu += swucount;
+      projtrans_su += swucount;
 
-      if (totrans_pkts == 0) /* no more to do, can show count in stats units */
-      {
-        LogScreen( "\rSent %s stats unit %lu.%02lu of %lu.%02lu (100.00%% transferred)   ",
-            contname, projtrans_wu/100, projtrans_wu%100,
-                      projtrans_wu/100, projtrans_wu%100 );
-      }
-      else /* count in packets */
-      {
+      if (totrans_pkts != 0) /* only print (packets) if more to do */
+      {                      /* else print (stats units) outside loop */
         unsigned long totrans = (projtrans_pkts + (unsigned long)(totrans_pkts));
         unsigned int percent = ((projtrans_pkts*10000)/totrans);
-        LogScreen( "\rSent %s packet %lu of %lu (%u.%02u%% transferred)     ",
+        LogScreen( "\r%s: Sent packet %lu of %lu (%u.%02u%% transferred) ",
           contname, projtrans_pkts, totrans,  percent/100, percent%100 );
       }
     } /* while (totrans_pkts >=0 ) */
@@ -896,15 +885,13 @@ long BufferFlushFile( Client *client, int break_pending,
     if (projtrans_pkts != 0) /* transferred anything? */
     {
       totaltrans_pkts += projtrans_pkts;
-      totaltrans_wu += projtrans_wu;
 
-      LogScreen("\n");
-      LogTo(LOGTO_FILE|LOGTO_MAIL,
-            "Transferred %lu.%02lu %s stats unit%s (%lu packet%s) to file.\n",
-                totaltrans_wu/100, totaltrans_wu%100, contname, 
-                ((totaltrans_wu==100)?(""):("s")),
-                totaltrans_pkts, ((totaltrans_pkts==1)?(""):("s")) );
-    }
+      LogScreen("\r");
+      Log("%s: Transferred %lu packet%s (%lu.%02lu stats units) to file.\n",
+            contname, projtrans_pkts,
+            ((projtrans_pkts==1)?(""):("s")),
+            projtrans_su/100, projtrans_su%100 );
+    }        
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
 
   if (failed)
