@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.3 2002/10/11 00:02:27 andreasb Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.3.2.1 2002/11/25 16:48:39 stream Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -1983,8 +1983,8 @@ void *netconn_open( const char * _servname, int _servport,
               netstate->servername_buffer[buf_used+namelen] = (char)tolower(*p);
               namelen++;
             }
-            p++;
           } /* if (!badname) */
+          p++;
         } /* while (*p && !(*p == ',' || *p == ';' || isspace(*p))) */
         netstate->servername_buffer[buf_used+namelen] = '\0';
         if (!badname && namelen)
