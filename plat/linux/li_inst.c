@@ -6,7 +6,7 @@
  * -install and -uninstall support for Linux (maybe all SysV style init?)
  *
  * Created Aug 23 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: li_inst.c,v 1.2 2002/09/02 00:35:50 andreasb Exp $
+ * $Id: li_inst.c,v 1.2.4.1 2003/02/08 11:26:12 andreasb Exp $
  *
 */
 #define __NO_STRING_INLINES /* work around bugs in glibc bits/string2.h */
@@ -132,11 +132,11 @@ int linux_uninstall(const char *basename, int quietly)
 
 
 #ifndef MAXPATHLEN
-  #ifdef PATH_MAX
-    #define MAXPATHLEN PATH_MAX+1
-  #else
-    #define MAXPATHLEN 1024+1
-  #endif     
+#  ifdef PATH_MAX
+#    define MAXPATHLEN PATH_MAX+1
+#  else
+#    define MAXPATHLEN 1024+1
+#  endif     
 #endif
 
 static int determine_appname(char *buffer,unsigned int bufsize)
@@ -267,10 +267,10 @@ static int create_init_d_script(const char *basename,const char *script_fullpath
   "\n"
   "test -f $CLIENT || exit 0\n"
   "\n"
-  #if 0
+#if 0
   "#set -e\n"
   "\n"
-  #endif
+#endif
   "case \"$1\" in\n"
   "\t*start)\n"
   "\t\t$CLIENT -quiet -shutdown  # only allow one instance to run.\n"

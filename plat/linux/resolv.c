@@ -13,7 +13,7 @@
  * has 'host', and that too can be bypassed (described below).
  *
  * Created Aug 2 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: resolv.c,v 1.2 2002/09/02 00:35:50 andreasb Exp $
+ * $Id: resolv.c,v 1.2.4.1 2003/02/08 11:26:12 andreasb Exp $
  *
  * The functions exported from here will first check if a bypass 
  * (described below) has been provided. 
@@ -256,9 +256,9 @@ static struct gen_hostent_data *__get_local_hostent_data(
 #if defined(SHOW_THREAD_UNSAFE_FIXMES) && defined(_REENTRANT) && \
       defined(NON_REENTRANT_FUNCTIONS_USE_TLS)
 #   undef NEED_STATIC_LOCAL_HOSTENT_DATA
-#   error Code needs to be adjusted for use with threads such that
-#   error calls to non-reentrant versions of gethostbyX use
-#   error thread local storage as opposed to static storage. 
+    #error Code needs to be adjusted for use with threads such that
+    #error calls to non-reentrant versions of gethostbyX use
+    #error thread local storage as opposed to static storage. 
     /* On failure to allocate/obtain a tls pointer, return NULL */
     errno = ENOMEM;
     return (struct gen_hostent_data *)0;
@@ -437,7 +437,7 @@ static struct resolv_conf *get_resolv_conf_data(void)
   static int need_init = 1;
 
 #if defined(SHOW_THREAD_UNSAFE_FIXMES) && defined(_REENTRANT)
-#  error FIXME: 'need_init' needs spinlock/mutex protection
+  #error FIXME: 'need_init' needs spinlock/mutex protection
 #endif
   if (need_init)
   {
@@ -1416,8 +1416,8 @@ static int do_res_xxx( struct gen_hostent_data *_r_buffer,
   TRACE_OUT(("doing do_res_weaks()\n"));
   if (reverse)
   {
-#   pragma weak _nss_dns_gethostbyaddr_r
-#   pragma weak _gethostbydnsaddr
+    #pragma weak _nss_dns_gethostbyaddr_r
+    #pragma weak _gethostbydnsaddr
     if (_nss_dns_gethostbyaddr_r) /* GLIBC - is this correct? */
     {
       TRACE_OUT(("doing _nss_dns_gethostbyaddr_r()\n"));
@@ -1438,8 +1438,8 @@ static int do_res_xxx( struct gen_hostent_data *_r_buffer,
   }
   else /* if (!reverse) */
   {
-#   pragma weak _nss_dns_gethostbyname2_r
-#   pragma weak _gethostbydnsname
+    #pragma weak _nss_dns_gethostbyname2_r
+    #pragma weak _gethostbydnsname
     if (_nss_dns_gethostbyname2_r) /* GLIBC - is this correct? */
     {
       TRACE_OUT(("doing _nss_dns_gethostbyname2_r()\n"));
@@ -1636,14 +1636,14 @@ static struct hostent *__gethostbyXXYY__( int reverse,
 #  if defined(__cplusplus)
 #    define __GETHOSTBY(x,y,z) \
             weak_extern( x ); strong_alias( y, x ); \
-            extern "C" struct hostent * ##y ##z ; \
-            struct hostent * ##y ##z
+            extern "C" struct hostent *y z ; \
+            struct hostent *y z
      extern "C" int __gen_h_errno;
 #  else            
 #    define __GETHOSTBY(x,y,z) \
             weak_extern( x ); strong_alias( y, x ); \
-            extern struct hostent * ##y ##z ; \
-            struct hostent * ##y ##z
+            extern struct hostent *y z ; \
+            struct hostent *y z
 #  endif            
    int __gen_h_errno;
 #  if !defined(_REENTRANT) /* otherwise h_errno is redefined to be a pointer */
@@ -1652,15 +1652,15 @@ static struct hostent *__gethostbyXXYY__( int reverse,
 #else /* !defined(__GNUC__) */
 #  if defined(__cplusplus)
 #     define __GETHOSTBY(x,y,z) \
-             extern "C" struct hostent * ##x ##z ; \
-             struct hostent * ##x ##z
+             extern "C" struct hostent * x z ; \
+             struct hostent * x z
 #  if !defined(h_errno)             
    extern "C" int h_errno;  
 #  endif
 #  else            
 #     define __GETHOSTBY(x,y,z) \
-            extern struct hostent * ##x ##z ; \
-            struct hostent * ##x ##z
+            extern struct hostent * x z ; \
+            struct hostent * x z
 #  endif            
 #  if !defined(h_errno) /* redefined for thread safe code */
    int h_errno;
@@ -1668,9 +1668,9 @@ static struct hostent *__gethostbyXXYY__( int reverse,
 #endif /* defined(__GNUC__) */ 
 
 #ifdef CMPTEST /* if 'CMPTEST' is defined, call the functions 'test_*' */
-#define _GETHOSTBY(x,z) __GETHOSTBY(test_gethostby##x , __gen_gethostby##x, ##z )
+#define _GETHOSTBY(x,z) __GETHOSTBY(test_gethostby##x , __gen_gethostby##x, z )
 #else
-#define _GETHOSTBY(x,z) __GETHOSTBY(gethostby##x , __gen_gethostby##x, ##z )
+#define _GETHOSTBY(x,z) __GETHOSTBY(gethostby##x , __gen_gethostby##x, z )
 #endif
 
 /* ---------------------------------------------------------------------- */
