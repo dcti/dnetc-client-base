@@ -1,6 +1,6 @@
 /* Created by Cyrus Patel <cyp@fb14.uni-mainz.de> 
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.14 2000/01/03 02:59:46 jlawson Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.15 2000/01/08 23:23:22 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc

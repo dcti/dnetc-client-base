@@ -1,5 +1,5 @@
 /* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
@@ -10,8 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.41 2000/01/08 12:57:21 snake Exp $"; }
-
+return "@(#)$Id: selcore.cpp,v 1.47.2.42 2000/01/08 23:23:30 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -550,18 +549,12 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         ; //don't know yet
       else 
       {
-       /*
         long det = (detected_type & 0x00ffffffL);
         if (det == 1)       //PPC 601
           cindex = 2;       // G1: 16k L1 cache - 1 key inline
         else if (det == 12) //PPC 7400
           cindex = 1;       // G4: 64k L1 cache - 6 bit called
         //don't know about the rest
-
-        Uh, whats this? I disable this for now and thus let the client
-        do a mini bench at startup - a wrong core was selected for G4 CPUs
-        
-        */
       }
       selcorestatics.corenum[CSC] = cindex;
     }
@@ -681,10 +674,10 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
           detected_type == 0x7500 || /* ARM 7500 */ 
           detected_type == 0x7500FE) /* ARM 7500FE */
         cindex = 0;
-      else if (detected_type == 0x200) /* ARM 2, 250 */
-        cindex = 1;
       else if (detected_type == 0x810 || /* ARM 810 */
-	       detected_type == 0xA10)    /* StrongARM 110 */
+          detected_type == 0xA10)    /* StrongARM 110 */
+        cindex = 1;
+      else if (detected_type == 0x200) /* ARM 2, 250 */
         cindex = 2;
       selcorestatics.corenum[RC5] = cindex;
     }
@@ -715,42 +708,31 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     selcorestatics.corenum[contestid] = 0;
     if (corecount > 0)
     {
-      int whichcrunch;
-      int saidmsg = 0, fastestcrunch = -1;
+      int whichcrunch, saidmsg = 0, fastestcrunch = -1;
       unsigned long fasttime = 0;
-      const u32 benchsize = 100000;
-      Problem *problem = new Problem();
 
       for (whichcrunch = 0; whichcrunch < corecount; whichcrunch++)
       {
-        ContestWork contestwork;
-        unsigned long elapsed;
+        long rate;
         selcorestatics.corenum[contestid] = whichcrunch;
-        memset( (void *)&contestwork, 0, sizeof(contestwork));
-        contestwork.crypto.iterations.lo = benchsize;
-        if (problem->LoadState( &contestwork, contestid, 
-                                benchsize, 0, 0, 0, 0 ) == 0)
+        if (!saidmsg)
         {
-          if (!saidmsg)
+          LogScreen("%s: Running micro-bench to select fastest core...\n", 
+                    contname);
+          saidmsg = 1;
+        }                                
+        if ((rate = TBenchmark( contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK )) > 0)
+        {
+#ifdef DEBUG
+          LogScreen("%s Core %d: %d keys/sec\n", contname,whichcrunch,rate);
+#endif
+          if (fastestcrunch < 0 || ((unsigned long)rate) > fasttime)
           {
-            LogScreen("%s: Running micro-bench to select fastest core...\n", 
-                      contname);
-            saidmsg = 1;
-          }                                
-          problem->Run();
-   
-          elapsed = (((unsigned long)problem->runtime_sec) * 1000000UL)+
-                    (((unsigned long)problem->runtime_usec));
-          //printf("%s Core %d: %lu usec\n", contname,whichcrunch,elapsed);
-    
-          if (fastestcrunch < 0 || elapsed < fasttime)
-          {
+            fasttime = rate;
             fastestcrunch = whichcrunch; 
-            fasttime = elapsed;
           }
         }
       }
-      delete problem;
 
       if (fastestcrunch < 0) /* all failed */
         fastestcrunch = 0; /* don't bench again */
@@ -826,10 +808,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 iterations );
   #endif
 #elif (CLIENT_CPU == CPU_68K)
-  #if (CLIENT_OS == OS_MACOS)
-    // rc5/ansi/rc5ansi_2-rg.cpp
-    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-  #elif(CLIENT_OS == OS_AMIGAOS)
+  #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)
     // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
     extern "C" u32 rc5_unit_func_000_030( RC5UnitWork *, u32 );
     extern "C" u32 rc5_unit_func_040_060( RC5UnitWork *, u32 );
@@ -1058,17 +1037,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #elif (CLIENT_CPU == CPU_68K)
     {
-      #if (CLIENT_OS == OS_MACOS) /* Take 68K Macs back to ANSI core *for now*
-                                     due to the fact that the old assembly core 
-                                     won't compile under Codewarrior */
-      {
-        // rc5/ansi/rc5ansi_2-rg.cpp
-        //xtern u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32);
-        unit_func.rc5 = rc5_unit_func_ansi_2_rg;
-        pipeline_count = 2;
-      }
-
-      #elif (CLIENT_OS == OS_AMIGAOS)
+      #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)
       {
         // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
         //xtern "C" u32 rc5_unit_func_000_030( RC5UnitWork *, u32 );

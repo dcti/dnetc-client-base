@@ -1,7 +1,8 @@
 /*
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * -------------------------------------------------------------------
  * The Network constructor and destructor methods are encapsulated in
@@ -12,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.26.2.4 2000/01/03 02:59:52 jlawson Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.26.2.5 2000/01/08 23:23:26 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"

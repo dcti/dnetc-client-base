@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __PROBFILL_H__
-#define __PROBFILL_H__ "@(#)$Id: probfill.h,v 1.8.2.5 2000/01/02 03:23:08 cyp Exp $"
+#define __PROBFILL_H__ "@(#)$Id: probfill.h,v 1.8.2.6 2000/01/08 23:23:28 cyp Exp $"
 
 #define PROBFILL_ANYCHANGED  1
 #define PROBFILL_GETBUFFERRS 2

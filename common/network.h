@@ -1,12 +1,12 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.6 2000/01/07 10:29:19 jlawson Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.7 2000/01/08 23:23:27 cyp Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"

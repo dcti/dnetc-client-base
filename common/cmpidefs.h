@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
 */ 
 
 #ifndef __CMPIDEFS_H__
-#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.22.2.3 2000/01/03 02:59:49 jlawson Exp $"
+#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.22.2.4 2000/01/08 23:23:22 cyp Exp $"
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #if defined(__TURBOC__)

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.47 2000/01/01 21:32:27 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.48 2000/01/08 23:23:28 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -360,7 +360,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
         { 
           was_reset = 1;
           contestwork.ogr.workstub.worklength = contestwork.ogr.workstub.stub.length;
-          contestwork.ogr.nodes.hi = contestwork.work.ogr.nodes.lo = 0;
+          contestwork.ogr.nodes.hi = contestwork.ogr.nodes.lo = 0;
         }  
       }
       extern CoreDispatchTable *ogr_get_dispatch_table();

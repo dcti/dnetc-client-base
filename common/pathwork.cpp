@@ -1,7 +1,9 @@
 /*
- * Copyright distributed.net 1997 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de> to be able to throw
+ * away some very ugly hackery in buffer open code. I apologize for Bovine.
  *
  * This module contains functions for setting the "working directory"
  * and pathifying a filename that has no dirspec. Functions need to be
@@ -21,7 +23,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.15.2.2 2000/01/03 02:59:54 jlawson Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.15.2.3 2000/01/08 23:23:28 cyp Exp $"; }
 
 #include <stdio.h>
 #include <string.h>

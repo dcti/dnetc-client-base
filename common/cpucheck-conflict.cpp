@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.28 2000/01/07 04:01:15 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.29 2000/01/08 23:23:23 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files

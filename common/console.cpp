@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.24 2000/01/04 16:43:28 dakidd Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.25 2000/01/08 23:23:22 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -325,9 +325,6 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       #elif (CLIENT_OS == OS_MACOS)
       {
         ch = getch();
-        #if (CLIENT_CPU == CPU_68K)
-        ch = (ch & 0x000000ff);
-        #endif
         if (ch == 3) ch = 13; /* In MacOS its common that "enter" equals "return". */
       }
       #else

@@ -7,7 +7,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.32.2.4 2000/01/05 02:19:48 cyp Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.32.2.5 2000/01/08 23:23:25 cyp Exp $"; }
 
 #include "baseincs.h"
 #include "network.h"
