@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.54 2000/09/17 11:46:30 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.55 2000/10/23 17:25:24 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -834,6 +834,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0570,  0x105, "K6"       },
           {  0x0580,  0x105, "K6-2"     },
           {  0x0590,  0x105, "K6-3"     },
+          {  0x05D0,  0x105, "K6-2+"    },
           {  0x0610,  0x109, "K7"       }, 
           {  0x0620,  0x109, "K7-2"     },
           {  0x0630,  0x109, "K7-3" }, //spitfire, socket+128K on-die 
