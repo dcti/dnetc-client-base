@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.cpp,v $
+// Revision 1.23  1999/02/08 17:11:39  cyp
+// re-added errno.h for linux
+//
 // Revision 1.22  1999/02/07 16:02:38  cyp
 // gericificied variable/function names; fixed blatant bugs.
 //
@@ -59,7 +62,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.22 1999/02/07 16:02:38 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.23 1999/02/08 17:11:39 cyp Exp $"; }
 #endif
 
 /* --------------------------------- */
@@ -126,7 +129,7 @@ int Lurk::CheckForStatusChange(void) //returns -1 if connection dropped
 //#include <linux/if_slip.h>
 //#include <linux/if.h>
 #include <stdio.h>
-//#include <errno.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
