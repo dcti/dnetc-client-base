@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.103 2000/01/22 22:54:09 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.104 2000/01/22 23:46:01 lyndon Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -205,9 +205,9 @@ TARGET_TARBALL_COMMENT="" # special comments for tarball.readme (if needed)
 TARGET_ARCTYPE="tgz"  # or "zip"
 
 #
-# warn as much as we can for maximum portability
+# GCC: warn as much as we can for maximum portability
 #
-OPTS_WARN="-Wall -Wtraditional -Wpointer-arith -Wcast-align \
+OPTS_GCC_WARN="-Wall -Wtraditional -Wpointer-arith -Wcast-align \
 	  -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes \
 	  -Wconversion -Winline -Waggregate-return -Wcast-qual \
 	  -Woverloaded-virtual -Wnested-externs"
@@ -218,7 +218,7 @@ OPTS_GCC="-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 	  -fexpensive-optimizations -fomit-frame-pointer \
 	  -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
 	  -funroll-loops -fno-inline-functions -fno-handle-exceptions \
-	  $OPTS_WARN"
+	  ${OPTS_GCC_WARN}"
 OPTS_GCC272="-fomit-frame-pointer -fno-inline-functions \
 	     -fno-rtti \
 	     -Wall -Wtraditional -Wpointer-arith -Wcast-align \
@@ -226,10 +226,10 @@ OPTS_GCC272="-fomit-frame-pointer -fno-inline-functions \
 	     -Wconversion  -Winline -Waggregate-return -Wcast-qual \
 	     -Woverloaded-virtual -Wnested-externs"
 OPTS_GCC295="-fomit-frame-pointer -fno-inline-functions \
-	     -fno-exceptions -fno-rtti $OPTS_WARN"
+	     -fno-exceptions -fno-rtti ${OPTS_GCC_WARN}"
 OPTS_XLC3="-O3 -qansialias -qlibansi"
-OPTS_EGCS="-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer $OPTS_WARN"
-#OPTS_EGCS="-O2 -fno-exceptions -fomit-frame-pointer $OPTS_WARN"
+OPTS_EGCS="-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer ${OPTS_GCC_WARN}"
+#OPTS_EGCS="-O2 -fno-exceptions -fomit-frame-pointer ${OPTS_GCC_WARN}"
 OPTS_MWCC="-O7 -lang cplus"
 
 #
@@ -267,23 +267,22 @@ OPTS_GCC_SUN68K="$OPTS_GCC -O2 -DASM_68K -D_SUN68K_"
 #-- MIPS
 
 ## Irix with MIPSpro compilers
-
-OPTS_CC_MIPSPRO="-O3 -INLINE:all -LNO:opt=1 -IPA -OPT:Olimit=0 -xansi -DMIPSpro -DASM_MIPS"
+OPTS_CC_MIPSPRO="-O3 -INLINE:all -LNO:opt=1 -IPA -OPT:Olimit=0 -xansi -DMIPSpro"
 OPTS_LD_MIPSPRO="-IPA"
 OPTS_LD_MIPSPRO_64="${OPTS_LD_MIPSPRO} -64"
 
 # Common across all MIPSpro compiles:
-OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD -DKWAN -DMEGGS"
-OPTS_MIPSPRO_SRCS="rc5/ansi/rc5ansi_2-rg.cpp ${MEGGS_SLICE_SRCS2} ${CSC_ANSI_SRCS}"
+OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DMULTITHREAD -DHAVE_OGR_CORES"
+OPTS_MIPSPRO_SRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 OPTS_MIPSPRO_DOCS="docs/readme._ix docs/readme.irix"
 
 # Common to a specific ABI:
-OPTS_MIPSPRO_CCFLAGS_32="${OPTS_MIPSPRO_CCFLAGS} -n32 "
-OPTS_MIPSPRO_CCFLAGS_64="${OPTS_MIPSPRO_CCFLAGS}  -64 "
+OPTS_MIPSPRO_CCFLAGS_32="${OPTS_MIPSPRO_CCFLAGS} -n32"
+OPTS_MIPSPRO_CCFLAGS_64="${OPTS_MIPSPRO_CCFLAGS}  -64"
 
 ## GNU
 
-OPTS_GCC_MIPS="$OPTS_GCC -O6 -DASM_MIPS"
+OPTS_GCC_MIPS="$OPTS_GCC295 -O6 -DASM_MIPS"
 OPTS_EGCS_MIPS="$OPTS_EGCS -Os -DASM_MIPS" 
 
 #-- Alpha
@@ -397,7 +396,7 @@ OPTS_DES_ULTRA_ASM="-DASM_SPARC -DIN_DCTI_CLIENT \
 		    -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL \
 		    -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc \
 		    -mtune=ultrasparc -fforce-mem -fstrict-aliasing\
-		    $OPTS_WARN \
+		    ${OPTS_GCC_WARN} \
 		    -mv8plus -mvis -mepilogue -Wa,-xarch=v8plusa -mflat \
 		    -Os -fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
 
@@ -682,8 +681,7 @@ case "$1" in
 
     *mips-egcs-crunch-64)     #needs very recent egcs
 	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mabi=64 \
-			-DMULTITHREAD \
-			 -DKWAN -DMEGGS"
+			-DMULTITHREAD"
 	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
 	TARGET_LDFLAGS="-mabi=64"
@@ -717,12 +715,10 @@ case "$1" in
     *mips-gcc)	# [lyndon] Irix 6, gcc, threaded (assumes n32 ABI)
         DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc"
-        TARGET_CCFLAGS="$OPTS_GCC_MIPS   \
-                        -DHAVE_DES_CORES -DHAVE_CSC_CORES \
-			-DMULTITHREAD \
-                         -DKWAN -DMEGGS"
-        TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2 \
-                        $CSC_ANSI_SRCS"
+        TARGET_CCFLAGS="$OPTS_GCC_MIPS \
+                        -DHAVE_OGR_CORES \
+			-DMULTITHREAD"
+        TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp ${OGR_ANSI_CORES}\
         TARGET_LIBS="-lpthread"
 	TARGET_STRIP="strip"
 	TARGET_TARBALL="irix6-mips-n32"
@@ -1230,6 +1226,29 @@ case "$1" in
 	;;
 
 ###### Intel X86 FreeBSD
+
+
+    *x86-freebsd)             # [dbaker] aout
+	TARGET_AS="gcc -c"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -DLURK"
+			#-DHAVE_CSC_CORES -DMMX_CSC" #-DHAVE_OGR_CORES
+                        # -DHAVE_DES_CORES $OPTS_DES_MMX 
+        TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="common/lurk.cpp" #$OGR_ANSI_SRCS 
+                        #$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
+	TARGET_ADDASMS="platforms/x86ident.S"
+                        #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
+			#des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
+	TARGET_LIBS="-lc_r"
+	TARGET_NASM_FMT="aoutb"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"  #$CSC_ASM_SRCS" $NASM_DESMMX_SRCS 
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="freebsd-x86-aout"
+        ;;
+
+    # as I don't know what the above target should be for, I added the
+    # following FreeBSD 2 target for a.out. The above target can't be used
+    # for that, as it assumes FreeBSD 3.x stuff.
 
     *x86-freebsd-aout)             # FreeBSD 2.x experimental, snake 
 	TARGET_AS="gcc -c"
