@@ -6,7 +6,9 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.57 2000/12/14 19:44:11 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.58 2001/01/08 23:02:04 cyp Exp $"; }
+
+//#define TRACE
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -24,6 +26,7 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.57 2000/12/14 19:44:11 cyp Exp $"; }
 #include "buffbase.h"  // GetBufferCount,Get|PutBufferRecord,etc
 #include "modereq.h"   // ModeReqSet() and MODEREQ_[FETCH|FLUSH]
 #include "clievent.h"  // ClientEventSyncPost( int event_id, long parm )
+#include "util.h"      // trace
 #include "probfill.h"  // ourselves.
 
 // =======================================================================
@@ -615,7 +618,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   *load_needed = 0;
   if (bufcount >= 0) /* load from file suceeded */
     *load_needed = 0;
-  else if (client->rc564closed)
+  else if (client->rc564closed || client->blockcount < 0)
     *load_needed = NOLOAD_NORANDOM; /* -1 */
   else if (client->nonewblocks)
     *load_needed = NOLOAD_NONEWBLOCKS;
@@ -718,9 +721,11 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 
 static int __post_summary_for_contest(unsigned int contestid)
 {
-  u32 iterhi, iterlo;
+  u32 iterhi, iterlo; int rc = -1;
   unsigned int packets, swucount;
   struct timeval ttime;
+
+  TRACE_OUT((+1,"__post_summary_for_contest(%u)\n",contestid));
 
   if (CliGetContestInfoSummaryData( contestid, &packets, &iterhi, &iterlo,
                                     &ttime, &swucount ) == 0)
@@ -728,6 +733,8 @@ static int __post_summary_for_contest(unsigned int contestid)
     if (packets)
     {
       char ratebuf[15];
+      TRACE_OUT((0,"pkts=%u, iter=%u:%u, time=%u:%u, swucount=%u\n", packets, 
+                    iterhi, iterlo, ttime.tv_sec, ttime.tv_usec, swucount ));
       Log("%s: Summary: %u packet%s (%u.%02u stats units)\n%s%c- [%s/s]\n",
           CliGetContestNameFromID(contestid), 
           packets, ((packets==1)?(""):("s")), 
@@ -736,9 +743,11 @@ static int __post_summary_for_contest(unsigned int contestid)
           ProblemComputeRate( contestid, ttime.tv_sec, ttime.tv_usec, 
                             iterhi, iterlo, 0, 0, ratebuf, sizeof(ratebuf)) );
     }                            
-    return 0;
+    rc = 0;
   }
-  return -1;
+
+  TRACE_OUT((-1,"__post_summary_for_contest()\n"));
+  return rc;
 }
 
 // --------------------------------------------------------------------
