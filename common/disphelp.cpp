@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.19 2002/03/26 00:16:12 zebe Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.20 2002/03/26 01:28:52 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -234,7 +234,7 @@ void GenerateManPage( void )
       ".sp 1\n"
       "The configuration options are fairly self-explanatory and can be run "
       "at any time by starting the client with the '-config' option. "
-      "A list of command line options is listed below. "
+      "A list of command line options is listed below.\n"
       );
 
     fprintf(manp, ".Sh OPTIONS\n"
