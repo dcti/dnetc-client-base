@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.55  1999/01/31 20:19:09  cyp
+// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
+//
 // Revision 1.54  1999/01/29 18:57:10  jlawson
 // fixed formatting.  changed some int vars to bool.
 //
@@ -266,17 +269,17 @@ class Network
 protected:
   char server_name[64];   // used only by ::Open
   s16  server_port;       // used only by ::Open
-  bool nofallback;        // used only by ::Open
+  int nofallback;        // used only by ::Open
 
   int  startmode;
-  bool autofindkeyserver; // implies 'only if hostname is a dnet keyserver'
+  int autofindkeyserver; // implies 'only if hostname is a dnet keyserver'
   int  verbose_level;     // 0 == no messages, 1 == user, 2 = diagnostic/debug
   int  iotimeout;         // use blocking calls if iotimeout is <0
 
   int  mode;              // startmode as modified at runtime
   SOCKET sock;            // socket file handle
-  bool isnonblocking;     // whether the socket could be set non-blocking
-  bool reconnected;       // set to 1 once a connect succeeds 
+  int isnonblocking;     // whether the socket could be set non-blocking
+  int reconnected;       // set to 1 once a connect succeeds 
 
   char fwall_hostname[64]; //intermediate
   int  fwall_hostport;
@@ -295,7 +298,7 @@ protected:
 
   // communications and decoding buffers
   AutoBuffer netbuffer, uubuffer;
-  bool gotuubegin, gothttpend, puthttpdone, gethttpdone;
+  int gotuubegin, gothttpend, puthttpdone, gethttpdone;
   u32 httplength;
 
   int LowLevelCreateSocket(void);
@@ -345,7 +348,7 @@ protected:
     // guess. 
  
   Network( const char *servname, int servport, 
-           bool _nofallback = true, int _iotimeout = -1, int _enctype = 0, 
+           int _nofallback = 1, int _iotimeout = -1, int _enctype = 0, 
            const char *_fwallhost = NULL, int _fwallport = 0, 
            const char *_fwalluid = NULL );
     // protected!: used by friend NetOpen() below.
@@ -353,7 +356,7 @@ protected:
 public:
 
   friend Network *NetOpen( const char *servname, int servport, 
-           bool _nofallback = true, int _iotimeout = -1, int _enctype = 0, 
+           int _nofallback = 1, int _iotimeout = -1, int _enctype = 0, 
            const char *_fwallhost = NULL, int _fwallport = 0, 
            const char *_fwalluid = NULL );
 

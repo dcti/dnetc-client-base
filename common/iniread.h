@@ -3,6 +3,9 @@
 // INI file reading/processing class for C++
 //
 // $Log: iniread.h,v $
+// Revision 1.24  1999/01/31 20:19:09  cyp
+// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
+//
 // Revision 1.23  1999/01/29 19:19:13  jlawson
 // changed some int vars to bool.
 //
@@ -138,21 +141,20 @@ public:
 
 
   // conditional tests
-  inline bool is_null(void) const
+  inline int is_null(void) const
     { return (!buffer || !buffer[0]); }
-  inline friend bool operator== (const IniString &s1, const char *s2)
+  inline friend int operator== (const IniString &s1, const char *s2)
     {
       const char *z1 = s1.c_str(); 
-      if (!z1 && !s2) return true;
-      if (!z1 || !s2) return false; 
+      if (!z1 || !s2) return (z1 == s2);
       while (*z1 && *s2 && tolower(*z1) == tolower(*s2)) { z1++; s2++; }
       return (*z1 == 0 && *s2 == 0);
     }
-  inline friend bool operator== (const IniString &s1, const IniString &s2)
+  inline friend int operator== (const IniString &s1, const IniString &s2)
     { return (s1 == s2.c_str()); }
-  inline friend bool operator!= (const IniString &s1, const IniString &s2)
+  inline friend int operator!= (const IniString &s1, const IniString &s2)
     { return !(s1 == s2); }
-  inline bool need_quotes(void) const
+  inline int need_quotes(void) const
     {return (buffer && (strchr(buffer, ' ') || strchr(buffer, ',')) &&
           *buffer != '\"' && strlen(buffer) > 1 &&
           buffer[strlen(buffer) - 1] != '\"' );}
@@ -443,7 +445,6 @@ public:
   // efficient alternate record retrieval (similar to Win32 api)
   inline int GetProfileInt(const char *Key, int DefValue)
     { return (int) getkey(Key, (long) DefValue); }
-  bool GetProfileBool(const char *Key, bool DefValue);
   inline void GetProfileStringA(const char *Key, const char *DefValue, char *buffer, int buffsize)
     {
       IniRecord *that = findfirst(Key);
@@ -482,8 +483,8 @@ public:
     { sections.Flush(); }
 
   // reading and writing
-  bool ReadIniFile(const char *Filename = NULL, const char *Section = 0);
-  bool WriteIniFile(const char *Filename = NULL);
+  int ReadIniFile(const char *Filename = NULL, const char *Section = 0);
+  int WriteIniFile(const char *Filename = NULL);
   void fwrite(FILE *out);
 
   
@@ -504,10 +505,6 @@ public:
   inline int GetProfileInt(const char *Section, const char *Key, int DefValue)
     { IniSection *section = findsection(Section);
       if (section) return section->GetProfileInt(Key, DefValue);
-      else return DefValue; }
-  inline bool GetProfileBool(const char *Section, const char *Key, bool DefValue)
-    { IniSection *section = findsection(Section);
-      if (section) return section->GetProfileBool(Key, DefValue);
       else return DefValue; }
   inline void GetProfileStringA(const char *Section, const char *Key, const char *DefValue, char *buffer, int buffsize)
     { IniSection *section = findsection(Section);

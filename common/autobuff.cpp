@@ -3,27 +3,21 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: autobuff.cpp,v $
+// Revision 1.11  1999/01/31 20:19:07  cyp
+// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
+//
 // Revision 1.10  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //
 // Revision 1.9  1998/07/08 23:30:33  remi
 // Cleared a GCC warning.
-// Tweaked $Id: autobuff.cpp,v 1.10 1999/01/01 02:45:14 cramer Exp $.
+// Tweaked $Id: autobuff.cpp,v 1.11 1999/01/31 20:19:07 cyp Exp $.
 //
 // Revision 1.8  1998/07/08 09:23:17  jlawson
 // eliminated integer type warnings on win16
 //
 // Revision 1.7  1998/07/07 21:54:57  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 // Revision 1.6  1998/07/06 09:21:19  jlawson
 // added lint tags around cvs id's to suppress unused variable warnings.
@@ -42,7 +36,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *autobuff_cpp(void) {
-return "@(#)$Id: autobuff.cpp,v 1.10 1999/01/01 02:45:14 cramer Exp $"; }
+return "@(#)$Id: autobuff.cpp,v 1.11 1999/01/31 20:19:07 cyp Exp $"; }
 #endif
 
 #include <string.h>
@@ -144,8 +138,8 @@ AutoBuffer AutoBuffer::operator+ (const AutoBuffer &that)
   return output;
 }
 
-// returns true if a complete line was found
-bool AutoBuffer::RemoveLine(AutoBuffer &line)
+// returns !0 if a complete line was found
+int AutoBuffer::RemoveLine(AutoBuffer &line)
 {
   line.Clear();
   int eol = -1;
@@ -154,7 +148,7 @@ bool AutoBuffer::RemoveLine(AutoBuffer &line)
     char ch = GetHead()[pos];
     if (ch == 0 || ch == '\r' || ch == '\n') {eol = pos; break;}
   }
-  if (eol < 0) return false;
+  if (eol < 0) return 0;
 
   line.Reserve(eol + 1);
   memmove(line.GetHead(), GetHead(), eol);
@@ -164,5 +158,5 @@ bool AutoBuffer::RemoveLine(AutoBuffer &line)
       (int)GetLength() > eol + 1 &&
       GetHead()[eol + 1] == '\n') RemoveHead(eol + 2);
   else RemoveHead(eol + 1);
-  return true;
+  return 1;
 }

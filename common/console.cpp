@@ -13,6 +13,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: console.cpp,v $
+// Revision 1.39  1999/01/31 20:19:08  cyp
+// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
+//
 // Revision 1.38  1999/01/29 18:50:33  jlawson
 // fixed formatting.  changed some int vars to bool.
 //
@@ -147,7 +150,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.38 1999/01/29 18:50:33 jlawson Exp $"; }
+return "@(#)$Id: console.cpp,v 1.39 1999/01/31 20:19:08 cyp Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -205,14 +208,14 @@ static struct
 int DeinitializeConsole(void)
 {
   if (constatics.initlevel == 1)
-  {
-    if (constatics.doingmodes && !constatics.runhidden)
     {
+    if (constatics.doingmodes && !constatics.runhidden)
+      {
       #if (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S) || \
           ((CLIENT_OS==OS_WIN32) && (!defined(WIN32GUI))) || \
           (CLIENT_OS==OS_NETWARE) || \
           ( (CLIENT_OS==OS_OS2) && !defined (__EMX__) )
-      {
+        {
         int init = 0;
         time_t endtime = (CliTimer(NULL)->tv_sec) + CONCLOSE_DELAY;
         int row = -1, height = 0;
@@ -221,7 +224,7 @@ int DeinitializeConsole(void)
         if (height > 2 && row != -1)
           ConSetPos(0, height-((row<(height-2))?(3):(1)));
         do
-        {
+          {
           char buffer[80];
           int remaining = (int)(endtime - (CliTimer(NULL)->tv_sec));
           if (remaining <= 0)
@@ -230,14 +233,14 @@ int DeinitializeConsole(void)
                    ((!init)?("\n\n"):("\r")), remaining );
           init = 1;
           ConOut( buffer );
-        } while (ConInKey(1000) == 0);
-      }
+          } while (ConInKey(1000) == 0);
+        }
       #endif
-    }
+      }
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
       w32DeinitializeConsole();
     #endif
-    }
+      }
 
   constatics.initlevel--;
 
@@ -251,7 +254,7 @@ int InitializeConsole(int runhidden,int doingmodes)
   int retcode = 0;
 
   if ((++constatics.initlevel) == 1)
-  {
+    {
     memset( (void *)&constatics, 0, sizeof(constatics) );
     constatics.initlevel = 1;
     constatics.runhidden = runhidden;
@@ -267,7 +270,7 @@ int InitializeConsole(int runhidden,int doingmodes)
     if (retcode != 0)
       --constatics.initlevel;
     else if (!runhidden)
-    {
+      {
       #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
         constatics.conisatty = w32ConIsScreen();
       #elif (CLIENT_OS == OS_RISCOS)
@@ -277,8 +280,8 @@ int InitializeConsole(int runhidden,int doingmodes)
       #else
         constatics.conisatty = (isatty(fileno(stdout)));
       #endif
-    }
-  } /* constatics.initlevel == 1 */
+      }
+    } /* constatics.initlevel == 1 */
 
   return retcode;
 }
@@ -298,10 +301,10 @@ int ConIsScreen(void)
 int ConBeep(void)
 {
   if (constatics.initlevel > 0 && constatics.conisatty) /*can't beep to file*/
-  {
+    {
     ConOut("\a");
     return 0;
-  }
+    }
   return -1;
 }
 
@@ -313,7 +316,7 @@ int ConBeep(void)
 int ConOut(const char *msg)
 {
   if (constatics.initlevel > 0 /*&& constatics.conisatty*/ )
-  {
+    {
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
       w32ConOut(msg);
     #elif (CLIENT_OS == OS_MACOS)
@@ -323,7 +326,7 @@ int ConOut(const char *msg)
       fflush(stdout);
     #endif
     return 0;
-  }
+    }
   return -1;
 }
 
@@ -386,46 +389,46 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
   int ch = -1;
 
   if (constatics.initlevel > 0 && constatics.conisatty)
-  {
-    if (timeout_millisecs > 0)
     {
+    if (timeout_millisecs > 0)
+      {
       CliTimer(&timestop);
       timestop.tv_sec += timeout_millisecs/1000;
       timestop.tv_usec += ( timeout_millisecs % 1000 )*1000;
       timestop.tv_sec += ( timestop.tv_usec / 1000000 );
       timestop.tv_usec %= 1000000;
-    }
+      }
     ch = 0;
 
     do
-    {
-      #if (CLIENT_OS == OS_RISCOS)
       {
+      #if (CLIENT_OS == OS_RISCOS)
+        {
         ch = _swi(OS_ReadC, _RETURN(0));
-      }
+        }
       #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
          (CLIENT_OS == OS_WIN32)
-      {
-        if (w32ConKbhit())
         {
+        if (w32ConKbhit())
+          {
           ch = w32ConGetch();
           if (!ch)
             ch = (w32ConGetch() << 8);
+          }
         }
-      }
       #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) || \
          ( (CLIENT_OS == OS_OS2) && !defined(__EMX__)  )
-      {
+        {
         fflush(stdout);
         if (kbhit())
-        {
+          {
           ch = getch();
           if (!ch)
             ch = (getch() << 8);
+          }
         }
-      }
       #elif (defined(TERMIOS_IS_AVAILABLE))
-      {
+        {
         struct termios stored;
         struct termios newios;
 
@@ -439,11 +442,11 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         ch = getchar();                /* Read the single character */
         tcsetattr(0,TCSANOW,&stored);  /* Restore the original settings */
         if (ch == EOF) ch = 0;
-      }
+        }
       #elif (CLIENT_OS == OS_MACOS)
       // Mac code never does console input
       #else
-      {
+        {
         setvbuf(stdin, (char *)NULL, _IONBF, 0);
 
         int fd = fileno(stdin);
@@ -455,12 +458,12 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         fflush(stdin);
         errno = 0;
         if ( select( fd+1, &rfds, NULL, NULL, NULL) && errno != EINTR )
-        {
+          {
           ch = fgetc( stdin );
           if (ch == EOF)
             ch = 0;
+          }
         }
-      }
       #endif
       if (ch || timeout_millisecs == 0 || CheckExitRequestTriggerNoIO())
         break;
@@ -468,11 +471,11 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
 
       CliTimer(&timenow);
 
-    } while ( (timeout_millisecs == -1) ||
+      } while ( (timeout_millisecs == -1) ||
               (( timenow.tv_sec < timestop.tv_sec ) ||
                (( timenow.tv_sec == timestop.tv_sec ) &&
                ( timenow.tv_usec < timestop.tv_usec ))));
-  }
+    }
 
   return ch;
 }
@@ -486,9 +489,9 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
 int ConInStr(char *buffer, unsigned int buflen, int flags )
 {
   int ch;
-  bool exitreq;
+  int exitreq;
   unsigned int pos;
-  bool asbool, boolistf, boolval, redraw;
+  int asbool, boolistf, boolval, redraw;
 
   if (constatics.initlevel < 1 || !constatics.conisatty)
     return -1;
@@ -499,56 +502,56 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
   //if ((flags & CONINSTR_ASPASSWORD) != 0)
   //  flags = CONINSTR_ASPASSWORD;
 
-  redraw = asbool = boolval = boolistf = false;
+  redraw = asbool = boolval = boolistf = 0;
   if ((flags & CONINSTR_ASBOOLEAN) != 0)
-  {
-    asbool = true;
-    if ((flags & CONINSTR_BYEXAMPLE) != 0)
     {
+    asbool = 1;
+    if ((flags & CONINSTR_BYEXAMPLE) != 0)
+      {
       if (buffer[0] =='t' || buffer[0]=='T')
-        boolistf = boolval = true;
+        boolistf = boolval = 1;
       else if (buffer[0] == 'f' || buffer[0] == 'F')
-        boolistf = true;
+        boolistf = 1;
       else if (buffer[0] == 'y' || buffer[0] == 'Y')
-        boolval = true;
+        boolval = 1;
       else if (buffer[0] == 'n' || buffer[0] == 'N') /* default */
-        boolval = false;
-    }
+        boolval = 0;
+      }
     flags = CONINSTR_ASBOOLEAN; /* strip by_example */
     if (buflen > 1) /* we only return a single char */
       buffer[1] = 0;
-    redraw = true;
-  }
+    redraw = 1;
+    }
 
 
   if ((flags & CONINSTR_BYEXAMPLE) != 0)
-  {
+    {
     pos = strlen( buffer );
     if ((flags & CONINSTR_ASPASSWORD)!=0)
-    {
+      {
       char scratch[2];
       scratch[1] = 0; scratch[0] = '*';
       for (ch = 0; ch < ((int)(pos)); ch++)
         ConOut(scratch);
-    }
+      }
     else
-    {
+      {
       ConOut(buffer);
+      }
     }
-  }
   else
-  {
+    {
     pos = 0;
     buffer[pos] = 0;
-  }
+    }
 
   do
-  {
-    if (asbool && redraw)
     {
+    if (asbool && redraw)
+      {
       char scratch[8];
-      strcpy(scratch, ((boolval)?((boolistf)?("true "):("yes  ")):
-                                ((boolistf)?("false"):("no   "))) );
+      strcpy(scratch, ((boolval)?((boolistf)?("1 "):("yes  ")):
+                                ((boolistf)?("0"):("no   "))) );
       #if (CLIENT_OS == OS_RISCOS)
       if (redraw) /* not the first round */
         riscos_backspace();
@@ -557,7 +560,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
       ConOut(scratch);
 
       for (ch = 0; scratch[ch] != 0; ch++)
-      {
+        {
         #ifdef TERM_IS_ANSI_COMPLIANT
         ConOut("\x1B" "[1D" );
         #elif (CLIENT_OS == OS_RISCOS)
@@ -566,53 +569,53 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
         #else
         ConOut("\b");
         #endif
-      }
+        }
       buffer[0] = ((boolval)?('y'):('n'));
       pos = 1;
-      redraw = false;
-    }
+      redraw = 0;
+      }
 
     ch = ConInKey(-1);
-    exitreq = (CheckExitRequestTriggerNoIO() != 0 ? true : false);
+    exitreq = (CheckExitRequestTriggerNoIO() != 0 ? 1 : 0);
 
     if (!exitreq)
-    {
+      {
       if (ch == '\n' || ch == '\r')
-      {
+        {
         ConOut("\n");
-        exitreq = true;
-      }
+        exitreq = 1;
+        }
       else if (asbool)
-      {
+        {
         if (ch == 'y' || ch == 'Y')
-        {
+          {
           redraw = (boolistf || !boolval);
-          boolistf = false; boolval = true;
-        }
+          boolistf = 0; boolval = 1;
+          }
         else if (ch == 't' || ch == 'T')
-        {
+          {
           redraw = (!boolistf || !boolval);
-          boolistf = boolval = true;
-        }
+          boolistf = boolval = 1;
+          }
         else if (ch == 'n' || ch == 'N')
-        {
+          {
           redraw = (boolistf || boolval);
-          boolistf = boolval = false;
-        }
+          boolistf = boolval = 0;
+          }
         else if (ch == 'f' || ch == 'F')
-        {
+          {
           redraw = (!boolistf || boolval);
-          boolistf = true; boolval = false;
-        }
+          boolistf = 1; boolval = 0;
+          }
         else
-        {
+          {
           ConBeep();
+          }
         }
-      }
       else if (ch == 0x08 || ch == '\177') /* backspace */
-      {
-        if (pos > 0)
         {
+        if (pos > 0)
+          {
           #ifdef TERM_IS_ANSI_COMPLIANT
           ConOut("\x1B" "[1D" " " "\x1B" "[1D");
           #elif (CLIENT_OS == OS_RISCOS)
@@ -621,24 +624,24 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
           ConOut("\b \b");
           #endif
           pos--;
+          }
         }
-      }
       else if (pos < (buflen-1))
-      {
+        {
         buffer[pos++] = (char)ch;
         if ((flags & CONINSTR_ASPASSWORD) != 0)
           ch = '*';
         if (isalpha(ch) || isspace(ch) || isdigit(ch) || ispunct(ch))
-        {
+          {
           /* if (!isctrl(ch)) */
           char x[2];
           x[0]=(char)ch;
           x[1]=0;
           ConOut(x);
+          }
         }
       }
-    }
-  } while (!exitreq);
+    } while (!exitreq);
 
   ConOut(""); /* flush */
   buffer[pos] = 0;
@@ -651,7 +654,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
 int ConGetPos( int *col, int *row )  /* zero-based */
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
-  {
+    {
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     return w32ConGetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
@@ -671,7 +674,7 @@ int ConGetPos( int *col, int *row )  /* zero-based */
     #else
     return ((row == NULL && col == NULL) ? (0) : (-1));
     #endif
-  }
+    }
   return -1;
 }
 
@@ -680,7 +683,7 @@ int ConGetPos( int *col, int *row )  /* zero-based */
 int ConSetPos( int col, int row )  /* zero-based */
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
-  {
+    {
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     return w32ConSetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
@@ -695,7 +698,7 @@ int ConSetPos( int col, int row )  /* zero-based */
     #else
     return -1;
     #endif
-  }
+    }
   return -1;
 }
 
@@ -709,18 +712,18 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     return -1;
 
   #if (CLIENT_OS == OS_RISCOS)
-  {
+    {
     static const int var[3] = { 133, 135, -1 };
     int value[3];
     if (!riscos_in_taskwindow)
-    {
-      if (_swix(OS_ReadVduVariables, _INR(0,1), var, value) == 0)
       {
+      if (_swix(OS_ReadVduVariables, _INR(0,1), var, value) == 0)
+        {
         // nlines = TWBRow - TWTRow + 1
         height = value[0] - value[1] + 1;
+        }
       }
     }
-  }
   #elif (CLIENT_OS == OS_DOS)
     if (dosCliConGetSize( &width, &height ) < 0)
       height = width = 0;
@@ -732,30 +735,30 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     GetSizeOfScreen( &ht, &wt );
     height = ht; width = wt;
   #else
-  {
+    {
     #if 0 //-- no longer needed since paging is disabled on unix targets
     // grrr... terminfo database location is installation dependent
     // search some standard (?) locations
     static int slines=0, scolumns=0;
 
     if (slines == 0 && scolumns == 0)
-    {
+      {
       unsigned int loc = 0;
-      bool success = false;
+      int success = 0;
 
       while (!success)
-      {
+        {
         int termerr;
         if (setupterm( NULL, 1, &termerr ) != ERR)
-        {
+          {
           if (termerr == 1)
-          {
-            success = true;
+            {
+            success = 1;
             break;
+            }
           }
-        }
         char *terminfo_locations[] =
-          {
+            {
           "/usr/share/terminfo",       // ncurses 1.9.9g defaults
           "/usr/local/share/terminfo", //
           "/usr/lib/terminfo",         // Debian 1.3x use this one
@@ -763,33 +766,33 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
           "/etc/terminfo",             // found something here on my machine, doesn't hurt
           "~/.terminfo",               // last resort
           NULL                         // stop tag
-          };
+            };
         if (terminfo_locations[loc] == NULL)
           break;
         setenv( "TERMINFO", terminfo_locations[loc], 1);
         loc++;
-      }
+        }
       if (success)
-      {
+        {
         slines = tigetnum( "lines" );
         scolums = tigetnum( "columns" );
+        }
       }
-    }
     height = slines; width = scolumns;
     #endif
-  }
+    }
   #endif
 
   if (height == 0)
-  {
+    {
     char *p = getenv( "LINES" );
     if (p) height = atoi( p );
-  }
+    }
   if (width == 0)
-  {
+    {
     char *p = getenv( "COLUMNS" );
     if (p) width = atoi( p );
-  }
+    }
   if (height <= 0 || height >= 300)
     height = 25;
   if (width <=0 || width >=300)
@@ -810,7 +813,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
 int ConClear(void)
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
-  {
+    {
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
       return w32ConClear();
     #elif (CLIENT_OS == OS_OS2)
@@ -831,7 +834,7 @@ int ConClear(void)
       /* ANSI cls  '\r space \r' is in case ansi is not supported */
       return 0;
     #endif
-  }
+    }
   return -1;
 }
 

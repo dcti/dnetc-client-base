@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.74  1999/01/31 20:19:08  cyp
+// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
+//
 // Revision 1.73  1999/01/29 19:10:32  jlawson
 // fixed formatting.  changed some int vars to bool.
 //
@@ -279,7 +282,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.73 1999/01/29 19:10:32 jlawson Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.74 1999/01/31 20:19:08 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -332,12 +335,12 @@ static int checkifbetaexpired(void)
   CliTimer(&currenttime);
   if (currenttime.tv_sec > expirationtime.tv_sec ||
       currenttime.tv_sec < (BETA_EXPIRATION_TIME - 1814400))
-  {
+    {
     Log("This beta release expired on %s. Please\n"
         "download a newer beta, or run a standard-release client.\n",
         CliGetTimeString(&expirationtime,1) );
     return 1;
-  }
+    }
 #endif
   return 0;
 }
@@ -473,7 +476,7 @@ static void yield_pump( void *tv_p )
     w32Yield();
   #elif (CLIENT_OS == OS_RISCOS)
     if (riscos_in_taskwindow)
-    { riscos_upcall_6(); }
+      { riscos_upcall_6(); }
   #elif (CLIENT_OS == OS_LINUX)
     #if defined(__ELF__)
     sched_yield();
@@ -511,27 +514,27 @@ static void yield_pump( void *tv_p )
 
   // used in conjunction with non-threaded go_mt
   if (tv_p)
-  {
+    {
     if (runstatics.nonmt_ran)
       pumps_without_run = 0;
     #ifdef NON_PREEMPTIVE_OS_PROFILING
     else if ((++pumps_without_run) > 5)
-    {
+      {
       pumps_without_run = 0;
       LogScreen("Yielding too fast. Doubled pump interval.\n");
       struct timeval *tv = (struct timeval *)tv_p;
       tv->tv_usec<<=1; tv->tv_sec<<=1;
       if (tv->tv_usec>=1000000)
-        { tv->tv_sec+=tv->tv_usec/1000000; tv->tv_usec%=1000000; }
-    }
+          { tv->tv_sec+=tv->tv_usec/1000000; tv->tv_usec%=1000000; }
+      }
     #endif
     if (RegPolledProcedure(yield_pump, tv_p, (struct timeval *)tv_p, 32 )==-1)
-    {
+      {
       //should never happen, but better safe than sorry...
       LogScreen("Panic! Unable to re-initialize yield pump\n");
       RaiseExitRequestTrigger();
+      }
     }
-  }
   return;
 }
 
@@ -544,20 +547,20 @@ unsigned long fixup_timeslice( unsigned long tslice, int contest )
   if (contest == 0)
     tslice = (tslice + 0x0E) & 0x0FFFFFFF0L;
   else
-  {
+    {
     unsigned long n, i = 0;
     for (n = (1<<31); n > 0; n>>=1 )
-    {
-      if ((tslice & n) != 0)
       {
+      if ((tslice & n) != 0)
+        {
         i = n;
         break;
+        }
       }
-    }
     if (i < 0x80)
       i = 0x80;
     tslice = i;
-  }
+    }
   return tslice;
 }
 
@@ -575,21 +578,21 @@ unsigned long do_ts_profiling( unsigned long tslice, int contest, int threadnum 
   CliTimer(&tvnow);
 
   if (reset_profiling_flag)
-  {
+    {
     tvstop.tv_sec = 0;
     tvstop.tv_usec = 0;
-  }
+    }
   if (tvstop.tv_sec == 0 && tvstop.tv_usec == 0)
-  {
+    {
     if (( tslice_table[0] = tslice_lkg[0] ) == 0 )
       tslice_table[0] = INITIAL_TIMESLICE_RC5;
     if (( tslice_table[1] = tslice_lkg[1] ) == 0 )
       tslice_table[1] = INITIAL_TIMESLICE_DES;
-  }
+    }
   else if (( tvnow.tv_sec > tvstop.tv_sec ) ||
        (( tvnow.tv_sec == tvstop.tv_sec ) &&
         ( tvnow.tv_usec >= tvstop.tv_usec )))
-  {
+    {
     tvstop.tv_sec = tvnow.tv_sec;  /* the time we really stopped */
     tvstop.tv_usec = tvnow.tv_usec;
 
@@ -598,15 +601,15 @@ unsigned long do_ts_profiling( unsigned long tslice, int contest, int threadnum 
     unsigned long usecs = (tvstop.tv_sec - tvstart.tv_sec) * 1000000L;
 
     if (tvstop.tv_usec < tvstart.tv_usec)
-    {
-      if (usecs) /* ie >= 1000000L */
       {
+      if (usecs) /* ie >= 1000000L */
+        {
         tvstop.tv_usec += 1000000L;
         usecs -= 1000000L;
-      }
+        }
       else                                /* timer is running backwards */
         tvstop.tv_usec = tvstart.tv_usec; /* let usecs = 0, and let % fail */
-    }
+      }
     usecs += (tvstop.tv_usec - tvstart.tv_usec);
 
     if (usecs) /* will also be zero if running backwards */
@@ -621,18 +624,18 @@ fflush(stdout);
 #endif
 
     if (!perc)
-    {
+      {
       /* nothing - data is unreliable (user pressed ^S or something) */
-    }
+      }
     else if (hgrain_run_count == 0) /* badly lagging or timer bad */
-    {
+      {
       if (((fubared_run_count++) & 0xFF ) == 1)
         Log("Running inefficiently. Timer is possibly bad.\n");
       tslice_table[0] = MIN_SANE_TIMESLICE_RC5;
       tslice_table[1] = MIN_SANE_TIMESLICE_DES;
-    }
+      }
     else if (hgrain_run_count < (MIN_RUNS_PER_TIME_GRAIN * 100))
-    {                             /* so decrease timeslice */
+      {                             /* so decrease timeslice */
       unsigned long under_par =
         ((MIN_RUNS_PER_TIME_GRAIN * 100) - hgrain_run_count) / 100;
 
@@ -640,19 +643,19 @@ fflush(stdout);
       goodrun_count = 0;
 
       if (under_par)  /* change is large enough to warrant adjustement */
-      {
+        {
         underrun_count++;
         if (under_par == MIN_RUNS_PER_TIME_GRAIN)
-        {
+          {
 #ifdef DEBUG
       printf("under_par: divide by 0!\n");
 #endif
           under_par--;
-        }
+          }
         ts = (totalslice_table[0]/runstatics.yield_run_count)/
                                     (MIN_RUNS_PER_TIME_GRAIN-under_par);
         if (tslice_table[0] > ts)
-        {
+          {
           tslice_table[0] -= ts;
 #ifdef DEBUG
 printf("-%lu=> ", ts );
@@ -662,22 +665,22 @@ printf("-%lu=> ", ts );
           else if ((underrun_count < 3) && tslice_lkg[0] &&
                                        (tslice_lkg[0] > tslice_table[0]))
             tslice_table[0] = tslice_lkg[0];
-        }
+          }
         ts = (totalslice_table[1]/runstatics.yield_run_count)/
                                     (MIN_RUNS_PER_TIME_GRAIN-under_par);
         if (tslice_table[1] > ts)
-        {
+          {
           tslice_table[1] -= ts;
           if (tslice_table[1] < MIN_SANE_TIMESLICE_DES)
             tslice_table[1] = MIN_SANE_TIMESLICE_DES;
           else if ((underrun_count < 3) && tslice_lkg[1] &&
                                        (tslice_lkg[1] > tslice_table[1]))
             tslice_table[1] = tslice_lkg[1];
+          }
         }
       }
-    }
     else if (hgrain_run_count > (MAX_RUNS_PER_TIME_GRAIN * 100))
-    {                             /* so increase timeslice */
+      {                             /* so increase timeslice */
       unsigned long over_par =
         (hgrain_run_count - (MAX_RUNS_PER_TIME_GRAIN * 100)) / 100;
 
@@ -686,15 +689,15 @@ printf("-%lu=> ", ts );
       goodrun_count = 0;
 
       if (over_par) /* don't do micro adjustments */
-      {
+        {
         ts = tslice_table[0];
         if (over_par ==  MAX_RUNS_PER_TIME_GRAIN)
-        {
+          {
 #ifdef DEBUG
           printf("over_par: divide by 0!\n");
 #endif
           over_par++;
-        }
+          }
         tslice_table[0] += (totalslice_table[0]/runstatics.yield_run_count)/
                                      (over_par-MAX_RUNS_PER_TIME_GRAIN);
 #ifdef DEBUG
@@ -712,42 +715,42 @@ printf("+%u=> ", tslice_table[0]-ts );
           tslice_table[1] = MAX_SANE_TIMESLICE_DES;
         else if ( tslice_table[1] < tslice_lkg[1])
           tslice_table[1] = tslice_lkg[1];
+        }
       }
-    }
     else
-    {
+      {
       fubared_run_count = 0;
       underrun_count = 0;
 
       ts = (totalslice_table[0]/runstatics.yield_run_count);
       if (ts > tslice_lkg[0])
-      {
+        {
         tslice_lkg[0] = ts;
         if ( tslice_lkg[0] < MIN_SANE_TIMESLICE_RC5 )
           tslice_lkg[0] =  MIN_SANE_TIMESLICE_RC5;
-      }
+        }
       tslice_table[0] = tslice_lkg[0] + ((tslice_lkg[0]/10) * goodrun_count);
       ts = (totalslice_table[1]/runstatics.yield_run_count);
       if (ts > tslice_lkg[1])
-      {
+        {
         tslice_lkg[1] = ts;
         if ( tslice_lkg[1] < MIN_SANE_TIMESLICE_DES )
           tslice_lkg[0] =  MIN_SANE_TIMESLICE_DES;
-      }
+        }
       tslice_table[1] = tslice_lkg[1] + ((tslice_lkg[1]/10) * goodrun_count);
       goodrun_count++;
 #ifdef DEBUG
 printf("+-0=> " );
 #endif
-    }
+      }
     tvstop.tv_sec = 0;
     tvstop.tv_usec = 0;
 #ifdef DEBUG
 printf("%u\n", tslice_table[contest] );
 #endif
-  }
+    }
   if (tvstop.tv_sec == 0 && tvstop.tv_usec == 0)
-  {
+    {
     totalslice_table[0] = threadnum; /* dummy code to use up the variable */
     totalslice_table[0] = 0;
     totalslice_table[1] = 0;
@@ -756,19 +759,19 @@ printf("%u\n", tslice_table[contest] );
 
     tvstop.tv_usec += TIMER_GRANULARITY;
     if (tvstop.tv_usec >= 1000000L)
-    {
+      {
       tvstop.tv_sec += tvstop.tv_usec/1000000L;
       tvstop.tv_usec %= 1000000L;
-    }
+      }
     runstatics.yield_run_count = 0;
     reset_profiling_flag = 0;
-  }
+    }
 
   if (tslice != tslice_table[contest])
-  {
+    {
     tslice_table[contest] = fixup_timeslice( tslice_table[contest], contest );
     tslice = tslice_table[contest];
-  }
+    }
   totalslice_table[contest]+=tslice;
 
   #if (CLIENT_OS == OS_NETWARE)
@@ -794,14 +797,14 @@ printf("%u\n", tslice_table[contest] );
 
 #if (CLIENT_OS == OS_RISCOS)
 /*if (threadnum == 1)
-  {
+    {
     thisprob = GetProblemPointerFromIndex(threadnum);
     thisprob->Run( threadnum );
     return;
-  } */
+    } */
 #elif (CLIENT_OS == OS_WIN32)
   if (targ->realthread)
-  {
+    {
     DWORD LAffinity, LProcessAffinity, LSystemAffinity;
     OSVERSIONINFO osver;
     unsigned int numthreads = targ->numthreads;
@@ -809,32 +812,32 @@ printf("%u\n", tslice_table[contest] );
     osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
     GetVersionEx(&osver);
     if ((VER_PLATFORM_WIN32_NT == osver.dwPlatformId) && (numthreads > 1))
-    {
-      if (GetProcessAffinityMask(GetCurrentProcess(), &LProcessAffinity, &LSystemAffinity))
       {
+      if (GetProcessAffinityMask(GetCurrentProcess(), &LProcessAffinity, &LSystemAffinity))
+        {
         LAffinity = 1L << threadnum;
         if (LProcessAffinity & LAffinity)
           SetThreadAffinityMask(GetCurrentThread(), LAffinity);
+        }
       }
     }
-  }
 #elif (CLIENT_OS == OS_NETWARE)
 if (targ->realthread)
-  {
+    {
     nwCliInitializeThread( threadnum+1 ); //in netware.cpp
-  }
+    }
 #elif (CLIENT_OS == OS_OS2)
 #elif (CLIENT_OS == OS_BEOS)
 #elif (CLIENT_OS == OS_MACOS)
   if (targ->realthread)
-  {
+    {
     MPEnterCriticalRegion(MP_count_region, kDurationForever);
     MP_active++;
     MPExitCriticalRegion(MP_count_region);
-  }
+    }
 #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
   if (targ->realthread)
-  {
+    {
     sigset_t signals_to_block;
     sigemptyset(&signals_to_block);
     sigaddset(&signals_to_block, SIGINT);
@@ -842,7 +845,7 @@ if (targ->realthread)
     sigaddset(&signals_to_block, SIGKILL);
     sigaddset(&signals_to_block, SIGHUP);
     pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL);
-  }
+    }
 #endif
 
   if (targ->realthread)
@@ -852,13 +855,13 @@ if (targ->realthread)
   targ->do_refresh = 1;
 
   while (!CheckExitRequestTriggerNoIO())
-  {
+    {
     if (targ->do_refresh)
       thisprob = GetProblemPointerFromIndex(threadnum);
     run = 1; //assume didn't run
     if (thisprob && thisprob->IsInitialized() && !thisprob->finished &&
        !CheckPauseRequestTriggerNoIO() && !targ->do_suspend)
-    {
+      {
       #ifdef NON_PREEMPTIVE_OS_PROFILING
       thisprob->tslice = do_ts_profiling( thisprob->tslice,
                           thisprob->contest, threadnum );
@@ -875,16 +878,16 @@ if (targ->realthread)
       #if (CLIENT_OS == OS_NETWARE)
       yield_pump(NULL);
       #endif
-    }
+      }
     if (run != 0)
-    {
-      if (thisprob == NULL || !thisprob->IsInitialized() || thisprob->finished)
       {
+      if (thisprob == NULL || !thisprob->IsInitialized() || thisprob->finished)
+        {
         runstatics.refillneeded = 1;
         yield_pump(NULL);
-      }
+        }
       else //(CheckPauseRequestTriggerNoIO() || targ->do_suspend)
-      {
+        {
       #if (CLIENT_OS == OS_MACOS)
         if (targ->realthread)
           mp_sleep(1);     // Mac needs special sleep call in MP threads
@@ -893,14 +896,14 @@ if (targ->realthread)
       #else
         NonPolledSleep(1); // don't race in this loop
       #endif
-      }
+        }
       #ifdef NON_PREEMPTIVE_OS_PROFILING
       reset_ts_profiling();
       #endif
       targ->do_refresh = 1;
-    }
+      }
     if (!targ->realthread)
-    {
+      {
     #if (CLIENT_OS == OS_MACOS)
         RegPolledProcedure( (void (*)(void *))Go_mt, parm, NULL, 0 );
     #else
@@ -908,8 +911,8 @@ if (targ->realthread)
     #endif
       runstatics.nonmt_ran = 1;
       break;
+      }
     }
-  }
 
   targ->threadID = 0; //the thread is dead
 
@@ -920,12 +923,12 @@ if (targ->realthread)
 
   #if (CLIENT_OS == OS_MACOS)
   if (targ->realthread)
-  {
+    {
     ThreadIsDone[threadnum] = 1;
     MPEnterCriticalRegion(MP_count_region, kDurationForever);
     MP_active--;
     MPExitCriticalRegion(MP_count_region);
-  }
+    }
   return(noErr);
   #endif
 }
@@ -935,12 +938,12 @@ if (targ->realthread)
 static int __StopThread( struct thread_param_block *thrparams )
 {
   if (thrparams)
-  {
+    {
     yield_pump(NULL);   //give threads some air
     if (thrparams->threadID) //thread did not exit by itself
-    {
-      if (thrparams->realthread) //real thread
       {
+      if (thrparams->realthread) //real thread
+        {
         #if (CLIENT_OS == OS_OS2)
         DosSetPriority( 2, PRTYC_REGULAR, 0, 0); /* thread to normal prio */
         DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
@@ -960,10 +963,10 @@ static int __StopThread( struct thread_param_block *thrparams )
         #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
         pthread_join( thrparams->threadID, (void **)NULL);
         #endif
+        }
       }
-    }
     free( thrparams );
-  }
+    }
   return 0;
 }
 
@@ -973,12 +976,12 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
          unsigned int numthreads, s32 timeslice, unsigned int priority,
          int no_realthreads )
 {
-  bool success = false, use_poll_process = false;
+  int success = 1, use_poll_process = 0;
 
   struct thread_param_block *thrparams = (struct thread_param_block *)
                          malloc( sizeof(struct thread_param_block) );
   if (thrparams)
-  {
+    {
     // Start the thread for this cpu
     memset( (void *)(thrparams), 0, sizeof( struct thread_param_block ));
     thrparams->threadID = 0;              /* whatever type */
@@ -998,15 +1001,15 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     thrparams->thread_data2 = 0;          /* ulong, free for thread use */
     thrparams->next = NULL;
 
-    use_poll_process = false;
+    use_poll_process = 0;
 
 
     if ( no_realthreads )
-      use_poll_process = true;
+      use_poll_process = 1;
     else
-    {
+      {
       #if (!defined(CLIENT_SUPPORTS_SMP)) //defined in cputypes.h
-        use_poll_process = true; //no thread support or cores are not thread safe
+        use_poll_process = 1; //no thread support or cores are not thread safe
       #elif (CLIENT_OS == OS_WIN32)
         unsigned int thraddr;
         thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
@@ -1016,7 +1019,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         success = ( thrparams->threadID != -1);
       #elif (CLIENT_OS == OS_NETWARE)
         if (!nwCliIsSMPAvailable())
-          use_poll_process = true;
+          use_poll_process = 1;
         else
           success = ((thrparams->threadID = BeginThread( Go_mt, NULL, 8192,
                                    (void *)thrparams )) != -1);
@@ -1030,7 +1033,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
                thread_name, be_priority, (void *)thrparams );
         if ( ((thrparams->threadID) >= B_NO_ERROR) &&
              (resume_thread(thrparams->threadID) == B_NO_ERROR) )
-          success = true;
+          success = 1;
       #elif (CLIENT_OS == OS_MACOS)
         OSErr thread_error;
         MPTaskID new_threadid;
@@ -1040,19 +1043,19 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         if (thread_error != noErr)
           new_threadid = NULL;
         else
-          success = true;
+          success = 1;
 
         thrparams->threadID = new_threadid;
         #if defined(MAC_GUI)
           if (success)
-          {
+            {
             Problem *thisprob;
             thisprob = GetProblemPointerFromIndex( thread_i );
             MakeGUIThread(thisprob->contest, thread_i);
             InitializeThreadProgress(thread_i, thisprob->CalcPercent(),
                        thisprob->GetKeysDone());
             UpdateClientInfo(&client_info);
-          }
+            }
         #endif
       #elif defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
         #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
@@ -1063,20 +1066,20 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           pthread_attr_setinheritsched(&thread_sched,PTHREAD_INHERIT_SCHED);
           if (pthread_create( &(thrparams->threadID), &thread_sched,
                 (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0)
-            success = true;
+            success = 1;
           SetGlobalPriority( 9 ); //back to normal
         #else
           if (pthread_create( &(thrparams->threadID), NULL,
              (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0 )
-            success = true;
+            success = 1;
         #endif
       #else
-        use_poll_process = true;
+        use_poll_process = 1;
       #endif
-    }
+      }
 
     if (use_poll_process)
-    {
+      {
       thrparams->realthread = 0;            /* int */
       if (timeslice > (1<<12))
         thrparams->timeslice = (1<<12);
@@ -1088,29 +1091,29 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
                                 (void *)thrparams , NULL, 0 );
     #endif
       success = ((int)thrparams->threadID != -1);
-    }
+      }
 
     if (success)
-    {
-      #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
       {
+      #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
+        {
       Problem *thisprob;
       thisprob = GetProblemPointerFromIndex( 0 );
       MakeGUIThread(thisprob->contest, 0);
       InitializeThreadProgress(0, thisprob->CalcPercent(),
                 thisprob->GetKeysDone());
       UpdateClientInfo(&client_info);
-      }
+        }
       #endif
 
       yield_pump(NULL);   //let the thread start
-    }
+      }
     else
-    {
+      {
       free( thrparams );
       thrparams = NULL;
+      }
     }
-  }
   return thrparams;
 }
 
@@ -1184,12 +1187,12 @@ int Client::Run( void )
   // --------------------------------------
 
   if (!checkpointsDisabled) //!nodiskbuffers
-    {
-    if (CheckpointAction( CHECKPOINT_OPEN, 0 )) //-> !0 if checkpts disabled
       {
+    if (CheckpointAction( CHECKPOINT_OPEN, 0 )) //-> !0 if checkpts disabled
+        {
       checkpointsDisabled = 1;
+        }
       }
-    }
 
   // --------------------------------------
   // BETA check
@@ -1197,10 +1200,10 @@ int Client::Run( void )
 
   #if defined(BETA)
   if (!TimeToQuit && checkifbetaexpired()!=0) //prints a message
-  {
+    {
     TimeToQuit = 1;
     exitcode = -1;
-  }
+    }
   #endif
 
   // --------------------------------------
@@ -1208,18 +1211,18 @@ int Client::Run( void )
   // --------------------------------------
 
   if (!TimeToQuit)
-  {
+    {
     force_no_realthreads = 0; /* this is a hint. it does not reflect capability */
     unsigned int numcrunchers = (unsigned int)numcpu;
 
     #if (CLIENT_OS == OS_FREEBSD && CLIENT_OS_MINOR != 4)
     if (numcrunchers > 1)
-    {
+      {
       LogScreen("FreeBSD threads are not SMP aware (do not automatically\n"
                 "migrate to distribute processor load). Please run one\n"
                 "client per processor.\n");
       numcrunchers = 1;
-    }
+      }
     #endif
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_BEOS)
     if (numcrunchers == 0) // must run with real threads because the
@@ -1235,55 +1238,55 @@ int Client::Run( void )
     #endif
 
     if (numcrunchers < 1) /* == 0 = user requested non-mt */
-    {
+      {
       force_no_realthreads = 1;
       numcrunchers = 1;
-    }
+      }
     if (numcrunchers > GetNumberOfSupportedProcessors()) //max by cli instance
       numcrunchers = GetNumberOfSupportedProcessors();   //not by platform
     load_problem_count = numcrunchers;
-  }
+    }
 
   // -------------------------------------
   // load (or rather, try to load) that many problems
   // -------------------------------------
 
   if (!TimeToQuit)
-  {
+    {
     if (load_problem_count > 1)
       Log( "Loading one block per cruncher...\n" );
     load_problem_count = LoadSaveProblems( load_problem_count, 0 );
 
     if (load_problem_count == 0)
-    {
+      {
       Log("Unable to load any blocks. Quitting...\n");
       TimeToQuit = 1;
       exitcode = -2;
+      }
     }
-  }
 
   // --------------------------------------
   // The contestdone state may have changed, so check it
   // --------------------------------------
 
   if (!TimeToQuit && contestdone[0] && contestdone[1])
-  {
+    {
     Log( "Both contests are marked as closed. This may mean that the\n"
          "contests are over. Check at http://www.distributed.net/\n" );
     TimeToQuit = 1;
     exitcode = -2;
-  }
+    }
 
   // --------------------------------------
   // Initialize the async "process" subsystem
   // --------------------------------------
 
   if (!TimeToQuit && InitializePolling())
-  {
+    {
     Log( "Unable to initialize async subsystem.\n");
     TimeToQuit = 1;
     exitcode = -1;
-  }
+    }
 
   // -------------------------------
   // create a yield pump for OSs that need one
@@ -1291,16 +1294,16 @@ int Client::Run( void )
 
   #if defined(NON_PREEMPTIVE_OS)
   if (!TimeToQuit)
-  {
+    {
     static struct timeval tv = {0,500};
 
     if (RegPolledProcedure(yield_pump, (void *)&tv, (timeval *)&tv, 32 ) == -1)
-    {
+      {
       Log("Unable to initialize yield pump\n" );
       TimeToQuit = -1;
       exitcode = -1;
+      }
     }
-  }
   #endif
 
   // --------------------------------------
@@ -1308,40 +1311,40 @@ int Client::Run( void )
   // --------------------------------------
 
   if (!TimeToQuit)
-  {
+    {
     struct thread_param_block *thrparamslast = thread_data_table;
     char srange[20];
     unsigned int planned_problem_count = load_problem_count;
     load_problem_count = 0;
 
     for ( prob_i = 0; prob_i < planned_problem_count; prob_i++ )
-    {
+      {
       struct thread_param_block *thrparams =
          __StartThread( prob_i, planned_problem_count,
                         timeslice, priority, force_no_realthreads );
       if ( thrparams )
-      {
+        {
         if (!thread_data_table)
           thread_data_table = thrparams;
         else
           thrparamslast->next = thrparams;
         thrparamslast = thrparams;
         load_problem_count++;
-      }
+        }
       else
-      {
+        {
         break;
+        }
       }
-    }
 
     if (load_problem_count == 0)
-    {
+      {
       Log("Unable to initialize cruncher(s). Quitting...\n");
       TimeToQuit = 1;
       exitcode = -1;
-    }
+      }
     else
-    {
+      {
       srange[0] = 0;
       if (load_problem_count > 1 && load_problem_count <= 26 /* a-z */)
         sprintf( srange, " ('a'%s'%c')",
@@ -1354,26 +1357,26 @@ int Client::Run( void )
              ((load_problem_count < planned_problem_count)?(' '):('\n')),
              ((load_problem_count < planned_problem_count)?('('):(0)),
              (planned_problem_count - load_problem_count) );
-    }
+      }
 
     // resize the problem table if we've loaded too much
     if (load_problem_count < planned_problem_count)
-    {
+      {
       if (TimeToQuit)
         LoadSaveProblems(planned_problem_count,PROBFILL_UNLOADALL);
       else
         LoadSaveProblems(load_problem_count, PROBFILL_RESIZETABLE);
+      }
     }
-  }
 
   //------------------------------------
   // display the percent bar so the user sees some action
   //------------------------------------
 
   if (!TimeToQuit && !percentprintingoff)
-  {
+    {
     LogScreenPercent( load_problem_count ); //logstuff.cpp
-  }
+    }
 
   //============================= MAIN LOOP =====================
   //now begin looping until we have a reason to quit
@@ -1391,7 +1394,7 @@ int Client::Run( void )
 
   // Start of MAIN LOOP
   while (TimeToQuit == 0)
-  {
+    {
     //------------------------------------
     //sleep, run or pause...
     //------------------------------------
@@ -1400,14 +1403,14 @@ int Client::Run( void )
     if (isPaused)
       sleep(3);
     else
-    {
+      {
       int i = 0;
       while ((i++)<5
             && !runstatics.refillneeded
             && !CheckExitRequestTriggerNoIO()
             && ModeReqIsSet(-1)==0)
         sleep(1);
-    }
+      }
     SetGlobalPriority( 9 );
 
     //------------------------------------
@@ -1425,40 +1428,40 @@ int Client::Run( void )
 
     #if defined(BETA)
     if (!TimeToQuit && !CheckExitRequestTrigger() && checkifbetaexpired()!=0)
-    {
+      {
       TimeToQuit = 1;
       exitcode = -1;
-    }
+      }
     #endif
     if (!TimeToQuit && CheckExitRequestTrigger())
-    {
+      {
       Log( "%s...\n",
          (CheckRestartRequestTrigger()?("Restarting"):("Shutting down")) );
       TimeToQuit = 1;
       exitcode = 1;
-    }
+      }
     if (!TimeToQuit)
-    {
+      {
       isPaused = CheckPauseRequestTrigger();
       if (isPaused)
-      {
+        {
         if (!wasPaused)
           LogScreen("Paused...\n");
         wasPaused = 1;
-      }
+        }
       else if (wasPaused)
-      {
+        {
         LogScreen("Running again after pause...\n");
         wasPaused = 0;
+        }
       }
-    }
 
     //------------------------------------
     //update the status bar, check all problems for change, do reloading etc
     //------------------------------------
 
     if (!TimeToQuit && !isPaused)
-    {
+      {
       if (!percentprintingoff)
         LogScreenPercent( load_problem_count ); //logstuff.cpp
       getbuff_errs+=LoadSaveProblems(load_problem_count,PROBFILL_GETBUFFERRS);
@@ -1466,7 +1469,7 @@ int Client::Run( void )
 
       if (CheckExitRequestTriggerNoIO())
         continue;
-    }
+      }
 
     //------------------------------------
     // Lurking
@@ -1475,9 +1478,9 @@ int Client::Run( void )
     #if defined(LURK)
     if (!TimeToQuit && !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) &&
         dialup.lurkmode && dialup.CheckIfConnectRequested())
-    {
+      {
       ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
-    }
+      }
     #endif
 
     //------------------------------------
@@ -1490,52 +1493,52 @@ int Client::Run( void )
     if (scheduledupdatetime != 0 && (preferred_contest_id==1) &&
       (timeNow >= scheduledupdatetime) &&
       (timeNow < (scheduledupdatetime+TIME_AFTER_START_TO_UPDATE)) )
-    {
-      if (scheduledupdatetime != last_scheduledupdatetime)
       {
+      if (scheduledupdatetime != last_scheduledupdatetime)
+        {
         last_scheduledupdatetime = scheduledupdatetime;
         //flush_scheduled_count = 0;
         flush_scheduled_adj = (Random(NULL,0)%UPDATE_INTERVAL);
         Log("Buffer update scheduled in %u minutes %02u seconds.\n",
              flush_scheduled_adj/60, flush_scheduled_adj%60 );
         flush_scheduled_adj += timeNow - scheduledupdatetime; // Catch up
-      }
+        }
       if ( (flush_scheduled_adj < TIME_AFTER_START_TO_UPDATE) &&
         (timeNow >= (time_t)(flush_scheduled_adj+scheduledupdatetime)) )
-      {
+        {
         //flush_scheduled_count++; /* for use with exponential staging */
         flush_scheduled_adj += ((UPDATE_INTERVAL>>1)+
                                (Random(NULL,0)%(UPDATE_INTERVAL>>1)));
         if ((contestdone[1] != 0) ||
             (GetBufferCount(1,0,0) == 0))
           // Check if contest is opened yet and if we have blocks.
-        {
+          {
           contestdone[1]=0;          //open the contest so we can get past the
           ModeReqSet(MODEREQ_FETCH|MODEREQ_FQUIET); // contestdone check in ::BufferUpdate()
+          }
         }
       }
-    }
 
     //------------------------------------
     //handle 'connectoften' requests
     //------------------------------------
 
     if (!TimeToQuit && connectoften && timeRun > timeNextConnect)
-    {
+      {
       timeNextConnect = timeRun + 60;
       ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
-    }
+      }
 
     //----------------------------------------
     // Check for time limit...
     //----------------------------------------
 
     if ( !TimeToQuit && (minutes > 0) && (timeRun > (time_t)( minutes*60 )))
-    {
+      {
       Log( "Shutdown - reached time limit.\n" );
       TimeToQuit = 1;
       exitcode = 3;
-    }
+      }
 
     //----------------------------------------
     // Check for 32 consecutive solutions
@@ -1543,30 +1546,30 @@ int Client::Run( void )
 
     unsigned int closed_count=0;
     for (cont_i=0; cont_i < CONTEST_COUNT; cont_i++)
-    {
+      {
       const char *contname = CliGetContestNameFromID( cont_i ); //clicdata.cpp
       if ((consecutivesolutions[cont_i] >= 32) && contestdone[cont_i]==0)
-      {
+        {
         contestdone[cont_i] = 1;
         if (keyport != 3064)
           randomchanged = 1;
         if (!TimeToQuit)
-        {
+          {
           Log( "Too many consecutive %s solutions detected.\n"
           "Either the contest is over, or this client is pointed at a test port.\n"
           "Marking contest as closed. Further %s blocks will not be processed.\n",
             contname, contname );
+          }
         }
-      }
       if (contestdone[cont_i])
         closed_count++;
-    }
+      }
     if (!TimeToQuit && closed_count>=CONTEST_COUNT)
-    {
+      {
       TimeToQuit = 1;
       Log( "All contests are marked as closed. Quitting...\n");
       exitcode = -2;
-    }
+      }
 
     //----------------------------------------
     // Has -runbuffers exhausted all buffers?
@@ -1575,51 +1578,51 @@ int Client::Run( void )
     // cramer magic (voodoo)
     if (!TimeToQuit && nonewblocks > 0 &&
       ((unsigned int)getbuff_errs >= load_problem_count))
-    {
+      {
       TimeToQuit = 1;
       exitcode = 4;
-    }
+      }
 
     //----------------------------------------
     // If not quitting, then write checkpoints
     //----------------------------------------
 
     if (!TimeToQuit && !checkpointsDisabled && !CheckPauseRequestTrigger())
-    {
-      if (timeRun > timeNextCheckpoint)
       {
+      if (timeRun > timeNextCheckpoint)
+        {
         unsigned long total_percent_now = 0;
         for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
-        {
+          {
           Problem *thisprob = GetProblemPointerFromIndex(prob_i);
           if ( thisprob )
             total_percent_now += thisprob->CalcPercent();
-        }
+          }
         prob_i = checkpointsPercent;
         checkpointsPercent = (total_percent_now/load_problem_count);
 
         if (checkpointsPercent != prob_i)
-        {
+          {
           if (CheckpointAction( CHECKPOINT_REFRESH, load_problem_count ))
             checkpointsDisabled = 1;
           timeNextCheckpoint = timeRun + (time_t)(60);
+          }
         }
       }
-    }
 
     //----------------------------------------
     // If not quitting, then handle mode requests
     //----------------------------------------
 
     if (!TimeToQuit && ModeReqIsSet(-1))
-    {
+      {
       //For interactive benchmarks, assume that we have "normal priority"
       //at this point and threads are running at lower priority. If that is
       //not the case, then benchmarks are going to return wrong results.
       //The messy way around that is to suspend the threads.
       ModeReqRun(this);
-    }
-  }  // End of MAIN LOOP
+      }
+    }  // End of MAIN LOOP
 
   //======================END OF MAIN LOOP =====================
 
@@ -1630,15 +1633,15 @@ int Client::Run( void )
   // ----------------
 
   if (thread_data_table)  //we have threads running
-  {
+    {
     LogScreen("Waiting for threads to end...\n");
     while (thread_data_table)
-    {
+      {
       struct thread_param_block *thrdatap = thread_data_table;
       thread_data_table = thrdatap->next;
       __StopThread( thrdatap );
+      }
     }
-  }
 
   // ----------------
   // Close the async "process" handler

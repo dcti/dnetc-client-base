@@ -8,6 +8,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: iniread.cpp,v $
+// Revision 1.21  1999/01/31 20:19:09  cyp
+// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
+//
 // Revision 1.20  1999/01/29 19:18:46  jlawson
 // fixed formatting.  changed some int vars to bool.
 //
@@ -86,7 +89,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.20 1999/01/29 19:18:46 jlawson Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.21 1999/01/31 20:19:09 cyp Exp $"; }
 #endif
 
 #define COMPILING_INIREAD
@@ -211,23 +214,6 @@ IniString IniString::lcase(void) const
   return output;
 }
 /////////////////////////////////////////////////////////////////////////////
-bool IniSection::GetProfileBool(const char *Key, bool DefValue)
-{
-  const char *value = GetProfileStringA(Key);
-  if (!value)
-    return DefValue;
-  if (atoi(value))
-    return true;
-  char buf[6];
-  int i=0;
-  for (;i<5 && value[i];i++)
-    buf[i] = (char)tolower(value[i]);
-  buf[i] = 0;
-  if (!strcmp(buf,"yes") || !strcmp(buf,"on") || !strcmp(buf,"true"))
-    return true;
-  return 0;
-}  
-/////////////////////////////////////////////////////////////////////////////
 #ifndef INIREAD_SINGLEVALUE
 void IniStringList::fwrite(FILE *out)
 {
@@ -298,13 +284,13 @@ IniRecord *IniSection::findnext()
   return NULL;
 }
 /////////////////////////////////////////////////////////////////////////////
-// returns false on error
-bool IniFile::ReadIniFile(const char *Filename, const char *Section)
+// returns 0 on error
+int IniFile::ReadIniFile(const char *Filename, const char *Section)
 {
   // open up the file
   if (Filename) lastfilename = Filename;
   FILE *inf = fopen(lastfilename.c_str(), "r");
-  if (inf == NULL) return false;             // open failed
+  if (inf == NULL) return 0;             // open failed
 
   // start reading the file
   IniSection *section = 0;
@@ -471,19 +457,19 @@ bool IniFile::ReadIniFile(const char *Filename, const char *Section)
     }
   }
   fclose(inf);
-  return true;
+  return 1;
 }
 /////////////////////////////////////////////////////////////////////////////
-// returns false on error
-bool IniFile::WriteIniFile(const char *Filename)
+// returns 0 on error
+int IniFile::WriteIniFile(const char *Filename)
 {
   if (Filename) lastfilename = Filename;
   FILE *outf = fopen(lastfilename.c_str(), "w");
   if (outf == NULL) 
-    return false;
+    return 0;
   fwrite(outf);
   fclose(outf);
-  return true;
+  return 1;
 }
 /////////////////////////////////////////////////////////////////////////////
 
@@ -492,7 +478,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
                       const char *defval, char *buffer, 
                       unsigned long buffsize, const char *filename )
 {
-  bool foundentry = false;
+  int foundentry = 0;
   IniFile inifile;
   IniSection *inisect;
   IniRecord *inirec;
@@ -515,7 +501,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
       if ((inirec = inisect->findfirst( key )) != NULL)
       {
         buffer[0] = 0;
-        foundentry = true;
+        foundentry = 1;
 #ifdef INIREAD_SINGLEVALUE
         inirec->values.copyto(buffer, buffsize );
 // printf("foundkey [%s]%s=%s\n",sect,key,buffer); 
@@ -545,7 +531,7 @@ int WritePrivateProfileStringB( const char *sect, const char *key,
   IniSection *inisect;
   IniRecord *inirec;
 
-  bool changed = false;
+  int changed = 0;
   if (sect == NULL)
     return 0;
   if (key == NULL)                 //we do not support section functions
@@ -564,13 +550,13 @@ int WritePrivateProfileStringB( const char *sect, const char *key,
     if ((inirec = inisect->findfirst( key ))!=NULL)
     {
       inisect->deleterecord( inirec );
-      changed = true;
+      changed = 1;
     }
   }
   else
   {
     inisect->setkey(key, value);
-    changed = true;
+    changed = 1;
   }
   if (changed)
   {

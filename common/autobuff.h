@@ -5,20 +5,14 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: autobuff.h,v $
+// Revision 1.8  1999/01/31 20:19:07  cyp
+// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
+//
 // Revision 1.7  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //
 // Revision 1.6  1998/07/07 21:54:59  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 // Revision 1.5  1998/06/14 08:12:26  friedbait
 // 'Log' keywords added to maintain automatic change history
@@ -55,7 +49,7 @@ public:
   void operator+= (const AutoBuffer &that);
   void operator= (const AutoBuffer &that);
   AutoBuffer operator+ (const AutoBuffer &that);
-  bool RemoveLine(AutoBuffer &line);
+  int RemoveLine(AutoBuffer &line);
 };
 
 

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.h,v $
+// Revision 1.10  1999/01/31 20:19:09  cyp
+// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
+//
 // Revision 1.9  1999/01/29 18:51:50  jlawson
 // changed some int vars to bool.
 //
@@ -49,13 +52,13 @@
 #define __CPUCHECK_H__
 
 //get core type by hardware detection
-int GetProcessorType(bool quietly);
+int GetProcessorType(int quietly);
 
 //-------
 
 //returns the number of cpus (>=0). 
 //Zero is valid and symbolizes 'force-single-threading'.
-unsigned int ValidateProcessorCount(int numcpu, bool quietly);
+unsigned int ValidateProcessorCount(int numcpu, int quietly);
 
 //-------
 

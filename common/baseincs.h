@@ -11,8 +11,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
-// Revision 1.53  1999/01/31 14:00:47  snake
+// Revision 1.54  1999/01/31 20:19:07  cyp
+// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
+// Revision 1.53  1999/01/31 14:00:47  snake
 // small correction of defines for BSD/OS 4
 //
 // Revision 1.52  1999/01/29 19:34:08  jlawson
@@ -28,16 +30,13 @@
 // Minor updates for Digital Unix clients.
 //
 // Revision 1.48  1999/01/19 12:51:01  patrick
-//
 // added strings.h for AIX
 //
 // Revision 1.47  1999/01/18 15:22:55  patrick
-//
 // added/changed some OS2 includes to work also for gcc.
 // added unistd.h for AIX
 //
 // Revision 1.46  1999/01/11 11:52:35  snake
-//
 // small openbsd fix
 //
 // Revision 1.45  1999/01/06 22:14:47  dicamillo
@@ -90,7 +89,6 @@
 // Added in an OS_FREEBSD include that was missing.
 //
 // Revision 1.29  1998/10/30 00:14:07  foxyloxy
-//
 // Added unistd.h to Irix standard includes.
 //
 // Revision 1.28  1998/10/26 03:21:26  cyp
@@ -219,13 +217,13 @@ extern "C" {
 #include <sys/stat.h>
 #endif
 #include <errno.h>
+#include <limits.h>
 
 #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
 }
 #endif
 
 #if (CLIENT_OS == OS_IRIX)
-  #include <limits.h>
   #include <unistd.h>
   #include <sys/types.h>
   #include <sys/prctl.h>
@@ -264,7 +262,7 @@ extern "C" {
     #include <swis.h>
     extern unsigned int ARMident(), IOMDident();
     extern void riscos_clear_screen();
-    extern bool riscos_check_taskwindow();
+    extern int riscos_check_taskwindow();
     extern void riscos_backspace();
     extern int riscos_count_cpus();
     extern char *riscos_x86_determine_name();
@@ -276,7 +274,7 @@ extern "C" {
     #define isatty(f) ((f) == 0)
   }
   extern s32 guiriscos, guirestart;
-  extern bool riscos_in_taskwindow;
+  extern int riscos_in_taskwindow;
 #elif (CLIENT_OS == OS_VMS)
   #include <fcntl.h>
   #include <types.h>
@@ -298,7 +296,6 @@ extern "C" {
   #include <conio.h>
   #include <share.h>
   #include <fcntl.h>
-  #include <limits.h>
   #include <io.h>
   #include "lurk.h"
   #include "w32svc.h"       // service
@@ -340,7 +337,6 @@ extern "C" {
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI) || (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
   #include <unistd.h>
-  #include <limits.h>
   #if (((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI))
     #include <errno.h> // glibc2 has errno only here
   #endif
@@ -390,18 +386,6 @@ extern "C" {
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
 #endif
-
-// --------------------------------------------------------------------------
-
-#ifdef max
-#undef max
-#endif
-#define max(a,b)            (((a) > (b)) ? (a) : (b))
-
-#ifdef min
-#undef min
-#endif
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
 
 // --------------------------------------------------------------------------
 

@@ -11,6 +11,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.115  1999/01/31 20:19:08  cyp
+// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
+//
 // Revision 1.114  1999/01/29 19:03:14  jlawson
 // fixed formatting.  changed some int vars to bool.
 //
@@ -487,7 +490,7 @@ public:
     // encapsulated main().  client.Main() may restart itself
 
   int ParseCommandline( int runlevel, int argc, const char *argv[], 
-                        int *retcodeP, bool logging_is_initialized );
+                        int *retcodeP, int logging_is_initialized );
                         
   // runlevel == 0: ReadConfig() (-quiet, -ini, -guistart etc done here too)
   //          >= 1: post-readconfig (override ini options)
@@ -516,12 +519,12 @@ public:
     //     3 = exit by time limit expiration
     //     4 = exit by block count expiration
 
-  int BufferUpdate( int updatereq_flags, bool interactive );
+  int BufferUpdate( int updatereq_flags, int interactive );
     // pass flags ORd with BUFFERUPDATE_FETCH/*_FLUSH. 
     // if interactive, prints "Input buffer full. No fetch required" etc.
     // returns updated flags or < 0 if offlinemode!=0 or NetOpen() failed.
 
-  int SelectCore(bool quietly);
+  int SelectCore(int quietly);
     // always returns zero.
     // to configure for cpu. called before Run() from main(), or for 
     // "modes" (Benchmark()/Test()) from ParseCommandLine().
