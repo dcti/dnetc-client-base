@@ -3016,8 +3016,8 @@ int main( int argc, char *argv[] )
     else if ( strcmp( argv[i], "-config" ) == 0 )
     {
       client.ValidateConfig();
-      client.Configure();
-      client.WriteConfig();
+      if (client.Configure()==1) client.WriteConfig();
+      //only write config if 1 is returned
       retcode = 0; //and break out of loop
     }
 #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2))
