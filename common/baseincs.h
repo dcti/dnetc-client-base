@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.63 1999/04/11 14:59:10 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.64 1999/04/13 15:54:53 jlawson Exp $"
 
 #include "cputypes.h"
 
@@ -116,7 +116,7 @@ extern "C" {
   #include "w32svc.h"       // service
   #include "w32cons.h"      // console
   #include "w32pre.h"       // prelude
-  #ifdef _MSC_VER_
+  #ifdef _MSC_VER
   // msc equivalents of file perm flags
   #define R_OK 04
   #define W_OK 02
