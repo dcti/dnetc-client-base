@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.56.2.2 1999/04/13 19:45:10 jlawson Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.56.2.3 1999/04/24 07:34:51 jlawson Exp $"
 
 #include "cputypes.h"
 
@@ -39,6 +39,12 @@ extern "C" {
   #include <sys/schedctl.h>
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_OS2)
+  #if defined(__WATCOMC__)
+    #include "os2defs.h"
+    #include <conio.h>            /* for console functions */
+    #include <direct.h>
+    #include <process.h>
+  #endif
   #define INCL_DOSPROCESS         /* For Disk functions */
   #define INCL_DOSFILEMGR         /* For Dos_Delete */
   #define INCL_ERRORS             /* DOS error values */
@@ -53,10 +59,6 @@ extern "C" {
   #include <fcntl.h>
   #include <io.h>
   #include <sys/time.h>         /* timeval */
-  #if defined(__WATCOMC__)
-    #include <conio.h>            /* for console functions */
-    #include <direct.h>
-  #endif
   #if defined(OS2_PM)
     #include "platforms/os2gui/os2cons.h"
   #endif

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.22.2.2 1999/04/13 19:45:10 jlawson Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.22.2.3 1999/04/24 07:34:52 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -113,17 +113,17 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
       itersize--;
   }
 
-  if (contestid == 1)
+  if (contestid == DES)
   {
     keycountshift = 1;
     if (itersize < 31) //Assumes that DES is (at least)
       itersize++;      //twice as fast as RC5.
     hourstobuffer = 3; // 3 Hours for DES
   }
-  else if (contestid == 0)
+  else if (contestid == RC5)
   {
     keycountshift = 0;
-    contestid = 0;
+    contestid = RC5;
     hourstobuffer = (3*24); // 3 Days for RC5
   }
   else 
@@ -168,7 +168,7 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
       (!defined(SMC) || !defined(MMX_RC5) || !defined(MMX_BITSLICER))
   unsigned int detectedtype = GetProcessorType(1);
   const char *not_supported = "Note: this client does not support the %s core.\n";
-  if (contestid == 0)
+  if (contestid == RC5)
   {
     #if (!defined(SMC))            /* all non-gcc platforms except netware */
     if (cputype == 1) /* 486 */

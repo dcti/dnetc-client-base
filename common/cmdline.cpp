@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.127.2.1 1999/04/13 19:45:18 jlawson Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.127.2.2 1999/04/24 07:34:57 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -193,22 +193,18 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           int dokill = ( strcmp( thisarg, "-kill" ) == 0 ||
                          strcmp( thisarg, "-shutdown") == 0 );
           thisarg = ((dokill)?("shut down"):("restarted"));
-          if (w32ConSendIDMCommand( ((dokill)?(IDM_SHUTDOWN):(IDM_RESTART)) )!=0)
+          int rc = w32ConSendIDMCommand( dokill ? IDM_SHUTDOWN : IDM_RESTART );
+          if (!loop0_quiet)
           {
-            if (!loop0_quiet)
-            {
+            if (rc < 0)
               sprintf(scratch,"No distributed.net clients are currently running.\n"
                               "None were %s.", thisarg);
-              ConOutErr(scratch);
-            }
-          }
-          else
-          {
-            if (!loop0_quiet)
-            {
+            else if (rc > 0)
+              sprintf(scratch,"A distributed.net client was found but "
+                              "could not be %s.\n", thisarg);
+            else
               sprintf(scratch,"The distributed.net client has been %s.", thisarg);
-              ConOutModal(scratch);
-            }
+            ConOutModal(scratch);
           }
         }
         #else

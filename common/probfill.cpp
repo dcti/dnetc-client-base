@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.43.2.2 1999/04/13 19:45:26 jlawson Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.43.2.3 1999/04/24 07:35:04 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -113,7 +113,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     WorkRecord wrdata;
     int resultcode;
     unsigned int cont_i;
-    s32 cputype = client->cputype; /* needed for FILEENTRY_CPU macro */
+    s32 cputype = CLIENT_CPU; /* needed for FILEENTRY_CPU macro */
     memset( (void *)&wrdata, 0, sizeof(WorkRecord));
     resultcode = thisprob->RetrieveState( &wrdata.work, &cont_i, 0 );
     #if (CLIENT_OS == OS_RISCOS)
@@ -143,9 +143,9 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 
       switch (cont_i) 
       {
-        case 0: // RC5
-        case 1: // DES
-	case 3: // CSC
+        case RC5:
+        case DES:
+        case CSC:
         {
           norm_key_count = 
              (unsigned int)__iter2norm( (wrdata.work.crypto.iterations.lo),
@@ -154,7 +154,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             norm_key_count = 1;
           break;
         }
-        case 2: // OGR
+        case OGR:
         {
           norm_key_count = 1;
           break;
@@ -190,9 +190,10 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       *contest = cont_i;
       *is_empty = 1; /* will soon be */
 
+      cputype           = client->cputype; /* uh, "coretype" */
       wrdata.contest    = (u8)cont_i;
       wrdata.resultcode = resultcode;
-      wrdata.cpu        = FILEENTRY_CPU; /* uses cputype variable */
+      wrdata.cpu        = FILEENTRY_CPU; /* combines CLIENT_CPU and coretype */
       wrdata.os         = FILEENTRY_OS;
       wrdata.buildhi    = FILEENTRY_BUILDHI; 
       wrdata.buildlo    = FILEENTRY_BUILDLO;
@@ -216,16 +217,16 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       {
         switch (cont_i) 
         {
-          case 0: // RC5
-          case 1: // DES
-          case 3: // CSC
+          case RC5:
+          case DES:
+          case CSC:
                   norm_key_count = (unsigned int)__iter2norm( 
-	                              (wrdata.work.crypto.iterations.lo),
+                                      (wrdata.work.crypto.iterations.lo),
                                       (wrdata.work.crypto.iterations.hi) );
                   if (norm_key_count == 0) /* test block */
                     norm_key_count = 1;
                   break;
-          case 2: // OGR
+          case OGR:
                   norm_key_count = 1;
                   break;
         }
@@ -238,21 +239,21 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       if (msg)
       {
         char workunit[80];
-	switch (cont_i)
-	{
-	  case 0: //RC5
-	  case 1: //DES
-          case 3: // CSC
+        switch (cont_i)
+        {
+          case RC5:
+          case DES:
+          case CSC:
                  sprintf(workunit, "%08lX:%08lX", 
                        (long) ( wrdata.work.crypto.key.hi ),
                        (long) ( wrdata.work.crypto.key.lo ) );
-		 break;
-	  case 2: //OGR
-                 strcpy(workunit, ogr_stubstr(&wrdata.work.ogr.stub));
-		 break;
-	}
+                 break;
+          case OGR:
+                 strcpy(workunit, ogr_stubstr(&wrdata.work.ogr.workstub.stub));
+                 break;
+        }
         Log( "%s packet %s%c(%u.%u0%% complete)\n", msg, workunit,
-	      ((permille == 0)?('\0'):(' ')), permille/10, permille%10 );
+              ((permille == 0)?('\0'):(' ')), permille/10, permille%10 );
       }
     } /* unconditional unload */
     
@@ -339,23 +340,23 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     
     switch (wrdata.contest) 
     {
-      case 0: // RC5
-      case 1: // DES
-      case 3: // CSC
+      case RC5:
+      case DES:
+      case CSC:
         if ( ((wrdata.work.crypto.keysdone.lo)!=0) || 
              ((wrdata.work.crypto.keysdone.hi)!=0) )
         {
           s32 cputype = client->cputype; /* needed for FILEENTRY_CPU macro */
 
           #if (CLIENT_OS == OS_RISCOS) /* second thread is x86 */
-          if (wrdata.contest == 0 && prob_i == 1) cputype = CPU_X86;
+          if (wrdata.contest == RC5 && prob_i == 1) cputype = CPU_X86;
           #endif
 
           // If this is a partial block, and completed by a different 
           // cpu/os/build, then reset the keysdone to 0...
           if ((wrdata.os      != FILEENTRY_OS) ||
               (wrdata.buildhi != FILEENTRY_BUILDHI) || 
-              (wrdata.cpu     != FILEENTRY_CPU) || /* uses 'cputype' variable */
+              (wrdata.cpu     != FILEENTRY_CPU) || /*CLIENT_CPU+coretype */
               (wrdata.buildlo != FILEENTRY_BUILDLO))
           {
              wrdata.work.crypto.keysdone.lo = 0;
@@ -372,7 +373,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
           }
         }
         break;
-      case 2: // OGR
+      case OGR:
         break;
     }
   } 
@@ -411,7 +412,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       wrdata.cpu                   = 0;
       wrdata.buildhi               = 0;
       wrdata.buildlo               = 0;
-      wrdata.contest               = 0; // Random blocks are always RC5
+      wrdata.contest               = RC5; // Random blocks are always RC5
       wrdata.work.crypto.key.lo    = (rnd & 0xF0000000L);
       wrdata.work.crypto.key.hi    = (rnd & 0x00FFFFFFL) + (randomprefix<<24);
       //constants are in rsadata.h
@@ -446,9 +447,9 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
 
     switch (wrdata.contest) 
     {
-      case 0: // RC5
-      case 1: // DES
-      case 3: // CSC
+      case RC5:
+      case DES:
+      case CSC:
       {
         norm_key_count = (unsigned int)__iter2norm((wrdata.work.crypto.iterations.lo),
                                                    (wrdata.work.crypto.iterations.hi));
@@ -465,9 +466,9 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
         #endif
         break;
       }
-      case 2: // OGR
+      case OGR:
       {
-        norm_key_count = wrdata.work.ogr.stub.marks;
+        norm_key_count = 1;
         break;
       }
     }
@@ -481,9 +482,9 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
 
       switch (*contest) 
       {
-        case 0: // RC5
-        case 1: // DES
-        case 3: // CSC
+        case RC5:
+        case DES:
+        case CSC:
         {
           Log("Loaded %s%s %u*2^28 packet %08lX:%08lX%c(%u.%u0%% done)",
                   cont_name, ((didrandom)?(" random"):("")), norm_key_count,
@@ -493,11 +494,11 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
                   (permille/10), (permille%10) );
           break;
         }
-        case 2: // OGR
+        case OGR:
         {
-          Log("Loaded %s stub %s (%u.%u0%% done)",
+          Log("Loaded %s stub %s%c(%u.%u0%% done)",
                   cont_name,
-                  ogr_stubstr(&wrdata.work.ogr.stub),
+                  ogr_stubstr(&wrdata.work.ogr.workstub.stub),
                   ((permille!=0 && permille<=1000)?(' '):(0)),
                   (permille/10), (permille%10) );
           break;
@@ -768,14 +769,25 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   }
 
   /* ============================================================ */
-
     
   for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
   {
-    const char *cont_name = CliGetContestNameFromID(cont_i);
+    unsigned int inout;
+    if (bufupd_pending && loaded_problems_count[cont_i]==0 && saved_problems_count[cont_i]==0)
+    {
+      bufupd_pending = 0;
+      for (inout = 0; inout < CONTEST_COUNT; inout++ )
+      {
+        if (((unsigned int)loadorder_map[inout]) == cont_i) /* not disabled */
+        {
+          bufupd_pending = 1;
+          break;
+        }
+      }
+    }
     if (bufupd_pending || loaded_problems_count[cont_i] || saved_problems_count[cont_i])
     {
-      unsigned int inout;
+      const char *cont_name = CliGetContestNameFromID(cont_i);
       for (inout=0;inout<=1;inout++)
       {
         unsigned long norm_count;

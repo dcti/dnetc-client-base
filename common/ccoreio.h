@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.1.2.1 1999/04/13 19:45:14 jlawson Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.1.2.2 1999/04/24 07:34:54 jlawson Exp $"
 
 typedef enum
 {
@@ -37,5 +37,10 @@ typedef struct
   u64 L0;               /* key, changes with every unit * PIPELINE_COUNT. */
                         /* Note: data is now in RC5/platform useful form */
 } RC5UnitWork;
+
+#if (CLIENT_OS == OS_AIX)
+extern "C" s32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice );
+// extern "C" static void  __SwitchRC5Format(u64 *_key);
+#endif
 
 #endif /* __CCOREIO_H__ */

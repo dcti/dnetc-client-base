@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.74.2.1 1999/04/13 19:45:21 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.74.2.2 1999/04/24 07:35:00 jlawson Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -379,61 +379,78 @@ static long __GetRawProcessorID(const char **cpuname)
 
 static long __GetRawProcessorID( const char **cpuname )
 {
-  long arch_id;
+  static long detectedtype = -2; /* -1==failed, -2==not supported */
+  static const char *detectedname = NULL;
 
+  if ( detectedtype == -2 ) {
+    long arch_id;
 // we treat the PPC as the default platform
-  if ( _system_configuration.architecture == POWER_RS ) {
-    arch_id=ARCH_IS_POWER;
-  } else {
-    arch_id=0;
-  }
+    if ( _system_configuration.architecture == POWER_RS ) {
+      arch_id=ARCH_IS_POWER;
+    } else {
+      arch_id=0;
+    }
 
-  switch (_system_configuration.implementation) {
-  case POWER_601:
-    *cpuname="PowerPC 601";
-    return (0x01 | arch_id);
-    break;
-  case POWER_603:
-    *cpuname="PowerPC 603";
-    return (0x02 | arch_id);
-    break;
-  case POWER_604:
-    *cpuname="PowerPC 604";
-    return (0x03 | arch_id);
-    break;
-  case POWER_620:
-    *cpuname="PowerPC 620";
-    return (0x04 | arch_id);
-    break;
-  case POWER_630:
-    *cpuname="PowerPC 630";
-    return (0x05 | arch_id);
-    break;
-  case POWER_A35:
-    *cpuname="PowerPC A35"; // this should be an AS/400 !!!! (65-bit)
-    return (0x05 | arch_id);
-    break;
-  case POWER_RS64II:
-    *cpuname="PowerPC RS64II"; // nameing not correct but how
-    return (0x06 | arch_id);
-    break;
-  case POWER_RS1:
-    *cpuname="POWER RS";
-    return (0x10 | arch_id);
-    break;
-  case POWER_RSC:
-    *cpuname="POWER RS2 Superchip"; // nameing ??
-    return (0x11 | arch_id);
-    break;
-  case POWER_RS2:
-    *cpuname="POWER RS2";
-    return (0x12 | arch_id);
-    break;
-  default:
-    *cpuname=NULL;
-    return -1;
-    break;
+    switch (_system_configuration.implementation) {
+    case POWER_601:
+      detectedname="PowerPC 601";
+      detectedtype= 0x01 | arch_id;
+      break;
+    case POWER_603:
+      detectedname="PowerPC 603";
+      detectedtype= 0x02 | arch_id;
+      break;
+    case POWER_604:
+      detectedname="PowerPC 604";
+      detectedtype= 0x03 | arch_id;
+      break;
+    case POWER_620:
+      detectedname="PowerPC 620";
+      detectedtype= (0x04 | arch_id);
+      break;
+    case POWER_630:
+      detectedname="PowerPC 630";
+      detectedtype= (0x05 | arch_id);
+      break;
+    case POWER_A35:
+      detectedname="PowerPC A35"; // this should be an AS/400 !!!! (65-bit)
+      detectedtype= (0x05 | arch_id);
+      break;
+    case POWER_RS64II:
+      detectedname="PowerPC RS64II"; // nameing not correct but how
+      detectedtype= (0x06 | arch_id);
+      break;
+    case POWER_RS1:
+      detectedname="POWER RS";
+      detectedtype= (0x10 | arch_id);
+      break;
+    case POWER_RSC:
+      detectedname="POWER RS2 Superchip"; // nameing ??
+      detectedtype= (0x11 | arch_id);
+      break;
+    case POWER_RS2:
+      detectedname="POWER RS2";
+      detectedtype= (0x12 | arch_id);
+      break;
+    default:
+      detectedname=NULL;
+      detectedtype= -1;
+      break;
+    }
+  #ifndef _AIXALL
+  #if (CLIENT_CPU == CPU_POWER)
+    if ( arch_id != ARCH_IS_POWER )
+        LogScreen("The CPU detected is not supported by this client.\n"
+                "Please use this client only on POWER systems.\n");
+  #else
+    if ( arch_id == ARCH_IS_POWER )
+        LogScreen("The CPU detected is not supported by this client.\n"
+                "Please use this client only on PowerPC systems.\n");
+  #endif
+  #endif
   }
+  *cpuname=detectedname;
+  return(detectedtype);
 
 }
 
@@ -1104,15 +1121,15 @@ int GetProcessorType(int quietly)
       coretouse = 5; /* remap 68060 to 68050 */
     #elif (CLIENT_CPU == CPU_ALPHA)
     coretouse = ((rawid <= 0) ? (-1) : ((int)rawid));
-    #elif defined(_AIXALL)
-    if (rawid == 1) {           // PPC 601 ?
+    #elif (CLIENT_OS == OS_AIX)
+    if (rawid && ARCH_IS_POWER) // POWER
 	coretouse=0;
-    } else if (rawid && ARCH_IS_POWER) {
-        coretouse=2;            // POWER
-    } else {
-        coretouse=1;            // PowerPC 604 and up
-    } /* endif */
-    #elif (CLIENT_CPU == CPU_POWERPC)
+    else if (rawid == 1) 
+        coretouse=1;            // PowerPC 601
+    else
+        coretouse=2;            // PowerPC 604 and up
+
+    #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX)
     coretouse = ((rawid < 0) ? (-1) : ((rawid==1L)?(0/*601*/):(1)));
     #elif (CLIENT_CPU == CPU_X86) /* way too many cpu<->core combinations */
     if (( rawid = __GetRawProcessorID(NULL,'c')) >= 0) coretouse = (int)rawid;

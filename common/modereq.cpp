@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.22.2.1 1999/04/13 19:45:25 jlawson Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.22.2.2 1999/04/24 07:35:03 jlawson Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -70,7 +70,9 @@ int ModeReqSetArg(int mode, void *arg )
 
 int ModeReqIsSet(int modemask)
 {
-  return ((modereq.reqbits & modemask) != 0);
+  if (modemask == -1)
+    modemask = MODEREQ_ALL;
+  return (modereq.reqbits & modemask);
 }
 
 /* --------------------------------------------------------------- */
@@ -179,10 +181,10 @@ int ModeReqRun(Client *client)
               if ( newclient->Configure() == 1 )
               {
                 WriteConfig(newclient,1); //full new build
-                if ((bits & MODEREQ_CONFRESTART) != 0)
-                  restart = 1;
                 retval |= (bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART));
               }
+              if ((bits & MODEREQ_CONFRESTART) != 0)
+                restart = 1;
             }
             delete newclient;
           }

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.2.2.2 1999/04/13 19:45:11 jlawson Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.2.2.3 1999/04/24 07:34:52 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -25,6 +25,7 @@ return "@(#)$Id: buffbase.cpp,v 1.2.2.2 1999/04/13 19:45:11 jlawson Exp $"; }
 static int BufferPutMemRecord( struct membuffstruct *membuff,
     const WorkRecord* data, unsigned long *countP ) /* returns <0 on ioerr */
 {
+  unsigned long count = 0;
   int retcode = -1;
   WorkRecord *dest;
 
@@ -43,11 +44,12 @@ static int BufferPutMemRecord( struct membuffstruct *membuff,
       memcpy( (void *)dest, (void *)data, sizeof( WorkRecord ));
       membuff->buff[membuff->count] = dest;
       membuff->count++;
-      if (countP)
-        *countP = membuff->count;
+      count = (unsigned long)membuff->count;
       retcode = 0;
     }
   }
+  if (countP)
+    *countP = count;
   return retcode;
 }    
 
@@ -59,8 +61,9 @@ static int BufferGetMemRecord( struct membuffstruct *membuff,
                            const WorkRecord* data, unsigned long *countP ) 
 {
   /*  <0 on ioerr, >0 if norecs */
-  int retcode = 1;
-  WorkRecord *src;
+  unsigned long count = 0;
+  int retcode = +1;
+  WorkRecord *src = (WorkRecord *)0;
 
   if (membuff->count > 0)
   {
@@ -73,10 +76,11 @@ static int BufferGetMemRecord( struct membuffstruct *membuff,
       retcode = 0;
       memcpy( (void *)data, (void *)src, sizeof( WorkRecord ));
       free( (void *)src );
-      if (countP)
-        *countP = membuff->count;
+      count = (unsigned long)membuff->count;
     }
   }
+  if (countP)
+    *countP = count;
   return retcode;
 }    
 
@@ -102,20 +106,20 @@ static int BufferCountMemRecords( struct membuffstruct *membuff,
       {
         if ( membuff->buff[rec] != NULL )
         {
-          WorkRecord workrec;
-          memcpy((void *)&workrec, (void *)(membuff->buff[rec]),sizeof(WorkRecord));
-          if (((unsigned int)workrec.contest) == contest)
+          WorkRecord *workrec = membuff->buff[rec];
+          if (((unsigned int)workrec->contest) == contest)
           {
             packetcount++;
-            switch (workrec.contest) 
+            switch (contest) 
             {
-              case 0: // RC5
-              case 1: // DES
+              case RC5:
+              case DES:
+              case CSC:
                 normcount += (unsigned int)
-                   __iter2norm( workrec.work.crypto.iterations.lo, 
-                                workrec.work.crypto.iterations.hi );
+                   __iter2norm( workrec->work.crypto.iterations.lo, 
+                                workrec->work.crypto.iterations.hi );
                 break;
-              case 2: // OGR
+              case OGR:
                 normcount++;
                 break;
             }
@@ -324,15 +328,16 @@ static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
   /* we don't do PDP byte order, so this is ok */
   switch (dest->workrec.contest) 
   {
-    case 0: // RC5
-    case 1: // DES
+    case RC5:
+    case DES:
+    case CSC:
     {
       u32 *w = (u32 *)(&(dest->workrec.work.crypto));
       for (i=0; i<(sizeof(dest->workrec.work.crypto)/sizeof(u32)); i++)
         w[i] = ntohl(w[i]);
       break;
     }
-    case 2: // OGR
+    case OGR:
     {
       dest->workrec.work.ogr.stub.marks  = ntohs(dest->workrec.work.ogr.stub.marks);
       dest->workrec.work.ogr.stub.length = ntohs(dest->workrec.work.ogr.stub.length);
@@ -406,7 +411,7 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
   unsigned int i, contest_i;
   const char *ffmsg="--fetch and --flush services are not available.\n";
 
-  if (remote_update_dir[0] == 0)
+  if (noupdatefromfile || remote_update_dir[0] == '\0')
   {
     if (interactive)
       LogScreen( "%sThis client has been configured to run without\n"
@@ -465,7 +470,7 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
   failed = didfetch = didflush = 0;
   if ((doflush || dofetch) && CheckExitRequestTriggerNoIO() == 0)
   {
-    if ( remote_update_dir[0] !=0 )
+    if (!noupdatefromfile && remote_update_dir[0] != '\0')
     {
       if (failed == 0 && !dontfetch && CheckExitRequestTriggerNoIO() == 0)
       {
@@ -509,8 +514,8 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
 
 /* --------------------------------------------------------------------- */
 
-int BufferGetFileRecord( const char *filename, WorkRecord * data, 
-               unsigned long *countP ) /* returns <0 on ioerr, >0 if norecs */
+int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data, 
+             unsigned long *countP ) /* returns <0 on ioerr, >0 if norecs */
 {                                      
   unsigned long reccount = 0;
   FILE *file = BufferOpenFile( filename, &reccount );
@@ -558,6 +563,14 @@ int BufferGetFileRecord( const char *filename, WorkRecord * data,
 
 /* --------------------------------------------------------------------- */
 
+int BufferGetFileRecord( const char *filename, WorkRecord * data, 
+               unsigned long *countP ) /* returns <0 on ioerr, >0 if norecs */
+{
+  return BufferGetFileRecordNoOpt( filename, data, countP );
+}  
+
+/* --------------------------------------------------------------------- */
+
 int BufferCountFileRecords( const char *filename, unsigned int contest, 
                        unsigned long *countP, unsigned long *normcountP )
 {
@@ -585,15 +598,16 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
         {
           switch (contest) 
           {
-            case 0: // RC5
-            case 1: // DES
+            case RC5:
+            case DES:
+            case CSC:
             {
               normcount += (unsigned int)
                  __iter2norm( ntohl(scratch.work.crypto.iterations.lo),
                               ntohl(scratch.work.crypto.iterations.hi) );
               break;
             }
-            case 2: // OGR
+            case OGR:
             {
               normcount++;
               break;
@@ -623,7 +637,7 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
 
 static void __FixupRandomPrefix( const WorkRecord * data, Client *client )
 {
-  if (data->contest == 0 && data->work.crypto.iterations.hi == 0 /* < 2^32 */
+  if (data->contest == RC5 && data->work.crypto.iterations.hi == 0 /* < 2^32 */
      && (data->work.crypto.iterations.lo) != 0x00100000UL /*!test*/
      && (data->work.crypto.iterations.lo) != 0x10000000UL /* !2**28 */)
   {                                   
@@ -640,7 +654,7 @@ static void __FixupRandomPrefix( const WorkRecord * data, Client *client )
 
 /* --------------------------------------------------------------------- */
 
-static void __CheckBuffLimits( Client *client )
+static int __CheckBuffLimits( Client *client )
 {
   unsigned int i;
   for (i=0;i<CONTEST_COUNT;i++)
@@ -654,7 +668,17 @@ static void __CheckBuffLimits( Client *client )
     else if ( client->outthreshold[i] > client->inthreshold[i])
       client->outthreshold[i] = client->inthreshold[i];
   }
-  return;
+  if (client->nodiskbuffers == 0 && 
+      client->out_buffer_basename[0] && client->in_buffer_basename[0])
+  {
+    if (strcmp(client->in_buffer_basename, client->out_buffer_basename) == 0)
+    {
+      Log("ERROR!: in- and out- buffer prefixes are identical.\n");
+      //RaiseExitRequestTrigger();
+      return -1;
+    }
+  }
+  return 0;
 }  
 
 /* --------------------------------------------------------------------- */
@@ -680,16 +704,18 @@ long Client::PutBufferRecord(const WorkRecord *data)
   {
     LogScreen("Discarded packet with unrecognized workstate %ld.\n",workstate);
   }
+  else if (__CheckBuffLimits( this ))
+  {
+    //nothing. message already printed
+  }
   else
   {
     tmp_retcode = 0;
+    tmp_use_out_file = 0;
     count = 0;
     __FixupRandomPrefix( data, this );
-    __CheckBuffLimits( this );
 
-    if (workstate == RESULT_WORKING)
-      tmp_use_out_file = 0;
-    else
+    if (workstate != RESULT_WORKING)
       tmp_use_out_file = 1;
 
     if (nodiskbuffers == 0)
@@ -729,7 +755,8 @@ long Client::GetBufferRecord( WorkRecord* data, unsigned int contest, int use_ou
   unsigned long count;
   int retcode, tmp_retcode, tmp_use_out_file;
 
-  __CheckBuffLimits( this );
+  if (__CheckBuffLimits( this ))
+    return -1;
   
   do
   {
@@ -782,14 +809,16 @@ long Client::GetBufferRecord( WorkRecord* data, unsigned int contest, int use_ou
                (use_out_file && workstate == RESULT_WORKING) ||
                (!use_out_file && workstate != RESULT_WORKING))
       {
-        tmp_use_out_file = (workstate != RESULT_NOTHING);
+        tmp_use_out_file = (workstate != RESULT_WORKING);
         tmp_retcode = 0;
-        LogScreen("Cross-saving packet of another type/contest.\n");
+//      LogScreen("Cross-saving packet of another type/contest.\n");
         if (nodiskbuffers == 0)
         {
+//LogScreen("old cont:%d, type: %d, name %s\n", contest, use_out_file, filename );
           filename = BufferGetDefaultFilename(tmp_contest, tmp_use_out_file,
           ((tmp_use_out_file) ? (out_buffer_basename) :(in_buffer_basename)) );
                    /* returns <0 on ioerr, >0 if norecs */
+//LogScreen("new cont:%d, type: %d, name %s\n", tmp_contest, tmp_use_out_file, filename );
           tmp_retcode = BufferPutFileRecord( filename, data, NULL );
         }
         else
@@ -825,9 +854,11 @@ long Client::GetBufferCount( unsigned int contest, int use_out_file, unsigned lo
   unsigned long reccount = 0;
   int retcode = -1;
 
-  __CheckBuffLimits( this );
-
-  if (contest < CONTEST_COUNT)
+  if (__CheckBuffLimits( this ) != 0)
+  {
+    //nothing, message already printed
+  }
+  else if (contest < CONTEST_COUNT)
   {
     if (nodiskbuffers == 0)
     {
@@ -867,7 +898,7 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
     return -1L;
   }
   
-  while (BufferGetFileRecord( source_file, &data, &remaining ) == 0) 
+  while (BufferGetFileRecordNoOpt( source_file, &data, &remaining ) == 0) 
                            //returns <0 on ioerr/corruption, > 0 if norecs
   {
     if (lastremaining != 0)
@@ -875,8 +906,8 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
       if (lastremaining <= remaining)
       {
         if (interactive)
-	  LogScreen("Import error: something bad happened.\n"
-	            "The source file isn't getting smaller.\n"); 
+          LogScreen("Import error: something bad happened.\n"
+                    "The source file isn't getting smaller.\n"); 
         errs = 1;
         recovered = 0;
         break;
@@ -902,19 +933,28 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
 long BufferFlushFile( Client *client, const char *loadermap_flags )
 {
   long combinedtrans = 0, combinedworkunits = 0;
-  //const char *exchname = "Flush::";
-  char basename[128];
+  char basename[sizeof(client->remote_update_dir)  +
+                sizeof(client->out_buffer_basename) + 10 ];
   unsigned int contest;
   int failed = 0;
   
-  if (client->remote_update_dir[0] == '\0')
-    return -1;
-  strncpy( basename, 
+  if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
+    return 0;
+
+  if (client->out_buffer_basename[0] == '\0')
+  {
+    strcpy( basename, 
+            GetFullPathForFilenameAndDir( BUFFER_DEFAULT_OUT_BASENAME,
+                                          client->remote_update_dir ));
+  }                                          
+  else
+  {
+    strcpy( basename, 
            GetFullPathForFilenameAndDir(
              &(client->out_buffer_basename[
                         GetFilenameBaseOffset(client->out_buffer_basename)]),
-             client->remote_update_dir ), 
-          sizeof(basename) );
+             client->remote_update_dir ) );
+  }                                          
   basename[sizeof(basename)-1] = '\0';
     
   for (contest = 0; failed == 0  && contest < CONTEST_COUNT; contest++)
@@ -954,12 +994,13 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
       
       switch (contest) 
       {
-        case 0: // RC5
-        case 1: // DES
+        case RC5:
+        case DES:
+        case CSC:
           workunits =  __iter2norm(wrdata.work.crypto.iterations.lo,
                                    wrdata.work.crypto.iterations.hi);
           break;
-        case 2: // OGR
+        case OGR:
           workunits = 1;                   
           break;
       }
@@ -1000,19 +1041,29 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
 long BufferFetchFile( Client *client, const char *loaderflags_map )
 {
   unsigned long combinedtrans = 0, combinedworkunits = 0;
-  //const char *exchname = "Fetch::";
-  char basename[128];
+  char basename[sizeof(client->remote_update_dir)  +
+                sizeof(client->in_buffer_basename) + 10 ];
   unsigned int contest;
   int failed = 0;
 
-  if (client->remote_update_dir[0] == '\0')
-    return -1;
-  strncpy( basename, 
-           GetFullPathForFilenameAndDir(
-             &(client->in_buffer_basename[
+  if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
+    return 0;
+
+  if (client->in_buffer_basename[0] == '\0')
+  {
+    strcpy( basename, 
+            GetFullPathForFilenameAndDir( BUFFER_DEFAULT_IN_BASENAME,
+                                          client->remote_update_dir ));
+  }
+  else
+  {
+     strcpy( basename, 
+             GetFullPathForFilenameAndDir(
+               &(client->in_buffer_basename[
                         GetFilenameBaseOffset(client->in_buffer_basename)]),
-             client->remote_update_dir ), 
-          sizeof(basename) );
+             client->remote_update_dir ) );
+
+  }                                          
   basename[sizeof(basename)-1] = '\0';
 //printf("basename: %s\n",basename);
     
@@ -1054,26 +1105,31 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       if (CheckExitRequestTriggerNoIO() != 0 )
         break;
 
-      if ( BufferGetFileRecord( remote_file, &wrdata, &remaining ) != 0 )
+      if ( BufferGetFileRecordNoOpt( remote_file, &wrdata, &remaining ) != 0 )
         break;
       if (remaining < ((unsigned long)(lefttotrans)))
         lefttotrans = remaining;
       
-      if (client->PutBufferRecord( &wrdata ) < 0)
+      if ((lefttotrans = client->PutBufferRecord( &wrdata )) < 0)
       {
         BufferPutFileRecord( remote_file, &wrdata, NULL );
         failed = -1;
         break;
       }
+      if (((long)(client->inthreshold[contest])) < lefttotrans) 
+        lefttotrans = 0;
+      else 
+        lefttotrans = ((long)(client->inthreshold[contest])) - lefttotrans;
       
       switch (contest) 
       {
-        case 0: // RC5
-        case 1: // DES
+        case RC5:
+        case DES:
+        case CSC:
           workunits =  __iter2norm(wrdata.work.crypto.iterations.lo,
                                    wrdata.work.crypto.iterations.hi);
           break;
-        case 2: // OGR
+        case OGR:
           workunits = 1;                   
           break;
       }

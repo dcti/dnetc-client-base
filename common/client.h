@@ -5,9 +5,15 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.127.2.1 1999/04/13 19:45:16 jlawson Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.127.2.2 1999/04/24 07:34:55 jlawson Exp $"
 
-#define MAXBLOCKSPERBUFFER  500
+
+enum {
+  RC5, // http://www.rsa.com/rsalabs/97challenge/
+  DES, // http://www.rsa.com/rsalabs/des3/index.html
+  OGR, // http://members.aol.com/golomb20/
+  CSC  // http://www.cie-signaux.fr/security/index.htm
+};
 #define CONTEST_COUNT       4  /* RC5,DES,OGR,CSC */
 
 #include "problem.h"          /* ContestWork structure */
@@ -27,6 +33,11 @@ typedef struct
 
 #pragma pack()
 
+
+#define MAXBLOCKSPERBUFFER  500
+#define BUFFER_DEFAULT_IN_BASENAME  "buff-in"
+#define BUFFER_DEFAULT_OUT_BASENAME "buff-out"
+
 struct membuffstruct 
 { 
   unsigned long count; 
@@ -38,60 +49,60 @@ class Client
 public:
   /* non-user-configurable */
   int  nonewblocks;
-  int  randomprefix;
   int  randomchanged;
+  int  randomprefix;
   int  rc564closed;
   int  stopiniio;
   u32  scheduledupdatetime;
   char inifilename[128];
-
-  /* -- block/buffer -- */
-  char id[64];
-  char checkpoint_file[128];
-  int  nodiskbuffers;
-  s32  connectoften;
-  s32  preferred_blocksize;
   struct { struct membuffstruct in, out; } membufftable[CONTEST_COUNT];
-  char in_buffer_basename[128];
-  char out_buffer_basename[128];
-  char remote_update_dir[128];
-  char loadorder_map[CONTEST_COUNT];
-  volatile s32 inthreshold[CONTEST_COUNT];
-  volatile s32 outthreshold[CONTEST_COUNT];
 
-  /* -- net -- */
-  s32  offlinemode;
-  s32  nettimeout;
-  s32  nofallback;
-  int  autofindkeyserver;
-  char keyproxy[64];
-  s32  keyport;
-  char httpproxy[64];
-  s32  httpport;
-  s32  uuehttpmode;
-  char httpid[128];
-
-  /* -- log -- */
-  char logname[128];
-  s32  messagelen;
-  char smtpsrvr[128];
-  s32  smtpport;
-  char smtpfrom[128];
-  char smtpdest[128];
-
-  /* -- perf -- */
-  s32  numcpu;
-  s32  cputype;
-  s32  priority;
-
-  /* -- misc -- */
+  /* -- general -- */
+  char id[64];
   int  quietmode;
   s32  blockcount;
   s32  minutes;
   s32  percentprintingoff;
   s32  noexitfilecheck;
   char pausefile[128];
+  char loadorder_map[CONTEST_COUNT];
 
+  /* -- buffers -- */
+  s32  nodiskbuffers;
+  char in_buffer_basename[128];
+  char out_buffer_basename[128];
+  char checkpoint_file[128];
+  s32  offlinemode;
+    s32  nettimeout;
+    s32  nofallback;
+    int  autofindkeyserver;
+    char keyproxy[64];
+    s32  keyport;
+    char httpproxy[64];
+    s32  httpport;
+    s32  uuehttpmode;
+    char httpid[128];
+  s32  noupdatefromfile;
+    char remote_update_dir[128];
+  s32  connectoften;
+  s32  preferred_blocksize;
+  volatile s32 inthreshold[CONTEST_COUNT];
+  volatile s32 outthreshold[CONTEST_COUNT];
+
+  /* -- perf -- */
+  s32  numcpu;
+  s32  cputype;
+  s32  priority;
+
+  /* -- log -- */
+  char logname[128];
+  char logfiletype[64]; /* "none", "no limit", "rotate", "restart", "fifo" */
+  char logfilelimit[64]; /* "nnn K|M|days" etc */
+  s32  messagelen;
+  char smtpsrvr[128];
+  s32  smtpport;
+  char smtpfrom[128];
+  char smtpdest[128];
 
   /* --------------------------------------------------------------- */
 

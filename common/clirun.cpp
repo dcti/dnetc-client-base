@@ -4,10 +4,9 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.82.2.1 1999/04/13 19:45:17 jlawson Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.82.2.2 1999/04/24 07:34:56 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
-//#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "problem.h"   // Problem class
@@ -29,12 +28,18 @@ return "@(#)$Id: clirun.cpp,v 1.82.2.1 1999/04/13 19:45:17 jlawson Exp $"; }
 
 // --------------------------------------------------------------------------
 
+#define OGR_TIMESLICE_MSEC 200
+#define OGR_TIMESLICE_MAX  0x100000 // in units of nodes
+
+// --------------------------------------------------------------------------
+
 static struct
 {
   int nonmt_ran;
   unsigned long yield_run_count;
   volatile int refillneeded;
-} runstatics = {0,0,0};
+  volatile u32 ogr_tslice;
+} runstatics = {0,0,0,0x1000};
 
 // --------------------------------------------------------------------------
 
@@ -595,28 +600,82 @@ if (targ->realthread)
     else
     {
 //printf("run: doing run\n");
-      int run; u32 last_count;
+      static struct 
+      {  unsigned int contest; u32 msec, max, min; volatile u32 optimal;
+      } dyn_timeslice[CONTEST_COUNT] = {
+        {  RC5, 1000, 0x80000000,  0x00100,  0x10000 },
+        {  DES, 1000, 0x80000000,  0x00100,  0x10000 },
+        {  OGR,    OGR_TIMESLICE_MSEC, OGR_TIMESLICE_MAX, 0x0100,  0x1000 },
+        {  CSC, 1000, 0x80000000,  0x00100,  0x10000 }
+      };  
+      int run; u32 optimal_timeslice = 0; u32 runtime_ms;
+      unsigned int contest_i = thisprob->contest;
+      u32 last_count = thisprob->core_run_count; 
+                  
       #ifdef NON_PREEMPTIVE_OS_PROFILING
-      thisprob->tslice = do_ts_profiling( thisprob->tslice,
-                          thisprob->contest, threadnum );
+      thisprob->tslice = do_ts_profiling(thisprob->tslice,contest_i,threadnum);
+      optimal_timeslice = 0;
+      #elif (CLIENT_OS == OS_MACOS)
+      thisprob->tslice = GetTimesliceToUse(contest_i);
+      optimal_timeslice = 0;
+      #else
+      #if (!defined(DYN_TIMESLICE))
+      if (contest_i == OGR)
       #endif
-      #if (CLIENT_OS == OS_MACOS)
-      thisprob->tslice = GetTimesliceToUse(thisprob->contest);
+      {
+        if (last_count == 0) /* prob hasn't started yet */
+          thisprob->tslice = dyn_timeslice[contest_i].optimal;
+        optimal_timeslice = thisprob->tslice;
+      }
       #endif
 
-      last_count = thisprob->core_run_count; 
+      runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000);
       targ->is_suspended = 0;
       run = thisprob->Run();
       targ->is_suspended = 1;
-      didwork = 1;
+      runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000) - runtime_ms;
+
+      didwork = (last_count != thisprob->core_run_count);
       if (run != RESULT_WORKING)
       {
         runstatics.refillneeded = 1;
-        didwork = (last_count != thisprob->core_run_count);
         if (!didwork && targ->realthread)
           yield_pump(NULL);
       }
+      
+      if (optimal_timeslice != 0) /* we are profiling for preemptive OSs */
+      {
+        optimal_timeslice = thisprob->tslice; /* get the number done back */
+#if defined(DYN_TIMESLICE_SHOWME)
+printf("timeslice: %ld  time: %ldms  working? %d\n",(long)optimal_timeslice, (long)runtime_ms, (run==RESULT_WORKING) );
+#endif
+        if (run == RESULT_WORKING) /* timeslice/time is invalid otherwise */
+        {
+          if (runtime_ms < (dyn_timeslice[contest_i].msec /* >>1 */))
+          {
+            optimal_timeslice <<= 1;
+            if (optimal_timeslice > dyn_timeslice[contest_i].max)
+              optimal_timeslice = dyn_timeslice[contest_i].max;
+          }
+          else if (runtime_ms > (dyn_timeslice[contest_i].msec /* <<1 */))
+          {
+            optimal_timeslice -= (optimal_timeslice>>2);
+            if (optimal_timeslice == 0)
+              optimal_timeslice = dyn_timeslice[contest_i].min;
+          }
+          thisprob->tslice = optimal_timeslice; /* for the next round */
+        }
+        else /* ok, we've finished. so save it */
+        {  
+          u32 opt = dyn_timeslice[contest_i].optimal;
+          if (optimal_timeslice > opt)
+            dyn_timeslice[contest_i].optimal = optimal_timeslice;
+          optimal_timeslice = 0; /* reset for the next prob */
+        }
+      }
+
     }
+    
     if (!didwork)
     {
       #ifdef NON_PREEMPTIVE_OS_PROFILING
@@ -850,6 +909,7 @@ int Client::Run( void )
   struct thread_param_block *thread_data_table = NULL;
 
   int TimeToQuit = 0, exitcode = 0;
+  int local_connectoften = 0;
   unsigned int load_problem_count = 0;
   unsigned int getbuff_errs = 0;
 
@@ -1228,7 +1288,7 @@ int Client::Run( void )
                                (rand()%(UPDATE_INTERVAL>>1)));
         
         int desisrunning = 0;
-        if (GetBufferCount(1,0,NULL) != 0) /* do we have DES blocks? */
+        if (GetBufferCount(DES, 0/*in*/, NULL) != 0) /* do we have DES blocks? */
           desisrunning = 1;
         else
         {
@@ -1247,7 +1307,7 @@ int Client::Run( void )
           {
             int rc = BufferUpdate( BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH, 0 );
             if (rc > 0 && (rc & BUFFERUPDATE_FETCH)!=0)
-              desisrunning = (GetBufferCount(1,0,NULL) != 0);
+              desisrunning = (GetBufferCount( DES, 0/*in*/, NULL) != 0);
           }
         }  
         if (desisrunning)
@@ -1281,8 +1341,8 @@ int Client::Run( void )
 
 //LogScreen("ckpoint refresh check. %d%% dif\n", 
 //                           abs((int)(checkpointsPercent - ((int)perc_now))));
-        if ( abs((int)(checkpointsPercent - ((unsigned int)perc_now))) 
-                                                >= CHECKPOINT_FREQ_PERCDIFF )
+        if ( ( timeNextCheckpoint == 0 ) || ( CHECKPOINT_FREQ_PERCDIFF < 
+          abs((int)(checkpointsPercent - ((unsigned int)perc_now))) ) )
         {
           checkpointsPercent = (unsigned int)perc_now;
           if (CheckpointAction( CHECKPOINT_REFRESH, load_problem_count ))
@@ -1297,11 +1357,14 @@ int Client::Run( void )
     // Lurking
     //------------------------------------
 
+    local_connectoften = (connectoften != 0);
     #if defined(LURK)
-    if (!TimeToQuit && !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) &&
-        dialup.lurkmode && dialup.CheckIfConnectRequested())
+    if (dialup.lurkmode)
     {
-      ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
+      connectoften = 0;
+      local_connectoften = (!TimeToQuit && 
+      !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) &&
+      dialup.CheckIfConnectRequested());
     }
     #endif
 
@@ -1309,10 +1372,33 @@ int Client::Run( void )
     //handle 'connectoften' requests
     //------------------------------------
 
-    if (!TimeToQuit && connectoften && timeRun > timeNextConnect)
+    if (!TimeToQuit && local_connectoften && timeRun > timeNextConnect)
     {
+      int doupd = 1;
+      if (timeNextConnect != 0)
+      {
+        int i;
+        for (i = 0; i < CONTEST_COUNT; i++ )
+        {
+          unsigned cont_i = (unsigned int)loadorder_map[i];
+          if (cont_i < CONTEST_COUNT) /* not disabled */
+          {
+            if (GetBufferCount( cont_i, 1, NULL ) > 0) 
+              break;  /* at least one out-buffer is not empty */
+            if (GetBufferCount( cont_i, 0, NULL ) >= 
+               ((long)(inthreshold[cont_i]))) /*at least one in-buffer is full*/
+            { 
+              doupd = 0;
+              break;
+            }
+          }
+        }
+      }
+      if ( doupd )
+      {
+        ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
+      }
       timeNextConnect = timeRun + 60;
-      ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
     }
 
     //----------------------------------------

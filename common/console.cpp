@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.45.2.2 1999/04/13 19:45:20 jlawson Exp $"; }
+return "@(#)$Id: console.cpp,v 1.45.2.3 1999/04/24 07:34:59 jlawson Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -24,6 +24,7 @@ return "@(#)$Id: console.cpp,v 1.45.2.2 1999/04/13 19:45:20 jlawson Exp $"; }
 #include "clitime.h"
 #include "triggers.h"
 #include "console.h" //also has CLICONS_SHORTNAME, CLICONS_LONGNAME
+#include "modereq.h"
 #include "sleepdef.h" //usleep
 #if (CLIENT_OS==OS_AIX)
 #include <sys/select.h>   // only needed if compiled on AIX 4.1
@@ -66,7 +67,7 @@ static struct
   int initlevel;
   int runhidden;
   int conisatty;
-  int doingmodes;
+  int pauseonclose;
 } constatics = {0,0,0,0};
 
 /* ---------------------------------------------------- */
@@ -75,7 +76,7 @@ int DeinitializeConsole(void)
 {
   if (constatics.initlevel == 1)
   {
-    if (constatics.doingmodes && !constatics.runhidden)
+    if (constatics.pauseonclose && !constatics.runhidden)
     {
       #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
           ((CLIENT_OS == OS_WIN32) && (!defined(WIN32GUI))) || \
@@ -124,7 +125,7 @@ int InitializeConsole(int runhidden,int doingmodes)
     memset( (void *)&constatics, 0, sizeof(constatics) );
     constatics.initlevel = 1;
     constatics.runhidden = runhidden;
-    constatics.doingmodes = doingmodes;
+    constatics.pauseonclose = (doingmodes && ModeReqIsSet(MODEREQ_CONFIG)==0);
 
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     retcode = w32InitializeConsole(runhidden,doingmodes);
@@ -132,7 +133,7 @@ int InitializeConsole(int runhidden,int doingmodes)
     runhidden=0;
     #endif
     #endif
-
+    
     if (retcode != 0)
       --constatics.initlevel;
     else if (!runhidden)

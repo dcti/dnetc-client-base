@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.49.2.1 1999/04/13 19:45:20 jlawson Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.49.2.2 1999/04/24 07:34:59 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -25,11 +25,11 @@ static const char *OPTSECT_NET     = "networking";
 static const char *OPTSECT_BUFFERS = "buffers";
 static const char *OPTSECT_MISC    = "misc";
 static const char *OPTSECT_RC5     = "rc5";
+static const char *OPTSECT_LOG     = "logging";
 
 /* ------------------------------------------------------------------------ */
-#include "console.h"
 
-static int __remapObsoleteParameters( const char *fn ) /* returns <0 if failed */
+static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if failed */
 {
   static const char *obskeys[]={ /* all in "parameters" section */
              "runhidden", "os2hidden", "win95hidden", "checkpoint2",
@@ -42,87 +42,131 @@ static int __remapObsoleteParameters( const char *fn ) /* returns <0 if failed *
   char buffer[128];
   int i, modfail = 0;
 
-  if ((i = GetPrivateProfileIntB( OPTION_SECTION, "nodisk", 0, fn )) != 0)
+  if (!GetPrivateProfileStringB( OPTION_SECTION, "quiet", "", buffer, sizeof(buffer), fn ))
   {
-    if (!GetPrivateProfileIntB( OPTSECT_BUFFERS, "buffer-only-in-memory", 1, fn ))
-      i = 0;
-    else
-      modfail += (!WritePrivateProfileStringB( OPTSECT_BUFFERS, "buffer-only-in-memory", "yes", fn ));
+    if (GetPrivateProfileIntB(OPTION_SECTION, "runhidden", 0, fn ) ||
+        GetPrivateProfileIntB(OPTION_SECTION, "os2hidden", 0, fn ) ||
+        GetPrivateProfileIntB(OPTION_SECTION, "win95hidden", 0, fn ))
+    {
+      client->quietmode = 1;
+      modfail+=(!WritePrivateProfileIntB( OPTSECT_BUFFERS, "quiet", 1, fn));
+    }
   }
-  if ((i = GetPrivateProfileIntB( OPTION_SECTION, "descontestclosed", 0, fn )) != 0)
+  
+  if (!GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-only-in-memory", "", buffer, sizeof(buffer), fn ))
+  {
+    if (GetPrivateProfileIntB( OPTION_SECTION, "nodisk", 0, fn ))
+    {
+      client->nodiskbuffers = 1;
+      modfail += (!WritePrivateProfileStringB( OPTSECT_BUFFERS, "buffer-only-in-memory", "yes", fn ));
+    }
+  }
+  
+  if (GetPrivateProfileIntB( OPTION_SECTION, "descontestclosed", 0, fn ))
   {
     if (GetPrivateProfileStringB( OPTION_SECTION, "in2", "", buffer, sizeof(buffer), fn ))
       unlink( GetFullPathForFilename( buffer ) );
     if (GetPrivateProfileStringB( OPTION_SECTION, "out2", "", buffer, sizeof(buffer), fn ))
       unlink( GetFullPathForFilename( buffer ) );
   }
-  if (i == 0)
+  
+  if (!GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", "", buffer, sizeof(buffer), fn ))
   {
-    if (!GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", "", buffer, 1, fn ))
+    if (GetPrivateProfileStringB( OPTION_SECTION, "in", "", buffer, sizeof(buffer), fn ))
     {
-      if (GetPrivateProfileStringB( OPTION_SECTION, "in", "", buffer, sizeof(buffer), fn ))
+      int basenameoffset = GetFilenameBaseOffset( buffer );
+      const char *suffixsep = EXTN_SEP;
+      char *suffix = strrchr( &buffer[basenameoffset], *suffixsep );
+      if (suffix)
+        *suffix = '\0';
+      if (strcmp( buffer, "buff-in" ) != 0)
       {
-        int basenameoffset = GetFilenameBaseOffset( buffer );
-        const char *suffixsep = EXTN_SEP;
-        char *suffix = strrchr( &buffer[basenameoffset], *suffixsep );
-        if (suffix)
-          *suffix = '\0';
-        if (strcmp( buffer, "buff-in" ) != 0)
-          modfail += (!WritePrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", buffer, fn ));
-      }
-    }  
-    if (!GetPrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", "", buffer, 1, fn ))
-    {
-      if (GetPrivateProfileStringB( OPTION_SECTION, "out", "", buffer, sizeof(buffer), fn ))
-      {
-        int basenameoffset = GetFilenameBaseOffset( buffer );
-        const char *suffixsep = EXTN_SEP;
-        char *suffix = strrchr( &buffer[basenameoffset], *suffixsep );
-        if (suffix)
-          *suffix = '\0';
-        if (strcmp( buffer, "buff-out" ) != 0)
-          modfail += (!WritePrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", buffer, fn ));
-      }
-    }  
-  }
-
-  if (GetPrivateProfileIntB( OPTION_SECTION, "dialwhenneeded", 0, fn ) &&
-    (i=GetPrivateProfileIntB( OPTSECT_NET, "enable-start-stop", -123, fn ))==-123)
+        strcpy( client->in_buffer_basename, buffer );
+        modfail += (!WritePrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", buffer, fn ));
+      }        
+    }
+  }  
+  
+  if (!GetPrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", "", buffer, sizeof(buffer), fn ))
   {
-    modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "enable-start-stop", "yes", fn ));
+    if (GetPrivateProfileStringB( OPTION_SECTION, "out", "", buffer, sizeof(buffer), fn ))
+    {
+      int basenameoffset = GetFilenameBaseOffset( buffer );
+      const char *suffixsep = EXTN_SEP;
+      char *suffix = strrchr( &buffer[basenameoffset], *suffixsep );
+      if (suffix)
+        *suffix = '\0';
+      if (strcmp( buffer, "buff-out" ) != 0)
+      {
+        strcpy( client->out_buffer_basename, buffer );
+        modfail += (!WritePrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", buffer, fn ));
+      }        
+    }
+  }  
+  if (!GetPrivateProfileStringB( OPTSECT_NET, "enable-start-stop", "", buffer, sizeof(buffer), fn ))
+  {
+    if ((i = GetPrivateProfileIntB( OPTION_SECTION, "dialwhenneeded", -123, fn ))!=-123)
+    {
+      #ifdef LURK
+      dialup.dialwhenneeded = i;
+      #endif
+      if (i)
+        modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "enable-start-stop", "yes", fn ));
+    }
   }   
-  if (GetPrivateProfileStringB( OPTSECT_MISC, "connectionname", "", buffer, 1, fn ))
+  
+  if (!GetPrivateProfileStringB( OPTSECT_NET, "dialup-profile", "", buffer, sizeof(buffer), fn ))
   {
-    modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "dialup-profile", buffer, fn ));
+    if (GetPrivateProfileStringB( OPTSECT_MISC, "connectionname", "", buffer, sizeof(buffer), fn ))
+    {
+      #ifdef LURK
+      strncpy( dialup.connprofile, buffer, sizeof(dialup.connprofile) );
+      dialup.connprofile[sizeof(dialup.connprofile)-1]='\0';
+      #endif
+      modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "dialup-profile", buffer, fn ));
+    }
+  }
+  
+  if (GetPrivateProfileIntB( OPTION_SECTION, "runbuffers", 0, fn ))
+  {
+    client->blockcount = -1;
+    modfail += (!WritePrivateProfileStringB( OPTION_SECTION, "count", "-1", fn ));
   }
 
-  if ((i = GetPrivateProfileIntB( OPTION_SECTION, "runbuffers", -123, fn )) != -123)
-    modfail += (!WritePrivateProfileStringB( OPTION_SECTION, "count", "-1", fn ));
-
-  if ((i = GetPrivateProfileIntB( OPTION_SECTION, "processdes", -123, fn )) != -123)
+  if (!GetPrivateProfileStringB( OPTSECT_MISC, "project-priority", "", buffer, sizeof(buffer), fn ))
   {
-    if (i == 0 && !GetPrivateProfileStringB( OPTSECT_MISC, "project-priority", "", buffer, 1, fn ))
+    if (GetPrivateProfileIntB( OPTION_SECTION, "processdes", sizeof(buffer), fn ) == 0 )
     {
+      int doneclient = 0, doneini = 0;
       projectmap_build( buffer, "" );
-      for (i=0;i<((int)CONTEST_COUNT);i++)
+      for (i=0;i<((int)CONTEST_COUNT) && (!doneclient || !doneini);i++)
       {
-        if (buffer[i] == 1 /* DES' contest id */)
+        if (client->loadorder_map[i] == 1)
         {
+          doneclient = 1;
+          client->loadorder_map[i] |= 0x80;
+        }
+        if (buffer[i] == DES)
+        {
+          doneini = 1;
           buffer[i] |= 0x80; /* disable */
-          break;
         }
       }
       modfail += (!WritePrivateProfileStringB( OPTSECT_MISC, "project-priority", projectmap_expand(buffer), fn ));
     }
   }
 
-  if ((i = GetPrivateProfileIntB( OPTION_SECTION, "runoffline", -123, fn )) != -123)
+  if (!GetPrivateProfileStringB( OPTSECT_NET, "disabled", "", buffer, sizeof(buffer), fn ))
   {
-    if (i!=0 && (GetPrivateProfileIntB( OPTION_SECTION, "lurkonly", 0, fn ) ||
-        GetPrivateProfileIntB( OPTION_SECTION, "lurk", 0, fn )) )
-      i = 0;
-    if (i!=0)
-      modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "disabled", "yes", fn ));
+    if (GetPrivateProfileIntB( OPTION_SECTION, "runoffline", 0, fn ))
+    {
+      client->offlinemode = 1;
+      if (GetPrivateProfileIntB( OPTION_SECTION, "lurkonly", 0, fn ) ||
+          GetPrivateProfileIntB( OPTION_SECTION, "lurk", 0, fn ) );
+        client->offlinemode = 0;
+      if (client->offlinemode)
+        modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "disabled", "yes", fn ));
+    }
   }
   
   /* unconditional deletion of obsolete keys */
@@ -169,11 +213,7 @@ int ReadConfig(Client *client)
   if ( access( fn, 0 ) != 0 ) 
     return +1; /* fall into config */
     
-  if (__remapObsoleteParameters( fn ) < 0)
-  {
-    ConOutErr("Config load failed. Unable to upgrade .ini.\n");
-    return -1; /* the message is just in case it doesn't fall into Configure() */
-  }
+  __remapObsoleteParameters( client, fn ); /* load obsolete options */
 
   if (!GetPrivateProfileStringB( sect, "id", "", client->id, sizeof(client->id), fn ))
     strcpy( client->id, "rc5@distributed.net" );
@@ -183,10 +223,11 @@ int ReadConfig(Client *client)
     p = strchr( buffer, ':' );
     client->inthreshold[0] = atoi(buffer);
     client->outthreshold[0] = ((p==NULL)?(client->inthreshold[0]):(atoi(p+1)));
-    client->inthreshold[1] = client->inthreshold[0];
-    client->outthreshold[1] = client->outthreshold[0];
-    client->inthreshold[2] = client->inthreshold[0];
-    client->outthreshold[2] = client->outthreshold[0];
+    for (i = 1; i < CONTEST_COUNT; i++ )
+    {
+      client->inthreshold[i] = client->inthreshold[0];
+      client->outthreshold[i] = client->outthreshold[0];
+    }
   }
   if (GetPrivateProfileStringB( sect, "threshold2", "", buffer, sizeof(buffer), fn ))
   {
@@ -245,24 +286,25 @@ int ReadConfig(Client *client)
     client->blockcount = -1;
   
   client->offlinemode = GetPrivateProfileIntB( OPTSECT_NET, "disabled", client->offlinemode, fn );
+  client->noupdatefromfile = (!GetPrivateProfileIntB( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn ));
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, client->remote_update_dir, sizeof(client->remote_update_dir), fn );
 
   client->percentprintingoff = GetPrivateProfileIntB( sect, "percentoff", client->percentprintingoff, fn );
   client->connectoften = GetPrivateProfileIntB( sect, "frequent", client->connectoften , fn );
   client->quietmode = GetPrivateProfileIntB( sect, "quiet", client->quietmode, fn );
-  client->quietmode |= GetPrivateProfileIntB( sect, "win95hidden", 0, fn );
-  client->quietmode |= GetPrivateProfileIntB( sect, "os2hidden", 0, fn );
-  client->quietmode |= GetPrivateProfileIntB( sect, "runhidden", 0, fn );
-  client->nofallback = GetPrivateProfileIntB( sect, "nofallback", 0, fn );
+  client->nofallback = GetPrivateProfileIntB( sect, "nofallback", client->nofallback, fn );
   client->noexitfilecheck = GetPrivateProfileIntB( sect, "noexitfilecheck", client->noexitfilecheck, fn );
 
   GetPrivateProfileStringB( sect, "logname", client->logname, client->logname, sizeof(client->logname), fn );
+  GetPrivateProfileStringB( OPTSECT_LOG, "log-file-type", client->logfiletype, client->logfiletype, sizeof(client->logfiletype), fn );
+  GetPrivateProfileStringB( OPTSECT_LOG, "log-file-limit", client->logfilelimit, client->logfilelimit, sizeof(client->logfilelimit), fn );
+
   GetPrivateProfileStringB( sect, "pausefile", client->pausefile, client->pausefile, sizeof(client->pausefile), fn );
   GetPrivateProfileStringB( sect, "checkpointfile", client->checkpoint_file, client->checkpoint_file, sizeof(client->checkpoint_file), fn );
 
   client->nodiskbuffers = GetPrivateProfileIntB( OPTSECT_BUFFERS, "buffer-only-in-memory", client->nodiskbuffers , fn );
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, client->in_buffer_basename, sizeof(client->in_buffer_basename), fn );
-  GetPrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", client->in_buffer_basename, client->out_buffer_basename, sizeof(client->out_buffer_basename), fn );
+  GetPrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, client->out_buffer_basename, sizeof(client->out_buffer_basename), fn );
 
   #if defined(LURK)
   i = dialup.GetCapabilityFlags();
@@ -327,7 +369,7 @@ static void __XSetProfileInt( const char *sect, const char *key,
   }
   dowrite = (defval != newval);
   if (!dowrite)
-    dowrite = (GetPrivateProfileStringB( sect, key, "", buffer, 2, fn ) != 0);
+    dowrite = (GetPrivateProfileStringB( sect, key, "", buffer, sizeof(buffer), fn ) != 0);
   if (dowrite)
   {
     if (asonoff)
@@ -360,9 +402,6 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
   char buffer[64]; int i;
   const char *sect = OPTION_SECTION;
 
-  client->randomchanged = 1;
-  RefreshRandomPrefix( client );
-
   const char *fn = client->inifilename;
   fn = GetFullPathForFilename( fn );
   if ( !writefull && access( fn, 0 )!=0 )
@@ -372,15 +411,20 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     ((strcmp( client->id,"rc5@distributed.net")==0)?(""):(client->id)), fn )))
     return -1; //failed
 
-  if (__remapObsoleteParameters( fn ) < 0) 
+  if (__remapObsoleteParameters( client, fn ) < 0) 
     return -1; //file is read-only
   
+  client->randomchanged = 1;
+  RefreshRandomPrefix( client );
+
   if (writefull != 0)
   {
     /* --- CONF_MENU_BUFF -- */
     __XSetProfileInt( OPTSECT_BUFFERS, "buffer-only-in-memory", (client->nodiskbuffers)?(1):(0), fn, 0, 'y' );
     __XSetProfileStr( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, fn, NULL );
     __XSetProfileStr( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, fn, NULL );
+
+    __XSetProfileInt( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn, 1, 1 );
     __XSetProfileStr( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, fn, NULL );
 
     strcpy(buffer,projectmap_expand(NULL));
@@ -464,6 +508,8 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     /* --- CONF_MENU_LOG -- */
 
     __XSetProfileStr( sect, "logname", client->logname, fn, NULL );
+    __XSetProfileStr( OPTSECT_LOG, "log-file-type", client->logfiletype, fn, NULL );
+    __XSetProfileStr( OPTSECT_LOG, "log-file-limit", client->logfilelimit, fn, NULL );
     __XSetProfileInt( sect, "messagelen", client->messagelen, fn, 0, 0);
     __XSetProfileStr( sect, "smtpsrvr", client->smtpsrvr, fn, NULL);
     __XSetProfileStr( sect, "smtpfrom", client->smtpfrom, fn, NULL);
@@ -503,10 +549,13 @@ void RefreshRandomPrefix( Client *client )
     if (client->randomchanged)
     {
       client->randomchanged = 0;
-      if (!WritePrivateProfileIntB(OPTSECT_RC5,"randomprefix",client->randomprefix,fn))
+      if (client->randomprefix != 100 || GetPrivateProfileIntB(OPTSECT_RC5, "randomprefix", 0, fn))
       {
-        //client->stopiniio == 1;
-        return; //write fail
+        if (!WritePrivateProfileIntB(OPTSECT_RC5,"randomprefix",client->randomprefix,fn))
+        {
+          //client->stopiniio == 1;
+          return; //write fail
+        }
       }
       WritePrivateProfileStringB(OPTSECT_RC5,"closed",(client->rc564closed)?("1"):(NULL), fn );
       if (client->scheduledupdatetime == 0)

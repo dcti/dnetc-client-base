@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.198.2.2 1999/04/13 19:45:15 jlawson Exp $"; }
+return "@(#)$Id: client.cpp,v 1.198.2.3 1999/04/24 07:34:54 jlawson Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -59,57 +59,56 @@ static void __initialize_client_object(Client *client)
   client->stopiniio=0;
   client->scheduledupdatetime = 0;
   client->inifilename[0]=0;
+  for (contest=0; contest<CONTEST_COUNT; contest++)
+    memset((void *)&(client->membufftable[contest]),0,sizeof(client->membufftable[0]));
 
-  /* -- block/buffer -- */
+  /* -- general -- */
   strcpy(client->id, "rc5@distributed.net" );
-  client->checkpoint_file[0]=0;
+  client->quietmode=0;
+  client->blockcount = 0;
+  client->minutes = 0;
+  client->percentprintingoff=0;
+  client->noexitfilecheck=0;
+  client->pausefile[0]=0;
+  projectmap_build(client->loadorder_map,"");
+
+  /* -- buffers -- */
   client->nodiskbuffers=0;
+  client->in_buffer_basename[0] = '\0';
+  client->out_buffer_basename[0] = '\0';
+  client->checkpoint_file[0]=0;
+  client->offlinemode = 0;
+    /* -- net -- */
+    client->nettimeout=60;
+    client->nofallback=0;
+    client->autofindkeyserver=1;
+    client->keyproxy[0] = 0;
+    client->keyport = 0;
+    client->httpproxy[0] = 0;
+    client->httpport = 0;
+    client->uuehttpmode = 0;
+    client->httpid[0] = 0;
+  client->noupdatefromfile = 0;
+    client->remote_update_dir[0] = '\0';
   client->connectoften=0;
   client->preferred_blocksize=31;
   for (contest=0; contest<CONTEST_COUNT; contest++)
-  {
-    client->inthreshold[contest] = 10;
-    client->outthreshold[contest] = 10;
-    client->membufftable[contest].in.count = 0;
-    client->membufftable[contest].out.count = 0;
-  }
-  client->in_buffer_basename[0] = '\0';
-  client->out_buffer_basename[0] = '\0';
-  client->remote_update_dir[0] = '\0';
-
-  /* -- net -- */
-  client->offlinemode = 0;
-  client->nettimeout=60;
-  client->nofallback=0;
-  client->autofindkeyserver=1;
-  client->keyproxy[0] = 0;
-  client->keyport = 0;
-  client->httpproxy[0] = 0;
-  client->httpport = 0;
-  client->uuehttpmode = 0;
-  client->httpid[0] = 0;
-
-  /* -- log -- */
-  client->logname[0]= 0;
-  client->messagelen = 0;
-  client->smtpport = 25;
-  client->smtpsrvr[0]=0;
-  client->smtpfrom[0]=0;
-  client->smtpdest[0]=0;
+    client->inthreshold[contest] = client->outthreshold[contest] = 10;
 
   /* -- perf -- */
   client->numcpu = -1;
   client->cputype = -1;
   client->priority = 0;
 
-  /* -- misc -- */
-  client->quietmode=0;
-  client->blockcount = 0;
-  client->minutes = 0;
-  client->noexitfilecheck=0;
-  client->percentprintingoff=0;
-  projectmap_build(client->loadorder_map,"");
-  client->pausefile[0]=0;
+  /* -- log -- */
+  client->logname[0]= 0;
+  client->logfiletype[0] = 0;
+  client->logfilelimit[0] = 0;
+  client->messagelen = 0;
+  client->smtpport = 25;
+  client->smtpsrvr[0]=0;
+  client->smtpfrom[0]=0;
+  client->smtpdest[0]=0;
 }
 
 Client::Client()
@@ -157,6 +156,8 @@ int ClientIsGUI(void)
 void PrintBanner(const char *dnet_id,int level,int restarted)
 {
   /* level = 0 = show copyright/version,  1 = show startup message */
+  restarted = 0; /* yes, always show everything */
+  
   if (!restarted)
   {
     if (level == 0)
@@ -230,23 +231,23 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
 
       struct timeval tv; tv.tv_usec = 0; tv.tv_sec = CliTimeGetBuildDate();
       LogRaw("\nRC5DES v" CLIENT_VERSIONSTRING "-"
-		       "%c" /* GUI == "G", CLI == "C" */
-		       #ifdef CLIENT_SUPPORTS_SMP
-		       "T" /* threads */
-		       #else
-		       "P" /* polling */
-		       #endif
+                       "%c" /* GUI == "G", CLI == "C" */
+                       #ifdef CLIENT_SUPPORTS_SMP
+                       "T" /* threads */
+                       #else
+                       "P" /* polling */
+                       #endif
                        #if (defined(BETA) || defined(BETA_PERIOD))
-		       "L" /* limited release */
-		       #else
-		       "R" /* public release */
-		       #endif
+                       "L" /* limited release */
+                       #else
+                       "R" /* public release */
+                       #endif
                        "-%s " /* date is in bugzilla format yymmddhh */ 
-		       "client for %s%s%s%s started.\n",
-	    ((ClientIsGUI())?('G'):('C')),  CliGetTimeString(&tv,4),
+                       "client for %s%s%s%s started.\n",
+            ((ClientIsGUI())?('G'):('C')),  CliGetTimeString(&tv,4),
             CLIENT_OS_NAME, ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
       LogScreenRaw( "Please provide the *entire* version descriptor "
-		    "when submitting bug reports.\n");
+                    "when submitting bug reports.\n");
       LogScreenRaw( "The distributed.net bug report pages are at "
                     "http://www.distributed.net/bugs/\n");
       LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n", dnet_id );
@@ -260,54 +261,54 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
 int Client::Main( int argc, const char *argv[] )
 {
   int retcode = 0;
-  int domodes = 0;
   int restart = 0;
-  int restarted;
 
-  do{
-    restarted = restart;
+  do
+  {
+    int restarted = restart;
     restart = 0;
     __initialize_client_object(this); /* reset everything in the object */
 
     //ReadConfig() and parse command line - returns !0 if shouldn't continue
     if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
-      {
-      domodes = (ModeReqIsSet(-1) != 0);
+    {
+      int domodes = (ModeReqIsSet(-1) != 0);
       if (InitializeTriggers(((noexitfilecheck ||
                               domodes)?(NULL):("exitrc5" EXTN_SEP "now")),
                               ((domodes)?(NULL):(pausefile)) )==0)
-        {
+      {
         if (InitializeConnectivity() == 0) //do global initialization
-          {
+        {
           if (InitializeConsole(quietmode,domodes) == 0)
-            {
+          {
             InitializeLogging( (quietmode!=0), (percentprintingoff!=0),
-                               logname, LOGFILETYPE_NOLIMIT, 0, messagelen,
-                               smtpsrvr, smtpport, smtpfrom, smtpdest, id );
+                               logname, logfiletype, logfilelimit, 
+                               messagelen, smtpsrvr, smtpport, smtpfrom, 
+                               smtpdest, id );
             PrintBanner(id,0,restarted);
             ParseCommandline( 1, argc, argv, NULL, (quietmode==0)); //show overrides
             InitRandom2( id );
 
             if (domodes)
-              {
+            {
               ModeReqRun( this );
-              }
+            }
             else
-              {
+            {
               PrintBanner(id,1,restarted);
               SelectCore( 0 );
               retcode = Run();
               restart = CheckRestartRequestTrigger();
-              }
+            }
             DeinitializeLogging();
             DeinitializeConsole();
-            }
-          DeinitializeConnectivity(); //netinit.cpp
           }
-        DeinitializeTriggers();
+          DeinitializeConnectivity(); //netinit.cpp
         }
+        DeinitializeTriggers();
       }
-    } while (restart);
+    }
+  } while (restart);
   return retcode;
 }
 
