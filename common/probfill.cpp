@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.66 2001/03/12 00:00:58 sampo Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.67 2001/03/19 15:38:59 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -402,8 +402,9 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       const char *contname;
       char pktid[32], ratebuf[32]; 
       char dcountbuf[64]; /* we use this as scratch space too */
-      u32 secs, usecs, ccounthi, ccountlo;
+      u32 secs, usecs, ccounthi, ccountlo, tcounthi, tcountlo;
       struct timeval tv;
+      ProblemInfo info;
 
       *contest = cont_i;
       *is_empty = 1; /* will soon be */
@@ -476,7 +477,9 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           action_msg = "Completed";
       }
 
-      if (ProblemGetInfo( thisprob, 0, &contname, 
+      memset(&info, 0, sizeof(info));
+      if (ProblemGetInfo( thisprob, &info, 0, 
+                                    0, &contname, 
                                     &secs, &usecs,
                                     &swucount, 2, 
                                     0, 
@@ -485,7 +488,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                                     0, 0, 
                                     0, 0, 
                                     ratebuf, sizeof(ratebuf),
-                                    0, 0, 
+                                    &tcounthi, &tcountlo,
                                     0, 0,
                                     &ccounthi, &ccountlo,
                                     0, 0,
@@ -493,7 +496,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       {
         tv.tv_sec = secs; tv.tv_usec = usecs;
 
-        if (finito && !discarded && swucount) /* swucount is zero for TEST */
+        if (finito && !discarded && !info.is_test_packet)
           CliAddContestInfoSummaryData(cont_i,ccounthi,ccountlo,&tv,swucount);
 
         if (action_msg)
@@ -508,13 +511,13 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           }
           else
           {
-            if (finito && !swucount) /* finished test packet */
+            if (finito && info.is_test_packet) /* finished test packet */
               strcat( strcpy( dcountbuf,"Test: RESULT_"),
                      ((resultcode==RESULT_NOTHING)?("NOTHING"):("FOUND")) );
             else if (finito) /* finished non-test packet */ 
             {
-              char *p = strrchr(pktid,':'); /* HACK! to supress too long */
-              if (p) *p = '\0';            /* crypto "Completed" lines */
+              char *p = strrchr(pktid, ':'); /* HACK! to supress too long */
+              if (p) *p = '\0';              /* crypto "Completed" lines */
               sprintf( dcountbuf, "%u.%02u stats units", 
                                   swucount/100, swucount%100);
             }
@@ -525,16 +528,21 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 
             //[....] RC5: Saved 12345678:ABCDEF00 4*2^28 (5.20% done)
             //       1.23:45:67:89 - [987,654,321 keys/s]
-            //[....] RC5: Saved 25/1-6-13-8-16-18 (12.34 Mnodes done)
+            //[....] OGR: Saved 25/1-6-13-8-16-18 (12.34 Mnodes done)
             //       1.23:45:67:89 - [987,654,321 nodes/s]
             //[....] RC5: Completed 68E0D85A:A0000000 4*2^28 (4.00 stats units)
             //       1.23:45:67:89 - [987,654,321 keys/s]
             //[....] OGR: Completed 22/1-3-5-7 (12.30 stats units)
             //       1.23:45:67:89 - [987,654,321 nodes/s]
-            Log("%s: %s %s (%s)\n%s - [%s/s]\n", 
+            Log("%s: %s %s (%s)\n%s - [%s/s]\n",
               contname, action_msg, pktid, dcountbuf,
               CliGetTimeString( &tv, 2 ), ratebuf );
-          } /* if (reason_msg) else */
+            if (finito && info.show_exact_iterations_done) 
+            {
+              Log("%s: %s [%s]\n", contname, pktid, 
+                    ProblemComputeRate(cont_i, 0, 0, tcounthi, tcountlo, 
+                                         0, 0, dcountbuf, sizeof(dcountbuf)));
+            }                                                                                                                   } /* if (reason_msg) else */
         } /* if (action_msg) */
       } /* if (thisprob->GetProblemInfo( ... ) != -1) */
     
@@ -710,7 +718,8 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         {
           unsigned int permille; u32 ddonehi, ddonelo;
           const char *contname; char pktid[32]; char ddonebuf[15];
-          if (ProblemGetInfo( thisprob, loaded_for_contest, &contname, 
+          if (ProblemGetInfo( thisprob, 0, 0, 
+                                        loaded_for_contest, &contname, 
                                         0, 0,
                                         0, 2, 
                                         0, 
