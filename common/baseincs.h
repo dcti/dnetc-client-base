@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.29 2000/03/20 14:27:53 jbaker Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.30 2000/04/21 08:55:34 jlawson Exp $"
 
 #include "cputypes.h"
 
@@ -127,6 +127,16 @@ extern "C" {
   #include <share.h>
   #include <fcntl.h>
   #include <io.h>
+  #ifdef __BORLANDC__
+    #include <utime.h>
+  #else
+    #include <sys/utime.h>
+  #endif
+  #include <fcntl.h>
+  #ifndef SH_DENYNO
+    #include <share.h>
+  #endif
+  #include "w32util.h"
   #include "w32svc.h"       // service
   #include "w32cons.h"      // console
   #include "w32pre.h"       // prelude
@@ -145,6 +155,9 @@ extern "C" {
     //#define S_IWUSR S_IWRITE
     #define S_IRGRP S_IREAD
     #define S_IWGRP S_IWRITE
+  #endif
+  #ifndef MAX_PATH
+    #define MAX_PATH 256
   #endif
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>

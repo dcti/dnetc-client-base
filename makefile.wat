@@ -6,7 +6,7 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.27.2.9 2000/03/10 03:10:39 jlawson Exp $
+## $Id: makefile.wat,v 1.27.2.10 2000/04/21 08:55:34 jlawson Exp $
 
 BASENAME = dnetc
 
@@ -637,6 +637,18 @@ output\w32x86.obj : platforms\win32cli\w32x86.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
+output\w32pid.obj : platforms\win32cli\w32pid.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\w32exe.obj : platforms\win32cli\w32exe.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\w32ini.obj : platforms\win32cli\w32ini.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
 output\w32util.obj : platforms\win32cli\w32util.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
@@ -652,7 +664,8 @@ output\w32cuis.obj : platforms\win32cli\w32cuis.c $(%LINKOBJS) .AUTODEPEND
    @if not $(%EXECOMPRESSOR).==. @$(%EXECOMPRESSOR) $(BASENAME).com
 
 output\w32ssb.obj : platforms\win32cli\w32ssb.cpp platforms\win32cli\w32cons.rc &
-                    output\w32util.obj output\w32ss.obj
+                    output\w32util.obj output\w32ss.obj output\w32ini.obj &
+                    output\w32exe.obj
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) platforms\win32cli\w32ssb.cpp $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
   @if $(%OSNAME).==win16. @wlink $(%LFLAGS) name $(BASENAME).scr &
@@ -826,7 +839,8 @@ w16: .symbolic                                       # Windows/16
      @set OPT_SPEED = /oaxt #/oneatx /oh /oi+ 
      @set LINKOBJS  = output\w32pre.obj output\w32ss.obj output\w32cons.obj &
                       output\w32sock.obj output\w32svc.obj output\w32x86.obj &
-                      output\w32util.obj $(%LINKOBJS)
+                      output\w32util.obj output\w32exe.obj output\w32ini.obj &
+                      output\w32pid.obj $(%LINKOBJS)
      @set PRELINKDEPS = output\w32ssb.obj
      @set POSTLINKTGTS = 
      @set LIBFILES  =
@@ -870,7 +884,8 @@ w32: .symbolic                               # win32
      @set OPT_SPEED = /oneatx /oh /oi+ /ei #/oneatx /oh /oi+ 
      @set LINKOBJS  = output\w32pre.obj output\w32ss.obj output\w32svc.obj &
                       output\w32cons.obj output\w32sock.obj output\w32ras.obj &
-                      output\w32util.obj output\lurk.obj $(%LINKOBJS)
+                      output\w32util.obj output\w32exe.obj output\w32ini.obj &
+                      output\w32pid.obj output\lurk.obj $(%LINKOBJS)
      @set PRELINKDEPS = output\w32ssb.obj output\w32cuis.obj
      @set POSTLINKTGTS = 
      @set LIBFILES  = user32,kernel32,advapi32,gdi32
@@ -908,7 +923,8 @@ w32ss: .symbolic                               # win32 screen saver
                       /DSSSTANDALONE
      @set OPT_SIZE  = /s /os
      @set OPT_SPEED = /oneatx /oh /oi+ /ei #/oneatx /oh /oi+ 
-     @set LINKOBJS  = output\w32ssb.obj output\w32ss.obj output\w32util.obj
+     @set LINKOBJS  = output\w32ssb.obj output\w32ss.obj output\w32util.obj &
+                      output\w32exe.obj output\w32ini.obj
      @set COREOBJS  =
      @set LIBFILES  = user32,kernel32,advapi32,gdi32
      @set MODULES   =
@@ -931,7 +947,8 @@ w16ss: .symbolic                    # Windows/16 screen saver
                       /i$(%watcom)\h;$(%watcom)\h\win;platforms/win32cli
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oaxt 
-     @set LINKOBJS  = output\w32ss.obj output\w32util.obj
+     @set LINKOBJS  = output\w32ss.obj output\w32util.obj &
+                      output\w32exe.obj output\w32ini.obj
      @set DEFALL    =
      @set COREOBJS  =
      @set LIBFILES  =
