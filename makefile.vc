@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.68 1999/11/15 03:04:54 cyp Exp $
+# $Id: makefile.vc,v 1.69 1999/12/08 02:47:02 cyp Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -66,7 +66,7 @@ OPTS_M_PLAT = IX86
 
 OPTS_MSVC = -nologo -I$(COMMONPATH) -I$(PLATSRCPATH) \
             -I$(DESSRCPATH) -I$(OGRSRCPATH) -I$(CSCSRCPATH) \
-            -DMULTITHREAD -D__WIN32__ -D_CPU_32BIT_ -DBIT_64 -DLURK \
+            -DMULTITHREAD -D__WIN32__ -D_CPU_32BIT_ -DLURK \
             -DHAVE_DES_CORES -DHAVE_OGR_CORES -DHAVE_CSC_CORES \
             -W3 -MT -GR- -GX- -GA -GF \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG) 

@@ -1,5 +1,5 @@
 
-$Id: TODO.txt,v 1.9 1999/06/11 13:39:35 cyp Exp $
+$Id: TODO.txt,v 1.10 1999/12/08 02:47:02 cyp Exp $
 
 This file contains a list of mini-projects. Submissions as well as 
 volunteers :) are welcome. 
@@ -14,25 +14,6 @@ with 'bug' or 'feature request') here.
 If you have the expertise but lack the time to handle a project, 
 please post your willingness to assist to coders@lists.distributed.net.
 Perhaps someone else has what you don't. :)
-
--- Add code to run a mini-,silent-,selftest (for all projects) on start.
-   This is to catch bad cores we don't have the CPUs to test for.
-                                                      **** Priority: HIGH
-
--- Clean up the cores.                                **** Priority: HIGH
-   a) The ideal prototype for any core, regardless of project,
-      s32 (*core_unit)( RC5unitWork *, u32 *timeslice, void *membuff );
-      1) it does its own pre- and post-incrementation, 
-      2) timeslice to 'nbits' ('nodes') conversion, 
-      3) store the effective timeslice back in *timeslice
-      4) return a rescode == RESULT_[FOUND|NOTHING|WORKING] or -1 if error
-      Also note that the call is to a function pointer that is selected
-      in Problem::LoadState() based on contest number and cputype. 
-   b) Clean up "ANSI" core(s) 
-      a) get rid of the RC5CORE stuff from ./configure
-      b) rename the cores from [rc5|des]_unit_func to 
-         [rc5|des]_ansi_[x]_unit_func 
-      c) fix the cores to use timeslice
 
 -- Devise and write a better filebuffer scheme.       Priority: in-progress
    a) better "locking". The current method of writing 0x1 to tag

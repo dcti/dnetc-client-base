@@ -6,7 +6,7 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.28 1999/11/09 18:36:43 cyp Exp $
+## $Id: makefile.wat,v 1.29 1999/12/08 02:47:02 cyp Exp $
 
 BASENAME = dnetc
 
@@ -76,12 +76,12 @@ BASENAME = dnetc
 %rc5mmxamd_SYMALIAS = #
 #---
 %desmmx_LINKOBJS = output\des-slice-meggs.obj output\deseval-mmx.obj
-%desmmx_DEFALL   = /DMEGGS /DMMX_BITSLICER /DBIT_64 #/DBITSLICER_WITH_LESS_BITS
+%desmmx_DEFALL   = /DMEGGS /DMMX_BITSLICER #/DBITSLICER_WITH_LESS_BITS
 %desmmx_SYMALIAS = #
 #---
 %des_mt_LINKOBJS = output\p2bdespro.obj output\bbdeslow.obj &
                    output\des-slice.obj output\deseval.obj output\sboxes-kwan4.obj 
-%des_mt_DEFALL   = /DKWAN #/DBIT_32
+%des_mt_DEFALL   = /DKWAN 
 %des_mt_SYMALIAS = #
 #---
 
