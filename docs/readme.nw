@@ -1,102 +1,83 @@
 
  distributed.net client for NetWare 3.11 and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- Document revision $Id: readme.nw,v 1.5.2.3 1999/11/09 17:04:38 cyp Exp $
+ Document revision $Id: readme.nw,v 1.5.2.4 2000/06/03 12:39:15 cyp Exp $
                                                           
  Welcome to the distributed.net client.
  This version is a unified client for both SMP and non-SMP machines.
 
  This document covers information specific to the client for NetWare.
  Refer to other enclosed documentation or browse the online FAQ at
- http://www.distributed.net/FAQ for non-platform-specific documentation.
+ http://www.distributed.net/FAQ/ for non-platform-specific documentation.
 
     1.0  Getting started
     2.0  distributed.net client for NetWare specific notes
-    3.0  Frequently seen problems, frequently asked questions.
+    3.0  client-for-NetWare specific configuration file options
+    4.0  Frequently seen problems, frequently asked questions.
 
  1.0  Getting started ------------------------------------------------
    
     Just copy the client into a directory of your choice and fire it up.
     If you have never run the client before, it will prompt you with a
     list of options. Quit and save when done, and then reload the client.
-    
-    NetWare 3.x,4.0,4.01,4.02,4.1 specific note:
 
-    NetWare 3 and NetWare 4 pre-4.11 don't come with a resolver 
-    (convert hostnames to IP addresses) library, so I wrote my own 
-    resolver, and while this worked fine for clients prior to v2.7112,
-    it may no longer do so since I no longer have a NetWare 3.x machine 
-    to check it on. 
-    NETDB.NLM is included in every NetWare 3.x,4.0 CLIB fix pack, so 
-    please get it from there if you do not have it and you have 
-    resolver problems. The client will use NETDB.NLM if it is available.    
-    
-    NetWare 3.1x specific note:
-     
-    A3112.NLM is required by this version of the client. NetWare 3.x 
-    users who do not have this file in their SYS:/SYSTEM directory may 
-    obtain it from Novell (it is part of the latest (October '95) CLIB 
-    update, ie LIB311.EXE or LIB312.EXE. The updates are also available 
+    Dependancies (or not):
+
+    A3112.NLM: is *required* by this version of the client. NetWare 3.x
+    users who do not have this file in their SYS:/SYSTEM directory may
+    obtain it from Novell. It is part of the every recent (after Oct/95)
+    update, ie LIB311.EXE or LIB312.EXE. The updates are also available
     from http://fb14.uni-mainz.de/~cyp/
 
+    TCPIP.NLM: The client does not require TCPIP (ie it will run offline
+    if TCPIP is not detected), but will use it if available/loaded.
 
-    The client does not *require* TCPIP (ie it will run offline if TCPIP 
-    is not detected), but will use it if available. The client has not 
-    been tested SFTIII, although it should work fine in that environment. 
-    Feedback to the porter :) <cyp@fb14.uni-mainz.de> is much appreciated.
+    NETDB.NLM: The client does not require NETDB, but will use it if 
+    available/loaded.  NetWare 3.x and NetWare 4 pre-4.10 don't come with 
+    a resolver (convert hostnames to IP addresses) library out of the box, 
+    so I wrote my own. If you have problems with name lookups, please get 
+    NETDB.NLM (its included with every NetWare 3.x and 4.x CLIB fix pack) 
+    and load it before loading the client. 
 
-    Please contact me at the address above if you have access to a 
-    NetWare 3.11 machine and are interested in running the pre-release 
-    clients at your site.
- 
+    SFTIII: The client has not been tested under SFTIII.
+    NetWare 3.11: The client has not been tested under NetWare 3.11.
+    Feedback to <cyp@fb14.uni-mainz.de> would be much appreciated.
+
  2.0  Notes: ---------------------------------------------------------
 
-    Beginning with v2.7112, the 'priority' setting in the .ini is
-    particularly sensitive. Each priority increment is 0.5 milliseconds-
-    before-yield, ie priority zero == yield every 0.5ms, priority one 
-    == yield every 1 millisec and so on.
+    Beginning with v2.8000, the ability to run the client from within 
+    the polling loop has been removed entirely. 
 
-    Beginning with v2.7112, the client supports the following configuration 
-    file options that are specific to the client for NetWare. These options 
-    are not editable from the clients -config dialog, and the config file
-    name cannot be anything but the default name (path+nlmbasename+.ini)
+    Beginning with v2.7112, the client supports -shutdown, -restart,
+    -pause and -unpause as console commands. That is, the client
+    inserts itself into the console command parser and can be issued
+    these commands from there. For example, the _command_ (note, *not*
+    "LOAD command") 'dnetc -pause' will cause the client to pause itself.
+    Due to a bug/feature in the NetWare 5 console command handler, these 
+    options will not be available if the client was initially loaded 
+    without  the 'LOAD' or if the client is in the search path. 
+    Use 'dnetcmd' instead.
 
-    [NetWare]           ; this is the name of the subsection in the .ini
-    fully-preemptive=0  
-    restartable-threads=1
-    use-polling-loop=1
-    sqelch-util-indicators=0
+    Beginning with v2.7112, the client supports several configuration
+    file settings that are specific to the client for NetWare. See
+    'NetWare specific configuration options' below.
 
-    fully-preemptive: (default=disabled) this option is useful only on 
-      NetWare 5 and tells the client to make use of NetWare 5's 
-      preemption capabilities. Do *not* turn it on unless the machine 
-      is doing nothing useful (ie, it is *not* serving clients).
-      Turning it on will boost the crunch rate, but file and network I/O
-      will suffer drastically.
-    restartable-threads: (default=enabled) 
-      this option tells the client to periodically restart the crunchers 
-      and consequently disable NetWare's efficiency profiling for that 
-      thread. If you turn this option off, NetWare will see the crunchers 
-      using lots of processor time, will think they need more and threads 
-      will run faster and faster as time goes by, to the point where the 
-      performance of other service processes and file and network I/O 
-      starts to degrade. 
-      Turning it off will boost the crunch rate over time, but should
-      not be used unless the client is restarted (or stopped) periodically 
-      (from a cron job for instance), or the client is running on a machine
-      that isn't doing anything useful (ie, it is not serving clients).
-    use-polling-loop: (default=enabled)
-      Beginning with version 2.7020.403, the client will, when possible
-      and when not running on a multi-processor machine, insert itself 
-      into the Idle Loop (called the 'Polling Loop' on NetWare 3.x) 
-      just like NetWare 3.x PSERVER does, which allows it to control 
-      processor usage far more precisely than it could before. Thus, 
-      it will appear as if the client was using no processing power at all.
-      The side effect on NetWare 3.x is that PSERVER, and consequently
-      printing, runs slower. Only one cruncher can run in the polling 
-      loop and may need to be disabled when running on SMP since it 
-      affects load balancing optimization.
-    sqelch-util-indicators: (default=disabled)
+    Beginning with v2.7014, the client can also be loaded more than once. 
+    Unloading and reloading the client for executing -fetch, -flush or 
+    -update is therefore no longer necessary. 
+    
+    Beginning with v2.7012, the two SMP and non-SMP clients have been 
+    merged into one unified client.
+
+ 3.0 client-for-NetWare specific configuration file options -------------
+
+    the following configuration file setting are specific to the client 
+    for NetWare and are not editable from the client's -config screens.
+
+    [NetWare]             ; this is the name of the subsection in dnetc.ini
+    sqelch-util-indicators=0  [not available on NetWare 5.x]
+    
+    - sqelch-util-indicators: (default=disabled)
       enabling this option tells the client to *attempt* to periodically 
       reset the 'processor utilization' indicator (as seen in monitor 
       for example). This option was added when users noted that 
@@ -104,93 +85,37 @@
       when the client was active. This was traced to what appeared as 
       'high' processor utilization which caused those jobs to reschedule 
       themselves because they believed the file server to be heavily loaded. 
+      'sqelch-util-indicator' is not available on NetWare 5.x.
+
       It is a common assumption that high 'processor utilization' is 
       an indication of a heavily loaded processor. This is *not* true.
       The 'processor utilization' indicator is simply an indication
       of how much time the OS spends in the 'idle loop' (called 'polling 
       loop' on NetWare 3) as a ratio to time spent in servicing threads.
+
       Note that this is option only causes the client to *attempt* 
       sqelching for brain-dead applications that rely on the 'utilization
       indicator' as a base for rescheduling logic. If your aim is to "hide"
       the client from your boss because you/he/she thinks a whizzing snake
       is scary, don't use the client or get another boss. :)
-      It works fine on NetWare 3 and 4, but appears to not work on NetWare 
-      5 (I don't run NetWare 5). Furthermore, it does not influence the 
-      counters on any processor except the primary processor.
 
-    Beginning with v2.7012, the two SMP and non-SMP clients have been 
-    merged into one unified client.
+ 4.0  Frequently seen problems, frequently asked questions ---------------
 
-    Beginning with v2.7014, the client can also be loaded more than once. 
-    Unloading and reloading the client for executing -fetch, -flush or 
-    -update is therefore no longer necessary. 
-    
-    Beginning with v2.7112, the client supports -shutdown, -restart,
-    -pause and -unpause from the command line. That is, the client
-    inserts itself into the console command parser and can be issued
-    these commands from there. For example, the _command_ (note, not
-    "load command") 'dnetc -pause' will cause the client to pause
-    itself.
+    - Q: I get a startup message saying "Cannot find public symbol XXX"
+         Whats up with that?
+      A: *sigh*  Read the section on "Getting Started".
+         Please let me know if you see this on NetWare 3.11
 
- 4.0  Frequently seen problems, frequently asked questions -------------
-
-    - If you get a startup message saying "Cannot find public symbol XXX",
-      read the section on "Getting Started".
-
-    - Multi-processor support may or may not work properly (seen as the 
-      crunchers all bunch up on one or two of the many processors). This is 
-      not the client's fault, but due to NetWare's poor load balancing 
-      logic, and is observable in most SMP-aware applications including 
-      Novell's own GroupWise. 
-      On NetWare 5, this "all threads on one processor" problem can be 
-      worked around by setting "system threshold" to something very low 
-      (your mileage will vary, but zero always works :). There is no known 
-      solution for this for NetWare 4, but running multiple instances 
-      (loading one client per processor, with numcpu set to 1) may help.
-
-    - 90% of the problems that are brought to my attention are network 
-      related. 
-      Ensure that your TCP/IP stack is correctly configured.
-       LOAD TCPIP.NLM
-       BIND IP TO {MLIDname} ADD=<ip address> 
-                             MASK=<net mask> 
-                             GATE=<ip address of gateway>  
-                             BCAST=<broadcast mask>
-        where ADD=    is the legal IP address of your machine, 
-                      eg ADD=134.93.246.119 
-              MASK=   is the netmask - it must agree with every other 
-                      host on your (sub-)network. 
-                      eg MASK=255.255.255.0
-              GATE=   is the IP address of the gateway. Ask your 
-                      network guru for the correct number. Use GATE
-                      even if Novell tells you not to (such as when 
-                      using RIP [Routing Information Protocol]).
-                      eg, GATE=134.93.247.254
-              BCAST=  is the IP range your machine will broadcast in.
-                      Your network guru will know this too.
-                      eg BCAST=134.93.247.255
-       Do *not* use leading zeros in IP address components (would 
-       otherwise be interpreted as an octal number).
-    
-    - Hostname lookup problems: NetWare 3 and NetWare 4 pre-4.11 don't 
-      come with a resolver library, so I wrote my own, and while this 
-      worked fine for clients prior to v2.7112, it may no longer do so 
-      since I no longer have a NetWare 3.x machine to check it on. 
-      NETDB.NLM is included in every NetWare 3.x,4.0 CLIB fix pack, so 
-      please get it from there if you do  not have it and you have 
-      resolver problems. The client will use NETDB.NLM if it is available.
-
-      Also ensure that your SYS:/ETC/RESOLV.CFG is correctly configured.
-      Note that it is spelled 'RESOLV.CFG', not 'RESOLVE.CFG'!
-      The contents should look *minimally* something like this: 
-          domain arl.mil
-          search hosts dns
-          nameserver 128.63.31.4
-          nameserver 128.63.5.4
-       This is only an example. Your internet guru knows the correct 
-       values. NOTE: THE FILE IS CALLED RESOLV.CFG (without a second 'E')
+    - Q: The client consistantly fails to find a keyserver. It says
+         "Unable to resolve xxxx"
+      A: Either TCPIP.NLM or SYS:/ETC/RESOLV.CFG is incorrectly setup.
+         - Check the TCP/IP stack by trying to ping a host on the internet.
+           For example: "LOAD PING 192.233.80.4" (<-www.novell.com)
+         - If your RESOLV.CFG is properly configured, then you will also
+           be able to ping by name. For example: "LOAD PING www.novell.com"
+         Note that RESOLV.CFG does not have a second "E", and that it has
+         a .CFG suffix and not '.conf'.
 
     Please report problems, suggestions to the port maintainer
     Cyrus Patel <cyp@fb14.uni-mainz.de>  Don't fret if you don't get 
     a response right away.
-
