@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.60  1998/06/27 21:17:22  jlawson
+# Made only the first match from the grep for the platform/os identifier
+# get kept by adding head -1
+#
 # Revision 1.59  1998/06/27 12:01:10  friedbait
 # switched os390 from SLICE_SRCS4 to MEGGS_SLICE_SRCS, the old setting
 # didn't compile anymore and didn't have time to figure out why.
@@ -879,8 +883,8 @@ CLIENTCPU=`./testplat cpu`
 CLIENTOS=`./testplat os`
 INTSIZES=`./testplat intsizes`
 fi
-CLIENTOSNAME=`grep "#define OS_.*\<$CLIENTOS\>" common/cputypes.h | cut -d' ' -f2`
-CLIENTCPUNAME=`grep "#define CPU_.*\<$CLIENTCPU\>" common/cputypes.h | cut -d' ' -f2`
+CLIENTOSNAME=`grep "#define OS_.*\<$CLIENTOS\>" common/cputypes.h | head -1 | cut -d' ' -f2`
+CLIENTCPUNAME=`grep "#define CPU_.*\<$CLIENTCPU\>" common/cputypes.h | head -1 | cut -d' ' -f2`
 echo "CLIENT_CPU = $CLIENTCPUNAME ($CLIENTCPU)"
 echo "CLIENT_OS = $CLIENTOSNAME ($CLIENTOS)"
 echo "INTSIZES = $INTSIZES"
