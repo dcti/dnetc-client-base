@@ -5,7 +5,7 @@
  */
 
 const char *ogr_cpp(void) {
-return "@(#)$Id: ogr.cpp,v 1.3.2.19 2000/02/15 03:41:53 sampo Exp $"; }
+return "@(#)$Id: ogr.cpp,v 1.3.2.20 2000/02/20 08:09:26 sampo Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,90 +33,6 @@ static int OGR[] = {
 static char first[65537];  /* first blank in 16 bit COMP bitmap, range: 1..16 */
 static U bit[200];         /* which bit of LIST to update */
 
-#if __VEC__
-#define COMP_LEFT_LIST_RIGHT(lev,s)                             \
-  {                                                             \
-    int ss = s - 32;                                            \
-    vec vs,vss,comps,listss;                                    \
-    vec2 compss,lists;                                          \
-    vs.u[0] = s;			    							    \
-    vss.u[0] = s - 32;    									    \
-    vs.v = vec_splat(vs.v,0);							        \
-    vss.v = vec_splat(vss.v,0);						            \
-    comps.v = vec_sl(lev->comp.v[0],vs.v);                      \
-    compss.v[0] = vec_sr(lev->comp.v[0],vss.v);                 \
-    compss.v[1] = vec_sr(lev->comp.v[1],vss.v);                 \
-    lev->comp.u[0] = comps.u[0] | compss.u[1];                  \
-    lev->comp.u[1] = comps.u[1] | compss.u[2];                  \
-    lev->comp.u[2] = comps.u[2] | compss.u[3];                  \
-    lev->comp.u[3] = comps.u[3] | compss.u[4];                  \
-    lev->comp.u[4] <<= s;                                       \
-    lists.v[0] = vec_sr(lev->list.v[0],vs.v);                   \
-    lists.v[1] = vec_sr(lev->list.v[1],vs.v);                   \
-    listss.v = vec_sl(lev->list.v[0],vss.v);                    \
-    lev->list.u[4] = lists.u[4] | listss.u[3];                  \
-    lev->list.u[3] = lists.u[3] | listss.u[2];                  \
-    lev->list.u[2] = lists.u[2] | listss.u[1];                  \
-    lev->list.u[1] = lists.u[1] | listss.u[0];                  \
-    lev->list.u[0] >>= s;                                       \
-  }
-
-#define COMP_LEFT_LIST_RIGHT_32(lev)                  \
-  lev->comp.u[0] = lev->comp.u[1];                    \
-  lev->comp.u[1] = lev->comp.u[2];                    \
-  lev->comp.u[2] = lev->comp.u[3];                    \
-  lev->comp.u[3] = lev->comp.u[4];                    \
-  lev->comp.u[4] = 0;                                 \
-  lev->list.u[4] = lev->list.u[3];                    \
-  lev->list.u[3] = lev->list.u[2];                    \
-  lev->list.u[2] = lev->list.u[1];                    \
-  lev->list.u[1] = lev->list.u[0];                    \
-  lev->list.u[0] = 0;
-
-
-#define COPY_LIST_SET_BIT(lev2,lev,bitindex)          \
-  {                                                   \
-    int d = bitindex;                                 \
-    if (d <= 32) {                                    \
-       lev2->list.u[0] = lev->list.u[0] | bit[ d ];   \
-       lev2->list.u[1] = lev->list.u[1];              \
-       lev2->list.u[2] = lev->list.u[2];              \
-       lev2->list.u[3] = lev->list.u[3];              \
-       lev2->list.u[4] = lev->list.u[4];              \
-    } else if (d <= 64) {                             \
-       lev2->list.u[0] = lev->list.u[0];              \
-       lev2->list.u[1] = lev->list.u[1] | bit[ d ];   \
-       lev2->list.u[2] = lev->list.u[2];              \
-       lev2->list.u[3] = lev->list.u[3];              \
-       lev2->list.u[4] = lev->list.u[4];              \
-    } else if (d <= 96) {                             \
-       lev2->list.u[0] = lev->list.u[0];              \
-       lev2->list.u[1] = lev->list.u[1];              \
-       lev2->list.u[2] = lev->list.u[2] | bit[ d ];   \
-       lev2->list.u[3] = lev->list.u[3];              \
-       lev2->list.u[4] = lev->list.u[4];              \
-    } else if (d <= 128) {                            \
-       lev2->list.u[0] = lev->list.u[0];              \
-       lev2->list.u[1] = lev->list.u[1];              \
-       lev2->list.u[2] = lev->list.u[2];              \
-       lev2->list.u[3] = lev->list.u[3] | bit[ d ];   \
-       lev2->list.u[4] = lev->list.u[4];              \
-    } else if (d <= 160) {                            \
-       lev2->list.v[0] = lev->list.v[0];              \
-       lev2->list.u[4] = lev->list.u[4] | bit[ d ];   \
-    } else {                                          \
-       lev2->list.v[0] = lev->list.v[0];              \
-       lev2->list.u[4] = lev->list.u[4];              \
-    }                                                 \
-  }
-
-#define COPY_DIST_COMP(lev2,lev)                              \
-  lev2->dist.v[0] = vec_or(lev->dist.v[0],lev2->list.v[0]);   \
-  lev2->dist.u[4] = lev->dist.u[4] | lev2->list.u[4];         \
-  lev2->comp.v[0] = vec_or(lev->comp.v[0],lev2->dist.v[0]);   \
-  lev2->comp.u[4] = lev->comp.u[4] | lev2->dist.u[4];
-
-#else
 #define COMP_LEFT_LIST_RIGHT(lev,s)                             \
   {                                                             \
     int ss = 32 - s;                                            \
@@ -197,7 +113,6 @@ static U bit[200];         /* which bit of LIST to update */
   lev2->comp[2] = lev->comp[2] | lev2->dist[2];   \
   lev2->comp[3] = lev->comp[3] | lev2->dist[3];   \
   lev2->comp[4] = lev->comp[4] | lev2->dist[4];
-#endif
 
 static CoreDispatchTable dispatch_table;
 
@@ -317,11 +232,7 @@ static void dump(int depth, struct Level *lev, int limit)
 }
 #endif
 
-#if __VEC__
-static int vec_ogr_create(void *input, int inputlen, void *state, int statelen)
-#else
 static int ogr_create(void *input, int inputlen, void *state, int statelen)
-#endif
 {
   struct State *oState;
   struct WorkStub *workstub = (struct WorkStub *)input;
@@ -386,19 +297,11 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
           limit = oState->max - OGR[oState->maxdepthm1 - oState->depth];
           limit = limit < oState->half_length ? limit : oState->half_length;
         } else {
-#if __VEC__
-          limit = oState->max - choose(lev->dist.u[0] >> ttmMAXBITS, oState->maxdepthm1 - oState->depth);
-#else
           limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - oState->depth);
-#endif
           limit = limit < oState->max - oState->marks[oState->half_depth]-1 ? limit : oState->max - oState->marks[oState->half_depth]-1;
         }
       } else {
-#if __VEC__
-        limit = oState->max - choose(lev->dist.u[0] >> ttmMAXBITS, oState->maxdepthm1 - oState->depth);
-#else
         limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - oState->depth);
-#endif
       }
       lev->limit = limit;
       int s = workstub->stub.diffs[i];
@@ -459,11 +362,7 @@ static void dump_ruler(struct State *oState, int depth)
 }
 #endif
 
-#if __VEC__
-static int vec_ogr_cycle(void *state, int *pnodes)
-#else
 static int ogr_cycle(void *state, int *pnodes)
-#endif
 {
   struct State *oState = (struct State *)state;
   int depth = oState->depth+1;      /* the depth of recursion */
@@ -494,19 +393,11 @@ static int ogr_cycle(void *state, int *pnodes)
         limit = oState->max - OGR[oState->maxdepthm1 - depth];
         limit = limit < oState->half_length ? limit : oState->half_length;
       } else {
-#if __VEC__
-        limit = oState->max - choose(lev->dist.u[0] >> ttmMAXBITS, oState->maxdepthm1 - depth);
-#else
         limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - depth);
-#endif
         limit = limit < oState->max - oState->marks[oState->half_depth]-1 ? limit : oState->max - oState->marks[oState->half_depth]-1;
       }
     } else {
-#if __VEC__
-      limit = oState->max - choose(lev->dist.u[0] >> ttmMAXBITS, oState->maxdepthm1 - depth);
-#else
       limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - depth);
-#endif
     }
 
 #ifdef OGR_DEBUG
@@ -517,11 +408,7 @@ static int ogr_cycle(void *state, int *pnodes)
 
     /* Find the next available mark location for this level */
 stay:
-#if __VEC__
-    comp0 = lev->comp.u[0];
-#else
     comp0 = lev->comp[0];
-#endif
 #ifdef OGR_DEBUG
     if (oState->LOGGING) printf("comp0=%08x\n", comp0);
 #endif
@@ -649,20 +536,11 @@ static int ogr_cleanup()
   return CORE_S_OK;
 }
 
-#if __VEC__
-CoreDispatchTable *vec_ogr_get_dispatch_table()
-#else
 CoreDispatchTable *ogr_get_dispatch_table()
-#endif
 {
   dispatch_table.init      = &ogr_init;
-#if __VEC__
-  dispatch_table.create    = &vec_ogr_create;
-  dispatch_table.cycle     = &vec_ogr_cycle;
-#else
   dispatch_table.create    = &ogr_create;
   dispatch_table.cycle     = &ogr_cycle;
-#endif
   dispatch_table.getresult = &ogr_getresult;
   dispatch_table.destroy   = &ogr_destroy;
 #if 0

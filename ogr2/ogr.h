@@ -48,26 +48,6 @@ struct WorkStub { /* size is 28 */
 
 typedef u32 U;
 
-#if __VEC__
-typedef union {
-	vector unsigned int v;
-	U u[4];
-    struct{U t,h,m,l;};
-} vec;
-typedef union {
-	vector unsigned int v[2];
-	U u[8];
-    struct{U ui1,ui2,ui3,ui4,ui5,ui6,ui7,ui8;};
-} vec2;
-struct Level {
-  vec2 list;
-  vec2 dist;
-  vec2 comp;
-  int cnt1;
-  int cnt2;
-  int limit;
-};
-#else
 struct Level {
   U list[BITMAPS];
   U dist[BITMAPS];
@@ -76,7 +56,6 @@ struct Level {
   int cnt2;
   int limit;
 };
-#endif
 
 #define OGR_LEVEL_SIZE (((4*BITMAPS)*3)+(OGR_INT_SIZE*3))
 
