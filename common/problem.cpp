@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.39 1999/12/13 15:53:49 snake Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.40 1999/12/16 17:21:52 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -1321,8 +1321,8 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
 
 int Problem::Run(void) /* returns RESULT_*  or -1 */
 {
-  int using_ptime;
-  struct timeval stop, start, pstart;
+  static volatile int using_ptime = -1;
+  struct timeval stop, start, pstart, clock_stop;
   int retcode, core_resultcode;
   u32 iterations;
 
@@ -1333,9 +1333,11 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     return ( last_resultcode );
 
   CliClock(&start);
-  using_ptime = 1;
-  if (CliGetProcessTime(&pstart) < 0)
-    using_ptime = 0;
+  if (using_ptime)
+  {
+    if (CliGetProcessTime(&pstart) < 0)
+      using_ptime = 0;
+  }      
     
   if (!started)
   {
@@ -1401,9 +1403,23 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   core_run_count++;
   if (using_ptime)
   {
+    //Warning for GetProcessTime(): if the OSs thread model is ala SunOS's LWP,
+    //ie, threads don't get their own pid, then GetProcessTime() functionality 
+    //is limited to single thread/benchmark/test only (the way it is now),
+    //otherwise it will be return process time for all threads. 
+    //This is asserted below too.
     if (CliGetProcessTime(&stop) < 0)
       using_ptime = 0;
-    else 
+    else if (using_ptime < 0)
+    {
+      CliClock(&clock_stop);
+      if (((clock_stop.tv_sec < stop.tv_sec) ||
+        (clock_stop.tv_sec==stop.tv_sec) && clock_stop.tv_usec<stop.tv_usec))
+        using_ptime = 0; /* clock time can never be less than process time */
+      else
+        using_ptime = 1;
+    }
+    if (using_ptime)
     {
       start.tv_sec = pstart.tv_sec;
       start.tv_usec = pstart.tv_usec;
@@ -1411,7 +1427,6 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   }
   if (!using_ptime || core_resultcode != RESULT_WORKING )
   {
-    struct timeval clock_stop;
     CliClock(&clock_stop);
     if (!using_ptime)
     {
