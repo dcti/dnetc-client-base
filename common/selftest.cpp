@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.76 2002/09/25 01:36:48 trashover Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.77 2002/09/25 03:32:43 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -356,9 +356,9 @@ long SelfTest( unsigned int contest )
       if (contest == RC5_72)
       {
         test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])rc5_72_test_cases;
-        expectedsolution_hi  = (*test_cases)[testnum][0];
+        expectedsolution_lo  = (*test_cases)[testnum][0];
         expectedsolution_mid = (*test_cases)[testnum][1];
-        expectedsolution_lo  = (*test_cases)[testnum][2];
+        expectedsolution_hi  = (*test_cases)[testnum][2];
         contestwork.bigcrypto.key.hi  = expectedsolution_hi;
         contestwork.bigcrypto.key.mid = expectedsolution_mid;
         contestwork.bigcrypto.key.lo  = expectedsolution_lo & 0xFFFF0000L;
