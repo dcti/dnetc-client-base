@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.32 2000/09/24 13:36:30 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.33 2000/10/05 22:39:00 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -57,6 +57,10 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 
 /* ---------------------------------------------------------------------- */
 
+#ifndef MIPSpro
+#pragma pack(1)
+#endif
+
 typedef union
 {
   struct {
@@ -73,6 +77,12 @@ typedef union
     char unused[12];
   } ogr;
 } ContestWork;
+
+#ifndef MIPSpro
+#pragma pack()
+#endif
+
+/* ---------------------------------------------------------------------- */
 
 typedef union
 {
@@ -91,6 +101,8 @@ typedef union
     #endif
 } unit_func_union;
 
+
+/* ---------------------------------------------------------------------- */
 
 #ifdef __cplusplus
 

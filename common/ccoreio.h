@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.3.2.2 1999/12/16 19:24:27 cyp Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.3.2.3 2000/10/05 22:39:00 cyp Exp $"
 
 typedef enum
 {
@@ -30,11 +30,19 @@ typedef enum
   RESULT_FOUND   = 2
 } Resultcode;
 
+#ifndef MIPSpro
+#pragma pack(1)
+#endif
+
 typedef struct
 {
   struct {u32 hi,lo;} plain;  /* plaintext (already mixed with iv!) */
   struct {u32 hi,lo;} cypher; /* cyphertext */
   struct {u32 hi,lo;} L0;     /* key, changes with every unit * PIPELINE_COUNT. */
 } RC5UnitWork;
+
+#ifndef MIPSpro
+#pragma pack()
+#endif
 
 #endif /* __CCOREIO_H__ */
