@@ -8,7 +8,7 @@
 ;
 ; Based off the r72-ss2.asm core, by Ianos Gnatiuc <ssianky@hotmail.com>
 ; (r72-ss2 was based on r72-dg2 and r72ansi2 cores)
-; $Id: r72-snjl2.asm,v 1.1.2.4 2003/11/04 05:35:27 snikkel Exp $
+; $Id: r72-snjl2.asm,v 1.1.2.5 2003/11/04 05:53:50 jlawson Exp $
 
 [SECTION .text]
 BITS 64
@@ -205,7 +205,7 @@ _rc5_72_unit_func_snjl2:
     mov  [save_r14], r14
     mov  [save_r15], r15   
 
-;    mov  ecx, [rsi]      	; iterations
+    mov  ecx, [rsi]      	; iterations
 
     mov  ebx, [RC5_72UnitWork_plainhi]
     mov  edx, [RC5_72UnitWork_plainlo]
@@ -216,8 +216,7 @@ _rc5_72_unit_func_snjl2:
     mov  [work_Plo],  edx
     mov  [work_Chi],  esi
     mov  [work_Clo],  edi
-;    mov  [work_iter], ecx
-    mov  [work_iter], [rsi]
+    mov  [work_iter], ecx
 
 ;    mov  ebx, [RC5_72UnitWork_L0lo]
     mov  L1_0, [RC5_72UnitWork_L0lo]
