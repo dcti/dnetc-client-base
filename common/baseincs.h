@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.42 2000/10/20 21:18:14 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.43 2000/10/23 03:10:56 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -40,12 +40,14 @@
   #include <sys/prctl.h>
   #include <sys/schedctl.h>
   #include <fcntl.h>
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_HPUX)
   #include <unistd.h>
   #include <sys/types.h>
   #include <fcntl.h>
   #include <sys/param.h>
   #include <sys/pstat.h>
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_OS2)
   #if defined(__WATCOMC__)
     #include "os2defs.h"
@@ -67,6 +69,7 @@
   #include <fcntl.h>
   #include <io.h>
   #include <sys/time.h>         /* timeval */
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
   #if defined(OS2_PM)
     #include "platforms/os2gui/os2cons.h"
   #endif
@@ -175,6 +178,7 @@
   #include <unistd.h>
   #include <fcntl.h>
   #include <sys/time.h>  // timeval
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_NETWARE)
   #include <sys/time.h> //timeval
   #include <unistd.h> //isatty, chdir, getcwd, access, unlink, chsize, O_...
@@ -204,16 +208,19 @@
   #include <thread.h>
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int);
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_AIX)
   #include <unistd.h>   // nice()
   #include <strings.h>    // bzero(), strcase...,
   #include <sys/select.h> // fd_set on AIX 4.1
   // clock_gettime is called getclock (used in clitime.cpp)
   #define clock_gettime(a,b) (getclock(a,b))
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_LINUX)
   #include <sys/time.h>
   #include <sys/file.h>
   #include <unistd.h>
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
   #undef NULL    /* some broken header unconditionally */   
   #define NULL 0 /* defines NULL to be ((void *)0) */
   #if defined(_MIT_POSIX_THREADS)
@@ -232,11 +239,13 @@
   extern "C" int clock_gettime(int clktype, struct timespec *tsp);
   #include <unistd.h>
   #define fileno(f) ((f)->handle)
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_RHAPSODY)
   //rhapsody is mach 2.x based and altivec unsafe
   #include <sys/time.h>
   #include <sys/sysctl.h>
   #include <unistd.h>
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_FREEBSD)
   #include <sys/time.h>
   #include <unistd.h>
@@ -269,21 +278,25 @@
   #include <sys/select.h>
   #include <process.h>
   #include <env.h>
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_NTO2)
   #include <sys/time.h>
   #include <strings.h>
   #include <unistd.h>
   #include <sched.h>
   #include <sys/syspage.h>
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_DYNIX)
   #include <unistd.h> // sleep(3c)
   struct timezone { int tz_minuteswest, tz_dsttime; };
   extern "C" int gethostname(char *, int);
   extern "C" int gettimeofday(struct timeval *, struct timezone *);
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
   #include <machine/cpuconf.h>
   #include <sys/time.h>
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_NEXTSTEP)
   #include <bsd/sys/time.h>
   #include <sys/types.h>
@@ -295,6 +308,7 @@
   #define       CLOCKS_PER_SEC          CLK_TCK
   extern "C" int sleep(unsigned int seconds);
   extern "C" int usleep(unsigned int useconds);
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #endif
 
 #endif /* __BASEINCS_H__ */
