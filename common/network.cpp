@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.95 1999/04/13 06:49:25 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.96 1999/04/28 14:10:04 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -950,7 +950,7 @@ int Network::Get( char * data, int length )
       else if (numRead < 0 && !tmp_isnonblocking) timed_out = 1;
 
       AutoBuffer line;
-      while (uubuffer.RemoveLine(line))
+      while (uubuffer.RemoveLine(&line))
       {
         nothing_done = 0;
         if (strncmpi(line, "Content-Length: ", 16) == 0)
@@ -1011,7 +1011,7 @@ int Network::Get( char * data, int length )
       else if (numRead < 0 && !tmp_isnonblocking) timed_out = 1;
 
       AutoBuffer line;
-      while (uubuffer.RemoveLine(line))
+      while (uubuffer.RemoveLine(&line))
       {
         nothing_done = 0;
 
