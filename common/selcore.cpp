@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: selcore.cpp,v $
+// Revision 1.20.2.4  1998/12/28 15:23:22  remi
+// Synced with :
+//  Revision 1.24  1998/12/18 18:29:27  sampo
+//  MacOS doesn't use the PPC whichrcunch calculation loop.
+//
 // Revision 1.20.2.3  1998/12/15 23:37:02  remi
 // Synced with :
 //
@@ -19,6 +24,11 @@
 // Revision 1.20.2.2  1998/11/08 11:51:53  remi
 // Lots of $Log tags.
 //
+
+#if (!defined(lint) && defined(__showids__))
+const char *selcore_cpp(void) {
+return "@(#)$Id: selcore.cpp,v 1.20.2.4 1998/12/28 15:23:22 remi Exp $"; }
+#endif
 
 #include "cputypes.h"
 #include "client.h"   // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -125,6 +135,7 @@ int Client::SelectCore(int quietly)
   #elif (CLIENT_OS == OS_WIN32)
     //actually not supported, but just in case
     cputype = 1;
+  #elif (CLIENT_OS == OS_MACOS)
   #else
     {
     if (cputype == -1)
