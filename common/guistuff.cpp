@@ -20,8 +20,7 @@ void UpdatePercentBar(void)
 // Hook to cause the win32gui progress bar to update.
 // Actually updates the full progress window, more specific hook may be
 // added in the future
-if (MainWindow->IsWindowVisible())
-   ::InvalidateRect(MainWindow->GetSafeWindow(), NULL, TRUE);
+  MainWindow->progresswin.RefreshPercentBar();
 #endif
 }
 
@@ -31,8 +30,7 @@ void UpdateBufferBars(void)
 // Hook to cause the win32gui progress bar to update.
 // Actually updates the full progress window, more specific hook may be
 // added in the future
-if (MainWindow->IsWindowVisible())
-   ::InvalidateRect(MainWindow->GetSafeWindow(), NULL, TRUE);
+  MainWindow->progresswin.RefreshBufferBars();
 #endif
 }
 
