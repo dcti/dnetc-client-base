@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.39 2000/10/27 17:58:41 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.40 2000/10/28 14:47:32 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -19,56 +19,6 @@ return "@(#)$Id: bench.cpp,v 1.27.2.39 2000/10/27 17:58:41 cyp Exp $"; }
 #include "logstuff.h"  // LogScreen()
 #include "clievent.h"  // event post etc.
 #include "bench.h"     // ourselves
-
-/* ----------------------------------------------------------------- */
-
-static void __show_notbest_msg(unsigned int contestid)
-{
-  #if (CLIENT_CPU == CPU_X86) && \
-      (!defined(SMC) || !defined(MMX_RC5) || !defined(MMX_BITSLICER))
-  int corenum = selcoreGetSelectedCoreForContest( contestid );
-  unsigned int detectedtype = GetProcessorType(1);
-  const char *not_supported = NULL;
-  if (contestid == RC5)
-  {
-    if (corenum == 1) /* 486 */
-    {
-      #if (!defined(SMC))            /* currently only linux */
-        not_supported = "RC5/486/SMC";
-      #endif
-    }
-    else if (corenum == 0 && (detectedtype & 0x100)!=0) /* P5 + mmx */
-    {
-      #if (!defined(MMX_RC5))        /* all non-nasm platforms (bsdi etc) */
-        not_supported = "RC5/P5/MMX";
-      #endif
-    }
-  }
-  else if (contestid == CSC)
-  {
-    if ((detectedtype & 0x100) != 0) /* mmx */
-    {
-      #if (!defined(MMX_CSC))
-        not_supported = "CSC/MMX bitslice";
-      #endif
-    }
-  }
-  else if (contestid == DES)
-  {
-    if ((detectedtype & 0x100) != 0) /* mmx */
-    {
-      #if (!defined(MMX_BITSLICER))
-        not_supported = "DES/MMX bitslice";
-      #endif
-    }
-  }
-  if (not_supported)
-    LogScreen( "Note: this client does not support\nthe %s core.\n", not_supported );
-  #endif
-
-  contestid = contestid;  
-  return;
-}
 
 /* ----------------------------------------------------------------- */
 
@@ -279,7 +229,6 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     else if ((flags & TBENCHMARK_QUIET) == 0 && scropen < 0)
     {
       scropen = 1;
-      __show_notbest_msg(contestid);
       LogScreen("%s: Benchmarking ... ", contname );
     }
     while ( run == RESULT_WORKING )

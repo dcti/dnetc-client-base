@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.76 2000/10/27 17:28:08 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.77 2000/10/28 14:47:31 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -48,7 +48,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "RG re-pair I",      /* Cyrix 486/6x86[MX]/MI */
       "RG RISC-rotate I",  /* K5 */
       "RG RISC-rotate II", /* K6 - may become mmx-k6-2 core at runtime */
-      #ifdef MMX_RC5
+      #if !defined(HAVE_NO_NASM)
       "RG/HB re-pair II",  /* K7 Athlon and Cx-MII, based on Cx re-pair */
       #endif
       NULL
@@ -191,16 +191,17 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       #endif
       if (det >= 0 && (det & 0x100)!=0) /* ismmx */
       {
-        #if defined(MMX_RC5)
+        #if !defined(HAVE_NO_NASM)
         corenames_table[RC5][0] = "jasonp P5/MMX"; /* slower on a PII/MMX */
         #endif
-        #if defined(MMX_RC5_AMD)
-        corenames_table[RC5][5] = "BRF Kx/MMX"; /* is this k6-2 only? */
+        #if !defined(HAVE_NO_NASM)
+        //rc5mmx-k6-2.asm fails test
+        //corenames_table[RC5][5] = "BRF Kx/MMX"; /* is this k6-2 only? */
         #endif
         #ifdef MMX_BITSLICER
         corenames_table[DES][2] = "BRF MMX bitslice";
         #endif
-        #if defined(MMX_CSC)
+        #if !defined(HAVE_NO_NASM)
         corenames_table[CSC][1] = "6 bit - bitslice";//replaces '6 bit - called'
         #endif
       }
@@ -638,13 +639,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
           switch ( detected_type & 0xff )
           {
             case 0x00: cindex = 0; break; // P5 ("RG/BRF class 5")
-            #ifdef MMX_RC5
+            #if !defined(HAVE_NO_NASM)
             case 0x01: cindex = 3; break; // 386/486 ("RG/HB re-pair II")
             #else
             case 0x01: cindex = 1; break; // 386/486 ("RG class 3/4")
             #endif
             case 0x02: cindex = 2; break; // PII/PIII ("RG class 6")
-            #if defined(MMX_RC5)
+            #if !defined(HAVE_NO_NASM)
             case 0x03: cindex = 6; break; // Cx6x86 ("RG/HB re-pair II")
             #else
             case 0x03: cindex = 3; break; // Cx6x86 ("RG re-pair I")
@@ -653,14 +654,14 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x05: cindex = 5; break; // K6/K6-2/K6-3 ("RG RISC-rotate II")
             #if defined(SMC)    
             case 0x06: cindex = 1; break; // cx486 uses SMC if avail (bug #99)
-            #elif defined(MMX_RC5)
+            #elif !defined(HAVE_NO_NASM)
             case 0x06: cindex = 6; break; // cx486 uses "RG/HB re-pair II" if avail
             #else 
             case 0x06: cindex = 3; break; // cx486 else core 3. (bug #804)
             #endif
             case 0x07: cindex = 2; break; // Celeron
             case 0x08: cindex = 2; break; // PPro
-            #ifdef MMX_RC5
+            #if !defined(HAVE_NO_NASM)
             case 0x09: cindex = 6; break; // AMD>=K7/Cx>=MII ("RG/HB re-pair II")
             #else
             case 0x09: cindex = 3; break; // AMD>=K7/Cx>=MII ("RG re-pair I")
@@ -714,7 +715,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         if (detected_type >= 0)
         {
           int cindex = -1; 
-          #if defined(MMX_CSC)
+          #if !defined(HAVE_NO_NASM)
           if ((detected_type & 0x100) != 0) /* have mmx */
             cindex = 1; /* == 6bit - called - MMX */
           else
@@ -988,7 +989,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   extern "C" s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
   extern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
   #endif
-  #if (CLIENT_CPU == CPU_X86) && defined(MMX_CSC)
+  #if (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
   extern "C" s32 csc_unit_func_6b_mmx ( RC5UnitWork *, u32 *iterations, void *membuff );
   #endif
 #endif
@@ -1274,7 +1275,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         break;
       case 5: // K6/K6-2
         unit_func.rc5 = rc5_unit_func_k6;
-        #if defined(MMX_RC5_AMD)
+        #if 0 //!defined(HAVE_NO_NASM) //rc5mmx-k6-2.asm fails test
         if (ismmx)
         { 
           unit_func.rc5 = rc5_unit_func_k6_mmx;
@@ -1282,14 +1283,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         }
         #endif
         break;
-      #ifdef MMX_RC5
+      #if !defined(HAVE_NO_NASM)
       case 6: // K7
         unit_func.rc5 = rc5_unit_func_k7;
 	      break;
       #endif
       default: // Pentium (0) + others
         unit_func.rc5 = rc5_unit_func_p5;
-        #if defined(MMX_RC5)
+        #if !defined(HAVE_NO_NASM)
         if (ismmx)
         { 
           unit_func.rc5 = rc5_unit_func_p5_mmx;
@@ -1480,7 +1481,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       case 0 : unit_func.gen = csc_unit_func_6b_i;
                break;
       case 1 : unit_func.gen = csc_unit_func_6b;
-               #if (CLIENT_CPU == CPU_X86) && defined(MMX_CSC)
+               #if (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
                if (ismmx) //6b-non-mmx isn't used (by default) on x86
                  unit_func.gen = csc_unit_func_6b_mmx;
                #endif     
