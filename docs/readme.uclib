@@ -1,8 +1,8 @@
-$Id: readme.uclib,v 1.1.2.1 2004/03/19 12:40:43 pfeffi Exp $
+$Id: readme.uclib,v 1.1.2.2 2004/03/19 12:42:20 pfeffi Exp $
 
 Additional information for Linux/uClibc clients.
 ================================================
 
 This is a time limited beta version.
-Please test it and report bug at: 
+Please test it and report bugs at: 
 http://www.distributed.net/bugs/
