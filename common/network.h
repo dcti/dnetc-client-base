@@ -5,6 +5,21 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: network.h,v $
+// Revision 1.40.2.6  1999/01/30 16:05:40  remi
+// Synced with :
+//
+//  Revision 1.54  1999/01/29 18:57:10  jlawson
+//  fixed formatting.  changed some int vars to bool.
+//
+//  Revision 1.53  1999/01/29 04:12:37  cyp
+//  NetOpen() no longer needs the autofind setting to be passed from the client.
+//
+//  Revision 1.52  1999/01/23 21:36:10  patrick
+//  OS2-EMX supports close (doesn't even know about soclose ;-)
+//
+//  Revision 1.51  1999/01/21 22:01:04  cyp
+//  fixed LowLevelSend() which didn't know /anything/ about non-blocking sox.
+//
 // Revision 1.40.2.5  1999/01/09 11:45:04  remi
 // Synced with :
 //
@@ -70,7 +85,7 @@ extern "C" {
 }
 #endif
 
-#if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   #define WIN32_LEAN_AND_MEAN
   #ifndef STRICT
     #define STRICT
@@ -148,7 +163,9 @@ extern "C" {
   // This is nessessary since the order of the OS/2 defines are important
   #include "platforms/os2cli/os2defs.h"
   typedef int SOCKET;
+  #if !defined(__EMX__)
   #define close(s) soclose(s)
+  #endif
   #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
   #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
 #elif (CLIENT_OS == OS_AMIGAOS)
@@ -238,3 +255,4 @@ extern "C" {
 #endif
 
 #endif //NETWORK_H
+
