@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.142  1998/07/09 05:27:51  silby
+// Changes to the MMX autodetect - still appear to be some overrides from user-set settings happening on pentium mmxes.
+//
 // Revision 1.141  1998/07/09 03:21:20  silby
 // Changed autodetect so that autodetection on x86 is always done, and mmx cores are forced if usemmx=1 no matter which core is selected. (prevents costly des keyrate loss)
 //
@@ -238,7 +241,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.141 1998/07/09 03:21:20 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.142 1998/07/09 05:27:51 silby Exp $";
 return id; }
 #endif
 
@@ -2266,17 +2269,17 @@ s32 Client::SelectCore(void)
 
 #ifdef MMX_BITSLICER
   if ((usemmx==1) && (detectedtype & 0x100 == 0x100))
-    fastcore=(fastcore & 0xFF) + 0x100;
+    {
+    s32 temp;
+    temp=0x100+(fastcore & 0xFF);
+    fastcore=temp;
+    };
     // turn on mmx even if wrong core is chosen manually
 #endif
 
   LogScreenf("Selecting %s code\n", cputypetable[(int)(fastcore & 0xFF)+1]);
 
-#ifdef MMX_BITSLICER
-  if ((usemmx==1) && (fastcore & 0x100 == 0x100))
-    LogScreen("Using MMX DES cores\n");
-    LogScreen("\n");
-#endif
+
   // select the correct core engine
   #if (defined(KWAN) || defined(MEGGS)) && !defined(MMX_BITSLICER)
     #define DESUNITFUNC51 des_unit_func_slice
@@ -2303,11 +2306,6 @@ s32 Client::SelectCore(void)
       break;
     case 2:
       rc5_unit_func = rc5_unit_func_p6;
-#ifdef MMX_BITSLICER
-      if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
-	  des_unit_func = des_unit_func2 = des_unit_func_mmx;
-      else
-#endif
         {
         des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
         des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
@@ -2315,11 +2313,6 @@ s32 Client::SelectCore(void)
       break;
     case 3:
       rc5_unit_func = rc5_unit_func_6x86;
-#ifdef MMX_BITSLICER
-      if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
-	  des_unit_func = des_unit_func2 = des_unit_func_mmx;
-      else
-#endif
         {
         des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
         des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
@@ -2332,11 +2325,6 @@ s32 Client::SelectCore(void)
       break;
     case 5:
       rc5_unit_func = rc5_unit_func_k6;
-#ifdef MMX_BITSLICER
-      if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
-	  des_unit_func = des_unit_func2 = des_unit_func_mmx;
-      else
-#endif
         {
         des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
         des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
@@ -2344,17 +2332,20 @@ s32 Client::SelectCore(void)
       break;
     default:
       rc5_unit_func = rc5_unit_func_p5;
-#ifdef MMX_BITSLICER
-      if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
-	  des_unit_func = des_unit_func2 = des_unit_func_mmx;
-      else
-#endif
       {
       des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
       des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
       }
       break;
   }
+#ifdef MMX_BITSLICER
+  if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
+    {
+    des_unit_func = des_unit_func2 = des_unit_func_mmx;
+    LogScreen("Using MMX DES cores\n");
+    };
+#endif
+
   #undef DESUNITFUNC61
   #undef DESUNITFUNC62
   #undef DESUNITFUNC51
