@@ -16,7 +16,7 @@
 ;# - Stack frame based upon Mac OS/AIX ABI.
 ;# - CTR, CR0, CR1, GPR0 and GPR3-GPR12 are volatile (not saved).
 ;#
-;# $Id: OGR_PPC_hybrid.gas.s,v 1.1.2.1 2004/07/14 01:11:47 piru Exp $
+;# $Id: OGR_PPC_hybrid.gas.s,v 1.1.2.2 2004/07/14 01:49:52 piru Exp $
 ;#
 ;#============================================================================
 
@@ -133,13 +133,13 @@
 
 
 ;#============================================================================
-;# System V.4 stack frame
+;# Mac OS/AIX stack frame
 .set          FIRST_NV_GPR, 13          ;# Save r13..r31
 .set          GPRSaveArea, (32-FIRST_NV_GPR) * 4 
 .set          FIRST_NV_VR, 20           ;# Save v20..
 .set          VRSaveArea, (28 - FIRST_NV_VR) * 16 
 
-.set          wSaveLR, 4                ;# Save LR
+.set          wSaveLR, 8                ;# Save LR
 .set          aStorage, 28              ;# Private storage area
 .set          wVRSave,-(GPRSaveArea+4)  
 .set          aVectorArea, 48           ;# Vectors save area
