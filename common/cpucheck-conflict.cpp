@@ -1,8 +1,17 @@
+// notes: removed non-mt limit , removed MAXCPUS references, made static
+// function __GetProcessorCount() public GetNumberOfDetectedProcessors(), 
+// Created GetNumberOfSupportedProcessors() [by the client that is]
+
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.25  1998/09/28 02:41:32  cyp
+// removed non-mt limit; removed references to MAXCPUS; turned static function
+// __GetProcessorCount() into public GetNumberOfDetectedProcessors(); created
+// GetNumberOfSupportedProcessors() ["supported" by the client that is]
+//
 // Revision 1.24  1998/08/14 00:05:03  silby
 // Changes for rc5 mmx core integration.
 //
@@ -92,7 +101,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.24 1998/08/14 00:05:03 silby Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.25 1998/09/28 02:41:32 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -104,11 +113,20 @@ return "@(#)$Id: cpucheck-conflict.cpp,v 1.24 1998/08/14 00:05:03 silby Exp $"; 
 
 #if (CLIENT_OS == OS_SOLARIS)
 #include <unistd.h>    // cramer - sysconf()
+#elif (CLIENT_OS == OS_IRIX)
+#include <sys/prctl.h>
 #endif
 
 // --------------------------------------------------------------------------
 
-static int __GetProcessorCount()  //returns -1 if not supported
+unsigned int GetNumberOfSupportedProcessors( void )
+{
+  return ( 128 ); /* just some arbitrary number */
+}
+
+// -------------------------------------------------------------------------
+
+int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
 {
   static int cpucount = -2;
 
@@ -133,7 +151,7 @@ static int __GetProcessorCount()  //returns -1 if not supported
       }
     #elif (CLIENT_OS == OS_NETWARE)
       {
-      cpucount = CliGetNumberOfProcessors();
+      cpucount = nwCliGetNumberOfProcessors();
       }
     #elif (CLIENT_OS == OS_OS2)
       {
@@ -152,6 +170,11 @@ static int __GetProcessorCount()  //returns -1 if not supported
         while(fgets(buffer, 256, cpuinfo))
           if (strstr(buffer, "processor") == buffer)
             cpucount++;
+      }
+    #elif (CLIENT_OS == OS_IRIX)
+      {
+      #error "please check GetNumberOfDetectedProcessors()"
+      cpucount = (int)prctl( PR_MAXPPROCS, 0, 0);
       }
     #elif (CLIENT_OS == OS_SOLARIS)
       {
@@ -185,19 +208,28 @@ void Client::ValidateProcessorCount( void )
   // no matter what the user puts on the command line or in the ini file.
   //
   // On MULTITHREAD systems, numcpu with zero implies "force_non-mt"
+  //
+  // The MAX CPUS limit is no longer the business of the select cpu logic.
+  // The thread data and Problem tables are (or rather, will soon be) grown
+  // dynamically.
+  //
+  // Whether a CLIENT_CPU (core) is thread safe or not is none of the 
+  // select cpu logic either.
+  // 
   //--------------------
 
   numcputemp = numcpu;
-  #ifndef MULTITHREAD  //this is the only place in the config where we
-  numcputemp = 1;      //check this
-  #endif
 
   if (numcputemp < 0)                //numcputemp == 0 implies force non-mt
     {                                //numcputemp < 0  implies autodetect
-    static int cpu_count = -2;
+    int cpu_count = -2;
+    #ifndef MULTITHREAD  //this is the only place in the config where we
+    cpu_count = 0;       //check this - implies force non-mt
+    #endif
+    
     if (cpu_count == -2)
       {
-      cpu_count = __GetProcessorCount();
+      cpu_count = GetNumberOfDetectedProcessors();
       // returns -1 if no hardware detection
       if ( cpu_count < 1 )
         {
@@ -215,17 +247,6 @@ void Client::ValidateProcessorCount( void )
     if (numcputemp < 0) //zero is legal for multithread (implies force non-mt)
       numcputemp = 1;
     }
-  if (numcputemp > MAXCPUS)
-    numcputemp = MAXCPUS;
-  #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && \
-      (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC))
-    if ( numcputemp > 1 )
-      {
-      numcputemp = 1;
-      LogScreenRaw("Core routines not yet updated for thread safe operation. "
-                "Using 1 processor.\n");
-      }
-  #endif
   return;
 }
 
@@ -328,7 +349,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     cpuidb &= 0x0ff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
       {  0x0030, 0426,     1, "80386"    },   // generic 386/486 core
-      {  0x0040, 0512,     1, "80486"    },   // - 946 ('95) + 1085 (NetWare) 
+      {  0x0040, 0512,     1, "80486"    },
       {  0x0400, 0512,     1, "486DX 25 or 33" },
       {  0x0410, 0512,     1, "486DX 50" },
       {  0x0420, 0512,     1, "486SX" },
@@ -542,7 +563,7 @@ unsigned int GetTimesliceBaseline(void)
 // for x86, I now (after writing it) realize that it could also get users on
 // non-x86 platforms to send us *their* processor detection code. :) - Cyrus 
 
-void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxcpus, const char ** sfoundcpus )
+void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscpus, const char ** sfoundcpus )
 {
   const char *maxcpu_s, *foundcpu_s, *cpuid_s;
 #if (CLIENT_CPU == CPU_X86)    
@@ -566,20 +587,22 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxcpu
 #else
   cpuid_s = "none (client does not support identification)";
 #endif    
+
   #if defined(MULTITHREAD)
-    static char maxcpu_b[6]; 
-    sprintf( maxcpu_b, "%d", MAXCPUS ); 
+    static char maxcpu_b[80]; 
+    sprintf( maxcpu_b, "%d (threading may be disabled "
+         "by setting -numcpu to zero)", GetNumberOfSupportedProcessors() ); 
     maxcpu_s = ((const char *)(&maxcpu_b[0]));
   #elif defined(OS_SUPPORTS_THREADING) //from threadcd.h
-    maxcpu_s = "1 (client built without thread support)";
+    maxcpu_s = "1 (threading is emulated - client built without thread support)";
   #elif ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && \
         (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC))
-    maxcpu_s = "1 (client is not thread-safe)";
+    maxcpu_s = "1 (threading is emulated - cores are not thread-safe)";
   #else
-    maxcpu_s = "1 (OS does not support threads)";
+    maxcpu_s = "1 (threading is emulated - OS does not support threads)";
   #endif  
 
-  int cpucount = __GetProcessorCount();
+  int cpucount = GetNumberOfDetectedProcessors();
   if (cpucount < 1)
     foundcpu_s = "1 (OS does not support detection)";
   else
@@ -590,7 +613,7 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxcpu
     }
 
   if ( scpuid ) *scpuid = cpuid_s;
-  if ( smaxcpus ) *smaxcpus = maxcpu_s; 
+  if ( smaxscpus ) *smaxscpus = maxcpu_s; 
   if ( sfoundcpus ) *sfoundcpus = foundcpu_s; 
   return;
 }  
@@ -599,13 +622,13 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxcpu
 
 void DisplayProcessorInformation(void)
 {
-  const char *scpuid, *smaxcpus, *sfoundcpus;
-  GetProcessorInformationStrings( &scpuid, &smaxcpus, &sfoundcpus );
+  const char *scpuid, *smaxscpus, *sfoundcpus;
+  GetProcessorInformationStrings( &scpuid, &smaxscpus, &sfoundcpus );
   
   LogScreenRaw("Automatic processor identification tag:\n\t%s\n"
    "Number of processors detected by this client:\n\t%s\n"
    "Number of processors supported by each instance of this client:\n\t%s\n",
-   scpuid, sfoundcpus, smaxcpus );
+   scpuid, sfoundcpus, smaxscpus );
   return;
 }     
  
