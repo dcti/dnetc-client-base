@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.7 1999/11/08 01:43:39 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.8 1999/11/09 17:05:14 cyp Exp $
 ==========================================================================
 
 2.8000
@@ -43,12 +43,13 @@ Version change log: $Id: CHANGES.txt,v 1.7 1999/11/08 01:43:39 cyp Exp $
             chg: win32: service ID is 'dnetc' for client, 'dnetd' for pproxy
             new: netware: complete rewrite of netware specific code
             new: *nix: client distribution includes a man page
-            chg: auto keyserver name resolution now allows as many retries
-                 as there are addresses for a name.
+            chg: all: auto keyserver name resolution now allows as many 
+	         retries as there are addresses for a name.
 
 2.7100
 ------
 2.7112.444  chg: ARM: cores have been partially rewritten.
+            fix: x86: K7 auto selects 'class 6', not 'RISC rotate II' core.
             fix: x86 DOS: ^C always works now. (is now trapped in a hardware
                  interrupt (irq1) handler rather than in the 'soft' int 23h)
             imp: win16: scheduling and idle detection has been rewritten
