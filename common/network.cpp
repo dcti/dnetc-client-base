@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.82  1999/03/02 23:30:41  cyp
+// OSI/TLI/XTI fix: was using the wrong t_info field.
+//
 // Revision 1.81  1999/02/22 00:40:53  cyp
 // fixed pedantic truncations warnings: x=htons(int) when htons() is a macro.
 //
@@ -176,7 +179,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.81 1999/02/22 00:40:53 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.82 1999/03/02 23:30:41 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -1489,10 +1492,10 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
       sin->sin_family = AF_INET;
       sin->sin_port = htons( that_port );
       rc = t_connect( sock, sndcall, NULL);
-      if (isnonblocking && rc == -1 && t_error == TNODATA) 
+      if (isnonblocking && rc == -1 && t_errno == TNODATA) 
         {
         time_t stoptime = time(NULL) + (time_t)iotimeout;
-        while (rc == -1 && t_error == TNODATA && time(NULL) <= stoptime)
+        while (rc == -1 && t_errno == TNODATA && time(NULL) <= stoptime)
           {
           usleep(250000);
           if (t_rcvconnect(sock, NULL) != -1) 
@@ -1632,13 +1635,13 @@ int Network::LowLevelPut(const char *data,int length)
   struct t_info info;
   if ( t_getinfo( sock, &info ) != -1)
     {
-    if (info.tdsu > 0)
-      sendquota = info.tdsu;
-    else if (info.tdsu == -1) /* no limit */
+    if (info.tsdu > 0)
+      sendquota = info.tsdu;
+    else if (info.tsdu == -1) /* no limit */
       sendquota = length;
-    else if (info.tdsu == 0) /* no boundaries */
+    else if (info.tsdu == 0) /* no boundaries */
       sendquota = 1;
-    else //if (info.tdsu == -2) /* normal send not supp'd (ever happens?)*/
+    else //if (info.tsdu == -2) /* normal send not supp'd (ever happens?)*/
       return -1;
     }
   #endif
