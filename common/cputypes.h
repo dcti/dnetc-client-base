@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.72 1999/12/05 17:28:35 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.73 1999/12/05 17:31:46 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -630,7 +630,7 @@ extern "C" {
   #define SIZEOF_LONGLONG 8
   typedef unsigned __int64 ui64;
   typedef __int64 si64;
-#elif (defined(__MWERKS__))
+#elif defined(__MWERKS__) || defined(__MRC__) || defined(__MOTO__)
   #define HAVE_I64
   #define SIZEOF_LONGLONG 8
   typedef unsigned long long ui64;
