@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.85 2001/03/20 10:04:16 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.86 2001/03/20 10:07:55 cyp Exp $
 ==========================================================================
 
 2.8000
@@ -32,7 +32,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.85 2001/03/20 10:04:16 cyp Exp $
             fix: all: current packet wasn't discarded on contest closure.
             fix: all: exited without crunching with "-n 1" option.
             new: *ix: all clients for unix are inherently SMP capable, 
-                      even the OS does not have/support threads.
+                      even if the OS does not have/support threads.
 
 2.8013.467  new: 68k: new, faster RC5 cores (previously only available in
                  the AmigaOS client)
