@@ -65,6 +65,7 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/iniread.obj    \
 	$(OUTPUTPATH)/cmdline.obj    \
 	$(OUTPUTPATH)/network.obj    \
+	$(OUTPUTPATH)/base64.obj     \
 	$(OUTPUTPATH)/netinit.obj    \
 	$(OUTPUTPATH)/scram.obj      \
 	$(OUTPUTPATH)/mail.obj       \
