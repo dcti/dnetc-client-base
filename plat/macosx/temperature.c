@@ -11,27 +11,34 @@
  * A test main() is at the end of this file.
  *
  * Currently we try 3 different sources:
- *   - host_processor_info(), which uses a CPUs builtin Thermal Assist Unit
+ *   - host_processor_info(), which uses CPUs built-in Thermal Assist Unit
  *   - AppleCPUThermo, an IOKit Object that provides "temp-monitor" from a
- *     dedicated sensor near the CPU (PowerMac MDD)
+ *     dedicated sensor near the CPU (PowerMac MDD and XServe only)
  *   - IOHWSensor, an IOKit Object that provides "temp-sensor" data from a
- *     dedicated sensor (PowerBook Alu)
+ *     dedicated sensor (PowerBook Alu and PowerMac G5)
+ *
+ * NOTES: Apple uses various sensors in its models
+ *
+ *  Computer     | Chipset                | Accuracy | Resolution
+ *  -------------+------------------------+----------+-----------
+ *  PowerPC G3   | Built-in TAU           | +/- 16.0 |     4
+ *  PowerMac MDD | Dallas DS1775          |  +/- 2.0 |     0.0625
+ *  XServe       | Dallas DS1775 (?)      |          |
+ *  PowerMac G5  | Analog Devices AD7417  |  +/- 1.0 |     0.25
+ *  AluBook 15"  | Analog Devices ADT7460 |  +/- 1.0 |   N/A
  *
  * FIXES:
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.c,v 1.1.2.4 2003/11/04 16:30:21 kakace Exp $
+ *  $Id: temperature.c,v 1.1.2.5 2003/11/08 13:57:20 kakace Exp $
  */
 
 #include <string.h>
 #include <stdio.h>
 
-/* for _readTAU() */
 #include <mach/mach.h>
 #include <mach/mach_error.h>
-
-/* for IOKit Objects */
 #include <IOKit/IOKitLib.h>
 #include <CoreFoundation/CFNumber.h>
 
@@ -80,8 +87,8 @@ static SInt32 _readTAU(void) {
 
 /*
 ** className := IO Class name (AppleCPUThermo / IOHWSensor)
-** location  := The string to be matched by the "location" key, or NULL to match all instances
-**              of the given IO Class.
+** location  := The string to be matched by the "location" key, or NULL to 
+**              match all instances of the given IO Class.
 ** dataKey   := Key that provides the raw temperature value.
 ** Returns the largest raw temperature value.
 */
@@ -167,14 +174,16 @@ static SInt32 _readAppleCPUThermo(void)
 }
 
 /*
-** PowerBook Alu 12", 15" and 17"
+** PowerBook Alu (12", 15" and 17") and PowerMac G5
+** For all those models, the value associated with the "location" key begins
+** with "CPU "  ("CPU BOTTOMSIZE", "CPU A AD7417 AMB", etc)
 */
 static SInt32 _readIOHWSensor(void)
 {
     SInt32 rawT;
     SInt32 k = -1;
     
-    if ( (rawT = _readTemperature("IOHWSensor", "CPU BOTTOMSIDE", CFSTR("current-value"))) >= 0)
+    if ( (rawT = _readTemperature("IOHWSensor", "CPU ", CFSTR("current-value"))) >= 0)
       k = (rawT * 100) / 65536 + 27315;
     
     return k;    /* Temperature (* 100, in kelvin) or -1 (error / no sensor) */
@@ -183,18 +192,18 @@ static SInt32 _readIOHWSensor(void)
 
 SInt32 macosx_cputemp(void) {
 
-    static int source = -1;									/* No source defined */
+    static int source = -1;                 /* No source defined */
     SInt32 temp = -1;
     
     switch (source) {
         case 0:
             break;
         case 1:
-            return _readTAU();              /* G3, old G4 */
+            return _readTAU();              /* G3 */
         case 2:
             return _readAppleCPUThermo();   /* PowerMac MDD, XServe */
         case 3:
-            return _readIOHWSensor();       /* PowerBook Alu 12", 15" and 17" */
+            return _readIOHWSensor();       /* PowerBook Alu, PowerMac G5*/
             
         default:
             temp = _readTAU();
