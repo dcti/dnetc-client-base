@@ -12,12 +12,25 @@ W32CLIPATH = platforms/win32cli
 
 OPTS_MSVC = -nologo -W3 -O1 -MT -I$(RC5PATH) -I$(DESPATH) \
   -I$(COMMONPATH) -I$(W32CLIPATH) -D_CPU_32BIT_ \
-  -DMULTITHREAD -D__WIN32__ -DNDEBUG -GR- -GX- -GA -GF \
+  -DMULTITHREAD -D__WIN32__ -GR- -GX- -GA -GF \
   -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN -DMMX_RC5
+
+OPTS_LINK = /incremental:no
+
+RES_FILE = $(OUTPUTPATH)/rc5des.res
+RC_FILE = $(W32CLIPATH)/rc5des.rc
 
 all: rc5des
 
-RES_FILE = $(OUTPUTPATH)/rc5des.res
+# --------------------------------------------
+
+!ifdef DEBUG
+OPTS_MSVC = -Zi -DDEBUG $(OPTS_MSVC)
+OPTS_LINK = $(OPTS_LINK) /debug /pdb:none /pdbtype:consolidate
+!else
+OPTS_MSVC = -DNDEBUG $(OPTS_MSVC)
+OPTS_LINK = $(OPTS_LINK) /release
+!endif
 
 # --------------------------------------------
 
@@ -97,14 +110,17 @@ RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
 {$(DESPATH)/brydmasm}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /i$(DESPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
 
+{$(DESPATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
+	nasmw -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\nasm\ $(**:/=\)
+
 {$(DESPATH)/mmx-bitslice}.asm{$(OUTPUTPATH)}.obj:
-	nasm -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\mmx-bitslice\ $(**:/=\)
+	nasmw -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\mmx-bitslice\ $(**:/=\)
 
 {$(RC5PATH)}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
 
 {$(RC5PATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
-	nasm -o $(@:/=\) -f win32 -i $(RC5PATH:/=\)\nasm\ $(**:/=\)
+	nasmw -o $(@:/=\) -f win32 -i $(RC5PATH:/=\)\nasm\ $(**:/=\)
 
 {$(PLATPATH)/win32cli}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
@@ -115,17 +131,19 @@ RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
 
-$(OUTPUTPATH)/rc5des.res:    $(W32CLIPATH)/rc5des.rc
-	rc -d_Windows -d_M_IX86 -i $(COMMONPATH) -fo$@ $(W32CLIPATH)/rc5des.rc
+$(RC_FILE):
+	echo 1 ICON $(PLATPATH)\win32gui\cowhead.ico > $(@:/=\)
+
+$(RES_FILE):    $(RC_FILE)
+	rc -d_Windows -d_M_IX86 -i $(COMMONPATH) -fo$@ $(**:/=\)
 
 # --------------------------------------------
 
 rc5des: $(RC5_OBJS) $(PREBUILT_OBJS) $(RES_FILE)
-	cl $(OPTS_MSVC) -Fe$(EXENAME) $(RC5_LIBS) $**
+	link $(OPTS_LINK) /OUT:$(EXENAME) $(RC5_LIBS) $**
 
 clean:
-	echo 1 ICON platforms\win32gui\cowhead.ico > $(W32CLIPATH)/rc5des.rc
-	del $(RC5_OBJS:/=\)
+	del $(RC5_OBJS:/=\) $(RC_FILE:/=\) $(RES_FILE:/=\)
 
 superclean: clean
 	del $(EXENAME) rc5des.ini buff-in.rc5 buff-out.rc5
