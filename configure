@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.240 2001/03/20 14:47:04 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.241 2001/03/20 21:07:35 ephraim Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1766,7 +1766,7 @@ case "$1" in
 	;;
 
     *x86-dynix4)
-        TARGET_CC="/bin/c++"
+        TARGET_CC="g++"
         TARGET_CCFLAGS="-DASM_X86"
         TARGET_LIBS="-lsocket -lnsl -lseq"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
