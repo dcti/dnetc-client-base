@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.44  1999/01/15 01:32:46  snake
+//
+// fixed CLIENT_OS_NAME entry for BSD/OS (it's not BSDI Unix)
+//
 // Revision 1.43  1999/01/13 01:07:14  snake
 //
 // fixed OpenBSD CLIENT_OS_NAME stuff
@@ -339,7 +343,7 @@ struct s128 { s64 hi, lo; };
   #define CLIENT_OS         OS_SUNOS
   #define CLIENT_CPU        CPU_68K
 #elif defined(bsdi)
-  #define CLIENT_OS_NAME   "BSDI Unix"
+  #define CLIENT_OS_NAME   "BSD/OS"
   #if defined(ASM_X86)
     #define CLIENT_OS     OS_BSDI
     #define CLIENT_CPU    CPU_X86
