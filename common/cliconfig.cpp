@@ -2080,9 +2080,11 @@ s32 Client::RunStartup(void)
 
 s32 Client::SelectCore(void)
 {
-static int coreselectalreadydone=0;
+static int previouscputype=0xBEEFD00D;// An unknown proc type, I hope
 
-if (coreselectalreadydone) return 0;
+if (previouscputype == cputype) return 0;// We already autodetected.
+
+previouscputype=cputype;// Set this so we know next time this proc is run.
 
 #if ((CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU != CPU_POWERPC))
   if (!(SysBase->AttnFlags & AFF_68020))
@@ -2292,7 +2294,6 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
   }
 
 #endif
-  coreselectalreadydone=1;
   return 0;
 }
 
