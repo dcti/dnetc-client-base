@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.108 2001/03/12 00:00:58 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.109 2001/03/19 15:36:42 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2076,6 +2076,7 @@ int ProblemGetSWUCount( const ContestWork *work,
  * 1=0+space between magna and number (or at end), 2=1+"nodes"/"keys"
 */
 int ProblemGetInfo(void *__thisprob,
+                   ProblemInfo *info, int flags,
                    unsigned int *cont_id, const char **cont_name, 
                    u32 *elapsed_secsP, u32 *elapsed_usecsP, 
                    unsigned int *swucount, int numstring_style,
@@ -2105,6 +2106,41 @@ int ProblemGetInfo(void *__thisprob,
   if (rescode >= 0)
   {
     u32 e_sec = 0, e_usec = 0;
+    
+    if (info)
+    {
+      ContestWork work;
+      unsigned int contestid = 0;
+      int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
+      flags = flags; // currently unused
+
+      info->contest_id = thisprob->pub_data.contest;
+      switch (thisprob->pub_data.contest)
+      {
+        case RC5: info->contest_name = "RC5"; break;
+        case DES: info->contest_name = "DES"; break;
+        case OGR: info->contest_name = "OGR"; break;
+        case CSC: info->contest_name = "CSC"; break;
+        default:  info->contest_name = "???"; break;
+      }
+      switch (thisprob->pub_data.contest)
+      {
+        case RC5:
+        case DES:
+        case CSC: info->unit_name = "keys";  break; 
+        case OGR: info->unit_name = "nodes"; break;
+        default:  info->unit_name = "???";   break;
+      }
+      
+      if (rescode >= 0)
+      {
+        info->is_test_packet = contestid == RC5 &&
+                               work.crypto.iterations.lo == 0x00100000 &&
+                               work.crypto.iterations.hi == 0;
+        //info->stats_units_are_integer = (contestid != OGR);
+        info->show_exact_iterations_done = (contestid == OGR);
+      }
+    }
 
     if (cont_id)
     {

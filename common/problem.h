@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.53 2001/03/12 00:00:59 sampo Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.54 2001/03/19 15:36:43 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -158,6 +158,24 @@ typedef struct
   struct problem_publics pub_data;
 } Problem;
 
+/* ---------------------------------------------------------------------- */
+
+typedef struct
+{
+  int contest_id;
+  const char* contest_name;
+  const char* unit_name;
+  
+  int is_test_packet;                   /* RC5: iterations == 0x00100000 */
+//  int stats_units_are_integer;          /* crypto contests */
+  int show_exact_iterations_done;       /* OGR: log exact nodecount */
+  
+  /* move all the ProblemGetInfo() parameters here */
+  
+} ProblemInfo;
+
+/* ---------------------------------------------------------------------- */
+
 /*
  * in the following functions that take a __thisprob argument, __thisprob
  * must be a void * to suppress the name mangling for struct Problem.
@@ -207,6 +225,7 @@ int ProblemRun(void *__thisprob);
 // numstring_style: -1=unformatted, 0=commas, 
 // 1=0+space between magna and number (or at end), 2=1+"nodes"/"keys"
 int ProblemGetInfo(void *__thisprob,
+                   ProblemInfo *info, int flags,
                      unsigned int *cont_id, const char **cont_name, 
                      u32 *elapsed_secs, u32 *elapsed_usecs, 
                      unsigned int *swucount, int numstring_style,
