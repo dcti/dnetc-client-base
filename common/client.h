@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.53  1998/06/29 07:51:54  ziggyb
+// OS/2 lurk and DOD header additions. (platforms\os2cli\dod.h)
+//
 // Revision 1.52  1998/06/29 06:57:43  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -201,7 +204,9 @@ extern "C" {
   extern "C" int gethostname(char *, int); // Keep g++ happy.
 #endif
 
-
+#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
+}
+#endif
 // --------------------------------------------------------------------------
 
 #ifdef max
@@ -656,6 +661,10 @@ public:
     // Returns 1 if a change to contest state was detected
 };
 
+// --------------------------------------------------------------------------
+#if (CLIENT_OS == OS_OS2)
+  #include "platforms\os2cli\dod.h"   // needs to be included after Client
+#endif
 // --------------------------------------------------------------------------
 
 #ifdef NEW_STATS_AND_LOGMSG_STUFF
