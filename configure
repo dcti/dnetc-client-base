@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.19 2002/12/29 02:56:05 andreasb Exp $
+# @(#)$Id: configure,v 1.288.2.20 2003/01/03 19:57:19 teichp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1231,14 +1231,16 @@ case "$1" in
 
     *arm-riscos-gccsdk) # RiscOS client crosscompiled under Unix using GCCSDK
                         # and Unixlib (http://hard-mofo.dsvr.net/)
-        TARGET_CC="/home/peter/gccsdk/cross/bin/gcc"
+        TARGET_CC="/home/peter/gccsdk-2.95.4-v2/cross/bin/gcc"
         generate_gcc_opts "arm" "riscos"
-        TARGET_CCFLAGS="$OPTS_GCC -Iplat/riscos -D__riscos"
-        TARGET_AS="/home/peter/gccsdk/cross/bin/gcc"
+        TARGET_CCFLAGS="$OPTS_GCC -mno-apcs-frame -mno-apcs-stack-check -Iplat/riscos -D__riscos"
+        TARGET_AS="/home/peter/gccsdk-2.95.4-v2/cross/bin/gcc"
         TARGET_ASFLAGS="-c"
         TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
+        TARGET_TARBALL="riscos-arm"
         TARGET_STRIP=touch
         TARGET_BINNAME_SUFFIX=",ff8"
+        TARGET_ARCTYPE="riscoszip"
         TARGET_IS_CROSSCOMPILE=1
         add_sources "riscos" "arm" "gccsdk"
         ;;
@@ -2733,6 +2735,15 @@ if [ -n "$TARGET_TARBALL" ]; then
     elif [ "$TARGET_ARCTYPE" = "amigaosgui" ]; then
       echo "	rm -f $FULLTARNAME.lha" >> Makefile
       echo "	sh plat/amigaos/tools/makearchive $FULLTARNAME.lha $TARGET_MAKEARC \${DOCFILES}" >> Makefile
+    elif [ "$TARGET_ARCTYPE" = "riscoszip" ]; then
+      echo "	rm -rf $FULLTARNAME" >> Makefile
+      echo "	rm -f $FULLTARNAME.zip" >> Makefile
+      echo "	mkdir $FULLTARNAME" >> Makefile
+      echo "	cp $TARGET_BINNAME$TARGET_BINNAME_SUFFIX $FULLTARNAME" >> Makefile
+      echo "	\$(foreach DOCFILE,\${DOCFILES},cp \${DOCFILE} $FULLTARNAME/\`basename \${DOCFILE}\`,fff;)" >> Makefile
+      echo "	cp plat/riscos/package/*,??? $FULLTARNAME" >> Makefile
+      echo "	cp -r plat/riscos/package/!System $FULLTARNAME" >> Makefile
+      echo "	/home/peter/gccsdk-2.95.4-v2/cross/bin/zip -r -, $FULLTARNAME.zip $FULLTARNAME" >> Makefile
     else
       echo "Warning: Unknown TARGET_ARCTYPE ${TARGET_ARCTYPE}"
     fi
