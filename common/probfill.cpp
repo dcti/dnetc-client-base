@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.15  1998/12/06 02:55:09  cyp
+// The problem loader now looks ahead in an attempt to guess whether the next
+// load/save cycle will have enough blocks to refresh all problems without a
+// network update.
+//
 // Revision 1.14  1998/12/04 16:50:07  cyp
 // Non-interactive fetch automatically does a flush as well. Similarly,
 // a non-interactive flush will also top off the input buffer (if the client
@@ -63,7 +68,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.14 1998/12/04 16:50:07 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.15 1998/12/06 02:55:09 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -413,7 +418,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         longcount = client->GetBufferRecord( &fileentry, contest_selected, 0 );
         if (longcount >= 0)
           {
-          if (longcount == 0)
+          if (((unsigned long)(longcount)) < (load_problem_count - prob_i))
             *bufupd_pending |= BUFFERUPDATE_FETCH;
           didload = 1;
           break;
@@ -521,13 +526,12 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     *contest = (unsigned int)(fileentry.contest);
     thisprob->LoadState( (ContestWork *) &fileentry , 
           (u32) (fileentry.contest), client->timeslice, client->cputype );
+    norm_key_count = (unsigned int)__iter2norm(ntohl(fileentry.iterations.lo));
 
     if (load_problem_count <= COMBINEMSG_THRESHOLD)
       {
       const char *cont_name = CliGetContestNameFromID(*contest);
-      unsigned long iter = ntohl(fileentry.iterations.lo);
       unsigned int startpercent = (unsigned int)( thisprob->startpercent/10 );
-      norm_key_count = (unsigned int)__iter2norm( iter );
       
       Log("Loaded %s%s %u*2^28 block %08lX:%08lX%c(%u.%02u%% done)",
               cont_name, ((didrandom)?(" random"):("")), norm_key_count,
