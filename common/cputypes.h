@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.20  1998/06/17 00:29:45  snake
+//
+//
+// #ifdefs for OpenBSD on Sparc were in the Linux section instead of the
+// OpenBSD section of 'configure'. Fixed by moving it to the right position.
+//
 // Revision 1.19  1998/06/15 00:13:09  skand
 // define NetBSD/alpha
 //
@@ -152,9 +158,6 @@ struct s128 { s64 hi, lo; };
   #if defined(ASM_ALPHA)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_ALPHA
-  #elif defined(ASM_SPARC)
-    #define CLIENT_OS     OS_OPENBSD
-    #define CLIENT_CPU    CPU_SPARC
   #elif defined(ASM_X86)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_X86
@@ -194,6 +197,9 @@ struct s128 { s64 hi, lo; };
   #elif defined(ASM_ALPHA)
     #define CLIENT_OS     OS_OPENBSD
     #define CLIENT_CPU    CPU_ALPHA
+  #elif defined(ASM_SPARC)
+    #define CLIENT_OS     OS_OPENBSD
+    #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(__QNX__)
   #if defined(ASM_X86)
