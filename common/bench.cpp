@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.33 2000/06/02 18:26:53 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.34 2000/06/13 18:11:34 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -202,7 +202,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   #if (CLIENT_OS == OS_NETWARE)
   if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
     numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
-  else if (GetFileServerMajorVersionNumber() < 5)
+  else
   {
     non_preemptive_os.yps = 1000/10; /* 10 ms minimum yield rate */ 
     tslice = 0; /* zero means 'use calibrated value' */
