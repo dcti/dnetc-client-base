@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.5 1999/06/17 12:19:59 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.6 1999/07/20 03:36:02 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -35,11 +35,6 @@ return "@(#)$Id: clirun.cpp,v 1.98.2.5 1999/06/17 12:19:59 cyp Exp $"; }
 //#define USE_THREADCODE_ONLY_WHEN_SMP_KERNEL_FOUND /* otherwise its for >=3.0 */
 #define FIRST_THREAD_UNDER_MAIN_CONTROL /* otherwise main is separate */
 #endif
-
-// --------------------------------------------------------------------------
-
-#define OGR_TIMESLICE_MSEC 200
-#define OGR_TIMESLICE_MAX  0x100000 // in units of nodes
 
 // --------------------------------------------------------------------------
 
@@ -106,82 +101,8 @@ struct thread_param_block
 
 // ----------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_NETWARE) || /* (CLIENT_OS == OS_WIN16) || */ \
-     (CLIENT_OS == OS_RISCOS) 
-
-#define NON_PREEMPTIVE_OS
-
-#define NON_PREEMPTIVE_OS_PROFILING /* undef this to use non_preemptive_os
-                                 code, but use your own timeslicing method */
-
-// TIMER_GRANULARITY       250000 /* time unit in usecs */
-// MIN_RUNS_PER_TIME_GRAIN 250    /* if yield runs less often than this in the
-//                                   period specified by TIMER_GRANULARITY
-//                                   then we adjust the timeslice downwards */
-// MAX_RUNS_PER_TIME_GRAIN 500   /* we adjust the timeslice upwards if the
-//                               number of times the process yields > this. */
-// INITIAL_TIMESLICE_RC5   128   /* we initialize with this */
-// INITIAL_TIMESLICE_DES   256
-//                              /* runaway and overflow protection */
-// MIN_SANE_TIMESLICE_RC5    256
-// MIN_SANE_TIMESLICE_DES    512
-// MAX_SANE_TIMESLICE_RC5  16384
-// MAX_SANE_TIMESLICE_DES  16384
-
-#if (CLIENT_OS == OS_NETWARE)
-  #define TIMER_GRANULARITY       125000
-  #define MIN_RUNS_PER_TIME_GRAIN     75 //10, 30, 50
-  #define MAX_RUNS_PER_TIME_GRAIN    125 //100
-  #define INITIAL_TIMESLICE_RC5      (GetTimesliceBaseline())
-  #define INITIAL_TIMESLICE_DES      (GetTimesliceBaseline()<<2)
-  #define MIN_SANE_TIMESLICE_RC5     (GetTimesliceBaseline()>>1)
-  #define MIN_SANE_TIMESLICE_DES     (GetTimesliceBaseline())
-  #define MAX_SANE_TIMESLICE_RC5   16384
-  #define MAX_SANE_TIMESLICE_DES   16384
-#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-  #define TIMER_GRANULARITY       125000
-  #define MIN_RUNS_PER_TIME_GRAIN     75 //10, 30, 50
-  #define MAX_RUNS_PER_TIME_GRAIN    125 //100
-  #define INITIAL_TIMESLICE_RC5      (GetTimesliceBaseline())
-  #define INITIAL_TIMESLICE_DES      (GetTimesliceBaseline()<<2)
-  #define MIN_SANE_TIMESLICE_RC5     (GetTimesliceBaseline()>>1)
-  #define MIN_SANE_TIMESLICE_DES     (GetTimesliceBaseline())
-  #define MAX_SANE_TIMESLICE_RC5   16384
-  #define MAX_SANE_TIMESLICE_DES   16384
-#elif (CLIENT_OS == OS_DOS) /* ineffective - used by cyp for testing */
-  #define TIMER_GRANULARITY       500000 /* has horrible timer resolution */
-  #define MIN_RUNS_PER_TIME_GRAIN     3 // 9 /* 18 times/sec */
-  #define MAX_RUNS_PER_TIME_GRAIN     5 //18
-  #define INITIAL_TIMESLICE_RC5      GetTimesliceBaseline()
-  #define INITIAL_TIMESLICE_DES      (GetTimesliceBaseline()<<2)
-  #define MIN_SANE_TIMESLICE_RC5      25
-  #define MIN_SANE_TIMESLICE_DES      75
-  #define MAX_SANE_TIMESLICE_RC5   16384
-  #define MAX_SANE_TIMESLICE_DES   16384
-#elif (CLIENT_OS == OS_RISCOS)
-  #define TIMER_GRANULARITY       1000000
-  #define MIN_RUNS_PER_TIME_GRAIN     10
-  #define MAX_RUNS_PER_TIME_GRAIN     30
-  #define INITIAL_TIMESLICE_RC5    65536
-  #define INITIAL_TIMESLICE_DES    131072
-  #define MIN_SANE_TIMESLICE_RC5    256
-  #define MIN_SANE_TIMESLICE_DES    256
-  #define MAX_SANE_TIMESLICE_RC5   1048576
-  #define MAX_SANE_TIMESLICE_DES   1048576
-#else
-  #error "Unknown OS. Please check timer granularity and timeslice constants"
-  #undef NON_PREEMPTIVE_OS_PROFILING  //or undef to do your own profiling
-#endif
-
-#endif /* CLIENT_OS == netware, macos, riscos, win16, win32s */
-
-// ----------------------------------------------------------------------
-
-static void yield_pump( void *tv_p )
+static void __yield__(void)
 {
-  static int pumps_without_run = 0;
-  runstatics.yield_run_count++;
-
   #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
     thr_yield();
   #elif (CLIENT_OS == OS_BSDI)
@@ -204,7 +125,7 @@ static void yield_pump( void *tv_p )
     w32Yield();
   #elif (CLIENT_OS == OS_RISCOS)
     if (riscos_in_taskwindow)
-      { riscos_upcall_6(); }
+      riscos_upcall_6();
   #elif (CLIENT_OS == OS_LINUX)
     #if defined(__ELF__)
     sched_yield();
@@ -232,7 +153,7 @@ static void yield_pump( void *tv_p )
   #elif (CLIENT_OS == OS_ULTRIX)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_HPUX)
-    sched_yield();;
+    sched_yield();
   #elif (CLIENT_OS == OS_DEC_UNIX)
    #error if you have "MULTITHREAD" defined something is broken. grep for multithread.
    #if defined(MULTITHREAD)
@@ -244,276 +165,7 @@ static void yield_pump( void *tv_p )
     #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */
   #endif
-
-  // used in conjunction with non-threaded go_mt
-  if (tv_p)
-  {
-    if (runstatics.nonmt_ran)
-      pumps_without_run = 0;
-    #ifdef NON_PREEMPTIVE_OS_PROFILING
-    else if ((++pumps_without_run) > 5)
-    {
-      pumps_without_run = 0;
-      LogScreen("Yielding too fast. Doubled pump interval.\n");
-      struct timeval *tv = (struct timeval *)tv_p;
-      tv->tv_usec<<=1; tv->tv_sec<<=1;
-      if (tv->tv_usec>=1000000)
-          { tv->tv_sec+=tv->tv_usec/1000000; tv->tv_usec%=1000000; }
-    }
-    #endif
-    if (RegPolledProcedure(yield_pump, tv_p, (struct timeval *)tv_p, 32 )==-1)
-    {
-      //should never happen, but better safe than sorry...
-      LogScreen("Panic! Unable to re-initialize yield pump\n");
-      RaiseExitRequestTrigger();
-    }
-  }
-  return;
 }
-
-#ifdef NON_PREEMPTIVE_OS_PROFILING
-int reset_profiling_flag = 1;
-void reset_ts_profiling(void) { reset_profiling_flag = 1; }
-
-unsigned long fixup_timeslice( unsigned long tslice, int contest )
-{
-  if (contest == 0)
-    tslice = (tslice + 0x0E) & 0x0FFFFFFF0L;
-  else
-  {
-    unsigned long n, i = 0;
-    for (n = (1<<31); n > 0; n>>=1 )
-    {
-      if ((tslice & n) != 0)
-      {
-        i = n;
-        break;
-      }
-    }
-    if (i < 0x80)
-      i = 0x80;
-    tslice = i;
-  }
-  return tslice;
-}
-
-unsigned long do_ts_profiling( unsigned long tslice, int contest, int threadnum )
-{
-  static struct timeval tvstart = {0,0}, tvstop = {0,0};
-  static unsigned long tslice_table[2] = {0,0};
-  static unsigned long totalslice_table[2] = {0,0};
-  static unsigned long tslice_lkg[2] = {0,0};   /* last-known-good */
-  static unsigned long fubared_run_count = 0;
-  static unsigned long underrun_count = 0, goodrun_count = 0;
-
-  struct timeval tvnow;
-  unsigned long ts;
-  CliTimer(&tvnow);
-
-  if (reset_profiling_flag)
-  {
-    tvstop.tv_sec = 0;
-    tvstop.tv_usec = 0;
-  }
-  if (tvstop.tv_sec == 0 && tvstop.tv_usec == 0)
-  {
-    if (( tslice_table[0] = tslice_lkg[0] ) == 0 )
-      tslice_table[0] = INITIAL_TIMESLICE_RC5;
-    if (( tslice_table[1] = tslice_lkg[1] ) == 0 )
-      tslice_table[1] = INITIAL_TIMESLICE_DES;
-  }
-  else if (( tvnow.tv_sec > tvstop.tv_sec ) ||
-       (( tvnow.tv_sec == tvstop.tv_sec ) &&
-        ( tvnow.tv_usec >= tvstop.tv_usec )))
-  {
-    tvstop.tv_sec = tvnow.tv_sec;  /* the time we really stopped */
-    tvstop.tv_usec = tvnow.tv_usec;
-
-    unsigned long hgrain_run_count = 0; /* yield count in (100 * timerunit) */
-    unsigned long perc = 0;
-    unsigned long usecs = (tvstop.tv_sec - tvstart.tv_sec) * 1000000L;
-
-    if (tvstop.tv_usec < tvstart.tv_usec)
-    {
-      if (usecs) /* ie >= 1000000L */
-      {
-        tvstop.tv_usec += 1000000L;
-        usecs -= 1000000L;
-      }
-      else                                /* timer is running backwards */
-        tvstop.tv_usec = tvstart.tv_usec; /* let usecs = 0, and let % fail */
-    }
-    usecs += (tvstop.tv_usec - tvstart.tv_usec);
-
-    if (usecs) /* will also be zero if running backwards */
-      perc = (((unsigned long)(TIMER_GRANULARITY))*100) / usecs;
-    if (perc)  /* yield count in one hundred timer units */
-      hgrain_run_count = (runstatics.yield_run_count * 10000) / perc;
-#ifdef DEBUG
-printf("%d. oldslice = %lu, y_real = %lu/%lu, y_adj (%lu%%) = %lu/%lu ",
-          threadnum, tslice_table[contest], runstatics.yield_run_count, usecs,
-          perc, hgrain_run_count, (unsigned long)(TIMER_GRANULARITY * 100) );
-fflush(stdout);
-#endif
-
-    if (!perc)
-    {
-      /* nothing - data is unreliable (user pressed ^S or something) */
-    }
-    else if (hgrain_run_count == 0) /* badly lagging or timer bad */
-    {
-      if (((fubared_run_count++) & 0xFF ) == 1)
-        Log("Running inefficiently. Timer is possibly bad.\n");
-      tslice_table[0] = MIN_SANE_TIMESLICE_RC5;
-      tslice_table[1] = MIN_SANE_TIMESLICE_DES;
-    }
-    else if (hgrain_run_count < (MIN_RUNS_PER_TIME_GRAIN * 100))
-    {                             /* so decrease timeslice */
-      unsigned long under_par =
-        ((MIN_RUNS_PER_TIME_GRAIN * 100) - hgrain_run_count) / 100;
-
-      fubared_run_count = 0;
-      goodrun_count = 0;
-
-      if (under_par)  /* change is large enough to warrant adjustement */
-      {
-        underrun_count++;
-        if (under_par == MIN_RUNS_PER_TIME_GRAIN)
-        {
-#ifdef DEBUG
-      printf("under_par: divide by 0!\n");
-#endif
-          under_par--;
-        }
-        ts = (totalslice_table[0]/runstatics.yield_run_count)/
-                                    (MIN_RUNS_PER_TIME_GRAIN-under_par);
-        if (tslice_table[0] > ts)
-        {
-          tslice_table[0] -= ts;
-#ifdef DEBUG
-printf("-%lu=> ", ts );
-#endif
-          if (tslice_table[0] < MIN_SANE_TIMESLICE_RC5)
-            tslice_table[0] = MIN_SANE_TIMESLICE_RC5;
-          else if ((underrun_count < 3) && tslice_lkg[0] &&
-                                       (tslice_lkg[0] > tslice_table[0]))
-            tslice_table[0] = tslice_lkg[0];
-        }
-        ts = (totalslice_table[1]/runstatics.yield_run_count)/
-                                    (MIN_RUNS_PER_TIME_GRAIN-under_par);
-        if (tslice_table[1] > ts)
-        {
-          tslice_table[1] -= ts;
-          if (tslice_table[1] < MIN_SANE_TIMESLICE_DES)
-            tslice_table[1] = MIN_SANE_TIMESLICE_DES;
-          else if ((underrun_count < 3) && tslice_lkg[1] &&
-                                       (tslice_lkg[1] > tslice_table[1]))
-            tslice_table[1] = tslice_lkg[1];
-        }
-      }
-    }
-    else if (hgrain_run_count > (MAX_RUNS_PER_TIME_GRAIN * 100))
-    {                             /* so increase timeslice */
-      unsigned long over_par =
-        (hgrain_run_count - (MAX_RUNS_PER_TIME_GRAIN * 100)) / 100;
-
-      fubared_run_count = 0;
-      underrun_count = 0;
-      goodrun_count = 0;
-
-      if (over_par) /* don't do micro adjustments */
-      {
-        ts = tslice_table[0];
-        if (over_par ==  MAX_RUNS_PER_TIME_GRAIN)
-        {
-#ifdef DEBUG
-          printf("over_par: divide by 0!\n");
-#endif
-          over_par++;
-        }
-        tslice_table[0] += (totalslice_table[0]/runstatics.yield_run_count)/
-                                     (over_par-MAX_RUNS_PER_TIME_GRAIN);
-#ifdef DEBUG
-printf("+%u=> ", tslice_table[0]-ts );
-#endif
-
-        if (tslice_table[0] > MAX_SANE_TIMESLICE_RC5)
-          tslice_table[0] = MAX_SANE_TIMESLICE_RC5;
-        else if ( tslice_table[0] < tslice_lkg[0])
-          tslice_table[0] = tslice_lkg[0];
-
-        tslice_table[1] += (totalslice_table[1]/runstatics.yield_run_count)/
-                                     (over_par-MAX_RUNS_PER_TIME_GRAIN);
-        if (tslice_table[1] > MAX_SANE_TIMESLICE_DES)
-          tslice_table[1] = MAX_SANE_TIMESLICE_DES;
-        else if ( tslice_table[1] < tslice_lkg[1])
-          tslice_table[1] = tslice_lkg[1];
-      }
-    }
-    else
-    {
-      fubared_run_count = 0;
-      underrun_count = 0;
-
-      ts = (totalslice_table[0]/runstatics.yield_run_count);
-      if (ts > tslice_lkg[0])
-        {
-        tslice_lkg[0] = ts;
-        if ( tslice_lkg[0] < MIN_SANE_TIMESLICE_RC5 )
-          tslice_lkg[0] =  MIN_SANE_TIMESLICE_RC5;
-      }
-      tslice_table[0] = tslice_lkg[0] + ((tslice_lkg[0]/10) * goodrun_count);
-      ts = (totalslice_table[1]/runstatics.yield_run_count);
-      if (ts > tslice_lkg[1])
-      {
-        tslice_lkg[1] = ts;
-        if ( tslice_lkg[1] < MIN_SANE_TIMESLICE_DES )
-          tslice_lkg[0] =  MIN_SANE_TIMESLICE_DES;
-      }
-      tslice_table[1] = tslice_lkg[1] + ((tslice_lkg[1]/10) * goodrun_count);
-      goodrun_count++;
-#ifdef DEBUG
-printf("+-0=> " );
-#endif
-    }
-    tvstop.tv_sec = 0;
-    tvstop.tv_usec = 0;
-#ifdef DEBUG
-printf("%u\n", tslice_table[contest] );
-#endif
-  }
-  if (tvstop.tv_sec == 0 && tvstop.tv_usec == 0)
-  {
-    totalslice_table[0] = threadnum; /* dummy code to use up the variable */
-    totalslice_table[0] = 0;
-    totalslice_table[1] = 0;
-    tvstop.tv_sec  = tvstart.tv_sec = tvnow.tv_sec;
-    tvstop.tv_usec = tvstart.tv_usec = tvnow.tv_usec;
-
-    tvstop.tv_usec += TIMER_GRANULARITY;
-    if (tvstop.tv_usec >= 1000000L)
-    {
-      tvstop.tv_sec += tvstop.tv_usec/1000000L;
-      tvstop.tv_usec %= 1000000L;
-    }
-    runstatics.yield_run_count = 0;
-    reset_profiling_flag = 0;
-  }
-
-  if (tslice != tslice_table[contest])
-  {
-    tslice_table[contest] = fixup_timeslice( tslice_table[contest], contest );
-    tslice = tslice_table[contest];
-  }
-  totalslice_table[contest]+=tslice;
-
-  #if (CLIENT_OS == OS_NETWARE)
-  yield_pump(NULL);
-  #endif
-
-  return tslice;
-}
-#endif
 
 // ----------------------------------------------------------------------
 
@@ -554,7 +206,7 @@ printf("%u\n", tslice_table[contest] );
     }
   }
 #elif (CLIENT_OS == OS_NETWARE)
-if (targ->realthread)
+  if (targ->realthread)
   {
     nwCliInitializeThread( threadnum+1 ); //in netware.cpp
   }
@@ -609,47 +261,70 @@ if (targ->realthread)
     }
     else if (!thisprob->IsInitialized())
     {
-//printf("run: not initialized\n");
       runstatics.refillneeded = 1;
       if (targ->realthread)
-        yield_pump(NULL);
+        __yield__();
     }
     else
     {
-//printf("run: doing run\n");
       static struct 
       {  unsigned int contest; u32 msec, max, min; volatile u32 optimal;
-      } dyn_timeslice[CONTEST_COUNT] = {
-      #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-        {  RC5,   55, 0x80000000,  0x00100,  0x00100 }, /* 165 too laggy */
-        {  DES,   55, 0x80000000,  0x00100,  0x00100 },
-        {  OGR,    OGR_TIMESLICE_MSEC, OGR_TIMESLICE_MAX, 0x0100,  0x1000 },
-        {  CSC,   55, 0x80000000,  0x00100,  0x00100 }
-      #else
+      } dyn_timeslice_table[CONTEST_COUNT] = {
         {  RC5, 1000, 0x80000000,  0x00100,  0x10000 },
         {  DES, 1000, 0x80000000,  0x00100,  0x10000 },
-        {  OGR,    OGR_TIMESLICE_MSEC, OGR_TIMESLICE_MAX, 0x0100,  0x1000 },
+        {  OGR,  200,   0x100000,  0x00100,  0x10000 }, //in units of nodes
         {  CSC, 1000, 0x80000000,  0x00100,  0x10000 }
-      #endif
-      };  
+      }; static int non_preemptive_os = 0;
       int run; u32 optimal_timeslice = 0; u32 runtime_ms;
       unsigned int contest_i = thisprob->contest;
       u32 last_count = thisprob->core_run_count; 
                   
-      #ifdef NON_PREEMPTIVE_OS_PROFILING
-      thisprob->tslice = do_ts_profiling(thisprob->tslice,contest_i,threadnum);
-      optimal_timeslice = 0;
-      #elif (CLIENT_OS == OS_MACOS)
-      thisprob->tslice = GetTimesliceToUse(contest_i);
-      optimal_timeslice = 0;
-      #else
-      #if (!defined(DYN_TIMESLICE))
-      if (contest_i == OGR)
-      #endif
+      #if (CLIENT_OS == OS_MACOS)
       {
-        if (last_count == 0) /* prob hasn't started yet */
-          thisprob->tslice = dyn_timeslice[contest_i].optimal;
-        optimal_timeslice = thisprob->tslice;
+        thisprob->tslice = GetTimesliceToUse(contest_i);
+        optimal_timeslice = 0;
+      }
+      #else
+      {
+        /* fixup the dyn_timeslice_table if running a non-preemptive OS */
+        #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
+            (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_NETWARE) || \
+            (CLIENT_OS == OS_WIN32) /* need to check for win32s */
+        static int tsinitd = 0;
+        if (!tsinitd)
+        {
+          #if (CLIENT_OS == OS_WIN32)                /* only if win32s */
+          non_preemptive_os = (winGetVersion()<400); /* (winnt is >= 2000) */
+          #elif (CLIENT_OS == OS_NETWARE)            /* only if !NetWare 5 */
+          non_preemptive_os = (nwCliGetVersion()<500); 
+          #else
+          non_preemptive_os = 1;
+          #endif  
+          tsinitd = 1;
+          if (non_preemptive_os)
+          {
+            for (tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
+            {
+              #if (CLIENT_OS == OS_RISCOS)
+              dyn_timeslice_table[tsinitd].msec = 30;
+              dyn_timeslice_table[tsinitd].optimal = 32768;
+              #else /* x86 */
+              dyn_timeslice_table[tsinitd].msec = 22; /* 55/2 ms */
+              dyn_timeslice_table[tsinitd].optimal = GetTimesliceBaseline();
+              #endif
+            }
+          }
+        }
+        #endif
+        
+        #if (!defined(DYN_TIMESLICE)) /* compile time override */
+        if (non_preemptive_os || contest_i == OGR)
+        #endif
+        {
+          if (last_count == 0) /* prob hasn't started yet */
+            thisprob->tslice = dyn_timeslice_table[contest_i].optimal;
+          optimal_timeslice = thisprob->tslice;
+        }
       }
       #endif
 
@@ -664,43 +339,49 @@ if (targ->realthread)
       {
         runstatics.refillneeded = 1;
         if (!didwork && targ->realthread)
-          yield_pump(NULL);
-        #if defined(DYN_TIMESLICE_SHOWME)
-        LogScreen("timeslice: %ld  time: %ldms  working? %d\n",(long)optimal_timeslice, (long)runtime_ms, (run==RESULT_WORKING) );
-        #endif
+          __yield__();
       }
       
-      if (optimal_timeslice != 0) /* we are profiling for preemptive OSs */
+      if (optimal_timeslice != 0)
       {
-        #if ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN16S)) /* not quite */
-        yield_pump(NULL);
-        #endif
+        if (non_preemptive_os) /* non-preemptive environment */
+          __yield__();
         optimal_timeslice = thisprob->tslice; /* get the number done back */
         #if defined(DYN_TIMESLICE_SHOWME)
-        //LogScreen("timeslice: %ld  time: %ldms  working? %d\n",(long)optimal_timeslice, (long)runtime_ms, (run==RESULT_WORKING) );
+        {
+          static int ctr = 0;
+          static unsigned long totaltime = 0, totalts = 0;
+          totaltime += runtime_ms;
+          totalts += optimal_timeslice;
+          if ((++ctr) == 50)
+          {
+            LogScreen("avg timeslice: %ld  avg time: %ldms\n", totalts/ctr, totaltime/ctr );
+            totaltime = totalts = 0; ctr = 0;
+          }
+        }
         #endif
         if (run == RESULT_WORKING) /* timeslice/time is invalid otherwise */
         {
-          unsigned int msec5perc = (dyn_timeslice[contest_i].msec / 20);
-          if (runtime_ms < (dyn_timeslice[contest_i].msec - msec5perc))
+          unsigned int msec5perc = (dyn_timeslice_table[contest_i].msec / 20);
+          if (runtime_ms < (dyn_timeslice_table[contest_i].msec - msec5perc))
           {
             optimal_timeslice <<= 1;
-            if (optimal_timeslice > dyn_timeslice[contest_i].max)
-              optimal_timeslice = dyn_timeslice[contest_i].max;
+            if (optimal_timeslice > dyn_timeslice_table[contest_i].max)
+              optimal_timeslice = dyn_timeslice_table[contest_i].max;
           }
-          else if (runtime_ms > (dyn_timeslice[contest_i].msec + msec5perc))
+          else if (runtime_ms > (dyn_timeslice_table[contest_i].msec + msec5perc))
           {
             optimal_timeslice -= (optimal_timeslice>>2);
             if (optimal_timeslice == 0)
-              optimal_timeslice = dyn_timeslice[contest_i].min;
+              optimal_timeslice = dyn_timeslice_table[contest_i].min;
           }
           thisprob->tslice = optimal_timeslice; /* for the next round */
         }
         else /* ok, we've finished. so save it */
         {  
-          u32 opt = dyn_timeslice[contest_i].optimal;
+          u32 opt = dyn_timeslice_table[contest_i].optimal;
           if (optimal_timeslice > opt)
-            dyn_timeslice[contest_i].optimal = optimal_timeslice;
+            dyn_timeslice_table[contest_i].optimal = optimal_timeslice;
           optimal_timeslice = 0; /* reset for the next prob */
         }
       }
@@ -709,14 +390,10 @@ if (targ->realthread)
     
     if (!didwork)
     {
-      #ifdef NON_PREEMPTIVE_OS_PROFILING
-      reset_ts_profiling();
-      #endif
-      targ->do_refresh = 1;
+      targ->do_refresh = 1; /* we need to reload the problem */
     }
     if (!targ->realthread)
     {
-//printf("run: rereg'd\n");    
       RegPolledProcedure( (void (*)(void *))Go_mt, parm, NULL, 0 );
       runstatics.nonmt_ran = didwork;
       break;
@@ -747,7 +424,7 @@ static int __StopThread( struct thread_param_block *thrparams )
 {
   if (thrparams)
   {
-    yield_pump(NULL);   //give threads some air
+    __yield__();   //give threads some air
     if (thrparams->threadID) //thread did not exit by itself
     {
       if (thrparams->realthread) //real thread
@@ -864,14 +541,14 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         static int assertedvms = 0;
         if (thrparams->threadnum == 0) /* the first to spin up */
         { 
-	  #define ONLY_NEEDED_VMPAGES_INHERITABLE         //children faster
-	  //#define ALL_DATA_VMPAGES_INHERITABLE          //parent faster
+          #define ONLY_NEEDED_VMPAGES_INHERITABLE         //children faster
+          //#define ALL_DATA_VMPAGES_INHERITABLE          //parent faster
           //#define ALL_TEXT_AND_DATA_VMPAGES_INHERITABLE //like linux threads
 
           assertedvms = -1; //assume failed
-	  #if defined(ONLY_NEEDED_VMPAGES_INHERITABLE)
+          #if defined(ONLY_NEEDED_VMPAGES_INHERITABLE)
           {
-	    //children are faster, main is slower
+            //children are faster, main is slower
             extern int TBF_MakeTriggersVMInheritable(void); /* probman.cpp */
             extern int TBF_MakeProblemsVMInheritable(void); /* triggers.cpp */
             if (TBF_MakeTriggersVMInheritable()!=0 ||
@@ -879,27 +556,27 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
                 minherit((void *)&runstatics, sizeof(runstatics), 0)==0)
               assertedvms = +1; //success
           }
-	  #else
+          #else
           {
- 	    extern _start; //iffy since crt0 is at the top only by default
-	    extern etext;
-	    extern edata;
-	    extern end;
+            extern _start; //iffy since crt0 is at the top only by default
+            extern etext;
+            extern edata;
+            extern end;
             //printf(".text==(start=0x%p - etext=0x%p) .rodata+.data==(etext - edata=0x%p) "
-	    //  ".bss==(edata - end=0x%p) heap==(end - sbrk(0)=0x%p)\n", 
-	    //  &_start, &etext,&edata,&end,sbrk(0));
-	    #if defined(ALL_TEXT_AND_DATA_VMPAGES_INHERITABLE)
-	    //.text+.rodata+.data+.bss+heap (so far)
-	    if (minherit((void *)&_start,(sbrk(0)-((char *)&_start)),0)==0)
+            //  ".bss==(edata - end=0x%p) heap==(end - sbrk(0)=0x%p)\n", 
+            //  &_start, &etext,&edata,&end,sbrk(0));
+            #if defined(ALL_TEXT_AND_DATA_VMPAGES_INHERITABLE)
+            //.text+.rodata+.data+.bss+heap (so far)
+            if (minherit((void *)&_start,(sbrk(0)-((char *)&_start)),0)==0)
               assertedvms = +1; //success
- 	    #else
-	    //main is faster, children are slower
-	    //.rodata+.data+.bss+heap (so far)
-	    if (minherit((void *)&etext,(sbrk(0)-((char *)&etext)),0)==0)
+            #else
+            //main is faster, children are slower
+            //.rodata+.data+.bss+heap (so far)
+            if (minherit((void *)&etext,(sbrk(0)-((char *)&etext)),0)==0)
               assertedvms = +1; //success
-	    #endif
+            #endif
           }
-	  #endif
+          #endif
 
           #ifdef FIRST_THREAD_UNDER_MAIN_CONTROL
           use_poll_process = 1; /* the first thread is always non-real */ 
@@ -977,8 +654,13 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         } /* thrparam inheritance ok */
       } /* FreeBSD >= 3.0 (+ SMP kernel optional) + global inheritance ok */
       #elif (CLIENT_OS == OS_WIN32)
-        thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
-        success = ( (thrparams->threadID) != 0);
+        if (winGetVersion() < 400) /* win32s */
+          use_poll_process = 1;
+        else
+        {
+          thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
+          success = ( (thrparams->threadID) != 0);
+        }
       #elif (CLIENT_OS == OS_OS2)
         thrparams->threadID = _beginthread( Go_mt, NULL, 8192, (void *)thrparams );
         success = ( thrparams->threadID != -1);
@@ -1047,7 +729,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     if (success)
     {
       ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTARTED, (long)thread_i );
-      yield_pump(NULL);   //let the thread start
+      __yield__();   //let the thread start
     }
     else
     {
@@ -1227,24 +909,6 @@ int Client::Run( void )
     exitcode = -1;
   }
 
-  // -------------------------------
-  // create a yield pump for OSs that need one
-  // -------------------------------
-
-  #if defined(NON_PREEMPTIVE_OS)
-  if (!TimeToQuit)
-  {
-    static struct timeval tv = {0,500};
-
-    if (RegPolledProcedure(yield_pump, (void *)&tv, (timeval *)&tv, 32 ) == -1)
-    {
-      Log("Unable to initialize yield pump\n" );
-      TimeToQuit = -1;
-      exitcode = -1;
-    }
-  }
-  #endif
-
   // --------------------------------------
   // Spin up the crunchers
   // --------------------------------------
@@ -1389,7 +1053,21 @@ int Client::Run( void )
     //----------------------------------------
     // Check for user break
     //----------------------------------------
-
+    
+    #if (CLIENT_OS == OS_DOS)   
+    { // DOS4G signal handling is broken: ^C doesn't get through if the keyb 
+      // buffer isn't empty. But we can't do this in triggers.cpp because
+      // we may need normal keyb handling for config.
+      if (kbhit())
+      {
+        int c = getch();
+        if (c == 0)
+          c |= getch() << 8;
+        if (c == 0x03)
+          RaiseExitRequestTrigger();
+      }
+    }
+    #endif
     #if defined(BETA)
     if (!TimeToQuit && !CheckExitRequestTrigger() && checkifbetaexpired()!=0)
     {
