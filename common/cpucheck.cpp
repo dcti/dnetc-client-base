@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.22 2003/08/05 19:58:17 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.23 2003/08/06 18:48:08 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1551,21 +1551,22 @@ static long __GetRawProcessorID(const char **cpuname)
   { 8, "TMS390S10", "microSPARC"},
   { 9, "MB86904", "microSPARC II"},
   {10, "MB86907", "TurboSPARC"},
-  {11, "TMS390Z50", "SuperSPARC"},
-  {12, "TMS390Z55", "SuperSPARC SC"},
-  {13, "TMS390Z50", "SuperSPARC II"},
-  {14, "TMS390Z55", "SuperSPARC II SC"},
-  {15, "RT620", "hyperSPARC"},	/* used? */  
-  {16, "RT625", "hyperSPARC"},
-  {16, "RT626", "hyperSPARC"},
+  {11, "RT620", "hyperSPARC"},  /* used? */
+  {11, "RT625", "hyperSPARC"},
+  {11, "RT626", "hyperSPARC"},
+  {12, "TMS390Z50", "SuperSPARC"},
+  {13, "TMS390Z55", "SuperSPARC SC"},
+  {14, "TMS390Z50", "SuperSPARC II"},
+  {15, "TMS390Z55", "SuperSPARC II SC"},
   /* sun4d */
   /* sun4u */
-  {17, "UltraSPARC", "UltraSPARC-I"},
-  {18, "UltraSPARC-II", "UltraSPARC-II"},
+  {16, "UltraSPARC", "UltraSPARC-I"},
+  {17, "UltraSPARC-II", "UltraSPARC-II"},
+  {18, "UltraSPARC-IIe", "UltraSPARC-IIe"},
   {19, "UltraSPARC-IIi", "UltraSPARC-IIi"},
-  {20, "UltraSPARC-IIe", "UltraSPARC-IIe"},
-  {21, "UltraSPARC-III", "UltraSPARC-III"},
-  {21, "UltraSPARC-III+", "UltraSPARC-III"}
+  {20, "UltraSPARC-III", "UltraSPARC-III"},
+  {20, "UltraSPARC-III+", "UltraSPARC-III"},  /* UltraSPARC-III Cu */
+  {21, "UltraSPARC-IIIi", "UltraSPARC-IIIi"}
   };
 
   detectedtype = -1L;  /* detection supported, but failed */
@@ -1612,7 +1613,7 @@ static long __GetRawProcessorID(const char **cpuname)
   }
 
   /* Detected SuperSPARC, **special case** */
-  if ((detectedtype == 11) || (detectedtype == 12)) {
+  if ((detectedtype == 12) || (detectedtype == 13)) {
     n = GetNumberOfDetectedProcessors ();
     for (i = 0; i < n; i++) {
       if (p_online (i, P_STATUS) == P_ONLINE) {

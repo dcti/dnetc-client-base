@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.57 2003/08/05 20:00:07 snikkel Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.58 2003/08/06 18:48:08 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -1654,18 +1654,18 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         case  7: cindex = 4; break; // SPARCstation 2   == AnBe 1-pipe
         case  8: cindex = 4; break; // microSPARC       == AnBe 1-pipe
         case  9: cindex = 4; break; // microSPARC II    == AnBe 1-pipe
-        case 10: cindex =-1; break; // TurboSPARC       == ?
-        case 11: cindex = 5; break; // SuperSPARC       == AnBe 2-pipe
-        case 12: cindex = 5; break; // SuperSPARC SC    == AnBe 2-pipe
-        case 13: cindex = 5; break; // SuperSPARC II    == AnBe 2-pipe
-        case 14: cindex = 5; break; // SuperSPARC II SC == AnBe 2-pipe 
-        case 15: cindex = 4; break; // hyperSPARC       == AnBe 1-pipe
-        case 16: cindex = 4; break; // hyperSPARC       == AnBe 1-pipe
-        case 17: cindex = 5; break; // UltraSPARC-I     == AnBe 2-pipe
-        case 18: cindex = 5; break; // UltraSPARC-II    == AnBe 2-pipe
+        case 10: cindex = 4; break; // TurboSPARC       == AnBe 1-pipe
+        case 11: cindex = 4; break; // hyperSPARC       == AnBe 1-pipe
+        case 12: cindex = 5; break; // SuperSPARC       == AnBe 2-pipe
+        case 13: cindex = 5; break; // SuperSPARC SC    == AnBe 2-pipe
+        case 14: cindex = 5; break; // SuperSPARC II    == AnBe 2-pipe
+        case 15: cindex = 5; break; // SuperSPARC II SC == AnBe 2-pipe 
+        case 16: cindex = 5; break; // UltraSPARC-I     == AnBe 2-pipe
+        case 17: cindex = 5; break; // UltraSPARC-II    == AnBe 2-pipe
+        case 18: cindex = 5; break; // UltraSPARC-IIe   == AnBe 2-pipe
         case 19: cindex = 5; break; // UltraSPARC-IIi   == AnBe 2-pipe
-        case 20: cindex = 5; break; // UltraSPARC-IIe   == AnBe 2-pipe
-        case 21: cindex = 5; break; // UltraSPARC-III   == AnBe 2-pipe
+        case 20: cindex = 5; break; // UltraSPARC-III   == AnBe 2-pipe
+        case 21: cindex = 5; break; // UltraSPARC-IIIi  == AnBe 2-pipe
         default: cindex =-1; break; // no default 
       }
     }
