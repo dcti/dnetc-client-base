@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.16 2004/06/27 21:44:19 jlawson Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.17 2004/08/14 23:31:59 kakace Exp $"
 
 #include "cputypes.h"
 
@@ -286,6 +286,7 @@
   #include <machine/cpuconf.h>
   #include <sys/time.h>
   #include <fcntl.h> /* O_RDWR etc */
+  #include <machine/endian.h>
 #elif (CLIENT_OS == OS_NEXTSTEP)
   #include <mach/mach.h>  /* host_self, host_kernel_version */
   #include <libc.h>       /* access, geteuid, ... */

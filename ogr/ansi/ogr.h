@@ -1,19 +1,15 @@
 /*
- * Copyright distributed.net 1999-2002 - All Rights Reserved
+ * Copyright distributed.net 1999-2004 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.16 2004/07/16 13:22:04 kakace Exp $"
-
-#ifndef u16
-#include "cputypes.h"
-#endif
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.17 2004/08/14 23:33:35 kakace Exp $"
 
 #include <limits.h>
 #if (UINT_MAX < 0xfffffffful)
-  #error "ogr needs an int thats not less than 32bits"
+  #error "ogr needs an int that's not less than 32bits"
 #elif (UINT_MAX == 0xffffffff)
   #define OGR_INT_SIZE 4
 #elif (UINT_MAX == 0xffffffffffffffff)
@@ -22,11 +18,8 @@
   #error "What's up Doc?"
 #endif
 
-#if (CLIENT_CPU == CPU_POWERPC) && (defined(__GCC__) || defined(__GNUC__)) && \
-    (defined(__VEC__) || defined(__ALTIVEC__)) && (!defined(__APPLE_CC__) && \
-    (__GNUC__ >= 3))
-  #include <altivec.h>
-#endif
+#include "cputypes.h"
+
 
 /* ===================================================================== */
 
@@ -39,10 +32,9 @@
 #define CORE_S_CONTINUE 1
 #define CORE_S_SUCCESS  2
 #define CORE_E_MEMORY   (-1)
-#define CORE_E_IO       (-2)
+#define CORE_E_STUB     (-2)
 #define CORE_E_FORMAT   (-3)
-#define CORE_E_STOPPED  (-4)
-#define CORE_E_STUB     (-5)
+#define CORE_E_INTERNAL (-4)
 
 #ifndef __SUNPRO_CC
   #include "pack1.h"
@@ -99,27 +91,6 @@ typedef struct {
    */
   int (*destroy)(void *state);
 
-#if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
-  /*
-   * Return the number of bytes needed to serialize this state.
-   */
-  int (*count)(void *state);
-
-  /*
-   * Serialize the state into a flat data structure suitable for
-   * persistent storage.
-   * buflen must be at least as large as the number of bytes returned
-   * by count().
-   * Does not destroy the state structure.
-   */
-  int (*save)(void *state, void *buffer, int buflen);
-
-  /*
-   * Load the state from persistent storage buffer.
-   */
-  int (*load)(void *buffer, int buflen, void **state);
-#endif
-
   /*
    * Clean up anything allocated in init().
    */
@@ -129,27 +100,22 @@ typedef struct {
 
 /* ===================================================================== */
 
-// define this to enable LOGGING code
-#undef OGR_DEBUG
-//#define OGR_PROFILE
-// OGR_WINDOW is used to test register windowing in the core
-//#define OGR_WINDOW 10
-
-// specifies the number of ruler diffs can be represented.
-// Warning: increasing this will cause all structures based
-// on workunit_t in packets.h to change, possibly breaking
-// network and buffer structure operations.
+/* specifies the number of ruler diffs can be represented.
+** Warning: increasing this will cause all structures based
+** on workunit_t in packets.h to change, possibly breaking
+** network and buffer structure operations.
+*/
 #define STUB_MAX 10
 
-struct Stub { /* size is 24 */
-  u16 marks;           /* N-mark ruler to which this stub applies */
-  u16 length;          /* number of valid elements in the stub[] array */
-  u16 diffs[STUB_MAX]; /* first <length> differences in ruler */
+struct Stub {           /* size is 24 */
+  u16 marks;            /* N-mark ruler to which this stub applies */
+  u16 length;           /* number of valid elements in the stub[] array */
+  u16 diffs[STUB_MAX];  /* first <length> differences in ruler */
 } DNETC_PACKED;
 
-struct WorkStub { /* size is 28 */
-  struct Stub stub;    /* stub we're working on */
-  u32 worklength;      /* depth of current state */
+struct WorkStub {       /* size is 28 */
+  struct Stub stub;     /* stub we're working on */
+  u32 worklength;       /* depth of current state */
 } DNETC_PACKED;
 
 #ifndef __SUNPRO_CC
@@ -158,98 +124,92 @@ struct WorkStub { /* size is 28 */
   #undef DNETC_PACKED
 #endif
 
-// Internal stuff that's not part of the interface but we need for
-// declaring the problem work area size.
 
-// I have to reserve memory for all possible OGR cruncher setups because
-// memory reservation happens inside problem.h/.c and I cannot know what
-// cruncher is going to get used :(
+#define BITMAPS_LENGTH  160   /* need to change macros when changing this */
+#define MAXDEPTH   30
 
-#define BITMAPS     5       /* need to change macros when changing this */
-#define MAXDEPTH   40
 
-typedef u32 U;
+#ifndef OGROPT_64BIT_IMPLEMENTATION
+  /* Bitmaps built with 32-bit words */
+  typedef u32 U;
+  #define BITMAPS_WORDS ((BITMAPS_LENGTH + 31) / 32)
 
-// Vector (AltiVec) implementation
-// Since ogr.cpp (thus ogr.h) is included from ppc/ogr-vec.cpp, we can
-// relie upon OGROPT_ALTERNATE_CYCLE to enable vector declarations.
-#if defined(OGROPT_ALTERNATE_CYCLE) && (OGROPT_ALTERNATE_CYCLE == 2) \
-    && (defined(__VEC__) || defined(__ALTIVEC__))
-  #define ENABLE_VECTOR_DECL
-  typedef union {
-    vector unsigned int v;
-    u32 u[4];
-  } VECTOR;
+#else   /* OGROPT_64BIT_IMPLEMENTATION */
+  /* Bitmaps built with 64-bit words */
+  typedef ui64 U;
+  #define BITMAPS_WORDS ((BITMAPS_LENGTH + 63) / 64)
+
 #endif
 
-struct Level {
-  /* If AltiVec is possible we must reserve memory, just in case */
-  #ifdef ENABLE_VECTOR_DECL
-  VECTOR listV0, listV1, compV;
-  U list0, comp0;
-  #endif
-  U list[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 2
-  U dist[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 1 || 2
-  U comp[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 2
-  int cnt1;        // unused if OGROPT_ALTERNATE_CYCLE == 1 || == 2
-  int cnt2;        // always needed
-  int limit;       // always needed
-};
 
-#define OGR_LEVEL_SIZE ((128*4)+((4*BITMAPS)*3)+(OGR_INT_SIZE*3))
+/* ===================================================================== */
+
+#ifndef OGROPT_OGR_CYCLE_ALTIVEC
+/*
+** Standard (32-bit scalar) implementation
+*/
+  struct Level {
+    U list[BITMAPS_WORDS];
+    U dist[BITMAPS_WORDS];
+    U comp[BITMAPS_WORDS];
+    int mark;
+    int limit;
+  };
+#else   
+/* Vector (PPC/AltiVec) implementation
+** Since ogr.cpp (thus ogr.h) is included from ppc/ogr-vec.cpp, we can relie
+** upon OGROPT_OGR_CYCLE_ALTIVEC to enable vector declarations.
+** VECTOR is defined in ppc/ogr-vec.cpp
+*/
+  typedef union {
+    vector unsigned int v;
+    unsigned int u[4];
+  } VECTOR;
+
+  struct Level {
+    VECTOR listV, compV, distV;
+    int limit;
+    U comp0, dist0, list0;  /* list0 *MUST* be the 4th integer */
+    int mark;
+  };
+#endif
+
+
+/* Internal stuff that's not part of the interface but we need for declaring
+** the problem work area size.
+**
+** I have to reserve memory for all possible OGR cruncher setups because
+** memory reservation happens inside problem.h/.c and I cannot know what
+** cruncher is going to get used :(
+*/
+#define OGR_LEVEL_SIZE_SCALAR (((((BITMAPS_LENGTH+63)/64)*3*8)+(OGR_INT_SIZE*2)+8)&(-8))
+#define OGR_LEVEL_SIZE_VECTOR (((16*3)+(4*3)+(OGR_INT_SIZE*2)+15)&(-16))
+
+#define OGR_LEVEL_SIZE (OGR_LEVEL_SIZE_SCALAR > OGR_LEVEL_SIZE_VECTOR ? \
+          OGR_LEVEL_SIZE_SCALAR : OGR_LEVEL_SIZE_VECTOR)
+
 
 struct State {
-  #if 0 /* unused - see notes for ogr_cycle() above */
-  struct { U hi,lo; } Nodes;      /* counts "tree branches" */
-  //double Nodes;                 /* counts "tree branches" */  
-  #endif
-  int max;                        /* maximum length of ruler */
-  int maxdepth;                   /* maximum number of marks in ruler */
-  int maxdepthm1;                 /* maxdepth-1 */
-  int half_length;                /* half of max */
-  int half_depth;                 /* half of maxdepth */
-  int half_depth2;                /* half of maxdepth, adjusted for 2nd mark */
-  int marks[MAXDEPTH+1];          /* current length */
+  int max;                  /* maximum length of ruler */
+  int maxdepth;             /* maximum number of marks in ruler */
+  int maxdepthm1;           /* maxdepth-1 */
+  int half_length;          /* half of max */
+  int half_depth;           /* half of maxdepth */
+  int half_depth2;          /* half of maxdepth, adjusted for 2nd mark */
   int startdepth;
   int depth;
-  int limit;
-  #ifdef OGR_DEBUG
-    int LOGGING;
-  #endif
-  #ifdef  OGR_WINDOW /* used by OGRtestbench */
-    int wind;                     /* depth window base */
-    int turn;                     /* window turn counter */
-  #endif
-  #ifdef OGR_PROFILE /* used by OGRtestbench */
-    struct {
-      long hd;                    /* Half depth */
-      long hd2;                   /* Half depth 2 */
-      long ghd;                   /* Greater than Half depth */
-      long lt16;                  /* shift <16 */
-      long lt32;                  /* shift < 32 */
-      long ge32;                  /* shift >= 32 */
-      long fo;                    /* found one? */
-      long push;                  /* Go deeper */
-   } prof;
-  #endif
-  /* If AltiVec is possible we must reserve memory, just in case */
-  #ifdef ENABLE_VECTOR_DECL
-    U dist0, pad1;
-    VECTOR distV;
-  #endif
-  U dist[BITMAPS];   /* only used by OGROPT_ALTERNATE_CYCLE == 1 */
   struct Level Levels[MAXDEPTH];
 };
 
-#define OGR_PROBLEM_SIZE (/*16+*/(6*OGR_INT_SIZE)+(OGR_INT_SIZE*(MAXDEPTH+1))+ \
-                         (4*OGR_INT_SIZE)+(128*2)+(OGR_INT_SIZE*BITMAPS)+ \
-                         (OGR_LEVEL_SIZE*MAXDEPTH)+64)
+#define OGR_PROBLEM_SIZE (((8*OGR_INT_SIZE+15)&(-16))+(OGR_LEVEL_SIZE*MAXDEPTH))
                          /* sizeof(struct State) */
 
+/*
+** ogr_sup.cpp
+*/
 unsigned long ogr_nodecount(const struct Stub *);
-const char *ogr_stubstr_r(const struct Stub *stub,
-                          char *buffer, unsigned int bufflen,
-                          int worklength);
+const char *ogr_stubstr_r(const struct Stub *stub, char *buffer,
+                          unsigned int bufflen, int worklength);
 const char *ogr_stubstr(const struct Stub *stub);
 
 #endif /* __OGR_H__ */

@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr_dat.cpp,v 1.2.4.1 2003/02/25 12:30:23 snake Exp $
+ * $Id: ogr_dat.cpp,v 1.2.4.2 2004/08/14 23:33:35 kakace Exp $
 */
 
 #ifdef __cplusplus
@@ -16,6 +16,14 @@ extern "C" const unsigned char ogr_choose_dat[];
 ** +4096*12 being (1<<header[1])*header[2] or (1<<MAXBITS)*CHOOSEBITS
 ** +1 being the "undefined" byte that has caused so much trouble
 **    This byte should not need to be there?
+** from kakace (08-04-2004) :
+** This byte MUST be there. The technical reason is that the choose array can
+** be addressed to find the length of a 13-marks (12-diffs) ruler when
+** searching for OGR-24 or OGR-25, although the array is defined for 12 marks
+** max. The extra mark just makes the search space reduction less efficient
+** because the core then gets 0 instead of the length of a 13-marks ruler.
+** The extra byte provides a 'safe' length for the case where all distances
+** (from 1 through to 12) have been used.
 */
 
 const unsigned char ogr_choose_dat[] = {

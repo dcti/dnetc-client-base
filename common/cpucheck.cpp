@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.63 2004/07/17 17:42:56 piru Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.64 2004/08/14 23:31:59 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -29,6 +29,7 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.63 2004/07/17 17:42:56 piru Exp $"; }
 #  include <sys/systemcfg.h>
 #elif (CLIENT_OS == OS_MACOSX)
 #  include <mach/mach.h>
+#  include <mach/machine.h>
 #  include <IOKit/IOKitLib.h>
 #elif (CLIENT_OS == OS_DYNIX)
 #  include <sys/tmp_ctl.h>
@@ -2172,11 +2173,18 @@ unsigned long GetProcessorFeatureFlags()
       // AltiVec support now has a proper sysctl value HW_VECTORUNIT to check
       // for
       int mib[2] = {CTL_HW, HW_VECTORUNIT};
-      int hasVectorUnit;
+      const char *sysname = "hw.cpusubtype";
+      int hasVectorUnit, cpuSubType;
       size_t len = sizeof(hasVectorUnit);
       if (sysctl( mib, 2, &hasVectorUnit, &len, NULL, 0 ) == 0) {
         if (hasVectorUnit != 0)
           ppc_features |= CPU_F_ALTIVEC;
+      }
+
+      len = sizeof(cpuSubType);
+      if (sysctlbyname( sysname, &cpuSubType, &len, NULL, 0 ) == 0) {
+        if (cpuSubType == CPU_SUBTYPE_POWERPC_970)
+          ppc_features |= CPU_F_64BITOPS;
       }
     #elif (CLIENT_OS == OS_LINUX)
       // Can someone write something better ?

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.85.2.13 2004/07/16 13:18:30 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.85.2.14 2004/08/14 23:31:59 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -147,7 +147,6 @@ static const u32 des_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
 static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   { 0x000D1B52, 21,  2, 22, 32, 21,  5,  1},
   {~0x0057102A, 21,  1,  2,  4,  5,  8, 10},
-//{~0x00A8EE70, 21,  2, 22, 32, 21,  5,  2}, // NOT a Golomb stub !
   {~0x0058E9DE, 21,  2, 22, 32,  1,  3, 10},
   {~0x007D1FD7, 22,  1,  2,  4,  5,  8, 10},
   { 0x0015ACEC, 22,  1,  8,  5, 29, 27, 36},
@@ -155,24 +154,14 @@ static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   {~0x00441720, 23,  1,  2,  4,  5,  8, 10},
   { 0x000EFA83, 23,  3,  4, 10, 44,  5, 25},
   {~0x0027C638, 23,  3,  4, 10, 44,  5, 26},
-#ifndef OGROPT_NEW_CHOOSEDAT
   {~0x01298F41, 24,  1,  2,  4,  5,  8, 10, 14},
   { 0x000ADD64, 24,  9, 24,  4,  1, 59, 25},
   {~0x003C3A07, 24,  9, 24,  4,  1, 59, 26},
   {~0x02EC64E8, 25,  1,  2,  4,  5,  8, 10, 14, 21},
   { 0x0018EE3D, 25, 12, 17, 10, 33, 19, 55, 11},
   {~0x0120C133, 25,  2,  7, 22,  5, 14,  4, 64, 37},
-#else
-  {~0x010FBEEA, 24,  1,  2,  4,  5,  8, 10, 14},
-  { 0x000ADCC7, 24,  9, 24,  4,  1, 59, 25},
-  {~0x003C388C, 24,  9, 24,  4,  1, 59, 26},
-  {~0x02E4A727, 25,  1,  2,  4,  5,  8, 10, 14, 21},
-  { 0x0018EE3D, 25, 12, 17, 10, 33, 19, 55, 11},
-  {~0x0120C133, 25,  2,  7, 22,  5, 14,  4, 64, 37},
-#endif
   {~0x0057102A, 21,  1,  2,  4,  5,  8, 10},
   { 0x000D1B52, 21,  2, 22, 32, 21,  5,  1},
-//{~0x00A8EE70, 21,  2, 22, 32, 21,  5,  2},
   {~0x0058E9DE, 21,  2, 22, 32,  1,  3, 10},
   {~0x007D1FD7, 22,  1,  2,  4,  5,  8, 10},
   { 0x0015ACEC, 22,  1,  8,  5, 29, 27, 36},
@@ -180,21 +169,12 @@ static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   {~0x00441720, 23,  1,  2,  4,  5,  8, 10},
   { 0x000EFA83, 23,  3,  4, 10, 44,  5, 25},
   {~0x0027C638, 23,  3,  4, 10, 44,  5, 26},
-#ifndef OGROPT_NEW_CHOOSEDAT
   {~0x01298F41, 24,  1,  2,  4,  5,  8, 10, 14},
   { 0x000ADD64, 24,  9, 24,  4,  1, 59, 25},
   {~0x003C3A07, 24,  9, 24,  4,  1, 59, 26},
   {~0x02EC64E8, 25,  1,  2,  4,  5,  8, 10, 14, 21},
   { 0x0018EE3D, 25, 12, 17, 10, 33, 19, 55, 11},
   {~0x0120C133, 25,  2,  7, 22,  5, 14,  4, 64, 37},
-#else
-  {~0x010FBEEA, 24,  1,  2,  4,  5,  8, 10, 14},
-  { 0x000ADCC7, 24,  9, 24,  4,  1, 59, 25},
-  {~0x003C388C, 24,  9, 24,  4,  1, 59, 26},
-  {~0x02E4A727, 25,  1,  2,  4,  5,  8, 10, 14, 21},
-  { 0x0018EE3D, 25, 12, 17, 10, 33, 19, 55, 11},
-  {~0x0120C133, 25,  2,  7, 22,  5, 14,  4, 64, 37},
-#endif
   {~0x0057102A, 21,  1,  2,  4,  5,  8, 10},
   { 0x000D1B52, 21,  2, 22, 32, 21,  5,  1},
   //{0, 26, 1, 32, 50, 21, 6, 14},
@@ -210,9 +190,6 @@ static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
 // [1] - number of marks
 // [2] - Minimum starting position
 // [3..9] - first differences
-#ifdef OGROPT_NEW_CHOOSEDAT
-#error Need to change the node counts
-#endif
 static const s32 ogrp2_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   // Test cases borrowed from the standard OGR test suite
   { 0x000D1B52, 21,  0,  2, 22, 32, 21,  5,  1},

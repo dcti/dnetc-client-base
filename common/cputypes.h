@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.24 2004/07/10 08:06:54 snake Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.25 2004/08/14 23:31:59 kakace Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -677,7 +677,7 @@ extern "C" {
       #endif
       #define SIZEOF_INT   1
       #ifndef SIZEOF_LONG
-        #if (ULONG_MAX > UINT_MAX)
+        #if (ULONG_MAX != UINT_MAX)
           #define SIZEOF_LONG  2
         #else
           #define SIZEOF_LONG  1
@@ -689,7 +689,7 @@ extern "C" {
       #endif
       #define SIZEOF_INT   2
       #ifndef SIZEOF_LONG
-        #if (ULONG_MAX > UINT_MAX)
+        #if (ULONG_MAX != UINT_MAX)
           #define SIZEOF_LONG  4
         #else
           #define SIZEOF_LONG  2
@@ -701,7 +701,7 @@ extern "C" {
       #endif
       #define SIZEOF_INT   4
       #ifndef SIZEOF_LONG
-        #if (ULONG_MAX > UINT_MAX)
+        #if (ULONG_MAX != UINT_MAX)
           #define SIZEOF_LONG  8
         #else
           #define SIZEOF_LONG  4
@@ -713,7 +713,7 @@ extern "C" {
       #endif
       #define SIZEOF_INT   8
       #ifndef SIZEOF_LONG
-        #if (ULONG_MAX > UINT_MAX)
+        #if (ULONG_MAX != UINT_MAX)
           #define SIZEOF_LONG  16
         #else
           #define SIZEOF_LONG  8
