@@ -11,6 +11,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.55  1999/02/04 07:34:06  cyp
+// Removed lurk.h from win32/16,os/2 sections. It is now included where ref'd.
+//
 // Revision 1.54  1999/01/31 20:19:07  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -242,7 +245,6 @@ extern "C" {
   #include <net/if.h>
   #include "platforms/os2cli/dod.h"   // needs to be included after Client
   #endif
-  #include "lurk.h"
   #include "platforms/os2cli/os2inst.h" //-install/-uninstall functionality
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
     #define QSV_NUMPROCESSORS     26
@@ -297,7 +299,6 @@ extern "C" {
   #include <share.h>
   #include <fcntl.h>
   #include <io.h>
-  #include "lurk.h"
   #include "w32svc.h"       // service
   #include "w32cons.h"      // console
   #include "w32pre.h"       // prelude
