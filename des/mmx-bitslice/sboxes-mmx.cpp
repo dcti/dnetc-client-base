@@ -6,6 +6,9 @@
 
 //
 // $Log: sboxes-mmx.cpp,v $
+// Revision 1.4  1998/09/28 22:09:23  remi
+// Cleared 3 warnings.
+//
 // Revision 1.3  1998/07/12 05:29:16  fordbr
 // Replaced sboxes 1, 2 and 7 with Kwan versions
 // Now 1876 kkeys/s on a P5-200MMX
@@ -20,7 +23,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *sboxes_mmx_cpp(void) { 
-return "@(#)$Id: sboxes-mmx.cpp,v 1.3 1998/07/12 05:29:16 fordbr Exp $"; }
+return "@(#)$Id: sboxes-mmx.cpp,v 1.4 1998/09/28 22:09:23 remi Exp $"; }
 #endif
 
 #include "sboxes-mmx.h"
@@ -1551,7 +1554,7 @@ asm ("
 
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
-void mmxs1 (stMmxParams *params)
+void mmxs1 (stMmxParams *)
 {
 #define t1 " 0*8+"locals
 #define t2 " 1*8+"locals
@@ -1693,7 +1696,7 @@ movq	%mm7, (%edx)	#
 
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
-void mmxs2 (stMmxParams *params)
+void mmxs2 (stMmxParams *)
 {
 #define t1 " 0*8+"locals
 #define t2 " 1*8+"locals
@@ -1830,7 +1833,7 @@ movq	%mm0, (%ecx)	/**/
 
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
-void mmxs7 (stMmxParams *params)
+void mmxs7 (stMmxParams *)
 {
 
 #define t1  " 0*8+"locals
