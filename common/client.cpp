@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.73 2000/05/11 12:15:40 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.74 2000/05/17 18:22:22 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -279,18 +279,23 @@ static const char *GetBuildOrEnvDescription(void)
 #elif (CLIENT_OS == OS_NETWARE)
   static char buffer[40];
   const char *speshul = "";
-  int major, minor, servType, loaderType;
+  int major, minor, revision, servType, loaderType;
   major = GetFileServerMajorVersionNumber();
-  if ((minor = GetFileServerMinorVersionNumber()) < 10) /* .02 => .20 */
-    minor *= 10;
+  minor = GetFileServerMinorVersionNumber();
+  revision = GetFileServerRevisionNumber();
+  #if 0 /* hmm, this is wrong. NetWare 4.02 != 4.2 */
+  if (minor < 10) 
+    minor *= 10; /* .02 => .20 */
+  #endif  
+  revision = ((revision == 0 || revision > 26)?(0):(revision + ('a'-1)));
   GetServerConfigurationInfo(&servType, &loaderType);
-  if (servType == 0 && loaderType > 1)
+  if (servType == 0 && loaderType > 1) /* OS/2/UnixWare/etc loader */
     speshul = " (nondedicated)";
   else if (servType == 1)
     speshul = " (SFT III IOE)";
   else if (servType == 2)
     speshul = " (SFT III MSE)";
-  sprintf(buffer, "NetWare%s %u.%u", speshul, major, minor );
+  sprintf(buffer, "NetWare%s %u.%u%c", speshul, major, minor, revision );
   return buffer;
 #elif (CLIENT_OS == OS_MACOS)
   const char *osname = "Mac OS";
