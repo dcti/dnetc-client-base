@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.52 2003/05/26 16:51:27 snikkel Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.53 2003/06/19 22:42:27 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -1480,7 +1480,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
           case 0x02: cindex = 1; break; // PII/PIII       == SES 2-pipe
           case 0x03: cindex = 2; break; // Cx6x86         == DG 2-pipe
           case 0x04: cindex = 2; break; // K5             == DG 2-pipe
-          case 0x05: cindex = 2; break; // K6             == DG 2-pipe
+          case 0x05: cindex = 5; break; // K6             == SS 2-pipe (#3293)
           case 0x06: cindex = 0; break; // Cx486          == SES 1-pipe
           case 0x07: cindex =-1; break; // orig Celeron   == unused?
           case 0x08: cindex =-1; break; // PPro           == ?

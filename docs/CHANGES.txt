@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.31 2003/06/14 22:54:44 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.32 2003/06/19 22:42:27 andreasb Exp $
 ==========================================================================
 
 2.9000
@@ -30,7 +30,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.31 2003/06/14 22:54:44 andreasb Ex
 2.9005-484  new: x86: detect Athlon with Barton core (#3227)
             new: x86: detect Celeron with Tualatin core / brand id 1 (#3246)
             new: x86: detect Pentium M (#3304)
-            imp: x86: changed some preselected cores (#3233)
+            imp: x86: changed some preselected cores (#3233, #3293)
             new: sparc: rc5-72 assembly cores by Andreas Beckmann
             new: decunix: initial Lurk support
             chg: all: single-threaded clients now ignore numcpu/max-threads
