@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.19 2000/02/21 01:16:35 trevorh Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.20 2000/03/02 12:59:12 snake Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -1324,7 +1324,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         const char *pscmd = ((char *)NULL);
         #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
             (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
-            (CLIENT_OS == OS_BSDOS)
+            (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX)
         pscmd = "ps ax|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
         /* fbsd: "ps ax -o pid -o command 2>/dev/null"; */ /* bsd + -o ext */
         /* lnux: "ps ax --format pid,comm 2>/dev/null"; */ /* bsd + gnu -o */
