@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.15 2000/09/17 11:46:31 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.16 2001/01/22 20:01:44 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -448,7 +448,10 @@ void DisplayHelp( const char * unrecognized_option )
 
     if (!goodopt)
     {
-      LogScreenRaw( "\nUnrecognized option '%s'\n\n", unrecognized_option);
+      if (strlen(unrecognized_option) > 25)
+        LogScreenRaw( "\nUnrecognized option '%25.25s...'\n\n", unrecognized_option);
+      else
+        LogScreenRaw( "\nUnrecognized option '%s'\n\n", unrecognized_option);
       LogScreenRaw( "The following list of command line switches may be obtained\n"
              "at any time by running the client with the '-help' option.\n\n");
       if (!nopaging)
