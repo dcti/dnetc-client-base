@@ -1,5 +1,5 @@
 
-$Id: TODO.txt,v 1.8.2.2 2000/01/04 06:39:55 cyp Exp $
+$Id: TODO.txt,v 1.8.2.3 2000/01/04 06:42:34 cyp Exp $
 
 This file contains a list of mini-projects. Submissions as well as 
 volunteers :) are welcome. 
@@ -46,9 +46,6 @@ Perhaps someone else has what you don't. :)
    functions. Something along the lines of whats used in the proxy would
    be nice, but without the bloat please.             Priority: in-progress
 
--- Convert all references to u64 structures (fake u64 that is) from {hi,lo} 
-   to u32 hi; u32 lo; (discard structure).            Priority: Low
-   
 -- convert the "work unit size" (1*2**28) to something human. :) 
    "cpu-work-hours" maybe?                            Priority: Medium
 
