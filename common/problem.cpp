@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.32  1998/08/22 08:00:40  silby
+// added in pipeline_count=2 "just in case" for x86
+//
 // Revision 1.31  1998/08/20 19:34:28  cyruspatel
 // Removed that terrible PIPELINE_COUNT hack: Timeslice and pipeline count
 // are now computed in Problem::LoadState(). Client::SelectCore() now saves
@@ -65,7 +68,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.31 1998/08/20 19:34:28 cyruspatel Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.32 1998/08/22 08:00:40 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -217,6 +220,7 @@ s32 Problem::LoadState( ContestWork * work, u32 contesttype, u32 _timeslice, u32
   #if (CLIENT_CPU == CPU_X86)
     if (_cputype == 6 && contest == 0) //RC5 MMX cores
       pipeline_count = 4;
+    else pipeline_count = 2;
   #endif
 
   if ( _timeslice < pipeline_count )
