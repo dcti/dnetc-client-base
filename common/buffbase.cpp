@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.61 2001/06/17 17:20:02 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.62 2001/06/23 17:59:03 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -790,8 +790,8 @@ long BufferFetchFile( Client *client, int break_pending,
       }
       LogScreen("\n");
       LogTo(LOGTO_FILE|LOGTO_MAIL,
-            "Retrieved %lu %s packet%s %sfrom file.\n",
-                  projtrans_pkts, contname, 
+            "%s: Retrieved %lu packet%s %sfrom file.\n",
+                  contname, projtrans_pkts,
                   ((projtrans_pkts==1)?(""):("s")), scratch );
     }
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
