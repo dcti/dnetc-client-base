@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.122  1998/08/10 23:02:12  cyruspatel
+// Four changes: (a) xxxTrigger and pausefilefound flags are now wrapped in
+// functions in trigger.cpp (b) NetworkInitialize()/NetworkDeinitialize()
+// related changes: (see netinit.cpp for documentation): calls to those two
+// functions have been removed from main() and are used before network i/o is
+// actually attempted. (c) NO!NETWORK references have been removed. network.cpp
+// changelog has details. (d) Fetch()/Flush()/Update() are now in buffupd.cpp
+//
 // Revision 1.121  1998/08/08 00:55:25  silby
 // Changes to get win32gui working again
 //
@@ -75,7 +83,7 @@
 // x86 clients in MMX mode will now permit des on > 2 processors.  Bryddes is still set at two, however.
 //
 // Revision 1.103  1998/07/16 08:25:07  cyruspatel
-// Added more NONETWORK wrappers around calls to Update/Fetch/Flush. Balanced
+// Added more NO!NETWORK wrappers around calls to Update/Fetch/Flush. Balanced
 // the '{' and '}' in Fetch and Flush. Also, Flush/Fetch will now end with
 // 100% unless there was a real send/retrieve fault.
 //
@@ -311,7 +319,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.121 1998/08/08 00:55:25 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.122 1998/08/10 23:02:12 cyruspatel Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -325,7 +333,8 @@ return "@(#)$Id: client.cpp,v 1.121 1998/08/08 00:55:25 silby Exp $"; }
 #include "mail.h"
 #include "scram.h"
 #include "convdes.h"
-#include "sleepdef.h"  //sleep(), usleep()
+#include "triggers.h" //[Check|Raise][Pause|Exit]RequestTrigger()
+#include "sleepdef.h" //sleep(), usleep()
 #include "threadcd.h"
 #include "buffwork.h"
 #include "clitime.h"
@@ -359,8 +368,6 @@ s32 guiriscos, guirestart;
 // --------------------------------------------------------------------------
 
 Problem problem[2*MAXCPUS];
-volatile u32 SignalTriggered, UserBreakTriggered;
-volatile s32 pausefilefound = 0;
 
 // --------------------------------------------------------------------------
 
@@ -605,962 +612,6 @@ void Client::RandomWork( FileEntry * data )
 
 }
 
-// --------------------------------------------------------------------------
-
-s32 Client::ForceFetch( u8 contest, Network *netin )
-{
-  s32 temp1, temp2;
-  s32 ret = -1;
-
-  temp1 = CountBufferInput(contest);
-  temp2 = temp1-1;
-  while ((!UserBreakTriggered) && (temp2 < temp1) && (temp1 < inthreshold[contest]))
-  {
-    // If we're actually making the buffer file bigger, then keep trying to fetch...
-    ret = Fetch(contest, netin);
-    temp2 = temp1;
-    temp1 = CountBufferInput(contest);
-
-    LogScreen("[%s] %d block%s remain%s in %s\n",Time(),temp1,temp1==1?"":"s",temp1==1?"s":"",
-#ifdef DONT_USE_PATHWORK
-    ini_in_buffer_file[contest]);
-#else
-    in_buffer_file[contest]);
-#endif
-  }
-  return ret;
-}
-
-// --------------------------------------------------------------------------
-
-#if defined(NONETWORK)
-s32 Client::Fetch( u8 /*contest*/, Network * /*netin*/, s32 /*quietness*/, s32 /*force*/ )
-{ return -2; }
-
-#else
-
-s32 Client::Fetch( u8 contest, Network *netin, s32 quietness, s32 force )
-{
-  Network *net;
-  Packet packet;
-  u32 scram;
-  u32 scram2;
-  s32 err;
-  FileEntry data;
-  unsigned int temptimes28, times28 = 0; //count of 2^28 blocks
-  s32 count = 0;
-  s32 more;
-  s32 retry;
-  u32 thisrandomprefix;
-  u8 tmpcontest;
-
-  if ((offlinemode && (force == 0))  // check to see if fetch should be done
-    #if (CLIENT_OS == OS_NETWARE)
-       || !nwCliIsNetworkAvailable(0)
-    #endif
-  ) return( -1 );
-
-  if (contestdone[contest]) return( -1 );
-
-  // first, find out if we are already full
-  if (CountBufferInput(contest) >= inthreshold[contest]) 
-    {
-    if (force == 1) LogScreen("%s in buffer is already full, no connect needed.\n",(contest == 1 ? "DES":"RC5"));
-    return 0;
-    };
-
-  #if defined(LURK)
-  // Check if we need to dial, and if update started this connect or not
-  if (!netin) // check if update started the connect, or if we must
-    if (dialup.DialIfNeeded(force) < 0) return -1; // connection failed
-  #endif
-
-
-  // ready the net
-  if (!netin)
-  {
-    net = new Network( (const char *) (keyproxy[0] ? keyproxy : NULL ),
-        (const char *) (nofallback ? (keyproxy[0] ? keyproxy : NULL) : DEFAULT_RRDNS),
-        (s16) keyport, autofindkeyserver );
-    net->quietmode = quietmode;
-
-    switch (uuehttpmode)
-    {
-    case 1:  // uue
-      net->SetModeUUE(true);
-      break;
-
-    case 2:  // http
-      net->SetModeHTTP(httpproxy, (s16) httpport, httpid);
-      break;
-
-    case 3:  // uue + http
-      net->SetModeHTTP(httpproxy, (s16) httpport, httpid);
-      net->SetModeUUE(true);
-      break;
-
-    case 4:  // SOCKS4
-      net->SetModeSOCKS4(httpproxy, (s16) httpport, httpid);
-      break;
-
-    case 5:  // SOCKS5
-      net->SetModeSOCKS5(httpproxy, (s16) httpport, httpid);
-      break;
-    }
-
-  } else {
-    net = netin;
-  }
-
-  retry = 0;
-  while ( net->Open() && ( retry++ < FETCH_RETRY ) )
-  {
-    if ( retry == FETCH_RETRY )
-    {
-      if (!netin) delete net;
-      return( -1 );
-    }
-    LogScreen( "[%s] Network::Open Error %d - sleeping for 3 seconds\n", Time(), retry );
-    sleep( 3 );
-
-#if (CLIENT_OS == OS_AMIGAOS)
-    if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
-      SignalTriggered = UserBreakTriggered = 1;
-#endif
-
-#if defined(LURK)
-    if (dialup.CheckForStatusChange() == -1)
-      {
-      LogScreen("TCPIP Connection Lost - Aborting fetch\n");
-      return -3;                 // so stop trying and return
-      };
-#endif
-
-    if ( SignalTriggered )
-      return -2;
-    // at this point we need more data, so try until we get a connection
-  }
-
-  // request a valid key for communications
-  memset( &packet, 0, sizeof(Packet) );
-  packet.op = htonl( OP_SCRAMREQUEST );
-  packet.version = htonl( PACKET_VERSION );
-    packet.os = htonl( CLIENT_OS );
-    packet.cpu = htonl( CLIENT_CPU );
-    packet.build = htonl( CLIENT_CONTEST*100 + CLIENT_BUILD );
-
-    if (contest == 0) {
-      packet.contestid = htonl( IDCONTEST_RC564 );
-    } else {
-      packet.contestid = htonl( IDCONTEST_DESII );
-    }
-
-  packet.checksum =
-    htonl( Checksum( (u32 *) &packet, ( sizeof(Packet) / 4 ) - 2 ) );
-  scram = Random( NULL, 0 );
-  Scramble( scram, (u32 *) &packet, ( sizeof(Packet) / 4 ) - 1 );
-  packet.scramble = htonl( scram );
-
-  if ( net->Put( sizeof( Packet ), (char *) &packet ) )
-  {
-    LogScreen( "[%s] Network::Error Unable to send data 1\n", Time() );
-    if (!netin) delete net;
-    return( -1 );
-  }
-
-  if ( ( err = net->Get( sizeof( Packet ), (char *) &packet, nettimeout ) ) == sizeof(Packet) )
-  {
-    Descramble( scram, (u32 *) &packet, ( sizeof(Packet) / 4 ) - 1 );
-    if ( ( ntohl( packet.scramble ) != scram ) || // key is valid
-         ( !CheckChecksum( ntohl( packet.checksum ),
-           (u32 *) &packet, ( sizeof(Packet) / 4 ) - 2 ) ) || // checksum valid
-         ( ntohl( packet.version ) != PACKET_VERSION ) || // version valid
-         ( ntohl( packet.op ) != OP_SCRAM ) )  // expected packet
-    {
-      LogScreen( "[%s] Network::Error Bad Data 2\n", Time() );
-      if (!netin) delete net;
-      return( -1 );
-    }
-  }
-  else
-  {
-    LogScreen( "[%s] Network::Error Read failed 3/%d\n", Time(), (int) err );
-    if (!netin) delete net;
-    return( -1 );
-  }
-
-  // this is the issued scramble key...
-  // finish communications with it...
-  scram2 = ntohl( packet.key.lo );
-
-  strncpy( proxymessage, packet.id, 63 );
-#if (CLIENT_OS == OS_OS390)
-  __atoe(proxymessage);
-#endif
-
-  SetContestDoneState(&packet);
-  if (contestdone[contest])
-  {
-    if (!netin) delete net;
-    return( -1 );
-  }
-
-  do
-  {
-    memset( &packet, 0, sizeof(Packet) );
-    packet.op = htonl( OP_REQUEST_MULTI );
-#if (CLIENT_CPU == CPU_X86)
-    // x86 cores require <=31
-    packet.iterations = htonl( 1 << min(31, (int) preferred_blocksize) );
-#else
-    //packet.iterations = 0x10000000L;     // Request 1 block
-    packet.iterations = htonl( 1 << preferred_blocksize );
-#endif
-    packet.version = htonl( PACKET_VERSION );
-    packet.os = htonl( CLIENT_OS );
-    packet.cpu = htonl( CLIENT_CPU );
-    packet.build = htonl( CLIENT_CONTEST*100 + CLIENT_BUILD );
-
-    if (contest == 0) {
-      packet.contestid = htonl( IDCONTEST_RC564 );
-    } else {
-      packet.contestid = htonl( IDCONTEST_DESII );
-    }
-
-    packet.checksum =
-      htonl( Checksum( (u32 *) &packet, ( sizeof(Packet) / 4 ) - 2 ) );
-    Scramble( scram2, (u32 *) &packet, ( sizeof(Packet) / 4 ) - 1 );
-    packet.scramble = htonl( scram2 );
-
-    if ( net->Put( sizeof( Packet ), (char *) &packet ) )
-    {
-      LogScreen( "\n[%s] Network::Error Unable to send data 4\n", Time() );
-      if (!netin) delete net;
-      return( count ? count : -1 );
-    }
-    if ( ( err = net->Get( sizeof( Packet ), (char *) &packet, nettimeout ) ) == sizeof(Packet) )
-    {
-      Descramble( ntohl( packet.scramble ),
-                  (u32 *) &packet, ( sizeof(Packet) / 4 ) - 1 );
-      if ( ( ntohl( packet.scramble ) != scram2 ) || // key is valid
-           ( !CheckChecksum( ntohl( packet.checksum ),
-             (u32 *) &packet, ( sizeof(Packet) / 4 ) - 2 ) ) || // checksum valid
-           ( ntohl( packet.version ) != PACKET_VERSION ) || // version valid
-           ( ntohl( packet.op ) != OP_DATA ) )  // expected packet
-      {
-
-        LogScreen( "\n[%s] Network::Error Bad Data 5\n", Time() );
-        if (!netin) delete net;
-        return( count ? count : -1 );
-      }
-    }
-    else
-    {
-      LogScreen( "\n[%s] Network::Error Read failed 6/%d\n", Time(), (int) err );
-      if (!netin) delete net;
-      return( count ? count : -1 );
-    }
-
-    // incoming is in network byte order, and so are the data strctures,
-    // so we can just copy...
-    data.key.hi = packet.key.hi;
-    data.key.lo = packet.key.lo;
-
-    if (ntohl(packet.contestid) == IDCONTEST_RC564) {
-      data.contest = 0;
-    } else {
-      if (ntohl(packet.contestid) == IDCONTEST_DESII) {
-        data.contest = 1;
-      } else {
-        if (ntohl(packet.contestid) == 0) {
-          // Connecting to a non-dual server will return contestid=0. This means RC564.
-          data.contest = 0;
-        } else {
-          Log("\n[%s] Received block for unknown contest #%ld\n",Time(),(long)ntohl(packet.contestid));
-          if (!netin) delete net;
-          return( count ? count : -1 );
-        }
-      }
-    }
-
-    tmpcontest = data.contest;
-
-    if (data.contest == 0) {
-      // Remember the prefix on the rc564 blocks.
-      thisrandomprefix = (ntohl(packet.key.hi) & 0xFF000000L) >> 24;
-      if (thisrandomprefix != ((u32) randomprefix) ) { // Has the high byte changed?  If so, then remember it.
-        if (ntohl(packet.iterations) > 0x08000000L) { // only if this wasn't a test block...
-          randomprefix=thisrandomprefix;                 // and use it to generate random blocks.
-          randomchanged=1;
-        }
-      }
-    }
-    data.iv.hi = packet.iv.hi;
-    data.iv.lo = packet.iv.lo;
-    data.plain.hi = packet.plain.hi;
-    data.plain.lo = packet.plain.lo;
-    data.cypher.hi = packet.cypher.hi;
-    data.cypher.lo = packet.cypher.lo;
-    data.keysdone.hi = 0;
-    data.keysdone.lo = 0;
-
-    if (packet.iterations == 0)
-    {
-      packet.iterations = (u32) 1<<31;
-      LogScreen("\n[%s] Received 2^32 block.  Truncating to 2^31\n", Time());
-    }
-    data.iterations.hi = 0;
-    data.iterations.lo = packet.iterations;
-
-    data.op = packet.op;
-    strcpy( data.id, "rc5@distributed.net" );
-#if (CLIENT_OS == OS_OS390)
-    __etoa(data.id);
-#endif
-    data.cpu=0;
-    data.os=0;
-    data.buildlo=0;
-    data.buildhi=0;
-
-//Log( "\niv:        %08lX:%08lX \n"
-//     "plain:     %08lX:%08lX \n"
-//     "cypher:    %08lX:%08lX \n"
-//     "key:       %08lX:%08lX \n",
-//     ntohl( data.iv.hi ) , ntohl( data.iv.lo ),
-//      ntohl( data.plain.hi ) , ntohl( data.plain.lo ),
-//      ntohl( data.cypher.hi ) , ntohl( data.cypher.lo ),
-//      ntohl( data.key.hi ) , ntohl( data.key.lo ));
-
-    if (data.iterations.hi)
-      temptimes28 = 16;
-    else
-      {
-      unsigned int size =  0;
-      u32 iter = ntohl(data.iterations.lo);
-      while (iter>1 && size<28)
-        { size++; iter>>=1; }
-      temptimes28 = iter;
-      }
-
-    data.checksum =
-      htonl( Checksum( (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 2 ) );
-    scram = Random( NULL, 0 ); // new random key
-    data.scramble = htonl( scram );
-    Scramble( scram, (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 1 );
-    // now have a safe file entry.
-
-    // stuff it in the queue immediately.
-    if ( ( more = PutBufferInput( &data ) ) == -1 )
-    {
-      Log( "\n[%s] Fatal Buffering Error\n", Time() );
-      if (!netin) delete net;
-      return( -1 );
-    }
-
-    count++;
-    times28+=temptimes28;
-
-    if (proxymessage[0] != 0) {
-      if (quietness <= 1) // if > 1, don't show proxy message
-        {
-        #if (CLIENT_OS == OS_WIN32)
-          //uses proportional font, so reformatting looks wierd
-          Log( "[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
-        #else
-          Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
-        #endif
-        }
-      proxymessage[0]=0;
-    }
-#if !defined(NOMAIN)
-    if (!isatty(fileno(stdout))) 
-      LogRaw( "<" );  // use simple output for redirected stdout
-    else
-#endif
-      {
-      u32 percent2div = (inthreshold[contest]-more)+count;
-      if (((s32)(percent2div)) <= 0) percent2div = 0; 
-      u32 percent2 = ((percent2div)?((count*10000)/percent2div):(10000));
-       LogScreen( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
-          CliGetTimeString(NULL,1), count, percent2div?percent2div:count,
-          percent2/100, percent2%100 );
-      }    
-    if (tmpcontest != contest)
-    {
-      // We didn't get the block we were requesting.
-      Log("\n[%s] Received block for wrong contest.\n", Time());
-      if (!netin) delete net;
-      return( -1 );
-    }
-#if (CLIENT_OS == OS_AMIGAOS)
-    if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
-      SignalTriggered = UserBreakTriggered = 1;
-#endif
-  } while ( more < inthreshold[contest]  && (!SignalTriggered) );
-
-  // close this connection
-  if (!netin) delete net;
-
-  #if defined(LURK)
-  // Check if we need to hangup (unless update started this connect)
-  if (!netin)
-    dialup.HangupIfNeeded();
-  #endif
-
-  LogScreen( "\n" );
-  Log( "[%s] Retrieved %d %s block%s (%d*2^28 keys) from server.\n", 
-      Time(), (int) count, (contest == 1 ? "DES":"RC5"),
-      ((count==1)?(""):("s")), (int)(times28));
-  return ( count );
-}
-
-#endif //NONETWORK
-
-// ---------------------------------------------------------------------------
-
-s32 Client::ForceFlush( u8 contest , Network *netin )
-{
-  u32 temp1, temp2;
-  s32 ret = -1;
-
-  temp1 = CountBufferOutput(contest);
-  temp2 = 1 + temp1;
-  while ((!UserBreakTriggered) && (temp1 < temp2) ) {
-    // If we're actually making the buffer file smaller, then keep trying to flush...
-    ret = Flush(contest, netin);
-    temp2 = temp1;
-    temp1 = CountBufferOutput(contest);
-    Log("[%s] %d block%s remain%s in %s\n",Time(), temp1, temp1==1?"":"s", temp1==1?"s":"",
-#ifdef DONT_USE_PATHWORK
-    ini_out_buffer_file[contest]);
-#else
-    out_buffer_file[contest]);
-#endif
-  }
-  return ret;
-}
-
-// ---------------------------------------------------------------------------
-
-#if defined(NONETWORK)
-s32 Client::Flush( u8 /*contest*/, Network * /*netin*/, s32 /*quietness*/, s32 /*force*/ )
-{ return -2; }
-
-#else
-
-s32 Client::Flush( u8 contest , Network *netin, s32 quietness, s32 force )
-{
-  // send data, look for ack...
-  // we must differentiate between OP_DONE and OP_SUCCESS so we can look for
-  // OP_DONE_NOCLOSE_ACK or OP_SUCCESS_ACK
-
-  Network *net;
-  Packet packet;
-  u32 scram;
-  u32 scram2;
-  unsigned int temptimes28, times28 = 0; //count of 2^28 blocks
-  s32 err;
-  u32 oper;
-  FileEntry data;
-  s32 count;
-  s32 more;
-  u32 i, retry;
-
-  if ((offlinemode && (force == 0))  // check to see if flush should be done
-    #if (CLIENT_OS == OS_NETWARE)
-       || !nwCliIsNetworkAvailable(0)
-    #endif
-  ) return( -1 );
-
-  if (contestdone[contest]) return( -1 );
-
-  // first, find out if we are empty already
-  if (CountBufferOutput(contest) < 1)
-    {
-    if (force == 1) LogScreen("%s out buffer is already empty, no connect needed.\n",(contest == 1 ? "DES":"RC5"));
-    return 0;
-    };
-
-  #if defined(LURK)
-  // Check if we need to dial, and if update started this connect or not
-  if (!netin) // check if update started the connect, or if we must
-    if (dialup.DialIfNeeded(force) < 0) return -1; // connection failed
-  #endif
-
-  // ready the net
-  if (!netin)
-  {
-    net = new Network( (const char *) (keyproxy[0] ? keyproxy : NULL ),
-        (const char *) (nofallback ? (keyproxy[0] ? keyproxy : NULL) : DEFAULT_RRDNS),
-        (s16) keyport, autofindkeyserver );
-    net->quietmode = quietmode;
-
-    switch (uuehttpmode)
-    {
-    case 1:  // uue
-      net->SetModeUUE(true);
-      break;
-
-    case 2:  // http
-        net->SetModeHTTP(httpproxy, (s16) httpport, httpid);
-      break;
-
-    case 3:  // uue + http
-      net->SetModeHTTP(httpproxy, (s16) httpport, httpid);
-        net->SetModeUUE(true);
-      break;
-
-    case 4:  // SOCKS4
-      net->SetModeSOCKS4(httpproxy, (s16) httpport, httpid);
-      break;
-    case 5:  // SOCKS5
-      net->SetModeSOCKS5(httpproxy, (s16) httpport, httpid);
-      break;
-    }
-
-  } else {
-    net = netin;
-  }
-
-  retry = 0;
-  while ( net->Open() )
-  {
-    if ( retry++ == FETCH_RETRY ) {
-      if (!netin) delete net;
-      return( -1 );
-    }
-
-    LogScreen( "\n[%s] Network::Open Error - Sleeping for 3 seconds\n", Time() );
-    sleep( 3 );
-#if (CLIENT_OS == OS_AMIGAOS)
-    if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
-      SignalTriggered = UserBreakTriggered = 1;
-    #endif
-
-#if defined(LURK)
-    if (dialup.CheckForStatusChange() == -1)
-       {
-       LogScreen("TCPIP Connection Lost - Aborting flush\n");
-       return -3;                 // so stop trying and return
-       };
-#endif
-
-    if ( 1==SignalTriggered ) return -1;
-    // Note that this ignores signaltriggered==2 (used when -nodisk is specified)
-
-    // at this point we need more data, so try until we get a connection
-  }
-
-  // request a valid key for communications
-  memset( &packet, 0, sizeof(Packet) );
-  packet.op = htonl( OP_SCRAMREQUEST );
-  packet.version = htonl( PACKET_VERSION );
-
-  if (contest == 0) {
-    packet.contestid = htonl( IDCONTEST_RC564 );
-  } else {
-    packet.contestid = htonl( IDCONTEST_DESII );
-  }
-
-  packet.checksum =
-    htonl( Checksum( (u32 *) &packet, ( sizeof(Packet) / 4 ) - 2 ) );
-  scram = Random( NULL, 0 );
-  Scramble( scram, (u32 *) &packet, ( sizeof(Packet) / 4 ) - 1 );
-  packet.scramble = htonl( scram );
-
-  if ( net->Put( sizeof( Packet ), (char *) &packet ) )
-  {
-    LogScreen( "[%s] Network::Error Unable to send 21\n", Time() );
-    if (!netin) delete net;
-    return( -1 );
-  }
-
-  if ( ( err = net->Get( sizeof( Packet ), (char *) &packet, nettimeout ) ) == sizeof(Packet) )
-  {
-    Descramble( scram, (u32 *) &packet, ( sizeof(Packet) / 4 ) - 1 );
-    if ( ( ntohl( packet.scramble ) != scram ) || // key is valid
-         ( !CheckChecksum( ntohl( packet.checksum ),
-           (u32 *) &packet, ( sizeof(Packet) / 4 ) - 2 ) ) || // checksum valid
-         ( ntohl( packet.version ) != PACKET_VERSION ) || // version valid
-         ( ntohl( packet.op ) != OP_SCRAM ) )  // expected packet
-    {
-      LogScreen( "[%s] Network::Error Bad Data 22\n", Time() );
-      if (!netin) delete net;
-      return( -1 );
-    }
-  }
-  else
-  {
-    LogScreen( "[%s] Network::Error Read failed 23/%d\n", Time(), (int) err );
-    if (!netin) delete net;
-    return( -1 );
-  }
-
-  SetContestDoneState(&packet);
-  if (contestdone[contest]) {
-    if (!netin) delete net;
-    return( -1 );
-  }
-
-  // this is the issued scramble key...
-  // finish communications with it...
-  scram2 = ntohl( packet.key.lo );
-
-  // get the text message and display to the client
-  strncpy( proxymessage, packet.id, 63 );
-#if (CLIENT_OS == OS_OS390)
-  __atoe(proxymessage);
-#endif
-
-  count = 0;
-  do
-  {
-    if ( ( more = GetBufferOutput( &data , contest) ) == -1 )
-    {
-      // no more to do
-      if (proxymessage[0] != 0)
-        {
-        if (quietness <= 1) // if > 1, don't show proxy message
-          {
-          #if (CLIENT_OS == OS_WIN32)
-            //uses proportional font, so reformatting looks wierd
-            Log( "[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
-          #else
-            Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
-          #endif
-          }
-        proxymessage[0]=0;
-      }
-      //Log( "\n[%s] Sent %d %s block(s) to server\n", Time(), (int) count, (contest == 1 ? "DES":"RC5") );
-      //if (!netin) delete net;
-      //return( count );
-      break;
-    }
-
-    // descramble - GetBufferOutbut already told us this is valid data...
-    Descramble( ntohl( data.scramble ),
-                (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 1 );
-
-    if (data.iterations.hi)
-      temptimes28 = 16;
-    else
-      {
-      unsigned int size =  0;
-      u32 iter = ntohl(data.iterations.lo);
-      while (iter>1 && size<28)
-        { size++; iter>>=1; }
-      temptimes28 = iter;
-      }
-
-    // compose real packet...
-    // data is in network byte order, and so are the packet strctures,
-    // so we can just copy...
-
-    memset( &packet, 0, sizeof(Packet) );
-
-    // need only op, id, iterations, key...
-
-    //if (strcmp(data.id,"rc5@distributed.net") == 0)
-      // This was an earlier version than 6402
-      // (Earlier versions always set id to rc5@distributed.net in
-      // the buffer, and submitted blocks using the configured id)
-      // ......The above didn't work properly, as some clients didn't set this field
-      // to rc5@distributed.net as expected.  Changed 12.15.1997 to the following...
-//printf("%s\n",data.id);
-//printf("%d %d %d %d \n",htonl( (u32) data.os ) , htonl((u32) data.cpu),htonl((u32) data.buildhi),htonl((u32) data.buildlo));
-
-    if ((64 != (u32) data.buildhi ) && (70 != (u32) data.buildhi) && (71 != (u32) data.buildhi))
-    {
-      // Well, if 64 (or 70 or 71) isn't saved in data.buildhi, then this record was written with an
-      // older version of the client.
-      strncpy( packet.id, id, sizeof(packet.id) - 1 );
-#if (CLIENT_OS == OS_OS390)
-      __etoa(packet.id);
-#endif
-      packet.os = htonl( CLIENT_OS );
-      packet.cpu = htonl( CLIENT_CPU );
-      packet.build = htonl( 6401 );
-    }
-    else
-    {
-      // This block was written to the file by a client ver > 6401
-      strncpy( packet.id, data.id, sizeof(data.id) - 1 );
-      packet.id[sizeof(data.id)-1]=0; // in case data.id was >58 bytes
-#if (CLIENT_OS == OS_OS390)
-      __etoa(packet.id);
-#endif
-      packet.os = htonl( (u32) data.os );
-      packet.cpu = htonl( (u32) data.cpu );
-      packet.build = htonl( ( (u32) data.buildhi) * 100 + ( (u32) data.buildlo ) );
-    }
-    for ( i = strlen(packet.id) ; i < sizeof(packet.id) ; i++ )
-      packet.id[(int) i] = 0;
-
-    oper = ntohl( data.op );
-    // oper in host order
-
-    // no need to change byte order.
-    packet.key.hi = data.key.hi;
-    packet.key.lo = data.key.lo;
-    packet.iv.hi = data.iv.hi;
-    packet.iv.lo = data.iv.lo;
-    packet.plain.hi = data.plain.hi;
-    packet.plain.lo = data.plain.lo;
-    packet.cypher.hi = data.cypher.hi;
-    packet.cypher.lo = data.cypher.lo;
-
-    if ( data.contest == 0 ) {
-        packet.contestid = htonl( IDCONTEST_RC564 );
-    } else {
-        packet.contestid = htonl( IDCONTEST_DESII );
-    }
-
-    if ( (oper == OP_DONE) || (oper == OP_DONE_MULTI) )
-    {
-      // block we did
-      packet.op = htonl( OP_DONE_MULTI );
-      packet.key.hi = data.key.hi;
-      packet.key.lo = data.key.lo;
-      packet.iterations = data.iterations.lo;
-    }
-    else if ( (oper == OP_SUCCESS) || (oper == OP_SUCCESS_MULTI) )
-    {
-      // exact key that is solution
-      packet.op = htonl( OP_SUCCESS_MULTI );
-
-      // network order problem
-      packet.key.hi = data.key.hi;
-      packet.key.lo = data.key.lo;
-      packet.iterations = 0;
-    }
-    else
-    {
-      // not a valid packet??? - discard
-      Log( "\n[%s] Error - Bad Data 24\n", Time() );
-      if (!netin) delete net;
-      return( count ? count : -1 );
-    }
-
-//Log( "\nFlushing key %08lX:%08lX   contestid= %d  cpu/os/build: %d/%d/%d\n",
-//      ntohl( packet.key.hi ) , ntohl( packet.key.lo ),packet.contestid,
-//     ntohl(packet.cpu),ntohl(packet.os),ntohl(packet.build));
-
-    packet.version = htonl( PACKET_VERSION );
-    packet.checksum =
-      htonl( Checksum( (u32 *) &packet, ( sizeof(Packet) / 4 ) - 2 ) );
-    Scramble( scram2, (u32 *) &packet, ( sizeof(Packet) / 4 ) - 1 );
-    packet.scramble = htonl( scram2 );
-    if ( net->Put( sizeof( Packet ), (char *) &packet ) )
-    {
-      LogScreen( "\n[%s] Network::Error Unable to send 25\n", Time() );
-
-      // return packet to buffer...
-      Scramble( ntohl( data.scramble ),
-                (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 1 );
-      PutBufferOutput( &data );
-      if (!netin) delete net;
-      return( count ? count : -1 );
-    }
-
-    // ok, it's sent.
-    if ( ( err = net->Get( sizeof( Packet ), (char *) &packet, nettimeout ) ) == sizeof(Packet) )
-    {
-      Descramble( ntohl( packet.scramble ),
-                  (u32 *) &packet, ( sizeof(Packet) / 4 ) - 1 );
-      if ( ( ntohl( packet.scramble ) != (u32) scram2 ) || // key is valid
-           ( !CheckChecksum( ntohl( packet.checksum ),
-             (u32 *) &packet, ( sizeof(Packet) / 4 ) - 2 ) ) || // checksum valid
-           ( ntohl( packet.version ) != PACKET_VERSION ) || // version valid
-           ( ( ntohl( packet.op ) != // expected packet
-               (u32) ( ( (oper == OP_DONE) || (oper == OP_DONE_MULTI) ) ?
-                 OP_DONE_NOCLOSE_ACK : OP_SUCCESS_ACK ) ) )
-            )
-      {
-        LogScreen( "Network::Error Bad Data 26\n", Time() );
-        // return packet to buffer...
-        Scramble( ntohl( data.scramble ),
-                  (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 1 );
-        PutBufferOutput( &data );
-        if (!netin) delete net;
-        return( count ? count : -1 );
-      }
-
-      count++;
-      times28+=temptimes28;
-
-      if (proxymessage[0] != 0)
-      {
-        if (quietness <= 1) // if > 1, don't show proxy message
-          {
-          #if (CLIENT_OS == OS_WIN32)
-            //uses proportional font, so reformatting looks wierd
-            Log( "[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
-          #else
-            Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
-          #endif
-          }
-        proxymessage[0]=0;
-      }
-#if !defined(NOMAIN)
-    if (!isatty(fileno(stdout))) 
-      Log( "<" );  // use simple output for redirected stdout
-    else
-#endif
-      {
-      u32 percent2div = (more+count);  //hmm, can more be negative?
-      if (((s32)(percent2div)) <= 0) percent2div = 0;
-      u32 percent2 = ((percent2div)?((count*10000)/percent2div):(10000));
-       LogScreen( "\r[%s] Sent block %u of %u (%u.%02u%% transferred) ",
-          CliGetTimeString(NULL,1), count, percent2div?percent2div:count,
-          percent2/100, percent2%100 );
-      }
-    }
-    else //Get()...
-    {
-      LogScreen( "\n[%s] Network::Error Read Failed 27/%d\n", Time(), (int) err );
-      // return packet to buffer...
-      Scramble( ntohl( data.scramble ),
-                (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 1 );
-      PutBufferOutput( &data );
-      if (!netin) delete net;
-      return( count ? count : -1 );
-    }
-
-#if (CLIENT_OS == OS_AMIGAOS)
-    if (SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
-      SignalTriggered = UserBreakTriggered = 1;
-#endif
-  }
-  while (more != -1 && !(SignalTriggered == 1));
-
-  // close this connection
-  if (!netin) delete net;
-
-  #if defined(LURK)
-  // Check if we need to hangup (unless update started this connect)
-  if (!netin)
-    dialup.HangupIfNeeded();
-  #endif
-
-  LogScreen( "\n" );
-  Log( "[%s] Sent %d %s block%s (%d*2^28 keys) to server.\n", 
-      Time(), (int) count, (contest == 1 ? "DES":"RC5"),
-      ((count==1)?(""):("s")), (int)(times28));
-  return( count );
-}
-
-#endif //NONETWORK
-
-// ---------------------------------------------------------------------------
-
-#ifdef NONETWORK
-s32 Client::Update (u8 /*contest*/, s32 /*fetcherr*/, s32 /*flusherr*/, s32 /*force*/ )
-{ return -1; }
-
-#else
-
-s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr, s32 force )
-{
-  s32 retcode,retcode1,retcode2;
-  Network *net;
-
-  // We need to check if we're allowed to connect
-  // If force==1, we don't care about the offline mode
-  if ((offlinemode && (force == 0)) 
-    #if (CLIENT_OS == OS_NETWARE)
-      || !nwCliIsNetworkAvailable(0)
-    #endif
-  )
-    return( -1 );
-
-    LogFlush(0); //checktosend(x)
-
-  // Ready the net
-
-  #if defined(LURK)
-  // Check if we need to dial
-  if (dialup.DialIfNeeded(force) < 0) return -1; // connection failed
-  #endif
-
-  net = new Network( (const char *) (keyproxy[0] ? keyproxy : NULL ),
-      (const char *) (nofallback ? (keyproxy[0] ? keyproxy : NULL) : DEFAULT_RRDNS),
-      (s16) keyport, autofindkeyserver );
-  net->quietmode = quietmode;
-
-  switch (uuehttpmode)
-  {
-  case 1:  // uue
-    net->SetModeUUE(true);
-    break;
-
-  case 2:  // http
-    net->SetModeHTTP(httpproxy, (s16) httpport, httpid);
-    break;
-
-  case 3:  // uue + http
-    net->SetModeHTTP(httpproxy, (s16) httpport, httpid);
-    net->SetModeUUE(true);
-    break;
-
-  case 4:  // SOCKS4
-    net->SetModeSOCKS4(httpproxy, (s16) httpport, httpid);
-    break;
-
-  case 5:  // SOCKS5
-    net->SetModeSOCKS5(httpproxy, (s16) httpport, httpid);
-    break;
-  }
-
-  // do the fetching and flushing
-  if ((!fetcherr) && flusherr)
-  {
-    // If we only need the flush to succeed, then do it first
-    // to prevent timeout problems.
-    retcode2 = Flush(contest, net,0,force);
-    if (retcode2 >= 1) // some blocks were transferred
-      retcode1 = Fetch(contest, net, 2,force);// No proxy message display a second time
-    else retcode1 = Fetch(contest, net,0,force);
-
-  } else {                        // This is either a flush request, or an update request.
-    retcode1 = Fetch(contest, net,0,force);
-    if (retcode1 >= 1) // some blocks were transferred
-      retcode2 = Flush(contest, net, 2,force);// No proxy message display a second time
-    else retcode2 = Flush(contest, net, 0,force);
-  }
-  if (contest == 0) {
-    if (randomchanged) {
-      if (!WriteContestandPrefixConfig()) randomchanged=0;
-    }
-  }
-
-  // delete the net
-  delete net;
-
-  #if defined(LURK)
-  // Check if we need to hangup
-  dialup.HangupIfNeeded();
-  #endif
-
-  if (fetcherr && flusherr) {
-     // This is an explicit call to update() by the user.
-     // Report if either type of error (flush/fetch) occurred
-     retcode = min( retcode1*fetcherr , retcode2*flusherr );
-  } else {
-     // We're only worried about one of the flush/fetch.
-     // Report its error and throw the other one away...
-     retcode = (retcode1 * fetcherr) + (retcode2 * flusherr);
-  }
-
-  if ((retcode1>0) || (retcode1==-1) || (retcode2>0) || (retcode2==-1))
-  {
-    // did any net traffic occur?
-    LogFlush(0); //checktosend(x)
-  }
-  return( retcode );
-}
-
-#endif //NONETWORK
-
 // ---------------------------------------------------------------------------
 
 u32 Client::Benchmark( u8 contest, u32 numk )
@@ -1600,7 +651,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
     contestid = 0;
     }
 
-  if (SelectCore() || SignalTriggered) 
+  if (SelectCore() || CheckExitRequestTrigger()) 
     return 0;
 
   LogScreenRaw( "\nBenchmarking %s with 1*2^%d tests (%u keys):\n", 
@@ -1638,11 +689,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
       nwCliThreadSwitchLowPriority();
     #endif
 
-    #if (CLIENT_OS == OS_AMIGAOS)
-      if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
-        SignalTriggered = UserBreakTriggered = 1;
-    #endif
-    if ( SignalTriggered )
+    if ( CheckExitRequestTrigger() )
       return 0;
     }
   LogScreenPercent( 1 ); //finish the percent bar
@@ -1701,7 +748,8 @@ s32 Client::SelfTest( u8 contest )
   RC5Result rc5result;
   u64 expectedsolution;
 
-  if (SelectCore()) return 0;
+  if (SelectCore()) 
+    return 0;
   if (contest == 1)
     {
     test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&rc5_test_cases[0][0];
@@ -1712,7 +760,8 @@ s32 Client::SelfTest( u8 contest )
     test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&des_test_cases[0][0];
     LogScreen("Beginning DES Self-test.\n");
     }
-  else return 0;
+  else 
+    return 0;
 
   for ( s32 i = 0 ; i < TEST_CASE_COUNT ; i++ )
   {
@@ -1760,11 +809,7 @@ s32 Client::SelfTest( u8 contest )
       (problem[0]).GetResult( &rc5result );
     }
 
-#if (CLIENT_OS == OS_AMIGAOS)
-    if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
-      SignalTriggered = UserBreakTriggered = 1;
-#endif
-    if ( SignalTriggered ) return 0;
+    if ( CheckExitRequestTrigger() ) return 0;
 
     // switch on value of run
     if ( run == 1 )
@@ -1825,7 +870,7 @@ s32 Client::SelfTest( u8 contest )
 // ---------------------------------------------------------------------------
 
 static int IsFilenameValid( const char *filename )
-{ return ( *filename != 0 && strcmp( filename, "none" ) != 0 ); }
+{ return ( filename && *filename != 0 && strcmp( filename, "none" ) != 0 ); }
 
 static int DoesFileExist( const char *filename )
 {
@@ -1906,39 +951,37 @@ void Go_mt( void * parm )
   pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL);
 #endif
 
-  while (!SignalTriggered)
-  {
-    for (s32 tempi = tempi2; tempi < 2*numcputemp ; tempi += numcputemp)
+  while (!CheckExitRequestTriggerNoIO())
     {
-      run = 0;
-      while (!SignalTriggered && (run == 0))
+    for (s32 tempi = tempi2; tempi < 2*numcputemp ; tempi += numcputemp)
       {
-#if (CLIENT_OS == OS_AMIGAOS)
-        if (SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
-          SignalTriggered = UserBreakTriggered = 1;
-#endif
-        // This will return without doing anything if uninitialized...
-        if (!pausefilefound) {
-#if (CLIENT_OS == OS_NETWARE)
+      run = 0;
+      while (!CheckExitRequestTriggerNoIO() && (run == 0))
+        {
+        if (CheckPauseRequestTriggerNoIO()) 
+          {
+          run = 0;
+          sleep( 1 ); // don't race in this loop
+          }
+        else
+          {
+          #if (CLIENT_OS == OS_NETWARE)
               //sets up and uses a polling procedure that runs as
               //an OS callback when the system enters an idle loop.
           run = nwCliRunProblemAsCallback( &(problem[tempi]),
                          timeslice / PIPELINE_COUNT, tempi2, niceness );
-#else
+          #else
+          // This will return without doing anything if uninitialized...
           run = (problem[tempi]).Run( timeslice / PIPELINE_COUNT , tempi2 );
-#endif
-        } else {
-          run = 0;
-          sleep( 1 ); // don't race in this loop
+          #endif
+          } 
         }
       }
+    sleep( 1 ); 
     }
-    sleep( 1 ); // Avoid looping in case no buffers become available, or pausefile found
-  }
-//   LogScreen("Exiting child thread %d\n",tempi2+1);
-#if (CLIENT_OS == OS_BEOS)
+  #if (CLIENT_OS == OS_BEOS)
   exit(0);
-#endif
+  #endif
 }
 #endif
 
@@ -2042,27 +1085,19 @@ s32 Client::Run( void )
   exitchecktime = timeStarted + 5;
 
   // --------------------------------------
-  // Clear the signal triggers
-  // --------------------------------------
-
-  #if (CLIENT_OS == OS_AMIGAOS)
-    SetSignal(0L, SIGBREAKF_CTRL_C);
-  #endif
-  SignalTriggered = UserBreakTriggered = pausefilefound = 0;
-
-  // --------------------------------------
   // Determine the number of problems to work with. Number is used everywhere.
   // --------------------------------------
 
   int load_problem_count = 1;
   #ifdef MULTITHREAD
-    load_problem_count = 2*numcputemp;
+    if (numcputemp == 0) //multithread compile but user requests non-mt
+      numcputemp = 1;
     #if (CLIENT_OS == OS_NETWARE)
-    {
-      if (numcputemp == 1) //NetWare client prefers non-MT if only one 
-        load_problem_count = 1; //thread/processor is to used
-    }
+    else if (numcputemp == 1) //NetWare client prefers non-MT if only one 
+      load_problem_count = 1; //thread/processor is to used
     #endif
+    else
+      load_problem_count = 2*numcputemp;
   #endif
 
   // --------------------------------------
@@ -2332,13 +1367,13 @@ PreferredIsDone1:
               Log("Exiting after current block\n");
               exitcode = 1;
             }
-        #if (defined(MULTITHREAD) && !defined(NONETWORK))
+          #if (defined(MULTITHREAD))
             if (hitchar == 'u' || hitchar == 'U')
             {
               Log("Keyblock Update forced\n");
               connectrequested = 1;
             }
-        #endif
+          #endif
           }
         }
     }
@@ -2348,7 +1383,7 @@ PreferredIsDone1:
     //special update request (by keyboard or by lurking) handling
     //------------------------------------
 
-    #if (defined(MULTITHREAD) && !defined(NONETWORK))
+    #if (defined(MULTITHREAD))
     {
       if ((connectoften && ((connectloops++)==19)) || (connectrequested > 0) )
       {
@@ -2406,7 +1441,7 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
       // prevent the main thread from racing & bogging everything down.
       sleep(3);
       }
-    else if (pausefilefound) //threads have their own sleep section
+    else if (CheckPauseRequestTrigger()) //threads have their own sleep section
       {
       #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
         SurrenderCPU();
@@ -2447,7 +1482,8 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
     //now check all problems for change, do checkpointing, reloading etc
     //------------------------------------
 
-    for (cpu_i = 0; ((!pausefilefound) && (!SignalTriggered) && (cpu_i < load_problem_count)); cpu_i++)
+    for (cpu_i = 0; ((!CheckPauseRequestTrigger()) && (!CheckExitRequestTrigger()) 
+                    && (cpu_i < load_problem_count)); cpu_i++)
     {
 
       // -------------
@@ -2722,15 +1758,11 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
     // Check for user break
     //----------------------------------------
 
-#if (CLIENT_OS == OS_AMIGAOS)
-    if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
-      SignalTriggered = UserBreakTriggered = 1;
-#endif
-    if ( SignalTriggered || UserBreakTriggered )
+    if ( CheckExitRequestTrigger() )
     {
       Log( "\n[%s] Shutdown message received - Block being saved.\n", Time() );
       TimeToQuit = 1;
-      if (UserBreakTriggered) exitcode = 1;
+      exitcode = 1;
     }
 
     //----------------------------------------
@@ -2778,33 +1810,17 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
 
     // Done enough blocks?
     if ( ( blockcount > 0 ) && ( totalBlocksDone[0]+totalBlocksDone[1] >= (u32) blockcount ) )
-    {
+      {
       Log( "[%s] Shutdown - %d blocks completed\n", Time(), (u32) totalBlocksDone[0]+totalBlocksDone[1] );
       TimeToQuit = 1;
       exitcode = 4;
-    }
-
-    if ( time( NULL ) > exitchecktime )
-    {
-    exitchecktime = time( NULL ) + exitfilechecktime; // At most once every 30 seconds by default
-    if (!noexitfilecheck) // Check if file "exitrc5.now" exists...
-      {
-        //----------------------------------------
-        // Found an "exitrc5.now" flag file?
-        //----------------------------------------
-        if( DoesFileExist( exit_flag_file ) )
-        {
-          Log( "[%s] Found \"exitrc5" EXTN_SEP "now\" file.  Exiting.\n", Time() );
-          TimeToQuit = 1;
-          exitcode = 2;
-        }
       }
-    }
-    //------------------------------------
-    // Does a pausefile exist?
-    //------------------------------------
 
-    pausefilefound = DoesFileExist( pausefile );
+    if (!TimeToQuit && CheckExitRequestTrigger())
+      {
+      TimeToQuit = 1;
+      exitcode = 2;
+      }
 
     //----------------------------------------
     // Are we quitting?
@@ -2816,7 +1832,7 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
       // Shutting down: shut down threads
       // ----------------
 
-      SignalTriggered = 1; // will make other threads exit
+      RaiseExitRequestTrigger(); // will make other threads exit
 
 #if defined(MULTITHREAD)
 
@@ -2895,10 +1911,8 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
       // no disk buffers -- we had better flush everything.
       if (nodiskbuffers)
       {
-        SignalTriggered = 2; // ignored by flush.
         ForceFlush((u8) preferred_contest_id ) ;
         ForceFlush((u8) ! preferred_contest_id );
-        SignalTriggered = 1; // not really required.
       }
 
     } // TimeToQuit
@@ -2912,7 +1926,7 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
       // Time to checkpoint?
       if ((IsFilenameValid( checkpoint_file[0] ) ||
            IsFilenameValid( checkpoint_file[1] ))
-           && (!nodiskbuffers) && (!pausefilefound))
+           && (!nodiskbuffers) && (!CheckPauseRequestTrigger()))
         {
        if ( (!TimeToQuit ) && ( ( (s32) time( NULL ) ) > ( (s32) nextcheckpointtime ) ) )
 
@@ -3026,6 +2040,10 @@ int main( int argc, char *argv[] )
     return -1;
 #endif
 
+  // set up break handlers
+  if (InitializeTriggers(NULL, NULL)) //CliSetupSignals();
+    return -1;
+
   // This is the main client object.  'Static' since allocating such
   // large objects off of the stack may cause problems for some and
   // also the NT Service keeps a pointer to it.
@@ -3038,14 +2056,10 @@ int main( int argc, char *argv[] )
     return -1;
 #endif
 
-  // set up break handlers
-  CliSetupSignals();
-
   // determine the filename of the ini file
-  if ( getenv( "RC5INI" ) != NULL )
-    {
-    strncpy( client.inifilename, getenv( "RC5INI" ), 127 );
-    }
+  char * inienvp = getenv( "RC5INI" );
+  if ((inienvp != NULL) && (strlen( inienvp ) < sizeof(client.inifilename)))
+    strcpy( client.inifilename, inienvp );
   else
     {
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
@@ -3153,12 +2167,8 @@ int main( int argc, char *argv[] )
     retcode = 0;
     }
 
-  #if defined(NONETWORK)
-     client.offlinemode=1;
-  #endif
-
   // parse command line "modes" - returns 0 if it didn't do anything
-  if (retcode == OK_TO_RUN )
+  if (retcode == OK_TO_RUN)
     {
     if ( client.RunCommandlineModes( argc, argv, &retcode ) == 0 ) 
       retcode = OK_TO_RUN;
@@ -3171,23 +2181,31 @@ int main( int argc, char *argv[] )
     }
 
   if (retcode == OK_TO_RUN)
+    {                   //will immediately do an exit_flag_file check
+    if (InitializeTriggers( ((client.noexitfilecheck)?(NULL):
+                      ("exitrc5" EXTN_SEP "now")),client.pausefile))
+      retcode = -1;
+    }
+
+  if (retcode == OK_TO_RUN)
     {
     // otherwise we are running
-
-    if (!client.offlinemode)  NetworkInitialize();
-
+    
     #if (CLIENT_OS == OS_RISCOS)
     if (!guirestart)
     #endif
-    LogRaw("\nRC5DES Client v2.%d.%d started.\nUsing %s as distributed.net ID.\n\n",
+    LogRaw("\nRC5DES Client v2.%d.%d started.\n"
+             "Using %s as distributed.net ID.\n\n",
              CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,client.id);
 
     client.Run();
 
-    if (!client.offlinemode)   NetworkDeinitialize();
-    if (client.randomchanged)  client.WriteContestandPrefixConfig();
+    if (client.randomchanged)  
+      client.WriteContestandPrefixConfig();
 
-    retcode = ( UserBreakTriggered ? -1 : 0 );
+    retcode = (CheckExitRequestTrigger() ? -1 : 0 );
+    DeinitializeTriggers();
+    
     } //if (retcode == OK_TO_RUN)
 
   client.DeinitializeLogging(); //flush and close logs/mail
@@ -3205,153 +2223,112 @@ int main( int argc, char *argv[] )
 
 // ---------------------------------------------------------------------------
 
+#if defined(NOMAIN)  //#if defined(NEEDVIRTUALMETHODS)
+int Client::RunCommandlineModes( int, char *, int * )
+{
+return 0;
+}
+#else
+
 //parse command line "modes" - returns 0 if did nothing
 int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
 {
-#if defined(NEEDVIRTUALMETHODS)
-return 0;
-#else
   int i, retcode = -12345;  // 'magic number' 
+  char *cmdstr;
 
   for (i = 1; ((retcode == -12345) && (i < argc)); i++)
     {
-    if ( argv[i][0] == 0 ) 
+    cmdstr = argv[i];
+    if ( *cmdstr == 0 ) 
       continue;
-    else if (( strcmp( argv[i], "-fetch" ) == 0 ) || 
-             ( strcmp( argv[i], "-forcefetch" ) == 0 ) || 
-             ( strcmp( argv[i], "-flush"      ) == 0 ) || 
-             ( strcmp( argv[i], "-forceflush" ) == 0 ) || 
-             ( strcmp( argv[i], "-update"     ) == 0 ))
+    else if (( strcmp( cmdstr, "-fetch" ) == 0 ) || 
+             ( strcmp( cmdstr, "-forcefetch" ) == 0 ) || 
+             ( strcmp( cmdstr, "-flush"      ) == 0 ) || 
+             ( strcmp( cmdstr, "-forceflush" ) == 0 ) || 
+             ( strcmp( cmdstr, "-update"     ) == 0 ))
       {
-      int dofetch = 0, doflush = 0, doforce = 0;
-      if ( strcmp( argv[i], "-fetch" ) == 0 )           dofetch=1;
-      else if ( strcmp( argv[i], "-flush" ) == 0 )      doflush=1;
-      else if ( strcmp( argv[i], "-forcefetch" ) == 0 ) dofetch=doforce=1;
-      else if ( strcmp( argv[i], "-forceflush" ) == 0 ) doflush=doforce=1;
-      else /* ( strcmp( argv[i], "-update" ) == 0) */   dofetch=doflush=1;
-    
-      offlinemode=0;
-      NetworkInitialize();
+      if (NetworkInitialize()<0)
+        {
+        LogScreenRaw( "TCP/IP services are not available. Without TCP/IP the "
+        "client cannot\nsupport the -flush, -forceflush, -fetch, "
+        "-forcefetch or -update options.\n");
+        retcode = -1;
+        }
+      else  
+        {
+        int dofetch = 0, doflush = 0, doforce = 0;
 
-      if ( dofetch && doflush )
-        {
-        Update(0 ,1,1,1);  // RC5 We care about the errors, force update
-        Update(1 ,1,1,1);  // DES We care about the errors, force update
-        }
-      else if ( dofetch )
-        {
-        int retcode2;
-        if ( doforce )
+        if ( strcmp( cmdstr, "-fetch" ) == 0 )           dofetch=1;
+        else if ( strcmp( cmdstr, "-flush" ) == 0 )      doflush=1;
+        else if ( strcmp( cmdstr, "-forcefetch" ) == 0 ) dofetch=doforce=1;
+        else if ( strcmp( cmdstr, "-forceflush" ) == 0 ) doflush=doforce=1;
+        else /* ( strcmp( cmdstr, "-update" ) == 0) */   dofetch=doflush=1;
+
+        retcode = 0;
+        offlinemode=0;
+        for (char contest=0;contest<2;contest++)
           {
-          retcode2 = ForceFetch(0); // RC5 Fetch
-          retcode = ForceFetch(1); // DES Fetch
+          if (!contestdone[contest])
+            {
+            int runcode = 0;
+            if ( dofetch & doflush )
+              runcode=(int)Update(contest ,1,1, doforce);
+            else if ( dofetch )
+              runcode=(int)((doforce)?ForceFetch(contest):Fetch(contest));
+            else
+              runcode=(int)((doforce)?ForceFlush(contest):Flush(contest));
+            if (randomchanged) 
+              WriteContestandPrefixConfig();
+            if (!contestdone[contest] && runcode < retcode) 
+              retcode = runcode;
+            }
+          }
+        if (retcode < 0)
+          {
+          LogScreenRaw( "An error occured trying to %s. "
+                     "Please try again later\n", cmdstr+1 );
+          retcode = -1;
           }
         else
           {
-          retcode2 = Fetch(0); // RC5 Fetch
-          retcode = Fetch(1); // DES Fetch
-          }
-        if (contestdone[0]) 
-          retcode2 = 0;
-        if (randomchanged) 
-          WriteContestandPrefixConfig();
-        if (contestdone[1]) 
-          retcode=1;
-        if (retcode < 0 || retcode2 < 0)
-          {
-          if (retcode2 < retcode) 
-            retcode = retcode2;
-          dofetch = retcode;
-          }
-        }
-      else if ( doflush )
-        {
-        int retcode2;
-        if (doforce)
-          {
-          retcode2 = ForceFlush(0); // RC5 Flush
-          retcode = ForceFlush(1); // DES Flush
-          }
-        else
-          {
-          retcode2 = Flush(0); // RC5 Flush
-          retcode = Flush(1); // DES Flush
-          }
-        if (contestdone[0]) 
-          retcode2 = 0;
-        if (contestdone[1]) 
+          //LogFlush(1); //checktosend(1)
+          cmdstr[1] = (char)toupper(cmdstr[1]);
+          LogScreenRaw( "%s completed.\n", cmdstr+1 );
           retcode = 0;
-        if (retcode < 0 || retcode2 < 0)
-          {
-          if (retcode2 < retcode) 
-            retcode = retcode2;
-          doflush = retcode;
           }
+        NetworkDeinitialize();
         }
-
-      LogFlush(1); //checktosend(1)
-      NetworkDeinitialize();
-
-      retcode = 0;
-      if (dofetch >= 0 && doflush >= 0) //no errors
-        {
-        argv[i][1] = toupper(argv[i][1]);
-        LogScreen( "%s completed.\n", argv[i]+1 );
-        }
-      else
-        {
-        #if defined(NONETWORK)
-        retcode = -1; //always error
-        #elif (CLIENT_OS == OS_NETWARE)
-        if (!nwCliIsNetworkAvailable(0)) retcode =-1; //detect TCP services 
-        #endif
-        
-        if (retcode) //was handled above
-          {
-          LogScreen( "TCP/IP services are not available. Without TCP/IP the "
-          "client cannot\nsupport the -flush, -forceflush, -fetch, "
-          "-forcefetch or -update options.\n");
-          }
-        else
-          {
-          LogScreen( "An error occured trying to %s. "
-                     "Please try again later\n", argv[i]+1 );
-          retcode = dofetch;
-          if (doflush < dofetch)
-            retcode = doflush;
-          }
-        }
-      }  
-    else if ( strcmp(argv[i], "-ident" ) == 0)
+      }
+    else if ( strcmp(cmdstr, "-ident" ) == 0)
       {
       CliIdentifyModules();
       retcode = 0;
       }
-    else if ( strcmp( argv[i], "-test" ) == 0 )
+    else if ( strcmp( cmdstr, "-test" ) == 0 )
       {
       if ( SelfTest(1) > 0 && SelfTest(2) > 0 ) //both OK
         retcode = 0;
-      else if ( UserBreakTriggered )
+      else if ( CheckExitRequestTrigger() )
         retcode = -1;
       else  //one of them failed
         retcode = 1; 
       }
-    else if (( strcmp( argv[i], "-benchmark2rc5" ) == 0 ) ||
-             ( strcmp( argv[i], "-benchmark2des" ) == 0 ) ||
-             ( strcmp( argv[i], "-benchmark2" ) == 0 ) ||
-             ( strcmp( argv[i], "-benchmarkrc5" ) == 0 ) ||
-             ( strcmp( argv[i], "-benchmarkdes" ) == 0 ) ||
-             ( strcmp( argv[i], "-benchmark" ) == 0 ))
+    else if (( strcmp( cmdstr, "-benchmark2rc5" ) == 0 ) ||
+             ( strcmp( cmdstr, "-benchmark2des" ) == 0 ) ||
+             ( strcmp( cmdstr, "-benchmark2" ) == 0 ) ||
+             ( strcmp( cmdstr, "-benchmarkrc5" ) == 0 ) ||
+             ( strcmp( cmdstr, "-benchmarkdes" ) == 0 ) ||
+             ( strcmp( cmdstr, "-benchmark" ) == 0 ))
       {
       int dobench = '1';  //default to benchmark2
-      if ( strcmp( argv[i], "-benchmark2rc5" ) == 0 )      dobench = '2';
-      else if ( strcmp( argv[i], "-benchmark2des" ) == 0 ) dobench = '3';
-      else if ( strcmp( argv[i], "-benchmarkrc5" ) == 0 )  dobench = '5';
-      else if ( strcmp( argv[i], "-benchmarkdes" ) == 0 )  dobench = '6';
-      else if ( strcmp( argv[i], "-benchmark2"   ) == 0 )  dobench = '1';
+      if ( strcmp( cmdstr, "-benchmark2rc5" ) == 0 )      dobench = '2';
+      else if ( strcmp( cmdstr, "-benchmark2des" ) == 0 ) dobench = '3';
+      else if ( strcmp( cmdstr, "-benchmarkrc5" ) == 0 )  dobench = '5';
+      else if ( strcmp( cmdstr, "-benchmarkdes" ) == 0 )  dobench = '6';
+      else if ( strcmp( cmdstr, "-benchmark2"   ) == 0 )  dobench = '1';
       else if ( isatty(fileno(stdout)) ) // -benchmark
         {
-        LogScreen( "Block type combinations to benchmark:\n" 
+        LogScreenRaw( "Block type combinations to benchmark:\n" 
                    "\n1. Both a short RC5 block and a short DES block."
                    "\n2. Only a short RC5 block."
                    "\n3. Only a short DES block."
@@ -3374,56 +2351,57 @@ return 0;
           if (isprint(dobench) || dobench == 0x1B) //ESC
             break;
           usleep(100000); //in case getchar()/getch() is non-blocking
-          #if (CLIENT_OS == OS_AMIGAOS)
-          if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
-            SignalTriggered = UserBreakTriggered = 1;
-          #endif
-          } while (!SignalTriggered);
+          } while (!CheckExitRequestTrigger());
         LogScreenRaw("%c\n", ((isprint(dobench))?(dobench):('\n')) );
         } 
-      if ( !SignalTriggered && ( dobench == '1' || dobench == '2' ))
+      if ( !CheckExitRequestTrigger() && ( dobench == '1' || dobench == '2' ))
         Benchmark(1, 1<<20 ); //1048576 instead of 1000000
-      if ( !SignalTriggered && ( dobench == '1' || dobench == '3' ))
+      if ( !CheckExitRequestTrigger() && ( dobench == '1' || dobench == '3' ))
         Benchmark(2, 1<<20 ); //1048576 instead of 1000000
-      if ( !SignalTriggered && ( dobench == '4' || dobench == '5' ))
+      if ( !CheckExitRequestTrigger() && ( dobench == '4' || dobench == '5' ))
         Benchmark(1, 0 );
-      if ( !SignalTriggered && ( dobench == '4' || dobench == '6' ))
+      if ( !CheckExitRequestTrigger() && ( dobench == '4' || dobench == '6' ))
         Benchmark(2, 0 );
-      retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
+      retcode = ( CheckExitRequestTrigger() ? -1 : 0 ); //and break out of loop
       }
-    else if ( strcmp( argv[i], "-cpuinfo" ) == 0 )
+    else if ( strcmp( cmdstr, "-cpuinfo" ) == 0 )
       {
       DisplayProcessorInformation(); //in cpucheck.cpp
       retcode = 0; //and break out of loop
       }
-    else if ( strcmp( argv[i], "-config" ) == 0 )
+    else if ( strcmp( cmdstr, "-config" ) == 0 )
       {
       if (Configure()==1) 
         WriteConfig();
       //only write config if 1 is returned
       retcode = 0; //and break out of loop
       }
-    else if ( strcmp( argv[i], "-install" ) == 0 )
+    else if ( strcmp( cmdstr, "-install" ) == 0 )
       {
       #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2))
       Install();
       retcode = 0; //and break out of loop
       #endif
       }
-    else if ( strcmp( argv[i], "-uninstall" ) == 0 )
+    else if ( strcmp( cmdstr, "-uninstall" ) == 0 )
       {
       #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2))
       Uninstall();
       retcode = 0; //and break out of loop
       #endif
       }
-    else if ( strcmp( argv[i], "-forceunlock" ) == 0 )
+    else if ( strcmp( cmdstr, "-forceunlock" ) == 0 )
       {
-      retcode = UnlockBuffer(argv[i+1]);
+      retcode = -1;
+      if (!DoesFileExist( argv[i+1] ))
+        LogScreenRaw( "Use %s together with the name of the buffer file\n",
+                      "For example: '%s buff-in.rc5'\n", cmdstr, cmdstr );
+      else
+        retcode = UnlockBuffer(argv[i+1]);
       }
     else
       {
-      DisplayHelp(argv[i]);
+      DisplayHelp(cmdstr);
       retcode = 0;
       }
     }
@@ -3431,8 +2409,9 @@ return 0;
     return 0;
   *retcodeP = retcode;
   return 1;
-#endif
 }  
+
+#endif
 
 // --------------------------------------------------------------------------
 

@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.171  1998/08/10 23:02:22  cyruspatel
+// Four changes: (a) xxxTrigger and pausefilefound flags are now wrapped in
+// functions in trigger.cpp (b) NetworkInitialize()/NetworkDeinitialize()
+// related changes: (see netinit.cpp for documentation): calls to those two
+// functions have been removed from main() and are used before network i/o is
+// actually attempted. (c) NO!NETWORK references have been removed. network.cpp
+// changelog has details. (d) Fetch()/Flush()/Update() are now in buffupd.cpp
+//
 // Revision 1.170  1998/08/07 05:28:47  silby
 // Changed lurk so that win32 users can now easily select the connection to use for dial on demand.
 //
@@ -68,7 +76,7 @@
 // CliGetKeyrateForProblemNoSave().
 //
 // Revision 1.153  1998/07/13 23:54:19  cyruspatel
-// Cleaned up NONETWORK handling.
+// Cleaned up NO!NETWORK handling.
 //
 // Revision 1.152  1998/07/13 12:40:25  kbracey
 // RISC OS update. Added -noquiet option.
@@ -174,17 +182,18 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.170 1998/08/07 05:28:47 silby Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.171 1998/08/10 23:02:22 cyruspatel Exp $"; }
 #endif
 
 #include "cputypes.h"
-#include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
-#include "baseincs.h"  // basic (even if port-specific) #includes
+#include "client.h"   // MAXCPUS, Packet, FileHeader, Client class, etc
+#include "baseincs.h" // basic (even if port-specific) #includes
 #include "version.h"
 #include "iniread.h"
 #include "network.h"  
-#include "problem.h"   // ___unit_func(), PIPELINE_COUNT
-#include "cpucheck.h"  // cpu selection, GetTimesliceBaseline()
+#include "problem.h"  // ___unit_func(), PIPELINE_COUNT
+#include "cpucheck.h" // cpu selection, GetTimesliceBaseline()
+#include "triggers.h" //[Check|Raise][Pause|Exit]RequestTrigger()/Init...Handler()
 #include "clirate.h"
 #include "scram.h"     // InitRandom2(id)
 #include "pathwork.h"
@@ -676,7 +685,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       fflush( stdin );
       fflush( stdout );
       choice = atoi( parm );
-      if ( choice == 0 || SignalTriggered)
+      if ( choice == 0 || CheckExitRequestTrigger())
         choice = -2; //quit request
       else if ( choice > 0 )
         choice = findmenuoption(currentmenu,choice); // returns -1 if !found
@@ -738,7 +747,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       fgets(parm, sizeof(parm), stdin);
       fflush( stdin );
       fflush( stdout );
-      if (SignalTriggered)
+      if (CheckExitRequestTrigger())
         choice = -2;
       else
         {
@@ -752,7 +761,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           }
           while (isspace(parm[strlen(parm)-1])) parm[strlen(parm)-1]=0; //strip trailing whitespace
           while (isspace(parm[0])) strcpy(parm,(parm+1));
-        } // if ( !SignalTriggered )
+        } // if ( !CheckExitRequestTrigger() )
       } //if ( choice >= 0 ) //if valid CONF_xxx option
 
     #ifndef OLDRESOLVE
@@ -1172,7 +1181,7 @@ s32 Client::Configure( void )
     fflush( stdin );
     fflush( stdout );
     choice = atoi(parm);
-    if (SignalTriggered)
+    if (CheckExitRequestTrigger())
       choice = 9;
 
     switch (choice)
@@ -1186,7 +1195,7 @@ s32 Client::Configure( void )
       case 0: returnvalue=1;break; //Breaks and tells it to save
       case 9: returnvalue=-1;break; //Breaks and tells it NOT to save
     };
-  if (SignalTriggered)
+  if (CheckExitRequestTrigger())
     returnvalue=-1;
   }
 
@@ -1925,7 +1934,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
     serviceStatus.dwCurrentState = SERVICE_STOP_PENDING;
     serviceStatus.dwControlsAccepted = 0;
     serviceStatus.dwWaitHint = 10000;
-    SignalTriggered = UserBreakTriggered = 1;
+    RaiseExitRequestTrigger();
   } else {
     // SERVICE_CONTROL_INTERROGATE
     serviceStatus.dwCurrentState = SERVICE_RUNNING;
@@ -1959,12 +1968,14 @@ void ServiceMain(DWORD Argc, LPTSTR *Argv)
   SetServiceStatus(serviceStatusHandle, &serviceStatus);
 
   // start working
-  NetworkInitialize();
   mainclient->ValidateConfig();
+
+  InitializeTriggers( ((mainclient->noexitfilecheck)?(NULL):
+                      ("exitrc5" EXTN_SEP "now")),mainclient->pausefile);
   mainclient->InitializeLogging(); //in logstuff.cpp - copies the smtp ini settings over
   mainclient->Run();
   mainclient->DeinitializeLogging(); //flush and stop logging to file/mail
-  NetworkDeinitialize();
+  DeinitializeTriggers();
 
   // update our status to stopped
   serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
@@ -2492,140 +2503,6 @@ void Client::SetNiceness(void)
     if ( niceness == 0 )      nice( 19 );
     else if ( niceness == 1 ) nice( 10 );
     // else                  /* nothing */;
-  #endif
-}
-
-// ---------------------------------------------------------------------------
-
-#if (CLIENT_OS == OS_AMIGAOS)
-/* Disable SAS/C CTRL-C handing */
-extern "C" void __regargs __chkabort(void) { return ;}
-#endif
-
-// --------------------------------------------------------------------------
-
-#if (CLIENT_OS == OS_WIN32)
-bool CliSignalHandler(DWORD  dwCtrlType)
-{
-  if ( dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_BREAK_EVENT ||
-       dwCtrlType == CTRL_CLOSE_EVENT || dwCtrlType == CTRL_SHUTDOWN_EVENT)
-  {
-#if !defined(NEEDVIRTUALMETHODS)
-    fprintf( stderr, "*Break*\n" );
-#endif
-    SignalTriggered = UserBreakTriggered = 1;
-    return TRUE;
-  }
-  return FALSE;
-}
-
-#elif (CLIENT_OS == OS_NETWARE)
-
-void CliSignalHandler( int sig )
-{
-  int itsAlive;
-  unsigned int dieTime = CliGetCurrentTicks() + (30*18); /* 30 secs to die */
-
-  if (sig == SIGABRT )
-    ConsolePrintf("RC5DES: Caught an ABORT signal. Please try again after loading MATHLIB.NLM\r\n");
-
-  SignalTriggered = UserBreakTriggered = 1;
-  ConsolePrintf("RC5DES: Client is shutting down...\r\n"); //prints appname as well
-
-  while ((itsAlive=CliIsClientRunning())!=0 && CliGetCurrentTicks()<dieTime )
-    CliThreadSwitchWithDelay();
-
-  if (itsAlive) /* timed out. If we got here, we're still alive anyway */
-    {
-    CliActivateConsoleScreen();
-    ConsolePrintf("RC5DES: Failed to shutdown gracefully. Forcing exit.\r\n");
-    CliForceClientShutdown(); //CliExitClient();  /* kill everything */
-    }
-  else
-    ConsolePrintf("RC5DES: Client has shut down.\r\n");
-  return;
-}
-
-#else
-
-#if (CLIENT_OS == OS_OS390)
-extern "C" void CliSignalHandler( int )
-#else
-void CliSignalHandler( int )
-#endif
-{
-  SignalTriggered = UserBreakTriggered = 1;
-
-  #if (CLIENT_OS == OS_RISCOS)
-    if (!guiriscos)
-      fprintf(stderr, "*Break*\n");
-    _kernel_escape_seen(); // clear escape flag for polling check in Problem::Run
-    signal( SIGINT, CliSignalHandler );
-  #elif (CLIENT_OS == OS_OS2)
-    // Give priority boost quit works faster
-    DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, 0, 0);
-    fprintf(stderr, "*Break*\n");
-    signal( SIGINT, CliSignalHandler );
-    signal( SIGTERM, CliSignalHandler );
-  #elif (CLIENT_OS == OS_DOS)
-    //break_off(); //break only on screen i/o (different from setup signals)
-    //- don't reset sighandlers or we may end up in an
-    //  infinite loop (keyboard buffer isn't clear yet)
-  #else
-    fprintf(stderr, "*Break*\n");
-    CliSetupSignals(); //reset the signal handlers
-    SignalTriggered = UserBreakTriggered = 1;
-  #endif
-}
-#endif
-
-// --------------------------------------------------------------------------
-
-void CliSetupSignals( void )
-{
-  SignalTriggered = 0;
-
-  #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS) || \
-      (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-    // nothing
-  #elif (CLIENT_OS == OS_WIN32)
-    SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CliSignalHandler, TRUE );
-  #elif (CLIENT_OS == OS_RISCOS)
-    signal( SIGINT, CliSignalHandler );
-  #elif (CLIENT_OS == OS_OS2)
-    signal( SIGINT, CliSignalHandler );
-    signal( SIGTERM, CliSignalHandler );
-  #elif (CLIENT_OS == OS_DOS)
-    break_on(); //break on any dos call (different from signal handler)
-    signal( SIGINT, CliSignalHandler );  //The  break_o functions can be used
-    signal( SIGTERM, CliSignalHandler ); // with DOS to restrict break checking
-    signal( SIGABRT, CliSignalHandler ); // break_off(): raise() on conio only
-    signal( SIGBREAK, CliSignalHandler ); //break_on(): raise() on any dos call
-  #elif (CLIENT_OS == OS_IRIX) && defined(__GNUC__)
-    signal( SIGHUP, (void(*)(...)) CliSignalHandler );
-    signal( SIGQUIT, (void(*)(...)) CliSignalHandler );
-    signal( SIGTERM, (void(*)(...)) CliSignalHandler );
-    signal( SIGINT, (void(*)(...)) CliSignalHandler );
-    signal( SIGSTOP, (void(*)(...)) CliSignalHandler );
-  #elif (CLIENT_OS == OS_VMS)
-    signal( SIGHUP, CliSignalHandler );
-    signal( SIGQUIT, CliSignalHandler );
-    signal( SIGTERM, CliSignalHandler );
-    signal( SIGINT, CliSignalHandler );
-  #elif (CLIENT_OS == OS_NETWARE)
-    signal( SIGHUP, CliSignalHandler );
-    signal( SIGQUIT, CliSignalHandler );
-    signal( SIGTERM, CliSignalHandler );
-    signal( SIGINT, CliSignalHandler );
-    signal( SIGSTOP, CliSignalHandler );
-    //workaround NW 3.x bug - printf "%f" handler is in mathlib not clib, which
-    signal( SIGABRT, CliSignalHandler ); //raises abrt if mathlib isn't loaded
-  #else
-    signal( SIGHUP, CliSignalHandler );
-    signal( SIGQUIT, CliSignalHandler );
-    signal( SIGTERM, CliSignalHandler );
-    signal( SIGINT, CliSignalHandler );
-    signal( SIGSTOP, CliSignalHandler );
   #endif
 }
 
