@@ -15,7 +15,7 @@
  *
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.11.2.6 1999/12/19 19:23:23 cyp Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.11.2.7 2000/03/04 08:33:38 jlawson Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()
@@ -28,7 +28,11 @@ return "@(#)$Id: checkpt.cpp,v 1.11.2.6 1999/12/19 19:23:23 cyp Exp $"; }
 #include "logstuff.h" // LogScreen()
 #include "checkpt.h"  // ourselves
 
-/* ----------------------------------------------------------------- */
+// ---------------------------------------------------------------------
+
+// Retrieves, saves, or zaps checkpoint files according to "action".
+// The "load_problem_count" is only used to affect checkpoint saving.
+// Returns 0 on success, otherwise checkpointing is not enabled.
 
 int CheckpointAction( Client *client, int action, unsigned int load_problem_count )
 {
@@ -62,7 +66,7 @@ int CheckpointAction( Client *client, int action, unsigned int load_problem_coun
             ((recovered == 1)?(""):("s")) );
         }
       }
-    action = CHECKPOINT_CLOSE;
+      action = CHECKPOINT_CLOSE;
     }
   }  
 
@@ -116,4 +120,6 @@ int CheckpointAction( Client *client, int action, unsigned int load_problem_coun
   
   return (do_checkpoint == 0); /* return !0 if don't do checkpoints */
 }  
+
+// ---------------------------------------------------------------------
 
