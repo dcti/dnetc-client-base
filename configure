@@ -4,18 +4,21 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.244 2001/04/05 23:16:13 teichp Exp $
+# @(#)$Id: configure,v 1.222.2.245 2001/04/06 16:18:44 cyp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
-#   for example: TARGET_TARBALL="linux-x86-libc4"
+#   for example: TARGET_TARBALL="linux-x86-elf"
 #
 # - Avoid building separate MT and non-MT clients. MT is always preferred
 #   (from the client's perspective), and the user can always force non-MT
 #   by setting numcpu=0
 #   *NOTE* All Unix'ish clients are inherently SMP capable. If the target
 #   does not have kernel support for real (userland) threads, eg *BSD, Linux
-#   et al, then let the default kick in (don't define MULTITHREAD).
+#   et al, then let the default kick in. 
+#   If you don't have support for threads (either -DHAVE_POSIX_THREADS
+#   or other thread lib as defined in cputypes.h), and you don't want 
+#   HAVE_MULTICRUNCH_BY_FORK, then you must define SINGLE_CRUNCHER_ONLY.
 
 #####################################################################
 # Note to people making changes..  Do not put spaces around the '=' #
@@ -88,10 +91,6 @@ TARGET_ARCTYPE="tgz"  # or "zip", "zipflat", "lha" or "tgzdir"
 # anywhere. Always use $OGR.
 OGR="ogr"
 #OGR="ogr2"
-
-# enable this to build with current ansi sources, even if hand optimized
-# assembler versions are available
-#OGR_FORCE_ANSI="1"
 
 add_sources() # $1=os, $2=arch, $3=custom
 {
@@ -205,22 +204,23 @@ add_sources() # $1=os, $2=arch, $3=custom
     #fi  
 
     # --------------- ogr ----------------
-    if [ "X$OGR_FORCE_ANSI" = "X" ]; then # use asm
-      if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
-        # -- non-nasm/ogr --
-        TARGET_ADDASMS="$TARGET_ADDASMS $OGR/x86/ogr.S"
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
-        ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-      else
-        # -- nasm/ogr --
-        TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogr.asm"
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
-        ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-      fi
-    else
+    if [ "$OGR" = "ogr2" ]; then 
+      # -- no special versions yet --
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    elif [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
+      # -- non-nasm/ogr --
+      #TARGET_ADDASMS="$TARGET_ADDASMS $OGR/x86/ogr.S"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogr-a.cpp $OGR/x86/ogr-b.cpp"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
+      ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    else
+      # -- nasm/ogr --
+      #TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogr.asm"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogr-a.cpp $OGR/x86/ogr-b.cpp"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
+      ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     fi
 
@@ -503,8 +503,9 @@ gcc_get_ver() {
     #gcc_v="Reading specs from blah\ngcc version 2.96 19991004 (experimental)"
     #gcc_v="gcc version egcs-2.91.66 19990314 (egcs-1.1.2 release)"
     #gcc_v="gcc driver version 2.7.2.3 executing gcc version 2.95.2"
+    #gcc_v="Reading specs from blah\ngcc version 2.9-hppa-991112"
 
-    gccver_line=`echo $gcc_v|tail -1`
+    gccver_line=`echo $gcc_v|tail -1|tr '-' ' '`
     #echo "gccver_line=#$gccver_line#"
     lastwas=""
     ver_num=""
@@ -512,17 +513,15 @@ gcc_get_ver() {
       if [ "${ver_num}X" = "X" ]; then
         #echo "verword=#$ver_word#,ver_num=#$ver_num#,laswas=#$lastwas#"
         if [ "$lastwas" = "version" ]; then
-          ver_num="$ver_word"
-        else
-          if [ "$ver_word" = "version" ]; then
-            if [ "$lastwas" = "driver" ]; then
-	            lastwas="driver"
-      	    else  
-	            lastwas="version"
-      	    fi
+          if [ "$ver_word" = "egcs" ]; then 
+            lastwas="version"
           else
-	          lastwas="$ver_word"
-          fi
+            ver_num="$ver_word"
+          fi 
+        elif [ "$ver_word" = "version" -a "$lastwas" = "driver" ]; then
+          lastwas="driver"
+        else
+          lastwas="$ver_word"
         fi
       fi	
     done  	  
@@ -530,8 +529,7 @@ gcc_get_ver() {
     if [ "${ver_num}X" = "X" ]; then
       gccver=0
     else  
-      #can't use cut -d- -f2
-      gccver=`echo $ver_num|tr '-' '\n'|tail -1|tr '.' ' '`
+      gccver=`echo $ver_num|tr '.' ' '`
       gcc_get_ver $gccver
     fi
   else
@@ -769,7 +767,7 @@ OPTS_MIPSPRO_ABI_64="-64 -mips4 -r10000"
 OPTS_CC_MIPSPRO="-O3 -IPA -LNO:opt=1 -xansi -DMIPSpro"
 
 # Common across all MIPSpro compiles:
-OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DMULTITHREAD -DHAVE_OGR_CORES"
+OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DHAVE_POSIX_THREADS -DHAVE_OGR_CORES"
 OPTS_MIPSPRO_DOCS="docs/readme._ix"
 
 # Common to a specific ABI:
@@ -1137,7 +1135,7 @@ case "$1" in
     *mips-irix64-gcc)     #needs "very recent" egcs
         TARGET_CC="g++"
         generate_gcc_opts "mips" "irix"
-        TARGET_CCFLAGS="$OPTS_GCC -mabi=64 -DMULTITHREAD"
+        TARGET_CCFLAGS="$OPTS_GCC -mabi=64 -DHAVE_POSIX_THREADS"
         TARGET_LDFLAGS="-mabi=64"
         TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -1147,7 +1145,7 @@ case "$1" in
     *mips-irix32-gcc)	   # [lyndon] Irix 6, gcc, threaded (assumes n32 ABI)
         TARGET_CC="gcc"
         generate_gcc_opts "mips" "irix"
-        TARGET_CCFLAGS="$OPTS_GCC -mabi=n32 -DMULTITHREAD"
+        TARGET_CCFLAGS="$OPTS_GCC -mabi=n32 -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lpthread"
         TARGET_TARBALL="irix6-mips-n32"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -1191,7 +1189,7 @@ case "$1" in
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti \
-                        -DASM_MIPS -DMULTITHREAD"
+                        -DASM_MIPS -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-mipsle"
@@ -1207,7 +1205,7 @@ case "$1" in
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti \
-                        -DASM_MIPS -DMULTITHREAD"
+                        -DASM_MIPS -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-mipsbe"
@@ -1253,7 +1251,7 @@ case "$1" in
     *hpux-hppa-gcc)  # [ivo]
         TARGET_CC="g++"
         generate_gcc_opts "hppa" "hpux"
-        TARGET_CCFLAGS="$OPTS_GCC" #-DMULTITHREAD
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="" #-lpthread"
         TARGET_TARBALL="hpux1020-hppa11-nomt"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -1273,7 +1271,7 @@ case "$1" in
     *88k-dgux)     # DGUX (Data General Unix)
         TARGET_CC="/usr/local/bin/g++"
         generate_gcc_opts "88k" "dgux"
-        TARGET_CCFLAGS="$OPTS_GCC -D_POSIX4A_DRAFT6_SOURCE -D_DGUX -DMULTITHREAD"
+        TARGET_CCFLAGS="$OPTS_GCC -D_POSIX4A_DRAFT6_SOURCE -D_DGUX -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "hpux" "88k"
@@ -1338,7 +1336,7 @@ case "$1" in
     *sparc-solaris-gcc)   # [ivo solaris/mt] fastest rc5 <- production target
         TARGET_CC="gcc"
         generate_gcc_opts "supersparc" "solaris"
-        TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DMULTITHREAD"
+        TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="solaris26-sparc"
@@ -1364,7 +1362,7 @@ case "$1" in
                             -mflat -Os -fcall-used-g4 -fcall-used-g5 \
                             -fcall-used-g6"
         TARGET_CCFLAGS="${OPTS_GCC} -pipe $OPTS_DES_ULTRA_ASM -Dsolaris \
-                        -DMULTITHREAD"
+                        -DHAVE_POSIX_THREADS"
         TARGET_ASFLAGS="$OPTS_AS_ULTRA"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -1377,7 +1375,7 @@ case "$1" in
     *x86-solaris)    # gcc, mt, dynamic
         TARGET_CC="g++"
         generate_gcc_opts "x86" "solaris"
-        TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DMULTITHREAD -D_REENTRANT"
+        TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
         TARGET_LIBS="-lnsl -lsocket -ldl -lthread"
         TARGET_DOCFILES="docs/readme._ix docs/readme.x86-solaris libstdc++.so.2.8.1"
         TARGET_TARBALL="x86-solaris"
@@ -1391,7 +1389,7 @@ case "$1" in
         TARGET_CC="g++"
         generate_gcc_opts "alpha" "decunix"
         TARGET_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT \
-                        -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT"
+                        -DHAVE_POSIX_THREADS -D_THREAD_SAFE -D_REENTRANT"
         TARGET_LIBS="-lpthread -lexc"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "digital-unix" "alpha" "mt"
@@ -1477,7 +1475,7 @@ case "$1" in
     *ppc-macosx)       # [mfeiri] (MACH 3.x based: MacOSXDP, Darwin 1.0)
         TARGET_CC="cc"
         generate_gcc_opts "ppc" "macosx"
-        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD -force_cpusubtype_ALL -faltivec"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -force_cpusubtype_ALL -faltivec"
         TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="macosx-ppc"
@@ -1559,7 +1557,7 @@ case "$1" in
         TARGET_STRIP="/usr/gcc/bin/ntoppc-strip"
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
-	                -fno-exceptions -fno-rtti -DASM_PPC -DMULTITHREAD"
+	                -fno-exceptions -fno-rtti -DASM_PPC -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-ppcbe"
@@ -1578,7 +1576,7 @@ case "$1" in
         TARGET_STRIP="/usr/gcc/bin/ntoshle-strip"
         TARGET_ASFLAGS="-DNO_BALIGN" 
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
-                        -fno-exceptions -fno-rtti -DASM_SH4 -DMULTITHREAD"
+                        -fno-exceptions -fno-rtti -DASM_SH4 -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-sh4le"
@@ -1593,7 +1591,7 @@ case "$1" in
         TARGET_STRIP="/usr/gcc/bin/ntoshbe-strip"
         TARGET_ASFLAGS="-DNO_BALIGN" 
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
-                        -fno-exceptions -fno-rtti -DASM_SH4 -DMULTITHREAD"
+                        -fno-exceptions -fno-rtti -DASM_SH4 -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-sh4be"
@@ -1747,7 +1745,7 @@ case "$1" in
         #TARGET_NASM="nasm"
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
-                        -fno-exceptions -fno-rtti -DMULTITHREAD -DASM_X86"
+                        -fno-exceptions -fno-rtti -DHAVE_POSIX_THREADS -DASM_X86"
 	      TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-x86"
@@ -1971,7 +1969,7 @@ case "$1" in
         TARGET_STRIP="/usr/gcc/bin/ntoarmle-strip"
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
-                        -fno-exceptions -fno-rtti -DASM_ARM -DMULTITHREAD"
+                        -fno-exceptions -fno-rtti -DASM_ARM -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-arm"
@@ -2028,7 +2026,7 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "beos"
-        TARGET_CCFLAGS="$OPTS_GCC -fno-pic -O3 -Wno-multichar -DMULTITHREAD"
+        TARGET_CCFLAGS="$OPTS_GCC -fno-pic -O3 -Wno-multichar"
         TARGET_LDFLAGS="-static"
         TARGET_TARBALL="beos-x86"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
@@ -2038,7 +2036,7 @@ case "$1" in
     *ppc-beos)
         TARGET_AS="mwcc -c"
         TARGET_CC="mwcc"
-        TARGET_CCFLAGS="$OPTS_MWCC_PPC604 -DMULTITHREAD"
+        TARGET_CCFLAGS="$OPTS_MWCC_PPC604"
         TARGET_STRIP="touch"
         TARGET_TARBALL="beos-ppc"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
