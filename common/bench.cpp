@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.36 2000/06/25 15:22:05 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.37 2000/08/03 22:05:47 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -173,8 +173,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
       contestwork.crypto.cypher.hi = ( 0 );
       contestwork.crypto.keysdone.lo = ( 0 );
       contestwork.crypto.keysdone.hi = ( 0 );
-      contestwork.crypto.iterations.lo = ( (1<<20) );
-      contestwork.crypto.iterations.hi = ( 0 );
+      contestwork.crypto.iterations.lo = ( 0 );
+      contestwork.crypto.iterations.hi = ( 1 );
       break;
     }
     case OGR:
@@ -253,6 +253,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     //  LogScreen("\rCalibrating ... done. (%lu)\n", (unsigned long)tslice );
     if (non_preemptive_os.yps)
       tslice /= non_preemptive_os.yps;
+    else
+      tslice <<= 1; /* try for two second steps */
   }
   if (tslice == 0)
   { 
@@ -269,7 +271,6 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   last_permille = 1001;
   
   /* --------------------------- */
-
   problem = new Problem();
   run = RESULT_WORKING;
 
@@ -386,6 +387,24 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           totalruntime.tv_usec = runtime.tv_usec;
           break;
         }
+        else if ( /* ( flags & TBENCHMARK_CALIBRATION ) == 0 && */
+            !non_preemptive_os.yps && problem->last_runtime_sec < 2)
+        { 
+          /* this tweak is only meaningful for contests that slice */
+          /* precisely and don't have a cap on the maximum tslice, */
+          /* and is probably only useful during the calibration phase. */
+          /* (a simple counter test showed that it only came here one */
+          /* time after tslice had been calibrated) */
+          u32 newtslice; 
+          u32 elapsedus = (problem->last_runtime_sec * 100000ul)+
+                           problem->last_runtime_usec;
+          tslice = problem->tslice;                           
+          newtslice = tslice + ((tslice/100)*(100-(elapsedus/20000ul)));
+          if (newtslice > tslice)
+          {
+            problem->tslice = tslice = newtslice;
+          }                                    
+        }	       
       }
     }
     if ( run < 0 )
