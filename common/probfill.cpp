@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.24  1998/12/22 21:14:50  cyp
+// Change hardcoded date to Jan 18 for DES-III
+//
 // Revision 1.23  1998/12/21 19:06:08  cyp
 // Removed 'unused'/'unimplemented' sil[l|b]yness added in recent version.
 // See client.h for full comment.
@@ -100,7 +103,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.23 1998/12/21 19:06:08 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.24 1998/12/22 21:14:50 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -208,10 +211,10 @@ static void __RefreshRandomPrefix( Client *client )
        switched contests.
     */
     int year,mon,day,hour,min; time_t starttime; } timestart[]= {
-      { 1999,  1,  2, 9+8, 00, (time_t)0x368e5090L }, /* des-ii-3 mock */
-      { 1999,  1, 13, 9+8, 00, (time_t)0x369cd110L }, /* des-ii-3 */
-      { 1999,  7, 13, 9+9, 00, (time_t)0x378b7ea0L }, /* des-ii-4 */
-      { 1999,  1, 13, 9+8, 00, (time_t)0           }  /* des-ii-5 */
+      { 1999,  1,  2, 9+8, 00, (time_t)0x368e5090L }, /* des-iii mock */
+      { 1999,  1, 18, 9+8, 00, (time_t)0x36a36890L }, /* DES-III */
+      { 1999,  7, 13, 9+9, 00, (time_t)0x378b7ea0L }, /* dummy */
+      { 2000,  1, 13, 9+8, 00, (time_t)0x387e0490L }  /* dummy */
     };
 
   if (client->contestdone[1]) /* DES only */
