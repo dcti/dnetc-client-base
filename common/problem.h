@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.46  1999/03/19 03:19:13  sampo
+// checkin fix for mac build bustage, make GetKeysDone() use new data structure.
+//
 // Revision 1.45  1999/03/18 03:49:24  cyp
 // a) discarded intermediate rc5result state/structures; b) Modified
 // RetrieveState() to return the core's resultcode; c) #if 0'd all Log()
@@ -303,7 +306,7 @@ public:
 
 
 #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-  u32 GetKeysDone() { return(rc5result.keysdone.lo); }
+  u32 GetKeysDone() { return(contestwork.crypto.keysdone.lo); }
     // Returns keys completed for Mac GUI display.
 #endif
 
