@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.63 2000/06/05 15:10:16 oliver Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.64 2000/06/06 12:21:06 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -61,6 +61,10 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       #endif
       NULL
     },
+    { /* OGR */
+      "GARSP 5.13",
+      NULL
+    },
   #elif (CLIENT_CPU == CPU_ARM)
     { /* RC5 */
       "Series A", /* (autofor for ARM 3/6xx/7xxx) "ARM 3, 610, 700, 7500, 7500FE" */
@@ -71,6 +75,10 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     { /* DES */
       "Standard ARM core", /* "ARM 3, 610, 700, 7500, 7500FE" or  "ARM 710" */
       "StrongARM optimized core", /* "ARM 810, StrongARM 110" or "ARM 2, 250" */
+      NULL
+    },
+    { /* OGR */
+      "GARSP 5.13",
       NULL
     },
   #elif (CLIENT_CPU == CPU_68K)
@@ -91,6 +99,18 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "Generic", 
       NULL
     },
+    { /* OGR */
+      #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+      "GARSP 5.13 - 68000",
+      "GARSP 5.13 - 68020",
+      "GARSP 5.13 - 68030",
+      "GARSP 5.13 - 68040",
+      "GARSP 5.13 - 68060",
+      #else
+      "GARSP 5.13",
+      #endif
+      NULL
+    },
   #elif (CLIENT_CPU == CPU_ALPHA) 
     { /* RC5 */
       #if (CLIENT_OS == OS_WIN32)
@@ -102,6 +122,10 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
     { /* DES */
       "dworz/amazing",
+      NULL
+    },
+    { /* OGR */
+      "GARSP 5.13",
       NULL
     },
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
@@ -120,6 +144,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "Generic DES core", 
       NULL
     },
+    { /* OGR */
+      "GARSP 5.13",
+      NULL, /* possibly used by "GARSP 5.13-vec" */
+      NULL
+    },
   #else
     { /* RC5 */
       "Generic RC5 core",
@@ -129,12 +158,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "Generic DES core",
       NULL
     },
-  #endif  
     { /* OGR */
       "GARSP 5.13",
-      NULL, /* possibly used by "GARSP 5.13-vec" */
       NULL
     },
+  #endif  
     { /* CSC */
       "6 bit - inline", 
       "6 bit - called",
@@ -501,6 +529,25 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   else if (contestid == DES)
   {
     selcorestatics.corenum[DES] = 0; //only one core
+  }
+  else if (contestid == OGR)
+  {
+    selcorestatics.corenum[OGR] = selcorestatics.user_cputype[OGR];
+    if (selcorestatics.corenum[OGR] < 0 && detected_type > 0)
+    {
+      int cindex = 0;
+      #if (CLIENT_OS == OS_AMIGAOS)
+      if (detected_type >= 68060)
+        cindex = 4;
+      else if (detected_type == 68040)
+        cindex = 3;
+      else if (detected_type == 68030)
+        cindex = 2;
+      else if (detected_type == 68020)
+        cindex = 1;
+      #endif
+      selcorestatics.corenum[OGR] = cindex;
+    }
   }
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
   #if (!defined(_AIXALL)) //not a PPC/POWER hybrid client?
@@ -1341,15 +1388,34 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
   #if defined(HAVE_OGR_CORES)
   if (contestid == OGR)
   {
-    #if (CLIENT_CPU != CPU_POWERPC)
-      coresel = 0;
+    #if (CLIENT_CPU == CPU_POWERPC)
+      extern CoreDispatchTable *ogr_get_dispatch_table();
+      //extern CoreDispatchTable *vec_ogr_get_dispatch_table();
+      //if (coresel == 1)    // G1,G2,G3
+      //  unit_func.ogr = vec_ogr_get_dispatch_table();
+      //else                 // G4
+      unit_func.ogr = ogr_get_dispatch_table();
+    #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
+      extern CoreDispatchTable *ogr_get_dispatch_table_000();
+      extern CoreDispatchTable *ogr_get_dispatch_table_020();
+      extern CoreDispatchTable *ogr_get_dispatch_table_030();
+      extern CoreDispatchTable *ogr_get_dispatch_table_040();
+      extern CoreDispatchTable *ogr_get_dispatch_table_060();
+      if (coresel == 4)
+        unit_func.ogr = ogr_get_dispatch_table_060();
+      else if (coresel == 3)
+        unit_func.ogr = ogr_get_dispatch_table_040();
+      else if (coresel == 2)
+        unit_func.ogr = ogr_get_dispatch_table_030();
+      else if (coresel == 1)
+        unit_func.ogr = ogr_get_dispatch_table_020();
+      else
+      {
+        unit_func.ogr = ogr_get_dispatch_table_000();
+        coresel = 0;
+      }
     #else
-        extern CoreDispatchTable *ogr_get_dispatch_table();
-        //extern CoreDispatchTable *vec_ogr_get_dispatch_table();
-        //if (coresel == 1)    // G1,G2,G3
-        //  unit_func.ogr = vec_ogr_get_dispatch_table();
-        //else                 // G4
-          unit_func.ogr = ogr_get_dispatch_table();
+      coresel = 0;
     #endif
   }
   #endif
