@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.113 1999/07/23 03:16:55 fordbr Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.114 1999/07/24 00:04:13 remi Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -467,33 +467,8 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   #endif
     unit_func = rc5_unit_func_g2_g3;
   pipeline_count = 1;
-#ifdef CSC_TEST
-  else if( contest == CSC ) // CSC
-  {
-    pipeline_count = 1;
-    switch( cputype ) {
-      case 0 : 
-	csc_unit_func = csc_unit_func_6b_i;
-	break;
-      case 1 :
-	csc_unit_func = csc_unit_func_6b;
-	break;
-      default:
-      case 2 :
-	csc_unit_func = csc_unit_func_1k_i;
-	break;
-      case 3 :
-	csc_unit_func = csc_unit_func_1k;
-	break;
-    }
-  }
-#endif
 #endif
 
-#ifdef CSC_TEST
-  if( contest == CSC && csc_unit_func == NULL )
-    csc_unit_func = csc_unit_func_1k_i;
-#endif
 #if (CLIENT_CPU == CPU_X86)
   static int detectedtype = -1;
   if (detectedtype == -1)
@@ -583,6 +558,30 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     }
   }
 #endif    
+
+#ifdef CSC_TEST
+  if( contest == CSC ) // CSC
+  {
+    pipeline_count = 1;
+    switch( cputype ) {
+      case 0 : 
+	csc_unit_func = csc_unit_func_6b_i;
+	break;
+      case 1 :
+	csc_unit_func = csc_unit_func_6b;
+	break;
+      default:
+      case 2 :
+	csc_unit_func = csc_unit_func_1k_i;
+	break;
+      case 3 :
+	csc_unit_func = csc_unit_func_1k;
+	break;
+    }
+  }
+  if( contest == CSC && csc_unit_func == NULL )
+    csc_unit_func = csc_unit_func_1k_i;
+#endif
 
 
   //----------------------------------------------------------------
