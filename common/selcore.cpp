@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.4 2002/12/21 00:56:38 pstadt Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.5 2002/12/28 13:29:16 acidblood Exp $"; }
 
 //#define TRACE
 
@@ -240,6 +240,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "DG 2-pipe",
       "DG 3-pipe",
       "DG 3-pipe alt",
+      "SS 2-pipe",
       NULL
     },
   #elif (CLIENT_CPU == CPU_ARM)
@@ -1132,12 +1133,12 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
           int cindex = -1; 
           switch (detected_type & 0xff)
           {
-            case 0x09: cindex = 5; break; // AMD>=K7/Cx>MII == DG 2-pipe
+            case 0x09: cindex = 8; break; // AMD>=K7/Cx>MII == SS 2-pipe
             case 0x0B: cindex = 6; break; // Pentium 4 == DG 3-pipe
             default:   cindex =-1; break; // no default
           }
           #if defined(HAVE_NO_NASM)
-          if (cindex == 5)   /* ("DG 2-pipe") */
+          if (cindex == 8)   /* ("SS 2-pipe") */
             cindex = 1;      /* ("ANSI 2-pipe") */
           if (cindex == 6)   /* ("DG 3-pipe") */
             cindex = 0;      /* ("ANSI 4-pipe") */
@@ -1566,12 +1567,14 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       extern "C" s32 cdecl rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 cdecl rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 cdecl rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
+      extern "C" s32 cdecl rc5_72_unit_func_ss_2( RC5_72UnitWork *, u32 *, void *);
     #else
       extern "C" s32 rc5_72_unit_func_ses( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_ses_2( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
+      extern "C" s32 rc5_72_unit_func_ss_2( RC5_72UnitWork *, u32 *, void *);
     #endif
   #endif
   #if (CLIENT_CPU == CPU_ARM)
@@ -2187,6 +2190,10 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       case 7:
         unit_func.gen_72 = rc5_72_unit_func_dg_3a;
         pipeline_count = 3;
+        break;
+      case 8:
+        unit_func.gen_72 = rc5_72_unit_func_ss_2;
+        pipeline_count = 2;
         break;
      #endif
 
