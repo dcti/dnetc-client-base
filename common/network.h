@@ -139,8 +139,10 @@ extern "C" {
   #define read(sock, buff, len) recv(sock, (unsigned char*)buff, len, 0)
   #define close(sock) CloseSocket(sock)
   #define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
-  #define inet_addr(host) inet_addr((unsigned char *)host)
-  #define gethostbyname(host) gethostbyname((unsigned char *)host)
+  #ifndef __PPC__
+	  #define inet_addr(host) inet_addr((unsigned char *)host)
+	  #define gethostbyname(host) gethostbyname((unsigned char *)host)
+  #endif
   typedef int SOCKET;
 #elif (CLIENT_OS == OS_BEOS)
   #include <sys/types.h>
