@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.13 2003/03/17 01:00:48 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.14 2003/03/17 01:32:00 andreasb Exp $
 ==========================================================================
 
 2.9000
@@ -30,6 +30,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.13 2003/03/17 01:00:48 andreasb Ex
 2.9004-482  undo: x86: rc5-72 SS-2 core (Athlon optimized) removed due to 
                        reentrancy and stack problems (#3187)
             chg: some: rc5-72 ansi cores removed in favor of faster asm cores
+	    chg: x86: disabled dg-* cores (bswap instr) on i386/i486 (#2878)
 
 2.9003-481  fix: smp via fork: 2nd process died after switching to project
                                ogr (added workaround for #3006)
