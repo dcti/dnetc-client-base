@@ -6,7 +6,7 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.27.2.4 1999/11/15 04:09:36 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.5 1999/11/15 04:48:55 cyp Exp $
 
 BASENAME = dnetc
 
@@ -756,7 +756,7 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
+#    @%make declare_for_ogr
      @%make declare_for_csc
      @%make platform
      #-------------------------
@@ -792,7 +792,7 @@ os2: .symbolic                                       # OS/2
      @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
+#    @%make declare_for_ogr
      @%make declare_for_csc
      @%make platform
 
@@ -830,7 +830,7 @@ w16: .symbolic                                       # Windows/16
      ##@%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
+#    @%make declare_for_ogr
      @%make declare_for_csc
      @%make platform
      #---------------------------
@@ -874,7 +874,7 @@ w32: .symbolic                               # win32
      @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
+#    @%make declare_for_ogr
      @%make declare_for_csc
      @%make platform
      #---------------------------------
@@ -973,7 +973,7 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      #@%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
+#    @%make declare_for_ogr
      @%make declare_for_csc
      @%make platform
      #

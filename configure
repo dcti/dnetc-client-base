@@ -4,15 +4,17 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.41 1999/11/15 04:01:06 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.42 1999/11/15 04:48:53 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
-# - Adding CSC/OGR to the target:
+# - Adding CSC to the target:
 #   a) Add ${CSC_ANSI_SRCS} to your target's TARGET_ADDSRCS
 #      (x86 clients also have nasm cores. See linux/freebsd.)
 #   b) Add -DHAVE_CSC_CORES to your target's TARGET_CCFLAGS
-#   The same applies to OGR ( $OGR_ANSI_SRCS and -DHAVE_OGR_CORES of course :)
+#
+# - OGR IS NOT READY YET, but the same would apply there too
+#   (with $OGR_ANSI_SRCS and -DHAVE_OGR_CORES of course :)
 #
 # - If you wish to continue supporting DES, add -DHAVE_DES_CORES
 #
@@ -951,11 +953,11 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
 			-DMULTITHREAD -DLURK \
-			-DHAVE_OGR_CORES -DHAVE_CSC_CORES -DHAVE_DES_CORES"
+			-DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
 	TARGET_ADDSRCS="common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-			$OGR_ANSI_SRCS "
+			" #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
@@ -971,11 +973,11 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
 			-DMULTITHREAD -DSMC -DLURK \
-			-DHAVE_OGR_CORES -DHAVE_CSC_CORES -DHAVE_DES_CORES"
+			-DHAVE_CSC_CORES -DHAVE_DES_CORES"  #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-			$OGR_ANSI_SRCS "
+			" #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
@@ -991,11 +993,11 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-D__showids__ -DSMC -DLURK \
-			-DHAVE_OGR_CORES -DHAVE_CSC_CORES -DHAVE_DES_CORES"
+			-DHAVE_CSC_CORES -DHAVE_DES_CORES"  #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-			$OGR_ANSI_SRCS "
+			" #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
@@ -1012,11 +1014,11 @@ case "$1" in
 	TARGET_CC="gcc -g"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-D__showids__ -DSMC -DMULTITHREAD -DLURK \
-			-DHAVE_OGR_CORES -DHAVE_CSC_CORES -DHAVE_DES_CORES"
+			-DHAVE_CSC_CORES -DHAVE_DES_CORES"  #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-			$OGR_ANSI_SRCS "
+			" #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
@@ -1051,10 +1053,10 @@ case "$1" in
     *x86-freebsd)             # [dbaker] aout
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DLURK \
-			-DHAVE_CSC_CORES -DHAVE_OGR_CORES -DHAVE_DES_CORES"
+			-DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
         TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS \
-	                $KWAN_SLICE_SRCS4 $OGR_ANSI_SRCS"
+	                $KWAN_SLICE_SRCS4 "  #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
@@ -1068,10 +1070,10 @@ case "$1" in
     *x86-freebsd-elf)       # [dbaker] elf
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DLURK \
-			-DHAVE_CSC_CORES -DHAVE_OGR_CORES -DHAVE_DES_CORES"
+			-DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS \
-	                $KWAN_SLICE_SRCS4 $OGR_ANSI_SRCS"
+	                $KWAN_SLICE_SRCS4 " #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
@@ -1086,10 +1088,10 @@ case "$1" in
     *x86-netbsd)
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-	                -DHAVE_CSC_CORES -DHAVE_OGR_CORES -DHAVE_DES_CORES"
+	                -DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-	                $OGR_ANSI_SRCS"
+	                " #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
 	                des/brydgnu/p1bdespro.S"
 	TARGET_NASM_FMT="aoutb"
@@ -1103,10 +1105,10 @@ case "$1" in
     *x86-openbsd)
 	TARGET_AS="g++ -c"
 	TARGET_CCFLAGS="$OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 \
-	                -DHAVE_CSC_CORES -DHAVE_OGR_CORES -DHAVE_DES_CORES"
+	                -DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-	                $OGR_ANSI_SRCS"
+	                " #$OGR_ANSI_SRCS
 	TARGET_NASM_FMT="aoutb"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
 	                des/brydgnu/p1bdespro.S"
@@ -1120,10 +1122,10 @@ case "$1" in
     *x86-bsdi)                        # snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -DKWAN $OPTS_DES_MMX -DMMX_RC5 \
-	                -DHAVE_CSC_CORES -DHAVE_OGR_CORES -DHAVE_DES_CORES"
+	                -DHAVE_CSC_CORES -DHAVE_DES_CORES"  #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-	                $OGR_ANSI_SRCS"
+	                " #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
 	                des/brydgnu/p1bdespro.S"
 	TARGET_NASM_FMT="aoutb"
@@ -1135,10 +1137,10 @@ case "$1" in
     *x86-bsdi4)                       # BSD/OS 4.0 with ELF format -snake
 	TARGET_AS="g++ -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-	                -DHAVE_CSC_CORES -DHAVE_OGR_CORES -DHAVE_DES_CORES"
+	                -DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-	                $OGR_ANSI_SRCS"
+	                " #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
 	                des/brydgnu/p1bdespro.S"
 	TARGET_NASM_FMT="elf"
