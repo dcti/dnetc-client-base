@@ -10,6 +10,9 @@
 //
 //
 // $Log: netinit.cpp,v $
+// Revision 1.23.2.1  1999/04/04 13:42:55  jlawson
+// modified includes
+//
 // Revision 1.23  1999/02/04 18:27:51  cyp
 // discarded os/2 and win32 sections in netInitAndDeinit() as they are no
 // longer special. :p
@@ -93,17 +96,17 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.23 1999/02/04 18:27:51 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.23.2.1 1999/04/04 13:42:55 jlawson Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
 
 #include "cputypes.h"
-#include "network.h"
-#include "logstuff.h" //for messages
-#include "clitime.h"  //for the time stamp string
-#include "sleepdef.h" //for sleep();
-#include "triggers.h" //for break checks
+#include "network2.h"
+#include "logstuff.h"     //for messages
+#include "clitime.h"      //for the time stamp string
+#include "sleepdef.h"     //for sleep();
+#include "triggers.h"     //for break checks
 #include "lurk.h"
 
 #if (CLIENT_OS == OS_MACOS)
