@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.36.2.4 2004/06/16 18:37:00 kakace Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.36.2.5 2004/06/19 23:33:23 kakace Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -241,7 +241,7 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
   else if (workstate != RESULT_WORKING && workstate != RESULT_FOUND &&
            workstate != RESULT_NOTHING)
   {
-    LogScreen("Discarded packet with unrecognized workstate %ld.\n",workstate);
+    Log("Discarded packet with unrecognized workstate %ld.\n",workstate);
   }
   else if (__CheckBuffLimits( client ))
   {
@@ -337,11 +337,11 @@ long GetBufferRecord( Client *client, WorkRecord* data,
       if (retcode == -123 ) /* corrupted */
       {
         // corrupted - packet invalid, discard it.
-        LogScreen( "Block integrity check failed. Block discarded.\n");
+        Log( "Block integrity check failed. Block discarded.\n");
       }
       else if (retcode < 0) /* io error */
       {
-        LogScreen("Buffer seek/read error. Partial packet discarded.\n");
+        Log("Buffer seek/read error. Partial packet discarded.\n");
         break; /* return -1; */
       }
       else if( retcode > 0 ) // no recs
@@ -353,12 +353,12 @@ long GetBufferRecord( Client *client, WorkRecord* data,
       tmp_contest = (unsigned int)data->contest;
       if (!(tmp_contest < CONTEST_COUNT))
       {
-        LogScreen("Discarded packet from unknown contest.\n");
+        Log("Discarded packet from unknown contest.\n");
       }
       else if (workstate != RESULT_WORKING && workstate != RESULT_FOUND &&
               workstate != RESULT_NOTHING)
       {
-        LogScreen("Discarded packet with unrecognized workstate %ld.\n",workstate);
+        Log("Discarded packet with unrecognized workstate %ld.\n",workstate);
       }
       else if (tmp_contest != contest ||
                (use_out_file && workstate == RESULT_WORKING) ||
