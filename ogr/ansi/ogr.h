@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.14 2004/06/17 15:47:55 kakace Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.15 2004/07/08 17:15:34 piru Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -23,7 +23,8 @@
 #endif
 
 #if (CLIENT_CPU == CPU_POWERPC) && (defined(__GCC__) || defined(__GNUC__)) && \
-    (defined(__VEC__) || defined(__ALTIVEC__)) && (!defined(__APPLE_CC__))
+    (defined(__VEC__) || defined(__ALTIVEC__)) && (!defined(__APPLE_CC__) && \
+    (__GNUC__ >= 3))
   #include <altivec.h>
 #endif
 

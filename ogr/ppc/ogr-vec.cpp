@@ -5,7 +5,7 @@
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.3.4.6 2004/06/16 18:05:03 kakace Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.3.4.7 2004/07/08 17:15:34 piru Exp $"; }
 
 #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
   #if (__MWERKS__)
@@ -51,10 +51,14 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.6 2004/06/16 18:05:03 kakace Exp $"; }
   #define OGR_P2_GET_DISPATCH_TABLE_FXN vec_ogr_p2_get_dispatch_table
   #define OVERWRITE_DEFAULT_OPTIMIZATIONS
 
+  #if (defined(__GNUC__) && !defined(__APPLE_CC__) && (__GNUC__ >= 3))
+    #include <altivec.h>
+  #endif
+
   typedef vector unsigned char V8_t;
   typedef vector unsigned int  V32_t;
 
-  #if (defined(__GNUC__) && !defined(__APPLE_CC__))
+  #if (defined(__GNUC__) && !defined(__APPLE_CC__) && (__GNUC__ >= 3))
     #define ZEROBIT_DECL     {0, 0, 1, 0}
     #define SHIFT_BY_1_DECL  {1}
     #define SHIFT_BY_2_DECL  {2}
