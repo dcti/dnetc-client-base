@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.14 2003/01/22 03:15:58 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.15 2003/01/23 20:50:50 pfeffi Exp $"; }
 
 //#define TRACE
 
@@ -1367,7 +1367,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
       {
         switch (detected_type & 0xff) // FIXME remove &0xff
         {
-          case 0x00: cindex = 5; break; // P5             == DG 2-pipe
+          case 0x00: cindex = 8; break; // P5             == SS 2-pipe
           case 0x01: cindex = 3; break; // 386/486        == SES 1-pipe
           case 0x02: cindex = 4; break; // PII/PIII       == SES 2-pipe
           case 0x03: cindex = 5; break; // Cx6x86         == DG 2-pipe
