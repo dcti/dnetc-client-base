@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.51 2000/12/21 17:48:10 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.52 2001/01/03 02:36:39 mfeiri Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -607,7 +607,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "             in the \"Log file limit\" option is reached.\n"
   "3) fifo      the oldest lines in the file will be discarded when the size\n"
   "             of the file exceeds the limit in the \"Log file limit\" option.\n"
-  "             This option is not supported on MacOS and VMS.\n"
+  "             This option is not supported on VMS.\n"
   "4) rotate    a new file will be created when the rotation interval specified\n"
   "             in the \"Log file limit\" option is exceeded.\n"
   ),CONF_MENU_LOG,CONF_TYPE_INT,NULL,NULL /*logtypes[]*/,0,0,NULL,NULL
