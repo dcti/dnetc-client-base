@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.19 2000/02/04 08:29:58 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.20 2000/02/06 05:31:15 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -88,23 +88,25 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "listed here are found to be running. Multiple filenames/process names\n"
   "may be specified by separating them with a '|'.\n"
   "\n"
-  #if (CLIENT_OS == OS_WIN16)
-  "For example, \"backup.exe|restore.exe\", or even .dlls if you prefer.\n"
-  #elif (defined(__unix__))
-  "For example, \"backup|restore\". The use of paths is generally not\n"
-  "supported since the process list is obtained from 'ps' or its programmatic\n"
-  "equivalent.\n"
+  #if (defined(__unix__))
+  "For example, \"backup|restore\". Providing a path is not advisable\n"
+  "since the process list is obtained from 'ps' and/or the programmatic\n"
+  "equivalent therof.\n"
   #elif (CLIENT_OS == OS_NETWARE)
   "For example, \"backup.nlm|restore.nlm|\". An extension (.DLL|.NLM etc)\n"
   "must be provided for this option to work correctly.\n"
-  #elif (CLIENT_OS == OS_WIN32)
-  "For example, \"backup.exe|restore.exe\". On WindowsNT and 9x, you may\n"
-  "specify canonical paths to avoid filename conflicts, but keep in mind\n"
-  "that a match might fail if you specify a drive letter and the executable\n"
-  "was in fact started from a network drive (or vice versa). Use of this\n"
-  "option requires toolhelp.dll which is standard only on Windows 9x and\n"
-  "Windows 2000 and may need to be manually copied to the system directory\n"
-  "from the install media for Windows NT 3.x/4.x systems.\n"
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  "For example, \"backup.exe|restore.exe\".\n"
+  "\n"
+  "WinNT5/Win9x: path and extension are optional (that is, if you don't\n"
+  "              provide a path or extension here, then those components of\n"
+  "              the filename will not influence a comparison).\n"
+  "WinNT3/WinNT4:path and extension are accepted, but ignored (neither\n"
+  "              component has any influence on the outcome of a comparison)\n"
+  "Win32s/Win16: extension is optional and path is ignored.\n"
+  "\n"
+  "NB: 32bit clients cannot detect the presence of 16bit applications and\n"
+  "vice-versa.\n"  
   #else
   "This option is not supported on all platforms\n"
   #endif
