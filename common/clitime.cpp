@@ -21,30 +21,33 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.17 2000/02/21 00:50:35 trevorh Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.18 2000/03/04 08:20:39 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
 #include "clitime.h"  // keep the prototypes in sync
 
-//Warning for getrusage(): if the OSs thread model is ala SunOS's LWP,
-//ie, threads don't get their own pid, then GetProcessTime() functionality
-//is limited to single thread/benchmark/test only (the way it is now),
-//otherwise it will be return process time for all threads.
-//(problem::Run() guards against this condition, but keep it mind anyway.)
 #if defined(__unix__) //possibly not for all unices. getrusage() is BSD4.3
+  // Warning for getrusage(): if the OSs thread model is ala SunOS's LWP,
+  // ie, threads don't get their own pid, then GetProcessTime() functionality
+  // is limited to single thread/benchmark/test only (the way it is now),
+  // otherwise it will be return process time for all threads.
+  // (problem::Run() guards against this condition, but keep it mind anyway.)
   #define HAVE_GETRUSAGE
   #include <sys/resource.h>
 #endif
 
 // ---------------------------------------------------------------------
 
+// Internal function.  Fills "tv" with current system time.  The returned
+// time is not guaranteed to be monotonically increasing.
+
 static int __GetTimeOfDay( struct timeval *tv )
 {
   if (tv)
   {
-    #if (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_VMS) || \
-        (CLIENT_OS == OS_NETWARE)
+    #if (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || \
+        (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_NETWARE)
     {
       struct timeb tb;
       ftime(&tb);
@@ -102,11 +105,13 @@ static int __GetTimeOfDay( struct timeval *tv )
   return 0;
 }
 
-/*
- * Unlike __GetTimeOfDay(), which may change when the user changes
- * the day/date, __GetMonotonicClock should return a monotonic time.
- * This is particularly critical for timing on non-preemptive systems.
-*/
+// ---------------------------------------------------------------------
+
+// Internal function.
+// Unlike __GetTimeOfDay(), which may change when the user changes
+// the day/date, __GetMonotonicClock should return a monotonic time.
+// This is particularly critical for timing on non-preemptive systems.
+
 static int __GetMonotonicClock( struct timeval *tv )
 {
   #if (CLIENT_OS == OS_NETWARE) /* use hardware clock */
@@ -139,9 +144,10 @@ static int __GetMonotonicClock( struct timeval *tv )
   #endif
 }
 
-/*
- * get thread time
-*/
+// ---------------------------------------------------------------------
+
+// Internal function.  get thread cpu time
+
 static int __GetProcessTime( struct timeval *tv )
 {
   tv = tv; /* may be unused */
@@ -197,8 +203,12 @@ static int __GetProcessTime( struct timeval *tv )
   return -1;
 }
 
+// ---------------------------------------------------------------------
 
-static int __GetMinutesWest(void) /* see CliTimeGetMinutesWest() for descr */
+// Internal function.
+// see CliTimeGetMinutesWest() for description.
+
+static int __GetMinutesWest(void)
 {
   int minwest;
 #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN16) || \
@@ -235,10 +245,20 @@ static int adj_time_delta = 0;
 static const char *monnames[]={ "Jan","Feb","Mar","Apr","May","Jun",
                                 "Jul","Aug","Sep","Oct","Nov","Dec"};
 
-/*
- * Set the 'time delta', a value added to the tv_sec member by CliTimer()
- * before the time is returned. CliTimerSetDelta() returns the old delta.
- */
+// We use a static class to allow its constructor to ensure 
+// counter initialization before the first thread spins up.
+static class _clockinit_  
+{                         
+  public:
+    _clockinit_()  { CliClock(NULL); CliGetProcessTime(NULL); }
+   ~_clockinit_()  { }
+} _clockinit;
+
+// ---------------------------------------------------------------------
+
+// Set the 'time delta', a value added to the tv_sec member by CliTimer()
+// before the time is returned. CliTimerSetDelta() returns the old delta.
+
 int CliTimerSetDelta( int delta )
 {
   int old = adj_time_delta;
@@ -248,16 +268,21 @@ int CliTimerSetDelta( int delta )
   return old;
 }
 
-/*
- * timezone offset after compensating for dst (west of utc > 0, east < 0)
- * such that the number returned is constant for any time of year
- */
+// ---------------------------------------------------------------------
+
+// timezone offset after compensating for dst (west of utc > 0, east < 0)
+// such that the number returned is constant for any time of year
+
 int CliTimeGetMinutesWest(void)
 {
   if (precalced_minuteswest == -1234)
     precalced_minuteswest = __GetMinutesWest();
   return precalced_minuteswest;
 }
+
+// ---------------------------------------------------------------------
+
+// Fills the tv structure with the elapsed time since process startup.
 
 int CliGetProcessTime( struct timeval *tv )
 {
@@ -268,9 +293,10 @@ int CliGetProcessTime( struct timeval *tv )
   return 0;
 }
 
-/*
- * Get time elapsed since start. (used from cores. Thread safe.)
-*/
+// ---------------------------------------------------------------------
+
+// Get time elapsed since start. (used from cores. Thread safe.)
+
 struct timeval *CliClock( struct timeval *tv )
 {
   static struct timeval base_tv = {-1,0};  /* base time for CliClock() */
@@ -296,12 +322,6 @@ struct timeval *CliClock( struct timeval *tv )
   tv->tv_sec -= base_tv.tv_sec;
   return (tv);
 }
-static class _clockinit_  /* we use a static constructor to */
-{                         /* ensure initialization before thread spin up */
-  public:
-    _clockinit_()  { CliClock(NULL); CliGetProcessTime(NULL); }
-   ~_clockinit_()  { }
-} _clockinit;
 
 // ---------------------------------------------------------------------
 
@@ -396,6 +416,10 @@ int CliTimerDiff( struct timeval *result, const struct timeval *tv1, const struc
 
 // ---------------------------------------------------------------------
 
+// Determines if the there is sufficient information to determine
+// the configured system timezone.  Returns 0 if okay, non-zero if
+// the timezone is not known (thus default to GMT).
+
 int CliIsTimeZoneInvalid(void)
 {
   #if ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
@@ -409,6 +433,7 @@ int CliIsTimeZoneInvalid(void)
     #endif
     if (!getenv("TZ"))
     {
+      // No timezone was yet configured, so just assume GMT.
       needfixup = 1;
       putenv("TZ=GMT+0");
       tzset();
