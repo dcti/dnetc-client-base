@@ -63,11 +63,9 @@ unsigned long alpha_S_not[1024]={
   S8_not(24L),
   S8_not(25L)};
 
-static __inline__
+// static __inline__
 u32 rc5_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice)
 {
   return alpha_keycracker(rc5unitwork,timeslice); 
 }
-  
-
 

@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.69  1999/01/18 12:12:35  cramer
+// - Added code for ncpu detection for linux/alpha
+// - Corrected the alpha RC5 core handling (support "timeslice")
+// - Changed the way selftest runs... it will not stop if a test fails,
+//     but will terminate at the end of each contest selftest if any test
+//     failed.  Interrupting the test is seen as the remaining tests
+//     having failed (to be fixed later)
+//
 // Revision 1.68  1999/01/17 22:55:10  silby
 // Change casts to make msvc happy.
 //
@@ -190,7 +198,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.68 1999/01/17 22:55:10 silby Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.69 1999/01/18 12:12:35 cramer Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -298,9 +306,9 @@ extern void CliSignalHandler(int);
      #error "Expecting PIPELINE_COUNT=2"
      #endif
   #else
-     extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
+     extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
      extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
-     #error Please verify these core prototypes
+     // CRAMER // #error Please verify these core prototypes
   #endif
 #else
   extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
@@ -1202,6 +1210,90 @@ printf("DES: kiter is %d\n",kiter);
     contestwork.keysdone.lo += timeslice*pipeline_count;
     if (contestwork.keysdone.lo < timeslice*pipeline_count)
        contestwork.keysdone.hi++;
+  }
+  else  /* DES portion taken from the ANSI routines below */
+  {
+    unsigned long kiter = 0;
+
+    timeslice *= 1;
+    u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
+
+    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
+    else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
+    timeslice = (1ul << nbits);
+    kiter = des_unit_func ( &rc5unitwork, nbits );
+    contestwork.keysdone.lo += kiter;
+    if (kiter < timeslice )
+    {
+      // found it?
+      rc5result.key.hi = contestwork.key.hi;
+      rc5result.key.lo = contestwork.key.lo;
+      rc5result.keysdone.hi = contestwork.keysdone.hi;
+      rc5result.keysdone.lo = contestwork.keysdone.lo;
+      rc5result.iterations.hi = contestwork.iterations.hi;
+      rc5result.iterations.lo = contestwork.iterations.lo;
+      rc5result.result = RESULT_FOUND;
+      finished = 1;
+      return( 1 );
+    }
+    else if (kiter != (timeslice))
+    {
+        LogScreen("kiter wrong %ld %ld\n",
+               (long) kiter, (long)(timeslice));
+    }
+  }
+#elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_LINUX)
+  if (contest == 0) {
+//#define DEBUG_ALPHA
+
+#ifdef DEBUG_ALPHA
+printf("BEGIN: timeslice[%X] key[%X/%X] keysdone[%X/%X] iters[%X/%X]\n",
+	timeslice,
+	rc5result.key.hi, rc5result.key.lo,
+	rc5result.keysdone.hi, rc5result.keysdone.lo,
+	rc5result.iterations.hi, rc5result.iterations.lo);
+#endif
+
+    u32 result = rc5_unit_func( &rc5unitwork, timeslice);
+    if ( result && (result != (timeslice*PIPELINE_COUNT)))
+    {
+#ifdef DEBUG_ALPHA
+printf("RESULT1: result[%X] key[%X/%X] keysdone[%X/%X] iters[%X/%X]\n",
+	result,
+	rc5result.key.hi, rc5result.key.lo,
+	rc5result.keysdone.hi, rc5result.keysdone.lo,
+	rc5result.iterations.hi, rc5result.iterations.lo);
+#endif
+
+      // found it?
+      rc5result.key.hi = contestwork.key.hi;
+      rc5result.key.lo = contestwork.key.lo;
+      rc5result.keysdone.hi = contestwork.keysdone.hi;
+      rc5result.keysdone.lo = contestwork.keysdone.lo + result;
+      rc5result.iterations.hi = contestwork.iterations.hi;
+      rc5result.iterations.lo = contestwork.iterations.lo;
+      rc5result.result = RESULT_FOUND;
+
+#ifdef DEBUG_ALPHA
+printf("RESULT2: result[%X] key[%X/%X] keysdone[%X/%X] iters[%X/%X]\n",
+	result,
+	rc5result.key.hi, rc5result.key.lo,
+	rc5result.keysdone.hi, rc5result.keysdone.lo,
+	rc5result.iterations.hi, rc5result.iterations.lo);
+#endif
+
+      finished = 1;
+      return( 1 );
+    }
+
+    contestwork.keysdone.lo += timeslice*PIPELINE_COUNT;
+    if (contestwork.keysdone.lo < timeslice*PIPELINE_COUNT)
+      contestwork.keysdone.hi++;
+
+    rc5result.key.hi = contestwork.key.hi;
+    rc5result.key.lo = contestwork.key.lo;
+    rc5result.keysdone.hi = contestwork.keysdone.hi;
+    rc5result.keysdone.lo = contestwork.keysdone.lo;
   }
   else  /* DES portion taken from the ANSI routines below */
   {

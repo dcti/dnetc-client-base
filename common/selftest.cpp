@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.39  1999/01/18 12:12:35  cramer
+// - Added code for ncpu detection for linux/alpha
+// - Corrected the alpha RC5 core handling (support "timeslice")
+// - Changed the way selftest runs... it will not stop if a test fails,
+//     but will terminate at the end of each contest selftest if any test
+//     failed.  Interrupting the test is seen as the remaining tests
+//     having failed (to be fixed later)
+//
 // Revision 1.38  1999/01/09 08:53:15  remi
 // Fixed my comment's formating.
 //
@@ -45,7 +53,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.38 1999/01/09 08:53:15 remi Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.39 1999/01/18 12:12:35 cramer Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -202,8 +210,6 @@ int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to 
     contestwork.key.lo = expectedsolution.lo & 0xFFFF0000L;
     contestwork.key.hi = expectedsolution.hi;
 
-
-
     if (contest == 0) { // RC5-64
       // test case 1 is the RSA pseudo-contest solution
       // test cases 2,3,4,5,6,7 are specially made to 
@@ -287,7 +293,7 @@ int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to 
       }
 
     problem.GetResult( &rc5result );
-    successes++;
+    //successes++;
     
     if ( rc5result.result == RESULT_FOUND )
       {
@@ -298,10 +304,10 @@ int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to 
       if (solutionfound.lo != expectedsolution.lo || solutionfound.hi != expectedsolution.hi)
         {
         // failure occurred (wrong key)
-        LogScreen( "Test %d FAILED: %08X:%08X - %08X:%08X\n", successes,
+        LogScreen( "Test %02d FAILED: %08X:%08X - %08X:%08X\n", testnum + 1,
           solutionfound.hi, solutionfound.lo, 
           expectedsolution.hi, expectedsolution.lo );
-        successes = -successes;
+        //successes = -successes;
         } 
       else  // match found
         {
@@ -315,23 +321,25 @@ int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to 
           u32 lo2 = ntohl( rc5result.key.lo ) + 
               (u32) ntohl( rc5result.keysdone.lo );
           convert_key_from_inc_to_des (&hi2, &lo2);
-           LogScreen("Test %02d Passed: %08X:%08X - %08X:%08X\n",successes,
+          LogScreen("Test %02d Passed: %08X:%08X - %08X:%08X\n", testnum + 1,
             (u32) hi2, (u32) lo2, (u32) hi, (u32) lo);
+          successes++;
           } 
         else 
           {
           // RC5...
-          LogScreen( "Test %02d Passed: %08X:%08X\n", successes,
+          LogScreen( "Test %02d Passed: %08X:%08X\n", testnum + 1,
             solutionfound.hi, solutionfound.lo);
+          successes++;
           }
         }
       }
     else
       {
       // failure occurred (no solution)
-      LogScreen( "Test %d FAILED: %08X:%08X - %08X:%08X\n", successes,
+      LogScreen( "Test %d FAILED: %08X:%08X - %08X:%08X\n", testnum + 1,
             0, 0, expectedsolution.hi, expectedsolution.lo );
-      successes = -successes;
+      //successes = -successes;
       }
   
     ClientEventSyncPost( CLIEVENT_SELFTEST_TESTEND, (successes>0) );
@@ -346,6 +354,14 @@ int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to 
     LogScreen( "\n%d/%d %s Tests Passed\n", 
       (int) successes, (int) TEST_CASE_COUNT, 
       CliGetContestNameFromID( contest ) );
+    }
+
+  if (successes != TEST_CASE_COUNT)
+    {
+    LogScreen( "\nWARNING WARNING WARNING\n%d %s Tests FAILED!!!\n", 
+      (int) (TEST_CASE_COUNT - successes),
+      CliGetContestNameFromID( contest ) );
+      successes=-successes;
     }
 
   return (successes);

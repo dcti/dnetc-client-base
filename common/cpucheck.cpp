@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.64  1999/01/18 12:12:34  cramer
+// - Added code for ncpu detection for linux/alpha
+// - Corrected the alpha RC5 core handling (support "timeslice")
+// - Changed the way selftest runs... it will not stop if a test fails,
+//     but will terminate at the end of each contest selftest if any test
+//     failed.  Interrupting the test is seen as the remaining tests
+//     having failed (to be fixed later)
+//
 // Revision 1.63  1999/01/18 00:33:19  remi
 // Arrg!
 //
@@ -218,7 +226,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.63 1999/01/18 00:33:19 remi Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.64 1999/01/18 12:12:34 cramer Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -315,6 +323,20 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
                if (strstr( p, "online" ) || strstr( p, "akp"))
                  cpucount++;
                }
+            }
+          #elif (CLIENT_CPU == CPU_ALPHA)
+          cpucount = 1;
+          while(fgets(buffer, 256, cpuinfo))
+            { // Search for SMP data (2.1+)
+              // [CPUs probed %d active %d ...]
+              if(strcmp(buffer, "CPUs probed") == 0)
+                for (char *p = strtok(buffer+12, "\t \n"); p;
+                      p = strtok(NULL, "\t \n"))
+                  if (strstr(p, "active" ))
+                    {
+                    cpucount = atoi(strtok(NULL, "\t \n"));
+                    break;
+                    }
             }
           #endif
           }
@@ -416,7 +438,7 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
     (CLIENT_CPU != CPU_68K) && \
     (CLIENT_CPU != CPU_POWERPC) && \
     (CLIENT_CPU != CPU_ARM) && \
-    ((CLIENT_CPU != CPU_ALPHA) || (CLIENT_OS != CPU_DIGITAL_UNIX))
+    ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS != CPU_DIGITAL_UNIX))
 int GetProcessorType(int quietly)
 {
   if (!quietly)
