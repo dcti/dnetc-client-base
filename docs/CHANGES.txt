@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.98 2002/03/22 23:19:35 sampo Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.99 2002/03/23 23:11:05 andreasb Exp $
 ==========================================================================
 
 2.8000
@@ -29,11 +29,12 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.98 2002/03/22 23:19:35 sampo Exp $
 
 2.8017.471  new: x86: P4 RC5 core (ak-p7)
             new: x86: Athlon RC5 core (re-pair III)
-            new: sparc: improved OGR core. (#2480)
+            imp: sparc: improved OGR core. (#2480)
             fix: mac: memory leak in battery checking code on OS X. (#2465)
             fix: all: client ignores "--" on command line by itself. (#2474)
-            fix: x86: better intel and amd chip identification. (#2448, #2424)
+            imp: x86: better intel and amd chip identification. (#2448, #2424)
             fix: ppc: linux kernel cpu string additions. (#2407)
+            fix: x86: Win2K, WinXP: disabled crashing RC5 SMC core. (#2399)
 
 2.8016.470  new: ppc: new AltiVec RC5 core for the PPC 7450 by Dan Oetting.
 

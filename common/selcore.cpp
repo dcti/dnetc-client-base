@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.127 2002/03/22 21:06:44 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.128 2002/03/23 23:11:04 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -308,10 +308,8 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     if (contestid == RC5)
     {
       if (!have_nasm && cindex == 6)    /* "RG/DG re-pair III" */
-        cindex = ((have_3486 && have_smc)?(7):(3)); /* "RG self-mod" or
-                                                       "RG/HB re-pair I"   */
-      if ((!have_smc || !have_3486) && cindex == 7)   /* "RG self-modifying"
-                                                       do not run on > 486 */
+        cindex = ((have_3486)?(7):(3)); /* "RG self-mod" or "RG/HB re-pair I" */
+      if (!have_smc && cindex == 7)     /* "RG self-modifying" */
         cindex = 1;                     /* "RG class 3/4" */
       if (!have_nasm && cindex == 8)    /* "AK Class 7" */
         cindex = 2;                     /* "RG Class 6" */
@@ -519,21 +517,24 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
     #elif (CLIENT_OS == OS_WIN32)
     if (x86_smc_initialized < 0) /* one shot */
     {
-      HANDLE h = OpenProcess(PROCESS_VM_OPERATION,
-                             FALSE,GetCurrentProcessId());
-      if (h)
+      if (WinGetVersion < 2500) // SMC core doesn't run under WinXP/Win2K
       {
-        DWORD old = 0;
-        if (VirtualProtectEx(h, rc5_unit_func_486_smc, 4096*3,
-                                 PAGE_EXECUTE_READWRITE, &old))
-          x86_smc_initialized = +1;
-        CloseHandle(h);
-      }  
+        HANDLE h = OpenProcess(PROCESS_VM_OPERATION,
+                               FALSE,GetCurrentProcessId());
+        if (h)
+        {
+          DWORD old = 0;
+          if (VirtualProtectEx(h, rc5_unit_func_486_smc, 4096*3,
+                                   PAGE_EXECUTE_READWRITE, &old))
+            x86_smc_initialized = +1;
+          CloseHandle(h);
+        }
+      }
     }
     #endif
     if (x86_smc_initialized < 0)
       x86_smc_initialized = 0;
-  }      
+  }
   #endif /* ifdef SMC */
 
   #if (CLIENT_OS == OS_AIX) && (!defined(_AIXALL)) //not a PPC/POWER hybrid client?
