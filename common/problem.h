@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.42  1999/03/04 01:25:28  cyp
+// Added (*[rc5|des]_unit_func) function pointers for ppc and alpha+dec_unix.
+//
 // Revision 1.41  1999/03/01 08:19:44  gregh
 // Changed ContestWork to a union that contains crypto (RC5/DES) and OGR data.
 //
@@ -141,9 +144,9 @@
   #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
 #endif
 
-#ifndef PIPELINE_COUNT
- #define PIPELINE_COUNT  2  // normally 1, but 2+ if we do more then one unit in parallel
-#endif
+//#ifndef PIPELINE_COUNT
+// #define PIPELINE_COUNT  2  // normally 1, but 2+ if we do more then one unit in parallel
+//#endif
 
 #if !defined(MEGGS) && !defined(DES_ULTRA) && !defined(DWORZ)
   #define MIN_DES_BITS  8
@@ -237,8 +240,13 @@ public:
   #elif (CLIENT_CPU == CPU_68K)
   extern "C" __asm u32 (*rc5_unit_func)( register __a0 RC5UnitWork *work, register __d0 u32 timeslice);
   #elif (CLIENT_CPU == CPU_ARM)
-  u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations  );
+  u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations );
   u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX) //defined(DEC_UNIX_CPU_SELECT)
+  u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork );
+  u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 nbits );
+  #elif (CLIENT_CPU == CPU_POWERPC)
+  extern "C" int (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations );
   #endif
 
 public:
