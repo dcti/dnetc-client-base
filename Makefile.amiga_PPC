@@ -1,0 +1,33 @@
+PROGNAME = rc5des
+
+DEBUG = #DEBUG=SF
+OPTIMIZE = optimize optsched
+
+CFLAGS = $(DEBUG) $(OPTIMIZE) nostkchk strmerge parms=reg define=LESS_GETENV define=PIPELINE_COUNT=1 define=_CPU_32BIT_ define=BIT_32 define=KWAN define=MEGGS includedir=netinclude: utillib NOLINK
+DISASM =
+
+LFLAGS = #farcode fardata
+
+COMMON_OBJS = platforms/_tzset.o common/cliconfig.o common/clirate.o common/clisrate.o common/clitime.o common/clicdata.o common/client.o common/autobuff.o common/iniread.o common/network.o common/scram.o common/buffwork.o common/mail.o common/convdes.o
+RC5_OBJS = common/problem.o rc5/crunch_allitnil_552.ppc.o rc5/crunch_lintilla_296.ppc.o
+DES_OBJS = des/des-slice-meggs.o des/deseval-meggs3.o
+
+OBJS = $(CLIENT_OBJS) $(RC5_OBJS) $(DES_OBJS)
+
+LIBS = LIB:sccxxppc.a LIB:scppc.a LIB:end.o
+
+.s.o:
+	ppc-amigaos-gas -m604 $*.s -o $*.o
+.cpp.o:
+	scppc RESETOPTS $(CFLAGS) $(DISASM) $*.cpp
+.c.o:
+	scppc RESETOPTS $(CFLAGS) $(DISASM) $*.c
+
+$(PROGNAME): $(OBJS)
+	ppc-amigaos-ld -r -o $(PROGNAME) lib:c_ppc.o $(OBJS) $(LIBS)
+	protect $(PROGNAME) rwed
+
+##############################################################################
+# dependancies for various objects
+rc5/crunch_lintilla_296.ppc.o: rc5/crunch_lintilla_296.ppc.s
+rc5/crunch_allitnil_552.ppc.o: rc5/crunch_allitnil_552.ppc.s
