@@ -2,10 +2,15 @@
 /* does function, links to next function */
 /* TOADS not done */
 
-/* $Log: s8_1.h,v $
-/* Revision 1.1  1998/06/14 14:23:51  remi
-/* Initial revision
-/* */
+/*
+ * $Log: s8_1.h,v $
+ * Revision 1.2  1998/06/14 15:19:27  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:51  remi
+ * Initial integration.
+ *
+ */
 
 
 #ifdef MANUAL_REGISTER_ALLOCATION

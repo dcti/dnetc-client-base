@@ -4,10 +4,15 @@
  * Defines are set in configure & Makefile.
  */
 
-/* $Log: s_paramaters.h,v $
-/* Revision 1.1  1998/06/14 14:23:51  remi
-/* Initial revision
-/* */
+/*
+ * $Log: s_paramaters.h,v $
+ * Revision 1.2  1998/06/14 15:19:31  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:51  remi
+ * Initial integration.
+ *
+ */
 
 
 /* toplevel defines that control what executable to build */

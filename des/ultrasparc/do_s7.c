@@ -1,13 +1,18 @@
 /* do_s7.c v4.0 */
 
-/* $Log: do_s7.c,v $
-/* Revision 1.1  1998/06/14 14:23:49  remi
-/* Initial revision
-/* */
+/*
+ * $Log: do_s7.c,v $
+ * Revision 1.2  1998/06/14 15:18:44  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:49  remi
+ * Initial integration.
+ *
+ */
 
 #include "des.h"
 
-static char *id="@(#)$Id: do_s7.c,v 1.1 1998/06/14 14:23:49 remi Exp $";
+static char *id="@(#)$Id: do_s7.c,v 1.2 1998/06/14 15:18:44 remi Exp $";
 
 unsigned long
 do_s7 ( register struct INNER_OFFSET_DISTANCES *offsets

@@ -1,10 +1,15 @@
 /* s1_3.h v3.0 */
 /* does function, pipeline for next function */
 
-/* $Log: s1_3.h,v $
-/* Revision 1.1  1998/06/14 14:23:49  remi
-/* Initial revision
-/* */
+/*
+ * $Log: s1_3.h,v $
+ * Revision 1.2  1998/06/14 15:18:54  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:49  remi
+ * Initial integration.
+ *
+ */
 
 
 #ifdef MANUAL_REGISTER_ALLOCATION

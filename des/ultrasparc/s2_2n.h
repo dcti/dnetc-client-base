@@ -13,10 +13,15 @@
  * same data area.  It can only be used when applied to separate data items.
  */
 
-/* $Log: s2_2n.h,v $
-/* Revision 1.1  1998/06/14 14:23:49  remi
-/* Initial revision
-/* */
+/*
+ * $Log: s2_2n.h,v $
+ * Revision 1.2  1998/06/14 15:18:56  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:49  remi
+ * Initial integration.
+ *
+ */
 
 
 #ifdef MANUAL_REGISTER_ALLOCATION

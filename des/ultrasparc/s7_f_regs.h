@@ -3,10 +3,15 @@
 /* This allocates g_k1 to GT5, g_k6 to  */
 /* also registers FT1, FT2, FT3, FT4 are live from s6 */
 
-/* $Log: s7_f_regs.h,v $
-/* Revision 1.1  1998/06/14 14:23:50  remi
-/* Initial revision
-/* */
+/*
+ * $Log: s7_f_regs.h,v $
+ * Revision 1.2  1998/06/14 15:19:24  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:50  remi
+ * Initial integration.
+ *
+ */
 
 
 #ifdef MANUAL_REGISTER_ALLOCATION

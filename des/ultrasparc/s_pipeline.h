@@ -1,9 +1,14 @@
 /* s_pipeline.h v4.0 */
 
-/* $Log: s_pipeline.h,v $
-/* Revision 1.1  1998/06/14 14:23:51  remi
-/* Initial revision
-/* */
+/*
+ * $Log: s_pipeline.h,v $
+ * Revision 1.2  1998/06/14 15:19:32  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:51  remi
+ * Initial integration.
+ *
+ */
 
 
 #define ASM_PIPELINE_S1(in, offsets)				\

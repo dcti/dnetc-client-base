@@ -1,14 +1,19 @@
 /* simple.c v4.0 */
 
-/* $Log: simple.c,v $
-/* Revision 1.1  1998/06/14 14:23:51  remi
-/* Initial revision
-/* */
+/*
+ * $Log: simple.c,v $
+ * Revision 1.2  1998/06/14 15:19:35  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:51  remi
+ * Initial integration.
+ *
+ */
 
 
 #include "des.h"
 
-static char *id="@(#)$Id: simple.c,v 1.1 1998/06/14 14:23:51 remi Exp $";
+static char *id="@(#)$Id: simple.c,v 1.2 1998/06/14 15:19:35 remi Exp $";
 
 /* Solaris dumps on the high half of the Local and In 64-bit registers.
  * To try to identify when this happens, all routines in this code set

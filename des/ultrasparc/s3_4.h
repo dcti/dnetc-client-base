@@ -1,10 +1,15 @@
 /* s3_4.h v3.0 */
 /* does function, links to next function */
 
-/* $Log: s3_4.h,v $
-/* Revision 1.1  1998/06/14 14:23:50  remi
-/* Initial revision
-/* */
+/*
+ * $Log: s3_4.h,v $
+ * Revision 1.2  1998/06/14 15:19:02  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:50  remi
+ * Initial integration.
+ *
+ */
 
 
 #ifdef MANUAL_REGISTER_ALLOCATION

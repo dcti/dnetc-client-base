@@ -1,13 +1,18 @@
 /* kwan_from_to.c v4.0 */
 
-/* $Log: kwan_from_to.c,v $
-/* Revision 1.1  1998/06/14 14:23:49  remi
-/* Initial revision
-/* */
+/*
+ * $Log: kwan_from_to.c,v $
+ * Revision 1.2  1998/06/14 15:18:46  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:49  remi
+ * Initial integration.
+ *
+ */
 
 #include "des.h"
 
-static char *id="@(#)$Id: kwan_from_to.c,v 1.1 1998/06/14 14:23:49 remi Exp $";
+static char *id="@(#)$Id: kwan_from_to.c,v 1.2 1998/06/14 15:18:46 remi Exp $";
 
 /*
  * Generated S-box files.

@@ -1,14 +1,19 @@
 /* des-ultra-crunch.c v4.0 */
 
-/* $Log: des_ultra_crunch.c,v $
-/* Revision 1.2  1998/06/14 14:32:23  remi
-/* Added the right key to the list of internal test-cases.
 /*
-/* Revision 1.1.1.1  1998/06/14 14:23:49  remi
-/* Initial integration.
-/* */
+ * $Log: des_ultra_crunch.c,v $
+ * Revision 1.3  1998/06/14 15:18:32  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.2  1998/06/14 14:32:23  remi
+ * Added the right key to the list of internal test-cases.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:49  remi
+ * Initial integration.
+ *
+ */
 
-static char *id="@(#)$Id: des_ultra_crunch.c,v 1.2 1998/06/14 14:32:23 remi Exp $";
+static char *id="@(#)$Id: des_ultra_crunch.c,v 1.3 1998/06/14 15:18:32 remi Exp $";
 
 /* defines are set in configure & Makefile when compiling DCTI client */
 #ifndef IN_DCTI_CLIENT

@@ -10,10 +10,15 @@
  * from S26 as 8.  So the load should come long after the store.
  */
 
-/* $Log: s1_2n.h,v $
-/* Revision 1.1  1998/06/14 14:23:49  remi
-/* Initial revision
-/* */
+/*
+ * $Log: s1_2n.h,v $
+ * Revision 1.2  1998/06/14 15:18:52  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:49  remi
+ * Initial integration.
+ *
+ */
 
 
 #ifdef MANUAL_REGISTER_ALLOCATION

@@ -1,9 +1,14 @@
 /* s6.h v3.0 */
 
-/* $Log: s6.h,v $
-/* Revision 1.1  1998/06/14 14:23:50  remi
-/* Initial revision
-/* */
+/*
+ * $Log: s6.h,v $
+ * Revision 1.2  1998/06/14 15:19:12  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:50  remi
+ * Initial integration.
+ *
+ */
 
 
 #ifdef MANUAL_REGISTER_ALLOCATION

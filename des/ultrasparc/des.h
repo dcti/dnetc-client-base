@@ -1,9 +1,14 @@
 /* des.h v4.0 */
 
-/* $Log: des.h,v $
-/* Revision 1.1  1998/06/14 14:23:48  remi
-/* Initial revision
-/* */
+/*
+ * $Log: des.h,v $
+ * Revision 1.2  1998/06/14 15:18:30  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:48  remi
+ * Initial integration.
+ *
+ */
 
 #define MAGIC_SENTINEL_VAL 0x5a3cf012ul
 

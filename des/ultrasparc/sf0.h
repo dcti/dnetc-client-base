@@ -1,9 +1,14 @@
 /* s0.h v3.0 */
 
-/* $Log: sf0.h,v $
-/* Revision 1.1  1998/06/14 14:23:51  remi
-/* Initial revision
-/* */
+/*
+ * $Log: sf0.h,v $
+ * Revision 1.2  1998/06/14 15:19:34  remi
+ * Avoid tons of warnings due to a brain-dead CVS.
+ *
+ * Revision 1.1.1.1  1998/06/14 14:23:51  remi
+ * Initial integration.
+ *
+ */
 
 
 #undef fx1
