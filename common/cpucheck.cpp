@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.10 2003/01/19 22:49:50 snake Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.11 2003/02/17 01:58:15 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -391,6 +391,7 @@ static long __GetRawProcessorID(const char **cpuname)
                 {    0x4011,   "405GP"                 },
                 {    0x8000,   "7450 (G4)"             },
                 {    0x8001,   "7455 (G4)"             },
+                {    0x8002,   "7457 (G4)"             },
                 {    0x800C,   "7410 (G4)"             },
                 {(1L<<16)+1,   "Power RS"              }, //not PVR based
                 {(1L<<16)+2,   "Power RS2 Superchip"   }, //not PVR based
