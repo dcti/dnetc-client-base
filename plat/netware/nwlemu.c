@@ -10,7 +10,7 @@
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * $Id: nwlemu.c,v 1.1.2.1 2001/01/21 15:10:29 cyp Exp $
+ * $Id: nwlemu.c,v 1.1.2.2 2001/10/19 10:45:32 cyp Exp $
 */
 
 //#define DEMO_TIMEFUNC
@@ -252,8 +252,8 @@ static int __get_cpu_and_flags(void) /* [0..3]=step,[4..7]=model,[8..11]=family 
   }
   return cpu_info;
 }
-//#define __have_tsc() (!__get_cpu_and_flags()) 
-#define __have_tsc() ((__get_cpu_and_flags() & 0x00040000ul)!=0)
+#define __have_tsc() ((__get_cpu_and_flags() & (1ul<<(4+16)))!=0)
+
 
 /* ------------------------------------------------------------------ */
 
