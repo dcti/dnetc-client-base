@@ -1,5 +1,9 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.13  1999/01/09 08:57:41  remi
+// Fixed the previous fix : it's only for alpha/nt + defined(bit_64) + msvc++
+// Removed the rcv copyright as we don't use rcv' sboxes anymore.
+//
 // Revision 1.12  1999/01/08 02:53:37  michmarc
 // Added __int64 type support for Alpha/NT (whose "unsigned long" type
 // is only 32 bits)
@@ -45,7 +49,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.12 1999/01/08 02:53:37 michmarc Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.13 1999/01/09 08:57:41 remi Exp $"; }
 #endif
 
 #include <cputypes.h>		/* Isn't this needed for using CLIENT_OS defines? */
@@ -60,11 +64,8 @@ return "@(#)$Id: deseval-meggs3.cpp,v 1.12 1999/01/08 02:53:37 michmarc Exp $"; 
 /* All rights reserved. A non-transferrable, royalty free license to this code   */
 /* is granted to distributed.net for use exclusively in the DES Challenge II,    */
 /* but ownership remains with the author.                                        */
-/*                                                                               */
-/* S-Box design Copyright (C) 1997 by Rocke Verser.                              */
-/* See include file for details.                                                 */
 
-#if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
+#if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32) && defined(BIT_64) && (_MSC_VER >= 11)
 // int and long are 32bits under Alpha/NT for compatability with x86/NT
 #define WORD_TYPE unsigned __int64
 #else
