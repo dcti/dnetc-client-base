@@ -1,12 +1,12 @@
 /*
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2001 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.50 2001/01/16 17:35:29 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.51 2001/01/20 12:32:16 cyp Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -740,7 +740,7 @@ long BufferFetchFile( Client *client, int break_pending,
           projtrans_su += swucount;
 
           if (projtrans_pkts == 1) /* first pass? */
-            ClientEventSyncPost( CLIEVENT_BUFFER_FETCHBEGIN, 0 );
+            ClientEventSyncPost( CLIEVENT_BUFFER_FETCHBEGIN, 0, 0 );
 
           if (swucount == 0) /* project doesn't support statsunits on unfinished work */
             swucount = 100; /* 1.00 stats units per packet */    

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.98 2001/01/13 17:09:55 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.99 2001/01/20 12:32:18 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -271,7 +271,7 @@ static int ClientMain( int argc, char *argv[] )
     restart = 0;
 
     ResetClientData(client); /* reset everything in the object */
-    ClientEventSyncPost( CLIEVENT_CLIENT_STARTED, *((long*)(&client)) );
+    ClientEventSyncPost( CLIEVENT_CLIENT_STARTED, &client, -1 );
     //ReadConfig() and parse command line - returns !0 if shouldn't continue
 
     TRACE_OUT((0,"Client.parsecmdline restarted?: %d\n", restarted));
@@ -384,7 +384,7 @@ static int ClientMain( int argc, char *argv[] )
         DeinitializeTriggers();
       }
     }
-    ClientEventSyncPost( CLIEVENT_CLIENT_FINISHED, (long)restart );
+    ClientEventSyncPost( CLIEVENT_CLIENT_FINISHED, &restart, sizeof(restart) );
     TRACE_OUT((0,"client.parsecmdline restarting?: %d\n", restart));
   } while (restart);
 

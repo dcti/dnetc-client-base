@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2001 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.84 2001/01/08 23:00:47 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.85 2001/01/20 12:32:19 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -654,7 +654,8 @@ static int __StopThread( struct thread_param_block *thrparams )
         NonPolledUSleep(300000);
       #endif
     }
-    ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTOPPED, (long)thrparams->threadnum );
+    ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTOPPED, 
+                         &(thrparams->threadnum), sizeof(thrparams->threadnum) );
     free( thrparams );
   }
   return 0;
@@ -1073,7 +1074,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
 
     if (success)
     {
-      ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTARTED, (long)thread_i );
+      ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTARTED, &(thread_i), sizeof(thread_i) );
       if (thrparams->realthread)
         NonPolledUSleep(100);   //let the thread start
     }
@@ -1206,7 +1207,7 @@ int ClientRun( Client *client )
   int checkpointsDisabled = (client->nodiskbuffers != 0);
   int dontSleep=0, isPaused=0, wasPaused=0, timeMonoError = 0;
 
-  ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0 );
+  ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0, 0 );
 
   // =======================================
   // Notes:
@@ -1551,7 +1552,7 @@ int ClientRun( Client *client )
             && !CheckExitRequestTriggerNoIO()
             && ModeReqIsSet(-1)==0)
       {
-        ClientEventSyncPost(CLIEVENT_CLIENT_RUNIDLE, i);
+        ClientEventSyncPost(CLIEVENT_CLIENT_RUNIDLE, &i, sizeof(i));
         if (isPaused)
           NonPolledSleep(1);
         else
@@ -1881,7 +1882,7 @@ int ClientRun( Client *client )
     DeinitializeProblemManager();
   }
 
-  ClientEventSyncPost( CLIEVENT_CLIENT_RUNFINISHED, 0 );
+  ClientEventSyncPost( CLIEVENT_CLIENT_RUNFINISHED, 0, 0 );
 
   return exitcode;
 }

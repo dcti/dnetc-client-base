@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.48 2000/11/04 20:01:34 oliver Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.49 2001/01/20 12:32:21 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -146,7 +146,7 @@ int ConIsGUI(void)
 {
   #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   /* => 'C'=native console, 'c'=pipe console, 'g'=lite GUI, 'G'=fat GUI */
-  return (win32ConGetType()=='G' || win32ConGetType()=='g');
+  return ((w32ConGetType() & 0xff)=='G' || (w32ConGetType() & 0xff)=='g');
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
   return 1;
   #elif (CLIENT_OS == OS_RISCOS)

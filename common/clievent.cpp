@@ -1,6 +1,6 @@
 /* Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2001 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -30,7 +30,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clievent_cpp(void) {
-return "@(#)$Id: clievent.cpp,v 1.10 1999/04/05 17:56:51 cyp Exp $"; }
+return "@(#)$Id: clievent.cpp,v 1.10.2.1 2001/01/20 12:32:19 cyp Exp $"; }
 
 #include "baseincs.h"   /* NULL, memset */
 #include "clievent.h"   /* keep prototypes in sync */
@@ -45,14 +45,14 @@ return "@(#)$Id: clievent.cpp,v 1.10 1999/04/05 17:56:51 cyp Exp $"; }
 struct event_listener
 {
   int event_id; 
-  void (*proc)(int event_id, long parm);
+  void (*proc)(int event_id, const void *parm, int isize);
 };
 struct event_listener listeners[MAX_EVENT_LISTENERS];
 unsigned int listener_count = 0;
 
 /* ------------------------------------------------------------ */
 
-int ClientEventAddListener(int event_id, void (*proc)(int event_id, long parm))
+int ClientEventAddListener(int event_id, void (*proc)(int event_id, const void *parm, int isize))
 {
   if (listener_count == 0)
     memset( (void *)(&listeners[0]), 0, sizeof(listeners ));
@@ -76,7 +76,7 @@ int ClientEventAddListener(int event_id, void (*proc)(int event_id, long parm))
  
 /* ------------------------------------------------------------ */
 
-int ClientEventRemoveListener(int event_id, void (*proc)(int event_id, long parm))
+int ClientEventRemoveListener(int event_id, void (*proc)(int event_id, const void *parm, int isize))
 {
   if (event_id == 0 || proc == NULL)
     return -1;
@@ -99,7 +99,7 @@ int ClientEventRemoveListener(int event_id, void (*proc)(int event_id, long parm
     
 /* ------------------------------------------------------------ */
 
-int ClientEventSyncPost( int event_id, long parm )
+int ClientEventSyncPost( int event_id, const void *parm, int isize )
 {
   int posted_count = 0;
 
@@ -114,7 +114,7 @@ int ClientEventSyncPost( int event_id, long parm )
     if (listeners[i].proc != NULL && 
         (listeners[i].event_id == event_id || listeners[i].event_id == -1))
     {
-      (*(listeners[i].proc))( event_id, parm );
+      (*(listeners[i].proc))( event_id, parm, isize );
       posted_count++;
     }
   }

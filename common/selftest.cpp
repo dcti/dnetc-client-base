@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2001 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.45 2001/01/14 02:40:13 andreasb Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.46 2001/01/20 12:32:24 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -237,7 +237,7 @@ long SelfTest( unsigned int contest )
     char lastmsg[100];
     unsigned int testnum;
 
-    ClientEventSyncPost( CLIEVENT_SELFTEST_STARTED, (long)contest );
+    ClientEventSyncPost( CLIEVENT_SELFTEST_STARTED, &contest, sizeof(contest) );
     successes = 0L;
     lastmsg[0] = '\0';
 
@@ -423,7 +423,7 @@ long SelfTest( unsigned int contest )
         if (ProblemLoadState( thisprob, &contestwork,
                               contest, tslice, 0, 0, 0, 0 ) == 0)
         {
-          ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)(thisprob) );
+          ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (void *)thisprob, -1 );
           do
           {
             if (non_preemptive_env)
@@ -540,7 +540,7 @@ long SelfTest( unsigned int contest )
 
           } /* if (!userbreak) */
 
-          ClientEventSyncPost( CLIEVENT_SELFTEST_TESTEND, (long)resultcode );
+          ClientEventSyncPost( CLIEVENT_SELFTEST_TESTEND, &resultcode, sizeof(resultcode) );
         } /* if load state ok */
         else {
           LogScreen( "\r%s: Test %02d load failed\n", contname, testnum + 1);
@@ -566,8 +566,7 @@ long SelfTest( unsigned int contest )
         successes=-successes;
       }
     }
-
-    ClientEventSyncPost( CLIEVENT_SELFTEST_FINISHED, (long)(successes) );
+    ClientEventSyncPost( CLIEVENT_SELFTEST_FINISHED, &successes, sizeof(successes) );
 
   } /* for ( threadpos = 0; threadpos < threadcount; threadpos++ ) */
 

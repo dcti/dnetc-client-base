@@ -1,4 +1,4 @@
-/* Copyright distributed.net 1997-2000 - All Rights Reserved
+/* Copyright distributed.net 1997-2001 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de)
@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.47 2001/01/12 04:34:15 andreasb Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.48 2001/01/20 12:32:22 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -27,6 +27,7 @@ return "@(#)$Id: logstuff.cpp,v 1.37.2.47 2001/01/12 04:34:15 andreasb Exp $"; }
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors() for logscreenpercent
 #include "clicdata.h"  // CliGetContestNameFromID() for logscreenpercent
 #include "console.h"   // for ConOut(), ConIsScreen(), ConIsGUI()
+#include "clievent.h"  // ClientEventSyncPost()
 #include "util.h"      // TRACE
 #include "logstuff.h"  // keep the prototypes in sync
 
@@ -926,6 +927,10 @@ void LogScreenPercent( unsigned int load_problem_count )
      (prob_count[OGR] > 0 || load_problem_count >= sizeof(pbuf)))
       disp_format = DISPFORMAT_COUNT; //or DISPFORMAT_RATE for rate;
     /* anything else is percent */
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    if ((w32ConGetType() & 0xffff) == MAKEWORD('g','t')) /* tray + gui */
+      disp_format = DISPFORMAT_RATE;
+    #endif
   }
 
   buffer[0] = '\0';
@@ -1085,6 +1090,7 @@ void LogScreenPercent( unsigned int load_problem_count )
 
   if (buffer[0] && disp_format != DISPFORMAT_PERC)
   {
+    ClientEventSyncPost( CLIEVENT_CLIENT_CRUNCHOMETER, buffer, -1 );
     LogScreen( "\r%s", buffer, NULL );
     logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
     logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
@@ -1168,6 +1174,8 @@ void LogScreenPercent( unsigned int load_problem_count )
         logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
         logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
       }
+      sprintf(buffer, "%u%%\n", endperc);
+      ClientEventSyncPost( CLIEVENT_CLIENT_CRUNCHOMETER, buffer, -1 );
     }
   } /* percent based dotdotdot */
   logstatics.perc_callcount++;

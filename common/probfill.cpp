@@ -1,12 +1,12 @@
 /* Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2001 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.60 2001/01/13 15:32:20 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.61 2001/01/20 12:32:23 cyp Exp $"; }
 
 //#define TRACE
 
@@ -25,7 +25,7 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.60 2001/01/13 15:32:20 cyp Exp $"; }
 #include "buffupd.h"   // BUFFERUPDATE_FETCH/_FLUSH define
 #include "buffbase.h"  // GetBufferCount,Get|PutBufferRecord,etc
 #include "modereq.h"   // ModeReqSet() and MODEREQ_[FETCH|FLUSH]
-#include "clievent.h"  // ClientEventSyncPost( int event_id, long parm )
+#include "clievent.h"  // ClientEventSyncPost
 #include "util.h"      // trace
 #include "probfill.h"  // ourselves.
 
@@ -425,7 +425,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         wrdata.buildlo = CLIENT_BUILD;
         strncpy( wrdata.id, client->id , sizeof(wrdata.id));
         wrdata.id[sizeof(wrdata.id)-1]=0;
-        ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
+        ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, &prob_i, sizeof(prob_i) );
       }
 
       if ((thisprob->pub_data.loaderflags & PROBLDR_DISCARD)!=0)
@@ -685,7 +685,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         *load_needed = 0;
         did_load = 1; 
 
-        ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
+        ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, &prob_i, sizeof(prob_i) );
     
         if (load_problem_count <= COMBINEMSG_THRESHOLD)
         {
@@ -873,7 +873,8 @@ unsigned int LoadSaveProblems(Client *client,
 
   /* ============================================================= */
 
-  ClientEventSyncPost(CLIEVENT_PROBLEM_TFILLSTARTED, (long)load_problem_count);
+  ClientEventSyncPost(CLIEVENT_PROBLEM_TFILLSTARTED, &load_problem_count, 
+                                                sizeof(load_problem_count));
 
   for (prob_for = 0; prob_for <= (prob_last - prob_first); prob_for++)
   {
@@ -943,7 +944,8 @@ unsigned int LoadSaveProblems(Client *client,
   } //for (prob_i = 0; prob_i < load_problem_count; prob_i++ )
 
   ClientEventSyncPost(CLIEVENT_PROBLEM_TFILLFINISHED,
-     (long)((previous_load_problem_count==0)?(total_problems_loaded):(total_problems_saved)));
+     ((previous_load_problem_count==0)?(&total_problems_loaded):(&total_problems_saved)),
+     sizeof(total_problems_loaded));
 
   /* ============================================================= */
 
