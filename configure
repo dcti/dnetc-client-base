@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.125 2000/02/13 04:00:14 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.126 2000/02/13 14:53:01 dworz Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -293,7 +293,7 @@ OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all'
 
 OPTS_GCC_ALPHA="$OPTS_GCC -O6 -DASM_ALPHA -static"
 OPTS_GCC272_ALPHA="$OPTS_GCC272 -O6 -DASM_ALPHA -static"
-OPTS_EGCS_ALPHA="$OPTS_EGCS -Os -DASM_ALPHA -static"
+OPTS_EGCS_ALPHA="$OPTS_EGCS -O3 -DASM_ALPHA"
 
 #-- HPUX
 
@@ -939,14 +939,16 @@ case "$1" in
 	TARGET_TARBALL="linux-alpha-glibc2"
 	;;
 
-    *alpha-linux-egcs)                     # daa
+    *alpha-linux-egcs)                     # dworz
 	TARGET_AS="as"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_EGCS_ALPHA  -DKWAN -DDWORZ"
-	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS rc5/alpha/axp-bmeyer.cpp"
+	TARGET_CCFLAGS="$OPTS_EGCS_ALPHA -DMULTITHREAD -DLURK -DHAVE_OGR_CORES"
+	TARGET_ADDSRCS="rc5/alpha/axp-bmeyer.cpp common/lurk.cpp $OGR_ANSI_SRCS"
 	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
+	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-alpha-glibc21"
 	;;
 
 ###### PowerPC/POWER
