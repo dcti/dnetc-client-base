@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.92 2002/07/25 20:06:45 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.93 2002/08/01 21:55:45 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1014,6 +1014,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         //{  0x06A0,  0x102, "Pentium III" }, //0.18 um w/ 1/2MB on-die L2
           {  0x36A0,  0x102, "Pentium III Xeon" },
         //{  0x06B0,  0x102, "Pentium III" }, /* Tualatin:6547:46B1 */
+          {  0x26B0,  0x102, "Pentium III (Tualatin)" },
           {  0x36B0,  0x102, "Celeron (Tualatin)" },
           {  0x46B0,  0x102, "Pentium III (Tualatin)" },
           {  0x66B0,  0x102, "Mobile Pentium III-M" },
