@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.16 2004/01/24 05:17:28 lightning Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.17 2004/01/24 19:30:58 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -215,6 +215,12 @@ int apply_selcore_substitution_rules_rc572(int cindex)
         cindex = 0;                     /* "SES 1-pipe" */
     #endif
 
+    if (!((GetProcessorFeatureFlags() & CPU_F_MMX & CPU_F_AMD_MMX_PLUS) ||
+         (GetProcessorFeatureFlags() & CPU_F_MMX & CPU_F_SSE))) {
+      if (cindex == 6) {  /* GO2 core requires extended MMX */
+        cindex = 1;      /* default core */
+      }
+    }
   }
 #endif
 
