@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version-conflict.h,v $
+// Revision 1.26  1998/12/01 00:34:17  cyp
+// Bump to 421.
+//
 // Revision 1.25  1998/11/13 15:52:13  silby
 // Bumping to 420.
 //
@@ -96,10 +99,10 @@
 
 #define CLIENT_CONTEST      71
 #define CLIENT_BUILD        02
-#define CLIENT_BUILD_FRAC   420
+#define CLIENT_BUILD_FRAC   421
 
-#define CLIENT_VERSIONSTRING    "v2.7102.420"
-#define CLIENT_VERSIONSTRING2   "2.7102.420"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7102.421"
+#define CLIENT_VERSIONSTRING2   "2.7102.421"        // no leading "v"
 
 // When releasing a beta client, please set the expiration time to
 // about two weeks into the future; that should be an adequate beta
