@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.21 1999/12/29 07:24:49 snake Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.22 2000/01/02 07:07:56 mfeiri Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -111,7 +111,7 @@ int InitializeConsole(int runhidden,int doingmodes)
     {
       #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
         constatics.conisatty = w32ConIsScreen();
-      #elif (CLIENT_OS == OS_RISCOS)
+      #elif (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_MACOS)
         constatics.conisatty = 1;
       #else
         constatics.conisatty = (isatty(fileno(stdout)));
