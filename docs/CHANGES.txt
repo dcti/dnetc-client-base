@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.83 2004/08/24 15:51:52 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.84 2004/08/28 20:19:11 oliver Exp $
 ==========================================================================
 
 2.9000
@@ -32,6 +32,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.83 2004/08/24 15:51:52 snikkel Exp
             imp: alpha: Added EV4 and EV67-specific 64-bit cores
             fix: x86: ogr core preselection for Pentium 4 & M (#3742, #3744)
             imp: x86: Pentium/Celeron M & Pentium 4 Prescott detection (#3745)
+            new: amigaos: AltiVec cores enabled for OS4
 
 2.9008-493  new: ppc: Enabled KOGE cores for all PPC targets, except AIX
             new: macosx: ASM-optimized GARSP-5 cores (KOGE Scalar/Hybrid)

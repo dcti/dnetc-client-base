@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.68 2004/08/20 16:35:18 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.69 2004/08/28 20:19:11 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2216,9 +2216,12 @@ unsigned long GetProcessorFeatureFlags()
         char *extensions;
         IExec->GetCPUInfoTags(GCIT_VectorUnit, &vec, GCIT_Extensions, &extensions, TAG_DONE);
 
-        // Altivec support disabled for now!
-        // if ((vec == VECTORTYPE_ALTIVEC) && extensions && strstr(extensions,"altivec"))
-        //    ppc_features |= CPU_F_ALTIVEC;
+        if ((vec == VECTORTYPE_ALTIVEC) &&
+            (extensions && strstr(extensions,"altivec")) &&
+            ((SysBase->LibNode.lib_Version == 51 && SysBase->LibNode.lib_Revision >= 12) || SysBase->LibNode.lib_Version > 51))
+        {
+           ppc_features |= CPU_F_ALTIVEC;
+        }
       #endif
     #elif (CLIENT_OS == OS_MORPHOS)  // MorphOS
       /* Altivec support was added in MorphOS 1.5 */

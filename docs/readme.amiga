@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.10.4.4 2004/07/18 17:53:51 oliver Exp $
+ Document revision $Id: readme.amiga,v 1.10.4.5 2004/08/28 20:19:11 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -43,6 +43,7 @@
      The OS4 PPC version requires:
      - A 603e or higher PPC processor.
      - AmigaOS 4.0 pre-release or newer.
+     - AltiVec cores require a G4 and kernel 51.12 or higher.
      - The Roadshow TCP/IP stack supplied with OS4.
 
      The WarpOS PPC version requires:
