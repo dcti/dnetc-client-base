@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.23 2002/03/22 01:35:58 grub Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.24 2002/04/11 10:50:31 oliver Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -2289,6 +2289,15 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
            * not a must-have feature.
            */
           that_address = 0; that_port = 0;
+          #elif (CLIENT_OS == OS_AMIGAOS)
+          /* The TermiteTCP implementation of getpeername() is buggy, causing
+           * the system to bomb out.  So, don't use it if TermiteTCP is the stack
+           * in use (getpeername() works fine with AmiTCP, Miami(Dx) and Genesis).
+           */
+          if (amigaIsTermiteTCP())
+          {
+            that_address = 0; that_port = 0;
+          }
           #endif
           if (that_address || that_port)
           {
