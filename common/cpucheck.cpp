@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.46 2000/06/15 20:29:32 kopstain Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.47 2000/06/20 03:27:05 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -31,10 +31,11 @@ return "@(#)$Id: cpucheck.cpp,v 1.79.2.46 2000/06/15 20:29:32 kopstain Exp $"; }
 #elif (CLIENT_OS == OS_AIX)
 #  include <sys/systemcfg.h>
 #elif ((CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
-       (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
-        (CLIENT_OS == OS_MACOSX))
+       (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS))
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
+#elif (CLIENT_OS == OS_MACOSX)
+#  include <mach/mach.h>
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -63,14 +64,22 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   {
     cpucount = -1;
     #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
-        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-        (CLIENT_OS == OS_MACOSX)
+        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
     { /* comment out if inappropriate for your *bsd - cyp (25/may/1999) */
       int ncpus; size_t len = sizeof(ncpus);
       int mib[2]; mib[0] = CTL_HW; mib[1] = HW_NCPU;
       if (sysctl( &mib[0], 2, &ncpus, &len, NULL, 0 ) == 0)
       //if (sysctlbyname("hw.ncpu", &ncpus, &len, NULL, 0 ) == 0)
         cpucount = ncpus;
+    }
+    #elif (CLIENT_OS == OS_MACOSX)
+    {
+      unsigned int    count;
+      struct host_basic_info  info;
+      count = HOST_BASIC_INFO_COUNT;
+      if (host_info(mach_host_self(), HOST_BASIC_INFO, (host_info_t)&info,
+          &count) == KERN_SUCCESS)
+         cpucount=info.avail_cpus;
     }
     #elif (CLIENT_OS == OS_HPUX)
     {
@@ -438,10 +447,45 @@ static long __GetRawProcessorID(const char **cpuname)
   #elif (CLIENT_OS == OS_MACOSX)
   if (detectedtype == -2L)
   {
-    // as long as we dont have cputype detection I set the default to a G3
-    detectedtype = 8;
-    // but I leave AltiVec enabled so users can select this core manually
-    isaltivec = true;
+    kern_return_t   kr;
+    unsigned int    count;
+    struct host_basic_info  info;
+
+    count = HOST_BASIC_INFO_COUNT;
+    kr = host_info(mach_host_self(),HOST_BASIC_INFO,(host_info_t)&info,&count);
+    if (kr == KERN_SUCCESS)
+    {
+      // host_info() doesnt use PVR values, so I map them as in mach/machine.h
+      switch (info.cpu_subtype)
+      {
+        case CPU_SUBTYPE_POWERPC_601:  detectedtype = 0x0001; break;
+        case CPU_SUBTYPE_POWERPC_603:  detectedtype = 0x0003; break;
+        case CPU_SUBTYPE_POWERPC_603e: detectedtype = 0x0006; break;
+        case CPU_SUBTYPE_POWERPC_603ev:detectedtype = 0x0007; break;
+        case CPU_SUBTYPE_POWERPC_604:  detectedtype = 0x0004; break;
+        case CPU_SUBTYPE_POWERPC_604e: detectedtype = 0x0009; break;
+        case CPU_SUBTYPE_POWERPC_750:  detectedtype = 0x0008; break;
+        case CPU_SUBTYPE_POWERPC_Max:
+        {
+          detectedtype = 0x000C;
+          // AltiVec is for MacOSXDP4 or higher (and Darwin 1.0 or higher)
+          char ostype[64]; size_t len = sizeof(ostype);
+          int mib[2]; mib[0] = CTL_KERN; mib[1] = KERN_OSTYPE;
+          if (sysctl( &mib[0], 2, ostype, &len, NULL, 0 ) == 0)
+          {
+            if (memcmp(ostype,"Darwin",6)==0) // MACH 3.x with a Darwin kernel
+               isaltivec = 1;
+          }
+          break;
+        }
+        default: // some PPC processor that we don't know about
+                 // set the tag (so that the user can tell us), but return 0
+        sprintf(namebuf, "0x%x", info.cpu_subtype );
+        detectedname = (const char *)&namebuf[0];
+        detectedtype = 0;
+        break;
+      }
+    }
   }
   #elif (CLIENT_OS == OS_WIN32)
   if (detectedtype == -2L)
