@@ -1,7 +1,7 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
-# $Id: makefile.bcc,v 1.23.2.11 2000/05/14 12:38:14 andreasb Exp $
+# $Id: makefile.bcc,v 1.23.2.12 2000/06/02 06:41:48 andreasb Exp $
 #
 # As of Feb 2000, Borland C++ 5.5 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
@@ -34,7 +34,7 @@ PLATSRCPATH = platforms\win32cli
 #HAVE_DES_CORES=1
 #HAVE_CSC_CORES=1
 # WARNING: OGR cores don't pass dnetc -test !!! :(((
-HAVE_OGR_CORES=1
+#HAVE_OGR_CORES=1
 
 
 
@@ -68,15 +68,6 @@ BCCOPTS = $(BCCOPTS) /DTRACE
 
 !ifdef BETA
 BCCOPTS = $(BCCOPTS) /DBETA
-!endif
-
-
-!ifdef MMXRC5
-BCCOPTS = $(BCCOPTS) /DMMX_RC5
-!endif
-
-!ifdef MMXDES
-BCCOPTS = $(BCCOPTS) /DMMX_BITSLICER /DBIT_64 /DMEGGS /DKWAN
 !endif
 
 
@@ -185,6 +176,7 @@ BCCOPTS = $(BCCOPTS) -DMMX_RC5
 !ifndef HAVE_DES_CORES
 DES_OBJS =
 !else
+!message WARNING! DES unsupported and untested!
 DES_OBJS =                                   \
         $(OUTPUTPATH)/bbdeslow.obj           \
         $(OUTPUTPATH)/bdeslow.obj            \
@@ -199,6 +191,10 @@ DES_OBJS =                                   \
         $(OUTPUTPATH)/sboxes-kwan4.obj       \
 #       $(OUTPUTPATH)/sboxes-mmx.obj
 BCCOPTS = $(BCCOPTS) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN
+!endif
+
+!ifdef MMXDES
+BCCOPTS = $(BCCOPTS) /DMMX_BITSLICER /DBIT_64 /DMEGGS /DKWAN
 !endif
 
 # --------------------------------- CSC ----------------------------
@@ -236,7 +232,7 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
         nasmw $(NASMOPTS) -i $(CSCPATH)\x86\ $(<:/=\) -o $(@:/=\)
 
 .asm.obj:
-        nasmw $(NASMOPTS) -DOS2 -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
+        nasmw $(NASMOPTS) -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
 
 .cpp.obj:
         bcc32 -q -c @&&|
