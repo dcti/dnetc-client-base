@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.9 2004/05/07 19:32:21 jlawson Exp $
+# $Id: makefile.vc,v 1.83.2.10 2004/06/27 22:07:17 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -52,6 +52,7 @@ CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 !ifdef DEBUG
 OPTS_CC_DEBUG = -MTd -Zi -DDEBUG -Od
 OPTS_LINK_DEBUG = /debug /pdb:none /pdbtype:consolidate
+#OPTS_LINK_DEBUG = /debug /pdb:dnetc.pdb
 !else
 OPTS_CC_DEBUG = -MT -DNDEBUG
 OPTS_LINK_DEBUG = /release
@@ -84,16 +85,25 @@ OPTS_LINK_DEBUG = /release
 # -Ox == -Og -Oi -Ot -Oy -Ob1 -Gs
 
 OPTS_MSVC = -nologo -D__WIN32__ \
-            -W4 -WX -MT -GR- -GX- -GA -GF -GM -Gy \
+            -W4 -WX -GR- -GX- -GA -GF -GM -Gy \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG)
 	    ## *** +++++++++++++++++++++++++++++++++++++++++
 OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
             ## *** SOMETHING IS BROKEN IF YOU NEED MORE
 	    ## *** THAN advapi+user32+kernel32+gdi32 ***
 	    ## *** +++++++++++++++++++++++++++++++++++++++++
-OPTS_LINK = /nologo /incremental:no /warn:1 \
+OPTS_LINK = /nologo /incremental:no \
             /machine:$(OPTS_M_PLAT) $(OPTS_LINK_DEBUG)
 OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
+
+
+!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+OPTS_MSVC = $(OPTS_MSVC:-GM=)
+OPTS_MSVC = $(OPTS_MSVC:-WX=)
+!else
+OPTS_LINK = $(OPTS_LINK) /warn:1 
+!endif
+
 
 # --------------------------------------------
 
@@ -176,6 +186,12 @@ PLAT_OBJS =                          \
 !if "$(PROCESSOR_ARCHITECTURE)" == "x86"
 # PLAT_OBJS = $(PLAT_OBJS) $(OUTPUTPATH)/w32x86.obj
 !endif
+!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+PLAT_OBJS = $(PLAT_OBJS) $(OUTPUTPATH)/strcmpi.obj
+!endif
+
+
+
 OPTS_MSVC = $(OPTS_MSVC) -I$(PLATSRCPATH) 
 
 # --------------------------------------------
@@ -198,6 +214,8 @@ CHIP_OBJS =
 CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj       \
             $(OUTPUTPATH)/x86features.obj    \
             $(OUTPUTPATH)/x86htcount.obj
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+####CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
 !endif
 
 # --------------------------------- RC5-64 -------------------------
@@ -231,7 +249,10 @@ OPTS_MSVC = $(OPTS_MSVC) -DSMC -DHAVE_RC5_64_CORES
 RC5_72_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 RC5_72_OBJS = \
-        $(OUTPUTPATH)/r72-snjl.obj
+        $(OUTPUTPATH)/r72-snjl.obj \
+        $(OUTPUTPATH)/r72ansi1.obj \
+        $(OUTPUTPATH)/r72ansi2.obj \
+        $(OUTPUTPATH)/r72ansi4.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 RC5_72_OBJS =                        \
@@ -317,8 +338,7 @@ OGR_OBJS =                           \
 OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH) -DHAVE_OGR_CORES
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 OGR_OBJS =                           \
-        $(OUTPUTPATH)/ogr-a.obj      \
-        $(OUTPUTPATH)/ogr-b.obj      \
+        $(OUTPUTPATH)/ogr.obj      \
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
 OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH) -DHAVE_OGR_CORES
@@ -363,8 +383,15 @@ $(VC_CHECK):
 
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 
+{$(RC572SRCPATH)/ansi}.cpp{$(OUTPUTPATH)}.obj:
+        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+
 {$(RC572SRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
         yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS -I $(RC572SRCPATH:/=\)\amd64\ $(**:/=\)
+
+{$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
+        yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS $(**:/=\)
+
 
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 
@@ -417,14 +444,24 @@ $(RES_FILE):    $(RC_FILE)
 
 # --------------------------------------------
 
-$(BASENAME).scr $(BASENAME).com $(BASENAME).exe: $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(CUI_OBJS) $(RES_FILE)
 # the screensaver's 4.0 tag will be adjusted to 3.10 by the _client_ if running on a 3.x platform
+$(BASENAME).scr: $(VC_CHECK) $(SCR_OBJS) $(RES_FILE)
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,4.00 /OUT:$(BASENAME).scr $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE) 
-        link $(OPTS_LINK) /SUBSYSTEM:CONSOLE,3.10 /OUT:$(BASENAME).com /NODEFAULTLIB $(OPTS_LIBS) $(CUI_OBJS)
-        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,3.10 /OUT:$(BASENAME).exe /MAP:$(BASENAME).map $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
 !ifdef EXECOMPRESSOR
         $(EXECOMPRESSOR) $(BASENAME).scr $(EXECOMPRESSOR2)
+!endif
+
+
+$(BASENAME).com: $(VC_CHECK) $(CUI_OBJS) 
+        link $(OPTS_LINK) /SUBSYSTEM:CONSOLE,3.10 /OUT:$(BASENAME).com /NODEFAULTLIB $(OPTS_LIBS) $(CUI_OBJS)
+!ifdef EXECOMPRESSOR
         $(EXECOMPRESSOR) $(BASENAME).com $(EXECOMPRESSOR2)
+!endif
+
+
+$(BASENAME).exe: $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
+        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,3.10 /OUT:$(BASENAME).exe /MAP:$(BASENAME).map $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
+!ifdef EXECOMPRESSOR
         $(EXECOMPRESSOR) $(BASENAME).exe $(EXECOMPRESSOR2)
 !endif
 
