@@ -6,6 +6,9 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.22  1998/07/08 08:11:07  cyruspatel
+// Added '#include "network.h"' for ntohl()/htonl() prototypes.
+//
 // Revision 1.21  1998/07/07 21:55:25  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -95,7 +98,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-static const char *id="@(#)$Id: clisrate.cpp,v 1.21 1998/07/07 21:55:25 cyruspatel Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.22 1998/07/08 08:11:07 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -106,6 +109,7 @@ return id; }
 #include "clitime.h"   // for CliTimer(), CliTimerDiff(), CliGetTimeString()
 #include "clirate.h"   // for CliGetKeyrateFor[Problem|Contest]()
 #include "clicdata.h"  // for CliGetContestInfo[Base|Summary]Data()
+#include "network.h"   // for ntohl()/htonl()
 #include "clisrate.h"  // included just to keep prototypes accurate
 
 // ---------------------------------------------------------------------------
