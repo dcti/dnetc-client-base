@@ -2,9 +2,13 @@
 ; * For use in distributed.net projects only.
 ; * Any other distribution or use of this source violates copyright.
 
-; $Id: ak-p7.asm,v 1.1.2.3 2002/05/08 11:02:02 acidblood Exp $
+; $Id: ak-p7.asm,v 1.1.2.4 2002/06/13 22:23:09 andreasb Exp $
 
+%ifdef __OMF__ ; Borland and Watcom compilers/linkers
+[SECTION _TEXT USE32 align=16]
+%else
 [SECTION .text]
+%endif
 
 [GLOBAL _rc5_unit_func_p7]
 [GLOBAL rc5_unit_func_p7]
