@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.19 2000/11/20 20:20:14 teichp Exp $
+ * $Id: ogr.cpp,v 1.1.2.20 2001/01/02 20:13:52 patrick Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -65,6 +65,19 @@
   #else
     #error play with the defines to find optimal settings for your compiler
   #endif
+#elif defined(ASM_POWER)
+  #if (__GNUC__)
+    #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
+    #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
+    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
+    #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* GCC does benefit */
+    #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
+    #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* use switch_asm   */
+  #else
+    #error play with the defines to find optimal settings for your compiler
+  #endif
+
 #elif defined(ASM_ARM)
   #if (__GNUC__)
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1
@@ -245,9 +258,14 @@ static int ogr_load(void *buffer, int buflen, void **state);
 static int ogr_cleanup(void);
 #endif
 
-#ifndef OGR_GET_DISPATCH_TABLE_FXN
-  #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table
+#if defined(_AIXALL) && defined(ASM_POWER)
+  #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table_power
+#else
+  #ifndef OGR_GET_DISPATCH_TABLE_FXN
+    #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table
+  #endif
 #endif  
+
 extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 
 #if defined(__cplusplus)
@@ -359,7 +377,8 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 /* shift the list to add or extend the first mark */
 #if (OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 2)
 
-  #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
+  #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__) || \
+      defined(ASM_POWER)
   #if defined(__GNUC__)
      #define __rlwinm(Rs,SH,MB,ME) \
      ({ int Ra; __asm__ ("rlwinm %0,%1,%2,%3,%4" : "=r" (Ra) : "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
