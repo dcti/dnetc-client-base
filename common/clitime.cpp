@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.42 2000/10/21 20:24:50 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.43 2000/11/03 18:38:36 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -516,8 +516,8 @@ int CliGetMonotonicClock( struct timeval *tv )
     {
       hrtime_t hirestime = gethrtime(); /* nanosecs since boot */
       hirestime /= 1000; /* nanosecs to microsecs */
-      tv.tv_sec = (time_t)(hirestime / 1000000);
-      tv.tv_usec = (unsigned long)(hirestime % 1000000);
+      tv->tv_sec = (time_t)(hirestime / 1000000);
+      tv->tv_usec = (unsigned long)(hirestime % 1000000);
     }
     #elif (CLIENT_OS == OS_LINUX) /*only RTlinux has clock_gettime/gethrtime*/
     {
