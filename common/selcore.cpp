@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.115 2001/04/22 12:17:48 oliver Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.116 2001/05/14 20:56:19 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -986,13 +986,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x00: cindex = 1; break; // P5           == without BSR (B)
             case 0x01: cindex = 1; break; // 386/486      == without BSR (B)
             case 0x02: cindex = 0; break; // PII/PIII     == with BSR (A)
-            case 0x03: cindex = 1; break; // Cx6x86       == without BSR (B)
+            case 0x03: cindex = 0; break; // Cx6x86       == with BSR (A)
             case 0x04: cindex = 1; break; // K5           == without BSR (B)
-            case 0x05: cindex = 1; break; // K6/K6-2/K6-3 == without BSR (B)
+            case 0x05: cindex = 0; break; // K6/K6-2/K6-3 == with BSR (B)
             case 0x06: cindex = 1; break; // Cyrix 486    == without BSR (B)
             case 0x07: cindex = 0; break; // orig Celeron == with BSR (A)
             case 0x08: cindex = 0; break; // PPro         == with BSR (A)
-            case 0x09: cindex = 1; break; // AMD K7       == without BSR (B)
+            case 0x09: cindex = 0; break; // AMD K7       == with BSR (A)
             case 0x0A: cindex = 1; break; // Centaur C6   == without BSR (B)
             case 0x0B: cindex = 0; break; // Pentium 4    == with BSR (A)
             default:   cindex =-1; break; // no default
