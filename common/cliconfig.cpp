@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.94  1998/06/18 05:16:54  remi
+// Avoid gcc warnings.
+//
 // Revision 1.93  1998/06/18 01:14:42  cyruspatel
 // Modified ::x86id() so that (a) "Selecting Pentium..." message does not
 // wrap; (b) its a easier to maintain and (c) users can tell us _exactly_
@@ -39,7 +42,7 @@
 #include "client.h"
 
 #if (!defined(lint) && !defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.93 1998/06/18 01:14:42 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.94 1998/06/18 05:16:54 remi Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -3071,9 +3074,9 @@ void Client::PrintBanner(const char * /*clname*/)
 #if (CLIENT_CPU == CPU_X86)
 int Client::x86id()
 {
-  struct _cpuxref { int cpuidb, coretouse; char *cpuname; } *cpuxref = NULL;
-  char *pronoun; //"an" "a"
-  char *vendorname; //"a Cyrix", "a Centaur", "an AMD", "an Intel"
+  struct _cpuxref { unsigned int cpuidb, coretouse; char *cpuname; } *cpuxref = NULL;
+  char *pronoun = NULL; //"an" "a"
+  char *vendorname = NULL; //"a Cyrix", "a Centaur", "an AMD", "an Intel"
   int coretouse = 0; // the core the client should use of the 5(6?)
   unsigned int vendorid, cpuidb, pos;
   u32 detectedvalue;
@@ -3163,7 +3166,7 @@ int Client::x86id()
       {  0x0650,   2, "Pentium II" },
       {  0x0000,   2, NULL         }  // default core = PPro/PII
       }; cpuxref = &__cpuxref[0];
-    }
+    } 
 
   LogScreen( "Automatic processor detection " );
   if ( cpuxref == NULL ) // fell through
