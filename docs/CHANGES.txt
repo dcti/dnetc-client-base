@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.36 2000/03/10 00:37:03 jlawson Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.37 2000/03/11 21:50:24 andreasb Exp $
 ==========================================================================
 
 2.8000
@@ -35,6 +35,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.36 2000/03/10 00:37:03 jlawson Exp 
                  all: checkpointing now done at 10% or 10 minute intervals,
                  instead of 10% with 10 minute minimum.
                  winnt4: pause on process handling optimized
+                 all: now logs, if exitfile was found during startup.
             fix: all: OGR -> RC5 / CSC -> RC5 switchover hang.
                  all: OGR nodecount network packet ordering fixed.
                  all: setting clock back during network ops could hang.
@@ -43,6 +44,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.36 2000/03/10 00:37:03 jlawson Exp 
                  many: better file system locking on buffers done now.
                  all: reported OGR noderate when completing a resumed stub is 
                  now the correct rate (was displayed as unacceptably high).
+                 all: now finishs partial OGR stubs before starting new ones.
 
 2.8007.458  fix: all: the annoying OGR 1 node bug finally fixed
             new: all: client can be configured a) to restart itself
