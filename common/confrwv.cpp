@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.92.2.2 2003/05/17 21:14:19 bdragon Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.92.2.3 2003/05/17 22:13:55 bdragon Exp $"; }
 
 //#define TRACE
 
@@ -974,8 +974,10 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
   {
     if ((i = GetPrivateProfileIntB( OPTION_SECTION, "numcpu", -12345, fn ))>=0)
     {
+      #if !defined(SINGLE_CRUNCHER_ONLY)
       client->numcpu = i;
-      modfail += (!_WritePrivateProfile_sINT( OPTSECT_CPU, "max-threads", client->numcpu, fn));
+      #endif /* SINGLE_CRUNCHER_ONLY */
+      modfail += (!_WritePrivateProfile_sINT( OPTSECT_CPU, "max-threads", i, fn));
     }
   }
   if ((i=GetPrivateProfileIntB( OPTSECT_CPU, "priority", -12345, fn ))!=-12345)
@@ -1454,7 +1456,9 @@ int ConfigWrite(Client *client)
 
     /* --- CONF_MENU_PERF -- */
 
+    #if !defined(SINGLE_CRUNCHER_ONLY)
     __XSetProfileInt( OPTSECT_CPU, "max-threads", client->numcpu, fn, -1, 0 );
+    #endif /* SINGLE_CRUNCHER_ONLY */
     __XSetProfileInt( OPTSECT_CPU, "priority", client->priority, fn, 0, 0);
 
     /* more buffer stuff */

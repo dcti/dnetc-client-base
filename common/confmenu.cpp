@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.62.2.4 2003/02/18 01:59:22 mfeiri Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.62.2.5 2003/05/17 22:13:55 bdragon Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -569,7 +569,9 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     }  
   }
   conf_options[CONF_NICENESS].thevariable = &(client->priority);
+  #if !defined(SINGLE_CRUNCHER_ONLY)
   conf_options[CONF_NUMCPU].thevariable = &(client->numcpu);
+  #endif /* SINGLE_CRUNCHER_ONLY */
 
   /* --------------------------------------------------------- */
 
