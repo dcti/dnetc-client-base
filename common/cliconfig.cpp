@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.110  1998/06/24 19:37:35  cyruspatel
+// Change for PPC: Combined CliGetKeyrateForProblem + CliClearProblemSumInfo
+// logic in ::SelectCore() into a call to CliGetKeyrateForProblemNoSave().
+// The latter is just like the original CliGetKeyrateForProblem() but does
+// not affect cumulative stats.
+//
 // Revision 1.109  1998/06/24 03:50:23  silby
 // Changes needed to get the NT service to compile under MSVC made, NT Service text strings modded to say "distributed.net", and message about having to set the service to automatic changed to say "check", since it's already done automatically.
 //
@@ -103,7 +109,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.109 1998/06/24 03:50:23 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.110 1998/06/24 19:37:35 cyruspatel Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -2142,7 +2148,7 @@ previouscputype=cputype;// Set this so we know next time this proc is run.
       problem.Run( benchsize , 0 );
 
       #ifdef NEW_STATS_AND_LOGMSG_STUFF
-        double elapsed = CliGetKeyrateForProblem( &problem );
+        double elapsed = CliGetKeyrateForProblemNoSave( &problem );
         LogScreenf( "%.1f kkeys/sec\n", (elapsed / 1000.0) );
       #else
       gettimeofday( &stop, &dummy );
@@ -2155,8 +2161,6 @@ previouscputype=cputype;// Set this so we know next time this proc is run.
       if (fastcore < 0 || elapsed < fasttime)
           {fastcore = whichcrunch; fasttime = elapsed;}
     }
-    CliClearContestInfoSummaryData( 0 ); //clear the totals for contest 0
-    CliClearContestInfoSummaryData( 1 ); //clear the totals for contest 1
   }
   whichcrunch = fastcore;
   LogScreenf( "| Using v%d.\n\n", whichcrunch );
