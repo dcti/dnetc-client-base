@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.127 2002/09/14 23:43:01 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.128 2002/09/15 21:45:49 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -44,6 +44,7 @@ struct __dyn_timeslice_struct
   u32 max, min, optimal; /* ... timeslice/nodes */
 };
 
+// FIXME: allow obsolete projects to be omitted
 static struct __dyn_timeslice_struct
   default_dyn_timeslice_table[CONTEST_COUNT] =  /* for preempted crunchers */
 {
@@ -65,7 +66,7 @@ static struct __dyn_timeslice_struct
   {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
 };
 #if (CONTEST_COUNT != 6)
-  #error timeslice_tables: static initializer need update (CONTEST_COUNT is not 6)
+  #error PROJECT_NOT_HANDLED("timeslice_tables: static initializers expect CONTEST_COUNT == 6")
 #endif
 
 // =====================================================================
@@ -390,8 +391,8 @@ void Go_mt( void * parm )
     amigaThreadInit();
     #if (CLIENT_CPU == CPU_POWERPC)
     /* Only necessary when using 68k for time measurement */
-    thrparams->dyn_timeslice_table[0].usec = 8000000;  // RC5
-    thrparams->dyn_timeslice_table[2].usec = 4000000;  // OGR
+    thrparams->dyn_timeslice_table[0].usec = 8000000;  // RC5 // FIXME THIS INDEXING IS DANGEROUS !!!
+    thrparams->dyn_timeslice_table[2].usec = 4000000;  // OGR // FIXME THIS INDEXING IS DANGEROUS !!!
     #endif
   }
 #endif

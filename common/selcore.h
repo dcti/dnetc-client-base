@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.9 2002/09/02 00:35:43 andreasb Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.10 2002/09/15 21:45:49 andreasb Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -27,6 +27,9 @@ typedef union
     #endif
     #if defined(HAVE_OGR_CORES)
     CoreDispatchTable *ogr;
+    #endif
+    #if 0
+    PROJECT_NOT_HANDLED("in unit_func_union");
     #endif
 } unit_func_union;
 

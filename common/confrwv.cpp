@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.85 2002/09/14 23:11:58 andreasb Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.86 2002/09/15 21:45:49 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -45,8 +45,11 @@ static const char *__getprojsectname( unsigned int ci )
   {
     #if 1
       #if (CONTEST_COUNT != 6)
-        #error fixme: (CONTEST_COUNT != 6) static table
+        #error PROJECT_NOT_HANDLED("static .ini section name list expects CONTEST_COUNT == 6")
       #endif
+      // section name of obsolete projects may be NULL
+      // RC5 and DES should be available (unchecked writes!)
+      // FIXME: put this into conStats[]
       static const char *sectnames[CONTEST_COUNT]={"rc5","des","ogr","csc","ogr-nextgen-someday","rc5-72"};
       return sectnames[ci];
     #else

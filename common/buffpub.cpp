@@ -9,7 +9,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.4 2002/09/02 00:35:41 andreasb Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.5 2002/09/15 21:45:49 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -231,6 +231,7 @@ static void __switch_byte_order( WorkRecord *dest, const WorkRecord *source,
     #endif
     default:
     {
+      // PROJECT_NOT_HANDLED(dest->contest);
       dest->contest = 0xff;
       break;
     }  

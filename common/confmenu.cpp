@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.59 2002/09/02 00:35:41 andreasb Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.60 2002/09/15 21:45:49 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -54,7 +54,8 @@ static int __is_opt_available_for_project(unsigned int cont_i, int menuoption)
     #if defined(HAVE_CSC_CORES)
     case CSC: return 1;
     #endif
-    default: break;
+    default: // PROJECT_NOT_HANDLED(cont_i);
+             break;
   }
   return 0;
 }

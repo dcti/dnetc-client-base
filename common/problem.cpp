@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.149 2002/09/02 00:35:43 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.150 2002/09/15 21:45:49 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -403,6 +403,9 @@ static void __IncrementKey(u32 *keyhi, u32 *keylo, u32 iters, int contest)
     case OGR:
       /* This should never be called for OGR */
       break;
+    default:
+      PROJECT_NOT_HANDLED(contest);
+      break;
   }
 }
 
@@ -454,6 +457,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
     }
     #endif
     default:
+      // PROJECT_NOT_HANDLED(contestid);
       break;
   }
   return -1;
@@ -868,6 +872,7 @@ int ProblemRetrieveState( void *__thisprob,
         #endif
         default: /* cannot happen */  
         {
+          PROJECT_NOT_HANDLED(thisprob->pub_data.contest);
           break;  
         }
       } /* switch */
@@ -1492,7 +1497,9 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
                 break;
       case CSC: retcode = Run_CSC( core_prob, &iterations, &last_resultcode );
                 break;
-      default:  retcode = 0; last_resultcode = -1;
+      default:  PROJECT_NOT_HANDLED(core_prob->pub_data.contest);
+                retcode = 0;
+                last_resultcode = -1;
                 break;
     }
 
@@ -1651,6 +1658,11 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
       #else
       return 0;
       #endif
+    }
+    default:
+    {
+      // PROJECT_NOT_HANDLED(contest_i);
+      break;
     }
   }
   return 0;
@@ -2016,6 +2028,7 @@ static unsigned int __compute_permille(unsigned int cont_i,
     break;
 #endif
     default:
+    PROJECT_NOT_HANDLED(cont_i);
     break;
   }
   return permille;
@@ -2073,6 +2086,7 @@ int WorkGetSWUCount( const ContestWork *work,
       break;
 #endif /* HAVE_OGR_CORES */
       default:
+        PROJECT_NOT_HANDLED(contestid);
         break;  
     } /* switch() */
 
@@ -2282,6 +2296,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
             break;
   #endif /* HAVE_OGR_CORES */
             default:
+            PROJECT_NOT_HANDLED(contestid);
             break;  
           } /* switch() */
   

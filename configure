@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.263 2002/09/02 00:35:40 andreasb Exp $
+# @(#)$Id: configure,v 1.264 2002/09/15 21:45:49 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -142,6 +142,8 @@ add_sources() # $1=os, $2=arch, $3=custom
   fi  
 
   # -------------------------------------------------------------------
+
+  # PROBLEM_NOT_HANDLED("add source files and -DHAVE_xyz_CORES here")
 
   # only generic/ansi cores are declared here. 
   # arch specific ones are declared in each arch specific section.

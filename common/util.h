@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.16 2002/09/02 01:15:45 andreasb Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.17 2002/09/15 21:45:49 andreasb Exp $"
 
 void trace_out( int indlevel, const char *fmt, ... );
 void trace_setsrc( const char *src_filename );
@@ -22,8 +22,10 @@ void trace_setsrc( const char *src_filename );
 #define TRACE_OUT(x) 
 #endif
 
-const char *projectmap_expand( const char *map );
-const char *projectmap_build( char *buf, const char *strtomap );
+#include "problem.h"       // for CONTEST_COUNT
+
+const char *projectmap_expand( const char map[CONTEST_COUNT] );
+const char *projectmap_build( char buf[CONTEST_COUNT], const char *strtomap );
 
 int utilGatherOptionArraysToList( char *opsize, unsigned int maxsize,
                                   const int *table1, const int *table2 );

@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.25 2002/09/14 23:11:58 andreasb Exp $"; }
+return "@(#)$Id: util.cpp,v 1.26 2002/09/15 21:45:49 andreasb Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -17,7 +17,8 @@ return "@(#)$Id: util.cpp,v 1.25 2002/09/14 23:11:58 andreasb Exp $"; }
 #include "clicdata.h" /* CliGetContestNameFromID() */
 #include "pathwork.h" /* GetFullPathForFilename() */
 #include "util.h"     /* ourselves */
-#define MAX_CONTEST_NAME_LEN 3
+#define MAX_CONTEST_NAME_LEN 6
+// PROJECT_NOT_HANDLED("is MAX_CONTEST_NAME_LEN still ok?")
 
 /* ------------------------------------------------------------------- */
 
@@ -324,7 +325,7 @@ int utilScatterOptionListToArrays( const char *oplist,
                                  table1, table2, &defarray[0], &defarray[0]);
 }
 
-const char *projectmap_expand( const char *map )
+const char *projectmap_expand( const char map[CONTEST_COUNT] )
 {
   static char buffer[(CONTEST_COUNT+1)*(MAX_CONTEST_NAME_LEN+3)];
   unsigned int id;
@@ -346,11 +347,12 @@ const char *projectmap_expand( const char *map )
 
 // --------------------------------------------------------------------------
 
-const char *projectmap_build( char *buf, const char *strtomap )
+const char *projectmap_build( char buf[CONTEST_COUNT], const char *strtomap )
 {
   #if (CONTEST_COUNT != 6)
-    #error static table needs fixing. (CONTEST_COUNT is not 6).
+    #error PROJECT_NOT_HANDLED("static default load order map expects CONTEST_COUNT == 6")
   #endif
+  // FIXME: default_map should allow obsolete projects to be omitted and ignored
   static char default_map[CONTEST_COUNT] = { DES,CSC,OGR,RC5,RC5_72,OGR_NEXTGEN_SOMEDAY };
   static char map[CONTEST_COUNT];
   unsigned int map_pos, i;

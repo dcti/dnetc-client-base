@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.65 2002/09/02 00:35:43 andreasb Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.66 2002/09/15 21:45:49 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -207,6 +207,8 @@ static const u32 csc_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
 };
 #endif
 
+// PROJECT_NOT_HANDLED("add your test data here")
+
 // ---------------------------------------------------------------------------
 
 // returns 0 if not supported, <0 on failed or break
@@ -351,6 +353,10 @@ long SelfTest( unsigned int contest )
         contestwork.crypto.key.hi = expectedsolution_hi;
       }
 #endif
+      if (0)
+      {
+        PROJECT_NOT_HANDLED(contest);
+      }
 
       switch (contest) 
       {
@@ -389,6 +395,7 @@ long SelfTest( unsigned int contest )
         }  
         #endif
         default:
+          PROJECT_NOT_HANDLED(contest);
           userbreak = 1;
           break;
       } /* switch */
@@ -536,6 +543,11 @@ long SelfTest( unsigned int contest )
                 break;
               }
               #endif /* HAVE_OGR_CORES */
+              default:
+              {
+                PROJECT_NOT_HANDLED(contest);
+                break;
+              }
             } /* switch */
 
           } /* if (!userbreak) */

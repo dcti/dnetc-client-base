@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.53 2002/09/14 23:11:58 andreasb Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.54 2002/09/15 21:45:49 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -25,7 +25,7 @@ return "@(#)$Id: bench.cpp,v 1.53 2002/09/14 23:11:58 andreasb Exp $"; }
 #define TBENCHMARK_CALIBRATION 0x80
 
 #if (CONTEST_COUNT != 6)
-  #error static initializer expects CONTEST_COUNT == 6
+  #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 6")
 #endif
 unsigned long bestrate_tab[CONTEST_COUNT] = {0,0,0,0,0,0};
 

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.80 2002/09/02 00:35:43 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.81 2002/09/15 21:45:49 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -44,6 +44,7 @@ return "@(#)$Id: selcore.cpp,v 1.80 2002/09/02 00:35:43 andreasb Exp $"; }
 
 static const char **__corenames_for_contest( unsigned int cont_i )
 {
+  // PROJECT_NOT_HANDLED("sorry, you still have to enter you core's names into this ugly struct")
   /* 
    When selecting corenames, use names that describe how (what optimization)
    they are different from their predecessor(s). If only one core,
@@ -774,6 +775,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       detected_type = -1;
   }
 
+  // PROJECT_NOT_HANDLED("you may add your pre-selected core depending on arch and cpu here")
   #if (CLIENT_CPU == CPU_ALPHA)
   if (contestid == RC5 || contestid == DES) /* old style */
   {
@@ -1420,6 +1422,10 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
 /* ------------------------------------------------------------- */
 
+// PROJECT_NOT_HANDLED("add your core function prototype(s) here")
+
+/* ------------------------------------------------------------- */
+
 int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
                        int *client_cpuP, struct selcore *selinfo )
 {                               
@@ -1952,6 +1958,11 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
    #endif
   }
   #endif /* #ifdef HAVE_CSC_CORES */
+
+  /* ================================================================== */
+
+  if (0)
+    PROJECT_NOT_HANDLED(contestid); // add code to select core function here
 
   /* ================================================================== */
 

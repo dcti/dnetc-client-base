@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.30 2002/09/14 23:32:39 andreasb Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.31 2002/09/15 21:45:49 andreasb Exp $"; }
 
 #include "baseincs.h" // for timeval
 #include "problem.h"  // for contest IDs
@@ -42,8 +42,9 @@ static struct contestInfo
                   { "OGR_NG", "nodes", OGR_NEXTGEN_SOMEDAY,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { "RC5-72", "keys",  RC5_72,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   {  NULL,    NULL,   -1,       0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
+// obsolete projects may be omitted
 #if (CONTEST_COUNT != 6)
-  #error conStats[]: static initializer needs fixing (CONTEST_COUNT is not 6).
+  #error PROJECT_NOT_HANDLED("conStats[]: static initializer expects CONTEST_COUNT == 6")
 #endif
 
 /* ----------------------------------------------------------------------- */
@@ -60,6 +61,10 @@ static struct contestInfo *__internalCliGetContestInfoVectorForID( int contestid
 
 // ---------------------------------------------------------------------------
 
+#if 0
+
+FIXME this function doesn't do what it's name/comments say FIXME
+
 // obtain the contestID for a contest identified by name.
 // returns -1 if invalid name (contest not found).
 int CliGetContestIDFromName( char *name )
@@ -70,13 +75,16 @@ int CliGetContestIDFromName( char *name )
     for (n = 0; conStats[i].ContestName[n] != 0; n++)
     {
       if (conStats[i].ContestName[n] != name[n])
+        // FIXME this aborts too early
         return -1;
     }
     if (!name[n])
+      // FIXME this returns an useless index - use conStats[i].ContestID instead
       return i;
   }
   return -1;
 }
+#endif
 
 // ---------------------------------------------------------------------------
 

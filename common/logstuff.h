@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.13 2002/09/02 00:35:42 andreasb Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.14 2002/09/15 21:45:49 andreasb Exp $"
 
 /* this is shared with Configure() */
 #define LOGFILETYPE_NONE    0 //no logging to file
@@ -64,5 +64,10 @@ void InitializeLogging( int noscreen, int nopercent, int nopercbaton,
                         long mailmsglen, const char *smtpsrvr, 
                         unsigned int smtpport, const char *smtpfrom, 
                         const char *smtpdest, const char *id );
+
+#define PROJECT_NOT_HANDLED(cID) Log("PROJECT: %d NOT HANDLED in %s line %d", cID, __FILE__, __LINE__)
+// PROJECT_NOT_HANDLED is also used to mark all places to be fixed
+// when a new project needs to be integrated into source
+
 #endif //__LOGSTUFF_H__
 

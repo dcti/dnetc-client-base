@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.83 2002/09/14 23:11:58 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.84 2002/09/15 21:45:49 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -70,6 +70,9 @@ enum {
      #endif
   #endif
 #endif
+#if 0
+PROJECT_NOT_HANDLED("enter your core mem alignment here");
+#endif
 
 /* ---------------------------------------------------------------------- */
 
@@ -93,6 +96,9 @@ typedef union
     struct {u32 hi,lo;} nodes;            // nodes completed
     char unused[12];
   } ogr;
+  #endif
+  #if 0
+    PROJECT_NOT_HANDLED("in ContestWork");
   #endif
 } ContestWork;
 
