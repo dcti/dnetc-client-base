@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.7 2002/10/22 21:30:33 acidblood Exp $
+; $Id: r72-dg2.asm,v 1.8 2002/10/23 02:19:16 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -122,11 +122,10 @@ defwork save_ebp
 %macro KEYSETUP_BLOCK_CONSTANTS_j0 1
         lea     shiftreg, [A1 + B1]
         add     B1, A1
-        add     A2, S_not(%1)
+        lea     A2, [A2 + B2 + S_not(%1)]
 
         add     B1, L_next
         mov     L_next, L2(0)
-        add     A2, B2
 
         rol     B1, shiftcount
         rol     A2, 3
@@ -137,11 +136,10 @@ defwork save_ebp
 
         lea     shiftreg, [A2 + B2]
         add     B2, A2
-        add     A1, S_not(%1+1)
+        lea     A1, [A1 + B1 + S_not(%1+1)]
 
         add     B2, L_next
         mov     L_next, L1(1)
-        add     A1, B1
 
         rol     B2, shiftcount
         rol     A1, 3
@@ -153,11 +151,10 @@ defwork save_ebp
 %macro KEYSETUP_BLOCK_CONSTANTS_j1 1
         lea     shiftreg, [A1 + B1]
         add     B1, A1
-        add     A2, S_not(%1)
+        lea     A2, [A2 + B2 + S_not(%1)]
 
         add     B1, L_next
         mov     L_next, L2(1)
-        add     A2, B2
 
         rol     B1, shiftcount
         rol     A2, 3
@@ -168,11 +165,10 @@ defwork save_ebp
 
         lea     shiftreg, [A2 + B2]
         add     B2, A2
-        add     A1, S_not(%1+1)
+        lea     A1, [A1 + B1 + S_not(%1+1)]
 
         add     B2, L_next
         mov     L_next, L1(2)
-        add     A1, B1
 
         rol     B2, shiftcount
         rol     A1, 3
@@ -184,11 +180,10 @@ defwork save_ebp
 %macro KEYSETUP_BLOCK_CONSTANTS_j2 1
         lea     shiftreg, [A1 + B1]
         add     B1, A1
-        add     A2, S_not(%1)
+        lea     A2, [A2 + B2 + S_not(%1)]
 
         add     B1, L_next
         mov     L_next, L2(2)
-        add     A2, B2
 
         rol     B1, shiftcount
         rol     A2, 3
@@ -199,11 +194,10 @@ defwork save_ebp
 
         lea     shiftreg, [A2 + B2]
         add     B2, A2
-        add     A1, S_not(%1+1)
+        lea     A1, [A1 + B1 + S_not(%1+1)]
 
         add     B2, L_next
         mov     L_next, L1(0)
-        add     A1, B1
 
         rol     B2, shiftcount
         rol     A1, 3
@@ -348,67 +342,85 @@ _rc5_72_unit_func_dg_2:
         mov     [save_esi], esi
 
         mov     [save_edi], edi
-        mov     ebx, [RC5_72UnitWork_plainlo]
-        mov     ecx, [RC5_72UnitWork_plainhi]
+        mov     esi, [RC5_72UnitWork_plainlo]
+        mov     edi, [RC5_72UnitWork_plainhi]
 
-        mov     esi, [RC5_72UnitWork_cipherlo]
-        mov     edi, [RC5_72UnitWork_cipherhi]
+        mov     ebx, [RC5_72UnitWork_cipherlo]
+        mov     ecx, [RC5_72UnitWork_cipherhi]
         mov     edx, [iterations]
 
-        mov     [work_P_0], ebx
-        mov     [work_P_1], ecx
-        mov     ebx, [RC5_72UnitWork_L0hi]
+        mov     [work_P_0], esi
+        mov     [work_P_1], edi
+        mov     esi, [RC5_72UnitWork_L0hi]
 
-        mov     [work_C_0], esi
-        mov     [work_C_1], edi
+        mov     [work_C_0], ebx
+        mov     [work_C_1], ecx
         mov     ebp, [edx]
 
         shr     ebp, 1
         mov     ecx, [RC5_72UnitWork_L0mid]
-        mov     esi, [RC5_72UnitWork_L0lo]
+        mov     ebx, [RC5_72UnitWork_L0lo]
 
         mov     [work_iterations], ebp
-        mov     L1(2), ebx
+        mov     L1(2), esi
 
-        inc     ebx
+        inc     esi
 
-        mov     L2(2), ebx
+        mov     L2(2), esi
 
         mov     L1(1), ecx
         mov     L2(1), ecx
 
-        mov     L1(0), esi
-        mov     L2(0), esi
+        mov     L1(0), ebx
+        mov     L2(0), ebx
 
 k7align 16
 key_setup_1:
-        mov     B1, L1(0)
         mov     A1, 0xBF0A8B1D ; 0xBF0A8B1D is S[0]
-        mov     B2, L2(0)
+        lea     B2, [A1 + B1]
+        add     B1, 0xBF0A8B1D
 
 ;       S1[0]
 
-        add     B1, A1
-        mov     A2, A1
-        mov     S1(0), A1
-
         rol     B1, 0x1D       ; 0x1D are least significant bits of S[0]
-        mov     S2(0), A2
+        mov     A2, A1
+        mov     S1(0), A2
+
+        lea     A1, [A1 + B1 + S_not(1)]
         mov     L_next, L1(1)
+        mov     S2(0), A2
 
 ;       L1[0]   S2[0]
 
-        mov     L1(0), B1
-        add     A1, S_not(1)
-        add     B2, A2
-
-        add     A1, B1
         rol     B2, 0x1D
+        rol     A1, 3
+        mov     L1(0), B1
 
         mov     L2(0), B2
-        rol     A1, 3
-
         mov     S1(1), A1
+
+
+;        mov     A1, 0xBF0A8B1D ; 0xBF0A8B1D is S[0]
+;        add     B1, 0xBF0A8B1D
+;        mov     A2, A1
+
+;       S1[0]
+
+;        rol     B1, 0x1D       ; 0x1D are least significant bits of S[0]
+;        mov     S1(0), A1
+;        mov     S2(0), A2
+
+;        mov     B2, B1
+;        lea     A1, [A1 + B1 + S_not(1)]
+;        mov     L_next, L1(1)
+
+;       L1[0]   S2[0]
+
+;        rol     A1, 3
+;        mov     L1(0), B1
+
+;        mov     L2(0), B2
+;        mov     S1(1), A1
 
 ;       S1[1]   L2[0]
 
@@ -695,19 +707,19 @@ test_key_1:
 k7align 16
 test_key_2:
         cmp     A2, [work_C_0]
-        mov     ebx, [RC5_72UnitWork_L0hi]
+        mov     edx, [RC5_72UnitWork_L0hi]
         mov     ecx, [RC5_72UnitWork_L0mid]
 
-        mov     edx, [RC5_72UnitWork_L0lo]
+        mov     ebx, [RC5_72UnitWork_L0lo]
         jne     short inc_key
 
         inc     dword [RC5_72UnitWork_CMCcount]
 
         cmp     B2, [work_C_1]
 
-        mov     [RC5_72UnitWork_CMChi], ebx
+        mov     [RC5_72UnitWork_CMChi], edx
         mov     [RC5_72UnitWork_CMCmid], ecx
-        mov     [RC5_72UnitWork_CMClo], edx
+        mov     [RC5_72UnitWork_CMClo], ebx
 
         jne     short inc_key
 
@@ -735,29 +747,29 @@ test_key_2:
 
 k7align 16
 inc_key:
-        add     bl, 2
+        add     dl, 2
         bswap   ecx
-        bswap   edx
+        bswap   ebx
 
-        mov     [RC5_72UnitWork_L0hi], ebx
-        mov     L1(2), ebx
+        mov     [RC5_72UnitWork_L0hi], edx
+        mov     L1(2), edx
         adc     ecx, 0
 
         bswap   ecx
-        adc     edx, 0
-        inc     ebx
+        adc     ebx, 0
+        inc     edx
 
-        bswap   edx
+        bswap   ebx
         dec     dword [work_iterations]
-        mov     L2(2), ebx
+        mov     L2(2), edx
 
         mov     L1(1), ecx
         mov     L2(1), ecx
-        mov     L1(0), edx
+        mov     L1(0), ebx
 
-        mov     L2(0), edx
+        mov     L2(0), ebx
         mov     [RC5_72UnitWork_L0mid], ecx
-        mov     [RC5_72UnitWork_L0lo], edx
+        mov     [RC5_72UnitWork_L0lo], ebx
 
         jnz     key_setup_1
 
