@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.2 2002/11/28 16:15:41 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.3 2002/11/28 16:36:42 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -183,7 +183,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       #endif
       #endif
 #endif
-#if defined HAVE_RC5_7272ORES
+#if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
       LogScreenRaw( "RC5-72 ARM assembly by Peter Teichmann\n");
       #endif
