@@ -1,5 +1,8 @@
 ;
 ; $Log: crunch_lintilla_296_apple.ppc.s,v $
+; Revision 1.1.2.2  2000/06/20 18:19:01  mfeiri
+; Applied the alignment changes by Oliver. It starts getting difficult to keep things in sync...
+;
 ; Revision 1.1.2.1  2000/06/13 01:27:31  mfeiri
 ; A version of lintilla that if fully compatible with Apples version of gas. Thanks a lot to pmack for his help!
 ;
@@ -521,6 +524,10 @@ label3:
 
  lwz	r30,Sr_0(r1)
  lwz	r31,Sr_1(r1)
+
+; ensure main loop starts on 8-byte boundary, for optimum cache performance
+; (pad with nop if necessary)
+.balignl	8,0x60000000
 
 loop:
 
