@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.44 2000/10/31 03:07:31 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.45 2000/11/03 16:47:48 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -452,15 +452,19 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
 { 
   CONF_THRESHOLDI              , /* CONF_MENU_BUFF */
   CFGTXT("Fetch work threshold"), "0 (default size or determine from time threshold)",
-  "This option specifies how many *work units* your client will buffer between\n"
-  "communications with a keyserver. When the number of work units in the\n"
+  "This option specifies how many stats units your client will buffer between\n"
+  "communications with a keyserver. When the number of stats units in the\n"
   "input buffer reaches 0, the client will attempt to connect to a keyserver,\n"
-  "fill the input buffer to the threshold, and send in all completed work\n"
-  "units. Keep the number of work-units to buffer low if you have a fixed\n"
-  "connection to the Internet, or the cost of your dialup connection is\n"
-  "negligible. While you could theoretically enter any number in the fields\n"
-  "here, the client has internal limits on the number of packets that it can\n"
-  "safely deal with.\n"
+  "fill the input buffer to the threshold, and send in all completed work.\n"
+  "Keep the number to buffer low if you have a fixed connection to the\n"
+  "Internet, or the cost of your dialup connection is negligible. While you\n"
+  "could theoretically enter any number in the fields here, the client has\n"
+  "internal limits on the number of packets that it can safely deal with.\n"
+#ifdef HAVE_OGR_CORES
+  "\n"
+  "The number of stats units per packet is assumed to be 1 when the number of\n"
+  "stats units cannot be determined before the packet is completed (ie for OGR).\n"
+#endif
   "\n"
   "A value of 0 for the 'fetch setting' indicates that a time threshold\n"
   "should be used instead. If that too is unspecified, then the client will\n"
@@ -473,10 +477,10 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
   CONF_THRESHOLDT              , /* CONF_MENU_BUFF */
   CFGTXT("Fetch time threshold (in hours)"), "0 (use work threshold)",
   "This option specifies that instead of fetching a specific number of\n"
-  "work units from the keyservers, enough work units should be downloaded\n"
-  "to keep your client busy for a specified number of hours.  This causes\n"
-  "the work unit threshold option to be constantly recalculated based on the\n"
-  "current speed of your client on your machine.\n\n"
+  "stats units from the keyservers, enough work should be downloaded\n"
+  "to keep your client busy for a specified number of hours. This causes\n"
+  "the stats unit threshold option to be constantly recalculated based on\n"
+  "the current crunch rate.\n\n"
   "For fixed (static) connections, you should set this to a low value, eg\n"
   "three to six hours. For dialup connections, set this to a value high\n"
   "enough to ensure that the client will not prematurely run out of work.\n"

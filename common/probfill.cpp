@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.47 2000/11/01 19:58:18 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.48 2000/11/03 16:47:49 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -15,9 +15,9 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.47 2000/11/01 19:58:18 cyp Exp $"; }
 #include "problem.h"   // Problem class
 #include "logstuff.h"  // Log()/LogScreen()
 #include "clitime.h"   // CliGetTimeString()
-#include "cpucheck.h"  // GetNumberOfDetectedProcessors()
-#include "clicdata.h"  // CliGetContestNameFromID()
 #include "probman.h"   // GetProblemPointerFromIndex()
+#include "clicdata.h"  // CliGetContestNameFromID,CliGetContestWorkUnitSpeed
+#include "cpucheck.h"  // GetNumberOfDetectedProcessors() [for thresh fxns]
 #include "checkpt.h"   // CHECKPOINT_CLOSE define
 #include "triggers.h"  // RaiseExitRequestTrigger()
 #include "buffupd.h"   // BUFFERUPDATE_FETCH/_FLUSH define
@@ -49,6 +49,151 @@ int SetProblemLoaderFlags( const char *loaderflags_map )
 }  
 
 /* ----------------------------------------------------------------------- */
+
+unsigned int ClientGetInThreshold(Client *client, 
+                                  int contestid, int force /*=0*/)
+{
+  // If inthreshold is <=0, then use time exclusively.
+  // If time threshold is 0, then use inthreshold exclusively.
+  // If inthreshold is <=0, AND time is 0, then use BUFTHRESHOLD_DEFAULT
+  // If inthreshold > 0 AND time > 0, then use MAX(inthreshold, effective_workunits(time))
+  int thresh = BUFTHRESHOLD_DEFAULT;
+
+  // OGR time threshold NYI
+  client->timethreshold[OGR] = 0;
+
+  if (contestid < CONTEST_COUNT)
+  {
+    thresh = client->inthreshold[contestid];
+    if (thresh <= 0)
+      thresh = BUFTHRESHOLD_DEFAULT; /* default (if time is also zero) */
+
+    if (client->timethreshold[contestid] > 0) /* use time */
+    {
+      int numprocs, numcrunchers, timethresh = 0;
+      unsigned int sec;
+      /* somebody keeps freaking playing with client->numcpu dependancy */
+      /* is it so difficult to understand that some users explictely specify */
+      /* a number of crunchers not equal to the number of cpus in the machine? */
+      /* (not necessarily crunchers less than cpus either) */
+      numprocs = GetNumberOfDetectedProcessors();
+      if (numprocs < 1)
+        numprocs = 1;
+      numcrunchers = client->numcpu;
+      if (numcrunchers < 0)
+        numcrunchers = numprocs;
+      else if (numcrunchers == 0)
+        numcrunchers = numprocs = 1; 
+      else if (numcrunchers < numprocs)
+        numprocs = numcrunchers;  
+
+      // get the speed
+      sec = CliGetContestWorkUnitSpeed(contestid, force);
+      if (sec != 0) /* we have a rate */
+        timethresh = 1 + (client->timethreshold[contestid] * 3600 * numprocs/sec);
+        
+      if (timethresh > client->inthreshold[contestid])
+        thresh = timethresh;
+      if (thresh < numcrunchers)
+        thresh = numcrunchers;
+    }
+  }
+  return 100*((unsigned int)thresh);
+}
+
+/* 
+   How thresholds affect contest rotation and contest fallover:
+
+   For contest rotation, outthreshold checks (and connectoften) must be 
+   disabled, otherwise the client will update before it hits the end of 
+   the load_order, resulting in more work becoming available for all 
+   projects.
+   Inversely, for contest fallover, outthreshold checks (or connectoften) 
+   must be enabled.
+
+   Example scenarios:
+   1) User wants to run both OGR and RC5, allocating 3 times as much cpu
+      time to OGR than to RC5. These would be the required settings:
+      load_order=OGR,RC5      (the order in which the client LOOKs for work)
+      inthresholds=OGR=6,RC5=2    (OGR thresh is 3 times RC5 thresh)
+      outthresholds=OGR=0,RC5=0 (disable outthresh checking)  
+      what happens: 
+         client looks for work. OGR is available. does OGR.
+         (repeat OGR inthresh times)
+         client looks for work, no OGR is available, RC5 is. does RC5.
+         (repeat RC5 inthresh times)
+         client looks for work, no OGR, no RC5 available. 
+                fetches&flushes. 
+         client looks for work. OGR is available. does OGR.
+   2) User wants to run OGR as long as OGR is available, the do RC5 (until 
+      OGR is available again).
+      load_order=OGR,RC5
+      inthresholds=OGR=<something>,RC5=<something>
+      outthresholds=OGR=<not zero and less than inthresh>,RC5=<whatever>
+      what happens: 
+         client looks for work. OGR is available. does OGR.
+         (repeat OGR outhresh times) 
+         out threshold now crossed. flushes&fetches.
+         client looks for work. OGR is available. does OGR.
+   3) User wants to run ONLY contest XXX.
+      load_order=XXX,<all others>=0
+      if contest XXX is NOT RC5, and no work is available, the client
+      will exit. if contest XXX is RC5, and no work is available, it will
+      do randoms.
+*/
+
+static unsigned int ClientGetOutThreshold(Client *client, 
+                                   int contestid, int /* force */)
+{
+  int outthresh = 0;  /* returns zero if outthresholds are not to be checked */
+  client = client; /* shaddup compiler. */
+
+  if (contestid < CONTEST_COUNT)
+  {
+#if (!defined(NO_OUTBUFFER_THRESHOLDS))
+    outthresh = client->outthreshold[contestid]; /* never time driven */
+    if (outthresh != 0) /* outthresh=0 => outthresh=inthresh => return 0 */
+    {
+      unsigned int inthres = ClientGetInThreshold(client, contestid, 0);
+      if (inthresh > 0) /* no error */
+      {
+        if (outthresh <= 0) /* relative to inthresh */
+        {
+          /*
+          a) if the outthreshold (as per .ini) is <=0, then outthreshold is 
+          to be interpreted as a value relative to the (computed) inthreshold.
+          ie, computed_outthreshold = computed_intthreshold + ini_outthreshold.
+          [thus an ini_threshold equal to zero implies rule c) below]
+          */
+          outthresh = inthresh + outthresh;
+        }
+        if (outthresh >= inthresh)
+        {
+          /*
+          b) if the outthreshold (according to the .ini) was > inthresh
+          then inthreshold rules are effective because outthresh can never
+          be greater than inthresh (inthresh will have been checked first).
+          (The exception is when using shared buffers, and another client 
+          fetches but does not flush).
+          Consequence: Only inthreshold is effective and outthresh 
+          doesn't need to be checked. ClientGetOutThreshold() returns 0.
+          c) if the outthreshold (according to the .ini) was equal to inthresh
+          there there is usually no point checking outthresh because 
+          the result of both checks would be the same. (The exception is 
+          when using shared buffers, and another client fetches but does
+          not flush).
+          Consequence: inthreshold is effective and outthresh 
+          doesn't need to be checked. ClientGetOutThreshold() returns 0.
+          */
+          outthresh = 0;
+        }
+      }
+    }
+#endif
+  }
+  return 100 * ((unsigned int)outthresh);      
+}
+
 
 /* determine if out buffer threshold has been crossed, and if so, set 
    the flush_required flag
@@ -202,7 +347,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           {
             //[....] Discarded CSC 12345678:ABCDEF00 4*2^28
             //       (project disabled/closed)
-            Log("%s %s %s%s\n", action_msg, contname, pktid, reason_msg );
+            Log("%s: %s %s%s\n", contname, action_msg, pktid, reason_msg );
           }
           else
           {
@@ -217,16 +362,16 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             else
               strcat( dcountbuf, " done" );
 
-            //[....] Saved RC5 12345678:ABCDEF00 4*2^28 (5.20% done)
+            //[....] RC5: Saved 12345678:ABCDEF00 4*2^28 (5.20% done)
             //       1.23:45:67:89 - [987,654,321 keys/s]
-            //[....] Saved OGR 25/1-6-13-8-16-18 (12.34 Mnodes done)
+            //[....] RC5: Saved 25/1-6-13-8-16-18 (12.34 Mnodes done)
             //       1.23:45:67:89 - [987,654,321 nodes/s]
-            //[....] Completed RC5 68E0D85A:A0000000 4*2^28 (4.00 stats units)
+            //[....] RC5: Completed 68E0D85A:A0000000 4*2^28 (4.00 stats units)
             //       1.23:45:67:89 - [987,654,321 keys/s]
-            //[....] Completed OGR 22/1-3-5-7 (12.30 stats units)
+            //[....] OGR: Completed 22/1-3-5-7 (12.30 stats units)
             //       1.23:45:67:89 - [987,654,321 nodes/s]
-            Log("%s %s %s (%s)\n%s - [%s/s]\n", 
-              action_msg, contname, pktid, dcountbuf,
+            Log("%s: %s %s (%s)\n%s - [%s/s]\n", 
+              contname, action_msg, pktid, dcountbuf,
               CliGetTimeString( &tv, 2 ), ratebuf );
           } /* if (reason_msg) else */
         } /* if (action_msg) */
@@ -417,7 +562,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
             extramsg = perdone;
           }
           
-          Log("Loaded %s %s%s%s\n",
+          Log("%s: Loaded %s%s%s\n",
                contname, ((thisprob->is_random)?("random "):("")),
                pktid, extramsg );
         } /* if (thisprob->GetProblemInfo(...) != -1) */
@@ -439,14 +584,17 @@ static int __post_summary_for_contest(unsigned int contestid)
   if (CliGetContestInfoSummaryData( contestid, &packets, &iterhi, &iterlo,
                                     &ttime, &swucount ) == 0)
   {
-    char ratebuf[15]; const char *name = CliGetContestNameFromID(contestid);
-
-    Log("Summary: %u %s packet%s (%u.%02u stats units)\n%s%c- [%s/s]\n",
-        packets, name, ((packets==1)?(""):("s")), 
-        swucount/100, swucount%100, 
-        CliGetTimeString(&ttime,2), ((packets)?(' '):(0)), 
-        ProblemComputeRate( contestid, ttime.tv_sec, ttime.tv_usec, 
+    if (packets)
+    {
+      char ratebuf[15];
+      Log("%s: Summary: %u packet%s (%u.%02u stats units)\n%s%c- [%s/s]\n",
+          CliGetContestNameFromID(contestid), 
+          packets, ((packets==1)?(""):("s")), 
+          swucount/100, swucount%100, 
+          CliGetTimeString(&ttime,2), ((packets)?(' '):(0)), 
+          ProblemComputeRate( contestid, ttime.tv_sec, ttime.tv_usec, 
                             iterhi, iterlo, 0, 0, ratebuf, sizeof(ratebuf)) );
+    }                            
     return 0;
   }
   return -1;
@@ -721,8 +869,8 @@ unsigned int LoadSaveProblems(Client *client,
 
       if (loaded_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD )
       {
-        Log( "Loaded %u %s packet%s from %s\n", 
-              loaded_problems_count[cont_i], cont_name,
+        Log( "%s: Loaded %u packet%s from %s\n", 
+              cont_name, loaded_problems_count[cont_i],
               ((loaded_problems_count[cont_i]==1)?(""):("s")),
               (client->nodiskbuffers ? "(memory-in)" : 
               BufferGetDefaultFilename( cont_i, 0, 
@@ -732,8 +880,8 @@ unsigned int LoadSaveProblems(Client *client,
       if (saved_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD
        && (client->nodiskbuffers == 0 || (mode != PROBFILL_UNLOADALL)))
       {
-        Log( "Saved %u %s packet%s to %s\n", 
-              saved_problems_count[cont_i], cont_name,
+        Log( "%s: Saved %u packet%s to %s\n", 
+              cont_name, saved_problems_count[cont_i],
               ((saved_problems_count[cont_i]==1)?(""):("s")),
               (mode == PROBFILL_UNLOADALL)?
                 (client->nodiskbuffers ? "(memory-in)" : 
@@ -768,28 +916,19 @@ unsigned int LoadSaveProblems(Client *client,
       unsigned int inout;
       for (inout=0;inout<=1;inout++)
       {
-        unsigned long norm_count;
-        long block_count = GetBufferCount( client, cont_i, inout, &norm_count );
+        unsigned long stats_count;
+        long block_count = GetBufferCount( client, cont_i, inout, &stats_count );
         if (block_count >= 0) /* no error */ 
         {
-          char buffer[128+sizeof(client->in_buffer_basename)];
-          /* we don't check in-buffer here since we need cumulative count */
-          if (inout != 0) /* out-buffer */ 
-          {
-            /* adjust bufupd_pending if outthresh has been crossed */
-            if (__check_outbufthresh_limit( client, cont_i, block_count, 
-                                            norm_count, &bufupd_pending ))
-            {
-              //Log("5. bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
-            }
-          }
-          sprintf(buffer, 
-              "%ld %s packet%s (%lu work unit%s) %s in\n%s",
-              block_count, 
-              cont_name, 
-              ((block_count == 1)?(""):("s")),  
-              norm_count,
-              ((norm_count == 1)?(""):("s")),
+          char buffer[(3*80)+sizeof(client->in_buffer_basename)];
+          int len;
+
+          len = sprintf(buffer, "%s: %ld packet%s ", 
+                cont_name, block_count, ((block_count == 1)?(""):("s")) );
+          if (stats_count)
+            len += sprintf( &buffer[len], "(%lu.%02lu stats units) ",
+                            stats_count/100,stats_count%100);
+          len += sprintf( &buffer[len], "%s in\n%s",
               ((inout!= 0 || mode == PROBFILL_UNLOADALL)?
                  ((block_count==1)?("is"):("are")):
                  ((block_count==1)?("remains"):("remain"))),
@@ -801,35 +940,38 @@ unsigned int LoadSaveProblems(Client *client,
                    BufferGetDefaultFilename( cont_i, 1, 
                    client->out_buffer_basename ) ))
              );
-          if (strlen(buffer) < 55) /* fits on a single line, so unwrap */
+          if (len < 55) /* fits on a single line, so unwrap */
           {
             char *nl = strrchr( buffer, '\n' );
             if (nl) *nl = ' ';
           }               
-          Log( "%s\n", buffer );
-          
-          if (inout == 0 && /* in */ (mode != PROBFILL_UNLOADALL))
+          if (inout != 0) /* out-buffer */ 
           {
-            /* compute number of processors _in_use_ */
-            int proc = GetNumberOfDetectedProcessors();
-            if (proc < 1)
-              proc = 1;
-            if (load_problem_count < (unsigned int)proc)
-              proc = load_problem_count;
-            if (proc > 0)
+            /* adjust bufupd_pending if outthresh has been crossed */
+            /* we don't check in-buffer here since we need cumulative count */
+            if (__check_outbufthresh_limit( client, cont_i, block_count, 
+                                            stats_count, &bufupd_pending ))
             {
-              extern void ClientSetNumberOfProcessorsInUse(int num);
+              //Log("5. bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
+            }
+          }
+          else /*in*/ if (stats_count && (mode!=PROBFILL_UNLOADALL))
+          {
+            unsigned int numcrunchers = ProblemCountLoaded(cont_i);
+            if (numcrunchers)
+            {
               timeval tv;
-              ClientSetNumberOfProcessorsInUse(proc); /* client.cpp */
               tv.tv_usec = 0;
-              tv.tv_sec = norm_count * 
+              tv.tv_sec = stats_count * 
                         CliGetContestWorkUnitSpeed( cont_i, 0 ) / 
-                        proc;
+                        numcrunchers;
               if (tv.tv_sec > 0)          
-                Log("Projected ideal time to completion: %s\n", 
+                len += sprintf(&buffer[len],
+                        "\nProjected ideal time to completion: %s", 
                              CliGetTimeString( &tv, 2));
             }
           }
+          Log( "%s\n", buffer );
 
         } //if (block_count >= 0)
       } //  for (inout=0;inout<=1;inout++)
@@ -842,6 +984,8 @@ unsigned int LoadSaveProblems(Client *client,
   {
     previous_load_problem_count = 0;
     previous_client = (Client *)0;
+    if (!CheckRestartRequestTrigger())
+      Log("Shutdown complete.\n");
   }
   --reentrant_count;
 

@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.46 2000/10/31 03:07:31 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.47 2000/11/03 16:47:48 cyp Exp $"; }
 
 //#define TRACE
 
@@ -33,6 +33,7 @@ static const char *OPTSECT_TRIGGERS = "triggers";
 static const char *OPTSECT_DISPLAY  = "display";
 
 static const char *DEFAULT_EXITFLAGFILENAME = "exitrc5"EXTN_SEP"now";
+#define OLD_PREFERREDBLOCKSIZE_DEFAULT 30 /* for converting old .inis */
 
 /* ------------------------------------------------------------------------ */
 
@@ -726,7 +727,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
     {
       if (i >= PREFERREDBLOCKSIZE_MIN &&
           i <= PREFERREDBLOCKSIZE_MAX &&
-          i != PREFERREDBLOCKSIZE_DEFAULT)
+          i != OLD_PREFERREDBLOCKSIZE_DEFAULT) /* 30 */
       {
         client->preferred_blocksize[RC5] = i;
         client->preferred_blocksize[DES] = i;
@@ -786,13 +787,13 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
              case DES:
              case CSC:
                multiplier = GetPrivateProfileIntB( cont_sect,
-                            "preferred-blocksize", PREFERREDBLOCKSIZE_DEFAULT, fn );
+                            "preferred-blocksize", OLD_PREFERREDBLOCKSIZE_DEFAULT, fn );
                if ( multiplier < 1)
-                 multiplier = PREFERREDBLOCKSIZE_DEFAULT;
+                 multiplier = OLD_PREFERREDBLOCKSIZE_DEFAULT;
                else if ( multiplier < PREFERREDBLOCKSIZE_MIN)
                  multiplier = PREFERREDBLOCKSIZE_MIN;
                else if (multiplier > PREFERREDBLOCKSIZE_MAX)
-                 multiplier = PREFERREDBLOCKSIZE_DEFAULT;
+                 multiplier = OLD_PREFERREDBLOCKSIZE_DEFAULT;
                multiplier -= (PREFERREDBLOCKSIZE_MIN-1);
                break;
              case OGR:

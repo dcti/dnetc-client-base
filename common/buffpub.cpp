@@ -8,7 +8,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.8 2000/10/24 21:36:34 cyp Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.9 2000/11/03 16:47:46 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -154,10 +154,10 @@ static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
     }
     case OGR:
     {
-      dest->work.ogr.workstub.stub.marks  = ntohs(dest->work.ogr.workstub.stub.marks);
-      dest->work.ogr.workstub.stub.length = ntohs(dest->work.ogr.workstub.stub.length);
+      dest->work.ogr.workstub.stub.marks  = (u16)ntohs(dest->work.ogr.workstub.stub.marks);
+      dest->work.ogr.workstub.stub.length = (u16)ntohs(dest->work.ogr.workstub.stub.length);
       for (int i = 0; i < STUB_MAX; i++)
-        dest->work.ogr.workstub.stub.diffs[i] = ntohs(dest->work.ogr.workstub.stub.diffs[i]);
+        dest->work.ogr.workstub.stub.diffs[i] = (u16)ntohs(dest->work.ogr.workstub.stub.diffs[i]);
       dest->work.ogr.workstub.worklength  = (u32)ntohl(dest->work.ogr.workstub.worklength);
       dest->work.ogr.nodes.hi             = (u32)ntohl(dest->work.ogr.nodes.hi);
       dest->work.ogr.nodes.lo             = (u32)ntohl(dest->work.ogr.nodes.lo);
@@ -303,18 +303,10 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
         packetcount++;
         if ( normcountP )
         {
-          switch (contest)
+          unsigned int swucount; 
+          if (BufferGetRecordInfo( &scratch, 0, &swucount) >= 0)
           {
-            case RC5:
-            case DES:
-            case CSC:
-              normcount += (unsigned int)
-                 __iter2norm( ntohl(scratch.work.crypto.iterations.lo),
-                              ntohl(scratch.work.crypto.iterations.hi) );
-              break;
-            case OGR:
-              normcount++;
-              break;
+            normcount += swucount;
           }
         }
       }

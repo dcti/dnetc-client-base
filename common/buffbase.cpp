@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.42 2000/10/27 02:15:30 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.43 2000/11/03 16:47:46 cyp Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -26,6 +26,24 @@ return "@(#)$Id: buffbase.cpp,v 1.12.2.42 2000/10/27 02:15:30 cyp Exp $"; }
 #include "clitime.h"  // CliClock(), CliTimer()
 #include "buffupd.h"  // BUFFERUPDATE_FETCH / BUFFERUPDATE_FLUSH
 #include "buffbase.h" //ourselves
+
+/* --------------------------------------------------------------------- */
+
+int BufferGetRecordInfo( const WorkRecord * data, 
+                         unsigned int *contest,
+                         unsigned int *swucount )
+{
+  int rc = -1;
+  if (data)
+  {
+    unsigned int cont_i = (unsigned int)data->contest;
+    rc = ProblemGetSWUCount( &(data->work), ((unsigned int)data->resultcode),
+                             cont_i, swucount );
+    if (rc >= 0 && contest)
+      *contest = cont_i;
+  }
+  return rc;
+}
 
 /* --------------------------------------------------------------------- */
 
@@ -158,19 +176,11 @@ static int BufferCountMemRecords( struct membuffstruct *membuff,
           WorkRecord *workrec = membuff->buff[rec];
           if (((unsigned int)workrec->contest) == contest)
           {
-            packetcount++;
-            switch (contest)
+            unsigned int swucount;
+            if (BufferGetRecordInfo( workrec, 0, &swucount ) != -1)
             {
-              case RC5:
-              case DES:
-              case CSC:
-                normcount += (unsigned int)
-                   __iter2norm( workrec->work.crypto.iterations.lo,
-                                workrec->work.crypto.iterations.hi );
-                break;
-              case OGR:
-                normcount++;
-                break;
+              packetcount++;
+              normcount += swucount;
             }
           }
         }
@@ -179,12 +189,12 @@ static int BufferCountMemRecords( struct membuffstruct *membuff,
     }
   }
   if (retcode == 0)
-    {
+  {
     if (normcountP)
       *normcountP = normcount;
     if (packetcountP)
       *packetcountP = reccount;
-    }
+  }
   return retcode;
 }
 
@@ -192,24 +202,6 @@ static int BufferCountMemRecords( struct membuffstruct *membuff,
 /*                      END OF MEMBUFF PRIMITIVES                        */
 /* ===================================================================== */
 
-static void __FixupRandomPrefix( const WorkRecord * data, Client *client )
-{
-  if (data->contest == RC5 && data->work.crypto.iterations.hi == 0 /* < 2^32 */
-     && (data->work.crypto.iterations.lo) != 0x00100000UL /*!test*/
-     && (data->work.crypto.iterations.lo) != 0x10000000UL /* !2**28 */)
-  {
-    u32 randomprefix = ((data->work.crypto.key.hi) & 0xFF000000L) >> 24;
-    if (randomprefix != ((u32) client->randomprefix) )
-    {
-      // Has the high byte changed?  If so, then remember it.
-      client->randomprefix = randomprefix;
-      client->randomchanged=1;
-    }
-  }
-  return;
-}
-
-/* --------------------------------------------------------------------- */
 
 static int __CheckBuffLimits( Client *client )
 {
@@ -259,7 +251,6 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
     tmp_retcode = 0;
     tmp_use_out_file = 0;
     count = 0;
-    __FixupRandomPrefix( data, client );
 
     if (workstate != RESULT_WORKING)
       tmp_use_out_file = 1;
@@ -404,7 +395,6 @@ long GetBufferRecord( Client *client, WorkRecord* data,
       }
       else /* packet is ok */
       {
-        __FixupRandomPrefix( data, client );
         return (long)count; // all is well, data is a valid entry.
       }
     }
@@ -559,37 +549,45 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
 // determine whether fetch should proceed/continue or not.
 // ******** MUST BE CALLED FOR EACH PASS THROUGH A FETCH LOOP *************
 
-unsigned long BufferReComputeWorkUnitsToFetch(Client *client, unsigned int contest)
+unsigned long BufferReComputeUnitsToFetch(Client *client, unsigned int contest)
 {
-  unsigned long lefttotrans;
-
-  lefttotrans = 0;
+  unsigned long swucount = 0;
   if (!BufferAssertIsBufferFull( client, contest ))
   {
-    int packets;
-    if ((packets = GetBufferCount( client, contest, 0, &lefttotrans )) < 0)
-      lefttotrans = 0;
+    int packets = GetBufferCount( client, contest, 0, &swucount );
+    if (packets < 0)
+    {
+      swucount = 0;
+    }
     else
     {
-      /* get threshold in *work units* */
-      int threshold = ClientGetInThreshold( client, contest, 1 /* force */ );
-      if (lefttotrans < ((unsigned long)threshold))
-        lefttotrans = threshold - lefttotrans;
-      else /* determine if we have at least one packet per cruncher */
-      {    /* (remember that GetInThreshold() returns *work units*) */
-        int numcrunchers = client->numcpu;
-        if (numcrunchers < 0)
-          numcrunchers = GetNumberOfDetectedProcessors();
-        if (numcrunchers < 1) /* force non-threaded or getnumprocs() failed */
-          numcrunchers = 1;
+      /* get threshold in *stats units* */
+      unsigned int swuthresh = ClientGetInThreshold( client, contest, 1 /* force */ );
+      if (swucount == 0)
+        swucount = packets*100; /* >= 1.00 stats units per packet */
+      if (swucount < swuthresh)
+        swucount = swuthresh - swucount;
+      else 
+      {
+        /* ok, we've determined that the thresholds are satisfied, now */
+        /* determine if we have at least one packet per cruncher */
+        /* (remember that GetInThreshold() returns *stats units*) */
+        int numcrunchers = ProblemCountLoaded(contest);
+        if (numcrunchers < 1) /* haven't spun any up yet */
+        {
+          numcrunchers = client->numcpu;
+          if (numcrunchers < 0)
+            numcrunchers = GetNumberOfDetectedProcessors();
+          if (numcrunchers < 1) /* force non-threaded or getnumprocs() failed */
+            numcrunchers = 1;
+        }
+        swucount = 0; /* assume we don't need more */
         if (packets < numcrunchers)  /* Have at least one packet per cruncher? */
-          lefttotrans = numcrunchers - packets;
-        else
-          lefttotrans = 0;
+          swucount = 100 * (numcrunchers - packets); /* >= 1.00 sus/packet */
       }
     }
   }
-  return lefttotrans;
+  return swucount;
 }
 
 /* ===================================================================== */
@@ -660,7 +658,8 @@ long BufferFetchFile( Client *client, int break_pending,
         break;
 
       /* update the count to fetch - NEVER do this outside the loop */
-      totrans_wu = BufferReComputeWorkUnitsToFetch( client, contest);
+      totrans_wu = BufferReComputeUnitsToFetch( client, contest);
+
       if (totrans_wu > 0)
       {
         WorkRecord wrdata;
@@ -699,7 +698,7 @@ long BufferFetchFile( Client *client, int break_pending,
         }
         else
         {
-          int workunits = 0;
+          unsigned int swucount = 0;
 
           if (donetrans_pkts > 0 && inbuffer_count_last >= inbuffer_count)
           {
@@ -720,55 +719,56 @@ long BufferFetchFile( Client *client, int break_pending,
           }
           inbuffer_count_last = inbuffer_count;
 
-          /* normalize to workunits for display */
-          switch (contest)
-          {
-            case RC5:
-            case DES:
-            case CSC:
-              workunits =  __iter2norm(wrdata.work.crypto.iterations.lo,
-                                     wrdata.work.crypto.iterations.hi);
-              if (workunits < 1)
-                workunits = 1;
-              break;
-            case OGR:
-              workunits = 1;
-              break;
-          }
-
+          BufferGetRecordInfo( &wrdata, 0, &swucount );
           donetrans_pkts++;
-          donetrans_wu += workunits;
+          donetrans_wu += swucount;
 
           if (donetrans_pkts == 1) /* first pass? */
             ClientEventSyncPost( CLIEVENT_BUFFER_FETCHBEGIN, 0 );
 
           if (remaining == 0) /* if no more available, then we've done 100% */
             totrans_wu = 0;
-          if (((unsigned long)workunits) > totrans_wu) /* done >= 100%? */
-            totrans_wu = workunits; /* then the # we wanted is the # we got */
-          totrans_wu -= workunits; /* how many to get for the next while() */
+          else if (swucount > totrans_wu) /* done >= 100%? */
+            totrans_wu = 0; /* then the # we wanted is the # we got */
+          else if (swucount != 0) /* contest can do count? */
+            totrans_wu -= swucount; /* how many to get for the next while() */
         }  /* if BufferGetRecord/BufferPutRecord */
       }  /* if if (totrans_wu > 0) */
 
-      if (donetrans_wu)
+      if (donetrans_pkts)
       {
-        unsigned long totrans = (donetrans_wu + (unsigned long)(totrans_wu));
-        unsigned int percent = ((donetrans_wu*10000)/totrans);
-
-        LogScreen( "\rRetrieved %s work unit %lu of %lu (%u.%02u%% transferred) ",
-                    contname, donetrans_wu, totrans, percent/100, percent%100 );
+        unsigned long totrans, donesofar = donetrans_pkts;
+        unsigned int percent;
+        const char *unittype = "packet";
+        if (donetrans_wu)
+        {
+          donesofar = donetrans_wu/100;
+          unittype = "stats unit";
+        }
+        totrans = (donesofar + (unsigned long)(totrans_wu));
+        percent = ((donesofar*10000)/totrans);
+        LogScreen( "\rRetrieved %s %s %lu of %lu (%u.%02u%% transferred) ",
+                    contname, unittype, donesofar, totrans, percent/100, percent%100 );
       }
     }  /* while ( totrans_wu > 0  ) */
 
-    if (donetrans_wu)
+    if (donetrans_pkts)
     {
+      char scratch[64];
       donetrans_total_wu   += donetrans_wu;
       donetrans_total_pkts += donetrans_pkts;
 
+      scratch[0] = '\0';
+      if (donetrans_wu)
+      {
+        sprintf(scratch, "(%lu.%02lu stats units) ",
+                         donetrans_wu/100,donetrans_wu%100);
+      }
       LogScreen("\n");
       LogTo(LOGTO_FILE|LOGTO_MAIL,
-            "Retrieved %lu %s work units (%lu packets) from file.\n",
-                         donetrans_wu, contname, donetrans_pkts );
+            "Retrieved %lu %s packet%s %sfrom file.\n",
+                  donetrans_pkts, contname, 
+                  ((donetrans_pkts==1)?(""):("s")), scratch );
     }
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
 
@@ -834,7 +834,7 @@ long BufferFlushFile( Client *client, int break_pending,
 
     while (totrans_pkts > 0)
     {
-      long workunits;
+      unsigned int swucount;
 
       if (!break_pending && CheckExitRequestTriggerNoIO())
         break;
@@ -872,29 +872,17 @@ long BufferFlushFile( Client *client, int break_pending,
       }
       totrans_pkts_last = totrans_pkts;
 
-      workunits = 1;
-      switch (contest)
-      {
-        case RC5:
-        case DES:
-        case CSC:
-          workunits =  __iter2norm(wrdata.work.crypto.iterations.lo,
-                                   wrdata.work.crypto.iterations.hi);
-          if (workunits < 1)
-            workunits = 1;
-          break;
-        case OGR:
-          workunits = 1;
-          break;
-      }
+      swucount = 0;
+      BufferGetRecordInfo( &wrdata, 0, &swucount );
 
       projtrans_pkts++;
-      projtrans_wu += workunits;
+      projtrans_wu += swucount;
 
-      if (totrans_pkts == 0) /* no more to do, can show count in work units */
+      if (totrans_pkts == 0) /* no more to do, can show count in stats units */
       {
-        LogScreen( "\rSent %s work unit %lu of %lu (100.00%% transferred)   ",
-            contname, projtrans_wu, projtrans_wu  );
+        LogScreen( "\rSent %s stats unit %lu.%02lu of %lu.%02lu (100.00%% transferred)   ",
+            contname, projtrans_wu/100, projtrans_wu%100,
+                      projtrans_wu/100, projtrans_wu%100 );
       }
       else /* count in packets */
       {
@@ -912,8 +900,9 @@ long BufferFlushFile( Client *client, int break_pending,
 
       LogScreen("\n");
       LogTo(LOGTO_FILE|LOGTO_MAIL,
-            "Transferred %lu %s work unit%s (%lu packet%s) to file.\n",
-                totaltrans_wu, contname, ((totaltrans_wu==1)?(""):("s")),
+            "Transferred %lu.%02lu %s stats unit%s (%lu packet%s) to file.\n",
+                totaltrans_wu/100, totaltrans_wu%100, contname, 
+                ((totaltrans_wu==100)?(""):("s")),
                 totaltrans_pkts, ((totaltrans_pkts==1)?(""):("s")) );
     }
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
@@ -1041,14 +1030,21 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
         {
           if (!BufferAssertIsBufferFull(client,cont_i))
           {
-            unsigned long wucount;
-            if (GetBufferCount( client, cont_i, 0, &wucount ) <= 0)
+            unsigned long swucount;
+            long pktcount = GetBufferCount( client, cont_i, 0, &swucount );
+            if (pktcount <= 0) /* buffer is empty */
+            {
               need_fetch = 1;
-            else if (fill_even_if_not_totally_empty &&
-                 wucount < (unsigned int)ClientGetInThreshold( client, cont_i, 0 ))
-            {     
-              need_fetch = 1;
-            }  
+            }
+            else if (fill_even_if_not_totally_empty)
+            {
+              if (swucount == 0) /* count not supported */
+                swucount = pktcount * 100; /* >= 1.00 SWU's per packet */
+              if (swucount < ClientGetInThreshold( client, cont_i, 0 ))
+              {     
+                need_fetch = 1;
+              }  
+            }
           }      
           if (need_fetch && either_or) /* either criterion satisfied ... */
             need_flush = 1;            /* ... fulfills both criteria */

@@ -8,17 +8,21 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.41 2000/11/02 11:21:29 mfeiri Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.42 2000/11/03 16:47:50 cyp Exp $"
 
-#include "cputypes.h"
-#include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
-#include "ogr.h"     /* OGR core stuff */
+#include "cputypes.h" /* u32 */
+#include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
+#include "ogr.h"      /* OGR core stuff */
+
+enum {
+  RC5, // http://www.rsa.com/rsalabs/97challenge/
+  DES, // http://www.rsa.com/rsalabs/des3/index.html
+  OGR, // http://members.aol.com/golomb20/
+  CSC  // http://www.cie-signaux.fr/security/index.htm
+};
+#define CONTEST_COUNT       4  /* RC5,DES,OGR,CSC */
 
 /* ---------------------------------------------------------------------- */
-
-int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
-/* result depends on #ifdefs, threadsafety issues etc */
-
 
 #undef MAX_MEM_REQUIRED_BY_CORE
 #define MAX_MEM_REQUIRED_BY_CORE  8  //64 bits
@@ -85,10 +89,21 @@ typedef union
   } ogr;
 } ContestWork;
 
-#ifndef MIPSpro
-#pragma pack()
-#endif
+typedef struct
+{
+  ContestWork work;/* {key,iv,plain,cypher,keysdone,iter} or {stub,pad} */
+  u32  resultcode; /* core state: RESULT_WORKING:0|NOTHING:1|FOUND:2 */
+  char id[59];     /* d.net id of worker that last used this */
+  u8   contest;    /* 0=rc5,1=des,etc. If this is changed, make this u32 */
+  u8   cpu;        /* 97.11.25 If this is ever changed, make this u32 */
+  u8   os;         /* 97.11.25 If this is ever changed, make this u32 */
+  u8   buildhi;    /* 97.11.25 If this is ever changed, make this u32 */
+  u8   buildlo;    /* 97.11.25 If this is ever changed, make this u32 */
+} WorkRecord;
 
+#ifndef MIPSpro
+# pragma pack()
+#endif /* ! MIPSpro */
 
 /* ---------------------------------------------------------------------- */
 
@@ -113,7 +128,6 @@ typedef union
 /* ---------------------------------------------------------------------- */
 
 #ifdef __cplusplus
-
 class Problem
 {
 protected: /* these members *must* be protected for thread safety */
@@ -221,6 +235,7 @@ public: /* anything public must be thread safe */
                      u32 *ubdcounthi, u32 *ubdcountlo, 
                      char *dcountbuf, unsigned int dcountbufsz);
 };
+#endif /* __cplusplus */
 
 unsigned int ProblemCountLoaded(int contestid); /* -1=total for all contests */
 
@@ -229,21 +244,11 @@ const char *ProblemComputeRate( unsigned int contestid,
                                 u32 *ratehi, u32 *ratelo,
                                 char *ratebuf, unsigned int ratebufsz ); 
 
-/* ------------------------------------------------------------------- */
+int ProblemGetSWUCount( const ContestWork *work,
+                        int rescode, unsigned int contestid,
+                        unsigned int *swucount );
 
-/* RC5/DES/CSC 2^28 key count conversion.
-   belongs in ccoreio.c[pp], but that doesn't exist, and its not worth
-   creating for this itty-bitty thing.
-   Only used from buff*.cpp 
-*/
-inline u32 __iter2norm( u32 iterlo, u32 iterhi )
-{
-  iterlo = ((iterlo >> 28) + (iterhi << 4));
-  if (!iterlo)
-    iterlo++;
-  return iterlo;
-}
-
-#endif /* __cplusplus */
+int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
+/* result depends on #ifdefs, threadsafety issues etc */
 
 #endif /* __PROBLEM_H__ */

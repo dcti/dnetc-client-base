@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.77 2000/11/01 19:58:18 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.78 2000/11/03 16:47:49 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -308,7 +308,7 @@ unsigned int ProblemCountLoaded(int contestid) /* -1=all contests */
 }
 
 /* forward reference */
-static unsigned int __compute_permille(unsigned int cont_i, ContestWork *work);
+static unsigned int __compute_permille(unsigned int cont_i, const ContestWork *work);
 
 /* LoadState() and RetrieveState() work in pairs. A LoadState() without
    a previous RetrieveState(,,purge) will fail, and vice-versa.
@@ -1441,29 +1441,39 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
         char fmtbuf[sizeof(numbuf)];
         char *r = &numbuf[len];
         char *w = &fmtbuf[sizeof(fmtbuf)];
-        unsigned int pos = 0;
+        len = 0;
         *--w = '\0';
         for (;;)
         {
           *--w = *--r;
           if (r == &numbuf[0])
             break;
-          if (((++pos) % 3)==0)
+          if (((++len) % 3)==0)
             *--w = ',';
         }
         len = strlen(strcpy( numbuf, w )); 
         if (len >= buflen)
         {
-          pos = buflen-4; /* "00X\0" */
-          while (len > pos || numbuf[len] != ',')
-          {
+          len = buflen-4; /* "nnX\0" */
+          while (len > 0 && numbuf[len] != ',') /* find a spot for a dec pt */
             len--;
-            if (numbuf[len] == ',')
-              magna++;
+          if (len == 0) /* bufsz < 7 and "nnn,nn..." or "nn,nn..." */
+          {
+            strcpy(numbuf,"***");
+            len = 3;
           }
-          numbuf[len] = '.';
-          len += 3;
-          numbuf[len] = '\0';
+          else
+          {
+            unsigned int pos = len;
+            while (numbuf[pos] == ',')
+            {
+              magna++;
+              pos += 4;
+            }  
+            numbuf[len] = '.';
+            len += 3;
+            numbuf[len] = '\0';
+          } 
         }
       } /* len > 3 */
       if (numstr_style == 1 || numstr_style == 2)
@@ -1519,7 +1529,8 @@ const char *ProblemComputeRate( unsigned int contestid,
   return ratebuf;
 }
 
-static unsigned int __compute_permille(unsigned int cont_i, ContestWork *work)
+static unsigned int __compute_permille(unsigned int cont_i, 
+                                       const ContestWork *work)
 {
   unsigned int permille = 0;
   switch (cont_i)
@@ -1562,6 +1573,69 @@ static unsigned int __compute_permille(unsigned int cont_i, ContestWork *work)
   }
   return permille;
 }
+
+
+int ProblemGetSWUCount( const ContestWork *work,
+                        int rescode, unsigned int contestid,
+                        unsigned int *swucount )
+{
+  if (rescode != RESULT_WORKING && rescode != RESULT_FOUND && 
+       rescode != RESULT_NOTHING)
+  {
+    rescode = -1;
+  }
+  else
+  { 
+    unsigned int units = 0;
+    switch (contestid)
+    {
+      case RC5:
+      case DES:
+      case CSC:
+      { 
+        u32 tcounthi = work->crypto.iterations.hi;
+        u32 tcountlo = work->crypto.iterations.lo;
+        if (contestid == DES)
+        {
+          tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
+        }
+        /* note that we return zero for test packets */
+        units = 100 * ((tcountlo >> 28)+(tcounthi << 4)); 
+
+        // if this is a completed packet and not a test one (other random
+        // packets are ok), then remember its prefix for random prefix.
+        if (contestid == RC5 && rescode != RESULT_WORKING &&
+            ((tcounthi != 0) || (tcounthi == 0 && tcountlo != 0x00100000UL)))
+        {   
+          last_rc5_prefix = ((work->crypto.key.hi >> 24) & 0xFF);
+        }
+      }
+      break;
+#ifdef HAVE_OGR_CORES
+      case OGR:
+      {
+        if (swucount && rescode != RESULT_WORKING)
+        {
+          u32 hi, tcounthi = work->ogr.nodes.hi;
+          u32 lo, tcountlo = work->ogr.nodes.lo;
+          /* ogr stats unit is Gnodes */
+          __u64div( tcounthi, tcountlo, 0, 1000000000ul, 0, &hi, 0, &lo);
+          units = (unsigned int)(hi * 100)+(lo / 10000000ul);
+        }
+      } /* OGR */      
+      break;
+#endif /* HAVE_OGR_CORES */
+      default:
+        break;  
+    } /* switch() */
+
+    if (swucount)
+      *swucount = units;
+  } /* if (swucount) */
+
+  return rescode;
+}
+
 
 /* more info than you ever wanted. :) any/all params can be NULL/0
  * tcount = total_number_of_iterations_to_do
