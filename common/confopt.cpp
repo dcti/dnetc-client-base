@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.13  1999/01/13 15:17:02  kbracey
+// Fixes to RISC OS processor detection and scheduling
+//
 // Revision 1.12  1999/01/12 14:57:35  cyp
 // -1 is a legal nettimeout value (force blocking net i/o).
 //
@@ -35,12 +38,12 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.12 1999/01/12 14:57:35 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.13 1999/01/13 15:17:02 kbracey Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
 #include "baseincs.h" // strcmp() etc as used by isstringblank() et al.
-#include "cmpidefs.h" // strcmpi() 
+#include "cmpidefs.h" // strcmpi()
 #include "client.h"   // only the MAXBLOCKSPERBUFFER define
 #include "confopt.h"  // ourselves
 #include "pathwork.h" // EXTN_SEP
@@ -55,7 +58,7 @@ return "@(#)$Id: confopt.cpp,v 1.12 1999/01/12 14:57:35 cyp Exp $"; }
 
 // --------------------------------------------------------------------------
 
-static const char *uuehttptable[]= 
+static const char *uuehttptable[]=
   {
   "No special encoding",
   "UUE encoding (telnet proxies)",
@@ -78,7 +81,7 @@ static const char *lurkmodetable[]=
 struct optionstruct conf_options[CONF_OPTION_COUNT]=
 {
 //0
-{ "id", CFGTXT("Your distributed.net ID"), "", 
+{ "id", CFGTXT("Your distributed.net ID"), "",
   CFGTXT(
   "Completed blocks sent back to distributed.net are tagged with the email\n"
   "address of the person whose machine completed those blocks. That address\n"
@@ -114,7 +117,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "maximum block sizes are 28 and 31 respectively.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_INT,4,NULL,NULL,28,31},
 //4
-{ "threshold", CFGTXT("Block fetch/flush threshold"), "10 (default)", 
+{ "threshold", CFGTXT("Block fetch/flush threshold"), "10 (default)",
   CFGTXT(
   "This option specifies how many blocks your client will buffer between\n"
   "communications with a keyserver. The client operates directly on blocks\n"
@@ -160,7 +163,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
 /* ------------------------------------------------------------ */
 
 //10
-{ "count", CFGTXT("Complete this many blocks, then exit"), "0 (no limit)", 
+{ "count", CFGTXT("Complete this many blocks, then exit"), "0 (no limit)",
   CFGTXT(
   "This option specifies that you wish to have the client exit after it has\n"
   "crunched a predefined number of blocks. Use 0 (zero) to apply 'no limit',\n"
@@ -168,7 +171,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "equivalent to the -runbuffers command line option.)\n"
   ),CONF_MENU_MISC,CONF_TYPE_INT,1,NULL,NULL,0,0}, /* no min max here */
 //11
-{ "hours", CFGTXT("Run for this long, then exit"), "0:00 (no limit)", 
+{ "hours", CFGTXT("Run for this long, then exit"), "0:00 (no limit)",
   CFGTXT(
   "This option specifies that you wish to have the client exit after it has\n"
   "crunched a predefined number of hours. Use 0:00 (or clear the field) to\n"
@@ -203,7 +206,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
 /* ------------------------------------------------------------ */
 
 //16
-{ "cputype", CFGTXT("Processor type"), "-1 (autodetect)", 
+{ "cputype", CFGTXT("Processor type"), "-1 (autodetect)",
   CFGTXT(
   "This option determines which processor the client will optimize operations\n"
   "for.  While auto-detection is preferrable for most processor families, you may\n"
@@ -211,26 +214,28 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "processor is detected incorrectly.\n"
   ),CONF_MENU_PERF,CONF_TYPE_INT,1,NULL,NULL,0,0},
 //17
-{ "numcpu", CFGTXT("Number of processors available"), "-1 (autodetect)", 
+{ "numcpu", CFGTXT("Number of processors available"), "-1 (autodetect)",
 #if (CLIENT_OS == OS_RISCOS)
-  CFGTXT(
-  "If you have a RiscPC-style x86 processor card, you can make the client\n"
-  "crack keys on it by setting this option to 2. If you don't have such a\n"
-  "card, you should set it to 1.\n"
-  )
+  "This option specifies the number of threads you want the client to work on.\n"
+  "On multi-processor machines this should be set to the number of processors\n"
+  "available or to -1 to have the client attempt to auto-detect the number of\n"
+  "processors. Multi-threaded clients can be forced to run single-threaded by\n"
+  "setting this option to zero.\n"
+  "Under RISC OS, processor 1 is the ARM, and processor 2 is an x86 processor\n"
+  "card, if fitted.\n"
 #else
   CFGTXT(
   "This option specifies the number of threads you want the client to work on.\n"
   "On multi-processor machines this should be set to the number of processors\n"
   "available or to -1 to have the client attempt to auto-detect the number of\n"
-  "processors. Multi-threaded clients can be forced to run single-threaded by\n" 
+  "processors. Multi-threaded clients can be forced to run single-threaded by\n"
   "setting this option to zero.\n"
   )
 #endif
   ,CONF_MENU_PERF,CONF_TYPE_INT,2,NULL,NULL,-1,128},
 //18
 { "", CFGTXT("Priority level to run at"), "0 (lowest/idle)",
-#if (CLIENT_OS == OS_NETWARE) 
+#if (CLIENT_OS == OS_NETWARE)
   CFGTXT(
   "The priority option is ignored on this machine. The distributed.net client\n"
   "for NetWare dynamically adjusts its process priority.\n"
@@ -263,13 +268,13 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "CPU time unless there is a time-critical process waiting to be run - this is\n"
   "obviously not a good idea unless the machine is running no other programs.\n"
   )
-#endif  
+#endif
   ,CONF_MENU_PERF, CONF_TYPE_INT, 3 /*menupos*/, NULL, NULL, 0, 9 },
 
 /* ------------------------------------------------------------ */
 
 //19
-{ "logname", CFGTXT("File to log to"), "", 
+{ "logname", CFGTXT("File to log to"), "",
   CFGTXT(
   "To enable logging to file you must specify the name of a logfile. The filename\n"
   "is limited a length of 128 characters and may not contain spaces. The file\n"
@@ -284,27 +289,27 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "bytes. Specify 0 (zero) to disable logging by mail.\n"
   ),CONF_MENU_LOG,CONF_TYPE_INT,2,NULL,NULL,0,125000},
 //21
-{ "smtpsrvr", CFGTXT("SMTP Server to use"), "", 
+{ "smtpsrvr", CFGTXT("SMTP Server to use"), "",
   CFGTXT(
   "Specify the name or DNS address of the SMTP host via which the client should\n"
   "relay mail logs. The default is the hostname component of the email address from\n"
   "which logs will be mailed.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,3,NULL,NULL,0,0},
 //22
-{ "smtpport", CFGTXT("SMTP Port"), "25 (default)", 
+{ "smtpport", CFGTXT("SMTP Port"), "25 (default)",
   CFGTXT(
   "Specify the port on the SMTP host to which the client's mail subsystem should\n"
   "connect when sending mail logs. The default is port 25.\n"
   ),CONF_MENU_LOG,CONF_TYPE_INT,4,NULL,NULL,1,0xFFFF},
 //23
-{ "smtpfrom", CFGTXT("E-mail address that logs will be mailed from"), 
-  "" /* *((const char *)(options[CONF_ID].thevariable)) */, 
+{ "smtpfrom", CFGTXT("E-mail address that logs will be mailed from"),
+  "" /* *((const char *)(options[CONF_ID].thevariable)) */,
   CFGTXT(
   "(Some servers require this to be a real address)\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,5,NULL,NULL,0,0},
 //24
-{ "smtpdest", CFGTXT("E-mail address to send logs to"), 
-  "" /* *((const char *)(options[CONF_ID].thevariable)) */, 
+{ "smtpdest", CFGTXT("E-mail address to send logs to"),
+  "" /* *((const char *)(options[CONF_ID].thevariable)) */,
   CFGTXT(
   "Full name and site eg: you@your.site.  Comma delimited list permitted.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,6,NULL,NULL,0,0},
@@ -352,7 +357,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "proxy (firewall) and you have trouble fetching or flushing blocks.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,5,NULL,NULL,0,0},
 //30
-{ "keyport", CFGTXT("Keyserver port to connect to"), "0 (auto select)", 
+{ "keyport", CFGTXT("Keyserver port to connect to"), "0 (auto select)",
   CFGTXT(
   "This field determines which keyserver port the client should connect to.\n"
   "Leave this option at zero to have the client automatically select a port\n"
@@ -384,7 +389,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "the client should connect. The port number must be valid.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,9,NULL,NULL,1,0xFFFF},
 //34
-{ "httpid", CFGTXT("HTTP/SOCKS proxy username"), "", 
+{ "httpid", CFGTXT("HTTP/SOCKS proxy username"), "",
   CFGTXT(
   "Specify a username in this field if your SOCKS host requires\n"
   "authentication before permitting communication through it.\n"
@@ -399,7 +404,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
 { "dialwhenneeded", CFGTXT("Dial the Internet as needed?"),"0",
    CFGTXT(""
    ),CONF_MENU_NET,CONF_TYPE_BOOL,12,NULL,NULL,0,1},
-//37  
+//37
 { "connectionname", CFGTXT("Dial-up Connection Name"),"",
   CFGTXT(""
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,13,NULL,NULL,0,0},
@@ -428,15 +433,15 @@ int confopt_IsHostnameDNetHost( const char * hostname )
 {
   unsigned int len;
   const char sig[]="distributed.net";
-  
-  if (!hostname || !*hostname) 
+
+  if (!hostname || !*hostname)
     return 1;
   if (isdigit( *hostname )) //IP address
     return 0;
   len = strlen( hostname );
   return (len > (sizeof( sig )-1) &&
       strcmpi( &hostname[(len-(sizeof( sig )-1))], sig ) == 0);
-}           
+}
 
 // --------------------------------------------------------------------------
 
