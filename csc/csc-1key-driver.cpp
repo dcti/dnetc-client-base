@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-1key-driver.cpp,v $
+// Revision 1.3.2.6  1999/11/02 19:06:07  cyp
+// ugly array param squelch for watcom compiler
+//
 // Revision 1.3.2.5  1999/10/24 23:54:53  remi
 // Use Problem::core_membuffer instead of stack for CSC cores.
 // Align frequently used memory to 16-byte boundary in CSC cores.
@@ -41,7 +44,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-driver.cpp,v 1.3.2.5 1999/10/24 23:54:53 remi Exp $"; }
+return "@(#)$Id: csc-1key-driver.cpp,v 1.3.2.6 1999/11/02 19:06:07 cyp Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
@@ -134,7 +137,8 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   ulong result;
   u32 bkey = 0;
   for( ;; ) {
-    result = PASTE(cscipher_bitslicer_,CSC_SUFFIX) ( *key, *plain, *cipher, membuffer );
+    result = PASTE(cscipher_bitslicer_,CSC_SUFFIX) ( 
+             (ulong const (* )[64])&((*key)[0]), *plain, *cipher, membuffer );
     if( result )
       break;
     if( ++bkey >= (1ul << (nbits - CSC_BITSLICER_BITS) ) )
@@ -158,9 +162,9 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
     keylo = keyhi = 0;
     for( int j=8; j<64; j++ )
       if( j<32 )
-	keylo |= (((*key)[0][j] >> numkeyfound) & 1) << j;
+        keylo |= (((*key)[0][j] >> numkeyfound) & 1) << j;
       else
-	keyhi |= (((*key)[0][j] >> numkeyfound) & 1) << (j-32);
+        keyhi |= (((*key)[0][j] >> numkeyfound) & 1) << (j-32);
 
     // convert key from CSC format to incrementable format
     convert_key_from_csc_to_inc( &keyhi, &keylo );
