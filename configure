@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.159 2000/06/14 08:56:05 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.160 2000/06/15 20:29:31 kopstain Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -712,7 +712,7 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC272 -O6 -DASM_MIPS -mcpu=r3000 -DMULTITHREAD \
 			-D__showids__ -DLURK -DHAVE_OGR_CORES"
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp $OGR_ANSI_SRCS"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp common/lurk.cpp $OGR_ANSI_SRCS"
 	TARGET_LDFLAGS=""
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile

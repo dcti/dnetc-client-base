@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.45 2000/06/13 18:11:34 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.46 2000/06/15 20:29:32 kopstain Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -105,7 +105,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     }
     #elif (CLIENT_OS == OS_LINUX)
     {
-      #if (CLIENT_CPU == CPU_ARM)
+      #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_MIPS)
         cpucount = 1;
       #else
       FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
@@ -1101,8 +1101,8 @@ static long __GetRawProcessorID(const char **cpuname)
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(cpuridtable)/sizeof(cpuridtable[0])); n++ )
           {
-            unsigned int l = strlen( cpuridtable[n].sig );
-            if ((!p[l] || isspace(p[l])) && memcmp( p, cpuridtable[n].sig, l)==0)
+            unsigned int l = strlen( cpuridtable[n].name );
+            if ((!p[l] || isspace(p[l])) && memcmp( p, cpuridtable[n].name, l)==0)
             {
               detectedtype = (long)cpuridtable[n].rid;
               break;
