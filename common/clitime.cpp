@@ -6,17 +6,20 @@
 // This file contains functions for obtaining/formatting/manipulating
 // the time. 'time' is always stored/passed/returned in timeval format.
 //
-// CliTimer() requires porting so that it returns the time as gettimeofday() 
-// would, ie seconds since 1.1.70 GMT in tv_sec, and remaining fraction in 
+// CliTimer() requires porting so that it returns the time as gettimeofday()
+// would, ie seconds since 1.1.70 GMT in tv_sec, and remaining fraction in
 // microseconds in tv_usec;
 //
-// CliTimer() is assumed to return a valid (possibly adjusted) time_t value 
+// CliTimer() is assumed to return a valid (possibly adjusted) time_t value
 // in tv_sec by much of the client code. If you see wierd time strings,
 // your implementation is borked. tv_usec is assumed to provide the highest
 // resolution time your OS supports (scaled of course).
 // ----------------------------------------------------------------------
 //
 // $Log: clitime.cpp,v $
+// Revision 1.26  1999/03/04 00:17:44  trevorh
+// Correct c0000005 error in CliTimer() after last update
+//
 // Revision 1.25  1999/03/03 04:29:36  cyp
 // created CliTimeGetMinutesWest() and CliTimerSetDelta(). See .h for descrip.
 //
@@ -43,7 +46,7 @@
 // ambiguities. ("declaration/type or an expression")
 //
 // Revision 1.17  1998/07/07 21:55:29  cyruspatel
-// client.h has been split into client.h and baseincs.h 
+// client.h has been split into client.h and baseincs.h
 //
 // Revision 1.16  1998/07/06 09:21:22  jlawson
 // added lint tags around cvs id's to suppress unused variable warnings.
@@ -66,11 +69,11 @@
 //
 // Revision 1.00  1998/05/01 05:01:08  cyruspatel
 // Created
-// 
+//
 
 #if (!defined(lint) && defined(__showids__))
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.25 1999/03/03 04:29:36 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.26 1999/03/04 00:17:44 trevorh Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -84,7 +87,7 @@ static int precalced_minuteswest = -1234;
 static struct timeval cliclock = {0,0};  //base time for CliClock()
 static int adj_time_delta = 0;
 
-/* 
+/*
  * Set the 'time delta', a value added to the tv_sec member by CliTimer()
  * before the time is returned. CliTimerSetDelta() returns the old delta.
  */
@@ -98,22 +101,22 @@ int CliTimerSetDelta( int delta )
 }
 
 
-/* 
+/*
  * timezone offset after compensating for dst (west of utc > 0, east < 0)
  * so that the number returned is constant for any time of year
  */
-int CliTimeGetMinutesWest(void) 
-{  
+int CliTimeGetMinutesWest(void)
+{
   int minwest;
-  
+
   if (precalced_minuteswest != -1234)
     return precalced_minuteswest;
 
 #if (CLIENT_OS == OS_NETWARE) || ((CLIENT_OS == OS_OS2) && !defined(EMX))
   minwest = timezone/60;
-  if (daylight) 
+  if (daylight)
     minwest += 60;
-  minwest = -minwest;      /* UTC = localtime + (timezone/60) */  
+  minwest = -minwest;      /* UTC = localtime + (timezone/60) */
   precalced_minuteswest = minwest;
 #elif (CLIENT_OS == OS_WIN32)
   TIME_ZONE_INFORMATION TZInfo;
@@ -146,11 +149,11 @@ int CliTimeGetMinutesWest(void)
   else if (loctime.tm_yday == utctime.tm_yday - 1) { minwest -= 1440; }
   else if (loctime.tm_yday <  utctime.tm_yday)     { minwest += 1440; }
   else                                             { minwest -= 1440; }
-  if (utctime.tm_isdst>0)  
+  if (utctime.tm_isdst>0)
     minwest-=60;
-  if (minwest < -(12*60)) 
-    minwest = -(12*60); 
-  else if (minwest > +(12*60)) 
+  if (minwest < -(12*60))
+    minwest = -(12*60);
+  else if (minwest > +(12*60))
     minwest = +(12*60);
   minwest = -minwest;
   precalced_minuteswest = minwest;
@@ -164,8 +167,8 @@ int CliTimeGetMinutesWest(void)
   precalced_minuteswest = minwest;
 #endif
   return minwest;
-}    
-   
+}
+
 
 /*
  * Get the time since first call to CliTimer (pass NULL if storage not reqd)
@@ -224,7 +227,7 @@ struct timeval *CliTimer( struct timeval *tv )
   stv.tv_usec = (ticks%1000)*1000;
   stv.tv_sec = basetime + (time_t)(ticks/1000);
 #elif (CLIENT_OS == OS_NETWARE)
-  nwCliGetTimeOfDay( &stv ); 
+  nwCliGetTimeOfDay( &stv );
 #elif (CLIENT_OS == OS_AMIGAOS)
   int dofallback = timer((unsigned int *)&stv );
   #define REQUIRES_TIMER_FALLBACK
@@ -283,9 +286,9 @@ struct timeval *CliTimer( struct timeval *tv )
     cliclock.tv_sec = stv.tv_sec;
     cliclock.tv_usec = stv.tv_usec;
   }
-  tv->tv_sec += adj_time_delta;
   if (tv)
   {
+    tv->tv_sec += adj_time_delta;
     tv->tv_sec = stv.tv_sec;
     tv->tv_usec = stv.tv_usec;
     return tv;
