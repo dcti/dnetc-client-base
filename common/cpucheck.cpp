@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.40 2000/05/06 20:20:53 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.41 2000/05/06 21:07:37 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -31,7 +31,8 @@ return "@(#)$Id: cpucheck.cpp,v 1.79.2.40 2000/05/06 20:20:53 cyp Exp $"; }
 #elif (CLIENT_OS == OS_AIX)
 #  include <sys/systemcfg.h>
 #elif ((CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
-       (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS))
+       (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
+        (CLIENT_OS == OS_MACOSX))
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
 #endif
@@ -62,7 +63,8 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   {
     cpucount = -1;
     #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
-        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
+        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
+        (CLIENT_OS == OS_MACOSX)
     { /* comment out if inappropriate for your *bsd - cyp (25/may/1999) */
       int ncpus; size_t len = sizeof(ncpus);
       int mib[2]; mib[0] = CTL_HW; mib[1] = HW_NCPU;
