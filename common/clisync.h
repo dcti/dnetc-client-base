@@ -14,7 +14,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.16 2001/03/29 16:36:53 teichp Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.17 2001/05/31 00:19:36 snake Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -367,7 +367,7 @@
   {
     while (fastlock_trylock(m) <= 0)
     {
-      #if (CLIENT_OS == OS_AMIGAOS)
+      #if (CLIENT_OS == OS_AMIGAOS) || (defined(__unix__))
       NonPolledUSleep(1);
       #else
       #error "What's up Doc?"
