@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.40 2000/01/21 23:27:35 ctate Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.41 2000/01/22 00:56:33 ctate Exp $"; }
 
 //#define TRACE
 
@@ -31,6 +31,7 @@ return "@(#)$Id: cmdline.cpp,v 1.133.2.40 2000/01/21 23:27:35 ctate Exp $"; }
 #include "confrwv.h"   // ValidateConfig()
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "cmdline.h"   // ourselves
+#include "triggers.h"   // TRIGGER_PAUSE_SIGNAL
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
@@ -166,9 +167,9 @@ int ParseCommandline( Client *client,
                strcmp( thisarg, "-shutdown") == 0 )
           { sig = SIGTERM; dowhat_descrip = "shutdown"; }
           else if (strcmp( thisarg, "-pause" ) == 0)
-          { sig = SIGTSTP; dowhat_descrip = "paused";  }
+          { sig = TRIGGER_PAUSE_SIGNAL; dowhat_descrip = "paused";  }
           else if (strcmp( thisarg, "-unpause" ) == 0)
-          { sig = SIGCONT; dowhat_descrip = "unpaused"; }
+          { sig = TRIGGER_UNPAUSE_SIGNAL; dowhat_descrip = "unpaused"; }
 
           pid_t already_sigd[128]; unsigned int sigd_count = 0;
           #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \

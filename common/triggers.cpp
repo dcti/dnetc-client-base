@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.16 2000/01/21 23:48:55 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.17 2000/01/22 00:56:34 ctate Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -329,14 +329,14 @@ static void __init_signal_handlers( int doingmodes )
 #ifndef CLISIGHANDLER_IS_SPECIAL
 extern "C" void CliSignalHandler( int sig )
 {
-  #if defined(SIGTSTP) && defined(SIGCONT) //&& defined(__unix__)
-  if (sig == SIGTSTP)
+  #if defined(TRIGGER_PAUSE_SIGNAL)
+  if (sig == TRIGGER_PAUSE_SIGNAL)
   {
     signal(sig,CliSignalHandler);
     RaisePauseRequestTrigger();
     return;
   }
-  if (sig == SIGCONT)
+  if (sig == TRIGGER_UNPAUSE_SIGNAL)
   {
     signal(sig,CliSignalHandler);
     ClearPauseRequestTrigger();
@@ -378,7 +378,7 @@ static void __init_signal_handlers( int doingmodes )
   #if defined(SIGHUP)
   signal( SIGHUP, CliSignalHandler );   //restart
   #endif
-  #if defined(SIGCONT) && defined(SIGTSTP)
+  #if defined(TRIGGER_PAUSE_SIGNAL)  // signal-based pause/unpause mechanism?
   if (!doingmodes)
   {
     #if defined(__unix__) && (CLIENT_OS != OS_BEOS)
@@ -390,11 +390,8 @@ static void __init_signal_handlers( int doingmodes )
     if( getpgrp() != getpid() )
       setpgid( 0, 0 );
     #endif
-    signal( SIGTSTP, CliSignalHandler );  //pause
-    signal( SIGCONT, CliSignalHandler );  //continue
-    #if (CLIENT_OS == OS_BEOS)            
-    signal( SIGUSR2, CliSignalHandler );  //SIGCONT only works if stopped
-    #endif
+    signal( TRIGGER_PAUSE_SIGNAL, CliSignalHandler );  //pause
+    signal( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue
   }
   #endif
   #if defined(SIGQUIT)
