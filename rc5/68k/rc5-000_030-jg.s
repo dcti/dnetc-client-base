@@ -1,9 +1,10 @@
 
 	OPT	O+,W-
 
-	XDEF	_rc5_unit_func_000_030
+	XDEF	_rc5_unit_func_000_030_asm
 
-;--------------------
+;-------------------- 
+;@(#)$Id: rc5-000_030-jg.s,v 1.1.2.1 1999/12/08 01:27:56 cyp Exp $
 
 	; Define P, Q
 
@@ -15,7 +16,7 @@ P0QR3:	equ	$bf0a8b1d	;(0*Q + P) <<< 3
 
 RUF_CODEALIGN:	MACRO
 	;Ensure next instruction is aligned on quadword boundary
-.align\@:	equ	*-_rc5_unit_func_000_030
+.align\@:	equ	*-_rc5_unit_func_000_030_asm
 	IFNE	.align\@&7
 	nop
 	RUF_CODEALIGN
@@ -38,7 +39,7 @@ RUF_CODEALIGN:	MACRO
 	;
 	;Exit:  d0=return code
 
-_rc5_unit_func_000_030:	movem.l	d2-7/a2-6,-(a7)
+_rc5_unit_func_000_030_asm:	movem.l	d2-7/a2-6,-(a7)
 
 	move.l	d0,-(a7)	;Save initial key iterations counter
 	move.l	#Q,a4	;a4=constant (P+nQ increment)
