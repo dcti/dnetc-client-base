@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.67 2000/12/31 12:30:02 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.68 2001/01/08 22:57:01 cyp Exp $"; }
 
 //#define TRACE
 
@@ -1103,7 +1103,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         else /* if (logging_is_initialized) */
         {
           LogScreenRaw("Warning: %s is obsolete.\n"
-                       "         Active settings: -runo%sline and -n %d%s.\n",
+                       "         Effective settings: -runo%sline and -n %d%s.\n",
               thisarg, ((client->offlinemode)?("ff"):("n")),
               ((client->blockcount<0)?(-1):((int)client->blockcount)),
               ((client->blockcount<0)?(" (exit on empty buffers)"):("")) );
