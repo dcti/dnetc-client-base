@@ -33,7 +33,6 @@ SECTION .text
 
         ALIGN 32
 GLOBAL cscipher_bitslicer_6b_i
-        GLOBAL cscipher_bitslicer_6b_i:function
 cscipher_bitslicer_6b_i: 
         sub  esp,2012
         push  ebp
@@ -6484,11 +6483,9 @@ L513:
         pop  ebp
         add  esp,2012
         ret
-.Lfe1: 
-        GLOBAL   cscipher_bitslicer_6b_i:function (.Lfe1-cscipher_bitslicer_6b_i)
+
         ALIGN 32
 GLOBAL csc_unit_func_6b_i
-        GLOBAL csc_unit_func_6b_i:function
 csc_unit_func_6b_i: 
         push  ebp
         mov  ebp,esp
@@ -6857,9 +6854,6 @@ L580:
         mov  esp,ebp
         pop  ebp
         ret
-.Lfe2: 
-        GLOBAL   csc_unit_func_6b_i:function (.Lfe2-csc_unit_func_6b_i)
-        ;IDENT "GCC: (GNU) 2.95.2 19991024 (release)"
 
         ALIGN 32
 mymemset:
