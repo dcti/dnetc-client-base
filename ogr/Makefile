@@ -1,28 +1,33 @@
 CFLAGS = -O2 -g -Wall -Du16="unsigned short" -Du32="unsigned long"
 
-all: choose test-ogr test-stubsplit
+all: choose test-ogr test-stubspace test-stubsplit
 
 test-ogr: test-ogr.o ogr.o choosedat.o crc32.o
+
+test-stubspace: test-stubspace.o stubsplit.o
 
 test-stubsplit: test-stubsplit.o stubsplit.o
 
 ogr.o: ogr.cpp client2.h crc32.h ogr.h
-	g++ $(CFLAGS) -c $<
+	gcc $(CFLAGS) -c $<
 
 stubsplit.o: stubsplit.cpp stubsplit.h ogr.h
-	g++ $(CFLAGS) -c $<
+	gcc $(CFLAGS) -c $<
+
+test-stubspace.o: test-stubspace.cpp stubsplit.h ogr.h
+	gcc $(CFLAGS) -c $<
 
 test-stubsplit.o: test-stubsplit.cpp stubsplit.h ogr.h
-	g++ $(CFLAGS) -c $<
+	gcc $(CFLAGS) -c $<
 
 test-ogr.o: test-ogr.cpp client2.h ogr.h
-	g++ $(CFLAGS) -c $<
+	gcc $(CFLAGS) -c $<
 
 choosedat.o: choosedat.cpp
-	g++ $(CFLAGS) -c $<
+	gcc $(CFLAGS) -c $<
 
 crc32.o: crc32.cpp
-	g++ $(CFLAGS) -c $<
+	gcc $(CFLAGS) -c $<
 
 choosedat.cpp: choose.dat bin2c.pl
 	perl bin2c.pl choose.dat choosedat.cpp choose_dat
