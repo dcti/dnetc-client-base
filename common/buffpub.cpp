@@ -10,10 +10,8 @@
  * ---------------------------------------------------------------------
  */
 
-const char *buffpriv_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.2 2000/03/28 00:12:06 andreasb Exp $"; }
 const char *buffupd_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.2 2000/03/28 00:12:06 andreasb Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.3 2000/04/14 12:59:06 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -39,9 +37,6 @@ return "@(#)$Id: buffpub.cpp,v 1.1.2.2 2000/03/28 00:12:06 andreasb Exp $"; }
 
 /* --------------------------------------------------------------------- */
 
-// Simple public version of the private version of this function with
-// the same name, for use in the public-source code distributions.
-
 int BufferZapFileRecords( const char *filename )
 {
   FILE *file;
@@ -66,9 +61,6 @@ int BufferZapFileRecords( const char *filename )
 
 
 /* --------------------------------------------------------------------- */
-
-// Simple public version of the private version of this function with
-// the same name, for use in the public-source code distributions.
 
 static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
 {
@@ -120,9 +112,6 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
 
 /* --------------------------------------------------------------------- */
 
-// Simple public version of the private version of this function with
-// the same name, for use in the public-source code distributions.
-
 static int BufferCloseFile( FILE *file )
 {
   fclose(file);
@@ -131,10 +120,6 @@ static int BufferCloseFile( FILE *file )
 
 /* --------------------------------------------------------------------- */
 
-// Internal function to accompany the public source code distributions
-// to handle network-order fixups of WorkRecords as they are stored or
-// read from disk.
-//
 // Note that we do not distinguish between translating to-or-from
 // network-order, since the conversion is mathematically reversible
 // with the same operation on both little-endian and big-endian
@@ -153,7 +138,7 @@ static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
     {
       u32 *w = (u32 *)(&(dest->work));
       for (unsigned i=0; i<(sizeof(dest->work)/sizeof(u32)); i++)
-        w[i] = ntohl(w[i]);
+        w[i] = (u32)ntohl(w[i]);
       break;
     }
     case OGR:
@@ -162,9 +147,9 @@ static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
       dest->work.ogr.workstub.stub.length = ntohs(dest->work.ogr.workstub.stub.length);
       for (int i = 0; i < STUB_MAX; i++)
         dest->work.ogr.workstub.stub.diffs[i] = ntohs(dest->work.ogr.workstub.stub.diffs[i]);
-      dest->work.ogr.workstub.worklength  = ntohl(dest->work.ogr.workstub.worklength);
-      dest->work.ogr.nodes.hi             = ntohl(dest->work.ogr.nodes.hi);
-      dest->work.ogr.nodes.lo             = ntohl(dest->work.ogr.nodes.lo);
+      dest->work.ogr.workstub.worklength  = (u32)ntohl(dest->work.ogr.workstub.worklength);
+      dest->work.ogr.nodes.hi             = (u32)ntohl(dest->work.ogr.nodes.hi);
+      dest->work.ogr.nodes.lo             = (u32)ntohl(dest->work.ogr.nodes.lo);
       break;
     }
   }
@@ -172,9 +157,6 @@ static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
 }
 
 /* --------------------------------------------------------------------- */
-
-// Simple public version of the private version of this function with
-// the same name, for use in the public-source code distributions.
 
 int UnlockBuffer( const char *filename )
 {
@@ -189,9 +171,6 @@ int UnlockBuffer( const char *filename )
 }
 
 /* --------------------------------------------------------------------- */
-
-// Simple public version of the private version of this function with
-// the same name, for use in the public-source code distributions.
 
 int BufferPutFileRecord( const char *filename, const WorkRecord * data,
                          unsigned long *countP )
@@ -231,9 +210,6 @@ int BufferPutFileRecord( const char *filename, const WorkRecord * data,
 }
 
 /* --------------------------------------------------------------------- */
-
-// Simple public version of the private version of this function with
-// the same name, for use in the public-source code distributions.
 
 int BufferUpdate( Client *client, int updatereq_flags, int interactive )
 {
@@ -276,7 +252,7 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
         unsigned long count;
         if (GetBufferCount(client, contest_i, 0, &count) >= 0) /* no error */
         {
-	  long threshold = ClientGetInThreshold( client, contest_i );
+          long threshold = ClientGetInThreshold( client, contest_i );
           if (threshold > 0 && count < (unsigned long) threshold )
           {
             if (count <= 1 || client->connectoften || interactive)
@@ -287,13 +263,9 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
       if (!doflush && !dontflush)
       {
         long count = GetBufferCount( client, contest_i, 1 /* use_out_file */, NULL );
-        if (count >= 0) /* no error */
+        if (count > 0) /* no error and something there to flush */
         {
-          if ( count > 0 /* count >= ClientGetOutThreshold( client, contest ) ||
-            ( client->connectoften && count > 0) || (interactive && count > 0) */)
-          {
-            doflush = 1;
-          }
+          doflush = 1;
         }
       }
     }
@@ -346,9 +318,6 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
 
 /* --------------------------------------------------------------------- */
 
-// Simple public version of the private version of this function with
-// the same name, for use in the public-source code distributions.
-
 int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data,
              unsigned long *countP ) /* returns <0 on ioerr, >0 if norecs */
 {
@@ -397,9 +366,6 @@ int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data,
 
 /* --------------------------------------------------------------------- */
 
-// Simple public version of the private version of this function with
-// the same name, for use in the public-source code distributions.
-
 int BufferGetFileRecord( const char *filename, WorkRecord * data,
                unsigned long *countP ) /* returns <0 on ioerr, >0 if norecs */
 {
@@ -407,9 +373,6 @@ int BufferGetFileRecord( const char *filename, WorkRecord * data,
 }
 
 /* --------------------------------------------------------------------- */
-
-// Simple public version of the private version of this function with
-// the same name, for use in the public-source code distributions.
 
 int BufferCountFileRecords( const char *filename, unsigned int contest,
                        unsigned long *packetcountP, unsigned long *normcountP )
