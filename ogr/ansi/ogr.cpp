@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.10 2003/09/07 00:03:28 oliver Exp $
+ * $Id: ogr.cpp,v 1.2.4.11 2003/09/12 13:16:13 mweiser Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -51,7 +51,7 @@
     #define OGROPT_CYCLE_CACHE_ALIGN 1
   #endif
 #elif defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
-  #if (__MWERKS__)
+  #if defined(__MWERKS__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
@@ -63,7 +63,7 @@
     #endif
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* use switch_asm   */
-  #elif (__MRC__)
+  #elif defined(__MRC__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
@@ -80,7 +80,7 @@
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* ACC is better    */
     #define OGROPT_CYCLE_CACHE_ALIGN              0 /* no balignl       */
-  #elif (__GNUC__)
+  #elif defined(__GNUC__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
@@ -88,14 +88,27 @@
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* GCC is better    */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* use switch_asm   */
-    #if !defined(__APPLE_CC__)
+    #if !defined(_AIX)                              /* no balignl       */
       #define OGROPT_CYCLE_CACHE_ALIGN              1
     #endif
+  #elif defined(__xlC__)
+    #include <builtins.h>                           /* __cntlz4()       */
+
+    #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
+    #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
+    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
+    #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* xlC does benefit */
+    #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
+
+    /* xlC has __rlwimi but lacks __rlwinm */
+    #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0
+    #define OGROPT_CYCLE_CACHE_ALIGN              0 /* no balignl       */
   #else
     #error play with the defines to find optimal settings for your compiler
   #endif
 #elif defined(ASM_POWER)
-  #if (__GNUC__)
+  #if defined (__GNUC__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
@@ -103,6 +116,20 @@
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* GCC does benefit */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* use switch_asm   */
+    #define OGROPT_CYCLE_CACHE_ALIGN              0 /* no balignl       */
+  #elif defined(__xlC__)
+    #include <builtins.h>                           /* __cntlz4()       */
+
+    #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
+    #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
+    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
+    #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* xlC does benefit */
+    #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
+
+    /* xlC has __rlwimi but lacks __rlwinm */
+    #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0
+    #define OGROPT_CYCLE_CACHE_ALIGN              0 /* no balignl       */
   #else
     #error play with the defines to find optimal settings for your compiler
   #endif
@@ -144,11 +171,12 @@
   #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
 #else
   #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
-  #if (defined(__PPC__) || defined(ASM_PPC)) || defined(__POWERPC__) ||\
+  #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__) || \
+      defined(ASM_POWER) || \
       (defined(__WATCOMC__) && defined(__386__)) || \
       (defined(__MWERKS__) && defined(__INTEL__)) || \
       (defined(__ICC)) /* icc is Intel only (duh!) */ || \
-      (defined(ALPHA_CIX)) || \
+      defined(ALPHA_CIX) || \
       (defined(__GNUC__) && (defined(ASM_X86) \
                              || (defined(ASM_68K) && (defined(mc68020) \
                              || defined(mc68030) || defined(mc68040) \
@@ -349,13 +377,9 @@ static int ogr_load(void *buffer, int buflen, void **state);
 static int ogr_cleanup(void);
 #endif
 
-#if defined(_AIXALL) && defined(ASM_POWER)
-  #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table_power
-#else
-  #ifndef OGR_GET_DISPATCH_TABLE_FXN
-    #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table
-  #endif
-#endif  
+#ifndef OGR_GET_DISPATCH_TABLE_FXN
+  #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table
+#endif
 
 extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 
@@ -476,14 +500,32 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 /* shift the list to add or extend the first mark */
 #if (OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 2)
 
-  #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__) || \
-      defined(ASM_POWER)
-  #if defined(__GNUC__)
-     #define __rlwinm(Rs,SH,MB,ME) \
-     ({ int Ra; __asm__ ("rlwinm %0,%1,%2,%3,%4" : "=r" (Ra) : "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
-     #define __rlwimi(Ra,Rs,SH,MB,ME) \
-     ({ __asm__ ("rlwimi %0,%2,%3,%4,%5" : "=r" (Ra) : "0" (Ra), "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
-  #endif /* __GNUC__ */
+/* gcc lacks builtin functions for rlwinm and rlwimi but has
+** inline assembly to call them directly */
+#if defined(__GNUC__) && defined(ASM_POWER)
+# define __rlwinm(Rs,SH,MB,ME) ({ \
+   int Ra; \
+   __asm__ ("rlinm %0,%1,%2,%3,%4" : \
+   "=r" (Ra) : "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+
+# define __rlwimi(Ra,Rs,SH,MB,ME) ({ \
+   __asm__ ("rlimi %0,%2,%3,%4,%5" : \
+   "=r" (Ra) : "0" (Ra), "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+
+#elif defined(__GNUC__) && (defined(ASM_PPC) || \
+       defined(__PPC__) || defined(__POWERPC__))
+# define __rlwinm(Rs,SH,MB,ME) ({ \
+   int Ra; \
+   __asm__ ("rlwinm %0,%1,%2,%3,%4" : \
+   "=r" (Ra) : "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+
+# define __rlwimi(Ra,Rs,SH,MB,ME) ({ \
+   __asm__ ("rlwimi %0,%2,%3,%4,%5" : \
+   "=r" (Ra) : "0" (Ra), "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+#endif
+
+#if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__) || \
+    defined(ASM_POWER)
   #define COMP_LEFT_LIST_RIGHT(lev, s)             \
   {                                                \
     switch (s)                                     \
@@ -2127,11 +2169,6 @@ static int found_one(const struct State *oState)
 }
 #endif
 
-
-#if defined(__SUNPRO_CC)
-  #define __inline inline
-#endif
-
 #if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
   static const char ogr_first_blank_8bit[256] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -2211,7 +2248,7 @@ static int found_one(const struct State *oState)
       return result;
     }
   #elif defined(FP_CLZ_LITTLEEND) /* using the exponent in floating point double format */
-  static __inline int LOOKUP_FIRSTBLANK(register unsigned int input)
+  static inline int LOOKUP_FIRSTBLANK(register unsigned int input)
   {
     unsigned int i;
     union {
@@ -2225,7 +2262,7 @@ static int found_one(const struct State *oState)
     return i == 0 ? 33 : 1055 - (u.i[1] >> 20);
   }
   #else /* C code, no asm */
-  static __inline int LOOKUP_FIRSTBLANK(register unsigned int input)
+  static inline int LOOKUP_FIRSTBLANK(register unsigned int input)
   {
     register int result = 0;
     if (input >= 0xffff0000) {
@@ -2240,12 +2277,23 @@ static int found_one(const struct State *oState)
     return result;
   }
   #endif
-#elif defined(__PPC__) || defined(ASM_PPC) || defined (__POWERPC__)/* CouNT Leading Zeros Word */
+#elif defined(ASM_PPC) || defined(__PPC__) || defined (__POWERPC__) /* CouNT Leading Zeros Word */
   #if defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
     { i = ~i; __asm__ ("cntlzw %0,%0" : "=r" (i) : "0" (i)); return ++i; }
-  #elif (__MWERKS__) || (__MRC__)
+  #elif defined(__MWERKS__) || defined(__MRC__)
     #define LOOKUP_FIRSTBLANK(x) (__cntlzw(~((unsigned int)(x)))+1)
+  #elif defined(__xlC__)
+    #define LOOKUP_FIRSTBLANK(x) (__cntlz4(~((unsigned int)(x)))+1)
+  #else
+    #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
+  #endif
+#elif defined(ASM_POWER) /* CouNT Leading Zeros */
+  #if defined(__GNUC__)
+    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
+    { i = ~i; __asm__ ("cntlz %0,%0" : "=r" (i) : "0" (i)); return ++i; }
+  #elif defined(__xlC__)
+    #define LOOKUP_FIRSTBLANK(x) (__cntlz4(~((unsigned int)(x)))+1)
   #else
     #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   #endif
