@@ -4,7 +4,7 @@
 ; For use by distributed.net. 
 ;
 ; based on r72-dg2 and RC5-64 'RG/HB re-pair II' cores
-; $Id: r72-go2.asm,v 1.1.2.2 2003/05/22 00:16:34 andreasb Exp $
+; $Id: r72-go2.asm,v 1.1.2.3 2003/05/22 00:49:55 andreasb Exp $
 
 %define P	  0xB7E15163
 %define Q	  0x9E3779B9
@@ -2369,8 +2369,8 @@ _NextKey:
 	mov	ebx, [RC5_72_L0hi]
 	bswap	edx
 	bswap	esi
-	adc	edx,0
-	adc	esi,0
+	adc	edx, BYTE 0
+	adc	esi, BYTE 0
 	bswap	edx
 	bswap	esi
 	mov	[RC5_72UnitWork_L0mid],edx
@@ -2457,7 +2457,7 @@ _checkKey1High_k7_mixed:
 	sub	[esi], ecx
 	mov	eax, RESULT_FOUND
 
-	jmp	finished
+	jmp	short finished
 
 finished_Found_nothing:
 	mov	eax, [RC5_72UnitWork]
@@ -2468,8 +2468,8 @@ finished_Found_nothing:
 	mov	esi, [RC5_72UnitWork_L0lo]
 	bswap	edx
 	bswap	esi
-	adc	edx,0
-	adc	esi,0
+	adc	edx, BYTE 0
+	adc	esi, BYTE 0
 	bswap	edx
 	bswap	esi
 	mov	[RC5_72UnitWork_L0mid],edx
