@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.153  1998/11/09 20:05:11  cyp
+// Did away with client.cktime altogether. Time-to-Checkpoint is calculated
+// dynamically based on problem completion state and is now the greater of 1
+// minute and time_to_complete_1_percent (an average change of 1% that is).
+//
 // Revision 1.152  1998/11/08 01:01:41  silby
 // Buncha hacks to get win32gui to compile, lots of cleanup to do.
 //
@@ -60,7 +65,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.152 1998/11/08 01:01:41 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.153 1998/11/09 20:05:11 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -129,7 +134,6 @@ Client::Client()
   strcpy(smtpfrom,"RC5Notify");
   strcpy(smtpdest,"you@your.site");
   numcpu = -1;
-  checkpoint_min=5;
   percentprintingoff=0;
   connectoften=0;
   nodiskbuffers=0;
@@ -153,7 +157,6 @@ Client::Client()
   nonewblocks=0;
   nettimeout=60;
   noexitfilecheck=0;
-  exitfilechecktime=30;
 #if defined(LURK)
   dialup.lurkmode=0;
   dialup.dialwhenneeded=0;

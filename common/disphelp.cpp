@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.50  1998/11/09 20:05:22  cyp
+// Did away with client.cktime altogether. Time-to-Checkpoint is calculated
+// dynamically based on problem completion state and is now the greater of 1
+// minute and time_to_complete_1_percent (an average change of 1% that is).
+//
 // Revision 1.49  1998/11/08 19:01:04  cyp
 // Removed lots and lots of junk; DisplayHelp() is no longer a client method;
 // unix-ish clients no longer use the internal pager.
@@ -158,7 +163,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.49 1998/11/08 19:01:04 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.50 1998/11/09 20:05:22 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -243,9 +248,7 @@ void DisplayHelp( const char * unrecognized_option )
   "-out2 <filename>   override name of DES output buffer file",
   "-ckpoint <fname>   set the name of the RC5 checkpoint file",
   "-ckpoint2 <fn>     set the name of the RC5 checkpoint file",
-  "-cktime <min>      set the number of seconds between saving checkpoints",
   "-noexitfilecheck   don't check for a 'exitrc5.now' command file",
-  "-exitfilechecktime <t> number of seconds that must elapse between checks",
   "-pausefile <fn>    name of file that causes the client to pause",
   "-processdes <x>    determines if the client will compete in DES contests",
   "-l <filename>      name of the log file",

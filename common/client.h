@@ -12,6 +12,11 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.96  1998/11/09 20:05:14  cyp
+// Did away with client.cktime altogether. Time-to-Checkpoint is calculated
+// dynamically based on problem completion state and is now the greater of 1
+// minute and time_to_complete_1_percent (an average change of 1% that is).
+//
 // Revision 1.95  1998/11/08 18:52:07  cyp
 // DisplayHelp() is no longer a client method.
 //
@@ -380,7 +385,6 @@ public:
   char pausefile[128];
 
   s32 numcpu;
-  s32 checkpoint_min;
   s32 percentprintingoff;
   s32 connectoften;
   s32 nodiskbuffers;
@@ -394,7 +398,6 @@ public:
   s32 nonewblocks;
   s32 nettimeout;
   s32 noexitfilecheck;
-  s32 exitfilechecktime;
   s32 preferred_contest_id;  // 0 for RC564, 1 for DESII (unlike config)
   s32 preferred_blocksize;
   s32 contestdone[2];

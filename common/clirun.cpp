@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.31  1998/11/09 20:05:09  cyp
+// Did away with client.cktime altogether. Time-to-Checkpoint is calculated
+// dynamically based on problem completion state and is now the greater of 1
+// minute and time_to_complete_1_percent (an average change of 1% that is).
+//
 // Revision 1.30  1998/11/09 18:01:25  cyp
 // Fixed timeRun adjustment. (checkpoints were always being updated every 3 secs)
 //
@@ -120,7 +125,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.30 1998/11/09 18:01:25 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.31 1998/11/09 20:05:09 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -903,7 +908,10 @@ int Client::Run( void )
   unsigned int getbuff_errs = 0;
   
   time_t timeNow;
-  time_t timeRun=0, timeLast=0, timeNextCheckpoint=0, timeNextConnect=0;
+  time_t timeRun=0, timeLast=0, timeNextConnect=0;
+  time_t lastCheckpointTime = 0;
+  int checkpointsDisabled = (!nodiskbuffers);
+  unsigned int checkpointsPercent = 0;
   int isPaused=0, wasPaused=0;
 
   // =======================================
@@ -934,12 +942,21 @@ int Client::Run( void )
 
   // --------------------------------------
   // Recover blocks from checkpoint files before anything else
+  // we always recover irrespective of TimeToQuit
   // --------------------------------------
 
-  if (UndoCheckpoint()) // we always recover irrespective of TimeToQuit
-    {                   // returns !0 if we have a break request
-    TimeToQuit = 1;
-    exitcode = -1;
+  if (!checkpointsDisabled) //!nodiskbuffers
+    { 
+    if (!IsFilenameValid( checkpoint_file[0] ) && 
+        !IsFilenameValid( checkpoint_file[1] ))
+      {
+      checkpointsDisabled = 1;
+      }
+    else if (UndoCheckpoint()) //returns !0 on break req.
+      {
+      TimeToQuit = 1;
+      exitcode = -1;
+      }
     }
 
   // --------------------------------------
@@ -1313,15 +1330,25 @@ int Client::Run( void )
     // If not quitting, then write checkpoints
     //----------------------------------------
 
-    if (!TimeToQuit && !nodiskbuffers && (timeRun > timeNextCheckpoint))
+    if (!TimeToQuit && !checkpointsDisabled && !CheckPauseRequestTrigger())
       {
-      timeNextCheckpoint = timeRun + (time_t)(checkpoint_min*60);
-      if (!CheckPauseRequestTrigger())
+      if (timeRun > (lastCheckpointTime + (time_t)(60)))
         {
-        //Checkpoints may be slightly late (a few seconds). However,
-        //this eliminates checkpoint catchup due to pausefiles/clock
-        //changes/other nasty things that change the clock
-        DoCheckpoint(load_problem_count);
+        lastCheckpointTime = timeRun;
+        unsigned long total_percent_now = 0;
+        for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
+          {
+          Problem *thisprob = GetProblemPointerFromIndex(prob_i);
+          if ( thisprob )
+            total_percent_now += thisprob->CalcPercent();
+          }
+        prob_i = checkpointsPercent;
+        checkpointsPercent = (total_percent_now/load_problem_count);
+        if (checkpointsPercent != prob_i)
+          {
+          if (DoCheckpoint(load_problem_count))
+            checkpointsDisabled = 1;
+          }
         }
       } 
       
@@ -1376,10 +1403,10 @@ int Client::Run( void )
 
    for (cont_i = 0; cont_i < 2; cont_i++ )
      {
-     if ( DoesFileExist( checkpoint_file[cont_i] ) )
+     if ( !checkpointsDisabled && DoesFileExist( checkpoint_file[cont_i] ) )
        EraseCheckpointFile( checkpoint_file[cont_i] );
      if (nodiskbuffers)    // we had better flush everything.
-       ForceFlush((u8)cont_i);
+       ForceFlush(cont_i);
      }
    if (randomchanged)  
      WriteContestandPrefixConfig();
@@ -1448,7 +1475,7 @@ int Client::DoCheckpoint( unsigned int load_problem_count )
 {
   FileEntry fileentry;
   unsigned int cont_i, prob_i;
-  int have_valid_filenames = 0;
+  int do_checkpoint = 0;
   
   for (cont_i = 0; cont_i < 2; cont_i++)
     {
@@ -1456,11 +1483,11 @@ int Client::DoCheckpoint( unsigned int load_problem_count )
     if ( IsFilenameValid( checkpoint_file[cont_i] ) )
       {
       EraseCheckpointFile( checkpoint_file[cont_i] ); 
-      have_valid_filenames = 1;
+      do_checkpoint = 1;
       }
     }
-
-  if ( !nodiskbuffers && have_valid_filenames )
+    
+  if ( !nodiskbuffers && do_checkpoint )
     {
     for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
       {
@@ -1494,7 +1521,7 @@ int Client::DoCheckpoint( unsigned int load_problem_count )
       }  // for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
     } // if ( !nodiskbuffers )
 
-  return 0;
+  return (do_checkpoint != 0);
 }
 
 // ---------------------------------------------------------------------------

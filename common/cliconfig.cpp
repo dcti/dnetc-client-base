@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.194  1998/11/09 20:05:16  cyp
+// Did away with client.cktime altogether. Time-to-Checkpoint is calculated
+// dynamically based on problem completion state and is now the greater of 1
+// minute and time_to_complete_1_percent (an average change of 1% that is).
+//
 // Revision 1.193  1998/11/09 14:32:16  chrisb
 // Set the RISC OS CPU priority message, and fixed a typo of CLIEN_OS == WIN32S.
 //
@@ -264,7 +269,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.193 1998/11/09 14:32:16 chrisb Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.194 1998/11/09 20:05:16 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -317,9 +322,9 @@ return "@(#)$Id: cliconfig.cpp,v 1.193 1998/11/09 14:32:16 chrisb Exp $"; }
 #define CONF_FREQUENT             31
 #define CONF_NODISK               32
 #define CONF_NOFALLBACK           33
-#define CONF_CKTIME               34
+#define CONF_CKTIME               34 /* obsolete */
 #define CONF_NETTIMEOUT           35
-#define CONF_EXITFILECHECKTIME    36
+#define CONF_EXITFILECHECKTIME    36 /* obsolete */
 #define CONF_OFFLINEMODE          37
 #define CONF_LURKMODE             38
 #define CONF_RC5IN                39
@@ -705,11 +710,7 @@ static optionstruct options[OPTION_COUNT]=
   ),
   3,3,7,NULL},
 //34
-{ "cktime", CFGTXT("Interval between saving of checkpoints (minutes):"),"5",
-  CFGTXT(
-  "This option determines the frequency (in minutes) between checkpoint writes.\n"
-  )
-  ,1,2,8,NULL},
+{ "" /* "cktime" */, "","5", "", /* obsolete */ 0,2,0,NULL},
 //35
 { "nettimeout", CFGTXT("Network Timeout (seconds)"), "60",
   CFGTXT(
@@ -718,7 +719,7 @@ static optionstruct options[OPTION_COUNT]=
   "broken.\n"
   ),3,2,8,NULL},
 //36
-{ "exitfilechecktime", "","30","", /* obsolete */ 0,2,0,NULL},
+{ "" /* "exitfilechecktime" */, "","30","", /* obsolete */ 0,2,0,NULL},
 //37
 { "runbuffers", CFGTXT("Offline operation mode"),"0",
   CFGTXT(
@@ -899,9 +900,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
     options[CONF_FREQUENT].thevariable=&connectoften;
     options[CONF_NODISK].thevariable=&nodiskbuffers;
     options[CONF_NOFALLBACK].thevariable=&nofallback;
-    options[CONF_CKTIME].thevariable=&checkpoint_min;
     options[CONF_NETTIMEOUT].thevariable=&nettimeout;
-    options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
     options[CONF_OFFLINEMODE].thevariable=&offlinemode;
     
     options[CONF_LOGNAME].thevariable=(char *)(&logname[0]);
@@ -1349,19 +1348,9 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           choice=yesno(parm);
           if (choice >= 0) *(s32 *)options[CONF_NOFALLBACK].thevariable=choice;
           break;
-        case CONF_CKTIME:
-          choice=atoi(parm);
-          if (choice > 0) *(s32 *)options[CONF_CKTIME].thevariable=choice;
-          ValidateConfig();
-          break;
         case CONF_NETTIMEOUT:
           choice=atoi(parm);
           if (choice > 0) *(s32 *)options[CONF_NETTIMEOUT].thevariable=choice;
-          ValidateConfig();
-          break;
-        case CONF_EXITFILECHECKTIME:
-          choice=atoi(parm);
-          if (choice > 0) *(s32 *)options[CONF_EXITFILECHECKTIME].thevariable=choice;
           ValidateConfig();
           break;
         case CONF_OFFLINEMODE:
@@ -1583,14 +1572,10 @@ int Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   if (tempconfig) quietmode=1;
   tempconfig=ini.getkey(OPTION_SECTION, "nofallback", "0")[0];
   if (tempconfig) nofallback=1;
-  tempconfig=ini.getkey(OPTION_SECTION, "cktime", "0")[0];
-  if (tempconfig) checkpoint_min=max(2,tempconfig);
   tempconfig=ini.getkey(OPTION_SECTION, "nettimeout", "60")[0];
   if (tempconfig) nettimeout=min(300,max(5,tempconfig));
   tempconfig=ini.getkey(OPTION_SECTION, "noexitfilecheck", "0")[0];
   if (tempconfig) noexitfilecheck=1;
-  tempconfig=ini.getkey(OPTION_SECTION, "exitfilechecktime", "30")[0];
-  if (tempconfig) exitfilechecktime=max(tempconfig,1);
 #if defined(LURK)
   tempconfig=ini.getkey(OPTION_SECTION, "lurk", "0")[0];
   if (tempconfig) dialup.lurkmode=1;
@@ -1685,14 +1670,6 @@ void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
     minutes=0;
   if ( blockcount < 0 ) 
     blockcount=0;
-  if (checkpoint_min < 2) 
-    checkpoint_min=2;
-  else if (checkpoint_min > 30) 
-    checkpoint_min=30;
-  if (exitfilechecktime < 5) 
-    exitfilechecktime=5;
-  else if (exitfilechecktime > 600) 
-    exitfilechecktime=600;
   if (nettimeout < 5) 
     nettimeout=5;
   else if (nettimeout > 300) 
@@ -1821,9 +1798,7 @@ int Client::WriteFullConfig(void) //construct a brand-spanking-new config
   INISETKEY( CONF_FREQUENT, connectoften );
   INISETKEY( CONF_NODISK, nodiskbuffers );
   INISETKEY( CONF_NOFALLBACK, nofallback );
-  INISETKEY( CONF_CKTIME, checkpoint_min );
   INISETKEY( CONF_NETTIMEOUT, nettimeout );
-  INISETKEY( CONF_EXITFILECHECKTIME, exitfilechecktime );
   INISETKEY( CONF_LOGNAME, logname );
   INISETKEY( CONF_CHECKPOINT, checkpoint_file[0] );
   INISETKEY( CONF_CHECKPOINT2, checkpoint_file[1] );

@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.95  1998/11/09 20:05:20  cyp
+// Did away with client.cktime altogether. Time-to-Checkpoint is calculated
+// dynamically based on problem completion state and is now the greater of 1
+// minute and time_to_complete_1_percent (an average change of 1% that is).
+//
 // Revision 1.94  1998/11/09 01:59:20  remi
 // Fixed a bug where ./rc5des -help will print the help text and then go to
 // config mode if there isn't any .ini file.
@@ -51,7 +56,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.94 1998/11/09 01:59:20 remi Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.95 1998/11/09 20:05:20 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -555,12 +560,14 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         if (nextarg)
           {
           skip_next = 1;
+          #if 0 /* obsolete */
           exitfilechecktime = atoi(nextarg);
           if (exitfilechecktime < 5) exitfilechecktime=5;
           else if (exitfilechecktime > 600) exitfilechecktime=600;
           if (logging_is_initialized)
             LogScreenRaw("Setting exitfile check time to %u\n", 
                 (unsigned int)(exitfilechecktime) );
+          #endif
           }
         }
       else if ( strcmp( thisarg, "-c" ) == 0)      // set cpu type
@@ -668,11 +675,13 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         if (nextarg)
           {
           skip_next = 1;
+          #if 0 /* obsolete */
           int tmp = atoi(nextarg);
           inimissing = 0; // Don't complain if the inifile is missing
           checkpoint_min=((tmp <=2)?(2):(tmp));
           if (logging_is_initialized)
             LogScreenRaw("Setting checkpointing to %u minutes\n", (unsigned int)(checkpoint_min));
+          #endif
           }
         }
       else if ( strcmp( thisarg, "-pausefile" ) == 0)
