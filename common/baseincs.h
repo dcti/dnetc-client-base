@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.26  1998/10/11 00:36:38  cyp
+// include "w32pre.h" for win32
+//
 // Revision 1.25  1998/10/06 15:08:27  blast
 // changed some AmigaOS includes...
 //
@@ -201,8 +204,9 @@ extern "C" {
   #include <windows.h>
   #include <winsock.h>      // timeval
   #include "lurk.h"
-  #include "w32svc.h" //service
-  #include "w32cons.h" //console
+  #include "w32svc.h"       // service
+  #include "w32cons.h"      // console
+  #include "w32pre.h"       // prelude
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
   #include <io.h>
@@ -236,6 +240,9 @@ extern "C" {
   #include <unistd.h>
   #if (((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS==OS_FREEBSD) || (CLIENT_OS==OS_BSDI))
     #include <errno.h> // glibc2 has errno only here
+  #endif
+  #if (CLIENT_OS == OS_LINUX)
+    #include <sched.h>
   #endif
 #elif (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_ARM)
   #include <sys/time.h>
