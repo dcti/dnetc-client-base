@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.4  1998/10/05 02:10:19  cyp
+// Removed explicit time stamps ([%s],Time())
+//
 // Revision 1.3  1998/10/04 17:15:15  silby
 // Made test block completion notice more verbose.
 //
@@ -19,7 +22,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.3 1998/10/04 17:15:15 silby Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.4 1998/10/05 02:10:19 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -38,7 +41,6 @@ return "@(#)$Id: probfill.cpp,v 1.3 1998/10/04 17:15:15 silby Exp $"; }
 #include "clirate.h"   // CliGetKeyrateForProblem()
 #include "probman.h"   // GetProblemPointerFromIndex()
 #include "probfill.h"   // ourselves.
-#define Time() (CliGetTimeString(NULL,1))
 
 // =======================================================================
 // each individual problem load+save generates 4 or more messages lines 
@@ -170,7 +172,7 @@ static unsigned int __IndividualProblemUnload( Problem *thisprob,
       }
     if (msg)
       {
-      Log( "[%s] %s block %08lX:%08lX (%d.%02d%% complete)\n", Time(), msg,
+      Log( "%s block %08lX:%08lX (%d.%02d%% complete)\n", msg,
           (unsigned long) keyhi, (unsigned long) keylo,
             (unsigned int)(percent/100), (unsigned int)(percent%100) );
       }
@@ -249,8 +251,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 
       if (load_problem_count <= COMBINEMSG_THRESHOLD)
         {
-        Log( "\n[%s] %s", CliGetTimeString(NULL,1), /* == Time() */
-             CliGetMessageForProblemCompleted( thisprob ) );
+        Log( CliGetMessageForProblemCompleted( thisprob ) );
         }
       else /* stop the log file from being cluttered with load/save msgs */
         {
@@ -294,7 +295,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   #if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
   if ( prob_i >= 4 )
     {
-    #if defined(MMX_BITSLICER)
+    #if (defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS))
     if ( des_unit_func != des_unit_func_mmx ) // if not using mmx cores
     #endif
       {
@@ -382,8 +383,8 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
           (fileentry.buildlo != FILEENTRY_BUILDLO))
         {
         fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
-        //LogScreen("[%s] Read partial block from another cpu/os/build.\n"
-        // "[%s] Marking entire block as unchecked.\n", Time(), Time());
+        //LogScreen("Read partial block from another cpu/os/build.\n"
+        // "Marking entire block as unchecked.\n");
         }
       else if ((ntohl(fileentry.iterations.lo) & 0x00000001L) == 1)
         {
@@ -399,8 +400,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     {
     if (load_problem_count <= COMBINEMSG_THRESHOLD)
       {
-      Log( "[%s] %s\n", CliGetTimeString(NULL,1),
-           CliGetMessageForFileentryLoaded( &fileentry ) );
+      Log( "%s\n", CliGetMessageForFileentryLoaded( &fileentry ) );
       }
 
     thisprob->LoadState( (ContestWork *) &fileentry , 
@@ -533,8 +533,8 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
       if (loaded_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD )
         {
-        sprintf(buffer, "[%s] Loaded %u %s block%s (%u*2^28 keys) from %s", 
-              Time(), loaded_problems_count[cont_i], cont_name,
+        sprintf(buffer, "Loaded %u %s block%s (%u*2^28 keys) from %s", 
+              loaded_problems_count[cont_i], cont_name,
               ((loaded_problems_count[cont_i]==1)?(""):("s")),
               loaded_normalized_key_count[cont_i],
               (nodiskbuffers ? "(memory-in)" : in_buffer_file[cont_i]) );
@@ -548,8 +548,8 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
       if (saved_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD)
         {
-        sprintf(buffer, "[%s] Saved %u %s block%s (%u*2^28 keys) to %s", 
-              Time(), saved_problems_count[cont_i], cont_name,
+        sprintf(buffer, "Saved %u %s block%s (%u*2^28 keys) to %s", 
+              saved_problems_count[cont_i], cont_name,
               ((saved_problems_count[cont_i]==1)?(""):("s")),
               saved_normalized_key_count[cont_i],
               (mode == PROBFILL_UNLOADALL)?
@@ -573,20 +573,19 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
           ((load_problem_count > number_of_crunchers) ? 
               load_problem_count : number_of_crunchers )) == 0 )
         {
-        Log( "[%s] Summary: %s\n", Time(),
-              CliGetSummaryStringForContest(cont_i) );
+        Log( "Summary: %s\n", CliGetSummaryStringForContest(cont_i) );
         }
 
       unsigned int in = (unsigned int) CountBufferInput((u8) cont_i);
       unsigned int out = (unsigned int) CountBufferOutput((u8) cont_i);
-      const char *msg = "[%s] %u %s block%s %s in file %s\n";
+      const char *msg = "%u %s block%s %s in file %s\n";
 
-      Log( msg, Time(), in, cont_name, in == 1 ? "" : "s",  
+      Log( msg, in, cont_name, in == 1 ? "" : "s",  
             ((mode == PROBFILL_UNLOADALL)?(in==1?"is":"are"):
                                           (in==1?"remains":"remain")),
             (nodiskbuffers ? "(memory-in)" : in_buffer_file[cont_i]));
 
-      Log( msg, Time(), out, cont_name, out == 1 ? "" : "s", 
+      Log( msg, out, cont_name, out == 1 ? "" : "s", 
             out == 1 ? "is" : "are",
             (nodiskbuffers ? "(memory-out)" : out_buffer_file[cont_i]));
       }
