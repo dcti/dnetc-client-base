@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.30 2000/04/21 13:05:02 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.31 2000/04/23 06:10:36 jlawson Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -508,7 +508,10 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   CFGTXT(
   "If the keyserver that your client will be connecting to is a personal\n"
   "proxy inside a protected LAN (inside a firewall), set this option to 'yes'.\n"
-  "Otherwise leave it at 'No'.\n"
+  "Otherwise leave it at 'No'.\n\n\n"
+  "(This option controls whether the client will 'fallback' to an official\n"
+  "distributed.net keyserver after connection failures to the server address\n"
+  "you have manually specified.)\n"
   ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL},
 //42
 { CFGTXT("Firewall/proxy protocol"), "none/transparent/mapped" /* note: atol("")==0 */,
