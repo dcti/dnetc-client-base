@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.17 1999/12/12 01:34:20 mfeiri Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.18 1999/12/16 06:11:49 dakidd Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -315,6 +315,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       }
       #elif (CLIENT_OS == OS_MACOS)
        ch = getch(); /* sometimes we do console input ;-) - Mindmorph */
+       if (ch == 3) ch = 13; // Hack to get "enter" key to equal "return" key.
       #else
       {
         setvbuf(stdin, (char *)NULL, _IONBF, 0);
