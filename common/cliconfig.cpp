@@ -2908,15 +2908,14 @@ void Client::PrintBanner(const char * clname)
 
 #if (CLIENT_CPU == CPU_X86)
 int Client::x86id()
-//#if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_OS2)
 {
   u32 detectedvalue; //valye x86ident returns, must be interpreted
-  int coretouse; // the core the client should use of the 5(6?)
+  int coretouse = -1; // the core the client should use of the 5(6?)
 
   LogScreen("Beginning CPU identification...\n");
   detectedvalue = x86ident();
   LogScreen("Completed CPU identification. ");
-  if ((detectedvalue >> 16)== 0x7943) // Cyrix CPU
+  if ((detectedvalue >> 16) == 0x7943) // Cyrix CPU
   {
     detectedvalue &= 0xfff0; //strip last 4 bits, don't need stepping info
     if (detectedvalue == 0x40)
@@ -3170,7 +3169,6 @@ int Client::x86id()
   else
   {
     LogScreen("Detected an unknown processor from an unknown manufacturer\n");
-    coretouse=-1;
   }
   return coretouse;
 }
