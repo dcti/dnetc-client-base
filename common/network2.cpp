@@ -4,7 +4,7 @@
 //
 
 const char *network_cpp(void) {
-return "@(#)$Id: network2.cpp,v 1.1.2.5 1999/04/22 09:17:38 jlawson Exp $"; }
+return "@(#)$Id: network2.cpp,v 1.1.2.6 1999/04/25 01:57:27 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "dcticonn.h"         // DCTIConnServer class
@@ -47,6 +47,7 @@ Network::Network( const char *servname, int servport,
      __hostnamecpy( server_name, servname, sizeof(server_name));
   server_port = servport;
   autofindkeyserver = !server_name[0];
+  fwall_userpass[0] = 0;
 
 
   // make sure server port matches hostname.
@@ -71,7 +72,8 @@ Network::Network( const char *servname, int servport,
 
   // connection mode.
   startmode = 0;
-  if (_enctype == 1 /*uue*/ || _enctype == 3 /*http+uue*/)
+  if (_enctype == 1 /*uue*/ || _enctype == 3 /*http+uue*/ ||
+      _enctype == 7 /*generic+uue*/ )
   {
     startmode |= MODE_UUE;
   }
@@ -82,8 +84,13 @@ Network::Network( const char *servname, int servport,
     {
       fwall_hostport = _fwallport;
       if (_fwalluid)
+      {
         strncpy( fwall_userpass, _fwalluid, sizeof(fwall_userpass));
+        fwall_userpass[sizeof(fwall_userpass) - 1] = 0;
+      }
       __hostnamecpy( fwall_hostname, _fwallhost, sizeof(fwall_hostname));
+      if (fwall_hostport == 0)
+        fwall_hostport = 8080;
     }
   }
   else if (_enctype == 4 /*socks4*/ || _enctype == 5 /*socks5*/)
@@ -94,7 +101,26 @@ Network::Network( const char *servname, int servport,
       fwall_hostport = _fwallport;
       __hostnamecpy(fwall_hostname, _fwallhost, sizeof(fwall_hostname));
       if (_fwalluid)
+      {
         strncpy(fwall_userpass, _fwalluid, sizeof(fwall_userpass));
+        fwall_userpass[sizeof(fwall_userpass) - 1] = 0;
+      }
+      if (fwall_hostport == 0)
+        fwall_hostport = 1080;
+    }
+  }
+  else if (_enctype == 6 /*generic*/ || _enctype == 7 /*generic+uue*/)
+  {
+    if (_fwallhost && _fwallhost[0])
+    {
+      startmode |= MODE_GENERIC;
+      fwall_hostport = _fwallport;
+      __hostnamecpy(fwall_hostname, _fwallhost, sizeof(fwall_hostname));
+      if (_fwalluid)
+      {
+        strncpy(fwall_userpass, _fwalluid, sizeof(fwall_userpass));
+        fwall_userpass[sizeof(fwall_userpass) - 1] = 0;
+      }
       if (fwall_hostport == 0)
         fwall_hostport = 1080;
     }
@@ -177,7 +203,14 @@ int Network::Open(void)
     else if (startmode & MODE_HTTP)
     {
       connserver->SetHTTPMode(fwall_hostname, fwall_hostport,
-           fwall_userpass);
+          fwall_userpass);
+      if (startmode & MODE_UUE)
+        connserver->SetUUEMode();
+    }
+    else if (startmode & MODE_GENERIC)
+    {
+      connserver->SetGenericMode(fwall_hostname, fwall_hostport,
+          fwall_userpass);
       if (startmode & MODE_UUE)
         connserver->SetUUEMode();
     }
