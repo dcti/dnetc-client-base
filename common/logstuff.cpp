@@ -11,7 +11,7 @@
  * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.17 2000/04/15 14:18:33 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.18 2000/05/06 20:38:40 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -56,7 +56,8 @@ return "@(#)$Id: logstuff.cpp,v 1.37.2.17 2000/04/15 14:18:33 cyp Exp $"; }
      CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
      CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN32S )
   #define ftruncate( fd, sz )  chsize( fd, sz )
-#elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_AMIGAOS) || \
+      (CLIENT_OS == OS_MACOS)
   #define ftruncate( fd, sz ) //nada, not supported
   #define FTRUNCATE_NOT_SUPPORTED
 #endif  
@@ -179,6 +180,17 @@ static FILE *__fopenlog( const char *fn, const char *mode )
     return file;
   close(fd);
   return (FILE *)0;
+}
+#elif (CLIENT_OS == OS_MACOS)
+static FILE *__fopenlog( const char *fn, const char *mode )
+{
+   FILE *file;
+   OSType temp;
+   temp = __gettype(0);
+   _ftype = 'RC5L';
+   file = fopen( GetFullPathForFilename( fn ), mode );
+   _ftype = temp;
+   return file;
 }
 #else
 #define __fopenlog( _fn, _mode ) fopen( GetFullPathForFilename( _fn ), _mode )
