@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.103  1998/11/26 07:23:03  cyp
+// Added stopiniio flag to client object. Ini should not be updated with
+// randomprefix number if it didn't exist to begin with.
+//
 // Revision 1.102  1998/11/22 14:54:35  cyp
 // Adjusted to reflect changed -runonline, -runoffline, -n behaviour
 //
@@ -82,7 +86,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.102 1998/11/22 14:54:35 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.103 1998/11/26 07:23:03 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -214,6 +218,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
 
     if ( ReadConfig() != 0)
       {
+      stopiniio = 1; /* client class */
       ModeReqSet( MODEREQ_CONFIG );
       inimissing = 1;
       }
