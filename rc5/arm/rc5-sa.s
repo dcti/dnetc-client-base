@@ -4,6 +4,9 @@
 ; Steve Lee, Chris Berry, Tim Dobson 1997,1998
 ;
 ; $Log: rc5-sa.s,v $
+; Revision 1.5  1998/06/15 12:04:16  kbracey
+; Lots of consts.
+;
 ; Revision 1.4  1998/06/15 10:49:42  kbracey
 ; Added ident strings
 ;
@@ -14,7 +17,8 @@
 
         AREA    fastrc5area, CODE, READONLY
 
-        DCB     "@(#)$Id: rc5-sa.s,v 1.4 1998/06/15 10:49:42 kbracey Exp $", 0
+        DCB     "@(#)$Id: rc5-sa.s,v 1.5 1998/06/15 12:04:16 kbracey Exp $", 0
+        ALIGN
 
         EXPORT  rc5_unit_func_strongarm
 

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.18  1998/06/15 12:03:58  kbracey
+// Lots of consts.
+//
 // Revision 1.17  1998/06/15 06:18:35  dicamillo
 // Updates for BeOS
 //
@@ -21,7 +24,7 @@
 // call DisplayHelp() from main with the 'unrecognized option' argv[x]
 // or NULL or "-help" or "help" (or whatever)
 
-static char *id="@(#)$Id: disphelp.cpp,v 1.17 1998/06/15 06:18:35 dicamillo Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.18 1998/06/15 12:03:58 kbracey Exp $";
 
 #include "client.h"
 
@@ -247,7 +250,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
       printf("\nPress '+' or '-' for the next/previous page, or any other key to quit... ");
 
     i = readkeypress();
-    if (i == '+' || i == '=' || i == ' ' || 
+    if (i == '+' || i == '=' || i == ' ' ||
         i == 'f' || i == '\r' || i == '\n')
     {
       startline += maxpagesize;

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: threadcd.cpp,v $
+// Revision 1.7  1998/06/15 12:04:08  kbracey
+// Lots of consts.
+//
 // Revision 1.6  1998/06/15 04:57:16  remi
 // Cleared a warning with gcc.
 //
@@ -23,7 +26,7 @@
 // This module encapsulates functions for the creation and destruction of
 // a single thread - used by client.cpp and piproxy.cpp
 
-static char *id="@(#)$Id: threadcd.cpp,v 1.6 1998/06/15 04:57:16 remi Exp $";
+static const char *id="@(#)$Id: threadcd.cpp,v 1.7 1998/06/15 12:04:08 kbracey Exp $";
 
 #include "threadcd.h"   //includes implementation and porting notes.
 #include "sleepdef.h"   //sleep() and usleep()

@@ -6,6 +6,9 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.16  1998/06/15 12:03:53  kbracey
+// Lots of consts.
+//
 // Revision 1.15  1998/06/14 08:26:43  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -28,7 +31,7 @@
                  >9 days, or >999Kk/s) will cause line to wrap.
 */
 
-static char *id="@(#)$Id: clisrate.cpp,v 1.15 1998/06/14 08:26:43 friedbait Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.16 1998/06/15 12:03:53 kbracey Exp $";
 
 #include "clisrate.h" //includes client.h, clitime.h, clirate.h, clicdata.h
 

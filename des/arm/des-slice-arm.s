@@ -5,6 +5,9 @@
 ; based on deseval.c from Matthew Kwan's bitslicing DES key search.
 ;
 ; $Log: des-slice-arm.s,v $
+; Revision 1.9  1998/06/15 12:04:10  kbracey
+; Lots of consts.
+;
 ; Revision 1.8  1998/06/15 10:15:38  kbracey
 ; New ARM sboxes from Steve Lee based on the latest Kwan sboxes.
 ;
@@ -15,7 +18,8 @@
 
 	AREA	fastdesarea, CODE, READONLY
 
-        DCB     "@(#)$Id: des-slice-arm.s,v 1.8 1998/06/15 10:15:38 kbracey Exp $", 0
+        DCB     "@(#)$Id: des-slice-arm.s,v 1.9 1998/06/15 12:04:10 kbracey Exp $", 0
+        ALIGN
 
         EXPORT	des_unit_func_arm
 	IMPORT	convert_key_from_des_to_inc__FPUlT1

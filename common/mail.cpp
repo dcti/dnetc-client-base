@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.11  1998/06/15 12:04:01  kbracey
+// Lots of consts.
+//
 // Revision 1.10  1998/06/14 08:26:51  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -26,7 +29,7 @@
 #define GEN_HEADER_AT_SEND    // FIFO buffer requires generating headers at
 #endif                        // send time rather than at msg creation time.
 
-static char *id="@(#)$Id: mail.cpp,v 1.10 1998/06/14 08:26:51 friedbait Exp $";
+static const char *id="@(#)$Id: mail.cpp,v 1.11 1998/06/15 12:04:01 kbracey Exp $";
 
 #include "network.h"
 #include "client.h"

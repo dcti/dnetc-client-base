@@ -6,6 +6,9 @@
 //
 //
 // $Log: network.cpp,v $
+// Revision 1.22  1998/06/15 12:04:03  kbracey
+// Lots of consts.
+//
 // Revision 1.21  1998/06/14 13:08:09  ziggyb
 // Took out all OS/2 DOD stuff, being moved to platforms\os2cli\dod.cpp
 //
@@ -25,7 +28,7 @@
 //                      (which should now warn if macros are not the same)
 //
 
-static char *id="@(#)$Id: network.cpp,v 1.21 1998/06/14 13:08:09 ziggyb Exp $";
+static const char *id="@(#)$Id: network.cpp,v 1.22 1998/06/15 12:04:03 kbracey Exp $";
 
 #include "network.h"
 #include "sleepdef.h"    //  Fix sleep()/usleep() macros there! <--
@@ -897,7 +900,7 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
       sleep(1); // full 1 second on Solaris due to so many reported network problems.
 #elif (CLIENT_OS == OS_HPUX)
       usleep( 100000 );  // use define in sleepdef.h and catch #error
-  #if 0    
+  #if 0
   #ifdef _STRUCT_TIMESPEC
       // HP-UX 10.x has nanosleep() rather than usleep()
       struct timespec interval, remainder;

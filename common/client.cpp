@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.51  1998/06/15 12:03:49  kbracey
+// Lots of consts.
+//
 // Revision 1.50  1998/06/15 08:28:02  jlawson
 // fixed signed/unsigned comparison
 //
@@ -27,7 +30,7 @@
 //
 //
 
-static char *id="@(#)$Id: client.cpp,v 1.50 1998/06/15 08:28:02 jlawson Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.51 1998/06/15 12:03:49 kbracey Exp $";
 
 #include "client.h"
 
@@ -640,7 +643,8 @@ s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
 
   // close this connection
   if (!netin) delete net;
-  Log( "\r[%s] Retrieved %d %s block%s from server              \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
+  LogScreen( "\r" );
+  Log( "[%s] Retrieved %d %s block%s from server              \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
   return ( count );
 #endif
 }
@@ -1034,7 +1038,8 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
 
   // close this connection
   if (!netin) delete net;
-  Log( "\r[%s] Sent %d %s block%s to server                \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
+  LogScreen( "\r" );
+  Log( "[%s] Sent %d %s block%s to server                \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
   return( count );
 #endif //NONETWORK
 }
@@ -2342,7 +2347,7 @@ PreferredIsDone1:
           // See if the request to quit after the completed block
           //---------------------
           if(exitcode == 1) TimeToQuit=1; // Time to quit
-          
+
 #if (CLIENT_OS == OS_OS2)
           //---------------------
           // If lurk mode, now is the time to do an update

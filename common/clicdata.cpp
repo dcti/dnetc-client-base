@@ -9,6 +9,9 @@
 // ease maintenance.
 //
 // $Log: clicdata.cpp,v $
+// Revision 1.7  1998/06/15 12:03:45  kbracey
+// Lots of consts.
+//
 // Revision 1.6  1998/06/14 08:26:37  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -23,7 +26,7 @@
    01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 
-static char *id="@(#)$Id: clicdata.cpp,v 1.6 1998/06/14 08:26:37 friedbait Exp $";
+static const char *id="@(#)$Id: clicdata.cpp,v 1.7 1998/06/15 12:03:45 kbracey Exp $";
 
 #include "clicdata.h" //includes client.h for timeval and NULL definitions
 

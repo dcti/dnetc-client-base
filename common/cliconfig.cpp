@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.90  1998/06/15 12:03:47  kbracey
+// Lots of consts.
+//
 // Revision 1.89  1998/06/15 06:18:28  dicamillo
 // Updates for BeOS
 //
@@ -24,7 +27,7 @@
 
 #include "client.h"
 
-static char *id="@(#)$Id: cliconfig.cpp,v 1.89 1998/06/15 06:18:28 dicamillo Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.90 1998/06/15 12:03:47 kbracey Exp $";
 
 // --------------------------------------------------------------------------
 

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.21  1998/06/15 12:04:05  kbracey
+// Lots of consts.
+//
 // Revision 1.20  1998/06/15 06:18:37  dicamillo
 // Updates for BeOS
 //
@@ -23,7 +26,7 @@
 // Added $Log.
 //
 
-static char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.20 1998/06/15 06:18:37 dicamillo Exp $";
+static const char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.21 1998/06/15 12:04:05 kbracey Exp $";
 
 #define NEW_STATS_AND_LOGMSG_STUFF
 
