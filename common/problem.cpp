@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.160 2002/09/24 12:05:22 acidblood Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.161 2002/09/24 16:05:34 jlawson Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -369,9 +369,9 @@ static inline void __copy_internal_problem( InternalProblem *dest,
 // Note that DES has a similiar but far more complex system, but everything
 // is handled by des_pub_data.unit_func().
 
-#ifdef HAVE_OLD_CRYPTO
+#ifdef HAVE_RC564_CORES
 
-static void  __SwitchRC5Format(u32 *hi, u32 *lo)
+static void  __SwitchRC564Format(u32 *hi, u32 *lo)
 {
     register u32 tempkeylo = *hi; /* note: we switch the order */
     register u32 tempkeyhi = *lo;
@@ -390,12 +390,14 @@ static void  __SwitchRC5Format(u32 *hi, u32 *lo)
 
 #endif
 
+/* ======================================================================= */
+
 // Here's the same mangling for RC5-72:
 //            key.hi key.mid  key.lo
 // unmangled      AB:CDEFGHIJ:KLMNOPQR
 // mangled        QR:OPMNKLIJ:GHEFCDAB
 
-static void  __SwitchRC5_72Format(u32 *hi, u32 *mid, u32 *lo)
+static void  __SwitchRC572Format(u32 *hi, u32 *mid, u32 *lo)
 {
     register u32 tempkeylo = *lo;
     register u32 tempkeymid = *mid;
@@ -420,24 +422,24 @@ static void  __SwitchRC5_72Format(u32 *hi, u32 *mid, u32 *lo)
 //         - a contest identifier (0==RC5 1==DES 2==OGR 3==CSC)
 //
 // Output: the key incremented
-// OK!
 
 static void __IncrementKey(u32 *keyhi, u32 *keymid, u32 *keylo, u32 iters, int contest)
 {
   switch (contest)
   {
     case RC5_72:
-      __SwitchRC5_72Format(keyhi,keymid,keylo);
+      __SwitchRC572Format(keyhi,keymid,keylo);
       *keylo = *keylo + iters;
       if (*keylo < iters) *keymid = *keymid + 1;
       if (*keymid == 0) *keyhi = *keyhi + 1;
-      __SwitchRC5_72Format(keyhi,keymid,keylo);
-#ifdef HAVE_OLD_CRYPTO
+      __SwitchRC572Format(keyhi,keymid,keylo);
+      break;
+#ifdef HAVE_RC564_CORES
     case RC5:
-      __SwitchRC5Format(keyhi,keylo);
+      __SwitchRC564Format(keyhi,keylo);
       *keylo = *keylo + iters;
       if (*keylo < iters) *keyhi = *keyhi + 1;
-      __SwitchRC5Format (keyhi,keylo);
+      __SwitchRC564Format (keyhi,keylo);
       break;
 #endif
     case DES:
@@ -1051,8 +1053,7 @@ int ProblemRetrieveState( void *__thisprob,
 
 /* ------------------------------------------------------------- */
 
-#ifdef HAVE_OLD_CRYPTO
-static int Run_RC5(InternalProblem *thisprob, /* already validated */
+static int Run_RC564(InternalProblem *thisprob, /* already validated */
                    u32 *keyscheckedP /* count of ... */, int *resultcode)
 {
 #ifndef HAVE_RC564_CORES
@@ -1212,7 +1213,6 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
   return RESULT_WORKING;    // Done with this round
 #endif
 }
-#endif
 
 /* ------------------------------------------------------------- */
 
@@ -1417,15 +1417,11 @@ static int Run_OGR( InternalProblem *thisprob, /* already validated */
  return -1;
 }
 
-static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
+/* ------------------------------------------------------------- */
+
+static int Run_RC572(InternalProblem *thisprob, /* already validated */
                    u32 *keyscheckedP /* count of ... */, int *resultcode)
 {
-#ifndef HAVE_RC564_CORES
-  thisprob = thisprob;
-  *keyscheckedP = 0;
-  *resultcode = -1;
-  return -1;
-#else
   s32 rescode = -1;
 
   /* a brace to ensure 'keystocheck' is not referenced in the common part */
@@ -1587,7 +1583,6 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
   // more to do, come back later.
   *resultcode = RESULT_WORKING;
   return RESULT_WORKING;    // Done with this round
-#endif
 }
 
 /* ------------------------------------------------------------- */
@@ -1824,21 +1819,26 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
     iterations      = core_prob->pub_data.tslice;
     switch (core_prob->pub_data.contest)
     {
-// TODO: acidblood/trashover
-      case RC5_72: retcode = Run_RC5_72( core_prob, &iterations, &last_resultcode );
-                   break;
-      case RC5: retcode = Run_RC5( core_prob, &iterations, &last_resultcode );
-                break;
-      case DES: retcode = Run_DES( core_prob, &iterations, &last_resultcode );
-                break;
-      case OGR: retcode = Run_OGR( core_prob, &iterations, &last_resultcode );
-                break;
-      case CSC: retcode = Run_CSC( core_prob, &iterations, &last_resultcode );
-                break;
-      default:  PROJECT_NOT_HANDLED(core_prob->pub_data.contest);
-                retcode = 0;
-                last_resultcode = -1;
-                break;
+      case RC5_72:
+        retcode = Run_RC572( core_prob, &iterations, &last_resultcode );
+        break;
+      case RC5:
+        retcode = Run_RC564( core_prob, &iterations, &last_resultcode );
+        break;
+      case DES:
+        retcode = Run_DES( core_prob, &iterations, &last_resultcode );
+        break;
+      case OGR:
+        retcode = Run_OGR( core_prob, &iterations, &last_resultcode );
+        break;
+      case CSC:
+        retcode = Run_CSC( core_prob, &iterations, &last_resultcode );
+        break;
+      default:
+        PROJECT_NOT_HANDLED(core_prob->pub_data.contest);
+        retcode = 0;
+        last_resultcode = -1;
+        break;
     }
 
     if (retcode < 0)
