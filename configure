@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# Copyright distributed.net 1998-1999 - All Rights Reserved
+# Copyright distributed.net 1998-2001 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.239 2001/03/20 09:15:47 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.240 2001/03/20 14:47:04 cyp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -13,6 +13,9 @@
 # - Avoid building separate MT and non-MT clients. MT is always preferred
 #   (from the client's perspective), and the user can always force non-MT
 #   by setting numcpu=0
+#   *NOTE* All Unix'ish clients are inherently SMP capable. If the target
+#   does not have kernel support for real (userland) threads, eg *BSD, Linux
+#   et al, then let the default kick in (don't define MULTITHREAD).
 
 #####################################################################
 # Note to people making changes..  Do not put spaces around the '=' #
@@ -21,8 +24,12 @@
 #####################################################################
 
 if [ -z "$1" ]; then
-  echo "No platform specified on command line.";
+  echo ""
+  echo "No platform specified on command line."
   echo "Run with 'list' as an argument to see available platforms."
+  echo ""
+  echo "Syntax: $0 {target|'list'} [debug]"
+  echo ""
   exit 1
 fi
 
@@ -452,6 +459,32 @@ add_sources() # $1=os, $2=arch, $3=custom
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
   fi  
 }
+
+# -------------------------------------------------------------------
+
+inferred_arch=""
+inferred_ver_major=0
+inferred_ver_minor=0
+infer_arch_and_version() { # $1=OS name to be expected from uname -s
+  os_name=`uname -s`
+  if [ "X$os_name" = "X$1" ]; then
+    inferred_ver_major=`uname -r|cut -d. -f1`
+    inferred_ver_minor=`uname -r|cut -d. -f2`
+    inferred_arch=`uname -m`
+    
+    #i486-iX86 is linux idiocy
+    if [ "$inferred_arch" = "i386" \
+      -o "$inferred_arch" = "i486" \
+      -o "$inferred_arch" = "i586" \
+      -o "$inferred_arch" = "i686" \
+      -o "$inferred_arch" = "i786" ]; then
+      inferred_arch="x86"
+    fi
+  else
+    echo "$1 targets can only be built on $1"
+    exit 1
+  fi
+}  
 
 # -------------------------------------------------------------------
 
@@ -1073,9 +1106,9 @@ case "$1" in
     *mips-linux)	#
         TARGET_CC="gcc"
         generate_gcc_opts "mips" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -mcpu=r3000 -DMULTITHREAD"
+        TARGET_CCFLAGS="$OPTS_GCC -mcpu=r3000"
         TARGET_LDFLAGS=""
-        TARGET_LIBS="-lpthread"
+        TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-mips"
         add_sources "linux" "mips"
@@ -1187,7 +1220,7 @@ case "$1" in
         TARGET_AS="sh-linux-g++ -c"
         TARGET_STRIP="sh-linux-strip"
         generate_gcc_opts "sh" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="linux-sh" 
@@ -1268,12 +1301,12 @@ case "$1" in
         ;;
 
     *sparc-linux)	# [remi]
-        TARGET_CC="gcc295"
-        TARGET_AS="gcc295 -c"
+        TARGET_CC="gcc"
+        TARGET_AS="gcc -c"
         generate_gcc_opts "supersparc" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -g -DMULTITHREAD"
-	      TARGET_LDFLAGS="-g -static"
-	      TARGET_LIBS="-lpthread"
+        TARGET_CCFLAGS="$OPTS_GCC"
+	      TARGET_LDFLAGS="-static"
+	      TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-sparc"
         add_sources "linux" "sparc"
@@ -1373,25 +1406,6 @@ case "$1" in
         add_sources "digital-unix" "alpha"
         ;;
 
-    *alpha-freebsd)       # FreeBSD
-        # note: although this client supports SMP (and is thus threaded),
-        # we NEED to link against libc, and NOT libc_r because the libc_r
-        # in 3.4 and above is incompatible with the pre-3.4 (specifically,
-        # the >=3.4 libc_r versions of select() and nanosleep() syscalls
-        # have their own new syscall numbers; they were emulated before).
-        # We don't really need the libc_r stuff anyway because the "threads"
-        # are really rfork()'d children.    -cyp Feb/13/2000
-        TARGET_AS="gcc -c"
-        TARGET_CC="g++"
-        generate_gcc_opts "alpha" "freebsd"
-        TARGET_CCFLAGS="$OPTS_GCC -Werror"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
-        TARGET_LIBS="-lc" # NOT libc_r
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="freebsd-alpha"
-        add_sources "freebsd" "alpha" 
-        ;;
-
     *alpha-netbsd)
         TARGET_CC="g++"
         generate_gcc_opts "alpha" "netbsd"
@@ -1418,9 +1432,9 @@ case "$1" in
         TARGET_AS="as"
         TARGET_CC="g++"
         generate_gcc_opts "alpha" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS=""
-        TARGET_LIBS="-lpthread -ldl"
+        TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-alpha"
         add_sources "linux" "alpha"
@@ -1431,9 +1445,9 @@ case "$1" in
     *ppc-linux)		             # [myshkin] linux-ppc
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
-        TARGET_LIBS="-lpthread"
+        TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-ppc"
         add_sources "linux" "ppc"
@@ -1588,101 +1602,64 @@ case "$1" in
 
 ###### Intel X86
 
-    ### ***RELEASE*** targets - mt for all
-    ### use of -Xlinker -omagic (for the SMC core) forces -static
-    ### so which lib (libc4/libc5/glibc20/glibc21) the binary is linked
-    ### against is fairly moot. HOWEVER, you _should_ add resolv.c
-    ### to TARGET_ADDSRCS to be truly binary compatible. If you don't,
-    ### dns lookup will either not work (or not work reliably), or segfault.
-    ### The rest of the client is unaffected by the choice of libc, ie a
-    ### client built on the newest-and-greatest linux will work even on 2.0.x
 
-    *x86-linux)	                    # generic. multithreaded. works everywhere
-        TARGET_AS="gcc -c"          # can make aout if TARGET_CCFLAGS+=-aout
-        TARGET_CC="gcc"             
-        generate_gcc_opts "x86" "linux"
+    *x86-linux*)                # generic. works everywhere
+        ### ***RELEASE*** targets - mt for all
+        ### use of -Xlinker -omagic (for the SMC core) forces -static
+        ### so which lib (libc4/libc5/glibc20/glibc21) the binary is linked
+        ### against is fairly moot. HOWEVER, you _should_ add resolv.c
+        ### to TARGET_ADDSRCS to be truly binary compatible. If you don't,
+        ### dns lookup will either not work (or not work reliably), or segfault.
+        ### The rest of the client is unaffected by the choice of libc, ie a
+        ### client built on the newest-and-greatest linux will work even on 2.0.x
+        ###
+        infer_arch_and_version "Linux"
+        if [ $inferred_ver_major -lt 2 ]; then # [jlawson] aout, no lurk
+          isaout="aout"            
+          TARGET_NASM_FMT="aout"
+          TARGET_CC="gcc"               # old gcc doesn't know .cpp
+          TARGET_LD="gcc"
+          OPTS_GCC="-x c++ -O2 -fomit-frame-pointer"
+        else
+          isaout=""
+          TARGET_NASM_FMT="elf"
+          TARGET_AS="gcc -c"          # can make aout if TARGET_CCFLAGS+=-aout
+          TARGET_CC="gcc"             
+          generate_gcc_opts "${inferred_arch}" "linux"
+        fi
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
-        TARGET_NASM_FMT="elf"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-x86-elf"
-        add_sources "linux" "x86" 
-        ;;
-
-    *x86-linux-pthread)         # not for distribution
-        TARGET_AS="gcc -c"      
-        TARGET_CC="gcc"
-        generate_gcc_opts "x86" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD"
-        TARGET_NASM_FMT="elf"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
-        TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"
-        TARGET_TARBALL="" # not for distribution
-        TARGET_GENMAN=    # too many unexplainable issues (with glibc?)
-        if [ -f /usr/include/pthread/mit/kthread.h ]; then
-          TARGET_CCFLAGS="$TARGET_CCFLAGS -D_MIT_POSIX_THREADS=1"
-        fi  
-        #TARGET_CCFLAGS="-g $TARGET_CCFLAGS" #for debugging
-        #TARGET_STRIP="touch"                #for debugging
-        add_sources "linux" "x86" 
-        ;;
-
-    *x86-linux-aout)	              # [jlawson] aout, no threads/smc/lurk
-        TARGET_CC="gcc"               # old gcc doesn't know .cpp
-        TARGET_CCFLAGS="-x c++ -O2 -fomit-frame-pointer -DHAVE_OGR_CORES"
-        TARGET_LD="gcc"
-        TARGET_NASM_FMT="aout"
         TARGET_LIBS=""
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+        TARGET_TARBALL="linux-${inferred_arch}-${TARGET_NASM_FMT}"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-x86-aout"
-        add_sources "linux" "x86" "aout"
+        add_sources "linux" "x86" $isaout
         ;;
 
-    *x86-linux-debug)	              # test/debug target
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "x86" "linux"  # -g for debug
-        TARGET_CCFLAGS="-g $OPTS_GCC -DMULTITHREAD"
-        TARGET_NASM_FMT="elf"
-        TARGET_STRIP="touch"      # do not strip
-        TARGET_LIBS="-lpthread"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-x86-debug"
-        add_sources "linux" "x86" 
-        ;;
-
-    *x86-freebsd-aout)             # FreeBSD 2.x experimental, snake
+    *freebsd*)              # FreeBSD (autoselect Alpha/x86 and aout/elf)
+                            # FreeBSD x86-elf >=2.2.4, cyp
+                            # FreeBSD x86-aout 2.x, snake (experimental)
+                            # FreeBSD Alpha 
+        infer_arch_and_version "FreeBSD"
+        inferred_bf="elf"
+        if [ $inferred_ver_major -lt 3 ]; then
+          inferred_bf="aout"
+          TARGET_NASM_FMT="aoutb"
+        fi  
         TARGET_AS="gcc -c"
         TARGET_CC="g++"
-        generate_gcc_opts "x86" "freebsd"
+        generate_gcc_opts "${inferred_arch}" "freebsd"
         TARGET_CCFLAGS="$OPTS_GCC -Werror"
         TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
-        TARGET_NASM_FMT="aoutb"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="freebsd-x86-aout"
-        add_sources "freebsd" "x86" 
-        ;;
-
-    *x86-freebsd-elf)       # FreeBSD >=2.2.4, elf, "threaded", cyp
-        # note: although this client supports SMP (and is thus threaded),
-        # we NEED to link against libc, and NOT libc_r because the libc_r
+        TARGET_LIBS="-lc" # NOT libc_r
+        # note: we NEED to link against libc, and NOT libc_r because the libc_r
         # in 3.4 and above is incompatible with the pre-3.4 (specifically,
         # the >=3.4 libc_r versions of select() and nanosleep() syscalls
         # have their own new syscall numbers; they were emulated before).
         # We don't really need the libc_r stuff anyway because the "threads"
         # are really rfork()'d children.    -cyp Feb/13/2000
-        TARGET_AS="gcc -c"
-        TARGET_CC="g++"
-        generate_gcc_opts "x86" "freebsd"
-        TARGET_CCFLAGS="$OPTS_GCC -Werror"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
-        TARGET_LIBS="-lc" # NOT libc_r
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="freebsd-x86-elf"
-        add_sources "freebsd" "x86" 
+        TARGET_TARBALL="freebsd-${inferred_arch}-${inferred_bf}"
+        add_sources "freebsd" "${inferred_arch}" 
         ;;
 
     *x86-netbsd-aout)	# NetBSD 1.4.x, aout [bernd]
@@ -1886,7 +1863,7 @@ case "$1" in
         TARGET_BINNAME_SUFFIX=",ff8"
         TARGET_IS_CROSSCOMPILE=1
         add_sources "riscos" "arm"
-	;; 
+        ;; 
 
     *arm-riscos-prepare) #create tar archive for native compilation
         rm -rf dnetc_riscos
@@ -2008,17 +1985,6 @@ case "$1" in
         TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "netbsd" "vax" 
-        ;;
-
-    *s390-linux-pthread)	# [friedbait]  fb@baiti.net
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "s390" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD"
-        TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-s390"
-        add_sources "linux" "s390" 
         ;;
 
     *s390-linux)	        # [friedbait]  fb@baiti.net
@@ -2183,6 +2149,20 @@ case "$1" in
 esac
 echo "Platform target for \"$1\" recognized."
 
+# -------------------------------------------------------------------
+
+#
+# Parse the rest of the command line
+#
+if [ "X$2" = "Xdebug" ]; then
+  if [ $gccver -ne 0 ]; then
+    TARGET_STRIP="touch"      # do not strip
+    TARGET_CCFLAGS="${TARGET_CCFLAGS} -g"
+    TARGET_TARBALL="${TARGET_TARBALL}-debug"
+  else
+    echo "Don't know how to add debug things for this compiler"
+  fi  
+fi  
 
 #
 # Build the test program
