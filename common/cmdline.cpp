@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.107  1998/12/10 18:52:30  cyp
+// Fixed a LogScreen() that should have been a LogScreenRaw()
+//
 // Revision 1.106  1998/12/05 22:26:18  cyp
 // Added -kill/-shutdown and -hup/-restart support for win32/win16
 // (aka "waaah, how do I stop a hidden client?") and for *nixes.
@@ -98,7 +101,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.106 1998/12/05 22:26:18 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.107 1998/12/10 18:52:30 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -236,8 +239,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                     (unsigned long)getpid(), p, q );
             if (system( buffer ) != 0)
               {
-              //sprintf(buffer, "%s failed. Unable to get pid list.", thisarg );
-              //ConOutErr( buffer );
+              sprintf(buffer, "%s failed. Unable to get pid list.", thisarg );
+              ConOutErr( buffer );
               }
             }
           }
@@ -439,8 +442,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         if (run_level!=0)
           {
           if (logging_is_initialized)
-            LogScreen("Client will run %s network access.\n", 
-                       ((offlinemode)?("without"):("with")) );
+            LogScreenRaw("Client will run with%s network access.\n", 
+                       ((offlinemode)?("out"):("")) );
           }
         else 
           offlinemode = ((strcmp( thisarg, "-runoffline" ) == 0)?(1):(0));
