@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.49  1999/03/20 18:14:50  gregh
+// Fix ogr.h includes.
+//
 // Revision 1.48  1999/03/20 05:56:16  cyp
 // cast the ResultCode enum in stone: 0=working, 1=nothing, 2=found.
 //
@@ -159,7 +162,7 @@
 
 #include "cputypes.h"
 #include "client2.h"
-#include "stub.h"
+#include "ogr.h"
 
 #if (CLIENT_CPU == CPU_X86)
   #define MAX_MEM_REQUIRED_BY_CORE (17*1024)

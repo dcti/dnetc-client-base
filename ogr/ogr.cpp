@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: ogr.cpp,v $
+// Revision 1.2  1999/03/20 18:14:51  gregh
+// Fix ogr.h includes.
+//
 // Revision 1.1  1999/03/18 07:45:40  gregh
 // Renamed from .c
 //
@@ -14,7 +17,7 @@
 
 #include "client2.h"
 #include "crc32.h"
-#include "stub.h"
+#include "ogr.h"
 
 /* this is in choosedat.c */
 extern unsigned char choose_dat[];
