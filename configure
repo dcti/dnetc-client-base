@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.197  1999/03/01 07:57:30  gregh
+# Add -Iogr wherever appropriate.
+#
 # Revision 1.196  1999/03/01 06:48:56  foxyloxy
 # Minor typo fix in mips-egcs-crunch target.
 #
@@ -695,19 +698,19 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 	  -fexpensive-optimizations -fomit-frame-pointer \
 	  -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
 	  -funroll-loops -fno-inline-functions -fno-handle-exceptions \
-	  -Wall -Icommon -Irc5 -Ides -Iplatforms'
+	  -Wall -Icommon -Irc5 -Ides -Iogr -Iplatforms'
 
 OPTS_GCC272='-fomit-frame-pointer -fno-inline-functions \
 	     -fno-handle-exceptions -fno-rtti \
-	     -Wall -Icommon -Irc5 -Ides -Iplatforms'
+	     -Wall -Icommon -Irc5 -Ides -Iogr -Iplatforms'
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
 OPTS_EGCS='-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer \
-	   -Wall -Icommon -Irc5 -Ides -Iplatforms'
+	   -Wall -Icommon -Irc5 -Ides -Iogr -Iplatforms'
 
 #OPTS_EGCS='-O2 -fno-exceptions -fomit-frame-pointer \
-#	   -Wall -Icommon -Irc5 -Ides -Iplatforms'
+#	   -Wall -Icommon -Irc5 -Ides -Iogr -Iplatforms'
 
 #
 # Common platform compiler options
@@ -742,7 +745,7 @@ OPTS_GCC_SUN68K="$OPTS_GCC -O2 -DASM_68K -D_SUN68K_"
 
 #-- MIPS
 
-OPTS_CC_MIPS='-O2 -xansi -DASM_MIPS -Icommon -Ides -Irc5'
+OPTS_CC_MIPS='-O2 -xansi -DASM_MIPS -Icommon -Ides -Irc5 -Iogr'
 OPTS_GCC_MIPS="$OPTS_GCC -O6 -DASM_MIPS"
 OPTS_EGCS_MIPS="$OPTS_EGCS -Os -DASM_MIPS" 
 
@@ -750,13 +753,13 @@ OPTS_EGCS_MIPS="$OPTS_EGCS -Os -DASM_MIPS"
 
 OPTS_CC_ALPHA_EV4='-O4 -tune ev4 -inline all'
 OPTS_CC_ALPHA_EV5='-O4 -tune ev5 -inline all'
-OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all -Icommon -Ides -Irc5'
+OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all -Icommon -Ides -Irc5 -Iogr'
 
 OPTS_GCC_ALPHA="$OPTS_GCC -O6 -DASM_ALPHA -static"
 
 #-- HPUX
 
-OPTS_CC_HPUX="$LDFLAGS_CC_HPUX +a1 +O3 -D_HPUX -DASM_HPPA -Icommon -Ides -Irc5"
+OPTS_CC_HPUX="$LDFLAGS_CC_HPUX +a1 +O3 -D_HPUX -DASM_HPPA -Icommon -Ides -Irc5 -Iogr"
 LDFLAGS_CC_HPUX='+A +DA2.0'
 
 OPTS_GCC_HPUX="$OPTS_GCC -O6 -DASM_HPPA -static"
@@ -798,9 +801,9 @@ OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentium -DASM_X86 -DPIPELINE_COUNT=2"
 
 #-- DYNIX
 
-OPTS_EPC_DYNIX="-relax -D_SEQUENT_ -Icommon -Ides -Irc5"
+OPTS_EPC_DYNIX="-relax -D_SEQUENT_ -Icommon -Ides -Irc5 -Iogr"
 
-OPTS_GCC_DYNIX="-D_SEQUENT_ -Icommon -Ides -Irc5"
+OPTS_GCC_DYNIX="-D_SEQUENT_ -Icommon -Ides -Irc5 -Iogr"
 
 #-- NeXT
 
@@ -826,7 +829,7 @@ OPTS_EGCS_VAX="$OPTS_EGCS -O2 -DASM_VAX"
 #-- OS/390
 
 #-D__STRING_CODE_SET__="ISO8859-1"
-OPTS_OS390="-D_ALL_SOURCE -I./common -I./rc5 -I./des"
+OPTS_OS390="-D_ALL_SOURCE -I./common -I./rc5 -I./des -I./ogr"
 
 #-- UltraSparc
 #
@@ -842,7 +845,7 @@ OPTS_DES_ULTRA_ASM="-DINTSIZES=442 -DASM_SPARC -DIN_DCTI_CLIENT \
 		    -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL \
 		    -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc \
 		    -mtune=ultrasparc -fforce-mem -fstrict-aliasing\
-		    -Wall -Icommon -Irc5 -Ides -Iplatforms \
+		    -Wall -Icommon -Irc5 -Ides -Iogr -Iplatforms \
 		    -mv8plus -mvis -mepilogue -Wa,-xarch=v8plusa -mflat \
 		    -Os -fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
 
@@ -1948,7 +1951,7 @@ case "$1" in
 		   -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas \
 		   -l/home/cberry/play/riscoslib/CLib/stubs.o"
 	TARGET_AS="armasm -apcs 3/26bit"
-	TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iplatforms \
+	TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplatforms \
 			-I/home/cberry/play/riscoslib/OSLib \
 			-I/home/cberry/play/riscoslib/TCPIPLibs \
 			-J/home/cberry/play/riscoslib/CLib \
