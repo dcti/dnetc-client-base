@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.36 1999/04/09 12:15:50 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37 1999/04/11 19:50:39 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -368,7 +368,19 @@ const char *CliGetTimeString( const struct timeval *tv, int strtype )
     }
     return spacestring;
   }
-  else if (strtype == 1 || strtype == -1 || strtype == 3) //new fmt = 1, old fmt = -1
+  else if (strtype == 2)
+  {
+    if (!tv) tv = CliTimer( NULL );
+    sprintf( hourstring, "%u.%02u:%02u:%02u.%02u", (unsigned) (tv->tv_sec / 86400L),
+      (unsigned) ((tv->tv_sec % 86400L) / 3600L), (unsigned) ((tv->tv_sec % 3600L)/60),
+      (unsigned) (tv->tv_sec % 60), (unsigned) ((tv->tv_usec/10000L)%100) );
+    //if ((tv->tv_sec / 86400L)==0 ) //don't show days if not needed
+    //  return &hourstring[2]; // skip the "0."
+    return hourstring;
+  }
+  else if (strtype < -1 || strtype > 4)
+    ; // return ""
+  else //if (strtype >= -1 && strtype <= 4) //-1,1,3,4
   {
     if (!tv) tv = CliTimer(NULL);/* show where CliTimer() is returning gunk */
     time_t timenow = tv->tv_sec;
@@ -393,6 +405,13 @@ const char *CliGetTimeString( const struct timeval *tv, int strtype )
                gmt->tm_hour,  gmt->tm_min, gmt->tm_sec );
 	  timelast = 0;
 	}
+	else if (strtype == 4) // yymmddhh (bugzilla version date format)
+	{
+          sprintf( timestring, "%02d%02d%02d%02d",
+	       gmt->tm_year%100, gmt->tm_mon + 1, gmt->tm_mday,
+               gmt->tm_hour );
+	  timelast = 0;
+	}
         else if (strtype == -1) // old "un-PC" type of length 21 OR 23 chars
         {
           // old: "04/03/98 11:22:33 GMT"
@@ -413,16 +432,6 @@ const char *CliGetTimeString( const struct timeval *tv, int strtype )
       }
     }
     return timestring;
-  }
-  else if (strtype == 2)
-  {
-    if (!tv) tv = CliTimer( NULL );
-    sprintf( hourstring, "%u.%02u:%02u:%02u.%02u", (unsigned) (tv->tv_sec / 86400L),
-      (unsigned) ((tv->tv_sec % 86400L) / 3600L), (unsigned) ((tv->tv_sec % 3600L)/60),
-      (unsigned) (tv->tv_sec % 60), (unsigned) ((tv->tv_usec/10000L)%100) );
-    //if ((tv->tv_sec / 86400L)==0 ) //don't show days if not needed
-    //  return &hourstring[2]; // skip the "0."
-    return hourstring;
   }
   return "";
 }
