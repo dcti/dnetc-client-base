@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.89  1998/08/21 23:46:52  cyruspatel
+# Spun off Client::SelectCore() from cliconfig.cpp to selcore.cpp
+#
 # Revision 1.88  1998/08/20 20:14:46  cyruspatel
 # Undid changes made in 1.84: -fno-handle-exceptions is back.
 # (also PIPELINE_COUNT hack has been fixed at source level).
@@ -68,21 +71,19 @@
 # Changed gcc back to egcs for x86-linux*-egcs.
 # gcc is gcc; egcs is egcs.  NEVER ASSUME THE TWO ARE THE SAME.
 # (Read that again.  GCC is not always EGCS.  If you want to build an
-#  egcs version, then it should actually use egcs -- or am I just nuts.)
+# egcs version, then it should actually use egcs -- or am I just nuts.)
 #
 # Revision 1.70  1998/07/09 18:40:08  remi
 # Reverted most to the previous changes. If you want to compile x86 linux
 # clients using GCC instead of EGCS, please use the *-gcc targets, not the
-# *-egcs ones.
-# Removed -fno-inline-functions from EGCS options, -O2 does not inline functions,
-# -O3 and up does.
+# *-egcs ones. Removed -fno-inline-functions from EGCS options, -O2 does 
+# not inline functions, -O3 and up does.
 #
 # Revision 1.69  1998/07/09 07:23:32  cramer
 # Added -fno-inline-functions (on by default) to OPTS_GCC and OPTS_EGCS.
 # This is required to get the MMX des assembly code to build.  (multiple
-# labels)
-#
-# Changed gcc to egcs for the x86-linux egcs builds (never assume gcc is egcs.)
+# labels). Changed gcc to egcs for the x86-linux egcs builds (never assume 
+# gcc is egcs.)
 #
 # Revision 1.68  1998/07/09 04:26:17  nordquist
 # Fixes for OPTS_XLC_PPC* (AIX 4.x with xlC compiler) and OPTS_CC_HPUX
@@ -102,13 +103,7 @@
 # added -static to link options for alpha-gcc
 #
 # Revision 1.64  1998/07/05 13:08:50  cyruspatel
-# Created new pathwork.cpp which contains functions for determining/setting
-# the "work directory" and pathifying a filename that has no dirspec.
-# GetFullPathForFilename() is ideally suited for use in (or just prior to) a
-# call to fopen(). This obviates the neccessity to pre-parse filenames or
-# maintain separate filename buffers. In addition, each platform has its own
-# code section to avoid cross-platform assumptions. More doc in pathwork.cpp
-# #define DONT_USE_PATHWORK if you don't want to use these functions.
+# Created new pathwork.cpp
 #
 # Revision 1.63  1998/07/02 05:04:40  daa
 # add ;; for hpux m68k entry
@@ -242,8 +237,6 @@
 #
 # Revision 1.28  1998/06/10 22:50:12  timc
 # Robert Au added for PPC targets
-# CVS:
-# CVS:
 #
 # Revision 1.27  1998/06/09 22:21:56  remi
 # Added testplat to the 'superclean' list
@@ -285,7 +278,6 @@
 # the stub no longer goes to './rc5' but to './common' instead
 #
 # Revision 1.16  1998/06/01 20:29:48  remi
-#
 # cleanup : changed ASM_P6, ASM_P6, ASM_6x86, etc ... to ASM_X86
 #
 # Revision 1.15  1998/06/01 17:39:26  friedbait
@@ -439,7 +431,7 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/clisrate.cpp common/clitime.cpp common/disphelp.cpp
     common/threadcd.cpp common/cpucheck.cpp common/pathwork.cpp
     common/cliident.cpp common/logstuff.cpp common/buffupd.cpp
-    common/triggers.cpp"
+    common/triggers.cpp common/selcore.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
