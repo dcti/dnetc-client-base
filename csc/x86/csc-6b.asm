@@ -3,6 +3,10 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; $Log: csc-6b.asm,v $
+; Revision 1.1.2.2  1999/11/06 05:41:56  gregh
+; Remove 'near' specifier on some jumps for compatibility with nasm 0.97.
+; It appears that nasm 0.98 ignores superfluous near specifiers.
+;
 ; Revision 1.1.2.1  1999/11/06 00:26:16  cyp
 ; they're here! (see also bench.res for 'ideal' combination)
 ;
@@ -16,7 +20,7 @@ extern         convert_key_from_inc_to_csc,convert_key_from_csc_to_inc
 %include "csc-mac.inc"
 
 __DATASECT__
-    db  "@(#)$Id: csc-6b.asm,v 1.1.2.1 1999/11/06 00:26:16 cyp Exp $",0
+    db  "@(#)$Id: csc-6b.asm,v 1.1.2.2 1999/11/06 05:41:56 gregh Exp $",0
 
 __CODESECT__
     align 16
@@ -4276,7 +4280,7 @@ X$13:
     mov       dword ptr [esp+0x48],edx
     mov       dword ptr [esp+0x4c],edi
     mov       dword ptr [esp+0x44],eax
-    jmp       near ptr X$13
+    jmp       ptr X$13
 X$14:
     mov       eax,dword ptr [esp+0x15c]
     inc       eax
@@ -4295,7 +4299,7 @@ X$15:
     mov       eax,dword ptr [ecx]
     test      eax,eax
     jne       X$15
-    jmp       near ptr X$9
+    jmp       ptr X$9
 X$16:
     test      al,0x02
     je        X$18
@@ -4312,7 +4316,7 @@ X$17:
     mov       eax,dword ptr [ecx]
     test      eax,eax
     jne       X$17
-    jmp       near ptr X$9
+    jmp       ptr X$9
 X$18:
     test      al,0x04
     je        X$20
@@ -4328,7 +4332,7 @@ X$19:
     mov       eax,dword ptr [ecx]
     test      eax,eax
     jne       X$19
-    jmp       near ptr X$9
+    jmp       ptr X$9
 X$20:
     test      al,0x08
     je        X$22
@@ -4345,7 +4349,7 @@ X$21:
     mov       eax,dword ptr [ecx]
     test      eax,eax
     jne       X$21
-    jmp       near ptr X$9
+    jmp       ptr X$9
 X$22:
     test      al,0x10
     je        X$24
@@ -4362,7 +4366,7 @@ X$23:
     mov       eax,dword ptr [ecx]
     test      eax,eax
     jne       X$23
-    jmp       near ptr X$9
+    jmp       ptr X$9
 X$24:
     test      al,0x20
     je        X$26
@@ -4379,7 +4383,7 @@ X$25:
     mov       eax,dword ptr [ecx]
     test      eax,eax
     jne       X$25
-    jmp       near ptr X$9
+    jmp       ptr X$9
 X$26:
     xor       eax,eax
     pop       edi
