@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.13 1999/11/29 22:47:24 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.14 1999/12/06 14:02:18 remi Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -207,6 +207,11 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   {
     non_preemptive_os.yps = 1000/20; /* 20 ms minimum yield rate */ 
     tslice = 2048;
+  } 
+  else if( ( flags & TBENCHMARK_CALIBRATION ) == 0 ) {
+    long res = TBenchmark( contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK | TBENCHMARK_CALIBRATION );
+    if( res != -1 )
+      tslice = (((u32)res) + 0xFFF) & 0xFFFFF000;
   }
   #elif (CLIENT_OS == OS_RISCOS)
   if (riscos_check_taskwindow())
