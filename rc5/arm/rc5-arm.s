@@ -1,4 +1,4 @@
-;------------------------------------------------------------------- 
+;-------------------------------------------------------------------
 ; ARM optimised RC5-64 core
 ;
 ; Steve Lee, Chris Berry, Tim Dobson 1997,1998
@@ -228,7 +228,7 @@ CNT     SETA    CNT + 1
 
 
 rc5_unit_func_arm
-        STMFD   r13!, {r4-r12,r14}
+        STMFD   r13!, {r4-r11,r14}
 
         mov     r14, r1
 
@@ -378,10 +378,8 @@ the_end
         mov     r0,r14
         stmia   r1, {r2-r3}
         ADD     r13,r13,#(T+4)*4
-        LDMIA   r13!,{r4-r12, pc}
+        LDMIA   r13!,{r4-r11, pc}^
 
-
-        DCD  &DEAD
 
         END
 
