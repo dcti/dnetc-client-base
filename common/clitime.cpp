@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.26 2000/05/31 01:27:40 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.27 2000/05/31 01:39:08 trevorh Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -310,18 +310,18 @@ int CliClock(struct timeval *tv)
 
 /* --------------------------------------------------------------------- */
 
-// __clks2tv() is called/inline'd from CliGetMonotonicClock() and converts 
-// 'ticks' (ticks/clks/whatever: whatever it is that your time-since-whenever 
-// function returns) to secs/usecs. 'hz' is that function's equivalent of 
+// __clks2tv() is called/inline'd from CliGetMonotonicClock() and converts
+// 'ticks' (ticks/clks/whatever: whatever it is that your time-since-whenever
+// function returns) to secs/usecs. 'hz' is that function's equivalent of
 // CLOCKS_PER_SECOND. 'wrap_ctr' is the number of times 'ticks' wrapped.
 // Caveat emptor: 'hz' cannot be greater than 1000000ul
 
-inline void __clks2tv( unsigned long hz, register unsigned long ticks, 
+inline void __clks2tv( unsigned long hz, register unsigned long ticks,
                        unsigned long wrap_ctr, struct timeval *tv )
-{ 
+{
   register unsigned long sadj = 0, wadj = 0;
   if (wrap_ctr) /* number of times 'ticks' wrapped */
-  { 
+  {
     sadj = (hz/10); /* intermediate temp to suppress optimization */
     wadj = wrap_ctr * (6UL+(10*((ULONG_MAX/10UL)%(hz/10)))); /* ((1<<ws)%hz) */
     sadj = wrap_ctr * ((ULONG_MAX/10UL)/sadj);               /* ((1<<ws)/hz) */
@@ -398,7 +398,7 @@ int CliGetMonotonicClock( struct timeval *tv )
       static DWORD lastticks = 0, wrap_count = 0;
       DWORD ticks, l_wrap_count; long *spllp;
       char *splcp = (char *)&splbuf[0];
-      
+
       int lacquired = 0, locktries = 0;
       splcp += ((64/8) - (((unsigned long)splcp) & ((64/8)-1)));
       spllp = (long *)splcp; /* long * to 64bit-aligned spinlock space */
@@ -436,18 +436,10 @@ int CliGetMonotonicClock( struct timeval *tv )
       splptr += (sizeof(long)-(((unsigned long)splptr) & (sizeof(long)-1)));
       while (!lacquired)
       {
-        #if defined(__GNUC__)
         __asm__ __volatile__ ("movl $1, %%eax;\n"
                               "lock; xchgl %%eax, %0;\n"
-                              "xorl $1,%%eax;\n" : 
-                              "=g"(*(splptr)), "=r" (lacquired);
-        #else /* watcom et al */
-        _asm mov eax,1        /* the new value */
-        _asm mov ecx, splptr  /* load the offset (done by =g above) */  
-        _asm lock xchgl [ecx], eax /* 'lock' is superfluous */
-        _asm xor eax,1 /* if oldval was 1, make it 0, and vice versa*/
-        _asm mov lacquired, eax  /* do "=r" (lacquired) */
-        #endif
+                              "xorl $1,%%eax;\n" :
+                              "=g"(*(splptr)), "=r" (lacquired));
         if (!lacquired)
           DosSleep(0);
       }
@@ -468,7 +460,7 @@ int CliGetMonotonicClock( struct timeval *tv )
     #elif defined(CTL_KERN) && defined(KERN_BOOTTIME) /* *BSD */
     {
       struct timeval boot, now;
-      int mib[2]; size_t argsize = sizeof(boot); 
+      int mib[2]; size_t argsize = sizeof(boot);
       mib[0] = CTL_KERN; mib[1] = KERN_BOOTTIME;
       if (gettimeofday(&now, 0))
         return -1;
@@ -480,7 +472,7 @@ int CliGetMonotonicClock( struct timeval *tv )
       if (now.tv_usec < boot.tv_usec) {
         now.tv_usec += 1000000;
         now.tv_sec--;
-      }  
+      }
       tv->tv_sec = now.tv_sec - boot.tv_sec;
       tv->tv_usec = now.tv_usec - boot.tv_usec;
     }
@@ -532,15 +524,15 @@ int CliGetMonotonicClock( struct timeval *tv )
     {
       /* ***** this code is not thread-safe! ******
          AND DO NOT USE THIS WITHOUT ENSURING ...
-         a) that clock() is not dependant on system time (all watcom clibs 
+         a) that clock() is not dependant on system time (all watcom clibs
             have this bug). Otherwise you may as well use __GetTimeOfDay()
-         b) that clock() does not return virtual time. Under unix clock() 
-            is often implemented via times() is thus virtual. Look at 
-            'top' source [get_system_info() in machine.c] to see what 
+         b) that clock() does not return virtual time. Under unix clock()
+            is often implemented via times() is thus virtual. Look at
+            'top' source [get_system_info() in machine.c] to see what
             you might be able to use instead.
          c) clock_t is at least an unsigned long
-         d) that the value from clock() does indeed count up to ULONG_MAX 
-            before wrapping. At least one implementation (EMX <=0.9) is 
+         d) that the value from clock() does indeed count up to ULONG_MAX
+            before wrapping. At least one implementation (EMX <=0.9) is
             known to wrap at (0xfffffffful/10).
          e) CLOCKS_PER_SECOND is not > 1000000
          ***** this code is not thread-safe! ******
