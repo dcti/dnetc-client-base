@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.55  1998/06/25 19:38:35  foxyloxy
+# mips-cc-64 and mips-gcc-irix5-crunch targets added; CCFLAGS tweaked for
+# mips targets; "cp -f ..." changed to "rm -f ...; cp ..." for irix5 compat.
+#
 # Revision 1.54  1998/06/24 16:35:18  remi
 # CFLAGS tweaking for the Ultra client. Should give ~4.1 Mkeys/s on a
 # 167 Mhz Ultra-1.
@@ -324,10 +328,27 @@ EXENAME="rc5des"
 case "$1" in
 
 ###### MIPS based platforms
-    *mips-sni-gcc)
+    *mips-sni-gcc)           #For MIPS SINIX
 	RC5CORECOPY="mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1 -Dsinix"
 	TARGET_LIBS="-lsocket -lnsl -lc -L/usr/ucblib -lucb"
+	;;
+
+    *mips-cc-64)             # For 64bit MIPS processors
+	#  mips-crunch.cpp doesn't yet compile with CC
+	RC5CORECOPY="rc5ansi2-rg2.cpp"
+	TARGET_CC="/usr/lib64/cmplrs/CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -O3 -static -r10000 -64 -MIPS4 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
+	TARGET_LDFLAGS="-static -64 -IPA -MIPS4"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	;;
+
+    *mips5-cc)                # IRIX CC is slower than mips-gcc targets
+        #  mips-crunch.cpp doesn't compile with CC
+	RC5CORECOPY="rc5ansi2-rg2.cpp"
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -DPIPELINE_COUNT=2 -DBIT_32 -D_irix5_ -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
     *mips-cc)                # IRIX CC is slower than mips-gcc targets
@@ -337,6 +358,13 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
+
+    *mips-gcc-irix5-crunch)        # faster than mips-gcc for IRIX
+        RC5CORECOPY="mips-crunch.cpp"
+        TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -D_irix5_ -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+        ;;
+
 
     *mips-gcc-crunch)        # faster than mips-gcc for IRIX
         RC5CORECOPY="mips-crunch.cpp"
@@ -901,7 +929,8 @@ for target in ${TARGET_ALLCCOBJS}; do
   eval TARGETSRC=$`echo DEPEND_$SAFENAME`
   if [ -n "${RC5CORECOPY}" -a `basename ${TARGETSRC}` = problem.cpp ]; then
     echo "$target:	${TARGETSRC} rc5/${RC5CORECOPY}" >> Makefile
-    echo "	cp -f rc5/${RC5CORECOPY} rc5/rc5stub.cpp" >> Makefile
+    echo "	rm -f rc5/rc5stub.cpp" >> Makefile
+    echo "	cp rc5/${RC5CORECOPY} rc5/rc5stub.cpp" >> Makefile
     echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
     echo "	rm -f rc5/rc5stub.cpp" >> Makefile
   else
