@@ -1,12 +1,12 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.72 2002/09/02 00:35:42 andreasb Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.72.4.1 2003/01/17 23:58:50 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -34,12 +34,12 @@ static const char *helpbody[] =
   "-flush             flush all output buffers",
   "-fetch             fill all input buffers",
   "-update            fetch + flush",
-  "-benchmark [pn]    16-20 sec speed check [optional: only project pn]",
-  "-benchmark2 [pn]   half (8-10 sec) and slightly inaccurate -benchmark",
-  "-bench [pn] [cn]   -benchmark all cores [optional: only project pn]",
-  "                   [optional: only core cn, must be used with pn]",
-  "-test [pn] [cn]    tests for core errors [optional: only project pn]",
-  "                   [optional: only core cn, must be used with pn]",
+  "-benchmark [prj]   16-20 sec speed check [optional: only project prj]",
+  "-benchmark2 [prj]  half (8-10 sec) and slightly inaccurate -benchmark",
+  "-bench [prj [cn]]  -benchmark all cores [optional: only project prj]",
+  "                   [optional: only core cn, must be used with prj]",
+  "-test [prj [cn]]   tests for core errors [optional: only project prj]",
+  "                   [optional: only core cn, must be used with prj]",
   "-restart           restart all active clients",
   "-shutdown          gracefully shut down all active clients",
   "-pause             pause all active clients",
@@ -78,14 +78,14 @@ static const char *helpbody[] =
   "-inbase <fname>    input buffer basename (ie without 'extension'/suffix)",
   "-outbase <fname>   output buffer basename (ie without 'extension'/suffix)",
   "-ckpoint <fname>   set the name of the checkpoint file",
-  "-blsize [pn] <n>   set preferred packet size (2^n keys/packet)",
-  "-bin <pn> <n>      set fetch buffer threshold to <n> work units",
+  "-blsize [prj] <n>  set preferred packet size (2^n keys/packet)",
+  "-bin <prj> <n>     set fetch buffer threshold to <n> work units",
   #if !defined(NO_OUTBUFFER_THRESHOLDS)
-  "-bout [pn] <n>     set flush buffer threshold to <n> work units",
-  "-b [pn] <n>        set both buffer thresholds to <n> work units",
+  "-bout [prj] <n>    set flush buffer threshold to <n> work units",
+  "-b [prj] <n>       set both buffer thresholds to <n> work units",
   #endif
-  "-btime [pn] <n>    set fetch time threshold to <n> hours",
-  "                   If not specified, project name <pn> defaults to RC5",
+  "-btime [prj] <n>   set fetch time threshold to <n> hours",
+  "                   If not specified, project name <prj> defaults to RC5",
   "",
 /*"------------------------------------ max width == 77 ------------------------" */
   "Network update related options:",
@@ -108,8 +108,8 @@ static const char *helpbody[] =
 /*"------------------------------------ max width == 77 ------------------------" */
   "Performance related options:",
   "",
-  "-c [pn] <n>        core number (run -config for a list of valid core numbers)",
-  "                   project name \"pn\" defaults to RC5",
+  "-c [prj] <n>       core number (run -config for a list of valid core numbers)",
+  "                   project name \"prj\" defaults to RC5",
   "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
   "-priority <0-9>    scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
   "",
