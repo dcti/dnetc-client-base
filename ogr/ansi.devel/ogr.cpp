@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.9 2000/10/06 01:03:35 mfeiri Exp $
+ * $Id: ogr.cpp,v 1.1.2.10 2000/10/06 06:17:57 sampo Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,12 +28,13 @@
   #if defined(ASM_68K) 
     #define OGROPT_BITOFLIST_DIRECT_BIT 0          /* we want 'no' */
   #endif
-  #if defined(ASM_PPC) || defined(__PPC__)
-    #if __MRC__ || __MWERKS__
+  #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
+    #if (__MRC__ || __MWERKS__)  
       #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* we want 'no'  */
       #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* important     */
       #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2 /* dunno         */
       #define OGROPT_OETTING_OGR_CYCLE              1 /* ppc optimized */
+      #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* cntlzw        */
     #else
       /* I'm not sure whether this is compiler or arch specific, */ 
       /* it doesn't seem to make any difference for x86/gcc 2.7x  */
@@ -63,7 +64,7 @@
   #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
 #else
   #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
-  #if (defined(__PPC__) || defined(ASM_PPC)) || \
+  #if (defined(__PPC__) || defined(ASM_PPC)) || defined(__POWERPC__) ||\
       (defined(__WATCOMC__) && defined(__386__)) || \
       (defined(__ICC)) /* icc is Intel only (duh!) */ || \
       (defined(__GNUC__) && (defined(ASM_SPARC) || defined(ASM_ALPHA) \
@@ -442,7 +443,7 @@ static int found_one(struct State *oState)
 #if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
   #define LOOKUP_FIRSTBLANK(x) ((x < 0xffff0000) ? \
       (ogr_first_blank[x>>16]) : (16 + ogr_first_blank[x - 0xffff0000]))
-#elif defined(__PPC__) || defined(ASM_PPC) /* CouNT Leading Zeros Word */
+#elif defined(__PPC__) || defined(ASM_PPC) || defined (__POWERPC__)/* CouNT Leading Zeros Word */
   #if defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
     { i = ~i; __asm__ ("cntlzw %0,%1" : "=r" (i) : "r" (i)); return i+1; }
@@ -778,7 +779,7 @@ static int ogr_cycle(void *state, int *pnodes)
 	
 		//int s = __cntlzw(~comp0) + 1;
 		
-		#if defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
+	  #if defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
       int s = LOOKUP_FIRSTBLANK( comp0 );
       #else
       int s;
