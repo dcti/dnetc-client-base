@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.27 2000/04/21 08:55:34 jlawson Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.28 2000/04/28 04:29:57 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -626,16 +626,17 @@ const char *utilGetAppName(void)
 #elif (CLIENT_OS == OS_BEOS)
   #include <kernel/OS.h>      // get_next_team_info()
   #include <kernel/image.h>   // get_next_image_info()
+#elif (CLIENT_OS == OS_WIN32)
+  #include <tlhelp32.h> /* toolhlp32 structures and function prototypes */
 #endif
 #ifdef __unix__
   #include <fcntl.h>
 #endif /* __unix__ */
 
 /*
-    get list of pid's for procname. if procname has a path, then search
-    for exactly that, else compare with basename. if pidlist is NULL
-    or maxnumpids is 0, then return found count, else return number of
-    pids now in list. On error return < 0.
+    get list of pid's for procname. if pidlist is NULL or maxnumpids is 0, 
+    then return found count, else return number of pids now in list. 
+    On error return < 0.
 */
 int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
 {
@@ -759,10 +760,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
     {
       if (*procname == '*' || *procname == '#')
       {
-        //
-        // Process name began with a special symbol and should
-        // match by window title ('*') or class name ('#').
-        //
+        /* match by window title ('*') or class name ('#') */
         char which = *procname++;
         while (*procname == ' ' || *procname == '\t')
           procname++;
@@ -774,21 +772,19 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           else if (which == '#') /* class name */
             hwnd = FindWindow( procname, NULL );
           num_found = 0;
-          if (hwnd != NULL)
+          if (hwnd != NULL) /* found! */
           {
-            // We have found a matching window, get its PID.
             DWORD pid = 0;
             #if (CLIENT_OS == OS_WIN32)
             if ( winGetVersion() >= 400 ) /* not win32s please */
-            {
-              // Return the actual PID on Win9x or NT.
+            {                             /* use real pid */
               if (GetWindowThreadProcessId( hwnd, &pid ) == 0)
                 pid = 0;
             }
             else
             #endif
             {
-              // Return module handles instead of pids for win16 or win32s.
+              /* Return module handles instead of pids for win16 or win32s. */
               #ifndef GWL_HINSTANCE /* GWW_HINSTANCE on win16 */
               #define GWL_HINSTANCE (-6)
               #endif
@@ -801,8 +797,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
               }
             }
 
-            // We have identified the PID to save.
-            if (pid != 0)
+            if (pid != 0) /* have a match to store */
             {
               if (pidlist)
               {
@@ -812,37 +807,163 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
             }
           }
         }
-      }
+      } /* find by window or window class */ 
+      #if (CLIENT_OS == OS_WIN32)
+      else if (winGetVersion() >= 400) /* not win32s please */
+      {
+        /* calls to CreateToolhelp32Snapshot(), Process32First() and 
+           Process32Next() go to platforms/win32cli/w32snapp.c which 
+           has stubs into toolhlp32.dll and emulation for toolhelp 
+           when running on NT3/4.
+        */   
+        HANDLE hSnapshot;
+
+        hSnapshot = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
+        if (hSnapshot)
+        {
+          PROCESSENTRY32 pe;
+          pe.dwSize = sizeof(pe);
+      
+          if (Process32First(hSnapshot, &pe))
+          {
+            DWORD ourownpid = GetCurrentProcessId();
+            int dirmatch_optimization_rule = -1; /* not determined yet */
+            unsigned int basenamepos, basenamelen, suffixlen;
+
+            /* Name matching: if any component (path,name,extension) of 
+              the found name or the template is not available, then those 
+              components are treated as lexical wildcards (match anything).
+            */
+
+            suffixlen = 0;
+            basenamelen = basenamepos = strlen(procname);
+            while (basenamepos > 0)
+            {
+              basenamepos--;
+              if (procname[basenamepos] == '\\' ||
+                 procname[basenamepos] == '/' ||
+                 procname[basenamepos] == ':')
+              {
+                basenamepos++;
+                basenamelen-=basenamepos;
+                break;
+              }
+            }
+            if (basenamelen > 3)
+            {
+              if (strcmpi( &procname[(basenamepos+basenamelen)-4],".com" )==0 ||
+                 strcmpi( &procname[(basenamepos+basenamelen)-4],".exe" )==0 )
+              {
+                suffixlen = 3;
+                basenamelen -=4;
+              }
+            }
+    
+            do
+            {
+//LogScreen("ps: %p => '%s'\n", pe.th32ProcessID, pe.szExeFile);
+              if (pe.szExeFile[0])
+              {
+                /* our enumerator is working */
+                if (num_found < 0)
+                {
+                  num_found = 0;
+                }
+                if (pe.th32ProcessID != ourownpid)
+                {
+                  int cmpresult = -1;
+                  const char *foundname = pe.szExeFile;
+                  const char *templname = procname;
+                  unsigned int len = strlen( foundname );
+                  unsigned int fbasenamelen = len;
+      
+                  while (len > 0)
+                  {
+                    len--;
+                    if (foundname[len]=='\\' ||
+                        foundname[len]=='/' ||
+                        foundname[len]==':')
+                    {
+                      len++;
+                      fbasenamelen-=len;
+                      break;
+                    }
+                  }
+    
+                  /*if no path is available on one side then skip
+                    the path (if it exists) on the other side
+                  */
+                  if (basenamepos == 0) /* no path in template */
+                  {
+                    foundname += len; /* then skip dir in foundname */
+                  }  
+                  else if (len == 0) /*dir in templ, but no dir in foundname */
+                  {
+                    templname += basenamepos; /* then skip dir in template */
+                  } 
+                  cmpresult = strcmpi( templname, foundname );
+      
+                  if ( cmpresult )
+                  {
+                    /* if either template OR foundname have no suffix, (but
+                       not both, which will have been checked above) then
+                       allow a match if the basenames (sans-suffix) are equal.
+                    */  
+                    int fsuffixlen = 0;
+                    if (fbasenamelen > 3)
+                    {
+                      /* Don't be tempted to try to optimize away 
+                         extension checks even when the data is from
+                         performance counters- although it might 
+                         *APPEAR* that pe.szExeFile never has an extension 
+                         (when using performance counters), that is not
+                         always so. -cyp
+                      */
+                      if ( strcmpi( &foundname[fbasenamelen-4], ".exe" ) == 0
+                        || strcmpi( &foundname[fbasenamelen-4], ".com" ) == 0 )
+                      { 
+                        fsuffixlen = 3;
+                        fbasenamelen -= 4;
+                      }  
+                    }  
+                    if (suffixlen != fsuffixlen && basenamelen == fbasenamelen)
+                    {
+                      cmpresult = memicmp( foundname, templname, basenamelen );
+                    }
+                  }
+                  
+                  if (cmpresult == 0)
+                  {
+                    if (pidlist)
+                    {
+                      pidlist[num_found] = (long)pe.th32ProcessID;
+                    }
+                    num_found++;
+                    if (pidlist && num_found == maxnumpids) /* hit limit? */
+                    {
+                      break; /* do {} while Process32Next() */
+                    }
+                  }
+                } /* if (pe.th32ProcessID != ourownpid) */
+              } /* if (pe.szExeFile[0]) */
+            } while (Process32Next(hSnapshot, &pe));
+          } /* if (Process32First(hSnapshot, &pe)) */
+          CloseHandle( hSnapshot );
+        } /* if (hSnapshot) */
+      } /* else if (winGetVersion() >= 400) */
+      #endif /* #if (CLIENT_OS == OS_WIN32) */
       else
       {
-        //
-        // Process name did not begin with a special symbol,
-        // so match by literal process executable name.
-        //
-        #if (CLIENT_OS == OS_WIN32)
-        if (winGetVersion() >= 2000 && winGetVersion() < 2500) // NT3/NT4
+        /* we should use taskfirst/tasknext, but thats a *bit*
+           cowplicated from within an extender
+        */
+        HMODULE hMod = GetModuleHandle(procname);
+        num_found = 0;
+        if (hMod != NULL)
         {
-          //num_found = __win32utilGetPidUsingPerfCaps(procname, pidlist, maxnumpids);
-          num_found = __win32utilGetPidUsingNtQuery(procname, pidlist, maxnumpids);
-        }
-        else if (winGetVersion() >= 400) // win9x/NT5, but not win32s.
-        {
-          num_found = __win32utilGetPidUsingPshelper(procname, pidlist, maxnumpids);
-        }
-        else
-        #endif
-        {
-          /* we should use taskfirst/tasknext, but thats a *bit*
-             cowplicated from within an extender
-          */
-          HMODULE hMod = GetModuleHandle(procname);
-          num_found = 0;
-          if (hMod != NULL)
-          {
-            if (pidlist != NULL)
-              pidlist[num_found] = (long)hMod;
-            num_found++;
-          }
+          if (pidlist != NULL)
+            pidlist[num_found] = (long)hMod;
+          num_found++;
         }
       }
     }
