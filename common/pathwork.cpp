@@ -22,6 +22,9 @@
 // --------------------------------------------------------------------
 //
 // $Log: pathwork.cpp,v $
+// Revision 1.11  1999/01/08 21:20:38  sugalskd
+// Fixed VMS path-finding code
+//
 // Revision 1.10  1998/10/04 11:35:49  remi
 // Id tags fun.
 //
@@ -51,7 +54,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.10 1998/10/04 11:35:49 remi Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.11 1999/01/08 21:20:38 sugalskd Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -145,13 +148,18 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
   #elif (CLIENT_OS == OS_VMS)
     {
     strcpy( cwdBuffer, inipath );
-    char *slash = strrchr(cwdBuffer, ':');
-    if (slash == NULL && apppath != NULL && strlen( apppath ) > 0)
+    char *slash, *bracket, *dirend;
+    slash = strrchr(cwdBuffer, ':');
+    bracket = strrchr(cwdBuffer, ']');
+    dirend = (slash > bracket ? slash : bracket);
+    if (dirend == NULL && apppath != NULL && strlen( apppath ) > 0)
       {
       strcpy( cwdBuffer, apppath );
       slash = strrchr(cwdBuffer, ':');
+      bracket = strrchr(cwdBuffer, ']');
+      dirend = (slash > bracket ? slash : bracket);
       }
-    if (slash != NULL) *(slash+1) = 0;
+    if (dirend != NULL) *(dirend+1) = 0;
     else cwdBuffer[0] = 0;  //current directory is also always the apps dir
     }
   #elif (CLIENT_OS == OS_NETWARE)
