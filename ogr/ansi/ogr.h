@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.13 2004/06/16 18:11:43 kakace Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.14 2004/06/17 15:47:55 kakace Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -180,7 +180,7 @@ struct Level {
   /* If AltiVec is possible we must reserve memory, just in case */
   #ifdef __VEC__   // unused if OGROPT_ALTERNATE_CYCLE == 0 || == 1
   VECTOR listV0, listV1, compV;
-  U list0, comp0, pad1, pad2;
+  U list0, comp0;
   #endif
   U list[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 2
   U dist[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 1 || 2
@@ -188,10 +188,9 @@ struct Level {
   int cnt1;        // unused if OGROPT_ALTERNATE_CYCLE == 1 || == 2
   int cnt2;        // always needed
   int limit;       // always needed
-  int pad3, pad4;
 };
 
-#define OGR_LEVEL_SIZE ((16*3)+(4*4)+((4*BITMAPS)*3)+(OGR_INT_SIZE*5))
+#define OGR_LEVEL_SIZE ((128*4)+((4*BITMAPS)*3)+(OGR_INT_SIZE*3))
 
 struct State {
   #if 0 /* unused - see notes for ogr_cycle() above */
@@ -232,13 +231,13 @@ struct State {
     U dist0, pad1;
     VECTOR distV;
   #endif
-  struct Level Levels[MAXDEPTH];
   U dist[BITMAPS];   /* only used by OGROPT_ALTERNATE_CYCLE == 1 */
+  struct Level Levels[MAXDEPTH];
 };
 
-#define OGR_PROBLEM_SIZE (/*8+*/(6*OGR_INT_SIZE)+(OGR_INT_SIZE*(MAXDEPTH+1))+ \
-                         (3*OGR_INT_SIZE)+/*4+2*4+8*4+*/(8+16)+\
-                         (OGR_LEVEL_SIZE*MAXDEPTH)+(OGR_INT_SIZE*BITMAPS)+16)
+#define OGR_PROBLEM_SIZE (/*16+*/(6*OGR_INT_SIZE)+(OGR_INT_SIZE*(MAXDEPTH+1))+ \
+                         (4*OGR_INT_SIZE)+(128*2)+(OGR_INT_SIZE*BITMAPS)+ \
+                         (OGR_LEVEL_SIZE*MAXDEPTH)+64)
                          /* sizeof(struct State) */
 
 unsigned long ogr_nodecount(const struct Stub *);
