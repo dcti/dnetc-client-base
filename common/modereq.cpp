@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.5  1998/11/03 16:08:31  cyp
+// config mode changed so that it isn't affected by active command line options.
+//
 // Revision 1.4  1998/11/02 04:46:08  cyp
 // Added check for user break after each mode is processed. Added code to
 // automatically trip a restart after mode processing (for use with config).
@@ -23,7 +26,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.4 1998/11/02 04:46:08 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.5 1998/11/03 16:08:31 cyp Exp $"; }
 #endif
 
 #include "client.h"   //client class
@@ -125,13 +128,29 @@ int ModeReqRun(Client *client)
         }
       if ((bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART)) != 0)
         {
-        if ( client->Configure() == 1 )
+        Client *newclient = new Client;
+        if (!newclient)
+          LogScreen("Unable to configure. (Insufficient memory)");
+        else
           {
-          client->WriteFullConfig(); //full new build
+          int i, nodestroy = 0;
+          for (i=0;client->inifilename[i];i++)
+            newclient->inifilename[i]=client->inifilename[i];
+          newclient->inifilename[i]=0;  
+          if ( newclient->ReadConfig() ) /* ini missing */
+            {
+            delete newclient;
+            newclient = client;
+            nodestroy = 1;
+            }
+          if ( newclient->Configure() == 1 )
+            newclient->WriteFullConfig(); //full new build
+          if (!nodestroy)
+            delete newclient;
+          if ((bits & MODEREQ_CONFRESTART) != 0)
+            restart = 1;
+          retval |= (bits & (MODEREQ_CONFIG|MODEREQ_CONFRESTART));
           }
-        if ((bits & MODEREQ_CONFRESTART) != 0)
-          restart = 1;
-        retval |= (bits & (MODEREQ_CONFIG|MODEREQ_CONFRESTART));
         modereq.reqbits &= ~(MODEREQ_CONFIG|MODEREQ_CONFRESTART);
         }
       if ((bits & (MODEREQ_FETCH | MODEREQ_FLUSH))!=0)
