@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.35 2000/05/11 15:49:09 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.36 2000/05/17 17:46:59 cyp Exp $"; }
 
 //#define TRACE
 
@@ -35,9 +35,7 @@ static const char *DEFAULT_EXITFLAGFILENAME = "exitrc5"EXTN_SEP"now";
 
 /* ------------------------------------------------------------------------ */
 
-// Returns a static textual name representation of the given contest id.
-// On error, returns NULL.
-
+// Get .ini's section name for a given contest id. On error, returns NULL.
 static const char *__getprojsectname( unsigned int ci )
 {
   if (ci < CONTEST_COUNT)
@@ -1235,7 +1233,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
   TRACE_OUT((+1,"WriteConfig()\n"));
 
   client->randomchanged = 1;
-  RefreshRandomPrefix( client );
+  RefreshRandomPrefix( client ); /* must come after writing something else */
 
   if (writefull != 0)
   {
@@ -1360,24 +1358,26 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
 // update contestdone and randomprefix .ini entries
 void RefreshRandomPrefix( Client *client )
 {
-  // we need to use no_trigger when reading/writing full configs
-
   if (client->stopiniio == 0 && client->nodiskbuffers == 0)
   {
     const char *fn = client->inifilename;
+    const char *rc5_sect = __getprojsectname(RC5);
     fn = GetFullPathForFilename( fn );
+
+    if ( access( fn, 0 )!=0 ) /* we also do not *write* if the .ini */
+      return;                 /* doesn't already exist */
 
     if ( client->randomchanged == 0 ) /* load */
     {
-      if ( access( fn, 0 )!=0 )
-        return;
-
-      client->randomprefix =  GetPrivateProfileIntB(__getprojsectname(RC5), "randomprefix",
+      client->randomprefix = GetPrivateProfileIntB(rc5_sect, "randomprefix",
                                                  client->randomprefix, fn);
+      if (client->randomprefix < 100 || client->randomprefix > 255)
+        client->randomprefix = 100;
+
+      client->rc564closed = (GetPrivateProfileIntB(rc5_sect, "closed", 0, fn )!=0);
+
       client->scheduledupdatetime = GetPrivateProfileIntB(OPTSECT_NET,
                       "scheduledupdatetime", client->scheduledupdatetime, fn);
-
-      client->rc564closed = (GetPrivateProfileIntB(__getprojsectname(RC5), "closed", 0, fn )!=0);
     }
 
     if (client->randomchanged)
@@ -1385,15 +1385,14 @@ void RefreshRandomPrefix( Client *client )
       client->randomchanged = 0;
       /* prevent our own writes from kicking off a restart */
       OverrideNextConffileChangeTrigger();
-      if (client->randomprefix != 100 || GetPrivateProfileIntB(__getprojsectname(RC5), "randomprefix", 0, fn))
-      {
-        if (!WritePrivateProfileIntB(__getprojsectname(RC5),"randomprefix",client->randomprefix,fn))
-        {
-          //client->stopiniio == 1;
-          return; //write fail
-        }
-      }
-      WritePrivateProfileStringB(__getprojsectname(RC5),"closed",(client->rc564closed)?("1"):(NULL), fn );
+
+      if (client->randomprefix == 100)
+        WritePrivateProfileStringB(rc5_sect,"randomprefix",NULL,fn);
+      else
+        WritePrivateProfileIntB(rc5_sect,"randomprefix",client->randomprefix,fn);
+
+      WritePrivateProfileStringB(rc5_sect,"closed",(client->rc564closed)?("yes"):(NULL), fn );
+
       if (client->scheduledupdatetime == 0)
         WritePrivateProfileStringB(OPTSECT_NET, "scheduledupdatetime", NULL, fn );
       else
