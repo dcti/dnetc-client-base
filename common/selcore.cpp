@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.32 2003/03/26 16:43:14 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.33 2003/03/26 16:45:04 andreasb Exp $"; }
 
 //#define TRACE
 
