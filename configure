@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.239 1999/11/08 02:57:50 cyp Exp $
+# @(#)$Id: configure,v 1.240 1999/11/09 16:06:00 cyp Exp $
 
 if [ -z "$1" ]; then
   echo "No platform specified on command line.";
@@ -1764,7 +1764,7 @@ if [ "X$TARGET_TARBALL" != "X" ]; then
   if [ "X$TARGET_TARBALL_COMMENT" != "X" ]; then
     echo "	echo \"${TARGET_TARBALL_COMMENT}\">${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
   fi
-  echo "	sh ./upload.sh rc5des\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
+  echo "	sh ./upload.sh ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
   if [ "X$TARGET_TARBALL_COMMENT" != "X" ]; then
     echo "	rm -f ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
   fi
