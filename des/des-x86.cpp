@@ -3,11 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.8  1998/06/17 21:56:07  remi
+// Fixed p?bryd_des routines naming.
+//
 // Revision 1.7  1998/06/16 22:12:29  silby
 // fixed second pro thread not working right
 //
 // Revision 1.5  1998/06/16 21:49:46  silby
-// Added p1bdespro and p2bdespro, really the "old" p5 bryddes cores until the pro ones are ported to .s
+// Added p1bdespro and p2bdespro, really the "old" p5 bryddes cores until
+// the pro ones are ported to .s
 //
 // des-x86.cpp has been modified for the dual x86 core support (p5/pro)
 //
@@ -22,7 +26,7 @@
 
 // encapsulate the BrydDES library
 
-static char *id="@(#)$Id: des-x86.cpp,v 1.7 1998/06/16 22:12:29 silby Exp $";
+static char *id="@(#)$Id: des-x86.cpp,v 1.8 1998/06/17 21:56:07 remi Exp $";
 
 #include <stdio.h>
 #include <string.h>
@@ -44,6 +48,8 @@ static char *id="@(#)$Id: des-x86.cpp,v 1.7 1998/06/16 22:12:29 silby Exp $";
  #define bryd_key_found _bryd_key_found
  #define bbryd_continue _bbryd_continue
  #define bbryd_key_found _bbryd_key_found
+ #define p1bryd_des _p1bryd_des
+ #define p2bryd_des _p2bryd_des
 #elif ((CLIENT_OS == OS_BEOS) && (CLIENT_CPU == CPU_X86))
  #define bbryd_des BBRYD_DES
  #define bbryd_continue BBRYD_CONTINUE
