@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.50 1999/11/16 22:16:17 ivo Exp $
+# @(#)$Id: configure,v 1.222.2.51 1999/11/22 00:29:34 elric Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -749,10 +749,12 @@ case "$1" in
 
     *alpha-netbsd)
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_EGCS_ALPHA -DBIT_64 -DKWAN -DDWORZ"
+	TARGET_CCFLAGS="$OPTS_EGCS_ALPHA -DBIT_64 -DKWAN -DDWORZ \
+			-DHAVE_CSC_CORES -DHAVE_DES_CORES"
+	TARGET_TARBALL="netbsd-alpha"
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS \
 			rc5/alpha/axp-bmeyer.cpp \
-			rc5/alpha/axp-bmeyer.s"
+			rc5/alpha/axp-bmeyer.s ${CSC_ANSI_SRCS}"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
