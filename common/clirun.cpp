@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.79 2000/11/12 21:06:36 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.80 2000/11/12 22:53:24 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1695,7 +1695,7 @@ int ClientRun( Client *client )
     if (!TimeToQuit && ModeReqIsSet(-1))
     {
       int did_suspend = 0;
-      if (ModeReqIsSet(MODEREQ_TEST_MASK|MODEREQ_BENCHMARK_MASK))
+      if (ModeReqIsSet(MODEREQ_TEST_MASK|MODEREQ_BENCHMARK_MASK|MODEREQ_CONFIG))
       {
         if (!wasPaused) /* read that as 'isPaused' */
         {
