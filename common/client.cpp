@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.80  1998/07/07 02:12:14  silby
+// Removed an over-zealous #if DONT_USE_PATHWORK - was preventing .inis from following the executible's name.
+//
 // Revision 1.79  1998/07/07 01:14:09  silby
 // Fixed a bug where the default rc5 out buffer was buff-out.des. 413 needs to be recalled now.
 //
@@ -140,7 +143,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.79 1998/07/07 01:14:09 silby Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.80 1998/07/07 02:12:14 silby Exp $";
 #endif
 
 #include "client.h"
@@ -3128,8 +3131,6 @@ int main( int argc, char *argv[] )
   {
     strncpy( client.inifilename, getenv( "RC5INI" ), 127 );
   }
-
-#ifdef DONT_USE_PATHWORK
   else
   {
 #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
@@ -3176,7 +3177,6 @@ int main( int argc, char *argv[] )
     strcat( client.inifilename, EXTN_SEP "ini" );
 #endif
   }
-#endif
 
   // See if there's a command line parameter to override the INI filename...
   for (i = 1; i < argc; i++)
