@@ -2,6 +2,11 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+// $Log: problem.cpp,v $
+// Revision 1.15  1998/06/14 00:06:07  remi
+// Added $Log.
+//
+
 #define NEW_STATS_AND_LOGMSG_STUFF
 
 #include "problem.h"
