@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.40  1998/11/26 07:31:03  cyp
+// Updated to reflect changed checkpoint and buffwork methods. Corrected BeOS
+// priority scaling.
+//
 // Revision 1.39  1998/11/25 09:23:30  chrisb
 // various changes to support x86 coprocessor under RISC OS
 //
@@ -150,7 +154,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.39 1998/11/25 09:23:30 chrisb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.40 1998/11/26 07:31:03 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -172,10 +176,10 @@ return "@(#)$Id: clirun.cpp,v 1.39 1998/11/25 09:23:30 chrisb Exp $"; }
 #include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "clisrate.h"
 #include "clicdata.h"
-#include "pathwork.h"
+#include "checkpt.h"
 #include "cpucheck.h"  //GetTimesliceBaseline(), GetNumberOfSupportedProcessors()
 #include "probman.h"   //GetProblemPointerFromIndex()
-#include "probfill.h"  //LoadSaveProblems(), RandomWork(), FILEENTRY_xxx macros
+#include "probfill.h"  //LoadSaveProblems(), FILEENTRY_xxx macros
 #include "modereq.h"   //ModeReq[Set|IsSet|Run]()
 
 // --------------------------------------------------------------------------
@@ -188,16 +192,6 @@ static struct
 } runstatics = {0,0,0};  
 
 // --------------------------------------------------------------------------
-
-static int IsFilenameValid( const char *filename )
-{ return ( filename && *filename != 0 && strcmp( filename, "none" ) != 0 ); }
-
-static int DoesFileExist( const char *filename )
-{
-  if ( !IsFilenameValid( filename ) )
-    return 0;
-  return ( access( GetFullPathForFilename( filename ), 0 ) == 0 );
-}
 
 #if defined(BETA)
 static int checkifbetaexpired(void)
@@ -660,18 +654,15 @@ void Go_mt( void * parm )
   Problem *thisprob = NULL;
   unsigned int threadnum = targ->threadnum;
   u32 run;
-#if (CLIENT_OS == OS_RISCOS)
-/*
-  if (threadnum == 1)
-  {
-      thisprob = GetProblemPointerFromIndex(threadnum);
-      thisprob->Run( threadnum ); 
-      return;
-  }
-*/
-#endif
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_RISCOS)
+/*if (threadnum == 1)
+    {
+    thisprob = GetProblemPointerFromIndex(threadnum);
+    thisprob->Run( threadnum ); 
+    return;
+    } */
+#elif (CLIENT_OS == OS_WIN32)
 if (targ->realthread)
   {
   DWORD LAffinity, LProcessAffinity, LSystemAffinity;
@@ -718,47 +709,49 @@ if (targ->realthread)
 
   while (!CheckExitRequestTriggerNoIO())
     {
-	if (targ->do_refresh)
-	    thisprob = GetProblemPointerFromIndex(threadnum);
-	run = 1; //assume didn't run
-	if (thisprob && thisprob->IsInitialized() && !thisprob->finished && 
-	    !CheckPauseRequestTriggerNoIO() && !targ->do_suspend)
-	{
-#ifdef NON_PREEMPTIVE_OS_PROFILING
-	    thisprob->tslice = do_ts_profiling( thisprob->tslice, 
-						thisprob->contest, threadnum );
-#endif
-	    
-	    targ->is_suspended = 0;
-	    // This will return without doing anything if uninitialized...
-	    run = thisprob->Run( threadnum ); 
-	    targ->is_suspended = 1;
-	    
-#if (CLIENT_OS == OS_NETWARE)
-	    yield_pump(NULL);
-#endif
-	}
-	if (run != 0)
-	{
-	    if (thisprob == NULL || !thisprob->IsInitialized() || thisprob->finished)
-	    {
-		runstatics.refillneeded = 1;
-		yield_pump(NULL);
-	    }
-	    else //(CheckPauseRequestTriggerNoIO() || targ->do_suspend)
-		if (!targ->realthread)
-		    NonPolledSleep(1); // don't race in this loop
-#ifdef NON_PREEMPTIVE_OS_PROFILING
-	    reset_ts_profiling();
-#endif
-	    targ->do_refresh = 1;
-	}
-	if (!targ->realthread)
-	{
-	    RegPolledProcedure( Go_mt, parm, NULL, 0 );
-	    runstatics.nonmt_ran = 1;
-	    break;
-	}
+    if (targ->do_refresh)
+      thisprob = GetProblemPointerFromIndex(threadnum);
+    run = 1; //assume didn't run
+    if (thisprob && thisprob->IsInitialized() && !thisprob->finished && 
+       !CheckPauseRequestTriggerNoIO() && !targ->do_suspend)
+      {
+      #ifdef NON_PREEMPTIVE_OS_PROFILING
+      thisprob->tslice = do_ts_profiling( thisprob->tslice, 
+                          thisprob->contest, threadnum );
+      #endif
+
+      targ->is_suspended = 0;
+      // This will return without doing anything if uninitialized...
+      run = thisprob->Run( threadnum ); 
+      targ->is_suspended = 1;
+      
+      #if (CLIENT_OS == OS_NETWARE)
+      yield_pump(NULL);
+      #endif
+      }
+    if (run != 0)
+      {
+      if (thisprob == NULL || !thisprob->IsInitialized() || thisprob->finished)
+        {
+        runstatics.refillneeded = 1;
+        yield_pump(NULL);
+        }
+      else //(CheckPauseRequestTriggerNoIO() || targ->do_suspend)
+        {
+        //if (targ->realthread)
+          NonPolledSleep(1); // don't race in this loop
+        }
+      #ifdef NON_PREEMPTIVE_OS_PROFILING
+      reset_ts_profiling();
+      #endif
+      targ->do_refresh = 1;
+      }
+    if (!targ->realthread)
+      {
+      RegPolledProcedure( Go_mt, parm, NULL, 0 );
+      runstatics.nonmt_ran = 1;
+      break;
+      }
     }
   
   targ->threadID = 0; //the thread is dead
@@ -860,20 +853,8 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
                                    (void *)thrparams )) != -1);
       #elif (CLIENT_OS == OS_BEOS)
         char thread_name[32];
-        long be_priority;
-     
-	// B_LOW_PRIORITY is 5 and B_NORMAL_PRIORITY is 10
-	be_priority = thrparams->priority + 1; 
-
-        #ifdef OLDNICENESS
-        switch(niceness)
-          {
-          case 0: be_priority = B_LOW_PRIORITY; break;
-          case 1: be_priority = (B_LOW_PRIORITY + B_NORMAL_PRIORITY) / 2; break;
-          case 2: be_priority = B_NORMAL_PRIORITY; break;
-          default: be_priority = B_LOW_PRIORITY; break;
-          }
-        #endif
+        long be_priority = 5 + ((thrparams->priority+1) >> 1); 
+        // B_LOW_PRIORITY is 5 and B_NORMAL_PRIORITY is 10
         sprintf(thread_name, "RC5DES crunch#%d", thread_i + 1);
         thrparams->threadID = spawn_thread((long (*)(void *)) Go_mt, 
                thread_name, be_priority, (void *)thrparams );
@@ -989,7 +970,7 @@ int Client::Run( void )
 
   if (!checkpointsDisabled) //!nodiskbuffers
     { 
-    if (UndoCheckpoint()) //returns !0 if checkpoints disabled
+    if (CheckpointAction( CHECKPOINT_OPEN, 0 )) //-> !0 if checkpts disabled
       {
       checkpointsDisabled = 1;
       }
@@ -1130,6 +1111,7 @@ int Client::Run( void )
         break;
         }
       }
+
     if (load_problem_count == 0)
       {
       Log("Unable to initialize cruncher(s). Quitting...\n");
@@ -1173,7 +1155,7 @@ int Client::Run( void )
              htonl( Checksum( (u32 *) &fileentry, (sizeof(FileEntry)/4)-2));
           Scramble( ntohl( fileentry.scramble ),
               (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-          InternalPutBuffer( in_buffer_file[cont_i], &fileentry );
+          PutBufferRecord(&fileentry);
           }
         }
       }
@@ -1215,12 +1197,10 @@ int Client::Run( void )
     else 
       {
       int i=0;
-      while ((i++)<3 
+      while ((i++)<3
             && !runstatics.refillneeded 
             && !CheckExitRequestTriggerNoIO()
             && ModeReqIsSet(-1)==0)
-        sleep(1);
-      if (!runstatics.refillneeded)
         sleep(1);
       }
     SetGlobalPriority( 9 );
@@ -1323,7 +1303,7 @@ int Client::Run( void )
       if ((consecutivesolutions[tmpc] >= 32) && !contestdone[tmpc])
         {
         contestdone[tmpc] = 1;
-        WriteContestandPrefixConfig( );
+        randomchanged = 1;
         if (!TimeToQuit)
           {
           Log( "Too many consecutive %s solutions detected.\n"  
@@ -1386,7 +1366,7 @@ int Client::Run( void )
 
         if (checkpointsPercent != prob_i)
           {
-          if (DoCheckpoint(load_problem_count))
+          if (CheckpointAction( CHECKPOINT_REFRESH, load_problem_count ))
             checkpointsDisabled = 1;
           timeNextCheckpoint = timeRun + (time_t)(60);
           }
@@ -1433,24 +1413,11 @@ int Client::Run( void )
   DeinitializePolling(); 
 
   // ----------------
-  // Shutting down: save problem buffers
+  // Shutting down: save prob buffers, flush if nodiskbuffers, kill checkpts
   // ----------------
 
    LoadSaveProblems(load_problem_count, PROBFILL_UNLOADALL );
-
-   // ----------------
-   // Shutting down: do a net flush if nodiskbuffers
-   // ----------------
-
-   for (cont_i = 0; cont_i < 2; cont_i++ )
-     {
-     if (nodiskbuffers)    // we had better flush everything.
-       ForceFlush(cont_i);
-     if ( DoesFileExist( checkpoint_file[cont_i] ) )
-       EraseCheckpointFile( checkpoint_file[cont_i] );
-     }
-   if (randomchanged)  
-     WriteContestandPrefixConfig();
+   CheckpointAction( CHECKPOINT_CLOSE, 0 ); /* also done by LoadSaveProb */
 
   
   #if (CLIENT_OS == OS_VMS)
@@ -1462,136 +1429,3 @@ int Client::Run( void )
 
 // ---------------------------------------------------------------------------
 
-#define COMBINE_ALL_CHECKPOINTS_IN_ONE_FILE
-
-int Client::UndoCheckpoint( void )
-{
-  FileEntry fileentry;
-  unsigned int outcont_i, cont_i, cont_count, recovered;
-  int remaining, lastremaining;
-  int do_checkpoint = 0;
-  u32 optype;
-
-  cont_count = 2;
-  #ifdef COMBINE_ALL_CHECKPOINTS_IN_ONE_FILE
-  cont_count = 1;
-  if ( IsFilenameValid( checkpoint_file[1] ) )
-    unlink( checkpoint_file[1] );
-  #endif
-
-  for (cont_i = 0; cont_i < cont_count; cont_i++)
-    {
-    if ( IsFilenameValid( checkpoint_file[cont_i] ) )
-      do_checkpoint = 1;
-    }
-
-  if (do_checkpoint)
-    {
-    recovered = 0;
-
-    for ( cont_i = 0; cont_i < cont_count; cont_i++ )
-      {
-      if ( DoesFileExist( checkpoint_file[cont_i] ))
-        {
-        lastremaining = -1;
-        while ((remaining = (int)InternalGetBuffer( 
-          checkpoint_file[cont_i], &fileentry, &optype, cont_i )) != -1)
-          {
-          if (lastremaining!=-1 && lastremaining != (remaining+1))
-            {
-            recovered = 0;
-            break;
-            }
-          lastremaining = remaining;
-
-          Descramble( ntohl( fileentry.scramble ),
-                    (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-          outcont_i = (unsigned int)fileentry.contest;
-          Scramble( ntohl( fileentry.scramble ),
-                    (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-          
-          if ( IsFilenameValid( in_buffer_file[outcont_i] ) &&
-             InternalPutBuffer( in_buffer_file[outcont_i], &fileentry )!=-1)
-            recovered++;
-          }
-        EraseCheckpointFile( checkpoint_file[cont_i] );
-        }
-      }
-    if (recovered)  
-      {
-      LogScreen("Recovered %u checkpoint block%s\n", recovered, 
-            ((recovered == 1)?(""):("s")) );
-      }
-    }
-  return (do_checkpoint == 0); /* return !0 if don't do checkpoints */
-}  
-
-// ---------------------------------------------------------------------------
-
-int Client::DoCheckpoint( unsigned int load_problem_count )
-{
-  FileEntry fileentry;
-  unsigned int cont_i, cont_count, prob_i;
-  char *ckfile;
-  int do_checkpoint = (nodiskbuffers == 0);
-
-  cont_count = 2;
-  #ifdef COMBINE_ALL_CHECKPOINTS_IN_ONE_FILE
-  cont_count = 1;
-  #endif
-
-  for (cont_i = 0; cont_i < cont_count; cont_i++)
-    {
-    ckfile = &(checkpoint_file[cont_i][0]);
-    // Remove prior checkpoint information (if any).
-    if ( IsFilenameValid( ckfile ) )
-      {
-      EraseCheckpointFile( ckfile ); 
-      do_checkpoint = 1;
-      }
-    }
-    
-  if ( do_checkpoint )
-    {
-    for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
-      {
-      Problem *thisprob = GetProblemPointerFromIndex(prob_i);
-      if ( thisprob )
-        {
-        cont_i = (unsigned int)thisprob->RetrieveState(
-                                           (ContestWork *) &fileentry, 0);
-        if (cont_i == 0 || cont_i == 1)
-          {
-          #ifdef COMBINE_ALL_CHECKPOINTS_IN_ONE_FILE
-          ckfile = &(checkpoint_file[0][0]);
-          #else
-          ckfile = &(checkpoint_file[cont_i][0]);
-          #endif
-
-          if ( IsFilenameValid( ckfile ) )
-            {
-            fileentry.contest = (u8)cont_i;
-            fileentry.op      = htonl( OP_DATA );
-            fileentry.cpu     = FILEENTRY_CPU;
-            fileentry.os      = FILEENTRY_OS;
-            fileentry.buildhi = FILEENTRY_BUILDHI; 
-            fileentry.buildlo = FILEENTRY_BUILDLO;
-            fileentry.checksum=
-               htonl( Checksum( (u32 *) &fileentry, (sizeof(FileEntry)/4)-2));
-            Scramble( ntohl( fileentry.scramble ),
-                         (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-            if (InternalPutBuffer( ckfile, &fileentry )== -1)
-              {
-              //Log( "Checkpoint %d, Buffer Error \"%s\"\n", 
-              //                     cont_i, ckfile );
-              }
-            }
-          } 
-        } 
-      }  // for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
-    } // if ( !nodiskbuffers )
-
-  return (do_checkpoint == 0); /* return !0 if don't do checkpoints */
-}
-
-// ---------------------------------------------------------------------------
