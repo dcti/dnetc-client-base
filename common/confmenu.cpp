@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.27 2000/11/12 04:27:12 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.28 2001/01/17 00:14:17 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -149,7 +149,10 @@ static int __enumcorenames(const char **corenames, int idx, void * /*unused*/)
       if (corenames[cont_i]) /* have a corename at this idx */
       {
         char xxx[4+32];
-        i = sprintf(xxx,"%2d) %-30.30s", idx, corenames[cont_i] );
+        const char *cname = corenames[cont_i];
+        if (selcoreValidateCoreIndex(cont_i,idx) != idx)
+          cname = "<not supported>";
+        i = sprintf(xxx,"%2d) %-30.30s", idx, cname );
         if (i > colwidth)
           i = colwidth;
         strncpy( &scrline[nextpos], xxx, i );
@@ -1044,6 +1047,19 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           else if (conf_options[editthis].type == CONF_TYPE_IARRAY)
           {
             newval_isok = 1; /* never rejected */
+            if (editthis == CONF_CPUTYPE) 
+            {
+              int iarray[CONTEST_COUNT];
+              utilScatterOptionListToArraysEx(parm, &iarray[0], NULL,NULL, NULL );
+              for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+              {
+                if (iarray[cont_i] != selcoreValidateCoreIndex(cont_i,iarray[cont_i]))
+                {
+                  newval_isok = 0; /* reject it */
+                  break;
+                }  
+              }    
+            }
           }
           else //if (conf_options[editthis].type==CONF_TYPE_ASCIIZ)
           {
