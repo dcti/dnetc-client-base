@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.22 1999/10/11 00:11:04 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.23 1999/10/11 01:29:32 cyp Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -1072,7 +1072,7 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -pipe \
-			-D__showids__ -DSMC -DLURK -DGREGH"
+			-D__showids__ -DSMC -DLURK $OGR_ANSI_CCOPTS"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
@@ -1127,10 +1127,10 @@ case "$1" in
     *x86-linux-mt-gcc-gregh)		 # mt, static, gcc, ogr
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DSMC -DLURK"
+			-DMULTITHREAD -DSMC -DLURK $OGR_ANSI_CCOPTS"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
-			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 $OGR_ANSI_SRCS"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
@@ -1598,10 +1598,10 @@ esac
 echo "Platform target for \"$1\" recognized."
 
 #
-# quick hack to add OGR and CSC to all
+# add (cough, cough) projects to all
 #
-TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS $CSC_ANSI_SRCS"
-TARGET_CCFLAGS="$TARGET_CCFLAGS $OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS"
+TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS" #$OGR_ANSI_SRCS 
+TARGET_CCFLAGS="$TARGET_CCFLAGS $CSC_ANSI_CCOPTS" #$OGR_ANSI_CCOPTS 
 
 #
 # Generate the list of output objects, making note of what
