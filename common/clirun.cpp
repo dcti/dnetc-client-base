@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.78  1999/02/19 03:17:02  silby
+// Added HPUX yield
+//
 // Revision 1.77  1999/02/06 00:51:15  silby
 // Change to win32 thread shutdown; win95 goes nuts if
 // thread-related funcs are called with invalid handles,
@@ -297,7 +300,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.77 1999/02/06 00:51:15 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.78 1999/02/19 03:17:02 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -517,6 +520,8 @@ static void yield_pump( void *tv_p )
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_ULTRIX)
     NonPolledUSleep( 0 ); /* yield */
+  #elif (CLIENT_OS == OS_HPUX)
+    sched_yield();;
   #elif (CLIENT_OS == OS_DEC_UNIX)
    #if defined(MULTITHREAD)
      sched_yield();
