@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.106 2001/03/30 12:01:06 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.107 2001/03/30 12:30:27 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -820,6 +820,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x07: cindex = 2; break; // Celeron
             case 0x08: cindex = 2; break; // PPro
             case 0x09:                    // AMD>=K7/Cx>MII
+            case 0x0A:                    // Centaur C6 - Bug #2082
             {
               cindex = 3; // ("RG re-pair I")
               #if !defined(HAVE_NO_NASM)
@@ -827,9 +828,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
               #endif
               break;
             }  
-            case 0x0A: cindex = 1; break; // Centaur C6
-            //no default
             case 0x0B: cindex = 8; break; // P4
+            //no default
           }
           selcorestatics.corenum[RC5] = cindex;
         }
