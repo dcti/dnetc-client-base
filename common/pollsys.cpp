@@ -27,6 +27,10 @@
 // does away with the 'timeslice factor' crutch.
 //
 // $Log: pollsys.cpp,v $
+// Revision 1.5  1998/11/06 04:26:26  cyp
+// Fixed a bug that would show up if the number of procedures registered was
+// an uneven number >= 11.
+//
 // Revision 1.4  1998/11/02 04:48:42  cyp
 // Minor fix to suppress looping if there are no events in the queue.
 // Previously it would suppress looping only if there was no queue (at all).
@@ -45,7 +49,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.4 1998/11/02 04:48:42 cyp Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.5 1998/11/06 04:26:26 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -130,18 +134,20 @@ int UnregPolledProcedure( int fd )
 int RegPolledProcedure( void (*proc)(void *), void *arg, 
                         struct timeval *interval, unsigned int priority ) 
 {
-  struct polldata *thatp, *thisp;
+  struct polldata *thatp, *thisp, *chaintail;
   unsigned int i, mcount;
   int fd = -1;
 
   if (proc)
     {
     thisp = pollsysdata.runlist;
+    chaintail = NULL;
     while ( thisp )
       {
       fd = thisp->fd;
       if (!thisp->inuse)
         break;
+      chaintail = thisp;
       thisp = thisp->next;
       }
     if ( !thisp )
@@ -170,12 +176,7 @@ int RegPolledProcedure( void (*proc)(void *), void *arg,
         if (pollsysdata.runlist == NULL)
           pollsysdata.runlist = thisp;
         else
-          {
-          thatp = pollsysdata.runlist;
-          while ( thatp->next )
-            thatp = thatp->next;
-          thatp->next = thisp;
-          }
+          chaintail->next = thisp;
         }
       }
     if ( !thisp )
