@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.31  1998/07/18 05:53:10  ziggyb
+// Removed a unneeded return 0, which was causing a 'unreachable code' warning in Watcom
+//
 // Revision 1.30  1998/07/13 23:54:25  cyruspatel
 // Cleaned up NONETWORK handling.
 //
@@ -65,7 +68,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-static const char *id="@(#)$Id: network.cpp,v 1.30 1998/07/13 23:54:25 cyruspatel Exp $";
+static const char *id="@(#)$Id: network.cpp,v 1.31 1998/07/18 05:53:10 ziggyb Exp $";
 return id; }
 #endif
 
@@ -973,7 +976,6 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
 
   if (need_close) Close();
   return bytesfilled;
-  return 0;
 }
 
 #endif //NONETWORK
