@@ -1,7 +1,7 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
-# $Id: makefile.bcc,v 1.23.2.18 2000/10/25 01:02:05 cyp Exp $
+# $Id: makefile.bcc,v 1.23.2.19 2000/10/28 15:02:42 cyp Exp $
 #
 # As of Feb 2000, Borland C++ 5.5 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
@@ -9,11 +9,12 @@
 
 .autodepend
 
-
 # Borland library and include paths.
 BCCINCLUDE = c:\borland\bcc55\include
 BCCLIBRARY = c:\borland\bcc55\lib
 
+# define variable to existence to enable debugging.
+#DEBUG=1
 
 # distributed.net source and compilation paths.
 BASENAME = dnetc
@@ -26,11 +27,6 @@ OGRPATH = ogr
 CHIPSRCPATH = platforms
 PLATSRCPATH = platforms\win32cli
 
-
-# define variable to existence to enable debugging.
-#DEBUG=1
-
-# define to control which additional contests are included.
 #HAVE_DES_CORES=1
 #HAVE_CSC_CORES=1
 HAVE_OGR_CORES=1
@@ -46,27 +42,14 @@ BCCOPTS = /a4 /Vv /x- /xd- /RT- /r /k- /d /O2 /O /OS /tWM -5\
         /w /w-aus /w-par \
         /I$(BCCINCLUDE) /I$(COMMONPATH) /I$(PLATSRCPATH) \
         /I$(OGRPATH) /I$(CSCPATH) /D_CPU_32BIT_ /DMULTITHREAD /DLURK
-
 NASMOPTS = -f obj -D__OMF__
-
 TLINKOPTS = /aa /x /Tpe /n /Gn /B:0x400000 /L$(BCCLIBRARY)
 
-
 !ifdef DEBUG
-BCCOPTS = /v $(BCCOPTS) /D__showids__ /DDEBUG /Tkh10000
+BCCOPTS = /v $(BCCOPTS) /DDEBUG /Tkh10000
 TASMOPTS = /zi $(TASMOPTS)
 TLINKOPTS = /v $(TLINKOPTS)
 NASMOPTS = $(NASMOPTS) -D__showids__
-!else
-BCCOPTS = $(BCCOPTS) /DNDEBUG
-!endif
-
-!ifdef TRACE
-BCCOPTS = $(BCCOPTS) /DTRACE
-!endif
-
-!ifdef BETA
-BCCOPTS = $(BCCOPTS) /DBETA
 !endif
 
 
@@ -95,7 +78,6 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/client.obj     \
         $(OUTPUTPATH)/clievent.obj   \
         $(OUTPUTPATH)/cliident.obj   \
-        $(OUTPUTPATH)/clirate.obj    \
         $(OUTPUTPATH)/clirun.obj     \
         $(OUTPUTPATH)/clisrate.obj   \
         $(OUTPUTPATH)/clitime.obj    \
@@ -164,7 +146,7 @@ RC5_OBJS =                           \
         $(OUTPUTPATH)/rg486.obj      \
         $(OUTPUTPATH)/rg6x86.obj     \
         $(OUTPUTPATH)/rc5-hbk7.obj
-BCCOPTS = $(BCCOPTS) -DMMX_RC5
+BCCOPTS = $(BCCOPTS)
 
 
 # --------------------------------- DES ----------------------------
@@ -190,10 +172,6 @@ DES_OBJS =                                   \
 BCCOPTS = $(BCCOPTS) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN
 !endif
 
-!ifdef MMXDES
-BCCOPTS = $(BCCOPTS) /DMMX_BITSLICER /DBIT_64 /DMEGGS /DKWAN
-!endif
-
 # --------------------------------- CSC ----------------------------
 
 !ifndef HAVE_CSC_CORES
@@ -207,7 +185,7 @@ CSC_OBJS =                           \
          $(OUTPUTPATH)/csc-6b-i.obj  \
          $(OUTPUTPATH)/csc-comm.obj  \
          $(OUTPUTPATH)/csc-mmx.obj
-BCCOPTS = $(BCCOPTS) -DHAVE_CSC_CORES -DMMX_CSC
+BCCOPTS = $(BCCOPTS) -DHAVE_CSC_CORES
 !endif
 
 # --------------------------------- OGR ----------------------------

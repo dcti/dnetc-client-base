@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.17 2000/10/25 01:02:05 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.18 2000/10/28 15:02:42 cyp Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -31,7 +31,7 @@ BASENAME  =dnetc
 known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 
 %EXTOBJS  = #extra objs (made elsewhere) but need linking here
-%DEFALL   = /DDYN_TIMESLICE /D__showids__ /IOGR #defines used everywhere
+%DEFALL   = /DDYN_TIMESLICE /D__showids__ #defines used everywhere
 %SYMALIAS = # symbols that need redefinition 
 %COREOBJS = # constructed at runtime
 # LINKOBJS is (somewhat) sorted by coherence - speed sentitive stuff first
@@ -45,7 +45,6 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
             output\checkpt.obj  &
             output\random.obj   &
             output\clicdata.obj &
-            output\clirate.obj  &
             output\clisrate.obj &
             output\base64.obj   &
             output\netbase.obj  &
@@ -76,7 +75,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %PRIVOBJS = output\buffpriv.obj  output\buffupd.obj   output\scram.obj
 %PUBOBJS =  output\buffpub.obj
             # this list can be added to in the platform specific section
-            # (+3 desmmx, +1 rc5mmx, +2 mt, +x plat specific)
+            # (+3 desmmx, +2 mt, +x plat specific)
 
 %PRELINKDEPS = # dependancies that need 'compiling' but not linking (eg .RC's)
 %POSTLINKTGTS= # targets to make after linking (bind etc)
@@ -86,7 +85,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
                    output\csc-6b-i.obj output\csc-6b.obj &
                    output\convcsc.obj output\csc-common.obj &
                    output\csc-mmx.obj
-%cscstd_DEFALL   = -DHAVE_CSC_CORES -Icsc -DMMX_CSC
+%cscstd_DEFALL   = -DHAVE_CSC_CORES -Icsc
 %cscstd_SYMALIAS = 
 #---
 %ogrstd_LINKOBJS = output\ogr.obj output\ogr_dat.obj output\ogr_sup.obj
@@ -95,12 +94,12 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 #---
 %desstd_LINKOBJS = output\des-x86.obj output\convdes.obj &
                    output\p1bdespro.obj output\bdeslow.obj
-%desstd_DEFALL   = /DBRYD -DHAVE_DES_CORES
+%desstd_DEFALL   = -DHAVE_DES_CORES /DBRYD 
 %desstd_SYMALIAS = #
 #---
 %rc5std_LINKOBJS = output\rg486.obj output\rc5-rgk5.obj output\brfp5.obj &
                    output\rc5-rgk6.obj output\rc5-rgp6.obj output\rg6x86.obj &
-                   output\rc5-hbk7.obj
+                   output\rc5-hbk7.obj output\rc5mmx.obj
 %rc5std_DEFALL   = /DHAVE_RC5_CORES
 %rc5std_SYMALIAS = #
 #---
@@ -108,13 +107,9 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %rc5smc_DEFALL   = /DSMC
 %rc5smc_SYMALIAS = #
 #---
-%rc5mmx_LINKOBJS = output\rc5mmx.obj 
-%rc5mmx_DEFALL   = /DMMX_RC5 
-%rc5mmx_SYMALIAS = #
-#---
-%rc5mmxamd_LINKOBJS = output\rc5mmx-k6-2.obj
-%rc5mmxamd_DEFALL   = /DMMX_RC5_AMD
-%rc5mmxamd_SYMALIAS = #
+#%rc5mmxamd_LINKOBJS = output\rc5mmx-k6-2.obj
+#%rc5mmxamd_DEFALL   = /DMMX_RC5_AMD
+#%rc5mmxamd_SYMALIAS = #
 #---
 %desmmx_LINKOBJS = output\des-slice-meggs.obj output\deseval-mmx.obj
 %desmmx_DEFALL   = /DMEGGS /DMMX_BITSLICER #/DBITSLICER_WITH_LESS_BITS
@@ -272,10 +267,6 @@ declare_for_desmmx : .symbolic
 declare_for_rc5 : .symbolic
   @set COREOBJS = $(%rc5std_LINKOBJS) $(%COREOBJS)
   @set DEFALL   = $(%rc5std_DEFALL) $(%DEFALL) 
-
-declare_for_rc5mmx : .symbolic
-  @set COREOBJS = $(%rc5mmx_LINKOBJS) $(%COREOBJS)
-  @set DEFALL   = $(%rc5mmx_DEFALL) $(%DEFALL) 
 
 declare_for_rc5mmxamd : .symbolic
   @set COREOBJS = $(%rc5mmxamd_LINKOBJS) $(%COREOBJS)
@@ -439,15 +430,7 @@ output\clicdata.obj : common\clicdata.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\clirate.obj : common\clirate.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
 output\clisrate.obj : common\clisrate.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\clistime.obj : common\clistime.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
@@ -985,7 +968,6 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   @%make declare_for_desmmx
-     @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
      @%make declare_for_ogr
 #    @%make declare_for_csc
@@ -1017,7 +999,6 @@ os2: .symbolic                                       # OS/2
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   @%make declare_for_desmmx
-     @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
      @%make declare_for_ogr
 #    @%make declare_for_csc
@@ -1056,7 +1037,6 @@ win16: .symbolic                                       # Windows/16
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   #@%make declare_for_desmmx
-     @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
      @%make declare_for_ogr
 #    @%make declare_for_csc
@@ -1105,7 +1085,6 @@ win32: .symbolic                               # win32
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   @%make declare_for_desmmx
-     @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
      @%make declare_for_ogr
 #    @%make declare_for_csc
@@ -1156,7 +1135,6 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
 #    @%make declare_for_des
 #    @%make declare_for_desmt
 ##   @%make declare_for_desmmx
-     @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
      @%make declare_for_ogr
 #    @%make declare_for_csc
