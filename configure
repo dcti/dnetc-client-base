@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.92 2003/07/21 00:48:20 mfeiri Exp $
+# @(#)$Id: configure,v 1.288.2.93 2003/07/28 06:09:47 jlawson Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -170,9 +170,9 @@ add_sources() # $1=os, $2=arch, $3=custom
   # only generic/ansi cores are declared here. 
   # arch specific ones are declared in each arch specific section.
   #-- RC5-64 -- (needs -DHAVE_RC5_64_CORES) ----------------------
-  RC5_ANSI4_SRCS="rc5/ansi/rc5ansi_4-rg.cpp" # 4 pipeline
-  RC5_ANSI2_SRCS="rc5/ansi/rc5ansi_2-rg.cpp" # 2 pipeline
-  RC5_ANSI1_SRCS="rc5/ansi/rc5ansi_1-rg.cpp" # 1 pipeline
+  RC5_64_ANSI4_SRCS="rc5/ansi/rc5ansi_4-rg.cpp" # 4 pipeline
+  RC5_64_ANSI2_SRCS="rc5/ansi/rc5ansi_2-rg.cpp" # 2 pipeline
+  RC5_64_ANSI1_SRCS="rc5/ansi/rc5ansi_1-rg.cpp" # 1 pipeline
   #-- RC5-72 -- (needs -DHAVE_RC5_72_CORES) ----------------------
   RC5_72_ANSI1_SRCS="rc5-72/ansi/r72ansi1.cpp" # 1 pipeline
   RC5_72_ANSI2_SRCS="rc5-72/ansi/r72ansi2.cpp" # 2 pipeline
@@ -351,9 +351,9 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_RC5_64" = "1" ]; then
       DEFAULT_RC5_64="0"
       if [ "$TARGET_CC" = "CC" -o "$1" = "netbsd" ]; then # mips-crunch doesn't compile with IRIX CC
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI2_SRCS"
       elif [ "$3" = "ps2" ]; then      #For PS2 Linux [jt(jt@distributed.net)]
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI2_SRCS"
         TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/mips/mips-crunch.cpp"
       else                             # gcc targets. mips-crunch.cpp is faster
                                        # except for NetBSD, ansi is 2% faster
@@ -466,7 +466,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_RC5_64" = "1" ]; then
       DEFAULT_RC5_64="0"
       if [ "$2" = "power" ]; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI2_SRCS"
         if [ "$1-$3" = "aix-aixall" ]; then
           TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_SRCS"
         fi
@@ -635,8 +635,11 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_RC5_64" = "1" ]; then
       DEFAULT_RC5_64="0"
       # pure ansi target. (4 pipeline RC5 core)
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI4_SRCS"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI4_SRCS"
     fi # HAVE_RC5_64
+  #-----------------------------------------------------------------
+  elif [ "$2" = "x86_64" ]; then
+    : # pure ansi targets for now.
   #-----------------------------------------------------------------
   else
     echo "Warning. Unknown arch '$2' to add_sources. Using all-ANSI cores."
@@ -647,7 +650,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   if [ "$HAVE_RC5_64" = "1" ]; then
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_RC5_64_CORES"
     if [ "$DEFAULT_RC5_64" = "1" ]; then
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI2_SRCS"
     fi
   fi
 
@@ -1007,6 +1010,12 @@ generate_gcc_opts() {
         opts310="$OPTS_GCC310 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
                  -falign-functions=5 -falign-loops=4 -funroll-loops"
         ;;
+
+    *internal-x86_64)
+        opts310="$OPTS_GCC310 -O2 -DASM_X86_64 \
+	    -m64 -mfpmath=sse -mno-3dnow -mno-mmx -fforce-addr \
+	    -falign-functions=5 -falign-loops=4 -funroll-loops"
+	;;
 
     *) # no default needed
         ;;
@@ -2360,6 +2369,29 @@ case "$1" in
         TARGET_LIBS="-lsocket -linet -lnsl -lXbsd -lseq"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "dynix" "x86"
+        ;;
+
+###### AMD X86-64
+
+
+    *x86_64-linux*)                # generic. works everywhere
+        infer_arch_and_version "Linux"
+        TARGET_NASM_FMT="elf"
+        TARGET_AS="gcc -c"          # can make aout if TARGET_CCFLAGS+=-aout
+        TARGET_CC="gcc"
+        generate_gcc_opts "${inferred_arch}" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+        TARGET_LIBS="-lstdc++"
+        TARGET_TARBALL="linux-${inferred_arch}-${TARGET_NASM_FMT}"
+        TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
+        TARGET_USES_GNUMAKE="yes"
+        add_sources "linux" "x86_64" ""
+
+        #TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_POSIX_THREADS"
+        #TARGET_LIBS="$TARGET_LIBS -lpthread"
+        #TARGET_TARBALL="${TARGET_TARBALL}-pthreads"
+
         ;;
 
 ###### NeXT (x86, m68k, sparc, hppa)

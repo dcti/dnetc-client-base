@@ -18,7 +18,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.6 2003/06/24 19:28:59 bdragon Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.7 2003/07/28 06:09:47 jlawson Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -111,7 +111,7 @@
      return +1;
    }
 
-#elif (CLIENT_CPU == CPU_X86)
+#elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_X86_64)
 
    #pragma pack(4)
    typedef struct { long spl; } fastlock_t;
@@ -668,7 +668,7 @@
   #define fastlock_unlock               mutex_unlock
   #define fastlock_trylock              mutex_trylock
 
-#else /* CLIENT_CPU == CPU_MIPS */
+#else
   /* can't do atomic operations on mips ISA < 2 without kernel support */
 
   #error "Whats required here is ... (or define SINGLE_CRUNCHER_ONLY)"

@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.10 2003/06/24 19:28:59 bdragon Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.11 2003/07/28 06:09:47 jlawson Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -34,6 +34,7 @@
 #define CPU_S390        14
 #define CPU_S390X       15 /* was MASPAR, never used */
 #define CPU_DESCRACKER  16 /* eff descracker */
+#define CPU_X86_64      17
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -169,6 +170,8 @@
     #define CLIENT_CPU    CPU_68K
   #elif defined(ASM_MIPS) || defined(__mips)
     #define CLIENT_CPU    CPU_MIPS
+  #elif defined(ASM_X86_64) || defined(__x86_64) || defined(__x86_64__) 
+    #define CLIENT_CPU    CPU_X86_64
   #endif
 #elif defined(__FreeBSD__)
   #ifndef __unix__ /* should already be defined */

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.55 2003/07/16 00:36:33 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.56 2003/07/28 06:09:47 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -295,7 +295,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
   /* ================================================================== */
   {
   #if (CLIENT_CPU == CPU_X86)
-    { /* RC5 */
+    { /* RC5-64 */
       /* we should be using names that tell us how the cores are different
          (just like "bryd" and "movzx bryd")
       */
@@ -323,8 +323,21 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13-B",
       NULL
     },
+  #elif (CLIENT_CPU == CPU_X86_64)
+    { /* RC5-64 */
+      "Generic RC5 core",
+      NULL
+    },
+    { /* DES */
+      "Generic DES core",
+      NULL
+    },
+    { /* OGR */
+      "GARSP 5.13",
+      NULL
+    },
   #elif (CLIENT_CPU == CPU_ARM)
-    { /* RC5 */
+    { /* RC5-64 */
       "Series A", /* (autofor for ARM 3/6xx/7xxx) "ARM 3, 610, 700, 7500, 7500FE" */
       "Series B", /* (autofor ARM 8xx/StrongARM) "ARM 810, StrongARM 110, 1100, 1110" */
       "Series C", /* (autofor ARM 2xx) "ARM 2, 250" */
@@ -341,7 +354,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
   #elif (CLIENT_CPU == CPU_68K)
-    { /* RC5 */
+    { /* RC5-64 */
       #if defined(__GCC__) || defined(__GNUC__) || \
           (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS)
       "68000/010", /* 68000/010 */
@@ -365,7 +378,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
   #elif (CLIENT_CPU == CPU_ALPHA) 
-    { /* RC5 */
+    { /* RC5-64 */
       #if (CLIENT_OS == OS_WIN32)
       "Marcelais",
       #else
@@ -383,7 +396,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-    { /* RC5 */
+    { /* RC5-64 */
       /* lintilla depends on allitnil, and since we need both even on OS's 
          that don't support the 601, we may as well "support" them visually.
       */
@@ -406,7 +419,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
   #elif (CLIENT_CPU == CPU_SPARC)
-    { /* RC5 */
+    { /* RC5-64 */
       #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_LINUX))
         "Ultrasparc RC5 core",
         "Generic RC5 core",
@@ -424,7 +437,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
   #elif (CLIENT_OS == OS_PS2LINUX)
-    { /* RC5 */
+    { /* RC5-64 */
       "Generic RC5 core",
       "mips-crunch RC5 core",
       NULL
@@ -438,7 +451,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
   #else
-    { /* RC5 */
+    { /* RC5-64 */
       "Generic RC5 core",
       NULL
     },
@@ -476,6 +489,13 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ANSI 2-pipe",
       "ANSI 1-pipe",
       #endif
+      NULL
+    },
+  #elif (CLIENT_CPU == CPU_X86_64)
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      "ANSI 1-pipe",
       NULL
     },
   #elif (CLIENT_CPU == CPU_ARM)
@@ -960,6 +980,8 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
         ogr_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_SPARC)
         ogr_get_dispatch_table();
+      #elif (CLIENT_CPU == CPU_X86_64)
+        ogr_get_dispatch_table();
       #else
         #error FIXME! call all your *ogr_get_dispatch_table* functions here once
       #endif
@@ -1126,6 +1148,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
   // PROJECT_NOT_HANDLED("you may add your pre-selected core depending on arch
   //  and cpu here, but leaving the defaults (runs micro-benchmark) is ok")
 
+  // ===============================================================
   #if (CLIENT_CPU == CPU_ALPHA)
   if (projectid == RC5)
   {
@@ -1181,6 +1204,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         cindex = -1;
     }
   }
+  // ===============================================================
   #elif (CLIENT_CPU == CPU_68K)
   if (projectid == RC5)
   {
@@ -1240,6 +1264,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
       #endif
     }
   }
+  // ===============================================================
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
   if (projectid == DES)
   {
@@ -1348,6 +1373,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
       #endif
     }
   }
+  // ===============================================================
   #elif (CLIENT_CPU == CPU_X86)
   {
     int have_mmx = ((detected_flags & CPU_F_MMX) == CPU_F_MMX);
@@ -1520,6 +1546,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
       }
     }
   }
+  // ===============================================================
   #elif (CLIENT_CPU == CPU_ARM)
   // what about switch?
   if (projectid == RC5)
@@ -1601,6 +1628,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         cindex = 0;
     }
   }
+  // ===============================================================
   #elif (CLIENT_CPU == CPU_SPARC)
   if (projectid == RC5)
   {
@@ -1651,6 +1679,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
     */
     #endif
   }
+  // ===============================================================
   #elif (CLIENT_OS == OS_PS2LINUX) // OUCH !!!! SELECT_BY_CPU !!!!! FIXME
   #error Please make this decision by CLIENT_CPU!
   #error CLIENT_OS may only be used for sub-selects (only if neccessary)
@@ -2293,6 +2322,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         unit_func.ogr = ogr_get_dispatch_table_nobsr(); //B
         coresel = 1;
       }
+    #elif (CLIENT_CPU == CPU_X86_64)
+      unit_func.ogr = ogr_get_dispatch_table();
+      coresel = 0;
     #elif (CLIENT_CPU == CPU_ARM)
       if (coresel == 0)
         unit_func.ogr = ogr_get_dispatch_table_arm1();
