@@ -16,15 +16,16 @@
     3.0  Getting and starting the client
          refer to platform specific readme.s for details
     4.0  Upgrading from a client older than the 2.7xxx
-    5.0  Fetching and flushing blocks
-         5.1 through a firewall
+    5.0  Fetching and flushing work
+         5.1 over a TCP/IP network connection (and/or through a firewall)
          5.2 via e-mail
+         5.3 to/from "remote" buffers that are serviced by another client 
     6.0  Help!
 
 
  This document's revision history ------------------------------------
 
-    Revision $Id: rc5des.txt,v 1.34 1999/04/20 18:29:55 cyp Exp $
+    Revision $Id: rc5des.txt,v 1.35 1999/05/04 15:55:08 cyp Exp $
     Nov 13. 1998 Cyrus Patel <cyp@fb14.uni-mainz.de> moved platform
                  specific information to separate readmes, replaced a 
                  great deal with references to documentation available
@@ -48,7 +49,7 @@
 
     Congratulations! This distributed.net client will make your computer 
     a part of the world's largest computer, distributed.net. The client 
-    you have downloaded is capable of working on two of Distributed.Net's
+    you have downloaded is capable of working on two of distributed.net's
     ongoing projects: The brute-force decryption of a RC5-64 message, and
     the brute force decryption of a DES message. The RC5-64 contest is a
     long-term contest, which may take a couple of years to solve. The DES
@@ -101,7 +102,7 @@
     http://www.distributed.net/clients/ or from ftp servers linked from 
     that page. They are occasionally available directly from distributed.net 
     coders in the #distributed channel on EFNet IRC. FreeBSD clients are 
-    also available on FreeBSD Distribution CDs. 
+    also available on FreeBSD distribution CDs. 
 
     Once you have downloaded the client, it is a simple matter of getting
     going. Simply unpack/unzip/unarc the archive you downloaded and fire 
@@ -135,55 +136,103 @@
      problems. If you are sharing buffer files between multiple clients, 
      please make sure that the clients have compatible buffer formats.
 
-                                                                     
- 5.0  Fetching and flushing blocks -----------------------------------
+                                                                          
+ 5.0  Fetching and flushing work -------------------------------------
  
-     For network communications, the distributed.net RC5DES client uses 
-     a proprietary communications method to talk to a network of 
-     keyservers using TCP/IP protocols. 
-   
-  5.1  Connecting through a firewall -------
-     
-     If you are connected through a strict firewall, port 2064 will 
-     probably be blocked by default. There are four primary methods to 
-     communicating through a firewall:
-     1. Run a personal proxy on the machine that runs the firewall.  
-        A personal proxy will receive connections from the client, buffer 
-        them, and then communicate with the main proxy network to send/
-        receive blocks. The setup of this is simple and reliable; all 
-        you must do is download a personal proxy available at 
-        http://www.distributed.net/proxies.html and set it up to run 
-        on the machine that functions as the firewall. Then set up all 
-        clients behind the firewall to connect to that machine to receive 
-        blocks. (The name/address of the proxy may be entered in the 
-        configuration in the "keyserver" field under "Network options")
-        Naturally, you need to be authorized to run the personal proxy on
-        that machine...
-     3. The most reliable option for sending/receiving blocks through 
-        the firewall if you are unable to directly modify the firewall's
-        configuration is to use SOCKS support (if your firewall supports 
-        it, of course.)  To configure SOCKS, enter the "Network Options" 
-        menu and select "Firewall Communications Mode". If you are using 
-        a SOCKS4 proxy, choose "SOCKS4", or choose "SOCKS5" if you know 
-        the firewall supports SOCKS5. If you are unsure as to which 
-        version of SOCKS you are using, select SOCKS4. Now, edit the
-        Proxy address and port and ensuring that they point to the SOCKS 
-        proxy you will be communicating through. If you must use a SOCKS 
-        userid/password, enter it in the appropriate field as well.
-     3. The next most reliable option is to set the firewall to allow
-        connections through to port 2064 (the port the client uses for
-        communication to the keyservers) either directly, through a 
-        "datapipe" or if you are using WinGate or Internet Gate, via 
-        "direct port mapping". All of these are require administrative 
-        access to the firewall host.
-     4. The most compatible firewall communications method is to use the
-        http proxy support of the client. Enter "Network Options", select
-        "Firewall Communications Mode" and set "HTTP encoding". Next,
-        enter the name/address of the HTTP proxy in the "HTTP/SOCKS proxy 
-        address" field and the port number of the HTTP proxy in the 
-        "HTTP/SOCKS proxy port" field. If you have problems with "HTTP
-        encoding", you may wish to try "HTTP+UUE encoding" instead.
+     The RC5DES client can fetch/flush work using 3 methods:
+     1) over a TCP/IP network connection
+     2) via e-mail
+     3) to/from "remote" buffers that are serviced by another client 
+     In addition, it can share buffers with another client.
+ 
+  5.1  Fetching and flushing work over a TCP/IP connection ---
 
+     The RC5DES client uses normal TCP/IP to communicate with keyservers.
+     It connects to port TCP port 2064 by default. 
+
+     distributed.net keyserver hostnames follow the following naming
+     convention: <us|euro|asia|aussie|jp>[port].v27.distributed.net .
+     The "port" is an optional field and may be either "80" or "23".
+     All other numbers cause the client to ignore it and automatically
+     select a hostname (see next para).
+     
+     It is generally not necessary to set a specific distributed.net
+     keyserver hostname. The client can automatically pick one in your 
+     approximate vicinity if you leave it blank.
+          
+     If you do not connect through a firewall, or access to port 2064 is
+     permitted, you can leave all network-related options at their
+     default values.
+
+     If you are connected through a strict firewall, port 2064 may
+     be blocked by default. There are a number of methods to allow your
+     client to fetch/flush...
+
+     Configuring for firewall support is easy.
+     a) Enter the configuration
+     b) Select "Buffer and Buffer Update Options" menu
+        If "Disable buffer updates to/from a keyserver" is "on",
+	turn it off.
+     c) Select in the "Keyserver<->client connectivity" submenu. 
+     Read on...
+     
+     If you have administrative access to the firewall machine, it is
+     probably easiest to use a "data pipe" or if you are using WinGate 
+     or Internet Gate, using "direct port mapping". Both describe 
+     essentially the same thing: A piece of software, either internal
+     to or separate from the firewall software itself, map ports on one
+     side of the firewall to ports on the other side. That is, the "data
+     pipe" listens for connections on a particular port on the inside of
+     the firewall, and forwards these to a predefined host/port on the 
+     other side. Set the client's "keyserver host" and "keyserver port" 
+     to point to the datapipe, and configure the datapipe to connect
+     to a distributed.net host (refer to the beginning of this section 
+     for information on distributed.net host names).
+     
+     Another method requiring administrative access, but with great 
+     advantages if you have a number of clients running inside the 
+     firewall, is to use a distributed.net personal proxy on the 
+     firewall machine. Personal proxies may be downloaded from 
+     http://www.distributed.net/proxies/. Configuration guides for setting 
+     up a personal proxy are beyond the scope of this document, but for 
+     the client, configuration is the same as that for a "datapipe" (in 
+     the section above).
+
+     If your firewall permits access to telnet ports (port 23), or
+     to HTTP ports (port 80), simply set the "Keyserver port" to that
+     port. If it doesn't work, and you are sure that access to telnet 
+     ports is permitted, it is possible that your firewall does not
+     cleanly handle 8bit data. Try again after enabling "Always use 
+     UUEncoding". UUE converts the 8bit data that that the client tries 
+     to send into 7bit data, permitting buffer updates to work even when 
+     8bit data is not handled cleanly. This situation does not happen
+     very often, but it does occur now and then.
+     
+     In addition to these "native" connectivity methods, the client
+     also has HTTP and SOCKS proxy support:
+     
+     Select the "Firewall/proxy protocol" option from the menu and...
+
+     For SOCKS support:
+          
+        Both SOCKS[4] and SOCKSv5 are supported. If you are unsure about 
+	which to use, try SOCKS4 first. Now, edit the "HTTP/SOCKS host" and 
+	"HTTP/SOCKS proxy port" and ensure that they point to the SOCKS 
+        proxy you will be communicating through. If you must use a SOCKS 
+        userid/password, enter it in the appropriate field as well. (Note:
+	only SOCKS5 uses passwords, so that field is invisible if you
+	select SOCKS4).
+	
+     For HTTP proxy support:
+     
+        The most compatible firewall communications method is to select
+        "HTTP proxy" support. Next, enter the name/address of the HTTP 
+	proxy in the "HTTP/SOCKS proxy host" field and the port number 
+	of the HTTP proxy in the "HTTP/SOCKS proxy port" field. If you 
+	cannot connect to a host without explicitely specifying one, 
+	select one based on the naming conventions described in the 
+	beginning of this section.
+	
      Firewall software Known to work with the distributed.net client.
 
      Software              Platform    Method       Download from
@@ -201,21 +250,21 @@
 
      If you can not get your client to flush/fetch directly (due to a 
      very stringent firewall), or are running a networkless client, 
-     such as the MS-DOS client, there is one last way for you two 
-     receive blocks to process: e-mail.
+     such as the MS-DOS client, there is one last way for your client  
+     to fetch and flush: e-mail.
 
      1. Send a message to fetch@distributed.net; an auto-responder 
         will reply with information on the proper options to use.
      2. Once you know the correct format, send a correctly formatted 
         message in. You should quickly receive a message back with 
-        the specified number/size of blocks attached as "buff-in.rc5".
+        the specified amount of work attached as "buff-in.rc5".
      3. Stop the client. 
      4. Save the file to the directory from which you are running the 
         client. 
      5. Restart the client.
 
-     Once your client has completed the blocks provided to it, you may 
-     send in the completed blocks via e-mail as follows:
+     Once your client has completed the work provided to it, you may 
+     send in back via e-mail as follows:
 
      1. Create a message to flush@distributed.net with the file 
         "buff-out.rc5" attached as a MIME/base64 or UUencoded (UUE) file. 
@@ -224,6 +273,16 @@
      2. Delete the buff-out.rc5 file so that you do not accidently 
         send part of its contents twice.
 
+  5.3  Flushing and fetching using remote buffers ----
+  
+     "Remote buffers" are simply buffers that are serviced by another
+     client. When fetching/flushing from/to remote buffers, the client
+     opens the remote files and moves what it needs from/to its "local"
+     buffer files. The difference betwees "remote buffers" and "shared
+     buffers" is of course the fact that with "remote buffers" each
+     client has its own files. Lock contention is thus minimized and
+     they can work without the user having to worry about the network
+     (if one exists) between them failing.
                                                                      
  6.0  Help! ----------------------------------------------------------
 
@@ -269,9 +328,8 @@
        platform you are running the client on. 
     
      - If you believe you have found a bug specific to this port, or 
-       would like to make a suggestion specific to this port, send a 
-       message to the port maintainer as listed at 
-       http://www.distributed.net/credits.html
+       would like to make a suggestion specific to this port, please use 
+       the bug tracking pages at http://www.distributed.net/bugs/
        Don't fret if you don't get a response right away - porters are
        usually very busy and it may take weeks before they get around 
        to answering your message.
