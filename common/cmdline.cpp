@@ -14,7 +14,9 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.132 1999/05/04 13:43:02 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133 1999/05/08 19:03:51 cyp Exp $"; }
+
+//#define TRACE
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -22,6 +24,7 @@ return "@(#)$Id: cmdline.cpp,v 1.132 1999/05/04 13:43:02 cyp Exp $"; }
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "pathwork.h"  // InitWorkingDirectoryFromSamplePaths();
 #include "lurk.h"      // dialup object
+#include "util.h"      // trace
 #include "modereq.h"   // get/set/clear mode request bits
 #include "console.h"   // ConOutErr()
 #include "clitime.h"   // CliTimer() for -until setting
@@ -38,6 +41,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
   int terminate_app = 0, havemode = 0;
   int pos, skip_next;
   const char *thisarg, *nextarg;
+
+  TRACE_OUT((+1,"ParseCommandline(%d,%d)\n",run_level,argc));
 
   #if ((CLIENT_OS == OS_DEC_UNIX)    || (CLIENT_OS == OS_HPUX)    || \
        (CLIENT_OS == OS_QNX)         || (CLIENT_OS == OS_OSF1)    || \
@@ -68,7 +73,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       {
         ++p;
         if (strlen(p) >= scratchlen)
-	  newargv0 = p;
+          newargv0 = p;
         if (strcmp(p,scratch)!=0)
           p = NULL;
       }
@@ -78,17 +83,17 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         if (len < scratchlen || len >= sizeof(oldname))
         {
           ConOutErr("fatal: the total length of binary's filename (including\n"
-	            "\tpath) must be greater than 5 and less than 124");
+              "\tpath) must be greater than 5 and less than 124");
           terminate_app = 1;
         }
         else 
         {
           /* kinda from perl source (assign to $0) */
-	  len = strlen(newargv0);
+          len = strlen(newargv0);
           strcpy( oldname, argv[0] );
-	  memset( (void *)newargv0, 0, len );
-	  strcpy( newargv0, scratch );
-	  argv[0] = (const char *)(&oldname[0]);
+          memset( (void *)newargv0, 0, len );
+          strcpy( newargv0, scratch );
+          argv[0] = (const char *)(&oldname[0]);
         }
       }
     }
@@ -99,6 +104,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
   // In the first loop we (a) get the ini filename and 
   // (b) get switches that won't be overriden by the ini
   //-----------------------------------
+
+  TRACE_OUT((+1,"ParseCommandline(P1)\n"));
 
   if (!terminate_app && run_level == 0)
   {
@@ -138,7 +145,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       else if ( ( strcmp( thisarg, "-restart" ) == 0) || 
                 ( strcmp( thisarg, "-hup" ) == 0 ) ||
                 ( strcmp( thisarg, "-kill" ) == 0 ) ||
-                ( strcmp( thisarg, "-shutdown" ) == 0 ) )
+                ( strcmp( thisarg, "-shutdown" ) == 0 ) ||
+                ( strcmp( thisarg, "-pause" ) == 0 ) ||
+                ( strcmp( thisarg, "-unpause" ) == 0 ) )
       {
         #if ((CLIENT_OS == OS_DEC_UNIX)    || (CLIENT_OS == OS_HPUX)    || \
              (CLIENT_OS == OS_QNX)         || (CLIENT_OS == OS_OSF1)    || \
@@ -153,15 +162,38 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         {
           terminate_app = 1;
           char buffer[1024];
-          int dokill = ( strcmp( thisarg, "-kill" ) == 0 ||
-                         strcmp( thisarg, "-shutdown") == 0 );
+          int sig = 0;
+          char *dowhat_descrip = NULL;
+          
+          if ( strcmp( thisarg, "-kill" ) == 0 ||
+               strcmp( thisarg, "-shutdown") == 0 )
+          {
+            sig = SIGTERM;
+            dowhat_descrip = "shutdown";
+          }
+          else if (strcmp( thisarg, "-pause" ) == 0)
+          {
+            sig = SIGUSR1;
+            dowhat_descrip = "paused";
+          }
+          else if (strcmp( thisarg, "-unpause" ) == 0)
+          {
+            sig = SIGHUP;
+            dowhat_descrip = "unpaused (by restart)";
+          }
+          else
+          {
+            sig = SIGHUP;
+            dowhat_descrip = "-HUP'ed";
+          }
+          
           if (nextarg != NULL && *nextarg == '[')
           {
-            int sig = ((dokill) ? (SIGTERM) : (SIGHUP));
             pid_t ourpid[2];
             ourpid[0] = atol( nextarg+1 );
             ourpid[1] = getpid();
             pos += 2;
+            
             if (pos >= argc || argv[pos] == NULL || !isdigit(argv[pos][0]) )
             {
               if (!loop0_quiet)
@@ -195,7 +227,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                 if ((kill_ok + kill_failed) == 0)    
                 {
                   sprintf(buffer,"No distributed.net clients are currently running.\n"
-                                 "None were %s.", ((dokill)?("killed"):("-HUP'ed")));
+                                 "None were %s.", dowhat_descrip );
                   ConOutErr(buffer);
                 }
                 else 
@@ -203,7 +235,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                   sprintf(buffer,"%u distributed.net client%s %s. %u failure%s%s%s%s.",
                            kill_ok, 
                            ((kill_ok==1)?(" was"):("s were")),
-                           ((dokill)?("killed"):("-HUP'ed")), 
+                           dowhat_descrip, 
                            kill_failed, (kill_failed==1)?(""):("s"),
                            ((kill_failed==0)?(""):(" (")),
                            ((kill_failed==0)?(""):(strerror(last_errno))),
@@ -216,7 +248,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           else
           {
             const char *binname = "rc5des"; /* this is what ps sees */
-	    //binname = (const char *)strrchr( argv[0], '/' );
+            //binname = (const char *)strrchr( argv[0], '/' );
             //binname = ((binname==NULL)?(argv[0]):(binname+1));
             
             sprintf(buffer, "%s %s %s [%lu] `"
@@ -245,22 +277,43 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         }
         #elif ((CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S))
         {
+          int rc, cmd = 0;
+          const char *dowhat_descrip = NULL;
+          
+          if ( strcmp( thisarg, "-kill" ) == 0 ||
+               strcmp( thisarg, "-shutdown") == 0 )
+          {
+            cmd = IDM_SHUTDOWN;
+            dowhat_descrip = "shutdown";
+          }
+          else if (strcmp( thisarg, "-pause" ) == 0)
+          {
+            cmd = IDM_PAUSE;
+            dowhat_descrip = "paused";
+          }
+          else if (strcmp( thisarg, "-unpause" ) == 0)
+          {
+            cmd = IDM_RESTART;
+            dowhat_descrip = "unpaused (by restart)";
+          }
+          else
+          {
+            cmd = IDM_RESTART;
+            dowhat_descrip = "restarted";
+          }
+          rc = w32ConSendIDMCommand( cmd );
           terminate_app = 1;
-          char scratch[128];
-          int dokill = ( strcmp( thisarg, "-kill" ) == 0 ||
-                         strcmp( thisarg, "-shutdown") == 0 );
-          thisarg = ((dokill)?("shut down"):("restarted"));
-          int rc = w32ConSendIDMCommand( dokill ? IDM_SHUTDOWN : IDM_RESTART );
           if (!loop0_quiet)
           {
+            char scratch[128];
             if (rc < 0)
               sprintf(scratch,"No distributed.net clients are currently running.\n"
-                              "None were %s.", thisarg);
+                              "None were %s.", dowhat_descrip);
             else if (rc > 0)
               sprintf(scratch,"A distributed.net client was found but "
-                              "could not be %s.\n", thisarg);
+                              "could not be %s.\n", dowhat_descrip);
             else
-              sprintf(scratch,"The distributed.net client has been %s.", thisarg);
+              sprintf(scratch,"The distributed.net client has been %s.", dowhat_descrip);
             ConOutModal(scratch);
           }
         }
@@ -304,10 +357,14 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
     }
   }
 
+  TRACE_OUT((-1,"ParseCommandline(P1)\n"));
+
   //-----------------------------------
   // In the next section we get inifilename defaults
   // and load the config from file
   //-----------------------------------
+
+  TRACE_OUT((+1,"ParseCommandline(P2)\n"));
 
   if (!terminate_app && run_level == 0)
   {
@@ -349,21 +406,30 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       }
     } // if (inifilename[0]==0)
 
+    TRACE_OUT((+1,"InitWorkingDirectoryFromSamplePaths()\n"));
     InitWorkingDirectoryFromSamplePaths( inifilename, argv[0] );
+    TRACE_OUT((-1,"InitWorkingDirectoryFromSamplePaths()\n"));
     
     if ( (pos = ReadConfig(this)) != 0)
     {
       if (pos < 0) /* fatal */
-        return -1;
-      stopiniio = 1; /* client class */
-      ModeReqSet( MODEREQ_CONFIG );
-      inimissing = 1;
+        terminate_app = 1;
+      else
+      {
+        stopiniio = 1; /* client class */
+        ModeReqSet( MODEREQ_CONFIG );
+        inimissing = 1;
+      }
     }
   } 
+
+  TRACE_OUT((-1,"ParseCommandline(P2,%s)\n",inifilename));
 
   //-----------------------------------
   // In the next loop we parse the other options
   //-----------------------------------
+
+  TRACE_OUT((+1,"ParseCommandline(P3)\n"));
 
   if (!terminate_app && ((run_level == 0) || (logging_is_initialized)))
   {
@@ -1059,6 +1125,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       }
     }
   }
+
+  TRACE_OUT((-1,"ParseCommandline(P3,%d,%d)\n",terminate_app,havemode));
         
   //-----------------------------------
   // In the final loop we parse the "modes".
@@ -1216,6 +1284,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
   
   if (retcodeP) 
     *retcodeP = 0;
+
+  TRACE_OUT((-1,"ParseCommandline(%d,%d)\n",run_level,argc));
+
   return terminate_app;
 }
 
