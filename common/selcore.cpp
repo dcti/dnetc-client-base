@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.16 2003/02/12 01:00:57 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.17 2003/02/17 02:01:21 mfeiri Exp $"; }
 
 //#define TRACE
 
@@ -1177,7 +1177,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
           {
             case 0x000C: cindex = 4; break; // 7400 (G4)   == crunch-vec
             case 0x8000: cindex = 5; break; // 7450 (G4+)  == crunch-vec-7450
-            case 0x8001: cindex = 5; break; // 7455 (G4+) == crunch-vec-7450
+            case 0x8001: cindex = 5; break; // 7455 (G4+)  == crunch-vec-7450
             case 0x800C: cindex = 4; break; // 7410 (G4)   == crunch-vec
             default:     cindex =-1; break; // no default
           }
@@ -1197,9 +1197,18 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
       #elif (CLIENT_CPU == CPU_POWER)   /* Power only */
         cindex = 1;                     /* "PowerRS" */
       #endif
-      #if defined(__VEC__)              /* OS+compiler support altivec */
-      if (( detected_type & (1L<<25) ) != 0) /* proc supports altivec? */
-        cindex = 2;                     /* PPC-vector */
+      #if defined(__VEC__)             /* OS+compiler support altivec */
+      if (( detected_type & (1L<<25) ) != 0) //altivec?
+      {
+        switch ( detected_type & 0xffff) // only compare the low PVR bits
+        {
+          case 0x000C: cindex = 2; break; // 7400 (G4)   == PPC-vector
+          case 0x8000: cindex = 0; break; // 7450 (G4+)  == PPC-scalar
+          case 0x8001: cindex = 0; break; // 7455 (G4+)  == PPC-scalar
+          case 0x800C: cindex = 2; break; // 7410 (G4)   == PPC-vector
+          default:     cindex =-1; break; // no default
+        }
+      }
       #endif
     }
   }
