@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.73  1999/04/01 07:16:24  jlawson
+// cleaned formatting. alpha linux now defaults to 1 processor instead of
+// returning 0 on non-smp kernels.
+//
 // Revision 1.72  1999/04/01 01:05:37  cyp
 // brought (hopefully correctly) Alpha detection into line with all the
 // others. This module is not the easiest code to maintain, so would porters
@@ -262,7 +266,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.72 1999/04/01 01:05:37 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.73 1999/04/01 07:16:24 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -332,14 +336,14 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     }
     #elif (CLIENT_OS == OS_LINUX)
     {
-      FILE *cpuinfo;
+      FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
       cpucount = 0;
-      if (( cpuinfo = fopen("/proc/cpuinfo", "r")) != ((FILE *)0))
+      if ( cpuinfo )
       {
         char buffer[256];
         while(fgets(buffer, sizeof(buffer), cpuinfo))
         {
-          buffer[sizeof(buffer)-1]='\0';
+          buffer[sizeof(buffer) - 1] = '\0';
           #if (CLIENT_CPU == CPU_X86 || CLIENT_CPU == CPU_POWERPC)
           if (strstr(buffer, "processor") == buffer)
             cpucount++;
@@ -351,7 +355,8 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
           else if (strstr( buffer, "BogoMips\t: " ) == buffer)
             cpucount = 1;
           // 2.0.x smp kernels (at least 2.0.35)
-          else if (strstr( buffer, "        CPU0\t\tCPU1\t\tCPU2\t\tCPU3\n" ) == buffer)
+          else if (strstr( buffer, "        CPU0\t\tCPU1\t\t"
+			   "CPU2\t\tCPU3\n" ) == buffer)
           {
             fgets( buffer, 256, cpuinfo );
             for (char *p = strtok( buffer+7, "\t \n" ); p;
@@ -364,19 +369,21 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
           #elif (CLIENT_CPU == CPU_ALPHA)
           // Search for SMP data (2.1+) - "CPUs probed %d active %d ..."
           if (memcmp(buffer, "CPUs probed", 11) == 0 && 
-                    (buffer[11]=='\t' || buffer[11]==' '))
+                    (buffer[11] == '\t' || buffer[11] == ' '))
           {
             char *p = strstr( buffer, "active" );
-            if (p && (p[6] == '\t' || p[6]==' '))
+            if (p && (p[6] == '\t' || p[6] == ' '))
             {
-              p+=6; while (*p && !isdigit(*p)) p++;
+              p += 6; while (*p && !isdigit(*p)) p++;
               cpucount = atoi(p);
+	      break;
             }
           }
+	  else cpucount = 1;
           #else
           cpucount = -1;
           break;
-          #endif    
+          #endif
         }
         fclose(cpuinfo);
       }
@@ -860,10 +867,11 @@ static int __GetRawAlphaIdentification(const char **cpuname)
   {
   #if (CLIENT_OS == OS_DEC_UNIX)
     long buf;
-    int  st = 0;
+    int st = 0;
     detectedtype = -1;
-    if (-1 != getsysinfo(GSI_PROC_TYPE, (char *) &buf, sizeof(buf), st, NULL,NULL))
-      detectedtype = buf & 0xffff;
+    if (getsysinfo(GSI_PROC_TYPE, (char *) &buf, sizeof(buf), 
+		   st, NULL,NULL) != -1)
+      detectedtype = (buf & 0xffff);
   #endif
   }
   if (cpuname)
@@ -881,7 +889,8 @@ static int __GetRawAlphaIdentification(const char **cpuname)
       "EV5.6 (21164PC)" 
     };
     *cpuname = NULL;
-    if (detectedtype>=0 && detectedtype<(sizeof(names)/sizeof(names[0])))
+    if (detectedtype >= 0 && 
+	detectedtype < (int) (sizeof(names) / sizeof(names[0])))
       *cpuname = names[detectedtype];
   }
   return detectedtype;
