@@ -1,15 +1,15 @@
-/* 
+/*
  * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
-*/ 
+*/
 
 //#define TRACE
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.82 2000/12/25 02:38:54 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.83 2001/01/03 23:05:21 teichp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -37,7 +37,7 @@ return "@(#)$Id: clirun.cpp,v 1.98.2.82 2000/12/25 02:38:54 cyp Exp $"; }
 
 struct __dyn_timeslice_struct
 {
-  unsigned int contest; 
+  unsigned int contest;
   u32 usec;              /* time */
   u32 max, min, optimal; /* ... timeslice/nodes */
 };
@@ -49,7 +49,7 @@ static struct __dyn_timeslice_struct
   {  DES, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  OGR,  200000,   0x100000,  0x00010,  0x10000 },
   {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 }
-}; 
+};
 static struct __dyn_timeslice_struct
   non_preemptive_dyn_timeslice_table[CONTEST_COUNT] = /* for co-op crunchers */
 {                                  /* adjusted by ClientRun() if appropriate */
@@ -93,7 +93,7 @@ struct thread_param_block
   int is_non_preemptive_cruncher;
   unsigned long thread_data1;
   unsigned long thread_data2;
-  struct __dyn_timeslice_struct *dyn_timeslice_table;  
+  struct __dyn_timeslice_struct *dyn_timeslice_table;
   struct __dyn_timeslice_struct rt_dyn_timeslice_table[CONTEST_COUNT];
   #if (CLIENT_OS == OS_NETWARE)
   int previous_was_sleep;
@@ -128,7 +128,7 @@ static void __cruncher_sleep__(struct thread_param_block * /*thrparams*/)
 static int __cruncher_yield__(struct thread_param_block *thrparams)
 {
   thrparams = thrparams;  /* shaddup compiler */
-  /* thrparams is needed for some OSs like MacOS that have different 
+  /* thrparams is needed for some OSs like MacOS that have different
   ** yield calls depending on how the cruncher was created.
   */
   #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
@@ -173,12 +173,12 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     }
     thrparams->previous_was_sleep = 0;
     MPKYieldThread();
-    #if 0   
+    #if 0
     int client_prio = thrparams->priority;
     if (client_prio > 9)
       client_prio = 9;
     client_prio = ((9-client_prio)>>1);
-    do { 
+    do {
       if (GetDiskIOsPending() || GetNestedInterruptLevel())
       {
         __MPKDelayThread(250);
@@ -189,7 +189,11 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     #endif
   #elif (CLIENT_OS == OS_RISCOS)
     if (riscos_in_taskwindow)
+    {
+      int t=read_monotonic_time();
       riscos_upcall_6();
+      return (read_monotonic_time()-t)*10000;
+    }
   #elif (CLIENT_OS == OS_LINUX)
     #if defined(HAVE_KTHREADS) /* kernel threads */
     kthread_yield();
@@ -218,7 +222,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
   #elif (CLIENT_OS == OS_NETBSD)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_FREEBSD)
-    /* don't use sched_yield() - 
+    /* don't use sched_yield() -
        different syscall # on 3.4,4.x */
     //sched_yield();
     NonPolledUSleep( 0 ); /* yield */
@@ -269,7 +273,7 @@ void Go_mt( void * parm )
   unsigned int threadnum = thrparams->threadnum;
   Problem *thisprob = NULL;
 
-#if (CLIENT_OS == OS_RISCOS) 
+#if (CLIENT_OS == OS_RISCOS)
   #if defined(HAVE_X86_CARD_SUPPORT)
   thisprob = GetProblemPointerFromIndex(threadnum);
   if (!thisprob) /* riscos has no real threads */
@@ -299,7 +303,7 @@ void Go_mt( void * parm )
         //printf("usec:%d \n",thrparam->dyn_timeslice_table[tsinitd].usec);
       }
       thrparams->priority = priority;
-    }  
+    }
     //printf("usec:%d, thrprio:%d \n",thrparams->dyn_timeslice_table[0].usec,thrparams->priority);
     #endif
   }
@@ -347,7 +351,7 @@ void Go_mt( void * parm )
         __MPKSetThreadAffinity( targetcpu );
         #if 0 /* not completely tested in a production environment */
         if (numcpus < 2)
-          ; /* nothing */       
+          ; /* nothing */
         else if (__MPKEnableThreadPreemption() == 0)
         {
           /* use 10ms quantum. preemption rate is 20ms, which is too high */
@@ -376,13 +380,13 @@ void Go_mt( void * parm )
     thrparams->dyn_timeslice_table[2].usec = 4000000;  // OGR
     #endif
   }
-#endif  
+#endif
 
   if (thrparams->realthread)
   {
     TriggersSetThreadSigMask();
     SetThreadPriority( thrparams->priority ); /* 0-9 */
-  }    
+  }
 
   thrparams->hasexited = 0;
   thrparams->is_suspended = 1;
@@ -399,7 +403,7 @@ void Go_mt( void * parm )
       if (thisprob == NULL)  // this is a bad condition, and should not happen
         thrparams->refillneeded = 1;// ..., ie more threads than problems
       if (thrparams->realthread) // don't race in the loop
-        __cruncher_sleep__(thrparams); 
+        __cruncher_sleep__(thrparams);
     }
     else if (!ProblemIsInitialized(thisprob))
     {
@@ -412,8 +416,8 @@ void Go_mt( void * parm )
       int run; u32 optimal_timeslice = 0;
       u32 elapsed_sec, elapsed_usec, runtime_usec;
       unsigned int contest_i = thisprob->pub_data.contest;
-      u32 last_count = thisprob->pub_data.core_run_count; 
-                  
+      u32 last_count = thisprob->pub_data.core_run_count;
+
       #if (!defined(DYN_TIMESLICE)) /* compile time override */
       if (is_non_preemptive_cruncher || contest_i == OGR)
       #endif
@@ -461,11 +465,11 @@ void Go_mt( void * parm )
       }
 
       /* non-preemptive crunchers (real threads or not) yield on every pass.
-       * if no work was done then threads for preemptive OSs should also yield 
-       * in order to give the main thread more cputime to run/reload 
+       * if no work was done then threads for preemptive OSs should also yield
+       * in order to give the main thread more cputime to run/reload
       */
       if ((is_non_preemptive_cruncher) || (!didwork && thrparams->realthread))
-      {                      
+      {
         int addrunus = __cruncher_yield__(thrparams);
         #if defined(DYN_TIMESLICE_SHOWME)
         if (runtime_usec != 0xfffffffful) /* time was valid */
@@ -478,28 +482,51 @@ void Go_mt( void * parm )
               thrparams->dyn_timeslice_showme.totalts = 0;
               thrparams->dyn_timeslice_showme.ctr = 0;
               thrparams->dyn_timeslice_showme.contest = contest_i;
-            } 
+            }
             thrparams->dyn_timeslice_showme.totaltime += runtime_usec;
             thrparams->dyn_timeslice_showme.totalts += thisprob->pub_data.tslice;
             thrparams->dyn_timeslice_showme.ctr++;
           }
           --thrparams->dyn_timeslice_showme.dispactive;
-        }          
+        }
         #endif
         if (addrunus > 0 && runtime_usec != 0xfffffffful)
           runtime_usec += addrunus;
       }
-      
+
       /* fine tune the timeslice for the *next* round */
       if (optimal_timeslice != 0)
       {
         if (contest_i != OGR) // OGR makes dynamic timeslicing go crazy!
           optimal_timeslice = thisprob->pub_data.tslice; /* get the number done back */
-        
+
         if (run == RESULT_WORKING) /* timeslice/time is invalid otherwise */
         {
           if (runtime_usec != 0xfffffffful) /* not negative time or other bad thing */
           {
+#ifdef ALTERNATE_DYNAMIC_TIMESLICE
+/* This calculates the optimal timeslice based on a sliding average of the
+ * reached rate. It reacts slower than the normal algorithm below, but has
+ * the advantage that it reaches a stable point.
+ */
+            {
+              static int ixes=0, usecs=0;
+
+              ixes=(ixes*15+thisprob->pub_data.tslice)/16;
+              usecs=(usecs*15+runtime_usec)/16;
+
+              /*if(usecs!=0)
+                printf("%5d %4d\r", thisprob->pub_data.tslice, ixes*1000/usecs);*/
+#ifndef HAVE_I64
+#error You need to have a 64 bit integer type for ALTERNATE_DYNAMIC_TIMESLICE
+#endif
+              optimal_timeslice=(ui64)thrparams->dyn_timeslice_table[contest_i].usec*ixes/usecs;
+              if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
+                optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
+              if (optimal_timeslice > thrparams->dyn_timeslice_table[contest_i].max)
+                optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].max;
+            }
+#else
             unsigned int usec5perc = (thrparams->dyn_timeslice_table[contest_i].usec / 20);
             if (runtime_usec < (thrparams->dyn_timeslice_table[contest_i].usec - usec5perc))
             {
@@ -515,11 +542,13 @@ void Go_mt( void * parm )
               if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
                 optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
             }
+
+#endif
             thisprob->pub_data.tslice = optimal_timeslice; /* for the next round */
           }
         }
         else /* ok, we've finished. so save it */
-        {  
+        {
           u32 opt = thrparams->dyn_timeslice_table[contest_i].optimal;
           if (optimal_timeslice > opt)
             thrparams->dyn_timeslice_table[contest_i].optimal = optimal_timeslice;
@@ -528,7 +557,7 @@ void Go_mt( void * parm )
       }
 
     }
-    
+
     if (!didwork)
     {
       thrparams->do_refresh = 1; /* we need to reload the problem */
@@ -546,7 +575,7 @@ void Go_mt( void * parm )
          it needs more, and begins rescheduling it more and more often.
          Restarting the thread effectively resets the kernel counters for
          the cruncher.
-      */ 
+      */
       unsigned long ticksnow = GetCurrentTime();
       if (ticksnow > (last_restart_ticks+THREAD_RESTART_INTERVAL_TICKS) )
       {
@@ -557,7 +586,7 @@ void Go_mt( void * parm )
         if (thrparams->threadID == -1)
           thrparams->threadID = oldthrid;
         else
-        { 
+        {
           char threadname[64];
           sprintf(threadname, "%s crunch #%02x", utilGetAppName(),
                                                thrparams->threadnum + 1 );
@@ -603,7 +632,7 @@ static int __StopThread( struct thread_param_block *thrparams )
       if (!thrparams->hasexited)
         DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
       #elif (CLIENT_OS == OS_WIN32)
-      while (!thrparams->hasexited) 
+      while (!thrparams->hasexited)
         Sleep(100);
       #elif (CLIENT_OS == OS_BEOS)
       static status_t be_exit_value;
@@ -618,10 +647,10 @@ static int __StopThread( struct thread_param_block *thrparams )
       #elif (CLIENT_OS==OS_LINUX) && defined(HAVE_KTHREADS) /*kernel threads*/
       kthread_join( thrparams->threadID );
       #elif (CLIENT_OS == OS_FREEBSD)
-      while (!thrparams->hasexited) 
+      while (!thrparams->hasexited)
         NonPolledUSleep(100000);
       #elif (CLIENT_OS == OS_AMIGAOS)
-      while (!thrparams->hasexited) 
+      while (!thrparams->hasexited)
         NonPolledUSleep(300000);
       #endif
     }
@@ -649,7 +678,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     thrparams->numthreads = numthreads;   /* unsigned int */
     thrparams->threadnum = thread_i;      /* unsigned int */
     thrparams->realthread = 1;            /* int */
-    thrparams->hasexited = 1;             /* not running yet */ 
+    thrparams->hasexited = 1;             /* not running yet */
     thrparams->priority = priority;       /* unsigned int */
     thrparams->is_non_preemptive_cruncher = is_non_preemptive_os; /* int */
     thrparams->do_exit = 0;
@@ -668,8 +697,8 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     }
     else
     {
-      memcpy( (void *)(thrparams->dyn_timeslice_table), 
-              default_dyn_timeslice_table, 
+      memcpy( (void *)(thrparams->dyn_timeslice_table),
+              default_dyn_timeslice_table,
               sizeof(default_dyn_timeslice_table));
     }
     thrparams->next = NULL;
@@ -694,7 +723,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         if (GetNumberOfDetectedProcessors()<2)
           ok2thread = -1;
         else
-        { 
+        {
           int issmp = 0; size_t len = sizeof(issmp);
           if (sysctlbyname("machdep.smp_active", &issmp, &len, NULL, 0)!=0)
           {
@@ -713,9 +742,9 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       {
         char buffer[64];size_t len=sizeof(buffer),len2=sizeof(buffer);
         //fprintf(stderr,"sysctlbyname()\n");
-        if (sysctlbyname("kern.ostype",buffer,&len,NULL,0)!=0) 
+        if (sysctlbyname("kern.ostype",buffer,&len,NULL,0)!=0)
           ok2thread = -2;
-        else if (len<7 || memcmp(buffer,"FreeBSD",7)!=0)      
+        else if (len<7 || memcmp(buffer,"FreeBSD",7)!=0)
           ok2thread = -3;
         else if (sysctlbyname("kern.osrelease",buffer,&len2,NULL,0)!=0)
           ok2thread = -4;
@@ -731,15 +760,15 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         }
       }
       if (ok2thread<1) /* not FreeBSD or not >=3.0 (or non-SMP kernel) */
-      { 
+      {
         use_poll_process = 1; /* can't use this stuff */
         //fprintf(stderr,"using poll-process\n");
       }
-      else 
-      { 
+      else
+      {
         static int assertedvms = 0;
         if (thrparams->threadnum == 0) /* the first to spin up */
-        { 
+        {
           #define ONLY_NEEDED_VMPAGES_INHERITABLE         //children faster
           //#define ALL_DATA_VMPAGES_INHERITABLE          //parent faster
           //#define ALL_TEXT_AND_DATA_VMPAGES_INHERITABLE //like linux threads
@@ -758,16 +787,16 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
                 madvise((void *)thisprob,ProblemGetSize(),MADV_WILLNEED);
                 #ifdef FIRST_THREAD_UNDER_MAIN_CONTROL
                 if (prob_i != 0) /* don't need to flag first problem */
-                #endif  
+                #endif
                 {
                   int mflag = 0; /*VM_INHERIT_SHARE*/ /*MAP_SHARED|MAP_INHERIT*/;
                   if (minherit((void *)thisprob,ProblemGetSize(),mflag)!=0)
                     assertedvms = -1;
-                }    
+                }
               }
             }
             //fprintf(stderr, "assertedvms = %d\n", assertedvms );
-          }    
+          }
           #else
           {
             extern _start; //iffy since crt0 is at the top only by default
@@ -775,7 +804,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
             extern edata;
             extern end;
             //printf(".text==(start=0x%p - etext=0x%p) .rodata+.data==(etext - edata=0x%p) "
-            //  ".bss==(edata - end=0x%p) heap==(end - sbrk(0)=0x%p)\n", 
+            //  ".bss==(edata - end=0x%p) heap==(end - sbrk(0)=0x%p)\n",
             //  &_start, &etext,&edata,&end,sbrk(0));
             #if defined(ALL_TEXT_AND_DATA_VMPAGES_INHERITABLE)
             //.text+.rodata+.data+.bss+heap (so far)
@@ -791,18 +820,18 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           #endif
 
           #ifdef FIRST_THREAD_UNDER_MAIN_CONTROL
-          use_poll_process = 1; /* the first thread is always non-real */ 
+          use_poll_process = 1; /* the first thread is always non-real */
           #endif
         }
         if (assertedvms != +1)
-          use_poll_process = 1; /* can't use this stuff */ 
+          use_poll_process = 1; /* can't use this stuff */
       }
       if (use_poll_process == 0)
       {
         thrparams->threadID = 0;
         success = 0;
         //fprintf(stderr, "beginning minherit()\n" );
-        if (minherit((void *)thrparams, sizeof(struct thread_param_block), 
+        if (minherit((void *)thrparams, sizeof(struct thread_param_block),
                                   0 /* undocumented VM_INHERIT_SHARE*/)==0)
         {
           int rforkflags=RFPROC|RFTHREAD|RFSIGSHARE|RFNOWAIT/*|RFMEM*/;
@@ -811,17 +840,17 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           if (new_threadID == -1) /* failed */
             success = 0;
           else if (new_threadID == 0) /* child */
-          { 
+          {
             int newprio=((22*(9-thrparams->priority))+5)/10;/*scale 0-9 to 20-0*/
             thrparams->threadID = getpid(); /* may have gotten here first */
             setpriority(PRIO_PROCESS,thrparams->threadID,newprio);
-            //nice(newprio); 
+            //nice(newprio);
             if ((rforkflags & RFNOWAIT) != 0) /* running under init (pid 1) */
              { seteuid(65534); setegid(65534); } /* so become nobody */
             Go_mt( (void *)thrparams );
             _exit(0);
-          }  
-          else if ((rforkflags & RFNOWAIT) != 0) 
+          }
+          else if ((rforkflags & RFNOWAIT) != 0)
           {    /* thread is detached (a child of init), so we can't wait() */
             int count = 0;
             while (count<100 && thrparams->threadID==0) /* set by child */
@@ -832,14 +861,14 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
               kill(new_threadID, SIGKILL); /* its hung. kill it */
           }
           else /* "normal" parent, so we can wait() for spinup */
-          {  
+          {
             int status, res;
             NonPolledUSleep(3000); /* wait for fork1() */
             res = waitpid(new_threadID,&status,WNOHANG|WUNTRACED);
             success = 0;
-            if (res == 0) 
+            if (res == 0)
             {
-              //printf("waitpid() returns 0\n");          
+              //printf("waitpid() returns 0\n");
               thrparams->threadID = new_threadID; /* may have gotten here first */
               success = 1;
             }
@@ -874,10 +903,10 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         else
         {
           SetGlobalPriority(thrparams->priority); /* so priority is inherited */
-          thrparams->threadID = kthread_create( (void (*)(void *))Go_mt, 
+          thrparams->threadID = kthread_create( (void (*)(void *))Go_mt,
                                                 8192, (void *)thrparams );
           success = (thrparams->threadID > 0);
-        }          
+        }
       }
       #elif (CLIENT_OS == OS_WIN32)
       {
@@ -895,19 +924,19 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         success = ( thrparams->threadID != -1);
       }
       #elif (CLIENT_OS == OS_NETWARE)
-      { 
+      {
         char threadname[64];
-        if (thrparams->threadnum == 0) /* initialize main while we're here */ 
+        if (thrparams->threadnum == 0) /* initialize main while we're here */
         {
           MPKEnterNetWare(); /* stick to CPU 0 for main thread */
           /* and initializes MPK stubs before the threads call it */
           sprintf(threadname, "%s Main", utilGetAppName() );
           RenameThread( GetThreadID(), threadname );
         }
-        thrparams->threadID = BeginThread( Go_mt, (void *)0, 
+        thrparams->threadID = BeginThread( Go_mt, (void *)0,
                                            8192, (void *)thrparams );
         if (thrparams->threadID == -1)
-          thrparams->threadID = 0; 
+          thrparams->threadID = 0;
         success = ( thrparams->threadID != 0);
         if (success)
         {
@@ -1000,9 +1029,9 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       }
       #elif ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
       {
-         if (thr_create(NULL, 0, (void *(*)(void *))Go_mt, 
+         if (thr_create(NULL, 0, (void *(*)(void *))Go_mt,
                    (void *)thrparams, THR_BOUND, &thrparams->threadID ) == 0)
-           success = 1;                         
+           success = 1;
       }
       #elif defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
       {
@@ -1033,7 +1062,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
 
       /* non-real-threads share their dyn_timeslice_data */
       thrparams->dyn_timeslice_table = &(default_dyn_timeslice_table[0]);
-      if (is_non_preemptive_os) 
+      if (is_non_preemptive_os)
         thrparams->dyn_timeslice_table = &(non_preemptive_dyn_timeslice_table[0]);
 
       //fprintf(stderr,"scheduling poll-process\n");
@@ -1079,12 +1108,12 @@ static int __gsc_flag_allthreads(struct thread_param_block *thrparam,
       if (isexit)
         thrparam->do_exit = isexit;
       thrparam->do_suspend = ispause;
-    }  
+    }
     thrparam = thrparam->next;
   }
   return 0;
-}                                 
- 
+}
+
 
 static int __CheckClearIfRefillNeeded(struct thread_param_block *thrparam,
                                       int doclear)
@@ -1099,12 +1128,12 @@ static int __CheckClearIfRefillNeeded(struct thread_param_block *thrparam,
     thrparam = thrparam->next;
   }
   return refillneeded;
-}  
+}
 
 #if defined(DYN_TIMESLICE_SHOWME)
 static void __dyn_timeslice_showme(struct thread_param_block *thrparam)
 {
-  while (thrparam) 
+  while (thrparam)
   {
     unsigned int ctr = 0;
     unsigned long totaltime = 0, totalts = 0;
@@ -1117,12 +1146,12 @@ static void __dyn_timeslice_showme(struct thread_param_block *thrparam)
         thrparam->dyn_timeslice_showme.contest = (unsigned int)-1;
       else
         ctr = 0;
-    }  
+    }
     --thrparam->dyn_timeslice_showme.dispactive;
     if (ctr)
     {
-      printf("\rT# %d (r=%d) ctr: %u avgs TS: %lu us: %lu\n", 
-              thrparam->threadnum , thrparam->realthread, 
+      printf("\rT# %d (r=%d) ctr: %u avgs TS: %lu us: %lu\n",
+              thrparam->threadnum , thrparam->realthread,
               ctr, totalts/ctr, totaltime/ctr );
     }
     thrparam = thrparam->next;
@@ -1176,7 +1205,7 @@ int ClientRun( Client *client )
 
   int checkpointsDisabled = (client->nodiskbuffers != 0);
   int dontSleep=0, isPaused=0, wasPaused=0;
-  
+
   ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0 );
 
   // =======================================
@@ -1219,7 +1248,7 @@ int ClientRun( Client *client )
       checkpointsDisabled = 1;
     }
   }
-  
+
   // --------------------------------------
   // Determine the number of problems to work with. Number is used everywhere.
   // --------------------------------------
@@ -1253,7 +1282,7 @@ int ClientRun( Client *client )
         LogScreen("Automatic processor detection found %d processor%s.\n",
                    numcrunchers, ((numcrunchers==1)?(""):("s")) );
       }
-    }    
+    }
     if (numcrunchers > GetMaxCrunchersPermitted())
     {
       numcrunchers = GetMaxCrunchersPermitted();
@@ -1298,7 +1327,7 @@ int ClientRun( Client *client )
   {
     if (load_problem_count != 0)
     {
-      //for (prob_i = 0; prob_i < CONTEST_COUNT; prob_i++) //get select core msgs 
+      //for (prob_i = 0; prob_i < CONTEST_COUNT; prob_i++) //get select core msgs
       //  selcoreGetSelectedCoreForContest( prob_i );      //... out of the way.
       if (load_problem_count > 1)
         Log( "Loading crunchers with work...\n" );
@@ -1310,7 +1339,7 @@ int ClientRun( Client *client )
     {
       TimeToQuit = 1;
       exitcode = -2;
-    } 
+    }
     else if (load_problem_count == 0)
     {
       Log("Unable to load any work. Quitting...\n");
@@ -1335,7 +1364,7 @@ int ClientRun( Client *client )
 
 
   // --------------------------------------
-  // fixup the dyn_timeslice_table if running a non-preemptive OS 
+  // fixup the dyn_timeslice_table if running a non-preemptive OS
   // --------------------------------------
 
   if (!TimeToQuit)
@@ -1344,16 +1373,16 @@ int ClientRun( Client *client )
     #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_MACOS) || \
         (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_NETWARE) || \
         (CLIENT_OS == OS_WIN32) /* win32 only if win32s */
-    {    
+    {
       is_non_preemptive_os = 1; /* assume this until we know better */
       #if (CLIENT_OS == OS_WIN32)                /* only if win32s */
       if (winGetVersion()>=400)
         is_non_preemptive_os = 0;
-      #elif (CLIENT_OS == OS_NETWARE)            
+      #elif (CLIENT_OS == OS_NETWARE)
         /* we enable 'preemptiveness' on a per-thread basis */
       #endif
       if (is_non_preemptive_os)
-      {      
+      {
         int tsinitd;
         for (tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
         {
@@ -1374,10 +1403,10 @@ int ClientRun( Client *client )
             non_preemptive_dyn_timeslice_table[tsinitd].optimal = 1024;
             #else // eg. (CLIENT_CPU == CPU_68K)
             non_preemptive_dyn_timeslice_table[tsinitd].optimal = 256;
-            #endif     
+            #endif
             non_preemptive_dyn_timeslice_table[tsinitd].usec = 100000*(client->priority+1);
           }
-          #elif (CLIENT_OS == OS_NETWARE) 
+          #elif (CLIENT_OS == OS_NETWARE)
           {
             long quantum = non_preemptive_dyn_timeslice_table[0].usec;
             if (tsinitd == 0)
@@ -1412,7 +1441,7 @@ int ClientRun( Client *client )
           #endif
         }
       }
-    }  
+    }
     #endif
   }
 
@@ -1426,7 +1455,7 @@ int ClientRun( Client *client )
     struct thread_param_block *thrparamslast = thread_data_table;
     unsigned int planned_problem_count = load_problem_count;
     load_problem_count = 0;
-    
+
     for ( prob_i = 0; prob_i < planned_problem_count; prob_i++ )
     {
       struct thread_param_block *thrparams =
@@ -1486,7 +1515,7 @@ int ClientRun( Client *client )
   #ifdef TRACE
   for (prob_i = 0; prob_i < CONTEST_COUNT; ++prob_i)
   {
-    if (IsProblemLoadPermitted(0, prob_i)) 
+    if (IsProblemLoadPermitted(0, prob_i))
     {
       TRACE_OUT((0, "%s thresholds: in: %d (%d wu/%d h) out: %d (%d wu)\n",
            CliGetContestNameFromID(prob_i),
@@ -1503,7 +1532,7 @@ int ClientRun( Client *client )
   //now begin looping until we have a reason to quit
   //------------------------------------
 
-  dontSleep = 1; // don't sleep in the first loop 
+  dontSleep = 1; // don't sleep in the first loop
                  // (do percbar, connectoften, checkpt first)
 
   // Start of MAIN LOOP
@@ -1514,18 +1543,18 @@ int ClientRun( Client *client )
     //------------------------------------
 
     if (!dontSleep)
-    {             
+    {
       int i = 0;
       SetGlobalPriority( client->priority );
       while ((i++)<5
-            && !__CheckClearIfRefillNeeded(thread_data_table,0) 
+            && !__CheckClearIfRefillNeeded(thread_data_table,0)
             && !CheckExitRequestTriggerNoIO()
             && ModeReqIsSet(-1)==0)
-      {      
-        ClientEventSyncPost(CLIEVENT_CLIENT_RUNIDLE, i); 
+      {
+        ClientEventSyncPost(CLIEVENT_CLIENT_RUNIDLE, i);
         if (isPaused)
           NonPolledSleep(1);
-        else 
+        else
           sleep(1);
         #if defined(DYN_TIMESLICE_SHOWME)
         __dyn_timeslice_showme(thread_data_table);
@@ -1548,7 +1577,7 @@ int ClientRun( Client *client )
           Log("ERROR: monotonic time found to be going backwards!\n");
           //TimeToQuit = 1;
         }
-        else  
+        else
           timeRun = tv.tv_sec;
       }
     }
@@ -1557,7 +1586,7 @@ int ClientRun( Client *client )
     // Check for time limit...
     //----------------------------------------
 
-    if ( !TimeToQuit && (client->minutes > 0) && 
+    if ( !TimeToQuit && (client->minutes > 0) &&
                         (timeRun >= (time_t)( (client->minutes)*60 )))
     {
       Log( "Shutdown - reached time limit.\n" );
@@ -1580,11 +1609,11 @@ int ClientRun( Client *client )
     //----------------------------------------
     // Check for user break
     //----------------------------------------
-    
+
     if (!TimeToQuit && CheckExitRequestTrigger()) /* prints a message */
     {
       /* the reason for the ExitRequest has already been printed,
-         we just say something here to show that the run loop is break'ing 
+         we just say something here to show that the run loop is break'ing
       */
       LogScreen( "%s...\n",
            (CheckRestartRequestTrigger()?("Restarting"):("Shutting down")) );
@@ -1634,8 +1663,8 @@ int ClientRun( Client *client )
         && !CheckExitRequestTriggerNoIO())
     {
       /* Checkpoints are done when CHECKPOINT_FREQ_SECSDIFF secs
-       * has elapsed since the last checkpoint OR timeNextCheckpoint is zero 
-      */  
+       * has elapsed since the last checkpoint OR timeNextCheckpoint is zero
+      */
       #define CHECKPOINT_FREQ_SECSDIFF (10*60)      /* 10 minutes */
       if ( (timeNextCheckpoint == 0) || (timeRun >= timeNextCheckpoint) )
       {
@@ -1677,7 +1706,7 @@ int ClientRun( Client *client )
           //flush_scheduled_count++; /* for use with exponential staging */
           flush_scheduled_adj += ((UPDATE_INTERVAL>>1)+
                                  (rand()%(UPDATE_INTERVAL>>1)));
-          
+
           int desisrunning = 0;
           if (GetBufferCount(client,DES, 0/*in*/, NULL) != 0) /* do we have DES blocks? */
             desisrunning = 1;
@@ -1693,24 +1722,24 @@ int ClientRun( Client *client )
                 desisrunning = 1;
                 break;
               }
-            } 
+            }
             if (desisrunning == 0)
             {
               int rc = BufferUpdate( client, BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH, 0 );
               if (rc > 0 && (rc & BUFFERUPDATE_FETCH)!=0)
                 desisrunning = (GetBufferCount( client, DES, 0/*in*/, NULL) != 0);
             }
-          }  
+          }
           if (desisrunning)
           {
             ignore_scheduledupdatetime_until = timeNow + TIME_AFTER_START_TO_UPDATE;
             /* if we got DES blocks, start ignoring sched update time */
           }
         }
-      } 
+      }
     }
 
-  
+
     //------------------------------------
     // Lurking and connect-often
     //------------------------------------
@@ -1725,9 +1754,9 @@ int ClientRun( Client *client )
       if ((LurkIsWatching() & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
       {                                  /* is lurk or lurkonly enabled? */
         client->connectoften = 0; /* turn off old setting */
-        if (LurkIsConnected()) 
+        if (LurkIsConnected())
           local_connectoften = 3; /* both fetch and flush */
-      }         
+      }
       else
       #endif
       {
@@ -1735,28 +1764,28 @@ int ClientRun( Client *client )
            (!client->noupdatefromfile && client->remote_update_dir[0]))
         {
           local_connectoften = client->connectoften;
-          /* 0=none, &1=in-buf, &2=out-buf, &4=sticky-flag (handled elsewhere) */ 
+          /* 0=none, &1=in-buf, &2=out-buf, &4=sticky-flag (handled elsewhere) */
         }
       }
     }
     TRACE_OUT((0,"local_connectoften=0x%x,timeRun=%u,timeNextConnect=%u\n",
                local_connectoften, (unsigned)timeRun, (unsigned)timeNextConnect));
-               
+
     if (!TimeToQuit
-       && (local_connectoften & 3)!=0 
-       && timeRun >= timeNextConnect 
-       && (client->max_buffupd_interval <= 0 || 
+       && (local_connectoften & 3)!=0
+       && timeRun >= timeNextConnect
+       && (client->max_buffupd_interval <= 0 ||
           client->last_buffupd_time == 0 ||
-          timeRun >= (((time_t)client->last_buffupd_time) + 
+          timeRun >= (((time_t)client->last_buffupd_time) +
                        (time_t)(client->max_buffupd_interval * 60))) )
     {
-      timeNextConnect = timeRun + 30; /* never more often than 30 seconds */  
+      timeNextConnect = timeRun + 30; /* never more often than 30 seconds */
       if (ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) == 0)
       {
-        int upd_flags = BUFFUPDCHECK_EITHER; 
+        int upd_flags = BUFFUPDCHECK_EITHER;
         /* BUFFUPDCHECK_EITHER == return both if _either_ fetch or flush needed*/
         TRACE_OUT((+1,"frequent connect check.\n"));
-        if ((local_connectoften & 1) != 0) /* check fetch */  
+        if ((local_connectoften & 1) != 0) /* check fetch */
           upd_flags |= BUFFERUPDATE_FETCH|BUFFUPDCHECK_TOPOFF;
         /* BUFFUPDCHECK_TOPOFF == "fetch even if not completely empty" */
         if ((local_connectoften & 2) != 0) /* check flush */
@@ -1768,9 +1797,9 @@ int ClientRun( Client *client )
            (upd_flags & (BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH))!=0)
         {
           ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
-        }   
+        }
       }
-    }  
+    }
 
     //----------------------------------------
     // If not quitting, then handle mode requests
@@ -1789,7 +1818,7 @@ int ClientRun( Client *client )
         while (__gsc_flag_allthreads(thread_data_table, 'c'))
         {
           /* if we got here, then we must be running real threads */
-          NonPolledUSleep(250000); 
+          NonPolledUSleep(250000);
         }
       }
       //For interactive benchmarks, assume that we have "normal priority"
