@@ -20,7 +20,7 @@ BCCOPTS = /a4 /Vv /x- /xd- /RT- /r /k- /d /w /O2 /O /OS /tWM \
 
 TASMOPTS = /t /q /m /ml 
 
-TLINKOPTS = /x /Tpe /ap /n /B:0x400000
+TLINKOPTS = /x /Tpe /n /B:0x400000
 
 
 !ifdef DEBUG
@@ -93,7 +93,7 @@ $(OUTPUTPATH)/rc5p5brf.obj: $(RC5PATH)/rc5p5brf.asm
 # --------------------------------------------
 
 rc5des:   $(RC5_OBJS) $(PREBUILT_OBJS)
-        tlink32 $(TLINKOPTS) @&&|
+        tlink32 /ap $(TLINKOPTS) @&&|
 c0x32.obj $(RC5_OBJS:/=\) $(PREBUILT_OBJS:/=\),\
 $(EXENAME:/=\),,$(CLI_LIBS)
 |
