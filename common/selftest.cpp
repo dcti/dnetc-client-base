@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.53 1999/11/08 02:30:10 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.54 1999/11/23 22:42:44 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -105,7 +105,7 @@ static const u32 des_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
 // [0] - expected number of nodes (~ if no solution expected to be found)
 // [1] - number of marks
 // [2..7] - first differences
-static const u32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
+static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   { 0x000D1B52, 21, 2, 22, 32, 21, 5, 1},
   {~0x0057102A, 21, 1, 2, 4, 5, 8, 10},
   {~0x00A8EE70, 21, 2, 22, 32, 21, 5, 2},

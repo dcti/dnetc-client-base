@@ -6,7 +6,7 @@
  *
 */ 
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.27 1999/11/08 02:02:42 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.28 1999/11/23 22:42:43 cyp Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
@@ -330,12 +330,14 @@ int NetResolve( const char *host, int resport, int resauto,
       for (pos = 0; ((pos < (plist->numproxies)) &&
                          (foundaddrcount < addrlistcount)); pos++ )
       {
-        struct hostent *hp;
+        struct hostent *hp; char *lookup;
         #ifdef RESDEBUG
         printf(" => %d:\"%s\"\n", pos+1, plist->proxies[pos] );
         #endif
-  
-        if ((hp = gethostbyname((char*)(plist->proxies[pos]))) != NULL) 
+   
+        //work around gethostbyname not getting const arg on some platforms
+        *((const char **)&lookup) = plist->proxies[pos];
+        if ((hp = gethostbyname(lookup) ) != NULL) 
         {
           unsigned int addrpos;
           if (resolve_hostname_sz)

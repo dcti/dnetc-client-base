@@ -2,9 +2,11 @@
  * Copyright distributed.net 1997 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.17 1999/11/08 02:02:34 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.18 1999/11/23 22:42:40 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -43,7 +45,7 @@ static int BufferPutMemRecord( struct membuffstruct *membuff,
     dest = (WorkRecord *)malloc(sizeof(WorkRecord));
     if (dest != NULL)
     {
-      memcpy( (void *)dest, (void *)data, sizeof( WorkRecord ));
+      memcpy( (void *)dest, (const void *)data, sizeof( WorkRecord ));
       membuff->buff[membuff->count] = dest;
       membuff->count++;
       count = (unsigned long)membuff->count;
@@ -60,7 +62,7 @@ static int BufferPutMemRecord( struct membuffstruct *membuff,
 
 
 static int BufferGetMemRecord( struct membuffstruct *membuff,
-                           const WorkRecord* data, unsigned long *countP ) 
+                            WorkRecord* data, unsigned long *countP ) 
 {
   /*  <0 on ioerr, >0 if norecs */
   unsigned long count = 0;
@@ -229,7 +231,14 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
     }
     #endif
     int handle = sopen(fn, O_RDWR|O_BINARY, SH_DENYNO); 
-    return ((handle == -1) ? (NULL) : (fdopen(handle, "r+b"))); 
+    if (handle != -1)
+    {
+      FILE *f = fdopen(handle, "r+b");
+      if (f)
+        return f;
+      close (handle);
+    }
+    return (FILE *)0;
   }
 #else
   #define BUFFEROPEN( fn )  fopen( fn, "r+" )
@@ -446,7 +455,7 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
     {
       if (!dofetch && !dontfetch)
       {
-        long count = client->GetBufferCount( contest_i, 0, NULL );
+        long count = GetBufferCount( client, contest_i, 0, NULL );
         if (count >= 0) /* no error */
         {
           if (count < ((long)(client->inthreshold[contest_i])) )
@@ -458,7 +467,7 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
       }
       if (!doflush && !dontflush)
       {
-        long count = client->GetBufferCount( contest_i, 1 /* use_out_file */, NULL );
+        long count = GetBufferCount( client, contest_i, 1 /* use_out_file */, NULL );
         if (count >= 0) /* no error */
         {
           if ( count > 0 /* count >= ((long)(client->outthreshold[contest_i])) || 
@@ -596,7 +605,7 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
         ; /* blank record, ignore it */
       else if ( ((unsigned int)(scratch.contest)) == contest )
       {
-	packetcount++;
+        packetcount++;
         if ( normcountP )
         {
           switch (contest) 
@@ -723,19 +732,21 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
 
     if (client->nodiskbuffers == 0)
     {
+      filename = client->in_buffer_basename;
+      if (tmp_use_out_file)
+        filename = client->out_buffer_basename;
       filename = BufferGetDefaultFilename(tmp_contest, tmp_use_out_file,
-        ((tmp_use_out_file) ? (client->out_buffer_basename) :
-	                      (client->in_buffer_basename)) );
-               /* returns <0 on ioerr, >0 if norecs */
+                                                       filename );
       tmp_retcode = BufferPutFileRecord( filename, data, &count );
+                    /* returns <0 on ioerr, >0 if norecs */
     }
     else
     {
-      membuff = ((tmp_use_out_file) ?
-          (&(client->membufftable[tmp_contest].out)) :
-          (&(client->membufftable[tmp_contest].in)));
-               /* returns <0 on ioerr, >0 if norecs */
+      membuff = &(client->membufftable[tmp_contest].in);
+      if (tmp_use_out_file)
+        membuff = &(client->membufftable[tmp_contest].out);
       tmp_retcode = BufferPutMemRecord( membuff, data, &count );
+               /* returns <0 on ioerr, >0 if norecs */
     }
     if (tmp_retcode == 0)
       return (long)count;
@@ -771,18 +782,19 @@ long GetBufferRecord( Client *client, WorkRecord* data,
     }
     else if (client->nodiskbuffers == 0)
     {
-      filename = BufferGetDefaultFilename(contest, use_out_file,
-          ((use_out_file) ? (client->out_buffer_basename) :
-	                    (client->in_buffer_basename)) );
+      filename = client->in_buffer_basename;
+      if (use_out_file)
+        filename = client->out_buffer_basename;
+      filename = BufferGetDefaultFilename(contest, use_out_file, filename );
                  /* returns <0 on ioerr, >0 if norecs */
       retcode = BufferGetFileRecord( filename, data, &count );
 //LogScreen("b:%d\n", retcode);
     }
     else
     {
-      membuff = ((use_out_file)?
-               (&(client->membufftable[contest].out)):
-	       (&(client->membufftable[contest].in)));
+      membuff = &(client->membufftable[contest].in);
+      if (use_out_file)
+        membuff = &(client->membufftable[contest].out);
                  /* returns <0 on ioerr, >0 if norecs */
       retcode = BufferGetMemRecord( membuff, data, &count );
     }
@@ -799,7 +811,7 @@ long GetBufferRecord( Client *client, WorkRecord* data,
         break; /* return -1; */
       }
       else if( retcode > 0 ) // no recs
-	break;
+        break;
     }
     else
     {
@@ -824,17 +836,20 @@ long GetBufferRecord( Client *client, WorkRecord* data,
         if (client->nodiskbuffers == 0)
         {
 //LogScreen("old cont:%d, type: %d, name %s\n", contest, use_out_file, filename );
+          filename = client->in_buffer_basename;
+          if (tmp_use_out_file)
+            filename = client->out_buffer_basename;
+
           filename = BufferGetDefaultFilename(tmp_contest, tmp_use_out_file,
-          ((tmp_use_out_file) ? (client->out_buffer_basename) :
-	                        (client->in_buffer_basename)) );
+                                              filename );
 //LogScreen("new cont:%d, type: %d, name %s\n", tmp_contest, tmp_use_out_file, filename );
           tmp_retcode = BufferPutFileRecord( filename, data, NULL );
         }
         else
         {
-          membuff = ((tmp_use_out_file)?
-           (&(client->membufftable[tmp_contest].out)):
-	   (&(client->membufftable[tmp_contest].in)));
+          membuff = &(client->membufftable[tmp_contest].in);
+          if (tmp_use_out_file)
+            membuff = &(client->membufftable[tmp_contest].out);
                  /* returns <0 on ioerr, >0 if norecs */
           tmp_retcode = BufferPutMemRecord( membuff, data, NULL );
         }
@@ -873,23 +888,25 @@ long GetBufferCount( Client *client, unsigned int contest,
   {
     if (client->nodiskbuffers == 0)
     {
-      filename = BufferGetDefaultFilename(contest, use_out_file, 
-        ((use_out_file) ? (client->out_buffer_basename) :
-	                  (client->in_buffer_basename)) );
+      filename = client->in_buffer_basename;
+      if (use_out_file)
+        filename = client->out_buffer_basename;
+      filename = BufferGetDefaultFilename(contest, use_out_file, filename );
       retcode = BufferCountFileRecords( filename, contest, &reccount, normcountP );
     }
     else
     {
-      membuff = ((use_out_file) ?
-               (&(client->membufftable[contest].out)) :
-               (&(client->membufftable[contest].in)));
+      membuff = &(client->membufftable[contest].in);
+      if (use_out_file)
+        membuff = &(client->membufftable[contest].out);
       retcode = BufferCountMemRecords( membuff, contest, &reccount, normcountP );
     }
   }
   if (retcode != 0 && normcountP)
     *normcountP = 0;
-
-  return ((retcode!=0)?(-1):((long)reccount));
+  if (retcode != 0)
+    return -1;
+  return (long)reccount;
 }
 
 /* --------------------------------------------------------------------- */
@@ -1023,15 +1040,21 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
       combinedtrans++;
       combinedworkunits += workunits;
 
-      struct Fetch_Flush_Info ffinfo = {contest, projtrans, combinedtrans};
-      ClientEventSyncPost(CLIEVENT_BUFFER_FLUSHFLUSHED, (long)(&ffinfo));
+      {
+        struct Fetch_Flush_Info ffinfo = {contest, projtrans, combinedtrans};
+        unsigned long totrans = (projtrans + (unsigned long)(lefttotrans));
 
-      unsigned long totrans = (projtrans + (unsigned long)(lefttotrans));
-      unsigned int percent = ((totrans>projtrans)?((projtrans*10000)/totrans):(10000));
-      LogScreen( "\rSent %s packet %lu of %lu (%u.%02u%% transferred)     ",
-          CliGetContestNameFromID(contest),
-          projtrans, (totrans > projtrans ? totrans : projtrans),
-          percent/100, percent%100 );
+        ClientEventSyncPost(CLIEVENT_BUFFER_FLUSHFLUSHED, (long)(&ffinfo));
+
+        unsigned int percent;
+        if (totrans < projtrans)
+          totrans = projtrans;
+        percent = ((projtrans*10000)/totrans);
+        
+        LogScreen( "\rSent %s packet %lu of %lu (%u.%02u%% transferred)     ",
+            CliGetContestNameFromID(contest),
+            projtrans, totrans,  percent/100, percent%100 );
+      }
     
       if (CheckExitRequestTriggerNoIO())  
         break;
@@ -1047,7 +1070,9 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
       combinedtrans, ((combinedtrans==1)?(""):("s")), combinedworkunits );
   }
 
-  return (failed ? (- (long)(combinedtrans+1)) : (combinedtrans));
+  if (failed)
+    return -((long)(combinedtrans+1));
+  return combinedtrans;
 }
         
 /* --------------------------------------------------------------------- */
@@ -1154,15 +1179,22 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
 
       if (combinedtrans == 1) 
         ClientEventSyncPost( CLIEVENT_BUFFER_FETCHBEGIN, 0 );
+
+      {
+        struct Fetch_Flush_Info ffinfo = {contest, projtrans, combinedtrans};
+        unsigned long totrans = (projtrans + (unsigned long)(lefttotrans));
+
+        ClientEventSyncPost(CLIEVENT_BUFFER_FLUSHFLUSHED, (long)(&ffinfo));
+
+        unsigned int percent;
+        if (totrans < projtrans)
+          totrans = projtrans;
+        percent = ((projtrans*10000)/totrans);
         
-      struct Fetch_Flush_Info ffinfo = {contest, projtrans, combinedtrans};
-      ClientEventSyncPost( CLIEVENT_BUFFER_FETCHFETCHED, (long)(&ffinfo) );
-  
-      unsigned long totrans = (projtrans + (unsigned long)(lefttotrans));
-      unsigned int percent = ((totrans)?((projtrans*10000)/totrans):(10000));
-      LogScreen( "\rRetrieved %s packet %lu of %lu (%u.%02u%% transferred) ",
-        CliGetContestNameFromID(contest),
-        projtrans, (totrans)?(totrans):(projtrans), percent/100, percent%100 );
+        LogScreen( "\rRetrieved %s packet %lu of %lu (%u.%02u%% transferred) ",
+            CliGetContestNameFromID(contest),
+            projtrans, totrans,  percent/100, percent%100 );
+      }
     }  /* while ( lefttotrans > 0  ) */
     
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
@@ -1175,6 +1207,8 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       combinedworkunits );
   }
 
-  return (failed ? (- (long) (combinedtrans+1)) : (combinedtrans));
+  if (failed)
+    return -((long)(combinedtrans+1));
+  return combinedtrans;
 }
 

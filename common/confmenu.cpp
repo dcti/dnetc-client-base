@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.49 1999/11/23 15:41:35 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.50 1999/11/23 22:42:42 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -529,7 +529,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
               if (conf_options[menuoption].disabledtext != NULL)
               {
                 #ifdef REVEAL_DISABLED /* this is only for greg! :) */
-                descr = (char *)conf_options[menuoption].disabledtext;
+                descr = (const char *)conf_options[menuoption].disabledtext;
                 #endif /* othewise ignore it */
               }
               else if (conf_options[menuoption].type==CONF_TYPE_MENU)
@@ -557,9 +557,9 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 #endif                
               )
               {
-                descr = (char *)conf_options[menuoption].thevariable;
+                descr = (const char *)conf_options[menuoption].thevariable;
                 if (!*descr)
-                  descr = (char *)conf_options[menuoption].defaultsetting;
+                  descr = (const char *)conf_options[menuoption].defaultsetting;
               }
               else if (conf_options[menuoption].type==CONF_TYPE_PASSWORD)
               {
@@ -582,11 +582,11 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                      (thevar >= conf_options[menuoption].choicemin) &&
                      (thevar <= conf_options[menuoption].choicemax) )
                 {
-                  descr = (char *)conf_options[menuoption].choicelist[thevar];
+                  descr = (const char *)conf_options[menuoption].choicelist[thevar];
                 }
                 else if (thevar == atoi(conf_options[menuoption].defaultsetting))
                 {
-                  descr = (char *)conf_options[menuoption].defaultsetting;
+                  descr = (const char *)conf_options[menuoption].defaultsetting;
                 }
                 else
                 {
@@ -695,14 +695,14 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
       /* -- display user selection in detail and get new value --- */
       while ( editthis >= 0 && !newval_isok) 
       {
-        char *p;
+        const char *p;
 
         ConClear(); 
         LogScreenRaw(CONFMENU_CAPTION, menuname);
         LogScreenRaw("\n%s:\n\n", conf_options[editthis].description );
 
         newval_isok = 1;
-        if ((p = (char *)conf_options[editthis].comments) != NULL)
+        if ((p = (const char *)conf_options[editthis].comments) != NULL)
         {
           while (strlen(p) > (sizeof(parm)-1))
           {
@@ -757,7 +757,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           )
           {
             strcpy(parm, (char *)conf_options[editthis].thevariable);
-            p = (char *)(conf_options[editthis].defaultsetting);
+            p = (const char *)(conf_options[editthis].defaultsetting);
           }
           else if (conf_options[editthis].type==CONF_TYPE_PASSWORD)
           {
@@ -773,7 +773,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
               vectb = &(client->outthreshold[0]); // THRESHOLDO any more
             utilGatherOptionArraysToList( parm, sizeof(parm),
                     (int *)conf_options[editthis].thevariable, vectb ); 
-            p = (char *)(conf_options[editthis].defaultsetting);
+            p = (const char *)(conf_options[editthis].defaultsetting);
           }
           else //if (conf_options[editthis].type==CONF_TYPE_INT)
           {
@@ -827,9 +827,9 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           {
             if (parm[0]!=0)
             {
-              p = &parm[strlen(parm)-1];
-              while (p >= &parm[0] && isspace(*p))
-                *p-- = 0;
+              char *wp = &parm[strlen(parm)-1];
+              while (wp >= &parm[0] && isspace(*wp))
+                *wp-- = 0;
               p = parm;
               while (*p && isspace(*p))
                 p++;
@@ -874,9 +874,9 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           {
             if (parm[0]!=0)
             {
-              p = &parm[strlen(parm)-1];
-              while (p >= &parm[0] && isspace(*p))
-                *p-- = 0;
+              char *wp = &parm[strlen(parm)-1];
+              while (wp >= &parm[0] && isspace(*wp))
+                *wp-- = 0;
               p = parm;
               while (*p && isspace(*p))
                 p++;

@@ -15,7 +15,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.20 1999/11/08 02:02:37 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.21 1999/11/23 22:42:41 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -124,7 +124,7 @@ extern const char *checkpt_cpp(void);
 extern const char *clicdata_cpp(void);
 extern const char *client_cpp(void);
 extern const char *clievent_cpp(void);
-extern const char *cliident_cpp(void);
+//extern const char *cliident_cpp(void);
 extern const char *clirate_cpp(void);
 extern const char *clirun_cpp(void);
 extern const char *clisrate_cpp(void);

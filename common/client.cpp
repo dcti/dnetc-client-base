@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.224 1999/11/09 19:01:06 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.225 1999/11/23 22:42:41 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -495,7 +495,7 @@ int main( int argc, char *argv[] )
     }
       
     p = argv[0];
-    argv[0] = (char *)defname;
+    ((const char **)argv)[0] = defname;
     if ((strlen(p) + 5) < sizeof(buffer))
     {
       char *s;
