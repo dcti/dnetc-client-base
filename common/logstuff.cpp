@@ -11,7 +11,7 @@
  * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.13 2000/01/23 00:33:18 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.14 2000/02/06 05:24:00 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -668,6 +668,15 @@ void LogRaw( const char *format, ... )
   va_list argptr;
   va_start(argptr, format);
   LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, &argptr );
+  va_end(argptr);
+  return;
+}  
+
+void LogTo( int towhat, const char *format, ... )
+{
+  va_list argptr;
+  va_start(argptr, format);
+  LogWithPointer( towhat, format, &argptr );
   va_end(argptr);
   return;
 }  

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11 1999/04/22 01:53:57 cyp Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.1 2000/02/06 05:24:00 cyp Exp $"
 
 #define LOGFILETYPE_NONE    0 //
 #define LOGFILETYPE_NOLIMIT 1 //unlimited (or limit == -1)
@@ -31,10 +31,6 @@ extern void LogFlush( int forceflush );
 //Log message to screen only. Make adjustments, like fixing a missing datestamp
 extern void LogScreen( const char *format, ... );
 
-//Legacy function. Same as LogScreen(...)
-//extern void LogScreenf( const char *format, ... ); 
-#define LogScreenf LogScreen
-
 //Log to mail+file+screen. Make adjustments.
 extern void Log( const char *format, ... );
 
@@ -43,6 +39,9 @@ extern void LogScreenRaw( const char *format, ... );
 
 //Log to mail+file+screen. No adjustments.
 extern void LogRaw( const char *format, ... );
+
+//Log to LOGTO_* flags (RAW implies screen)
+extern void LogTo( int towhat, const char *format, ... );
 
 //display percent bar. (bar is now always compound form)
 extern void LogScreenPercent( unsigned int load_problem_count );
