@@ -11,12 +11,10 @@ please post your willingness to assist to coders@. Perhaps someone
 else has what you don't. :)
 
 
-1. Fix HTTP encoding in the client.                          Priority: URGENT
-      
-2. Add support for GSSAPI authentication to the client's SOCKS5 handler.
+1. Add support for GSSAPI authentication to the client's SOCKS5 handler.
    GSSAPI support is *required* according to the SOCKS5 rfc. Priority: Medium
 
-3. Clean up the cores.                                       Priority: HIGH
+2. Clean up the cores.                                       Priority: HIGH
    a) The ideal prototype for any core, regardless of project,
       s32 (*core_unit)( RC5unitWork *, u32 *timeslice, void *membuff );
       1) it does its own pre- and post-incrementation, 
@@ -31,7 +29,7 @@ else has what you don't. :)
          [rc5|des]_ansi_[x]_unit_func 
       c) fix the cores to use timeslice
 
-4. Devise and write a better filebuffer scheme.            Priority: Low
+3. Devise and write a better filebuffer scheme.            Priority: Low
    a) better "locking". The current method of writing 0x1 to tag
       a file as 'locked' is not ideal. Using a specific value to 
       identify the lock as the client's own would probably solve
@@ -43,12 +41,12 @@ else has what you don't. :)
       uses a "find one more suitable than default" scheme. It works 
       well and has a low overhead. 
 
-5. Write a routine to import/export uuencoded buffers for/from users
+4. Write a routine to import/export uuencoded buffers for/from users
    that can only update their buffers via mail.            Priority: Medium
         
-6. Add FTP as a supported buffer exchange protocol. The client could
+5. Add FTP as a supported buffer exchange protocol. The client could
    directly STOR buff-in.xx and requests to RETR rc5 would cause the
    keyserver to return a rc5 block from its ready queue.   Priority: Low
     
-7. Write a small routine to obtain a list of the local host's UP af_inet 
+6. Write a small routine to obtain a list of the local host's UP af_inet 
    if's by using SNMP or ... Use ioctl() to do the same (for your port).                                                                   Priority: Low
