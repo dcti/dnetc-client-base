@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.56 2000/10/24 16:40:08 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.57 2000/10/25 18:56:36 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -777,17 +777,18 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     else if ( vendorid == 0x6F43 /* 'eM' */)
     {
       static struct cpuxref vpc[]={
-          {  0x0535,      0, "586 (emulated)" },
-          {  0x0000,     -1, NULL             }
+          {  0x0535,      0, "VPC586" },
+          {  0x0000,     -1, NULL     }
           }; internalxref = &vpc[0];
-      vendorname = "Motorola ";
+      vendorname = "Connectix ";
       cpuidbmask = 0x0ff0;
     }
     else if ( vendorid == 0x6543 /* 'eC' */ ) /* "CentaurHauls" */
     {
       static struct cpuxref centaurxref[]={
-          {  0x0540,  0x10A, "C6"          }, /* has its own id */
-          {  0x0585,  0x10A, "WinChip 2"   }, /* uses RG Cx re-pair */
+          {  0x0540,  0x10A, "C6" }, /* has its own id */
+          {  0x0580,  0x10A, "C2" }, /* uses RG Cx re-pair */
+          {  0x0590,  0x10A, "C3" },
           {  0x0660,  0x109, "Samuel (Cyrix III)" }, /* THIS IS NOT A P6 !!! */
           {  0x0000,     -1, NULL          }
           }; internalxref = &centaurxref[0];
@@ -843,7 +844,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0570,  0x105, "K6"       },
           {  0x0580,  0x105, "K6-2"     },
           {  0x0590,  0x105, "K6-3"     },
-          {  0x05D0,  0x105, "K6-2+"    },
+          {  0x05D0,  0x105, "K6-2+/K6-3+" },
           {  0x0610,  0x109, "K7"       }, 
           {  0x0620,  0x109, "K7-2"     },
           {  0x0630,  0x109, "K7-3" }, //spitfire, socket+128K on-die 
