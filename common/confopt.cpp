@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.25 2000/03/20 12:50:09 andreasb Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.26 2000/04/05 00:48:58 andreasb Exp $"; }
 
 // no, we don't rotate by default
 //#define ROTATE_BETWEEN_PROJECTS
@@ -134,9 +134,15 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   /* CFGTXT( */
   "The client looks for work in the order specified here. For example, \"OGR,\n"
   "RC5\" instructs the client to work on OGR until those buffers are exhausted;\n"
+#ifdef ROTATE_BETWEEN_PROJECTS
   "afterwards, it works on RC5. If *all* 'flush thresholds' are at -1 (default)\n"
   "then the client will obtain new work from the network only when all buffers\n"
   "are empty; ie it will rotate through the list.\n"
+#else
+// FIXME: native english speakers check this, please [andreasb]
+  "afterwards, it tries to update buffers. If new OGR work can't be received\n"
+  "(update disabled, project completed), it works on RC5.\n"
+#endif
   "\n"
   "You can turn off a project by setting \":0\" or \"=0\" after the project's\n"
   "name - for instance, \"OGR:0\" tells your client not to work on, or request\n"
@@ -303,10 +309,9 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "For fixed (static) connections, you should set this to a low value, like\n"
   "three to six hours.  For dialup connections, set this based on how often\n"
   "you connect to the network.\n"
-#if 0
-FIXME the following needs documentation - is there enough space on screen ? [andreasb]
-  "You can specify a fetch work threshold, too. This will be used as the minimum number of workunits to buffer.\n" 
-#endif
+// FIXME: native english speakers check this, please [andreasb]
+  "\nYou can specify a fetch work threshold, too. This will be used as the\n"
+  "minimum number of workunits to buffer.\n" 
 #ifdef HAVE_OGR_CORES
   "\nCurrently not implemented for OGR because the amount of work in an\n"
   "unprocessed packet cannot be predicted.\n\n"
