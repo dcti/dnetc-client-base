@@ -652,6 +652,16 @@ public:
 #endif
     // runs the interactive configuration setup
 
+  s32  ConfigureGeneral( int currentmenu );
+    // part of the interactive setup
+
+  s32 yesno(char *str);
+    // Checks whether user typed yes or no, used in interactive setup
+    // Returns 1=yes, 0=no, -1=unknown
+
+  void clearscreen( void );
+    // Clears the screen. (Platform specific ifdefs go inside of it.)
+
   s32  ReadConfig( void );
     // returns -1 if no ini exits, 0 otherwise
 
