@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.157  1999/01/08 08:07:12  myshkin
+# Added support for PPC 821/860 target. Thanks to Cort Dougan
+#   (cort@persephone.cs.nmt.edu) for the gcc command-line arguments.
+#
 # Revision 1.156  1999/01/08 07:25:08  cramer
 # Added Solaris/Sparc/non-mt target
 #
@@ -623,7 +627,9 @@ OPTS_GCC_DGUX="$OPTS_GCC -O6 -D_DGUX -DPIPELINE_COUNT=2 \
 
 OPTS_GCC_PPC601="$OPTS_GCC -O6 -DASM_PPC -mcpu=601"
 OPTS_GCC_PPC="$OPTS_GCC -O6 -DASM_PPC -mcpu=604"
+OPTS_GCC_PPC860="$OPTS_GCC -O6 -DASM_PPC -mcpu=860 -msoft-float"
 OPTS_GCC272_PPC="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604"
+OPTS_GCC272_PPC860="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=860 -msoft-float"
 OPTS_GCC_POWER="$OPTS_GCC -O6 -DASM_POWER -mcpu=power"
 
 OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC -Icommon"
@@ -1166,7 +1172,7 @@ case "$1" in
 
   ### generic targets
 
-    *ppc-gcc)	      # generic PPC target
+    *ppc-gcc)		# generic PPC target
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
@@ -1174,8 +1180,24 @@ case "$1" in
 			rc5/crunch_lintilla_296.ppc.s"
 	;;
 
-    *ppc-gcc272)	   # generic PPC target, gcc 2.7.2
+    *ppc860-gcc)	# PPC 821/860 target
+	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 \
+			-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+			rc5/crunch_allitnil_552.ppc.s \
+			rc5/crunch_lintilla_296.ppc.s"
+	;;
+
+    *ppc-gcc272)	# generic PPC target, gcc 2.7.2
 	TARGET_CCFLAGS="$OPTS_GCC272_PPC -DPIPELINE_COUNT=1 \
+			-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+			rc5/crunch_allitnil_552.ppc.s \
+			rc5/crunch_lintilla_296.ppc.s"
+	;;
+
+    *ppc860-gcc272)	# PPC 821/860 target, gcc 2.7.2
+	TARGET_CCFLAGS="$OPTS_GCC272_PPC860 -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			rc5/crunch_allitnil_552.ppc.s \
