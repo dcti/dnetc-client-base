@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.38 2000/06/19 16:38:43 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.39 2000/06/28 19:37:25 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -170,8 +170,16 @@ struct optionstruct conf_options[] = {
   "system is running on battery power or, where more appropriate, if it finds\n"
   "that the system is not running on mains power.\n" 
   "\n"
+  #if (CLIENT_OS == OS_LINUX) ||  ((CLIENT_CPU == CPU_X86) && \
+      ((CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD)))
+  "This option is ignored if power management is disabled or not configured or\n"
+  "if /dev/apm cannot be opened for reading (may require superuser privileges).\n"
+  #elif (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_WIN32)
   "This option is ignored if power source detection is not supported by the\n"
   "the operating system or hardware architecture.\n"
+  #else
+  "This option is not supported on this platform and is ignored.\n"
+  #endif
   ,CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 { 
