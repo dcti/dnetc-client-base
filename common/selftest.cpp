@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.85.2.8 2004/05/20 21:13:14 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.85.2.9 2004/05/22 10:24:31 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -565,7 +565,7 @@ long SelfTest( unsigned int contest )
       thisprob = ProblemAlloc();
       if (thisprob)
       {
-        u32 tslice = 0x1000;
+        u32 tslice = 0x80000;
         int non_preemptive_env = 0;
         int resultcode;
 
