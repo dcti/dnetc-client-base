@@ -18,7 +18,12 @@ Bugs Listing
                  because I have more options in there. I'll make a new
                  procedure that only updates the randomprefix and
                  contest status.
-
+  FIXED: (Silby) Ok, I added a new function (WriteContestandPrefixConfig).
+         It only writes the randomprefix and contestdone settings to the
+         file (making sure to load fresh from the .ini first.) I then
+         changed all the calls to writeconfig aside from two to
+         WriteContestandPrefixConfig. This appears to fix the bug for me.
+         (If it does not, please comment, of course.)
 
 5-31-98 - Oscar Chang
   New Bug: Between 403 and 406, there is a drop of almost 50k keys/sec on my
