@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.119 2000/02/01 17:29:40 ivo Exp $
+# @(#)$Id: configure,v 1.222.2.120 2000/02/01 20:16:38 lyndon Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -277,8 +277,8 @@ OPTS_MIPSPRO_SRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 OPTS_MIPSPRO_DOCS="docs/readme._ix docs/readme.irix"
 
 # Common to a specific ABI:
-OPTS_MIPSPRO_CCFLAGS_32="${OPTS_MIPSPRO_CCFLAGS} -n32"
-OPTS_MIPSPRO_CCFLAGS_64="${OPTS_MIPSPRO_CCFLAGS}  -64"
+OPTS_MIPSPRO_CCFLAGS_32="${OPTS_MIPSPRO_CCFLAGS} -n32 -mips3 -r4000"
+OPTS_MIPSPRO_CCFLAGS_64="${OPTS_MIPSPRO_CCFLAGS}  -64 -mips4 -r10000"
 
 ## GNU
 
@@ -456,6 +456,28 @@ case "$1" in
 # your platform.
 #
 # lyndon@orthanc.ab.ca (Nov 28, 1999)
+
+    *mips-cc-n32)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} \
+			-DCLIENT_OS_NAME=\"\\\"Irix (generic-n32)\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"
+	TARGET_TARBALL="irix6.5-mips-n32"
+	;;
+
+    *mips-cc-64)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} \
+			-DCLIENT_OS_NAME=\"\\\"Irix (generic-64)\\\"\""
+	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"
+	TARGET_TARBALL="irix6.5-mips-64"
+	;;
 
     *mips-cc-ip19)
 	TARGET_CC="CC"
@@ -645,33 +667,12 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *mips-cc-64)	     # For 64bit MIPS processors
-	#  mips-crunch.cpp doesn't yet compile with CC
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPSPRO -O3 -r5000 -IPA -64 -mips4 \
-			 -DKWAN -DMEGGS"
-	TARGET_LDFLAGS="-static -64 -IPA -mips4"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
     *mips5-cc)		# IRIX CC is slower than mips-gcc targets
 	#  mips-crunch.cpp doesn't compile with CC
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPSPRO -D_irix5_ \
 			 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *mips-cc)		# IRIX CC is slower than mips-gcc targets
-	#  mips-crunch.cpp doesn't compile with CC
-	TARGET_CC="CC"
-	TARGET_LDFLAGS="-n32"
-	TARGET_CCFLAGS="$OPTS_CC_MIPSPRO -n32 -DMULTITHREAD \
-			 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
-	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
