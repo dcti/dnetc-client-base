@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.29 1999/11/02 14:55:26 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.30 1999/11/06 05:51:09 ivo Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -151,7 +151,7 @@ OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
 OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86"
 OPTS_GCC272_X86="$OPTS_GCC272 -O6 -m486 -DASM_X86"
 
-OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentiumpro -malign-functions=5 -malign-loops=4 -DASM_X86"
+OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentiumpro -malign-functions=4 -DASM_X86"
 
 #-- DYNIX
 
@@ -318,14 +318,21 @@ DESULTRA_SRCS_ASM="des/ultrasparc/des-slice-ultrasparc.cpp \
 #
 OGR_ANSI_SRCS="ogr/ogr.cpp ogr/crc32.cpp ogr/choosedat.cpp"
 OGR_ANSI_CCOPTS="-DGREGH -DHAVE_OGR_CORES -Iogr"
-	     
+
 #
 # Source files making up the CSC core code
 #
 CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp \
                csc/csc-1k-i.cpp csc/csc-1k.cpp \
                csc/csc-6b-i.cpp csc/csc-6b.cpp"
-CSC_ANSI_CCOPTS="-DHAVE_CSC_CORES -Icsc"
+CSC_ANSI_CCOPTS="-DHAVE_CSC_CORES -Icsc -Icsc/x86"
+
+CSC_ASM_SRCS="csc/x86/convcsc.asm  \
+		csc/x86/csc-1k-i.asm \
+		csc/x86/csc-1k.asm \
+		csc/x86/csc-6b-i.asm \
+		csc/x86/csc-6b.asm \
+		csc/x86/csc-comm.asm"
 
 #
 # Define the default compilation options
@@ -336,7 +343,7 @@ TARGET_LDFLAGS=""
 TARGET_LIBS=""
 TARGET_AS="as"
 TARGET_NASM="nasm"
-TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -d__ELF__ -f elf"
+TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i csc/x86/ -i des/mmx-bitslice/ -d__ELF__ -f elf"
 TARGET_ASFLAGS=""
 TARGET_STRIP="strip"
 TARGET_CP="cp"
@@ -355,7 +362,6 @@ DELETECHARS="'[:punct:]'"
 # Determine the platform specific options for this target
 #
 case "$1" in
-
 ###### MIPS based platforms
     *mips-cobalt)	# For Cobalt Qube - doesn't work yet - Peter
 	RC5CORECOPY="rc5/mips-crunch.cpp"
@@ -1124,18 +1130,40 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *x86-linux-mt-gcc-gregh)		 # mt, static, gcc, ogr
+    *x86-linux-mt-gcc-ogr-csc)		 # mt, static, gcc, ogr, csc
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DSMC -DLURK $OGR_ANSI_CCOPTS"
+			-DMULTITHREAD -DSMC -DLURK \
+			$OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
-			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 $OGR_ANSI_SRCS"
+			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
+			$OGR_ANSI_SRCS "
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS $NASM_CSC_SRCS"
 	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
+			  -d__showids__ -d__ELF__ \
+			  -f elf"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	;;
+
+    *x86-linux-mt-gcc-ogr-asmcsc)		 # mt, static, gcc, ogr, asm csc
+	TARGET_AS="gcc -c"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
+			-DMULTITHREAD -DSMC -DLURK \
+			$OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS"
+	TARGET_LDFLAGS="-static -Xlinker -omagic"
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
+			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
+			$OGR_ANSI_SRCS "
+	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
+			platforms/x86ident.S \
+			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS $CSC_ASM_SRCS"
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i csc/x86/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
@@ -1600,8 +1628,8 @@ echo "Platform target for \"$1\" recognized."
 #
 # add (cough, cough) projects to all
 #
-TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS" #$OGR_ANSI_SRCS 
-TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES $CSC_ANSI_CCOPTS" #$OGR_ANSI_CCOPTS 
+TARGET_ADDSRCS="$TARGET_ADDSRCS" #$CSC_ANSI_SRCS" $OGR_ANSI_SRCS 
+TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES" #$CSC_ANSI_CCOPTS" #$OGR_ANSI_CCOPTS 
 
 #
 # Generate the list of output objects, making note of what
@@ -1812,12 +1840,11 @@ echo "\${BUILDNAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
 echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
 
-echo "dep: $0" >> Makefile
+echo "reconfigure: $0" >> Makefile
 echo "	\$(SHELL) $0 \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
-echo "reconfigure: dep" >> Makefile
-echo "" >> Makefile
-echo "clean:" >> Makefile
+
+echo "clean: " >> Makefile
 echo "	rm -f \${ALLOBJS}  ${TARGET_BINNAME}" >> Makefile
 echo "" >> Makefile
 
