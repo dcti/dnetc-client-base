@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.118 2000/01/09 20:32:38 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.119 2000/01/23 00:41:32 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -118,7 +118,11 @@ static void __thread_yield__(void)
   #elif (CLIENT_OS == OS_OS2)
     DosSleep(0);
   #elif (CLIENT_OS == OS_IRIX)
+    #ifdef _irix5_
     sginap(0);
+    #else	// !_irix5_
+    sched_yield();
+    #endif	// !_irix5_
   #elif (CLIENT_OS == OS_WIN32)
     w32Yield(); //Sleep(0);
   #elif (CLIENT_OS == OS_DOS)
@@ -421,9 +425,6 @@ void Go_mt( void * parm )
   #if ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
   if (thrparams->realthread)
     thr_exit((void *)0);
-  #elif (CLIENT_OS == OS_BEOS)
-  if (thrparams->realthread)
-    _exit(0);
   #endif
 }
 

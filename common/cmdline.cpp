@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.152 2000/01/16 22:38:24 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.153 2000/01/23 00:41:33 cyp Exp $"; }
 
 //#define TRACE
 
@@ -31,6 +31,7 @@ return "@(#)$Id: cmdline.cpp,v 1.152 2000/01/16 22:38:24 cyp Exp $"; }
 #include "confrwv.h"   // ValidateConfig()
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "cmdline.h"   // ourselves
+#include "triggers.h"   // TRIGGER_PAUSE_SIGNAL
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
@@ -166,9 +167,9 @@ int ParseCommandline( Client *client,
                strcmp( thisarg, "-shutdown") == 0 )
           { sig = SIGTERM; dowhat_descrip = "shutdown"; }
           else if (strcmp( thisarg, "-pause" ) == 0)
-          { sig = SIGTSTP; dowhat_descrip = "paused";  }
+          { sig = TRIGGER_PAUSE_SIGNAL; dowhat_descrip = "paused";  }
           else if (strcmp( thisarg, "-unpause" ) == 0)
-          { sig = SIGCONT; dowhat_descrip = "unpaused"; }
+          { sig = TRIGGER_UNPAUSE_SIGNAL; dowhat_descrip = "unpaused"; }
 
           pid_t already_sigd[128]; unsigned int sigd_count = 0;
           #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
@@ -324,7 +325,7 @@ int ParseCommandline( Client *client,
           #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
           pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
           #elif (CLIENT_OS == OS_BEOS)
-          pscmd = "/bin/ps | egrep zzz 2>/dev/null";  /* get the (sleeping) main thread ID, not the team ID */
+          pscmd = "/bin/ps | /bin/egrep zzz | /bin/egrep -v crunch 2>/dev/null";  /* get the (sleeping) main thread ID, not the team ID */
           #else
           #error fixme: select an appropriate ps syntax
           #endif

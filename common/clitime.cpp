@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.50 2000/01/08 23:36:05 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.51 2000/01/23 00:41:32 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -145,7 +145,13 @@ static int __GetMonotonicClock( struct timeval *tv )
 static int __GetProcessTime( struct timeval *tv )
 {
   tv = tv; /* may be unused */
-  #if defined(HAVE_GETRUSAGE)
+  #if (CLIENT_OS == OS_BEOS)
+  thread_info tInfo;
+  get_thread_info(find_thread(NULL), &tInfo);
+  tv->tv_sec = tInfo.user_time / 1000000;	// convert from microseconds
+  tv->tv_usec = tInfo.user_time % 1000000;
+  return 0;
+  #elif defined(HAVE_GETRUSAGE)
   struct rusage rus;
   if (getrusage(RUSAGE_SELF,&rus) == 0)
   {

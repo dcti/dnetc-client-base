@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.109 2000/01/16 17:09:14 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.110 2000/01/23 00:41:33 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -182,10 +182,10 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     #elif (CLIENT_OS == OS_MACOS)
     {
       #if (CLIENT_CPU == CPU_POWERPC)
-        if (MPLibraryIsLoaded())
-          cpucount = MPProcessors();
-        else
-          cpucount = 1;
+      if (MPLibraryIsLoaded())
+        cpucount = MPProcessors();
+      else
+        cpucount = 1;
       #else // Dont support MP on 68k CPUs
         cpucount = 1;
       #endif
@@ -338,7 +338,7 @@ static long __GetRawProcessorID(const char **cpuname)
 {
   /* ******* detected type reference is (PVR value >> 16) *********** */
   static long detectedtype = -2L; /* -1 == failed, -2 == not supported */
-  static int ispower = 0;
+  static int ispower = 0, isaltivec = 0;
   static const char *detectedname = NULL;
   static char namebuf[30];
   static struct { long rid; const char *name; int powername; } cpuridtable[] = {
@@ -440,6 +440,7 @@ static long __GetRawProcessorID(const char **cpuname)
     detectedtype = -1;
     if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
       detectedtype = result - 0x100L; // PVR!!
+    isaltivec = macosAltiVecPresent();
   }
   #elif (CLIENT_OS == OS_WIN32)
   if (detectedtype == -2L)
@@ -511,6 +512,32 @@ static long __GetRawProcessorID(const char **cpuname)
       fclose(cpuinfo);
     }
   }
+  #elif (CLIENT_OS == OS_BEOS)  // BeOS PPC
+  if (detectedtype == -2L)
+  {
+    system_info sInfo;
+    sInfo.cpu_type = 0;
+    get_system_info(&sInfo);
+    detectedtype = -1;
+    if (sInfo.cpu_type) /* didn't fail */
+    {
+      switch (sInfo.cpu_type)
+      {
+        case B_CPU_PPC_601:  detectedtype = 1; break;
+        case B_CPU_PPC_603:  detectedtype = 3; break;
+        case B_CPU_PPC_603e: detectedtype = 6; break;
+        case B_CPU_PPC_604:  detectedtype = 4; break;
+        case B_CPU_PPC_604e: detectedtype = 9; break;
+        case B_CPU_PPC_750:  detectedtype = 8; break;
+        default: // some PPC processor that we don't know about
+                 // set the tag (so that the user can tell us), but return 0
+        sprintf(namebuf, "%d", sInfo.cpu_type );
+        detectedname = (const char *)&namebuf[0];
+        detectedtype = 0;
+        break;
+      }
+    }
+  }
   #endif
   
   if (detectedtype > 0 && detectedname == NULL )
@@ -535,8 +562,13 @@ static long __GetRawProcessorID(const char **cpuname)
   
   if (cpuname)
     *cpuname = detectedname;
-  if (detectedtype >= 0 && ispower)
-    return ((1L<<24) | detectedtype);
+  if (detectedtype > 0)
+  {
+    if (ispower)    
+      return ((1L<<24)|detectedtype);
+    if (isaltivec) /* *OS* supports altivec */
+      return ((1L<<25)|detectedtype);
+  }
   return detectedtype;
 }
 #endif /* (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) */
@@ -1290,28 +1322,34 @@ long GetProcessorType(int quietly)
   {
     const char *cpuname = NULL;
     long rawid = __GetRawProcessorID(&cpuname);
-    if (!quietly)
+    if (rawid < 0)
     {
-      if (rawid < 0)
+      retval = -1L;  
+      if (!quietly)
         LogScreen("%s%s.\n", apd, ((rawid == -1L)?("failed"):("is not supported")));
-      else if (rawid == 0)
-        LogScreen("%sdid not\nrecognize the processor (tag: \"%s\")\n", apd, (cpuname?cpuname:"???") );
-      else if (cpuname == NULL || *cpuname == '\0')
-        LogScreen("%sdid not\nrecognize the processor (id: %ld)\n", apd, rawid );
-      else
-        LogScreen("%sfound\na%s %s processor.\n",apd, 
-           ((strchr("aeiou8", tolower(*cpuname)))?("n"):("")), cpuname);
     }
-    #if (CLIENT_CPU == CPU_X86) /* simply too many core<->cpu combinations */
-    if (rawid >= 0)             /* so return a simplified id */
+    else if (rawid == 0)
     {
-      if ((rawid = __GetRawProcessorID(NULL,'c')) >= 0)
-        retval = rawid;
+      retval = -1L;  
+      if (!quietly)
+        LogScreen("%sdid not\nrecognize the processor (tag: \"%s\")\n", apd, (cpuname?cpuname:"???") );
     }
-    #else
-    if (rawid >= 0)             /* let selcore figure things out */
-      retval = rawid; 
-    #endif
+    else 
+    {
+      if (!quietly)
+      {
+        if (cpuname == NULL || *cpuname == '\0')
+          LogScreen("%sdid not\nrecognize the processor (id: %ld)\n", apd, rawid );
+        else
+          LogScreen("%sfound\na%s %s processor.\n",apd, 
+             ((strchr("aeiou8", tolower(*cpuname)))?("n"):("")), cpuname);
+      }
+      retval = rawid; /* let selcore figure things out */
+      #if (CLIENT_CPU == CPU_X86) /* simply too many core<->cpu combinations */
+      if ((retval = __GetRawProcessorID(NULL,'c')) < 0)
+        retval = -1;
+      #endif
+    }
   }  
   #else
   {

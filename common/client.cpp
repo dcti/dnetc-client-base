@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.245 2000/01/16 22:38:23 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.246 2000/01/23 00:41:32 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -245,7 +245,6 @@ static const char *GetBuildOrEnvDescription(void)
 
 static void PrintBanner(const char *dnet_id,int level,int restarted)
 {
-  /* level = 0 = show copyright/version,  1 = show startup message */
   restarted = 0; /* yes, always show everything */
   
   if (!restarted)
@@ -293,7 +292,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       #endif
       LogScreenRaw( "\n" );
     }
-    else if ( level == 1 )
+    else if ( level == 1 || level == 2 )
     {
       const char *msg = GetBuildOrEnvDescription();
       if (msg == NULL) msg="";
@@ -305,14 +304,14 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
                     "when submitting bug reports.\n");
       LogScreenRaw( "The distributed.net bug report pages are at "
                     "http://www.distributed.net/bugs/\n");
-      if (dnet_id[0] == '\0' || strcmp(dnet_id,"rc5@distributed.net")==0)
+      if (dnet_id[0] != '\0' && strcmp(dnet_id,"rc5@distributed.net") !=0 )
+        LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n",dnet_id);
+      else if (level == 2)
         LogRaw( "\n* =========================================================================="
                 "\n* The client is not configured with your email address (distributed.net ID) "
                 "\n* Work done cannot be credited until it is set. Please run '%s -config'"
                 "\n* =========================================================================="
                 "\n\n", utilGetAppName());
-      else              
-        LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n",dnet_id);
 
       if (CliIsTimeZoneInvalid()) /*clitime.cpp (currently DOS,OS/2,WIN[16] only)*/
       {
@@ -356,11 +355,11 @@ static int ClientMain( int argc, char *argv[] )
     TRACE_OUT((0,"Client.parsecmdline restarted?: %d\n", restarted));
     if (ParseCommandline(client,0,argc,(const char **)argv,&retcode,0)==0)
     {
-      int domodes = (ModeReqIsSet(-1) != 0);
+      int domodes = ModeReqIsSet(-1); /* get current flags */
       TRACE_OUT((0,"initializetriggers\n"));
-      if (InitializeTriggers(((client->noexitfilecheck ||
-                              domodes)?(NULL):("exitrc5" EXTN_SEP "now")),
-                              ((domodes)?(NULL):(client->pausefile)) )==0)
+      if (InitializeTriggers(domodes, ((client->noexitfilecheck)?(NULL):
+                                        ("exitrc5" EXTN_SEP "now")),
+                                       client->pausefile )==0)
       {
         TRACE_OUT((0,"initializeconnectivity\n"));
         if (InitializeConnectivity() == 0) //do global initialization
@@ -399,7 +398,8 @@ static int ClientMain( int argc, char *argv[] )
 
             if (domodes)
             {
-              con_waitforuser = (ModeReqIsSet(MODEREQ_CONFIG)==0);
+              PrintBanner(client->id,1,restarted);
+              con_waitforuser = ((domodes & MODEREQ_CONFIG)!=0);
               TRACE_OUT((+1,"modereqrun\n"));
               ModeReqRun( client );
               TRACE_OUT((-1,"modereqrun\n"));
@@ -408,7 +408,7 @@ static int ClientMain( int argc, char *argv[] )
               con_waitforuser = 1;
             else
             {
-              PrintBanner(client->id,1,restarted);
+              PrintBanner(client->id,2,restarted);
               TRACE_OUT((+1,"client.run\n"));
               retcode = ClientRun(client);
               TRACE_OUT((-1,"client.run\n"));

@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.26 2000/01/16 22:38:24 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.27 2000/01/23 00:41:34 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -24,9 +24,14 @@ return "@(#)$Id: triggers.cpp,v 1.26 2000/01/16 22:38:24 cyp Exp $"; }
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "pathwork.h"  // GetFullPathForFilename()
 #include "logstuff.h"  // LogScreen()
-#include "triggers.h"  // for xxx_CHECKTIME defines
+#include "triggers.h"  // keep prototypes in sync
 
 /* ----------------------------------------------------------------------- */
+
+#define PAUSEFILE_CHECKTIME_WHENON  (3)  //seconds
+#define PAUSEFILE_CHECKTIME_WHENOFF (3*PAUSEFILE_CHECKTIME_WHENON)
+#define EXITFILE_CHECKTIME          (PAUSEFILE_CHECKTIME_WHENOFF)
+
 
 #define TRIGSETBY_SIGNAL   0x1  /*signal or explicit call to raise */ 
 #define TRIGSETBY_FLAGFILE 0x2  /*flag file */
@@ -251,7 +256,162 @@ int CheckPauseRequestTrigger(void)
   return( trigstatics.pausetrig.trigger );
 }   
 
+// =======================================================================
+
+void __PollDrivenBreakCheck( void ) /* not static to avoid compiler warnings */
+{
+  #if (CLIENT_OS == OS_RISCOS)
+  if (_kernel_escape_seen())
+      RaiseExitRequestTrigger();
+  #elif (CLIENT_OS == OS_AMIGAOS)
+  if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
+    RaiseExitRequestTrigger();
+  #elif (CLIENT_OS == OS_NETWARE)
+    nwCliCheckForUserBreak(); //in nwccons.cpp
+  #elif (CLIENT_OS == OS_WIN32)
+    w32ConOut("");    /* benign call to keep ^C handling alive */
+  #elif (CLIENT_OS == OS_DOS)
+    _asm mov ah,0x0b  /* benign dos call (kbhit()) */
+    _asm int 0x21     /* to keep int23h (^C) handling alive */
+  #endif
+  return;  
+}      
+
+// =======================================================================
+
+#if (CLIENT_OS == OS_AMIGAOS)
+extern "C" void __regargs __chkabort(void) 
+{ 
+  /* Disable SAS/C CTRL-C handing */
+  return;
+}
+#define CLISIGHANDLER_IS_SPECIAL
+static void __init_signal_handlers( int doingmodes )
+{
+  __assert_statics(); 
+  doingmodes = doingmodes; /* unused */
+  SetSignal(0L, SIGBREAKF_CTRL_C); // Clear the signal triggers
+  RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
+}    
+#endif
+
 // -----------------------------------------------------------------------
+
+#if (CLIENT_OS == OS_WIN32)
+BOOL WINAPI CliSignalHandler(DWORD dwCtrlType)
+{
+  if ( dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_CLOSE_EVENT || 
+       dwCtrlType == CTRL_SHUTDOWN_EVENT)
+  {
+    RaiseExitRequestTrigger();
+    return TRUE;
+  }
+  else if (dwCtrlType == CTRL_BREAK_EVENT)
+  {
+    RaiseRestartRequestTrigger();
+    return TRUE;
+  }
+  return FALSE;
+}
+#define CLISIGHANDLER_IS_SPECIAL
+static void __init_signal_handlers( int doingmodes ) 
+{
+  __assert_statics(); 
+  doingmodes = doingmodes; /* unused */
+  SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, FALSE );
+  SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, TRUE );
+  RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
+}
+#endif
+
+// -----------------------------------------------------------------------
+
+#ifndef CLISIGHANDLER_IS_SPECIAL
+extern "C" void CliSignalHandler( int sig )
+{
+  #if defined(TRIGGER_PAUSE_SIGNAL)
+  if (sig == TRIGGER_PAUSE_SIGNAL)
+  {
+    signal(sig,CliSignalHandler);
+    RaisePauseRequestTrigger();
+    return;
+  }
+  if (sig == TRIGGER_UNPAUSE_SIGNAL)
+  {
+    signal(sig,CliSignalHandler);
+    ClearPauseRequestTrigger();
+    return;
+  }
+  #endif  
+  #if defined(SIGHUP)
+  if (sig == SIGHUP)
+  {
+    signal(sig,CliSignalHandler);
+    RaiseRestartRequestTrigger();
+    return;
+  }  
+  #endif
+  ClearRestartRequestTrigger();
+  RaiseExitRequestTrigger();
+
+  signal(sig,SIG_IGN);
+}  
+#endif //ifndef CLISIGHANDLER_IS_SPECIAL
+
+// -----------------------------------------------------------------------
+
+#ifndef CLISIGHANDLER_IS_SPECIAL
+static void __init_signal_handlers( int doingmodes )
+{
+  __assert_statics(); 
+  doingmodes = doingmodes; /* possibly unused */
+  #if (CLIENT_OS == OS_SOLARIS)
+  signal( SIGPIPE, SIG_IGN );
+  #endif
+  #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
+  RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
+  #endif
+  #if (CLIENT_OS == OS_DOS)
+  break_on(); //break on any dos call, not just term i/o
+  RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
+  #endif
+  #if defined(SIGHUP)
+  signal( SIGHUP, CliSignalHandler );   //restart
+  #endif
+  #if defined(TRIGGER_PAUSE_SIGNAL)  // signal-based pause/unpause mechanism?
+  if (!doingmodes)
+  {
+    #if defined(__unix__) && (CLIENT_OS != OS_BEOS)
+    // stop the shell from seeing SIGTSTP and putting the client
+    // into the background when we '-pause' it.
+    // porters : those calls are POSIX.1, 
+    // - on BSD you might need to change setpgid(0,0) to setpgrp()
+    // - on SYSV you might need to change getpgrp() to getpgid(0)
+    if( getpgrp() != getpid() )
+      setpgid( 0, 0 );
+    #endif
+    signal( TRIGGER_PAUSE_SIGNAL, CliSignalHandler );  //pause
+    signal( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue
+  }
+  #endif
+  #if defined(SIGQUIT)
+  signal( SIGQUIT, CliSignalHandler );  //shutdown
+  #endif
+  #if defined(SIGSTOP)
+  signal( SIGSTOP, CliSignalHandler );  //shutdown, maskable some places
+  #endif
+  #if defined(SIGABRT)
+  signal( SIGABRT, CliSignalHandler );  //shutdown
+  #endif
+  #if defined(SIGBREAK)
+  signal( SIGBREAK, CliSignalHandler ); //shutdown
+  #endif
+  signal( SIGTERM, CliSignalHandler );  //shutdown
+  signal( SIGINT, CliSignalHandler );   //shutdown
+}
+#endif
+
+// =======================================================================
 
 int DeinitializeTriggers(void)
 {
@@ -302,7 +462,8 @@ static const char *_init_trigfile(const char *fn, char *buffer, unsigned int buf
   return (const char *)0;
 }
 
-int InitializeTriggers( const char *exitfile, const char *pausefile )
+int InitializeTriggers( int doingmodes,
+                        const char *exitfile, const char *pausefile )
 {
   __assert_statics(); 
   memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
@@ -310,163 +471,18 @@ int InitializeTriggers( const char *exitfile, const char *pausefile )
   trigstatics.exittrig.pollinterval.whenoff = EXITFILE_CHECKTIME;
   trigstatics.pausetrig.pollinterval.whenon = PAUSEFILE_CHECKTIME_WHENON;
   trigstatics.pausetrig.pollinterval.whenoff = PAUSEFILE_CHECKTIME_WHENOFF;
-  CliSetupSignals();
+  __init_signal_handlers( doingmodes );
 
-  trigstatics.exittrig.flagfile = _init_trigfile(exitfile, 
-               trigstatics.exitfilebuf, sizeof(trigstatics.exitfilebuf) );
-  trigstatics.pausetrig.flagfile = _init_trigfile(pausefile, 
-               trigstatics.pausefilebuf, sizeof(trigstatics.pausefilebuf) );
+  if (!doingmodes)
+  {
+    trigstatics.exittrig.flagfile = _init_trigfile(exitfile, 
+                 trigstatics.exitfilebuf, sizeof(trigstatics.exitfilebuf) );
+    trigstatics.pausetrig.flagfile = _init_trigfile(pausefile, 
+                 trigstatics.pausefilebuf, sizeof(trigstatics.pausefilebuf) );
+  }
   return (CheckExitRequestTrigger());
 }  
 
-// =======================================================================
-
-void __PollDrivenBreakCheck( void ) /* not static to avoid compiler warnings */
-{
-  #if (CLIENT_OS == OS_RISCOS)
-  if (_kernel_escape_seen())
-      RaiseExitRequestTrigger();
-  #elif (CLIENT_OS == OS_AMIGAOS)
-  if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
-    RaiseExitRequestTrigger();
-  #elif (CLIENT_OS == OS_NETWARE)
-    nwCliCheckForUserBreak(); //in nwccons.cpp
-  #elif (CLIENT_OS == OS_WIN32)
-    w32ConOut("");    /* benign call to keep ^C handling alive */
-  #elif (CLIENT_OS == OS_DOS)
-    _asm mov ah,0x0b  /* benign dos call (kbhit()) */
-    _asm int 0x21     /* to keep int23h (^C) handling alive */
-  #endif
-  return;  
-}      
-
-// =======================================================================
-
-#if (CLIENT_OS == OS_AMIGAOS)
-extern "C" void __regargs __chkabort(void) 
-{ 
-  /* Disable SAS/C CTRL-C handing */
-  return;
-}
-#define CLISIGHANDLER_IS_SPECIAL
-void CliSetupSignals( void )
-{
-  __assert_statics(); 
-  SetSignal(0L, SIGBREAKF_CTRL_C); // Clear the signal triggers
-  RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
-}    
-#endif
-
-// -----------------------------------------------------------------------
-
-#if (CLIENT_OS == OS_WIN32)
-BOOL WINAPI CliSignalHandler(DWORD dwCtrlType)
-{
-  if ( dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_CLOSE_EVENT || 
-       dwCtrlType == CTRL_SHUTDOWN_EVENT)
-  {
-    RaiseExitRequestTrigger();
-    return TRUE;
-  }
-  else if (dwCtrlType == CTRL_BREAK_EVENT)
-  {
-    RaiseRestartRequestTrigger();
-    return TRUE;
-  }
-  return FALSE;
-}
-#define CLISIGHANDLER_IS_SPECIAL
-void CliSetupSignals( void ) 
-{
-  __assert_statics(); 
-  SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, FALSE );
-  SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, TRUE );
-  RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
-}
-#endif
-
-// -----------------------------------------------------------------------
-
-#ifndef CLISIGHANDLER_IS_SPECIAL
-extern "C" void CliSignalHandler( int sig )
-{
-  #if defined(SIGTSTP) && defined(SIGCONT) //&& defined(__unix__)
-  if (sig == SIGTSTP)
-  {
-    signal(sig,CliSignalHandler);
-    RaisePauseRequestTrigger();
-    return;
-  }
-  if (sig == SIGCONT)
-  {
-    signal(sig,CliSignalHandler);
-    ClearPauseRequestTrigger();
-    return;
-  }
-  #endif  
-  #if defined(SIGHUP)
-  if (sig == SIGHUP)
-  {
-    signal(sig,CliSignalHandler);
-    RaiseRestartRequestTrigger();
-    return;
-  }  
-  #endif
-  ClearRestartRequestTrigger();
-  RaiseExitRequestTrigger();
-
-  signal(sig,SIG_IGN);
-}  
-#endif //ifndef CLISIGHANDLER_IS_SPECIAL
-
-// -----------------------------------------------------------------------
-
-#ifndef CLISIGHANDLER_IS_SPECIAL
-void CliSetupSignals( void )
-{
-  __assert_statics(); 
-  #if (CLIENT_OS == OS_SOLARIS)
-  signal( SIGPIPE, SIG_IGN );
-  #endif
-  #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
-  RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
-  #endif
-  #if (CLIENT_OS == OS_DOS)
-  break_on(); //break on any dos call, not just term i/o
-  RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
-  #endif
-  #if defined(SIGHUP)
-  signal( SIGHUP, CliSignalHandler );   //restart
-  #endif
-  #if defined(SIGCONT) && defined(SIGTSTP)
-  #if defined(__unix__) && (CLIENT_OS != OS_BEOS)
-  // stop the shell from seeing SIGTSTP and putting the client
-  // into the background when we '-pause' it.
-  // porters : those calls are POSIX.1, 
-  // - on BSD you might need to change setpgid(0,0) to setpgrp()
-  // - on SYSV you might need to change getpgrp() to getpgid(0)
-  if( getpgrp() != getpid() )
-    setpgid( 0, 0 );
-  #endif
-  signal( SIGTSTP, CliSignalHandler );  //pause
-  signal( SIGCONT, CliSignalHandler );  //continue
-  #endif
-  #if defined(SIGQUIT)
-  signal( SIGQUIT, CliSignalHandler );  //shutdown
-  #endif
-  #if defined(SIGSTOP)
-  signal( SIGSTOP, CliSignalHandler );  //shutdown, maskable some places
-  #endif
-  #if defined(SIGABRT)
-  signal( SIGABRT, CliSignalHandler );  //shutdown
-  #endif
-  #if defined(SIGBREAK)
-  signal( SIGBREAK, CliSignalHandler ); //shutdown
-  #endif
-  signal( SIGTERM, CliSignalHandler );  //shutdown
-  signal( SIGINT, CliSignalHandler );   //shutdown
-}
-#endif
 
 // -----------------------------------------------------------------------
 
