@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.213 1999/07/26 04:24:12 sampo Exp $"; }
+return "@(#)$Id: client.cpp,v 1.214 1999/08/09 17:05:46 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -14,6 +14,7 @@ return "@(#)$Id: client.cpp,v 1.213 1999/07/26 04:24:12 sampo Exp $"; }
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "client.h"    // Client class
+#include "cliident.h"  // CliGetFullVersionDescriptor()
 #include "random.h"    // InitRandom()
 #include "pathwork.h"  // EXTN_SEP
 #include "clitime.h"   // CliTimer()
@@ -190,46 +191,24 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
     }
     else if ( level == 1 )
     {
-      #if ((CLIENT_OS==OS_DOS) || (CLIENT_OS==OS_WIN16) || \
-           (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_OS2) || \
-           (CLIENT_OS==OS_WIN32))
-      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-      if ((winGetVersion()%2000) < 400) /* w32pre.cpp. +2000==NT */
-      #endif
-      if (getenv("TZ") == NULL)
-      {
-        LogScreenRaw("Warning: The TZ= variable is not set in the environment. "
-         "The client will\nprobably display the wrong time and/or select the "
-         "wrong keyserver.\n");
-        putenv("TZ=GMT+0"); //use local, not redmond or armonk or saltlakecity time
-      }
-      #endif
-
       const char *msg = GetBuildOrEnvDescription();
       if (msg == NULL) msg="";
 
-      struct timeval tv; tv.tv_usec = 0; tv.tv_sec = CliTimeGetBuildDate();
-      LogRaw("\nRC5DES v" CLIENT_VERSIONSTRING "-"
-                       "%c" /* GUI == "G", CLI == "C" */
-                       #ifdef CLIENT_SUPPORTS_SMP
-                       "T" /* threads */
-                       #else
-                       "P" /* polling */
-                       #endif
-                       #if (defined(BETA) || defined(BETA_PERIOD))
-                       "L" /* limited release */
-                       #else
-                       "R" /* public release */
-                       #endif
-                       "-%s " /* date is in bugzilla format yymmddhh */ 
-                       "client for %s%s%s%s.\n",
-            ((ConIsGUI())?('G'):('C')),  CliGetTimeString(&tv,4),
-            CLIENT_OS_NAME, ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
+      LogRaw("\n%s%s%s%s.\n",
+             CliGetFullVersionDescriptor(), /* cliident.cpp */
+             ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
       LogScreenRaw( "Please provide the *entire* version descriptor "
                     "when submitting bug reports.\n");
       LogScreenRaw( "The distributed.net bug report pages are at "
                     "http://www.distributed.net/bugs/\n");
       LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n", dnet_id );
+
+      if (CliIsTimeZoneInvalid()) /*clitime.cpp (currently DOS,OS/2,WIN[16] only)*/
+      {
+        LogScreenRaw("Warning: The TZ= variable is not set in the environment. "
+         "The client will\nprobably display the wrong time and/or select the "
+         "wrong keyserver.\n");
+      }
     }
   }
   return;
@@ -314,7 +293,7 @@ int Client::Main( int argc, const char *argv[] )
 
 /* ---------------------------------------------------------------------- */
 
-static int realmain( int argc, char *argv[] ) /* YES, *STATIC* */
+static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
 {
   // This is the main client object.  we 'new'/malloc it, rather than make
   // it static in the hope that people will think twice about using exit()
@@ -424,15 +403,16 @@ static int realmain( int argc, char *argv[] ) /* YES, *STATIC* */
 #ifdef CLIENT_17
 void main(void)
 {
-  macosCliMain(realmain); /* sythesise a command line for realmain */
+  //extern void macosCliMain(int (*)(int,char **));
+  macosCliMain(_realmain); /* sythesise a command line for realmain */
   return;                 /* UI will be initialized later via console.cpp */
-}
-#endif  
+}  
+#endif
 #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* parse the command line and call the bootstrap */
   TRACE_OUT((+1,"WinMain()\n"));
-  int rc=winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, realmain);
+  int rc=winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, _realmain);
   TRACE_OUT((-1,"WinMain()\n"));
   return rc;
 }
@@ -585,12 +565,15 @@ int main( int argc, char *argv[] )
     return 0;
   }
   #endif
-  return realmain( argc, argv );
+  return _realmain( argc, argv );
 }      
 #else
 int main( int argc, char *argv[] )
 {
-  return realmain( argc, argv );
+  int rc;
+  TRACE_OUT((+1,"main()\n"));
+  rc=_realmain( argc, argv );
+  TRACE_OUT((-1,"main()\n"));
+  return rc;
 }
 #endif
-
