@@ -1,10 +1,19 @@
-// Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
-//
 // Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+//
+// ----------------------------------------------------------------------
+// Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
+// ----------------------------------------------------------------------
+//
 // $Log: logstuff.cpp,v $
+// Revision 1.21.2.9  1999/01/30 16:03:26  remi
+// Synced with :
+//
+//  Revision 1.30  1999/01/29 18:47:28  jlawson
+//  fixed formatting.
+//
 // Revision 1.21.2.8  1999/01/23 14:08:00  remi
 // Synced with :
 //
@@ -57,7 +66,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.21.2.8 1999/01/23 14:08:00 remi Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.21.2.9 1999/01/30 16:03:26 remi Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
