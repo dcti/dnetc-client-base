@@ -1,5 +1,7 @@
 Dual mode (RC5DES) clients
 --------------------------
+v2.7100.416 98.07.20 work around added for Win95/98 combo-box bug that created system
+                     pausing after opening the config dialog at least once.
 v2.7100.416 98.07.18 win32 gui logging fixed
 v2.7100.416 98.07.18 Clients updated so that des-ii-2 blocks will be
                      ignored in future des contests.
