@@ -10,6 +10,9 @@
 // ----------------------------------------------------------------------
 // 
 // $Log: clitime.h,v $
+// Revision 1.17  1999/03/31 11:41:39  cyp
+// a) lots of const. b) added #error where OS support was missing.
+//
 // Revision 1.16  1999/03/18 03:11:25  cyp
 // New function CliTimeGetBuildDate() returns build time_t. Used to check
 // that time obtained from proxy is (somewhat) sane.
@@ -72,17 +75,17 @@ time_t CliTimeGetBuildDate(void);
 
 // Get time as string. Curr time if tv is NULL. Separate buffers for each
 // type: 0=blank type 1, 1="MMM dd hh:mm:ss GMT", 2="hhhh:mm:ss.pp"
-const char *CliGetTimeString( struct timeval *tv, int strtype );
+const char *CliGetTimeString( const struct timeval *tv, int strtype );
 
 // Get the time since program start (pass NULL if storage not required)
 struct timeval *CliClock( struct timeval *tv );
 
 // Add 'tv1' to 'tv2' and store in 'result'. Uses curr time if a 'tv' is NULL
 // tv1/tv2 are not modified (unless 'result' is the same as one of them).
-int CliTimerAdd( struct timeval *result, struct timeval *tv1, struct timeval *tv2 );
+int CliTimerAdd( struct timeval *result, const struct timeval *tv1, const struct timeval *tv2 );
 
 // Store non-negative diff of tv1 and tv2 in 'result'. Uses current time if a 'tv' is NULL
 // tv1/tv2 are not modified (unless 'result' is the same as one of them).
-int CliTimerDiff( struct timeval *result, struct timeval *tv1, struct timeval *tv2 );
+int CliTimerDiff( struct timeval *result, const struct timeval *tv1, const struct timeval *tv2 );
 
 #endif //ifndef _CLITIME_H_

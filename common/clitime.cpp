@@ -17,6 +17,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: clitime.cpp,v $
+// Revision 1.31  1999/03/31 11:41:38  cyp
+// a) lots of const. b) added #error where OS support was missing.
+//
 // Revision 1.30  1999/03/18 03:11:25  cyp
 // New function CliTimeGetBuildDate() returns build time_t. Used to check
 // that time obtained from proxy is (somewhat) sane.
@@ -86,12 +89,11 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.30 1999/03/18 03:11:25 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.31 1999/03/31 11:41:38 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
-#include "sleepdef.h" // usleep for amiga and where gettimeofday is supported
 #include "clitime.h"  // keep the prototypes in sync
 
 // ---------------------------------------------------------------------
@@ -127,7 +129,9 @@ int CliTimeGetMinutesWest(void)
   if (precalced_minuteswest != -1234)
     return precalced_minuteswest;
 
-#if (CLIENT_OS == OS_NETWARE) || ((CLIENT_OS == OS_OS2) && !defined(EMX))
+#if (CLIENT_OS == OS_NETWARE) || ((CLIENT_OS == OS_OS2) && !defined(EMX)) || \
+    (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  /* ANSI rules :) */
   minwest = timezone/60;
   if (daylight)
     minwest += 60;
@@ -140,39 +144,10 @@ int CliTimeGetMinutesWest(void)
   minwest = TZInfo.Bias; /* sdk doc is wrong. .Bias is always !dst */
   precalced_minuteswest = minwest;
 #elif (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_AMIGA) || \
-  (CLIENT_OS==OS_MACOS) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET)) || \
-  (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-  time_t timenow; int haveutctime, haveloctime;
-  struct tm * tmP; struct tm loctime, utctime;
-  #if (CLIENT_OS != OS_MACOS)
-  tzset();       /* this should be nop #defined if macos can't support it */
-  #endif
-  timenow = CliTimer(NULL)->tv_sec;
-  tmP = localtime( (const time_t *) &timenow);
-  if ((haveloctime = (tmP != NULL))!=0)
-    memcpy( &loctime, tmP, sizeof( struct tm ));
-  tmP = gmtime( (const time_t *) &timenow);
-  if ((haveutctime = (tmP != NULL))!=0)
-    memcpy( &utctime, tmP, sizeof( struct tm ));
-  if (!haveutctime || !haveloctime)
-    return 0;
-  minwest =  ((loctime.tm_min  - utctime.tm_min) )
-            +((loctime.tm_hour - utctime.tm_hour)*60 );
-  /* last two are when the time is on a year boundary */
-  if      (loctime.tm_yday == utctime.tm_yday)     { ;/* no change */ }
-  else if (loctime.tm_yday == utctime.tm_yday + 1) { minwest += 1440; }
-  else if (loctime.tm_yday == utctime.tm_yday - 1) { minwest -= 1440; }
-  else if (loctime.tm_yday <  utctime.tm_yday)     { minwest += 1440; }
-  else                                             { minwest -= 1440; }
-  if (utctime.tm_isdst>0)
-    minwest-=60;
-  if (minwest < -(12*60))
-    minwest = -(12*60);
-  else if (minwest > +(12*60))
-    minwest = +(12*60);
-  minwest = -minwest;
-  precalced_minuteswest = minwest;
+  (CLIENT_OS==OS_MACOS) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
+  #error How does this OS natively deal with timezone? ANSI or Posix rule? (use native calls where possible)
 #else
+  /* POSIX rules :) */
   struct timezone tz; struct timeval tv;
   if ( gettimeofday(&tv, &tz) )
     return 0;
@@ -223,6 +198,7 @@ struct timeval *CliClock( struct timeval *tv )
 struct timeval *CliTimer( struct timeval *tv )
 {
   static struct timeval stv = {0,0};
+  int dofallback = 0;
 
 #if (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || \
     ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
@@ -244,58 +220,40 @@ struct timeval *CliTimer( struct timeval *tv )
 #elif (CLIENT_OS == OS_NETWARE)
   nwCliGetTimeOfDay( &stv );
 #elif (CLIENT_OS == OS_AMIGAOS)
-  int dofallback = timer((unsigned int *)&stv );
-  #define REQUIRES_TIMER_FALLBACK
+  dofallback = timer((unsigned int *)&stv );
 #else
   struct timezone tz;
-  int dofallback =( gettimeofday(&stv, &tz) );
-  #define REQUIRES_TIMER_FALLBACK
+  dofallback = gettimeofday(&stv, &tz);
 #endif
-#ifdef REQUIRES_TIMER_FALLBACK
-#undef REQUIRES_TIMER_FALLBACK
   if (dofallback)
   {
-    static unsigned int timebase = 0;
-    unsigned int secs, rate, xclock = (unsigned int)(clock());
+    static unsigned long lastcheck = 0;
+    static time_t timebase = (time_t)0;
+    unsigned long now = (unsigned long)clock();
+    unsigned long rate = CLOCKS_PER_SEC;
+    unsigned long secs = (now / rate);
 
-    if (!xclock)
+    if ((lastcheck == 0) || (lastcheck < now))
     {
-      if (!stv.tv_sec && !stv.tv_usec)
-      {
-        stv.tv_sec = ((unsigned int)(time(NULL)));
-        stv.tv_usec = 0;
-      }
-      else if ((long) stv.tv_sec == (long) (secs = ((unsigned int)(time(NULL)))))
-      {
-        usleep(100000L); //1/10 sec
-        stv.tv_usec += 100000L;
-      }
-      else
-      {
-        stv.tv_sec = secs;
-        stv.tv_usec = 0;
-      }
+      timebase = ((unsigned long)(time(NULL))) - secs;
+      lastcheck = now;
     }
+    stv.tv_sec = (time_t)(timebase + secs);
+    now -= (secs * rate);
+    if ( now == 0 )  
+      stv.tv_usec = 0;
+    else if ( rate <= 1000000UL )
+      stv.tv_usec = now * (1000000UL/rate);
+    else if (rate <= 1000000000UL )
+      stv.tv_usec = ((now * 1000) / (rate/1000));
     else
-    {
-      rate = CLOCKS_PER_SEC;
-      secs = (xclock/rate);
-      if (!timebase) timebase = ((unsigned int)(time(NULL))) - secs;
-      stv.tv_sec = (time_t)(timebase + secs);
-      xclock -= (secs * rate);
-      if ( rate <= 1000000L )
-        stv.tv_usec = xclock * (1000000L/rate);
-      else
-        stv.tv_usec = xclock / (rate/1000000L);
-    }
-
+      stv.tv_usec = now / (rate/1000000UL);
     if (stv.tv_usec > 1000000L)
     {
       stv.tv_sec += stv.tv_usec/1000000L;
       stv.tv_usec %= 1000000L;
     }
   }
-#endif
   stv.tv_sec += adj_time_delta;
   if (cliclock.tv_sec == 0) //CliClock() not initialized
   {
@@ -315,22 +273,26 @@ struct timeval *CliTimer( struct timeval *tv )
 
 // Add 'tv1' to 'tv2' and store in 'result'. Uses curr time if a 'tv' is NULL
 // tv1/tv2 are not modified (unless 'result' is the same as one of them).
-int CliTimerAdd( struct timeval *dest, struct timeval *tv1, struct timeval *tv2 )
+int CliTimerAdd( struct timeval *result, const struct timeval *tv1, const struct timeval *tv2 )
 {
-  if (dest)
+  if (result)
   {
     if (!tv1 || !tv2)
     {
-      CliTimer( NULL );
-      if (!tv1) tv1 = dest;
-      if (!tv2) tv2 = dest;
+      CliTimer( result );
+      if (!tv1 && !tv2)
+        return 0;
+      if (!tv1) 
+        tv1 = (const struct timeval *)result;
+      if (!tv2) 
+        tv2 = (const struct timeval *)result;
     }
-    dest->tv_sec = tv1->tv_sec + tv2->tv_sec;
-    dest->tv_usec = tv1->tv_usec + tv2->tv_usec;
-    if (dest->tv_usec > 1000000L)
+    result->tv_sec = tv1->tv_sec + tv2->tv_sec;
+    result->tv_usec = tv1->tv_usec + tv2->tv_usec;
+    if (result->tv_usec > 1000000L)
     {
-      dest->tv_sec += dest->tv_usec / 1000000L;
-      dest->tv_usec %= 1000000L;
+      result->tv_sec += result->tv_usec / 1000000L;
+      result->tv_usec %= 1000000L;
     }
   }
   return 0;
@@ -340,38 +302,37 @@ int CliTimerAdd( struct timeval *dest, struct timeval *tv1, struct timeval *tv2 
 
 // Store non-negative diff of tv1 and tv2 in 'result'. Uses current time if a 'tv' is NULL
 // tv1/tv2 are not modified (unless 'result' is the same as one of them).
-int CliTimerDiff( struct timeval *dest, struct timeval *tv1, struct timeval *tv2 )
+int CliTimerDiff( struct timeval *result, const struct timeval *tv1, const struct timeval *tv2 )
 {
-  struct timeval tvdiff, tvtemp;
-  struct timeval *tv0;
-
-  if (dest)
+  if (result)
   {
     if (!tv1 && !tv2)
-      dest->tv_sec = dest->tv_usec = 0;
+      result->tv_sec = result->tv_usec = 0;
     else
     {
+      struct timeval tvdiff, tvtemp;
+      const struct timeval *tv0;
       if (!tv1 || !tv2)
       {
         CliTimer( &tvtemp );
-        if (!tv1) tv1 = &tvtemp;
-        else tv2 = &tvtemp;
+        if (!tv1) tv1 = (const struct timeval *)&tvtemp;
+        else tv2 = (const struct timeval *)&tvtemp;
       }
-      if ((((unsigned int)(tv2->tv_sec)) < ((unsigned int)(tv1->tv_sec))) ||
+      if ((((unsigned long)(tv2->tv_sec)) < ((unsigned long)(tv1->tv_sec))) ||
          ((tv2->tv_sec == tv1->tv_sec) &&
-           ((unsigned int)(tv2->tv_usec)) < ((unsigned int)(tv1->tv_usec))))
+           ((unsigned long)(tv2->tv_usec)) < ((unsigned long)(tv1->tv_usec))))
       {
         tv0 = tv1; tv1 = tv2; tv2 = tv0;
       }
       tvdiff.tv_sec = tv2->tv_sec;
       tvdiff.tv_usec = tv2->tv_usec;
-      if (((unsigned int)(tvdiff.tv_usec)) < ((unsigned int)(tv1->tv_usec)))
+      if (((unsigned long)(tvdiff.tv_usec)) < ((unsigned long)(tv1->tv_usec)))
       {
         tvdiff.tv_usec += 1000000L;
         tvdiff.tv_sec--;
       }
-      dest->tv_sec  = tvdiff.tv_sec - tv1->tv_sec;
-      dest->tv_usec = tvdiff.tv_usec - tv1->tv_usec;
+      result->tv_sec  = tvdiff.tv_sec - tv1->tv_sec;
+      result->tv_usec = tvdiff.tv_usec - tv1->tv_usec;
     }
   }
   return 0;
@@ -440,7 +401,7 @@ time_t CliTimeGetBuildDate(void)
 
 // Get time as string. Curr time if tv is NULL. Separate buffers for each
 // type: 0=blank type 1, 1="MMM dd hh:mm:ss GMT", 2="hhhh:mm:ss.pp"
-const char *CliGetTimeString( struct timeval *tv, int strtype )
+const char *CliGetTimeString( const struct timeval *tv, int strtype )
 {
   static time_t timelast = (time_t)NULL;
   static int lasttype;
@@ -448,7 +409,7 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
 
   if (!timelast)
   {
-    timestring[0]=spacestring[0]=hourstring[0]=0;
+    timestring[0] = spacestring[0] = hourstring[0] = 0;
     timelast = 1;
     lasttype = 0;
   }
@@ -465,22 +426,17 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
   }
   else if (strtype == 1 || strtype == -1) //new fmt = 1, old fmt = -1
   {
-    #if ((CLIENT_OS != OS_RISCOS) && (CLIENT_OS != OS_MACOS))
-    tzset();
-    #endif
     if (!tv) tv = CliTimer(NULL);/* show where CliTimer() is returning gunk */
     time_t timenow = tv->tv_sec;
 
     if (timenow && (timenow != timelast) && (lasttype != strtype))
     {
       struct tm *gmt;
-      int utc = 1;
-      #if 0 /*((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
-              (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_OS2)) */
-      utc = ( getenv("TZ") != NULL );
-      #endif
-      if ( utc) utc = (( gmt = gmtime( (const time_t *) &timenow) ) != NULL);
-      if (!utc) gmt = localtime( (const time_t *) &timenow);
+      if (( gmt = gmtime( (const time_t *) &timenow) ) == NULL)
+      {
+        time_t lt = timenow - (time_t)(CliTimeGetMinutesWest() * 60);
+        gmt = localtime( (const time_t *) &lt);
+      }
 
       if (gmt)
       {
@@ -490,19 +446,18 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
         {
           // old: "04/03/98 11:22:33 GMT"
           //                      2 1  2 1 2  1  2 1 2  1 2  1 3/5 = 21 or 23
-          sprintf( timestring, "%02d/%02d/%02d %02d:%02d:%02d %s",
+          sprintf( timestring, "%02d/%02d/%02d %02d:%02d:%02d GMT",
                gmt->tm_mon + 1, gmt->tm_mday,
                gmt->tm_year%100, gmt->tm_hour,
-               gmt->tm_min, gmt->tm_sec, ((utc)?("GMT"):("local")) );
+               gmt->tm_min, gmt->tm_sec );
         }
         else // strtype == 1 == new type of fixed length and neutral locale
         {
-
-          // new: "Apr 03 11:22:33 GMT" year = gmt->tm_year%100,
+          // new: "Apr 03 11:22:33 UTC" year = gmt->tm_year%100,
           //                    3 1  2 1  2 1  2 1  2 1 3   = 19
-          sprintf( timestring, "%s %02d %02d:%02d:%02d %s",
+          sprintf( timestring, "%s %02d %02d:%02d:%02d UTC",
              monnames[gmt->tm_mon%12], gmt->tm_mday,
-             gmt->tm_hour, gmt->tm_min, gmt->tm_sec, ((utc)?("UTC"):("---")) );
+             gmt->tm_hour, gmt->tm_min, gmt->tm_sec );
         }
       }
     }
