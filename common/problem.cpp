@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.18  1998/06/14 10:13:43  skand
+// use #if 0 (or 1) to turn on some debugging info, rather than // on each line
+//
 // Revision 1.17  1998/06/14 08:26:54  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -14,7 +17,7 @@
 // Added $Log.
 //
 
-static char *id="@(#)$Id: problem.cpp,v 1.17 1998/06/14 08:26:54 friedbait Exp $";
+static char *id="@(#)$Id: problem.cpp,v 1.18 1998/06/14 10:13:43 skand Exp $";
 
 #define NEW_STATS_AND_LOGMSG_STUFF
 
@@ -109,11 +112,16 @@ s32 Problem::LoadState( ContestWork * work , u32 contesttype )
   contestwork.keysdone.lo = ntohl( work->keysdone.lo );
   contestwork.iterations.hi = ntohl( work->iterations.hi );
   contestwork.iterations.lo = ntohl( work->iterations.lo );
-//printf("key    hi/lo:  %08x:%08x\n",contestwork.key.hi,contestwork.key.lo);
-//printf("iv     hi/lo:  %08x:%08x\n",contestwork.iv.hi,contestwork.iv.lo);
-//printf("plain  hi/lo:  %08x:%08x\n",contestwork.plain.hi,contestwork.plain.lo);
-//printf("cipher hi/lo:  %08x:%08x\n",contestwork.cypher.hi,contestwork.cypher.lo);
-//printf("iter   hi/lo:  %08x:%08x\n",contestwork.iterations.hi,contestwork.iterations.lo);
+#if 0
+  printf("key    hi/lo:  %08x:%08x\n", contestwork.key.hi, contestwork.key.lo);
+  printf("iv     hi/lo:  %08x:%08x\n", contestwork.iv.hi, contestwork.iv.lo);
+  printf("plain  hi/lo:  %08x:%08x\n",
+	 contestwork.plain.hi, contestwork.plain.lo);
+  printf("cipher hi/lo:  %08x:%08x\n",
+	 contestwork.cypher.hi, contestwork.cypher.lo);
+  printf("iter   hi/lo:  %08x:%08x\n",
+	 contestwork.iterations.hi, contestwork.iterations.lo);
+#endif
 
   // determine the starting key number
   // (note: doesn't account for carryover to hi or high end of keysdone)
