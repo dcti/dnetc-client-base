@@ -8,7 +8,7 @@
  *
  */
 const char *ogr_core(void) {
-return "@(#)$Id: ogr_g_r.cor,v 1.1.2.3 2001/01/25 01:26:54 andreasb Exp $"; }
+return "@(#)$Id: ogr_g_r.cor,v 1.1.2.4 2001/01/25 18:54:34 andreasb Exp $"; }
 
 #if (OGROPT_ALTERNATE_CYCLE == 0)
 
@@ -597,7 +597,7 @@ stay:
       /* ogr_getresult() and ogr_cycle() must interact thread safe */  
       mutex_lock(&oState->lock);
 
-      oState->depth = depth-1;
+      oState->depth = depth;
 
       for (int i = oState->startdepth+1; i <= oState->maxdepth; ++i) {
         oState->marks[i] = oState->Levels[i].cnt2;
