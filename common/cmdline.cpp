@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.52 2000/04/16 19:27:19 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.53 2000/04/24 18:20:31 ctate Exp $"; }
 
 //#define TRACE
 
@@ -1626,8 +1626,8 @@ int ParseCommandline( Client *client,
     client->quietmode = 0;
     ModeReqSet( MODEREQ_CONFIG );
   }
-  /* BeOS gcc defines __unix__ for some strange reason... */
-  #if defined(__unix__) && (CLIENT_OS != OS_BEOS) && (CLIENT_OS != OS_NEXTSTEP) && !defined(__EMX__)
+  /* BeOS gcc defines __unix__ for some strange reason.  But this works under BeOS, so keep it. */
+  #if defined(__unix__) && (CLIENT_OS != OS_NEXTSTEP) && !defined(__EMX__)
   else if (!terminate_app && run_level==0 && (ModeReqIsSet(-1)==0) &&
            client->quietmode)
   {

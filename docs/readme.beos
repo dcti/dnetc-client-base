@@ -1,6 +1,6 @@
  distributed.net client for BeOS (x86 and PowerPC)
  Released by Christopher Tate <ctate@be.com>
- document revision $Id: readme.beos,v 1.1.2.4 2000/01/16 20:59:38 ctate Exp $
+ document revision $Id: readme.beos,v 1.1.2.5 2000/04/24 18:20:31 ctate Exp $
 
  Welcome to the distributed.net client.
 
@@ -14,7 +14,11 @@
  1.0  Getting started ------------------------------------------------
  
     Just unpack/unzip/untar the client in a directory of your choice and 
-    fire it up.
+    fire it up.  This is a command-line application, so it must be run by
+    typing "dnetc" from within a Terminal.  Double-clicking on the "dnetc"
+    icon *will* launch the client, but if it's never been configured, it will
+    immediately quit as it attempts to display the configuration messages
+    on its (nonexistent) command line.
 
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done.
