@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.4 1999/12/08 00:41:59 cyp Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.5 2000/01/08 23:18:02 cyp Exp $"
 
 void trace_out( int indlevel, const char *fmt, ... );
 #ifdef TRACE
@@ -30,6 +30,8 @@ int utilScatterOptionListToArraysEx( const char *oplist,
 int utilScatterOptionListToArrays( const char *oplist, 
                                   int *table1, int *table2, 
                                   int defaultval );
+
+unsigned int __iter2norm( u32 iterlo, u32 iterhi );
 
 const char *ogr_stubstr(const struct Stub *stub);
 unsigned long ogr_nodecount( const struct Stub *stub );

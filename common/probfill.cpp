@@ -1,6 +1,6 @@
 /* Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.19 1999/12/23 21:43:25 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.20 2000/01/08 23:18:11 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -19,7 +19,7 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.19 1999/12/23 21:43:25 cyp Exp $"; }
 #include "logstuff.h"  // Log()/LogScreen()
 #include "clitime.h"   // CliGetTimeString()
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
-#include "util.h"      // temporary home for ogr_stubstr()
+#include "util.h"      // ogr_stubstr(), __iter2norm()
 #include "random.h"    // Random()
 #include "selcore.h"   // selcoreSelectCore()
 #include "clisrate.h"  // CliGetMessageFor... et al.
@@ -44,10 +44,6 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.19 1999/12/23 21:43:25 cyp Exp $"; }
 #define COMBINEMSG_THRESHOLD 4 // anything above this and we don't show 
                                // individual load/save messages
 // =======================================================================   
-
-#define __iter2norm( iterlo, iterhi ) ((iterlo>>28)+(iterhi<<4))
-
-/* ----------------------------------------------------------------------- */
 
 static const char *__WrapOrTruncateLogLine( char *buffer, int dowrap )
 {
@@ -156,8 +152,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           norm_key_count = 
              (unsigned int)__iter2norm( (wrdata.work.crypto.iterations.lo),
                                       (wrdata.work.crypto.iterations.hi) );
-          if (norm_key_count == 0) /* test block */
-            norm_key_count = 1;
           break;
         }
         case OGR:
@@ -173,8 +167,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         //---------------------
         // update the totals for this contest
         //---------------------
-        if ((unsigned long)(longcount) >= (unsigned long)(client->outthreshold[*contest]))
-          *bufupd_pending |= BUFFERUPDATE_FLUSH;
 
         if (load_problem_count <= COMBINEMSG_THRESHOLD)
         {
@@ -184,6 +176,27 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         {
           CliGetKeyrateForProblem( thisprob ); //add to totals
         }
+
+        if (cont_i != OGR)
+        {
+          double rate = CliGetKeyrateForProblemNoSave( thisprob );
+		  if (rate > 0.0)
+            CliSetContestWorkUnitSpeed(cont_i, (int)((1<<28)/rate + 0.5));
+        }
+
+        {
+	  unsigned int thresh = ClientGetOutThreshold( client, cont_i, 0 );
+	  if (thresh > 0) /* zero means ignore output buffer threshold */
+	  {
+            unsigned long count;
+            if (GetBufferCount( client, cont_i, 1, &count ) > 0)
+	    {
+              if ((unsigned long)(count) >= ((unsigned long)thresh))
+                *bufupd_pending |= BUFFERUPDATE_FLUSH;
+	    }
+	  }    	
+        }
+	
       }
       ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
     }
@@ -229,8 +242,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                   norm_key_count = (unsigned int)__iter2norm( 
                                       (wrdata.work.crypto.iterations.lo),
                                       (wrdata.work.crypto.iterations.hi) );
-                  if (norm_key_count == 0) /* test block */
-                    norm_key_count = 1;
                   break;
           case OGR:
                   norm_key_count = 1;
@@ -412,7 +423,11 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   if (bufcount >= 0) /* load from file succeeded */
   {
     int client_cpu = 0, coresel;
-    
+
+    /* if the total number of packets in buffers is less than the number 
+       of crunchers running then try to fetch *now*. This means that the
+       effective _total_ minimum threshold is always >= num crunchers
+    */   
     if (((unsigned long)(bufcount)) < (load_problem_count - prob_i))
       *bufupd_pending |= BUFFERUPDATE_FETCH;
 
@@ -473,8 +488,6 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       {
         norm_key_count = (unsigned int)__iter2norm((wrdata.work.crypto.iterations.lo),
                                                    (wrdata.work.crypto.iterations.hi));
-        if (norm_key_count == 0) /* test block */
-          norm_key_count = 1;
         sprintf(msgbuf, "%s %u*2^28 packet %08lX:%08lX", 
                 ((didrandom)?(" random"):("")), norm_key_count,
                 (unsigned long) ( wrdata.work.crypto.key.hi ),
@@ -603,12 +616,6 @@ unsigned int LoadSaveProblems(Client *pass_client,
    
     loaded_problems_count[cont_i]=loaded_normalized_key_count[cont_i]=0;
     saved_problems_count[cont_i] =saved_normalized_key_count[cont_i]=0;
-
-    if ( ((unsigned long)(client->inthreshold[cont_i])) <
-      (((unsigned long)(load_problem_count))<<1))
-    {
-      client->inthreshold[cont_i] = load_problem_count<<1;
-    }
   }
 
   /* ============================================================= */
@@ -754,10 +761,12 @@ unsigned int LoadSaveProblems(Client *pass_client,
         long block_count = GetBufferCount( client, cont_i, inout, &norm_count );
         if (block_count >= 0) /* no error */
         {
-          char buffer[100+128 /*sizeof(client->in_buffer_basename)*/];
+          char buffer[200+128 /*sizeof(client->in_buffer_basename)*/];
           if (inout != 0)                              /* out-buffer */
           {
-            if (block_count > ((long)client->outthreshold[cont_i]))
+	    unsigned int thresh = ClientGetOutThreshold(client, cont_i, 0);
+	    /* a zero outbuffer threshold means 'don't check it' */
+	    if (thresh > 0 && norm_count > thresh)
               bufupd_pending |= BUFFERUPDATE_FLUSH;
           }
           else                                         /* in-buffer */
@@ -783,7 +792,23 @@ unsigned int LoadSaveProblems(Client *pass_client,
                   BufferGetDefaultFilename( cont_i, 1, 
                                             client->out_buffer_basename ) ))
               );
+
+          if (inout == 0)  /* in */
+            {
+            int proc = (client->numcpu == -1) ?
+                        GetNumberOfDetectedProcessors() :
+                        client->numcpu;
+            if (proc <= 0) proc = 1;
+
+            timeval tv;
+            tv.tv_usec = 0;
+            if ((tv.tv_sec = norm_count * CliGetContestWorkUnitSpeed( cont_i, true ) / proc) > 0)
+              sprintf(buffer+strlen(buffer) /* sprintfcat */,
+                "\nProjected time to completion: %s", CliGetTimeString( &tv, 2));
+            };
+
           Log( "%s\n", __WrapOrTruncateLogLine( buffer, 1 ));
+             
         } //if (block_count >= 0)
       } //  for (inout=0;inout<=1;inout++)
     } //if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])

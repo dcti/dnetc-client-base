@@ -1,11 +1,11 @@
 /* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.30 2000/01/05 21:33:01 patrick Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.31 2000/01/08 23:18:05 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -137,7 +137,7 @@ static void __thread_yield__(void)
     NonPolledUSleep( 0 ); /* yield */
     #endif
   #elif (CLIENT_OS == OS_MACOS)
-    sched_yield();
+    NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OPENBSD)
@@ -725,9 +725,6 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       thrparams->dyn_timeslice_table = &(default_dyn_timeslice_table[0]);
       #if (CLIENT_OS == OS_MACOS)
       thrparams->threadID = (GUSIContext*)RegPolledProcedure(Go_mt,
-                                (void *)thrparams , NULL, 0 );
-      #elif defined(_POSIX_THREADS_SUPPORTED)
-      thrparams->threadID = (pthread_t)RegPolledProcedure(Go_mt,
                                 (void *)thrparams , NULL, 0 );
       #else
       thrparams->threadID = RegPolledProcedure(Go_mt,
@@ -1370,11 +1367,14 @@ int ClientRun( Client *client )
               have_non_empty = 1; /* at least one out-buffer is not empty */
               break;
             }
-            if (GetBufferCount( client, cont_i, 0, NULL ) >= 
-               ((long)(client->inthreshold[cont_i]))) 
-            {         
-              have_one_full = 1; /* at least one in-buffer is full */
-            }
+            unsigned long count;
+            if (GetBufferCount( client, cont_i, 0, &count ) >= 0)
+	    {
+              if (count >= (unsigned int)ClientGetInThreshold( client, cont_i, 1 /* force */ )) 
+              {         
+                have_one_full = 1; /* at least one in-buffer is full */
+              }
+	    }  
           }
         }
         doupd = (have_non_empty || !have_one_full);

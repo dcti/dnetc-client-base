@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.14 1999/12/08 00:41:44 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.15 2000/01/08 23:18:08 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -83,6 +83,9 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   } userpass;
   unsigned int cont_i;
   char loadorder[MINCLIENTOPTSTRLEN];
+  int inthreshold[CONTEST_COUNT];
+  int outthreshold[CONTEST_COUNT];
+  int preferred_blocksize[CONTEST_COUNT];
 
   // ---- Set all stuff that doesn't change during config ----   
   // note that some options rely on others, so watch the init order
@@ -109,8 +112,27 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   conf_options[CONF_REMOTEUPDATEDISABLED].thevariable=&(client->noupdatefromfile);
   conf_options[CONF_REMOTEUPDATEDIR].thevariable=&(client->remote_update_dir[0]);
   conf_options[CONF_FREQUENT].thevariable=&(client->connectoften);
-  conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=&(client->preferred_blocksize[0]);
-  conf_options[CONF_THRESHOLDI].thevariable=&(client->inthreshold[0]);
+  for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+  {
+    preferred_blocksize[cont_i] = client->preferred_blocksize[cont_i];
+    if (cont_i == OGR) /* always (for now?) */
+      preferred_blocksize[cont_i] = -1; /* (auto) */
+    else if (preferred_blocksize[cont_i] < 1)  
+      preferred_blocksize[cont_i] = -1; /* (auto) */
+    else if (preferred_blocksize[cont_i] < PREFERREDBLOCKSIZE_MIN)
+      preferred_blocksize[cont_i] = PREFERREDBLOCKSIZE_MIN;
+    else if (preferred_blocksize[cont_i] > PREFERREDBLOCKSIZE_MAX)
+      preferred_blocksize[cont_i] = PREFERREDBLOCKSIZE_DEFAULT; /*yes, default*/
+    inthreshold[cont_i] = client->inthreshold[cont_i];
+    if (inthreshold[cont_i] < 1)
+      inthreshold[cont_i] = -1;
+    outthreshold[cont_i] = client->outthreshold[cont_i];
+    if (outthreshold[cont_i] < 1)
+      outthreshold[cont_i] = -1;
+  }
+  conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=&(preferred_blocksize[0]);
+  conf_options[CONF_THRESHOLDI].thevariable=&(inthreshold[0]);
+  conf_options[CONF_THRESHOLDT].thevariable=&(client->timethreshold[0]);
 
   /* ------------------- CONF_MENU_LOG  ------------------ */  
 
@@ -311,13 +333,13 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                   (client->offlinemode ? " ==> n/a [no net & no remote dir]" : NULL );
       conf_options[CONF_REMOTEUPDATEDIR].disabledtext = 
                   (client->noupdatefromfile ? na : NULL );
-      conf_options[CONF_THRESHOLDI].disabledtext= 
-                  (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_FREQUENT].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_PREFERREDBLOCKSIZE].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_THRESHOLDI].disabledtext= 
+                  (client->offlinemode && noremotedir ? na : NULL );
+      conf_options[CONF_THRESHOLDT].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
  
     }
@@ -537,7 +559,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
               {
                 int *vectb = NULL;
                 if ( menuoption == CONF_THRESHOLDI )  // don't have a
-                  vectb = &(client->outthreshold[0]); // THRESHOLDO any more
+                  vectb = &(outthreshold[0]); // THRESHOLDO any more
                 utilGatherOptionArraysToList( parm, sizeof(parm),
                     (int *)conf_options[menuoption].thevariable, vectb ); 
                 descr = parm;
@@ -761,7 +783,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           {
             int *vectb = NULL;
             if ( editthis == CONF_THRESHOLDI )  // don't have a
-              vectb = &(client->outthreshold[0]); // THRESHOLDO any more
+              vectb = &(outthreshold[0]); // THRESHOLDO any more
             utilGatherOptionArraysToList( parm, sizeof(parm),
                     (int *)conf_options[editthis].thevariable, vectb ); 
             p = (const char *)(conf_options[editthis].defaultsetting);
@@ -982,7 +1004,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           int *vectb = NULL;
           unsigned int cont_i;
           if ( editthis == CONF_THRESHOLDI )  // don't have a
-            vectb = &(client->outthreshold[0]); // THRESHOLDO any more
+            vectb = &(outthreshold[0]); // THRESHOLDO any more
           utilScatterOptionListToArraysEx(parm,vecta, vectb,NULL, NULL );
           if (editthis == CONF_CPUTYPE) 
           {
@@ -993,17 +1015,22 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           {
             int mmin = conf_options[editthis].choicemin;
             int mmax = conf_options[editthis].choicemax;
+	    int mdef = atoi(conf_options[editthis].defaultsetting);
             if (mmin && mmax)
             {
               for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
               {
-                if (vecta[cont_i] < mmin)
+	        if (vecta[cont_i] == mdef)
+		  ; /* default */
+                else if (vecta[cont_i] < mmin)
                   vecta[cont_i] = mmin;
                 else if (vecta[cont_i] > mmax)
                   vecta[cont_i] = mmax;
                 if (vectb)
                 {
-                  if (vectb[cont_i] < mmin)
+	          if (vectb[cont_i] == mdef)
+		    ; /* default */
+                  else if (vectb[cont_i] < mmin)
                     vectb[cont_i] = mmin;
                   else if (vectb[cont_i] > mmax)
                     vectb[cont_i] = mmax;
@@ -1035,6 +1062,18 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 
   if (returnvalue != -1)
   {
+    for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+    {
+      if (preferred_blocksize[cont_i] < 1) /* "auto" */
+        preferred_blocksize[cont_i] = 0; 
+      client->preferred_blocksize[cont_i] = preferred_blocksize[cont_i];
+      if (inthreshold[cont_i] < 1) /* "auto" */
+        inthreshold[cont_i] = 0;
+      client->inthreshold[cont_i] = inthreshold[cont_i];
+      if (outthreshold[cont_i] < 1)
+        outthreshold[cont_i] = 0;
+      client->outthreshold[cont_i] = outthreshold[cont_i];
+    }
     if (logtype >=0 && logtype < (int)(sizeof(logtypes)/sizeof(logtypes[0])))
     {
       if (logtype == LOGFILETYPE_ROTATE)

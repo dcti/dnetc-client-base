@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.27 1999/12/23 21:45:25 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.28 2000/01/08 23:18:00 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -85,7 +85,6 @@ static double __calc_rate( unsigned int contestid,
   const char *rateunit = "";
   double keysdone = (double)keysdone_already_lo + 
                     (double)keysdone_already_hi * 4294967296.0 /* 2^32 */;
-
   corecpu = corecpu; /* unused */
   
   switch (contestid)
@@ -122,6 +121,7 @@ static double __calc_rate( unsigned int contestid,
   if (totalruntime->tv_sec != 0 || totalruntime->tv_usec != 0)
     rate = keysdone / (((double)(totalruntime->tv_sec))+
                    (((double)(totalruntime->tv_usec))/((double)(1000000L))));
+
   if (print_it)
   {
     char ratestr[32];
@@ -150,6 +150,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   const char *contname;
   struct timeval totalruntime;
   u32 keysdone_hi, keysdone_lo;
+  unsigned int workunitsec = 0;
 
   contname = CliGetContestNameFromID(contestid);
   if (!contname)
@@ -397,8 +398,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     run = -1; /* core error */
   if (scropen > 0 && run < 0)
     LogScreen("\n");
-  delete problem;
-  
+
   /* --------------------------- */
   
   retvalue = -1; /* assume error */
@@ -408,6 +408,25 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
                          &totalruntime, contname, 
                          problem->coresel, problem->client_cpu,
                          (!(flags & TBENCHMARK_QUIET)) );
+
+  delete problem;
+  
+  workunitsec = 0;
+  switch (contestid)
+  {
+    case RC5:
+    case DES:
+    case CSC:
+      workunitsec = 1 + (1<<28)/retvalue;
+      break;
+
+    case OGR:
+      // NYI
+      workunitsec = 0;
+      break;
+  };
+
+  CliSetContestWorkUnitSpeed(contestid, workunitsec);
 
   return retvalue;
 }  

@@ -1,18 +1,18 @@
 /* 
- * Copyright distributed.net 1997 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.14 2000/01/04 16:54:32 chrisb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.15 2000/01/08 23:18:04 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
 #include "baseincs.h" //basic #includes
 #include "network.h"  //ntohl(), htonl()
-#include "util.h"     //IsFilenameValid(), DoesFileExist()
+#include "util.h"     //IsFilenameValid(), DoesFileExist(), __iter2norm()
 #include "clievent.h" //event stuff
 #include "clicdata.h" //GetContestNameFromID() 
 #include "logstuff.h" //Log()/LogScreen()/LogScreenPercent()/LogFlush()
@@ -22,7 +22,6 @@ return "@(#)$Id: buffbase.cpp,v 1.12.2.14 2000/01/04 16:54:32 chrisb Exp $"; }
 #include "probfill.h"
 #include "buffupd.h"  // BUFFERUPDATE_FETCH / BUFFERUPDATE_FLUSH
 #include "buffbase.h" //ourselves
-#define __iter2norm( iterlo, iterhi ) ((iterlo >> 28) + (iterhi << 4))
 
 /* --------------------------------------------------------------------- */
 
@@ -36,11 +35,11 @@ static int BufferPutMemRecord( struct membuffstruct *membuff,
   if (membuff->count == 0)
   {
     unsigned int i;
-    for (i = 0; i < MAXBLOCKSPERBUFFER; i++)
+    for (i = 0; i < BUFTHRESHOLD_MAX; i++)
       membuff->buff[i]=NULL;
   }
 
-  if (membuff->count < MAXBLOCKSPERBUFFER)
+  if (membuff->count < BUFTHRESHOLD_MAX)
   {
     dest = (WorkRecord *)malloc(sizeof(WorkRecord));
     if (dest != NULL)
@@ -120,7 +119,7 @@ static int BufferCountMemRecords( struct membuffstruct *membuff,
               case DES:
               case CSC:
                 normcount += (unsigned int)
-                   __iter2norm( workrec->work.crypto.iterations.lo, 
+                   __iter2norm( workrec->work.crypto.iterations.lo,
                                 workrec->work.crypto.iterations.hi );
                 break;
               case OGR:
@@ -157,15 +156,6 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
     u32 result = filelength( fileno(file) );    
     if (result == 0xFFFFFFFFL) return -1;
     *length = result;
-  #elif (CLIENT_OS == OS_MACOS)
-    struct stat statbuf;
-    if ( fstat(file->handle, &statbuf ) != 0) return -1;
-    *length = (u32)statbuf.st_size;
-  #elif (CLIENT_OS == OS_RISCOS)
-    if (riscos_get_filelength(fileno(file),(unsigned long *)length) != 0)
-    {
-	return -1;
-    }
   #else
     struct stat statbuf;
     #if (CLIENT_OS == OS_NETWARE)
@@ -461,10 +451,9 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
     {
       if (!dofetch && !dontfetch)
       {
-        long count = GetBufferCount( client, contest_i, 0, NULL );
-        if (count >= 0) /* no error */
+        if (GetBufferCount( client, contest_i, 0, &count ) >= 0) /* no error */
         {
-          if (count < ((long)(client->inthreshold[contest_i])) )
+          if (count < ClientGetInThreshold( client, contest_i ) )
           {
             if (count <= 1 || client->connectoften || interactive)
               dofetch = 1;
@@ -476,7 +465,7 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
         long count = GetBufferCount( client, contest_i, 1 /* use_out_file */, NULL );
         if (count >= 0) /* no error */
         {
-          if ( count > 0 /* count >= ((long)(client->outthreshold[contest_i])) || 
+          if ( count > 0 /* count >= ClientGetOutThreshold( client, contest ) || 
             ( client->connectoften && count > 0) || (interactive && count > 0) */)
           {
             doflush = 1;
@@ -619,17 +608,13 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
             case RC5:
             case DES:
             case CSC:
-            {
               normcount += (unsigned int)
                  __iter2norm( ntohl(scratch.work.crypto.iterations.lo),
                               ntohl(scratch.work.crypto.iterations.hi) );
               break;
-            }
             case OGR:
-            {
               normcount++;
               break;
-            }
           }
         }
       }
@@ -674,18 +659,7 @@ static void __FixupRandomPrefix( const WorkRecord * data, Client *client )
 
 static int __CheckBuffLimits( Client *client )
 {
-  unsigned int i;
-  for (i=0;i<CONTEST_COUNT;i++)
-  {
-    if ( ((int)(client->inthreshold[i])) < 1 )
-      client->inthreshold[i] = 1;
-    else if ( ((int)(client->inthreshold[i])) > (int)(MAXBLOCKSPERBUFFER))
-      client->inthreshold[i] = MAXBLOCKSPERBUFFER;
-    if ( ((int)(client->outthreshold[i])) < 1 )
-      client->outthreshold[i] = 1;
-    else if ( client->outthreshold[i] > client->inthreshold[i])
-      client->outthreshold[i] = client->inthreshold[i];
-  }
+  /* thresholds are managed in ClientGet[In|Out]Threshold() [client.cpp] */
   if (client->nodiskbuffers == 0 && 
       client->out_buffer_basename[0] && client->in_buffer_basename[0])
   {
@@ -1114,8 +1088,8 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
     
   for (contest = 0; !failed && contest < CONTEST_COUNT; contest++)
   {
-    unsigned long projtrans = 0;
-    long lefttotrans;
+    unsigned long projtrans = 0, projworkunits = 0;
+    unsigned long lefttotrans;
     char remote_file[128];
 
     if (CheckExitRequestTriggerNoIO())  
@@ -1124,11 +1098,10 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
     if (loaderflags_map[contest] != 0) /* contest is closed or disabled */
       continue;
 
-    lefttotrans = (long)GetBufferCount( client, contest, 0, NULL );
+    GetBufferCount( client, contest, 0, &lefttotrans );
 
-    if ((lefttotrans >= 0) && (((unsigned long)(lefttotrans)) < 
-              ((unsigned long)(client->inthreshold[contest]))) ) 
-      lefttotrans = ((long)(client->inthreshold[contest])) - lefttotrans;
+    if (GetBufferCount( client, contest, 0, &lefttotrans) >= 0)
+      lefttotrans = ClientGetInThreshold( client, contest, true ) - lefttotrans;
     else
       lefttotrans = 0;
 
@@ -1152,20 +1125,24 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
 
       if ( BufferGetFileRecordNoOpt( remote_file, &wrdata, &remaining ) != 0 )
         break;
-      if (remaining < ((unsigned long)(lefttotrans)))
-        lefttotrans = remaining;
+      if (remaining == 0)
+         lefttotrans = 0;
       
-      if ((lefttotrans = PutBufferRecord( client, &wrdata )) < 0)
+      if (PutBufferRecord( client, &wrdata ) < 0)
       {
         BufferPutFileRecord( remote_file, &wrdata, NULL );
         failed = -1;
+        lefttotrans = 0;
         break;
       }
-      if (((long)(client->inthreshold[contest])) < lefttotrans) 
-        lefttotrans = 0;
-      else 
-        lefttotrans = ((long)(client->inthreshold[contest])) - lefttotrans;
-      
+      else
+      {
+        if (GetBufferCount( client, contest, 0, &lefttotrans ) >= 0)
+          lefttotrans = ClientGetInThreshold( client, contest, true ) - lefttotrans;
+        else
+          lefttotrans = 0;
+      }
+
       switch (contest) 
       {
         case RC5:
@@ -1180,6 +1157,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       }
 
       projtrans++;
+      projworkunits+=workunits;
       combinedtrans++;
       combinedworkunits+=workunits;
 
@@ -1188,18 +1166,18 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
 
       {
         struct Fetch_Flush_Info ffinfo = {contest, projtrans, combinedtrans};
-        unsigned long totrans = (projtrans + (unsigned long)(lefttotrans));
+        unsigned long totrans = (projworkunits + (unsigned long)(lefttotrans));
 
         ClientEventSyncPost(CLIEVENT_BUFFER_FLUSHFLUSHED, (long)(&ffinfo));
 
         unsigned int percent;
-        if (totrans < projtrans)
-          totrans = projtrans;
-        percent = ((projtrans*10000)/totrans);
-        
-        LogScreen( "\rRetrieved %s packet %lu of %lu (%u.%02u%% transferred) ",
+        if (totrans < projworkunits)
+          totrans = projworkunits;
+        percent = ((projworkunits*10000)/totrans);
+
+        LogScreen( "\rRetrieved %s work unit %lu of %lu (%u.%02u%% transferred) ",
             CliGetContestNameFromID(contest),
-            projtrans, totrans,  percent/100, percent%100 );
+            projworkunits, totrans,  percent/100, percent%100 );
       }
     }  /* while ( lefttotrans > 0  ) */
     
@@ -1208,13 +1186,12 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
   if (combinedtrans > 0)
   {
     ClientEventSyncPost( CLIEVENT_BUFFER_FETCHEND, (long)(combinedtrans) );
-    Log( "Retrieved %lu packet%s (%lu work units) from remote file.\n", 
-      combinedtrans, ((combinedtrans==1)?(""):("s")), 
-      combinedworkunits );
+    Log( "Retrieved %lu work unit%s (%lu packet%s) from remote file.\n", 
+      combinedworkunits, ((combinedworkunits==1)?(""):("s")),
+      combinedtrans, ((combinedtrans==1)?(""):("s")) );
   }
 
   if (failed)
     return -((long)(combinedtrans+1));
   return combinedtrans;
 }
-

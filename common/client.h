@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1998 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.7 1999/12/08 00:41:40 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.8 2000/01/08 23:18:01 cyp Exp $"
 
 
 enum {
@@ -39,12 +39,12 @@ typedef struct
 # pragma pack()
 #endif /* ! MIPSpro */
 
+#define __TEXTIFY(x) #x
+#define _TEXTIFY(x) __TEXTIFY(x)
 
-#define MAXBLOCKSPERBUFFER              500
-#define BUFTHRESHOLD_DEFAULT             10
-#define BUFTHRESHOLD_DEFAULT_TEXT       "10" /* for configure */
+#define BUFTHRESHOLD_MAX               2000  /* Now in work units */
+#define BUFTHRESHOLD_DEFAULT             24  /* Now in work units */
 #define PREFERREDBLOCKSIZE_DEFAULT       30
-#define PREFERREDBLOCKSIZE_DEFAULT_TEXT "30" /* for configure */
 #define PREFERREDBLOCKSIZE_MIN           28
 #define PREFERREDBLOCKSIZE_MAX           33
 #define BUFFER_DEFAULT_IN_BASENAME  "buff-in"
@@ -54,7 +54,7 @@ typedef struct
 struct membuffstruct 
 { 
   unsigned long count; 
-  WorkRecord *buff[MAXBLOCKSPERBUFFER];
+  WorkRecord *buff[BUFTHRESHOLD_MAX];
 };
 
 typedef struct
@@ -101,8 +101,13 @@ public:
   struct dialup_conf lurk_conf;
   #endif
   int  connectoften;
+
+  // In general, don't use inthreshold anymore;
+  // Use ClientGetInThreshold(client, contest)
   int inthreshold[CONTEST_COUNT]; 
   int outthreshold[CONTEST_COUNT];
+  int timethreshold[CONTEST_COUNT];  /* in hours */
+
   int preferred_blocksize[CONTEST_COUNT];
 
   /* -- perf -- */
@@ -123,6 +128,8 @@ public:
 } Client;
 
 void ResetClientData(Client *client); /* reset everything */
+int ClientGetInThreshold(Client *client, int contestid, int force = 0 );
+int ClientGetOutThreshold(Client *client, int contestid, int force = 0 );
 int ClientRun(Client *client);  /* run the loop, do the work */
 
 #endif /* __CLIENT_H__ */

@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.47 2000/01/05 20:14:33 patrick Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.48 2000/01/08 23:18:09 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -19,9 +19,11 @@ return "@(#)$Id: client.cpp,v 1.206.2.47 2000/01/05 20:14:33 patrick Exp $"; }
 #include "random.h"    // InitRandom()
 #include "pathwork.h"  // EXTN_SEP
 #include "clitime.h"   // CliTimer()
+#include "clicdata.h"  // CliGetContestWorkUnitSpeed()
 #include "util.h"      // projectmap_build(), trace, utilCheckIfBetaExpired
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
 #include "cmdline.h"   // ParseCommandLine() and load config
+#include "cpucheck.h"  // GetNumberOfDetectedProcessors()
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
@@ -83,12 +85,16 @@ void ResetClientData(Client *client)
     client->remote_update_dir[0] = '\0';
   client->connectoften=0;
   //memset(&(client->lurk_conf),0,sizeof(client->lurk_conf));
-  for (contest=0; contest<CONTEST_COUNT; contest++)
-  {
-    client->inthreshold[contest] = BUFTHRESHOLD_DEFAULT;
-    client->outthreshold[contest] = BUFTHRESHOLD_DEFAULT;
-    client->preferred_blocksize[contest] = PREFERREDBLOCKSIZE_DEFAULT;
-  }
+  // If inthreshold is <=0, then use time exclusively.
+  // If time threshold is 0, then use inthreshold exclusively.
+  // If inthreshold is <=0, AND time is 0, then use BUFTHRESHOLD_DEFAULT
+  // If out is <=0, don't do outbuffer threshold checking, regardless of time
+  // If out is >0, then use outthreshold, regardless of time
+  //memset(&(client->inthreshold),0,sizeof(client->inthreshold));
+  //memset(&(client->outhreshold),0,sizeof(client->outhreshold));
+  //memset(&(client->timethreshold),0,sizeof(client->timethreshold));
+  //if preferred_blocksize is <=0, then "auto"
+  //memset(&(client->preferred_blocksize),0,sizeof(client->preferred_blocksize));
 
   /* -- perf -- */
   client->numcpu = -1;
@@ -109,6 +115,71 @@ void ResetClientData(Client *client)
 
 // --------------------------------------------------------------------------
 
+int ClientGetInThreshold(Client *client, int contestid, int force)
+{
+  int thresh = BUFTHRESHOLD_DEFAULT;
+
+  // OGR time threshold NYI
+  client->timethreshold[OGR] = 0; 
+
+  if (contestid < CONTEST_COUNT)
+  {
+    thresh = client->inthreshold[contestid];
+    if (thresh <= 0) 
+    {
+      /* use time limit */
+      thresh = BUFTHRESHOLD_DEFAULT; /* default (if time is also zero) */
+      if (client->timethreshold[contestid] > 0) /* use time */
+      {	
+        unsigned int sec; int proc;
+        /* - note that we do not use client->numcpu here: If MP isn't supported */
+        /* then numcpu is 1 anyway. And, yes, the client _does_ assume that */
+        /* GetNumberOfDetectedProcessors() works for clients that support MP */
+        proc = GetNumberOfDetectedProcessors();
+        if (proc <= 0)
+          proc = 1;
+	thresh = proc; /* Just make sure we have one unit for each CPU */
+	               /* for outthresh we'd set it to _MAX (don't connect) */
+
+        // get the speed
+        sec = CliGetContestWorkUnitSpeed(contestid, force);
+        if (sec != 0) /* we have a rate */
+          thresh = 1 + (client->timethreshold[contestid] * 3600 * proc/sec);
+      }  
+    }  
+  }    
+  if (thresh > BUFTHRESHOLD_MAX)
+    thresh = BUFTHRESHOLD_MAX;
+  return thresh;
+}      
+    
+int ClientGetOutThreshold(Client *client, int contestid, int /* force */)
+{                                  /* out threshold is never time driven */
+  int outthresh = 0; 
+  if (contestid < CONTEST_COUNT)
+  {
+    outthresh = client->outthreshold[contestid];
+    /*if outthresh is 0, don't do outthresh checking, (let load_order kick in)*/
+    if (outthresh <= 0)
+      outthresh = 0;
+    else  
+    {
+      int inthresh = client->inthreshold[contestid];
+      /* if both thresholds are non-zero, make sure outthresh <= inthresh */
+      /* but if inthreshold is zero (use time), just return outthresh */
+      /* (allow split personality: intresh=time,outthres=workunits) */
+      if (inthresh > 0 && outthresh > inthresh)
+        outthresh = inthresh;
+    }	
+  }    
+  /* if outthreshold is greater than max, cap it */
+  if (outthresh > BUFTHRESHOLD_MAX)
+    outthresh = BUFTHRESHOLD_MAX;
+  return outthresh;
+}
+
+// --------------------------------------------------------------------------
+
 static const char *GetBuildOrEnvDescription(void)
 {
   /*
@@ -119,7 +190,7 @@ static const char *GetBuildOrEnvDescription(void)
   */
 #if (CLIENT_OS == OS_DOS)
   return dosCliGetEmulationDescription(); //if in win/os2 VM
-#elif ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16))
+#elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16))
   static char buffer[32]; long ver = winGetVersion(); /* w32pre.cpp */
   sprintf(buffer,"Windows%s %u.%u", (ver>=2000)?("NT"):(""), (ver/100)%20, ver%100 );
   return buffer;
@@ -160,14 +231,8 @@ static const char *GetBuildOrEnvDescription(void)
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
   if (uname(&ut)==0) {
-#if (CLIENT_OS == OS_AIX)
-	// on AIX version is the major and release the minor
-    static char buffer[sizeof(ut.sysname)+1+sizeof(ut.release)+1+sizeof(ut.version)+1];
-    return strcat(strcat(strcat(strcat(strcpy(buffer,ut.sysname)," "),ut.version),"."),ut.release);
-#else
     static char buffer[sizeof(ut.sysname)+1+sizeof(ut.release)+1];
     return strcat(strcat(strcpy(buffer,ut.sysname)," "),ut.release);
-#endif
   }
   return "";
 #else
@@ -380,14 +445,15 @@ static int ClientMain( int argc, char *argv[] )
 #if (CLIENT_OS == OS_MACOS)
 int main( void )
 {
+  extern void MacInitToolbox(void);
   char *argv[2]; 
   ((const char **)argv)[0] = utilGetAppName();
   argv[1] = (char *)0;
-  macosInitialize();
+  MacInitToolbox();
   ClientMain(1,argv);
   return 0;
 }
-#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* parse the command line and call the bootstrap */
   TRACE_OUT((+1,"WinMain()\n"));

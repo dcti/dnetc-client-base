@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.8 1999/12/08 00:41:58 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.9 2000/01/08 23:18:02 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -91,6 +91,14 @@ int utilCheckIfBetaExpired(int print_msg)
 }
 
 /* ------------------------------------------------------------------- */
+
+u32 __iter2norm( u32 iterlo, u32 iterhi )
+{
+  iterlo = ((iterlo >> 28) + (iterhi << 4));
+  if (!iterlo)
+    iterlo++;
+  return iterlo;    
+}
 
 unsigned long ogr_nodecount(const struct Stub * /* stub */)
 {
@@ -551,3 +559,4 @@ const char *utilGetAppName(void)
 {
   return utilSetAppName((const char *)0);
 }
+
