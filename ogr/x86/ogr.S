@@ -7,16 +7,16 @@
 * if your compiler can generate faster code please send it to me
 * for disassembly.
 *
-* $Id: ogr.S,v 1.1.2.1 2000/11/10 16:27:20 cyp Exp $
+* $Id: ogr.S,v 1.1.2.2 2000/11/14 14:54:12 snake Exp $
 */
 
-.globl ogr_get_dispatch_table
+.globl _ogr_get_dispatch_table
 
 .text
 
 	.p2align 2
 init_load_choose:
-	cmpb $12,ogr_choose_dat+2
+	cmpb $12,_ogr_choose_dat+2
 	jne .L13
 	xorl %eax,%eax
 	ret
@@ -42,7 +42,7 @@ found_one:
 	pushl $0
 	leal 36(%esp),%eax
 	pushl %eax
-	call memset
+	call _memset
 	movl $1,%edi
 	addl $12,%esp
 	.p2align 2,0x90
@@ -153,7 +153,7 @@ ogr_create:
 	pushl $3100
 	pushl $0
 	pushl %ebx
-	call memset
+	call _memset
 	movl 48(%esp),%edi
 	movzwl (%edi),%eax
 	movl %eax,4(%ebx)
@@ -229,7 +229,7 @@ ogr_create:
 	subl %edx,%edi
 	movl %edi,%edx
 	leal (%eax,%eax,2),%eax
-	movzbl ogr_choose_dat+3(%edx,%eax,4),%edx
+	movzbl _ogr_choose_dat+3(%edx,%eax,4),%edx
 	movl (%ebx),%eax
 	movl %eax,%ecx
 	subl %edx,%ecx
@@ -249,7 +249,7 @@ ogr_create:
 	subl %edx,%edi
 	movl %edi,%edx
 	leal (%eax,%eax,2),%eax
-	movzbl ogr_choose_dat+3(%edx,%eax,4),%eax
+	movzbl _ogr_choose_dat+3(%edx,%eax,4),%eax
 	movl (%ebx),%edx
 	subl %eax,%edx
 .L59:
@@ -595,7 +595,7 @@ ogr_cycle:
 	movl 8(%ebx),%edx
 	subl 36(%esp),%edx
 	leal (%eax,%eax,2),%eax
-	movzbl ogr_choose_dat+3(%edx,%eax,4),%edx
+	movzbl _ogr_choose_dat+3(%edx,%eax,4),%edx
 	movl (%ebx),%eax
 	movl %eax,%ebp
 	subl %edx,%ebp
@@ -614,7 +614,7 @@ ogr_cycle:
 	movl 8(%ebx),%edx
 	subl 36(%esp),%edx
 	leal (%eax,%eax,2),%eax
-	movzbl ogr_choose_dat+3(%edx,%eax,4),%eax
+	movzbl _ogr_choose_dat+3(%edx,%eax,4),%eax
 	movl (%ebx),%ebp
 	subl %eax,%ebp
 .L98:
@@ -864,6 +864,6 @@ dispatch_table:
         .long ogr_cleanup
 
 	.p2align 2
-ogr_get_dispatch_table:
+_ogr_get_dispatch_table:
 	movl $dispatch_table,%eax
 	ret
