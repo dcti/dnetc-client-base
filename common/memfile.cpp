@@ -13,6 +13,9 @@
 */
 /*
 ** $Log: memfile.cpp,v $
+** Revision 1.2  1998/10/03 05:34:28  sampo
+** comment out <malloc.h> for MacOS builds.
+**
 ** Revision 1.1  1998/08/20 19:21:50  cyruspatel
 ** Created
 **
@@ -22,14 +25,16 @@
 
 #include <stdio.h>
 #include <string.h>
+#if (CLIENT_OS != OS_MACOS)
 #include <malloc.h>
+#endif
 #include "memfile.h" /* thats us */
 
 /* ====================================================================== */
 
 #if !defined(lint)
 const char *memfile_c(void) {
-return "@(#)$Id: memfile.cpp,v 1.1 1998/08/20 19:21:50 cyruspatel Exp $"; }
+return "@(#)$Id: memfile.cpp,v 1.2 1998/10/03 05:34:28 sampo Exp $"; }
 #endif
 
 /* #define TEST */
