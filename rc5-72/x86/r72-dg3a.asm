@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3a.asm,v 1.1 2002/10/24 02:19:29 acidblood Exp $
+; $Id: r72-dg3a.asm,v 1.2 2002/10/24 02:29:34 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -11,9 +11,9 @@
 [SECTION .text]
 %endif
 
-[GLOBAL rc5_72_unit_func_dg_3_]
-[GLOBAL _rc5_72_unit_func_dg_3]
-[GLOBAL rc5_72_unit_func_dg_3]
+[GLOBAL rc5_72_unit_func_dg_3a_]
+[GLOBAL _rc5_72_unit_func_dg_3a]
+[GLOBAL rc5_72_unit_func_dg_3a]
 
 %define P         0xB7E15163
 %define Q         0x9E3779B9
