@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.204 2000/11/10 16:35:52 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.205 2000/11/17 00:52:15 mfeiri Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -357,6 +357,11 @@ add_sources() # $1=os, $2=arch, $3=custom
     ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    if [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
+      if [ "X$3" = "X" ]; then #mach3+
+        TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ppc/ogr-vec.cpp"  
+      fi
+    fi
   #-----------------------------------------------------------------  
   elif [ "$2" = "arm" ]; then
     if [ "$1" = "riscos" ]; then
@@ -599,15 +604,8 @@ generate_gcc_opts() {
         ;;
 
     *internal-ppc)
-        opts272="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=601 -funroll-loops"
-        opts295="$OPTS_GCC295 -O2 -DASM_PPC -mcpu=601 -funroll-loops"
-        #the following were also defined, but weren't in use.
-        #OPTS_GCC_PPC601="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=601"
-        #OPTS_GCC_PPC604="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604"
-        #OPTS_GCC_PPC860="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=860 -msoft-float"
-        #OPTS_EGCS_PPC601="$OPTS_EGCS -O6 -DASM_PPC -mcpu=601"
-        #OPTS_EGCS_PPC604="$OPTS_EGCS -O6 -DASM_PPC -mcpu=604"
-        #OPTS_EGCS_PPC860="$OPTS_EGCS -O6 -DASM_PPC -mcpu=860 -msoft-float"
+        opts272="$OPTS_GCC272 -O6 -DASM_PPC -funroll-loops"
+        opts295="$OPTS_GCC295 -O3 -DASM_PPC -funroll-loops"
         ;;
 
     *internal-ppc603e)
@@ -1303,7 +1301,7 @@ case "$1" in
     *ppc-macosx)       # [mfeiri] (MACH 3.x based: MacOSXDP, Darwin 1.0)
         TARGET_CC="cc"
         generate_gcc_opts "ppc" "macosx"
-        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD -faltivec" # -DXMLSERVE
+        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD -force_cpusubtype_ALL -faltivec"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="macosx-ppc"
         add_sources "macosx" "ppc"
