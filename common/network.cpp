@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.70  1999/01/19 04:47:35  cyp
+// Fixed win16/32 connect bug. EINVAL is (of course!) not equal to WSAEINVAL.
+//
 // Revision 1.69  1999/01/13 19:49:09  cyp
 // Tried to fix http and connect. Lets see...
 //
@@ -205,7 +208,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.69 1999/01/13 19:49:09 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.70 1999/01/19 04:47:35 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -224,6 +227,9 @@ return "@(#)$Id: network.cpp,v 1.69 1999/01/13 19:49:09 cyp Exp $"; }
     (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
     (CLIENT_OS == OS_MACOS)
 #define ERRNO_IS_UNUSABLE /* ... for network purposes */
+#endif
+#if (CLIENT_OS == OS_WIN16) || (CLIENT_OS==OS_WIN32)
+//#define ENSURE_CONNECT_WITH_BLOCKING_SOCKET
 #endif
 
 extern int NetCheckIsOK(void); // used before doing i/o
@@ -706,7 +712,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         isnonblocking = ( MakeNonBlocking() == 0 );
         if (verbose_level > 1) //debug
           {
-          LogScreen("Network::Connected (%sblocking).\n", 
+          LogScreen("Debug::Connecting with %sblocking socket.\n", 
               ((isnonblocking)?("non-"):("")) );
           }
         }
@@ -720,7 +726,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         isnonblocking = ( MakeNonBlocking() == 0 );
         if (verbose_level > 1) //debug
           {
-          LogScreen("Network::Connected (%sblocking).\n", 
+          LogScreen("Debug::Connected (%sblocking).\n", 
               ((isnonblocking)?("non-"):("")) );
           }
         }
@@ -1543,44 +1549,34 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
       rc = 0;
       break;
       }
+
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+    errno = WSAGetLastError();
+    #undef  EISCONN
+    #define EISCONN WSAEISCONN
+    #undef  EINPROGRESS
+    #define EINPROGRESS WSAEINPROGRESS
+    #undef  EALREADY
+    #define EALREADY WSAEALREADY
+    #undef  EWOULDBLOCK
+    #define EWOULDBLOCK WSAEWOULDBLOCK
+    if (errno == WSAEINVAL) /* ws1.1 returns WSAEINVAL instead of WSAEALREADY */
+      errno = EALREADY;  
+    #elif (CLIENT_OS == OS_OS2)
+    errno = sock_errno();
+    #endif
+
     if (isnonblocking == 0)
       {
       rc = -1;
       break;
       }
-
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-    errno = WSAGetLastError();
-    #ifndef EISCONN
-    #define EISCONN WSAEISCONN
-    #endif
-    #ifndef EINPROGRESS
-    #define EINPROGRESS WSAEINPROGRESS
-    #endif
-    #ifndef EALREADY
-    #define EALREADY WSAEALREADY
-    #endif
-    #ifndef EINVAL 
-    #define EINVAL WSAEINVAL
-    #endif
-    #ifndef EWOULDBLOCK
-    #define EWOULDBLOCK WSAEWOULDBLOCK
-    #endif
-    #elif (CLIENT_OS == OS_OS2)
-    errno = sock_errno();
-    #endif
-
     if (errno == EISCONN)
       {
       rc = 0;
       break;
       }
-
-    if (errno != EINPROGRESS && errno != EALREADY
-      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-      && errno != EINVAL /* winsock 1.1 returns this instead of EALREADY */
-      #endif
-      && errno != EWOULDBLOCK )
+    if (errno != EINPROGRESS && errno != EALREADY && errno != EWOULDBLOCK )
       {
       rc = -1;
       break;
