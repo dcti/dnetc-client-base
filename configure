@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.183 2000/08/19 10:42:46 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.184 2000/08/25 19:42:07 patrick Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -159,7 +159,6 @@ gcc_get_ver() {
     fi 
     #2.7.2.1 = 2000000 +  70000 +  200 + 1 = 2070201
     #2.95.1  = 2000000 + 950000 +  100     = 2950100
-    #2.96    = 2000000 + 960000 +    0     = 2960000
     #2.91.66 = 2000000 + 910000 + 6600     = 2916600
     gccver=`echo "($a1 * 1000000)+($a2 * 10000)+($a3 * 100)+$a4" | bc`
     #echo $gccver
@@ -169,12 +168,11 @@ gcc_get_ver() {
 generate_gcc_opts() {  
 
 # GCC: warn as much as we can for maximum portability
-  OPTS_GCC_WARN="-W -Wall -Wpointer-arith -Wcast-align \
-  	         -Wmissing-prototypes -Wconversion -Winline \
+  OPTS_GCC_WARN="-W -Wall -Wtraditional -Wpointer-arith -Wcast-align \
+  	         -Wmissing-declarations -Wmissing-prototypes \
+	         -Wstrict-prototypes -Wconversion -Winline \
 	         -Waggregate-return -Wcast-qual -Woverloaded-virtual \
-	         " #-Wshadow needs fixes
-                 #-Wtraditional+-Wmissing-declarations+-Wstrict-prototypes+
-                 #-Wnested-externs are not available on 2.96+
+	         -Wnested-externs" #-Wshadow needs fixes
   OPTS_GCC_BASE="-fcaller-saves -fomit-frame-pointer \
                  -fno-inline-functions -fno-rtti" 
   OPTS_272_PLUS="-fno-handle-exceptions"
@@ -283,7 +281,7 @@ generate_gcc_opts() {
 
     *internal-ppc)
          opts272="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=601 -funroll-loops"
-         opts295="$OPTS_GCC295 -O2 -DASM_PPC -mcpu=ppc601 -funroll-loops"
+         opts295="$OPTS_GCC295 -O2 -DASM_PPC -mcpu=601 -funroll-loops"
          #the following were also defined, but weren't in use.
          #OPTS_GCC_PPC601="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=601"
          #OPTS_GCC_PPC604="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604"
@@ -316,7 +314,7 @@ generate_gcc_opts() {
 
   # ------
 
-  gccopts="$opts295" # 2.96
+  gccopts="$opts295" # 3.0
   if [ $gccver -lt 2960000 ]; then
     gccopts="$opts295"
     if [ $gccver -lt 2900000 ]; then
@@ -1323,7 +1321,9 @@ case "$1" in
         AIXPOWERFLAGS="$OPTS_GCC $ALLCORES"
         generate_gcc_opts "ppc" "aix"
         AIXPPC601FLAGS="$OPTS_GCC $ALLCORES"
+	generate_gcc_opts "ppc604" "aix"
         AIXPPC604FLAGS="$OPTS_GCC $ALLCORES"
+	generate_gcc_opts "aixcommon" "aix"
         TARGET_CCFLAGS="$OPTS_GCC -mthreads -mcpu=common -D_AIX -D_AIXALL \
                         -DHAVE_OGR_CORES"
         TARGET_ADDSRCS="$RC5PPC_SRCS rc5/ansi/rc5ansi_2-rg.cpp $OGR_ANSI_SRCS"
@@ -1332,7 +1332,8 @@ case "$1" in
 	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
 	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_LIBS="$TARGET_LIBS -lpthreads "
+	TARGET_LIBS=$TARGET_LIBS
+	TARGET_LDFLAGS="$TARGET_LDFLAGS -mthreads"
 	TARGET_TARBALL="aix-all-aix4.1"
         ;;
 
@@ -2251,8 +2252,7 @@ if [ -n "${TARGET_ADDASMS}" ]; then
   echo "Scanning output AS dependencies..."
   TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} as"
   for target in ${TARGET_ADDASMS}; do
-      TARGETOBJECT=`basename $target .s`
-      TARGETOBJECT=output/`basename $TARGETOBJECT .S`.o
+      TARGETOBJECT=output/`basename $target`.o
       echo "  $target -> $TARGETOBJECT"
       TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
       TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
@@ -2262,7 +2262,7 @@ if [ -n "${TARGET_ADDNASMS}" ]; then
   echo "Scanning output NASM dependencies..."
   TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} nasm"
   for target in ${TARGET_ADDNASMS}; do
-      TARGETOBJECT=output/`basename $target .asm`.o
+      TARGETOBJECT=output/`basename $target`.o
       echo "  $target -> $TARGETOBJECT"
       TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
       TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
