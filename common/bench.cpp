@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.24 1999/12/16 03:06:18 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.25 1999/12/16 05:06:29 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -266,7 +266,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   scropen = run = -1;
   keysdone_lo = 0;
   keysdone_hi = 0;
-  last_permille = 10000;
+  last_permille = 1001;
   
   /* --------------------------- */
 
@@ -345,12 +345,12 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
                                     (runtime.tv_usec / 1000)) ) / numsecs;
           if (permille >= 1000)
             permille = 1000;
-          if (last_permille != permille)
+          if (last_permille != (permille / 10))
           {    
             LogScreen("\r%s: Benchmarking ... %u.%02u%% done", 
                        contname, (unsigned int)(permille/10), 
                                  (unsigned int)((permille%10)*10) );
-            last_permille = permille;
+            last_permille = (permille / 10);
           }                                 
         }
         if ( run != RESULT_WORKING) /* finished this block */
