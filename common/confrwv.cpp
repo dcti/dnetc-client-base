@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.35  1999/01/27 00:58:33  jlawson
+// changed ini functions to use B versions instead of A versions.
+//
 // Revision 1.34  1999/01/26 20:19:15  cyp
 // adapted for new ini stuff.
 //
@@ -147,7 +150,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.34 1999/01/26 20:19:15 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.35 1999/01/27 00:58:33 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -184,10 +187,10 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   if ( access( fn, 0 )!=0 ) 
     return -1;
 
-  if (!GetPrivateProfileStringA( sect, "id", "", client->id, sizeof(client->id), fn ))
+  if (!GetPrivateProfileStringB( sect, "id", "", client->id, sizeof(client->id), fn ))
     strcpy( client->id, "rc5@distributed.net" );
 
-  if (GetPrivateProfileStringA( sect, "threshold", "", buffer, sizeof(buffer), fn ))
+  if (GetPrivateProfileStringB( sect, "threshold", "", buffer, sizeof(buffer), fn ))
     {
     p = strchr( buffer, ':' );
     client->inthreshold[0]=atoi(buffer);
@@ -195,13 +198,13 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
     client->inthreshold[1]=client->inthreshold[0];
     client->outthreshold[1]=client->outthreshold[0];
     }
-  if (GetPrivateProfileStringA( sect, "threshold2", "", buffer, sizeof(buffer), fn ))
+  if (GetPrivateProfileStringB( sect, "threshold2", "", buffer, sizeof(buffer), fn ))
     {
     p = strchr( buffer, ':' );
     client->inthreshold[1]=atoi(buffer);
     client->outthreshold[1]=((p==NULL)?(client->inthreshold[1]):(atoi(p+1)));
     }
-  if (GetPrivateProfileStringA( sect, "hours", "", buffer, sizeof(buffer), fn ))
+  if (GetPrivateProfileStringB( sect, "hours", "", buffer, sizeof(buffer), fn ))
     {
     client->minutes = (atoi(buffer) * 60);
     if ((p = strchr( buffer, ':' )) == NULL)
@@ -214,72 +217,72 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
       client->minutes = 0;
     }
   
-  client->uuehttpmode = GetPrivateProfileIntA( sect, "uuehttpmode", client->uuehttpmode, fn );
-  GetPrivateProfileStringA( sect, "httpproxy", client->httpproxy, client->httpproxy, sizeof(client->httpproxy), fn );  
-  client->httpport = GetPrivateProfileIntA( sect, "httpport", client->httpport, fn );
-  GetPrivateProfileStringA( sect, "httpid", client->httpid, client->httpid, sizeof(client->httpid), fn );
-  client->keyport = GetPrivateProfileIntA( sect, "keyport", client->keyport, fn );
-  GetPrivateProfileStringA( sect, "keyproxy", client->keyproxy, client->keyproxy, sizeof(client->keyproxy), fn );
-  client->nettimeout = GetPrivateProfileIntA( sect, "nettimeout", client->nettimeout, fn );
+  client->uuehttpmode = (s32) GetPrivateProfileIntB( sect, "uuehttpmode", client->uuehttpmode, fn );
+  GetPrivateProfileStringB( sect, "httpproxy", client->httpproxy, client->httpproxy, sizeof(client->httpproxy), fn );  
+  client->httpport = (s32) GetPrivateProfileIntB( sect, "httpport", client->httpport, fn );
+  GetPrivateProfileStringB( sect, "httpid", client->httpid, client->httpid, sizeof(client->httpid), fn );
+  client->keyport = (s32) GetPrivateProfileIntB( sect, "keyport", client->keyport, fn );
+  GetPrivateProfileStringB( sect, "keyproxy", client->keyproxy, client->keyproxy, sizeof(client->keyproxy), fn );
+  client->nettimeout = (s32) GetPrivateProfileIntB( sect, "nettimeout", client->nettimeout, fn );
   
   client->autofindkeyserver = ((client->keyproxy[0]==0 || 
     strcmpi( client->keyproxy, "rc5proxy.distributed.net" )==0 ||
     strcmpi(client->keyproxy,"auto")==0 || strcmpi(client->keyproxy,"(auto)")==0) ||
     ( confopt_IsHostnameDNetHost(client->keyproxy) &&
-    GetPrivateProfileIntA( "networking", "autofindkeyserver", 1, fn ) ));
+    GetPrivateProfileIntB( "networking", "autofindkeyserver", 1, fn ) ));
   if (client->autofindkeyserver && client->keyport != 3064)  
     client->keyport = 0;
   
-  i = GetPrivateProfileIntA( sect, "niceness", -12345, fn );
+  i = GetPrivateProfileIntB( sect, "niceness", -12345, fn );
   if (i != -12345) client->priority = ((i==2)?(8):((i==1)?(4):(0)));
-  client->priority = GetPrivateProfileIntA( "processor-usage", "priority", client->priority, fn );
-  client->cputype = GetPrivateProfileIntA( sect, "cputype", client->cputype, fn );
-  client->numcpu = GetPrivateProfileIntA( sect, "numcpu", client->numcpu, fn );
-  client->preferred_blocksize = GetPrivateProfileIntA( sect, "preferredblocksize", client->preferred_blocksize, fn );
-  client->preferred_contest_id = (GetPrivateProfileIntA( sect, "processdes", 1, fn )?(1):(0));
+  client->priority = GetPrivateProfileIntB( "processor-usage", "priority", client->priority, fn );
+  client->cputype = GetPrivateProfileIntB( sect, "cputype", client->cputype, fn );
+  client->numcpu = GetPrivateProfileIntB( sect, "numcpu", client->numcpu, fn );
+  client->preferred_blocksize = GetPrivateProfileIntB( sect, "preferredblocksize", client->preferred_blocksize, fn );
+  client->preferred_contest_id = (GetPrivateProfileIntB( sect, "processdes", 1, fn )?(1):(0));
 
-  client->messagelen = GetPrivateProfileIntA( sect, "messagelen", client->messagelen, fn );
-  client->smtpport = GetPrivateProfileIntA( sect, "smtpport", client->smtpport, fn );
-  GetPrivateProfileStringA( sect, "smtpsrvr", client->smtpsrvr, client->smtpsrvr, sizeof(client->smtpsrvr), fn );
-  GetPrivateProfileStringA( sect, "smtpfrom", client->smtpfrom, client->smtpfrom, sizeof(client->smtpfrom), fn );
-  GetPrivateProfileStringA( sect, "smtpdest", client->smtpdest, client->smtpdest, sizeof(client->smtpdest), fn );
+  client->messagelen = GetPrivateProfileIntB( sect, "messagelen", client->messagelen, fn );
+  client->smtpport = GetPrivateProfileIntB( sect, "smtpport", client->smtpport, fn );
+  GetPrivateProfileStringB( sect, "smtpsrvr", client->smtpsrvr, client->smtpsrvr, sizeof(client->smtpsrvr), fn );
+  GetPrivateProfileStringB( sect, "smtpfrom", client->smtpfrom, client->smtpfrom, sizeof(client->smtpfrom), fn );
+  GetPrivateProfileStringB( sect, "smtpdest", client->smtpdest, client->smtpdest, sizeof(client->smtpdest), fn );
 
-  client->blockcount = GetPrivateProfileIntA( sect, "count", client->blockcount, fn );
-  if (GetPrivateProfileIntA( sect, "runbuffers", 0, fn ))
+  client->blockcount = GetPrivateProfileIntB( sect, "count", client->blockcount, fn );
+  if (GetPrivateProfileIntB( sect, "runbuffers", 0, fn ))
     client->blockcount = -1;
   
-  client->offlinemode = GetPrivateProfileIntA( sect, "runoffline", 0, fn );
-  client->percentprintingoff = GetPrivateProfileIntA( sect, "percentoff", 0, fn );
-  client->connectoften = GetPrivateProfileIntA( sect, "frequent", 0, fn );
-  client->nodiskbuffers = GetPrivateProfileIntA( sect, "nodisk", 0, fn );
-  client->quietmode = GetPrivateProfileIntA( sect, "quiet", 0, fn );
-  client->quietmode |= GetPrivateProfileIntA( sect, "win95hidden", 0, fn );
-  client->quietmode |= GetPrivateProfileIntA( sect, "os2hidden", 0, fn );
-  client->quietmode |= GetPrivateProfileIntA( sect, "runhidden", 0, fn );
-  client->nofallback = GetPrivateProfileIntA( sect, "nofallback", 0, fn );
-  client->noexitfilecheck = GetPrivateProfileIntA( sect, "noexitfilecheck", 0, fn );
+  client->offlinemode = GetPrivateProfileIntB( sect, "runoffline", 0, fn );
+  client->percentprintingoff = GetPrivateProfileIntB( sect, "percentoff", 0, fn );
+  client->connectoften = GetPrivateProfileIntB( sect, "frequent", 0, fn );
+  client->nodiskbuffers = GetPrivateProfileIntB( sect, "nodisk", 0, fn );
+  client->quietmode = GetPrivateProfileIntB( sect, "quiet", 0, fn );
+  client->quietmode |= GetPrivateProfileIntB( sect, "win95hidden", 0, fn );
+  client->quietmode |= GetPrivateProfileIntB( sect, "os2hidden", 0, fn );
+  client->quietmode |= GetPrivateProfileIntB( sect, "runhidden", 0, fn );
+  client->nofallback = GetPrivateProfileIntB( sect, "nofallback", 0, fn );
+  client->noexitfilecheck = GetPrivateProfileIntB( sect, "noexitfilecheck", 0, fn );
 
   #if defined(MMX_BITSLICER) || defined(MMX_RC5)
-  client->usemmx = GetPrivateProfileIntA( sect, "usemmx", 1, fn );
+  client->usemmx = GetPrivateProfileIntB( sect, "usemmx", 1, fn );
   #endif
 
-  GetPrivateProfileStringA( sect, "logname", client->logname, client->logname, sizeof(client->logname), fn );
-  GetPrivateProfileStringA( sect, "pausefile", client->pausefile, client->pausefile, sizeof(client->pausefile), fn );
-  GetPrivateProfileStringA( sect, "checkpointfile", client->checkpoint_file, client->checkpoint_file, sizeof(client->checkpoint_file), fn );
-  GetPrivateProfileStringA( sect, "in", client->in_buffer_file[0], client->in_buffer_file[0], sizeof(client->in_buffer_file[0]), fn );
-  GetPrivateProfileStringA( sect, "out", client->out_buffer_file[0], client->out_buffer_file[0], sizeof(client->out_buffer_file[0]), fn );
-  GetPrivateProfileStringA( sect, "in2", client->in_buffer_file[1], client->in_buffer_file[1], sizeof(client->in_buffer_file[1]), fn );
-  GetPrivateProfileStringA( sect, "out2", client->out_buffer_file[1], client->out_buffer_file[1], sizeof(client->out_buffer_file[1]), fn );
+  GetPrivateProfileStringB( sect, "logname", client->logname, client->logname, sizeof(client->logname), fn );
+  GetPrivateProfileStringB( sect, "pausefile", client->pausefile, client->pausefile, sizeof(client->pausefile), fn );
+  GetPrivateProfileStringB( sect, "checkpointfile", client->checkpoint_file, client->checkpoint_file, sizeof(client->checkpoint_file), fn );
+  GetPrivateProfileStringB( sect, "in", client->in_buffer_file[0], client->in_buffer_file[0], sizeof(client->in_buffer_file[0]), fn );
+  GetPrivateProfileStringB( sect, "out", client->out_buffer_file[0], client->out_buffer_file[0], sizeof(client->out_buffer_file[0]), fn );
+  GetPrivateProfileStringB( sect, "in2", client->in_buffer_file[1], client->in_buffer_file[1], sizeof(client->in_buffer_file[1]), fn );
+  GetPrivateProfileStringB( sect, "out2", client->out_buffer_file[1], client->out_buffer_file[1], sizeof(client->out_buffer_file[1]), fn );
 
   #if defined(LURK)
   dialup.lurkmode = 0;
-  if (GetPrivateProfileIntA( sect, "lurkonly", 0, fn )) 
+  if (GetPrivateProfileIntB( sect, "lurkonly", 0, fn )) 
     { dialup.lurkmode = 2; client->connectoften = 1; }
-  else if (GetPrivateProfileIntA( sect, "lurk", 0, fn ))
+  else if (GetPrivateProfileIntB( sect, "lurk", 0, fn ))
     dialup.lurkmode = 1;
   #if (CLIENT_OS == OS_WIN32)
-  dialup.dialwhenneeded = GetPrivateProfileIntA( sect, "dialwhenneeded", 0, fn );
-  GetPrivateProfileStringA( sect, "connectionname", dialup.connectionname, dialup.connectionname, sizeof(dialup.connectionname), fn );
+  dialup.dialwhenneeded = GetPrivateProfileIntB( sect, "dialwhenneeded", 0, fn );
+  GetPrivateProfileStringB( sect, "connectionname", dialup.connectionname, dialup.connectionname, sizeof(dialup.connectionname), fn );
   #endif
   #endif /* LURK */
 
@@ -300,27 +303,27 @@ static void __XSetProfileStr( const char *sect, const char *key,
     defval = "";
   int dowrite = (strcmp( newval, defval )!=0);
   if (!dowrite)
-    dowrite = (GetPrivateProfileStringA( sect, key, "", buffer, 2, fn )!=0);
+    dowrite = (GetPrivateProfileStringB( sect, key, "", buffer, 2, fn )!=0);
   if (dowrite)
-    WritePrivateProfileStringA( sect, key, newval, fn );
+    WritePrivateProfileStringB( sect, key, newval, fn );
 }
 
 static void __XSetProfileInt( const char *sect, const char *key, 
-          s32 newval, const char *fn, s32 defval, int asbool )
+          s32 newval, const char *fn, s32 defval, bool asbool )
 { 
   char buffer[4];
   if (sect == NULL) 
     sect = OPTION_SECTION;
   if (asbool)
-    {
-    defval = ((defval)?(1):(0));
-    newval = ((newval)?(1):(0));
-    }
-  int dowrite = (defval!=newval);
+  {
+    defval = ((defval) ? (1) : (0));
+    newval = ((newval) ? (1) : (0));
+  }
+  int dowrite = (defval != newval);
   if (!dowrite)
-    dowrite = (GetPrivateProfileStringA( sect, key, "", buffer, 2, fn )!=0);
+    dowrite = (GetPrivateProfileStringB( sect, key, "", buffer, 2, fn ) != 0);
   if (dowrite)
-    WritePrivateProfileIntA( sect, key, newval, fn );
+    WritePrivateProfileIntB( sect, key, newval, fn );
 }
 
 // --------------------------------------------------------------------------
@@ -341,7 +344,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
   if ( !writefull && access( fn, 0 )!=0 )
     writefull = 1;
 
-  if (0 == WritePrivateProfileStringA( sect, "id", 
+  if (0 == WritePrivateProfileStringB( sect, "id", 
     ((strcmp( client->id,"rc5@distributed.net")==0)?(""):(client->id)), fn ))
     return -1; //failed
   
@@ -360,11 +363,11 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     sprintf(buffer,"%d:%d", (int)client->inthreshold[0], (int)client->outthreshold[0]);
     __XSetProfileStr( sect, "threshold", buffer, fn, "10:10" );
     if (client->inthreshold[1] == client->inthreshold[0] && client->outthreshold[1] == client->outthreshold[0])
-      WritePrivateProfileStringA( sect, "threshold2", NULL, fn );
+      WritePrivateProfileStringB( sect, "threshold2", NULL, fn );
     else
       {
       sprintf(buffer,"%d:%d", (int)client->inthreshold[1], (int)client->outthreshold[1]);
-      WritePrivateProfileStringA( sect, "threshold2", buffer, fn );
+      WritePrivateProfileStringB( sect, "threshold2", buffer, fn );
       }
 
     __XSetProfileInt( sect, "nodisk", (client->nodiskbuffers)?(1):(0), fn, 0, 1 );
@@ -399,18 +402,18 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     else if (confopt_IsHostnameDNetHost(host))
       { af = "0"; if (client->keyport != 3064) port = NULL; }
     if (port!=NULL) sprintf(port,"%ld",client->keyport);
-    WritePrivateProfileStringA( "networking", "autofindkeyserver", af, fn );
-    WritePrivateProfileStringA( sect, "keyport", port, fn );
-    WritePrivateProfileStringA( sect, "keyproxy", host, fn );
+    WritePrivateProfileStringB( "networking", "autofindkeyserver", af, fn );
+    WritePrivateProfileStringB( sect, "keyport", port, fn );
+    WritePrivateProfileStringB( sect, "keyproxy", host, fn );
     __XSetProfileInt( sect, "uuehttpmode", client->uuehttpmode, fn, 0, 0);
     __XSetProfileInt( sect, "httpport", client->httpport, fn, 0, 0);
     __XSetProfileStr( sect, "httpproxy", client->httpproxy, fn, NULL);
     __XSetProfileStr( sect, "httpid", client->httpid, fn, NULL);
 
     #if defined(LURK)
-    WritePrivateProfileStringA( sect, "lurk", (dialup.lurkmode==1)?("1"):(NULL), fn );
-    WritePrivateProfileStringA( sect, "lurkonly", (dialup.lurkmode==2)?("1"):(NULL), fn );
-    WritePrivateProfileStringA( sect, "dialwhenneeded", (dialup.dialwhenneeded)?("1"):(NULL), fn );
+    WritePrivateProfileStringB( sect, "lurk", (dialup.lurkmode==1)?("1"):(NULL), fn );
+    WritePrivateProfileStringB( sect, "lurkonly", (dialup.lurkmode==2)?("1"):(NULL), fn );
+    WritePrivateProfileStringB( sect, "dialwhenneeded", (dialup.dialwhenneeded)?("1"):(NULL), fn );
     #if (CLIENT_OS==OS_WIN32)
     __XSetProfileStr( sect, "connectionname", dialup.connectionname, fn, NULL );
     #endif
@@ -427,7 +430,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
 
     /* no menu option */
   
-    WritePrivateProfileStringA( sect, "processdes", ((client->preferred_contest_id==1)?(NULL):("1")), fn);
+    WritePrivateProfileStringB( sect, "processdes", ((client->preferred_contest_id==1)?(NULL):("1")), fn);
       
     } /* if (writefull != 0) */
   
@@ -435,14 +438,14 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
   const char *obskeys[]={"runhidden","os2hidden","win95hidden","checkpoint2",
                          "niceness","timeslice","runbuffers"};
   for (i=0;i<(int)(sizeof(obskeys)/sizeof(obskeys[0]));i++)
-    WritePrivateProfileStringA( sect, obskeys[i], NULL, fn );    
+    WritePrivateProfileStringB( sect, obskeys[i], NULL, fn );    
   
   /* conditional deletion of obsolete keys */
-  if (GetPrivateProfileStringA( sect, "usemmx", "", buffer, 2, fn))
+  if (GetPrivateProfileStringB( sect, "usemmx", "", buffer, 2, fn))
     {
     if (((GetProcessorType(1) & 0x100) != 0) || 
-       GetPrivateProfileIntA( sect, "usemmx", 0, fn ))
-    WritePrivateProfileStringA( sect, "usemmx", NULL, fn );
+       GetPrivateProfileIntB( sect, "usemmx", 0, fn ))
+    WritePrivateProfileStringB( sect, "usemmx", NULL, fn );
     }
   
   return 0;
@@ -468,12 +471,12 @@ void RefreshRandomPrefix( Client *client, int no_trigger )
         return;
 
       client->randomprefix = 
-         GetPrivateProfileIntA(sect, "randomprefix", client->randomprefix, fn);
+         GetPrivateProfileIntB(sect, "randomprefix", client->randomprefix, fn);
       client->descontestclosed = ntohl(
-         GetPrivateProfileIntA(sect, "descontestclosed", 
+         GetPrivateProfileIntB(sect, "descontestclosed", 
                                          htonl(client->descontestclosed), fn));
       client->scheduledupdatetime = ntohl(
-         GetPrivateProfileIntA(sect, "scheduledupdatetime",
+         GetPrivateProfileIntB(sect, "scheduledupdatetime",
                                       htonl(client->scheduledupdatetime), fn));
       int statechange = 0;
       for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
@@ -481,7 +484,7 @@ void RefreshRandomPrefix( Client *client, int no_trigger )
         if (cont_i==0) strcpy(key,"contestdone");
         else sprintf(key,"contestdone%u", cont_i+1 );
         int oldstate = ((client->contestdone[cont_i])?(1):(0));
-        int newstate = GetPrivateProfileIntA(sect, key, oldstate, fn );
+        int newstate = GetPrivateProfileIntB(sect, key, oldstate, fn );
         newstate = ((newstate)?(1):(0));
         if (oldstate != newstate)
           {
@@ -498,7 +501,7 @@ void RefreshRandomPrefix( Client *client, int no_trigger )
       {
       client->randomchanged = 0;
 
-      if (!WritePrivateProfileIntA(sect,"randomprefix",client->randomprefix,fn))
+      if (!WritePrivateProfileIntB(sect,"randomprefix",client->randomprefix,fn))
         return; //write fail
 
       for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
@@ -506,14 +509,14 @@ void RefreshRandomPrefix( Client *client, int no_trigger )
         if (cont_i==0) strcpy(key,"contestdone");
         else sprintf(key, "contestdone%u", cont_i+1 );
         if (client->contestdone[cont_i])
-          WritePrivateProfileIntA( sect, key, 1, fn );
+          WritePrivateProfileIntB( sect, key, 1, fn );
         else
-          WritePrivateProfileStringA( sect, key, NULL, fn );
+          WritePrivateProfileStringB( sect, key, NULL, fn );
         }
-      WritePrivateProfileStringA( sect, "contestdoneflags", NULL, fn );
-      WritePrivateProfileIntA( sect, "descontestclosed", 
+      WritePrivateProfileStringB( sect, "contestdoneflags", NULL, fn );
+      WritePrivateProfileIntB( sect, "descontestclosed", 
                                     htonl(client->descontestclosed), fn );
-      WritePrivateProfileIntA( sect, "scheduledupdatetime", 
+      WritePrivateProfileIntB( sect, "scheduledupdatetime", 
                                     htonl(client->scheduledupdatetime), fn );
       }
     }
