@@ -26,7 +26,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.1 1999/06/11 01:16:48 cyp Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.2 1999/06/15 14:12:46 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -76,6 +76,9 @@
 #elif (CLIENT_OS == OS_HPUX)
   #include <unistd.h>
   #include <sys/time.h>
+  #if 1 //good for all HP-UX's (according to select(2) manpage)
+  #undef usleep
+  #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
   #ifdef _STRUCT_TIMESPEC
      // HP-UX 10.x has nanosleep() rather than usleep()
      #define usleep(x) { \
@@ -83,18 +86,15 @@
        interval.tv_sec = 0; interval.tv_nsec = (x)*100; \
        nanosleep(&interval, &remainder); }
   #else // HP-UX 9.x doesn't have nanosleep() or usleep()
-    //#define usleep(x) sleep(1)
-    #error FIXME - is this correct?
     #undef usleep
     #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
   #endif
 #elif (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
   #undef usleep
-  //#define usleep(x) sginap((x)*10000) /* useless:1ms for root, 10ms/others*/
-  #include <sys/time.h>
-  #define usleep(x) { struct timespec rval, ival; ival.tv_sec = 0; \
-                      ival.tv_nsec = (x)*100; nanosleep(&ival, &rval); }
+  #define usleep(x) sginap((((x)*CLK_TCK)+500000)/1000000L)
+  //CLK_TCK is defined as sysconf(_SC_CLK_TCK) in limits.h and 
+  //is 100 (10ms) for non-realtime processes, machine dependant otherwise
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
   #ifdef sleep
@@ -105,7 +105,7 @@
   #endif
   #define sleep(n) Delay(n*TICKS_PER_SECOND);
   #define usleep(n) Delay(n*TICKS_PER_SECOND/1000000);
-  #error Intentionally left unfixed. *Read* the documentation about using parens!
+  #error Intentionally left unfixed. (hint: use parenthesis)
   }
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C" {
@@ -118,10 +118,9 @@
   #undef usleep
   #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
 #elif (CLIENT_OS == OS_ULTRIX)
-  #define usleep(x) { struct timeval tv = {0,(x)}; \
-                      select(0,NULL,NULL,NULL,&tv); }
+  #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
 #else
-  #include <unistd.h> //gcc has both sleep() and usleep()
+  #include <unistd.h> //has both sleep() and usleep()
 #endif
 
 #ifndef __SLEEP_FOR_POLLING__
