@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.50  1998/06/15 08:28:02  jlawson
+// fixed signed/unsigned comparison
+//
 // Revision 1.49  1998/06/15 06:18:32  dicamillo
 // Updates for BeOS
 //
@@ -24,7 +27,7 @@
 //
 //
 
-static char *id="@(#)$Id: client.cpp,v 1.49 1998/06/15 06:18:32 dicamillo Exp $";
+static char *id="@(#)$Id: client.cpp,v 1.50 1998/06/15 08:28:02 jlawson Exp $";
 
 #include "client.h"
 
@@ -1938,7 +1941,7 @@ PreferredIsDone1:
             if (hitchar == 3 || hitchar == 'X' || hitchar == 'x' || hitchar == '!')
             {
               // exit after current blocks
-              blockcount = min(blockcount,totalBlocksDone[0] + totalBlocksDone[1] + numcputemp);
+              blockcount = min(blockcount, (s32) (totalBlocksDone[0] + totalBlocksDone[1] + numcputemp));
               Log("Exiting after current block\n");
               exitcode = 1;
             }
