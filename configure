@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.78  1998/07/16 20:11:26  nordquist
+# Configuration for DYNIX.  Note that testplat needs the LDFLAGS to
+# compile properly.
+#
 # Revision 1.77  1998/07/16 17:44:16  nordquist
 # Make sure static-link options are passed to the HP-UX CC linker.
 #
@@ -364,6 +368,11 @@ OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentium -DASM_X86"
 
 #--
 
+OPTS_EPC_DYNIX="-relax -D_SEQUENT_ -Icommon -Ides -Irc5"
+OPTS_GCC_DYNIX="-D_SEQUENT_ -Icommon -Ides -Irc5"
+
+#--
+
 OPTS_GCC_M68K="$OPTS_GCC -m68040 -DASM_68K"
 OPTS_GAS_M68K="-v -V --register-prefix-optional -m68040"
 OPTS_GCC_M68030K="$OPTS_GCC -m68030 -DASM_68K"
@@ -412,6 +421,7 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
 KWAN_SLICE_SRCS4="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan4.cpp"
+OLDER_MEGGS_SLICE_SRCS="des/deseval-meggs2.cpp des/des-slice-meggs.cpp"
 MEGGS_SLICE_SRCS="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
 XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s rc5/crunch_allitnil_552.ppcxlc.s"
 RC5X86_SRCS="rc5/rc5-486-rg.cpp rc5/rc5-6x86-rg.cpp rc5/rc5p5brf.cpp rc5/rc5-p6-rg.cpp rc5/rc5-k5-rg.cpp rc5/rc5-k6-rg.cpp"
@@ -927,6 +937,24 @@ case "$1" in
 	TARGET_LIBS="-lsocket"
 	;;
 
+####### Intel x86 DYNIX
+
+    *x86-dynix4)
+	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
+	TARGET_CC="ec++"
+	TARGET_CCFLAGS="$OPTS_EPC_DYNIX -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$OLDER_MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-lsocket -lnsl -lseq -L/opt/epc/ec++/lib -lec++"
+	;;
+
+    *x86-dynix2)
+	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_DYNIX -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LDFLAGS="-L."
+	TARGET_LIBS="-lsocket -lnsl -lseq"
+	;;
+
 ###### NeXT (x86, m68k, sparc, hppa)
 
     *x86-next)
@@ -1050,7 +1078,7 @@ done
 # Build the test program
 #
 echo "Building test program..."
-sh -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp -o testplat"
+sh -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
 if [ $? -ne 0 ]; then
    echo "Compilation failed.  Check your target options."
    exit
