@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.4 1999/08/06 08:31:55 chrisb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.5 1999/08/08 17:11:04 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -193,7 +193,7 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
   #define BUFFEROPEN( fn )  fopen( fn, "r+" )
   #define BUFFERCREATE( fn )   fopen( fn, "w" )
   #define ftruncate(h,sz) //nothing. ftruncate not supported.
-#elif (CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K)
+#elif (CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K) //Sun3
   #define BUFFEROPEN( fn )  fopen( fn, "r+" )
   #define BUFFERCREATE( fn )   fopen( fn, "w" )
   extern "C" int ftruncate(int, off_t); // Keep g++ happy.
@@ -239,6 +239,8 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
 /* --------------------------------------------------------------------- */
 
 #ifndef SUPPRESS_FILE_BUFFER_PRIMITIVES
+const char *buffwork_cpp(void) { return ""; }
+const char *buffupd_cpp(void) { return ""; }
 
 int BufferZapFileRecords( const char *filename )
 {
