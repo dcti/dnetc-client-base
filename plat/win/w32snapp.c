@@ -26,7 +26,7 @@
  * and pe.szExeFile usually (I've seen a few ".com"s, but not all .com's
  * appear with ".com") does not have an extension.
  *
- * $Id: w32snapp.c,v 1.1.2.1 2001/01/21 15:10:25 cyp Exp $
+ * $Id: w32snapp.c,v 1.1.2.2 2001/04/12 14:56:42 cyp Exp $
 */
 
 #define WIN32_LEAN_AND_MEAN
@@ -44,6 +44,45 @@
 #endif
  
 /* ---------------------------------------------------- */
+
+#pragma pack(1)
+typedef struct _SYSTEM_PROCESS_INFORMATION 
+{
+  ULONG NextEntryOffset;
+  ULONG NumberOfThreads;
+  LARGE_INTEGER SpareLi1;
+  LARGE_INTEGER SpareLi2;
+  LARGE_INTEGER SpareLi3;
+  LARGE_INTEGER CreateTime;
+  LARGE_INTEGER UserTime;
+  LARGE_INTEGER KernelTime;
+  struct { USHORT Length; USHORT MaximumLength; PWSTR Buffer; } ImageName;
+                                /* UNICODE_STRING ImageName; */
+  LONG BasePriority;
+  HANDLE UniqueProcessId;
+  HANDLE InheritedFromUniqueProcessId;
+  ULONG HandleCount;
+  ULONG SpareUl2;
+  ULONG SpareUl3;
+  ULONG PeakVirtualSize;
+  ULONG VirtualSize;
+  ULONG PageFaultCount;
+  ULONG PeakWorkingSetSize;
+  ULONG WorkingSetSize;
+  ULONG QuotaPeakPagedPoolUsage;
+  ULONG QuotaPagedPoolUsage;
+  ULONG QuotaPeakNonPagedPoolUsage;
+  ULONG QuotaNonPagedPoolUsage;
+  ULONG PagefileUsage;
+  ULONG PeakPagefileUsage;
+  ULONG PrivatePageCount;
+} SYSTEM_PROCESS_INFORMATION, *PSYSTEM_PROCESS_INFORMATION;
+#pragma pack()
+    
+typedef DWORD (WINAPI *NtQuerySystemInformationT) (
+        DWORD SystemInformationClass, PVOID SystemInformation,
+        ULONG SystemInformationLength, PULONG ReturnLength);
+
 
 static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags, 
                                                       DWORD th32ProcessID)
@@ -72,44 +111,6 @@ static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags,
 
   if ((dwFlags & TH32CS_SNAPPROCESS)!=0) /* the only flag we currently support */
   {
-    #pragma pack(1)
-    typedef struct _SYSTEM_PROCESS_INFORMATION 
-    {
-      ULONG NextEntryOffset;
-      ULONG NumberOfThreads;
-      LARGE_INTEGER SpareLi1;
-      LARGE_INTEGER SpareLi2;
-      LARGE_INTEGER SpareLi3;
-      LARGE_INTEGER CreateTime;
-      LARGE_INTEGER UserTime;
-      LARGE_INTEGER KernelTime;
-      struct { USHORT Length; USHORT MaximumLength; PWSTR Buffer; } ImageName;
-                                    /* UNICODE_STRING ImageName; */
-      LONG BasePriority;
-      HANDLE UniqueProcessId;
-      HANDLE InheritedFromUniqueProcessId;
-      ULONG HandleCount;
-      ULONG SpareUl2;
-      ULONG SpareUl3;
-      ULONG PeakVirtualSize;
-      ULONG VirtualSize;
-      ULONG PageFaultCount;
-      ULONG PeakWorkingSetSize;
-      ULONG WorkingSetSize;
-      ULONG QuotaPeakPagedPoolUsage;
-      ULONG QuotaPagedPoolUsage;
-      ULONG QuotaPeakNonPagedPoolUsage;
-      ULONG QuotaNonPagedPoolUsage;
-      ULONG PagefileUsage;
-      ULONG PeakPagefileUsage;
-      ULONG PrivatePageCount;
-    } SYSTEM_PROCESS_INFORMATION, *PSYSTEM_PROCESS_INFORMATION;
-    #pragma pack()
-    
-    typedef DWORD (WINAPI *NtQuerySystemInformationT) (
-        DWORD SystemInformationClass, PVOID SystemInformation,
-        ULONG SystemInformationLength, PULONG ReturnLength);
-    
     static int issupported = -1;
     static NtQuerySystemInformationT fnNtQuerySystemInformation = 0;
  
@@ -636,6 +637,7 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
     } /* if (hProcessHeap) */
   } /* if ((dwFlags & TH32CS_SNAPPROCESS)!=0) */
     
+  th32ProcessID = th32ProcessID; /* shaddup compiler */
   return hSnapshot;
 }
 
