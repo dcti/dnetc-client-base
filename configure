@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.150  1999/01/01 01:16:45  silby
+# Added dctistrg.cpp
+#
 # Revision 1.149  1998/12/30 07:46:57  cramer
 # removed a redundant 'rm' from distclean
 #
@@ -649,7 +652,7 @@ COMMON_SRCS="common/client.cpp common/problem.cpp
     common/clievent.cpp common/cpucheck.cpp common/pathwork.cpp
     common/cliident.cpp common/logstuff.cpp common/buffupd.cpp
     common/triggers.cpp common/selcore.cpp common/netinit.cpp
-    common/cmdline.cpp common/selftest.cpp
+    common/cmdline.cpp common/selftest.cpp common/dctistrg.cpp
     common/bench.cpp common/probman.cpp common/clirun.cpp
     common/probfill.cpp common/pollsys.cpp common/setprio.cpp
     common/console.cpp common/modereq.cpp common/confmenu.cpp
