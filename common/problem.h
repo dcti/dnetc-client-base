@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.27 2000/05/04 21:47:09 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.28 2000/06/04 11:07:14 oliver Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -79,7 +79,11 @@ typedef union
 {
     /* this is our generic prototype */
     s32 (*gen)( RC5UnitWork *, u32 *iterations, void *memblk );
+    #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+    u32 __regargs (*rc5)( RC5UnitWork * , u32 iterations );
+    #else
     u32 (*rc5)( RC5UnitWork * , u32 iterations );
+    #endif
     #if defined(HAVE_DES_CORES)
     u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );
     #endif  
