@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.64  1999/01/11 05:45:10  pct
+// Ultrix modifications for updated client.
+//
 // Revision 1.63  1999/01/08 02:59:29  michmarc
 // Added support for Alpha/NT architecture.
 //
@@ -178,7 +181,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.63 1999/01/08 02:59:29 michmarc Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.64 1999/01/11 05:45:10 pct Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -265,14 +268,19 @@ extern void CliSignalHandler(int);
   #endif
   // CRAMER // #error Please verify these core prototypes
 #elif (CLIENT_CPU == CPU_MIPS)
-  #if (MIPS_CRUNCH == 1)
-  extern "C" unsigned long crunch( register RC5UnitWork * rc5unitwork, u32 timeslice);
-  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
-  #else
-  extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
-  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #if (CLIENT_OS != OS_ULTRIX)
+    #if (MIPS_CRUNCH == 1)
+    extern "C" unsigned long crunch( register RC5UnitWork * rc5unitwork, u32 timeslice);
+    extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+    #else
+    extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
+    extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+    #endif
+    #error Please verify these core prototypes
+  #else /* OS_ULTRIX */
+    extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
+    extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
   #endif
-  #error Please verify these core prototypes
 #elif (CLIENT_CPU == CPU_ALPHA)
   #if (CLIENT_OS == OS_WIN32)
      extern "C" u32 rc5_unit_func ( RC5UnitWork *rc5unitwork, u32 timeslice);

@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.160  1999/01/11 05:45:09  pct
+# Ultrix modifications for updated client.
+#
 # Revision 1.159  1999/01/10 11:00:53  cramer
 # Added targets for 601/604/860 linux-PPC builds (mt and non-mt.)  Only the
 # 604 build appears to work on my 7200/75 (601) machine.
@@ -904,6 +907,7 @@ case "$1" in
 	;;
 
     *mips-gcc-ultrix)	# For mips based DEC Ultrix machines
+	DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DKWAN -DMEGGS"

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.67  1999/01/11 05:45:10  pct
+// Ultrix modifications for updated client.
+//
 // Revision 1.66  1999/01/06 09:54:29  chrisb
 // fixes to the RISC OS timeslice stuff for DES - now runs about 2.5 times as fast
 //
@@ -257,7 +260,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.66 1999/01/06 09:54:29 chrisb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.67 1999/01/11 05:45:10 pct Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -469,6 +472,8 @@ static void yield_pump( void *tv_p )
   #elif (CLIENT_OS == OS_OPENBSD)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_QNX)
+    NonPolledUSleep( 0 ); /* yield */
+  #elif (CLIENT_OS == OS_ULTRIX)
     NonPolledUSleep( 0 ); /* yield */
   #else
     #error where is your yield function?
