@@ -9,8 +9,11 @@
  * one's head against a wall but with fewer opportunities for reward.
  * -------------------------------------------------------------------
  */
+#warning selcore needs to be fixed for OGR nextgen
+#warning currently only core 0 supported
+
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.102 2001/03/07 00:21:09 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.102.4.1 2001/03/23 20:56:37 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -182,6 +185,10 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "1 key - inline", 
       "1 key - called",
       NULL, /* room */
+      NULL
+    },
+    { /* OGR next generation */ // HACK !!!
+      "OGR2 nextgen",
       NULL
     }
   };

@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.50 2000/12/14 23:18:34 oliver Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.50.4.1 2001/03/23 20:56:35 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -43,10 +43,10 @@ static const char *__getprojsectname( unsigned int ci )
   if (ci < CONTEST_COUNT)
   {
     #if 1
-      #if (CONTEST_COUNT != 4)
-        #error fixme: (CONTEST_COUNT != 4) static table
+      #if (CONTEST_COUNT != 5)
+        #error fixme: (CONTEST_COUNT != 5) static table
       #endif
-      static const char *sectnames[CONTEST_COUNT]={"rc5","des","ogr","csc"};
+      static const char *sectnames[CONTEST_COUNT]={"rc5","des","ogr1_old","csc","ogr"};
       return sectnames[ci];
     #else
       const char *cname = CliGetContestNameFromID(ci);

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.58 2001/03/19 15:34:25 andreasb Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.58.2.1 2001/03/23 20:56:32 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -21,10 +21,10 @@ return "@(#)$Id: bench.cpp,v 1.27.2.58 2001/03/19 15:34:25 andreasb Exp $"; }
 
 #define TBENCHMARK_CALIBRATION 0x80
 
-#if (CONTEST_COUNT != 4)
-  #error static initializer expects CONTEST_COUNT == 4
+#if (CONTEST_COUNT != 5)
+  #error static initializer expects CONTEST_COUNT == 5
 #endif
-unsigned long bestrate_tab[CONTEST_COUNT] = {0,0,0,0};
+unsigned long bestrate_tab[CONTEST_COUNT] = {0,0,0,0,0};
 
 /* -------------------------------------------------------------------- */
 

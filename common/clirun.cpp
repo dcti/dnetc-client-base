@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.90 2001/03/19 18:06:55 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.90.2.1 2001/03/23 20:56:34 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -42,21 +42,26 @@ struct __dyn_timeslice_struct
   u32 max, min, optimal; /* ... timeslice/nodes */
 };
 
+#if (CONTEST_COUNT != 5)
+  #error static initializer expects CONTEST_COUNT == 5
+#endif
 static struct __dyn_timeslice_struct
   default_dyn_timeslice_table[CONTEST_COUNT] =  /* for preempted crunchers */
 {
-  {  RC5, 1000000, 0x80000000,  0x00100,  0x10000 },
-  {  DES, 1000000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR,  200000,  0x8000000,  0x00010,  0x10000 },
-  {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 }
+  {  RC5,       1000000, 0x80000000,  0x00100,  0x10000 },
+  {  DES,       1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR1_OLD,   200000,  0x8000000,  0x00010,  0x10000 },
+  {  CSC,       1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR,        200000,  0x8000000,  0x00010,  0x10000 }
 };
 static struct __dyn_timeslice_struct
   non_preemptive_dyn_timeslice_table[CONTEST_COUNT] = /* for co-op crunchers */
 {                                  /* adjusted by ClientRun() if appropriate */
-  {  RC5, 1000000, 0x80000000,  0x00100,  0x10000 },
-  {  DES, 1000000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR,  200000,  0x8000000,  0x00010,  0x10000 },
-  {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 }
+  {  RC5,       1000000, 0x80000000,  0x00100,  0x10000 },
+  {  DES,       1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR1_OLD,   200000,  0x8000000,  0x00010,  0x10000 },
+  {  CSC,       1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR,        200000,  0x8000000,  0x00010,  0x10000 }
 };
 
 // =====================================================================
@@ -380,8 +385,8 @@ void Go_mt( void * parm )
     amigaThreadInit();
     #if (CLIENT_CPU == CPU_POWERPC)
     /* Only necessary when using 68k for time measurement */
-    thrparams->dyn_timeslice_table[0].usec = 8000000;  // RC5
-    thrparams->dyn_timeslice_table[2].usec = 4000000;  // OGR
+    thrparams->dyn_timeslice_table[RC5].usec = 8000000;
+    thrparams->dyn_timeslice_table[OGR].usec = 4000000;
     #endif
   }
 #endif

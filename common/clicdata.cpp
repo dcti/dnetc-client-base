@@ -12,12 +12,13 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.18.2.12 2001/02/23 00:05:43 sampo Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.18.2.12.4.1 2001/03/23 20:56:33 andreasb Exp $"; }
 
-#include "baseincs.h" //for timeval
-#include "clitime.h" //required for CliTimerDiff() and CliClock()
+#include "baseincs.h" // for timeval
+#include "clitime.h"  // required for CliTimerDiff() and CliClock()
 #include "bench.h"    // for TBenchmark
 #include "selcore.h"  // for selcoreGetSelectedCoreForContest()
+#include "problem.h"  // constants
 
 /* ------------------------------------------------------------------------ */
 
@@ -33,11 +34,17 @@ static struct contestInfo
   unsigned int UnitsDone;
   unsigned int BestTime;  /* in seconds */
   int BestTimeWasForced;
-} conStats[] = {  { "RC5", 0,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "DES", 1,  2, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "OGR", 2,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "CSC", 3,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  {  NULL,-1,  0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
+} conStats[] = {  
+  /* Note: There are no entries for obsolete contests, e.g. OGR1_OLD */
+  { "RC5", RC5, 1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+  { "DES", DES, 2, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+  { "OGR", OGR, 1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+  { "CSC", CSC, 1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+  {  NULL, -1,  0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }
+  #if (CONTEST_COUNT != 5)
+    #error You might have to adjust conStats if CONTEST_COUNT changes
+  #endif
+};
 
 /* ----------------------------------------------------------------------- */
 
@@ -53,6 +60,10 @@ static struct contestInfo *__internalCliGetContestInfoVectorForID( int contestid
 
 // ---------------------------------------------------------------------------
 
+#if 0 // XXX [andreasb]
+// (a) unused
+// (b) WRONG! 
+
 // obtain the contestID for a contest identified by name.
 // returns -1 if invalid name (contest not found).
 int CliGetContestIDFromName( char *name )
@@ -63,13 +74,14 @@ int CliGetContestIDFromName( char *name )
     for (n = 0; conStats[i].ContestName[n] != 0; n++)
     {
       if (conStats[i].ContestName[n] != name[n])
-        return -1;
+        return -1; // WRONG! need "next i" here;
     }
     if (!name[n])
       return i;
   }
   return -1;
 }
+#endif
 
 // ---------------------------------------------------------------------------
 

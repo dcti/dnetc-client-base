@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.30 2001/01/24 16:44:30 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.30.4.1 2001/03/23 20:56:34 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -36,6 +36,8 @@ static const char *CONFMENU_CAPTION="distributed.net client configuration: %s\n"
 
 static int __is_opt_available_for_project(unsigned int cont_i, int menuoption)
 {
+  if (!CliIsContestIDValid(cont_i))
+    return 0;
   if (menuoption == CONF_CPUTYPE)
   {
     if (selcoreValidateCoreIndex(cont_i,1) < 0) /* second core doesn't exist */

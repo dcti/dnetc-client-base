@@ -5,7 +5,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.46 2001/03/19 18:06:58 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.46.2.1 2001/03/23 20:56:37 andreasb Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -326,19 +326,24 @@ int utilScatterOptionListToArrays( const char *oplist,
 const char *projectmap_expand( const char *map )
 {
   static char buffer[(CONTEST_COUNT+1)*(MAX_CONTEST_NAME_LEN+3)];
-  unsigned int id;
+  unsigned int id, valid_id;
 
   if (!map)
     map = projectmap_build(NULL,NULL);
 
   buffer[0] = '\0';
+  valid_id = 0;
   for (id=0;id<CONTEST_COUNT;id++)
   {
-    if (id > 0)
-      strcat( buffer, "," );
-    strcat( buffer, CliGetContestNameFromID( map[id] & 0x7f ) );
-    if (( map[id] & 0x80 ) != 0)
-      strcat( buffer,"=0" );
+    if ( CliIsContestIDValid(map[id] & 0x7f) )
+    {
+      if (valid_id > 0)
+        strcat( buffer, "," );
+      strcat( buffer, CliGetContestNameFromID( map[id] & 0x7f ) );
+      if (( map[id] & 0x80 ) != 0)
+        strcat( buffer,"=0" );
+      valid_id++;
+    }
   }
   return buffer;
 }
@@ -347,10 +352,10 @@ const char *projectmap_expand( const char *map )
 
 const char *projectmap_build( char *buf, const char *strtomap )
 {
-  #if (CONTEST_COUNT != 4)
-    #error static table needs fixing. (CONTEST_COUNT is not 4).
+  #if (CONTEST_COUNT != 5)
+    #error static table needs fixing. (CONTEST_COUNT is not 5).
   #endif
-  static char default_map[CONTEST_COUNT] = { 1,3,2,0 };
+  static char default_map[CONTEST_COUNT] = { DES, CSC, OGR, RC5, OGR1_OLD };
   static char map[CONTEST_COUNT];
   unsigned int map_pos, i;
   int contestid;

@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.54 2001/03/19 15:36:43 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.54.2.1 2001/03/23 20:56:36 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -20,10 +20,11 @@
 enum {
   RC5, // http://www.rsa.com/rsalabs/97challenge/
   DES, // http://www.rsa.com/rsalabs/des3/index.html
-  OGR, // http://members.aol.com/golomb20/
-  CSC  // http://www.cie-signaux.fr/security/index.htm
+  OGR1_OLD, // http://members.aol.com/golomb20/
+  CSC, // http://www.cie-signaux.fr/security/index.htm
+  OGR  // http://members.aol.com/golomb20/
 };
-#define CONTEST_COUNT       4  /* RC5,DES,OGR,CSC */
+#define CONTEST_COUNT       5  /* RC5,DES,(OGR1),CSC,OGR */
 
 /* ---------------------------------------------------------------------- */
 

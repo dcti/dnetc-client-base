@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.57 2001/03/12 00:00:56 sampo Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.57.4.1 2001/03/23 20:56:32 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -351,6 +351,10 @@ long GetBufferRecord( Client *client, WorkRecord* data,
       if (!(tmp_contest < CONTEST_COUNT))
       {
         LogScreen("Discarded packet from unknown contest.\n");
+      }
+      else if (tmp_contest == OGR1_OLD) // FIXME: use a contestinfo flag somewhere
+      {
+        LogScreen("Discarded packet from closed contest.\n");
       }
       else if (workstate != RESULT_WORKING && workstate != RESULT_FOUND &&
               workstate != RESULT_NOTHING)
