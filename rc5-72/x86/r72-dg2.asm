@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.11 2002/10/23 05:45:55 acidblood Exp $
+; $Id: r72-dg2.asm,v 1.12 2002/10/23 05:59:49 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -649,13 +649,14 @@ test_key_2:
         jne     short inc_key
 
         inc     dword [RC5_72UnitWork_CMCcount]
-
-        cmp     B2, [work_C_1_ebp]
+        inc     edx
 
         mov     [RC5_72UnitWork_CMChi], edx
         mov     [RC5_72UnitWork_CMCmid], ecx
         mov     [RC5_72UnitWork_CMClo], ebx
 
+        dec     edx
+        cmp     B2, [work_C_1_ebp]
         jne     short inc_key
 
         mov     ecx, [work_iterations_ebp]
@@ -663,7 +664,7 @@ test_key_2:
 
         shl     ecx, 1
 
-        sub     ecx, 1
+        dec     ecx
 
         sub     [esi], ecx
         mov     eax, RESULT_FOUND
