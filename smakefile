@@ -116,7 +116,7 @@ OBJS_PPC     = $(RC5_OBJS_PPC) $(DES_OBJS_PPC) $(EXTRA_OBJS_PPC) $(COMMON_OBJS_P
 LIBS_PPC     = LIB:sccxxppc.lib LIB:scppc.lib #LIB:end.o
 
 LIBSTART_68K = $(LIBSTART)
-OBJS_68K     = $(RC5_OBJS_68K) $(DES_OBJS_68K) $(EXTRA_OBJS_68K) $(COMMON_OBJS_68K) 
+OBJS_68K     = $(COMMON_OBJS_68K) $(RC5_OBJS_68K) $(DES_OBJS_68K) $(EXTRA_OBJS_68K)
 LIBS_68K     = LIB:scm.lib LIB:sc.lib LIB:amiga.lib LIB:debug.lib
 
 .s.o_ppc:
