@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.87 2002/10/17 02:29:08 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.87.2.1 2002/12/29 02:45:18 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -529,6 +529,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             //       1.23:45:67:89 - [987,654,321 keys/s]
             //[....] OGR: Completed 22/1-3-5-7 (12.30 stats units)
             //       1.23:45:67:89 - [987,654,321 nodes/s]
+            //[....] OGR: 25/1-2-4-5-8-10 [12,345,578,910 nodes]
             Log("%s: %s %s (%s)\n%s - [%s/s]\n", 
               info.name, action_msg, info.sigbuf, dcountbuf,
               CliGetTimeString( &tv, 2 ), info.rate.ratebuf );
