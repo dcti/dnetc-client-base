@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.51 2002/09/02 00:35:41 andreasb Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.51.4.1 2002/11/20 23:46:52 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -12,6 +12,7 @@ return "@(#)$Id: confopt.cpp,v 1.51 2002/09/02 00:35:41 andreasb Exp $"; }
 #include "pathwork.h" // EXTN_SEP
 #include "baseincs.h" // NULL
 #include "client.h"   // PREFERREDBLOCKSIZE_MIN etc
+#include "util.h"     // projectmap_expand()
 #include "confopt.h"  // ourselves
 
 /* ----------------------------------------------------------------------- */
@@ -22,6 +23,14 @@ static const char *lurkmodetable[] =
   "Dial-up detection mode",
   "Dial-up detection ONLY mode"
 };
+
+static const char *__default_loadorder()
+{
+  static char buf[64];
+  strncpy(buf, projectmap_expand(NULL, NULL), sizeof(buf));
+  buf[sizeof(buf)-1] = '\0';
+  return buf;
+}
 
 // --------------------------------------------------------------------------
 
@@ -351,7 +360,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 },
 { 
   CONF_LOADORDER               , /* CONF_MENU_BUFF "DES,OGR,RC5" */
-  CFGTXT("Load-work precedence"), "DES,CSC,OGR,RC5", 
+  CFGTXT("Load-work precedence"), __default_loadorder(), 
   /* CFGTXT( */
   "The order specified here determines the order the client will look for work\n"
   "each time it needs to load a packet from a buffer. For example, \"OGR,RC5,...\"\n"
