@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.54  1998/06/21 16:08:02  cyruspatel
+// NetWare change: first thread no longer migrates to smp.
+//
 // Revision 1.53  1998/06/17 10:51:23  kbracey
 // Fixed printfs for machines with 64-bit longs.
 //
@@ -36,7 +39,7 @@
 //
 //
 
-static const char *id="@(#)$Id: client.cpp,v 1.53 1998/06/17 10:51:23 kbracey Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.54 1998/06/21 16:08:02 cyruspatel Exp $";
 
 #include "client.h"
 
@@ -178,11 +181,7 @@ Client::Client()
   strcpy(smtpsrvr,"your.smtp.server");
   strcpy(smtpfrom,"RC5Notify");
   strcpy(smtpdest,"you@your.site");
-#if ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_BEOS))
   numcpu = -1;
-#else
-  numcpu = 1;
-#endif
   numcputemp=1;
   strcpy(checkpoint_file[0],"none");
   strcpy(ini_checkpoint_file[0],"none");
@@ -1427,7 +1426,8 @@ void Go_mt( void * parm )
   //isn't being forced to switch context the-trillion-or-so times per sec.
   CliClearThreadContextSpecifier( GetThreadID() );
   //put the thread under MP control, controller decides when/whether to move it
-  CliMigrateThreadToSMP();
+  if (tempi2 != 0) //don't go SMP for first thread
+    CliMigrateThreadToSMP();
   }
 #elif (CLIENT_OS == OS_OS2)
 #elif (CLIENT_OS == OS_BEOS)
@@ -1547,7 +1547,7 @@ s32 Client::Run( void )
   s32 TimeToQuit = 0, getbuff_errs = 0;
 
 #if defined(MULTITHREAD)
-  connectrequested = 0;
+  u32 connectrequested = 0;
   u32 connectloops = 0;
 #endif
 
