@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.160  1998/11/13 12:35:49  remi
+// uuehttpmode set to 0 (no special encoding) instead of 1 (uue encoding)
+// in Client::Client().
+//
 // Revision 1.159  1998/11/12 23:50:15  cyp
 // Added -hide/-quiet support for unix'ish clients
 //
@@ -84,7 +88,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.159 1998/11/12 23:50:15 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.160 1998/11/13 12:35:49 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -130,7 +134,7 @@ Client::Client()
   keyport = 2064;
   httpproxy[0] = 0;
   httpport = 80;
-  uuehttpmode = 1;
+  uuehttpmode = 0;
   httpid[0] = 0;
   totalBlocksDone[0] = 0;
   totalBlocksDone[1] = 0;
