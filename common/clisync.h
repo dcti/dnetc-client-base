@@ -14,7 +14,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.15 2001/03/29 15:08:38 cyp Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.16 2001/03/29 16:36:53 teichp Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -618,31 +618,7 @@
 
 #elif (CLIENT_CPU == CPU_ARM) && defined(__GNUC__)
 
-  #error "please check this"
-
-  /* from glibc-2.2.2/sysdeps/arm/atomicity.h */
-  static __inline__ int __compare_and_swap (volatile long int *p, 
-                                        long int oldval, long int newval)
-  {
-    int result, tmp;
-    __asm__ __volatile__ (
-           "0:  ldr  %1,[%2]       \n\t" \
-           "    mov  %0,#0         \n\t" \
-           "    cmp   %1,%4        \n\t" \
-           "    bne   1f           \n\t" \
-           "    swp   %0,%3,[%2]   \n\t" \
-           "    cmp   %1,%0        \n\t" \
-           "    swpne   %1,%0,[%2] \n\t" \
-           "    bne   0b           \n\t" \
-           "    mov   %0,#1        \n\t" \
-           "1:                     \n\t"
-           : "=&r" (result), "=&r" (tmp)
-           : "r" (p), "r" (newval), "r" (oldval)
-           : "cc", "memory");
-    return result;
-  }
-
-  typedef { volatile long int spl; } fastlock_t;
+  typedef struct { volatile long int spl; } fastlock_t;
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *__alp)
@@ -653,10 +629,19 @@
   static __inline__ int fastlock_trylock(fastlock_t *__alp)
   { 
     volatile long int *alp = &(__alp->spl);
-    if (__compare_and_swap( alp, 0, 1) == 0)
-      return +1;
-    return 0;
-  }  
+    int result;
+    
+    __asm__ __volatile__ (
+           "	mov	%0,#1      \n\t" \
+           "	swp	%0,%0,[%1] \n\t" \
+           "	cmp	%0,#0      \n\t" \
+           "	movne	%0,#0      \n\t" \
+           "	moveq	%0,#1      \n\t"
+           : "=&r" (result)                /* If it has already been locked */
+           : "r" (alp)                     /* the 1 can stay there !        */
+           : "cc", "memory");
+    return result;
+  }
   static __inline__ void fastlock_lock(fastlock_t *m)
   {
     while (fastlock_trylock(m) <= 0)
