@@ -3,8 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.cpp,v $
+// Revision 1.152.2.13  1999/01/17 12:23:15  remi
+// Inc sync with 1.183
+//
 // Revision 1.152.2.12  1999/01/09 11:14:52  remi
 // Synced with :
+//
 //  Revision 1.182  1999/01/06 22:16:10  dicamillo
 //  Changed credit for Dan Oetting at his request.
 //
