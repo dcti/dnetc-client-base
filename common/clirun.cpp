@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.111 1999/12/04 15:42:18 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.112 1999/12/10 06:26:29 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -79,6 +79,7 @@ struct thread_param_block
   unsigned int priority;
   int refillneeded;
   int do_suspend;
+  int do_exit;
   int do_refresh;
   int is_suspended;
   int is_non_preemptive_os;
@@ -231,14 +232,14 @@ void Go_mt( void * parm )
   thrparams->is_suspended = 1;
   thrparams->do_refresh = 1;
 
-  while (!CheckExitRequestTriggerNoIO())
+  while (!thrparams->do_exit)
   {
     int didwork = 0; /* did we work? */
     if (thrparams->do_refresh)
       thisprob = GetProblemPointerFromIndex(threadnum);
-    if (thisprob == NULL || thrparams->do_suspend || CheckPauseRequestTriggerNoIO())
+    if (thisprob == NULL || thrparams->do_suspend)
     {
-//printf("run: isnull? %08x, ispausereq? %d, issusp? %d\n", thisprob, CheckPauseRequestTriggerNoIO(), thrparams->do_suspend);
+//printf("run: isnull? %08x, issusp? %d\n", thisprob, thrparams->do_suspend);
       if (thisprob == NULL)  // this is a bad condition, and should not happen
         thrparams->refillneeded = 1;// ..., ie more threads than problems
       if (thrparams->realthread)
@@ -368,7 +369,7 @@ void Go_mt( void * parm )
          we also give MP a chance to better shuffle things about.
       */
       if (!usepollprocess && thrparams->thread_restart_time && 
-         thrparams->realthread && didwork && !CheckExitRequestTriggerNoIO())
+         thrparams->realthread && didwork && !thrparams->do_exit)
       {
         unsigned long tnow = GetCurrentTime();
         if (tnow > thrparams->thread_restart_time)
@@ -461,6 +462,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     thrparams->realthread = 1;            /* int */
     thrparams->priority = priority;       /* unsigned int */
     thrparams->is_non_preemptive_os = is_non_preemptive_os; /* int */
+    thrparams->do_exit = 0;
     thrparams->do_suspend = 0;
     thrparams->is_suspended = 0;
     thrparams->do_refresh = 1;
@@ -715,6 +717,24 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
 
 /* ----------------------------------------------------------------------- */
 
+static int __gsc_flag_allthreads(struct thread_param_block *thrparam,
+                                 int whichflag )
+{
+  int isexit = 0, ispause = 0;
+  if (whichflag == 'x')
+    isexit = 1;
+  else if (whichflag == 's')
+    ispause = 1;
+  while (thrparam)
+  {
+    if (isexit)
+      thrparam->do_exit = isexit;
+    thrparam->do_suspend = ispause;
+    thrparam = thrparam->next;
+  }
+  return 0;
+}                                 
+ 
 static int __CheckClearIfRefillNeeded(struct thread_param_block *thrparam,
                                       int doclear)
 {
@@ -1151,12 +1171,12 @@ int ClientRun( Client *client )
       if (isPaused)
       {
         if (!wasPaused)
-          Log("Paused...\n");
+          __gsc_flag_allthreads(thread_data_table, 's'); //suspend 'em
         wasPaused = 1;
       }
       else if (wasPaused)
       {
-        Log("Running again after pause...\n");
+        __gsc_flag_allthreads(thread_data_table, 0 ); //un-suspend 'em
         wasPaused = 0;
       }
     }
@@ -1339,6 +1359,7 @@ int ClientRun( Client *client )
   //======================END OF MAIN LOOP =====================
 
   RaiseExitRequestTrigger(); // will make other threads exit
+  __gsc_flag_allthreads(thread_data_table, 'x'); //exit'ify them
 
   // ----------------
   // Shutting down: shut down threads

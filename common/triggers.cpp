@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.23 1999/12/02 05:25:24 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.24 1999/12/10 06:26:29 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -28,8 +28,9 @@ return "@(#)$Id: triggers.cpp,v 1.23 1999/12/02 05:25:24 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
-#define TRIGSETBY_INTERNAL  1  /* signal or explicit call to raise */ 
-#define TRIGSETBY_EXTERNAL  2  /* flag file */
+#define TRIGSETBY_SIGNAL   0x1  /*signal or explicit call to raise */ 
+#define TRIGSETBY_FLAGFILE 0x2  /*flag file */
+#define TRIGSETBY_APPACTIV 0x4  /*pause due to a particular app being active*/
 
 struct trigstruct 
 {
@@ -38,17 +39,17 @@ struct trigstruct
   unsigned int incheck; //recursion check
   void (*pollproc)(void);
   volatile int trigger; 
+  int laststate;
   time_t nextcheck;
 };
 
 static struct 
 {
-  int exitmsgwasseen;
   struct trigstruct exittrig;
   struct trigstruct pausetrig;
   struct trigstruct huptrig;
-  char pausefilebuf[64];
-  char exitfilebuf[64];
+  char pausefilebuf[128]; /* includes path */
+  char exitfilebuf[128];
 } trigstatics;
 
 static void __assert_statics(void)
@@ -63,55 +64,48 @@ static void __assert_statics(void)
 
 // -----------------------------------------------------------------------
 
+static int __trig_raise(struct trigstruct *trig )
+{
+  int oldstate;
+  __assert_statics();
+  oldstate = trig->trigger;
+  trig->trigger |= TRIGSETBY_SIGNAL;
+  return oldstate;
+}  
+
+static int __trig_clear(struct trigstruct *trig )
+{
+  int oldstate;
+  __assert_statics();
+  oldstate = trig->trigger;
+  trig->trigger &= ~TRIGSETBY_SIGNAL;
+  return oldstate;
+}
+
 int RaiseExitRequestTrigger(void) 
-{ 
-  int oldstate;
-  __assert_statics();
-  oldstate = trigstatics.exittrig.trigger;
-  trigstatics.exittrig.trigger = TRIGSETBY_INTERNAL;
-  return (oldstate);
-}  
-
+{ return __trig_raise( &trigstatics.exittrig ); }
 int RaiseRestartRequestTrigger(void) 
-{ 
-  int oldstate;
-  __assert_statics();
-  oldstate = trigstatics.huptrig.trigger;
-  trigstatics.exittrig.trigger = TRIGSETBY_INTERNAL;
-  trigstatics.huptrig.trigger = TRIGSETBY_INTERNAL;
-  return (oldstate);
-}  
-
+{ RaiseExitRequestTrigger(); return __trig_raise( &trigstatics.huptrig ); }
 static int ClearRestartRequestTrigger(void) /* used internally */
-{
-  int oldstate;
-  __assert_statics();
-  oldstate = trigstatics.huptrig.trigger;
-  trigstatics.huptrig.trigger = 0;
-  return oldstate;
-}  
-
+{ return __trig_clear( &trigstatics.huptrig ); }
 int RaisePauseRequestTrigger(void) 
-{ 
-  int oldstate;
-  __assert_statics();
-  oldstate = trigstatics.pausetrig.trigger;
-  trigstatics.pausetrig.trigger = TRIGSETBY_INTERNAL;
-  return (oldstate);
-}  
-
+{ return __trig_raise( &trigstatics.pausetrig ); }
 int ClearPauseRequestTrigger(void)
-{
-  int oldstate;
-  __assert_statics();
-  if ( trigstatics.pausetrig.flagfile && 
-    access( GetFullPathForFilename( trigstatics.pausetrig.flagfile ),0)==0)
-    unlink( GetFullPathForFilename( trigstatics.pausetrig.flagfile ) );
-  oldstate = trigstatics.pausetrig.trigger;
-  trigstatics.pausetrig.trigger = 0;
+{ 
+  int oldstate = __trig_clear( &trigstatics.pausetrig );
+  #if 0
+  if ((trigstatics.pausetrig.trigger & TRIGSETBY_FLAGFILE)!=0 &&
+      trigstatics.pausetrig.flagfile)
+  {
+    if (access( trigstatics.pausetrig.flagfile, 0 ) == 0)
+    {
+      unlink( trigstatics.pausetrig.flagfile );
+      trigstatics.pausetrig.trigger &= ~TRIGSETBY_FLAGFILE;
+    }
+  }
+  #endif  
   return oldstate;
 }  
-
 int CheckExitRequestTriggerNoIO(void) 
 { __assert_statics(); return (trigstatics.exittrig.trigger); } 
 int CheckPauseRequestTriggerNoIO(void) 
@@ -137,49 +131,20 @@ void *RegisterPollDrivenBreakCheck( register void (*proc)(void) )
 static void __PollExternalTrigger(struct trigstruct *trig, int undoable)
 {
   __assert_statics(); 
-  #if (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN32S)
-  // we treat a running defrag as another flagfile (we need to ensure
-  // that two 'external' type checks don't cancel each other out.)
-  if (trig == &trigstatics.pausetrig)
-  {
-    static int defrag_set_it = 0;
-    if (FindWindow("MSDefragWClass1",NULL))
-    {
-      if (!defrag_set_it)
-      {
-        defrag_set_it = 1;
-        if (trig->trigger) /*was already paused */
-          defrag_set_it++;
-        trig->trigger = TRIGSETBY_EXTERNAL; 
-        Log("Found defrag to be running.%s..\n",
-           ((defrag_set_it>1)?(" Pause level raised."):("")) );
-      }
-      return;
-    } 
-    else if (defrag_set_it) /* we set it, we clear it */
-    {
-      Log("Defrag is no longer running.%s..\n",
-          ((defrag_set_it>1)?(" Pause level lowered."):("")) );
-      if (defrag_set_it < 2) /* it wasn't paused before */ 
-        trig->trigger = 0;
-      defrag_set_it = 0;
-    }
-  }
-  #endif
-  if ((undoable || !trig->trigger) && trig->flagfile)
+  if ((undoable || (trig->trigger & TRIGSETBY_FLAGFILE)==0) && trig->flagfile)
   {
     time_t now;
     if ((now = time(NULL)) >= trig->nextcheck) 
     {
-      if ( access( GetFullPathForFilename( trig->flagfile ), 0 ) == 0 )
+      if ( access( trig->flagfile, 0 ) == 0 )
       {
         trig->nextcheck = now + (time_t)trig->pollinterval.whenon;
-        trig->trigger = TRIGSETBY_EXTERNAL;
+        trig->trigger |= TRIGSETBY_FLAGFILE;
       }
       else
       {
         trig->nextcheck = now + (time_t)trig->pollinterval.whenoff;
-        trig->trigger = 0;
+        trig->trigger &= ~TRIGSETBY_FLAGFILE;
       }
     }
   }
@@ -191,7 +156,7 @@ static void __PollExternalTrigger(struct trigstruct *trig, int undoable)
 int CheckExitRequestTrigger(void) 
 {
   __assert_statics(); 
-  if (!trigstatics.exitmsgwasseen && !trigstatics.exittrig.incheck)
+  if (!trigstatics.exittrig.laststate && !trigstatics.exittrig.incheck)
   {
     ++trigstatics.exittrig.incheck;
     if ( !trigstatics.exittrig.trigger )
@@ -203,12 +168,12 @@ int CheckExitRequestTrigger(void)
       __PollExternalTrigger( &trigstatics.exittrig, 0 );
     if ( trigstatics.exittrig.trigger )
     {
-      LogScreen("*Break*%s\n", 
-       (trigstatics.exittrig.trigger == TRIGSETBY_EXTERNAL)?
-         (" (found exit flag file)"): 
-         ((trigstatics.huptrig.trigger)?(" Restarting..."):
-         (" Shutting down...")) );
-      trigstatics.exitmsgwasseen = 1;             
+      trigstatics.exittrig.laststate = 1;             
+      LogScreen("*Break* %s\n",
+        ( ((trigstatics.exittrig.trigger & TRIGSETBY_FLAGFILE)!=0)?
+             ("(found exit flag file)"): 
+         ((trigstatics.huptrig.trigger)?("Restarting..."):("Shutting down..."))
+          ) );
     }
     --trigstatics.exittrig.incheck;
   }
@@ -222,13 +187,67 @@ int CheckPauseRequestTrigger(void)
   __assert_statics(); 
   if ( CheckExitRequestTrigger() )   //only check if not exiting
     return 0;
-  if ( !trigstatics.pausetrig.incheck && 
-       trigstatics.pausetrig.trigger != TRIGSETBY_INTERNAL )
+  if ( (++trigstatics.pausetrig.incheck) == 1 )
   {
-    ++trigstatics.pausetrig.incheck;
+    #if (CLIENT_OS==OS_WIN32) // || (CLIENT_OS==OS_WIN16)
+    if (FindWindow("MSDefragWClass1",NULL))
+      trigstatics.pausetrig.trigger |= TRIGSETBY_APPACTIV;
+    else
+      trigstatics.pausetrig.trigger &= ~TRIGSETBY_APPACTIV;
+    #endif
     __PollExternalTrigger( &trigstatics.pausetrig, 1 );
-    --trigstatics.pausetrig.incheck;
+    if (trigstatics.pausetrig.laststate != trigstatics.pausetrig.trigger)
+    {
+      if ((trigstatics.pausetrig.trigger & TRIGSETBY_SIGNAL)!=0 &&
+          (trigstatics.pausetrig.laststate & TRIGSETBY_SIGNAL)==0)
+      {
+        Log("Pause%sd... (user generated)\n",
+             ((trigstatics.pausetrig.laststate)?(" level raise"):("")) );
+        trigstatics.pausetrig.laststate |= TRIGSETBY_SIGNAL;
+      }
+      else if ((trigstatics.pausetrig.trigger & TRIGSETBY_SIGNAL)==0 &&
+          (trigstatics.pausetrig.laststate & TRIGSETBY_SIGNAL)!=0)
+      {
+        trigstatics.pausetrig.laststate &= ~TRIGSETBY_SIGNAL;
+        Log("%s... (user cleared)\n",
+          ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
+          ("Running again after pause")) );
+      }
+      if ((trigstatics.pausetrig.trigger & TRIGSETBY_FLAGFILE)!=0 &&
+          (trigstatics.pausetrig.laststate & TRIGSETBY_FLAGFILE)==0)
+      {
+        Log("Pause%sd... (found flagfile)\n",
+             ((trigstatics.pausetrig.laststate)?(" level raise"):("")) );
+        trigstatics.pausetrig.laststate |= TRIGSETBY_FLAGFILE;
+      }
+      else if ((trigstatics.pausetrig.trigger & TRIGSETBY_FLAGFILE)==0 &&
+          (trigstatics.pausetrig.laststate & TRIGSETBY_FLAGFILE)!=0)
+      {
+        trigstatics.pausetrig.laststate &= ~TRIGSETBY_FLAGFILE;
+        Log("%s... (flagfile cleared)\n",
+          ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
+          ("Running again after pause")) );
+      }
+      #if (CLIENT_OS==OS_WIN32) // || (CLIENT_OS==OS_WIN16)
+      if ((trigstatics.pausetrig.trigger & TRIGSETBY_APPACTIV)!=0 &&
+          (trigstatics.pausetrig.laststate & TRIGSETBY_APPACTIV)==0)
+      {
+        Log("Pause%sd... (defrag running)\n",
+             ((trigstatics.pausetrig.laststate)?(" level raise"):("")) );
+        trigstatics.pausetrig.laststate |= TRIGSETBY_APPACTIV;
+      }
+      else if ((trigstatics.pausetrig.trigger & TRIGSETBY_APPACTIV)==0 &&
+          (trigstatics.pausetrig.laststate & TRIGSETBY_APPACTIV)!=0)
+      {
+        trigstatics.pausetrig.laststate &= ~TRIGSETBY_APPACTIV;
+        Log("%s... (defrag no longer running)\n",
+          ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
+          ("Running again after pause")) );
+      }
+      #endif
+    }
   }
+  --trigstatics.pausetrig.incheck;
   return( trigstatics.pausetrig.trigger );
 }   
 
@@ -246,6 +265,43 @@ int DeinitializeTriggers(void)
 
 // -----------------------------------------------------------------------
 
+static const char *_init_trigfile(const char *fn, char *buffer, unsigned int bufsize )
+{
+  if (buffer && bufsize)
+  {
+    if (fn)
+    {
+      while (*fn && isspace(*fn))
+        fn++;
+      if (*fn)  
+      {
+        unsigned int len = strlen(fn);
+        while (len > 0 && isspace(fn[len-1]))
+          len--;
+        if (len && len < (bufsize-1))
+        {
+          strncpy( buffer, fn, len );
+          buffer[len] = '\0';
+          if (strcmp( buffer, "none" ) != 0)
+          {
+            fn = GetFullPathForFilename( buffer );
+            if (fn)
+            {
+              if (strlen(fn) < (bufsize-1))
+              {
+                strcpy( buffer, fn );
+                return buffer;
+              }
+            }
+          }
+        }
+      }
+    }
+    buffer[0] = '\0';
+  }
+  return (const char *)0;
+}
+
 int InitializeTriggers( const char *exitfile, const char *pausefile )
 {
   __assert_statics(); 
@@ -256,33 +312,10 @@ int InitializeTriggers( const char *exitfile, const char *pausefile )
   trigstatics.pausetrig.pollinterval.whenoff = PAUSEFILE_CHECKTIME_WHENOFF;
   CliSetupSignals();
 
-  if (exitfile)
-  {
-    trigstatics.exittrig.flagfile = NULL;
-    while (*exitfile && isspace(*exitfile))
-      exitfile++;
-    strncpy(trigstatics.exitfilebuf,exitfile,sizeof(trigstatics.exitfilebuf)-1);
-    trigstatics.exitfilebuf[sizeof(trigstatics.exitfilebuf)-1]=0;
-    unsigned int len=strlen(trigstatics.exitfilebuf);
-    while (len > 0 && isspace(trigstatics.exitfilebuf[len-1]))
-      trigstatics.exitfilebuf[--len]=0;
-    if (len > 0 && strcmp(trigstatics.exitfilebuf,"none")!=0)
-      trigstatics.exittrig.flagfile = trigstatics.exitfilebuf;
-  }
-
-  if (pausefile)
-  {
-    trigstatics.pausetrig.flagfile = NULL;
-    while (*pausefile && isspace(*pausefile))
-      pausefile++;
-    strncpy(trigstatics.pausefilebuf,pausefile,sizeof(trigstatics.pausefilebuf)-1);
-    trigstatics.pausefilebuf[sizeof(trigstatics.pausefilebuf)-1]=0;
-    unsigned int len=strlen(trigstatics.pausefilebuf);
-    while (len > 0 && isspace(trigstatics.pausefilebuf[len-1]))
-      trigstatics.pausefilebuf[--len]=0;
-    if (len > 0 && strcmp(trigstatics.pausefilebuf,"none")!=0)
-      trigstatics.pausetrig.flagfile = trigstatics.pausefilebuf;
-  }
+  trigstatics.exittrig.flagfile = _init_trigfile(exitfile, 
+               trigstatics.exitfilebuf, sizeof(trigstatics.exitfilebuf) );
+  trigstatics.pausetrig.flagfile = _init_trigfile(pausefile, 
+               trigstatics.pausefilebuf, sizeof(trigstatics.pausefilebuf) );
   return (CheckExitRequestTrigger());
 }  
 
