@@ -12,6 +12,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.94  1998/11/07 14:15:15  cyp
+// InternalCountBuffer() (optionally) returns the number of 2^28 blocks in a
+// buffer.
+//
 // Revision 1.93  1998/11/04 21:28:12  cyp
 // Removed redundant ::hidden option. ::quiet was always equal to ::hidden.
 //
@@ -398,7 +402,6 @@ public:
   int usemmx;
 #endif
 
-protected:
   char proxymessage[64];
 
   u32 totalBlocksDone[2];
@@ -423,7 +426,6 @@ protected:
     // get work from in buffer
     // Returns: -1 on error, otherwise number of blocks now in file.
 
-public:
   s32  CountBufferInput(unsigned int contest);
     // returns number of blocks currently in input buffer
 
@@ -431,21 +433,17 @@ public:
     // dump an entry into output buffer
     // Returns: -1 on error, otherwise number of entries now in file.
 
-protected:
   s32  GetBufferOutput( FileEntry * data , unsigned int contest);
     // get work from output buffer
     // Returns: -1 on error, otherwise number of blocks now in file.
 
-public:
   s32  CountBufferOutput(unsigned int contest);
     // returns number of blocks currently in output buffer
 
   s32 InternalPutBuffer( const char *filename, const FileEntry * data );
   s32 InternalGetBuffer( const char *filename, FileEntry * data, u32 *optype , unsigned int contest);
-  s32 InternalCountBuffer( const char *filename , unsigned int contest);
-#if defined(DONT_USE_PATHWORK)
-  const char *InternalGetLocalFilename( const char *filename );
-#endif
+  unsigned int InternalCountBuffer( unsigned int contest,
+                            int use_out_file,  unsigned int *norm_count );
 
 #if defined(NEEDVIRTUALMETHODS)
   // methods that can be overriden to provide additional functionality
@@ -458,7 +456,6 @@ public:
   bool CheckForcedKeyport(void);
   bool CheckForcedKeyproxy(void);
 
-public:
   Client();
   ~Client() {};
 
