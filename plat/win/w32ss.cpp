@@ -8,7 +8,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.1.2.2 2001/03/26 18:00:02 cyp Exp $"; }
+return "@(#)$Id: w32ss.cpp,v 1.1.2.3 2001/04/12 14:58:10 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -96,7 +96,7 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
     int isDialogActive;
     int reallyClose;
     int sstype; /* 0 == blank, -1 == none */
-    int top, left, height, width;
+    UINT top, left, height, width;
     int mmthreshX, mmthreshY;
   } ss = {0,{0,0},0,0,0,0,0,0,0,0};
   
@@ -110,8 +110,8 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
       GetWindowRect(hwnd, &rc);
       ss.top = rc.top;
       ss.left = rc.left;
-      ss.height = rc.bottom - rc.top;
-      ss.width = rc.right - rc.left;
+      ss.height = (UINT)(rc.bottom - rc.top);
+      ss.width = (UINT)(rc.right - rc.left);
       ss.hParentWnd = GetParent(hwnd);
       if (ss.hParentWnd && GetDesktopWindow() == ss.hParentWnd)
         ss.hParentWnd = NULL;
@@ -130,8 +130,8 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
         GetWindowRect(GetDesktopWindow(), &rc);
         ss.top = rc.top;
         ss.left = rc.left;
-        ss.height = rc.bottom - rc.top;
-        ss.width = rc.right - rc.left;
+        ss.height = (UINT)(rc.bottom - rc.top);
+        ss.width = (UINT)(rc.right - rc.left);
         MoveWindow( hwnd, ss.left,ss.top, ss.width, ss.height, 0 );
       }
       break;
@@ -164,7 +164,7 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
           {
             if (ss.hParentWnd) /* preview mode + transparent */
             {
-              int oldbltmode = STRETCH_ORSCANS;
+              UINT oldbltmode = STRETCH_ORSCANS;
               #if defined(STRETCH_HALFTONE)
               oldbltmode = STRETCH_HALFTONE;
               #endif
@@ -509,17 +509,17 @@ static int SSGetFileData(const char *filename, int *verp, int *isguip,
 
 static UINT SSRunMessageLoop(void)
 {
-  MSG msg;int ranmsg = 0;
+  UINT rc = 0; MSG msg;
   while (PeekMessage(&msg, NULL, 0, 0, (/*PM_NOYIELD|*/PM_NOREMOVE)))
   {
-    ranmsg = 1;
     GetMessage(&msg,NULL,0,0);
+    rc = msg.message; 
     if (msg.message == WM_QUIT)
       break;
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
-  return ((ranmsg)?(msg.message):(0));
+  return rc;
 }
 
 /* ---------------------------------------------------- */
@@ -1197,13 +1197,14 @@ static int SSDoSaver(HINSTANCE hInstance, HWND hParentWnd )
       //in preview mode, hwnd is the parent window, in runmode, hwnd is null
       HWND hFocus = NULL;
       HWND hScrWindow;
-      int exbits = 0, wsbits = 0, cx = 0, cy = 0, ox = 0, oy = 0;
+      DWORD exbits = 0, wsbits = 0;
+      int cx = 0, cy = 0, ox = 0, oy = 0;
 
       if (hParentWnd)
       { 
         RECT rc; GetWindowRect(hParentWnd, &rc);
-        cx=rc.right-rc.left; 
-        cy=rc.bottom-rc.top;  
+        cx = rc.right-rc.left; 
+        cy = rc.bottom-rc.top;  
         wsbits = WS_CHILD|WS_VISIBLE;
       }
       else
@@ -1232,7 +1233,8 @@ static int SSDoSaver(HINSTANCE hInstance, HWND hParentWnd )
         }
       }
       hScrWindow = CreateWindowEx(exbits, wc.lpszClassName, "",
-               wsbits, ox, oy, cx, cy, hParentWnd, NULL, hInstance, NULL );
+                   wsbits, (UINT)ox, (UINT)oy, (UINT)cx, (UINT)cy, 
+                   hParentWnd, NULL, hInstance, NULL );
       if (hScrWindow)
       {
         MSG msg;
@@ -1311,7 +1313,7 @@ BOOL PASCAL VerQueryValue(const void * lpvBlock, LPCSTR lpszSubBlock,
       FreeLibrary(hLib);
     }
   }
-  return rc;
+  return (BOOL)(rc != 0);
 }
 #endif
 
@@ -1786,7 +1788,7 @@ static int _MapSSList(HWND hwnd, int *seltype, char *selname)
     int sel = (int)SendMessage( hwnd, CB_GETCURSEL, 0, 0 );  
     if (sel != CB_ERR)
     {
-      sel = (int)SendMessage( hwnd, CB_GETLBTEXT, sel, (LPARAM)&buf[0] );
+      sel = (int)SendMessage( hwnd, CB_GETLBTEXT, (UINT)sel, (LPARAM)&buf[0] );
       if (sel != CB_ERR)
         buf[sel] = '\0';
     }
@@ -2165,10 +2167,10 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
             {
               hwnd = GetDlgItem( dialog, 405 /* SSCONFIG_FNCONFIG */ );
               if (hwnd)
-                EnableWindow( hwnd, found );
+                EnableWindow( hwnd, (BOOL)found );
               hwnd = GetDlgItem( dialog, 1 /* IDOK */ );
               if (hwnd)
-                EnableWindow( hwnd, found );
+                EnableWindow( hwnd, (BOOL)found );
               lastfound = found;
             }
           }
