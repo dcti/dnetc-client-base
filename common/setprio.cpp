@@ -9,7 +9,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.50.2.9 2000/05/06 13:06:18 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.50.2.10 2000/06/02 16:21:10 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -138,7 +138,7 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
   {
     if ( set_for_thread )
     {
-      // nothing
+      MPKSetThreadPriority( MPKCurrentThread(), 1 );
     }
     else
     {

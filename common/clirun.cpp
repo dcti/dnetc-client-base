@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.57 2000/05/25 17:06:15 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.58 2000/06/02 16:21:09 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1168,18 +1168,17 @@ int ClientRun( Client *client )
           }
           #elif (CLIENT_OS == OS_NETWARE) 
           {
-            /* The switchcount<->runtime ratio is inversely proportionate. 
-               By definition, 1000ms == 1.0 switchcounts/sec. In real life it
-               looks something like this:  (note the middle magic of "55".
-               55ms == one timer tick)
-               msecs:   880  440  220  110  55  27.5   14  6.8  3.4   1.7  
-               count: ~2.75 ~5.5  ~11  ~22 ~55  ~110 ~220 ~440 ~880 ~1760
-               For simplicity, we use 30ms (~half-a-tick) as max for prio 9
-               and 3ms as min (about the finest monotonic res we can squeeze 
-               from the timer on a 386)
+            /* Due to timer resolution limitations, the max yield rate on 
+            NetWare 3 is about 256/sec. For Netware 4 and above the effective
+            yield rate is about twice what we enter here. For nw4/5 we 
+            need ~7500 low-prio-yields/sec to be really "nice". Its all very
+            environment dependant, but we try our best anyway.
             */
+            if (GetFileServerMajorVersionNumber() < 4)
+              non_preemptive_dyn_timeslice_table[tsinitd].usec = 512;
+            else
+              non_preemptive_dyn_timeslice_table[tsinitd].usec = 256;
             non_preemptive_dyn_timeslice_table[tsinitd].optimal = 1024;
-            non_preemptive_dyn_timeslice_table[tsinitd].usec = 512 * (client->priority+1);
           }
           #else /* x86 */
           {
