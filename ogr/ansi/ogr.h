@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.1 2003/03/22 20:11:59 gavin Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.2 2003/04/03 21:29:57 oliver Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -22,10 +22,9 @@
   #error "What's up Doc?"
 #endif
 
-#if (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_POWERPC)
-  #ifdef __VEC__ 
-    #include <altivec.h>
-  #endif
+#if (CLIENT_CPU == CPU_POWERPC) && (defined(__GCC__) || defined(__GNUC__)) && \
+    (defined(__VEC__) || defined(__ALTIVEC__))
+  #include <altivec.h>
 #endif
 
 /* ===================================================================== */
