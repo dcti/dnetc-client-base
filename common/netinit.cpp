@@ -10,6 +10,10 @@
 */
 //
 // $Log: netinit.cpp,v $
+// Revision 1.11  1998/12/21 17:54:23  cyp
+// (a) Network connect is now non-blocking. (b) timeout param moved from
+// network::Get() to object scope.
+//
 // Revision 1.10  1998/12/08 05:49:51  dicamillo
 // Add initialization for MacOS networking.
 //
@@ -46,7 +50,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.10 1998/12/08 05:49:51 dicamillo Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.11 1998/12/21 17:54:23 cyp Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -384,11 +388,12 @@ int NetClose( Network *net )
 
 // prototype is: 
 // ork *NetOpen(const char *keyserver, s32 keyserverport, int nofallback = 1, 
-//       int autofindks = 0, s32 proxytype = 0, const char *proxyhost = NULL, 
-//       s32 proxyport = 0, const char *proxyuid = NULL)
+//       int autofindks = 0, int iotimeout = -1, s32 proxytype = 0, 
+//       const char *proxyhost = NULL, s32 proxyport = 0, 
+//       const char *proxyuid = NULL)
 
 Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback, 
-          int autofindks, s32 proxytype, const char *proxyhost, 
+          int autofindks, int iotimeout, s32 proxytype, const char *proxyhost, 
           s32 proxyport, const char *proxyuid)
 {
   const char *fbkeyserver;
@@ -405,7 +410,8 @@ Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback,
   if ( nofallback )
     fbkeyserver = keyserver;
           
-  net = new Network( keyserver, fbkeyserver, (s16)keyserverport, autofindks);
+  net = new Network( keyserver, fbkeyserver, 
+                     (s16)keyserverport, autofindks, iotimeout );
   success = ( net != NULL );
     
   if (success)

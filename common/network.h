@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.42  1998/12/21 17:54:23  cyp
+// (a) Network connect is now non-blocking. (b) timeout param moved from
+// network::Get() to object scope.
+//
 // Revision 1.41  1998/12/08 05:57:03  dicamillo
 // Add defines for MacOS.
 //
@@ -129,7 +133,10 @@ extern "C" {
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>    // for offsetof
 #include <time.h>
+#include <errno.h>     // for errno and EINTR
+
 #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
 }
 #endif
@@ -318,9 +325,11 @@ class Network; //for forward resolution
 // Network::Network() and NetworkDeinitialize()+Network::~Network() 
 // must be called instead of the Network constructor or destructor.
 extern Network *NetOpen(const char *keyserver, s32 keyserverport, 
-                int nofallback = 1, int autofindks = 0, s32 proxytype = 0, 
+                int nofallback = 1, int autofindks = 0, 
+                int iotimeout = 10, s32 proxytype = 0, 
                 const char *proxyhost = NULL, s32 proxyport = 0, 
                 const char *proxyuid = NULL);
+
 extern int NetClose( Network *net );
 
 ///////////////////////////////////////////////////////////////////////////
@@ -337,18 +346,19 @@ protected:
   char rrdns_name[64];
   s16  port;
   int  mode, startmode;
-  SOCKET sock;          // socket file handle
-  int  retries;         // 3 retries, then do RRDNS lookup
+  SOCKET sock;            // socket file handle
+  int  retries;           // 3 retries, then do RRDNS lookup
   u32  lastaddress;
   s16  lastport;
-  int  isnonblocking;    // whether the socket could be set non-blocking
-  int autofindkeyserver; // implies 'only if hostname is a dnet keyserver'
-  int  verbose_level; // 0 == no messages, 1 == user, 2 = diagnostic/debug
+  int  isnonblocking;     // whether the socket could be set non-blocking
+  int  autofindkeyserver; // implies 'only if hostname is a dnet keyserver'
+  int  verbose_level ;    // 0 == no messages, 1 == user, 2 = diagnostic/debug
+  int  iotimeout;         // use blocking calls if iotimeout is <0
 
   // http related
-  char httpproxy[64];   // also used for socks4
-  s16 httpport;         // also used for socks4
-  char httpid[128];     // also used for socks4
+  char httpproxy[64];     // also used for socks4
+  s16 httpport;           // also used for socks4
+  char httpid[128];       // also used for socks4
   u32 lasthttpaddress;
 
   // communications and decoding buffers
@@ -384,8 +394,8 @@ protected:
     // returns 0 if success/-1 if error. 
     // length of sent buffer stored back into 'length'
 
-  Network( const char * preferred, const char * roundrobin, 
-           s16 port, int AutoFindKeyServer );
+  Network( const char *preferred, const char * roundrobin, 
+           s16 port, int AutoFindKeyServer, int _iotimeout );
     // constructor: If preferred or roundrobin are NULL, use DEFAULT_RRDNS.
     // They can be IP's and not necessarily names, though a name is better
     // suited for roundrobin use.  if port is 0, use DEFAULT_PORT
@@ -403,8 +413,10 @@ protected:
     // returns -1 on error, 0 on success
 
   friend Network *NetOpen(const char *keyserver, s32 keyserverport, 
-                  int nofallback, int autofindks, s32 proxytype, 
-                  const char *proxyhost, s32 proxyport, const char *proxyuid);
+                          int nofallback, int autofindks, int iotimeout, 
+                          s32 proxytype, const char *proxyhost, s32 proxyport, 
+                          const char *proxyuid );
+
   friend int NetClose( Network *net );
 
 public:
@@ -435,7 +447,7 @@ public:
   int  Close( void );
     // close the connection
 
-  s32  Get( u32 length, char * data, u32 timeout = 10 );
+  s32  Get( u32 length, char * data );
     // recv data over the open connection, uue/http based on ( mode & MODE_UUE ) etc.
     // Returns length of read buffer.
 

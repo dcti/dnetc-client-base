@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.53  1998/12/21 17:54:23  cyp
+// (a) Network connect is now non-blocking. (b) timeout param moved from
+// network::Get() to object scope.
+//
 // Revision 1.52  1998/12/08 05:56:18  dicamillo
 // Add MacOS code for LowLevelConditionSocket.
 //
@@ -145,7 +149,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.52 1998/12/08 05:56:18 dicamillo Exp $"; }
+return "@(#)$Id: network.cpp,v 1.53 1998/12/21 17:54:23 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -156,20 +160,13 @@ return "@(#)$Id: network.cpp,v 1.52 1998/12/08 05:56:18 dicamillo Exp $"; }
 #include "cmpidefs.h"  // strncmpi(), strcmpi()
 #include "logstuff.h"  // LogScreen()
 #include "clitime.h"   // CliGetTimeString(NULL,1);
-#include <stddef.h>    // for offsetof
-#if (CLIENT_OS == OS_RISCOS)
-extern "C"
-{
-#include <errno.h>     // for errno and EINTR
-};
-#elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
-      (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-#  define ERRNO_IS_UNUSABLE 
-#else
-#include <errno.h>     // for errno and EINTR
+#include "network.h"   // thats us
+
+#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
+    (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+#define ERRNO_IS_UNUSABLE /* ... for network purposes */
 #endif
 
-#include "network.h"   // thats us
 extern int NetCheckIsOK(void); // used before doing i/o
 
 //----------------------------------------------------------------------
@@ -251,16 +248,6 @@ const char *Socks5ErrorText[9] =
 
 //======================================================================
 
-class NetTimer
-{
-  time_t start;
-public:
-  NetTimer(void) : start(time(NULL)) {};
-  operator u32 (void) {return time(NULL) - start;}
-};
-
-//======================================================================
-
 //short circuit the u32 -> in_addr.s_addr ->inet_ntoa method.
 //besides, it works around context issues.
 static const char *__inet_ntoa__(u32 addr)
@@ -274,14 +261,14 @@ static const char *__inet_ntoa__(u32 addr)
 //======================================================================
 
 Network::Network( const char * Preferred, const char * Roundrobin, 
-                  s16 Port, int AutoFindKeyServer )
+             s16 Port, int AutoFindKeyServer, int _iotimeout )
 {
   // intialize communication parameters
   strncpy(server_name, (Preferred ? Preferred : ""), sizeof(server_name));
   strncpy(rrdns_name, (Roundrobin ? Roundrobin : ""), sizeof(rrdns_name));
   port = (s16) (Port ? Port : DEFAULT_PORT);
   autofindkeyserver = AutoFindKeyServer;
-  isnonblocking = 0; // whether the socket could be set non-blocking
+  
   mode = startmode = 0;
   retries = 0;
   sock = INVALID_SOCKET;
@@ -289,6 +276,15 @@ Network::Network( const char * Preferred, const char * Roundrobin,
   httplength = 0;
   lasthttpaddress = lastaddress = 0;
   httpid[0] = 0;
+
+  isnonblocking = 0;      /* whether the socket could be set non-blocking */
+  iotimeout = _iotimeout; /* if iotimeout is <0, use blocking calls */
+  if (iotimeout < 0)
+    iotimeout = -1;
+  else if (iotimeout < 5)
+    iotimeout = 5;
+  else if (iotimeout > 120)
+    iotimeout = 120;
 
   #ifdef DEBUG
   verbose_level = 2;
@@ -305,7 +301,7 @@ Network::Network( const char * Preferred, const char * Roundrobin,
      ((dummy = offsetof(SOCKS5METHODREPLY, end)) != 2) ||
      ((dummy = offsetof(SOCKS5USERPWREPLY, end)) != 2) ||
      ((dummy = offsetof(SOCKS5, end)) != 10))
-    LogScreenf("Network::Socks Incorrectly packed structures.\n");
+    LogScreen("Network::Socks Incorrectly packed structures.\n");
 }
 
 
@@ -410,7 +406,8 @@ int Network::Open( SOCKET insock)
   uubuffer.Clear();
 
   // make socket non-blocking
-  isnonblocking = ( MakeNonBlocking() == 0);
+  isnonblocking = (iotimeout < 0)?(0):(MakeNonBlocking() == 0);
+
   return 0;
 }  
 
@@ -435,6 +432,17 @@ int Network::Open( void )               // returns -1 on error, 0 on success
     return -1;
   
   success = (LowLevelCreateSocket() == 0);      // create a new socket
+
+  if (success)
+    {
+    if (iotimeout < 0)
+      isnonblocking = 0;
+    else
+      isnonblocking = ( MakeNonBlocking() == 0 );
+    if (verbose_level > 1) //debug
+      LogScreen("Network::Connected (%sblocking).\n", 
+                                 ((isnonblocking)?("non-"):("")) );
+    }
 
   if (!success)
     {
@@ -555,7 +563,9 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       LogScreen("Connecting to %s:%u...\n", conntohost,
                                               ((unsigned int)(lastport)) );
       }
+
     success = ( LowLevelConnectSocket( lastaddress, lastport ) == 0 );
+
     if (!success)
       {
       if (verbose_level > 0)
@@ -606,15 +616,8 @@ int Network::Open( void )               // returns -1 on error, 0 on success
        ((startmode & MODE_HTTP)?("HTTP "):("??? "))))));
       }
     }
-    
-  if (success)
-    {
-    isnonblocking = ( MakeNonBlocking() == 0 );
-    if (verbose_level > 1) //debug
-      LogScreen("Network::Connected (%sblocking).\n", 
-                                 ((isnonblocking)?("non-"):("")) );
-    }
 
+    
   if (!success)
     {
     LowLevelCloseSocket();
@@ -841,12 +844,12 @@ int Network::Close(void)
 // -----------------------------------------------------------------------
 
 // Returns length of read buffer.
-s32 Network::Get( u32 length, char * data, u32 timeout )
+s32 Network::Get( u32 length, char * data )
 {
-  NetTimer timer;
   int need_close = 0;
+  time_t timestop = time(NULL)+((time_t)((isnonblocking)?(iotimeout):(0)));
 
-  while (netbuffer.GetLength() < length && timer <= timeout)
+  while (netbuffer.GetLength() < length && time(NULL) <= timestop)
   {
     int nothing_done = 1;
 
@@ -1238,7 +1241,7 @@ int Network::LowLevelCreateSocket(void)
 
 int Network::LowLevelCloseSocket(void)
 {
-#if defined( _TIUSER_ ) //TLI
+#if defined( _TIUSER_ )                                //TLI
    if ( sock != INVALID_SOCKET )
      {
      t_blocking( sock ); /* turn blocking back on */
@@ -1252,7 +1255,7 @@ int Network::LowLevelCloseSocket(void)
      sock = INVALID_SOCKET;
      return rc;
      }
-#else //BSD socks
+#else                                                  //BSD socks
    if ( sock != INVALID_SOCKET )
      {
      LowLevelConditionSocket( CONDSOCK_BLOCKING_ON );
@@ -1277,20 +1280,33 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
     return -1;
 
 #if defined(_TIUSER_)                                            //TLI
-  if ( t_bind( sock, NULL, NULL ) == -1 )
-    return -1;
-  struct t_call *sndcall = (struct t_call *)t_alloc(sock, T_CALL, T_ADDR);
-  if ( sndcall == NULL )
-    return -1;
-  sndcall->addr.len  = sizeof(struct sockaddr_in);
-  sndcall->opt.len   = 0;
-  sndcall->udata.len = 0;
-  struct sockaddr_in *sin = (struct sockaddr_in *) sndcall->addr.buf;
-  sin->sin_addr.s_addr = that_address;
-  sin->sin_family = AF_INET;
-  sin->sin_port = htons(that_port);
-  int rc = t_connect( sock, sndcall, NULL);
-  t_free((char *)sndcall, T_CALL);
+  int rc = -1;
+  if ( t_bind( sock, NULL, NULL ) != -1 )
+    {
+    struct t_call *sndcall = (struct t_call *)t_alloc(sock, T_CALL, T_ADDR);
+    if ( sndcall != NULL )
+      {
+      sndcall->addr.len  = sizeof(struct sockaddr_in);
+      sndcall->opt.len   = 0;
+      sndcall->udata.len = 0;
+      struct sockaddr_in *sin = (struct sockaddr_in *) sndcall->addr.buf;
+      sin->sin_addr.s_addr = that_address;
+      sin->sin_family = AF_INET;
+      sin->sin_port = htons(that_port);
+      rc = t_connect( sock, sndcall, NULL);
+      if (isnonblocking && rc == -1)
+        {
+        time_t stoptime = time(NULL) + 
+                          (time_t)(1+((iotimeout<=0)?(0):(iotimeout)));
+        while (rc == -1 && t_error == TNODATA && time(NULL) < stoptime)
+          {
+          if (t_rcvconnect(sock, NULL) != -1) 
+            rc = 0;
+          }
+        }
+      t_free((char *)sndcall, T_CALL);
+      }
+    }
   return rc;
 #else
   #if (defined( SOL_SOCKET ) && defined( SO_REUSEADDR ) && defined(AF_INET))
@@ -1308,7 +1324,102 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
     sin.sin_port = htons( that_port ); 
     sin.sin_addr.s_addr = that_address;
 
-    if (!(connect(sock, (struct sockaddr *) &sin, sizeof(sin)) < 0))
+    #ifdef ENSURE_BLOCKING_SOCKET_AROUND_CONNECT
+    int tmp_isblocking = (isnonblocking==0);
+    if (tmp_isblocking==0)
+      tmp_isblocking = (MakeBlocking()==0);
+    if (tmp_isblocking==0)
+      return -1;
+    #endif
+
+    int rc = connect(sock, (struct sockaddr *)&sin, sizeof(sin));
+    
+    #ifdef ENSURE_BLOCKING_SOCKET_AROUND_CONNECT
+    if (isnonblocking)
+      isnonblocking = (MakeNonBlocking()==0);
+    else
+    #endif
+    
+    if (isnonblocking && rc < 0)
+      {
+      timeval tv;
+      tv.tv_sec = (time_t)(1+((iotimeout<=0)?(0):(iotimeout)));
+      tv.tv_usec = 0;
+
+      if (MakeBlocking()==0)
+        {
+        while (rc < 0)
+          {
+          fd_set writefds, exceptfds;
+
+          #if defined(__WINDOWS_386__) /* hack against FAR * casts in macros*/
+          writefds.fd_array[0]=sock;  writefds.fd_count = 1;
+          exceptfds.fd_array[0]=sock; exceptfds.fd_count = 1;
+          #else
+          FD_ZERO(&writefds);    FD_SET(sock, &writefds);
+          FD_ZERO(&exceptfds);   FD_SET(sock, &exceptfds);
+          #endif
+
+          rc = select(sock + 1, NULL, &writefds, &exceptfds, &tv);
+          if (rc == 0) /* timeout */
+            {
+            #ifndef ERRNO_IS_UNUSABLE
+            errno = ETIMEDOUT;
+            #endif
+            rc = -1;
+            break;
+            }
+          else if (rc > 0)
+            {
+            #if defined(__WINDOWS_386__) /*hack against FAR * casts in macros*/
+            rc = ((__WSAFDIsSet(sock, &writefds))?(0):(-1));
+            #else
+            rc = ((FD_ISSET(sock, &writefds))?(0):(-1));
+            #endif
+            
+            #ifndef ERRNO_IS_UNUSABLE
+            if (rc != 0)      /* exception */
+              errno = EPROTO;
+            #endif
+            break;
+            }
+          else
+            {
+            rc = -1;
+            #ifndef ERRNO_IS_UNUSABLE
+            if (errno != EINTR)
+            #endif
+              break;
+            }
+          }
+        isnonblocking = (MakeNonBlocking() == 0);
+        }
+      #ifndef ERRNO_IS_UNUSABLE
+      else
+        {
+        tv.tv_sec += time(NULL);
+        do{
+          sleep(1);
+          rc = connect( sock, (struct sockaddr *)&sin, sizeof(sin));
+          if (rc >= 0 || errno == EISCONN)
+            {
+            rc = 0;
+            break;
+            }
+          rc = -1;
+          if ( (errno != EINPROGRESS) && (errno != EALREADY) )
+            break; 
+          if (time(NULL) > tv.tv_sec )
+            {
+            errno = ETIMEDOUT;
+            break;
+            }
+          } while (rc < 0);
+        }
+      #endif  
+      }
+
+    if (!( rc < 0))
       return 0;
     }
   #else //no socket support
@@ -1429,9 +1540,9 @@ int Network::LowLevelConditionSocket( unsigned long cond_type )
     #elif (CLIENT_OS == OS_AMIGAOS)
       char flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
       return IoctlSocket(sock, FIONBIO, &flagon);
-	#elif (CLIENT_OS == OS_MACOS)
+          #elif (CLIENT_OS == OS_MACOS)
       char flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
-	  return(0);	// need to check this	
+            return(-1); // need to check this   
     #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
       {
       int flag, res, arg;

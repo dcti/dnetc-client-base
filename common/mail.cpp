@@ -1,9 +1,14 @@
 // Created by Tim Charron (tcharron@interlog.com) 97.9.17
+// Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.26  1998/12/21 17:54:23  cyp
+// (a) Network connect is now non-blocking. (b) timeout param moved from
+// network::Get() to object scope.
+//
 // Revision 1.25  1998/08/24 23:50:03  cyp
 // added mailmessage.clear() so logstuff can clear the spool if necessary.
 //
@@ -100,7 +105,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.25 1998/08/24 23:50:03 cyp Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.26 1998/12/21 17:54:23 cyp Exp $"; }
 #endif
 
 #include "network.h"
@@ -125,7 +130,7 @@ static int get_smtp_result( Network * net )
 
   while (index>=0) //ie, while(1)
     {
-    if ( net->Get( 1, &in_data[index], 2*NETTIMEOUT ) != 1)
+    if ( net->Get( 1, &in_data[index] ) != 1)
       return(-1);
     #ifdef SHOWMAIL
     printf( "%c", in_data[index] );
@@ -835,7 +840,7 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
   #ifdef SHOWMAIL
   LogScreen("SHOWMAIL: appending %d bytes to mail spool.\n"
             "          max spool len: %d, old spool len: %d\n", 
-	    (int)txtlen,
+            (int)txtlen,
     #if (defined(MAILSPOOL_IS_AUTOBUFFER) || defined(MAILSPOOL_IS_MEMFILE))
        (int)((msg->sendthreshold/10)*11),
     #else
@@ -855,7 +860,7 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
       if (msg->spoolbuff != NULL)
         {
         msglen = (unsigned long)(msg->spoolbuff->GetLength());
-	      
+              
         if (( msglen + txtlen ) >= ( msg->maxspoolsize )) 
           {
           msg->spoolbuff->Reserve(((s32)(txtlen))); //
