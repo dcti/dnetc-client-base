@@ -91,7 +91,7 @@ extern "C" {
   {
     #include <stdarg.h>
     #include <machine/endian.h>
-    #include <kernel.h>
+    #include <swis.h>
     extern unsigned int ARMident(), IOMDident();
     extern void riscos_clear_screen();
     extern bool riscos_check_taskwindow();

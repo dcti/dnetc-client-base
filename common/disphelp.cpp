@@ -30,8 +30,10 @@ static int readkeypress()
   (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_NETWARE)
   ch = getch();
   if (!ch) ch = (getch() << 8);
+#elif (CLIENT_OS == OS_RISCOS)
+  ch = _swi(OS_ReadC, _RETURN(0));
 #elif ((CLIENT_OS == OS_LINUX) || ((CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_ARM)))
-  struct termios stored;     
+  struct termios stored;
   struct termios newios;
 
   /* Get the original termios configuration */
@@ -52,7 +54,7 @@ static int readkeypress()
   /* Restore the original settings */
   tcsetattr(0,TCSANOW,&stored);
 #else
-  ch = getchar()
+  ch = getchar();
 #endif
 
   return ch;

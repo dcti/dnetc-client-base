@@ -1119,7 +1119,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   (problem[0]).percent = 0;
 #if (CLIENT_OS == OS_NETWARE)
   //A normal .Run() with such a large timeslice would cause the OS to
-  //suspend this thread for hogging the CPU, so we run with a small 
+  //suspend this thread for hogging the CPU, so we run with a small
   //timeslice and yield frequently.
   while ( (problem[0]).Run( 2000 / PIPELINE_COUNT , 0 ) == 0 )
   {                             //normal ThreadSwitch on NetWare 3.x
@@ -1433,9 +1433,7 @@ u32 log2x(u32 x)
 s32 Client::Run( void )
 {
   FileEntry fileentry;
-#if !defined(MULTITHREAD)
-  s32 run;
-#else
+#if defined(MULTITHREAD)
   char buffer[MAXCPUS][4][40];
   #if (CLIENT_OS == OS_BEOS)
     static char * thstart[MAXCPUS][4];
@@ -2329,7 +2327,7 @@ PreferredIsDone1:
                  " %s  %d %s Blocks are in file %s\n",
                  CliGetTimeString(NULL,1), count, CliGetContestNameFromID(fileentry.contest),
                  (nodiskbuffers ? "(memory-in)" : ini_in_buffer_file[fileentry.contest]),
-                 CliGetTimeString(NULL,0), CountBufferOutput(fileentry.contest), CliGetContestNameFromID(fileentry.contest), 
+                 CliGetTimeString(NULL,0), CountBufferOutput(fileentry.contest), CliGetContestNameFromID(fileentry.contest),
                  (nodiskbuffers ? "(memory-out)" : ini_out_buffer_file[fileentry.contest]) );
 
           }
@@ -2345,7 +2343,7 @@ PreferredIsDone1:
                  ntohl( fileentry.key.hi ), ntohl( fileentry.key.lo ),
                  Time(), count, (nodiskbuffers ? "(memory-in)": ini_in_buffer_file[fileentry.contest]),
                  Time(), CountBufferOutput(fileentry.contest),
-                 (nodiskbuffers ? "(memory-out)" : ini_out_buffer_file[fileentry.contest]), 
+                 (nodiskbuffers ? "(memory-out)" : ini_out_buffer_file[fileentry.contest]),
                  ((load_problem_count>1)?("ready to process"):("being processed")));
 
             gettimeofday( &stop, &dummy );
@@ -2360,7 +2358,7 @@ PreferredIsDone1:
 
           (problem[cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
         } // end (if 'found' or 'nothing')
-        
+
         DoCheckpoint( load_problem_count );
       } // end(if finished)
     } // endfor(cpu_i)
@@ -3131,9 +3129,9 @@ int main( int argc, char *argv[] )
 
   if (retcode == OK_TO_RUN)
   {
-    if (client.RunStartup()) 
+    if (client.RunStartup())
       retcode = 0;
-  }  
+  }
 
   if (retcode == OK_TO_RUN)
   {

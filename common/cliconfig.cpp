@@ -1250,22 +1250,22 @@ void Client::ValidateConfig( void )
 
   if (strrchr(ini_exit_flag_file, PATH_SEP_C) == NULL)
     strcpy(exit_flag_file,InternalGetLocalFilename(ini_exit_flag_file));
-  else 
+  else
     strcpy(exit_flag_file,ini_exit_flag_file);
 
   if (strrchr(ini_in_buffer_file[0], PATH_SEP_C) == NULL)
     strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
-  else 
+  else
     strcpy(in_buffer_file[0],ini_in_buffer_file[0]);
 
   if (strrchr(ini_out_buffer_file[0], PATH_SEP_C) == NULL)
     strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
-  else 
+  else
     strcpy(out_buffer_file[0],ini_out_buffer_file[0]);
 
   if (strrchr(ini_in_buffer_file[1], PATH_SEP_C) == NULL)
     strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
-  else 
+  else
     strcpy(in_buffer_file[1],ini_in_buffer_file[1]);
 
   if (strrchr(ini_out_buffer_file[1], PATH_SEP_C) == NULL)
@@ -1307,7 +1307,7 @@ void Client::ValidateConfig( void )
     buffer[0]=0; // Blank the string, we have no path info
     }
   else *(slash+1) = 0; // we have to add path info in!
-     
+
     if (strrchr(ini_exit_flag_file,PATH_SEP_C) == NULL)
       {
       // no path already here, add it
@@ -2995,13 +2995,8 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
 void Client::PrintBanner(const char * /*clname*/)
 {
 #if (CLIENT_OS == OS_RISCOS)
-  if (guiriscos)
-  {
-    if (guirestart)
+  if (guiriscos && guirestart)
       return;
-    else
-      clname="";
-  }
 #endif
   LogScreenf( "\nRC5DES v2.%d.%d client - a project of distributed.net\n"
           "Copyright distributed.net 1997-1998\n"
@@ -3011,13 +3006,18 @@ void Client::PrintBanner(const char * /*clname*/)
 #if defined(KWAN)
           "DES Search routines Copyright Matthew Kwan\n"
 #endif
-          "Please visit http://www.distributed.net/ for up to date contest information."
+          "Please visit http://www.distributed.net/ for up to date contest information.\n"
+          "%s\n", CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC,
 #if (CLIENT_OS == OS_NETWARE)
-          "\n\n",CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC);
+          "");
 #else
-          "\nExecute with option '-help' for online help, or read rc5des.txt for more\n"
-          "detailed client option information.\n\n",
-          CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC);
+  #if (CLIENT_OS == OS_RISCOS)
+          guiriscos ?
+          "Interactive help is available, or select 'Help contents' from the menu for\n"
+          "more detailed client information." :
+  #endif
+          "Execute with option '-help' for online help, or read rc5des" EXTN_SEP "txt for more\n"
+          "detailed client option information.\n");
 #endif
 }
 
