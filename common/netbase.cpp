@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.15 2001/01/21 16:22:29 cyp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.16 2001/02/14 19:37:17 ephraim Exp $"; }
 
 #define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -230,6 +230,9 @@ extern "C" {
   #define socklen_t size_t
 #elif ((CLIENT_OS == OS_NTO2) || (CLIENT_OS == OS_QNX))
   #define socklen_t size_t
+#elif (CLIENT_OS == OS_DYNIX)
+  #define socklen_t size_t
+  extern "C" int gethostname(char *, size_t);
 #elif (CLIENT_OS == OS_AMIGAOS)
   #define socklen_t long
 #else
