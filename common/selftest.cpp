@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.11 1999/11/08 05:17:55 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.12 1999/11/08 05:51:01 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -365,7 +365,7 @@ int SelfTest( unsigned int contest )
           for (int i = 0; i < TEST_CASE_DATA-2; i++) {
             contestwork.ogr.workstub.stub.diffs[i] = (u16)((*test_cases)[testnum][2+i]);
             if (contestwork.ogr.workstub.stub.diffs[i] == 0) {
-              contestwork.ogr.workstub.stub.length = i;
+              contestwork.ogr.workstub.stub.length = (u16)i;
               break;
             }
           }
