@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.52 2001/01/03 02:36:39 mfeiri Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.53 2001/01/11 15:51:45 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -216,46 +216,24 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 { 
   CONF_CRUNCHMETER              , /* CONF_MENU_MISC */
   CFGTXT("Crunch-o-meter (progress indicator) style"),"-1 (auto-sense)",
-  /*CFGTXT(*/
-#if 1
-  "-1) auto-sense: Use the 'live-rate style' when an OGR cruncher is active or\n"
+  CFGTXT(
+  "-1) auto-sense: Use the 'absolute style' when an OGR cruncher is active or\n"
   "                there are more than 26 crunchers (a...z), otherwise use the\n"
   "                'relative style'.\n"
   " 0) disabled:   Disable the crunch-o-meter entirely.\n"
   " 1) absolute:   Always display the current position within the packet.\n"
+  "                Example: \"[...] #1: OGR:25/6-20-9-19-3-1 [26,455,914,813]\"\n"
   " 2) relative:   Always display the current position as a percentage relative\n"
   "                to the total amount of work in the packet.\n"
-  "                Since the total amount of work in a packet is known in advance\n"
-  "                only for linear, orthogonal projects such as RC5, DES and CSC,\n"
-  "                forcing the 'relative style' for projects other than those\n"
-  "                mentioned above may result in a display that may be confusing\n"
-  "                or may simply be too crude an approximation to be useful.\n"
+  "                Example: \"....10....20....30....                    \"\n"
+  "                Note that the total amount of work in a packet is known in\n"
+  "                advance only for linear projects such as RC5, DES and CSC.\n"
+  "                Forcing the 'relative style' for other projects may result\n"
+  "                in a display that may be confusing or misleading.\n"
   " 3) live-rate:  Display a per-project 'live' crunch rate and, if supported,\n"
-  "                the crunchers' efficiency. "
-#if 0
-                                              "Note: 'efficiency' may occasionally\n"
-  "                exceed 100% even on non-SMP machines due to regular, periodic\n"
-  "                clock (time-of-day) adjustments made by the OS."
-   /*"adjustments that if you need an explanation 
-      would be futile to try to explain." :) */
-#endif
-  "\n"
-#if 0
-  "Note: The 'absolute' and 'live-rate' styles may negatively influence\n"
-  "      performance on some platforms since they imply frequent screen updates.\n"
-#endif
-  /*)*/,CONF_MENU_MISC,CONF_TYPE_INT,NULL,NULL,-1,3,NULL,NULL
-#else
-  "When left enabled, the client will display an indicator that reflects the\n"
-  "approximate position of each of the first 26 crunchers (a...z) relative\n"
-  "to the packet each cruncher is processing.\n"
-  "\n"
-  "For linear crunching, for instance RC5, the indicator is fairly accurate,\n"
-  "but for non-linear crunching, such as OGR, the indicator is only a crude\n"
-  "approximation since the total amount of work in a packet cannot be\n"
-  "determined until the packet has been processed completely.\n"
-  /*)*/,CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
-#endif
+  "                an approximation of cruncher throughput.\n"
+  "                Example: \"[...] OGR: rate: 3,680,878 nodes/sec\"\n"
+  ),CONF_MENU_MISC,CONF_TYPE_INT,NULL,NULL,-1,3,NULL,NULL
 },
 { 
   CONF_COMPLETIONSOUNDON       , /* CONF_MENU_MISC */

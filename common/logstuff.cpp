@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.45 2000/12/15 00:33:47 oliver Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.46 2001/01/11 15:51:45 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -923,7 +923,7 @@ void LogScreenPercent( unsigned int load_problem_count )
       disp_format = DISPFORMAT_RATE;
     else if (logstatics.crunchmeter < 0 &&
      (prob_count[OGR] > 0 || load_problem_count >= sizeof(pbuf)))
-      disp_format = DISPFORMAT_RATE; //or DISPFORMAT_AUTO for count;
+      disp_format = DISPFORMAT_COUNT; //or DISPFORMAT_RATE for rate;
     /* anything else is percent */
   }
 
