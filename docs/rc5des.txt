@@ -204,8 +204,9 @@
      MS Proxy Server       WinNT       HTTP Proxy
      Novell BorderManager  NetWare     HTTP Proxy
      Purveyor HTTP Proxy   VMS/NetWare HTTP Proxy
-     Wingate 2.x           Win32       HTTP Proxy   http://www.wingate.com
-                                       Port Mapping
+     Wingate 2.x           Win32       HTTP Proxy,  http://www.wingate.com
+                                       Port Mapping,
+                                       SOCKS, telnet
      AltaVista 97 proxy    Unix/Win32  HTTP
 
   5.2  Flushing and fetching via e-mail ----
