@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.46 2003/04/13 20:04:52 teichp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.47 2003/04/20 00:41:15 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -264,6 +264,8 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.46 2003/04/13 20:04:52 teichp Exp $"; }
     #endif
   #elif (CLIENT_CPU == CPU_SPARC)
     extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
+    extern "C" s32 CDECL rc5_72_unit_func_anbe_1( RC5_72UnitWork *, u32 *, void * );
+    extern "C" s32 CDECL rc5_72_unit_func_anbe_2( RC5_72UnitWork *, u32 *, void * );
   #elif (CLIENT_CPU == CPU_MIPS)
     extern "C" s32 CDECL rc5_72_unit_func_MIPS_2 ( RC5_72UnitWork *, u32 *, void * );
   #endif
@@ -508,6 +510,8 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ANSI 2-pipe",
       "ANSI 1-pipe",
       "KKS 2-pipe",
+      "AnBe 1-pipe",
+      "AnBe 2-pipe",
       NULL
     },  
   #elif (CLIENT_CPU == CPU_MIPS)
@@ -2458,6 +2462,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
      #if (CLIENT_CPU == CPU_SPARC)
        case 3:
          unit_func.gen_72 = rc5_72_unit_func_KKS_2;
+         pipeline_count = 2;
+         break;
+       case 4:
+         unit_func.gen_72 = rc5_72_unit_func_anbe_1;
+         pipeline_count = 1;
+         break;
+       case 5:
+         unit_func.gen_72 = rc5_72_unit_func_anbe_2;
          pipeline_count = 2;
          break;
      #endif

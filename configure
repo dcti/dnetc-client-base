@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.77 2003/04/13 20:04:52 teichp Exp $
+# @(#)$Id: configure,v 1.288.2.78 2003/04/20 00:41:15 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -312,7 +312,8 @@ add_sources() # $1=os, $2=arch, $3=custom
 
     if [ "$HAVE_RC5_72" = "1" ]; then
       # DEFAULT_RC5_72="1" # just an addition to the default ansi cores
-      TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/sparc/r72-kks2.s"
+      TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/sparc/r72-kks2.s \
+                      rc5-72/sparc/r72-anbe1.s rc5-72/sparc/r72-anbe2.s"
     fi # HAVE_RC5_72
 
     if [ "$HAVE_DES" = "1" ]; then
