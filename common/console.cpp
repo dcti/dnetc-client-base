@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.38 2000/06/04 10:13:39 oliver Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.39 2000/06/13 00:31:26 mfeiri Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -37,11 +37,12 @@ return "@(#)$Id: console.cpp,v 1.48.2.38 2000/06/04 10:13:39 oliver Exp $"; }
   || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
   || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDOS) \
   || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) \
-  || (CLIENT_OS==OS_NTO2) )
+  || (CLIENT_OS==OS_NTO2) || (CLIENT_OS==OS_MACOSX) || (CLIENT_OS==OS_RHAPSODY))
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
-#if (defined(__unix__) && !defined(__EMX__)) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390) || (CLIENT_OS == OS_AMIGAOS)
+#if (defined(__unix__) && !defined(__EMX__)) || (CLIENT_OS == OS_VMS) || \
+    (CLIENT_OS == OS_OS390) || (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RHAPSODY)
 #define TERM_IS_ANSI_COMPLIANT
 #endif
 #if defined(__unix__)
@@ -670,7 +671,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_IRIX) || \
         (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX) || \
         (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
-        (CLIENT_OS == OS_DEC_UNIX)
+        (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_MACOSX) || \
+        (CLIENT_OS == OS_RHAPSODY)
     /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
