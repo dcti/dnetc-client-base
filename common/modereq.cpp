@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: modereq.cpp,v $
+// Revision 1.6.2.3  1998/11/11 03:11:08  remi
+// Synced with :
+//  Revision 1.7  1998/11/08 19:03:21  cyp
+//  -help (and invalid command line options) are now treated as "mode" requests.
+//
 // Revision 1.6.2.2  1998/11/08 11:51:32  remi
 // Lots of $Log tags.
 //
@@ -22,8 +27,22 @@ static struct
 {
   int isrunning;
   int reqbits;
-} modereq = {0,0};
+  const char *helpoption;
+} modereq = {0,0,(const char *)0};
 
+/* --------------------------------------------------------------- */
+ 
+int ModeReqSetArg(int mode, void *arg )
+{
+  if (mode == MODEREQ_CMDLINE_HELP)
+    {
+    ModeReqSet(MODEREQ_CMDLINE_HELP);
+    modereq.helpoption = (const char *)arg;
+    return 0;
+    }
+  return -1;
+}  
+  
 /* --------------------------------------------------------------- */
 
 int ModeReqIsSet(int modemask)
@@ -80,10 +99,10 @@ int ModeReqRun(Client *client)
       {
       unsigned int bits = modereq.reqbits;
       
-      if ((bits & MODEREQ_HELP) && client)
+      if ((bits & MODEREQ_CMDLINE_HELP) && client)
 	{
 	client->DisplayHelp();
-        modereq.reqbits &= ~(MODEREQ_HELP);
+        modereq.reqbits &= ~(MODEREQ_CMDLINE_HELP);
 	}
 
       if ((bits & (MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5)) != 0)
