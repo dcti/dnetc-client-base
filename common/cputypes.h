@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.45 2001/02/07 18:52:39 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.46 2001/02/07 19:05:45 oliver Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -437,7 +437,7 @@
 /* ----------------------------------------------------------------- */
 
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_88K) || \
-     (CLIENT_CPU == CPU_SPARC) || \
+     (CLIENT_CPU == CPU_SPARC) || (CLIENT_CPU == CPU_68K) || \
      (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC) || \
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
      ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)))
@@ -485,6 +485,9 @@
   /* ... but first thread is polled ... */
   #define OS_SUPPORTS_SMP
   typedef long THREADID;
+#elif (CLIENT_OS == OS_AMIGAOS)
+  typedef long THREADID;
+  #define OS_SUPPORTS_SMP
 #elif defined(MULTITHREAD)
   /*
   Q: can't we simply use if defined(_POSIX_THREADS), as this is often defined

@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.86 2001/02/05 18:39:40 ephraim Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.87 2001/02/07 19:05:45 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -713,7 +713,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     else
     {
       //defined in cputypes.h
-      #if (!defined(CLIENT_SUPPORTS_SMP) && (CLIENT_OS != OS_AMIGAOS))
+      #if !defined(CLIENT_SUPPORTS_SMP)
         use_poll_process = 1; //no thread support or cores are not thread safe
       #elif (CLIENT_OS == OS_FREEBSD)
       //#define USE_THREADCODE_ONLY_WHEN_SMP_KERNEL_FOUND /* otherwise its for >=3.0 */
@@ -1170,8 +1170,6 @@ static int GetMaxCrunchersPermitted( void )
 #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
   if (GetNumberOfDetectedProcessors() > 1)
     return 2; /* thread 0 is ARM, thread 1 is x86 */
-#elif (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
-  return 1; /* limit to single cruncher thread - cores not yet re-entrant */
 #endif
   return ( 128 ); /* just some arbitrary number */
 }
