@@ -8,13 +8,15 @@ COMMONPATH = common
 DESPATH = des
 RC5PATH = rc5
 OGRPATH = ogr
+CSCPATH = csc
 PLATPATH = platforms
 W32CLIPATH = platforms/win32cli
 
 OPTS_MSVC = -nologo -W3 -O1 -MT -I$(RC5PATH) -I$(DESPATH) \
   -I$(COMMONPATH) -I$(W32CLIPATH) -D_CPU_32BIT_ -I$(OGRPATH) \
+  -I$(CSCPATH) \
   -DMULTITHREAD -D__WIN32__ -GR- -GX- -GA -GF \
-  -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN -DMMX_RC5 -DLURK
+  -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN -DMMX_RC5 -DLURK -DCSC_TEST -DGREGH
 
 OPTS_LINK = /incremental:no
 
@@ -84,7 +86,16 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/clievent.obj   \
 	$(OUTPUTPATH)/util.obj       \
 	$(OUTPUTPATH)/base64.obj     \
-	$(OUTPUTPATH)/random.obj
+	$(OUTPUTPATH)/random.obj     \
+	$(OUTPUTPATH)/ogr.obj        \
+	$(OUTPUTPATH)/crc32.obj      \
+	$(OUTPUTPATH)/choosedat.obj  \
+	$(OUTPUTPATH)/convcsc.obj    \
+	$(OUTPUTPATH)/csc-1k-i.obj   \
+	$(OUTPUTPATH)/csc-1k.obj     \
+	$(OUTPUTPATH)/csc-6b-i.obj   \
+	$(OUTPUTPATH)/csc-6b.obj     \
+	$(OUTPUTPATH)/csc-common.obj
 
 
 PREBUILT_OBJS =                   \
@@ -133,6 +144,12 @@ RC5_LIBS = advapi32.lib user32.lib gdi32.lib
 	cl -c $(OPTS_MSVC) -Fo$@ $**
 
 {$(DESPATH)}.cpp{$(OUTPUTPATH)}.obj:
+	cl -c $(OPTS_MSVC) -Fo$@ $**
+
+{$(OGRPATH)}.cpp{$(OUTPUTPATH)}.obj:
+	cl -c $(OPTS_MSVC) -Fo$@ $**
+
+{$(CSCPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
 
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj:
