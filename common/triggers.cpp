@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.58 2001/01/02 18:35:07 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.59 2001/01/03 19:01:28 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -140,7 +140,11 @@ int CheckExitRequestTriggerNoIO(void)
 { 
   __assert_statics(); 
   if (trigstatics.exittrig.pollproc)
+#ifdef CRUNCHERS_CALL_THIS_DIRECTLY
     (*trigstatics.exittrig.pollproc)(0 /* io_cycle_NOT_allowed */);
+#else
+    (*trigstatics.exittrig.pollproc)(1 /* io_cycle_IS_allowed */);
+#endif     
   return (trigstatics.exittrig.trigger); 
 } 
 int CheckPauseRequestTriggerNoIO(void) 
@@ -624,9 +628,9 @@ static void __PollDrivenBreakCheck(int io_cycle_allowed)
   #elif (CLIENT_OS == OS_NETWARE)
   if (io_cycle_allowed)
     nwCliCheckForUserBreak(); //in nwccons.cpp
-  #elif (CLIENT_OS == OS_WIN16)
+  #elif (CLIENT_OS == OS_WIN16) /* always thread safe */
     w32ConOut("");    /* benign call to keep ^C handling alive */
-  #elif (CLIENT_OS == OS_WIN16)
+  #elif (CLIENT_OS == OS_WIN32)
   if (io_cycle_allowed)
     w32ConOut("");    /* benign call to keep ^C handling alive */
   #elif (CLIENT_OS == OS_DOS)
