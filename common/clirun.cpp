@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.8 2003/05/24 23:09:36 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.9 2003/09/01 23:59:49 mweiser Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -550,11 +550,11 @@ void Go_mt( void * parm )
           if (runtime_usec != 0xfffffffful) /* not negative time or other bad thing */
           {
             #ifdef HAVE_I64
-            if (contest_i == OGR)    
+            if (contest_i == OGR)
             {
-              /* This calculates the optimal timeslice based on a sliding 
-              ** average of the reached rate. It reacts slower than the 
-              ** normal algorithm below, but has the advantage that it reaches 
+              /* This calculates the optimal timeslice based on a sliding
+              ** average of the reached rate. It reacts slower than the
+              ** normal algorithm below, but has the advantage that it reaches
               ** a stable point.
               */
               int ixes = thrparams->dyn_timeslice_slide[contest_i].ixes;
@@ -603,7 +603,7 @@ void Go_mt( void * parm )
                 if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
                   optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
               }
-            } 
+            }
             thisprob->pub_data.tslice = optimal_timeslice; /* for the next round */
           }
         }
@@ -737,7 +737,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         else
           printf("unknown cause for stop\n");
       }
-      #endif  
+      #endif
       #elif (CLIENT_OS == OS_FREEBSD)
       while (!thrparams->hasexited)
         NonPolledUSleep(100000);
@@ -746,7 +746,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         NonPolledUSleep(300000);
       #endif
     }
-    ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTOPPED, 
+    ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTOPPED,
                          &(thrparams->threadnum), sizeof(thrparams->threadnum) );
     cmem_free( thrparams );
   }
@@ -1719,7 +1719,7 @@ int ClientRun( Client *client )
             }
           }
           timeRun = tv.tv_sec; /* assume its ok on the next round */
-          if ((++timeMonoError) > (60/MAIN_LOOP_RUN_INTERVAL)) 
+          if ((++timeMonoError) > (60/MAIN_LOOP_RUN_INTERVAL))
           {
             Log("Monotonic time found to be going backwards more than\n"
                 "%d times within the space off one minute. Quitting...\n",
@@ -1810,7 +1810,7 @@ int ClientRun( Client *client )
     // If not quitting, then write checkpoints
     //----------------------------------------
 
-    if (!TimeToQuit && !checkpointsDisabled 
+    if (!TimeToQuit && !checkpointsDisabled
         && (!isPaused || timeNextCheckpoint == 0)
         && !CheckExitRequestTriggerNoIO())
     {
