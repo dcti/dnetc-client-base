@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.30 2000/04/23 12:58:41 jlawson Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.31 2000/04/26 00:01:05 cyp Exp $"; }
 
 //#define TRACE
 
@@ -66,13 +66,13 @@ static const char *__getprojsectname( unsigned int ci )
 /* ------------------------------------------------------------------------ */
 
 // Reads or writes a hostname and port in "hostname:port" format.
-//
-// aswrite - should be zero to indicate reading, or non-zero to write.
+// aswrite - is zero to read, non-zero to write
 // fn - filename of the ini file.
 // sect - section within the ini file that holds the hostname.
 // opt - option name within the ini file section.
 // hostname/hnamelen/port - the hostname and port to read or write.
 //
+// if port is non-zero, but hostname is blank then writes "*:nnn"
 // Always returns 0.
 
 static int _readwrite_hostname_and_port( int aswrite, const char *fn,
@@ -395,13 +395,8 @@ static int __parse_timestring(const char *source, int oldstyle_hours_compat )
 
 /* ------------------------------------------------------------------------ */
 
-// Loads configuration parameters from the specified ini file according to
-// obsolete client ini formatting standards.  This function will simultaneously 
-// attempt to convert the ini file to conform to new standards when possible.
-// 
-// Returns 0 on succes, or negative if any failures occurred.  Any failures
-// encountered during the remapping process are treated as non-critical
-// occurrances and do not prevent the entire process from running to completion.
+// Convert old ini settings to new (if new doesn't already exist/is not empty).
+// Returns 0 on succes, or negative if any failures occurred.
 
 static int __remapObsoleteParameters( Client *client, const char *fn )
 {
@@ -421,6 +416,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
     {
       client->messagelen = i;
       modfail += (!WritePrivateProfileIntB( OPTSECT_LOG, "mail-log-max", i, fn));
+      TRACE_OUT((0,"remapped mail-log-max (%d)\n", modfail));
     }
   }
   if (!GetPrivateProfileStringB( OPTSECT_LOG, "mail-log-from", "", buffer, sizeof(buffer), fn ))
@@ -430,6 +426,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       strncpy( client->smtpfrom, buffer, sizeof(client->smtpfrom) );
       client->smtpfrom[sizeof(client->smtpfrom)-1] = '\0';
       modfail += (!WritePrivateProfileStringB( OPTSECT_LOG, "mail-log-from", buffer, fn ));
+      TRACE_OUT((0,"remapped mail-log-from (%d)\n", modfail));
     }
   }
   if (!GetPrivateProfileStringB( OPTSECT_LOG, "mail-log-dest", "", buffer, sizeof(buffer), fn ))
@@ -439,6 +436,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       strncpy( client->smtpdest, buffer, sizeof(client->smtpdest) );
       client->smtpdest[sizeof(client->smtpdest)-1] = '\0';
       modfail += (!WritePrivateProfileStringB( OPTSECT_LOG, "mail-log-dest", buffer, fn ));
+      TRACE_OUT((0,"remapped mail-log-dest (%d)\n", modfail));
     }
   }
   if (!GetPrivateProfileStringB( OPTSECT_LOG, "mail-log-via", "", buffer, sizeof(buffer), fn ))
@@ -453,6 +451,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
                                 OPTSECT_LOG, "mail-log-via",
                                 client->smtpsrvr, sizeof(client->smtpsrvr),
                                 &(client->smtpport) );
+      TRACE_OUT((0,"remapped hostname/port (%d)\n", modfail));
     }
   }
   if (!GetPrivateProfileStringB( OPTSECT_LOG, "log-file", "", buffer, sizeof(buffer), fn ))
@@ -462,6 +461,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       strncpy( client->logname, buffer, sizeof(client->logname) );
       client->logname[sizeof(client->logname)-1] = '\0';
       modfail += (!WritePrivateProfileStringB( OPTSECT_LOG, "log-file", buffer, fn ));
+      TRACE_OUT((0,"remapped log-file (%d)\n", modfail));
     }
   }
 
@@ -475,6 +475,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
     {
       client->coretypes[RC5] = i;
       modfail += (!WritePrivateProfileIntB( __getprojsectname(RC5), "core", i, fn));
+      TRACE_OUT((0,"remapped rc5 core (%d)\n", modfail));
     }
   }
   #endif
@@ -496,7 +497,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       }
     }
   }
-
+  TRACE_OUT((0,"remapping 5 (%d)\n", modfail));
   {
     int thresholdsdone = 0;
     for (cont_i=0; cont_i < CONTEST_COUNT; cont_i++)
@@ -588,6 +589,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
   }
 
   /* ----------------- OPTSECT_BUFFERS ----------------- */
+  TRACE_OUT((0,"remapping 6 (%d)\n", modfail));
 
   if (!GetPrivateProfileStringB( OPTSECT_BUFFERS, "checkpoint-filename", "", buffer, sizeof(buffer), fn ))
   {
@@ -661,6 +663,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
   }
 
   /* ----------------- OPTSECT_NET ----------------- */
+  TRACE_OUT((0,"remapping 7 (%d)\n", modfail));
 
   if (GetPrivateProfileIntB( OPTSECT_NET, "nettimeout", 0, fn ) == 0)
   {
@@ -674,6 +677,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
         i = 180;
       client->nettimeout = i;
       modfail += (!WritePrivateProfileIntB( OPTSECT_NET, "nettimeout", i, fn));
+      TRACE_OUT((0,"remapped nettimeout (%d)\n", modfail));
     }
   }
   if (!GetPrivateProfileStringB( OPTSECT_NET, "nofallback", "", buffer, sizeof(buffer), fn ))
@@ -682,6 +686,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
     {
       client->nofallback = 1;
       modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "nofallback", "true", fn));
+      TRACE_OUT((0,"remapped nofallback (%d)\n", modfail));
     }
   }
   if (!GetPrivateProfileStringB( OPTSECT_NET, "disabled", "", buffer, sizeof(buffer), fn ))
@@ -694,6 +699,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
         client->offlinemode = 0;
       if (client->offlinemode)
         modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "disabled", "yes", fn ));
+      TRACE_OUT((0,"remapped runoffline (%d)\n", modfail));
     }
   }
   if (!GetPrivateProfileStringB( OPTSECT_NET, "keyserver", "", buffer, sizeof(buffer), fn ))
@@ -733,7 +739,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       else
         client->keyport = i;
     }
-    modfail += WritePrivateProfileStringB( OPTSECT_NET,"autofindkeyserver",((client->autofindkeyserver)?(NULL):("no")), fn);
+    WritePrivateProfileStringB( OPTSECT_NET,"autofindkeyserver",((client->autofindkeyserver)?(NULL):("no")), fn);
     if (client->keyproxy[0] || client->keyport)
     {
       modfail += _readwrite_hostname_and_port( 1, fn,
@@ -741,6 +747,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
                                 client->keyproxy, sizeof(client->keyproxy),
                                 &(client->keyport) );
     }
+    TRACE_OUT((0,"remapped keyserver/port (%d)\n", modfail));
   }
   if (!GetPrivateProfileStringB( OPTSECT_NET, "enable-start-stop", "", buffer, sizeof(buffer), fn ))
   {
@@ -752,6 +759,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       if (i)
         modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "enable-start-stop", "yes", fn ));
     }
+    TRACE_OUT((0,"remapped nettimeout (%d)\n", modfail));
   }
   if (!GetPrivateProfileStringB( OPTSECT_NET, "dialup-watcher", "", buffer, sizeof(buffer), fn ))
   {
@@ -772,7 +780,10 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       #endif
     }
     if (buffer[0])
+    {
       modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "dialup-watcher", buffer, fn ));
+      TRACE_OUT((0,"remapped lurkmode (%d)\n", modfail));
+    }
   }
   if (!GetPrivateProfileStringB( OPTSECT_NET, "dialup-profile", "", buffer, sizeof(buffer), fn ))
   {
@@ -783,10 +794,12 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       client->lurk_conf.connprofile[sizeof(client->lurk_conf.connprofile)-1]='\0';
       #endif
       modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "dialup-profile", buffer, fn ));
+      TRACE_OUT((0,"remapped connectionname (%d)\n", modfail));
     }
   }
 
   /* ----------------- OPTSECT_CPU ----------------- */
+  TRACE_OUT((0,"remapping 8 (%d)\n", modfail));
 
   if ((i=GetPrivateProfileIntB( OPTSECT_CPU, "max-threads",-12345,fn))!=-12345)
   {
@@ -807,6 +820,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
   }
 
   /* ----------------- OPTSECT_MISC ----------------- */
+  TRACE_OUT((0,"remapping 9 (%d)\n", modfail));
 
   if (!GetPrivateProfileStringB(OPTSECT_MISC,"run-time-limit","",buffer,2,fn))
   {
@@ -855,6 +869,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
     }
   }
   /* ----------------- OPTSECT_DISPLAY ----------------- */
+  TRACE_OUT((0,"remapping 10 (%d)\n", modfail));
 
   if (!GetPrivateProfileStringB( OPTSECT_DISPLAY, "detached", "", buffer, sizeof(buffer), fn ))
   {
@@ -877,6 +892,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
   }
 
   /* ----------------- OPTSECT_TRIGGERS ----------------- */
+  TRACE_OUT((0,"remapping 11 (%d)\n", modfail));
 
   /* exit-flag-filename is a bit unusual in that the default (if the key 
      doesn't exist) is not "", but thats all handled in confread().
@@ -908,7 +924,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
   /* unconditional deletion of obsolete keys */
   /* (all keys in OPTION_SECTION except "id") */
   {
-    #if 0 /* faster but causes comment loss */
+    #if 0 /* faster but causes comment loss (and puts the section at the end) */
     if (GetPrivateProfileStringB( OPTION_SECTION, "id", "", buffer, sizeof(buffer), fn ))
     {
       for (i=0;buffer[i];i++)
@@ -916,10 +932,8 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       if (strcmp( buffer, "rc5@distributed.net" ) == 0)
         buffer[0] = '\0';
     }
-    if (WritePrivateProfileStringB( OPTION_SECTION, NULL, "", fn))
-    {
-      modfail += (!WritePrivateProfileStringB( OPTION_SECTION, "id", buffer, fn));
-    }
+    WritePrivateProfileStringB( OPTION_SECTION, NULL, "", fn);
+    modfail += (!WritePrivateProfileStringB( OPTION_SECTION, "id", buffer, fn));
     #else
     static const char *obskeys[]={ /* all in "parameters" section */
              "runhidden", "os2hidden", "win95hidden", "checkpoint2",
@@ -1153,7 +1167,7 @@ static void __XSetProfileStr( const char *sect, const char *key,
 }
 
 static void __XSetProfileInt( const char *sect, const char *key,
-          long newval, const char *fn, long defval, int asonoff )
+    long newval, const char *fn, long defval, int asonoff /*+style=y|t|o|1*/ )
 {
   int dowrite;
   char buffer[(sizeof(long)+1)*3];
@@ -1209,8 +1223,9 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     ((strcmp( client->id,"rc5@distributed.net")==0)?(""):(client->id)), fn ))
     return -1; //failed
 
-  if (__remapObsoleteParameters( client, fn ) < 0)
-    return -1; //file is read-only
+  __remapObsoleteParameters( client, fn ); 
+
+  TRACE_OUT((+1,"WriteConfig()\n"));
 
   client->randomchanged = 1;
   RefreshRandomPrefix( client );
@@ -1252,8 +1267,10 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
 
     /* more buffer stuff */
 
+    TRACE_OUT((+0,"cont_i loop\n"));
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
     {
+      TRACE_OUT((+0,"cont_i=%u\n", cont_i));
       if ((p =  __getprojsectname(cont_i)) != ((const char *)0))
       {
         __XSetProfileInt( p, "fetch-workunit-threshold", client->inthreshold[cont_i], fn,  0, 0 );
@@ -1321,6 +1338,8 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       WritePrivateProfileStringB( OPTSECT_LOG,"log-file-type", client->logfiletype, fn );
 
   } /* if (writefull != 0) */
+
+  TRACE_OUT((-1,"WriteConfig()\n"));
 
   return 0;
 }
