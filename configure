@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.105  1998/10/06 13:19:40  remi
+# Added -D__showids__ to sparc-linux-mt-egcs entry.
+#
 # Revision 1.104  1998/10/03 23:43:44  remi
 # Added -DMMX_RC5 to all entries with the MMX RC5 core.
 #
@@ -642,7 +645,7 @@ case "$1" in
 
     *sparc-linux-mt-egcs)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -DMULTITHREAD -DPIPELINE_COUNT=2 -DKWAN -DMEGGS -DBIT_32"
+	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -D__showids__ -fno-inline-functions -DMULTITHREAD -DPIPELINE_COUNT=2 -DKWAN -DMEGGS -DBIT_32"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	TARGET_LIBS="-lpthread -lncurses"
 	;;
