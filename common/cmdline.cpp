@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.29 1999/10/20 16:27:37 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.30 1999/10/20 16:30:08 cyp Exp $"; }
 
 //#define TRACE
 
@@ -1490,6 +1490,8 @@ int ParseCommandline( Client *client,
                 strcmp( thisarg, "-test" ) == 0 )
       {
         int do_mode = MODEREQ_BENCHMARK;
+        client->quietmode = 0;
+	
         if (strcmp( thisarg, "-benchmark2"  ) == 0)
           do_mode = MODEREQ_BENCHMARK_QUICK;
         else if (strcmp( thisarg, "-bench"  ) == 0)
