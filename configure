@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.208 2000/11/23 16:19:19 teichp Exp $
+# @(#)$Id: configure,v 1.222.2.209 2000/11/26 18:42:59 friedbait Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1832,12 +1832,23 @@ case "$1" in
         add_sources "netbsd" "vax" 
         ;;
 
-    *s390-linux)	        # [friedbait]  fb@baiti.net
+    *s390-linux-pthread)	# [friedbait]  fb@baiti.net
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
         TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD"
         TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-s390"
+        add_sources "linux" "s390" 
+        ;;
+
+    *s390-linux)	        # [friedbait]  fb@baiti.net
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "s390" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-s390"
         add_sources "linux" "s390" 
