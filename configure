@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.49 1999/11/16 20:30:20 ivo Exp $
+# @(#)$Id: configure,v 1.222.2.50 1999/11/16 22:16:17 ivo Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -994,7 +994,7 @@ case "$1" in
         TARGET_TARBALL="linux-x86-glibc2"
 	;;
 
-    *x86-linux-glibc2-static)	                   # glibc2
+    *x86-linux-glibc2-static)	 # glibc2 static for b0rken RH50
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
@@ -1011,7 +1011,7 @@ case "$1" in
 	TARGET_NASM_FMT="elf"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-x86-glibc2-static"
+        TARGET_TARBALL="linux-x86-glibc2-static-redhat50"
 	;;
 
     *x86-linux-libc5)	                   # libc5
