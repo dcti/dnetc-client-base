@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.18  1998/08/02 03:16:54  silby
+// Major reorganization:  Log,LogScreen, and LogScreenf are now in logging.cpp, and are global functions - client.h #includes logging.h, which is all you need to use those functions.  Lurk handling has been added into the Lurk class, which resides in lurk.cpp, and is auto-included by client.h if lurk is defined as well. baseincs.h has had lurk-specific win32 includes moved to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of printf. client.cpp has had variable names changed as well, etc.
+//
 // Revision 1.17  1998/07/26 12:46:07  cyruspatel
 // new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
 // xx.v27.distributed.net then that will be interpreted by Network::Resolve()
@@ -51,7 +54,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-static const char *id="@(#)$Id: mail.cpp,v 1.17 1998/07/26 12:46:07 cyruspatel Exp $";
+static const char *id="@(#)$Id: mail.cpp,v 1.18 1998/08/02 03:16:54 silby Exp $";
 return id; }
 #endif
 
@@ -59,6 +62,7 @@ return id; }
 #include "baseincs.h"
 #include "sleepdef.h"
 #include "mail.h"
+#include "logging.h"
 
 //-------------------------------------------------------------------------
 
@@ -112,22 +116,16 @@ void MailMessage::checktosend( u32 forcesend)
          retry=0;
 #ifdef FIFO_ON_BUFF_OVERFLOW
          while ((this->sendmessage() == -1) && retry++ < 3) {
-#if !defined(NEEDVIRTUALMETHODS)
-            printf("Mail::sendmessage %d - Unable to send mail message\n",
+            LogScreenf("Mail::sendmessage %d - Unable to send mail message\n",
                   (int) retry );
-#endif
             if (retry < 3) sleep(1);
          }
 #else
          while ((this->sendmessage() == -1) && retry++ < 3) {
             if (retry == 3) {
-#if !defined(NEEDVIRTUALMETHODS)
-               printf("Mail::sendmessage %d - Unable to send mail message.  Contents discarded.\n", (int) retry);
-#endif
+               LogScreenf("Mail::sendmessage %d - Unable to send mail message.  Contents discarded.\n", (int) retry);
             } else {
-#if !defined(NEEDVIRTUALMETHODS)
-               printf("Mail::sendmessage %d - Unable to send mail message\n", (int) retry );
-#endif
+               LogScreenf("Mail::sendmessage %d - Unable to send mail message\n", (int) retry );
                sleep( 1 );
             }
          }
@@ -186,15 +184,13 @@ int MailMessage::inittext(int out)
        messagelen=MAXMAILSIZE;
     }
   }
-#if !defined(NEEDVIRTUALMETHODS)
   if (out == 1) {
-    printf("Mail server:port is %s:%d\n", smtp, (int) port);
-    printf("Mail id is %s\n", fromid);
-    printf("Destination is %s\n", destid);
-    printf("Message length set to %d\n", (int) messagelen);
-    printf("RC5id set to %s\n", rc5id);
+    LogScreenf("Mail server:port is %s:%d\n", smtp, (int) port);
+    LogScreenf("Mail id is %s\n", fromid);
+    LogScreenf("Destination is %s\n", destid);
+    LogScreenf("Message length set to %d\n", (int) messagelen);
+    LogScreenf("RC5id set to %s\n", rc5id);
   }
-#endif
 
 #ifndef NONETWORK
   gethostname(my_hostname, 255);   //This should be in network.cpp
@@ -309,9 +305,7 @@ int MailMessage::sendmessage()
         delete net;
         return(-1);
       }
-#if !defined(NEEDVIRTUALMETHODS)
-      printf("Network::MailMessage %d - Unable to open connection to smtp server\n", (int) retry );
-#endif
+      LogScreenf("Network::MailMessage %d - Unable to open connection to smtp server\n", (int) retry );
       sleep( 3 );
       // Unable to open network.
     }
@@ -323,9 +317,7 @@ int MailMessage::sendmessage()
       if (0 == send_smtp_edit_data(net))
       {
         finish_smtp_message(net);
-#if !defined(NEEDVIRTUALMETHODS)
-        printf("Mail message has been sent.\n");
-#endif
+        LogScreenf("Mail message has been sent.\n");
         net->Close();
         delete net;
         return(0);
@@ -335,9 +327,7 @@ int MailMessage::sendmessage()
         return(-1);
       }
     } else {
-#if !defined(NEEDVIRTUALMETHODS)
-      printf("Error in prepare_smtp_message\n");
-#endif
+      LogScreenf("Error in prepare_smtp_message\n");
       net->Close();
       return(-1);
     }
@@ -459,13 +449,11 @@ int MailMessage::get_smtp_line( Network * net )
     {
     if ( net->Get( 1, &in_data[index], 2*NETTIMEOUT ) != 1)
       {
-#if !defined(NEEDVIRTUALMETHODS)
-      printf("recv error\n");
-#endif
+      LogScreen("recv error\n");
       return(-1);
       }
 #ifdef SHOWMAIL
-printf("%s%c", ((index==0)?("GET: "):("")), in_data[index] );
+LogScreenf("%s%c", ((index==0)?("GET: "):("")), in_data[index] );
 #endif
     if (in_data[index] == '\n')
       {
@@ -483,14 +471,12 @@ int MailMessage::put_smtp_line( const char * line, unsigned int nchars , Network
 {
 
 #ifdef SHOWMAIL
-printf("PUT: %s",line);
+LogScreenf("PUT: %s",line);
 #endif
 //  delay(1); //Some servers can't talk too fast.
   if ( net->Put( nchars, line ) )
   {
-#if !defined(NEEDVIRTUALMETHODS)
-    printf("send error\n");
-#endif
+    LogScreen("send error\n");
     return -1;
   }
   return (0);
@@ -570,8 +556,8 @@ int MailMessage::transform_and_send_edit_data(Network * net)
     while ((unsigned int) (index - messagetext) < send_len)
     {
       this_char = *index;
-#if defined(SHOWMAIL) && !defined(NEEDVIRTUALMETHODS)
-printf("%c",this_char);
+#if defined(SHOWMAIL)
+LogScreenf("%c",this_char);
 #endif
 //      delay(1); //Some servers can't talk too fast.
       switch (this_char)
@@ -622,9 +608,7 @@ printf("%c",this_char);
 
 void MailMessage::smtp_error (Network *net, const char * message)
 {
-#if !defined(NEEDVIRTUALMETHODS)
-  printf("%s\n",message);
-#endif
+  LogScreenf("%s\n",message);
   put_smtp_line("QUIT\r\n", 6,net);
   net->Close();
 }

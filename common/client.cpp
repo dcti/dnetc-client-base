@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.114  1998/08/02 03:16:31  silby
+// Major reorganization:  Log,LogScreen, and LogScreenf are now in logging.cpp, and are global functions - client.h #includes logging.h, which is all you need to use those functions.  Lurk handling has been added into the Lurk class, which resides in lurk.cpp, and is auto-included by client.h if lurk is defined as well. baseincs.h has had lurk-specific win32 includes moved to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of printf. client.cpp has had variable names changed as well, etc.
+//
 // Revision 1.113  1998/07/30 05:08:59  silby
 // Fixed DONT_USE_PATHWORK handling, ini_etc strings were still being included, now they are not. Also, added the logic for dialwhenneeded, which is a new lurk feature.
 //
@@ -98,7 +101,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.113 1998/07/30 05:08:59 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.114 1998/08/02 03:16:31 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -274,7 +277,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.113 1998/07/30 05:08:59 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.114 1998/08/02 03:16:31 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -492,17 +495,14 @@ Client::Client()
   noexitfilecheck=0;
   exitfilechecktime=30;
 #if defined(LURK)
-  lurk=0;
-  islurkstarted=0;
+  dialup.lurkmode=0;
+  dialup.dialwhenneeded=0;
 #endif
 #if (CLIENT_OS==OS_WIN32) 
   win95hidden=0;
 #endif
 #if (CLIENT_OS == OS_OS2)
    os2hidden=0;
-#endif
-#if defined(LURK)
-         oldlurkstatus=0;      // Trigger the lurk the first time client is run
 #endif
   contestdone[0]=contestdone[1]=0;
   srand( (unsigned) time( NULL ) );
@@ -625,7 +625,7 @@ if (force == 0) // check to see if fetch should be done
     ) return( -1 );
 
   #if defined(LURK)
-    if ( (lurk==2) && (LurkStatus() == 0) )
+    if ( (dialup.lurkmode==2) && (dialup.Status() == 0) )
       {
       return -1;
       };
@@ -645,9 +645,9 @@ if (force == 0) // check to see if fetch should be done
 
   #if defined(LURK)
   // Check if we need to dial, and if update started this connect or not
-  if (dialwhenneeded=1 && !netin)
+  if (dialup.dialwhenneeded=1 && !netin)
     {
-    if (LurkInitiateConnection() < 0) return -1; // We need to dial, but
+    if (dialup.InitiateConnection() < 0) return -1; // We need to dial, but
       // if the connect fails, error back
     };
   #endif
@@ -706,7 +706,7 @@ if (force == 0) // check to see if fetch should be done
 #endif
 
 #if defined(LURK)
-    if(lurk && (LurkStatus() < oldlurkstatus))   // lost tcpip connection while trying to fetch
+    if(dialup.lurkmode && (dialup.Status() < dialup.oldlurkstatus))   // lost tcpip connection while trying to fetch
        {
        LogScreenf("TCPIP Connection Lost - Aborting fetch\n");
        return -3;                 // so stop trying and return
@@ -965,11 +965,11 @@ if (force == 0) // check to see if fetch should be done
 
   #if defined(LURK)
   // Check if we need to hangup (unless update started this connect)
-  if (dialwhenneeded=1 && !netin)
+  if (dialup.dialwhenneeded=1 && !netin)
     {
-    if (oldlurkstatus == 0) // We weren't previously connected,
+    if (dialup.oldlurkstatus == 0) // We weren't previously connected,
                             // but are now
-      LurkTerminateConnection();     
+      dialup.TerminateConnection();     
     };
   #endif
 
@@ -1038,7 +1038,7 @@ if (force == 0) // Check if flush should be done
      ) return( -1 );
 
   #if defined(LURK)
-    if ( (lurk==2) && (LurkStatus() == 0) )
+    if ( (dialup.lurkmode==2) && (dialup.Status() == 0) )
       {
       return -1;
       };
@@ -1058,9 +1058,9 @@ if (force == 0) // Check if flush should be done
 
   #if defined(LURK)
   // Check if we need to dial, and if update started this connect or not
-  if (dialwhenneeded=1 && !netin)
+  if (dialup.dialwhenneeded=1 && !netin)
     {
-    if (LurkInitiateConnection() < 0) return -1; // We need to dial, but
+    if (dialup.InitiateConnection() < 0) return -1; // We need to dial, but
       // if the connect fails, error back
     };
   #endif
@@ -1116,7 +1116,7 @@ if (force == 0) // Check if flush should be done
     #endif
 
 #if defined(LURK)
-    if(lurk && (LurkStatus() < oldlurkstatus))   // lost tcpip connection while trying to flush
+    if(dialup.lurkmode && (dialup.Status() < dialup.oldlurkstatus))   // lost tcpip connection while trying to flush
        {
        LogScreenf("TCPIP Connection Lost - Aborting flush\n");
        return -3;                 // so stop trying and return
@@ -1402,11 +1402,11 @@ if (force == 0) // Check if flush should be done
 
   #if defined(LURK)
   // Check if we need to hangup (unless update started this connect)
-  if (dialwhenneeded=1 && !netin)
+  if (dialup.dialwhenneeded=1 && !netin)
     {
-    if (oldlurkstatus == 0) // We weren't previously connected,
+    if (dialup.oldlurkstatus == 0) // We weren't previously connected,
                             // but are now
-      LurkTerminateConnection();     
+      dialup.TerminateConnection();     
     };
   #endif
 
@@ -1440,7 +1440,7 @@ if (force == 0) // We need to check if we're allowed to connect
     return( -1 );
 
   #if defined(LURK)
-    if ( (lurk==2) && (LurkStatus() == 0) )
+    if ( (dialup.lurkmode==2) && (dialup.Status() == 0) )
       {
       return -1;
       };
@@ -1456,9 +1456,9 @@ if (force == 0) // We need to check if we're allowed to connect
   #if defined(LURK)
 
   // Check if we need to dial
-  if (dialwhenneeded=1)
+  if (dialup.dialwhenneeded=1)
     {
-    if (LurkInitiateConnection() < 0) return -1; // We need to dial, but
+    if (dialup.InitiateConnection() < 0) return -1; // We need to dial, but
       // if the connect fails, error back
     };
   #endif
@@ -1519,11 +1519,11 @@ if (force == 0) // We need to check if we're allowed to connect
 
   #if defined(LURK)
   // Check if we need to hangup
-  if (dialwhenneeded=1)
+  if (dialup.dialwhenneeded=1)
     {
-    if (oldlurkstatus == 0) // We weren't previously connected,
+    if (dialup.oldlurkstatus == 0) // We weren't previously connected,
                             // but are now
-      LurkTerminateConnection();     
+      dialup.TerminateConnection();     
     };
   #endif
 
@@ -1757,7 +1757,7 @@ s32 Client::SelfTest( u8 contest )
 
 // ---------------------------------------------------------------------------
 
-static int IsFilenameValid( const char *filename )
+int IsFilenameValid( const char *filename )
 { return ( *filename != 0 && strcmp( filename, "none" ) != 0 ); }
 
 static int DoesFileExist( const char *filename )
@@ -2369,37 +2369,8 @@ PreferredIsDone1:
     //------------------------------------
 
 #if defined(LURK)
-    {
-      if(lurk)
-         {
-         if (LurkStatus() == 0) // We're not connected
-            {
-            if(oldlurkstatus != 0)    // Lost the connection
-              {
-               Log("\nDialup Connection Disconnected");
-               oldlurkstatus = 0;// So we know next time through this loop
-               if(lurk == 2) // Lurk-only mode
-                  {
-                  Log(" - Connections will not be initiated by the client.");
-                    // lurkonly needs a live connect - also, don't
-                    // interfere if offlinemode already ==1 or ==2
-                  connectrequested = 0; // cancel any connection requests
-                  }
-               Log("\n");
-               }
-            }
-         else // We're connected!
-            {
-            connectrequested=2;// Trigger an update
-            if(oldlurkstatus != 1) // We previously weren't connected
-               {
-               // Only put out message the first time.
-               Log("\nDialup Connection Detected\n");
-               oldlurkstatus = 1;
-               }
-            }
-         }
-    }
+if(dialup.lurkmode) // check to make sure lurk mode is enabled
+  connectrequested=dialup.CheckIfConnectRequested();
 #endif
 
 
@@ -3045,87 +3016,6 @@ void Client::MailDeinitialize(void)
     mailmessage.checktosend(1);
 }
 
-// ------------------------------------------------------------------------
-
-// gui clients will override this function in their derrived classes
-void Client::LogScreen ( const char *text)
-{
-  if (!quietmode)
-  {
-#if (CLIENT_OS == OS_OS2)
-    DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, 0, 0);
-    // Give prioirty boost so that text appears faster
-#endif
-    fwrite(text, 1, strlen(text), stdout);
-    fflush(stdout);
-#if (CLIENT_OS == OS_OS2)
-    SetNiceness();
-#endif
-  }
-}
-
-// ---------------------------------------------------------------------------
-
-void Client::LogScreenf ( const char *format, ...)
-{
-#if defined(NEEDVIRTUALMETHODS)
-  // the gui clients depend on the overridden LogScreen for output
-  va_list argptr;
-  va_start(argptr, format);
-  vsprintf(logstr, format, argptr);
-  LogScreen(logstr);
-  va_end(argptr);
-#else
-  if (!quietmode)
-  {
-#if (CLIENT_OS == OS_OS2)
-    DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, 0, 0);
-    // Give prioirty boost so that text appears faster
-#endif
-    va_list argptr;
-    va_start(argptr, format);
-    vprintf( format, argptr); // display it
-    fflush( stdout );
-    va_end(argptr);
-#if (CLIENT_OS == OS_OS2)
-    SetNiceness();
-#endif
-  }
-#endif
-}
-
-// ---------------------------------------------------------------------------
-
-void Client::Log( const char *format, ...)
-{
-  va_list argptr;
-
-  // format the buffer
-  va_start(argptr, format);
-  vsprintf(logstr, format, argptr);
-  va_end(argptr);
-
-  //add to mail
-  mailmessage.addtomessage( logstr );
-
-  // print it out and log it
-  LogScreen(logstr);
-
-  if ( IsFilenameValid( logname ) )
-    {
-#ifdef DONT_USE_PATHWORK
-      FILE *file = fopen ( logname, "a" );
-#else
-      FILE *file = fopen ( GetFullPathForFilename( logname ), "a" );
-#endif
-      if (file != NULL)
-        {
-          fprintf( file, "%s", logstr );
-          fclose( file );
-        }
-    }
-}
-
 // ---------------------------------------------------------------------------
 
 void Client::LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted)
@@ -3299,7 +3189,7 @@ int main( int argc, char *argv[] )
   {
     if ( strcmp(argv[i], "-quiet" ) == 0)
     {
-      client.quietmode=1;
+      quietmode=1;
       argv[i][0] = 0;
     }
   }
@@ -3367,13 +3257,13 @@ int main( int argc, char *argv[] )
       int i = client.SelfTest(1);
       int j = client.SelfTest(2);
       if ( i < 0 )
-        client.LogScreenf( "\n%d Tests, Failed on RC5 Test %d\n", (int) TEST_CASE_COUNT, (int) -i );
+        LogScreenf( "\n%d Tests, Failed on RC5 Test %d\n", (int) TEST_CASE_COUNT, (int) -i );
       else
-        client.LogScreenf( "\n%d/%d RC5 Tests Passed\n", (int) i, (int) TEST_CASE_COUNT);
+        LogScreenf( "\n%d/%d RC5 Tests Passed\n", (int) i, (int) TEST_CASE_COUNT);
       if ( j < 0 )
-        client.LogScreenf( "\n%d Tests, Failed on DES Test %d\n", (int) TEST_CASE_COUNT, (int) -j );
+        LogScreenf( "\n%d Tests, Failed on DES Test %d\n", (int) TEST_CASE_COUNT, (int) -j );
       else
-        client.LogScreenf( "\n%d/%d DES Tests Passed\n", (int) j, (int) TEST_CASE_COUNT);
+        LogScreenf( "\n%d/%d DES Tests Passed\n", (int) j, (int) TEST_CASE_COUNT);
       retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
     }
     else if ( strcmp( argv[i], "-benchmark2rc5" ) == 0 )
@@ -3430,18 +3320,18 @@ int main( int argc, char *argv[] )
       }
       if (client.contestdone[1]) retcode=1;
 
-      mailmessage.quietmode = client.quietmode;
+      mailmessage.quietmode = quietmode;
       if (!client.offlinemode)
          mailmessage.checktosend(1);
       NetworkDeinitialize();
       if (retcode < 0 || retcode2 < 0)
       {
-        client.LogScreen( "\nAn error occured trying to fetch.  Please try again later\n" );
+        LogScreen( "\nAn error occured trying to fetch.  Please try again later\n" );
         if (retcode2 < retcode) retcode = retcode2;
         //retcode = retcode; //and break out of loop
       }
       else
-        client.LogScreen( "Fetch completed.\n" );
+        LogScreen( "Fetch completed.\n" );
     }
     else if (( strcmp( argv[i], "-flush" ) == 0 ) || ( strcmp( argv[i], "-forceflush" ) == 0 ))
     {
@@ -3464,19 +3354,19 @@ int main( int argc, char *argv[] )
       }
       if (client.contestdone[1]) retcode = 0;
 
-      mailmessage.quietmode=client.quietmode;
+      mailmessage.quietmode=quietmode;
       if (!client.offlinemode)
          mailmessage.checktosend(1);
       NetworkDeinitialize();
       if (retcode < 0 || retcode2 < 0)
       {
-        client.LogScreen( "\nAn error occured trying to flush the files out.\n"
+        LogScreen( "\nAn error occured trying to flush the files out.\n"
                 "Please try again later\n" );
         if (retcode2 < retcode) retcode = retcode2;
         //retcode = retcode; //and break out of loop
       }
       else
-        client.LogScreen( "Flush completed.\n" );
+        LogScreen( "Flush completed.\n" );
     }
     else if ( strcmp( argv[i], "-update" ) == 0 )
     {
@@ -3491,25 +3381,25 @@ int main( int argc, char *argv[] )
       // DES We care about both the fetch & flush errors.
       int retcode2 = client.contestdone[1] ? 0 : client.Update(1,1,1);
 
-      mailmessage.quietmode = client.quietmode;
+      mailmessage.quietmode = quietmode;
       if (!client.offlinemode)
          mailmessage.checktosend(1);
       NetworkDeinitialize();
 
       if (retcode < 0 || retcode2 < 0)
       {
-        client.LogScreen( "\nAn error occured during the update.\n" );
+        LogScreen( "\nAn error occured during the update.\n" );
         if (retcode2 < retcode) retcode = retcode2;
         //retcode = retcode; //and break out of loop
       }
       else
-        client.LogScreen( "Update completed.\n" );
+        LogScreen( "Update completed.\n" );
     }
     else if ( strcmp( argv[i], "-cpuinfo" ) == 0 )
     {
       const char *scpuid, *smaxcpus, *sfoundcpus;  //cpucheck.cpp
       GetProcessorInformationStrings( &scpuid, &smaxcpus, &sfoundcpus );
-      client.LogScreenf("Automatic processor detection tag:\n\t%s\n"
+      LogScreenf("Automatic processor detection tag:\n\t%s\n"
       "Number of processors detected by this client:\n\t%s\n"
       "Number of processors supported by each instance of this client:\n\t%s\n",
       scpuid, sfoundcpus, smaxcpus );
@@ -3582,7 +3472,7 @@ int main( int argc, char *argv[] )
 #if (CLIENT_OS == OS_RISCOS)
     if (!guirestart)
 #endif
-      client.Log("RC5DES Client v2.%d.%d started.\nUsing %s as email address.\n\n",
+      Log("RC5DES Client v2.%d.%d started.\nUsing %s as email address.\n\n",
              CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,client.id);
 //client.LogScreenf("in: %s\n",client.in_buffer_file[0]);
 //client.LogScreenf("out: %s\n",client.out_buffer_file[0]);
@@ -3624,262 +3514,5 @@ int main( int argc, char *argv[] )
 }
 #endif
 
-// ---------------------------------------------------------------------------
-
-#if defined(LURK)
-
-#if (CLIENT_OS == OS_WIN32)
-static rasenumconnectionsT rasenumconnections = NULL;
-static rasgetconnectstatusT rasgetconnectstatus = NULL;
-static rashangupT rashangup = NULL;
-static rasdialT rasdial = NULL;
-static rasgeterrorstringT rasgeterrorstring = NULL;
-static rasgetentrydialparamsT rasgetentrydialparams = NULL;
-#endif
-
-s32 Client::StartLurk(void)// Initializes Lurk Mode
-  // 0 == Successfully started lurk mode
-  // -1 == Start of lurk mode failed
-{
-#if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
-  LPVOID lpMsgBuf;
-
-  if (!rasenumconnections || !rasgetconnectstatus)
-  {
-    HINSTANCE hinstance;
-    hinstance=LoadLibrary("RASAPI32.dll");
-    if (hinstance == NULL)
-    {
-      LogScreen("Couldn't load rasapi32.dll\n");
-      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
-      return -1;
-    }
-    rasenumconnections = (rasenumconnectionsT) GetProcAddress(hinstance,"RasEnumConnectionsA");
-    if (rasenumconnections==NULL)
-    {
-      FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-        (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
-      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
-      LocalFree( lpMsgBuf );
-      return -1;
-    }
-    rasgetconnectstatus = (rasgetconnectstatusT) GetProcAddress(hinstance,"RasGetConnectStatusA");
-    if (rasgetconnectstatus==NULL)
-    {
-      FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-        (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
-      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
-      LocalFree( lpMsgBuf );
-      return -1;
-    }
-    rashangup = (rashangupT) GetProcAddress(hinstance,"RasHangUpA");
-    if (rashangup==NULL)
-    {
-      FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-        (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
-      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
-      LocalFree( lpMsgBuf );
-      return -1;
-    }
-    rasdial = (rasdialT) GetProcAddress(hinstance,"RasDialA");
-    if (rasdial==NULL)
-    {
-      FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-        (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
-      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
-      LocalFree( lpMsgBuf );
-      return -1;
-    }
-    rasgeterrorstring = (rasgeterrorstringT) GetProcAddress(hinstance,"RasGetErrorStringA");
-    if (rasgeterrorstring==NULL)
-    {
-      FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-        (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
-      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
-      LocalFree( lpMsgBuf );
-      return -1;
-    }
-    rasgetentrydialparams = (rasgetentrydialparamsT)
-      GetProcAddress(hinstance,"RasGetEntryDialParamsA");
-    if (rasgetentrydialparams==NULL)
-    {
-      FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-        (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
-      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
-      LocalFree( lpMsgBuf );
-      return -1;
-    }
-
-  }
-#endif
-islurkstarted=1;
-return 0;
-}
-
-// ---------------------------------------------------------------------------
-
-s32 Client::LurkStatus(void)// Checks status of connection
-  // 0 == not currently connected
-  // 1 == currently connected
-{
-if (islurkstarted != 1) StartLurk();
-if (islurkstarted != 1) return 0; // Lurk can't be started, evidently
-
-#if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
-if (rasenumconnections && rasgetconnectstatus)
-  {
-  RASCONN rasconn[8];
-  DWORD cb;
-  DWORD cConnections;
-  RASCONNSTATUS rasconnstatus;
-  (rasconn[0]).dwSize = sizeof(RASCONN);
-  cb = sizeof(rasconn);
-  if (rasenumconnections(&rasconn[0], &cb, &cConnections) == 0)
-    {
-    if (cConnections > 0)
-      {
-      rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
-      for (DWORD whichconn = 1; whichconn <= cConnections; whichconn++)
-        {
-        if (rasgetconnectstatus((rasconn[whichconn-1]).hrasconn,
-            &rasconnstatus) == 0 && rasconnstatus.rasconnstate == RASCS_Connected)
-            return 1;// We're connected
-        }
-      }
-    }
-  }
-#elif (CLIENT_OS == OS_OS2) && defined(MULTITHREAD)
-  DialOnDemand dod;       // just used to check online status for lurk
-  return dod.rweonline();
-#endif
-return 0;// Not connected
-}
-
-s32 Client::LurkInitiateConnection(void)
-  // Initiates a dialup connection
-  // 0 = already connected, 1 = connection started,
-  // -1 = connection failed
-{
-if (islurkstarted != 1) StartLurk();
-if (islurkstarted != 1) return -1; // Lurk can't be started, evidently
-
-if (LurkStatus() == 1) return 0; // We're already connected!
-
-#if (CLIENT_OS == OS_WIN32)
-
-RASDIALPARAMS dialparameters;
-BOOL passwordretrieved;
-HRASCONN connectionhandle;
-DWORD returnvalue;
-char errorstring[128];
-
-dialparameters.dwSize=sizeof(RASDIALPARAMS);
-strcpy(dialparameters.szEntryName,connectionname);
-strcpy(dialparameters.szPhoneNumber,"");
-strcpy(dialparameters.szCallbackNumber,"*");
-strcpy(dialparameters.szUserName,"");
-strcpy(dialparameters.szPassword,"");
-strcpy(dialparameters.szDomain,"*");
-
-returnvalue=rasgetentrydialparams(NULL,&dialparameters,&passwordretrieved);
-
-if (returnvalue==0)
-  {
-  if (passwordretrieved != TRUE) LogScreen("Password could not be found, connection may fail.\n");
-  }
-else
-  switch(returnvalue)
-    {
-    case ERROR_CANNOT_FIND_PHONEBOOK_ENTRY:
-      LogScreenf("Phonebook entry %s could not be found, aborting dial.\n",
-                 connectionname);
-      return -1;
-    case ERROR_CANNOT_OPEN_PHONEBOOK:
-      LogScreen("The phonebook cound not be opened, aborting dial.\n");
-      return -1;
-    case ERROR_BUFFER_INVALID:
-      LogScreen("Invalid buffer passed, aborting dial.\n");
-      return -1;
-    };
-
-LogScreenf("Phonebook entry %s found, dialing.\n",connectionname);
-returnvalue=rasdial(NULL,NULL,&dialparameters,NULL,NULL,&connectionhandle);
-
-if (returnvalue != 0)
-  {  
-  rasgeterrorstring(returnvalue,errorstring,sizeof(errorstring));
-  LogScreenf("There was an error initiating a connection: %s\n",errorstring);
-  return -1;
-  };
-return 1; // If we got here, connection successful.
-
-#endif
-
-return -1; // Can't dial on a platform that's not implemented
-}
-
-s32 Client::LurkTerminateConnection(void)
-  // -1 = connection did not terminate properly, 0 = connection
-  // terminated
-{
-if (islurkstarted != 1) StartLurk();
-if (islurkstarted != 1) return -1; // Lurk can't be started, evidently
-
-if (LurkStatus() == 0) return 0; // We're already disconnected
-
-#if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
-if (lurk && rasenumconnections && rasgetconnectstatus)
-  {
-  RASCONN rasconn[8];
-  DWORD cb;
-  DWORD cConnections;
-  RASCONNSTATUS rasconnstatus;
-  (rasconn[0]).dwSize = sizeof(RASCONN);
-  cb = sizeof(rasconn);
-  if (rasenumconnections(&rasconn[0], &cb, &cConnections) == 0)
-    {
-    if (cConnections > 0)
-      {
-      rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
-      for (DWORD whichconn = 1; whichconn <= cConnections; whichconn++)
-        {
-        if (rasgetconnectstatus((rasconn[whichconn-1]).hrasconn,
-            &rasconnstatus) == 0 && rasconnstatus.rasconnstate == RASCS_Connected)
-            // We're connected
-            if (rashangup(rasconn[whichconn-1].hrasconn) == 0) // So kill it!
-              return 0; // Successful hangup
-            else return -1; // RasHangUp reported an error.
- 
-        }   
-      }
-    }
-  }
-return 0;
-#else
-return 0;
-#endif
-
-
-}
-
-#endif
 // ---------------------------------------------------------------------------
 

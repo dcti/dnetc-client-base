@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.166  1998/08/02 03:16:20  silby
+// Major reorganization:  Log,LogScreen, and LogScreenf are now in logging.cpp, and are global functions - client.h #includes logging.h, which is all you need to use those functions.  Lurk handling has been added into the Lurk class, which resides in lurk.cpp, and is auto-included by client.h if lurk is defined as well. baseincs.h has had lurk-specific win32 includes moved to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of printf. client.cpp has had variable names changed as well, etc.
+//
 // Revision 1.165  1998/07/30 05:08:52  silby
 // Fixed DONT_USE_PATHWORK handling, ini_etc strings were still being included, now they are not. Also, added the logic for dialwhenneeded, which is a new lurk feature.
 //
@@ -156,7 +159,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.165 1998/07/30 05:08:52 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.166 1998/08/02 03:16:20 silby Exp $";
 return id; }
 #endif
 
@@ -1051,12 +1054,12 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           if (choice > 2) choice=0;
           if (choice==0)
             {
-            choice=0;lurk=0;connectoften=0;
+            choice=0;dialup.lurkmode=0;connectoften=0;
             }
-          else if (choice==1) lurk=1;
+          else if (choice==1) dialup.lurkmode=1;
           else if (choice==2)
             {
-            lurk=2;
+            dialup.lurkmode=2;
             connectoften=0;
             }
           break;
@@ -1113,7 +1116,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           if (choice >= 0) *(s32 *)options[CONF_DIALWHENNEEDED].thevariable=choice;
           break;
         case CONF_CONNECTNAME:
-          strncpy( connectionname, parm, sizeof(connectionname));
+          strncpy( dialup.connectionname, parm, sizeof(dialup.connectionname));
           break;
         #endif
         default:
@@ -1278,7 +1281,7 @@ options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
 options[CONF_OFFLINEMODE].thevariable=&offlinemode;
 
 #if defined(LURK)
-options[CONF_LURKMODE].thevariable=&lurk;
+options[CONF_LURKMODE].thevariable=&dialup.lurkmode;
 #else
 options[CONF_LURKMODE].optionscreen=0;
 #endif
@@ -1307,8 +1310,8 @@ options[CONF_PAUSEFILE].thevariable=(char *)(&pausefile[0]);
 options[CONF_MMX].thevariable=&usemmx;
 #endif
 #ifdef LURK
-options[CONF_DIALWHENNEEDED].thevariable=&dialwhenneeded;
-options[CONF_CONNECTNAME].thevariable=&connectionname;
+options[CONF_DIALWHENNEEDED].thevariable=&dialup.dialwhenneeded;
+options[CONF_CONNECTNAME].thevariable=&dialup.connectionname;
 #else
 options[CONF_DIALWHENNEEDED].optionscreen=0;
 options[CONF_CONNECTNAME].optionscreen=0;
@@ -1495,12 +1498,12 @@ s32 Client::ReadConfig(void)
 #endif
 #if defined(LURK)
   tempconfig=ini.getkey(OPTION_SECTION, "lurk", "0")[0];
-  if (tempconfig) lurk=1;
+  if (tempconfig) dialup.lurkmode=1;
   tempconfig=ini.getkey(OPTION_SECTION, "lurkonly", "0")[0];
-  if (tempconfig) {lurk=2; connectoften=0;}
+  if (tempconfig) {dialup.lurkmode=2; connectoften=0;}
   tempconfig=ini.getkey(OPTION_SECTION, "dialwhenneeded", "0")[0];
-  if (tempconfig) dialwhenneeded=1;
-  INIGETKEY(CONF_CONNECTNAME).copyto(connectionname,sizeof(connectionname));
+  if (tempconfig) dialup.dialwhenneeded=1;
+  INIGETKEY(CONF_CONNECTNAME).copyto(dialup.connectionname,sizeof(dialup.connectionname));
 #endif
 
 #ifdef DONT_USE_PATHWORK
@@ -1793,8 +1796,8 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_EXITFILECHECKTIME, exitfilechecktime );
 
 #ifdef LURK
-  INISETKEY( CONF_DIALWHENNEEDED, dialwhenneeded);
-  INISETKEY( CONF_CONNECTNAME, connectionname);
+  INISETKEY( CONF_DIALWHENNEEDED, dialup.dialwhenneeded);
+  INISETKEY( CONF_CONNECTNAME, dialup.connectionname);
 #endif
 
 #ifdef DONT_USE_PATHWORK
@@ -1856,7 +1859,7 @@ s32 Client::WriteConfig(void)
 
 #if defined(LURK)
 
-  if (lurk==0)
+  if (dialup.lurkmode==0)
     {
     IniRecord *tempptr;
     tempptr = ini.findfirst(OPTION_SECTION, "lurk");
@@ -1864,7 +1867,7 @@ s32 Client::WriteConfig(void)
     tempptr = ini.findfirst(OPTION_SECTION, "lurkonly");
     if (tempptr) tempptr->values.Erase();
     }
-  else if (lurk==1)
+  else if (dialup.lurkmode==1)
     {
     IniRecord *tempptr;
     s32 tempvalue=1;
@@ -1872,7 +1875,7 @@ s32 Client::WriteConfig(void)
     if (tempptr) tempptr->values.Erase();
     ini.setrecord(OPTION_SECTION, "lurk",  IniString(tempvalue));
     }
-  else if (lurk==2)
+  else if (dialup.lurkmode==2)
     {
     IniRecord *tempptr;
     s32 tempvalue=1;
@@ -2713,12 +2716,12 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
 #if defined(LURK)
     else if ( strcmp( Argv[i], "-lurk" ) == 0 ) // Detect modem connections
     {
-      lurk=1;
+      dialup.lurkmode=1;
       Argv[i][0] = 0;
     }
     else if ( strcmp( Argv[i], "-lurkonly" ) == 0 ) // Only connect when modem connects
     {
-      lurk=2;
+      dialup.lurkmode=2;
       Argv[i][0] = 0;
     }
 #endif

@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.73  1998/08/02 03:16:42  silby
+// Major reorganization:  Log,LogScreen, and LogScreenf are now in logging.cpp, and are global functions - client.h #includes logging.h, which is all you need to use those functions.  Lurk handling has been added into the Lurk class, which resides in lurk.cpp, and is auto-included by client.h if lurk is defined as well. baseincs.h has had lurk-specific win32 includes moved to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of printf. client.cpp has had variable names changed as well, etc.
+//
 // Revision 1.72  1998/07/30 05:09:08  silby
 // Fixed DONT_USE_PATHWORK handling, ini_etc strings were still being included, now they are not. Also, added the logic for dialwhenneeded, which is a new lurk feature.
 //
@@ -259,6 +262,18 @@ typedef struct Packet
 
 #pragma pack()
 
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+#define LURK
+#include "lurk.h"
+#endif
+
+#include "logging.h"
+
+// --------------------------------------------------------------------------
+// Global Functions:
+
+  int IsFilenameValid( const char *filename );
+
 // --------------------------------------------------------------------------
 
 class Network;            // prototype for referenced classes
@@ -296,14 +311,12 @@ public:
   void MailDeinitialize(void); //checktosend(1) if not offline mode
 
 #ifdef DONT_USE_PATHWORK
-  char ini_logname[128];// Logfile name as is in the .ini
   char ini_in_buffer_file[2][128];
   char ini_out_buffer_file[2][128];
   char ini_exit_flag_file[128];
   char ini_checkpoint_file[2][128];
   char ini_pausefile[128];
 #endif
-  char logname[128];// Logfile name as used by the client
   char in_buffer_file[2][128];
   char out_buffer_file[2][128];
   char exit_flag_file[128];
@@ -322,7 +335,6 @@ public:
   s32 randomchanged;
   s32 consecutivesolutions[2];
   int autofindkeyserver;
-  s32 quietmode;
   s32 nonewblocks;
   s32 nettimeout;
   s32 noexitfilecheck;
@@ -330,28 +342,6 @@ public:
   s32 preferred_contest_id;  // 0 for RC564, 1 for DESII (unlike config)
   s32 preferred_blocksize;
   s32 contestdone[2];
-
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
-#define LURK
-#endif
-
-#if defined(LURK)
-  s32 lurk;
-    // Mode of operation
-    // 0 = disabled
-    // 1 = fill buffers while online, try to connect when emptied
-    // 2 = fill buffers while online, never connect
-  s32 dialwhenneeded;
-    // 0 = Don't dial, let autodial handle it or fail
-    // 1 = Have the client manually dial/hangup when a flush happens.
-  s32 oldlurkstatus;
-    // Status of LurkStatus as of the last check.
-  s32 islurkstarted;
-    // 0 = lurk functionality has not been initialized
-    // 1 = lurk functionality has been initialized
-  char connectionname[100];
-    // For win32, name of connection to use, perhaps useful for other lurkers.
-#endif
 
 #if ( (CLIENT_OS==OS_WIN32) && (!defined(WINNTSERVICE)) )
   s32 win95hidden;
@@ -367,7 +357,6 @@ public:
 
 protected:
   char proxymessage[64];
-  char logstr[1024];
 
   u32 totalBlocksDone[2];
   u32 old_totalBlocksDone[2];
@@ -422,23 +411,6 @@ protected:
   const char *InternalGetLocalFilename( const char *filename );
 #endif
 
-#if defined(LURK)
-  s32 StartLurk(void);
-    // Initializes Lurk Mode -> 0=success, -1 = failed
-
-  s32 LurkStatus(void);
-    // Checks status of connection -> !0 = connected
-
-  s32 LurkInitiateConnection(void);
-    // Initiates a dialup connection
-    // 0 = already connected, 1 = connection started,
-    // -1 = connection failed
-
-  s32 LurkTerminateConnection(void);
-    // -1 = connection did not terminate properly, 0 = connection
-    // terminated
-#endif
-
 #if defined(NEEDVIRTUALMETHODS)
   // methods that can be overriden to provide additional functionality
   // virtuals required for OS2 & win GUI clients...
@@ -472,16 +444,7 @@ public:
   void DisplayHelp( const char * unrecognized_option );
     // Displays the interactive command line help screen.
 
-  void Log( const char *format, ... );
-    // logs message to screen and file (append mode)
-    // if logname isn't set, then only to screen
-
-  void LogScreenf( const char *format, ... );
-    // logs message to screen only
-
 #if defined(NEEDVIRTUALMETHODS)
-  virtual void LogScreen ( const char *text );
-    // logs preformated message to screen only.  can be overriden.
 
   virtual void LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted);
 
@@ -491,8 +454,6 @@ public:
   virtual s32  Configure( void );
     // runs the interactive configuration setup
 #else
-  void LogScreen ( const char *text );
-    // logs preformated message to screen only.  can be overriden.
 
   void LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted);
 
@@ -629,6 +590,8 @@ public:
 
 // --------------------------------------------------------------------------
 
+
+
 #ifdef DONT_USE_PATHWORK
   #if (CLIENT_OS == OS_NETWARE)
   //#define PATH_SEP   "\\"   //left undefined so I can see
@@ -675,6 +638,15 @@ extern volatile s32 pausefilefound;
 extern void CliSetupSignals( void );
 
 // --------------------------------------------------------------------------
+// Setup the message mailing class.
+#include "mail.h"
+extern MailMessage mailmessage;
+
+// Setup the Lurk class
+#if defined(LURK)
+extern Lurk dialup;
+#endif
+
 
 #endif // __CLIBASICS_H__
 

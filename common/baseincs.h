@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.13  1998/08/02 03:16:16  silby
+// Major reorganization:  Log,LogScreen, and LogScreenf are now in logging.cpp, and are global functions - client.h #includes logging.h, which is all you need to use those functions.  Lurk handling has been added into the Lurk class, which resides in lurk.cpp, and is auto-included by client.h if lurk is defined as well. baseincs.h has had lurk-specific win32 includes moved to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of printf. client.cpp has had variable names changed as well, etc.
+//
 // Revision 1.12  1998/07/29 05:14:31  silby
 // Changes to win32 so that LurkInitiateConnection now works - required the addition of a new .ini key connectionname=.  Username and password are automatically retrieved based on the connectionname.
 //
@@ -147,18 +150,6 @@ extern "C" {
   #define WIN32_LEAN_AND_MEAN
   #include <windows.h>
   #include <winsock.h>      // timeval
-  #if (CLIENT_OS == OS_WIN32)
-    #include <ras.h>
-    #include <raserror.h>
-    typedef DWORD (WINAPI *rasenumconnectionsT)(LPRASCONN, LPDWORD, LPDWORD);
-    typedef DWORD (WINAPI *rasgetconnectstatusT)(HRASCONN, LPRASCONNSTATUS);
-    typedef DWORD (WINAPI *rashangupT)(HRASCONN); 
-    typedef DWORD (WINAPI *rasdialT)(LPRASDIALEXTENSIONS, LPSTR,
-                   LPRASDIALPARAMS, DWORD, LPVOID, LPHRASCONN);
-    typedef DWORD (WINAPI *rasgeterrorstringT)(UINT, LPTSTR, DWORD);
-    typedef DWORD (WINAPI *rasgetentrydialparamsT)(LPSTR,
-                   LPRASDIALPARAMS, LPBOOL);
-  #endif
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
   #include <io.h>
