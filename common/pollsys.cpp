@@ -27,6 +27,10 @@
 // does away with the 'timeslice factor' crutch.
 //
 // $Log: pollsys.cpp,v $
+// Revision 1.3  1998/09/28 22:01:29  remi
+// Cleared a gcc 2.7.2.2 warning about 'register' parameters in
+// RegPolledProcedure.
+//
 // Revision 1.2  1998/09/28 21:07:24  remi
 // Cleared 3 "might be used uninitialised" warnings.
 //
@@ -37,7 +41,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.2 1998/09/28 21:07:24 remi Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.3 1998/09/28 22:01:29 remi Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -114,7 +118,7 @@ int UnregPolledProcedure( int fd )
 // procedures registered with a high priority have an interval long enough
 // to allow procedures with a low(er) priority to run.
 
-int RegPolledProcedure( void register (*proc)(void *), void *arg, 
+int RegPolledProcedure( void (*proc)(void *), void *arg, 
                         struct timeval *interval, unsigned int priority ) 
 {
   struct polldata *thatp, *thisp;

@@ -6,6 +6,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: pollsys.h,v $
+// Revision 1.2  1998/09/28 22:01:31  remi
+// Cleared a gcc 2.7.2.2 warning about 'register' parameters in
+// RegPolledProcedure.
+//
 // Revision 1.1  1998/09/28 02:52:23  cyp
 // Created.
 //
@@ -30,7 +34,7 @@ int InitializePolling(void);
 // procedures registered with a high priority have an interval long enough
 // to allow procedures with a low(er) priority to run.
 
-int RegPolledProcedure( void register (*proc)(void *), void *arg, 
+int RegPolledProcedure( void (*proc)(void *), void *arg, 
                         struct timeval *interval, unsigned int priority );
 
 // UnregPolledProcedure() unregisters a procedure previously registered with
