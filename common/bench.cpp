@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.34 2000/06/13 18:11:34 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.35 2000/06/24 09:06:41 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -355,7 +355,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         }
         if ( run != RESULT_WORKING) /* finished this block */
         {
-          if ( problem->RetrieveState(&tmp_work, NULL, 0) >= 0 )
+          if ( problem->RetrieveState(&tmp_work, NULL, 1) >= 0 ) // purge block!
           {
             u32 old_lo, frag_hi = 0, frag_lo = 0;
             switch( contestid ) 
@@ -393,7 +393,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   }
   if (run < 0) /* errors or ^C */
     run = -1; /* core error */
-  else if (problem->RetrieveState(&contestwork, NULL, 0) < 0)
+  else if (problem->RetrieveState(&contestwork, NULL, 1) < 0) // purge block!
     run = -1; /* core error */
   if (scropen > 0 && run < 0)
     LogScreen("\n");
