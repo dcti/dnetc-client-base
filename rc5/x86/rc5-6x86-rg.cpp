@@ -4,6 +4,9 @@
 // torment.ntr.net K6 233 sean@ntr.net
 //
 // $Log: rc5-6x86-rg.cpp,v $
+// Revision 1.7  1998/07/08 22:59:34  remi
+// Lots of $Id$ stuff.
+//
 // Revision 1.6  1998/07/08 18:47:45  remi
 // $Id fun ...
 //
@@ -91,8 +94,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_6x86_rg_cpp (void) {
-static char *id="@(#)$Id: rc5-6x86-rg.cpp,v 1.6 1998/07/08 18:47:45 remi Exp $";
-return id; }
+return "@(#)$Id: rc5-6x86-rg.cpp,v 1.7 1998/07/08 22:59:34 remi Exp $"; }
 #endif
 
 #define CORE_INCREMENTS_KEY

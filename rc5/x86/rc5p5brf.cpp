@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5p5brf.cpp,v $
+// Revision 1.5  1998/07/08 22:59:53  remi
+// Lots of $Id$ stuff.
+//
 // Revision 1.4  1998/07/08 18:47:42  remi
 // $Id fun ...
 //
@@ -41,8 +44,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5p5brf_cpp (void) {
-static char *id="@(#)$Id: rc5p5brf.cpp,v 1.4 1998/07/08 18:47:42 remi Exp $";
-return id; }
+return "@(#)$Id: rc5p5brf.cpp,v 1.5 1998/07/08 22:59:53 remi Exp $"; }
 #endif
 
 #define CORE_INCREMENTS_KEY

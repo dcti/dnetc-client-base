@@ -6,6 +6,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5ansi2-rg.cpp,v $
+// Revision 1.6  1998/07/08 22:59:50  remi
+// Lots of $Id$ stuff.
+//
 // Revision 1.5  1998/06/14 08:27:34  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -43,7 +46,10 @@
 // in order :
 //	- all others
 
-static char *id="@(#)$Id: rc5ansi2-rg.cpp,v 1.5 1998/06/14 08:27:34 friedbait Exp $";
+#if (!defined(lint) && defined(__showids__))
+const char *rc5ansi2_rg_cpp (void) {
+return "@(#)$Id: rc5ansi2-rg.cpp,v 1.6 1998/07/08 22:59:50 remi Exp $"; }
+#endif
 
 #include "problem.h"
 #include "rotate.h"

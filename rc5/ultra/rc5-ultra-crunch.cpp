@@ -3,6 +3,9 @@
  * generation of S0[]
  *
  * $Log: rc5-ultra-crunch.cpp,v $
+ * Revision 1.7  1998/07/08 22:59:40  remi
+ * Lots of $Id$ stuff.
+ *
  * Revision 1.6  1998/06/15 02:44:32  djones
  * First build of UltraSPARC 64-bit/VIS DES client:
  * - many configure file tweaks: split up C++, ASM and C files; make "gcc" the
@@ -21,8 +24,10 @@
  *
  */
 
-/* Can't define id here - it's defined in problem.cpp, which includes this */
-/*static char *id="@(#)$Id: rc5-ultra-crunch.cpp,v 1.6 1998/06/15 02:44:32 djones Exp $";*/
+#if (!defined(lint) && defined(__showids__))
+const char *rc5_ultra_crunch_cpp (void) {
+return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.7 1998/07/08 22:59:40 remi Exp $"; }
+#endif
 
 #include <stdio.h>
 

@@ -6,6 +6,9 @@
  * Marco.Walther@mch.sni.de
  *
  * $Log: mips-crunch.cpp,v $
+ * Revision 1.6  1998/07/08 22:59:31  remi
+ * Lots of $Id$ stuff.
+ *
  * Revision 1.5  1998/06/14 08:27:13  friedbait
  * 'Id' tags added in order to support 'ident' command to display a bill of
  * material of the binary executable
@@ -21,7 +24,11 @@
  * generation of S0[]
  */
 
-static char *id="@(#)$Id: mips-crunch.cpp,v 1.5 1998/06/14 08:27:13 friedbait Exp $";
+#if (!defined(lint) && defined(__showids__))
+const char *mips_crunch_cpp(void) {
+return "@(#)$Id: mips-crunch.cpp,v 1.6 1998/07/08 22:59:31 remi Exp $"; }
+#endif
+
 
 #include <stdio.h>
 
