@@ -10,11 +10,13 @@
 %include "csc-mac.inc"
 
     global    csc_unit_func_6b_mmx
+    global    _csc_unit_func_6b_mmx
+
     extern    convert_key_from_inc_to_csc, convert_key_from_csc_to_inc
     extern    csc_tabp,csc_bit_order
 
 __DATASECT__
-    db  "@(#)$Id: csc-mmx.asm,v 1.1.2.1 1999/12/11 11:27:42 cyp Exp $",0
+    db  "@(#)$Id: csc-mmx.asm,v 1.1.2.2 1999/12/12 07:27:00 jlawson Exp $",0
 
 __CODESECT__
 
@@ -5646,6 +5648,8 @@ X$23:
     align 128 ; this is already para aligned actually
     
 csc_unit_func_6b_mmx:
+_csc_unit_func_6b_mmx:
+
     push      ebp
     mov       ebp,esp
     sub       esp,0x0000004c
