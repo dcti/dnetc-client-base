@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.41  1998/11/26 22:17:04  dicamillo
+// Restore BeOS priority ranging from 1 to 10.
+//
 // Revision 1.40  1998/11/26 07:31:03  cyp
 // Updated to reflect changed checkpoint and buffwork methods. Corrected BeOS
 // priority scaling.
@@ -154,7 +157,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.40 1998/11/26 07:31:03 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.41 1998/11/26 22:17:04 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -853,8 +856,9 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
                                    (void *)thrparams )) != -1);
       #elif (CLIENT_OS == OS_BEOS)
         char thread_name[32];
-        long be_priority = 5 + ((thrparams->priority+1) >> 1); 
-        // B_LOW_PRIORITY is 5 and B_NORMAL_PRIORITY is 10
+        long be_priority = thrparams->priority+1; 
+	// Be OS priority for rc5des should be adjustable from 1 to 10
+	// 1 is lowest, 10 is higest for non-realtime and non-system tasks
         sprintf(thread_name, "RC5DES crunch#%d", thread_i + 1);
         thrparams->threadID = spawn_thread((long (*)(void *)) Go_mt, 
                thread_name, be_priority, (void *)thrparams );
