@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.30 2000/06/04 09:57:07 oliver Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.31 2000/06/06 18:03:10 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -508,21 +508,33 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
     #elif (CLIENT_OS == OS_LINUX) /*only RTlinux has clock_gettime/gethrtime*/
     {
-      /* we have no choice but to use getrusage() [we can */
-      /* do that because each thread has its own pid] */
-      struct rusage rus;
-      if (getrusage(RUSAGE_SELF,&rus) != 0)
-        return -1;
-      tv->tv_sec  = rus.ru_utime.tv_sec  + rus.ru_stime.tv_sec;
-      tv->tv_usec = rus.ru_utime.tv_usec + rus.ru_stime.tv_usec;
-      if (tv->tv_usec >= 1000000)
+      /* this is computationally expensive, but we don't have a choice,
+         and since linux supports thread time, this is only called when 
+         a block starts/ends. /proc/uptime is buggy (it wraps) in 2.0.x 
+         kernels for uptimes greater than ~18 months.
+      */
+      int rc = -1;
+      FILE *file = fopen("/proc/uptime","r");
+      if (file)
       {
-        tv->tv_usec -= 1000000;
-        tv->tv_sec++;
+        double uptime, idletime; /* eg "10762.56 10733.61\n" */
+        if (fscanf(file,"%lf %lf", &uptime, &idletime) == 2)
+        {
+          unsigned long secs = (unsigned long)uptime;
+          tv->tv_usec = (long)(1000000.0 * (uptime - ((double)secs)));
+          tv->tv_sec = (time_t)secs;
+          rc = 0;
+        }
+        fclose(file);
       }
+      if (rc != 0)
+        return -1;
     }
     #elif (CLIENT_OS == OS_AMIGAOS)
-      return amigaGetMonoClock(tv);
+    {
+      if (amigaGetMonoClock(tv) != 0)
+        return -1;
+    }
     #elif defined(CLOCK_MONOTONIC) /* POSIX 1003.1c */
     {                           /* defined doesn't always mean supported :( */
       struct timespec ts;
@@ -546,9 +558,9 @@ int CliGetMonotonicClock( struct timeval *tv )
          a) that clock() is not dependant on system time (all watcom clibs
             have this bug). Otherwise you may as well use __GetTimeOfDay()
          b) that clock() does not return virtual time. Under unix clock()
-            is often implemented via times() is thus virtual. Look at
-            'top' source [get_system_info() in machine.c] to see what
-            you might be able to use instead.
+            is often implemented via times() and is thus virtual. Look at
+            uptime source or see if something in top source (get_system_info 
+            in machine/m_[yourplat].c) is usable.
          c) clock_t is at least an unsigned long
          d) that the value from clock() does indeed count up to ULONG_MAX
             before wrapping. At least one implementation (EMX <=0.9) is
