@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.13  1999/01/04 04:49:17  cyp
+// Cleared a 'potential integer truncation' warning.
+//
 // Revision 1.12  1999/01/04 02:47:30  cyp
 // Cleaned up menu options and handling.
 //
@@ -63,7 +66,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.12 1999/01/04 02:47:30 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.13 1999/01/04 04:49:17 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -136,9 +139,9 @@ static int yesno(char *str)
 static unsigned char base64table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
                                      "ghijklmnopqrstuvwxyz0123456789+/";
 
-int base64_encode(char *outbuf, const char *inbuf)
-{
-  unsigned int length = strlen(inbuf)+1;
+int base64_encode(char *outbuf, const char *inbuf) //outbuff must be at least
+{                                                 //(strlen(inbuf))*4/3) bytes  
+  unsigned int length = strlen(inbuf)+1;           
   
   #define B64_ENC(Ch) (char) (base64table[(char)(Ch) & 63])
 
@@ -169,7 +172,7 @@ int base64_encode(char *outbuf, const char *inbuf)
 }
 
 
-static int base64_decode(char *outbuf, const char *inbuf )
+int base64_decode(char *outbuf, const char *inbuf )
 {
   static char inalphabet[256], decoder[256];
   int i, bits, c, char_count, errors = 0;
@@ -177,7 +180,7 @@ static int base64_decode(char *outbuf, const char *inbuf )
    for (i = (64/*sizeof(base64table)*/-1); i >= 0 ; i--) 
      {
      inalphabet[base64table[i]] = 1;
-     decoder[base64table[i]] = i;
+     decoder[base64table[i]] = ((unsigned char)(i));
      }
   char_count = 0;
   bits = 0;
@@ -192,11 +195,11 @@ static int base64_decode(char *outbuf, const char *inbuf )
           errors++;
           break;
         case 2:
-          *outbuf++ = ((bits >> 10));
+          *outbuf++ = (char)((bits >> 10));
           break;
         case 3:
-          *outbuf++ = ((bits >> 16));
-          *outbuf++ = (((bits >> 8) & 0xff));
+          *outbuf++ = (char)((bits >> 16));
+          *outbuf++ = (char)(((bits >> 8) & 0xff));
           break;
         }
       break;
@@ -207,9 +210,9 @@ static int base64_decode(char *outbuf, const char *inbuf )
     char_count++;
     if (char_count == 4) 
       {
-      *outbuf++ = ((bits >> 16));
-      *outbuf++ = (((bits >> 8) & 0xff));
-      *outbuf++ = ((bits & 0xff));
+      *outbuf++ = (char)((bits >> 16));
+      *outbuf++ = (char)(((bits >> 8) & 0xff));
+      *outbuf++ = (char)((bits & 0xff));
       bits = 0;
       char_count = 0;
       } 
