@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.8 1999/10/11 04:16:13 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.9 1999/10/14 18:35:58 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -539,7 +539,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   }
   #endif
 
-
   if (selcorestatics.corenum[contestid] < 0) /* ok, bench it then */
   {
     int corecount = (int)__corecount_for_contest(contestid);
@@ -547,12 +546,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     if (corecount > 0)
     {
       int whichcrunch;
-      int fastestcrunch = -1;
+      int saidmsg = 0, fastestcrunch = -1;
       unsigned long fasttime = 0;
-      Problem *problem = new Problem();
       const u32 benchsize = 100000;
+      Problem *problem = new Problem();
 
-      LogScreen("%s: Manually selecting fastest core...\n", contname);
       for (whichcrunch = 0; whichcrunch < corecount; whichcrunch++)
       {
         ContestWork contestwork;
@@ -560,22 +558,37 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         selcorestatics.corenum[contestid] = whichcrunch;
         memset( (void *)&contestwork, 0, sizeof(contestwork));
         contestwork.crypto.iterations.lo = benchsize;
-        problem->LoadState( &contestwork, contestid, benchsize, whichcrunch );
-        problem->Run();
-    
-        elapsed = (((unsigned long)problem->runtime_sec) * 1000000UL)+
-                  (((unsigned long)problem->runtime_usec));
-        //printf("%s Core %d: %lu usec\n", contname,whichcrunch,elapsed);
-    
-        if (fastestcrunch < 0 || elapsed < fasttime)
+        if (problem->LoadState( &contestwork, contestid, 
+                                benchsize, 0 /* unused */ ) == 0)
         {
-          fastestcrunch = whichcrunch; 
-          fasttime = elapsed;
+          if (!saidmsg)
+          {
+            LogScreen("%s: Manually selecting fastest core...\n", contname);
+            saidmsg = 1;
+          }                                
+          problem->Run();
+   
+          elapsed = (((unsigned long)problem->runtime_sec) * 1000000UL)+
+                    (((unsigned long)problem->runtime_usec));
+          //printf("%s Core %d: %lu usec\n", contname,whichcrunch,elapsed);
+    
+          if (fastestcrunch < 0 || elapsed < fasttime)
+          {
+            fastestcrunch = whichcrunch; 
+            fasttime = elapsed;
+          }
         }
       }
-      selcorestatics.corenum[contestid] = fastestcrunch;
-      LogScreen("%s: selected core #%d (%s).\n", contname, fastestcrunch, 
-                     selcoreGetDisplayName( contestid, fastestcrunch ) );
+      delete problem;
+
+      if (fastestcrunch < 0) /* all failed */
+        selcorestatics.corenum[contestid] = 0; /* don't bench again */
+      else
+      {
+        selcorestatics.corenum[contestid] = fastestcrunch;
+        LogScreen("%s: selected core #%d (%s).\n", contname, fastestcrunch, 
+                       selcoreGetDisplayName( contestid, fastestcrunch ) );
+      }
     }
   }
   
