@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.96 1999/12/04 15:37:08 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.97 1999/12/04 18:12:18 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -326,10 +326,10 @@ static long __GetRawProcessorID(const char **cpuname)
   static int ispower = 0;
   static const char *detectedname = NULL;
   static char namebuf[30];
-  static struct { long rid; const char *name; int powername} cpuridtable[] = {
+  static struct { long rid; const char *name; int powername; } cpuridtable[] = {
     //note: if the name is not prefixed with "Power", it defaults to "PowerPC"
     //note: Non-PVR based numbers start at 0x10000 (real PVR numbers are 16bit)
-                {         1,   "601"                   }
+                {         1,   "601"                   },
                 {         3,   "603"                   },
                 {         4,   "604"                   },
                 {         6,   "603e"                  },
