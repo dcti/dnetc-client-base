@@ -6,26 +6,32 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5ansi_2-rg.cpp,v $
+// Revision 1.2  1999/12/27 12:45:36  patrick
+//
+// incorporated changes to 2-rg.c from cyp
+//
 // Revision 1.1  1999/12/27 12:22:16  patrick
 //
 // new version of the RC5 ANSI 2-rg core. Replaces 2-rg.c. Can be compiled using g++. Uses new naming convention.
 //
-// Revision 1.4  1999/05/02 20:37:12  patrick
-//
-// changed key incrementation to account for changed (and no longer usable __IncrementKey)
-//
-// Revision 1.3  1999/04/08 18:48:58  patrick
-//
-// removed def of struct RC5UnitWork and used ccoreio.h instead
-//
-// Revision 1.2  1999/04/05 21:48:04  patrick
-//
-// changed due to compiler problems (mangleing/demangling)
-//
-// Revision 1.1  1999/04/05 19:26:57  patrick
-//
-// rc5 ANSI core ported to the new scheme
-//
+
+/*
+ * Copyright distributed.net 1997 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ---------------------------------------------------------------
+ * dual-key, mixed round 3 and encryption, A1/A2 use for last value,
+ * non-arrayed S1/S2 tables, run-time generation of S0[]
+ *
+ * extern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
+ *                            u32 *timeslice, void *scratch_area );
+ *            //returns RESULT_FOUND,RESULT_WORKING or -1,
+ *
+ * extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 timeslice );
+ *            //returns timeslice
+ * ---------------------------------------------------------------
+*/
 
 //*Run-time generation of S0[] :
 //
@@ -54,7 +60,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi_2_rg_cpp (void) {
-return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.1 1999/12/27 12:22:16 patrick Exp $"; }
+return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.2 1999/12/27 12:45:36 patrick Exp $"; }
 #endif
 
 #define PIPELINE_COUNT 2
@@ -62,8 +68,6 @@ return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.1 1999/12/27 12:22:16 patrick Exp $"; }
 
 #include "problem.h"
 #include "rotate.h"
-
-extern "C" {
 
 #define _P_RC5       0xB7E15163
 #define _Q       0x9E3779B9
@@ -198,12 +202,14 @@ extern "C" {
 // assembly gurus encouraged.
 // Returns: 0 - nothing found, 1 - found on pipeline 1,
 //   2 - found pipeline 2, 3 - ... etc ...
-// extern "C" {
+#if defined(__cplusplus)
+extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *rc5unitwork, u32 tslice );
+#endif
 
-s32 rc5_unit_func_ansi_2_rg( RC5UnitWork *rc5unitwork, u32 *timeslice)
+u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *rc5unitwork, u32 tslice)
 {
   u32 kiter = 0;
-  u32 keycount = *timeslice;
+  u32 keycount = tslice;
   u32 S1_00,S1_01,S1_02,S1_03,S1_04,S1_05,S1_06,S1_07,S1_08,S1_09,
       S1_10,S1_11,S1_12,S1_13,S1_14,S1_15,S1_16,S1_17,S1_18,S1_19,
       S1_20,S1_21,S1_22,S1_23,S1_24,S1_25;
@@ -345,4 +351,28 @@ s32 rc5_unit_func_ansi_2_rg( RC5UnitWork *rc5unitwork, u32 *timeslice)
   return kiter;
 }
 
-} /* extern "C" */
+#if defined(__cplusplus)
+extern "C" s32 rc5_ansi_2_rg_unified_form( RC5UnitWork * work,
+                                u32 *timeslice, void *scratch_area );
+#endif
+
+s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
+                              u32 *timeslice, void *scratch_area )
+{
+  /*  this is a two pipeline core, so ... iterations_to_do == timeslice / 2
+   *                              and ... iterations_done  == retval * 2
+  */
+  u32 kiter, xiter = (*timeslice / 2);
+  scratch_area = scratch_area; /* shaddup compiler */
+
+  kiter = rc5_unit_func_ansi_2_rg( work, xiter );
+  *timeslice = kiter * 2;
+
+  if (xiter == kiter) {
+    return RESULT_WORKING;
+  } else if (xiter < kiter) {
+    return RESULT_FOUND;
+  }
+
+  return -1; /* error */
+}
