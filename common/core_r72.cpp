@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.28 2004/06/22 15:38:43 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.29 2004/06/24 21:13:28 kakace Exp $"; }
 
 //#define TRACE
 
@@ -698,7 +698,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
 /* ------------------------------------------------------------- */
 
 /*
-** Estimate the number of work units that can be processed on a daily
+** Estimate the maximum number of work units that can be processed on a daily
 ** basis.
 */
 unsigned int estimate_nominal_rate_rc572()
