@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.43  1999/03/31 21:47:45  cyp
+// a) Add of keysdone to key on RESULT_FOUND is done in Problem::Run() (where
+// it should have been in the first place), and not here. b) Cleaned up a bit.
+//
 // Revision 1.42  1999/03/01 08:19:44  gregh
 // Changed ContestWork to a union that contains crypto (RC5/DES) and OGR data.
 //
@@ -64,7 +68,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.42 1999/03/01 08:19:44 gregh Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.43 1999/03/31 21:47:45 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -75,6 +79,7 @@ return "@(#)$Id: selftest.cpp,v 1.42 1999/03/01 08:19:44 gregh Exp $"; }
 #include "convdes.h"   // convert_key_from_des_to_inc 
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "logstuff.h"  // LogScreen()
+#include "cpucheck.h"  // GetNumberOfDetectedProcessors() [for RISCOS]
 #include "clicdata.h"  // CliGetContestNameFromID() 
 #include "clievent.h"  // ClientEventSyncPost()
 
@@ -159,222 +164,200 @@ static const u32 des_test_cases[TEST_CASE_COUNT][8] = {
 
 // ---------------------------------------------------------------------------
 
-int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to -1L */ )
+int SelfTest( unsigned int contest, int cputype )
 {
-  s32 run;
-  unsigned int testnum;
-  const u32 (*test_cases)[TEST_CASE_COUNT][8];
-  Problem problem(threadindex);
-  ContestWork contestwork;
-  RC5Result rc5result;
-  u64 expectedsolution, solutionfound;
+  int threadpos, threadcount = 1;
   int successes = 0;
-  
-  if (contest == 0)
-    {
-    test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&rc5_test_cases[0][0];
+  const char *contname = CliGetContestNameFromID( contest );
+
 #if (CLIENT_OS == OS_RISCOS)
-    LogScreen("Beginning %s RC5 Self-test.\n", (threadindex == 1)?"x86":"ARM");
-#else
-    LogScreen("Beginning RC5 Self-test.\n");
-#endif
-    }
-  else if (contest == 1)
+  if (contest == 0 && GetNumberOfDetectedProcessors() == 2)
+    threadcount = 2;
+#endif    
+
+  for ( threadpos = 0; successes >= 0 && threadpos < threadcount; threadpos++ )
+  {
+    unsigned int testnum;
+    long threadindex = -1L;
+    if (threadcount > 1)
+      threadindex = (long)threadpos;
+
+    ClientEventSyncPost( CLIEVENT_SELFTEST_STARTED, (long)contest );
+    successes = 0;
+
+    for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ )
     {
-    test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&des_test_cases[0][0];
-    LogScreen("Beginning DES Self-test.\n");
-    }
-  else
-    return 0;
+      const u32 (*test_cases)[TEST_CASE_COUNT][8];
+      int resultcode; const char *resulttext = NULL;
+      u64 expectedsolution;
+      ContestWork contestwork;
+      Problem problem(threadindex);
 
-  ClientEventSyncPost( CLIEVENT_SELFTEST_STARTED, (long)contest );
+      if (CheckExitRequestTriggerNoIO())
+        break;
 
-  for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ )
-    {
-    if (CheckExitRequestTriggerNoIO())
-      break;
-
-    // load test case
-    if (contest == 0) 
+      // load test case
+      if (contest == 1)   // DES
       {
-      // RC5-64
-      expectedsolution.lo = (*test_cases)[testnum][0];
-      expectedsolution.hi = (*test_cases)[testnum][1];
-      } 
-    else //if (contest == 1) 
-      {
-      // DES
-      expectedsolution.lo = (*test_cases)[testnum][0];
-      expectedsolution.hi = (*test_cases)[testnum][1];
+        test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&des_test_cases[0][0];
+        expectedsolution.lo = (*test_cases)[testnum][0];
+        expectedsolution.hi = (*test_cases)[testnum][1];
 
-      convert_key_from_des_to_inc ( (u32 *) &expectedsolution.hi, 
-                                    (u32 *) &expectedsolution.lo);
+        convert_key_from_des_to_inc ( (u32 *) &expectedsolution.hi, 
+                                      (u32 *) &expectedsolution.lo);
 
-      // to test also success on complementary keys
-      if (expectedsolution.hi & 0x00800000L)
+        // to test also success on complementary keys
+        if (expectedsolution.hi & 0x00800000L)
         {
-        expectedsolution.hi ^= 0x00FFFFFFL;
-        expectedsolution.lo = ~expectedsolution.lo;
+          expectedsolution.hi ^= 0x00FFFFFFL;
+          expectedsolution.lo = ~expectedsolution.lo;
         }
+        contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
+        contestwork.crypto.key.hi = expectedsolution.hi;
       }
-    contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
-    contestwork.crypto.key.hi = expectedsolution.hi;
+      else //if (contest == 0) /* RC5-64 */
+      { 
+        test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&rc5_test_cases[0][0];
+        expectedsolution.lo = (*test_cases)[testnum][0];
+        expectedsolution.hi = (*test_cases)[testnum][1];
 
-    if (contest == 0) { // RC5-64
-      // test case 1 is the RSA pseudo-contest solution
-      // test cases 2,3,4,5,6,7 are specially made to 
-      // stress the key incrementation system
-      // the other test cases are generic (random)
+        #if (CLIENT_OS == OS_RISCOS)
+        if (threadcount == 2)
+          contname = ((threadpos == 0)?("RC5 ARM"):("RC5 X86"));
+        #endif
 
-/*  if test case N fails, then key & K insn't properly incremented when key & W wrap :
-
-    N         K                 W
-           (hi:lo)           (hi:lo)
-
-    2 00000000:00FF0000 00000000:0000FFFF
-    3 00000000:FF000000 00000000:00FF0000
-    4 000000FF:00000000 00000000:FF000000
-    5 0000FF00:00000000 000000FF:00000000
-    6 00FF0000:00000000 0000FF00:00000000
-    7 FF000000:00000000 00FF0000:00000000
-
-  another way of explaining this algorithm :
-                                         __
-    2 the solution is :       7602EDDB:C3A303DB
-      we're starting from :   7602EDDB:C3A20000
-                                       __
-    3 the solution is :       59DA3369:8A00EAE3
-      we're starting from :   59DA3369:89FF0000
+        #if 0
+        test case 1 is the RSA pseudo-contest solution
+        test cases 2,3,4,5,6,7 are specially made to 
+        stress the key incrementation system
+        the other test cases are generic (random)
+  
+        if test case N fails, then key & K insn't properly 
+        incremented when key & W wrap :
+  
+        N         K                 W
+               (hi:lo)           (hi:lo)
+  
+        2 00000000:00FF0000 00000000:0000FFFF
+        3 00000000:FF000000 00000000:00FF0000
+        4 000000FF:00000000 00000000:FF000000
+        5 0000FF00:00000000 000000FF:00000000
+        6 00FF0000:00000000 0000FF00:00000000
+        7 FF000000:00000000 00FF0000:00000000
+  
+        another way of explaining this algorithm :
+                                             __
+        2 the solution is :       7602EDDB:C3A303DB
+          we're starting from :   7602EDDB:C3A20000
+                                           __
+        3 the solution is :       59DA3369:8A00EAE3
+          we're starting from :   59DA3369:89FF0000
+                                        __
+        4 the solution is :       A2098FD6:0000348F
+          we're starting from :   A2098FD5:FFFF0000
+                                      __
+        5 the solution is :       28A00B00:0000E77F
+          we're starting from :   28A00AFF:FFFF0000
                                     __
-    4 the solution is :       A2098FD6:0000348F
-      we're starting from :   A2098FD5:FFFF0000
+        6 the solution is :       47FC0000:000076B5
+          we're starting from :   47FBFFFF:FFFF0000
                                   __
-    5 the solution is :       28A00B00:0000E77F
-      we're starting from :   28A00AFF:FFFF0000
-                                __
-    6 the solution is :       47FC0000:000076B5
-      we're starting from :   47FBFFFF:FFFF0000
-                              __
-    7 the solution is :       AE000000:0000ECBB
-      we're starting from :   ADFFFFFF:FFFF0000
+        7 the solution is :       AE000000:0000ECBB
+          we're starting from :   ADFFFFFF:FFFF0000
+  
+        remember, in cores the running key is reversed, ie:
+        keybyte_inside_core[0] == keybyte_outside_core[7] == key.hi & 0xFF000000,
+        keybyte_inside_core[1] == keybyte_outside_core[6] == key.hi & 0x00FF0000,
+        keybyte_inside_core[2] == keybyte_outside_core[5], etc...
+        #endif
 
-  (remember, in cores the running key is reversed, ie:
-   keybyte_inside_core[0] == keybyte_outside_core[7] == key.hi & 0xFF000000,
-   keybyte_inside_core[1] == keybyte_outside_core[6] == key.hi & 0x00FF0000,
-   keybyte_inside_core[2] == keybyte_outside_core[5], etc...)
-
-*/
-      if (testnum>1 && testnum<=6) 
+        contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
+        contestwork.crypto.key.hi = expectedsolution.hi;
+        if (testnum>1 && testnum<=6) 
         {
-        if (!(contestwork.crypto.key.lo & 0xFFFF0000)) 
-          {
           contestwork.crypto.key.lo -= 0x00010000;
-          contestwork.crypto.key.hi--;
-          } 
-        else
-          contestwork.crypto.key.lo -= 0x00010000;
+          if ((expectedsolution.lo & 0xFFFF0000L) == 0)
+            contestwork.crypto.key.hi--;
         }
       }
-
-    contestwork.crypto.key.lo = ( contestwork.crypto.key.lo );
-    contestwork.crypto.key.hi = ( contestwork.crypto.key.hi );
-    contestwork.crypto.iv.lo =  ( (*test_cases)[testnum][2] );
-    contestwork.crypto.iv.hi =  ( (*test_cases)[testnum][3] );
-    contestwork.crypto.plain.lo = ( (*test_cases)[testnum][4] );
-    contestwork.crypto.plain.hi = ( (*test_cases)[testnum][5] );
-    contestwork.crypto.cypher.lo = ( (*test_cases)[testnum][6] );
-    contestwork.crypto.cypher.hi = ( (*test_cases)[testnum][7] );
-    contestwork.crypto.keysdone.lo = ( 0 );
-    contestwork.crypto.keysdone.hi = ( 0 );
-    contestwork.crypto.iterations.lo = ( 0x00020000L ); // 17 bits instead of 16
-    contestwork.crypto.iterations.hi = ( 0 );
-
-    problem.LoadState( &contestwork, contest, 0x1000, cputype);
-
-    ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)((Problem *)(&problem)) );
-
-    while ( ( run = problem.Run( 0 ) ) == 0 ) //threadnum
+      contestwork.crypto.iv.lo =  ( (*test_cases)[testnum][2] );
+      contestwork.crypto.iv.hi =  ( (*test_cases)[testnum][3] );
+      contestwork.crypto.plain.lo = ( (*test_cases)[testnum][4] );
+      contestwork.crypto.plain.hi = ( (*test_cases)[testnum][5] );
+      contestwork.crypto.cypher.lo = ( (*test_cases)[testnum][6] );
+      contestwork.crypto.cypher.hi = ( (*test_cases)[testnum][7] );
+      contestwork.crypto.keysdone.lo = ( 0 );
+      contestwork.crypto.keysdone.hi = ( 0 );
+      contestwork.crypto.iterations.lo = ( 0x00020000L ); // 17 bits instead of 16
+      contestwork.crypto.iterations.hi = ( 0 );
+  
+      problem.LoadState( &contestwork, contest, 0x1000, cputype);
+  
+      ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)((Problem *)(&problem)) );
+  
+      while ( problem.Run( 0 ) == 0 ) //threadnum
       {
-      #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-      Yield();
-      #elif (CLIENT_OS == OS_NETWARE)
-      nwCliThreadSwitchLowPriority();
-      #endif
-      }
-
-    problem.GetResult( &rc5result );
-    //successes++;
-    
-    if ( rc5result.result == RESULT_FOUND )
-      {
-      solutionfound.lo = ( rc5result.key.lo ) + ( rc5result.keysdone.lo );
-      solutionfound.hi = ( rc5result.key.hi ) + ( rc5result.keysdone.hi );
-      if (solutionfound.lo < ( rc5result.key.lo )) 
-        solutionfound.hi++; // wrap occured ?
-      if (solutionfound.lo != expectedsolution.lo || solutionfound.hi != expectedsolution.hi)
-        {
-        // failure occurred (wrong key)
-        LogScreen( "Test %02d FAILED: %08X:%08X - %08X:%08X\n", testnum + 1,
-          solutionfound.hi, solutionfound.lo, 
-          expectedsolution.hi, expectedsolution.lo );
-        //successes = -successes;
-        } 
-      else  // match found
-        {
-        if (contest == 1) // DES...
-          {
-          u32 hi = (*test_cases)[testnum][1];
-          u32 lo = (*test_cases)[testnum][0];
-
-          u32 hi2 = ( rc5result.key.hi ) + 
-              (u32) ( rc5result.keysdone.hi );
-          u32 lo2 = ( rc5result.key.lo ) + 
-              (u32) ( rc5result.keysdone.lo );
-          convert_key_from_inc_to_des (&hi2, &lo2);
-          LogScreen("Test %02d Passed: %08X:%08X - %08X:%08X\n", testnum + 1,
-            (u32) hi2, (u32) lo2, (u32) hi, (u32) lo);
-          successes++;
-          } 
-        else 
-          {
-          // RC5...
-          LogScreen( "Test %02d Passed: %08X:%08X\n", testnum + 1,
-            solutionfound.hi, solutionfound.lo);
-          successes++;
-          }
-        }
-      }
-    else
-      {
-      // failure occurred (no solution)
-      LogScreen( "Test %02d FAILED: %08X:%08X - %08X:%08X\n", testnum + 1,
-            0, 0, expectedsolution.hi, expectedsolution.lo );
-      //successes = -successes;
+        #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+        Yield();
+        #elif (CLIENT_OS == OS_NETWARE)
+        nwCliThreadSwitchLowPriority();
+        #endif
       }
   
-    ClientEventSyncPost( CLIEVENT_SELFTEST_TESTEND, (successes>0) );
-    if (successes < 0)
-      break;
-    }
+      resultcode = problem.RetrieveState( &contestwork, NULL, 1 );
 
-  ClientEventSyncPost( CLIEVENT_SELFTEST_FINISHED, (long)(successes) );
+      if ( resultcode != RESULT_FOUND )                /* no solution */
+      {
+        contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
+        resulttext = "FAILED";
+        resultcode = -1;
+      }
+      else if (contestwork.crypto.key.lo != expectedsolution.lo || 
+               contestwork.crypto.key.hi != expectedsolution.hi)   
+      {                                                /* wrong solution */
+        resulttext = "FAILED";
+        resultcode = -1;
+      } 
+      else                                             /* correct solution */
+      {
+        resulttext = "passed";
+        successes++;
+        #if 0
+        if (contest == 1) // DES...
+        {
+          /* original expected solution */
+          expectedsolution.hi = (*test_cases)[testnum][1]; 
+          expectedsolution.lo = (*test_cases)[testnum][0];
+          convert_key_from_inc_to_des(&(contestwork.crypto.key.hi), 
+                                      &(contestwork.crypto.key.lo));
+        } 
+        #endif
+      }
 
-  if (successes > 0)
+      LogScreen( "%s Test %02d %s: %08X:%08X - %08X:%08X\n", 
+         contname, testnum + 1, resulttext,
+         contestwork.crypto.key.hi, contestwork.crypto.key.lo, 
+         expectedsolution.hi, expectedsolution.lo );
+
+      ClientEventSyncPost( CLIEVENT_SELFTEST_TESTEND, (long)resultcode );
+    
+    } /* for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ ) */
+
+    if (successes > 0)
     {
-    LogScreen( "\n%d/%d %s Tests Passed\n", 
-      (int) successes, (int) TEST_CASE_COUNT, 
-      CliGetContestNameFromID( contest ) );
+      LogScreen( "\n%s: %d/%d Tests Passed\n", contname,
+        (int) successes, (int) TEST_CASE_COUNT );
     }
-
-  if (successes != TEST_CASE_COUNT)
+    if (successes != TEST_CASE_COUNT)
     {
-    LogScreen( "\nWARNING WARNING WARNING\n%d %s Tests FAILED!!!\n", 
-      (int) (TEST_CASE_COUNT - successes),
-      CliGetContestNameFromID( contest ) );
-      successes=-successes;
+      LogScreen( "\n%s: WARNING WARNING WARNING: %d Tests FAILED!!!\n", 
+        contname, (int) (TEST_CASE_COUNT - successes) );
+        successes=-successes;
     }
 
+    ClientEventSyncPost( CLIEVENT_SELFTEST_FINISHED, (long)(successes) );
+
+  } /* for ( threadpos = 0; threadpos < threadcount; threadpos++ ) */
+  
   return (successes);
 }
-
-// ---------------------------------------------------------------------------
