@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.74  1999/02/05 14:20:10  chrisb
+// fixed one last high-word inc problem in the riscos/x86 stuff
+//
 // Revision 1.73  1999/01/29 04:15:35  pct
 // Updates for the initial attempt at a multithreaded/multicored Digital
 // Unix Alpha client.  Sorry if these changes cause anyone any grief.
@@ -211,7 +214,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.73 1999/01/29 04:15:35 pct Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.74 1999/02/05 14:20:10 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -642,36 +645,44 @@ ConInKey(-1);
   //-------------------------------------------------------------------
 
 #if (CLIENT_OS == OS_RISCOS)
-  if (threadindex == 1 /*x86 thread*/)
+    if (threadindex == 1 /*x86 thread*/)
     {
-    RC5PCstruct rc5pc;
-    _kernel_swi_regs r;
-
-    rc5pc.key.hi = contestwork.key.hi;
-    rc5pc.key.lo = contestwork.key.lo;
-    rc5pc.iv.hi = contestwork.iv.hi;
-    rc5pc.iv.lo = contestwork.iv.lo;
-    rc5pc.plain.hi = contestwork.plain.hi;
-    rc5pc.plain.lo = contestwork.plain.lo;
-    rc5pc.cypher.hi = contestwork.cypher.hi;
-    rc5pc.cypher.lo = contestwork.cypher.lo;
-    rc5pc.keysdone.hi = contestwork.keysdone.hi;
-    rc5pc.keysdone.lo = contestwork.keysdone.lo;
-    rc5pc.iterations.hi = contestwork.iterations.hi;
-    rc5pc.iterations.lo = contestwork.iterations.lo;
-    rc5pc.timeslice = tslice;
-
-    _kernel_swi(RC5PC_On,&r,&r);
-    r.r[1] = (int)&rc5pc;
-    _kernel_swi(RC5PC_AddBlock,&r,&r);
-    if (r.r[0] == -1)
-      {
-      LogScreen("Failed to add block to x86 cruncher\n");
-      }
+	RC5PCstruct rc5pc;
+	_kernel_oserror *err;
+	_kernel_swi_regs r;
+	
+	rc5pc.key.hi = contestwork.key.hi;
+	rc5pc.key.lo = contestwork.key.lo;
+	rc5pc.iv.hi = contestwork.iv.hi;
+	rc5pc.iv.lo = contestwork.iv.lo;
+	rc5pc.plain.hi = contestwork.plain.hi;
+	rc5pc.plain.lo = contestwork.plain.lo;
+	rc5pc.cypher.hi = contestwork.cypher.hi;
+	rc5pc.cypher.lo = contestwork.cypher.lo;
+	rc5pc.keysdone.hi = contestwork.keysdone.hi;
+	rc5pc.keysdone.lo = contestwork.keysdone.lo;
+	rc5pc.iterations.hi = contestwork.iterations.hi;
+	rc5pc.iterations.lo = contestwork.iterations.lo;
+	rc5pc.timeslice = tslice;
+	
+	err = _kernel_swi(RC5PC_On,&r,&r);
+	if (err)
+	{
+	    LogScreen("Failed to start x86 card");
+	}
+	else
+	{
+	    r.r[1] = (int)&rc5pc;
+	    err = _kernel_swi(RC5PC_AddBlock,&r,&r);
+	    if ((err) || (r.r[0] == -1))
+	    {
+		LogScreen("Failed to add block to x86 cruncher\n");
+	    }
+	}
     }
 #endif
 
-  return( 0 );
+    return( 0 );
 }
 
 /* ------------------------------------------------------------------- */
@@ -1082,52 +1093,67 @@ s32 Problem::Run( u32 /*unused*/ )
             This is the RISC OS specific x86 2nd thread magic.
           */
           _kernel_swi_regs r;
+	  _kernel_oserror *err;
           volatile RC5PCstruct *rc5pcr;
-          _kernel_swi(RC5PC_BufferStatus,&r,&r);
-
-          /*
-            contestwork.keysdone.lo is 0 for a completed block,
-            so take care when setting it.
-           */
-          rc5pcr = (volatile RC5PCstruct *)r.r[1];
-
-          
-          if (r.r[2]==1)
-          {
-              /*
-                block finished
-              */
-              r.r[0] = 0;
-              _kernel_swi(RC5PC_RetriveBlock,&r,&r);
-              rc5pcr = (volatile RC5PCstruct *)r.r[1];
-              
-              if (rc5pcr->result == RESULT_FOUND)
-              {
-                  contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+          err = _kernel_swi(RC5PC_BufferStatus,&r,&r);
+	  if (err)
+	  {
+	      LogScreen("Error retrieving buffer status from x86 card");
+	  }
+	  else
+	  {
+	      /*
+		contestwork.keysdone.lo is 0 for a completed block,
+		so take care when setting it.
+	      */
+	      rc5pcr = (volatile RC5PCstruct *)r.r[1];
+	      
+	      if (r.r[2]==1)
+	      {
+		  /*
+		    block finished
+		  */
+		  r.r[0] = 0;
+		  err = _kernel_swi(RC5PC_RetriveBlock,&r,&r);
+		  if (err)
+		  {
+		      LogScreen("Error retrieving block from x86 card");
+		  }
+		  else
+		  {
+		      rc5pcr = (volatile RC5PCstruct *)r.r[1];
+		  
+		      if (rc5pcr->result == RESULT_FOUND)
+		      {
+			  contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+			  contestwork.keysdone.hi = rc5pcr->keysdone.hi;
 //printf("x86:FF Keysdone %08lx\n",contestwork.keysdone.lo);
-
-                  rc5result.key.hi = contestwork.key.hi;
-                  rc5result.key.lo = contestwork.key.lo;
-                  rc5result.keysdone.hi = contestwork.keysdone.hi;
-                  rc5result.keysdone.lo = contestwork.keysdone.lo;
-                  rc5result.iterations.hi = contestwork.iterations.hi;
-                  rc5result.iterations.lo = contestwork.iterations.lo;
-                  rc5result.result = RESULT_FOUND;
-                  finished = 1;
-                  return( 1 );
-              }
-              else
-              {
-                  contestwork.keysdone.lo = contestwork.iterations.lo;
+			  
+			  rc5result.key.hi = contestwork.key.hi;
+			  rc5result.key.lo = contestwork.key.lo;
+			  rc5result.keysdone.hi = contestwork.keysdone.hi;
+			  rc5result.keysdone.lo = contestwork.keysdone.lo;
+			  rc5result.iterations.hi = contestwork.iterations.hi;
+			  rc5result.iterations.lo = contestwork.iterations.lo;
+			  rc5result.result = RESULT_FOUND;
+			  finished = 1;
+			  return( 1 );
+		      }
+		      else
+		      {
+			  contestwork.keysdone.lo = contestwork.iterations.lo;
+			  contestwork.keysdone.hi = contestwork.iterations.hi;
 //printf("x86:FN Keysdone %08lx\n",contestwork.keysdone.lo);
-              }
-
-          }
-          else
-          {
-              contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+		      }
+		  }
+	      }
+	      else
+	      {
+		  contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+		  contestwork.keysdone.hi = rc5pcr->keysdone.hi;
 //printf("x86:NF Keysdone %08lx\n",contestwork.keysdone.lo);
-          }
+	      }
+	  }
       }
 #endif
     }
