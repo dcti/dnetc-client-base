@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.33  1998/11/16 22:30:05  cyp
+// Added CLIENT_OS_NAME
+//
 // Revision 1.32  1998/11/12 22:58:28  remi
 // Reworked a bit AIX ppc & power defines, based on Patrick Hildenbrand
 // <patrick@de.ibm.com> advices.
@@ -169,6 +172,8 @@ struct s128 { s64 hi, lo; };
 
 // determine current compiling platform
 #if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
+
+  #define CLIENT_OS_NAME "Win32"
   #if defined(NTALPHA)
     #define CLIENT_OS     OS_WIN32
     #define CLIENT_CPU    CPU_ALPHA
@@ -179,6 +184,8 @@ struct s128 { s64 hi, lo; };
     // win16 gui
     #define CLIENT_OS     OS_WIN16
     #define CLIENT_CPU    CPU_X86
+    #undef CLIENT_OS_NAME
+    #define CLIENT_OS_NAME "Win16"
   #elif defined(NOMAIN) && !defined(MULTITHREAD)
     // win32s gui
     #define CLIENT_OS     OS_WIN32S
@@ -190,7 +197,9 @@ struct s128 { s64 hi, lo; };
 #elif defined(DJGPP) || defined(DOS4G) || defined(__MSDOS__)
   #define CLIENT_OS     OS_DOS
   #define CLIENT_CPU    CPU_X86
+  #define CLIENT_OS_NAME "x86 DOS"
 #elif defined(__NETWARE__)
+  #define CLIENT_OS_NAME "NetWare"
   #if defined(_M_IX86)
     #define CLIENT_OS     OS_NETWARE
     #define CLIENT_CPU    CPU_X86
@@ -202,9 +211,11 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_ALPHA
   #endif
 #elif defined(__OS2__)
+  #define CLIENT_OS_NAME "OS/2"
   #define CLIENT_OS     OS_OS2
   #define CLIENT_CPU    CPU_X86
 #elif defined(linux)
+  #define CLIENT_OS_NAME "Linux"
   #if defined(ASM_ALPHA)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_ALPHA
@@ -225,11 +236,13 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_68K
   #endif
 #elif defined(__FreeBSD__)
+  #define CLIENT_OS_NAME "FreeBSD"
   #if defined(ASM_X86)
     #define CLIENT_OS     OS_FREEBSD
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(__NetBSD__)
+  #define CLIENT_OS_NAME "NetBSD"
   #if defined(ASM_X86)
     #define CLIENT_OS     OS_NETBSD
     #define CLIENT_CPU    CPU_X86
@@ -241,6 +254,7 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_ALPHA
   #endif
 #elif defined(__OpenBSD__) || defined(openbsd)
+  #define CLIENT_OS_NAME "OpenBSD"
   #if defined(ASM_X86)
     #define CLIENT_OS     OS_OPENBSD
     #define CLIENT_CPU    CPU_X86
@@ -252,11 +266,13 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(__QNX__)
+  #define CLIENT_OS_NAME "QNX"
   #if defined(ASM_X86)
     #define CLIENT_OS     OS_QNX
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(solaris)
+  #define CLIENT_OS_NAME "Solaris"
   #if defined(ASM_X86)
     #define CLIENT_OS     OS_SOLARIS
     #define CLIENT_CPU    CPU_X86
@@ -265,36 +281,44 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(_SUN68K_)
+  #define CLIENT_OS_NAME   "SunOS"
   #define CLIENT_OS         OS_SUNOS
   #define CLIENT_CPU        CPU_68K
 #elif defined(bsdi)
+  #define CLIENT_OS_NAME   "BSDI Unix"
   #if defined(ASM_X86)
     #define CLIENT_OS     OS_BSDI
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(sco5)
+  #define CLIENT_OS_NAME   "SCO Unix"
   #if defined(ASM_X86)
     #define CLIENT_OS     OS_SCO
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(__osf__)
+  #define CLIENT_OS_NAME   "DEC Unix"
   #if defined(__alpha)
     #define CLIENT_OS     OS_DEC_UNIX
     #define CLIENT_CPU    CPU_ALPHA
   #endif
 #elif defined(sinix)
+  #define CLIENT_OS_NAME   "Sinix"
   #if defined(ASM_MIPS) || defined(__mips)
     #define CLIENT_OS     OS_SINIX
     #define CLIENT_CPU    CPU_MIPS
   #endif
 #elif (defined(ASM_MIPS) || defined(__mips)) && !defined(sinix)
   #if defined(ultrix)
-    #define CLIENT_OS	OS_ULTRIX
+    #define CLIENT_OS_NAME   "Ultrix"
+    #define CLIENT_OS OS_ULTRIX
   #else
+    #define CLIENT_OS_NAME   "Irix"
     #define CLIENT_OS     OS_IRIX
   #endif
   #define CLIENT_CPU    CPU_MIPS
 #elif defined(__VMS)
+  #define CLIENT_OS_NAME   "VMS"
   #if defined(__ALPHA)
     #define CLIENT_OS     OS_VMS
     #define CLIENT_CPU    CPU_ALPHA
@@ -307,19 +331,23 @@ struct s128 { s64 hi, lo; };
   #endif
 
 #elif defined(_HPUX)
+  #define CLIENT_OS_NAME   "HP/UX"
   #if defined(ASM_HPPA)
     #define CLIENT_OS     OS_HPUX
     #define CLIENT_CPU    CPU_PA_RISC
   #endif
 #elif defined(_HPUX_M68K)
+  #define CLIENT_OS_NAME   "HP/UX"
   #define CLIENT_OS     OS_HPUX
   #define CLIENT_CPU    CPU_68K
 #elif defined(_DGUX)
+  #define CLIENT_OS_NAME   "DG/UX"
   #define CLIENT_OS     OS_DGUX
   #define CLIENT_CPU    CPU_88K
   #define PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_GLOBAL
   #define pthread_sigmask(a,b,c)
 #elif defined(_AIX)
+  #define CLIENT_OS_NAME   "AIX"
   #if (defined(_ARCH_PPC) || defined(ASM_PPC))
     #define CLIENT_OS     OS_AIX
     #define CLIENT_CPU    CPU_POWERPC
@@ -328,6 +356,7 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_POWER
   #endif
 #elif defined(macintosh)
+  #define CLIENT_OS_NAME   "MacOS"
   #if GENERATINGPOWERPC
     #define CLIENT_OS     OS_MACOS
     #define CLIENT_CPU    CPU_POWERPC
@@ -336,6 +365,7 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_68K
   #endif
 #elif defined(__dest_os) && defined(__be_os) && (__dest_os == __be_os)
+  #define CLIENT_OS_NAME   "BeOS"
   #if defined(__POWERPC__)
     #define CLIENT_OS     OS_BEOS
     #define CLIENT_CPU    CPU_POWERPC
@@ -344,6 +374,7 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(AMIGA)
+  #define CLIENT_OS_NAME   "AmigaOS"
   #define CLIENT_OS     OS_AMIGAOS
   #ifdef __PPC__
     #define CLIENT_CPU    CPU_POWERPC
@@ -351,9 +382,11 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_68K
   #endif
 #elif defined(__riscos)
+  #define CLIENT_OS_NAME   "RISC OS"
   #define CLIENT_OS     OS_RISCOS
   #define CLIENT_CPU    CPU_ARM
 #elif defined(_NeXT_)
+  #define CLIENT_OS_NAME   "NextStep"
   #if defined(ASM_X86)
     #define CLIENT_OS     OS_NEXTSTEP
     #define CLIENT_CPU    CPU_X86
@@ -368,9 +401,11 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(__MVS__)
+  #define CLIENT_OS_NAME   "OS390"
   #define CLIENT_OS     OS_OS390
   #define CLIENT_CPU    CPU_S390
 #elif defined(_SEQUENT_)
+  #define CLIENT_OS_NAME   "Dynix"
   #if defined(ASM_X86)
     #define CLIENT_OS     OS_DYNIX
     #define CLIENT_CPU    CPU_X86
@@ -384,6 +419,7 @@ struct s128 { s64 hi, lo; };
 #if !defined(CLIENT_OS) || !defined(CLIENT_CPU)
   #define CLIENT_OS     OS_UNKNOWN
   #define CLIENT_CPU    CPU_UNKNOWN
+  #define CLIENT_OS_NAME "**Unknown OS**
 #endif
 #if (CLIENT_OS == OS_UNKNOWN) || (CLIENT_CPU == CPU_UNKNOWN)
   #if !defined(IGNOREUNKNOWNCPUOS)
