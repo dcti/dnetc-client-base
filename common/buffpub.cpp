@@ -9,7 +9,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.6.2.7 2004/05/20 21:13:14 kakace Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.6.2.8 2004/06/27 21:43:27 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -77,7 +77,7 @@ static FILE *BufferOpenFile( const char *filename,
        (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_MACOS) || \
        (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
        (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_OS2) || \
-       (CLIENT_OS == OS_WIN16))
+       (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN64))
   #define BUFFOPEN_MODE "b"
   #else
   #define BUFFOPEN_MODE ""

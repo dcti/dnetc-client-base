@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.19 2004/06/24 21:10:28 kakace Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.20 2004/06/27 21:50:34 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -589,7 +589,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           }
           retcode = (kill_found < 0) ? 3 : 0;
         }
-        #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32)
+        #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         {
           int rc, cmd = DNETC_WCMD_RESTART;
           const char *dowhat_descrip = "restarted";
@@ -689,7 +689,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         retcode = 0;  
         if (0!=macosx_install(argv[0], (argc-pos), &argv[pos], loop0_quiet))
           retcode = 3;           /* plat/macosx/c_install.c */
-        #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+        #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         win32CliInstallService(loop0_quiet); /*w32svc.cpp*/
         retcode = 0;
         #elif (CLIENT_OS == OS_OS2)
@@ -706,7 +706,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       {
         if (misc_call)
           continue;
-        #if (CLIENT_OS == OS_WIN32)
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         int isinst = win32CliIsServiceInstalled();/*<0=err,0=no,>0=yes */
         if (isinst < 0 && !loop0_quiet)
           ConOutErr("Service manager error. Service could not be started.\n");
@@ -737,7 +737,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         retcode = 0;  
         if (macosx_uninstall(argv[0], loop0_quiet)!=0)
           retcode = 3;           /* plat/macosx/c_install.c */
-        #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+        #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         win32CliUninstallService(loop0_quiet); /*w32svc.cpp*/
         retcode = 0;
         #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
@@ -791,7 +791,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           {          
             #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || \
                 (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2) || \
-                (CLIENT_OS == OS_WIN32)
+                (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
             //not really needed for netware (appname in argv[0] won't be anything
             //except what I tell it to be at link time.)
             strcpy( client->inifilename, argv[0] );
@@ -2103,7 +2103,7 @@ static int __finalize_level(const char *argv0,
     }
     else if ((ModeReqIsSet(-1)==0))
     {
-      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)  
+      #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)  
       if (*multiok > 0)  /* the default is 0 for win/os2 */
       {
         putenv("dnetc_multiok=1");

@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.19 2004/06/24 21:05:43 kakace Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.20 2004/06/27 21:46:53 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -83,7 +83,7 @@ struct thread_param_block
     thread_t threadID;
   #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
     pthread_t threadID;
-  #elif (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     unsigned long threadID;
   #elif (CLIENT_OS == OS_NETWARE)
     long threadID;
@@ -171,7 +171,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     #else       // !_irix5_
     sched_yield();
     #endif      // !_irix5_
-  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     w32Yield(); //not Sleep(0)!
   #elif (CLIENT_OS == OS_DOS)
     dosCliYield(); //dpmi yield
@@ -339,14 +339,14 @@ void Go_mt( void * parm )
     //printf("usec:%d, thrprio:%d \n",thrparams->dyn_timeslice_table[0].usec,thrparams->priority);
     #endif
   }
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (thrparams->realthread)
   {
-    DWORD LAffinity, LProcessAffinity, LSystemAffinity;
+    DWORD_PTR LAffinity, LProcessAffinity, LSystemAffinity;
     OSVERSIONINFO osver;
     unsigned int numthreads = thrparams->numthreads;
 
-    osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
+    osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
     GetVersionEx(&osver);
     if ((VER_PLATFORM_WIN32_NT == osver.dwPlatformId) && (numthreads > 1))
     {
@@ -717,7 +717,7 @@ static int __StopThread( struct thread_param_block *thrparams )
       DosSetPriority( 2, PRTYC_REGULAR, 0, (ULONG)thrparams->threadID); /* thread to normal prio */
       if (!thrparams->hasexited)
         DosWaitThread( (PTID)&(thrparams->threadID), DCWW_WAIT);
-      #elif (CLIENT_OS == OS_WIN32)
+      #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       while (!thrparams->hasexited)
         Sleep(100);
       #elif (CLIENT_OS == OS_BEOS)
@@ -1068,7 +1068,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           success = (thrparams->threadID > 0);
         }
       }
-      #elif (CLIENT_OS == OS_WIN32)
+      #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       {
         if (winGetVersion() < 400) /* win32s */
           use_poll_process = 1;
@@ -1483,7 +1483,7 @@ int ClientRun( Client *client )
       numcrunchers = GetMaxCrunchersPermitted();
     }
 
-    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_BEOS)
+    #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_BEOS)
     force_no_realthreads = 0; // must run with real threads because the
                               // main thread runs at normal priority
     #elif (CLIENT_OS == OS_NETWARE)
@@ -1567,10 +1567,10 @@ int ClientRun( Client *client )
     is_non_preemptive_os = 0;  /* assume this until we know better */
     #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_MACOS) || \
         (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_NETWARE) || \
-        (CLIENT_OS == OS_WIN32) /* win32 only if win32s */
+        (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) /* win32 only if win32s */
     {
       is_non_preemptive_os = 1; /* assume this until we know better */
-      #if (CLIENT_OS == OS_WIN32)                /* only if win32s */
+      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)       /* only if win32s */
       if (winGetVersion()>=400)
         is_non_preemptive_os = 0;
       #elif (CLIENT_OS == OS_NETWARE)

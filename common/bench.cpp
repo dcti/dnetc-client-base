@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.56.2.5 2004/06/24 21:06:56 kakace Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.56.2.6 2004/06/27 21:43:52 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -115,7 +115,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     non_preemptive_os.yps = 1000/20; /* 20 ms minimum yield rate */
     tslice = 0; /* zero means 'use calibrated value' */
   }
-  #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32 /* win32s */) 
+  #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) /* or win32s */
   if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
     numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
   else if (winGetVersion() < 400) /* win16 or win32s */
@@ -227,7 +227,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
             if (newtslice > tslice)
               thisprob->pub_data.tslice = tslice = newtslice;
           }
-          #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
+          #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) /* or win32s */
           w32Yield(); /* pump waiting messages */
           #elif (CLIENT_OS == OS_MACOS)
           macosSmartYield(6);

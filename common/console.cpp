@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.75.2.11 2004/01/07 02:50:51 piru Exp $"; }
+return "@(#)$Id: console.cpp,v 1.75.2.12 2004/06/27 21:44:57 jlawson Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -82,7 +82,7 @@ int DeinitializeConsole(int waitforuser)
   {
     if (constatics.runhidden || !constatics.conisatty)
       waitforuser = 0;
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     w32DeinitializeConsole(waitforuser);
     #elif (CLIENT_OS == OS_NETWARE)
     nwCliDeinitializeConsole(waitforuser);
@@ -108,7 +108,7 @@ int InitializeConsole(int *runhidden,int doingmodes)
     constatics.initlevel = 1;
     constatics.runhidden = *runhidden;
 
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     retcode = w32InitializeConsole(constatics.runhidden,doingmodes);
     #elif (CLIENT_OS == OS_NETWARE)
     retcode = nwCliInitializeConsole(constatics.runhidden,doingmodes);
@@ -135,7 +135,7 @@ int InitializeConsole(int *runhidden,int doingmodes)
       constatics.conisatty = 1;
     else if (!constatics.runhidden)
     {
-      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+      #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         constatics.conisatty = w32ConIsScreen();
       #elif (CLIENT_OS == OS_RISCOS)
         constatics.conisatty = 1;
@@ -154,7 +154,7 @@ int InitializeConsole(int *runhidden,int doingmodes)
 
 int ConIsGUI(void)
 {
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   /* => 'C'=native console, 'c'=pipe console, 'g'=lite GUI, 'G'=fat GUI */
   return ((w32ConGetType() & 0xff)=='G' || (w32ConGetType() & 0xff)=='g');
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
@@ -206,7 +206,7 @@ int ConOut(const char *msg)
 {
   if (constatics.initlevel > 0 /*&& constatics.conisatty*/ )
   {
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       w32ConOut(msg);
     #elif (CLIENT_OS == OS_OS2 && defined(OS2_PM))
       os2conout(msg);
@@ -231,7 +231,7 @@ int ConOut(const char *msg)
 */
 int ConOutModal(const char *msg)
 {
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     w32ConOutModal(msg);
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
     WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, msg,
@@ -257,7 +257,7 @@ int ConOutModal(const char *msg)
 
 int ConOutErr(const char *msg)
 {
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     w32ConOutErr(msg);
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
      WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, (PSZ)msg,
@@ -312,7 +312,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       {
         ch = macosConGetCh();
       }
-      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       {
         if (w32ConKbhit())
         {
@@ -621,7 +621,7 @@ int ConGetPos( int *col, int *row )  /* zero-based */
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
   {
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     return w32ConGetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
     unsigned short r, c;
@@ -660,7 +660,7 @@ int ConSetPos( int col, int row )  /* zero-based */
     #if defined(HAVE_ANSICOMPLIANTTERM)
     printf("\033" "[%d;%dH", row+1, col+1 );
     return 0;
-    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     return w32ConSetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
     gotoxy( ((unsigned short)col), ((unsigned short)row) );
@@ -719,7 +719,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     v_init();
     v_dimen(&width, &height);
     #endif
-  #elif (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     if ( w32ConGetSize(&width,&height) < 0 )
       height = width = 0;
   #elif (CLIENT_OS == OS_NETWARE)
@@ -858,7 +858,7 @@ int ConClear(void)
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
   {
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       return w32ConClear();
     #elif (CLIENT_OS == OS_OS2)
       #ifndef __EMX__

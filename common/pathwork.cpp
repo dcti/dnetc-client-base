@@ -24,7 +24,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.21.4.8 2004/01/07 02:50:51 piru Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.21.4.9 2004/06/27 21:54:25 jlawson Exp $"; }
 
 // #define TRACE
 
@@ -61,7 +61,7 @@ unsigned int GetFilenameBaseOffset( const char *fullpath )
   #elif (CLIENT_OS == OS_RISCOS)
     slash = strrchr( fullpath, '.' );
   #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
-    (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+    (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_OS2)
     slash = strrchr( (char*) fullpath, '\\' );
     char *slash2 = strrchr( (char*) fullpath, '/' );
     if (slash2 > slash) slash = slash2;
@@ -194,7 +194,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
     if (slash != NULL) *(slash+1) = 0;
     else __cwd_buffer[0] = 0;
   }
-  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || ( (CLIENT_OS == OS_OS2) && defined(__EMX__) )
+  #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || ( (CLIENT_OS == OS_OS2) && defined(__EMX__) )
   {
     strcpy( __cwd_buffer, inipath );
     char *slash = strrchr(__cwd_buffer, '/');
@@ -337,7 +337,7 @@ static int __is_filename_absolute(const char *fname)
   #elif (CLIENT_OS == OS_RISCOS)
   return (*fname == '.');
   #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
-      (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+      (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_OS2)
   return (*fname == '\\' || *fname == '/' || (*fname && fname[1]==':'));
   #elif (CLIENT_OS == OS_NETWARE)
   return (*fname == '\\' || *fname == '/' || (strchr(fname,':')));
@@ -441,7 +441,7 @@ const char *GetFullPathForFilenameAndDir( const char *fname, const char *dir )
     #elif (CLIENT_OS == OS_RISCOS)
       strcat( __path_buffer, "." );
     #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
-      (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+      (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_OS2)
       strcat( __path_buffer, "\\" );
     #else
       strcat( __path_buffer, "/" );

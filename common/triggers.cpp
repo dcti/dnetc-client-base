@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.16 2004/01/08 20:20:24 oliver Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.17 2004/06/27 21:41:41 jlawson Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -48,7 +48,7 @@ return "@(#)$Id: triggers.cpp,v 1.31.2.16 2004/01/08 20:20:24 oliver Exp $"; }
 #define TRIGPAUSEBY_SRCBATTERY 0x20 /* pause due to running on battery */
 #define TRIGPAUSEBY_CPUTEMP    0x40 /* cpu temperature guard */
 
-#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS) || (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 # define CLISIGHANDLER_IS_SPECIAL 1
 #endif
 
@@ -268,14 +268,14 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 {
   DNETC_UNUSED_PARAM(unmangle_it);
 
-  #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16))
+  #if ((CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16))
   /* these two are frequently used 16bit apps that aren't visible (?)
      to utilGetPIDList so they are searched for by window class name,
      which is a unique identifier so we can find/tack them on to the
      end of the pauseplist in __init. (They used to be hardcoded in
      the days before utilGetPIDList)
   */
-  if (winGetVersion() >= 400 && winGetVersion() <2000) /* win9x only */
+  if (winGetVersion() >= 400 && winGetVersion() < 2000) /* win9x only */
   {
     static const char *app2wclass[] = { "scandisk",  "#ScanDskWDlgClass",
                                         "scandiskw", "#ScanDskWDlgClass",
@@ -315,7 +315,7 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
       TRACE_OUT((-1,"x2: mangle: '%s'\n",name));
     }
   } /* win9x? */
-  #endif /* ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) */
+  #endif /* ((CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) */
 
   return name;
 }
@@ -344,7 +344,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 {
   if (trigstatics.pause_if_no_mains_power)
   {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     static FARPROC getsps = ((FARPROC)-1);
     if (getsps == ((FARPROC)-1))
     {
@@ -712,7 +712,7 @@ static void __PollDrivenBreakCheck(int io_cycle_allowed)
     nwCliCheckForUserBreak(); //in nwccons.cpp
   #elif (CLIENT_OS == OS_WIN16) /* always thread safe */
     w32ConOut("");    /* benign call to keep ^C handling alive */
-  #elif (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (io_cycle_allowed)
     w32ConOut("");    /* benign call to keep ^C handling alive */
   #elif (CLIENT_OS == OS_DOS)
@@ -787,7 +787,7 @@ int CheckPauseRequestTrigger(void)
     const char *custom_now_inactive = "";
     const char *app_now_active = "";
 
-    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16)
+    #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     {
       custom_now_active = "(defrag running)";
       custom_now_inactive = "(defrag no longer running)";
@@ -1003,7 +1003,7 @@ static void __init_signal_handlers( int doingmodes )
 
 // -----------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 BOOL WINAPI CliSignalHandler(DWORD dwCtrlType)
 {
   if ( dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_CLOSE_EVENT ||
@@ -1399,7 +1399,7 @@ static void _init_pauseplist( const char *plist )
       }
     }
   }
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   /*
   sorry about this piece of OS-specific uglyness. These were
   pause triggers before the days of utilGetPidlist(), and are now

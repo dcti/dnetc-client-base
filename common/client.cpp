@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.22 2004/06/20 18:30:56 kakace Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.23 2004/06/27 21:46:52 jlawson Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -67,7 +67,7 @@ static const char *GetBuildOrEnvDescription(void)
 
 #if (CLIENT_OS == OS_DOS)
   return dosCliGetEmulationDescription(); //if in win/os2 VM
-#elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16))
+#elif ((CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16))
   static char buffer[32]; long ver = winGetVersion(); /* w32pre.cpp */
   sprintf(buffer,"Windows%s %u.%u", (ver>=2000)?("NT"):(""), (ver/100)%20, ver%100 );
   return buffer;
@@ -545,7 +545,7 @@ int main( void )
   ClientMain(1,argv);
   return 0;
 }
-#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 //if you get compile or link errors it is probably because you compiled with
 //STRICT, which is a no-no when using cpp (think 'overloaded')
 #define WIN32_LEAN_AND_MEAN

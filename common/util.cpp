@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29.2.16 2004/01/29 21:35:03 kakace Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29.2.17 2004/06/27 21:40:05 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -602,7 +602,7 @@ const char *utilGetAppName(void)
 #elif (CLIENT_OS == OS_BEOS)
   #include <kernel/OS.h>      // get_next_team_info()
   #include <kernel/image.h>   // get_next_image_info()
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   #define WIN32_LEAN_AND_MEAN
   #include <windows.h>
   #include <tlhelp32.h> /* toolhlp32 structures and function prototypes */
@@ -741,7 +741,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       num_found = os2GetPIDList(procname, pidlist, maxnumpids);
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     {
       if (*procname == '*' || *procname == '#')
       {
@@ -760,7 +760,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           if (hwnd != NULL) /* found! */
           {
             DWORD pid = 0;
-            #if (CLIENT_OS == OS_WIN32)
+            #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
             if ( winGetVersion() >= 400 ) /* not win32s please */
             {                             /* use real pid */
               if (GetWindowThreadProcessId( hwnd, &pid ) == 0)
@@ -793,7 +793,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           }
         }
       } /* find by window or window class */
-      #if (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       else if (winGetVersion() >= 400) /* not win32s please */
       {
         /* calls to CreateToolhelp32Snapshot(), Process32First() and

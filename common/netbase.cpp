@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.18 2004/01/08 20:20:23 oliver Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.19 2004/06/27 21:54:25 jlawson Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -78,7 +78,7 @@ return "@(#)$Id: netbase.cpp,v 1.5.2.18 2004/01/08 20:20:23 oliver Exp $"; }
 #define TRACE_WRITE(x)    //TRACE_OUT(x) /* net_write() */
 #define TRACE_NETDB(x)    //TRACE_OUT(x) /* net_resolve() */
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+#if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #define WIN32_LEAN_AND_MEAN /* don't want winsock.h included here */
   #ifndef STRICT
     #define STRICT
@@ -130,7 +130,7 @@ return "@(#)$Id: netbase.cpp,v 1.5.2.18 2004/01/08 20:20:23 oliver Exp $"; }
   #include <sys/ioctl.h>
   #include <netdb.h>
   #define MSG_PEEK 0
-#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+#elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   /* nothing else needed */
 #else
   #include <sys/socket.h>
@@ -268,7 +268,7 @@ static int __global_init_deinit_check(int doWhat, int final_call)
       {
         LIBPREFIX(init)("rc5-client");
       }
-      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       if (first_call) /* only done once */
       {
         /* this must be done globally for win32 for two reasons:
@@ -304,7 +304,7 @@ static int __global_init_deinit_check(int doWhat, int final_call)
   {
     if (init_mark == 1)
     {
-      #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       if (final_call)
       {
         if (winGetVersion() >= 400) /* win9x and winnt only */
@@ -433,7 +433,7 @@ static int net_init_check_deinit( int doWhat, int only_test_api_avail )
       __dialupsupport_action(doWhat);
       #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
       amigaNetworkingDeinit();
-      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       if (winGetVersion() < 400) /* win16 and win32s only */
         WSACleanup();            /* winnt and win9x do it as a one-shot */
       #endif
@@ -460,7 +460,7 @@ static int net_init_check_deinit( int doWhat, int only_test_api_avail )
           #endif
           if (!amigaNetworkingInit(openalllibs))
             rc = ps_ENOSYS;
-        #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+        #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         if (winGetVersion() < 400) /* win16 and win32s only */
         {                          /* win9x and winnt do it as a one-shot */
           WSADATA wsaData;
@@ -642,7 +642,7 @@ static int ___read_errnos(SOCKET fd, int ps_errnum,
         *neterr = 0;
         ps_errnum = ps_stdsyserr;
       }
-      #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+      #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
       *neterr = WSAGetLastError();
       TRACE_ERRMGMT((0,"WSAGetLastError() => %d\n", *neterr ));
       #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
@@ -805,7 +805,7 @@ static const char *internal_net_strerror(const char *ctx, int ps_errnum, SOCKET 
       msgbuf[sizeof(msgbuf)-1] = '\0';
       got_message = 1;
     }
-#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+#elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     msg = (const char *)0;
     switch (neterr)
     {
@@ -910,7 +910,7 @@ const char *net_strerror(int ps_errnum, SOCKET fd)
 /* only the errnos we're actually testing for internally are checked */
 static int net_match_errno(register int which_ps_err)
 {
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   if (which_ps_err == ps_EINPROGRESS)
   {
     int err = WSAGetLastError();
@@ -1036,7 +1036,7 @@ static int __bsd_quick_disco_look(SOCKET fd, int fdr_is_ready)
     char ch = 0;
     #if (CLIENT_OS == OS_MACOS) /* broken gusi */
       ch = 1; /* msg_peek removes 1 byte from the queue */
-    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     if (winGetVersion() < 400) /* broken 16bit winsock.dll */
       ch = 1; /* msg_peek removes 1 byte from the queue */
     #endif
@@ -1547,7 +1547,7 @@ static int net_poll1( SOCKET fd, int events, int *revents, int mstimeout )
 #if defined(HAVE_NET_IOCTL) /* have BSD sox + FIONBIO or FIONREAD */
 static int net_ioctl( SOCKET sock, unsigned long opt, int *i_optval )
 {
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     unsigned long optval = (unsigned long)*i_optval; //hmm!
     if (ioctlsocket(sock, opt, &optval)!=0)
       return ps_stdneterr;
@@ -1711,7 +1711,7 @@ int net_close(SOCKET fd)
     TRACE_CLOSE((+1,"close(s)\n"));
     #if (CLIENT_OS == OS_OS2) && !defined(__EMX__)
     rc = (int)soclose( fd );
-    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     rc = (int)closesocket( fd );
     #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     rc = (int)CloseSocket( fd );
@@ -2187,7 +2187,7 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
               break;
             }
 #endif
-            #if ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
+            #if ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64))
             {
               /* wsock32.dll bug: does not set wfds on successful connect */
               TRACE_CONNECT((+1,"2] connect(s, %s:%d)\n", net_ntoa(*that_address), *that_port));
@@ -2249,7 +2249,7 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
                 *this_port = 0xffff & ((int)htons(saddr.sin_port));
             }
           }
-          #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+          #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
           /* another freaking windows bug - winNT only:
            * getpeername() will freeze the machine (yes, super-duper-
            * "secure" NT can thus be frozen) in the half-blocking scenario
@@ -3048,7 +3048,7 @@ int net_gethostname(char *buffer, unsigned int len)
            null-terminated, unless insufficient space is provided."
         */
         scratch[sizeof(scratch)-1] = '\0';
-        #if (CLIENT_OS == OS_WIN32)|| (CLIENT_OS == OS_WIN16)
+        #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32)|| (CLIENT_OS == OS_WIN16)
         {
           /* <quote> If no local host name has been configured gethostname
              must succeed and return a token host name that gethostbyname

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.85.2.11 2004/05/22 16:57:43 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.85.2.12 2004/06/27 21:55:08 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -574,7 +574,7 @@ long SelfTest( unsigned int contest )
         non_preemptive_env = (!nwCliIsPreemptiveEnv());
         if (non_preemptive_env)
           tslice = 2048;
-        #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) /* win32s */
+        #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) /* or win32s */
         non_preemptive_env = (winGetVersion() < 400);
         if (non_preemptive_env)
           tslice = 2048;
@@ -595,7 +595,7 @@ long SelfTest( unsigned int contest )
           {
             if (non_preemptive_env)
             {
-              #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
+              #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) /* or win32s */
               w32Yield(); /* pump waiting messages */
               #elif (CLIENT_OS == OS_MACOS)
               macosSmartYield(6);

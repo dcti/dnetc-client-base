@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.61.4.12 2004/01/08 20:20:23 oliver Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.61.4.13 2004/06/27 21:39:34 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -285,7 +285,7 @@ static int isonline = -1; /* 0=no, 1=yes, -1=don't know yet */
 #include <string.h>
 static HINSTANCE hWinsockInst = NULL;
 
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 
 #include <windows.h>
 #include <string.h>
@@ -381,7 +381,7 @@ int LurkGetCapabilityFlags(void)
 
   TRACE_OUT((+1,"Lurk::GetCapabilityFlags() (lurker.islurkstarted?=%d)\n",lurker.islurkstarted));
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   {
     static int caps = -1;
     if (caps == -1)
@@ -493,7 +493,7 @@ int LurkGetCapabilityFlags(void)
 
 const char **LurkGetConnectionProfileList(void)
 {
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     static const char *firstentry = ""; //the first entry is blank, ie use default
     static RASENTRYNAME rasentries[10];
     static const char *configptrs[(sizeof(rasentries)/sizeof(rasentries[0]))+2];
@@ -585,7 +585,7 @@ int LurkStart(int nonetworking,struct dialup_conf *params)
       if (lurkmode && (flags & (CONNECT_LURK|CONNECT_LURKONLY))==0)
       {              //only happens if user used -lurk on the command line
         lurkmode = 0;
-        #if (CLIENT_OS == OS_WIN32)
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         //LogScreen( "Dial-up must be installed for lurk/lurkonly/dialing\n" );
         dialwhenneeded = 0; //if we can't support lurk, we can't support dod either
         #elif (CLIENT_OS == OS_WIN16)
@@ -598,7 +598,7 @@ int LurkStart(int nonetworking,struct dialup_conf *params)
       if (dialwhenneeded && (flags & (CONNECT_DOD))==0)
       {               //should never happen since dod is not a cmdline option
         dialwhenneeded = 0;
-        #if (CLIENT_OS == OS_WIN32)
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         LogScreen( "Dial-up-Networking must be installed for demand dialing\n" );
         #elif (CLIENT_OS == OS_WIN16)
         LogScreen("Demand dialing is only supported with Trumpet Winsock.\n");
@@ -682,7 +682,7 @@ int LurkStart(int nonetworking,struct dialup_conf *params)
             {
               memcpy( tempname, "lan", 3 );
             }
-            #elif (CLIENT_OS == OS_WIN32) //convert 'sl*' names to 'ppp*'
+            #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) //convert 'sl*' names to 'ppp*'
             if ( memcmp( tempname, "sl", 2 )==0 &&
                 (isdigit(tempname[2]) || tempname[2] == '*'))
             {
@@ -940,7 +940,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
     TRACE_OUT((-1,"winsock.dll is loaded. returning 1\n"));
     return 1;
   }
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 
   #ifdef LURK_MULTIDEV_TRACK
    /* init tracking */
@@ -1669,7 +1669,7 @@ int LurkDialIfNeeded(int force /* !0== override lurk-only */ )
   lurker.dohangupcontrol = 1;  // we should also control hangup
   return 0;
 
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 
   if ((LurkGetCapabilityFlags() & CONNECT_DODBYPROFILE) != 0) /* have ras */
   {
@@ -1868,7 +1868,7 @@ int LurkHangupIfNeeded(void) //returns 0 on success, -1 on fail
   lurker.dohangupcontrol = 0;
   return 0;
 
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 
   TRACE_OUT((0,"HUP-stage-01\n"));
   if (isconnected)

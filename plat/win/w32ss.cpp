@@ -8,7 +8,7 @@
 */
 
 const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.2.4.2 2003/09/02 00:48:54 mweiser Exp $"; }
+return "@(#)$Id: w32ss.cpp,v 1.2.4.3 2004/06/27 21:59:23 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "unused.h"     /* DNETC_UNUSED_* */
@@ -67,7 +67,7 @@ static int SSIsTransparencyAvailable(void)
 static int SSChangePassword(HINSTANCE hInst, HWND hwnd)
 {
   hInst = hInst;
-  #if (CLIENT_OS != OS_WIN32)
+  #if (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_WIN64)
   hwnd = hwnd;
   #else
   HINSTANCE hmpr = LoadLibrary("MPR.DLL");
@@ -259,7 +259,7 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
         if (ss.reallyClose && !ss.isDialogActive)
         {
           BOOL canClose = TRUE;
-          #if (CLIENT_OS == OS_WIN32)
+          #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
           /*transparent has no password, and NT manages passwords by itself*/
           if (ss.sstype!=-1 && winGetVersion()>=400 && winGetVersion()<2000)
           {
@@ -482,7 +482,7 @@ static int SSGetFileData(const char *filename, int *verp, int *isguip,
           ver+= 2000; /* 32bit */
           isgui = (ofh->Subsystem == 2); /* IMAGE_SUBSYSTEM_WINDOWS_GUI */
 
-          #if (CLIENT_OS == OS_WIN32)
+          #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
           if (ssnbuf && ssnbuflen>1)
           {
             HINSTANCE hInst = LoadLibraryEx(filename, NULL,
@@ -510,7 +510,7 @@ static int SSGetFileData(const char *filename, int *verp, int *isguip,
 
 struct w16ProcessTrack { HINSTANCE hInst; HMODULE hModule; };
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 static BOOL CALLBACK __SSFreeProcessEnumWinProcNT(HWND hwnd,LPARAM lParam)
 {
    DWORD thatpid = 0, searchpid = (DWORD)lParam;
@@ -536,7 +536,7 @@ int SSFreeProcess( void *handle, int withShutdown )
 
   if (handle && handle != ((void *)ULONG_MAX))
   {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     if (winGetVersion() >= 400) /* win32s used winexec */
     {
       PROCESS_INFORMATION *pidp = (PROCESS_INFORMATION *)handle;
@@ -618,7 +618,7 @@ void *SSLaunchProcess( const char *filename, const char *args,
   //if (args && strstr( args, "-hide" ))
   //  nCmdShow = SW_HIDE;
 
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (winGetVersion() >= 400) /* win32s wait needs winexec */
   {
     void *pidp = malloc(sizeof(PROCESS_INFORMATION));
@@ -757,7 +757,7 @@ void *SSLaunchProcess( const char *filename, const char *args,
         if (waitMode)
         {
           UINT hTimer = SetTimer(NULL,0, 250, NULL);
-          #if (CLIENT_OS != OS_WIN32)
+          #if (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_WIN64)
           int orefcount = -1;
           int os32file32 = 0;
           //if (winGetVersion()>=400 && SSGetFileData(filename,0,0,0,0)>=2000)
@@ -767,7 +767,7 @@ void *SSLaunchProcess( const char *filename, const char *args,
             waitMode = +1;
           while (waitMode) /* dummy while */
           {
-            #if (CLIENT_OS != OS_WIN32)
+            #if (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_WIN64)
             if (!os32file32)
             {
               int refcount = prio; /* use up prio variable */
@@ -835,7 +835,7 @@ void *SSLaunchProcess( const char *filename, const char *args,
 static HWND SSGetPreviewWindow(void)
 {
   HWND hPreview = (HWND)0;
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if ((winGetVersion()%2000) >= 400)
   {
     HINSTANCE hInst = LoadLibrary("USER32");
@@ -893,7 +893,7 @@ static int IsDCTIClientRunning(void)
   int found = (FindWindow( NULL, W32CLI_CONSOLE_NAME ) != NULL);
   if (!found)
     found = (FindWindow( NULL, W32CLI_OLD_CONSOLE_NAME ) != NULL);
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (!found)
   {
     HANDLE hmutex;
@@ -1022,7 +1022,7 @@ static int SSSetiControl(const char *ssname)
                 tick = GetTickCount();
                 if (tock == 0)
                   tock = tick + 1000;
-                #if (CLIENT_OS == OS_WIN32)
+                #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
                 Sleep(50);
                 #else
                 Yield();
@@ -1057,7 +1057,7 @@ static int SSSetiControl(const char *ssname)
           found = 100;
         else
         {
-          #if (CLIENT_OS == OS_WIN32)
+          #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
           Sleep(50);
           #else
           Yield();
@@ -1184,7 +1184,7 @@ static int SSDoSaver(HINSTANCE hInstance, HWND hParentWnd )
     wc.hCursor = NULL;
     wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
     wc.lpszMenuName = NULL;
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     strcpy( classname, "ScrClass" );
     #else
     sprintf( classname, "ScrClass%d", hInstance);
@@ -1334,7 +1334,7 @@ static int SSGetFileVersionInfo(const char *filename,
   int retval = 0;
   DWORD dwHandle, dwLen;
 
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   DWORD (APIENTRY *__GetFileVersionInfoSize)(LPSTR, LPDWORD);
   BOOL (APIENTRY *__GetFileVersionInfo)(LPSTR, DWORD, DWORD, LPVOID );
   BOOL (APIENTRY *__VerQueryValue)(const LPVOID, LPSTR, LPVOID *, PUINT);
@@ -1421,7 +1421,7 @@ static int SSGetFileVersionInfo(const char *filename,
     if (mallocbuf)
       free(mallocbuf);
   }
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   FreeLibrary(hVerLib);
   #endif
   return retval;
@@ -1541,7 +1541,7 @@ static int SSExtractScreennameFromFile( const char *filename,
 
 /* ---------------------------------------------------- */
 
-#if (CLIENT_OS != OS_WIN32)
+#if (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_WIN64)
 #include <direct.h>
 #endif
 
@@ -1549,7 +1549,7 @@ static const char *SSFindNext(void *dirbase, char *buf, unsigned int bufsize)
 {
   if (dirbase)
   {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     WIN32_FIND_DATA fdata;
     if (!FindNextFile( (HANDLE)dirbase, &fdata))
       return (const char *)0;
@@ -1572,7 +1572,7 @@ static int SSFindClose(void *dirbase)
 {
   if (dirbase)
   {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     FindClose((HANDLE)dirbase);
     #else
     closedir((DIR *)dirbase);
@@ -1586,7 +1586,7 @@ static int SSFindClose(void *dirbase)
 
 static void *SSFindFirst(const char *path, char *buf, unsigned int bufsize)
 {
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   WIN32_FIND_DATA fdata;
   HANDLE dirbase = FindFirstFile( path, &fdata );
   if (dirbase == INVALID_HANDLE_VALUE)
@@ -1893,7 +1893,7 @@ static void SSUnGenChild(HWND hChildWnd)
 
 /* ---------------------------------------------------- */
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 //<BovineMoo> comdlg32.dll has a very huge memory footprint
 //<BovineMoo> pulls in like 20 dlls or so
 //<BovineMoo> well, comdlg32 pulls in winspool, which pulls in activeds,
@@ -1978,7 +1978,7 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
     if (hwnd)
       EnableWindow( hwnd, (sslisttype > 0));
     lparam = 0; wparam = 406; /*SSCONFIG_FN */
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     wparam |= (EN_CHANGE << 16);
     #else
     lparam |= (EN_CHANGE << 16);
@@ -1989,7 +1989,7 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
   else if (msg == WM_COMMAND)
   {
     WORD id = (WORD)LOWORD(wparam);
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     HWND hwnd = (HWND)lparam;
     WORD cmd  = (WORD)HIWORD(wparam);
     #else
@@ -2270,7 +2270,7 @@ static int SSConfigure(HINSTANCE hInstance, HWND hwnd)
   {
     if (!hwnd)
     {
-      #if (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       hwnd = GetForegroundWindow();
       #else
       if ((winGetVersion()%2000)>=400)
@@ -2335,7 +2335,7 @@ int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst,
 
   if (!hPrevInst && winGetVersion()<400)
   {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     {
       MessageBox(NULL, "This screen saver cannot be used with win32s\n"
                        "Use the native win16 version instead.",
@@ -2392,7 +2392,7 @@ int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst,
       {
         if (!hPrevInst)
         {
-          #if (CLIENT_OS == OS_WIN32)
+          #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
           HANDLE hmutex;
           SECURITY_ATTRIBUTES sa;
           memset(&sa,0,sizeof(sa));

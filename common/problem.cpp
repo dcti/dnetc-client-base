@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.21 2004/05/20 21:13:14 kakace Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.22 2004/06/27 21:40:40 jlawson Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -781,9 +781,9 @@ static int __InternalLoadState( InternalProblem *thisprob,
   {
     /* may also be overridden in go_mt */
     #if (CLIENT_OS == OS_RISCOS)
-    if (riscos_check_taskwindow() && thisprob->pub_data.client_cpu!=CPU_X86)
+    if (riscos_check_taskwindow() && thisprob->pub_data.client_cpu != CPU_X86)
       thisprob->pub_data.cruncher_is_time_constrained = 1;
-    #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+    #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     if (winGetVersion() < 400)
       thisprob->pub_data.cruncher_is_time_constrained = 1;
     #elif (CLIENT_OS == OS_MACOS)

@@ -15,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.53.4.10 2004/06/24 21:11:35 kakace Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.53.4.11 2004/06/27 21:50:34 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -299,7 +299,7 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
 {
   #if (CLIENT_OS == OS_NETWARE || CLIENT_OS == OS_DOS || \
        CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
-       CLIENT_OS == OS_WIN32)
+       CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN64)
     #define ftruncate( fd, sz )  chsize( fd, sz )
 //  #elif (CLIENT_OS == )
 //    #define ftruncate( fd, sz ) //nada, not supported
@@ -1228,7 +1228,7 @@ void LogScreenPercent( unsigned int load_problem_count )
   if (disp_format < 0)
     return;
 
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (disp_format != DISPFORMAT_RATE &&
      (w32ConGetType() & 0xffff) == (((int)('g'))+(((int)('t'))<<8)))
   {                                          /* gui + tray */

@@ -1,11 +1,11 @@
-/* Hey, Emacs, this a -*-C++-*- file !
+/* -*-C++-*-
  *
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.15 2004/01/08 20:20:23 oliver Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.16 2004/06/27 21:44:19 jlawson Exp $"
 
 #include "cputypes.h"
 
@@ -104,7 +104,7 @@
   #include <unistd.h>
   #include <fcntl.h>
   #include <sys/time.h>
-#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+#elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #include <windows.h>
   #include <sys/timeb.h>
   #include <process.h>

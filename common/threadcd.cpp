@@ -9,7 +9,7 @@
  *
 */
 const char *threadcd_cpp(void) {
-return "@(#)$Id: threadcd.cpp,v 1.17.4.1 2003/01/19 22:49:51 snake Exp $"; }
+return "@(#)$Id: threadcd.cpp,v 1.17.4.2 2004/06/27 21:48:07 jlawson Exp $"; }
 
 #include <stdio.h>      //NULL
 #include "threadcd.h"   //includes implementation and porting notes.
@@ -27,7 +27,7 @@ int CliDestroyThread( THREADID cliThreadID )
      rescode = -1;
   #elif (CLIENT_OS == OS_OS2)
      DosWaitThread( &cliThreadID, DCWW_WAIT);
-  #elif (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
      WaitForSingleObject((HANDLE)cliThreadID, INFINITE);
   #elif (CLIENT_OS == OS_BEOS)
      {
@@ -105,7 +105,7 @@ THREADID CliCreateThread( register void (*proc)(void *), void *param )
     shelldata.proc = proc;
     shelldata.param = param;
 
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
        {
        cliThreadID = _beginthread( shellproc, 8192, shellparam );
        //if ( cliThreadID == 0) cliThreadID = NULL; //0

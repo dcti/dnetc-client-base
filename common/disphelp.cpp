@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.72.4.5 2004/01/07 02:50:51 piru Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.72.4.6 2004/06/27 21:50:34 jlawson Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -45,7 +45,7 @@ static const char *helpbody[] =
   "-shutdown          gracefully shut down all active clients",
   "-pause             pause all active clients",
   "-unpause           unpause all active clients",
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   "-install           install the client as a service",
   "-uninstall         uninstall the client previously -installed",
   "-svcstart          start a previously -installed client-as-service",

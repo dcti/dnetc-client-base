@@ -11,7 +11,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.60.4.3 2004/01/08 20:20:24 oliver Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.60.4.4 2004/06/27 21:48:07 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -46,7 +46,7 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       DosSetPriority( PRTYS_THREAD, PRTYC_IDLETIME, ((32 * prio)/10), 0);
     //main thread always runs at normal priority
   }
-  #elif (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   {
     static int useidleclass = -1;           // track detection state.
     int threadprio = 0, classprio = 0;

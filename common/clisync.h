@@ -1,4 +1,4 @@
-/* Hey, Emacs, this a -*-C++-*- file !
+/* -*-C++-*-
  *
  * Copyright distributed.net 2001-2003 - All Rights Reserved
  * For use in distributed.net projects only.
@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.24 2004/05/15 08:31:09 mweiser Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.25 2004/06/27 21:46:53 jlawson Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -234,7 +234,7 @@
       ThreadSwitchLowPriority();
 # elif (CLIENT_OS == OS_OS2)
       DosSleep(1);
-# elif (CLIENT_OS == OS_WIN32)
+# elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       Sleep(1);
 # else
 #  error "What's up Doc?"

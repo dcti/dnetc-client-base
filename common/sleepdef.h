@@ -1,4 +1,4 @@
-/* Hey, Emacs, this a -*-C++-*- file !
+/* -*-C++-*-
  *
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
@@ -30,11 +30,11 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37.2.4 2004/01/07 02:50:50 piru Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37.2.5 2004/06/27 21:48:07 jlawson Exp $"
 
 #include "cputypes.h"
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   #define WIN32_LEAN_AND_MEAN
   #include <windows.h>
   #ifdef sleep
