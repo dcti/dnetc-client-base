@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.219 2001/01/06 14:05:57 friedbait Exp $
+# @(#)$Id: configure,v 1.222.2.220 2001/01/06 21:26:07 friedbait Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1910,7 +1910,7 @@ case "$1" in
         TARGET_LDFLAGS="-static"
         TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-s390"
+        TARGET_TARBALL="linux-s390-static"
         add_sources "linux" "s390" 
         ;;
 
