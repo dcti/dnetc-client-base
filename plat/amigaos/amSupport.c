@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.2.4.8 2004/04/17 19:04:56 oliver Exp $
+ * $Id: amSupport.c,v 1.2.4.9 2004/05/02 02:49:03 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -845,9 +845,7 @@ int ftruncate(int fd, int newsize)
 */
 #include <sys/types.h>
 #include <sys/stat.h>
-#pragma pack(2)
 #include <dos/dosextens.h>
-#pragma pack()
 
 __BEGIN_DECLS
 extern void __seterrno(void);

@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amTime.c,v 1.2.4.5 2004/01/10 17:09:12 piru Exp $
+ * $Id: amTime.c,v 1.2.4.6 2004/05/02 02:49:03 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -523,7 +523,7 @@ int amigaGetMonoClock(struct timeval *tp)
    return 0;
 }
 
-#ifndef __amigaos4__
+#if !defined(__amigaos4__) && !defined(__MORPHOS__)
 /*
 ** libnix mktime() has broken leap year handling, so use this instead
 */
