@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.9 2000/01/31 15:54:12 ivo Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.10 2000/02/04 08:25:22 cyp Exp $"; }
 
 #include "cputypes.h"  // u32
 #include "problem.h"   // Problem class
@@ -199,6 +199,12 @@ const char *CliGetSummaryStringForContest( int contestid )
   unsigned int packets, units;
   struct timeval ttime;
 
+  name = "???";
+  units = packets = 0;
+  ttime.tv_sec = 0;
+  ttime.tv_usec = 0;
+  keyrateP = "---.-- ";
+  totalnodesP = "---.-- ";
   if ( CliIsContestIDValid( contestid ) ) //clicdata.cpp
   {
     CliGetContestInfoBaseData( contestid, &name, NULL ); //clicdata.cpp
@@ -210,15 +216,6 @@ const char *CliGetSummaryStringForContest( int contestid )
       totalnodesP=num_sep(__CliGetKeyrateAsString(iterstr, totaliter, ((double)(1000000)), 1));
       //totalnodesP=num_sep(CliGetDoubleAsString(totaliter, 0, -1));
     }
-  }
-  else
-  {
-    name = "???";
-    units = packets = 0;
-    ttime.tv_sec = 0;
-    ttime.tv_usec = 0;
-    keyrateP = "---.-- ";
-    totalnodesP = "---.-- ";
   }
 
   str[0] = '\0';
