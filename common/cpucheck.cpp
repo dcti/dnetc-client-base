@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.35 2000/01/23 00:12:22 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.36 2000/01/26 18:52:59 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -577,9 +577,6 @@ static long __GetRawProcessorID(const char **cpuname)
 
 #if (CLIENT_CPU == CPU_X86)
 
-#if (defined(__WATCOMC__) || (CLIENT_OS == OS_QNX)) 
-  #define x86ident _x86ident
-#endif
 #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
   extern "C" u32 x86ident( void ) asm ("x86ident");
 #else
@@ -591,7 +588,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
   static long detectedtype = -2L;  /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
   static int  kKeysPerMhz = 512; /* default rate if not found */
-  static int  simpleid   = 0;   /* default id if not found */
+  static int  simpleid   = 0xff; /* default id if not found */
   
   if ( detectedtype == -2L )
   {
@@ -609,7 +606,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
   
     sprintf( namebuf, "%04X:%04X", vendorid, cpuid );
     detectedname = (const char *)&namebuf[0];
-    detectedtype = -1; /* assume not found */
+    if (vendorid || cpuid)
+      detectedtype = 0; /* allow tag to be shown */
+    else
+      detectedtype = -1; /* assume not found */
+    simpleid = 0xff; /* default id = unknown */
     
     /* use detectedt type= 0xFF when you don't know what to use.
        DO *NOT* guess
@@ -617,21 +618,23 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     if ( vendorid == 0x7943 /* 'yC' */ ) // Cyrix CPU
     {
       static struct cpuxref cyrixxref[]={
-          {    0x40,  950,     6, "486"       }, // Pentium or SMC core
-          {  0x0440,  950,     0, "MediaGX"   },
+          {    0x40,  950,     6, "486" /* obsolete entry */},
+          {  0x0400,  950,     6, "486SLC/DLC/SR/DR" },
+          {  0x0410,  950,     6, "486S/Se/S2/DX/DX2" },
+          {  0x0440,  950,     0, "GX/MediaGX" },
           {  0x0490, 1185,     0, "5x86"      },
-          {  0x0520, 2090,     3, "6x86"      }, // "Cyrix 6x86/6x86MX/M2"
-          {  0x0540, 1200,     0, "GXm"       }, // use Pentium core here too
-          {  0x0600, 2115, 0x103, "6x86MX"    },
+          {  0x0520, 2090,     3, "6x86/MI"   },
+          {  0x0540, 1200,     0, "GXm"       },
+          {  0x0600, 2115, 0x103, "6x86MX/MII"},
           {  0x0000, 2115,    -1, NULL        }
           }; internalxref = &cyrixxref[0];
       vendorname = "Cyrix ";
-      cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
+      cpuidbmask = 0x0ff0;
     }
     else if ( vendorid == 0x6952 /* 'iR' */  ) //"RiseRiseRiseRise"
     {
       static struct cpuxref risexref[]={
-           {  0x0500, 1500,  0xFF, "mP6" }, /* (0.25 æm) - dunno which core */
+          {  0x0500, 1500,  0xFF, "mP6" }, /* (0.25 æm) - dunno which core */
           {  0x0500, 1500,  0xFF, "mP6" }, /* (0.18 æm) - dunno which core */
           {  0x0000, 2115,    -1, NULL  }
           }; internalxref = &risexref[0];
@@ -651,7 +654,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     else if ( vendorid == 0x654E /* 'eN' */  ) //"NexGenDriven"
     {   
       static struct cpuxref nexgenxref[]={
-          {  0x0300, 1500,     1, "Nx586" }, //386/486 core
+          {  0x0500, 1500,     1, "Nx586" }, //386/486 core
           {  0x0000, 1500,    -1, NULL  } //no such thing
           }; internalxref = &nexgenxref[0];
       vendorname = "NexGen ";
@@ -670,7 +673,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     else if ( vendorid == 0x7541 /* 'uA' */ ) // "AuthenticAMD"
     {
       static struct cpuxref amdxref[]={
-          {  0x0040,  950,     0, "486"      }, // "Pentium, Pentium MMX, Cyrix 486/5x86/MediaGX, AMD 486",
+          {  0x0040,  950,     0, "486"      },
+          {  0x0400,  950,     0, "486"      },
           {  0x0430,  950,     0, "486DX2"   },
           {  0x0470,  950,     0, "486DX2WB" },
           {  0x0480,  950,     0, "486DX4"   },
@@ -697,7 +701,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0000, 4096,    -1, NULL       }
           }; internalxref = &amdxref[0];
       vendorname = "AMD ";
-      cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
+      if (cpuid == 0x0400)
+        vendorname = ""; //not for generic 486
+      cpuidbmask = 0x0ff0;
     }
     else if ( vendorid == 0x6547 /* 'eG' */ ) // "GenuineIntel"
     {
@@ -726,7 +732,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           A80522, Klamath (0.28 æm)
           A80523, Deschutes (0.25 æm)
           Tonga (0.25 æm mobile) - 0x0650+0
-          Covington (no On-Die L2 Cache)
+          Covington (no On-Die L2 Cache) 0x650
           Mendocino (128 KB On-Die L2 Cache) 0x0660
           Dixon (256 KB On-Die L2 Cache) 
           Intel P6-core 
@@ -736,7 +742,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           */
           {  0x0630, 2785, 0x102, "Pentium II" },
           {  0x0650, 2785, 0x102, "Pentium II" }, //0x0650=mobile,651=boxed PII/Xeon
-          {  0x0660, 2785, 0x102, "Celeron-A" }, //on-die L2 
+          {  0x0660, 2785, 0x102, "Celeron-A"  }, //on-die L2 
           {  0x0670, 2785, 0x102, "Pentium III" },
           {  0x0680, 2785, 0x102, "Pentium III" },
           {  0x0000, 4096,    -1, NULL }
@@ -751,16 +757,13 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       unsigned int pos;
       int maskedid = ( cpuid & cpuidbmask );
   
-      for (pos = 0; ; pos++ )
+      for (pos = 0; internalxref[pos].cpuname; pos++ )
       {
-        if ((internalxref[pos].cpuname == NULL) || /* bonk! hit bottom */
-           (maskedid == (internalxref[pos].cpuid & cpuidbmask))) /* found it */
+        if (maskedid == (internalxref[pos].cpuid & cpuidbmask)) /* found it */
         {
           kKeysPerMhz  = internalxref[pos].kKeysPerMhz;
           simpleid    = internalxref[pos].simpleid;
           detectedtype = dettype;
-          if (detectedtype < 0)
-            detectedtype = -1;
           if ( internalxref[pos].cpuname )
           {
             strcpy( namebuf, vendorname );
