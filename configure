@@ -5,8 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
-# Revision 1.106  1998/10/07 17:39:34  snake
+# Revision 1.107  1998/10/10 11:43:30  cyp
+# Added modereq.cpp
 #
+# Revision 1.106  1998/10/07 17:39:34  snake
 # added new entry for BSD/OS 4.0 with ELF support, thus MMX support
 #
 # Revision 1.105  1998/10/06 13:19:40  remi
@@ -494,7 +496,7 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/cmdline.cpp common/selftest.cpp common/guistuff.cpp
     common/bench.cpp common/probman.cpp common/clirun.cpp
     common/probfill.cpp common/pollsys.cpp common/setprio.cpp
-    common/console.cpp"
+    common/console.cpp common/modereq.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"

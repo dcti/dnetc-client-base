@@ -55,6 +55,7 @@ common/probman.o_ppc\
 common/probfill.o_ppc\
 common/bench.o_ppc\
 common/console.o_ppc\
+common/modereq.o_ppc\
 common/setprio.o_ppc
 
 RC5_OBJS_PPC	=\
@@ -110,6 +111,7 @@ common/probman.o_68k\
 common/probfill.o_68k\
 common/bench.o_68k\
 common/console.o_68k\
+common/modereq.o_68k\
 common/setprio.o_68k
 
 RC5_OBJS_68K	=\
@@ -217,6 +219,7 @@ common/probfill.o_ppc   :       common/probfill.cpp
 common/bench.o_ppc      :       common/bench.cpp
 common/console.o_ppc    :       common/console.cpp
 common/setprio.o_ppc    :       common/setprio.cpp
+common/modereq.o_ppc    :       common/modereq.cpp
 
 # RC5 Dependencies
 
@@ -272,6 +275,7 @@ common/probfill.o_68k   :       common/probfill.cpp
 common/bench.o_68k      :       common/bench.cpp
 common/console.o_68k    :       common/console.cpp
 common/setprio.o_68k    :       common/setprio.cpp
+common/modereq.o_68k    :       common/modereq.cpp
 
 # RC5 Dependencies
 
