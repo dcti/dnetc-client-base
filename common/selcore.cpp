@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.83 2002/09/24 00:11:38 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.84 2002/09/24 00:26:33 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -89,7 +89,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       NULL
-    }
+    },
   #elif (CLIENT_CPU == CPU_ARM)
     { /* RC5 */
       "Series A", /* (autofor for ARM 3/6xx/7xxx) "ARM 3, 610, 700, 7500, 7500FE" */
@@ -110,7 +110,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       NULL
-    }
+    },
   #elif (CLIENT_CPU == CPU_68K)
     { /* RC5 */
       #if defined(__GCC__) || defined(__GNUC__) || \
@@ -139,7 +139,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       NULL
-    }
+    },
   #elif (CLIENT_CPU == CPU_ALPHA) 
     { /* RC5 */
       #if (CLIENT_OS == OS_WIN32)
@@ -162,7 +162,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       NULL
-    }
+    },
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
     { /* RC5 */
       /* lintilla depends on allitnil, and since we need both even on OS's 
@@ -190,7 +190,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       NULL
-    }
+    },
   #elif (CLIENT_CPU == CPU_SPARC)
     { /* RC5 */
       #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_LINUX))
@@ -213,7 +213,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       NULL
-    }
+    },
   #elif (CLIENT_OS == OS_PS2LINUX)
     { /* RC5 */
       "Generic RC5 core",
@@ -232,7 +232,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       NULL
-    }
+    },
   #else
     { /* RC5 */
       "Generic RC5 core",
@@ -250,7 +250,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       NULL
-    }
+    },
   #endif  
     { /* CSC */
       "6 bit - inline", 
