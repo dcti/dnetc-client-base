@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.10 1999/11/25 11:48:33 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.11 1999/11/27 16:30:27 cyp Exp $"; }
 
 //#define TRACE
 
@@ -659,7 +659,7 @@ int ReadConfig(Client *client)
   const char *cont_name;
   unsigned int cont_i;
   const char *fn = client->inifilename;
-  char *p; int i;
+  char *p;
 
   fn = GetFullPathForFilename( fn );
 
@@ -721,25 +721,27 @@ int ReadConfig(Client *client)
     GetPrivateProfileIntB( OPTSECT_NET, "autofindkeyserver", 1, fn ) ));
 
   #if defined(LURK)
-  i = dialup.GetCapabilityFlags();
-  dialup.lurkmode = 0;
-  if ((i & CONNECT_LURKONLY)!=0 && GetPrivateProfileIntB( sect, "lurkonly", 0, fn ))
-    { dialup.lurkmode = CONNECT_LURKONLY; }
-  else if ((i & CONNECT_LURK)!=0 && GetPrivateProfileIntB( sect, "lurk", 0, fn ))
-    dialup.lurkmode = CONNECT_LURK;
-  if ((i & CONNECT_IFACEMASK)!=0)
-    GetPrivateProfileStringB( OPTSECT_NET, "interfaces-to-watch", dialup.connifacemask,
-                              dialup.connifacemask, sizeof(dialup.connifacemask), fn );
-  if ((i & CONNECT_DOD)!=0)
   {
-    dialup.dialwhenneeded = GetPrivateProfileIntB( OPTSECT_NET, "enable-start-stop", 0, fn );
-    if ((i & CONNECT_DODBYSCRIPT)!=0)
+    int caps = dialup.GetCapabilityFlags();
+    dialup.lurkmode = 0;
+    if ((caps & CONNECT_LURKONLY)!=0 && GetPrivateProfileIntB( sect, "lurkonly", 0, fn ))
+      { dialup.lurkmode = CONNECT_LURKONLY; }
+    else if ((caps & CONNECT_LURK)!=0 && GetPrivateProfileIntB( sect, "lurk", 0, fn ))
+      dialup.lurkmode = CONNECT_LURK;
+    if ((caps & CONNECT_IFACEMASK)!=0)
+      GetPrivateProfileStringB( OPTSECT_NET, "interfaces-to-watch", dialup.connifacemask,
+                                dialup.connifacemask, sizeof(dialup.connifacemask), fn );
+    if ((caps & CONNECT_DOD)!=0)
     {
-      GetPrivateProfileStringB( OPTSECT_NET, "dialup-start-cmd", dialup.connstartcmd, dialup.connstartcmd, sizeof(dialup.connstartcmd), fn );
-      GetPrivateProfileStringB( OPTSECT_NET, "dialup-stop-cmd", dialup.connstopcmd, dialup.connstopcmd, sizeof(dialup.connstopcmd), fn );
+      dialup.dialwhenneeded = GetPrivateProfileIntB( OPTSECT_NET, "enable-start-stop", 0, fn );
+      if ((caps & CONNECT_DODBYSCRIPT)!=0)
+      {
+        GetPrivateProfileStringB( OPTSECT_NET, "dialup-start-cmd", dialup.connstartcmd, dialup.connstartcmd, sizeof(dialup.connstartcmd), fn );
+        GetPrivateProfileStringB( OPTSECT_NET, "dialup-stop-cmd", dialup.connstopcmd, dialup.connstopcmd, sizeof(dialup.connstopcmd), fn );
+      }
+      if ((caps & CONNECT_DODBYPROFILE)!=0)
+        GetPrivateProfileStringB( OPTSECT_NET, "dialup-profile", dialup.connprofile, dialup.connprofile, sizeof(dialup.connprofile), fn );
     }
-    if ((i & CONNECT_DODBYPROFILE)!=0)
-      GetPrivateProfileStringB( OPTSECT_NET, "dialup-profile", dialup.connprofile, dialup.connprofile, sizeof(dialup.connprofile), fn );
   }
   #endif /* LURK */
 
