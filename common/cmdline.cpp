@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.18 1999/07/11 16:08:22 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.19 1999/07/14 11:16:53 cyp Exp $"; }
 
 //#define TRACE
 
@@ -208,6 +208,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }  
           #elif (CLIENT_OS == OS_HPUX)
           {
+            pid_t ourpid = getpid();
             struct pst_status pst[10];
             int count, idx = 0; /* index within the context */
             kill_found = -1; /* assume all failed */
@@ -224,7 +225,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                 //printf("pid: %d, cmd: %s\n",pst[i].pst_pid,pst[i].pst_ucomm);
                 char *procname = (char *)pst[i].pst_ucomm;
                 pid_t thatpid = (pid_t)pst[i].pst_pid;
-                if (!strcmp(procname,binname) || !strcmp(procname,altbinname))
+                if (thatpid != ourpid && (strcmp(procname,binname) == 0 || 
+                    strcmp(procname,altbinname) == 0))
                 {
                   kill_found++;
                   if ( kill( thatpid, sig ) == 0)
@@ -437,7 +439,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         not_supported = 1;
         #endif
       }
-      else if ( strcmp(thisarg, "-uninstall" ) == 0)
+      else if (!strcmp(thisarg,"-uninstall") || !strcmp(thisarg, "-deinstall"))
       {
         #if (CLIENT_OS == OS_OS2)
         extern int os2CliUninstallClient(int /*do it without feedback*/);
