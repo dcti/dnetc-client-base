@@ -2,7 +2,7 @@
  * Created for use in distributed.net projects, but incorporation
  * in other libraries is encouraged.
  *
- * $Id: systime.c,v 1.1.2.3 2001/07/27 08:51:15 mfeiri Exp $
+ * $Id: systime.c,v 1.1.2.4 2001/07/27 23:37:24 mfeiri Exp $
  *
  * POSIX/ANSI time and date functions for MacOS.
  * 
@@ -74,6 +74,7 @@ extern "C" {
 /*                    BEGIN HARDWARE/OS PRIMITIVES                        */
 /* ====================================================================== */
 
+#include <Timer.h>          // Microseconds
 #include <DateTimeUtils.h>  // Set/GetDateTime
 #include <DriverServices.h> // UpTime
 
