@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.259 2000/07/11 08:26:42 mfeiri Exp $
+# @(#)$Id: configure,v 1.260 2000/07/11 10:57:47 mfeiri Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -372,11 +372,8 @@ COMMON_SRCS="common/client.cpp \
 	     common/util.cpp \
 	     common/random.cpp \
 	     common/base64.cpp \
-	     common/netres.cpp"
-
-#	     common/minihttp.cpp \
-#	     common/netio.cpp \
-#	     common/xmlserve.cpp"
+	     common/netres.cpp \
+	     common/netio.cpp"
 
 #
 # Include standard/public files source files too.
@@ -392,6 +389,11 @@ COMMON_SRCS="${COMMON_SRCS} \
 	    common/buffpub.cpp"
 fi
 
+#
+# Source files making up the XML serving machinery
+#
+XMLSERVE_SRC="common/minihttp.cpp \
+              common/xmlserve.cpp"
 
 #
 # Source files making up the RC5 core code
