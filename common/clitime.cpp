@@ -21,17 +21,18 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.47 1999/12/02 05:14:59 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.48 1999/12/31 20:29:31 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
 #include "clitime.h"  // keep the prototypes in sync
 
-#if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
-  //if your OS doesn't support getrusage, OR it returns rusage for 
-  //*all* threads combined (ie, threads don't get their own pid, eg solaris), 
-  //put it here.
-#elif defined(__unix__) //possibly not for all unices. getrusage() is BSD4.3
+//Warning for getrusage(): if the OSs thread model is ala SunOS's LWP,
+//ie, threads don't get their own pid, then GetProcessTime() functionality 
+//is limited to single thread/benchmark/test only (the way it is now),
+//otherwise it will be return process time for all threads.
+//(problem::Run() guards against this condition, but keep it mind anyway.)
+#if defined(__unix__) //possibly not for all unices. getrusage() is BSD4.3
   #define HAVE_GETRUSAGE
   #include <sys/resource.h>
 #endif

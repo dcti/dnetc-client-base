@@ -1,6 +1,7 @@
 /* Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * ----------------------------------------------------------------------
  * This file contains functions for calculating the keyrate for a completed
@@ -8,13 +9,12 @@
  * ----------------------------------------------------------------------
 */
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.26 1999/12/12 15:45:06 cyp Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.27 1999/12/31 20:29:30 cyp Exp $"; }
 
-#include "cputypes.h" //for u64 define
+#include "baseincs.h" //timeval
 #include "client.h"   //for project constants
 #include "problem.h"  //uses Problem::RetrieveState()
-#include "baseincs.h" //timeval
-#include "clicdata.h" //Cli[Add|Get]ContestInfoSummaryData, CliGetContestInfoBaseData
+#include "clicdata.h" //Cli[Get|Add]ContestInfo[Summary|Base]Data
 #include "clitime.h"  //CliTimerDiff
 #include "clirate.h"  //keep the prototypes in sync.
 

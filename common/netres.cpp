@@ -1,17 +1,17 @@
-/* Written by Cyrus Patel <cyp@fb14.uni-mainz.de> 
+/* Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
-*/ 
+*/
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.30 1999/12/06 19:11:09 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.31 1999/12/31 20:29:34 cyp Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
 #ifdef RESDEBUG
-  //#define RESDEBUGZONE +12  //the timezone we want to appear to be in 
+  //#define RESDEBUGZONE +12  //the timezone we want to appear to be in
 #endif
 
 #if defined(TEST) || defined(PROXYTYPE)
@@ -27,6 +27,7 @@ return "@(#)$Id: netres.cpp,v 1.30 1999/12/06 19:11:09 cyp Exp $"; }
   #if defined(PROXYTYPE)
     #include "netio.h"
   #else
+    #include "baseincs.h"
     #include "network.h"
     #include "clitime.h" /* CliTimeGetMinutesWest() */
     #include <ctype.h> //tolower()
@@ -41,29 +42,29 @@ return "@(#)$Id: netres.cpp,v 1.30 1999/12/06 19:11:09 cyp Exp $"; }
 //------------------------------------------------------------------------
 
 #ifndef NETRES_STUBS_ONLY
-static const struct        // this structure defines which proxies are 
-{                          // 'responsible' for which time zone. The 
+static const struct        // this structure defines which proxies are
+{                          // 'responsible' for which time zone. The
   const char *name;        // timezones overlap, and users in an overlapped
   int minzone;             // area will have 2 (or more) proxies at their
-  int maxzone;             // disposal.  
+  int maxzone;             // disposal.
   int midzone;
-} proxyzoi[] = { 
-                { "us",    -10, -1 ,  -5 },   
+} proxyzoi[] = {
+                { "us",    -10, -1 ,  -5 },
                 { "euro",   -2, +6 ,  +2 }, //euro crosses 0 degrees longitude
                 { "asia",   +5, +10,  +9 },
                 { "aussie", +9, -9 , +12 }, //jp and aussie cross the dateline
-                { "jp",    +10, -10, -11 }   
+                { "jp",    +10, -10, -11 }
                };
 //static int dnet_portlist[] = {80,23,2064,3064,110};
-static const char DNET_PROXY_DOMAINNAME[]="v27.distributed.net"; // NOT char* 
+static const char DNET_PROXY_DOMAINNAME[]="v27.distributed.net"; // NOT char*
 #endif
 
 //-------------------------------------------------------------------------
 
 #ifndef NETRES_STUBS_ONLY
-static int IsHostnameDNetKeyserver( const char *hostname, int *tzdiff ) 
+static int IsHostnameDNetKeyserver( const char *hostname, int *tzdiff )
 {
-  char *p; 
+  char *p;
   char buffer[ sizeof( DNET_PROXY_DOMAINNAME )+15 ];
   unsigned int pos, i = strlen( hostname );
 
@@ -87,8 +88,8 @@ static int IsHostnameDNetKeyserver( const char *hostname, int *tzdiff )
         for (i=0;;i++)
         {
           int xport = ((isdigit(buffer[i]))?(atoi(buffer+i)):(-1));
-          if ((proxyzoi[pos].name[i] == 0) && ((buffer[i]=='.') || 
-                 xport==80 || xport==23 || xport==2064 || 
+          if ((proxyzoi[pos].name[i] == 0) && ((buffer[i]=='.') ||
+                 xport==80 || xport==23 || xport==2064 ||
                  xport==3064 || xport==110 ))
           {
             if (tzdiff) *tzdiff = proxyzoi[pos].midzone * 60;
@@ -98,10 +99,10 @@ static int IsHostnameDNetKeyserver( const char *hostname, int *tzdiff )
             break;
         }
       }
-    }      
+    }
   }
   return 0;
-}  
+}
 #endif
 
 //------------------------------------------------------------------------
@@ -112,7 +113,7 @@ static int calc_tzmins(void)
   #if !defined(TEST) && !defined(PROXYTPE)
   return -CliTimeGetMinutesWest();  /* clitime.cpp */
   #else
-  static int saved_tz = -12345; 
+  static int saved_tz = -12345;
   time_t timenow;
   struct tm * tmP;
   struct tm loctime, utctime;
@@ -146,11 +147,11 @@ static int calc_tzmins(void)
   else if (loctime.tm_yday <  utctime.tm_yday)     { tzdiff += 1440; }
   else                                             { tzdiff -= 1440; }
 
-  if (utctime.tm_isdst>0)  
+  if (utctime.tm_isdst>0)
     tzdiff-=60;
-  if (tzdiff < -(12*60)) 
-    tzdiff = -(12*60); 
-  else if (tzdiff > +(12*60)) 
+  if (tzdiff < -(12*60))
+    tzdiff = -(12*60);
+  else if (tzdiff > +(12*60))
     tzdiff = +(12*60);
   if (haveutctime && haveloctime)
     saved_tz = tzdiff;
@@ -176,37 +177,37 @@ static struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host ord
   static char *proxies[sizeof(proxyzoi)/sizeof(proxyzoi[1])];
   static char proxynames[sizeof(proxyzoi)/sizeof(proxyzoi[1])][30];
   static struct proxylist retlist = { 0xFFFF, (const char **)&proxies[0] };
-  
+
   int inrange, tz_min, tz_max;
   unsigned int pos;
   char cport[6];
-  
+
   retlist.numproxies = 0;
-  
+
   cport[0] = 0;
-  if ( port == 23 || port == 80 ) 
+  if ( port == 23 || port == 80 )
     sprintf( cport, "%d", port );
-  tzdiff /= 60; 
-      
+  tzdiff /= 60;
+
   for (pos = 0; pos < (sizeof(proxyzoi)/sizeof(proxyzoi[1])); pos++ )
   {
     tz_min = proxyzoi[pos].minzone;
     tz_max = proxyzoi[pos].maxzone;
     if ( (tz_min > 0) && (tz_max < 0) ) //straddles dateline
       inrange = (( tzdiff >= tz_min || tzdiff <= tz_max) ? 1 : 0);
-    else             
+    else
       inrange = (( tzdiff >= tz_min && tzdiff <= tz_max) ? 1 : 0);
     if ( inrange )
     {
-      sprintf( proxynames[retlist.numproxies], 
+      sprintf( proxynames[retlist.numproxies],
          "%s%s.%s", proxyzoi[pos].name, cport, DNET_PROXY_DOMAINNAME );
       proxies[retlist.numproxies] = proxynames[retlist.numproxies];
       retlist.numproxies++;
     }
-  } 
+  }
   if (retlist.numproxies == 0) /* should never happen! */
   {
-    sprintf( proxynames[0], 
+    sprintf( proxynames[0],
          "us%s.%s", cport, DNET_PROXY_DOMAINNAME );
     proxies[0] = proxynames[0];
     retlist.numproxies = 1;
@@ -232,18 +233,18 @@ int NetResolve( const char *host, int resport, int resauto,
     return -1;
 
   resport = resport; //shaddup compiler
-  resauto = resauto; 
+  resauto = resauto;
 
   #if (!defined(TEST) && !defined(NETRES_STUBS_ONLY))
   {
     int whichpass, maxpass;
     unsigned int pos;
     char hostname[64];
-  
+
     while (*host && isspace(*host))
       host++;
     pos = 0;
-    while (*host && !isspace(*host) && 
+    while (*host && !isspace(*host) &&
                     isprint(*host) && *host!='\r' && *host!='\n')
     {
       if (pos == (sizeof(hostname)-1))
@@ -263,7 +264,7 @@ int NetResolve( const char *host, int resport, int resauto,
         if (resolve_hostname_sz)
         {
           host = (const char *)(addrlist);
-          sprintf(hostname, "%d.%d.%d.%d.in-addr.arpa", 
+          sprintf(hostname, "%d.%d.%d.%d.in-addr.arpa",
                     (host[3]&255),(host[2]&255),(host[1]&255),(host[0]&255) );
           strncpy(resolve_hostname,hostname,resolve_hostname_sz);
           resolve_hostname[resolve_hostname_sz-1] = '\0';
@@ -271,14 +272,14 @@ int NetResolve( const char *host, int resport, int resauto,
         return 1; /* only one address */
       }
     }
-  
+
     if ( resauto && !resport )
       return -1;
-  
+
     #ifdef RESDEBUG
       printf("host:=%s:%d autofindkeyserver=%d\n", hostname, (int)resport, (int)resauto );
     #endif
-  
+
     if (resauto && (!hostname[0] || IsHostnameDNetKeyserver(hostname,NULL)))
     {
       resauto = 1;
@@ -289,13 +290,13 @@ int NetResolve( const char *host, int resport, int resauto,
       resauto = 0;
       maxpass = 1;
     }
-  
+
     foundaddrcount = 0;
     for (whichpass = 0; (foundaddrcount==0 && whichpass<maxpass); whichpass++)
     {
       struct proxylist *plist;
       struct proxylist dummylist;
-  
+
       if (resauto)
       {
         int tzmin = -6*60; /* middle of us.d.net */
@@ -307,12 +308,12 @@ int NetResolve( const char *host, int resport, int resauto,
           tzmin = calc_tzmins();
           #endif
         }
-        plist = GetApplicableProxyList( resport, tzmin ); 
-  
+        plist = GetApplicableProxyList( resport, tzmin );
+
         #ifdef RESDEBUG
         for (pos=0;pos<plist->numproxies;pos++)
           printf("%s resolved to %s\n", hostname, plist->proxies[pos]);
-        #endif        
+        #endif
       }
       else
       {
@@ -321,7 +322,7 @@ int NetResolve( const char *host, int resport, int resauto,
         dummylist.numproxies = 1;
         plist = &dummylist;
       }
-  
+
       for (pos = 0; ((pos < (plist->numproxies)) &&
                          (foundaddrcount < addrlistcount)); pos++ )
       {
@@ -329,24 +330,24 @@ int NetResolve( const char *host, int resport, int resauto,
         #ifdef RESDEBUG
         printf(" => %d:\"%s\"\n", pos+1, plist->proxies[pos] );
         #endif
-   
+
         //work around gethostbyname not getting const arg on some platforms
         *((const char **)&lookup) = plist->proxies[pos];
-        if ((hp = gethostbyname(lookup) ) != NULL) 
+        if ((hp = gethostbyname(lookup) ) != NULL)
         {
           unsigned int addrpos;
           if (resolve_hostname_sz)
           {
             if (resolve_hostname[0] == '\0')
             {
-              strncpy( resolve_hostname, plist->proxies[pos], 
+              strncpy( resolve_hostname, plist->proxies[pos],
                                           resolve_hostname_sz);
               resolve_hostname[resolve_hostname_sz-1]='\0';
             }
           }
-          for ( addrpos = 0; (hp->h_addr_list[addrpos] && 
+          for ( addrpos = 0; (hp->h_addr_list[addrpos] &&
                (foundaddrcount < addrlistcount)); addrpos++ )
-          { 
+          {
             unsigned int dupcheck = 0;
             addrlist[foundaddrcount] = *((u32 *)(hp->h_addr_list[addrpos]));
             while (dupcheck < foundaddrcount)
@@ -360,7 +361,7 @@ int NetResolve( const char *host, int resport, int resauto,
           }
         }
       }
-  
+
       if (resolve_hostname_sz)
       {
         if (resolve_hostname[0] == '\0')
@@ -386,7 +387,7 @@ int Network::Resolve(const char *host, u32 *hostaddress, int resport )
 {
   u32 addrlist[64]; /* should be more than enough */
   int acount;
-  
+
   acount = NetResolve( host, resport, autofindkeyserver,
                        &addrlist[0], (sizeof(addrlist)/sizeof(addrlist[0])),
                        resolve_hostname, sizeof(resolve_hostname) );
@@ -395,9 +396,9 @@ int Network::Resolve(const char *host, u32 *hostaddress, int resport )
 
   *hostaddress = addrlist[0]; //let the nameserver handle rotation
   //*hostaddress = addrlist[rand() % acount];
-  
+
   return 0;
-}  
+}
 #endif
 
 //-----------------------------------------------------------------------
@@ -415,15 +416,15 @@ int main(void)
   while (proceed)
   {
     abstzdiff = ((tzdiff<0)?(-tzdiff):(tzdiff));
-    printf("  Result for timezone %c%02d%02d %s:\n", 
+    printf("  Result for timezone %c%02d%02d %s:\n",
                ((tzdiff<0)?('-'):('+')), abstzdiff/60, abstzdiff%60, p );
     for (pos = 0;pos<3;pos++)
     {
       port = ((pos==0)?(23):((pos==1)?(80):(0)));
       plist = GetApplicableProxyList( port, tzdiff );
-   
+
       printf("  Port %-10.10s:",((pos==0)?("23"):((pos==1)?("80"):("(other)"))));
-   
+
       for (pos2=0;pos2<plist->numproxies;pos2++)
       {
         if ((p=strchr(plist->proxies[pos2],'.'))!=NULL)
@@ -438,11 +439,11 @@ int main(void)
       getbuffer[0]=0;
       printf( "\nEnter TZ (-1200 to +1200) or "
               "name (\"euro\", \"jp\" etc) to test : " );
-      scanf( "%10s", getbuffer ); 
-      
+      scanf( "%10s", getbuffer );
+
       if (getbuffer[0] == 0)
         proceed = 0;
-      else if (getbuffer[0] == '-' || getbuffer[0]=='+' 
+      else if (getbuffer[0] == '-' || getbuffer[0]=='+'
                  || (getbuffer[0]>='0' && getbuffer[0]<='9'))
       {
         tzdiff = atoi( getbuffer );
@@ -457,7 +458,7 @@ int main(void)
           proceed = 1;
         }
       }
-      else 
+      else
       {
         if ( strchr( getbuffer, '.' ) == NULL )
           sprintf( hostname, "%s.%s", getbuffer, DNET_PROXY_DOMAINNAME );
@@ -472,11 +473,11 @@ int main(void)
             sprintf( hostname, "(%s)", getbuffer );
           p = hostname;
         }
-        else 
+        else
           printf( "That proxyname doesn't appear to be valid\n" );
       }
     }
   }
   return 0;
-}  
+}
 #endif

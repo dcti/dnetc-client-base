@@ -10,9 +10,8 @@
  * ----------------------------------------------------------------------
 */ 
 #ifndef __CLISRATE_H__
-#define __CLISRATE_H__ "@(#)$Id: clisrate.h,v 1.22 1999/12/13 05:39:46 cyp Exp $"
+#define __CLISRATE_H__ "@(#)$Id: clisrate.h,v 1.23 1999/12/31 20:29:31 cyp Exp $"
 
-//#include "cputypes.h" // struct fake_u64
 //#include "problem.h"  // Problem class
 
 #ifndef _U32LimitDouble_
@@ -24,10 +23,6 @@
 /* returns keyrate as string (maxlen=26) "nnnn.nn ['k'|'M'|'G'|'T']" */
 /* return value is a pointer to buffer.                           */
 const char *CliGetKeyrateAsString( char *buffer, double rate );
-
-/* return iter/keysdone/whatever as string.                       */
-/* set contestID = -1 to have the ID ignored                      */
-const char *CliGetU64AsString( struct fake_u64 *u, int /*inNetOrder*/, int contestID );
 
 /* combines CliGetKeyrateForProblem() and CliGetKeyrateAsString() */
 const char *CliGetKeyrateStringForProblem( Problem *prob );

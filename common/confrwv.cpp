@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.74 1999/12/08 05:04:42 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.75 1999/12/31 20:29:32 cyp Exp $"; }
 
 //#define TRACE
 
@@ -29,7 +29,7 @@ static const char *OPTSECT_CPU     = "processor-usage";
 
 /* ------------------------------------------------------------------------ */
 
-static int __strcasecmp(const char *s1, const char *s2)
+static int __STRCASECMP(const char *s1, const char *s2)
 {
   for (;;)
   {
@@ -317,7 +317,7 @@ static int confopt_IsHostnameDNetHost( const char * hostname )
     return 0;
   len = strlen( hostname );
   return (len > (sizeof( sig )-1) &&
-      __strcasecmp( &hostname[(len-(sizeof( sig )-1))], sig ) == 0);
+      __STRCASECMP( &hostname[(len-(sizeof( sig )-1))], sig ) == 0);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -529,7 +529,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
   {
     if (GetPrivateProfileStringB( OPTION_SECTION, "keyproxy", "", buffer, sizeof(buffer), fn ))
     {
-      if (__strcasecmp(buffer,"auto")==0 || __strcasecmp(buffer,"(auto)")==0)
+      if (__STRCASECMP(buffer,"auto")==0 || __STRCASECMP(buffer,"(auto)")==0)
         buffer[0]=0; //one config version accidentally wrote "auto" out
       else if (strcmp( buffer, "rc5proxy.distributed.net" )==0)
         buffer[0]=0; //obsolete hostname
@@ -708,7 +708,7 @@ int ReadConfig(Client *client)
 
   if (GetPrivateProfileStringB( sect, "id", "", client->id, sizeof(client->id), fn ))
   {
-    if (__strcasecmp( client->id, "rc5@distributed.net" ) == 0)
+    if (__STRCASECMP( client->id, "rc5@distributed.net" ) == 0)
       client->id[0] = '\0';
   }
 
@@ -759,9 +759,9 @@ int ReadConfig(Client *client)
     client->lurk_conf.lurkmode = 0;
     if (GetPrivateProfileStringB( OPTSECT_NET, "dialup-watcher", p, buffer, sizeof(buffer), fn ))
     {
-      if (__strcasecmp( buffer, "active" ) == 0)
+      if (__STRCASECMP( buffer, "active" ) == 0)
         client->lurk_conf.lurkmode = CONNECT_LURK;
-      else if (__strcasecmp( buffer, "passive" ) == 0)
+      else if (__STRCASECMP( buffer, "passive" ) == 0)
         client->lurk_conf.lurkmode = CONNECT_LURKONLY;
     }
     GetPrivateProfileStringB( OPTSECT_NET, "interfaces-to-watch", client->lurk_conf.connifacemask, client->lurk_conf.connifacemask, sizeof(client->lurk_conf.connifacemask), fn );
@@ -1019,7 +1019,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     
     __XSetProfileStr( OPTSECT_LOG, "log-file-limit", client->logfilelimit, fn, NULL );
     __XSetProfileStr( OPTSECT_LOG, "log-file", client->logname, fn, NULL );
-    if ((client->logfiletype[0] && __strcasecmp(client->logfiletype,"none")!=0) || 
+    if ((client->logfiletype[0] && __STRCASECMP(client->logfiletype,"none")!=0) || 
       GetPrivateProfileStringB(OPTSECT_LOG,"log-file-type","",buffer,2,fn))
       WritePrivateProfileStringB( OPTSECT_LOG,"log-file-type", client->logfiletype, fn );
 

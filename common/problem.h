@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.76 1999/12/13 05:39:47 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.77 1999/12/31 20:29:36 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -19,7 +19,7 @@
 int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 /* result depends on #ifdefs, threadsafety issues etc */
 
-/* ----------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------- */
 
 #undef MAX_MEM_REQUIRED_BY_CORE
 #define MAX_MEM_REQUIRED_BY_CORE  8  //64 bits
@@ -48,16 +48,16 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 typedef union
 {
   struct {
-    struct fake_u64 key;              // starting key
-    struct fake_u64 iv;               // initialization vector
-    struct fake_u64 plain;            // plaintext we're searching for
-    struct fake_u64 cypher;           // cyphertext
-    struct fake_u64 keysdone;         // iterations done (also current position in block)
-    struct fake_u64 iterations;       // iterations to do
+    struct {u32 hi,lo;} key;              // starting key
+    struct {u32 hi,lo;} iv;               // initialization vector
+    struct {u32 hi,lo;} plain;            // plaintext we're searching for
+    struct {u32 hi,lo;} cypher;           // cyphertext
+    struct {u32 hi,lo;} keysdone;         // iterations done (also current position in block)
+    struct {u32 hi,lo;} iterations;       // iterations to do
   } crypto;
   struct {
     struct WorkStub workstub; // stub to work on (28 bytes)
-    struct fake_u64 nodes;            // nodes completed
+    struct {u32 hi,lo;} nodes;            // nodes completed
     char unused[12];
   } ogr;
 } ContestWork;
@@ -69,7 +69,7 @@ class Problem
 protected: /* these members *must* be protected for thread safety */
   /* --------------------------------------------------------------- */
   RC5UnitWork rc5unitwork; /* MUST BE longword (64bit) aligned */
-  struct fake_u64 refL0;               
+  struct {u32 hi,lo;} refL0;               
   ContestWork contestwork;
   CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */
@@ -78,8 +78,9 @@ protected: /* these members *must* be protected for thread safety */
   int last_resultcode; /* the rescode the last time contestwork was stable */
   int started;
   int initialized;
+  unsigned int threadindex; /* 0-n (globally unique identifier) */
+
 public: /* anything public must be thread safe */
-  unsigned int pipeline_count;
   u32 completion_timehi, completion_timelo; /* wall clock time between start/finish */
   u32 runtime_sec, runtime_usec; /* ~total user time spent in core */
   u32 last_runtime_sec, last_runtime_usec; /* time spent in core in last run */
@@ -94,36 +95,38 @@ public: /* anything public must be thread safe */
   int coresel;                   /*  |                                   */
   int client_cpu;                /*  | effective CLIENT_CPU              */
   u32 tslice;                    /* -' -- adjusted by non-preemptive OSs */
+  int was_reset;                 /* set if loadstate reset the block     */
 
   u32 permille;    /* used by % bar */
   int loaderflags; /* used by problem loader (probfill.cpp) */
 
-  unsigned int threadindex; /* index of this problem in the problem table */
-  int threadindex_is_valid; /* 0 if the problem is not managed by probman*/
-
-  /* this is our generic prototype */
-  s32 (*unit_func)( RC5UnitWork *, u32 *iterations, void *memblk );
-
-  u32 (*rc5_unit_func)( RC5UnitWork * , u32 iterations );
-  #if defined(HAVE_DES_CORES)
-  u32 (*des_unit_func)( RC5UnitWork * , u32 *iterations, char *membuf );
-  #endif  
+  unsigned int pipeline_count;
+  union
+  {
+    /* this is our generic prototype */
+    s32 (*gen)( RC5UnitWork *, u32 *iterations, void *memblk );
+    u32 (*rc5)( RC5UnitWork * , u32 iterations );
+    #if defined(HAVE_DES_CORES)
+    u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );
+    #endif  
+  } unit_func;
 
   int Run_RC5(u32 *iterations,int *core_retcode); /* \  run for n iterations.              */
   int Run_DES(u32 *iterations,int *core_retcode); /*  > set actual number of iter that ran */
   int Run_OGR(u32 *iterations,int *core_retcode); /* /  returns RESULT_* or -1 if error    */
   int Run_CSC(u32 *iterations,int *core_retcode); /* /                                     */
 
-  Problem(long _threadindex = -1L);
+  Problem();
   ~Problem();
 
   int IsInitialized() { return (initialized!=0); }
 
   int LoadState( ContestWork * work, unsigned int _contest, u32 _iterations, 
-     int _unused );
+     int expected_cpunum, int expected_corenum, 
+     int expected_os, int expected_buildfrac );
     // Load state into internal structures.
     // state is invalid (will generate errors) until this is called.
-    // expected_[core|cpu|buildnum] are those loaded with the workunit
+    // expected_[core|cpu|os|buildnum] are those loaded with the workunit
     //   and allow LoadState to reset the problem if deemed necessary.
     // returns: -1 on error, 0 is OK
 
@@ -139,6 +142,8 @@ public: /* anything public must be thread safe */
   u32 CalcPermille();
     /* Return the % completed in the current block, to nearest 0.1%. */
 };
+
+/* ----------------------------------------------------------------------- */
 
 #endif /* __cplusplus */
 

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.75 1999/12/06 19:11:07 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.76 1999/12/31 20:29:29 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -169,19 +169,26 @@ extern "C" {
   #if defined(__ELF__)
     #include <sched.h>
   #endif
+#elif (CLIENT_OS == OS_MACOS)  
+  #include <sys/time.h>
+  #include <unistd.h>
+  #include <sched.h>
+  #include <Gestalt.h>
+  #include "client_defs.h"
+#elif (CLIENT_OS == OS_FREEBSD)  
+  #include <sys/time.h>
+  #include <unistd.h>
+  #include <sched.h>
 #elif (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
   #include <unistd.h>
-#elif (CLIENT_OS == OS_BSDI)
+#elif (CLIENT_OS == OS_BSDOS)
+  #include <sys/param.h>
   #include <sys/time.h>
   #include <unistd.h>
   #include <sched.h>
 #elif (CLIENT_OS == OS_NETBSD)
   #include <sys/time.h>
-#elif (CLIENT_OS == OS_FREEBSD)  
-  #include <sys/time.h>
-  #include <unistd.h>
-  #include <sched.h>
 #elif (CLIENT_OS == OS_QNX)
   #include <sys/time.h>
   #include <sys/select.h>
@@ -191,11 +198,6 @@ extern "C" {
   struct timezone { int tz_minuteswest, tz_dsttime; };
   extern "C" int gethostname(char *, int);
   extern "C" int gettimeofday(struct timeval *, struct timezone *);
-#elif (CLIENT_OS == OS_MACOS)
-  #include <sys/time.h> /* Mindmorph */
-  #include <unistd.h> /* Mindmorph */
-  #include <Gestalt.h> /* Mindmorph */
-  #include "client_defs.h" /* support stuff */
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
 #endif

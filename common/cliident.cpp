@@ -16,7 +16,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.22 1999/12/12 15:45:06 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.23 1999/12/31 20:29:30 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -61,7 +61,6 @@ return "@(#)$Id: cliident.cpp,v 1.22 1999/12/12 15:45:06 cyp Exp $"; }
 #include "setprio.h"
 #include "sleepdef.h"
 #include "triggers.h"
-//#include "u64class.h"
 #include "util.h"
 #include "version.h"
 
@@ -110,7 +109,6 @@ static const char *h_ident_table[] =
   (const char *)__SETPRIO_H__,
   (const char *)__SLEEPDEF_H__,
   (const char *)__TRIGGERS_H__,
-//(const char *)__U64CLASS_H__,
   (const char *)__UTIL_H__,
   (const char *)__VERSION_H__
 };
@@ -156,7 +154,6 @@ extern const char *selcore_cpp(void);
 extern const char *selftest_cpp(void);
 extern const char *setprio_cpp(void);
 extern const char *triggers_cpp(void);
-extern const char *u64class_cpp(void);
 extern const char *util_cpp(void);
 
 static const char * (*ident_table[])() = 
@@ -204,7 +201,6 @@ static const char * (*ident_table[])() =
   selftest_cpp,
   setprio_cpp,
   triggers_cpp,
-//u64class_cpp,
   util_cpp
 };
 

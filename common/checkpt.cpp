@@ -15,7 +15,7 @@
  *
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.16 1999/11/08 02:02:35 cyp Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.17 1999/12/31 20:29:29 cyp Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()
@@ -94,10 +94,9 @@ int CheckpointAction( Client *client, int action, unsigned int load_problem_coun
             thisprob->RetrieveState((ContestWork *)&work, &cont_i, 0);
             if (cont_i < CONTEST_COUNT /* 0,1,2...*/ )
             {
-              int cputype = thisprob->coresel;
               work.resultcode = RESULT_WORKING;
               work.contest = (u8)cont_i;
-              work.cpu     = FILEENTRY_CPU;
+              work.cpu     = FILEENTRY_CPU(thisprob->client_cpu,thisprob->coresel);
               work.os      = FILEENTRY_OS;
               work.buildhi = FILEENTRY_BUILDHI; 
               work.buildlo = FILEENTRY_BUILDLO;

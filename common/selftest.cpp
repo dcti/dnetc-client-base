@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.60 1999/12/13 05:39:48 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.61 1999/12/31 20:29:36 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -209,10 +209,6 @@ int SelfTest( unsigned int contest )
   }
   if (!IsProblemLoadPermitted(-1, contest)) /* also checks HAVE_xxx_CORES */
     return 0;
-  #if (CLIENT_OS == OS_RISCOS)
-  if (contest == RC5 && GetNumberOfDetectedProcessors() == 2)
-    threadcount = 2;
-  #endif
 
   contname = CliGetContestNameFromID( contest );
   for ( threadpos = 0; 
@@ -221,9 +217,6 @@ int SelfTest( unsigned int contest )
   {
     char lastmsg[100];
     unsigned int testnum;
-    long threadindex = -1L;
-    if (threadcount > 1)
-      threadindex = (long)threadpos;
 
     ClientEventSyncPost( CLIEVENT_SELFTEST_STARTED, (long)contest );
     successes = 0;
@@ -235,7 +228,7 @@ int SelfTest( unsigned int contest )
       int resultcode; const char *resulttext = NULL;
       u32 expectedsolution_hi, expectedsolution_lo;
       ContestWork contestwork;
-      Problem *problem = new Problem(threadindex);
+      Problem *problem = new Problem();
 
       u32 tslice = 0x1000;
       int non_preemptive_env = 0;
@@ -259,14 +252,9 @@ int SelfTest( unsigned int contest )
 
       if (contest == RC5)
       { 
-        test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])&rc5_test_cases[0][0];
+        test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])rc5_test_cases;
         expectedsolution_lo = (*test_cases)[testnum][0];
         expectedsolution_hi = (*test_cases)[testnum][1];
-
-        #if (CLIENT_OS == OS_RISCOS)
-        if (threadcount == 2)
-          contname = ((threadpos == 0)?("RC5 ARM"):("RC5 X86"));
-        #endif
 
         /*
         test case 1 is the RSA pseudo-contest solution
@@ -325,7 +313,7 @@ int SelfTest( unsigned int contest )
 #ifdef HAVE_DES_CORES
       if (contest == DES)
       {
-        test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])&des_test_cases[0][0];
+        test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])des_test_cases;
         expectedsolution_lo = (*test_cases)[testnum][0];
         expectedsolution_hi = (*test_cases)[testnum][1];
 
@@ -345,14 +333,14 @@ int SelfTest( unsigned int contest )
 #ifdef HAVE_OGR_CORES
       if (contest == OGR)
       {
-        test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])&ogr_test_cases[0][0];
+        test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])ogr_test_cases;
         expectedsolution_lo = (*test_cases)[testnum][0];
       }
 #endif
 #ifdef HAVE_CSC_CORES
       if (contest == CSC) // CSC
       {
-        test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])&csc_test_cases[0][0];
+        test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])csc_test_cases;
         expectedsolution_lo = (*test_cases)[testnum][0];
         expectedsolution_hi = (*test_cases)[testnum][1];
 
@@ -394,7 +382,7 @@ int SelfTest( unsigned int contest )
           break;
       }
   
-      problem->LoadState( &contestwork, contest, tslice, 0 /* unused */);
+      problem->LoadState( &contestwork, contest, tslice, 0, 0, 0, 0 );
 
       ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)(problem) );
 
@@ -405,7 +393,7 @@ int SelfTest( unsigned int contest )
           #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
           w32Yield(); /* pump waiting messages */
           #elif (CLIENT_OS == OS_MACOS)
-          DoYieldToMain(0);
+          sched_yield(); /* posix <sched.h> */
           #elif (CLIENT_OS == OS_RISCOS)
           riscos_upcall_6();
           #elif (CLIENT_OS == OS_NETWARE)

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.235 1999/12/26 20:49:05 patrick Exp $"; }
+return "@(#)$Id: client.cpp,v 1.236 1999/12/31 20:29:30 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 

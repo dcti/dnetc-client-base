@@ -1,14 +1,14 @@
-/* Hey, Emacs, this a -*-C++-*- file !
+/* Hey, Emacs, this a -*-C-*- file !
  *
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * ** header may be included by cores, so guard around c++ constructs **
+ * ** header is included by cores, so guard around c++ constructs **
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.75 1999/12/31 00:42:16 friedbait Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.76 1999/12/31 20:29:33 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -52,7 +52,7 @@
 #define OS_SOLARIS      15
 /* #define OS_UNUSED_1  16 */ /* never used. was os9 */
 /* #define OS_UNUSED_2  17 */ /* never used. was java-vm */
-#define OS_BSDI         18
+#define OS_BSDOS        18
 #define OS_NEXTSTEP     19
 #define OS_SCO          20
 #define OS_QNX          21
@@ -135,26 +135,20 @@
   #define __unix__
   #endif
   #define CLIENT_OS_NAME "Linux"
+  #define CLIENT_OS     OS_LINUX
   #if defined(__alpha__) || defined(ASM_ALPHA)
-    #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_ALPHA
-  #elif defined(__S390__)
-    #define CLIENT_OS     OS_LINUX
-    #define CLIENT_CPU    CPU_S390
   #elif defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_X86
+  #elif defined(__S390__)  
+    #define CLIENT_CPU    CPU_S390
   #elif defined(ARM)
-    #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_ARM
   #elif defined(__sparc__) || defined(ASM_SPARC)
-    #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_SPARC
   #elif defined(ASM_PPC)
-    #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_POWERPC
   #elif defined(ASM_68K)
-    #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_68K
   #endif
 #elif defined(__FreeBSD__)
@@ -162,8 +156,8 @@
   #define __unix__
   #endif
   #define CLIENT_OS_NAME "FreeBSD"
+  #define CLIENT_OS     OS_FREEBSD
   #if defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_OS     OS_FREEBSD
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(__NetBSD__)
@@ -226,7 +220,7 @@
   #define __unix__
   #endif
   #define CLIENT_OS_NAME  "BSD/OS"
-  #define CLIENT_OS       OS_BSDI
+  #define CLIENT_OS       OS_BSDOS
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
   #endif
@@ -309,22 +303,20 @@
   #define __unix__
   #endif
   #define CLIENT_OS_NAME   "AIX"
+  #define CLIENT_OS     OS_AIX
   /* AIXALL hides itself as POWER, it's more easy copy with this problem */
   /* in the POWER tree, because this is used on AIX only */
   #if defined(_ARCH_PPC) || defined(ASM_PPC) || defined(_AIXALL)
-    #define CLIENT_OS     OS_AIX
     #define CLIENT_CPU    CPU_POWERPC
   #elif (defined(_ARCH_PWR) || defined(_ARCH_PWR2) || defined(ASM_POWER))
-    #define CLIENT_OS     OS_AIX
     #define CLIENT_CPU    CPU_POWER
   #endif
 #elif defined(macintosh)
   #define CLIENT_OS_NAME   "Mac OS"
+  #define CLIENT_OS     OS_MACOS
   #if __POWERPC__
-    #define CLIENT_OS     OS_MACOS
     #define CLIENT_CPU    CPU_POWERPC
   #elif __MC68K__
-    #define CLIENT_OS     OS_MACOS
     #define CLIENT_CPU    CPU_68K
   #endif
 #elif defined(__BEOS__) || defined(__be_os)
@@ -352,17 +344,14 @@
   #define CLIENT_CPU    CPU_ARM
 #elif defined(_NeXT_)
   #define CLIENT_OS_NAME   "NextStep"
+  #define CLIENT_OS     OS_NEXTSTEP
   #if defined(ASM_X86)
-    #define CLIENT_OS     OS_NEXTSTEP
     #define CLIENT_CPU    CPU_X86
   #elif defined(ASM_68K)
-    #define CLIENT_OS     OS_NEXTSTEP
     #define CLIENT_CPU    CPU_68K
   #elif defined(ASM_HPPA)
-    #define CLIENT_OS     OS_NEXTSTEP
     #define CLIENT_CPU    CPU_PA_RISC
   #elif defined(ASM_SPARC)
-    #define CLIENT_OS     OS_NEXTSTEP
     #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(__MVS__)
@@ -641,7 +630,8 @@ extern "C" {
 #endif  
 
 typedef unsigned char u8;
-struct fake_u64 { u32 hi, lo; }; /* DO NOT TYPEDEF THIS TO A u64 again! */
-                                 /* One too many bugs have been caused by */
-                                 /* passing u64's as an argument. */
+#if 0 /* broken u_64 is no longer used */
+struct fake_u_64 { u32 hi, lo; };
+#endif
+
 #endif /* __CPUTYPES_H__ */

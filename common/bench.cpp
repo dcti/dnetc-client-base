@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.44 1999/12/12 15:45:02 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.45 1999/12/31 20:29:29 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -14,7 +14,7 @@ return "@(#)$Id: bench.cpp,v 1.44 1999/12/12 15:45:02 cyp Exp $"; }
 #include "clitime.h"   // CliGetTimeString()
 #include "clisrate.h"  // CliGetKeyrateAsString()
 #include "clicdata.h"  // GetContestNameFromID()
-#include "selcore.h"   // 
+#include "selcore.h"   // selcoreGet[SelectedCoreForContest|DisplayName]()
 #include "cpucheck.h"  // GetProcessorType()
 #include "logstuff.h"  // LogScreen()
 #include "clievent.h"  // event post etc.
@@ -72,77 +72,64 @@ static void __show_notbest_msg(unsigned int contestid)
 
 /* ----------------------------------------------------------------- */
 
-static void __add_u64( struct fake_u64 *result, 
-                       const struct fake_u64 *a, 
-                       const struct fake_u64 *b )
-{
-  u32 lo = a->lo + b->lo;
-  result->hi = a->hi + b->hi;
-  if( lo < a->lo || lo < b->lo )
-    result->hi++;
-  result->lo = lo;
-}
-
-/* ----------------------------------------------------------------- */
-
 static double __calc_rate( unsigned int contestid, 
                            const ContestWork *contestwork, 
                            int last_run_result, 
-                           const struct fake_u64 *keys_done_already,
+                           u32 keysdone_already_hi,
+                           u32 keysdone_already_lo,
                            const struct timeval *totalruntime, 
-                           int print_it )
+                           const char *contname, 
+                           int corenum, int corecpu, int print_it )
 {                         
-  char ratestr[32];
   double rate;
-  double keysdone;
-  rate = 0.0;
-  struct fake_u64 keys_already_done;
-  keys_already_done.hi = keys_done_already->hi;
-  keys_already_done.lo = keys_done_already->lo;
+  const char *rateunit = "";
+  double keysdone = (double)keysdone_already_lo + 
+                    (double)keysdone_already_hi * 4294967296.0 /* 2^32 */;
 
+  corecpu = corecpu; /* unused */
+  
   switch (contestid)
   {
     case RC5:
     case DES:
     case CSC:
     {
-      unsigned int count;
-      if (CliGetContestInfoBaseData( contestid, NULL, &count ) != 0)
-        count = 1;
-      if( last_run_result == RESULT_WORKING )
-        __add_u64( &keys_already_done, &keys_already_done, &(contestwork->crypto.keysdone) );
-      keysdone = 
-        (double)keys_already_done.lo + 
-        (double)keys_already_done.hi * 4294967296.0 /* 2^32 */;
-      if (count>1) //iteration-to-keycount-multiplication-factor
-        keysdone = (keysdone)*((double)(count));
-      rate = keysdone / (((double)(totalruntime->tv_sec))+
-                 (((double)(totalruntime->tv_usec))/((double)(1000000L))));
-      if (print_it)
+      unsigned int multiplier;
+      if ( last_run_result == RESULT_WORKING )
+        keysdone = keysdone +
+        (double)contestwork->crypto.keysdone.lo + 
+        (double)contestwork->crypto.keysdone.hi * 4294967296.0 /* 2^32 */;
+      if (CliGetContestInfoBaseData( contestid, NULL, &multiplier ) == 0)
       {
-        LogScreen("\rCompleted in %s [%skeys/sec]\n",  
-                 CliGetTimeString( totalruntime, 2 ),
-                 CliGetKeyrateAsString( ratestr, rate ) );
+        if (multiplier > 1) //iteration-to-keycount multiplication-factor
+          keysdone = (keysdone)*((double)(multiplier));
       }
+      rateunit = "keys/sec";
       break;
     }
     case OGR:
     {
-      if( last_run_result == RESULT_WORKING )
-        __add_u64( &keys_already_done, &keys_already_done, &(contestwork->ogr.nodes) );
-      keysdone = 
-        (double)keys_already_done.lo + 
-        (double)keys_already_done.hi * 4294967296.0 /* 2^32 */;
-      rate = keysdone / (((double)(totalruntime->tv_sec))+
-              (((double)(totalruntime->tv_usec))/((double)(1000000L))));
-      if (print_it)
-      {
-        LogScreen("\rCompleted in %s [%snodes/sec]\n",
-                 CliGetTimeString( totalruntime, 2 ),
-                 CliGetKeyrateAsString( ratestr, rate ) );
-      }
+      if ( last_run_result == RESULT_WORKING )
+        keysdone = keysdone +
+        (double)contestwork->ogr.nodes.lo + 
+        (double)contestwork->ogr.nodes.hi * 4294967296.0 /* 2^32 */;
+      rateunit = "nodes/sec";
       break;
-    }
+    }      
+  }        
+
+  rate = keysdone;  /* guard against divide by zero */
+  if (totalruntime->tv_sec != 0 || totalruntime->tv_usec != 0)
+    rate = keysdone / (((double)(totalruntime->tv_sec))+
+                   (((double)(totalruntime->tv_usec))/((double)(1000000L))));
+  if (print_it)
+  {
+    char ratestr[32];
+    LogScreen("\r%s: Benchmark completed in %s"
+              "\n%s: core #%d (%s) - [%s%s]\n",
+              contname, CliGetTimeString( totalruntime, 2 ),
+              contname, corenum, selcoreGetDisplayName(contestid, corenum),
+                        CliGetKeyrateAsString( ratestr, rate ), rateunit );
   }
   return (rate);
 }
@@ -162,7 +149,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   ContestWork contestwork;
   const char *contname;
   struct timeval totalruntime;
-  struct fake_u64 keysdone;
+  u32 keysdone_hi, keysdone_lo;
 
   contname = CliGetContestNameFromID(contestid);
   if (!contname)
@@ -277,9 +264,9 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   totalruntime.tv_sec = 0;
   totalruntime.tv_usec = 0;
   scropen = run = -1;
-  keysdone.lo = 0;
-  keysdone.hi = 0;
-  last_permille = 10000;
+  keysdone_lo = 0;
+  keysdone_hi = 0;
+  last_permille = 1001;
   
   /* --------------------------- */
 
@@ -289,26 +276,28 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   while (((unsigned int)totalruntime.tv_sec) < numsecs)
   {
     run = RESULT_WORKING;
-    if ( problem->LoadState( &contestwork, contestid, tslice, 0 /*unused*/) != 0)
+    if ( problem->LoadState( &contestwork, contestid, tslice, 0, 0, 0, 0) != 0)
       run = -1;
     else if ((flags & TBENCHMARK_QUIET) == 0 && scropen < 0)
     {
       scropen = 1;
       __show_notbest_msg(contestid);
-      LogScreen("Benchmarking %s ... ", contname );
+      LogScreen("%s: Benchmarking ... ", contname );
     }
     while ( run == RESULT_WORKING )
     {
+      ContestWork tmp_work;
       if (non_preemptive_os.yps) /* is this a non-preemptive environment? */
       {
         if (non_preemptive_os.did_adjust < 30 /* don't do this too often */
            && totalruntime.tv_sec >= (2+non_preemptive_os.did_adjust))
         {
-          ContestWork tmp_work;
           if (problem->RetrieveState(&tmp_work, NULL, 0) >= 0)
           {
             double rate = __calc_rate(contestid, &tmp_work, run, 
-                                      &keysdone, &totalruntime, 0);
+                                      keysdone_hi, keysdone_lo, 
+                                      &totalruntime, contname, 
+                                      problem->coresel, problem->client_cpu, 0);
             u32 newtslice = (u32)(rate/((double)non_preemptive_os.yps));
             if (newtslice > (tslice + (tslice/10)))
             {
@@ -322,7 +311,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
         w32Yield(); /* pump waiting messages */
         #elif (CLIENT_OS == OS_MACOS)
-        DoYieldToMain(0);
+        sched_yield(); /* posix <sched.h> */
         #elif (CLIENT_OS == OS_RISCOS)
         riscos_upcall_6();
         #elif (CLIENT_OS == OS_NETWARE)
@@ -337,7 +326,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
       {
         run = -1; /* error */
         if (scropen > 0)
-          LogScreen("\rBenchmarking %s ... *Break*       ", contname );
+          LogScreen("\r%s: Benchmarking ... *Break*       ", contname );
         break;
       }
       else
@@ -356,30 +345,37 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
                                     (runtime.tv_usec / 1000)) ) / numsecs;
           if (permille >= 1000)
             permille = 1000;
-          if (last_permille != permille)
+          if (last_permille != (permille / 10))
           {    
-            LogScreen("\rBenchmarking %s ... %u.%02u%% done", 
+            LogScreen("\r%s: Benchmarking ... %u.%02u%% done", 
                        contname, (unsigned int)(permille/10), 
                                  (unsigned int)((permille%10)*10) );
-            last_permille = permille;
+            last_permille = (permille / 10);
           }                                 
         }
         if ( run != RESULT_WORKING) /* finished this block */
         {
-          ContestWork tmp_work;
-          switch( contestid ) 
+          if ( problem->RetrieveState(&tmp_work, NULL, 0) >= 0 )
           {
-          case RC5:
-          case DES:
-          case CSC:
-            if( problem->RetrieveState(&tmp_work, NULL, 0) >= 0 )
-               __add_u64( &keysdone, &keysdone, &(tmp_work.crypto.keysdone) );
-            break;
-
-          case OGR:
-            if( problem->RetrieveState(&tmp_work, NULL, 0) >= 0 )
-              __add_u64( &keysdone, &keysdone, &(tmp_work.ogr.nodes) );
-            break;
+            u32 old_lo, frag_hi = 0, frag_lo = 0;
+            switch( contestid ) 
+            {
+              case RC5:
+              case DES:
+              case CSC:
+                frag_hi = tmp_work.crypto.keysdone.hi;
+                frag_lo = tmp_work.crypto.keysdone.lo;
+                break;
+              case OGR:
+                frag_hi = tmp_work.ogr.nodes.hi;
+                frag_lo = tmp_work.ogr.nodes.lo;
+                break;
+            }        
+            old_lo = keysdone_lo; 
+            keysdone_lo += frag_lo;
+            keysdone_hi += frag_hi;
+            if ( keysdone_lo < old_lo || keysdone_lo < frag_lo )
+              keysdone_hi++;
           }
           totalruntime.tv_sec = runtime.tv_sec;
           totalruntime.tv_usec = runtime.tv_usec;
@@ -407,8 +403,11 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   
   retvalue = -1; /* assume error */
   if (run >= 0) /* no errors, no ^C */
-    retvalue = (long)__calc_rate(contestid, &contestwork, run, &keysdone, 
-                         &totalruntime, (!(flags & TBENCHMARK_QUIET)) );
+    retvalue = (long)__calc_rate(contestid, &contestwork, run, 
+                         keysdone_hi, keysdone_lo, 
+                         &totalruntime, contname, 
+                         problem->coresel, problem->client_cpu,
+                         (!(flags & TBENCHMARK_QUIET)) );
 
   return retvalue;
 }  
