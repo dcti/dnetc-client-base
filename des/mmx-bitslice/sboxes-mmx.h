@@ -1,4 +1,12 @@
 
+//
+// $Log: sboxes-mmx.h,v $
+// Revision 1.2  1998/07/08 15:47:15  remi
+// Added $Log
+//
+//
+
+
 typedef unsigned long long slice;
 
 // My own way of crippling the code (grin)
