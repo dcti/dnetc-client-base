@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.2 1999/06/06 13:37:30 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.3 1999/06/07 03:56:35 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -32,8 +32,6 @@ return "@(#)$Id: clirun.cpp,v 1.98.2.2 1999/06/06 13:37:30 cyp Exp $"; }
 #include <sys/wait.h>     /* wait() */
 #include <sys/resource.h> /* WIF*() macros */
 #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
-extern int TBF_MakeTriggersVMInheritable(void); /* probman.cpp */
-extern int TBF_MakeProblemsVMInheritable(void); /* triggers.cpp */
 //#define USE_THREADCODE_ONLY_WHEN_SMP_KERNEL_FOUND /* otherwise its for >=3.0 */
 #define FIRST_THREAD_UNDER_MAIN_CONTROL /* otherwise main is separate */
 #endif
@@ -849,7 +847,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         {
           ok2thread = ((buffer[0]-'0')*100)+((buffer[2]-'0')*10);
           //printf("found fbsd ver %d\n", ok2thread );
-          if (ok2thread < 300)
+          if (ok2thread < 300) /* FreeBSD < 3.0 */
             ok2thread = -6;
         }
       }
@@ -861,13 +859,44 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       { 
         static int assertedvms = 0;
         if (thrparams->threadnum == 0) /* the first to spin up */
-        {  
-          if (TBF_MakeTriggersVMInheritable()!=0 ||
-              TBF_MakeProblemsVMInheritable()!=0 ||
-              minherit((void *)&runstatics, sizeof(runstatics), 0)!=0)
-            assertedvms = -1;
-          else
-            assertedvms = +1;
+        { 
+	  #define ONLY_NEEDED_VMPAGES_INHERITABLE         //children faster
+	  //#define ALL_DATA_VMPAGES_INHERITABLE          //parent faster
+          //#define ALL_TEXT_AND_DATA_VMPAGES_INHERITABLE //like linux threads
+
+          assertedvms = -1; //assume failed
+	  #if defined(ONLY_NEEDED_VMPAGES_INHERITABLE)
+          {
+	    //children are faster, main is slower
+            extern int TBF_MakeTriggersVMInheritable(void); /* probman.cpp */
+            extern int TBF_MakeProblemsVMInheritable(void); /* triggers.cpp */
+            if (TBF_MakeTriggersVMInheritable()!=0 ||
+                TBF_MakeProblemsVMInheritable()!=0 ||
+                minherit((void *)&runstatics, sizeof(runstatics), 0)==0)
+              assertedvms = +1; //success
+          }
+	  #else
+          {
+ 	    extern _start; //iffy since crt0 is at the top only by default
+	    extern etext;
+	    extern edata;
+	    extern end;
+            //printf(".text==(start=0x%p - etext=0x%p) .rodata+.data==(etext - edata=0x%p) "
+	    //  ".bss==(edata - end=0x%p) heap==(end - sbrk(0)=0x%p)\n", 
+	    //  &_start, &etext,&edata,&end,sbrk(0));
+	    #if defined(ALL_TEXT_AND_DATA_VMPAGES_INHERITABLE)
+	    //.text+.rodata+.data+.bss+heap (so far)
+	    if (minherit((void *)&_start,(sbrk(0)-((char *)&_start)),0)==0)
+              assertedvms = +1; //success
+ 	    #else
+	    //main is faster, children are slower
+	    //.rodata+.data+.bss+heap (so far)
+	    if (minherit((void *)&etext,(sbrk(0)-((char *)&etext)),0)==0)
+              assertedvms = +1; //success
+	    #endif
+          }
+	  #endif
+
           #ifdef FIRST_THREAD_UNDER_MAIN_CONTROL
           use_poll_process = 1; /* the first thread is always non-real */ 
           #endif
