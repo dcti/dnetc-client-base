@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.111  1998/06/25 01:55:41  silby
+// Fixed numcpu not showing up in the config, fixed timeslice's menu entry at the same time.
+//
 // Revision 1.110  1998/06/24 19:37:35  cyruspatel
 // Change for PPC: Combined CliGetKeyrateForProblem + CliClearProblemSumInfo
 // logic in ::SelectCore() into a call to CliGetKeyrateForProblemNoSave().
@@ -109,7 +112,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.110 1998/06/24 19:37:35 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.111 1998/06/25 01:55:41 silby Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -252,7 +255,7 @@ static optionstruct options[OPTION_COUNT]=
     "65536",
 #endif
     CFGTXT("\nThe lower the value, the less impact the client will have on your system, but\n"
-    "the slower it will go. Values from 200 to 65536 are good."),4,3,4,NULL},
+    "the slower it will go. Values from 200 to 65536 are good."),4,2,4,NULL},
 //8
 { "niceness", CFGTXT("Level of niceness to run at"), "0",
   CFGTXT("\n\nExtremely Nice will not slow down other running programs.\n"
@@ -312,7 +315,7 @@ static optionstruct options[OPTION_COUNT]=
 #else
   { "numcpu", CFGTXT("Number of CPUs in this machine"), "1", "\n"
 #endif
-,4,2,2,NULL},
+,4,2,3,NULL},
 //23
 { "checkpointfile", CFGTXT("RC5 Checkpoint Path/Name"),"none",
   CFGTXT("\n(Non-shared file required.  ckpoint" EXTN_SEP "rc5 recommended.  'none' to disable)\n")
@@ -969,7 +972,6 @@ options[CONF_SMTPSRVR].thevariable=&smtpsrvr;
 options[CONF_SMTPPORT].thevariable=&smtpport;
 options[CONF_SMTPFROM].thevariable=&smtpfrom;
 options[CONF_SMTPDEST].thevariable=&smtpdest;
-options[CONF_NUMCPU].optionscreen=0;
 options[CONF_NUMCPU].thevariable=&numcpu;
 options[CONF_CHECKPOINT].thevariable=&ini_checkpoint_file[0];
 options[CONF_CHECKPOINT2].thevariable=&ini_checkpoint_file[1];
