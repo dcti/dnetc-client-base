@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.51 1999/12/04 15:52:14 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.52 1999/12/05 15:34:50 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -384,21 +384,27 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
         conf_options[CONF_KEYSERVNAME].disabledtext = "n/a [autoselected]";
       }
       #ifdef LURK
-      if ((client->lurk_conf.lurkmode)!=CONNECT_LURK && (client->lurk_conf.lurkmode)!=CONNECT_LURKONLY)
       {
         conf_options[CONF_CONNIFACEMASK].disabledtext=
-        conf_options[CONF_DIALWHENNEEDED].disabledtext=
-        conf_options[CONF_CONNPROFILE].disabledtext=
-        conf_options[CONF_CONNSTARTCMD].disabledtext=
-        conf_options[CONF_CONNSTOPCMD].disabledtext=
-        "n/a [Dialup detection is off]";
-      }
-      else if (!(client->lurk_conf.dialwhenneeded) || conf_options[CONF_DIALWHENNEEDED].thevariable==NULL)
-      {
-        conf_options[CONF_CONNPROFILE].disabledtext=
-        conf_options[CONF_CONNSTARTCMD].disabledtext=
-        conf_options[CONF_CONNSTOPCMD].disabledtext=
-        "n/a [Demand-dial is off/not supported]";
+                                         "n/a [Requires Lurk|lurkony or DOD]";
+        if ((client->lurk_conf.lurkmode)==CONNECT_LURK || (client->lurk_conf.lurkmode)==CONNECT_LURKONLY)
+          conf_options[CONF_CONNIFACEMASK].disabledtext= NULL;
+        #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)  
+        else //win16 and win32 dialwhenneeded depends on lurk being available
+          conf_options[CONF_DIALWHENNEEDED].disabledtext= 
+                             "n/a [Dialup detection is off]";
+        #endif
+        if (client->lurk_conf.dialwhenneeded && 
+            conf_options[CONF_DIALWHENNEEDED].thevariable &&
+            conf_options[CONF_DIALWHENNEEDED].disabledtext==NULL) 
+          conf_options[CONF_CONNIFACEMASK].disabledtext= NULL;
+        else
+        {
+          conf_options[CONF_CONNPROFILE].disabledtext=
+          conf_options[CONF_CONNSTARTCMD].disabledtext=
+          conf_options[CONF_CONNSTOPCMD].disabledtext=
+          "n/a [Dialup detection is off]";
+        }
       }
       #endif
     }

@@ -18,7 +18,7 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.54 1999/12/04 15:48:55 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.55 1999/12/05 15:34:50 cyp Exp $"; }
 
 /* ---------------------------------------------------------- */
 
@@ -325,7 +325,8 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
   if (!nonetworking)
   {
     int flags = GetCapabilityFlags();
-  
+
+    conf.lurkmode = conf.dialwhenneeded = 0;  
     if (params->lurkmode || params->dialwhenneeded)
     {
       int lurkmode = params->lurkmode;
@@ -358,9 +359,12 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
       }
       conf.lurkmode = lurkmode;
       conf.dialwhenneeded = dialwhenneeded;
+
+      TRACE_OUT((0,"lurkmode=%d dialwhenneeded=%d\n",conf.lurkmode,conf.dialwhenneeded));
     }
   
-    if (params->connprofile[0]!=0)
+    conf.connprofile[0] = 0;
+    if (conf.dialwhenneeded && params->connprofile[0]!=0)
     {
       int n=0, pos=0;
       while (params->connprofile[pos] && isspace(params->connprofile[pos]))
@@ -373,10 +377,8 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
     }
   
     mask_include_all = mask_default_only = 0;
-    ifacestowatch[0]=NULL;
-    ifacemaskcopy[0]=0;
-
-    if (params->connifacemask[0]!=0)
+    conf.connifacemask[0] = ifacemaskcopy[0]=0; ifacestowatch[0]=NULL;
+    if ((conf.lurkmode || conf.dialwhenneeded) && params->connifacemask[0])
     {
       int n=0, pos=0;
       while (params->connifacemask[pos] && isspace(params->connifacemask[pos]))
@@ -433,17 +435,42 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
       if (ptrindex == 0 && !mask_include_all) //nothing in list
         mask_default_only = 1;
       ifacestowatch[ptrindex] = NULL;
+
+      #ifdef TRACE
+      TRACE_OUT((0,"mask flags: include_all=%d, defaults_only=%d\niface list:\n",
+                   mask_include_all, mask_default_only ));
+      for (int ptrindex=0;ifacestowatch[ptrindex];ptrindex++)
+        TRACE_OUT((0,"  %d) '%s'\n",ptrindex+1,ifacestowatch[ptrindex]));
+      #endif
     }
-    #ifdef TRACE
-    TRACE_OUT((0,"mask flags: include_all=%d, defaults_only=%d\niface list:\n",
-                 mask_include_all, mask_default_only ));
-    for (int ptrindex=0;ifacestowatch[ptrindex];ptrindex++)
-      TRACE_OUT((0,"  %d) '%s'\n",ptrindex+1,ifacestowatch[ptrindex]));
-    TRACE_OUT((0,"lurkmode=%d dialwhenneeded=%d\n",conf.lurkmode,conf.dialwhenneeded));
-    #endif
   
+    conf.connstartcmd[0] = 0;
+    if (conf.dialwhenneeded && params->connstartcmd[0])
+    {
+      int n=0, pos=0;
+      while (params->connstartcmd[pos] && isspace(params->connstartcmd[pos]))
+        pos++;
+      while (params->connstartcmd[pos])
+        conf.connstartcmd[n++] = params->connstartcmd[pos++];
+      while (n>0 && isspace(conf.connstartcmd[n-1]))
+        n--;
+      conf.connstartcmd[n]=0;
+    }
+    
+    conf.connstopcmd[0] = 0;
+    if (conf.dialwhenneeded && params->connstopcmd[0])
+    {
+      int n=0, pos=0;
+      while (params->connstopcmd[pos] && isspace(params->connstopcmd[pos]))
+        pos++;
+      while (params->connstopcmd[pos])
+        conf.connstopcmd[n++] = params->connstopcmd[pos++];
+      while (n>0 && isspace(conf.connstopcmd[n-1]))
+        n--;
+      conf.connstopcmd[n]=0;
+    }
+    
     islurkstarted=1;
-  
   }
   TRACE_OUT((-1,"Lurk::Start()\n"));
   return 0;

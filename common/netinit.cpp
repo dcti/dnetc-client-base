@@ -12,7 +12,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.31 1999/12/04 15:47:10 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.32 1999/12/05 15:34:50 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -168,11 +168,8 @@ static int __netInitAndDeinit( int doWhat )
     if ( doWhat == 0 )     //request to check online mode
     {
       #if defined(LURK)
-      if ( dialup.IsWatching() ) /* is lurk or lurkonly enabled? */
-      {
-        if (dialup.CheckForStatusChange()) //- no longer-online?
-          return 0;                        //oops, return 0
-      }
+      if (dialup.CheckForStatusChange()) //- no longer-online?
+        return 0;                        //oops, return 0
       #endif
       return 1;            //assume always online once initialized
     }
@@ -182,11 +179,8 @@ static int __netInitAndDeinit( int doWhat )
       if ((++net_init_level)==1) //don't initialize more than once
       {
         #if defined(LURK)
-        if ( dialup.IsWatching() ) /* is lurk or lurkonly enabled? */
-        { 
-          if (dialup.DialIfNeeded(1) != 0 ) /* dialup failed */
-            success = 0;
-        }
+        if (dialup.DialIfNeeded(1) != 0 ) /* not connected and dialup failed */
+          success = 0;
         #endif
       }
       if (!success)
@@ -198,8 +192,7 @@ static int __netInitAndDeinit( int doWhat )
       if ((--net_init_level)==0) //don't deinitialize more than once
       {
         #if defined(LURK)
-        if ( dialup.IsWatching() ) /* is lurk or lurkonly enabled? */
-          dialup.HangupIfNeeded();
+        dialup.HangupIfNeeded();
         #endif
       }
     }
