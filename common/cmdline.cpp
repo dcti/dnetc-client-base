@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.104  1998/11/28 19:48:58  cyp
+// Added win16 -install/-uninstall support.
+//
 // Revision 1.103  1998/11/26 07:23:03  cyp
 // Added stopiniio flag to client object. Ini should not be updated with
 // randomprefix number if it didn't exist to begin with.
@@ -86,7 +89,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.103 1998/11/26 07:23:03 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.104 1998/11/28 19:48:58 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -154,14 +157,22 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         os2CliInstallClient(0);
         terminate_app = 1;
         #endif
+        #if (CLIENT_OS == OS_WIN16)
+        win16CliInstallClient(0);
+        terminate_app = 1;
+        #endif
         }
       else if ( strcmp(thisarg, "-uninstall" ) == 0)
         {
+        #if (CLIENT_OS == OS_WIN16)
+        win16CliUninstallClient(0);
+        terminate_app = 1;
+        #endif
         #if (CLIENT_OS == OS_OS2)
         os2CliUninstallClient(0);
         terminate_app = 1;
         #endif
-        #if (CLIENT_OS == OS_WIN32) 
+        #if (CLIENT_OS == OS_WIN32)
         win32CliUninstallService(0);
         terminate_app = 1;
         #endif
@@ -310,9 +321,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         if (run_level!=0)
           {
           if (logging_is_initialized)
-	    LogScreen("Client will run %s network access.\n", 
-	               ((offlinemode)?("without"):("with")) );
-	  }
+            LogScreen("Client will run %s network access.\n", 
+                       ((offlinemode)?("without"):("with")) );
+          }
         else 
           offlinemode = ((strcmp( thisarg, "-runoffline" ) == 0)?(1):(0));
         }
@@ -322,7 +333,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           {
           if (logging_is_initialized && blockcount < 0)
               LogScreenRaw("Setting blockcount to -1. (exit on empty buffer)\n");
-	  }
+          }
         else
           blockcount = -1;
         }
@@ -330,17 +341,19 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         {
         if (run_level!=0)
           {
-          if (logging_is_initialized && blockcount == 0 && offlinemode == 0)
-	    {
-	    LogScreenRaw("Warning: -run is obsolete. "
-	                 "Setting -runonline and -n 0.\n");
-	    }
-	  }
-	else
-	  {
+          if (logging_is_initialized)
+            {
+            LogScreenRaw("Warning: -run is obsolete. "
+              "Active settings: -runo%sline and -n %d.\n",
+              ((offlinemode)?("ff"):("n")), blockcount );
+            }
+          }
+        else
+          {
           offlinemode = 0;
-	  blockcount = 0;
-	  }
+          if (blockcount < 0)
+            blockcount = 0;
+          }
         }
       else if ( strcmp( thisarg, "-nodisk" ) == 0 ) 
         {
@@ -475,7 +488,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             }
           else
             {
-            inimissing = 0; // Don't complain if the inifile is missing
             uuehttpmode = (s32) atoi( nextarg );
             }
           }
@@ -816,14 +828,14 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           if (run_level!=0)
             {
             if (logging_is_initialized)
-	      {
-	      if (blockcount < 0)
-	        LogScreenRaw("Client will exit when buffers are empty.\n");
-	      else
+              {
+              if (blockcount < 0)
+                LogScreenRaw("Client will exit when buffers are empty.\n");
+              else
                 LogScreenRaw("Setting block completion limit to %u%s\n",
                     (unsigned int)blockcount, 
-		    ((blockcount==0)?(" (no limit)"):("")));
-	      }
+                    ((blockcount==0)?(" (no limit)"):("")));
+              }
             }
           else if ( (blockcount = atoi( nextarg )) < 0)
             blockcount = -1;
