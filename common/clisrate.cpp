@@ -142,7 +142,7 @@ const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
   if (CliGetContestInfoBaseData( fileentry->contest, &name, NULL )!=0) //clicdata
     name = "???";
 
-  sprintf( str, "%s %s %d*2^%d block %08lX:%08lX%c(%02u.%02u%% done)",
+  sprintf( str, "%s %s %d*2^%d block %08lX:%08lX%c(%u.%02u%% done)",
   #ifdef MULTITHREAD
            "Loaded",
   #else
