@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.34 2001/02/01 21:05:21 oliver Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.35 2001/04/01 11:38:48 cyp Exp $"; }
 
 //#define TRACE
 
@@ -636,42 +636,63 @@ int LurkStart(int nonetworking,struct dialup_conf *params)
           c++;
         if (*c)
         {
-          char *p = &lurker.ifacemaskcopy[stindex];
-          while (*c && !isspace(*c) && *c!=':')
-            lurker.ifacemaskcopy[stindex++] = *c++;
-          lurker.ifacemaskcopy[stindex++]='\0';
-          if (p[0] == '*' && p[1]=='\0')
+          char tempname[sizeof(lurker.conf.connifacemask)+1];
+          unsigned int namelen = 0;
+          while (*c && *c != ':' && *c != '\r' && *c != '\n')
           {
-            ptrindex = 0;
-            lurker.mask_include_all = 1;
-            break;
+            tempname[namelen++] = *c++;
           }
-          #if (CLIENT_OS == OS_OS2)  //convert 'eth*' names to 'lan*'
-          if (*p=='e' && p[1]=='t' && p[2]=='h' && (isdigit(p[3]) || p[3]=='*'))
-          {*p='l'; p[1]='a'; p[2]='n'; }
-          #elif (CLIENT_OS == OS_WIN32)
-          if (*p=='s' && p[1]=='l' && (isdigit(p[2]) || p[2]=='*'))
-          {                          //convert 'sl*' names to 'ppp*'
-            char buf[sizeof(lurker.ifacemaskcopy)];
-            strcpy(buf,p+2);strcat(strcpy(p,"ppp"),buf);
-            stindex++;
+          while (namelen > 0 && isspace(tempname[namelen-1]))
+          {
+            namelen--;
           }
-          #endif
-          lurker.ifacestowatch[ptrindex++] = (const char *)p;
-          if (ptrindex == ((sizeof(lurker.ifacestowatch)/sizeof(lurker.ifacestowatch[0]))-1))
-            break;
+          tempname[namelen] = '\0';
+          TRACE_OUT((0,"iface tempname='%s'\n",tempname));
+          if (namelen > 0)
+          {
+            if (strcmp(tempname, "*") == 0)
+            {
+              ptrindex = 0;
+              lurker.mask_include_all = 1;
+              break;
+            }
+            #if (CLIENT_OS == OS_OS2) //convert 'eth*' names to 'lan*'
+            if ( memcmp( tempname, "eth", 3 )==0 &&
+                (isdigit(tempname[3]) || tempname[3] == '*'))
+            {
+              memcpy( tempname, "lan", 3 );
+            }
+            #elif (CLIENT_OS == OS_WIN32) //convert 'sl*' names to 'ppp*'
+            if ( memcmp( tempname, "sl", 2 )==0 &&
+                (isdigit(tempname[2]) || tempname[2] == '*'))
+            {
+              memmove( &tempname[3], &tempname[2], (namelen + 1)-2 );
+              memcpy( tempname, "ppp", 3 );
+              namelen++;
+            }
+            #endif
+
+            strcpy( &lurker.ifacemaskcopy[stindex], tempname );
+            lurker.ifacestowatch[ptrindex] = &lurker.ifacemaskcopy[stindex];
+            stindex += strlen(&lurker.ifacemaskcopy[stindex])+1;
+            TRACE_OUT((0,"ifacestowatch[%d]='%s'\n",ptrindex,lurker.ifacestowatch[ptrindex]));
+            ptrindex++;
+
+            if (ptrindex == ((sizeof(lurker.ifacestowatch)/sizeof(lurker.ifacestowatch[0]))-1))
+            {
+              break;
+            }
+          }
         }
       } while (*c);
+
+      lurker.ifacestowatch[ptrindex] = (const char *)0;
       if (ptrindex == 0 && !lurker.mask_include_all) //nothing in list
         lurker.mask_default_only = 1;
-      lurker.ifacestowatch[ptrindex] = (const char *)0;
 
-      #ifdef TRACE
-      TRACE_OUT((0,"mask flags: include_all=%d, defaults_only=%d\niface list:\n",
+      TRACE_OUT((0,"total ifaces=%d\n", ptrindex));
+      TRACE_OUT((0,"mask flags: include_all=%d, defaults_only=%d\n",
                    lurker.mask_include_all, lurker.mask_default_only ));
-      for (ptrindex=0;lurker.ifacestowatch[ptrindex];ptrindex++)
-        TRACE_OUT((0,"  %d) '%s'\n",ptrindex+1,lurker.ifacestowatch[ptrindex]));
-      #endif
     }
 
     lurker.conf.connstartcmd[0] = 0;
@@ -885,16 +906,19 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
     return 1;
   }
 #elif (CLIENT_OS == OS_WIN32)
+
+  #ifdef LURK_MULTIDEV_TRACK
+   /* init tracking */
+  __insdel_devname(NULL,1,lurker.conndevices,sizeof(lurker.conndevices));
+  #endif
+  int upcount = 0;
+
   if ((LurkGetCapabilityFlags() & CONNECT_IFACEMASK) != 0 /* have working WS2_32 */
    && (!lurker.mask_default_only || (LurkGetCapabilityFlags() & CONNECT_DODBYPROFILE)==0))
   {
     TRACE_OUT((+1,"ioctl InternalIsConnected()\n"));
     HINSTANCE ws2lib = LoadLibrary( "WS2_32.DLL" );
-    int upcount = 0;
 
-    #ifdef LURK_MULTIDEV_TRACK
-    __insdel_devname(NULL,1,lurker.conndevices,sizeof(lurker.conndevices)); /* init tracking */
-    #endif
     if (ws2lib)
     {
       FARPROC __WSAStartup  = GetProcAddress( ws2lib, "WSAStartup" );
@@ -1039,87 +1063,145 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
       }
       FreeLibrary(ws2lib);
     }
-    #ifdef LURK_MULTIDEV_TRACK
-    __insdel_devname(NULL,0,lurker.conndevices,sizeof(lurker.conndevices)); /* stop tracking */
-    #endif
     TRACE_OUT((-1,"ioctl InternalIsConnected() =>%d\n",upcount));
-
-    if (upcount)
-    {
-      TRACE_OUT((-1,"Lurk::InternalIsConnected() => 1\n"));
-      return 1;
-    }
   }
   if ((LurkGetCapabilityFlags() & CONNECT_DODBYPROFILE)!=0) /* have ras */
   {
-    RASCONN rasconn;
-    RASCONN *rasconnp = NULL;
-    DWORD cb, whichconn, cConnections;
-    int foundconn = 0;
+    RASENTRYNAME rasentry;
+    RASENTRYNAME *rasentriesp;
+    DWORD cb, whichentry, numentries;
+    int ras_upcount = 0;
 
-    TRACE_OUT((+1,"Lurk::InternalIsConnected() [BYPROFILE]\n"));
-    cb = sizeof(rasconn);
-    rasconn.dwSize = sizeof(RASCONN);
-    rasconnp = &rasconn;
-    if (RasEnumConnections( rasconnp, &cb, &cConnections) != 0)
+    TRACE_OUT((+1,"RAS InternalIsConnected()\n"));
+
+    /* 
+    ** create a table of all possible entries
+    */
+    rasentriesp = &rasentry;
+    numentries = 0;
+    cb = sizeof(rasentry); /* only one entry to start */
+    rasentriesp->dwSize = sizeof(RASENTRYNAME);
+
+    if (RasEnumEntries(NULL,NULL, rasentriesp, &cb, &numentries) != 0)
     {
-      cConnections = 0;
-      if (cb > (DWORD)(sizeof(RASCONN)))
+      numentries = 0;
+      if (cb > sizeof(RASENTRYNAME) && (cb % sizeof(RASENTRYNAME)) == 0)
       {
-        rasconnp = (RASCONN *) malloc( (int)cb );
-        if (rasconnp)
+        rasentriesp = (RASENTRYNAME *)malloc(cb);
+        if (rasentriesp)
         {
-          rasconnp->dwSize = sizeof(RASCONN);
-          if (RasEnumConnections( rasconnp, &cb, &cConnections) != 0)
-            cConnections = 0;
+          rasentriesp->dwSize = sizeof(RASENTRYNAME);
+          if (RasEnumEntries(NULL,NULL, rasentriesp, &cb, &numentries) != 0)
+            numentries = 0;
         }
       }
     }
-    TRACE_OUT((0,"number of profiles: %d\n",cConnections));
+    TRACE_OUT((0,"number of profiles: %d\n",numentries));
 
-    #ifdef LURK_MULTIDEV_TRACK
-    __insdel_devname(NULL,1,lurker.conndevices,sizeof(lurker.conndevices)); /* begin tracking */
-    #endif
-    for (whichconn = 0; whichconn < cConnections; whichconn++ )
+    /* 
+    ** set all entries as "disconnected" 
+    */
+    for (whichentry = 0; whichentry < numentries; whichentry++)
     {
-      HRASCONN hrasconn = rasconnp[whichconn].hrasconn;
-      char *connname = rasconnp[whichconn].szEntryName;
-      RASCONNSTATUS rasconnstatus;
-      rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
-      if (RasGetConnectStatus(hrasconn,&rasconnstatus) == 0)
+      rasentriesp[whichentry].dwSize = 0;
+    }
+
+    /*
+    ** build a list of connections, match them to the entries,
+    ** setting the dwSize field of each entry back to non-zero
+    ** if that entry matches a connection
+    */
+    if (numentries > 0)
+    {
+      RASCONN *rasconnp;
+      cb = sizeof(RASCONN)*numentries;
+      rasconnp = (RASCONN *)malloc(cb);
+      if (rasconnp)
       {
-        if (rasconnstatus.rasconnstate == RASCS_Connected)
+        DWORD numconns = 0, whichconn; 
+
+        rasconnp->dwSize = sizeof(RASCONN);
+        if (RasEnumConnections( rasconnp, &cb, &numconns ) != 0)
         {
-          foundconn = 1;
-          #ifdef LURK_MULTIDEV_TRACK
-          if (__insdel_devname(connname,1,lurker.conndevices,sizeof(lurker.conndevices)))
-            break; /* table is full */
-          #else
-          strncpy( conn, connname, sizeof(lurker.conndevice) );
-          lurker.conndevice[sizeof(lurker.conndevice)-1]=0;
-          break;
-          #endif
+          TRACE_OUT((0,"RasEnumConnections() failed\n"));
+          numconns = 0;
         }
+        for (whichconn = 0; whichconn < numconns; whichconn++)
+        {
+          RASCONNSTATUS rasconnstatus;
+          rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
+           if (RasGetConnectStatus(rasconnp[whichconn].hrasconn,
+                                  &rasconnstatus) != 0)
+          {
+            TRACE_OUT((0,"RasGetConnectStatus() failed\n"));
+            rasconnstatus.rasconnstate = RASCS_Disconnected;
+          }
+          if (rasconnstatus.rasconnstate == RASCS_Connected)
+          {
+            const char *connname = rasconnp[whichconn].szEntryName;
+            TRACE_OUT((0,"'%s' is connected\n", connname));
+            for (whichentry = 0; whichentry < numentries; whichentry++)
+            {
+              if (strcmp(connname, rasentriesp[whichentry].szEntryName)==0)
+              {
+                rasentriesp[whichentry].dwSize = sizeof(RASENTRYNAME);
+                break;
+              }
+            }
+          }
+        } /* for (whichconn = 0; whichconn < numconns; whichconn++) */
+        free((void *)rasconnp);
+      } /* if (rasconnp) */
+    } /* if (numentries > 0) */
+
+    /* 
+    ** walk the list of entries, and compare the connected ones
+    ** against the iface mask.
+    */
+    for (whichentry = 0; whichentry < numentries; whichentry++)
+    {
+      const char *connname = rasentriesp[whichentry].szEntryName;
+      if (rasentriesp[whichentry].dwSize /* connection is online */
+          && __MatchMask( connname,
+                          lurker.mask_include_all,
+                          lurker.mask_default_only, 
+                          &lurker.ifacestowatch[0]) )
+      {
+        ras_upcount++;
+        TRACE_OUT((0,"mask matched. name='%s'\n", connname ));
         #ifdef LURK_MULTIDEV_TRACK
-        else
-          __insdel_devname(connname,0,lurker.conndevices,sizeof(lurker.conndevices));
+        if (__insdel_devname(connname,1,lurker.conndevices,sizeof(lurker.conndevices))!=0)
+          break; /* table is full */
+        #else
+        strncpy( lurker.conndevice, devname, sizeof(lurker.conndevice) );
+        lurker.conndevice[sizeof(lurker.conndevice)-1] = 0;
+        break;
         #endif
       }
+      #ifdef LURK_MULTIDEV_TRACK
+      else
+        __insdel_devname(connname,0,lurker.conndevices,sizeof(lurker.conndevices));
+      #endif
     }
-    #ifdef LURK_MULTIDEV_TRACK
-    __insdel_devname(NULL,0,lurker.conndevices,sizeof(lurker.conndevices)); /* end tracking */
-    #endif
 
-    if (rasconnp != NULL && rasconnp != &rasconn)
-      free((void *)rasconnp );
+    if (rasentriesp != NULL && rasentriesp != &rasentry)
+      free((void *)rasentriesp );
 
-    TRACE_OUT((-1,"found conn?: %d\n",foundconn));
-    if (foundconn)
-    {
-      TRACE_OUT((-1,"Lurk::InternalIsConnected() => 1\n"));
-      return 1;
-    }
+    TRACE_OUT((-1,"RAS InternalIsConnected() =>%d\n",ras_upcount));
+    upcount += ras_upcount;
   }
+
+  #ifdef LURK_MULTIDEV_TRACK
+  /* stop tracking */
+  __insdel_devname(NULL,0,lurker.conndevices,sizeof(lurker.conndevices));
+  #endif
+
+  if (upcount)
+  {
+    TRACE_OUT((-1,"Lurk::InternalIsConnected() => upcount=%d\n",upcount));
+    return 1;
+  }
+
 #elif (CLIENT_OS == OS_OS2) && !defined(__EMX__)
    int s, i, rc, j, foundif = 0;
    struct ifmib MyIFMib = {0};

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.55 2001/02/27 00:37:22 andreasb Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.56 2001/04/01 11:38:48 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -819,9 +819,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "   ie \"ppp*:sl*:...\" (dialup interface names vary from platform to\n"
   "   platform. FreeBSD for example, also includes 'tun*' interfaces. Win32\n"
   "   emulates SLIP as a subset of PPP: sl* interfaces are seen as ppp*).\n"
-  "b) if you have an intermittent ethernet connection through which you can\n"
-  "   access the Internet, put the corresponding interface name in this list,\n"
-  "   typically 'eth0'\n"
+  "b) if you have an intermittent ethernet connection to the Internet, put\n"
+  "   the corresponding interface name in this list, typically 'eth0'\n"
   "c) To include all interfaces, set this option to '*'.\n"
   #if (CLIENT_OS == OS_WIN32)
   "** All Win32 network adapters (regardless of medium; dialup/non-dialup)\n"
@@ -830,6 +829,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "** a list of interfaces can be obtained from ipconfig.exe or winipcfg.exe\n"
   "   The first dialup interface is ppp0, the second is ppp1 and so on, while\n"
   "   the first non-dialup interface is eth0, the second is eth1 and so on.\n"
+  "** RAS profiles may be specified here too (note: names are case sensitive)\n"
   #else
   "** The command line equivalent of this option is --interfaces-to-watch\n"
   #endif
@@ -860,7 +860,13 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   #endif
   "",
   #if (CLIENT_OS == OS_WIN32)
-  CFGTXT("Select the DUN profile to use when dialing-as-needed.\n")
+  CFGTXT(
+  "Select the DUN profile to use when it becomes necessary to dial.\n"
+  "\n"
+  "Note that the name you specify here is used to select the profile to use\n"
+  "when *dialing*. It is not used for masking the active connections in the\n"
+  "way \"Interfaces to watch\" is used.\n"
+  )
   #elif (CLIENT_OS == OS_AMIGAOS)
   CFGTXT(
   "Select which interface name to put online, when dial-up access is\n"
