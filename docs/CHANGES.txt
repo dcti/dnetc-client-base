@@ -21,16 +21,19 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log:   $Id: CHANGES.txt,v 1.4 1999/05/08 19:15:06 cyp Exp $
+Version change log:   $Id: CHANGES.txt,v 1.4.2.1 1999/05/11 02:11:00 cyp Exp $
 ==========================================================================  
 
-2.7110.443  new: win/*nix: support -pause and -unpause (the latter is an
-                 equivalent to -restart). Used like -restart/-shutdown etc.
+2.7110.443  new: win/*nix: support -pause and -unpause (SIGSTOP and SIGCONT
+                 respectively). Used like -restart/-shutdown etc.
 2.7110.442  new: win32: ioctl-driven network adapter online state detection.
                  primarily for use with non-RAS net devs (heads up! AOL users)
                  includes device masking support ala Linux/FreeBSD
 	    new: unix: ps will always see the client as 'rc5des'. This is
 	         to facilitate scripted or system-wide shutdowns/restarts.
+		 Note: to avoid having to re-exec itself, the client must be
+		 started with something (a cmd) that is at least 5 chars long.
+		 So, while ./rc5 is too short, ././rc5 is long enough. :)
 2.7110.441  new: log-to-file options/types/limits
 	    imp: made --config menus more intuitive
 2.7109.441  fix: win32cli shutdown if not hidden and not service :)
