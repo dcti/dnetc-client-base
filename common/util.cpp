@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29.2.4 2003/02/20 00:07:00 mfeiri Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29.2.5 2003/04/22 11:44:51 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -1386,4 +1386,14 @@ int utilIsUserIDValid(const char *userid)
 {
   return __utilIsUserIDAValidEmailAddress(userid) ||
          __utilIsUserIDAValidGUID(userid);
+}
+
+/* ------------------------------------------------------------------------ */
+
+char * strncpyz(char *dest, const char *src, int n)
+{
+  strncpy(dest, src, n);
+  if (dest && n>0)
+    dest[n - 1] = '\0';
+  return dest;
 }

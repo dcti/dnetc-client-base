@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.18.2.2 2003/01/19 22:49:51 snake Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.18.2.3 2003/04/22 11:44:51 andreasb Exp $"
 
 void trace_out( int indlevel, const char *fmt, ... );
 void trace_setsrc( const char *src_filename );
@@ -56,6 +56,9 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids );
 
 /* returns 1 = valid, 0 = invalid */
 int utilIsUserIDValid(const char *userid);
+
+/* strncpy with terminating '\0' */
+char *strncpyz(char *dest, const char *src, int n);
 
 #endif /* __UTIL_H__ */
 
