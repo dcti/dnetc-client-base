@@ -18,7 +18,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.7 2003/07/28 06:09:47 jlawson Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.8 2003/08/09 12:44:45 mweiser Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -306,11 +306,19 @@
 
   static __inline__ void fastlock_unlock(fastlock_t *m)
   { 
+    #if (CLIENT_OS == OS_NEXTSTEP)
+    /* m->spl = 0; */
+    __asm__  __volatile__ (
+             "clrb %0"          \
+             : "=m"  (m->spl)   \
+             :  "0"  (m->spl));
+    #else
     /* m->spl = 0; */
     __asm__  __volatile__ (
              "clr.b %0"         \
              : "=m"  (m->spl)   \
              :  "0"  (m->spl));
+    #endif
   }
   /* _trylock returns -1 on EINVAL, 0 if could not lock, +1 if could lock */
   static __inline__ int fastlock_trylock(fastlock_t *m)
