@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.87.2.12 2004/06/24 21:03:17 kakace Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.87.2.13 2004/06/26 16:22:01 kakace Exp $"; }
 
 //#define TRACE
 
@@ -644,6 +644,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     int update_on_current_contest_exhaust_flag = (client->connectoften & 4);
     long bufcount;
     int may_do_random_blocks, random_project = -1, proj_i;
+    struct timeval tv;
 
     may_do_random_blocks = 0;
     for (proj_i = 0; proj_i < PROJECT_COUNT; ++proj_i)
@@ -658,6 +659,21 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         break;
       }
     }
+
+    if (!may_do_random_blocks && client->last_buffupd_failed_time != 0
+                              && CliClock(&tv) == 0)
+    {
+      // If no random work is allowed and if buffer updates are temporarily
+      // disabled (retry delay not elapsed), then exit early to prevent the
+      // client from doing unecessary file I/O operations until updates are
+      // enabled.
+      if (!tv.tv_sec)
+        tv.tv_sec++;
+      if (client->last_buffupd_failed_time + client->buffupd_retry_delay > tv.tv_sec) {
+        *load_needed = NOLOAD_NORANDOM;
+        return 0;   /* Retry delay not elapsed : did nothing */
+      }
+    }  
 
     retry_due_to_failed_loadstate = 0;
     bufcount = __loadapacket( client, &wrdata, 1, prob_i,
