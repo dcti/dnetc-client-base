@@ -4,13 +4,13 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.234 1999/12/12 15:45:04 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.235 1999/12/26 20:49:05 patrick Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
 //#define TRACE
 
-#include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
+//#include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "client.h"    // Client class
@@ -441,7 +441,8 @@ int main( int argc, char *argv[] )
   {
     char *q = "RC5PROG";
     int didset = 0;
-    #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX)
+    #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
+	(CLIENT_OS == OS_AIX)
     char *m = (char *)malloc( strlen(q)+1+strlen(argv[0])+1 );
     if (m) {
       didset=(0==putenv(strcat(strcat(strcpy(m,q),"="),argv[0]))); //BSD4.3
@@ -490,7 +491,8 @@ int main( int argc, char *argv[] )
         strncpy( &buffer[7], argv[0], sizeof(buffer)-7 );
         buffer[sizeof(buffer)-5]='\0';
         strcat( buffer, ".ini" );
-        #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX)
+        #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
+            (CLIENT_OS == OS_AIX)
         putenv( buffer );                 //BSD4.3
         #else
         setenv("RC5INI", &buffer[7], 1 ); //SYSV7 and posix
