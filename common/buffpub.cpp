@@ -8,7 +8,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.13 2001/02/03 18:20:36 cyp Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.14 2001/02/05 16:39:34 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -211,6 +211,7 @@ static void __switch_byte_order( WorkRecord *dest, const WorkRecord *source,
         w[i] = (u32)ntohl(w[i]);
       break;
     }
+    #if defined(HAVE_OGR_CORES)
     case OGR:
     {
       dest->work.ogr.workstub.stub.marks  = (u16)ntohs(dest->work.ogr.workstub.stub.marks);
@@ -222,6 +223,12 @@ static void __switch_byte_order( WorkRecord *dest, const WorkRecord *source,
       dest->work.ogr.nodes.lo             = (u32)ntohl(dest->work.ogr.nodes.lo);
       break;
     }
+    #endif
+    default:
+    {
+      dest->contest = 0xff;
+      break;
+    }  
   }
   return;
 }
