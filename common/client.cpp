@@ -1,8 +1,18 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.cpp,v $
+// Revision 1.152.2.10  1999/01/04 02:03:21  remi
+// Synced with :
+//
+//  Revision 1.179  1999/01/03 02:31:10  cyp
+//  Client::Main() reinitializes the client object when restarting. ::pausefile
+//  and ::exitflagfile are now ignored when starting with "modes".
+//
+//  Revision 1.178  1999/01/01 02:45:14  cramer
+//  Part 1 of 1999 Copyright updates...
+//
 // Revision 1.152.2.9  1998/12/28 16:40:36  remi
 // Fixed the merge.
 //
@@ -97,15 +107,21 @@ s32 guiriscos, guirestart;
 
 // --------------------------------------------------------------------------
 
-Client::Client()
-{
+static void __initialize_client_object(Client *client)
   totalBlocksDone[0] = totalBlocksDone[1] = 0;
   cputype=-1;
-#if defined(__QNX__)
-  srand( (unsigned) time(NULL)/*(unsigned) CliTimer( NULL )->tv_usec*/ );
+#if (CLIENT_OS == OS_QNX)
+   srand( (unsigned) time(NULL)/*(unsigned) CliTimer( NULL )->tv_usec*/ );
 #else
-  srand( (unsigned) CliTimer( NULL )->tv_usec );
+   srand( (unsigned) CliTimer( NULL )->tv_usec );
 #endif
+}
+
+// --------------------------------------------------------------------------
+
+Client::Client()
+{
+  __initialize_client_object(this); 
 }
 
 // --------------------------------------------------------------------------
@@ -135,7 +151,7 @@ void PrintBanner(const char */*dnet_id*/,int level,int restarted)
       {
       LogScreenRaw( "\nRC5DES " CLIENT_VERSIONSTRING 
                  " client - a project of distributed.net\n"
-                 "Copyright 1997-1998 distributed.net\n" );
+                 "Copyright 1997-1999 distributed.net\n" );
       
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
