@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.25  1998/06/09 18:52:40  jlawson
+# renamed SLICE_SRCS to KWAN_SLICE_SRCS.  clarified naming of some
+# linux-x86 build targets.
+#
 # Revision 1.24  1998/06/09 10:46:27  cberry
 # initialise TARGET_ALLCCOBJS and TARGET_ALLASOBJS to be empty.
 #
@@ -92,14 +96,14 @@ OPTS_GCC_SUN68K="$OPTS_GCC -O2 -DASM_68K -D_SUN68K_"
 #--
 
 #-mips1 -OPT:fold_arith_limit=2000 -OPT:Olimit=2396 -OPT:unroll_analysis=ON
-OPTS_CC_MIPS='-O2 -xansi -DASM_MIPS -Icommon -Ides -Irc5 -Iplatforms'
+OPTS_CC_MIPS='-O2 -xansi -DASM_MIPS -Icommon -Ides -Irc5'
 OPTS_GCC_MIPS="$OPTS_GCC -O6 -DASM_MIPS"
 
 #--
 
 OPTS_CC_ALPHA_EV4='-O4 -tune ev4 -inline all'
 OPTS_CC_ALPHA_EV5='-O4 -tune ev5 -inline all'
-OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all'
+OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all -Icommon -Ides -Irc5'
 OPTS_GCC_ALPHA="$OPTS_GCC -O6 -DASM_ALPHA -static"
 
 #--
@@ -162,10 +166,10 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/convdes.cpp common/clicdata.cpp common/clirate.cpp 
     common/clisrate.cpp common/clitime.cpp common/disphelp.cpp
     common/threadcd.cpp"
-SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
-SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
-SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
-SLICE_SRCS4="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan4.cpp"
+#KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
+#KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
+KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
+KWAN_SLICE_SRCS4="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan4.cpp"
 MEGGS_SLICE_SRCS="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
 XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s rc5/crunch_allitnil.ppcxlc.s"
 RC5X86_SRCS="rc5/rc5-486-rg.cpp rc5/rc5-6x86-rg.cpp rc5/rc5p5brf.cpp rc5/rc5-p6-rg.cpp rc5/rc5-k5-rg.cpp rc5/rc5-k6-rg.cpp"
@@ -212,13 +216,13 @@ case "$1" in
     *mips-gcc-crunch)        # faster than mips-gcc for IRIX
         RC5CORECOPY="mips-crunch.cpp"
         TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN"
-        TARGET_ADDSRCS="$SLICE_SRCS3"
+        TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
         ;;
 
     *mips-gcc)               # faster than mips-cc for IRIX
         RC5CORECOPY="rc5ansi2-rg.cpp"
         TARGET_CCFLAGS="$OPTS_GCC_MIPS -DBIT_32 -DPIPELINE_COUNT=2 -DKWAN"
-        TARGET_ADDSRCS="$SLICE_SRCS3"
+        TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
         ;;
 
 
@@ -256,7 +260,7 @@ case "$1" in
     *sparc-linux)
 	RC5CORECOPY="rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -DPIPELINE_COUNT=2 -DSPARCLINUX=1 -DKWAN -DBIT_32"
-	TARGET_ADDSRCS="$SLICE_SRCS3"
+	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_LIBS="-ldl"
 	;;
 
@@ -285,7 +289,7 @@ case "$1" in
     *m68k-linux-gcc)
         TARGET_CFLAGS="$(OPTS_GCC_M68K) -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
 	TARGET_AFLAGS="$OPTS_GAS_M68K"
- 	TARGET_ADDSRCS="$SLICE_SRCS3"
+ 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
  	TARGET_ADDASMS="crunch.68k.gcc.s"
  	TARGET_LIBS="-static"
 	;;
@@ -294,14 +298,14 @@ case "$1" in
     *sparc-solaris-gcc-mt)        # slower rc5, slower des
 	RC5CORECOPY="rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1 -DKWAN"
-	TARGET_ADDSRCS="$SLICE_SRCS3"
+	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
     *sparc-solaris-gcc-crunch-mt)    # fastest rc5, slower des
 	RC5CORECOPY="rc5-ultra-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1 -DKWAN"
-	TARGET_ADDSRCS="$SLICE_SRCS3"
+	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
@@ -417,7 +421,7 @@ case "$1" in
 	;;
 
 ###### Intel X86 Linux platforms
-    *x86-linux)    # uses EGCS options
+    *x86-linux-egcs)    # uses EGCS options
 	TARGET_AS="as"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
@@ -443,7 +447,7 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	;;
 
-    *x86-linux-mt)
+    *x86-linux-mt-egcs)
 	TARGET_AS="as"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
@@ -453,7 +457,7 @@ case "$1" in
 	TARGET_LIBS="-lpthread"
 	;;
 
-    *x86-linux-mt-old)
+    *x86-linux-mt-gcc)
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
@@ -462,20 +466,20 @@ case "$1" in
 	TARGET_LIBS="-lpthread"
 	;;
 
-    *x86-linux-mt-slice)     # using slice not bryddes
+    *x86-linux-mt-slice-kwan-gcc)     # using slice not bryddes
 	TARGET_AS="as"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $SLICE_SRCS"
+	TARGET_ADDSRCS="$RC5X86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="platforms/x86ident.s"
 	TARGET_LIBS="-lpthread"
 	;;
 
-    *x86-linux-mt-slice-meggs)     # using slice not bryddes
+    *x86-linux-mt-slice-meggs-gcc)     # using slice not bryddes
 	TARGET_AS="as"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DMEGGS -DKWAN"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $SLICE_SRCS"
+	TARGET_ADDSRCS="$RC5X86_SRCS $MEGGS_SLICE_SRCS"
 	TARGET_ADDASMS="platforms/x86ident.s"
 	TARGET_LIBS="-lpthread"
 	;;
@@ -540,7 +544,7 @@ case "$1" in
     *m68k-next-gcc)
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_NEXT_M68K -D_NeXT_ -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
-	TARGET_ADDSRCS="rc5/crunch.68k.gcc.s $SLICE_SRCS4"
+	TARGET_ADDSRCS="rc5/crunch.68k.gcc.s $KWAN_SLICE_SRCS4"
 	;;
 
     *m68k-next)
@@ -600,14 +604,14 @@ case "$1" in
 	TARGET_CC="cxx"
 	TARGET_AS=""
 	TARGET_CCFLAGS="$OPTS_OS390 -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
-	TARGET_ADDSRCS="$SLICE_SRCS4"
+	TARGET_ADDSRCS="$KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS=""
 	TARGET_LIBS="$SOCKS_LIBS"
 	;;
 
 ###### Unknown
     *list)
-	egrep "^[ ]*\*" $0
+	egrep "^[ ]*\*" $0 | more
 	echo ""
 	exit 1
 	;;
