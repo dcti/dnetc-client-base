@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.49 2003/05/14 19:21:12 snikkel Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.50 2003/05/19 18:03:38 bdragon Exp $"; }
 
 //#define TRACE
 
@@ -1157,6 +1157,16 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         cindex = 1;
       else
         cindex = 0;
+    }
+  }
+  else if (projectid == RC5_72)
+  {
+    if (detected_type > 0)
+    {
+      if (detected_type >= 7 /*EV56 and higher*/)
+        cindex = 0;
+      else /* EV5 and lower */
+        cindex = -1;
     }
   }
   #elif (CLIENT_CPU == CPU_68K)
