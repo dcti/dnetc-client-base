@@ -4,6 +4,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.20  1998/08/10 20:29:39  cyruspatel
+// Call to gethostname() is now a call to Network::GetHostName(). Updated
+// send routine to reflect new NetworkInitialize()/NetworkDeinitialize()
+// requirements. Removed all references to NO!NETWORK.
+//
 // Revision 1.19  1998/08/02 16:18:06  cyruspatel
 // Completed support for logging.
 //
@@ -17,7 +22,7 @@
 // constructor extended to take this as an argument.
 //
 // Revision 1.16  1998/07/13 23:54:23  cyruspatel
-// Cleaned up NONETWORK handling.
+// Cleaned up NO!NETWORK handling.
 //
 // Revision 1.15  1998/07/13 03:30:05  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
@@ -27,16 +32,7 @@
 // updates to get Borland C++ to compile under Win32.
 //
 // Revision 1.13  1998/07/07 21:55:43  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h
 //
 // Revision 1.12  1998/07/06 09:21:24  jlawson
 // added lint tags around cvs id's to suppress unused variable warnings.
@@ -51,14 +47,13 @@
 // Revision 1.9  1998/06/14 08:12:56  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
-// Revision 0.0  1997/09/17 09:17:07  timc
+// Revision 1.0  1997/09/17 09:17:07  timc
 // Created
 //-------------------------------------------------------------------------
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-static const char *id="@(#)$Id: mail.cpp,v 1.19 1998/08/02 16:18:06 cyruspatel Exp $";
-return id; }
+return "@(#)$Id: mail.cpp,v 1.20 1998/08/10 20:29:39 cyruspatel Exp $"; }
 #endif
 
 #include "network.h"
@@ -66,19 +61,15 @@ return id; }
 #include "sleepdef.h"
 #include "mail.h"
 #include "logstuff.h"
+#include "triggers.h"
+#include "clitime.h"
+#define Time() (CliGetTimeString(NULL,1))
 
 //-------------------------------------------------------------------------
 
 #undef SHOWMAIL               // define showmail to see mail transcript on stdout
-#define GEN_HEADER_AT_SEND    // if defined, then the message header is
-                              // generated and sent at message send time, and
-                              // is not pre-made as part of the message itself
 #define FIFO_ON_BUFF_OVERFLOW // if defined, lines are thrown out as needed.
                               // if !defined, then all old text is discarded.
-
-#if defined(FIFO_ON_BUFF_OVERFLOW) && !defined(GEN_HEADER_AT_SEND)
-#define GEN_HEADER_AT_SEND    // FIFO buffer requires generating headers at
-#endif                        // send time rather than at msg creation time.
 
 //-------------------------------------------------------------------------
 
@@ -97,246 +88,197 @@ MailMessage::MailMessage(void)
    timeoffset=0;
 }
 
+//-------------------------------------------------------------------------
+
 MailMessage::~MailMessage()
 {
   timeoffset=0; // nothing to do. - suppress compiler warning.
 }
 
-#ifdef NONETWORK
-
-void MailMessage::checktosend( u32 /* forcesend */ ) { return; };
-
-#else
+//-------------------------------------------------------------------------
 
 void MailMessage::checktosend( u32 forcesend)
 {
-   s32 retry;
-   if (strlen(messagetext) == 0) {
-      this->inittext(0);
-   }
-   if (messagelen != 0) {
-      if ((strlen(messagetext) >= messagelen) || forcesend) {
-         retry=0;
-#ifdef FIFO_ON_BUFF_OVERFLOW
-         while ((this->sendmessage() == -1) && retry++ < 3) {
-            LogScreen("Mail::sendmessage %d - Unable to send mail message\n",
-                  (int) retry );
-            if (retry < 3) sleep(1);
-         }
-#else
-         while ((this->sendmessage() == -1) && retry++ < 3) {
-            if (retry == 3) {
-               LogScreen("Mail::sendmessage %d - Unable to send mail message.  Contents discarded.\n", (int) retry);
-            } else {
-               LogScreen("Mail::sendmessage %d - Unable to send mail message\n", (int) retry );
-               sleep( 1 );
-            }
-         }
-         strcpy(messagetext,"");
-#endif
-      }
-   }
-}
-
-#endif //NONETWORK
-
-void MailMessage::addtomessage(char *txt ) {
-   if (messagelen != 0) {
-      if ((strlen(messagetext)+strlen(txt)+1) >= MAILBUFFSIZE) { // drop old mail due to overflow?
-#ifdef FIFO_ON_BUFF_OVERFLOW
-        {
-        int len;
-        if ( ((len=strlen(txt))+1) >= MAILBUFFSIZE ) // should never happen
-          return;
-        else
+  int retry;
+   
+  if (strlen(messagetext) == 0) 
+    {
+    this->inittext(0);
+    }
+  if (messagelen != 0 && strlen(messagetext) != 0)
+    {
+    if ((strlen(messagetext) >= messagelen) || forcesend) 
+      {
+      retry=0;
+      //sendmessage returns 0 if success, <0 if send error, >0 no network (defer)
+      do{
+        if (this->sendmessage() >= 0) 
+          break;
+        ++retry;
+        #ifndef FIFO_ON_BUFF_OVERFLOW
+        if (retry > 3)
           {
-          char *p=strchr(messagetext+len,'\n');
-          if (p != NULL)
-            strcpy( messagetext, p+1 ); // move the whole lot up
-          else
-            messagetext[0]=0; //no '\n' terminated lines in buffer anyway.
+          LogScreen("[%s] Mail::sendmessage - - Giving up. Contents discared.\n", Time() );
+          strcpy(messagetext,"");
+          break;
           }
-        }
-#else
-            strcpy(messagetext,"");
-#endif
+        #endif
+        LogScreen("[%s] Mail::sendmessage %d - Unable to send mail message.\n", Time(), (int) retry);
+        } while (retry <= 3);
       }
-      if (strlen(messagetext) == 0) {
-         this->inittext(0);
-      }
-      strcat(messagetext,txt);
-      if ('\r' == txt[strlen(txt)-1]) {
-         strcat(messagetext,"\n");
-      }
-      if (strlen(messagetext) >= (messagelen+5000)) { // Although messages are sent when
-                                         // Update() is called, this ensures that
-                                         // mail is still send when using a shared buffer
-                                         // (in which case, Update() may never get called)
-         checktosend(1);
-      }
-   }
+    }
+  return;
 }
+
+//-------------------------------------------------------------------------
+
+void MailMessage::addtomessage(char *txt ) 
+{
+  if (messagelen != 0) 
+    {
+    if ((strlen(messagetext)+strlen(txt)+1) >= MAILBUFFSIZE) 
+      { // drop old mail due to overflow?
+      #ifdef FIFO_ON_BUFF_OVERFLOW
+      int len;
+      if ( ((len=strlen(txt))+1) >= MAILBUFFSIZE ) // should never happen
+        return;
+      else
+        {
+        char *p=strchr(messagetext+len,'\n');
+        if (p != NULL)
+          strcpy( messagetext, p+1 ); // move the whole lot up
+        else
+          messagetext[0]=0; //no '\n' terminated lines in buffer anyway.
+        }
+      #else
+      strcpy(messagetext,"");
+      #endif
+      }
+    if (strlen(messagetext) == 0) 
+      {
+      this->inittext(0);
+      }
+    strcat(messagetext,txt);
+    if ('\r' == txt[strlen(txt)-1]) 
+      {
+      strcat(messagetext,"\n");
+      }
+    if (strlen(messagetext) >= (messagelen+5000)) 
+      { 
+      checktosend(1);
+      }
+    } 
+  return;
+}
+
+//-------------------------------------------------------------------------
 
 int MailMessage::inittext(int out)
 {
-  if (messagelen != 0) {
-    if (messagelen<500) {
+  if (messagelen != 0) 
+    {
+    if (messagelen<500) 
        messagelen=500;
-    }
-    if (messagelen>MAXMAILSIZE) {
+     if (messagelen>MAXMAILSIZE) 
        messagelen=MAXMAILSIZE;
     }
-  }
-  if (out == 1) {
+  if (out == 1) 
+    {
     LogScreen("Mail server:port is %s:%d\n", smtp, (int) port);
     LogScreen("Mail id is %s\n", fromid);
     LogScreen("Destination is %s\n", destid);
     LogScreen("Message length set to %d\n", (int) messagelen);
     LogScreen("RC5id set to %s\n", rc5id);
-  }
-
-#ifndef NONETWORK
-  gethostname(my_hostname, 255);   //This should be in network.cpp
-#else
-  strcpy(my_hostname, "No Network");
-#endif
-
-#ifndef GEN_HEADER_AT_SEND
-  char dttext[255];
-  time_t time_of_day;
-
-  time_of_day = time( NULL );
-  #if defined(_SUNOS3_)
-    {
-      struct tm *now = localtime(&time_of_day);
-      const char *day;
-      const char *month;
-      switch (now->tm_wday)
-      {
-        case 0: day = "Sun"; break;
-        case 1: day = "Mon"; break;
-        case 2: day = "Tue"; break;
-        case 3: day = "Wed"; break;
-        case 4: day = "Thu"; break;
-        case 5: day = "Fri"; break;
-        default:
-        case 6: day = "Sat"; break;
-      }
-      switch (now->tm_mon)
-      {
-        case 0: month = "Jan"; break;
-        case 1: month = "Feb"; break;
-        case 2: month = "Mar"; break;
-        case 3: month = "Apr"; break;
-        case 4: month = "May"; break;
-        case 5: month = "Jun"; break;
-        case 6: month = "Jul"; break;
-        case 7: month = "Aug"; break;
-        case 8: month = "Sep"; break;
-        case 9: month = "Oct"; break;
-        case 10: month = "Nov"; break;
-        default:
-        case 11: month = "Dec"; break;
-      }
-      sprintf(dttext, "%s, %02d %s %04d %02d:%02d:%02d", day, now->tm_mday,
-              month, (now->tm_year+1900), now->tm_hour, now->tm_min,
-              now->tm_sec);
     }
-  #else
-     strftime( dttext, 80, "%a, %d %b %Y %H:%M:%S",
-                localtime( &time_of_day ) );
-  #endif
-
-   strcpy(messagetext,"Subject: RC5DES stats (");
-   strcat(messagetext,my_hostname);
-   strcat(messagetext,":");
-   strcat(messagetext,rc5id);
-   strcat(messagetext,")\r\nFrom: ");
-   strcat(messagetext,fromid);
-   if (!strchr(fromid, '@')) { strcat(messagetext,"@"); strcat(messagetext,smtp); }
-   strcat(messagetext,"\r\nTo: ");
-   strcat(messagetext,destid);
-   strcat(messagetext,"\r\nDate: ");
-   // Store the position where the date belongs...
-   timeoffset = strlen(messagetext);
-   strcat(messagetext,rfc822Date() /* dttext */);
-   strcat(messagetext,"\r\n\r\n");
-
-#endif // GEN_HEADER_AT_SEND
-   return(0);
+  return(0);
 }
 
-#ifndef NONETWORK
+//-------------------------------------------------------------------------
+
+//returns 0 if success, <0 if send error, >0 no network (should defer)
+
 int MailMessage::sendmessage()
 {
   // Get the SMTP server name, destination mailid from the INI file...
   s32 retry;
+  int retcode;
   Network *net;
 
-#if (CLIENT_OS == OS_NETWARE)
-  if ( !CliIsNetworkAvailable(0) )    //This should be made a generic
-    return 0;                         //function in network.cpp
-#endif
-
-
-#ifndef GEN_HEADER_AT_SEND
-// First, update the time in the header.  Otherwise, it will have the time that
-// composition of the message started, instead of now.
-  char *temptime = rfc822Date();
-  for (u32 i = 0; i < 29; i++)
-    messagetext[timeoffset+i] = *(temptime+i);
-#endif
-
-//   printf("Server: %s\n",smtp);
-//   printf("Port:   %d\n",port);
-//   printf("From:   %s\n",fromid);
-//   printf("Dest:   %s\n",destid);
-
-  if (messagelen != 0)
-  {
-    net = new Network( (const char *) smtp , (const char *) smtp, (s16) port, 0 );
-    net->quietmode = quietmode;
-
-    retry=0;
-    while ((net->Open()) && retry++ < 3)
+  retcode = 0;
+  net = NULL;
+  
+  if (messagelen == 0) 
+    return 0;
+  
+  if (NetworkInitialize() < 0)
+    return +1;
+  
+  net = new Network( (const char *) smtp , (const char *) smtp, (s16) port, 0 );
+  if (!net) 
     {
-      if (retry == 3)
+    retcode = +1;
+    }
+    
+  if (retcode == 0)
+    {
+    net->quietmode = quietmode;
+    retry=0;
+    do 
       {
-#ifndef FIFO_ON_BUFF_OVERFLOW
-        strcpy(messagetext,"");
-#endif
-        delete net;
-        return(-1);
-      }
-      LogScreen("Network::MailMessage %d - Unable to open connection to smtp server\n", (int) retry );
-      sleep( 3 );
-      // Unable to open network.
+      if (!net->Open())
+        break;
+      if ((++retry) == 3)
+        {
+        retcode = -1;
+        break;
+        }
+      if (!CheckExitRequestTrigger())
+        {
+        LogScreen("[%s] Network::MailMessage %d - Unable to open connection to smtp server\n", Time(), (int) retry );
+        sleep( 3 );
+        }
+      if (CheckExitRequestTrigger())
+        retcode = -1;
+      } while (!retcode);
     }
 
+  if (retcode == 0)
+    {
     net->MakeBlocking(); // This message is sent byte-by-byte -- there's no reason to be non-blocked
 
-    if (prepare_smtp_message(net) != -1)
-    {
-      if (0 == send_smtp_edit_data(net))
+    if (prepare_smtp_message(net) == -1)
       {
-        finish_smtp_message(net);
-        LogScreen("Mail message has been sent.\n");
-        net->Close();
-        delete net;
-        return(0);
-      } else {
-        net->Close();
-        delete net;
-        return(-1);
+      LogScreen("[%s] Error in prepare_smtp_message\n", Time());
+      retcode = -1;
       }
-    } else {
-      LogScreen("Error in prepare_smtp_message\n");
-      net->Close();
-      return(-1);
     }
-  }
-  return(0);
+  
+  if (retcode == 0)
+    {
+    if (0 == send_smtp_edit_data(net))
+      {
+      finish_smtp_message(net);
+      LogScreen("[%s] Mail message has been sent.\n", Time());
+      }
+    else
+      retcode = -1;
+    }
+
+  if (net)
+    {
+    net->Close();
+    delete net;
+    }
+    
+  NetworkDeinitialize();
+
+  if (!retcode)               //clear message if no errors
+    strcpy(messagetext,"");
+
+  return(retcode);
 }
+
+//-------------------------------------------------------------------------
 
 // 'destination' is the address the message is to be sent to
 // 'message' is a pointer to a null-terminated 'string' containing the
@@ -350,97 +292,106 @@ int MailMessage::prepare_smtp_message(Network *net)
   char *ptr;
   int len, startLen;
 
-
   if ( get_smtp_line(net) != 220 )
-  {
+    {
     smtp_error (net,"SMTP server error");
     return(-1);
-  }
+    }
+
+  net->GetHostName(my_hostname, 255);
 
   sprintf( out_data, "HELO %s\r\n", my_hostname );
-  if (0 != put_smtp_line( out_data, strlen (out_data), net ))  {
-     smtp_error(net,"SMTP server error");
-     return -1;
-  }
+  if (0 != put_smtp_line( out_data, strlen (out_data), net ))  
+    {
+    smtp_error(net,"SMTP server error");
+    return -1;
+    }
 
   if ( get_smtp_line(net) != 250 )
-  {
+    {
     smtp_error (net,"SMTP server error");
     return -1;
-  }
+    }
 
   sprintf (out_data, "MAIL From:<%s>\r\n", fromid);
-  if (0 != put_smtp_line( out_data, strlen (out_data) , net))  {
-     smtp_error(net,"SMTP server error");
-     return -1;
-  }
+  if (0 != put_smtp_line( out_data, strlen (out_data) , net))  
+    {
+    smtp_error(net,"SMTP server error");
+    return -1;
+    }
 
   if (get_smtp_line(net) != 250)
-  {
+    {
     smtp_error (net,"The mail server doesn't like the sender name,\nhave you set your mail address correctly?\n");
     return -1;
-  }
+    }
 
   // do a series of RCPT lines for each name in address line
   strcpy( (char *)(&destidcopy[0]), (char const *)(&destid[0]) );
   for (ptr = destidcopy; *ptr; ptr += len + 1)
-  {
+    {
     // if there's only one token left, then len will = startLen,
     // and we'll iterate once only
     startLen = strlen (ptr);
     if ((len = strcspn (ptr, " ,\n\t\r")) != startLen)
-    {
+      {
       ptr[len] = '\0';                  // replace delim with NULL char
       while (strchr (" ,\n\t\r", ptr[len+1]))   // eat white space
         ptr[len++] = '\0';
-    }
+      }
 
     sprintf (out_data, "RCPT To: <%s>\r\n", ptr);
-    if (0 != put_smtp_line( out_data, strlen (out_data) , net ))  {
-       smtp_error(net,"SMTP server error");
-       return -1;
-    }
+    if (0 != put_smtp_line( out_data, strlen (out_data) , net ))  
+      {
+      smtp_error(net,"SMTP server error");
+      return -1;
+      } 
 
     if (get_smtp_line(net) != 250)
-    {
+      {
       sprintf (str, "The mail server doesn't like the name %s.\nHave you set the 'To' field correctly\n",ptr);
       smtp_error (net,str);
       return -1;
-    }
+      }
 
     if (len == startLen)        // last token, we're done
       break;
-  }
+    }
 
   sprintf (out_data, "DATA\r\n");
-  if (0 != put_smtp_line( out_data, strlen (out_data) , net))  {
-     smtp_error(net,"SMTP server error");
-     return -1;
-  }
+  if (0 != put_smtp_line( out_data, strlen (out_data) , net))  
+    {
+    smtp_error(net,"SMTP server error");
+    return -1;
+    }
 
   if (get_smtp_line(net) != 354)
-  {
+    {
     smtp_error(net,"Mail server error accepting message data");
     return -1;
-  }
+    }
 
   return(0);
 }
+
+//-------------------------------------------------------------------------
 
 int MailMessage::send_smtp_edit_data (Network * net)
 {
   transform_and_send_edit_data(net);
 
   if (get_smtp_line(net) != 250)
-  {
+    {
     smtp_error (net,"Message not accepted by server");
     return -1;
-  }
-#ifdef FIFO_ON_BUFF_OVERFLOW   // send OK. The buffer is finally emptied
+    }
+  #ifdef FIFO_ON_BUFF_OVERFLOW   // send OK. The buffer is finally emptied
   strcpy(messagetext,"");
-#endif
+  #endif
   return(0);
 }
+
+//-------------------------------------------------------------------------
 
 int MailMessage::get_smtp_line( Network * net )
 {
@@ -452,12 +403,12 @@ int MailMessage::get_smtp_line( Network * net )
     {
     if ( net->Get( 1, &in_data[index], 2*NETTIMEOUT ) != 1)
       {
-      LogScreen("recv error\n");
+      LogScreen("[%s] Mailmessage: recv error\n", Time());
       return(-1);
       }
-#ifdef SHOWMAIL
-LogScreen("%s%c", ((index==0)?("GET: "):("")), in_data[index] );
-#endif
+    #ifdef SHOWMAIL
+    LogScreen("%s%c", ((index==0)?("GET: "):("")), in_data[index] );
+    #endif
     if (in_data[index] == '\n')
       {
       if ( in_data[3] != '-') //if not an ESMPT multi-line reply
@@ -470,25 +421,31 @@ LogScreen("%s%c", ((index==0)?("GET: "):("")), in_data[index] );
   return( atoi( in_data ) );
 }
 
+//-------------------------------------------------------------------------
+
 int MailMessage::put_smtp_line( const char * line, unsigned int nchars , Network *net)
 {
 
-#ifdef SHOWMAIL
-LogScreen("PUT: %s",line);
-#endif
-//  delay(1); //Some servers can't talk too fast.
+  #ifdef SHOWMAIL
+  LogScreen("PUT: %s",line);
+  #endif
+  //  delay(1); //Some servers can't talk too fast.
   if ( net->Put( nchars, line ) )
-  {
-    LogScreen("send error\n");
+    {
+    LogScreen("[%s] Mailmessage:Send error\n", Time());
     return -1;
-  }
+    }
   return (0);
 }
+
+//-------------------------------------------------------------------------
 
 int MailMessage::finish_smtp_message(Network * net)
 {
   return put_smtp_line( "QUIT\r\n", 6 , net);
 }
+
+//-------------------------------------------------------------------------
 
 int send_message_header( Network * net, char *desthost, char *fromhost,
                  char *destid, char *fromid, char *statsid, char *date )
@@ -516,20 +473,30 @@ int send_message_header( Network * net, char *desthost, char *fromhost,
      if ( net->Put( 8, "\r\nDate: " ) ) return(-1);
      if ( net->Put( strlen(date), date ) ) return(-1);
      }
-   if ( net->Put( 25, "\r\nSubject: RC5DES stats (" ) ) return(-1);
-   if ( fromhost && *fromhost)
+   if ( net->Put( 23, "\r\nSubject: RC5DES stats" ) ) return(-1);
+   if (( fromhost && *fromhost) || ( statsid && *statsid ))
      {
-     if ( net->Put( strlen(fromhost), fromhost ) ) return(-1);
-     if ( net->Put( 1, ":" ) ) return(-1);
+     if ( net->Put( 2, " (" )) return (-1);
+     if ( fromhost && *fromhost)
+       {
+       char *p = strchr( fromhost, '.' );
+       unsigned int len = strlen(fromhost);
+       if ( p && p!=fromhost ) len = (p-fromhost)-1;
+       if ( len && net->Put( len, fromhost ) ) return(-1);
+       if ( statsid && *statsid && len && net->Put( 1, ":" )) return (-1);
+       }
+     if ( statsid && *statsid )
+       {
+       if ( net->Put( strlen(statsid), statsid ) ) return(-1);
+       }
+     if ( net->Put( 1, ")" )) return (-1);
      }
-   if ( statsid && *statsid )
-     {
-     if ( net->Put( strlen(statsid), statsid ) ) return(-1);
-     }
-   if ( net->Put( 5, ")\r\n\r\n" ) ) return(-1);
+   if ( net->Put( 4, "\r\n\r\n" ) ) return(-1);
 
    return 0;
 }
+
+//-------------------------------------------------------------------------
 
 int MailMessage::transform_and_send_edit_data(Network * net)
 {
@@ -540,29 +507,27 @@ int MailMessage::transform_and_send_edit_data(Network * net)
   unsigned int send_len;
   bool done = 0;
 
-//  send_len = lstrlen(messagetext);
   send_len = strlen(messagetext);
   index = messagetext;
 
-#ifdef GEN_HEADER_AT_SEND
+  if (strlen( my_hostname )==0)
+    net->GetHostName(my_hostname, 255);
+
   if ( send_message_header( net, smtp,   my_hostname,
                           destid, fromid, rc5id, rfc822Date() ) )
     return -1;
   header_end = messagetext;
-#else
-  header_end = strstr (messagetext, "\r\n\r\n");
-#endif
 
   while (!done)
-  {
+    {
     // room for extra char for double dot on end case
     while ((unsigned int) (index - messagetext) < send_len)
-    {
+      {
       this_char = *index;
-#if defined(SHOWMAIL)
-LogScreen("%c",this_char);
-#endif
-//      delay(1); //Some servers can't talk too fast.
+      #if defined(SHOWMAIL)
+      LogScreen("%c",this_char);
+      #endif
+      //delay(1); //Some servers can't talk too fast.
       switch (this_char)
       {
       case '.':
@@ -609,14 +574,21 @@ LogScreen("%c",this_char);
   return (0);
 }
 
+//-------------------------------------------------------------------------
+
 void MailMessage::smtp_error (Network *net, const char * message)
 {
-  LogScreen("%s\n",message);
-  put_smtp_line("QUIT\r\n", 6,net);
-  net->Close();
+  LogScreen("[%s] %s\n", Time(),message);
+  if (net)
+    {
+    put_smtp_line("QUIT\r\n", 6,net);
+    net->Close();
+    }
+  return;
 }
 
-#endif
+//-------------------------------------------------------------------------
+
 char *rfc822Date(void)
 {
   time_t timenow;
