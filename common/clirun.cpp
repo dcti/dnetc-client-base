@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.22 1999/12/12 02:03:11 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.23 1999/12/12 14:31:44 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -964,52 +964,54 @@ int ClientRun( Client *client )
     #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || \
         (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_NETWARE) || \
         (CLIENT_OS == OS_MACOS) 
-    is_non_preemptive_os = 1; /* assume this until we know better */
-    #if (CLIENT_OS == OS_WIN32)                /* only if win32s */
-    if (winGetVersion()>=400)
-      is_non_preemptive_os = 0;
-    #elif (CLIENT_OS == OS_NETWARE)            
-    if (nwCliIsPreemptiveEnv())            /* settable on NetWare 5 */
-      is_non_preemptive_os = 0;
-    #endif
-    if (is_non_preemptive_os)
-    {      
-      int tsinitd;
-      for (tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
-      {
-        #if (CLIENT_OS == OS_RISCOS)
-        if (riscos_in_taskwindow)
+    {    
+      is_non_preemptive_os = 1; /* assume this until we know better */
+      #if (CLIENT_OS == OS_WIN32)                /* only if win32s */
+      if (winGetVersion()>=400)
+        is_non_preemptive_os = 0;
+      #elif (CLIENT_OS == OS_NETWARE)            
+      if (nwCliIsPreemptiveEnv())            /* settable on NetWare 5 */
+        is_non_preemptive_os = 0;
+      #endif
+      if (is_non_preemptive_os)
+      {      
+        int tsinitd;
+        for (tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
         {
-          default_dyn_timeslice_table[tsinitd].usec = 30000;
-          default_dyn_timeslice_table[tsinitd].optimal = 32768;
+          #if (CLIENT_OS == OS_RISCOS)
+          if (riscos_in_taskwindow)
+          {
+            default_dyn_timeslice_table[tsinitd].usec = 30000;
+            default_dyn_timeslice_table[tsinitd].optimal = 32768;
+          }
+          else
+          {
+            default_dyn_timeslice_table[tsinitd].usec = 1000000;
+            default_dyn_timeslice_table[tsinitd].optimal = 131072;
+          }
+          #elif (CLIENT_OS == OS_MACOS) /* just default numbers - Mindmorph */
+            default_dyn_timeslice_table[tsinitd].optimal = 2048;      
+            default_dyn_timeslice_table[tsinitd].usec = 10000*(client->priority+1);
+          #elif (CLIENT_OS == OS_NETWARE) 
+          /* The switchcount<->runtime ratio is inversely proportionate. 
+             By definition, 1000ms == 1.0 switchcounts/sec. In real life it
+             looks something like this:  (note the middle magic of "55".
+             55ms == one timer tick)
+             msecs:   880  440  220  110  55  27.5   14  6.8  3.4   1.7  
+             count: ~2.75 ~5.5  ~11  ~22 ~55  ~110 ~220 ~440 ~880 ~1760
+             For simplicity, we use 30ms (~half-a-tick) as max for prio 9
+             and 3ms as min (about the finest monotonic res we can squeeze 
+             from the timer on a 386)
+          */
+          default_dyn_timeslice_table[tsinitd].optimal = 1024;
+          default_dyn_timeslice_table[tsinitd].usec = 512 * (client->priority+1);
+          #else /* x86 */
+          default_dyn_timeslice_table[tsinitd].usec = 27500; /* 55/2 ms */
+          default_dyn_timeslice_table[tsinitd].optimal = 512 * (client->priority+1);
+          #endif
         }
-        else
-        {
-          default_dyn_timeslice_table[tsinitd].usec = 1000000;
-          default_dyn_timeslice_table[tsinitd].optimal = 131072;
-        }
-        #elif (CLIENT_OS == OS_MACOS) /* just default numbers - Mindmorph */
-          default_dyn_timeslice_table[tsinitd].optimal = 2048;      
-          default_dyn_timeslice_table[tsinitd].usec = 10000*(client->priority+1);
-        #elif (CLIENT_OS == OS_NETWARE) 
-        /* The switchcount<->runtime ratio is inversely proportionate. 
-           By definition, 1000ms == 1.0 switchcounts/sec. In real life it
-           looks something like this:  (note the middle magic of "55".
-           55ms == one timer tick)
-           msecs:   880  440  220  110  55  27.5   14  6.8  3.4   1.7  
-           count: ~2.75 ~5.5  ~11  ~22 ~55  ~110 ~220 ~440 ~880 ~1760
-           For simplicity, we use 30ms (~half-a-tick) as max for prio 9
-           and 3ms as min (about the finest monotonic res we can squeeze 
-           from the timer on a 386)
-        */
-        default_dyn_timeslice_table[tsinitd].optimal = 1024;
-        default_dyn_timeslice_table[tsinitd].usec = 512 * (client->priority+1);
-        #else /* x86 */
-        default_dyn_timeslice_table[tsinitd].usec = 27500; /* 55/2 ms */
-        default_dyn_timeslice_table[tsinitd].optimal = 512 * (client->priority+1);
-        #endif
       }
-    }
+    }  
     #endif
   }
 
