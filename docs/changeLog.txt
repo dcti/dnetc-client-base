@@ -5,25 +5,50 @@ v2.7021.405 98.05.23 Mail doesn't clear buffers on mail send failure from Cyrus 
 v2.7021.405 98.05.23 Cleaned up Client::Run from Cyrus Patel
 v2.7021.405 98.05.23 Improved client display, block transfer progress, and keyrate computation from Cyrus Patel
 v2.7021.405 98.05.23 NetWare changes from Cyrus Patel
-v2.7021.405 98.05.21 New parisc rc5 core from Katsuomi Hamajima
 v2.7021.405 98.05.21 New cpu/os codes added OS_OS390=39, CPU_S390=14
+v2.7021.405 98.05.21 OS/2 changes from Oscar Chang
+v2.7021.405 98.05.21 New parisc rc5 core from Katsuomi Hamajima
+v2.7021.405 98.05.21 Added Banner message crediting Matthew Kwan
+v2.7021.405 98.05.21 OS390 changes from Friedemann Baitinger
+v2.7021.405 98.05.21 ARM/riscos changes from Chris Berry
+v2.7021.405 98.05.21 Rebuilt bdeslow.aout.o/bbdeslow.aout.o and updated des-x86.cpp
 v2.7021.404 98.05.19 Increased temp space allocated for headers in http mode
 v2.7021.404 98.05.17 "-n" setting now forces a minimum of 1 block
 v2.7021.404 98.05.04 ForcedKeyPort changes for euro23.v27.distributed.net/jp.v27.distributed.net/port 3064
+v2.7021.404 98.05.04 New directory structure, configure script
 v2.7020.403 98.04.28 Fixed starting of NT service from command line
 v2.7020.403 98.04.28 Fixed DOS buffer problems
 v2.7020.403 98.04.28 Fixed bug in -offlinemode, when ini file doesn't know that DES is over.
 v2.7020.403 98.04.23 Improved x86 chip identification
 v2.7020.403 98.04.23 Faster generic des core
 v2.7020.403 98.04.21 Fixed final buffer flush when using "nodisk" mode.
-v2.7020.403 98.04.21 Faster generic rc5 core
+v2.7020.403 98.04.21 stricmp references changed to strcmpi in cliconfig.cpp
+v2.7020.403 98.04.21 Change to ansi rc5 core rc5ansi2-rg.cpp (4 macros).
+v2.7020.403 98.04.21 Very minor change to p5 core (not even a cycle, really).
 v2.7020.403 98.04.21 Added "-forcefetch"/"-forceflush".  These deal with corrupted buffer entries much better.
+v2.7020.403 98.04.21 RISCOS changes
+v2.7020.403 98.04.21 Updated strongARM core (in source -- it was used in last compile already)
+v2.7019.402 98.04.14 Fixed CPU detection for K6/6x86
+v2.7019.402 98.04.14 Win16 changes
+v2.7019.402 98.04.13 Renamed problem.H to problem.h
 v2.7019.402 98.04.13 Fixed Socks4/Socks5 support
 v2.7019.402 98.04.13 Arm/StrongArm fixes
+v2.7019.402 98.04.13 Added aflags to open call in buffwork/sh_fopen
+v2.7019.402 98.04.03 Added SOCKS5 support (with username/password and no auth)
+
+v2.7019.402 98.04.02 Fixed SOCKS4 support which wasn't working.
+v2.7019.402 98.04.02 Use only correct port with well-known keyserver RRs.
+v2.7018.401 98.04.02 Client::Run returns 'fuller' return codes
 v2.7018.401 98.04.02 Benchmark / test now do both contests
+v2.7018.401 98.04.02 Renamed rc5.* to problem.*
+v2.7018.401 98.04.02 Removed OS2_PM #defines
 v2.7018.401 98.04.02 Fixed dates in mail messages
+v2.7018.401 98.04.02 SUNOS changes
+v2.7018.401 98.04.02 adjusted the #defines in des-x86.cpp to link successfully under linux
+v2.7018.401 98.04.02 Fixed sopen() problem in buffwork.cpp which affected many OSes
 v2.7018.401 98.04.02 New HP-PA RC5 core from Katsuomi Hamajima <hamajima@ydc.co.jp>
 v2.7018.401 98.04.02 Lurk mode 'sticks' now in win32gui client.
+
 v2.7017.400 98.03.15 New K6 core
 v2.7017.400 98.03.15 Updated Alpha RC5 core (by Pedro Miguel Teixeira)
 v2.7016.399 98.03.13 Fixed buffer flushing problem
@@ -37,11 +62,23 @@ v2.7015.398 98.03.06 Fixed treatment of "empty" checkpoint filenames.
 v2.7015.398 98.03.06 Fixed key speed calculation for 2^31 size DES blocks
 v2.7015.398 98.03.06 Fixed block size reported for 2^31 DES blocks
 v2.7014.397b 98.02.27 New x86 CPP cores which fix the core dump problem
+v2.7014.397b 98.02.23 Netware changes
+v2.7014.397 98.02.17 Minor code cleanup
+v2.7014.397 98.02.12 AIX Changes, OSF changes
+v2.7013.396c 98.02.09 Older slice routines moved to oldslice.zip
 v2.7013.396c 98.02.09 HTTP modes no longer force port keyport=2064.
 v2.7013.396b 98.02.13 Made "-quiet" even quieter
 v2.7013.396b 98.02.13 Fixed fault when missing final parameter of 2-param option
+v2.7013.396b 98.02.08 Digital Unix patches
+v2.7013.396 98.02.08 AIX / SPARC changes
+v2.7013.396 98.02.08 BDESLOW.S/BDESLW1.S cores from Sven Mikkelsen (AT&T syntax)
 v2.7013.396 98.02.13 Fixed mail bug related to sending empty mail messages
 v2.7012.395 98.02.05 Yet another new bitslice driver.
+v2.7011.394b 98.02.01 "Connecting to..." message in network.cpp
+v2.7011.394 98.02.01 Watcom link order changed
+v2.7011.394 98.02.01 OS2 GUI changes for DES tests
+v2.7011.394 98.02.01 Macro collission problem fixed
+v2.7011.394 98.02.01 Netware changes
 v2.7010.393 98.01.30 New, much faster bitslice driver and s-boxes.
 v2.7010.393 98.01.30 Got RC5 assembly running on AIX/PowerPC client.
 v2.7010.393 98.01.30 Fixed mailing to multiple destinations
@@ -50,6 +87,7 @@ v2.7010.392 98.01.30 Warning message about "-hide" when running win32 client on 
 v2.7010.392 98.01.28 BEOS, HP, Netware changes
 v2.7009.391 98.01.25 Added duplicate x86 core to allow 2 DES threads.
 v2.7008.390 98.01.24 New non-x86 DES core routines
+v2.7008.390 98.01.25 Netware changes
 v2.7008.390 98.01.24 -runbuffers/-runoffline ignored when doing fetch/flush/update
 v2.7007.389 98.01.21 "sent to server"/"received from server" messages include DES/RC5 type
 v2.7007.389 98.01.20 CPU identification for non-unix X86 from Cyrus Patel
@@ -59,7 +97,9 @@ v2.7005.387 98.01.18 DES Bitslice cores from Remi
 v2.7004.386 98.01.17 Client will properly identify a 3*2^28 block now
 v2.7004.386 98.01.17 Fixed negative block sizes
 v2.7004.386 98.01.17 Added ansi core des routine
+v2.7004.386 98.01.17 632 byte memory leak on some failed network Open()s
 v2.7003.385 98.01.15 Don't process a partial block started on another cpu/os/build
+v2.7002.384 98.01.13 RISCOS changes
 v2.7002.383 98.01.13 Banner problem
 v2.7002.382 98.01.13 Client shows size of block being processed
 v2.7002.382 98.01.13 Win32 clients no longer set  processor affinity when only 1
@@ -68,12 +108,15 @@ v2.7002.382 98.01.13 Fixed RC5 blocks being sent to server with wrong contestid
                      when they were downloaded by older non-dual clients.
                      This also caused various other buffer problems, and faults.
 v2.7002.382 98.01.13 "Block ready" message now identifies what kind of block.
-98.01.12 v2.7001.378 Fixed up code to detect end of DES contest
-98.01.12 v2.7001.376 Problem with block counting fixed
-98.01.12 v2.7001.375 Cosmetic changes to key speed reporting
-98.01.11 v2.7001.369 des key incrementation stuff from Remi, new des-x86.cpp
-98.01.10 v2.7001.368 X86 des core from Remi Guyomarch
-98.01.06 v2.7001.365 Initial Changes to incorporate DESII contest
+v2.7001.381 98.01.12 New RC5 cores (cpp wasn't updated before)
+v2.7001.380 98.01.12 Fixed up code to detect end of DES contest (again.  Ugh.)
+v2.7001.379 98.01.12 Fixed speed reporting on individual blocks.
+v2.7001.378 98.01.12 Fixed up code to detect end of DES contest
+v2.7001.376 98.01.12 Problem with block counting fixed
+v2.7001.375 98.01.12 Cosmetic changes to key speed reporting
+v2.7001.369 98.01.11 des key incrementation stuff from Remi, new des-x86.cpp
+v2.7001.368 98.01.10 X86 des core from Remi Guyomarch
+v2.7001.365 98.01.06 Initial Changes to incorporate DESII contest
 
 2.6403
 ------
