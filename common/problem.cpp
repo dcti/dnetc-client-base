@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.108.2.3 2001/03/22 22:34:25 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.108.2.4 2001/03/22 22:35:25 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2079,7 +2079,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, u32 flags)
     //info->stats_units_are_integer = (contestid != OGR);
     info->show_exact_iterations_done = (contestid == OGR);
 
-    if (flags & (P_INFO_E_TIME | P_INFO_RATE | P_INFO_RATEBUF)
+    if (flags & (P_INFO_E_TIME | P_INFO_RATE | P_INFO_RATEBUF))
     {
       if (thisprob->pub_data.elapsed_time_sec != 0xfffffffful)
       {
