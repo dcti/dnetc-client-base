@@ -32,7 +32,7 @@ struct WorkStub { /* size is 28 */
 #define BITMAPS     5       /* need to change macros when changing this */
 #define MAXDEPTH   40
 
-typedef unsigned int U;
+typedef u32 U;
 
 struct Level {
   U list[BITMAPS];
