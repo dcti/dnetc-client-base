@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.23 1999/12/13 16:01:27 snake Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.24 1999/12/18 15:53:56 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -25,11 +25,12 @@ return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.23 1999/12/13 16:01:27 snake Exp
 #  include <sys/sysinfo.h>
 #  include <machine/hal_sysinfo.h>
 #  include <machine/cpuconf.h>
+#elif (CLIENT_OS == OS_MACOS)
+#  include <Gestalt.h>
 #elif (CLIENT_OS == OS_AIX)
 #  include <sys/systemcfg.h>
-#elif ((CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS))
-#  include <sys/sysctl.h>
-#elif ((CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD))
+#elif ((CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
+       (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS))
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
 #endif
