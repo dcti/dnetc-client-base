@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.21  1999/01/09 08:56:24  remi
+// Fixed the previous fix : it's only for alpha/nt + defined(bit_64) + msvc++
+//
 // Revision 1.20  1999/01/08 02:53:37  michmarc
 // Added __int64 type support for Alpha/NT (whose "unsigned long" type
 // is only 32 bits)
@@ -71,7 +74,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-return "@(#)$Id: des-slice-meggs.cpp,v 1.20 1999/01/08 02:53:37 michmarc Exp $"; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.21 1999/01/09 08:56:24 remi Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -92,14 +95,16 @@ return "@(#)$Id: des-slice-meggs.cpp,v 1.20 1999/01/08 02:53:37 michmarc Exp $";
   #if defined(__GNUC__)
     #define BASIC_SLICE_TYPE unsigned long long
     #define NOTZERO ~(0ull)
-  #elif defined(__WATCOMC__) || (_MSC_VER >= 11) // VC++ 5.0
+  #elif defined(__WATCOMC__) || (_MSC_VER >= 11) // VC++ >= 5.0
     #define BASIC_SLICE_TYPE __int64
     #define NOTZERO ~((__int64)0)
   #elif
     #error "What's the 64-bit type on your compiler ?"
   #endif
 #else
-  #if defined(__WATCOMC__) || (_MSC_VER >= 11) // VC++ 5.0
+  // int and long are 32bits under Alpha/NT for compatability with x86/NT
+  #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32) && \
+      defined(BIT_64) && (_MSC_VER >= 11) // VC++ >= 5.0
     #define BASIC_SLICE_TYPE unsigned __int64
     #define NOTZERO ~((unsigned __int64)0)
   #else
