@@ -6,6 +6,9 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.33  1998/10/06 21:28:07  cyp
+// Removed timestamps.
+//
 // Revision 1.32  1998/10/04 11:35:28  remi
 // Id tags fun.
 //
@@ -49,16 +52,7 @@
 // Added '#include "network.h"' for ntohl()/htonl() prototypes.
 //
 // Revision 1.21  1998/07/07 21:55:25  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 // Revision 1.20  1998/07/05 21:49:30  silby
 // Modified logging so that manual wrapping is not done on win32gui,
@@ -138,7 +132,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.32 1998/10/04 11:35:28 remi Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.33 1998/10/06 21:28:07 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // for u64
@@ -457,14 +451,15 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
     itermul = (unsigned int)iter;
     }
 
-//[Aug 01 10:00:00 GMT] Completed one RC5 block 00000000:00000000 (4*2^28 keys)\n"
-  sprintf( str, "Completed one %s " /* "%d*2^%d " */ "block %08lX:%08lX (%u*2^28 keys)\n"
-                "[%s] %s - [%skeys/sec]\n",  
-                name, /* (int)size, (int)count, */
+//"Completed one RC5 block 00000000:00000000 (4*2^28 keys)\n"
+//"%s - [%skeys/sec]\n"
+
+  sprintf( str, "Completed one %s block %08lX:%08lX (%u*2^28 keys)\n"
+                "%s - [%skeys/sec]\n",  
+                name, 
                 (unsigned long) ntohl( rc5result.key.hi ) ,
                 (unsigned long) ntohl( rc5result.key.lo ),
                 (unsigned int)(itermul),
-                CliGetTimeString( NULL, 1 ),
                 CliGetTimeString( &tv, 2 ),
                 keyrateP );
 
