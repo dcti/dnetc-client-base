@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.15 2000/01/08 23:18:12 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.16 2000/01/14 21:30:42 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -365,6 +365,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "a new file will be opened. The interval may be specified as a number of days,\n"
   "or as \"daily\",\"weekly\",\"monthly\" etc.\n"
   "For other log types, this option determines the maximum file size in kilobytes.\n"
+  "The \"fifo\" log type will enforce a minimum of 100KB to avoid excessive file I/O.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
 //30
 { CFGTXT("Log by mail spool size (bytes)"), "0 (mail disabled)",
