@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.93 2002/08/01 21:55:45 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.94 2002/08/02 01:54:54 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -954,6 +954,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0640,  0x109, "K7-4 (Athlon Thunderbird)" }, // 256K L2
           {  0x0660,  0x109, "K7-6 (Athlon XP/MP/-4)" }, // Palomino core, 256K L2
           {  0x0670,  0x109, "K7-7 (Duron)"           }, // Morgan core = Palomino core w/ 64K L2
+          {  0x0680,  0x109, "K7-8 (Athlon XP)"       }, // Thoroughbred core
           {  0x0000,     -1, NULL       }
           }; internalxref = &amdxref[0];
       vendorname = "AMD";
