@@ -18,8 +18,8 @@
  *    b) #define usleep(x) { struct timespec interval, remainder; \
  *                           interval.tv_sec = 0; interval.tv_nsec = (x)*100;\
  *                           nanosleep(&_interval, &_remainder); }
- *    c) #define usleep(x) { struct timeval tv = {0,(x)}; \
- *                           select(0,NULL,NULL,NULL,&tv); }
+ *    c) #define usleep(x) { struct timeval tv__ = {0,(x)}; \
+ *                           select(0,NULL,NULL,NULL,&tv__); }
  *       (Not all implementations support (c): some don't sleep at all, 
  *       while others sleep forever)
  *    d) roll a usleep() using your sched_yield()[or whatever] and 
@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.25 1999/11/08 02:02:45 cyp Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.26 1999/11/26 13:08:51 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -48,8 +48,13 @@
   #define sleep(x)  w32Sleep((x)*1000)
   #define usleep(x) w32Sleep((x)/1000)
 #elif (CLIENT_OS == OS_DOS)
-  //usleep() and sleep() are wrappers around dpmi yield
-  #include "platforms/dos/clidos.h"
+  //usleep and sleep are wrapper around dpmi yield
+  //emulated in platforms/dos/cdosyield.cpp
+  #include <unistd.h>
+  #undef sleep
+  #undef usleep
+  extern "C" void sleep(unsigned int);
+  extern "C" void usleep(unsigned int);
 #elif (CLIENT_OS == OS_OS2)
   #ifdef sleep
   #undef sleep    // gets rid of warning messages
@@ -96,20 +101,18 @@
 #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
   //Jul '99: It appears Sol/Sparc and/or Sol/ultra have a
   //problem with usleep() (sudden crash with bad lib link)
-  #if (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_X86)
+  //whether x86/68k also have this bug is unknown. But to be
+  //safe, we use poll() too since that is a direct syscall.
   #include <unistd.h>
-  extern "C" void usleep(unsigned int);
-  #else /* pukes at runtime on Sparcs/Ultras */
   #undef usleep
   #define usleep(x) poll(NULL, 0, (x)/1000);
-  #endif
 #elif (CLIENT_OS == OS_HPUX)
   #include <unistd.h>
   #include <sys/time.h>
   //HP-UX 10.x has nanosleep() but no usleep(), 9.x has neither, so ...
   //we do whats good for all HP-UX's (according to select(2) manpage)
   #undef usleep
-  #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
+  #define usleep(x) {struct timeval tv__={0,(x)};select(0,NULL,NULL,NULL,&tv__);}
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C" {
   #include <unistd.h>
@@ -119,7 +122,8 @@
   #undef usleep
   #define usleep(x) poll(NULL, 0, (x)/1000);
 #elif (CLIENT_OS == OS_ULTRIX)
-  #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
+  #include <sys/time.h>
+  #define usleep(x) {struct timeval tv__={0,(x)};select(0,NULL,NULL,NULL,&tv__);}
 #else
   #include <unistd.h> //has both sleep() and usleep()
 #endif

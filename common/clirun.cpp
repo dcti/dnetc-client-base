@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.105 1999/11/08 02:02:37 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.106 1999/11/26 13:08:48 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -41,11 +41,12 @@ return "@(#)$Id: clirun.cpp,v 1.105 1999/11/08 02:02:37 cyp Exp $"; }
 
 // --------------------------------------------------------------------------
 
+//#define DYN_TIMESLICE_SHOWME
+
 static struct
 {
   volatile int refillneeded;
 } runstatics = {0};
-
 //#define DYN_TIMESLICE_SHOWME 1
 
 struct __dyn_timeslice_struct

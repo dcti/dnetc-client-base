@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.66 1999/11/23 15:41:37 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.67 1999/11/26 13:08:50 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -366,10 +366,12 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         {
           //cputype = client->cputype; /* needed for FILEENTRY_CPU macro */
 
+#if 0
+@@@@@@ chrisb needs to fix this
           #if (CLIENT_OS == OS_RISCOS) /* second thread is x86 */
           if (wrdata.contest == RC5 && prob_i == 1) cputype = CPU_X86;
           #endif
-
+#endif
           // If this is a partial block, and completed by a different 
           // cpu/os/build, then reset the keysdone to 0...
           if ((wrdata.os      != FILEENTRY_OS) ||
