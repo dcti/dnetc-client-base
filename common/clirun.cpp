@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.27  1998/11/03 04:23:54  cyp
+// Added missing #if ... defined(MULTITHREAD) to def out pthread_sigmask
+//
 // Revision 1.26  1998/11/03 01:46:51  cyp
 // Commit to overwrite corrupted clirun in the tree.
 //
@@ -107,7 +110,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.26 1998/11/03 01:46:51 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.27 1998/11/03 04:23:54 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -638,7 +641,7 @@ if (targ->realthread)
   }
 #elif (CLIENT_OS == OS_OS2)
 #elif (CLIENT_OS == OS_BEOS)
-#elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H))
+#elif ((defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD))
 if (targ->realthread)
   {
   sigset_t signals_to_block;
