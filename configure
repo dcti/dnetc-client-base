@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.106 2000/01/23 19:55:41 friedbait Exp $
+# @(#)$Id: configure,v 1.222.2.107 2000/01/24 15:48:13 ivo Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -698,7 +698,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *mips-irix)     # [ivo] generic mips-irix target
+    *mips-irix)     # [ivo] generic mips-irix target (note: Ivo no longer porter!)
         DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc"
         TARGET_CCFLAGS="$OPTS_GCC_MIPS   \
@@ -737,7 +737,7 @@ case "$1" in
 
 ###### HPUX
 
-    *hpux-hppa-CC)
+    *hpux-hppa-CC) # obsolete? Not used by Ivo...
 	TARGET_CC="CC"
 	TARGET_CCFLAGS=" -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/parisc/parisc.s $MEGGS_SLICE_SRCS2"
@@ -748,9 +748,8 @@ case "$1" in
    *hpux-hppa-gcc-nomt)  # [ivo]
         #DELETECHARS="'/.\$\-'"
         TARGET_CCFLAGS="$OPTS_GCC_HPUX  \
-                        -DHAVE_CSC_CORES -DHAVE_DES_CORES \
-                         -DKWAN -DMEGGS"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
+                        -DHAVE_OGR_CORES"
+        TARGET_ADDSRCS="$OGR_ANSI_SRCS"
         TARGET_ADDASMS="rc5/parisc/parisc.s"
         #TARGET_LDFLAGS="-lpthread"
         TARGET_TARBALL="hpux1020-hppa11"
@@ -804,41 +803,39 @@ case "$1" in
 
     #####
 
-    *sparc-solaris-gcc-nomt)   # [ivo solaris/nonultra/nomt] fastest rc5 & des for ultra
+    *sparc-solaris-gcc-nomt)   # [ivo solaris/nomt]
         #DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc -pipe" 
         TARGET_CCFLAGS="$OPTS_GCC295_SPARC -Dsolaris \
-                        -DHAVE_CSC_CORES -DHAVE_DES_CORES \
-                         -DKWAN -DMEGGS"
+                        -DHAVE_OGR_CORES"
         TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
-                        $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
+                        $OGR_ANSI_SRCS"
         TARGET_LIBS="-lnsl -lsocket -ldl"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TRAGET_TARBALL="sparc-solaris26-nomt"
+        TRAGET_TARBALL="solaris26-sparc-nomt"
         ;;
 
-    *sparc-solaris-gcc)   # [ivo solaris/nonultra/mt] fastest rc5
+    *sparc-solaris-gcc)   # [ivo solaris/mt] fastest rc5 <- production target
         #DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc -pipe"
         TARGET_CCFLAGS="$OPTS_GCC295_SPARC -Dsolaris \
                         -DMULTITHREAD \
-                        -DHAVE_CSC_CORES -DHAVE_DES_CORES \
-                         -DKWAN -DMEGGS"
+                        -DHAVE_OGR_CORES"
         TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
-                        $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
+                        $OGR_ANSI_SRCS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="solaris26-sparc"
         ;;
 
-    *sparc-solaris-gcc-ultra)   # [ivo ultra] fastest rc5 & VIS DES
+    *sparc-solaris-gcc-ultra)   # [ivo ultra] very fast DES -> hence obsolete
         #DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc -pipe"
         TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
                         -DMULTITHREAD \
-                        -DHAVE_CSC_CORES -DHAVE_DES_CORES "
+                        -DHAVE_OGR_CORES -DHAVE_DES_CORES "
         TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
-                        $DESULTRA_SRCS_ASM $CSC_ANSI_SRCS"
+                        $DESULTRA_SRCS_ASM $OGR_ANSI_SRCS"
         TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
         TARGET_ASFLAGS="$OPTS_AS_ULTRA"   
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
