@@ -8,16 +8,16 @@
  * ----------------------------------------------------------------------
 */
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.20 1999/04/05 17:56:51 cyp Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.21 1999/04/06 19:24:53 cyp Exp $"; }
 
 #include "cputypes.h" //for u64 define
-#include "problem.h"  //uses Problem and RC5Result class definitions 
+#include "problem.h"  //uses Problem::RetrieveState()
 #include "baseincs.h" //timeval
 #include "clicdata.h" //Cli[Add|Get]ContestInfoSummaryData, CliGetContestInfoBaseData
 #include "clitime.h"  //CliTimerDiff
 #include "clirate.h"  //keep the prototypes in sync.
 
-// ---------------------------------------------------------------------------
+/* -------------------------------------------------------------------- */
 
 // return (cumulative) keyrate for a particular contest
 double CliGetKeyrateForContest( int contestid )
@@ -35,15 +35,15 @@ double CliGetKeyrateForContest( int contestid )
      (((double)(totaltime.tv_usec))/((double)(1000000L))));
 }
 
-// ---------------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
 //internal - see CliGetKeyrateForProblem() for description
 static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
 {
-  RC5Result rc5result;
-  unsigned int count;
+  unsigned int count, contestid;
   struct timeval tv;
-  int contestid;
+  ContestWork work;
+  int resultcode;
   double keys;
 
   if (!prob)
@@ -51,17 +51,23 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   if ((!(prob->finished)) || (!(prob->started)) || (!(prob->IsInitialized())))
     return ((double)(-2));
 
+  /*
   tv.tv_usec = prob->timelo;
   tv.tv_sec = prob->timehi;
   CliTimerDiff( &tv, &tv, NULL ); //get time difference as tv
-  if (!tv.tv_sec && !tv.tv_usec)
-    tv.tv_usec = 1; //don't divide by zero
+  */
 
-  contestid = prob->GetResult( &rc5result );
+  tv.tv_usec = prob->runtime_usec; /* actual core run time */
+  tv.tv_sec = prob->runtime_sec;
+  
+  resultcode = prob->RetrieveState( &work, &contestid, 0 ); 
+  if (resultcode < 0)
+    return ((double)(-2));   // not initialized
+    
   if (CliGetContestInfoBaseData( contestid, NULL, &count )) //clicdata.cpp
     return ((double)(0));   //clicdata.cpp says no such contest
 
-  keys = U64TODOUBLE(rc5result.keysdone.hi,rc5result.keysdone.lo);
+  keys = U64TODOUBLE(work.crypto.keysdone.hi,work.crypto.keysdone.lo);
   if (count>1) //iteration-to-keycount-multiplication-factor
     keys = (keys)*((double)(count));
   if (prob->startpercent) //slight misnomer. factor is *100000 not *100
@@ -69,11 +75,14 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   if (keys==((double)(0))) //no keys done? should never happen.
     return ((double)(0));
 
+  if (!tv.tv_sec && !tv.tv_usec)
+    tv.tv_usec = 1; //don't divide by zero
+    
   if (doSave)
-    {
+  {
     count = 1; //number of blocks to add to clicdata.cpp information
     CliAddContestInfoSummaryData( contestid, &count, &keys, &tv );
-    }
+  }
 
   return ((double)(keys))/
        (((double)(tv.tv_sec))+(((double)(tv.tv_usec))/((double)(1000000L))));
@@ -85,6 +94,4 @@ double CliGetKeyrateForProblem( Problem *prob )
 
 double CliGetKeyrateForProblemNoSave( Problem *prob )
 {  return __CliGetKeyrateForProblem( prob, 0 ); }
-
-// ---------------------------------------------------------------------------
 

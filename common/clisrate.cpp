@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.40 1999/04/05 17:56:51 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.41 1999/04/06 19:24:53 cyp Exp $"; }
 
 #include "cputypes.h"  // u64
 #include "problem.h"   // Problem class
@@ -213,42 +213,44 @@ const char *CliGetU64AsString( u64 *u, int /*inNetOrder*/, int contestid )
 static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave )
 {
   static char str[160];
-  RC5Result rc5result;
-  struct timeval tv;
+  ContestWork work;
+  struct timeval tv = {0,0};
   char keyrate[32];
   unsigned int /* size=1, count=32, */ itermul;
-  unsigned int mulfactor;
-  const char *keyrateP, *name;
-  int contestid = prob->GetResult( &rc5result );
-
-  if (CliGetContestInfoBaseData( contestid, &name, &mulfactor )==0) //clicdata
+  unsigned int mulfactor, contestid = 0;
+  const char *keyrateP = "---.-- ", *name = "???";
+  
+  if (prob->IsInitialized() && prob->finished)
+  {
+    prob->RetrieveState( &work, &contestid, 0 );
+    if (CliGetContestInfoBaseData( contestid, &name, &mulfactor )==0) //clicdata
     {
-    keyrateP = CliGetKeyrateAsString( keyrate, 
-        ((doSave) ? ( CliGetKeyrateForProblem( prob ) ) :
-                    ( CliGetKeyrateForProblemNoSave( prob ) ))  );
+      keyrateP = CliGetKeyrateAsString( keyrate, 
+          ((doSave) ? ( CliGetKeyrateForProblem( prob ) ) :
+                      ( CliGetKeyrateForProblemNoSave( prob ) ))  );
     }
-  else
-    {
-    keyrateP = "---.-- ";
-    name = "???";
-    }
-
-  tv.tv_sec = prob->timehi;
-  tv.tv_usec = prob->timelo;
-  CliTimerDiff( &tv, &tv, NULL );
-
-  switch (prob->contest) {
+    /*  
+    tv.tv_sec = prob->timehi;
+    tv.tv_usec = prob->timelo;
+    CliTimerDiff( &tv, &tv, NULL );
+    */
+    tv.tv_sec = prob->runtime_sec;
+    tv.tv_usec = prob->runtime_usec;
+  }
+  
+  switch (contestid) 
+  {
     case 0: // RC5
     case 1: // DES
 //"Completed one RC5 packet 00000000:00000000 (4*2^28 keys)\n"
 //"%s - [%skeys/sec]\n"
-      itermul = (((rc5result.iterations.lo) >> 28) +
-                 ((rc5result.iterations.hi) * 16) );
+      itermul = (((work.crypto.iterations.lo) >> 28) +
+                 ((work.crypto.iterations.hi) <<  4) );
       sprintf( str, "Completed one %s packet %08lX:%08lX (%u*2^28 keys)\n"
                     "%s - [%skeys/sec]\n",  
                     name, 
-                    (unsigned long) ( rc5result.key.hi ) ,
-                    (unsigned long) ( rc5result.key.lo ),
+                    (unsigned long) ( work.crypto.key.hi ) ,
+                    (unsigned long) ( work.crypto.key.lo ),
                     (unsigned int)(itermul),
                     CliGetTimeString( &tv, 2 ),
                     keyrateP );
@@ -265,7 +267,6 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
                     keyrateP );
       break;
   }
-
   return str;
 }
 
