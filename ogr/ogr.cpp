@@ -5,7 +5,7 @@
  */
 
 const char *ogr_cpp(void) {
-return "@(#)$Id: ogr.cpp,v 1.3.2.20 2000/02/20 08:09:26 sampo Exp $"; }
+return "@(#)$Id: ogr.cpp,v 1.3.2.21 2000/06/24 23:18:49 andreasb Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -538,16 +538,16 @@ static int ogr_cleanup()
 
 CoreDispatchTable *ogr_get_dispatch_table()
 {
-  dispatch_table.init      = &ogr_init;
-  dispatch_table.create    = &ogr_create;
-  dispatch_table.cycle     = &ogr_cycle;
-  dispatch_table.getresult = &ogr_getresult;
-  dispatch_table.destroy   = &ogr_destroy;
+  dispatch_table.init      = ogr_init;
+  dispatch_table.create    = ogr_create;
+  dispatch_table.cycle     = ogr_cycle;
+  dispatch_table.getresult = ogr_getresult;
+  dispatch_table.destroy   = ogr_destroy;
 #if 0
-  dispatch_table.count     = &ogr_count;
-  dispatch_table.save      = &ogr_save;
-  dispatch_table.load      = &ogr_load;
+  dispatch_table.count     = ogr_count;
+  dispatch_table.save      = ogr_save;
+  dispatch_table.load      = ogr_load;
 #endif
-  dispatch_table.cleanup   = &ogr_cleanup;
+  dispatch_table.cleanup   = ogr_cleanup;
   return &dispatch_table;
 }

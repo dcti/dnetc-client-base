@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.67 2000/06/24 09:56:12 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.68 2000/06/24 23:18:48 andreasb Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -399,7 +399,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
                       sizeof(WorkStub), core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
       if (r != CORE_S_OK)
         return -1;
-      if (contestwork.ogr.workstub.worklength > contestwork.ogr.workstub.stub.length)
+      if (contestwork.ogr.workstub.worklength > (u32)contestwork.ogr.workstub.stub.length)
       {
         // This is just a quick&dirty calculation that resembles progress.
         startpermille = contestwork.ogr.workstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10

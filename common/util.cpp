@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.31 2000/05/08 11:16:18 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.32 2000/06/24 23:18:48 andreasb Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -909,7 +909,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                        not both, which will have been checked above) then
                        allow a match if the basenames (sans-suffix) are equal.
                     */  
-                    int fsuffixlen = 0;
+                    unsigned int fsuffixlen = 0;
                     if (fbasenamelen > 3)
                     {
                       /* Don't be tempted to try to optimize away 
@@ -1224,6 +1224,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         } /* if (file != ((FILE *)NULL)) */
       }
       #endif /* spawn ps */
+      thatpid = thatpid; /* shaddup compiler */
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #endif /* #if (defined(__unix__)) */
