@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.5 1999/07/07 18:48:28 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.6 1999/09/17 15:19:34 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -183,12 +183,12 @@ Problem::Problem(long _threadindex /* defaults to -1L */)
 #ifdef STRESS_THREADS_AND_BUFFERS 
   static int runlevel = 0;
   if (runlevel != -12345)
-    {
+  {
     if ((++runlevel) != 1)
-      {
+    {
       --runlevel;
       return;
-      }
+    }
     RaisePauseRequestTrigger();
     LogScreen("Warning! STRESS_THREADS_AND_BUFFERS is defined.\n"
               "Are you sure that the client is pointing at\n"
@@ -197,13 +197,13 @@ Problem::Problem(long _threadindex /* defaults to -1L */)
     ConInStr(getyes,4,0);
     ClearPauseRequestTrigger();
     if (strcmpi(getyes,"yes") != 0)
-      {
+    {
       runlevel = +12345;
       RaiseExitRequestTrigger();
       return;
-      }
-    runlevel = -12345;
     }
+    runlevel = -12345;
+  }
 #endif    
 }
 
@@ -214,13 +214,12 @@ Problem::~Problem()
   started = 0; // nothing to do. - suppress compiler warning
 #if (CLIENT_OS == OS_RISCOS)
   if (GetProblemIndexFromPointer(this) == 1)
-    {
+  {
     _kernel_swi_regs r;
     r.r[0] = 0;
     _kernel_swi(RC5PC_RetriveBlock,&r,&r);
     _kernel_swi(RC5PC_Off,&r,&r);
-    
-    }
+  }
 #endif
 }
 
@@ -353,6 +352,10 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     
   if (contest >= CONTEST_COUNT)
     return -1;
+#ifdef NO_DES_SUPPORT    
+  if (contest == DES)
+    return -1;
+#endif    
 
   pipeline_count = 2;
 
@@ -413,6 +416,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   des_unit_func = des_unit_func_alpha_dworz;
   #endif
 #endif
+
 #if (CLIENT_OS == OS_AIX)
   static int detectedtype = -1;
   if (detectedtype == -1)
@@ -464,6 +468,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     cputype = 0;
 
   pipeline_count = 2; /* most cases */
+#ifndef NO_DES_SUPPORT
   if (contest == DES)
   {
     #if defined(MMX_BITSLICER) 
@@ -511,7 +516,8 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
       #endif
     }
   }
-  else if (contest == RC5) 
+#endif
+  if (contest == RC5) 
   {
     if (cputype == 1)   // Intel 386/486
     {
@@ -909,12 +915,20 @@ int Problem::Run_CSC(u32 *timesliceP, int *resultcode)
 
 /* ------------------------------------------------------------- */
 
+#ifdef NO_DES_SUPPORT
+int Problem::Run_DES(u32 *timesliceP, int *resultcode)
+{
+  *timesliceP = 0;  /* no keys done */
+  *resultcode = -1; /* core error */
+  return -1;
+}
+#else
 int Problem::Run_DES(u32 *timesliceP, int *resultcode)
 {
   u32 kiter = 0;
   u32 timeslice = *timesliceP;
   
-#if (CLIENT_CPU == CPU_X86)
+  #if (CLIENT_CPU == CPU_X86)
   u32 min_bits = 8;  /* bryd and kwan cores only need a min of 256 */
   u32 max_bits = 24; /* these are the defaults if !MEGGS && !DES_ULTRA */
 
@@ -941,11 +955,11 @@ int Problem::Run_DES(u32 *timesliceP, int *resultcode)
   else
   #endif
   kiter = (*unit_func)( &rc5unitwork, nbits );
-#elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
   u32 nbits = 20;  // FROM des-slice-dworz.cpp
   timeslice = (1ul << nbits);
   kiter = des_unit_func ( &rc5unitwork, nbits );
-#else
+  #else
   u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 
   if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
@@ -953,7 +967,7 @@ int Problem::Run_DES(u32 *timesliceP, int *resultcode)
   timeslice = (1ul << nbits);
 
   kiter = des_unit_func ( &rc5unitwork, nbits );
-#endif
+  #endif
 
   *timesliceP = timeslice;
 
@@ -1015,6 +1029,7 @@ int Problem::Run_DES(u32 *timesliceP, int *resultcode)
   *resultcode = RESULT_WORKING;
   return RESULT_WORKING; // Done with this round
 }
+#endif /* #ifdef NO_DES_SUPPORT */
 
 /* ------------------------------------------------------------- */
 
@@ -1088,7 +1103,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   if ( last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
     return ( last_resultcode );
     
-  CliTimer(&start);
+  CliClock(&start);
   if (!started)
   {
     timehi = start.tv_sec; timelo = start.tv_usec;
@@ -1149,7 +1164,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   }
   
   core_run_count++;
-  CliTimer(&stop);
+  CliClock(&stop);
   if ( core_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING */
   {
     if (((u32)(stop.tv_sec)) > ((u32)(timehi)))
