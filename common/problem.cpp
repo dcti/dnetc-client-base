@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.98 2001/02/03 18:17:59 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.99 2001/02/08 22:45:52 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1799,7 +1799,7 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
 
       #if (ULONG_MAX > 0xfffffffful) /* 64+ bit */
       {
-        len = sprintf( numbuf, "%lu", (((unsigned long)hi)<<32UL)+((unsigned long)lo);
+        len = sprintf( numbuf, "%lu", (((unsigned long)hi)<<32UL)+((unsigned long)lo));
       }
       #else
       {

@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.47 2001/02/08 18:17:01 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.48 2001/02/08 22:45:51 sampo Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -27,7 +27,7 @@
 #define CPU_VAX         10
 #define CPU_ARM         11
 #define CPU_88K         12
-/* #define CPU_UNUSED_2 13 - please recycle */
+#define CPU_IA64        13
 #define CPU_S390        14
 /* #define CPU_UNUSED_3 15 - please recycle */
 #define CPU_DESCRACKER  16  /* eff descracker */
@@ -139,6 +139,8 @@
     #define CLIENT_CPU    CPU_X86
   #elif defined(__S390__)
     #define CLIENT_CPU    CPU_S390
+  #elif defined(__IA64__)
+    #define CLIENT_CPU    CPU_IA64
   #elif defined(ARM) || defined(__arm__)
     #define CLIENT_CPU    CPU_ARM
   #elif defined(ASM_SPARC) || defined(__sparc__)
