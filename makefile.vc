@@ -1,44 +1,46 @@
 # RC5 client makefile (MS Visual C++ for Win32 x86)
-# feel free to generalize to do Win32 Alpha as well
 # see http://www.distributed.net/
+#
+# $Id: makefile.vc,v 1.62 1999/10/21 17:15:37 cyp Exp $
+#
 
-EXENAME = dnetc.exe
+BASENAME = dnetc
 OUTPUTPATH = output
 COMMONPATH = common
-DESPATH = des
-RC5PATH = rc5
-OGRPATH = ogr
-CSCPATH = csc
-PLATPATH = platforms
-W32CLIPATH = platforms/win32cli
+DESSRCPATH = des
+RC5SRCPATH = rc5
+OGRSRCPATH = ogr
+CSCSRCPATH = csc
+X86SRCPATH = platforms
+PLATSRCPATH = platforms/win32cli
 
-OPTS_MSVC = -nologo -W3 -O1 -MT -I$(RC5PATH) -I$(DESPATH) \
-  -I$(COMMONPATH) -I$(W32CLIPATH) -D_CPU_32BIT_ -I$(OGRPATH) \
-  -I$(CSCPATH) \
-  -DMULTITHREAD -D__WIN32__ -GR- -GX- -GA -GF \
-	-DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN -DMMX_RC5 -DLURK \
-	-DHAVE_DES_CORES -DHAVE_OGR_CORES -DHAVE_CSC_CORES
+OPTS_MSVC =  -I$(COMMONPATH) -I$(PLATSRCPATH) \
+             -I$(RC5SRCPATH) -I$(DESSRCPATH) -I$(OGRSRCPATH) -I$(CSCSRCPATH) \
+             -DMULTITHREAD -D__WIN32__ -D_CPU_32BIT_ -DLURK \
+	     -DHAVE_DES_CORES -DHAVE_OGR_CORES -DHAVE_CSC_CORES
+OPTS_CC_X86 = -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN -DMMX_RC5 \
+             -nologo -W3 -O1 -MT -GR- -GX- -GA -GF
 
 OPTS_LINK = /incremental:no /version:3.10
+OPTS_LIBS = advapi32.lib user32.lib gdi32.lib
+RES_FILE = $(OUTPUTPATH)/$(BASENAME).res
+RC_FILE = $(PLATSRCPATH)/w32cons.rc
 
-RES_FILE = $(OUTPUTPATH)/dnetc.res
-RC_FILE = $(W32CLIPATH)/dnetc.rc
-
-all: dnetc
+all: $(BASENAME)
 
 # --------------------------------------------
 
 !ifdef DEBUG
-OPTS_MSVC = -Zi -DDEBUG $(OPTS_MSVC)
+OPTS_MSVC = -Zi -DDEBUG $(OPTS_MSVC) $(OPTS_CC_X86)
 OPTS_LINK = $(OPTS_LINK) /debug /pdb:none /pdbtype:consolidate
 !else
-OPTS_MSVC = -DNDEBUG $(OPTS_MSVC)
+OPTS_MSVC = -DNDEBUG $(OPTS_MSVC) $(OPTS_CC_X86)
 OPTS_LINK = $(OPTS_LINK) /release
 !endif
 
 # --------------------------------------------
 
-RC5_OBJS =                    \
+COMMON_OBJS =                        \
 	$(OUTPUTPATH)/client.obj     \
 	$(OUTPUTPATH)/disphelp.obj   \
 	$(OUTPUTPATH)/autobuff.obj   \
@@ -47,9 +49,10 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/netinit.obj    \
 	$(OUTPUTPATH)/scram.obj      \
 	$(OUTPUTPATH)/mail.obj       \
-	$(OUTPUTPATH)/confmenu.obj  \
-	$(OUTPUTPATH)/confrwv.obj  \
-	$(OUTPUTPATH)/confopt.obj  \
+	$(OUTPUTPATH)/cpucheck.obj   \
+	$(OUTPUTPATH)/confmenu.obj   \
+	$(OUTPUTPATH)/confrwv.obj    \
+	$(OUTPUTPATH)/confopt.obj    \
 	$(OUTPUTPATH)/selftest.obj   \
 	$(OUTPUTPATH)/cmdline.obj    \
 	$(OUTPUTPATH)/clitime.obj    \
@@ -59,14 +62,11 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/buffwork.obj   \
 	$(OUTPUTPATH)/convdes.obj    \
 	$(OUTPUTPATH)/problem.obj    \
-	$(OUTPUTPATH)/des-x86.obj    \
-	$(OUTPUTPATH)/cpucheck.obj   \
 	$(OUTPUTPATH)/pathwork.obj   \
 	$(OUTPUTPATH)/cliident.obj   \
-	$(OUTPUTPATH)/lurk.obj \
+	$(OUTPUTPATH)/lurk.obj       \
 	$(OUTPUTPATH)/logstuff.obj   \
 	$(OUTPUTPATH)/buffupd.obj    \
-	$(OUTPUTPATH)/des-slice-meggs.obj \
 	$(OUTPUTPATH)/triggers.obj   \
 	$(OUTPUTPATH)/selcore.obj    \
 	$(OUTPUTPATH)/clirun.obj     \
@@ -74,12 +74,6 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/probman.obj    \
 	$(OUTPUTPATH)/probfill.obj   \
 	$(OUTPUTPATH)/bench.obj      \
-	$(OUTPUTPATH)/w32cons.obj    \
-	$(OUTPUTPATH)/w32sock.obj    \
-	$(OUTPUTPATH)/w32svc.obj     \
-	$(OUTPUTPATH)/w32pre.obj     \
-	$(OUTPUTPATH)/w32ras.obj     \
-	$(OUTPUTPATH)/w32util.obj     \
 	$(OUTPUTPATH)/console.obj    \
 	$(OUTPUTPATH)/setprio.obj    \
 	$(OUTPUTPATH)/modereq.obj    \
@@ -88,9 +82,49 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/util.obj       \
 	$(OUTPUTPATH)/base64.obj     \
 	$(OUTPUTPATH)/random.obj     \
+	$(OUTPUTPATH)/netres.obj
+
+PLAT_OBJS =                          \
+	$(OUTPUTPATH)/w32cons.obj    \
+	$(OUTPUTPATH)/w32sock.obj    \
+	$(OUTPUTPATH)/w32svc.obj     \
+	$(OUTPUTPATH)/w32pre.obj     \
+	$(OUTPUTPATH)/w32ras.obj     \
+	$(OUTPUTPATH)/w32ss.obj      \
+	$(OUTPUTPATH)/w32util.obj
+
+X86_OBJS =                           \
+	$(OUTPUTPATH)/x86ident.obj
+
+RC5_OBJS =                           \
+	$(OUTPUTPATH)/rg486.obj      \
+	$(OUTPUTPATH)/rg6x86.obj     \
+	$(OUTPUTPATH)/rc5-rgk5.obj   \
+	$(OUTPUTPATH)/rc5-rgk6.obj   \
+	$(OUTPUTPATH)/brfp5.obj      \
+	$(OUTPUTPATH)/rc5-rgp6.obj   \
+	$(OUTPUTPATH)/rc5mmx.obj
+				     
+DES_OBJS =                           \
+	$(OUTPUTPATH)/des-slice-meggs.obj \
+	$(OUTPUTPATH)/des-x86.obj    \
+	$(OUTPUTPATH)/bdeslow.obj    \
+	$(OUTPUTPATH)/bbdeslow.obj   \
+	$(OUTPUTPATH)/p1bdespro.obj  \
+	$(OUTPUTPATH)/p2bdespro.obj  \
+#       $(OUTPUTPATH)/sboxes-mmx.obj \
+#       $(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
+	$(OUTPUTPATH)/deseval-mmx.obj \
+	$(OUTPUTPATH)/deseval.obj    \
+	$(OUTPUTPATH)/des-slice.obj  \
+	$(OUTPUTPATH)/sboxes-kwan4.obj
+
+OGR_OBJS =                           \
 	$(OUTPUTPATH)/ogr.obj        \
 	$(OUTPUTPATH)/crc32.obj      \
-	$(OUTPUTPATH)/choosedat.obj  \
+	$(OUTPUTPATH)/choosedat.obj
+
+CSC_OBJS =                           \
 	$(OUTPUTPATH)/convcsc.obj    \
 	$(OUTPUTPATH)/csc-1k-i.obj   \
 	$(OUTPUTPATH)/csc-1k.obj     \
@@ -98,80 +132,57 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/csc-6b.obj     \
 	$(OUTPUTPATH)/csc-common.obj
 
-
-PREBUILT_OBJS =                   \
-	$(OUTPUTPATH)/rg486.obj   \
-	$(OUTPUTPATH)/rg6x86.obj  \
-	$(OUTPUTPATH)/rc5-rgk5.obj    \
-	$(OUTPUTPATH)/rc5-rgk6.obj    \
-	$(OUTPUTPATH)/brfp5.obj \
-	$(OUTPUTPATH)/rc5-rgp6.obj    \
-	$(OUTPUTPATH)/bdeslow.obj  \
-	$(OUTPUTPATH)/bbdeslow.obj \
-	$(OUTPUTPATH)/p1bdespro.obj  \
-	$(OUTPUTPATH)/p2bdespro.obj  \
-	$(OUTPUTPATH)/x86ident.obj  \
-#       $(OUTPUTPATH)/sboxes-mmx.obj \
-	$(OUTPUTPATH)/rc5mmx.obj \
-#       $(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
-	$(OUTPUTPATH)/deseval-mmx.obj \
-	$(OUTPUTPATH)/deseval.obj \
-	$(OUTPUTPATH)/des-slice.obj \
-	$(OUTPUTPATH)/sboxes-kwan4.obj
-
-RC5_LIBS = advapi32.lib user32.lib gdi32.lib
-
 # --------------------------------------------
 
-{$(PLATPATH)}.asm{$(OUTPUTPATH)}.obj:
+{$(X86SRCPATH)}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
 
-{$(DESPATH)/brydmasm}.asm{$(OUTPUTPATH)}.obj:
-	tasm32 /t /m /ml /i$(DESPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
+{$(DESSRCPATH)/brydmasm}.asm{$(OUTPUTPATH)}.obj:
+	tasm32 /t /m /ml /i$(DESSRCPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
 
-{$(DESPATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
-	nasmw -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\nasm\ $(**:/=\)
+{$(DESSRCPATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
+	nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\nasm\ $(**:/=\)
 
-{$(DESPATH)/mmx-bitslice}.asm{$(OUTPUTPATH)}.obj:
-	nasmw -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\mmx-bitslice\ $(**:/=\)
+{$(DESSRCPATH)/mmx-bitslice}.asm{$(OUTPUTPATH)}.obj:
+	nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\mmx-bitslice\ $(**:/=\)
 
-{$(RC5PATH)}.asm{$(OUTPUTPATH)}.obj:
+{$(RC5SRCPATH)}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
 
-{$(RC5PATH)/x86/nasm}.asm{$(OUTPUTPATH)}.obj:
-	nasmw -o $(@:/=\) -f win32 -i $(RC5PATH:/=\)\x86\nasm\ $(**:/=\)
-
-{$(PLATPATH)/win32cli}.cpp{$(OUTPUTPATH)}.obj:
+{$(DESSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
 
-{$(DESPATH)}.cpp{$(OUTPUTPATH)}.obj:
+{$(RC5SRCPATH)/x86/nasm}.asm{$(OUTPUTPATH)}.obj:
+	nasmw -o $(@:/=\) -f win32 -i $(RC5SRCPATH:/=\)\x86\nasm\ $(**:/=\)
+
+{$(OGRSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
 
-{$(OGRPATH)}.cpp{$(OUTPUTPATH)}.obj:
+{$(CSCSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
 
-{$(CSCPATH)}.cpp{$(OUTPUTPATH)}.obj:
+{$(PLATSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
 
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
 
-$(RC_FILE):
-	echo 1 ICON $(PLATPATH)\win32gui\cowhead.ico > $(@:/=\)
+#$(RC_FILE):
+#	echo 1 ICON $(PLATSRCPATH)\w32cons.ico > $(@:/=\)
 
 $(RES_FILE):    $(RC_FILE)
 	rc -d_Windows -d_M_IX86 -i $(COMMONPATH) -fo$@ $(**:/=\)
 
 # --------------------------------------------
 
-dnetc: $(RC5_OBJS) $(PREBUILT_OBJS) $(RES_FILE)
-	link $(OPTS_LINK) /OUT:$(EXENAME) $(RC5_LIBS) $**
+$(BASENAME): $(COMMON_OBJS) $(PLAT_OBJS) $(X86_OBJS) $(RC5_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
+	link $(OPTS_LINK) /OUT:$(BASENAME).exe $(OPTS_LIBS) $**
 
 clean:
-	del $(RC5_OBJS:/=\) $(RC_FILE:/=\) $(RES_FILE:/=\)
+	del $(OUTPUTPATH:/=\)\*.obj $(RC_FILE:/=\) $(RES_FILE:/=\)
 
 superclean: clean
-	del $(EXENAME) dnetc.ini buff-in.* buff-out.*
+	del $(BASENAME).exe $(BASENAME).ini buff-in.* buff-out.*
 
 rebuild: clean all
 
