@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.1 1999/06/07 00:20:43 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.2 1999/07/26 16:55:35 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -310,6 +310,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
                     unsigned load_problem_count, unsigned int *contest,
                     int *bufupd_pending )
 {
+  int work_was_reset = 0;
   WorkRecord wrdata;
   unsigned int norm_key_count = 0;
   int didload = 0, didrandom = 0;
@@ -361,8 +362,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
           {
              wrdata.work.crypto.keysdone.lo = 0;
              wrdata.work.crypto.keysdone.hi = 0;
-            //LogScreen("Read partial packet from another cpu/os/build.\n"
-            //                     "Marking entire packet as unchecked.\n");
+             work_was_reset = 1;
           }
           else if (((wrdata.work.crypto.iterations.lo) & 0x00000001L) == 1)
           {
@@ -477,32 +477,36 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
 
     if (load_problem_count <= COMBINEMSG_THRESHOLD)
     {
-      const char *cont_name = CliGetContestNameFromID(*contest);
-      unsigned int permille = (unsigned int)(thisprob->startpermille);
-
+      char msgbuf[80]; msgbuf[0] = '\0';
       switch (*contest) 
       {
         case RC5:
         case DES:
         case CSC:
         {
-          Log("Loaded %s%s %u*2^28 packet %08lX:%08lX%c(%u.%u0%% done)",
-                  cont_name, ((didrandom)?(" random"):("")), norm_key_count,
+          sprintf(msgbuf, "%s %u*2^28 packet %08lX:%08lX", 
+                  ((didrandom)?(" random"):("")), norm_key_count,
                   (unsigned long) ( wrdata.work.crypto.key.hi ),
-                  (unsigned long) ( wrdata.work.crypto.key.lo ),
-                  ((permille!=0 && permille<=1000)?(' '):(0)),
-                  (permille/10), (permille%10) );
+                  (unsigned long) ( wrdata.work.crypto.key.lo ) );
           break;
         }
         case OGR:
         {
-          Log("Loaded %s stub %s%c(%u.%u0%% done)",
-                  cont_name,
-                  ogr_stubstr(&wrdata.work.ogr.workstub.stub),
-                  ((permille!=0 && permille<=1000)?(' '):(0)),
-                  (permille/10), (permille%10) );
+          sprintf(msgbuf," stub %s", ogr_stubstr(&wrdata.work.ogr.workstub.stub) );
           break;
         }
+      }
+      if (msgbuf[0])
+      {
+        char perdone[48]; 
+        unsigned int permille = (unsigned int)(thisprob->startpermille);
+        perdone[0]='\0';
+        if (permille!=0 && permille<=1000)
+          sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
+        Log("Loaded %s%s%s\n%s",
+           CliGetContestNameFromID(*contest), msgbuf, perdone,
+             (work_was_reset ? ("Packet originated from a client "
+             "with another cpu/os/build.\n"):("")) );
       }
     } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
   } /* if (didload) */
