@@ -6,7 +6,7 @@
 //
 
 #ifndef __LURK_H__
-#define __LURK_H__ "@(#)$Id: lurk.h,v 1.21.2.5 2000/09/20 18:22:49 cyp Exp $"
+#define __LURK_H__ "@(#)$Id: lurk.h,v 1.21.2.6 2000/10/06 00:40:15 mfeiri Exp $"
 
 /* lurk: fetch/flush if modem goes online but also go online if fetch/flush needed */
 #define CONNECT_LURK         0x01 
@@ -75,7 +75,7 @@ protected:
   #ifndef CLIENT_OS /* catch static struct problems _now_ */
   #error "CLIENT_OS isn't defined yet. cputypes.h must be #included before lurk.h"
   #endif
-  #if (CLIENT_OS != OS_WIN16) /* win16 has no names, so can't track */
+  #if (CLIENT_OS != OS_WIN16) && (CLIENT_OS != OS_MACOS)
   #define LURK_MULTIDEV_TRACK
   #endif
   
