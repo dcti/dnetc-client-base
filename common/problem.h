@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.18  1998/08/05 16:42:15  cberry
+// ARM clients now define PIPELINE_COUNT=2
+//
 // Revision 1.17  1998/07/29 21:31:44  blast
 // Changed the default 68K cpu PIPELINE_COUNT for AmigaOS to 256...
 // Testing new core that's faster on 68060...
@@ -161,8 +164,8 @@ typedef enum
     #endif
   #endif
 #elif (CLIENT_CPU == CPU_ARM)
-  #if (PIPELINE_COUNT != 1)
-  #error "Expecting PIPELINE_COUNT=1"
+  #if (PIPELINE_COUNT != 2)
+  #error "Expecting PIPELINE_COUNT=2"
   #endif
   extern u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long t );
   extern u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, unsigned long t );
