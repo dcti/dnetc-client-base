@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.76 2001/04/15 14:41:16 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.77 2002/03/22 01:14:38 sampo Exp $"; }
 
 //#define TRACE
 
@@ -838,6 +838,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       if ( thisarg == NULL )
         ; //nothing
       else if (*thisarg == 0)
+        ; //nothing
+      else if ( strcmp( thisarg, "-" ) == 0 )
         ; //nothing
       else if ( strcmp( thisarg, "-c" ) == 0 ||
                 strcmp( thisarg, "-blsize" ) == 0 ||
