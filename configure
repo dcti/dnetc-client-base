@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.152  1999/01/02 09:49:24  cramer
+# Updated sparc-linux target and added sparc-linux-mt target (uses gcc)
+#
 # Revision 1.151  1999/01/01 02:45:14  cramer
 # Part 1 of 1999 Copyright updates...
 #
@@ -818,9 +821,17 @@ case "$1" in
 
     *sparc-linux)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -DPIPELINE_COUNT=2 -DKWAN -DBIT_32"
-	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
-	TARGET_LIBS="-ldl"
+	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -D__showids__ -DPIPELINE_COUNT=2 -DKWAN -DMEGGS -DBIT_32"
+	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
+	TARGET_LDFLAGS="-static"
+	;;
+
+    *sparc-linux-mt)
+	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -D__showids__ -DMULTITHREAD -DPIPELINE_COUNT=2 -DKWAN -DMEGGS -DBIT_32"
+	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
+	TARGET_LDFLAGS="-static"
+	TARGET_LIBS="-lpthread"
 	;;
 
     *sparc-linux-mt-egcs)
