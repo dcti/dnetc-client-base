@@ -1,5 +1,11 @@
 #
 # $Log: crunch_lintilla_296.ppc.s,v $
+# Revision 1.5  1999/12/27 12:19:40  patrick
+#
+# It's nice if someone fixes something, but here someone broke something. The
+# AIX loader insist on the '.' notation. Maybe you can call gas indirectly
+# as I do, GCC should remove the ifdefs (at least he does it for me).
+#
 # Revision 1.4  1999/12/06 18:47:42  cyp
 # fixed externs
 #
@@ -18,9 +24,17 @@
 gcc2_compiled.:
 # .csect	.text[PR]
 # .align 8
+#if (CLIENT_OS == OS_AIX)
+ .globl .crunch_lintilla
+#else
  .globl crunch_lintilla
- .type	 crunch_lintilla,@function
+#endif
+# .type  crunch_lintilla,@function
+#if (CLIENT_OS == OS_AIX)
+.crunch_lintilla:
+#else
 crunch_lintilla:
+#endif
 
 # standard register aliases
 .set r0, 0
