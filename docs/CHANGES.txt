@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.40 2000/04/05 00:40:41 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.41 2000/04/10 14:39:01 jlawson Exp $
 ==========================================================================
 
 2.8000
@@ -41,6 +41,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.40 2000/04/05 00:40:41 andreasb Exp
                  number of workunits to be fetched.
                  all: -b[in] <pn> <n> now clears time threshold for <pn>.
                  all: rotating projects before fetching disabled by default.
+                 all: will now flush to a proxy/server that is empty.
             fix: all: OGR -> RC5 / CSC -> RC5 switchover hang.
                  all: OGR nodecount network packet ordering fixed.
                  all: setting clock back during network ops could hang.
