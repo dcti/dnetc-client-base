@@ -8,7 +8,7 @@
 ;
 ; Based off the r72-ss2.asm core, by Ianos Gnatiuc <ssianky@hotmail.com>
 ; (r72-ss2 was based on r72-dg2 and r72ansi2 cores)
-; $Id: r72-snjl2.asm,v 1.1.2.2 2003/11/04 02:49:11 jlawson Exp $
+; $Id: r72-snjl2.asm,v 1.1.2.3 2003/11/04 05:21:10 jlawson Exp $
 
 [SECTION .text]
 BITS 64
@@ -18,8 +18,11 @@ BITS 64
 
 ;------------------------------------------------
 
+;; return codes passed back in eax.
 %define RESULT_NOTHING  1
 %define RESULT_FOUND    2
+
+;; number of pipelines (simultaneously checked keys) for this core.
 %define PIPES           2
 
 ;; magic constants for the RC5 algorithm
@@ -42,9 +45,8 @@ BITS 64
 %endmacro
 
 ;; local storage variables
-defwork S1_baseaddr,26
-%define S1(N)       [S1_baseaddr + (N)*4] 
-defwork work_iter,1
+defwork work_S1,26		; array (accessed via S1() macro)
+defwork work_iter,1		; iterations left to do before returning
 defwork work_L0hi,1
 defwork work_L0mid,1
 defwork work_L0lo,1
@@ -54,16 +56,15 @@ defwork save_r12,2
 defwork save_r13,2
 defwork save_r14,2
 defwork save_r15,2
-defwork work_Clo,1
-defwork work_Chi,1
-defwork work_Plo,1
-defwork work_Phi,1
+defwork work_Clo,1		; ciphertext lo
+defwork work_Chi,1		; ciphertext hi
+defwork work_Plo,1		; plaintext lo
+defwork work_Phi,1		; plaintext hi
 defwork S1_ROL3,1
 defwork S2_ROL3,1
 ;defwork L0_ROL,1
 ;defwork L1_ROL,1
-defwork S2_baseaddr,26
-%define S2(N)       [S2_baseaddr + (N)*4]
+defwork work_S2,26		; array (accessed via S2() macro)
 defwork S2_L1,1
 defwork RC5_72UnitWork,2	; 1st argument (64-bit pointer), passed in rdi
 defwork iterations,2		; 2nd argument (64-bit pointer), passed in rsi
@@ -81,6 +82,10 @@ defwork iterations,2		; 2nd argument (64-bit pointer), passed in rsi
 %define RC5_72UnitWork_CMCmid   rax + 36
 %define RC5_72UnitWork_CMClo    rax + 40
 
+;; convenience macros to index into the arrays.
+%define S1(N)       [work_S1 + (N)*4] 
+%define S2(N)       [work_S2 + (N)*4]
+	
 ;; 32-bit values saved in the extended general-purpose registers.
 %define L1_0    r8d 
 %define L1_1    r9d
@@ -218,20 +223,13 @@ _rc5_72_unit_func_snjl2:
     mov  [work_Clo],  edi
     mov  [work_iter], ecx
 
-;    mov  ebx, [RC5_72UnitWork_L0lo]
     mov  L1_0, [RC5_72UnitWork_L0lo]
-;    mov  esi, [RC5_72UnitWork_L0mid]
     mov  L1_1, [RC5_72UnitWork_L0mid]
-;    mov  edx, [RC5_72UnitWork_L0hi]
     mov  L1_2, [RC5_72UnitWork_L0hi]
 
-;    bswap ebx
-     bswap L1_0
-;    bswap esi
-     bswap L1_1
+    bswap L1_0
+    bswap L1_1
 
-;    mov  [work_L0lo],  ebx
-;    mov  [work_L0mid], esi
     mov  [work_L0lo], L1_0
     mov  [work_L0mid], L1_1
 
@@ -241,17 +239,13 @@ LOOP_LO_SS_2:
     ; S[0] = S0_ROL3
     ; L[0] = ROTL(L[0] + S[0], S[0]);
 
-;    mov  eax, [work_L0lo]
-;    bswap eax
-    bswap L1_0
+    mov eax,[work_L0lo]
+    bswap eax
 
-;    add  eax, S0_ROL3
-;    rol  eax, 0x1D
-    add  L1_0, S0_ROL3
-    rol  L1_0, 0x1D
+    add  eax, S0_ROL3
+    rol  eax, 0x1D
 
-;    mov  [L0_ROL], eax
-    mov  L0_ROL, L1_0
+    mov  L0_ROL, eax
 
     align 16
 LOOP_MID_SS_2:
@@ -260,7 +254,6 @@ LOOP_MID_SS_2:
     ; S[1] = ROTL3(S_not(1) + S[0] + L[0]);
     ; L[1] = ROTL(L[1] + S[1] + L[0], S[1] + L[0]);
 
-;    mov  eax, [L0_ROL]
     mov  eax, L0_ROL
     mov  ebx, [work_L0mid]
     mov  ecx, eax
@@ -274,7 +267,6 @@ LOOP_MID_SS_2:
 
     add  ebx, ecx
     rol  ebx, cl
-;    mov  [L1_ROL], ebx
     mov  L1_ROL, ebx
 
     ; S[2] = ROTL3(S_not(2) + S[1] + L[1])
@@ -311,11 +303,9 @@ LOOP_HI_SS_2:
     ; EAX - S1  ESI - L1
     ; EBX - S2  EDI - L2
     mov  esi, edx
-;    mov  eax, [L0_ROL]
     mov  eax, L0_ROL
     lea  edi, [edx+1]
     mov  ecx, [S2_L1]
-;    mov  ebx, [L1_ROL]
     mov  ebx, L1_ROL
 
     mov  L1_0, eax
