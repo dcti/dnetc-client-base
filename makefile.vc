@@ -97,9 +97,6 @@ RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
 {$(DESPATH)/brydmasm}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /i$(DESPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
 
-{$(DESPATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
-	nasm -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\nasm\ $(**:/=\)
-
 {$(DESPATH)/mmx-bitslice}.asm{$(OUTPUTPATH)}.obj:
 	nasm -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\mmx-bitslice\ $(**:/=\)
 
