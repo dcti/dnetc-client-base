@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.112  1998/07/30 02:18:18  blast
+// AmigaOS update
+//
 // Revision 1.111  1998/07/29 05:14:40  silby
 // Changes to win32 so that LurkInitiateConnection now works - required the addition of a new .ini key connectionname=.  Username and password are automatically retrieved based on the connectionname.
 //
@@ -92,7 +95,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.111 1998/07/29 05:14:40 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.112 1998/07/30 02:18:18 blast Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -268,7 +271,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.111 1998/07/29 05:14:40 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.112 1998/07/30 02:18:18 blast Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -298,10 +301,12 @@ return "@(#)$Id: client.cpp,v 1.111 1998/07/29 05:14:40 silby Exp $"; }
 
 // --------------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
-long __stack  = 65536L; // AmigaOS has no automatic stack extension
-                        // seems standard stack isn't enough
-#endif
+#if (CLIENT_OS == OS_AMIGAOS)
+#if (CLIENT_CPU == CPU_68K)
+long __near __stack  = 65536L;	// AmigaOS has no automatic stack extension
+			// seems standard stack isn't enough
+#endif // (CLIENT_CPU == CPU_68K)
+#endif // (CLIENT_OS == OS_AMIGAOS)
 
 #if (CLIENT_OS == OS_RISCOS)
 s32 guiriscos, guirestart;
