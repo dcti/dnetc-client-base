@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.126 1999/11/27 09:22:00 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.127 1999/11/28 07:05:02 sampo Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -96,6 +96,7 @@ extern "C" void riscos_upcall_6(void);
   #else
   extern "C" s32 rc5_unit_func_g1( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
   extern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
+  extern "C" s32 rc5_unit_func_vec( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
   #endif
   extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
 #elif (CLIENT_CPU == CPU_68K)
@@ -446,12 +447,37 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     }
     #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX)
     {
+      #if (CLIENT_OS == OS_MACOS)
+      static int detectedtype = -1;
+      if (detectedtype == -1)
+        detectedtype = GetProcessorType(1 /* quietly */);
+      switch (detectedtype) 
+      {
+         case 0:                  // PPC 601
+            coresel = 0;
+            problem->rc5_unit_func = rc5_unit_func_g1;
+            problem->pipeline_count = 1;
+            break;
+         default:
+         case 1:                  // PPC 603-750
+            coresel = 1;
+            problem->rc5_unit_func = rc5_unit_func_g2_g3;
+            problem->pipeline_count = 1;
+            break;
+         case 2:                  // AltiVec
+         	coresel = 2;
+            problem->rc5_unit_func = rc5_unit_func_vec;
+            problem->pipeline_count = 1;        	
+            break;
+      }
+      #else
       problem->rc5_unit_func = rc5_unit_func_g2_g3;
       problem->pipeline_count = 1;
       #if ((CLIENT_OS != OS_BEOS) || (CLIENT_OS != OS_AMIGAOS))
       if (coresel == 0)
         problem->rc5_unit_func = rc5_unit_func_g1;
       #endif
+      #endif /* OS_MACOS */
     }
     #elif (CLIENT_CPU == CPU_X86)
     {

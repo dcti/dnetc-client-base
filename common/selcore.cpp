@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.58 1999/11/23 15:41:38 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.59 1999/11/28 07:05:15 sampo Exp $"; }
 
 
 #include "cputypes.h"
@@ -160,6 +160,15 @@ static const char **__corenames_for_contest( unsigned int cont_i )
         corenames_table[DES][2] = "MMX bitslice"; 
         #endif
       }
+    }
+    #endif
+    #if (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_MACOS) // G4's are only in macs
+    {
+    	long det = GetProcessorType(1);
+		if(det == 2) {    	
+        	corenames_table[RC5][2] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
+        	corenames_table[RC5][3] = NULL;
+        }
     }
     #endif
     fixed_up = 1;  
@@ -456,6 +465,22 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     #elif (CLIENT_OS == OS_WIN32)
       //actually win32/ppc isn't supported, but just in case
       selcorestatics.corenum[RC5] = 1;
+    #elif (CLIENT_OS == OS_MACOS)
+      switch (detected_type)
+      {
+      	case 0:
+      		selcorestatics.corenum[RC5] = 0;	// PowerPC 601
+      		selcorestatics.corenum[CSC] = 1;	// 16k L1 instruction cache
+      		break;
+      	case 1:
+      		selcorestatics.corenum[RC5] = 1;	// PowerPC 603 through 750
+      		//selcorestatics.corenum[CSC] = 1;	// L1 cache 16-64k
+      		break;							   
+      	case 2:
+      		selcorestatics.corenum[RC5] = 2;	// PowerPC 7400
+      		//selcorestatics.corenum[CSC] = 0;	// L1 cache 64k
+      		break;
+      }
     #endif
   }
   #elif (CLIENT_CPU == CPU_X86)
