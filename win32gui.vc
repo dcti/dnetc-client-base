@@ -69,7 +69,6 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/scram.obj      \
 	$(OUTPUTPATH)/mail.obj       \
 	$(OUTPUTPATH)/confrwv.obj  \
-	$(OUTPUTPATH)/confmenu.obj  \
 	$(OUTPUTPATH)/confopt.obj  \
 	$(OUTPUTPATH)/pathwork.obj   \
 	$(OUTPUTPATH)/cliident.obj    \
@@ -79,7 +78,6 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/clicdata.obj   \
 	$(OUTPUTPATH)/triggers.obj   \
 	$(OUTPUTPATH)/buffwork.obj   \
-	$(OUTPUTPATH)/guistuff.obj   \
 	$(OUTPUTPATH)/modereq.obj    \
 	$(OUTPUTPATH)/clirun.obj     \
 	$(OUTPUTPATH)/pollsys.obj    \
@@ -88,8 +86,8 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/bench.obj      \
 	$(OUTPUTPATH)/setprio.obj    \
 	$(OUTPUTPATH)/console.obj    \
-	$(OUTPUTPATH)/w32svc.obj     \
-	$(OUTPUTPATH)/checkpt.obj \
+	$(OUTPUTPATH)/clievent.obj   \
+	$(OUTPUTPATH)/checkpt.obj    \
 	$(OUTPUTPATH)/x86ident.obj    \
 	$(OUTPUTPATH)/rc5-rgp6.obj    \
 	$(OUTPUTPATH)/rg486.obj   \
@@ -99,10 +97,10 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/rg6x86.obj  \
 	$(OUTPUTPATH)/rc5-rgk6.obj \
 	$(OUTPUTPATH)/rc5mmx.obj   \
-        $(OUTPUTPATH)/deseval.obj \
-        $(OUTPUTPATH)/des-slice.obj \
-        $(OUTPUTPATH)/sboxes-kwan4.obj \
-	$(OUTPUTPATH)/w32pre.obj   \
+	$(OUTPUTPATH)/deseval.obj \
+	$(OUTPUTPATH)/des-slice.obj \
+	$(OUTPUTPATH)/sboxes-kwan4.obj \
+#        $(OUTPUTPATH)/w32pre.obj   \
 	$(OUTPUTPATH)/guicons.obj \
 !ifndef WIN32S
 	$(OUTPUTPATH)/p2bdespro.obj \
