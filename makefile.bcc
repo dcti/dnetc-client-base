@@ -1,17 +1,12 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
-# $Id: makefile.bcc,v 1.23.2.23 2001/02/27 00:42:23 andreasb Exp $
+# $Id: makefile.bcc,v 1.23.2.24 2001/03/10 16:40:38 andreasb Exp $
 #
-# As of Feb 2000, Borland C++ 5.5 compiler is free for download.
+# As of Jul 2000, Borland C++ 5.5.1 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
-# ftp://ftpd.inprise.com/download/bcppbuilder/FreeCommandLineTools.exe
-#
-# Unfortunately, the Borland C++ 5.5 initial public release does not
-# include any of the include\*.rh files necessary to compile resources.
-# Workaround: unzip plat/win/bcc55-rh.zip to bccinstallpath\include.
-# The zip contains four one-line xxx.rh files including the xxx.h file.
-# This is enough to compile the client's .res file.
+# ftp://ftpd.inprise.com/download/bcppbuilder/freecommandLinetools.exe
+# ftp://ftpd.inprise.com/download/bcppbuilder/TurboDebugger.exe
 
 .autodepend
 
@@ -56,6 +51,11 @@ BCCOPTS = /v $(BCCOPTS) /DDEBUG /Tkh10000
 TASMOPTS = /zi $(TASMOPTS)
 TLINKOPTS = /v $(TLINKOPTS)
 NASMOPTS = $(NASMOPTS) -D__showids__
+!endif
+
+!ifdef BETA
+BCCOPTS = $(BCCOPTS) -DBETA
+NASMOPTS = $(NASMOPTS) -DBETA
 !endif
 
 
@@ -234,6 +234,7 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
 
 clean:
         @if exist $(OUTPUTPATH)\*.obj erase $(OUTPUTPATH)\*.obj 
+        @if exist $(OUTPUTPATH)\*.aobj erase $(OUTPUTPATH)\*.aobj 
         @if exist $(OUTPUTPATH)\*.res erase $(OUTPUTPATH)\*.res 
         @if exist $(DEF_FILE) erase $(DEF_FILE) 
         @if exist $(RES_FILE) erase $(RES_FILE)
