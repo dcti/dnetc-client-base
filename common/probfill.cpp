@@ -1,6 +1,6 @@
 /* Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.70 2000/01/04 01:31:37 michmarc Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.71 2000/01/04 12:12:34 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -19,7 +19,7 @@ return "@(#)$Id: probfill.cpp,v 1.70 2000/01/04 01:31:37 michmarc Exp $"; }
 #include "logstuff.h"  // Log()/LogScreen()
 #include "clitime.h"   // CliGetTimeString()
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
-#include "util.h"      // temporary home for ogr_stubstr()
+#include "util.h"      // ogr_stubstr(), __iter2norm()
 #include "random.h"    // Random()
 #include "selcore.h"   // selcoreSelectCore()
 #include "clisrate.h"  // CliGetMessageFor... et al.
@@ -44,10 +44,6 @@ return "@(#)$Id: probfill.cpp,v 1.70 2000/01/04 01:31:37 michmarc Exp $"; }
 #define COMBINEMSG_THRESHOLD 4 // anything above this and we don't show 
                                // individual load/save messages
 // =======================================================================   
-
-#define __iter2norm( iterlo, iterhi ) max(1, ((iterlo>>28)+(iterhi<<4)))
-
-/* ----------------------------------------------------------------------- */
 
 static const char *__WrapOrTruncateLogLine( char *buffer, int dowrap )
 {
@@ -190,8 +186,10 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 
         {
           unsigned long count;
-          GetBufferCount( client, cont_i, 1, &count );
-          if ((unsigned long)(count) >= (unsigned long)(client->outthreshold[*contest]))
+          if (GetBufferCount( client, cont_i, 1, &count ) < 0)
+	    count = 0;
+          if ((unsigned long)(count) >= 
+	      (unsigned long)(client->outthreshold[*contest]))
             *bufupd_pending |= BUFFERUPDATE_FLUSH;
         }
       }

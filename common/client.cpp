@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.239 2000/01/04 01:31:34 michmarc Exp $"; }
+return "@(#)$Id: client.cpp,v 1.240 2000/01/04 12:12:33 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -116,55 +116,56 @@ void ResetClientData(Client *client)
 
 // --------------------------------------------------------------------------
 
-int ClientGetInThreshold(Client *client, int contestid, bool force)
+static int __getinoutthreshold( Client *client, int contestid, 
+                                int get_in, int force)
 {
+  unsigned int sec; int proc, thresh;
+  
+  if (client->timethreshold[contestid] < 0)
+    client->timethreshold[contestid] = 0;
+  else if (client->timethreshold[contestid] > BUFTHRESHOLD_MAX)
+    return BUFTHRESHOLD_MAX; /* its going to be over this anyway */
+  
   if (client->timethreshold[contestid] == 0)
-    {
-    if (client->inthreshold[contestid] == -1)
+  {
+    thresh = client->inthreshold[contestid];
+    if (!get_in) /* get_out */
+      thresh = client->outthreshold[contestid];
+    if (thresh < 1)
       return BUFTHRESHOLD_DEFAULT;
-    else
-      return client->outthreshold[contestid];
-    }
+    if (thresh > BUFTHRESHOLD_MAX)
+      return BUFTHRESHOLD_MAX;  
+    return thresh;
+  }
 
   // We have a time limit
-  int proc = (client->numcpu == -1) ?
-             GetNumberOfDetectedProcessors() :
-             client->numcpu;
-  if (proc <= 0) proc = 1;
 
-  unsigned int sec = CliGetContestWorkUnitSpeed(contestid, force);
+  /* - note that we do not use client->numcpu here: If MP isn't supported */
+  /* then numcpu is 1 anyway. And, yes, the client _does_ assume that */
+  /* GetNumberOfDetectedProcessors() is valid for clients that support MP */
+  proc = GetNumberOfDetectedProcessors();
+  if (proc <= 0)
+    proc = 1;
+
+  // get the speed
+  sec = CliGetContestWorkUnitSpeed(contestid, force);
   if (sec == 0)
+  {
+    if (!get_in) /* get_out */
+      return BUFTHRESHOLD_MAX;  /* Don't connect unncessesarily */
     return proc;  /* Just make sure we have one unit for each CPU */
+  }    
   
-  int rv = 1 + client->timethreshold[contestid]*3600*proc/sec;
-  return (rv > MAXBLOCKSPERBUFFER) ? MAXBLOCKSPERBUFFER : rv;
-};
-
-// --------------------------------------------------------------------------
-
-int ClientGetOutThreshold(Client *client, int contestid, bool force)
-{
-  if (client->timethreshold[contestid] == 0)
-    {
-    if (client->outthreshold[contestid] == -1)
-      return BUFTHRESHOLD_DEFAULT;
-    else
-      return client->outthreshold[contestid];
-    }
-
-  // We have a time limit
-  unsigned int sec = CliGetContestWorkUnitSpeed(contestid, force);
-  if (sec == 0)
-    return MAXBLOCKSPERBUFFER;  /* Don't connect unncessesarily */
-  
-  int proc = (client->numcpu == -1) ?
-             GetNumberOfDetectedProcessors() :
-             client->numcpu;
-  if (proc <= 0) proc = 1;
-
-  int rv = 1 + client->timethreshold[contestid]*3600*proc/sec;
-  return (rv > MAXBLOCKSPERBUFFER) ? MAXBLOCKSPERBUFFER : rv;
-};
+  thresh = 1 + (client->timethreshold[contestid] * 3600 * proc/sec);
+  if (thresh > BUFTHRESHOLD_MAX)
+    thresh = BUFTHRESHOLD_MAX;
+  return thresh;
+}      
+    
+int ClientGetInThreshold(Client *client, int contestid, int force)
+{ return __getinoutthreshold( client, contestid, 1, force ); }
+int ClientGetOutThreshold(Client *client, int contestid, int force)
+{ return __getinoutthreshold( client, contestid, 0, force ); }
 
 // --------------------------------------------------------------------------
 
@@ -178,7 +179,7 @@ static const char *GetBuildOrEnvDescription(void)
   */
 #if (CLIENT_OS == OS_DOS)
   return dosCliGetEmulationDescription(); //if in win/os2 VM
-#elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
+#elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16))
   static char buffer[32]; long ver = winGetVersion(); /* w32pre.cpp */
   sprintf(buffer,"Windows%s %u.%u", (ver>=2000)?("NT"):(""), (ver/100)%20, ver%100 );
   return buffer;
@@ -441,7 +442,7 @@ int main( void )
   ClientMain(1,argv);
   return 0;
 }
-#elif (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
+#elif (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* parse the command line and call the bootstrap */
   TRACE_OUT((+1,"WinMain()\n"));

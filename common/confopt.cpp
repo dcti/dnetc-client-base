@@ -1,17 +1,17 @@
 /* 
- * Copyright distributed.net 1997-1998 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.45 2000/01/04 01:31:36 michmarc Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.46 2000/01/04 12:12:34 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
 #include "cputypes.h" // CLIENT_OS
 #include "pathwork.h" // EXTN_SEP
 #include "baseincs.h" // NULL
-#include "client.h"   // MAXBLOCKSPERBUFFER etc
+#include "client.h"   // BUFTHRESHOLD_MAX etc
 #include "confopt.h"  // ourselves
 
 /* ----------------------------------------------------------------------- */
@@ -206,12 +206,12 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "be updated frequently while a connection is detected.\n" 
   ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL},
 //19
-{ CFGTXT("Preferred packet size (2^X keys/packet)"), _T(PREFERREDBLOCKSIZE_DEFAULT) " (default)",
+{ CFGTXT("Preferred packet size (2^X keys/packet)"), _TEXTIFY(PREFERREDBLOCKSIZE_DEFAULT) " (default)",
   /* CFGTXT( */
   "When fetching key-based packets from a server, the client will request\n"
   "packets with the size you specify in this option. Packet sizes are\n"
   "specified as powers of 2.\n"
-  "The minimum and maximum packet sizes are " _T(PREFERREDBLOCKSIZE_MIN) " and " _T(PREFERREDBLOCKSIZE_MAX) " respectively.\n"
+  "The minimum and maximum packet sizes are " _TEXTIFY(PREFERREDBLOCKSIZE_MIN) " and " _TEXTIFY(PREFERREDBLOCKSIZE_MAX) " respectively.\n"
   "Note: the number you specify is the *preferred* size. Although the\n"
   "keyserver will do its best to serve that size, there is no guarantee that\n"
   "it will always do so.\n"
@@ -222,7 +222,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   #endif
   /*)*/,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,PREFERREDBLOCKSIZE_MIN,PREFERREDBLOCKSIZE_MAX,NULL,NULL},
 //20
-{ CFGTXT("Fetch:flush work unit threshold"), "-1 (use default size, or determine from time threshold)",
+{ CFGTXT("Fetch:flush work threshold"), "-1 (default size or determine from time threshold)",
   CFGTXT(
   "This option specifies how many work units your client will buffer between\n"
   "communications with a keyserver. When the number of work units in the\n"
@@ -230,12 +230,16 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "fill the input buffer to the threshold, and send in all completed work\n"
   "units. Keep the number of workunits to buffer low if you have a fixed\n"
   "connection to the internet, or the cost of your dialup connection is\n"
-  "negligible.  Thresholds as displayed here are in the form \"fetch:flush\","
-  "and the 'flush\n setting' defaults to the 'fetch setting' if not\n"
-  "explicitely set.  A value of -1 indicates that a time threshold will be\n"
-  "used instead, or that the default buffer size of " _T(BUFTHRESHOLD_DEFAULT) "\n"
+  "negligible.  Thresholds as displayed here are in the form \"fetch:flush\",\n"
+  "and the 'flush setting' defaults to the 'fetch setting' if not\n"
+  "explicitely set.\n"
+  "\n"
+  "A value of -1 indicates that a time threshold will be used instead. If the\n"
+  "time threshold is also disabled, the client will use work unit thresholds\n"
+  "with default values.\n"
+  "\n"
   "You may also force a buffer exchange by starting the client with -update.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,-1,MAXBLOCKSPERBUFFER,NULL,NULL},
+  ),CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,-1,BUFTHRESHOLD_MAX,NULL,NULL},
 //21
 { CFGTXT("Fetch:flush time threshold (in hours)"), "0 (disabled)",
   "This option specifies that instead of fetching a specific number of\n"
@@ -244,7 +248,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "the work unit threshold option to be constantly recalculated based on the\n"
   "current speed of your client on your machine.\n\n"
   "For fixed (static) connections, you should set this to a low value, like\n"
-  "six to twelve hours.  For dialup connections, set this based on how often\n"
+  "three to six hours.  For dialup connections, set this based on how often\n"
   "you connect to the network.\n"
 #ifdef HAVE_OGR_CORES
   "\nCurrently not implemented for OGR because the amount of work in an\n"
@@ -284,7 +288,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "The priority option is ignored on this machine. The distributed.net client\n"
   "for "CLIENT_OS_NAME" dynamically adjusts its process priority.\n"
   )
-#elif (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S) //||(CLIENT_OS==OS_WIN32)
+#elif (CLIENT_OS==OS_WIN16) //|| (CLIENT_OS==OS_WIN32)
   CFGTXT(
   "The priority option is ignored on this machine. distributed.net clients\n"
   "for Windows always run at lowest ('idle') priority.\n"

@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.25 2000/01/04 01:31:33 michmarc Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.26 2000/01/04 12:12:33 cyp Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
@@ -167,7 +167,7 @@ int CliAddContestInfoSummaryData( int contestid, unsigned int *addblocks,
 // returns the expected time to complete a work unit, in seconds
 // if force is true, then a microbenchmark will be done to get the
 // rate if no work on this contest has been completed yet.
-int CliGetContestWorkUnitSpeed( int contestid, bool force)
+int CliGetContestWorkUnitSpeed( int contestid, int force)
 {
   struct contestInfo *conInfo =
                        __internalCliGetContestInfoVectorForID( contestid );
@@ -175,23 +175,23 @@ int CliGetContestWorkUnitSpeed( int contestid, bool force)
     return 0;
 
   if ((conInfo->BestTime == 0) && force)
-    {
+  {
     // This may trigger a mini-benchmark, which will get the speed
     // we need and not waste time.
     selcoreGetSelectedCoreForContest( contestid );
 
     if (conInfo->BestTime == 0)
       TBenchmark(contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK);
-    }
+  }
 
   return conInfo->BestTime;
-};
+}
 
 // ---------------------------------------------------------------------------
 
 // sets a possible new value for best time; returns true
 // if this speed was a new record
-bool CliSetContestWorkUnitSpeed( int contestid, unsigned int sec)
+int CliSetContestWorkUnitSpeed( int contestid, unsigned int sec)
 {
   struct contestInfo *conInfo =
                        __internalCliGetContestInfoVectorForID( contestid );
@@ -199,13 +199,13 @@ bool CliSetContestWorkUnitSpeed( int contestid, unsigned int sec)
     return false;
 
   if ((conInfo->BestTime == 0) || (conInfo->BestTime > sec))
-    {
+  {
     conInfo->BestTime = sec;
     return true;
-    };
+  }
 
   return false;
-};
+}
     
 // ---------------------------------------------------------------------------
 

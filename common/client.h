@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1998 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.142 2000/01/04 01:31:34 michmarc Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.143 2000/01/04 12:12:33 cyp Exp $"
 
 
 enum {
@@ -39,11 +39,11 @@ typedef struct
 # pragma pack()
 #endif /* ! MIPSpro */
 
-#define __T(x) #x
-#define _T(x) __T(x)
+#define __TEXTIFY(x) #x
+#define _TEXTIFY(x) __TEXTIFY(x)
 
-#define MAXBLOCKSPERBUFFER             2000  /* Now in work units */
-#define BUFTHRESHOLD_DEFAULT             25  /* Now in work units */
+#define BUFTHRESHOLD_MAX               2000  /* Now in work units */
+#define BUFTHRESHOLD_DEFAULT             24  /* Now in work units */
 #define PREFERREDBLOCKSIZE_DEFAULT       30
 #define PREFERREDBLOCKSIZE_MIN           28
 #define PREFERREDBLOCKSIZE_MAX           33
@@ -54,7 +54,7 @@ typedef struct
 struct membuffstruct 
 { 
   unsigned long count; 
-  WorkRecord *buff[MAXBLOCKSPERBUFFER];
+  WorkRecord *buff[BUFTHRESHOLD_MAX];
 };
 
 typedef struct
@@ -128,8 +128,8 @@ public:
 } Client;
 
 void ResetClientData(Client *client); /* reset everything */
-int ClientGetInThreshold(Client *client, int contestid, bool force = false);
-int ClientGetOutThreshold(Client *client, int contestid, bool force = false);
+int ClientGetInThreshold(Client *client, int contestid, int force = 0 );
+int ClientGetOutThreshold(Client *client, int contestid, int force = 0 );
 int ClientRun(Client *client);  /* run the loop, do the work */
 
 #endif /* __CLIENT_H__ */

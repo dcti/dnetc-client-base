@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.46 2000/01/04 01:31:33 michmarc Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.47 2000/01/04 12:12:32 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -85,8 +85,6 @@ static double __calc_rate( unsigned int contestid,
   const char *rateunit = "";
   double keysdone = (double)keysdone_already_lo + 
                     (double)keysdone_already_hi * 4294967296.0 /* 2^32 */;
-  unsigned int workunitsec = 0;
-
   corecpu = corecpu; /* unused */
   
   switch (contestid)
@@ -152,6 +150,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   const char *contname;
   struct timeval totalruntime;
   u32 keysdone_hi, keysdone_lo;
+  unsigned int workunitsec = 0;
 
   contname = CliGetContestNameFromID(contestid);
   if (!contname)
@@ -412,7 +411,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 
   delete problem;
   
-  unsigned int workunitsec;
+  workunitsec = 0;
   switch (contestid)
   {
     case RC5:

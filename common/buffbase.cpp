@@ -1,18 +1,18 @@
 /* 
- * Copyright distributed.net 1997 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.22 2000/01/04 01:31:33 michmarc Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.23 2000/01/04 12:12:32 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
 #include "baseincs.h" //basic #includes
 #include "network.h"  //ntohl(), htonl()
-#include "util.h"     //IsFilenameValid(), DoesFileExist()
+#include "util.h"     //IsFilenameValid(), DoesFileExist(), __iter2norm()
 #include "clievent.h" //event stuff
 #include "clicdata.h" //GetContestNameFromID() 
 #include "logstuff.h" //Log()/LogScreen()/LogScreenPercent()/LogFlush()
@@ -22,7 +22,6 @@ return "@(#)$Id: buffbase.cpp,v 1.22 2000/01/04 01:31:33 michmarc Exp $"; }
 #include "probfill.h"
 #include "buffupd.h"  // BUFFERUPDATE_FETCH / BUFFERUPDATE_FLUSH
 #include "buffbase.h" //ourselves
-#define __iter2norm( iterlo, iterhi ) max(1, ((iterlo >> 28) + (iterhi << 4)))
 
 /* --------------------------------------------------------------------- */
 
@@ -36,11 +35,11 @@ static int BufferPutMemRecord( struct membuffstruct *membuff,
   if (membuff->count == 0)
   {
     unsigned int i;
-    for (i = 0; i < MAXBLOCKSPERBUFFER; i++)
+    for (i = 0; i < BUFTHRESHOLD_MAX; i++)
       membuff->buff[i]=NULL;
   }
 
-  if (membuff->count < MAXBLOCKSPERBUFFER)
+  if (membuff->count < BUFTHRESHOLD_MAX)
   {
     dest = (WorkRecord *)malloc(sizeof(WorkRecord));
     if (dest != NULL)
@@ -149,7 +148,7 @@ static int BufferCountMemRecords( struct membuffstruct *membuff,
 
 int GetFileLengthFromStream( FILE *file, u32 *length )
 {
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S)
+  #if (CLIENT_OS == OS_WIN32)
     u32 result = (u32) GetFileSize((HANDLE)_get_osfhandle(fileno(file)),NULL);
     if (result == 0xFFFFFFFFL) return -1;
     *length = result;
@@ -205,7 +204,7 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
   #define BUFFERCREATE( fn )   fopen( fn, "wb" )
 #elif ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
        (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_OS2) || \
-       (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S))
+       (CLIENT_OS == OS_WIN16))
   #define ftruncate(h,sz) chsize(h,sz)
   #define BUFFERCREATE( fn ) fopen( fn, "wb" )
   static FILE *BUFFEROPEN(const char *fn) 
@@ -667,14 +666,14 @@ static int __CheckBuffLimits( Client *client )
   {
     if ( ((int)(client->inthreshold[i])) < 1 )
       client->inthreshold[i] = -1;
-    else if ( ((int)(client->inthreshold[i])) > (int)MAXBLOCKSPERBUFFER)
-      client->inthreshold[i] = MAXBLOCKSPERBUFFER;
+    else if ( ((int)(client->inthreshold[i])) > (int)BUFTHRESHOLD_MAX)
+      client->inthreshold[i] = BUFTHRESHOLD_MAX;
     if ( ((int)(client->outthreshold[i])) < 1 )
       client->outthreshold[i] = -1;
     else if ( client->inthreshold[i] == -1)
        {
-       if ( client->outthreshold[i] > MAXBLOCKSPERBUFFER )
-         client->outthreshold[i] = MAXBLOCKSPERBUFFER;
+       if ( client->outthreshold[i] > BUFTHRESHOLD_MAX )
+         client->outthreshold[i] = BUFTHRESHOLD_MAX;
        }
     else if ( client->outthreshold[i] > client->inthreshold[i])
       client->outthreshold[i] = client->inthreshold[i];

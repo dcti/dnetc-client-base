@@ -1,5 +1,5 @@
 /* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.71 2000/01/04 01:31:38 michmarc Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.72 2000/01/04 12:12:35 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -703,15 +703,12 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     selcorestatics.corenum[contestid] = 0;
     if (corecount > 0)
     {
-      int whichcrunch;
-      int saidmsg = 0, fastestcrunch = -1;
-      int fasttime = 0;
-      const u32 benchsize = 100000;
-      Problem *problem = new Problem();
+      int whichcrunch, saidmsg = 0, fastestcrunch = -1;
+      unsigned long fasttime = 0;
 
       for (whichcrunch = 0; whichcrunch < corecount; whichcrunch++)
       {
-        int rate;
+        long rate;
         selcorestatics.corenum[contestid] = whichcrunch;
         if (!saidmsg)
         {
@@ -724,14 +721,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 #ifdef DEBUG
           LogScreen("%s Core %d: %d keys/sec\n", contname,whichcrunch,rate);
 #endif
-          if (fastestcrunch < 0 || rate > fasttime)
+          if (fastestcrunch < 0 || ((unsigned long)rate) > fasttime)
           {
             fasttime = rate;
             fastestcrunch = whichcrunch; 
-          };
-        };
+          }
+        }
       }
-      delete problem;
 
       if (fastestcrunch < 0) /* all failed */
         fastestcrunch = 0; /* don't bench again */
