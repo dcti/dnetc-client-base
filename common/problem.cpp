@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177 2002/10/24 00:15:22 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.178 2002/11/10 20:49:35 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -817,7 +817,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
       //determine starting key number. accounts for carryover & highend of keysdone
       thisprob->priv_data.rc5unitwork.L0.hi =
           thisprob->priv_data.contestwork.crypto.key.hi +
-          thisprob->priv_data.contestwork.crypto.keysdone.hi +
+          thisprob->priv_data.contestwork.crypto.keysdone.hi;
       thisprob->priv_data.rc5unitwork.L0.lo =
           thisprob->priv_data.contestwork.crypto.key.lo +
           thisprob->priv_data.contestwork.crypto.keysdone.lo;
