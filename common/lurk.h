@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.h,v $
+// Revision 1.8  1999/01/27 19:32:09  patrick
+//
+// changed to work with OS2-EMX
+//
 // Revision 1.7  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -19,6 +23,7 @@
 #define __LURK_H__
 
 #include "cputypes.h"
+//#if ( (CLIENT_OS == OS_OS2) && !defined(__EMX__) ) || (CLIENT_OS == OS_WIN32)
 #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
 
 #ifndef LURK
@@ -39,8 +44,19 @@ s32 lurkmode;
 s32 dialwhenneeded;
   // 0 = Don't dial, let autodial handle it or fail
   // 1 = Have the client manually dial/hangup when a flush happens.
+#if (CLIENT_OS == OS_WIN32)
 char connectionname[100];
   // For win32, name of connection to use, perhaps useful for other lurkers.
+#elif (CLIENT_OS == OS_OS2)
+
+// used for the defaults
+char *Lurk_Cmd, *Lurk_Start, *Lurk_Stop;
+
+int     Sleeptime;           // time to wait until connection is expected to be up
+int     Retry;               // number of times to try to connect  
+char  **commandline[20];     // maybe we should make this dynamic as soon as
+                             // we read the ini file
+#endif
 
 Lurk();
 

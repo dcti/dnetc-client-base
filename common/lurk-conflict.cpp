@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk-conflict.cpp,v $
+// Revision 1.14  1999/01/27 19:31:39  patrick
+//
+// changed to work with OS2-EMX
+//
 // Revision 1.13  1999/01/01 10:09:07  silby
 // Changed logic in CheckIfConnectRequested to make slightly more sense.
 //
@@ -36,7 +40,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.13 1999/01/01 10:09:07 silby Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.14 1999/01/27 19:31:39 patrick Exp $"; }
 #endif
 
 /* --------------------------------- */
@@ -126,10 +130,15 @@ static FARPROC LoadRASAPIProc( const char *procname )
 
 /* ---------------------------------------------------------- */
 
-
-
-
-#endif
+#elif (CLIENT_OS == OS_OS2) && defined(__EMX__)
+  #define TCPIPV4               //should also work with V3 though
+  #include  <net/if.h>          // ifmib
+  #include  <sys/process.h>     // P_NOWAIT, spawnl()
+  #ifndef SIOSTATIF
+  #define SIOSTATIF         _IOR('n', 48, char /*struct ifmib*/)
+				// in the OS2 TCPIP Toolkit        
+  #endif
+#endif  //(CLIENT_OS ...)
 
 /* ========================================================== */
 
@@ -138,6 +147,13 @@ Lurk::Lurk()  // Init lurk internal variables
 {
   islurkstarted=0;
   oldlurkstatus=0;
+  #if (CLIENT_OS == OS2)
+  Sleeptime = 60;
+  Retry = 3;
+  Lurk_Cmd =  "rc5dial.cmd";
+  Lurk_Start = "start";
+  Lurk_Stop = "stop";
+  #endif
 }
 
 /* ---------------------------------------------------------- */
@@ -350,6 +366,17 @@ s32 Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
     lurkmode = 0;
     return -1;
     }
+  #elif (CLIENT_OS == OS2)
+    // here we should read what pgm to start (and check the values)
+    // currently this is hardcoded in start and stop. We only check wether
+    // the program exist here
+    if(!access(Lurk_Cmd, R_OK)) {
+       LogScreen("Could not find %s to initiate/end Dial-up connection.\n"\
+                 "See README.TXT for details", Lurk_Cmd);
+       return -1;
+       }
+    Lurk_Cmd[Switch_Cmd++]=' ';         // add a space
+    Lurk_Cmd[Switch_Cmd]='\0';
   #endif
   
   islurkstarted=1;
@@ -410,8 +437,30 @@ s32 Lurk::Status(void)// Checks status of connection
       }
     }
 #elif (CLIENT_OS == OS_OS2)
-  DialOnDemand dod;       // just used to check online status for lurk
-  return dod.rweonline();
+   {
+   int s, rc, i;
+   struct ifmib MyIFMib = {0};
+
+   s = socket(PF_INET, SOCK_STREAM, 0);
+   rc = ioctl(s, SIOSTATIF, (char *)&MyIFMib, sizeof(MyIFMib));
+   #ifdef __EMX__
+   close(s);
+   #else
+   soclose(s);
+   #endif
+   
+   // check for an interface of type SLIP or PPP
+   for(i = 0; i < IFMIB_ENTRIES; i++)
+      {
+      if(MyIFMib.iftable[i].ifType != 0)
+         switch(MyIFMib.iftable[i].ifType)
+            {
+            case HT_SLIP:
+            case HT_PPP:
+               return 1;      // Report online if SLIP or PPP detected
+            }
+      }
+   }
 #endif
 return 0;// Not connected
 }
@@ -484,6 +533,19 @@ s32 Lurk::InitiateConnection(void)
   
   rasgeterrorstring(returnvalue,errorstring,sizeof(errorstring));
   LogScreen("There was an error initiating a connection: %s\n",errorstring);
+
+  #elif (CLIENT_OS == OS_OS2)
+  
+  int i;
+  // next line should be the retry value from config(patrick)
+  i=3;
+  do {
+     spawnl( P_NOWAIT, "startDOD.cmd", (char *)NULL );
+     sleep( Sleeptime );     // there has to be a way to do a 'faster' check
+     if (Status() == 1) {
+                return 1;
+     } /* endif */
+  } while ( --i ); /* enddo */
   #endif
 
   return -1; //failed
@@ -532,6 +594,10 @@ s32 Lurk::TerminateConnection(void)
         }
       }
     }
+  #elif (CLIENT_OS == OS_OS2)
+  // this should be from config ! (patrick)
+  spawnl( P_NOWAIT, "stopDOD.cmd", (char *)NULL );
+   
   #endif  
   return 0;
 }
