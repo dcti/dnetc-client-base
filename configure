@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.15 1999/07/15 20:56:45 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.16 1999/07/15 21:11:13 cyp Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -1776,6 +1776,9 @@ if [ "X$TARGET_TARBALL" != "X" ]; then
     echo "	echo \"${TARGET_TARBALL_COMMENT}\">rc5des\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
   fi
   echo "	sh ./upload.sh rc5des\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
+  if [ "X$TARGET_TARBALL_COMMENT" != "X" ]; then
+    echo "	rm -f rc5des\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
+  fi
 fi  
 echo "" >> Makefile
 
