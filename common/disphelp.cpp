@@ -1,13 +1,24 @@
+// Hey, Emacs, this a -*-C++-*- file !
+
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.21  1998/06/22 00:41:37  cyruspatel
+// What started out as an intension to add two fflush()es turned into a four
+// hour journey through hell :). Redirection is now handled properly and AFAIK
+// thoroughly (not that anyone cares). Added --More-- type listing for people
+// who don't like less (or when stdout is not a tty). If you don't like that
+// either, then define NOMORE. And (I almost forgot) added two fflush()es.
+//
 // Revision 1.20  1998/06/21 02:41:53  silby
-// This is a much improved way of disabling the pager.  It looks decent. :)
+// This is a much improved way of disabling the pager. It looks decent. :)
 //
 // Revision 1.19  1998/06/21 02:36:26  silby
-// Made changes so that the help display would detect if it was piped and not wait for user input.  It's ugly and could use work, but it prevents the former problem of the help screen appearing to lock up.
+// Made changes so that the help display would detect if it was piped and 
+// not wait for user input.  It's ugly and could use work, but it prevents 
+// the former problem of the help screen appearing to lock up.
 //
 // Revision 1.18  1998/06/15 12:03:58  kbracey
 // Lots of consts.
@@ -29,30 +40,35 @@
 //
 // call DisplayHelp() from main with the 'unrecognized option' argv[x]
 // or NULL or "-help" or "help" (or whatever)
+//
 
-static const char *id="@(#)$Id: disphelp.cpp,v 1.20 1998/06/21 02:41:53 silby Exp $";
+#if (!defined(lint) && defined(__showids__))
+static const char *id="@(#)$Id: disphelp.cpp,v 1.21 1998/06/22 00:41:37 cyruspatel Exp $";
+#endif
 
 #include "client.h"
 
+// --------------------------------------------------------------------------
 
-//#define NOPAGER        // define if you don't like the built-in pager
+//#define NOLESS // (aka NOPAGER) define if you don't like less (+/- paging)
+//#define NOMORE // define this if you don't like --More--
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BEOS)
 #include <termios.h>
 #define TERMIOSPAGER
 #endif
 
-
 // --------------------------------------------------------------------------
 
-#if !defined(NOCONFIG) && !defined(NOPAGER)
 // read a single keypress, without waiting for an Enter if possible
 static int readkeypress()
 {
   int ch;
-
-#if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || \
-  (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_NETWARE)
+#if (defined(NOCONFIG) || (defined(NOLESS) && defined(NOMORE)))
+  ch = -1;  // actually nothing. function never gets called.
+#elif (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || \
+  (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || \
+  (CLIENT_OS == OS_NETWARE)
   ch = getch();
   if (!ch) ch = (getch() << 8);
 #elif (CLIENT_OS == OS_RISCOS)
@@ -84,7 +100,6 @@ static int readkeypress()
 
   return ch;
 }
-#endif
 
 // --------------------------------------------------------------------------
 
@@ -122,9 +137,11 @@ void Client::DisplayHelp( const char * unrecognized_option )
   "-e <address>       the email id by which you are known to distributed.net",
   "-nice <[0-2]>      niceness",
   "-c <cputype>       cpu type (run -config for a list of valid cputype numbers)",
-#if defined(MULTITHREAD)
-  "-numcpu <n>        run simultaneously on <n> CPUs",
-#endif
+  "-numcpu <n>        run simultaneously on <n> CPUs"
+                      #ifndef MULTITHREAD
+                      " (ignored on this platform)"
+                      #endif
+                      "",
   "-h <hours>         time limit in hours",
   "-n <count>         blocks to complete",
   "-until <HHMM>      quit at HHMM (eg 0700)",
@@ -194,33 +211,65 @@ void Client::DisplayHelp( const char * unrecognized_option )
   int startline, maxscreenlines, maxpagesize;
   char whoami[64];
 
-  if (unrecognized_option && *unrecognized_option)
-  {
-    bool done = false;
-    for (int i = 0; i < (int) (sizeof(valid_help_requests)/sizeof(char *)); i++)
+  int nostdin, forcenopagemode = 0; //forcenopagemode is "--More--" mode
+  FILE *outstream, *teestream;
+
+  #if defined(NOLESS) || defined(NOPAGER) // fyi: noless was previously 
+    forcenopagemode = 1;                  // called nopager
+  #endif
+  
+  nostdin = (!isatty(fileno(stdin))); //may not work for </dev/nul
+  outstream = stdout;
+  if (isatty(fileno(outstream))) //normal mode
     {
-      if (strcmpi(unrecognized_option,valid_help_requests[i]) == 0)
-      {
-        done = true;
-        break;
-      }
+    teestream = NULL;
     }
-    if (!done)
+  else if (isatty(fileno(stderr))) // could dup() but thats not supported 
+    {                              // everywhere
+    teestream = outstream; //stdout
+    outstream = stderr;
+    forcenopagemode = 1;  //paging works, but turn it off 
+    }                     //for aesthetic reasons. :)
+  else //neither is a tty, so leave outstream==stdout and turn off paging
     {
-      printf( "\nUnrecognized option '%s'\n", unrecognized_option);
-#if !defined(NOPAGER)
-      printf( "Press enter/space to display a list of valid command line\n"
-              "options or press any other key to quit... ");
-      if (!isatty(fileno(stdout))) ; // nobody can hear us!
-      else 
+    nostdin = 1;
+    teestream = NULL;
+    }
+
+  sprintf(whoami, "RC5DES v2.%d.%d client - a project of distributed.net",
+                  CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC );
+  helpheader[0] = whoami;
+
+  if (unrecognized_option && *unrecognized_option)
+    {
+    int found = 0;
+    for (int i = 0; ((!found) && (i < (int)
+         (sizeof(valid_help_requests)/sizeof(char *)))); i++)
+      found = (strcmpi(unrecognized_option,valid_help_requests[i]) == 0);
+    if (!found)
+      {
+      fprintf( outstream, "\nUnrecognized option '%s'\n", unrecognized_option);
+      if (teestream)
+        fprintf( teestream, "\nUnrecognized option '%s'\n", unrecognized_option);
+      char *msg = "\n\nThe following list may be obtained at any time by "
+                  "running\nthe client with the '-help' option.\n\n";
+      fprintf( outstream, ((nostdin || forcenopagemode)?(msg):  
+          ("Press enter/space to display a list of valid command line\n"
+          "options or press any other key to quit... ")) );
+      if (teestream)
+        fprintf( teestream, msg );
+      fflush( outstream );
+      if (!nostdin && !forcenopagemode)
         {
         int i = readkeypress();
-        printf("\n");
-        if (i != '\n' && i != '\r' && i != ' ') return;
-        };
-#endif
+        if (SignalTriggered || UserBreakTriggered)
+          return;
+        fprintf( outstream, "\n" );
+        if (i != '\n' && i != '\r' && i != ' ') 
+          return;
+        }
+      }
     }
-  }
 
   maxscreenlines = 24;    /* you can decrease, but don't increase this */
   headerlines = (sizeof(helpheader) / sizeof(char *));
@@ -229,57 +278,105 @@ void Client::DisplayHelp( const char * unrecognized_option )
   startline = 0;
   maxpagesize = maxscreenlines - (headerlines+footerlines);
 
-  sprintf(whoami, "RC5DES v2.%d.%d client - a project of distributed.net",
-                  CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC );
-  helpheader[0] = whoami;
-
-if (!isatty(fileno(stdout)))
-  {
+  if (teestream) //we do this first, so we're not paging there
+    {
     int i;
     for (i = 0; i < headerlines; i++)
-      printf("%s\n", helpheader[i] );
+      fprintf( teestream, "%s\n", helpheader[i] );
     for (i = 0; i < bodylines; i++)
-      printf("%s\n", helpbody[i] );
-  }
-else
-  while (true)
-  {
-    int i;
-    clearscreen();
-
+      fprintf( teestream, "%s\n", helpbody[i] );
+    }
+  if (nostdin || forcenopagemode) //stdin is redirected or NOLESS
+    {
+    int i, l, n=maxpagesize-5; // -5 to see the 'invalid option' message
     for (i = 0; i < headerlines; i++)
-      printf("%s\n", helpheader[i] );
-    for (i = startline; i < (startline+maxpagesize); i++)
-      printf("%s\n", helpbody[i] );
+      fprintf( outstream, "%s\n", helpheader[i] );
+    for (l = 0; l < bodylines; )
+      {
+      for (i = 0; (l < bodylines) && (i < n); i++ ) 
+        fprintf( outstream, "%s\n", helpbody[l++] );
+      n = maxscreenlines-2; //use a two line overlap
+      if (l<bodylines && !nostdin) //NOLESS mode: stdin is ok
+        {
+        #ifndef NOMORE // very obstinate people :)
+        fprintf( outstream, "--More--" );
+        fflush( outstream );
+        readkeypress();
+        if (SignalTriggered || UserBreakTriggered) 
+          break;
+        fprintf( outstream, "\r" ); //overwrite the --More--
+        #endif
+        }
+      }
+    }
+  else  //stdout may or may not be redirected
+    {
+    int i = 1;
+    do{
+      if (i > 0) //do we need a screen refresh?
+        {
+        if (teestream) //can't use clearscreen if not stdout
+          {
+          for (i=0;i<10;i++) // 10*20 should be more than enough :)
+            fprintf( outstream, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+          }
+        else
+          clearscreen(); //this applies to stdout only
 
-    if (startline == 0)
-      printf("\nPress '+' for the next page... ");
-    else if (startline >= ((bodylines-maxpagesize)-1))
-      printf("\nPress '-' for the previous page... ");
-    else
-      printf("\nPress '+' or '-' for the next/previous page, or any other key to quit... ");
+        for (i = 0; i < headerlines; i++)
+          fprintf( outstream, "%s\n", helpheader[i] );
+        for (i = startline; i < (startline+maxpagesize); i++)
+          fprintf( outstream, "%s\n", helpbody[i] );
 
+        if (startline == 0)
+          fprintf( outstream, "\nPress '+' for the next page... ");
+        else if (startline >= ((bodylines-maxpagesize)-1))
+          fprintf( outstream, "\nPress '-' for the previous page... ");
+        else
+          fprintf( outstream, "\nPress '+' or '-' for the next/previous page,"
+                  " or any other key to quit... ");
+        }
+
+      fflush( outstream );
       i = readkeypress();
-    if (i == '+' || i == '=' || i == ' ' ||
-        i == 'f' || i == '\r' || i == '\n')
-    {
-      startline += maxpagesize;
-      if ( startline >= (bodylines-maxpagesize))
-        startline = (bodylines-maxpagesize) - 1;
-    }
-    else if (i == '-' || i == 'b')
-    {
-      startline -= maxpagesize;
-      if ( startline < 0 )
-        startline = 0;
-    }
-    else
-    {
-      break;
-    }
-  }
+      if (SignalTriggered || UserBreakTriggered)
+        break;
 
-  printf("\n\n");
+      if (i == '+' || i == '=' || i == ' ' ||
+        i == 'f' || i == '\r' || i == '\n')
+        {
+        i = 0; //assume no refresh required
+        if (startline < ((bodylines-maxpagesize) - 1))
+          {
+          startline += maxpagesize;
+          if ( startline >= (bodylines-maxpagesize))
+            startline = (bodylines-maxpagesize) - 1;
+          i = 1; //signal refresh required
+          }
+        //else if (teestream) //stdout is redirected, so clean up after getch()
+        //  i = 1;
+        }
+      else if (i == '-' || i == 'b')
+        {
+        i = 0; //assume no refresh required
+        if (startline > 0)
+          {
+          startline -= maxpagesize;
+          if ( startline < 0 )
+            startline = 0;
+          i = 1; //signal refresh required
+          }
+        //else if (teestream) //stdout is redirected, so clean up after getch()
+        //  i = 1;
+        }
+      else
+        {
+        i = -1; //unknown keystroke, so quit
+        }
+      } while (i >= 0);
+    } //stdin is a tty
+
+  //fprintf( outstream, "\n\n");
   return;
 }
 #endif
