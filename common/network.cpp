@@ -5,12 +5,16 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.36  1998/08/20 19:27:10  cyruspatel
+// Made the purpose of NetworkInitialize/Deinitialize a little more
+// transparent.
+//
 // Revision 1.35  1998/08/10 21:53:51  cyruspatel
 // Two major changes to work around a lack of a method to detect if the network
 // availability state had changed (or existed to begin with) and also protect
-// against any re-definition of client.offlinemode. (a) The NO!NETWORK define is
-// now obsolete. Whether a platform has networking capabilities or not is now
-// a purely network.cpp thing. (b) NetworkInitialize()/NetworkDeinitialize()
+// against any re-definition of client.offlinemode. (a) The NO!NETWORK define 
+// is now obsolete. Whether a platform has networking capabilities or not is 
+// now a purely network.cpp thing. (b) NetworkInitialize()/NetworkDeinitialize
 // are no longer one-shot-and-be-done-with-it affairs. ** Documentation ** is
 // in netinit.cpp.
 //
@@ -81,7 +85,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.35 1998/08/10 21:53:51 cyruspatel Exp $"; }
+return "@(#)$Id: network.cpp,v 1.36 1998/08/20 19:27:10 cyruspatel Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -112,7 +116,7 @@ return "@(#)$Id: network.cpp,v 1.35 1998/08/10 21:53:51 cyruspatel Exp $"; }
 #elif (CLIENT_OS == OS_DOS)
    #define STUBIFY_ME //until fixed
 #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-   #define STUBIFY_ME //previously NO!NETWORK. Now local to network.cpp
+   #define STUBIFY_ME //until fixed
 #elif (defined(TEST_NO_NETWORK_CAPS_CODE))
    #define STUBIFY_ME //for testing
 #endif
@@ -122,7 +126,7 @@ return "@(#)$Id: network.cpp,v 1.35 1998/08/10 21:53:51 cyruspatel Exp $"; }
 #define VERBOSE_OPEN //print cause of ::Open() errors
 #define UU_DEC(Ch) (char) (((Ch) - ' ') & 077)
 #define UU_ENC(Ch) (char) (((Ch) & 077) != 0 ? ((Ch) & 077) + 0x20 : '`')
-static int QueryInitializationLevel(void); //static in netinit.cpp
+static int NetworkCheckIsOnline(void); // in netinit.cpp
 
 //----------------------------------------------------------------------
 
@@ -201,12 +205,6 @@ public:
 
 //======================================================================
 
-#if defined(STUBIFY_ME)
-
-Network::Network( const char * , const char * , s16, int ) 
-{ retries = 0; return; } 
-
-#else
 
 Network::Network( const char * Preferred, const char * Roundrobin, 
                   s16 Port, int AutoFindKeyServer )
@@ -217,7 +215,7 @@ Network::Network( const char * Preferred, const char * Roundrobin,
   port = (s16) (Port ? Port : DEFAULT_PORT);
   autofindkeyserver = AutoFindKeyServer;
   mode = startmode = 0;
-  retries = 0;
+  retries = (NetworkCheckIsOnline()?(0):(4));
   sock = 0;
   gotuubegin = gothttpend = false;
   httplength = 0;
@@ -225,7 +223,6 @@ Network::Network( const char * Preferred, const char * Roundrobin,
   httpid[0] = 0;
 }
 
-#endif //STUBIFY_ME
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -320,13 +317,10 @@ int Network::GetHostName( char *buffer, unsigned int len )
   #if defined(STUBIFY_ME)
     {
     if (!buffer || !len)
-      return 0;
-    if (len >= sizeof( "localhost" ))
-      {
-      strcpy( buffer, "localhost" );
-      return (int)(sizeof( "localhost" ));
-      }
+      return -1;
     buffer[0]=0;
+    if (len >= sizeof( "127.0.0.1" ))
+      strcpy( buffer, "127.0.0.1" );
     return 0;
     }
   #else
@@ -336,15 +330,13 @@ int Network::GetHostName( char *buffer, unsigned int len )
 
 //////////////////////////////////////////////////////////////////////////////
 
-#if defined(STUBIFY_ME)
-
-s32 Network::Open( SOCKET ) { return -1; }
-
-#else
-
 // returns -1 on error, 0 on success
 s32 Network::Open( SOCKET insock)
 {
+  #ifdef STUBIFY_ME
+  sock = insock;
+  return -1;
+  #else
   // set communications settings
   mode = startmode;
   gotuubegin = gothttpend = puthttpdone = gethttpdone = false;
@@ -356,9 +348,8 @@ s32 Network::Open( SOCKET insock)
   sock = insock;
   MakeNonBlocking(sock, true);
   return 0;
+  #endif //STUBIFY_ME
 }
-
-#endif //STUBIFY_ME
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -385,12 +376,8 @@ s32 Network::Open( void )
 #else  
   Close();
 
-  if (!QueryInitializationLevel())
-    {
-    Log("[%s] Network::Open when not initialized. RTFM...\n", Time());
-    //*I* think we should we delete ourselves here. heh, heh
+  if (!NetworkCheckIsOnline())
     return -1;
-    }
   
   mode = startmode;
 
@@ -442,6 +429,13 @@ s32 Network::Open( void )
         } 
       }
 
+
+  if (!NetworkCheckIsOnline())
+    {
+    close(sock);
+    return -1;
+    }
+
 #ifdef VERBOSE_OPEN
     LogScreen("[%s] Connecting to %s...\n", Time(),
       fixupdisplayedhostname(hostname,autofindkeyserver));
@@ -480,6 +474,12 @@ s32 Network::Open( void )
       lastport = DEFAULT_PORT;
       } 
 
+  if (!NetworkCheckIsOnline())
+    {
+    close(sock);
+    return -1;
+    }
+
 #ifdef VERBOSE_OPEN
     LogScreen("[%s] Connecting to %s...\n", Time(),
        fixupdisplayedhostname(hostname,autofindkeyserver));
@@ -511,6 +511,13 @@ s32 Network::Open( void )
   sin.sin_family = AF_INET;
   sin.sin_port = htons( lastport ); //(mode & MODE_PROXIED) ? httpport : lastport);
   sin.sin_addr.s_addr = lastaddress;
+
+
+  if (!NetworkCheckIsOnline())
+    {
+    close(sock);
+    return -1;
+    }
 
 
   // try connecting
@@ -566,6 +573,11 @@ s32 Network::Open( void )
   netbuffer.Clear();
   uubuffer.Clear();
 
+  if (!NetworkCheckIsOnline())
+    {
+    close(sock);
+    return -1;
+    }
 
 
   if (startmode & MODE_SOCKS4)
@@ -759,6 +771,12 @@ Socks5Failure:
       return(-1);
     }
   }
+
+  if (!NetworkCheckIsOnline())
+    {
+    close(sock);
+    return -1;
+    }
 
   // change socket to non-blocking
   MakeNonBlocking(sock, true);
@@ -1107,6 +1125,9 @@ s32 Network::Put( u32 length, const char * data )
 #if !defined(STUBIFY_ME)
 s32 Network::LowLevelGet(u32 length, char *data)
 {
+  if (!NetworkCheckIsOnline())
+    return -1;
+
   #if defined(SELECT_FIRST)
     fd_set rs;
     timeval tv = {0,0};
@@ -1134,6 +1155,9 @@ s32 Network::LowLevelGet(u32 length, char *data)
 #if !defined(STUBIFY_ME)
 s32 Network::LowLevelPut(u32 length, const char *data)
 {
+  if (!NetworkCheckIsOnline())
+    return -1;
+
   u32 writelen = write(sock, (char*)data, length);
   return (s32) (writelen != length ? -1 : (s32)writelen);
 }
