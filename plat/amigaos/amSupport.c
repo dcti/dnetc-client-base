@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.2.4.7 2004/01/09 12:08:39 piru Exp $
+ * $Id: amSupport.c,v 1.2.4.8 2004/04/17 19:04:56 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -53,7 +53,9 @@
 
 #ifndef __OS3PPC__
 
-#ifdef __MORPHOS__
+#if defined(__amigaos4__)
+char *__stack_string = "$STACK:200000";
+#elif defined(__MORPHOS__)
 unsigned long __stack = 200000L;
 #else
 unsigned long __stack = 65536L;
@@ -266,7 +268,6 @@ static void finish_resethandler(void)
 
 #endif
 
-
 int amigaInit(int *argc, char **argv[])
 {
    int done = TRUE;
@@ -386,7 +387,7 @@ int amigaInit(int *argc, char **argv[])
       }
 
       if (!(amigaGUIInit((char *)wbs->sm_ArgList->wa_Name,arg))) {
-         if (!(amigaOpenNewConsole("CON:////distributed.net client/CLOSE/WAIT"))) {
+         if (!(amigaOpenNewConsole("CON://630/200/distributed.net client/CLOSE/WAIT"))) {
             done = FALSE;
          }
       }
@@ -411,8 +412,6 @@ void amigaExit(void)
    amigaGUIDeinit();
    #endif
 
-   GlobalTimerDeinit();
-
    #ifdef __amigaos4__
    if (ILocale) DropInterface((struct Interface *)ILocale);
    if (ISocket) DropInterface((struct Interface *)ISocket);
@@ -431,9 +430,8 @@ void amigaExit(void)
    /*
    ** PowerUp
    */
-   #include "sleepdef.h"
    if (TriggerPort) {
-      while (!PPCDeletePort(TriggerPort)) usleep(250000);
+      while (!PPCDeletePort(TriggerPort)) amigaSleep(0,250000);
    }
    CloseLibrary(PPCLibBase);
    #else
@@ -454,6 +452,8 @@ void amigaExit(void)
       DeleteMsgPort(TriggerPort);
    }
    #endif
+
+   GlobalTimerDeinit();
 
    #if USE_RESETHANDLER
    finish_resethandler();
@@ -671,10 +671,12 @@ int chmod(const char *name, mode_t mode)
 /*
 ** libnix for PowerUp has a broken isatty() - writes to 0x100000!
 */
+extern unsigned long *__stdfiledes;	// libnix internal
+
 asm(".section	\".text\"\n\t.align 2\n\t.globl __isatty\n\t.type\t __isatty,@function\n__isatty:\n");
 int __isatty(int d)
 {
-   return IsInteractive(STDFILEDES[d]);
+   return IsInteractive(__stdfiledes[d]);
 }
 
 /*
