@@ -9,13 +9,15 @@
 */
 
 #ifndef __CLIEVENT_H__
-#define __CLIEVENT_H__ "@(#)$Id: clievent.h,v 1.9 1999/04/06 10:20:47 cyp Exp $"
+#define __CLIEVENT_H__ "@(#)$Id: clievent.h,v 1.10 1999/04/09 08:38:49 cyp Exp $"
 
                                               /* parm is ... */
 #define CLIEVENT_CLIENT_STARTED        0x0001 /* ...client ptr */
 #define CLIEVENT_CLIENT_FINISHED       0x0002 /* ...restarting flag */
 #define CLIEVENT_CLIENT_RUNSTARTED     0x0003 /* ...0 */
 #define CLIEVENT_CLIENT_RUNFINISHED    0x0004 /* ...0 */
+#define CLIEVENT_CLIENT_THREADSTARTED  0x0005 /* ...thread_i */
+#define CLIEVENT_CLIENT_THREADSTOPPED  0x0006 /* ...thread_i */
 #define CLIEVENT_PROBLEM_STARTED       0x0101 /* ...problem id */
 #define CLIEVENT_PROBLEM_FINISHED      0x0102 /* ...problem id */
 #define CLIEVENT_PROBLEM_TFILLSTARTED  0x0103 /* ...# of problems to check */
