@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.14  1998/07/11 02:34:49  cramer
+// Added automagic number of cpu detection for linux.  If it cannot detect the
+// number of processors, a warning is issued and we assume it's only got one.
+// (Note to Linus: add num_cpus to struct sysinfo.)
+//
 // Revision 1.13  1998/07/09 03:22:54  silby
 // Changed so that IDT winchip WILL use mmx now also.
 //
@@ -61,7 +66,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-static const char *id="@(#)$Id: cpucheck.cpp,v 1.13 1998/07/09 03:22:54 silby Exp $";
+static const char *id="@(#)$Id: cpucheck.cpp,v 1.14 1998/07/11 02:34:49 cramer Exp $";
 return id; }
 #endif
 
@@ -107,6 +112,16 @@ static int __GetProcessorCount()  //returns -1 if not supported
       if (rc!=0 || cpucount < 1)
         cpucount = 1;
       }
+    #elif (CLIENT_OS == OS_LINUX)
+      {
+      char buffer[256];
+
+      cpucount = 0;
+      if (FILE *cpuinfo = fopen("/proc/cpuinfo", "r"))
+        while(fgets(buffer, 256, cpuinfo))
+          if (strstr(buffer, "processor") == buffer)
+            cpucount++;
+      }
     #endif
     if (cpucount < 1)  //not supported
       cpucount = -1;
@@ -145,12 +160,12 @@ void Client::ValidateProcessorCount( void )
     static int cpu_count = -2;
     if (cpu_count == -2)
       {
-      cpu_count = __GetProcessorCount(); //in cpuinfo.cpp
+      cpu_count = __GetProcessorCount();
       // returns -1 if no hardware detection
       if ( cpu_count < 1 )
         {
-        // LogScreen("Automatic processor count detection is not supported "
-        // "on this platform.\nA single processor machine is assumed.\n");
+        LogScreen("Automatic processor count detection failed to detect "
+        "an processors.\nA single processor machine is assumed.\n");
         cpu_count = 1;
         }
       else

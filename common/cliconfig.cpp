@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.148  1998/07/11 02:34:44  cramer
+// Added automagic number of cpu detection for linux.  If it cannot detect the
+// number of processors, a warning is issued and we assume it's only got one.
+// (Note to Linus: add num_cpus to struct sysinfo.)
+//
 // Revision 1.147  1998/07/11 02:26:21  cyruspatel
 // Removed an obsolete 'Overriding Autodetect' message from x86
 // section of ::SelectCore()
@@ -262,7 +267,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.147 1998/07/11 02:26:21 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.148 1998/07/11 02:34:44 cramer Exp $";
 return id; }
 #endif
 
@@ -483,7 +488,7 @@ static optionstruct options[OPTION_COUNT]=
 //21
 { "smtpdest", CFGTXT("E-mail address to send logs to"), "you@your.site", CFGTXT("\n(Full name and site eg: you@your.site.  Comma delimited list permitted)\n"),2,1,6,NULL},
 //22
-#if ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_BEOS)) || (CLIENT_OS == OS_OS2)
+#if ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_BEOS)) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_LINUX)
   { "numcpu", CFGTXT("Number of CPUs in this machine"), "-1 (autodetect)", "\n"
 #else
   { "numcpu", CFGTXT("Number of CPUs in this machine"), "1", "\n"
