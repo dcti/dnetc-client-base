@@ -1,0 +1,61 @@
+                                                    
+ RC5-DES Client for Win16 (MS-Windows,WINE or whatever) 3.1 and above
+ Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
+                                                          
+ Welcome to the new RC5-DES (Project Monarch) Client for Win16.
+
+    1.0  Getting started
+    2.0  Win16 specific notes
+    3.0  Help! 
+   
+ 1.0  Getting started ------------------------------------------------
+ 
+    Just unpack the client in a directory of your choice and fire it up
+    with [path]RC5DES.EXE
+
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done, the 
+    configuration file will be saved in the same directory as the 
+    client. Then, simply restart the client. From that point on it will 
+    use the saved configuration.
+    
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the '-config' option.
+    A list of command line options is available by starting the client 
+    with '-help'.
+
+    A detailed guide to the various configuration options as well as 
+    applicable command line switches is in the enclosed rc5des.txt.
+    FAQs are available online at http://www.distributed.net/FAQ/
+
+ 2.0  Notes: ---------------------------------------------------------
+
+    The Win16 client is a true 32-bit protected mode application and 
+    therefore requires Windows to be running in "386 extended" mode.
+
+    The Win16 client will use any WinSock sockets implementation if 
+    available, and will otherwise not use the network layer. A "lurk"
+    feature may be made available in the future if the demand for it 
+    is sufficiently high. Novell's WinSock implementation (TCPIP stack) 
+    prior to version 5.00.207 (November 06, 1997) contains a bug that
+    will manifest itself when attempting to resolve a hostname. Either
+    use only IP addresses, or install the fix. (tcp1607.exe available
+    from Novell support sites).
+
+    "Mode" (eg -fetch, -flush, -benchmark etc) that are generally only 
+    available as command-line options are accessable by right-clicking 
+    the client window.
+
+    This client is not optimized for speed but for "niceness".
+
+ 3.0  Help: ----------------------------------------------------------
+
+    Please report problems, suggestions to the port maintainer
+    Cyrus Patel <cyp@fb14.uni-mainz.de>  Don't fret if you don't get 
+    a response right away.
+ 
+    If you need assistance regarding use or operation, post a message to 
+    the mailing list at <rc5@lists.distributed.net> (To subscribe to the 
+    mailing list, send a message to <majordomo@lists.distributed.net> with 
+    "subscribe rc5" as the message text).
+
