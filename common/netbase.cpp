@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.25 2002/04/12 23:56:37 andreasb Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.26 2002/04/16 12:41:54 snake Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -230,8 +230,9 @@ extern "C" {
     || (CLIENT_OS == OS_NETBSD) \
     || ((CLIENT_OS == OS_FREEBSD) && (__FreeBSD__ >= 4))
   /* nothing - socklen_t already defined */
-#elif ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION > 199701))
+#elif ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION < 199701))
   #define socklen_t size_t
+  /* only needed for old BSD/OS (before 4.x) */
 #elif (CLIENT_OS == OS_QNX)
   #define socklen_t size_t
 #elif (CLIENT_OS == OS_DYNIX)
@@ -630,7 +631,11 @@ static int ___read_errnos(SOCKET fd, int ps_errnum,
     if (is_netapi_callable())
     {
       int rc, so_err = 0;
-      socklen_t szint = (socklen_t) sizeof(so_err);
+      #if ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION >= 199701))
+        size_t szint = (size_t) sizeof(so_err);
+      #else
+        socklen_t szint = (socklen_t) sizeof(so_err);
+      #endif
       TRACE_ERRMGMT((+1,"getsockopt(s,SOL_SOCKET,SO_ERROR, &so_err, &%d\n",(int)szint));
       rc = getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&so_err, &szint);
       TRACE_ERRMGMT((-1,"getsockopt(...)=>%d%s [so_err=%d]\n", rc, trace_expand_api_rc(rc,fd), so_err ));
@@ -1817,7 +1822,11 @@ static int bsd_condition_new_socket(SOCKET fd, int as_listener)
     for (which = 0; which < 2; which++ )
     {
       int sz = 0, type = ((which == 0)?(SO_RCVBUF):(SO_SNDBUF));
-      socklen_t szint = (socklen_t)sizeof(int);
+      #if ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION >= 199701))
+        size_t szint = (size_t) sizeof(int);
+      #else
+        socklen_t szint = (socklen_t) sizeof(int);
+      #endif
       if (getsockopt(fd, SOL_SOCKET, type, (char *)&sz, &szint) < 0)
         ;
       else if (sz < min_buf_size)
