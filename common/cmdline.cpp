@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.106  1998/12/05 22:26:18  cyp
+// Added -kill/-shutdown and -hup/-restart support for win32/win16
+// (aka "waaah, how do I stop a hidden client?") and for *nixes.
+// Yes, unix support is ugly, but it works.
+//
 // Revision 1.105  1998/12/01 15:04:44  cyp
 // Both -run and -runbuffers give obsolete warnings and show the current
 // state of offlinemode and blockcount.
@@ -93,7 +98,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.105 1998/12/01 15:04:44 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.106 1998/12/05 22:26:18 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -131,6 +136,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
     skip_next = 0;
     for (pos = 1;((terminate_app==0) && (pos<argc));pos+=(1+skip_next))
       {
+      int not_supported = 0;
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
@@ -151,15 +157,123 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         else
           terminate_app = 1;
         }
+      else if ( ( strcmp( thisarg, "-restart" ) == 0) || 
+                ( strcmp( thisarg, "-hup" ) == 0 ) ||
+                ( strcmp( thisarg, "-kill" ) == 0 ) ||
+                ( strcmp( thisarg, "-shutdown" ) == 0 ) )
+        {
+        #if ((CLIENT_OS == OS_DEC_UNIX)    || (CLIENT_OS == OS_HPUX)    || \
+             (CLIENT_OS == OS_QNX)         || (CLIENT_OS == OS_OSF1)    || \
+             (CLIENT_OS == OS_BSDI)        || (CLIENT_OS == OS_SOLARIS) || \
+             (CLIENT_OS == OS_IRIX)        || (CLIENT_OS == OS_SCO)     || \
+             (CLIENT_OS == OS_LINUX)       || (CLIENT_OS == OS_NETBSD)  || \
+             (CLIENT_OS == OS_UNIXWARE)    || (CLIENT_OS == OS_DYNIX)   || \
+             (CLIENT_OS == OS_MINIX)       || (CLIENT_OS == OS_MACH10)  || \
+             (CLIENT_OS == OS_AIX)         || (CLIENT_OS == OS_AUX)     || \
+             (CLIENT_OS == OS_OPENBSD)     || (CLIENT_OS == OS_SUNOS)   || \
+             (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX))
+          {
+          terminate_app = 1;
+          char buffer[1024];
+          int dokill = ( strcmp( thisarg, "-kill" ) == 0 ||
+                         strcmp( thisarg, "-shutdown") == 0 );
+          if (nextarg != NULL && *nextarg == '[')
+            {
+            int sig = ((dokill)?(SIGTERM):(SIGHUP));
+            pid_t ourpid[2];
+            ourpid[0] = atol( nextarg+1 );
+            ourpid[1] = getpid();
+            pos+=2;
+            if (!(pos<argc && argv[pos]!=NULL && isdigit(argv[pos][0])))
+              {
+              ConOutErr( ((pos==argc || argv[pos]==NULL)?
+                   ("Unable to get pid list."):(argv[pos])) );
+              }
+            else
+              {
+              unsigned int kill_ok = 0;
+              unsigned int kill_failed = 0;
+              int last_errno = 0;
+              do{
+                pid_t tokill = atol( argv[pos++] );
+                if (tokill!=ourpid[0] && tokill!=ourpid[1] && tokill!=0)
+                  {
+                  if ( kill( tokill, sig ) == 0)
+                    kill_ok++;
+                  else
+                    {
+                    kill_failed++;
+                    last_errno = errno;
+                    }
+                  }
+                } while (pos<argc && argv[pos]!=NULL && isdigit(argv[pos][0]));
+              if ((kill_ok + kill_failed) == 0)    
+                {
+                sprintf(buffer,"No distributed.net clients are currently running.\n"
+                               "None were %s.", ((dokill)?("killed"):("-HUP'ed")));
+                ConOutErr(buffer);
+                }
+              else 
+                {
+                sprintf(buffer,"%u distributed.net client%s %s. %u failure%s%s%s%s.",
+                           kill_ok, 
+                           ((kill_ok==1)?(" was"):("s were")),
+                           ((dokill)?("killed"):("-HUP'ed")), 
+                           kill_failed, (kill_failed==1)?(""):("s"),
+                           ((kill_failed==0)?(""):(" (")),
+                           ((kill_failed==0)?(""):(strerror(last_errno))),
+                           ((kill_failed==0)?(""):(")")) );
+                ConOutErr(buffer);
+                }
+              }
+            }
+          else
+            {
+            const char *p = "pidof";
+            const char *q = (const char *)strrchr( argv[0], '/' );
+            q = ((q==NULL)?(argv[0]):(q+1));
+            sprintf(buffer, "%s %s [%lu] `%s %s`", argv[0], thisarg,
+                    (unsigned long)getpid(), p, q );
+            if (system( buffer ) != 0)
+              {
+              //sprintf(buffer, "%s failed. Unable to get pid list.", thisarg );
+              //ConOutErr( buffer );
+              }
+            }
+          }
+        #elif ((CLIENT_OS==OS_WIN16 || CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN32S))
+          {
+          terminate_app = 1;
+          char scratch[128];
+          int dokill = ( strcmp( thisarg, "-kill" ) == 0 ||
+                         strcmp( thisarg, "-shutdown") == 0 );
+          thisarg = ((dokill)?("shut down"):("restarted"));
+          if (w32ConSendIDMCommand( ((dokill)?(IDM_SHUTDOWN):(IDM_RESTART)) )!=0)
+            {
+            sprintf(scratch,"No distributed.net clients are currently running.\n"
+                            "None were %s.", thisarg);
+            ConOutErr(scratch);
+            }
+          else
+            {
+            sprintf(scratch,"The distributed.net client has been %s.", thisarg);
+            ConOutModal(scratch);
+            }
+          }
+        #else
+          not_supported = 1;
+        #endif
+        }
       else if ( strcmp(thisarg, "-install" ) == 0)
         {
         #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
         winInstallClient(0); /*w32pre.cpp*/
         terminate_app = 1;
-        #endif
-        #if (CLIENT_OS == OS_OS2)
+        #elif (CLIENT_OS == OS_OS2)
         os2CliInstallClient(0);
         terminate_app = 1;
+        #else
+        not_supported = 1;
         #endif
         }
       else if ( strcmp(thisarg, "-uninstall" ) == 0)
@@ -167,11 +281,19 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         #if (CLIENT_OS == OS_OS2)
         os2CliUninstallClient(0);
         terminate_app = 1;
-        #endif
-        #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+        #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
         winUninstallClient(0); /*w32pre.cpp*/
         terminate_app = 1;
+        #else
+        not_supported = 1;
         #endif
+        }
+      if (not_supported)
+        {
+        char scratch[80];
+        sprintf(scratch,"%s is not supported for this platform.\n",thisarg);
+        ConOutErr(scratch);
+        terminate_app = 1;
         }
       }
     }
