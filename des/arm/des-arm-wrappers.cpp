@@ -1,4 +1,7 @@
-/* @(#)$Id: des-arm-wrappers.cpp,v 1.2 1999/12/07 23:53:30 cyp Exp $ */
+/* @(#)$Id: des-arm-wrappers.cpp,v 1.3 1999/12/07 23:54:37 cyp Exp $ */
+
+#include "cputypes.h" /* u32 */
+#include "problem.h" /* RC5UnitWork */
 
 #ifdef __cplusplus
 extern "C" {
