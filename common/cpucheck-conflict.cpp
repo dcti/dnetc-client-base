@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.93 1999/11/28 07:04:27 sampo Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.94 1999/12/01 02:03:29 sampo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -492,7 +492,7 @@ static long __GetRawProcessorID(const char **cpuname)
                 {       8, "740/750/G3"      },
                 {       9, "604e"            },
                 {      10, "604ev"           },
-                {	   11, "7400/G4"         }
+                {	   12, "7400/G4"         }
                 };
 
   #if (CLIENT_OS == OS_MACOS)
@@ -505,14 +505,14 @@ static long __GetRawProcessorID(const char **cpuname)
     long processorAttributes;
 	Boolean hasAltiVec = false;
 	if(Gestalt(gestaltPowerPCProcessorFeatures, &processorAttributes) == noErr)
-		hasAltiVec = gestaltPowerPCHasVectorInstructions & processorAttributes;
+		hasAltiVec = 16 & processorAttributes;
 	/*if (Mac_PPC_prototype)   Mindmoprh */
     /*  detectedtype = 1L;  // old developer machines - 601  Mindmoprh */
     /*else  Mindmoprh */
     if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
     	detectedtype = result - 0x100L;
   	if(hasAltiVec)
-		detectedtype = 11;
+		detectedtype = 12;
   }
   #elif (CLIENT_OS == OS_LINUX)
   if (detectedtype == -2L)
@@ -1315,8 +1315,8 @@ int GetProcessorType(int quietly)
         coretouse=2;            // PowerPC 603 and up
 
     #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX)
-    if (rawid > 10)
-    	coretouse = 2;	//	PowerPC 7400
+    if (rawid == 12)
+    	coretouse = 2;	//	PowerPC 7400/G4
     else if (rawid > 1)
     	coretouse = 1;	//	PowerPC 603 and up
     else if (rawid > 0)
