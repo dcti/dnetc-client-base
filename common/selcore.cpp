@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.30 1999/12/23 13:04:00 chrisb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.31 1999/12/23 18:45:24 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -547,7 +547,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         if (det == 1)       //PPC 601
           cindex = 2;       // G1: 16k L1 cache - 1 key inline
         else if (det == 12) //PPC 7400
-          cindex = 0;       // G4: 64k L1 cache - 6 bit inline
+          cindex = 1;       // G4: 64k L1 cache - 6 bit called
         //don't know about the rest
       }
       selcorestatics.corenum[CSC] = cindex;
