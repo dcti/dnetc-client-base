@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.157  1998/11/11 06:04:31  cyp
+// Added a win version check <=3.x before asserting TZ= validity
+//
 // Revision 1.156  1998/11/11 05:26:57  cramer
 // Various minor fixes...
 //
@@ -75,7 +78,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.156 1998/11/11 05:26:57 cramer Exp $"; }
+return "@(#)$Id: client.cpp,v 1.157 1998/11/11 06:04:31 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -225,7 +228,13 @@ static void PrintBanner(const char *dnet_id)
       dosCliCheckPlatform(); //show warning if pure DOS client is in win/os2 VM
     #endif
     #if ((CLIENT_OS==OS_DOS) || (CLIENT_OS==OS_WIN16) || \
-      (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2))
+         (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_OS2) || \
+         ((CLIENT_OS==OS_WIN32) && !defined(NEEDVIRTUALMETHODS)))
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+    int major=0;
+    w32ConGetWinVersion(&major,NULL);
+    if ((major%20) <= 3) /* >=20 == NT */
+    #endif   
     if (getenv("TZ") == NULL)
       {
       LogScreenRaw("Warning: The TZ= variable is not set in the environment. "
