@@ -3,10 +3,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.15 2001/02/05 23:43:39 andreasb Exp $"
-
-// define this for compiling with .asm
-//#define OLD_STATE
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.16 2001/02/07 16:56:37 andreasb Exp $"
 
 // define this to use the new struct Stub
 //#define OGR_NEW_STUB_FORMAT
@@ -242,7 +239,7 @@ struct Level {
 #define OGR_LEVEL_SIZE ((128*4)+((4*BITMAPS)*3)+(OGR_INT_SIZE*3))
 
 #ifdef OGR_CORE_INTERNAL_STRUCTURES
-#ifdef OLD_STATE /* currently needed for old ogr.asm */
+#if 0
 struct State {
   #if 0 /* unused - see notes for ogr_cycle() above */
   struct { U hi,lo; } Nodes;      /* counts "tree branches" */
@@ -286,22 +283,24 @@ struct State {
 #else
 struct State {
   /* all variables will be initialized by ogr_create() */
+  /* State may not contain pointers pointing into State itself! */
+  
   /* Part 1: variables that won't get changed after ogr_create() */
   int stub_error;                 /* don't process stub if not zero */
   int max;                        /* maximum length of ruler */
-  int maxdepth;                   /* 2.RENAME TO marks */ /* maximum number of marks in ruler */
-  int maxdepthm1;                 /* 3.RENAME TO maxdepth */ /* maximum number of first differences in ruler = marks - 1 */
+  int maxmarks;                   /* was: maxdepth */ /* maximum number of marks in ruler */
+  int maxdepth;                   /* was: maxdepthm1 */ /* maximum number of first differences in ruler = marks - 1 */
   int half_length;                /* maximum length of left segment */
   int half_depth;                 /* depth of left/right segment */
   int half_depth2;                /* depth of left+middle segment */
   int startdepth;                 /* depth of the stub */
   
   /* Part 2: variables that will be changed by ogr_cycle() and read by 
-             ogr_getresult(). Thread safe locking needed for read/write !!!
+             ogr_getresult(). Do not read these values while ogr_cycle() is running!
              The state represented by parts 1&2 and returned by ogr_getresult
              is safe to be saved to disk. */
   int depth;                      /* depth of last placed mark */
-  int marks[MAXDEPTH];            /* 1.RENAME TO markpos */ /* current positions of the marks */
+  int markpos[MAXDEPTH];          /* was: marks */ /* current positions of the marks */
   u32 nodeshi, nodeslo;           /* our internal nodecounter */
   
   /* Part 3: Variables that may be used ONLY by ogr_cycle() */
@@ -338,7 +337,7 @@ struct State {
 #pragma pack()
 #endif
 
-#ifdef OLD_STATE
+#if 0
 #define OGR_PROBLEM_SIZE (/*16+*/(6*OGR_INT_SIZE)+(OGR_INT_SIZE*(MAXDEPTH+1))+ \
                          (4*OGR_INT_SIZE)+(128*2)+(OGR_INT_SIZE*BITMAPS)+ \
                          (OGR_LEVEL_SIZE*MAXDEPTH)+64)
@@ -375,9 +374,9 @@ extern "C" {
 #endif
 
   extern const int choose_version;
-  extern const int choose_distbits;
-  extern const int choose_max_marks;
-  extern const int choose_align_marks;
+  extern const int choose_dist_bits;
+  extern const int choose_max_depth;
+  extern const int choose_alignment;
 
   extern const unsigned char ogr_choose_dat2[];
 

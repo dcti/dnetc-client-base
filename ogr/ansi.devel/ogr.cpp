@@ -8,7 +8,7 @@
  * - it #includes all neccessary .cor (core functions/macros), 
  *   .mac (general macros), .inc (general stuff) files
  */
-#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.39 2001/02/05 23:43:39 andreasb Exp $"
+#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.40 2001/02/07 16:56:37 andreasb Exp $"
 
 #include <stdio.h>      /* printf for debugging */
 #include <stdlib.h>     /* malloc (if using non-static choose dat) */
@@ -21,6 +21,7 @@
 /* #define OGR_TEST_BITOFLIST  */ /* test bitoflist table */
 
 /* --- various optimization option overrides ----------------------------- */
+//#define OGROPT_ALTERNATE_CYCLE 1
 //#define OGROPT_ALTERNATE_CYCLE 3
 
 /* baseline/reference == ogr.cpp without optimization == ~old ogr.cpp */
@@ -251,10 +252,9 @@
   #define ttmDISTBITS (32-CHOOSE_DIST_BITS)
 #else /* OGROPT_NEW_CHOOSEDAT */
   // maximum number of marks supported by ogr_choose_dat
-  #define CHOOSE_MAX_MARKS   13
-  #define CHOOSE_MARKS       CHOOSE_MAX_MARKS
+  #define CHOOSE_MAX_DEPTH   12
   // alignment musn't be equal to CHOOSE_MAX_MARKS
-  #define CHOOSE_ALIGN_MARKS 16
+  #define CHOOSE_ALIGNMENT   16
   // number of bits from the beginning of dist bitmaps supported by ogr_choose_dat
   #define CHOOSE_DIST_BITS   12
   #define ttmDISTBITS (32-CHOOSE_DIST_BITS)
@@ -286,22 +286,25 @@ extern "C" {
 #else /* we have OGROPT_NEW_CHOOSEDAT */
 #ifdef HAVE_STATIC_CHOOSEDAT  /* choosedat table is static, pre-generated */
 //  extern const unsigned char ogr_choose_dat2[]; /* this is in ogr_dat2.cpp */
-  #if (CHOOSE_ALIGN_MARKS == 16 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
+/* choose(bitmap, depth) */
+  #if (CHOOSE_ALIGNMENT == 16 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
      // strength reduce the multiply -- which is slow on MANY processors
      #define choose(x,y) (ogr_choose_dat2[((x)<<4)+(y)])
   #else
-     #define choose(x,y) (ogr_choose_dat2[CHOOSE_ALIGN_MARKS*(x)+(y)])
+     #define choose(x,y) (ogr_choose_dat2[CHOOSE_ALIGNMENT*(x)+(y)])
   #endif
 #else
   #error OGROPT_NEW_CHOOSEDAT and not HAVE_STATIC_CHOOSEDAT ???   
 #endif
 #endif /* OGROPT_NEW_CHOOSEDAT */
 
-static const int OGR[] = {
+static const int OGR_length[] = { /* use: OGR_length[depth] */ 
+/* marks */
   /*  1 */    0,   1,   3,   6,  11,  17,  25,  34,  44,  55,
   /* 11 */   72,  85, 106, 127, 151, 177, 199, 216, 246, 283,
   /* 21 */  333, 356, 372, 425, 480, 492, 553, 585, 623
 };
+
 #ifndef __MRC__
 static int init_load_choose(void);
 static int found_one(const struct State *oState);
@@ -443,9 +446,9 @@ static int init_load_choose(void)
 #ifndef HAVE_STATIC_CHOOSEDAT
   #error non static choosedat not supported with OGROPT_NEW_CHOOSEDAT
 #endif
-  if ( (CHOOSE_ALIGN_MARKS != choose_align_marks) ||
-       (CHOOSE_DIST_BITS   != choose_distbits)    ||
-       (CHOOSE_MAX_MARKS   >  choose_max_marks) )
+  if ( (CHOOSE_ALIGNMENT != choose_alignment) ||
+       (CHOOSE_DIST_BITS != choose_dist_bits) ||
+       (CHOOSE_MAX_DEPTH >  choose_max_depth) )
   {
     return CORE_E_FORMAT;
   }
@@ -553,6 +556,7 @@ static int ogr_init(void)
 
 
 static const char* ogr_core_id() {
+  /* whats the most senseful format for this? char ** like argv ? */
   return __OGR_H__ "\n" __OGR_CPP__ "\n" __OGR_FB_MAC__ "\n" __OGR_CORE__ "\n";
 }
 
@@ -568,11 +572,11 @@ static int ogr_getresult(void *state, void *result, int resultlen)
   if (resultlen != sizeof(struct WorkStub)) {
     return CORE_E_FORMAT;
   }
-  workstub->stub.marks = (u16)oState->maxdepth;
+  workstub->stub.marks = (u16)oState->maxmarks;
   workstub->stub.length = (u16)oState->startdepth;
   for (i = 0; i < STUB_MAX; i++) {
     #if (OGROPT_ALTERNATE_CYCLE == 0)
-    workstub->stub.diffs[i] = (u16)(oState->marks[i+1] - oState->marks[i]);
+    workstub->stub.diffs[i] = (u16)(oState->markpos[i+1] - oState->markpos[i]);
     #else
     workstub->stub.diffs[i] = (u16)(oState->Levels[i+1].cnt2 - oState->Levels[i].cnt2);
     #endif
@@ -583,8 +587,10 @@ static int ogr_getresult(void *state, void *result, int resultlen)
   }
   return CORE_S_OK;
 }
-#else // thread safe version
+#else
 static int ogr_getresult(void *state, void *result, int resultlen)
+/* DO NOT call ogr_getresult() for a state currently being processed 
+   by ogr_cycle() */
 {
   struct State *oState = (struct State *)state;
   struct WorkStub *workstub = (struct WorkStub *)result;
@@ -594,23 +600,24 @@ static int ogr_getresult(void *state, void *result, int resultlen)
     return CORE_E_FORMAT;
   }
 
-  /* ogr_getresult() and ogr_cycle() must interact thread safe */
-
-  /* this is where we would lock the public data (for read) */
-
-  workstub->stub.marks = (u16)oState->maxdepth;
+  workstub->stub.marks = (u16)oState->maxmarks;
   workstub->stub.length = (u16)oState->startdepth;
   for (i = 0; i < STUB_MAX; i++) {
-    workstub->stub.diffs[i] = (u16)(oState->marks[i+1] - oState->marks[i]);
+    #if (OGROPT_ALTERNATE_CYCLE == 1 || OGROPT_ALTERNATE_CYCLE == 2)
+    workstub->stub.diffs[i] = (u16)(oState->Levels[i+1].cnt2 - oState->Levels[i].cnt2);
+    #else
+    workstub->stub.diffs[i] = (u16)(oState->markpos[i+1] - oState->markpos[i]);
+    #endif
   }
   workstub->worklength = oState->depth;
 
   /* This causes node count differences !!! */
+  /* the only senseful way to fix this is increasing STUB_MAX */
   if (workstub->worklength > STUB_MAX) {
     workstub->worklength = STUB_MAX;
   }
 
-  /* will be needed later ...
+  /* will be needed later ... new struct Stub with nodecount
   workstub->nodeshi = oState->nodeshi;
   workstub->nodeslo = oState->nodeslo;
   */
@@ -620,8 +627,6 @@ static int ogr_getresult(void *state, void *result, int resultlen)
     workstub->worklength = oState->stub_error;
     /* workstub->nodes.hi = workstub->nodes.lo = 0; */
   }
-
-  /* this is where we would release the read lock */
 
   return CORE_S_OK;
 }

@@ -8,7 +8,7 @@
  * - use the processor cache better when many registers are available
  * - support altivec
  */
-#define __OGR_CORE__ "@(#)$Id: ogr_o_c.cor,v 1.1.2.6 2001/02/05 23:43:39 andreasb Exp $"
+#define __OGR_CORE__ "@(#)$Id: ogr_o_c.cor,v 1.1.2.7 2001/02/07 16:56:37 andreasb Exp $"
 
 #if ( (OGROPT_ALTERNATE_CYCLE == 1) || (OGROPT_ALTERNATE_CYCLE == 2))
 
@@ -1341,7 +1341,7 @@ static int found_one(const struct State *oState)
    int i, j;
    const int maximum = oState->max;
    const int maximum2 = maximum >> 1;     // shouldn't this be rounded up?
-   const int maxdepth = oState->maxdepth;
+   const int maxmarks = oState->maxmarks;
    const struct Level *levels = &oState->Levels[0];
    char diffs[1024]; // first 64 entries will never be used!
 
@@ -1351,7 +1351,7 @@ static int found_one(const struct State *oState)
 
    memset( diffs, 0, maximum2 + 1 );
 
-   for (i = 1; i < maxdepth; i++) {
+   for (i = 1; i < maxmarks; i++) {
       int levelICount = levels[i].cnt2;
 
       for (j = 0; j < i; j++) {
@@ -1370,7 +1370,7 @@ static int found_one(const struct State *oState)
 
       }   /* for (j = 0; j < i; j++) */
 
-   }  /* for (i = 1; i < maxdepth; i++) */
+   }  /* for (i = 1; i < maxmarks; i++) */
 
   return CORE_S_SUCCESS;
 }
@@ -1383,8 +1383,9 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
 {
   struct State *oState;
   struct WorkStub *workstub = (struct WorkStub *)input;
-  int retval = CORE_S_OK; /* will be changed to the first STUB_E_... */
-  /* finish ogr_create() to allow a graceful discard in case of a STUB_E_ */
+  int retval = CORE_S_OK;
+  /* save STUB_E_ error codes into oState->stub_error and finish ogr_create() 
+     to allow a graceful discard in case of a STUB_E_ */
 
   if (!input || inputlen != sizeof(struct WorkStub)) {
     return CORE_E_FORMAT;
@@ -1400,41 +1401,40 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
 
   memset(oState, 0, sizeof(struct State));
 
-  oState->maxdepth = workstub->stub.marks;
-  oState->maxdepthm1 = oState->maxdepth-1;
+  oState->maxmarks = workstub->stub.marks;
+  oState->maxdepth = oState->maxmarks-1;
 
-  if (((unsigned int)oState->maxdepth) > (sizeof(OGR)/sizeof(OGR[0]))) {
+  if (((unsigned int)oState->maxmarks) > (sizeof(OGR_length)/sizeof(OGR_length[0]))) {
     return CORE_E_FORMAT;
   }
 
-  oState->max = OGR[oState->maxdepthm1];
+  oState->max = OGR_length[oState->maxdepth];
 
   /* Note, marks are labled 0, 1...  so mark @ depth=1 is 2nd mark */
-  oState->half_depth2 = oState->half_depth = ((oState->maxdepth+1) >> 1) - 1;
-  if (!(oState->maxdepth % 2)) oState->half_depth2++;  /* if even, use 2 marks */
+  oState->half_depth2 = oState->half_depth = ((oState->maxmarks+1) >> 1) - 1;
+  if (!(oState->maxmarks % 2)) oState->half_depth2++;  /* if even, use 2 marks */
 
   /* Simulate GVANT's "KTEST=1" */
   oState->half_depth--;
   oState->half_depth2++;
   /*------------------
-  Since:  half_depth2 = half_depth+2 (or 3 if maxdepth even) ...
-  We get: half_length2 >= half_length + 3 (or 6 if maxdepth even)
+  Since:  half_depth2 = half_depth+2 (or 3 if maxmarks even) ...
+  We get: half_length2 >= half_length + 3 (or 6 if maxmarks even)
   But:    half_length2 + half_length <= max-1    (our midpoint reduction)
-  So:     half_length + 3 (6 if maxdepth even) + half_length <= max-1
+  So:     half_length + 3 (6 if maxmarks even) + half_length <= max-1
   ------------------*/
                                oState->half_length = (oState->max-4) >> 1;
-  if ( !(oState->maxdepth%2) ) oState->half_length = (oState->max-7) >> 1;
+  if ( !(oState->maxmarks%2) ) oState->half_length = (oState->max-7) >> 1;
 
   oState->depth = 1;
   
 #ifdef OGROPT_NEW_CHOOSEDAT
   /* would we choose values somewhere behind the precalculated values from 
-     ogr_choose_dat2 ? */
-  if ((oState->maxdepthm1 - (oState->half_depth+1) > (CHOOSE_MAX_MARKS-1) ) &&
-      (retval == CORE_S_OK))
-  {
-    retval = STUB_E_MARKS;
-  }
+     ogr_choose_dat2 ? 
+     choose(x,y) will be called from middle and right segment for the 
+     remaining ruler, not including the current mark, so we can subtract 1 */
+  if (oState->maxdepth - oState->half_depth - 1 > CHOOSE_MAX_DEPTH)
+    oState->stub_error |= STUB_E_MARKS;  
 #endif
 
 #if ((OGROPT_ALTERNATE_CYCLE == 1) || (OGROPT_ALTERNATE_CYCLE == 2))
@@ -1455,7 +1455,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
     }
 
     const int oStateMax = oState->max;
-    const int oStateMaxDepthM1 = oState->maxdepthm1;
+    const int oStateMaxDepthM1 = oState->maxdepth;
     const int oStateHalfDepth2 = oState->half_depth2;
     const int oStateHalfDepth = oState->half_depth;
     const int oStateHalfLength = oState->half_length;
@@ -1471,7 +1471,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
 
       if (oStateDepth <= oStateHalfDepth2) {
         if (oStateDepth <= oStateHalfDepth) {
-          limit = oStateMax - OGR[maxMinusDepth];
+          limit = oStateMax - OGR_length[maxMinusDepth];
           limit = (limit < oStateHalfLength) ? limit : oStateHalfLength;
         } else {
           limit = oStateMax - choose(dist0 >> ttmDISTBITS, maxMinusDepth);
@@ -1531,8 +1531,8 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
 #ifdef OGR_DEBUG
   printf("sizeof      = %d\n", sizeof(struct State));
   printf("max         = %d\n", oState->max);
+  printf("maxmarks    = %d\n", oState->maxmarks);
   printf("maxdepth    = %d\n", oState->maxdepth);
-  printf("maxdepthm1  = %d\n", oState->maxdepthm1);
   printf("half_length = %d\n", oState->half_length);
   printf("half_depth  = %d\n", oState->half_depth);
   printf("half_depth2 = %d\n", oState->half_depth2);
@@ -1540,7 +1540,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
     int i;
     printf("marks       = ");
      for (i = 1; i <= oState->depth; i++) {
-      printf("%d ", oState->marks[i]-oState->marks[i-1]);
+      printf("%d ", oState->markpos[i]-oState->markpos[i-1]);
     }
     printf("\n");
   }
@@ -1561,7 +1561,7 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
    int nodes = 0;
    int nodeslimit = *pnodes;
     const int oStateMax = oState->max;
-    const int oStateMaxDepthM1 = oState->maxdepthm1;
+    const int oStateMaxDepthM1 = oState->maxdepth;
     const int oStateHalfDepth2 = oState->half_depth2;
     const int oStateHalfDepth = oState->half_depth;
     const int oStateHalfLength = oState->half_length;
@@ -1595,7 +1595,7 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
                break;
             }
             
-            limit = oStateMax - OGR[maxMinusDepth];
+            limit = oStateMax - OGR_length[maxMinusDepth];
             limit = (limit < oStateHalfLength) ? limit : oStateHalfLength;
          } else {
             limit = oStateMax - choose(dist0 >> ttmDISTBITS, maxMinusDepth);
