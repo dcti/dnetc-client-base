@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.71  1998/07/04 01:57:33  cyruspatel
+// Fixed the pause file fix :) - on mt systems inner cpu_i loop was being run
+// even if pausefilefound.
+//
 // Revision 1.70  1998/07/03 23:13:55  remi
 // Fix the pause file bug in non-multithreaded clients.
 //
@@ -102,7 +106,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.70 1998/07/03 23:13:55 remi Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.71 1998/07/04 01:57:33 cyruspatel Exp $";
 #endif
 
 #include "client.h"
@@ -713,7 +717,7 @@ s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
 
   // close this connection
   if (!netin) delete net;
-  LogScreen( "\r" );
+  LogScreen( "\n" );
   Log( "[%s] Retrieved %d %s block%s from server              \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
   return ( count );
 #endif
@@ -1106,7 +1110,7 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
 
   // close this connection
   if (!netin) delete net;
-  LogScreen( "\r" );
+  LogScreen( "\n" );
   Log( "[%s] Sent %d %s block%s to server                \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
   return( count );
 #endif //NONETWORK
@@ -2194,8 +2198,7 @@ PreferredIsDone1:
     //now check all problems for change, do checkpointing, reloading etc
     //------------------------------------
 
-    if (load_problem_count > 1 || !pausefilefound)
-    for (cpu_i = 0; ((!SignalTriggered) && (cpu_i < load_problem_count)); cpu_i++)
+    for (cpu_i = 0; ((!pausefilefound) && (!SignalTriggered) && (cpu_i < load_problem_count)); cpu_i++)
     {
       // -------------
       //  update the percent bar
@@ -2674,14 +2677,13 @@ PreferredIsDone1:
           exitcode = 2;
         }
       }
+    }
     //------------------------------------
     // Does a pausefile exist?
     //------------------------------------
 
     pausefilefound = (strcmp(pausefile,"none") != 0 &&
           stat(pausefile, &buf) != -1 ? 1 : 0);
-
-    }
 
     //----------------------------------------
     // Are we quitting?
