@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.7 1999/11/03 18:24:12 gregh Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.8 1999/11/03 18:58:32 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -195,6 +195,10 @@ int SelfTest( unsigned int contest )
   int threadpos, threadcount = 1;
   int successes = 0;
   const char *contname;
+  int userbreak = 0;
+
+  if (CheckExitRequestTrigger())
+    return 0;
 
   if (contest >= CONTEST_COUNT)
   {
@@ -231,7 +235,9 @@ int SelfTest( unsigned int contest )
   
 
   contname = CliGetContestNameFromID( contest );
-  for ( threadpos = 0; successes >= 0 && threadpos < threadcount; threadpos++ )
+  for ( threadpos = 0; 
+        !userbreak && successes >= 0 && threadpos < threadcount;
+        threadpos++ )
   {
     unsigned int testnum;
     long threadindex = -1L;
@@ -241,16 +247,13 @@ int SelfTest( unsigned int contest )
     ClientEventSyncPost( CLIEVENT_SELFTEST_STARTED, (long)contest );
     successes = 0;
 
-    for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ )
+    for ( testnum = 0 ; !userbreak && testnum < TEST_CASE_COUNT ; testnum++ )
     {
       const u32 (*test_cases)[TEST_CASE_COUNT][8] = NULL;
       int resultcode; const char *resulttext = NULL;
       u64 expectedsolution;
       ContestWork contestwork;
       Problem *problem = new Problem(threadindex);
-
-      if (CheckExitRequestTriggerNoIO())
-        break;
 
       if (contest == RC5)
       { 
@@ -388,101 +391,113 @@ int SelfTest( unsigned int contest )
       problem->LoadState( &contestwork, contest, 0x1000, 0 /* unused */);
   
       ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)(problem) );
-  
-      while ( problem->Run() == RESULT_WORKING )
+
+      resultcode = RESULT_WORKING;
+      do
       {
         #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
         Yield();
         #elif (CLIENT_OS == OS_NETWARE)
         nwCliThreadSwitchLowPriority();
         #endif
-      }
+        if (CheckExitRequestTrigger())
+	{
+	  userbreak = 1;
+          break;
+        }
+      } while ( problem->Run() == RESULT_WORKING );
   
-      resultcode = problem->RetrieveState( &contestwork, NULL, 1 );
+      if (!userbreak)
+      {
+        resultcode = problem->RetrieveState( &contestwork, NULL, 1 );
 
-      switch (contest) {
-        case RC5:
-        case DES:
-        case CSC:
-          if ( resultcode != RESULT_FOUND )                /* no solution */
-          {
-            contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
-            resulttext = "FAILED";
-            resultcode = -1;
-          }
-          else if (contestwork.crypto.key.lo != expectedsolution.lo || 
-                   contestwork.crypto.key.hi != expectedsolution.hi)   
-          {                                                /* wrong solution */
-            resulttext = "FAILED";
-            resultcode = -1;
-          } 
-          else                                             /* correct solution */
-          {
-            resulttext = "passed";
-            successes++;
-            #if 0
-            if (contest == DES)
+        switch (contest) {
+          case RC5:
+          case DES:
+          case CSC:
+            if ( resultcode != RESULT_FOUND )                /* no solution */
             {
-              /* original expected solution */
-              expectedsolution.hi = (*test_cases)[testnum][1]; 
-              expectedsolution.lo = (*test_cases)[testnum][0];
-              convert_key_from_inc_to_des(&(contestwork.crypto.key.hi), 
-                                          &(contestwork.crypto.key.lo));
+              contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
+              resulttext = "FAILED";
+              resultcode = -1;
+            }
+            else if (contestwork.crypto.key.lo != expectedsolution.lo || 
+                     contestwork.crypto.key.hi != expectedsolution.hi)   
+            {                                                /* wrong solution */
+              resulttext = "FAILED";
+              resultcode = -1;
             } 
-            #endif
-          }
-          LogScreen( "\r%s: Test %02d %s: %08X:%08X-%08X:%08X", 
-             contname, testnum + 1, resulttext,
-             contestwork.crypto.key.hi, contestwork.crypto.key.lo, 
-             expectedsolution.hi, expectedsolution.lo );
-          break;
+            else                                             /* correct solution */
+            {
+              resulttext = "passed";
+              successes++;
+              #if 0
+              if (contest == DES)
+              {
+                /* original expected solution */
+                expectedsolution.hi = (*test_cases)[testnum][1]; 
+                expectedsolution.lo = (*test_cases)[testnum][0];
+                convert_key_from_inc_to_des(&(contestwork.crypto.key.hi), 
+                                            &(contestwork.crypto.key.lo));
+              } 
+              #endif
+            }
+            LogScreen( "\r%s: Test %02d %s: %08X:%08X-%08X:%08X", 
+               contname, testnum + 1, resulttext,
+               contestwork.crypto.key.hi, contestwork.crypto.key.lo, 
+               expectedsolution.hi, expectedsolution.lo );
+            break;
 
-        case OGR:
-          if (expectedsolution.lo & 0x80000000) { // no solution
-            expectedsolution.lo = ~expectedsolution.lo;
-            if (resultcode != RESULT_NOTHING ||
-                contestwork.ogr.nodes.lo != expectedsolution.lo) {
-              resulttext = "FAILED";
-              resultcode = -1;
+          case OGR:
+            if (expectedsolution.lo & 0x80000000) { // no solution
+              expectedsolution.lo = ~expectedsolution.lo;
+              if (resultcode != RESULT_NOTHING ||
+                  contestwork.ogr.nodes.lo != expectedsolution.lo) {
+                resulttext = "FAILED";
+                resultcode = -1;
+              } else {
+                resulttext = "passed";
+                successes++;
+              }
             } else {
-              resulttext = "passed";
-              successes++;
+              if (resultcode != RESULT_FOUND ||
+                  contestwork.ogr.nodes.lo != expectedsolution.lo) {
+                resulttext = "FAILED";
+                resultcode = -1;
+              } else {
+                resulttext = "passed";
+                successes++;
+              }
             }
-          } else {
-            if (resultcode != RESULT_FOUND ||
-                contestwork.ogr.nodes.lo != expectedsolution.lo) {
-              resulttext = "FAILED";
-              resultcode = -1;
-            } else {
-              resulttext = "passed";
-              successes++;
-            }
-          }
-          LogScreen( "%s: Test %02d %s: %s %08X-%08X\n", 
-             contname, testnum + 1, resulttext,
-             ogr_stubstr(&contestwork.ogr.workstub.stub),
-             contestwork.ogr.nodes.lo, 
-             expectedsolution.lo );
-          break;
-      }
+            LogScreen( "%s: Test %02d %s: %s %08X-%08X\n", 
+               contname, testnum + 1, resulttext,
+               ogr_stubstr(&contestwork.ogr.workstub.stub),
+               contestwork.ogr.nodes.lo, 
+               expectedsolution.lo );
+            break;
+        } /* switch */
+      } /* if (!userbreak) */
 
       ClientEventSyncPost( CLIEVENT_SELFTEST_TESTEND, (long)resultcode );
       delete problem;
 
     } /* for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ ) */
 
-    if (successes > 0)
+    if (!userbreak)
     {
-      LogScreen( "\n%s: %d/%d Tests Passed\n", contname,
-        (int) successes, (int) TEST_CASE_COUNT );
+      if (successes > 0)
+      {
+        LogScreen( "\n%s: %d/%d Tests Passed\n", contname,
+          (int) successes, (int) TEST_CASE_COUNT );
+      }
+      if (successes != TEST_CASE_COUNT)
+      {
+        LogScreen( "\n%s: WARNING WARNING WARNING: %d Tests FAILED!!!\n", 
+          contname, (int) (TEST_CASE_COUNT - successes) );
+          successes=-successes;
+      }
     }
-    if (successes != TEST_CASE_COUNT)
-    {
-      LogScreen( "\n%s: WARNING WARNING WARNING: %d Tests FAILED!!!\n", 
-        contname, (int) (TEST_CASE_COUNT - successes) );
-        successes=-successes;
-    }
-
+    
     ClientEventSyncPost( CLIEVENT_SELFTEST_FINISHED, (long)(successes) );
 
   } /* for ( threadpos = 0; threadpos < threadcount; threadpos++ ) */
