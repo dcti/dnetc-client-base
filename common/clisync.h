@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.17 2003/09/08 19:12:25 mweiser Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.18 2003/09/12 13:27:59 mweiser Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -213,6 +213,43 @@
 # else
 #  error "What's up Doc?"
 # endif
+    }
+  }
+
+#elif (CLIENT_OS == OS_AIX)
+
+  /* there's no assembly for fastlocks on Power and the PowerPC code
+  ** has to use local labels which the AIX system as doesn't
+  ** support. So (for now) we use the AIX atomic ops on both PowerPC
+  ** and Power. As soon as GNU binutils properly support AIX we can
+  ** switch back to the PowerPC asm code with local labels. */
+
+# include <sys/atomic_op.h>
+
+  typedef int fastlock_t;
+
+  static inline void fastlock_init(fastlock_t *l) {
+    *l = 0;
+  }
+
+  static inline void fastlock_unlock(fastlock_t *l) {
+    /* Atomically writes a single word variable, issuing an export
+    ** fence for multiprocessor systems */
+    _clear_lock(l, 0);
+  }
+
+  static inline int fastlock_trylock(fastlock_t *l) {
+    /* Conditionally updates a single word variable atomically,
+    ** issuing an import fence for multiprocessor systems. */
+    if (!_check_lock(l, 0, 1 ))
+      return 1;
+
+    return 0;
+  }
+
+  static inline void fastlock_lock(fastlock_t *l) {
+    while (fastlock_trylock(l) <= 0) {
+      NonPolledUSleep(1);
     }
   }
 
@@ -415,45 +452,6 @@
     }
   }
 
-/* Power is AIX only */
-#elif (CLIENT_CPU == CPU_POWER) && defined(__GNUC__)
-
-  /* Using cs(3). Deprecated as of AIX 4.0
-  #define fastlock_t int
-  #define FASTLOCK_INITIALIZER_UNLOCKED 0
-  #define fastlock_trylock(__flp) ((cs( __flp, 0, 1)) ? (+1) : (0))
-  #define fastlock_unlock(__flp) do { *__flp = 0; break; } while (0)
-  #define fastlock_lock(__flp) do { if (fastlock_trylock(__flp) > 0) break; \
-                                    NonPolledUSleep(1); } while (1)
-  */
-# include <sys/atomic_op.h>
-
-  typedef int fastlock_t;
-
-  static inline void fastlock_init(fastlock_t *l) {
-    *l = 0;
-  }
-
-  static inline void fastlock_unlock(fastlock_t *l) {
-    /* Atomically writes a single word variable, issuing */
-    /* an export fence for multiprocessor systems */
-    _clear_lock(l, 0);
-  }
-
-  static inline int fastlock_trylock(fastlock_t *l) {
-    /* Conditionally updates a single word variable atomically, */
-    /* issuing an import fence for multiprocessor systems. */
-    if (!_check_lock(l, 0, 1 ))
-      return 1;
-
-    return 0;
-  }
-
-  static inline void fastlock_lock(fastlock_t *l) {
-    while (fastlock_trylock(l) <= 0) {
-      NonPolledUSleep(1);
-    }
-  }
 
 #elif ((CLIENT_CPU == CPU_S390) || (CLIENT_CPU == CPU_S390X)) && \
       defined(__GNUC__)
