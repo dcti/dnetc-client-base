@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.25 2000/01/09 20:32:38 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.26 2000/01/13 09:24:14 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -1088,12 +1088,16 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
     if (loaderflags_map[contest] != 0) /* contest is closed or disabled */
       continue;
 
-    GetBufferCount( client, contest, 0, &lefttotrans );
-
-    if (GetBufferCount( client, contest, 0, &lefttotrans) >= 0)
-      lefttotrans = ClientGetInThreshold( client, contest, true ) - lefttotrans;
-    else
+    if (GetBufferCount( client, contest, 0, &lefttotrans) < 0)
       lefttotrans = 0;
+    else
+    {
+      int threshold = ClientGetInThreshold( client, contest, true );
+      if ( lefttotrans >= ((unsigned long)threshold) ) /* buffers full? */
+        lefttotrans = 0;
+      else
+        lefttotrans -= threshold;
+    }
 
     if (lefttotrans != 0)
     {
@@ -1125,13 +1129,6 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
         lefttotrans = 0;
         break;
       }
-      else
-      {
-        if (GetBufferCount( client, contest, 0, &lefttotrans ) >= 0)
-          lefttotrans = ClientGetInThreshold( client, contest, true ) - lefttotrans;
-        else
-          lefttotrans = 0;
-      }
 
       switch (contest) 
       {
@@ -1150,6 +1147,10 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       projworkunits+=workunits;
       combinedtrans++;
       combinedworkunits+=workunits;
+      if (((unsigned long)workunits) > lefttotrans)
+        lefttotrans = 0;
+      else  
+        lefttotrans -= workunits;
 
       if (combinedtrans == 1) 
         ClientEventSyncPost( CLIEVENT_BUFFER_FETCHBEGIN, 0 );

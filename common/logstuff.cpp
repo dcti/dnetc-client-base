@@ -11,7 +11,7 @@
  * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.48 2000/01/09 20:32:39 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.49 2000/01/13 09:24:15 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -24,6 +24,12 @@ return "@(#)$Id: logstuff.cpp,v 1.48 2000/01/09 20:32:39 cyp Exp $"; }
 #include "console.h"   // for ConOut() and ConIsScreen()
 #include "triggers.h"  // don't print percbar if pause/exit/restart triggered
 #include "logstuff.h"  // keep the prototypes in sync
+
+#ifndef PERSISTANT_OPENLOG
+  #if defined(__unix__)
+  //#define PERSISTANT_OPENLOG //NO!! DON'T DO THIS!
+  #endif
+#endif  
 
 //-------------------------------------------------------------------------
 
@@ -177,8 +183,8 @@ static FILE *__fopenlog( const char *fn, const char *mode )
 #endif
 
 
-//this can ONLY be called from LogWithPointer. msgbuffer is recycled!
-static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/ )
+//this can ONLY be called from LogWithPointer.
+static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*flags*/ )
 {
   int logfileType = logstatics.logfileType;
   unsigned int logfileLimit = logstatics.logfileLimit;
@@ -203,7 +209,7 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
       fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
       fflush( logstatics.logstream );
       filelen = (long)ftell( logstatics.logstream );
-      #ifndef __unix__
+      #ifndef PERSISTANT_OPENLOG
       fclose( logstatics.logstream );
       logstatics.logstream = NULL;
       #endif
@@ -219,7 +225,7 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
            "Restarted...\n\n", CliGetTimeString( NULL, 1 ), 
            (unsigned int)( logstatics.logfileLimit ));
         fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
-        #ifndef __unix__
+        #ifndef PERSISTANT_OPENLOG
         fclose( logstatics.logstream );
         logstatics.logstream = NULL;
         #else
@@ -339,7 +345,7 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
       if ( logstatics.logstream )
       {
         fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
-        #ifndef __unix__
+        #ifndef PERSISTANT_OPENLOG
         fclose( logstatics.logstream );
         logstatics.logstream = NULL;
         #else
@@ -360,7 +366,7 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
       
     if (!logstatics.logstream)
     {
-      #ifndef __unix__
+      #ifndef PERSISTANT_OPENLOG
       logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
       #else
       logstatics.logstream = __fopenlog( logstatics.logfile, "r+" );
@@ -375,54 +381,63 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
       fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
       if (((long)(filelen = ftell( logstatics.logstream ))) == ((long)(-1)))
         filelen = 0;
-      #ifndef __unix__
+      #ifndef PERSISTANT_OPENLOG
       fclose( logstatics.logstream );
       logstatics.logstream = NULL;
       #endif
     }
     if ( filelen > (((unsigned long)(logfileLimit))<<10) )
     {    /* careful: file must be read/written without translation - cyp */
-      if (!logstatics.logstream) /* always false for unix */
-        logstatics.logstream = __fopenlog( logstatics.logfile, "r+b" );
-      if ( logstatics.logstream )
+      unsigned int maxswapsize = 1024*4; //assumed dpage/sector size
+      char *swapbuffer = (char *)malloc( maxswapsize );
+      if (swapbuffer)
       {
-        unsigned long next_top = filelen - /* keep last 90% */
-                               ((((unsigned long)(logfileLimit))<<10)*9)/10;
-        if ( fseek( logstatics.logstream, next_top, SEEK_SET ) == 0 &&
-          ( msglen = fread( msgbuffer, sizeof( char ), MAX_LOGENTRY_LEN-1, 
-                    logstatics.logstream ) ) != 0 )
+        if (!logstatics.logstream) /* always false for PERSISTANT_OPENLOG */
+          logstatics.logstream = __fopenlog( logstatics.logfile, "r+b" );
+        if ( logstatics.logstream )
         {
-          msgbuffer[msglen]=0;
-          char *p = strchr( msgbuffer, '\n' );  //translate manually
-          char *q = strchr( msgbuffer, '\r' );  //to find next line start
-          if ( q != NULL && q > p ) 
-            p = q;
-          if ( p != NULL )
+          unsigned long next_top = filelen - /* keep last 90% */
+                                 ((((unsigned long)(logfileLimit))<<10)*9)/10;
+          if ( fseek( logstatics.logstream, next_top, SEEK_SET ) == 0 &&
+            ( msglen = fread( swapbuffer, sizeof( char ), maxswapsize, 
+                      logstatics.logstream ) ) != 0 )
           {
-            while (*p=='\r' || *p=='\n') 
-              p++;
-            next_top += ( p - (&msgbuffer[0]) );
+            /* skip to the beginning of the next line */
+            filelen = 0;
+            while (filelen < (msglen-1))
+            {
+              if (swapbuffer[filelen]=='\r' || swapbuffer[filelen]=='\n')
+              {
+                while (filelen < (msglen-1) &&
+                  (swapbuffer[filelen]=='\r' || swapbuffer[filelen]=='\n'))
+                  filelen++;
+                next_top += filelen;
+                break;
+              }
+              filelen++;
+            }
+            
+            filelen = 0;
+            while ( fseek( logstatics.logstream, next_top, SEEK_SET ) == 0 &&
+               ( msglen = fread( swapbuffer, sizeof( char ), maxswapsize, 
+                      logstatics.logstream ) ) != 0 &&
+                  fseek( logstatics.logstream, filelen, SEEK_SET ) == 0 &&
+               ( msglen == fwrite( swapbuffer, sizeof( char ), msglen, 
+                       logstatics.logstream ) ) )
+            {
+              next_top += msglen;
+              filelen += msglen;
+            }
+            ftruncate( fileno( logstatics.logstream ), filelen );
           }
-          filelen = 0;
-          
-          while ( fseek( logstatics.logstream, next_top, SEEK_SET ) == 0 &&
-             ( msglen = fread( msgbuffer, sizeof( char ), MAX_LOGENTRY_LEN, 
-                    logstatics.logstream ) ) != 0 &&
-                fseek( logstatics.logstream, filelen, SEEK_SET ) == 0 &&
-             ( msglen == fwrite( msgbuffer, sizeof( char ), msglen, 
-                     logstatics.logstream ) ) )
-          {
-            next_top += msglen;
-            filelen += msglen;
-          }
-          ftruncate( fileno( logstatics.logstream ), filelen );
+          #ifndef PERSISTANT_OPENLOG
+          fclose( logstatics.logstream );
+          logstatics.logstream = NULL;
+          #endif
         }
-        #ifndef __unix__
-        fclose( logstatics.logstream );
-        logstatics.logstream = NULL;
-        #endif
-      }
-    }  
+        free((void *)swapbuffer);
+      }  
+    }
     logstatics.logfilestarted = 1;
   }
   #endif
@@ -435,7 +450,7 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
     if (logstatics.logstream)
     {
       fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
-      #ifndef __unix__
+      #ifndef PERSISTANT_OPENLOG
       fclose( logstatics.logstream );
       logstatics.logstream = NULL;
       #else
@@ -546,6 +561,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
     #ifdef ASSERT_WIDTH_80  //"show" where badly formatted lines are cropping up
     //if (ConIsScreen())
     {
+      int scrwidth = 80; /* assume this for consistancy */
       buffptr = &msgbuffer[0];
       do{
         while (*buffptr == '\r' || *buffptr == '\n' )
@@ -553,11 +569,17 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
         obuffptr = buffptr;
         while (*buffptr && *buffptr != '\r' && *buffptr != '\n' )
           buffptr++;
-        if ((buffptr-obuffptr) > 79)
+        if ((buffptr-obuffptr) >= scrwidth)
         {
-          obuffptr[75] = ' '; obuffptr[76] = obuffptr[77] = obuffptr[78] = '.';
-          memmove( obuffptr+79, buffptr, strlen(buffptr)+1 );
-          buffptr = obuffptr+79;
+          if (scrwidth > 5)
+          {
+            obuffptr[(scrwidth-5)] = ' '; 
+            obuffptr[(scrwidth-4)] = '.';
+            obuffptr[(scrwidth-3)] = '.';
+            obuffptr[(scrwidth-2)] = '.';
+          }
+          memmove( obuffptr+(scrwidth-1), buffptr, strlen(buffptr)+1 );
+          buffptr = obuffptr+(scrwidth-1);
         }    
       } while (*buffptr);
       msglen = strlen( msgbuffer );
