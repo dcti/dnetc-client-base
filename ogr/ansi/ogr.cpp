@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.17 2004/01/06 14:11:11 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.18 2004/01/10 22:39:22 kakace Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -3154,32 +3154,28 @@ static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen
   }
 
   /*
-  ** Sanity check.
-  ** Finalization stubs have one diff less than regular (OGR) stubs.
-  ** In order to skip already done work by the OGR contest, the minimum
-  ** position for the first mark is hidden in the distribution stub.
-  ** If worklength exceeds the stub length, then the stub has already been
-  ** processed (partially) and we no longer need the minimum position (which
-  ** has already been overwritten, anyhow).
-  ** If finalization_stub is set to 1, the main loop will iterate one more
-  ** time to place the next mark at its minimum position.
+  ** Sanity check
+  ** Make sure we only get OGR-24/OGR-25 finalization stubs, and make
+  ** sure supposed finalization stubs (that have less diffs than regular
+  ** stubs) come with the corresponding starting point.
+  ** OGR already handled all stubs upto (and including) length 70, so the
+  ** starting point must be higher.
   */
-  if (oState->maxdepth == 24) {
-    if (workstub->stub.length < 5 && workstub->worklength <= workstub->stub.length) {
-      finalization_stub = 1;
-      if(workstub->stub.diffs[workstub->stub.length] < 70)
-        return CORE_E_FORMAT;
+  if (workstub->stub.marks == 24 && workstub->stub.length < 5) {
+    if (workstub->minpos <= 70) {
+      return CORE_E_FORMAT;         // Too low.
     }
+    finalization_stub = 1;
   }
-  else if (oState->maxdepth == 25) {
-    if (workstub->stub.length < 6 && workstub->worklength <= workstub->stub.length) {
-      finalization_stub = 1;
-      if (workstub->stub.diffs[workstub->stub.length] < 70)
-        return CORE_E_FORMAT;
+  else if (workstub->stub.marks == 25 && workstub->stub.length < 6) {
+    if (workstub->minpos <= 70) {
+      return CORE_E_FORMAT;         // Too low.
     }
+    finalization_stub = 1;
   }
-  else {
-     return CORE_E_FORMAT;
+  else if (workstub->minpos != 0) {
+    // Unsuspected starting point
+    return CORE_E_FORMAT;
   }
 
   oState->max = OGR[oState->maxdepthm1];
@@ -3257,7 +3253,7 @@ static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen
         ** As a result, ogr_cycle() will start one level deeper, then
         ** proceed as usual until it backtracks to depth oState->startdepth.
         */
-        --s;
+        s = workstub->minpos - 1;
         if (lev->cnt2 < s) {
           int k = s - lev->cnt2;
           while (k >= 32) {
@@ -3375,7 +3371,7 @@ static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen
         ** As a result, ogr_cycle() will start one level deeper, then
         ** proceed as usual until it backtracks to depth oState->startdepth.
         */
-        --s;
+        s = workstub->minpos - 1;
         if (cnt2 < s) {
           int k = s - cnt2;
           while (k >= 32) {
