@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.48  1998/06/25 02:30:38  jlawson
+// put back public Client::connectrequested for use by win32gui
+//
 // Revision 1.47  1998/06/24 16:24:05  cyruspatel
 // Added prototype for GetTimesliceBaseline() (in cpucheck.cpp)
 //
@@ -412,8 +415,11 @@ protected:
   u32 old_totalBlocksDone[2];
   u32 timeStarted;
 
-  //u32 connectrequested; //in conflict with Client::Run()'s connectrequested
-                          //used nowhere else anyway
+
+#if (CLIENT_OS == OS_WIN32) && defined(NEEDVIRTUALMETHODS)
+  u32 connectrequested;       // used by win32gui to signal an update
+#endif
+  
 
 #if (CLIENT_OS == OS_WIN16)
   virtual void SurrenderCPU( void ) {};

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.59  1998/06/25 02:30:33  jlawson
+// put back public Client::connectrequested for use by win32gui
+//
 // Revision 1.58  1998/06/25 01:34:31  blast
 //
 // AmigaOS changes, also changed makefile so that there now is only ONE
@@ -57,7 +60,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.58 1998/06/25 01:34:31 blast Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.59 1998/06/25 02:30:33 jlawson Exp $";
 #endif
 
 #include "client.h"
@@ -1584,7 +1587,11 @@ s32 Client::Run( void )
   s32 TimeToQuit = 0, getbuff_errs = 0;
 
 #if defined(MULTITHREAD)
-  u32 connectrequested = 0;
+  #if (CLIENT_OS == OS_WIN32) && defined(NEEDVIRTUALMETHODS)
+    connectrequested = 0;         // uses public class member
+  #else  
+    u32 connectrequested = 0;
+  #endif
   u32 connectloops = 0;
 #endif
 
