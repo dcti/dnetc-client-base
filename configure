@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.44  1998/06/16 21:59:26  silby
+# Added p1bdespro.s and p2bdespro.s into configure for x86 linux
+#
 # Revision 1.43  1998/06/16 09:01:46  kbracey
 # Another attempt to fix ident rule in a way that works for everyone.
 #
@@ -522,7 +525,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
 	;;
 
     *x86-linux-egcs-debug)    # debug version of x86-linux-egcs
@@ -530,7 +533,7 @@ case "$1" in
 	TARGET_CC="gcc -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
 	TARGET_STRIP="touch"
 	;;
 
@@ -549,7 +552,7 @@ case "$1" in
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
 	;;
 
     *x86-linux-aout)
@@ -558,7 +561,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
 	;;
 
     *x86-linux-mt-egcs)
@@ -567,7 +570,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
 	TARGET_LIBS="-lpthread"
 	;;
 
@@ -576,7 +579,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
 	TARGET_LIBS="-lpthread"
 	;;
 
