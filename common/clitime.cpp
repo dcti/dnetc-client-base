@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.48 2001/01/11 16:41:25 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.49 2001/01/14 20:05:06 teichp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -120,6 +120,14 @@ static int __GetTimeOfDay( struct timeval *tv )
       tv->tv_sec = (time_t)secs;
       tv->tv_usec = (long)fsec;
     }
+    #elif (CLIENT_OS == OS_RISCOS)
+    {
+      time_t t;
+
+      time(&t);
+      tv->tv_sec=t;
+      tv->tv_usec=0;
+    }
     #else
     {
       //struct timezone tz;
@@ -132,7 +140,7 @@ static int __GetTimeOfDay( struct timeval *tv )
 
 /* --------------------------------------------------------------------- */
 
-// timezone offset such that the number returned is constant for any 
+// timezone offset such that the number returned is constant for any
 // time of year (ie, dst unadjusted, just as if the date was always Jan 1)
 // "minuteswest" means west of utc > 0, east < 0, ie utctime-localtime
 // CliGetMinutesWest() caches the value returned from __GetMinutesWest()
@@ -144,7 +152,7 @@ static int __GetMinutesWest(void)
   ((CLIENT_OS == OS_OS2) && !defined(__EMX__))
   /* ANSI rules :) - 'timezone' doesn't reflect 'daylight' state. */
   /* ie utctime-localtime == timezone-(daylight*3600) */
-  minwest = (int)(((long)timezone)/60L); 
+  minwest = (int)(((long)timezone)/60L);
 #elif (CLIENT_OS == OS_WIN32)
   TIME_ZONE_INFORMATION TZInfo;
   if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
@@ -418,7 +426,7 @@ int CliGetMonotonicClock( struct timeval *tv )
       static int using_qff = -1;
       if (using_qff != 0)
       {
-        static unsigned __int64 freq = 0;  
+        static unsigned __int64 freq = 0;
         unsigned __int64 now; int gotit = 0;
         LARGE_INTEGER qperf;
         if (winGetVersion() >= 400 && /* not efficient on win32s */
@@ -427,9 +435,9 @@ int CliGetMonotonicClock( struct timeval *tv )
           if (qperf.LowPart || qperf.HighPart)
           {
             gotit = +1;
-            if (using_qff < 0) 
+            if (using_qff < 0)
             {
-              /* guard against Japanese Win95 (PC9800 version) which always 
+              /* guard against Japanese Win95 (PC9800 version) which always
               ** returns 1193180 (.eq. QueryPerfFrequency()) as counter.
               ** See KB article Q152145
               */
@@ -441,7 +449,7 @@ int CliGetMonotonicClock( struct timeval *tv )
                 if ((qcheck.LowPart || qcheck.HighPart) &&
                     ((qcheck.LowPart != qperf.LowPart) ||
                      (qcheck.HighPart != qperf.HighPart)))
-                {  
+                {
                   qperf.LowPart = qcheck.LowPart;
                   qperf.HighPart = qcheck.HighPart;
                   if (QueryPerformanceFrequency(&qcheck))
@@ -451,16 +459,16 @@ int CliGetMonotonicClock( struct timeval *tv )
                     now += qcheck.LowPart;
                     freq = now;
                     gotit = +1;
-                  }  
+                  }
                 }
-              }    
+              }
             }
           }
         }
-        if (using_qff < 0) 
-          using_qff = gotit;  
+        if (using_qff < 0)
+          using_qff = gotit;
         else if (!gotit)
-          return -1; 
+          return -1;
         if (gotit)
         {
           now = qperf.HighPart;
@@ -470,7 +478,7 @@ int CliGetMonotonicClock( struct timeval *tv )
           now = now % freq;
           now = now * 1000000ui64;
           tv->tv_usec = (time_t)(now / freq);
-          return 0; 
+          return 0;
         }
         /* fallthrough: using_qff == 0 */
       }
@@ -532,7 +540,7 @@ int CliGetMonotonicClock( struct timeval *tv )
                    "xorl $1,%0\n\t"
                    : "=r"(lacquired)
                    : "m"(*((struct __fool_gcc_volatile *)(splptr)))
-                   : "memory"); 
+                   : "memory");
         #elif defined(__WATCOMC__)
         _asm mov edx, splptr
         _asm mov eax, 1
@@ -594,7 +602,7 @@ int CliGetMonotonicClock( struct timeval *tv )
     #elif (CLIENT_OS == OS_LINUX) /*only RTlinux has clock_gettime/gethrtime*/
     {
       /* this is computationally expensive, but we don't have a choice.
-         /proc/uptime is buggy even in the newest kernel (2.4-test2): 
+         /proc/uptime is buggy even in the newest kernel (2.4-test2):
          it wraps at jiffies/HZ, ie ~497 days on a 32bit cpu (and the
          fact that that hasn't been noticed in 5 years is a pretty good
          indication that no linux box ever runs more than 497 days :)
@@ -604,7 +612,7 @@ int CliGetMonotonicClock( struct timeval *tv )
       #else
       static int fd = -1;
       #endif
-      int rc = -1; 
+      int rc = -1;
       if (fd == -1)
         fd = open("/proc/uptime",O_RDONLY);
       if (fd != -1)
@@ -622,7 +630,7 @@ int CliGetMonotonicClock( struct timeval *tv )
             {
               tt = t1;
               t1 = (t1*10)+((*p++)-'0');
-	    }  
+	    }
             if (*p++ == '.')
             {
               tt=0;
@@ -630,7 +638,7 @@ int CliGetMonotonicClock( struct timeval *tv )
               {
                 tt = t2;
                 t2 = (t2*10)+((*p++)-'0');
-	      }  
+	      }
               if (*p++ == ' ')
               {
                 tv->tv_usec = (long)(10000UL * t2);
@@ -676,7 +684,7 @@ int CliGetMonotonicClock( struct timeval *tv )
             have this bug). Otherwise you may as well use __GetTimeOfDay()
          b) that clock() does not return virtual time. Under unix clock()
             is often implemented via times() and is thus virtual. Look at
-            uptime source or see if something in top source (get_system_info 
+            uptime source or see if something in top source (get_system_info
             in machine/m_[yourplat].c) is usable.
          c) clock_t is at least an unsigned long
          d) that the value from clock() does indeed count up to ULONG_MAX
@@ -734,7 +742,7 @@ int CliGetThreadUserTime( struct timeval *tv )
       return -1;
     tv->tv_sec = rus.ru_utime.tv_sec;
     tv->tv_usec = rus.ru_utime.tv_usec;
-    //printf("\rgetrusage(%d) => %d.%02d\n", getpid(), tv->tv_sec, tv->tv_usec/10000 ); 
+    //printf("\rgetrusage(%d) => %d.%02d\n", getpid(), tv->tv_sec, tv->tv_usec/10000 );
   }
   return 0;
 #elif (CLIENT_OS == OS_WIN32)
