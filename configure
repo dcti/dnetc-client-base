@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.185 2000/08/25 20:36:08 patrick Exp $
+# @(#)$Id: configure,v 1.222.2.186 2000/08/30 22:24:21 oliver Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -290,6 +290,11 @@ generate_gcc_opts() {
         #OPTS_EGCS_PPC604="$OPTS_EGCS -O6 -DASM_PPC -mcpu=604"
         #OPTS_EGCS_PPC860="$OPTS_EGCS -O6 -DASM_PPC -mcpu=860 -msoft-float"
         ;;
+
+    *internal-ppc603e)
+        opts272="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=603e -funroll-loops"
+        opts295="$OPTS_GCC295 -O2 -DASM_PPC -mcpu=603e -funroll-loops"
+	;;
 
     *internal-ppc604)
         opts272="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604 -funroll-loops"
@@ -2065,15 +2070,16 @@ case "$1" in
     *m68k-amigaos)              # [oliver] <oliver@futaura.co.uk>
 	TARGET_AS="platforms/amiga/tools/genam_wrapper"
 	TARGET_CC="g++ -V 2.95.2"
-        generate_gcc_opts "generic" "amigaos"
+        generate_gcc_opts "68k" "amigaos"
 	TARGET_CCFLAGS="$OPTS_GCC -m68000 -fpermissive -O6 -I./ -noixemul \
                         -D__AMIGADATE__=\`platforms/amiga/tools/amigadate\` \
-                        -DDYN_TIMESLICE -DHAVE_OGR_CORES"
+                        -DDYN_TIMESLICE -DHAVE_OGR_CORES -DLURK"
 	TARGET_LDFLAGS="-noixemul"
+	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
 	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
                         platforms/amiga/amTime.c platforms/amiga/amNetwork.c \
-                        platforms/amiga/amConsole.c ogr/ogr_sup.cpp ogr/crc32.cpp \
-                        ogr/choosedat.cpp"
+                        platforms/amiga/amConsole.c ogr/ansi/ogr_sup.cpp \
+                        ogr/ansi/ogr_dat.cpp"
 	TARGET_ADDASMS="rc5/68k/rc5-000_010-jg.s rc5/68k/rc5-020_030-jg.s \
                         rc5/68k/rc5-040_060-jg.s"
         TARGET_ADDOBJS="output/ogr000.o output/ogr020.o output/ogr030.o \
@@ -2090,13 +2096,14 @@ case "$1" in
 	TARGET_AS="ppc-amigaos-gas"
 	TARGET_CC="ppc-amigaos-g++ -V 2.95.2"
         TARGET_ASFLAGS="-m603"
-        generate_gcc_opts "generic" "amigaos"
-	TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_PPC -mcpu=603e -mmultiple -mstring -I./ \
+        generate_gcc_opts "ppc603e" "amigaos"
+	TARGET_CCFLAGS="$OPTS_GCC -O6 -mmultiple -mstring -I./ \
                         -D__AMIGADATE__=\`platforms/amiga/tools/amigadate\` \
-                        -DDYN_TIMESLICE -DHAVE_OGR_CORES"
+                        -DDYN_TIMESLICE -DHAVE_OGR_CORES -DLURK"
+	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
 	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
                         platforms/amiga/amTime.c platforms/amiga/amNetwork.c \
-                        platforms/amiga/amConsole.c $RC5PPC_SRCS $OGR_PPC_SRCS"
+                        platforms/amiga/amConsole.c $RC5PPC_SRCS $OGR_ANSI_SRCS"
         TARGET_TARBALL="amigaos-ppc-wos"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
         TARGET_STRIP="platforms/amiga/tools/strip_wos"
@@ -2110,14 +2117,16 @@ case "$1" in
 	TARGET_AS="ppc-amigaos-gas"
 	TARGET_CC="ppc-amigaos-g++ -V 2.95.2" 
         TARGET_ASFLAGS="-m603"
-        generate_gcc_opts "generic" "amigaos"
-	TARGET_CCFLAGS="-pup -D__POWERUP__ $OPTS_GCC -O6 -DASM_PPC -mcpu=603e -mmultiple \
+        generate_gcc_opts "ppc603e" "amigaos"
+	TARGET_CCFLAGS="$OPTS_GCC -pup -D__POWERUP__ -O6 -mmultiple -mstring \
                         -D__AMIGADATE__=\`platforms/amiga/tools/amigadate\` \
-                        -mstring -mstrict-align -I./ -DDYN_TIMESLICE -DHAVE_OGR_CORES"
+                        --mstrict-align -I./ -DDYN_TIMESLICE \
+                        -DHAVE_OGR_CORES -DLURK"
 	TARGET_LDFLAGS="-pup"
+	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
 	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
                         platforms/amiga/amTime.c platforms/amiga/amNetwork.c \
-                        platforms/amiga/amConsole.c $RC5PPC_SRCS $OGR_PPC_SRCS"
+                        platforms/amiga/amConsole.c $RC5PPC_SRCS $OGR_ANSI_SRCS"
         TARGET_TARBALL="amigaos-ppc-pup"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
         TARGET_STRIP="platforms/amiga/tools/strip_pup"
@@ -2549,15 +2558,13 @@ fi
       
 if [ "$TARGET_OS" = "AMIGAOS_68K" ]; then
   echo "Generating Makefile AmigaOS 68k multi-core OGR dependency targets..."
-  TARGETSRC="ogr/ogr.cpp"
+  TARGETSRC="ogr/ansi/ogr.cpp"
   TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
   OGR68K="000 020 030 040 060"
   for targetext in ${OGR68K}; do
     echo "output/ogr${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
-    echo "	sed -e s/ogr_get_dispatch_table/ogr_get_dispatch_table_${targetext}/ \\" >> Makefile
-    echo "	-e s/ogr_cpp/ogr${targetext}_cpp/ <ogr/ogr.cpp >output/ogr68k.cpp" >> Makefile
-    echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -c -o output/ogr${targetext}.o output/ogr68k.cpp" >> Makefile
-    echo "	rm -f output/ogr68k.cpp" >> Makefile
+    echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -c -o output/ogr${targetext}.o ogr/ansi/ogr.cpp \\" >> Makefile
+    echo "	-DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext}" >> Makefile
     echo "" >> Makefile
   done
 fi
