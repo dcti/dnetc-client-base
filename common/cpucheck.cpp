@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.61 2004/06/24 18:04:17 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.62 2004/07/16 18:01:13 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -726,8 +726,7 @@ static long __GetRawProcessorID(const char **cpuname)
     #if defined(__amigaos4__)
     /* AmigaOS 4.x */
     ULONG cpu;
-    IExec->GetCPUInfoTags(GCIT_Model, &cpu,
-                          TAG_DONE);
+    IExec->GetCPUInfoTags(GCIT_Model, &cpu, TAG_DONE);
     switch (cpu)
     {
        case CPUTYPE_PPC603E:        detectedtype = 0x0006; break;
@@ -745,7 +744,6 @@ static long __GetRawProcessorID(const char **cpuname)
        detectedtype = 0;
        break;
     }
-
     #elif !defined(__POWERUP__)
     /* WarpOS */
     struct TagItem cputags[2] = { {GETINFO_CPU, 0}, {TAG_END,0} };
@@ -2125,6 +2123,20 @@ unsigned int GetProcessorFrequency()
     if (processor_info (i, &infop) == 0) {
       freq = infop.pi_clock;
     }      
+  #elif (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_POWERPC)
+    #if defined(__amigaos4__)
+      uint64 freqhz;
+      IExec->GetCPUInfoTags(GCIT_ProcessorSpeed, &freqhz, TAG_DONE);
+      if (freqhz != 0)
+        freq = (freqhz + 500000) / 1000000;
+    #elif !defined(__POWERUP__)
+      struct TagItem cputags[2] = { {GETINFO_CPUCLOCK, 0}, {TAG_END,0} };
+      GetInfo(cputags);
+      if (cputags[0].ti_Data != 0)
+        freq = (cputags[0].ti_Data + 500000) / 1000000;
+    #else
+      freq = PPCGetAttr(PPCINFOTAG_CPUCLOCK);
+    #endif
   #endif
 
   return freq;
@@ -2168,10 +2180,11 @@ unsigned long GetProcessorFeatureFlags()
       #if defined(__amigaos4__)
         /* AmigaOS 4.x */
         ULONG vec;
-        IExec->GetCPUInfoTags(GCIT_VectorUnit, &vec, TAG_DONE);
+        char *extensions;
+        IExec->GetCPUInfoTags(GCIT_VectorUnit, &vec, GCIT_Extensions, &extensions, TAG_DONE);
 
         // Altivec support disabled for now!
-        // if (vec == VECTORTYPE_ALTIVEC)
+        // if ((vec == VECTORTYPE_ALTIVEC) && extensions && strstr(extensions,"altivec"))
         //    ppc_features |= CPU_F_ALTIVEC;
       #endif
     #elif (CLIENT_OS == OS_MORPHOS)  // MorphOS
