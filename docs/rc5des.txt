@@ -21,6 +21,7 @@ Index:
     d.  Unix installation instructions
     e.  MS-DOS client installation instructions
     f.  Amiga client installation instructions
+    g.  RISC OS CLI installation instructions
    (Windows and Macintosh GUI installation instructions are included with
    their respective programs.)
 4.  Upgrading from a previous version of the client
@@ -33,6 +34,7 @@ Index:
     a.  Windows NT Service client
     b.  MS-DOS client
     c.  Amiga client
+    d.  RISC OS CLI
 11. Frequently asked questions
 12. Firewall support / Network protocol description
 13. Flushing and fetching buffers via e-mail
@@ -193,6 +195,25 @@ information on how to use it.
       Please read section 10c of this document for more Amiga specific
       information.
 
+3g.  RISC OS CLI installation instructions:
+
+     a.  Unpack the archive into the directory from which you will be
+         running the client.
+     b.  From a task window, run rc5des. This will initiate the menu-
+         driven configuration (described below.) Set the options for
+         your client as described in section 5 of this document. (Note
+         that you will not need to configure most of the options unless
+         you are behind a firewall or have other special configuration
+         needs.) When you are done, type 0 [ENTER] to exit and save the
+         settings.
+     c.  Run rc5des to start up the client; make sure you are connected
+         to the internet at this time so it may obtain blocks to work
+         on.
+     d.  Make sure to add rc5des to your boot sequence so that it will
+         automatically start in the future.
+
+      Please read section 10d of this document for more RISC OS specific
+      information.
 
 4.  Upgrading from a previous version of the client
 ---------------------------------------------------
@@ -503,10 +524,10 @@ Default setting: -1
 
 If you are using a x86 or PPC client, this will allow you to set which
 optimized rc5 core you wish to use.  All x86 cores will work on all 386+
-processors, and all PPC cores will work on all PPC processors. The
-autoselected core will usually be the fastest, so unless there is a
-misdetection (as may occur with Cyrix processors), you need not manually
-set a core.
+processors, all PPC cores will work on all PPC processors, and all ARM
+cores will work on all ARM processors. The autoselected core will
+usually be the fastest, so unless there is a misdetection (as may occur
+with Cyrix processors), you need not manually set a core.
 
 x86 CPU types:
      -1  : Auto detect
@@ -521,6 +542,11 @@ PPC CPU types:
      -1  : Auto detect
       0  : PPC 601
       1  : PPC 603/603e/604/604e/750
+
+  ARM CPU types:
+     -1  : Auto detect
+      0  : ARM 2/250/3/600/610/700/710/7500/7500FE
+      1  : ARM 810/StrongARM 110
 
 --------------------------------------------
 Command line argument: -l <path/logfilename>
@@ -1058,7 +1084,7 @@ from the server during the connection.
 
 [dd/mm/yy hh:mm:ss GMT] Sent x <type> block(s) to server
 
-If the client just recieved some blocks from the server, it'll tell you
+If the client just received some blocks from the server, it'll tell you
 how many and what kind.
 
 [dd/mm/yy hh:mm:ss GMT] Retrieved x block(s) from server
@@ -1132,6 +1158,41 @@ how you read them.  The averages
           specific, mail blast@amiganet.org, or look for him as `Blast' or
           `Blast2' on ANet #Amiga. (irc.amiganet.org or any other ANet
           server will work.)
+
+    10d.  RISC OS CLI
+
+          The RISC OS CLI client requires:
+
+          -RISC OS 3.10 or later
+          -The Acorn Internet module, or a compatible stack (eg FreeNet)
+
+          The RISC OS port was created by ant.org (team 553).
+
+          If you run the RISC OS client in a task window, you can reduce
+          the amount of processor time used by decreasing the keys per
+          timeslice setting.
+
+          The RISC OS CLI client can be run in a task window at boot time
+          by adding the command
+
+            TaskWindow "Run {path to client}.rc5des" -wimpslot 352K
+                  -name "RC5DES client"
+
+          to your desktop boot file. Changing the quoted command to
+          "Run {path to client}.rc5des { > null: }" will make the client
+          invisible. Stop it by killing it via the task manager or by
+          creating a file "exitrc5/now" in the client's directory.
+          Alternatively, you will probably be better off installing the
+          RISC OS GUI client.
+
+          For help with the RISC OS client, you can either ask through
+          "standard" support channels (listed below), or visit the ant.org
+          RC5 team homepage (http://ant.org/rc5/) for more RISC OS-specific
+          information. (Or e-mail rc5@ant.org)
+
+          If you have problems with the RISC OS port you believe to be
+          RISC OS specific, mail kbracey@acorn.co.uk.
+
 
 11.  Frequently asked questions
 ------------------------------
@@ -1311,7 +1372,9 @@ A:  If you leave the client at its default niceness setting (0), it will
 run at the lowest priority level on your system so that it does not
 interfere with the running of any program. The only two exceptions to this
 rule are the Windows 3.1 and the Macintosh clients, which are hindered
-by non-preemptively multitasking operating systems.
+by non-preemptively multitasking operating systems. On these systems,
+you can reduce the processor time consumed by reducing the keys per
+timeslice setting.
 
 Q:  I've been watching my keyrate, and it seems that it gets SLOWER
 during the times I'm not at my computer! Shouldn't the processor be
