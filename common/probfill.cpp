@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.66.2.2 2001/03/22 22:24:50 sampo Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.66.2.3 2001/03/22 22:31:04 sampo Exp $"; }
 
 //#define TRACE
 
@@ -704,7 +704,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     
         if (load_problem_count <= COMBINEMSG_THRESHOLD)
         {
-          unsigned int permille; char pktid[32]; char ddonebuf[15];
+          char pktid[32]; char ddonebuf[15];
           ProblemInfo info;
           info.permille_only_if_exact = 1;
           info.sigbuf = pktid;
@@ -716,22 +716,22 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   
             if (thisprob->pub_data.was_reset)
               extramsg="\nPacket was from a different core/client cpu/os/build.";
-            else if (permille > 0 && permille < 1000)
+            else if (info.s_permille > 0 && info.s_permille < 1000)
             {
               sprintf(perdone, " (%u.%u0%% done)", (info.s_permille/10), (info.s_permille%10));
               extramsg = perdone;
             }
-            else if (info.ddonehi || info.ddonelo)
+            else if (info.dcounthi || info.dcountlo)
             {
               strcat( strcat( strcpy(perdone, " ("), U64stringify(ddonebuf, sizeof(ddonebuf), 
-                                                                  info.ddonehi, info.ddonelo, 2,
-                                                                  CliGetContestUnitFromID(thisprob->pub_data.contest)),
+                                                                  info.dcounthi, info.dcountlo, 2,
+                                                                  CliGetContestUnitFromID(thisprob->pub_data.contest))),
                                                      " done)"); 
               extramsg = perdone;
             }
             
             Log("%s: Loaded %s%s%s\n",
-                 CliGetContestNameFromID(rhisprob->pub_data.contest),
+                 CliGetContestNameFromID(thisprob->pub_data.contest),
                  ((thisprob->pub_data.is_random)?("random "):("")), pktid, extramsg );
           } /* if (thisprob->GetProblemInfo(...) != -1) */
         } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
