@@ -21,16 +21,19 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.16 2000/01/02 04:41:30 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.17 2000/01/04 06:13:09 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
 
+2.8004.452  chg: all: .ini option spin off from the generic [parameters] 
+                 section into subsections is now complete. phew! Nothing
+		 left except "id".
+
 2.8004.451  fix: OS/2: Fixed crash in -config by using different API calls
             fix: OS/2: included the forgotten CSC-MMX core.
             fix: win32 Alpha: network connect()
-            fix: MacOS: buffer x-fer to non-Mac and vice versa works again
             fix: all: 2 digit date in log-by-mail
             fix: solaris x86: multithreading works correctly now (uses
                  native threads bound to LWPs instead of pthreads)
