@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.33 2000/07/01 13:43:29 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.34 2000/10/05 11:14:12 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -197,6 +197,7 @@ int SelfTest( unsigned int contest )
   int successes = 0;
   const char *contname;
   int userbreak = 0;
+  unsigned long runtime_sec, runtime_usec;
 
   if (CheckExitRequestTrigger())
     return 0;
@@ -221,6 +222,7 @@ int SelfTest( unsigned int contest )
     successes = 0;
     lastmsg[0] = '\0';
 
+    runtime_sec = runtime_usec = 0;
     for ( testnum = 0 ; !userbreak && testnum < TEST_CASE_COUNT ; testnum++ )
     {
       const u32 (*test_cases)[TEST_CASE_COUNT][TEST_CASE_DATA] = NULL;
@@ -414,6 +416,14 @@ int SelfTest( unsigned int contest )
       {
         resultcode = problem->RetrieveState( &contestwork, NULL, 1 );
 
+        runtime_sec += problem->runtime_sec;
+        runtime_usec += problem->runtime_usec;
+        if (runtime_usec >= 1000000ul)
+        {
+          runtime_sec++;
+          runtime_usec-=1000000ul;         
+        }
+
         switch (contest) 
         {
           case RC5:
@@ -495,8 +505,8 @@ int SelfTest( unsigned int contest )
     {
       if (successes > 0)
       {
-        Log( "%s: %d/%d Tests Passed\n", contname,
-          (int) successes, (int) TEST_CASE_COUNT );
+        Log( "%s: %d/%d Tests Passed (%lu.%06lu seconds)\n", contname,
+          (int) successes, (int) TEST_CASE_COUNT, runtime_sec, runtime_usec );
       }
       if (successes != TEST_CASE_COUNT)
       {
@@ -509,6 +519,6 @@ int SelfTest( unsigned int contest )
     ClientEventSyncPost( CLIEVENT_SELFTEST_FINISHED, (long)(successes) );
 
   } /* for ( threadpos = 0; threadpos < threadcount; threadpos++ ) */
-  
+
   return (successes);
 }
