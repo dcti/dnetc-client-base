@@ -7,7 +7,7 @@
 
 // --------------------------------------------------------------------------
 
-#define OPTION_COUNT    43
+#define OPTION_COUNT    44
 #define MAXMENUENTRIES  15
 
 char *menutable[5]=
@@ -17,6 +17,13 @@ char *menutable[5]=
   "Communication Options",
   "Performance Options",
   "Miscellaneous Options"
+  };
+
+char nicenesstable[3][60]=
+  {
+  "Extremely Nice",
+  "Nice",
+  "Nasty"
   };
 
 #if (CLIENT_CPU == CPU_X86)
@@ -59,8 +66,8 @@ char uuehttptable[6][60]=
 char contesttable[3][60]=
   {
   "",//need a null placeholder since this is 1/2 based
-  "RC5",
-  "DES"
+  "RC5 only",
+  "DES when possible, RC5 otherwise"
   };
 
 char offlinemodetable[3][60]=
@@ -124,10 +131,12 @@ optionstruct options[OPTION_COUNT]=
     "the slower it will go. Values from 200 to 65536 are good.",4,2,4,NULL},
 //8
 { "niceness", "Level of niceness to run at", "0",
-     "\n  mode 0) (recommended) Very nice, should not interfere with any other process\n"
-     "  mode 1) Nice, runs with slightly higher priority than idle processes\n"
-     "          Same as mode 0 in OS/2 and Win32\n"
-     "  mode 2) Normal, runs with same priority as normal user processes\n",4,2,1,NULL},
+  "\n\nExtremely Nice will not slow down other running programs.\n"
+  "Nice may slow down other idle-mode processes.\n"
+  "Nasty will cause the client to run at regular user level priority.\n\n"
+  "On a completely idle system, all options will result in the same\n"
+  "keyrate. For this reason, Extremely Nice is recommended.\n",4,2,1,NULL,
+  &nicenesstable[0][0],0,2},
 //9
 { "logname", "File to log to", "", "(128 characters max, blank = no log)\n",2,1,1,NULL},
 //10
@@ -160,7 +169,7 @@ optionstruct options[OPTION_COUNT]=
       "\n",4,2,3,NULL,&cputypetable[1][0],-1,1},
 #else
 //16
-{ "cputype", "CPU type...not applicable in this client", "-1", "(default -1)",4,2,8,
+{ "cputype", "CPU type...not applicable in this client", "-1", "(default -1)",0,2,0,
   NULL,NULL,0,0},
 #endif
 //17
@@ -199,10 +208,10 @@ optionstruct options[OPTION_COUNT]=
 //25
 { "randomprefix", "High order byte of random blocks","100","Do not change this",0,2,0,NULL},
 //26
-{ "preferredblocksize", "Preferred Block Size","30",
+{ "preferredblocksize", "Preferred Block Size (2^X keys/block)","30",
   "(2^28 -> 2^31)",5,2,5,NULL},
 //27
-{ "preferredcontest", "Preferred Contest","2","- DES strongly recommended",5,2,6,
+{ "preferredcontest", "Contest to process","2","",5,2,6,
   NULL,&contesttable[0][0],1,2},
 //28
 { "quiet", "Disable all screen output? (quiet mode)","no","",5,3,7,NULL},
@@ -254,10 +263,11 @@ optionstruct options[OPTION_COUNT]=
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n",
   3,2,10,NULL,&lurkmodetable[0][0],0,2},
-{ "in",  "RC5 In-Buffer Path/Name", "[Current Path]\\buff-in.rc5","",0,1,13,NULL},
-{ "out", "RC5 Out-Buffer Path/Name", "[Current Path]\\buff-out.rc5","",0,1,14,NULL},
-{ "in2", "DES In-Buffer Path/Name", "[Current Path]\\buff-in.des","",0,1,15,NULL},
-{ "out2","DES Out-Buffer Path/Name","[Current Path]\\buff-out.des","",0,1,16,NULL}
+{ "in",  "RC5 In-Buffer Path/Name", "[Current Path]\\buff-in.rc5","",0,1,14,NULL},
+{ "out", "RC5 Out-Buffer Path/Name", "[Current Path]\\buff-out.rc5","",0,1,15,NULL},
+{ "in2", "DES In-Buffer Path/Name", "[Current Path]\\buff-in.des","",0,1,16,NULL},
+{ "out2","DES Out-Buffer Path/Name","[Current Path]\\buff-out.des","",0,1,17,NULL},
+{ "pausefile","Pausefile name","none","(blank = no pausefile)",5,1,13,NULL}
 };
 
 #define CONF_ID 0
@@ -303,6 +313,7 @@ optionstruct options[OPTION_COUNT]=
 #define CONF_RC5OUT 40
 #define CONF_DESIN 41
 #define CONF_DESOUT 42
+#define CONF_PAUSEFILE 43
 
 // --------------------------------------------------------------------------
 
@@ -769,7 +780,9 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
         case CONF_DESOUT:
           strncpy( out_buffer_file[1] , parm, sizeof(out_buffer_file)/2 -1 );
           break;
-
+        case CONF_PAUSEFILE:
+          strncpy( pausefile, parm, sizeof(pausefile) -1 );
+          break;
         default:
           break;
       }
@@ -926,6 +939,7 @@ options[CONF_RC5IN].thevariable=&in_buffer_file[0];
 options[CONF_RC5OUT].thevariable=&out_buffer_file[0];
 options[CONF_DESIN].thevariable=&in_buffer_file[1];
 options[CONF_DESOUT].thevariable=&out_buffer_file[1];
+options[CONF_PAUSEFILE].thevariable=&pausefile;
 
 if (messagelen != 0)
   {
@@ -1354,6 +1368,7 @@ s32 Client::WriteConfig(void)
 //  INISETKEY( CONF_RC5OUT, out_buffer_file[0]);
 //  INISETKEY( CONF_DESIN, in_buffer_file[1]);
 //  INISETKEY( CONF_DESOUT, out_buffer_file[1]);
+  INISETKEY( CONF_PAUSEFILE, pausefile);
 
   if (offlinemode == 0)
     {
