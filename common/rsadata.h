@@ -1,12 +1,12 @@
 // Hey, Emacs, this a -*-C++-*- file !
 //
-// Copyright distributed.net 1997-1999 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 
 #ifndef __RSADATA_H__
-#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.11 2002/09/25 10:26:18 acidblood Exp $"
+#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.12 2002/09/28 00:28:37 andreasb Exp $"
 
 // RC5-56:
 // Contest identifier: RC5-32/12/7 
@@ -33,7 +33,7 @@
 // Cipher: RC5-32/12/8 (RC5 with 32-bit wordsize, 12 rounds, and
 // 8*8=64-bit key) 
 // Start of contest: 28 January 1997, 9 am PST 
-// State of contest: ongoing 
+// State of contest: finished
 // IV: 79 ce d5 d5 50 75 ea fc 
 // Hexadecimal ciphertext:
 //   bf 55 01 55 dc 26 f2 4b 26 e4 85 4d f9 0a d6 79
@@ -105,7 +105,8 @@
 // DES Challenge III:
 // Identifier: DES-Challenge-III
 // Cipher: DES
-// Start: January 18, 1999 9:00 AM PST
+// Start of the contest: January 18, 1999 9:00 AM PST
+// State of the contest: finished
 // IV: da 4b be f1 6b 6e 98 3d
 // Ciphertext:
 //   bd 0d de 91 99 60 b8 8a 47 9c b1 5c 23 7b 81 18 99 05
