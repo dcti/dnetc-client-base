@@ -18,9 +18,12 @@
 | Converted from Amiga Devpac assembler notation to GAS notation
 | by Oliver Roberts <oliver@futaura.co.uk>
 |
-| $Id: r72-060-mh.gas.s,v 1.1.2.2 2003/04/04 12:13:45 oliver Exp $
+| $Id: r72-060-mh.gas.s,v 1.1.2.3 2003/04/04 19:45:54 snake Exp $
 |
 | $Log: r72-060-mh.gas.s,v $
+| Revision 1.1.2.3  2003/04/04 19:45:54  snake
+| make the assembler cores link with both, elf and a.out (eg. with or with underscore prepend to the main symbols), thanx to Oliver Roberts
+|
 | Revision 1.1.2.2  2003/04/04 12:13:45  oliver
 | changed regname syntax (d0 now %d0, etc) to provide better compatibility
 | with varying gas versions
@@ -36,7 +39,8 @@
 
 	.extern	_rc5_check64
 
-	.globl	_rc5_72_unit_func_060_mh_2
+	.globl	rc5_72_unit_func_060_mh_2	| elf
+	.globl	_rc5_72_unit_func_060_mh_2	| a.out
 
 |--------------------
 
@@ -71,7 +75,8 @@
         |
 
         CNOP    0,8
-_rc5_72_unit_func_060_mh_2:
+rc5_72_unit_func_060_mh_2:	| elf
+_rc5_72_unit_func_060_mh_2:	| a.out
 	move.l  4(%a7),%a0
 	move.l  8(%a7),%a1
 
