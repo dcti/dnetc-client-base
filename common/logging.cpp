@@ -19,6 +19,8 @@
 
 // ------------------------------------------------------------------------
 
+#if !defined(NEEDVIRTUALMETHODS)
+
 // gui clients will override this function in their derrived classes
 void LogScreen ( const char *text)
 {
@@ -36,6 +38,7 @@ void LogScreen ( const char *text)
   }
 }
 
+#endif
 // ---------------------------------------------------------------------------
 
 void LogScreenf ( const char *format, ...)

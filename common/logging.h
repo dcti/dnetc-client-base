@@ -11,13 +11,8 @@
     // logs message to screen and file (append mode)
     // if logname isn't set, then only to screen
 
-#if defined(NEEDVIRTUALMETHODS)
-  virtual void LogScreen ( const char *text );
-    // logs preformated message to screen only.  can be overriden.
-#else
   void LogScreen ( const char *text );
     // logs preformated message to screen only.  can be overriden.
-#endif
 
 // --------------------------------------------------------------------------
 // Logging variables:

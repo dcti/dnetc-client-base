@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.74  1998/08/02 06:51:40  silby
+// Slight logging changes to bring win32gui in sync with rest of tree.
+//
 // Revision 1.73  1998/08/02 03:16:42  silby
 // Major reorganization:  Log,LogScreen, and LogScreenf are now in logging.cpp, and are global functions - client.h #includes logging.h, which is all you need to use those functions.  Lurk handling has been added into the Lurk class, which resides in lurk.cpp, and is auto-included by client.h if lurk is defined as well. baseincs.h has had lurk-specific win32 includes moved to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of printf. client.cpp has had variable names changed as well, etc.
 //
@@ -390,9 +393,10 @@ protected:
     // get work from in buffer
     // Returns: -1 on error, otherwise number of blocks now in file.
 
+public:
   s32  CountBufferInput(u8 contest);
     // returns number of blocks currently in input buffer
-
+protected:
   s32  PutBufferOutput( const FileEntry * data );  // "user"
     // dump an entry into output buffer
     // Returns: -1 on error, otherwise number of entries now in file.
@@ -401,8 +405,10 @@ protected:
     // get work from output buffer
     // Returns: -1 on error, otherwise number of blocks now in file.
 
+public:
   s32  CountBufferOutput(u8 contest);
     // returns number of blocks currently in output buffer
+protected:
 
   s32 InternalPutBuffer( const char *filename, const FileEntry * data );
   s32 InternalGetBuffer( const char *filename, FileEntry * data, u32 *optype , u8 contest);
