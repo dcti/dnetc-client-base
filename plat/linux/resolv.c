@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2000-2002 - All Rights Reserved
+ * Copyright distributed.net 2000-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -13,7 +13,7 @@
  * has 'host', and that too can be bypassed (described below).
  *
  * Created Aug 2 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: resolv.c,v 1.2.4.1 2003/02/08 11:26:12 andreasb Exp $
+ * $Id: resolv.c,v 1.2.4.2 2003/02/22 14:09:20 andreasb Exp $
  *
  * The functions exported from here will first check if a bypass 
  * (described below) has been provided. 

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2002 - All Rights Reserved
+ * Copyright distributed.net 2002-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -17,7 +17,7 @@
  * But http://developer.apple.com/techpubs/macosx/Essentials/SystemOverview/
  * BootingLogin/Creating_Cu_artup_Items.html seems to have more recent info.
  *
- * $Id: c_install.c,v 1.2.4.1 2003/01/31 14:39:33 mfeiri Exp $
+ * $Id: c_install.c,v 1.2.4.2 2003/02/22 14:09:21 andreasb Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
