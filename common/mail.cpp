@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.14  1998/07/08 05:19:32  jlawson
+// updates to get Borland C++ to compile under Win32.
+//
 // Revision 1.13  1998/07/07 21:55:43  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -35,12 +38,13 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-static const char *id="@(#)$Id: mail.cpp,v 1.13 1998/07/07 21:55:43 cyruspatel Exp $";
+static const char *id="@(#)$Id: mail.cpp,v 1.14 1998/07/08 05:19:32 jlawson Exp $";
 return id; }
 #endif
 
 #include "network.h"
 #include "baseincs.h"
+#include "sleepdef.h"
 #include "mail.h"
 
 //-------------------------------------------------------------------------

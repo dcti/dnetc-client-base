@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.26  1998/07/08 05:19:34  jlawson
+// updates to get Borland C++ to compile under Win32.
+//
 // Revision 1.25  1998/07/07 21:55:48  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -90,6 +93,8 @@ extern "C" {
 #endif
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  #define WIN32_LEAN_AND_MEAN
+  #include <windows.h>
   #include <winsock.h>
   #include <io.h>
   #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
@@ -152,7 +157,7 @@ extern "C" {
   #endif
   // All the OS/2 specific headers are here
   // This is nessessary since the order of the OS/2 defines are important
-  #include "platforms\os2cli\os2defs.h"
+  #include "platforms/os2cli/os2defs.h"
   typedef int SOCKET;
   #define close(s) soclose(s)
   #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)

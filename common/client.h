@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.64  1998/07/08 05:19:26  jlawson
+// updates to get Borland C++ to compile under Win32.
+//
 // Revision 1.63  1998/07/07 21:55:18  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -118,11 +121,8 @@
 #define __CLIBASICS_H__
 
 #include "cputypes.h"
-#include "network.h" //needs this for the fetch() and flush() method defs.
 
 // --------------------------------------------------------------------------
-
-//#define OPTION_SECTION "parameters" //now a const char * in cliconfig.cpp
 
 #define PACKET_VERSION      0x03
 
@@ -228,6 +228,9 @@ typedef struct Packet
 
 // --------------------------------------------------------------------------
 
+class Network;            // prototype for referenced classes
+class IniSection;
+
 class Client
 {
 public:
@@ -258,7 +261,6 @@ public:
   char smtpdest[128];
   void MailInitialize(void); //copy the mail specific settings over
   void MailDeinitialize(void); //checktosend(1) if not offline mode
-  //MailMessage mailmessage; //this is now a static in main.cpp
 
 #ifndef DONT_USE_PATHWORK
   char ini_logname[128];// Logfile name as is in the .ini
@@ -291,6 +293,10 @@ public:
   s32 nettimeout;
   s32 noexitfilecheck;
   s32 exitfilechecktime;
+  s32 preferred_contest_id;  // 0 for RC564, 1 for DESII (unlike config)
+  s32 preferred_blocksize;
+  s32 contestdone[2];
+
 #if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
   s32 lurk;
   s32 oldlurkstatus;
@@ -298,21 +304,15 @@ public:
 #if ( (CLIENT_OS==OS_WIN32) && (!defined(WINNTSERVICE)) )
   s32 win95hidden;
 #endif
-
 #if (CLIENT_OS == OS_OS2)
   s32 os2hidden;
 //  s32 connectstatus;          // 0 is not connected, 1 is connected
 #endif
-  s32 preferred_contest_id;  // 0 for RC564, 1 for DESII (unlike config)
-  s32 preferred_blocksize;
-  s32 contestdone[2];
+
 
 protected:
   char proxymessage[64];
   char logstr[1024];
-
-  //ContestWork contestwork; //local variable in Benchmark and SelfTest
-  //RC5Result rc5result; //local variable in SelfTest and Run
 
   u32 totalBlocksDone[2];
   u32 old_totalBlocksDone[2];
@@ -363,8 +363,11 @@ protected:
   const char *InternalGetLocalFilename( const char *filename );
 #endif
 
-  s32 StartLurk(void);// Initializes Lurk Mode -> 0=success, -1 = failed
-  s32 LurkStatus(void);// Checks status of connection -> !0 = connected
+  s32 StartLurk(void);
+    // Initializes Lurk Mode -> 0=success, -1 = failed
+
+  s32 LurkStatus(void);
+    // Checks status of connection -> !0 = connected
 
 #if defined(NEEDVIRTUALMETHODS)
   // methods that can be overriden to provide additional functionality
@@ -486,18 +489,18 @@ public:
     //     3 = exit by time limit expiration
     //     4 = exit by block count expiration
 
-  s32  Fetch( u8 contest, Network *netin = NULL, s32 quietness=0 );
+  s32  Fetch( u8 contest, Network *netin = 0, s32 quietness = 0 );
     // fills up all of the input buffers
     // this is for sneakernet support amung other things
     // Returns: number of buffers received, negative if some error occured
     // If quietness > 1, it will not display the proxymessage.
     // in the future, 1 could make it not show # of blocks transferred
 
-  s32  ForceFetch( u8 contest, Network *netin = NULL );
+  s32  ForceFetch( u8 contest, Network *netin = 0 );
     // Like fetch, but keeps trying until done or until buffer size doesn't get bigger
     // Basically, ignores premature disconnection.
 
-  s32  Flush( u8 contest, Network *netin = NULL, s32 quietness=0 );
+  s32  Flush( u8 contest, Network *netin = 0, s32 quietness = 0 );
     // flushes out result buffers, useful when a SUCCESS happens
     // Also remove buffer file stub if done
     // this is for sneakernet support
@@ -505,7 +508,7 @@ public:
     // If quietness > 1, it will not display the proxymessage.
     // in the future, 1 could make it not show # of blocks transferred
 
-  s32  ForceFlush( u8 contest, Network *netin = NULL );
+  s32  ForceFlush( u8 contest, Network *netin = 0 );
     // Like flush, but keeps trying until done or until buffer size doesn't get smaller
     // Basically, ignores '31' and '32' type errors -- bad buffer file entry problems.
 
@@ -588,7 +591,6 @@ public:
 
 // --------------------------------------------------------------------------
 
-//extern Problem problem[2*MAXCPUS];
 extern volatile u32 SignalTriggered, UserBreakTriggered;
 extern volatile s32 pausefilefound;
 extern void CliSetupSignals( void );
@@ -596,3 +598,4 @@ extern void CliSetupSignals( void );
 // --------------------------------------------------------------------------
 
 #endif // __CLIBASICS_H__
+

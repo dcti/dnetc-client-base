@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.83  1998/07/08 05:19:23  jlawson
+// updates to get Borland C++ to compile under Win32.
+//
 // Revision 1.82  1998/07/07 21:55:14  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -159,7 +162,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-static const char *id="@(#)$Id: client.cpp,v 1.82 1998/07/07 21:55:14 cyruspatel Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.83 1998/07/08 05:19:23 jlawson Exp $";
 return id; }
 #endif
 
@@ -189,12 +192,10 @@ return id; }
 
 // --------------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_AMIGAOS)
-#if (CLIENT_CPU == CPU_68K)
+#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
 long __stack  = 65536L; // AmigaOS has no automatic stack extension
-      // seems standard stack isn't enough
-#endif // (CLIENT_CPU == CPU_68K)
-#endif // (CLIENT_OS == OS_AMIGAOS)
+                        // seems standard stack isn't enough
+#endif
 
 #if (CLIENT_OS == OS_RISCOS)
 s32 guiriscos, guirestart;
@@ -285,8 +286,6 @@ u32 des_test_cases[TEST_CASE_COUNT][8] = {
   {0x5225BCB0L,0xE51C98B6L,0x2B7ABF2DL,0xD714717EL,0xC867B0B7L,0xF24322B6L,0x0A6BF211L,0xB0B7C1CAL},
   {0xCE6823E9L,0x16A8A476L,0xCDC4DBA4L,0xD93B6603L,0xC6E231B9L,0xD84C2204L,0xDB623F7CL,0x3477E4B2L},
 };
-
-//
 
 // --------------------------------------------------------------------------
 
@@ -451,6 +450,7 @@ void Client::RandomWork( FileEntry * data )
 }
 
 // --------------------------------------------------------------------------
+
 s32 Client::ForceFetch( u8 contest, Network *netin )
 {
   s32 temp1, temp2;
@@ -474,6 +474,7 @@ s32 Client::ForceFetch( u8 contest, Network *netin )
   }
   return ret;
 }
+
 // --------------------------------------------------------------------------
 
 s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
@@ -3336,8 +3337,8 @@ int main( int argc, char *argv[] )
 // ---------------------------------------------------------------------------
 
 #if (CLIENT_OS == OS_WIN32)
-rasenumconnectionsT rasenumconnections = NULL;
-rasgetconnectstatusT rasgetconnectstatus = NULL;
+static rasenumconnectionsT rasenumconnections = NULL;
+static rasgetconnectstatusT rasgetconnectstatus = NULL;
 #endif
 
 s32 Client::StartLurk(void)// Initializes Lurk Mode
@@ -3386,11 +3387,13 @@ s32 Client::StartLurk(void)// Initializes Lurk Mode
 return 0;
 }
 
+// ---------------------------------------------------------------------------
+
 s32 Client::LurkStatus(void)// Checks status of connection
   // 0 == not currently connected
   // 1 == currently connected 
 {
-#if (CLIENT_OS==OS_WIN32) && defined(MULTITHREAD)
+#if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
 if (lurk && rasenumconnections && rasgetconnectstatus)
   {
   RASCONN rasconn[8];
@@ -3419,7 +3422,6 @@ if (lurk && rasenumconnections && rasgetconnectstatus)
 #endif
 return 0;// Not connected
 }
-
 
 // ---------------------------------------------------------------------------
 

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.134  1998/07/08 05:19:18  jlawson
+// updates to get Borland C++ to compile under Win32.
+//
 // Revision 1.133  1998/07/07 23:03:47  jlawson
 // eliminated printf warning again
 //
@@ -197,7 +200,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.133 1998/07/07 23:03:47 jlawson Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.134 1998/07/08 05:19:18 jlawson Exp $";
 return id; }
 #endif
 
@@ -206,6 +209,7 @@ return id; }
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "version.h"
 #include "iniread.h"
+#include "network.h"
 #include "problem.h"   // ___unit_func(), PIPELINE_COUNT
 #include "cpucheck.h"  // cpu selection, GetTimesliceBaseline()
 #include "mail.h"      // MAXMAILSIZE

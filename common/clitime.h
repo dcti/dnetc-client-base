@@ -8,6 +8,9 @@
 // the time. 'time' is always stored/passed/returned in timeval format.
 // 
 // $Log: clitime.h,v $
+// Revision 1.8  1998/07/08 05:19:28  jlawson
+// updates to get Borland C++ to compile under Win32.
+//
 // Revision 1.7  1998/07/07 21:55:32  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -31,7 +34,8 @@
 #ifndef _CLITIME_H_
 #define _CLITIME_H_
 
-//#include "baseincs.h" //we need this for timeval
+struct timeval;     // prototype
+
 
 // Get the current time in timeval format (pass NULL if storage not req'd)
 struct timeval *CliTimer( struct timeval *tv );

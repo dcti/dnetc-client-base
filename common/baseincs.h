@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.3  1998/07/08 05:19:16  jlawson
+// updates to get Borland C++ to compile under Win32.
+//
 // Revision 1.2  1998/07/07 23:05:20  jlawson
 // added time includes for Linux (probably will be needed for others)
 //
@@ -104,18 +107,20 @@ extern "C" {
 #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S)
   #include <sys/timeb.h>
   #include <process.h>
-  #include <ras.h>
   #include <conio.h>
   #include <share.h>
   #include <fcntl.h>
+  #include <io.h>
   #if defined(__TURBOC__)
     #include <dir.h>
   #endif
+  #define WIN32_LEAN_AND_MEAN
+  #include <windows.h>
+  #include <winsock.h>      // timeval
   #if (CLIENT_OS == OS_WIN32)
+    #include <ras.h>
     typedef DWORD (CALLBACK *rasenumconnectionsT)(LPRASCONN, LPDWORD, LPDWORD);
     typedef DWORD (CALLBACK *rasgetconnectstatusT)(HRASCONN, LPRASCONNSTATUS);
-    extern rasenumconnectionsT rasenumconnections;
-    extern rasgetconnectstatusT rasgetconnectstatus;
   #endif
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
@@ -144,7 +149,7 @@ extern "C" {
 #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
   #include <fcntl.h>
   extern "C" int nice(int);
-  extern "C" int gethostname(char *, int); // Keep g++ happy.
+  extern "C" int gethostname(char *, int);
 #elif (CLIENT_OS == OS_LINUX)
   #include <sys/time.h>
   #include <unistd.h>
