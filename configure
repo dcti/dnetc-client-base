@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.134  1998/12/09 02:55:32  foxyloxy
+# More irix tweaks/clean up. Nothing worth specifically noting here.
+#
 # Revision 1.133  1998/12/05 19:45:21  daa
 # fic for sun3 - rc5/   added to path to crunch_sun68k
 #
@@ -478,8 +481,8 @@ OPTS_GCC272='-fomit-frame-pointer -fno-inline-functions -fno-handle-exceptions \
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
-OPTS_EGCS='-O2 -fno-exceptions -fomit-frame-pointer -Wall -Icommon -Ides \
-    -Irc5 -Iplatforms'
+OPTS_EGCS='-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer\
+	 -Wall -Icommon -Ides -Irc5 -Iplatforms'
 
 #
 # Common platform compiler options
@@ -499,7 +502,7 @@ OPTS_GCC_SUN68K="$OPTS_GCC -O2 -DASM_68K -D_SUN68K_"
 
 OPTS_CC_MIPS='-O2 -xansi -DASM_MIPS -Icommon -Ides -Irc5'
 OPTS_GCC_MIPS="$OPTS_GCC -O6 -DASM_MIPS"
-
+OPTS_EGCS_MIPS="$OPTS_EGCS -Os -DASM_MIPS" 
 #--
 
 OPTS_CC_ALPHA_EV4='-O4 -tune ev4 -inline all'
@@ -678,24 +681,20 @@ case "$1" in
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
         ;;
 
-    *mips-gcc-crunch-64)     #needs very recent egcs
+    *mips-egcs-crunch-64)     #needs very recent egcs
 	RC5CORECOPY="rc5/mips-crunch.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_MIPS -mabi=64 -DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1 -DBIT_64 -DKWAN -DMEGGS -DMULTITHREAD"
+	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mabi=64 -DPIPELINE_COUNT=2\
+			-DMIPS_CRUNCH=1 -DBIT_64 -DKWAN -DMEGGS -DMULTITHREAD"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	TARGET_LIBS="-lpthread"
 	;;
 
-    *mips-gcc-crunch)        # faster than mips-gcc for IRIX
+    *mips-egcs-crunch)        # faster than mips-gcc for IRIX
         RC5CORECOPY="rc5/mips-crunch.cpp"
-        TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS -DMULTITHREAD"
+        TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mab=n32 -DPIPELINE_COUNT=2\
+			-DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS -DMULTITHREAD"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	TARGET_LIBS="-lpthread"
-        ;;
-
-    *mips-gcc)               # faster than mips-cc for IRIX
-        RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
-        TARGET_CCFLAGS="$OPTS_GCC_MIPS -DBIT_32 -DPIPELINE_COUNT=2 -DKWAN"
-        TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
         ;;
 
     *mips-gcc-ultrix)        # For mips based DEC Ultrix machines
