@@ -1,6 +1,7 @@
 /*
  * .ini (configuration file ala windows) file read/write routines
- * written by Cyrus Patel <cyp@fb14.uni-mainz.de>, no copyright.
+ * written by Cyrus Patel <cyp@fb14.uni-mainz.de>, no copyright, 
+ * and no restrictions on usage in any form or function :)
  *
  * Unlike native windows' this version does not cache the file
  * separately, but uses buffered I/O and assumes the OS knows what 
@@ -10,15 +11,16 @@
  * Unlike a cpp file of a similar name, this .ini file parser is pure
  * C, is portable, passes -pedantic tests, does not 'new' a bazillion 
  * and one times, will not die if mem is scarce, does not fragment 
- * memory, does not attempt to parse comments, and does not assume 
- * that the calling function was written by a twit. 
+ * memory, does not attempt to parse comments, will not choke on
+ * crlf translation, and does not assume that the calling function
+ * was written by a twit. 
  *
  * But,.. it ain't perfect (yet) and doesn't pretend to be.
  *
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.27.2.2 1999/11/08 02:48:37 cyp Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.27.2.3 1999/11/25 11:50:51 cyp Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -27,7 +29,9 @@ return "@(#)$Id: iniread.cpp,v 1.27.2.2 1999/11/08 02:48:37 cyp Exp $"; }
 #include <limits.h>  /* UINT_MAX */
 #include "iniread.h"
 
-//#define ALLOW_EMBEDDED_COMMENTS /* embedded comment handling is not api conform */
+#if 0 /* embedded comment handling is not api conform */
+#define ALLOW_EMBEDDED_COMMENTS 
+#endif
 
 /* ini_doit() functionality:
    section exists:  w create new key+value
@@ -289,7 +293,18 @@ static unsigned long ini_doit( int dowrite, const char *sect,
               filelen-=linelen;
               offset-=linelen;
               if (value == NULL) /* delete key+value */
+              {
                 foundrecs--;     /* the record is gone */
+                if (keyoff < filelen && data[keyoff]=='[')
+                {                /* need to reinsert a blank line */
+                  memmove( (void *)&data[keyoff+1], 
+                           (void *)&data[keyoff], 
+                           filelen-keyoff );
+                  data[keyoff]='\n';
+                  filelen++;
+                  offset++;
+                }
+              }
               else               /* insert key+value */
               {
                 valuelen = 0;
@@ -387,7 +402,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
               {
                 success=0;
                 while (((unsigned int)success)<(bufflen-1) && 
-		       ((long)success)<valuelen)
+                       ((long)success)<valuelen)
                   buffer[success++]=data[valueoff++];
                 buffer[success++]=0;
                 break;
