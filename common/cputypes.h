@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.51  1999/02/04 23:03:47  foxyloxy
+// Very small cosmetic change in comments.
+//
 // Revision 1.50  1999/01/31 20:18:08  cyp
 // Discarded all 'bool' type wierdness. If a variable name and usage does not
 // clearly identify it as being 0 or !0, no amount of declaration as bool
@@ -150,7 +153,7 @@
   typedef signed long s32;
   typedef unsigned short u16;
   typedef signed short s16;
-#elif (INTSIZES == 842)     // (primarily Alphas):  long=64, int=32, short=16
+#elif (INTSIZES == 842)     // (Alphas and 64bit MIPS): long=64, int=32, short=16
   typedef unsigned int u32;
   typedef signed int s32;
   typedef unsigned short u16;
