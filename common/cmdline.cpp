@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.128 1999/04/05 17:56:51 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.129 1999/04/11 14:56:30 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -221,7 +221,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         winInstallClient(loop0_quiet); /*w32pre.cpp*/
         terminate_app = 1;
         #elif (CLIENT_OS == OS_OS2)
-        os2CliInstallClient(loop0_quiet);
+        extern int os2CliInstallClient(int quiet, const char *exename);
+        os2CliInstallClient(loop0_quiet,argv[0]); /* os2inst.cpp */
         terminate_app = 1;
         #else
         not_supported = 1;
@@ -230,7 +231,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       else if ( strcmp(thisarg, "-uninstall" ) == 0)
       {
         #if (CLIENT_OS == OS_OS2)
-        os2CliUninstallClient(loop0_quiet);
+        extern int os2CliUninstallClient(int /*do it without feedback*/);
+        os2CliUninstallClient(loop0_quiet); /* os2inst.cpp */
         terminate_app = 1;
         #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
         winUninstallClient(loop0_quiet); /*w32pre.cpp*/
@@ -1163,4 +1165,5 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
     *retcodeP = 0;
   return terminate_app;
 }
+
 
