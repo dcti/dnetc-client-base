@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.9 1999/12/13 15:03:55 snake Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.10 1999/12/14 03:01:50 dakidd Exp $"
 
 #include "cputypes.h"
 
@@ -197,6 +197,7 @@ extern "C" {
   #include <unistd.h> /* Mindmorph */
   #include <Gestalt.h> /* Mindmorph */
   #include "client_defs.h" /* support stuff */
+  #include "pollsys.h" /* Mac yields using NonPolledUSleep() */
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
 #endif
