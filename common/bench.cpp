@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.23 1999/12/16 02:09:38 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.24 1999/12/16 03:06:18 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -14,7 +14,7 @@ return "@(#)$Id: bench.cpp,v 1.27.2.23 1999/12/16 02:09:38 cyp Exp $"; }
 #include "clitime.h"   // CliGetTimeString()
 #include "clisrate.h"  // CliGetKeyrateAsString()
 #include "clicdata.h"  // GetContestNameFromID()
-#include "selcore.h"   // 
+#include "selcore.h"   // selcoreGet[SelectedCoreForContest|DisplayName]()
 #include "cpucheck.h"  // GetProcessorType()
 #include "logstuff.h"  // LogScreen()
 #include "clievent.h"  // event post etc.
@@ -311,7 +311,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
         w32Yield(); /* pump waiting messages */
         #elif (CLIENT_OS == OS_MACOS)
-        DoYieldToMain(0);
+        usleep(0); /* unistd.h */
         #elif (CLIENT_OS == OS_RISCOS)
         riscos_upcall_6();
         #elif (CLIENT_OS == OS_NETWARE)

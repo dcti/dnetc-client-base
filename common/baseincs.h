@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.10 1999/12/14 03:01:50 dakidd Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.11 1999/12/16 03:06:18 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -194,10 +194,9 @@ extern "C" {
   extern "C" int gettimeofday(struct timeval *, struct timezone *);
 #elif (CLIENT_OS == OS_MACOS)
   #include <sys/time.h> /* Mindmorph */
-  #include <unistd.h> /* Mindmorph */
+  #include <unistd.h> /* usleep() etc */
   #include <Gestalt.h> /* Mindmorph */
   #include "client_defs.h" /* support stuff */
-  #include "pollsys.h" /* Mac yields using NonPolledUSleep() */
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
 #endif
