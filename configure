@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.203 2000/11/10 05:05:08 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.204 2000/11/10 16:35:52 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -157,6 +157,8 @@ add_sources() # $1=os, $2=arch, $3=custom
     ##des mt##  TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bbdeslow.S des/brydgnu/p2bdespro.S"
     ##des mt##  TARGET_ADDSRCS="$TARGET_ADDSRCS $KWAN_SLICE_SRCS4"
     ##des mt##  TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
     if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_NO_NASM"  # ****NOTE****
       TARGET_ADDASMS="$TARGET_ADDASMS platforms/x86ident.S"
@@ -169,8 +171,7 @@ add_sources() # $1=os, $2=arch, $3=custom
                       rc5/x86/rc5p5brf.cpp   rc5/x86/rc5-p6-rg.cpp \
                       rc5/x86/rc5-k5-rg.cpp  rc5/x86/rc5-k6-rg.cpp"
       # -- non-nasm/ogr --
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+      TARGET_ADDASMS="$TARGET_ADDASMS ogr/x86/ogr.S"
     else
       TARGET_ADDNASMS="$TARGET_ADDNASMS platforms/x86ident.asm"
       TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_RC5X86_SRCS"
@@ -198,9 +199,7 @@ add_sources() # $1=os, $2=arch, $3=custom
                        rc5/x86/nasm/rg6x86.asm     rc5/x86/nasm/rc5mmx.asm \
                        rc5/x86/nasm/rc5-hbk7.asm"
       # -- nasm/ogr --
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
       TARGET_ADDNASMS="$TARGET_ADDNASMS ogr/x86/ogr.asm"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
     fi  
   #-----------------------------------------------------------------  
   elif [ "$2" = "sparc" ]; then
