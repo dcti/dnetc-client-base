@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.69 2000/10/11 21:17:44 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.70 2000/10/28 15:43:24 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1076,8 +1076,7 @@ int ClientRun( Client *client )
   unsigned int load_problem_count = 0;
   unsigned int getbuff_errs = 0;
 
-  time_t timeRun = 0;
-  time_t timeNextConnect=0, timeNextCheckpoint=0, ignoreCheckpointUntil=0;
+  time_t timeRun = 0, timeNextConnect=0, timeNextCheckpoint=0;
 
   time_t last_scheduledupdatetime = 0; /* we reset the next two vars on != */
   //unsigned int flush_scheduled_count = 0; /* used for exponential staging */
@@ -1085,7 +1084,6 @@ int ClientRun( Client *client )
   time_t ignore_scheduledupdatetime_until = 0; /* ignore schedupdtime until */
 
   int checkpointsDisabled = (client->nodiskbuffers != 0);
-  unsigned int checkpointsPercent = 0;
   int dontSleep=0, isPaused=0, wasPaused=0;
   
   ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0 );
@@ -1526,11 +1524,26 @@ int ClientRun( Client *client )
         LogScreenPercent( load_problem_count ); //logstuff.cpp
       anychanged = LoadSaveProblems(client,load_problem_count,PROBFILL_ANYCHANGED);
       __CheckClearIfRefillNeeded(thread_data_table,1);
-
-      if (CheckExitRequestTriggerNoIO())
-        continue;
-      else if (anychanged)      /* load/save action occurred */
+      if (anychanged)      /* load/save action occurred */
         timeNextCheckpoint = 0; /* re-checkpoint right away */
+    }
+
+    //----------------------------------------
+    // If not quitting, then write checkpoints
+    //----------------------------------------
+
+    if (!TimeToQuit && !checkpointsDisabled && !isPaused)
+    {
+      /* Checkpoints are done when CHECKPOINT_FREQ_SECSDIFF secs
+       * has elapsed since the last checkpoint OR timeNextCheckpoint is zero 
+      */  
+      #define CHECKPOINT_FREQ_SECSDIFF (10*60)      /* 10 minutes */
+      if ( (timeNextCheckpoint == 0) || (timeRun >= timeNextCheckpoint) )
+      {
+        if (CheckpointAction( client, CHECKPOINT_REFRESH, load_problem_count ))
+          checkpointsDisabled = 1;
+        timeNextCheckpoint = timeRun + (time_t)(CHECKPOINT_FREQ_SECSDIFF);
+      }
     }
 
     //------------------------------------
@@ -1596,97 +1609,38 @@ int ClientRun( Client *client )
       } 
     }
 
-    //----------------------------------------
-    // If not quitting, then write checkpoints
-    //----------------------------------------
-
-    if (!TimeToQuit && !checkpointsDisabled && !CheckPauseRequestTrigger())
-    {
-      int checkpointNow = 0;
-      unsigned long perc_now = 0;
-
-      // Decide if we should definitely checkpoint now, or if we need to
-      // possibly check the percentage before deciding.
-      if ( (timeNextCheckpoint == 0) || (timeRun >= timeNextCheckpoint) )
-        checkpointNow = 1;      // time expired, checkpoint now.
-      else if ( (ignoreCheckpointUntil == 0) || (timeRun >= ignoreCheckpointUntil) )
-        checkpointNow = -1;     // check percent and maybe checkpoint.
-
-      // Compute the current percentage complete, if needed.
-      // Even if we already know we're going to checkpoint, compute the
-      // percentage so it can be remembered for the last checkpoint place.
-      if (checkpointNow != 0)
-      {
-        unsigned int probs_counted = 0;
-        for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
-        {
-          Problem *thisprob = GetProblemPointerFromIndex(prob_i);
-          if ( thisprob )
-          {
-            perc_now += ((thisprob->CalcPermille() + 5)/10);
-            probs_counted++;
-          }
-        }
-        perc_now /= probs_counted;
-
-        if (checkpointNow < 0)
-        {
-          if ( CHECKPOINT_FREQ_PERCDIFF <
-              abs( (int)(checkpointsPercent - (unsigned int)perc_now) ) )
-              checkpointNow = 1;    // percent completed, checkpoint now.
-          else
-            // don't check percentage for another "ignore period".
-            ignoreCheckpointUntil = timeRun + (time_t)(CHECKPOINT_FREQ_SECSIGNORE);
-        }
-      }
-
-      // Write out the checkpoint now if needed.
-      if (checkpointNow > 0)
-      {
-        checkpointsPercent = (unsigned int)perc_now;
-        if (CheckpointAction( client, CHECKPOINT_REFRESH, load_problem_count ))
-          checkpointsDisabled = 1;
-        timeNextCheckpoint = timeRun + (time_t)(CHECKPOINT_FREQ_SECSDIFF);
-        ignoreCheckpointUntil = timeRun + (time_t)(CHECKPOINT_FREQ_SECSIGNORE);
-      }
-    }
   
     //------------------------------------
-    // Lurking
+    // Lurking and connect-often
     //------------------------------------
 
+    //this first part has to be done separately from the actual
+    //if-update-needed part below because dialup.IsConnected()
+    //provides user feedback
     local_connectoften = 0;
-    if (!TimeToQuit)
+    #if defined(LURK)
+    if ((dialup.IsWatching() & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
+    {                                  /* is lurk or lurkonly enabled? */
+      client->connectoften = 0; /* turn off old setting */
+      if (dialup.IsConnected()) 
+        local_connectoften = 3; /* both fetch and flush */
+    }         
+    else
+    #endif
     {
-      #if defined(LURK)
-      if ((dialup.IsWatching() & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
-      {                                  /* is lurk or lurkonly enabled? */
-        client->connectoften = 0; /* turn off old setting */
-        if (dialup.IsConnected()) 
-          local_connectoften = 3; /* both fetch and flush */
-      }         
-      else
-      #endif
+      if (!client->offlinemode)
       {
-        if (!client->offlinemode)
-        {
-          local_connectoften = client->connectoften;
-          /* 0=none, &1=in-buf, &2=out-buf, &4=sticky-flag (handled elsewhere) */ 
-        }
-      }    
+        local_connectoften = client->connectoften;
+        /* 0=none, &1=in-buf, &2=out-buf, &4=sticky-flag (handled elsewhere) */ 
+      }
     }  
-
-    //------------------------------------
-    //handle 'connectoften' requests
-    //------------------------------------
-
     TRACE_OUT((0,"local_connectoften=0x%x,timeRun=%u,timeNextConnect=%u\n",
                local_connectoften, (unsigned)timeRun, (unsigned)timeNextConnect));
-
-    if (!TimeToQuit 
-      && (local_connectoften & 3)!=0 
-      && timeRun >= timeNextConnect 
-      && (client->max_buffupd_interval <= 0 || 
+               
+    if (!TimeToQuit
+       && (local_connectoften & 3)!=0 
+       && timeRun >= timeNextConnect 
+       && (client->max_buffupd_interval <= 0 || 
           client->last_buffupd_time == 0 ||
           timeRun >= (((time_t)client->last_buffupd_time) + 
                        (time_t)(client->max_buffupd_interval * 60))) )
@@ -1787,4 +1741,3 @@ int ClientRun( Client *client )
 }
 
 // ---------------------------------------------------------------------------
-
