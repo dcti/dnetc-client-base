@@ -21,6 +21,10 @@
 */
 //
 // $Log: sleepdef.h,v $
+// Revision 1.17  1998/10/30 00:06:05  foxyloxy
+//
+// Changed sginap() multiplier to be correct.
+//
 // Revision 1.16  1998/10/26 03:20:54  cyp
 // More tags fun.
 //
@@ -137,7 +141,7 @@
   #if 1
     #ifndef usleep
       #include <limits.h>
-      #define usleep(x) sginap((x)*(1000000L/CLK_TCK))
+      #define usleep(x) sginap((x)*(CLK_TCK/1000000L))
     #endif
   #else
     #ifdef _irix5_
