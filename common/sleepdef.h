@@ -7,6 +7,7 @@
  * ------------------------------------------------------------------
  * This include file ensures that sleep() and usleep() are valid.
  * They MUST actually block/yield for approx. the duration requested.
+ * "approx" does not mean a factor of. :)
  *
  * Porter notes: Check network.cpp and network.h to remove duplicate
  * or conflicting defines or code in the platform specific sections there.
@@ -17,13 +18,15 @@
  *                         select(0,NULL,NULL,NULL,&tv); }
  *    (Not all implementations support this: some don't sleep at all, 
  *    while others sleep forever)
- * 2. if usleep(x) or sleep(x) are macros, make sure that 'x' is
+ * 2. If you can't use select() for usleep()ing, you can still roll a 
+ *    usleep() using your sched_yield()[or whatever] and gettimeofday() 
+ * 3. if usleep(x) or sleep(x) are macros, make sure that 'x' is
  *    enclosed in parens. ie #define sleep(x) myDelay((x)/1000)
  *    otherwise expect freak outs with sleep(sleepstep+10) and the like.
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.20 1999/04/06 10:20:48 cyp Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.21 1999/04/06 13:37:34 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -83,8 +86,8 @@
     //#define usleep(x) sleep(1)
     #error FIXME - is this correct?
     #undef usleep
-    #define usleep(usecs) { struct timeval tv; tv.sec = 0; tv.usec = usecs; \
-                            select(0,NULL,NULL,NULL,&tv); }
+    #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
+  #endif
 #elif (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
   #if 1
@@ -119,8 +122,7 @@
   //#define usleep(x) sleep(1)
   #error FIXME - is this correct?
   #undef usleep
-  #define usleep(usecs) { struct timeval tv; tv.sec = 0; tv.usec = usecs; \
-                          select(0,NULL,NULL,NULL,&tv); }
+  #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
 #elif (CLIENT_OS == OS_ULTRIX)
   #define usleep(x) { struct timeval tv = {0,(x)}; \
                       select(0,NULL,NULL,NULL,&tv); }

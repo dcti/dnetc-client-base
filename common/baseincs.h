@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.59 1999/04/06 10:20:47 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.60 1999/04/06 13:37:34 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -210,4 +210,5 @@ extern "C" {
   #include <unistd.h>
 #endif
 
-// --------------------------------------------------------------------------
+
+#endif /* __BASEINCS_H__ */
