@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.56  1999/02/01 08:20:00  silby
+// Network class once again allows autofindkeyserver to be disabled.
+//
 // Revision 1.55  1999/01/31 20:19:09  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -348,7 +351,8 @@ protected:
     // guess. 
  
   Network( const char *servname, int servport, 
-           int _nofallback = 1, int _iotimeout = -1, int _enctype = 0, 
+           int _nofallback = 1, int _noautofindkeyserver = 0,
+           int _iotimeout = -1, int _enctype = 0, 
            const char *_fwallhost = NULL, int _fwallport = 0, 
            const char *_fwalluid = NULL );
     // protected!: used by friend NetOpen() below.
@@ -356,7 +360,8 @@ protected:
 public:
 
   friend Network *NetOpen( const char *servname, int servport, 
-           int _nofallback = 1, int _iotimeout = -1, int _enctype = 0, 
+           int _nofallback = 1, int noautofindkeyserver = 0,
+           int _iotimeout = -1, int _enctype = 0, 
            const char *_fwallhost = NULL, int _fwallport = 0, 
            const char *_fwalluid = NULL );
 

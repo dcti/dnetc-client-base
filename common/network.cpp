@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.77  1999/02/01 08:19:59  silby
+// Network class once again allows autofindkeyserver to be disabled.
+//
 // Revision 1.76  1999/01/31 20:19:09  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -161,7 +164,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.76 1999/01/31 20:19:09 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.77 1999/02/01 08:19:59 silby Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -363,7 +366,7 @@ static int __fixup_dnethostname( char *host, int port, int autofind )
 //======================================================================
 
 Network::Network( const char * servname, int servport, int _nofallback,
-                  int _iotimeout, int _enctype,
+                  int _noautofindkeyserver, int _iotimeout, int _enctype,
                   const char *_fwallhost, int _fwallport, const char *_fwalluid)
 {
   // check that the packet structures have been correctly packed
@@ -379,7 +382,10 @@ Network::Network( const char * servname, int servport, int _nofallback,
   server_name[0] = 0;
   if (servname)
     __hostnamecpy( server_name, servname, sizeof(server_name));
-  server_port = __fixup_dnethostname(server_name,servport,0);
+  if (!_noautofindkeyserver)
+    server_port = __fixup_dnethostname(server_name,servport,_noautofindkeyserver);
+  else
+    server_port = servport;
   autofindkeyserver = (server_name[0] == 0);
 
   reconnected = 0;

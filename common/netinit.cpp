@@ -10,6 +10,9 @@
 //
 //
 // $Log: netinit.cpp,v $
+// Revision 1.20  1999/02/01 08:19:59  silby
+// Network class once again allows autofindkeyserver to be disabled.
+//
 // Revision 1.19  1999/01/31 20:19:09  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -78,7 +81,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.19 1999/01/31 20:19:09 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.20 1999/02/01 08:19:59 silby Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -416,7 +419,8 @@ int NetClose( Network *net )
 //----------------------------------------------------------------------
 
 Network *NetOpen( const char *servname, int servport, 
-           int _nofallback/*= 1*/, int _iotimeout/*= -1*/, int _enctype/*=0*/, 
+           int _nofallback/*= 1*/, int _noautofindkeyserver /*=0*/,
+           int _iotimeout/*= -1*/, int _enctype/*=0*/, 
            const char *_fwallhost /*= NULL*/, int _fwallport /*= 0*/, 
            const char *_fwalluid /*= NULL*/ )
 {
@@ -428,7 +432,8 @@ Network *NetOpen( const char *servname, int servport,
     return NULL; 
 
   net = new Network( servname, servport, 
-           _nofallback /*=1*/, _iotimeout/*=-1*/, _enctype /*= 0*/, 
+           _nofallback /*=1*/, _noautofindkeyserver/*=0*/,
+           _iotimeout/*=-1*/, _enctype /*= 0*/, 
            _fwallhost /*= NULL*/, _fwallport /*= 0*/, _fwalluid /*= NULL*/ );
   success = ( net != NULL );
 
