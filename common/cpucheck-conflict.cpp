@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.4 1999/06/10 23:43:52 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.5 1999/06/16 12:22:14 ivo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -814,7 +814,7 @@ static long __GetRawProcessorID(const char **cpuname)
   static int detectedtype = -2L; /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
   static char namebuf[30];
-  static struct { const char *name; int rid; } cpuridtable {
+  static struct { const char *name; int rid; } cpuridtable[] = {
                 { "R2000"         ,       1  },
                 { "R3000"         ,       2  },
                 { "R3000A"        ,       3  },
