@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.72  1998/07/04 10:30:10  jlawson
+// fixed printing of info of invalid block when -runbuffers consumes
+// all blocks from buffin
+//
 // Revision 1.71  1998/07/04 01:57:33  cyruspatel
 // Fixed the pause file fix :) - on mt systems inner cpu_i loop was being run
 // even if pausefilefound.
@@ -106,7 +110,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.71 1998/07/04 01:57:33 cyruspatel Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.72 1998/07/04 10:30:10 jlawson Exp $";
 #endif
 
 #include "client.h"
@@ -2490,7 +2494,7 @@ PreferredIsDone1:
           }
 
 
-          if (count < 0)
+          if (count < 0 && !nonewblocks)
           {
             getbuff_errs++;
             TimeToQuit=1; // Force blocks to be saved
@@ -2502,7 +2506,7 @@ PreferredIsDone1:
           // correct any potential problems in the freshly loaded fileentry
           //---------------------
 
-          if ((!nonewblocks) && (count != -2))
+          if (!nonewblocks)
           {
             // LoadWork expects things descrambled.
             Descramble( ntohl( fileentry.scramble ),
@@ -2539,6 +2543,7 @@ PreferredIsDone1:
           //---------------------
 
           #ifdef NEW_STATS_AND_LOGMSG_STUFF
+          if (!nonewblocks)
           {
             int outcount = CountBufferOutput(fileentry.contest);
             Log( "[%s] %s\n", CliGetTimeString(NULL,1), /* == Time() */
@@ -2554,6 +2559,7 @@ PreferredIsDone1:
 
           }
           #else
+          if (!nonewblocks)
           {
             tmpblksize=log2x(ntohl(fileentry.iterations.lo));
             tmpblkcnt = ntohl(fileentry.iterations.lo) / (1<<tmpblksize);
@@ -2577,8 +2583,9 @@ PreferredIsDone1:
           //---------------------
           // now load the problem with the fileentry
           //---------------------
+          if (!nonewblocks)
+            (problem[cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
 
-          (problem[cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
         } // end (if 'found' or 'nothing')
 
         DoCheckpoint( load_problem_count );
