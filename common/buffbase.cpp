@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.63 2001/06/30 09:08:18 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.64 2001/07/07 14:56:16 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -524,7 +524,6 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
           Log("Import error: something bad happened.\n"
               "The source file isn't getting smaller.\n");
         errs = 1;
-        recovered = 0;
         break;
       }
     }
@@ -532,9 +531,26 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
     if ( PutBufferRecord( client, &data ) > 0 )
     {
       recovered++;
+    } 
+    else
+    {
+      // failed to save packet into regular buffer, so put it back in the source file
+      // error message for regular buffer has been printed
+      if (BufferPutFileRecord( source_file, &data, NULL ) >= 0)
+      {
+        if (interactive)
+          Log("Import: Resaved packet to source file.\n");
+      }
+      else
+      {
+        if (interactive)
+          Log("FATAL: Import: Can't resave packet to source file.\n");
+      }
+      errs = 1;
+      break; // stop import
     }
   }
-  if (recovered > 0)
+  if (recovered > 0 && errs == 0)
   {
     #ifdef PROFILE_DISK_HITS
     LogScreen("Diskhit: BufferZapFileRecords() <- BufferImportFileRecords()\n");
@@ -542,9 +558,9 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
     BufferZapFileRecords( source_file );
   }
   if (recovered > 0 && interactive)
-    Log("Import: %u records successfully imported.\n", recovered);
+    Log("Import: %u records successfully imported from\n'%s'.\n", recovered, source_file);
   else if (errs == 0 && recovered == 0 && interactive)
-    Log("Import: No buffer records could be imported.\n");
+    Log("Import: No buffer records could be imported from\n'%s'.\n", source_file);
   return (long)recovered;
 }
 
