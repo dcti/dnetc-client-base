@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.30 2001/01/15 01:25:24 andreasb Exp $
+ * $Id: ogr.cpp,v 1.1.2.31 2001/01/16 17:16:29 cyp Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -10,6 +10,9 @@
 
 #define HAVE_STATIC_CHOOSEDAT /* choosedat table is static, pre-generated */
 /* #define CRC_CHOOSEDAT_ANYWAY */ /* you'll need to link crc32 if this is defd */
+
+/* #define OGR_TEST_FIRSTBLANK */ /* test firstblank logic (table or asm) */
+/* #define OGR_TEST_BITOFLIST  */ /* test bitoflist table */
 
 /* --- various optimization option overrides ----------------------------- */
 
@@ -22,12 +25,14 @@
   #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - default is 1 ('yes') */
   #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - default is 0 ('no') */
   #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0-2 - default is 0 */
-  #define OGROPT_SMALL_FIRST_ZERO_BIT_TABLE     0 /* 0/1 - default is 0 ('no') */
-#elif (defined(OVERWRITE_DEFAULT_OPTIMIZATIONS))  /* defines reside in an external file */
+#elif (defined(OVERWRITE_DEFAULT_OPTIMIZATIONS))  
+  /* defines reside in an external file */
 #elif (defined(ASM_X86) || defined(__386__))
-  #if defined(OGR_NOFFZ) /* the bsr insn is slooooow on anything less than a PPro */
+  #if defined(OGR_NOFFZ) 
+    /* the bsr insn is slooooow on anything less than a PPro */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 0
   #endif
+  #define OGROPT_BITOFLIST_DIRECT_BIT 0          /* we want 'no' */
 #elif defined(ASM_68K)
   #define OGROPT_BITOFLIST_DIRECT_BIT 0          /* we want 'no' */
 #elif defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
@@ -81,7 +86,6 @@
 #elif defined(ASM_ARM)
   #if (__GNUC__)
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1
-    #define OGROPT_SMALL_FIRST_ZERO_BIT_TABLE     1
     #define OGROPT_BITOFLIST_DIRECT_BIT           0
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1
@@ -120,19 +124,8 @@
                              || defined(mc68030) || defined(mc68040) \
                              || defined(mc68060)))))
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 1
-    /* #define FIRSTBLANK_ASM_TEST *//* define this to test */
+    /* #define OGR_TEST_FIRSTBLANK */ /* ... to test */
   #endif
-#endif
-
-/* use a 256 byte table instead of the 64k table. Costs an additional 
-   comparison and shift, but saves memory when cache is rare, e.g. on ARM.
-*/
-#ifndef OGROPT_SMALL_FIRST_ZERO_BIT_TABLE
-  #define OGROPT_SMALL_FIRST_ZERO_BIT_TABLE 0
-#elif (OGROPT_SMALL_FIRST_ZERO_BIT_TABLE == 1)
-  /* it's in the asm section, even if it's only C */
-  #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
-  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 1
 #endif
 
 /* optimize COPY_LIST_SET_BIT macro for when jumps are expensive.
@@ -294,13 +287,6 @@ static const int OGR[] = {
   /* 11 */   72,  85, 106, 127, 151, 177, 199, 216, 246, 283,
   /* 21 */  333, 356, 372, 425, 480, 492, 553, 585, 623
 };
-#if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) || defined(FIRSTBLANK_ASM_TEST)
-static char ogr_first_blank[65537]; /* first blank in 16 bit COMP bitmap, range: 1..16 */
-#endif
-#if (OGROPT_BITOFLIST_DIRECT_BIT == 0) && (OGROPT_ALTERNATE_CYCLE == 0)
-static U ogr_bit_of_LIST[200]; /* which bit of LIST to update */
-#endif
-
 #ifndef __MRC__
 static int init_load_choose(void);
 static int found_one(const struct State *oState);
@@ -1698,8 +1684,38 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
     lev->list[0] = 0;
 #endif
 
-#if (OGROPT_BITOFLIST_DIRECT_BIT == 0)
-  #define BITOFLIST(x) ogr_bit_of_LIST[x]
+#if (OGROPT_BITOFLIST_DIRECT_BIT == 0) && (OGROPT_ALTERNATE_CYCLE == 0)
+  #define BITOFLIST(x) ogr_bit_of_LIST[x] /* which bit of LIST to update */
+  /* ogr_bit_of_LIST[n] = 0x80000000 >> ((n-1) % 32); */
+  #define BoL(__n) (0x80000000 >> ((__n - 1) % 32)) //(0x80000000>>((__n - 1)&0x1f))
+  static const U ogr_bit_of_LIST[200] = {
+        0 , BoL(  1), BoL(  2), BoL(  3), BoL(  4), BoL(  5), BoL(  6), BoL(  7),
+  BoL(  8), BoL(  9), BoL( 10), BoL( 11), BoL( 12), BoL( 13), BoL( 14), BoL( 15),
+  BoL( 16), BoL( 17), BoL( 18), BoL( 19), BoL( 20), BoL( 21), BoL( 22), BoL( 23),
+  BoL( 24), BoL( 25), BoL( 26), BoL( 27), BoL( 28), BoL( 29), BoL( 30), BoL( 31),
+  BoL( 32), BoL( 33), BoL( 34), BoL( 35), BoL( 36), BoL( 37), BoL( 38), BoL( 39),
+  BoL( 40), BoL( 41), BoL( 42), BoL( 43), BoL( 44), BoL( 45), BoL( 46), BoL( 47),
+  BoL( 48), BoL( 49), BoL( 50), BoL( 51), BoL( 52), BoL( 53), BoL( 54), BoL( 55),
+  BoL( 56), BoL( 57), BoL( 58), BoL( 59), BoL( 60), BoL( 61), BoL( 62), BoL( 63),
+  BoL( 64), BoL( 65), BoL( 66), BoL( 67), BoL( 68), BoL( 69), BoL( 70), BoL( 71),
+  BoL( 72), BoL( 73), BoL( 74), BoL( 75), BoL( 76), BoL( 77), BoL( 78), BoL( 79),
+  BoL( 80), BoL( 81), BoL( 82), BoL( 83), BoL( 84), BoL( 85), BoL( 86), BoL( 87),
+  BoL( 88), BoL( 89), BoL( 90), BoL( 91), BoL( 92), BoL( 93), BoL( 94), BoL( 95),
+  BoL( 96), BoL( 97), BoL( 98), BoL( 99), BoL(100), BoL(101), BoL(102), BoL(103),
+  BoL(104), BoL(105), BoL(106), BoL(107), BoL(108), BoL(109), BoL(110), BoL(111),
+  BoL(112), BoL(113), BoL(114), BoL(115), BoL(116), BoL(117), BoL(118), BoL(119),
+  BoL(120), BoL(121), BoL(122), BoL(123), BoL(124), BoL(125), BoL(126), BoL(127),
+  BoL(128), BoL(129), BoL(130), BoL(131), BoL(132), BoL(133), BoL(134), BoL(135),
+  BoL(136), BoL(137), BoL(138), BoL(139), BoL(140), BoL(141), BoL(142), BoL(143),
+  BoL(144), BoL(145), BoL(146), BoL(147), BoL(148), BoL(149), BoL(150), BoL(151),
+  BoL(152), BoL(153), BoL(154), BoL(155), BoL(156), BoL(157), BoL(158), BoL(159),
+  BoL(160), BoL(161), BoL(162), BoL(163), BoL(164), BoL(165), BoL(166), BoL(167),
+  BoL(168), BoL(169), BoL(170), BoL(171), BoL(172), BoL(173), BoL(174), BoL(175),
+  BoL(176), BoL(177), BoL(178), BoL(179), BoL(180), BoL(181), BoL(182), BoL(183),
+  BoL(184), BoL(185), BoL(186), BoL(187), BoL(188), BoL(189), BoL(190), BoL(191),
+  BoL(192), BoL(193), BoL(194), BoL(195), BoL(196), BoL(197), BoL(198), BoL(199)
+  #undef BoL
+};
 #else
   #define BITOFLIST(x) 0x80000000>>((x-1)&0x1f) /*0x80000000 >> ((x-1) % 32)*/
 #endif
@@ -2050,10 +2066,8 @@ static int found_one(const struct State *oState)
 #endif
 
 
+
 #if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
-  #define LOOKUP_FIRSTBLANK(x) ((x < 0xffff0000) ? \
-      (ogr_first_blank[x>>16]) : (16 + ogr_first_blank[x - 0xffff0000]))
-#elif (OGROPT_SMALL_FIRST_ZERO_BIT_TABLE == 1)
   static const char ogr_first_blank_8bit[256] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -2089,7 +2103,6 @@ static int found_one(const struct State *oState)
       return result;
     }
   #else /* C code, no asm */
-  #warning LOOKUP_FIRSTBLANK is a C only version!
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input)
   {
     register int result = 0;
@@ -2112,10 +2125,10 @@ static int found_one(const struct State *oState)
   #elif (__MWERKS__) || (__MRC__)
     #define LOOKUP_FIRSTBLANK(x) (__cntlzw(~((unsigned int)(x)))+1)
   #else
-    #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
+    #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   #endif
 #elif defined(ASM_ALPHA) && defined(__GNUC__)
-  #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
+  #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
   { i = ~i; __asm__ ("cntlzw %0,%0" : "=r"(i) : "0" (i)); return i+1; }
 #elif defined(ASM_X86) && defined(__GNUC__) || \
@@ -2186,35 +2199,43 @@ static int ogr_init(void)
     return r;
   }
 
-  #if (OGROPT_BITOFLIST_DIRECT_BIT == 0) && (OGROPT_ALTERNATE_CYCLE == 0)
+  #if (OGROPT_BITOFLIST_DIRECT_BIT == 0) && (OGROPT_ALTERNATE_CYCLE == 0) && \
+      defined(OGR_TEST_BITOFLIST)
   {
-    int n;
-    ogr_bit_of_LIST[0] = 0;
-    for( n=1; n < 200; n++) {
-       ogr_bit_of_LIST[n] = 0x80000000 >> ((n-1) % 32);
+    unsigned int n, err_count = 0;
+    printf("begin bit of list test\n");
+    for( n = 0; n < (sizeof(ogr_bit_of_LIST)/sizeof(ogr_bit_of_LIST[0])); n++) 
+    {
+      U exp = 0x80000000 >> ((n-1) % 32); if (n == 0) exp = 0;
+      if (exp != ogr_bit_of_LIST[n])
+      {
+        printf("ogr_bit_of_LIST[%d]=%u (but expected %u)\n", n, ogr_bit_of_LIST[n], exp);
+        err_count++;
+      }     
     }
+    printf("end bit of list test. %d errors\n", err_count);
+    if (err_count)
+      return -1;
   }
-  #endif
+  #endif    
 
-  #if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) || defined(FIRSTBLANK_ASM_TEST)
+  #if defined(FIRSTBLANK_ASM_TEST)
   {
+    static int done_test = -1;
+    static char ogr_first_blank[65537]; /* first blank in 16 bit COMP bitmap, range: 1..16 */
     /* first zero bit in 16 bits */
     int i, j, k = 0, m = 0x8000;
+
     for (i = 1; i <= 16; i++) {
       for (j = k; j < k+m; j++) ogr_first_blank[j] = (char)i;
       k += m;
       m >>= 1;
     }
     ogr_first_blank[0xffff] = 17;     /* just in case we use it */
-  }
-  #endif
-
-  #if defined(FIRSTBLANK_ASM_TEST)
-  {
-    static int done_test = -1;
     if ((++done_test) == 0)
     {
-      unsigned int q, err_count = 0;
+      unsigned int q, err_count = 0, first_fail = 0xffffffff;
+      int last_s1 = 0, last_s2 = 0;
       printf("begin firstblank test\n"
              "(this may take a looooong time and requires a -KILL to stop)\n");
       for (q = 0; q <= 0xfffffffe; q++)
@@ -2222,15 +2243,33 @@ static int ogr_init(void)
         int s1 = ((q < 0xffff0000) ? \
           (ogr_first_blank[q>>16]) : (16 + ogr_first_blank[q - 0xffff0000]));
         int s2 = LOOKUP_FIRSTBLANK(q);
+        int show_it = (q == 0xfffffffe || (q & 0xfffff) == 0xfffff);
         if (s1 != s2)
         {
-          printf("\nfirstblank error %d != %d (q=%u/0x%08x)\n", s1, s2, q, q);
+          if (first_fail == 0xffffffff || (last_s1 != s1 || last_s2 != s2)) {
+            printf("\n");
+            first_fail = q;
+            show_it = 1;
+            last_s1 = s1;
+            last_s2 = s2;
+          }  
+          if (show_it) {
+            printf("\rfirstblank FAIL 0x%08x-0x%08x (should be %d, got %d) ", first_fail, q, s1, s2);
+            fflush(stdout);
+          }   
           err_count++;
         }
-        else if (q == 0xfffffffe || (q & 0xfffff) == 0xfffff)
+        else 
         {
-          printf("\rfirstblank done 0x%08x-0x%08x ", q & 0xfff00000, q);
-          fflush(stdout);
+          if (first_fail != 0xffffffff) {
+            printf("\n");
+            first_fail = 0xffffffff;
+            show_it = 1;
+          }  
+          if (show_it) {
+            printf("\rfirstblank [ok] 0x%08x-0x%08x ", q & 0xfff00000, q);
+            fflush(stdout);
+          }  
         }
       }
       printf("\nend firstblank test (%u errors)\n", err_count);
@@ -2817,4 +2856,3 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
   dispatch_table.cleanup   = ogr_cleanup;
   return &dispatch_table;
 }
-
