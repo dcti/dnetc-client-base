@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.54 2000/01/04 12:30:48 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.55 2000/01/04 13:07:46 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -187,7 +187,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   conf_options[CONF_FORCEHTTP].thevariable=&use_http_regardless;
   conf_options[CONF_FORCEUUE].thevariable=&use_uue_regardless;
   conf_options[CONF_FWALLTYPE].thevariable=&fwall_type;
-  conf_options[CONF_FWALLTYPE].choicelist=&fwall_types[fwall_type];
+  conf_options[CONF_FWALLTYPE].choicelist=&fwall_types[0];
   conf_options[CONF_FWALLTYPE].choicemax=(int)((sizeof(fwall_types)/sizeof(fwall_types[0]))-1);
   
   conf_options[CONF_FWALLHOSTNAME].thevariable=&(client->httpproxy[0]);
