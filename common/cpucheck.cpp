@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.49 2004/04/12 16:21:19 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.50 2004/04/12 17:32:13 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2165,7 +2165,7 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
               ("none\n\t(client does not support identification)"));
   else
   {
-    static char namebuf[60];
+    static char namebuf[200];
     long x86features;
     if (cpuid_s == NULL) cpuid_s = "*unknown*";
     if (*cpuid_s =='\0') cpuid_s = "???";
@@ -2189,10 +2189,10 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
       strcat( namebuf, "MMX " );
     }
     if (x86features & CPU_F_CYRIX_MMX_PLUS) {
-      strcat( namebuf, "Cyrix MMX+ " );
+      strcat( namebuf, "Cyrix_MMX+ " );
     }
     if (x86features & CPU_F_AMD_MMX_PLUS) {   
-      strcat( namebuf, "AMD MMX+ " );   
+      strcat( namebuf, "AMD_MMX+ " );   
     }
     if (x86features & CPU_F_3DNOW) {   
       strcat( namebuf, "3DNOW " );   
@@ -2211,11 +2211,11 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     }
     if (x86features & CPU_F_HYPERTHREAD) {   
       static char htbuf[60];
-      sprintf( htbuf, "Hyper-Threading (%ld)", x86htcount() );
+      sprintf( htbuf, "Hyper-Threading(%u) ", x86htcount() );
       strcat( namebuf, htbuf );   
     }
   #else
-    sprintf(namebuf, "%ld\n\tname: %s\n", rawid, cpuid_s );
+    sprintf(namebuf, "%ld\n\tname: %s", rawid, cpuid_s );
   #endif
     cpuid_s = ((const char *)(&namebuf[0]));
   }    
