@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.4 2002/10/14 14:49:11 jlawson Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.4.2.1 2003/09/01 21:14:19 jlawson Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -5190,16 +5190,11 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       }
       else if (wParam == WMCMD_HELP_FAQ)
       {
-        URL = "http://www.distributed.net/faq/cache/1.html";
+        URL = "http://www.distributed.net/faq/";
       }
       else if (wParam == WMCMD_HELP_BUG)
       {
         URL = "http://www.distributed.net/bugs/";
-        if (winGetVersion()>=400) /* exceeds cmdline len otherwise */
-        {
-          URL = "http://www.distributed.net/bugs/buglist.cgi?product=Client&bug_status=UNCONFIRMED&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&order=Bug+Number";
-          //URL = "http://www.distributed.net/bugs/buglist.cgi?product=Client&bug_status=UNCONFIRMED&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&order=Bug+Number&component=Beta-Test&component=config&component=&Configuration&component=Core-Selection&component=Core-Speed&component=Crashes%2FHangs&component=display+and+UI&component=Network%2FCommunications";
-        }
       }
       else if (wParam == WMCMD_HELP_MAILTO)
       {
