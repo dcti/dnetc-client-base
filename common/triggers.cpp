@@ -3,10 +3,25 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: triggers.cpp,v $
+// Revision 1.8.2.3  1998/12/28 15:26:51  remi
+// Synced with :
+//
+//  Revision 1.10  1998/12/08 06:01:58  dicamillo
+//  Add MacOS definitions.
+//
+//  Revision 1.9  1998/11/25 06:09:39  dicamillo
+//  Update for BeOS R4.  Changes so that SIGHUP is not intercepted for BeOS.
+//
 // Revision 1.8.2.2  1998/11/08 11:52:07  remi
 // Lots of $Log tags.
 //
 // Synchronized with official 1.8
+//
+
+#if (!defined(lint) && defined(__showids__))
+const char *triggers_cpp(void) {
+return "@(#)$Id: triggers.cpp,v 1.8.2.3 1998/12/28 15:26:51 remi Exp $"; }
+#endif
 
 // --------------------------------------------------------------------------
 
@@ -315,6 +330,13 @@ void CliPollDrivenBreakCheck( void )
 #endif
 
 // -----------------------------------------------------------------------
+#if (CLIENT_OS == OS_MACOS)
+#define CLISIGHANDLER_IS_SPECIAL
+// Mac framework code will raise requests by calling
+// RaiseExitRequestTrigger
+#endif
+
+// -----------------------------------------------------------------------
 
 #ifndef CLISIGHANDLER_IS_SPECIAL
 void CliSignalHandler
@@ -381,6 +403,13 @@ void CliSetupSignals( void )
     signal( SIGSTOP, CliSignalHandler );
     //workaround NW 3.x bug - printf "%f" handler is in mathlib not clib, which
     signal( SIGABRT, CliSignalHandler ); //raises abrt if mathlib isn't loaded
+  #elif (CLIENT_OS == OS_BEOS)
+    // SIGHUP can't be used, because detach processes get SIGHUP when
+    // started from Terminal and Terminal quits.
+    signal( SIGQUIT, CliSignalHandler );
+    signal( SIGTERM, CliSignalHandler );
+    signal( SIGINT, CliSignalHandler );
+    signal( SIGSTOP, CliSignalHandler );
   #else
     signal( SIGHUP, CliSignalHandler );
     signal( SIGQUIT, CliSignalHandler );
