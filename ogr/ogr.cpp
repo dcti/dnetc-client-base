@@ -5,7 +5,7 @@
  */
 
 const char *ogr_cpp(void) {
-return "@(#)$Id: ogr.cpp,v 1.3.2.15 2000/02/02 07:39:46 gregh Exp $"; }
+return "@(#)$Id: ogr.cpp,v 1.3.2.16 2000/02/04 23:13:05 sampo Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +33,70 @@ static int OGR[] = {
 static char first[65537];  /* first blank in 16 bit COMP bitmap, range: 1..16 */
 static U bit[200];         /* which bit of LIST to update */
 
+#if __VEC__
+#define COMP_LEFT_LIST_RIGHT(lev,s)                             \
+  {                                                             \
+    int ss = 32 - s;                                            \
+    v_u32 s_vec,ss_vec,vec1,vec2;								\
+    s_vec.sca[0] = s;											\
+    ss_vec.sca[0] = ss;    										\
+    s_vec.vec = vec_splat(s_vec.vec,0);							\
+    ss_vec.vec = vec_splat(ss_vec.vec,0);						\
+    vec1.vec = vec_sl(lev->zeroed_comp_vec.vec,s_vec.vec); 		\
+    vec2.vec = vec_sr(lev->offset_comp_vec.vec,ss_vec.vec); 	\
+    lev->zeroed_comp_vec.vec = vec_or(vec1.vec,vec2.vec); 		\
+    lev->comp[4] <<= s;                                         \
+	vec1.vec = vec_sr(lev->offset_list_vec.vec,s_vec.vec); 		\
+	vec2.vec = vec_sl(lev->zeroed_list_vec.vec,ss_vec.vec); 	\
+	lev->offset_list_vec.vec = vec_or(vec1.vec,vec2.vec); 		\
+    lev->list[0] >>= s;                                         \
+  }
+
+#define COMP_LEFT_LIST_RIGHT_32(lev)              		\
+  lev->zeroed_comp_vec.vec = lev->offset_comp_vec.vec;	\
+  lev->comp[4] = 0;                               		\
+  lev->offset_list_vec.vec = lev->zeroed_list_vec.vec;	\
+  lev->list[0] = 0;
+
+#define COPY_LIST_SET_BIT(lev2,lev,bitindex)      \
+  {                                               \
+    int d = bitindex;                             \
+    if (d <= 32) {                                \
+       lev2->list[0] = lev->list[0] | bit[ d ];   \
+	   lev2->offset_list_vec.vec = lev->offset_list_vec.vec; \
+    } else if (d <= 64) {                         \
+       lev2->list[0] = lev->list[0];              \
+       lev2->list[1] = lev->list[1] | bit[ d ];   \
+       lev2->list[2] = lev->list[2];              \
+       lev2->list[3] = lev->list[3];              \
+       lev2->list[4] = lev->list[4];              \
+    } else if (d <= 96) {                         \
+       lev2->list[0] = lev->list[0];              \
+       lev2->list[1] = lev->list[1];              \
+       lev2->list[2] = lev->list[2] | bit[ d ];   \
+       lev2->list[3] = lev->list[3];              \
+       lev2->list[4] = lev->list[4];              \
+    } else if (d <= 128) {                        \
+       lev2->list[0] = lev->list[0];              \
+       lev2->list[1] = lev->list[1];              \
+       lev2->list[2] = lev->list[2];              \
+       lev2->list[3] = lev->list[3] | bit[ d ];   \
+       lev2->list[4] = lev->list[4];              \
+    } else if (d <= 160) {                        \
+	   lev2->zeroed_list_vec.vec = lev->zeroed_list_vec.vec; \
+       lev2->list[4] = lev->list[4] | bit[ d ];   \
+    } else {                                      \
+	   lev2->zeroed_list_vec.vec = lev->zeroed_list_vec.vec; \
+       lev2->list[4] = lev->list[4];              \
+    }                                             \
+  }
+
+#define COPY_DIST_COMP(lev2,lev)                  \
+  lev2->zeroed_dist_vec.vec = vec_or(lev->zeroed_dist_vec.vec,lev2->zeroed_list_vec.vec); \
+  lev2->dist[4] = lev->dist[4] | lev2->list[4];   \
+  lev2->zeroed_comp_vec.vec = vec_or(lev->zeroed_comp_vec.vec,lev2->zeroed_dist_vec.vec); \
+  lev2->comp[4] = lev->comp[4] | lev2->dist[4];
+#else
 #define COMP_LEFT_LIST_RIGHT(lev,s)                             \
   {                                                             \
     int ss = 32 - s;                                            \
@@ -113,6 +177,7 @@ static U bit[200];         /* which bit of LIST to update */
   lev2->comp[2] = lev->comp[2] | lev2->dist[2];   \
   lev2->comp[3] = lev->comp[3] | lev2->dist[3];   \
   lev2->comp[4] = lev->comp[4] | lev2->dist[4];
+#endif
 
 static CoreDispatchTable dispatch_table;
 
@@ -362,7 +427,11 @@ static void dump_ruler(struct State *oState, int depth)
 }
 #endif
 
+#if __VEC__
+static int vec_ogr_cycle(void *state, int *pnodes)
+#else
 static int ogr_cycle(void *state, int *pnodes)
+#endif
 {
   struct State *oState = (struct State *)state;
   int depth = oState->depth+1;      /* the depth of recursion */
@@ -540,7 +609,11 @@ CoreDispatchTable *ogr_get_dispatch_table()
 {
   dispatch_table.init      = &ogr_init;
   dispatch_table.create    = &ogr_create;
+#if __VEC__
+  dispatch_table.cycle     = &vec_ogr_cycle;
+#else
   dispatch_table.cycle     = &ogr_cycle;
+#endif
   dispatch_table.getresult = &ogr_getresult;
   dispatch_table.destroy   = &ogr_destroy;
 #if 0
