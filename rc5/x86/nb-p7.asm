@@ -262,66 +262,6 @@
 ; ebx = eA2  ebp = eB2
 ; edx = eA3  edi = eB3
 
-%macro ROUND_3A_EVEN 1
-        add     eax, esi
-        add     ebx, ebp
-        add     edx, edi
-        rol     eax, 3
-        rol     ebx, 3
-        rol     edx, 3
-        mov     [work_Lhi1], esi
-        mov     [work_Lhi2], ebp
-        mov     [work_Lhi3], edi
-        mov     S1(%1), eax
-        add     esi, eax
-        mov     S2(%1), ebx
-        add     ebp, ebx
-        mov     S3(%1), edx
-        add     edi, edx
-        mov     ecx, esi
-        add     esi, [work_Llo1]
-        rol     esi, cl
-        add     eax, S1(%1+1)
-        mov     ecx, ebp
-        add     ebp, [work_Llo2]
-        rol     ebp, cl
-        add     ebx, S2(%1+1)
-        mov     ecx, edi
-        add     edi, [work_Llo3]
-        rol     edi, cl
-        add     edx, S3(%1+1)
-%endmacro
-
-%macro ROUND_3A_ODD 1
-        add     eax, esi
-        add     ebx, ebp
-        add     edx, edi
-        rol     eax, 3
-        rol     ebx, 3
-        rol     edx, 3
-        mov     [work_Llo1], esi
-        mov     [work_Llo2], ebp
-        mov     [work_Llo3], edi
-        mov     S1(%1), eax
-        add     esi, eax
-        mov     S2(%1), ebx
-        add     ebp, ebx
-        mov     S3(%1), edx
-        add     edi, edx
-        mov     ecx, esi
-        add     esi, [work_Lhi1]
-        rol     esi, cl
-        add     eax, S1(%1+1)
-        mov     ecx, ebp
-        add     ebp, [work_Lhi2]
-        rol     ebp, cl
-        add     ebx, S2(%1+1)
-        mov     ecx, edi
-        add     edi, [work_Lhi3]
-        rol     edi, cl
-        add     edx, S3(%1+1)
-%endmacro
-
 %macro ROUND_3B_EVEN 1
         xor     eax, esi
         xor     ebx, ebp
@@ -353,8 +293,8 @@
 %endmacro
 
 %macro ROUND_3A_EVEN_AND_ODD 1
-    ROUND_3A_EVEN %1
-    ROUND_3A_ODD  %1+1
+    ROUND_2_EVEN %1
+    ROUND_2_ODD  %1+1
 %endmacro
 
 %macro ROUND_3B_EVEN_AND_ODD 1
@@ -560,7 +500,7 @@ _end_round2_p7:
 	ROUND_3A_EVEN_AND_ODD 18
 	ROUND_3A_EVEN_AND_ODD 20
 	ROUND_3A_EVEN_AND_ODD 22
-	ROUND_3A_EVEN         24
+	ROUND_2_EVEN          24
 
         mov     [work_Llo1], esi
         mov     [work_Llo2], ebp
