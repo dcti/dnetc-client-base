@@ -1,5 +1,5 @@
 
-$Id: TODO.txt,v 1.7 1999/04/13 14:09:56 jlawson Exp $
+$Id: TODO.txt,v 1.8 1999/05/01 00:20:54 cyp Exp $
 
 This file contains a list of mini-projects. Submissions as well as 
 volunteers :) are welcome. 
@@ -15,10 +15,7 @@ If you have the expertise but lack the time to handle a project,
 please post your willingness to assist to coders@lists.distributed.net.
 Perhaps someone else has what you don't. :)
 
-1. Add support for GSSAPI authentication to the client's SOCKS5 handler.
-   GSSAPI support is *required* according to the SOCKS5 rfc. Priority: Medium
-
-2. Clean up the cores.                                       Priority: HIGH
+-- Clean up the cores.                                       Priority: HIGH
    a) The ideal prototype for any core, regardless of project,
       s32 (*core_unit)( RC5unitWork *, u32 *timeslice, void *membuff );
       1) it does its own pre- and post-incrementation, 
@@ -33,7 +30,7 @@ Perhaps someone else has what you don't. :)
          [rc5|des]_ansi_[x]_unit_func 
       c) fix the cores to use timeslice
 
-3. Devise and write a better filebuffer scheme.            Priority: Low
+-- Devise and write a better filebuffer scheme.       Priority: in-progress
    a) better "locking". The current method of writing 0x1 to tag
       a file as 'locked' is not ideal. Using a specific value to 
       identify the lock as the client's own would probably solve
@@ -48,25 +45,25 @@ Perhaps someone else has what you don't. :)
       per record padding that we can add fields without having to 
       redesign the whole mess again soon.
 
-4. Write a routine to import/export uuencoded buffers for/from users
+-- Write a routine to import/export uuencoded buffers for/from users
    that can only update their buffers via mail. The functions to
    import binary buffer records already exists.           Priority: Medium
         
-5. Add FTP as a supported buffer exchange protocol. The client could
+-- Add FTP as a supported buffer exchange protocol. The client could
    directly STOR buff-in.xx and requests to RETR rc5 would cause the
    keyserver to return a rc5 block from its ready queue.   Priority: Low
     
-6. Write a small routine to obtain a list of the local host's UP af_inet 
+-- Write a small routine to obtain a list of the local host's UP af_inet 
    if's by using SNMP or ... Use ioctl() to do the same (for your port).
    Linux/OS/2/FreeBSD/OpenBSD are already implemented      Priority: Low
 							   
-7. Modify client to use an ini file format with more varied sections
-   to classify the option categories better.               Priority: Low
+-- Modify client to use an ini file format with more varied sections
+   to classify the option categories better.          Priority: in-progress
 
-8. Split network.cpp into netio primitives and high-level/wrapper handling
+-- Split network.cpp into netio primitives and high-level/wrapper handling
    functions. Something along the lines of whats used in the proxy would
-   be nice, but without the bloat please.                  Priority: Low
+   be nice, but without the bloat please.             Priority: in-progress
 
-9. Convert all references to u64 structures (fake u64 that is) from {hi,lo} 
+-- Convert all references to u64 structures (fake u64 that is) from {hi,lo} 
    to u32 hi; u32 lo; (discard structure).                 Priority: Low
    
