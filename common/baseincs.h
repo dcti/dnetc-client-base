@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.39 2000/07/01 10:43:45 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.40 2000/07/13 21:44:02 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -213,7 +213,11 @@
   #include <sys/time.h>
   #include <sys/file.h>
   #include <unistd.h>
-  #if defined(__ELF__)
+  #undef NULL    /* some broken header unconditionally */   
+  #define NULL 0 /* defines NULL to be ((void *)0) */
+  #if defined(_MIT_POSIX_THREADS)
+    #define sched_yield() pthread_yield()
+  #elif defined(__ELF__) && !defined(_LINUX_SCHED_H)
     #include <sched.h>
   #endif
 #elif (CLIENT_OS == OS_MACOS)

@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.32 2000/06/13 00:28:05 mfeiri Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.33 2000/07/13 21:44:02 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -463,6 +463,18 @@
   #include <sys/resource.h> /* WIF*() macros */
   #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
   #include <sys/mman.h>     /* minherit() */
+#elif (CLIENT_OS == OS_LINUX) && \
+  !defined(MULTITHREAD) && (CLIENT_CPU == CPU_X86)
+  /* uses clone() instead of pthreads ... */
+  #define THREAD_BY_CLONE
+  /* ... but first thread is polled ... */
+  #define DYN_TIMESLICE
+  #include <linux/unistd.h>
+  #include <linux/sched.h>
+  //#include <sys/types.h>
+  #include <sys/wait.h>
+  typedef pid_t THREADID;
+  #define OS_SUPPORTS_SMP
 #elif defined(MULTITHREAD)
   /* 
   Q: can't we simply use if defined(_POSIX_THREADS), as this is often defined
