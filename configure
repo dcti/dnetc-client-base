@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.85  1998/08/20 01:52:29  silby
+# Adddition of NASM to configure
+#
 # Revision 1.84  1998/08/19 01:31:05  silby
 # Cazatnged -fno-handle-exceptions to -fno-exceptions, since GCC told me that was what to do. <g> Also, removed -DPIPELINE_COUNT for linux x85 builds - it's now a variable for x86.
 #
@@ -446,11 +449,7 @@ XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s rc5/crunch_allitnil_552.ppcxlc.s
 RC5X86_SRCS="rc5/rc5-486-rg.cpp rc5/rc5-6x86-rg.cpp rc5/rc5p5brf.cpp rc5/rc5-p6-rg.cpp rc5/rc5-k5-rg.cpp rc5/rc5-k6-rg.cpp"
 DESX86_SRCS="des/des-x86.cpp"
 DESMMX_SRCS="des/deseval-meggs3-mmx.cpp des/sboxes-mmx.cpp des/des-slice-meggs.cpp"
-DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.c platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc
-
-
-
-/do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
+DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.c platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc/do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
 DESULTRA_SRCS_ASM="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/des_ultra_crunch.c"
 
 #
@@ -461,11 +460,14 @@ TARGET_CCFLAGS="$OPTS_GCC"
 TARGET_LDFLAGS=""
 TARGET_LIBS=""
 TARGET_AS="gas"
+TARGET_NASM="nasm"
+TARGET_NASMFLAGS=""
 TARGET_ASFLAGS=""
 TARGET_STRIP="strip"
 
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
+TARGET_ADDNASMS=""
 TARGET_ADDOBJS=""
 EXENAME="rc5des"
 
@@ -898,6 +900,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lpthread -lncurses"
 	;;
 
@@ -1077,6 +1080,7 @@ echo "Platform target for \"$1\" recognized."
 
 TARGET_ALLCCOBJS=
 TARGET_ALLASOBJS=
+TARGET_ALLNASMOBJS=
 
 echo "Scanning output C++ dependencies..."
 for target in ${COMMON_SRCS} ${TARGET_ADDSRCS}; do
@@ -1086,6 +1090,7 @@ for target in ${COMMON_SRCS} ${TARGET_ADDSRCS}; do
     eval "DEPEND_${SAFENAME}=$target"
     TARGET_ALLCCOBJS="${TARGET_ALLCCOBJS} ${TARGETOBJECT}"
 done
+
 echo "Scanning output AS dependencies..."
 for target in ${TARGET_ADDASMS}; do
     TARGETOBJECT=output/`basename $target`.o
@@ -1093,6 +1098,15 @@ for target in ${TARGET_ADDASMS}; do
     echo "  $target -> $TARGETOBJECT ($SAFENAME)"
     eval "DEPEND_${SAFENAME}=$target"
     TARGET_ALLASOBJS="${TARGET_ALLASOBJS} ${TARGETOBJECT}"
+done
+
+echo "Scanning output NASM dependencies..."
+for target in ${TARGET_ADDNASMS}; do
+    TARGETOBJECT=output/`basename $target`.o
+    SAFENAME=`echo ${TARGETOBJECT} | tr -d '/.\$\-'`
+    echo "  $target -> $TARGETOBJECT ($SAFENAME)"
+    eval "DEPEND_${SAFENAME}=$target"
+    TARGET_ALLNASMOBJS="${TARGET_ALLNASMOBJS} ${TARGETOBJECT}"
 done
 
 
@@ -1147,8 +1161,9 @@ echo "LDFLAGS = ${TARGET_LDFLAGS}" >> Makefile
 echo "LIBS = ${TARGET_LIBS}" >> Makefile
 echo "AS = ${TARGET_AS}" >> Makefile
 echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
+echo "NASM = ${TARGET_NASM}" >> Makefile
 echo "STRIP = ${TARGET_STRIP}" >> Makefile
-echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS}" >> Makefile
+echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "" >> Makefile
 
@@ -1203,6 +1218,14 @@ for target in ${TARGET_ALLASOBJS}; do
   eval TARGETSRC=$`echo DEPEND_$SAFENAME`
   echo "$target:	${TARGETSRC}" >> Makefile
   echo "	\${AS} \${ASFLAGS} ${TARGETSRC} -o $target" >> Makefile
+  echo "" >> Makefile
+done
+echo "Generating Makefile NASM dependency targets..."
+for target in ${TARGET_ALLNASMOBJS}; do
+  SAFENAME=`echo $target | tr -d '/.\$\-'`
+  eval TARGETSRC=$`echo DEPEND_$SAFENAME`
+  echo "$target:	${TARGETSRC}" >> Makefile
+  echo "	\${NASM} \${NASMFLAGS} ${TARGETSRC} -o $target" >> Makefile
   echo "" >> Makefile
 done
 echo "Makefile auto-generation complete!"
