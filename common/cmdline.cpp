@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.49 2000/03/20 14:27:53 jbaker Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.50 2000/04/05 00:39:47 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -31,7 +31,9 @@ return "@(#)$Id: cmdline.cpp,v 1.133.2.49 2000/03/20 14:27:53 jbaker Exp $"; }
 #include "confrwv.h"   // ValidateConfig()
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "cmdline.h"   // ourselves
-#include "triggers.h"   // TRIGGER_PAUSE_SIGNAL
+#include "triggers.h"  // TRIGGER_PAUSE_SIGNAL
+#include "confopt.h"   // conf_options[] for defaults/ranges
+#include "selcore.h"   // selcoreValidateCoreIndex()
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
@@ -328,7 +330,7 @@ int ParseCommandline( Client *client,
           pscmd = "/bin/ps | /bin/egrep zzz | /bin/egrep -v crunch 2>/dev/null";  /* get the (sleeping) main thread ID, not the team ID */
           #elif (CLIENT_OS == OS_QNX)
           pscmd = "ps -A -F"%p %c" 2>/dev/null";
-	  #elif (CLIENT_OS == OS_NTO2)
+          #elif (CLIENT_OS == OS_NTO2)
           pscmd = "ps -A -o pid,comm 2>/dev/null";
           #else
           #error fixme: select an appropriate ps syntax
@@ -671,7 +673,7 @@ int ParseCommandline( Client *client,
         else
         {
           // isthresh: 1 = in, 2 = out, 4 = time_in
-          int n, maxval = 0, minval = 0, isthresh = 0, isblsize = 0;
+          int n, maxval = 0, minval = 0, defval = 0, confoption = -1, isthresh = 0, isblsize = 0;
           int contest_defaulted = 0;
           unsigned int contest;
           const char *op;
@@ -714,29 +716,50 @@ int ParseCommandline( Client *client,
               n = -123;
           }
 
+          // get default values and ranges from conf_options[]
           if (isblsize)
           {
-            minval = 28;
-            maxval = 33;
+            confoption = CONF_PREFERREDBLOCKSIZE;
             if (contest == OGR) /* invalid for ogr */
               n = -123;
           }
-          else if (isthresh)
+          else if (isthresh & (1+2))
           {
-            maxval = minval = 1;
-            if ((isthresh & 4) && (contest == OGR)) /* time threshold invalid for ogr */
+            confoption = CONF_THRESHOLDI;
+          }
+          else if (isthresh & 4)
+          {
+            confoption = CONF_THRESHOLDT;
+            if (contest == OGR) /* time threshold invalid for ogr */
               n = -123;
           }
+          else if (isthresh)
+            missing_value = 1; // uups ?
           else /* coretype */
-            maxval = minval = -1;
+          {
+            confoption = -1;
+            if ((n != -1) && (n != selcoreValidateCoreIndex(contest, n)))
+              invalid_value = 1;
+          }
 
-          if (n < minval || ((maxval > minval) && (n > maxval)))
+          if (confoption >= 0)
+          {
+            minval = conf_options[confoption].choicemin;
+            maxval = conf_options[confoption].choicemax;
+            defval = atoi(conf_options[confoption].defaultsetting);
+          }
+          else
+            minval = maxval = defval = 0;
+
+          if ((n != defval) && (minval || maxval) && (n < minval || n > maxval))
             invalid_value = 1;
           else if (run_level == 0)
           {
             inimissing = 0; // Don't complain if the inifile is missing
             if (isblsize)
             {
+              if (n == -1)
+                n = 0; // default
               client->preferred_blocksize[contest] = n;
               if (contest_defaulted)
                 client->preferred_blocksize[DES] = n;
@@ -769,7 +792,6 @@ int ParseCommandline( Client *client,
                   client->preferred_blocksize[contest] );
               if (contest_defaulted)
                 LogScreenRaw("DES preferred packet size set to 2^%d\n",
-                  /*CliGetContestNameFromID(contest),*/
                   client->preferred_blocksize[DES] );
             }
             else if (isthresh)
