@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.220 2001/01/06 21:26:07 friedbait Exp $
+# @(#)$Id: configure,v 1.222.2.221 2001/01/14 02:39:10 andreasb Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -146,7 +146,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   # -- CSC -- (needs -DHAVE_CSC_CORES)
   CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp csc/csc-1k-i.cpp csc/csc-1k.cpp csc/csc-6b-i.cpp csc/csc-6b.cpp"
   # -- OGR -- (needs -DHAVE_OGR_CORES) -------------------------
-  OGR_ANSI_SRCS="ogr/ansi/ogr.cpp ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
+  OGR_ANSI_SRCS="ogr/ansi/ogr.cpp ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp ogr/ansi/ogr_dat2.cpp"
 
   # -------------------------------------------------------------------
 
