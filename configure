@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.111  1998/10/31 22:11:23  silby
+# Fixed nasm options for freebsd non-elf
+#
 # Revision 1.110  1998/10/30 04:40:01  foxyloxy
 #
 # More MIPS cleanup.
@@ -1030,6 +1033,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+        TARGET_NASMFLAGS="-i rc5/nasm/ -f aoutb"
 	;;
 
     *x86-freebsd-mt)
@@ -1039,6 +1043,7 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lc_r"
+        TARGET_NASMFLAGS="-i rc5/nasm/ -f aoutb"
 	;;
 
     *x86-freebsd-elf)
