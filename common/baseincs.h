@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.46 2000/11/21 19:22:05 teichp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.47 2001/01/16 21:00:25 teichp Exp $"
 
 #include "cputypes.h"
 
@@ -97,6 +97,12 @@
   extern int getch();
   #define fileno(f) ((f)->__file)
   #define isatty(f) ((f) == 0)
+  #undef time
+  #define time riscos_utcbase_time
+  #undef gmtime
+  #define gmtime riscos_utcbase_gmtime
+  #undef localtime
+  #define localtime riscos_utcbase_localtime
   #define tzset() /* nothing */
   #define S_IRUSR S_IREAD
   #define S_IWUSR S_IWRITE
@@ -220,7 +226,7 @@
   #include <sys/file.h>
   #include <unistd.h>
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
-  #undef NULL    /* some broken header unconditionally */   
+  #undef NULL    /* some broken header unconditionally */
   #define NULL 0 /* defines NULL to be ((void *)0) */
   #if defined(_MIT_POSIX_THREADS)
     #define sched_yield() pthread_yield()
@@ -232,7 +238,7 @@
     #include <sched.h>
   #endif
   extern "C" int linux_uninstall(const char *basename, int quietly);
-  extern "C" int linux_install(const char *basename, int argc, 
+  extern "C" int linux_install(const char *basename, int argc,
     const char *argv[], int quietly); /* argv[1..(argc-1)] as start options */
 #elif (CLIENT_OS == OS_MACOS)
   #include "client_defs.h"
