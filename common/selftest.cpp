@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.30 2000/05/06 20:09:26 mfeiri Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.31 2000/06/02 18:26:53 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -398,7 +398,7 @@ int SelfTest( unsigned int contest )
           #elif (CLIENT_OS == OS_RISCOS)
           riscos_upcall_6();
           #elif (CLIENT_OS == OS_NETWARE)
-          nwCliThreadSwitchLowPriority();
+          ThreadSwitchLowPriority();
           #endif
         }
         if (CheckExitRequestTrigger())

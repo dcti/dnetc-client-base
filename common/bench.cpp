@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.32 2000/05/06 22:04:55 mfeiri Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.33 2000/06/02 18:26:53 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -315,7 +315,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         #elif (CLIENT_OS == OS_RISCOS)
         riscos_upcall_6();
         #elif (CLIENT_OS == OS_NETWARE)
-        nwCliThreadSwitchLowPriority();
+        ThreadSwitchLowPriority();
         #endif
       }
       run = problem->Run();
