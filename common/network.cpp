@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.78  1999/02/01 18:02:44  cyp
+// undid last SillyB change. (so, whats new?)
+//
 // Revision 1.77  1999/02/01 08:19:59  silby
 // Network class once again allows autofindkeyserver to be disabled.
 //
@@ -164,7 +167,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.77 1999/02/01 08:19:59 silby Exp $"; }
+return "@(#)$Id: network.cpp,v 1.78 1999/02/01 18:02:44 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -178,6 +181,9 @@ return "@(#)$Id: network.cpp,v 1.77 1999/02/01 08:19:59 silby Exp $"; }
 #include "clitime.h"   // CliGetTimeString(NULL,1);
 #include "triggers.h"  // CheckExitRequestTrigger()
 #include "network.h"   // thats us
+
+//#defined PERMIT_NODEZERO_ACCESS //allow access to fullserver on nodezero 
+                                  //FOR DCTI USE ONLY!!!
 
 #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_MACOS)
 #define ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG 
@@ -268,15 +274,10 @@ const char *Socks5ErrorText[9] =
 // besides, it works around context issues.
 static const char *__inet_ntoa__(u32 addr)
 {
-  static char buff[18];
+  static char buff[sizeof("255.255.255.255  ")];
   char *p = (char *)(&addr);
-#ifdef HAVE_SNPRINTF
-  snprintf( buff, sizeof(buff), "%d.%d.%d.%d",
-      (p[0]&255), (p[1]&255), (p[2]&255), (p[3]&255) );
-#else
   sprintf( buff, "%d.%d.%d.%d",
       (p[0]&255), (p[1]&255), (p[2]&255), (p[3]&255) );
-#endif
   return buff;
 }  
 
@@ -314,12 +315,13 @@ static void __hostnamecpy( char *dest,
   return;
 }  
 
-static int __fixup_dnethostname( char *host, int port, int autofind )
+static int __fixup_dnethostname( char *host, int *portP )
 {
+  int autofind = 0;
   if (host[0]==0 || strcmpi(host,"auto")==0 || strcmpi(host,"(auto)")==0)
     autofind = 1;
   else if (!autofind && strchr( host, '.' )!=NULL)
-      {
+    {
     char *p = host;
     int len = 0;
     while (*p && isspace(*p))
@@ -329,45 +331,49 @@ static int __fixup_dnethostname( char *host, int port, int autofind )
     host[len]=0;
     if ( len>15 && strcmp( &host[len-15], "distributed.net" )==0 &&
          (( len == 15 ) || host[len-16]=='.'))
-        {
+      {
       if (len == 15)
         autofind = 1;
+      #ifdef PERMIT_NODEZERO_ACCESS
+      else if ( strcmp( host, "nodezero.distributed.net")==0 )
+        autofind = (access("dcti_test.ok",0)!=0); // FOR DCTI USE ONLY!!!
+      #endif
       else if ( strcmp( strchr( host, '.' ), ".v27.distributed.net" )!=0 )
         autofind = 1;
       else
-          {
+        {
         int i, isvalid=0;
         const char *dzones[]={"us","euro","asia","aussie","jp"};
         for (i=0;(!isvalid && i<((int)(sizeof(dzones)/sizeof(dzones[0]))));i++)
-            {
+          {
           int len2 = strlen(dzones[i]);
           if ( memcmp( dzones[i], host, len2 )==0)
-              {
+            {
             int foundport = ((host[len2]=='.')?(2064):(atoi(&host[len2])));
             if (foundport != 80 && foundport != 23 && foundport != 2064)
               break;
-            else if (port == 0) //note: the hostname determines port
-              port = foundport; //not viceversa. 2064 also accepts http/uue
-            else if (port != 3064 && (port != foundport))
+            else if (*portP == 0) //note: the hostname determines port
+              *portP = foundport; //not viceversa. 2064 also accepts http/uue
+            else if (*portP != 3064 && (*portP != foundport))
               break;
             isvalid = 1;
-              }
             }
+          }
         if (!isvalid)
           autofind = 1;
-          }
         }
       }
+    }
   if (autofind)
     host[0]=0;
-  return port;
+  return autofind;
 }    
 
 //======================================================================
 
 Network::Network( const char * servname, int servport, int _nofallback,
-                  int _noautofindkeyserver, int _iotimeout, int _enctype,
-                  const char *_fwallhost, int _fwallport, const char *_fwalluid)
+                  int _iotimeout, int _enctype, const char *_fwallhost, 
+                  int _fwallport, const char *_fwalluid)
 {
   // check that the packet structures have been correctly packed
   size_t dummy;
@@ -381,12 +387,9 @@ Network::Network( const char * servname, int servport, int _nofallback,
   // intialize communication parameters
   server_name[0] = 0;
   if (servname)
-    __hostnamecpy( server_name, servname, sizeof(server_name));
-  if (!_noautofindkeyserver)
-    server_port = __fixup_dnethostname(server_name,servport,_noautofindkeyserver);
-  else
-    server_port = servport;
-  autofindkeyserver = (server_name[0] == 0);
+     __hostnamecpy( server_name, servname, sizeof(server_name));
+  server_port = servport;
+  autofindkeyserver = __fixup_dnethostname(server_name,&server_port);
 
   reconnected = 0;
   nofallback = _nofallback;
@@ -637,13 +640,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
           targethost = sig + 1;
           if (svc_hostaddr)
             {
-#ifdef HAVE_SNPRINTF
-            snprintf(scratch, sizeof(scratch), "%s %s",
-                sig+1, __inet_ntoa__(svc_hostaddr));
-#else
-            sprintf(scratch, "%s %s",
-                sig+1, __inet_ntoa__(svc_hostaddr));
-#endif
+            sprintf(scratch, "%s %s", sig+1, __inet_ntoa__(svc_hostaddr));
             targethost = scratch;
             }
           }

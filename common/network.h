@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.57  1999/02/01 18:02:44  cyp
+// undid last SillyB change. (so, whats new?)
+//
 // Revision 1.56  1999/02/01 08:20:00  silby
 // Network class once again allows autofindkeyserver to be disabled.
 //
@@ -271,7 +274,7 @@ class Network
 {
 protected:
   char server_name[64];   // used only by ::Open
-  s16  server_port;       // used only by ::Open
+  int server_port;       // used only by ::Open
   int nofallback;        // used only by ::Open
 
   int  startmode;
@@ -351,8 +354,7 @@ protected:
     // guess. 
  
   Network( const char *servname, int servport, 
-           int _nofallback = 1, int _noautofindkeyserver = 0,
-           int _iotimeout = -1, int _enctype = 0, 
+           int _nofallback = 1, int _iotimeout = -1, int _enctype = 0, 
            const char *_fwallhost = NULL, int _fwallport = 0, 
            const char *_fwalluid = NULL );
     // protected!: used by friend NetOpen() below.
@@ -360,8 +362,7 @@ protected:
 public:
 
   friend Network *NetOpen( const char *servname, int servport, 
-           int _nofallback = 1, int noautofindkeyserver = 0,
-           int _iotimeout = -1, int _enctype = 0, 
+           int _nofallback = 1, int _iotimeout = -1, int _enctype = 0, 
            const char *_fwallhost = NULL, int _fwallport = 0, 
            const char *_fwalluid = NULL );
 

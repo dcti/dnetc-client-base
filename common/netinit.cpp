@@ -10,6 +10,9 @@
 //
 //
 // $Log: netinit.cpp,v $
+// Revision 1.21  1999/02/01 18:02:44  cyp
+// undid last SillyB change. (so, whats new?)
+//
 // Revision 1.20  1999/02/01 08:19:59  silby
 // Network class once again allows autofindkeyserver to be disabled.
 //
@@ -81,7 +84,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.20 1999/02/01 08:19:59 silby Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.21 1999/02/01 18:02:44 cyp Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -419,8 +422,7 @@ int NetClose( Network *net )
 //----------------------------------------------------------------------
 
 Network *NetOpen( const char *servname, int servport, 
-           int _nofallback/*= 1*/, int _noautofindkeyserver /*=0*/,
-           int _iotimeout/*= -1*/, int _enctype/*=0*/, 
+           int _nofallback/*= 1*/, int _iotimeout/*= -1*/, int _enctype/*=0*/, 
            const char *_fwallhost /*= NULL*/, int _fwallport /*= 0*/, 
            const char *_fwalluid /*= NULL*/ )
 {
@@ -432,8 +434,7 @@ Network *NetOpen( const char *servname, int servport,
     return NULL; 
 
   net = new Network( servname, servport, 
-           _nofallback /*=1*/, _noautofindkeyserver/*=0*/,
-           _iotimeout/*=-1*/, _enctype /*= 0*/, 
+           _nofallback /*=1*/, _iotimeout/*=-1*/, _enctype /*= 0*/, 
            _fwallhost /*= NULL*/, _fwallport /*= 0*/, _fwalluid /*= NULL*/ );
   success = ( net != NULL );
 
