@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.135  1998/07/08 09:46:31  remi
+// Added support for the MMX bitslicer.
+// Added -nommx command line option and 'usemmx' ini file setting so the user
+// can disable MMX usage.
+// Wrapped $Log comments to some reasonable value.
+//
 // Revision 1.134  1998/07/08 05:19:18  jlawson
 // updates to get Borland C++ to compile under Win32.
 //
@@ -47,7 +53,10 @@
 // integer cast warnings on win16 resolved and other formatting cleanup.
 //
 // Revision 1.124  1998/07/04 21:05:23  silby
-// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong should be fixed.
+// Changes to lurk code; win32 and os/2 code now uses the same variables, and
+// has been integrated into StartLurk and LurkStatus functions so they now act
+// the same.  Additionally, problems with lurkonly clients trying to connect
+// when contestdone was wrong should be fixed.
 //
 // Revision 1.123  1998/07/02 13:09:20  kbracey
 // A couple of RISC OS fixes - printf format specifiers made long.
@@ -77,10 +86,12 @@
 // added new platform OS_WIN32S to make code handling easier.
 //
 // Revision 1.116  1998/06/28 23:40:18  silby
-// Changes to path handling code so that path validation+adding to filenames will be more reliable (especially on win32).
+// Changes to path handling code so that path validation+adding to filenames
+// will be more reliable (especially on win32).
 //
 // Revision 1.115  1998/06/28 19:48:08  silby
-// Changed default amd 486 core selection to pentium core and changed strings to reflect that.
+// Changed default amd 486 core selection to pentium core and changed strings
+// to reflect that.
 //
 // Revision 1.114  1998/06/27 20:57:14  remi
 // Fixed "Setting DES buffer size to %d" to print DES buffer size, not the RC5
@@ -90,10 +101,12 @@
 // fix core selection on ppc -- from goldbob
 //
 // Revision 1.112  1998/06/25 04:43:29  silby
-// Changes to Internalgetfilename for win32 (+ other platforms in the future) to make path handling better (now it won't miss / and : on win32)
+// Changes to Internalgetfilename for win32 (+ other platforms in the future)
+// to make path handling better (now it won't miss / and : on win32)
 //
 // Revision 1.111  1998/06/25 01:55:41  silby
-// Fixed numcpu not showing up in the config, fixed timeslice's menu entry at the same time.
+// Fixed numcpu not showing up in the config, fixed timeslice's menu entry at
+// the same time.
 //
 // Revision 1.110  1998/06/24 19:37:35  cyruspatel
 // Change for PPC: Combined CliGetKeyrateForProblem + CliClearProblemSumInfo
@@ -102,16 +115,21 @@
 // not affect cumulative stats.
 //
 // Revision 1.109  1998/06/24 03:50:23  silby
-// Changes needed to get the NT service to compile under MSVC made, NT Service text strings modded to say "distributed.net", and message about having to set the service to automatic changed to say "check", since it's already done automatically.
+// Changes needed to get the NT service to compile under MSVC made,
+// NT Service text strings modded to say "distributed.net", and message about
+// having to set the service to automatic changed to say "check", since it's
+// already done automatically.
 //
 // Revision 1.108  1998/06/24 03:29:45  silby
-// Switched the order of timeslice and cputype so most oses wouldn't have the gap in the #2 menu spot in the performance menu
+// Switched the order of timeslice and cputype so most oses wouldn't have
+// the gap in the #2 menu spot in the performance menu
 //
 // Revision 1.107  1998/06/23 21:58:52  remi
 // Use only two x86 DES cores (P5 & PPro) when not multithreaded.
 //
 // Revision 1.106  1998/06/23 03:14:13  silby
-// Small fix to make sure e-mail addresses contain @something, so SMTP servers are happy.
+// Small fix to make sure e-mail addresses contain @something, so SMTP servers
+// are happy.
 //
 // Revision 1.105  1998/06/22 11:25:48  cyruspatel
 // Created new function in clicdata.cpp: CliClearContestSummaryData(int c)
@@ -200,7 +218,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.134 1998/07/08 05:19:18 jlawson Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.135 1998/07/08 09:46:31 remi Exp $";
 return id; }
 #endif
 
@@ -229,7 +247,7 @@ return id; }
 
 // --------------------------------------------------------------------------
 
-#define OPTION_COUNT    44
+#define OPTION_COUNT    45
 #define MAXMENUENTRIES  18
 static const char *OPTION_SECTION="parameters"; //#define OPTION_SECTION "parameters"
 
@@ -492,11 +510,23 @@ static optionstruct options[OPTION_COUNT]=
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n"),
   3,2,10,NULL,CFGTXT(&lurkmodetable[0][0]),0,2},
+//39
 { "in",  CFGTXT("RC5 In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "rc5",CFGTXT(""),6,1,4,NULL},
+//40
 { "out", CFGTXT("RC5 Out-Buffer Path/Name"), "buff-out" EXTN_SEP "rc5",CFGTXT(""),6,1,5,NULL},
+//41
 { "in2", CFGTXT("DES In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "des",CFGTXT(""),6,1,6,NULL},
+//42
 { "out2",CFGTXT("DES Out-Buffer Path/Name"), "buff-out" EXTN_SEP "des",CFGTXT(""),6,1,7,NULL},
-{ "pausefile",CFGTXT("Pausefile Path/Name"),"none",CFGTXT("(blank = no pausefile)"),6,1,3,NULL}
+//43
+{ "pausefile",CFGTXT("Pausefile Path/Name"),"none",CFGTXT("(blank = no pausefile)"),6,1,3,NULL},
+//44
+#ifdef MMX_BITSLICER
+{ "usemmx",CFGTXT("Use MMX instructions?"),"1",CFGTXT(""),4,3,4,NULL}
+#else
+{ "usemmx", CFGTXT("Use MMX...not applicable in this client"), "-1", CFGTXT("(default -1)"),0,2,0,
+  NULL,NULL,0,0},
+#endif
 };
 
 // --------------------------------------------------------------------------
@@ -607,6 +637,7 @@ static void killwhitespace( char *string )
 #define CONF_DESIN 41
 #define CONF_DESOUT 42
 #define CONF_PAUSEFILE 43
+#define CONF_MMX 44
 
 // --------------------------------------------------------------------------
 
@@ -1046,6 +1077,13 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           if (isstringblank(pausefile)) strcpy (pausefile,"none");
           #endif
           break;
+        #ifdef MMX_BITSLICER
+	case CONF_MMX:
+          choice = yesno(parm);
+	  if ((choice < 0) || (choice >= 1))
+	    usemmx = 1;
+          break;
+        #endif
         default:
           break;
       }
@@ -1222,6 +1260,10 @@ options[CONF_RC5OUT].thevariable=&out_buffer_file[0];
 options[CONF_DESIN].thevariable=&in_buffer_file[1];
 options[CONF_DESOUT].thevariable=&out_buffer_file[1];
 options[CONF_PAUSEFILE].thevariable=&pausefile;
+#endif
+
+#ifdef MMX_BITSLICER
+options[CONF_MMX].thevariable=&usemmx;
 #endif
 
 if (messagelen != 0)
@@ -1421,6 +1463,9 @@ s32 Client::ReadConfig(void)
   if (tempconfig) contestdone[0]=1;
   tempconfig=ini.getkey(OPTION_SECTION, "contestdone2", "0")[0];
   if (tempconfig) contestdone[1]=1;
+#ifdef MMX_BITSLICER
+  usemmx=INIGETKEY(CONF_MMX);
+#endif
 
 #undef INIGETKEY
 #if defined(NEEDVIRTUALMETHODS)
@@ -1675,6 +1720,10 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_DESIN, in_buffer_file[1]);
   INISETKEY( CONF_DESOUT, out_buffer_file[1]);
   INISETKEY( CONF_PAUSEFILE, pausefile);
+#endif
+
+#ifdef MMX_BITSLICER
+  INISETKEY( CONF_MMX, (s32)(usemmx) );
 #endif
 
   if (offlinemode == 0)
@@ -2193,10 +2242,10 @@ s32 Client::SelectCore(void)
 
   // Old "try every code" speed detect removed; it was never right, and
   // x86id gets almost all processors now anyway.
-  LogScreenf("Selecting %s code\n", cputypetable[(int)fastcore+1]);
+  LogScreenf("Selecting %s code\n", cputypetable[(int)(fastcore & 0xFF)+1]);
 
   // select the correct core engine
-  #ifdef KWAN
+  #if (defined(KWAN) || defined(MEGGS)) && !defined(MMX_BITSLICER)
     #define DESUNITFUNC51 des_unit_func_slice
     #define DESUNITFUNC52 des_unit_func_slice
     #define DESUNITFUNC61 des_unit_func_slice
@@ -2212,7 +2261,7 @@ s32 Client::SelectCore(void)
     #define DESUNITFUNC61 p1des_unit_func_pro
     #define DESUNITFUNC62 NULL
   #endif
-  switch(fastcore)
+  switch(fastcore & 0xFF)
   {
     case 1:
       rc5_unit_func = rc5_unit_func_486;
@@ -2221,13 +2270,21 @@ s32 Client::SelectCore(void)
       break;
     case 2:
       rc5_unit_func = rc5_unit_func_p6;
-      des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-      des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+      if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
+	  des_unit_func = des_unit_func2 = des_unit_func_mmx;
+      else {
+	  des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+	  des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+      }
       break;
     case 3:
       rc5_unit_func = rc5_unit_func_6x86;
-      des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-      des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+      if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
+	  des_unit_func = des_unit_func2 = des_unit_func_mmx;
+      else {
+	  des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+	  des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+      }
       break;
     case 4:
       rc5_unit_func = rc5_unit_func_k5;
@@ -2236,13 +2293,21 @@ s32 Client::SelectCore(void)
       break;
     case 5:
       rc5_unit_func = rc5_unit_func_k6;
-      des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-      des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+      if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
+	  des_unit_func = des_unit_func2 = des_unit_func_mmx;
+      else {
+	  des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+	  des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+      }
       break;
     default:
       rc5_unit_func = rc5_unit_func_p5;
-      des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
-      des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
+      if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
+	  des_unit_func = des_unit_func2 = des_unit_func_mmx;
+      else {
+	  des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
+	  des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
+      }
       break;
   }
   #undef DESUNITFUNC61
@@ -2605,6 +2670,12 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       connectoften=1;
       Argv[i][0] = 0;
     }
+    else if ( strcmp(Argv[i], "-nommx" ) == 0)
+    {
+      LogScreenf("Won't use MMX instructions\n");
+      usemmx=0;
+      Argv[i][0] = 0;
+    }
     else if ((i+1) < Argc) {
       if ( strcmp( Argv[i], "-b" ) == 0 ) // Buffer threshold size
       {                                           // Here in case its with a fetch/flush/update
@@ -2947,7 +3018,8 @@ void Client::PrintBanner(const char * /*clname*/)
             #if defined(MEGGS) //t'is only fair - 1998/06/21 cyrus
             "DES bitslice driver Copyright Andrew Meggs\n"
             #endif
-          #elif (CLIENT_CPU == CPU_X86)
+          #endif
+          #if (CLIENT_CPU == CPU_X86)
           "DES search routines Copyright Svend Olaf Mikkelsen\n"
           #endif
           "Please visit http://www.distributed.net/ for up to date contest information.\n"
