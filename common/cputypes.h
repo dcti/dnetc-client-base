@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.25  1998/07/01 09:06:36  daa
+// add HPUX_M68
+//
 // Revision 1.24  1998/06/29 10:42:13  jlawson
 // swapped OS_WIN32S and OS_WIN16 values, since Win32s clients were
 // previously classified as win16
@@ -277,6 +280,9 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_OS     OS_HPUX
     #define CLIENT_CPU    CPU_PA_RISC
   #endif
+#elif defined(_HPUX_M68K)
+  #define CLIENT_OS     OS_HPUX
+  #define CLIENT_CPU    CPU_68K
 #elif defined(_DGUX)
   #define CLIENT_OS     OS_DGUX
   #define CLIENT_CPU    CPU_88K
