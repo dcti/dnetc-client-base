@@ -1,12 +1,17 @@
-/* Created by Oliver Roberts <oliver@futaura.co.uk>
-**
-** $Id: amTime.c,v 1.1.2.1 2001/01/21 15:10:27 cyp Exp $
-**
-** ----------------------------------------------------------------------
-** This file contains all the Amiga specific code related to time
-** functions, including obtaining system time, GMT offset, generating
-** delays, obtaining monotonic & linear time.
-** ----------------------------------------------------------------------
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: amTime.c,v 1.1.2.2 2002/04/11 11:28:22 oliver Exp $
+ *
+ * Created by Oliver Roberts <oliver@futaura.co.uk>
+ *
+ * ----------------------------------------------------------------------
+ * This file contains all the Amiga specific code related to time
+ * functions, including obtaining system time, GMT offset, generating
+ * delays, obtaining monotonic & linear time.
+ * ----------------------------------------------------------------------
 */
 
 /*
@@ -74,7 +79,7 @@ struct TimerResources
    struct timerequest *tr_TimeReq;
    struct MsgPort     *tr_TimePort;
    BOOL                tr_TimerDevOpen;
-   UWORD               tr_pad;
+   BOOL                tr_IsThread;
 
    #if defined(__PPC__) && defined(__POWERUP__) && defined(USE_PPCDELAY)
    ULONG               tr_DelaySig;
@@ -82,6 +87,8 @@ struct TimerResources
 };
 
 static int GetGMTOffset(void);
+
+extern struct Library *DnetcBase;
 
 VOID CloseTimer(VOID)
 {
@@ -119,7 +126,7 @@ VOID CloseTimer(VOID)
    }
 }
 
-struct Device *OpenTimer(VOID)
+struct Device *OpenTimer(BOOL isthread)
 {
    struct Device *timerbase = NULL;
    struct TimerResources *res;
@@ -149,6 +156,8 @@ struct Device *OpenTimer(VOID)
          if (res->tr_DelaySig == (ULONG)-1) timerbase = NULL;
       }
       #endif
+
+      res->tr_IsThread = isthread;
    }
 
    if (!timerbase) CloseTimer();
@@ -173,7 +182,7 @@ BOOL GlobalTimerInit(VOID)
 
    GMTOffset = GetGMTOffset();
 
-   done = ((TimerBase = OpenTimer()) != NULL);
+   done = ((TimerBase = OpenTimer(FALSE)) != NULL);
 
    #ifdef __PPC__
    #ifdef __POWERUP__
@@ -221,12 +230,79 @@ BOOL GlobalTimerInit(VOID)
    return(done);
 }
 
+#ifndef NOGUI
+#if !defined(__PPC__)
+/* 68K */
+struct timerequest *amigaSleepAsync(struct TimerResources *res, unsigned int secs, unsigned int usecs)
+{
+   res->tr_TimeReq->tr_node.io_Command = TR_ADDREQUEST;
+   struct timeval *tv = &res->tr_TimeReq->tr_time;
+   tv->tv_secs = secs + (usecs / 1000000);
+   tv->tv_micro = usecs % 1000000;
+   SendIO((struct IORequest *)res->tr_TimeReq);
+
+   return(res->tr_TimeReq);
+}
+#endif
+#if defined(__POWERUP__)
+/* PowerUp */
+void *amigaSleepAsync(unsigned int ticks, ULONG sigmask)
+{
+   struct TagItem tags[4];
+
+   tags[0].ti_Tag = PPCTIMERTAG_50HZ;       tags[0].ti_Data = ticks;
+   tags[1].ti_Tag = PPCTIMERTAG_SIGNALMASK; tags[1].ti_Data = sigmask;
+   tags[2].ti_Tag = PPCTIMERTAG_AUTOREMOVE; tags[2].ti_Data = TRUE;
+   tags[3].ti_Tag = TAG_END;
+
+   return PPCCreateTimerObject(tags);
+}
+#endif
+#endif
+
 void amigaSleep(unsigned int secs, unsigned int usecs)
 {
+#ifndef NOGUI
+   struct TimerResources *res;
+
+   #ifndef __PPC__
+   res = (struct TimerResources *)(FindTask(NULL))->tc_UserData;
+   #elif !defined(__POWERUP__)
+   res = (struct TimerResources *)(FindTaskPPC(NULL))->tp_Task.tc_UserData;
+   #else
+   unsigned int ticks = secs * TICKS_PER_SECOND + (usecs * TICKS_PER_SECOND / 1000000);
+   void *timer;
+   ULONG sigmask;
+   res = (struct TimerResources *)PPCGetTaskAttr(PPCTASKTAG_EXTUSERDATA);
+   sigmask = 1L << res->tr_DelaySig;
+   #endif
+
+   if (!res->tr_IsThread && DnetcBase) {
+      #if !defined(__PPC__)
+      amigaHandleGUI(amigaSleepAsync(res,secs,usecs));
+      #elif defined(__POWERUP__)
+      if (ticks > 0) {
+         timer = amigaSleepAsync(ticks,sigmask);
+         amigaHandleGUI(timer,timer ? sigmask : 0);
+      }
+      else {
+         Delay(0);
+      }
+      #else
+      struct timeval tv;
+      tv.tv_sec = secs;
+      tv.tv_micro = usecs;
+      amigaHandleGUI(&tv);
+      #endif
+      return;
+   }
+#endif
+
 #if !defined(__PPC__) || !defined(USE_PPCDELAY)
    /*
    ** 68K 
    */
+  #ifdef NOGUI
    struct TimerResources *res;
 
    #ifndef __PPC__
@@ -236,7 +312,7 @@ void amigaSleep(unsigned int secs, unsigned int usecs)
    #else
    res = (struct TimerResources *)PPCGetTaskAttr(PPCTASKTAG_EXTUSERDATA);
    #endif
-
+  #endif
    res->tr_TimeReq->tr_node.io_Command = TR_ADDREQUEST;
    struct timeval *tv = &res->tr_TimeReq->tr_time;
    tv->tv_secs = secs + (usecs / 1000000);
@@ -257,20 +333,13 @@ void amigaSleep(unsigned int secs, unsigned int usecs)
    /*
    ** PowerUp 
    */
-   unsigned int ticks = secs * TICKS_PER_SECOND + (usecs * TICKS_PER_SECOND / 1000000);
+  #ifdef NOGUI
+   struct TimerResources *res = (struct TimerResources *)PPCGetTaskAttr(PPCTASKTAG_EXTUSERDATA);
+  #endif
 
    if (ticks > 0) {  // PowerUp timer objects can't handle zero!
-      struct TagItem tags[4];
-      void *timer;
-      struct TimerResources *res = (struct TimerResources *)PPCGetTaskAttr(PPCTASKTAG_EXTUSERDATA);
-
-      tags[0].ti_Tag = PPCTIMERTAG_50HZ; tags[0].ti_Data = ticks;
-      tags[1].ti_Tag = PPCTIMERTAG_SIGNALMASK; tags[1].ti_Data = 1L << res->tr_DelaySig;
-      tags[2].ti_Tag = PPCTIMERTAG_AUTOREMOVE; tags[2].ti_Data = TRUE;
-      tags[3].ti_Tag = TAG_END;
-
-      if ((timer = PPCCreateTimerObject(tags))) {
-         PPCWait(1L << res->tr_DelaySig);
+      if ((timer = amigaSleepAsync(ticks,sigmask))) {
+         PPCWait(sigmask);
          PPCDeleteTimerObject(timer);
       }
    }
