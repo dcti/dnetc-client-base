@@ -8,6 +8,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: iniread.cpp,v $
+// Revision 1.22  1999/02/04 10:38:05  cyp
+// fixed a bad charp[index] in GetPrivateProfileInt()
+//
 // Revision 1.21  1999/01/31 20:19:09  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -89,7 +92,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.21 1999/01/31 20:19:09 cyp Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.22 1999/02/04 10:38:05 cyp Exp $"; }
 #endif
 
 #define COMPILING_INIREAD
@@ -495,11 +498,11 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
   if (buffsize == 1)
     return 0;
   if ( inifile.ReadIniFile( filename ) )
-  {
-    if ((inisect = inifile.findsection( sect )) != NULL)
     {
-      if ((inirec = inisect->findfirst( key )) != NULL)
+    if ((inisect = inifile.findsection( sect )) != NULL)
       {
+      if ((inirec = inisect->findfirst( key )) != NULL)
+        {
         buffer[0] = 0;
         foundentry = 1;
 #ifdef INIREAD_SINGLEVALUE
@@ -509,18 +512,18 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
         if (inirec->values.GetCount() > 0)
           inirec->values[0].copyto(buffer, buffsize);
 #endif
+        }
       }
-    }
 //else printf("find sect %s failed\n", sect );
-  }
+    }
 //else printf("openini for write failed\n");
   
   if (!foundentry && *defval && defval != buffer)
-  {
+    {
 //printf("using default for [%s]%s\n",sect,key); 
     strncpy( buffer, defval, buffsize-1 );
     buffer[buffsize-1] = 0;
-  }
+    }
   return strlen(buffer);
 }
 
@@ -538,31 +541,30 @@ int WritePrivateProfileStringB( const char *sect, const char *key,
     return 0;                      //ie delete section if key is NULL
   inifile.ReadIniFile( filename );
   if ((inisect = inifile.findsection( sect )) == NULL)
-  {
-//printf("write find sec failed\n");
+    {
     if (value == NULL || key == NULL)
       return 1;
     if ((inisect = inifile.addsection( sect )) == NULL)
       return 0;
-  }
+    }
   if (value == NULL)
-  {
-    if ((inirec = inisect->findfirst( key ))!=NULL)
     {
+    if ((inirec = inisect->findfirst( key ))!=NULL)
+      {
       inisect->deleterecord( inirec );
       changed = 1;
+      }
     }
-  }
   else
-  {
+    {
     inisect->setkey(key, value);
     changed = 1;
-  }
+    }
   if (changed)
-  {
+    {
     if ( !inifile.WriteIniFile() )
       return 0;
-  }
+    }
   return 1; //success
 }
 
@@ -582,8 +584,8 @@ unsigned int GetPrivateProfileIntB( const char *sect, const char *key,
   for (n = 0; n < 4 && ((unsigned long)(n)) < i; n++)
     buf[n] = (char)tolower(buf[n]);
   if ((i == 2 && buf[0]=='o' && buf[1]=='n') ||
-      (i == 3 && buf[0]=='y' && buf[1]=='e' && buf[3]=='s') ||
-      (i == 4 && buf[0]=='t' && buf[1]=='r' && buf[3]=='u' && buf[4]=='e'))
+      (i == 3 && buf[0]=='y' && buf[1]=='e' && buf[2]=='s') ||
+      (i == 4 && buf[0]=='t' && buf[1]=='r' && buf[2]=='u' && buf[3]=='e'))
     return 1;
   return 0;
 }
