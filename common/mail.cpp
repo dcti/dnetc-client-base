@@ -4,9 +4,24 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.24  1998/08/21 00:05:47  cyruspatel
+// Added a sendpendingflag so that smtp_deinitialize() (or the MailMessage
+// destructor) will attempt a send() before the spool is destroyed/cleared.
+//
 // Revision 1.23  1998/08/20 19:25:01  cyruspatel
-// Restored spooling via static buffer until Autobuffer growth can be
-// limited.
+// Reverted to spooling by static buffer until infinite autobuffer 
+// growth can be restricted.
+//
+// Revision 1.22  1998/08/15 21:32:11  jlawson
+// updated mail to use autobuffer
+//
+// Revision 1.21  1998/08/15 18:09:45  cyruspatel
+// (a) completely restructured to remove the logical limit on the size of a
+// message. (b) mem bleeds cauterized - net object is now destroyed from only
+// one place. (c) completed fifo handling of spool buffer. (d) mail is now
+// also discarded on smtp error. (d) error messages are now in english :) -
+// they hint at possible hotspots. (f) many sanity checks added, eg address
+// handling is now RFC822 aware. (g) cleaned up a bit.
 //
 // Revision 1.20  1998/08/10 20:29:39  cyruspatel
 // Call to gethostname() is now a call to Network::GetHostName(). Updated
@@ -49,13 +64,40 @@
 // Revision 1.9  1998/06/14 08:12:56  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
+// Revision 1.8  1998/06/11 09:43:27  jlawson
+// mail, network, and problem will no longer print any error messages if
+// the NEEDVIRTUALMETHODS item is defined.  Printing messages to stdout in
+// the Win32 GUI compile was causing the i/o queus to become backed up.
+//
+// Revision 1.7  1998/06/08 15:47:09  kbracey
+// Added lots of "const"s and "static"s to reduce compiler warnings, and
+// hopefully improve output code, too.
+//
+// Revision 1.6  1998/06/04 00:19:15  timc
+// Changed subject from RC5-64 to RC5DES
+//
+// Revision 1.5  1998/06/03 08:16:54  bovine
+// preliminary changes for win32s windows 3.1 client
+//
+// Revision 1.4  1998/05/29 08:01:16  bovine
+// copyright update, indents
+//
+// Revision 1.3  1998/05/25 07:16:47  bovine
+// fixed warnings on g++/solaris
+//
+// Revision 1.2  1998/05/25 05:58:34  bovine
+// fixed warnings for Borland C++
+//
+// Revision 1.1  1998/05/24 14:25:53  daa
+// Import 5/23/98 client tree
+//
 // Revision 1.0  1997/09/17 09:17:07  timc
 // Created
 //-------------------------------------------------------------------------
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.23 1998/08/20 19:25:01 cyruspatel Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.24 1998/08/21 00:05:47 cyruspatel Exp $"; }
 #endif
 
 #include "network.h"
@@ -69,52 +111,6 @@ return "@(#)$Id: mail.cpp,v 1.23 1998/08/20 19:25:01 cyruspatel Exp $"; }
 //-------------------------------------------------------------------------
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
-
-//-------------------------------------------------------------------------
-
-int smtp_deinitialize_message( struct mailmessage *msg )
-{
-  #if (defined(MAILSPOOL_IS_AUTOBUFFER))
-    {
-    if (msg->spoolbuff)
-      {
-      delete (msg->spoolbuff);
-      msg->spoolbuff = NULL;
-      }
-    }
-  #elif defined(MAILSPOOL_IS_MEMFILE)
-    {
-    if (msg->spoolbuff)
-      {
-      mfclose(msg->spoolbuff);
-      msg->spoolbuff = NULL;
-      }
-    }
-  #else // (defined(MAILSPOOL_IS_STATICBUFFER))
-    {
-    msg->spoolbuff[0]=0;
-    }
-  #endif
-  return 0;
-}
-
-//-------------------------------------------------------------------------
-
-int smtp_initialize_message( struct mailmessage *msg, unsigned long sendthresh,
-               const char *smtphost, unsigned int smtpport, const char *fromid,
-                                        const char *destid, const char *rc5id )
-{
-  if (!msg) return -1;
-  memset( (void *)(msg), 0, sizeof( struct mailmessage ));
-  if (smtphost)   strncpy( msg->smtphost, smtphost, sizeof(msg->smtphost)-1);
-  if (smtpport)   msg->smtpport = smtpport;
-  if (fromid)     strncpy( msg->fromid, fromid, sizeof(msg->fromid)-1);
-  if (destid)     strncpy( msg->destid, destid, sizeof(msg->destid)-1);
-  if (rc5id)      strncpy( msg->rc5id, rc5id, sizeof(msg->rc5id)-1);
-  if (sendthresh) msg->sendthreshold = sendthresh;
-  
-  return 0;
-}    
 
 //-------------------------------------------------------------------------
 
@@ -192,7 +188,12 @@ static Network *smtp_open_net( const char *smtphost, unsigned int smtpport )
     }
 
   if (!net)
+    {
+    #ifdef SHOWMAIL
+    printf("SHOWMAIL: net->Open() failed\n");
+    #endif
     NetworkDeinitialize();
+    }
   return(net);
 }  
 
@@ -754,11 +755,22 @@ unsigned long smtp_countspooled( struct mailmessage *msg )
 
 //-------------------------------------------------------------------------
 
+int smtp_deinitialize_message( struct mailmessage *msg ); //fwd resolution
+
 //returns 0 if success, <0 if send error, >0 no network (should defer)
 int smtp_send_message( struct mailmessage *msg )
 {
   int errcode = 0;
   Network *net;
+
+  if (msg->sendpendingflag == 0) //no changes since we last tried to send
+    return 0;
+  msg->sendpendingflag = 0; //protect against recursive calls
+
+  #ifdef SHOWMAIL
+  LogScreen("SHOWMAIL: beginning send(): spool length: %d bytes\n", 
+                               (int)(smtp_countspooled(msg)) );
+  #endif
 
   if (smtp_countspooled( msg ) == 0)
     return 0;
@@ -809,7 +821,20 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
     msg->sendthreshold = 1024;
 
   txtlen = strlen( txt );
+  msg->sendpendingflag = 1;    
 
+  #ifdef SHOWMAIL
+  LogScreen("SHOWMAIL: appending %d bytes to mail spool.\n"
+            "          max spool len: %d, old spool len: %d\n", 
+	    (int)txtlen,
+    #if (defined(MAILSPOOL_IS_AUTOBUFFER) || defined(MAILSPOOL_IS_MEMFILE))
+       (int)((msg->sendthreshold/10)*11),
+    #else
+       (int)(MAILBUFFSIZE),
+    #endif       
+       (int)(smtp_countspooled(msg)) );
+  #endif
+  
   #if (defined(MAILSPOOL_IS_AUTOBUFFER))
     {
     msg->maxspoolsize = ((msg->sendthreshold/10)*11);
@@ -821,7 +846,7 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
       if (msg->spoolbuff != NULL)
         {
         msglen = (unsigned long)(msg->spoolbuff->GetLength());
-      
+	      
         if (( msglen + txtlen ) >= ( msg->maxspoolsize )) 
           {
           msg->spoolbuff->Reserve(((s32)(txtlen))); //
@@ -859,6 +884,7 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
       if (msg->spoolbuff != NULL)
         {
         msglen = mfilelength( mfileno( msg->spoolbuff ) );
+
         if (( msglen + txtlen ) >= ( msg->maxspoolsize )) 
           {
           smtp_send_message( msg );
@@ -869,7 +895,7 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
           msglen = 0;  
           if ( msg->spoolbuff != NULL ) //message still there or recreated
             {
-            if ( mfwrite( txt, txtlen, sizeof(char), msg->spoolbuff ) != txtlen )
+            if ( mfwrite( txt, txtlen, sizeof(char), msg->spoolbuff )!=txtlen )
               mftruncate( msg->spoolbuff, 0 );
             else
               msglen = txtlen;
@@ -907,8 +933,8 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
       msg->sendthreshold = ((msg->maxspoolsize/10)*9);
 
     unsigned long maxlen = msg->maxspoolsize;
-  
     msglen = (unsigned long)(strlen( msg->spoolbuff ));
+    
     if (txtlen > 0 ) 
       {  
       if (( msglen + txtlen + 1) >= maxlen ) 
@@ -958,9 +984,61 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
     }
   #endif
   
+  #ifdef SHOWMAIL
+  LogScreen("          new spool length: %d bytes\n", 
+                               (int)(smtp_countspooled(msg)) );
+  #endif
+
   if (smtp_countspooled( msg ) > msg->sendthreshold ) //crossed the threshold?
     return smtp_send_message( msg );  
   return 0;
 }
 
 //-------------------------------------------------------------------------
+
+int smtp_deinitialize_message( struct mailmessage *msg )
+{
+  smtp_send_message( msg );
+
+  #if (defined(MAILSPOOL_IS_AUTOBUFFER))
+    {
+    if (msg->spoolbuff)
+      {
+      delete (msg->spoolbuff);
+      msg->spoolbuff = NULL;
+      }
+    }
+  #elif defined(MAILSPOOL_IS_MEMFILE)
+    {
+    if (msg->spoolbuff)
+      {
+      mfclose(msg->spoolbuff);
+      msg->spoolbuff = NULL;
+      }
+    }
+  #else // (defined(MAILSPOOL_IS_STATICBUFFER))
+    {
+    msg->spoolbuff[0]=0;
+    }
+  #endif
+  return 0;
+}
+
+//-------------------------------------------------------------------------
+
+int smtp_initialize_message( struct mailmessage *msg, unsigned long sendthresh,
+               const char *smtphost, unsigned int smtpport, const char *fromid,
+                                        const char *destid, const char *rc5id )
+{
+  if (!msg) return -1;
+  memset( (void *)(msg), 0, sizeof( struct mailmessage ));
+  if (smtphost)   strncpy( msg->smtphost, smtphost, sizeof(msg->smtphost)-1);
+  if (smtpport)   msg->smtpport = smtpport;
+  if (fromid)     strncpy( msg->fromid, fromid, sizeof(msg->fromid)-1);
+  if (destid)     strncpy( msg->destid, destid, sizeof(msg->destid)-1);
+  if (rc5id)      strncpy( msg->rc5id, rc5id, sizeof(msg->rc5id)-1);
+  if (sendthresh) msg->sendthreshold = sendthresh;
+  
+  return 0;
+}    
+

@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: mail.h,v $
+// Revision 1.12  1998/08/21 00:05:50  cyruspatel
+// Added a sendpendingflag so that smtp_deinitialize() (or the MailMessage
+// destructor) will attempt a send() before the spool is destroyed/cleared.
+//
 // Revision 1.11  1998/08/20 19:24:58  cyruspatel
 // Restored spooling via static buffer until Autobuffer growth can be
 // limited.
@@ -44,6 +48,7 @@ struct mailmessage
 {
   unsigned long sendthreshold; 
   unsigned long maxspoolsize;
+  int sendpendingflag; //0 after a send() (successful or not), 1 after append()
     
   #if (defined(MAILSPOOL_IS_AUTOBUFFER))
     AutoBuffer *spoolbuff;
@@ -78,9 +83,12 @@ public:
       const char *_rc5id )    { return smtp_initialize_message( &msg, 
                                 _sendthresh, _smtphost, _smtpport,
                                 _fromid,  _destid, _rc5id );               }
+				
   int Deinitialize(void)      { return smtp_deinitialize_message( &msg );  }
+                              //Deinitialize() send()s if necessary
 
   int append(const char *txt) { return smtp_append_message( &msg, txt );   }
+  
   int send(void)              { return smtp_send_message( &msg );          }
 
   unsigned long countspooled(void) { return smtp_countspooled( &msg );     }
@@ -89,7 +97,8 @@ public:
                                 ((msg.sendthreshold/10)*9)))?(send()):(0));}
 
   MailMessage(void)           { memset( (void *)(&msg), 0, sizeof(msg) );  }
-  ~MailMessage(void)          { send(); Deinitialize();                    }
+
+  ~MailMessage(void)          { Deinitialize();                            }
 };
 
 #endif //__MAIL_H__
