@@ -16,7 +16,7 @@
 */
 
 const char *ogr64_cpp(void) {
-return "@(#)$Id: ogr-64.cpp,v 1.1.2.1 2004/08/08 20:19:28 kakace Exp $"; }
+return "@(#)$Id: ogr-64.cpp,v 1.1.2.2 2004/08/09 08:00:07 jlawson Exp $"; }
 
 #include <stddef.h>
 #include "cputypes.h"
@@ -28,7 +28,7 @@ return "@(#)$Id: ogr-64.cpp,v 1.1.2.1 2004/08/08 20:19:28 kakace Exp $"; }
 
 #define OGROPT_ALTERNATE_CYCLE                  2 /* 0-2 - ** MUST BE 2 ** */
 
-#if defined(__PPC__) || defined(__POWERPC__)
+#if defined(__PPC__) || defined(__POWERPC__) || (CLIENT_CPU == CPU_PPC)
   #include "ppc/asm-ppc.h"
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */
   #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* 0/1 - 'yes' (default) */
@@ -46,7 +46,21 @@ return "@(#)$Id: ogr-64.cpp,v 1.1.2.1 2004/08/08 20:19:28 kakace Exp $"; }
       #define __CNTLZ(x) (__CNTLZ__(~(x))+1)
     #endif
   #endif
+#elif (CLIENT_CPU == CPU_X86)
+  // this 64-bit version does not actually seem to be a benefit on x86.
+  #include "x86/asm-x86.h"
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* 0/1 - 'yes' (default) */
+  #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
+  #define OGROPT_HAVE_OGR_CYCLE_ASM             0 /* 0-2 - 'no'  (default) */
+  #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
+  #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0/1 - 'std' (default) */
 
+  #if (OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM == 2) && !defined(__CNTLZ)
+    #warning Macro __CNTLZ not defined. OGROPT_FFZ reset to 0.
+    #undef  OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0
+  #endif
 #else
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
   #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* 0/1 - 'yes' (default) */
@@ -73,8 +87,8 @@ return "@(#)$Id: ogr-64.cpp,v 1.1.2.1 2004/08/08 20:19:28 kakace Exp $"; }
       U comp1, comp2;                       \
       U list0, list1, list2;                \
       U dist1, dist2;                       \
-      u32 comp0 = lev->comp[0];             \
-      u32 dist0 = lev->dist[0];             \
+      u32 comp0 = (u32) lev->comp[0];       \
+      u32 dist0 = (u32) lev->dist[0];       \
       comp1 = lev->comp[1];                 \
       comp2 = lev->comp[2];                 \
       list0 = lev->list[0] | ((U)1 << 32);  \
@@ -97,7 +111,7 @@ return "@(#)$Id: ogr-64.cpp,v 1.1.2.1 2004/08/08 20:19:28 kakace Exp $"; }
       temp2 = comp1 >> ss;                  \
       list2 = (list2 >> (s)) | temp1;       \
       temp1 = comp2 >> ss;                  \
-      comp0 = (comp0 << (s)) | temp2;       \
+      comp0 = (u32) ((comp0 << (s)) | temp2);       \
       comp1 = (comp1 << (s)) | temp1;       \
       comp2 = (comp2 << (s));               \
     }
@@ -110,7 +124,7 @@ return "@(#)$Id: ogr-64.cpp,v 1.1.2.1 2004/08/08 20:19:28 kakace Exp $"; }
       list2 = (list2 >> 32) | (list1 << 32);  \
       list1 = (list1 >> 32) | (list0 << 32);  \
       list0 >>= 32;                           \
-      comp0 = comp1 >> 32;                    \
+      comp0 = (u32) (comp1 >> 32);            \
       comp1 = (comp1 << 32) | (comp2 >> 32);  \
       comp2 <<= 32;
 
@@ -138,7 +152,7 @@ return "@(#)$Id: ogr-64.cpp,v 1.1.2.1 2004/08/08 20:19:28 kakace Exp $"; }
       dist0 &= ~list0;        \
       dist1 &= ~list1;        \
       dist2 &= ~list2;        \
-      comp0 = lev->comp[0];   \
+      comp0 = (u32) lev->comp[0];   \
       comp1 = lev->comp[1];   \
       comp2 = lev->comp[2];
 
@@ -162,8 +176,8 @@ return "@(#)$Id: ogr-64.cpp,v 1.1.2.1 2004/08/08 20:19:28 kakace Exp $"; }
     ** comp0 and dist0 must be 32-bit
     */
     #define SETUP_TOP_STATE(lev)    \
-      u32 comp0 = lev->comp[0];     \
-      u32 dist0 = lev->dist[0];     \
+      u32 comp0 = (u32) lev->comp[0];     \
+      u32 dist0 = (u32) lev->dist[0];     \
       lev->list[0] |= ((U)1 << 32);
 
     /*
@@ -179,7 +193,7 @@ return "@(#)$Id: ogr-64.cpp,v 1.1.2.1 2004/08/08 20:19:28 kakace Exp $"; }
       temp2 = lev->comp[1] >> (ss);                           \
       lev->list[2] = (lev->list[2] >> (s)) | temp1;           \
       temp1 = lev->comp[2] >> (ss);                           \
-      comp0 = (lev->comp[0] = (lev->comp[0] << (s)) | temp2); \
+      comp0 = (u32) (lev->comp[0] = (lev->comp[0] << (s)) | temp2); \
       lev->comp[1] = (lev->comp[1] << (s)) | temp1;           \
       lev->comp[2] = lev->comp[2] << (s);                     \
     }
@@ -204,7 +218,7 @@ return "@(#)$Id: ogr-64.cpp,v 1.1.2.1 2004/08/08 20:19:28 kakace Exp $"; }
       struct Level *lev2 = lev + 1;                   \
       U temp = lev->list[0];                          \
       lev2->list[0] = temp | ((U)1 << 32);            \
-      dist0 = (lev2->dist[0] = lev->dist[0] | temp);  \
+      dist0 = (u32) (lev2->dist[0] = lev->dist[0] | temp);  \
       lev2->comp[0] = (comp0 |= dist0);               \
       temp = (lev2->list[1] = lev->list[1]);          \
       temp = (lev2->dist[1] = lev->dist[1] | temp);   \
@@ -218,7 +232,7 @@ return "@(#)$Id: ogr-64.cpp,v 1.1.2.1 2004/08/08 20:19:28 kakace Exp $"; }
     ** Pop level state (all bitmaps).
     ** comp0 is a 32-bit value
     */
-    #define POP_LEVEL(lev) comp0 = lev->comp[0];
+    #define POP_LEVEL(lev) comp0 = (u32) lev->comp[0];
 
     /*
     ** Save final state (all bitmaps)
