@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.9  1998/11/26 06:56:17  cyp
+// Overhauled __IndividualProblemLoad() and added support for new buffer
+// methods.
+//
 // Revision 1.8  1998/11/25 09:23:34  chrisb
 // various changes to support x86 coprocessor under RISC OS
 //
@@ -37,7 +41,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.8 1998/11/25 09:23:34 chrisb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.9 1998/11/26 06:56:17 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -47,7 +51,7 @@ return "@(#)$Id: probfill.cpp,v 1.8 1998/11/25 09:23:34 chrisb Exp $"; }
 #include "problem.h"   // Problem class
 #include "scram.h"     // Descramble()
 #include "network.h"   // sheesh... htonl()/ntohl()
-#include "buffwork.h"  // InternalCountBuffer(), InternalGetBuffer()
+#include "buffwork.h"  // 
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "clitime.h"   // CliGetTimeString()
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
@@ -55,7 +59,9 @@ return "@(#)$Id: probfill.cpp,v 1.8 1998/11/25 09:23:34 chrisb Exp $"; }
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "clirate.h"   // CliGetKeyrateForProblem()
 #include "probman.h"   // GetProblemPointerFromIndex()
-#include "probfill.h"   // ourselves.
+#include "checkpt.h"   // 
+#include "buffupd.h"   // BUFFERUPDATE_FETCH define
+#include "probfill.h"  // ourselves.
 
 // =======================================================================
 // each individual problem load+save generates 4 or more messages lines 
@@ -65,57 +71,6 @@ return "@(#)$Id: probfill.cpp,v 1.8 1998/11/25 09:23:34 chrisb Exp $"; }
 #define COMBINEMSG_THRESHOLD 4 // anything above this and we don't show 
                                // individual load/save messages
 // =======================================================================
-
-// -----------------------------------------------------------------------
-
-void Client::RandomWork( FileEntry * data )
-{
-  u32 randompref2;
-
-  randompref2 = ( ( (u32) randomprefix) + 1 ) & 0xFF;
-
-  data->key.lo = htonl( Random( NULL, 0 ) & 0xF0000000L );
-  data->key.hi = htonl( (Random( NULL, 0 ) & 0x00FFFFFFL) + ( randompref2 << 24) ); // 64 bits significant
-
-  data->iv.lo = htonl( 0xD5D5CE79L );
-  data->iv.hi = htonl( 0xFCEA7550L );
-  data->cypher.lo = htonl( 0x550155BFL );
-  data->cypher.hi = htonl( 0x4BF226DCL );
-  data->plain.lo = htonl( 0x20656854L );
-  data->plain.hi = htonl( 0x6E6B6E75L );
-  data->keysdone.lo = htonl( 0 );
-  data->keysdone.hi = htonl( 0 );
-  data->iterations.lo = htonl( 0x10000000L );
-  data->iterations.hi = htonl( 0 );
-  data->id[0] = 0;
-//82E51B9F:9CC718F9 -- sample problem from RSA pseudo-contest...
-//  data->key.lo = htonl(0x9CC718F9L & 0xFF000000L );
-//  data->key.hi = htonl(0x82E51B9FL & 0xFFFFFFFFL );
-//  data->iv.lo = htonl( 0xF839A5D9L );
-//  data->iv.hi = htonl( 0xC41F78C1L );
-//  data->cypher.lo = htonl( 0xB74BE041L );
-//  data->cypher.hi = htonl( 0x496DEF29L );
-//  data->plain.lo = htonl( 0x20656854L );
-//  data->plain.hi = htonl( 0x6E6B6E75L );
-//  data->iterations.lo = htonl( 0x01000000L );
-//END SAMPLE PROBLEM
-  data->op = htonl( OP_DATA );
-  data->os = 0;
-  data->cpu = 0;
-  data->buildhi = 0;
-  data->buildlo = 0;
-
-  data->contest = 0; // Random blocks are always RC5, not DES.
-
-  data->checksum =
-    htonl( Checksum( (u32 *) data, ( sizeof(FileEntry) / 4 ) - 2 ) );
-  data->scramble = htonl( Random( NULL, 0 ) );
-  Scramble( ntohl(data->scramble), (u32 *) data, ( sizeof(FileEntry) / 4 ) - 1 );
-
-}
-
-
-// -----------------------------------------------------------------------
 
 static unsigned long __iter2norm( unsigned long iter )
 {
@@ -129,6 +84,43 @@ static unsigned long __iter2norm( unsigned long iter )
     }
   return iter;
 }  
+
+
+// -----------------------------------------------------------------------
+
+#include "iniread.h"
+#include "pathwork.h"
+
+// update contestdone and randomprefix .ini entries
+static void __RefreshRandomPrefix( Client *client )
+{                        
+  if (client->stopiniio == 0 && client->nodiskbuffers == 0)
+    {
+    const char *OPTION_SECTION = "parameters";
+    IniSection ini;
+    s32 tmpconfig = ini.ReadIniFile( 
+                    GetFullPathForFilename( client->inifilename ) );
+
+    if (client->randomchanged)
+      {
+      ini.setrecord(OPTION_SECTION,"randomprefix",IniString((s32)(client->randomprefix)));
+      ini.setrecord(OPTION_SECTION, "contestdone", IniString(client->contestdone[0]));
+      ini.setrecord(OPTION_SECTION, "contestdone2", IniString(client->contestdone[1]));
+      ini.WriteIniFile( GetFullPathForFilename( client->inifilename ) );
+      client->randomchanged = 0;
+      }
+    else if (!tmpconfig)
+      {  
+      tmpconfig=ini.getkey(OPTION_SECTION, "randomprefix", "0")[0];
+      if (tmpconfig) client->randomprefix = tmpconfig;
+      tmpconfig=ini.getkey(OPTION_SECTION, "contestdone", "0")[0];
+      client->contestdone[0] = (tmpconfig != 0);
+      tmpconfig=ini.getkey(OPTION_SECTION, "contestdone2", "0")[0];
+      client->contestdone[1]= (tmpconfig != 0);
+      }
+    }
+  return;
+}
 
 // -----------------------------------------------------------------------
 
@@ -145,9 +137,7 @@ static unsigned int __IndividualProblemUnload( Problem *thisprob,
 
   *contest = 0;
   *load_needed = 0;
-#if (CLIENT_OS != OS_RISCOS)
   prob_i = prob_i; //get rid of warning
-#endif
 
   if (thisprob && thisprob->IsInitialized())
     {
@@ -165,14 +155,10 @@ static unsigned int __IndividualProblemUnload( Problem *thisprob,
 
     cputype           = client->cputype; /* needed for FILEENTRY_CPU macro */
     fileentry.op      = htonl( OP_DATA );
-
-
-#if (CLIENT_OS == OS_RISCOS)
-    fileentry.cpu = (prob_i == 0)?FILEENTRY_CPU:FILEENTRY_RISCOS_X86_CPU;
-#else
     fileentry.cpu     = FILEENTRY_CPU;
+#if (CLIENT_OS == OS_RISCOS)
+    fileentry.cpu     = (prob_i == 0)?FILEENTRY_CPU:FILEENTRY_RISCOS_X86_CPU;
 #endif
-
     fileentry.os      = FILEENTRY_OS;
     fileentry.buildhi = FILEENTRY_BUILDHI; 
     fileentry.buildlo = FILEENTRY_BUILDLO;
@@ -182,8 +168,7 @@ static unsigned int __IndividualProblemUnload( Problem *thisprob,
     Scramble( ntohl( fileentry.scramble ),
                        (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
 
-    // send it back...
-    if (client->InternalPutBuffer( client->in_buffer_file[cont_i], &fileentry )==-1)
+    if (client->PutBufferRecord( &fileentry ) < 0)  // send it back...
       {
       msg = "Unable to save";
       norm_key_count = 0;
@@ -215,10 +200,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
   RC5Result rc5result;
   unsigned int cont_i;
   unsigned int norm_key_count = 0;
-#if (CLIENT_OS != OS_RISCOS)
   prob_i = prob_i; //get rid of warning
-#endif
-
+  
   if ( thisprob->IsInitialized() && thisprob->GetResult( &rc5result ) != -1 &&
     (rc5result.result==RESULT_FOUND || rc5result.result==RESULT_NOTHING))
     {
@@ -254,13 +237,11 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       fileentry.op = htonl( OP_DONE_MULTI );
       }
 
+    fileentry.os      = CLIENT_OS;
+    fileentry.cpu     = CLIENT_CPU;
 #if (CLIENT_OS == OS_RISCOS)
     fileentry.cpu = (prob_i == 1)?CPU_X86:CPU_ARM;
-#else
-    fileentry.cpu     = CLIENT_CPU;
 #endif
-
-    fileentry.os      = CLIENT_OS;
     fileentry.buildhi = CLIENT_CONTEST;
     fileentry.buildlo = CLIENT_BUILD;
     strncpy( fileentry.id, client->id , sizeof(fileentry.id)-1); // set owner's id
@@ -272,7 +253,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                 (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
 
     // send it back...
-    if ( client->PutBufferOutput( &fileentry ) == -1 )
+    if (client->PutBufferRecord( &fileentry ) < 0)  // send it back...
       {
       //Log( "PutBuffer Error\n" ); //error already printed?
       }
@@ -306,17 +287,15 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 
 static unsigned int __IndividualProblemLoad( Problem *thisprob, 
                    unsigned int prob_i, Client *client, int *load_needed, 
-                       unsigned load_problem_count, unsigned int *contest )
+                   unsigned load_problem_count, unsigned int *contest )
 {
   FileEntry fileentry;
   unsigned int cont_i;
   unsigned int norm_key_count = 0;
-
-  u32 optype;
   unsigned int contest_count, contest_selected;
   unsigned int contest_preferred, contest_alternate;
-  int count;
-  int done_update, error_set;
+  long longcount;
+  int didupdate, didload, didrandom;
   s32 cputype;
 
   cputype           = client->cputype; /* needed for FILEENTRY_CPU macro */
@@ -338,74 +317,48 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       }
     }
   #endif
-
   #if (CLIENT_OS == OS_RISCOS)
-  /*
-    RISC OS x86 thread currently only supports RC5
-   */
+  /* RISC OS x86 thread currently only supports RC5 */
   if (prob_i == 1)
-  {
-      contest_preferred = contest_alternate = 0;
-      contest_count     = 1;
-  }
+    {
+    contest_preferred = contest_alternate = 0;
+    contest_count     = 1;
+    }
   #endif
 
-  count = -1;
-  for (cont_i = 0;count < 0 && cont_i < contest_count; cont_i++)
+  didrandom = didload = 0;
+  
+  for (cont_i = 0;(didload == 0 && cont_i < contest_count); cont_i++)
     {
-    done_update = (client->nonewblocks != 0);
     contest_selected = ((cont_i)?(contest_alternate):(contest_preferred));
-    error_set = 0;
+    didupdate = 0;
 
-    while (!(client->contestdone[contest_selected]))
+    while (client->contestdone[contest_selected] == 0)
       {
-      count = (int)client->InternalGetBuffer( 
-                   client->in_buffer_file[contest_selected], 
-                   &fileentry, &optype, contest_selected );
-               
-      if (count < 0)
-        error_set = 1;
-      if (count >= 0 && optype == OP_DATA)
-        break;
-      count = (int) client->InternalCountBuffer( contest_selected, 0, NULL );
-      if (count == 0) // update only if we have no blocks in buffer
+      longcount = client->GetBufferRecord( &fileentry, contest_selected, 0 );
+      if (longcount >= 0)
         {
-        count = -1;
-        if (done_update) //did we update on this round already?
-          break;
-          
-        if ( (unsigned int)(client->inthreshold[contest_selected]) < 
-             load_problem_count)
-          client->inthreshold[contest_selected] = load_problem_count;
-          
-        if (client->Update(contest_selected, 1, 0) < 0)
-          {
-          if ( client->offlinemode >= 2)
-             client->nonewblocks = 1;
-          break;
-          }
-        done_update = 1; //don't update twice in the same load loop
+        didload = 1;
+        break;
+        }
+      if (client->nonewblocks || client->offlinemode || didupdate != 0) 
+        {                                     /* net update not permitted */
+        didload = -1;
+        break;
+        }
+      didupdate = 1;
+      if ( ((unsigned long)(client->inthreshold[contest_selected])) < 
+           ((unsigned long)(load_problem_count)))
+        client->inthreshold[contest_selected] = load_problem_count;
+      if (client->BufferUpdate(BUFFERUPDATE_FETCH,0) < 0)
+        {
+        didload = -1;
+        break;
         }
       }
-    if (error_set)
-      *load_needed = 1; 
     }
-
-  if (count < 0) 
-    {
-    if (client->contestdone[contest_preferred] && 
-        client->contestdone[contest_alternate])
-      count = -2;
-    else if (client->nonewblocks)
-      count = -3;
-    else
-      {
-      client->RandomWork( &fileentry );
-      count = 0;
-      }
-    }
-
-  if (count >= 0) 
+    
+  if (didload > 0) /* normal load from buffer succeeded */
     {
     // LoadWork expects things descrambled.
     Descramble( ntohl( fileentry.scramble ),
@@ -419,15 +372,15 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       {
       // If this is a partial block, and completed by a different 
       // cpu/os/build, then reset the keysdone to 0...
+      if ((fileentry.os      != FILEENTRY_OS) ||
+          (fileentry.buildhi != FILEENTRY_BUILDHI) || 
 #if (CLIENT_OS == OS_RISCOS)
-      if (((prob_i == 0) && (fileentry.cpu != FILEENTRY_CPU)) ||
-	  ((prob_i == 1) && (fileentry.cpu != FILEENTRY_RISCOS_X86_CPU)) ||
+          ((prob_i == 0) && (fileentry.cpu != FILEENTRY_CPU)) ||
+          ((prob_i == 1) && (fileentry.cpu != FILEENTRY_RISCOS_X86_CPU)) ||
 #else
-      if ((fileentry.cpu     != FILEENTRY_CPU) ||
+          (fileentry.cpu     != FILEENTRY_CPU) ||
 #endif
-	  (fileentry.os      != FILEENTRY_OS) ||
-	  (fileentry.buildhi != FILEENTRY_BUILDHI) || 
-	  (fileentry.buildlo != FILEENTRY_BUILDLO))
+          (fileentry.buildlo != FILEENTRY_BUILDLO))
         {
         fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
         //LogScreen("Read partial block from another cpu/os/build.\n"
@@ -441,22 +394,75 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         fileentry.key.lo = htonl(ntohl(fileentry.key.lo) & 0xFEFFFFFFL);
         }
       }
-    }
+    } 
+  else /* if (didload <= 0) *//* normal load from buffer failed */
+    {
+    if (client->contestdone[contest_preferred] && 
+        client->contestdone[contest_alternate])
+      didload = -2;
+    else if (client->nonewblocks)
+      didload = -3;
+    else if (client->blockcount < 0) /* no random blocks permitted */
+      didload = -1;
+    else /* random blocks permitted */
+      {
+      didload = 1;
+      didrandom = 1;
+      __RefreshRandomPrefix(client); //get/put an up-to-date prefix 
 
-  if (count >= 0) 
+      u32 randomprefix = ( ( (u32)(client->randomprefix) ) + 1 ) & 0xFF;
+      fileentry.key.lo = htonl( Random( NULL, 0 ) & 0xF0000000L );
+      fileentry.key.hi = htonl( (Random( NULL, 0 ) & 0x00FFFFFFL) + ( randomprefix << 24) ); // 64 bits significant
+      fileentry.iv.lo = htonl( 0xD5D5CE79L );
+      fileentry.iv.hi = htonl( 0xFCEA7550L );
+      fileentry.cypher.lo = htonl( 0x550155BFL );
+      fileentry.cypher.hi = htonl( 0x4BF226DCL );
+      fileentry.plain.lo = htonl( 0x20656854L );
+      fileentry.plain.hi = htonl( 0x6E6B6E75L );
+      fileentry.keysdone.lo = htonl( 0 );
+      fileentry.keysdone.hi = htonl( 0 );
+      fileentry.iterations.lo = htonl( 0x10000000L );
+      fileentry.iterations.hi = htonl( 0 );
+      fileentry.id[0] = 0;
+      fileentry.op = htonl( OP_DATA );
+      fileentry.os = 0;
+      fileentry.cpu = 0;
+      fileentry.buildhi = 0;
+      fileentry.buildlo = 0;
+      fileentry.contest = 0; // Random blocks are always RC5, not DES.
+      fileentry.checksum =
+         htonl( Checksum( (u32 *)&fileentry, ( sizeof(FileEntry) / 4 ) - 2 ) );
+      fileentry.scramble = htonl( Random( NULL, 0 ) );
+      }
+    }
+    
+  if (didload <= 0)
+    {
+    *load_needed = 1;
+    }
+  else /*if (didload > 0)  *//* success */
     {
     if (load_problem_count <= COMBINEMSG_THRESHOLD)
       {
-      Log( "%s\n", CliGetMessageForFileentryLoaded( &fileentry ) );
+      const char *name;
+      unsigned long iter = ntohl(fileentry.iterations.lo);
+      unsigned int startpercent = (unsigned int) ( (double) 10000.0 *
+           ( (double) (ntohl(fileentry.keysdone.lo)) / (double)(iter) ) );
+      if (CliGetContestInfoBaseData( fileentry.contest, &name, NULL )!=0) 
+        name = "???";
+      norm_key_count = (unsigned int)__iter2norm( iter );
+      
+      Log("Loaded %s%s %u*2^28 block %08lX:%08lX%c(%u.%02u%% done)",
+              name, ((didrandom)?(" random"):("")), norm_key_count,
+              (unsigned long) ntohl( fileentry.key.hi ),
+              (unsigned long) ntohl( fileentry.key.lo ),
+              ((startpercent)?(' '):(0)),
+              (unsigned)(startpercent/100), (unsigned)(startpercent%100) );
       }
-
     thisprob->LoadState( (ContestWork *) &fileentry , 
           (u32) (fileentry.contest), client->timeslice, client->cputype );
-
     *contest = (unsigned int)(fileentry.contest);
-    norm_key_count = 
-       (unsigned int)__iter2norm( ntohl(fileentry.iterations.lo) );
-    } //if ("count" >=0 )
+    } 
 
   return norm_key_count;
 }    
@@ -465,7 +471,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 
 unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 {
-  static int done_initial_load = 0; 
+  static unsigned int done_initial_load = 0; 
 
   Problem *thisprob;
   int load_needed, changed_flag;
@@ -481,25 +487,25 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   unsigned int getbuff_errs;
 
   getbuff_errs = 0;
-  changed_flag = (!done_initial_load);
+  changed_flag = (done_initial_load == 0);
   total_problems_loaded = 0;
   total_problems_saved = 0;
 
   // ====================================================
 
-  if (!done_initial_load)
+  if (done_initial_load == 0)
     {
     prob_step = 1;
 
     i = InitializeProblemManager(load_problem_count);
     if (i<=0)
-    {
       return 0;
-    }
     load_problem_count = (unsigned int)i;
     }
   else
     {
+    if (load_problem_count == 0)
+      load_problem_count = done_initial_load;
     prob_step = -1;
     }
 
@@ -507,6 +513,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   for (prob_for=0; prob_for<load_problem_count; prob_for++)
     {
     prob_i= (prob_step < 0) ? ((load_problem_count-1)-prob_for) : (prob_for);
+
     thisprob = GetProblemPointerFromIndex( prob_i );
     if (thisprob == NULL)
       {
@@ -518,7 +525,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
     // -----------------------------------
 
     load_needed = 0;
-    if (!done_initial_load) 
+    if (done_initial_load == 0) 
       {
       if ( mode != PROBFILL_UNLOADALL )  
         load_needed = 1;
@@ -552,17 +559,25 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
     if (load_needed)
       {
-      load_needed = 0;
-      norm_key_count = __IndividualProblemLoad( thisprob, prob_i, this, 
-                  &load_needed, load_problem_count, &cont_i );
-      if (load_needed)
-        getbuff_errs++;
-      if (norm_key_count)
+      if (blockcount > 0 && 
+        ((u32)(totalBlocksDone[0]+totalBlocksDone[1]) >= (u32)(blockcount)))
         {
-        total_problems_loaded++;
-        loaded_normalized_key_count[cont_i] += norm_key_count;
-        loaded_problems_count[cont_i]++;
-        changed_flag = 1;
+        ; //nothing
+        }
+      else
+        {
+        load_needed = 0;
+        norm_key_count = __IndividualProblemLoad( thisprob, prob_i, this, 
+                    &load_needed, load_problem_count, &cont_i );
+        if (load_needed)
+          getbuff_errs++;
+        if (norm_key_count)
+          {
+          total_problems_loaded++;
+          loaded_normalized_key_count[cont_i] += norm_key_count;
+          loaded_problems_count[cont_i]++;
+          changed_flag = 1;
+          }
         }
       } //if (load_needed)
     
@@ -624,10 +639,10 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
         Log( "Summary: %s\n", CliGetSummaryStringForContest(cont_i) );
         }
 
-      unsigned int in, norm_in, out, norm_out;
-      in = InternalCountBuffer( cont_i, 0, &norm_in );
-      out = InternalCountBuffer( cont_i, 1, &norm_out );
-      const char *msg = "%u %s block%s (%u*2^28 keys) %s in file %s\n";
+      unsigned long in, norm_in, out, norm_out;
+      in = GetBufferCount( cont_i, 0, &norm_in );
+      out = GetBufferCount( cont_i, 1, &norm_out );
+      const char *msg = "%lu %s block%s (%lu*2^28 keys) %s in file %s\n";
 
       sprintf(buffer, msg, in, cont_name, in == 1 ? "" : "s",  norm_in,
             ((mode == PROBFILL_UNLOADALL)?(in==1?"is":"are"):
@@ -655,14 +670,38 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
       }
     } //for ( cont_i = 0; cont_i < 2; cont_i++)
 
+ if (randomchanged)
+   __RefreshRandomPrefix(this); //get/put an up-to-date prefix 
+
  if (mode == PROBFILL_UNLOADALL)
    {
    done_initial_load = 0;
    DeinitializeProblemManager();
+   if (!nodiskbuffers)                        
+     CheckpointAction( CHECKPOINT_CLOSE, 0 );
+   else
+     BufferUpdate(BUFFERUPDATE_FLUSH,0);
    return total_problems_saved;
    }
-   
-  done_initial_load = 1;
+
+  done_initial_load = load_problem_count;
+
+  if (blockcount > 0 && 
+    ((u32)(totalBlocksDone[0]+totalBlocksDone[1]) >= (u32)(blockcount)))
+    {
+    for (prob_i = 0; prob_i < load_problem_count; prob_i++ )
+      {
+      thisprob = GetProblemPointerFromIndex( prob_i );
+      if (thisprob != NULL)
+        {
+        if (thisprob->IsInitialized()) /* still have probs open */
+          {
+          blockcount = 1 + ((u32)(totalBlocksDone[0]+totalBlocksDone[1]));
+          break;
+          }
+        }
+      }    
+    }
 
   if (mode == PROBFILL_GETBUFFERRS) 
     return getbuff_errs;
