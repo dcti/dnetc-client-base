@@ -10,9 +10,9 @@
  * Once completed, it should become a reference core for the next generation OGR
  * cores.
  * And it will be used in stubmap generation.
- *
- * $Id: ogr_ab.cor,v 1.1.2.3 2001/02/02 13:41:03 cyp Exp $
  */
+#define __OGR_CORE__ "@(#)$Id: ogr_ab.cor,v 1.1.2.4 2001/02/05 23:44:48 andreasb Exp $"
+
 #warning This core needs revision by other coders
 
 /*
@@ -126,12 +126,10 @@ the needed memory, but reduces the amount of nodes to be visited.
 
 #if (OGROPT_ALTERNATE_CYCLE == 3)
 
-#if defined(OGR_CORE_HAS_NAME)
 const char* ogr_name()
 {
-  return "AB 0.01 $Version:$  $Release:$";
+  return "AB 0.02 $Revision: 1.1.2.4 $";
 }
-#endif
 
 
 #define COMP_LEFT_LIST_RIGHT(lev,s)                             \
@@ -461,10 +459,6 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
     return CORE_E_MEMORY;
   }
 
-  memset(oState, 0, sizeof(struct State));
-  mutex_t initmux = DEFAULTMUTEX; /* {0} or whatever */
-  memcpy( &(oState->lock), &initmux, sizeof(mutex_t) );
-
   oState->stub_error = STUB_OK; 
   /* stub_error stores the STUB_E_ error codes. An oState with a non zero 
      stub_error will be rejected by ogr_cycle(), but returned to network */
@@ -741,9 +735,6 @@ stay:
 #ifdef OGR_CALLBACK
     if (depth == ogr_callback_depth) {
       // update part 2 of oState
-      /* ogr_getresult() and ogr_cycle() must interact thread safe */  
-      mutex_lock(&oState->lock);
-
       oState->depth = depth;
 
       for (int i = oState->startdepth+1; i <= oState->maxdepth; ++i) {
@@ -752,8 +743,6 @@ stay:
       
       // don't update oState->nodes[hi|lo] !
 
-      mutex_unlock(&oState->lock);
-      
       if (ogr_callback(oState) != 0)
         break;
 
@@ -803,11 +792,7 @@ up:
     goto stay; /* repeat this level till done */
   }
 
-  /* ogr_getresult() and ogr_cycle() must interact thread safe */
-
-  /* lock the changing part of public data (part 2) for updating */
-  mutex_lock(&oState->lock);
-
+  /* update part 2 of oState */
   oState->depth = depth-1;
 
   for (int i = oState->startdepth+1; i <= oState->maxdepth; ++i) {
@@ -817,9 +802,6 @@ up:
   oState->nodeslo += nodes;
   if (oState->nodeslo < (u32)nodes)
     oState->nodeshi++;
-
-  /* release lock */
-  mutex_unlock(&oState->lock);
 
   *pnodes = nodes;
 
