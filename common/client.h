@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.46  1998/06/24 15:54:18  jlawson
+// added pragma pack(1) around structures.
+//
 // Revision 1.45  1998/06/22 19:42:01  daa
 // bump to 2.7025.410 this is likely to become 2.7100.411
 //
@@ -261,9 +264,12 @@ typedef enum
 
 // --------------------------------------------------------------------------
 
+#pragma pack(1)               // no padding allowed
+
 // remember that for now, the u64's come from the server in the "wrong" order
 // lo|hi, not hi|lo like they should
 // - everything in network byte order.
+
 typedef struct Packet
 {
   u32  op;            // operation code                     }--|    }--|
@@ -317,6 +323,8 @@ typedef struct
   u32  checksum;          // checksum for file curruption
   u32  scramble;          // scramble key for this entry (NOT! the same as OP_KEY)
 } FileEntry;
+
+#pragma pack()
 
 // --------------------------------------------------------------------------
 
