@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.94  1999/04/01 07:14:34  jlawson
+// non-decunix alpha targets now use function pointers for all cores.
+//
 // Revision 1.93  1999/03/31 22:31:03  cyp
 // grr. when will gcc learn that whitespace following a '\' (#if continuation)
 // can be ignored?
@@ -294,7 +297,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.93 1999/03/31 22:31:03 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.94 1999/04/01 07:14:34 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -374,15 +377,17 @@ extern "C" void riscos_upcall_6(void);
   #endif
   extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
 #elif (CLIENT_CPU == CPU_68K)
-  extern "C" __asm u32 rc5_unit_func_000_030( register __a0 RC5UnitWork *, register __d0 unsigned long timeslice );
-  extern "C" __asm u32 rc5_unit_func_040_060( register __a0 RC5UnitWork *, register __d0 unsigned long timeslice );
+  extern "C" __asm u32 rc5_unit_func_000_030
+      ( register __a0 RC5UnitWork *, register __d0 unsigned long timeslice );
+  extern "C" __asm u32 rc5_unit_func_040_060
+      ( register __a0 RC5UnitWork *, register __d0 unsigned long timeslice );
   extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
-#elif (CLIENT_CPU == CPU_ARM) 
-  extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork *  , unsigned long t);
-  extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork *  , unsigned long t);
-  extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork *  , unsigned long t);
-  extern "C" u32 des_unit_func_arm( RC5UnitWork *  , unsigned long t);
-  extern "C" u32 des_unit_func_strongarm( RC5UnitWork *  , unsigned long t);
+#elif (CLIENT_CPU == CPU_ARM)
+  extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * , unsigned long t);
+  extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * , unsigned long t);
+  extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * , unsigned long t);
+  extern "C" u32 des_unit_func_arm( RC5UnitWork * , unsigned long t);
+  extern "C" u32 des_unit_func_strongarm( RC5UnitWork * , unsigned long t);
 #elif (CLIENT_CPU == CPU_PA_RISC)
   extern u32 rc5_unit_func( RC5UnitWork *  );
   extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
@@ -411,8 +416,8 @@ extern "C" void riscos_upcall_6(void);
   #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
   #if (CLIENT_OS == OS_WIN32)
-     extern "C" u32 rc5_unit_func ( RC5UnitWork *, u32 timeslice);
-     extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
+     extern "C" u32 rc5_unit_func( RC5UnitWork *, u32 timeslice );
+     extern     u32 des_unit_func( RC5UnitWork *, u32 timeslice );
   #elif (CLIENT_OS == OS_DEC_UNIX)
      #if defined(DEC_UNIX_CPU_SELECT)
        #include <machine/cpuconf.h>
@@ -424,13 +429,14 @@ extern "C" void riscos_upcall_6(void);
        extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
      #endif
   #else
-     extern u32 rc5_unit_func( RC5UnitWork * , u32 timeslice );
-     extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
-     // CRAMER // #error Please verify these core prototypes
+     extern "C" u32 rc5_unit_func_axp_bmeyer
+         ( RC5UnitWork * , unsigned long iterations);   // note not u32
+     extern "C" u32 des_unit_func_alpha_dworz
+         ( RC5UnitWork * , u32 nbbits );
   #endif
 #else
-  extern u32 rc5_unit_func( RC5UnitWork *  );
-  extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
+  extern u32 rc5_unit_func_ansi( RC5UnitWork * , u32 timeslice );
+  extern u32 des_unit_func_ansi( RC5UnitWork * , u32 timeslice );
   #error RC5ANSICORE is disappearing. Please declare/prototype cores by CLIENT_CPU and assert PIPELINE_COUNT
 #endif
 
@@ -600,7 +606,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 #endif    
 
 #if (CLIENT_CPU == CPU_ALPHA) 
-  #if (CLIENT_OS == OS_DEC_UNIX) //defined(DEC_UNIX_CPU_SELECT)
+  #if (CLIENT_OS == OS_DEC_UNIX)
   pipeline_count = 2;
   if (cputype ==  EV5_CPU) || (cputype == EV56_CPU) ||
      (cputype ==  PCA56_CPU) || (cputype == EV6_CPU)
@@ -613,6 +619,10 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     rc5_unit_func = rc5_alpha_osf_ev4;
     des_unit_func = des_alpha_osf_ev4;
   }
+  #else
+  pipeline_count = 2;
+  rc5_unit_func = rc5_unit_func_axp_bmeyer;
+  des_unit_func = des_unit_func_alpha_dworz;
   #endif
 #endif
 
@@ -881,7 +891,7 @@ u32 rc5_singlestep_core_wrapper( RC5UnitWork * rc5unitwork, u32 timeslice,
                 int pipeline_count, auto u32 (*unit_func)( RC5UnitWork *) )
 {                                
   u32 kiter = 0;
-  int keycount=timeslice;
+  int keycount = timeslice;
   //LogScreenf ("rc5unitwork = %08X:%08X (%X)\n", rc5unitwork.L0.hi, rc5unitwork.L0.lo, keycount);
   while ( keycount-- ) // timeslice ignores the number of pipelines
   {
@@ -958,7 +968,10 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
     #endif
     /* do other ARM goodstuff */
   #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-    kiter = (timeslice*pipeline_count)-rc5_unit_func(&rc5unitwork,timeslice);
+    kiter = (timeslice * pipeline_count) - 
+      rc5_unit_func(&rc5unitwork,timeslice);
+  #elif (CLIENT_CPU == CPU_ALPHA)
+    kiter = rc5_unit_func(&rc5unitwork, timeslice);
   #else
     kiter = rc5_singlestep_core_wrapper( &rc5unitwork, timeslice,
                 pipeline_count, rc5_unit_func );

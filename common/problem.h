@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.51  1999/04/01 07:14:34  jlawson
+// non-decunix alpha targets now use function pointers for all cores.
+//
 // Revision 1.50  1999/03/31 21:54:28  cyp
 // a) Created separate (internal) Run_RC5(), Run_DES() and Run_OGR() sub-
 // functions. b) Folded AlignTimeslice() method into Run_RC5() since its only
@@ -173,9 +176,6 @@
   #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
 #endif
 
-//#ifndef PIPELINE_COUNT
-// #define PIPELINE_COUNT  2  // normally 1, but 2+ if we do more then one unit in parallel
-//#endif
 
 #if !defined(MEGGS) && !defined(DES_ULTRA) && !defined(DWORZ)
   #define MIN_DES_BITS  8
@@ -268,17 +268,21 @@ public:
   void *ogrstate;
 
   #if (CLIENT_CPU == CPU_X86)
-  u32 (*unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+  u32 (*unit_func)( RC5UnitWork * , u32 timeslice );
   #elif (CLIENT_CPU == CPU_68K)
-  extern "C" __asm u32 (*rc5_unit_func)( register __a0 RC5UnitWork *work, register __d0 u32 timeslice);
+  extern "C" __asm u32 (*rc5_unit_func)
+       ( register __a0 RC5UnitWork * , register __d0 u32 timeslice);
   #elif (CLIENT_CPU == CPU_ARM)
-  u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations );
-  u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
-  #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX) //defined(DEC_UNIX_CPU_SELECT)
-  u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork );
-  u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 nbits );
+  u32 (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
+  u32 (*des_unit_func)( RC5UnitWork * , u32 timeslice );
+  #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX)
+  u32 (*rc5_unit_func)( RC5UnitWork * );
+  u32 (*des_unit_func)( RC5UnitWork * , u32 nbits );
+  #elif (CLIENT_CPU == CPU_ALPHA)
+  u32 (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
+  u32 (*des_unit_func)( RC5UnitWork * , u32 nbits );
   #elif (CLIENT_CPU == CPU_POWERPC)
-  int (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations );
+  int (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
   #endif
 
   int Run_RC5(u32 *timeslice); /* \    run for n timeslices.                */
@@ -290,8 +294,8 @@ public:
 
   int IsInitialized() { return (initialized!=0); }
 
-  int LoadState( ContestWork * work, unsigned int _contest, u32 _timeslice, 
-                                                            int _cputype );
+  int LoadState( ContestWork * work, unsigned int _contest, 
+		 u32 _timeslice, int _cputype );
     // Load state into internal structures.
     // state is invalid (will generate errors) until this is called.
     // returns: -1 on error, 0 is OK
