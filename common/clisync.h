@@ -7,7 +7,7 @@
  *
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.9 2001/03/22 10:51:55 cyp Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.10 2001/03/22 14:42:55 cyp Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -404,10 +404,10 @@
 
   #error "please check this"
 
-  #if (ULONG_MAX == 0xFFFFFFFFUL) /* 32bit */
   /* based on
-     http://lxr.linux.no/source/include/asm-sparc/system.h
+     http://lxr.linux.no/source/include/asm-sparc[64]/system.h
   */
+  #if (ULONG_MAX == 0xFFFFFFFFUL) /* 32bit */
   static __inline__ unsigned long atomic_xchg_ulong(
                     __volatile__ unsigned long *m, unsigned long val)
   {
@@ -417,9 +417,6 @@
      return val;
   }
   #else /* 64 bit */
-  /* based on
-     http://lxr.linux.no/source/include/asm-sparc64/system.h
-  */
   static __inline__ unsigned long atomic_xchg_ulong(
                     __volatile__ unsigned long *m, unsigned long val)
   {
@@ -537,6 +534,53 @@
     }
   }
 
+#elif (CLIENT_CPU == CPU_ARM) && defined(__GNUC__)
+
+  #error "please check this"
+
+  /* from glibc-2.2.2/sysdeps/arm/atomicity.h */
+  static __inline__ int __compare_and_swap (volatile long int *p, 
+                                        long int oldval, long int newval)
+  {
+    int result, tmp;
+    __asm__ __volatile__ (
+           "0:  ldr  %1,[%2]       \n\t"
+           "    mov  %0,#0         \n\t"
+           "    cmp   %1,%4        \n\t"
+           "    bne   1f           \n\t"
+           "    swp   %0,%3,[%2]   \n\t"
+           "    cmp   %1,%0        \n\t"
+           "    swpne   %1,%0,[%2] \n\t"
+           "    bne   0b           \n\t"
+           "    mov   %0,#1        \n\t"
+           "1:                     \n\t"
+           : "=&r" (result), "=&r" (tmp)
+           : "r" (p), "r" (newval), "r" (oldval)
+           : "cc", "memory");
+    return result;
+  }
+
+  #define fastlock_t long
+  #define FASTLOCK_INITIALIZER_UNLOCKED 0L
+
+  static __inline__ void fastlock_unlock(volatile fastlock_t *v)
+  {
+    *v = 0;
+  }
+  static __inline__ int fastlock_trylock(volatile fastlock_t *v)
+  { 
+    if (__compare_and_swap(v, 0, 1) == 0)
+      return +1;
+    return 0;
+  }  
+  static __inline__ void fastlock_lock(volatile fastlock_t *m)
+  {
+    while (fastlock_trylock(m) <= 0)
+    {
+      NonPolledUSleep(1);
+    }
+  }
+
 #elif defined(_POSIX_THREADS_SUPPORTED)
   /* put this at the end, so that more people notice/are affected by 
      any potential problems in other code 
@@ -564,9 +608,7 @@
   #define fastlock_unlock               mutex_unlock
   #define fastlock_trylock              mutex_trylock
 
-#elif (CLIENT_CPU == CPU_POWER) || \
-      (CLIENT_CPU == CPU_MIPS)  ||
-      (CLIENT_CPU == CPU_ARM)
+#elif (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_MIPS)
 
   #error "Whats required here is ..."
   #error ""
@@ -578,8 +620,9 @@
   #error "static __inline__ void fastlock_lock(fastlock_t *v)  { while (fastlock_trylock(v) <= 0) { usleep(0}; } }"
   #error ""
   #error "some code to look at/for..."
-  #error "atomic test-and-set tas(). [lots of places on the net]"
+  #error "atomic test-and-set tas(). [lots of places on the net, like postgres]"
   #error "atomic compare_and_swap eg, http://lxr.linux.no/source/include/asm-XXX/system.h"
+  #error "               or gcc source libstdc++-v3/config/cpu/XXX/bits/atomicity.h"
   #error "atomic [inc|dec]rement eg, http://lxr.linux.no/source/include/asm-XXX/atomic.h"
 
 #else
