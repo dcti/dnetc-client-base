@@ -15,7 +15,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.2 1999/09/07 02:52:50 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.3 1999/09/17 15:20:56 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -86,7 +86,7 @@ static const char *h_ident_table[] =
   (const char *)__CONFOPT_H__,
   (const char *)__CONFRWV_H__,
   (const char *)__CONSOLE_H__,
-  (const char *)__CONVDES_H__,
+//(const char *)__CONVDES_H__,
   (const char *)__CPUCHECK_H__,
   (const char *)__CPUTYPES_H__,
   (const char *)__DISPHELP_H__,
@@ -180,7 +180,7 @@ static const char * (*ident_table[])() =
   confopt_cpp,
   confrwv_cpp,
   console_cpp,
-  convdes_cpp,
+//convdes_cpp,
   cpucheck_cpp,
   disphelp_cpp,
   iniread_cpp,
