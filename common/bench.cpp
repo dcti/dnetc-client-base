@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.14 1999/12/06 14:02:18 remi Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.15 1999/12/07 04:21:29 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -140,6 +140,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   struct { int yps, did_adjust; } non_preemptive_os;
   /* non-preemptive os minimum yields per second */
   Problem *problem;
+  unsigned long last_permille;
   ContestWork contestwork;
   const char *contname;
   struct timeval totalruntime;
@@ -187,52 +188,79 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     }
   }
 
-  tslice = 0x10000;
+  tslice = 0; /* zero means 'use calibrated value' */
   non_preemptive_os.yps = 0; /* assume preemptive OS */
   non_preemptive_os.did_adjust = 0;
-  
+
   #if (CLIENT_OS == OS_NETWARE)
-  if (GetFileServerMajorVersionNumber() < 5)
+  if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
+    numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
+  else if (GetFileServerMajorVersionNumber() < 5)
   {
     non_preemptive_os.yps = 1000/10; /* 10 ms minimum yield rate */ 
-    tslice = 2048;
+    tslice = 0; /* zero means 'use calibrated value' */
   }  
   #elif (CLIENT_OS == OS_MACOS)
-  {
-    non_preemptive_os.yps = 1000/20; /* 20 ms minimum yield rate */ 
-    tslice = 4096;
+  if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
+    numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
+  else
+  {    
+    non_preemptive_os.yps = 1000/20; /* 20 ms minimum yield rate */
+    tslice = 0; /* zero means 'use calibrated value' */
   }
   #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32 /* win32s */) 
-  if (winGetVersion() < 400) /* win16 or win32s */
-  {
+  if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
+    numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
+  else if (winGetVersion() < 400) /* win16 or win32s */
+  {  
     non_preemptive_os.yps = 1000/20; /* 20 ms minimum yield rate */ 
-    tslice = 2048;
+    tslice = 0;  /* zero means 'use calibrated value' */
   } 
-  else if( ( flags & TBENCHMARK_CALIBRATION ) == 0 ) {
-    long res = TBenchmark( contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK | TBENCHMARK_CALIBRATION );
-    if( res != -1 )
-      tslice = (((u32)res) + 0xFFF) & 0xFFFFF000;
-  }
   #elif (CLIENT_OS == OS_RISCOS)
-  if (riscos_check_taskwindow())
+  if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
+    numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
+  else if (riscos_check_taskwindow())
   {
     non_preemptive_os.yps = 1000/100; /* 100 ms minimum yield rate */ 
-    tslice = 4096;
-  }
-  #else
-  if( ( flags & TBENCHMARK_CALIBRATION ) == 0 ) {
-    long res = TBenchmark( contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK | TBENCHMARK_CALIBRATION );
-    if( res != -1 )
-      tslice = (((u32)res) + 0xFFF) & 0xFFFFF000;
+    tslice = 0;  /* zero means 'use calibrated value' */
   }
   #endif
 
+  if (tslice == 0 && ( flags & TBENCHMARK_CALIBRATION ) == 0 )
+  {
+    long res;
+    if ((flags & TBENCHMARK_QUIET) == 0)
+    {
+      selcoreGetSelectedCoreForContest(contestid); /* let selcore message */
+      //LogScreen("Calibrating ... " );
+    }  
+    res = TBenchmark( contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK | TBENCHMARK_CALIBRATION );
+    if ( res == -1 ) /* LoadState failed */
+    {
+      if ((flags & TBENCHMARK_QUIET) == 0)
+        LogScreen("\rCalibration failed!\n");
+      return -1;
+    }  
+    tslice = (((u32)res) + 0xFFF) & 0xFFFFF000;
+    //if ((flags & TBENCHMARK_QUIET) == 0)
+    //  LogScreen("\rCalibrating ... done. (%lu)\n", (unsigned long)tslice );
+    if (non_preemptive_os.yps)
+      tslice /= non_preemptive_os.yps;
+  }
+  if (tslice == 0)
+  { 
+    tslice = 0x10000;
+    if (non_preemptive_os.yps)
+      tslice = 4096;
+  }
+  
   totalruntime.tv_sec = 0;
   totalruntime.tv_usec = 0;
   scropen = run = -1;
   keysdone.lo = 0;
   keysdone.hi = 0;
-
+  last_permille = 10000;
+  
   /* --------------------------- */
 
   problem = new Problem();
@@ -308,9 +336,13 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
                                     (runtime.tv_usec / 1000)) ) / numsecs;
           if (permille >= 1000)
             permille = 1000;
-          LogScreen("\rBenchmarking %s ... %u.%02u%% done", 
-                     contname, (unsigned int)(permille/10), 
-                               (unsigned int)((permille%10)*10) );
+          if (last_permille != permille)
+          {    
+            LogScreen("\rBenchmarking %s ... %u.%02u%% done", 
+                       contname, (unsigned int)(permille/10), 
+                                 (unsigned int)((permille%10)*10) );
+            last_permille = permille;
+          }                                 
         }
         if ( run != RESULT_WORKING) /* finished this block */
         {
@@ -356,7 +388,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   retvalue = -1; /* assume error */
   if (run >= 0) /* no errors, no ^C */
     retvalue = (long)__calc_rate(contestid, &contestwork, run, keysdone, 
-				 &totalruntime, (flags & TBENCHMARK_QUIET) ? 0 : 1 );
+			 &totalruntime, (!(flags & TBENCHMARK_QUIET)) );
 
   return retvalue;
 }  
