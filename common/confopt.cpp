@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.51.4.7 2003/07/06 01:38:46 bdragon Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.51.4.8 2003/09/07 18:20:42 kakace Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -156,7 +156,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   #if ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_MACOSX))
   "\n"
   "Processor temperature checking is only supported under Mac OS with certain\n"
-  "PowerPC G3 or G4 processors (those featuring a Thermal Assist Unit, TAU).\n"
+  "PowerPC G3 or G4 processors (those featuring a Thermal Assist Unit, TAU),\n"
+  "or on machines that have dedicated temperature sensors.\n"
   #elif (CLIENT_OS == OS_DEC_UNIX)
   "\n"
   "Processor temperature checking is only supported under OSF/1 with certain\n"
@@ -172,20 +173,22 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "Processor temperature threshold(s) may be specified either as\n"
   " - a low:high pair: The client will pause when temperature exceeds 'high',\n" 
   "   and remain paused until temperature has fallen below 'low'.\n"
-  "   Examples: \"318K:333K\", \"573R:599R\", \"113F:140F\", \"45C:60C\".\n"
+  "   Examples: \"318K:333K\", \"573R:599R\", \"113F:140F\", \"45.6C:50.2C\".\n"
   " - a single value: The client will treat this as a 'high', with 'low' being\n"
   "   90 percent of the K equivalent of 'high'.\n"
   "\n"
   "As noted above, temperatures may be specified in Kelvin (K, the default),\n"
   "Rankine (R), degrees Fahrenheit (F) or degrees Celsius/Centigrade (C).\n"
+  "The precision allowed is two digits after the decimal point.\n"
   "\n"
-  "Illegal values, for instance a 'low' that is not less than 'high', will\n"
-  "render the pair invalid and cause temperature threshold checking to be\n"
-  "silently disabled.\n"
+  "Illegal values, for instance a 'low' that is not less or equal than 'high',\n"
+  "will render the pair invalid and cause temperature threshold checking to\n"
+  "be silently disabled.\n"
   #if ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_MACOSX))
   "\n"
   "Processor temperature checking is only supported under Mac OS with certain\n"
-  "PowerPC G3 or G4 processors (those featuring a Thermal Assist Unit, TAU).\n"
+  "PowerPC G3 or G4 processors (those featuring a Thermal Assist Unit, TAU),\n"
+  "or on machines that have dedicated temperature sensors.\n"
   #elif (CLIENT_OS == OS_DEC_UNIX)
   "\n"
   "Processor temperature checking is only supported under OSF/1 with certain\n"
