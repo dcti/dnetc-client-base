@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.121  1998/11/11 16:39:02  remi
+# Sorted out x86-linux entries.
+# Created new $OPTS_GCC272 as I don't think -fno-exceptions is a gcc
+# 2.7.2.x valid option.
+#
 # Revision 1.120  1998/11/11 05:26:55  cramer
 # Various minor fixes...
 #
@@ -418,6 +423,12 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
     -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
     -fno-inline-functions -fno-exceptions'
 
+OPTS_GCC272='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
+    -fexpensive-optimizations -fomit-frame-pointer \
+    -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
+    -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
+    -fno-inline-functions -fno-handle-exceptions -fno-rtti'
+
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
 OPTS_EGCS='-O2 -fno-exceptions -fomit-frame-pointer -Wall -Icommon -Ides \
@@ -480,6 +491,7 @@ OPTS_GCC_AIX="$OPTS_GCC -O6 -D_ARCH_PPC -D_AIX"
 #--
 
 OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86 -DPIPELINE_COUNT=2"
+OPTS_GCC272_X86="$OPTS_GCC272 -O6 -m486 -DASM_X86 -DPIPELINE_COUNT=2"
 OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentium -DASM_X86 -DPIPELINE_COUNT=2"
 
 #--
@@ -889,42 +901,13 @@ case "$1" in
 	;;
 
 ###### Intel X86 Linux platforms
-    *x86-linux-egcs)              # uses EGCS options
-	TARGET_AS="g++ -c"
-	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS=""
-	;;
 
-    *x86-linux-egcs-cramer)       # special target for cramer's non-standard installation
-	TARGET_AS="egcs -c"
-	TARGET_CC="egcs"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS=""
-	;;
+  ### Remi's targets
 
-    *x86-linux-gcc)               # uses standard GCC options plus '-pipe'
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS=""
-	;;
-
-    *x86-linux-libc5-gcc)         # uses GCC options plus '-pipe' (libc5)
+    *x86-linux-libc5-nomt-gcc)         # [remi] nomt, libc5, static, gcc
 	TARGET_AS="i486-linuxlibc1-gcc -c"
 	TARGET_CC="i486-linuxlibc1-gcc"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
@@ -932,48 +915,7 @@ case "$1" in
 	TARGET_LIBS=""
 	;;
 
-    *x86-linux-gcc-simple) # standard GCC options, non-static, non-threaded
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	;;
-
-    *x86-linux-egcs-debug)        # debug version of x86-linux-egcs
-	TARGET_AS="g++ -c"
-	TARGET_CC="g++ -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_STRIP="touch"
-	TARGET_LIBS=""
-	;;
-
-    *x86-linux-egcs-debug-cramer) # debug version of x86-linux-egcs-cramer
-	TARGET_AS="egcs -c"
-	TARGET_CC="egcs -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_STRIP="touch"
-	TARGET_LIBS=""
-	;;
-
-    *x86-linux-gcc-debug)         # debug version of x86-linux-gcc
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc -g"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_STRIP="touch"
-	TARGET_LIBS=""
-	;;
-
-    *x86-linux-aout-egcs)          # aout version, using EGCS options
+    *x86-linux-aout-nomt-egcs)         # [remi] nomt, libc4, static, egcs
 	TARGET_AS="i486-pc-linux-gnuaout-gcc -c"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
@@ -985,7 +927,55 @@ case "$1" in
 	TARGET_LIBS=""
 	;;
 
-    *x86-linux-aout-egcs-cramer)   # special target for cramer's non-standard installation
+    *x86-linux-libc5-mt-gcc)           # [remi] mt, libc5, static, gcc
+	TARGET_AS="i486-linuxlibc1-gcc -c"
+	TARGET_CC="i486-linuxlibc1-gcc"
+	TARGET_CCFLAGS="$OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_LIBS="-lpthread"
+	;;
+
+    *x86-linux-glibc2-mt-egcs)         # [remi] mt, glibc2, dynamic, egcs
+	TARGET_AS="g++ -c"
+	TARGET_CC="g++ -nodefaultlibs"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ -DMULTITHREAD"
+	TARGET_LDFLAGS=""
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_LIBS="-lgcc -lc -lm -lpthread"
+	;; # avoid dynamic linking with libstdc++.so
+
+
+
+  ### Cramer's targets
+
+    *x86-linux-egcs-cramer)            # [cramer] nomt, static, egcs
+	TARGET_AS="egcs -c"
+	TARGET_CC="egcs"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_LIBS=""
+	;;
+
+    *x86-linux-egcs-debug-cramer)      # [cramer] nomt, static, egcs, debug
+	TARGET_AS="egcs -c"
+	TARGET_CC="egcs -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_STRIP="touch"
+	TARGET_LIBS=""
+	;;
+
+    *x86-linux-aout-egcs-cramer)       # [cramer] nomt, libc4, static, egcs
 	TARGET_AS="i486-pc-linux-gnuaout-egcs -c"
 	TARGET_CC="i486-pc-linux-gnuaout-egcs"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
@@ -996,29 +986,7 @@ case "$1" in
 	TARGET_LIBS=""
 	;;
 
-    *x86-linux-mt-egcs)            # multithreaded build using EGCS options
-	TARGET_AS="g++ -c"
-	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lpthread"
-	;;
-
-    *x86-linux-glibc2-mt-egcs)     # multithreaded build using EGCS options (dyn. linked w/glibc2)
-	TARGET_AS="g++ -c"
-	TARGET_CC="g++ -nodefaultlibs"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ -DMULTITHREAD"
-	TARGET_LDFLAGS=""
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lgcc -lc -lm /usr/lib/libpthread.a"
-	;; # hacked a bit to avoid all dynamic linking but libc.so.6 and libm.so.6
-
-    *x86-linux-mt-egcs-cramer)     # special target for cramer's non-standard installation
+    *x86-linux-mt-egcs-cramer)         # [cramer] mt, static, egcs
 	TARGET_AS="egcs -c"
 	TARGET_CC="egcs"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD"
@@ -1029,7 +997,40 @@ case "$1" in
 	TARGET_LIBS="-lpthread"
 	;;
 
-    *x86-linux-mt-gcc)             # multithreaded build using GCC options
+
+
+  ### Other targets
+
+    *x86-linux-gcc)                    # nomt, static, gcc
+	TARGET_AS="gcc -c"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_LIBS=""
+	;;
+
+    *x86-linux-gcc-simple)             # nomt, dynamic, gcc
+	TARGET_AS="gcc -c"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	;;
+
+    *x86-linux-gcc-debug)              # nomt, dynamic, gcc, debug
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc -g"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_STRIP="touch"
+	TARGET_LIBS=""
+	;;
+
+    *x86-linux-mt-gcc)                 # mt, static, gcc
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
@@ -1039,23 +1040,45 @@ case "$1" in
 	TARGET_LIBS="-lpthread"
 	;;
 
-    *x86-linux-libc5-mt-gcc)             # multithreaded build using GCC options (libc5)
-	TARGET_AS="i486-linuxlibc1-gcc -c"
-	TARGET_CC="i486-linuxlibc1-gcc"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lpthread"
-	;;
-
-    *x86-linux-mt-slice-kwan-gcc)  # using slice not bryddes
+    *x86-linux-mt-slice-kwan-gcc)      # mt, static, gcc, use integer bitslicer
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DMMX_RC5 -D__showids__ -DBIT_32 -DMULTITHREAD -DKWAN"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="platforms/x86ident.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_LIBS="-lpthread"
+	;;
+
+    *x86-linux-egcs)                   # nomt, static, egcs
+	TARGET_AS="g++ -c"
+	TARGET_CC="g++"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_LIBS=""
+	;;
+
+    *x86-linux-egcs-debug)             # nomt, dynamic, egcs, debug
+	TARGET_AS="g++ -c"
+	TARGET_CC="g++ -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_STRIP="touch"
+	TARGET_LIBS=""
+	;;
+
+    *x86-linux-mt-egcs)                # mt, static, egcs
+	TARGET_AS="g++ -c"
+	TARGET_CC="g++"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lpthread"
 	;;
