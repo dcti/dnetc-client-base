@@ -5,9 +5,8 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.130 1999/04/17 07:38:35 gregh Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.131 1999/04/17 14:02:50 cyp Exp $"
 
-#define MAXBLOCKSPERBUFFER  500
 
 enum {
   RC5, // http://www.rsa.com/rsalabs/97challenge/
@@ -34,6 +33,11 @@ typedef struct
 
 #pragma pack()
 
+
+#define MAXBLOCKSPERBUFFER  500
+#define BUFFER_DEFAULT_IN_BASENAME  "buff-in"
+#define BUFFER_DEFAULT_OUT_BASENAME "buff-out"
+
 struct membuffstruct 
 { 
   unsigned long count; 
@@ -51,23 +55,31 @@ public:
   int  stopiniio;
   u32  scheduledupdatetime;
   char inifilename[128];
-
-  /* -- block/buffer -- */
-  char id[64];
-  char checkpoint_file[128];
-  int  nodiskbuffers;
-  s32  connectoften;
-  s32  preferred_blocksize;
   struct { struct membuffstruct in, out; } membufftable[CONTEST_COUNT];
+
+  /* -- general -- */
+  char id[64];
+  char loadorder_map[CONTEST_COUNT];
+  int  quietmode;
+  s32  blockcount;
+  s32  minutes;
+  s32  percentprintingoff;
+  s32  noexitfilecheck;
+  char pausefile[128];
+
+  /* -- buffers -- */
+  char checkpoint_file[128];
+  s32  nodiskbuffers;
   char in_buffer_basename[128];
   char out_buffer_basename[128];
-  char remote_update_dir[128];
-  char loadorder_map[CONTEST_COUNT];
   volatile s32 inthreshold[CONTEST_COUNT];
   volatile s32 outthreshold[CONTEST_COUNT];
-
-  /* -- net -- */
+  s32  connectoften;
+  s32  noupdatefromfile;
+  char remote_update_dir[128];
   s32  offlinemode;
+  
+  s32  preferred_blocksize;
   s32  nettimeout;
   s32  nofallback;
   int  autofindkeyserver;
@@ -92,13 +104,6 @@ public:
   s32  priority;
 
   /* -- misc -- */
-  int  quietmode;
-  s32  blockcount;
-  s32  minutes;
-  s32  percentprintingoff;
-  s32  noexitfilecheck;
-  char pausefile[128];
-
 
   /* --------------------------------------------------------------- */
 

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.7 1999/04/17 07:38:33 gregh Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.8 1999/04/17 14:03:48 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -878,8 +878,8 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
       if (lastremaining <= remaining)
       {
         if (interactive)
-	  LogScreen("Import error: something bad happened.\n"
-	            "The source file isn't getting smaller.\n"); 
+          LogScreen("Import error: something bad happened.\n"
+                    "The source file isn't getting smaller.\n"); 
         errs = 1;
         recovered = 0;
         break;
@@ -905,19 +905,28 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
 long BufferFlushFile( Client *client, const char *loadermap_flags )
 {
   long combinedtrans = 0, combinedworkunits = 0;
-  //const char *exchname = "Flush::";
-  char basename[128];
+  char basename[sizeof(client->remote_update_dir)  +
+                sizeof(client->out_buffer_basename) + 10 ];
   unsigned int contest;
   int failed = 0;
   
   if (client->remote_update_dir[0] == '\0')
     return -1;
-  strncpy( basename, 
+
+  if (client->out_buffer_basename[0] == '\0')
+  {
+    strcpy( basename, 
+            GetFullPathForFilenameAndDir( BUFFER_DEFAULT_OUT_BASENAME,
+                                          client->remote_update_dir ));
+  }                                          
+  else
+  {
+    strcpy( basename, 
            GetFullPathForFilenameAndDir(
              &(client->out_buffer_basename[
                         GetFilenameBaseOffset(client->out_buffer_basename)]),
-             client->remote_update_dir ), 
-          sizeof(basename) );
+             client->remote_update_dir ) );
+  }                                          
   basename[sizeof(basename)-1] = '\0';
     
   for (contest = 0; failed == 0  && contest < CONTEST_COUNT; contest++)
@@ -1004,19 +1013,29 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
 long BufferFetchFile( Client *client, const char *loaderflags_map )
 {
   unsigned long combinedtrans = 0, combinedworkunits = 0;
-  //const char *exchname = "Fetch::";
-  char basename[128];
+  char basename[sizeof(client->remote_update_dir)  +
+                sizeof(client->in_buffer_basename) + 10 ];
   unsigned int contest;
   int failed = 0;
 
   if (client->remote_update_dir[0] == '\0')
     return -1;
-  strncpy( basename, 
-           GetFullPathForFilenameAndDir(
-             &(client->in_buffer_basename[
+
+  if (client->in_buffer_basename[0] == '\0')
+  {
+    strcpy( basename, 
+            GetFullPathForFilenameAndDir( BUFFER_DEFAULT_IN_BASENAME,
+                                          client->remote_update_dir ));
+  }
+  else
+  {
+     strcpy( basename, 
+             GetFullPathForFilenameAndDir(
+               &(client->in_buffer_basename[
                         GetFilenameBaseOffset(client->in_buffer_basename)]),
-             client->remote_update_dir ), 
-          sizeof(basename) );
+             client->remote_update_dir ) );
+
+  }                                          
   basename[sizeof(basename)-1] = '\0';
 //printf("basename: %s\n",basename);
     
