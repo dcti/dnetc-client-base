@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.27 1999/10/16 16:34:35 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.28 1999/10/17 22:36:38 cyp Exp $"; }
 
 //#define TRACE
 
@@ -149,13 +149,15 @@ int ParseCommandline( Client *client,
         {
           char buffer[1024];
           int sig = SIGHUP; char *dowhat_descrip = "-HUP'ed";
-          unsigned int kill_ok = 0, kill_failed = 0; 
+          unsigned int bin_index, kill_ok = 0, kill_failed = 0; 
           int last_errno = 0, kill_found = 0;
-          const char *binname = (const char *)strrchr( argv[0], '/' );
-          char altbinname[64];
-          binname = ((binname==NULL)?(argv[0]):(binname+1));
-          strncpy(altbinname,utilGetAppName(),sizeof(altbinname));
-          altbinname[sizeof(altbinname)-1] = '\0';
+          const char *binnames[3];
+          char rc5des[8]; rc5des[0]='r';rc5des[1]='c';rc5des[2]='5';
+          rc5des[3]='d';rc5des[4]='e';rc5des[5]='s';rc5des[6]='\0';
+          binnames[0] = (const char *)strrchr( argv[0], '/' );
+          binnames[0] = ((!binnames[0])?(argv[0]):(binnames[0]+1));
+          binnames[1] = utilGetAppName();
+          binnames[2] = rc5des;
             
           if ( strcmp( thisarg, "-kill" ) == 0 ||
                strcmp( thisarg, "-shutdown") == 0 )
@@ -200,7 +202,7 @@ int ParseCommandline( Client *client,
                 *q = '\0'; 
                 strncpy(realbinname,p,sizeof(realbinname));   
                 realbinname[sizeof(realbinname)-1]='\0';
-                binname = (const char *)&realbinname[0];
+                binnames[0] = (const char *)&realbinname[0];
               }
             }
             while ((dp = readdir(dirp)) != ((struct dirent *)0))  
@@ -232,20 +234,26 @@ int ParseCommandline( Client *client,
                   q++;
                 }
                 *q = '\0';
-                //printf("%s: %s (binname:%s,altbinname:%s)\n",dp->d_name,procname,binname,altbinname);
-                if (!strcmp(procname,binname) || !strcmp(procname,altbinname))
+                //printf("%s: %s (binname0:%s,binname1:%s)\n",dp->d_name,procname,binname[0],binname[1]);
+                for (bin_index=0;
+                     bin_index<(sizeof(binnames)/sizeof(binnames[0]));
+                     bin_index++)
                 {
-                  kill_found++;
-                  if ( kill( thatpid, sig ) == 0)
+                  if (strcmp(procname,binnames[bin_index])==0)
                   {
-                    if (sigd_count < (sizeof(already_sigd)/sizeof(pid_t)-1))
-                      already_sigd[sigd_count++] = thatpid;
-                    kill_ok++;
-                  }
-                  else if ((errno != ESRCH) && (errno != ENOENT))
-                  {
-                    kill_failed++;
-                    last_errno = errno;
+                    kill_found++;
+                    if ( kill( thatpid, sig ) == 0)
+                    {
+                      if (sigd_count < (sizeof(already_sigd)/sizeof(pid_t)-1))
+                        already_sigd[sigd_count++] = thatpid;
+                      kill_ok++;
+                    }
+                    else if ((errno != ESRCH) && (errno != ENOENT))
+                    {
+                      kill_failed++;
+                      last_errno = errno;
+                    }
+                    break;
                   }
                 }
               }
@@ -271,16 +279,24 @@ int ParseCommandline( Client *client,
                 //printf("pid: %d, cmd: %s\n",pst[pspos].pst_pid,pst[pspos].pst_ucomm);
                 char *procname = (char *)pst[pspos].pst_ucomm;
                 pid_t thatpid = (pid_t)pst[pspos].pst_pid;
-                if (thatpid != ourpid && (strcmp(procname,binname) == 0 || 
-                    strcmp(procname,altbinname) == 0))
+                if (thatpid != ourpid)
                 {
-                  kill_found++;
-                  if ( kill( thatpid, sig ) == 0)
-                    kill_ok++;
-                  else if ((errno != ESRCH) && (errno != EINVAL))
+                  for (bin_index=0;
+                       bin_index<(sizeof(binnames)/sizeof(binnames[0]));
+                       bin_index++)
                   {
-                    kill_failed++;
-                    last_errno = errno;
+                    if (strcmp(procname,binnames[bin_index])==0)
+                    {
+                      kill_found++;
+                      if ( kill( thatpid, sig ) == 0)
+                        kill_ok++;
+                      else if ((errno != ESRCH) && (errno != EINVAL))
+                      {
+                        kill_failed++;
+                        last_errno = errno;
+                      }
+                      break;
+                    }
                   }
                 }
               }
@@ -366,34 +382,39 @@ int ParseCommandline( Client *client,
                         }
                       }
                     }
-                    if (thatpid != 0)
-                    {
-                      while (*procname && (isdigit(*procname) || isspace(*procname)))
-                        procname++;
-                      q = procname;
-                      while (*q && !isspace(*q))
-                      {
-                        if (*q == '/')
-                          procname = q+1;
-                        q++;
-                      }
-                      *q = '\0';
-                      //printf("pid='%d' procname='%s'\n",thatpid,procname);
-                      if (strcmp(procname,binname) && strcmp(procname,altbinname))
-                        thatpid = 0;
-                    }
                   }
                   if (thatpid != 0)
                   {
-                    kill_found++;
-                    if ( kill( thatpid, sig ) == 0)
-                      kill_ok++;
-                    else if ((errno != ESRCH) && (errno != ENOENT))
+                    while (*procname && (isdigit(*procname) || isspace(*procname)))
+                      procname++;
+                    q = procname;
+                    while (*q && !isspace(*q))
                     {
-                      kill_failed++;
-                      last_errno = errno;
+                      if (*q == '/')
+                        procname = q+1;
+                      q++;
                     }
-                  }
+                    *q = '\0';
+                    //printf("pid='%d' procname='%s'\n",thatpid,procname);
+
+                    for (bin_index=0;
+                         bin_index<(sizeof(binnames)/sizeof(binnames[0]));
+                         bin_index++)
+                    {
+                      if (strcmp(procname,binnames[bin_index])==0)
+                      {
+                        kill_found++;
+                        if ( kill( thatpid, sig ) == 0)
+                          kill_ok++;
+                        else if ((errno != ESRCH) && (errno != ENOENT))
+                        {
+                          kill_failed++;
+                          last_errno = errno;
+                        }
+                        break;
+                      }
+                    }
+                  } /* not ourselves and not already done */
                 } /* if (linelen < sizeof(buffer)-1) */
                 linelen = 0; /* prepare for next line */
               } /* if (ch == '\n') */
@@ -432,28 +453,28 @@ int ParseCommandline( Client *client,
         }
         #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S)
         {
-          int rc, cmd = IDM_RESTART;
+          int rc, cmd = DNETC_WCMD_RESTART;
           const char *dowhat_descrip = "restarted";
           
           if ( strcmp( thisarg, "-kill" ) == 0 ||
                strcmp( thisarg, "-shutdown") == 0 )
           {
-            cmd = IDM_SHUTDOWN;
+            cmd = DNETC_WCMD_SHUTDOWN;
             thisarg = "-shutdown";
             dowhat_descrip = "shutdown";
           }
           else if (strcmp( thisarg, "-pause" ) == 0)
           {
-            cmd = IDM_PAUSE;
+            cmd = DNETC_WCMD_PAUSE;
             dowhat_descrip = "paused";
           }
           else if (strcmp( thisarg, "-unpause" ) == 0)
           {
-            cmd = IDM_UNPAUSE;
+            cmd = DNETC_WCMD_UNPAUSE;
             dowhat_descrip = "unpaused";
           }
           
-          rc = w32ConSendIDMCommand( cmd );
+          rc = w32PostRemoteWCMD(cmd); /*<0=notfound,0=found+ok,>0=found+err*/
           terminate_app = 1;
           if (!loop0_quiet)
           {
@@ -1011,7 +1032,7 @@ int ParseCommandline( Client *client,
           else
           {
             inimissing = 0; // Don't complain if the inifile is missing
-            client->httpport = (s32) atoi( argvalue );
+            client->httpport = atoi( argvalue );
           }
         }
       }
@@ -1048,7 +1069,7 @@ int ParseCommandline( Client *client,
           }
           else
           {
-            client->messagelen = (s32) atoi(argvalue);
+            client->messagelen = atoi(argvalue);
           }
         }
       }
@@ -1067,7 +1088,7 @@ int ParseCommandline( Client *client,
           }
           else
           {
-            client->smtpport = (s32) atoi(argvalue);
+            client->smtpport = atoi(argvalue);
           }
         }
       }
@@ -1187,7 +1208,7 @@ int ParseCommandline( Client *client,
           }
           else
           {
-            client->priority = (s32) atoi( argvalue );
+            client->priority = atoi( argvalue );
             if ( strcmp( thisarg, "-nice" ) == 0 )
               client->priority = ((client->priority==2)?(8):
                                  ((client->priority==1)?(4):(0)));
@@ -1298,7 +1319,7 @@ int ParseCommandline( Client *client,
             ;
           else
           {
-            client->numcpu = (s32) atoi(argvalue);
+            client->numcpu = atoi(argvalue);
             inimissing = 0; // Don't complain if the inifile is missing
           }
         }
