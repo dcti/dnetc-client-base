@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.19 1999/11/27 06:22:45 sampo Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.20 1999/11/27 20:59:53 lyndon Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -157,10 +157,10 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
     u32 result = filelength( fileno(file) );    
     if (result == 0xFFFFFFFFL) return -1;
     *length = result;
-  /*#elif (CLIENT_OS == OS_MACOS)
-  /*  u32 result = my_getopenfilelength(fileno(file)); Mindmorph */
-  /*  *length = result; Mindmorph */
-  /* use generic functions handled by GUSI - Mindmorph */
+  #elif (CLIENT_OS == OS_MACOS) && defined (NOTYET_MINDMORPH)
+    u32 result = my_getopenfilelength(fileno(file));/* Mindmorph */
+    *length = result; /*Mindmorph */
+    /* use generic functions handled by GUSI - Mindmorph */
   #else
     struct stat statbuf;
     #if (CLIENT_OS == OS_NETWARE)
