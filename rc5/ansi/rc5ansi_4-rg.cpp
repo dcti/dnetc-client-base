@@ -19,8 +19,8 @@
  * ---------------------------------------------------------------
 */
 #if (!defined(lint) && defined(__showids__))
-const char *rc5ansi_2_rg_cpp (void) {
-return "@(#)$Id: rc5ansi_4-rg.cpp,v 1.1.2.1 2001/02/17 04:09:33 sampo Exp $"; }
+const char *rc5ansi_4_rg_cpp (void) {
+return "@(#)$Id: rc5ansi_4-rg.cpp,v 1.1.2.2 2001/02/18 23:31:48 sampo Exp $"; }
 #endif
 //
 //*Run-time generation of S0[] :
@@ -467,11 +467,11 @@ u32 rc5_unit_func_ansi_4_rg( RC5UnitWork *rc5unitwork, u32 tslice)
 }
 
 #if defined(__cplusplus)
-extern "C" s32 rc5_ansi_2_rg_unified_form( RC5UnitWork * work,
+extern "C" s32 rc5_ansi_4_rg_unified_form( RC5UnitWork * work,
                                 u32 *timeslice, void *scratch_area );
 #endif
 
-s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
+s32 rc5_ansi_4_rg_unified_form( RC5UnitWork *work,
                               u32 *keystocheck, void *scratch_area )
 {
   u32 keyschecked, iterstodo;
