@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.34  1998/11/12 03:06:52  silby
+// Added an int cast that was bothering freebsd, and added a message about freebsd's junky posix implementation.
+//
 // Revision 1.33  1998/11/10 14:04:08  chrisb
 // changed a < to <= so reports ('a'-'z') when there are  26 threads
 //
@@ -131,7 +134,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.33 1998/11/10 14:04:08 chrisb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.34 1998/11/12 03:06:52 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -871,7 +874,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         thrparams->timeslice = (1<<12);
       thrparams->threadID = RegPolledProcedure(Go_mt, 
                                 (void *)thrparams , NULL, 0 );
-      success = (thrparams->threadID != -1);
+      success = ((int)thrparams->threadID != -1);
       }
         
     if (success)
@@ -986,11 +989,11 @@ int Client::Run( void )
     force_no_realthreads = 0; /* this is a hint. it does not reflect capability */
     unsigned int numcrunchers = (unsigned int)numcpu;
 
-    #if (CLIENT_OS == OS_FREEBSD) //FleaBSD multithreading is disabled
-    force_no_realthreads = 1;
-    if (numcrunchers > 0)
-      LogScreen("POSIX threads are disabled for FreeBSD clients.\n"
-                "Threading will be emulated.\n");
+    #if (CLIENT_OS == OS_FREEBSD) //FreeBSD multithreading will not span
+                                  //processors yet
+    if (numcrunchers > 1)
+      LogScreen("POSIX threads are not fully implemented in FreeBSD.\n"
+                "Only one processor can be used per running copy of the client.\n"
     #endif
     #if (CLIENT_OS == OS_NETWARE)
     if (numcrunchers == 1) // NetWare client prefers non-threading  
