@@ -1,7 +1,7 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
-# $Id: makefile.bcc,v 1.23.2.9 2000/03/11 02:58:57 andreasb Exp $
+# $Id: makefile.bcc,v 1.23.2.10 2000/05/03 00:03:14 andreasb Exp $
 #
 # As of Feb 2000, Borland C++ 5.5 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
@@ -82,6 +82,7 @@ BCCOPTS = $(BCCOPTS) /DMMX_BITSLICER /DBIT_64 /DMEGGS /DKWAN
 .path.asm = $(RC5PATH)\x86\nasm;$(DESPATH)\mmx-bitslice;$(CSCPATH)\x86;$(CSCPATH)\x86\mmx;$(CHIPSRCPATH)
 # do not add $(CSCPATH) to .path.cpp - everything is in .path.asm
 .path.cpp = $(COMMONPATH);$(RC5PATH);$(DESPATH);$(OGRPATH);$(PLATSRCPATH)
+.path.c = $(PLATSRCPATH)
 .path.obj = $(OUTPUTPATH)
 
 all:    $(BASENAME).exe
@@ -144,11 +145,16 @@ PLAT_OBJS =                          \
         $(OUTPUTPATH)/w32sock.obj    \
         $(OUTPUTPATH)/w32ss.obj      \
         $(OUTPUTPATH)/w32svc.obj     \
+        $(OUTPUTPATH)/w32exe.obj     \
+        $(OUTPUTPATH)/w32ini.obj     \
+        $(OUTPUTPATH)/w32snapp.obj   \
         $(OUTPUTPATH)/w32util.obj
 
 SCR_OBJS =                           \
         $(OUTPUTPATH)/w32ss.obj      \
         $(OUTPUTPATH)/w32ssb.obj     \
+        $(OUTPUTPATH)/w32exe.obj     \
+        $(OUTPUTPATH)/w32ini.obj     \
         $(OUTPUTPATH)/w32util.obj
 
 CUI_OBJS =                           \
