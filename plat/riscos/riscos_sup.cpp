@@ -5,7 +5,7 @@
  *
  * By Kevin Bracey <kbracey@acorn.com> and Chris Berry <cberry@acorn.com>
  *
- * $Id: riscos_sup.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $
+ * $Id: riscos_sup.cpp,v 1.2.4.1 2002/12/10 16:04:50 andreasb Exp $
 */
 
 #include <stdio.h> /* printf() for debugging */
@@ -214,3 +214,43 @@ int riscos_find_local_directory(const char *progname)
     return 0;
   return -1;
 }
+
+char *riscos_version(void)
+{
+  _kernel_swi_regs regs;
+  _kernel_oserror *e;
+
+  regs.r[0]=129;
+  regs.r[1]=0;
+  regs.r[2]=255;
+  e = _kernel_swi(XOS_Bit|OS_Byte, &regs, &regs);
+  if (!e)
+  {
+    switch (regs.r[1])
+    {
+      case 0xa0:
+        return "Arthur 1.2";
+      case 0xa1:
+        return "RISC OS 2.00";
+      case 0xa2:
+        return "RISC OS 2.01";
+      case 0xa3:
+        return "RISC OS 3.00";
+      case 0xa4:
+        return "RISC OS 3.1X";
+      case 0xa5:
+        return "RISC OS 3.5";
+      case 0xa6:
+        return "RISC OS 3.6";
+      case 0xa7:
+        return "RISC OS 3.7";
+      case 0xa8:
+        return "RISC OS 4.0";
+      default:
+        return "";
+    }
+  }
+  else
+    return "";
+}
+

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.3 2002/11/28 16:36:42 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.4 2002/12/10 16:04:50 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -145,6 +145,8 @@ static const char *GetBuildOrEnvDescription(void)
     #endif
   }
   return "";
+#elif (CLIENT_OS == OS_RISCOS)
+  return riscos_version();
 #else
   return "";
 #endif

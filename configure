@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.5 2002/11/25 21:33:40 pfeffi Exp $
+# @(#)$Id: configure,v 1.288.2.6 2002/12/10 16:04:50 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -504,12 +504,16 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_DES
     if [ "$HAVE_RC5_72" = 1 ]; then
+      DEFAULT_RC5_72="0"
       if [ "$1" = "riscos" ]; then
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_RC5_72_ASM_CORES"
-        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1.s"
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1.s \
+                                        rc5-72/arm/r72arm2.s"
       elif [ "$1-$3" = "linux-elf" ]; then
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_RC5_72_ASM_CORES"
-        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu-elf.S"
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu-elf.S \
+                                        rc5-72/arm/r72arm2-gnu-elf.S"
+      else
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu.S \
+                                        rc5-72/arm/r72arm2-gnu.S"
       fi
     fi # HAVE_RC5_72
   #-----------------------------------------------------------------
@@ -793,17 +797,15 @@ generate_gcc_opts() {
     *internal-arm)
         opts272="$OPTS_GCC272 -DARM -DASM_ARM -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -march=armv3 -mtune=strongarm -DARM -DASM_ARM \
-                 -fforce-mem -fforce-addr -fexpensive-optimizations \
-                 -frerun-cse-after-loop"
+                 -fschedule-insns -fschedule-insns2"
         opts310="$OPTS_GCC310 -O2 -march=armv3 -mtune=strongarm -DARM -DASM_ARM \
-                 -fforce-mem -fforce-addr -fexpensive-optimizations \
-                 -frerun-cse-after-loop"
+                 -fschedule-insns -fschedule-insns2"
         ;;
 
     *internal-sparc)  # (sparc/v7 [SS1/2/IPX]) (v8 [supersparc] is below)
         opts272="$OPTS_GCC272 -O6 -mcypress -DASM_SPARC -funroll-loops"
-        opts295="$OPTS_GCC295 -O2 -mcpu=cypress -DASM_SPARC -funroll-loops"
-        opts310="$OPTS_GCC310 -O2 -mcpu=cypress -DASM_SPARC -funroll-loops"
+        opts295="$OPTS_GCC295 -O2 -mcpu=cypress -mtune=supersparc -DASM_SPARC -funroll-loops"
+        opts310="$OPTS_GCC310 -O2 -mcpu=cypress -mtune=supersparc -DASM_SPARC -funroll-loops"
         ;;
 
     *internal-supersparc)  # (sparc/v8 [SS5+])
@@ -1123,7 +1125,7 @@ case "$1" in
         add_sources "linux" "arm" "aout"
         ;;
 
-    *arm-linux-elf)     # andrewm
+    *arm-linux-elf)     # teichp
         TARGET_CC="gcc"
         TARGET_AS="gcc -c"
         generate_gcc_opts "arm" "linux"
@@ -1144,9 +1146,9 @@ case "$1" in
         done
         ;;
 
-    *arm-netbsd)        # chrisb
+    *arm-netbsd)        # teichp
         TARGET_CC="gcc"
-        TARGET_AS="as"
+        TARGET_AS="gcc -c"
         generate_gcc_opts "arm" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LIBS="-lm"
@@ -1631,10 +1633,10 @@ case "$1" in
         add_sources "netbsd" "sparc"
         ;;
 
-    *sparc-linux)	# [remi]
+    *sparc-linux)       # teichp
         TARGET_CC="gcc"
         TARGET_AS="gcc -c"
-        generate_gcc_opts "supersparc" "linux"
+        generate_gcc_opts "sparc" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
         TARGET_LIBS=""

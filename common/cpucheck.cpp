@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.2 2002/11/25 17:45:18 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.3 2002/12/10 16:04:50 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1207,7 +1207,7 @@ static long __GetRawProcessorID(const char **cpuname )
   if (detectedtype == -2)
   {
     char buffer[256]; int mib[2];
-    int len = (int)(sizeof(buffer)-1);
+    size_t len = (size_t)(sizeof(buffer)-1);
     mib[0]=CTL_HW; mib[1]=HW_MODEL;
     detectedtype = -1;
 
