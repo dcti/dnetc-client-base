@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.15 1999/04/04 17:48:00 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16 1999/05/07 04:27:14 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -73,6 +73,13 @@ int RaiseRestartRequestTrigger(void)
   return (oldstate);
 }  
 
+static int ClearRestartRequestTrigger(void) /* used internally */
+{
+  int oldstate = trigstatics.huptrig.trigger;
+  trigstatics.huptrig.trigger = 0;
+  return oldstate;
+}  
+
 int RaisePauseRequestTrigger(void) 
 { 
   if (!trigstatics.isinit)
@@ -121,21 +128,21 @@ static void InternalPollForFlagFiles(struct trigstruct *trig, int undoable)
   time_t now;
   
   if ((undoable || !trig->trigger) && trig->flagfile)
-    {
+  {
     if ((now = time(NULL)) >= trig->nextcheck) 
-      {
+    {
       if ( access( GetFullPathForFilename( trig->flagfile ), 0 ) == 0 )
-        {
+      {
         trig->nextcheck = now + (time_t)trig->pollinterval.whenon;
         trig->trigger = TRIGSETBY_EXTERNAL;
-        }
+      }
       else
-        {
+      {
         trig->nextcheck = now + (time_t)trig->pollinterval.whenoff;
         trig->trigger = 0;
-        }
       }
     }
+  }
   return;
 }
 
@@ -148,26 +155,26 @@ int CheckExitRequestTrigger(void)
   if (!trigstatics.isinit)
     InitializeTriggers( NULL, NULL );
   if (!wasseen && !trigstatics.exittrig.incheck)
-    {
+  {
     ++trigstatics.exittrig.incheck;
     if ( !trigstatics.exittrig.trigger )
-      {
+    {
       if (trigstatics.exittrig.pollproc)
         (*trigstatics.exittrig.pollproc)();
-      }
+    }
     if ( !trigstatics.exittrig.trigger )
       InternalPollForFlagFiles( &trigstatics.exittrig, 0 );
     if ( trigstatics.exittrig.trigger )
-      {
+    {
       LogScreen("*Break*%s\n", 
        (trigstatics.exittrig.trigger == TRIGSETBY_EXTERNAL)?
          (" (found exit flag file)"): 
          ((trigstatics.huptrig.trigger)?(" Restarting..."):
          (" Shutting down...")) );
       wasseen = 1;             
-      }
-    --trigstatics.exittrig.incheck;
     }
+    --trigstatics.exittrig.incheck;
+  }
   return( trigstatics.exittrig.trigger );
 }  
 
@@ -181,11 +188,11 @@ int CheckPauseRequestTrigger(void)
     return 0;
   if ( !trigstatics.pausetrig.incheck && 
        trigstatics.pausetrig.trigger != TRIGSETBY_INTERNAL )
-    {
+  {
     ++trigstatics.pausetrig.incheck;
     InternalPollForFlagFiles( &trigstatics.pausetrig, 1 );
     --trigstatics.pausetrig.incheck;
-    }
+  }
   return( trigstatics.pausetrig.trigger );
 }   
 
@@ -245,24 +252,40 @@ int InitializeTriggers( const char *exitfile, const char *pausefile )
 
 // =======================================================================
 
+void __PollDrivenBreakCheck( void ) /* not static */
+{
+  #if (CLIENT_OS == OS_RISCOS)
+  if (_kernel_escape_seen())
+    CliSignalHandler(SIGINT);
+  #elif (CLIENT_OS == OS_AMIGAOS)
+  if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
+    RaiseExitRequestTrigger();
+  #elif (CLIENT_OS == OS_NETWARE)
+    nwCliCheckForUserBreak(); //in netware.cpp
+  #endif
+  return;  
+}      
+
+// =======================================================================
+
 #if (CLIENT_OS == OS_AMIGAOS)
 extern "C" void __regargs __chkabort(void) 
 { 
   /* Disable SAS/C CTRL-C handing */
   return;
 }
-void CliPollDrivenBreakCheck( void )
-{
-  if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
-    RaiseExitRequestTrigger();
-}
 #define CLISIGHANDLER_IS_SPECIAL
+void CliSetupSignals( void )
+{
+  SetSignal(0L, SIGBREAKF_CTRL_C); // Clear the signal triggers
+  RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
+}    
 #endif
 
 // -----------------------------------------------------------------------
 
 #if (CLIENT_OS == OS_WIN32)
-bool CliSignalHandler(DWORD  dwCtrlType)
+BOOL CliSignalHandler(DWORD dwCtrlType)
 {
   if ( dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_BREAK_EVENT ||
        dwCtrlType == CTRL_CLOSE_EVENT || dwCtrlType == CTRL_SHUTDOWN_EVENT)
@@ -273,188 +296,101 @@ bool CliSignalHandler(DWORD  dwCtrlType)
   return FALSE;
 }
 #define CLISIGHANDLER_IS_SPECIAL
-#endif
-
-// -----------------------------------------------------------------------
-
-#if (CLIENT_OS == OS_NETWARE)
-void CliSignalHandler( int sig )
+void CliSetupSignals( void )
 {
-  if (sig == SIGHUP)
-    RaiseRestartRequestTrigger();
-  else
-  {
-    RaiseExitRequestTrigger();
-    nwCliSignalHandler( sig ); //never to return...
-  }
+  //SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CliSignalHandler, TRUE );
 }
-#define CLISIGHANDLER_IS_SPECIAL
 #endif
 
 // -----------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_OS390)
-extern "C" void CliSignalHandler( int )
-{
-  RaiseExitRequestTrigger();
-  CliSetupSignals(); //reset the signal handlers
-}
-#define CLISIGHANDLER_IS_SPECIAL
-#endif
-  
-// -----------------------------------------------------------------------
-
-#if (CLIENT_OS == OS_OS2)
-void CliSignalHandler( int )
-{
-  // Give priority boost quit works faster
-  DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, 0, 0); 
-  RaiseExitRequestTrigger();
-  CliSetupSignals(); //reset the signal handlers
-}  
-#define CLISIGHANDLER_IS_SPECIAL
-#endif
-
-// -----------------------------------------------------------------------
-
-#if (CLIENT_OS == OS_RISCOS)
-void CliSignalHandler( int )
-{
-  _kernel_escape_seen();  // clear escape trigger for polling check below
-  RaiseExitRequestTrigger();
-  CliSetupSignals(); //reset the signal handlers
-}
-#define CLISIGHANDLER_IS_SPECIAL
-void CliPollDrivenBreakCheck( void )
-{
-  if (_kernel_escape_seen())
-    CliSignalHandler(SIGINT);
-}
-#endif  
-
-// -----------------------------------------------------------------------
-
-#if (CLIENT_OS == OS_DOS)
-void CliSignalHandler( int )
-{
-  RaiseExitRequestTrigger();
-  //break_off(); //break only on screen i/o (different from setup signals)
-  //- don't reset sighandlers or we may end up in an
-  //  infinite loop (keyboard buffer isn't clear yet)
-}
-#define CLISIGHANDLER_IS_SPECIAL
-#endif
-
-// -----------------------------------------------------------------------
-
-#if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-void CliPollDrivenBreakCheck( void )
-{
-  #if 0
-  if (kbhit())
-  {
-    int key = getch();
-    if ( key == 3 ) RaiseExitRequestTrigger();
-    else if (!key ) getch();
-  }
-  #endif
-  return;  
-}      
-#define CLISIGHANDLER_IS_SPECIAL
-#endif
-
-// -----------------------------------------------------------------------
 #if (CLIENT_OS == OS_MACOS)
-#define CLISIGHANDLER_IS_SPECIAL
 // Mac framework code will raise requests by calling
 // RaiseExitRequestTrigger
+#define CLISIGHANDLER_IS_SPECIAL
+void CliSetupSignals( void ) {}
 #endif
 
 // -----------------------------------------------------------------------
 
 #ifndef CLISIGHANDLER_IS_SPECIAL
-void CliSignalHandler( int sig )
+extern "C" void CliSignalHandler( int sig )
 {
-  sig = sig; /* squelch compiler warning */
-#ifdef SIGHUP
+  #if defined(SIGUSR1) && defined(SIGUSR2)
+  if (sig == SIGUSR1)
+  {
+    signal(sig,CliSignalHandler);
+    RaisePauseRequestTrigger();
+    return;
+  }
+  if (sig == SIGUSR2)
+  {
+    signal(sig,CliSignalHandler);
+    ClearPauseRequestTrigger();
+    return;
+  }
+  #endif  
+  #if defined(SIGHUP) && (CLIENT_OS != OS_BEOS)
+  // according to peter dicamillo, BeOS' shell's sends _only_ a sighup. Uh, huh.
   if (sig == SIGHUP)
+  {
+    signal(sig,CliSignalHandler);
     RaiseRestartRequestTrigger();
-#endif
+    return;
+  }  
+  #endif
+  ClearRestartRequestTrigger();
   RaiseExitRequestTrigger();
-  CliSetupSignals(); //reset the signal handlers
+
+  #if (CLIENT_OS == OS_NETWARE)
+    nwCliSignalHandler( sig ); //never to return...
+  #elif (CLIENT_OS == OS_RISCOS)
+    _kernel_escape_seen();  // clear escape trigger
+    signal(sig,SIG_IGN);
+  #else
+    signal(sig,SIG_IGN);
+  #endif
 }  
 #endif //ifndef CLISIGHANDLER_IS_SPECIAL
 
 // -----------------------------------------------------------------------
 
+#ifndef CLISIGHANDLER_IS_SPECIAL
 void CliSetupSignals( void )
 {
-  #if (CLIENT_OS == OS_MACOS) 
-    // nothing
-  #elif (CLIENT_OS == OS_AMIGAOS)
-    SetSignal(0L, SIGBREAKF_CTRL_C); // Clear the signal triggers
-    RegisterPollDrivenBreakCheck( CliPollDrivenBreakCheck );
-  #elif (CLIENT_OS == OS_DOS)
-    break_on(); //break on any dos call 
-    signal( SIGINT, CliSignalHandler );  //The  break_o functions can be used
-    signal( SIGTERM, CliSignalHandler ); // with DOS to restrict break checking
-    signal( SIGABRT, CliSignalHandler ); // break_off(): raise() on conio only
-    signal( SIGBREAK, CliSignalHandler ); //break_on(): raise() on any dos call
-  #elif (CLIENT_OS == OS_WIN32)
-    SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CliSignalHandler, TRUE );
-  #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
-        (CLIENT_OS == OS_DOS && defined(__WINDOWS__)) //watcom win32
-    while (kbhit()) { if (getch()==0) getch(); } //flush the keyboard
-    RegisterPollDrivenBreakCheck( CliPollDrivenBreakCheck );
-  #elif (CLIENT_OS == OS_RISCOS)
-    signal( SIGINT, CliSignalHandler );
-    RegisterPollDrivenBreakCheck( CliPollDrivenBreakCheck );
-  #elif (CLIENT_OS == OS_OS2)
-    signal( SIGINT, CliSignalHandler );
-    signal( SIGTERM, CliSignalHandler );
-  #elif (CLIENT_OS == OS_IRIX) && defined(__GNUC__)
-    signal( SIGHUP, (void(*)(...)) CliSignalHandler );
-    signal( SIGQUIT, (void(*)(...)) CliSignalHandler );
-    signal( SIGTERM, (void(*)(...)) CliSignalHandler );
-    signal( SIGINT, (void(*)(...)) CliSignalHandler );
-    signal( SIGSTOP, (void(*)(...)) CliSignalHandler );
-  #elif (CLIENT_OS == OS_VMS)
-    signal( SIGHUP, CliSignalHandler );
-    signal( SIGQUIT, CliSignalHandler );
-    signal( SIGTERM, CliSignalHandler );
-    signal( SIGINT, CliSignalHandler );
-  #elif (CLIENT_OS == OS_NETWARE)
-    signal( SIGHUP, CliSignalHandler );
-    signal( SIGQUIT, CliSignalHandler );
-    signal( SIGTERM, CliSignalHandler );
-    signal( SIGINT, CliSignalHandler );
-    RegisterPollDrivenBreakCheck( nwCliCheckForUserBreak );
-    signal( SIGSTOP, CliSignalHandler );
-    //workaround NW 3.x bug - printf "%f" handler is in mathlib not clib, which
-    signal( SIGABRT, CliSignalHandler ); //raises abrt if mathlib isn't loaded
-  #elif (CLIENT_OS == OS_BEOS)
-    // SIGHUP can't be used, because detach processes get SIGHUP when
-    // started from Terminal and Terminal quits.
-    signal( SIGQUIT, CliSignalHandler );
-    signal( SIGTERM, CliSignalHandler );
-    signal( SIGINT, CliSignalHandler );
-    signal( SIGSTOP, CliSignalHandler );
-  #elif (CLIENT_OS == OS_SOLARIS)
-    // SIGPIPE is a fatal error in Solaris?
-    signal( SIGHUP, CliSignalHandler );
-    signal( SIGQUIT, CliSignalHandler );
-    signal( SIGTERM, CliSignalHandler );
-    signal( SIGINT, CliSignalHandler );
-    signal( SIGSTOP, CliSignalHandler );
-    signal( SIGPIPE, SIG_IGN );
-  #else
-    signal( SIGHUP, CliSignalHandler );
-    signal( SIGQUIT, CliSignalHandler );
-    signal( SIGTERM, CliSignalHandler );
-    signal( SIGINT, CliSignalHandler );
-    signal( SIGSTOP, CliSignalHandler );
+  #if (CLIENT_OS == OS_SOLARIS)
+  // SIGPIPE is a fatal error in Solaris?
+  signal( SIGPIPE, SIG_IGN );
   #endif
+  #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
+  RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
+  #endif
+  #if (CLIENT_OS == OS_DOS)
+  break_on(); //break on any dos call, not just term i/o
+  #endif
+  #if defined(SIGHUP)
+  signal( SIGHUP, CliSignalHandler );   //restart (or for beos==shutdown)
+  #endif
+  #if defined(SIGUSR1) && defined(SIGUSR2)
+  signal( SIGUSR1, CliSignalHandler );  //pause
+  signal( SIGUSR2, CliSignalHandler );  //unpause
+  #endif
+  #if defined(SIGQUIT)
+  signal( SIGQUIT, CliSignalHandler );  //shutdown
+  #endif
+  #if defined(SIGSTOP)
+  signal( SIGSTOP, CliSignalHandler );  //shutdown
+  #endif
+  #if defined(SIGABRT)
+  signal( SIGABRT, CliSignalHandler );  //shutdown
+  #endif
+  #if defined(SIGBREAK)
+  signal( SIGBREAK, CliSignalHandler ); //shutdown
+  #endif
+  signal( SIGTERM, CliSignalHandler );  //shutdown
+  signal( SIGINT, CliSignalHandler );   //shutdown
 }
+#endif
 
 // -----------------------------------------------------------------------
 
