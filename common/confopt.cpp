@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.23 2000/02/12 23:24:53 gregh Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.24 2000/02/13 06:40:10 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -98,18 +98,16 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   "For example, \"backup.exe|restore.exe\".\n"
   "note: 32bit clients cannot 'see' 16bit applications and vice-versa.\n"
-  "WinNT5/Win9x: path and extension are optional (that is, if you don't provide\n"
-  "              a path or extension here, then those components of the filename\n"
-  "              will not influence a comparison).\n"
-  "WinNT3/WinNT4:path and extension are accepted, but ignored (neither\n"
-  "              component has any influence on the outcome of a comparison)\n"
+  "WinNT5/Win9x: path and extension are optional (that is, they won't influence\n"
+  "              the outcome of a search if not explicitely specified).\n"
+  "WinNT3/WinNT4:path and extension are accepted, but ignored (ie, they have no\n"
+  "              influence on the outcome of a search). Note that enabling this\n"
+  "              option may adversely affect client performance.\n"
   "Win32s/Win16: extension is optional and path is ignored.\n"
-  "\n"
   "Clients that are not running as a service can also detect by window title\n"
   "and/or by window class. To specify a window title, prefix it with '*', for\n"
   "example, \"*Backup Exec\". Prefix class names with '#'. Searching by window\n"
   "title and/or class name is exact, ie sensitive to case and name length.\n"
-  "Note that enabling this option may affect client performance.\n"
   #else
   "This option is not supported on all platforms\n"
   #endif
