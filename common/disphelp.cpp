@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.6 1999/10/10 23:03:52 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.7 1999/10/11 04:26:56 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -26,13 +26,13 @@ static const char *helpbody[] =
 {
   "Special Options: (the client will execute the option and then exit)",
   "-config            start the configuration menu",
-  "-test              tests for core errors",
   "-flush             flush all output buffers",
   "-fetch             fill all input buffers",
   "-update            fetch + flush",
-  "-forceunlock <fn>  unlock buffer file <fn>",
-  "-benchmark [pn]    tests the client speed. Project \"pn\" defaults to all",
-  "-benchmark2 [pn]   quicker (but slightly inaccurate) client speed test",
+  "-benchmark [pn]    16-20 sec speed check [optional: only project pn]",
+  "-benchmark2 [pn]   half (8-10 sec) and slightly inaccurate -benchmark",
+	"-bench [pn]        -benchmark all cores [optional: only project pn]",
+  "-test [pn]         tests for core errors [optional: only project pn]",
   "-restart           restart all active clients (equivalent to -hup)",
   "-shutdown          gracefully shut down all active clients",
   "-pause             pause all active clients",
@@ -49,6 +49,7 @@ static const char *helpbody[] =
 #endif
 //"-import <fn> [cnt] import [cnt] packets from file <fn> into client buffers",
   "-import <fn>       import packets from file <fn> into client buffers",
+  "-forceunlock <fn>  unlock buffer file <fn>",
   "-help              display this text",
   "",
 /*"------------------------------------ max width == 77 ------------------------" */
