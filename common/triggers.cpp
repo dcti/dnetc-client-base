@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.36 2000/05/09 13:48:33 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.37 2000/05/10 04:41:17 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -340,12 +340,11 @@ static int __CPUTemperaturePoll(void)
     /* read the cpu temp in Kelvin. For multiple cpus, gets one 
        with highest temp. On error, returns < 0.
        Note that cputemp is in Kelvin, if your OS returns a value in
-       Farenheit or Celsius, see __init_cputemp for conversion functions.
+       Farenheit or Celsius, see _init_cputemp for conversion functions.
     */
     int cputemp = -1;
     #if (CLIENT_OS == OS_MACOS)
-      #error Hey Feiri, barblahyaddablahfoo this! :)
-    cputemp = barblahyaddablahfoo();
+      cputemp = macosCPUTemp();
     #elif 0 /* other client_os */
     cputemp = fooyaddablahblahbar();
     #endif
