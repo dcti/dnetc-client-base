@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.68 2003/03/29 05:01:20 snake Exp $
+# @(#)$Id: configure,v 1.288.2.69 2003/03/30 13:44:07 gavin Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -135,7 +135,7 @@ add_sources() # $1=os, $2=arch, $3=custom
                  ${COMMON_SRCS}"
   elif [ "$1" = "linux" ]; then
     COMMON_SRCS="plat/linux/li_inst.c ${COMMON_SRCS}"
-    if [ "$2" = "x86" ]; then #maybe others as well
+    if [ "$2" = "x86" -o "$2" = "ppc" ]; then #maybe others as well
       #COMMON_SRCS="plat/linux/li_kthread.c ${COMMON_SRCS}"
       #(obsolete) TARGET_CCFLAGS="$TARGET_CCFLAGS -DUNIVERSALRESOLVER"
       COMMON_SRCS="plat/linux/resolv.c ${COMMON_SRCS}"

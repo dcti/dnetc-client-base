@@ -21,13 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.15 2003/03/26 17:12:06 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.16 2003/03/30 13:44:07 gavin Exp $
 ==========================================================================
 
 2.9000
 ------
 
 2.9005-483  fix: x86: re-added SS-2 core - new version fixes bug #3187
+            fix: linux/ppc: no longer coredumps while resolving (#3213)
 
 2.9004-482  undo: x86: rc5-72 SS-2 core (Athlon optimized) removed due to 
                        reentrancy and stack problems (#3187)
