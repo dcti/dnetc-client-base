@@ -104,9 +104,9 @@ const char *CliGetU64AsString( u64 *u, int inNetOrder, int contestid )
     norm.hi = (unsigned int)(d - (((double)(i))*1000000000.0));
   }
   
-  if (i)            sprintf( str, "%u%09u%09u", i, norm.hi, norm.lo );
-  else if (norm.hi) sprintf( str, "%u%09u", norm.hi, norm.lo );
-  else              sprintf( str, "%u", norm.lo );
+  if (i)            sprintf( str, "%u%09u%09u", (unsigned) i, (unsigned) norm.hi, (unsigned) norm.lo );
+  else if (norm.hi) sprintf( str, "%u%09u", (unsigned) norm.hi, (unsigned) norm.lo );
+  else              sprintf( str, "%u", (unsigned) norm.lo );
     
   return str;
 }  

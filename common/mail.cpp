@@ -76,15 +76,16 @@ void MailMessage::checktosend( u32 forcesend)
          retry=0;
 #ifdef FIFO_ON_BUFF_OVERFLOW
          while ((this->sendmessage() == -1) && retry++ < 3) {
-            printf("Mail::sendmessage %d - Unable to send mail message\n", retry );
+            printf("Mail::sendmessage %d - Unable to send mail message\n", 
+                  (int) retry );
             if (retry < 3) sleep(1);
          }
 #else
          while ((this->sendmessage() == -1) && retry++ < 3) {
             if (retry == 3) {
-               printf("Mail::sendmessage %d - Unable to send mail message.  Contents discarded.\n", retry);
+               printf("Mail::sendmessage %d - Unable to send mail message.  Contents discarded.\n", (int) retry);
             } else {
-               printf("Mail::sendmessage %d - Unable to send mail message\n", retry );
+               printf("Mail::sendmessage %d - Unable to send mail message\n", (int) retry );
                sleep( 1 );
             }
          }
@@ -143,11 +144,11 @@ int MailMessage::inittext(int out)
     }
   }
   if (out == 1) {
-    printf("Mail server:port is %s:%d\n",smtp,port);
-    printf("Mail id is %s\n",fromid);
-    printf("Destination is %s\n",destid);
-    printf("Message length set to %d\n",messagelen);
-    printf("RC5id set to %s\n",rc5id);
+    printf("Mail server:port is %s:%d\n", smtp, (int) port);
+    printf("Mail id is %s\n", fromid);
+    printf("Destination is %s\n", destid);
+    printf("Message length set to %d\n", (int) messagelen);
+    printf("RC5id set to %s\n", rc5id);
   }
 
 #ifndef NONETWORK
@@ -263,7 +264,7 @@ int MailMessage::sendmessage()
         delete net;
         return(-1);
       }
-      printf("Network::MailMessage %d - Unable to open connection to smtp server\n", retry );
+      printf("Network::MailMessage %d - Unable to open connection to smtp server\n", (int) retry );
       sleep( 3 );
       // Unable to open network.
     }

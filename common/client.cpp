@@ -563,12 +563,13 @@ s32 Client::Fetch( u8 contest, Network *netin )
 #else
     Log( "<" );
 #endif
-    if (tmpcontest != contest) {
+    if (tmpcontest != contest) 
+    {
       // We didn't get the block we were requesting.
       Log("\n[%s] Received block for wrong contest.\n", Time());
       if (!netin) delete net;
       return( -1 );
-  }
+    }
 #if (CLIENT_OS == OS_AMIGA)
     if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
       SignalTriggered = UserBreakTriggered = 1;
@@ -1642,18 +1643,18 @@ PreferredIsDone1:
               ((load_problem_count>4)?("-"):(" and ")),
               'A'+((load_problem_count>>1)-1));
 
-          for (tmpcontest=0;tmpcontest<2;tmpcontest++) //once for each contest
+          for (s32 tmpc = 0; tmpc < 2; tmpc++) //once for each contest
           {
-            if (have_loaded_buffers[tmpcontest]) //load any of this type?
+            if (have_loaded_buffers[tmpc]) //load any of this type?
             {
               Log( "[%s] %d %s Blocks remain in file %s\n", CliGetTimeString(NULL,1), 
-                CountBufferInput((u8) tmpcontest), 
-                CliGetContestNameFromID(tmpcontest),
-                (nodiskbuffers? "(memory-in)":in_buffer_file[tmpcontest]));
+                CountBufferInput((u8) tmpc), 
+                CliGetContestNameFromID(tmpc),
+                (nodiskbuffers ? "(memory-in)" : in_buffer_file[tmpc]));
               Log( " %s  %d %s Blocks are in file %s\n", CliGetTimeString(NULL,0), 
-                CountBufferOutput((u8) tmpcontest), 
-                CliGetContestNameFromID(tmpcontest),
-                (nodiskbuffers? "(memory-out)":out_buffer_file[tmpcontest]) );
+                CountBufferOutput((u8) tmpc), 
+                CliGetContestNameFromID(tmpc),
+                (nodiskbuffers ? "(memory-out)" : out_buffer_file[tmpc]) );
             }
           }
         }
@@ -1734,10 +1735,10 @@ PreferredIsDone1:
           pthread_attr_init(&thread_sched[cpu_i]);
           pthread_attr_setscope(&thread_sched[cpu_i],PTHREAD_SCOPE_SYSTEM);
           pthread_attr_setinheritsched(&thread_sched[cpu_i],PTHREAD_INHERIT_SCHED);
-          if (pthread_create( &threadid[cpu_i], &thread_sched[cpu_i], (void *) Go_mt, thstart[cpu_i]) )
+          if (pthread_create( &threadid[cpu_i], &thread_sched[cpu_i], (void *(*)(void*)) Go_mt, thstart[cpu_i]) )
             threadid[cpu_i] = NULL; //0
 #else
-          if (pthread_create( &threadid[cpu_i], NULL, (void *) Go_mt, thstart[cpu_i]) )
+          if (pthread_create( &threadid[cpu_i], NULL, (void *(*)(void*)) Go_mt, thstart[cpu_i]) )
             threadid[cpu_i] = NULL; //0
 #endif
 
@@ -1995,7 +1996,7 @@ PreferredIsDone1:
         if (problem[cpu_i].started == 1)
         {
           int percent2 = problem[cpu_i].CalcPercent();
-          if ( percent2 > problem[cpu_i].percent )
+          if ( percent2 > (int) problem[cpu_i].percent )
           {
             if (numcputemp > 1)
                 LogScreenPercentMulti((u32) cpu_i%numcputemp, (u32) percent2,
@@ -2299,20 +2300,20 @@ PreferredIsDone1:
     // Check for 32 consecutive solutions
     //----------------------------------------
 
-    for (int tmpcontest=0; tmpcontest<2; tmpcontest++)
+    for (int tmpc = 0; tmpc < 2; tmpc++)
     {
       #ifdef NEW_STATS_AND_LOGMSG_STUFF
-      const char *contname = CliGetContestNameFromID( tmpcontest ); //clicdata.cpp
+      const char *contname = CliGetContestNameFromID( tmpc ); //clicdata.cpp
       #else
-      const char *contname = ((tmpcontest)?("DES"):("RC5"));
+      const char *contname = ((tmpc) ? ("DES") : ("RC5"));
       #endif
-      if ((consecutivesolutions[tmpcontest] >= 32) && !contestdone[tmpcontest])
+      if ((consecutivesolutions[tmpc] >= 32) && !contestdone[tmpc])
       {
         Log( "\n[%s] Too many consecutive %s solutions detected.\n", Time(), contname );
         Log( "[%s] Either the contest is over, or this client is pointed at a test port.\n", Time() );
         Log( "[%s] Marking %s contest as over\n", Time(), contname );
         Log( "[%s] Further %s blocks will not be processed.\n", Time(), contname );
-        contestdone[tmpcontest] = 1;
+        contestdone[tmpc] = 1;
         WriteConfig( );
       }
     }
@@ -2489,14 +2490,14 @@ PreferredIsDone1:
         //display summaries only of *active* contests otherwise we get
         //something like "341 DES Blocks 1421:25:51.96 - [0.02 keys/sec]"
         int i=1;
-        for (tmpcontest=0;tmpcontest<2;tmpcontest++)
+        for (s32 tmpc = 0; tmpc < 2; tmpc++)
         {
-          if (old_totalBlocksDone[tmpcontest] != totalBlocksDone[tmpcontest])
+          if (old_totalBlocksDone[tmpc] != totalBlocksDone[tmpc])
           {
             Log( "%c%s%c Summary: %s\n", 
-             ((i==1)?('['):(' ')), CliGetTimeString(NULL,i), 
-             ((i==1)?(']'):(' ')), CliGetSummaryStringForContest(tmpcontest) );
-            if ((--i)<0) i=0;
+             ((i == 1) ? ('[') : (' ')), CliGetTimeString(NULL, i), 
+             ((i == 1) ? (']') : (' ')), CliGetSummaryStringForContest(tmpc) );
+            if ((--i) < 0) i = 0;
           }
         }
       }
@@ -2615,7 +2616,6 @@ void Client::LogScreenf ( const char *format, ...)
 
 void Client::Log( const char *format, ...)
 {
-  FILE * file;
   va_list argptr;
 
   // format the buffer
@@ -2629,11 +2629,15 @@ void Client::Log( const char *format, ...)
   // print it out and log it
   LogScreen(logstr);
 
-  if (( strlen( logname ) > 0 ) && (file = fopen ( logname, "a" ))!=NULL)
-  {
-    fprintf( file, "%s", logstr );
-    fclose( file );
-  }
+  if (strlen( logname ) > 0 )
+    {
+      FILE *file = fopen ( logname, "a" );
+      if (file != NULL)
+        {
+          fprintf( file, "%s", logstr );
+          fclose( file );
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------

@@ -16,6 +16,10 @@
 
 #include "clitime.h" //which #includes client.h
 
+#if (CLIENT_OS == OS_SOLARIS) // keep g++ happy
+extern "C" void usleep(unsigned int);
+#endif
+
 // ---------------------------------------------------------------------
 
 static struct timeval cliclock = {0,0};  //base time for CliClock()
@@ -105,11 +109,11 @@ struct timeval *CliTimer( struct timeval *tv )
     if (!xclock)
     {
       if (!stv.tv_sec && !stv.tv_usec)
-        {
+      {
         stv.tv_sec = ((unsigned int)(time(NULL)));
         stv.tv_usec = 0;
       }
-      else if (stv.tv_sec == (secs = ((unsigned int)(time(NULL)))))
+      else if ((long) stv.tv_sec == (long) (secs = ((unsigned int)(time(NULL)))))
       {
         usleep(100000);
         stv.tv_usec += 100000;
@@ -288,9 +292,9 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
   else if (strtype == 2)
   {
     if (!tv) tv = CliTimer( NULL );
-    sprintf( hourstring, "%u.%02u:%02u:%02u.%02u", (tv->tv_sec / 86400),
-      ((tv->tv_sec % 86400) / 3600), (tv->tv_sec % 3600)/60, 
-      (tv->tv_sec % 60), (tv->tv_usec/10000)%100 );
+    sprintf( hourstring, "%u.%02u:%02u:%02u.%02u", (unsigned) (tv->tv_sec / 86400),
+      (unsigned) ((tv->tv_sec % 86400) / 3600), (unsigned) ((tv->tv_sec % 3600)/60), 
+      (unsigned) (tv->tv_sec % 60), (unsigned) ((tv->tv_usec/10000)%100) );
     //if ((tv->tv_sec / 86400)==0 ) //don't show days if not needed
     //  return hourstring+sizeof("0.");
     return hourstring;  
