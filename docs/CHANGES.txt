@@ -21,11 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.35 2003/08/09 23:22:54 mweiser Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.36 2003/08/23 19:05:48 mweiser Exp $
 ==========================================================================
 
 2.9000
 ------
+
+2.9007-486  imp: nextstep: include assembler cores on x86
+            imp: nextstep: fix console handling for config menu
 
 2.9006-485  new: decunix: cpu temperature detection
             new: macosx: use AppleCPUthermo to read CPU temperature (#3315)
