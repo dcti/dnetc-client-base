@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.91 2002/09/25 01:10:55 trashover Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.92 2002/09/25 01:32:37 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1160,7 +1160,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   }
   #endif
 
-  if ((selcorestatics.corenum[contestid] < 0) && (contestid != RC5_72))
+  if (selcorestatics.corenum[contestid] < 0)
     selcorestatics.corenum[contestid] = selcorestatics.user_cputype[contestid];
 
   if (selcorestatics.corenum[contestid] < 0) /* ok, bench it then */
@@ -1998,10 +1998,11 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       unit_func.rc5_72 = rc5_72_unit_func_ansi_4;
       pipeline_count = 4;
     }
-    else /* coresel == 1 */
+    else
     {
       unit_func.rc5_72 = rc5_72_unit_func_ansi_2;
       pipeline_count = 2;
+      coresel = 1;
     }
   }
 
