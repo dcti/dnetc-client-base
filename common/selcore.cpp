@@ -11,7 +11,7 @@
  * ----------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.39 1999/04/04 17:51:22 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.40 1999/04/05 19:46:04 patrick Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -82,12 +82,15 @@ extern "C" u32 des_unit_func_strongarm( RC5UnitWork * rc5unitwork , unsigned lon
 u32 (*rc5_unit_func)(RC5UnitWork *rc5unitwork, unsigned long t);
 u32 (*des_unit_func)(RC5UnitWork *rc5unitwork, unsigned long t);
 
-#elif ((CLIENT_CPU == CPU_POWERPC) && \
+#elif (CLIENT_OS == OS_AIX) || ((CLIENT_CPU == CPU_POWERPC) && \
       ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX || (CLIENT_OS == OS_MACOS))))
 static const char *cputypetable[]=
   {
   "PowerPC 601",
   "PowerPC 603/604/750"
+#if (CLIENT_OS == OS_AIX)
+  , "POWER CPUs"
+#endif
   };
 #elif (CLIENT_CPU == CPU_68K)
 static const char *cputypetable[]=
