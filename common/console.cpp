@@ -11,6 +11,10 @@
    to functions in modules in your own platform area.   - cyp
 */
 // $Log: console.cpp,v $
+// Revision 1.31  1999/01/13 08:49:27  cramer
+// Removed the stdin isatty() check -- who gives a flip if stdin is a tty;
+// stdout is what matters. (Note: if rc5des is started from a script...)
+//
 // Revision 1.30  1999/01/12 15:01:41  cyp
 // Created an itty-bitty ConBeep(). (used by Client::Configure())
 //
@@ -114,7 +118,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.30 1999/01/12 15:01:41 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.31 1999/01/13 08:49:27 cramer Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -234,8 +238,7 @@ int InitializeConsole(int runhidden,int doingmodes)
       #elif (CLIENT_OS == OS_MACOS)
         constatics.conisatty = 1;
       #else
-        constatics.conisatty = ((isatty(fileno(stdout))) && 
-          (isatty(fileno(stdin))));
+        constatics.conisatty = (isatty(fileno(stdout)));
       #endif
       }
     } /* constatics.initlevel == 1 */
