@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.24 2000/03/20 14:27:56 jbaker Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.25 2000/04/14 17:19:55 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -154,8 +154,7 @@ int utilGatherOptionArraysToList( char *buffer, unsigned int buflen,
     buffer[0] = '\0';
   for (contest = 0; contest < CONTEST_COUNT; contest++)
   {
-    /* HACK: OGR doesn't a member in the preferred_blocksize/coretype arrays */
-    if (table2 || (contest != OGR)) /* HACK! OGR only for threshold arrays */
+    //if (1)
     {
       const char *p = CliGetContestNameFromID(contest);
       if (p)
@@ -564,27 +563,15 @@ const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
 
 /* --------------------------------------------------------------------- */
 
-/*
-    Returns a pointer to a static buffer containing a standardized filename
-    that can be copied into argv[0] so that our process is still clearly
-    identified, even if the user tried to rename us to something else to
-    obscure our identity.
-
-    Note that this function intentionally has obscure behavior and
-    complexity to thwart basic attempts to patch our binary.  Although it
-    accepts an argument, we never call it with one.
-
-        newname = Optional string argument that when supplied will be
-                used to generate the string that is returned.  The first
-                token (separated by whitespace or the path separator)
-                will be copied to the static buffer that is returned.
-                If this argument is not supplied, then the string returned
-                will be "rc5des" or "dnetc"
-
-*/
-
 const char *utilSetAppName(const char *newname)
 {
+  /*
+   What is the official distributed.net name for this client?
+   Used for argv[0] stuffing, banners, etc, etc.
+   Intentionally obscure to thwart attempts to patch the binary.
+   May be called with an override, but that functionality is AFAIK 
+   no longer (as of Nov/2000) used.
+  */
   static int initialized = -1;
   static char appname[32];
   if (newname != NULL)
@@ -634,7 +621,7 @@ const char *utilGetAppName(void)
 /* --------------------------------------------------------------------- */
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
-      (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
+   (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
 #  include <dirent.h>        /* for direct read of /proc/ */
 #elif (CLIENT_OS == OS_BEOS)
 #  include <kernel/OS.h>     /* get_next_team_info() */
