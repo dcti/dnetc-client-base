@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.97  1998/07/13 13:18:45  kbracey
+// Put back in .ini filename selection code. CYP! STOP MESSING ABOUT!
+//
 // Revision 1.96  1998/07/13 03:29:49  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
 // ambiguities. ("declaration/type or an expression")
@@ -40,7 +43,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.96 1998/07/13 03:29:49 cyruspatel Exp $.
+// Tweaked $Id: client.cpp,v 1.97 1998/07/13 13:18:45 kbracey Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -216,13 +219,13 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.96 1998/07/13 03:29:49 cyruspatel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.97 1998/07/13 13:18:45 kbracey Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
 
 #include "cputypes.h"
-#include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc 
+#include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "version.h"
 #include "problem.h"
@@ -260,7 +263,7 @@ s32 guiriscos, guirestart;
 Problem problem[2*MAXCPUS];
 volatile u32 SignalTriggered, UserBreakTriggered;
 volatile s32 pausefilefound = 0;
-MailMessage mailmessage; 
+MailMessage mailmessage;
 
 // --------------------------------------------------------------------------
 
@@ -525,9 +528,9 @@ s32 Client::ForceFetch( u8 contest, Network *netin )
     LogScreenf("[%s] %d block%s remain%s in %s\n",Time(),temp1,temp1==1?"":"s",temp1==1?"s":"",
 #ifdef DONT_USE_PATHWORK
     ini_in_buffer_file[contest]);
-#else    
+#else
     in_buffer_file[contest]);
-#endif    
+#endif
   }
   return ret;
 }
@@ -835,7 +838,7 @@ s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
     if (proxymessage[0] != 0) {
       if (quietness <= 1) // if > 1, don't show proxy message
         {
-        #if (CLIENT_OS == OS_WIN32) 
+        #if (CLIENT_OS == OS_WIN32)
           //uses proportional font, so reformatting looks wierd
           Log( "[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
         #else
@@ -895,12 +898,12 @@ s32 Client::ForceFlush( u8 contest , Network *netin )
     ret = Flush(contest, netin);
     temp2 = temp1;
     temp1 = CountBufferOutput(contest);
-    Log("[%s] %d block%s remain%s in %s\n",Time(), temp1, temp1==1?"":"s", temp1==1?"s":"", 
+    Log("[%s] %d block%s remain%s in %s\n",Time(), temp1, temp1==1?"":"s", temp1==1?"s":"",
 #ifdef DONT_USE_PATHWORK
     ini_out_buffer_file[contest]);
-#else    
+#else
     out_buffer_file[contest]);
-#endif    
+#endif
   }
   return ret;
 }
@@ -1074,7 +1077,7 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
         {
         if (quietness <= 1) // if > 1, don't show proxy message
           {
-          #if (CLIENT_OS == OS_WIN32) 
+          #if (CLIENT_OS == OS_WIN32)
             //uses proportional font, so reformatting looks wierd
             Log( "[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
           #else
@@ -1230,7 +1233,7 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
       {
         if (quietness <= 1) // if > 1, don't show proxy message
           {
-          #if (CLIENT_OS == OS_WIN32) 
+          #if (CLIENT_OS == OS_WIN32)
             //uses proportional font, so reformatting looks wierd
             Log( "[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
           #else
@@ -1296,11 +1299,11 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
 #if (CLIENT_OS == OS_NETWARE)
         || !CliIsNetworkAvailable(0)
 #endif
-    ) 
+    )
     return( -1 );
 
 #if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
-  if ( (lurk==2) && (LurkStatus() == 0) && !(fetcherr && flusherr) ) 
+  if ( (lurk==2) && (LurkStatus() == 0) && !(fetcherr && flusherr) )
     {
     return -1;
     };
@@ -1606,7 +1609,7 @@ static int IsFilenameValid( const char *filename )
 { return ( *filename != 0 && strcmp( filename, "none" ) != 0 ); }
 
 static int DoesFileExist( const char *filename )
-{ 
+{
   if ( !IsFilenameValid( filename ) )
     return 0;
 #ifdef DONT_USE_PATHWORK
@@ -1974,23 +1977,23 @@ PreferredIsDone1:
                 CliGetContestNameFromID((int) tmpc),
                 in == 1 ? "" : "s",
                 in == 1 ? "s" : "",
-                (nodiskbuffers ? "(memory-in)" : 
+                (nodiskbuffers ? "(memory-in)" :
 #ifdef DONT_USE_PATHWORK
                 ini_in_buffer_file[(int) tmpc]));
-#else                
+#else
                 in_buffer_file[(int) tmpc]));
-#endif                
+#endif
               Log( "[%s] %d %s block%s %s in file %s\n", CliGetTimeString(NULL,1),
                 out,
                 CliGetContestNameFromID((int) tmpc),
                 out == 1 ? "" : "s",
                 out == 1 ? "is" : "are",
-                (nodiskbuffers ? "(memory-out)" : 
+                (nodiskbuffers ? "(memory-out)" :
 #ifdef DONT_USE_PATHWORK
                 ini_out_buffer_file[(int) tmpc]));
 #else
                 out_buffer_file[(int) tmpc]));
-#endif                
+#endif
             }
           }
         }
@@ -2199,8 +2202,8 @@ PreferredIsDone1:
           LogScreen("Fetch request completed.\n");
           connectrequested=0;
           };
-         
-        
+
+
       }
     }
     #endif
@@ -2436,7 +2439,7 @@ PreferredIsDone1:
             Log( "PutBuffer Error\n" );
 
             // Block didn't get put into a buffer, subtract it from the count.
-            totalBlocksDone[(int)tmpcontest]--;                                          
+            totalBlocksDone[(int)tmpcontest]--;
             };
 
           //---------------------
@@ -2565,20 +2568,20 @@ PreferredIsDone1:
                  "[%s] %d %s block%s %s in file %s\n",
                  CliGetTimeString(NULL,1), count, CliGetContestNameFromID(fileentry.contest),
                  count == 1 ? "" : "s", count == 1 ? "s" : "",
-                 (nodiskbuffers ? "(memory-in)" : 
+                 (nodiskbuffers ? "(memory-in)" :
 #ifdef DONT_USE_PATHWORK
                  ini_in_buffer_file[(int)fileentry.contest]),
-#else                 
+#else
                  in_buffer_file[(int)fileentry.contest]),
-#endif                 
+#endif
                  CliGetTimeString(NULL,1), outcount, CliGetContestNameFromID(fileentry.contest),
                  outcount == 1 ? "" : "s", outcount == 1 ? "is" : "are",
-                 (nodiskbuffers ? "(memory-out)" : 
+                 (nodiskbuffers ? "(memory-out)" :
 #ifdef DONT_USE_PATHWORK
                  ini_out_buffer_file[(int)fileentry.contest]) );
-#else                 
+#else
                  out_buffer_file[(int)fileentry.contest]) );
-#endif                 
+#endif
           }
 
           //---------------------
@@ -2792,7 +2795,7 @@ PreferredIsDone1:
     if (!TimeToQuit)
     {
       // Time to checkpoint?
-      if ((IsFilenameValid( checkpoint_file[0] ) || 
+      if ((IsFilenameValid( checkpoint_file[0] ) ||
            IsFilenameValid( checkpoint_file[1] ))
            && (!nodiskbuffers) && (!pausefilefound))
         {
@@ -2876,7 +2879,7 @@ void Client::MailDeinitialize(void)
   mailmessage.quietmode=quietmode;
   if (!offlinemode)
     mailmessage.checktosend(1);
-}  
+}
 
 // ------------------------------------------------------------------------
 
@@ -2950,7 +2953,7 @@ void Client::Log( const char *format, ...)
       FILE *file = fopen ( logname, "a" );
 #else
       FILE *file = fopen ( GetFullPathForFilename( logname ), "a" );
-#endif                  
+#endif
       if (file != NULL)
         {
           fprintf( file, "%s", logstr );
@@ -2966,7 +2969,7 @@ void Client::LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted
   // fixes the problem of "100%" running off an 80 column screen and
   // also gives a '.' sooner for new blocks.
   char buffer[88];
-  int pos = 0;  
+  int pos = 0;
   u32 restartpercent =
               (!restarted || percent == 100) ? 0 :
               ( percent - ((percent > 90) ? (percent & 1) : (1 - (percent & 1))) );
@@ -3072,7 +3075,7 @@ int main( int argc, char *argv[] )
   }
   else
   {
-  #if (CLIENT_OS == OS_WIN32) 
+  #if (CLIENT_OS == OS_WIN32)
     char fndrive[_MAX_DRIVE], fndir[_MAX_DIR], fname[_MAX_FNAME], fext[_MAX_FNAME];
     _splitpath(argv[0], fndrive, fndir, fname, fext);
     _makepath(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
@@ -3081,9 +3084,8 @@ int main( int argc, char *argv[] )
     strcpy(client.exename, fname);     // exe filename
     strcat(client.exename, fext);      // tack on extention
   #endif
-  #ifdef DONT_USE_PATHWORK 
     #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
-        (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || \ 
+        (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || \
         (CLIENT_OS == OS_OS2)
       #if defined(DJGPP)
         char fndrive[MAXDRIVE], fndir[MAXDIR], fname[MAXFILE], fext[MAXEXT];
@@ -3116,7 +3118,6 @@ int main( int argc, char *argv[] )
       strcpy( client.inifilename, argv[0] );
       strcat( client.inifilename, EXTN_SEP "ini" );
     #endif
-  #endif //DONT_USE_PATHWORK
   }
 
   // See if there's a command line parameter to override the INI filename...
@@ -3396,7 +3397,7 @@ int main( int argc, char *argv[] )
     #if defined(NONETWORK)
       client.offlinemode=1;
     #endif
-    if (!client.offlinemode) 
+    if (!client.offlinemode)
       NetworkInitialize();
     client.MailInitialize(); //copy the smtp ini settings over
 
@@ -3426,8 +3427,8 @@ int main( int argc, char *argv[] )
     client.MailDeinitialize(); //checktosend(1) if not offlinemode
     if (!client.offlinemode)
       NetworkDeinitialize();
-    
-    if (client.randomchanged) 
+
+    if (client.randomchanged)
       client.WriteContestandPrefixConfig();
 
     retcode = ( UserBreakTriggered ? -1 : 0 );
@@ -3502,7 +3503,7 @@ return 0;
 
 s32 Client::LurkStatus(void)// Checks status of connection
   // 0 == not currently connected
-  // 1 == currently connected 
+  // 1 == currently connected
 {
 #if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
 if (lurk && rasenumconnections && rasgetconnectstatus)
