@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.118  1998/11/10 09:18:09  silby
+# Added alpha-linux target, should use axp-bmeyer core.
+#
 # Revision 1.117  1998/11/09 09:03:42  remi
 # sparc-linux-mt-egcs is now -static, 'cause the stock RH 5.1 glibc2 is
 # not thread friendly.
@@ -820,6 +823,14 @@ case "$1" in
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-ltermcap"
+	;;
+
+    *alpha-linux)
+	TARGET_AS="g++ -c"
+	TARGET_CC="g++"
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/alphaasm/axp-bmeyer.cpp rc5/alphaasm/axp-bmeyer.s"
+	TARGET_LDFLAGS="-static"
 	;;
 
 ###### PowerPC/POWER

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.39  1998/11/10 09:18:13  silby
+// Added alpha-linux target, should use axp-bmeyer core.
+//
 // Revision 1.38  1998/11/08 22:25:48  silby
 // Fixed RC5_MMX pipeline count selection, was incorrect.
 //
@@ -91,7 +94,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.38 1998/11/08 22:25:48 silby Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.39 1998/11/10 09:18:13 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -115,6 +118,8 @@ return "@(#)$Id: problem.cpp,v 1.38 1998/11/08 22:25:48 silby Exp $"; }
   extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
 #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_VMS)
   #include "rc5ansi2-rg.cpp"
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+#elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_LINUX)
   extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
 #elif (CLIENT_CPU == CPU_POWER)
   // power, not powerpc
