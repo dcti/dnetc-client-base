@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.198  1999/04/01 03:20:41  cyp
+// Updated to reflect changed [in|out]_buffer_[file->basename] semantics.
+//
 // Revision 1.197  1999/03/20 07:48:39  cyp
 // added #include "random.h"
 //
@@ -212,7 +215,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.197 1999/03/20 07:48:39 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.198 1999/04/01 03:20:41 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -276,11 +279,12 @@ static void __initialize_client_object(Client *client)
   {
     client->inthreshold[contest] = 10;
     client->outthreshold[contest] = 10;
-    client->in_buffer_file[contest][0] = '\0';
-    client->out_buffer_file[contest][0] = '\0';
-    client->membufftable[contest].in.count=0;
-    client->membufftable[contest].out.count=0;
+    client->membufftable[contest].in.count = 0;
+    client->membufftable[contest].out.count = 0;
   }
+  client->in_buffer_basename[0] = '\0';
+  client->out_buffer_basename[0] = '\0';
+  client->remote_update_dir[0] = '\0';
 
   /* -- net -- */
   client->offlinemode = 0;

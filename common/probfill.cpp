@@ -6,6 +6,9 @@
  * ****************** THIS IS WORLD-READABLE SOURCE *********************
  *
  * $Log: probfill.cpp,v $
+ * Revision 1.42  1999/04/01 03:20:41  cyp
+ * Updated to reflect changed [in|out]_buffer_[file->basename] semantics.
+ *
  * Revision 1.41  1999/03/20 07:41:33  cyp
  * Modified for use with new WorkRecord structure.
  *
@@ -167,7 +170,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.41 1999/03/20 07:41:33 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.42 1999/04/01 03:20:41 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -297,22 +300,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       LogScreen("Test success was %sdetected!\n",
          (wrdata.resultcode == RESULT_NOTHING ? "not" : "") );
     }
-    
-    if (resultcode == RESULT_FOUND)
-    {
-      switch (cont_i) 
-      {
-        case 0: // RC5
-        case 1: // DES
-        {
-          /* ********************** SHOULD THIS NOT BE IN PROBLEM? ****** */
-          wrdata.work.crypto.key.lo += wrdata.work.crypto.keysdone.lo;
-          break;
-        }
-        case 2: // OGR
-          break;
-      }
-    }
 
     wrdata.contest = (u8)(cont_i);
     wrdata.resultcode = resultcode;
@@ -347,6 +334,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           norm_key_count = 
             (unsigned int)__iter2norm( wrdata.work.crypto.iterations.lo,
                                        wrdata.work.crypto.iterations.hi );
+          if (norm_key_count == 0) /* test block */
+            norm_key_count = 1;
           break;
         case 2: //OGR
           norm_key_count = 1;
@@ -390,6 +379,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         norm_key_count = 
            (unsigned int)__iter2norm( (wrdata.work.crypto.iterations.lo),
                                       (wrdata.work.crypto.iterations.hi) );
+        if (norm_key_count == 0) /* test block */
+          norm_key_count = 1;
         sprintf(workunit, "%08lX:%08lX", ( wrdata.work.crypto.key.hi ),
                                          ( wrdata.work.crypto.key.lo ) );
         break;
@@ -617,6 +608,9 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
       {
         norm_key_count = (unsigned int)__iter2norm((wrdata.work.crypto.iterations.lo),
                                                    (wrdata.work.crypto.iterations.hi));
+        if (norm_key_count == 0) /* test block */
+          norm_key_count = 1;
+        #if 0
         if (norm_key_count == 0)
         {
           Log("Ouch!: normkeycount == 0 for iter %08x:%08x\n",
@@ -624,6 +618,7 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
                       wrdata.work.crypto.iterations.lo);
           norm_key_count++;
         }
+        #endif
         break;
       }
       case 2: // OGR
@@ -696,7 +691,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   unsigned int saved_normalized_key_count[CONTEST_COUNT];
   unsigned long totalBlocksDone; /* all contests */
   
-  char buffer[100+sizeof(in_buffer_file[0])];
+  char buffer[100+sizeof(in_buffer_basename[0])];
   unsigned int total_problems_loaded, total_problems_saved;
   unsigned int norandom_count, getbuff_errs, empty_problems;
 
@@ -871,7 +866,8 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
               loaded_problems_count[cont_i], cont_name,
               ((loaded_problems_count[cont_i]==1)?(""):("s")),
               loaded_normalized_key_count[cont_i],
-              (nodiskbuffers ? "(memory-in)" : in_buffer_file[cont_i]) );
+              (nodiskbuffers ? "(memory-in)" : 
+              BufferGetDefaultFilename( cont_i, 0, in_buffer_basename )) );
         }
 
       if (saved_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD)
@@ -881,8 +877,10 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
               ((saved_problems_count[cont_i]==1)?(""):("s")),
               saved_normalized_key_count[cont_i],
               (mode == PROBFILL_UNLOADALL)?
-                (nodiskbuffers ? "(memory-in)" : in_buffer_file[cont_i]) :
-                (nodiskbuffers ? "(memory-out)" : out_buffer_file[cont_i]) );
+                (nodiskbuffers ? "(memory-in)" : 
+                BufferGetDefaultFilename( cont_i, 0, in_buffer_basename ) ) :
+                (nodiskbuffers ? "(memory-out)" : 
+                BufferGetDefaultFilename( cont_i, 1, out_buffer_basename )) );
         }
 
       // To suppress "odd" problem completion count summaries (and not be
@@ -949,8 +947,8 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
                  ((block_count==1)?("is"):("are")):
                  ((block_count==1)?("remains"):("remain"))),
               ((inout== 0)?
-                 ((nodiskbuffers)?("(memory-in)"):(in_buffer_file[cont_i])):
-                 ((nodiskbuffers)?("(memory-out)"):(out_buffer_file[cont_i])))
+                (nodiskbuffers ? "(memory-in)" : BufferGetDefaultFilename( cont_i, 0, in_buffer_basename ) ) :
+                (nodiskbuffers ? "(memory-out)": BufferGetDefaultFilename( cont_i, 1, out_buffer_basename ) ))
               );
           Log( "%s\n", __WrapOrTruncateLogLine( buffer, 1 ));
           } //if (block_count >= 0)

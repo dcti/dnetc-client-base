@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.28  1999/04/01 03:20:40  cyp
+// Updated to reflect changed [in|out]_buffer_[file->basename] semantics.
+//
 // Revision 1.27  1999/03/18 05:40:43  cyp
 // oops. "Project priority" was in the wrong menu.
 //
@@ -88,7 +91,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.27 1999/03/18 05:40:43 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.28 1999/04/01 03:20:40 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -141,14 +144,14 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "packets which may then be transferred to a team account; (c) The number of\n"
   "packets completed may be used as votes in the selection of a recipient of\n"
   "the prize-money reserved for a non-profit organization.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,1,NULL,NULL,0,0},
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //1
 {  CFGTXT("Buffer packets in RAM only? (no disk I/O)"),"0",
    CFGTXT(
    "This option is for machines with permanent connections to a keyserver\n"
    "but without local disks. Note: This option will cause all buffered,\n"
    "unflushable packets to be lost by a client shutdown.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_BOOL,2,NULL,NULL,0,1},
+  ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
 //2
 { CFGTXT("Frequently check for empty buffers?"),"0",
   CFGTXT(
@@ -156,7 +159,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "every few minutes or so. You might want to use this if you have a\n"
   "single computer with a network connecting \"feeding\" other clients via\n"
   "a common buff-in.* file so that the buffer never reaches empty.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_BOOL,3,NULL,NULL,0,1},
+  ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
 //3
 { CFGTXT("Preferred RC5/DES packet size (2^X keys/packet)"),"31 (default)",
   CFGTXT(
@@ -165,7 +168,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "the -benchmark switch will give you a hint as to what the best packet size\n"
   "for this machine might be. Packet sizes are specified as powers of 2.\n"
   "The minimum and maximum packet sizes are 28 and 33 respectively.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_INT,4,NULL,NULL,28,33},
+  ),CONF_MENU_BUFF,CONF_TYPE_INT,NULL,NULL,28,33,NULL},
 //4
 { CFGTXT("Packet fetch/flush threshold"), "10 (default)",
   CFGTXT(
@@ -175,39 +178,42 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "When the number of packets in the input buffer reaches 0, the client will\n"
   "attempt to connect to a keyserver, fill the input buffer to the threshold,\n"
   "and send in all completed packets. Keep the number of packets to buffer low\n"
-  "(10 or less) if you have a fixed (static) connection to the internet. If\n"
-  "you use a dial-up connection buffer as many packets as you would complete\n"
-  "in a day (running the client with -benchmark will give you a hint as what\n"
-  "might be accomplished by this machine in one day). You may also force a\n"
-  "buffer exchange by starting the client with the -update option.  Do not\n"
-  "buffer more than what might be accomplished in one week; you might not\n"
-  "receive credit for them.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_INT,5,NULL,NULL,1,MAXBLOCKSPERBUFFER},
+  "if you have a fixed (static) connection to the internet, or the cost of your\n"
+  "dialup connection is negligible.\n"
+  "In general, you should not buffer more than your client(s) can complete in\n"
+  "one day (running the client with -benchmark will give you a hint as what\n"
+  "might be accomplished by this machine in one day), and you should think twice\n"
+  "about buffering more than can be accomplished in 3 days.\n"
+  "You may also force a buffer exchange by starting the client with the -update\n"
+  "option.\n"
+  ),CONF_MENU_BUFF,CONF_TYPE_INT,NULL,NULL,1,MAXBLOCKSPERBUFFER,NULL},
 //5
-{ CFGTXT("RC5 In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "rc5",
-  CFGTXT(""
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,6,NULL,NULL,0,0},
+{ CFGTXT("In-Buffer Filename Prefix"), "buff-in",
+  CFGTXT(
+  "Enter the prefix (the base name, ie a filename without an 'extension') of the\n"
+  "buffer files where unfinished work will be stored. The default is \"buff-in\".\n"
+  "The name of the project will concatenated internally to this base name name\n"
+  "to construct the full name of the buffer file. Thus, \"buff-in\" will become\n"
+  "\"buff-in"EXTN_SEP"rc5\" for the RC5 input buffer, \"buff-in"EXTN_SEP"des\"\n"
+  "for the DES input buffer and \"buff-in"EXTN_SEP"ogr\" for the OGR input\n"
+  "buffer. Note: if a path is not specified, the files will be created in the\n"
+  "same directory as the .ini file, which is - by default - created in the same\n"
+  "directory as rc5des itself.\n"
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //6
-{ CFGTXT("RC5 Out-Buffer Path/Name"), "buff-out" EXTN_SEP "rc5",
-  CFGTXT(""
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,7,NULL,NULL,0,0},
+{ CFGTXT("Out-Buffer Filename Prefix"), "buff-out",
+  CFGTXT(
+  "Enter the prefix (the base name, ie a filename without an 'extension') of the\n"
+  "buffer files where finished work will be stored. The default is \"buff-out\".\n"
+  "The name of the project will concatenated internally to this base name name\n"
+  "to construct the full name of the buffer file. Thus, \"buff-out\" will become\n"
+  "\"buff-out"EXTN_SEP"rc5\" for the RC5 output buffer, \"buff-out"EXTN_SEP"des\"\n"
+  "for the DES output buffer and \"buff-out"EXTN_SEP"ogr\" for the OGR output\n"
+  "buffer. Note: if a path is not specified, the files will be created in the\n"
+  "same directory as the .ini file, which is - by default - created in the same\n"
+  "directory as rc5des itself.\n"
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //7
-{ CFGTXT("DES In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "des",
-  CFGTXT(""
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,9,NULL,NULL,0,0},
-//8
-{ CFGTXT("DES Out-Buffer Path/Name"), "buff-out" EXTN_SEP "des",
-  CFGTXT(""
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,10,NULL,NULL,0,0},
-//9
-{ CFGTXT("OGR In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "ogr",
-  CFGTXT(""
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,11,NULL,NULL,0,0},
-//10
-{ CFGTXT("OGR Out-Buffer Path/Name"), "buff-out" EXTN_SEP "ogr",
-  CFGTXT(""
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,12,NULL,NULL,0,0},
-//11
 { CFGTXT("Checkpoint Filename"),"",
   CFGTXT(
   "This option sets the location of the checkpoint file. The checkpoint is\n"
@@ -216,30 +222,46 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "DO NOT SHARE CHECKPOINTS BETWEEN CLIENTS. Avoid the use of checkpoints unless\n"
   "your client is running in an environment where it might not be able to shutdown\n"
   "properly.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,13,NULL,NULL,0,0},
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+//8
+{ CFGTXT("Alternate buffer directory"),"",
+  CFGTXT(
+  "When a client runs out of work to do and cannot fetch more work from a\n"
+  "keyserver, it will fetch/flush from/to files in this directory.\n"
+  "\n"
+  "This option specifies a *directory*, and not a filename. The full paths\n"
+  "effectively used are constructed from the name of the project and the\n"
+  "filename component in the \"[Out|In]-Buffer Filename Prefix\" options.\n"
+  "For example, if the \"In-Buffer Filename Prefix\" is \"~/buff-in\", and\n"
+  "the alternate buffer directory is \"/there/\" then the alternate in-buffer-file\n"
+  "for RC5 becomes \"/there/buff-in.rc5\"\n"
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 
 /* ------------------------------------------------------------ */
 
-//12
+//8
 { CFGTXT("Complete this many packets, then exit"), "0 (no limit)",
   CFGTXT(
   "This option specifies that you wish to have the client exit after it has\n"
   "crunched a predefined number of packets. Use 0 (zero) to apply 'no limit',\n"
   "or -1 to have the client exit when the input buffer is empty (this is the\n"
   "equivalent to the -runbuffers command line option.)\n"
-  ),CONF_MENU_MISC,CONF_TYPE_INT,1,NULL,NULL,0,0}, /* no min max here */
-//13
+  ),CONF_MENU_MISC,CONF_TYPE_INT,NULL,NULL,0,0,NULL}, /* no min max here */
+//9
 { CFGTXT("Run for this long, then exit"), "0:00 (no limit)",
   CFGTXT(
   "This option specifies that you wish to have the client exit after it has\n"
   "crunched a predefined number of hours. Use 0:00 (or clear the field) to\n"
   "specify 'no limit'.\n"
-  ),CONF_MENU_MISC,CONF_TYPE_TIMESTR,2,NULL,NULL,0,0},
-//14
+  ),CONF_MENU_MISC,CONF_TYPE_TIMESTR,NULL,NULL,0,0,NULL},
+//10
 { CFGTXT("Pausefile Path/Name"),"",
-  CFGTXT(""
-  ),CONF_MENU_MISC,CONF_TYPE_ASCIIZ,3,NULL,NULL,0,0},
-//15
+  CFGTXT(
+  "While running, the client will occasionally look for the the presence of this\n"
+  "file. If it exists, the client will immediately suspend itself and will continue\n"
+  "to remain suspended as long as the file is present.\n"
+  ),CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+//11
 { CFGTXT("Disable all screen output? (quiet mode)"),"0",
   CFGTXT(
   "When enabled, this option will cause the client to suppress all screen output\n"
@@ -248,37 +270,37 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "you choose to run the client with disabled screen output. This option is\n"
   "synonymous with the -runhidden and -quiet command line switches and can be\n"
   "overridden with the -noquiet switch.\n"
-  ),CONF_MENU_MISC,CONF_TYPE_BOOL,4,NULL,NULL,0,1},
-//16
+  ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
+//12
 { CFGTXT("Disable exit file checking?"),"0",
   CFGTXT(
   "When disabled, this option will cause the client to watch for a file named\n"
   "\"exitrc5.now\", the presence of which being a request to the client to\n"
   "shut itself down. (The name of the exit flag file may be set in the ini.)\n"
-  ),CONF_MENU_MISC,CONF_TYPE_BOOL,5,NULL,NULL,0,1},
-//17
+  ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
+//13
 { CFGTXT("Disable the packet completion indicator?"),"0",
   CFGTXT(""
-  ),CONF_MENU_MISC,CONF_TYPE_BOOL,6,NULL,NULL,0,1},
-//18
+  ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
+//14
 { CFGTXT("Project Priority"), "DES,OGR,RC5",
   CFGTXT(
   "Enter the order in which the client will search for active projects,\n"
   "for instance \"DES,OGR,RC5\" specifies that DES packets (if available) will\n"
   "be crunched before OGR or RC5 packets.\n"
-  ),CONF_MENU_MISC,CONF_TYPE_ASCIIZ,7,NULL,NULL,0,0},
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 
 /* ------------------------------------------------------------ */
 
-//19
+//15
 { CFGTXT("Processor type"), "-1 (autodetect)",
   CFGTXT(
   "This option determines which processor the client will optimize operations\n"
   "for.  While auto-detection is preferrable for most processor families, you may\n"
   "wish to set the processor type manually if detection fails or your machine's\n"
   "processor is detected incorrectly.\n"
-  ),CONF_MENU_PERF,CONF_TYPE_INT,1,NULL,NULL,0,0},
-//20
+  ),CONF_MENU_PERF,CONF_TYPE_INT,NULL,NULL,0,0,NULL},
+//16
 { CFGTXT("Number of processors available"), "-1 (autodetect)",
 #if (CLIENT_OS == OS_RISCOS)
   "This option specifies the number of threads you want the client to work on.\n"
@@ -297,8 +319,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "setting this option to zero.\n"
   )
 #endif
-  ,CONF_MENU_PERF,CONF_TYPE_INT,2,NULL,NULL,-1,128},
-//21
+  ,CONF_MENU_PERF,CONF_TYPE_INT,NULL,NULL,-1,128,NULL},
+//17
 { CFGTXT("Priority level to run at"), "0 (lowest/idle)",
 #if (CLIENT_OS == OS_NETWARE)
   CFGTXT(
@@ -334,68 +356,68 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "obviously not a good idea unless the machine is running no other programs.\n"
   )
 #endif
-  ,CONF_MENU_PERF, CONF_TYPE_INT, 3 /*menupos*/, NULL, NULL, 0, 9 },
+  ,CONF_MENU_PERF, CONF_TYPE_INT, NULL, NULL, 0, 9, NULL },
 
 /* ------------------------------------------------------------ */
 
-//22
+//18
 { CFGTXT("File to log to"), "",
   CFGTXT(
   "To enable logging to file you must specify the name of a logfile. The filename\n"
   "is limited a length of 128 characters and may not contain spaces. The file\n"
   "will be created to be in the client's directory unless a path is specified.\n"
-  ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,1,NULL,NULL,0,0},
-//23
+  ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+//19
 { CFGTXT("Log by mail spool size (bytes)"), "0 (mail disabled)",
   CFGTXT(
   "The client is capable of sending you a log of the client's progress by mail.\n"
   "To activate this capability, specify how much you want the client to buffer\n"
   "before sending. The minimum is 2048 bytes, the maximum is approximately 130000\n"
   "bytes. Specify 0 (zero) to disable logging by mail.\n"
-  ),CONF_MENU_LOG,CONF_TYPE_INT,2,NULL,NULL,0,125000},
-//24
+  ),CONF_MENU_LOG,CONF_TYPE_INT,NULL,NULL,0,125000,NULL},
+//20
 { CFGTXT("SMTP Server to use"), "",
   CFGTXT(
   "Specify the name or DNS address of the SMTP host via which the client should\n"
   "relay mail logs. The default is the hostname component of the email address from\n"
   "which logs will be mailed.\n"
-  ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,3,NULL,NULL,0,0},
-//25
+  ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+//21
 { CFGTXT("SMTP Port"), "25 (default)",
   CFGTXT(
   "Specify the port on the SMTP host to which the client's mail subsystem should\n"
   "connect when sending mail logs. The default is port 25.\n"
-  ),CONF_MENU_LOG,CONF_TYPE_INT,4,NULL,NULL,1,0xFFFF},
-//26
+  ),CONF_MENU_LOG,CONF_TYPE_INT,NULL,NULL,1,0xFFFF,NULL},
+//22
 { CFGTXT("E-mail address that logs will be mailed from"),
   "" /* *((const char *)(options[CONF_ID].thevariable)) */,
   CFGTXT(
   "(Some servers require this to be a real address)\n"
-  ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,5,NULL,NULL,0,0},
-//27
+  ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+//23
 { CFGTXT("E-mail address to send logs to"),
   "" /* *((const char *)(options[CONF_ID].thevariable)) */,
   CFGTXT(
   "Full name and site eg: you@your.site.  Comma delimited list permitted.\n"
-  ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,6,NULL,NULL,0,0},
+  ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 
 /* ------------------------------------------------------------ */
 
-//28
+//24
 { CFGTXT("Offline operation mode"),"0",
   CFGTXT(
   "Yes: The client will never connect to a keyserver.\n"
   " No: The client will connect to a keyserver as needed.\n"
-  ),CONF_MENU_NET,CONF_TYPE_BOOL,1,NULL,NULL,0,1},
-//29
+  ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
+//25
 { CFGTXT("Network Timeout (seconds)"), "60 (default)",
   CFGTXT(
   "This option determines the amount of time the client will wait for a network\n"
   "read or write acknowledgement before it assumes that the connection has been\n"
   "broken. Any value between 5 and 300 seconds is valid and setting the timeout\n"
   "to -1 forces a blocking connection.\n"
-  ),CONF_MENU_NET,CONF_TYPE_INT,2,NULL,NULL,-1,300},
-//30
+  ),CONF_MENU_NET,CONF_TYPE_INT,NULL,NULL,-1,300,NULL},
+//26
 { CFGTXT("Firewall Protocol/Communications mode"), "0 (direct connection)",
   CFGTXT(
   "This option determines what protocol to use when communicating via a SOCKS\n"
@@ -403,8 +425,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "that is listening a telnet port. Specify 0 (zero) if you have a direct\n"
   "connection to either a personal proxy or to a distributed.net keyserver\n"
   "on the internet.\n"
-  ),CONF_MENU_NET,CONF_TYPE_INT,3,NULL,CFGTXT(&uuehttptable[0]),0,5},
-//31
+  ),CONF_MENU_NET,CONF_TYPE_INT,NULL,CFGTXT(&uuehttptable[0]),0,5,NULL},
+//27
 { CFGTXT("Automatically select a distributed.net keyserver?"), "1",
   CFGTXT(
   "Set this option to 'Yes' UNLESS your client will not be communicating\n"
@@ -412,17 +434,17 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "keyservers) OR your client will be connecting through an HTTP proxy\n"
   "(firewall) and you have been explicitely advised by distributed.net\n"
   "staff to use a specific IP address.\n"
-  ),CONF_MENU_NET,CONF_TYPE_BOOL,4,NULL,NULL,0,1},
-//32
-{ CFGTXT("Keyserver to communicate with"), "",
+  ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
+//28
+{ CFGTXT("Keyserver hostname"), "",
   CFGTXT(
   "This is the name or IP address of the machine that your client will\n"
   "obtain keys from and send completed packets to. Avoid IP addresses\n"
   "if possible unless your client will be communicating through a HTTP\n"
   "proxy (firewall) and you have trouble fetching or flushing packets.\n"
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,5,NULL,NULL,0,0},
-//33
-{ CFGTXT("Keyserver port to connect to"), "0 (auto select)",
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+//29
+{ CFGTXT("Keyserver port"), "0 (auto select)",
   CFGTXT(
   "This field determines which keyserver port the client should connect to.\n"
   "You should leave this at zero unless:\n"
@@ -434,40 +456,40 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "\n"
   "All keyservers (personal proxy as well as distributed.net hosts) accept\n"
   "all encoding methods (UUE, HTTP, raw) on any/all ports the listen on.\n"
-  ),CONF_MENU_NET,CONF_TYPE_INT,6,NULL,NULL,0,0xFFFF},
-//34
+  ),CONF_MENU_NET,CONF_TYPE_INT,NULL,NULL,0,0xFFFF,NULL},
+//30
 { CFGTXT("Keyserver is a personal proxy on a protected LAN?"),"0",
   CFGTXT(
   "If the keyserver that your client will be connecting to is a personal\n"
   "proxy inside a protected LAN (inside a firewall), set this option to 'yes'.\n"
   "Otherwise leave it at 'No'.\n"
-  ),CONF_MENU_NET,CONF_TYPE_BOOL,7,NULL,NULL,0,1},
-//35
-{ CFGTXT("HTTP/SOCKS proxy hostname"), "proxy.mydomain.com",
+  ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
+//31
+{ CFGTXT("Firewall hostname"), "",
   CFGTXT(
   "This field determines the hostname or IP address of the firewall proxy\n"
   "through which the client should communicate. The proxy is expected to be\n"
   "on a local network.\n"
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,8,NULL,NULL,0,0},
-//36
-{ CFGTXT("HTTP/SOCKS proxy port"), "" /* note: atol("")==0 */,
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+//32
+{ CFGTXT("Firewall port"), "" /* note: atol("")==0 */,
   CFGTXT(
   "This field determines the port number on the firewall proxy to which the\n"
   "the client should connect. The port number must be valid.\n"
-  ),CONF_MENU_NET,CONF_TYPE_INT,9,NULL,NULL,1,0xFFFF},
-//37
-{ CFGTXT("HTTP/SOCKS proxy username"), "",
+  ),CONF_MENU_NET,CONF_TYPE_INT,NULL,NULL,1,0xFFFF,NULL},
+//33
+{ CFGTXT("Firewall username"), "",
   CFGTXT(
   "Specify a username in this field if your SOCKS host requires\n"
   "authentication before permitting communication through it.\n"
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,10,NULL,NULL,0,0},
-//38
-{ CFGTXT("HTTP/SOCKS5 proxy password"), "",
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+//34
+{ CFGTXT("Firewall password"), "",
   CFGTXT(
   "Specify the password in this field if your SOCKS host requires\n"
   "authentication before permitting communication through it.\n"
-  ),CONF_MENU_NET,CONF_TYPE_PASSWORD,11,NULL,NULL,0,0},
-//39
+  ),CONF_MENU_NET,CONF_TYPE_PASSWORD,NULL,NULL,0,0,NULL},
+//35
 { CFGTXT("Modem detection options"),"0",
   CFGTXT(
   "Normal mode: the client will send/receive packets only when it\n"
@@ -483,8 +505,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "        connected. HOWEVER, if the client runs out of packets,\n"
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random packets until a connection is detected.\n"
-  ),CONF_MENU_NET,CONF_TYPE_INT,12,NULL,CFGTXT(&lurkmodetable[0]),0,2},
-//40
+  ),CONF_MENU_NET,CONF_TYPE_INT,NULL,CFGTXT(&lurkmodetable[0]),0,2,NULL},
+//36
 { CFGTXT("Interfaces to watch"), "",
   CFGTXT(
   "Colon-separated list of interface names to monitor for a connection,\n"
@@ -499,8 +521,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "   which access the Internet via a LAN in one location but via a modem\n"
   "   in another, set this option to '*'.\n"
   "The command line equivalent of this option is --interfaces-to-watch\n"
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,13,NULL,NULL,0,0},
-//41
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+//37
 { /*dialwhenneeded*/ 
    #if (CLIENT_OS == OS_WIN32)
    CFGTXT("Use a specific DUN profile for connecting to the net?"),
@@ -512,29 +534,29 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
    "0",CFGTXT(
    "Select 'yes' to have the client control how network connections\n"
    "are initiatiated if none is active.\n"
-   ),CONF_MENU_NET,CONF_TYPE_BOOL,14,NULL,NULL,0,1},
-//42
+   ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
+//38
 { CFGTXT("Dial-up Connection Profile"),"",
   #if (CLIENT_OS == OS_WIN32)
   CFGTXT("Select the DUN profile to use when dialing-as-needed.\n")
   #else
   CFGTXT("")
   #endif
-  ,CONF_MENU_NET,CONF_TYPE_ASCIIZ,15,NULL,NULL,0,0},
-//43
+  ,CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+//39
 { CFGTXT("Command/script to start dialup"),"",
   CFGTXT(
   "Enter any valid shell command or script name to use to initiate a\n"
   "network connection. \"Dial the Internet as needed?\" must be enabled for\n"
   "this to be of any use.\n"
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,16,NULL,NULL,0,0},
-//44
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+//40
 { CFGTXT("Command/script to stop dialup"),"",
   CFGTXT(
   "Enter any valid shell command or script name to use to shutdown a\n"
   "network connection previously initiated with the script/command specified\n"
   "in the \"Command/script to start dialup\" option.\n"
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,17,NULL,NULL,0,0}
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL}
 };
 
 // --------------------------------------------------------------------------

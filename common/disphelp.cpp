@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.62  1999/04/01 03:20:40  cyp
+// Updated to reflect changed [in|out]_buffer_[file->basename] semantics.
+//
 // Revision 1.61  1999/03/18 03:09:12  cyp
 // Removed help text for obsolete options (-forcefetch,-forceflush etc)
 //
@@ -200,7 +203,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.61 1999/03/18 03:09:12 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.62 1999/04/01 03:20:40 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -233,13 +236,13 @@ void DisplayHelp( const char * unrecognized_option )
 {
 #if !defined(NOCONFIG)
   static const char *valid_help_requests[] =
-    { "-help", "--help", "help", "-h", "/h", "/?", "-?", "?", "/help" };
+  { "-help", "--help", "help", "-h", "/h", "/?", "-?", "?", "/help" };
 
   static const char *helpbody[] =
-    {
+  {
     "Special Options: (the client will execute the option and then exit)",
     "-config            start the configuration menu",
-    "-test              tests for client errors",
+    "-test              tests for core errors",
     "-flush             flush all output buffers",
     "-fetch             fill all input buffers",
     "-update            fetch + flush",
@@ -248,54 +251,6 @@ void DisplayHelp( const char * unrecognized_option )
     "-benchmark2        quick (but slightly inaccurate) client speed test",
     "-hup, -restart     restart all active clients",
     "-kill, -shutdown   gracefully shut down all active clients",
-    "-help              display these help screens",
-    "",
-  //"------------------------------------ max width == 77 -------------------------
-    "Other Options:",
-    "-runoffline        disable network access",
-    "-runonline         enable network access",
-    "-runbuffers        set -n == -1 (exit when buffers are empty)",
-    /*
-    "-run               normal run (override ini offlinemode/runbuffer settings)",
-    */
-    "-a <address>       proxy server name or IP address",
-    "-p <port>          proxy server port number",
-    "-e <address>       the email id by which you are known to distributed.net",
-    #ifdef OLDNICENESS
-    "-nice <[0-2]>      niceness",
-    #else
-    "-priority <[0-9]>  scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
-    #endif
-    "-c <cputype>       cpu type (run -config for a list of valid cputype numbers)",
-    "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
-    "-h <hours>         time limit in hours",
-    "-n <count>         blocks to complete. -1 forces exit when buffer is empty.",
-    "-until <HH:MM>     quit at HH:MM (eg 07:30)",
-    "-u <uuehttp>       use UUE/HTTP mode",
-    "-ha <address>      http proxy name or IP address",
-    "-hp <port>         http proxy port",
-    "-ini <filename>    override default name of INI file",
-    "-nodisk            don't use disk buffer files",
-    "-b <blocks>        maximum number of blocks in an RC5 buffer file",
-    "-b2 <blocks>       maximum number of blocks in an DES buffer file",
-    "-in <filename>     override name of RC5 input buffer file",
-    "-out <filename>    override name of RC5 output buffer file",
-    "-in2 <filename>    override name of DES input buffer file",
-    "-out2 <filename>   override name of DES output buffer file",
-    "-ckpoint <fname>   set the name of the RC5 checkpoint file",
-    "-ckpoint2 <fn>     set the name of the RC5 checkpoint file",
-    "-noexitfilecheck   don't check for a 'exitrc5.now' command file",
-    "-pausefile <fn>    name of file that causes the client to pause",
-    "-l <filename>      name of the log file",
-    "-nofallback        don't fallback to a distributed.net proxy",
-    "-smtplen <len>     max size (in bytes) of a mail message (0 means no mail)",
-    "-smtpsrvr <nm>     name or IP address of mail (SMTP) server",
-    "-smtpport <port>   mail (SMTP) server port number",
-    "-smtpfrom <id>     who the client should say is sending the message",
-    "-smtpdest <id>     who the client should send mail to",
-    "-nettimeout <x>    set the network timeout to x",
-    "-frequent          attempt updates often",
-    "-blsize <n>        set a preferred blocksize (2^n)",
   #if (CLIENT_OS == OS_WIN32)
     "-install           install the client as a service",
     "-uninstall         uninstall the client if running as a service",
@@ -304,22 +259,73 @@ void DisplayHelp( const char * unrecognized_option )
     "-install           install the client in the startup folder",
     "-uninstall         remove the client from the startup folder",
   #endif
+    "-help              display this text",
+    "",
+  //"------------------------------------ max width == 77 -------------------------
+    "Project and buffer related options:",
+    "",
+    "-ini <filename>    override default name of INI file",
+    "-e <address>       the email id by which you are known to distributed.net",
+    "-nodisk            don't use disk buffer files",
+    "-n <count>         blocks to complete. -1 forces exit when buffer is empty.",
+    "-runbuffers        set -n == -1 (exit when buffers are empty)",
+    "-frequent          frequently check for empty buffers",
+    "-blsize <n>        set a preferred packet size (2^n keys/packet)",
+    "-b <blocks>        set in-buffer threshold",
+    "-b2 <blocks>       set out-buffer threshold",
+    "-inbase <filename> input buffer basename (ie without 'extension'/suffix)",
+    "-outbase <filename> output buffer basename (ie without 'extension'/suffix)",
+    "-ckpoint <fname>   set the name of the checkpoint file",
+    "",
+    "Network update related options:",
+    "",
+    "-runoffline        disable network access",
+    "-runonline         enable network access",
+    "-nettimeout <secs> set the network timeout. Use -1 to force blocking mode",
+    "-a <address>       keyserver name or IP address",
+    "-p <port>          keyserver port number",
+    "-nofallback        don't fallback to a distributed.net keyserver",
+    "-u <method>        use this UUE/HTTP encoding method (see -config)",
+    "-ha <address>      http/socks proxy name or IP address",
+    "-hp <port>         http/socks proxy port",
   #ifdef LURK
     "-lurk              automatically detect modem connections",
     "-lurkonly          perform buffer updates only when a connection is detected",
     "-interfaces <list> limit the interfaces to monitor for online/offline status",
   #endif
+    "",
+    "Performance related options:",
+    "",
+    "-c <cputype>       cpu type (run -config for a list of valid cputype numbers)",
+    "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
+    "-priority <[0-9]>  scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
+    "",
+    "Logging options:",
+    "",
+    "-l <filename>      name of the log file",
+    "-smtplen <len>     max size (in bytes) of a mail message (0 means no mail)",
+    "-smtpsrvr <host>   name or IP address of mail (SMTP) server",
+    "-smtpport <port>   mail (SMTP) server port number",
+    "-smtpfrom <id>     who the client should say is sending the message",
+    "-smtpdest <id>     who the client should send mail to",
+    "",
+    "Miscellaneous runtime options:",
+    "",
+    "-h <hours>         time limit in hours",
+    "-until <HH:MM>     quit at HH:MM (eg 07:30)",
+    "-noexitfilecheck   don't check for a 'exitrc5.now' command file",
+    "-pausefile <fn>    name of file that causes the client to pause",
     "-percentoff        don't display block completion as a running percentage",
     "-quiet or -hide    suppress screen output (== detach for some clients)",
     "-noquiet           don't suppress screen output (override ini quiet setting)"
-      };
+  };
   
   static const char *helpheader[] =
-    {
+  {
     "RC5DES v" CLIENT_VERSIONSTRING " client - a project of distributed.net",
     "Visit http://www.distributed.net/FAQ/ for in-depth command line help",
     "-------------------------------------------------------------------------"
-    };
+  };
   
   int headerlines, bodylines, footerlines;
   int startline, maxscreenlines, maxpagesize;
@@ -341,28 +347,28 @@ void DisplayHelp( const char * unrecognized_option )
   /* -------------------------------------------------- */
 
   if (unrecognized_option && *unrecognized_option)
-    {
+  {
     int goodopt = 0;
 
     for (i = 0; ((goodopt == 0) && (i < (int)
          (sizeof(valid_help_requests)/sizeof(char *)))); i++)
-      {
+    {
       int n=0;
       for (;((valid_help_requests[i][n])!=0 && unrecognized_option[n]!=0);n++)
-        {
+      {
         if (tolower(valid_help_requests[i][n])!=tolower(unrecognized_option[n]))
           break;
-        }
-      goodopt = ((valid_help_requests[i][n])==0 && unrecognized_option[n]==0);
       }
+      goodopt = ((valid_help_requests[i][n])==0 && unrecognized_option[n]==0);
+    }
 
     if (!goodopt)
-      {
+    {
       LogScreenRaw( "\nUnrecognized option '%s'\n\n", unrecognized_option);
       LogScreenRaw( "The following list of command line switches may be obtained\n"
              "at any time by running the client with the '-help' option.\n\n");
       if (!nopaging)
-        {
+      {
         LogScreenRaw("Press enter to continue... ");
         key = ConInKey(-1); /* -1 == wait forever. returns zero if break. */
         LogScreenRaw( "\r                          \r" );
@@ -370,35 +376,35 @@ void DisplayHelp( const char * unrecognized_option )
           return;
         if (key != '\n' && key != '\r' && key != ' ')
           return;
-        }
       }
     }
+  }
 
   /* -------------------------------------------------- */
 
   if (nopaging || (maxscreenlines > (headerlines+bodylines)))
-    {
+  {
     for (i = 0; i < headerlines; i++)
       LogScreenRaw( "%s\n", helpheader[i] );
     for (i = 0; i < bodylines; i++)
       LogScreenRaw( "%s\n", helpbody[i] );
     return;
-    }
+  }
 
   /* -------------------------------------------------- */
 
   key = 0;
   do
-    {
+  {
     if (key == 0) /* refresh required */
-      {
+    {
       ConClear();
       for (i = 0; i < headerlines; i++)
         LogScreenRaw( "%s\n", helpheader[i] );
       for (i = startline; i < (startline+maxpagesize); i++)
         LogScreenRaw( "%s\n", helpbody[i] );
       LogScreenRaw("\n");
-      }
+    }
 
     if (startline == 0)
       strcpy( linebuffer, "Press '+' for the next page... ");
@@ -423,30 +429,30 @@ void DisplayHelp( const char * unrecognized_option )
 
     if (key == '+' || key == '=' || key == ' ' ||
       key == 'f' || key == '\r' || key == '\n')
-      {
+    {
       if (startline <= ((bodylines-maxpagesize) - 1))
-        {
+      {
         startline += maxpagesize;
         if ( startline >= (bodylines-maxpagesize))
           startline = (bodylines-maxpagesize);
         key = 0; //refresh required
-        }
       }
+    }
     else if (key == '-' || key == 'b')
-      {
+    {
       if (startline > 0)
-        {
+      {
         startline -= maxpagesize;
         if ( startline < 0 )
           startline = 0;
         key = 0; //refresh required
-        }
       }
+    }
     else
-      {
+    {
       key = -1; //unknown keystroke, so quit
-      }
-    } while (key >= 0);
+    }
+  } while (key >= 0);
       
   return;
 #endif
