@@ -21,6 +21,12 @@
 */
 //
 // $Log: sleepdef.h,v $
+// Revision 1.16  1998/10/26 03:20:54  cyp
+// More tags fun.
+//
+// Revision 1.15  1998/10/19 12:42:17  cyp
+// win16 changes
+//
 // Revision 1.14  1998/10/06 15:19:16  blast
 // Changed the sleep() functions used in AmigaOS is the minumum sleep
 // we need in the client is 55ms or something like that and the AmigaOS
@@ -81,10 +87,12 @@
   #define sleep(x) Sleep(1000*(x))
   #define usleep(x) Sleep((x)/1000)
 #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-  // Win16 doesn't have any form of sleep available
-  #define sleep(x)  delay((x)*1000)
-  #define usleep(x) delay((x)/1000)
+  // Win16 has Yield(), but we have a gui, so pump messages instead
+  #include "w32cons.h"
+  #define sleep(x)  w32Sleep((x)*1000)
+  #define usleep(x) w32Sleep((x)/1000)
 #elif (CLIENT_OS == OS_DOS)
+  //thats a wrapper around a dpmi yield
   #include "platforms/dos/clidos.h"
   #define sleep(x) dosCliSleep((x))
   #define usleep(x) dosCliUSleep((x))

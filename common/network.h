@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.40  1998/10/26 03:21:53  cyp
+// More tags fun.
+//
+// Revision 1.39  1998/10/19 12:42:06  cyp
+// win16 changes
+//
 // Revision 1.38  1998/09/25 11:31:15  chrisb
 // Added stuff to support 3 cores in the ARM clients.
 //
@@ -125,14 +131,19 @@ extern "C" {
 }
 #endif
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+#if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
   #define WIN32_LEAN_AND_MEAN
+  #define STRICT
   #include <windows.h>
+  #if (CLIENT_OS == OS_WIN32)
   #include <winsock.h>
+  #else
+  #include "w32sock.h" //winsock wrappers
+  #endif
   #include <io.h>
   #define write(sock, buff, len) send(sock, (char*)buff, (int)len, 0)
   #define read(sock, buff, len) recv(sock, (char*)buff, (int)len, 0)
-  #define close(sock) closesocket(sock);
+  #define close(sock) closesocket(sock)
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C" {
   #include <socklib.h>

@@ -4,6 +4,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.17  1998/10/26 03:23:08  cyp
+// More tags fun.
+//
+// Revision 1.16  1998/10/19 12:39:08  cyp
+// Percent bar code is ^C aware.
+//
 // Revision 1.15  1998/10/08 10:15:55  cyp
 // Fixed a bug in line width check. message length was not being recomputed
 // after the line width was adjusted.
@@ -66,7 +72,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.15 1998/10/08 10:15:55 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.17 1998/10/26 03:23:08 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -415,11 +421,11 @@ void LogWithPointer( int loggingTo, const char *format, va_list arglist )
       obuffptr = buffptr;
       while (*buffptr && *buffptr != '\r' && *buffptr != '\n' )
         buffptr++;
-      if ((buffptr-obuffptr) > 78)
+      if ((buffptr-obuffptr) > 79)
         {
-	obuffptr[74] = ' '; obuffptr[75] = obuffptr[76] = obuffptr[77] = '.';
-	memmove( obuffptr+78, buffptr, strlen(buffptr)+1 );
-	buffptr = obuffptr+78;
+	obuffptr[75] = ' '; obuffptr[76] = obuffptr[77] = obuffptr[78] = '.';
+	memmove( obuffptr+79, buffptr, strlen(buffptr)+1 );
+	buffptr = obuffptr+79;
 	}    
       } while (*buffptr);
     msglen = strlen( msgbuffer );
@@ -834,6 +840,7 @@ void Client::InitializeLogging(int spools_on)
       ******************************************************************* */
       }
     }
+
   return;
 }
 

@@ -3,6 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.91  1998/10/26 03:19:57  cyp
+// More tags fun.
+//
+// Revision 1.9  1998/10/19 12:59:51  cyp
+// completed implementation of 'priority'.
+//
+// Revision 1.8  1998/10/19 12:42:18  cyp
+// win16 changes
+//
 // Revision 1.7  1998/10/11 00:41:22  cyp
 // Implemented ModeReq
 //
@@ -32,7 +41,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.7 1998/10/11 00:41:22 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.91 1998/10/26 03:19:57 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -165,17 +174,9 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         strcpy( inifilename, inienvp );
       else
         {
-        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
-        (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || \
-        (CLIENT_OS == OS_OS2)
-        char fndrive[_MAX_DRIVE], fndir[_MAX_DIR], fname[_MAX_FNAME], fext[_MAX_FNAME];
-        _splitpath(argv[0], fndrive, fndir, fname, fext);
-        _makepath(inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
-        strcpy(exepath, fndrive);   // have the drive
-        strcat(exepath, fndir);     // append dir for fully qualified path
-        strcpy(exename, fname);     // exe filename
-        strcat(exename, fext);      // tack on extention
-        #elif (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS)
+        #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || \
+            (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
+            (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
         //not really needed for netware (appname in argv[0] won't be anything 
         //except what I tell it to be at link time.)
         inifilename[0] = 0;
@@ -561,8 +562,24 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         if (nextarg)
           {
           skip_next = 1;
+#ifdef OLDNICENESS
           niceness = (s32) atoi( nextarg );
+#else          
+          priority = (s32) atoi( nextarg );
+          priority = ((priority==2)?(8):((priority==1)?(4):(0)));
+#endif
           inimissing = 0; // Don't complain if the inifile is missing
+          }
+        }
+      else if ( strcmp( thisarg, "-priority" ) == 0 ) // Nice level
+        {
+        if (nextarg)
+          {
+          skip_next = 1;
+#ifndef OLDNICENESS
+          priority = (s32) atoi( nextarg );
+          inimissing = 0; // Don't complain if the inifile is missing
+#endif
           }
         }
       else if ( strcmp( thisarg, "-h" ) == 0 ) // Hours to run
@@ -805,6 +822,8 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
 
   if (inimissing)
     ModeReqSet( MODEREQ_CONFIG );
+  if (!do_break && runlevel >= 1)
+    do_break = ModeReqIsSet(-1);
   if (retcodeP && do_break) 
     *retcodeP = retcode;
   return do_break;

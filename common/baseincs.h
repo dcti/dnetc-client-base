@@ -10,6 +10,12 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.28  1998/10/26 03:21:26  cyp
+// More tags fun.
+//
+// Revision 1.27  1998/10/19 12:42:14  cyp
+// win16 changes
+//
 // Revision 1.26  1998/10/11 00:36:38  cyp
 // include "w32pre.h" for win32
 //
@@ -182,27 +188,21 @@ extern "C" {
 #elif (CLIENT_OS == OS_SCO)
   #include <fcntl.h>
   #include <sys/time.h>
-#elif (CLIENT_OS == OS_WIN16)
-  #include <sys/timeb.h>
-  #include <io.h>
-  #include <conio.h>
-  #include <dos.h>
-  #include <share.h>
-  #include <dir.h>
-  #include <fcntl.h>
-#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S)
+#elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16)
+  #if (CLIENT_OS == OS_WIN32) || !defined(__WINDOWS_386__)
+  #define WIN32_LEAN_AND_MEAN
+  #include <windows.h>
+  #include <winsock.h>      // timeval
+  #else
+  #include <windows.h>
+  #include "w32sock.h"
+  #endif
   #include <sys/timeb.h>
   #include <process.h>
   #include <conio.h>
   #include <share.h>
   #include <fcntl.h>
   #include <io.h>
-  #if defined(__TURBOC__)
-    #include <dir.h>
-  #endif
-  #define WIN32_LEAN_AND_MEAN
-  #include <windows.h>
-  #include <winsock.h>      // timeval
   #include "lurk.h"
   #include "w32svc.h"       // service
   #include "w32cons.h"      // console
