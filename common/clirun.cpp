@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.94 2001/04/12 10:44:49 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.95 2001/05/09 21:38:13 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1352,9 +1352,14 @@ int ClientRun( Client *client )
                   "A single processor machine is assumed.\n");
         numcrunchers = 1;
       }
-      else
+      else if (numcrunchers == 1)
       {
         LogScreen("Automatic processor detection found %d processor%s.\n",
+                   numcrunchers, ((numcrunchers==1)?(""):("s")) );
+      }
+      else
+      {
+        Log("Automatic processor detection found %d processor%s.\n",
                    numcrunchers, ((numcrunchers==1)?(""):("s")) );
       }
     }

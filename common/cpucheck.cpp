@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.71 2001/04/05 23:16:15 teichp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.72 2001/05/09 21:38:14 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1505,6 +1505,7 @@ static long __GetRawProcessorID(const char **cpuname)
 
 long GetProcessorType(int quietly)
 {
+  // only successful detection / detection of a new unknown cpu type gets logged to file
   long retval = -1L;
   const char *apd = "Automatic processor type detection ";
   #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
@@ -1524,16 +1525,16 @@ long GetProcessorType(int quietly)
     {
       retval = -1L;  
       if (!quietly)
-        LogScreen("%sdid not\nrecognize the processor (tag: \"%s\")\n", apd, (cpuname?cpuname:"???") );
+        Log("%sdid not\nrecognize the processor (tag: \"%s\")\n", apd, (cpuname?cpuname:"???") );
     }
     else 
     {
       if (!quietly)
       {
         if (cpuname == NULL || *cpuname == '\0')
-          LogScreen("%sdid not\nrecognize the processor (id: %ld)\n", apd, rawid );
+          Log("%sdid not\nrecognize the processor (id: %ld)\n", apd, rawid );
         else
-          LogScreen("%sfound\na%s %s processor.\n",apd, 
+          Log("%sfound\na%s %s processor.\n",apd, 
              ((strchr("aeiou8", tolower(*cpuname)))?("n"):("")), cpuname);
       }
       retval = rawid; /* let selcore figure things out */
@@ -1641,7 +1642,7 @@ void DisplayProcessorInformation(void)
   const char *scpuid, *smaxscpus, *sfoundcpus;
   GetProcessorInformationStrings( &scpuid, &smaxscpus, &sfoundcpus );
 
-  LogScreenRaw("Automatic processor identification tag: %s\n"
+  LogRaw("Automatic processor identification tag: %s\n"
     "Number of processors detected by this client: %s\n"
     "Number of processors supported by this client: %s\n",
     scpuid, sfoundcpus, smaxscpus );
