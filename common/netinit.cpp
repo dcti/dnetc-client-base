@@ -10,6 +10,10 @@
 //
 //
 // $Log: netinit.cpp,v $
+// Revision 1.23  1999/02/04 18:27:51  cyp
+// discarded os/2 and win32 sections in netInitAndDeinit() as they are no
+// longer special. :p
+//
 // Revision 1.22  1999/02/03 03:36:33  cyp
 // worked around strange behaviour by WSAStartup()/WSAShutdown() when used in
 // a winNT/service environment (causing sporadic client quit by crash after
@@ -89,7 +93,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.22 1999/02/03 03:36:33 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.23 1999/02/04 18:27:51 cyp Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -129,7 +133,7 @@ static int __netInitAndDeinit( int doWhat )
   if (( doWhat < 0 ) && ( net_init_level == 0 ))
     {
     Log("Squawk! Unbalanced Network Init/Deinit!\n");
-    abort();
+    return 0;
     }
   else if (( doWhat == 0 ) && ( net_init_level == 0 ))
     return 0;  //isOK() always returns 0 if we are not initialized
@@ -225,105 +229,10 @@ static int __netInitAndDeinit( int doWhat )
 
   //----------------------------
 
-  #if (CLIENT_OS==OS_WIN32) 
-  if (success)
-    {
-    if ( doWhat == 0 )                     //request to check online mode
-      {
-      //- still-online? 
-      #if defined(LURK)
-      if (dialup.CheckForStatusChange() == -1)
-        return 0;                          //oops, return 0
-      #endif
-      return 1;                           //yeah, we are still online
-      }
-    else if (doWhat > 0)                  //request to initialize
-      {
-      if ((++net_init_level)!=1)     //don't initialize more than once
-        success = 1;
-      else
-        {
-        success = 1; 
-        #if defined(LURK)
-        if ( dialup.DialIfNeeded(1) < 0 )
-          success = 0;
-        #endif
-        if (!success)
-          {
-          --net_init_level;
-          }
-        }
-      }
-    else //if (doWhat < 0) //request to de-initialize
-      {
-      if ((--net_init_level)!=0) //don't deinitialize more than once
-        success = 1;
-      else
-        {
-        #if defined(LURK)
-        dialup.HangupIfNeeded();
-        #endif
-        success = 1;
-        }
-      }
-    }
-  #define DOWHAT_WAS_HANDLED
-  #endif
-
-  //----------------------------
-
-  #if (CLIENT_OS == OS_OS2)
-  if (success)
-    {
-    if ( doWhat == 0 )                   //request to check online mode
-      {
-      //- still-online? 
-      #if defined(LURK)
-      if (dialup.CheckForStatusChange() == -1)
-        return 0;                        //oops, return 0
-      #endif
-      return 1;                          //yeah, we are still online
-      }
-    else if (doWhat > 0)                 //request to initialize
-      {
-      if ((++net_init_level)!=1) //don't initialize more than once
-        success = 1;
-      else
-        {
-        #if !defined(__EMX__)
-        sock_init();
-        #endif
-        success = 1;
-
-        #if defined(LURK)
-        if ( dialup.DialIfNeeded(1) < 0 )
-          success = 0;           //FIXME: sock_deinit()? missing (?)
-        #endif
-        }
-      }
-    else //if (doWhat < 0) //request to de-initialize
-      {
-      if ((--net_init_level)!=0) //don't deinitialize more than once
-        success = 1;
-      else
-        {
-        #if defined(LURK)
-        dialup.HangupIfNeeded();
-        #endif
-                                //FIXME: sock_deinit()? missing (?) 
-        success = 1;
-        }
-      }
-    }
-  #define DOWHAT_WAS_HANDLED
-  #endif
-
-  //----------------------------------------------
-
   #if (CLIENT_OS == OS_AMIGAOS)
   if (success)
     {
-//    static struct Library *SocketBase;
+    //static struct Library *SocketBase;
     if ( doWhat == 0 )     //request to check online mode
       {
       return 1;            //assume always online once initialized
@@ -333,7 +242,7 @@ static int __netInitAndDeinit( int doWhat )
       if ((++net_init_level)!=1) //don't initialize more than once
         success = 1;
       else
-          {
+        {
         #define SOCK_LIB_NAME "bsdsocket.library"
         SocketBase = OpenLibrary((unsigned char *)SOCK_LIB_NAME, 4UL);
         if (SocketBase)
@@ -371,20 +280,34 @@ static int __netInitAndDeinit( int doWhat )
     {
     if ( doWhat == 0 )     //request to check online mode
       {
+      #if defined(LURK)                  
+      if (dialup.CheckForStatusChange() != 0 ) //- still-online? 
+        return 0;                        //oops, return 0
+      #endif
       return 1;            //assume always online once initialized
       }
     else if (doWhat > 0)   //request to initialize
       {
-      #ifdef SOCKS
-      LIBPREFIX(init)("rc5-client");
-      #endif
-      net_init_level++;
       success = 1;
+      if ((++net_init_level)==1) //don't initialize more than once
+        {
+        #if defined(LURK)
+        if ( dialup.DialIfNeeded(1) != 0 ) 
+          success = 0;
+        #endif
+        }
+      if (!success)
+        net_init_level--;
       }
     else //if (doWhat < 0) //request to de-initialize
       {
-      net_init_level--;
       success = 1;
+      if ((--net_init_level)==0) //don't deinitialize more than once
+        {
+        #if defined(LURK)
+        dialup.HangupIfNeeded();
+        #endif
+        }
       }
     }
   #endif
@@ -409,15 +332,21 @@ static int __globalInitAndDeinit( int doWhat )
     if (global_is_init == 0)
       {
       global_is_init = 1; //assume all success
+
+      #ifdef SOCKS
+      LIBPREFIX(init)("rc5-client");
+      #endif
+      #if ((CLIENT_OS == OS_OS2) && !defined(__EMX__))
+      sock_init();
+      #endif
       #if (CLIENT_OS == OS_WIN32)
       WSADATA wsaData;
       if ( WSAStartup( 0x0101, &wsaData ) != 0 )
         global_is_init = 0;
       #endif  
-
       #ifdef LURK
       if (global_is_init != 0)
-      dialup.Start();
+        dialup.Start();
       #endif
       }
     success = (global_is_init != 0);
@@ -429,7 +358,6 @@ static int __globalInitAndDeinit( int doWhat )
       #ifdef LURK
       dialup.Stop();
       #endif
-
       #if (CLIENT_OS == OS_WIN32)
       WSACleanup();
       #endif
