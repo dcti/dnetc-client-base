@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.59  1998/06/27 12:01:10  friedbait
+# switched os390 from SLICE_SRCS4 to MEGGS_SLICE_SRCS, the old setting
+# didn't compile anymore and didn't have time to figure out why.
+#
 # Revision 1.58  1998/06/26 07:20:26  myshkin
 #
 # Added -lncurses for the ppc-gcc target, per remi's recommendation.
@@ -801,10 +805,10 @@ case "$1" in
 ###### OS390
     *os390)
 	RC5CORECOPY="rc5ansi2-rg2.cpp"
-	TARGET_CC="cxx"
+	TARGET_CC="gcc"
 	TARGET_AS=""
-	TARGET_CCFLAGS="$OPTS_OS390 -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
-	TARGET_ADDSRCS="$KWAN_SLICE_SRCS4"
+	TARGET_CCFLAGS="$OPTS_OS390 -D__showids__ -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	TARGET_ADDASMS=""
 	TARGET_LIBS="$SOCKS_LIBS"
 	;;
