@@ -1,6 +1,6 @@
 
   distributed.net's RC5DES client documentation
-  document revision $Id: rc5des.txt,v 1.36 1999/05/06 18:35:50 cyp Exp $
+  document revision $Id: rc5des.txt,v 1.36.2.1 1999/06/07 00:34:44 cyp Exp $
 
   Copyright distributed.net 1997-1999 - All Rights Reserved
   For use in distributed.net projects only.
@@ -292,22 +292,15 @@
        send a message to <majordomo@lists.distributed.net> with 
        "subscribe rc5" as the message text).
 
-     - The distributed.net bug tracking pages are at
-       http://www.distributed.net/bugs/
-
      - More user support is available from <rc5help@distributed.net> 
        as well as from our regional support representatives listed at 
        http://www.distributed.net/regional/index.html
     
      - If you believe you have found a bug in the client or would like 
-       to make a suggestion, please send a message to the coders at 
-       <coders@lists.distributed.net>. Don't forget to specify which 
-       platform you are running the client on. 
-    
-     - If you believe you have found a bug specific to this port, or 
-       would like to make a suggestion specific to this port, please use 
-       the bug tracking pages at http://www.distributed.net/bugs/
-       Don't fret if you don't get a response right away - porters are
-       usually very busy and it may take weeks before they get around 
-       to answering your message.
+       to make a suggestion, please use the bug tracking pages at 
+       http://www.distributed.net/bugs/  
+       DO NOT FORGET TO PROVIDE THE **FULL** VERSION NUMBER OF YOUR CLIENT
+       Don't fret if you don't get a response right away - porters are 
+       usually very busy and it may take weeks before they get around to 
+       answering your message.
        
