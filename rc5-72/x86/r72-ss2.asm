@@ -1,6 +1,10 @@
+; Copyright distributed.net 1997-2002 - All Rights Reserved
+; For use in distributed.net projects only.
+; Any other distribution or use of this source violates copyright.
+;
 ; Author: Gnatiuc Ianos <ssianky@hotmail.com>
 ; based on r72-dg2 and r72ansi2 cores
-
+; $Id: r72-ss2.asm,v 1.1.2.2 2002/12/28 12:42:48 andreasb Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _DATA FLAT USE32 align=32 CLASS=DATA]
@@ -36,7 +40,6 @@ save_edi    dd 0
 [SECTION .text]
 %endif
 
-[GLOBAL rc5_72_unit_func_ss_2_]
 [GLOBAL _rc5_72_unit_func_ss_2]
 [GLOBAL rc5_72_unit_func_ss_2]
 
@@ -104,9 +107,9 @@ save_edi    dd 0
         %else
             jmp short %%alend
             align %1
-            %%alend:
         %endif
     %endif
+    %%alend:
 %endmacro
 
 ;------------------------------------------------
