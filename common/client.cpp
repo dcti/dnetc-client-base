@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.cpp,v $
+// Revision 1.152.2.11  1999/01/09 11:09:45  remi
+// Fixed the previous merge.
+//
 // Revision 1.152.2.10  1999/01/04 02:03:21  remi
 // Synced with :
 //
@@ -108,8 +111,9 @@ s32 guiriscos, guirestart;
 // --------------------------------------------------------------------------
 
 static void __initialize_client_object(Client *client)
-  totalBlocksDone[0] = totalBlocksDone[1] = 0;
-  cputype=-1;
+{
+  client->totalBlocksDone[0] = client->totalBlocksDone[1] = 0;
+  client->cputype=-1;
 #if (CLIENT_OS == OS_QNX)
    srand( (unsigned) time(NULL)/*(unsigned) CliTimer( NULL )->tv_usec*/ );
 #else

@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.h,v $
+// Revision 1.94.2.5  1999/01/09 11:09:45  remi
+// Fixed the previous merge.
+//
 // Revision 1.94.2.4  1999/01/04 02:06:39  remi
 // Synced with :
 //
@@ -32,7 +35,7 @@ public:
   s32  timeslice;
   s32  cputype;
 
-protected:
+//protected:
   u32 totalBlocksDone[2];
   u32 old_totalBlocksDone[2];
 
