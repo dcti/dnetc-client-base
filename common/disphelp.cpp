@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.31  1998/07/06 01:41:19  cyruspatel
+// Added support for /DNOTERMIOS and /DNOCURSES compiler switches to allow
+// the linux client to be built on systems without termios/curses libraries
+// or include files.
+//
 // Revision 1.30  1998/07/01 10:50:30  ziggyb
 // -lurk/-lurkonly shows up on the -help in OS/2
 //
@@ -92,7 +97,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: disphelp.cpp,v 1.30 1998/07/01 10:50:30 ziggyb Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.31 1998/07/06 01:41:19 cyruspatel Exp $";
 #endif
 
 #include "client.h"
@@ -102,17 +107,21 @@ static const char *id="@(#)$Id: disphelp.cpp,v 1.30 1998/07/01 10:50:30 ziggyb E
 //#define NOLESS // (aka NOPAGER) define if you don't like less (+/- paging)
 //#define NOMORE // define this if you don't like --More--
 
+#ifndef NOTERMIOS
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BEOS)
 #include <termios.h>
 #include "sleepdef.h"
 #define TERMIOSPAGER
 #endif
+#endif
 
+#ifndef NOCURSES
 // Other *nixes may want to use this (add "-lcurses" to configure / Makefile)
 #if (CLIENT_OS == OS_LINUX)
 #include <curses.h>
 #include <term.h>
 #define TERMINFOLINES
+#endif
 #endif
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) 
