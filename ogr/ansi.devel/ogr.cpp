@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.3 2000/08/13 17:56:01 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.4 2000/08/14 22:17:48 oliver Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +12,9 @@
 /* #define CRC_CHOOSEDAT_ANYWAY */ /* you'll need to link crc32 if this is defd */
 
 /* optimization for machines where shift is faster than mem access */
+#if defined(ASM_68K)
+  #define BITOFLIST_OVER_MEMTABLE
+#endif
 #ifdef BITOFLIST_OVER_MEMTABLE      /* if memlookup is faster than shift */
 #undef NO_BITOFLIST_OVER_MEMTABLE   /* the default is "no" */
 #endif
@@ -21,7 +24,10 @@
 #if (defined(__PPC__) || defined(ASM_PPC)) || \
   (defined(__WATCOMC__) && defined(__386__)) || \
   (defined(__GNUC__) && (defined(ASM_SPARC) || defined(ASM_ALPHA) \
-                         || defined(ASM_X86) ))
+                         || defined(ASM_X86) \
+                         || (defined(ASM_68K) && (defined(mc68020) \
+                             || defined(mc68030) || defined(mc68040) \
+                             || defined(mc68060)))))
   #define HAVE_REVERSE_FFS_INSN /* have 'ffs from highbit' instruction */
   /* #define FIRSTBLANK_ASM_TEST */ /* define this to test */
 #endif  
@@ -352,6 +358,9 @@ static int found_one(struct State *oState)
                       "f0:"          \
 		      value [edx] parm [eax] modify exact [eax edx] nomemory;
   #endif
+#elif defined(ASM_68K) && defined(__GNUC__) /* Bit field find first one set (020+) */
+  static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
+  { i = ~i; __asm__ ("bfffo %1,0,0,%0" : "=d" (i) : "d" (i)); return ++i; }  
 #else
   #error FIRSTBLANK_OVER_MEMTABLE is not defined, and no code to match
 #endif
@@ -364,7 +373,6 @@ static int found_one(struct State *oState)
 0xF000- (0xF000+0x0800-1) = 5    0xF000-0xF7ff = 5 (0x07ff) 1111 1000 0000 0000
 0xF800- (0xF800+0x0400-1) = 6    0xF800-0xFBff = 6 (0x03ff) 1111 1100 0000 0000
 */
-
 
 static int ogr_init(void)
 {
