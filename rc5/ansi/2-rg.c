@@ -6,6 +6,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: 2-rg.c,v $
+// Revision 1.4  1999/05/02 20:37:12  patrick
+//
+// changed key incrementation to account for changed (and no longer usable __IncrementKey)
+//
 // Revision 1.3  1999/04/08 18:48:58  patrick
 //
 // removed def of struct RC5UnitWork and used ccoreio.h instead
@@ -47,7 +51,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_rg_cpp (void) {
-return "@(#)$Id: 2-rg.c,v 1.3 1999/04/08 18:48:58 patrick Exp $"; }
+return "@(#)$Id: 2-rg.c,v 1.4 1999/05/02 20:37:12 patrick Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -57,24 +61,6 @@ return "@(#)$Id: 2-rg.c,v 1.3 1999/04/08 18:48:58 patrick Exp $"; }
 #define _P_RC5       0xB7E15163
 #define _Q       0x9E3779B9
 #define S_not(n) _P_RC5+_Q*n
-
-/* name mangling problem, have to use my own */
-static void __SwitchRC5Format( u64 *key) {
-u32 lo, hi;
-    lo = 
-      ((key->hi >> 24 ) & 0x000000FFL) |
-      ((key->hi >>  8) & 0x0000FF00L) |
-      ((key->hi <<  8) & 0x00FF0000L) |
-      ((key->hi << 24) & 0xFF000000L);
-    hi =
-      ((key->lo >> 24) & 0x000000FFL) |
-      ((key->lo >>  8) & 0x0000FF00L) |
-      ((key->lo <<  8) & 0x00FF0000L) |
-      ((key->lo << 24) & 0xFF000000L);
-
-    key->lo = lo;
-    key->hi = hi;
-}
 
 // Round 1 macros
 // --------------
@@ -345,10 +331,38 @@ s32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice )
   	      ROTL3(S2_25 + A2 + ROTL(Llo2 + A2 + Lhi2, A2 + Lhi2))) return ++kiter;
     }
     // "mangle-increment" the key number by the number of pipelines (2 in this case)
-    __SwitchRC5Format (& rc5unitwork->L0);
-    rc5unitwork->L0.lo += 2;	//pipelinecount
-    if (rc5unitwork->L0.lo < 2) rc5unitwork->L0.hi++;
-    __SwitchRC5Format (& rc5unitwork->L0);
+    // didn't like to change the whole thing
+    #define key rc5unitwork->L0
+    key.hi = (key.hi + ( 2 << 24)) & 0xFFFFFFFF;
+    if (!(key.hi & 0xFF000000))
+      {
+      key.hi = (key.hi + 0x00010000) & 0x00FFFFFF;
+      if (!(key.hi & 0x00FF0000))
+        {
+        key.hi = (key.hi + 0x00000100) & 0x0000FFFF;
+        if (!(key.hi & 0x0000FF00))
+          {
+          key.hi = (key.hi + 0x00000001) & 0x000000FF;
+	// we do not need to mask here, was done above
+          if (!(key.hi))
+            {
+            key.lo = key.lo + 0x01000000;
+            if (!(key.lo & 0xFF000000))
+              {
+              key.lo = (key.lo + 0x00010000) & 0x00FFFFFF;
+              if (!(key.lo & 0x00FF0000))
+                {
+                key.lo = (key.lo + 0x00000100) & 0x0000FFFF;
+                if (!(key.lo & 0x0000FF00))
+                  {
+                  key.lo = (key.lo + 0x00000001) & 0x000000FF;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
 
     kiter += 2;
   }
