@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.56 2001/04/12 10:53:55 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.57 2001/04/14 14:24:47 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -483,7 +483,7 @@
   #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
   #include <sys/mman.h>     /* minherit() */
 #elif (CLIENT_OS == OS_LINUX) && \
-  !defined(HAVE_POSIX_THREADS) && (CLIENT_CPU == CPU_X86)
+  !defined(HAVE_POSIX_THREADS) && (CLIENT_CPU == CPU_X86) && 0 /* DISABLED! */
   #define HAVE_KTHREADS /* platforms/linux/li_kthread.c */
   /* uses clone() instead of pthreads ... */
   /* ... but first thread is polled ... */
