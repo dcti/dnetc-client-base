@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.80 1999/06/09 09:47:11 ivo Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.81 1999/06/28 17:44:06 chrisb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -105,6 +105,10 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     }
     #elif (CLIENT_OS == OS_LINUX)
     {
+      #if (CLIENT_CPU == CPU_ARM)
+	cpucount = 1;
+      #else
+
       FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
       cpucount = 0;
       if ( cpuinfo )
@@ -156,6 +160,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         }
         fclose(cpuinfo);
       }
+      #endif // (CLIENT_CPU == CPU_ARM)
     }
     #elif (CLIENT_OS == OS_IRIX)
     {
@@ -729,11 +734,11 @@ static long __GetRawProcessorID(const char **cpuname )
 {
   static long detectedtype = -2L; /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
+  static char namebuf[60];
 
   #if (CLIENT_OS == OS_RISCOS)
   if ( detectedvalue == -2L )
   {
-    static char namebuf[60];
     /*
        ARMident() will throw SIGILL on an ARM 2 or ARM 250, because they 
        don't have the system control coprocessor. (We ignore the ARM 1 
@@ -741,31 +746,31 @@ static long __GetRawProcessorID(const char **cpuname )
      */
     signal(SIGILL, ARMident_catcher);
     if (setjmp(ARMident_jmpbuf))
-      detectedvalue = 0x2000;
+      detectedtype = 0x2000;
     else
-      detectedvalue = ARMident();
+      detectedtype = ARMident();
     signal(SIGILL, SIG_DFL);
-    detectedvalue = (detectedvalue >> 4) & 0xfff; // extract part number field
+    detectedtype = (detectedtype >> 4) & 0xfff; // extract part number field
 
-    if ((detectedvalue & 0xf00) == 0) //old-style ID (ARM 3 or prototype ARM 600)
-      detectedvalue <<= 4;            // - shift it into the new form
-    if (detectedvalue == 0x300)
+    if ((detectedtype & 0xf00) == 0) //old-style ID (ARM 3 or prototype ARM 600)
+      detectedtype <<= 4;            // - shift it into the new form
+    if (detectedtype == 0x300)
     {
-      detectedvalue = 3;
+      detectedtype = 3;
     }
-    else if (detectedvalue == 0x710)
+    else if (detectedtype == 0x710)
     {
       // the ARM 7500 returns an ARM 710 ID - need to look at its
       // integral IOMD unit to spot the difference
       u32 detectediomd = IOMDident();
       detectediomd &= 0xff00; // just want most significant byte
       if (detectediomd == 0x5b00)
-        detectedvalue = 0x7500;
+        detectedtype = 0x7500;
       else if (detectediomd == 0xaa00)
-        detectedvalue = 0x7500FEL;
+        detectedtype = 0x7500FEL;
     }
     detectedname = ((const char *)&(namebuf[0]));
-    switch (detectedvalue)
+    switch (detectedtype)
     {
       case 0x200: strcpy( namebuf, "ARM 2 or 250" ); 
                   break;
@@ -778,18 +783,84 @@ static long __GetRawProcessorID(const char **cpuname )
       case 0x7500:
       case 0x7500FEL:
       case 0x710:
-      case 0x810: sprintf( namebuf, "ARM %lX", detectedvalue );
+      case 0x810: sprintf( namebuf, "ARM %lX", detectedtype );
                   break;
-      default:    sprintf( namebuf, "%lX", detectedvalue );
-                  detectedvalue = 0;
+      default:    sprintf( namebuf, "%lX", detectedtype );
+                  detectedtype = 0;
                   break;
     }
   }
-  #endif /* RISCOS */
+  #elif (CLIENT_OS == OS_LINUX)
+  if (detectedtype == -2)
+  {
+    FILE *cpuinfo;
+    detectedtype = -1L;
+    if ((cpuinfo = fopen( "/proc/cpuinfo", "r")) != NULL)
+    {
+      char buffer[256];
+      while(fgets(buffer, sizeof(buffer), cpuinfo)) 
+      {
+        const char *p = "Type\t\t: ";
+        unsigned int n = strlen( p );
+        if ( memcmp( buffer, p, n ) == 0 )
+        {
+          static struct 
+           { const char *sig;  int rid; } sigs[] ={
+	       { "arm2",       0x200},
+	       { "arm250",     0x250},
+	       { "arm3",       0x3},
+	       { "arm6",       0x600},
+	       { "arm610",     0x610},
+	       { "arm7",       0x700},
+	       { "arm710",     0x710},
+	       { "sa110",      0xA10}
+           };
+          p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
+          for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
+          {
+            unsigned int l = strlen( sigs[n].sig );
+            if ((!p[l] || isspace(p[l])) && memcmp( p, sigs[n].sig, l)==0)
+            {
+              detectedtype = (long)sigs[n].rid;
+              break;
+            }
+          }
 
+	  detectedname = ((const char *)&(namebuf[0]));
+	  switch (detectedtype)
+	  {
+	  case 0x200: strcpy( namebuf, "ARM 2 or 250" ); 
+	      break;
+	  case 0xA10: strcpy( namebuf, "StrongARM 110" ); 
+	      break;
+	  case 0x3:
+	  case 0x600:
+	  case 0x610:
+	  case 0x700:
+	  case 0x7500:
+	  case 0x7500FEL:
+	  case 0x710:
+	  case 0x810: sprintf( namebuf, "ARM %lX", detectedtype );
+	      break;
+	  default:    sprintf( namebuf, "%lX (unknown)", detectedtype );
+	      detectedtype = 0;
+	      break;
+	  }
+          break;
+        }
+      }
+      fclose(cpuinfo);
+    }
+  }
+  #elif (CLIENT_OS == OS_NETBSD)
+  if (detectedtype == -2)
+  {
+  }
+  #endif
+  
   if ( cpuname )
     *cpuname = detectedname;
-  return detectedvalue;
+  return detectedtype;
 }  
 #endif
 
