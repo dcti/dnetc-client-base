@@ -21,11 +21,26 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.11 1999/12/02 16:24:59 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.12 1999/12/11 01:15:47 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
+2.8003.448  new: x86: 50% faster CSC MMX core added. '6bit - bitslice' 
+                 replaces '6bit - called'
+            fix: all: lines in mail/logfile are no longer truncated
+            fix: all: pause by signal (by user) and pause by filename
+                 are additive, that is, pause remains in effect as
+                 long as either one is in effect.
+            fix: all: completed/summary time is now elapsed wall clock
+                 time again
+            fix: x86: Cyrix 6x86 auto-selects CSC core #3 now.
+            imp: all: threads no longer check external flags for shutdown/
+                 pause state. Flags are 'pushed' instead, which reduces 
+                 cache footprint.
+            imp: all: benchmarks have greater time precision (no longer
+                 overshoot the end of the bench period)
+
 2.8002.447  chg: all: firewall settings in the .ini have moved to the network
                  section. socks user:pass is now saved encoded
             chg: if appropriate, 'Summary:' now also shows # of work units
@@ -44,6 +59,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.11 1999/12/02 16:24:59 cyp Exp $
                  single project, eg '-benchmark csc' to bench only csc
             new: all: '-bench [project]' benches all cores for a given
                  project (or all projects if no project is specified)
+            new: all: benchmarks are time based now (8-10 secs/16-20 secs)
             new: win32: distribution includes a native cui wrapper
             new: win16/32: client saves window size and position
             chg: win32: service ID is 'dnetc' for client, 'dnetd' for pproxy
