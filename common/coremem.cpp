@@ -9,7 +9,7 @@
  * Created March 2001 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *probmem_cpp(void) {
-return "@(#)$Id: coremem.cpp,v 1.1.2.1 2001/03/20 09:11:59 cyp Exp $"; }
+return "@(#)$Id: coremem.cpp,v 1.1.2.2 2001/03/20 14:58:51 cyp Exp $"; }
 
 #include "cputypes.h" /* HAVE_MULTICRUNCH_VIA_FORK define */
 #include "baseincs.h" /* malloc/free/mmap/munmap */
@@ -61,6 +61,7 @@ int cmem_free(void *mem)
   sz = *((unsigned int *)p);
   return munmap((void *)p, sz);
 #else
-  return free(mem);
+  free(mem);
+  return 0;
 #endif  
 }  
