@@ -525,6 +525,9 @@ public:
   void setupoptions( void );
     // Sets all the pointers/etc for optionstruct options
 
+  void killwhitespace( char *string );
+    // Removes all spaces from a string
+
   void clearscreen( void );
     // Clears the screen. (Platform specific ifdefs go inside of it.)
 
