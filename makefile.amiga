@@ -42,7 +42,8 @@ common/buffwork.o_ppc\
 common/mail.o_ppc\
 common/convdes.o_ppc\
 common/cpucheck.o_ppc\
-common/disphelp.o_ppc
+common/disphelp.o_ppc\
+common/pathwork.o_ppc
 
 RC5_OBJS_PPC	=\
 common/problem.o_ppc\
@@ -74,7 +75,8 @@ common/buffwork.o_68k\
 common/mail.o_68k\
 common/convdes.o_68k\
 common/cpucheck.o_68k\
-common/disphelp.o_68k
+common/disphelp.o_68k\
+common/pathwork.o_68k
 
 RC5_OBJS_68K	=\
 common/problem.o_68k\

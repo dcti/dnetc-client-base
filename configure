@@ -5,6 +5,15 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.64  1998/07/05 13:08:50  cyruspatel
+# Created new pathwork.cpp which contains functions for determining/setting
+# the "work directory" and pathifying a filename that has no dirspec.
+# GetFullPathForFilename() is ideally suited for use in (or just prior to) a
+# call to fopen(). This obviates the neccessity to pre-parse filenames or
+# maintain separate filename buffers. In addition, each platform has its own
+# code section to avoid cross-platform assumptions. More doc in pathwork.cpp
+# #define DONT_USE_PATHWORK if you don't want to use these functions.
+#
 # Revision 1.63  1998/07/02 05:04:40  daa
 # add ;; for hpux m68k entry
 #
@@ -323,7 +332,7 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/scram.cpp common/buffwork.cpp common/mail.cpp
     common/convdes.cpp common/clicdata.cpp common/clirate.cpp
     common/clisrate.cpp common/clitime.cpp common/disphelp.cpp
-    common/threadcd.cpp common/cpucheck.cpp"
+    common/threadcd.cpp common/cpucheck.cpp common/pathwork.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
@@ -333,6 +342,7 @@ XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s rc5/crunch_allitnil.ppcxlc.s"
 RC5X86_SRCS="rc5/rc5-486-rg.cpp rc5/rc5-6x86-rg.cpp rc5/rc5p5brf.cpp rc5/rc5-p6-rg.cpp rc5/rc5-k5-rg.cpp rc5/rc5-k6-rg.cpp"
 DESX86_SRCS="des/des-x86.cpp"
 DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.c platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc
+
 /do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
 DESULTRA_SRCS_ASM="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/des_ultra_crunch.c"
 

@@ -5,12 +5,22 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.h,v $
+// Revision 1.59  1998/07/05 13:09:04  cyruspatel
+// Created new pathwork.cpp which contains functions for determining/setting
+// the "work directory" and pathifying a filename that has no dirspec.
+// GetFullPathForFilename() is ideally suited for use in (or just prior to) a
+// call to fopen(). This obviates the neccessity to pre-parse filenames or
+// maintain separate filename buffers. In addition, each platform has its own
+// code section to avoid cross-platform assumptions. More doc in pathwork.cpp
+// #define DONT_USE_PATHWORK if you don't want to use these functions.
+//
 // Revision 1.58  1998/07/05 12:42:37  cyruspatel
 // Created cpucheck.h to support makefiles that rely on autodependancy info
 // to detect file changes.
 //
 // Revision 1.57  1998/07/04 21:05:34  silby
 // Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong 
+
 should be fixed.
 //
 // Revision 1.56  1998/07/02 13:09:28  kbracey
@@ -238,22 +248,28 @@ extern "C" {
 // --------------------------------------------------------------------------
 
 #if (CLIENT_OS == OS_NETWARE)
+#ifdef DONT_USE_PATHWORK
 //#define PATH_SEP   "\\"   //left undefined so I can see
 //#define PATH_SEP_C '\\'   //where the references are
+#endif
 #define EXTN_SEP   "."
 #define EXTN_SEP_C '.'
 #elif ((CLIENT_OS == OS_DOS) || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
+#ifdef DONE_USE_PATHWORK
 #define PATH_SEP   "\\"
 #define PATH_SEP_C '\\'
 #define ALT_PATH_SEP '/'
 #define ALT_PATH_SEP_C '/'
 #define DRIVE_SEP ':'
 #define DRIVE_SEP_C ':'
+#endif
 #define EXTN_SEP   "."
 #define EXTN_SEP_C '.'
 #elif (CLIENT_OS == OS_MACOS)
+#ifdef DONT_USE_PATHWORK
 #define PATH_SEP   ":"
 #define PATH_SEP_C ':'
+#endif
 #define EXTN_SEP   "."
 #define EXTN_SEP_C '.'
 #elif (CLIENT_OS == OS_RISCOS)
@@ -262,8 +278,10 @@ extern "C" {
 #define EXTN_SEP   "/"
 #define EXTN_SEP_C '/'
 #else
+#ifdef DONT_USE_PATHWORK
 #define PATH_SEP   "/"
 #define PATH_SEP_C '/'
+endif
 #define EXTN_SEP   "."
 #define EXTN_SEP_C '.'
 #endif
@@ -385,8 +403,6 @@ public:
   s32  minutes;
   s32  timeslice;
   s32  niceness;
-  char logname[128];// Logfile name as used by the client
-  char ini_logname[128];// Logfile name as is in the .ini
   char keyproxy[64];
   s32  keyport;
   char httpproxy[64];
@@ -400,16 +416,24 @@ public:
   char smtpfrom[128];
   char smtpdest[128];
   s32  offlinemode;
-  char in_buffer_file[2][128];
+
+#ifndef DONT_USE_PATHWORK
+  char ini_logname[128];// Logfile name as is in the .ini
   char ini_in_buffer_file[2][128];
-  char out_buffer_file[2][128];
   char ini_out_buffer_file[2][128];
-  char exit_flag_file[128];
   char ini_exit_flag_file[128];
+  char ini_checkpoint_file[2][128];
+  char ini_pausefile[128];
+#endif
+  char logname[128];// Logfile name as used by the client
+  char in_buffer_file[2][128];
+  char out_buffer_file[2][128];
+  char exit_flag_file[128];
+  char checkpoint_file[2][128];
+  char pausefile[128];
+
   MailMessage mailmessage;
   s32  numcpu, numcputemp;
-  char checkpoint_file[2][128];
-  char ini_checkpoint_file[2][128];
   s32 checkpoint_min;
   s32 percentprintingoff;
   s32 connectoften;
@@ -437,8 +461,6 @@ public:
   s32 os2hidden;
 //  s32 connectstatus;          // 0 is not connected, 1 is connected
 #endif
-  char pausefile[128];
-  char ini_pausefile[128];
   s32 preferred_contest_id;  // 0 for RC564, 1 for DESII (unlike config)
   s32 preferred_blocksize;
   s32 contestdone[2];
@@ -590,11 +612,13 @@ public:
   void setupoptions( void );
     // Sets all the pointers/etc for optionstruct options
 
+#ifndef DONT_USE_PATHWORK
   static void killwhitespace( char *string );
     // Removes all spaces from a string
 
   static int isstringblank( char *string );
     // returns 1 if a string is blank (or null), 0 if it is not
+#endif
 
   static void clearscreen( void );
     // Clears the screen. (Platform specific ifdefs go inside of it.)

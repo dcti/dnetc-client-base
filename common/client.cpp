@@ -3,11 +3,21 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.75  1998/07/05 13:08:58  cyruspatel
+// Created new pathwork.cpp which contains functions for determining/setting
+// the "work directory" and pathifying a filename that has no dirspec.
+// GetFullPathForFilename() is ideally suited for use in (or just prior to) a
+// call to fopen(). This obviates the neccessity to pre-parse filenames or
+// maintain separate filename buffers. In addition, each platform has its own
+// code section to avoid cross-platform assumptions. More doc in pathwork.cpp
+// #define DONT_USE_PATHWORK if you don't want to use these functions.
+//
 // Revision 1.74  1998/07/04 22:05:53  silby
 // Fixed problem found by peterd in which message mailing would have overridden offlinemode.
 //
 // Revision 1.73  1998/07/04 21:05:30  silby
-// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong should be fixed.
+// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong 
+should be fixed.
 //
 // Revision 1.72  1998/07/04 10:30:10  jlawson
 // fixed printing of info of invalid block when -runbuffers consumes
@@ -116,15 +126,18 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.74 1998/07/04 22:05:53 silby Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.75 1998/07/05 13:08:58 cyruspatel Exp $";
 #endif
 
 #include "client.h"
+#ifndef DONT_USE_PATHWORK
+#include "pathwork.h"
+#endif
 
 #if (CLIENT_OS == OS_AMIGAOS)
 #if (CLIENT_CPU == CPU_68K)
-long __stack  = 65536L;	// AmigaOS has no automatic stack extension
-			// seems standard stack isn't enough
+long __stack  = 65536L; // AmigaOS has no automatic stack extension
+      // seems standard stack isn't enough
 #endif // (CLIENT_CPU == CPU_68K)
 #endif // (CLIENT_OS == OS_AMIGAOS)
 
@@ -242,21 +255,40 @@ Client::Client()
   strcpy(httpid,"");
   totalBlocksDone[0] = totalBlocksDone[1] = 0;
   timeStarted = 0;
-  strcpy(logname, "none");
-  strcpy(ini_logname, "none");
   cputype=-1;
   offlinemode = 0;
+
+#ifdef DONT_USE_PATHWORK
+  strcpy(ini_logname, "none");
+  strcpy(ini_in_buffer_file[0], "buff-in" EXTN_SEP "rc5");
+  strcpy(ini_out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
+  strcpy(ini_in_buffer_file[1], "buff-in" EXTN_SEP "des");
+  strcpy(ini_out_buffer_file[1], "buff-out" EXTN_SEP "des");
+  strcpy(ini_exit_flag_file, "exitrc5" EXTN_SEP "now");
+  strcpy(ini_checkpoint_file[0],"none");
+  strcpy(ini_checkpoint_file[1],"none");
+  strcpy(ini_pausefile,"none");
+
+  strcpy(logname, "none");
   strcpy(inifilename, InternalGetLocalFilename("rc5des" EXTN_SEP "ini"));
   strcpy(in_buffer_file[0], InternalGetLocalFilename("buff-in" EXTN_SEP "rc5"));
-  strcpy(ini_in_buffer_file[0], "buff-in" EXTN_SEP "rc5");
   strcpy(out_buffer_file[0], InternalGetLocalFilename("buff-out" EXTN_SEP "rc5"));
-  strcpy(ini_out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
   strcpy(in_buffer_file[1], InternalGetLocalFilename("buff-in" EXTN_SEP "des"));
-  strcpy(ini_in_buffer_file[1], "buff-in" EXTN_SEP "des");
   strcpy(out_buffer_file[0], InternalGetLocalFilename("buff-out" EXTN_SEP "des"));
-  strcpy(ini_out_buffer_file[1], "buff-out" EXTN_SEP "des");
   strcpy(exit_flag_file, InternalGetLocalFilename("exitrc5" EXTN_SEP "now"));
-  strcpy(ini_exit_flag_file, "exitrc5" EXTN_SEP "now");
+  strcpy(checkpoint_file[1],"none");
+  strcpy(pausefile,"none");
+#else
+  strcpy(logname, "none");
+  strcpy(inifilename, "rc5des" EXTN_SEP "ini");
+  strcpy(in_buffer_file[0], "buff-in" EXTN_SEP "rc5");
+  strcpy(out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
+  strcpy(in_buffer_file[1], "buff-in" EXTN_SEP "des");
+  strcpy(out_buffer_file[0], "buff-out" EXTN_SEP "des");
+  strcpy(exit_flag_file, "exitrc5" EXTN_SEP "now");
+  strcpy(checkpoint_file[1],"none");
+  strcpy(pausefile,"none");
+#endif
   messagelen = 0;
   smtpport = 25;
   strcpy(smtpsrvr,"your.smtp.server");
@@ -265,11 +297,6 @@ Client::Client()
   numcpu = -1;
   numcputemp=1;
   strcpy(checkpoint_file[0],"none");
-  strcpy(ini_checkpoint_file[0],"none");
-  strcpy(checkpoint_file[1],"none");
-  strcpy(ini_checkpoint_file[1],"none");
-  strcpy(pausefile,"none");
-  strcpy(ini_pausefile,"none");
   checkpoint_min=5;
   percentprintingoff=0;
   connectoften=0;
@@ -304,7 +331,7 @@ Client::Client()
   win95hidden=0;
 #endif
 #if (CLIENT_OS == OS_OS2)
-	 os2hidden=0;
+   os2hidden=0;
 #endif
 #if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
          oldlurkstatus=0;      // Trigger the lurk the first time client is run
@@ -384,7 +411,13 @@ s32 Client::ForceFetch( u8 contest, Network *netin )
     ret = Fetch(contest, netin);
     temp2 = temp1;
     temp1 = CountBufferInput(contest);
-    LogScreenf("[%s] %d block%s remain%s in %s\n",Time(),temp1,temp1==1?"":"s",temp1==1?"s":"",ini_in_buffer_file[contest]);
+
+    LogScreenf("[%s] %d block%s remain%s in %s\n",Time(),temp1,temp1==1?"":"s",temp1==1?"s":"",
+#ifdef DONT_USE_PATHWORK
+    ini_in_buffer_file[contest]);
+#else    
+    in_buffer_file[contest]);
+#endif    
   }
   return ret;
 }
@@ -707,7 +740,7 @@ s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
 #endif
 #endif
       u32 percent2 = ((count*10000)/((inthreshold[contest]-more)+count));
-	 LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
+   LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
           CliGetTimeString(NULL,1), count, ((inthreshold[contest]-more)+count),
           percent2/100, percent2%100 );
 #if !defined(NOMAIN)           // these two must match
@@ -750,7 +783,12 @@ s32 Client::ForceFlush( u8 contest , Network *netin )
     ret = Flush(contest, netin);
     temp2 = temp1;
     temp1 = CountBufferOutput(contest);
-    Log("[%s] %d block%s remain%s in %s\n",Time(), temp1, temp1==1?"":"s", temp1==1?"s":"", ini_out_buffer_file[contest]);
+    Log("[%s] %d block%s remain%s in %s\n",Time(), temp1, temp1==1?"":"s", temp1==1?"s":"", 
+#ifdef DONT_USE_PATHWORK
+    ini_out_buffer_file[contest]);
+#else    
+    out_buffer_file[contest]);
+#endif    
   }
   return ret;
 }
@@ -1682,12 +1720,12 @@ s32 Client::Run( void )
   // Recover blocks from checkpoint files
   // --------------------------------------
 
-  if ( strcmp(checkpoint_file[0],"none") != 0)
+  if ( (checkpoint_file[0][0])!=0 &&  strcmp(checkpoint_file[0],"none") != 0)
   {
     s32 recovered = CkpointToBufferInput(0); // Recover any checkpointed information in case we abnormally quit.
     if (recovered != 0) Log("Recovered %d block%s from RC5 checkpoint file\n",recovered,recovered==1?"":"s");
   }
-  if ( strcmp(checkpoint_file[1],"none") != 0)
+  if ( (checkpoint_file[1][0])!=0 && strcmp(checkpoint_file[1],"none") != 0)
   {
     s32 recovered = CkpointToBufferInput(1); // Recover any checkpointed information in case we abnormally quit.
     if (recovered != 0) Log("Recovered %d block%s from DES checkpoint file\n",recovered,recovered==1?"":"s");
@@ -1876,13 +1914,23 @@ PreferredIsDone1:
                 CliGetContestNameFromID(tmpc),
                 in == 1 ? "" : "s",
                 in == 1 ? "s" : "",
-                (nodiskbuffers ? "(memory-in)" : ini_in_buffer_file[tmpc]));
+                (nodiskbuffers ? "(memory-in)" : 
+#ifdef DONT_USE_PATHWORK
+                ini_in_buffer_file[tmpc]));
+#else                
+                in_buffer_file[tmpc]));
+#endif                
               Log( " %s  %d %s block%s %s in file %s\n", CliGetTimeString(NULL,0),
                 out,
                 CliGetContestNameFromID(tmpc),
                 out == 1 ? "" : "s",
                 out == 1 ? "is" : "are",
-                (nodiskbuffers ? "(memory-out)" : ini_out_buffer_file[tmpc]));
+                (nodiskbuffers ? "(memory-out)" : 
+#ifdef DONT_USE_PATHWORK
+                ini_out_buffer_file[tmpc]));
+#else
+                out_buffer_file[tmpc]));
+#endif                
             }
           }
         }
@@ -1901,8 +1949,18 @@ PreferredIsDone1:
              Time(), (fileentry.contest == 1 ? "DES":"RC5"),tmpblkcnt,tmpblksize,
                  (unsigned long) ntohl( fileentry.key.hi ),
                  (unsigned long) ntohl( fileentry.key.lo ),
-             Time(), count, (nodiskbuffers? "(memory-in)":ini_in_buffer_file[fileentry.contest]),
-             Time(), CountBufferOutput(fileentry.contest), (nodiskbuffers? "(memory-out)":ini_out_buffer_file[fileentry.contest]) );
+             Time(), count, (nodiskbuffers? "(memory-in)":
+#ifdef DONT_USE_PATHWORK
+             ini_in_buffer_file[fileentry.contest]),
+#else             
+             in_buffer_file[fileentry.contest]),
+#endif             
+             Time(), CountBufferOutput(fileentry.contest), (nodiskbuffers? "(memory-out)":
+#ifdef DONT_USE_PATHWORK
+             ini_out_buffer_file[fileentry.contest]) );
+#else
+             out_buffer_file[fileentry.contest]) );
+#endif
         gettimeofday( &stop, &dummy );
         (problem[cpu_i]).timehi = stop.tv_sec;
         (problem[cpu_i]).timelo = stop.tv_usec;
@@ -2410,9 +2468,10 @@ PreferredIsDone1:
           //---------------------
 
           // Checkpoint info just became outdated...
-          if (strcmp(checkpoint_file[0],"none") != 0)
+
+          if ((checkpoint_file[0][0])!=0 && strcmp(checkpoint_file[0],"none") != 0)
             unlink(checkpoint_file[0]);
-          if (strcmp(checkpoint_file[1],"none") != 0)
+          if ((checkpoint_file[1][0])!=0 && strcmp(checkpoint_file[1],"none") != 0)
             unlink(checkpoint_file[1]);
 
 
@@ -2532,11 +2591,20 @@ PreferredIsDone1:
                  " %s  %d %s block%s %s in file %s\n",
                  CliGetTimeString(NULL,1), count, CliGetContestNameFromID(fileentry.contest),
                  count == 1 ? "" : "s", count == 1 ? "s" : "",
-                 (nodiskbuffers ? "(memory-in)" : ini_in_buffer_file[fileentry.contest]),
+                 (nodiskbuffers ? "(memory-in)" : 
+#ifdef DONT_USE_PATHWORK
+                 ini_in_buffer_file[fileentry.contest]),
+#else                 
+                 in_buffer_file[fileentry.contest]),
+#endif                 
                  CliGetTimeString(NULL,0), outcount, CliGetContestNameFromID(fileentry.contest),
                  outcount == 1 ? "" : "s", outcount == 1 ? "is" : "are",
-                 (nodiskbuffers ? "(memory-out)" : ini_out_buffer_file[fileentry.contest]) );
-
+                 (nodiskbuffers ? "(memory-out)" : 
+#ifdef DONT_USE_PATHWORK
+                 ini_out_buffer_file[fileentry.contest]) );
+#else                 
+                 out_buffer_file[fileentry.contest]) );
+#endif                 
           }
           #else
           if (!nonewblocks)
@@ -2549,9 +2617,19 @@ PreferredIsDone1:
                  "[%s] %d Blocks are in file %s\n",
                  Time(), (fileentry.contest == 1 ? "DES":"RC5"),tmpblkcnt,tmpblksize,
                  ntohl( fileentry.key.hi ), ntohl( fileentry.key.lo ),
-                 Time(), count, (nodiskbuffers ? "(memory-in)": ini_in_buffer_file[fileentry.contest]),
+                 Time(), count, (nodiskbuffers ? "(memory-in)": 
+#ifdef DONT_USE_PATHWORK
+                 ini_in_buffer_file[fileentry.contest]),
+#else                 
+                 in_buffer_file[fileentry.contest]),
+#endif                 
                  Time(), CountBufferOutput(fileentry.contest),
-                 (nodiskbuffers ? "(memory-out)" : ini_out_buffer_file[fileentry.contest]),
+                 (nodiskbuffers ? "(memory-out)" : 
+#ifdef DONT_USE_PATHWORK
+                 ini_out_buffer_file[fileentry.contest]),
+#else                 
+                 out_buffer_file[fileentry.contest]),
+#endif                 
                  ((load_problem_count>1)?("ready to process"):("being processed")));
 
             gettimeofday( &stop, &dummy );
@@ -2669,7 +2747,7 @@ PreferredIsDone1:
     // Does a pausefile exist?
     //------------------------------------
 
-    pausefilefound = (strcmp(pausefile,"none") != 0 &&
+    pausefilefound = ( *pausefile != 0 && strcmp(pausefile,"none") != 0 &&
           stat(pausefile, &buf) != -1 ? 1 : 0);
 
     //----------------------------------------
@@ -2749,9 +2827,9 @@ PreferredIsDone1:
       // Shutting down: delete checkpoint files
       // ----------------
 
-      if (strcmp(checkpoint_file[0],"none") != 0)
+      if ((checkpoint_file[0][0])!=0 && strcmp(checkpoint_file[0],"none") != 0)
         unlink(checkpoint_file[0]);
-      if (strcmp(checkpoint_file[1],"none") != 0)
+      if ((checkpoint_file[1][0])!=0 && strcmp(checkpoint_file[1],"none") != 0)
         unlink(checkpoint_file[1]);
 
       // ----------------
@@ -2776,7 +2854,8 @@ PreferredIsDone1:
     if (!TimeToQuit)
     {
       // Time to checkpoint?
-      if ( ((strcmp(checkpoint_file[0],"none") != 0) || (strcmp(checkpoint_file[1],"none") != 0))
+      if ( (((checkpoint_file[0][0])!=0 && (strcmp(checkpoint_file[0],"none") != 0)) || 
+            ((checkpoint_file[1][0])!=0 && (strcmp(checkpoint_file[1],"none") != 0)))
            && (!nodiskbuffers) && (!pausefilefound))
       {
         if ( (!TimeToQuit ) && ( ( (s32) time( NULL ) ) > ( (s32) nextcheckpointtime ) ) )
@@ -2809,7 +2888,7 @@ void Client::DoCheckpoint( int load_problem_count )
 
   for (s32 j = 0; j < 2; j++)
   {
-    if (strcmp(checkpoint_file[j],"none") != 0)
+    if ((checkpoint_file[j][0])!=0 && strcmp(checkpoint_file[j],"none") != 0)
     {
       unlink(checkpoint_file[j]); // Remove prior checkpoint information (if any).
 
@@ -2905,9 +2984,13 @@ void Client::Log( const char *format, ...)
   // print it out and log it
   LogScreen(logstr);
 
-  if (strcmpi ( logname, "none" ) != 0 )
+  if ( (*logname != 0) && (strcmpi( logname, "none" ) != 0) )
     {
+#ifdef DONT_USE_PATHWORK
       FILE *file = fopen ( logname, "a" );
+#else
+      FILE *file = fopen ( GetFullPathForFilename( logname ), "a" );
+#endif                  
       if (file != NULL)
         {
           fprintf( file, "%s", logstr );
@@ -3036,6 +3119,8 @@ int main( int argc, char *argv[] )
   {
     strncpy( client.inifilename, getenv( "RC5INI" ), 127 );
   }
+
+#ifdef DONT_USE_PATHWORK
   else
   {
 #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
@@ -3082,7 +3167,7 @@ int main( int argc, char *argv[] )
     strcat( client.inifilename, EXTN_SEP "ini" );
 #endif
   }
-
+#endif
 
   // See if there's a command line parameter to override the INI filename...
   for (i = 1; i < argc; i++)
@@ -3095,6 +3180,9 @@ int main( int argc, char *argv[] )
     }
   }
 
+#ifndef DONT_USE_PATHWORK
+  InitWorkingDirectoryFromSamplePaths( client.inifilename, argv[0] );
+#endif
 
   // read in the ini file
   inimissing = client.ReadConfig();
