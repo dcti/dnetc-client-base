@@ -515,12 +515,12 @@ case "$1" in
 ###### RISCOS
 
     *riscos)
-	TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -nounusedareas"
+	TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
 	TARGET_AS="armasm -apcs 3/26bit"
-	TARGET_CCFLAGS="-Icommon -Irc5 -Ides -Iplatforms -J/home/cberry/play/riscoslib/CLib -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -D__riscos -DPIPELINE_COUNT=1 -DBIT_32"
+	TARGET_CCFLAGS="-Icommon -Irc5 -Ides -Iplatforms -J/home/cberry/play/riscoslib/CLib -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -D__riscos -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="platforms/riscos/riscos.cpp"
 	TARGET_ADDASMS="platforms/riscos/riscosasm.s rc5/rc5-sa.s rc5/rc5-arm.s des/des-slice-arm.s"
-	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/CLib/stubs.o /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
+	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
 	TARGET_STRIP=touch
 	EXENAME=rc5des,ff8
 	;;
@@ -528,7 +528,7 @@ case "$1" in
     *arm-linux)
 	TARGET_CC="gcc"
 	TARGET_AS="as"
-	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=1 -DBIT_32 -Dlinux"
+	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=1 -DBIT_32 -Dlinux -DKWAN"
 	TARGET_ADDSRCS=""
 	TARGET_ADDASMS="rc5/rc5-sa-gnu.s rc5/rc5-arm-gnu.s des/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
@@ -537,7 +537,7 @@ case "$1" in
     *arm-netbsd)
 	TARGET_CC="gcc"
 	TARGET_AS="as"
-	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=1 -DBIT_32"
+	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS=""
 	TARGET_ADDASMS="rc5/rc5-sa-gnu.s rc5/rc5-arm-gnu.s des/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
@@ -607,9 +607,15 @@ ${TARGET_STRIP} testplat
 #
 # Look up the platform and os types
 #
+if [ $1 = riscos ]; then
+CLIENTCPU=11
+CLIENTOS=34
+INTSIZES=442
+else
 CLIENTCPU=`./testplat cpu`
 CLIENTOS=`./testplat os`
 INTSIZES=`./testplat intsizes`
+fi
 CLIENTOSNAME=`grep "#define OS_.*\<$CLIENTOS\>" common/cputypes.h | cut -d' ' -f2`
 CLIENTCPUNAME=`grep "#define CPU_.*\<$CLIENTCPU\>" common/cputypes.h | cut -d' ' -f2`
 echo "CLIENT_CPU = $CLIENTCPUNAME ($CLIENTCPU)"
