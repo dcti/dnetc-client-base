@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.211  1999/04/01 12:43:13  jlawson
+# removed obsolete alpha targets. updated others.
+#
 # Revision 1.210  1999/04/01 07:13:35  jlawson
 # updated alpha-linux target
 #
@@ -1031,31 +1034,14 @@ case "$1" in
 	;;
 
 ###### Alpha
-    *alpha-cc-ev5-static)	# If anyone is still using this rule, please remove this comment by May 99
-	RC5CORECOPY="rc5/ansi/rc5ansi2-bo2.cpp"
-	TARGET_CC="cxx"
-	TARGET_CCFLAGS="$OPTS_CC_ALPHA_EV5 -DPIPELINE_COUNT=2 \
-			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
-	TARGET_LIBS="-non_shared"
-	;;
 
-    *alpha-cc-ev4-static)	# If anyone is still using this rule, please remove this comment by May 99
-	RC5CORECOPY="rc5/ansi/rc5ansi2-bo2.cpp"
-	TARGET_CC="cxx"
-	TARGET_CCFLAGS="$OPTS_CC_ALPHA_EV4 -DPIPELINE_COUNT=2 \
-			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
-	TARGET_LIBS="-non_shared"
-	;;
-
-    *alpha-gcc-digital_unix-mt)	   # See notes in platforms/digital-unix-alpha
+    *alpha-gcc-digital_unix-mt)
 	TARGET_CC="g++"
 	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DDEC_UNIX_CPU_SELECT -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT -DCORES_SUPPORT_SMP -Ddes_alpha_osf_ev5=des_alpha_osf_ev4"
 	TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
 	TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 platforms/digital-unix-alpha/rc5-digital-unix-alpha-ev4.cpp"
-	TARGET_DIGITAL_UNIX_EV5_SRCS="platforms/digital-unix-alpha/rc5-digital-unix-alpha-ev5.cpp"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
+	TARGET_DIGITAL_UNIX_EV5_SRCS="rc5/alphaasm/rc5-digital-unix-alpha-ev5.cpp"
 	TARGET_LIBS="-lpthread -lexc"
 	TARGET_OS=DIGITAL_UNIX
 	;;
@@ -1065,70 +1051,39 @@ case "$1" in
 	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DDEC_UNIX_CPU_SELECT"
 	TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
 	TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 platforms/digital-unix-alpha/rc5-digital-unix-alpha-ev4.cpp"
-	TARGET_DIGITAL_UNIX_EV5_SRCS="platforms/digital-unix-alpha/rc5-digital-unix-alpha-ev5.cpp platforms/digital-unix-alpha/deseval-dworz3.S platforms/digital-unix-alpha/des-slice-dworz.cpp"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
+	TARGET_DIGITAL_UNIX_EV5_SRCS="rc5/alphaasm/rc5-digital-unix-alpha-ev5.cpp des/alpha-asm/deseval-dworz3.S des/alpha-asm/des-slice-dworz.cpp"
 	TARGET_LIBS="-static"
 	TARGET_OS=DIGITAL_UNIX
 	;;
 
-    *alpha-cc)	# If anyone is still using this rule, please remove this comment by May 99
-	RC5CORECOPY="rc5/ansi/rc5ansi2-bo2.cpp"
-	TARGET_CC="cxx"
-	TARGET_CCFLAGS="$OPTS_CC_ALPHA -DPIPELINE_COUNT=2 \
-			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
-	;;
-
-    *alpha-gcc)
-	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
-	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 \
-			-DBIT_64 -DKWAN -DDWORZ"
-	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS"
-	TARGET_LDFLAGS="-static"
-	TARGET_LIBS=""
-	;;
-
-    *alpha-gcc-mt)	# If anyone is still using this rule, please remove this comment by May 99
-	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
-	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA \
-			-DMULTITHREAD -DPIPELINE_COUNT=1 \
-			-DBIT_64 -DKWAN -DDWORZ"
-	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS"
-	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-lpthread"
-	;;
 
     *alpha-netbsd)
-	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 \
-			-DBIT_64 -DKWAN -DDWORZ"
-	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DBIT_64 -DKWAN -DDWORZ"
+	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS \
+			rc5/alpha/axp-bmeyer.cpp \
+			rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-ltermcap"
 	;;
 
     *alpha-openbsd)
-	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
-	TARGET_AS="g++ -c"
-	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -BIT_64 -DKWAN -DDWORZ"
-	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS"
-	#TARGET_ADDSRC="$DWORZ_SLICE_SRCS \
-			rc5/alpha/axp-bmeyer.cpp \
-			rc5/alpha/axp-bmeyer.s"
-	TARGET_LDFLAGS="-static"
-	;;
-
-    *alpha-linux)                     # [bovine]
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DBIT_64 -DKWAN -DDWORZ"
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS \
 			rc5/alpha/axp-bmeyer.cpp \
 			rc5/alpha/axp-bmeyer.s"
+	TARGET_LDFLAGS="-static"
+	;;
+
+    *alpha-linux)                     # jlawson
+	TARGET_AS="as"
+	TARGET_CC="g++"
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DBIT_64 -DKWAN -DDWORZ"
+	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS rc5/alpha/axp-bmeyer.cpp"
+	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
 	;;
 
