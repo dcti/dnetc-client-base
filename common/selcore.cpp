@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.98 2002/10/09 22:22:15 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.99 2002/10/16 23:49:33 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -24,6 +24,7 @@ return "@(#)$Id: selcore.cpp,v 1.98 2002/10/09 22:22:15 andreasb Exp $"; }
 #include "selftest.h"  // SelfTest()
 #include "selcore.h"   // keep prototypes in sync
 #include "probman.h"   // GetManagedProblemCount()
+#include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #if (CLIENT_OS == OS_AIX) // needs signal handler
   #include <sys/signal.h>
   #include <setjmp.h>
@@ -1185,7 +1186,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             LogScreen("%s: Running micro-bench to select fastest core...\n", 
                       contname);
             saidmsg = 1;
-          }                                
+          }
+          if (CheckExitRequestTriggerNoIO())
+            break;
           if ((rate = TBenchmark( contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK )) > 0)
           {
 #ifdef DEBUG

@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.85 2002/10/08 09:30:11 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.86 2002/10/16 23:49:33 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -645,10 +645,14 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 
     if (bufcount < 0 && client->nonewblocks == 0)
     {
+      if (CheckExitRequestTriggerNoIO())
+        break;
       //Log("3. BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0)\n");
       TRACE_BUFFUPD((0, "BufferUpdate: reason = __IndividualProblemLoad && no more blocks\n"));
       int didupdate = 
          BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
+      if (CheckExitRequestTriggerNoIO())
+        break;
       if (!(didupdate < 0))
       {
         if (didupdate!=0)
