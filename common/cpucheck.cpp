@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.11 2003/02/17 01:58:15 mfeiri Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.12 2003/03/06 23:02:48 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -572,37 +572,24 @@ static long __GetRawProcessorID(const char **cpuname)
            { "821",             0x0050  },
            { "860",             0x0080  },
            { "8240",            0x0081  },
-           { "405GP",           0x4011  }
+           { "405GP",           0x4011  },
+           { "7450",            0x8000  },
+           { "7455",            0x8001  },
+           { "7410",            0x800C  }
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
           {
             unsigned int l = strlen( sigs[n].sig );
-            if ((!p[l] || isspace(p[l])) && memcmp( p, sigs[n].sig, l)==0)
+            if ((!p[l] || isspace(p[l]) || p[l]==',') && memcmp( p, sigs[n].sig, l)==0)
             {
               detectedtype = (long)sigs[n].rid;
-              break;
-            }
-          }
-          if (detectedtype == 0x000C) /* 7400 (G4) */
-          {
-            /* Altivec support appeared in 2.3.99-pre4 */
-            struct utsname ut;
-            if (uname(&ut)==0)
-            {
-              if (strcmp(ut.sysname,"Linux")==0)
+              if (detectedtype == 0x000C || detectedtype & 0x8000) /* 7400, 7410, 7450, 7455 (G4) */
               {
-                p = strchr(ut.release,'.');
-                n = atoi(ut.release);
-                if (n < 2)
-                  isaltivec = 0;
-                else if (n > 2)
-                  isaltivec = 1;
-                else if (!p)
-                  isaltivec = 0;
-                else if (atoi(p+1) >= 4)
+                if (memcmp( &p[l], ", altivec supported", 19)==0)
                   isaltivec = 1;
               }
+              break;
             }
           }
           if (detectedtype == -1L)
