@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: main.c,v 1.1.2.1 2002/04/11 11:44:56 oliver Exp $
+ * $Id: main.c,v 1.1.2.2 2002/04/25 17:12:54 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -354,6 +354,14 @@ LIBFUNC ULONG dnetcguiHandleMsgs(REG(d0,ULONG signals),REG(a6,struct LibBase *lb
 
                //case WMHI_GADGETUP:
                //   break;
+
+               case WMHI_RAWKEY:
+                  switch (result & WMHI_KEYMASK) {
+                     case 0x45: // Esc
+                        cmds |= DNETC_MSG_SHUTDOWN;
+                        break;
+		  }
+                  break;
 
                case WMHI_MENUPICK:
                   while ( (result & WMHI_MENUMASK) != MENUNULL ) {

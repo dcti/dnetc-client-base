@@ -28,10 +28,10 @@ $(TARGET): $(OBJS) $(OBJDIR)/endcode.o
 $(OBJDIR)/LibBase.o: LibBase.c common.h dnetcgui_rev.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(OBJDIR)/main.o: main.c common.h prefs.h
+$(OBJDIR)/main.o: main.c common.h main.h prefs.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(OBJDIR)/prefs.o: prefs.c common.h prefs.h
+$(OBJDIR)/prefs.o: prefs.c common.h main.h prefs.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(OBJDIR)/endcode.o: endcode.c

@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: prefs.c,v 1.1.2.1 2002/04/11 11:44:56 oliver Exp $
+ * $Id: prefs.c,v 1.1.2.2 2002/04/25 17:12:54 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -44,7 +44,7 @@
 
 #define PREFS_VER 1
 
-enum { GAD_FONT=0, GAD_MAXLINES, GAD_TITLES, GAD_SHOWICON, GAD_SHOWMENU, GAD_STARTHIDDEN,
+enum { GAD_FONT=1, GAD_MAXLINES, GAD_TITLES, GAD_SHOWICON, GAD_SHOWMENU, GAD_STARTHIDDEN,
        GAD_WINPOS, GAD_SNAPSHOT, GAD_WINLEFT, GAD_WINTOP, GAD_WINWIDTH, GAD_WINHEIGHT,
        GAD_SAVE, GAD_USE, GAD_CANCEL, NUM_PREFS_GADS };
 
