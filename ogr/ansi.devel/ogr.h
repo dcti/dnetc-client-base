@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.h,v 1.1.2.10 2001/01/18 00:46:30 andreasb Exp $
+ * $Id: ogr.h,v 1.1.2.11 2001/01/19 01:19:12 andreasb Exp $
 */
 #ifndef __OGR_H__
 #define __OGR_H__ 
@@ -57,7 +57,7 @@
  * You need to define this here in ogr.h, because files other than ogr.cpp 
  * (e.g. selftest) depend on this setting.
  */
-//#define OGROPT_NEW_CHOOSEDAT
+#define OGROPT_NEW_CHOOSEDAT
 
 /* ===================================================================== */
 
@@ -179,6 +179,7 @@ struct WorkStub { /* size is 28 */
 
 typedef u32 U;
 
+#ifdef OGR_CORE_INTERNAL_STRUCTURES
 struct Level {
   /* If AltiVec is possible we must reserve memory, just in case */
   #ifdef __VEC__   // unused if OGROPT_ALTERNATE_CYCLE == 0 || == 1
@@ -191,9 +192,11 @@ struct Level {
   int cnt2;        // always needed
   int limit;       // always needed
 };
+#endif /* OGR_CORE_INTERNAL_STRUCTURES */
 
 #define OGR_LEVEL_SIZE ((128*4)+((4*BITMAPS)*3)+(OGR_INT_SIZE*3))
 
+#ifdef OGR_CORE_INTERNAL_STRUCTURES
 struct State {
   #if 0 /* unused - see notes for ogr_cycle() above */
   struct { U hi,lo; } Nodes;      /* counts "tree branches" */
@@ -235,6 +238,7 @@ struct State {
   U dist[BITMAPS];   /* only used by OGROPT_ALTERNATE_CYCLE == 1 */
   struct Level Levels[MAXDEPTH];
 };
+#endif /* OGR_CORE_INTERNAL_STRUCTURES */
 
 #ifndef MIPSpro
 #pragma pack()
