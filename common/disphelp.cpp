@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.59  1999/02/10 03:42:03  cyp
+// --interfaces is no longer linux specific.
+//
 // Revision 1.58  1999/02/06 09:08:08  remi
 // Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
 // to watch for online/offline status. If this list is empty (the default), any
@@ -191,7 +194,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.58 1999/02/06 09:08:08 remi Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.59 1999/02/10 03:42:03 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -244,7 +247,7 @@ void DisplayHelp( const char * unrecognized_option )
     "-kill, -shutdown   gracefully shut down all active clients",
     "-help              display these help screens",
     "",
-  //----the runoffline/runbuffers lines are the longest a description may get-----#
+  //"------------------------------------ max width == 77 -------------------------
     "Other Options:",
     "-runoffline        disable network access",
     "-runonline         enable network access",
@@ -302,9 +305,7 @@ void DisplayHelp( const char * unrecognized_option )
   #ifdef LURK
     "-lurk              automatically detect modem connections",
     "-lurkonly          perform buffer updates only when a connection is detected",
-    #if (CLIENT_OS == OS_LINUX)
-    "-interfaces <list> watch those interfaces to detect online/offline status",
-    #endif
+    "-interfaces <list> limit the interfaces to monitor for online/offline status",
   #endif
     "-percentoff        don't display block completion as a running percentage",
     "-quiet or -hide    suppress screen output (== detach for some clients)",
