@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.48  1999/01/04 04:47:55  cyp
+// Minor fixes for platforms without network support.
+//
 // Revision 1.47  1999/01/02 07:18:23  dicamillo
 // Add ctype.h for BeOS.
 //
@@ -473,9 +476,6 @@ public:
       const char * socksusername = NULL );
     // enables socks4-proxy tunnelling transmission.
     // Specifying NULL for sockshost will disable.
-
-  static char * base64_encode(char *username, char *password);
-    // encodes the username & password pair
 
   void SetModeSOCKS5(const char *sockshost = NULL, s16 socksport = 1080,
       const char * socksusernamepw = NULL );

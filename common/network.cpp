@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.62  1999/01/04 04:47:55  cyp
+// Minor fixes for platforms without network support.
+//
 // Revision 1.61  1999/01/04 03:56:39  cyp
 // ack! ::nofallback was not being assigned.
 //
@@ -178,7 +181,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.61 1999/01/04 03:56:39 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.62 1999/01/04 04:47:55 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -315,7 +318,7 @@ static void __hostnamecpy( char *dest, const char *source,unsigned int maxlen)
 {
   unsigned int len = 0;
   while (*source && isspace(*source))
-    *source++;
+    source++;
   while (((++len)<maxlen) && *source && !isspace(*source))
     *dest++=(char)tolower(*source++);
   *dest=0;
@@ -1229,48 +1232,6 @@ s32 Network::Put( u32 length, const char * data )
   return (LowLevelPut(outbuf.GetLength(), outbuf) != -1 ? 0 : -1);
 }
 
-//------------------------------------------------------------------------
-
-#define B64_ENC(Ch) (char) (base64table[(char)(Ch) & 63])
-char * Network::base64_encode(char *username, char *password)
-{
-  static char in[80], out[80];
-  static const char base64table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
-                                    "ghijklmnopqrstuvwxyz0123456789+/";
-
-  u32 length = strlen(username) + strlen(password) + 1;
-  if ((length+1) >= sizeof(in) || (length + 2) * 4 / 3 >= sizeof(out)) 
-    return NULL;
-  sprintf(in, "%s:%s\n", username, password);
-
-  char *b = out, *data = in;
-  for (; length > 2; length -= 3, data += 3)
-    {
-    *b++ = B64_ENC(data[0] >> 2);
-    *b++ = B64_ENC(((data[0] << 4) & 060) | ((data[1] >> 4) & 017));
-    *b++ = B64_ENC(((data[1] << 2) & 074) | ((data[2] >> 6) & 03));
-    *b++ = B64_ENC(data[2] & 077);
-    }
-
-  if (length == 1)
-    {
-    *b++ = B64_ENC(data[0] >> 2);
-    *b++ = B64_ENC((data[0] << 4) & 060);
-    *b++ = '=';
-    *b++ = '=';
-    }
-  else if (length == 2)
-    {
-    *b++ = B64_ENC(data[0] >> 2);
-    *b++ = B64_ENC(((data[0] << 4) & 060) | ((data[1] >> 4) & 017));
-    *b++ = B64_ENC((data[1] << 2) & 074);
-    *b++ = '=';
-    }
-  *b = 0;
-
-  return out;
-}
-
 //=====================================================================
 // From here on down we have "bottom half" functions that (a) use socket
 // functions or (b) are TCP/IP specific or (c) actually do i/o.
@@ -1541,7 +1502,7 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
 //------------------------------------------------------------------------
 
 #if (!defined(AF_INET) || !defined(SOCK_STREAM))  
-s32 Network::Resolve( const char *, u32 *, int )
+int Network::Resolve( const char *, u32 *, int )
 { return -1; }
 #else
 #include "netres.cpp"
