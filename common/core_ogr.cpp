@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.21 2004/05/21 18:49:20 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.22 2004/05/22 10:26:50 kakace Exp $"; }
 
 //#define TRACE
 
@@ -348,10 +348,13 @@ int selcoreGetPreselectedCoreForProject_ogr()
       {
         switch ( detected_type & 0xffff) // only compare the low PVR bits
         {
-          case 0x000C: cindex = 1; break; // 7400 (G4)   == PPC-vector
-          case 0x8000: cindex = 0; break; // 7450 (G4+)  == PPC-scalar
-          case 0x8001: cindex = 0; break; // 7455 (G4+)  == PPC-scalar
-          case 0x800C: cindex = 1; break; // 7410 (G4)   == PPC-vector
+          case 0x000C: cindex = 1; break; // 7400      (G4)  == PPC-vector
+          case 0x0039: // PPC 970
+          case 0x8000: // 7441/7450/7451
+          case 0x8001: // 7445/7455
+          case 0x8002: // 7447/7457
+          case 0x8003: cindex = 0; break; // 744x/745x (G4+) == PPC-scalar
+          case 0x800C: cindex = 1; break; // 7410      (G4)  == PPC-vector
           default:     cindex =-1; break; // no default
         }
       }
