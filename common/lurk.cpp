@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.cpp,v $
+// Revision 1.16  1999/01/29 18:49:05  jlawson
+// fixed formatting.
+//
 // Revision 1.15  1999/01/28 00:24:25  trevorh
 // Put back the call to dod.cpp when using Watcom. Left EMX broken.
 //
@@ -43,7 +46,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.15 1999/01/28 00:24:25 trevorh Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.16 1999/01/29 18:49:05 jlawson Exp $"; }
 #endif
 
 /* --------------------------------- */
@@ -88,11 +91,11 @@ static int rasapiinitialized = 0;
 static int DeinitializeRASAPI(void)
 {
   if ((--rasapiinitialized) == 0)
-    {
+  {
     if (hrasapiInstance)
       FreeLibrary(hrasapiInstance);
     hrasapiInstance = NULL;
-    }
+  }
   return 0;
 }
 
@@ -101,7 +104,7 @@ static int DeinitializeRASAPI(void)
 static int InitializeRASAPI(void)
 {
   if ((++rasapiinitialized) == 1)
-    {
+  {
     OFSTRUCT ofstruct;
     ofstruct.cBytes = sizeof(ofstruct);
 
@@ -111,15 +114,15 @@ static int InitializeRASAPI(void)
     #define OF_SEARCH 0x0400
     #endif
     if ( OpenFile( "RASAPI32.dll", &ofstruct, OF_EXIST|OF_SEARCH) >= 0)
-      {
+    {
       hrasapiInstance = LoadLibrary( ofstruct.szPathName );
       if ((UINT)hrasapiInstance <= 32)
         hrasapiInstance = NULL;
       else
         rasapiinitialized = 1;
-      }
     }
-  return ((rasapiinitialized > 0)?(0):(-1));
+  }
+  return ((rasapiinitialized > 0) ? (0) : (-1));
 }
 
 /* ---------------------------------------------------------- */
@@ -152,55 +155,55 @@ static FARPROC LoadRASAPIProc( const char *procname )
 
 Lurk::Lurk()  // Init lurk internal variables
 {
-  islurkstarted=0;
-  oldlurkstatus=0;
-  #if (CLIENT_OS == OS2)
+  islurkstarted = 0;
+  oldlurkstatus = 0;
+#if (CLIENT_OS == OS2)
   Sleeptime = 60;
   Retry = 3;
   Lurk_Cmd =  "rc5dial.cmd";
   Lurk_Start = "start";
   Lurk_Stop = "stop";
-  #endif
+#endif
 }
 
 /* ---------------------------------------------------------- */
 
 char *Lurk::GetEntryList(long *finalcount)
 {
-#if (CLIENT_OS==OS_WIN32)
+#if (CLIENT_OS == OS_WIN32)
   {
-  RASENTRYNAME rasentries[10];
-  static char configentries[10][60];
-  unsigned long buffersize;
-  u32 entrycount;
-  char *EntryList;
+    RASENTRYNAME rasentries[10];
+    static char configentries[10][60];
+    unsigned long buffersize;
+    u32 entrycount;
+    char *EntryList;
 
-  if (islurkstarted != 1)
-    Start();
-  if (islurkstarted != 1)
-    return NULL; // Lurk can't be started, evidently
+    if (islurkstarted != 1)
+      Start();
+    if (islurkstarted != 1)
+      return NULL; // Lurk can't be started, evidently
 
-  rasentries[0].dwSize=sizeof(RASENTRYNAME);
+    rasentries[0].dwSize = sizeof(RASENTRYNAME);
 
-  buffersize=sizeof(rasentries);
-  entrycount=0;
+    buffersize = sizeof(rasentries);
+    entrycount = 0;
 
-  rasenumentries(NULL,NULL,&rasentries[0],&buffersize,&entrycount);
+    rasenumentries(NULL,NULL,&rasentries[0],&buffersize,&entrycount);
 
-  if (entrycount >= 1)
+    if (entrycount >= 1)
     {
-    for (unsigned int temp=0;temp < entrycount;temp++)
+      for (unsigned int temp = 0; temp < entrycount; temp++)
         strncpy(&configentries[temp][0],&rasentries[temp].szEntryName[0], 60);
     }
 
-  EntryList=&configentries[0][0];
-  *finalcount=(int)entrycount;
-  return EntryList;
+    EntryList=&configentries[0][0];
+    *finalcount=(int)entrycount;
+    return EntryList;
   }
 #else
   {
-  *finalcount=0;
-  return NULL;
+    *finalcount=0;
+    return NULL;
   }
 #endif
 }
@@ -215,31 +218,31 @@ s32 Lurk::CheckIfConnectRequested(void) //Get possible values of connectrequeste
     return 0; // We're not supposed to lurk!
 
   if (Status() == 0) // We're not connected
+  {
+    if (oldlurkstatus != 0)    // Lost the connection
     {
-    if( oldlurkstatus != 0)    // Lost the connection
-      {
       Log("\nDialup Connection Disconnected");
       oldlurkstatus = 0;// So we know next time through this loop
-      if(lurkmode == 2) // Lurk-only mode
-        {
+      if (lurkmode == 2) // Lurk-only mode
+      {
         Log(" - Connections will not be initiated by the client.");
          // lurkonly needs a live connect - also, don't
          // interfere if offlinemode already ==1 or ==2
-        };
-      Log("\n");
       }
-    connectrequested=0; // No, don't try to connect.
+      Log("\n");
     }
+    connectrequested = 0; // No, don't try to connect.
+  }
   else // We're connected!
+  {
+    connectrequested = 1; // Trigger an update
+    if (oldlurkstatus != 1) // We previously weren't connected
     {
-    connectrequested=1;// Trigger an update
-    if(oldlurkstatus != 1) // We previously weren't connected
-      {
       // Only put out message the first time.
       Log("\nDialup Connection Detected\n");
       oldlurkstatus = 1;
-      };
-    };
+    }
+  }
   return connectrequested;
 }
 
@@ -278,42 +281,42 @@ s32 Lurk::DialIfNeeded(s32 force)
     return 0; // We're not supposed to lurk!
 
   if (Status() == 1) // We're already connected
-    {
-    dialstatus=0; // Make sure we won't hangup
+  {
+    dialstatus = 0; // Make sure we won't hangup
     return 0;
-    };
+  }
 
   // Ok, we're not connected, check if we should dial.
 
   // First, check if we're in lurk-only, and if we're allowed to dial.
 
   if (force == 0)        // No override
-    {
+  {
     if (lurkmode == 2)   // lurk-only mode, we're not allowed to
       return -1;         // connect
-    }
+  }
 
-  if (dialwhenneeded==0) // We'll have to let auto-dial handle this.
-    {
-    dialstatus=0;
+  if (dialwhenneeded == 0) // We'll have to let auto-dial handle this.
+  {
+    dialstatus = 0;
     return 0;
-    }
-  else if (dialwhenneeded==1) // Let's dial!
-    {
+  }
+  else if (dialwhenneeded == 1) // Let's dial!
+  {
     returnvalue=InitiateConnection(); // Go dial! Yeah!
     switch (returnvalue)
-      {
+    {
       case -1: // Connection failed, error.
-           dialstatus=0;
-           return -1;
+        dialstatus = 0;
+        return -1;
       case 0: // We were already connected.
-           dialstatus=0;
-           return 0;
+        dialstatus = 0;
+        return 0;
        case 1: // We just made a connection.
-           dialstatus=1; // We have to hangup later.
-           return 0;
-       };
-    };
+        dialstatus = 1; // We have to hangup later.
+        return 0;
+     }
+  }
   return -1;  // I don't know how you'd get here, so it's an error.
 }
 
@@ -326,10 +329,10 @@ s32 Lurk::HangupIfNeeded(void)
   if (Status() == 0)
     return 0; // We're already disconnected
   if (dialstatus == 1) // We dialed, so we should hangup
-    {
-    dialstatus=0; // Make sure we don't hangup twice.
+  {
+    dialstatus = 0; // Make sure we don't hangup twice.
     TerminateConnection(); // Hangup.
-    };
+  }
   return 0;
 }
 
@@ -340,15 +343,14 @@ s32 Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
   if (lurkmode < 1)
     return -1; // We're not supposed to lurk!
 
-  #if (CLIENT_OS == OS_WIN32)
-
+#if (CLIENT_OS == OS_WIN32)
   if (InitializeRASAPI() != 0)
-    {
+  {
     LogScreen("Couldn't load rasapi32.dll\n"
               "Dial-up must be installed for -lurk/-lurkonly\n");
     lurkmode = 0;
     return -1;
-    }
+  }
 
   rasenumconnections = (rasenumconnectionsT) LoadRASAPIProc("RasEnumConnectionsA");
   rasgetconnectstatus = (rasgetconnectstatusT) LoadRASAPIProc("RasGetConnectStatusA");
@@ -361,7 +363,7 @@ s32 Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
   if (!rasenumconnections || !rasgetconnectstatus || !rashangup ||
       !rasdial || !rasgeterrorstring || !rasgetentrydialparams ||
       !rasenumentries )
-    {
+  {
     LPVOID lpMsgBuf;
     FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
@@ -372,19 +374,20 @@ s32 Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
     DeinitializeRASAPI();
     lurkmode = 0;
     return -1;
-    }
-  #elif (CLIENT_OS == OS2)
-    // here we should read what pgm to start (and check the values)
-    // currently this is hardcoded in start and stop. We only check wether
-    // the program exist here
-    if(!access(Lurk_Cmd, R_OK)) {
-       LogScreen("Could not find %s to initiate/end Dial-up connection.\n"\
-                 "See README.TXT for details", Lurk_Cmd);
-       return -1;
-       }
-    Lurk_Cmd[Switch_Cmd++]=' ';         // add a space
-    Lurk_Cmd[Switch_Cmd]='\0';
-  #endif
+  }
+#elif (CLIENT_OS == OS2)
+  // here we should read what pgm to start (and check the values)
+  // currently this is hardcoded in start and stop. We only check wether
+  // the program exist here
+  if(!access(Lurk_Cmd, R_OK))
+  {
+    LogScreen("Could not find %s to initiate/end Dial-up connection.\n"\
+             "See README.TXT for details", Lurk_Cmd);
+    return -1;
+  }
+  Lurk_Cmd[Switch_Cmd++] = ' ';         // add a space
+  Lurk_Cmd[Switch_Cmd] = '\0';
+#endif
 
   islurkstarted=1;
   return 0;
@@ -392,22 +395,25 @@ s32 Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
 
 /* ---------------------------------------------------------- */
 
-s32 Lurk::Stop(void)// DeInitializes Lurk Mode. returns 0 on success.
+// DeInitializes Lurk Mode. returns 0 on success.
+
+s32 Lurk::Stop(void)
 {
   if (islurkstarted)
-    {
-    #if (CLIENT_OS==OS_WIN32)
+  {
+    #if (CLIENT_OS == OS_WIN32)
     DeinitializeRASAPI();
     #endif
     islurkstarted=0;
-    };
+  }
   return 0;
 }
 
 /* ---------------------------------------------------------- */
 
+// Checks status of connection
 
-s32 Lurk::Status(void)// Checks status of connection
+s32 Lurk::Status(void)
 {
   // 0 == not currently connected
   // 1 == currently connected
@@ -420,9 +426,9 @@ s32 Lurk::Status(void)// Checks status of connection
   if (islurkstarted != 1)
     return 0; // Lurk can't be started, evidently
 
-  #if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32)
   if (rasenumconnections && rasgetconnectstatus)
-    {
+  {
     RASCONN rasconn[8];
     DWORD cb;
     DWORD cConnections;
@@ -430,46 +436,46 @@ s32 Lurk::Status(void)// Checks status of connection
     (rasconn[0]).dwSize = sizeof(RASCONN);
     cb = sizeof(rasconn);
     if (rasenumconnections(&rasconn[0], &cb, &cConnections) == 0)
-      {
+    {
       if (cConnections > 0)
-        {
+      {
         rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
         for (DWORD whichconn = 1; whichconn <= cConnections; whichconn++)
-          {
+        {
           if (rasgetconnectstatus((rasconn[whichconn-1]).hrasconn,
               &rasconnstatus) == 0 && rasconnstatus.rasconnstate == RASCS_Connected)
               return 1;// We're connected
-          }
         }
       }
     }
+  }
 #elif (CLIENT_OS == OS_OS2)
   #if defined(__EMX__)
-   {
-   int s, rc, i;
-   struct ifmib MyIFMib = {0};
+  {
+    int s, rc, i;
+    struct ifmib MyIFMib = {0};
 
-   s = socket(PF_INET, SOCK_STREAM, 0);
-   rc = ioctl(s, SIOSTATIF, (char *)&MyIFMib, sizeof(MyIFMib));
-   close(s);
-   // check for an interface of type SLIP or PPP
-   for(i = 0; i < IFMIB_ENTRIES; i++)
-      {
+    s = socket(PF_INET, SOCK_STREAM, 0);
+    rc = ioctl(s, SIOSTATIF, (char *)&MyIFMib, sizeof(MyIFMib));
+    close(s);
+    // check for an interface of type SLIP or PPP
+    for(i = 0; i < IFMIB_ENTRIES; i++)
+    {
       if(MyIFMib.iftable[i].ifType != 0)
-         switch(MyIFMib.iftable[i].ifType)
-            {
-            case HT_SLIP:
-            case HT_PPP:
-               return 1;      // Report online if SLIP or PPP detected
-            }
-      }
-   }
+        switch(MyIFMib.iftable[i].ifType)
+        {
+          case HT_SLIP:
+          case HT_PPP:
+            return 1;      // Report online if SLIP or PPP detected
+          }
+    }
+  }
   #else
   DialOnDemand dod;       // just used to check online status for lurk
   return dod.rweonline();
   #endif
 #endif
-return 0;// Not connected
+  return 0;   // Not connected
 }
 
 /* ---------------------------------------------------------- */
@@ -491,7 +497,7 @@ s32 Lurk::InitiateConnection(void)
   if (Status() == 1)
     return 0; // We're already connected!
 
-  #if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32)
 
   RASDIALPARAMS dialparameters;
   BOOL passwordretrieved;
@@ -510,15 +516,15 @@ s32 Lurk::InitiateConnection(void)
   returnvalue =
     rasgetentrydialparams(NULL,&dialparameters,&passwordretrieved);
 
-  if (returnvalue==0)
-    {
+  if (returnvalue == 0)
+  {
     if (passwordretrieved != TRUE)
       LogScreen("Password could not be found, connection may fail.\n");
-    }
+  }
   else
-    {
+  {
     switch(returnvalue)
-      {
+    {
       case ERROR_CANNOT_FIND_PHONEBOOK_ENTRY:
         LogScreen("Phonebook entry %s could not be found, aborting dial.\n",
                    connectionname);
@@ -529,11 +535,11 @@ s32 Lurk::InitiateConnection(void)
       case ERROR_BUFFER_INVALID:
         LogScreen("Invalid buffer passed, aborting dial.\n");
         return -1;
-      };
     }
+  }
 
   LogScreen("Dialing phonebook entry %s...\n",connectionname);
-  returnvalue=rasdial(NULL,NULL,&dialparameters,NULL,NULL,&connectionhandle);
+  returnvalue = rasdial(NULL,NULL,&dialparameters,NULL,NULL,&connectionhandle);
 
   if (returnvalue == 0)
     return 1; //If we got here, connection successful.
@@ -541,21 +547,19 @@ s32 Lurk::InitiateConnection(void)
   rasgeterrorstring(returnvalue,errorstring,sizeof(errorstring));
   LogScreen("There was an error initiating a connection: %s\n",errorstring);
 
-  #elif (CLIENT_OS == OS_OS2)
+#elif (CLIENT_OS == OS_OS2)
 
-  int i;
   // next line should be the retry value from config(patrick)
-  i=3;
+  int i = 3;
   do {
-     spawnl( P_NOWAIT, "startDOD.cmd", (char *)NULL );
-     sleep( Sleeptime );     // there has to be a way to do a 'faster' check
-     if (Status() == 1) {
-                return 1;
-     } /* endif */
+    spawnl( P_NOWAIT, "startDOD.cmd", (char *)NULL );
+    sleep( Sleeptime );     // there has to be a way to do a 'faster' check
+    if (Status() == 1)
+      return 1;
   } while ( --i ); /* enddo */
-  #endif
+#endif
 
-  return -1; //failed
+  return -1; // failed
 }
 
 s32 Lurk::TerminateConnection(void)
@@ -573,9 +577,9 @@ s32 Lurk::TerminateConnection(void)
   if (Status() == 0)
     return 0; // We're already disconnected
 
-  #if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32)
   if (rasenumconnections && rasgetconnectstatus)
-    {
+  {
     RASCONN rasconn[8];
     DWORD cb;
     DWORD cConnections;
@@ -583,29 +587,30 @@ s32 Lurk::TerminateConnection(void)
     (rasconn[0]).dwSize = sizeof(RASCONN);
     cb = sizeof(rasconn);
     if (rasenumconnections(&rasconn[0], &cb, &cConnections) == 0)
-      {
+    {
       if (cConnections > 0)
-        {
+      {
         rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
         for (DWORD whichconn = 1; whichconn <= cConnections; whichconn++)
-          {
+        {
           if (rasgetconnectstatus((rasconn[whichconn-1]).hrasconn,
               &rasconnstatus) == 0 && rasconnstatus.rasconnstate == RASCS_Connected)
-            {
+          {
             // We're connected
             if (rashangup(rasconn[whichconn-1].hrasconn) == 0) // So kill it!
               return 0; // Successful hangup
             return -1; // RasHangUp reported an error.
-            }
           }
         }
       }
     }
-  #elif (CLIENT_OS == OS_OS2)
+  }
+#elif (CLIENT_OS == OS_OS2)
+  
   // this should be from config ! (patrick)
   spawnl( P_NOWAIT, "stopDOD.cmd", (char *)NULL );
 
-  #endif
+#endif
   return 0;
 }
 

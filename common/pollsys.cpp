@@ -27,6 +27,9 @@
 // does away with the 'timeslice factor' crutch.
 //
 // $Log: pollsys.cpp,v $
+// Revision 1.7  1999/01/29 18:46:43  jlawson
+// fixed formatting.
+//
 // Revision 1.6  1999/01/01 02:45:16  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -52,7 +55,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.6 1999/01/01 02:45:16 cramer Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.7 1999/01/29 18:46:43 jlawson Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -108,19 +111,19 @@ int UnregPolledProcedure( int fd )
   
   thisp = pollsysdata.runlist;
   while ( thisp )
-    {
+  {
     if (thisp->fd == fd)
-      {
+    {
       if (thisp->inuse)
-        {
+      {
         thisp->inuse = 0;
         rc = 0;
-        }
+      }
       pollsysdata.regcount--;
       break;
-      }
-    thisp = thisp->next;
     }
+    thisp = thisp->next;
+  }
   return rc;
 }  
 
@@ -142,50 +145,51 @@ int RegPolledProcedure( void (*proc)(void *), void *arg,
   int fd = -1;
 
   if (proc)
-    {
+  {
     thisp = pollsysdata.runlist;
     chaintail = NULL;
     while ( thisp )
-      {
+    {
       fd = thisp->fd;
       if (!thisp->inuse)
         break;
       chaintail = thisp;
       thisp = thisp->next;
-      }
+    }
     if ( !thisp )
-      {
+    {
       if (!pollsysdata.runlist)
-        {
-        for (i=0;i<(sizeof(pollsysdata.nextrun)/sizeof(pollsysdata.nextrun[0]));i++)
+      {
+        for (i = 0; i < (sizeof(pollsysdata.nextrun)/
+            sizeof(pollsysdata.nextrun[0])); i++)
           pollsysdata.nextrun[i]=NULL;
-        }
+      }
       mcount = 1024/(sizeof(struct polldata));
       thisp = (struct polldata *)(malloc( mcount * sizeof(struct polldata) ));
       if ( thisp )
-        {
+      {
         thatp = thisp;
         if (fd == -1)
           fd = 0;
-        for (i=0; i<mcount; i++)
-          {
+        for (i = 0; i < mcount; i++)
+        {
           thatp->next = (i<(mcount-1))?(thatp+1):(NULL);
           thatp->chainhead = (i==0);
           thatp->proc = NULL;  
           thatp->inuse = 0;  
           thatp->fd = ++fd;
           thatp++;
-          }
+        }
         if (pollsysdata.runlist == NULL)
           pollsysdata.runlist = thisp;
         else
           chaintail->next = thisp;
-        }
       }
+    }
     if ( !thisp )
       fd = -1;
     else
-      {
+    {
       pollsysdata.regcount++;
       fd = thisp->fd;
       thisp->inuse = 1;
@@ -196,14 +200,14 @@ int RegPolledProcedure( void (*proc)(void *), void *arg,
         thisp->priority = MAX_POLL_RUNLEVEL-1;
       CliTimer( &thisp->execat );
       if (interval)
-        {
+      {
         thisp->execat.tv_sec += interval->tv_sec;
         thisp->execat.tv_usec += interval->tv_usec;
         thisp->execat.tv_sec += thisp->execat.tv_usec/1000000;
         thisp->execat.tv_usec %= 1000000;
-        }
       }
     }
+  }
   return (fd);
 }  
 
@@ -215,10 +219,10 @@ int InitializePolling(void)
   if (pollsysdata.runlist != NULL)
     return 0;
   if ((fd = RegPolledProcedure( __initchk, NULL, NULL, 0 )) != -1)
-    {
+  {
     UnregPolledProcedure( fd ); /* remove it from the queue */
     return 0;
-    }
+  }
   return -1;
 }
 
@@ -231,17 +235,17 @@ int DeinitializePolling(void)
   thatp = pollsysdata.runlist = NULL;
 
   while ( thisp )
-    {
+  {
     if ( thisp->chainhead )
-      {
+    {
       if ( thatp )
         free((void *)(thatp));
       thatp = thisp;
-      }
+    }
     thisp = thisp->next;
     if (!thisp && thatp)
       free((void *)(thatp));
-    }
+  }
   return 0;
 }  
 
@@ -256,18 +260,18 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
   int reclock, loopend, dorun;
 
   if ((++isrunning) > 1)
-    {
+  {
     fprintf(stderr, "call to sleep when no sleep allowed!");
-    }
+  }
   else if (!pollsysdata.runlist || pollsysdata.regcount==0)
-    {
+  {
     if ( secs )
       sleep( secs );
     if ( usecs || !secs )
       usleep( usecs );
-    }
+  }
   else
-    {  
+  {
     CliTimer( &now );
     until.tv_usec = now.tv_usec;
     until.tv_sec = now.tv_sec;
@@ -278,41 +282,43 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
   
     runprio = MAX_POLL_RUNLEVEL;
     
-    do{
+    do
+    {
       thisp = NULL;
       reclock = 0;
 //printf("o%d", runprio);
 
-      do{
+      do
+      {
         dorun = 0;
 //printf("i");
       
         //could lock MUTEX here 
         if ( !pollsysdata.runlist )
-          {
+        {
           loopend = 1;
           reclock = 0;
-          }
+        }
         else
-          {
+        {
           //lock MUTEX here
           if ( !thisp )
-            {
+          {
             if ( !pollsysdata.nextrun[runprio] )
               pollsysdata.nextrun[runprio] = pollsysdata.runlist;
             thisp = pollsysdata.nextrun[runprio];
-            }
+          }
           if ((nextp = thisp->next) == NULL)
             nextp = pollsysdata.runlist;
           loopend = ( !nextp || 
                 (pollsysdata.nextrun[runprio])->fd == nextp->fd );
           if (thisp->inuse)
-            {
+          {
             if ((thisp->priority == runprio) &&
               (( now.tv_sec > thisp->execat.tv_sec ) ||
               (( thisp->execat.tv_sec == now.tv_sec ) && 
               ( now.tv_usec >= thisp->execat.tv_usec ))))
-              {
+            {
               arg = thisp->arg;
               proc = thisp->proc;
               thisp->inuse = 0;
@@ -322,36 +328,36 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
               pollsysdata.nextrun[runprio] = nextp;
               loopend = 1;
 //printf("r%dp%d", thisp->fd, thisp->priority );
-              }
             }
           }
+        }
         //could unlock MUTEX here
         
         if (dorun)
           (*proc)(arg);
         thisp = nextp;
-        } while (!loopend);
+      } while (!loopend);
       
       if (reclock) /* ran at that level */
         runprio = MAX_POLL_RUNLEVEL; /* start over */
       else if (runprio > 0)
         runprio--;
       else
-        {
+      {
         runprio = MAX_POLL_RUNLEVEL;
         if (( now.tv_sec < until.tv_sec ) || (( now.tv_sec == until.tv_sec ) 
           && ( now.tv_usec < until.tv_usec )))
           usleep(100); 
         reclock = 1;
-        }
+      }
 
       if (reclock)
         CliTimer( &now );
            
-      } while (( now.tv_sec < until.tv_sec ) || 
+    } while (( now.tv_sec < until.tv_sec ) || 
               (( now.tv_sec == until.tv_sec ) && 
                ( now.tv_usec < until.tv_usec )));
-    }
+  }
     
   --isrunning;
   return;           

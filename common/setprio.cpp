@@ -9,6 +9,9 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.47  1999/01/29 18:47:04  jlawson
+// fixed formatting.
+//
 // Revision 1.46  1999/01/17 13:27:42  cyp
 // SetPriority() does its own range validation.
 //
@@ -71,7 +74,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.46 1999/01/17 13:27:42 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.47 1999/01/29 18:47:04 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -89,7 +92,7 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
 
   #if (CLIENT_OS == OS_MACH)
     if ( set_for_thread )
-      {
+    {
       cthread_t thrid = cthread_self();
       int newprio = __mach_get_max_thread_priority( thrid, NULL );
       if (prio < 9) 
@@ -98,14 +101,14 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
         newprio++;
       if (cthread_priority( thrid, newprio, 0 ) != KERN_SUCCESS)
         return -1;
-      }
+    }
   #elif (CLIENT_OS == OS_OS2)
     if ( set_for_thread )
-      {
-      DosSetPriority( PRTYS_THREAD, PRTYC_IDLETIME, ((32 * prio)/10), 0);
-      }
-  #elif (CLIENT_OS == OS_WIN32)
     {
+      DosSetPriority( PRTYS_THREAD, PRTYC_IDLETIME, ((32 * prio)/10), 0);
+    }
+  #elif (CLIENT_OS == OS_WIN32)
+  {
     static int useidleclass = -1;
     int threadprio = 0, classprio = 0;
     HANDLE our_thrid = GetCurrentThread();
@@ -124,22 +127,22 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     ******************************************************************* */
   
     if (useidleclass == -1) /* not yet detected */
-      {
+    {
       SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
       Sleep(1);
       SetThreadPriority( our_thrid, THREAD_PRIORITY_TIME_CRITICAL);    
       if (GetThreadPriority( our_thrid ) == THREAD_PRIORITY_TIME_CRITICAL)
         useidleclass = 1;
       else
-        {
+      {
         useidleclass = 0;
         SetPriorityClass( GetCurrentProcess(), NORMAL_PRIORITY_CLASS );
         Sleep(1);
-        }
-      SetThreadPriority( our_thrid, THREAD_PRIORITY_NORMAL );    
       }
+      SetThreadPriority( our_thrid, THREAD_PRIORITY_NORMAL );    
+    }
     if (useidleclass == 1)
-      {    
+    {
       classprio = IDLE_PRIORITY_CLASS;
       if (!set_for_thread) threadprio = THREAD_PRIORITY_TIME_CRITICAL;/* 15 */
       else if (prio >= 7)  threadprio = THREAD_PRIORITY_HIGHEST;      /*  6 */
@@ -156,86 +159,86 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       else if (prio >= 7)  threadprio = THREAD_PRIORITY_BELOW_NORMAL; /*  6 */
       else if (prio >= 5)  threadprio = THREAD_PRIORITY_LOWEST;       /*  5 */
       else                 threadprio = THREAD_PRIORITY_IDLE;         /*  1 */
-      }
+    }
     //SetPriorityClass( GetCurrentProcess(), classprio );
     //Sleep(1);
     SetThreadPriority( our_thrid, threadprio );
-    }
+  }
   #elif (CLIENT_OS == OS_MACOS)
     if ( set_for_thread )
-      {
+    {
       // nothing
-      }
+    }
     else
-      {
+    {
       // nothing
-      }
+    }
   #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     if ( set_for_thread )
-      {
+    {
       // nothing
-      }
+    }
     else
-      {
+    {
       // nothing
-      }
+    }
   #elif (CLIENT_OS == OS_NETWARE)
     if ( set_for_thread )
-      {
+    {
       // nothing
-      }
+    }
     else
-      {
+    {
       // nothing
-      }
+    }
   #elif (CLIENT_OS == OS_DOS)
     if ( set_for_thread )
-      {
+    {
       // nothing
-      }
+    }
     else
-      {
+    {
       // nothing
-      }
+    }
   #elif (CLIENT_OS == OS_BEOS)
     if ( set_for_thread )
-      {
+    {
       // priority of crunching threads is set when they are created.
-      }
+    }
     else
-      {
+    {
       // Main thread runs at normal priority, since it does very little;
-      }
+    }
   #elif (CLIENT_OS == OS_RISCOS)
     if ( set_for_thread )
-      {
+    {
       // nothing - non threaded
-      }
+    }
     else
-      {
+    {
       // nothing
-      }
+    }
   #elif (CLIENT_OS == OS_VMS)
     if ( set_for_thread )
-      {
+    {
       // nothing - non threaded
-      }
+    }
     else
-      {
+    {
       nice( (10-(prio+1)) >> 1 ); /* map from 0-9 to 4-0 */
       // assumes base priority is the default 4. 0 is highest priority.
       // GO-VMS.COM can also be used
-      }
+    }
   #elif (CLIENT_OS == OS_AMIGAOS)
     if ( set_for_thread )
-      {
+    {
       //nothing - non threaded
-      }
+    }
     else
-      {
+    {
       int pri = -(((9-prio) * 10)/5); /* scale from 0-9 to -20 to zero */
       SetTaskPri(FindTask(NULL), pri ); 
-      }
+    }
   #elif (CLIENT_OS == OS_QNX)
 	  setprio( 0, prio-3 );
     // if ( niceness == 0 )      setprio( 0, getprio(0)-3 );
@@ -244,27 +247,28 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     // #error FIXME: SetPriority needs to be scaled from 0 (lowest/idle prio) to 9 (normal)
   #elif (CLIENT_OS == OS_IRIX)
     if ( set_for_thread )
-      {
+    {
       //nothing - priority is set when created.
-      }
+    }
     else
+    {
+      if (prio == 0){
+        schedctl( NDPRI, 0, NDPLOMIN );
+        schedctl( RENICE, 0, 39);
+      } 
+      else
       {
-        if (prio == 0){
-          schedctl( NDPRI, 0, NDPLOMIN );
-          schedctl( RENICE, 0, 39);
-        } 
-        else{
-          if (prio < 9)
-            schedctl( NDPRI, 0, (NDPLOMIN - NDPNORMMIN)/prio);
-        }
+        if (prio < 9)
+          schedctl( NDPRI, 0, (NDPLOMIN - NDPNORMMIN)/prio);
       }
+    }
   #else
     #if (CLIENT_OS == OS_FREEBSD)
     #define PRI_OTHER_MAX 10
     #define PRI_OTHER_MIN 20
     #endif
     if ( set_for_thread )
-      {
+    {
       #if defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
         #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
           //nothing - priority is set when created
@@ -279,27 +283,27 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
             return -1;
         #endif
       #endif
-      }
+    }
     else 
-      {
+    {
       static int oldnice = -1;
       int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
       if (oldnice != -1)
-        {
+      {
         errno = 0;
         nice( -oldnice );   // note: assumes nice() handles the 
         if ( errno )        // (-20 to 20) range and not 0-40 
           return -1;
-        }
+      }
       if ( newnice != 0 )
-        {
+      {
         errno = 0;
         nice( newnice );
         if ( errno )
           return -1;
-        }
-      oldnice = newnice;
       }
+      oldnice = newnice;
+    }
   #endif
 
   if (!prio)          //dummy code to suppress
