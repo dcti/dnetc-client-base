@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.101 2002/10/19 15:09:14 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.102 2002/10/19 16:47:56 acidblood Exp $"; }
 
 //#define TRACE
 
@@ -1468,9 +1468,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 // Since we only have ANSI C++ RC5-72 cores for now, there's no need for
 // CLIENT_CPU checking.
 
-  extern "C" u32 rc5_72_unit_func_ansi_4( RC5_72UnitWork *, u32 );
-  extern "C" u32 rc5_72_unit_func_ansi_2( RC5_72UnitWork *, u32 );
-  extern "C" u32 rc5_72_unit_func_ansi_1( RC5_72UnitWork *, u32 );
+  extern "C" s32 rc5_72_unit_func_ansi_4( RC5_72UnitWork *, u32 *, void * );
+  extern "C" s32 rc5_72_unit_func_ansi_2( RC5_72UnitWork *, u32 *, void * );
+  extern "C" s32 rc5_72_unit_func_ansi_1( RC5_72UnitWork *, u32 *, void * );
 
 // OK!
 
@@ -2021,16 +2021,16 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     switch (coresel)
     {
       case 0:
-        unit_func.rc5_72 = rc5_72_unit_func_ansi_4;
+        unit_func.gen_72 = rc5_72_unit_func_ansi_4;
         pipeline_count = 4;
         break;
       case 1:
-        unit_func.rc5_72 = rc5_72_unit_func_ansi_2;
+        unit_func.gen_72 = rc5_72_unit_func_ansi_2;
         pipeline_count = 2;
         break;
       case 2:
       default:
-        unit_func.rc5_72 = rc5_72_unit_func_ansi_1;
+        unit_func.gen_72 = rc5_72_unit_func_ansi_1;
         pipeline_count = 1;
         coresel = 2; // yes, we explicitly set coresel in the default case !
         break;

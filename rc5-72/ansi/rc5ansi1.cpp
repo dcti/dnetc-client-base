@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi1_cpp(void) {
-return "@(#)$Id: rc5ansi1.cpp,v 1.9 2002/10/19 15:09:14 acidblood Exp $"; }
+return "@(#)$Id: rc5ansi1.cpp,v 1.10 2002/10/19 16:47:56 acidblood Exp $"; }
 
 #include "ccoreio.h"
 #include "rotate.h"
@@ -13,20 +13,20 @@ return "@(#)$Id: rc5ansi1.cpp,v 1.9 2002/10/19 15:09:14 acidblood Exp $"; }
 #define Q 0x9E3779B9
 
 #ifdef __cplusplus
-extern "C" u32 rc5_72_unit_func_ansi_1 ( RC5_72UnitWork *, u32, void * );
+extern "C" s32 rc5_72_unit_func_ansi_1 ( RC5_72UnitWork *, u32 *, void * );
 #endif
 
 #ifdef _MSC_VER
 #pragma warning(disable:4307)   // integral constant overflow
 #endif
 
-u32 rc5_72_unit_func_ansi_1 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice, void *memblk)
+s32 rc5_72_unit_func_ansi_1 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *memblk)
 {
   u32 A, B;
   u32 S[26];
   u32 L[3];
-  u32 kiter = 0;
-  while (timeslice--)
+  u32 kiter = *iterations/4;
+  while (kiter--)
   {
     L[2] = rc5_72unitwork->L0.hi;
     L[1] = rc5_72unitwork->L0.mid;
@@ -186,7 +186,6 @@ u32 rc5_72_unit_func_ansi_1 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice, void
     FINAL_BLOCK(11);
     FINAL_BLOCK(12);
 
-
     if (A == rc5_72unitwork->cypher.lo)
     {
       ++rc5_72unitwork->check.count;
@@ -194,10 +193,12 @@ u32 rc5_72_unit_func_ansi_1 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice, void
       rc5_72unitwork->check.mid = rc5_72unitwork->L0.mid;
       rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
       if (B == rc5_72unitwork->cypher.hi)
+      {
+        *iterations = kiter + 1;
         return RESULT_FOUND;
+      }
     }
 
-    ++kiter;
     #define key rc5_72unitwork->L0
     key.hi = (key.hi + 0x01) & 0x000000FF;
     if (!key.hi)
