@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.18  1999/01/02 01:43:26  silby
+// processdes option read/written again.
+//
 // Revision 1.17  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -94,7 +97,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.17 1999/01/01 02:45:15 cramer Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.18 1999/01/02 01:43:26 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -254,7 +257,7 @@ int ReadConfig(Client *client)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   if (INIFIND(CONF_RANDOMPREFIX) != NULL)
   client->randomprefix = INIGETKEY(CONF_RANDOMPREFIX);
   if (INIFIND(CONF_PROCESSDES) != NULL)
-  client->preferred_contest_id = 1; // INIGETKEY(CONF_PROCESSDES);
+  client->preferred_contest_id = INIGETKEY(CONF_PROCESSDES);
   if (INIFIND(CONF_PREFERREDBLOCKSIZE) != NULL)
   client->preferred_blocksize = INIGETKEY(CONF_PREFERREDBLOCKSIZE);
 
@@ -500,6 +503,13 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       INISETKEY( CONF_CPUTYPE, client->cputype );
     if (client->numcpu!=-1 || INIFIND(CONF_NUMCPU)!=NULL)
       INISETKEY( CONF_NUMCPU, client->numcpu );
+    if (client->preferred_contest_id==0)
+      INISETKEY( CONF_PROCESSDES, client->preferred_contest_id);
+    else
+      {
+      tempptr = ini.findfirst( OPTION_SECTION, "processdes");
+      if (tempptr) tempptr->values.Erase();
+      }
     if (INIFIND(CONF_NUMCPU)!=NULL || client->preferred_blocksize!=
       (atoi(conf_options[CONF_PREFERREDBLOCKSIZE].defaultsetting)))
      INISETKEY( CONF_PREFERREDBLOCKSIZE, client->preferred_blocksize );
