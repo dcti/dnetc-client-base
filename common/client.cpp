@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.247 2000/06/02 06:24:53 jlawson Exp $"; }
+return "@(#)$Id: client.cpp,v 1.248 2000/07/11 04:28:03 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -54,6 +54,8 @@ void ResetClientData(Client *client)
   client->stopiniio=0;
   client->scheduledupdatetime = 0;
   client->inifilename[0]=0;
+  client->last_buffupd_time = 0;
+  memset(&(client->project_flags[0]),0,sizeof(client->project_flags));
 
   /* -- general -- */
   client->id[0]='\0';
@@ -85,13 +87,13 @@ void ResetClientData(Client *client)
   memset(&(client->lurk_conf),0,sizeof(client->lurk_conf));
   #endif
   client->connectoften=0;
-  memset(&(client->inthreshold),0,sizeof(client->inthreshold));
-  memset(&(client->timethreshold),0,sizeof(client->timethreshold));
+  memset(&(client->inthreshold[0]),0,sizeof(client->inthreshold));
+  memset(&(client->timethreshold[0]),0,sizeof(client->timethreshold));
+  client->max_buffupd_interval = 0;
   #if (!defined(NO_OUTBUFFER_THRESHOLDS))
-  minupdateinterval = 0;
   memset(&(client->outhreshold),0,sizeof(client->outhreshold));
   #endif
-  memset(&(client->preferred_blocksize),0,sizeof(client->preferred_blocksize));
+  memset(&(client->preferred_blocksize[0]),0,sizeof(client->preferred_blocksize));
   projectmap_build(client->loadorder_map,"");
 
   /* -- perf -- */
@@ -126,6 +128,11 @@ static int numcpusinuse = -1; /* *real* count */
 void ClientSetNumberOfProcessorsInUse(int num) /* from probfill.cpp */
 {
   numcpusinuse = num;
+}
+
+int ClientGetNumberOfProcessorsInUse(void) /* from probfill.cpp */
+{
+  return numcpusinuse;
 }
 
 unsigned int ClientGetInThreshold(Client *client, 
@@ -317,6 +324,20 @@ static const char *GetBuildOrEnvDescription(void)
   return "";
 #elif (CLIENT_OS == OS_NEXTSTEP)
   return "";
+#elif (CLIENT_OS == OS_AMIGAOS)
+  static char buffer[40];
+  #ifdef __PPC__
+    #ifdef __POWERUP__
+    sprintf(buffer,"OS %s, PowerUp %ld.%ld",amigaGetOSVersion(),PPCVersion(),PPCRevision());
+    #else
+    #define LIBVER(lib) *((UWORD *)(((UBYTE *)lib)+20))
+    #define LIBREV(lib) *((UWORD *)(((UBYTE *)lib)+22))
+    sprintf(buffer,"OS %s, WarpOS %d.%d",amigaGetOSVersion(),LIBVER(PowerPCBase),LIBREV(PowerPCBase));
+    #endif
+  #else
+  sprintf(buffer,"OS %s, 68K",amigaGetOSVersion());
+  #endif
+  return buffer;
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
   if (uname(&ut)==0) 
@@ -338,9 +359,12 @@ static const char *GetBuildOrEnvDescription(void)
 
 /* ---------------------------------------------------------------------- */
 
-static void PrintBanner(const char *dnet_id,int level,int restarted)
+static void PrintBanner(const char *dnet_id,int level,int restarted,int logscreenonly)
 {
   restarted = 0; /* yes, always show everything */
+  int logto = LOGTO_RAWMODE|LOGTO_SCREEN;
+  if (!logscreenonly)
+    logto |= LOGTO_FILE|LOGTO_MAIL;
 
   if (!restarted)
   {
@@ -352,7 +376,8 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
       #endif
       #if (CLIENT_CPU == CPU_POWERPC)
-      LogScreenRaw( "RC5 PowerPC and AltiVec assembly by Dan Oetting\n");
+      LogScreenRaw( "RC5 PowerPC and AltiVec assembly by Dan Oetting\n"
+                    "Enhancements for 604e CPUs by Roberto Ragusa\n");
       #endif
       #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
       LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
@@ -392,22 +417,34 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       const char *msg = GetBuildOrEnvDescription();
       if (msg == NULL) msg="";
 
-      LogRaw("\n%s%s%s%s.\n",
-             CliGetFullVersionDescriptor(), /* cliident.cpp */
-             ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
+      LogTo( logto, "\n%s%s%s%s.\n",
+                    CliGetFullVersionDescriptor(), /* cliident.cpp */
+                    ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
       LogScreenRaw( "Please provide the *entire* version descriptor "
                     "when submitting bug reports.\n");
       LogScreenRaw( "The distributed.net bug report pages are at "
                     "http://www.distributed.net/bugs/\n");
       if (dnet_id[0] != '\0' && strcmp(dnet_id,"rc5@distributed.net") !=0 )
-        LogRaw( "Using email address (distributed.net ID) \'%s\'\n",dnet_id);
+        LogTo( logto, "Using email address (distributed.net ID) \'%s\'\n",dnet_id);
       else if (level == 2)
-        LogRaw( "\n* =========================================================================="
-                "\n* The client is not configured with your email address (distributed.net ID) "
-                "\n* Work done cannot be credited until it is set. Please run '%s -config'"
-                "\n* =========================================================================="
-                "\n", utilGetAppName());
-      LogRaw("\n");
+        LogTo( logto, "\n* =========================================================================="
+                      "\n* The client is not configured with your email address (distributed.net ID) "
+                      "\n* Work done cannot be credited until it is set. Please run '%s -config'"
+                      "\n* =========================================================================="
+                      "\n", utilGetAppName());
+      LogTo( logto, "\n");
+      #if CLIENT_OS == OS_IRIX
+      /*
+       * Irix 6.5 has a kernel bug that will cause the system
+       * to freeze if we're running as root on a multi-processor
+       * machine and we try to use more than one CPU.
+       */
+      if (geteuid() == 0) {
+	LogScreenRaw("* Cannot run as the superuser on Irix.\n"
+		     "* Please run the client under a non-zero uid.\n\n");
+	exit(1);
+      }
+      #endif /* CLIENT_OS == OS_IRIX */
 
       if (CliIsTimeZoneInvalid()) /*clitime.cpp (currently DOS,OS/2,WIN[16] only)*/
       {
@@ -503,7 +540,7 @@ static int ClientMain( int argc, char *argv[] )
               TRACE_OUT((-1,"initializelogging\n"));
               if ((domodes & MODEREQ_CONFIG)==0)
               {
-                PrintBanner(client->id,0,restarted);
+                PrintBanner(client->id,0,restarted,0);
 
                 TRACE_OUT((+1,"parsecmdline(1)\n"));
                 ParseCommandline( client, 1, argc, (const char **)argv, NULL,
@@ -521,7 +558,7 @@ static int ClientMain( int argc, char *argv[] )
                 con_waitforuser = ((domodes & ~MODEREQ_CONFIG)!=0);
                 if ((domodes & MODEREQ_CONFIG)==0) 
                 { /* avoid printing/logging banners for nothing */
-                  PrintBanner(client->id,1,restarted);
+                  PrintBanner(client->id,1,restarted,((domodes & MODEREQ_CMDLINE_HELP)!=0));
                 }
                 TRACE_OUT((+1,"modereqrun\n"));
                 ModeReqRun( client );
@@ -531,7 +568,7 @@ static int ClientMain( int argc, char *argv[] )
               else if (!utilCheckIfBetaExpired(1)) /* prints message */
               {
                 con_waitforuser = 0;
-                PrintBanner(client->id,2,restarted);
+                PrintBanner(client->id,2,restarted,0);
                 TRACE_OUT((+1,"client.run\n"));
                 retcode = ClientRun(client);
                 TRACE_OUT((-1,"client.run\n"));
@@ -580,7 +617,6 @@ int main( void )
   argv[1] = (char *)0;
   macosInitialize();
   ClientMain(1,argv);
-  macosDeInitialize();
   return 0;
 }
 #elif (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
@@ -765,8 +801,13 @@ int main( int argc, char *argv[] )
 #elif (CLIENT_OS == OS_AMIGAOS)
 int main( int argc, char *argv[] )
 {
-  int rc = ClientMain( argc, argv );
-  if (rc) rc = 5; //Warning
+  int rc = 20;
+  if (amigaInit())
+  {  
+    rc = ClientMain( argc, argv );
+    if (rc) rc = 5; //Warning
+    amigaExit();
+  }
   return rc;
 }
 #else
