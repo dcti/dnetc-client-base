@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.32  1999/02/01 02:31:59  cyp
+// Added protection against repetitive unload_all which is possible when a
+// client shuts down asynchronously. (win16/32 clients do this when win ends)
+//
 // Revision 1.31  1999/01/14 18:05:44  cyp
 // Fixed erroneous increment of client->randomprefix.
 //
@@ -132,7 +136,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.31 1999/01/14 18:05:44 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.32 1999/02/01 02:31:59 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -579,7 +583,7 @@ void __event_test( int event_id, long parm )
 
 unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 {
-  static unsigned int previous_load_problem_count = 0; 
+  static unsigned int previous_load_problem_count = 0, reentrant_count = 0;
 
   Problem *thisprob;
   int load_needed, changed_flag;
@@ -603,7 +607,18 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   total_problems_saved = 0;
   bufupd_pending = 0;
   totalBlocksDone = 0;
-  
+
+  if (mode == PROBFILL_UNLOADALL)
+    {
+    if (previous_load_problem_count == 0)
+      return 0;
+    //load_problem_count = previous_load_problem_count;
+    }
+  if ((++reentrant_count) > 1)
+    {
+    --reentrant_count;
+    return 0;
+    }
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
    {
    unsigned int blocksdone;
@@ -635,7 +650,10 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
     i = InitializeProblemManager(load_problem_count);
     if (i<=0)
+      {
+      --reentrant_count;
       return 0;
+      }
     load_problem_count = (unsigned int)i;
 
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
@@ -846,14 +864,18 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   ClientEventSyncPost(CLIEVENT_PROBLEM_TFILLFINISHED,
      (long)((previous_load_problem_count==0)?(total_problems_loaded):(total_problems_saved)));
 
+  --reentrant_count;
+
   if (mode == PROBFILL_UNLOADALL)
     {
     previous_load_problem_count = 0;
     if (nodiskbuffers == 0)
      CheckpointAction( CHECKPOINT_CLOSE, 0 );
     DeinitializeProblemManager();
+
     return total_problems_saved;
     }
+
   if (mode == PROBFILL_RESIZETABLE)
     return total_problems_saved;
 
