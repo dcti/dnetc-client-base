@@ -11,9 +11,11 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.48 2000/01/08 23:23:28 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.49 2000/01/23 18:13:15 remi Exp $"; }
 
 /* ------------------------------------------------------------- */
+
+#include <assert.h>   //assert() macro
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -59,6 +61,8 @@ static unsigned int __problem_counter = 0;
 
 Problem::~Problem()
 {
+  free( malloced_core_membuffer );
+  malloced_core_membuffer = core_membuffer = NULL;
   __problem_counter--;
   initialized = started = 0;
 }
@@ -70,6 +74,11 @@ Problem::Problem(void)
   threadindex = __problem_counter++;
   initialized = 0;
   started = 0;
+
+  // Allocates core_membuffer and align it
+  malloced_core_membuffer = malloc( MAX_MEM_REQUIRED_BY_CORE + (1<<CORE_MEM_ALIGNMENT) - 1 );
+  assert( sizeof(void*) <= sizeof(unsigned) );
+  core_membuffer = (void*)((unsigned)malloced_core_membuffer & (~0 << CORE_MEM_ALIGNMENT));
 
   {
     unsigned int sz = sizeof(int);
@@ -369,7 +378,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       if (r != CORE_S_OK)
         return -1;
       r = ogr->create(&contestwork.ogr.workstub, 
-                      sizeof(WorkStub), core_membuffer, sizeof(core_membuffer));
+                      sizeof(WorkStub), core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
       if (r != CORE_S_OK)
         return -1;
       if (contestwork.ogr.workstub.worklength > contestwork.ogr.workstub.stub.length)

@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.20 1999/12/31 21:09:22 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.21 2000/01/23 18:13:16 remi Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -23,6 +23,8 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 
 #undef MAX_MEM_REQUIRED_BY_CORE
 #define MAX_MEM_REQUIRED_BY_CORE  8  //64 bits
+// Problem->core_membuffer should be aligned to 2^CORE_MEM_ALIGNMENT
+#define CORE_MEM_ALIGNMENT 3
 
 #if defined(HAVE_DES_CORES) && defined(MMX_BITSLICER)
   #if MAX_MEM_REQUIRED_BY_CORE < (17*1024)
@@ -34,15 +36,26 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
   #if MAX_MEM_REQUIRED_BY_CORE < (17*1024)
      #undef MAX_MEM_REQUIRED_BY_CORE
      #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
-  #endif      
+  #endif
+  // CSC membuffer should be aligned to a 16-byte boundary
+  #if CORE_MEM_ALIGNMENT < 4
+     #undef CORE_MEM_ALIGNMENT
+     #define CORE_MEM_ALIGNMENT 4
+  #endif
 #endif
 #if defined(HAVE_OGR_CORES)
   #if MAX_MEM_REQUIRED_BY_CORE < OGR_PROBLEM_SIZE
      #undef MAX_MEM_REQUIRED_BY_CORE
      #define MAX_MEM_REQUIRED_BY_CORE OGR_PROBLEM_SIZE
-  #endif     
-#endif    
-  
+  #endif
+  // CSC membuffer should be aligned to a 8-byte boundary
+  // (essential for non-x86 CPUs)
+  #if CORE_MEM_ALIGNMENT < 3
+     #undef CORE_MEM_ALIGNMENT
+     #define CORE_MEM_ALIGNMENT 3
+  #endif
+#endif
+
 /* ---------------------------------------------------------------------- */
 
 typedef union
@@ -84,7 +97,8 @@ protected: /* these members *must* be protected for thread safety */
   ContestWork contestwork;
   CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */
-  char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
+  void *malloced_core_membuffer;
+  void *core_membuffer; //[MAX_MEM_REQUIRED_BY_CORE];
   u32 timehi, timelo;
   int last_resultcode; /* the rescode the last time contestwork was stable */
   int started;
