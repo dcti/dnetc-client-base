@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.265 2002/03/25 00:16:19 sampo Exp $
+# @(#)$Id: configure,v 1.222.2.266 2002/03/25 01:20:46 sampo Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1586,7 +1586,7 @@ case "$1" in
         generate_gcc_opts "ppc" "macosx"
         TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -force_cpusubtype_ALL -faltivec"
         TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme.macosx.rtf"   #platform specific docfile
         TARGET_TARBALL="macosx-ppc"
         add_sources "macosx" "ppc"
         ;;
