@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.155  1999/01/06 21:37:24  cramer
+# Changes sparc-solaris targets to TARGET_CC="gcc" to avoid g++ stupidly
+# linking in libs that it doesn't need.
+#
 # Revision 1.154  1999/01/06 07:32:02  cramer
 # Fixed configure for sparc-linux (oops)
 #
@@ -1005,6 +1009,7 @@ case "$1" in
 
     *sparc-solaris-gcc-mt)	# slower rc5, slower des
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
@@ -1014,6 +1019,7 @@ case "$1" in
 
     *sparc-solaris-gcc-crunch-mt)    # fastest rc5, slower des
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
+	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
@@ -1023,6 +1029,7 @@ case "$1" in
 
     *sparc-solaris-gcc-crunch-slice-mt)   # fastest rc5 & des for ultra
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
+	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
@@ -1032,12 +1039,12 @@ case "$1" in
 
     *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
+	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
  	TARGET_ADDASMS="platforms/ultrasparc/simple.handopt.s"
 	TARGET_ASFLAGS="$OPTS_GAS_ULTRA"
-	TARGET_CC="gcc"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
@@ -1738,6 +1745,7 @@ if [ $1 = riscos ]; then
   #tum-te-tum
   rsh starman "cd rc5/src/client; gcc common/testplat.cpp -o testplat"
 else
+    echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
   sh -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
   if [ $? -ne 0 ]; then
     echo "Compilation failed.  Check your target options."
