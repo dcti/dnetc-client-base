@@ -6,6 +6,9 @@
  * ****************** THIS IS WORLD-READABLE SOURCE *********************
  *
  * $Log: probfill.cpp,v $
+ * Revision 1.43.2.1  1999/04/05 07:46:36  jlawson
+ * added probfill_noblocks and probfill_disabled constants.
+ *
  * Revision 1.43  1999/04/01 07:15:12  jlawson
  * corrected argument warning for 64-bit platforms.
  *
@@ -173,7 +176,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.43 1999/04/01 07:15:12 jlawson Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.43.2.1 1999/04/05 07:46:36 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -253,14 +256,14 @@ int SetProblemLoaderFlags( const char *loaderflags_map )
   while ((thisprob = GetProblemPointerFromIndex(prob_i)) != NULL)
   {
     if (thisprob->IsInitialized())
-      thisprob->loaderflags |= loaderflags_map[thisprob->contest];
+      thisprob->loaderflags |= loaderflags_map[thisprob->contest] &
+          (PROBLDR_DISCARD | PROBLDR_FORCEUNLOAD);
     prob_i++;
   }
-  return ((prob_i == 0)?(-1):((int)prob_i));
+  return ((prob_i == 0) ? (-1) : ((int)prob_i));
 }  
 
 /* ----------------------------------------------------------------------- */
-
 
 static unsigned int __IndividualProblemSave( Problem *thisprob, 
                 unsigned int prob_i, Client *client, int *is_empty, 

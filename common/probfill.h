@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.h,v $
+// Revision 1.7.2.1  1999/04/05 07:46:36  jlawson
+// added probfill_noblocks and probfill_disabled constants.
+//
 // Revision 1.7  1999/03/18 03:41:52  cyp
 // new function in probfill.cpp for network update code to communicate
 // changed project states to the problems themselves.
@@ -41,7 +44,11 @@
 
 #define PROBLDR_DISCARD      0x01
 #define PROBLDR_FORCEUNLOAD  0x02
-extern int SetProblemLoaderFlags( const char *loaderflags_map /* 1 char per contest */ );
+#define PROBLDR_NOBLOCKS     0x40  /* ignored by probfill, used by buffupd */
+#define PROBLDR_DISABLED     0x80  /* ignored by probfill, used by buffupd */
+
+extern int SetProblemLoaderFlags( const char *loaderflags_map );
+// loaderflags_map is 1 char per contest.
 
 // --------------------------------------------------------------------------
 
