@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.43 2001/01/15 08:45:16 dg Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.44 2001/02/05 19:00:36 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -129,7 +129,9 @@
   #endif
   #define CLIENT_OS_NAME "Linux"
   #define CLIENT_OS     OS_LINUX
-  #if defined(ASM_ALPHA) || defined(__alpha__)
+  #if defined(ASM_HPPA) /* cross compile, ergo don't use __hppa/__hppa__ */
+    #define CLIENT_CPU    CPU_PA_RISC
+  #elif defined(ASM_ALPHA) || defined(__alpha__)
     #define CLIENT_CPU    CPU_ALPHA
   #elif defined(ASM_X86) || defined(__i386__)
     #define CLIENT_CPU    CPU_X86
