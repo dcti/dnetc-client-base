@@ -6,7 +6,7 @@
 */
 
 #ifndef NETWORK_H
-#define NETWORK_H "@(#)$Id: network.h,v 1.63 1999/04/04 15:06:19 cyp Exp $"
+#define NETWORK_H "@(#)$Id: network.h,v 1.64 1999/04/06 08:54:07 cyp Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -56,7 +56,7 @@ extern "C" {
   #define SOCKET int
   }
 #elif (CLIENT_OS == OS_DOS) 
-  //generally NO!NETWORK, but to be safe we...
+  //ntohl()/htonl() defines are in...
   #include "platform/dos/clidos.h" 
 #elif (CLIENT_OS == OS_VMS)
   #include <signal.h>
@@ -98,19 +98,19 @@ extern "C" {
   #define ioctl(sock, request, arg) socket_ioctl(sock, request, arg)
   extern Boolean myNetInit(void);
 #elif (CLIENT_OS == OS_OS2)
-  #include <process.h>
-  #include <io.h>
-
-  #if defined(__WATCOMC__)
-    #include <i86.h>
-  #endif
-  // All the OS/2 specific headers are here
-  // This is neccessary since the order of the OS/2 defines are important
-  #include "platforms/os2cli/os2defs.h"
-  typedef int SOCKET;
+  #define BSD_SELECT
+  #include <fcntl.h>
+  #include <netdb.h>
+  #include <netinet/in.h>
+  #include <sys/types.h>
+  #include <sys/socket.h>
+  #include <sys/time.h>
+  #include <sys/select.h>
+  #include <sys/ioctl.h>
   #if !defined(__EMX__)
-  #define close(s) soclose(s)
+  #define close(sock) soclose(sock)
   #endif
+  typedef int SOCKET;
   #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
   #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
 #elif (CLIENT_OS == OS_AMIGAOS)
