@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.232 2001/02/08 18:27:30 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.233 2001/02/09 04:55:23 sampo Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -405,7 +405,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
   #-----------------------------------------------------------------  
-  elif [ "$2" = "88k" -o "$2" = "sh4" \
+  elif [ "$2" = "88k" -o "$2" = "sh4" -o "$2" = "ia64" \
       -o "$2" = "vax" -o "$2" = "s390" -o "$2" = "generic" ]; then
     # pure ansi targets. (2 pipeline RC5 core)
     TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
@@ -588,6 +588,10 @@ generate_gcc_opts() {
         opts272="$OPTS_GCC272 -O6 -D__S390__ -U__i386__ -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -D__S390__ -U__i386__ -funroll-loops \
 	         -fno-caller-saves"
+        ;;
+
+    *internal-ia64)
+        opts295="$OPTS_GCC295 -O2 -D__IA64__"
         ;;
 
     *internal-vax)
@@ -2126,6 +2130,18 @@ case "$1" in
         add_sources "amigaos" "ppc"
         ;;
 
+###### IA-64
+
+    *ia64-linux)
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "ia64" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-ia64"
+        add_sources "linux" "ia64" 
+        ;;
 
 ###### Unknown
     *list)
