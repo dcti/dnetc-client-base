@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.46 1999/12/31 21:09:22 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.47 2000/01/01 21:32:27 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -424,79 +424,120 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
 
 /* ------------------------------------------------------------- */
 
-int Problem::Run_RC5(u32 *iterationsP, int *resultcode)
+int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
 {
-  u32 kiter = 0;
-  u32 iterations = *iterationsP;
+  s32 rescode = -1;
 
-  // don't allow a too large of a iterations be used ie (>(iter-keysdone)) 
-  // (technically not necessary, but may save some wasted time)
-  if (contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi)
+  /* a brace to ensure 'keystocheck' is not referenced in the common part */
   {
-    u32 todo = contestwork.crypto.iterations.lo-contestwork.crypto.keysdone.lo;
-    if (todo < iterations)
-      iterations = todo;
-  }
-
-  if (iterations < MINIMUM_ITERATIONS)
-    iterations = MINIMUM_ITERATIONS;
-  else if ((iterations % MINIMUM_ITERATIONS) != 0)
-    iterations += (MINIMUM_ITERATIONS - (iterations % MINIMUM_ITERATIONS));
-
- #if 0
-LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
-          "suggested iterations: %lu (0x%lx)\n"
-          "pipeline_count = %lu, iterations%%pipeline_count = %lu\n", 
-          (unsigned long)iterations, (unsigned long)iterations,
-          (unsigned long)(*iterationsP), (unsigned long)(*iterationsP),
-          pipeline_count, iterations%pipeline_count );
-#endif
-
-  if (use_generic_proto)
-  {
-    s32 rescode;
-    *iterationsP = iterations/pipeline_count;
-    rescode = (*(unit_func.gen))( &rc5unitwork, iterationsP, core_membuffer );
-    if (rescode < 0) /* "kiter" error */
+    u32 keystocheck = *keyscheckedP;
+    // don't allow a too large of a keystocheck be used ie (>(iter-keysdone)) 
+    // (technically not necessary, but may save some wasted time)
+    if (contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi)
     {
-      *resultcode = -1;
-      return -1;
+      u32 todo = contestwork.crypto.iterations.lo-contestwork.crypto.keysdone.lo;
+      if (todo < keystocheck)
+        keystocheck = todo;
     }
-    *resultcode = (int)rescode;
-    if (cruncher_is_asynchronous) /* co-processor or similar */
-    {
-      if (rescode == RESULT_WORKING)
-        return rescode;
-    }
-  }
-  else /* old style */
-  {  
-    kiter = (*(unit_func.rc5))(&rc5unitwork, iterations/pipeline_count );
-    *iterationsP = iterations;
-  }
 
-  __IncrementKey(&refL0.hi, &refL0.lo, iterations, contest);
-    // Increment reference key count
+    if (keystocheck < MINIMUM_ITERATIONS)
+      keystocheck = MINIMUM_ITERATIONS;
+    else if ((keystocheck % MINIMUM_ITERATIONS) != 0)
+      keystocheck += (MINIMUM_ITERATIONS - (keystocheck % MINIMUM_ITERATIONS));
 
-  if (((refL0.hi != rc5unitwork.L0.hi) ||  // Compare ref to core
-      (refL0.lo != rc5unitwork.L0.lo)) &&  // key incrementation
-      (kiter == iterations))
-  {
-    #if 0 /* can you spell "thread safe"? */
-    Log("Internal Client Error #23: Please contact help@distributed.net\n"
-        "Debug Information: %08x:%08x - %08x:%08x\n",
-        rc5unitwork.L0.hi, rc5unitwork.L0.lo, refL0.hi, refL0.lo);
+    #if 0
+    LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
+              "suggested iterations: %lu (0x%lx)\n"
+              "pipeline_count = %lu, iterations%%pipeline_count = %lu\n", 
+              (unsigned long)keystocheck, (unsigned long)keystocheck,
+              (unsigned long)(*keyscheckedP), (unsigned long)(*keyscheckedP),
+              pipeline_count, keystocheck%pipeline_count );
     #endif
+
+    if (use_generic_proto)
+    {
+      //we don't care about pipeline_count when using unified cores. 
+      //we _do_ need to care that the keystocheck and starting key are aligned.
+
+      *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
+      rescode = (*(unit_func.gen))(&rc5unitwork,keyscheckedP,core_membuffer);
+
+      if (rescode >= 0 && cruncher_is_asynchronous) /* co-processor or similar */
+      {
+        keystocheck = *keyscheckedP; /* always so */
+        /* how this works:
+         - for RESULT_FOUND, we don't need to do anything, since keyscheckedP 
+           has the real count of iters done. If we were still using old style
+           method of determining RESULT_FOUND by (keyscheckedP < keystocheck), 
+           then we would simply need to set 'keystocheck = 1 + *keyscheckedP'
+           to make it greater.
+         - for RESULT_NOTHING/RESULT_WORKING
+           unlike normal cores, where RESULT_NOTHING and RESULT_WORKING
+           are synonymous (RESULT_NOTHING from the core's perspective ==
+           RESULT_WORKING from the client's perspective), async cores tell 
+           us which-is-which through the keyscheckedP pointer. As long as 
+           they are _WORKING, the *keyscheckedP (ie iterations_done) will be 
+           zero. (And of course, incrementations checks will pass as long
+           as iterations_done is zero :).
+        */
+        //(these next 3 lines are quite useless, since the actual state
+        //is set lower down, but leave them in anyway to show how it works)
+        //remember: keystocheck has already been set equal to *keyscheckedP
+        if (rescode != RESULT_FOUND) /* RESULT_NOTHING/RESULT_WORKING */
+        {
+          rescode = *resultcode = RESULT_NOTHING; //assume we know something
+          if (*keyscheckedP == 0)  /* still working */
+            rescode = *resultcode = RESULT_WORKING;
+        }  
+      }
+    }
+    else /* old style */
+    {  
+      *keyscheckedP = (*(unit_func.rc5))(&rc5unitwork,(keystocheck/pipeline_count));
+      //don't use the next few lines as a guide for conversion to unified
+      //prototypes!  look at the end of rc5/ansi/rc5ansi_2-rg.cpp instead.
+      if (*keyscheckedP < keystocheck)
+        rescode = RESULT_FOUND;
+      else if (*keyscheckedP == keystocheck)
+        rescode = RESULT_WORKING; /* synonymous with RESULT_NOTHING */
+      else 
+        rescode = -1;  
+    }
+  } /* brace to ensure that 'keystocheck' is not referenced beyond here */
+  /* -- the code from here on down is identical to that of CSC -- */
+
+  if (rescode < 0) /* "kiter" error */
+  {
+    *resultcode = -1;
+    return -1;
+  }
+  *resultcode = (int)rescode;
+
+  // Increment reference key count
+  __IncrementKey(&refL0.hi, &refL0.lo, *keyscheckedP, contest);
+
+  // Compare ref to core key incrementation
+  if (((refL0.hi != rc5unitwork.L0.hi) || (refL0.lo != rc5unitwork.L0.lo))
+      && (*resultcode != RESULT_FOUND) )
+  {
+    if (contestwork.crypto.iterations.hi == 0 &&
+        contestwork.crypto.iterations.lo == 0x20000) /* test case */
+    {
+      Log("RC5 incrementation mismatch:\n"
+          "Debug Information: %08x:%08x - %08x:%08x\n",
+          rc5unitwork.L0.hi, rc5unitwork.L0.lo, refL0.hi, refL0.lo);
+    }      
     *resultcode = -1;
     return -1;
   };
 
-  contestwork.crypto.keysdone.lo += kiter;
-  if (contestwork.crypto.keysdone.lo < kiter)
+  // Checks passed, increment keys done count.
+  contestwork.crypto.keysdone.lo += *keyscheckedP;
+  if (contestwork.crypto.keysdone.lo < *keyscheckedP)
     contestwork.crypto.keysdone.hi++;
-    // Checks passed, increment keys done count.
 
-  if (kiter < iterations)
+  // Update data returned to caller
+  if (*resultcode == RESULT_FOUND)  //(*keyscheckedP < keystocheck)
   {
     // found it!
     u32 keylo = contestwork.crypto.key.lo;
@@ -504,20 +545,8 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
     contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
     if (contestwork.crypto.key.lo < keylo) 
       contestwork.crypto.key.hi++; // wrap occured ?
-    *resultcode = RESULT_FOUND;
     return RESULT_FOUND;
   }
-  else if (kiter != iterations)
-  {
-    #if 0 /* can you spell "thread safe"? */
-    Log("Internal Client Error #24: Please contact help@distributed.net\n"
-        "Debug Information: k: %x t: %x\n"
-        "Debug Information: %08x:%08x - %08x:%08x\n", kiter, iterations,
-        rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
-    #endif
-    *resultcode = -1;
-    return -1;
-  };
 
   if ( ( contestwork.crypto.keysdone.hi > contestwork.crypto.iterations.hi ) ||
        ( ( contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi ) &&
@@ -527,7 +556,6 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
     *resultcode = RESULT_NOTHING;
     return RESULT_NOTHING;
   }
-
   // more to do, come back later.
   *resultcode = RESULT_WORKING;
   return RESULT_WORKING;    // Done with this round
@@ -557,11 +585,13 @@ int Problem::Run_CSC(u32 *iterationsP, int *resultcode)
   // Compare ref to core key incrementation
   if ((refL0.hi != rc5unitwork.L0.hi) || (refL0.lo != rc5unitwork.L0.lo))
   { 
-    #ifdef DEBUG_CSC_CORE /* can you spell "thread safe"? */
-    Log("CSC incrementation mismatch:\n"
-        "expected %08x:%08x, got %08x:%08x\n",
-        refL0.lo, refL0.hi, rc5unitwork.L0.lo, rc5unitwork.L0.hi );
-    #endif
+    if (contestwork.crypto.iterations.hi == 0 &&
+        contestwork.crypto.iterations.lo == 0x20000) /* test case */
+    {
+      Log("CSC incrementation mismatch:\n"
+          "expected %08x:%08x, got %08x:%08x\n",
+          refL0.lo, refL0.hi, rc5unitwork.L0.lo, rc5unitwork.L0.hi );
+    }
     *resultcode = -1;
     return -1;
   }
