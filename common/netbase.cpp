@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5 2002/11/03 15:07:16 pfeffi Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.1 2002/12/22 23:43:20 sod75 Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -633,7 +633,7 @@ static int ___read_errnos(SOCKET fd, int ps_errnum,
     if (is_netapi_callable())
     {
       int rc, so_err = 0;
-      #if ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION >= 199701))
+      #if (((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION >= 199701)) || (CLIENT_OS == OS_AIX ))
         size_t szint = (size_t) sizeof(so_err);
       #else
         socklen_t szint = (socklen_t) sizeof(so_err);
@@ -1829,7 +1829,7 @@ static int bsd_condition_new_socket(SOCKET fd, int as_listener)
     for (which = 0; which < 2; which++ )
     {
       int sz = 0, type = ((which == 0)?(SO_RCVBUF):(SO_SNDBUF));
-      #if ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION >= 199701))
+      #if (((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION >= 199701)) || (CLIENT_OS == OS_AIX ))
         size_t szint = (size_t) sizeof(int);
       #else
         socklen_t szint = (socklen_t) sizeof(int);
@@ -2274,7 +2274,11 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
         if (rc == 0)
         {
           int rc2;
+          #if ( CLIENT_OS == OS_AIX )
+          size_t addrsz;
+          #else
           socklen_t addrsz;
+          #endif
           if (this_address || this_port)
           {
             addrsz = sizeof(saddr);
@@ -2441,7 +2445,11 @@ int net_accept( SOCKET listen_fd, SOCKET *conn_fdP,
       {
         SOCKET conn_fd;
         struct sockaddr_in saddr;
+        #if ( CLIENT_OS == OS_AIX )
+        size_t addrlen = sizeof(saddr);
+        #else
         socklen_t addrlen = sizeof(saddr);
+        #endif
 
         memset((void *) &saddr, 0, sizeof(saddr));
         saddr.sin_family = AF_INET;

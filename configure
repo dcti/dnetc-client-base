@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.13 2002/12/21 00:56:38 pstadt Exp $
+# @(#)$Id: configure,v 1.288.2.14 2002/12/22 23:43:20 sod75 Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -83,7 +83,7 @@ TARGET_GENMAN=1        # non-blank generate a man page, or not (blank)
 #
 # Target specific tarball options.
 #
-TARGET_TARBALL=""     # 'binnameNNN-' is auto prepended, ".tar.gz" is appended
+TARGET_TARBALL="AIX4.3-Power"     # 'binnameNNN-' is auto prepended, ".tar.gz" is appended
 TARGET_TARBALL_COMMENT="" # special comments for tarball.readme (if needed)
 TARGET_ARCTYPE="tgzdir"  # "tgz", "zip", "zipflat", "lha" or "tgzdir"
 
