@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.197 2000/10/31 12:20:39 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.198 2000/10/31 12:41:03 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1440,23 +1440,12 @@ case "$1" in
     ### against is fairly moot. HOWEVER, you _should_ add resolv.c
     ### to TARGET_ADDSRCS to be truly binary compatible. If you don't,
     ### dns lookup will either not work (or not work reliably), or segfault.
-    ### The rest of the client is unaffected by the choice of libc.
+    ### The rest of the client is unaffected by the choice of libc, ie a
+    ### client built on the newest-and-greatest linux will work even on 2.0.x
 
-    *x86-linux-elf)	 # universal elf <- production target
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "x86" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD" #-D_MIT_POSIX_THREADS=1
-        TARGET_NASM_FMT="elf"
-        TARGET_LIBS="-lpthread"                  #<-mit pthread
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-x86-elf"
-        add_sources "linux" "x86" 
-	      ;;
-
-    *x86-linux)	                    # generic. clone() for threads and thus
-        TARGET_AS="gcc -c"          # avoids mitthreads/linuxthreads issue
-        TARGET_CC="gcc"             # can make aout if TARGET_CCFLAGS.=-aout
+    *x86-linux)	                    # generic. multithreaded. works everywhere
+        TARGET_AS="gcc -c"          # can make aout if TARGET_CCFLAGS+=-aout
+        TARGET_CC="gcc"             
         generate_gcc_opts "x86" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_NASM_FMT="elf"
