@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.67 2004/05/26 22:19:53 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.68 2004/06/03 17:23:36 kakace Exp $
 ==========================================================================
 
 2.9000
@@ -36,6 +36,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.67 2004/05/26 22:19:53 kakace Exp 
             imp: ppc: Faster OGR-P2 cores.
             imp: amigaos: Allow crunchers to shutdown on exit when other user
                           tasks are monopolizing cpu time
+            imp: macosx: Added PowerPC 970FX recognition (#3675)
 
 2.9008-490  new: all: Enable OGR-24 and OGR-25 Phase 2 (finalization)
             new: amigaos: native OS4 port
