@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.115 2000/01/27 01:57:17 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.116 2000/01/27 02:41:20 jlawson Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1128,7 +1128,7 @@ case "$1" in
 			-DMULTITHREAD -DLURK -DSMC -DHAVE_OGR_CORES"
 			##-DMMX_CSC -DHAVE_CSC_CORES 
 			##$OPTS_DES_MMX -DHAVE_DES_CORES 
-	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
+	TARGET_LDFLAGS="-Xlinker -omagic"  #NEVER STATIC FOR GLIBC!!!
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
 			common/lurk.cpp $OGR_ANSI_SRCS"
 			##$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
@@ -1150,7 +1150,7 @@ case "$1" in
 			-DMULTITHREAD -DLURK -DHAVE_OGR_CORES"
                         ##-DMMX_CSC -DHAVE_CSC_CORES
                         ##$OPTS_DES_MMX -DHAVE_DES_CORES
-	TARGET_LDFLAGS="-static"
+	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
 			common/lurk.cpp $OGR_ANSI_SRCS"
 			##$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
