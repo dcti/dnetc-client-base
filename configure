@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.209 2000/11/26 18:42:59 friedbait Exp $
+# @(#)$Id: configure,v 1.222.2.210 2000/11/30 16:18:52 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -274,7 +274,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     else
       TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/crunch.68k.gcc.s"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/68k/rc5_68k_gcc_crunch.cpp"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/68k/rc5_68k_gcc_crunch.c"
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
     fi  
@@ -1689,7 +1689,7 @@ case "$1" in
         add_sources "next" "hppa" 
 	      ;;
 
-	  *m68k-netbsd) # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, -snake
+    *m68k-netbsd) # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, -snake
         TARGET_CC="g++"
         TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
                         -m68020-40 -DASM_68K -DLURK -DHAVE_OGR_CORES"
