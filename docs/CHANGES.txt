@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.103 2002/03/25 22:31:09 sampo Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.104 2002/03/27 23:13:22 sampo Exp $
 ==========================================================================
 
 2.8000
@@ -39,6 +39,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.103 2002/03/25 22:31:09 sampo Exp $
             new: macosx: platform-specific read me for OS X (#2580)
             fix: fbsd: Client doesn't respond to SIG(INT/TERM) occasionally (#1985)
             fix: all: Errors in generated man page (#2451)
+            fix: linux: no alpha SMP support (#2142)
 
 2.8016.470  new: ppc: new AltiVec RC5 core for the PPC 7450 by Dan Oetting.
 
