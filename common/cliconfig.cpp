@@ -8,6 +8,7 @@
 // --------------------------------------------------------------------------
 
 #define OPTION_COUNT    43
+#define MAXMENUENTRIES  15
 
 char *menutable[4]=
   {
@@ -251,10 +252,10 @@ optionstruct options[OPTION_COUNT]=
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n",
   3,2,10,NULL,&lurkmodetable[0][0],0,2},
-{ "in",  "RC5 In-Buffer Path/Name", "[Current Path]\\buff-in.rc5","",4,1,13,NULL},
-{ "out", "RC5 Out-Buffer Path/Name", "[Current Path]\\buff-out.rc5","",4,1,14,NULL},
-{ "in2", "DES In-Buffer Path/Name", "[Current Path]\\buff-in.des","",4,1,15,NULL},
-{ "out2","DES Out-Buffer Path/Name","[Current Path]\\buff-out.des","",4,1,16,NULL}
+{ "in",  "RC5 In-Buffer Path/Name", "[Current Path]\\buff-in.rc5","",0,1,13,NULL},
+{ "out", "RC5 Out-Buffer Path/Name", "[Current Path]\\buff-out.rc5","",0,1,14,NULL},
+{ "in2", "DES In-Buffer Path/Name", "[Current Path]\\buff-in.des","",0,1,15,NULL},
+{ "out2","DES Out-Buffer Path/Name","[Current Path]\\buff-out.des","",0,1,16,NULL}
 };
 
 #define CONF_ID 0
@@ -337,12 +338,18 @@ options[CONF_KEYPORT].thevariable=&keyport;
 options[CONF_HTTPPROXY].thevariable=&httpproxy;
 options[CONF_HTTPPORT].thevariable=&httpport;
 options[CONF_HTTPID].thevariable=&httpid;
+#if !((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
+options[CONF_CPUTYPE].optionscreen=0;
+#endif
 options[CONF_CPUTYPE].thevariable=&cputype;
 options[CONF_MESSAGELEN].thevariable=&messagelen;
 options[CONF_SMTPSRVR].thevariable=&smtpsrvr;
 options[CONF_SMTPPORT].thevariable=&smtpport;
 options[CONF_SMTPFROM].thevariable=&smtpfrom;
 options[CONF_SMTPDEST].thevariable=&smtpdest;
+#if !defined(MULTITHREAD)
+options[CONF_NUMCPU].optionscreen=0;
+#endif
 options[CONF_NUMCPU].thevariable=&numcpu;
 options[CONF_CHECKPOINT].thevariable=&checkpoint_file[0];
 options[CONF_CHECKPOINT2].thevariable=&checkpoint_file[1];
@@ -352,6 +359,9 @@ options[CONF_PREFERREDCONTEST].thevariable=&contestidtemp;
 options[CONF_QUIETMODE].thevariable=&quietmode;
 options[CONF_NOEXITFILECHECK].thevariable=&noexitfilecheck;
 options[CONF_PERCENTOFF].thevariable=&percentprintingoff;
+#if !defined(MULTITHREAD)
+options[CONF_FREQUENT].optionscreen=0;
+#endif
 options[CONF_FREQUENT].thevariable=&connectoften;
 options[CONF_NODISK].thevariable=&nodiskbuffers;
 options[CONF_NOFALLBACK].thevariable=&nofallback;
@@ -362,11 +372,41 @@ options[CONF_OFFLINEMODE].thevariable=&offlinemode;
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
 options[CONF_LURKMODE].thevariable=&lurk;
+#else
+options[CONF_LURKMODE].optionscreen=0;
 #endif
 options[CONF_RC5IN].thevariable=&in_buffer_file[0];
 options[CONF_RC5OUT].thevariable=&out_buffer_file[0];
 options[CONF_DESIN].thevariable=&in_buffer_file[1];
 options[CONF_DESOUT].thevariable=&out_buffer_file[1];
+
+if (messagelen != 0)
+  {
+  options[CONF_SMTPSRVR].optionscreen=2;
+  options[CONF_SMTPPORT].optionscreen=2;
+  options[CONF_SMTPDEST].optionscreen=2;
+  options[CONF_SMTPFROM].optionscreen=2;
+  }
+  else
+  {
+  options[CONF_SMTPSRVR].optionscreen=0;
+  options[CONF_SMTPPORT].optionscreen=0;
+  options[CONF_SMTPDEST].optionscreen=0;
+  options[CONF_SMTPFROM].optionscreen=0;
+  }; 
+
+if (uuehttpmode > 1)
+  {
+  options[CONF_HTTPPROXY].optionscreen=3;
+  options[CONF_HTTPPORT].optionscreen=3;
+  options[CONF_HTTPID].optionscreen=3;
+  }
+  else
+  {
+  options[CONF_HTTPPROXY].optionscreen=0;
+  options[CONF_HTTPPORT].optionscreen=0;
+  options[CONF_HTTPID].optionscreen=0;
+  };
 
   while ( 1 )
   {
@@ -379,53 +419,10 @@ printf("Distributed.Net RC5/DES Client build v2.70%i.%i config menu\n",CLIENT_BU
 printf("%s\n",menutable[currentmenu-1]);
 printf("------------------------------------------------------------\n\n");
 
-for ( temp2=1; choice != -1; temp2++ )
-//    for ( choice = 0; choice < OPTION_COUNT; choice++ )
+for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
     {
       choice=findmenuoption(currentmenu,temp2);
-      if (((choice >= 0 && choice < 1+CONF_KEYPROXY) ||
-           (choice == CONF_KEYPROXY) ||
-           (choice == CONF_KEYPORT) ||
-           ((choice == CONF_HTTPPROXY || choice == CONF_HTTPPORT || choice == CONF_HTTPID) &&
-               (uuehttpmode > 1)) ||
-           (choice == CONF_UUEHTTPMODE)
-#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
-           || (choice == CONF_CPUTYPE)
-#endif
-           || (choice == CONF_MESSAGELEN)
-           || ((choice == CONF_SMTPSRVR) && (messagelen != 0))
-           || ((choice == CONF_SMTPPORT) && (messagelen != 0))
-           || ((choice == CONF_SMTPDEST) && (messagelen != 0))
-           || ((choice == CONF_SMTPFROM) && (messagelen != 0))
-#if defined(MULTITHREAD)
-           || (choice == CONF_NUMCPU)
-#endif
-           || (choice == CONF_CHECKPOINT)
-           || (choice == CONF_CHECKPOINT2)
-           || (choice == CONF_PREFERREDBLOCKSIZE)
-           || (choice == CONF_PREFERREDCONTEST)
-           || (choice == CONF_QUIETMODE)
-           || (choice == CONF_NOEXITFILECHECK)
-           || (choice == CONF_PERCENTOFF)
-#if defined(MULTITHREAD)
-           || (choice == CONF_FREQUENT)
-#endif
-           || (choice == CONF_NODISK)
-           || (choice == CONF_NOFALLBACK)
-           || (choice == CONF_CKTIME)
-           || (choice == CONF_NETTIMEOUT)
-           || (choice == CONF_EXITFILECHECKTIME)
-           || (choice == CONF_OFFLINEMODE)
-#if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2)
-           || (choice == CONF_LURKMODE)
-#endif
-//           || (choice == CONF_RC5IN)
-//           || (choice == CONF_RC5OUT)
-//           || (choice == CONF_DESIN)
-//           || (choice == CONF_DESOUT)
-           )
-           && (options[choice].optionscreen==currentmenu)
-          )
+      if (choice >= 0)
           {
           printf("%2d) %s ==> ",
                   options[choice].menuposition, options[choice].description);
@@ -462,47 +459,7 @@ for ( temp2=1; choice != -1; temp2++ )
 
       choice=findmenuoption(currentmenu,choice);
 
-      if (((choice >= 0 && choice < 1+CONF_KEYPROXY) ||
-           (choice == CONF_KEYPROXY) ||
-           (choice == CONF_KEYPORT) ||
-           ((choice == CONF_HTTPPROXY || choice == CONF_HTTPPORT || choice == CONF_HTTPID) &&
-               (uuehttpmode > 1)) ||
-           (choice == CONF_UUEHTTPMODE)
-#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
-           || (choice == CONF_CPUTYPE)
-#endif
-           || (choice == CONF_MESSAGELEN)
-           || ((choice == CONF_SMTPSRVR) && (messagelen != 0))
-           || ((choice == CONF_SMTPPORT) && (messagelen != 0))
-           || ((choice == CONF_SMTPDEST) && (messagelen != 0))
-           || ((choice == CONF_SMTPFROM) && (messagelen != 0))
-#if defined(MULTITHREAD)
-           || (choice == CONF_NUMCPU)
-#endif
-           || (choice == CONF_CHECKPOINT)
-           || (choice == CONF_CHECKPOINT2)
-           || (choice == CONF_PREFERREDBLOCKSIZE)
-           || (choice == CONF_PREFERREDCONTEST)
-           || (choice == CONF_QUIETMODE)
-           || (choice == CONF_NOEXITFILECHECK)
-           || (choice == CONF_PERCENTOFF)
-           || (choice == CONF_FREQUENT)
-           || (choice == CONF_NODISK)
-           || (choice == CONF_NOFALLBACK)
-           || (choice == CONF_CKTIME)
-           || (choice == CONF_NETTIMEOUT)
-           || (choice == CONF_EXITFILECHECKTIME)
-           || (choice == CONF_OFFLINEMODE)
-#if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2)
-           || (choice == CONF_LURKMODE)
-#endif
-//           || (choice == CONF_RC5IN)
-//           || (choice == CONF_RC5OUT)
-//           || (choice == CONF_DESIN)
-//           || (choice == CONF_DESOUT)
-           )
-           && (options[choice].optionscreen==currentmenu)
-          )
+      if (choice >= 0)
         break;
     }
 
@@ -662,6 +619,18 @@ for ( temp2=1; choice != -1; temp2++ )
                    keyport=2064;
                    break;
             };
+          if (uuehttpmode > 1)
+            {
+            options[CONF_HTTPPROXY].optionscreen=3;
+            options[CONF_HTTPPORT].optionscreen=3;
+            options[CONF_HTTPID].optionscreen=3;
+            } 
+            else
+            {
+            options[CONF_HTTPPROXY].optionscreen=0;
+            options[CONF_HTTPPORT].optionscreen=0;
+            options[CONF_HTTPID].optionscreen=0;
+            };
           break;
 #if (CLIENT_CPU == CPU_X86)
         case CONF_CPUTYPE:
@@ -689,6 +658,20 @@ for ( temp2=1; choice != -1; temp2++ )
           if ( messagelen > MAXMAILSIZE) {
             messagelen = MAXMAILSIZE;
           }
+          if (messagelen != 0)
+            {
+            options[CONF_SMTPSRVR].optionscreen=2;
+            options[CONF_SMTPPORT].optionscreen=2;
+            options[CONF_SMTPDEST].optionscreen=2;
+            options[CONF_SMTPFROM].optionscreen=2;
+            }
+          else
+            {
+            options[CONF_SMTPSRVR].optionscreen=0;
+            options[CONF_SMTPPORT].optionscreen=0;
+            options[CONF_SMTPDEST].optionscreen=0;
+            options[CONF_SMTPFROM].optionscreen=0;
+            }; 
           break;
         case CONF_SMTPPORT:
           smtpport = atoi(parm);
