@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.11 2000/04/14 18:11:51 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.12 2000/04/16 19:27:19 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -115,7 +115,7 @@ static const char *helpbody[] =
   "",
   "-h <hours>         time limit in hours",
   "-until <HH:MM>     quit at HH:MM (eg 07:30)",
-  "-noexitfilecheck   don't check for an 'exitrc5.now' file",
+  "-noexitfilecheck   override .ini exit flagfile setting",
   "-pausefile <fn>    name of file that causes the client to pause",
   "-percentoff        don't display work completion as a running percentage",
   "-quiet/-hide       suppress screen output (== detach for some clients)",

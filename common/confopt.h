@@ -6,14 +6,14 @@
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16.2.4 2000/04/15 16:57:10 cyp Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16.2.5 2000/04/16 19:27:20 cyp Exp $"
 
 #define CONF_MENU_MISC_PLACEHOLDER  0
 #define CONF_ID                     1 /* CONF_MENU_MISC */
 #define CONF_COUNT                  2 /* CONF_MENU_MISC -1 == runbuffers */
 #define CONF_HOURS                  3 /* CONF_MENU_MISC */
 #define CONF_PAUSEFILE              4 /* CONF_MENU_MISC */
-#define CONF_NOEXITFILECHECK        5 /* CONF_MENU_MISC */
+#define CONF_EXITFILE               5 /* CONF_MENU_MISC */
 #define CONF_RESTARTONINICHANGE     6 /* CONF_MENU_MISC */
 #define CONF_PAUSEPLIST             7 /* CONF_MENU_MISC */
 #define CONF_QUIETMODE              8 /* CONF_MENU_MISC */

@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.26 2000/04/15 16:57:10 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.27 2000/04/16 19:27:18 cyp Exp $"; }
 
 //#define TRACE
 
@@ -30,6 +30,8 @@ static const char *OPTSECT_CPU      = "processor-usage";
 static const char *OPTSECT_TRIGGERS = "triggers";
 static const char *OPTSECT_DISPLAY  = "display";
 
+static const char *DEFAULT_EXITFLAGFILENAME = "exitrc5"EXTN_SEP"now";
+
 /* ------------------------------------------------------------------------ */
 
 static int __STRCASECMP(const char *s1, const char *s2)
@@ -44,6 +46,7 @@ static int __STRCASECMP(const char *s1, const char *s2)
   }
   return 0;
 }
+
 
 static const char *__getprojsectname( unsigned int ci )
 {
@@ -378,10 +381,9 @@ static int __parse_timestring(const char *source, int oldstyle_hours_compat )
 
 // Analyzes a hostname and determines if it is a distributed.net round-robin.
 // Returns the following values:
-//      0 = valid, but non-distributed.net servername.
-//      1 = blank servername (use autofindserver method)
-//      2 = valid explicitly specified distributed.net servername.
-
+//     <0 = not applicable, non-distributed.net servername.
+//      0 = inacceptable distributed.net servername
+//     >0 = acceptable distributed.net servername.
 static int confopt_IsHostnameDNetHost( const char * hostname )
 {
   unsigned int len;
@@ -390,23 +392,22 @@ static int confopt_IsHostnameDNetHost( const char * hostname )
   const char sig3[]=".v27.distributed.net";
 
   if (!hostname || !*hostname)
-    return 1;
-  if (isdigit( *hostname )) //IP address
     return 0;
+  if (isdigit( *hostname )) //assume IP address. not technically correct, but
+    return -1;              //oh, well. assume its not a d.net box.
   len = strlen( hostname );
   if (len < (sizeof( sig ) - 1) ||
       __STRCASECMP( &hostname[(len-(sizeof( sig )-1))], sig ) != 0)
-    return 0;
+    return -1; /* not a d.net host */
   if (len > (sizeof( sig2 ) - 1) &&
       __STRCASECMP( &hostname[(len - (sizeof( sig2 ) - 1))], sig2 ) == 0)
-    return 2;
+    return +1; /* is an acceptable d.net host */
   if (len > (sizeof( sig3 ) - 1) &&
       __STRCASECMP( &hostname[(len - (sizeof( sig3 ) - 1))], sig3 ) == 0)
-    return 2;
-
+    return +1; /* is an acceptable d.net host */
   // otherwise a hostname ending with "distributed.net" supplied, but it is
   // not under the "proxy" or "v27" subdomains, which we do not support.
-  return 1;
+  return 0;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -710,7 +711,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
     {
       if (__STRCASECMP(buffer,"auto")==0 || __STRCASECMP(buffer,"(auto)")==0)
         buffer[0] = 0; //one config version accidentally wrote "auto" out
-      else if ( confopt_IsHostnameDNetHost( buffer ) == 1 )
+      else if ( confopt_IsHostnameDNetHost( buffer ) == 0 )
         buffer[0] = 0; //it's an unsupported d.net host, purge it.
 
       strncpy( client->keyproxy, buffer, sizeof(client->keyproxy) );
@@ -870,14 +871,22 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
 
   /* ----------------- OPTSECT_TRIGGERS ----------------- */
 
-  if (!GetPrivateProfileStringB( OPTSECT_TRIGGERS, "exit-flag-file-checks", "", buffer, sizeof(buffer), fn ))
-  {
-    if (GetPrivateProfileIntB(OPTION_SECTION, "noexitfilecheck", 0, fn ))
+  /* exit-flag-filename is a bit unusual in that the default (if the key 
+     doesn't exist) is not "", but thats all handled in confread().
+  */
+  if (GetPrivateProfileStringB( OPTSECT_TRIGGERS, "exit-flag-filename", "*", buffer, sizeof(buffer), fn )==1)
+  {      /* need a double test to ensure the key doesn't exist */
+    if (buffer[0] == '*')
     {
-      client->noexitfilecheck = 1;
-      modfail += (!WritePrivateProfileStringB( OPTSECT_TRIGGERS, "exit-flag-file-checks", "off", fn));
+      if ((GetPrivateProfileIntB(OPTSECT_TRIGGERS, "exit-flag-file-checks", 1, fn)==0)
+       || (GetPrivateProfileIntB(OPTION_SECTION, "noexitfilecheck", 0, fn )!=0))
+      {
+        modfail+=WritePrivateProfileStringB( OPTSECT_TRIGGERS, 
+                              "exit-flag-filename", "", fn);
+      }
     }
-  }
+  }  
+  WritePrivateProfileStringB( OPTSECT_TRIGGERS, "exit-flag-file-checks", NULL, fn);
   if (!GetPrivateProfileStringB( OPTSECT_TRIGGERS, "pause-flag-filename", "", buffer, sizeof(buffer), fn ))
   {
     if (GetPrivateProfileStringB(OPTION_SECTION, "pausefile", "", buffer, sizeof(buffer), fn ))
@@ -970,9 +979,9 @@ int ReadConfig(Client *client)
 
   /* --------------------- */
 
-  client->noexitfilecheck = !GetPrivateProfileIntB( OPTSECT_TRIGGERS, "exit-flag-file-checks", !(client->noexitfilecheck), fn );
+  GetPrivateProfileStringB( OPTSECT_TRIGGERS, "exit-flag-filename", DEFAULT_EXITFLAGFILENAME, client->exitflagfile, sizeof(client->exitflagfile), fn );
   GetPrivateProfileStringB( OPTSECT_TRIGGERS, "pause-flag-filename", client->pausefile, client->pausefile, sizeof(client->pausefile), fn );
-  client->restartoninichange  = GetPrivateProfileIntB( OPTSECT_TRIGGERS, "restart-on-config-file-change", (client->restartoninichange), fn );
+  client->restartoninichange = GetPrivateProfileIntB( OPTSECT_TRIGGERS, "restart-on-config-file-change", client->restartoninichange, fn );
   GetPrivateProfileStringB( OPTSECT_TRIGGERS, "pause-watch-plist", client->pauseplist, client->pauseplist, sizeof(client->pauseplist), fn );
 
   /* --------------------- */
@@ -982,31 +991,23 @@ int ReadConfig(Client *client)
   _readwrite_hostname_and_port( 0, fn, OPTSECT_NET, "keyserver",
                                 client->keyproxy, sizeof(client->keyproxy),
                                 &(client->keyport) );
-  client->autofindkeyserver = GetPrivateProfileIntB( OPTSECT_NET, "autofindkeyserver", -12345, fn );
-
-  if (client->autofindkeyserver == 0 ||
-      client->autofindkeyserver == -12345)
+  //NetOpen() gets (autofindkeyserver)?(""):(client->keyproxy))
   {
-    // if autofind was explicitly specified as 0, or left blank.
-    if (confopt_IsHostnameDNetHost(client->keyproxy) == 1)
-    {
-      // the user specified a blank servername, so force autofind.
+    int hostnametype = confopt_IsHostnameDNetHost(client->keyproxy);
+    if (hostnametype == 0) /* a d.net host, but bad */
+    {                           
       client->autofindkeyserver = 1;
-      client->keyproxy[0] = 0;
+      client->keyproxy[0] = '\0';
     }
-    else
+    else if ((client->autofindkeyserver = GetPrivateProfileIntB( OPTSECT_NET, 
+                "autofindkeyserver", -12345, fn )) == -12345) /* no such key */
     {
-      // the user specified a valid servername, so ensure we use it.
-      client->autofindkeyserver = 0;
+      client->autofindkeyserver = 0; /* don't autofind ... unless ... */
+      if (hostnametype >= 0) // a blank or d.net servername, so force autofind.
+        client->autofindkeyserver = 1;
+      //the hostname itself has already been validated above, so don't clear it.  
     }
-  }
-  else
-  {
-    // autofindkeyserver was a non-zero (true) value, so don't fight it.
-    client->autofindkeyserver = 1;
-    client->keyproxy[0] = 0;
-  }
-
+  }  
   client->nettimeout = GetPrivateProfileIntB( OPTSECT_NET, "nettimeout", client->nettimeout, fn );
   client->nofallback = GetPrivateProfileIntB( OPTSECT_NET, "nofallback", client->nofallback, fn );
 
@@ -1134,14 +1135,18 @@ int ReadConfig(Client *client)
 static void __XSetProfileStr( const char *sect, const char *key,
             const char *newval, const char *fn, const char *defval )
 {
-  char buffer[4];
   if (sect == NULL)
     sect = OPTION_SECTION;
   if (defval == NULL)
     defval = "";
   int dowrite = (strcmp( newval, defval )!=0);
   if (!dowrite)
-    dowrite = (GetPrivateProfileStringB( sect, key, "", buffer, 2, fn )!=0);
+  {
+    char buffer[4];
+    dowrite = (GetPrivateProfileStringB( sect, key, "=", 
+                    buffer, sizeof(buffer), fn ) !=1 );
+    if (!dowrite) dowrite = (buffer[0] != '=' );
+  }  
   if (dowrite)
     WritePrivateProfileStringB( sect, key, newval, fn );
   return;
@@ -1233,7 +1238,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileInt( OPTSECT_MISC, "run-work-limit", client->blockcount, fn, 0, 0 );
 
     __XSetProfileInt( OPTSECT_TRIGGERS, "restart-on-config-file-change", client->restartoninichange, fn, 0, 'n' );
-    __XSetProfileInt( OPTSECT_TRIGGERS, "exit-flag-file-checks", !client->noexitfilecheck, fn, 1, 'o' );
+    __XSetProfileStr( OPTSECT_TRIGGERS, "exit-flag-filename", client->exitflagfile, fn, DEFAULT_EXITFLAGFILENAME );
     __XSetProfileStr( OPTSECT_TRIGGERS, "pause-flag-filename", client->pausefile, fn, NULL );
     __XSetProfileStr( OPTSECT_TRIGGERS, "pause-watch-plist", client->pauseplist, fn, NULL );
 
@@ -1277,10 +1282,9 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
 
     _readwrite_fwallstuff( 1, fn, client );
     p = NULL;
-    if (client->autofindkeyserver != 0 ||
-        confopt_IsHostnameDNetHost(client->keyproxy) == 1)
-      client->keyproxy[0] = 0;
-    else
+    if (confopt_IsHostnameDNetHost(client->keyproxy) == 0)
+      client->keyproxy[0] = 0;        /* d.net host, but invalid */
+    else if (!client->autofindkeyserver)
       p = "no";
     WritePrivateProfileStringB( OPTSECT_NET, "autofindkeyserver", p, fn );
     _readwrite_hostname_and_port( 1, fn, OPTSECT_NET, "keyserver",

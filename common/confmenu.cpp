@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.18 2000/04/14 18:11:50 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.19 2000/04/16 19:27:20 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -159,7 +159,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   conf_options[CONF_COUNT].thevariable=&(client->blockcount);
   conf_options[CONF_HOURS].thevariable=&(client->minutes);
   conf_options[CONF_PAUSEFILE].thevariable=&(client->pausefile[0]);
-  conf_options[CONF_NOEXITFILECHECK].thevariable=&(client->noexitfilecheck);
+  conf_options[CONF_EXITFILE].thevariable=&(client->exitflagfile[0]);
   conf_options[CONF_RESTARTONINICHANGE].thevariable=&(client->restartoninichange);
   conf_options[CONF_PAUSEPLIST].thevariable=&(client->pauseplist[0]);
   conf_options[CONF_QUIETMODE].thevariable=&(client->quietmode);

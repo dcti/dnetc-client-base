@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.28 2000/04/15 16:57:10 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.29 2000/04/16 19:27:20 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -60,19 +60,19 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "specify 'no limit'.\n"
   ),CONF_MENU_MISC,CONF_TYPE_TIMESTR,NULL,NULL,0,0,NULL,NULL},
 //4
-{ CFGTXT("Pausefile Path/Name"),"",
+{ CFGTXT("Pause flagfile Path/Name"),"",
   CFGTXT(
   "While running, the client will occasionally look for the the presence of\n"
   "this file. If it exists, the client will immediately suspend itself and\n"
   "will continue to remain suspended as long as the file is present.\n"
   ),CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
 //5
-{ CFGTXT("Disable exit file checking?"),"no",
+{ CFGTXT("Exit flagfile Path/Name"),"",
   CFGTXT(
-  "When disabled, this option will cause the client to watch for a file named\n"
-  "\"exitrc5.now\" the presence of which being a request to the client to\n"
-  "shut itself down.\n"
-  ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL},
+  "While running, the client will occasionally look for the the presence of\n"
+  "this file. If it exists, the client will immediately exit and will not\n"
+  "start as long as the file continues to exist.\n"
+  ),CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
 //6  
 { CFGTXT("Enable restart on .ini file change?"),"no",
   CFGTXT(

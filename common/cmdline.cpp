@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.51 2000/04/14 18:11:49 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.52 2000/04/16 19:27:19 cyp Exp $"; }
 
 //#define TRACE
 
@@ -922,7 +922,7 @@ int ParseCommandline( Client *client,
       else if ( strcmp( thisarg, "-noexitfilecheck" ) == 0 )
       {
         if (run_level == 0)
-          client->noexitfilecheck=1;             // Change network timeout
+          client->exitflagfile[0]='\0';
       }
       else if ( strcmp( thisarg, "-runoffline" ) == 0 ||
                 strcmp( thisarg, "-runonline" ) == 0)
