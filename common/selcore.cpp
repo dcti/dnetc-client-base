@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.11 2003/01/19 23:08:23 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.12 2003/01/20 00:42:52 mfeiri Exp $"; }
 
 //#define TRACE
 
@@ -587,6 +587,13 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     }
     else if (contestid == RC5_72)
     {
+        #if (CLIENT_OS == OS_MACOSX)
+        if (cindex == 3)
+            cindex = -1;
+        #elif defined(__GCC__) || defined(__GNUC__)
+        if ((cindex == 4) || (cindex == 5))
+            cindex = 3;
+        #endif
         if (!have_vec && cindex == 6)     /* "KKS 7400" */
             cindex = -1;                  /* minibench */
         if (!have_vec && cindex == 7)     /* "KKS 7450" */
