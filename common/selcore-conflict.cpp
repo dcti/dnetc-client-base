@@ -1,8 +1,14 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.20.2.5  1999/01/04 02:23:59  remi
+// Synced with :
+//
+//  Revision 1.25  1999/01/01 02:45:16  cramer
+//  Part 1 of 1999 Copyright updates...
+//
 // Revision 1.20.2.4  1998/12/28 15:23:22  remi
 // Synced with :
 //  Revision 1.24  1998/12/18 18:29:27  sampo
@@ -27,7 +33,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.20.2.4 1998/12/28 15:23:22 remi Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.20.2.5 1999/01/04 02:23:59 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
