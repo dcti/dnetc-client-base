@@ -6,7 +6,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.60 1999/04/23 06:18:38 gregh Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61 1999/04/29 05:55:46 dicamillo Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -134,8 +134,10 @@ public: /* anything public must be thread safe */
     /* Return the % completed in the current block, to nearest 0.1%. */
 
 #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-  u32 GetKeysDone() { return(contestwork.crypto.keysdone.lo); }
+  u64 GetKeysDone() { return(contestwork.crypto.keysdone); }
     // Returns keys completed for Mac GUI display.
+  int GetResultCode() { return(last_resultcode); }
+    // Returns result code at completion (no thread safety issue).
 #endif
 
 };
