@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.12 2002/10/04 22:18:33 andreasb Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.13 2002/10/08 09:30:11 andreasb Exp $"
 
 #include "cputypes.h"   /* u32 etc. used here and in the cores */
 
@@ -48,7 +48,7 @@ typedef struct
   struct {u32 hi,lo;} plain;  /* plaintext (already mixed with iv!) */
   struct {u32 hi,lo;} cypher; /* cyphertext */
   struct {u32 hi,mid,lo;} L0; /* key, changes with every unit * PIPELINE_COUNT. */
-  struct {u16 count; u32 hi,mid,lo;} check; /* counter-measure check */
+  struct {u32 count; u32 hi,mid,lo;} check; /* counter-measure check */
 } RC5_72UnitWork;
 
 #ifndef MIPSpro

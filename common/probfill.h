@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __PROBFILL_H__
-#define __PROBFILL_H__ "@(#)$Id: probfill.h,v 1.16 2002/09/02 00:35:43 andreasb Exp $"
+#define __PROBFILL_H__ "@(#)$Id: probfill.h,v 1.17 2002/10/08 09:30:11 andreasb Exp $"
 
 #define PROBFILL_ANYCHANGED  1
 #define PROBFILL_GETBUFFERRS 2
@@ -48,6 +48,7 @@ extern int SetProblemLoaderFlags( const char *loaderflags_map /* 1 char per cont
 
 /* the following macros are used by probfill and when scanning a buffer */
 /* for "most suitable packet" */
+#if 0 // finally we got rid of this insanity
 #define FILEENTRY_OS         CLIENT_OS
 #define FILEENTRY_BUILDHI    ((CLIENT_BUILD_FRAC >> 8) & 0xff)
 #define FILEENTRY_BUILDLO    ((CLIENT_BUILD_FRAC     ) & 0xff)
@@ -59,6 +60,12 @@ extern int SetProblemLoaderFlags( const char *loaderflags_map /* 1 char per cont
 #define FILEENTRY_BUILD_TO_BUILD( _fe_buildhi, _fe_buildlo ) \
                              ((((int)(_fe_buildhi))<<8) | _fe_buildlo)
 #define FILEENTRY_OS_TO_OS( _fe_os ) ( _fe_os )
+#else
+#define FILEENTRY_OS                CLIENT_OS
+#define FILEENTRY_CPU( _fe_cpu )    ( _fe_cpu )
+#define FILEENTRY_BUILD             CLIENT_VERSION
+#define FILEENTRY_CORE( _fe_core )  ( _fe_core )
+#endif
 
 // --------------------------------------------------------------------------
 

@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.92 2002/10/06 19:57:12 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.93 2002/10/08 09:30:11 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -114,8 +114,8 @@ typedef union
     struct {u32 hi,lo;} cypher;           // cyphertext
     struct {u32 hi,lo;} keysdone;         // iterations done (also current position in block)
     struct {u32 hi,lo;} iterations;       // iterations to do
-    u16 randomsubspace;                   // subspace for random generation.
-    struct {u16 count; u32 hi,mid,lo;} check;   // keyid of last found counter-measure check.
+    u32 randomsubspace;                   // subspace for random generation.
+    struct {u32 count; u32 hi,mid,lo;} check;   // keyid of last found counter-measure check.
   } bigcrypto;     /* 68 bytes */
   #endif
   #if defined(HAVE_OGR_CORES)
@@ -136,12 +136,12 @@ typedef struct
 {
   ContestWork work;/* {key,iv,plain,cypher,keysdone,iter} or {stub,pad} */
   u32  resultcode; /* core state: RESULT_WORKING:0|NOTHING:1|FOUND:2 */
-  char id[59];     /* d.net id of worker that last used this */
-  u32   contest;    /* 0=rc5,1=des,etc.  */
-  u32   cpu;        /*  */
-  u32   os;         /*  */
-  u32   buildhi;    /*  */
-  u32   buildlo;    /*  */
+  char id[64];     /* d.net id of worker that last used this */
+  u32  contest;    /* 0=rc5,1=des,etc.  */
+  u32  cpu;        /* CLIENT_CPU */
+  u32  os;         /* CLIENT_OS */
+  u32  build;      /* CLIENT_VERSION - combined build identifier */
+  u32  core;       /* core used to process the packet */
 } WorkRecord;
 
 #ifndef MIPSpro

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.170 2002/10/07 08:04:35 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.171 2002/10/08 09:30:11 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -680,7 +680,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
                       const ContestWork * work, unsigned int contestid,
                       u32 _iterations, int expected_cputype,
                       int expected_corenum, int expected_os,
-                      int expected_buildfrac )
+                      int expected_build )
 {
   ContestWork for_magic;
   int genned_random = 0, genned_benchmark = 0;
@@ -807,7 +807,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
       if (thisprob->priv_data.contestwork.crypto.keysdone.lo || thisprob->priv_data.contestwork.crypto.keysdone.hi)
         {
           if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
-              CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
+              CLIENT_OS != expected_os || CLIENT_VERSION != expected_build)
             {
               thisprob->priv_data.contestwork.crypto.keysdone.lo = thisprob->priv_data.contestwork.crypto.keysdone.hi = 0;
               thisprob->pub_data.was_reset = 1;
@@ -871,7 +871,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
       if (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo || thisprob->priv_data.contestwork.bigcrypto.keysdone.hi)
         {
           if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
-              CLIENT_OS != expected_os || CLIENT_BUILD_FRAC != expected_buildfrac)
+              CLIENT_OS != expected_os || CLIENT_VERSION != expected_build)
             {
               thisprob->priv_data.contestwork.bigcrypto.keysdone.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.hi = 0;
               thisprob->priv_data.contestwork.bigcrypto.check.count = 0;
@@ -911,7 +911,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
     if (thisprob->priv_data.contestwork.ogr.nodes.hi != 0 || thisprob->priv_data.contestwork.ogr.nodes.lo != 0)
     {
       if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
-          CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
+          CLIENT_OS != expected_os || CLIENT_VERSION != expected_build)
       {
         thisprob->pub_data.was_reset = 1;
         thisprob->priv_data.contestwork.ogr.workstub.worklength = thisprob->priv_data.contestwork.ogr.workstub.stub.length;
@@ -988,7 +988,7 @@ int ProblemLoadState( void *__thisprob,
                       const ContestWork * work, unsigned int contestid,
                       u32 _iterations, int expected_cputype,
                       int expected_corenum, int expected_os,
-                      int expected_buildfrac )
+                      int expected_build )
 {
   InternalProblem *temp_prob = __pick_probptr(__thisprob, PICKPROB_TEMP);
   InternalProblem *main_prob = __pick_probptr(__thisprob, PICKPROB_MAIN);
@@ -1005,7 +1005,7 @@ int ProblemLoadState( void *__thisprob,
 
   res = __InternalLoadState( temp_prob, work, contestid, _iterations, 
                              expected_cputype, expected_corenum, expected_os,
-                             expected_buildfrac );
+                             expected_build );
   if (res != 0)
   {
     return (res<0)?(res):(-1);

@@ -14,7 +14,7 @@
  * -----------------------------------------------------------------
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.20 2002/09/02 00:35:41 andreasb Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.21 2002/10/08 09:30:11 andreasb Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()
@@ -98,11 +98,11 @@ int CheckpointAction( Client *client, int action, unsigned int load_problem_coun
               if (cont_i < CONTEST_COUNT)
               {
                 work.resultcode = RESULT_WORKING;
-                work.contest = (u8)cont_i;
-                work.cpu     = FILEENTRY_CPU(thisprob->pub_data.client_cpu,thisprob->pub_data.coresel);
+                work.contest = cont_i;
+                work.cpu     = FILEENTRY_CPU(thisprob->pub_data.client_cpu);
                 work.os      = FILEENTRY_OS;
-                work.buildhi = FILEENTRY_BUILDHI; 
-                work.buildlo = FILEENTRY_BUILDLO;
+                work.build   = FILEENTRY_BUILD; 
+                work.core    = FILEENTRY_CORE(thisprob->pub_data.coresel);
 
                 if (BufferPutFileRecord( client->checkpoint_file, &work, 
                                          NULL, BUFFER_FLAGS_CHECKPOINT ) < 0) 

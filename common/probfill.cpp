@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.84 2002/10/06 19:58:38 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.85 2002/10/08 09:30:11 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -413,15 +413,12 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       *contest = cont_i;
       *is_empty = 1; /* will soon be */
 
-      wrdata.contest = (u8)(cont_i);
+      wrdata.contest    = cont_i;
       wrdata.resultcode = resultcode;
-      wrdata.contest    = (u8)cont_i;
-      wrdata.resultcode = resultcode;
-      wrdata.cpu        = FILEENTRY_CPU(thisprob->pub_data.client_cpu,
-                                        thisprob->pub_data.coresel);
-      wrdata.os         = FILEENTRY_OS;      //CLIENT_OS
-      wrdata.buildhi    = FILEENTRY_BUILDHI; //(CLIENT_BUILDFRAC >> 8)
-      wrdata.buildlo    = FILEENTRY_BUILDLO; //CLIENT_BUILDFRAC & 0xff
+      wrdata.cpu        = FILEENTRY_CPU(thisprob->pub_data.client_cpu);
+      wrdata.os         = FILEENTRY_OS;
+      wrdata.build      = FILEENTRY_BUILD;
+      wrdata.core       = FILEENTRY_CORE(thisprob->pub_data.coresel);
 
       if (finito)
       {
@@ -432,8 +429,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         else
         #endif
         wrdata.cpu     = CLIENT_CPU;
-        wrdata.buildhi = CLIENT_CONTEST;
-        wrdata.buildlo = CLIENT_BUILD;
+        wrdata.build   = CLIENT_VERSION;
+        wrdata.core    = FILEENTRY_CORE(thisprob->pub_data.coresel);
         strncpy( wrdata.id, client->id , sizeof(wrdata.id));
         wrdata.id[sizeof(wrdata.id)-1]=0;
         ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, &prob_i, sizeof(prob_i) );
@@ -694,10 +691,10 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       else
       {
         *loaded_for_contest = (unsigned int)(wrdata.contest);
-        expected_cpu = FILEENTRY_CPU_TO_CPUNUM( wrdata.cpu );
-        expected_core = FILEENTRY_CPU_TO_CORENUM( wrdata.cpu );
-        expected_os  = FILEENTRY_OS_TO_OS( wrdata.os );
-        expected_build = FILEENTRY_BUILD_TO_BUILD(wrdata.buildhi,wrdata.buildlo);
+        expected_cpu   = wrdata.cpu;
+        expected_core  = wrdata.core;
+        expected_os    = wrdata.os;
+        expected_build = wrdata.build;
         work = &wrdata.work;
         
         /* if the total number of packets in buffers is less than the number 
