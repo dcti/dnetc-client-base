@@ -11,6 +11,9 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.18  1998/11/09 17:24:35  chrisb
+// Added riscos_backspace() to work round some lame implementation of consoles.
+//
 // Revision 1.17  1998/11/09 16:54:04  cyp
 // Added special bksp handling for ANSI compliant terms.
 //
@@ -68,7 +71,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.17 1998/11/09 16:54:04 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.18 1998/11/09 17:24:35 chrisb Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -98,6 +101,10 @@ return "@(#)$Id: console.cpp,v 1.17 1998/11/09 16:54:04 cyp Exp $"; }
     (CLIENT_OS==OS_OS390)
 #define TERM_IS_ANSI_COMPLIANT
 #endif    
+
+#if (CLIENT_OS == OS_RISCOS)
+extern "C" void riscos_backspace();
+#endif
 
 /* ---------------------------------------------------- */
 
@@ -400,12 +407,15 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
 
      if (!exitreq)
        {
+//printf("***%d***\n",ch);
        if (ch == 0x08 || ch == '\177') /* backspace */
          {
          if (pos > 0)  
            {
            #ifdef TERM_IS_ANSI_COMPLIANT
            ConOut("\x1B" "[1D" " " "\x1B" "[1D");
+	   #elif (CLIENT_OS == OS_RISCOS)
+	   riscos_backspace();
            #else
            ConOut("\b \b");
            #endif
