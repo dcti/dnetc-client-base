@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.6 2002/12/29 02:56:05 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.7 2003/01/07 15:40:44 oliver Exp $"; }
 
 //#define TRACE
 
@@ -107,9 +107,9 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.6 2002/12/29 02:56:05 andreasb Exp $"; }
 #elif (CLIENT_CPU == CPU_68K)
   #if defined(__GCC__) || defined(__GNUC__) || \
       (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS)
-    extern "C" u32 rc5_unit_func_000_010re( RC5UnitWork *, u32 );
-    extern "C" u32 rc5_unit_func_020_030( RC5UnitWork *, u32 );
-    extern "C" u32 rc5_unit_func_060re( RC5UnitWork *, u32 );
+    extern "C" u32 CDECL rc5_unit_func_000_010re( RC5UnitWork *, u32 );
+    extern "C" u32 CDECL rc5_unit_func_020_030( RC5UnitWork *, u32 );
+    extern "C" u32 CDECL rc5_unit_func_060re( RC5UnitWork *, u32 );
   #elif (CLIENT_OS == OS_MACOS)
     // rc5/68k/crunch.68k.a.o
     extern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
@@ -241,6 +241,11 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.6 2002/12/29 02:56:05 andreasb Exp $"; }
   #elif (CLIENT_CPU == CPU_ARM)
     extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
     extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
+  #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
+    extern "C" s32 CDECL rc5_72_unit_func_020_030_mh_2( RC5_72UnitWork *, u32 *, void *);
+    extern "C" s32 CDECL rc5_72_unit_func_060_mh_2( RC5_72UnitWork *, u32 *, void *);
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+    extern "C" s32 CDECL rc5_72_unit_func_ppc_mh_2( RC5_72UnitWork *, u32 *, void *);
   #endif
 
 #endif
@@ -452,6 +457,24 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ARM 1-pipe B",
       NULL
     },
+  #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
+    { /* RC5-72 */
+      "MH 2-pipe 68020/030",
+      "MH 2-pipe 68000/040/060",
+      NULL
+    },
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      "ANSI 1-pipe",
+     #if defined(__GCC__) || defined(__GNUC__)
+      "MH 2-pipe",
+     #else
+      #error "ppc optimized rc5-72 core available - needs testing for non-gcc targets"
+     #endif
+      NULL
+    },
   #else
     { /* RC5-72 */
       "ANSI 4-pipe",
@@ -544,8 +567,7 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
       if (!have_vec && cindex == 5)     /* "crunch-vec-7450" */
         cindex = 1;                     /* "lintilla" */
     }
-    else
-    if (contestid == OGR)
+    else if (contestid == OGR)
     {
       if (have_pwr)
         cindex = 1;                     /* "PowerRS" */
@@ -1097,6 +1119,23 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       selcorestatics.corenum[OGR] = cindex;
     }
   }
+  else if (contestid == RC5_72)
+  {
+    selcorestatics.corenum[RC5_72] = selcorestatics.user_cputype[RC5_72];
+    if (selcorestatics.corenum[RC5_72] < 0 && detected_type >= 0)
+    {
+      int cindex;
+      #if (CLIENT_OS == OS_AMIGAOS)
+      if (detected_type >= 68020 && detected_type <= 68030)
+        cindex = 0; /* 020/030 optimized */
+      else
+        cindex = 1; /* 060 optimized (best for 68000/040 too) */
+      #else
+      cindex = -1;
+      #endif
+      selcorestatics.corenum[RC5_72] = cindex;
+    }
+  }
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
   if (contestid == DES)
   {
@@ -1172,6 +1211,25 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       #endif
 
       selcorestatics.corenum[OGR] = cindex;
+    }
+  }
+  else if (contestid == RC5_72)
+  {
+    selcorestatics.corenum[RC5_72] = selcorestatics.user_cputype[RC5_72];
+    if (selcorestatics.corenum[RC5_72] < 0 && detected_type > 0)
+    {
+      int cindex;
+      switch ( detected_type & 0xffff) // only compare the low PVR bits
+      {
+        case 0x0003: cindex = 3; break; // 603            == MH 2-pipe
+        case 0x0004: cindex = 3; break; // 604            == MH 2-pipe
+        case 0x0006: cindex = 3; break; // 603e           == MH 2-pipe
+        case 0x0007: cindex = 3; break; // 603r/603ev     == MH 2-pipe
+        case 0x0009: cindex = 3; break; // 604e           == MH 2-pipe
+        case 0x000A: cindex = 3; break; // 604ev          == MH 2-pipe
+        default:     cindex =-1; break; // no default
+      }
+      selcorestatics.corenum[RC5_72] = cindex;
     }
   }
   #elif (CLIENT_CPU == CPU_X86)
@@ -2095,6 +2153,17 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_arm2;
         pipeline_count = 1;
         break;
+     #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
+      case 0:
+        unit_func.gen_72 = rc5_72_unit_func_020_030_mh_2;
+        pipeline_count = 2;
+        break;
+      case 1:
+      default:
+        unit_func.gen_72 = rc5_72_unit_func_060_mh_2;
+        pipeline_count = 2;
+        coresel = 1;
+        break;
      #else
       case 0:
         unit_func.gen_72 = rc5_72_unit_func_ansi_4;
@@ -2137,6 +2206,17 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_ss_2;
         pipeline_count = 2;
         break;
+     #endif
+
+     #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+     #if defined(__GCC__) || defined(__GNUC__)
+      case 3:
+        unit_func.gen_72 = rc5_72_unit_func_ppc_mh_2;
+        pipeline_count = 2;
+        break;
+     #else
+      #error "ppc optimized rc5-72 core available - needs testing for non-gcc targets"
+     #endif
      #endif
 
     }
