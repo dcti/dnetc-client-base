@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: modereq.cpp,v $
+// Revision 1.6.2.6  1998/12/29 19:58:59  remi
+// A small fix, and synced with :
+//
+//  Revision 1.16  1998/12/28 21:05:55  cyp
+//  Removed CLIENT_OS specific stuff. MacOS! Get in line!
+//
 // Revision 1.6.2.5  1998/12/28 15:11:49  remi
 // Synced with :
 //  Revision 1.13  1998/12/08 05:48:59  dicamillo
@@ -23,6 +29,11 @@
 // Lots of $Log tags.
 //
 
+#if (!defined(lint) && defined(__showids__))
+const char *modereq_cpp(void) {
+return "@(#)$Id: modereq.cpp,v 1.6.2.6 1998/12/29 19:58:59 remi Exp $"; }
+#endif
+
 #include "client.h"    //client class
 #include "triggers.h"  //CheckExitRequestTrigger() [used by bench stuff]
 #include "logstuff.h"  //LogScreen() [used by update/fetch/flush stuff]
@@ -31,9 +42,6 @@
 #include "cpucheck.h"  //"mode" DisplayProcessorInformation()
 #include "selftest.h"  //"mode" SelfTest()
 #include "bench.h"     //"mode" Benchmark()
-#if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-  #include "baseincs.h" // client-specific includes
-#endif
 
 /* --------------------------------------------------------------- */
 
@@ -117,6 +125,7 @@ int ModeReqRun(Client *client)
 	{
 	client->DisplayHelp();
         modereq.reqbits &= ~(MODEREQ_CMDLINE_HELP);
+        retval |= (MODEREQ_CMDLINE_HELP);
 	}
 
       if ((bits & (MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5)) != 0)
@@ -127,24 +136,10 @@ int ModeReqRun(Client *client)
           u32 benchsize = (1L<<23); /* long bench: 8388608 instead of 100000000 */
           if ((bits & (MODEREQ_BENCHMARK_QUICK))!=0)
             benchsize = (1L<<20); /* short bench: 1048576 instead of 10000000 */
-          if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_RC5)!=0) {
-            #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-              MakeGUIThread(0, 0);
-            #endif
-	    Benchmark( 0, benchsize, client->cputype );
-            #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-              DestroyGUIThread(0);
-            #endif
-	    }
-          if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0) {
-            #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-              MakeGUIThread(1, 0);
-            #endif
-	    Benchmark( 1, benchsize, client->cputype );
-            #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-              DestroyGUIThread(0);
-            #endif
-	    }
+          if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_RC5)!=0) 
+            Benchmark( 0, benchsize, client->cputype );
+          if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0) 
+            Benchmark( 1, benchsize, client->cputype );
           }
         retval |= (modereq.reqbits & (MODEREQ_BENCHMARK_DES | 
                  MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_QUICK ));
