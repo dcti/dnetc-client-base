@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.35 1999/12/09 12:15:46 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.36 1999/12/09 12:49:00 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -123,7 +123,7 @@ return "@(#)$Id: problem.cpp,v 1.108.2.35 1999/12/09 12:15:46 cyp Exp $"; }
     extern "C" u32 rc5_alpha_osf_ev5( RC5UnitWork *, u32 );
   #elif (CLIENT_OS == OS_WIN32) /* little-endian asm */
     //rc5/alpha/rc5-alpha-nt.s
-    extern "C" u32 rc5_unit_func( RC5UnitWork *, unsigned long iterations );
+    extern "C" u32 rc5_unit_func_ntalpha_michmarc( RC5UnitWork *, u32 );
   #else
     //axp-bmeyer.cpp around axp-bmeyer.s
     extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
@@ -161,7 +161,7 @@ return "@(#)$Id: problem.cpp,v 1.108.2.35 1999/12/09 12:15:46 cyp Exp $"; }
    //des/des-slice-meggs.cpp
    extern u32 des_unit_func_meggs( RC5UnitWork * , u32 *iter, char *coremem );
 #else
-   //all rvc based drivers (eg des/ultrasparc/des-slice-ultrasparc.cpp)
+   //all rvs based drivers (eg des/ultrasparc/des-slice-ultrasparc.cpp)
    extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
 #endif
 #endif
@@ -179,6 +179,9 @@ return "@(#)$Id: problem.cpp,v 1.108.2.35 1999/12/09 12:15:46 cyp Exp $"; }
   extern "C" s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *iterations, void *membuff );
   extern "C" s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
   extern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
+#if (CLIENT_CPU == CPU_X86) && defined(MMX_CSC)
+  extern "C" s32 csc_unit_func_6b_mmx ( RC5UnitWork *, u32 *iterations, void *membuff );
+#endif
 #endif
 
 /* ------------------------------------------------------------- */
@@ -462,8 +465,8 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       #elif (CLIENT_OS == OS_WIN32) /* little-endian asm */
       {
         //rc5/alpha/rc5-alpha-nt.s
-        //xtern "C" u32 rc5_unit_func( RC5UnitWork *, unsigned long iterations );
-        problem->rc5_unit_func = ::rc5_unit_func;
+        //xtern "C" u32 rc5_unit_func_ntalpha_michmarc( RC5UnitWork *, u32 );
+        problem->rc5_unit_func = rc5_unit_func_ntalpha_michmarc;
         problem->pipeline_count = 2;
         coresel = 0;
       }
@@ -646,6 +649,10 @@ static int __core_picker(Problem *problem, unsigned int contestid)
                break;
       case 3 : problem->unit_func = csc_unit_func_1k;
                break;
+#if defined(MMX_CSC)
+      case 4 : problem->unit_func = csc_unit_func_6b_mmx;
+               break;
+#endif
     }
     return coresel;
   }
@@ -1057,21 +1064,12 @@ int Problem::Run_RC5(u32 *iterationsP, int *resultcode)
 LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
           "suggested iterations: %lu (0x%lx)\n"
           "pipeline_count = %lu, iterations%%pipeline_count = %lu\n", 
-          (unsigned long)iterations, (unsigned long)iterations,
+          (unsigned long)iterations, (unsigned long)(*iterationsP),
           (unsigned long)tslice, (unsigned long)tslice,
           pipeline_count, iterations%pipeline_count );
 #endif
 
-  iterations /= pipeline_count;
-
-  #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-    #error michmarc, please fix this
-    kiter = (iterations*pipeline_count)-(*rc5_unit_func)(&rc5unitwork,iterations);
-  #else
-    kiter = (*rc5_unit_func)(&rc5unitwork, iterations);
-  #endif
-  
-  iterations *= pipeline_count;
+  kiter = (*rc5_unit_func)(&rc5unitwork, iterations/pipeline_count );
   *iterationsP = iterations;
 
   __IncrementKey (&refL0, iterations, contest);
@@ -1203,6 +1201,8 @@ int Problem::Run_DES(u32 *iterationsP, int *resultcode)
   *resultcode = -1; /* core error */
   return -1;
 #else
+
+  //iterationsP == in: suggested iterations, out: effective iterations
   u32 kiter = (*des_unit_func)( &rc5unitwork, iterationsP, core_membuffer );
 
   __IncrementKey (&refL0, *iterationsP, contest);
