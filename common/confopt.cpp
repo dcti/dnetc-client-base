@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.51.4.12 2004/01/07 02:50:50 piru Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.51.4.13 2004/01/29 21:33:17 kakace Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -113,7 +113,10 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "listed here are found to be running. Multiple filenames/process names\n"
   "may be specified by separating them with a '|'.\n"
   "\n"
-  #if defined(__unix__)
+  #if (CLIENT_OS == OS_MACOSX)
+  "For example, \"DVD Player|Safari\". Providing a path is not advisable\n"
+  "since the process list is obtained from 'ps -acwx'.\n"
+  #elif defined(__unix__)
   "For example, \"backup|restore\". Providing a path is not advisable\n"
   "since the process list is obtained from 'ps' and/or the programmatic\n"
   "equivalent thereof.\n"
