@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.27 2000/02/17 10:16:32 chrisb Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.28 2000/02/20 13:21:12 jlawson Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -272,19 +272,22 @@ int CheckPauseRequestTrigger(void)
     }
     #endif
 
-    if (trigstatics.pauseplist[0])
+    if (trigstatics.pauseplist[0] != NULL)
     {
-      int index, nowcleared = 0;
+      int nowcleared = -1;
       char **pp = &trigstatics.pauseplist[0];
-      long pidlist[1];
+
+      // the use of "nowcleared" is a hack for the sake of optimization
+      // so that we can sequence the code for the paused->unpause and
+      // the unpause->pause transitions and still avoid an extra call
+      // to utilGetPIDList() if we know the app is definitely not running.
+
       if ((trigstatics.pausetrig.trigger & TRIGSETBY_APPACTIV) != 0)
       {
-        /* this is a HACK for the sake of user convenience so 
-           that there is no transition between pause->nopause->pause
-        */
-        index = trigstatics.lastactivep;
-        if (!(utilGetPIDList( pp[index], &pidlist[0], 1 ) > 0))
+        int index = trigstatics.lastactivep;
+        if (utilGetPIDList( pp[index], NULL, 0 ) <= 0)
         {
+          // Triggered program is no longer running.
           Log("%s... ('%s' inactive)\n",
               (((trigstatics.pausetrig.laststate 
                    & ~TRIGSETBY_APPACTIV)!=0)?("Pause level lowered"):
@@ -292,18 +295,22 @@ int CheckPauseRequestTrigger(void)
           trigstatics.pausetrig.laststate &= ~TRIGSETBY_APPACTIV;
           trigstatics.pausetrig.trigger &= ~TRIGSETBY_APPACTIV;
           trigstatics.lastactivep = 0;
-          nowcleared = (-(index+1));
+          nowcleared = index;
         }
       }
       if ((trigstatics.pausetrig.trigger & TRIGSETBY_APPACTIV) == 0)
       {
-        index = 0;
-        while (pp[index])
+        int index = 0;
+        while (pp[index] != NULL)
         {
-          if (nowcleared == (-(index+1)))
-            ; /* already done above */
-          else if (utilGetPIDList( pp[index], &pidlist[0], 1 ) > 0)
+          if (index == nowcleared)
           {
+            // if this matched, then we came from the transition
+            // above and know that this is definitely not running.
+          }
+          else if (utilGetPIDList( pp[index], NULL, 0 ) > 0)
+          {
+            // Triggered program is now running.
             trigstatics.pausetrig.trigger |= TRIGSETBY_APPACTIV;
             trigstatics.lastactivep = index;
             app_now_active = pp[index];
