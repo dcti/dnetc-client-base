@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.19 2003/03/31 17:55:40 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.20 2003/04/03 22:31:26 oliver Exp $
 ==========================================================================
 
 2.9000
@@ -32,6 +32,9 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.19 2003/03/31 17:55:40 snikkel Exp
             new: ppc: support for altivec under linux (#1349)
             new: sparc/solaris: optimized rc5-72 core by Didier Levet
             new: sparc/solaris: cpu detection
+            new: ppc: faster non-Altivec rc5-72 core by Malcolm Howell
+            new: 68k: optimized rc5-72 cores, now not only for AmigaOS
+            fix: some: network cleanup failed during rare error condition
 
 2.9004-482  undo: x86: rc5-72 SS-2 core (Athlon optimized) removed due to 
                        reentrancy and stack problems (#3187)
@@ -90,6 +93,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.19 2003/03/31 17:55:40 snikkel Exp
             fix: amigaos: fixed problems with font requester opening in
                           GUI prefs window when clicking other gadgets
             imp: amigaos: can be shutdown by pressing escape key in GUI
+            fix: some: lurking now works again regarding multiple interfaces
 
 2.8018.472  fix: macosx: fix crash in battery pause code from #2465 (#2615)
             fix: macosx: config menu displayed erroneous message that pause
