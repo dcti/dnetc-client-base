@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.18 2000/01/08 23:34:37 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.19 2000/01/08 23:53:10 cyp Exp $
 ==========================================================================
 
 2.8000
@@ -30,9 +30,12 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.18 2000/01/08 23:34:37 cyp Exp $
 2.8005.453  chg: client supports thresholds either as a time-factor, or
                  as a workunit-factor. -config documentation has more info.
 		 A review of your settings is *strongly* advised.
-            chg: all: .ini option spin off from the generic [parameters] 
+
+2.8004.452  chg: all: .ini option spin off from the generic [parameters] 
                  section into subsections is now complete. phew! Nothing
 		 left except "id".
+	    chg: reverted log file opening on win/dos/netware/os2 to 
+	         non-shared.
 
 2.8004.451  fix: OS/2: Fixed crash in -config by using different API calls
             fix: OS/2: included the forgotten CSC-MMX core.
