@@ -1,10 +1,10 @@
-/* 
+/*
  * Copyright distributed.net 1998-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_rc5_cpp(void) {
-return "@(#)$Id: core_rc5.cpp,v 1.1.2.2 2003/09/01 19:27:36 jlawson Exp $"; }
+return "@(#)$Id: core_rc5.cpp,v 1.1.2.3 2003/09/01 22:40:07 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -37,7 +37,7 @@ return "@(#)$Id: core_rc5.cpp,v 1.1.2.2 2003/09/01 19:27:36 jlawson Exp $"; }
 /* ======================================================================== */
 
 /* all the core prototypes
-   note: we may have more prototypes here than cores in the client 
+   note: we may have more prototypes here than cores in the client
    note2: if you need some 'cdecl' value define it in selcore.h to CDECL */
 
 
@@ -143,7 +143,7 @@ int InitializeCoreTable_rc564(int first_time)
 {
   #if (CLIENT_CPU == CPU_X86) && defined(SMC)
   {                      /* self-modifying code needs initialization */
- 
+
     #if defined(USE_DPMI) && ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16))
     /*
     ** Unlike all other targets, the dpmi based ones need to initialize on
@@ -222,7 +222,7 @@ const char **corenames_for_contest_rc564()
    they are different from their predecessor(s). If only one core,
    use the obvious "MIPS optimized" or similar.
   */
-  static const char *corenames_table[] = 
+  static const char *corenames_table[] =
   {
   /* ================================================================== */
   #if (CLIENT_CPU == CPU_X86)
@@ -254,14 +254,14 @@ const char **corenames_for_contest_rc564()
       #else
       "Generic",
       #endif
-  #elif (CLIENT_CPU == CPU_ALPHA) 
+  #elif (CLIENT_CPU == CPU_ALPHA)
       #if (CLIENT_OS == OS_WIN32)
       "Marcelais",
       #else
       "axp bmeyer",
       #endif
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-      /* lintilla depends on allitnil, and since we need both even on OS's 
+      /* lintilla depends on allitnil, and since we need both even on OS's
          that don't support the 601, we may as well "support" them visually.
       */
       "allitnil",
@@ -282,7 +282,7 @@ const char **corenames_for_contest_rc564()
       "mips-crunch RC5 core",
   #else
       "Generic RC5 core",
-  #endif  
+  #endif
   /* ================================================================== */
       NULL
   };
@@ -292,7 +292,7 @@ const char **corenames_for_contest_rc564()
 
 /* -------------------------------------------------------------------- */
 
-/* 
+/*
 ** Apply substition according to the same rules enforced by
 ** selcoreSelectCore() [ie, return the cindex of the core actually used
 ** after applying appropriate OS/architecture/#define limitations to
@@ -300,13 +300,13 @@ const char **corenames_for_contest_rc564()
 **
 ** This is necessary when the list of cores is a superset of the
 ** cores supported by a particular build. For example, all x86 clients
-** display the same core list for RC5, but as not all cores may be 
-** available in a particular client/build/environment, this function maps 
+** display the same core list for RC5, but as not all cores may be
+** available in a particular client/build/environment, this function maps
 ** between the ones that aren't available to the next best ones that are.
 **
 ** Note that we intentionally don't do very intensive validation here. Thats
 ** selcoreGetSelectedCoreForContest()'s job when the user chooses to let
-** the client auto-select. If the user has explicitely specified a core #, 
+** the client auto-select. If the user has explicitely specified a core #,
 ** they have to live with the possibility that the choice will at some point
 ** no longer be optimal.
 */
@@ -315,9 +315,9 @@ int apply_selcore_substitution_rules_rc564(int cindex)
   #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
   {
     /* AIX note:
-    ** A power-only client running on PPC will never get here. So, at this 
+    ** A power-only client running on PPC will never get here. So, at this
     ** point its either a power-only client running on power, or a ppc-only
-    ** client (no power core) running on PPC or power, or _AIXALL client 
+    ** client (no power core) running on PPC or power, or _AIXALL client
     ** running on either power or PPC.
     */
     int have_vec = 0;
@@ -535,8 +535,8 @@ int selcoreGetPreselectedCoreForProject_rc564()
 
 /* ---------------------------------------------------------------------- */
 
-int selcoreSelectCore_rc564( unsigned int threadindex,
-                       int *client_cpuP, struct selcore *selinfo )
+int selcoreSelectCore_rc564(unsigned int threadindex,
+                            int *client_cpuP, struct selcore *selinfo)
 {
   int use_generic_proto = 0; /* if rc5/des unit_func proto is generic */
   unit_func_union unit_func; /* declared in problem.h */
@@ -870,7 +870,7 @@ int selcoreSelectCore_rc564( unsigned int threadindex,
 
   /* ================================================================== */
 
-  if (coresel >= 0 && unit_func.gen && 
+  if (coresel >= 0 && unit_func.gen &&
      coresel < ((int)corecount_for_contest(RC5)) )
   {
     if (client_cpuP)
@@ -893,4 +893,3 @@ int selcoreSelectCore_rc564( unsigned int threadindex,
 /* ------------------------------------------------------------- */
 
 #endif  // HAVE_RC5_64_CORES
- 
