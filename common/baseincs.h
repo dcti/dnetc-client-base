@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: baseincs.h,v $
+// Revision 1.30.2.4  1998/11/16 09:56:01  remi
+// In win32 section, fixed two #include.
+//
 // Revision 1.30.2.3  1998/11/15 15:36:05  remi
 // Synced with :
 //  Revision 1.31  1998/11/09 01:17:46  remi
@@ -102,13 +105,13 @@ extern "C" {
   #else
   #include <windows.h>
   #include "w32sock.h"
-  #endif  #include <sys/timeb.h>
+  #endif  
+  #include <sys/timeb.h>
   #include <process.h>
   #include <conio.h>
   #include <share.h>
   #include <fcntl.h>
   #include <io.h>
-  #include "lurk.h"
   #include "w32svc.h"       // service
   #include "w32cons.h"      // console
   #include "w32pre.h"       // prelude
