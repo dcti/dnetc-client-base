@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common.h,v $
+// Revision 1.1.2.2  1999/10/07 23:33:01  cyp
+// added some things to help test/force use of 64bit 'registers' on '32bit' cpus
+//
 // Revision 1.1.2.1  1999/10/07 18:41:14  cyp
 // sync'd from head
 //
@@ -12,25 +15,39 @@
 //
 
 #ifndef __CSC_COMMON_H
-#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.1.2.1 1999/10/07 18:41:14 cyp Exp $"
+#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.1.2.2 1999/10/07 23:33:01 cyp Exp $"
 
 #include <stdlib.h>
 #include <string.h>
-#include "cputypes.h"
+#include <limits.h>
+#include "cputypes.h" /* u32, s32 */
 
-#if defined( BIT_32 ) || defined( MMX_BITSLICER )
-  #define CSC_BIT_32
-#elif defined( BIT_64 )
+//#define _FORCE64_
+
+#if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
+  #define _FORCE64_
+#endif  
+
+#if defined(_FORCE64_)
   #define CSC_BIT_64
+  #if defined(__GNUC__)
+    typedef unsigned long long ulong;
+    #define CASTNUM64(n) n##ull
+  #elif ( defined(_MSC_VER) /*>=11*/ || defined(__WATCOMC__) /*>=10*/)
+    typedef unsigned __int64 ulong;
+    #define CASTNUM64(n) n##ul
+  #else
+    #error something missing
+  #endif
+#elif (ULONG_MAX == 0xfffffffful)
+  #define CSC_BIT_32
+  typedef unsigned long ulong;  
+#elif (ULONG_MAX == 0xfffffffffffffffful)
+  #define CSC_BIT_64
+  typedef unsigned long ulong;  
+  #define CASTNUM64(n) n##ul
 #else
   #error define either CSC_BIT_32 or CSC_BIT_64
-#endif
-
-#if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32) && \
-    defined(CSC_BIT_64) && (_MSC_VER >= 11) // VC++ >= 5.0
-  typedef unsigned __int64 ulong;
-#else
-  typedef unsigned long ulong;
 #endif
 
 #define _0 ( (ulong)0)
@@ -138,3 +155,4 @@ void transP( ulong in7, ulong in6, ulong in5, ulong in4,
 #endif
 
 #endif
+
