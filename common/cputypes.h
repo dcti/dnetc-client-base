@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.26  1998/07/15 05:50:33  ziggyb
+// removed the need for a fake bool when I upgraded my version of Watcom to version 11
+//
 // Revision 1.25  1998/07/01 09:06:36  daa
 // add HPUX_M68
 //
@@ -357,12 +360,8 @@ struct s128 { s64 hi, lo; };
   #define NEED_FAKE_BOOL
 #elif defined(_HPUX) || defined(_OLD_NEXT_)
   #define NEED_FAKE_BOOL
-#elif defined(OS2)
-  #define NEED_FAKE_BOOL
-#elif defined(__WATCOMC__)           
+#elif defined(__WATCOMC__)
   //nothing - bool is defined
-  //#elif (CLIENT_OS == OS_OS2)     // this should be changed to a Watcom version test
-  //  #define NEED_FAKE_BOOL
 #elif defined(__xlc) || defined(__xlC) || defined(__xlC__) || defined(__XLC121__)
   #define NEED_FAKE_BOOL
 #elif (defined(__mips) && __mips < 3 && !defined(__GNUC__))
