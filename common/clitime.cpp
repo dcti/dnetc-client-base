@@ -21,14 +21,16 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.45 1999/11/11 04:55:13 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.46 1999/11/16 22:44:39 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
 #include "clitime.h"  // keep the prototypes in sync
 
-#if 0 //if your OS doesn't support getrusage, #if it here.
-  //nothing
+#if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
+  //if your OS doesn't support getrusage, OR it returns rusage for 
+  //*all* threads combined (ie, threads don't get their own pid, eg solaris), 
+  //put it here.
 #elif defined(__unix__) //possibly not for all unices. getrusage() is BSD4.3
   #define HAVE_GETRUSAGE
   #include <sys/resource.h>

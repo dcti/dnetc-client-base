@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.22 1999/11/14 19:00:47 cyp Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.23 1999/11/16 22:44:39 cyp Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
@@ -113,7 +113,7 @@ int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
   {
     totaltime->tv_sec = conInfo->TimeDone.tv_sec;
     totaltime->tv_usec = conInfo->TimeDone.tv_usec;
-#if 0  
+//#if 0  
     if (conInfo->BlocksDone > 1)
     {
       //get time since first call to CliTimer() (time when 1st prob started)
@@ -125,7 +125,7 @@ int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
         totaltime->tv_usec = conInfo->TimeDone.tv_usec;
       }
     }
-#endif
+//#endif
   }
   return 0;
 }
