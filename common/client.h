@@ -12,6 +12,11 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.76  1998/08/05 18:28:47  cyruspatel
+// Converted more printf()s to LogScreen()s, changed some Log()/LogScreen()s
+// to LogRaw()/LogScreenRaw()s, ensured that DeinitializeLogging() is called,
+// and InitializeLogging() is called only once (*before* the banner is shown)
+//
 // Revision 1.75  1998/08/02 16:17:47  cyruspatel
 // Completed support for logging.
 //
@@ -488,6 +493,12 @@ public:
     //     2 = exit by exit file check
     //     3 = exit by time limit expiration
     //     4 = exit by block count expiration
+
+  int  RunCommandlineModes( int argc, char *argv[], int *retcode );
+    // Parse the command line for special commands. Returns 0 if it did 
+    // nothing. -update, -[force]fetch, -[force]flush, -ident, -test, 
+    // -cpuinfo, -benchmark[2], -config, -install, -uninstall, -forceunlock
+    // and co. are all handled here. Calls DisplayHelp() on invalid arg/-help
 
   s32  Fetch( u8 contest, Network *netin = 0, s32 quietness = 0, s32 force = 0 );
     // fills up all of the input buffers

@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.117  1998/08/05 18:28:40  cyruspatel
+// Converted more printf()s to LogScreen()s, changed some Log()/LogScreen()s
+// to LogRaw()/LogScreenRaw()s, ensured that DeinitializeLogging() is called,
+// and InitializeLogging() is called only once (*before* the banner is shown)
+//
 // Revision 1.116  1998/08/02 16:17:37  cyruspatel
 // Completed support for logging.
 //
@@ -107,7 +112,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.116 1998/08/02 16:17:37 cyruspatel Exp $.
+// Tweaked $Id: client.cpp,v 1.117 1998/08/05 18:28:40 cyruspatel Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -283,7 +288,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.116 1998/08/02 16:17:37 cyruspatel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.117 1998/08/05 18:28:40 cyruspatel Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -305,8 +310,8 @@ return "@(#)$Id: client.cpp,v 1.116 1998/08/02 16:17:37 cyruspatel Exp $"; }
 #include "clisrate.h"
 #include "clicdata.h"
 #include "pathwork.h"
-#include "cliident.h"  // CliIdentifyModules()
 #include "cpucheck.h"  //GetTimesliceBaseline()
+#include "cliident.h"  // CliIdentifyModules()
 #include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
 
 #if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
@@ -1562,6 +1567,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
     if ( SignalTriggered )
       return 0;
     }
+  LogScreenPercent( 1 ); //finish the percent bar
 
   #if 0 //could use this, but it shows the block number ("00000000:00000000")
     LogScreen("\n[%s] %s\n", CliGetTimeString( NULL, 1 ),
@@ -1648,8 +1654,6 @@ s32 Client::SelfTest( u8 contest )
       #endif
 
       (problem[0]).GetResult( &rc5result );
-//      LogScreen( "." );
-//      fflush( stdout );
     }
 
 #if (CLIENT_OS == OS_AMIGAOS)
@@ -1670,6 +1674,10 @@ s32 Client::SelfTest( u8 contest )
           || (ntohl( rc5result.key.lo ) + ntohl( rc5result.keysdone.lo ) ) != expectedsolution.lo )
         {
           // failure occurred (wrong key)
+          LogScreen( "Test %d FAILED: %08X:%08X - %08X:%08X\n", successes,
+              (ntohl( rc5result.key.hi ) + ntohl( rc5result.keysdone.hi ) ),
+              (ntohl( rc5result.key.lo ) + ntohl( rc5result.keysdone.lo ) ),
+              expectedsolution.hi, expectedsolution.lo );
           successes *= -1;
           return( successes );
         } else {
@@ -1698,11 +1706,15 @@ s32 Client::SelfTest( u8 contest )
       else
       {
         // failure occurred (no solution)
+        LogScreen( "Test %d FAILED: %08X:%08X - %08X:%08X\n", successes,
+              0, 0, expectedsolution.hi, expectedsolution.lo );
         successes *= -1;
         return( successes );
       }
     }
   }
+  LogScreen( "\n%d/%d %s Tests Passed\n", 
+      (int) successes, (int) TEST_CASE_COUNT, ((contest == 1)?"RC5":"DES") );
   return( successes );
 }
 
@@ -2906,7 +2918,8 @@ int main( int argc, char *argv[] )
 
 #if (CLIENT_OS == OS_RISCOS)
   riscos_in_taskwindow = riscos_check_taskwindow();
-  if (riscos_find_local_directory(argv[0])) return -1;
+  if (riscos_find_local_directory(argv[0])) 
+    return -1;
 #endif
 
   // This is the main client object.  'Static' since allocating such
@@ -2917,22 +2930,23 @@ int main( int argc, char *argv[] )
 #if (CLIENT_OS == OS_NETWARE) // create stdout/screen, set cwd etc.
   // and save pointer to client so functions in netware.cpp can get at the
   // filenames and niceness level
-  if ( nwCliInitClient( argc, argv, &client )  ) return -1;
+  if ( nwCliInitClient( argc, argv, &client )  ) 
+    return -1;
 #endif
-
 
   // set up break handlers
   CliSetupSignals();
 
   // determine the filename of the ini file
   if ( getenv( "RC5INI" ) != NULL )
-  {
+    {
     strncpy( client.inifilename, getenv( "RC5INI" ), 127 );
-  }
+    }
   else
-  {
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
-    (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+    {
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
+    (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || \
+    (CLIENT_OS == OS_OS2)
     char fndrive[_MAX_DRIVE], fndir[_MAX_DIR], fname[_MAX_FNAME], fext[_MAX_FNAME];
     _splitpath(argv[0], fndrive, fndir, fname, fext);
     _makepath(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
@@ -2940,7 +2954,7 @@ int main( int argc, char *argv[] )
     strcat(client.exepath, fndir);     // append dir for fully qualified path
     strcpy(client.exename, fname);     // exe filename
     strcat(client.exename, fext);      // tack on extention
-  #elif (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS)
+    #elif (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS)
     //not really needed for netware (appname in argv[0] won't be anything 
     //except what I tell it to be at link time.)
     client.inifilename[0] = 0;
@@ -2960,24 +2974,24 @@ int main( int argc, char *argv[] )
       }
     if ( client.inifilename[0] == 0 )
       strcpy( client.inifilename, "rc5des.ini" );
-  #elif (CLIENT_OS == OS_VMS)
+    #elif (CLIENT_OS == OS_VMS)
     strcpy( client.inifilename, "rc5des" EXTN_SEP "ini" );
-  #else
+    #else
     strcpy( client.inifilename, argv[0] );
     strcat( client.inifilename, EXTN_SEP "ini" );
-  #endif
-  }
+    #endif
+    }
 
   // See if there's a command line parameter to override the INI filename...
   for (i = 1; i < argc; i++)
-  {
-    if ( strcmp(argv[i], "-ini" ) == 0)
     {
+    if ( strcmp(argv[i], "-ini" ) == 0)
+      {
       strcpy( client.inifilename, argv[i+1] );
       argv[i][0] = argv[i+1][0] = 0;
       i++; // Don't try and parse the next argument
+      }
     }
-  }
 
 #ifndef DONT_USE_PATHWORK
   InitWorkingDirectoryFromSamplePaths( client.inifilename, argv[0] );
@@ -2988,35 +3002,38 @@ int main( int argc, char *argv[] )
 
   // See if there's a command line parameter for the quiet setting...
   for (i = 1; i < argc; i++)
-  {
-    if ( strcmp(argv[i], "-quiet" ) == 0)
     {
+    if ( strcmp(argv[i], "-quiet" ) == 0)
+      {
       client.quietmode=1;
       argv[i][0] = 0;
+      }
     }
-  }
 
 #if (CLIENT_OS == OS_RISCOS)
-  // See if we are a subtask of the GUI
   for (i = 1; i < argc; i++)
-  {
-    if ( strcmp(argv[i], "-guiriscos" ) == 0) {
+    {
+    // See if we are a subtask of the GUI
+    if ( strcmp(argv[i], "-guiriscos" ) == 0) 
+      {                       
       guiriscos=1;
       argv[i][0] = 0;
-    }
-  }
-
-  // See if are restarting (hence less banners wanted)
-  for (i = 1; i < argc; i++)
-  {
-    if ( strcmp(argv[i], "-guirestart" ) == 0) {
+      }
+    // See if are restarting (hence less banners wanted)
+    if ( strcmp(argv[i], "-guirestart" ) == 0) 
+      {                  
       guirestart=1;
       argv[i][0] = 0;
+      }
     }
-  }
 #endif
 
-  client.InitializeLogging(); //let quietmode take effect
+  //'magic number' so ::Run gets executed only when unchanged
+  #define OK_TO_RUN (-123)
+  int retcode = OK_TO_RUN;
+
+  //let quietmode take effect
+  client.InitializeLogging(); 
 
   // print a banner
   client.PrintBanner(argv[0]);
@@ -3024,176 +3041,238 @@ int main( int argc, char *argv[] )
   // start parsing the command line
   client.ParseCommandlineOptions(argc, argv, &inimissing);
 
-  //The NetWare client must go through to the end (CliExitClient())
-  //or risk spewing out half a dozen "resource not freed" messages
-  //This is particularly important once Problem:Run() runs, as the client
-  //registers an 'idle process' callback that will crash the machine if not
-  //unregistered (idle process callbacks are left undocumented for a reason)
-
-  //'magic number' so ::Run gets executed only when unchanged
-  #define OK_TO_RUN (-123)
-  int retcode = OK_TO_RUN;
-
-  // parse command line "modes"
-  for (i = 1; ((retcode == OK_TO_RUN) && (i < argc)); i++)
-  {
-    if ( argv[i][0] == 0 ) continue;
-    #if defined(NONETWORK)
-    else if (( strcmp( argv[i], "-fetch" ) == 0 ) || \
-             ( strcmp( argv[i], "-forcefetch" ) == 0 ) || \
-             ( strcmp( argv[i], "-flush"      ) == 0 ) || \
-             ( strcmp( argv[i], "-forceflush" ) == 0 ) || \
-             ( strcmp( argv[i], "-update"     ) == 0 ))
+  if (inimissing)
     {
-        LogScreen( 
-        "Sorry, this client is not network capable and cannot support\n"
-         "the -flush, -forceflush, -fetch, -forcefetch or -update options.\n");
-        retcode = 0; //and break out of loop
-    }    
+    // prompt the user to do the configuration if there wasn't an ini file
+    if (client.Configure() ==1 ) 
+      client.WriteConfig();
+    retcode = 0;
+    }
+
+  #if defined(NONETWORK)
+     client.offlinemode=1;
+  #endif
+
+  // parse command line "modes" - returns 0 if it didn't do anything
+  if (retcode == OK_TO_RUN )
+    {
+    if ( client.RunCommandlineModes( argc, argv, &retcode ) == 0 ) 
+      retcode = OK_TO_RUN;
+    }
+
+  if (retcode == OK_TO_RUN)
+    {
+    if (client.RunStartup())
+      retcode = 0;
+    }
+
+  if (retcode == OK_TO_RUN)
+    {
+    // otherwise we are running
+
+    if (!client.offlinemode)  NetworkInitialize();
+
+    #if (CLIENT_OS == OS_RISCOS)
+    if (!guirestart)
     #endif
+    LogRaw("\nRC5DES Client v2.%d.%d started.\nUsing %s as distributed.net ID.\n\n",
+             CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,client.id);
+
+    client.Run();
+
+    if (!client.offlinemode)   NetworkDeinitialize();
+    if (client.randomchanged)  client.WriteContestandPrefixConfig();
+
+    retcode = ( UserBreakTriggered ? -1 : 0 );
+    } //if (retcode == OK_TO_RUN)
+
+  client.DeinitializeLogging(); //flush and close logs/mail
+
+  #if (CLIENT_OS == OS_NETWARE)
+  nwCliExitClient(); // destroys AES process, screen, polling procedure
+  #endif
+  #if (CLIENT_OS == OS_AMIGAOS)
+  if (retcode) retcode = 5; // 5 = Warning
+  #endif // (CLIENT_OS == OS_AMIGAOS)
+
+  return retcode;
+}
+#endif
+
+// ---------------------------------------------------------------------------
+
+//parse command line "modes" - returns 0 if did nothing
+int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
+{
+  int i, retcode = -12345;  // 'magic number' 
+
+  for (i = 1; ((retcode == -12345) && (i < argc)); i++)
+    {
+    if ( argv[i][0] == 0 ) 
+      continue;
+    else if (( strcmp( argv[i], "-fetch" ) == 0 ) || 
+             ( strcmp( argv[i], "-forcefetch" ) == 0 ) || 
+             ( strcmp( argv[i], "-flush"      ) == 0 ) || 
+             ( strcmp( argv[i], "-forceflush" ) == 0 ) || 
+             ( strcmp( argv[i], "-update"     ) == 0 ))
+      {
+      int dofetch = 0, doflush = 0, doforce = 0;
+      if ( strcmp( argv[i], "-fetch" ) == 0 )           dofetch=1;
+      else if ( strcmp( argv[i], "-flush" ) == 0 )      doflush=1;
+      else if ( strcmp( argv[i], "-forcefetch" ) == 0 ) dofetch=doforce=1;
+      else if ( strcmp( argv[i], "-forceflush" ) == 0 ) doflush=doforce=1;
+      else /* ( strcmp( argv[i], "-update" ) == 0) */   dofetch=doflush=1;
+    
+      offlinemode=0;
+      NetworkInitialize();
+
+      if ( dofetch )
+        {
+        int retcode2;
+        if ( doforce )
+          {
+          retcode2 = ForceFetch(0); // RC5 Fetch
+          retcode = ForceFetch(1); // DES Fetch
+          }
+        else
+          {
+          retcode2 = Fetch(0); // RC5 Fetch
+          retcode = Fetch(1); // DES Fetch
+          }
+        if (contestdone[0]) 
+          retcode2 = 0;
+        if (randomchanged) 
+          WriteContestandPrefixConfig();
+        if (contestdone[1]) 
+          retcode=1;
+        if (retcode < 0 || retcode2 < 0)
+          {
+          if (retcode2 < retcode) 
+            retcode = retcode2;
+          dofetch = retcode;
+          }
+        }
+      if ( doflush )
+        {
+        int retcode2;
+        if (doforce)
+          {
+          retcode2 = ForceFlush(0); // RC5 Flush
+          retcode = ForceFlush(1); // DES Flush
+          }
+        else
+          {
+          retcode2 = Flush(0); // RC5 Flush
+          retcode = Flush(1); // DES Flush
+          }
+        if (contestdone[0]) 
+          retcode2 = 0;
+        if (contestdone[1]) 
+          retcode = 0;
+        if (retcode < 0 || retcode2 < 0)
+          {
+          if (retcode2 < retcode) 
+            retcode = retcode2;
+          doflush = retcode;
+          }
+        }
+
+      LogFlush(1); //checktosend(1)
+      NetworkDeinitialize();
+
+      retcode = 0;
+      if (dofetch >= 0 && doflush >= 0) //no errors
+        LogScreen( "%s completed.\n", argv[i]+1 );
+      else
+        {
+        #if defined(NONETWORK)
+        retcode = -1; //always error
+        #elif (CLIENT_OS == OS_NETWARE)
+        if (!nwCliIsNetworkAvailable(0)) retcode =-1; //detect TCP services 
+        #endif
+        
+        if (retcode) //was handled above
+          {
+          LogScreen( "TCP/IP services are not available. Without TCP/IP the "
+          "client cannot\nsupport the -flush, -forceflush, -fetch, "
+          "-forcefetch or -update options.\n");
+          }
+        else
+          {
+          LogScreen( "\nAn error occured trying to %s. "
+                     "Please try again later\n", argv[i]+1 );
+          retcode = dofetch;
+          if (doflush < dofetch)
+            retcode = doflush;
+          }
+        }
+      }  
     else if ( strcmp(argv[i], "-ident" ) == 0)
       {
-        CliIdentifyModules();
-        retcode = 0;
+      CliIdentifyModules();
+      retcode = 0;
       }
     else if ( strcmp( argv[i], "-test" ) == 0 )
-    {
-      int i = client.SelfTest(1);
-      int j = client.SelfTest(2);
-      if ( i < 0 )
-        LogScreen( "\n%d Tests, Failed on RC5 Test %d\n", (int) TEST_CASE_COUNT, (int) -i );
-      else
-        LogScreen( "\n%d/%d RC5 Tests Passed\n", (int) i, (int) TEST_CASE_COUNT);
-      if ( j < 0 )
-        LogScreen( "\n%d Tests, Failed on DES Test %d\n", (int) TEST_CASE_COUNT, (int) -j );
-      else
-        LogScreen( "\n%d/%d DES Tests Passed\n", (int) j, (int) TEST_CASE_COUNT);
-      retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
-    }
-    else if ( strcmp( argv[i], "-benchmark2rc5" ) == 0 )
-    {
-      client.Benchmark(1, 1000000L);
-      retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
-    }
-    else if ( strcmp( argv[i], "-benchmark2des" ) == 0 )
-    {
-      client.Benchmark(2, 1000000L);
-      retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
-    }
-    else if ( strcmp( argv[i], "-benchmark2" ) == 0 )
-    {
-      client.Benchmark(1, 1000000L);
-      client.Benchmark(2, 1000000L);
-      retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
-    }
-    else if ( strcmp( argv[i], "-benchmarkrc5" ) == 0 )
-    {
-      client.Benchmark(1, 0);
-      retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
-    }
-    else if ( strcmp( argv[i], "-benchmarkdes" ) == 0 )
-    {
-      client.Benchmark(2, 0);
-      retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
-    }
-    else if ( strcmp( argv[i], "-benchmark" ) == 0 )
-    {
-      client.Benchmark(1, 0);
-      client.Benchmark(2, 0);
-      retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
-    }
-    else if (( strcmp( argv[i], "-fetch" ) == 0 ) || ( strcmp( argv[i], "-forcefetch" ) == 0 ))
-    {
-      client.offlinemode=0;
-      NetworkInitialize();
-      client.ValidateConfig();
-
-      int retcode2;
-      if ( strcmp( argv[i], "-fetch" ) == 0 ) {
-        retcode2 = client.Fetch(0); // RC5 Fetch
-      } else {
-        retcode2 = client.ForceFetch(0); // RC5 Fetch
-      }
-      if (client.contestdone[0]) retcode2 = 0;
-      if (client.randomchanged) client.WriteContestandPrefixConfig();
-
-      if ( strcmp( argv[i], "-fetch" ) == 0 ) {
-        retcode = client.Fetch(1); // DES Fetch
-      } else {
-        retcode = client.ForceFetch(1); // DES Fetch
-      }
-      if (client.contestdone[1]) retcode=1;
-      LogFlush(1); //checktosend(1)
-      NetworkDeinitialize();
-      if (retcode < 0 || retcode2 < 0)
       {
-        LogScreen( "\nAn error occured trying to fetch.  Please try again later\n" );
-        if (retcode2 < retcode) retcode = retcode2;
-        //retcode = retcode; //and break out of loop
+      if ( SelfTest(1) > 0 && SelfTest(2) > 0 ) //both OK
+        retcode = 0;
+      else if ( UserBreakTriggered )
+        retcode = -1;
+      else  //one of them failed
+        retcode = 1; 
       }
-      else
-        LogScreen( "Fetch completed.\n" );
-    }
-    else if (( strcmp( argv[i], "-flush" ) == 0 ) || ( strcmp( argv[i], "-forceflush" ) == 0 ))
-    {
-      client.offlinemode = 0;
-      NetworkInitialize();
-      client.ValidateConfig();
-
-      int retcode2;
-      if ( strcmp( argv[i], "-flush" ) == 0 ) {
-        retcode2 = client.Flush(0); // RC5 Flush
-      } else {
-        retcode2 = client.ForceFlush(0); // RC5 Flush
-      }
-      if (client.contestdone[0]) retcode2 = 0;
-
-      if ( strcmp( argv[i], "-flush" ) == 0 ) {
-        retcode = client.Flush(1); // DES Flush
-      } else {
-        retcode = client.ForceFlush(1); // DES Flush
-      }
-      if (client.contestdone[1]) retcode = 0;
-
-      LogFlush(1); //checktosend(1)
-      NetworkDeinitialize();
-      if (retcode < 0 || retcode2 < 0)
+    else if (( strcmp( argv[i], "-benchmark2rc5" ) == 0 ) ||
+             ( strcmp( argv[i], "-benchmark2des" ) == 0 ) ||
+             ( strcmp( argv[i], "-benchmark2" ) == 0 ) ||
+             ( strcmp( argv[i], "-benchmarkrc5" ) == 0 ) ||
+             ( strcmp( argv[i], "-benchmarkdes" ) == 0 ) ||
+             ( strcmp( argv[i], "-benchmark" ) == 0 ))
       {
-        LogScreen( "\nAn error occured trying to flush the files out.\n"
-                "Please try again later\n" );
-        if (retcode2 < retcode) retcode = retcode2;
-        //retcode = retcode; //and break out of loop
+      int dobench = '1'; 
+      if ( isatty(fileno(stdout)) )
+        {
+        LogScreen( "Block type combinations to benchmark:\n" 
+                   "\n1. Both a short RC5 block and a short DES block."
+                   "\n2. Only a short RC5 block."
+                   "\n3. Only a short DES block."
+                   "\n4. Both a long RC5 block and a long DES block."
+                   "\n5. Only a long RC5 block."
+                   "\n6. Only a long DES block."
+                   "\n\nSelect block type(s) to benchmark or "
+                   "press any other key to quit: " );
+        do{
+          fflush(stdin);
+          #if (CLIENT_OS == OS_DOS || CLIENT_OS == OS_NETWARE || \
+               CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN16 || \
+               CLIENT_OS == OS_WIN16S || CLIENT_OS == OS_OS2)
+          dobench = getch();
+          if (!dobench) getch(); //purge the extended keystroke
+          #else
+          //could do a select() here in lieu of kbhit()
+          dobench = getchar();
+          #endif
+          if (isprint(dobench) || dobench == 0x1B) //ESC
+            break;
+          usleep(100000); //in case getchar()/getch() is non-blocking
+          #if (CLIENT_OS == OS_AMIGAOS)
+          if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
+            SignalTriggered = UserBreakTriggered = 1;
+          #endif
+          } while (!SignalTriggered);
+        LogScreenRaw("%c\n", ((isprint(dobench))?(dobench):('\n')) );
+        } 
+      if ( !SignalTriggered && ( dobench == '1' || dobench == '2' ))
+        Benchmark(1, 1000000L);
+      if ( !SignalTriggered && ( dobench == '1' || dobench == '3' ))
+        Benchmark(2, 1000000L);
+      if ( !SignalTriggered && ( dobench == '4' || dobench == '5' ))
+        Benchmark(1, 0 );
+      if ( !SignalTriggered && ( dobench == '4' || dobench == '6' ))
+        Benchmark(2, 0 );
+      retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
       }
-      else
-        LogScreen( "Flush completed.\n" );
-    }
-    else if ( strcmp( argv[i], "-update" ) == 0 )
-    {
-      client.offlinemode = 0;
-      NetworkInitialize();
-      client.ValidateConfig();
-
-      // RC5 We care about both the fetch & flush errors.
-      retcode = client.contestdone[0] ? 0 : client.Update(0,1,1);
-      if (client.randomchanged) client.WriteContestandPrefixConfig();
-
-      // DES We care about both the fetch & flush errors.
-      int retcode2 = client.contestdone[1] ? 0 : client.Update(1,1,1);
-
-      LogFlush(1); //checktosend(1)
-      NetworkDeinitialize();
-
-      if (retcode < 0 || retcode2 < 0)
-      {
-        LogScreen( "\nAn error occured during the update.\n" );
-        if (retcode2 < retcode) retcode = retcode2;
-        //retcode = retcode; //and break out of loop
-      }
-      else
-        LogScreen( "Update completed.\n" );
-    }
     else if ( strcmp( argv[i], "-cpuinfo" ) == 0 )
-    {
+      {
       const char *scpuid, *smaxcpus, *sfoundcpus;  //cpucheck.cpp
       GetProcessorInformationStrings( &scpuid, &smaxcpus, &sfoundcpus );
       LogScreen("Automatic processor detection tag:\n\t%s\n"
@@ -3201,115 +3280,43 @@ int main( int argc, char *argv[] )
       "Number of processors supported by each instance of this client:\n\t%s\n",
       scpuid, sfoundcpus, smaxcpus );
       retcode = 0; //and break out of loop
-    }
+      }
     else if ( strcmp( argv[i], "-config" ) == 0 )
-    {
-      client.ValidateConfig();
-      if (client.Configure()==1) client.WriteConfig();
+      {
+      if (Configure()==1) 
+        WriteConfig();
       //only write config if 1 is returned
       retcode = 0; //and break out of loop
-    }
+      }
     else if ( strcmp( argv[i], "-install" ) == 0 )
-    {
+      {
       #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2))
-      client.Install();
+      Install();
       retcode = 0; //and break out of loop
       #endif
-    }
+      }
     else if ( strcmp( argv[i], "-uninstall" ) == 0 )
-    {
+      {
       #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2))
-      client.Uninstall();
+      Uninstall();
       retcode = 0; //and break out of loop
       #endif
-    }
+      }
     else if ( strcmp( argv[i], "-forceunlock" ) == 0 )
-    {
-      retcode = client.UnlockBuffer(argv[i+1]);
-    }
+      {
+      retcode = UnlockBuffer(argv[i+1]);
+      }
     else
-    {
-    client.DisplayHelp(argv[i]);
-    retcode = 0;
-    }
-  }
-
-
-  if (retcode == OK_TO_RUN)
-  {
-    // If we're this far, and argc>1, then some parameter must have been changed.
-    fflush(stdout);
-    client.ValidateConfig();
-
-
-    // prompt the user to do the configuration if there wasn't an ini file
-    if ( inimissing )
-    {
-      if (client.Configure() ==1 ) client.WriteConfig();
+      {
+      DisplayHelp(argv[i]);
       retcode = 0;
+      }
     }
-  }
+  if ( retcode == -12345 ) //no change?
+    return 0;
+  *retcodeP = retcode;
+  return 1;
+}  
 
-  if (retcode == OK_TO_RUN)
-  {
-    if (client.RunStartup())
-      retcode = 0;
-  }
-
-  if (retcode == OK_TO_RUN)
-  {
-    // otherwise we are running
-    #if defined(NONETWORK)
-      client.offlinemode=1;
-    #endif
-    if (!client.offlinemode)
-      NetworkInitialize();
-    client.InitializeLogging(); //copy the smtp ini settings over
-
-#if (CLIENT_OS == OS_RISCOS)
-    if (!guirestart)
-#endif
-      Log("RC5DES Client v2.%d.%d started.\nUsing %s as email address.\n\n",
-             CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,client.id);
-//LogScreen("in: %s\n",client.in_buffer_file[0]);
-//LogScreen("out: %s\n",client.out_buffer_file[0]);
-//LogScreen("in2: %s\n",client.in_buffer_file[1]);
-//LogScreen("out2: %s\n",client.out_buffer_file[1]);
-//LogScreen("percentoff: %d\n",client.percentprintingoff);
-//LogScreen("frequent: %d\n",client.connectoften);
-//LogScreen("nodisk: %d\n",client.nodiskbuffers);
-//LogScreen("nofallback: %d\n",client.nofallback);
-//LogScreen("quiet: %d\n",client.quietmode);
-//LogScreen("offlinemode: %d\n",client.offlinemode);
-//LogScreen("cktime: %d\n",client.checkpoint_min);
-//LogScreen("win95hidden: %d\n",client.win95hidden);
-//LogScreen("lurk: %d\n",client.lurk);
-//LogScreen("nettimeout: %d\n", client.nettimeout);
-//LogScreen("noexitfilecheck: %d\n", client.noexitfilecheck);
-
-    client.Run();
-
-    client.DeinitializeLogging(); //flush and close logs/mail
-    if (!client.offlinemode)
-      NetworkDeinitialize();
-
-    if (client.randomchanged)
-      client.WriteContestandPrefixConfig();
-
-    retcode = ( UserBreakTriggered ? -1 : 0 );
-  } //if (retcode == OK_TO_RUN)
-
-#if (CLIENT_OS == OS_NETWARE)
-  nwCliExitClient(); // destroys AES process, screen, polling procedure
-#endif
-
-#if (CLIENT_OS == OS_AMIGAOS)
-  return (retcode ? 5 : 0); // 5 = Warning
-#else
-  return retcode;
-#endif // (CLIENT_OS == OS_AMIGAOS)
-}
-#endif
-
-// ---------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 
