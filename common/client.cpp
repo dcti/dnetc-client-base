@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.107  1998/07/20 00:32:19  silby
+// Changes to facilitate 95 CLI/NT service integration
+//
 // Revision 1.106  1998/07/19 14:42:12  cyruspatel
 // NetWare SMP adjustments
 //
@@ -74,7 +77,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.106 1998/07/19 14:42:12 cyruspatel Exp $.
+// Tweaked $Id: client.cpp,v 1.107 1998/07/20 00:32:19 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -250,7 +253,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.106 1998/07/19 14:42:12 cyruspatel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.107 1998/07/20 00:32:19 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -467,7 +470,7 @@ Client::Client()
 #if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
   lurk=0;
 #endif
-#if ( (CLIENT_OS==OS_WIN32) && (!defined(WINNTSERVICE)) )
+#if (CLIENT_OS==OS_WIN32) 
   win95hidden=0;
 #endif
 #if (CLIENT_OS == OS_OS2)
