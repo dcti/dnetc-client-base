@@ -5,7 +5,7 @@
  */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.1.2.3 2000/02/20 07:27:04 sampo Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.1.2.4 2000/02/20 08:08:14 sampo Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +30,7 @@ static int OGR[] = {
   /* 11 */   72,  85, 106, 127, 151, 177, 199, 216, 246, 283,
   /* 21 */  333, 356, 372, 425, 480, 492, 553, 585, 623
 };
-static char first[65537];  /* first blank in 16 bit COMP bitmap, range: 1..16 */
+//static char first[65537];  /* first blank in 16 bit COMP bitmap, range: 1..16 */
 static U bit[200];         /* which bit of LIST to update */
 
 #define COMP_LEFT_LIST_RIGHT(lev,s)                             \
@@ -179,6 +179,13 @@ static inline vector unsigned int intToVec(unsigned int n)
 	return uv.v;
 }
 
+static asm int first_asm (register int i)
+{
+	not		r3, r3
+	cntlzw	r3, r3
+	addi	r3, r3, 1
+}
+
 /*-----------------------------------------*/
 /*  found_one() - print out golomb rulers  */
 /*-----------------------------------------*/
@@ -261,7 +268,7 @@ int vec_found_one(struct State *oState)
 
 static int ogr_init()
 {
-  int r, i, j, k, m;
+  int r, i;
   
   r = init_load_choose();
   if (r != CORE_S_OK) {
@@ -271,15 +278,6 @@ static int ogr_init()
   for( i=1; i < 200; i++) {
      bit[i] = 0x80000000 >> ((i-1) % 32);
   }
-
-  /* first zero bit in 16 bits */
-  k = 0; m = 0x8000;
-  for (i = 1; i <= 16; i++) {
-    for (j = k; j < k+m; j++) first[j] = (char)i;
-    k += m;
-    m >>= 1;
-  }
-  first[0xffff] = 17;     /* just in case we use it */
 
   return CORE_S_OK;
 }
@@ -476,27 +474,20 @@ stay:
 #ifdef OGR_DEBUG
     if (oState->LOGGING) printf("comp0=%08x\n", comp0);
 #endif
-    if (comp0 < 0xffff0000) {
-      s = first[comp0 >> 16];
-    } else {
       if (comp0 < 0xfffffffe) {
         /* s = 16 + first[comp0 & 0x0000ffff]; slow code */
-        s = 16 + first[comp0 - 0xffff0000];
+        s = first_asm(comp0);
+        if ((lev->cnt2 += s) > limit) goto up; /* no spaces left */
+        COMP_LEFT_LIST_RIGHT(lev, s);
       } else {
         /* s>32 */
         if ((lev->cnt2 += 32) > limit) goto up; /* no spaces left */
         COMP_LEFT_LIST_RIGHT_32(lev);
         if (comp0 == 0xffffffff) goto stay;
-        goto skip_out;
       }
-    }
 #ifdef OGR_DEBUG
     if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
 #endif
-    if ((lev->cnt2 += s) > limit) goto up; /* no spaces left */
-
-    COMP_LEFT_LIST_RIGHT(lev, s);
-skip_out:
 
     /* New ruler? */
     if (depth == oState->maxdepthm1) {
