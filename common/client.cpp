@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.227 1999/11/27 08:14:14 sampo Exp $"; }
+return "@(#)$Id: client.cpp,v 1.228 1999/11/28 07:02:19 sampo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -416,7 +416,9 @@ HandleMenuCommand( long menuResult )
 				RaiseExitRequestTrigger();
 				gQuit = true;
 				break;
-
+			case kHaltCmd:
+				RaiseExitRequestTrigger();
+				break;
 			case kRunNormalCmd:
 				TRACE_OUT((+1,"main()\n"));
 				easywienix(0);
