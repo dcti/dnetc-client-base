@@ -7,8 +7,10 @@
  * There were many modifications ... can anyone tell?
  *
  */
+#ifndef NO_OGR_IDENT
 const char *ogr_core(void) {
-return "@(#)$Id: ogr_g_r.cor,v 1.1.2.5 2001/01/26 16:54:00 cyp Exp $"; }
+return "@(#)$Id: ogr_g_r.cor,v 1.1.2.6 2001/02/01 20:55:12 oliver Exp $"; }
+#endif
 
 #if (OGROPT_ALTERNATE_CYCLE == 0)
 

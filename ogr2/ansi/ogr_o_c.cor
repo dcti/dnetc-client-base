@@ -9,8 +9,10 @@
  * - support altivec
  *
  */
+#ifndef NO_OGR_IDENT
 const char *ogr_core(void) {
-return "@(#)$Id: ogr_o_c.cor,v 1.1.2.3 2001/01/25 01:27:58 andreasb Exp $"; }
+return "@(#)$Id: ogr_o_c.cor,v 1.1.2.4 2001/02/01 20:55:12 oliver Exp $"; }
+#endif
 
 #if ( (OGROPT_ALTERNATE_CYCLE == 1) || (OGROPT_ALTERNATE_CYCLE == 2))
 

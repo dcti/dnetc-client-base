@@ -9,8 +9,10 @@
  *   .mac (general macros), .inc (general stuff) files
  *
  */
+#ifndef NO_OGR_IDENT
 const char *ogr_cpp(void) {
-return "@(#)$Id: ogr.cpp,v 1.1.2.36 2001/01/26 16:54:00 cyp Exp $"; }
+return "@(#)$Id: ogr.cpp,v 1.1.2.37 2001/02/01 20:55:10 oliver Exp $"; }
+#endif
 
 #include <stdio.h>      /* printf for debugging */
 #include <stdlib.h>     /* malloc (if using non-static choose dat) */

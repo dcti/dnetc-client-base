@@ -12,8 +12,10 @@
  * And it will be used in stubmap generation.
  *
  */
+#ifndef NO_OGR_IDENT
 const char *ogr_core(void) {
-return "@(#)$Id: ogr_ab.cor,v 1.1.2.1 2001/01/26 01:04:44 andreasb Exp $"; }
+return "@(#)$Id: ogr_ab.cor,v 1.1.2.2 2001/02/01 20:55:11 oliver Exp $"; }
+#endif
 
 #warning This core needs revision by other coders
 
