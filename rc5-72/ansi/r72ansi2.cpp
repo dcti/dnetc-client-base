@@ -3,8 +3,8 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *rc5ansi2_cpp(void) {
-return "@(#)$Id: r72ansi2.cpp,v 1.18 2002/10/20 01:22:03 jlawson Exp $"; }
+const char *r72ansi2_cpp(void) {
+return "@(#)$Id: r72ansi2.cpp,v 1.19 2002/10/20 22:10:45 andreasb Exp $"; }
 
 #include "ccoreio.h"
 #include "rotate.h"
