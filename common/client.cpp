@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.170  1998/11/24 22:41:25  silby
+// Commented out winmain for win32gui - it will call realmain from its own code.
+//
 // Revision 1.169  1998/11/20 03:43:14  silby
 // Can't call static func (realmain) from a seperate source file.
 //
@@ -120,7 +123,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.169 1998/11/20 03:43:14 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.170 1998/11/24 22:41:25 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -478,12 +481,15 @@ int realmain( int argc, char *argv[] )
 
 /* ----------------------------------------------------------------- */
 
+
 #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+#if !defined(WIN32GUI)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, 
     int nCmdShow) 
 { /* abstraction layer between WinMain() and realmain() */
   return winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, realmain);
 }
+#endif
 #else
 int main( int argc, char *argv[] )
 { 
