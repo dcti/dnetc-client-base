@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.33 2000/01/18 23:02:49 lyndon Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.34 2000/01/21 22:09:42 ctate Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -425,9 +425,6 @@ void Go_mt( void * parm )
   #if ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
   if (thrparams->realthread)
     thr_exit((void *)0);
-  #elif (CLIENT_OS == OS_BEOS)
-  if (thrparams->realthread)
-    _exit(0);
   #endif
 }
 
