@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.123 2000/07/05 21:14:49 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.124 2000/07/11 07:52:23 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -31,11 +31,11 @@ return "@(#)$Id: clirun.cpp,v 1.123 2000/07/05 21:14:49 mfeiri Exp $"; }
 #include "probfill.h"  // LoadSaveProblems(), FILEENTRY_xxx macros
 #include "modereq.h"   // ModeReq[Set|IsSet|Run]()
 #include "clievent.h"  // ClientEventSyncPost() and constants
+
+#ifdef XMLSERVE
 #include "xmlserve.h"
-#include "minihttp.h"
-#if (CLIENT_OS == OS_MACOS)
-#include <Sound.h>  // audible performance monitoring and debugging!
 #endif
+
 // --------------------------------------------------------------------------
 
 //#define DYN_TIMESLICE_SHOWME
@@ -517,7 +517,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         static status_t be_exit_value;
         wait_for_thread(thrparams->threadID, &be_exit_value);
         #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
-        MPTerminateTask((thrparams->threadID),nil);//while (thrparams->threadID) MPYield();
+        while (thrparams->threadID) MPYield();//MPTerminateTask((thrparams->threadID),nil);
         #elif (CLIENT_OS == OS_NETWARE)
         while (thrparams->threadID) delay(100);
         #elif (CLIENT_OS == OS_FREEBSD)
@@ -978,14 +978,10 @@ int ClientRun( Client *client )
   unsigned int checkpointsPercent = 0;
   int dontSleep=0, isPaused=0, wasPaused=0;
 
-#define MAX_CONNECTIONS   5
-#define LISTENADDRESS     0
-#define LISTENPORT        81
-#define CLIENTIDLETIMEOUT 30
-
+#ifdef XMLSERVE
   SOCKET mainListener;
   MiniHttpDaemonConnection *connections[MAX_CONNECTIONS];
-
+#endif
 
   ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0 );
 
@@ -1310,6 +1306,13 @@ int ClientRun( Client *client )
   // Setup the HTTP listener for XMLSERVE
   // --------------------------------------
 
+#ifdef XMLSERVE
+
+#if (CLIENT_OS == OS_WIN32)
+  // initialize the socket system.
+  WSADATA wsadata;
+  WSAStartup(MAKEWORD(1,1), &wsadata);
+#endif
 
   // blank out the connection placeholders.
   for (int i = 0; i < MAX_CONNECTIONS; i++)
@@ -1319,11 +1322,12 @@ int ClientRun( Client *client )
   if (netio_openlisten(mainListener, LISTENADDRESS,
         LISTENPORT, true) < 0)
   {
-    printf("Error: Cannot setup primary listener on port %d!\n",
+    Log( "Error: Cannot setup primary listener on port %d!\n",
         (int) LISTENPORT);
     return 0;
   }
 
+#endif
 
   //============================= MAIN LOOP =====================
   //now begin looping until we have a reason to quit
@@ -1366,10 +1370,6 @@ int ClientRun( Client *client )
       SetGlobalPriority( 9 );
     }
     dontSleep = 0; //for the next round
-
-#if (CLIENT_OS == OS_MACOS)
-SysBeep(1);  // audible performance monitoring and debugging!
-#endif
 
     //------------------------------------
     // Fixup timers
@@ -1607,6 +1607,17 @@ SysBeep(1);  // audible performance monitoring and debugging!
     //handle 'connectoften' requests
     //------------------------------------
 
+    #if 0
+    if (client->min_buffupd_interval > 0 && client->last_buffupd_time != 0)
+    {
+      /* Fixup next connect time so that the elapsed time between updates
+         is _at_least_ client->min_buffupd_interval 
+      */   
+      timeNextConnect = ((time_t)client->last_buffupd_time) + 
+                        (time_t)(client->min_buffupd_interval * 60); 
+    }
+    #endif
+
     if (!TimeToQuit && ((local_connectoften & 3)!=0) && timeRun>=timeNextConnect)
     {
       int doupd = 1;
@@ -1618,12 +1629,14 @@ SysBeep(1);  // audible performance monitoring and debugging!
           unsigned cont_i = (unsigned int)client->loadorder_map[i];
           if (cont_i < CONTEST_COUNT) /* not disabled */
           {
-            if ((local_connectoften & 2) != 0) /* check flush */
+            if ((client->project_flags[cont_i] & PROJECTFLAGS_CLOSED) == 0)
             {
-              if (GetBufferCount( client, cont_i, 1, NULL ) > 0)
+              if ((local_connectoften & 2) != 0) /* check flush */
               {
-                have_non_empty = 1; /* at least one out-buffer is not empty */
-                break;
+                if (GetBufferCount( client, cont_i, 1, NULL ) > 0) 
+                {
+                  have_non_empty = 1; /* at least one out-buffer is not empty */
+                  break;
               }
             }
             if ((local_connectoften & 1) != 0) /* check fetch */
@@ -1631,11 +1644,12 @@ SysBeep(1);  // audible performance monitoring and debugging!
               unsigned long count;
               if (GetBufferCount( client, cont_i, 0, &count ) >= 0)
               {
-                if (count >= (unsigned int)ClientGetInThreshold( client, cont_i, 1 /* force */ ))
-                {
-                  have_one_full = 1; /* at least one in-buffer is full */
+                  if (count >= (unsigned int)ClientGetInThreshold( client, cont_i, 1 /* force */ )) 
+                  {         
+                    have_one_full = 1; /* at least one in-buffer is full */
+                  }
                 }
-              }
+              }  
             }
           }
         }
@@ -1645,13 +1659,18 @@ SysBeep(1);  // audible performance monitoring and debugging!
       {
         ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
       }
-      timeNextConnect = timeRun + 30; /* every 30 seconds */
+      if (client->max_buffupd_interval > 0) /* interval was specified (minutes) */
+        timeNextConnect = timeRun + (client->max_buffupd_interval*60);  
+      else
+        timeNextConnect = timeRun + 30; /* every 30 seconds */
     }
 
 
     //----------------------------------------
     // XMLSERVE
     //----------------------------------------
+
+#ifdef XMLSERVE
 
     fd_set readfds, writefds, errorfds;
     int sockmax;
@@ -1722,15 +1741,15 @@ SysBeep(1);  // audible performance monitoring and debugging!
         {
           if (newslot >= MAX_CONNECTIONS)
           {
-            printf("Client: [%s] No available slots to accept new client.\n",
-                netio_ntoa(clientaddr));
+            /*Log("Client: [%s] No available slots to accept new client.\n",
+                netio_ntoa(clientaddr));*/
             netio_close(newclient);
             break;
           }
           if (!connections[newslot])
           {
-            printf("Client: [%s] Accepted new client connection.\n",
-                netio_ntoa(clientaddr));
+            /*Log("Client: [%s] Accepted new client connection.\n",
+                netio_ntoa(clientaddr));*/
             connections[newslot] = new MiniHttpDaemonConnection(newclient, clientaddr);
             dontSleep = 1;
             break;
@@ -1762,9 +1781,9 @@ SysBeep(1);  // audible performance monitoring and debugging!
           closeneeded = true;
         if (!closeneeded && connections[jj]->IsComplete())
         {
-          printf("content is complete. reading\n");
+          /*Log("content is complete. reading\n");*/
             dontSleep = 1;
-          if (!ProcessClientPacket(connections[jj]))
+          if (!ProcessClientPacket(connections[jj],client))
             closeneeded = true;
         }
         if (!closeneeded && write_ready &&
@@ -1776,21 +1795,22 @@ SysBeep(1);  // audible performance monitoring and debugging!
         }
         if (!closeneeded && connections[jj]->GetLastActivity() > CLIENTIDLETIMEOUT)
         {
-          printf("Client: [%s] %d secs idle. Closing connection.\n",
+          /*Log("Client: [%s] %d secs idle. Closing connection.\n",
               netio_ntoa(connections[jj]->GetAddress()),
-              (int)connections[jj]->GetLastActivity() );
+              (int)connections[jj]->GetLastActivity() );*/
           closeneeded = true;
         }
         if (closeneeded || !connections[jj]->IsConnected())
         {
-          printf("Client: Closing client connection with %s\n",
-              netio_ntoa(connections[jj]->GetAddress()));
+          /*Log("Client: Closing client connection with %s\n",
+              netio_ntoa(connections[jj]->GetAddress()));*/
           delete connections[jj];
           connections[jj] = NULL;
         }
       }
     }
 
+#endif
 
     //----------------------------------------
     // If not quitting, then handle mode requests
@@ -1843,6 +1863,7 @@ SysBeep(1);  // audible performance monitoring and debugging!
     }
   }
 
+#ifdef XMLSERVE
 
   // ----------------
   // Close the HTTP listeners for XMLSERVE
@@ -1853,6 +1874,7 @@ SysBeep(1);  // audible performance monitoring and debugging!
     if (connections[k] != NULL)
       delete connections[k];
 
+#endif
 
   // ----------------
   // Close the async "process" handler
