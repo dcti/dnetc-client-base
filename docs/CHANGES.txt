@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.112 2002/04/07 21:18:56 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.113 2002/04/11 12:01:42 oliver Exp $
 ==========================================================================
 
 2.8000
@@ -43,6 +43,10 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.112 2002/04/07 21:18:56 andreasb Ex
             new: macosx: platform-specific read me doc (#2580)
             new: macosx: now supports -[un]install for /Library/StartupItems/
             fix: macosx: leaks in pause-if-on-battery code. (#2465)
+            new: amigaos: can now be installed and/or run via Workbench
+            new: amigaos: built-in ReAction GUI added
+            new: amigaos: now supports -[un]install for WBStartup
+            fix: amigaos: now compatible with TermiteTCP (#2570)
 
 2.8016.470  new: ppc: new AltiVec RC5 core for the PPC 7450 by Dan Oetting.
             fix: all: flushed when 1 packet was left in in-buffer (#2209).
