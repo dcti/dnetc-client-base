@@ -3,6 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.cpp,v $
+// Revision 1.152.2.3  1998/11/11 03:07:42  remi
+// Synced with :
+//  Revision 1.154  1998/11/10 21:51:32  cyp
+//  Completely reorganized Client::Main() initialization order so that (a) the
+//  client object is completely initialized (both ini file and cmdline) before
+//  anything else, (b) whether the client is running "modes" is known from the
+//  beginning (c) Single instance protection can occur conditionally (ie only
+//  if the client will not be running "modes").
+//
 // Revision 1.152.2.2  1998/11/08 11:50:22  remi
 // Lots of $Log tags.
 //
@@ -99,32 +108,34 @@ static void PrintBanner(void)
 int Client::Main( int argc, const char *argv[], int restarted )
 {
   int retcode = 0;
+  int domodes = 0;
 
-  //set up break handlers
-  if (InitializeTriggers(NULL, NULL)==0) //CliSetupSignals();
+  ModeReqSet( MODEREQ_CMDLINE_HELP );
+
+  //ReadConfig() and parse command line - returns !0 if shouldn't continue
+  if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
     {
-    //get -ini options/defaults, then ReadConfig(), then get -quiet/-hidden
-    if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0) //!0 if "mode"
-      {                                                
-      if (InitializeConsole(0) == 0) //initialize conio
+    domodes = (ModeReqIsSet(-1) != 0);
+    if (domodes)
+      {
+      if (InitializeTriggers(NULL,NULL)==0)
         {
-        int autoclosecon = 1; // let console close without user intervention
-        InitializeLogging(0); //enable only screen logging for now
-
-        PrintBanner(); //tracks restart state itself
-
-        //get remaining option overrides and set "mode" bits if applicable
-        ParseCommandline( 2, argc, argv, &retcode, 1 );
-        if (ModeReqIsSet( -1 ) == 0)
-	  ModeReqSet( MODEREQ_HELP );
-	ModeReqRun( this );     
-	autoclosecon = 0; //wait for a keypress before closing the console
-
-        DeinitializeLogging();
-        DeinitializeConsole(autoclosecon);
+        if (InitializeConsole(0,domodes) == 0)
+          {
+          InitializeLogging(0); //enable only screen logging for now
+          PrintBanner(); //tracks restart state itself
+          ParseCommandline( 1, argc, argv, NULL, 1 ); //show cmdline overrides
+      
+          if (domodes)
+            {
+            ModeReqRun( this );     
+            }
+          DeinitializeLogging();
+          DeinitializeConsole();
+          }
+        DeinitializeTriggers();
         }
       }
-    DeinitializeTriggers();
     }
   return retcode;
 }  
@@ -149,18 +160,6 @@ int realmain( int argc, char *argv[] )
     riscos_in_taskwindow = riscos_check_taskwindow();
     if (riscos_find_local_directory(argv[0])) 
       init_success = 0;
-    }
-  #endif
-
-  //-----------------------------
-
-  #if (CLIENT_OS == OS_WIN32)
-  HANDLE hmutex = NULL;
-  if (init_success) 
-    {
-    SetLastError(0); // only allow one running instance
-    hmutex = CreateMutex(NULL, TRUE, "Bovine RC5/DES Win32 Client");
-    init_success = (GetLastError() == 0);
     }
   #endif
 
@@ -208,11 +207,6 @@ int realmain( int argc, char *argv[] )
   
   if (clientP)
     delete clientP;
-
-  #if (CLIENT_OS == OS_WIN32)
-  if (hmutex)
-    ReleaseMutex( hmutex );
-  #endif  
 
   return (retcode);
 }
