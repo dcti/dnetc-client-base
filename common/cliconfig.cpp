@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.156  1998/07/18 17:10:09  cyruspatel
+// DOS client specific change: PrintBanner now displays PMODE copyright.
+//
 // Revision 1.155  1998/07/14 09:06:30  remi
 // Users are now able to change the 'usemmx' setting with -config.
 //
@@ -295,7 +298,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.155 1998/07/14 09:06:30 remi Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.156 1998/07/18 17:10:09 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -304,7 +307,7 @@ return id; }
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "version.h"
 #include "iniread.h"
-#include "network.h"
+#include "network.h"  
 #include "problem.h"   // ___unit_func(), PIPELINE_COUNT
 #include "cpucheck.h"  // cpu selection, GetTimesliceBaseline()
 #include "clirate.h"
@@ -313,19 +316,18 @@ return id; }
 #ifndef DONT_USE_PATHWORK
 #include "pathwork.h"
 #endif
+#if (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS != OS_BEOS && CLIENT_OS != OS_AMIGAOS && CLIENT_OS != OS_WIN32))
+  #include "clirate.h" //for CliGetKeyrateForProblemNoSave() in SelectCore
+#endif
 
 #if (CLIENT_OS == OS_WIN32)
 #if defined(WINNTSERVICE)
   #define NTSERVICEID "rc5desnt"
-  #include "network.h" //NetworkInitialize()
 #else
-  #include "sleepdef.h" //RunStartup()
+  #include "sleepdef.h" //used by RunStartup()
 #endif  
 #endif
 
-#if (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS != OS_BEOS && CLIENT_OS != OS_AMIGAOS && CLIENT_OS != OS_WIN32))
-  #include "clirate.h"
-#endif
 
 // --------------------------------------------------------------------------
 
@@ -2514,7 +2516,7 @@ void Client::SetNiceness(void)
   #elif (CLIENT_OS == OS_NETWARE)
      // nothing - netware sets timeslice dynamically
   #elif (CLIENT_OS == OS_DOS)
-     timeslice = dosCliGetTimeslice();
+     timeslice = dosCliGetTimeslice(); //65536 or GetTimesliceBaseline if win16
   #elif (CLIENT_OS == OS_BEOS)
      // Main control thread runs at normal priority, since it does very little;
      // priority of crunching threads is set when they are created.
@@ -3125,6 +3127,11 @@ void Client::PrintBanner(const char * /*clname*/)
           #if (CLIENT_CPU == CPU_X86)
           "DES search routines Copyright Svend Olaf Mikkelsen\n"
           #endif
+          );
+          #if (CLIENT_OS == OS_DOS)
+          dosCliShowPmodeCopyrightMsg(); //PMODE (c) string if not win16 
+          #endif
+  LogScreenf( 
           "Please visit http://www.distributed.net/ for up to date contest information.\n"
           "%s\n", CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC,
           #if (CLIENT_OS == OS_RISCOS)
@@ -3132,10 +3139,10 @@ void Client::PrintBanner(const char * /*clname*/)
           "Interactive help is available, or select 'Help contents' from the menu for\n"
           "detailed client information.\n" :
           #endif
-          "Execute with option '-help' for online help, or read rc5des" EXTN_SEP "txt for\n"
+          "Execute with option '-help' for online help, or read rc5des" EXTN_SEP "txt\n"
           "for a list of command line options.\n");
 #if (CLIENT_OS == OS_DOS)
-  dosCliCheckPlatform();
+  dosCliCheckPlatform(); //show warning if pure DOS client is in win/os2 VM
 #endif
 }
 
