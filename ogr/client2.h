@@ -3,10 +3,16 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client2.h,v $
+// Revision 1.3  1999/04/09 06:11:58  gregh
+// Protect file with #ifndef ... #endif
+//
 // Revision 1.2  1999/03/18 07:49:52  gregh
 // Add getresult() function, remove result() callback.
 //
 //
+
+#ifndef __CLIENT2_H
+#define __CLIENT2_H
 
 /*
  * Constants for return values from all the below functions.
@@ -86,3 +92,5 @@ typedef struct {
   int (*cleanup)();
 
 } CoreDispatchTable;
+
+#endif // __CLIENT2_H
