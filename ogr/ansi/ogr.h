@@ -4,7 +4,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.15 2001/02/03 18:36:21 cyp Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.16 2001/03/13 23:44:36 teichp Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -143,6 +143,10 @@ struct WorkStub { /* size is 28 */
   u32 worklength;      /* depth of current state */
 };
 
+#ifndef MIPSpro
+#pragma pack()
+#endif
+
 // Internal stuff that's not part of the interface but we need for
 // declaring the problem work area size.
 
@@ -211,10 +215,6 @@ struct State {
   U dist[BITMAPS];   /* only used by OGROPT_ALTERNATE_CYCLE == 1 */
   struct Level Levels[MAXDEPTH];
 };
-
-#ifndef MIPSpro
-#pragma pack()
-#endif
 
 #define OGR_PROBLEM_SIZE (/*16+*/(6*OGR_INT_SIZE)+(OGR_INT_SIZE*(MAXDEPTH+1))+ \
                          (4*OGR_INT_SIZE)+(128*2)+(OGR_INT_SIZE*BITMAPS)+ \
