@@ -22,8 +22,8 @@
 // --------------------------------------------------------------------------
 
 #define CLIENT_CONTEST      70
-#define CLIENT_BUILD        22
-#define CLIENT_BUILD_FRAC   407
+#define CLIENT_BUILD        23
+#define CLIENT_BUILD_FRAC   408
 
 // all revision comments moved to the changeLog.txt
 
