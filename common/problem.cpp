@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.33 1999/12/08 00:41:54 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.34 1999/12/08 02:28:18 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -45,9 +45,9 @@ return "@(#)$Id: problem.cpp,v 1.108.2.33 1999/12/08 00:41:54 cyp Exp $"; }
   extern "C" u32 rc5_unit_func_k6_mmx( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
 #elif (CLIENT_CPU == CPU_ARM)
-  extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * , unsigned long t);
-  extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * , unsigned long t);
-  extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * , unsigned long t);
+  extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * , u32 );
+  extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * , u32 );
+  extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * , u32 );
 #elif (CLIENT_CPU == CPU_S390)
   //rc5/ansi/2-rg.c
   extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
@@ -77,12 +77,11 @@ return "@(#)$Id: problem.cpp,v 1.108.2.33 1999/12/08 00:41:54 cyp Exp $"; }
   #endif
 #elif (CLIENT_CPU == CPU_68K)
   #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)
-    extern "C" __asm u32 rc5_unit_func_000_030
-        ( register __a0 RC5UnitWork *, register __d0 unsigned long );
-    extern "C" __asm u32 rc5_unit_func_040_060
-        ( register __a0 RC5UnitWork *, register __d0 unsigned long );
+    // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
+    extern "C" u32 rc5_unit_func_000_030( RC5UnitWork *, u32 );
+    extern "C" u32 rc5_unit_func_040_060( RC5UnitWork *, u32 );
   #elif defined(__GCC__) || defined(__GNUC__) /* hpux, next, linux, sun3 */
-    // rc5/68k/rc5_68k_crunch.c around rc5/68k/crunch.68k.gcc.s
+    // rc5/68k/rc5_68k_gcc_crunch.c around rc5/68k/crunch.68k.gcc.s
     extern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
   #else
     // rc5/ansi/rc5ansi1-b2.cpp
@@ -118,14 +117,16 @@ return "@(#)$Id: problem.cpp,v 1.108.2.33 1999/12/08 00:41:54 cyp Exp $"; }
     #endif
   #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
-  #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
-    #error these cores are missing the 'u32 iterations' argument.
-    extern u32 rc5_alpha_osf_ev4( RC5UnitWork * );
-    extern u32 rc5_alpha_osf_ev5( RC5UnitWork * );
-  #elif (CLIENT_OS == OS_WIN32) /* asm */
+  #if (CLIENT_OS == OS_DEC_UNIX)
+    //rc5/alpha/rc5-digital-unix-alpha-ev[4|5].cpp
+    extern "C" u32 rc5_alpha_osf_ev4( RC5UnitWork *, u32 );
+    extern "C" u32 rc5_alpha_osf_ev5( RC5UnitWork *, u32 );
+  #elif (CLIENT_OS == OS_WIN32) /* little-endian asm */
+    //rc5/alpha/rc5-alpha-nt.s
     extern "C" u32 rc5_unit_func( RC5UnitWork *, unsigned long iterations );
   #else
-    extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, unsigned long /* NOT u32 */);
+    //axp-bmeyer.cpp around axp-bmeyer.s
+    extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
   #endif
 #else
   #error "How did you get here?" 
@@ -280,8 +281,9 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     {
       #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)
       {
-        //xtern "C" __asm u32 rc5_unit_func_000_030( register __a0 RC5UnitWork *, register __d0 unsigned long );
-        //xtern "C" __asm u32 rc5_unit_func_040_060( register __a0 RC5UnitWork *, register __d0 unsigned long );
+        // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
+        //xtern "C" u32 rc5_unit_func_000_030( RC5UnitWork *, u32 );
+        //xtern "C" u32 rc5_unit_func_040_060( RC5UnitWork *, u32 );
         if (coresel == 1 )
         {
           problem->pipeline_count = 2;
@@ -297,7 +299,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       }
       #elif defined(__GCC__) || defined(__GNUC__) /* hpux, next, linux, sun3 */
       {
-        // rc5/68k/rc5_68k_crunch.c around rc5/68k/crunch.68k.gcc.s
+        // rc5/68k/rc5_68k_gcc_crunch.c around rc5/68k/crunch.68k.gcc.s
         //xtern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
         problem->rc5_unit_func = rc5_68k_crunch_unit_func;
         problem->pipeline_count = 1; //the default is 2
@@ -436,11 +438,11 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     }
     #elif (CLIENT_CPU == CPU_ALPHA)
     {
-      #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
+      #if (CLIENT_OS == OS_DEC_UNIX)
       {
-        //#error these cores are missing the 'u32 iterations' argument.
-        //xtern u32 rc5_alpha_osf_ev4( RC5UnitWork * );
-        //xtern u32 rc5_alpha_osf_ev5( RC5UnitWork * );
+        //rc5/alpha/rc5-digital-unix-alpha-ev[4|5].cpp
+        //xtern "C" u32 rc5_alpha_osf_ev4( RC5UnitWork *, u32 );
+        //xtern "C" u32 rc5_alpha_osf_ev5( RC5UnitWork *, u32 );
         if (coresel == 1) /* EV5, EV56, PCA56, EV6 */
         {
           problem->pipeline_count = 2;
@@ -449,12 +451,17 @@ static int __core_picker(Problem *problem, unsigned int contestid)
         else // EV3_CPU, EV4_CPU, LCA4_CPU, EV45_CPU and default
         {
           problem->pipeline_count = 2;
+          #if defined(DEC_UNIX_CPU_SELECT)
           problem->rc5_unit_func = rc5_alpha_osf_ev4; 
+          #else
+          problem->rc5_unit_func = rc5_alpha_osf_ev5; 
+          #endif
           coresel = 0;
         }
       }
-      #elif (CLIENT_OS == OS_WIN32) /* asm */
+      #elif (CLIENT_OS == OS_WIN32) /* little-endian asm */
       {
+        //rc5/alpha/rc5-alpha-nt.s
         //xtern "C" u32 rc5_unit_func( RC5UnitWork *, unsigned long iterations );
         problem->rc5_unit_func = ::rc5_unit_func;
         problem->pipeline_count = 2;
@@ -462,7 +469,8 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       }
       #else
       {
-        //xtern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, unsigned long /* NOT u32 */);
+        //axp-bmeyer.cpp around axp-bmeyer.s
+        //xtern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
         problem->rc5_unit_func = rc5_unit_func_axp_bmeyer;
         problem->pipeline_count = 2;
         coresel = 0;
@@ -1055,6 +1063,7 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
   iterations /= pipeline_count;
 
   #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
+    #error michmarc, please fix this
     kiter = (iterations*pipeline_count)-(*rc5_unit_func)(&rc5unitwork,iterations);
   #else
     kiter = (*rc5_unit_func)(&rc5unitwork, iterations);
