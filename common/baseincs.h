@@ -10,6 +10,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.46  1999/01/11 11:52:35  snake
+//
+// small openbsd fix
+//
 // Revision 1.45  1999/01/06 22:14:47  dicamillo
 // Support PPC prototype machines.
 //
@@ -299,7 +303,7 @@ extern "C" {
   #include <unistd.h>
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int);
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS==OS_BSDI)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS==OS_BSDI) || (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
   #include <unistd.h>
   #if (((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS==OS_FREEBSD) || (CLIENT_OS==OS_BSDI))
