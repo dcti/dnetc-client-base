@@ -1,6 +1,9 @@
 Dual mode (RC5DES) clients
 --------------------------
-v2.7100.416 98.07.14 Got new version of Watcom, able to compile MMX core and build the new version without a major speed decrease in both the rc5 and des cores.
+v2.7100.416 98.07.15 Change to fetch, flush, and update in the win32 GUI
+                     so that they're more verbose and will ignore
+                     offline/lurk settings.
+v2.7100.416 98.07.14 Got new version of Watcom for OS/2, now able to compile MMX core and build the new version without a major speed decrease in both the rc5 and des cores.
 v2.7100.416 98.07.14 fixed -runbuffers behaviour.  it now completely exhausts the buffer file(s) and then exits as it should.
 v2.7100.416 98.07.12 patched a possible divide by zero race condition that could occur when two or more clients attempt to flush a shared buffer where file locking cannot be enforced (eg. NFS)
 v2.7100.416 98.07.12 win32gui will again only respect "runhidden" if it is auto-launched on startup (via -guistart)

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.101  1998/07/15 06:58:03  silby
+// Changes to Flush, Fetch, and Update so that when the win32 gui sets connectoften to initiate one of the above more verbose feedback will be given.  Also, when force=1, a connect will be made regardless of offlinemode and lurk.
+//
 // Revision 1.100  1998/07/15 06:10:54  silby
 // Fixed an improper #ifdef
 //
@@ -57,7 +60,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.100 1998/07/15 06:10:54 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.101 1998/07/15 06:58:03 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -233,7 +236,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.100 1998/07/15 06:10:54 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.101 1998/07/15 06:58:03 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -551,7 +554,7 @@ s32 Client::ForceFetch( u8 contest, Network *netin )
 
 // --------------------------------------------------------------------------
 
-s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
+s32 Client::Fetch( u8 contest, Network *netin, s32 quietness, s32 force )
 {
 #if defined(NONETWORK)
   return -2;
@@ -568,16 +571,32 @@ s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
   u32 thisrandomprefix;
   u8 tmpcontest;
 
-  if (offlinemode
-#if (CLIENT_OS == OS_NETWARE)
-        || !CliIsNetworkAvailable(0)
-#endif
-  ) return( -1 );
+if (force == 0) // check to see if fetch should be done
+  {
+    if (offlinemode
+      #if (CLIENT_OS == OS_NETWARE)
+          || !CliIsNetworkAvailable(0)
+      #endif
+    ) return( -1 );
+
+  #if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+    if ( (lurk==2) && (LurkStatus() == 0) )
+      {
+      return -1;
+      };
+      // lurkonly will never connect if we're not online, unless forced
+  #endif
+
+  };
 
   if (contestdone[contest]) return( -1 );
 
   // first, find out if we are already full
-  if (CountBufferInput(contest) >= inthreshold[contest]) return 0;
+  if (CountBufferInput(contest) >= inthreshold[contest]) 
+    {
+    if (force == 1) LogScreenf("%s in buffer is already full, no connect needed.\n",(contest == 1 ? "DES":"RC5"));
+    return 0;
+    };
 
   // ready the net
   if (!netin)
@@ -925,7 +944,7 @@ s32 Client::ForceFlush( u8 contest , Network *netin )
 
 // ---------------------------------------------------------------------------
 
-s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
+s32 Client::Flush( u8 contest , Network *netin, s32 quietness, s32 force )
 {
 #if defined(NONETWORK)
   return -2;
@@ -945,17 +964,32 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
   s32 more;
   u32 i, retry;
 
-  if (offlinemode
-#if (CLIENT_OS == OS_NETWARE)
-        || !CliIsNetworkAvailable(0)
-#endif
+if (force == 0) // Check if flush should be done
+  {
+    if (offlinemode
+    #if (CLIENT_OS == OS_NETWARE)
+          || !CliIsNetworkAvailable(0)
+    #endif
      ) return( -1 );
+
+  #if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+    if ( (lurk==2) && (LurkStatus() == 0) )
+      {
+      return -1;
+      };
+      // lurkonly will never connect if we're not online, unless forced
+  #endif
+
+  };
 
   if (contestdone[contest]) return( -1 );
 
   // first, find out if we are empty already
-  if (CountBufferOutput(contest) < 1) return 0;
-
+  if (CountBufferOutput(contest) < 1)
+    {
+    if (force == 1) LogScreenf("%s out buffer is already empty, no connect needed.\n",(contest == 1 ? "DES":"RC5"));
+    return 0;
+    };
   // ready the net
   if (!netin)
   {
@@ -1302,7 +1336,7 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
 
 // ---------------------------------------------------------------------------
 
-s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
+s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr, s32 force )
 {
   s32 retcode,retcode1,retcode2;
 #ifdef NONETWORK
@@ -1310,20 +1344,23 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
 #else
   Network *net;
 
-  if (offlinemode
-#if (CLIENT_OS == OS_NETWARE)
+if (force == 0) // We need to check if we're allowed to connect
+  {
+    if (offlinemode
+      #if (CLIENT_OS == OS_NETWARE)
         || !CliIsNetworkAvailable(0)
-#endif
+      #endif
     )
     return( -1 );
 
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
-  if ( (lurk==2) && (LurkStatus() == 0) && !(fetcherr && flusherr) )
-    {
-    return -1;
-    };
-  // lurkonly will never connect if we're not online, unless forced by the user
-#endif
+  #if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+    if ( (lurk==2) && (LurkStatus() == 0) )
+      {
+      return -1;
+      };
+      // lurkonly will never connect if we're not online, unless forced
+  #endif
+  };
 
     mailmessage.quietmode=quietmode;
     if (!offlinemode)
@@ -1368,16 +1405,16 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
   {
     // If we only need the flush to succeed, then do it first
     // to prevent timeout problems.
-    retcode2 = Flush(contest, net);
+    retcode2 = Flush(contest, net,0,force);
     if (retcode2 >= 1) // some blocks were transferred
-      retcode1 = Fetch(contest, net, 2);// No proxy message display a second time
-    else retcode1 = Fetch(contest, net,0);
+      retcode1 = Fetch(contest, net, 2,force);// No proxy message display a second time
+    else retcode1 = Fetch(contest, net,0,force);
 
   } else {                        // This is either a flush request, or an update request.
-    retcode1 = Fetch(contest, net);
+    retcode1 = Fetch(contest, net,0,force);
     if (retcode1 >= 1) // some blocks were transferred
-      retcode2 = Flush(contest, net, 2);// No proxy message display a second time
-    else retcode2 = Flush(contest, net, 0);
+      retcode2 = Flush(contest, net, 2,force);// No proxy message display a second time
+    else retcode2 = Flush(contest, net, 0,force);
   }
   if (contest == 0) {
     if (randomchanged) {
@@ -2202,28 +2239,28 @@ PreferredIsDone1:
         connectloops=0;
         if (connectrequested == 1) // forced update by a user
           {
-          Update(0 ,1,1);  // RC5 We care about the errors.
-          Update(1 ,1,1);  // DES We care about the errors.
+          Update(0 ,1,1,1);  // RC5 We care about the errors, force update.
+          Update(1 ,1,1,1);  // DES We care about the errors, force update.
           LogScreen("Keyblock Update completed.\n");
           connectrequested=0;
           }
         else if (connectrequested == 2) // automatic update
           {
           Update(0 ,0,0);  // RC5 We don't care about any of the errors.
-          Update(1 ,0,0);  // DES We don't care about any of the errors.
+          Update(1 ,0,0);  // DES 
           connectrequested=0;
           }
         else if (connectrequested == 3) // forced flush
           {
-          Flush(0,NULL,1);
-          Flush(1,NULL,1);
+          Flush(0,NULL,1,1); // Show errors, force flush
+          Flush(1,NULL,1,1);
           LogScreen("Flush request completed.\n");
           connectrequested=0;
           }
         else if (connectrequested == 4) // forced fetch
           {
-          Fetch(0,NULL,1);
-          Fetch(1,NULL,1);
+          Fetch(0,NULL,1,1); // Show errors, force fetch
+          Fetch(1,NULL,1,1);
           LogScreen("Fetch request completed.\n");
           connectrequested=0;
           };

@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.67  1998/07/15 06:58:12  silby
+// Changes to Flush, Fetch, and Update so that when the win32 gui sets connectoften to initiate one of the above more verbose feedback will be given.  Also, when force=1, a connect will be made regardless of offlinemode and lurk.
+//
 // Revision 1.66  1998/07/11 00:37:29  silby
 // Documented the connectrequested variable better.
 //
@@ -508,34 +511,43 @@ public:
     //     3 = exit by time limit expiration
     //     4 = exit by block count expiration
 
-  s32  Fetch( u8 contest, Network *netin = 0, s32 quietness = 0 );
+  s32  Fetch( u8 contest, Network *netin = 0, s32 quietness = 0, s32 force = 0 );
     // fills up all of the input buffers
     // this is for sneakernet support amung other things
     // Returns: number of buffers received, negative if some error occured
     // If quietness > 1, it will not display the proxymessage.
     // in the future, 1 could make it not show # of blocks transferred
+    // If force > 0, a fetch will be attempted no matter the offline
+    // mode/etc. - -fetch and GUIs should call with this 1. Automated
+    // fetches by the client will all use 0 of course.
 
   s32  ForceFetch( u8 contest, Network *netin = 0 );
     // Like fetch, but keeps trying until done or until buffer size doesn't get bigger
     // Basically, ignores premature disconnection.
 
-  s32  Flush( u8 contest, Network *netin = 0, s32 quietness = 0 );
+  s32  Flush( u8 contest, Network *netin = 0, s32 quietness = 0, s32 force = 0 );
     // flushes out result buffers, useful when a SUCCESS happens
     // Also remove buffer file stub if done
     // this is for sneakernet support
     // Returns: number of buffers sent, negative if some error occured
     // If quietness > 1, it will not display the proxymessage.
     // in the future, 1 could make it not show # of blocks transferred
+    // If force > 0, a flush will be attempted no matter the offline
+    // mode/etc. - -flush and GUIs should call with this 1. Automated
+    // fetches by the client will all use 0 of course.
 
   s32  ForceFlush( u8 contest, Network *netin = 0 );
     // Like flush, but keeps trying until done or until buffer size doesn't get smaller
     // Basically, ignores '31' and '32' type errors -- bad buffer file entry problems.
 
-  s32 Update( u8 contest, s32 fetcherr, s32 flusherr);
+  s32 Update( u8 contest, s32 fetcherr, s32 flusherr, s32 force = 0);
     // flushes out buffer, and fills input buffers
     // returns: number of buffers sent, negative if some error occurred
     // Return value is the return from fetch*fetcherr +
     //                      value from flush*flusherr
+    // If force > 0, a update will be attempted no matter the offline
+    // mode/etc. - -update and GUIs should call with this 1. Automated
+    // fetches by the client will all use 0 of course.
 
   s32 Install();
     // installs the clients into autolaunch configuration
