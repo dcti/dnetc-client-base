@@ -72,7 +72,7 @@ PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/rc5mmx.obj \
 	$(OUTPUTPATH)/deseval-meggs3-mmx.obj
 
-RC5_LIBS = wsock32.lib advapi32.lib
+RC5_LIBS = wsock32.lib advapi32.lib user32.lib
 
 # --------------------------------------------
 
