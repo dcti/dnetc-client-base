@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.53 2000/04/24 18:20:31 ctate Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.54 2000/05/04 21:05:35 cyp Exp $"; }
 
 //#define TRACE
 
@@ -142,12 +142,28 @@ int ParseCommandline( Client *client,
         {
           if (!loop0_quiet)
           {
+            /* nwCliGetNLMBaseName is name we use for the command processor  */
+            /* parser (which is sorta like a hook into the shell) and is     */
+            /* defined at build time with a link directive to uniquely ident */
+            /* the module throughout the system. (the client is a kernel     */
+            /* plug-in after all). Its currently 'dnetc'. Imagine that! :)   */
             const char *appname = nwCliGetNLMBaseName();
+            /* ow, netware 3.x can't deal with tabs in ConsolePrintf */
             ConsolePrintf("%s: %s cannot be used as a load time option.\r\n"
-            "\tPlease use '%s [-quiet] %s'\r\n"
-            "\tinstead of 'LOAD %s [-quiet] %s'\r\n"
-            "\t(note: this is only available when a client is running)\r\n",
-                     appname, thisarg, appname, thisarg, appname, thisarg );
+              "       Please use '%s [-quiet] %s'\r\n"
+              "       instead of 'LOAD %s [-quiet] %s'\r\n"
+              "       *note*: command control options (like %s) are only\r\n"
+              "       available when a client is running.\r\n",
+              appname, thisarg, appname, thisarg, appname, thisarg, thisarg );
+            if (GetFileServerMajorVersionNumber() >= 5) 
+            {
+              /* STUPID NetWare, uneducated users, poor help@d.net */
+              ConsolePrintf(
+              "\tTo work around a bug in NetWare 5's (and above) console command\r\n"
+              "\thandler, the client (like all other utilities that provide console\r\n"
+              "\tcommands named after themselves) must have been previously loaded\r\n"
+              "\twith the LOAD command, and should not be in the search path.\r\n" );
+            }
           }
           terminate_app = 1;
         }
