@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.31 2002/03/13 10:21:39 acidblood Exp $
+## $Id: makefile.wat,v 1.27.2.32 2002/04/07 21:18:55 andreasb Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -99,7 +99,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 #---
 %rc5std_LINKOBJS = output\rg-486.obj output\rg-k5.obj output\brf-p5.obj &
                    output\rg-k6.obj output\rg-p6.obj  output\rg-6x86.obj &
-                   output\dg-k7.obj output\jp-mmx.obj output\ak-p7.obj
+                   output\hb-k7.obj output\jp-mmx.obj output\ak-p7.obj
 %rc5std_DEFALL   = /DHAVE_RC5_CORES
 %rc5std_SYMALIAS = #
 #---
@@ -348,7 +348,7 @@ output\rg-6x86.obj : rc5\x86\rg-6x86.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
-output\dg-k7.obj : rc5\x86\dg-k7.asm $(%dependall)
+output\hb-k7.obj : rc5\x86\hb-k7.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
   @set isused=1
 

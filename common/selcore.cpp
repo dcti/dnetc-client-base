@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.139 2002/03/31 13:10:45 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.140 2002/04/07 21:18:55 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -64,7 +64,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "RG re-pair I",          /* 3. Cyrix 486/6x86[MX]/MI */
       "RG RISC-rotate I",      /* 4. K5 */
       "RG RISC-rotate II",     /* 5. K6 */
-      "RG/DG re-pair III",     /* 6. K7 Athlon and Cx-MII, based on Cx re-pair */
+      "RG/HB re-pair II",      /* 6. K7 Athlon and Cx-MII, based on Cx re-pair */
       "RG/BRF self-mod",       /* 7. SMC */
       "AK class 7",            /* 8. P4 */
       "jasonp P5/MMX",         /* 9. P5/MMX *only* - slower on PPro+ */
@@ -315,7 +315,7 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
 
     if (contestid == RC5)
     {
-      if (!have_nasm && cindex == 6)    /* "RG/DG re-pair III" */
+      if (!have_nasm && cindex == 6)    /* "RG/HB re-pair II" */ 
         cindex = ((have_3486 && have_smc)?(7):(3)); /* "RG self-mod" or
                                                        "RG/HB re-pair I" */
       if (!have_smc && cindex == 7)     /* "RG self-modifying" */
@@ -940,13 +940,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x06: cindex = ((have_smc)?(7 /*#99*/):(6 /*#804*/)); break; // cx486
             case 0x07: cindex = 2; break; // Celeron    == RG class 6
             case 0x08: cindex = 2; break; // PPro       == RG class 6
-            case 0x09: cindex = 6; break; // AMD>=K7/Cx>MII == RG/DG re-pair III
-            case 0x0A: cindex = 6; break; // Centaur C6 == RG/DG re-pair III (#2082)
+            case 0x09: cindex = 6; break; // AMD>=K7/Cx>MII == RG/HB re-pair II
+            case 0x0A: cindex = 6; break; // Centaur C6 == RG/HB re-pair II (#2082)
             case 0x0B: cindex = 8; break; // P4         == ak/P4 
             default:   cindex =-1; break; // no default
           }
           #if defined(HAVE_NO_NASM)
-          if (cindex == 6)   /* ("RG/DG re-pair III") */
+          if (cindex == 6)   /* ("RG/HB re-pair II") */
           {   
             cindex = 3;      /* ("RG re-pair I") */
             if ((detected_type & 0xff) == 0x01) /* 386/486 */

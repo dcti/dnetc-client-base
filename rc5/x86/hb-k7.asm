@@ -1,22 +1,9 @@
-; $Id: dg-k7.asm,v 1.1.2.2 2002/04/07 21:18:56 andreasb Exp $
-;
-; This core is currently not included in the client, because the the signal 
-; handler overrides the [ESP-offset] part of the stack. (Non threaded client,
-; happened under Linux and FreeBSD, probably more.) Bug #2584.      -- andreasb
-;
-; Slight improvements by Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; Measured speedup relative to hb-k7, average of 3 benchmarks: 1.6%
-; Code size reduction: about 10%
-; Changes:
-; -have ESP point at middle of allocated space for temp variables; that way,
-;  most [ESP+offset] memory accesses have displacements encoded as 8-bit
-;  signed immediates, instead of the full 32-bit addressing mode.
-; -incrementing code at end of loop was replaced by a BSWAP-based approach.
-;
 ; AMD K7 optimized version
 ; from Holger Böhring <HBoehring@hboehring.de>
 ; based on Cx6x86 core
 ;
+; $Id: hb-k7.asm,v 1.1.2.3 2002/04/07 21:18:56 andreasb Exp $
+; 
 ; performance 2106/1830 with client v2.8008-459
 ; comparitive benchmark with core from rc5-k7ss.asm:
 ; [Jun 26 23:07:28 UTC] RC5: using core #6 (RG/SS ath).
@@ -62,15 +49,6 @@
 ;  Offsets to access work_struct fields.
 %assign work_size        0
 
-%macro predefwork 1-2 1
-    %assign work_size work_size+4*(%2)
-%endmacro
-
-%macro enddefwork 0
-    %assign opt_work_size work_size/2
-    %assign work_size opt_work_size-work_size
-%endmacro
-
 ; macros to define the workspace
 %macro defidef 2
     %define %1 esp+%2
@@ -82,35 +60,10 @@
 %endmacro
 
 ; Locals
-predefwork work_key2_edi
-predefwork work_key2_esi
-predefwork work_key_hi
-predefwork work_key_lo
-predefwork RC5UnitWork
-predefwork timeslice
-predefwork work_s1,26
-predefwork work_s2,26
-predefwork work_P_0
-predefwork work_P_1
-predefwork work_C_0
-predefwork work_C_1
-predefwork work_iterations
-predefwork work_pre1_r1
-predefwork work_pre2_r1
-predefwork work_pre3_r1
-predefwork save_ebp
-predefwork save_edi
-predefwork save_esi
-predefwork save_ebx
-
-enddefwork
-
-defwork save_ebp
+defwork work_key2_edi
 defwork work_key2_esi
 defwork work_key_hi
 defwork work_key_lo
-defwork RC5UnitWork
-defwork timeslice
 defwork work_s1,26
 defwork work_s2,26
 defwork work_P_0
@@ -121,11 +74,10 @@ defwork work_iterations
 defwork work_pre1_r1
 defwork work_pre2_r1
 defwork work_pre3_r1
-defwork work_key2_edi
+defwork save_ebp
 defwork save_edi
 defwork save_esi
 defwork save_ebx
-
 
 ; Offsets to access RC5UnitWork fields
 %define RC5UnitWork_plainhi   eax+0
@@ -135,8 +87,8 @@ defwork save_ebx
 %define RC5UnitWork_L0hi      eax+16
 %define RC5UnitWork_L0lo      eax+20
 
-%define RC5UnitWork_t   esp+work_size+4
-%define timeslice_t     esp+work_size+8
+%define RC5UnitWork     esp+work_size+4
+%define timeslice       esp+work_size+8
 
 
   ; A1   = %eax  A2   = %ebp
@@ -384,21 +336,20 @@ rc5_unit_func_k7:
 _rc5_unit_func_k7:
 ;u32 rc5_unit_func_k7( RC5UnitWork * rc5unitwork, u32 timeslice )
 
-        sub esp, opt_work_size ; set up stack
+        sub esp, work_size ; set up stack
 
-        mov     [save_ebp], ebp ; save registers
-        mov     [save_edi], edi
-        mov     [save_esi], esi
-        mov     [save_ebx], ebx
+        mov [save_ebp], ebp ; save registers
+        mov [save_edi], edi
+        mov [save_esi], esi
+        mov [save_ebx], ebx
 
-        mov     ebp, [timeslice_t]
 
-        mov     eax, [RC5UnitWork_t] ; load pointer to rc5unitwork into eax
+        mov     ebp, [timeslice]
+
+        mov     eax,[RC5UnitWork] ; load pointer to rc5unitwork into eax
 
 ;    work.iterations = timeslice;
-        mov     [timeslice], ebp
         mov     [work_iterations], ebp
-        mov     [RC5UnitWork], eax
 
         ; load parameters
         mov     ebx, [RC5UnitWork_L0lo]                 ; ebx = l0 = Llo1
@@ -677,15 +628,13 @@ __exit_1_k7:
 
 __exit_2_k7:
         mov     edx,[work_key_hi]
-        bswap   edx
-        add     edx,2
-        bswap   edx
-        lea     edi,[edx+0x01000000]
-        jc      short _next_inc_k7
+        add     edx,0x02000000
+        jc      _next_inc_k7
 
 ;k7align 4
 _next_iter_k7:
         mov     [work_key_hi],edx
+        lea     edi, [0x01000000+edx]
         dec     dword [work_iterations]
         jg      near _loaded_k7
 
@@ -697,16 +646,41 @@ _next_iter_k7:
 
 k7align 16
 _next_inc_k7:
+        add     edx, 0x00010000
+        test    edx, 0x00FF0000
+        jnz     _next_iter_k7
+
+        add     edx, 0xFF000100
+        test    edx, 0x0000FF00
+        jnz     _next_iter_k7
+
+        add     edx, 0xFFFF0001
+        test    edx, 0x000000FF
+        jnz     _next_iter_k7
+
         mov     ebx, [work_key_lo]
 
-        bswap   ebx
-        inc     ebx
-        bswap   ebx
+        sub     edx, 0x00000100
+        add     ebx, 0x01000000
+        jnc     _next_iter2_k7
+
+        add     ebx, 0x00010000
+        test    ebx, 0x00FF0000
+        jnz     _next_iter2_k7
+
+        add     ebx, 0xFF000100
+        test    ebx, 0x0000FF00
+        jnz     _next_iter2_k7
+
+        add     ebx, 0xFFFF0001
+        test    ebx, 0x000000FF
+;        jnz     short _next_iter2_k7
 
 ;k7align 4
 _next_iter2_k7:
         mov     [work_key_hi],edx
         mov     [work_key_lo],ebx
+        lea     edi, [0x01000000+edx]
         mov     esi, ebx
         dec     dword [work_iterations]
         jg      near _bigger_loop_k7
@@ -785,7 +759,7 @@ _rest_reg_k7:
         mov edi, [save_edi]
         mov ebp, [save_ebp]
 
-        add esp, opt_work_size
+        add esp, work_size
 
         ret
 
