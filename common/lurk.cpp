@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.cpp,v $
+// Revision 1.10  1998/11/17 05:49:02  silby
+// Fixed an uninit variable that was causing updates that should not have been.
+//
 // Revision 1.9  1998/11/12 13:09:01  silby
 // Added a stop function, made start and stop public.
 //
@@ -16,7 +19,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.9 1998/11/12 13:09:01 silby Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.10 1998/11/17 05:49:02 silby Exp $"; }
 #endif
 
 /* --------------------------------- */
@@ -185,7 +188,9 @@ s32 Lurk::CheckIfConnectRequested(void) //Get possible values of connectrequeste
         connectrequested = 0; // cancel any connection requests
         };
       Log("\n");
-      };
+      }
+    else
+      connectrequested=0;
     }
   else // We're connected!
     {
