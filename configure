@@ -5,6 +5,19 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.11  1998/12/28 16:00:24  remi
+# Synced with :
+#
+#  Revision 1.144  1998/12/23 10:54:37  myshkin
+#  Added code to _GetRawPPCIdentification to read /proc/cpuinfo on linux-ppc.
+#  Added *ppc-gcc272 entry to configure (until I successfully upgrade to egcs).
+#
+#  Revision 1.143  1998/12/21 16:18:23  jcmichot
+#  Add qnx4 support.
+#
+#  Revision 1.142  1998/12/22 02:38:39  snake
+#  EPROTO doesn't exist on some systems
+#
 # Revision 1.113.2.10  1998/12/15 23:37:51  remi
 # Synced with (!) :
 #
@@ -188,6 +201,7 @@ OPTS_GCC_DGUX="$OPTS_GCC -O6 -D_DGUX -DPIPELINE_COUNT=2 \
 
 OPTS_GCC_PPC601="$OPTS_GCC -O6 -DASM_PPC -mcpu=601"
 OPTS_GCC_PPC="$OPTS_GCC -O6 -DASM_PPC -mcpu=604"
+OPTS_GCC272_PPC="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604"
 OPTS_GCC_POWER="$OPTS_GCC -O6 -DASM_POWER -mcpu=power"
 
 OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC -Icommon"
@@ -549,6 +563,11 @@ case "$1" in
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch_allitnil_552.ppc.s rc5/crunch_lintilla_296.ppc.s"
 	;;
 
+    *ppc-gcc272)           # generic PPC target, gcc 2.7.2
+	TARGET_CCFLAGS="$OPTS_GCC272_PPC -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch_allitnil_552.ppc.s rc5/crunch_lintilla_296.ppc.s"
+	;;
+
     *power-gcc)            # generic POWER target
 	RC5CORECOPY="rc5/rc5ansi1-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
@@ -642,7 +661,14 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+        TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	;;
+
+    *x86-qnx4)
+	TARGET_AS="g++ -c -DNO_BALIGN"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4"
+	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	;;
 
     *x86-openbsd)
