@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.160 2000/06/15 20:29:31 kopstain Exp $
+# @(#)$Id: configure,v 1.222.2.161 2000/06/15 22:54:27 mfeiri Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1074,20 +1074,20 @@ case "$1" in
 
   ### MacOSX PPC targets
 
-    *ppc-macosx-server) # [mfeiri] (MACH 2.x based: MXS 1.x, Darwin 0.x, Rhapsody)
+    *ppc-macosxserver) # [mfeiri] (MACH 2.x based: MXS 1.x, Darwin 0.x, Rhapsody)
 	TARGET_CC="cc"
 	TARGET_CCFLAGS="$OPTS_GCC272_PPC -DHAVE_OGR_CORES"
 	TARGET_ADDSRCS="$RC5PPC_APPLE_SRCS $OGR_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="macosx-server-ppc"
+	TARGET_TARBALL="macosxserver-ppc"
 	;;
 
-    *ppc-macosx)        # [mfeiri] (MACH 3.x based: MacOSXDP, Darwin 1.0)
+    *ppc-macosx)       # [mfeiri] (MACH 3.x based: MacOSXDP, Darwin 1.0)
 	TARGET_CC="cc"
 	TARGET_CCFLAGS="$OPTS_GCC295_PPC -DHAVE_OGR_CORES -DMULTITHREAD -D__unix__ -faltivec -DLURK" # -DXMLSERVE
-	TARGET_ADDSRCS="$RC5PPC_APPLE_SRCS $OGR_ANSI_SRCS $RC5ALTIVEC_SRCS common/lurk.cpp" #
+	TARGET_ADDSRCS="$RC5PPC_APPLE_SRCS $OGR_PPC_SRCS $RC5ALTIVEC_SRCS common/lurk.cpp" #
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="macosx-ppc-mt"
+	TARGET_TARBALL="macosx-ppc"
 	;;
 
   ### AIX PPC targets
