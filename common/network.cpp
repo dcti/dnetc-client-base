@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.84  1999/03/18 04:25:37  cyp
+// a) Created new method Reset(); b) undid change from 1.83 - the reason why
+// it does what it does are (and always have been) documented in Open().
+//
 // Revision 1.83  1999/03/09 21:58:55  silby
 // Keyport is now autodetected for uue and http modes correctly.
 //
@@ -182,7 +186,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.83 1999/03/09 21:58:55 silby Exp $"; }
+return "@(#)$Id: network.cpp,v 1.84 1999/03/18 04:25:37 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -293,24 +297,35 @@ static const char *__inet_ntoa__(u32 addr)
   return buff;
 }  
 
-static void __print_packet( const char *label, const char *apacket, int alen )
+void __print_packet( const char *label, const char *apacket, unsigned int alen )
 {
-  int i,n;
+  unsigned int i;
   for (i = 0; i < alen; i += 16)
-    {
+  {
     char buffer[128];
-    char *p = &buffer[0];
-    p += sprintf(buffer,"%s %04x: ", label, i );
-    for (n = 0; (n < 16 && ((n + i) < alen)); n++)
-      p += sprintf(p,"%02x ", (unsigned char)apacket[n+i]);
-    for (; n < 16; n++)
-        {*p++=' ';*p++=' ';*p++=' ';}
-    for (n=0;(n<16 && ((n+i)<alen));n++)        
-      *p++=((apacket[n+1]!='\r' && apacket[n+i]!='\n' && apacket[n+i]!='\t'
-           && isprint(apacket[n+i]))?(apacket[n+i]):('.'));
-    *p++=0;
-    LogRaw("%s\n",buffer);
+    char *p, *q; unsigned int n;
+    sprintf(buffer,"%s %04x: ", label, i );
+    q = 48 + (p = &buffer[strlen(buffer)]);
+    for (n = 0; n < 16; n++)
+    {
+      unsigned int c = ' ';
+      p[0] = p[1] = ' ';
+      if (( n + i ) < alen )
+      {
+        static const char *tox="0123456789abcdef";
+        c = (((unsigned int)apacket[n+i]) & 0xff);
+        p[0] = (char)tox[c>>4];
+        p[1] = (char)tox[c&0x0f];
+        if (!isprint(c) || /*isctrl(c)*/ c=='\r' || c=='\n' || c=='\t')
+          c = '.';
+      }
+      p+=2;
+      *p++ = ' ';
+      *q++ = (char)c;
     }
+    *q = '\0';
+    LogRaw("%s\n",buffer);
+  }
   LogRaw("%s total len: %d\n",label, alen);
   return;
 }
@@ -414,12 +429,10 @@ Network::Network( const char * servname, int servport, int _nofallback,
   mode = startmode = 0;
   if (_enctype == 1 /*uue*/ || _enctype == 3 /*http+uue*/)
     {
-    if (server_port == 0) server_port = 23;
     startmode |= MODE_UUE;
     }
   if (_enctype == 2 /*http*/ || _enctype == 3 /*http+uue*/)
     {
-    if (server_port == 0) server_port = 80;
     startmode |= MODE_HTTP;
     if (_fwallhost && _fwallhost[0])
       {
@@ -474,24 +487,18 @@ Network::~Network(void)
 //----------------------------------------------------------------------
 
 // returns -1 on error, 0 on success
-int Network::Open( SOCKET insock)
+int Network::Reset(int fallbacknow)
 {
-  sock = insock;
-
-  // set communications settings
-  mode = startmode;
-  gotuubegin = gothttpend = puthttpdone = gethttpdone = 0;
-  httplength = 0;
-  netbuffer.Clear();
-  uubuffer.Clear();
-
-  // make socket non-blocking
-  isnonblocking = (iotimeout >= 0 && MakeNonBlocking() == 0);
-
-  return 0;
+  svc_hostaddr = 0; /* go use another host even for http */
+  if (fallbacknow)
+  {
+    server_name[0] = 0;
+    nofallback = 1;
+  }
+  return Open();
 }  
 
-/* ----------------------------------------------------------------------- */
+//----------------------------------------------------------------------
 
 int Network::Open( void )               // returns -1 on error, 0 on success
 {
@@ -553,7 +560,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       if (svc_hostname[0] == 0 || retries > (preftries - 1)) /* fallback*/
         {
         svc_hostaddr = 0; 
-        svc_hostname = "rc5proxy.distributed.net";
+        svc_hostname = "rc5proxy.distributed.net"; /* special name for resolve */
         if (svc_hostport != 80 && svc_hostport != 23 && 
           svc_hostport != 2064 && svc_hostport != 3064 /* && 
           svc_hostport != 21 && svc_hostport != 25 && svc_hostport != 110 */)
@@ -801,8 +808,12 @@ int Network::InitializeConnection(void)
   if (sock == INVALID_SOCKET)
     return -1;
 
-  if (startmode & MODE_SOCKS5)
-    {
+  if (startmode & MODE_HTTP)
+  {
+    LowLevelConditionSocket(CONDSOCK_KEEPALIVE_ON);
+  }
+  else if (startmode & MODE_SOCKS5)
+  {
     int success = 0; //assume failed
     int recoverable = 0; //assume non-recoverable error (negotiation failure)
     
@@ -827,25 +838,25 @@ int Network::InitializeConnection(void)
 
     len = 2 + psocks5mreq->nMethods;
     if (LowLevelPut(socksreq, (int) len) != (int) len)
-      {
+    {
       if (verbose_level > 0)
         LogScreen("SOCKS5: error sending negotiation request\n");
       recoverable = 1;
-      }
+    }
     else if (LowLevelGet(socksreq, 2) != 2)
-      {
+    {
       if (verbose_level > 0)
         LogScreen("SOCKS5: failed to get negotiation request ack.\n");
       recoverable = 1;
-      }
+    }
     else if (psocks5mreply->ver != 5)
-      {
+    {
       if (verbose_level > 0)
         LogScreen("SOCKS5: authentication has wrong version, %d should be 5\n", 
                             psocks5mreply->ver);
-      }
+    }
     else if (psocks5mreply->Method == 2)  // username and pw
-      {
+    {
       char username[255];
       char password[255];
       char *pchSrc, *pchDest;
@@ -879,47 +890,47 @@ int Network::InitializeConnection(void)
       len += pwlen;
 
       if (LowLevelPut(socksreq, len) != (int) len)
-        {
+      {
         if (verbose_level > 0)
           LogScreen("SOCKS5: failed to send sub-negotiation request.\n");
         recoverable = 1;
-        }
+      }
       else if (LowLevelGet(socksreq, 2) != 2)
-        {
+      {
         if (verbose_level > 0)
           LogScreen("SOCKS5: failed to get sub-negotiation response.\n");
         recoverable = 1;
-        }
+      }
       else if (psocks5userpwreply->ver != 1 ||
            psocks5userpwreply->status != 0)
-        {
+      {
         if (verbose_level > 0)
           LogScreen("SOCKS5: user %s rejected by server.\n", username);
-        }       
+      }       
       else
-        {
-        authaccepted = 1;
-        }
-      } //username and pw
-    else if (psocks5mreply->Method == 1)  // GSSAPI
       {
+        authaccepted = 1;
+      }
+    } //username and pw
+    else if (psocks5mreply->Method == 1)  // GSSAPI
+    {
       if (verbose_level > 0)
         LogScreen("SOCKS5: GSSAPI per-message authentication is\n"
                   "not supported. Please use SOCKS4 or HTTP.\n");
-      }
+    }
     else if (psocks5mreply->Method == 0)       // no authentication required
-      {
+    {
       // nothing to do for no authentication method
       authaccepted = 1;
-      }
+    }
     else //if (psocks5mreply->Method > 2)
-      {
+    {
       if (verbose_level > 0)
         LogScreen("SOCKS5 authentication method rejected.\n");
-      }
+    }
       
     if (authaccepted)
-      {
+    {
       // after subnegotiation, send connect request
       psocks5->ver = 5;
       psocks5->cmdORrep = 1;   // connnect
@@ -930,7 +941,7 @@ int Network::InitializeConnection(void)
       int packetsize = 10;
 
       if (svc_hostaddr == 0)           
-        {                              
+      {                              
         psocks5->atyp = 0x03; //fully qualified domainname
         char *p = (char *)(&psocks5->addr);
         // at this point svc_hostname is a ptr to a resolve_hostname.
@@ -939,34 +950,34 @@ int Network::InitializeConnection(void)
         p += (++len);
         *((u16 *)(p)) = (u16)htons((u16)svc_hostport);
         packetsize = (10-sizeof(u32))+len;
-        }
+      }
         
       if (LowLevelPut(socksreq, packetsize) != packetsize)
-        {
+      {
         if (verbose_level > 0)
           LogScreen("SOCKS5: failed to send connect request.\n");
         recoverable = 1;
-        }
+      }
       else if (LowLevelGet( socksreq, packetsize) < 10 /*ok for both atyps*/)
-        {
+      {
         if (verbose_level > 0)
           LogScreen("SOCKS5: failed to get connect request ack.\n");
         recoverable = 1;
-        }
+      }
       else if (psocks5->ver != 5)
-        {
+      {
         if (verbose_level > 0)
            LogScreen("SOCKS5: reply has wrong version, %d should be 5\n", 
                        psocks5->ver);
-        }
+      }
       else if (psocks5->cmdORrep == 0)  // 0 is successful connect
-        {
+      {
         success = 1;
         if (psocks5->atyp == 1)  // IPv4
           svc_hostaddr = psocks5->addr;
-        }
+      }
       else if (verbose_level > 0)
-        {
+      {
         const char *p = ((psocks5->cmdORrep >=
                          (sizeof Socks5ErrorText / sizeof Socks5ErrorText[0]))
                          ? ("") : (Socks5ErrorText[ psocks5->cmdORrep ]));
@@ -974,14 +985,14 @@ int Network::InitializeConnection(void)
                  ((int)(psocks5->cmdORrep)),
                  ((*p) ? (" (") : ("")), p, ((*p) ? (")") : ("")),
                  svc_hostname, (unsigned int)svc_hostport );
-        }
-      } //if (authaccepted)
+      }
+    } //if (authaccepted)
       
     return ((success) ? (0) : ((recoverable) ? (+1) : (-1)));
-    } //if (startmode & MODE_SOCKS5)
+  } //if (startmode & MODE_SOCKS5)
 
   if (startmode & MODE_SOCKS4)
-    {
+  {
     int success = 0; //assume failed
     int recoverable = 0; //assume non-recoverable error (negotiation failure)
 
@@ -1000,30 +1011,30 @@ int Network::InitializeConnection(void)
 
     len = sizeof(*psocks4) - 1 + strlen(fwall_userpass) + 1;
     if (LowLevelPut(socksreq, len) != (int) len)
-      {
+    {
       if (verbose_level > 0)
         LogScreen("SOCKS4: Error sending connect request\n");
       recoverable = 1;
-      }
+    }
     else
-      {
+    {
       len = sizeof(*psocks4) - 1;  // - 1 for the USERID[1]
       int gotlen = LowLevelGet(socksreq,len);
       if (((u32)(gotlen)) != len )
-        {
+      {
         if (verbose_level > 0)
           LogScreen("SOCKS4:%s response from server.\n",
                                      ((gotlen<=0)?("No"):("Invalid")));
         recoverable = 1;
-        }
+      }
       else //if ( (u32)(gotlen)) == len)
-        {
+      {
         if (psocks4->VN == 0 && psocks4->CD == 90) // 90 is successful return
-          {
+        {
           success = 1;
-          }
+        }
         else if (verbose_level > 0)
-          {
+        {
           LogScreen("SOCKS4: request rejected%s.\n", 
             (psocks4->CD == 91)
              ? ""
@@ -1035,12 +1046,12 @@ int Network::InitializeConnection(void)
              ? ", invalid identd response"
              :
              ", unexpected response");
-          }
         }
       }
+    }
 
     return ((success) ? (0) : ((recoverable) ? (+1) : (-1)));
-    }
+  }
     
   return 0;
 }
@@ -1101,7 +1112,7 @@ int Network::Get( char * data, int length )
         {
           httplength = atoi((const char*)line + 16);
         }
-        else if ( /* (svc_hostaddr == 0) && */
+        else if ( (svc_hostaddr == 0) && 
           (strncmpi(line, "X-KeyServer: ", 13) == 0))
         {
           u32 newaddr = 0;
@@ -1272,14 +1283,12 @@ int Network::Get( char * data, int length )
   if (((u32)(netbuffer.GetLength())) < ((u32)(length)))
     bytesfilled = netbuffer.GetLength();
   if (bytesfilled != 0)
-    {
+  {
     memmove(data, netbuffer.GetHead(), bytesfilled);
     netbuffer.RemoveHead((u32)bytesfilled);
-    #if !defined (__EMX__) // coredumps on OS2
     if (verbose_level > 1) //DEBUG
       __print_packet("Get", data, bytesfilled );
-    #endif
-    }
+  }
 
   if (verbose_level > 1) //DEBUG
     Log("Get: toread:%d read:%d\n", length, bytesfilled );
@@ -1368,10 +1377,8 @@ int Network::Put( const char * data, int length )
     puthttpdone = 1;
   }
 
-  #if !defined (__EMX__) // coredumps on OS2
   if (verbose_level > 1) //DEBUG
     __print_packet("Put", outbuf, outbuf.GetLength() );
-  #endif
 
   int towrite = (int)outbuf.GetLength();
   int written = LowLevelPut(outbuf,towrite);
@@ -1485,10 +1492,10 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
 #if defined(_TIUSER_)                                         //OSI/XTI/TLI
   int rc = -1;
   if ( t_bind( sock, NULL, NULL ) != -1 )
-    {
+  {
     struct t_call *sndcall = (struct t_call *)t_alloc(sock, T_CALL, T_ADDR);
     if ( sndcall != NULL )
-      {
+    {
       sndcall->addr.len  = sizeof(struct sockaddr_in);
       sndcall->opt.len   = 0;
       sndcall->udata.len = 0;
@@ -1498,18 +1505,18 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
       sin->sin_port = htons( that_port );
       rc = t_connect( sock, sndcall, NULL);
       if (isnonblocking && rc == -1 && t_errno == TNODATA) 
-        {
+      {
         time_t stoptime = time(NULL) + (time_t)iotimeout;
         while (rc == -1 && t_errno == TNODATA && time(NULL) <= stoptime)
-          {
+        {
           usleep(250000);
           if (t_rcvconnect(sock, NULL) != -1) 
             rc = 0;
-          }
         }
-      t_free((char *)sndcall, T_CALL);
       }
+      t_free((char *)sndcall, T_CALL);
     }
+  }
   return rc;
 #elif (CLIENT_OS == OS_MACOS)
   // The Mac OS client simulates just the most essential socket calls, as a
@@ -1544,12 +1551,13 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
   int rc = -1;
   time_t starttime = time(NULL);
 
-  do{
+  do
+  {
     if ( connect(sock, (struct sockaddr *)&sin, sizeof(sin)) >= 0 )
-      {
+    {
       rc = 0;
       break;
-      }
+    }
 
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     errno = WSAGetLastError();
@@ -1570,32 +1578,32 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
     #endif
 
     if (isnonblocking == 0)
-      {
+    {
       rc = -1;
       break;
-      }
+    }
     if (errno == EISCONN)
-      {
+    {
       rc = 0;
       break;
-      }
+    }
     if (errno != EINPROGRESS && errno != EALREADY && errno != EWOULDBLOCK )
-      {
+    {
       rc = -1;
       break;
-      }
+    }
       
     if ( (time(NULL)-starttime) > iotimeout )
-      {
+    {
       rc = -1;
       #ifndef ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG
       errno = ETIMEDOUT;
       #endif
       break;
-      }
+    }
     sleep(1);
     rc = -1;
-    } while (isnonblocking); /* always 1 */
+  } while (isnonblocking); /* always 1 */
   
   return rc;  
 
@@ -1615,7 +1623,7 @@ int Network::Resolve( const char *, u32 *, int )
 
 // -----------------------------------------------------------------------   
 
-// Returns length of sent data or -1 if error
+// Returns length of sent data or 0 if the socket is closed, or -1 if timeout+nodata
 int Network::LowLevelPut(const char *data,int length)
 {                                                       
   if ( sock == INVALID_SOCKET )
@@ -1628,6 +1636,7 @@ int Network::LowLevelPut(const char *data,int length)
   u32 totaltowrite = length;
   u32 totalwritten = 0;
   u32 sendquota = 1500; /* how much to send per send() call */
+  int firsttime = 1;
   time_t timenow = 0, stoptime = 0;
   int sleptcount = 0; /* ... in a row */
   int sleepms = 250; /* sleep time in millisecs. adjust here if needed */
@@ -1639,7 +1648,7 @@ int Network::LowLevelPut(const char *data,int length)
   sendquota = 512;
   struct t_info info;
   if ( t_getinfo( sock, &info ) != -1)
-    {
+  {
     if (info.tsdu > 0)
       sendquota = info.tsdu;
     else if (info.tsdu == -1) /* no limit */
@@ -1648,11 +1657,11 @@ int Network::LowLevelPut(const char *data,int length)
       sendquota = 1;
     else //if (info.tsdu == -2) /* normal send not supp'd (ever happens?)*/
       return -1;
-    }
+  }
   #endif
-  
+
   #if (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32S)
-  if (sendquota > 0x7FFF)  
+  if (sendquota > 0x7FFF)  /* 16 bit OS but int is 32 bits */
     sendquota = 0x7FFF;
   #else
   if (sendquota > INT_MAX)  
@@ -1660,23 +1669,69 @@ int Network::LowLevelPut(const char *data,int length)
   #endif
 
   do
-    {
+  {
     int towrite = (int)((((u32)length)>((u32)sendquota))?(sendquota):(length));
+    int written;
 
     #if defined(_TIUSER_)                              //TLI/XTI
-    int written = -2;
+    int noiocount = 0;
+    written = -2;
     while (written == -2)
-      {
+    {
       int flag = (((length - towrite)==0) ? (0) : (T_MORE));
       written = t_snd(sock, (char *)data, (unsigned int)towrite, flag );
-      if (written == -1 && t_errno == TFLOW ) /* sending too fast */
+      if (written == 0)       /* transport provider accepted nothing */
+      {                   /* should never happen unless 'towrite' was 0*/
+        if ((++noiocount) < 3)
         {
-        usleep(500000); // 0.5 secs
-        written = -2;
+          written = -2;   /* retry */
+          usleep(500000); // 0.5 secs
+        }
+      }  
+      else if (written == -1)
+      {
+        if ( t_errno == TFLOW ) /* sending too fast */
+        {
+          usleep(500000); // 0.5 secs
+          written = -2;
+        }
+        else if (t_errno == TLOOK)
+        {
+          if (t_look(sock) == T_DISCONNECT)
+            return 0;
         }
       }
-    #else                                              //BSD 4.3 sockets
-    int written = send(sock, (char*)data, towrite, 0 );
+    }
+    #elif defined(AF_INET) && defined(SOCK_STREAM)      //BSD 4.3 sockets
+    if (firsttime)
+    {
+      int ready;
+      fd_set rs;
+      timeval tv = {0,0};
+      FD_ZERO(&rs);
+      FD_SET(sock, &rs);
+      ready = select(sock + 1, &rs, NULL, NULL, &tv);
+      if (ready < 0)   /* ENETDOWN, EINVAL, EINTR */
+        return 0; /* assume sock closed */
+      else if (ready == 1)
+      {
+        /*
+        For connection-oriented sockets, readability can also indicate 
+        that a close request has been received from the peer. If the virtual 
+        circuit was closed gracefully, then a recv will return immediately 
+        with zero bytes read. If the virtual circuit was reset, then a 
+        recv will complete immediately with an error code.
+        
+        Platforms that support OSI/XTI/TLI (MacOS, all SysV, etc) should 
+        use that instead.
+        */
+        char scratch[2];
+        if ( recv(sock, &scratch[0], sizeof(scratch), MSG_PEEK ) <= 0)
+          return 0;
+      }
+      firsttime = 0;
+    }
+    written = send(sock, (char*)data, towrite, 0 );
     /*
       When used on a blocking SOCK_STREAM socket, send() requests block 
       until all of the client's data can be sent or buffered by the socket. 
@@ -1688,38 +1743,39 @@ int Network::LowLevelPut(const char *data,int length)
     #endif
 
     if (written > 0)
-      {
+    {
       totalwritten += written;    
       length -= written;
       data += written;
       sleptcount = 0;
       if (length == 0) /* sent all */
         break;
-      }
+      firsttime = 0;
+    }
     if (isnonblocking == 0)
-      {
+    {
       if (written <= 0)
         break;
-      }
+    }
     else //if (isnonblocking) 
-      {
+    {
       if (time(&timenow) > stoptime)
-        {
+      {
         if (written <= 0 && sleptcount > 10)
           break;
         else if (written > 0)
           stoptime = timenow+1;
-        }
+      }
       if (written <= 0) /* nothing sent but haven't timed out yet */
-        {
+      {
         unsigned long sleepdur = ((unsigned long)(++sleptcount)) * sleepms;
         if (sleepdur > 1000000UL)
           sleep( sleepdur / 1000000UL );
         if ((sleepdur % 1000000UL) != 0)
           usleep( sleepdur % 1000000UL );
-        }
       }
-    } while (length);
+    }
+  } while (length);
 
   if (verbose_level > 1)
     Log("LLPut: towrite=%d, written=%d\n", totaltowrite, totalwritten );
@@ -1757,76 +1813,76 @@ int Network::LowLevelGet(char *data,int length)
     writequota = INT_MAX;
   #endif
 
+//LogScreen("beginning recv loop (total to recv=%d)\n", length );
   do
-    {
+  {
     int toread = (int)((((u32)length)>((u32)writequota))?(writequota):(length));
     int bytesread = 0;
 
-    #if defined(_TIUSER_)                               //TLI/XTI
+    #if defined(_TIUSER_)                               //OSI/TLI/XTI
+    {
       int flags;
       bytesread = t_rcv( sock, data, toread, &flags );
       if (bytesread == -1)
-          {
+      {
         if ( t_errno != TNODATA ) /* TLOOK (async event) or TSYSERR */
           bytesread = 0; /* set as socket closed */
-          }
+      }
       else if (bytesread == 0) /* should never happen? */
         bytesread = -1; /* set as none waiting */
-    #else                                               //BSD 4.3
-      #if defined(SELECT_FIRST) || (CLIENT_OS == OS_HPUX)
+    }
+    #elif (defined(AF_INET) && defined(SOCK_STREAM))        //BSD 4.3
+    {
       fd_set rs;
       timeval tv = {0,0};
       FD_ZERO(&rs);
       FD_SET(sock, &rs);
       bytesread = select(sock + 1, &rs, NULL, NULL, &tv);
-      if (bytesread < 0)   /* error */
+      if (bytesread < 0)   /* ENETDOWN, EINVAL, EINTR */
         bytesread = 0; /* == sock closed */
       else if (bytesread != 1) /* not ready */
         bytesread = -1;
-      else
-      #endif
-      bytesread = read(sock, data, toread );
-      
-      #if (CLIENT_OS == OS_HPUX)
-      // HPUX incorrectly returns 0 on a non-blocking socket with
-      // data waiting to be read instead of -1.
-      if (bytesread == 0 && isnonblocking) 
-        bytesread = -1;
-      #endif
+      else /* socket says ready, but that could also mean closed :) */
+      {
+        bytesread = recv(sock, data, toread, 0 );
+        if (bytesread <= 0)
+          bytesread = 0;
+      }
+    }
     #endif /* TLI/XTI or BSD */
     
     if (verbose_level > 1) //DEBUG
       Log("LLGet: read(%d)-> %d\n", toread, bytesread );
 
     if (bytesread == 0) /* sock closed */
-      {
+    {
       sockclosed = 1;
       break;
-      }
+    }
     if (bytesread > 0) /* have data */
-      {
+    {
       totalread += bytesread;
       data += bytesread;
       length -= bytesread;
       if (length == 0) /* done all */
         break;
-      }
+    }
     if (!isnonblocking)
       break;
     if (bytesread < 0)
-      {
+    {
       if (totalread != 0)
         break;
       if (time(&timenow) > stoptime)
         break;
       ++sleptcount;
-      }
+    }
     unsigned long sleepdur = ((unsigned long)(sleptcount+1)) * sleepms;
     if (sleepdur > 1000000UL)
       sleep( sleepdur / 1000000UL );
     if ((sleepdur % 1000000UL) != 0)
       usleep( sleepdur % 1000000UL );
-    } while (length);
+  } while (length);
 
   if (verbose_level > 1) //DEBUG
     Log("LLGet: got %u (requested %u) sockclosed:%s\n", 
@@ -1846,13 +1902,25 @@ int Network::LowLevelConditionSocket( unsigned long cond_type )
   if ( sock == INVALID_SOCKET )
     return -1;
 
-  if ( cond_type == CONDSOCK_BLOCKING_ON ||
+  if ( cond_type == CONDSOCK_KEEPALIVE_ON ||
+       cond_type == CONDSOCK_KEEPALIVE_OFF )
+  {       
+    #if defined(SOL_SOCKET) && defined(SO_KEEPALIVE)
+    int flag = 1;
+    if ( cond_type == CONDSOCK_KEEPALIVE_ON )
+      flag = 0;
+    if (!setsockopt(sock,SOL_SOCKET,SO_KEEPALIVE,(char *)&flag, sizeof(flag)))
+      return 0;
+    #endif
+    return -1;
+  }
+  else if ( cond_type == CONDSOCK_BLOCKING_ON ||
        cond_type == CONDSOCK_BLOCKING_OFF )
-    {
+  {
     #if defined(_TIUSER_)                                    //TLI
       if ( cond_type == CONDSOCK_BLOCKING_ON )
         return ( t_blocking( sock ) );
-      else         /* same as an ioctl call with I_SETDELAY and 1 as args. */
+      else
         return ( t_nonblocking( sock ) );
     #elif (!defined(FIONBIO) && !(defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK))))
       return -1;
@@ -1887,7 +1955,7 @@ int Network::LowLevelConditionSocket( unsigned long cond_type )
       char flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
       return ioctl(sock, FIONBIO, &flagon);    
     #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
-      {
+    {
       int flag, res, arg;
       #if (defined(FNDELAY))
         flag = FNDELAY;
@@ -1906,11 +1974,11 @@ int Network::LowLevelConditionSocket( unsigned long cond_type )
         return -1;
       if ((arg && res) || (!arg && !res))
         return 0;
-      }
+    }
     #else
       return -1;
     #endif
-    }
+  }
   return -1;
 }
 
