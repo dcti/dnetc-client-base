@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.19  1999/01/19 09:43:38  patrick
+//
+// changed confmenu to display LURK network selections only for Win32 and not
+// for OS2
+//
 // Revision 1.18  1999/01/17 13:50:11  cyp
 // buffer thresholds must be volatile.
 //
@@ -81,7 +86,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.18 1999/01/17 13:50:11 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.19 1999/01/19 09:43:38 patrick Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -312,6 +317,7 @@ int Client::Configure( void )
   conf_options[CONF_CONNECTNAME].optionscreen=CONF_MENU_NET;
   conf_options[CONF_LURKMODE].thevariable=&dialup.lurkmode;
   conf_options[CONF_DIALWHENNEEDED].thevariable=&dialup.dialwhenneeded;
+  #if (CLIENT_OS == OS_WIN32)
   conf_options[CONF_CONNECTNAME].thevariable=&dialup.connectionname;
   char *connectnames = dialup.GetEntryList(&conf_options[CONF_CONNECTNAME].choicemax);
   if (conf_options[CONF_CONNECTNAME].choicemax < 1)
@@ -331,6 +337,7 @@ int Client::Configure( void )
     conf_options[CONF_CONNECTNAME].choicemax--;
     }
   #endif
+  #endif // if(CLIENT_OS == ...)
   conf_options[CONF_FWALLHOSTNAME].thevariable=(char *)(&httpproxy[0]);
   conf_options[CONF_FWALLHOSTPORT].thevariable=&httpport;
   struct { char username[128], password[128]; } userpass;
@@ -823,7 +830,7 @@ int Client::Configure( void )
             {
             confopt_killwhitespace(parm);
             }
-          #ifdef LURK
+          #if defined(LURK) && (CLIENT_OS == OS_WIN32)
           if (userselection == CONF_CONNECTNAME) /* wierdo */
             {
             if (*newval_z != 0)
