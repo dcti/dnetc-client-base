@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.6 2004/01/24 05:16:35 lightning Exp $
+# $Id: makefile.vc,v 1.83.2.7 2004/02/26 06:57:18 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -13,7 +13,11 @@ DESSRCPATH = des
 OGRSRCPATH = ogr
 CSCSRCPATH = csc
 PLATSRCPATH = plat/win
-EXECOMPRESSOR = upx.exe -9 -qq --compress-resources=0
+#EXECOMPRESSOR = upx.exe -9 -qq --compress-resources=0
+#EXECOMPRESSOR2 =
+EXECOMPRESSOR = pecompact.exe 
+EXECOMPRESSOR2 = /A /X
+
 
 #HAVE_RC5_64_CORES=1
 HAVE_RC5_72_CORES=1
@@ -384,9 +388,9 @@ $(BASENAME).scr $(BASENAME).com $(BASENAME).exe: $(VC_CHECK) $(PLAT_OBJS) $(COMM
         link $(OPTS_LINK) /SUBSYSTEM:CONSOLE,3.10 /OUT:$(BASENAME).com /NODEFAULTLIB $(OPTS_LIBS) $(CUI_OBJS)
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,3.10 /OUT:$(BASENAME).exe /MAP:$(BASENAME).map $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
 !ifdef EXECOMPRESSOR
-        $(EXECOMPRESSOR) $(BASENAME).scr
-        $(EXECOMPRESSOR) $(BASENAME).com
-        $(EXECOMPRESSOR) $(BASENAME).exe
+        $(EXECOMPRESSOR) $(BASENAME).scr $(EXECOMPRESSOR2)
+        $(EXECOMPRESSOR) $(BASENAME).com $(EXECOMPRESSOR2)
+        $(EXECOMPRESSOR) $(BASENAME).exe $(EXECOMPRESSOR2)
 !endif
 
 # --------------------------------------------
@@ -401,8 +405,8 @@ rebuild: clean all
 
 # --------------------------------------------
 
-makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr docs/readme.1st docs/readme.w32 docs/dnetc.txt docs/CHANGES.txt
+makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr docs/readme.1st docs/readme.win32.html docs/dnetc.txt docs/CHANGES.txt
 	zip dnetcXXX-win32-x86.zip $**
-
+	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win32-x86.zip
 
 
