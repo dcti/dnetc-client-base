@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: gentests72.cpp,v 1.6 2002/09/25 15:21:30 acidblood Exp $
+ * $Id: gentests72.cpp,v 1.7 2002/10/22 15:35:43 acidblood Exp $
 */
 /**************************************************************************/
 /*                                                                        */
@@ -128,11 +128,12 @@ int main ()
          key[7]=Random( ) & 0x000000FF;
          key[8]=Random( ) & 0x000000FF;
 	 switch (testcase) {
-	     case 6: key[1] = 0x00;
-	     case 5 :key[2] = 0x00;
-	     case 4 :key[3] = 0x00;
-	     case 3 :key[4] = 0x00;
-	     case 2 :key[5] = 0x00; break;
+         case 7 :key[1] = 0x00;
+	     case 6 :key[2] = 0x00;
+	     case 5 :key[3] = 0x00;
+	     case 4 :key[4] = 0x00;
+	     case 3 :key[5] = 0x00;
+	     case 2 :key[6] = 0x00; break;
 	 }
          iv[0]=Random( ) & 0xFFFFFFFF;
          iv[1]=Random( ) & 0xFFFFFFFF;

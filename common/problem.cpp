@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.175 2002/10/19 22:13:10 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.176 2002/10/22 15:35:43 acidblood Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1634,6 +1634,7 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
     if (thisprob->priv_data.contestwork.bigcrypto.key.lo < keylo)
     {
       thisprob->priv_data.contestwork.bigcrypto.key.mid++; // wrap occured ?
+      keymid++;
       if (thisprob->priv_data.contestwork.bigcrypto.key.mid == 0)
         thisprob->priv_data.contestwork.bigcrypto.key.hi++;
     }
