@@ -16,10 +16,11 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.32 2000/04/16 19:28:56 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.33 2000/05/01 08:31:56 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
+//#define TRACE
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "pathwork.h"  // GetFullPathForFilename()
@@ -33,11 +34,16 @@ return "@(#)$Id: triggers.cpp,v 1.16.2.32 2000/04/16 19:28:56 cyp Exp $"; }
 #define PAUSEFILE_CHECKTIME_WHENOFF (3*PAUSEFILE_CHECKTIME_WHENON)
 #define EXITFILE_CHECKTIME          (PAUSEFILE_CHECKTIME_WHENOFF)
 
-
-#define TRIGSETBY_SIGNAL   0x1  /*signal or explicit call to raise */ 
-#define TRIGSETBY_FLAGFILE 0x2  /*flag file */
-#define TRIGSETBY_APPACTIV 0x4  /*pause due to a particular app being active*/
-#define TRIGSETBY_CUSTOM   0x8  /* (platform specific) */
+/* note that all flags are single bits */
+#if !defined(TRIGSETBY_SIGNAL) /* defined like this in triggers.h */
+#define TRIGSETBY_SIGNAL       0x01 /* signal or explicit call to raise */ 
+#define TRIGSETBY_FLAGFILE     0x02 /* flag file */
+#define TRIGSETBY_CUSTOM       0x04 /* something other than the above */
+#endif
+/* the following are internal and are exported as TRIGSETBY_CUSTOM */
+#define TRIGPAUSEBY_APPACTIVE  0x10 /* pause due to app being active*/
+#define TRIGPAUSEBY_SRCBATTERY 0x20 /* pause due to running on battery */
+#define TRIGPAUSEBY_CPUTEMP    0x40 /* cpu temperature guard */
 
 struct trigstruct 
 {
@@ -52,6 +58,7 @@ struct trigstruct
 
 static struct 
 {
+  int doingmodes;
   struct trigstruct exittrig;
   struct trigstruct pausetrig;
   struct trigstruct huptrig;
@@ -61,10 +68,17 @@ static struct
   time_t currinifiletime;
   char inifile[128];
   char pauseplistbuffer[128];
-  char *pauseplist[16];
+  const char *pauseplist[16];
   int lastactivep;
-  int doingmodes;
+  int pause_if_no_mains_power;
+  struct
+  {
+    unsigned int lothresh, hithresh; /* in Kelvin */
+    int marking_high; /* we were >= high, waiting for < lowthresh */
+  } cputemp;  
 } trigstatics;
+
+// -----------------------------------------------------------------------
 
 static void __assert_statics(void)
 {
@@ -108,8 +122,8 @@ int ClearPauseRequestTrigger(void)
 { 
   int oldstate = __trig_clear( &trigstatics.pausetrig );
   #if 0
-  if ((trigstatics.pausetrig.trigger & TRIGSETBY_FLAGFILE)!=0 &&
-      trigstatics.pausetrig.flagfile)
+  if ((trigstatics.pausetrig.trigger & TRIGSETBY_FLAGFILE)!=TRIGSETBY_FLAGFILE 
+     && trigstatics.pausetrig.flagfile)
   {
     if (access( trigstatics.pausetrig.flagfile, 0 ) == 0)
     {
@@ -123,7 +137,11 @@ int ClearPauseRequestTrigger(void)
 int CheckExitRequestTriggerNoIO(void) 
 { __assert_statics(); return (trigstatics.exittrig.trigger); } 
 int CheckPauseRequestTriggerNoIO(void) 
-{ __assert_statics(); return (trigstatics.pausetrig.trigger); }
+{ __assert_statics(); 
+  return ((trigstatics.pausetrig.trigger&(TRIGSETBY_SIGNAL|TRIGSETBY_FLAGFILE))
+         |((trigstatics.pausetrig.trigger&
+           (~(TRIGSETBY_SIGNAL|TRIGSETBY_FLAGFILE)))?(TRIGSETBY_CUSTOM):(0)));
+}           
 int CheckRestartRequestTriggerNoIO(void) 
 { __assert_statics(); return (trigstatics.huptrig.trigger); }
 
@@ -143,7 +161,7 @@ void *RegisterPollDrivenBreakCheck( register void (*proc)(void) )
 static void __PollExternalTrigger(struct trigstruct *trig, int undoable)
 {
   __assert_statics(); 
-  if ((undoable || (trig->trigger & TRIGSETBY_FLAGFILE)==0) && trig->flagfile)
+  if ((undoable || (trig->trigger & TRIGSETBY_FLAGFILE)==TRIGSETBY_FLAGFILE) && trig->flagfile)
   {
     time_t now;
     if ((now = time(NULL)) >= trig->nextcheck) 
@@ -205,6 +223,152 @@ static void __CheckIniFileChangeStuff(void)
 }  
 
 // -----------------------------------------------------------------------
+
+static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
+{
+  #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16))
+  /* these two are frequently used 16bit apps that aren't visible (?) 
+     to utilGetPIDList so they are searched for by window class name, 
+     which is a unique identifier so we can find/tack them on to the 
+     end of the pauseplist in __init. (They used to be hardcoded in
+     the days before utilGetPIDList)
+  */   
+  if (winGetVersion() >= 400 && winGetVersion() <2000) /* win9x only */
+  {
+    static const char *app2wclass[] = { "scandisk",  "#ScanDskWDlgClass",
+                                        "scandiskw", "#ScanDskWDlgClass",
+                                        "defrag",    "#MSDefragWClass1" };
+    unsigned int app;
+    if (unmangle_it)
+    {
+      TRACE_OUT((+1,"x1: demangle: '%s'\n",name));
+      for (app = 0; app < (sizeof(app2wclass)/sizeof(app2wclass[0])); app+=2)
+      {
+        if ( strcmp( name, app2wclass[app+1]) == 0)
+        {
+          name = app2wclass[app+0];
+          break;
+        }
+      }
+      TRACE_OUT((-1,"x2: demangle: '%s'\n",name));
+    }
+    else /* this only happens once per InitializeTriggers() */
+    {
+      unsigned int bpos, blen;
+      blen = bpos = strlen( name );
+      while (bpos>0 && name[bpos-1]!='\\' && name[bpos-1]!='/' && name[bpos-1]!=':')
+        bpos--;
+      blen -= bpos;
+      if (blen > 3 && strcmpi(&name[bpos+(blen-4)],".exe") == 0)
+        blen-=4;        /* only need to look for '.exe' since all are .exe */
+      TRACE_OUT((+1,"x1: mangle: '%s', pos=%u,len=%u\n",name,bpos,blen));
+      for (app = 0; app < (sizeof(app2wclass)/sizeof(app2wclass[0])); app += 2)
+      {
+        if ( memicmp( name+bpos, app2wclass[app+0], blen) == 0)
+        {
+          name = app2wclass[app+1];
+          break;
+        }
+      }    
+      TRACE_OUT((-1,"x2: mangle: '%s'\n",name));
+    }                                
+  } /* win9x? */  
+  #endif /* ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) */
+
+  unmangle_it = unmangle_it; /* shaddup compiler */
+  return name;
+}
+
+// -----------------------------------------------------------------------
+
+static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
+{
+  if (trigstatics.pause_if_no_mains_power)
+  {
+    #if (CLIENT_OS == OS_WIN32)
+    static FARPROC getsps = ((FARPROC)-1);
+    if (getsps == ((FARPROC)-1))
+    {
+      HMODULE hKernel = GetModuleHandle("kernel32.dll");
+      if (hKernel)
+        getsps = GetProcAddress( hKernel, "GetSystemPowerStatus");
+      else
+        getsps = (FARPROC)0;
+    }
+    if (getsps)
+    {    
+      SYSTEM_POWER_STATUS sps;
+      sps.ACLineStatus = 255;
+      if ((*((BOOL (WINAPI *)(LPSYSTEM_POWER_STATUS))getsps))(&sps))
+      {
+        TRACE_OUT((0,"sps: ACLineStatus = 0x%02x, BatteryFlag = 0x%02x\n",sps.ACLineStatus,sps.BatteryFlag));
+        if (sps.ACLineStatus == 1) /* we have AC power */
+          return 0; /* no, we are not on battery */
+        if (sps.ACLineStatus == 0) /* on battery power */
+        {
+          if ((sps.BatteryFlag & 8)!=0) /* but charging */
+            return 0; /* return not-on-battery */
+          return 1; /* yes, we are on battery */
+        }
+      }
+    }
+    #endif
+  }  
+  return -1; /* unknown */
+}
+
+// -----------------------------------------------------------------------
+
+static int __CPUTemperaturePoll(void)
+{
+  int lowthresh = (int)trigstatics.cputemp.lothresh;
+  int highthresh = (int)trigstatics.cputemp.hithresh;
+  if (highthresh > lowthresh) /* otherwise values are invalid */
+  {
+    /* read the cpu temp in Kelvin. For multiple cpus, gets one 
+       with highest temp. On error, returns < 0.
+       Note that cputemp is in Kelvin, if your OS returns a value in
+       Farenheit or Celsius, see __init_cputemp for conversion functions.
+    */
+    int cputemp = -1;
+    #if (CLIENT_OS == OS_MACOS)
+      #error Hey Feiri, barblahyaddablahfoo this! :)
+    cputemp = barblahyaddablahfoo();
+    #elif 0 /* other client_os */
+    cputemp = fooyaddablahblahbar();
+    #endif
+    if (cputemp < 0) /* error */
+      ; 
+    else if (cputemp >= highthresh)
+      trigstatics.cputemp.marking_high = 1;
+    else if (cputemp < lowthresh)
+      trigstatics.cputemp.marking_high = 0;
+  }
+  return trigstatics.cputemp.marking_high;
+}
+
+// -----------------------------------------------------------------------
+
+static void __PollDrivenBreakCheck( void )
+{
+  #if (CLIENT_OS == OS_RISCOS)
+  if (_kernel_escape_seen())
+      RaiseExitRequestTrigger();
+  #elif (CLIENT_OS == OS_AMIGAOS)
+  if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
+    RaiseExitRequestTrigger();
+  #elif (CLIENT_OS == OS_NETWARE)
+    nwCliCheckForUserBreak(); //in nwccons.cpp
+  #elif (CLIENT_OS == OS_WIN32)
+    w32ConOut("");    /* benign call to keep ^C handling alive */
+  #elif (CLIENT_OS == OS_DOS)
+    _asm mov ah,0x0b  /* benign dos call (kbhit()) */
+    _asm int 0x21     /* to keep int23h (^C) handling alive */
+  #endif
+  return;  
+}      
+
+// =======================================================================
 
 int CheckExitRequestTrigger(void) 
 {
@@ -275,54 +439,76 @@ int CheckPauseRequestTrigger(void)
 
     if (trigstatics.pauseplist[0] != NULL)
     {
-      int nowcleared = -1;
-      char **pp = &trigstatics.pauseplist[0];
+      int index, nowcleared = -1;
+      const char **pp = &trigstatics.pauseplist[0];
 
-      // the use of "nowcleared" is a hack for the sake of optimization
-      // so that we can sequence the code for the paused->unpause and
-      // the unpause->pause transitions and still avoid an extra call
-      // to utilGetPIDList() if we know the app is definitely not running.
-
-      if ((trigstatics.pausetrig.trigger & TRIGSETBY_APPACTIV) != 0)
+      /* the use of "nowcleared" is a hack for the sake of optimization
+         so that we can sequence the code for the paused->unpause and
+         the unpause->pause transitions and still avoid an extra call
+         to utilGetPIDList() if we know the app is definitely not running.
+      */
+      if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_APPACTIVE) != 0)
       {
-        int index = trigstatics.lastactivep;
+        index = trigstatics.lastactivep;
+        TRACE_OUT((+1,"y1: index=%d,'%s'\n", index, pp[index]));
         if (utilGetPIDList( pp[index], NULL, 0 ) <= 0)
         {
-          // Triggered program is no longer running.
+          /* program is no longer running. */
           Log("%s... ('%s' inactive)\n",
               (((trigstatics.pausetrig.laststate 
-                   & ~TRIGSETBY_APPACTIV)!=0)?("Pause level lowered"):
-              ("Running again after pause")), pp[index] );
-          trigstatics.pausetrig.laststate &= ~TRIGSETBY_APPACTIV;
-          trigstatics.pausetrig.trigger &= ~TRIGSETBY_APPACTIV;
+                   & ~TRIGPAUSEBY_APPACTIVE)!=0)?("Pause level lowered"):
+              ("Running again after pause")), 
+              __mangle_pauseapp_name(pp[index],1 /* unmangle */) );
+          trigstatics.pausetrig.laststate &= ~TRIGPAUSEBY_APPACTIVE;
+          trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_APPACTIVE;
           trigstatics.lastactivep = 0;
           nowcleared = index;
         }
+        TRACE_OUT((-1,"y2: nowcleared=%d\n", nowcleared));
       }
-      if ((trigstatics.pausetrig.trigger & TRIGSETBY_APPACTIV) == 0)
+      if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_APPACTIVE) == 0)
       {
-        int index = 0;
+        index = 0;
         while (pp[index] != NULL)
         {
+          TRACE_OUT((+1,"z1: %d, '%s'\n",index, pp[index]));
           if (index == nowcleared)
           {
-            // if this matched, then we came from the transition
-            // above and know that this is definitely not running.
+            /* if this matched, then we came from the transition
+               above and know that this is definitely not running.
+            */   
           }
           else if (utilGetPIDList( pp[index], NULL, 0 ) > 0)
           {
-            // Triggered program is now running.
-            trigstatics.pausetrig.trigger |= TRIGSETBY_APPACTIV;
+            /* Triggered program is now running. */
+            trigstatics.pausetrig.trigger |= TRIGPAUSEBY_APPACTIVE;
             trigstatics.lastactivep = index;
-            app_now_active = pp[index];
+            app_now_active = __mangle_pauseapp_name(pp[index],1 /* unmangle */);
             break;
           }
+          TRACE_OUT((-1,"z2\n"));
           index++;
         }
       }
     }
-    
+
+    {
+      int isbat = __IsRunningOnBattery(); /* <0=unknown/err, 0=no, >0=yes */
+      if (isbat > 0)
+        trigstatics.pausetrig.trigger |= TRIGPAUSEBY_SRCBATTERY;
+      else if (isbat == 0)
+        trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_SRCBATTERY;  
+      /* otherwise error/unknown, so don't change anything */  
+    }    
+    if (__CPUTemperaturePoll())
+      trigstatics.pausetrig.trigger |= TRIGPAUSEBY_CPUTEMP;
+    else
+      trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_CPUTEMP;  
+
     __PollExternalTrigger( &trigstatics.pausetrig, 1 );
+    
+    /* +++ */
+    
     if (trigstatics.pausetrig.laststate != trigstatics.pausetrig.trigger)
     {
       if ((trigstatics.pausetrig.trigger & TRIGSETBY_SIGNAL)!=0 &&
@@ -371,48 +557,60 @@ int CheckPauseRequestTrigger(void)
           ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
           ("Running again after pause")), custom_now_inactive );
       }
-      if ((trigstatics.pausetrig.trigger & TRIGSETBY_APPACTIV)!=0 &&
-          (trigstatics.pausetrig.laststate & TRIGSETBY_APPACTIV)==0)
+      if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_APPACTIVE)!=0 &&
+          (trigstatics.pausetrig.laststate & TRIGPAUSEBY_APPACTIVE)==0)
       {
         Log("Pause%sd... ('%s' active)\n",
              ((trigstatics.pausetrig.laststate)?(" level raise"):("")),
              ((*app_now_active)?(app_now_active):("process")) );
-        trigstatics.pausetrig.laststate |= TRIGSETBY_APPACTIV;
+        trigstatics.pausetrig.laststate |= TRIGPAUSEBY_APPACTIVE;
       }
-      else if ((trigstatics.pausetrig.trigger & TRIGSETBY_APPACTIV)==0 &&
-          (trigstatics.pausetrig.laststate & TRIGSETBY_APPACTIV)!=0)
+      else if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_APPACTIVE)==0 &&
+          (trigstatics.pausetrig.laststate & TRIGPAUSEBY_APPACTIVE)!=0)
       {
-        trigstatics.pausetrig.laststate &= ~TRIGSETBY_APPACTIV;
+        trigstatics.pausetrig.laststate &= ~TRIGPAUSEBY_APPACTIVE;
+        /* message was already printed above
         //Log("%s... %s\n",
         //  ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
         //  ("Running again after pause")), "(process no longer active)" );
+        */
+      }
+      if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_SRCBATTERY)!=0 &&
+          (trigstatics.pausetrig.laststate & TRIGPAUSEBY_SRCBATTERY)==0)
+      {
+        Log("Pause%sd... (No mains power)\n",
+             ((trigstatics.pausetrig.laststate)?(" level raise"):("")) );
+        trigstatics.pausetrig.laststate |= TRIGPAUSEBY_SRCBATTERY;
+      }
+      else if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_SRCBATTERY)==0 &&
+          (trigstatics.pausetrig.laststate & TRIGPAUSEBY_SRCBATTERY)!=0)
+      {          
+        trigstatics.pausetrig.laststate &= ~TRIGPAUSEBY_SRCBATTERY;
+        Log("%s... (Mains power restored)\n",
+          ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
+          ("Running again after pause")) );
+      }
+      if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_CPUTEMP)!=0 &&
+          (trigstatics.pausetrig.laststate & TRIGPAUSEBY_CPUTEMP)==0)
+      {
+        Log("Pause%sd... (CPU temperature exceeds %uK)\n",
+             ((trigstatics.pausetrig.laststate)?(" level raise"):("")),
+               trigstatics.cputemp.hithresh );
+        trigstatics.pausetrig.laststate |= TRIGPAUSEBY_CPUTEMP;
+      }
+      else if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_CPUTEMP)==0 &&
+          (trigstatics.pausetrig.laststate & TRIGPAUSEBY_CPUTEMP)!=0)
+      {          
+        trigstatics.pausetrig.laststate &= ~TRIGPAUSEBY_CPUTEMP;
+        Log("%s... (CPU temperature below %uK)\n",
+          ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
+          ("Running again after pause")), trigstatics.cputemp.lothresh );
       }
     }
   }
   --trigstatics.pausetrig.incheck;
-  return( trigstatics.pausetrig.trigger );
+  return CheckPauseRequestTriggerNoIO(); /* return public mask */
 }   
-
-// =======================================================================
-
-void __PollDrivenBreakCheck( void ) /* not static to avoid compiler warnings */
-{
-  #if (CLIENT_OS == OS_RISCOS)
-  if (_kernel_escape_seen())
-      RaiseExitRequestTrigger();
-  #elif (CLIENT_OS == OS_AMIGAOS)
-  if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
-    RaiseExitRequestTrigger();
-  #elif (CLIENT_OS == OS_NETWARE)
-    nwCliCheckForUserBreak(); //in nwccons.cpp
-  #elif (CLIENT_OS == OS_WIN32)
-    w32ConOut("");    /* benign call to keep ^C handling alive */
-  #elif (CLIENT_OS == OS_DOS)
-    _asm mov ah,0x0b  /* benign dos call (kbhit()) */
-    _asm int 0x21     /* to keep int23h (^C) handling alive */
-  #endif
-  return;  
-}      
 
 // =======================================================================
 
@@ -483,6 +681,8 @@ static void (*SETSIGNAL(int signo, void (*proc)(int)))(int)
 #else
 #define SETSIGNAL signal
 #endif
+
+// -----------------------------------------------------------------------
 
 extern "C" void CliSignalHandler( int sig )
 {
@@ -572,18 +772,6 @@ static void __init_signal_handlers( int doingmodes )
 
 // =======================================================================
 
-int DeinitializeTriggers(void)
-{
-  int huptrig;
-  __assert_statics(); 
-  huptrig = trigstatics.huptrig.trigger;
-  /* clear everything to ensure we don't use IO after DeInit */
-  memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
-  return huptrig;
-}  
-
-// -----------------------------------------------------------------------
-
 static const char *_init_trigfile(const char *fn, char *buffer, unsigned int bufsize )
 {
   if (buffer && bufsize)
@@ -621,17 +809,101 @@ static const char *_init_trigfile(const char *fn, char *buffer, unsigned int buf
   return (const char *)0;
 }
 
+/* ---------------------------------------------------------------- */
+
+static void _init_cputemp( const char *p ) /* cpu temperature string */
+{
+  int K[2], which;
+
+  trigstatics.cputemp.hithresh = trigstatics.cputemp.lothresh = 0;
+  trigstatics.cputemp.marking_high = 0;
+
+  K[0] = K[1] = -1;
+  for (which=0;which<2;which++)
+  {
+    int val = 0, len = 0, neg = 0;
+    while (*p && isspace(*p))
+      p++;
+    if (!*p)  
+      break;
+    if (*p == '-' || *p == '+')
+      neg = *p++;
+    while (isdigit(*p))
+    {
+      val = val*10;
+      val += (*p - '0'); /* this is safe in ebcidic as well */
+      len++;
+      p++;
+    }
+    if (len == 0) /* bad number */
+      return;
+    if (*p == '.') /* hmm, decimal pt */
+    {
+      p++;
+      if (!isdigit(*p))
+        return;
+      if (*p >= '5')
+        val++;  
+      while (isdigit(*p))  
+        p++;
+    }  
+    if (neg)
+      val = -val;
+    while (*p && isspace(*p))
+      p++;  
+    if (*p=='F' || *p=='f' || *p=='R' || *p=='r') /* farenheit or rankine */
+    {
+      if (*p == 'R' || *p == 'r') /* convert rankine to farenheit first */
+        val -= 459; /* 459.67 */
+      val = (((val - 32) * 5)/9) + 273/*.15*/;  /* F -> K */
+      p++;
+    }
+    else if (*p == 'C' || *p == 'c') /* celcius/centigrade */    
+    {   
+      val += 273/*.15*/; /* C -> K */
+      p++;
+    }
+    else if (*p == 'K' || *p == 'k') /* Kelvin */
+    {
+      p++; 
+    }
+    if (val < 0) /* below absolute zero, uh, huh */
+      return;
+    K[which] = val;
+    while (*p && isspace(*p))
+      p++;
+    if (*p != ':')
+      break;
+    p++;
+  }  
+  if (K[0] > 1) /* wierd but possible given that we allow fractions */
+  {
+    if (K[1] < 0) /* only single temp provided */
+    {
+      K[1] = K[0]; /* then make that the high water mark */
+      K[0] -= (K[0]/10); /* low water mark is 90% of high water mark */
+    }
+    TRACE_OUT((0,"cputemp: %dK:%dK\n", K[0], K[1]));
+
+    trigstatics.cputemp.lothresh = K[0];
+    trigstatics.cputemp.hithresh = K[1];
+  }
+  return;
+}
+
+/* ---------------------------------------------------------------- */
+
 static void _init_pauseplist( const char *plist )
 {
   const char *p = plist;
-  unsigned int wpos = 0, index = 0;
+  unsigned int wpos = 0, index = 0, len;
   while (*p)
   {
     while (*p && (isspace(*p) || *p == '|'))
       p++;
     if (*p)
     {
-      unsigned int len = 0;
+      len = 0;
       plist = p;
       while (*p && *p != '|')
       {
@@ -642,14 +914,15 @@ static void _init_pauseplist( const char *plist )
         len--;
       if (len)
       {
+        const char *appname = &(trigstatics.pauseplistbuffer[wpos]);
         if ((wpos + len) >= (sizeof(trigstatics.pauseplistbuffer) - 2))
         {
           break;
         }
-        trigstatics.pauseplist[index++]=&(trigstatics.pauseplistbuffer[wpos]);
         memcpy( &(trigstatics.pauseplistbuffer[wpos]), plist, len );
         wpos += len;
         trigstatics.pauseplistbuffer[wpos++] = '\0';
+        trigstatics.pauseplist[index++] = __mangle_pauseapp_name(appname,0);
         if (index == ((sizeof(trigstatics.pauseplist)/
                        sizeof(trigstatics.pauseplist[0]))-1) )
         {
@@ -658,14 +931,50 @@ static void _init_pauseplist( const char *plist )
       }
     }
   }
-  trigstatics.pauseplist[index] = (char *)0;
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  /* 
+  sorry about this piece of OS-specific uglyness. These were
+  pause triggers before the days of utilGetPidlist(), and are now 
+  tacked on at the end of the guard list for compatibility's sake. 
+  Yes, they really are needed - I've seen people curse these two
+  till they were blue in the face, not realizing what the heck it 
+  was that so crippled their machines. Yeah, yeah. win9x stinks. :)
+  The mangling done above will already have given us unique identifiers,
+  so we at least don't have to parse the whole lot again.
+  */
+  if (winGetVersion() >= 400 && winGetVersion() < 2000) /* win9x only */
+  {
+    for (len = 0; len < 2; len++)
+    {
+      const char *clist;
+      if (index == ((sizeof(trigstatics.pauseplist)/
+                   sizeof(trigstatics.pauseplist[0]))-1) )
+        break;
+      clist = __mangle_pauseapp_name( ((len==0)?("defrag"):("scandisk")),0);
+      for (wpos = 0; wpos < index; wpos++)
+      {
+        if ( strcmp( trigstatics.pauseplist[wpos], clist ) == 0 )
+        {
+          clist = (const char *)0;
+          break;
+        }
+      }
+      if (clist)
+        trigstatics.pauseplist[index++] = clist;
+    }
+  }
+  #endif
+  trigstatics.pauseplist[index] = (const char *)0;
 }
 
+/* ---------------------------------------------------------------- */
 
 int InitializeTriggers(int doingmodes,
                        const char *exitfile, const char *pausefile,
                        const char *pauseplist,
-                       int restartoninichange, const char *inifile )
+                       int restartoninichange, const char *inifile,
+                       int watchcputempthresh, const char *cputempthresh,
+                       int pauseifnomainspower )
 {
   __assert_statics(); 
   memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
@@ -682,15 +991,31 @@ int InitializeTriggers(int doingmodes,
                  trigstatics.exitfilebuf, sizeof(trigstatics.exitfilebuf) );
     trigstatics.pausetrig.flagfile = _init_trigfile(pausefile, 
                  trigstatics.pausefilebuf, sizeof(trigstatics.pausefilebuf) );
-    if (restartoninichange)
+    if (restartoninichange && inifile)
       _init_trigfile(inifile,trigstatics.inifile,sizeof(trigstatics.inifile));
     _init_pauseplist( pauseplist );
+    if (watchcputempthresh && cputempthresh)
+      _init_cputemp( cputempthresh ); /* cpu temp string */
+    trigstatics.pause_if_no_mains_power = pauseifnomainspower;
+    if (doingmodes) /* dummy if, always false */
+      __PollDrivenBreakCheck(); /* shaddup compiler */
   }
   return 0;
 }  
 
+/* ---------------------------------------------------------------- */
 
-// -----------------------------------------------------------------------
+int DeinitializeTriggers(void)
+{
+  int huptrig;
+  __assert_statics(); 
+  huptrig = trigstatics.huptrig.trigger;
+  /* clear everything to ensure we don't use IO after DeInit */
+  memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
+  return huptrig;
+}  
+
+/* ---------------------------------------------------------------- */
 
 #if (CLIENT_OS == OS_FREEBSD)
 #include <sys/mman.h>

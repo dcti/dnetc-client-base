@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __TRIGGERS_H__
-#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.8 2000/04/16 19:28:56 cyp Exp $"
+#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.9 2000/05/01 08:31:56 cyp Exp $"
 
 #if defined(__unix__) && !defined(__EMX__)
   /* These constants define symbolically the signal names used by the
@@ -29,7 +29,9 @@
 //initialize... first call initializes the signal handler. args can be NULL
 extern int InitializeTriggers(int doingmodes, const char *exitfile, 
                               const char *pausefile, const char *pauseplist,
-                              int restartoninichange, const char *inifile );
+                              int restartoninichange, const char *inifile,
+                              int watchcputempthresh, const char *cputempthresh,
+                              int pauseifnomainspower );
 //deinitialize...
 extern int DeinitializeTriggers(void);
 
@@ -44,6 +46,11 @@ extern int RaisePauseRequestTrigger(void);
 //clear all all pause flags. Also note that it is the only clearable
 //trigger. (the restart trigger can only be cleared by restarting).
 extern int ClearPauseRequestTrigger(void);
+
+/* Check...() functions return a combination of one or more of these */
+#define TRIGSETBY_SIGNAL       0x01 /* signal or explicit call to raise */ 
+#define TRIGSETBY_FLAGFILE     0x02 /* flag file */
+#define TRIGSETBY_CUSTOM       0x04 /* something other than the above */
 
 //check/refresh the various triggers, poll external semaphore files or 
 //platform-specific callouts as appropriate. Print messages as appropriate.
