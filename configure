@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.113 2003/12/13 12:57:59 kakace Exp $
+# @(#)$Id: configure,v 1.288.2.114 2004/01/06 13:52:41 kakace Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -161,9 +161,6 @@ add_sources() # $1=os, $2=arch, $3=custom
     COMMON_SRCS="plat/os2/os2inst.cpp ${COMMON_SRCS}"
   elif [ "$1" = "macosx" ]; then
     COMMON_SRCS="plat/macosx/c_install.cpp ${COMMON_SRCS}"
-    if [ "$2" = "ppc" ]; then     # Apple-specific
-      COMMON_SRCS="plat/macosx/temperature.cpp ${COMMON_SRCS}"
-    fi
   elif [ "$1" = "digital-unix" ]; then
     COMMON_SRCS="plat/dunix/temperature.c \
                  ${COMMON_SRCS}"
@@ -427,11 +424,6 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
                                       output/ogr030.o output/ogr040.o \
                                       output/ogr060.o"
-      if [ "$HAVE_OGR_P2" = "1" ]; then
-      TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr_p2_000.o output/ogr_p2_020.o \
-                                      output/ogr_p2_030.o output/ogr_p2_040.o \
-                                      output/ogr_p2_060.o"
-      fi #HAVE_OGR_P2
       TARGET_OGR_MULTI="68k"
     fi # HAVE_OGR
     if [ "$HAVE_DES" = "1" ]; then
@@ -606,7 +598,6 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_72
     if [ "$HAVE_OGR" = 1 ]; then
-      HAVE_OGR_P2="0"             # Doesn't work with asm cores
       if [ "$1" = "riscos" ]; then
         if [ "$3" = "gccsdk" ]; then
           TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gccsdk.s \
@@ -3255,8 +3246,7 @@ if [ "$TARGET_OGR_MULTI" = "68k" ]; then
     echo "	\$(CC) \$(CCFLAGS) -DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext} \\" >>Makefile
 
     if [ "$HAVE_OGR_P2" = "1"]; then
-      echo "output/ogr_p2_${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
-      echo "	\$(CC) \$(CCFLAGS) -DOGR_P2_GET_DISPATCH_TABLE_FXN=ogr_p2_get_dispatch_table_${targetext} \\" >>Makefile
+      echo "	    -DOGR_P2_GET_DISPATCH_TABLE_FXN=ogr_p2_get_dispatch_table_${targetext} \\" >>Makefile
     fi
 
     # fake 68060 optimisation with gcc < 2.95 - easiest way for now
