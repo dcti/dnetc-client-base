@@ -11,9 +11,9 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.23 1999/04/05 17:56:52 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.24 1999/04/09 16:54:02 cyp Exp $"; }
 
-#include "client.h"   //client class
+#include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
 #include "triggers.h" //CheckExitRequestTrigger() [used by bench stuff]
 #include "logstuff.h" //LogScreen() [used by update/fetch/flush stuff]
@@ -124,8 +124,8 @@ int ModeReqRun(Client *client)
     while ((modereq.reqbits & MODEREQ_ALL)!=0)
     {
       unsigned int bits = modereq.reqbits;
-    
-      if ((bits & (MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5)) != 0)
+      if ((bits & (MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5 | 
+                                           MODEREQ_BENCHMARK_ALL)) != 0)
       {
         if (client)
         {
@@ -133,15 +133,29 @@ int ModeReqRun(Client *client)
           u32 benchsize = (1L<<23); /* long bench: 8388608 instead of 100000000 */
           if ((bits & (MODEREQ_BENCHMARK_QUICK))!=0)
             benchsize = (1L<<20); /* short bench: 1048576 instead of 10000000 */
-          if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_RC5)!=0) 
-            Benchmark( 0, benchsize, client->cputype, NULL );
-          if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0) 
-            Benchmark( 1, benchsize, client->cputype, NULL );
+	  if ((bits & MODEREQ_BENCHMARK_ALL)!=0)
+	  {
+	    unsigned int contest;
+	    for (contest = 0; contest < CONTEST_COUNT; contest++)
+	    {
+	      if (CheckExitRequestTriggerNoIO())
+	        break;
+	      Benchmark( contest, benchsize, client->cputype, NULL );
+	    }
+	  }
+	  else
+	  {
+            if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_RC5)!=0) 
+              Benchmark( 0, benchsize, client->cputype, NULL );
+            if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0) 
+              Benchmark( 1, benchsize, client->cputype, NULL );
+	  }
         }
         retval |= (modereq.reqbits & (MODEREQ_BENCHMARK_DES | 
-                 MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_QUICK ));
-        modereq.reqbits &= ~(MODEREQ_BENCHMARK_DES | 
-               MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_QUICK );
+                 MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_ALL | 
+		 MODEREQ_BENCHMARK_QUICK ));
+        modereq.reqbits &= ~(MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5 | 
+	         MODEREQ_BENCHMARK_ALL | MODEREQ_BENCHMARK_QUICK );
       }
       if ((bits & MODEREQ_CMDLINE_HELP) != 0)
       {
@@ -152,30 +166,26 @@ int ModeReqRun(Client *client)
       }
       if ((bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART)) != 0)
       {
-        // configure is awkward with the GUI at the moment
         Client *newclient = new Client;
         if (!newclient)
           LogScreen("Unable to configure. (Insufficient memory)");
         else
         {
           int i;
-          int nodestroy = 0;
           for (i=0;client->inifilename[i];i++)
             newclient->inifilename[i]=client->inifilename[i];
           newclient->inifilename[i]=0;  
-          if ( ReadConfig(newclient) ) /* ini missing */
+          if ( ReadConfig(newclient) == 0 ) /* ini not missing */
           {
-            delete newclient;
-            newclient = client;
-            nodestroy = 1;
+            if ( newclient->Configure() == 1 )
+	    {
+              WriteConfig(newclient,1); //full new build
+              if ((bits & MODEREQ_CONFRESTART) != 0)
+                restart = 1;
+              retval |= (bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART));
+	    }
           }
-          if ( newclient->Configure() == 1 )
-            WriteConfig(newclient,1); //full new build
-          if (!nodestroy)
-            delete newclient;
-          if ((bits & MODEREQ_CONFRESTART) != 0)
-            restart = 1;
-          retval |= (bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART));
+          delete newclient;
         }
         modereq.reqbits &= ~(MODEREQ_CONFIG | MODEREQ_CONFRESTART);
       }
@@ -233,9 +243,13 @@ int ModeReqRun(Client *client)
       {
         if (client)
         {
+	  unsigned int contestid = 0;
           client->SelectCore( 0 /* not quietly */ );
-          if ( SelfTest(0, client->cputype ) > 0 ) 
-            SelfTest(1, client->cputype );
+	  for (contestid = 0; contestid < CONTEST_COUNT; contestid++ ) 
+	  {
+	    if ( SelfTest(contestid, client->cputype ) < 0 ) 
+	      break;
+	  }
         }
         retval |= (MODEREQ_TEST);
         modereq.reqbits &= ~(MODEREQ_TEST);
