@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.27  1999/01/13 10:46:15  cramer
+// Cosmetic update (comments and indenting)
+//
 // Revision 1.26  1999/01/08 02:56:26  michmarc
 // Fix a trailing ; typo; plus change va_arg for those platforms
 // (like Alpha/NT) where va_arg is a structure, not a pointer
@@ -99,7 +102,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.26 1999/01/08 02:56:26 michmarc Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.27 1999/01/13 10:46:15 cramer Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -177,7 +180,7 @@ static struct
   unsigned int logfilestarted; // 1 after the first logfile write
 
   char stdoutisatty;         //log screen can handle lines not ending in '\n'
-  char stableflag;           //last log screen didn't end in '\n'
+  char stableflag;           //last log screen did end in '\n'
   char lastwasperc;          //last log screen was a percentbar
   
 } logstatics = { 
@@ -489,6 +492,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
         msglen++;
         memmove( msgbuffer+1, msgbuffer, msglen );
         msgbuffer[0] = '\n';
+	// CRAMER - should this even be here? (I think not)
         logstatics.stableflag = 1;
         }
       }  

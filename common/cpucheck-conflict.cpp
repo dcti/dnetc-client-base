@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.58  1999/01/13 10:46:15  cramer
+// Cosmetic update (comments and indenting)
+//
 // Revision 1.57  1999/01/12 16:36:13  cyp
 // Made failed cpu count detection message sound, uh, less severe.
 //
@@ -199,7 +202,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.57 1999/01/12 16:36:13 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.58 1999/01/13 10:46:15 cramer Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -265,7 +268,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         cpucount = -1;
       }
     #elif (CLIENT_OS == OS_LINUX)
-      { // cramer -- yes, I'm cheating, but it's the only way...
+      { // CRAMER -- Yes, this is cheating, but it's the only way...
       char buffer[256];
       cpucount = 0;
       if (FILE *cpuinfo = fopen("/proc/cpuinfo", "r"))
@@ -314,14 +317,14 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       {
       cpucount = riscos_count_cpus();
       }
-	  #elif (CLIENT_OS == OS_QNX)
+    #elif (CLIENT_OS == OS_QNX)
       {
       cpucount = 1;
       }
-	  #elif (CLIENT_OS == OS_MACOS)
- 	    {
-		  cpucount = 1;
-  	  if (haveMP) 
+    #elif (CLIENT_OS == OS_MACOS)
+      {
+      cpucount = 1;
+      if (haveMP) 
         cpucount = MPProcessors();
       }
     #endif
