@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.70 1999/12/08 02:49:11 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.71 1999/12/11 11:39:37 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -171,12 +171,14 @@ CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp \
                csc/csc-6b-i.cpp csc/csc-6b.cpp"
 #if adding CSC, also -DHAVE_CSC_CORES
 
+#if adding x86 asm CSC, also -DMMX_CSC
 CSC_ASM_SRCS="csc/x86/convcsc.asm \
 		csc/x86/csc-1k-i.asm \
 		csc/x86/csc-1k.asm \
 		csc/x86/csc-6b-i.asm \
 		csc/x86/csc-6b.asm \
-		csc/x86/csc-comm.asm"
+		csc/x86/csc-comm.asm \
+                csc/x86/csc-mmx.asm"
 
 #
 # Define characters to delete to form a safe name
@@ -1119,7 +1121,7 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DLURK \
+			-DMULTITHREAD -DLURK -DMMX_CSC \
 			-DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
 	TARGET_ADDSRCS="common/lurk.cpp \
@@ -1139,7 +1141,7 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DLURK \
+			-DMULTITHREAD -DLURK -DMMX_CSC \
 			-DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp \
@@ -1159,7 +1161,7 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DSMC -DLURK \
+			-DMULTITHREAD -DSMC -DLURK -DMMX_CSC \
 			-DHAVE_CSC_CORES -DHAVE_DES_CORES"  #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
@@ -1179,7 +1181,7 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-D__showids__ -DSMC -DLURK \
+			-D__showids__ -DSMC -DLURK -DMMX_CSC \
 			-DHAVE_CSC_CORES -DHAVE_DES_CORES"  #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
@@ -1199,7 +1201,7 @@ case "$1" in
     *x86-linux-debug)	              # debug
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc -g"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
 			-D__showids__ -DSMC -DMULTITHREAD -DLURK \
 			-DHAVE_CSC_CORES -DHAVE_DES_CORES"  #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-Xlinker -omagic"
@@ -1240,7 +1242,7 @@ case "$1" in
     *x86-freebsd)             # [dbaker] aout
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DLURK \
-			-DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
+			-DHAVE_CSC_CORES -DHAVE_DES_CORES -DMMX_CSC" #-DHAVE_OGR_CORES
         TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS \
 	                $KWAN_SLICE_SRCS4 "  #$OGR_ANSI_SRCS
@@ -1257,7 +1259,7 @@ case "$1" in
     *x86-freebsd-elf)       # [dbaker] elf
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DLURK \
-			-DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
+			-DHAVE_CSC_CORES -DHAVE_DES_CORES -DMMX_CSC" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS \
 	                $KWAN_SLICE_SRCS4 " #$OGR_ANSI_SRCS
@@ -1275,7 +1277,7 @@ case "$1" in
     *x86-netbsd)
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_TARBALL="netbsd-i386"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
 	                -DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
@@ -1292,7 +1294,7 @@ case "$1" in
 
     *x86-openbsd)
 	TARGET_AS="g++ -c"
-	TARGET_CCFLAGS="$OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 \
+	TARGET_CCFLAGS="$OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
 	                -DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
@@ -1309,7 +1311,7 @@ case "$1" in
 
     *x86-bsdi)                        # snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -DKWAN $OPTS_DES_MMX -DMMX_RC5 \
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -DKWAN $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
 	                -DHAVE_CSC_CORES -DHAVE_DES_CORES"  #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
@@ -1324,7 +1326,7 @@ case "$1" in
 
     *x86-bsdi4)                       # BSD/OS 4.0 with ELF format -snake
 	TARGET_AS="g++ -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
 	                -DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
