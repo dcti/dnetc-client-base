@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.22 2000/01/26 05:38:59 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.23 2000/02/08 21:58:19 remi Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -48,7 +48,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
      #undef MAX_MEM_REQUIRED_BY_CORE
      #define MAX_MEM_REQUIRED_BY_CORE OGR_PROBLEM_SIZE
   #endif
-  // CSC membuffer should be aligned to a 8-byte boundary
+  // OGR membuffer should be aligned to a 8-byte boundary
   // (essential for non-x86 CPUs)
   #if CORE_MEM_ALIGNMENT < 3
      #undef CORE_MEM_ALIGNMENT
