@@ -1,5 +1,7 @@
 Dual mode (RC5DES) clients
 --------------------------
+v2.7100.418 98.08.19 RC5 MMX cores are now in place. 50% speed
+                     improvement on Pentium MMX processors.
 v2.7100.418 98.08.19 Complete rewrite of logging code; blocks now
                      displayed in 2^28 increments, other changes.
 v2.7100.418 98.08.19 Problem with client rewriting .ini file while in
