@@ -6,7 +6,7 @@
  * This resource file is shared by the client and screensaver.
  * (the client can also run as a screensaver)
  *
- * Revision $Id: w32cons.rc,v 1.3.2.2 2003/09/21 09:32:13 jlawson Exp $
+ * Revision $Id: w32cons.rc,v 1.3.2.3 2004/03/28 06:14:10 jlawson Exp $
 */
 
 #define DNETC_EXE_ICO "plat\\win\\w32cons.ico" //dnet2.ico,w32cons.ico
@@ -74,10 +74,10 @@ SSCONFIG_SSICON ICON LOADONCALL MOVEABLE DISCARDABLE DNETC_SCR_ICO
                        VALUE "FileVersion", SSVI_VERSTRING "\0"
                        VALUE "InternalName", "dnetc\0"
                        VALUE "LegalCopyright", "Copyright \251 1997-2003. All Rights Reserved.\0"
-                       //VALUE "LegalTrademarks", "distributed.net is a trademark of Distributed Computing Technologies, Inc.\0"
                        VALUE "OriginalFilename", "dnetc.exe\0"
                        VALUE "ProductName", SSVI_FILEDESCR "\0"
                        VALUE "ProductVersion", SSVI_VERSTRING "\0"
+                       VALUE "Comments", "This is not a malicious program, trojan-horse, virus, or worm. It should have only been explicitly installed by you or your system administrator. If this program has been unexpectedly found on this computer, then please visit http://www.distributed.net/trojans.php for details."
                     END
                  END
                  BLOCK "VarFileInfo"
