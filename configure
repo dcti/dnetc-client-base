@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.96 2000/01/16 20:59:33 ctate Exp $
+# @(#)$Id: configure,v 1.222.2.97 2000/01/18 19:59:24 ctate Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -99,6 +99,11 @@ XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
 
 RC5PPC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.s \
 	     rc5/ppc/crunch_allitnil_552.ppc.s \
+	     rc5/ppc/rc5_unit_func_lintilla.cpp \
+	     rc5/ppc/rc5_unit_func_allitnil.cpp"
+
+RC5PPC_MWCC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.c \
+	     rc5/ppc/crunch_allitnil_552.ppc.c \
 	     rc5/ppc/rc5_unit_func_lintilla.cpp \
 	     rc5/ppc/rc5_unit_func_allitnil.cpp"
 
@@ -225,6 +230,7 @@ OPTS_GCC295="-fomit-frame-pointer -fno-inline-functions \
 OPTS_XLC3="-O3 -qansialias -qlibansi"
 OPTS_EGCS="-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer $OPTS_WARN"
 #OPTS_EGCS="-O2 -fno-exceptions -fomit-frame-pointer $OPTS_WARN"
+OPTS_MWCC="-O7 -lang cplus"
 
 #
 # Common platform compiler options
@@ -323,6 +329,9 @@ OPTS_XLC_POWER2="$OPTS_XLC -qarch=pwr2 -qtune=pwr2 -D_AIX -D_ARCH_PWR2"
 
 OPTS_XLC3_PPC601="$OPTS_XLC3 -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
 OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
+
+OPTS_MWCC_PPC603="$OPTS_MWCC -proc 603e"
+OPTS_MWCC_PPC604="$OPTS_MWCC -proc 604e"
 
 #-- X86
 
@@ -1521,15 +1530,35 @@ case "$1" in
     *x86-beos)
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -fno-pic -O3 -Wno-multichar $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
-			-D__showids__ -DMULTITHREAD -DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -fno-pic -O3 -Wno-multichar -DMMX_RC5 -DMMX_CSC \
+			-D__showids__ -DMULTITHREAD -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4" #$OGR_ANSI_SRCS
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
-			platforms/x86ident.S \
-			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS $CSC_ASM_SRCS"
+	TARGET_ADDSRCS="$KWAN_SLICE_SRCS4 $OGR_ANSI_SRCS"
+	TARGET_ADDASMS="platforms/x86ident.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
 	TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
+	;;
+
+    *ppc603-beos)
+	TARGET_AS="mwcc -c"
+	TARGET_CC="mwcc"
+	TARGET_CCFLAGS="$OPTS_MWCC_PPC603 -D__showids__ -DMULTITHREAD -DKWAN -DHAVE_OGR_CORES"
+	TARGET_LDFLAGS=""
+	TARGET_ADDSRCS="$RC5PPC_MWCC_SRCS $OGR_ANSI_SRCS"
+	TARGET_LIBS=""
+	TARGET_STRIP="touch"
+        TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
+	;;
+
+    *ppc604-beos)
+	TARGET_AS="mwcc -c"
+	TARGET_CC="mwcc"
+	TARGET_CCFLAGS="$OPTS_MWCC_PPC604 -D__showids__ -DMULTITHREAD -DKWAN -DHAVE_OGR_CORES"
+	TARGET_LDFLAGS=""
+	TARGET_ADDSRCS="$RC5PPC_MWCC_SRCS $OGR_ANSI_SRCS"
+	TARGET_LIBS=""
+	TARGET_STRIP="touch"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
 	;;
 
