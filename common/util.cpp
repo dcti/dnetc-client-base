@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.29 2000/05/04 22:16:19 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.30 2000/05/06 20:07:52 mfeiri Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -1001,6 +1001,17 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
             pidlist[num_found] = (long)nlmHandle;
           num_found++;
         }
+      }
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    #elif (CLIENT_OS == OS_MACOS)
+    {
+      long lowLongOfPSN = macosFindProc( procname );
+      num_found = 0;
+      if (lowLongOfPSN)
+      {
+        if (pidlist)
+          pidlist[num_found] = lowLongOfPSN;
+        num_found++;
       }
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
