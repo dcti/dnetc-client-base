@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.58 1999/04/06 11:55:44 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.59 1999/04/09 19:31:02 patrick Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -386,12 +386,8 @@ struct s128 { s64 hi, lo; };
   typedef unsigned long THREADID;
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_OS2)
-  #if defined(__EMX__)
-    #include <stdlib.h>
-  #else
-    //Headers defined elsewhere in a separate file.
-    typedef long THREADID;
-  #endif
+  //Headers defined elsewhere in a separate file.
+  typedef long THREADID;
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_NETWARE)
   #include <process.h>
