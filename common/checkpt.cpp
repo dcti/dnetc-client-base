@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: checkpt.cpp,v $
+// Revision 1.4  1999/01/17 14:26:38  cyp
+// added leading/trailing whitespace stripping for checkpoint_file.
+//
 // Revision 1.3  1999/01/04 02:49:10  cyp
 // Enforced single checkpoint file for all contests.
 //
@@ -16,7 +19,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.3 1999/01/04 02:49:10 cyp Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.4 1999/01/17 14:26:38 cyp Exp $"; }
 #endif
 
 #include "client.h"   // FileHeader, Client class
@@ -38,7 +41,17 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
   FileEntry fileentry;
   unsigned int prob_i, cont_i, recovered;
   unsigned long remaining, lastremaining;
-  int do_checkpoint = (nodiskbuffers==0 && IsFilenameValid( checkpoint_file ));
+  int do_checkpoint = (nodiskbuffers==0);
+
+  if (do_checkpoint)
+    {
+    while (checkpoint_file[0]!=0 && isspace(checkpoint_file[0]))
+      strcpy( checkpoint_file, &checkpoint_file[1] );
+    recovered=strlen(checkpoint_file);
+    while (recovered>0 && isspace(checkpoint_file[recovered-1]))
+      checkpoint_file[--recovered]=0;
+    do_checkpoint = (nodiskbuffers==0 && IsFilenameValid( checkpoint_file ));
+    }
 
   if ( action == CHECKPOINT_OPEN )
     {
