@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: cmdline.cpp,v $
+// Revision 1.92.2.6  1998/12/28 14:32:39  remi
+// Merge with 1.111 :
+//  Revision 1.101  1998/11/21 13:08:09  remi
+//  Fixed "Setting cputype to" when cputype < 0.
+//
 // Revision 1.92.2.5  1998/11/15 15:41:17  remi
 // I forget to include -c and -cputype option handling...
 //
@@ -71,7 +76,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           if (run_level!=0)
             {
             if (logging_is_initialized)
-              LogScreenRaw("Setting cputype to %u\n", (unsigned int)(cputype));
+              LogScreenRaw("Setting cputype to %u\n", (int)(cputype));
             }
           else
             {
