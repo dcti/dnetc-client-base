@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.210 1999/07/23 03:16:52 fordbr Exp $"; }
+return "@(#)$Id: client.cpp,v 1.211 1999/07/25 16:25:50 sampo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -430,13 +430,14 @@ static int realmain( int argc, char *argv[] ) /* YES, *STATIC* */
 /* ----------------------------------------------------------------- */
 
 #if (CLIENT_OS == OS_MACOS)
-//
-// nothing - Mac framework provides main
-#error That may be so. But realmain is static and stays that way.
-#error example code follows (yes, wow, its vewwy komplikated!)
-#error extern void macCliMain(int (*)(int,char **));
-#error void main(void) { macCliMain(realmain); return; }
-//
+#ifdef CLIENT_17
+extern void macCliMain(int (*)(int,char **));
+void main(void) 
+{
+	macCliMain(realmain); 
+	return;
+}
+#endif
 #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* simply parses the command line and call the bootstrap */
