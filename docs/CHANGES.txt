@@ -21,12 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.1 2002/11/10 12:15:43 pfeffi Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.2 2002/11/24 17:49:17 pfeffi Exp $
 ==========================================================================
 
 2.9000
 ------
-2.9000.477  fix: os2: installation complete rewritten
+2.9001.478  new: os2: enabled command line options: -pause, -unpause, -restart
+
+2.9001.477  fix: os2: installation complete rewritten (#2061)
             fix: os2: keyboard hangs, random colors after -config or -help in OS/2 fullscreen session
             new: os2: "pause-when-running" enabled
             new: os2: more command line options (-shutdown, ...)
