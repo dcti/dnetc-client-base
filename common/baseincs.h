@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: baseincs.h,v $
+// Revision 1.30.2.3  1998/11/15 15:36:05  remi
+// Synced with :
+//  Revision 1.31  1998/11/09 01:17:46  remi
+//  Linux/aout doesn't have <sched.h>
+//
 // Revision 1.30.2.2  1998/11/08 11:38:38  remi
 // Added $Log tag
 //
@@ -141,7 +146,8 @@ extern "C" {
   #if (((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS==OS_FREEBSD) || (CLIENT_OS==OS_BSDI))
     #include <errno.h> // glibc2 has errno only here
   #endif
-  #if ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD))
+  #if (((CLIENT_OS == OS_LINUX) && defined(__ELF__)) || \
+       (CLIENT_OS == OS_FREEBSD))
     #include <sched.h>
   #endif
 #elif (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_ARM)
