@@ -11,6 +11,9 @@
 */ 
 //
 // $Log: cliident.cpp,v $
+// Revision 1.11  1998/12/29 22:35:42  cyp
+// removed guistuff.cpp
+//
 // Revision 1.10  1998/12/26 21:23:05  cyp
 // Removed threadcd.
 //
@@ -45,7 +48,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.10 1998/12/26 21:23:05 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.11 1998/12/29 22:35:42 cyp Exp $"; } 
 #endif
 
 //-----------------------------------------------------------------------
@@ -85,7 +88,6 @@ extern const char *selcore_cpp(void);
 extern const char *selftest_cpp(void);
 extern const char *cpucheck_cpp(void);
 extern const char *cmdline_cpp(void);
-extern const char *guistuff_cpp(void);
 extern const char *probfill_cpp(void);
 extern const char *pollsys_cpp(void);
 extern const char *clirun_cpp(void);
@@ -124,7 +126,6 @@ selcore_cpp,
 selftest_cpp,
 cpucheck_cpp,
 cmdline_cpp,
-guistuff_cpp,
 probfill_cpp,
 pollsys_cpp,
 clirun_cpp,
@@ -135,7 +136,7 @@ probman_cpp,
 console_cpp
 };
 
-//"@(#)$Id: cliident.cpp,v 1.10 1998/12/26 21:23:05 cyp Exp $"
+//"@(#)$Id: cliident.cpp,v 1.11 1998/12/29 22:35:42 cyp Exp $"
 
 void CliIdentifyModules(void)
 {
