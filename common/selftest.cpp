@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.34  1998/12/23 11:33:42  remi
+// Expressend doubts on the ARM cores, please look at the comments.
+//
 // Revision 1.33  1998/12/22 19:34:07  chrisb
 // ARM cores don't handle high-word increments, so the tests for this are modified on ARM.
 //
@@ -26,7 +29,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.33 1998/12/22 19:34:07 chrisb Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.34 1998/12/23 11:33:42 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -183,7 +186,44 @@ int SelfTest( unsigned int contest, int cputype )
    clients will be limited to 32 bits or below. 32 bits will take
    the fastest StrongARM about 4 hours to complete.
 */
-#if (CLIENT_CPU != CPU_ARM)
+#if (CLIENT_CPU == CPU_ARM)
+#error "IF THESE RC5 SELF TESTS FAILS, THEN YOUR CORES ARE LIKELY TO BE BUGGY !!!"
+/*
+  !!!!!!!!!!!!!!
+  VERY IMPORTANT
+  !!!!!!!!!!!!!!
+
+	These self-test blocks are 17 bits blocks !!
+	They are no where near 32 bits !
+	On my 486 DX4/100, the full rc5 test suite completes in about 17 seconds.
+
+	Please look carefully at my comments, starting from
+	"another way of explaining this algorithm"
+
+		6	the solution is :       47FC0000:000076B5
+			we're starting from :   47FBFFFF:FFFF0000
+
+	47FBFFFFF:FFFF0000 is a perfectly valid 17 bits block.
+
+	You're assuming that when the client gets an n-bit block, the n least
+	significant bits are all zero, but I don't know if this is true in all
+	situations (ie, full proxies on port 2064, personal proxies (all versions), 
+	the http cgi, the mail system, the telnet proxy).
+	In previous client versions, I've seen something like "3*28 bits blocks", and 
+	I'm wondering if such blocks have been fully checked by ARM cores...
+	
+	I think it's pretty dangerous to assume the proxies won't sent someday a
+	30-bit block starting from 47BFFFFF:E0000000 and ending with 47C00000:0FFFFFFF
+	for example.
+
+	In all cases, and even if the proxies are made like you assume,
+
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		!! THE SELF-TESTS 2 AND 3 SHOULD NEVER FAIL !!
+		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+*/
+#endif
 
     if (contest == 0) { // RC5-64
       // test case 1 is the RSA pseudo-contest solution
@@ -237,7 +277,7 @@ int SelfTest( unsigned int contest, int cputype )
 	      contestwork.key.lo -= 0x00010000;
       }
     }
-#endif
+
     contestwork.key.lo = htonl( contestwork.key.lo );
     contestwork.key.hi = htonl( contestwork.key.hi );
     contestwork.iv.lo = htonl( (*test_cases)[testnum][2] );
