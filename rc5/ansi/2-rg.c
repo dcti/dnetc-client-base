@@ -1,69 +1,60 @@
-// dual-key, mixed round 3 and encryption, A1/A2 use for last value,
-// non-arrayed S1/S2 tables, run-time generation of S0[]
-
-// Copyright distributed.net 1997 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: 2-rg.c,v $
-// Revision 1.4  1999/05/02 20:37:12  patrick
-//
-// changed key incrementation to account for changed (and no longer usable __IncrementKey)
-//
-// Revision 1.3  1999/04/08 18:48:58  patrick
-//
-// removed def of struct RC5UnitWork and used ccoreio.h instead
-//
-// Revision 1.2  1999/04/05 21:48:04  patrick
-//
-// changed due to compiler problems (mangleing/demangling)
-//
-// Revision 1.1  1999/04/05 19:26:57  patrick
-//
-// rc5 ANSI core porte4d to the new scheme
-//
-
-
-//*Run-time generation of S0[] :
-//
-//	- loading a large constant on RISC need two instructions.
-//	  (ie, on sparc :)
-//		sethi %hi(1444465436),%g2
-//		or %g2,%lo(1444465436),%g2
-//
-//	- generating S0[] at run time need only one instruction
-//	  since S0[n] = S0[n-1] + Q
-//	  (ie, : currentS0 += Q )
-//
-//	- drawback : we need two more registers
-//	  one for 'currentS0' and one for 'Q'
-//
-// some chips can't do two shifts at once
-//	- Sparcs
-//	- Alphas
-//
-// out of order :
-//	- ppc604
-//	- R10000
-//	- PA8000
-// in order :
-//	- all others
+/*
+ * Copyright distributed.net 1997 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ---------------------------------------------------------------
+ * dual-key, mixed round 3 and encryption, A1/A2 use for last value,
+ * non-arrayed S1/S2 tables, run-time generation of S0[]
+ *
+ * Prototype:
+ * extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 timeslice );
+ * ---------------------------------------------------------------
+*/
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_rg_cpp (void) {
-return "@(#)$Id: 2-rg.c,v 1.4 1999/05/02 20:37:12 patrick Exp $"; }
+return "@(#)$Id: 2-rg.c,v 1.5 1999/11/30 12:46:20 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
 #include "ccoreio.h"
 #include "rotate.h"
 
+/*
+ *
+ * Run-time generation of S0[] :
+ *
+ *	- loading a large constant on RISC need two instructions.
+ *	  (ie, on sparc :)
+ *		sethi %hi(1444465436),%g2
+ *		or %g2,%lo(1444465436),%g2
+ *
+ *	- generating S0[] at run time need only one instruction
+ *	  since S0[n] = S0[n-1] + Q
+ *	  (ie, : currentS0 += Q )
+ *
+ *	- drawback : we need two more registers
+ *	  one for 'currentS0' and one for 'Q'
+ *
+ * some chips can't do two shifts at once
+ *	- Sparcs
+ *	- Alphas
+ *
+ * out of order :
+ *	- ppc604
+ *	- R10000
+ *	- PA8000
+ * in order :
+ *	- all others
+*/
+
 #define _P_RC5       0xB7E15163
 #define _Q       0x9E3779B9
 #define S_not(n) _P_RC5+_Q*n
 
-// Round 1 macros
-// --------------
+/* Round 1 macros */
+/* -------------- */
 
 #define ROUND1EVEN(S1N, S2N)	\
     cS0 += Q;			\
@@ -77,8 +68,8 @@ return "@(#)$Id: 2-rg.c,v 1.4 1999/05/02 20:37:12 patrick Exp $"; }
     tmp1 = A1 + Lhi1;		\
     S2N = A2;			\
     tmp2 = A2 + Lhi2;		\
-    Llo1 += tmp1;			\
-    Llo2 += tmp2;			\
+    Llo1 += tmp1;		\
+    Llo2 += tmp2;		\
     Llo1 = ROTL(Llo1, tmp1);	\
     Llo2 = ROTL(Llo2, tmp2);
 
@@ -94,14 +85,14 @@ return "@(#)$Id: 2-rg.c,v 1.4 1999/05/02 20:37:12 patrick Exp $"; }
     tmp1 = A1 + Llo1;		\
     S2N = A2;			\
     tmp2 = A2 + Llo2;		\
-    Lhi1 += tmp1;			\
-    Lhi2 += tmp2;			\
+    Lhi1 += tmp1;		\
+    Lhi2 += tmp2;		\
     Lhi1 = ROTL(Lhi1, tmp1);	\
     Lhi2 = ROTL(Lhi2, tmp2);
 
 
-// Round 2 macros
-// --------------
+/* Round 2 macros */
+/* -------------- */
 
 #define ROUND2EVEN(S1N, S2N)	\
     tmp1 = S1N;			\
@@ -116,8 +107,8 @@ return "@(#)$Id: 2-rg.c,v 1.4 1999/05/02 20:37:12 patrick Exp $"; }
     tmp1 = A1 + Lhi1;		\
     S2N = A2;			\
     tmp2 = A2 + Lhi2;		\
-    Llo1 += tmp1;			\
-    Llo2 += tmp2;			\
+    Llo1 += tmp1;		\
+    Llo2 += tmp2;		\
     Llo1 = ROTL(Llo1,tmp1);	\
     Llo2 = ROTL(Llo2,tmp2)
 
@@ -134,13 +125,13 @@ return "@(#)$Id: 2-rg.c,v 1.4 1999/05/02 20:37:12 patrick Exp $"; }
     tmp1 = A1 + Llo1;		\
     S2N = A2;			\
     tmp2 = A2 + Llo2;		\
-    Lhi1 += tmp1;			\
-    Lhi2 += tmp2;			\
+    Lhi1 += tmp1;		\
+    Lhi2 += tmp2;		\
     Lhi1 = ROTL(Lhi1,tmp1);	\
     Lhi2 = ROTL(Lhi2,tmp2)
 
-// Round 3 macros
-// --------------
+/* Round 3 macros */
+/* -------------- */
 
 #define ROUND3EVEN(S1N, S2N)	\
     tmp1 = S1N;			\
@@ -159,8 +150,8 @@ return "@(#)$Id: 2-rg.c,v 1.4 1999/05/02 20:37:12 patrick Exp $"; }
     eA2 += A2;			\
     tmp1 = A1 + Lhi1;		\
     tmp2 = A2 + Lhi2;		\
-    Llo1 += tmp1;			\
-    Llo2 += tmp2;			\
+    Llo1 += tmp1;		\
+    Llo2 += tmp2;		\
     Llo1 = ROTL(Llo1,tmp1);	\
     Llo2 = ROTL(Llo2,tmp2);
 	
@@ -181,18 +172,18 @@ return "@(#)$Id: 2-rg.c,v 1.4 1999/05/02 20:37:12 patrick Exp $"; }
     eB2 += A2;			\
     tmp1 = A1 + Llo1;		\
     tmp2 = A2 + Llo2;		\
-    Lhi1 += tmp1;			\
-    Lhi2 += tmp2;			\
+    Lhi1 += tmp1;		\
+    Lhi2 += tmp2;		\
     Lhi1 = ROTL(Lhi1,tmp1);	\
     Lhi2 = ROTL(Lhi2,tmp2);
 
-// rc5_unit will get passed an RC5WorkUnit to complete
-// this is where all the actually work occurs, this is where you optimize.
-// assembly gurus encouraged.
-// Returns: 0 - nothing found, 1 - found on pipeline 1,
-//   2 - found pipeline 2, 3 - ... etc ...
+/* -------------------------------------------------------------------- */
 
-s32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice )
+#if defined(__cplusplus)
+extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 tslice );
+#endif
+
+u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice )
 {
   u32 kiter = 0;
   int keycount=(int)timeslice;
@@ -208,8 +199,8 @@ s32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice )
   register u32 A2, Llo2, Lhi2;
   register u32 tmp1, tmp2;
 
-  while ( keycount-- ) // timeslice ignores the number of pipelines
-    {
+  while ( keycount-- ) /* timeslice ignores the number of pipelines */
+  {
     Llo2 = Llo1 = rc5unitwork->L0.lo;
     Lhi2 = (Lhi1 = rc5unitwork->L0.hi) + 0x01000000;
   
@@ -330,39 +321,39 @@ s32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice )
   	    rc5unitwork->cypher.hi == ROTL(eB2 ^ eA2, eA2) +
   	      ROTL3(S2_25 + A2 + ROTL(Llo2 + A2 + Lhi2, A2 + Lhi2))) return ++kiter;
     }
-    // "mangle-increment" the key number by the number of pipelines (2 in this case)
-    // didn't like to change the whole thing
+    /* "mangle-increment" the key number by the number of pipelines */
+    /* (2 in this case) - didn't like to change the whole thing */
     #define key rc5unitwork->L0
     key.hi = (key.hi + ( 2 << 24)) & 0xFFFFFFFF;
     if (!(key.hi & 0xFF000000))
-      {
+    {
       key.hi = (key.hi + 0x00010000) & 0x00FFFFFF;
       if (!(key.hi & 0x00FF0000))
-        {
+      {
         key.hi = (key.hi + 0x00000100) & 0x0000FFFF;
         if (!(key.hi & 0x0000FF00))
-          {
+        {
           key.hi = (key.hi + 0x00000001) & 0x000000FF;
-	// we do not need to mask here, was done above
+	  /* we do not need to mask here, was done above */
           if (!(key.hi))
-            {
+          {
             key.lo = key.lo + 0x01000000;
             if (!(key.lo & 0xFF000000))
-              {
+            {
               key.lo = (key.lo + 0x00010000) & 0x00FFFFFF;
               if (!(key.lo & 0x00FF0000))
-                {
+              {
                 key.lo = (key.lo + 0x00000100) & 0x0000FFFF;
                 if (!(key.lo & 0x0000FF00))
-                  {
+                {
                   key.lo = (key.lo + 0x00000001) & 0x000000FF;
-                  }
                 }
               }
             }
           }
         }
       }
+    }
 
     kiter += 2;
   }
