@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.21  1998/06/22 09:25:18  cyruspatel
+// Added __WATCOMC__ check for bool support. 'true' was incorrectly defined
+// as (1). Changed to be (!false). As of this writing, this should have no
+// impact on the anything (I checked).
+//
 // Revision 1.20  1998/06/17 00:29:45  snake
 //
 //
@@ -148,9 +153,17 @@ struct s128 { s64 hi, lo; };
 #elif defined(DJGPP) || defined(DOS4G) || defined(__MSDOS__)
   #define CLIENT_OS     OS_DOS
   #define CLIENT_CPU    CPU_X86
-#elif defined(__NETWARE__) && defined(_M_IX86)
-  #define CLIENT_OS     OS_NETWARE
-  #define CLIENT_CPU    CPU_X86
+#elif defined(__NETWARE__)
+  #if defined(_M_IX86)
+    #define CLIENT_OS     OS_NETWARE
+    #define CLIENT_CPU    CPU_X86
+  #elif defined(_M_SPARC)
+    #define CLIENT_OS     OS_NETWARE
+    #define CLIENT_CPU    CPU_SPARC
+  #elif defined(_M_ALPHA)
+    #define CLIENT_OS     OS_NETWARE
+    #define CLIENT_CPU    CPU_ALPHA
+  #endif
 #elif defined(__OS2__)
   #define CLIENT_OS     OS_OS2
   #define CLIENT_CPU    CPU_X86
@@ -327,8 +340,10 @@ struct s128 { s64 hi, lo; };
   #define NEED_FAKE_BOOL
 #elif defined(_HPUX) || defined(_OLD_NEXT_)
   #define NEED_FAKE_BOOL
-#elif (CLIENT_OS == OS_OS2)     // this should be changed to a Watcom version test
-  #define NEED_FAKE_BOOL
+#elif defined(__WATCOMC__)           
+  //nothing - bool is defined
+  //#elif (CLIENT_OS == OS_OS2)     // this should be changed to a Watcom version test
+  //  #define NEED_FAKE_BOOL
 #elif defined(__xlc) || defined(__xlC) || defined(__xlC__) || defined(__XLC121__)
   #define NEED_FAKE_BOOL
 #elif (defined(__mips) && __mips < 3 && !defined(__GNUC__))
@@ -340,9 +355,9 @@ struct s128 { s64 hi, lo; };
 #endif
 
 #if defined(NEED_FAKE_BOOL)
-  typedef char bool;
-  #define true 1
-  #define false 0
+    typedef char bool;
+    #define true (!0)
+    #define false (0)
 #endif
 
 
