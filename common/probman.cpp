@@ -6,7 +6,7 @@
  *
 */ 
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.9.2.4 2000/11/12 17:16:43 cyp Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.9.2.5 2001/02/23 03:38:07 sampo Exp $"; }
 
 #include "baseincs.h"  // malloc()/NULL/memset()
 #include "problem.h"   // Problem class
@@ -50,14 +50,29 @@ int GetProblemIndexFromPointer( Problem *prob )
 
 // -----------------------------------------------------------------------
 
+// InitializeProblemManager() allocates maxnumproblems, and returns that
+// value, or returns error value of -1 if it could not allocate the number
+// of problems requested.
+
+// XXX
+// if this is in fact the wrong behaviour, for example, the client should
+// return success if it only allocated *some* of the crunchers, then we can
+// change the code to reflect this, but this seems more bulletproof. feel
+// free to prove me wrong.  - sampo.
+
 int InitializeProblemManager(unsigned int maxnumproblems)
 {
   unsigned int i, probcount;
   
-  if (maxnumproblems == 0 || probmanstatics.probtable!= ((Problem **)0))
+  if (maxnumproblems == 0 || probmanstatics.probtable != ((Problem **)0))
     return -1;
   if (((int)(maxnumproblems)) < 0)
-    maxnumproblems = (16*1024);
+    maxnumproblems = (16*1024);     // XXX
+                                    // a comment to explain this magic
+                                    // number would be nice.  Why not 128
+                                    // as in GetMaxCrunchersPermitted() ?
+                                    // a #define for magic numbers would be
+                                    // good.
 
   probmanstatics.probtable=(Problem **)
                              malloc(maxnumproblems * sizeof(Problem *));
@@ -76,8 +91,13 @@ int InitializeProblemManager(unsigned int maxnumproblems)
       break;
     probcount++;
   }
-  if (probcount == 0)
+  if (probcount != maxnumproblems)
   {
+    unsigned int j;
+    
+    for(j=0; j<probcount; j++)
+        ProblemFree(probmanstatics.probtable[j]);
+        
     free((void *)probmanstatics.probtable);
     probmanstatics.probtable = ((Problem **)0);
     probmanstatics.probcount = 0;
