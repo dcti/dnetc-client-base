@@ -99,11 +99,8 @@ OPTS_NEXT_M68K="$OPTS_GCC -O6 -m68040 -DASM_68K"
 OPTS_NEXT_SPARC="$OPTS_GCC -O6 -DASM_SPARC -D_OLD_NEXT_"
 OPTS_NEXT_HPPA="$OPTS_GCC -O6 -DASM_HPPA -D_OLD_NEXT_"
 
-#--
-
-#-D__STRING_CODE_SET__="ISO8859-1"
-OPTS_OS390='-D_ALL_SOURCE'
-
+ #-D__STRING_CODE_SET__="ISO8859-1"
+OPTS_OS390="-D_ALL_SOURCE"  
 
 
 
@@ -357,49 +354,54 @@ case "$1" in
 
 ###### Intel X86 Linux platforms
     *x86-linux)    # uses EGCS options
+	TARGET_AS="as"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
-	TARGET_LIBS="-Xlinker --format -Xlinker a.out-i386"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	;;
 
     *x86-linux-old)   # uses standard GCC options plus '-pipe'
+	TARGET_AS="as"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
-	TARGET_LIBS="-Xlinker --format -Xlinker a.out-i386"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	;;
 
     *x86-linux-aout)
+	TARGET_AS="as"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
 	TARGET_CCFLAGS="$(OPTS_EGCS_P5) -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$(X86_CPP)"
-	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	;;
 
     *x86-linux-mt)
+	TARGET_AS="as"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
-	TARGET_LIBS="-Xlinker --format -Xlinker a.out-i386 -lpthread"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
+	TARGET_LIBS="-lpthread"
 	;;
 
     *x86-linux-mt-old)
+	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
-	TARGET_LIBS="-Xlinker --format -Xlinker a.out-i386-linux -lpthread"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
+	TARGET_LIBS="-lpthread"
 	;;
 
     *x86-linux-mt-slice)     # using slice not bryddes
+	TARGET_AS="as"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
 	TARGET_ADDSRCS="$RC5X86_SRCS $SLICE_SRCS"
 	TARGET_LIBS="-lpthread"
 	;;
 
     *x86-linux-mt-slice-meggs)     # using slice not bryddes
+	TARGET_AS="as"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
 	TARGET_ADDSRCS="$RC5X86_SRCS $SLICE_SRCS"
 	TARGET_LIBS="-lpthread"
@@ -408,28 +410,32 @@ case "$1" in
 ###### Intel X86 FreeBSD/NetBSD/OpenBSD
 
     *x86-freebsd)
+	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	;;
 
     *x86-freebsd-mt)
+	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	TARGET_LIBS="-lc_r"
 	;;
 
     *x86-netbsd)
+	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	;;
 
     *x86-openbsd)
+	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_P5 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	;;
 
 ####### Intel X86 SCO5
@@ -437,17 +443,18 @@ case "$1" in
     *x86-sco5)
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -belf -Dsco5"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	TARGET_LIBS="-lsocket"
 	;;
 
 ###### NeXT (x86, m68k, sparc, hppa)
 
     *x86-next)
+	TARGET_AS="as"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -D_NeXT_ -DPIPELINE_COUNT=2 -DBIT_32"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
 	;;
 
     *m68k-next-gcc)
