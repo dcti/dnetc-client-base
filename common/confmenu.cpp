@@ -9,9 +9,12 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.8 1999/10/17 22:59:21 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.9 1999/11/23 05:48:23 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
+
+//#define TRACE
+//#define PLAINTEXT_PW
 
 //#include "cputypes.h" // CLIENT_OS
 #include "console.h"  // ConOutErr()
@@ -22,7 +25,6 @@ return "@(#)$Id: confmenu.cpp,v 1.41.2.8 1999/10/17 22:59:21 cyp Exp $"; }
 #include "selcore.h"  // GetCoreNameFromCoreType()
 #include "clicdata.h" // GetContestNameFromID()
 #include "util.h"     // projectmap_*()
-#include "base64.h"   // base64_[en|de]code()
 #include "lurk.h"     // lurk stuff
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
 #include "confopt.h"  // the option table
@@ -196,30 +198,11 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   conf_options[CONF_FWALLHOSTPORT].thevariable=&(client->httpport);
   userpass.username[0] = userpass.password[0] = 0;
   
-  if (client->httpid[0] == 0)
-    ; //nothing
-  else if (client->uuehttpmode==UUEHTTPMODE_UUEHTTP || client->uuehttpmode==UUEHTTPMODE_HTTP)
-  {
-    char *p;
-    if (strlen(client->httpid) >= (sizeof(userpass)-1)) /* mime says maxlen=76 */
-      userpass.username[0]=0;
-    else if (base64_decode(userpass.username, client->httpid, sizeof(userpass), strlen(client->httpid) )<0) 
-      userpass.username[0]=0;                         /* parity errors */
-    else if ((p = strchr( userpass.username, ':' )) == NULL)
-      userpass.username[0]=0;                         /* wrong format */
-    else
-    {
-      *p++ = 0;
-      memmove(userpass.password,p,sizeof(userpass.password));
-    }
-  }
-  else if (client->uuehttpmode == UUEHTTPMODE_SOCKS4) 
-    strcpy(userpass.username,client->httpid);
-  else if (client->uuehttpmode == UUEHTTPMODE_SOCKS5)
+  if (client->httpid[0])
   {
     strcpy( userpass.username, client->httpid );
     char *p = strchr( userpass.username,':');
-    if (p != NULL) 
+    if (p) 
     {
       *p++ = 0;
       strcpy( userpass.password, p );
@@ -559,12 +542,6 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                 descr = "n/a [not available on this platform]";
                 #endif /* othewise ignore it */
               }
-              else if (conf_options[menuoption].type==CONF_TYPE_ASCIIZ)
-              {
-                descr = (char *)conf_options[menuoption].thevariable;
-                if (!*descr)
-                  descr = (char *)conf_options[menuoption].defaultsetting;
-              }
               else if (conf_options[menuoption].type==CONF_TYPE_IARRAY)
               {
                 int *vectb = NULL;
@@ -573,6 +550,16 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                 utilGatherOptionArraysToList( parm, sizeof(parm),
                     (int *)conf_options[menuoption].thevariable, vectb ); 
                 descr = parm;
+              }
+              else if (conf_options[menuoption].type==CONF_TYPE_ASCIIZ
+#ifdef PLAINTEXT_PW
+                || conf_options[menuoption].type==CONF_TYPE_PASSWORD
+#endif                
+              )
+              {
+                descr = (char *)conf_options[menuoption].thevariable;
+                if (!*descr)
+                  descr = (char *)conf_options[menuoption].defaultsetting;
               }
               else if (conf_options[menuoption].type==CONF_TYPE_PASSWORD)
               {
@@ -763,17 +750,21 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
             }
           }
           
-          if (conf_options[editthis].type==CONF_TYPE_PASSWORD)
+          if (conf_options[editthis].type==CONF_TYPE_ASCIIZ
+#ifdef PLAINTEXT_PW
+           || conf_options[editthis].type==CONF_TYPE_PASSWORD
+#endif           
+          )
+          {
+            strcpy(parm, (char *)conf_options[editthis].thevariable);
+            p = (char *)(conf_options[editthis].defaultsetting);
+          }
+          else if (conf_options[editthis].type==CONF_TYPE_PASSWORD)
           {
             int i = strlen((char *)conf_options[editthis].thevariable);
             memset(parm, '*', i);
             parm[i] = 0;
             coninstrmode = CONINSTR_ASPASSWORD;
-          }
-          else if (conf_options[editthis].type==CONF_TYPE_ASCIIZ)
-          {
-            strcpy(parm, (char *)conf_options[editthis].thevariable);
-            p = (char *)(conf_options[editthis].defaultsetting);
           }
           else if (conf_options[editthis].type==CONF_TYPE_IARRAY)
           {
@@ -1095,31 +1086,16 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
     else if (use_uue_regardless)
       client->uuehttpmode = UUEHTTPMODE_UUE;
     
-    if (strlen(userpass.username) == 0 && strlen(userpass.password) == 0)
-      client->httpid[0] = 0;
-    else if (client->uuehttpmode==UUEHTTPMODE_UUEHTTP || client->uuehttpmode==UUEHTTPMODE_HTTP)
+    TRACE_OUT((0,"precomp: u:p=\"%s:%s\"\n",userpass.username,userpass.password));
+    client->httpid[0] = 0;
+    if (strlen(userpass.username) || strlen(userpass.password))
     {
-      if (((strlen(userpass.username)+strlen(userpass.password)+4)*4/3) >
-        sizeof(client->httpid)) /* too big. what should we do? */
-        client->httpid[0] = 0; 
-      else
-      {
-        strcat(userpass.username,":");
-        strcat(userpass.username,userpass.password);
-        base64_encode(client->httpid,userpass.username, sizeof(client->httpid),strlen(userpass.username));
-      }
-    }
-    else if (client->uuehttpmode == UUEHTTPMODE_SOCKS4)
-    {
-      strcpy( client->httpid, userpass.username );
-    }
-    else if (client->uuehttpmode == UUEHTTPMODE_SOCKS5)
-    {
-      strcat(userpass.username, ":");
-      strcat(userpass.username, userpass.password);
+      if (strlen(userpass.password))
+        strcat(strcat(userpass.username, ":"), userpass.password);
       strncpy( client->httpid, userpass.username, sizeof( client->httpid ));
       client->httpid[sizeof( client->httpid )-1] = 0;
     }
+    TRACE_OUT((0,"postcomp: u:p=\"%s\"\n",client->httpid));
   }
 
   //fini
