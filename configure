@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.59 2003/03/16 18:21:16 andreasb Exp $
+# @(#)$Id: configure,v 1.288.2.60 2003/03/16 22:01:30 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1192,7 +1192,7 @@ case "$1" in
         add_sources "linux" "alpha"
         ;;
 
-     *alpha-linux-static)       # dworz / jlawson / kamy
+    *alpha-linux-static)       # dworz / jlawson / kamy
         TARGET_CC="g++"
         TARGET_AS="as"
         generate_gcc_opts "alpha" "linux"
@@ -2141,6 +2141,13 @@ case "$1" in
         TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
         TARGET_USES_GNUMAKE="yes"
         add_sources "linux" "x86" $isaout
+        case "internal-$1" in
+          internal-*pthread*)
+            TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_POSIX_THREADS"
+            TARGET_LIBS="$TARGET_LIBS -lpthread"
+            TARGET_TARBALL="${TARGET_TARBALL}-pthreads"
+          ;;
+        esac
         ;;
 
     *freebsd*)              # FreeBSD (autoselect Alpha/x86 and aout/elf)
