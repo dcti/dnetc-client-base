@@ -1,5 +1,9 @@
+
 //
 // $Log: gentestsdes.cpp,v $
+// Revision 1.4  1998/06/14 10:44:19  remi
+// Indentation.
+//
 // Revision 1.3  1998/06/14 08:27:09  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -9,14 +13,16 @@
 //
 //
 
+/*
 Date sent:        Sun, 11 Jan 1998 19:37:00 +0100
 From:             Remi Guyomarch <rguyom@mail.dotcom.fr>
 Organization:     Me ? Organized ?
 To:               Andrew Meggs <insect@antennahead.com>
 Copies to:        tcharron@interlog.com, jlawson@hmc.edu, beberg@distributed.net
 Subject:          Re: (Fwd) DES x86-core news
+*/
 
-static char *id="@(#)$Id: gentestsdes.cpp,v 1.3 1998/06/14 08:27:09 friedbait Exp $";
+static char *id="@(#)$Id: gentestsdes.cpp,v 1.4 1998/06/14 10:44:19 remi Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,31 +78,31 @@ void main (void)
 
     for (i=0; i<TEST_CASE_COUNT; i++) {
 
-   // first, set up some random keys,plain,iv
- for (j=0; j<8; j++) key[j] = odd_parity[(random() & 0x7F) << 1];
- des_test_cases[i][0] = key[7] | (key[6] << 8) | (key[5] << 16) | (key[4] << 24); // low
- des_test_cases[i][1] = key[3] | (key[2] << 8) | (key[1] << 16) | (key[0] << 24); // high
- for (j=0; j<8; j++) iv[j] = random() & 0xFF;
- des_test_cases[i][2] = iv[7] | (iv[6] << 8) | (iv[5] << 16) | (iv[4] << 24); // low
- des_test_cases[i][3] = iv[3] | (iv[2] << 8) | (iv[1] << 16) | (iv[0] << 24); // high
- for (j=0; j<8; j++) plain[j] = random() & 0xFF;
- des_test_cases[i][4] = plain[7] | (plain[6] << 8) | (plain[5] << 16) | (plain[4] << 24);
- des_test_cases[i][5] = plain[3] | (plain[2] << 8) | (plain[1] << 16) | (plain[0] << 24);
+	// first, set up some random keys,plain,iv
+	for (j=0; j<8; j++) key[j] = odd_parity[(random() & 0x7F) << 1];
+	des_test_cases[i][0] = key[7] | (key[6] << 8) | (key[5] << 16) | (key[4] << 24); // low
+	des_test_cases[i][1] = key[3] | (key[2] << 8) | (key[1] << 16) | (key[0] << 24); // high
+	for (j=0; j<8; j++) iv[j] = random() & 0xFF;
+	des_test_cases[i][2] = iv[7] | (iv[6] << 8) | (iv[5] << 16) | (iv[4] << 24); // low
+	des_test_cases[i][3] = iv[3] | (iv[2] << 8) | (iv[1] << 16) | (iv[0] << 24); // high
+	for (j=0; j<8; j++) plain[j] = random() & 0xFF;
+	des_test_cases[i][4] = plain[7] | (plain[6] << 8) | (plain[5] << 16) | (plain[4] << 24);
+	des_test_cases[i][5] = plain[3] | (plain[2] << 8) | (plain[1] << 16) | (plain[0] << 24);
 
-   // now encrypt all that and store cyphertext
- if ((j=key_sched((C_Block*)key,ks)) != 0) printf("Key error %d\n",j);
- des_cbc_encrypt((C_Block*)plain,(C_Block*)cypher, 8,ks, (C_Block*)iv,DES_ENCRYPT);
- des_test_cases[i][6] = cypher[7] | (cypher[6]<<8) | (cypher[5]<<16) | (cypher[4]<<24);
- des_test_cases[i][7] = cypher[3] | (cypher[2]<<8) | (cypher[1]<<16) | (cypher[0]<<24);
- des_cbc_encrypt((C_Block*)cypher,(C_Block*)plain2, 8,ks, (C_Block*)iv,DES_DECRYPT);
- if (memcmp(plain,plain2,8) != 0) printf("cbc_encrypt decrypt error\n");
+	// now encrypt all that and store cyphertext
+	if ((j=key_sched((C_Block*)key,ks)) != 0) printf("Key error %d\n",j);
+	des_cbc_encrypt((C_Block*)plain,(C_Block*)cypher, 8,ks, (C_Block*)iv,DES_ENCRYPT);
+	des_test_cases[i][6] = cypher[7] | (cypher[6]<<8) | (cypher[5]<<16) | (cypher[4]<<24);
+	des_test_cases[i][7] = cypher[3] | (cypher[2]<<8) | (cypher[1]<<16) | (cypher[0]<<24);
+	des_cbc_encrypt((C_Block*)cypher,(C_Block*)plain2, 8,ks, (C_Block*)iv,DES_DECRYPT);
+	if (memcmp(plain,plain2,8) != 0) printf("cbc_encrypt decrypt error\n");
 
-   // write everything in C++ syntax
- printf ("  {0x%08X,0x%08X,0x%08X,0x%08X,0x%08X,0x%08X,0x%08X,0x%08X},\n",
-  des_test_cases[i][0],des_test_cases[i][1],
-  des_test_cases[i][2],des_test_cases[i][3],
-  des_test_cases[i][4],des_test_cases[i][5],
-  des_test_cases[i][6],des_test_cases[i][7]);
+	// write everything in C++ syntax
+	printf ("  {0x%08X,0x%08X,0x%08X,0x%08X,0x%08X,0x%08X,0x%08X,0x%08X},\n",
+		des_test_cases[i][0],des_test_cases[i][1],
+		des_test_cases[i][2],des_test_cases[i][3],
+		des_test_cases[i][4],des_test_cases[i][5],
+		des_test_cases[i][6],des_test_cases[i][7]);
     }
     printf ("};\n");
 }
