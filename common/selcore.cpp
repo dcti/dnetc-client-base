@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.58 2000/02/22 10:19:58 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.59 2000/02/23 14:17:51 snake Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1179,9 +1179,11 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         #endif
 	break;
 
+#ifdef MMX_RC5
       case 6: // K7
         unit_func.rc5 = rc5_unit_func_k7;
 	break;
+#endif
 
       default: // Pentium (0) + others
         unit_func.rc5 = rc5_unit_func_p5;
