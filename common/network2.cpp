@@ -4,7 +4,7 @@
 //
 
 const char *network_cpp(void) {
-return "@(#)$Id: network2.cpp,v 1.1.2.3 1999/04/13 19:45:26 jlawson Exp $"; }
+return "@(#)$Id: network2.cpp,v 1.1.2.4 1999/04/14 04:19:39 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "dcticonn.h"         // DCTIConnServer class
@@ -38,6 +38,7 @@ Network::Network( const char *servname, int servport,
 {
   connserver = NULL;
   proxyver = 0;
+  proxymessage[0] = 0;
 
 
   // server name, server port
@@ -131,8 +132,8 @@ int Network::Open(void)
   {
     Close();
 
-//    if (CheckExitRequestTriggerNoIO())
-//      break; /* return -1; */
+    if (CheckExitRequestTriggerNoIO())
+      break; /* return -1; */
 
 
     // If we require a firewall hostname/port, check it now.
@@ -151,7 +152,7 @@ int Network::Open(void)
     char connect_name[64];
     if (autofindkeyserver)
       AutoFindServer( connect_name, sizeof(connect_name) );
-    else if (!nofallback || retries < preftries)
+    else if (!nofallback || retries <= preftries)
       __hostnamecpy( connect_name, server_name, sizeof(connect_name) );
     else
       AutoFindServer( connect_name, sizeof(connect_name) );
@@ -246,6 +247,9 @@ int Network::EstablishConnection(void)
 
 int Network::Close(void)
 {
+  proxyver = 0;
+  proxymessage[0] = 0;
+
   if (connserver)
   {
     delete connserver;
@@ -337,6 +341,21 @@ int Network::Put( net_packet_t *data )
 
 void Network::ShowConnection(void)
 {
+#if 0
+  if ((startmode & (MODE_HTTP | MODE_SOCKS4 | MODE_SOCKS5)) == 0)
+  {  
+    LogScreen("Connected to %s:%u...\n", targethost,
+             ((unsigned int)(svc_hostport)) );
+  }
+  else
+  {
+    LogScreen( "Connected to %s:%u\nvia %s proxy %s:%u\n",
+               targethost, ((unsigned int)(svc_hostport)),
+               ((startmode & MODE_SOCKS5)?("SOCKS5"):
+               ((startmode & MODE_SOCKS4)?("SOCKS4"):("HTTP"))),
+          fwall_hostname, (unsigned int)fwall_hostport );
+  }
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////
