@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.113  1999/01/17 13:50:11  cyp
+// buffer thresholds must be volatile.
+//
 // Revision 1.112  1999/01/04 02:49:09  cyp
 // Enforced single checkpoint file for all contests.
 //
@@ -409,8 +412,8 @@ public:
   int  quietmode;
   char inifilename[128];
   char id[64];
-  s32  inthreshold[CONTEST_COUNT];
-  s32  outthreshold[CONTEST_COUNT];
+  volatile s32  inthreshold[CONTEST_COUNT];
+  volatile s32  outthreshold[CONTEST_COUNT];
   s32  blockcount;
   s32  minutes;
   s32  timeslice;

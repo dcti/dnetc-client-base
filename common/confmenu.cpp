@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.18  1999/01/17 13:50:11  cyp
+// buffer thresholds must be volatile.
+//
 // Revision 1.17  1999/01/12 14:57:35  cyp
 // -1 is a legal nettimeout value (force blocking net i/o).
 //
@@ -78,7 +81,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.17 1999/01/12 14:57:35 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.18 1999/01/17 13:50:11 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -261,10 +264,12 @@ int Client::Configure( void )
 
   /* ------------------- CONF_MENU_BUFF ------------------ */  
         
+  s32 threshold = (s32)inthreshold[0];
   if (strcmpi(id,"rc5@distributed.net") == 0)
     id[0]=0; /*is later converted back to 'rc5@distributed.net' */
   conf_options[CONF_ID].thevariable=(char *)(&id[0]);
-  conf_options[CONF_THRESHOLDI].thevariable=&inthreshold[0];
+  conf_options[CONF_THRESHOLDI].thevariable=&threshold;
+  conf_options[CONF_THRESHOLDI].choicemax=MAXBLOCKSPERBUFFER; /* client.h */
   conf_options[CONF_FREQUENT].thevariable=&connectoften;
   conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=&preferred_blocksize;
   conf_options[CONF_NODISK].thevariable=&nodiskbuffers;
@@ -273,7 +278,6 @@ int Client::Configure( void )
   conf_options[CONF_DESIN].thevariable=(char *)(&in_buffer_file[1][0]);
   conf_options[CONF_DESOUT].thevariable=(char *)(&out_buffer_file[1][0]);
   conf_options[CONF_CHECKPOINT].thevariable=(char *)(&checkpoint_file[0]);
-  conf_options[CONF_THRESHOLDI].choicemax=MAXBLOCKSPERBUFFER; /* client.h */
 
   /* ------------------- CONF_MENU_LOG  ------------------ */  
   
@@ -852,7 +856,7 @@ int Client::Configure( void )
             if ( userselection == CONF_COUNT && newval_d < 0)
               blockcount = -1;
             else if (userselection == CONF_THRESHOLDI)
-              outthreshold[0]=inthreshold[1]=outthreshold[1]=newval_d;
+              inthreshold[0]=outthreshold[0]=inthreshold[1]=outthreshold[1]=newval_d;
             else if (userselection == CONF_NETTIMEOUT)
               nettimeout = ((newval_d<0)?(-1):((newval_d<5)?(5):(newval_d)));
             }
