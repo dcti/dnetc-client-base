@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.7  1998/12/21 00:21:01  silby
+// Universally scheduled update time is now retrieved from the proxy,
+// and stored in the .ini file.  Not yet used, however.
+//
 // Revision 1.6  1998/12/20 23:00:35  silby
 // Descontestclosed value is now stored and retrieved from the ini file,
 // additional updated of the .ini file's contest info when fetches and
@@ -22,7 +26,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.6 1998/12/20 23:00:35 silby Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.7 1998/12/21 00:21:01 silby Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -416,7 +420,9 @@ struct optionstruct conf_options[OPTION_COUNT]=
 { "connectionname", CFGTXT("Dial-up Connection Name"),
   "Your Internet Connection",CFGTXT(""),3,1,12,NULL},
 //46
-{ "descontestclosed", "","","",0,1,0,NULL}
+{ "descontestclosed","","","",0,1,0,NULL},
+//47
+{ "scheduledupdatetime","","","",0,1,0,NULL}
 };
 
 // --------------------------------------------------------------------------

@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.h,v $
+// Revision 1.3  1998/12/21 00:21:01  silby
+// Universally scheduled update time is now retrieved from the proxy,
+// and stored in the .ini file.  Not yet used, however.
+//
 // Revision 1.2  1998/12/20 23:00:35  silby
 // Descontestclosed value is now stored and retrieved from the ini file,
 // additional updated of the .ini file's contest info when fetches and
@@ -75,7 +79,10 @@
                                      /* 0xBEEFFOOD means closed,   */
                                      /* otherwise checksum of      */
                                      /* ciphertext                 */
-#define OPTION_COUNT              47
+#define CONF_SCHEDULEDUPDATETIME  47 /* Time all clients should do */
+                                     /* a flush, in GMT - used to  */
+                                     /* coordinate project start.  */
+#define OPTION_COUNT              48
 
 /* ---------------------------------------------------------------- */
 

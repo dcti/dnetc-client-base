@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.4  1998/12/21 00:21:01  silby
+// Universally scheduled update time is now retrieved from the proxy,
+// and stored in the .ini file.  Not yet used, however.
+//
 // Revision 1.3  1998/12/20 23:00:35  silby
 // Descontestclosed value is now stored and retrieved from the ini file,
 // additional updated of the .ini file's contest info when fetches and
@@ -26,7 +30,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.3 1998/12/20 23:00:35 silby Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.4 1998/12/21 00:21:01 silby Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -265,6 +269,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       };
 
 conf_options[CONF_DESCONTESTCLOSED].thevariable=(s32*)&descontestclosed;
+conf_options[CONF_SCHEDULEDUPDATETIME].thevariable=(s32*)&scheduledupdatetime;
       
     /* -------------------- end setup options --------------------- */
     

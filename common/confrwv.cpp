@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.5  1998/12/21 00:21:01  silby
+// Universally scheduled update time is now retrieved from the proxy,
+// and stored in the .ini file.  Not yet used, however.
+//
 // Revision 1.4  1998/12/20 23:00:35  silby
 // Descontestclosed value is now stored and retrieved from the ini file,
 // additional updated of the .ini file's contest info when fetches and
@@ -31,7 +35,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.4 1998/12/20 23:00:35 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.5 1998/12/21 00:21:01 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -253,7 +257,8 @@ int Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
     usemmx=ini.getkey(OPTION_SECTION, "usemmx", "1")[0];
   #endif
 
-  descontestclosed=ntohl(ini.getkey(OPTION_SECTION, "descontestclosed","1")[0]);
+  descontestclosed=ntohl(ini.getkey(OPTION_SECTION, "descontestclosed","0")[0]);
+  scheduledupdatetime=ntohl(ini.getkey(OPTION_SECTION, "scheduledupdatetime","0")[0]);
 
   #if defined(NEEDVIRTUALMETHODS)
     InternalReadConfig(ini);
