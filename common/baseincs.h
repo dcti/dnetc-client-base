@@ -11,6 +11,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.52  1999/01/29 19:34:08  jlawson
+// added limits.h to linux
+//
 // Revision 1.51  1999/01/29 19:07:16  jlawson
 // fixed formatting.  added limits.h to win32
 //
@@ -333,7 +336,8 @@ extern "C" {
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI) || (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
   #include <unistd.h>
-  #if (((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS==OS_BSDI))
+  #include <limits.h>
+  #if (((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI))
     #include <errno.h> // glibc2 has errno only here
   #endif
   #if (((CLIENT_OS == OS_LINUX) && defined(__ELF__)) || \
