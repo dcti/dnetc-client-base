@@ -6,6 +6,9 @@
  * ****************** THIS IS WORLD-READABLE SOURCE *********************
  *
  * $Log: probfill.cpp,v $
+ * Revision 1.43  1999/04/01 07:15:12  jlawson
+ * corrected argument warning for 64-bit platforms.
+ *
  * Revision 1.42  1999/04/01 03:20:41  cyp
  * Updated to reflect changed [in|out]_buffer_[file->basename] semantics.
  *
@@ -170,7 +173,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.42 1999/04/01 03:20:41 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.43 1999/04/01 07:15:12 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -381,8 +384,9 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                                       (wrdata.work.crypto.iterations.hi) );
         if (norm_key_count == 0) /* test block */
           norm_key_count = 1;
-        sprintf(workunit, "%08lX:%08lX", ( wrdata.work.crypto.key.hi ),
-                                         ( wrdata.work.crypto.key.lo ) );
+        sprintf(workunit, "%08lX:%08lX", 
+		(long) ( wrdata.work.crypto.key.hi ),
+		(long) ( wrdata.work.crypto.key.lo ) );
         break;
       }
       case 2: // OGR
