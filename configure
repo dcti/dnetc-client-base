@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.148 2000/04/19 23:21:17 jlawson Exp $
+# @(#)$Id: configure,v 1.222.2.149 2000/04/22 16:29:35 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1391,6 +1391,7 @@ case "$1" in
        ;;
 
     # bsdos-4 client is still experimental, found a severe bug with PentiumII
+	# now under BSD/OS 4.1 it seems to run and compile correctly
     *x86-bsdos4)      # BSD/OS 4.0 with ELF format, now without DES -snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	#TARGET_CCFLAGS="-g $OPTS_GCC272_X86 -DMMX_RC5 -DHAVE_OGR_CORES -DLURK"
