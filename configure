@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.213 2000/12/18 02:10:55 mfeiri Exp $
+# @(#)$Id: configure,v 1.222.2.214 2000/12/25 23:28:23 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1585,7 +1585,6 @@ case "$1" in
 	      ;;
 
     *x86-openbsd)	# snake
-        TARGET_AS="g++ -c -DNO_BALIGN"
         TARGET_CC="g++"
         generate_gcc_opts "x86" "openbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
