@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.140  1998/10/03 03:33:13  cyp
+// Removed RunStartup() altogether, changed fprintf(stderr,) to ConOutErr(),
+// moved 68k kudos from selcore.cpp to PrintBanner(), removed ::Install and
+// ::Uninstall, added winNT svc startup code to realmain(), added WinMain().
+//
 // Revision 1.139  1998/09/28 21:42:07  remi
 // Cleared a warning in InitConsole. Wrapped $Log comments.
 //
@@ -176,7 +181,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.139 1998/09/28 21:42:07 remi Exp $"; }
+return "@(#)$Id: client.cpp,v 1.140 1998/10/03 03:33:13 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -188,9 +193,10 @@ return "@(#)$Id: client.cpp,v 1.139 1998/09/28 21:42:07 remi Exp $"; }
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "pathwork.h"  // EXTN_SEP
 #include "triggers.h"  // RestartRequestTrigger()
-#include "clitime.h"   //CliTimer(), Time()/(CliGetTimeString(NULL,1))
+#include "clitime.h"   // CliTimer(), Time()/(CliGetTimeString(NULL,1))
 #define Time() (CliGetTimeString(NULL,1))
-#include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
+#include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
+#include "console.h"   // [De]InitializeConsole(), ConOutErr()
 
 // --------------------------------------------------------------------------
 
@@ -308,7 +314,6 @@ Client::Client()
 #endif
 }
 
-
 // --------------------------------------------------------------------------
 
 static void PrintBanner(const char *dnet_id)
@@ -323,6 +328,9 @@ static void PrintBanner(const char *dnet_id)
     LogScreenRaw( "\nRC5DES " CLIENT_VERSIONSTRING 
                " client - a project of distributed.net\n"
                "Copyright distributed.net 1997-1998\n" );
+    #if (CLIENT_CPU == CPU_68K)
+    LogScreenRaw( "RC5 68K assembly by John Girvin\n");
+    #endif
     #if defined(KWAN)
     #if defined(MEGGS)
     LogScreenRaw( "DES bitslice driver Copyright Andrew Meggs\n" 
@@ -359,430 +367,28 @@ static void PrintBanner(const char *dnet_id)
     LogRaw("\nRC5DES Client v2.%d.%d started.\n"
              "Using distributed.net ID %s\n\n",
          CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,dnet_id);
+
+    #if defined(BETA) && defined(BETA_EXPIRATION_TIME) && (BETA_EXPIRATION_TIME != 0)
+    timeval currenttime;
+    timeval expirationtime;
+
+    CliTimer(&currenttime);
+    expirationtime.tv_usec= 0;
+    expirationtime.tv_sec = BETA_EXPIRATION_TIME;
+
+    if (currenttime.tv_sec > expirationtime.tv_sec ||
+      currenttime.tv_sec < (BETA_EXPIRATION_TIME - 1814400))
+      {
+      ; //nothing - start run, recover checkpoints and _then_ exit.
+      } 
+    else
+      {
+      LogScreenRaw("Notice: This is beta release and expires on %s\n\n",
+       CliGetTimeString(&expirationtime,1) );
+      }
     }
 
   return;
-}
-
-// --------------------------------------------------------------------------
-
-#if (CLIENT_OS == OS_WIN32) && defined(WINNTSERVICE)
-#define NTSERVICEID "rc5desnt"
-#include <winsvc.h>
-
-static SERVICE_STATUS_HANDLE serviceStatusHandle;
-
-void __stdcall ServiceCtrlHandler(DWORD controlCode)
-{
-  // update our status to stopped
-  SERVICE_STATUS serviceStatus;
-  serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-  serviceStatus.dwWin32ExitCode = NO_ERROR;
-  serviceStatus.dwServiceSpecificExitCode = 0;
-  serviceStatus.dwCheckPoint = 0;
-  if (controlCode == SERVICE_CONTROL_SHUTDOWN ||
-      controlCode == SERVICE_CONTROL_STOP)
-  {
-    serviceStatus.dwCurrentState = SERVICE_STOP_PENDING;
-    serviceStatus.dwControlsAccepted = 0;
-    serviceStatus.dwWaitHint = 10000;
-    RaiseExitRequestTrigger();
-  } else {
-    // SERVICE_CONTROL_INTERROGATE
-    serviceStatus.dwCurrentState = SERVICE_RUNNING;
-    serviceStatus.dwWaitHint = 0;
-  }
-  SetServiceStatus(serviceStatusHandle, &serviceStatus);
-}
-#endif
-
-// ---------------------------------------------------------------------------
-
-#if (CLIENT_OS == OS_WIN32) && defined(WINNTSERVICE)
-static Client *mainclient; 
-
-void ServiceMain(DWORD Argc, LPTSTR *Argv)
-{
-  SERVICE_STATUS serviceStatus;
-  
-  serviceStatusHandle = RegisterServiceCtrlHandler(NTSERVICEID,
-                                              ServiceCtrlHandler);
-
-  // update our status to running
-  serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-  serviceStatus.dwCurrentState = SERVICE_RUNNING;
-  serviceStatus.dwControlsAccepted = (SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_STOP);
-  serviceStatus.dwWin32ExitCode = NO_ERROR;
-  serviceStatus.dwServiceSpecificExitCode = 0;
-  serviceStatus.dwCheckPoint = 0;
-  serviceStatus.dwWaitHint = 0;
-  SetServiceStatus(serviceStatusHandle, &serviceStatus);
-
-  mainclient = new Client();
-  if (mainclient == NULL)
-    {
-    MessageBox( NULL, "Unable to initialize client.\n",
-        "RC5DES", MB_OK | MB_TASKMODAL);
-    }
-  else
-    {
-    mainclient->Main( (int)(Argc), (const char **)Argv, -1 ); //restarted == -1
-    delete mainclient;
-    }
-
-  // update our status to stopped
-  serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-  serviceStatus.dwCurrentState = SERVICE_STOPPED;
-  serviceStatus.dwControlsAccepted = 0;
-  serviceStatus.dwWin32ExitCode = NO_ERROR;
-  serviceStatus.dwServiceSpecificExitCode = 0;
-  serviceStatus.dwCheckPoint = 0;
-  serviceStatus.dwWaitHint = 0;
-  SetServiceStatus(serviceStatusHandle, &serviceStatus);
-}
-#endif
-
-// ---------------------------------------------------------------------
-
-static int RunShutdown(void) { return 0; }
-
-
-// do stuff before calling Run() for the first time
-// returns: non-zero on failure
-
-static int RunStartup(int restarted)
-{
-  int retcode = 0;
-
-  if (restarted == 0)
-    {
-    #if (CLIENT_OS == OS_WIN32) && defined(WINNTSERVICE)
-      {
-      LogScreen("Attempting to start up NT service.\n");
-      //mainclient = this;  //ignored - service must create a new one
-      SERVICE_TABLE_ENTRY serviceTable[] = {
-        {NTSERVICEID, (LPSERVICE_MAIN_FUNCTION) ServiceMain},
-        {NULL, NULL}};
-      if (!StartServiceCtrlDispatcher(serviceTable))
-        {
-        LogScreen("Error starting up NT service.  Please remember that this\n"
-           "client cannot be invoked directly.  If you wish to install it\n"
-           "as a service, use the -install option\n");
-        }
-      retcode = -1; //always -1
-      }
-    #elif ((CLIENT_OS == OS_WIN32) && (!defined(WINNTSERVICE)))
-      {
-      OSVERSIONINFO osver;
-      osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
-      GetVersionEx(&osver);
-
-      //check if we are registered as a w9x "service" (survive logouts)
-      if (VER_PLATFORM_WIN32_NT != osver.dwPlatformId)
-        {
-        HKEY srvkey = NULL;
-        int run_as_w9x_service = 0;
-        #ifdef W9x_ALWAYS_RUN_AS_SERVICE
-        run_as_w9x_service = 1;
-        #endif
-        
-        if (!run_as_w9x_service)
-          {
-          if (RegOpenKey(HKEY_LOCAL_MACHINE, 
-            "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",
-            &srvkey) == ERROR_SUCCESS)
-            {
-            DWORD valuetype = REG_SZ;
-            char buffer[260]; // maximum registry key length
-            DWORD valuesize = sizeof(buffer);
-
-            if ( RegQueryValueEx(srvkey, "bovwin32", NULL,
-                &valuetype, (unsigned char *)(&buffer[0]), 
-                &valuesize) == ERROR_SUCCESS )
-              {
-              run_as_w9x_service = 1;
-              }
-            RegCloseKey(srvkey);
-            }
-          }
-
-        if (run_as_w9x_service)
-          {              
-          // register ourself as a Win95 service
-          HMODULE kernl = GetModuleHandle("KERNEL32");
-          if (kernl)
-            {
-            typedef DWORD (CALLBACK *ULPRET)(DWORD,DWORD);
-            ULPRET func = (ULPRET) GetProcAddress(kernl, "RegisterServiceProcess");
-            if (func) (*func)(0, 1);
-            }
-          }
-        
-        }
-      retcode = 0;
-      }
-    #endif
-    }
-
-  return retcode;
-}
-
-// -----------------------------------------------------------------------
-
-static int DeinitializeConsole(void)
-{
-  #if ((CLIENT_OS == OS_WIN32) && defined(CONSOLE))
-    {
-    FreeConsole();
-    }
-  #endif
-  return 0;
-}  
-
-// ---------------------------------------------------------------------------
-
-#if 0 //((CLIENT_OS == OS_WIN32) && defined(CONSOLE))
-
-static WNDPROC (*oldwndproc)(HWND,unsigned,UINT,LONG);
-
-/* CALLBACK */
-extern "C" WNDPROC FAR __export PASCAL WindowProc( HWND hwnd, unsigned msg,
-             UINT wparam, LONG lparam );
-
-WNDPROC FAR __export PASCAL WindowProc( HWND hwnd, unsigned msg,
-             UINT wparam, LONG lparam )
-{
-  if (msg == WM_DESTROY )
-    {
-    RaiseExitRequestTrigger();
-    PostQuitMessage( 0 );
-    return(0L);
-    }
-  return( (*oldwndproc)( hwnd, msg, wparam, lparam ) );
-}    
-#endif
-
-#if (CLIENT_OS != OS_WIN32)
-static int InitializeConsole(int) { return 0; }
-#else
-static int InitializeConsole(int runhidden)
-{
-  int retcode = 0;
-
-  //the win32 console client is really a GUI client without a GUI - cyrus
-  #if ((CLIENT_OS == OS_WIN32) && defined(CONSOLE))
-    {
-    const char *contitle = "Distributed.Net RC5/DES Client " 
-                             "" CLIENT_VERSIONSTRING "";
-    OSVERSIONINFO osver;
-    osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
-    GetVersionEx(&osver);
-      
-    // only allow one running instance
-    CreateMutex(NULL, TRUE, "Bovine RC5/DES Win32 Client");
-    if (GetLastError()) 
-      {
-      retcode = -1;
-      }
-    else if (runhidden)
-      {
-      //nothing - console won't be created
-      retcode = 0;
-      }
-    else if (!AllocConsole())
-      {
-      retcode = -1;
-      MessageBox( NULL, "Unable to create console window.",
-                           contitle, MB_OK | MB_TASKMODAL);
-      }
-    else
-      {
-      retcode = 0;
-      SetConsoleTitle(contitle);
-      
-      #if 0
-      HWND hwnd = FindWindow( NULL, contitle );
-      if ( hwnd )
-        {
-        oldwndproc = (WNDPROC (*)(HWND,unsigned,UINT,LONG))
-                     GetWindowLong(hwnd, GWL_WNDPROC);
-                         
-        if (oldwndproc)
-          {             //thing doesn't set. probably a mem access issue.
-          SetWindowLong(hwnd, GWL_WNDPROC, (LPARAM)(WNDPROC)(WindowProc));
-          //SubclassWindow(hwnd, WindowProc);
-          }
-        }
-      #endif
-
-      // Now re-map the C Runtime STDIO handles
-      if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
-        {
-        //microsoft method - fails on win98 (_fdopen fails)
-        //http://support.microsoft.com/support/kb/articles/q105/3/05.asp
-
-        int hCrt = _open_osfhandle((long)GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
-        FILE *hf = _fdopen(hCrt, "w");
-        *stdout = *hf;
-        setvbuf(stdout, NULL, _IONBF, 0);         
-        hCrt = _open_osfhandle((long)GetStdHandle(STD_ERROR_HANDLE), _O_TEXT);
-        hf = _fdopen(hCrt, "w");
-        *stderr = *hf;
-        setvbuf(stderr, NULL, _IONBF, 0);         
-        hCrt = _open_osfhandle((long)GetStdHandle(STD_INPUT_HANDLE), _O_TEXT);
-        hf = _fdopen(hCrt, "r");
-        *stdin = *hf;
-        setvbuf(stdin, NULL, _IONBF, 0);
-        }
-      else
-        {
-        FILE *hf;
-        hf = fopen("CONOUT$", "w+t");
-        if (!hf)
-          {
-          MessageBox( NULL, "Unable to open console for write.",
-                            contitle, MB_OK | MB_TASKMODAL);
-          retcode = -1;
-          }
-        else
-          {
-          *stdout = *hf;
-          setvbuf(stdout, NULL, _IONBF, 0);
-          *stderr = *hf;
-          setvbuf(stderr, NULL, _IONBF, 0);
-            
-          hf = fopen("CONIN$", "rt");
-          if (!hf)
-            {
-            MessageBox( NULL, "Unable to open console for read.",
-                              contitle, MB_OK | MB_TASKMODAL);
-            retcode = -1;
-            }
-          else
-            {
-            *stdin = *hf;
-            setvbuf(stdin, NULL, _IONBF, 0);
-            }
-          }
-        #if 0
-        else
-          {
-          SECURITY_ATTRIBUTES sa;
-          sa.nLength      = sizeof(SECURITY_ATTRIBUTES);
-          sa.lpSecurityDescriptor = NULL;
-          sa.bInheritHandle   = TRUE;
-
-          HANDLE hIFile = CreateFile( "CONIN$", GENERIC_READ /*dwDesiredAccess*/, 
-          FILE_SHARE_READ /*dwShareMode*/, &sa /*lpSecurityAttributes*/,
-          OPEN_EXISTING /*dwCreationDistribution*/, 0 /*dwFlagsAndAttributes*/,
-          0 /*hTemplateFile*/ );
-          HANDLE hOFile = CreateFile( "CONOUT$", GENERIC_WRITE /*dwDesiredAccess*/, 
-          FILE_SHARE_WRITE /*dwShareMode*/, &sa /*lpSecurityAttributes*/,
-          OPEN_EXISTING /*dwCreationDistribution*/, 0 /*dwFlagsAndAttributes*/,
-          0 /*hTemplateFile*/ );
-
-          SetStdHandle( STD_OUTPUT_HANDLE, hOFile );
-          SetStdHandle( STD_ERROR_HANDLE, hOFile );
-          SetStdHandle( STD_INPUT_HANDLE, hIFile );
-          }
-        #endif
-        }
-      }
-    }
-  #elif ((CLIENT_OS == OS_WIN32) && (!defined(WINNTSERVICE)))
-    {
-    const char *contitle = "Distributed.Net RC5/DES Client " 
-                           "" CLIENT_VERSIONSTRING "";
-    OSVERSIONINFO osver;
-    osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
-    GetVersionEx(&osver);
-
-    SetConsoleTitle(contitle);
-        
-    // only allow one running instance
-    CreateMutex(NULL, TRUE, "Bovine RC5/DES Win32 Client");
-    if (GetLastError()) 
-      {
-      retcode = -1;
-      }
-    else if (!runhidden)
-      {
-      //nothing - screen is already visible
-      }
-    else if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
-      {
-      MessageBox( NULL, "Running -hidden is not recommended under NT.\n"
-      "(There have been cases of conflicts with system process csrss.exe)\n"
-        "Please use the NT Service client.", contitle, MB_OK | MB_TASKMODAL);
-      retcode = -1;
-      }
-    else
-      {
-      FreeConsole();
-      }
-    }
-  #endif
-
-  return retcode;
-}  
-#endif // (CLIENT_OS != OS_WIN32)
-
-
-#if !defined(NOMAIN)
-int main( int argc, char *argv[] )
-{
-  // This is the main client object.  we 'new'/malloc it, rather than make 
-  // it static in the hope that people will think twice about using exit()
-  // or otherwise breaking flow. (wanna bet it'll happen anyway?)
-  // The if (success) thing is for nesting without {} nesting.
-  Client *clientP = NULL;
-  int retcode = -1, init_success = 1;
-  int restarted = 0;
-  
-  //------------------------------
-
-  #if (CLIENT_OS == OS_RISCOS)
-  if (init_success) //protect ourselves
-    {
-    riscos_in_taskwindow = riscos_check_taskwindow();
-    if (riscos_find_local_directory(argv[0])) 
-      init_success = 0;
-    }
-  #endif
-
-  if ( init_success )
-    {
-    init_success = (( clientP = new Client() ) != NULL);
-    if (!init_success) fprintf( stderr, "\nRC5DES: Out of memory.\n" );
-    }
-
-  #if (CLIENT_OS == OS_NETWARE) 
-  //create stdout/screen, set cwd etc. save ptr to client for fnames/niceness
-  if ( init_success )
-    init_success = ( nwCliInitClient( argc, argv, clientP ) == 0);
-  #endif
-
-  if ( init_success )
-    {
-    do {
-       retcode = clientP->Main( argc, (const char **)argv, restarted );
-       restarted = 1; //for the next round
-       } while (CheckRestartRequestTrigger());
-
-    #if (CLIENT_OS == OS_AMIGAOS)
-    if (retcode) retcode = 5; // 5 = Warning
-    #endif // (CLIENT_OS == OS_AMIGAOS)
-    }
-  
-  #if (CLIENT_OS == OS_NETWARE)
-  if (init_success)
-    nwCliExitClient(); // destroys AES process, screen, polling procedure
-  #endif
-  
-  if (clientP)
-    delete clientP;
-
-  return (retcode);
 }
 
 //------------------------------------------------------------------------
@@ -801,7 +407,7 @@ int Client::Main( int argc, const char *argv[], int restarted )
       InitializeTriggers( ((noexitfilecheck)?(NULL):("exitrc5" EXTN_SEP "now")),pausefile);
 
       InitializeLogging(); //let -quiet take affect
-      if (InitializeConsole(runhidden) == 0)  //create console (if required)
+      if (InitializeConsole(runhidden||quietmode) == 0) //create console (if required)
         {
         PrintBanner(id); //tracks restart state itself
 
@@ -812,12 +418,11 @@ int Client::Main( int argc, const char *argv[], int restarted )
             if (Configure() ==1 ) 
               WriteFullConfig(); //full new build
             }
-          else if ( RunStartup(restarted) == 0 ) 
+          else
             {
             ValidateConfig();
             PrintBanner(id);  //tracks restart state itself
             retcode = Run();
-            RunShutdown();
             }
           }
         DeinitializeConsole();
@@ -830,206 +435,112 @@ int Client::Main( int argc, const char *argv[], int restarted )
 }  
 #endif
 
+// --------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-
-int Client::Install()
+int realmain( int argc, char *argv[] )
 {
-#if (CLIENT_OS == OS_WIN32) && defined(WINNTSERVICE)
-  char mypath[200];
-  GetModuleFileName(NULL, mypath, sizeof(mypath));
-  SC_HANDLE myService, scm;
-  scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
-  if (scm)
-  {
-    myService = CreateService(scm, NTSERVICEID,
-        "Distributed.Net RC5/DES Service Client",
-        SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
-        SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
-        mypath, 0, 0, 0, 0, 0);
-    if (myService)
+  // This is the main client object.  we 'new'/malloc it, rather than make 
+  // it static in the hope that people will think twice about using exit()
+  // or otherwise breaking flow. (wanna bet it'll happen anyway?)
+  // The if (success) thing is for nesting without {} nesting.
+  Client *clientP = NULL;
+  int retcode = -1, init_success = 1;
+  int restarted = 0;
+  
+  //------------------------------
+  
+  #if (CLIENT_OS == OS_WIN32)
     {
-      LogScreen("Windows NT Service installation complete.\n"
-          "Click on the 'Services' icon in 'Control Panel' and ensure that the\n"
-          "Distributed.Net RC5/DES Service Client is set to startup automatically.\n");
-      CloseServiceHandle(myService);
-    } else {
-      LogScreen("Error creating service entry.\n");
-    }
-    CloseServiceHandle(scm);
-  } else {
-    LogScreen("Error opening service control manager.\n");
-  }
-#elif ((CLIENT_OS == OS_WIN32) && !defined(WINNTSERVICE))
-  HKEY srvkey=NULL;
-  DWORD dwDisp=NULL;
-  char mypath[260];
-
-  OSVERSIONINFO osver;
-  osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
-  GetVersionEx(&osver);
-
-  if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
-    {
-    LogScreen("-install failed. This version of the client was built "
-              "without NT service support.\n" );
-    }
-  else
-    {
-    GetModuleFileName(NULL, mypath, sizeof(mypath));
- 
-    strcat( mypath, " -hide" );
-
-    // register a Win95 "RunService" item
-    if (RegCreateKeyEx(HKEY_LOCAL_MACHINE,
-        "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",0,"",
-              REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,
-              &srvkey,&dwDisp) == ERROR_SUCCESS)
+    if (win32CliGetVersion() >= 20) /* DOS style version # (>= 20 for NT) */
       {
-      RegSetValueEx(srvkey, "bovwin32", 0, REG_SZ, (unsigned const char *)mypath, strlen(mypath) + 1);
-      RegCloseKey(srvkey);
-      }
+      if (argc == 1) //possibly old style NT service (no commandline options)
+        {            
+        if ( win32CliOldStyleInitializeService() == 0 ) //started ok
+          init_success = 0;  //service ran so quit here
+        }
+      if (argc >= 2 && strcmp( argv[1], "-svcrun" ) == 0) 
+        {                                     
+        if ( win32CliInitializeService(argc,argv) == 0) //started ok
+          init_success = 0;  //service ran so quit here
+        //inappropriate "-svcrun". fall through and let the cmdline parser puke
+        }
+      } // if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
+    }
+  #endif //#if (CLIENT_OS == OS_WIN32)   
 
-    // unregister a Win95 "Run" item
-    if (RegOpenKey(HKEY_LOCAL_MACHINE,
-        "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-      &srvkey) == ERROR_SUCCESS)
-      {
-      RegDeleteValue(srvkey, "bovwin32");
-      RegCloseKey(srvkey);
-      }
-    LogScreen("Win95 Service installation complete.\n");
+  //------------------------------
+  
+  #if (CLIENT_OS == OS_RISCOS)
+  if (init_success) //protect ourselves
+    {
+    riscos_in_taskwindow = riscos_check_taskwindow();
+    if (riscos_find_local_directory(argv[0])) 
+      init_success = 0;
+    }
+  #endif
+
+  //-----------------------------
+
+  if ( init_success )
+    {
+    init_success = (( clientP = new Client() ) != NULL);
+    if (!init_success) 
+      ConOutErr( "Unable to create client object. Out of memory." );
     }
 
-#elif (CLIENT_OS == OS_OS2)
-  int rc;
-  const int len = 4068;
+  //----------------------------
 
-  char   pszClassName[] = "WPProgram";
-  char   pszTitle[] = "RC5-DES Cracking Client";
-  char   pszLocation[] = "<WP_START>";    // Startup Folder
-  ULONG ulFlags = 0;
+  #if (CLIENT_OS == OS_NETWARE) 
+  //create stdout/screen, set cwd etc. save ptr to client for fnames/niceness
+  if ( init_success )
+    init_success = ( nwCliInitClient( argc, argv, clientP ) == 0);
+  #endif
 
-  char   pszSetupString[len] =
-            "OBJECTID=<RC5DES-CLI>;"
-            "MINIMIZED=YES;"
-            "PROGTYPE=WINDOWABLEVIO;";
+  //----------------------------
 
-  // Add full path of the program
-  strncat(pszSetupString, "EXENAME=",len);
+  if ( init_success )
+    {
+    do {
+       retcode = clientP->Main( argc, (const char **)argv, restarted );
+       restarted = 1; //for the next round
+       } while ( CheckRestartRequestTrigger() );
+    }
 
-  if(runhidden == 1)   // Run detached
-  {
-    strncat(pszSetupString, "CMD.EXE;", len);     // command processor
-    strncat(pszSetupString, "PARAMETERS=/c detach ", len);   // detach
-  }
+  //------------------------------
 
-  // Add exepath and exename
-  strncat(pszSetupString, exepath, len);
-  strncat(pszSetupString, exename, len);
-  strncat(pszSetupString, ";", len);
+  #if (CLIENT_OS == OS_AMIGAOS)
+  if (retcode) retcode = 5; // 5 = Warning
+  #endif // (CLIENT_OS == OS_AMIGAOS)
 
-  // Add on Working Directory
-  strncat(pszSetupString, "STARTUPDIR=", len);
-  strncat(pszSetupString, exepath, len);
-  strncat(pszSetupString, ";", len);
+  //------------------------------
+  
+  #if (CLIENT_OS == OS_NETWARE)
+  if (init_success)
+    nwCliExitClient(); // destroys AES process, screen, polling procedure
+  #endif
 
-  rc = WinCreateObject(pszClassName, pszTitle, pszSetupString,
-              pszLocation, ulFlags);
-  if(rc == NULLHANDLE)
-    LogScreen("ERROR: RC5-DES Program object could not be added "
-            "into your Startup Folder\n"
-            "RC5-DES is probably already installed\n");
-  else
-    LogScreen("RC5-DES Program object has been added into your Startup Folder\n");
-#endif
-  return 0;
+  //------------------------------
+  
+  if (clientP)
+    delete clientP;
+
+  return (retcode);
 }
 
-// ---------------------------------------------------------------------------
 
-int Client::Uninstall(void)
-{
-#if (CLIENT_OS == OS_OS2)
-  HOBJECT hObject = WinQueryObject("<RC5DES-CLI>");
+#if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
 
-  if(hObject == NULLHANDLE)
-    LogScreen("ERROR: RC5-DES Client object was not found\n"
-          "No RC5-DES client installed in the Startup folder\n");
-  else
-    {
-    LogScreen("RC5-DES Client object %s removed from the Startup Folder.\n",
-      ((WinDestroyObject(hObject) == TRUE)?("was"):("could not be"))  );
-    }
-#endif
-
-#if (CLIENT_OS == OS_WIN32) && defined(WINNTSERVICE)
-
-  SC_HANDLE myService, scm;
-  SERVICE_STATUS status;
-  scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
-  if (scm)
-  {
-    myService = OpenService(scm, NTSERVICEID,
-        SERVICE_ALL_ACCESS | DELETE);
-    if (myService)
-    {
-      if (QueryServiceStatus(myService, &status) &&
-        status.dwCurrentState != SERVICE_STOPPED)
-      {
-        LogScreen("Service currently active.  Stopping service...\n");
-        if (!ControlService(myService, SERVICE_CONTROL_STOP, &status))
-          LogScreen("Failed to stop service!\n");
-      }
-      if (DeleteService(myService))
-      {
-        LogScreen("Windows NT Service uninstallation complete.\n");
-      } else {
-        LogScreen("Error deleting service entry.\n");
-      }
-      CloseServiceHandle(myService);
-    }
-    CloseServiceHandle(scm);
-  } else {
-    LogScreen("Error opening service control manager.\n");
-  }
-#endif
-
-#if (CLIENT_OS == OS_WIN32) && (!defined(WINNTSERVICE))
-  HKEY srvkey;
-
-  OSVERSIONINFO osver;
-  osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
-  GetVersionEx(&osver);
-
-  if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
-    {
-    LogScreen("-uninstall failed. This version of the client was built "
-              "without NT service support.\n" );
-    }
-  else
-    {
-    // unregister a Win95 "RunService" item
-    if (RegOpenKey(HKEY_LOCAL_MACHINE,
-        "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",
-        &srvkey) == ERROR_SUCCESS)
-      {
-      RegDeleteValue(srvkey, "bovwin32");
-      RegCloseKey(srvkey);
-      }
-
-    // unregister a Win95 "Run" item
-    if (RegOpenKey(HKEY_LOCAL_MACHINE,
-      "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-      &srvkey) == ERROR_SUCCESS)
-      {
-      RegDeleteValue(srvkey, "bovwin32");
-      RegCloseKey(srvkey);
-      }
-    LogScreen("Win95 Service uninstallation complete.\n");
-    }
-#endif
-
-  return 0;
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                             LPSTR lpszCmdLine, int nCmdShow)
+{ 
+  return ((hPrevInstance)?(0):(realmain( __argc, __argv ))); 
 }
 
+#else
+
+int main( int argc, char *argv[] )
+{ 
+  return realmain( argc, argv ); 
+}
+
+#endif
