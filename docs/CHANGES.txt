@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.65 2004/05/23 17:08:10 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.66 2004/05/25 09:23:59 oliver Exp $
 ==========================================================================
 
 2.9000
@@ -33,6 +33,8 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.65 2004/05/23 17:08:10 kakace Exp 
             imp: all: Reworked the activity display in test mode (OGR-P2)
             imp: ppc: Select GARSP 5.1x Scalar by default on PPC 74x7/G5
             imp: ppc: Faster OGR-P2 cores.
+            imp: amigaos: Allow crunchers to shutdown on exit when other user
+                          tasks are monopolizing cpu time
 
 2.9008-490  new: all: Enable OGR-24 and OGR-25 Phase 2 (finalization)
             new: amigaos: native OS4 port
