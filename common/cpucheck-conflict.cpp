@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.29  1998/10/08 16:47:17  cyp
+// Fixed a missing ||
+//
 // Revision 1.28  1998/10/08 11:05:26  cyp
 // Moved AmigaOS 68k hardware detection code from selcore.cpp to cpucheck.cpp
 //
@@ -103,7 +106,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.28 1998/10/08 11:05:26 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.29 1998/10/08 16:47:17 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -254,8 +257,8 @@ void Client::ValidateProcessorCount( void )
 
 // --------------------------------------------------------------------------
 
-#if (!((CLIENT_CPU == CPU_X86) || 
-      ((CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS))
+#if (!((CLIENT_CPU == CPU_X86) || \
+      ((CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)) || \
       ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS)) ))
 int GetProcessorType(int quietly)
 { 
