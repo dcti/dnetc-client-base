@@ -8,7 +8,7 @@
 ;
 ; Based off the r72-ss2.asm core, by Ianos Gnatiuc <ssianky@hotmail.com>
 ; (r72-ss2 was based on r72-dg2 and r72ansi2 cores)
-; $Id: r72-snjl2.asm,v 1.1.2.6 2003/11/04 06:02:26 jlawson Exp $
+; $Id: r72-snjl2.asm,v 1.1.2.7 2003/11/04 06:08:18 jlawson Exp $
 
 [SECTION .text]
 BITS 64
@@ -238,7 +238,7 @@ _rc5_72_unit_func_snjl2:
     mov  [work_L0mid], L1_1
 
 
-;;edx is unused from this point on
+;;TODO:	edx,ebp are unused from this point on
 
 LOOP_LO_SS_2:
 
