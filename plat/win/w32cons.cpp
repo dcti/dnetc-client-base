@@ -7,7 +7,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.1.2.6 2001/03/26 17:54:31 cyp Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.1.2.7 2001/03/30 11:15:11 cyp Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -58,6 +58,8 @@ return "@(#)$Id: w32cons.cpp,v 1.1.2.6 2001/03/26 17:54:31 cyp Exp $"; }
 #else
   #define SetForegroundWindow BringWindowToTop
   #define SetBrushOrgEx( __0, __1, __2, __3 ) SetBrushOrg( __0, __1, __2 )
+  #define MAKEWORD(a, b) \ 
+    ((WORD) (((BYTE) (a)) | ((WORD) ((BYTE) (b))) << 8)) 
 #endif
 
 /* ---------------------------------------------------- */
@@ -4421,41 +4423,52 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       #define GWL_HINSTANCE (-6)
       #endif
       HINSTANCE hinst = (HINSTANCE)GetWindowLong(hwnd,GWL_HINSTANCE);
+      #if defined(__WINDOWS_386__)
+      struct WM_CREATE_DATA far *conscreate_data = ((WM_CREATE_DATA far *)0);
+      #else
       struct WM_CREATE_DATA *conscreate_data = NULL;
+      #endif
+
+      TRACE_INITEXIT((0,"WM_CREATE,hInstance=%ld (0x%x)\n", hinst,hinst));
 
       if (lParam)
       {
         #if defined(__WINDOWS_386__)
-        CREATESTRUCT far *lpCreateStruct = (CREATESTRUCT far *)MK_FP32((void *)lParam);
+        CREATESTRUCT far *lpcs = (CREATESTRUCT far *)MK_FP32((void *)lParam);
+        if (lpcs->lpCreateParams)
+          conscreate_data = (WM_CREATE_DATA far *)MK_FP32((void *)(lpcs->lpCreateParams));
         #else
-        LPCREATESTRUCT lpCreateStruct = (LPCREATESTRUCT)lParam;
+        LPCREATESTRUCT lpcs = (LPCREATESTRUCT) lParam;
+        if (lpcs->lpCreateParams)
+          conscreate_data = (struct WM_CREATE_DATA *)(lpcs->lpCreateParams);
         #endif
-        if (lpCreateStruct)
-          conscreate_data = (struct WM_CREATE_DATA *)(lpCreateStruct->lpCreateParams);
       }
+      TRACE_INITEXIT((0,"WM_CREATE,conscreate_data*=%p\n", conscreate_data));
       if (!conscreate_data)
       {
         TRACE_INITEXIT((0,"WM_CREATE,conscreate_data == NULL\n"));
         return -1;
       }
-      
-      TRACE_INITEXIT((0,"WM_CREATE,hInstance=%ld (0x%x)\n", hinst,hinst));
 
       console = (W16ConsoleStruc *)malloc(sizeof(W16ConsoleStruc));
       if (!console)
       {
+        TRACE_INITEXIT((0,"WM_CREATE,no memory\n"));
         conscreate_data->create_pending = 0;
         conscreate_data->create_errorcode = W16CONS_ERR_NOMEM;
         // fail to create
         return -1;
       }
 
+      TRACE_INITEXIT((0,"WM_CREATE,init console struct\n"));
       // initialize our private structure
       memset((void *)console, 0, sizeof(W16ConsoleStruc));
       memset((void *)(&(console->buff[0][0])),' ',sizeof(console->buff));
 
+      TRACE_INITEXIT((0,"WM_CREATE,inherit conscreate data\n"));
       console->client_run_startstop_level_ptr = conscreate_data->client_run_startstop_level_ptr;
 
+      TRACE_INITEXIT((0,"WM_CREATE,setup log window things\n"));
       console->hwnd = hwnd;
       console->disprows = W16CONS_HEIGHT;
       console->dispcols = W16CONS_WIDTH;
@@ -4477,6 +4490,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
           console->nCmdShow = SW_SHOWNORMAL;
       }
       #endif
+      TRACE_INITEXIT((0,"WM_CREATE,console->nCmdShow=%d\n",console->nCmdShow));
 
       if (console->nCmdShow != SW_HIDE && ModeReqIsSet(-1) == 0)
       {
@@ -4486,6 +4500,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
           console->rate_view.func = MakeProcInstance( (FARPROC)__w16GraphView, hinst);
         }
       }
+      TRACE_INITEXIT((0,"WM_CREATE,console->rate_view.func=%p\n",console->rate_view.func));
 
       /* ------------ things that affect font selection ------- */
       console->fontx = (int)GetSystemMetrics(SM_CXSCREEN);
@@ -4516,6 +4531,8 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
 
       /* ---- all things that affect menu options come before here */
 
+      TRACE_INITEXIT((0,"WM_CREATE,setup menu\n"));
+
       GetSystemMenu( hwnd, 0); /* make our sys menu a copy of the std one */
       /* need to do win menu _before_ adjust rect otherwise the size will be off */
       __w16UpdateWinMenu(console, hwnd);
@@ -4524,6 +4541,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
 
       /* ---- all things that affect window size come before here */
 
+      TRACE_INITEXIT((0,"WM_CREATE,adjust rect\n"));
       __w16AdjustRect( console, hwnd, WM_CREATE, 0, 0 );
       TRACE_INITEXIT((0,"WM_CREATE visible=%d,zoomed=%d,iconic=%d\n",IsWindowVisible(hwnd),IsZoomed(hwnd),IsIconic(hwnd)));
       if (console->hfont == NULL)
@@ -4535,6 +4553,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
         free((void *)console);
         conscreate_data->create_pending = 0; /* failed */
         conscreate_data->create_errorcode = W16CONS_ERR_NOFONT;
+        TRACE_INITEXIT((0,"WM_CREATE,alloc font failed\n"));
         return -1;
       }
 
@@ -4579,14 +4598,17 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       if (console->rate_view.func && 
             GetDCTIProfileInt( "client", "view", 'c' ) == 'r')
       {
+        TRACE_INITEXIT((0,"WM_CREATE,PostMessage(hwnd,WM_COMMAND,WMCMD_SWITCHVIEW,WM_CREATE)\n"));
         PostMessage(hwnd,WM_COMMAND,WMCMD_SWITCHVIEW,WM_CREATE);
       }
       else /* can't showwindow() directly from here */
       {
+        TRACE_INITEXIT((0,"WM_CREATE,PostMessage(hwnd,WM_COMMAND,WMCMD_REFRESHVIEW,WM_CREATE)\n"));
         PostMessage(hwnd,WM_COMMAND,WMCMD_REFRESHVIEW,WM_CREATE);
       }
       conscreate_data->create_errorcode = 0;
       conscreate_data->create_pending = 0;
+      TRACE_INITEXIT((0,"WM_CREATE,end\n"));
       break; /* return 0 */
     }
     case WM_WININICHANGE: /* aka WM_SETTINGCHANGE for WINVER >= 0x0400 */
@@ -5844,6 +5866,7 @@ static void __win16WinCreateHelper( void *xarg )
   createdata.create_errorcode = W16CONS_ERR_NCCREATE;
   createdata.client_run_startstop_level_ptr = 
                           &constatics.client_run_startstop_level;
+  TRACE_INITEXIT((0,"pre_createwin,conscreate_data*=%p\n", &createdata));
 
   /* don't use WS_EX_CLIENTEDGE - the client will do this itself */
   /* don't use any WS_EX_* that Win(NT)3.x doesn't explicitely support */
