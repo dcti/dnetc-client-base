@@ -1,30 +1,21 @@
-// dual-key, mixed round 3 and encryption, A1/A2 use for last value,
-// non-arrayed S1/S2 tables
-
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
-/*  This file is included from rc5.cpp so we can use __inline__.  */
-
-#include "problem.h"
-#include "rotate.h"
-
-extern "C" 
-{
-  unsigned int alpha_keycracker( RC5UnitWork * rc5unitwork, unsigned long count);
-}
 
 
-#define CORE_INCREMENTS_KEY 1
+// dual-key, mixed round 3 and encryption, A1/A2 use for last value,
+// non-arrayed S1/S2 tables
+//
+// core expects "pipeline_count" value of 2.
+// core increments key itself.
+// 
+// core unit function defined in separate axp-bmeyer.s
+//
+// function has prototype:
+//   extern "C" u32 rc5_unit_func_axp_bmeyer
+//         ( RC5UnitWork * rc5unitwork, unsigned long count);
 
-#if (PIPELINE_COUNT != 2)
-#error "Expecting pipeline count of 2"
-#endif
-
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
 
 
 #define P     0xB7E15163L
@@ -62,10 +53,4 @@ unsigned long alpha_S_not[1024]={
   S8_not(23L),
   S8_not(24L),
   S8_not(25L)};
-
-// static __inline__
-u32 rc5_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice)
-{
-  return alpha_keycracker(rc5unitwork,timeslice); 
-}
 
