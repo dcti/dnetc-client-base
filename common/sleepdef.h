@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.15 2000/02/07 02:24:14 mfeiri Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.16 2000/02/13 04:09:30 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -124,6 +124,16 @@
 #elif (CLIENT_OS == OS_ULTRIX)
   #include <sys/time.h>
   #define usleep(x) {struct timeval tv__={0,(x)};select(0,NULL,NULL,NULL,&tv__);}
+#elif (CLIENT_OS == OS_FREEBSD)
+  /* sleep/usleep in freebsd static libs use setitimer on pre-3.4 
+     and nanosleep on 3.4 and above.
+  */
+  #include <sys/time.h>
+  #define _xsleep(_secs,_usecs) {struct timeval tv__={(_secs),(_usecs)};select(0,NULL,NULL,NULL,&tv__);}
+  #undef usleep
+  #define usleep(x) _xsleep(0,(x))
+  #undef sleep
+  #define sleep(x) _xsleep((x),0)
 #else
   #include <unistd.h> //has both sleep() and usleep()
 #endif
