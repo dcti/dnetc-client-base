@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.44 1999/04/17 07:38:36 gregh Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45 1999/04/23 06:18:37 gregh Exp $"; }
 
 #include "cputypes.h"  // u64
 #include "problem.h"   // Problem class
@@ -265,7 +265,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
       sprintf( str, "Completed one %s stub %s (%s nodes)\n"
                     "%s - [%snodes/sec]\n",  
                     name, 
-                    ogr_stubstr( &work.ogr.stub ),
+                    ogr_stubstr( &work.ogr.workstub.stub ),
                     CliGetU64AsString(&work.ogr.nodes, 0, -1),
                     CliGetTimeString( &tv, 2 ),
                     keyrateP );

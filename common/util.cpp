@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.9 1999/04/17 14:02:51 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.10 1999/04/23 06:18:38 gregh Exp $"; }
 
 #include "baseincs.h" /* string.h */
 #include "client.h"   /* CONTEST_COUNT, stub definition */
@@ -34,7 +34,7 @@ const char *ogr_stubstr(const struct Stub *stub)
     return buf;
   }
   for (i = 0; i < len; i++) {
-    sprintf(&buf[strlen(buf)], "%d", (int)stub->stub[i]);
+    sprintf(&buf[strlen(buf)], "%d", (int)stub->diffs[i]);
     if (i+1 < len) {
       strcat(buf, "-");
     }

@@ -2,14 +2,6 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// $Log: client2.h,v $
-// Revision 1.3  1999/04/09 06:11:58  gregh
-// Protect file with #ifndef ... #endif
-//
-// Revision 1.2  1999/03/18 07:49:52  gregh
-// Add getresult() function, remove result() callback.
-//
-//
 
 #ifndef __CLIENT2_H
 #define __CLIENT2_H
@@ -58,7 +50,8 @@ typedef struct {
 
   /*
    * If cycle returns CORE_S_SUCCESS, call getresult to get the successful
-   * result.
+   * result. If called at other times, returns the current state of the 
+   * search.
    */
   int (*getresult)(void *state, void *result, int resultlen);
 
@@ -67,6 +60,7 @@ typedef struct {
    */
   int (*destroy)(void *state);
 
+#if 0
   /*
    * Return the number of bytes needed to serialize this state.
    */
@@ -85,6 +79,7 @@ typedef struct {
    * Load the state from persistent storage buffer.
    */
   int (*load)(void *buffer, int buflen, void **state);
+#endif
 
   /*
    * Clean up anything allocated in init().

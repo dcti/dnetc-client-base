@@ -6,7 +6,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.59 1999/04/16 07:22:35 gregh Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.60 1999/04/23 06:18:38 gregh Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -43,9 +43,9 @@ typedef union
     u64 iterations;       // iterations to do
   } crypto;
   struct {
-    Stub stub;            // stub to work on (24 bytes)
+    WorkStub workstub;    // stub to work on (28 bytes)
     u64 nodes;            // nodes completed
-    char unused[16];
+    char unused[12];
   } ogr;
 } ContestWork;
 

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.106 1999/04/23 02:43:15 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.107 1999/04/23 06:18:37 gregh Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -296,11 +296,11 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
                 break;
                 }
         case OGR:
-                Stub curstub;
+                WorkStub curstub;
                 ogr->getresult(ogrstate, &curstub, sizeof(curstub));
                 // This is just a quick&dirty calculation that resembles progress.
-                retpermille = curstub.stub[contestwork.ogr.stub.length]*10
-                            + curstub.stub[contestwork.ogr.stub.length+1]/10;
+                retpermille = curstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10
+                            + curstub.stub.diffs[contestwork.ogr.workstub.stub.length+1]/10;
                 break;
       }
     }
@@ -597,7 +597,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
       int r = ogr->init();
       if (r != CORE_S_OK)
         return -1;
-      r = ogr->create(&contestwork.ogr.stub, sizeof(Stub), &ogrstate);
+      r = ogr->create(&contestwork.ogr.workstub, sizeof(WorkStub), &ogrstate);
       if (r != CORE_S_OK)
         return -1;
       break;
@@ -655,7 +655,22 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
   if (!initialized)
     return -1;
   if (work) // store back the state information
+  {
+    switch (contest) {
+      case RC5:
+      case DES:
+      case CSC:
+        // nothing special needs to be done here
+        break;
+      case OGR:
+        if (ogrstate != NULL)
+        {
+          ogr->getresult(ogrstate, &contestwork.ogr.workstub, sizeof(WorkStub));
+        }
+        break;
+    }
     memcpy( (void *)work, (void *)&contestwork, sizeof(ContestWork));
+  }
   if (contestid)
     *contestid = contest;
   if (dopurge)
@@ -1027,9 +1042,10 @@ int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
     }
     case CORE_S_SUCCESS:
     {
-      if (ogr->getresult(ogrstate, &contestwork.ogr.stub, sizeof(contestwork.ogr.stub)) == CORE_S_OK)
+      if (ogr->getresult(ogrstate, &contestwork.ogr.workstub, sizeof(WorkStub)) == CORE_S_OK)
       {
         //Log("OGR Success!\n");
+        contestwork.ogr.workstub.stub.length = contestwork.ogr.workstub.worklength;
         *resultcode = RESULT_FOUND;
         return RESULT_FOUND;
       }

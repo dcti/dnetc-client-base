@@ -2,14 +2,6 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// $Log: ogr.cpp,v $
-// Revision 1.2  1999/03/20 18:14:51  gregh
-// Fix ogr.h includes.
-//
-// Revision 1.1  1999/03/18 07:45:40  gregh
-// Renamed from .c
-//
-//
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -260,12 +252,13 @@ static void dump(int depth, struct Level *lev, int limit)
   printf("dist=%08lx%08lx%08lx%08lx%08lx\n", lev->dist[0], lev->dist[1], lev->dist[2], lev->dist[3], lev->dist[4]);
   printf("comp=%08lx%08lx%08lx%08lx%08lx\n", lev->comp[0], lev->comp[1], lev->comp[2], lev->comp[3], lev->comp[4]);
   printf("cnt1=%d cnt2=%d limit=%d\n", lev->cnt1, lev->cnt2, limit);
+  sleep(1);
 }
 
 static int ogr_create(void *input, int inputlen, void **state)
 {
   struct State *State;
-  struct Stub *stub = (struct Stub *)input;
+  struct WorkStub *workstub = (struct WorkStub *)input;
 
   if (input == NULL) {
     return CORE_E_FORMAT;
@@ -279,7 +272,7 @@ static int ogr_create(void *input, int inputlen, void **state)
 
   memset(State, 0, sizeof(struct State));
 
-  State->maxdepth = stub->marks;
+  State->maxdepth = workstub->stub.marks;
   State->maxdepthm1 = State->maxdepth-1;
 
   if (State->maxdepth > sizeof(OGR)/sizeof(OGR[0])) {
@@ -310,15 +303,33 @@ static int ogr_create(void *input, int inputlen, void **state)
     int i, n;
     struct Level *lev, *lev2;
 
-    n = stub->length;
+    n = workstub->worklength;
+    if (n < workstub->stub.length) {
+      n = workstub->stub.length;
+    }
+    if (n > STUB_MAX) {
+      return CORE_E_FORMAT;
+    }
     lev = &State->Levels[1];
     for (i = 0; i < n; i++) {
-      int t;
-      int s = stub->stub[i];
+      int limit;
+      if (State->depth <= State->half_depth2) {
+        if (State->depth <= State->half_depth) {
+          limit = State->max - OGR[State->maxdepthm1 - State->depth];
+          limit = limit < State->half_length ? limit : State->half_length;
+        } else {
+          limit = State->max - choose(lev->dist[0] >> ttmMAXBITS, State->maxdepthm1 - State->depth);
+          limit = limit < State->max - State->marks[State->half_depth]-1 ? limit : State->max - State->marks[State->half_depth]-1;
+        }
+      } else {
+        limit = State->max - choose(lev->dist[0] >> ttmMAXBITS, State->maxdepthm1 - State->depth);
+      }
+      lev->limit = limit;
+      int s = workstub->stub.diffs[i];
       //dump(State->depth, lev, 0);
       State->marks[i+1] = State->marks[i] + s;
       lev->cnt2 += s;
-      t = s;
+      int t = s;
       while (t >= 32) {
         COMP_LEFT_LIST_RIGHT_32(lev);
         t -= 32;
@@ -336,7 +347,7 @@ static int ogr_create(void *input, int inputlen, void **state)
     }
   }
 
-  State->startdepth = State->depth;
+  State->startdepth = workstub->stub.length + 1;
 
 /*
   printf("sizeof      = %d\n", sizeof(struct State));
@@ -349,7 +360,7 @@ static int ogr_create(void *input, int inputlen, void **state)
   {
     int i;
     printf("marks       = ");
-    for (i = 1; i < State->startdepth; i++) {
+    for (i = 1; i < State->depth; i++) {
       printf("%d ", State->marks[i]-State->marks[i-1]);
     }
     printf("\n");
@@ -475,19 +486,20 @@ up:
 static int ogr_getresult(void *state, void *result, int resultlen)
 {
   struct State *State = (struct State *)state;
-  struct Stub *stub = (struct Stub *)result;
+  struct WorkStub *workstub = (struct WorkStub *)result;
   int i;
 
-  if (resultlen != sizeof(struct Stub)) {
+  if (resultlen != sizeof(struct WorkStub)) {
     return CORE_E_FORMAT;
   }
-  stub->marks = State->maxdepth;
-  stub->length = State->depth;
-  if (stub->length > STUB_MAX) {
-    stub->length = STUB_MAX;
-  }
+  workstub->stub.marks = State->maxdepth;
+  workstub->stub.length = State->startdepth - 1;
   for (i = 0; i < STUB_MAX; i++) {
-    stub->stub[i] = State->marks[i+1] - State->marks[i];
+    workstub->stub.diffs[i] = State->marks[i+1] - State->marks[i];
+  }
+  workstub->worklength = State->depth;
+  if (workstub->worklength > STUB_MAX) {
+    workstub->worklength = STUB_MAX;
   }
   return CORE_S_OK;
 }
@@ -498,6 +510,7 @@ static int ogr_destroy(void *state)
   return CORE_S_OK;
 }
 
+#if 0
 static int ogr_count(void *state)
 {
   return sizeof(struct State);
@@ -524,6 +537,7 @@ static int ogr_load(void *buffer, int buflen, void **state)
   memcpy(*state, buffer, sizeof(struct State));
   return CORE_S_OK;
 }
+#endif
 
 static int ogr_cleanup()
 {
@@ -537,9 +551,11 @@ CoreDispatchTable *ogr_get_dispatch_table()
   dispatch_table.cycle     = &ogr_cycle;
   dispatch_table.getresult = &ogr_getresult;
   dispatch_table.destroy   = &ogr_destroy;
+#if 0
   dispatch_table.count     = &ogr_count;
   dispatch_table.save      = &ogr_save;
   dispatch_table.load      = &ogr_load;
+#endif
   dispatch_table.cleanup   = &ogr_cleanup;
   return &dispatch_table;
 }

@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.52 1999/04/22 18:23:11 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.53 1999/04/23 06:18:37 gregh Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -248,7 +248,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                        (long) ( wrdata.work.crypto.key.lo ) );
                  break;
           case OGR:
-                 strcpy(workunit, ogr_stubstr(&wrdata.work.ogr.stub));
+                 strcpy(workunit, ogr_stubstr(&wrdata.work.ogr.workstub.stub));
                  break;
         }
         Log( "%s packet %s%c(%u.%u0%% complete)\n", msg, workunit,
@@ -467,7 +467,7 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
       }
       case OGR:
       {
-        norm_key_count = wrdata.work.ogr.stub.marks;
+        norm_key_count = 1;
         break;
       }
     }
@@ -497,7 +497,7 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
         {
           Log("Loaded %s stub %s (%u.%u0%% done)",
                   cont_name,
-                  ogr_stubstr(&wrdata.work.ogr.stub),
+                  ogr_stubstr(&wrdata.work.ogr.workstub.stub),
                   ((permille!=0 && permille<=1000)?(' '):(0)),
                   (permille/10), (permille%10) );
           break;

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.92 1999/04/23 02:57:20 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.93 1999/04/23 06:18:36 gregh Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -647,7 +647,7 @@ if (targ->realthread)
       if (optimal_timeslice != 0) /* we are profiling for preemptive OSs */
       {
         optimal_timeslice = thisprob->tslice; /* get the number done back */
-#if defined(DYN_TIMESLICE_SHOWME) || defined(GREGH)
+#if defined(DYN_TIMESLICE_SHOWME)
 printf("timeslice: %ld  time: %ldms  working? %d\n",(long)optimal_timeslice, (long)runtime_ms, (run==RESULT_WORKING) );
 #endif
         if (run == RESULT_WORKING) /* timeslice/time is invalid otherwise */
