@@ -12,8 +12,8 @@
  * integrity and ease maintenance. 
  * ----------------------------------------------------------------------
 */ 
-#ifndef _CLICDATA_H_
-#define _CLICDATA_H_ "@(#)$Id: clicdata.h,v 1.18 1999/04/06 10:20:47 cyp Exp $"
+#ifndef __CLICDATA_H__
+#define __CLICDATA_H__ "@(#)$Id: clicdata.h,v 1.19 1999/04/06 11:55:43 cyp Exp $"
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestID);
@@ -46,5 +46,5 @@ int CliAddContestInfoSummaryData( int contestid, unsigned int *addblocks,
 // Return a usable contest name, returns "???" if bad id.
 const char *CliGetContestNameFromID(int contestid);
 
-#endif /* _CLICDATA_H_ */
+#endif /* __CLICDATA_H__ */
 

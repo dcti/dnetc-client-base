@@ -4,8 +4,8 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
-#ifndef RSADATA_H
-#define RSADATA_H "@(#)$Id: rsadata.h,v 1.6 1999/04/06 10:20:48 cyp Exp $"
+#ifndef __RSADATA_H__
+#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.7 1999/04/06 11:55:44 cyp Exp $"
 
 // RC5-56:
 // Contest identifier: RC5-32/12/7 
@@ -105,4 +105,4 @@
 #define RC5CLOSEDCODE 0x1337F00DL
 #define DESCLOSEDCODE 0xBEEFF00DL
 
-#endif /* RSADATA_H */
+#endif /* __RSADATA_H__ */

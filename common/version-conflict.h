@@ -21,8 +21,8 @@
  *  `----------- Denotes a client rewrite.
  * ---------------------------------------------------------------------
 */
-#ifndef _VERSION_H
-#define _VERSION_H "@(#)$Id: version-conflict.h,v 1.46 1999/04/06 10:20:48 cyp Exp $"
+#ifndef __VERSION_H__
+#define __VERSION_H__ "@(#)$Id: version-conflict.h,v 1.47 1999/04/06 11:55:44 cyp Exp $"
 
 #define CLIENT_MAJOR_VER     2
 #define CLIENT_CONTEST       71
@@ -30,4 +30,4 @@
 #define CLIENT_BUILD_FRAC    439
 #define CLIENT_VERSIONSTRING "2.7109.439"
 
-#endif /* _VERSION_H */
+#endif /* __VERSION_H__ */

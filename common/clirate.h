@@ -9,8 +9,8 @@
  * problem and for obtaining the total/average keyrate for an entire contest.
  * ----------------------------------------------------------------------
 */ 
-#ifndef _CLIRATE_H_
-#define _CLIRATE_H_ "@(#)$Id: clirate.h,v 1.12 1999/04/06 10:20:47 cyp Exp $"
+#ifndef __CLIRATE_H__
+#define __CLIRATE_H__ "@(#)$Id: clirate.h,v 1.13 1999/04/06 11:55:43 cyp Exp $"
 
 //#include "problem.h" //uses Problem and RC5Result class definitions 
 
@@ -29,4 +29,4 @@ double CliGetKeyrateForProblemNoSave( Problem *problem );
           (((double)(_U32LimitDouble_))+((double)(1))))+((double)(lo))))
 #endif
 
-#endif /* _CLIRATE_H_ */
+#endif /* __CLIRATE_H__ */

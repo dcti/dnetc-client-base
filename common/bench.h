@@ -4,10 +4,10 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
-#ifndef __BENCHMARK_H__
-#define __BENCHMARK_H__ "@(#)$Id: bench.h,v 1.6 1999/04/06 10:20:47 cyp Exp $"
+#ifndef __BENCH_H__
+#define __BENCH_H__ "@(#)$Id: bench.h,v 1.7 1999/04/06 11:55:43 cyp Exp $"
 
 /* returns keys/sec or 0 if break */
 u32 Benchmark( unsigned int contest, u32 numkeys, int cputype, int *numblocks );
 
-#endif /* __BENCHMARK_H__ */
+#endif /* __BENCH_H__ */

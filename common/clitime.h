@@ -10,8 +10,8 @@
  * ----------------------------------------------------------------------
  *
 */ 
-#ifndef _CLITIME_H_
-#define _CLITIME_H_ "@(#)$Id: clitime.h,v 1.18 1999/04/05 17:56:51 cyp Exp $"
+#ifndef __CLITIME_H__
+#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.19 1999/04/06 11:55:43 cyp Exp $"
 
 #include "baseincs.h" /* struct timeval */
 
@@ -45,4 +45,4 @@ int CliTimerAdd( struct timeval *result, const struct timeval *tv1, const struct
 // tv1/tv2 are not modified (unless 'result' is the same as one of them).
 int CliTimerDiff( struct timeval *result, const struct timeval *tv1, const struct timeval *tv2 );
 
-#endif /* _CLITIME_H_ */
+#endif /* __CLITIME_H__ */

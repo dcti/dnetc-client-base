@@ -5,8 +5,8 @@
  * Any other distribution or use of this source violates copyright.
 */
 
-#ifndef _PROBLEM_H_
-#define _PROBLEM_H_ "@(#)$Id: problem.h,v 1.52 1999/04/04 15:06:19 cyp Exp $"
+#ifndef __PROBLEM_H__
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.53 1999/04/06 11:55:44 cyp Exp $"
 
 #include "cputypes.h"
 #include "ogr.h"
@@ -170,6 +170,6 @@ public:
 
 };
 
-#endif /* _PROBLEM_H_ */
+#endif /* __PROBLEM_H__ */
 
 

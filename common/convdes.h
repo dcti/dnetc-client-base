@@ -9,8 +9,8 @@
  * by Remi Guyomarche
  * ---------------------------------------------------------------
 */ 
-#ifndef CONVDES_H
-#define CONVDES_H "@(#)$Id: convdes.h,v 1.8 1999/04/06 10:20:48 cyp Exp $"
+#ifndef __CONVDES_H__
+#define __CONVDES_H__ "@(#)$Id: convdes.h,v 1.9 1999/04/06 11:55:44 cyp Exp $"
 
 // odd_parity[n] = (n & 0xFE) | b
 // b set so that odd_parity[n] has an odd number of bits
@@ -20,5 +20,5 @@ extern const u8 odd_parity[256];
 extern void convert_key_from_des_to_inc (u32 *deshi, u32 *deslo);
 extern void convert_key_from_inc_to_des (u32 *deshi, u32 *deslo);
 
-#endif /* CONVDES_H */
+#endif /* __CONVDES_H__ */
 

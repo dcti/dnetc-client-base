@@ -5,8 +5,8 @@
  * Any other distribution or use of this source violates copyright.
 */
 
-#ifndef NETWORK_H
-#define NETWORK_H "@(#)$Id: network.h,v 1.64 1999/04/06 08:54:07 cyp Exp $"
+#ifndef __NETWORK_H__
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.65 1999/04/06 11:55:44 cyp Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -330,5 +330,5 @@ public:
     //show who we are connected to. (::Open() no longer does this)
 };
 
-#endif /* NETWORK_H */
+#endif /* __NETWORK_H__ */
 

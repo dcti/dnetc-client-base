@@ -5,8 +5,8 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 
-#ifndef _CPUTYPES_H_
-#define _CPUTYPES_H_ "@(#)$Id: cputypes.h,v 1.57 1999/04/05 18:44:00 patrick Exp $"
+#ifndef __CPUTYPES_H__
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.58 1999/04/06 11:55:44 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -461,5 +461,5 @@ struct s128 { s64 hi, lo; };
 
 /* ----------------------------------------------------------------- */
 
-#endif /* _CPUTYPES_H_ */
+#endif /* __CPUTYPES_H__ */
 

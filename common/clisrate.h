@@ -9,8 +9,8 @@
  * statistics obtained from clirate.cpp into strings suitable for display.
  * ----------------------------------------------------------------------
 */ 
-#ifndef _CLICSTAT_H_
-#define _CLICSTAT_H_ "@(#)$Id: clisrate.h,v 1.19 1999/04/06 10:20:48 cyp Exp $"
+#ifndef __CLISRATE_H__
+#define __CLISRATE_H__ "@(#)$Id: clisrate.h,v 1.20 1999/04/06 11:55:43 cyp Exp $"
 
 //#include "cputypes.h" // u64
 //#include "problem.h"  // Problem class
@@ -45,4 +45,4 @@ const char *CliGetMessageForProblemCompleted( Problem *problem );
 /* same as above, but does not affect cumulative stats            */
 const char *CliGetMessageForProblemCompletedNoSave( Problem *problem );
 
-#endif /* _CLICSTAT_H_ */
+#endif /* __CLISRATE_H__ */

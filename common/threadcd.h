@@ -11,8 +11,8 @@
  * 2. a 'lurk' mechanism running asynchronously.
  * -----------------------------------------------------------------------
 */
-#ifndef __CLITHREAD_H__
-#define __CLITHREAD_H__ "@(#)$Id: threadcd.h,v 1.14 1999/04/06 10:20:48 cyp Exp $"
+#ifndef __THREADCD_H__
+#define __THREADCD_H__ "@(#)$Id: threadcd.h,v 1.15 1999/04/06 11:55:44 cyp Exp $"
 
 #include "cputypes.h" /* THREADID typedef */
 
