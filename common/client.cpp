@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.39 1999/12/20 00:01:51 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.40 1999/12/20 01:55:28 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -148,14 +148,14 @@ static const char *GetBuildOrEnvDescription(void)
     osname = "A/UX";
   else if ( Gestalt( gestaltSystemVersion, &osversion ) != noErr)
     osversion = 0;
-  if (osversion != 0)
+  if ((osversion & 0xffff) != 0)
   {    
     static char buffer[40];
     sprintf( buffer, "%s %d.%d%c%d", osname,
-                                     (int)((osversion&0xff)>>8), 
-                                     (int)((osversion&0xf0)>>4),
-				     (((osversion & 0x0f) == 0)?(0):('.')),
-				     (int)((osversion&0x0f)) );
+                                     (int)((osversion&0xff00)>>8), 
+                                     (int)((osversion&0x00f0)>>4),
+				                             (((osversion & 0x000f) == 0)?(0):('.')),
+				                             (int)((osversion&0x000f)) );
     return buffer;				  
   }
   return "";			      
