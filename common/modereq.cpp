@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: modereq.cpp,v $
+// Revision 1.6.2.8  1999/01/17 11:03:49  remi
+// Synced with :
+//  Revision 1.20  1999/01/15 20:54:21  friedbait
+//  #include "baseincs.h" added to fix undefined 'NULL' in linux x86, gcc-2.7.2.3
+//
+//  Revision 1.19  1999/01/15 20:21:59  michmarc
+//  Fix the fact that Benchmark() in bench.cpp changed its prototype
+//
 // Revision 1.6.2.7  1999/01/09 11:41:13  remi
 // Synced with :
 //
@@ -42,10 +50,11 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.6.2.7 1999/01/09 11:41:13 remi Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.6.2.8 1999/01/17 11:03:49 remi Exp $"; }
 #endif
 
 #include "client.h"    //client class
+#include "baseincs.h" //basic #includes
 #include "triggers.h"  //CheckExitRequestTrigger() [used by bench stuff]
 #include "logstuff.h"  //LogScreen() [used by update/fetch/flush stuff]
 #include "modereq.h"   //our constants
@@ -148,9 +157,9 @@ int ModeReqRun(Client *client)
           if ((bits & (MODEREQ_BENCHMARK_QUICK))!=0)
             benchsize = (1L<<20); /* short bench: 1048576 instead of 10000000 */
           if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_RC5)!=0) 
-            Benchmark( 0, benchsize, client->cputype );
+            Benchmark( 0, benchsize, client->cputype, NULL );
           if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0) 
-            Benchmark( 1, benchsize, client->cputype );
+            Benchmark( 1, benchsize, client->cputype, NULL );
           }
         retval |= (modereq.reqbits & (MODEREQ_BENCHMARK_DES | 
                  MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_QUICK ));
