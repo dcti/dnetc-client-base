@@ -10,11 +10,12 @@
 #define OPTION_COUNT    43
 #define MAXMENUENTRIES  15
 
-char *menutable[4]=
+char *menutable[5]=
   {
-  "General Options",
+  "Required Options",
   "Logging Options",
   "Communication Options",
+  "Performance Options",
   "Miscellaneous Options"
   };
 
@@ -100,16 +101,16 @@ optionstruct options[OPTION_COUNT]=
 { "threshold", "RC5 Blocks to Buffer", "10", "(max 1000)",1,2,2,NULL},
 //2
 { "threshold", "RC5 block flush threshold", "10",
-    "\nSet this equal to RC5 Blocks to Buffer except in rare cases.",1,2,3,NULL},
+    "\nSet this equal to RC5 Blocks to Buffer except in rare cases.",5,2,3,NULL},
 //3
-{ "threshold2", "DES Blocks to Buffer", "10", "(max 1000)",1,2,4,NULL},
+{ "threshold2", "DES Blocks to Buffer", "10", "(max 1000)",1,2,3,NULL},
 //4
 { "threshold2", "DES block flush threshold", "10",
-    "\nSet this equal to DES Blocks to Buffer except in rare cases.",1,2,5,NULL},
+    "\nSet this equal to DES Blocks to Buffer except in rare cases.",5,2,4,NULL},
 //5
-{ "count", "Blocks to complete in run", "0", "(0 = no limit)",1,2,6,NULL},
+{ "count", "Complete this many blocks, then exit", "0", "(0 = no limit)",5,2,1,NULL},
 //6
-{ "hours", "Hours to complete in a run", "0.0", "(0 = no limit)",1,1,7,NULL},
+{ "hours", "Run for this many hours, then exit", "0.00", "(0 = no limit)",5,1,2,NULL},
 //7
 { "timeslice", "Keys per timeslice - for Macs, Win16, RISC OS, etc",
 #if (CLIENT_OS == OS_WIN16)
@@ -149,29 +150,29 @@ optionstruct options[OPTION_COUNT]=
 #if (CLIENT_CPU == CPU_X86)
 //16
 { "cputype", "Optimize performance for CPU type", "Autodetect",
-      "\n",1,2,8,NULL,&cputypetable[1][0],-1,5},
+      "\n",4,2,3,NULL,&cputypetable[1][0],-1,5},
 #elif (CLIENT_CPU == CPU_ARM)
 { "cputype", "Optimize performance for CPU type", "Autodetect",
-      "\n",1,2,8,NULL,&cputypetable[1][0],-1,1},
+      "\n",4,2,3,NULL,&cputypetable[1][0],-1,1},
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
 //16
 { "cputype", "Optimize performance for CPU type", "Autodetect",
-      "\n",1,2,8,NULL,&cputypetable[1][0],-1,1},
+      "\n",4,2,3,NULL,&cputypetable[1][0],-1,1},
 #else
 //16
-{ "cputype", "CPU type...not applicable in this client", "-1", "(default -1)",1,2,8,
+{ "cputype", "CPU type...not applicable in this client", "-1", "(default -1)",4,2,8,
   NULL,NULL,0,0},
 #endif
 //17
 { "messagelen", "Message Mailing (bytes)", "0", "(0=no messages mailed.  10000 recommended.  125000 max.)\n",2,2,2,NULL},
 //18
-{ "smtpsrvr", "SMTP Server", "your.smtp.server", "(128 characters max)",2,1,3,NULL},
+{ "smtpsrvr", "SMTP Server to use", "your.smtp.server", "(128 characters max)",2,1,3,NULL},
 //19
 { "smtpport", "SMTP Port", "25", "(SMTP port on mail server -- default 25)",2,2,4,NULL},
 //20
-{ "smtpfrom", "Mail ID that logs will be mailed from", "RC5notify", "\n(Some servers require this to be a real address)\n",2,1,5,NULL},
+{ "smtpfrom", "E-mail address that logs will be mailed from", "RC5notify", "\n(Some servers require this to be a real address)\n",2,1,5,NULL},
 //21
-{ "smtpdest", "Mail ID that logs will be sent to", "you@your.site", "\n(Full name and site eg: you@your.site.  Comma delimited list permitted)\n",2,1,6,NULL},
+{ "smtpdest", "E-mail address to send logs to", "you@your.site", "\n(Full name and site eg: you@your.site.  Comma delimited list permitted)\n",2,1,6,NULL},
 //22
 #if ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_BEOS))
   { "numcpu", "Number of CPUs in this machine", "-1 (autodetect)", "\n"
@@ -180,40 +181,41 @@ optionstruct options[OPTION_COUNT]=
 #endif
 ,4,2,2,NULL},
 //23
-{ "checkpointfile", "RC5 Checkpoint information filename","none","\n(Non-shared file required.  "
+{ "checkpointfile", "RC5 Checkpoint filename","none","\n(Non-shared file required.  "
 #if (CLIENT_OS == OS_RISCOS)
   "ckpoint/rc5"
 #else
   "ckpoint.rc5"
 #endif
-  " recommended.  'none' to disable)\n",4,1,3,NULL},
+  " recommended.  'none' to disable)\n",1,1,4,NULL},
 //24
-{ "checkpointfile2", "DES Checkpoint information filename","none","\n(Non-shared file required.  "
+{ "checkpointfile2", "DES Checkpoint filename","none","\n(Non-shared file required.  "
 #if (CLIENT_OS == OS_RISCOS)
   "ckpoint/des"
 #else
   "ckpoint.des"
 #endif
-  " recommended.  'none' to disable)\n",4,1,4,NULL},
+  " recommended.  'none' to disable)\n",1,1,5,NULL},
 //25
 { "randomprefix", "High order byte of random blocks","100","Do not change this",0,2,0,NULL},
 //26
-{ "preferredblocksize", "Preferred Block Size (2^28 through 2^31) ","30","28 -- 31",4,2,5,NULL},
+{ "preferredblocksize", "Preferred Block Size","30",
+  "(2^28 -> 2^31)",5,2,5,NULL},
 //27
-{ "preferredcontest", "Preferred Contest","DES","- DES strongly recommended",4,2,6,
+{ "preferredcontest", "Preferred Contest","DES","- DES strongly recommended",5,2,6,
   NULL,&contesttable[0][0],1,2},
 //28
-{ "quiet", "Disable all screen output? (quiet mode)","no","",4,3,7,NULL},
+{ "quiet", "Disable all screen output? (quiet mode)","no","",5,3,7,NULL},
 //29
-{ "noexitfilecheck", "Disable exit file checking?","no","",4,3,8,NULL},
+{ "noexitfilecheck", "Disable exit file checking?","no","",5,3,8,NULL},
 //30
-{ "percentoff", "Disable block percent completion indicators?","no","",4,3,9,NULL},
+{ "percentoff", "Disable block percent completion indicators?","no","",5,3,9,NULL},
 //31
 { "frequent", "Attempt keyserver connections frequently?","no","",3,3,6,NULL},
 //32
 { "nodisk", "Buffer blocks in RAM only? (no disk I/O)","no",
     "\nNote: This option will cause all buffered, unflushable blocks to be lost\n"
-    "during client shutdown!",4,3,10,NULL},
+    "during client shutdown!",5,3,10,NULL},
 //33
 { "nofallback", "Disable fallback to US Round-Robin?","no",
   "\nIf your specified proxy is down, the client normally falls back\n"
@@ -222,11 +224,11 @@ optionstruct options[OPTION_COUNT]=
   3,3,7,NULL},
 //34
 { "cktime", "Interval between saving of checkpoints (minutes):","5",
-  "",4,2,11,NULL},
+  "",5,2,11,NULL},
 //35
 { "nettimeout", "Network Timeout (seconds)", "60"," ",3,2,8,NULL},
 //36
-{ "exitfilechecktime", "Exit file check time (seconds)","30","",4,2,12,NULL},
+{ "exitfilechecktime", "Exit file check time (seconds)","30","",5,2,12,NULL},
 //37
 { "runbuffers", "Offline operation mode","Normal Operation",
   "\nNormal Operation: The client will connect to a keyserver as needed,\n"
@@ -437,6 +439,7 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
           inthreshold[0]=atoi(parm);
           if ( inthreshold[0] < 1   ) inthreshold[0] = 1;
           if ( inthreshold[0] > 1000 ) inthreshold[0] = 1000;
+          outthreshold[0]=inthreshold[0];
           break;
         case CONF_THRESHOLDO:
           outthreshold[0]=atoi(parm);
@@ -449,6 +452,7 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
           inthreshold[1]=atoi(parm);
           if ( inthreshold[1] < 1   ) inthreshold[1] = 1;
           if ( inthreshold[1] > 1000 ) inthreshold[1] = 1000;
+          outthreshold[1]=inthreshold[1];
           break;
         case CONF_THRESHOLDO2:
           outthreshold[1]=atoi(parm);
@@ -785,7 +789,8 @@ while (returnvalue == 0)
    printf(" 1) %s\n",menutable[0]);
    printf(" 2) %s\n",menutable[1]);
    printf(" 3) %s\n",menutable[2]);
-   printf(" 4) %s\n\n",menutable[3]);
+   printf(" 4) %s\n",menutable[3]);
+   printf(" 5) %s\n\n",menutable[4]);
    printf(" 9) Discard settings and exit\n");
    printf(" 0) Save settings and exit\n\n");
    if (strcmpi(id,"rc5@distributed.net")==0)
@@ -803,6 +808,7 @@ while (returnvalue == 0)
       case 2: ConfigureGeneral(2);break;
       case 3: ConfigureGeneral(3);break;
       case 4: ConfigureGeneral(4);break;
+      case 5: ConfigureGeneral(5);break;
       case 0: returnvalue=1;break; //Breaks and tells it to save
       case 9: returnvalue=-1;break; //Breaks and tells it NOT to save
       };
