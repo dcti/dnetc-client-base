@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.9 2003/09/02 00:48:54 mweiser Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.10 2003/09/05 14:09:39 mweiser Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -264,10 +264,8 @@ Problem *ProblemAlloc(void)
 
   if (thisprob && !err)
   {
-    fastlock_t initmux = FASTLOCK_INITIALIZER_UNLOCKED; /* {0} or whatever */
-
     memset( thisprob, 0, sizeof(SuperProblem) );
-    memcpy( &(thisprob->copy_lock), &initmux, sizeof(fastlock_t));
+    fastlock_init(&(thisprob->copy_lock));
 
     thisprob->iprobs[PICKPROB_CORE].priv_data.threadindex =
     thisprob->iprobs[PICKPROB_MAIN].priv_data.threadindex =
