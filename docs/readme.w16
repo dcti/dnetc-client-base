@@ -42,6 +42,12 @@
     use only IP addresses, or install the fix. (tcp1607.exe available
     from Novell support sites).
 
+    The Win16 client will search for winsock.dll in the following order:
+    The windows directory, then in the system directory, then the client's
+    directory and then along the search path as determined by the PATH= or 
+    SET PATH= statement active at the time Windows starts. Check you 
+    autoexec.bat as that is usually where it is set.
+
     "Mode" (eg -fetch, -flush, -benchmark etc) that are generally only 
     available as command-line options are accessable by right-clicking 
     the client window.
