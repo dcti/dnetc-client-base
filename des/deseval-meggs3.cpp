@@ -1,5 +1,8 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.16  1999/11/27 06:57:34  sampo
+// Mac command-line client checkins round 1...all changes commented with /* Mindmorph */ until everything settles out.
+//
 // Revision 1.15  1999/11/17 21:51:52  sampo
 // remove Dakidd's cvs merge error in previous revision in regards to ambiguous
 // type 'slice'
@@ -56,7 +59,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.15 1999/11/17 21:51:52 sampo Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.16 1999/11/27 06:57:34 sampo Exp $"; }
 #endif
 
 #include <cputypes.h>		/* Isn't this needed for using CLIENT_OS defines? */
@@ -84,9 +87,10 @@ return "@(#)$Id: deseval-meggs3.cpp,v 1.15 1999/11/17 21:51:52 sampo Exp $"; }
 #if (CLIENT_OS == OS_MACOS)
 #define TICKS ((unsigned long *)0x16a)
 #define slice unsigned long
-extern void DES_YieldToMain(void);
-extern unsigned long DES_ticks_to_use;
-extern unsigned long DES_yield_ticks;
+//extern void DES_YieldToMain(void);
+extern void mac_yield(void);
+unsigned long DES_ticks_to_use = 6; /* hardcode 100ms for now */
+unsigned long DES_yield_ticks = 0;
 #endif
 
 static void
@@ -1052,10 +1056,10 @@ SliceType whack16(SliceType *P, SliceType *C, SliceType *K)
 			}
 			// now step the tail
             #if (CLIENT_OS == OS_MACOS)
-		      if (DES_yield_ticks < *TICKS) {
+		    if (DES_yield_ticks < *TICKS) {
 	            DES_yield_ticks = *TICKS + DES_ticks_to_use;
-			    DES_YieldToMain();
-			  }
+			    mac_yield(0);
+			}
             #endif
 
 			hs = 0;
