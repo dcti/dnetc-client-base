@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.10 2002/10/23 05:34:49 acidblood Exp $
+; $Id: r72-dg2.asm,v 1.11 2002/10/23 05:45:55 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -668,7 +668,7 @@ test_key_2:
         sub     [esi], ecx
         mov     eax, RESULT_FOUND
 
-        jmp     finished
+        jmp     short finished
 
 k7align 16
 inc_key:
