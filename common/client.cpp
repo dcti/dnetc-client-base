@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.55  1998/06/22 03:25:30  silby
+// changed so that pausefile is only checked every exitfilechecktime now.
+//
 // Revision 1.54  1998/06/21 16:08:02  cyruspatel
 // NetWare change: first thread no longer migrates to smp.
 //
@@ -39,7 +42,7 @@
 //
 //
 
-static const char *id="@(#)$Id: client.cpp,v 1.54 1998/06/21 16:08:02 cyruspatel Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.55 1998/06/22 03:25:30 silby Exp $";
 
 #include "client.h"
 
@@ -1931,13 +1934,6 @@ PreferredIsDone1:
   while ((getbuff_errs == 0) && (TimeToQuit == 0))
   {
     //------------------------------------
-    // Does a pausefile exist?
-    //------------------------------------
-
-    pausefilefound = (strcmp(pausefile,"none") != 0 &&
-          stat(pausefile, &buf) != -1 ? 1 : 0);
-
-    //------------------------------------
     //Do keyboard stuff for clients that allow user interaction during the run
     //------------------------------------
 
@@ -2587,15 +2583,14 @@ PreferredIsDone1:
       exitcode = 4;
     }
 
-    //----------------------------------------
-    // Found an "exitrc5.now" flag file?
-    //----------------------------------------
-
-    if (!noexitfilecheck) // Check if file "exitrc5.now" exists...
+    if ( time( NULL ) > exitchecktime )
     {
-      if ( time( NULL ) > exitchecktime )
+    exitchecktime = time( NULL ) + exitfilechecktime; // At most once every 30 seconds by default
+    if (!noexitfilecheck) // Check if file "exitrc5.now" exists...
       {
-        exitchecktime = time( NULL ) + exitfilechecktime; // At most once every 30 seconds by default
+        //----------------------------------------
+        // Found an "exitrc5.now" flag file?
+        //----------------------------------------
         if( stat( exit_flag_file, &buf ) != -1 )
         {
           Log( "[%s] Found \"exitrc5" EXTN_SEP "now\" file.  Exiting.\n", Time() );
@@ -2603,6 +2598,13 @@ PreferredIsDone1:
           exitcode = 2;
         }
       }
+    //------------------------------------
+    // Does a pausefile exist?
+    //------------------------------------
+ 
+    pausefilefound = (strcmp(pausefile,"none") != 0 &&
+          stat(pausefile, &buf) != -1 ? 1 : 0);
+    
     }
 
     //----------------------------------------
@@ -2723,53 +2725,6 @@ PreferredIsDone1:
         }
       } // Checkpointing
     }
-
-    //----------------------------------------
-    // Print contest totals if the number of completed blocks has changed
-    //----------------------------------------
-
-    // Detect/report any changes to the total completed blocks...
-/*    if ((old_totalBlocksDone[0] != totalBlocksDone[0]) || (old_totalBlocksDone[1] != totalBlocksDone[1]) )
-    {
-      #ifdef NEW_STATS_AND_LOGMSG_STUFF
-      {
-        //display summaries only of *active* contests otherwise we get
-        //something like "341 DES Blocks 1421:25:51.96 - [0.02 keys/sec]"
-        int i=1;
-        for (s32 tmpc = 0; tmpc < 2; tmpc++)
-        {
-          if (old_totalBlocksDone[tmpc] != totalBlocksDone[tmpc])
-          {
-            Log( "%c%s%c Summary: %s\n",
-             ((i == 1) ? ('[') : (' ')), CliGetTimeString(NULL, i),
-             ((i == 1) ? (']') : (' ')), CliGetSummaryStringForContest(tmpc) );
-            if ((--i) < 0) i = 0;
-          }
-        }
-      }
-#else
-      {
-        gettimeofday( &stop, &dummy );
-
-        len = max(.01, ((double)stop.tv_sec - global_timehi) + ((double)stop.tv_usec - global_timelo)/1000000.0 );
-        global_timehi2 = (u32) len;
-        global_timelo2 = (u32) ( ((u32) (len*1000000.0)) % 1000000L);
-
-        Log( "[%s] Tot: %d RC5 blocks %02d:%02d:%02d.%02d - [%.2f keys/sec]\n"
-           "                        Tot: %d DES blocks %02d:%02d:%02d.%02d - [%.2f keys/sec]\n",
-           Time(), totalBlocksDone[0],
-           global_timehi2 / 3600 , (global_timehi2 % 3600) / 60, global_timehi2 % 60, global_timelo2/10000L,
-           ( ( ( (double) totkeyscount[0]) /
-           ( ( (double) (global_timehi2) + (((double) global_timelo2)/1000000.0) ) / 32768.0 ) ) ),
-        totalBlocksDone[1],
-        global_timehi2 / 3600 , (global_timehi2 % 3600) / 60, global_timehi2 % 60, global_timelo2/10000L,
-        ( ( ( (double) totkeyscount[1]) /
-        ( ( (double) (global_timehi2) + (((double) global_timelo2)/1000000.0) ) / 32768.0 ) ) ) );
-      }
-#endif
-      old_totalBlocksDone[0] = totalBlocksDone[0];
-      old_totalBlocksDone[1] = totalBlocksDone[1];
-    }*/
 
   }  // End of MAIN LOOP
 
