@@ -3,7 +3,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.18.2.1 2001/04/01 19:05:37 andreasb Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.18.2.2 2001/04/01 19:55:10 andreasb Exp $"
 
 // define this to use the new struct Stub
 //#define OGR_NEW_STUB_FORMAT
@@ -71,6 +71,9 @@
  * (e.g. selftest) depend on this setting.
  */
 #define OGROPT_NEW_CHOOSEDAT
+
+/* either undef'd or 3 is implemented in common/selftest.cpp */
+#define OGR_ALTERNATE_TESTCASES 3
 
 /* ===================================================================== */
 
@@ -204,7 +207,7 @@ struct WorkStub { /* size is 28 */
 
 /* The client may read these values, but NOT MODIFY them !!! (except ntoh/hton()) */
 /* maximum size is 48 */
-struct NewStub { /* size is 1+1+1+32+8 = 43 [+1 = 44] */
+struct NewStub { /* size is 1+1+1+32+8 = 43 [+1 = 44] [+1+1 = 46] */
   u8 marks;            /* N-mark ruler to which this stub applies */
   u8 depth;            /* startdepth, can calculate stopdepth from depth,depththdiff */
   u8 workdepth;        /* depth of current state */
@@ -217,6 +220,9 @@ struct NewStub { /* size is 1+1+1+32+8 = 43 [+1 = 44] */
   /* marks, depth, diffs[0 .. depth-2], depththdiff are CONST. Do not modify them in the core!
      workdepth, diffs[depth-1 .. STUB_MAX-1], nodes may be modified by the core. */
   /* we need an ogr_resetstub() function. */
+  
+  u8 core;             /* save the core number */
+  u8 cycle;            /* count recycles for fifo-buffers */
 };
 
 #endif /* OGR_NEW_STUB_FORMAT */
@@ -265,7 +271,6 @@ struct State {
   int half_depth2;                /* half of maxdepth, adjusted for 2nd mark */
   int marks[MAXDEPTH+1];          /* current length */
   int startdepth;
-  int stopdepth;
   int depth;
   int limit; // unused
   #ifdef OGR_DEBUG
@@ -307,6 +312,7 @@ struct State {
   int half_depth;                 /* depth of left/right segment */
   int half_depth2;                /* depth of left+middle segment */
   int startdepth;                 /* depth of the stub */
+  int stopdepth;                  /* */
   
   /* Part 2: variables that will be changed by ogr_cycle() and read by 
              ogr_getresult(). Do not read these values while ogr_cycle() is running!
