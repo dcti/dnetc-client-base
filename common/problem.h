@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.43 2000/11/12 02:00:15 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.44 2000/11/12 17:18:17 cyp Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -242,7 +242,13 @@ int ProblemGetInfo(void *__thisprob,
 Problem *ProblemAlloc(void);
 void ProblemFree(void *__thisprob);
 
-unsigned int ProblemCountLoaded(int contestid); /* -1=total for all contests */
+/* Get the number of problems for a particular contest, */
+/*  or, if contestid is -1 then the total for all contests */
+unsigned int ProblemCountLoaded(int contestid);
+
+/* Get the size of the problem (which is not! sizeof(Problem) */
+/* used for IPC, shmem et al */
+unsigned int ProblemGetSize(void);
 
 const char *ProblemComputeRate( unsigned int contestid, 
                                 u32 secs, u32 usecs, u32 iterhi, u32 iterlo, 

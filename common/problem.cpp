@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.80 2000/11/12 02:00:14 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.81 2000/11/12 17:18:17 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -126,9 +126,16 @@ int ProblemIsInitialized(void *__thisprob)
   return 0;
 }
 
+unsigned int ProblemGetSize(void)
+{ /* needed by IPC/shmem */
+  return sizeof(InternalProblem);
+}  
+
 Problem *ProblemAlloc(void)
 {
+  char *p; unsigned long ww;
   InternalProblem *thisprob = (InternalProblem *)0;
+  int err = 0;
 
   #ifdef STRESS_THREADS_AND_BUFFERS
   {
@@ -148,46 +155,53 @@ Problem *ProblemAlloc(void)
         runlevel = -1;
     }
     if (runlevel < 0)
-      return (InternalProblem *)0;
+      err = 1;
   }
   #endif
+
+  if (!err)
   {
     thisprob = (InternalProblem *)malloc(sizeof(InternalProblem));
     if (!thisprob)
     {
       Log("Insufficient memory to allocate problem data\n");
+      err = 1;
     }
-    else
+  }    
+    
+  if (thisprob && !err)
+  {
+    p = (char *)&(thisprob->priv_data.rc5unitwork);
+    ww = ((unsigned long)p);
+
+    #if (CLIENT_CPU == CPU_ALPHA) /* sizeof(long) can be either 4 or 8 */
+    ww &= 0x7; /* (sizeof(longword)-1); */
+    #else
+    ww &= (sizeof(int)-1); /* int alignment */
+    #endif
+    if (ww)
     {
-      char *p; unsigned long ww;
-
-      p = (char *)&(thisprob->priv_data.rc5unitwork);
-      ww = ((unsigned long)p);
-
-      #if (CLIENT_CPU == CPU_ALPHA) /* sizeof(long) can be either 4 or 8 */
-      ww &= 0x7; /* (sizeof(longword)-1); */
-      #else
-      ww &= (sizeof(int)-1); /* int alignment */
-      #endif
-      if (ww)
-      {
-        Log("priv_data.rc5unitwork for problem %d is misaligned!\n", __problem_counter);
-        RaiseExitRequestTrigger();
-        free((void *)thisprob);
-        thisprob = (InternalProblem *)0;
-      }
-      else
-      {
-        memset( thisprob, 0, sizeof(InternalProblem) );
-        thisprob->priv_data.threadindex = __problem_counter++;
-
-        //align core_membuffer to 16byte boundary
-        p = &(thisprob->priv_data.__core_membuffer_space[0]);
-        while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
-          p++;
-        thisprob->priv_data.core_membuffer = p;
-      }
+      Log("priv_data.rc5unitwork for problem %d is misaligned!\n", __problem_counter);
+      err = 1;
     }
+  }      
+
+  if (thisprob && !err)
+  {
+    memset( thisprob, 0, sizeof(InternalProblem) );
+    thisprob->priv_data.threadindex = __problem_counter++;
+
+    //align core_membuffer to 16byte boundary
+    p = &(thisprob->priv_data.__core_membuffer_space[0]);
+    while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
+      p++;
+    thisprob->priv_data.core_membuffer = p;
+  }
+  
+  if (thisprob && err)
+  {
+    free((void *)thisprob);
+    thisprob = (InternalProblem *)0;
   }
   return (Problem *)thisprob;
 }
@@ -569,9 +583,14 @@ int ProblemRetrieveState( void *__thisprob,
 {
   InternalProblem *thisprob = __validate_probptr(__thisprob);
   if (!thisprob)
+  {
     return -1;
+  }    
   if (!thisprob->priv_data.initialized)
+  {
+    //LogScreen("ProblemRetrieveState() without preceding LoadState()\n");
     return -1;
+  }    
   if (work) // store back the state information
   {
     switch (thisprob->pub_data.contest) {
@@ -596,13 +615,18 @@ int ProblemRetrieveState( void *__thisprob,
     if (!dontwait) /* normal state is to wait. But we can't wait when aborting */
     {
       while (thisprob->priv_data.running) /* need to guarantee that no Run() will occur on a */
+      {
         usleep(1000); /* purged problem. */
+      }    
     }
     loaded_problems[thisprob->pub_data.contest]--;       /* per contest */  
     loaded_problems[CONTEST_COUNT]--; /* total */
   }
   if (thisprob->priv_data.last_resultcode < 0)
+  {
+    //LogScreen("last resultcode = %d\n",thisprob->priv_data.last_resultcode);
     return -1;
+  }    
   return ( thisprob->priv_data.last_resultcode );
 }
 
@@ -2031,4 +2055,3 @@ int ProblemGetInfo(void *__thisprob,
   } /* if (rescode >= 0) */
   return rescode;
 }
-
