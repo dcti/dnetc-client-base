@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dgp4.asm,v 1.1 2002/10/23 00:51:04 sampo Exp $
+; $Id: r72-dgp4.asm,v 1.2 2002/10/23 01:31:56 sampo Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -614,7 +614,7 @@ encryption:
 test_key_1_0:
         cmp     A1, [work_C_0]
         mov     eax, [RC5_72UnitWork]
-        je	test_key_1_1
+        je	near test_key_1_1
         
 test_key_2_0:        
         cmp     A2, [work_C_0]
