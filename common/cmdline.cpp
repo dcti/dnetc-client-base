@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.97  1998/11/14 13:51:07  cyp
+// -hidden/-quiet spawn of a new process for unix hosts is done here instead
+// of from main.
+//
 // Revision 1.96  1998/11/10 21:45:59  cyp
 // ParseCommandLine() is now one-pass. (a second pass is available so that
 // lusers can see the override messages on the screen)
@@ -60,7 +64,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.96 1998/11/10 21:45:59 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.97 1998/11/14 13:51:07 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -69,6 +73,7 @@ return "@(#)$Id: cmdline.cpp,v 1.96 1998/11/10 21:45:59 cyp Exp $"; }
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "pathwork.h"  // InitWorkingDirectoryFromSamplePaths();
 #include "modereq.h"   // get/set/clear mode request bits
+#include "console.h"   // ConOutErr()
 #include "cmdline.h"   // ourselves
 
 /* -------------------------------------- */
@@ -988,8 +993,60 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       }
     }
 
+  //-----------------------------------------
+  // done. set the inimissing bit if appropriate;
+  // if hidden and a unix host, fork a new process with >/dev/null
+  // -----------------------------------------
+
   if (inimissing  && run_level == 0)
+    {
+    quietmode = 0;
     ModeReqSet( MODEREQ_CONFIG );
+    }
+  #if ((CLIENT_OS == OS_DEC_UNIX)    || (CLIENT_OS == OS_HPUX)    || \
+       (CLIENT_OS == OS_QNX)         || (CLIENT_OS == OS_OSF1)    || \
+       (CLIENT_OS == OS_BSDI)        || (CLIENT_OS == OS_SOLARIS) || \
+       (CLIENT_OS == OS_IRIX)        || (CLIENT_OS == OS_SCO)     || \
+       (CLIENT_OS == OS_LINUX)       || (CLIENT_OS == OS_NETBSD)  || \
+       (CLIENT_OS == OS_UNIXWARE)    || (CLIENT_OS == OS_DYNIX)   || \
+       (CLIENT_OS == OS_MINIX)       || (CLIENT_OS == OS_MACH10)  || \
+       (CLIENT_OS == OS_AIX)         || (CLIENT_OS == OS_AUX)     || \
+       (CLIENT_OS == OS_OPENBSD)     || (CLIENT_OS == OS_SUNOS)   || \
+       (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX))
+  else if (run_level == 0 && (ModeReqIsSet(-1) != 0) && 
+          quietmode && isatty(fileno(stdout)))
+    {
+    terminate_app = 1; //always return !0
+    int i,quoteit;
+    char cmd_buffer[1024];
+    char redir[] = ">/dev/null &";
+    strcpy(cmd_buffer,argv[0]);
+    for (i=1;i<=argc;i++)
+      {
+      if (argv[i])
+        {
+        if ((strlen(cmd_buffer)+strlen(argv[i])+4) >= 
+            ((sizeof(cmd_buffer)-sizeof(redir))+2))
+          break;
+        quoteit=(argv[i][0]==0 || strchr(argv[i],' ')!=NULL || 
+                                  strchr(argv[i],'\t')!=NULL);
+        strcat(cmd_buffer," ");
+        if (quoteit) strcat(cmd_buffer,"\"");
+        strcat(cmd_buffer,argv[i]);
+        if (quoteit) strcat(cmd_buffer,"\"");
+        }
+      }    
+    strcat(cmd_buffer,redir);
+    if (system(cmd_buffer) != 0)
+      {
+      sprintf(cmd_buffer,"Unable to start quiet/hidden. "
+              "Use \"%s\" instead.",redir);
+      ConOutErr(cmd_buffer);
+      }
+    }
+  #endif
+ 
+  
   if (retcodeP) 
     *retcodeP = 0;
   return terminate_app;
