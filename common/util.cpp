@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29.2.6 2003/04/26 15:16:48 pfeffi Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29.2.7 2003/08/09 12:46:21 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -1108,6 +1108,11 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
         /* fbsd: "ps ax -o pid -o command 2>/dev/null"; */ /* bsd + -o ext */
         /* lnux: "ps ax --format pid,comm 2>/dev/null"; */ /* bsd + gnu -o */
+        #elif (CLIENT_OS == OS_NEXTSTEP)
+        /* NeXTstep porduces spaces in process status columns like
+         * 26513 p1 SW    0:01 -bash (bash)
+         * 26542 p1 R N  32:52 ./dnetc */
+        pscmd = "ps axw|sed \"s/ [RUSITHPD][W >][N< ]//\"|awk '{print$1\" \"$4}' 2>/dev/null";
         #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
               (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
         pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
