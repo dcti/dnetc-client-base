@@ -2,7 +2,7 @@
 
 extern csc_tabp, csc_tabe, csc_tabc, csc_bit_order
 extern convert_key_from_inc_to_csc, convert_key_from_csc_to_inc
-extern memset
+;extern memset
 
 ; this file has been produced by the following chain :
 ;
@@ -30,6 +30,7 @@ extern memset
 ;   from the .cpp (modulo symbol names)
 
 SECTION .text
+
         ALIGN 32
 GLOBAL cscipher_bitslicer_6b_i
         GLOBAL cscipher_bitslicer_6b_i:function
@@ -6415,7 +6416,7 @@ L492:
         not  dword [eax]
         cmp  dword [edx],BYTE 0
         jne short L492
-        jmp near L49
+        jmp L49
         ;;ALIGN 1<<4 ; IF < 7
 L488:
         mov  edx, [esp+1648]
@@ -6584,7 +6585,7 @@ L524:
         push  BYTE 0
         lea  eax, [edi+256]
         push  eax
-        call memset
+        call mymemset
         mov  edx, [ebp+-8]
         mov  eax,edx
         shr  eax,24
@@ -6860,3 +6861,36 @@ L580:
         GLOBAL   csc_unit_func_6b_i:function (.Lfe2-csc_unit_func_6b_i)
         ;IDENT "GCC: (GNU) 2.95.2 19991024 (release)"
 
+        ALIGN 32
+mymemset:
+	push  edi
+	push  ebx
+	mov   edi, [esp+0xc]
+	movzx eax, BYTE [esp+0x10] ;0f b6 44 24 10
+	mov   ecx, [esp+0x14]
+	push  edi
+	cld    
+	cmp   ecx, 15
+	jle   short .here
+	mov   ah,al
+	mov   edx,eax
+	shl   eax,16
+	or    eax,edx
+	mov   edx,edi
+	neg   edx
+	and   edx,3
+	mov   ebx,ecx
+	sub   ebx,edx
+	mov   ecx,edx
+	repz  stosb
+	mov   ecx,ebx
+	shr   ecx,2
+	repz  stosd
+	mov   ecx,ebx
+	and   ecx,3
+.here:
+	repz stosb
+	pop   eax
+	pop   ebx
+	pop   edi
+	ret    
