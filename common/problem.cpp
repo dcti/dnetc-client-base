@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.78 2000/11/03 16:47:49 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.79 2000/11/05 22:33:18 andreasb Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -1454,7 +1454,7 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
         len = strlen(strcpy( numbuf, w )); 
         if (len >= buflen)
         {
-          len = buflen-4; /* "nnX\0" */
+          len = buflen-5; /* ".nnX\0" */ /* buflen contains the space between number and magna */
           while (len > 0 && numbuf[len] != ',') /* find a spot for a dec pt */
             len--;
           if (len == 0) /* bufsz < 7 and "nnn,nn..." or "nn,nn..." */
