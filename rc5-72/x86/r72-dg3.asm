@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3.asm,v 1.3.2.6 2003/01/29 01:29:58 andreasb Exp $
+; $Id: r72-dg3.asm,v 1.3.2.7 2003/02/06 20:59:42 andreasb Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -588,7 +588,7 @@ test_key_3:
 
         lea     ecx, [ecx + 2*ecx]
 
-        sub     ecx, 2
+        sub     ecx, BYTE 2
 
         sub     [esi], ecx
         mov     eax, RESULT_FOUND
@@ -638,8 +638,8 @@ complex_incr:
         bswap   ecx
         bswap   ebx
 
-        adc     ecx, 0
-        adc     ebx, 0
+        adc     ecx, BYTE 0
+        adc     ebx, BYTE 0
 
         bswap   ecx
         bswap   ebx
@@ -660,8 +660,8 @@ complex_incr:
         bswap   ecx
         bswap   ebx
 
-        adc     ecx, 0
-        adc     ebx, 0
+        adc     ecx, BYTE 0
+        adc     ebx, BYTE 0
 
         bswap   ecx
         bswap   ebx
@@ -678,8 +678,8 @@ complex_incr:
         bswap   ecx
         bswap   ebx
 
-        adc     ecx, 0
-        adc     ebx, 0
+        adc     ecx, BYTE 0
+        adc     ebx, BYTE 0
         dec     dword [work_iterations]
 
         bswap   ecx

@@ -4,7 +4,7 @@
 ;
 ; Author: Gnatiuc Ianos <ssianky@hotmail.com>
 ; based on r72-dg2 and r72ansi2 cores
-; $Id: r72-ss2.asm,v 1.1.2.4 2003/01/29 01:29:58 andreasb Exp $
+; $Id: r72-ss2.asm,v 1.1.2.5 2003/02/06 20:59:42 andreasb Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _DATA FLAT USE32 align=32 CLASS=DATA]
@@ -228,7 +228,7 @@ rc5_72_unit_func_ss_2:
 rc5_72_unit_func_ss_2_:
 _rc5_72_unit_func_ss_2:
 
-    sub  esp, (26+3)*4
+    sub  esp, BYTE (26+3)*4
 
     mov  [save_edi], edi
     mov  [save_esi], esi
@@ -528,30 +528,30 @@ TEST_KEY_2_SS_2:
     k7align 16
 INC_KEY_HI_SS_2:
 
-    add  dl, PIPES
+    add  dl, BYTE PIPES
     jc   INC_KEY_MID_SS_2
 
-    sub  dword [work_iter], PIPES
+    sub  dword [work_iter], BYTE PIPES
     jnz  LOOP_HI_SS_2
-    jmp  LOOP_EXIT_NOTHING_SS_2
+    jmp  short LOOP_EXIT_NOTHING_SS_2
 
 
 INC_KEY_MID_SS_2:
 
-    adc  dword [work_L0mid], 0
+    adc  dword [work_L0mid], BYTE 0
     jc   INC_KEY_LO_SS_2
 
-    sub  dword [work_iter], PIPES
+    sub  dword [work_iter], BYTE PIPES
     jnz  LOOP_MID_SS_2
-    jmp  LOOP_EXIT_NOTHING_SS_2
+    jmp  short LOOP_EXIT_NOTHING_SS_2
 
 
 INC_KEY_LO_SS_2:
 
-    adc  dword [work_L0lo], 0
+    adc  dword [work_L0lo], BYTE 0
 ;    jc   LOOP_EXIT_NOTHING_SS_2
 
-    sub  dword [work_iter], PIPES
+    sub  dword [work_iter], BYTE PIPES
     jnz  LOOP_LO_SS_2
 
 
@@ -570,7 +570,7 @@ LOOP_EXIT_NOTHING_SS_2:
     mov  [RC5_72UnitWork_L0lo],  ecx
 
 
-    add  esp, (26+3)*4
+    add  esp, BYTE (26+3)*4
     mov  edi, [save_edi]
     mov  esi, [save_esi]
     mov  ebx, [save_ebx]
@@ -594,7 +594,7 @@ LOOP_EXIT_FOUND_SS_2:
     mov  [RC5_72UnitWork_L0mid], ebx
     mov  [RC5_72UnitWork_L0lo],  ecx
 
-    add  esp, (26+3)*4
+    add  esp, BYTE (26+3)*4
     mov  edi, [save_edi]
     mov  esi, [save_esi]
     mov  ebx, [save_ebx]
