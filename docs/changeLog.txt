@@ -6,6 +6,12 @@ Dual mode (RC5DES) clients
 v2.7100.418 98.11.07 Randomprefix is now changed from buffer
                      files; offline clients will now generate
                      from the "correct" randomprefix.
+v2.7100.418 98.11.07 Client now counts buffer files in 2^28
+                     blocks.
+v2.7100.418 98.10.xx Celeron-A detection added.
+v2.7100.418 98.10.xx New win16/32 console code by Jeff Lawson
+                     implemented for CLI clients.
+v2.7100.418 98.10.xx Windows CLI and NT service client integrated.
 v2.7100.418 98.08.19 RC5 MMX cores are now in place. 50% speed
                      improvement on Pentium MMX processors.
 v2.7100.418 98.08.19 Complete rewrite of logging code; blocks now
