@@ -3,11 +3,17 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.15  1999/01/07 04:01:58  cyp
+// resolve_hostname needed to be set before Resolve() returns _anything_. Its
+// (currently) used by socks5 if the lookup fails, so initializing it before
+// Resolve() is just about to return 'success' wouldn't help much. :)
+//
 // Revision 1.14  1999/01/06 22:19:42  dicamillo
 // hostaddress should have been *hostaddress in debugging code.
 //
 // Revision 1.13  1999/01/06 14:29:23  chrisb
-// hacked in a strcpy to the OLDRESOLVE version of Network::Resolve() so resolve_hostname isn't uninitialised.
+// hacked in a strcpy to the OLDRESOLVE version of Network::Resolve() 
+// so resolve_hostname isn't uninitialised
 //
 // Revision 1.12  1999/01/05 22:44:34  cyp
 // Resolve() copies the hostname being resolved (first if from a list) to a
@@ -51,7 +57,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.14 1999/01/06 22:19:42 dicamillo Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.15 1999/01/07 04:01:58 cyp Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -263,36 +269,51 @@ struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host order*/
 #elif defined(STUBIFY_ME) //ooookay...
 
 int Network::Resolve(const char * , u32 *, int )
-{ return -1; }
+{ 
+  resolve_hostname[0]=0; //last used name we tried to lookup (used by socks5)
+  return -1; 
+}
 
 #elif defined(OLDRESOLVE)  //***** OLD ****
 
 // returns -1 on error, 0 on success
 int Network::Resolve(const char *host, u32 *hostaddress, int )
 {
-#if (CLIENT_OS == OS_MACOS)
-  if ((*hostaddress = inet_addr((char*)host).s_addr) == 0xFFFFFFFFL)
-#else
-  if ((*hostaddress = inet_addr((char*)host)) == 0xFFFFFFFFL)
-#endif
+  resolve_hostname[0]=0; //last used name we tried to lookup (used by socks5)
+
+  if (!host)
+    return -1;
+  
+  int i=0;
+  char hostname[64];
+  while (*host && isspace(*host))
+    host++;
+  while (*host && !isspace(*host) && isprint(*host) && *host!='\r' && *host!='\n')
+    hostname[i++]=(char)tolower(*host++);
+  hostname[i]=0;
+  host = hostname;
+    
+  #if (CLIENT_OS == OS_MACOS)
+    *hostaddress = inet_addr(hostname).s_addr;
+  #else
+    *hostaddress = inet_addr(hostname);
+  #endif
+  if (*hostaddress != 0xFFFFFFFFL)
     {
-    struct hostent *hp;
-    if ((hp = gethostbyname((char*)host)) == NULL) return -1;
-
-    int addrcount;
-
-    // randomly select one
-    for (addrcount = 0; hp->h_addr_list[addrcount]; addrcount++);
-    int index = rand() % addrcount;
-    memcpy((void*) hostaddress, (void*) hp->h_addr_list[index], sizeof(u32));
+    char *p = (char *)(hostaddress);
+    sprintf(resolve_hostname, "%d.%d.%d.%d.in-addr.arpa", 
+                  (p[3]&255),(p[2]&255),(p[1]&255),(p[0]&255) );
+    return 0;
     }
 
-  /*
-    @@@@@ chrisb
-
-    this appears to work, but could be hugely bogus for all I know
-  */
   strcpy(resolve_hostname,host);
+
+  struct hostent *hp;
+  if ((hp = gethostbyname((char*)host)) == NULL) 
+    return -1;
+  if (!(hp->h_addr_list[0]))
+    return -1;
+  memcpy((void*) hostaddress, (void*) hp->h_addr_list[0], sizeof(u32));
 
   return 0;
 }
