@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.19 2001/03/26 16:30:12 cyp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.20 2001/03/26 17:39:01 cyp Exp $"; }
 
 #define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -696,7 +696,7 @@ static int ___read_errnos(SOCKET fd, int ps_errnum,
     return ps_ELASTERR - 1; /* translation error */
   }
 
-  if (ps_errnum == ps_stdneterr)
+  if (ps_errnum == ps_stdsyserr)
   {
     *syserr = errno;
     TRACE_ERRMGMT((0, "(sys) errno => %d\n", *syserr ));
