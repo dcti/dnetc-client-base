@@ -1,10 +1,12 @@
-// Copyright distributed.net 1997-2002 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
+/*
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+*/
 
 #ifndef __OS2DEFS_H__
-#define __OS2DEFS_H__ "@(#)$Id: os2defs.h,v 1.2.4.2 2002/11/24 17:51:06 pfeffi Exp $"
+#define __OS2DEFS_H__ "@(#)$Id: os2defs.h,v 1.2.4.3 2003/02/23 21:00:14 pfeffi Exp $"
 
 #define INCL_DOSPROCESS         /* For Disk functions */
 #define INCL_DOSFILEMGR         /* For Dos_Delete */

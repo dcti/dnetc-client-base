@@ -1,5 +1,12 @@
+/*
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+*/
+
 #ifndef DOSQSS_H
-#define DOSQSS_H "@(#)$Id: dosqss.h,v 1.1.2.2 2002/11/24 17:50:10 pfeffi Exp $"
+#define DOSQSS_H "@(#)$Id: dosqss.h,v 1.1.2.3 2003/02/23 21:00:14 pfeffi Exp $"
 
 
 #ifdef __cplusplus
