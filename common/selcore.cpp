@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.103 2002/10/20 01:22:47 jlawson Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.104 2002/10/21 04:04:18 acidblood Exp $"; }
 
 //#define TRACE
 
@@ -237,6 +237,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ANSI 1-pipe",
       "SES 1-pipe",
       "SES 2-pipe",
+      "DG 2-pipe",
       NULL
     },
   #else
@@ -1487,6 +1488,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   #if (CLIENT_CPU == CPU_X86) && defined(HAVE_RC5_72_ASM_CORES)
       extern "C" s32 rc5_72_unit_func_ses( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_ses_2( RC5_72UnitWork *, u32 *, void *);
+      extern "C" s32 rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
   #endif
 #endif
 
@@ -2064,6 +2066,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_ses_2;
         pipeline_count = 2;
         break;
+      case 5:
+        unit_func.gen_72 = rc5_72_unit_func_dg_2;
      #endif
 
     }
