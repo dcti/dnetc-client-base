@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.38  1999/02/04 10:44:19  cyp
+// Added support for script-driven dialup. (currently linux only)
+//
 // Revision 1.37  1999/01/29 19:06:37  jlawson
 // fixed formatting.
 //
@@ -157,7 +160,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.37 1999/01/29 19:06:37 jlawson Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.38 1999/02/04 10:44:19 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -171,7 +174,6 @@ return "@(#)$Id: confrwv.cpp,v 1.37 1999/01/29 19:06:37 jlawson Exp $"; }
 #include "confopt.h"   // conf_option table
 #include "triggers.h"  // RaiseRestartRequestTrigger()
 #include "clicdata.h"  // CliClearContestData()
-#include "network.h"   // ntohl() / htonl()
 #include "cmpidefs.h"  // strcmpi()
 #include "confrwv.h"   // Outselves
 
@@ -198,21 +200,21 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
     strcpy( client->id, "rc5@distributed.net" );
 
   if (GetPrivateProfileStringB( sect, "threshold", "", buffer, sizeof(buffer), fn ))
-  {
+    {
     p = strchr( buffer, ':' );
     client->inthreshold[0] = atoi(buffer);
     client->outthreshold[0] = ((p==NULL)?(client->inthreshold[0]):(atoi(p+1)));
     client->inthreshold[1] = client->inthreshold[0];
     client->outthreshold[1] = client->outthreshold[0];
-  }
+    }
   if (GetPrivateProfileStringB( sect, "threshold2", "", buffer, sizeof(buffer), fn ))
-  {
+    {
     p = strchr( buffer, ':' );
     client->inthreshold[1] = atoi(buffer);
     client->outthreshold[1] = ((p==NULL)?(client->inthreshold[1]):(atoi(p+1)));
-  }
+    }
   if (GetPrivateProfileStringB( sect, "hours", "", buffer, sizeof(buffer), fn ))
-  {
+    {
     client->minutes = (atoi(buffer) * 60);
     if ((p = strchr( buffer, ':' )) == NULL)
       p = strchr( buffer, '.' );
@@ -222,7 +224,7 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
       client->minutes += atoi(p+1);
     else if (p != NULL) //strlen/isdigit check failed
       client->minutes = 0;
-  }
+    }
   
   client->uuehttpmode = GetPrivateProfileIntB( sect, "uuehttpmode", client->uuehttpmode, fn );
   GetPrivateProfileStringB( sect, "httpproxy", client->httpproxy, client->httpproxy, sizeof(client->httpproxy), fn );  
@@ -259,16 +261,16 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   if (GetPrivateProfileIntB( sect, "runbuffers", 0, fn ))
     client->blockcount = -1;
   
-  client->offlinemode = GetPrivateProfileIntB( sect, "runoffline", 0, fn );
-  client->percentprintingoff = GetPrivateProfileIntB( sect, "percentoff", 0, fn );
-  client->connectoften = GetPrivateProfileIntB( sect, "frequent", 0, fn );
-  client->nodiskbuffers = GetPrivateProfileIntB( sect, "nodisk", 0, fn );
-  client->quietmode = GetPrivateProfileIntB( sect, "quiet", 0, fn );
+  client->offlinemode = GetPrivateProfileIntB( sect, "runoffline", client->offlinemode, fn );
+  client->percentprintingoff = GetPrivateProfileIntB( sect, "percentoff", client->percentprintingoff, fn );
+  client->connectoften = GetPrivateProfileIntB( sect, "frequent", client->connectoften , fn );
+  client->nodiskbuffers = GetPrivateProfileIntB( sect, "nodisk", client->nodiskbuffers , fn );
+  client->quietmode = GetPrivateProfileIntB( sect, "quiet", client->quietmode, fn );
   client->quietmode |= GetPrivateProfileIntB( sect, "win95hidden", 0, fn );
   client->quietmode |= GetPrivateProfileIntB( sect, "os2hidden", 0, fn );
   client->quietmode |= GetPrivateProfileIntB( sect, "runhidden", 0, fn );
   client->nofallback = GetPrivateProfileIntB( sect, "nofallback", 0, fn );
-  client->noexitfilecheck = GetPrivateProfileIntB( sect, "noexitfilecheck", 0, fn );
+  client->noexitfilecheck = GetPrivateProfileIntB( sect, "noexitfilecheck", client->noexitfilecheck, fn );
 
   #if defined(MMX_BITSLICER) || defined(MMX_RC5)
   client->usemmx = GetPrivateProfileIntB( sect, "usemmx", 1, fn );
@@ -285,10 +287,14 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   #if defined(LURK)
   dialup.lurkmode = 0;
   if (GetPrivateProfileIntB( sect, "lurkonly", 0, fn )) 
-    { dialup.lurkmode = 2; client->connectoften = 1; }
+    { dialup.lurkmode = CONNECT_LURKONLY; client->connectoften = 1; }
   else if (GetPrivateProfileIntB( sect, "lurk", 0, fn ))
-    dialup.lurkmode = 1;
-  #if (CLIENT_OS == OS_WIN32)
+    dialup.lurkmode = CONNECT_LURK;
+  #if (CLIENT_OS == OS_LINUX)
+  dialup.dialwhenneeded = GetPrivateProfileIntB( "networking", "enable-start-stop", 0, fn );
+  GetPrivateProfileStringB( "networking", "dialup-start-cmd", dialup.connectionname, dialup.connectionname, sizeof(dialup.connectionname), fn );
+  GetPrivateProfileStringB( "networking", "dialup-stop-cmd", dialup.stopconnection, dialup.stopconnection, sizeof(dialup.stopconnection), fn );
+  #elif (CLIENT_OS == OS_WIN32)
   dialup.dialwhenneeded = GetPrivateProfileIntB( sect, "dialwhenneeded", 0, fn );
   GetPrivateProfileStringB( sect, "connectionname", dialup.connectionname, dialup.connectionname, sizeof(dialup.connectionname), fn );
   #endif
@@ -324,18 +330,18 @@ static void __XSetProfileInt( const char *sect, const char *key,
   if (sect == NULL) 
     sect = OPTION_SECTION;
   if (asonoff)
-  {
+    {
     if (defval) defval = 1;
     if (newval) newval = 1;
-  }
+    }
   int dowrite = (defval != newval);
   if (!dowrite)
     dowrite = (GetPrivateProfileStringB( sect, key, "", buffer, 2, fn ) != 0);
   if (dowrite)
-  {
+    {
     sprintf(buffer,"%ld",(long)newval);
     WritePrivateProfileStringB( sect, key, buffer, fn );
-  }
+    }
   return;
 }
 
@@ -348,6 +354,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
 {
   char buffer[64];
   const char *sect = OPTION_SECTION;
+  const char *netsect = "networking";
   int i;
 
   client->randomchanged = 1;
@@ -362,7 +369,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     return -1; //failed
   
   if (writefull != 0)
-  {
+    {
     /* --- CONF_MENU_BUFF -- */
 
     __XSetProfileStr( sect, "in", client->in_buffer_file[0], fn, NULL );
@@ -378,10 +385,10 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     if (client->inthreshold[1] == client->inthreshold[0] && client->outthreshold[1] == client->outthreshold[0])
       WritePrivateProfileStringB( sect, "threshold2", NULL, fn );
     else
-    {
+      {
       sprintf(buffer,"%d:%d", (int)client->inthreshold[1], (int)client->outthreshold[1]);
       WritePrivateProfileStringB( sect, "threshold2", buffer, fn );
-    }
+      }
 
     __XSetProfileInt( sect, "nodisk", (client->nodiskbuffers)?(1):(0), fn, 0, 1 );
     __XSetProfileStr( sect, "checkpointfile", client->checkpoint_file, fn, NULL );
@@ -389,10 +396,10 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     /* --- CONF_MENU_MISC __ */
 
     if (client->minutes!=0 || GetPrivateProfileStringB(sect,"hours","",buffer,2,fn))
-    {
+      {
       sprintf(buffer,"%u:%02u", (unsigned)(client->minutes/60), (unsigned)(client->minutes%60)); 
       WritePrivateProfileStringB( sect, "hours", buffer, fn );
-    }
+      }
     __XSetProfileInt( sect, "count", client->blockcount, fn, 0, 0 );
     __XSetProfileStr( sect, "pausefile", client->pausefile, fn, NULL );
     __XSetProfileInt( sect, "quiet", client->quietmode, fn, 0, 1 );
@@ -409,16 +416,16 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
 
     __XSetProfileInt( sect, "runoffline", client->offlinemode, fn, 0, 1);
     __XSetProfileInt( sect, "nettimeout", client->nettimeout, fn, 60, 0);
-    __XSetProfileInt( sect, "nofallback", client->nofallback, fn, 1, 1);
+    __XSetProfileInt( sect, "nofallback", client->nofallback, fn, 0, 1);
     
     char *af=NULL, *host=client->keyproxy, *port = buffer;
     if (confopt_isstringblank(host) || client->autofindkeyserver)
-      { //delete keys so that old inis stay compatible and default.
+        { //delete keys so that old inis stay compatible and default.
       host = NULL; if (client->keyport != 3064) port = NULL; }
     else if (confopt_IsHostnameDNetHost(host))
-      { af = "0"; if (client->keyport != 3064) port = NULL; }
+        { af = "0"; if (client->keyport != 3064) port = NULL; }
     if (port!=NULL) sprintf(port,"%ld",client->keyport);
-    WritePrivateProfileStringB( "networking", "autofindkeyserver", af, fn );
+    WritePrivateProfileStringB( netsect, "autofindkeyserver", af, fn );
     WritePrivateProfileStringB( sect, "keyport", port, fn );
     WritePrivateProfileStringB( sect, "keyproxy", host, fn );
     __XSetProfileInt( sect, "uuehttpmode", client->uuehttpmode, fn, 0, 0);
@@ -427,10 +434,15 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileStr( sect, "httpid", client->httpid, fn, NULL);
 
     #if defined(LURK)
-    WritePrivateProfileStringB( sect, "lurk", (dialup.lurkmode==1)?("1"):(NULL), fn );
-    WritePrivateProfileStringB( sect, "lurkonly", (dialup.lurkmode==2)?("1"):(NULL), fn );
-    WritePrivateProfileStringB( sect, "dialwhenneeded", (dialup.dialwhenneeded)?("1"):(NULL), fn );
-    #if (CLIENT_OS==OS_WIN32)
+    WritePrivateProfileStringB( sect, "lurk", (dialup.lurkmode==CONNECT_LURK)?("1"):(NULL), fn );
+    WritePrivateProfileStringB( sect, "lurkonly", (dialup.lurkmode==CONNECT_LURKONLY)?("1"):(NULL), fn );
+    #if (CLIENT_OS==OS_LINUX)
+    if (dialup.dialwhenneeded || GetPrivateProfileStringB( netsect, "enable-start-stop", "", buffer, 2, fn))
+      WritePrivateProfileStringB( netsect, "enable-start-stop", (dialup.dialwhenneeded)?("yes"):("no"), fn );
+    __XSetProfileStr( netsect, "dialup-start-cmd", dialup.connectionname, fn, NULL );
+    __XSetProfileStr( netsect, "dialup-stop-cmd", dialup.stopconnection, fn, NULL );
+    #elif (CLIENT_OS==OS_WIN32)
+    __XSetProfileInt( sect, "dialwhenneeded", dialup.dialwhenneeded, fn, 0, 1 );
     __XSetProfileStr( sect, "connectionname", dialup.connectionname, fn, NULL );
     #endif
     #endif // defined LURK
@@ -447,7 +459,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     /* no menu option */
   
     WritePrivateProfileStringB( sect, "processdes", ((client->preferred_contest_id==1)?(NULL):("1")), fn);
-      
+
     } /* if (writefull != 0) */
   
   /* unconditional deletion of obsolete keys */
@@ -458,11 +470,11 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
   
   /* conditional deletion of obsolete keys */
   if (GetPrivateProfileStringB( sect, "usemmx", "", buffer, 2, fn))
-  {
+    {
     if (((GetProcessorType(1) & 0x100) != 0) || 
        GetPrivateProfileIntB( sect, "usemmx", 0, fn ))
     WritePrivateProfileStringB( sect, "usemmx", NULL, fn );
-  }
+    }
   
   return 0;
 }
@@ -475,67 +487,67 @@ void RefreshRandomPrefix( Client *client, int no_trigger )
   // we need to use no_trigger when reading/writing full configs
 
   if (client->stopiniio == 0 && client->nodiskbuffers == 0)
-  {
+    {
     const char *fn = GetFullPathForFilename( client->inifilename );
     const char *sect = OPTION_SECTION;
     unsigned int cont_i;
     char key[32];
 
     if ( client->randomchanged == 0 ) /* load */
-    {
+      {
       if ( access( fn, 0 )!=0 )
         return;
 
       client->randomprefix = 
          GetPrivateProfileIntB(sect, "randomprefix", client->randomprefix, fn);
-      client->descontestclosed = ntohl(
-         GetPrivateProfileIntB(sect, "descontestclosed", 
-                                         htonl(client->descontestclosed), fn));
-      client->scheduledupdatetime = ntohl(
-         GetPrivateProfileIntB(sect, "scheduledupdatetime",
-                                      htonl(client->scheduledupdatetime), fn));
+      client->descontestclosed = GetPrivateProfileIntB(sect, "descontestclosed", client->descontestclosed, fn);
+      client->scheduledupdatetime = GetPrivateProfileIntB(sect, "scheduledupdatetime", client->scheduledupdatetime, fn);
+      if (client->descontestclosed == 0x0DF0EFEBL) 
+        {                      //fix the net'ified values used during des-III
+        client->descontestclosed = 0xBEEFF00DL;
+        client->scheduledupdatetime = 0;
+        client->randomchanged = 1;                //force a rewrite
+        }
       int statechange = 0;
       for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-      {
+        {
         if (cont_i==0) strcpy(key,"contestdone");
         else sprintf(key,"contestdone%u", cont_i+1 );
         int oldstate = ((client->contestdone[cont_i])?(1):(0));
         int newstate = GetPrivateProfileIntB(sect, key, oldstate, fn );
         newstate = ((newstate)?(1):(0));
         if (oldstate != newstate)
-        {
+          {
           statechange = 1;
           client->contestdone[cont_i] = newstate;
           CliClearContestInfoSummaryData( cont_i );
+          }
         }
-      }
       if (statechange && !no_trigger)
         RaiseRestartRequestTrigger();
-    }
+      }
       
     if (client->randomchanged)
-    {
+      {
       client->randomchanged = 0;
 
       if (!WritePrivateProfileIntB(sect,"randomprefix",client->randomprefix,fn))
         return; //write fail
 
       for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-      {
+        {
         if (cont_i==0) strcpy(key,"contestdone");
         else sprintf(key, "contestdone%u", cont_i+1 );
         if (client->contestdone[cont_i])
           WritePrivateProfileIntB( sect, key, 1, fn );
         else
           WritePrivateProfileStringB( sect, key, NULL, fn );
-      }
+        }
       WritePrivateProfileStringB( sect, "contestdoneflags", NULL, fn );
-      WritePrivateProfileIntB( sect, "descontestclosed", 
-                                    htonl(client->descontestclosed), fn );
-      WritePrivateProfileIntB( sect, "scheduledupdatetime", 
-                                    htonl(client->scheduledupdatetime), fn );
+      WritePrivateProfileIntB( sect, "descontestclosed", client->descontestclosed, fn );
+      WritePrivateProfileIntB( sect, "scheduledupdatetime", client->scheduledupdatetime, fn );
+      }
     }
-  }
   return;
 }
 

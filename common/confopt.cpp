@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.17  1999/02/04 10:44:19  cyp
+// Added support for script-driven dialup. (currently linux only)
+//
 // Revision 1.16  1999/01/29 18:59:52  jlawson
 // fixed formatting.
 //
@@ -47,7 +50,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.16 1999/01/29 18:59:52 jlawson Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.17 1999/02/04 10:44:19 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -414,10 +417,14 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
    CFGTXT(""
    ),CONF_MENU_NET,CONF_TYPE_BOOL,12,NULL,NULL,0,1},
 //37
-{ "connectionname", CFGTXT("Dial-up Connection Name"),"",
+{ "", CFGTXT("Dial-up Connection Name" /* "Command/script to start dialup" */),"",
   CFGTXT(""
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,13,NULL,NULL,0,0},
 //38
+{ "", CFGTXT("Command/script to stop dialup"),"",
+  CFGTXT(""
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,14,NULL,NULL,0,0},
+//39
 { "lurk", CFGTXT("Modem detection options"),"0",
   CFGTXT(
   "Normal mode: the client will send/receive blocks only when it\n"

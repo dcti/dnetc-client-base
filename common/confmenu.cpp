@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.22  1999/02/04 10:44:19  cyp
+// Added support for script-driven dialup. (currently linux only)
+//
 // Revision 1.21  1999/01/29 19:04:03  jlawson
 // fixed formatting.  removed unused function.
 //
@@ -91,7 +94,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.21 1999/01/29 19:04:03 jlawson Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.22 1999/02/04 10:44:19 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -296,15 +299,26 @@ int Client::Configure( void )
 
   conf_options[CONF_LURKMODE].thevariable=
   conf_options[CONF_DIALWHENNEEDED].thevariable=
-  conf_options[CONF_CONNECTNAME].thevariable=NULL;
+  conf_options[CONF_CONNECTNAME].thevariable=
+  conf_options[CONF_DISCONNECTNAME].thevariable=NULL;
 
   #if defined(LURK)
-    conf_options[CONF_LURKMODE].optionscreen=
+    conf_options[CONF_LURKMODE].optionscreen=CONF_MENU_NET;
+    conf_options[CONF_LURKMODE].thevariable=&dialup.lurkmode;
+    #if (CLIENT_OS == OS_OS2)
+    #elif (CLIENT_OS == OS_LINUX)
+    conf_options[CONF_DIALWHENNEEDED].optionscreen=
+    conf_options[CONF_CONNECTNAME].optionscreen=
+    conf_options[CONF_DISCONNECTNAME].optionscreen=CONF_MENU_NET;
+    conf_options[CONF_DIALWHENNEEDED].thevariable=&dialup.dialwhenneeded;
+    conf_options[CONF_CONNECTNAME].thevariable=&dialup.connectionname;
+    conf_options[CONF_CONNECTNAME].description="Command/script to start dialup";
+    conf_options[CONF_DISCONNECTNAME].thevariable=&dialup.stopconnection;    
+    conf_options[CONF_DISCONNECTNAME].description="Command/script to stop dialup";
+    #elif (CLIENT_OS == OS_WIN32)
     conf_options[CONF_DIALWHENNEEDED].optionscreen=
     conf_options[CONF_CONNECTNAME].optionscreen=CONF_MENU_NET;
-    conf_options[CONF_LURKMODE].thevariable=&dialup.lurkmode;
     conf_options[CONF_DIALWHENNEEDED].thevariable=&dialup.dialwhenneeded;
-    #if (CLIENT_OS == OS_WIN32)
     conf_options[CONF_CONNECTNAME].thevariable=&dialup.connectionname;
     char *connectnames = dialup.GetEntryList(&conf_options[CONF_CONNECTNAME].choicemax);
     if (conf_options[CONF_CONNECTNAME].choicemax < 1)

@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.h,v $
+// Revision 1.8  1999/02/04 10:44:19  cyp
+// Added support for script-driven dialup. (currently linux only)
+//
 // Revision 1.7  1999/01/04 02:47:30  cyp
 // Cleaned up menu options and handling.
 //
@@ -78,8 +81,9 @@
 
 #define CONF_DIALWHENNEEDED       36 /* CONF_MENU_NET */
 #define CONF_CONNECTNAME          37 /* CONF_MENU_NET */
-#define CONF_LURKMODE             38 /* CONF_MENU_NET */
-#define CONF_OPTION_COUNT         39
+#define CONF_DISCONNECTNAME       38 /* CONF_MENU_NET */
+#define CONF_LURKMODE             39 /* CONF_MENU_NET */
+#define CONF_OPTION_COUNT         40
 
 #define CONF_MENU_UNDEF            0
 #define CONF_MENU_BUFF             1
