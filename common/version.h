@@ -24,7 +24,7 @@
  * ---------------------------------------------------------------------
 */
 #ifndef __VERSION_H__
-#define __VERSION_H__ "@(#)$Id: version.h,v 1.52.2.35 2001/04/14 14:21:49 cyp Exp $"
+#define __VERSION_H__ "@(#)$Id: version.h,v 1.52.2.36 2001/10/05 22:43:22 mfeiri Exp $"
 
 /* BETA etc is handled internally/at-runtime by cliident.cpp. */
 /* Do not adjust for BETA here, particularly CLIENT_VERSIONSTRING. */
@@ -35,11 +35,11 @@
 #define CLIENT_MAJOR_VER_HEX   0x02   /* needed for macos version resource */
 #define CLIENT_CONTEST         80
 #define CLIENT_CONTEST_HEX     0x50   /* needed for macos version resource */
-#define CLIENT_BUILD           15
-#define CLIENT_BUILD_HEX       0x0F   /* needed for macos version resource */
-#define CLIENT_BUILD_FRAC      469
-#define CLIENT_BUILD_FRAC_HEX  0x01D5 /* needed for macos version resource */
-#define CLIENT_VERSIONSTRING   "2.8015-469"
+#define CLIENT_BUILD           16
+#define CLIENT_BUILD_HEX       0x10   /* needed for macos version resource */
+#define CLIENT_BUILD_FRAC      470
+#define CLIENT_BUILD_FRAC_HEX  0x01D6 /* needed for macos version resource */
+#define CLIENT_VERSIONSTRING   "2.8015-470"
 
 #endif /* __VERSION_H__ */
 
