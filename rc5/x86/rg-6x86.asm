@@ -1,6 +1,6 @@
 ; Cyrix 6x86 optimized version (nasm version of .cpp core)
 ;
-; $Id: rg-6x86.asm,v 1.1.2.2 2002/10/03 18:02:34 rick Exp $
+; $Id: rg-6x86.asm,v 1.1.2.3 2002/10/22 02:16:20 andreasb Exp $
 ;
 ; 980226 :
 ;	- Corrected bug in the key incrementation algorithm that caused the
@@ -181,7 +181,7 @@
 ; S2(N) = A2 = ROTL3 (A2 + Llo2 + S_not(N));
 ; Lhi1 = ROTL (Lhi1 + A1 + Llo1, A1 + Llo1);
 ; Lhi2 = ROTL (Lhi2 + A2 + Llo2, A2 + Llo2);
-%macro ROUND_1_ODD 1(N) \
+%macro ROUND_1_ODD 1
         add     eax, ebx                ; . pairs with roll in previous iteration
         add     ebp, esi                ; 1
         rol     eax, 3                  ;
