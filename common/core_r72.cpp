@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.7 2003/10/19 12:10:09 jlawson Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.8 2003/10/20 00:09:45 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -113,7 +113,7 @@ const char **corenames_for_contest_rc572()
       "ANSI 1-pipe",
       #endif
   #elif (CLIENT_CPU == CPU_X86_64)
-      "DG64 3-pipe",
+      "SNJL 3-pipe",
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       "ANSI 1-pipe",
