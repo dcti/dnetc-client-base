@@ -13,21 +13,17 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.26.2.10 2000/08/22 13:33:32 oliver Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.26.2.11 2000/09/20 18:15:51 cyp Exp $"; }
 
-#include "cputypes.h"
-#include "baseincs.h"
-#include "network.h"
+//#define TRACE
+
+#include "baseincs.h" //standard stuff
+#include "util.h"     //trace
 #include "logstuff.h" //for messages
-#include "clitime.h"  //for the time stamp string
-#include "sleepdef.h" //for sleep();
-#include "triggers.h" //for break checks
-#include "lurk.h"
-
+#include "lurk.h"     //#ifdef LURK
+#include "network.h"  //ourselves
 
 //--------------------------------------------------------------------------
-
-static unsigned int net_init_level = 0;
 
 /*
   __netInitAndDeinit( ... ) combines both init and deinit so statics can
@@ -37,185 +33,130 @@ static unsigned int net_init_level = 0;
 
 static int __netInitAndDeinit( int doWhat )
 {
-  int success = 1;
+  static int init_level = 0;
+  int rc = 0; /* assume success */
 
-  if (( doWhat < 0 ) && ( net_init_level == 0 ))
+  TRACE_OUT((+1,"__netInitAndDeinit(doWhat=%d)\n", doWhat));
+
+  /* ----------------------- */
+
+  if (rc == 0 && doWhat < 0)       //request to deinitialize
   {
-    Log("Squawk! Unbalanced Network Init/Deinit!\n");
-    return 0;
-  }
-  else if (( doWhat == 0 ) && ( net_init_level == 0 ))
-    return 0;  //isOK() always returns 0 if we are not initialized
-
-  //----------------------------
-
-  #if (!defined(AF_INET) || !defined(SOCK_STREAM))
-  if (success)  //no networking capabilities
-  {
-    if ( doWhat == 0 )     //query online mode
-      return 0; //always fail - should never get called
-    else if ( doWhat > 0)  //initialize request
-      success = 0; //always fail
-    else // (doWhat < 0)   //deinitialize request
-      success = 1; //always succeed - should never get called
-  }
-  #define DOWHAT_WAS_HANDLED
-  #endif
-
-  //----------------------------
-
-  #if (CLIENT_OS == OS_NETWARE)
-  if (success)
-  {
-    if ( doWhat == 0 )     //query online mode
+    if (init_level == 0) /* ACK! */
     {
-      return nwCliIsNetworkAvailable(0);  //test if tcpip is still loaded
+      Log("Beep! Beep! Unbalanced Network Init/Deinit!\n");
+      rc = -1;
     }
-    else if (doWhat > 0)   //init request
+    else if ((--init_level)==0)  //don't deinitialize more than once
     {
-      success = nwCliIsNetworkAvailable(0); //test if tcpip is loaded
-      if (success)
-        net_init_level++;
-    }
-    else                   //de-init request
-    {
-      success = 1;
-      net_init_level--;
-    }
-  }
-  #define DOWHAT_WAS_HANDLED
-  #endif
-
-  //----------------------------
-
-  #if (CLIENT_OS == OS_WIN16)
-  if (success)
-  {
-    if ( doWhat == 0 )                     //request to check online mode
-    {
-      return w32sockIsAlive();
-    }
-    else if (doWhat > 0)                  //request to initialize
-    {
-      if ((++net_init_level)!=1)     //don't initialize more than once
-        success = 1;
-      else if ((success = w32sockInitialize()) == 0)
-        --net_init_level;
-    }
-    else if (doWhat < 0)
-    {
-      if ((--net_init_level)==0) //don't deinitialize more than once
-        w32sockDeinitialize();
-      success = 1;
-    }
-  }
-  #define DOWHAT_WAS_HANDLED
-  #endif
-
-  //----------------------------
-
-  #if (CLIENT_OS == OS_AMIGAOS)
-  if (success)
-  {
-    if ( doWhat == 0 )     //request to check online mode
-    {
-      if (dialup.IsWatching())
-      {
-        if (dialup.CheckForStatusChange()) //- no longer-online?
-          return 0;                        //oops, return 0
-        return 1;            //assume always online once initialized
-      }
-      else
-        return amigaIsNetworkingActive();  //test if tcpip is still available
-    }
-    else if (doWhat > 0)   //request to initialize
-    {
-      success = 1;
-      if ((++net_init_level)==1) //don't initialize more than once
-      {
-        if (amigaSocketInit())
-        {
-          if ( dialup.DialIfNeeded(1) != 0 ) /* not connected and dialup failed */
-            success = 0;
-          else
-            success = dialup.IsConnected();
-        }
-        else
-          success = 0;
-      }
-      if (!success)
-      {
-        net_init_level--;
-        amigaSocketDeinit();
-      }
-    }
-    else //if (doWhat < 0) //request to de-initialize
-    {
-      success = 1;
-      if ((--net_init_level)==0) //don't deinitialize more than once
-      {
-        dialup.HangupIfNeeded();
-        amigaSocketDeinit();
-      }
-    }
-  }
-  #define DOWHAT_WAS_HANDLED
-  #endif
-
-  //----------------------------------------------
-
-  #ifndef DOWHAT_WAS_HANDLED
-  if (success)
-  {
-    if ( doWhat == 0 )     //request to check online mode
-    {
-      #if defined(LURK)
-      if (dialup.CheckForStatusChange()) //- no longer-online?
-        return 0;                        //oops, return 0
+      #if defined(LURK) 
+      // HangupIfNeeded will hang up a connection if previously 
+      // initiated with DialIfNeeded(). Otherwise it does nothing.
+      dialup.HangupIfNeeded(); 
       #endif
-      return 1;            //assume always online once initialized
+      #if (CLIENT_OS == OS_AMIGAOS)
+      amigaSocketDeinit();
+      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+      if (winGetVersion() < 400) /* win16 or win32s */
+        w32sockDeinitialize();
+      #endif
     }
-    else if (doWhat > 0)   //request to initialize
-    {
-      success = 1;
-      if ((++net_init_level)==1) //don't initialize more than once
-      {
-        #if defined(LURK)
-        if (dialup.DialIfNeeded(1) != 0 ) /* not connected and dialup failed */
-          success = 0;
-        #endif
-      }
-      if (!success)
-        net_init_level--;
-    }
-    else //if (doWhat < 0) //request to de-initialize
-    {
-      success = 1;
-      if ((--net_init_level)==0) //don't deinitialize more than once
-      {
-        #if defined(LURK)
-        dialup.HangupIfNeeded();
-        #endif
-      }
-    }
-  }
-  #endif
+  }  
 
-  //----------------------------
+  /* ----------------------- */
 
-  return ((success) ? (0) : (-1));
+  if (rc == 0 && doWhat > 0)  //request to initialize
+  {
+    if ((++init_level)!=1) //already initialized?
+      doWhat = 0; //convert into request to check online mode
+    else  
+    {
+      #if (!defined(AF_INET) || !defined(SOCK_STREAM))
+        rc = -1;  //no networking capabilities
+      #elif (CLIENT_OS == OS_AMIGAOS)
+      if (!amigaSocketInit())
+        rc = -1;
+      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+      if (rc == 0 && winGetVer() < 400) /* win16 or win32s */
+        rc = ((!w32sockInitialize())?(-1):(rc));
+      #endif    
+      if (rc == 0)
+        rc = __netInitAndDeinit(0); //recurse as request to check online mode
+      if (rc != 0)
+        init_level--;
+    }    
+  } 
+
+  /* ----------------------- */
+  
+  if ( rc == 0 && doWhat == 0 )     //request to check online mode
+  {
+    if (init_level == 0) /* ACK! haven't been initialized yet */
+      rc = -1;
+    else
+    {  
+      #if (!defined(AF_INET) || !defined(SOCK_STREAM))
+      rc = -1;  //no networking capabilities
+      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+      if (rc == 0 && winGetVersion() < 400) /* win16 or win32s */
+        rc = ((!w32sockIsAlive())?(-1):(rc));
+      #elif(CLIENT_OS == OS_AMIGAOS)
+      if (!amigaIsNetworkingActive())  //test if tcpip is still available
+        rc = -1;
+      #elif (CLIENT_OS == OS_NETWARE)  
+      if (!FindNLMHandle("TCPIP.NLM")) /* tcpip is still loaded? */
+        rc = -1;
+      #endif    
+    }	  
+
+    #if defined(LURK)
+    if (rc == 0)
+    {
+      // dialup.IsWatching() returns zero if 'dialup' isn't initialized.
+      // Otherwise it returns a bitmask of things it is configured to do,
+      // ie CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DOD
+      int confbits = dialup.IsWatching();
+      if (confbits) /* 'dialup' initialized and have LURK[ONLY] and/or DOD */
+      {       
+        // IsConnected() returns non-zero when 'dialup' is initialized and
+        // a link is up. Otherwise it returns zero.
+        if (!dialup.IsConnected()) /* no longer online? */
+        {
+	  rc = -1; /* conn dropped and assume not restartable */
+	  if ((confbits & CONNECT_DOD)!=0) /* configured for dial-on-demand?*/
+	  {                              
+            // DialIfNeeded(1) returns zero if already connected OR 
+            // not-configured-for-dod OR dial success. Otherwise it returns -1 
+            // (either 'dialup' isn't initialized or dialing failed).
+            // Passing '1' makes it ignore any lurkonly restriction.
+    	    if (dialup.DialIfNeeded(1) == 0) /* reconnect to complete */
+  	    {                                /* whatever we were doing */
+	      rc = 0; /* (re-)dial was successful */
+	    }
+          }
+        } /* !dialup.IsConnected() */
+      } /* if dialup.IsWatching() */
+    }	/* if (rc == 0) */
+    #endif /* if defined(LURK) */
+  } /* if ( rc == 0 && doWhat == 0 ) */
+
+  /* ----------------------- */
+
+  TRACE_OUT((-1,"__netInitAndDeinit() => %d\n", rc));
+  return rc;
 }
 
 //======================================================================
 
 //  __globalInitAndDeinit() gets called once (to init) when the
-// client starts and once (to deinit) when the client stops.
+// client starts and once (to deinit) when the client stops/restarts.
 
 static int __globalInitAndDeinit( int doWhat )
 {
   static unsigned int global_is_init = 0;
-  int success = 1; //assume ok
+  int rc = 0; //assume ok
 
+  TRACE_OUT((+1,"__globalInitAndDeinit(doWhat=%d)\n", doWhat));
   if (doWhat > 0)                            //initialize
   {
     if (global_is_init == 0)
@@ -234,14 +175,15 @@ static int __globalInitAndDeinit( int doWhat )
         global_is_init = 0;
       #endif
     }
-    success = (global_is_init != 0);
+    if (global_is_init == 0)
+      rc = -1;
   }
   else if (doWhat < 0)                      //deinitialize
   {
     if (global_is_init != 0)
     {
       global_is_init = 0; // assume all success
-      
+  
       #if (CLIENT_OS == OS_WIN32)
       WSACleanup();
       #endif
@@ -249,9 +191,11 @@ static int __globalInitAndDeinit( int doWhat )
   }
   else //if (doWhat == 0)                   //query state
   {
-    success = (global_is_init != 0);
+    if (global_is_init == 0)
+      rc = -1;
   }
-  return ((success == 0)?(-1):(0));
+  TRACE_OUT((-1,"__globalInitAndDeinit() => %d\n", rc));
+  return rc;
 }
 
 //======================================================================
@@ -259,7 +203,12 @@ static int __globalInitAndDeinit( int doWhat )
 int NetCheckIsOK(void)
 {
   //get the (platform specific) network state
-  return __netInitAndDeinit( 0 );
+  int isok = 0; /* !OK */
+  TRACE_OUT((+1,"NetCheckIsOK(void)\n"));
+  if (__netInitAndDeinit( 0 ) == 0)
+    isok = 1; /* OK */
+  TRACE_OUT((-1,"NetCheckIsOK(void)=>%d\n",isok));
+  return isok;
 }
 
 //----------------------------------------------------------------------
@@ -269,7 +218,6 @@ int NetClose( Network *net )
   if ( net )
   {
     delete net;
-
     // do platform specific network deinit
     return __netInitAndDeinit( -1 );
   }
@@ -283,48 +231,49 @@ Network *NetOpen( const char *servname, int servport,
            const char *_fwallhost /*= NULL*/, int _fwallport /*= 0*/,
            const char *_fwalluid /*= NULL*/ )
 {
-  Network *net;
-  int success;
-
-  //check if connectivity has been initialized
-  if (__globalInitAndDeinit( 0 ) < 0)
-    return NULL;
-
-  // do platform specific socket init
-  if ( __netInitAndDeinit( +1 ) < 0)
-    return NULL;
-
-  net = new Network( servname, servport,
+  Network *net = (Network *)0;
+  TRACE_OUT((+1,"NetOpen(...)\n"));
+  if (__globalInitAndDeinit( 0 ) == 0) //has global connectivity been initialized?
+  {
+    if ( __netInitAndDeinit( +1 ) == 0) // do platform specific socket init
+    {
+      net = new Network( servname, servport,
            _nofallback /*=1*/, _iotimeout/*=-1*/, _enctype /*= 0*/,
            _fwallhost /*= NULL*/, _fwallport /*= 0*/, _fwalluid /*= NULL*/ );
-  success = ( net != NULL );
-
-  if (success)
-    success = ((net->OpenConnection()) == 0); //opened ok
-
-  if (!success)
-  {
-    if (net)
-      delete net;
-    net = NULL;
-
-    // do platform specific sock deinit
-    __netInitAndDeinit( -1 );
-  }
-
-  return (net);
+      TRACE_OUT((0,"new Network => %p\n", net));
+      if (net)
+      {           
+        if ((net->OpenConnection()) != 0)
+        {
+          delete net;
+          net = (Network *)0;
+        }
+        TRACE_OUT((0,"net->OpenConnection() => %s\n",((net)?("ok"):("err"))));
+      }    
+      if (!net)
+      {
+        __netInitAndDeinit( -1 );
+      }
+    }  
+  }    
+  TRACE_OUT((-1,"NetOpen(...) => %s\n",((net)?("ok"):("failed"))));
+  return net;
 }
 
 //----------------------------------------------------------------------
 
 int InitializeConnectivity(void)
 {
+  TRACE_OUT((+1,"InitializeConnectivity(void)\n"));
   __globalInitAndDeinit( +1 );
+  TRACE_OUT((-1,"InitializeConnectivity(void) => 0\n"));
   return 0; //don't care about errors - NetOpen will handle that
 }
 
 int DeinitializeConnectivity(void)
 {
+  TRACE_OUT((+1,"DeinitializeConnectivity(void)\n"));
   __globalInitAndDeinit( -1 );
+  TRACE_OUT((-1,"DeinitializeConnectivity(void) => 0\n"));
   return 0;
 }

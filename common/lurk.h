@@ -6,7 +6,7 @@
 //
 
 #ifndef __LURK_H__
-#define __LURK_H__ "@(#)$Id: lurk.h,v 1.21.2.3 1999/12/08 00:41:51 cyp Exp $"
+#define __LURK_H__ "@(#)$Id: lurk.h,v 1.21.2.4 2000/09/20 18:15:51 cyp Exp $"
 
 /* lurk: fetch/flush if modem goes online but also go online if fetch/flush needed */
 #define CONNECT_LURK         0x01 
@@ -55,29 +55,41 @@ public:
                                      // Start -> 0=success, !0 = failure
   int Stop(void);                    // Stop  -> 0=success, !0 = failure
 
-  // test if we are currently connected.
-  int IsConnected(void);   // quietly! check if connected-> !0 = connected
+  // test if we are currently connected. (verbose version of InternalIsConnected)
+  int IsConnected(void);
 
   // constructor and destructor.
   Lurk(); 
   ~Lurk();
-  int IsWatching(void); //Start() was ok and lurkmode is CONNECT_LURK/LURKONLY
+  int IsWatching(void); //Start() was ok and CONNECT_LURK|LURKONLY|DOD */
   int IsWatcherPassive(void); //Start was ok and lurkmode is CONNECT_LURKONLY
   
 protected:
-
+  int InternalIsConnected(void); /* workhorse */
+  int islurkstarted;      //was lurk.Start() successful?
   struct dialup_conf conf; //local copy of config. Initialized by Start()
 
   int mask_include_all, mask_default_only; //what does the mask tell us?
   const char *ifacestowatch[(64/2)+1]; //(sizeof(connifacemask)/sizeof(char *))+1
   char ifacemaskcopy[64];            //sizeof(connifacemask)
 
-  char conndevice[35];        //name of the device a connection was detected on
-                              //informational use only
-  int islurkstarted;          //was lurk.Start() successful?
-  int lastcheckshowedconnect; //the connect state at the last CheckIfConnectRequested()
-  int dohangupcontrol;        //if we dialed, we're welcome to hangup
+  int showedconnectcount; //used by CheckIfConnectRequested()
+  int dohangupcontrol;    //if we dialed, we're welcome to hangup
 
+  #ifndef CLIENT_OS /* catch static struct problems _now_ */
+  #error "CLIENT_OS isn't defined yet. cputypes.h must be #included before lurk.h"
+  #endif
+  #if (CLIENT_OS != OS_WIN16) /* win16 has no names, so can't track */
+  #define LURK_MULTIDEV_TRACK
+  #endif
+  
+  #ifdef LURK_MULTIDEV_TRACK
+  char conndevices[64*32];
+  #else
+  //name of the device a connection was detected on informational use only
+  char conndevice[35];        
+  char previous_conndevice[35]; //copy of last conndevice
+  #endif
 };
 
 extern Lurk dialup;

@@ -2,24 +2,55 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- *
  * This module contains functions for both lurking and dial initiation/hangup.
  *
- * The workhorse function, IsConnected(), is needed to support both.
- * IsConnected() can be called at any time
+ * The workhorse function, InternalIsConnected(), is needed to support both.
+ * - InternalIsConnected() may be called at any time and always returns yes/no.
+ *   If the state could not be determined due to error or because lurk has
+ *   not been initialized, it returns zero ('no').
  *
- * Lurk detection is trivial and contain no OS specific routines.
- *                  CheckIfConnectRequested() and CheckForStatusChange()
+ * State functions are trivial and contain no OS specific routines.
+ * - IsWatching() 
+ *   returns zero if lurk has not been initialized.
+ *   Otherwise, it returns the bitmask of enabled modes: 
+ *   CONNECT_LURKONLY | CONNECT_LURK | CONNECT_DOD
+ * - IsWatcherPassive()
+ *   returns (IsWatching() & CONNECT_LURKONLY)
+ * - IsConnected()
+ *   IsConnected() is a verbose version of InternalIsConnected().
+ *   return values are the same as InternalIsConnected()
+ *
+ * old state functions superceded by IsConnected()/IsWatch*():
+ * - CheckIfConnectRequested() is identical to IsConnected() with the
+ *   following exception: It always returns zero if neither CONNECT_LURKONLY 
+ *   nor CONNECT_LURK are set. This implies that CheckIfConnectRequested()
+ *   cannot be used if _only_ dial-on-demand is enabled.
+ * - CheckForStatusChange() returns non-zero if the connect state at
+ *   the time of the last call to CheckIfConnectRequested() is not the
+ *   same as the current connect state.
+ * In other words, CheckIfConnectRequested() begins a connection bracket
+ * and CheckForStatusChange() closes it. Both functions are trivial and
+ * require no OS support.
+ *  
  * Public function used for dial initiation/hangup:
- *                  DialIfNeeded() and HangupIfNeeded()
-*/
+ * - DialIfNeeded(int override_lurkonly)
+ *   does nothing if lurk is not initialized (returns -1) 
+ *   does nothing if dial-on-demand is not enabled (returns 0)
+ *   does nothing if already connected (returns 0)
+ *   does nothing if CONNECT_LURKONLY and override_lurkonly is zero (return -1)
+ *   otherwise it dials and returns zero on success, or -1 if a connection
+ *             could not be established.
+ * - HangupIfNeeded()
+ *   does nothing if lurk is not initialized (returns -1)
+ *   does nothing if dial-on-demand is not enabled (returns 0)
+ *   does nothing if the connection wasn't previously 
+ *        initiated with DialIfNeeded() (returns -1 if IsConnected(), else 0)
+ *   otherwise it hangs up and returns zero. (no longer connected)
+*/ 
+const char *lurk_cpp(void) {
+return "@(#)$Id: lurk.cpp,v 1.43.2.20 2000/09/20 18:15:51 cyp Exp $"; }
 
 //#define TRACE
-
-const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.19 2000/08/22 13:19:26 oliver Exp $"; }
-
-/* ---------------------------------------------------------- */
 
 #include <stdio.h>
 #include <string.h>
@@ -40,12 +71,17 @@ Lurk dialup;        // publicly exported class instance.
 int Lurk::Stop(void)
 {
   TRACE_OUT((+1,"Lurk:Stop()\n"));
-  islurkstarted = lastcheckshowedconnect = dohangupcontrol = 0;
+  islurkstarted = showedconnectcount = dohangupcontrol = 0;
   conf.lurkmode = conf.dialwhenneeded = 0;
   conf.connprofile[0] = conf.connifacemask[0] = 0;
   conf.connstartcmd[0] = conf.connstopcmd[0] =
-  ifacemaskcopy[0] = conndevice[0] = 0;
+  ifacemaskcopy[0] =  0;
   ifacestowatch[0] = (const char *)0;
+  #ifdef LURK_MULTIDEV_TRACK
+  memset(&conndevices[0],0,sizeof(conndevices));
+  #else
+  conndevice[0] = previous_conndevice[0] = 0;
+  #endif
   TRACE_OUT((-1,"Lurk:Stop()\n"));
   return 0;
 }
@@ -63,72 +99,65 @@ int Lurk::IsWatching(void)
     return 0;
   }
   rc = (conf.lurkmode & (CONNECT_LURKONLY|CONNECT_LURK));
-  TRACE_OUT((-1,"(conf.lurkmode & (CONNECT_LURKONLY|CONNECT_LURK))=>%d\n",rc));
+  if (conf.dialwhenneeded)
+    rc |= CONNECT_DOD;
+  TRACE_OUT((-1,"IsWatching=>(CONNECT_LURKONLY|CONNECT_LURK|CONNECT_DOD)=>0x%x\n",rc));
   return rc;
 }
-int Lurk::IsWatcherPassive(void)
-{
-  int rc;
-  TRACE_OUT((+1,"Lurk::IsWatcherPassive() (islurkstarted?=%d)\n",islurkstarted));
-  if (!islurkstarted)
-  {
-    TRACE_OUT((-1,"!islurkstarted. returning 0\n"));
-    return 0;
-  }
-  rc = (conf.lurkmode & CONNECT_LURKONLY);
-  TRACE_OUT((-1,"(conf.lurkmode & CONNECT_LURKONLY)=>%d\n",rc));
-  return rc;
-}
+int Lurk::IsWatcherPassive(void) { return (IsWatching() & CONNECT_LURKONLY); }
 
 /* ---------------------------------------------------------- */
 
-int Lurk::CheckIfConnectRequested(void) //yes/no
+int Lurk::IsConnected(void)
 {
-  TRACE_OUT((+1,"Lurk::CheckIfConnectRequested() (islurkstarted?=%d)\n",islurkstarted));
-  if (!islurkstarted)
+  int rc = 0; /* assume not connected */
+  TRACE_OUT((+1,"Lurk::IsConnected() (islurkstarted?=%d)\n",islurkstarted));
+  if (islurkstarted)
   {
-    TRACE_OUT((-1,"!islurkstarted. returning 0\n"));
-    return 0;
-  }
-
-  if ((conf.lurkmode & (CONNECT_LURKONLY|CONNECT_LURK)) == 0)
-  {
-    TRACE_OUT((-1,"(conf.lurkmode & (CONNECT_LURKONLY|CONNECT_LURK)=>0\n"));
-    return 0; // We're not supposed to lurk!
-  }
-
-  TRACE_OUT((0,"beginning IsConnected()\n"));
-  if (IsConnected()) //we are connected!
-  {
-    TRACE_OUT((0,"IsConnected() => yes\n"));
-    if ( lastcheckshowedconnect == 0 ) // We previously weren't connected
+    TRACE_OUT((0,"beginning InternalIsConnected()\n"));
+    rc = InternalIsConnected();
+    TRACE_OUT((0,"end InternalIsConnected() => %d\n", rc ));
+    #ifndef LURK_MULTIDEV_TRACK
+    if (rc) //we are connected!
     {
+      if (showedconnectcount == 0) /* there was no previous device */
+        previous_conndevice[0] = '\0';
       if (conndevice[0]==0) /* only win16 has no name */
-        LogScreen("Dialup Connection Detected...\n"); // so this is the first time
-      else
-        LogScreen("Connection detected on '%s'...\n", conndevice );
+      {
+        LogScreen("Dialup link detected...\n"); // so this is the first time
+        showedconnectcount = 1; // and there is only one device
+      }
+      else if (strcmp(conndevice,previous_conndevice)!=0) /*different device?*/
+      {
+	/* its AF_INET, not IP, of course */
+        LogScreen("Tracking %sIP-link on '%s'...\n", 
+                  ((showedconnectcount == 0)?(""):("new")), conndevice );
+        strcpy(previous_conndevice,conndevice);
+        showedconnectcount++;
+      }
     }
-    lastcheckshowedconnect = 1;
-    TRACE_OUT((-1,"Lurk::CheckIfConnectRequested returning '1'\n"));
-    return 1;
-  }
-  TRACE_OUT((0,"IsConnected() => no\n"));
-
-  TRACE_OUT((0,"lastcheckshowedconnect? = %d\n",lastcheckshowedconnect));
-  if ( lastcheckshowedconnect ) // we were previously connected...connection lost
-  {
-    char *msg = "";
-    lastcheckshowedconnect = 0;        // So we know next time through this loop
-    if (conf.lurkmode == CONNECT_LURKONLY) // Lurk-only mode
-      msg = " and will not be re-initiated";
-    LogScreen("Connection lost%s.\n",msg);
-  }
-  TRACE_OUT((-1,"Lurk::CheckIfConnectRequested returning '0'\n"));
-  return 0;
+    else if ( showedconnectcount > 0 ) /* no longer connected */
+    {
+      #if 0
+       LogScreen("(Dialup-)link was dropped%s.\n",
+                ((conf.lurkmode == CONNECT_LURKONLY)?
+                (" and will not be re-initiated")?("")) );
+      #else
+       LogScreen("Tracked termination of %s.\n",
+          ((showedconnectcount > 1)?("all IP links"):("IP link")) );
+      #endif
+      showedconnectcount = 0;
+      previous_conndevice[0] = '\0';
+    }
+    #endif /* LURK_MULTIDEV_TRACK */
+  }  
+  TRACE_OUT((-1,"Lurk::IsConnected()=>%d conncount=>%d\n",rc,showedconnectcount));
+  return rc;
 }
 
 /* ---------------------------------------------------------- */
 
+#if 0
 int Lurk::CheckForStatusChange(void) //returns -1 if connection dropped
 {
   TRACE_OUT((+1,"Lurk::CheckForStatusChange() (islurkstarted?=%d)\n",islurkstarted));
@@ -137,26 +166,44 @@ int Lurk::CheckForStatusChange(void) //returns -1 if connection dropped
     TRACE_OUT((-1,"!islurkstarted. returning 0\n"));
     return 0;
   }
-
   if ( (conf.lurkmode == 0) && (!conf.dialwhenneeded) )
   {
     TRACE_OUT((-1,"((conf.lurkmode == 0) && (!conf.dialwhenneeded)). returning 0\n"));
     return 0; // We're not lurking.
   }
-  TRACE_OUT((0,"lastcheckshowedconnect? => %d\n",lastcheckshowedconnect));
-  if (lastcheckshowedconnect)
+  TRACE_OUT((0,"showedconnectcount? => %d\n", showedconnectcount));
+  if (showedconnectcount > 0) /* we had shown a connected message */
   {
-    TRACE_OUT((0,"beginning IsConnected()\n"));
-    if ( !IsConnected() ) //if (Status() < oldlurkstatus)
+    TRACE_OUT((0,"beginning InternalIsConnected()\n"));
+    if ( !InternalIsConnected() ) //if (Status() < oldlurkstatus)
     {
-      TRACE_OUT((-1,"IsConnected() => no. we got disconnected. returning -1\n"));
+      TRACE_OUT((-1,"InternalIsConnected() => no. we got disconnected. returning -1\n"));
       return -1;  // we got disconnected!
     }
-    TRACE_OUT((0,"IsConnected() => yes. still connected.\n"));
+    TRACE_OUT((0,"InternalIsConnected() => yes. still connected.\n"));
   }
   TRACE_OUT((-1,"returning 0.\n"));
   return 0;
 }
+#endif
+
+#if 0
+int Lurk::CheckIfConnectRequested(void) //yes/no
+{
+  TRACE_OUT((+1,"Lurk::CheckIfConnectRequested() (islurkstarted?=%d)\n",islurkstarted));
+  if (!islurkstarted)
+  {
+    TRACE_OUT((-1,"!islurkstarted. returning 0\n"));
+    return 0; /* if this is changed, don't forget to change InternalIsConnected */
+  }
+  if ((conf.lurkmode & (CONNECT_LURKONLY|CONNECT_LURK)) == 0)
+  {
+    TRACE_OUT((-1,"(conf.lurkmode & (CONNECT_LURKONLY|CONNECT_LURK)=>0\n"));
+    return 0; // We're not supposed to lurk!
+  }
+  return IsConnected();
+}  
+#endif
 
 
 /* ================================================================== */
@@ -282,14 +329,12 @@ int Lurk::GetCapabilityFlags(void)
         TRACE_OUT((+1,"Lurk::GetCapabilityFlags() ioctl check.\n"));
         if (osver.dwPlatformId == VER_PLATFORM_WIN32_NT)
         {
-          #if !defined(_MSC_VER) || defined(_M_ALPHA) //strange, eh?
           isok = ((osver.dwMajorVersion > 4) ||
                   (osver.dwMajorVersion == 4 &&
                    strncmp(osver.szCSDVersion,"Service Pack ",13)==0 &&
                    atoi(&(osver.szCSDVersion[13])) >= 4));
           //http://support.microsoft.com/support/kb/articles/q181/5/20.asp
           //http://support.microsoft.com/support/kb/articles/q170/6/42.asp
-          #endif
         }
         if (isok && OpenFile( "WS2_32.DLL", &ofstruct, OF_EXIST|OF_SEARCH)!=HFILE_ERROR)
           what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_IFACEMASK);
@@ -346,7 +391,7 @@ const char **Lurk::GetConnectionProfileList(void)
 {
   #if (CLIENT_OS == OS_WIN32)
     static const char *firstentry = ""; //the first entry is blank, ie use default
-    static RASENTRYNAME rasentries[4];
+    static RASENTRYNAME rasentries[10];
     static const char *configptrs[(sizeof(rasentries)/sizeof(rasentries[0]))+2];
     DWORD buffersize = sizeof(rasentries);
     DWORD maxentries = 0;
@@ -578,11 +623,8 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
 
 /* ---------------------------------------------------------- */
 
-#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
-    (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_WIN32) || \
-    (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
-    (CLIENT_OS == OS_MACOSX) || ((CLIENT_OS == OS_OS2) && defined(__EMX__)) || \
-    (CLIENT_OS == OS_AMIGAOS)
+#if (!((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2) && !defined(__EMX__)))
+/* needed by all except win16 and non-emx-os/2 */
 static int __MatchMask( const char *ifrname, int mask_include_all,
                        int mask_default_only, const char *ifacestowatch[] )
 {
@@ -590,11 +632,16 @@ static int __MatchMask( const char *ifrname, int mask_include_all,
   char wildmask[32+4]; //should be sizeof((struct ifreq.ifr_name)+4
   const char *matchedname = "*";
 
-  if (mask_include_all)
+  TRACE_OUT((+1,"__MatchMask(ifrname='%s',mask_include_all=%d,"
+                "mask_default_only=%d,ifacestowatch=%p)\n",
+                ifrname,mask_include_all,mask_default_only,ifacestowatch));
+
+  if (mask_include_all) //mask was "*"
     ismatched = 1;
   else
   {
     int maskpos=0;
+    //create a wildcard version of ifrname (eg, "eth1" becomes "eth*")
     strncpy(wildmask,ifrname,sizeof(wildmask));
     wildmask[sizeof(wildmask)-1]=0;
     while (maskpos < ((int)(sizeof(wildmask)-2)) &&
@@ -602,60 +649,119 @@ static int __MatchMask( const char *ifrname, int mask_include_all,
       maskpos++;
     wildmask[maskpos++]='*';
     wildmask[maskpos]='\0';
-    if (mask_default_only)
-    {
+    if (mask_default_only) //user didn't specify a mask, so default is any
+    {                      //dialup device
       ismatched = (strcmp(wildmask,"ppp*")==0
       #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
         (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
         (CLIENT_OS == OS_MACOSX)
-      || strcmp(wildmask,"dun*")==0
+      || strcmp(wildmask,"dun*")==0 || 
+      || strcmp(wildmask,"tun*")==0 ||
       #elif (CLIENT_OS == OS_AMIGAOS)
       || strcmp(wildmask,"mi*")==0  // required for Miami (not MiamiDx or Genesis)
       #endif
       || strcmp(wildmask,"sl*")==0);
       matchedname = ((!ismatched)?(NULL):((const char *)(&wildmask[0])));
     }
-    else
-    {
+    else //user specified a mask. must match ifrname, or (if the mask is
+    {    //a wildcard version) the wildcard version of ifrname
       for (maskpos=0;!ismatched && (matchedname=ifacestowatch[maskpos])!=NULL;maskpos++)
         ismatched = (strcmp(ifacestowatch[maskpos],ifrname)==0 ||
                      strcmp(ifacestowatch[maskpos],wildmask)==0);
     }
   }
-  TRACE_OUT((0,"__Maskmatch: matched?=%s ifrname=='%s' matchname=='%s'\n",
+  TRACE_OUT((-1,"__Maskmatch: matched?=%s ifrname=='%s' matchname=='%s'\n",
     (ismatched?"yes":"no"), ifrname, matchedname?matchedname:"(not found)" ));
   return ismatched;
 }
 #endif
 
+
 /* ---------------------------------------------------------- */
 
-int Lurk::IsConnected(void) //must always returns a valid yes/no
+#ifdef LURK_MULTIDEV_TRACK
+static int __insdel_devname(const char *devname, int isup,
+                            char *conndevices, unsigned int conndevices_sz)
 {
-  conndevice[0]=0;
+  unsigned int len;
+  char *p = conndevices;
+  if (!devname)
+  {            
+    while (*p)
+    {
+      if (*p == '|' && isup)
+      {
+        *p++ = '?';
+      }  
+      else if (*p == '?' && !isup)
+      {
+        char *q = p+1;
+        while (*q && *q != '|' && *q != '?')
+          q++;
+        *p = *q;
+        *q = '\0';
+        LogScreen("Detected IP-link drop for '%s'.\n", p+1 );
+	/* its AF_INET, not IP, of course */
+        if (*p)
+          strcpy(p+1,q+1);
+      }  
+      else 
+        p++;
+    }
+    return 0;
+  }  
+  len = strlen(devname)+1;
+  while ((*p == '?' || *p == '|') && 
+        ((p+len) < &conndevices[conndevices_sz]))
+  {
+    char *q = p+1;
+    while (*q && *q != '?' && *q != '|')
+      q++;
+    if ((&p[len] == q) && memcmp(p+1,devname,len-1)==0)
+    {
+      if (isup)
+        *p = '|';
+      else
+      {
+        strcpy( p, q ); 
+        LogScreen("Detected IP-link drop for '%s'.\n", devname );
+	/* its AF_INET, not IP, of course */
+      }
+      return 0;
+    }
+    p = q;
+  }
+  if (!isup)
+    return 0;
+  if ((strlen(conndevices)+len) >= (conndevices_sz-2))
+    return -1; /* ENOSPC */
+  LogScreen("Detected IP-link on '%s'...\n", devname );
+  /* its AF_INET, not IP, of course */
+  strcat(strcat(conndevices,"|"),devname);
+  return 0;
+}  
+#endif
 
-  TRACE_OUT((+1,"Lurk::IsConnected() (islurkstarted=%d)\n",islurkstarted));
+/* ---------------------------------------------------------- */
+
+int Lurk::InternalIsConnected(void) //must always returns a valid yes/no
+{
+  #ifndef LURK_MULTIDEV_TRACK
+  conndevice[0]=0;
+  #endif
+
+  TRACE_OUT((+1,"Lurk::InternalIsConnected() (islurkstarted=%d)\n",islurkstarted));
 
   if (!islurkstarted)
   {
     TRACE_OUT((-1,"!islurkstarted. returning 0\n"));
-    return 0;
+    return 0;/* if this is changed, don't forget to change IsConnected() */
   }
   if (!conf.lurkmode && !conf.dialwhenneeded)
   {
     TRACE_OUT((-1,"(!conf.lurkmode && !conf.dialwhenneeded) returning 1\n"));
     return 1;
   }
-
-#if (CLIENT_OS == OS_AMIGAOS)
-  int closesocklib = 0;
-  if (!SocketBase)
-  {
-    if (!(SocketBase = OpenLibrary("bsdsocket.library",4)))
-      return 0;
-    closesocklib = 1;
-  }
-#endif
 
 #if (CLIENT_OS == OS_WIN16)
   if ( GetModuleHandle("WINSOCK") )
@@ -667,9 +773,13 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
   if ((GetCapabilityFlags() & CONNECT_IFACEMASK) != 0 /* have working WS2_32 */
    && (!mask_default_only || (GetCapabilityFlags() & CONNECT_DODBYPROFILE)==0))
   {
-    #if !defined(_MSC_VER) || defined(_M_ALPHA) //some msvcs can't cast for shit
-    TRACE_OUT((+1,"ioctl IsConnected()\n"));
+    TRACE_OUT((+1,"ioctl InternalIsConnected()\n"));
     HINSTANCE ws2lib = LoadLibrary( "WS2_32.DLL" );
+    int upcount = 0;
+
+    #ifdef LURK_MULTIDEV_TRACK
+    __insdel_devname(NULL,1,conndevices,sizeof(conndevices)); /* init tracking */
+    #endif
     if (ws2lib)
     {
       FARPROC __WSAStartup  = GetProcAddress( ws2lib, "WSAStartup" );
@@ -677,10 +787,11 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
       FARPROC __WSAIoctl    = GetProcAddress( ws2lib, "WSAIoctl" );
       FARPROC __WSACleanup  = GetProcAddress( ws2lib, "WSACleanup" );
       FARPROC __closesocket = GetProcAddress( ws2lib, "closesocket" );
-      if (__WSAStartup && __WSASocket && __WSAIoctl && __WSACleanup && __closesocket)
+      if (__WSAStartup && __WSASocket && __WSAIoctl &&
+          __WSACleanup && __closesocket)
       {
         WSADATA winsockData;
-        TRACE_OUT((0,"ioctl IsConnected() [2]\n"));
+        TRACE_OUT((0,"ioctl InternalIsConnected() [2]\n"));
 
         if (( (*((int (PASCAL FAR *)(WORD, LPWSADATA))(__WSAStartup)))
                                          (MAKEWORD(2,2), &winsockData)) == 0)
@@ -691,7 +802,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
           (*((int (PASCAL FAR *)(int,int,int,LPWSAPROTOCOL_INFO,GROUP,DWORD))
             (__WSASocket)))(AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, 0);
 
-          TRACE_OUT((0,"ioctl IsConnected() [3]\n"));
+          TRACE_OUT((0,"ioctl InternalIsConnected() [3]\n"));
 
           if (s != INVALID_SOCKET)
           {
@@ -705,7 +816,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
             #define IFF_MULTICAST    0x00000010 /* multicast is supported */
             DWORD bytesReturned;
 
-            TRACE_OUT((0,"ioctl IsConnected() [4]\n"));
+            TRACE_OUT((0,"ioctl InternalIsConnected() [4]\n"));
 
             #pragma pack(1)
             struct if_info_v4 /* 4+(3*16) */
@@ -750,6 +861,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
 
               for (i=0; i<bytesReturned; i+=stepsize)
               {
+                int isup = 0;
                 u_long if_flags = ((struct if_info_v4 *)(ifp))->iiFlags;
                 u_long if_addr  = ((struct if_info_v4 *)(ifp))->iiAddress.sin_addr;
                 /* if_addr is always (?) an AF_INET[4] addr because thats what our socket is */
@@ -781,13 +893,27 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
                       __MatchMask(seqname,mask_include_all,
                          mask_default_only, &ifacestowatch[0] )))
                   {
+                    upcount++;
+                    isup = 1;
                     TRACE_OUT((0,"stage8: mask matched. name=%s\n", devname ));
-                    strcat( devname, "/" );
-                    strcat( devname, seqname );
+                  }
+                  strcat( devname, "/" );
+                  strcat( devname, seqname );
+                  if (isup)
+                  {
+                    #ifdef LURK_MULTIDEV_TRACK
+                    if (__insdel_devname(devname,1,conndevices,sizeof(conndevices))!=0)
+                      break; /* table is full */
+                    #else
                     strncpy( conndevice, devname, sizeof(conndevice) );
                     conndevice[sizeof(conndevice)-1] = 0;
                     break;
+                    #endif
                   }
+                  #ifdef LURK_MULTIDEV_TRACK
+                  else
+                    __insdel_devname(devname,0,conndevices,sizeof(conndevices));
+                  #endif
                 }
               }
             }
@@ -798,14 +924,16 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
       }
       FreeLibrary(ws2lib);
     }
-    TRACE_OUT((-1,"ioctl IsConnected() '%s'\n",conndevice));
+    #ifdef LURK_MULTIDEV_TRACK
+    __insdel_devname(NULL,0,conndevices,sizeof(conndevices)); /* stop tracking */
+    #endif
+    TRACE_OUT((-1,"ioctl InternalIsConnected() '%s'\n",conndevice));
 
-    if (conndevice[0])
+    if (upcount)
     {
-      TRACE_OUT((-1,"Lurk::IsConnected() => 1\n"));
+      TRACE_OUT((-1,"Lurk::InternalIsConnected() => 1\n"));
       return 1;
     }
-    #endif
   }
   if ((GetCapabilityFlags() & CONNECT_DODBYPROFILE)!=0) /* have ras */
   {
@@ -814,7 +942,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
     DWORD cb, whichconn, cConnections;
     int foundconn = 0;
 
-    TRACE_OUT((+1,"Lurk::IsConnected() [BYPROFILE]\n"));
+    TRACE_OUT((+1,"Lurk::InternalIsConnected() [BYPROFILE]\n"));
     cb = sizeof(rasconn);
     rasconn.dwSize = sizeof(RASCONN);
     rasconnp = &rasconn;
@@ -834,6 +962,9 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
     }
     TRACE_OUT((0,"number of profiles: %d\n",cConnections));
 
+    #ifdef LURK_MULTIDEV_TRACK
+    __insdel_devname(NULL,1,conndevices,sizeof(conndevices)); /* begin tracking */
+    #endif
     for (whichconn = 0; whichconn < cConnections; whichconn++ )
     {
       HRASCONN hrasconn = rasconnp[whichconn].hrasconn;
@@ -845,12 +976,24 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
         if (rasconnstatus.rasconnstate == RASCS_Connected)
         {
           foundconn = 1;
-          strncpy( conndevice, connname, sizeof(conndevice) );
+          #ifdef LURK_MULTIDEV_TRACK
+          if (__insdel_devname(connname,1,conndevices,sizeof(conndevices)))
+            break; /* table is full */
+          #else
+          strncpy( conn, connname, sizeof(conndevice) );
           conndevice[sizeof(conndevice)-1]=0;
           break;
+          #endif
         }
+        #ifdef LURK_MULTIDEV_TRACK
+        else
+          __insdel_devname(connname,0,conndevices,sizeof(conndevices));
+        #endif
       }
     }
+    #ifdef LURK_MULTIDEV_TRACK
+    __insdel_devname(NULL,0,conndevices,sizeof(conndevices)); /* end tracking */
+    #endif
 
     if (rasconnp != NULL && rasconnp != &rasconn)
       free((void *)rasconnp );
@@ -858,7 +1001,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
     TRACE_OUT((-1,"found conn?: %d\n",foundconn));
     if (foundconn)
     {
-      TRACE_OUT((-1,"Lurk::IsConnected() => 1\n"));
+      TRACE_OUT((-1,"Lurk::InternalIsConnected() => 1\n"));
       return 1;
     }
   }
@@ -866,7 +1009,6 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
    int s, i, rc, j, foundif = 0;
    struct ifmib MyIFMib = {0};
    struct ifact MyIFNet = {0};
-   int ismatched = 0;
 
    MyIFNet.ifNumber = 0;
    s = socket(PF_INET, SOCK_STREAM, 0);
@@ -880,6 +1022,9 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
        if ( i < 0)
          MyIFNet.ifNumber = 0;
      }
+     #ifdef LURK_MULTIDEV_TRACK
+     __insdel_devname(NULL,1,conndevices,sizeof(conndevices)); /* begin tracking */
+     #endif
      for (i = 0; i < MyIFNet.ifNumber; i++)
      {
        j = MyIFNet.iftable[i].ifIndex;      /* j is now the index into the stats table for this i/f */
@@ -889,6 +1034,8 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
          {
            if (MyIFNet.iftable[i].ifa_addr != 0x0100007f)  /* same thing for TCPIP < 4.1 */
            {
+             char devname[64];
+             int ismatched = 0;
              struct ifreq MyIFReq = {0};
              const char *wildmask = "";
              if (j < 9)
@@ -905,13 +1052,12 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
              {
                strcpy(MyIFReq.ifr_name, "lo");
              }
-             strncpy( conndevice, MyIFReq.ifr_name, sizeof(conndevice) );
-             conndevice[sizeof(conndevice)-1]=0;
+             strncpy( devname, MyIFReq.ifr_name, sizeof(devname) );
+             devname[sizeof(devname)-1]=0;
              if (ioctl(s, SIOCGIFFLAGS, (char*)&MyIFReq, sizeof(MyIFReq))==0)
              {
                if ((MyIFReq.ifr_flags & IFF_UP) != 0)
                {
-                 int ismatched = 0;
                  if (mask_include_all)
                    ismatched = 1;
                  else if (mask_default_only)
@@ -923,24 +1069,37 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
                      ismatched= (stricmp(ifacestowatch[maskpos],MyIFReq.ifr_name)==0
                      || (*wildmask && stricmp(ifacestowatch[maskpos],wildmask)==0));
                  }
-                 if (ismatched)
-                 {
-                   foundif = i+1; // Report online if SLIP or PPP detected
-                 }
-               }
-             } // ioctl(s, SIOCGIFFLAGS ) == 0
+               } // if ((MyIFReq.ifr_flags & IFF_UP) != 0)
+             } // ioctl(s, SIOCGIFFLAGS ) == 0  
+             if (ismatched)
+             {
+               foundif = i+1; // Report online if SLIP or PPP detected
+               #ifdef LURK_MULTIDEV_TRACK
+               if (__insdel_devname(devname,1,conndevices,sizeof(conndevices))!=0)
+                 break; /* table is full */
+               #else
+               strncpy( conndevice, devname, sizeof(conndevice) );
+               conndevice[sizeof(conndevice)-1]=0;
+               #endif
+             }
+             #ifdef LURK_MULTIDEV_TRACK
+             else
+               __insdel_devname(devname,0,conndevices,sizeof(conndevices));
+             #endif
            } // != 0x0100007f
          } // != HT_PPP (loopback actually)
        } // != HT_ETHER
      } //for ...
+     #ifdef LURK_MULTIDEV_TRACK
+     __insdel_devname(NULL,0,conndevices,sizeof(conndevices)); /* end tracking */
+     #endif
      soclose(s);
    }
    if (foundif)
    {
-     TRACE_OUT((-1,"Lurk::IsConnected() => 1\n"));
+     TRACE_OUT((-1,"Lurk::InternalIsConnected() => 1\n"));
      return 1;
    }
-   conndevice[0]=0;
 
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
       (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
@@ -950,6 +1109,15 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
    struct ifreq *ifr;
    int n, foundif = 0;
    char *p;
+   #if (CLIENT_OS == OS_AMIGAOS)
+   int closesocklib = 0;
+   if (!SocketBase)
+   {
+     if (!(SocketBase = OpenLibrary("bsdsocket.library",4)))
+       return 0;
+     closesocklib = 1;
+   }
+   #endif
 
    int fd = socket(PF_INET,SOCK_STREAM,0);
    if (fd >= 0)
@@ -980,14 +1148,19 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
 
      if (ifc.ifc_len)
      {
+       #ifdef LURK_MULTIDEV_TRACK
+       __insdel_devname(NULL,1,conndevices,sizeof(conndevices)); /* begin tracking */
+       #endif
        #if (CLIENT_OS == OS_LINUX) || ((CLIENT_OS == OS_OS2) && defined(__EMX__))
        for (n = 0, ifr = ifc.ifc_req; n < ifc.ifc_len; n += sizeof(struct ifreq), ifr++)
        {
          if (__MatchMask(ifr->ifr_name,mask_include_all,
                          mask_default_only, &ifacestowatch[0] ))
          {
-           strncpy( conndevice, ifr->ifr_name, sizeof(conndevice) );
-           conndevice[sizeof(conndevice)-1] = 0;
+           char devname[64];
+           strncpy(devname,ifr->ifr_name,sizeof(devname));
+           devname[sizeof(devname)-1] = '\0';
+
            ioctl (fd, SIOCGIFFLAGS, ifr); // get iface flags
            #ifndef __EMX__
            if ((ifr->ifr_flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK))
@@ -998,11 +1171,21 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
            #endif
            {
              foundif = (n / sizeof(struct ifreq)) + 1;
+             #ifdef LURK_MULTIDEV_TRACK
+             if (__insdel_devname(devname,1,conndevices,sizeof(conndevices))!=0)
+               break; /* table is full */
+             #else
+             strncpy( conndevice, devname, sizeof(conndevice) );
+             conndevice[sizeof(conndevice)-1]=0;
              break;
-           }
-         }
-       }
-       // maybe other *BSD systems
+             #endif
+           }  
+           #ifdef LURK_MULTIDEV_TRACK
+           else
+             __insdel_devname(devname,0,conndevices,sizeof(conndevices));
+           #endif  
+         } /* if __MatchMask */
+       } /* for (n = 0, ... ) */
        #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_NETBSD || \
              (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_AMIGAOS))
@@ -1023,8 +1206,10 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
            if (__MatchMask(ifr->ifr_name,mask_include_all,
                            mask_default_only, &ifacestowatch[0] ))
            {
-             strncpy( conndevice, ifr->ifr_name, sizeof(conndevice) );
-             conndevice[sizeof(conndevice)-1] = 0;
+             int isup = 0;
+             char devname[64];
+             strncpy(devname,ifr->ifr_name,sizeof(devname));
+             devname[sizeof(devname)-1] = '\0';
              ioctl (fd, SIOCGIFFLAGS, ifr); // get iface flags
              #if (CLIENT_OS == OS_AMIGAOS)
              if (strcmp(ifr->ifr_name,"mi0") == 0) // IFF_UP is always set for mi0
@@ -1032,29 +1217,46 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
                struct Library *MiamiBase;
                if ((MiamiBase = OpenLibrary((unsigned char *)"miami.library",11)))
                {
-                 foundif = MiamiIsOnline("mi0");
+                 isup = MiamiIsOnline("mi0");
                  CloseLibrary(MiamiBase);
-                 break;
                }
              }
-             if ((ifr->ifr_flags & (IFF_UP | IFF_LOOPBACK)) == IFF_UP)
+             else if ((ifr->ifr_flags & (IFF_UP | IFF_LOOPBACK)) == IFF_UP)
              #else
              if ((ifr->ifr_flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK))
                  == (IFF_UP | IFF_RUNNING))
              #endif
              {
-               foundif = (n / sizeof(struct ifreq)) + 1;
-               break;
+               isup = 1;
              }
-           }
-         }
+             if (isup)
+             {
+               foundif = (n / sizeof(struct ifreq)) + 1;
+               #ifdef LURK_MULTIDEV_TRACK
+               if (__insdel_devname(devname,1,conndevices,sizeof(conndevices))!=0)
+                 break; /* table is full */
+               #else
+               strncpy( conndevice, devname, sizeof(conndevice) );
+               conndevice[sizeof(conndevice)-1]=0;
+               break;
+               #endif
+             }  
+             #ifdef LURK_MULTIDEV_TRACK
+             else
+               __insdel_devname(devname,0,conndevices,sizeof(conndevices));
+             #endif  
+           } /* if matchmask */
+         } /* if (sa->sa_family == AF_INET) */
          // calculate the length of this entry and jump to the next
          int ifrsize = IFNAMSIZ + sa_len;
          ifr = (struct ifreq *)((caddr_t)ifr + ifrsize);
          n -= ifrsize;
-       }
+       } /* for (n = 0, ... ) */
        #else
        #error "What's up Doc ?"
+       #endif
+       #ifdef LURK_MULTIDEV_TRACK
+       __insdel_devname(NULL,0,conndevices,sizeof(conndevices)); /* end tracking */
        #endif
      }
      if (ifc.ifc_buf)
@@ -1072,17 +1274,16 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
 
    if (foundif)
    {
-     TRACE_OUT((-1,"Lurk::IsConnected() => 1\n"));
+     TRACE_OUT((-1,"Lurk::InternalIsConnected() => 1\n"));
      return 1;
    }
-   conndevice[0]=0;
 
 #else
-  #error "IsConnected() must always return a valid yes/no."
+  #error "InternalIsConnected() must always return a valid yes/no."
   #error "There is no default return value."
 #endif
 
-  TRACE_OUT((-1,"Lurk::IsConnected() => 0\n"));
+  TRACE_OUT((-1,"Lurk::InternalIsConnected() => 0\n"));
   return 0;// Not connected
 }
 
