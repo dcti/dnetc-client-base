@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.17 1999/07/10 17:36:49 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.18 1999/07/11 16:08:22 cyp Exp $"; }
 
 //#define TRACE
 
@@ -251,9 +251,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
           //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */
           #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
-                (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX) || \
-                (CLIENT_OS == OS_IRIX)
+                (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
           pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
+	  #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
+          pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4}' 2>/dev/null";
           #else
           #error fixme: select an appropriate ps syntax
           #endif
@@ -381,7 +382,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           terminate_app = 1;
         }
-        #elif ((CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S))
+        #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S)
         {
           int rc, cmd = IDM_RESTART;
           const char *dowhat_descrip = "restarted";
