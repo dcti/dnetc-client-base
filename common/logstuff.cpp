@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.46 2001/01/11 15:51:45 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.47 2001/01/12 04:34:15 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -765,6 +765,7 @@ static int __ContestGetLiveRate(unsigned int contest_i,
                                  0, 0, 
                                  0, 
                                  0, 0, 
+                                 0, 0, 
                                  0, 0, 0, 0,
                                  0, 0, 0, 0,
                                  &ccounthi, &ccountlo, 0, 0,
@@ -1034,7 +1035,7 @@ void LogScreenPercent( unsigned int load_problem_count )
           char blkdone[32], blksig[32]; const char *contname;
           girc = ProblemGetInfo(selprob, &cont_i, &contname, 0, 0, 0, 0, 0, 
                            &permille, &startpermille, 0,
-                           blksig, sizeof(blksig), 0, 0, 0, 0, 0,0,0, 0,0,0,
+                           0, 0, blksig, sizeof(blksig), 0, 0, 0, 0, 0,0,0, 0,0,0,
                            0, 0, 0, 0, blkdone, sizeof(blkdone) );
           if (permille == 1000 && disp_format == DISPFORMAT_AUTO)
             disp_format = DISPFORMAT_PERC;
@@ -1049,7 +1050,7 @@ void LogScreenPercent( unsigned int load_problem_count )
         {
           girc = ProblemGetInfo(selprob, &cont_i, 0, 0, 0, 0, 0, 0,
                                          &permille, &startpermille, 0,
-                                         0, 0, 0, 0, 0, 0, 
+                                         0, 0, 0, 0, 0, 0, 0, 0, 
                                          0,0,0, 0,0,0, 0, 0, 0, 0, 0, 0 );
         }
         if (girc != -1)

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.50 2001/01/09 00:46:35 mfeiri Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.51 2001/01/12 04:34:16 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -173,7 +173,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
              && thisprob->pub_data.runtime_sec >= ((u32)(2+non_preemptive_os.did_adjust)))
           {
             u32 newtslice;
-            if (ProblemGetInfo(thisprob, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            if (ProblemGetInfo(thisprob, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                &ratelo, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                0, 0, 0, 0 ) == -1)
             {
@@ -203,7 +203,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
              if (!thisprob->pub_data.last_runtime_is_invalid)
         {
           u32 donehi, donelo;
-          if (ProblemGetInfo(thisprob, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          if (ProblemGetInfo(thisprob, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                              &donehi, &donelo, 0, 0 ) == -1)
           {
@@ -270,6 +270,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
                                       0, 0, 0, /* swucount, pad_strings, unit_name */
                                       0, 0, 0, /* currpermille, startperm, poie */
                                       0, 0,    /* idbuf, idbufsz */
+                                      0, 0,    /* cwpbuf, cwpbufsz */
                                       &ratehi, &ratelo, 
                                       ratebuf, sizeof(ratebuf),
                                       0, 0, 0, 0,   0, 0, 0, 0, 

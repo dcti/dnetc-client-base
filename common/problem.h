@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.47 2001/01/11 04:58:55 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.48 2001/01/12 04:34:16 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -245,6 +245,7 @@ int ProblemGetInfo(void *__thisprob,
                      unsigned int *c_permille, unsigned int *s_permille,
                      int permille_only_if_exact,
                      char *idbuf, unsigned int idbufsz,
+                     char *cwpbuf, unsigned int cwpbufsz,
                      u32 *ratehi, u32 *ratelo,
                      char *ratebuf, unsigned int ratebufsz,
                      u32 *ubtcounthi, u32 *ubtcountlo, 

@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.58 2001/01/08 23:02:04 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.59 2001/01/12 04:34:15 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -466,6 +466,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                                     &permille, 0, 1,
                                     pktid, sizeof(pktid),
                                     0, 0, 
+                                    0, 0, 
                                     ratebuf, sizeof(ratebuf),
                                     0, 0, 
                                     0, 0,
@@ -682,6 +683,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
                                       0, 
                                       0, &permille, 1,
                                       pktid, sizeof(pktid),
+                                      0, 0, 
                                       0, 0, 0, 0,
                                       0, 0, 
                                       0, 0,

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.90 2001/01/11 04:58:54 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.91 2001/01/12 04:34:15 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1813,6 +1813,8 @@ int ProblemGetSWUCount( const ContestWork *work,
 
 
 /* more info than you ever wanted. :) any/all params can be NULL/0
+ * sig/idbuf: packet identifier
+ * cwpbuf: current working position
  * tcount = total_number_of_iterations_to_do
  * ccount = number_of_iterations_done_thistime.
  * dcount = number_of_iterations_done_ever
@@ -1828,6 +1830,7 @@ int ProblemGetInfo(void *__thisprob,
                    unsigned int *c_permille, unsigned int *s_permille,
                    int permille_only_if_exact,
                    char *sigbuf, unsigned int sigbufsz,
+                   char *cwpbuf, unsigned int cwpbufsz,
                    u32 *ratehi, u32 *ratelo, 
                    char *ratebuf, unsigned int ratebufsz,
                    u32 *ubtcounthi, u32 *ubtcountlo, 
@@ -1882,6 +1885,13 @@ int ProblemGetInfo(void *__thisprob,
         *sigbuf = '\0';
       if (sigbufsz < 2)
         sigbuf = (char *)0;
+    }
+    if (cwpbuf)
+    {
+      if (cwpbufsz)
+        *cwpbuf = '\0';
+      if (cwpbufsz < 2)
+        cwpbuf = (char *)0;
     }
     if (ratebuf)
     {
@@ -1960,7 +1970,8 @@ int ProblemGetInfo(void *__thisprob,
         e_usec = thisprob->pub_data.runtime_usec;
       }
     } /* if (elapsed || rate || ratebuf) */    
-    if ( sigbuf     || c_permille || s_permille ||
+    if ( sigbuf     || cwpbuf     || 
+         c_permille || s_permille ||
          ratehi     || ratelo     || ratebuf   ||  
          ubtcounthi || ubtcountlo || tcountbuf ||
          ubccounthi || ubccountlo || ccountbuf ||
@@ -2029,6 +2040,17 @@ int ProblemGetInfo(void *__thisprob,
               strncpy( sigbuf, scratch, sigbufsz );
               sigbuf[sigbufsz-1] = '\0';
             }
+            if (cwpbuf)
+            {
+              // ToDo: do something different here - any ideas for a cwp for crypto packets?
+              char scratch[32];
+              sprintf( scratch, "%08lX:%08lX:%u*2^%u", 
+                       (unsigned long) ( work.crypto.key.hi ),
+                       (unsigned long) ( work.crypto.key.lo ),
+                       units, twoxx );
+              strncpy( cwpbuf, scratch, cwpbufsz );
+              cwpbuf[cwpbufsz-1] = '\0';
+            }
             if (swucount && (tcounthi || tcountlo)) /* only if finished */
             {
               /* note that we return zero for test packets */
@@ -2057,6 +2079,10 @@ int ProblemGetInfo(void *__thisprob,
             if (sigbuf)
             {
               ogr_stubstr_r( &work.ogr.workstub.stub, sigbuf, sigbufsz, 0);
+            }
+            if (cwpbuf)
+            {
+              ogr_stubstr_r( &work.ogr.workstub.stub, cwpbuf, cwpbufsz, work.ogr.workstub.worklength);
             }
             if (swucount && (tcounthi || tcountlo)) /* only if finished */
             {
