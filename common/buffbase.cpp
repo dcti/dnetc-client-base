@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.32 2000/06/17 21:36:00 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.33 2000/06/18 16:23:56 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -498,12 +498,12 @@ unsigned long BufferReComputeWorkUnitsToFetch(Client *client, unsigned int conte
       lefttotrans = 0;
     else
     {
-      /* get threshold in *work units */
+      /* get threshold in *work units* */
       int threshold = ClientGetInThreshold( client, contest, 1 /* force */ );
       if (lefttotrans < ((unsigned long)threshold))
         lefttotrans = threshold - lefttotrans;
       else /* determine if we have at least one packet per cruncher */
-      {    /* (remember that GetInThreshold() returns *work-units*) */
+      {    /* (remember that GetInThreshold() returns *work units*) */
         int numcrunchers = client->numcpu;
         if (numcrunchers < 0)
           numcrunchers = GetNumberOfDetectedProcessors();
@@ -517,7 +517,15 @@ unsigned long BufferReComputeWorkUnitsToFetch(Client *client, unsigned int conte
     }
   }
   return lefttotrans;
-}  
+}
+
+/* ===================================================================== */
+/* Remote buffer fetch/flush                                             */
+
+/* remote buffer loop detection: Fetch/FlushFile operation stop after
+   MAX_REMOTE_BUFFER_WARNINGS (buffer size doesn't in/decrease) */
+
+#define MAX_REMOTE_BUFFER_WARNINGS 3
 
 /* --------------------------------------------------------------------- */
 
@@ -554,8 +562,10 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
 
   for (contest = 0; !failed && contest < CONTEST_COUNT; contest++)
   {
-    const char *contname; char remote_file[sizeof(basename)+10];
+    const char *contname;
+    char remote_file[sizeof(basename)+10];
     unsigned long totrans_wu, donetrans_pkts = 0, donetrans_wu = 0;
+    long inbuffer_count = 0, inbuffer_count_last = -1, inbuffer_count_warnings = 0;
 
     if (CheckExitRequestTriggerNoIO())
       break;
@@ -564,7 +574,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       continue; /* Skip to next contest if this one is closed or disabled. */
     contname = CliGetContestNameFromID(contest);
     if (!contname)
-      continue;  
+      continue;
 
     strncpy( remote_file, BufferGetDefaultFilename(contest,1,basename), sizeof(remote_file));
     remote_file[sizeof(remote_file)-1] = '\0';
@@ -593,20 +603,41 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
         else if (((unsigned int)wrdata.contest) != contest)
         {
           Log("Remote buffer %s\ncontains non-%s packets. Stopped fetch for %s.\n",
-                       remote_file, contname, contname, contname );
+                       remote_file, contname, contname );
           BufferPutFileRecord( remote_file, &wrdata, NULL );
           //totrans_wu = 0; /* move to next contest on file error */
           break; /* move to next contest - error msg has been printed */
         }
-        else if (PutBufferRecord( client, &wrdata ) < 0) /* can't save here? */
+        else if ((inbuffer_count = PutBufferRecord( client, &wrdata )) < 0) /* can't save here? */
         {                             /* then put it back there */
+          BufferPutFileRecord( remote_file, &wrdata, NULL );
           failed = -1; /* stop further local buffer I/O */
           //totrans_wu = 0; /* move to next contest on file error */
           break; /* move to next contest - error msg has been printed */
-        }  
+        }
         else
         {
           int workunits = 0;
+
+          if (donetrans_pkts > 0 && inbuffer_count_last >= inbuffer_count)
+          {
+            // check, whether in-buffer gets larger
+            // multiple clients fetching blocks from the in-buffer while fetching
+            // new work from the remote in-buffer aborts action, too
+            if ( inbuffer_count_warnings++ < MAX_REMOTE_BUFFER_WARNINGS)
+            {
+              //LogScreen("\nFetchFile error: The dest file isn't getting bigger.\n");
+            }
+            else
+            {
+              LogScreen("\n");
+              Log("FetchFile error: The dest file isn't getting bigger.\n"
+                  "Check for a loop in your (remote) buffer settings!\n");
+              break;
+            }
+          }
+          inbuffer_count_last = inbuffer_count;
+
           /* normalize to workunits for display */
           switch (contest)
           {
@@ -616,7 +647,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
               workunits =  __iter2norm(wrdata.work.crypto.iterations.lo,
                                      wrdata.work.crypto.iterations.hi);
               if (workunits < 1)
-                workunits = 1;                                     
+                workunits = 1;
               break;
             case OGR:
               workunits = 1;
@@ -644,7 +675,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
 
         LogScreen( "\rRetrieved %s work unit %lu of %lu (%u.%02u%% transferred) ",
                     contname, donetrans_wu, totrans, percent/100, percent%100 );
-      }             
+      }
     }  /* while ( totrans_wu > 0  ) */
 
     if (donetrans_wu)
@@ -697,9 +728,11 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
 
   for (contest = 0; !failed && contest < CONTEST_COUNT; contest++)
   {
-    const char *contname; char remote_file[sizeof(basename)+10];
-    unsigned long projtrans_wu = 0, projtrans_pkts = 0; 
-    WorkRecord wrdata; long totrans_pkts;
+    const char *contname;
+    char remote_file[sizeof(basename)+10];
+    unsigned long projtrans_wu = 0, projtrans_pkts = 0;
+    WorkRecord wrdata;
+    long totrans_pkts, totrans_pkts_last, totrans_pkts_warnings;
 
     if (CheckExitRequestTriggerNoIO())
       break;
@@ -713,6 +746,9 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
     remote_file[sizeof(remote_file)-1] = '\0';
 
     totrans_pkts = 1;
+    totrans_pkts_last = -1;
+    totrans_pkts_warnings = 0;
+
     while (totrans_pkts > 0)
     {
       long workunits;
@@ -730,6 +766,25 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
         failed = -1;
         break;
       }
+
+      if (projtrans_pkts > 0 && totrans_pkts_last <= totrans_pkts)
+      {
+        // check, whether out-buffer gets smaller
+        // multiple clients flushing blocks to the out-buffer while flushing
+        // the out-buffer to the remote out-buffer aborts action, too
+        if ( totrans_pkts_warnings++ < MAX_REMOTE_BUFFER_WARNINGS)
+        {
+          //LogScreen("\nFlushFile warning: The source file isn't getting smaller.\n");
+        }
+        else
+        {
+          LogScreen("\n");
+          Log("FlushFile error: The source file isn't getting smaller.\n"
+              "Check for a loop in your (remote) buffer settings!\n");
+          break;
+        }
+      }
+      totrans_pkts_last = totrans_pkts;
 
       workunits = 1;
       switch (contest)
@@ -749,7 +804,7 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
 
       projtrans_pkts++;
       projtrans_wu += workunits;
-      
+
       if (totrans_pkts == 0) /* no more to do, can show count in work units */
       {
         LogScreen( "\rSent %s work unit %lu of %lu (100.00%% transferred)   ",
@@ -772,7 +827,7 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
       LogScreen("\n");
       LogTo(LOGTO_FILE|LOGTO_MAIL,
             "Transferred %lu %s work unit%s (%lu packet%s) to file.\n",
-                totaltrans_wu, ((totaltrans_wu==1)?(""):("s")),  contname, 
+                totaltrans_wu, contname, ((totaltrans_wu==1)?(""):("s")),
                 totaltrans_pkts, ((totaltrans_pkts==1)?(""):("s")) );
     }
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
