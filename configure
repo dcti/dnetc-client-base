@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.226 1999/06/13 23:18:02 daa Exp $
+# @(#)$Id: configure,v 1.227 1999/06/23 07:53:35 myshkin Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -239,6 +239,10 @@ COMMON_SRCS="common/client.cpp \
 #
 XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
 		   rc5/ppc/crunch_allitnil_552.ppcxlc.s"
+
+RC5PPC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.s \
+	     rc5/ppc/crunch_allitnil_552.ppc.s \
+	     rc5/ppc/crunch_ppc_wrappers.cpp"
 
 NASM_RC5X86_SRCS="rc5/x86/nasm/rg486.asm \
 		  rc5/x86/nasm/rc5-rgk5.asm \
@@ -661,91 +665,81 @@ case "$1" in
 
     *ppc-601-linux-egcs)		# [cramer] PPC 601 target
 	TARGET_CC="gcc -pipe -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_PPC601 -DPIPELINE_COUNT=1 \
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC601 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/ppc/crunch_allitnil_552.ppc.s \
-			rc5/ppc/crunch_lintilla_296.ppc.s"
+			$RC5PPC_SRCS"
 	;;
 
     *ppc-601-linux-mt-egcs)		# [cramer] PPC 601-mt target
 	TARGET_CC="gcc -pipe -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_PPC601 -DPIPELINE_COUNT=1 \
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC601 \
 			-DMULTITHREAD -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/ppc/crunch_allitnil_552.ppc.s \
-			rc5/ppc/crunch_lintilla_296.ppc.s"
+			$RC5PPC_SRCS"
 	TARGET_LIBS="-lpthread"
 	;;
 
     *ppc-604-linux-egcs)		# [cramer] PPC 604 target
 	TARGET_CC="gcc -pipe -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_PPC604 -DPIPELINE_COUNT=1 \
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC604 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/ppc/crunch_allitnil_552.ppc.s \
-			rc5/ppc/crunch_lintilla_296.ppc.s"
+			$RC5PPC_SRCS"
 	;;
 
     *ppc-604-linux-mt-egcs)		# [cramer] PPC 604-mt target
 	TARGET_CC="gcc -pipe -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_PPC604 -DPIPELINE_COUNT=1 \
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC604 \
 			-DMULTITHREAD -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/ppc/crunch_allitnil_552.ppc.s \
-			rc5/ppc/crunch_lintilla_296.ppc.s"
+			$RC5PPC_SRCS"
 	TARGET_LIBS="-lpthread"
 	;;
 
     *ppc-860-linux-egcs)		# [cramer] PPC 860 target
 	TARGET_CC="gcc -pipe -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_PPC860 -DPIPELINE_COUNT=1 \
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC860 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/ppc/crunch_allitnil_552.ppc.s \
-			rc5/ppc/crunch_lintilla_296.ppc.s"
+			$RC5PPC_SRCS"
 	;;
 
     *ppc-860-linux-mt-egcs)		# [cramer] PPC 860-mt target
 	TARGET_CC="gcc -pipe -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_PPC860 -DPIPELINE_COUNT=1 \
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC860 \
 			-DMULTITHREAD -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/ppc/crunch_allitnil_552.ppc.s \
-			rc5/ppc/crunch_lintilla_296.ppc.s"
+			$RC5PPC_SRCS"
 	TARGET_LIBS="-lpthread"
 	;;
 
-    *ppc-gcc)		# generic PPC target
-	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 \
+    *ppc-gcc)		# [myshkin] generic PPC target
+	TARGET_CCFLAGS="$OPTS_GCC_PPC \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/ppc/crunch_allitnil_552.ppc.s \
-			rc5/ppc/crunch_lintilla_296.ppc.s"
+			$RC5PPC_SRCS"
 	;;
 
-    *ppc860-gcc)	# PPC 821/860 target
-	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 \
+    *ppc860-gcc)	# [myshkin] PPC 821/860 target
+	TARGET_CCFLAGS="$OPTS_GCC_PPC \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/ppc/crunch_allitnil_552.ppc.s \
-			rc5/ppc/crunch_lintilla_296.ppc.s"
+			$RC5PPC_SRCS"
 	;;
 
-    *ppc-gcc272)	# generic PPC target, gcc 2.7.2
-	TARGET_CCFLAGS="$OPTS_GCC272_PPC -DPIPELINE_COUNT=1 \
+    *ppc-gcc272)	# [myshkin] generic PPC target, gcc 2.7.2
+	TARGET_CCFLAGS="$OPTS_GCC272_PPC \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/ppc/crunch_allitnil_552.ppc.s \
-			rc5/ppc/crunch_lintilla_296.ppc.s"
+			$RC5PPC_SRCS"
 	;;
 
-    *ppc860-gcc272)	# PPC 821/860 target, gcc 2.7.2
-	TARGET_CCFLAGS="$OPTS_GCC272_PPC860 -DPIPELINE_COUNT=1 \
+    *ppc860-gcc272)	# [myshkin] PPC 821/860 target, gcc 2.7.2
+	TARGET_CCFLAGS="$OPTS_GCC272_PPC860 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			rc5/ppc/crunch_allitnil_552.ppc.s \
-			rc5/ppc/crunch_lintilla_296.ppc.s"
+			$RC5PPC_SRCS"
 	;;
 
     *power-gcc)	    # generic POWER target
@@ -753,7 +747,7 @@ case "$1" in
 	# the POWER support should use pipelinecount=2 anyway. 
 	# patrick - patrick@mail4you.de
 	RC5CORECOPY="rc5/ansi/rc5ansi1-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_POWER -DPIPELINE_COUNT=1 \
+	TARGET_CCFLAGS="$OPTS_GCC_POWER \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	;;
