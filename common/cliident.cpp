@@ -20,7 +20,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.15 2000/10/20 21:10:38 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.16 2000/10/20 21:43:06 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -145,7 +145,6 @@ extern const char *lurk_cpp(void);
 extern const char *mail_cpp(void);
 extern const char *memfile_cpp(void);
 extern const char *modereq_cpp(void);
-extern const char *netinit_cpp(void);
 extern const char *netbase_cpp(void);
 extern const char *netconn_cpp(void);
 extern const char *pathwork_cpp(void);
@@ -191,7 +190,6 @@ static const char * (*ident_table[])() =
   mail_cpp,
 //memfile_cpp,
   modereq_cpp,
-  netinit_cpp,
   netbase_cpp,
   netconn_cpp,
   pathwork_cpp,
