@@ -8,6 +8,10 @@
 ;
 ;
 ; $Log: deseval-mmx.asm,v $
+; Revision 1.8  1999/01/17 20:58:32  cyp
+; Core gets a mem pointer on the stack. Obviates need for malloc/free and
+; boosts speed yet a bit more.
+;
 ; Revision 1.7  1999/01/17 12:13:22  fordbr
 ; Re-wrote sbox 3 and modified some initial lines in sboxes 1, 2, 6 and 8
 ; Should be about a 4% speedup
@@ -1404,7 +1408,7 @@ SECTION DATA USE32 ALIGN=16
 %else
 [SECTION .data]
 %endif
-idtag:    db "@(#)$Id: deseval-mmx.asm,v 1.7 1999/01/17 12:13:22 fordbr Exp $\0"
+idtag:    db "@(#)$Id: deseval-mmx.asm,v 1.8 1999/01/17 20:58:32 cyp Exp $\0"
 %endif
 
 ; PLATFORM  text segment definition
@@ -1415,25 +1419,25 @@ SECTION TEXT USE32 ALIGN=16
 %endif
 
 ; PLATFORM external routines and memory allocation
-%ifdef __ELF__
-extern malloc, free
-%define _malloc malloc
-%define _free free
-%else
-extern _malloc, _free
-%endif
+;;;;;;;;%ifdef __ELF__
+;;;;;;;;extern malloc, free
+;;;;;;;;%define _malloc malloc
+;;;;;;;;%define _free free
+;;;;;;;;%else
+;;;;;;;;extern _malloc, _free
+;;;;;;;;%endif
 
-%macro getmem 1
-; amount given by argument and leaves a pointer in eax
-   push  dword %1
-   call  _malloc
-   pop   edx                 ; remove argument from the stack
-%endmacro
+;;;;;;;;%macro getmem 1
+;;;;;;;;; amount given by argument and leaves a pointer in eax
+;;;;;;;;   push  dword %1
+;;;;;;;;   call  _malloc
+;;;;;;;;   pop   edx                 ; remove argument from the stack
+;;;;;;;;%endmacro
 
-%macro relmem 0
-; expects the pointer returned from getmem(_malloc) to be on the stack
-   call  _free
-%endmacro
+;;;;;;;;%macro relmem 0
+;;;;;;;;; expects the pointer returned from getmem(_malloc) to be on the stack
+;;;;;;;;   call  _free
+;;;;;;;;%endmacro
 
 ; PLATFORM yielding if required
 ; yield1ms is approximately every 1 ms on a Pentium MMX 166MHz
@@ -1645,7 +1649,8 @@ whack16_:
    mov   esi, [esp+28]
    mov   ebx, [esp+24]
 
-   getmem mem_needed
+   mov   eax, [esp+36]       ; mem ptr
+   ;;;;;;;;;;getmem mem_needed
 
    push  eax                 ; keep the pointer to allocated memory
 
@@ -2575,7 +2580,7 @@ finish:
    emms
 
    ; Uses the eax value pushed after the call to _malloc
-   relmem
+   ;;;;;;;;relmem
 
    pop   edx                 ; remove argument from the stack
    xor   eax, eax
@@ -3143,7 +3148,7 @@ key_found:
 
    emms
 
-   relmem
+   ;;;;;;;;;;relmem
 
    pop   edx                 ; remove argument from the stack
    pop   eax                 ; retrieve the result
