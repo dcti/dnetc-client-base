@@ -20,24 +20,20 @@
 */
 //
 // $Log: netinit.cpp,v $
+// Revision 1.3  1998/08/24 07:09:19  cyruspatel
+// Added FIXME comments for "lurk"ers.
+//
 // Revision 1.2  1998/08/20 19:27:16  cyruspatel
 // Made the purpose of NetworkInitialize/Deinitialize a little more
 // transparent.
 //
 // Revision 1.1  1998/08/10 21:53:55  cyruspatel
-// Two major changes to work around a lack of a method to detect if the network
-// availability state had changed (or existed to begin with) and also protect
-// against any re-definition of client.offlinemode. (a) The NO!NETWORK define is
-// now obsolete. Whether a platform has networking capabilities or not is now
-// a purely network.cpp thing. (b) NetworkInitialize()/NetworkDeinitialize()
-// are no longer one-shot-and-be-done-with-it affairs. ** Documentation ** is
-// in netinit.cpp.
+// Created - see documentatin above.
 //
-//
-//
+
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.2 1998/08/20 19:27:16 cyruspatel Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.3 1998/08/24 07:09:19 cyruspatel Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -47,13 +43,11 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
   static unsigned int initializationlevel=0;
   int success = 1;
 
-  if ((( doWhat < 0 ) && ( ( initializationlevel & 1 ) == 0 )) ||
-      (( doWhat > 0 ) && ( ( initializationlevel & 1 ) == 1 )))
+  if (( doWhat < 0 ) && ( initializationlevel == 0 ))
     {
-    Log("**** SQUAWK!!! UNBALANCED NETWORK INIT/DEINIT!!! ***");
+    Log("[%s] Squawk! Unbalanced Network Init/Deinit!\n",Time());
     abort();
     }
-
 
   //---------------------------
 
@@ -85,7 +79,6 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
         }
       }
     }
-
 
   //----------------------------
 
@@ -134,7 +127,7 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
     if ( doWhat == 0 )     //request to check online mode
       {
       //----------------------- add still-online? check here --------------
-      return 1;            //always online once initialized?
+      return 1;            //always online once initialized?  //FIXME!!
       }
     else if (doWhat > 0)   //request to initialize
       {
@@ -144,7 +137,7 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
         {
         WSADATA wsaData;
         WSAStartup(0x0101, &wsaData);
-        success = 1;
+        success = 1;         // --- dialup initialize goes here -- FIXME!!
         }
       }
     else //if (doWhat < 0) //request to de-initialize
@@ -154,7 +147,7 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
       else
         {
         WSACleanup();
-        success = 1;
+        success = 1;                  // --- hangup goes here -- FIXME!!
         }
       }
     }
@@ -169,7 +162,7 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
     if ( doWhat == 0 )     //request to check online mode
       {
       //----------------------- add still-online? check here --------------
-      return 1; //always online once initialized?
+      return 1; //always online once initialized?                //FIXME!!
       }
     else if (doWhat > 0)   //request to initialize
       {
@@ -178,7 +171,7 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
       else
         {
         sock_init();
-        success = 1;
+        success = 1;         // --- dialup initialize goes here -- FIXME!!
         }
       }
     else //if (doWhat < 0) //request to de-initialize
@@ -188,7 +181,7 @@ static int netInitAndDeinit( int doWhat )     //combines both init and deinit
       else
         {
         //nothing else to do
-        success = 1;                  
+        success = 1;                  // --- hangup goes here -- FIXME!!
         }
       }
     }
