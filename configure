@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.7 2002/12/11 21:15:31 jt Exp $
+# @(#)$Id: configure,v 1.288.2.8 2002/12/13 20:10:04 rick Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -509,6 +509,9 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1.s \
                                         rc5-72/arm/r72arm2.s"
       elif [ "$1-$3" = "linux-elf" ]; then
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu-elf.S \
+                                        rc5-72/arm/r72arm2-gnu-elf.S"
+      elif [ "$1" = "nto2" ]; then
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu-elf.S \
                                         rc5-72/arm/r72arm2-gnu-elf.S"
       else
