@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-dworz.cpp,v $
+// Revision 1.7  1999/04/04 16:41:21  dworz
+// replaced (1UL << i) with (ONE << i)...
+//
 // Revision 1.6  1999/04/01 07:18:40  jlawson
 // changed core function name to des_unit_func_alpha_dworz
 //
@@ -27,7 +30,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_dworz_cpp(void) {
-return "@(#)$Id: des-slice-dworz.cpp,v 1.6 1999/04/01 07:18:40 jlawson Exp $"; }
+return "@(#)$Id: des-slice-dworz.cpp,v 1.7 1999/04/04 16:41:21 dworz Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -117,7 +120,7 @@ u32 des_unit_func_alpha_dworz( RC5UnitWork * rc5unitwork, u32 nbbits )
 #ifdef DEBUG
   Log(" SK=%08x%08x\n",SK>>32,SK);
 #endif
-  for (i = 0; i < 56; i++) dws.K[i] = (SK & (1UL << i)) ? NOTZERO : 0;
+  for (i = 0; i < 56; i++) dws.K[i] = (SK & (ONE << i)) ? NOTZERO : 0;
   
   dws.K[ 0] = 0xFFFFFFFF00000000UL; dws.K[ 1] = 0xFFFF0000FFFF0000UL;
   dws.K[ 2] = 0xFF00FF00FF00FF00UL; dws.K[40] = 0xF0F0F0F0F0F0F0F0UL;
