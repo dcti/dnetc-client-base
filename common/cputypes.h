@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.8 2003/03/31 20:41:48 snikkel Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.9 2003/05/20 20:53:18 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -396,7 +396,7 @@
   #ifndef __unix__ /* 4.4bsd compatible or not? */
   #define __unix__ /* it ain't that special! */
   #endif
-  #define CLIENT_OS_NAME   "Be OS"
+  #define CLIENT_OS_NAME   "BeOS"
   #define CLIENT_OS     OS_BEOS
   #if defined(__POWERPC__) || defined(__PPC__)
     #define CLIENT_CPU    CPU_POWERPC

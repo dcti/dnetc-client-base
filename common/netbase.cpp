@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.7 2003/04/28 09:44:24 andreasb Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.8 2003/05/20 20:53:18 andreasb Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -169,6 +169,7 @@ extern "C" {
   #include <unistd.h>
   #include <fcntl.h>
   #include <netdb.h>
+  #define MSG_PEEK 0
 #else
   #include <sys/types.h>
   #include <sys/socket.h>
