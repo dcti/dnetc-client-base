@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.48  1998/12/06 03:06:11  cyp
+// Define STRESS_THREADS_AND_BUFFERS to configure problem.cpp for 'dummy
+// crunching', ie problems are finished before they even start. You will be
+// warned (at runtime) if you define it.
+//
 // Revision 1.47  1998/12/01 11:24:11  chrisb
 // more riscos x86 changes
 //
@@ -120,7 +125,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.47 1998/12/01 11:24:11 chrisb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.48 1998/12/06 03:06:11 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -129,6 +134,10 @@ return "@(#)$Id: problem.cpp,v 1.47 1998/12/01 11:24:11 chrisb Exp $"; }
 #include "network.h" // for timeval and htonl/ntohl
 #include "clitime.h" //for CliTimer() which gets a timeval of the current time
 #include "logstuff.h" //LogScreen()
+#include "console.h"
+#include "triggers.h"
+
+//#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
 
 #ifndef _CPU_32BIT_
 #error "everything assumes a 32bit CPU..."
@@ -180,6 +189,32 @@ Problem::Problem()
   initialized = 0;
   finished = 0;
   started = 0;
+
+#ifdef STRESS_THREADS_AND_BUFFERS 
+  static int runlevel = 0;
+  if (runlevel != -12345)
+    {
+    if ((++runlevel) != 1)
+      {
+      --runlevel;
+      return;
+      }
+    RaisePauseRequestTrigger();
+    LogScreen("Warning! STRESS_THREADS_AND_BUFFERS is defined.\n"
+              "Are you sure that the client is pointing at\n"
+              "a test proxy? If so, type 'yes': ");
+    char getyes[10];
+    ConInStr(getyes,4,0);
+    ClearPauseRequestTrigger();
+    if (strcmpi(getyes,"yes") != 0)
+      {
+      runlevel = +12345;
+      RaiseExitRequestTrigger();
+      return;
+      }
+    runlevel = -12345;
+    }
+#endif    
 }
 
 Problem::~Problem()
@@ -400,6 +435,21 @@ s32 Problem::Run( u32 threadnum )
        started = (threadnum == 0); //squelch 'unused variable' warning
     #endif
     started=1;
+
+#ifdef STRESS_THREADS_AND_BUFFERS 
+    contestwork.keysdone.hi = contestwork.iterations.hi;
+    contestwork.keysdone.lo = contestwork.iterations.lo;
+    rc5result.result = RESULT_NOTHING;
+    rc5result.key.hi = contestwork.key.hi;
+    rc5result.key.lo = contestwork.key.lo;
+    rc5result.keysdone.hi = contestwork.keysdone.hi;
+    rc5result.keysdone.lo = contestwork.keysdone.lo;
+    rc5result.iterations.hi = contestwork.iterations.hi;
+    rc5result.iterations.lo = contestwork.iterations.lo;
+
+    finished = 1;
+    return 1;
+#endif    
     }
 
   // don't allow a too large of a timeslice be used
@@ -650,41 +700,41 @@ s32 Problem::Run( u32 threadnum )
       }
     else // threadnum == 1
       {
-	  /*
-	    This is the RISC OS specific x86 2nd thread magic.
-	  */
-	  _kernel_swi_regs r;
-	  volatile RC5PCstruct *rc5pcr;
-	  _kernel_swi(RC5PC_BufferStatus,&r,&r);
+          /*
+            This is the RISC OS specific x86 2nd thread magic.
+          */
+          _kernel_swi_regs r;
+          volatile RC5PCstruct *rc5pcr;
+          _kernel_swi(RC5PC_BufferStatus,&r,&r);
 
-	  rc5pcr = (volatile RC5PCstruct *)r.r[1];
-	  contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+          rc5pcr = (volatile RC5PCstruct *)r.r[1];
+          contestwork.keysdone.lo = rc5pcr->keysdone.lo;
 //LogScreen("x86: Keysdone %08lx",contestwork.keysdone.lo);
-	  
-	  if (r.r[2]==1)
-	  {
-	      /*
-		block finished
-	      */
-	      LogScreen("x86: Finished (%08lx)",contestwork.keysdone.lo);
-	      r.r[0] = 0;
-	      _kernel_swi(RC5PC_RetriveBlock,&r,&r);
-	      rc5pcr = (volatile RC5PCstruct *)r.r[1];
-	      
-	      if (rc5pcr->result == RESULT_FOUND)
-	      {
-		  LogScreen("x86: Found it (%08lx)!",contestwork.keysdone.lo);
-		  rc5result.key.hi = contestwork.key.hi;
-		  rc5result.key.lo = contestwork.key.lo;
-		  rc5result.keysdone.hi = contestwork.keysdone.hi;
-		  rc5result.keysdone.lo = contestwork.keysdone.lo;
-		  rc5result.iterations.hi = contestwork.iterations.hi;
-		  rc5result.iterations.lo = contestwork.iterations.lo;
-		  rc5result.result = RESULT_FOUND;
-		  finished = 1;
-		  return( 1 );
-	      }
-	  }
+          
+          if (r.r[2]==1)
+          {
+              /*
+                block finished
+              */
+              LogScreen("x86: Finished (%08lx)",contestwork.keysdone.lo);
+              r.r[0] = 0;
+              _kernel_swi(RC5PC_RetriveBlock,&r,&r);
+              rc5pcr = (volatile RC5PCstruct *)r.r[1];
+              
+              if (rc5pcr->result == RESULT_FOUND)
+              {
+                  LogScreen("x86: Found it (%08lx)!",contestwork.keysdone.lo);
+                  rc5result.key.hi = contestwork.key.hi;
+                  rc5result.key.lo = contestwork.key.lo;
+                  rc5result.keysdone.hi = contestwork.keysdone.hi;
+                  rc5result.keysdone.lo = contestwork.keysdone.lo;
+                  rc5result.iterations.hi = contestwork.iterations.hi;
+                  rc5result.iterations.lo = contestwork.iterations.lo;
+                  rc5result.result = RESULT_FOUND;
+                  finished = 1;
+                  return( 1 );
+              }
+          }
       }
 #endif
     }
