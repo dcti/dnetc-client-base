@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.122 2000/07/03 07:15:32 jlawson Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.123 2000/07/05 21:14:49 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -33,7 +33,9 @@ return "@(#)$Id: clirun.cpp,v 1.122 2000/07/03 07:15:32 jlawson Exp $"; }
 #include "clievent.h"  // ClientEventSyncPost() and constants
 #include "xmlserve.h"
 #include "minihttp.h"
-
+#if (CLIENT_OS == OS_MACOS)
+#include <Sound.h>  // audible performance monitoring and debugging!
+#endif
 // --------------------------------------------------------------------------
 
 //#define DYN_TIMESLICE_SHOWME
@@ -1365,6 +1367,10 @@ int ClientRun( Client *client )
     }
     dontSleep = 0; //for the next round
 
+#if (CLIENT_OS == OS_MACOS)
+SysBeep(1);  // audible performance monitoring and debugging!
+#endif
+
     //------------------------------------
     // Fixup timers
     //------------------------------------
@@ -1726,6 +1732,7 @@ int ClientRun( Client *client )
             printf("Client: [%s] Accepted new client connection.\n",
                 netio_ntoa(clientaddr));
             connections[newslot] = new MiniHttpDaemonConnection(newclient, clientaddr);
+            dontSleep = 1;
             break;
           }
         }
@@ -1756,6 +1763,7 @@ int ClientRun( Client *client )
         if (!closeneeded && connections[jj]->IsComplete())
         {
           printf("content is complete. reading\n");
+            dontSleep = 1;
           if (!ProcessClientPacket(connections[jj]))
             closeneeded = true;
         }
