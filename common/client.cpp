@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.63 2000/03/11 03:00:05 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.64 2000/03/11 20:27:59 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -367,12 +367,12 @@ static int ClientMain( int argc, char *argv[] )
       int domodes = ModeReqIsSet(-1); /* get current flags */
       TRACE_OUT((0,"initializetriggers\n"));
       #define EXITFILENAME "exitrc5" EXTN_SEP "now"
-      if (InitializeTriggers(domodes, ((client->noexitfilecheck)?(NULL):
-                                        (EXITFILENAME)),
+      if (InitializeTriggers(domodes, ((client->noexitfilecheck)?(NULL):(EXITFILENAME)),
                                        client->pausefile,
                                        client->pauseplist,
                                        ((domodes)?(0):(client->restartoninichange)),
-                                       client->inifilename )==0)
+                                       client->inifilename ) == 0 
+          || CheckExitRequestTriggeredByFlagfileNoIO() ) // ignore exitfile until logging is initialized
       {
         TRACE_OUT((0,"initializeconnectivity\n"));
         if (InitializeConnectivity() == 0) //do global initialization
@@ -401,38 +401,63 @@ static int ClientMain( int argc, char *argv[] )
                                client->id );
             TRACE_OUT((-1,"initializelogging\n"));
             PrintBanner(client->id,0,restarted);
-            TRACE_OUT((+1,"parsecmdline(1)\n"));
-            ParseCommandline( client, 1, argc, (const char **)argv, NULL,
-                                    (client->quietmode==0)); //show overrides
-            TRACE_OUT((-1,"parsecmdline(1)\n"));
-            InitRandom2( client->id );
-            TRACE_OUT((+1,"initcoretable\n"));
-            InitializeCoreTable( &(client->coretypes[0]) );
-            TRACE_OUT((-1,"initcoretable\n"));
-            ClientSetNumberOfProcessorsInUse(-1); /* reset */
-
-            if (domodes)
+            if (CheckExitRequestTrigger() == 0)
             {
-              PrintBanner(client->id,1,restarted);
-              con_waitforuser = ((domodes & ~MODEREQ_CONFIG)!=0);
-              TRACE_OUT((+1,"modereqrun\n"));
-              ModeReqRun( client );
-              TRACE_OUT((-1,"modereqrun\n"));
+              TRACE_OUT((+1,"parsecmdline(1)\n"));
+              ParseCommandline( client, 1, argc, (const char **)argv, NULL,
+                                      (client->quietmode==0)); //show overrides
+              TRACE_OUT((-1,"parsecmdline(1)\n"));
+              InitRandom2( client->id );
+              TRACE_OUT((+1,"initcoretable\n"));
+              InitializeCoreTable( &(client->coretypes[0]) );
+              TRACE_OUT((-1,"initcoretable\n"));
+              ClientSetNumberOfProcessorsInUse(-1); /* reset */
+
+              if (domodes)
+              {
+                PrintBanner(client->id,1,restarted);
+                con_waitforuser = ((domodes & ~MODEREQ_CONFIG)!=0);
+                TRACE_OUT((+1,"modereqrun\n"));
+                ModeReqRun( client );
+                TRACE_OUT((-1,"modereqrun\n"));
+              }
+              else if (utilCheckIfBetaExpired(1)) /* prints message */
+                con_waitforuser = 1;
+              else
+              {
+                PrintBanner(client->id,2,restarted);
+                TRACE_OUT((+1,"client.run\n"));
+                retcode = ClientRun(client);
+                TRACE_OUT((-1,"client.run\n"));
+                restart = CheckRestartRequestTrigger();
+              }
+
+              ClientSetNumberOfProcessorsInUse(-1); /* reset */
+              TRACE_OUT((0,"deinit coretable\n"));
+              DeinitializeCoreTable();
             }
-            else if (utilCheckIfBetaExpired(1)) /* prints message */
-              con_waitforuser = 1;
             else
             {
-              PrintBanner(client->id,2,restarted);
-              TRACE_OUT((+1,"client.run\n"));
-              retcode = ClientRun(client);
-              TRACE_OUT((-1,"client.run\n"));
-              restart = CheckRestartRequestTrigger();
+              if (CheckExitRequestTriggeredByFlagfileNoIO() && !client->noexitfilecheck)
+              {
+                TRACE_OUT((0,"found exitfile (" EXITFILENAME ") during client startup\n"));
+                PrintBanner(client->id,2,restarted); // print banner to logfile
+                LogRaw( "WARNING! The distributed.net client could not be started.\n" 
+                        "         Check for an exitfile (" EXITFILENAME ") in the client's directory.\n" );
+                con_waitforuser = 1;
+                #if 0
+                // currently disabled [andreasb]
+                
+                // print a warning message if we aren't in -hide mode (e.g. by servicestart)
+                // just to give the user a hint why the client isn't running
+                if (!client->quietmode) 
+                {
+                  ConOutErr( "The distributed.net client could not be started.\n" 
+                             "Check for an exitfile (" EXITFILENAME ") in the client's directory." );
+                }
+                #endif
+              }
             }
-
-            ClientSetNumberOfProcessorsInUse(-1); /* reset */
-            TRACE_OUT((0,"deinit coretable\n"));
-            DeinitializeCoreTable();
             TRACE_OUT((0,"deinitialize logging\n"));
             DeinitializeLogging();
             TRACE_OUT((0,"deinitialize console\n"));
@@ -447,20 +472,6 @@ static int ClientMain( int argc, char *argv[] )
         }
         TRACE_OUT((0,"deinitialize triggers\n"));
         DeinitializeTriggers();
-      }
-      else
-      {
-        TRACE_OUT((0,"fail: initializetriggers\n"));
-        // check, whether we can't start because someone put an exitfile into our directory
-        // print a warning message if we aren't in -hide mode (e.g. by servicestart)
-        // just to give the user a hint why the client isn't running
-        // can't use logging - it's not initialized (has never been)
-        if (!client->noexitfilecheck && !client->quietmode
-            && CheckExitRequestTriggeredByFlagfileNoIO()) 
-        {
-          ConOutErr( "The distributed.net client could not be started.\n" 
-                     "Check for an exitfile (" EXITFILENAME ") in the client's directory." );
-        }
       }
     }
     ClientEventSyncPost( CLIEVENT_CLIENT_FINISHED, (long)restart );
