@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-486-smc-rg.cpp,v $
+// Revision 1.4  1998/11/28 17:37:52  remi
+// This one is a bit faster, as I removed an AGI stall in ROUND3. Does
+// 102.3 kkeys/s on my DX4/100.
+// Renamed the function to integrate it in the client, without replacing
+// the original, multithreaded 386/486 core.
+//
 // Revision 1.3  1998/11/20 23:45:08  remi
 // Added FreeBSD support in the BALIGN macro.
 //
@@ -48,7 +54,7 @@
 // build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:33  remi
-// Lots of $Id: rc5-486-smc-rg.cpp,v 1.3 1998/11/20 23:45:08 remi Exp $ stuff.
+// Lots of $Id: rc5-486-smc-rg.cpp,v 1.4 1998/11/28 17:37:52 remi Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:43  remi
 // $Id fun ...
@@ -88,7 +94,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_486_smc_rg_cpp (void) {
-return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.3 1998/11/20 23:45:08 remi Exp $"; }
+return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.4 1998/11/28 17:37:52 remi Exp $"; }
 #endif
 
 #define CORE_INCREMENTS_KEY
@@ -113,9 +119,9 @@ return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.3 1998/11/20 23:45:08 remi Exp $"; }
 #define __(s)   #s
 
 #if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
-#define BALIGN(x) ".align 2"
+#define BALIGN4 ".align 2"
 #else
-#define BALIGN(x) ".balign 4"
+#define BALIGN4 ".balign 4"
 #endif
 
 // The S0 values for key expansion round 1 are constants.
@@ -128,39 +134,31 @@ return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.3 1998/11/20 23:45:08 remi Exp $"; }
 
 struct work_struct {
     u32 add_iter;	// +  0
-    u32 P_0;		// +  4
-    u32 P_1;		// +  8
-    u32 C_0;		// + 12
-    u32 C_1;		// + 16
-    u32 save_ebp;	// + 20
-    u32 key2_ebp;	// + 24
-    u32 key2_edi;	// + 28
-    u32 key2_esi;	// + 32
-    u32 key_hi;		// + 36
-    u32 key_lo;		// + 40
-    u32 iterations;	// + 44
-    u32 pre1_r1;	// + 48
-    u32 pre2_r1;	// + 52
-    u32 pre3_r1;	// + 56
+    u32 save_ebp;	// +  4
+    u32 key2_ebp;	// +  8
+    u32 key2_edi;	// + 12
+    u32 key2_esi;	// + 16
+    u32 key_hi;		// + 20
+    u32 key_lo;		// + 24
+    u32 iterations;	// + 28
+    u32 pre1_r1;	// + 32
+    u32 pre2_r1;	// + 36
+    u32 pre3_r1;	// + 40
 };
 
 //  Offsets to access work_struct fields.
 
 #define	work_add_iter   "0+%0"
-#define	work_P_0        "4+%0" 
-#define	work_P_1        "8+%0" 
-//#define	work_C_0        "12+%0"
-//#define	work_C_1        "16+%0"
-#define	work_save_ebp   "20+%0"
-#define	work_key2_ebp   "24+%0"
-#define	work_key2_edi   "28+%0"
-#define	work_key2_esi   "32+%0"
-#define work_key_hi     "36+%0"
-#define work_key_lo     "40+%0"
-#define work_iterations "44+%0"
-#define work_pre1_r1    "48+%0"
-#define work_pre2_r1    "52+%0"
-#define work_pre3_r1    "56+%0"
+#define	work_save_ebp   "4+%0" 
+#define	work_key2_ebp   "8+%0" 
+#define	work_key2_edi   "12+%0"
+#define	work_key2_esi   "16+%0"
+#define work_key_hi     "20+%0"
+#define work_key_lo     "24+%0"
+#define work_iterations "28+%0"
+#define work_pre1_r1    "32+%0"
+#define work_pre2_r1    "36+%0"
+#define work_pre3_r1    "40+%0"
 
 //  Macros to access the S arrays.
 
@@ -232,14 +230,14 @@ struct work_struct {
 // Llo2 = ROTL (Llo2 + A2 + Lhi2, A2 + Lhi2);
 #define ROUND_2_EVEN(N) \
 "	roll	$3,     %%eax			# 2 - 3
-	movl	%%eax, _modif486_r3_S1_"_(N)"+3	# 1 - 5
+	movl	%%eax, _modif486_r3_S1_"_(N)"+1	# 1 - 5
 	leal	(%%eax, %%edx), %%ecx		# 2 - 3
 _modif486_r2_S2_"_(N)":				#	20
 	leal	0x90ABCDEF(%%edi,%%ebp),%%ebp	# 2 - 7
 	addl	%%ecx,  %%ebx			# 1 - 2
 	roll	%%cl,   %%ebx			# 3 - 2
 	roll	$3,     %%ebp			# 2 - 3
-	movl	%%ebp, _modif486_r3_S2_"_(N)"+3	# 1 - 6
+	movl	%%ebp, _modif486_r3_S2_"_(N)"+1	# 1 - 6
 	leal	(%%ebp, %%edi), %%ecx		# 2 - 4
 	addl	%%ecx,  %%esi			# 1 - 2
 	roll	%%cl,   %%esi			# 3 - 2	 \n"	
@@ -301,7 +299,8 @@ _modif486_r2_S2_"_(N2)":			#	20
 // L1 = %edx  .. = %ebp
 #define ROUND_3_EVEN_AND_ODD(Sx,N1,N2) \
 "_modif486_r3_"_(Sx)"_"_(N1)":
-	leal	0x12345678(%%eax,%%edx),%%eax	# 2 - 7
+	addl	$0x12345678, %%eax		# 1 - 5
+	addl	%%edx,    %%eax			# 1 - 2
 	roll	$3,       %%eax			# 2 - 3
 	movl	%%edi,    %%ecx			# 1 - 2
 	xorl	%%edi,    %%esi			# 1 - 2
@@ -310,9 +309,9 @@ _modif486_r2_S2_"_(N2)":			#	20
 	movl	%%eax,    %%ecx			# 1 - 2
 	addl	%%edx,    %%ecx			# 1 - 2
 	addl	%%ecx,    %%ebx			# 1 - 2
-	roll	%%cl,     %%ebx			# 3 - 2
-_modif486_r3_"_(Sx)"_"_(N2)":			#	26
+_modif486_r3_"_(Sx)"_"_(N2)":			#	24
 	addl	$0x12345678, %%eax		# 1 - 5
+	roll	%%cl,     %%ebx			# 3 - 2
 	addl	%%ebx,    %%eax			# 1 - 2
 	roll	$3,       %%eax			# 2 - 3
 	movl	%%esi,    %%ecx			# 1 - 2
@@ -322,7 +321,7 @@ _modif486_r3_"_(Sx)"_"_(N2)":			#	26
 	movl	%%eax,    %%ecx			# 1 - 2
 	addl	%%ebx,    %%ecx			# 1 - 2
 	addl	%%ecx,    %%edx			# 1 - 2
-	roll	%%cl,     %%edx			# 3 - 2	26	sum = 32 \n"
+	roll	%%cl,     %%edx			# 3 - 2	28	sum = 32 \n"
 
 
 // ------------------------------------------------------------------
@@ -333,7 +332,7 @@ _modif486_r3_"_(Sx)"_"_(N2)":			#	26
 // timeslice*PIPELINE_COUNT if no keys are 'good' keys.
 // (ie:      if (result == timeslice*PIPELINE_COUNT) NOTHING_FOUND
 //      else if (result < timeslice*PIPELINE_COUNT) SOMETHING_FOUND at result+1
-//      else SOMETHING_GET_WRONG... )
+//      else SOMETHING_WENT_WRONG... )
 
 // There is no way to tell gcc to save %ebp.
 //	(putting %ebp in the clobbered register list has no effect)
@@ -344,10 +343,10 @@ _modif486_r3_"_(Sx)"_"_(N2)":			#	26
 // (can't use static variables, and can't use push/pop in this
 //  function because &work_struct is relative to %esp)
 
-extern "C" u32 rc5_unit_func_486( RC5UnitWork * rc5unitwork, u32 timeslice ) ;
+extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * rc5unitwork, u32 timeslice ) ;
 
 //static
-u32 rc5_unit_func_486( RC5UnitWork * rc5unitwork, u32 timeslice ) 
+u32 rc5_unit_func_486_smc( RC5UnitWork * rc5unitwork, u32 timeslice ) 
 {
     work_struct work;
 
@@ -374,9 +373,11 @@ u32 rc5_unit_func_486( RC5UnitWork * rc5unitwork, u32 timeslice )
 	/* each time in RC5_ROUND_3xy, instead of two if we save  */
 	/* only the pointer to the RC5 struct)                    */
 "	movl	"RC5UnitWork_plainlo"(%%eax), %%ebp
-	movl	%%ebp, "work_P_0"
+	movl	%%ebp, 	_modif_486_work_P_0_1 + 2
+	movl	%%ebp, 	_modif_486_work_P_0_2 + 2
 	movl	"RC5UnitWork_plainhi"(%%eax), %%ebp
-	movl	%%ebp, "work_P_1"
+	movl	%%ebp, 	_modif_486_work_P_1_1 + 2
+	movl	%%ebp, 	_modif_486_work_P_1_2 + 2
 	movl	"RC5UnitWork_cypherlo"(%%eax), %%ebp
 	movl	%%ebp, _modif486_work_C_0_1 + 2
 	movl	%%ebp, _modif486_work_C_0_2 + 2
@@ -408,7 +409,7 @@ u32 rc5_unit_func_486( RC5UnitWork * rc5unitwork, u32 timeslice )
 	leal	(%%eax,%%ebx), %%ecx		# 2
 	movl	%%ecx, "work_pre3_r1"		# 1
 
-"BALIGN(4)"
+"BALIGN4"
 _loaded_486:\n"
 
     /* ------------------------------ */
@@ -419,8 +420,7 @@ _loaded_486:\n"
 	movl	%%ebx, %%esi			# 1
 	movl	"work_pre2_r1", %%eax		# 1
 	movl	%%eax, %%ebp			# 1
-
-	movl	"work_pre3_r1", %%ecx
+	movl	"work_pre3_r1", %%ecx		# 1
 	addl	%%ecx, %%edx			# 1
 	roll	%%cl,  %%edx			# 3
 	addl	%%ecx, %%edi			# 1
@@ -448,13 +448,12 @@ _loaded_486:\n"
 	leal	"S0_ROTL3"(%%eax,%%edx),%%eax	# 2
 	leal	"S0_ROTL3"(%%ebp,%%edi),%%ebp	# 2
 	roll	$3,    %%eax			# 2
-	movl	%%eax, _modif486_r3_S1_0 + 3	# 1
+	movl	%%eax, _modif486_r3_S1_0 + 1	# 1
 	roll	$3,    %%ebp			# 2
-	movl	%%ebp, _modif486_r3_S2_0 + 3	# 1
+	movl	%%ebp, _modif486_r3_S2_0 + 1	# 1
 	
-	##leal	(%%eax,%%edx), %%ecx		# 2
-	movl	%%eax, %%ecx
-	addl	%%edx, %%ecx
+	movl	%%eax, %%ecx			# 1
+	addl	%%edx, %%ecx			# 1
 	addl	%%ecx, %%ebx			# 1
 	roll	%%cl,  %%ebx			# 3
 	leal	(%%ebp,%%edi), %%ecx		# 2
@@ -492,12 +491,7 @@ _modif486_r2_S1_2:
 	ROUND_2_EVEN_AND_ODD      (22,23,24)
 	ROUND_2_EVEN_AND_ODD_LAST (24,25)
 
-    /* Save 2nd key parameters and initialize result variable
-
-       I'm using the stack instead of a memory location, because
-       gcc don't allow me to put more than 10 constraints in an
-       asm() statement.
-    */
+    /* Save 2nd key parameters and initialize result variable */
 "_end_round2_486:
 	movl	%%ebp,"work_key2_ebp"
 	movl	%%esi,"work_key2_esi"
@@ -512,28 +506,25 @@ _modif486_r2_S1_2:
 	// L0 = %ebx  eB = %edi
 	// L1 = %edx  .. = %ebp
 
-"	nop
-	nop
-_modif486_r3_S1_0:
-	leal	0x12345678(%%eax,%%edx), %%eax	# 2	A = ROTL3(S00 + A + L1);
+"_modif486_r3_S1_0:
+	addl	$0x12345678, %%eax	# 1 - 5
+	addl	%%edx,    %%eax		# 1 - 2	A = ROTL3(S00 + A + L1);
 	roll	$3,     %%eax		# 2
-	movl	"work_P_0", %%esi	# 1	eA = P_0 + A;
-	addl	%%eax,  %%esi		# 1
-	##leal	(%%eax, %%edx), %%ecx	# 2	L0 = ROTL(L0 + A + L1, A + L1);
-	movl	%%eax,  %%ecx
-	addl	%%edx,  %%ecx
+_modif_486_work_P_0_1:
+	leal	0x12345678(%%eax),%%esi	# 1	eA = P_0 + A;
+	movl	%%eax,  %%ecx		# 1
+	addl	%%edx,  %%ecx		# 1	L0 = ROTL(L0 + A + L1, A + L1);
 	addl	%%ecx,  %%ebx		# 1
 	roll	%%cl,   %%ebx		# 3
 	       			
-	addl	%%ebx,  %%eax		# 1	A = ROTL3(S01 + A + L0);
 _modif486_r3_S1_1:
 	addl	$0x90ABCDEF,%%eax	# 2
+	addl	%%ebx,  %%eax		# 1	A = ROTL3(S01 + A + L0);
 	roll	$3,     %%eax		# 2
-	movl	"work_P_1", %%edi	# 1	eB = P_1 + A;
-	addl	%%eax,  %%edi		# 1
-	#leal	(%%eax, %%ebx), %%ecx	# 2	L1 = ROTL(L1 + A + L0, A + L0);
-	movl	%%eax,  %%ecx
-	addl	%%ebx,  %%ecx
+_modif_486_work_P_1_1:
+	leal	0x12345678(%%eax),%%edi	# 1	eB = P_1 + A;
+	movl	%%eax,  %%ecx		# 1
+	addl	%%ebx,  %%ecx		# 1	L1 = ROTL(L1 + A + L0, A + L0);
 	addl	%%ecx,  %%edx		# 1
 	roll	%%cl,   %%edx		# 3	sum = 26 \n"
 
@@ -552,27 +543,27 @@ _modif486_r3_S1_1:
 	/* early exit */
 "_end_round3_1_486:
 _modif486_r3_S1_24:
-	leal	0x12345678(%%edx,%%eax), %%eax	# 2	A = ROTL3(S24 + A + L1);
+	addl	$0x12345678, %%eax	# 1 - 5
+	addl	%%edx,    %%eax		# 1 - 2	A = ROTL3(S24 + A + L1);
 	roll	$3,      %%eax		# 2
 	movl	%%edi,   %%ecx		# 1	eA = ROTL(eA ^ eB, eB) + A
 	xorl	%%edi,   %%esi		# 1
 	roll	%%cl,    %%esi		# 3
 	addl	%%eax,   %%esi		# 1
 					
-_modif486_work_C_0_1:
-	cmp	$0x12345678, %%esi
+_modif486_work_C_0_1:			# this label isn't aligned, but we don't care
+	cmp	$0x12345678, %%esi	# since we write on it only one time per call
 	jne	__exit_1_486
 					
-	##leal	(%%eax,%%edx), %%ecx	# 2	L0 = ROTL(L0 + A + L1, A + L1);
-	movl	%%eax,   %%ecx
-	addl	%%edx,   %%ecx
+	movl	%%eax,   %%ecx		# 1
+	addl	%%edx,   %%ecx		# 1	L0 = ROTL(L0 + A + L1, A + L1);
 	addl	%%ecx,   %%ebx		# 1
 	roll	%%cl,    %%ebx		# 3
+	movl	%%esi,   %%ecx		# 1	eB = ROTL(eB ^ eA, eA) + A
 _modif486_r3_S1_25:
 	addl	$0x90ABCDEF,%%eax	# 2
 	addl	%%ebx,   %%eax		# 1	A = ROTL3(S25 + A + L0);
 	roll	$3,      %%eax		# 2
-	movl	%%esi,   %%ecx		# 1	eB = ROTL(eB ^ eA, eA) + A
 	xorl	%%esi,   %%edi		# 1
 	roll	%%cl,    %%edi		# 3
 	addl	%%eax,   %%edi		# 1
@@ -581,7 +572,9 @@ _modif486_work_C_1_1:
 	cmpl	$0x12345678, %%edi
 	je	_full_exit_486
 
-"BALIGN(4)"
+"BALIGN4"
+nop	# spacers, won't be executed anyway
+nop
 nop
 __exit_1_486: \n"
 
@@ -600,25 +593,24 @@ __exit_1_486: \n"
 	// L1 = %edx  .. = %ebp
 
 "_modif486_r3_S2_0:
-	leal	0x12345678(%%edx,%%eax), %%eax	# 2	A = ROTL3(S00 + A + L1);
+	addl	$0x12345678, %%eax	# 1 - 5
+	addl	%%edx,    %%eax		# 1 - 2	A = ROTL3(S00 + A + L1);
 	roll	$3,     %%eax		# 2
-	movl	"work_P_0", %%esi	# 1	eA = P_0 + A;
-	addl	%%eax,  %%esi		# 1
-	##leal	(%%eax, %%edx), %%ecx	# 2	L0 = ROTL(L0 + A + L1, A + L1);
-	movl	%%eax,  %%ecx
-	addl	%%edx,  %%ecx
+_modif_486_work_P_0_2:
+	leal	0x12345678(%%eax),%%esi	# 1	eA = P_0 + A;
+	movl	%%eax,  %%ecx		# 1
+	addl	%%edx,  %%ecx		# 1	L0 = ROTL(L0 + A + L1, A + L1);
 	addl	%%ecx,  %%ebx		# 1
 	roll	%%cl,   %%ebx		# 3
 	       			
-	addl	%%ebx,  %%eax		# 1	A = ROTL3(S01 + A + L0);
 _modif486_r3_S2_1:
 	addl	$0x90ABCDEF,%%eax	# 2
+	addl	%%ebx,  %%eax		# 1	A = ROTL3(S01 + A + L0);
 	roll	$3,     %%eax		# 2
-	movl	"work_P_1", %%edi	# 1	eB = P_1 + A;
-	addl	%%eax,  %%edi		# 1
-	##leal	(%%eax, %%ebx), %%ecx	# 2	L1 = ROTL(L1 + A + L0, A + L0);
-	movl	%%eax,  %%ecx
-	addl	%%ebx,  %%ecx
+_modif_486_work_P_1_2:
+	leal	0x12345678(%%eax),%%edi	# 1	eB = P_1 + A;
+	movl	%%eax,  %%ecx		# 1
+	addl	%%ebx,  %%ecx		# 1	L1 = ROTL(L1 + A + L0, A + L0);
 	addl	%%ecx,  %%edx		# 1
 	roll	%%cl,   %%edx		# 3	sum = 26 \n"
 
@@ -637,7 +629,8 @@ _modif486_r3_S2_1:
 	/* early exit */
 "_end_round3_2_486:
 _modif486_r3_S2_24:
-	leal	0x12345678(%%edx,%%eax), %%eax	# 2	A = ROTL3(S24 + A + L1);
+	addl	$0x12345678, %%eax	# 1 - 5
+	addl	%%edx,    %%eax		# 1 - 2	A = ROTL3(S24 + A + L1);
 	roll	$3,      %%eax		# 2
 	movl	%%edi,   %%ecx		# 1	eA = ROTL(eA ^ eB, eB) + A
 	xorl	%%edi,   %%esi		# 1
@@ -648,14 +641,13 @@ _modif486_work_C_0_2:
 	cmp	$0x12345678, %%esi
 	jne	__exit_2_486
 					
-	##leal	(%%eax,%%edx), %%ecx	# 2	L0 = ROTL(L0 + A + L1, A + L1);
-	movl	%%eax,   %%ecx
-	addl	%%edx,   %%ecx
+	movl	%%eax,   %%ecx		# 1
+	addl	%%edx,   %%ecx		# 1	L0 = ROTL(L0 + A + L1, A + L1);
 	addl	%%ecx,   %%ebx		# 1
 	roll	%%cl,    %%ebx		# 3
+	addl	%%ebx,   %%eax		# 1	A = ROTL3(S25 + A + L0);
 _modif486_r3_S2_25:
 	addl	$0x90ABCDEF,%%eax	# 2
-	addl	%%ebx,   %%eax		# 1	A = ROTL3(S25 + A + L0);
 	roll	$3,      %%eax		# 2
 	movl	%%esi,   %%ecx		# 1	eB = ROTL(eB ^ eA, eA) + A
 	xorl	%%esi,   %%edi		# 1
@@ -668,7 +660,7 @@ _modif486_work_C_1_2:
 	movl	$1, "work_add_iter"
 	jmp	_full_exit_486
 
-"BALIGN(4)"
+"BALIGN4"
 __exit_2_486:
 
 	movl	"work_key_hi", %%edx
@@ -688,7 +680,7 @@ _next_iter_486:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_486
 
-"BALIGN(4)"
+"BALIGN4"
 _next_iter2_486:
 	movl	%%ebx, "work_key_lo"
 	movl	%%edx, "work_key_hi"
@@ -701,7 +693,7 @@ _next_iter2_486:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_486
 
-"BALIGN(4)"
+"BALIGN4"
 _next_inc_486:
 	addl	$0x00010000, %%edx
 	testl	$0x00FF0000, %%edx
@@ -740,7 +732,7 @@ _next_inc_486:
 	# Not much to do here, since we have finished the block ...
 
 
-"BALIGN(4)"
+"BALIGN4"
 _full_exit_486:
 	movl	"work_save_ebp", %%ebp \n"
 
