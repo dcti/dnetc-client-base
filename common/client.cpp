@@ -174,14 +174,15 @@ Client::Client()
   nettimeout=60;
   noexitfilecheck=0;
   exitfilechecktime=30;
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
   lurk=0;
   #if !defined(WINNTSERVICE)
     win95hidden=0;
   #endif
 #endif
 #if (CLIENT_OS == OS_OS2)
-  os2hidden=0;
+	 os2hidden=0;
+	 connectstatus=0;
 #endif
   contestdone[0]=contestdone[1]=0;
   srand( time( NULL ) );
@@ -1885,7 +1886,59 @@ PreferredIsDone1:
       CliKickWatchdog(); //wonder what the RSPCA will say to that?
     #endif
 
+	 //------------------------------------
+    // Lurking in OS/2
+    //------------------------------------
+#if (CLIENT_OS == OS_OS2)
+    {
+   	 if(lurk)
+			 {
+          const s32 index = 68;     // index to check if connected
+			 s32  s, rc, tmpmode;
+			 char netstat[128];
 
+			 netstat[index] = 0;       // clear the bit
+			 // Get routing data
+			 s = socket(PF_INET, SOCK_DGRAM, 0);
+			 rc = ioctl(s, SIOSTATRT, netstat, 128);
+			 soclose(s);
+			 
+			 if(rc != 0)
+				 {
+				 Log("Unable to get routing information, lurk mode disabled\n");
+				 lurk = 0;
+				 }
+			 else
+				 {
+				 if(!netstat[index])
+					 {
+					 tmpmode = 0;
+					 if(connectstatus != tmpmode)    // No connection
+						 {
+						 Log("TCP/IP Connection Disconnected - Offline Mode\n");
+						 connectstatus = tmpmode;
+						 if(lurk == 2)
+							 offlinemode = 1;
+						 }
+					 }
+				 else if(netstat[index])
+					 {
+					 tmpmode = 1;
+					 if(connectstatus != tmpmode)
+						 {
+						 Log("TCP/IP Connection Detected - Updating Buffers\n");
+						 connectstatus = tmpmode;
+						 connectrequested = 2;     // update blocks.
+						 if(lurk == 2)
+							 offlinemode = 0;
+
+						 }
+					 }
+				 }
+			 }
+	 }
+#endif
+	 
     //------------------------------------
     //Modem detection stuff for WinNT/Win95
     //------------------------------------
@@ -3130,8 +3183,9 @@ int main( int argc, char *argv[] )
   #endif
 #endif
 #if (CLIENT_OS == OS_OS2)
+              "-lurk        Detect modem connections    -lurkonly    Only comm. on mdm connect\n"
               "-install     Install into Startup Folder -uninstall   Uninstall from Startup\n"
-              "-hide        Run detached (hidden)       "
+              "-hide        Install detached (hidden)   "
 #endif
 #if defined(MULTITHREAD)
               "-numcpu n    Configure for 'n' CPUs.\n"
