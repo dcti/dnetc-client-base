@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.57  1998/12/26 21:45:15  cyp
+// Cleared a 'may be used uninitialized' warning. Removed threadcd.h from
+// include list.
+//
 // Revision 1.56  1998/12/23 03:24:56  silby
 // Client once again listens to keyserver for next contest start time,
 // tested, it correctly updates.  Restarting after des blocks have
@@ -218,7 +222,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.56 1998/12/23 03:24:56 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.57 1998/12/26 21:45:15 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -233,7 +237,6 @@ return "@(#)$Id: clirun.cpp,v 1.56 1998/12/23 03:24:56 silby Exp $"; }
 #include "triggers.h" //[Check|Raise][Pause|Exit]RequestTrigger()
 #include "sleepdef.h" //sleep(), usleep()
 #include "setprio.h"  //SetThreadPriority(), SetGlobalPriority()
-#include "threadcd.h"
 #include "buffwork.h"
 #include "clirate.h"
 #include "clitime.h"   //CliTimer(), Time()/(CliGetTimeString(NULL,1))
@@ -314,8 +317,7 @@ struct thread_param_block
 
 // ----------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS) || \
-    (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_WIN32S) || \
+#if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS) || \
     (CLIENT_OS == OS_WIN16)
 
 #define NON_PREEMPTIVE_OS
@@ -377,10 +379,6 @@ struct thread_param_block
   #define MIN_SANE_TIMESLICE_DES    256
   #define MAX_SANE_TIMESLICE_RC5   1048576
   #define MAX_SANE_TIMESLICE_DES   1048576
-#elif (CLIENT_OS == OS_MACOS)
-  #undef NON_PREEMPTIVE_OS_PROFILING
-//  #error "Please check timer granularity and timeslice constants"
-//  #undef NON_PREEMPTIVE_OS_PROFILING  //or undef to do your own profiling
 #else
   #error "Unknown OS. Please check timer granularity and timeslice constants"
   #undef NON_PREEMPTIVE_OS_PROFILING  //or undef to do your own profiling
@@ -878,7 +876,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
         #elif (CLIENT_OS == OS_WIN32)
         SetThreadPriority( (HANDLE)thrparams->threadID, 
-           GetThreadPriority(GetCurrentThread()) );
+                           GetThreadPriority(GetCurrentThread()) );
         WaitForSingleObject((HANDLE)thrparams->threadID, INFINITE);
         CloseHandle((HANDLE)thrparams->threadID);
         #elif (CLIENT_OS == OS_BEOS)
@@ -886,10 +884,9 @@ static int __StopThread( struct thread_param_block *thrparams )
         wait_for_thread(thrparams->threadID, &be_exit_value);
         #elif (CLIENT_OS == OS_NETWARE)
         nwCliWaitForThreadExit( thrparams->threadID ); //in netware.cpp
-		#elif (CLIENT_OS == OS_MACOS)
-		  while (ThreadIsDone[thrparams->threadnum] == 0) {
-			tick_sleep(60);
-          }		
+	#elif (CLIENT_OS == OS_MACOS)
+        while (ThreadIsDone[thrparams->threadnum] == 0) {
+	  tick_sleep(60); }
         #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
         pthread_join( thrparams->threadID, (void **)NULL);
         #endif
@@ -1074,7 +1071,7 @@ int Client::Run( void )
   
   time_t timeNow;
   time_t timeRun=0, timeLast=0, timeNextConnect=0, timeNextCheckpoint = 0;
-  time_t timeNextScheduledUpdateCheck;
+  time_t timeNextScheduledUpdateCheck = 0;
   int checkpointsDisabled = (nodiskbuffers != 0);
   unsigned int checkpointsPercent = 0;
   int isPaused=0, wasPaused=0;
