@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.250 2001/04/25 00:11:10 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.251 2001/05/06 11:15:14 teichp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -127,7 +127,11 @@ add_sources() # $1=os, $2=arch, $3=custom
     COMMON_SRCS="plat/riscos/riscos_sup.cpp \
                  plat/riscos/riscos_x86.cpp \
                  ${COMMON_SRCS}"
-    TARGET_ADDASMS="$TARGET_ADDASMS plat/riscos/riscos_asm.s"
+    if [ "$3" = "gccsdk" ]; then
+      TARGET_ADDASMS="$TARGET_ADDASMS plat/riscos/riscos_asm_gccsdk.s"
+    else
+      TARGET_ADDASMS="$TARGET_ADDASMS plat/riscos/riscos_asm.s"
+    fi
   elif [ "$1" = "os2" ]; then
     COMMON_SRCS="plat/os2/os2inst.cpp ${COMMON_SRCS}"
   elif [ "$1" = "macosx" ]; then
@@ -417,9 +421,15 @@ add_sources() # $1=os, $2=arch, $3=custom
   #-----------------------------------------------------------------  
   elif [ "$2" = "arm" ]; then
     if [ "$1" = "riscos" ]; then
-      TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1.s rc5/arm/rc5-arm-2.s rc5/arm/rc5-arm-3.s"
-      ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-arm.s des/arm/des-slice-sa.s"
-      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
+      if [ "$3" = "gccsdk" ]; then
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gccsdk.s rc5/arm/rc5-arm-2-gccsdk.s rc5/arm/rc5-arm-3-gccsdk.s"
+        ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-arm.s des/arm/des-slice-sa.s"
+        ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
+      else
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1.s rc5/arm/rc5-arm-2.s rc5/arm/rc5-arm-3.s"
+        ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-arm.s des/arm/des-slice-sa.s"
+        ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
+      fi
     elif [ "$1-$3" = "linux-" ]; then  #linux-elf
       TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gnu-elf.s \
                                       rc5/arm/rc5-arm-2-gnu-elf.s \
@@ -1872,70 +1882,29 @@ case "$1" in
 	                -I/home/cberry/play/riscoslib/OSLib \
 			-I/home/cberry/play/riscoslib/TCPIPLibs \
 			-J/home/cberry/play/riscoslib/CLib \
-			-DCOMPAT_INET4 -D__riscos -DHAVE_OGR_CORES"
+			-DCOMPAT_INET4 -D__riscos -DHAVE_OGR_CORES" 
         TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o \
-	             /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o \
-		     /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
+                     /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o \
+                     /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
         TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
         TARGET_STRIP=touch
         TARGET_BINNAME_SUFFIX=",ff8"
         TARGET_IS_CROSSCOMPILE=1
         add_sources "riscos" "arm"
-        ;; 
+        ;;
 
-    *arm-riscos-prepare) #create tar archive for native compilation
-        rm -rf dnetc_riscos
-        mkdir dnetc_riscos
-        mkdir dnetc_riscos/common
-        mkdir dnetc_riscos/common/c++
-        mkdir dnetc_riscos/common/h
-        mkdir dnetc_riscos/rc5
-        mkdir dnetc_riscos/rc5/arm
-        mkdir dnetc_riscos/rc5/arm/s
-        mkdir dnetc_riscos/$OGR
-        mkdir dnetc_riscos/$OGR/h
-        mkdir dnetc_riscos/$OGR/ansi
-        mkdir dnetc_riscos/$OGR/ansi/c++
-        mkdir dnetc_riscos/$OGR/ansi/h
-        mkdir dnetc_riscos/plat
-        mkdir dnetc_riscos/plat/riscos
-        mkdir dnetc_riscos/plat/riscos/c++
-        mkdir dnetc_riscos/plat/riscos/h
-        mkdir dnetc_riscos/plat/riscos/s
-        mkdir dnetc_riscos/o
-        for file in common/*.h; do
-          cp $file dnetc_riscos/common/h/`basename $file | sed -e s/[.]h//`
-        done
-        for file in common/*.cpp; do
-          cp $file dnetc_riscos/common/c++/`basename $file | sed -e s/[.]cpp//`
-        done
-        for file in rc5/arm/rc5-arm-?.s; do
-          cp $file dnetc_riscos/rc5/arm/s/`basename $file | sed -e s/[.]s//`
-        done
-        for file in $OGR/*.h; do
-          cp $file dnetc_riscos/$OGR/h/`basename $file | sed -e s/[.]h//`
-        done
-        for file in $OGR/ansi/*.h; do
-          cp $file dnetc_riscos/$OGR/ansi/h/`basename $file | sed -e s/[.]h//`
-        done
-        for file in $OGR/ansi/*.cpp; do
-          cp $file dnetc_riscos/$OGR/ansi/c++/`basename $file | sed -e s/[.]cpp//`
-        done
-        for file in plat/riscos/*.cpp; do
-          cp $file dnetc_riscos/plat/riscos/c++/`basename $file | sed -e s/[.]cpp//`
-        done
-        for file in plat/riscos/*.s; do
-          cp $file dnetc_riscos/plat/riscos/s/`basename $file | sed -e s/[.]s//`
-        done
-        for file in plat/riscos/*.h; do
-          cp $file dnetc_riscos/plat/riscos/h/`basename $file | sed -e s/[.]h//`
-        done
-        cp Makefile.riscos dnetc_riscos/Makefile
-        rm -f riscos.tar.gz
-        tar cf - dnetc_riscos | gzip -rc - > riscos.tar.gz
-        rm -rf dnetc_riscos
-        echo "Now transfer the riscos.tar.gz file to your RiscOS machine and compile!"
-        exit 0
+    *arm-riscos-gccsdk) # RiscOS client crosscompiled under Unix using GCCSDK
+                        # and Unixlib (http://hard-mofo.dsvr.net/)
+        TARGET_CC="/home/peter/gccsdk/cross/bin/gcc"
+        generate_gcc_opts "arm" "riscos"
+        TARGET_CCFLAGS="$OPTS_GCC -Iplat/riscos -D__riscos"
+        TARGET_AS="/home/peter/gccsdk/cross/bin/gcc"
+        TARGET_ASFLAGS="-c"
+        TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
+        TARGET_STRIP=touch
+        TARGET_BINNAME_SUFFIX=",ff8"
+        TARGET_IS_CROSSCOMPILE=1
+        add_sources "riscos" "arm" "gccsdk"
         ;;                              
 
     *arm-linux-aout)					# chrisb
@@ -2627,4 +2596,5 @@ fi
 rm -f testplat
 echo ""
 exit 0
+
 
