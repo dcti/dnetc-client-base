@@ -3,6 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.6  1998/06/23 20:22:05  cyruspatel
+// Added new function: GetTimesliceBaseline() returns a value that the
+// ideal RC5 keyrate (kKeys per Mhz) would be IF a machine were running
+// at peak efficiency. For non-preemptive systems, it is thus a good
+// indicator of how low we can set the timeslice/rate-of-yield without
+// losing efficiency. Or inversely, at what point OS responsiveness starts
+// to suffer - which also applies to preemptive but non-mt systems handling
+// of a break request. - Currently only supports all the x86 OS's.
+//
 // Revision 1.5  1998/06/22 10:28:22  kbracey
 // Just tidying
 //
@@ -20,7 +29,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cpucheck.cpp,v 1.5 1998/06/22 10:28:22 kbracey Exp $";
+static const char *id="@(#)$Id: cpucheck.cpp,v 1.6 1998/06/23 20:22:05 cyruspatel Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -151,127 +160,154 @@ int Client::GetProcessorType()
   extern "C" u32 x86ident( void );
 #endif
 
-int Client::GetProcessorType()
+struct _cpuxref { int cpuidb;
+                  unsigned int kKeysPerMhz; //numbers are from Alde's tables
+                  int coretouse; 
+                  char *cpuname; };
+
+struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
+                               char **pronounP, char **vendornameP )
 {
-  struct _cpuxref { int cpuidb, coretouse; char *cpuname; } *cpuxref = NULL;
   char *pronoun = NULL; //"an" "a"
-  char *vendorname = NULL; //"a Cyrix", "a Centaur", "an AMD", "an Intel"
-  int coretouse = 0; // the core the client should use of the 5(6?)
+  char *vendorname = NULL; //"Cyrix", "Centaur", "AMD", "Intel", ""
+  static struct _cpuxref *cpuxref = NULL;
 
   u32 detectedvalue = x86ident(); //must be interpreted
   int vendorid = (int)(detectedvalue >> 16);
   int cpuidb  = (int)(detectedvalue & 0xffff);
+  
+  if (cpuidbP) *cpuidbP = cpuidb;
+  if (vendoridP) *vendoridP = vendorid;
 
   if ( vendorid == 0x7943) // Cyrix CPU
     {
     pronoun = "a";
-    vendorname = " Cyrix";
+    vendorname = "Cyrix";
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
-    struct _cpuxref __cpuxref[]={
-      {    0x40,   0, "486"     }, // use Pentium core
-      {  0x0490,   0, "5x86"    },
-      {  0x0440,   0, "MediaGX" },
-      {  0x0520,   3, "6x86"    }, // "AMD 486, Cyrix 6x86/6x86MX/M2"
-      {  0x0540,   0, "GXm"     }, // use Pentium core here too
-      {  0x0600,   3, "6x86MX"  },
-      {  0x0000,   3, NULL      } //default core == 6x86
+    static struct _cpuxref __cpuxref[]={
+      {    0x40, 1024,   0, "486"     }, // use Pentium core
+      {  0x0440, 1024,   0, "MediaGX" },
+      {  0x0490, 1185,   0, "5x86"    },
+      {  0x0520, 2090,   3, "6x86"    }, // "AMD 486, Cyrix 6x86/6x86MX/M2"
+      {  0x0540, 1200,   0, "GXm"     }, // use Pentium core here too
+      {  0x0600, 2115,   3, "6x86MX"  },
+      {  0x0000, 2115,   3, NULL      } //default core == 6x86
       }; cpuxref = &__cpuxref[0];
     }
   else if ( vendorid == 0x6543) //centaur/IDT cpu
     {
     pronoun = "a";
-    vendorname = " Centaur/IDT";
+    vendorname = "Centaur/IDT";
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
-    struct _cpuxref __cpuxref[]={
-      {  0x0540,   0, "C6"      }, // use Pentium core
-      {  0x0000,   0, NULL      }  // default core == Pentium
+    static struct _cpuxref __cpuxref[]={
+      {  0x0540, 1200,   0, "C6"      }, // use Pentium core
+      {  0x0000, 1200,   0, NULL      }  // default core == Pentium
       }; cpuxref = &__cpuxref[0];
     }
   else if ( vendorid == 0x7541) // AMD CPU
     {
     pronoun = "an";
-    vendorname = " AMD";
+    vendorname = "AMD";
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
-    struct _cpuxref __cpuxref[]={
-      {  0x0040,   3, "486"      },   // "AMD 486, Cyrix 6x86/6x86MX/M2",
-      {  0x0430,   3, "486DX2"   },
-      {  0x0470,   3, "486DX2WB" },
-      {  0x0480,   3, "486DX4"   },
-      {  0x0490,   3, "486DX4WB" },
-      {  0x04E0,   3, "5x86"     },
-      {  0x04F0,   3, "5x86WB"   },
-      {  0x0500,   4, "K5 PR75, PR90, or PR100" }, // use K5 core
-      {  0x0510,   4, "K5 PR120 or PR133" },
-      {  0x0520,   4, "K5 PR166" },
-      {  0x0530,   4, "K5 PR200" },
-      {  0x0560,   5, "K6"       },
-      {  0x0570,   5, "K6"       },
-      {  0x0580,   5, "K6-2"     },
-      {  0x0590,   5, "K6-3"     },
-      {  0x0000,   5, NULL       }   // for the future - default core = K6
+    static struct _cpuxref __cpuxref[]={
+      {  0x0040, 1024,   3, "486"      },   // "AMD 486, Cyrix 6x86/6x86MX/M2",
+      {  0x0430, 1024,   3, "486DX2"   },
+      {  0x0470, 1024,   3, "486DX2WB" },
+      {  0x0480, 1024,   3, "486DX4"   },
+      {  0x0490, 1024,   3, "486DX4WB" },
+      {  0x04E0, 1185,   3, "5x86"     },
+      {  0x04F0, 1185,   3, "5x86WB"   },
+      {  0x0500, 2353,   4, "K5 PR75, PR90, or PR100" }, // use K5 core
+      {  0x0510, 2353,   4, "K5 PR120 or PR133" },
+      {  0x0520, 2353,   4, "K5 PR166" },
+      {  0x0530, 2353,   4, "K5 PR200" },
+      {  0x0560, 1611,   5, "K6"       },
+      {  0x0570, 1611,   5, "K6"       },
+      {  0x0580, 1611,   5, "K6-2"     },
+      {  0x0590, 1611,   5, "K6-3"     },
+      {  0x0000, 1611,   5, NULL       }   // for the future - default core = K6
       }; cpuxref = &__cpuxref[0];
     }
   else if (vendorid == 0x6E49 || vendorid == 0x6547) // Intel CPU
     {
     pronoun = "an";
-    vendorname = " Intel";
+    vendorname = "Intel";
     if ((cpuidb == 0x30) || (cpuidb == 0x40))
       vendorname = ""; //generic 386/486
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
-    struct _cpuxref __cpuxref[]={
-      {  0x0030,   1, "80386"    },   // generic 386/486 core
-      {  0x0040,   1, "80486"    },
-      {  0x0400,   1, "486DX 25 or 33" },
-      {  0x0410,   1, "486DX 50" },
-      {  0x0420,   1, "486SX" },
-      {  0x0430,   1, "486DX2" },
-      {  0x0440,   1, "486SL" },
-      {  0x0450,   1, "486SX2" },
-      {  0x0470,   1, "486DX2WB" },
-      {  0x0480,   1, "486DX4" },
-      {  0x0490,   1, "486DX4WB" },
-      {  0x0500,   0, "Pentium" }, //stepping A
-      {  0x0510,   0, "Pentium" },
-      {  0x0520,   0, "Pentium" },
-      {  0x0530,   0, "Pentium Overdrive" },
-      {  0x0540,   0, "Pentium MMX" },
-      {  0x0570,   0, "Pentium" },
-      {  0x0580,   0, "Pentium MMX" },
-      {  0x0600,   2, "Pentium Pro" },
-      {  0x0610,   2, "Pentium Pro" },
-      {  0x0630,   2, "Pentium II" },
-      {  0x0650,   2, "Pentium II" },
-      {  0x0000,   2, NULL         }  // default core = PPro/PII
+    static struct _cpuxref __cpuxref[]={
+      {  0x0030, 0426,  1, "80386"    },   // generic 386/486 core
+      {  0x0040, 1024,  1, "80486"    },   // - 946 ('95) + 1085 (NetWare) 
+      {  0x0400, 1024,  1, "486DX 25 or 33" },
+      {  0x0410, 1024,  1, "486DX 50" },
+      {  0x0420, 1024,  1, "486SX" },
+      {  0x0430, 1024,  1, "486DX2" },
+      {  0x0440, 1024,  1, "486SL" },
+      {  0x0450, 1024,  1, "486SX2" },
+      {  0x0470, 1024,  1, "486DX2WB" },
+      {  0x0480, 1024,  1, "486DX4" },
+      {  0x0490, 1024,  1, "486DX4WB" },
+      {  0x0500, 1416,  0, "Pentium" }, //stepping A
+      {  0x0510, 1416,  0, "Pentium" },    
+      {  0x0520, 1416,  0, "Pentium" },
+      {  0x0530, 1416,  0, "Pentium Overdrive" },
+      {  0x0540, 1432,  0, "Pentium MMX" },
+      {  0x0570, 1416,  0, "Pentium" },
+      {  0x0580, 1432,  0, "Pentium MMX" },
+      {  0x0600, 2785,  2, "Pentium Pro" },
+      {  0x0610, 2785,  2, "Pentium Pro" },
+      {  0x0630, 2785,  2, "Pentium II" },
+      {  0x0650, 2785,  2, "Pentium II" },
+      {  0x0000, 2785,  2, NULL         }  // default core = PPro/PII
       }; cpuxref = &__cpuxref[0];
     }
 
-  LogScreen( "Automatic processor detection " );
-  if ( cpuxref == NULL ) // fell through
-    {
-    cpuidb = (detectedvalue & 0xffff); //restore all bits
-    LogScreenf( "failed. (id: %04X:%04X)\n", vendorid, cpuidb );
-    }
-  else // we have a mfg's table
+  if (pronounP) *pronounP = pronoun;
+  if (vendornameP) *vendornameP = vendorname;
+
+  if ( cpuxref != NULL ) // we have a mfg's table
     {
     unsigned int pos;
     for (pos=0 ; ; pos++)
       {
-      if ( (cpuxref[pos].cpuname)==NULL )
-        {
-        coretouse = (cpuxref[pos].coretouse);
-        cpuidb = (detectedvalue & 0xffff); //restore all bits
-        LogScreenf("found an unrecognized%s processor. (id: %04X)",
-                                                    vendorname, cpuidb );
-        break;
-        }
-      if ( cpuidb == (cpuxref[pos].cpuidb))
-        {
-        coretouse = (cpuxref[pos].coretouse);  //show the name
-        LogScreenf( "found %s%s %s.\n", pronoun,
-                                     vendorname, (cpuxref[pos].cpuname));
-        break;
-        }
+      if (( (cpuxref[pos].cpuname)==NULL ) ||
+            ( cpuidb == (cpuxref[pos].cpuidb)) )
+        return (&(cpuxref[pos]));
       }
+    }
+  return NULL;
+}  
+
+// ---------------------
+
+int Client::GetProcessorType()
+{
+  int coretouse = 0; // the core the client should. Default is Pentium
+  int vendorid, cpuidb;                           
+  char *pronoun, *vendorname;
+  struct _cpuxref *cpuxref = 
+          __GetProcessorXRef( &cpuidb, &vendorid, &pronoun, &vendorname );
+
+  LogScreen( "Automatic processor detection " );
+  if ( cpuxref == NULL ) // fell through
+    {
+    LogScreenf( "failed. (id: %04X:%04X)\n", vendorid, cpuidb );
+    coretouse = 0;
+    }
+  else if ( cpuxref->cpuname == NULL )  // fell through to last element
+    {
+    coretouse = (cpuxref->coretouse);
+    LogScreenf("found an unrecognized %s processor. (id: %04X)",
+                                                    vendorname, cpuidb );
+    }
+  else // if ( cpuidb == (cpuxref->cpuidb))
+    {
+    coretouse = (cpuxref->coretouse);      
+    if ( !vendorname || !*vendorname )  // generic type - no vendor name
+      LogScreenf( "found %s %s.\n", pronoun, (cpuxref->cpuname));
+    else
+      LogScreenf( "found %s %s %s.\n", pronoun,
+                                     vendorname, (cpuxref->cpuname));
     }
   return coretouse;
 }
@@ -377,4 +413,23 @@ int Client::GetProcessorType()
 
 #endif //Arm/riscos cpucheck
 
+// --------------------------------------------------------------------------
+
+// GetTimesliceBaseline() returns a value that the ideal RC5 keyrate (kKeys 
+// per Mhz) would be IF a machine were running at peak efficiency. For 
+// non-preemptive systems, it is thus a good indicator of how low we can 
+// set the timeslice/rate-of-yield without losing efficiency. Or inversely, 
+// at what point OS responsiveness starts to suffer - which also applies to 
+// preemptive but non-mt systems handling of a break request. 
+
+unsigned int GetTimesliceBaseline(void) 
+{ 
+#if (CLIENT_CPU == CPU_X86)    
+  struct _cpuxref *cpuxref = __GetProcessorXRef( NULL, NULL, NULL, NULL );
+  return ((!cpuxref) ? ( 1024 ) : ( cpuxref->kKeysPerMhz ));
+#else 
+  return 0;
+#endif    
+}  
+ 
 // --------------------------------------------------------------------------
