@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.27 1999/11/28 16:09:11 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.28 1999/11/28 17:57:09 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -35,34 +35,7 @@ extern "C" void riscos_upcall_6(void);
 
 /* ------------------------------------------------------------- */
 
-#ifdef PIPELINE_COUNT
-#error Remove PIPELINE_COUNT from your makefile. It is useless (and 
-#error confusing) when different cores have different PIPELINE_COUNTs
-#error *Assign it* by core/cputype in LoadState() 
-#error .
-#error Ideally, the client should not need to know anything about the
-#error number of pipelines in use by a core. Create a wrapper function
-#error for that core and increment there.
-#error .
-#error The (projected) ideal prototype for *any* core (RC5/DES/OGR/CSC) is 
-#error   s32 (*core_unit)( RC5unitWork *, u32 *iterations, void *membuff );
-#error Note that the core wrapper does its own iterations to nbits 
-#error conversion, increments the work space itself, stores the effective
-#error iterations back in the u32 *iterations, and returns a result code.
-#error (result code == RESULT_[FOUND|NOTHING|WORKING] or -1 if error).
-#error .
-#error Also note that the call is to a function pointer. That too should  
-#error be assigned in LoadState() based on contest number and cputype. 
-#error .
-#error Would some kind user of the ANSI core(s) please rename the cores 
-#error from [rc5|des]_unit_func to [rc5|des]_ansi_[x]_unit_func and fix
-#error the RC5 cores to use iterations as a second argument?
-#error .
-#error ./configure/ users: Please put your nick/cvs id and email address 
-#error next to any rules you use in ./configure/.
-#endif
-
-#undef PIPELINE_COUNT
+#undef PIPELINE_COUNT //obsolete
 
 #if (CLIENT_CPU == CPU_X86)
   extern "C" u32 rc5_unit_func_486( RC5UnitWork * , u32 iterations );
@@ -74,97 +47,111 @@ extern "C" void riscos_upcall_6(void);
   extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_k6_mmx( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
-  extern u32 p1des_unit_func_p5( RC5UnitWork * , u32 nbbits );
-  extern u32 p1des_unit_func_pro( RC5UnitWork * , u32 nbbits );
-  extern u32 p2des_unit_func_p5( RC5UnitWork * , u32 nbbits );
-  extern u32 p2des_unit_func_pro( RC5UnitWork * , u32 nbbits );
-  extern u32 des_unit_func_mmx( RC5UnitWork * , u32 nbbits, char *coremem );
-  extern u32 des_unit_func_slice( RC5UnitWork * , u32 nbbits );
 #elif (CLIENT_OS == OS_AIX)     // this has to stay BEFORE CPU_POWERPC
   #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWER)
-  #define HAVE_ANSI2RG_UNIT_FUNC
   extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
   #endif
   #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWERPC)
   extern "C" s32 crunch_allitnil( RC5UnitWork *work, u32 iterations);
   extern "C" s32 crunch_lintilla( RC5UnitWork *work, u32 iterations);
   #endif
-  extern u32 des_unit_func( RC5UnitWork * , u32 iterations );
-#elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_WIN32) //NT PPC has poor asm
-  extern "C" s32 rc5_unit_func_g1( RC5UnitWork *work, u32 *iterations /* , void *scratch_area */);
-  extern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *work, u32 *iterations /* , void *scratch_area */);
-  extern u32 des_unit_func( RC5UnitWork * , u32 nbbits );
+#elif (CLIENT_CPU == CPU_POWERPC)
+  #if (CLIENT_OS == OS_WIN32) //NT PPC has poor assembly
+    #define HAVE_ANSI2RG_UNIT_FUNC
+    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
+  #else
+    extern "C" s32 rc5_unit_func_g1( RC5UnitWork *work, u32 *iterations /* , void *scratch_area */);
+    extern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *work, u32 *iterations /* , void *scratch_area */);
+  #endif
 #elif (CLIENT_CPU == CPU_68K)
-  extern "C" __asm u32 rc5_unit_func_000_030
+  #if defined(__GCC__) || defined(__GNUC__) /* hpux, next, linux, sun3 */
+    #define RC5_SINGLE_STEPPER
+    #define HAVE_ONLY_SINGLE_PIPELINE //the default is 2
+    extern "C" u32 rc5_unit_func( RC5UnitWork * ); //rc5/68k/crunch.68k.gcc.s
+  #elif (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)
+    extern "C" __asm u32 rc5_unit_func_000_030
       ( register __a0 RC5UnitWork *, register __d0 unsigned long iterations );
-  extern "C" __asm u32 rc5_unit_func_040_060
+    extern "C" __asm u32 rc5_unit_func_040_060
       ( register __a0 RC5UnitWork *, register __d0 unsigned long iterations );
-  extern u32 des_unit_func( RC5UnitWork * , u32 nbbits );
+  #else
+    #define RC5_SINGLE_STEPPER
+    #define HAVE_ONLY_SINGLE_PIPELINE //the default is 2
+    #include "../rc5/rc5ansi1-b2.cpp"
+  #endif
 #elif (CLIENT_CPU == CPU_ARM)
   extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * , unsigned long t);
   extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * , unsigned long t);
   extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * , unsigned long t);
-  extern "C" u32 des_unit_func_arm( RC5UnitWork * , unsigned long t);
-  extern "C" u32 des_unit_func_strongarm( RC5UnitWork * , unsigned long t);
 #elif (CLIENT_CPU == CPU_SPARC)
   #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
-  #define HAVE_ONLY_SINGLE_PIPELINE //the default is 2
-  //rc5/ultra/rc5-ultra-crunch.cpp
-  extern "C" u32 rc5_unit_func_ultrasparc_crunch( register RC5UnitWork * , u32 iterations);
-  extern "C++" u32 des_unit_func( RC5UnitWork * , u32 iterations );
+    #define HAVE_ONLY_SINGLE_PIPELINE //the default is 2
+    //rc5/ultra/rc5-ultra-crunch.cpp
+    extern "C" u32 rc5_unit_func_ultrasparc_crunch( register RC5UnitWork * , u32 iterations);
   #else
-  #define HAVE_ANSI2RG_UNIT_FUNC
-  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-  extern "C++" u32 des_unit_func( RC5UnitWork * , u32 iterations );
+    #define HAVE_ANSI2RG_UNIT_FUNC
+    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
   #endif
-#elif (CLIENT_CPU == CPU_S390)
-  #define HAVE_ANSI2RG_UNIT_FUNC
-  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-  extern u32 des_unit_func( RC5UnitWork * , u32 iterations );
-#elif (CLIENT_CPU == CPU_88K) //OS_DGUX
-  #define HAVE_ANSI2RG_UNIT_FUNC
-  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-  extern u32 des_unit_func( RC5UnitWork * , u32 iterations );
 #elif (CLIENT_CPU == CPU_MIPS)
   #if (CLIENT_OS == OS_ULTRIX)
     #define HAVE_ANSI2RG_UNIT_FUNC
     extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-    extern u32 des_unit_func( RC5UnitWork * , u32 iterations );
   #elif (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX) || (CLIENT_OS==OS_IRIX)
     //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
     extern "C" u32 rc5_unit_func_mips_crunch( register RC5UnitWork *, u32 iterations );
-    extern u32 des_unit_func( RC5UnitWork * , u32 iterations );
   #else
     #error "What's up, Doc?"
   #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
-  #if (CLIENT_OS == OS_WIN32)
-     extern "C" u32 rc5_unit_func( RC5UnitWork *, unsigned long iterations );
-     extern "C" u32 des_unit_func_alpha_dworz( RC5UnitWork * , u32 nbbits );
-  #elif (CLIENT_OS == OS_DEC_UNIX)
-     #if defined(DEC_UNIX_CPU_SELECT)
-       #include <machine/cpuconf.h>
-       #error these cores are missing the second iterations argument.
-       extern u32 rc5_alpha_osf_ev4( RC5UnitWork * );
-       extern u32 rc5_alpha_osf_ev5( RC5UnitWork * );
-       extern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 iterations );
-       extern u32 des_alpha_osf_ev5( RC5UnitWork * , u32 iterations );
-     #else
-       extern u32 des_unit_func( RC5UnitWork * , u32 iterations );
-     #endif
+  #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
+    #include <machine/cpuconf.h>
+    #error these cores are missing the 'u32 iterations' argument.
+    extern u32 rc5_alpha_osf_ev4( RC5UnitWork * );
+    extern u32 rc5_alpha_osf_ev5( RC5UnitWork * );
+  #elif (CLIENT_OS == OS_WIN32) /* asm */
+    extern "C" u32 rc5_unit_func( RC5UnitWork *, unsigned long iterations );
   #else
-     extern "C" u32 rc5_unit_func_axp_bmeyer
-         ( RC5UnitWork * , unsigned long iterations);   // note not u32
-     extern "C" u32 des_unit_func_alpha_dworz
-         ( RC5UnitWork * , u32 nbbits );
+     extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, unsigned long /* NOT u32 */);
   #endif
-#else
+#elif (CLIENT_CPU == CPU_S390)
+  #define HAVE_ANSI2RG_UNIT_FUNC
+  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
+#elif (CLIENT_CPU == CPU_PA_RISC) /* hppa */
   #define RC5_SINGLE_STEPPER
-  //#pragma warn RC5CORECOPY is BAD!
-  extern u32 rc5_unit_func( RC5UnitWork *  );
-  extern u32 des_unit_func( RC5UnitWork * , u32 iterations );
+  #include "../rc5/parisc/parisc.cpp" /* encap for parisc.s, 2 pipelines */
+#elif (CLIENT_CPU == CPU_88K) //OS_DGUX
+  #define HAVE_ANSI2RG_UNIT_FUNC
+  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
+#elif (CLIENT_CPU == CPU_VAX)
+  #define RC5_SINGLE_STEPPER
+  #define HAVE_ONLY_SINGLE_PIPELINE //the default is 2
+  #include "../rc5/rc5ansi1-b2.cpp"
+#else
+  #error "How did you get here?"  
 #endif
 
+/* ------------------------------------------------------------------- */
+#ifdef HAVE_DES_CORES
+  #if (CLIENT_CPU == CPU_X86)
+    extern u32 p1des_unit_func_p5( RC5UnitWork * , u32 nbbits );
+    extern u32 p1des_unit_func_pro( RC5UnitWork * , u32 nbbits );
+    extern u32 p2des_unit_func_p5( RC5UnitWork * , u32 nbbits );
+    extern u32 p2des_unit_func_pro( RC5UnitWork * , u32 nbbits );
+    extern u32 des_unit_func_mmx( RC5UnitWork * , u32 nbbits, char *coremem );
+    extern u32 des_unit_func_slice( RC5UnitWork * , u32 nbbits );
+ #elif (CLIENT_CPU == CPU_ARM)
+    extern "C" u32 des_unit_func_arm( RC5UnitWork * , unsigned long );
+    extern "C" u32 des_unit_func_strongarm( RC5UnitWork * , unsigned long );
+ #elif (CLIENT_CPU == CPU_ALPHA)
+    #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
+    extern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 nbbits );
+    extern u32 des_alpha_osf_ev5( RC5UnitWork * , u32 nbbits );
+    #else
+    extern "C" u32 des_unit_func_alpha_dworz( RC5UnitWork * , u32 nbbits );
+    #endif
+ #else
+    extern u32 des_unit_func( RC5UnitWork * , u32 nbbits );
+ #endif
+#endif
 /* ------------------------------------------------------------------- */
 #ifdef HAVE_CSC_CORES
 extern "C" {
@@ -395,20 +382,6 @@ static int __core_picker(Problem *problem, unsigned int contestid)
         problem->rc5_unit_func = rc5_unit_func_000_030;
       problem->pipeline_count = 2;
     }
-    #elif (CLIENT_CPU == CPU_ALPHA)
-    {
-      problem->pipeline_count = 2;
-      #if (CLIENT_OS == OS_DEC_UNIX)
-      if (coresel == 1) /* EV5, EV56, PCA56, EV6 */
-        problem->rc5_unit_func = rc5_alpha_osf_ev5;
-      else // EV3_CPU, EV4_CPU, LCA4_CPU, EV45_CPU and default
-        problem->rc5_unit_func = rc5_alpha_osf_ev4; 
-      #elif (CLIENT_OS == OS_WIN32)
-        problem->rc5_unit_func = ::rc5_unit_func;
-      #else
-        problem->rc5_unit_func = rc5_unit_func_axp_bmeyer;
-      #endif
-    }
     #elif (CLIENT_OS == OS_AIX)
     {
       static int detectedtype = -1;
@@ -505,10 +478,24 @@ static int __core_picker(Problem *problem, unsigned int contestid)
         coresel = 0;
       }
     }
-    #elif defined(HAVE_ANSI2RG_UNIT_FUNC)
-    problem->pipeline_count = 2;
-    #elif defined(HAVE_ONLY_SINGLE_PIPELINE) //the default is 2
-    problem->pipeline_count = 1;
+    #elif (CLIENT_CPU == CPU_ALPHA)
+    {
+      problem->pipeline_count = 2;
+      #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
+      if (coresel == 1) /* EV5, EV56, PCA56, EV6 */
+        problem->rc5_unit_func = rc5_alpha_osf_ev5;
+      else // EV3_CPU, EV4_CPU, LCA4_CPU, EV45_CPU and default
+        problem->rc5_unit_func = rc5_alpha_osf_ev4; 
+      #elif (CLIENT_OS == OS_WIN32)
+        problem->rc5_unit_func = ::rc5_unit_func;
+      #else
+        problem->rc5_unit_func = rc5_unit_func_axp_bmeyer;
+      #endif
+    }
+    #else
+      #if defined(HAVE_ONLY_SINGLE_PIPELINE) //the default is 2
+      problem->pipeline_count = 1;
+      #endif
     #endif
     return coresel;
   }
@@ -759,8 +746,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   }
 
   //---------------------------------------------------------------
-#if (CLIENT_OS == OS_RISCOS)
-#if 0
+#if 0 //(CLIENT_OS == OS_RISCOS)
   if (threadindex == 1 /*x86 thread*/)
   {
     RC5PCstruct rc5pc;
@@ -794,7 +780,6 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       }
     }
   }
-#endif
 #endif
 
   last_resultcode = RESULT_WORKING;
@@ -834,12 +819,16 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
 
 /* ------------------------------------------------------------- */
 
-#ifdef RC5_SINGLE_STEPPER
-u32 rc5_singlestep_core_wrapper( RC5UnitWork * rc5unitwork, u32 iterations,
-                int pipeline_count )
+#if defined(RC5_SINGLE_STEPPER)
+u32 rc5_singlestep_core_wrapper( RC5UnitWork * rc5unitwork, u32 iterations )
 {                                
   u32 kiter = 0;
   int keycount = iterations;
+  int pipeline_count = 2; /* the default */
+  #if defined(HAVE_ONLY_SINGLE_PIPELINE) //the default is 2
+  pipeline_count = 1; 
+  #endif
+  
   //LogScreenf ("rc5unitwork = %08X:%08X (%X)\n", rc5unitwork.L0.hi, rc5unitwork.L0.lo, keycount);
   while ( keycount-- ) // iterations ignores the number of pipelines
   {
@@ -894,7 +883,9 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
 
   iterations /= pipeline_count;
 
-  #if (CLIENT_CPU == CPU_X86)
+  #if defined(RC5_SINGLE_STEPPER)
+    kiter = rc5_singlestep_core_wrapper( &rc5unitwork, iterations );
+  #elif (CLIENT_CPU == CPU_X86)
     kiter = (*x86_unit_func)( &rc5unitwork, iterations );
   #elif (CLIENT_CPU == CPU_MIPS) && \
         (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX) || (CLIENT_OS==OS_IRIX)
@@ -904,24 +895,21 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
         (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
     //rc5/ultra/rc5-ultra-crunch.cpp
     kiter = rc5_unit_func_ultrasparc_crunch( &rc5unitwork, iterations);
-  #elif (CLIENT_CPU == CPU_68K) || (CLIENT_OS == OS_AIX) || \
-        (CLIENT_CPU == CPU_POWER)
+  #elif (CLIENT_CPU == CPU_68K)
+    kiter = (*rc5_unit_func)( &rc5unitwork, iterations );
+  #elif (CLIENT_CPU == CPU_POWER) || (CLIENT_OS == OS_AIX)
     kiter = (*rc5_unit_func)( &rc5unitwork, iterations );
   #elif (CLIENT_CPU == CPU_POWERPC)
-    kiter = iterations;
+    kiter = iterations; 
     *resultcode = (*rc5_unit_func)( &rc5unitwork, &kiter );
   #elif (CLIENT_CPU == CPU_ARM)
     kiter = rc5_unit_func(&rc5unitwork, iterations);
   #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-    kiter = (iterations * pipeline_count) - 
-      rc5_unit_func(&rc5unitwork,iterations);
+    kiter = (iterations*pipeline_count)-rc5_unit_func(&rc5unitwork,iterations);
   #elif (CLIENT_CPU == CPU_ALPHA)
     kiter = rc5_unit_func(&rc5unitwork, iterations);
   #elif defined(HAVE_ANSI2RG_UNIT_FUNC)
     kiter = rc5_ansi_2_rg_unit_func( &rc5unitwork, iterations );
-  #elif defined(RC5_SINGLE_STEPPER)
-    kiter = rc5_singlestep_core_wrapper( &rc5unitwork, iterations,
-                pipeline_count );
   #else
     #error "What's up, Doc?"                
   #endif

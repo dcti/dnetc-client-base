@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.60 1999/11/28 16:09:09 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.61 1999/11/28 17:57:07 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -16,7 +16,8 @@
 # - OGR IS NOT READY YET, but the same would apply there too
 #   (with $OGR_ANSI_SRCS and -DHAVE_OGR_CORES of course :)
 #
-# - If you wish to continue supporting DES, add -DHAVE_DES_CORES
+# - If you wish to continue supporting DES, *AND*YOU*DO*NOT*USE*MEGGS*,
+#   add -DHAVE_DES_CORES, otherwise remove all DES cores/references
 #
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>" 
@@ -25,8 +26,6 @@
 # - Avoid building separate MT and non-MT clients. MT is always preferred
 #   (from the client's perspective), and the user can always force non-MT
 #   by setting numcpu=0
-#
-# - RC5CORECOPY is obsolete! 
 
 #####################################################################
 # Note to people making changes..  Do not put spaces around the '=' #
@@ -138,8 +137,7 @@ OPTS_GCC_HPUX_M68K="$OPTS_GCC -D_HPUX_M68K -static"
 
 #-- DGUX
 
-OPTS_GCC_DGUX="$OPTS_GCC -O6 -D_DGUX -DPIPELINE_COUNT=2 \
-	       -DCPU_ID=CPU_88K -DOS_ID=OS_DGUX"
+OPTS_GCC_DGUX="$OPTS_GCC -O6 -D_DGUX -DCPU_ID=CPU_88K -DOS_ID=OS_DGUX"
 
 #-- PPC
 
@@ -389,7 +387,7 @@ case "$1" in
     *mips-linux)	# For Cobalt Qube - doesn't work yet - Peter
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -mcpu=r3000 -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS -DHAVE_DES_CORES"
+			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -442,7 +440,7 @@ case "$1" in
 
     *mips-egcs-crunch-64)     #needs very recent egcs
 	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mabi=64 \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 \
+			-DMULTITHREAD \
 			-DBIT_64 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
@@ -452,7 +450,7 @@ case "$1" in
 
     *mips-egcs-crunch)	# faster than mips-gcc for IRIX
 	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mabi=n32 \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 \
+			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
@@ -501,10 +499,8 @@ case "$1" in
 ###### HPUX
 
     *hpux-hppa-CC)
-	RC5CORECOPY="rc5/parisc/parisc.cpp"
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="-DPIPELINE_COUNT=2 \
-			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_CCFLAGS="-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/parisc/parisc.s $MEGGS_SLICE_SRCS2"
 	TARGET_LDFLAGS="$LDFLAGS_CC_HPUX"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -512,7 +508,6 @@ case "$1" in
 
    *hpux-hppa-gcc-nomt)  # [ivo]
         #DELETECHARS="'/.\$\-'"
-        RC5CORECOPY="rc5/parisc/parisc.cpp"
         TARGET_CCFLAGS="$OPTS_GCC_HPUX  \
                         -DHAVE_CSC_CORES -DHAVE_DES_CORES \
                         -DBIT_32 -DKWAN -DMEGGS"
@@ -524,8 +519,7 @@ case "$1" in
         ;;
 
     *hpux-m68k-gcc)
-	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_HPUX_M68K -DPIPELINE_COUNT=1 \
+	TARGET_CCFLAGS="$OPTS_GCC_HPUX_M68K \
 			-DBIT_32 -DKWAN"
 	TARGET_LDFLAGS="-static"
 	TARGET_AFLAGS="$OPTS_GAS_M68030K"
@@ -642,10 +636,15 @@ case "$1" in
 
     *alpha-gcc-digital_unix-mt)
 	TARGET_CC="g++"
-	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DDEC_UNIX_CPU_SELECT -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT -DCORES_SUPPORT_SMP -Ddes_alpha_osf_ev5=des_alpha_osf_ev4"
+	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT \
+                            -DBIT_64 -DMEGGS -DKWAN \
+                            -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT \
+                            -DCORES_SUPPORT_SMP \
+                            -Ddes_alpha_osf_ev5=des_alpha_osf_ev4"
 	TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
 	TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+                        rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
 	TARGET_DIGITAL_UNIX_EV5_SRCS="rc5/alphaasm/rc5-digital-unix-alpha-ev5.cpp"
 	TARGET_LIBS="-lpthread -lexc"
 	TARGET_OS=DIGITAL_UNIX
@@ -654,7 +653,7 @@ case "$1" in
 
     *alpha-gcc-digital_unix-static)
 	TARGET_CC="g++"
-	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DDEC_UNIX_CPU_SELECT"
+	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DBIT_64 -DMEGGS -DKWAN -DDEC_UNIX_CPU_SELECT"
 	TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
 	TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
@@ -1120,7 +1119,7 @@ case "$1" in
 
     *x86-qnx4)
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
@@ -1133,7 +1132,7 @@ case "$1" in
     *x86-sco5)
 	TARGET_AS="g++ -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DPIPELINE_COUNT=2 -belf -Dsco5"
+			-belf -Dsco5"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
@@ -1146,7 +1145,7 @@ case "$1" in
 
     *x86-dynix4)
 	TARGET_CC="ec++"
-	TARGET_CCFLAGS="$OPTS_EPC_DYNIX -DMMX_RC5 -DPIPELINE_COUNT=2 \
+	TARGET_CCFLAGS="$OPTS_EPC_DYNIX -DMMX_RC5 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS1"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1155,7 +1154,7 @@ case "$1" in
 	;;
 
     *x86-dynix2)
-	TARGET_CCFLAGS="$OPTS_GCC_DYNIX -DMMX_RC5 -DPIPELINE_COUNT=2 \
+	TARGET_CCFLAGS="$OPTS_GCC_DYNIX -DMMX_RC5 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1171,7 +1170,7 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D_NeXT_ \
-			-DPIPELINE_COUNT=2 -DBIT_32"
+			-DBIT_32"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1180,16 +1179,15 @@ case "$1" in
 
     *m68k-next-gcc)
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_NEXT_M68K -D_NeXT_ -DPIPELINE_COUNT=1 \
+	TARGET_CCFLAGS="$OPTS_NEXT_M68K -D_NeXT_ \
 			-DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="rc5/68k/crunch.68k.gcc.s $KWAN_SLICE_SRCS4"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *m68k-next)
-	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
 	TARGET_CC="cc++"
-	TARGET_CCLAGS="$OPTS_NEXT_M68K -arch m68k -D_NeXT_ -DPIPELINE_COUNT=1"
+	TARGET_CCLAGS="$OPTS_NEXT_M68K -arch m68k -D_NeXT_"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
@@ -1263,9 +1261,8 @@ case "$1" in
 
 ###### NetBSD/vax
     *vax-netbsd-gcc)
-        RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
         TARGET_CC="g++"
-        TARGET_CCFLAGS="$OPTS_GCC_VAX -DPIPELINE_COUNT=1 -DBIT_32 \
+        TARGET_CCFLAGS="$OPTS_GCC_VAX -DBIT_32 \
                         -DMEGGS -DKWAN -DRC5ANSICORE"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
         TARGET_LIBS="-ltermcap"
@@ -1650,16 +1647,9 @@ if [ -n "${TARGET_ALLCCOBJS}" ]; then
   for target in ${TARGET_ALLCCOBJS}; do
     SAFENAME=`echo $target | tr -d ${DELETECHARS}`
     eval TARGETSRC=$`echo DEPEND_$SAFENAME`
-    if [ -n "${RC5CORECOPY}" -a `basename ${TARGETSRC}` = problem.cpp ]; then
-      TARGET_HDEPS1=`./testplat build_dependancies ${TARGETSRC}`
-      TARGET_HDEPS2=`./testplat build_dependancies ${RC5CORECOPY}`
-      echo "$target:	${TARGETSRC} ${TARGET_HDEPS1} ${RC5CORECOPY} ${TARGET_HDEPS2}" >> Makefile
-      echo "	\${CC} -c \${CCFLAGS} -include ${RC5CORECOPY} ${TARGETSRC} -o $target" >> Makefile
-    else
-      TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
-      echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
-      echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
-    fi
+    TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
+    echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
+    echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
     echo "" >> Makefile
   done
 fi
