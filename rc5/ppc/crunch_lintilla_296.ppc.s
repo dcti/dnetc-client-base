@@ -1,5 +1,9 @@
 #
 # $Log: crunch_lintilla_296.ppc.s,v $
+# Revision 1.3.2.2  2000/01/03 14:34:37  patrick
+#
+# EGCS on AIX needs the defines. Please keep 'em.
+#
 # Revision 1.3.2.1  1999/12/06 09:56:55  myshkin
 # Minor changes to conform to gas syntax (version 980114).
 #
@@ -13,11 +17,19 @@
 #
  .file	"crunch-ppc.cpp"
 gcc2_compiled.:
-# .csect	.text[PR]
+# .csect        .text[PR]
 # .align 8
+#if (CLIENT_OS == OS_AIX)
+ .globl .crunch_lintilla
+#else
  .globl crunch_lintilla
- .type	 crunch_lintilla,@function
+#endif
+# .type  crunch_lintilla,@function
+#if (CLIENT_OS == OS_AIX)
+.crunch_lintilla:
+#else
 crunch_lintilla:
+#endif
 
 # standard register aliases
 .set r0, 0
