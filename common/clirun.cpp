@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.44 2000/03/11 03:01:46 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.45 2000/03/14 23:08:18 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -79,7 +79,7 @@ struct thread_param_block
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
   #elif (CLIENT_OS == OS_MACOS)
-    long threadID; /* MPTaskID but we cast */
+    MPTaskID /*long*/ threadID; /* MPTaskID but we cast */
   #else
     int threadID;
   #endif
@@ -458,7 +458,7 @@ static int __StopThread( struct thread_param_block *thrparams )
 {
   if (thrparams)
   {
-    __thread_yield__();   //give threads some air
+    if (thrparams->realthread) __thread_yield__(); //give realthreads some air
     if (thrparams->threadID) //thread did not exit by itself
     {
       if (thrparams->realthread) //real thread
