@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.29  1998/12/29 19:20:36  cyp
+// Post start/finish events at beginning/end of LoadSaveProblems()
+//
 // Revision 1.28  1998/12/28 18:15:16  cyp
 // Net update (unconditionally, don't check other contests first) if no blocks
 // are available. Implemented generic event posting for started/finished probs.
@@ -123,7 +126,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.28 1998/12/28 18:15:16 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.29 1998/12/29 19:20:36 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -652,6 +655,8 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
   /* ============================================================= */
 
+  ClientEventSyncPost(CLIEVENT_PROBLEM_TFILLSTARTED, (long)load_problem_count);
+
   prob_for = 0;
 
   if (mode == PROBFILL_RESIZETABLE && previous_load_problem_count)
@@ -836,6 +841,9 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
     } //for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
 
   /* ============================================================ */
+
+  ClientEventSyncPost(CLIEVENT_PROBLEM_TFILLFINISHED,
+     (long)((previous_load_problem_count==0)?(total_problems_loaded):(total_problems_saved)));
 
   if (mode == PROBFILL_UNLOADALL)
     {
