@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.17 1999/12/05 00:29:01 mfeiri Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.18 1999/12/07 05:44:19 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -718,7 +718,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0610, 2785,     8, "Pentium Pro" },
           {  0x0630, 2785, 0x102, "Pentium II" },
           {  0x0650, 2785, 0x102, "Pentium II" },
-          {  0x0660, 2785, 0x102, "Pentium II" }, //or Celeron-A or Xeon
+          {  0x0660, 2785, 0x102, "Celeron-A" }, //on die L2
           {  0x0670, 2785, 0x102, "Pentium III" },
           {  0x0000, 4096,    -1, NULL }
           }; internalxref = &intelxref[0];
