@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.54 2001/03/29 21:59:52 oliver Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.55 2001/03/30 11:16:54 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -935,10 +935,10 @@ void LogScreenPercent( unsigned int load_problem_count )
       disp_format = DISPFORMAT_COUNT; //or DISPFORMAT_RATE for rate;
     /* anything else is percent */
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-    if ((w32ConGetType() & 0xffff) == MAKEWORD('g','t')) /* tray + gui */
-    {
+    if ((w32ConGetType() & 0xffff) == (((int)('g'))+(((int)('t'))<<8)))
+    {                                          /* gui + tray */
       disp_format = DISPFORMAT_RATE;
-      event_only  = 1; /* don't logscreen it */
+      //event_only  = 1; /* don't logscreen it */
     }
     #endif
   }
