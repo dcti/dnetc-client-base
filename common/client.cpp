@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.110  1998/07/26 12:45:52  cyruspatel
+// new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
+// xx.v27.distributed.net then that will be interpreted by Network::Resolve()
+// to mean 'find a keyserver that covers the timezone I am in'. Network
+// constructor extended to take this as an argument.
+//
 // Revision 1.109  1998/07/25 06:31:39  silby
 // Added lurk functions to initiate a connection and hangup a connection.  win32 hangup is functional.
 //
@@ -83,7 +89,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.109 1998/07/25 06:31:39 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.110 1998/07/26 12:45:52 cyruspatel Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -259,7 +265,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.109 1998/07/25 06:31:39 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.110 1998/07/26 12:45:52 cyruspatel Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -406,6 +412,7 @@ Client::Client()
   timeStarted = 0;
   cputype=-1;
   offlinemode = 0;
+  autofindkeyserver = 1;  //implies 'only if keyproxy==dnetkeyserver'
 
 #ifdef DONT_USE_PATHWORK
   strcpy(ini_logname, "none");
@@ -629,7 +636,7 @@ if (force == 0) // check to see if fetch should be done
   {
     net = new Network( (const char *) (keyproxy[0] ? keyproxy : NULL ),
         (const char *) (nofallback ? (keyproxy[0] ? keyproxy : NULL) : DEFAULT_RRDNS),
-        (s16) keyport );
+        (s16) keyport, autofindkeyserver );
     net->quietmode = quietmode;
 
     switch (uuehttpmode)
@@ -1020,7 +1027,7 @@ if (force == 0) // Check if flush should be done
   {
     net = new Network( (const char *) (keyproxy[0] ? keyproxy : NULL ),
         (const char *) (nofallback ? (keyproxy[0] ? keyproxy : NULL) : DEFAULT_RRDNS),
-        (s16) keyport );
+        (s16) keyport, autofindkeyserver );
     net->quietmode = quietmode;
 
     switch (uuehttpmode)
@@ -1398,7 +1405,7 @@ if (force == 0) // We need to check if we're allowed to connect
 #endif
   net = new Network( (const char *) (keyproxy[0] ? keyproxy : NULL ),
       (const char *) (nofallback ? (keyproxy[0] ? keyproxy : NULL) : DEFAULT_RRDNS),
-      (s16) keyport);
+      (s16) keyport, autofindkeyserver );
   net->quietmode = quietmode;
 
   switch (uuehttpmode)

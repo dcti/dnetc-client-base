@@ -12,6 +12,12 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.70  1998/07/26 12:46:04  cyruspatel
+// new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
+// xx.v27.distributed.net then that will be interpreted by Network::Resolve()
+// to mean 'find a keyserver that covers the timezone I am in'. Network
+// constructor extended to take this as an argument.
+//
 // Revision 1.69  1998/07/25 06:31:44  silby
 // Added lurk functions to initiate a connection and hangup a connection.  win32 hangup is functional.
 //
@@ -298,7 +304,7 @@ public:
   char checkpoint_file[2][128];
   char pausefile[128];
 
-  s32  numcpu, numcputemp;
+  s32 numcpu, numcputemp;
   s32 checkpoint_min;
   s32 percentprintingoff;
   s32 connectoften;
@@ -309,6 +315,7 @@ public:
   s32 randomprefix;
   s32 randomchanged;
   s32 consecutivesolutions[2];
+  int autofindkeyserver;
   s32 quietmode;
   s32 nonewblocks;
   s32 nettimeout;

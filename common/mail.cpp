@@ -4,6 +4,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.17  1998/07/26 12:46:07  cyruspatel
+// new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
+// xx.v27.distributed.net then that will be interpreted by Network::Resolve()
+// to mean 'find a keyserver that covers the timezone I am in'. Network
+// constructor extended to take this as an argument.
+//
 // Revision 1.16  1998/07/13 23:54:23  cyruspatel
 // Cleaned up NONETWORK handling.
 //
@@ -45,7 +51,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-static const char *id="@(#)$Id: mail.cpp,v 1.16 1998/07/13 23:54:23 cyruspatel Exp $";
+static const char *id="@(#)$Id: mail.cpp,v 1.17 1998/07/26 12:46:07 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -289,7 +295,7 @@ int MailMessage::sendmessage()
 
   if (messagelen != 0)
   {
-    net = new Network( (const char *) smtp , (const char *) smtp, (s16) port );
+    net = new Network( (const char *) smtp , (const char *) smtp, (s16) port, 0 );
     net->quietmode = quietmode;
 
     retry=0;

@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.29  1998/07/26 12:46:16  cyruspatel
+// new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
+// xx.v27.distributed.net then that will be interpreted by Network::Resolve()
+// to mean 'find a keyserver that covers the timezone I am in'. Network
+// constructor extended to take this as an argument.
+//
 // Revision 1.28  1998/07/16 21:23:04  nordquist
 // More DYNIX port changes.
 //
@@ -279,6 +285,7 @@ protected:
   s32  retries;         // 3 retries, then do RRDNS lookup
   u32  lastaddress;
   s16  lastport;
+  int autofindkeyserver; // implies 'only if hostname is a dnet keyserver'
 
   // http related
   char httpproxy[64];   // also used for socks4
@@ -304,7 +311,8 @@ protected:
     //    or -1 on error
 
 public:
-  Network( const char * preferred, const char * roundrobin, s16 port);
+  Network( const char * preferred, const char * roundrobin, 
+           s16 port, int AutoFindKeyServer );
     // constructor: If preferred or roundrobin are NULL, use DEFAULT_RRDNS.
     // They can be IP's and not necessarily names, though a name is better
     // suited for roundrobin use.
@@ -347,7 +355,7 @@ public:
   s32  Close( void );
     // close the connection
 
-  static s32 Resolve( const char *host, u32 &hostaddress );
+  s32 Resolve( const char *host, u32 &hostaddress );
     // perform a DNS lookup, handling random selection of DNS lists
     // returns -1 on error, 0 on success
 

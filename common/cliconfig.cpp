@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.160  1998/07/26 12:45:42  cyruspatel
+// new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
+// xx.v27.distributed.net then that will be interpreted by Network::Resolve()
+// to mean 'find a keyserver that covers the timezone I am in'. Network
+// constructor extended to take this as an argument.
+//
 // Revision 1.159  1998/07/25 05:29:43  silby
 // Changed all lurk options to use a LURK define (automatically set in client.h) so that lurk integration of mac/amiga clients needs only touch client.h and two functions in client.cpp
 //
@@ -307,7 +313,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.159 1998/07/25 05:29:43 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.160 1998/07/26 12:45:42 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -1513,6 +1519,8 @@ s32 Client::ReadConfig(void)
   if (tempconfig) quietmode=1;
   tempconfig=ini.getkey(OPTION_SECTION, "nofallback", "0")[0];
   if (tempconfig) nofallback=1;
+  tempconfig=ini.getkey("networking", "autofindkeyserver", "1")[0];
+  autofindkeyserver = (tempconfig)?(1):(0);
   tempconfig=ini.getkey(OPTION_SECTION, "cktime", "0")[0];
   if (tempconfig) checkpoint_min=max(2,tempconfig);
   tempconfig=ini.getkey(OPTION_SECTION, "nettimeout", "60")[0];
@@ -1775,8 +1783,7 @@ s32 Client::WriteConfig(void)
   sprintf(buffer,"%d:%d",(int)inthreshold[1],(int)outthreshold[1]);
   INISETKEY( CONF_THRESHOLDI2, buffer );
   INISETKEY( CONF_COUNT, blockcount );
-  sprintf(hours,"%u.%02u", (unsigned)(minutes/60),
-    (unsigned)(minutes%60)); //1.000000 hours looks silly
+  sprintf(hours,"%u.%02u", (unsigned)(minutes/60), (unsigned)(minutes%60)); 
   INISETKEY( CONF_HOURS, hours );
   INISETKEY( CONF_TIMESLICE, timeslice );
   INISETKEY( CONF_NICENESS, niceness );
@@ -1784,6 +1791,7 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_KEYPORT, keyport );
   INISETKEY( CONF_HTTPPROXY, httpproxy );
   INISETKEY( CONF_HTTPPORT, httpport );
+  ini.setrecord("networking", "autofindkeyserver", IniString(autofindkeyserver?"1":"0"));
   INISETKEY( CONF_UUEHTTPMODE, uuehttpmode );
   INISETKEY( CONF_HTTPID, httpid);
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX)) )

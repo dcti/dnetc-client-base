@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.32  1998/07/26 12:46:12  cyruspatel
+// new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
+// xx.v27.distributed.net then that will be interpreted by Network::Resolve()
+// to mean 'find a keyserver that covers the timezone I am in'. Network
+// constructor extended to take this as an argument.
+//
 // Revision 1.31  1998/07/18 05:53:10  ziggyb
 // Removed a unneeded return 0, which was causing a 'unreachable code' warning in Watcom
 //
@@ -60,15 +66,14 @@
 // Revision 1.18  1998/06/14 08:13:00  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
-//
-//      network.cpp,v 1.17 1998/06/13 23:33:18 cyruspatel
-//                      Fixed NetWare stuff and added #include "sleepdef.h"
-//                      (which should now warn if macros are not the same)
+// Revision 1.18  1998/06/13 23:33:18  cyruspatel
+// Fixed NetWare stuff and added #include "sleepdef.h" (which should now 
+// warn if macros are not the same)
 //
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-static const char *id="@(#)$Id: network.cpp,v 1.31 1998/07/18 05:53:10 ziggyb Exp $";
+static const char *id="@(#)$Id: network.cpp,v 1.32 1998/07/26 12:46:12 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -209,16 +214,19 @@ void NetworkDeinitialize(void)
 
 #if defined(NONETWORK)
 
-Network::Network( const char * , const char * , s16 ) { retries = 0; return; }
+Network::Network( const char * , const char * , s16, int ) 
+{ retries = 0; return; } 
 
 #else
 
-Network::Network( const char * Preferred, const char * Roundrobin, s16 Port)
+Network::Network( const char * Preferred, const char * Roundrobin, 
+                  s16 Port, int AutoFindKeyServer )
 {
   // intialize communication parameters
   strncpy(server_name, (Preferred ? Preferred : ""), sizeof(server_name));
   strncpy(rrdns_name, (Roundrobin ? Roundrobin : ""), sizeof(rrdns_name));
   port = (s16) (Port ? Port : DEFAULT_PORT);
+  autofindkeyserver = AutoFindKeyServer;
   mode = startmode = 0;
   retries = 0;
   sock = 0;
@@ -318,42 +326,6 @@ void Network::SetModeSOCKS5(const char *sockshost, s16 socksport,
 
 //////////////////////////////////////////////////////////////////////////////
 
-#if defined(NONETWORK)
-
-s32 Network::Resolve(const char *, u32 & ) { return -1; } 
-
-#else
-
-// returns -1 on error, 0 on success
-s32 Network::Resolve(const char *host, u32 &hostaddress)
-{
-  if ((hostaddress = inet_addr((char*)host)) == 0xFFFFFFFFL)
-  {
-#if (CLIENT_OS == OS_WIN16)
-    struct hostent FAR *hp;
-#else
-    struct hostent *hp;
-#endif
-    if ((hp = gethostbyname((char*)host)) == NULL) return -1;
-
-    int addrcount;
-
-    // randomly select one
-    for (addrcount = 0; hp->h_addr_list[addrcount]; addrcount++);
-    int index = rand() % addrcount;
-#if (CLIENT_OS == OS_WIN16)
-    _fmemcpy((void*) &hostaddress, (void FAR*) hp->h_addr_list[index], sizeof(u32));
-#else
-    memcpy((void*) &hostaddress, (void*) hp->h_addr_list[index], sizeof(u32));
-#endif
-  }
-  return 0;
-}
-
-#endif //NONETWORK
-
-//////////////////////////////////////////////////////////////////////////////
-
 void Network::LogScreen ( const char * text) const
 {
 #if (CLIENT_OS == OS_NETWARE)
@@ -426,21 +398,34 @@ s32 Network::Open( void )
   if (lastaddress == 0)
   {
     const char * hostname;
-    if (mode & MODE_PROXIED) hostname = httpproxy;
+    if (mode & MODE_PROXIED) 
+      {
+      hostname = httpproxy;
+      lastport = httpport;
+      }
     else
-    {
-      hostname = (retries < 4 ? server_name : rrdns_name);
-      if (!hostname[0]) {
+      {
+      lastport = port;
+      if ( retries < 4 )
+        hostname = server_name;
+      else
+        {
+        hostname = rrdns_name;
+        autofindkeyserver = 1;
+        }
+      if (!hostname[0]) 
+        {
+        autofindkeyserver = 1;
         hostname = DEFAULT_RRDNS;
         lastport = DEFAULT_PORT;
-      } else lastport = port;
-    }
+        } 
+      }
 
 #ifdef VERBOSE_OPEN
     sprintf(logstr,"Connecting to %s...\n",hostname);
     LogScreen(logstr);
 #endif
-    if (Resolve(hostname, lastaddress) < 0)
+    if (Resolve(hostname, lastaddress ) < 0)
     {
       lastaddress = 0;
       close(sock);
@@ -459,17 +444,26 @@ s32 Network::Open( void )
   if ((mode & MODE_PROXIED) && (lasthttpaddress == 0))
   {
     const char * hostname;
-    hostname = (retries < 4 ? server_name : rrdns_name);
-    if (!hostname[0]) {
+    lastport = httpport;
+    if ( retries < 4 )
+      hostname = server_name;
+    else
+      {
+      hostname = rrdns_name;
+      autofindkeyserver = 1;
+      }
+    if (!hostname[0]) 
+      {
+      autofindkeyserver = 1;
       hostname = DEFAULT_RRDNS;
       lastport = DEFAULT_PORT;
-    } else lastport = port;
+      } 
 
 #ifdef VERBOSE_OPEN
     sprintf(logstr,"Connecting to %s...\n",hostname);
     LogScreen(logstr);
 #endif
-    if (Resolve(hostname, lasthttpaddress) < 0)
+    if (Resolve(hostname, lasthttpaddress ) < 0)
     {
       lasthttpaddress = 0;
 
@@ -494,7 +488,7 @@ s32 Network::Open( void )
   struct sockaddr_in sin;
   memset((void *) &sin, 0, sizeof(sin));
   sin.sin_family = AF_INET;
-  sin.sin_port = htons((mode & MODE_PROXIED) ? httpport : lastport);
+  sin.sin_port = htons( lastport ); //(mode & MODE_PROXIED) ? httpport : lastport);
   sin.sin_addr.s_addr = lastaddress;
 
 
@@ -1216,3 +1210,4 @@ char * Network::base64_encode(char *username, char *password)
 
 //////////////////////////////////////////////////////////////////////////////
 
+#include "netres.cpp"
