@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.23 2000/06/05 18:01:07 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.24 2000/06/13 00:22:32 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -114,16 +114,9 @@ static FILE *__fopenlog( const char *fn, const char *mode )
   unsigned int len = strlen(logstatics.basedir);
   if ((len + strlen(fn) +1) < sizeof(logstatics.basedir))
   {
-    #if (CLIENT_OS == OS_MACOS)
-    OSType old_ftype = __gettype(0);
-    _ftype = 'RC5L';
-    #endif
     strcat( logstatics.basedir, fn );
     file = fopen( logstatics.basedir, mode );
     logstatics.basedir[len] = '\0';
-    #if (CLIENT_OS == OS_MACOS)
-    _ftype = old_ftype;
-    #endif
   }
   return file;
 }
