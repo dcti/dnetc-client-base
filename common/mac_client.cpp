@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mac_client.cpp,v $
+// Revision 1.3  1998/12/16 15:57:17  sampo
+// MODEREQ_FFORCE doesn't do anything different from normal force/flush, so Irecycled it as MODEREQ_FQUIET for use with non-interactive BufferUpdate()
+//
 // Revision 1.2  1998/12/15 07:01:49  dicamillo
 // Use "_" instead of "/" in Mac header file names for CVS.
 //
@@ -11,7 +14,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *mac_client_cpp(void) {
-return "@(#)$Id: mac_client.cpp,v 1.2 1998/12/15 07:01:49 dicamillo Exp $"; }
+return "@(#)$Id: mac_client.cpp,v 1.3 1998/12/16 15:57:17 sampo Exp $"; }
 #endif
 
 // This file contains the routines added to the Client class for the Mac_Client
@@ -149,7 +152,7 @@ s32 Mac_Client::Startup( int argc, char *argv[] )
     else if ( strcmp( argv[1], "-update" ) == 0 )
     {
         ModeReqClear(-1); //clear all - only do -fetch/-flush/-update
-        ModeReqSet( MODEREQ_FETCH | MODEREQ_FLUSH | MODEREQ_FFORCE );
+        ModeReqSet( MODEREQ_FETCH | MODEREQ_FLUSH | MODEREQ_FQUIET );
 		do_modes = true;
     }
     else if ( strcmp( argv[1], "-runoffline" ) == 0 )
