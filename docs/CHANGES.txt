@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.119 2002/04/21 08:17:08 zebe Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.120 2002/05/05 22:32:38 andreasb Exp $
 ==========================================================================
 
 2.8000
@@ -30,6 +30,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.119 2002/04/21 08:17:08 zebe Exp $
 2.8018.472  fix: macosx: fix crash in battery pause code from #2465 (#2615)
             fix: macosx: config menu displayed erroneous message that pause
                          on battery was not supported.
+            fix: win32: core throughput: summary column not zeroed (#2630)
 
 2.8017.471  (not publicly released)
             new: x86: P4 RC5 core (ak-p7)

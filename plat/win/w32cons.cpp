@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.1.2.10 2002/04/12 23:56:51 andreasb Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.1.2.11 2002/05/05 22:33:59 andreasb Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -2277,8 +2277,8 @@ static void __ShadeRect(HDC hDC, const RECT *lpRect, BOOL dark)
 
 #define GRAPH_DIALOG        2
 #define IDC_PROJLIST      101
-#define IDC_CURRATE   102
-#define IDC_GRAPH     103
+#define IDC_CURRATE       102
+#define IDC_GRAPH         103
 #define IDC_CRUNCHCOUNT   104
 #define IDC_AMP_FRAME     105
 #define IDC_AMP           106
@@ -2648,7 +2648,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
             if (numcrunchers != dd->cdata[cont_i].numcrunchers)
               crunch_count_change = 1;
             if (cont_i != ((unsigned int)dd->timer_cont_sel))
-              buffers_changed  = 1;
+              buffers_changed = out_buffer_changed = 1;
 
             if (!IsProblemLoadPermitted(-1, cont_i))
             {
