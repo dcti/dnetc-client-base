@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.13 2000/11/06 02:18:49 mfeiri Exp $
+ * $Id: ogr.cpp,v 1.1.2.14 2000/11/06 12:24:54 oliver Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +52,7 @@
       #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
       #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* GCC does benefit */
       #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
-      #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* GCC is better    */
+      #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* use switch_asm   */
     #else
       #error play with the defines to find optimal settings for your compiler
     #endif
