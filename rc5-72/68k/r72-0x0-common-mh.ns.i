@@ -3,14 +3,14 @@
 | Any other distribution or use of this source violates copyright.
 
 | $VER: MC680x0 RC5 core common definitions 04-Feb-2001
-| $Id: r72-0x0-common-mh.ns.i,v 1.1.2.1 2003/08/09 12:31:30 mweiser Exp $
+| $Id: r72-0x0-common-mh.ns.i,v 1.1.2.2 2004/05/15 08:31:09 mweiser Exp $
 
 | MC680x0 RC5 core common definitions
 | for distributed.net RC5-64 clients.
 |
 | Written by John Girvin <girv@girvnet.org.uk>
 | Adapted to funny NeXTstep assembler syntax by
-|  Michael Weiser <michael@weiser.saale-net.de>
+|  Michael Weiser <michael@weiser.dinsnail.net>
 
 | --------------------
 | Constants

@@ -17,7 +17,7 @@
  * Fine-grained locking results in a very short time spent while holding a
  * lock, so there is a low probability of collision (finding a lock busy).
  *
- * 2003-08-29 Michael Weiser <michael@weiser.saale-net.de> cleanup:
+ * 2003-08-29 Michael Weiser <michael@weiser.dinsnail.net> cleanup:
  *
  * fastlock_t used to be a structure with one volatile element. The
  * element being declared volatile ensured that compiler optimisations
@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.23 2004/04/29 18:19:11 oliver Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.24 2004/05/15 08:31:09 mweiser Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */

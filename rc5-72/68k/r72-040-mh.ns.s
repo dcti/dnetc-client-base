@@ -7,11 +7,14 @@
 |
 | Malcolm Howell <coreblimey@rottingscorpion.com>, 29th Jan 2003
 | Adapted to funny NeXTstep assembler syntax by
-|  Michael Weiser <michael@weiser.saale-net.de>
+|  Michael Weiser <michael@weiser.dinsnail.net>
 |
-| $Id: r72-040-mh.ns.s,v 1.1.2.1 2003/08/09 12:25:27 mweiser Exp $
+| $Id: r72-040-mh.ns.s,v 1.1.2.2 2004/05/15 08:31:09 mweiser Exp $
 |
 | $Log: r72-040-mh.ns.s,v $
+| Revision 1.1.2.2  2004/05/15 08:31:09  mweiser
+| new email address
+|
 | Revision 1.1.2.1  2003/08/09 12:25:27  mweiser
 | add NeXTstep as versions of 68k assembler cores
 |
