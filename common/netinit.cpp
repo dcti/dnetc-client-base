@@ -10,6 +10,11 @@
 //
 //
 // $Log: netinit.cpp,v $
+// Revision 1.22  1999/02/03 03:36:33  cyp
+// worked around strange behaviour by WSAStartup()/WSAShutdown() when used in
+// a winNT/service environment (causing sporadic client quit by crash after
+// net i/o) by allowing those two functions to be called only once.
+//
 // Revision 1.21  1999/02/01 18:02:44  cyp
 // undid last SillyB change. (so, whats new?)
 //
@@ -84,7 +89,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.21 1999/02/01 18:02:44 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.22 1999/02/03 03:36:33 cyp Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -100,7 +105,9 @@ return "@(#)$Id: netinit.cpp,v 1.21 1999/02/01 18:02:44 cyp Exp $"; }
 #if (CLIENT_OS == OS_MACOS)
   Boolean myNetInit(void);
 #endif
+
 //--------------------------------------------------------------------------
+
 
 /*
   __netInitAndDeinit( ... ) combines both init and deinit so statics can
@@ -112,17 +119,19 @@ return "@(#)$Id: netinit.cpp,v 1.21 1999/02/01 18:02:44 cyp Exp $"; }
 static struct Library *SocketBase;
 #endif
 
+static unsigned int net_init_level = 0;
+
+
 static int __netInitAndDeinit( int doWhat )  
 {                                            
-  static unsigned int initializationlevel = 0;
   int success = 1;
 
-  if (( doWhat < 0 ) && ( initializationlevel == 0 ))
+  if (( doWhat < 0 ) && ( net_init_level == 0 ))
     {
     Log("Squawk! Unbalanced Network Init/Deinit!\n");
     abort();
     }
-  else if (( doWhat == 0 ) && ( initializationlevel == 0 ))
+  else if (( doWhat == 0 ) && ( net_init_level == 0 ))
     return 0;  //isOK() always returns 0 if we are not initialized
 
   //----------------------------
@@ -147,18 +156,18 @@ static int __netInitAndDeinit( int doWhat )
     {
     if ( doWhat == 0 )     //query online mode
       {
-      return 1;			// for now, always online
+      return 1;                 // for now, always online
       }
     else if (doWhat > 0)   //init request
       {
       success = myNetInit();
       if (success)
-        initializationlevel++;
+        net_init_level++;
       }
     else                   //de-init request
       {
       success = 1;
-      initializationlevel--;
+      net_init_level--;
       }
     }
   #define DOWHAT_WAS_HANDLED
@@ -177,12 +186,12 @@ static int __netInitAndDeinit( int doWhat )
       {
       success = nwCliIsNetworkAvailable(0); //test if online
       if (success)
-        initializationlevel++;
+        net_init_level++;
       }
     else                   //de-init request
       {
       success = 1;
-      initializationlevel--;
+      net_init_level--;
       }
     }
   #define DOWHAT_WAS_HANDLED
@@ -199,16 +208,16 @@ static int __netInitAndDeinit( int doWhat )
       }
     else if (doWhat > 0)                  //request to initialize
       {
-      if ((++initializationlevel)!=1)     //don't initialize more than once
+      if ((++net_init_level)!=1)     //don't initialize more than once
         success = 1;
       else if ((success = w32sockInitialize()) == 0)
-        --initializationlevel;
+        --net_init_level;
       }
     else if (doWhat < 0)
       {
-      if ((--initializationlevel)==0) //don't deinitialize more than once
+      if ((--net_init_level)==0) //don't deinitialize more than once
         w32sockDeinitialize();
-     success = 1;
+      success = 1;
       }
     }
   #define DOWHAT_WAS_HANDLED
@@ -230,40 +239,30 @@ static int __netInitAndDeinit( int doWhat )
       }
     else if (doWhat > 0)                  //request to initialize
       {
-      if ((++initializationlevel)!=1)     //don't initialize more than once
+      if ((++net_init_level)!=1)     //don't initialize more than once
         success = 1;
       else
-          {
-        WSADATA wsaData;
-        success = 0;
-        if ( WSAStartup( 0x0101, &wsaData ) == 0 )
-          {
-          success = 1; 
-          #if defined(LURK)
-          if ( dialup.DialIfNeeded(1) < 0 )
-            {
-            success = 0;
-            WSACleanup();  // cleanup because we won't be called to deinit
-            }
-          #endif
-          }
+        {
+        success = 1; 
+        #if defined(LURK)
+        if ( dialup.DialIfNeeded(1) < 0 )
+          success = 0;
+        #endif
         if (!success)
           {
-          --initializationlevel;
+          --net_init_level;
           }
         }
       }
     else //if (doWhat < 0) //request to de-initialize
       {
-      if ((--initializationlevel)!=0) //don't deinitialize more than once
+      if ((--net_init_level)!=0) //don't deinitialize more than once
         success = 1;
       else
         {
         #if defined(LURK)
         dialup.HangupIfNeeded();
         #endif
-
-        WSACleanup();
         success = 1;
         }
       }
@@ -287,13 +286,13 @@ static int __netInitAndDeinit( int doWhat )
       }
     else if (doWhat > 0)                 //request to initialize
       {
-      if ((++initializationlevel)!=1) //don't initialize more than once
+      if ((++net_init_level)!=1) //don't initialize more than once
         success = 1;
       else
         {
-    #if !defined(__EMX__)
+        #if !defined(__EMX__)
         sock_init();
-    #endif
+        #endif
         success = 1;
 
         #if defined(LURK)
@@ -304,7 +303,7 @@ static int __netInitAndDeinit( int doWhat )
       }
     else //if (doWhat < 0) //request to de-initialize
       {
-      if ((--initializationlevel)!=0) //don't deinitialize more than once
+      if ((--net_init_level)!=0) //don't deinitialize more than once
         success = 1;
       else
         {
@@ -331,7 +330,7 @@ static int __netInitAndDeinit( int doWhat )
       }
     else if (doWhat > 0)   //request to initialize
       {
-      if ((++initializationlevel)!=1) //don't initialize more than once
+      if ((++net_init_level)!=1) //don't initialize more than once
         success = 1;
       else
           {
@@ -343,13 +342,13 @@ static int __netInitAndDeinit( int doWhat )
           {
           LogScreen("Network::Failed to open " SOCK_LIB_NAME "\n");
           success = 0;
-          initializationlevel--;
+          net_init_level--;
           }
         }
       }
     else //if (doWhat < 0) //request to de-initialize
       {
-      if ((--initializationlevel)!=0) //don't deinitialize more than once
+      if ((--net_init_level)!=0) //don't deinitialize more than once
         success = 1;
       else 
         {
@@ -379,12 +378,12 @@ static int __netInitAndDeinit( int doWhat )
       #ifdef SOCKS
       LIBPREFIX(init)("rc5-client");
       #endif
-      initializationlevel++;
+      net_init_level++;
       success = 1;
       }
     else //if (doWhat < 0) //request to de-initialize
       {
-      initializationlevel--;
+      net_init_level--;
       success = 1;
       }
     }
@@ -395,9 +394,56 @@ static int __netInitAndDeinit( int doWhat )
   return ((success) ? (0) : (-1));
 }  
 
-
 //======================================================================
 
+//  __globalInitAndDeinit() gets called once (to init) when the 
+// client starts and once (to deinit) when the client stops.
+
+static int __globalInitAndDeinit( int doWhat )
+{
+  static unsigned int global_is_init = 0;
+  int success = 1; //assume ok
+
+  if (doWhat > 0)                            //initialize
+    {
+    if (global_is_init == 0)
+      {
+      global_is_init = 1; //assume all success
+      #if (CLIENT_OS == OS_WIN32)
+      WSADATA wsaData;
+      if ( WSAStartup( 0x0101, &wsaData ) != 0 )
+        global_is_init = 0;
+      #endif  
+
+      #ifdef LURK
+      if (global_is_init != 0)
+      dialup.Start();
+      #endif
+      }
+    success = (global_is_init != 0);
+    }
+  else if (doWhat < 0)                      //deinitialize
+    {
+    if (global_is_init != 0)
+      {
+      #ifdef LURK
+      dialup.Stop();
+      #endif
+
+      #if (CLIENT_OS == OS_WIN32)
+      WSACleanup();
+      #endif
+      global_is_init = 0;
+      }
+    }
+  else //if (doWhat == 0)                   //query state
+    {
+    success = (global_is_init != 0);
+    }
+  return ((success == 0)?(-1):(0));
+}
+
+//======================================================================
 
 int NetCheckIsOK(void)
 {
@@ -428,6 +474,10 @@ Network *NetOpen( const char *servname, int servport,
 {
   Network *net;
   int success;
+
+  //check if connectivity has been initialized
+  if (__globalInitAndDeinit( 0 ) < 0)
+    return NULL;
   
   // do platform specific socket init
   if ( __netInitAndDeinit( +1 ) < 0)
@@ -456,3 +506,14 @@ Network *NetOpen( const char *servname, int servport,
 
 //----------------------------------------------------------------------
 
+int InitializeConnectivity(void)
+{
+  __globalInitAndDeinit( +1 );
+  return 0; //don't care about errors - NetOpen will handle that
+}
+ 
+int DeinitializeConnectivity(void)
+{
+  __globalInitAndDeinit( -1 );
+  return 0;
+}
