@@ -1,6 +1,6 @@
 
  distributed.net client for Win32 (Win9x/WinNT/Win32s)
- document revision $Id: readme.w32,v 1.1.2.6 1999/11/25 01:58:08 cyp Exp $
+ document revision $Id: readme.w32,v 1.1.2.7 1999/12/29 18:25:41 cyp Exp $
 
  Welcome to the distributed.net client.
 
@@ -281,6 +281,11 @@
        do not request "big-block"s from the keyservers (ensure 
        'preferred-packet-size' is less than 32). Read the general FAQ 
        for specifics.
+       SAMBA note: Samba supports "opportunistic locking", which implies
+       that the Samba client's view of the remote volume is cached. This
+       option is on by default. Consequently, if you are accessing data 
+       on a samba mount both via Samba and via the native-FS, you *must* 
+       "veto oplock <paths>" in your Samba configuration.
 
     Q: How do I completely remove the this client from my system?
     A: First run the client with the '-uninstall' switch to ensure that 
