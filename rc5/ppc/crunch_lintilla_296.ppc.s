@@ -1,5 +1,11 @@
 #
 # $Log: crunch_lintilla_296.ppc.s,v $
+# Revision 1.3.2.4  2001/03/29 21:52:15  oliver
+# no longer assume the code was called with PowerOpen calling conventions -
+# i.e. the r3/r4 parameters are now saved on local stack, instead of in
+# the parameter save area (which doesn't exist when System V.4 calling
+# conventions are used, in this case) in the caller's stack frame.
+#
 # Revision 1.3.2.3  2000/06/20 15:08:54  oliver
 # ensure main loop starts on 8-byte boundary for optimum cache performance (on
 # a 603e, at least, but can do no harm for other PPC processors too)
@@ -81,12 +87,12 @@ crunch_lintilla:
 
 # Local_Frame struct: stack frame and local variables
 .set frame_new,0	# save SP
-.set save_CR,4		# save CR
+#.set save_CR,4		# save CR
 .set save_RTOC,20	# save RTOC
 
 # local variables
-#.set param1, 24	# 24(SP) pass parameters here
-#.set param2, 28	# 28(SP) ...
+.set work_ptr, 24
+.set iterations, 28
 .set count, 32
 .set P_0, 36
 .set P_1, 40
@@ -136,7 +142,8 @@ crunch_lintilla:
 .set Ss_13, 216
 .set Ss_14, 220
 
-# old stack frame
+# old stack frame - do not rely on this, since it will be different
+# depending on the calling conventions (PowerOpen or System V.4 ABI)
    # -76+frame(SP)	saved GPR13-31
 .set frame_old, 300	# 0+frame(SP)	old SP pointed here
    # 4+frame(SP)	save CR
@@ -144,9 +151,9 @@ crunch_lintilla:
    # 12+frame(SP)	reserved
    # 16+frame(SP)	reserved
    # 20+frame(SP)	callers RTOC
-# calling parameter storage
-.set work_ptr, 324	# 24+frame(SP)
-.set iterations, 328	# 28+frame(SP)
+# calling parameter storage (PowerOpen only)
+#.set work_ptr, 324	# 24+frame(SP)
+#.set iterations, 328	# 28+frame(SP)
 
 # register aliases
 

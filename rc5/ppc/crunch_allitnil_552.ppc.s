@@ -1,5 +1,11 @@
 #
 # $Log: crunch_allitnil_552.ppc.s,v $
+# Revision 1.3.2.3  2001/03/29 21:52:15  oliver
+# no longer assume the code was called with PowerOpen calling conventions -
+# i.e. the r3/r4 parameters are now saved on local stack, instead of in
+# the parameter save area (which doesn't exist when System V.4 calling
+# conventions are used, in this case) in the caller's stack frame.
+#
 # Revision 1.3.2.2  2000/01/03 14:34:00  patrick
 #
 # GCC on AIX needs the #defines. Please keep 'em.
@@ -82,17 +88,17 @@ crunch_allitnil:
 .set r31, 31
 
 .set SP, r1
-
-.set iterations, 28
-.set work_ptr, 24		
+		
 .set save_RTOC, -80
 .set count, -84
 .set P_0, -88
 .set P_1, -92
 # .set C_0, -96
 .set C_1, -100
-.set L0_0, -104
-.set L0_1, -108
+#.set L0_0, -104
+#.set L0_1, -108
+.set iterations, -104
+.set work_ptr, -108
 .set Sr_0, -112
 .set Sr_1, -116
 .set con0, -120
