@@ -128,15 +128,17 @@ Client::Client()
   strcpy(ini_logname, "none");
   cputype=-1;
   offlinemode = 0;
-  strcpy(inifilename, InternalGetLocalFilename("rc5des.ini"));
-  strcpy(in_buffer_file[0], InternalGetLocalFilename("buff-in.rc5"));
-  strcpy(ini_in_buffer_file[0], "buff-in.rc5");
-  strcpy(out_buffer_file[0], InternalGetLocalFilename("buff-out.rc5"));
-  strcpy(ini_out_buffer_file[0], "buff-out.rc5");
-  strcpy(ini_in_buffer_file[1], "buff-in.des");
-  strcpy(ini_out_buffer_file[1], "buff-out.des");
-  strcpy(exit_flag_file, InternalGetLocalFilename("exitrc5.now"));
-  strcpy(ini_exit_flag_file, "exitrc5.now");
+  strcpy(inifilename, InternalGetLocalFilename("rc5des" EXTN_SEP "ini"));
+  strcpy(in_buffer_file[0], InternalGetLocalFilename("buff-in" EXTN_SEP "rc5"));
+  strcpy(ini_in_buffer_file[0], "buff-in" EXTN_SEP "rc5");
+  strcpy(out_buffer_file[0], InternalGetLocalFilename("buff-out" EXTN_SEP "rc5"));
+  strcpy(ini_out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
+  strcpy(in_buffer_file[1], InternalGetLocalFilename("buff-in" EXTN_SEP "des"));
+  strcpy(ini_in_buffer_file[1], "buff-in" EXTN_SEP "des");
+  strcpy(out_buffer_file[0], InternalGetLocalFilename("buff-out" EXTN_SEP "des"));
+  strcpy(ini_out_buffer_file[1], "buff-out" EXTN_SEP "des");
+  strcpy(exit_flag_file, InternalGetLocalFilename("exitrc5" EXTN_SEP "now"));
+  strcpy(ini_exit_flag_file, "exitrc5" EXTN_SEP "now");
   messagelen = 0;
   smtpport = 25;
   strcpy(smtpsrvr,"your.smtp.server");
@@ -2455,7 +2457,7 @@ PreferredIsDone1:
         exitchecktime = time( NULL ) + exitfilechecktime; // At most once every 30 seconds by default
         if( stat( exit_flag_file, &buf ) != -1 )
         {
-          Log( "[%s] Found \"exitrc5.now\" file.  Exiting.\n", Time() );
+          Log( "[%s] Found \"exitrc5" EXTN_SEP "now\" file.  Exiting.\n", Time() );
           TimeToQuit = 1;
           exitcode = 2;
         }
@@ -2830,15 +2832,15 @@ int main( int argc, char *argv[] )
   s32 inimissing;
   int i;
 
-  // This is the main client object.  'Static' since allocating such
-  // large objects off of the stack may cause problems for some and
-  // also the NT Service keeps a pointer to it.
-  static Client client;
-
 #if (CLIENT_OS == OS_RISCOS)
   riscos_in_taskwindow = riscos_check_taskwindow();
   if (riscos_find_local_directory(argv[0])) return -1;
 #endif
+
+  // This is the main client object.  'Static' since allocating such
+  // large objects off of the stack may cause problems for some and
+  // also the NT Service keeps a pointer to it.
+  static Client client;
 
 #if (CLIENT_OS == OS_NETWARE) // create stdout/screen, set cwd etc.
   // and save pointer to client so functions in netware.cpp can get at the
@@ -2861,7 +2863,7 @@ int main( int argc, char *argv[] )
   #ifndef DJGPP // __WATCOM__ || __TURBOC__ || MSVC
     char fndrive[_MAX_DRIVE], fndir[_MAX_DIR], fname[_MAX_FNAME], fext[_MAX_FNAME];
     _splitpath(argv[0], fndrive, fndir, fname, fext);
-    _makepath(client.inifilename, fndrive, fndir, fname, ".ini");
+    _makepath(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
     strcpy(client.exepath, fndrive);   // have the drive
     strcat(client.exepath, fndir);     // append dir for fully qualified path
     strcpy(client.exename, fname);     // exe filename
@@ -2869,7 +2871,7 @@ int main( int argc, char *argv[] )
   #elif defined(DJGPP)
     char fndrive[MAXDRIVE], fndir[MAXDIR], fname[MAXFILE], fext[MAXEXT];
     fnsplit(argv[0], fndrive, fndir, fname, fext);
-    fnmerge(client.inifilename, fndrive, fndir, fname, ".ini");
+    fnmerge(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
     strcpy(client.exepath, fndrive);   // have the drive
     strcat(client.exepath, fndir);     // append dir for fully qualified path
     strcpy(client.exename, fname);     // exe filename
@@ -2893,16 +2895,12 @@ int main( int argc, char *argv[] )
       if (slash) *(slash+1) = 0;
       else client.inifilename[0] = 0;
     }
-    strcat( client.inifilename, "rc5des.ini" );
+    strcat( client.inifilename, "rc5des" EXTN_SEP "ini" );
 #elif (CLIENT_OS == OS_VMS)
-    strcpy( client.inifilename, "rc5des.ini" );
-#elif (CLIENT_OS == OS_RISCOS)
-    char *dot = strrchr(argv[0], '.');
-    strcpy( client.inifilename, dot ? dot + 1 : argv[0] );
-    strcat( client.inifilename, "/ini" );
+    strcpy( client.inifilename, "rc5des" EXTN_SEP "ini" );
 #else
     strcpy( client.inifilename, argv[0] );
-    strcat( client.inifilename, ".ini" );
+    strcat( client.inifilename, EXTN_SEP "ini" );
 #endif
   }
 
@@ -2926,14 +2924,13 @@ int main( int argc, char *argv[] )
   {
     char buffer[200];
     strcpy( buffer,client.inifilename );
-    char *slash = strrchr(buffer, '/');
-    slash = max( slash, strrchr(buffer, '\\') );
+    char *slash = strrchr(buffer, PATH_SEP_C);
     if (slash == NULL) {
-      strcpy(client.in_buffer_file[0],"buff-in.rc5");
-      strcpy(client.out_buffer_file[0],"buff-out.rc5");
-      strcpy(client.in_buffer_file[1],"buff-in.des");
-      strcpy(client.out_buffer_file[1],"buff-out.des");
-      strcpy(client.exit_flag_file,"exitrc5.now");
+      strcpy(client.in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
+      strcpy(client.out_buffer_file[0],"buff-out" EXTN_SEP "rc5");
+      strcpy(client.in_buffer_file[1],"buff-in" EXTN_SEP "des");
+      strcpy(client.out_buffer_file[1],"buff-out" EXTN_SEP "des");
+      strcpy(client.exit_flag_file,"exitrc5" EXTN_SEP "now");
     } else {
       *(slash+1) = 0;
       strcpy(client.in_buffer_file[0],buffer);
@@ -2941,11 +2938,11 @@ int main( int argc, char *argv[] )
       strcpy(client.in_buffer_file[1],buffer);
       strcpy(client.out_buffer_file[1],buffer);
       strcpy(client.exit_flag_file,buffer);
-      strcat(client.in_buffer_file[0],"buff-in.rc5");
-      strcat(client.out_buffer_file[0],"buff-out.rc5");
-      strcat(client.in_buffer_file[1],"buff-in.des");
-      strcat(client.out_buffer_file[1],"buff-out.des");
-      strcat(client.exit_flag_file,"exitrc5.now");
+      strcat(client.in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
+      strcat(client.out_buffer_file[0],"buff-out" EXTN_SEP "rc5");
+      strcat(client.in_buffer_file[1],"buff-in" EXTN_SEP "des");
+      strcat(client.out_buffer_file[1],"buff-out" EXTN_SEP "des");
+      strcat(client.exit_flag_file,"exitrc5" EXTN_SEP "now");
     }
   }
 #endif
@@ -3188,7 +3185,7 @@ int main( int argc, char *argv[] )
               "-smtpfrom id Source mailid for mail      -smtpdest id Destination id for mail\n"
               "-ckpoint fn  Set rc5 checkpoint file     -cktime min  Set checkpoint interval\n"
               "-ckpoint2 fn Set des checkpoint file to fn\n"
-              "-nettimeout x Set network timeout to x   -noexitfilecheck No 'exitrc5.now' check\n"
+              "-nettimeout x Set network timeout to x   -noexitfilecheck No 'exitrc5" EXTN_SEP "now' check\n"
               "-pausefile fn Pause when file fn found   -exitfilechecktime t check frequency\n"
 #if (CLIENT_OS == OS_WIN32)
               "-install     Install service             -uninstall   Uninstall service\n"

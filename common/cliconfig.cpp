@@ -196,19 +196,11 @@ static optionstruct options[OPTION_COUNT]=
 ,4,2,2,NULL},
 //23
 { "checkpointfile", CFGTXT("RC5 Checkpoint filename"),"none",
-#if (CLIENT_OS == OS_RISCOS)
-  CFGTXT("\n(Non-shared file required.  ckpoint/rc5 recommended.  'none' to disable)\n")
-#else
-  CFGTXT("\n(Non-shared file required.  ckpoint.rc5 recommended.  'none' to disable)\n")
-#endif
+  CFGTXT("\n(Non-shared file required.  ckpoint" EXTN_SEP "rc5 recommended.  'none' to disable)\n")
   ,1,1,4,NULL},
 //24
 { "checkpointfile2", "DES Checkpoint filename","none",
-#if (CLIENT_OS == OS_RISCOS)
-  CFGTXT("\n(Non-shared file required.  ckpoint/des recommended.  'none' to disable)\n")
-#else
-  CFGTXT("\n(Non-shared file required.  ckpoint.des recommended.  'none' to disable)\n")
-#endif
+  CFGTXT("\n(Non-shared file required.  ckpoint" EXTN_SEP "des recommended.  'none' to disable)\n")
   ,1,1,5,NULL},
 //25
 { "randomprefix", CFGTXT("High order byte of random blocks"),"100",CFGTXT("Do not change this"),0,2,0,NULL},
@@ -267,10 +259,10 @@ static optionstruct options[OPTION_COUNT]=
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n"),
   3,2,10,NULL,&lurkmodetable[0][0],0,2},
-{ "in",  CFGTXT("RC5 In-Buffer Path/Name"), "buff-in.rc5",CFGTXT(""),5,1,14,NULL},
-{ "out", CFGTXT("RC5 Out-Buffer Path/Name"), "buff-out.rc5",CFGTXT(""),5,1,15,NULL},
-{ "in2", CFGTXT("DES In-Buffer Path/Name"), "buff-in.des",CFGTXT(""),5,1,16,NULL},
-{ "out2",CFGTXT("DES Out-Buffer Path/Name"),"buff-out.des",CFGTXT(""),5,1,17,NULL},
+{ "in",  CFGTXT("RC5 In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "rc5",CFGTXT(""),5,1,14,NULL},
+{ "out", CFGTXT("RC5 Out-Buffer Path/Name"), "buff-out" EXTN_SEP "rc5",CFGTXT(""),5,1,15,NULL},
+{ "in2", CFGTXT("DES In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "des",CFGTXT(""),5,1,16,NULL},
+{ "out2",CFGTXT("DES Out-Buffer Path/Name"), "buff-out" EXTN_SEP "des",CFGTXT(""),5,1,17,NULL},
 { "pausefile",CFGTXT("Pausefile name"),"none",CFGTXT("(blank = no pausefile)"),5,1,13,NULL}
 };
 
@@ -786,22 +778,22 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
 #endif
         case CONF_RC5IN:
           strncpy( ini_in_buffer_file[0] , parm, sizeof(ini_in_buffer_file)/2 -1 );
-          if (isstringblank(ini_in_buffer_file[0])) strcpy (ini_in_buffer_file[0],"buff-in.rc5");
+          if (isstringblank(ini_in_buffer_file[0])) strcpy (ini_in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
           strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
           break;
         case CONF_RC5OUT:
           strncpy( ini_out_buffer_file[0] , parm, sizeof(ini_out_buffer_file)/2 -1 );
-          if (isstringblank(ini_out_buffer_file[0])) strcpy (ini_out_buffer_file[0],"buff-out.rc5");
+          if (isstringblank(ini_out_buffer_file[0])) strcpy (ini_out_buffer_file[0],"buff-out" EXTN_SEP "rc5");
           strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
           break;
         case CONF_DESIN:
           strncpy( ini_in_buffer_file[1] , parm, sizeof(ini_in_buffer_file)/2 -1 );
-          if (isstringblank(ini_in_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-in.des");
+          if (isstringblank(ini_in_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-in" EXTN_SEP "des");
           strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
           break;
         case CONF_DESOUT:
           strncpy( ini_out_buffer_file[1] , parm, sizeof(ini_out_buffer_file)/2 -1 );
-          if (isstringblank(ini_out_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-out.des");
+          if (isstringblank(ini_out_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-out" EXTN_SEP "des");
           strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
           break;
         case CONF_PAUSEFILE:
@@ -1257,16 +1249,16 @@ void Client::ValidateConfig( void )
   if ( blockcount < 0 ) blockcount=0;
 
   if (isstringblank(ini_in_buffer_file[0]))
-    strcpy(ini_in_buffer_file[0],"buff-in.rc5");
+    strcpy(ini_in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
   strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
   if (isstringblank(ini_out_buffer_file[0]))
-    strcpy(ini_out_buffer_file[0],"buff-out.rc5");
+    strcpy(ini_out_buffer_file[0],"buff-out" EXTN_SEP "rc5");
   strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
   if (isstringblank(ini_in_buffer_file[1]))
-    strcpy(ini_in_buffer_file[1],"buff-in.des");
+    strcpy(ini_in_buffer_file[1],"buff-in" EXTN_SEP "des");
   strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
   if (isstringblank(ini_out_buffer_file[1]))
-    strcpy(ini_out_buffer_file[1],"buff-out.des");
+    strcpy(ini_out_buffer_file[1],"buff-out" EXTN_SEP "des");
   strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
 
   if (isstringblank(ini_pausefile)) strcpy(ini_pausefile,"none");
@@ -1382,30 +1374,30 @@ void Client::ValidateConfig( void )
     //    (destbuff, destsize, defaultvalue, changetoNONEifempty, source)
 
     CliValidateSinglePath( inifilename, sizeof(inifilename),
-                             "rc5des.ini", 0, inifilename );
+                             "rc5des" EXTN_SEP "ini", 0, inifilename );
     if (!nodiskbuffers)
     {
       CliValidateSinglePath( in_buffer_file[0], sizeof(in_buffer_file[0]),
-                                       "buff-in.rc5", 0, in_buffer_file[0] );
+                                       "buff-in" EXTN_SEP "rc5", 0, in_buffer_file[0] );
       CliValidateSinglePath( out_buffer_file[0], sizeof(out_buffer_file[0]),
-                                       "buff-out.rc5", 0, out_buffer_file[0] );
+                                       "buff-out" EXTN_SEP "rc5", 0, out_buffer_file[0] );
       CliValidateSinglePath( in_buffer_file[1], sizeof(in_buffer_file[1]),
-                                       "buff-out.des", 0, in_buffer_file[1] );
+                                       "buff-out" EXTN_SEP "des", 0, in_buffer_file[1] );
       CliValidateSinglePath( out_buffer_file[1], sizeof(out_buffer_file[1]),
-                                       "buff-out.des", 0, out_buffer_file[1] );
+                                       "buff-out" EXTN_SEP "des", 0, out_buffer_file[1] );
     }
     if (strcmp(exit_flag_file,"none")!=0)
       CliValidateSinglePath( exit_flag_file, sizeof(exit_flag_file),
-                                     "exitrc5.now", 1, exit_flag_file);
+                                     "exitrc5" EXTN_SEP "now", 1, exit_flag_file);
     if (strcmp(pausefile,"none")!=0)
       CliValidateSinglePath( pausefile, sizeof(pausefile),
                                      "none", 1, pausefile);
     if (strcmp(checkpoint_file[0],"none")!=0)
       CliValidateSinglePath( checkpoint_file[0], sizeof(checkpoint_file[0]),
-                                       "ckpoint.rc5", 1, checkpoint_file[0]);
+                                       "ckpoint" EXTN_SEP "rc5", 1, checkpoint_file[0]);
     if (strcmp(checkpoint_file[1],"none")!=0)
       CliValidateSinglePath( checkpoint_file[1], sizeof(checkpoint_file[1]),
-                                       "ckpoint.des", 1, checkpoint_file[1]);
+                                       "ckpoint" EXTN_SEP "des", 1, checkpoint_file[1]);
     if (strlen(logname)!=0)
       CliValidateSinglePath( logname, sizeof(logname), "", 0, logname);
   }

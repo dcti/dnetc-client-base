@@ -95,14 +95,6 @@ extern "C" {
     extern int riscos_find_local_directory(const char *argv0);
     extern char *riscos_localise_filename(const char *filename);
 
-    extern int my_stat(const char *filename, struct stat *buf);
-    extern FILE *my_fopen(const char *filename, const char *mode);
-    extern int my_unlink(const char *filename);
-
-    #define fopen(f,m) my_fopen(f,m)
-    #define unlink(f) my_unlink(f)
-    #define stat(f,s) my_stat(f,s)
-
     #define fileno(f) ((f)->__file)
     #define isatty(f) ((f) == 0)
     }
@@ -251,6 +243,28 @@ struct timezone
 #endif
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16)
+#define PATH_SEP   "\\"
+#define PATH_SEP_C '\\'
+#define EXTN_SEP   "."
+#define EXTN_SEP_C '.'
+#elif (CLIENT_OS == OS_MACOS)
+#define PATH_SEP   ":"
+#define PATH_SEP_C ':'
+#define EXTN_SEP   "."
+#define EXTN_SEP_C '.'
+#elif (CLIENT_OS == OS_RISCOS)
+#define PATH_SEP   "."
+#define PATH_SEP_C '.'
+#define EXTN_SEP   "/"
+#define EXTN_SEP_C '/'
+#else
+#define PATH_SEP   "/"
+#define PATH_SEP_C '/'
+#define EXTN_SEP   "."
+#define EXTN_SEP_C '.'
+#endif
+
 // --------------------------------------------------------------------------
 
 typedef enum
@@ -338,7 +352,7 @@ typedef struct
   u64  iterations;        // iterations to do
   u32  op;                // (out)OP_SUCCESS, (out)OP_DONE, or (in)OP_DATA
   char id[59];            // email address of original worker...
-  u8   contest;           // 
+  u8   contest;           //
   u8   cpu;               // added 97.11.25
   u8   os;                // added 97.11.25
   u8   buildhi;           // added 97.11.25

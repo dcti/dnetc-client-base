@@ -62,11 +62,6 @@ extern "C" {
 }
 #endif
 
-#if (CLIENT_OS == OS_RISCOS)
-  #define fopen(f,m) my_fopen(f,m)
-  extern "C" FILE *my_fopen(const char *, const char *);
-#endif
-
 #define IniNULL IniString()
 
 class ostream;
