@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.96 1999/05/01 00:06:31 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.97 1999/05/04 04:12:50 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -97,8 +97,8 @@ struct thread_param_block
 
 // ----------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS) || \
-    (CLIENT_OS == OS_WIN16)
+#if (CLIENT_OS == OS_NETWARE) || /* (CLIENT_OS == OS_WIN16) || */ \
+     (CLIENT_OS == OS_RISCOS) 
 
 #define NON_PREEMPTIVE_OS
 
@@ -604,10 +604,17 @@ if (targ->realthread)
       static struct 
       {  unsigned int contest; u32 msec, max, min; volatile u32 optimal;
       } dyn_timeslice[CONTEST_COUNT] = {
+      #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+        {  RC5,   55, 0x80000000,  0x00100,  0x00100 }, /* 165 too laggy */
+        {  DES,   55, 0x80000000,  0x00100,  0x00100 },
+        {  OGR,    OGR_TIMESLICE_MSEC, OGR_TIMESLICE_MAX, 0x0100,  0x1000 },
+        {  CSC,   55, 0x80000000,  0x00100,  0x00100 }
+      #else
         {  RC5, 1000, 0x80000000,  0x00100,  0x10000 },
         {  DES, 1000, 0x80000000,  0x00100,  0x10000 },
         {  OGR,    OGR_TIMESLICE_MSEC, OGR_TIMESLICE_MAX, 0x0100,  0x1000 },
         {  CSC, 1000, 0x80000000,  0x00100,  0x10000 }
+      #endif
       };  
       int run; u32 optimal_timeslice = 0; u32 runtime_ms;
       unsigned int contest_i = thisprob->contest;
@@ -642,23 +649,30 @@ if (targ->realthread)
         runstatics.refillneeded = 1;
         if (!didwork && targ->realthread)
           yield_pump(NULL);
+        #if defined(DYN_TIMESLICE_SHOWME)
+        LogScreen("timeslice: %ld  time: %ldms  working? %d\n",(long)optimal_timeslice, (long)runtime_ms, (run==RESULT_WORKING) );
+        #endif
       }
       
       if (optimal_timeslice != 0) /* we are profiling for preemptive OSs */
       {
+        #if ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN16S)) /* not quite */
+        yield_pump(NULL);
+        #endif
         optimal_timeslice = thisprob->tslice; /* get the number done back */
-#if defined(DYN_TIMESLICE_SHOWME)
-printf("timeslice: %ld  time: %ldms  working? %d\n",(long)optimal_timeslice, (long)runtime_ms, (run==RESULT_WORKING) );
-#endif
+        #if defined(DYN_TIMESLICE_SHOWME)
+        //LogScreen("timeslice: %ld  time: %ldms  working? %d\n",(long)optimal_timeslice, (long)runtime_ms, (run==RESULT_WORKING) );
+        #endif
         if (run == RESULT_WORKING) /* timeslice/time is invalid otherwise */
         {
-          if (runtime_ms < (dyn_timeslice[contest_i].msec /* >>1 */))
+          unsigned int msec5perc = (dyn_timeslice[contest_i].msec / 20);
+          if (runtime_ms < (dyn_timeslice[contest_i].msec - msec5perc))
           {
             optimal_timeslice <<= 1;
             if (optimal_timeslice > dyn_timeslice[contest_i].max)
               optimal_timeslice = dyn_timeslice[contest_i].max;
           }
-          else if (runtime_ms > (dyn_timeslice[contest_i].msec /* <<1 */))
+          else if (runtime_ms > (dyn_timeslice[contest_i].msec + msec5perc))
           {
             optimal_timeslice -= (optimal_timeslice>>2);
             if (optimal_timeslice == 0)
