@@ -8,9 +8,12 @@
 #
 # Based in part on "Lintilla" core for RC5-64 by Dan Oetting
 #
-# $Id: r72-603e-mh-1-addi.gas.s,v 1.1.2.1 2003/04/03 22:24:00 oliver Exp $
+# $Id: r72-603e-mh-1-addi.gas.s,v 1.1.2.2 2003/04/05 09:53:54 oliver Exp $
 #
 # $Log: r72-603e-mh-1-addi.gas.s,v $
+# Revision 1.1.2.2  2003/04/05 09:53:54  oliver
+# support coff and a.out output formats, as well as elf
+#
 # Revision 1.1.2.1  2003/04/03 22:24:00  oliver
 # new core from Malcolm Howell (1-pipe lintilla-alike), with a 604e
 # optimized version from Roberto Ragusa - fastest cores in testing on
@@ -21,11 +24,9 @@ gcc2_compiled.:
 
 .section    .text
 
-#if (CLIENT_OS == OS_AIX)
-.globl  .rc5_72_unit_func_mh603e_addi
-#else
-.globl  rc5_72_unit_func_mh603e_addi
-#endif
+.globl  rc5_72_unit_func_mh603e_addi	# elf
+.globl  .rc5_72_unit_func_mh603e_addi	# coff
+.globl  _rc5_72_unit_func_mh603e_addi	# a.out
 
 # Register aliases
 
@@ -188,12 +189,9 @@ gcc2_compiled.:
 #            r4 = u32 * iterations
 #           (r5 = void * memblk -- unused)
 
-#if (CLIENT_OS == OS_AIX)
-.rc5_72_unit_func_mh603e_addi:
-#else
-rc5_72_unit_func_mh603e_addi:
-#endif
-
+rc5_72_unit_func_mh603e_addi:	# elf
+.rc5_72_unit_func_mh603e_addi:	# coff
+_rc5_72_unit_func_mh603e_addi:	# a.out
     stwu    r1,-var_size(r1)
     stmw    r13,save_regs(r1)
 
