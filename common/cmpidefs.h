@@ -7,8 +7,11 @@
 /*
 * Generic strcmpi and strncmpi macros
 */
-//  
+//
 // $Log: cmpidefs.h,v $
+// Revision 1.17  1999/01/28 00:11:19  trevorh
+// Added support for IBM VA C++
+//
 // Revision 1.16  1999/01/27 00:36:58  jlawson
 // added sys/types.h for riscos
 //
@@ -83,6 +86,8 @@
     #define strncmpi(x,y,n)  _strnicmp(x,y,n)
   #elif defined(__WATCOMC__)
     // already knows strcmpi
+    #define strncmpi(x,y,n)  strnicmp(x,y,n)
+  #elif defined(__IBMCPP__)
     #define strncmpi(x,y,n)  strnicmp(x,y,n)
   #else
     //nada. Let the compiler generate the error if needed
