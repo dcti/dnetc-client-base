@@ -491,9 +491,6 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
         case CONF_LOGNAME:
           strncpy( ini_logname, parm, sizeof(ini_logname) - 1 );
           if (isstringblank(ini_logname)) strcpy (ini_logname,"none");
-          if (strcmpi(ini_logname,"none") != 0)
-            strcpy(logname,InternalGetLocalFilename(ini_logname));
-          else strcpy(logname, "none");
           break;
         case CONF_KEYPROXY:
           strncpy( keyproxy, parm, sizeof(keyproxy) - 1 );
@@ -691,18 +688,10 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
         case CONF_CHECKPOINT:
           strncpy( ini_checkpoint_file[0] , parm, sizeof(ini_checkpoint_file)/2 -1 );
           if (isstringblank(ini_checkpoint_file[0])) strcpy (ini_checkpoint_file[0],"none");
-          if (strcmpi(ini_checkpoint_file[0],"none") != 0)
-            strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
-          else
-            strcpy(ini_checkpoint_file[0],"none");
           break;
         case CONF_CHECKPOINT2:
           strncpy( ini_checkpoint_file[1] , parm, sizeof(ini_checkpoint_file)/2 -1 );
           if (isstringblank(ini_checkpoint_file[1])) strcpy (ini_checkpoint_file[1],"none");
-          if (strcmpi(ini_checkpoint_file[1],"none") != 0)
-            strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
-          else
-            strcpy(ini_checkpoint_file[1],"none");
           break;
         case CONF_PREFERREDBLOCKSIZE:
           preferred_blocksize = atoi(parm);
@@ -779,30 +768,22 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
         case CONF_RC5IN:
           strncpy( ini_in_buffer_file[0] , parm, sizeof(ini_in_buffer_file)/2 -1 );
           if (isstringblank(ini_in_buffer_file[0])) strcpy (ini_in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
-          strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
           break;
         case CONF_RC5OUT:
           strncpy( ini_out_buffer_file[0] , parm, sizeof(ini_out_buffer_file)/2 -1 );
           if (isstringblank(ini_out_buffer_file[0])) strcpy (ini_out_buffer_file[0],"buff-out" EXTN_SEP "rc5");
-          strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
           break;
         case CONF_DESIN:
           strncpy( ini_in_buffer_file[1] , parm, sizeof(ini_in_buffer_file)/2 -1 );
           if (isstringblank(ini_in_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-in" EXTN_SEP "des");
-          strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
           break;
         case CONF_DESOUT:
           strncpy( ini_out_buffer_file[1] , parm, sizeof(ini_out_buffer_file)/2 -1 );
           if (isstringblank(ini_out_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-out" EXTN_SEP "des");
-          strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
           break;
         case CONF_PAUSEFILE:
           strncpy( ini_pausefile, parm, sizeof(ini_pausefile) -1 );
           if (isstringblank(ini_pausefile)) strcpy (ini_pausefile,"none");
-          if (strcmpi(ini_pausefile,"none") != 0)
-            strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
-          else
-            strcpy(pausefile,"none");
           break;
         default:
           break;
@@ -1209,6 +1190,7 @@ void Client::ValidateConfig( void )
   system_info the_info;
   static bool did_detect_message = false;
 #endif
+  char *slash;
 
   killwhitespace(id);
   killwhitespace(keyproxy);
@@ -1250,33 +1232,66 @@ void Client::ValidateConfig( void )
   if ( minutes < 0 ) minutes=0;
   if ( blockcount < 0 ) blockcount=0;
 
+  // Check for blank filenames, fix if so
   if (isstringblank(ini_in_buffer_file[0]))
     strcpy(ini_in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
-  strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
   if (isstringblank(ini_out_buffer_file[0]))
     strcpy(ini_out_buffer_file[0],"buff-out" EXTN_SEP "rc5");
-  strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
   if (isstringblank(ini_in_buffer_file[1]))
     strcpy(ini_in_buffer_file[1],"buff-in" EXTN_SEP "des");
-  strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
   if (isstringblank(ini_out_buffer_file[1]))
     strcpy(ini_out_buffer_file[1],"buff-out" EXTN_SEP "des");
-  strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
-
   if (isstringblank(ini_pausefile)) strcpy(ini_pausefile,"none");
-  if (strcmpi(ini_pausefile,"none") != 0)
-    strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
-
   if (isstringblank(ini_checkpoint_file[0])) strcpy(ini_checkpoint_file[0],"none");
-  if (strcmpi(ini_checkpoint_file[0],"none") != 0)
-    strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
   if (isstringblank(ini_checkpoint_file[1])) strcpy(ini_checkpoint_file[1],"none");
-  if (strcmpi(ini_checkpoint_file[1],"none") != 0)
-    strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
-
   if (isstringblank(ini_logname)) strcpy (ini_logname,"none");
+
+  // now, add in path to current directory if path isn't specified
+
+  if (strrchr(ini_in_buffer_file[0], PATH_SEP_C) == NULL)
+    strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
+  else 
+    strcpy(in_buffer_file[0],ini_in_buffer_file[0]);
+
+  if (strrchr(ini_out_buffer_file[0], PATH_SEP_C) == NULL)
+    strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
+  else 
+    strcpy(out_buffer_file[0],ini_out_buffer_file[0]);
+
+  if (strrchr(ini_in_buffer_file[1], PATH_SEP_C) == NULL)
+    strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
+  else 
+    strcpy(in_buffer_file[1],ini_in_buffer_file[1]);
+
+  if (strrchr(ini_out_buffer_file[1], PATH_SEP_C) == NULL)
+    strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
+  else
+    strcpy(out_buffer_file[1],ini_out_buffer_file[1]);
+
+  if (strcmpi(ini_pausefile,"none") != 0)
+    if (strrchr(ini_pausefile,PATH_SEP_C) == NULL)
+      strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
+    else
+      strcpy(pausefile,ini_pausefile);
+
+  if (strcmpi(ini_checkpoint_file[0],"none") != 0)
+    if (strrchr(ini_checkpoint_file[0],PATH_SEP_C) == NULL)
+      strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
+    else
+      strcpy(checkpoint_file[0],ini_checkpoint_file[0]);
+
+  if (strcmpi(ini_checkpoint_file[1],"none") != 0)
+    if (strrchr(ini_checkpoint_file[1],PATH_SEP_C) == NULL)
+      strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
+    else
+      strcpy(checkpoint_file[1],ini_checkpoint_file[1]);
+
   if (strcmpi(ini_logname,"none") != 0)
-    strcpy(logname,InternalGetLocalFilename(ini_logname));
+    if (strrchr(ini_logname,PATH_SEP_C) == NULL)
+      strcpy(logname,InternalGetLocalFilename(ini_logname));
+    else
+      strcpy(logname,ini_logname);
+
 
 
   CheckForcedKeyport();
