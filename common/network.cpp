@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.61  1999/01/04 03:56:39  cyp
+// ack! ::nofallback was not being assigned.
+//
 // Revision 1.60  1999/01/03 06:19:35  cyp
 // Cleared an unused variable notice.
 //
@@ -175,7 +178,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.60 1999/01/03 06:19:35 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.61 1999/01/04 03:56:39 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -308,6 +311,17 @@ static void __print_packet( const char *label, const char *apacket, int alen )
   return;
 }
 
+static void __hostnamecpy( char *dest, const char *source,unsigned int maxlen)
+{
+  unsigned int len = 0;
+  while (*source && isspace(*source))
+    *source++;
+  while (((++len)<maxlen) && *source && !isspace(*source))
+    *dest++=(char)tolower(*source++);
+  *dest=0;
+  return;
+}  
+
 //======================================================================
 
 Network::Network( const char * servname, s16 servport, int _nofallback,
@@ -316,7 +330,7 @@ Network::Network( const char * servname, s16 servport, int _nofallback,
   // intialize communication parameters
   server_name[0] = 0;
   if (servname)
-    strncpy(server_name, servname, sizeof(server_name));
+    __hostnamecpy( server_name, servname, sizeof(server_name));
   server_port = servport;
   autofindkeyserver = AutoFindKeyServer;
 
@@ -325,6 +339,7 @@ Network::Network( const char * servname, s16 servport, int _nofallback,
   gotuubegin = gothttpend = 0;
   httplength = 0;
   reconnected = 0;
+  nofallback = _nofallback;
   
   fwall_hostaddr = svc_hostaddr = conn_hostaddr = 0;
   fwall_userpass[0] = 0;
@@ -391,8 +406,8 @@ void Network::SetModeHTTP( const char *httphost, s16 httpport, const char *httpu
     startmode &= ~(MODE_SOCKS4 | MODE_SOCKS5);
     startmode |= MODE_HTTP;
     fwall_hostport = httpport;
-    strncpy( fwall_userpass, httpusername, 128);
-    strncpy( fwall_hostname, httphost, 64);
+    strncpy( fwall_userpass, httpusername, sizeof(fwall_userpass));
+    __hostnamecpy( fwall_hostname, httphost, sizeof(fwall_hostname));
     }
   else 
     {
@@ -413,7 +428,7 @@ void Network::SetModeSOCKS4(const char *sockshost, s16 socksport,
     startmode &= ~(MODE_HTTP | MODE_SOCKS5 | MODE_UUE);
     startmode |= MODE_SOCKS4;
     fwall_hostport = socksport;
-    strncpy(fwall_hostname, sockshost, sizeof(fwall_hostname));
+    __hostnamecpy(fwall_hostname, sockshost, sizeof(fwall_hostname));
     fwall_userpass[0] = 0;
     if (socksusername && *socksusername)
       strncpy(fwall_userpass, socksusername, sizeof(fwall_userpass));
@@ -438,7 +453,7 @@ void Network::SetModeSOCKS5(const char *sockshost, s16 socksport,
     startmode &= ~(MODE_HTTP | MODE_SOCKS4 | MODE_UUE);
     startmode |= MODE_SOCKS5;
     fwall_hostport = socksport;
-    strncpy(fwall_hostname, sockshost, sizeof(fwall_hostname));
+    __hostnamecpy(fwall_hostname, sockshost, sizeof(fwall_hostname));
     fwall_userpass[0] = 0;
     if (socksusernamepw && *socksusernamepw)
       strncpy(fwall_userpass, socksusernamepw, sizeof(fwall_userpass));
