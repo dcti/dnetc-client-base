@@ -1,0 +1,77 @@
+This is the new RC5DES v2.7020.403 (98.04.28) client for IBM S/390
+servers running the OS/390 operating system.
+
+The client code has been ported and tested on an IBM 9672 System
+running OS/390 V2R5. Currently the client is single threaded. In
+order to exploit multiple CPUs on an SMP system, start multiple
+instances of the client.
+
+Currently neither the HTTP enconding nor SOCKS support is available
+in this client. It depends on a direct connection to a keyserver or
+keyserver proxy.
+
+
+There are 2 installation procedures:
+
+1) download and unpack on a non S/390 system
+
+   o  unpack the archive to some temp directory for instance like:
+
+      tar xvzf rc5des403-os390-nomt.tar.gz
+
+   o  you will get 3 files:
+
+          1629 May 27 17:27 Readme.OS390
+         12638 Apr 28 23:38 Readme.txt
+        716800 May 25 22:32 rc5des
+
+   o  the Readmes are in ASCII and you can read them right away,
+      in fact, you are reading them already ;)
+
+   o  The 'rc5des' is a binary file which only runs on an IBM S/390
+      mainframe system. ftp it to the target system in binary, do
+      a 'chmod +x rc5des', then you can execute it like:
+
+      'rc5des -config'
+
+
+
+2) download and unpack on a S/390 system
+
+   o  ftp the rc5des403-os390-nomt.tar.gz to the target IBM S/390 machine
+
+   o  gunzip rc5des403-os390-nomt.tar.gz
+      if you don't have 'gunzip', to obtain it, go to:
+         
+               http://www.s390.ibm.com/oe/bpxqp1.html
+
+   o  export A2E='-o from=ISO8859-1,to=IBM-1047'
+
+   o  pax $A2E -rf rc5des403-os390-nomt.tar
+
+*) o  pax -rf rc5des403-os390-nomt.tar rc5des
+
+   o  chmod +x rc5des
+
+
+*) The reason why this statement is there is because the tar archive
+   contains files which need to be translated from ASCII to EBCDIC
+   during extracting them from the archive, and it also holds a binary
+   executable (rc5des) which gets garbled by applying this translation.
+   the 2nd call to pax extracts the binary 'straight', without applying
+   any conversion. Sorry for the confusion, I don't know (yet) of a
+   way to ship binary and ASCII data in a tar archive and treat them
+   separately via one call to 'pax'.
+
+
+In case of questions, feel free to contact:
+
+   Friedemann Baitinger <baiti@zenon.toplink.net>
+
+
+#
+# $Log: readme.os390,v $
+# Revision 1.1  1998/06/01 17:01:17  friedbait
+# Initial release
+#
+#
