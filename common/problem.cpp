@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.94 2001/01/18 00:40:56 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.95 2001/01/25 00:53:36 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -31,7 +31,7 @@ return "@(#)$Id: problem.cpp,v 1.108.2.94 2001/01/18 00:40:56 andreasb Exp $"; }
 #include "cpucheck.h" //hardware detection
 #include "console.h"  //ConOutErr
 #include "triggers.h" //RaiseExitRequestTrigger()
-#include "sleepdef.h" //sleep()
+#include "clisync.h"  //synchronisation primitives
 #include "problem.h"  //ourselves
 
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
@@ -92,7 +92,9 @@ typedef struct
     int started;
     int initialized;
     unsigned int threadindex; /* 0-n (globally unique identifier) */
-    volatile int running; /* RetrieveState(,,purge) has to wait while Run()ning */
+    mutex_t coredata_lock; /* half-lock: locked when accessing this structure */
+    mutex_t corecode_lock; /* full-lock: locked when in core */
+                           /* implies hung/crashed core == hung client */
   } priv_data;
 } InternalProblem;
 
@@ -122,19 +124,24 @@ void ProblemFree(void *__thisprob)
 
 int ProblemIsInitialized(void *__thisprob)
 { 
+  int rescode = -1;
   InternalProblem *thisprob = __validate_probptr(__thisprob);
   if (thisprob)
   {
-    int init = thisprob->priv_data.initialized;
-    int rescode = thisprob->priv_data.last_resultcode;
+    int init;
+    mutex_lock(&(thisprob->priv_data.coredata_lock));
+    init = thisprob->priv_data.initialized;
+    rescode = 0;
     if (init)
     {
+      rescode = thisprob->priv_data.last_resultcode;
       if (rescode <= 0) /* <0 = error, 0 = RESULT_WORKING */
-        return -1;
-      return rescode; /* 1==RESULT_NOTHING, 2==RESULT_FOUND */
+        rescode = -1;
+      /* otherwise 1==RESULT_NOTHING, 2==RESULT_FOUND */
     } 
+    mutex_unlock(&(thisprob->priv_data.coredata_lock));
   }
-  return 0;
+  return rescode;
 }
 
 unsigned int ProblemGetSize(void)
@@ -144,7 +151,7 @@ unsigned int ProblemGetSize(void)
 
 Problem *ProblemAlloc(void)
 {
-  char *p; unsigned long ww;
+  char *p;
   InternalProblem *thisprob = (InternalProblem *)0;
   int err = 0;
 
@@ -183,14 +190,7 @@ Problem *ProblemAlloc(void)
   if (thisprob && !err)
   {
     p = (char *)&(thisprob->priv_data.rc5unitwork);
-    ww = ((unsigned long)p);
-
-    #if (CLIENT_CPU == CPU_ALPHA) /* sizeof(long) can be either 4 or 8 */
-    ww &= 0x7; /* (sizeof(longword)-1); */
-    #else
-    ww &= (sizeof(int)-1); /* int alignment */
-    #endif
-    if (ww)
+    if ((((unsigned long)p) & (sizeof(void *)-1)) != 0)
     {
       Log("priv_data.rc5unitwork for problem %d is misaligned!\n", __problem_counter);
       err = 1;
@@ -199,8 +199,11 @@ Problem *ProblemAlloc(void)
 
   if (thisprob && !err)
   {
+    mutex_t initmux = DEFAULTMUTEX; /* {0} or whatever */
     memset( thisprob, 0, sizeof(InternalProblem) );
     thisprob->priv_data.threadindex = __problem_counter++;
+    memcpy( &(thisprob->priv_data.coredata_lock), &initmux, sizeof(mutex_t) );
+    memcpy( &(thisprob->priv_data.corecode_lock), &initmux, sizeof(mutex_t) );
 
     //align core_membuffer to 16byte boundary
     p = &(thisprob->priv_data.__core_membuffer_space[0]);
@@ -562,24 +565,9 @@ int ProblemLoadState( void *__thisprob,
                         sizeof(WorkStub), thisprob->priv_data.core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
       if (r != CORE_S_OK)
       {
-        /* this is a really silly way to deal with errors. 
-        ** By simply discarding the stub, the proxy network will simply
-        ** reissue it eventually. Oh well, andreas wants it this way.
-        **
-        ** It is apparently impossible for keyservers to filter these
-        ** bad-stub errors (_E_FORMAT and _E_STUB) in the first place, so 
-        ** what what ogr_create() really _should_ do is delegate these errors 
-        ** (and perhaps all errors) to some later stage, which in turn
-        ** would "truncate" the stub (sets total number of nodes done to zero) 
-        ** and return RESULT_NOTHING. RetrieveState() could then optionally
-        ** print the appropriate error message.
-        */
         const char *msg = "Unknown error";
         if      (r == CORE_E_MEMORY)  msg = "CORE_E_MEMORY: Insufficient memory";
         else if (r == CORE_E_FORMAT)  msg = "CORE_E_FORMAT: Format or range error";
-        else if (r == STUB_E_GOLOMB)  msg = "STUB_E_GOLOMB: Stub is not golomb";
-        else if (r == STUB_E_LIMIT)   msg = "STUB_E_LIMIT:\nStub has been obsoleted by a better core";
-        else if (r == STUB_E_MARKS)   msg = "STUB_E_MARKS:\nStub is not supported by this client";
         Log("OGR stub load failure: %s\n", msg );
         return -1;
       }
@@ -633,53 +621,62 @@ int ProblemRetrieveState( void *__thisprob,
                           ContestWork * work, unsigned int *contestid, 
                           int dopurge, int dontwait )
 {
+  int ret_code = 0;
   InternalProblem *thisprob = __validate_probptr(__thisprob);
   if (!thisprob)
   {
     return -1;
   }    
+  mutex_lock(&(thisprob->priv_data.coredata_lock));
   if (!thisprob->priv_data.initialized)
   {
     //LogScreen("ProblemRetrieveState() without preceding LoadState()\n");
-    return -1;
-  }    
-  if (work) // store back the state information
-  {
-    switch (thisprob->pub_data.contest) {
-      case RC5:
-      case DES:
-      case CSC:
-        // nothing special needs to be done here
-        break;
-      #if defined(HAVE_OGR_CORES)
-      case OGR:
-        (thisprob->pub_data.unit_func.ogr)->getresult(thisprob->priv_data.core_membuffer, &thisprob->priv_data.contestwork.ogr.workstub, sizeof(WorkStub));
-        break;
-      #endif
-    }
-    memcpy( (void *)work, (void *)&thisprob->priv_data.contestwork, sizeof(ContestWork));
-  }
-  if (contestid)
-    *contestid = thisprob->pub_data.contest;
-  if (dopurge)
-  {
-    thisprob->priv_data.initialized = 0;
-    if (!dontwait) /* normal state is to wait. But we can't wait when aborting */
+    ret_code = -1;
+  }   
+  else
+  { 
+    if (work) // store back the state information
     {
-      while (thisprob->priv_data.running) /* need to guarantee that no Run() will occur on a */
-      {
-        usleep(1000); /* purged problem. */
-      }    
+      switch (thisprob->pub_data.contest) {
+        case RC5:
+        case DES:
+        case CSC:
+          // nothing special needs to be done here
+          break;
+        #if defined(HAVE_OGR_CORES)
+        case OGR:
+          (thisprob->pub_data.unit_func.ogr)->getresult(thisprob->priv_data.core_membuffer, &thisprob->priv_data.contestwork.ogr.workstub, sizeof(WorkStub));
+          break;
+        #endif
+      }
+      memcpy( (void *)work, (void *)&thisprob->priv_data.contestwork, sizeof(ContestWork));
     }
-    loaded_problems[thisprob->pub_data.contest]--;       /* per contest */  
-    loaded_problems[CONTEST_COUNT]--; /* total */
+    if (contestid)
+      *contestid = thisprob->pub_data.contest;
+    if (dopurge)
+    {
+      thisprob->priv_data.initialized = 0;
+      /* wait for the core to see the changed .initialized state */
+      if (!dontwait) /* normal state is to wait. But we can't wait when aborting */
+      {
+        mutex_lock(&(thisprob->priv_data.corecode_lock));
+      }
+      loaded_problems[thisprob->pub_data.contest]--;       /* per contest */  
+      loaded_problems[CONTEST_COUNT]--; /* total */
+      if (!dontwait)
+      {
+        mutex_unlock(&(thisprob->priv_data.corecode_lock));
+      }
+    }
+    ret_code = thisprob->priv_data.last_resultcode;
+    if (ret_code < 0)
+    {
+      //LogScreen("last resultcode = %d\n",ret_code);
+      ret_code = -1;
+    }    
   }
-  if (thisprob->priv_data.last_resultcode < 0)
-  {
-    //LogScreen("last resultcode = %d\n",thisprob->priv_data.last_resultcode);
-    return -1;
-  }    
-  return ( thisprob->priv_data.last_resultcode );
+  mutex_unlock(&(thisprob->priv_data.coredata_lock));
+  return ret_code;
 }
 
 /* ------------------------------------------------------------- */
@@ -1166,10 +1163,7 @@ static void __compute_run_times(InternalProblem *thisprob,
 
 int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
 {
-  static volatile int s_using_ptime = -1;
-  struct timeval tv;
-  int retcode, core_resultcode, using_ptime;
-  u32 iterations, runstart_secs, runstart_usecs;
+  int retcode;
   InternalProblem *thisprob = __validate_probptr(__thisprob);
 
   if (!thisprob)
@@ -1183,11 +1177,8 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
   {
     return ( -1 );
   }
-  if ((++thisprob->priv_data.running) > 1)
-  {
-    --thisprob->priv_data.running;
-    return -1;
-  }
+
+  mutex_lock(&(thisprob->priv_data.corecode_lock));
 
 #ifdef STRESS_THREADS_AND_BUFFERS
   if (thisprob->pub_data.contest == RC5 && !thisprob->priv_data.started)
@@ -1202,90 +1193,94 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
   }
 #endif
 
-  if ( thisprob->priv_data.last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
+  if ( thisprob->priv_data.last_resultcode == RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
   {
-    thisprob->priv_data.running--;
-    return ( thisprob->priv_data.last_resultcode );
-  }
+    static volatile int s_using_ptime = -1;
+    struct timeval tv;
+    int core_resultcode, using_ptime;
+    u32 iterations, runstart_secs, runstart_usecs;
 
-  /*
-    On return from the Run_XXX thisprob->priv_data.contestwork must be in a state that we
-    can put away to disk - that is, do not expect the loader (probfill
-    et al) to fiddle with iterations or key or whatever.
+    /*
+      On return from the Run_XXX thisprob->priv_data.contestwork must be in a state that we
+      can put away to disk - that is, do not expect the loader (probfill
+      et al) to fiddle with iterations or key or whatever.
 
-    The Run_XXX functions do *not* update problem.thisprob->priv_data.last_resultcode, they use
-    core_resultcode instead. This is so that members of the problem object
-    that are updated after the resultcode has been set will not be out of
-    sync when the main thread gets it with RetrieveState().
+      The Run_XXX functions do *not* update problem.thisprob->priv_data.last_resultcode, they use
+      core_resultcode instead. This is so that members of the problem object
+      that are updated after the resultcode has been set will not be out of
+      sync when the main thread gets it with RetrieveState().
 
-    note: although the value returned by Run_XXX is usually the same as
-    the core_resultcode it is not always the case. For instance, if
-    post-LoadState() initialization  failed, but can be deferred, Run_XXX
-    may choose to return -1, but keep core_resultcode at RESULT_WORKING.
-  */
+      note: although the value returned by Run_XXX is usually the same as
+      the core_resultcode it is not always the case. For instance, if
+      post-LoadState() initialization  failed, but can be deferred, Run_XXX
+      may choose to return -1, but keep core_resultcode at RESULT_WORKING.
+    */
 
-  thisprob->priv_data.started = 1;
-  thisprob->pub_data.last_runtime_usec = thisprob->pub_data.last_runtime_sec = 0;
-  runstart_secs = 0xfffffffful;
-  using_ptime = s_using_ptime;
-  if (using_ptime)
-  {
-    if (CliGetThreadUserTime(&tv) != 0)
-      using_ptime = 0;
-    else
-      runstart_secs = 0;
-  }
-  if (!using_ptime)
-  {
-    runstart_secs = 0;
-    if (CliGetMonotonicClock(&tv) != 0)
+    thisprob->priv_data.started = 1;
+    thisprob->pub_data.last_runtime_usec = thisprob->pub_data.last_runtime_sec = 0;
+    runstart_secs = 0xfffffffful;
+    using_ptime = s_using_ptime;
+    if (using_ptime)
     {
-      if (CliGetMonotonicClock(&tv) != 0)
-        runstart_secs = 0xfffffffful;
+      if (CliGetThreadUserTime(&tv) != 0)
+        using_ptime = 0;
+      else
+        runstart_secs = 0;
     }
-  }
-  runstart_usecs = 0; /* shaddup compiler */
-  if (runstart_secs == 0)
-  {
-    runstart_secs = tv.tv_sec;
-    runstart_usecs = tv.tv_usec;
-  }
-  iterations = thisprob->pub_data.tslice;
-  core_resultcode = thisprob->priv_data.last_resultcode;
-  retcode = -1;
+    if (!using_ptime)
+    {
+      runstart_secs = 0;
+      if (CliGetMonotonicClock(&tv) != 0)
+      {
+        if (CliGetMonotonicClock(&tv) != 0)
+          runstart_secs = 0xfffffffful;
+      }
+    }
+    runstart_usecs = 0; /* shaddup compiler */
+    if (runstart_secs == 0)
+    {
+      runstart_secs = tv.tv_sec;
+      runstart_usecs = tv.tv_usec;
+    }
+    iterations = thisprob->pub_data.tslice;
+    core_resultcode = thisprob->priv_data.last_resultcode;
+    retcode = -1;
 
-  switch (thisprob->pub_data.contest)
-  {
-    case RC5: retcode = Run_RC5( thisprob, &iterations, &core_resultcode );
-              break;
-    case DES: retcode = Run_DES( thisprob, &iterations, &core_resultcode );
-              break;
-    case OGR: retcode = Run_OGR( thisprob, &iterations, &core_resultcode );
-              break;
-    case CSC: retcode = Run_CSC( thisprob, &iterations, &core_resultcode );
-              break;
-    default: retcode = core_resultcode = thisprob->priv_data.last_resultcode = -1;
-       break;
+    switch (thisprob->pub_data.contest)
+    {
+      case RC5: retcode = Run_RC5( thisprob, &iterations, &core_resultcode );
+                break;
+      case DES: retcode = Run_DES( thisprob, &iterations, &core_resultcode );
+                break;
+      case OGR: retcode = Run_OGR( thisprob, &iterations, &core_resultcode );
+                break;
+      case CSC: retcode = Run_CSC( thisprob, &iterations, &core_resultcode );
+                break;
+      default: retcode = core_resultcode = thisprob->priv_data.last_resultcode = -1;
+                break;
+    }
+
+    /* don't touch thisprob->pub_data.tslice or runtime as long as retcode < 0!!! */
+    if (retcode >= 0)
+    {
+      if (!thisprob->priv_data.started || !thisprob->priv_data.initialized)
+      {
+        /* RetrieveState(,,purge) has been called */
+        core_resultcode = -1; // discard the purged block
+      }
+      thisprob->pub_data.core_run_count++;
+      __compute_run_times( thisprob, runstart_secs, runstart_usecs, 
+                           &thisprob->priv_data.loadtime_sec, &thisprob->priv_data.loadtime_usec,
+                           using_ptime, &s_using_ptime, core_resultcode );
+      thisprob->pub_data.tslice = iterations;
+      thisprob->priv_data.last_resultcode = core_resultcode;
+    }    
   }
 
-  if (retcode < 0) /* don't touch thisprob->pub_data.tslice or runtime as long as < 0!!! */
-  {
-    thisprob->priv_data.running--;
-    return -1;
-  }
-  if (!thisprob->priv_data.started || !thisprob->priv_data.initialized) /* RetrieveState(,,purge) has been called */
-  {
-    core_resultcode = -1; // "Discarded (core error)": discard the purged block
-  }
+  retcode = thisprob->priv_data.last_resultcode;
 
-  thisprob->pub_data.core_run_count++;
-  __compute_run_times( thisprob, runstart_secs, runstart_usecs, 
-                       &thisprob->priv_data.loadtime_sec, &thisprob->priv_data.loadtime_usec,
-                       using_ptime, &s_using_ptime, core_resultcode );
-  thisprob->pub_data.tslice = iterations;
-  thisprob->priv_data.last_resultcode = core_resultcode;
-  thisprob->priv_data.running--;
-  return thisprob->priv_data.last_resultcode;
+  mutex_unlock(&(thisprob->priv_data.corecode_lock));
+  return retcode;
 }
 
 /* ----------------------------------------------------------------------- */
