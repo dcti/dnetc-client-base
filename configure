@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.131  1998/11/26 16:14:26  cyp
+# New module: checkpt.cpp
+#
 # Revision 1.130  1998/11/25 05:53:21  dicamillo
 # Update for BeOS R4 for Intel.  Added x86-beos target.  Also added the
 # variable DELETECHARS for the argument of "tr", since since the argument
@@ -575,7 +578,7 @@ COMMON_SRCS="common/client.cpp common/problem.cpp
     common/bench.cpp common/probman.cpp common/clirun.cpp
     common/probfill.cpp common/pollsys.cpp common/setprio.cpp
     common/console.cpp common/modereq.cpp common/confmenu.cpp
-    common/confrwv.cpp common/confopt.cpp"
+    common/confrwv.cpp common/confopt.cpp common/checkpt.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
