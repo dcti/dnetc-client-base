@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.91 1999/04/22 01:55:53 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.92 1999/04/23 02:57:20 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -910,6 +910,7 @@ int Client::Run( void )
   struct thread_param_block *thread_data_table = NULL;
 
   int TimeToQuit = 0, exitcode = 0;
+  int local_connectoften = 0;
   unsigned int load_problem_count = 0;
   unsigned int getbuff_errs = 0;
 
@@ -1357,11 +1358,14 @@ int Client::Run( void )
     // Lurking
     //------------------------------------
 
+    local_connectoften = (connectoften != 0);
     #if defined(LURK)
-    if (!TimeToQuit && !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) &&
-        dialup.lurkmode && dialup.CheckIfConnectRequested())
+    if (dialup.lurkmode)
     {
-      ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
+      connectoften = 0;
+      local_connectoften = (!TimeToQuit && 
+      !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) &&
+      dialup.CheckIfConnectRequested());
     }
     #endif
 
@@ -1369,10 +1373,33 @@ int Client::Run( void )
     //handle 'connectoften' requests
     //------------------------------------
 
-    if (!TimeToQuit && connectoften && timeRun > timeNextConnect)
+    if (!TimeToQuit && local_connectoften && timeRun > timeNextConnect)
     {
+      int doupd = 1;
+      if (timeNextConnect != 0)
+      {
+        int i;
+        for (i = 0; i < CONTEST_COUNT; i++ )
+        {
+          unsigned cont_i = (unsigned int)loadorder_map[i];
+          if (cont_i < CONTEST_COUNT) /* not disabled */
+          {
+            if (GetBufferCount( cont_i, 1, NULL ) > 0) 
+              break;  /* at least one out-buffer is not empty */
+            if (GetBufferCount( cont_i, 0, NULL ) >= 
+               ((long)(inthreshold[cont_i]))) /*at least one in-buffer is full*/
+            { 
+              doupd = 0;
+              break;
+            }
+          }
+        }
+      }
+      if ( doupd )
+      {
+        ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
+      }
       timeNextConnect = timeRun + 60;
-      ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
     }
 
     //----------------------------------------
