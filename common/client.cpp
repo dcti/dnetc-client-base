@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.137  1998/09/23 22:26:42  silby
+// Changed checkifbetaexpired from s32 to int
+//
 // Revision 1.136  1998/09/19 08:50:15  silby
 // Added in beta test client timeouts.  Enabled/controlled from version.h by defining BETA, and setting the expiration time.
 //
@@ -146,7 +149,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.136 1998/09/19 08:50:15 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.137 1998/09/23 22:26:42 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -2206,7 +2209,7 @@ void Client::SetNiceness(void)
 }
 
 #if defined(BETA)
-s32 checkifbetaexpired(void)
+int checkifbetaexpired(void)
 {
 timeval currenttime;
 timeval expirationtime;
