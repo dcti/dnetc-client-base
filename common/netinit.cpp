@@ -12,7 +12,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.30 1999/11/08 02:02:42 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.31 1999/12/04 15:47:10 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -23,9 +23,7 @@ return "@(#)$Id: netinit.cpp,v 1.30 1999/11/08 02:02:42 cyp Exp $"; }
 #include "triggers.h" //for break checks
 #include "lurk.h"
 
-#if (CLIENT_OS == OS_MACOS)
-extern Boolean myNetInit(void);
-#elif (CLIENT_OS == OS_AMIGAOS)
+#if (CLIENT_OS == OS_AMIGAOS)
 static struct Library *SocketBase;
 #endif
 
@@ -62,28 +60,6 @@ static int __netInitAndDeinit( int doWhat )
       success = 0; //always fail
     else // (doWhat < 0)   //deinitialize request
       success = 1; //always succeed - should never get called
-  }
-  #define DOWHAT_WAS_HANDLED
-  #endif
-
-  //----------------------------
-
-  #if (CLIENT_OS == OS_MACOS)
-  if (success)
-  {
-    if ( doWhat == 0 )     //query online mode
-      return 1;                 // for now, always online
-    else if (doWhat > 0)   //init request
-    {
-      success = myNetInit();
-      if (success)
-        net_init_level++;
-    }
-    else                   //de-init request
-    {
-      success = 1;
-      net_init_level--;
-    }
   }
   #define DOWHAT_WAS_HANDLED
   #endif
@@ -192,8 +168,11 @@ static int __netInitAndDeinit( int doWhat )
     if ( doWhat == 0 )     //request to check online mode
     {
       #if defined(LURK)
-      if (dialup.CheckForStatusChange()) //- no longer-online?
-        return 0;                        //oops, return 0
+      if ( dialup.IsWatching() ) /* is lurk or lurkonly enabled? */
+      {
+        if (dialup.CheckForStatusChange()) //- no longer-online?
+          return 0;                        //oops, return 0
+      }
       #endif
       return 1;            //assume always online once initialized
     }
@@ -203,8 +182,11 @@ static int __netInitAndDeinit( int doWhat )
       if ((++net_init_level)==1) //don't initialize more than once
       {
         #if defined(LURK)
-        if ( dialup.DialIfNeeded(1) != 0 )
-          success = 0;
+        if ( dialup.IsWatching() ) /* is lurk or lurkonly enabled? */
+        { 
+          if (dialup.DialIfNeeded(1) != 0 ) /* dialup failed */
+            success = 0;
+        }
         #endif
       }
       if (!success)
@@ -216,7 +198,8 @@ static int __netInitAndDeinit( int doWhat )
       if ((--net_init_level)==0) //don't deinitialize more than once
       {
         #if defined(LURK)
-        dialup.HangupIfNeeded();
+        if ( dialup.IsWatching() ) /* is lurk or lurkonly enabled? */
+          dialup.HangupIfNeeded();
         #endif
       }
     }
@@ -255,10 +238,6 @@ static int __globalInitAndDeinit( int doWhat )
       if ( WSAStartup( 0x0101, &wsaData ) != 0 )
         global_is_init = 0;
       #endif
-      #ifdef LURK
-      if (global_is_init != 0)
-        dialup.Start();
-      #endif
     }
     success = (global_is_init != 0);
   }
@@ -266,9 +245,6 @@ static int __globalInitAndDeinit( int doWhat )
   {
     if (global_is_init != 0)
     {
-      #ifdef LURK
-      dialup.Stop();
-      #endif
       #if (CLIENT_OS == OS_WIN32)
       WSACleanup();
       #endif
@@ -295,12 +271,12 @@ int NetCheckIsOK(void)
 int NetClose( Network *net )
 {
   if ( net )
-    {
+  {
     delete net;
 
     // do platform specific network deinit
     return __netInitAndDeinit( -1 );
-    }
+  }
   return 0;
 }
 
