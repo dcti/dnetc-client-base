@@ -1,5 +1,8 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.14  1999/10/06 19:37:43  dakidd
+// All occurrences of "slice" changed to "SliceType" to resolve "ambiguous class reference - found slice/std::slice" error under CW pro 5. (Apparently, CWP5 has a "std::slice" class)
+//
 // Revision 1.13  1999/01/09 08:57:41  remi
 // Fixed the previous fix : it's only for alpha/nt + defined(bit_64) + msvc++
 // Removed the rcv copyright as we don't use rcv' sboxes anymore.
@@ -49,7 +52,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.13 1999/01/09 08:57:41 remi Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.14 1999/10/06 19:37:43 dakidd Exp $"; }
 #endif
 
 #include <cputypes.h>		/* Isn't this needed for using CLIENT_OS defines? */
@@ -507,32 +510,32 @@ void multiround( WORD_TYPE S[32], WORD_TYPE N[32], WORD_TYPE M[32], WORD_TYPE D[
 
 
 
-typedef WORD_TYPE slice;
+typedef WORD_TYPE SliceType; // dakidd 05-OCT-1999 - original "slice" was choking CW Pro 5 with "ambiguious class reference" errors
 #if ((CLIENT_OS == OS_MACOS) && defined(MRCPP_FOR_DES))
-extern "C" slice whack16(slice *P, slice *C, slice *K);
+extern "C" SliceType whack16(SliceType *P, SliceType *C, SliceType *K);
 #else
-extern slice whack16(slice *P, slice *C, slice *K);
+extern SliceType whack16(SliceType *P, SliceType *C, SliceType *K);
 #endif
 
 #define DEBUGPRINT 0
 
 // test all combinations of the easily-toggled bits
-slice whack16(slice *P, slice *C, slice *K)
+SliceType whack16(SliceType *P, SliceType *C, SliceType *K)
 {
-	slice R14[16][32];
-	slice L13[16][32];
+	SliceType R14[16][32];
+	SliceType L13[16][32];
 
-	slice R12_23[16], R12_15[16], R12_29[16], R12__5[16];
-	slice R12__8[16], R12_16[16], R12_22[16], R12_30[16];
+	SliceType R12_23[16], R12_15[16], R12_29[16], R12__5[16];
+	SliceType R12__8[16], R12_16[16], R12_22[16], R12_30[16];
 
-	slice L1[32];
-	slice R2[32];
-	slice L3[32];
+	SliceType L1[32];
+	SliceType R2[32];
+	SliceType L3[32];
 
-	slice R[32];
-	slice L[32];
+	SliceType R[32];
+	SliceType L[32];
 
-	slice PL[32], PR[32], CL[32], CR[32];
+	SliceType PL[32], PR[32], CL[32], CR[32];
 	PL[0] = P[6];
 	PL[1] = P[14];
 	PL[2] = P[22];
@@ -806,11 +809,11 @@ slice whack16(slice *P, slice *C, slice *K)
 				partialround( R, L, L, K, 480, 0xDE );
 				{ // now we start checking the outputs...
 				// round 12
-					slice save = R[29];
-					slice result;
+					SliceType save = R[29];
+					SliceType result;
 					{
 						SBOX_2_INIT( L[ 7]^K[54], L[ 8]^K[26], L[ 9]^K[34], L[10]^K[ 3], L[11]^K[18], L[12]^K[ 6] );
-						slice out;
+						SliceType out;
 						SBOX_2_BIT_0( R[23], out ); R[23] = out;
 						result  = ~(out ^ R12_23[hs]);
 						SBOX_2_BIT_1( R[15], out ); R[15] = out;
@@ -838,7 +841,7 @@ slice whack16(slice *P, slice *C, slice *K)
 					save = R[ 8];
 					{
 						SBOX_0_INIT( L[31]^K[48], L[ 0]^K[12], L[ 1]^K[27], L[ 2]^K[ 4], L[ 3]^K[39], L[ 4]^K[10] );
-						slice out;
+						SliceType out;
 						SBOX_0_BIT_0( R[ 8], out ); R[ 8] = out;
 						result &= ~(out ^ R12__8[hs]);
 						SBOX_0_BIT_1( R[16], out ); R[16] = out;
@@ -858,7 +861,7 @@ slice whack16(slice *P, slice *C, slice *K)
 					f_s3( R[ 7]^K[40], save^K[12], R[ 9]^K[20], R[10]^K[46], R[11]^K[ 4], R[12]^K[17],    L[23], L[15], L[29], L[ 5] );
 					
 					// no more cleverness, just finish inv-14 and 12 piece by piece and compare as we go
-					slice t1, t2, t3, t4;
+					SliceType t1, t2, t3, t4;
 					
 					t1 = R14[hs][12];
 					t2 = R14[hs][27];
