@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.8 2000/10/05 22:34:22 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.9 2000/10/06 01:03:35 mfeiri Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,10 +29,17 @@
     #define OGROPT_BITOFLIST_DIRECT_BIT 0          /* we want 'no' */
   #endif
   #if defined(ASM_PPC) || defined(__PPC__)
-    /* I'm not sure whether this is compiler or arch specific, */ 
-    /* it doesn't seem to make any difference for x86/gcc 2.7x  */
-    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0    /* no optimization */
-  #endif
+    #if __MRC__ || __MWERKS__
+      #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* we want 'no'  */
+      #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* important     */
+      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2 /* dunno         */
+      #define OGROPT_OETTING_OGR_CYCLE              1 /* ppc optimized */
+    #else
+      /* I'm not sure whether this is compiler or arch specific, */ 
+      /* it doesn't seem to make any difference for x86/gcc 2.7x  */
+      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0    /* no optimization */
+    #endif
+  #endif  
 #endif  
 
 /* -- various optimization option defaults ------------------------------- */
@@ -97,6 +104,22 @@
 #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2 /* 0 (no opt) or 1 or 2 */
 #endif
 
+
+/* Note changes:
+   top level is now in registers (don't try this on a PC)
+   bit[] and first[] are not used
+   dist is not saved except on exit
+   newbit is shifted into list instead of setting the bit for last mark
+   cnt1 and lev2 have been eliminated
+
+   To Do:
+   ogr_create() should be updated to match
+   dist is not needed in lev*, we only need the final value in state
+*/
+#ifndef OGROPT_OETTING_OGR_CYCLE
+#define OGROPT_OETTING_OGR_CYCLE 0 /* the default is "no" */
+#endif
+
 /* ----------------------------------------------------------------------- */
 
 
@@ -133,6 +156,7 @@ static char ogr_first_blank[65537]; /* first blank in 16 bit COMP bitmap, range:
 static U ogr_bit_of_LIST[200]; /* which bit of LIST to update */
 #endif
 
+#ifndef __MRC__
 static int init_load_choose(void);
 static int found_one(struct State *oState);
 static int ogr_init(void);
@@ -146,6 +170,7 @@ static int ogr_save(void *state, void *buffer, int buflen);
 static int ogr_load(void *buffer, int buflen, void **state);
 #endif
 static int ogr_cleanup(void);
+#endif
 
 #ifndef OGR_GET_DISPATCH_TABLE_FXN
   #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table
@@ -158,6 +183,33 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 
 /* ------------------------------------------------------------------ */
 
+#if (OGROPT_OETTING_OGR_CYCLE == 1)
+#define COMP_LEFT_LIST_RIGHT(lev,s)                             \
+  {                                                             \
+	register U	comp0 = lev->comp[0], comp1 = lev->comp[1], comp2 = lev->comp[2], comp3 = lev->comp[3], comp4 = lev->comp[4];	\
+	register U	list0 = lev->list[0], list1 = lev->list[1], list2 = lev->list[2], list3 = lev->list[3], list4 = lev->list[4];	\
+	while (s>=32) {		\
+		comp0 = comp1; comp1 = comp2; comp2 = comp3; comp3 = comp4; comp4 = 0;	\
+		list4 = list3; list3 = list2; list2 = list1; list1 = list0; list0 = 0;	\
+		s = s - 32;	\
+	}	\
+	if (s) {	\
+	    int ss = 32 - s;				\
+	    comp0 = (comp0 << s) | (comp1 >> ss);	\
+	    comp1 = (comp1 << s) | (comp2 >> ss);	\
+	    comp2 = (comp2 << s) | (comp3 >> ss);	\
+	    comp3 = (comp3 << s) | (comp4 >> ss);	\
+	    comp4 = comp4 <<= s;					\
+	    list4 = (list4 >> s) | (list3 << ss);  \
+	    list3 = (list3 >> s) | (list2 << ss);  \
+	    list2 = (list2 >> s) | (list1 << ss);  \
+	    list1 = (list1 >> s) | (list0 << ss);  \
+	    list0 = list0         >>= s;                                         \
+    }	\
+    lev->comp[0] = comp0; lev->comp[1] = comp1; lev->comp[2] = comp2; lev->comp[3] = comp3; lev->comp[4] = comp4;	\
+    lev->list[4] = list4; lev->list[3] = list3; lev->list[2] = list2; lev->list[1] = list1; lev->list[0] = list0;	\
+  }
+#else
 #define COMP_LEFT_LIST_RIGHT(lev,s)                             \
   {                                                             \
     register int ss = 32 - s;                                   \
@@ -172,6 +224,8 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
     lev->list[1] = (lev->list[1] >> s) | (lev->list[0] << ss);  \
     lev->list[0] >>= s;                                         \
   }
+#endif
+
 #define COMP_LEFT_LIST_RIGHT_32(lev)              \
   lev->comp[0] = lev->comp[1];                    \
   lev->comp[1] = lev->comp[2];                    \
@@ -392,9 +446,10 @@ static int found_one(struct State *oState)
   #if defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
     { i = ~i; __asm__ ("cntlzw %0,%1" : "=r" (i) : "r" (i)); return i+1; }
-  #else /* macos */
-    #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
+  #elif (__MWERKS__) || (__MRC__)
     #define LOOKUP_FIRSTBLANK(x) (__cntlzw(~((unsigned int)(x)))+1)
+  #else
+    #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
   #endif    
 #elif defined(ASM_ALPHA) && defined(__GNUC__)
   #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
@@ -679,6 +734,148 @@ static void dump_ruler(struct State *oState, int depth)
 #endif
 
 
+#if (OGROPT_OETTING_OGR_CYCLE == 1)
+static int ogr_cycle(void *state, int *pnodes)
+{
+	struct State *oState = (struct State *)state;
+	int depth = oState->depth+1;      /* the depth of recursion */
+	struct Level *lev = &oState->Levels[depth];
+	int nodes = 0;
+	int nodeslimit = *pnodes;
+	int retval = CORE_S_CONTINUE;
+	int limit;
+	
+	/* load the top level */
+	U	comp0 = lev->comp[0], comp1 = lev->comp[1], comp2 = lev->comp[2], comp3 = lev->comp[3], comp4 = lev->comp[4];
+	U	list0 = lev->list[0], list1 = lev->list[1], list2 = lev->list[2], list3 = lev->list[3], list4 = lev->list[4];
+	U	dist0 = lev->dist[0], dist1 = lev->dist[1], dist2 = lev->dist[2], dist3 = lev->dist[3], dist4 = lev->dist[4];
+	int cnt2 = lev->cnt2;
+	int newbit = 1;
+	
+	for (;;) {
+
+		oState->marks[depth-1] = cnt2;
+		if (depth <= oState->half_depth2) {
+			if (depth <= oState->half_depth) {
+				if (nodes >= nodeslimit) {
+					break;
+				}
+				limit = oState->max - OGR[oState->maxdepthm1 - depth];
+				limit = limit < oState->half_length ? limit : oState->half_length;
+			} else {
+				limit = oState->max - choose(dist0 >> ttmMAXBITS, oState->maxdepthm1 - depth);
+				limit = limit < oState->max - oState->marks[oState->half_depth]-1 ? limit : oState->max - oState->marks[oState->half_depth]-1;
+			}
+		} else {
+			limit = oState->max - choose(dist0 >> ttmMAXBITS, oState->maxdepthm1 - depth);
+		}
+
+		nodes++;
+
+		/* Find the next available mark location for this level */
+		stay:
+	if (comp0 < 0xfffffffe) {
+	
+		//int s = __cntlzw(~comp0) + 1;
+		
+		#if defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
+      int s = LOOKUP_FIRSTBLANK( comp0 );
+      #else
+      int s;
+      if (comp0 < 0xffff0000) 
+        s = ogr_first_blank[comp0 >> 16];
+      else {    
+        /* s = 16 + ogr_first_blank[comp0 & 0x0000ffff]; slow code */
+        s = 16 + ogr_first_blank[comp0 - 0xffff0000];
+      }        
+      #endif
+		
+		int ss = 32 - s;
+		if ((cnt2 += s) > limit) 	goto up; /* no spaces left */
+
+		/* shift comp left, list right */
+		comp0 = (comp0 << s) | (comp1 >> ss);	
+		comp1 = (comp1 << s) | (comp2 >> ss);	
+		comp2 = (comp2 << s) | (comp3 >> ss);	
+		comp3 = (comp3 << s) | (comp4 >> ss);	
+		comp4 = comp4 << s;					
+		list4 = (list4 >> s) | (list3 << ss);  
+		list3 = (list3 >> s) | (list2 << ss);  
+		list2 = (list2 >> s) | (list1 << ss);  
+		list1 = (list1 >> s) | (list0 << ss);  
+		list0 = (list0 >> s) | (newbit << ss); 
+		newbit = 0;                                       
+	} else { /* s>32 */
+		int comp = comp0;
+		if ((cnt2 += 32) > limit) 	goto up; /* no spaces left */
+
+		/* shift comp left, list right by word */
+		comp0 = comp1; comp1 = comp2; comp2 = comp3; comp3 = comp4; comp4 = 0;	
+		list4 = list3; list3 = list2; list2 = list1; list1 = list0; list0 = newbit;	
+		newbit = 0;
+		if (comp == 0xffffffff) 		goto stay;
+	}
+
+		/* New ruler? */
+		if (depth == oState->maxdepthm1) {
+			oState->marks[oState->maxdepthm1] = cnt2;       /* not placed yet into list arrays! */
+			if (found_one(oState)) {
+				retval = CORE_S_SUCCESS;
+				break;
+			}
+			goto stay;
+		}
+
+		/* Go Deeper */
+		/* save current level, set newbit, update dist, comp */
+		lev->list[0] = list0; lev->list[1] = list1; lev->list[2] = list2; lev->list[3] = list3; lev->list[4] = list4;
+		newbit = 1;
+		
+		dist0 |= list0; dist1 |= list1; dist2 |= list2; dist3 |= list3; dist4 |= list4;
+		lev->comp[0] = comp0; comp0 |= dist0;
+		lev->comp[1] = comp1; comp1 |= dist1;
+		lev->comp[2] = comp2; comp2 |= dist2;
+		lev->comp[3] = comp3; comp3 |= dist3;
+		lev->comp[4] = comp4; comp4 |= dist4;
+
+		lev->cnt2 = cnt2;
+		lev->limit = limit;
+		lev++;
+		depth++;
+		continue;
+
+		up:
+		lev--;
+		depth--;
+		if (depth <= oState->startdepth) {
+			retval = CORE_S_OK;
+			break;
+		}
+		
+		/* load current level */
+		limit = lev->limit;
+		comp0 = lev->comp[0], comp1 = lev->comp[1], comp2 = lev->comp[2], comp3 = lev->comp[3], comp4 = lev->comp[4];
+		list0 = lev->list[0], list1 = lev->list[1], list2 = lev->list[2], list3 = lev->list[3], list4 = lev->list[4];
+		dist0 = dist0 & ~list0; dist1 = dist1 & ~list1; dist2 = dist2 & ~list2; dist3 = dist3 & ~list3; dist4 = dist4 & ~list4; 
+		newbit = 0;
+		cnt2 = lev->cnt2;
+		goto stay; /* repeat this level till done */
+	}
+
+	/* save current level, state */
+	lev->list[0] = list0; lev->list[1] = list1; lev->list[2] = list2; lev->list[3] = list3; lev->list[4] = list4;
+	lev->dist[0] = dist0; lev->dist[1] = dist1; lev->dist[2] = dist2; lev->dist[3] = dist3; lev->dist[4] = dist4;
+	lev->comp[0] = comp0; lev->comp[1] = comp1; lev->comp[2] = comp2; lev->comp[3] = comp3; lev->comp[4] = comp4;
+	lev->cnt2 = cnt2;
+	
+	//oState->Nodes += nodes;
+	oState->depth = depth-1;
+
+	*pnodes = nodes;
+
+	return retval;
+}
+#else
 static int ogr_cycle(void *state, int *pnodes)
 {
   struct State *oState = (struct State *)state;
@@ -807,6 +1004,7 @@ up:
 
   return retval;
 }
+#endif
 
 static int ogr_getresult(void *state, void *result, int resultlen)
 {
