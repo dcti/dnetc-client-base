@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.h,v 1.1.2.9 2001/01/14 02:37:09 andreasb Exp $
+ * $Id: ogr.h,v 1.1.2.10 2001/01/18 00:46:30 andreasb Exp $
 */
 #ifndef __OGR_H__
 #define __OGR_H__ 
@@ -27,19 +27,22 @@
 /*
  * Constants for return values from all the below functions.
  * Those starting with CORE_S are success codes, and those starting
- * with CORE_E are error codes.
+ * with CORE_E or STUB_E are error codes.
  */
 #define CORE_S_OK       0
 #define CORE_S_CONTINUE 1
 #define CORE_S_SUCCESS  2
-#define CORE_E_MEMORY   (-1)
-#define CORE_E_IO       (-2)
-#define CORE_E_FORMAT   (-3)
-#define CORE_E_STOPPED  (-4)
-/* Stub is not Golomb or exceeds a limit, so it can't  */
-#define CORE_E_STUB     (-5)
-/* current ogr_choose_dat2 has not enough entries for this ruler length */
-#define CORE_E_CHOOSE   (-6)
+#define CORE_E_MEMORY    (-1)
+//#define CORE_E_IO      (-2)
+#define CORE_E_FORMAT    (-3)
+//#define CORE_E_STOPPED (-4)
+
+/* Stub is not Golomb, i.e. measures a distance twice */
+#define STUB_E_GOLOMB    (-5)
+/* Stub exceeds a limit, so it's too long to contain an optimal ruler */
+#define STUB_E_LIMIT     (-6)
+/* current ogr_choose_dat2 has not enough entries for this rulers marks */
+#define STUB_E_MARKS     (-7)
 
 /* ===================================================================== */
 
@@ -142,7 +145,7 @@ typedef struct {
 /* ===================================================================== */
 
 // define this to enable LOGGING code
-#undef OGR_DEBUG
+//#undef OGR_DEBUG
 //#define OGR_PROFILE
 // OGR_WINDOW is used to test register windowing in the core
 //#define OGR_WINDOW 10
