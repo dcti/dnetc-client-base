@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.19 2000/10/31 15:22:41 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.20 2000/12/25 02:41:13 cyp Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -31,7 +31,7 @@ BASENAME  =dnetc
 known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 
 %EXTOBJS  = #extra objs (made elsewhere) but need linking here
-%DEFALL   = /DDYN_TIMESLICE /D__showids__ #defines used everywhere
+%DEFALL   = /DDYN_TIMESLICE #defines used everywhere
 %SYMALIAS = # symbols that need redefinition 
 %COREOBJS = # constructed at runtime
 # LINKOBJS is (somewhat) sorted by coherence - speed sentitive stuff first
@@ -632,13 +632,13 @@ output\csc-6b-i.obj : csc\x86\csc-6b-i.asm $(%dependall) .AUTODEPEND
 
 # ----------------------------------------------------------------
 
-output\ogr.obj : ogr\ansi\ogr.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
-
-#output\ogr.obj : ogr\x86\ogr.asm $(%dependall) 
-#  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+#output\ogr.obj : ogr\ansi\ogr.cpp $(%dependall) .AUTODEPEND
+#  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
 #  @set isused=1
+
+output\ogr.obj : ogr\x86\ogr.asm $(%dependall) 
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+  @set isused=1
 
 output\ogr_dat.obj : ogr\ansi\ogr_dat.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
@@ -1103,8 +1103,8 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      @set AFLAGS    = /5s /fp3 /bt=netware /ms
      @set TASMEXE   = tasm32.exe
      @set NASMEXE   = nasmw.exe
-     @set WLINKOPS  = version=0.0 multiload nod map &
-                      xdcdata=platforms/netware/client.xdc #osdomain
+     @set WLINKOPS  = version=2.80 multiload nod map &
+                      xdcdata=platforms/netware/client.xdc osdomain
      @set LFLAGS    = op scr 'none' op osname='NetWare NLM' symtrace spawnlp #sys netware
      @set OPT_SIZE  = /os /s  
      @set OPT_SPEED = /oneatx /oh /oi+  
@@ -1118,8 +1118,8 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      @set LINKOBJS  = $(%LINKOBJS) output\netware.obj 
      #@set EXTOBJS   = $(%EXTOBJS) platforms\netware\watavoid\i8s.obj
      @set IMPORTS   = ImportPublicSymbol UnImportPublicSymbol &
-                      GetCurrentTime OutputToScreen &
-                      GetServerConfigurationInfo Abend &
+                      GetCurrentTime OutputToScreen fmod &
+                      GetServerConfigurationInfo Abend FEGetOpenFileInfo &
                       @$(%watcom)\novi\clib.imp @$(%watcom)\novi\tli.imp
                       # @$(%watcom)\novi\mathlib.imp
      @set LIBPATH   = platforms\netware\misc platforms\netware\inet &
@@ -1135,7 +1135,7 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
 #    @%make declare_for_desmt
 ##   @%make declare_for_desmmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
+##   @%make declare_for_ogr
 #    @%make declare_for_csc
      @%make platform
      #

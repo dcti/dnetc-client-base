@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.65 2000/11/02 18:29:45 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.66 2000/12/25 02:38:54 cyp Exp $"; }
 
 //#define TRACE
 
@@ -1717,6 +1717,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
     }
   }
 
+
   TRACE_OUT((-1,"ParseCommandline(%d) => retcode=%d, havemode=%d, misc_call=%d, modebits=%d\n", 
                run_level, retcode, havemode, misc_call, ModeReqIsSet(-1)));
 
@@ -1952,6 +1953,26 @@ static int __finalize_level(const char *argv0,
       } /* if (client->quietmode) */  
       #endif /* __unix__ */
     } /* if ((ModeReqIsSet(-1)==0)) */
+
+    #if (CLIENT_OS == OS_NETWARE)
+    if (retcode == -12345)
+    {                   
+      int modes = ModeReqIsSet(-1);
+      if (modes == 0 || (modes & MODEREQ_CONFIG)!=0)
+      {                     /* about to run client normally or do -config */
+        if (strcmp(GetFullPathForFilename("blah"),"blah")==0)
+        {  
+          /* no canonical argv[0] (launched from non-NetWare partion) and */
+          /* no -ini override to hint which directory to use */
+          ConsolePrintf("\r%s: The client cannot determine its working directory\r\n"
+          "       when launched from a non-NetWare volume/partition. Please use\r\n"
+          "       the '-ini <fullpath-to-config-file>' option to give the client\r\n"
+          "       a hint as to which directory it should use.\r\n", utilGetAppName() );
+          retcode = -1; 
+        }
+      }
+    }
+    #endif
   } /* if (retcode == -12345 && run_level == 0) */
 
   if (retcode == -12345)

@@ -6,9 +6,10 @@
 */ 
 
 //#define TRACE
+//#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.81 2000/12/14 19:35:18 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.82 2000/12/25 02:38:54 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -33,8 +34,6 @@ return "@(#)$Id: clirun.cpp,v 1.98.2.81 2000/12/14 19:35:18 cyp Exp $"; }
 #include "clievent.h"  // ClientEventSyncPost() and constants
 
 // --------------------------------------------------------------------------
-
-//#define DYN_TIMESLICE_SHOWME
 
 struct __dyn_timeslice_struct
 {
@@ -96,12 +95,25 @@ struct thread_param_block
   unsigned long thread_data2;
   struct __dyn_timeslice_struct *dyn_timeslice_table;  
   struct __dyn_timeslice_struct rt_dyn_timeslice_table[CONTEST_COUNT];
+  #if (CLIENT_OS == OS_NETWARE)
+  int previous_was_sleep;
+  #endif
+  #if defined(DYN_TIMESLICE_SHOWME)
+  struct
+  {
+    unsigned long totaltime;
+    unsigned long totalts;
+    unsigned int ctr;
+    unsigned int contest;
+    int dispactive;
+  } dyn_timeslice_showme;
+  #endif
   struct thread_param_block *next;
 };
 
 // ----------------------------------------------------------------------
 
-static void __cruncher_sleep__(int /*is_non_preemptive_cruncher*/)
+static void __cruncher_sleep__(struct thread_param_block * /*thrparams*/)
 {
   #if (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
     /* only real threads sleep and all our real threads are MP threads */
@@ -113,11 +125,11 @@ static void __cruncher_sleep__(int /*is_non_preemptive_cruncher*/)
   #endif
 }
 
-static void __cruncher_yield__(int is_non_preemptive_cruncher)
+static int __cruncher_yield__(struct thread_param_block *thrparams)
 {
-  is_non_preemptive_cruncher = is_non_preemptive_cruncher; /* shaddup compiler */
-  /* some OSs like MacOS have different yield calls depending on
-     how the cruncher was created.
+  thrparams = thrparams;  /* shaddup compiler */
+  /* thrparams is needed for some OSs like MacOS that have different 
+  ** yield calls depending on how the cruncher was created.
   */
   #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
     thr_yield();
@@ -135,14 +147,46 @@ static void __cruncher_yield__(int is_non_preemptive_cruncher)
     #else       // !_irix5_
     sched_yield();
     #endif      // !_irix5_
-  #elif (CLIENT_OS == OS_WIN32)
-    w32Yield(); //Sleep(0);
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    w32Yield(); //not Sleep(0)!
   #elif (CLIENT_OS == OS_DOS)
     dosCliYield(); //dpmi yield
   #elif (CLIENT_OS == OS_NETWARE)
+    int slow = (GetDiskIOsPending() || GetNestedInterruptLevel());
+    if (slow)
+      thrparams->previous_was_sleep = 1;
+    else if (thrparams->previous_was_sleep)
+    {
+      thrparams->previous_was_sleep = 0;
+      slow = 1;
+    }
+    if (slow)
+    {
+      do
+      {
+        __MPKDelayThread(250);
+        slow = (GetDiskIOsPending() || GetNestedInterruptLevel());
+        if (slow)
+          thrparams->previous_was_sleep = 1;
+      } while (slow && !thrparams->do_suspend && !thrparams->do_exit);
+      return 250000;
+    }
+    thrparams->previous_was_sleep = 0;
     MPKYieldThread();
-  #elif (CLIENT_OS == OS_WIN16)
-    w32Yield();
+    #if 0   
+    int client_prio = thrparams->priority;
+    if (client_prio > 9)
+      client_prio = 9;
+    client_prio = ((9-client_prio)>>1);
+    do { 
+      if (GetDiskIOsPending() || GetNestedInterruptLevel())
+      {
+        __MPKDelayThread(250);
+        return 250000;
+      }
+      MPKYieldThread();
+    } while ((--client_prio) > 0);
+    #endif
   #elif (CLIENT_OS == OS_RISCOS)
     if (riscos_in_taskwindow)
       riscos_upcall_6();
@@ -156,7 +200,7 @@ static void __cruncher_yield__(int is_non_preemptive_cruncher)
     #endif
   #elif (CLIENT_OS == OS_MACOS)
     #if (CLIENT_CPU == CPU_POWERPC)
-    if (!is_non_preemptive_cruncher)
+    if (!thrparams->is_non_preemptive_cruncher)
       MPYield(); /* MP Threads are non-preemptive */
     else
     #endif
@@ -176,7 +220,7 @@ static void __cruncher_yield__(int is_non_preemptive_cruncher)
   #elif (CLIENT_OS == OS_FREEBSD)
     /* don't use sched_yield() - 
        different syscall # on 3.4,4.x */
-    //sched_yield(); /* 4.4bsd */
+    //sched_yield();
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_QNX)
     NonPolledUSleep( 0 ); /* yield */
@@ -200,6 +244,7 @@ static void __cruncher_yield__(int is_non_preemptive_cruncher)
     #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */
   #endif
+  return 0;
 }
 
 // ----------------------------------------------------------------------
@@ -287,20 +332,23 @@ void Go_mt( void * parm )
     last_restart_ticks = GetCurrentTime(); /* in ticks */
     if (last_restart_ticks == 0)
       last_restart_ticks = 1;
-    if (numcpus > 1)
+    if (numcpus < 1)
+      numcpus = 1;
     {
       int targetcpu = threadnum % numcpus;
       int numthreads = (int)thrparams->numthreads;
       if (numthreads < numcpus) /* fewer threads than cpus? */
         targetcpu++; /* then leave CPU 0 to netware */
-      if (targetcpu == 0) /* if sharing CPU 0 with netware */
+      if (targetcpu == 0 && numcpus > 1) /* if sharing CPU 0 with netware */
         MPKEnterNetWare(); /* then keep the first thread bound to the kernel */
       else
       {
         MPKExitNetWare(); /* spin off into kControl */
         __MPKSetThreadAffinity( targetcpu );
-    #if 0 /* not completely tested in a production environment */
-        if (__MPKEnableThreadPreemption() == 0)
+        #if 0 /* not completely tested in a production environment */
+        if (numcpus < 2)
+          ; /* nothing */       
+        else if (__MPKEnableThreadPreemption() == 0)
         {
           /* use 10ms quantum. preemption rate is 20ms, which is too high */
           for (int tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
@@ -314,7 +362,7 @@ void Go_mt( void * parm )
           for (int tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
             thrparams->dyn_timeslice_table[tsinitd].usec *= 4;
         }
-    #endif
+        #endif
       }
     }
   }
@@ -351,13 +399,13 @@ void Go_mt( void * parm )
       if (thisprob == NULL)  // this is a bad condition, and should not happen
         thrparams->refillneeded = 1;// ..., ie more threads than problems
       if (thrparams->realthread) // don't race in the loop
-        __cruncher_sleep__(is_non_preemptive_cruncher); 
+        __cruncher_sleep__(thrparams); 
     }
     else if (!ProblemIsInitialized(thisprob))
     {
       thrparams->refillneeded = 1;
       if (thrparams->realthread) // don't race in the loop
-        __cruncher_yield__(is_non_preemptive_cruncher);
+        __cruncher_yield__(thrparams);
     }
     else
     {
@@ -418,7 +466,28 @@ void Go_mt( void * parm )
       */
       if ((is_non_preemptive_cruncher) || (!didwork && thrparams->realthread))
       {                      
-        __cruncher_yield__(is_non_preemptive_cruncher);
+        int addrunus = __cruncher_yield__(thrparams);
+        #if defined(DYN_TIMESLICE_SHOWME)
+        if (runtime_usec != 0xfffffffful) /* time was valid */
+        {
+          if ((++thrparams->dyn_timeslice_showme.dispactive) == 1)
+          {
+            if (contest_i != thrparams->dyn_timeslice_showme.contest)
+            {
+              thrparams->dyn_timeslice_showme.totaltime = 0;
+              thrparams->dyn_timeslice_showme.totalts = 0;
+              thrparams->dyn_timeslice_showme.ctr = 0;
+              thrparams->dyn_timeslice_showme.contest = contest_i;
+            } 
+            thrparams->dyn_timeslice_showme.totaltime += runtime_usec;
+            thrparams->dyn_timeslice_showme.totalts += thisprob->pub_data.tslice;
+            thrparams->dyn_timeslice_showme.ctr++;
+          }
+          --thrparams->dyn_timeslice_showme.dispactive;
+        }          
+        #endif
+        if (addrunus > 0 && runtime_usec != 0xfffffffful)
+          runtime_usec += addrunus;
       }
       
       /* fine tune the timeslice for the *next* round */
@@ -427,29 +496,6 @@ void Go_mt( void * parm )
         if (contest_i != OGR) // OGR makes dynamic timeslicing go crazy!
           optimal_timeslice = thisprob->pub_data.tslice; /* get the number done back */
         
-        #if defined(DYN_TIMESLICE_SHOWME)
-        if (/*!thrparams->realthread &&*/ 
-            runtime_usec != 0xfffffffful) /* time was valid */
-        {
-          static unsigned int ctr = UINT_MAX;
-          static unsigned long totaltime = 0, totalts = 0;
-          if (ctr == UINT_MAX)
-          {
-            totaltime = totalts = 0;
-            ctr = 0;
-          }
-          totaltime += runtime_usec;
-          totalts += optimal_timeslice;
-          ctr++;
-          if (ctr >= 1000 || totaltime > 100000000ul)
-          {
-            if (ctr)
-              LogScreen("ctr: %u avg timeslice: %lu  avg time: %luus\n", ctr, totalts/ctr, totaltime/ctr );
-            totaltime = totalts = 0;
-            ctr = 0;
-          }
-        }
-        #endif
         if (run == RESULT_WORKING) /* timeslice/time is invalid otherwise */
         {
           if (runtime_usec != 0xfffffffful) /* not negative time or other bad thing */
@@ -1055,6 +1101,36 @@ static int __CheckClearIfRefillNeeded(struct thread_param_block *thrparam,
   return refillneeded;
 }  
 
+#if defined(DYN_TIMESLICE_SHOWME)
+static void __dyn_timeslice_showme(struct thread_param_block *thrparam)
+{
+  while (thrparam) 
+  {
+    unsigned int ctr = 0;
+    unsigned long totaltime = 0, totalts = 0;
+    if ((++thrparam->dyn_timeslice_showme.dispactive) == 1)
+    {
+      totaltime = thrparam->dyn_timeslice_showme.totaltime;
+      totalts = thrparam->dyn_timeslice_showme.totalts;
+      ctr = thrparam->dyn_timeslice_showme.ctr;
+      if (ctr >= 5000 || totaltime > 100000000ul) /* 100 secs */
+        thrparam->dyn_timeslice_showme.contest = (unsigned int)-1;
+      else
+        ctr = 0;
+    }  
+    --thrparam->dyn_timeslice_showme.dispactive;
+    if (ctr)
+    {
+      printf("\rT# %d (r=%d) ctr: %u avgs TS: %lu us: %lu\n", 
+              thrparam->threadnum , thrparam->realthread, 
+              ctr, totalts/ctr, totaltime/ctr );
+    }
+    thrparam = thrparam->next;
+  }
+  return;
+}
+#endif
+
 /* ----------------------------------------------------------------------- */
 
 static int GetMaxCrunchersPermitted( void )
@@ -1306,18 +1382,18 @@ int ClientRun( Client *client )
             long quantum = non_preemptive_dyn_timeslice_table[0].usec;
             if (tsinitd == 0)
             {
-              quantum = 100;
+              quantum = 512;
               #if (CLIENT_CPU == CPU_X86)
-              quantum = 512; /* good enough for NetWare 3x */
+              quantum = 5000; /* 5ms good enough for NetWare 3x */
               if (GetFileServerMajorVersionNumber() >= 4) /* just guess */
               {
                 long det_type = (GetProcessorType(1) & 0xff);
                 if (det_type > 0x0A) /* not what we know about */
                   ConsolePrintf("\rDNETC: unknown CPU type for quantum selection in "__FILE__").\r\n");
                 if (det_type==0x02 || det_type==0x07 || det_type==0x09)
-                  quantum = 256; /* PII/PIII || Celeron-A || AMD-K7 */
+                  quantum = 500; /* 256 PII/PIII || Celeron-A || AMD-K7 */
                 else /* the rest */
-                  quantum = 100;
+                  quantum = 250; /* 100 */
               }
               #endif
               if (client->priority >= 0 && client->priority <= 9)
@@ -1407,16 +1483,20 @@ int ClientRun( Client *client )
     }
   }
 
-  #ifdef DEBUG
-  for (int i = 0; i < CONTEST_COUNT; ++i)
-    if (IsProblemLoadPermitted(0, i))
-      Log( "%s thresholds: in: %d (%d wu/%d h) out: %d (%d wu)\n",
-           CliGetContestNameFromID(i),
-           ClientGetInThreshold(client, i, 1),
-           client->inthreshold[i],
-           client->timethreshold[i],
-           ClientGetOutThreshold(client, i),
-           client->outthreshold[i] );
+  #ifdef TRACE
+  for (prob_i = 0; prob_i < CONTEST_COUNT; ++prob_i)
+  {
+    if (IsProblemLoadPermitted(0, prob_i)) 
+    {
+      TRACE_OUT((0, "%s thresholds: in: %d (%d wu/%d h) out: %d (%d wu)\n",
+           CliGetContestNameFromID(prob_i),
+           ClientGetInThreshold(client, prob_i, 1),
+           client->inthreshold[prob_i],
+           client->timethreshold[prob_i],
+           ClientGetOutThreshold(client, prob_i),
+           client->outthreshold[prob_i] ));
+    }
+  }
   #endif
 
   //============================= MAIN LOOP =====================
@@ -1447,6 +1527,9 @@ int ClientRun( Client *client )
           NonPolledSleep(1);
         else 
           sleep(1);
+        #if defined(DYN_TIMESLICE_SHOWME)
+        __dyn_timeslice_showme(thread_data_table);
+        #endif
       }
       SetGlobalPriority( 9 );
     }
