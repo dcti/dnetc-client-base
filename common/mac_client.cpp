@@ -3,8 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mac_client.cpp,v $
+// Revision 1.4  1998/12/16 22:40:31  dicamillo
+// Fixed commenting error (missing //) in previous log entry.
+//
 // Revision 1.3  1998/12/16 15:57:17  sampo
-// MODEREQ_FFORCE doesn't do anything different from normal force/flush, so Irecycled it as MODEREQ_FQUIET for use with non-interactive BufferUpdate()
+// MODEREQ_FFORCE doesn't do anything different from normal force/flush, so I
+// recycled it as MODEREQ_FQUIET for use with non-interactive BufferUpdate()
 //
 // Revision 1.2  1998/12/15 07:01:49  dicamillo
 // Use "_" instead of "/" in Mac header file names for CVS.
@@ -14,7 +18,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *mac_client_cpp(void) {
-return "@(#)$Id: mac_client.cpp,v 1.3 1998/12/16 15:57:17 sampo Exp $"; }
+return "@(#)$Id: mac_client.cpp,v 1.4 1998/12/16 22:40:31 dicamillo Exp $"; }
 #endif
 
 // This file contains the routines added to the Client class for the Mac_Client
