@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.173 2000/07/10 15:33:02 jbaker Exp $
+# @(#)$Id: configure,v 1.222.2.174 2000/07/11 01:53:09 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1647,11 +1647,17 @@ case "$1" in
 	# now under BSD/OS 4.1 it seems to run and compile correctly
     *x86-bsdos4)      # BSD/OS 4.0 with ELF format, now without DES -snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
+	#TARGET_CCFLAGS="-g $OPTS_GCC272_X86 -DMMX_RC5 -DHAVE_OGR_CORES -DLURK"
+	#TARGET_CCFLAGS="$OPTS_EGCS_X86 -DMMX_RC5 -DHAVE_OGR_CORES -DLURK"
+	TARGET_CCFLAGS="-g $OPTS_EGCS_X86 -DHAVE_OGR_CORES -DLURK"
+		#  -DHAVE_CSC_CORES" -DMMX_CSC
+	#TARGET_CCFLAGS="-g $OPTS_GCC272_X86 -DHAVE_OGR_CORES -DLURK"
 	TARGET_CC="g++"
         generate_gcc_opts "x86" "bsdos"
 	TARGET_CCFLAGS="-g $OPTS_GCC -DHAVE_OGR_CORES -DLURK"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$OGR_ANSI_SRCS common/lurk.cpp $RC5X86_SRCS"
+	#TARGET_ADDSRCS="$OGR_ANSI_SRCS common/lurk.cpp"
 	TARGET_ADDASMS="platforms/x86ident.S"
 	##rc5mmx## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_RC5"
 	##rc5mmx## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_RC5X86_SRCS"
