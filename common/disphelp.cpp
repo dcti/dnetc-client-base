@@ -13,6 +13,7 @@
 // call from main() with the invalid option (argv[x]) that triggered help
 // --------------------------------------------------------------------------
 
+#if !defined(NOCONFIG)
 void Client::DisplayHelp( char * unrecognized_option )
 {
   static char *valid_help_requests[] = 
@@ -214,4 +215,5 @@ void Client::DisplayHelp( char * unrecognized_option )
   clearscreen();
   return;
 }
+#endif
 
