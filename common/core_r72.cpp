@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.9 2003/10/28 17:11:58 teichp Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.10 2003/11/04 14:06:33 kakace Exp $"; }
 
 //#define TRACE
 
@@ -133,7 +133,9 @@ const char **corenames_for_contest_rc572()
       "KKS 7450",      /* gas and OSX format, AltiVec only */
       "MH 1-pipe",     /* gas, TOC and OSX format */
       "MH 1-pipe 604e",/* gas, TOC and OSX format */
+      #if 0     // Disabled (kakace)
       "KKS 970",       /* gas and OSX format, AltiVec only */
+      #endif
   #elif (CLIENT_CPU == CPU_SPARC)
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -296,7 +298,11 @@ int selcoreGetPreselectedCoreForProject_rc572()
             case 0x8000: cindex = 4; break; // 7450 (G4+)  == KKS 7450
             case 0x8001: cindex = 4; break; // 7455 (G4+)  == KKS 7450
             case 0x800C: cindex = 3; break; // 7410 (G4)   == KKS 7400
-            //case 0x0039: cindex = 10; break; // 970 (G5)   == KKS 970
+            #if 0       // Disabled (kakace)
+            case 0x0039: cindex = 7; break; // 970 (G5)    == KKS 970
+            #else
+            case 0x0039: cindex = 4; break; // Redirect G5 to KKS 7450
+            #endif
             default:     cindex =-1; break; // no default
         }
       }
@@ -561,10 +567,12 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         pipeline_count = 1;
         break;
       #if defined(__VEC__) || defined(__ALTIVEC__)
+      #if 0     // Disabled (kakace)
       case 7:
           unit_func.gen_72 = rc5_72_unit_func_KKS970;
           pipeline_count = 4;
           break;
+      #endif
       #endif
      // -----------
      #else /* the ansi cores */
