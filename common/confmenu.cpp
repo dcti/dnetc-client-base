@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.32 2001/05/01 19:15:59 andreasb Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.33 2001/06/16 16:59:17 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -1143,15 +1143,21 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           }
           else if (conf_options[editthis].type == CONF_TYPE_IARRAY)
           {
-            newval_isok = 1; /* never rejected */
+            newval_isok = 1;
             if (editthis == CONF_CPUTYPE) 
             {
+              /* merge with previous is done later - this is just to check
+              ** that the numbers that the user _does_ provide are ok.
+              ** (there is no min/max range adjustment done for cputype)
+              */
               int iarray[CONTEST_COUNT];
+              for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+                iarray[cont_i] = -1; /* default for validation purposes */
               utilScatterOptionListToArraysEx(parm, &iarray[0], NULL,NULL, NULL );
               for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
               {
-                if (__is_opt_available_for_project(cont_i, CONF_CPUTYPE) &&
-                  iarray[cont_i] != selcoreValidateCoreIndex(cont_i,iarray[cont_i]))
+                if (__is_opt_available_for_project(cont_i, editthis) &&
+                   iarray[cont_i] != selcoreValidateCoreIndex(cont_i,iarray[cont_i]))
                 {
                   newval_isok = 0; /* reject it */
                   break;
@@ -1355,6 +1361,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           {
             for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
             {
+              vecta[cont_i] = -1; /* autosel */
               if (__is_opt_available_for_project(cont_i, editthis))
                 vecta[cont_i] = selcoreValidateCoreIndex(cont_i,iarray_a[cont_i]);
             }    
