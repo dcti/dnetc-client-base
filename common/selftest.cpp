@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.69 2002/09/23 16:58:36 acidblood Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.70 2002/09/24 00:40:18 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -365,9 +365,9 @@ long SelfTest( unsigned int contest )
         contestwork.bigcrypto.key.lo  = expectedsolution_lo & 0xFFFF0000L;
         if (testnum>1 && testnum<=6)
         {
-          contestwork.crypto.key.lo -= 0x00010000;
+          contestwork.bigcrypto.key.lo -= 0x00010000;
           if ((expectedsolution_lo & 0xFFFF0000L) == 0)
-            contestwork.crypto.key.hi--;
+            contestwork.bigcrypto.key.hi--;
         }
       }
 
@@ -601,9 +601,9 @@ long SelfTest( unsigned int contest )
                   resulttext = "FAILED";
                   resultcode = -1;
                 }
-                else if (contestwork.bigcrypto.key.hi != expectedsolution_hi  ||
-                         contestwork.crypto.key.mid   != expectedsolution_mid ||
-                         contestwork.crypto.key.lo    != expectedsolution_lo)
+                else if (contestwork.bigcrypto.key.hi  != expectedsolution_hi  ||
+                         contestwork.bigcrypto.key.mid != expectedsolution_mid ||
+                         contestwork.bigcrypto.key.lo  != expectedsolution_lo)
                 {                                                /* wrong solution */
                   resulttext = "FAILED";
                   resultcode = -1;
@@ -672,6 +672,7 @@ long SelfTest( unsigned int contest )
         ProblemFree(thisprob);
       } /* if ProblemAlloc() */
 
+      expectedsolution_mid = expectedsolution_mid;
     } /* for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ ) */
 
     if (userbreak)
