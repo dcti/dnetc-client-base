@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.88  1998/06/14 11:20:46  ziggyb
+// Added the did_detect_message variable to the os/2 build
+//
 // Revision 1.87  1998/06/13 21:56:13  friedbait
 // 'id'variable added, such that we can use 'ident' on the resulting binary
 // in order to get a 'bill of material' on what versions the binary consists
@@ -18,7 +21,7 @@
 
 #include "client.h"
 
-static char *id="@(#)$Id: cliconfig.cpp,v 1.87 1998/06/13 21:56:13 friedbait Exp $";
+static char *id="@(#)$Id: cliconfig.cpp,v 1.88 1998/06/14 11:20:46 ziggyb Exp $";
 
 // --------------------------------------------------------------------------
 
@@ -210,7 +213,7 @@ static optionstruct options[OPTION_COUNT]=
 //21
 { "smtpdest", CFGTXT("E-mail address to send logs to"), "you@your.site", CFGTXT("\n(Full name and site eg: you@your.site.  Comma delimited list permitted)\n"),2,1,6,NULL},
 //22
-#if ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_BEOS))
+#if ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_BEOS)) || (CLIENT_OS == OS_OS2)
   { "numcpu", CFGTXT("Number of CPUs in this machine"), "-1 (autodetect)", "\n"
 #else
   { "numcpu", CFGTXT("Number of CPUs in this machine"), "1", "\n"
@@ -1211,6 +1214,8 @@ void Client::ValidateConfig( void )
   static bool did_detect_message = false;
 #elif (CLIENT_OS == OS_BEOS)
   system_info the_info;
+  static bool did_detect_message = false;
+#elif (CLIENT_OS == OS_OS2)
   static bool did_detect_message = false;
 #endif
 
