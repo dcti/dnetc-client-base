@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.9 2003/10/28 17:11:58 teichp Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.10 2003/11/04 14:04:23 kakace Exp $"; }
 
 //#define TRACE
 
@@ -354,7 +354,7 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
 
 #if (CLIENT_CPU == CPU_POWERPC)
 # if defined(__VEC__) || defined(__ALTIVEC__) /* compiler+OS supports AltiVec */
-  if (coresel == 2)                           /* "PPC-vector" */
+  if (coresel == 1)                           /* "PPC-vector" */
     unit_func.ogr = vec_ogr_get_dispatch_table();
 # endif
 
