@@ -1,6 +1,9 @@
 ; Copyright distributed.net 1997-2002 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
+;
+; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
+; $Id: r72-dg2.asm,v 1.2 2002/10/21 05:02:57 acidblood Exp $
 
 [GLOBAL rc5_72_unit_func_dg_2_]
 [GLOBAL _rc5_72_unit_func_dg_2]
@@ -580,33 +583,17 @@ key_setup_3:
 ;       L[1]    S2[24]
 ;       S1[25]  L2[1]
 
-;       L1[2]   S2[25]
-;               L2[2]
+;               S2[25]
 
-        add     B1, A1
+        mov     A1, [work_P_0]
         add     A2, S_next
         mov     S1_next, S1(0)
 
-        mov     shiftreg, B1
-        add     B1, L_next
         add     A2, B2
 
-        mov     L_next, L2(2)
-        rol     B1, shiftcount
         rol     A2, 3
 
-        add     B2, A2
-        mov     L1(2), B1
         mov     S2(25), A2
-
-        mov     A1, [work_P_0]
-        mov     shiftreg, B2
-        add     B2, L_next
-
-        rol     B2, shiftcount
-
-        mov     L2(2), B2
-
 
 ;    A1 = rc5_72unitwork->plain.lo + S1[0];
 ;    A2 = rc5_72unitwork->plain.lo + S2[0];
@@ -666,9 +653,8 @@ encryption:
 
 test_key_1:
         cmp     A1, [work_C_0]
-        jne     test_key_2
-
         mov     eax, [RC5_72UnitWork]
+        jne     test_key_2
 
         inc     dword [RC5_72UnitWork_CMCcount]
 
@@ -719,21 +705,20 @@ test_key_1:
 align 16
 test_key_2:
         cmp     A2, [work_C_0]
-        jne     not_found
+        mov     ebx, [RC5_72UnitWork_L0hi]
+        mov     ecx, [RC5_72UnitWork_L0mid]
 
-        mov     eax, [RC5_72UnitWork]
+        mov     edx, [RC5_72UnitWork_L0lo]
+        jne     inc_hi
 
         inc     dword [RC5_72UnitWork_CMCcount]
 
-        mov     ecx, [RC5_72UnitWork_L0hi]
-        mov     esi, [RC5_72UnitWork_L0mid]
-        mov     edi, [RC5_72UnitWork_L0lo]
-
-        mov     [RC5_72UnitWork_CMChi], ecx
-        mov     [RC5_72UnitWork_CMCmid], esi
-        mov     [RC5_72UnitWork_CMClo], edi
+        mov     [RC5_72UnitWork_CMChi], ebx
+        mov     [RC5_72UnitWork_CMCmid], ecx
+        mov     [RC5_72UnitWork_CMClo], edx
 
         cmp     B2, [work_C_1]
+
         jne     test_key_2
 
         mov     ecx, [work_iterations]
@@ -758,36 +743,25 @@ test_key_2:
 
         ret
 
-not_found:
-        mov     eax, [RC5_72UnitWork]
-
-        mov     ebx, [RC5_72UnitWork_L0hi]
-        mov     ecx, [RC5_72UnitWork_L0mid]
-        mov     edx, [RC5_72UnitWork_L0lo]
-
-
+k7align 16
 inc_hi:
-        add     ebx, 2
+        add     bl, 2
         bswap   ecx
         bswap   edx
 
-        and     ebx, 0x000000FF
-
         mov     [RC5_72UnitWork_L0hi], ebx
         mov     L1(2), ebx
-        jnz     inc_iter
+        jnc     inc_iter
 
 inc_mid:
         inc     ecx
-
-        test    ecx, ecx
 
         jnz     inc_iter
 
 inc_lo:
         inc     edx
 
-align 16
+k7align 16
 inc_iter:
         inc     ebx
         dec     dword [work_iterations]
