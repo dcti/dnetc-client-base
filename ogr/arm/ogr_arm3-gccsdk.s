@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Peter Teichmann <dnet@peter-teichmann.de>
-; $Id: ogr_arm3-gccsdk.s,v 1.1.2.1 2004/06/16 21:39:42 teichp Exp $
+; $Id: ogr_arm3-gccsdk.s,v 1.1.2.2 2004/06/29 20:39:01 teichp Exp $
 ;
 ; XScale optimized core:
 ; * Intel really did a extremly bad job. They had better just taken the
@@ -511,18 +511,18 @@ loop_break
 
 ;-----------------------------------------------------------------------------
 
-	EXPORT	ogr_get_dispatch_table_arm3
-ogr_get_dispatch_table_arm3
-	stmdb	r13!, {r4, r14}
-	bl	ogr_get_dispatch_table
-	ldr	r4, pdispatch_table
-	ldmia	r0!,{r1-r3}
-	ldr	r3, pogr_cycle
-	stmia	r4!,{r1-r3}
-	ldmia	r0!,{r1-r3}
-	stmia	r4!,{r1-r3}
-	sub	r0, r4, #24
-	ldmia	r13!, {r4, pc}
+;	EXPORT	ogr_get_dispatch_table_arm3
+;ogr_get_dispatch_table_arm3
+;	stmdb	r13!, {r4, r14}
+;	bl	ogr_get_dispatch_table
+;	ldr	r4, pdispatch_table
+;	ldmia	r0!,{r1-r3}
+;	ldr	r3, pogr_cycle
+;	stmia	r4!,{r1-r3}
+;	ldmia	r0!,{r1-r3}
+;	stmia	r4!,{r1-r3}
+;	sub	r0, r4, #24
+;	ldmia	r13!, {r4, pc}
 
 ;-----------------------------------------------------------------------------
 
@@ -551,6 +551,6 @@ pogr_cycle
 	AREA	|C$$DATA|, DATA
 	ALIGN	32
 dispatch_table
-	%	24
+	%	36
 
 	END
