@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.200  1999/03/03 02:17:46  foxyloxy
+# Fixed ld flags for mips-egcs-crunch-64
+#
 # Revision 1.199  1999/03/01 20:17:16  patrick
 #
 # added aix32-ppc target (doesn't compile for me due to compiler error)
@@ -1045,6 +1048,7 @@ case "$1" in
 			-DMIPS_CRUNCH=1 -DBIT_64 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
+	TARGET_LDFLAGS="-mabi=64"
 	;;
 
     *mips-egcs-crunch)	# faster than mips-gcc for IRIX
