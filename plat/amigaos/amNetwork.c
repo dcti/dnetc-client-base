@@ -1,6 +1,6 @@
 /* Created by Oliver Roberts <oliver@futaura.co.uk>
 **
-** $Id: amNetwork.c,v 1.1.2.1 2001/01/21 15:10:27 cyp Exp $
+** $Id: amNetwork.c,v 1.1.2.2 2001/03/19 19:18:55 oliver Exp $
 **
 ** ----------------------------------------------------------------------
 ** This file contains Amiga specific networking code, including socket
@@ -63,10 +63,10 @@ BOOL amigaOpenSocketLib(void)
       #else
       #ifdef __POWERUP__
       /* disable for now - may have something to do with stability problems */
-      //libnotinmem = (PPCFindNameSync((struct List *)(((UBYTE *)SysBase)+378),"bsdsocket.library") == NULL);
+      //libnotinmem = (PPCFindNameSync(&SysBase->LibList,"bsdsocket.library") == NULL);
       #else
       ULONG skey = Super();
-      libnotinmem = (FindNamePPC((struct List *)(((UBYTE *)SysBase)+378),"bsdsocket.library") == NULL);
+      libnotinmem = (FindNamePPC(&SysBase->LibList,"bsdsocket.library") == NULL);
       User(skey);
       #endif
       #endif

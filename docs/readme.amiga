@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.7.2.6 2000/11/04 20:09:20 oliver Exp $
+ Document revision $Id: readme.amiga,v 1.7.2.7 2001/03/19 19:19:44 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -140,6 +140,7 @@
        - Roberto Patriarca (Myzar)
        - Thomas Tavoly (coordinator of the Amiga RC5 Team)
        - Jacek Rzeuski (keyrate chart class code for Myzar)
+       - Dirk Stoecker (laborious testing of PowerUp client betas)
 
     -- The whole Amiga RC5 Team
        Without you there wouldn't be much of a point in doing the client, 
