@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amConsole.c,v 1.2.4.1 2004/01/07 02:50:50 piru Exp $
+ * $Id: amConsole.c,v 1.2.4.2 2004/01/08 21:00:48 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 
-#ifdef __PPC__
+#ifdef __OS3PPC__
 #pragma pack(2)
 #endif
 
@@ -24,23 +24,18 @@
 #include <proto/exec.h>
 #include <proto/dos.h>
 
-#ifdef __PPC__
+#ifdef __OS3PPC__
 #pragma pack()
 #endif
 
+#include <unistd.h>
 #include <ctype.h>
 #include "amiga.h"
 #include "triggers.h"
 #include "util.h"
 #include "modereq.h"
 
-#if (CLIENT_OS == OS_MORPHOS)
-/* use Amiga 68k code */
-#undef __PPC__
-#undef __POWERUP__
-#endif
-
-#if defined(__PPC__) && defined(__POWERUP__)
+#if defined(__OS3PPC__) && defined(__POWERUP__)
 #undef Read
 #undef Write
 #define Read(a,b,c) PPCRead(a,b,c)
@@ -53,7 +48,7 @@ static struct {
    BOOL InputIsInteractive;
    BOOL OutputIsInteractive;
 
-   #ifndef NOGUI
+   #ifndef NO_GUI
    BPTR NewConsole;
    BPTR OldInput;
    BPTR OldOutput;
@@ -62,11 +57,20 @@ static struct {
 
 extern struct Library *DnetcBase;
 
-extern unsigned long *__stdfiledes;
+#ifdef __amigaos4__
 
-#ifndef NOGUI
+extern APTR *__fd;
+#define STDFILEDES(n) *((BPTR *)(((ULONG)__fd[n])+36))	// libc internal
+
+#else
+
+extern BPTR *__stdfiledes;
+#define STDFILEDES(n) __stdfiledes[n]			// libnix internal
+#ifndef NO_GUI
 /* default console for WB startup (libnix) */
 char __stdiowin[] = "NIL:";
+#endif
+
 #endif
 
 int amigaInitializeConsole(int runhidden, int runmodes)
@@ -80,7 +84,7 @@ int amigaInitializeConsole(int runhidden, int runmodes)
       ConStatics.OutputIsInteractive = (IsInteractive(ConStatics.Output) == DOSTRUE);
 
    // Workbench "Execute Command" output windows refuse to close without this!
-   #ifndef NOGUI
+   #ifndef NO_GUI
    if (!DnetcBase) {
       printf("\r");
       fflush(stdout);
@@ -93,7 +97,7 @@ int amigaInitializeConsole(int runhidden, int runmodes)
    return 0;
 }
 
-#ifndef NOGUI
+#ifndef NO_GUI
 BPTR amigaOpenNewConsole(char *conname)
 {
    if (!ConStatics.NewConsole) {
@@ -101,7 +105,7 @@ BPTR amigaOpenNewConsole(char *conname)
       if (con) {
          ConStatics.OldInput = SelectInput(con);
          ConStatics.OldOutput = SelectOutput(con);
-         __stdfiledes[0] = __stdfiledes[1] = con;
+         STDFILEDES(STDIN_FILENO) = STDFILEDES(STDOUT_FILENO) = con;
          ConStatics.NewConsole = con;
          amigaInitializeConsole(0,0);
       }
@@ -116,8 +120,8 @@ void amigaCloseNewConsole(void)
       Close(ConStatics.NewConsole);
       SelectInput(ConStatics.OldInput);
       SelectOutput(ConStatics.OldOutput);
-      __stdfiledes[0] = ConStatics.OldInput;
-      __stdfiledes[1] = ConStatics.OldOutput;
+      STDFILEDES(STDIN_FILENO) = ConStatics.OldInput;
+      STDFILEDES(STDOUT_FILENO) = ConStatics.OldOutput;
       ConStatics.NewConsole = NULL;
       amigaInitializeConsole(0,0);
    }
@@ -126,7 +130,7 @@ void amigaCloseNewConsole(void)
 
 int amigaConOut(const char *msg)
 {
-   #ifndef NOGUI
+   #ifndef NO_GUI
    static int forcecon = 0;
    if (DnetcBase) {
       if (ModeReqIsSet(MODEREQ_CONFIG|MODEREQ_CONFRESTART)) {
@@ -154,7 +158,7 @@ int amigaConOut(const char *msg)
 
 int amigaConOutModal(const char *msg)
 {
-   #ifndef NOGUI
+   #ifndef NO_GUI
    if (DnetcBase) {
       amigaGUIOut((char *)msg);
    }
@@ -169,7 +173,7 @@ int amigaConOutModal(const char *msg)
 
 int amigaConOutErr(const char *msg)
 {
-   #ifndef NOGUI
+   #ifndef NO_GUI
    if (DnetcBase) {
       amigaGUIOut((char *)msg);
    }
@@ -186,7 +190,7 @@ int amigaConIsGUI(void)
 {
    static int running = -1;
 
-   #ifndef NOGUI
+   #ifndef NO_GUI
    if (DnetcBase) return 1;
    #endif
 
@@ -306,7 +310,7 @@ static int __ReadCtrlSeqResponse(char *cmd, int cmdlen, char matchchar1,
 
 int amigaConGetSize(int *width, int *height)
 {
-   #ifndef NOGUI
+   #ifndef NO_GUI
    if (amigaConIsGUI() && !ConStatics.NewConsole)
    #else
    if (amigaConIsGUI())
@@ -347,7 +351,7 @@ int getch(void) /* get a char from stdin, do not echo, block if none waiting */
 
       if (c == 3) {  /* ^C in input */
          c = 0;
-         #ifdef __PPC__
+         #ifdef __OS3PPC__
          #ifdef __POWERUP__
          void *task = PPCFindTask(NULL);
          PPCSignal(task, SIGBREAKF_CTRL_C);

@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amiga.h,v 1.2.4.1 2004/01/07 02:52:10 piru Exp $
+ * $Id: amiga.h,v 1.2.4.2 2004/01/08 21:00:48 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -18,50 +18,56 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-   #ifdef __PPC__
-   #pragma pack(2)
-   #endif
 
-   #include <exec/types.h>
-   #include <exec/execbase.h>
-   #include <exec/libraries.h>
-
-   #ifndef AFF_68060
+   #ifdef __amigaos4__
+      #define __BEGIN_DECLS
+      #define __END_DECLS
+      #define __P(p) p
+      #define NO_MIAMI
+   #elif !defined(AFF_68060)
       #define AFF_68060 (1L<<7)
    #endif
 
-   #ifdef __PPC__
-      #if (CLIENT_OS == OS_MORPHOS)
-         #include <proto/ppc.h>
-         #include <ppclib/ppc.h>
-         #include <ppclib/tasks.h>
-         #include <ppclib/message.h>
+   #if defined(__PPC__) && !defined(__amigaos4__) && !defined(__MORPHOS__)
+      #define __OS3PPC__
+   #endif
+
+   #ifdef __OS3PPC__
+   #pragma pack(2)
+   #endif
+
+   #include <exec/exec.h>
+
+   #ifdef __OS3PPC__
+      #ifndef __POWERUP__
+         #include <powerpc/powerpc.h>
+         #include <powerpc/powerpc_protos.h>
       #else
-         #ifndef __POWERUP__
-            #include <powerpc/powerpc.h>
-            #include <powerpc/powerpc_protos.h>
-         #else
-            #include <powerup/ppcinline/macros.h>
-            #include <powerup/ppclib/ppc.h>
-            #include <powerup/ppclib/tasks.h>
-            #include <powerup/ppclib/message.h>
+         #include <powerup/ppcinline/macros.h>
+         #include <powerup/ppclib/ppc.h>
+         #include <powerup/ppclib/tasks.h>
+         #include <powerup/ppclib/message.h>
 
-            #ifndef PPC_BASE_NAME
-            #define PPC_BASE_NAME PPCLibBase
-            #endif /* !PPC_BASE_NAME */
+         #ifndef PPC_BASE_NAME
+         #define PPC_BASE_NAME PPCLibBase
+         #endif /* !PPC_BASE_NAME */
 
-            extern struct Library *PPCLibBase;
+         extern struct Library *PPCLibBase;
 
-            #define PPCSetTaskAttrs(TaskObject, Tags) \
-                    LP2(0xc0, ULONG, PPCSetTaskAttrs, void*, TaskObject, a0, struct TagItem*, Tags, a1, \
-                    , PPC_BASE_NAME, IF_CACHEFLUSHALL, NULL, 0, IF_CACHEFLUSHALL, NULL, 0)
+         #define PPCSetTaskAttrs(TaskObject, Tags) \
+                 LP2(0xc0, ULONG, PPCSetTaskAttrs, void*, TaskObject, a0, struct TagItem*, Tags, a1, \
+                 , PPC_BASE_NAME, IF_CACHEFLUSHALL, NULL, 0, IF_CACHEFLUSHALL, NULL, 0)
 
-            #ifndef NO_PPCINLINE_STDARG
-            #define PPCSetTaskAttrsTags(a0, tags...) \
-                    ({ULONG _tags[] = { tags }; PPCSetTaskAttrs((a0), (struct TagItem*)_tags);})
-            #endif /* !NO_PPCINLINE_STDARG */
-         #endif
+         #ifndef NO_PPCINLINE_STDARG
+         #define PPCSetTaskAttrsTags(a0, tags...) \
+                 ({ULONG _tags[] = { tags }; PPCSetTaskAttrs((a0), (struct TagItem*)_tags);})
+         #endif /* !NO_PPCINLINE_STDARG */
       #endif
+   #elif defined(__MORPHOS__)
+      #include <proto/ppc.h>
+      #include <ppclib/ppc.h>
+      #include <ppclib/tasks.h>
+      #include <ppclib/message.h>
    #endif
 
    #include <proto/exec.h>
@@ -70,12 +76,13 @@ extern "C" {
    #include <dos/dostags.h>
    #include <devices/timer.h>
 
-   #ifdef __PPC__
+   #ifdef __OS3PPC__
    #pragma pack()
    #endif
 
-   #include <sys/ioctl.h>
+   //#include <sys/ioctl.h>
    #include <sys/time.h>
+   #include <sys/socket.h>
    #include <stdio.h>
    #include <stdlib.h>
    #include <string.h>
@@ -84,20 +91,18 @@ extern "C" {
    #include <stdarg.h>
    #include <assert.h>
 
-   #ifdef __PPC__
-      #if (CLIENT_OS != OS_MORPHOS)
-         #undef SetSignal
-         #undef AllocVec
-         #undef FreeVec
-         #ifdef __POWERUP__
-            #define SetSignal(x,y) PPCSetSignal(x,y)
-            #define AllocVec(a,b) PPCAllocVec(a,b)
-            #define FreeVec(a) PPCFreeVec(a)
-         #else
-            #define SetSignal(a,b) SetSignalPPC(a,b)
-            #define AllocVec(a,b) AllocVecPPC(a,b,0)
-            #define FreeVec(a) FreeVecPPC(a)
-         #endif
+   #ifdef __OS3PPC__
+      #undef SetSignal
+      #undef AllocVec
+      #undef FreeVec
+      #ifdef __POWERUP__
+         #define SetSignal(x,y) PPCSetSignal(x,y)
+         #define AllocVec(a,b) PPCAllocVec(a,b)
+         #define FreeVec(a) PPCFreeVec(a)
+      #else
+         #define SetSignal(a,b) SetSignalPPC(a,b)
+         #define AllocVec(a,b) AllocVecPPC(a,b,0)
+         #define FreeVec(a) FreeVecPPC(a)
       #endif
    #endif
 
@@ -109,6 +114,7 @@ extern "C" {
 }
 #endif
 
+#ifndef __amigaos4__
 struct	hostent {
 	char	*h_name;	/* official name of host */
 	char	**h_aliases;	/* alias list */
@@ -117,6 +123,7 @@ struct	hostent {
 	char	**h_addr_list;	/* list of addresses from name server */
 #define	h_addr	h_addr_list[0]	/* address, for backward compatiblity */
 };
+#endif
 
 struct ThreadArgsMsg {
    struct Message tp_ExecMessage;
@@ -168,7 +175,7 @@ struct WBArg;
 BOOL amigaGUIInit(char *programname, struct WBArg *iconname);
 void amigaGUIDeinit(void);
 void amigaGUIOut(char *msg);
-#if !defined(__PPC__) || (CLIENT_OS == OS_MORPHOS)
+#if !defined(__OS3PPC__)
 void amigaHandleGUI(struct timerequest *tr);
 #elif !defined(__POWERUP__)
 void amigaHandleGUI(struct timeval *tr);
@@ -183,9 +190,12 @@ int amigaUninstall(int quiet, const char *progname);
 /* unistd prototypes - we can't include unistd.h as the prototypes interfere with
 ** with the Amiga socket prototype macros
 */
+#ifndef __amigaos4__
 int isatty __P((int));
 int unlink __P((const char *));
 int access __P((const char *, int));
+int ftruncate(int file_descriptor, off_t length);
+#endif
 
 __END_DECLS
 

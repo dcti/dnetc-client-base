@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amGUI.c,v 1.2.4.2 2004/01/07 02:50:50 piru Exp $
+ * $Id: amGUI.c,v 1.2.4.3 2004/01/08 21:00:48 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */
 
-#ifndef NOGUI
+#ifndef NO_GUI
 
 #include "amiga.h"
 #include "cputypes.h"
@@ -27,13 +27,10 @@
 
 #include "proto/dnetcgui.h"
 
-#if (CLIENT_OS == OS_MORPHOS)
-/* use Amiga 68k code */
-#undef __PPC__
-#undef __POWERPC__
-#endif
-
 struct Library *DnetcBase;
+#ifdef __amigaos4__
+struct DnetcIFace *IDnetc;
+#endif
 
 static ULONG GUISigMask;
 
@@ -195,7 +192,7 @@ static void __amigaDoInfoUpdates(void)
 }
 #endif
 
-#if !defined(__PPC__)
+#if !defined(__OS3PPC__)
 void amigaHandleGUI(struct timerequest *tr)
 #elif !defined(__POWERUP__)
 void amigaHandleGUI(struct timeval *tv)
@@ -209,7 +206,7 @@ void amigaHandleGUI(void *timer, ULONG timesig)
 {
    BOOL done = FALSE;
 
-   #ifndef __PPC__
+   #ifndef __OS3PPC__
    struct MsgPort *tport;
    ULONG waitsigs,timesig;
 
@@ -234,7 +231,7 @@ void amigaHandleGUI(void *timer, ULONG timesig)
 
       ULONG sigr;
 
-      #ifndef __PPC__
+      #ifndef __OS3PPC__
       sigr = Wait(waitsigs);
       if (sigr & timesig) {
          done = TRUE;
@@ -273,7 +270,7 @@ void amigaHandleGUI(void *timer, ULONG timesig)
          if ( cmds & DNETC_MSG_CONFIG )
             ModeReqSet(MODEREQ_CONFIG | MODEREQ_CONFRESTART);
 
-         #ifndef __PPC__
+         #ifndef __OS3PPC__
          if (cmds && !done && tr) {
             AbortIO((struct IORequest *)tr);
             WaitIO((struct IORequest *)tr);
@@ -291,7 +288,7 @@ void amigaHandleGUI(void *timer, ULONG timesig)
 
       //if (!ModeReqIsSet(-1)) __amigaDoInfoUpdates();
 
-      #if defined(__PPC__) && !defined(__POWERUP__)
+      #if defined(__OS3PPC__) && !defined(__POWERUP__)
       if (sigr && !done) {
          GetSysTimePPC(&tvnow);
          if (CmpTimePPC(&tvnow,&tvend) == 1) {
@@ -353,10 +350,18 @@ BOOL amigaGUIInit(char *programname, struct WBArg *iconname)
    BOOL guiopen = FALSE;
 
    if ((DnetcBase = OpenLibrary("dnetcgui.library",1))) {
+      #ifdef __amigaos4__
+      if (!(IDnetc = (struct DnetcIFace *)GetInterface( DnetcBase, "main", 1L, NULL ))) {
+         goto fail;
+      }
+      #endif
       if ((GUISigMask = dnetcguiOpen(((CLIENT_CPU == CPU_POWERPC) ? DNETCGUI_PPC : DNETCGUI_68K),(UBYTE *)programname,iconname,CliGetFullVersionDescriptor()))) {
          guiopen = TRUE;
       }
       else {
+#ifdef __amigaos4__
+fail:
+#endif
          CloseLibrary(DnetcBase);
          DnetcBase = NULL;
       }
@@ -369,9 +374,13 @@ void amigaGUIDeinit(void)
 {
    if (DnetcBase) {
       dnetcguiClose(NULL);
+      #ifdef __amigaos4__
+      DropInterface((struct Interface *)IDnetc);
+      IDnetc = NULL;
+      #endif
       CloseLibrary(DnetcBase);
       DnetcBase = NULL;
    }
 }
 
-#endif /* NOGUI */
+#endif /* NO_GUI */

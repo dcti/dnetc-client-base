@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.2.4.3 2004/01/07 02:50:50 piru Exp $
+ * $Id: amSupport.c,v 1.2.4.4 2004/01/08 21:00:48 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -23,38 +23,34 @@
 #endif
 
 #include "amiga.h"
-#include "sleepdef.h"
 #include "modereq.h"
 
-#ifdef __PPC__
+#ifdef __OS3PPC__
 #pragma pack(2)
 #endif
 
 #include <workbench/startup.h>
 #include <proto/locale.h>
 #include <proto/timer.h>
-#ifndef NOGUI
+#ifndef NO_GUI
 #include "proto/dnetcgui.h"
 #endif
 
-#ifdef __PPC__
+#ifdef __OS3PPC__
 #pragma pack()
 #endif
 
-#if (CLIENT_OS == OS_MORPHOS)
-/* use Amiga 68k code */
-#undef __PPC__
-#undef __POWERUP__
-#endif
+#ifndef __OS3PPC__
 
-#ifndef __PPC__
-#if (CLIENT_OS == OS_MORPHOS)
+#ifdef __MORPHOS__
 unsigned long __stack = 262144L;
 #else
 unsigned long __stack = 65536L;
 #endif
 static struct MsgPort *TriggerPort;
+
 #else
+
 #ifdef CHANGE_MIRROR_TASK_PRI
 static LONG Old68kMirrorPri; /* Used to restore shell priority on exit */
 #endif
@@ -64,6 +60,7 @@ static void *TriggerPort;
 #else
 static struct MsgPortPPC *TriggerPort;
 #endif
+
 #endif
 
 struct TriggerMessage
@@ -77,40 +74,45 @@ extern VOID GlobalTimerDeinit(VOID);
 extern VOID CloseTimer(VOID);
 struct Library *OpenTimer(BOOL isthread);
 extern struct Library *SocketBase;
+#ifdef __amigaos4__
+extern struct Interface *ISocket;
+#endif
 
-#if (CLIENT_OS != OS_MORPHOS)
-
+#ifndef __MORPHOS__
 const char *amigaGetOSVersion(void)
 {
-   static const char *osver[11] = { "2.0","2.0x","2.1","3.0","3.1","3.2","3.3","3.4","3.5","3.9","4.0" };
+   static const char *osver[] = { "2.0","2.0x","2.1","3.0","3.1","3.2","3.3","3.4","3.5","3.9","3.9","3.9","3.9","3.9","4.0","4.1" };
    int ver = SysBase->LibNode.lib_Version;
-   if (ver >= 40) {   // Detect OS 3.5/3.9
+   #ifndef __amigaos4__
+   if (ver >= 40 && ver < 50) {   // Detect OS 3.5/3.9
       struct Library *VersionBase;
       if ((VersionBase = OpenLibrary("version.library",0))) {
          ver = VersionBase->lib_Version;
          CloseLibrary(VersionBase);
       }
    }
-   ver -= 36;
-   if (ver > (46-36)) ver = (44-36);
-   return osver[ver];
+   #endif
+   #ifdef __POWERUP__
+   if (FindResident("MorphOS") && ver > 45) ver = 45;
+   #endif
+   if (ver < 36) ver = 36;
+   else if (ver > 51) ver = 51;
+   return osver[ver-36];
 }
-
 #endif
 
 int amigaInit(int *argc, char **argv[])
 {
    int done = TRUE;
 
-   #if !defined(__POWERUP__) && (CLIENT_OS != OS_MORPHOS)
+   #if !defined(__POWERUP__) && !defined(__amigaos4__) && !defined(__MORPHOS__)
    if (!MemInit()) return FALSE;
    #endif
 
-   #ifdef __PPC__
+   #ifdef __OS3PPC__
    /*
    ** PPC
    */
-   //SetProgramName("dnetc_ppc");
 
    /* Set the priority of the PPC 68k mirror main task */
    #ifdef CHANGE_MIRROR_TASK_PRI
@@ -161,7 +163,6 @@ int amigaInit(int *argc, char **argv[])
    /*
    ** WarpOs
    */
-   Forbid();
    if (!FindPortPPC("dnetc")) {
       if ((TriggerPort = CreateMsgPortPPC())) {
          TriggerPort->mp_Port.mp_Node.ln_Name = "dnetc";
@@ -172,14 +173,12 @@ int amigaInit(int *argc, char **argv[])
          done = FALSE;
       }
    }
-   Permit();
    #endif
 
    #else
    /*
-   ** 68K
+   ** 68K / OS4 / MorphOS
    */
-   //SetProgramName("dnetc_68k");
 
    struct MsgPort *portexists;
 
@@ -198,28 +197,19 @@ int amigaInit(int *argc, char **argv[])
    }
 
    Permit();
-
-   /*if (done) {
-      if ((SysInfoBase = OpenLibrary("SysInfo.library",0))) {
-         SysInfo = InitSysInfo();
-      }
-   }*/
    #endif
 
    if (!TimerBase && done) done = GlobalTimerInit();
 
    if (!done) amigaExit();
 
-   #ifndef NOGUI
+   #ifndef NO_GUI
    /* Workbench startup */
    if (done && *argc == 0) {
       struct WBStartup *wbs = (struct WBStartup *)*argv;
       struct WBArg *arg = wbs->sm_ArgList;
-      static char /*cmdname[256],*/ *newargv[1];
+      static char *newargv[1];
       newargv[0] = (char *)arg->wa_Name;
-
-      //NameFromLock(wbs->sm_ArgList->wa_Lock,cmdname,256);
-      //AddPart(cmdname,wbs->sm_ArgList->wa_Name,256);
 
       *argc = 1;
       *argv = newargv;
@@ -242,15 +232,21 @@ int amigaInit(int *argc, char **argv[])
 
 void amigaExit(void)
 {
-   #ifndef NOGUI
+   #ifndef NO_GUI
    amigaCloseNewConsole();
    amigaGUIDeinit();
    #endif
 
    GlobalTimerDeinit();
+
+   #ifdef __amigaos4__
+   if (ILocale) DropInterface((struct Interface *)ILocale);
+   if (ISocket) DropInterface((struct Interface *)ISocket);
+   #endif
    CloseLibrary((struct Library *)LocaleBase);
-   CloseLibrary(SocketBase); // ensure something hasn't left this open
-   #ifdef __PPC__
+   CloseLibrary((struct Library *)SocketBase);
+
+   #ifdef __OS3PPC__
    /*
    ** PPC
    */
@@ -261,6 +257,7 @@ void amigaExit(void)
    /*
    ** PowerUp
    */
+   #include "sleepdef.h"
    if (TriggerPort) {
       while (!PPCDeletePort(TriggerPort)) usleep(250000);
    }
@@ -276,12 +273,8 @@ void amigaExit(void)
    #endif
    #else
    /*
-   ** 68K
+   ** 68K / OS4 / MorphOS
    */
-   /*if (SysInfoBase) {
-      if (SysInfo) FreeSysInfo(SysInfo);
-      CloseLibrary(SysInfoBase);
-   }*/
    if (TriggerPort) {
       RemPort(TriggerPort);
       DeleteMsgPort(TriggerPort);
@@ -307,13 +300,13 @@ ULONG amigaGetTriggerSigs(void)
 
    if ( sigr & SIGBREAKF_CTRL_C ) trigs |= DNETC_MSG_SHUTDOWN;
 
-   #ifndef NOGUI
+   #ifndef NO_GUI
    if ( DnetcBase && ModeReqIsSet(-1) ) trigs |= dnetcguiHandleMsgs(sigr);
    #endif
 
-   #ifndef __PPC__
+   #ifndef __OS3PPC__
    /*
-   ** 68K
+   ** 68K / OS4 / MorphOS
    */
    if ( TriggerPort && sigr & 1L << TriggerPort->mp_SigBit ) {
       struct TriggerMessage *msg;
@@ -353,9 +346,9 @@ int amigaPutTriggerSigs(ULONG trigs)
 {
    int done = -1;
 
-   #ifndef __PPC__
+   #ifndef __OS3PPC__
    /*
-   ** 68K
+   ** 68K / OS4 / MorphOS
    */
    struct TriggerMessage msg;
    if ((msg.tm_ExecMsg.mn_ReplyPort = CreateMsgPort())) {
@@ -379,8 +372,7 @@ int amigaPutTriggerSigs(ULONG trigs)
       }
       DeleteMsgPort(msg.tm_ExecMsg.mn_ReplyPort);
    }
-   #else
-   #ifndef __POWERUP__
+   #elif !defined(__POWERUP__)
    /*
    ** WarpOS
    */
@@ -428,14 +420,11 @@ int amigaPutTriggerSigs(ULONG trigs)
       PPCDeletePort(replyport);
    }
    #endif
-   #endif
 
    return(done);
 }
 
-
-#if (CLIENT_OS == OS_AMIGAOS)
-
+#if !defined(__amigaos4__) && !defined(__MORPHOS__)
 extern unsigned long *__stdfiledes;	// libnix internal
 
 int ftruncate(int fd, int newsize)
@@ -444,8 +433,9 @@ int ftruncate(int fd, int newsize)
    if (result != -1) return 0;
    return(result);
 }
+#endif
 
-#if defined(__PPC__) && defined(__POWERUP__)
+#if defined(__OS3PPC__) && defined(__POWERUP__)
 /*
 ** libnix for PowerUp has broken strncpy().  Was causing NetResolve to trash
 ** addresses, confrwv.cpp to crash, and probably heaps of other problems!
@@ -506,7 +496,7 @@ int chmod(const char *name, mode_t mode)
 asm(".section	\".text\"\n\t.align 2\n\t.globl __isatty\n\t.type\t __isatty,@function\n__isatty:\n");
 int __isatty(int d)
 {
-   return IsInteractive(__stdfiledes[d]);
+   return IsInteractive(STDFILEDES[d]);
 }
 
 /*
@@ -653,11 +643,9 @@ void __exitcommandline(void)
 ADD2INIT(__nocommandline,-40);
 ADD2EXIT(__exitcommandline,-40);
 
-#endif /* defined(__PPC__) && defined(__POWERUP__) */
+#endif /* defined(__OS3PPC__) && defined(__POWERUP__) */
 
-#endif /* (CLIENT_OS == OS_AMIGAOS) */
-
-#if (CLIENT_OS == OS_MORPHOS)
+#ifdef __MORPHOS__
 
 /*
 ** libnix for MorphOS is missing ftruncate()
@@ -706,4 +694,4 @@ int chmod(const char *name, mode_t mode)
   return ret;
 }
 
-#endif /* (CLIENT_OS == OS_MORPHOS) */
+#endif /* __MORPHOS__ */

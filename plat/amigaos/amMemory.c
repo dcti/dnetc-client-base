@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amMemory.c,v 1.2.4.1 2004/01/07 02:50:50 piru Exp $
+ * $Id: amMemory.c,v 1.2.4.2 2004/01/08 21:00:48 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -17,7 +17,7 @@
  * ----------------------------------------------------------------------
 */
 
-#if (CLIENT_OS != OS_MORPHOS) && !defined(__POWERUP__)
+#if !defined(__POWERUP__) && !defined(__amigaos4__) && !defined(__MORPHOS__)
 /*
 ** Use libnix memory routines for PowerUp since there seems to be a bug
 ** in the PowerUp's semaphore routines (or the memory pool routines) which
@@ -31,7 +31,7 @@ static void *MemPool = NULL;
 /* Memory pools cannot by accessed by more than one task at the same
 ** time, so we must use semaphores to protect against such cases
 */
-#ifndef __PPC__
+#if !defined(__OS3PPC__)
 static struct SignalSemaphore MemPoolLock;
 #elif !defined(__POWERUP__)
 static struct SignalSemaphorePPC MemPoolLock;
@@ -42,7 +42,9 @@ static void *MemPoolLock;
 BOOL MemInit(VOID)
 {
    if (!MemPool) {
-      #ifndef __PPC__
+      #ifdef __amigaos4__
+      MemPool = CreatePool(MEMF_SHARED,8192,4096); /* OS4 */
+      #elif !defined(__PPC__)
       MemPool = LibCreatePool(MEMF_PUBLIC,8192,4096); /* 68K */
       InitSemaphore(&MemPoolLock);
       #elif !defined(__POWERUP__)
@@ -66,7 +68,11 @@ void *malloc(size_t bytes)
    if (!MemPool) MemInit();
 
    if (MemPool) {
-      #ifndef __PPC__
+      #ifdef __amigaos4__
+      ObtainSemaphore(&MemPoolLock);
+      mem = (ULONG *)AllocVecPooled(MemPool,bytes); /* OS4 */
+      ReleaseSemaphore(&MemPoolLock);
+      #elif !defined(__PPC__)
       bytes += 4;
       ObtainSemaphore(&MemPoolLock);
       if ((mem = (ULONG *)LibAllocPooled(MemPool,bytes))) { /* 68K */
@@ -107,7 +113,11 @@ void *calloc(size_t objsize, size_t numobjs)
 void free(void *ptr)
 {
    if (ptr) {
-      #ifndef __PPC__
+      #ifdef __amigaos4__
+      ObtainSemaphore(&MemPoolLock);
+      FreeVecPooled(MemPool,ptr); /* OS4 */
+      ReleaseSemaphore(&MemPoolLock);
+      #elif !defined(__PPC__)
       ObtainSemaphore(&MemPoolLock);
       LibFreePooled(MemPool,&((ULONG *)ptr)[-1],((ULONG *)ptr)[-1]); /* 68K */
       ReleaseSemaphore(&MemPoolLock);
@@ -126,7 +136,11 @@ void free(void *ptr)
 VOID MemDeinit(VOID)
 {
    if (MemPool) {
-      #ifndef __PPC__
+      #ifdef __amigaos4__
+      ObtainSemaphore(&MemPoolLock);
+      DeletePool(MemPool); /* OS4 */
+      ReleaseSemaphore(&MemPoolLock);
+      #elif !defined(__PPC__)
       ObtainSemaphore(&MemPoolLock);
       LibDeletePool(MemPool); /* 68K */
       ReleaseSemaphore(&MemPoolLock);
@@ -157,4 +171,4 @@ VOID MemDeinit(VOID)
 
 ADD2EXIT(MemDeinit,-50);
 
-#endif /* (CLIENT_OS != OS_MORPHOS) && !defined(__POWERUP__) */
+#endif /* !defined(__POWERUP__) && !defined(__amigaos4__) && !defined(__MORPHOS__) */
