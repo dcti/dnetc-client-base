@@ -2,6 +2,9 @@
 
 /*
  * $Log: s_pipeline.h,v $
+ * Revision 1.4  1998/06/20 14:50:13  remi
+ * Fixed a comment.
+ *
  * Revision 1.3  1998/06/16 06:27:43  remi
  * - Integrated some patches in the UltraSparc DES code.
  * - Cleaned-up C++ style comments in the UltraSparc DES code.
@@ -234,7 +237,7 @@
  *  ASM_F_D_LOAD (f_k2, ((INNER_LOOP_FSLICE *)fkey2)[0]); / * PIPELINE into s3_4 * /
  *  ASM_F_D_LOAD (f_k3, ((INNER_LOOP_FSLICE *)fkey3)[0]); / * PIPELINE into s3_4 * /
  *
- *  ASM_F_D_LOAD (f_a2, in[S62]);		/* PIPELINE into s3_4 */
+ *  ASM_F_D_LOAD (f_a2, in[S62]);		/ * PIPELINE into s3_4 * /
  */
 
 #define ASM_PIPELINE_F_S6_all(in, offsets)				\
