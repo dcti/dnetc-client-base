@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.51  1999/01/21 22:01:04  cyp
+// fixed LowLevelSend() which didn't know /anything/ about non-blocking sox.
+//
 // Revision 1.50  1999/01/08 02:57:37  michmarc
 // Wrapper around #define STRICT to avoid a _HUGE_ pile of warnings
 // under VC6/AlphaNT
@@ -363,7 +366,7 @@ class Network; //for forward resolution
 // must be called instead of the Network constructor or destructor.
 extern Network *NetOpen(const char *keyserver, s32 keyserverport, 
                 int nofallback = 1, int autofindks = 0, 
-                int iotimeout = 10, s32 proxytype = 0, 
+                int iotimeout = 60, s32 proxytype = 0, 
                 const char *proxyhost = NULL, s32 proxyport = 0, 
                 const char *proxyuid = NULL);
 
@@ -474,8 +477,6 @@ protected:
 
   friend int NetClose( Network *net );
 
-public:
-
   void SetModeUUE( int is_enabled );
     // enables or disable uuencoding of the data stream
 
@@ -499,6 +500,13 @@ public:
   int  Close( void );
     // close the connection
 
+  int MakeBlocking(void) // make the socket operate in blocking mode.
+      { return LowLevelConditionSocket( CONDSOCK_BLOCKING_ON ); }
+
+  int MakeNonBlocking(void) //the other shortcut
+      { return LowLevelConditionSocket( CONDSOCK_BLOCKING_OFF ); };
+
+public:
   s32  Get( u32 length, char * data );
     // recv data over the open connection, uue/http based on ( mode & MODE_UUE ) etc.
     // Returns length of read buffer.
@@ -510,11 +518,6 @@ public:
   int GetHostName( char *buffer, unsigned int len ); //used by mail.
     // like gethostname() 
     
-  int MakeBlocking(void) // make the socket operate in blocking mode.
-      { return LowLevelConditionSocket( CONDSOCK_BLOCKING_ON ); }
-
-  int MakeNonBlocking(void) //the other shortcut
-      { return LowLevelConditionSocket( CONDSOCK_BLOCKING_OFF ); };
 };
 
 ///////////////////////////////////////////////////////////////////////////

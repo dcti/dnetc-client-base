@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.72  1999/01/21 22:01:04  cyp
+// fixed LowLevelSend() which didn't know /anything/ about non-blocking sox.
+//
 // Revision 1.71  1999/01/19 05:39:08  cyp
 // added connect() error message support for win16/32
 //
@@ -211,7 +214,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.71 1999/01/19 05:39:08 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.72 1999/01/21 22:01:04 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -1677,8 +1680,56 @@ s32 Network::LowLevelPut(u32 length, const char *data)
     }
   return (s32)((rc == -1 && totalsent == 0)?(-1):(totalsent));
 #else                                                         //BSD sox
-  u32 writelen = write(sock, (char*)data, length);
-  return (s32) (writelen != length ? -1 : (s32)writelen);
+  u32 totaltowrite = length;
+  u32 totalwritten = 0;
+  time_t timenow = 0, stoptime = 0;
+  int tries = 0;
+  int sleeptime = 250000;
+
+  if (isnonblocking)
+    stoptime = (time(NULL))+(time_t)iotimeout;
+
+  do{
+    int towrite = ((length > 1500)?(1500):((int)(length)));
+    int written = send(sock, (char*)data, towrite, 0 );
+    
+    /*
+      When used on a blocking SOCK_STREAM socket, send() requests block 
+      until all of the client's data can be sent or buffered by the socket. 
+      When used on a nonblocking socket, send() requests send or buffer the 
+      maximum amount of data that can be handled without blocking and 
+      return the amount that was taken. If no data is taken, they return 
+      a value of -1, indicating an EWOULDBLOCK error.
+    */
+    
+    if (written < 0) /* on failure, min(max 10 tries, timeout) */
+      {
+      if (isnonblocking == 0) /* timeout immediately for blocking sockets */
+        tries = 10;
+      else if (time(NULL) > stoptime)
+        tries = 10;
+      else if ((++tries) < 10) 
+        {
+        usleep(sleeptime);
+        sleeptime+=250000;
+        }
+      }
+    else          /* on success, ignore both tries and timeout */
+      {           /* for blocking sockets, written will always == towrite */
+      tries = 0;
+      totalwritten += written;    
+      length -= written;
+      data += written;
+      if (isnonblocking && length)
+        {
+        usleep(100000);
+        if (time(&timenow) > stoptime)
+          stoptime = timenow + 1 + (sleeptime/1000000); // min 1 sec grace
+        }
+      }
+    } while (length && (tries < 10));
+ 
+  return ((totalwritten != totaltowrite)?(-1):((s32)(totalwritten)));
 #endif  
 }
 
