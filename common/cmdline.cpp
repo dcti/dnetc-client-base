@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.14 2004/01/07 02:50:50 piru Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.15 2004/01/10 22:02:59 kakace Exp $"; }
 
 //#define TRACE
 
@@ -1160,8 +1160,13 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       else if ( strcmp( thisarg, "-runoffline" ) == 0 ||
                 strcmp( thisarg, "-runonline" ) == 0)
       {
-        if (run_level == 0)
-          client->offlinemode = ((strcmp( thisarg, "-runoffline" ) == 0)?(1):(0));
+        if (run_level == 0) {
+          client->offlinemode = 0;
+          if ( strcmp( thisarg, "-runoffline" ) == 0) {
+            client->offlinemode = 1;
+            client->blockcount = -1;    // mimic -runbuffers behavior
+          }
+        }
         else /* if (logging_is_initialized) */
           LogScreenRaw("Client will run with%s network access.\n",
                        ((client->offlinemode)?("out"):("")) );

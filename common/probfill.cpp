@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.87.2.7 2003/12/13 12:57:14 kakace Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.87.2.8 2004/01/10 22:02:59 kakace Exp $"; }
 
 //#define TRACE
 
@@ -1063,26 +1063,33 @@ unsigned int LoadSaveProblems(Client *client,
     {
       /*
        =============================================================
+       the running crunchers need new blocks, but the buffers remain
+       empty and no random work is allowed (OGR, bug #2726)
+       -------------------------------------------------------------
+      */
+      if (norandom_count >= load_problem_count)
+      {
+        Log( "Shutdown - buffers empty.\n" );
+        RaiseExitRequestTrigger();
+      }
+
+      /*
+       =============================================================
        if we are running a limited number of blocks then check if we have
        exceeded that number. If we have, but one or more crunchers are
        still at work, bump the limit.
        -------------------------------------------------------------
       */
-      int limitsexceeded = 0;
-      if (client->blockcount < 0 && norandom_count >= load_problem_count)
-        limitsexceeded = 1;
       if (client->blockcount > 0 &&
          (totalBlocksDone >= (unsigned long)(client->blockcount)))
       {
         if (empty_problems >= load_problem_count)
-          limitsexceeded = 1;
+        {
+          Log( "Shutdown - packet limit exceeded.\n" );
+          RaiseExitRequestTrigger();
+        }
         else
           client->blockcount = ((u32)(totalBlocksDone))+1;
-      }
-      if (limitsexceeded)
-      {
-        Log( "Shutdown - packet limit exceeded.\n" );
-        RaiseExitRequestTrigger();
       }
     }
 
