@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.63 1999/11/28 21:33:06 lyndon Exp $
+# @(#)$Id: configure,v 1.222.2.64 1999/11/28 21:38:51 lyndon Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -447,7 +447,7 @@ case "$1" in
     *mips-cc-ip22_4k)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip22_4k \
-			-DCLIENT_OS_NAME=\"Irix (IP22/R4K)" \
+			-DCLIENT_OS_NAME=\"Irix (IP22/R4K)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
