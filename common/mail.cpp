@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.30.2.1  1999/04/04 07:24:13  jlawson
+// updated to use raw netio.cpp functions, instead of high-level
+// Network class object.
+//
 // Revision 1.30  1999/02/03 17:49:38  cyp
 // Cleaned up CLIENT_VERSIONSTRING #define
 //
@@ -117,10 +121,10 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.30 1999/02/03 17:49:38 cyp Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.30.2.1 1999/04/04 07:24:13 jlawson Exp $"; }
 #endif
 
-#include "network.h"
+#include "netio.h"
 #include "version.h"
 #include "baseincs.h"
 #include "cmpidefs.h"
@@ -138,28 +142,28 @@ return "@(#)$Id: mail.cpp,v 1.30 1999/02/03 17:49:38 cyp Exp $"; }
 
 //-------------------------------------------------------------------------
 
-static int get_smtp_result( Network * net )
+static int get_smtp_result( SOCKET sock )
 {
   char in_data[10];
   int index = 0;
   in_data[3] = 0;
 
-  while (index>=0) //ie, while(1)
-    {
-    if ( net->Get( &in_data[index], 1 ) != 1)
+  while (index >= 0) //ie, while(1)
+  {
+    if ( netio_recv( sock, &in_data[index], 1 ) != 1)
       return(-1);
     #ifdef SHOWMAIL
     LogRaw( "%c", in_data[index] );
     #endif
     if (in_data[index] == '\n')
-      {
-      if ( in_data[3] != '-') //if not an ESMPT multi-line reply
+    {
+      if ( in_data[3] != '-') //if not an ESMTP multi-line reply
         break;
       index = 0;
-      }
+    }
     else if (index < 5)
       index++;
-    }
+  }
   if (isdigit(in_data[0]))
     return ( atoi( in_data ) );
   return( -1 );
@@ -167,65 +171,39 @@ static int get_smtp_result( Network * net )
 
 //-------------------------------------------------------------------------
 
-static int put_smtp_line(const char * line, unsigned int nchars, Network *net)
+static int put_smtp_line(const char * line, unsigned int nchars, SOCKET sock)
 {
   #ifdef SHOWMAIL
-  for (unsigned int i=0;i<nchars;i++)
+  for (unsigned int i = 0; i < nchars; i++)
     LogRaw( "%c", line[i] );
   #endif 
-  if ( net->Put( line, nchars ) != ((int)nchars) )
+  if ( netio_send(sock, line, nchars ) != ((int)nchars) )
     return -1;
   return (0);
 }
 
 //-------------------------------------------------------------------------
 
-static int smtp_close_net( Network *net )
+static int smtp_close_net( SOCKET &sock )
 {
-  if (net) NetClose(net);
-  //if (net) { net->Close(); delete net; }
-  //NetworkDeinitialize();
+  netio_close(sock);
   return 0;
 }  
 
 //-------------------------------------------------------------------------
     
-static Network *smtp_open_net( const char *smtphost, unsigned int smtpport )
+static SOCKET smtp_open_net( const char *smtphost, unsigned int smtpport )
 {
   if ( smtpport == 0 || smtpport > 0xFFFE)
     smtpport = 25; //standard SMTP port
   if ( !smtphost || !*smtphost )
     smtphost = "127.0.0.1";   
 
-  return NetOpen( smtphost, (s32)(smtpport) );
-    
-  #if 0
-  Network *net;
-  
-  if (NetworkInitialize() < 0 ) 
-    return NULL;
-
-  if ((net = new Network( smtphost, smtphost, (s16)smtpport, 0 ))!=NULL)
-    {
-    if (!net->Open())
-      net->MakeBlocking(); // no reason to be non-blocked
-    else
-      {
-      delete net;
-      net = NULL;
-      }
-    }
-
-  if (!net)
-    {
-    #ifdef SHOWMAIL
-    LogRaw("SHOWMAIL: net->Open() failed\n");
-    #endif
-    NetworkDeinitialize();
-    }
-
-  return(net);
-  #endif
+  SOCKET sock;
+  u32 hostaddr;
+  if (netio_connect(sock, smtphost, smtpport, hostaddr, 0 ) < 0)
+    return -1;
+  return sock;
 }  
 
 //-------------------------------------------------------------------------
@@ -233,7 +211,7 @@ static Network *smtp_open_net( const char *smtphost, unsigned int smtpport )
 //returns -1 if totally illegal address, +1 if addr is incomplete (truncated)
 //this only handles single addresses. multi-address lines require tokenizing.
 static int rfc822Address( char *buffer, const char *addr, 
-                                       const char *host, const char **next )
+                          const char *host, const char **next )
 {
   char pchar;
   int errcode = 0;
@@ -254,7 +232,7 @@ static int rfc822Address( char *buffer, const char *addr,
         {
         errcode = 0;
         addr++;
-        while (*addr!='>')
+        while (*addr != '>')
           {
           if (!*addr)
             {
@@ -262,11 +240,11 @@ static int rfc822Address( char *buffer, const char *addr,
             errcode = -1;
             break;
             }    
-          if (*addr==',' || !isprint(*addr) || isspace(*addr))
+          if (*addr == ',' || !isprint(*addr) || isspace(*addr))
             {
             while (!isprint(*addr) || isspace(*addr))
             addr++;
-            if (started && *addr!='>')
+            if (started && *addr != '>')
               {
               ptr = buffer;
               errcode = (*addr)?(-1):(+1);
@@ -289,31 +267,31 @@ static int rfc822Address( char *buffer, const char *addr,
       addr++;
 
       char *ptr2 = ptr;
-      while (*addr && *addr!=pchar && (isspace(*addr) || !isprint(*addr)))
+      while (*addr && *addr != pchar && (isspace(*addr) || !isprint(*addr)))
         addr++;
-      while (*addr && *addr!=pchar)
+      while (*addr && *addr != pchar)
         { 
         if (!started) 
-          *ptr2++=*addr;
+          *ptr2++ = *addr;
         *addr++;
         }
-      if (*addr!=pchar)
+      if (*addr != pchar)
         {
         errcode = +1;
         break;  
         }
-      while (*addr && (*addr==',' || isspace(*addr) || !isprint(*addr)))
+      while (*addr && (*addr == ',' || isspace(*addr) || !isprint(*addr)))
         addr++;
       if (started)
-        break;    
+        break;
 
-      *ptr2=0;
+      *ptr2 = 0;
       if (ptr2 > ptr)
         {
         do{    
           ptr2--;
-          } while (ptr2>=ptr) && 
-                 (isspace(*ptr2) || !isprint(*ptr2) || *ptr2==','))
+          } while (ptr2 >= ptr) && 
+                 (isspace(*ptr2) || !isprint(*ptr2) || *ptr2 == ','))
         }
       if (ptr2 >= ptr)
         {
@@ -321,10 +299,10 @@ static int rfc822Address( char *buffer, const char *addr,
         ptr2 = ptr;
         while (*ptr2)
           {
-          if (isspace(*ptr2) || !isprint(*ptr2) || *ptr2==',')
+          if (isspace(*ptr2) || !isprint(*ptr2) || *ptr2 == ',')
           break;
           }
-        if (*ptr2==0 && strchr(ptr,'@')!=NULL)
+        if (*ptr2 == 0 && strchr(ptr,'@') != NULL)
           {
           ptr = ptr2;
           break;
@@ -339,21 +317,21 @@ static int rfc822Address( char *buffer, const char *addr,
       addr++;
       while (*addr && *addr!=pchar)
         addr++;
-      if (*addr!=pchar)
+      if (*addr != pchar)
         {
-        errcode=+1;
+        errcode = +1;
         break; 
         }
       addr++;
-      while (*addr && (*addr==',' || isspace(*addr) || !isprint(*addr)))
+      while (*addr && (*addr == ',' || isspace(*addr) || !isprint(*addr)))
         addr++;
       if (started)
         break;
       }
     #endif   
-    else if (*addr==',' || isspace(*addr) || !isprint(*addr))
+    else if (*addr == ',' || isspace(*addr) || !isprint(*addr))
       {
-      while (*addr && (*addr==',' || isspace(*addr) || !isprint(*addr)))
+      while (*addr && (*addr == ',' || isspace(*addr) || !isprint(*addr)))
         addr++;
       if (started)
         break;    
@@ -397,7 +375,7 @@ static int rfc822Address( char *buffer, const char *addr,
 //---------------------------------------------------------------------
 
 //returns 0 if success, <0 if smtp error, >0 if network error (should defer)
-static int smtp_open_message_envelope(Network *net, 
+static int smtp_open_message_envelope(SOCKET sock, 
     const char *fromid, const char *destid, const char *smtphost )
 {
   char out_data[300];
@@ -405,22 +383,22 @@ static int smtp_open_message_envelope(Network *net,
   const char *errmsg = NULL;
   unsigned int pos;
     
-  if ( get_smtp_result(net) != 220 ) //wait for server to welcome us
+  if ( get_smtp_result(sock) != 220 ) //wait for server to welcome us
     errmsg = writefailmsg;
     
   if (!errmsg)
     {
     strcpy( out_data, "HELO " );
     pos = strlen( out_data );
-    if (net->GetHostName( out_data+pos, 256 )!=0)
+    if (netio_gethostname( out_data+pos, 256 ) < 0)
       {
-      out_data[pos]=0;
-      strcat( out_data, "127.0.0.1" );//wicked! try it anyway
+        // couldn't get localhost's name. try by IP address anyway.
+        strcpy( out_data+pos, "127.0.0.1" );
       }
     strcat( out_data, "\r\n" );  
-    if ( put_smtp_line( out_data, strlen(out_data), net ))  
+    if ( put_smtp_line( out_data, strlen(out_data), sock ))  
       errmsg = writefailmsg;
-    else if ( get_smtp_result(net) != 250 )
+    else if ( get_smtp_result(sock) != 250 )
       errmsg = "Mail::SMTP server refused our connection.\n";
     }
        
@@ -429,9 +407,9 @@ static int smtp_open_message_envelope(Network *net,
     strcpy( out_data, "MAIL From:<" );
     rfc822Address( out_data+11, fromid, smtphost, &fromid );
     strcat( out_data, ">\r\n" );
-    if ( put_smtp_line( out_data, strlen(out_data), net) )  
+    if ( put_smtp_line( out_data, strlen(out_data), sock) )  
       errmsg = writefailmsg;
-    else if (get_smtp_result(net) != 250)
+    else if (get_smtp_result(sock) != 250)
       errmsg = "Mail::SMTP server rejected sender name.\n";
     }
 
@@ -442,13 +420,13 @@ static int smtp_open_message_envelope(Network *net,
       {
       strcpy( out_data, "RCPT To:<" );
       pos = strlen( out_data );
-      while (*destid && (*destid==',' || !isprint(*destid) ||isspace(*destid)))
+      while (*destid && (*destid == ',' || !isprint(*destid) || isspace(*destid)))
         destid++;
       if ( *destid == '\"' || *destid == '(' || *destid == '\'')
         {
-        out_data[pos] = ((*destid=='(')?(')'):(*destid));
+        out_data[pos] = (*destid == '(' ? ')' : *destid);
         destid++;
-        while (*destid && *destid!=out_data[pos])
+        while (*destid && *destid != out_data[pos])
           destid++;
         if (*destid)  
           destid++;  
@@ -460,14 +438,14 @@ static int smtp_open_message_envelope(Network *net,
         break;
       strcat( out_data, ">\r\n" ); 
       addrtries++;     
-      if ( put_smtp_line( out_data, strlen(out_data), net ))  
+      if ( put_smtp_line( out_data, strlen(out_data), sock ))  
         errmsg = writefailmsg;
-      else if (get_smtp_result(net) == 250)
+      else if (get_smtp_result(sock) == 250)
         addrok++;
       }
     if (!errmsg)
       {
-      if (addrtries==0)       
+      if (addrtries == 0)       
         errmsg = "Mail::Invalid or missing recipient address(es).\n";
       else if (addrok<addrtries) //this is not a fatal error, so continue.
         LogScreen( "Mail::One or more recipient addresses are invalid.\n");
@@ -477,16 +455,16 @@ static int smtp_open_message_envelope(Network *net,
   if (!errmsg)
     {
     strcpy(out_data, "DATA\r\n");
-    if ( put_smtp_line( out_data, strlen (out_data) , net))  
+    if ( put_smtp_line( out_data, strlen (out_data), sock))  
       errmsg = writefailmsg;
-    if (get_smtp_result(net) != 354)
+    if (get_smtp_result(sock) != 354)
       errmsg = "Mail::SMTP server refused to accept message.\n";
     }
   
   if (errmsg)
     {
     LogScreen( errmsg );
-    return ((errmsg==writefailmsg)?(-1):(+1)); //retry hint
+    return (errmsg == writefailmsg ? -1 : +1); //retry hint
     }
   return(0);
 }
@@ -498,13 +476,15 @@ static char *rfc822Date(char *timestring)  //min 32 chars
   time_t timenow;
   struct tm * tmP;
 
-  static const char *monnames[12] = {"Jan","Feb","Mar","Apr","May","Jun",
-                                     "Jul","Aug","Sep","Oct","Nov","Dec" };
-  static const char *wdaynames[7] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+  static const char *monnames[12] =
+      {"Jan","Feb","Mar","Apr","May","Jun",
+       "Jul","Aug","Sep","Oct","Nov","Dec" };
+  static const char *wdaynames[7] =
+      {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
   struct tm loctime, utctime;
   int haveutctime, haveloctime, tzdiff, abstzdiff;
 
-  timestring[0]=0;
+  timestring[0] = 0;
 
   timenow = time(NULL);
   tmP = localtime( (const time_t *) &timenow);
@@ -529,28 +509,28 @@ static char *rfc822Date(char *timestring)  //min 32 chars
   else if (loctime.tm_yday <  utctime.tm_yday)     { tzdiff += 1440; }
   else                                             { tzdiff -= 1440; }
 
-  abstzdiff = ((tzdiff<0)?(-tzdiff):(tzdiff));
-  if (utctime.tm_wday<0 || utctime.tm_wday>6)
+  abstzdiff = ((tzdiff < 0) ? (-tzdiff) : (tzdiff));
+  if (utctime.tm_wday < 0 || utctime.tm_wday > 6)
     {
     //for those (eg chinese, korean) locales that use w_day field as tm*
     #define dow(y,m,d) \
         ( ( ( 3*(y) - (7*((y)+((m)+9)/12))/4 + (23*(m))/9 + (d) + 2    \
         + (((y)-((m)<3))/100+1) * 3 / 4 - 15 ) % 7 ) )
-    utctime.tm_wday=dow(loctime.tm_year+1900,loctime.tm_mon,loctime.tm_mday);
+    utctime.tm_wday = dow(loctime.tm_year+1900,loctime.tm_mon,loctime.tm_mday);
     #undef dow
     }
                       //5    3   4    3   3    3    2  1 1  2   2
   sprintf( timestring, "%s, %02d %s %02d %02d:%02d:%02d %c%02d%02d" ,
        wdaynames[loctime.tm_wday], loctime.tm_mday, monnames[loctime.tm_mon],
        loctime.tm_year, loctime.tm_hour, loctime.tm_min,
-       loctime.tm_sec, ((tzdiff<0)?('-'):('+')), abstzdiff/60, abstzdiff%60);
+       loctime.tm_sec, (tzdiff < 0 ? '-' : '+'), abstzdiff/60, abstzdiff%60);
 
   return(timestring);
 }
 
 // -----------------------------------------------------------------------
 
-static int smtp_send_message_header( Network * net,  
+static int smtp_send_message_header( SOCKET sock,
                                 char *fromid, char *destid, char *statsid )
 {
   //fromid, destid and desthost would have been validated during
@@ -563,29 +543,29 @@ static int smtp_send_message_header( Network * net,
   if (errcode == 0) //send the senders address
     {
     sprintf( buffer, "From: %s", ((fromid && *fromid)?(fromid):("<>")) );
-    if ( put_smtp_line( buffer, strlen(buffer), net ) ) 
+    if ( put_smtp_line( buffer, strlen(buffer), sock ) ) 
       errcode = -1;
     }
 
   if (errcode == 0) //send the recipients address
     {
     sprintf( buffer, "\r\nTo: %s", ((destid && *destid)?(destid):("<>")));
-    if ( put_smtp_line( buffer, strlen(buffer), net ) ) 
+    if ( put_smtp_line( buffer, strlen(buffer), sock ) ) 
       errcode = -1;
     }
 
   if (errcode == 0)
     {
-    p = (!statsid)?(NULL):(strchr(statsid,'@'));
+    p = (!statsid) ? (NULL) : (strchr(statsid,'@'));
     if ( p && strcmp( p, "@distributed.net" )!=0 )
       {
       sprintf( buffer,"\r\nErrors-to: %s", statsid );
-      if ( put_smtp_line( buffer, strlen(buffer), net ) ) 
+      if ( put_smtp_line( buffer, strlen(buffer), sock ) ) 
         errcode = -1;
       else
         { 
         sprintf( buffer,"\r\nReply-to: %s", statsid );
-        if ( put_smtp_line( buffer, strlen(buffer), net ) ) 
+        if ( put_smtp_line( buffer, strlen(buffer), sock ) ) 
           errcode = -1;
         }
       }
@@ -596,7 +576,7 @@ static int smtp_send_message_header( Network * net,
     sprintf( buffer, "\r\nDate: %s" 
         "\r\nX-Mailer: distributed.net RC5DES v"CLIENT_VERSIONSTRING" client",
         rfc822Date( buffer + 256 ) ); 
-    if ( put_smtp_line( buffer, strlen( buffer ), net ) ) 
+    if ( put_smtp_line( buffer, strlen( buffer ), sock ) ) 
       errcode = -1;
     }
   
@@ -604,26 +584,26 @@ static int smtp_send_message_header( Network * net,
     { /*                                             
     strcpy( buffer, "\r\nMIME-Version: 1.0"
         "\r\nContent-Type: text/plain; charset=\"us-ascii\"" );
-    if ( put_smtp_line( buffer, strlen( buffer ), net ) ) 
+    if ( put_smtp_line( buffer, strlen( buffer ), sock ) ) 
       errcode = -1; */
-    }    
+    }
        
   if (errcode == 0) //send the subject
     {
     strcpy( buffer, "\r\nSubject: RC5DES stats (" );
-    if ((net->GetHostName( buffer+25, 256 ))!=0) buffer[25] = 0;
-    if ((!isdigit(buffer[25])) && ((p=strchr(buffer+25,'.'))!=NULL)) *p = 0;
+    if ((netio_gethostname( buffer+25, 256 )) < 0) buffer[25] = 0;
+    if ((!isdigit(buffer[25])) && ((p = strchr(buffer+25,'.')) != NULL)) *p = 0;
     if ((buffer[25]) && ( statsid && *statsid )) strcat( buffer+25, ":" ); 
     if ( statsid && *statsid ) strcat( buffer+25, statsid );
-    if ( buffer[25] ) strcat( buffer, ")" ); else buffer[23]=0;
-    if ( put_smtp_line( buffer, strlen(buffer), net ) ) 
+    if ( buffer[25] ) strcat( buffer, ")" ); else buffer[23] = 0;
+    if ( put_smtp_line( buffer, strlen(buffer), sock ) ) 
       errcode = -1;
     }
 
        
   if (errcode == 0) //finish off
     {
-    if ( put_smtp_line( "\r\n\r\n", 4, net ) ) 
+    if ( put_smtp_line( "\r\n\r\n", 4, sock ) ) 
       errcode = -1;
     }
   return errcode;
@@ -633,13 +613,13 @@ static int smtp_send_message_header( Network * net,
 
 //returns 0 if success, <0 if smtp error, >0 if network error (should defer)
 #if defined(MAILSPOOL_IS_AUTOBUFFER)
-static int smtp_send_message_text(Network * net, const AutoBuffer &txt)
+static int smtp_send_message_text(SOCKET sock, const AutoBuffer &txtbuf)
 {
-  AutoBuffer txtbuf(txt);       // make a working copy since we modify ours
+  u32 buffoffs = 0;
   AutoBuffer netbuf;
   int errcode = 0;
 
-  while (!errcode && txtbuf.RemoveLine(netbuf))
+  while (!errcode && txtbuf.StepLine(netbuf, buffoffs))
   {
     if (*netbuf.GetHead() == '.' && netbuf.GetLength() == 1)
     {
@@ -655,7 +635,7 @@ static int smtp_send_message_text(Network * net, const AutoBuffer &txt)
       netbuf.MarkUsed(2);
     }
 
-    if ( put_smtp_line( netbuf, netbuf.GetLength(), net ) )
+    if ( put_smtp_line( netbuf, netbuf.GetLength(), sock ) )
       errcode = -1;
   }
   return (errcode); // <=0
@@ -663,13 +643,13 @@ static int smtp_send_message_text(Network * net, const AutoBuffer &txt)
 #else
 
 #if defined(MAILSPOOL_IS_MEMFILE)
-static int smtp_send_message_text(Network * net, const MEMFILE *mfile)
+static int smtp_send_message_text(SOCKET sock, const MEMFILE *mfile)
 #else  // MAILSPOOL_IS_STATICBUFFER or MAILSPOOL_IS_MALLOCBUFFER
-static int smtp_send_message_text(Network * net, const char *txt)
+static int smtp_send_message_text(SOCKET sock, const char *txt)
 #endif
 {
   char netbuf[512]; 
-  unsigned int index=0;
+  unsigned int index = 0;
   int eotext = 0, errcode = 0;
   char thischar, prevchar = 0;
   unsigned long txtlen, txtpos;
@@ -701,36 +681,36 @@ static int smtp_send_message_text(Network * net, const char *txt)
     
     if ((thischar == '.') && (prevchar == '\n'))  // '.' on a new line?
       {
-      netbuf[index++]='.'; //convert to two dots (ie nextchar won't be a CR)
-      netbuf[index++]='.';
+      netbuf[index++] = '.'; //convert to two dots (ie nextchar won't be a CR)
+      netbuf[index++] = '.';
       }
     else if (thischar == '\r')
       {
-      if (txt[1]=='\r' && txt[2]=='\n') //ignore softbreaks "\r\r\n"
+      if (txt[1] == '\r' && txt[2] == '\n') //ignore softbreaks "\r\r\n"
         {
-        txt+=2;
-        if (prevchar!=' ' && prevchar!='\t' && prevchar!='-')
-          netbuf[index++]=' ';
+        txt += 2;
+        if (prevchar != ' ' && prevchar != '\t' && prevchar != '-')
+          netbuf[index++] = ' ';
         }
       else if (txt[1] != '\n')
         {
-        netbuf[index++]='\r';
-        netbuf[index++]='\n';
+        netbuf[index++] = '\r';
+        netbuf[index++] = '\n';
         }
       }
     else if (thischar == '\n')
       {
       if (prevchar != '\r') // all \n's should be preceeded by \r's...
-        netbuf[index++]='\r';
-      netbuf[index++]='\n';
+        netbuf[index++] = '\r';
+      netbuf[index++] = '\n';
       }
     else 
       netbuf[index++] = thischar;
-    prevchar = (char)((index)?(netbuf[index-1]):(0));
+    prevchar = (char)(index ? netbuf[index-1] : 0);
 
-    if ( eotext || (index >= (sizeof(netbuf)-10))) //little safety margin
+    if ( eotext || (index >= sizeof(netbuf) - 10) ) //little safety margin
       {
-      if ( put_smtp_line( netbuf, index, net ) ) 
+      if ( put_smtp_line( netbuf, index, sock ) ) 
         errcode = -1;
       index = 0;
       }
@@ -742,11 +722,11 @@ static int smtp_send_message_text(Network * net, const char *txt)
 
 //-------------------------------------------------------------------------
 
-static int smtp_send_message_footer( Network *net )
+static int smtp_send_message_footer( SOCKET sock )
 {
-  if ( put_smtp_line( "\r\n.\r\n", 5, net ) ) 
+  if ( put_smtp_line( "\r\n.\r\n", 5, sock ) ) 
     return -1;
-  if ( get_smtp_result(net) != 250 )
+  if ( get_smtp_result(sock) != 250 )
     {
     LogScreen("Mail::Message was not accepted by server.\n");
     return +1;
@@ -756,14 +736,16 @@ static int smtp_send_message_footer( Network *net )
 
 //-------------------------------------------------------------------------
 
-static int smtp_close_message_envelope(Network * net)
-{ return (put_smtp_line( "QUIT\r\n", 6 , net)?(-1):(0)); }
+static int smtp_close_message_envelope(SOCKET sock)
+{
+  return (put_smtp_line( "QUIT\r\n", 6 , sock) ? -1 : 0);
+}
 
 //-------------------------------------------------------------------------
 
 unsigned long smtp_countspooled( struct mailmessage *msg )
 {
-  if (((long)(msg->sendthreshold)) <= 0 ) //sanity check
+  if ((long) msg->sendthreshold <= 0 ) //sanity check
     msg->sendthreshold = 0;
   if (msg->sendthreshold == 0)
     return 0;
@@ -800,7 +782,7 @@ int smtp_deinitialize_message( struct mailmessage *msg ); //fwd resolution
 int smtp_send_message( struct mailmessage *msg )
 {
   int errcode = 0;
-  Network *net;
+  SOCKET sock;
 
   if (msg->sendpendingflag == 0) //no changes since we last tried to send
     return 0;
@@ -814,20 +796,20 @@ int smtp_send_message( struct mailmessage *msg )
   if (smtp_countspooled( msg ) == 0)
     return 0;
 
-  if ((net = smtp_open_net( msg->smtphost, msg->smtpport )) == NULL)
+  if ((sock = smtp_open_net( msg->smtphost, msg->smtpport )) == NULL)
     return +1; //retry hint
 
   //---------------
   if (errcode == 0)
-    errcode = smtp_open_message_envelope(net,msg->fromid,msg->destid,NULL);
+    errcode = smtp_open_message_envelope( sock,msg->fromid,msg->destid,NULL );
   if (errcode == 0)
-    errcode = smtp_send_message_header(net, msg->fromid,msg->destid,msg->rc5id);
+    errcode = smtp_send_message_header( sock, msg->fromid,msg->destid,msg->rc5id );
   if (errcode == 0)
-    errcode = smtp_send_message_text( net, msg->spoolbuff );
+    errcode = smtp_send_message_text( sock, msg->spoolbuff );
   if (errcode == 0) 
-    errcode = smtp_send_message_footer( net );
+    errcode = smtp_send_message_footer( sock );
   if (errcode >= 0)                             
-    smtp_close_message_envelope( net );  // always send QUIT unless net error
+    smtp_close_message_envelope( sock );  // always send QUIT unless net error
   //---------------
 
   if (errcode > 0) //smtp error (error message has already been printed)
@@ -842,7 +824,7 @@ int smtp_send_message( struct mailmessage *msg )
   if ( errcode >= 0 ) // always clear message unless net error
     smtp_deinitialize_message( msg );
 
-  smtp_close_net(net);
+  smtp_close_net(sock);
   return(errcode);
 }
 
@@ -876,7 +858,6 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
   
   #if (defined(MAILSPOOL_IS_AUTOBUFFER))
     {
-#error Untested
     msg->maxspoolsize = ((msg->sendthreshold/10)*11);
 
     if (txtlen > 0)
@@ -889,7 +870,7 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
               
         if (( msglen + txtlen ) >= ( msg->maxspoolsize )) 
           {
-          msg->spoolbuff->Reserve(((s32)(txtlen))); //
+          msg->spoolbuff->Reserve(((s32)(txtlen)));
           strncpy(msg->spoolbuff->GetTail(), txt, txtlen);
           smtp_send_message( msg );
           msglen = 0;
@@ -904,7 +885,7 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
           }
         else
           {
-          msg->spoolbuff->Reserve(((s32)(txtlen))+2048); //
+          msg->spoolbuff->Reserve(((s32)(txtlen))+2048);
           strncpy(msg->spoolbuff->GetTail(), txt, txtlen);
           msg->spoolbuff->MarkUsed(txtlen);
           msglen = (unsigned long)(msg->spoolbuff->GetLength());
@@ -1116,9 +1097,9 @@ static void cleanup_field( int atype, char *addr, const char *default_addr )
 
   unsigned int len = strlen( addr );
   while (len > 0 && isspace(addr[len-1]))
-    addr[--len]=0;
+    addr[--len] = 0;
 
-  const char sig[]="distributed.net";
+  const char sig[] = "distributed.net";
   if (len>=(sizeof(sig)-1) && strcmpi(&(addr[(len-(sizeof(sig)-1))]),sig)==0)
     {
     if (len==(sizeof(sig)-1))
@@ -1134,8 +1115,8 @@ static void cleanup_field( int atype, char *addr, const char *default_addr )
 
 
 int smtp_initialize_message( struct mailmessage *msg, unsigned long sendthresh,
-               const char *smtphost, unsigned int smtpport, const char *fromid,
-                                        const char *destid, const char *rc5id )
+              const char *smtphost, unsigned int smtpport, const char *fromid,
+              const char *destid, const char *rc5id )
 {
   if (!msg) return -1;
   memset( (void *)(msg), 0, sizeof( struct mailmessage ));
@@ -1160,9 +1141,9 @@ int smtp_initialize_message( struct mailmessage *msg, unsigned long sendthresh,
          msg->smtpport, msg->sendthreshold );
   #endif
   
-  if (rc5id[0]==0)
+  if (rc5id[0] == 0)
     {
-    sendthresh=0;
+    sendthresh = 0;
     return -1;
     }
   return 0;
