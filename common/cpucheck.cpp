@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.77 2005/03/08 20:12:27 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.78 2005/03/08 22:25:27 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1252,7 +1252,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x4FF0, CPU_F_I686,       9, "K8-15 (Opteron 2xx)" },
           {  0x5FF0, CPU_F_I686,       9, "K8-15 (Opteron 8xx)" },
           {  0x7FF0, CPU_F_I686,       9, "K8-15 (Mobile Athlon XP-M)" },
-          {  0x8FF0, CPU_F_I686,       9, "K8-15 (Athlon XP/Sempron/Mobile Sempron" },
+          {  0x8FF0, CPU_F_I686,       9, "K8-15 (Athlon XP/Sempron/Mobile Sempron)" },
           {  0x9FF0, CPU_F_I686,       9, "K8-15 (Athlon 64 FX)" },
           {  0x0000, 0,               -1, NULL       }
           }; internalxref = &amdxref[0];
