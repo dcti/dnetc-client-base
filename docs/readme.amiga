@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.7.2.4 2000/08/22 14:08:52 oliver Exp $
+ Document revision $Id: readme.amiga,v 1.7.2.5 2000/10/16 17:18:28 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -12,9 +12,10 @@
     1.0  System requirements
     2.0  Getting started
     3.0  AmigaOS client specific notes
-         3.1 Setting the time zone
-         3.2 Myzar - GUI front-end for the client
-         3.3 Packets and work units?
+         3.1 Ensuring stack size is large enough
+         3.2 Setting the time zone
+         3.3 Myzar - GUI front-end for the client
+         3.4 Packets and work units?
     4.0  Credits & thank yous
 
  1.0  System requirements --------------------------------------------
@@ -39,9 +40,10 @@
      The PowerUp PPC version requires:
      - A 603e or higher PPC processor. Tested on 603e and 604e.
      - Ralph Schmidt's ppc.library version 46.30 or higher.
+       Available from ftp://ftp.meanmachine.ch/pub/amiga/ppclib/
      - Also works under WarpUp with PPCLibEmu 0.8a or higher (although
-       you should really use the native WarpOS version instead).
-       
+       you should really use the native WarpOS version instead, of course).
+
  2.0  Getting started ------------------------------------------------
 
     Just copy the client into a directory of your choice and fire it up.
@@ -72,7 +74,18 @@
     The usage section on the Amiga effort pages contains all you need to
     know to change this.
 
-  3.1  Setting the time zone -----------------------------------------
+  3.1  Ensuring stack size is large enough ---------------------------
+
+    The 68k client always allocates its own 64K stack, which is enough for
+    the client to operate, so you should not need any special stack
+    settings in this.  Similarly with the WarpOS version, WarpOS programs
+    always get assigned a largish stack.  However, if you're using the
+    PowerUp version and start experiencing crashes, it could be that the
+    stack is set too low.  Increase it by calling the stack command
+    before running the client or change it via the respective Myzar
+    config option - 100000 should be more than enough for the client.
+
+  3.2  Setting the time zone -----------------------------------------
 
     The client always displays the current time in UTC - not your local
     time!  For this to work correctly, you need to ensure your timezone
@@ -86,7 +99,7 @@
     in the UK, you would set the timezone to GMT when not in dst, and
     to 1 hour from GMT (a zone to the right) when in dst.
 
-  3.2  Myzar - GUI front-end for the client --------------------------
+  3.3  Myzar - GUI front-end for the client --------------------------
 
     Myzar is a GUI front-end for the Amiga port of client. It is not a
     simple interface to start/stop the shell-based client, but a complex
@@ -101,7 +114,7 @@
     You'll need Myzar 2.1 or higher for full functionality with the
     v2.80xx clients.
 
-  3.3  Packets and work units?
+  3.4  Packets and work units?
 
     If you are upgrading from the old 2.710x clients, you may not be
     familiar with the new terminology that has replaced "blocks".  The
