@@ -39,7 +39,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.9.2.2 2000/02/13 04:07:45 cyp Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.9.2.3 2000/06/22 09:24:27 oliver Exp $"; }
 
 #include "baseincs.h"  /* NULL, malloc */
 #include "clitime.h"   /* CliTimer() */
@@ -237,6 +237,7 @@ int DeinitializePolling(void)
 void __RunPollingLoop( unsigned int secs, unsigned int usecs )
 {
   static unsigned int isrunning = 0;
+  static timeval overflow = { 0, 0 };
   struct timeval now, until;
   struct polldata *thisp, *nextp = NULL;
   void *arg = NULL;
@@ -268,7 +269,17 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
     until.tv_sec += secs;
     until.tv_sec += until.tv_usec / 1000000;
     until.tv_usec %= 1000000;
-  
+
+    /* substract extra time used by previous call */
+    until.tv_sec -= overflow.tv_sec;
+    if ( until.tv_usec < overflow.tv_usec )
+    {
+      until.tv_sec--;
+      until.tv_usec += 1000000 - overflow.tv_usec;
+    }
+    else
+      until.tv_usec -= overflow.tv_usec;
+
     runprio = MAX_POLL_RUNLEVEL;
     
     do
@@ -346,6 +357,17 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
     } while (( now.tv_sec < until.tv_sec ) || 
               (( now.tv_sec == until.tv_sec ) && 
                ( now.tv_usec < until.tv_usec )));
+
+    /* store extra time spent, ready for next call */
+    overflow.tv_sec = now.tv_sec - until.tv_sec;
+    if ( now.tv_usec < until.tv_usec )
+    {
+      overflow.tv_sec--;
+      overflow.tv_usec = 1000000 + now.tv_usec - until.tv_usec;
+    }
+    else
+      overflow.tv_usec = now.tv_usec - until.tv_usec;
+//printf("overflow = %ld,%06ld\n",overflow.tv_sec,overflow.tv_usec);
   }
     
   --isrunning;
