@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.33  1998/12/22 19:34:07  chrisb
+// ARM cores don't handle high-word increments, so the tests for this are modified on ARM.
+//
 // Revision 1.32  1998/11/30 00:57:03  remi
 // Added key incrementation system check.
 //
@@ -23,7 +26,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.32 1998/11/30 00:57:03 remi Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.33 1998/12/22 19:34:07 chrisb Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -170,6 +173,18 @@ int SelfTest( unsigned int contest, int cputype )
     contestwork.key.lo = expectedsolution.lo & 0xFFFF0000L;
     contestwork.key.hi = expectedsolution.hi;
 
+
+/*
+   The ARM cores use a feature of the key expansion which relies on
+   the high word of the key not changing, so these tests break the
+   cores.
+
+   When we eventually start distributing blocks >32 bits, the ARM
+   clients will be limited to 32 bits or below. 32 bits will take
+   the fastest StrongARM about 4 hours to complete.
+*/
+#if (CLIENT_CPU != CPU_ARM)
+
     if (contest == 0) { // RC5-64
       // test case 1 is the RSA pseudo-contest solution
       // test cases 2,3,4,5,6,7 are specially made to 
@@ -222,6 +237,7 @@ int SelfTest( unsigned int contest, int cputype )
 	      contestwork.key.lo -= 0x00010000;
       }
     }
+#endif
     contestwork.key.lo = htonl( contestwork.key.lo );
     contestwork.key.hi = htonl( contestwork.key.hi );
     contestwork.iv.lo = htonl( (*test_cases)[testnum][2] );
