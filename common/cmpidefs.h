@@ -10,7 +10,7 @@
 */ 
 
 #ifndef __CMPIDEFS_H__
-#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.22.2.4 2000/01/08 23:23:22 cyp Exp $"
+#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.22.2.5 2000/02/01 23:03:34 ivo Exp $"
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #if defined(__TURBOC__)
@@ -66,11 +66,11 @@
   #define strncmpi(x,y,n)  strncasecmp(x,y,n)
 #elif (CLIENT_OS == OS_SUNOS)
   #include <sys/types.h>
-  #if (CLIENT_CPU == CPU_68K)
+  #if (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_SPARC)
     #define strcmpi(x,y)  strcasecmp(x,y)
     #define strncmpi(x,y,n)  strncasecmp(x,y,n)
-    extern "C" int strcasecmp(char *s1, char *s2); // Keep g++ happy.
-    extern "C" int strncasecmp(char *s1, char *s2, size_t); // Keep g++ happy.
+    extern "C" int strcasecmp(const char *s1, const char *s2); // Keep g++ happy.
+    extern "C" int strncasecmp(const char *s1, const char *s2, size_t); // Keep g++ happy.
   #endif
 #else
   #if defined(__MVS__)

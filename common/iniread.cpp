@@ -20,7 +20,7 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.27.2.5 1999/12/08 00:41:49 cyp Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.27.2.6 2000/02/01 23:03:35 ivo Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -28,6 +28,7 @@ return "@(#)$Id: iniread.cpp,v 1.27.2.5 1999/12/08 00:41:49 cyp Exp $"; }
 #include <stdlib.h>  /* malloc()/free()/atoi() */
 #include <limits.h>  /* UINT_MAX */
 #include "iniread.h"
+#include "baseincs.h" /* SEEK_[SET|END|CUR] on SunOS */
 
 #if 0 /* embedded comment handling is not api conform */
 #define ALLOW_EMBEDDED_COMMENTS 

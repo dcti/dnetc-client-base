@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.28 2000/01/16 20:59:36 ctate Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.29 2000/02/01 23:03:34 ivo Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -36,7 +36,7 @@ return "@(#)$Id: console.cpp,v 1.48.2.28 2000/01/16 20:59:36 ctate Exp $"; }
   || (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
   || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
   || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDOS) \
-  || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) )
+  || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) )
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
@@ -644,7 +644,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       height  = winsz.ws_row;
     }
   #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
-        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
+        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) 
     struct ttysize winsz;
     winsz.ts_lines = winsz.ts_cols = winsz.ts_xxx = winsz.ts_yyy = 0;
     ioctl (fileno(stdout), TIOCGWINSZ, &winsz);

@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.121 2000/02/01 20:52:48 ivo Exp $
+# @(#)$Id: configure,v 1.222.2.122 2000/02/01 23:03:30 ivo Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -808,12 +808,13 @@ case "$1" in
 
     *sparc-sunos-gcc-nomt)   # [ivo sunos413/nomt]
         DELETECHARS="'/.\$\-'"
-        TARGET_CC="gcc -pipe" 
+        TARGET_CC="gcc" 
         TARGET_CCFLAGS="$OPTS_GCC_SPARC1 -Dsunos \
                         -DHAVE_OGR_CORES"
-        TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp \
-                        $OGR_ANSI_SRCS"
+        TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
+			$OGR_ANSI_SRCS"
         TARGET_LIBS="-lnsl -ldl"
+        TARGET_LDFLAGS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TRAGET_TARBALL="sunos413-sparc-nomt"
         ;;

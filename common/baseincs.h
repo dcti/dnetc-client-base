@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.22 2000/02/01 20:52:52 ivo Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.23 2000/02/01 23:03:34 ivo Exp $"
 
 #include "cputypes.h"
 
@@ -153,12 +153,17 @@ extern "C" {
   #include <nwfile.h> //sopen()
   #include <fcntl.h> //O_... constants
   #include "platforms/netware/netware.h" //for stuff in netware.cpp
-#elif (CLIENT_OS == OS_SUNOS)
+#elif (CLIENT_OS == OS_SUNOS) 
   #include <fcntl.h>
   #include <unistd.h>
   #include <stdlib.h>
+  #include <stdio.h>
+  #define SEEK_SET 0
+  #define SEEK_CUR 1
+  #define SEEK_END 2
   #include <poll.h>
   #include <sys/time.h>
+  #include <sys/socket.h>
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int);
 #elif (CLIENT_OS == OS_SOLARIS)
