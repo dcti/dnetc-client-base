@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.144  1998/07/10 04:04:27  silby
+// Change to thread priorities for win32 gui.
+//
 // Revision 1.143  1998/07/09 17:08:09  silby
 // Ok, DES MMX core selection override code now works. The output of cpucheck and usemmx are the only things it cares about; everyone who's mmx capable will use it now.
 //
@@ -244,7 +247,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.143 1998/07/09 17:08:09 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.144 1998/07/10 04:04:27 silby Exp $";
 return id; }
 #endif
 
@@ -2444,8 +2447,10 @@ void Client::SetNiceness(void)
     else if ( niceness == 1 ) DosSetPriority( 2, PRTYC_IDLETIME, 31, 0 );
     // else                  /* nothing */; 
   #elif (CLIENT_OS == OS_WIN32)
+    #if !defined(USEVIRTUALMETHODS)
     if ( niceness != 2 )      SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS ); 
     if ( niceness == 0 )      SetThreadPriority( GetCurrentThread() ,THREAD_PRIORITY_IDLE );
+    #endif
     // else                  /* nothing */; 
   #elif (CLIENT_OS == OS_MACOS)
      // nothing
