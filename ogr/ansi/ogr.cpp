@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.12 2000/11/02 12:35:35 oliver Exp $
+ * $Id: ogr.cpp,v 1.1.2.13 2000/11/06 02:18:49 mfeiri Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +19,7 @@
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 0   /* 0/1 - default is hw dependant */
   #define OGROPT_COPY_LIST_SET_BIT_JUMPS  0       /* 0-2 - default is 1 */
   #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 0-2 - default is 2 */
-#else
+#elif (!defined(OVERWRITE_DEFAULT_OPTIMIZATIONS))
   #if (defined(ASM_X86) || defined(__386__)) && defined(OGR_NOFFZ)
     /* the bsr instruction is very slow on some cpus */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 0
@@ -30,31 +30,31 @@
   #endif
   #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
     #if (__MWERKS__)
-      #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* we want 'no'  irrelev */
-      #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* important     irrelev */
-      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2 /* dunno         irrelev */
-      #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* cntlzw        */
-      #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* MWC=1  MrC=0  */
-      #define OGROPT_ALTERNATE_CYCLE                1 /* oetting/cox   */
-      #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* switch_asm    */
+      #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
+      #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
+      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
+      #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
+      #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* MWC does benefit */
+      #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
+      #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* use switch_asm   */
     #elif (__MRC__)
-      #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* we want 'no'  irrelev */
-      #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* important     irrelev */
-      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2 /* dunno         irrelev */
-      #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* cntlzw        */
-      #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* MWC=1  MrC=0  */
-      #define OGROPT_ALTERNATE_CYCLE                1 /* oetting/cox   */
-      #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* use original  */
+      #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
+      #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
+      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
+      #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
+      #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* MrC is better    */
+      #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
+      #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* MrC is better    */
     #elif (__GNUC__)
-      #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* we want 'no'  irrelev */
-      #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* important     irrelev */
-      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* no optimization */
-      #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* cntlzw        */
-      #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* GCC=1         */
-      #define OGROPT_ALTERNATE_CYCLE                1 /* oetting/cox   */
-      #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* switch_asm    */
+      #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
+      #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
+      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
+      #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
+      #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* GCC does benefit */
+      #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
+      #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* GCC is better    */
     #else
-      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0    /* no optimization */
+      #error play with the defines to find optimal settings for your compiler
     #endif
   #endif  
 #endif  
@@ -146,12 +146,11 @@
    on MANY processors -- from "12*(x)" to "((x)<<3)+((x)<<2)" in choose(x,y).
    Note that very smart compilers can sometimes do a better job at replacing
    the original statement with intrinsics than we can do by inserting these
-   shift operations (e.g.: MrC).
+   shift operations (e.g.: MrC). Thanks to Chris Cox for this optimization.
    If CHOOSEBITS != 12 this setting will have no effect.
-   Thanks to Chris Cox for this optimization.
 */
 #ifndef OGROPT_STRENGTH_REDUCE_CHOOSE
-#define OGROPT_STRENGTH_REDUCE_CHOOSE 0 /* the default is "no" */
+#define OGROPT_STRENGTH_REDUCE_CHOOSE 1 /* the default is "yes" */
 #endif
 
 
@@ -2235,11 +2234,11 @@ static int ogr_cycle(void *state, int *pnodes)
    up:
       lev--;
       depth--;
+      POP_LEVEL(lev);
       if (depth <= oState->startdepth) {
          retval = CORE_S_OK;
          break;
       }
-      POP_LEVEL(lev);
       goto stay; /* repeat this level till done */
    }
 
