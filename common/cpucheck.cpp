@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.38 2000/03/20 14:27:54 jbaker Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.39 2000/04/21 10:17:59 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -694,14 +694,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0580, 1690, 0x105, "K6-2"     },
           {  0x0590, 1690, 0x105, "K6-3"     },
           {  0x0610, 3400, 0x109, "K7"       },
-          /* There may be a split personality issue here:
-             7541:0612  600 MHz K7: core #2 gets 1.798 Mkey/sec, 
-                              while core #3 gets 1.809 Mkey/sec consistently.
-             However, I now have two reports (no email addy unfortunately)
-             of core #2 being definitely faster. That may be the later
-             series K7 (7541:062x). Needs checking.
-          */
-          {  0x0620, 3400, 0x103, "K7-2"     },
+          {  0x0620, 3400, 0x109, "K7-2"     },
           {  0x0000, 4096,    -1, NULL       }
           }; internalxref = &amdxref[0];
       vendorname = "AMD ";
