@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.41 2001/02/13 01:04:30 andreasb Exp $
+ * $Id: ogr.cpp,v 1.1.2.42 2001/02/19 08:10:39 mfeiri Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -2460,9 +2460,9 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
       int s = workstub->stub.diffs[i];
       
       #pragma warning This does not work
-      if (s <= (32*5))
-        if (lev->dist[(s-1)>>5] & (0x80000000>>((s-1)&0x1f)))//#define BITOFLIST(x) 0x80000000>>((x-1)&0x1f)
-          return CORE_E_STUB;
+//      if (s <= (32*5))
+//        if (lev->dist[(s-1)>>5] & (0x80000000>>((s-1)&0x1f)))//#define BITOFLIST(x) 0x80000000>>((x-1)&0x1f)
+//          return CORE_E_STUB;
       #pragma warning This does not work
       
       //dump(oStateDepth, lev, 0);
