@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.33  1998/10/11 00:43:20  cyp
+// Implemented 'quietly' in SelectCore() and ValidateProcessorCount()
+//
 // Revision 1.32  1998/10/09 12:25:21  cyp
 // ValidateProcessorCount() is no longer a client method [is now standalone].
 //
@@ -118,7 +121,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.32 1998/10/09 12:25:21 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.33 1998/10/11 00:43:20 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -209,7 +212,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
 
 // --------------------------------------------------------------------------
 
-unsigned int ValidateProcessorCount( int numcpu )
+unsigned int ValidateProcessorCount( int numcpu, int quietly )
 {
   static int detected_count = -2;
 
@@ -243,14 +246,16 @@ unsigned int ValidateProcessorCount( int numcpu )
       // returns -1 if no hardware detection
       if ( detected_count < 1 )
         {
-        LogScreen("Automatic processor count detection failed.\n"
-                  "A single processor machine is assumed.\n");
+        if (!quietly)
+          LogScreen("Automatic processor count detection failed.\n"
+                    "A single processor machine is assumed.\n");
         detected_count = 1;
         }
       else
         {
-        LogScreen("Automatic processor detection found %d processor%s.\n",
-           detected_count, ((detected_count==1)?(""):("s")) );
+        if (!quietly)
+          LogScreen("Automatic processor detection found %d processor%s.\n",
+             detected_count, ((detected_count==1)?(""):("s")) );
         }
       }
     numcpu = detected_count;
@@ -268,7 +273,7 @@ unsigned int ValidateProcessorCount( int numcpu )
 int GetProcessorType(int quietly)
 { 
   if (!quietly)
-    LogScreen("Processor detection is not supported.\n");
+    LogScreen("Automatic processor detection is not supported.\n");
   return -1; 
 }
 #endif
@@ -286,15 +291,15 @@ int GetProcessorType(int quietly)
     if ((flags & AFF_68060) && (flags & AFF_68040) && (flags & AFF_68030))
         detectedtype = 5; // Phase5 060 boards at least report this...
     else if ((flags & AFF_68040) && (flags & AFF_68030))
-        detectedtype = 4; // 68040
+        detectedtype = 4; // 68040
     else if ((flags & AFF_68030) && (flags & AFF_68020))
-        detectedtype = 3; // 68030
+        detectedtype = 3; // 68030
     else if ((flags & AFF_68020) && (flags & AFF_68010))
         detectedtype = 2; // 68020
     else if (flags & AFF_68010)
         detectedtype = 1; // 68010
     else
-        detectedtype = 0; // Assume a 68000
+        detectedtype = 0; // Assume a 68000
     }
   if (!quietly)
     {

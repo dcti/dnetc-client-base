@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.h,v $
+// Revision 1.6  1998/10/11 00:43:22  cyp
+// Implemented 'quietly' in SelectCore() and ValidateProcessorCount()
+//
 // Revision 1.5  1998/10/09 12:25:27  cyp
 // ValidateProcessorCount() is no longer a client method [is now standalone].
 //
@@ -35,7 +38,7 @@ int GetProcessorType(int quietly);
 
 //returns the number of cpus (>=0). 
 //Zero is valid and symbolizes 'no-multithreading'.
-unsigned int ValidateProcessorCount(int numcpu);
+unsigned int ValidateProcessorCount(int numcpu, int quietly);
 
 //-------
 

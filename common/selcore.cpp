@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore.cpp,v $
+// Revision 1.17  1998/10/11 00:43:23  cyp
+// Implemented 'quietly' in SelectCore() and ValidateProcessorCount()
+//
 // Revision 1.16  1998/10/09 12:25:25  cyp
 // ValidateProcessorCount() is no longer a client method [is now standalone].
 //
@@ -71,7 +74,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.16 1998/10/09 12:25:25 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.17 1998/10/11 00:43:23 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -149,11 +152,12 @@ const char *GetCoreNameFromCoreType( unsigned int coretype )
 
 // ---------------------------------------------------------------------------
 
-s32 Client::SelectCore(void)
+int Client::SelectCore(int quietly)
 {
   static s32 last_cputype = -123;
+  static s32 detectedtype = -2;
 
-  numcputemp = ValidateProcessorCount( numcpu ); //in cpucheck.cpp
+  numcputemp = ValidateProcessorCount( numcpu, quietly ); //in cpucheck.cpp
   
   if (cputype == last_cputype) //no change, so don't bother reselecting
     return 0;                  //(cputype can change when restarted)
@@ -164,6 +168,13 @@ s32 Client::SelectCore(void)
   if (cputype<0 || cputype>=(int)(sizeof(cputypetable)/sizeof(cputypetable[0])))
     cputype = -1;
   #endif
+  
+  if (cputype == -1)
+    {
+    if (detectedtype == -2) 
+      detectedtype = GetProcessorType(quietly);//returns -1 if unable to detect
+    cputype = detectedtype;
+    }
     
 #if (CLIENT_CPU == CPU_POWERPC)
   #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_AMIGAOS))
@@ -175,16 +186,11 @@ s32 Client::SelectCore(void)
     cputype = 1;
   #else
     {
-    static s32 detectedtype = -1;
-    
-    if (cputype == -1)
-      cputype = detectedtype;
-              
     if (cputype == -1)
       {
       double fasttime = 0;
-
-      LogScreen("Automatically selecting fastest core...\n"
+      if (!quietly)
+        LogScreen("Manually selecting fastest core...\n"
                 "This is a guess based on a small test of each core.\n"
                 "If you know what processor this machine has, then please\n"
                 "please set it in the client's configuration.\n");
@@ -204,10 +210,12 @@ s32 Client::SelectCore(void)
         contestwork.iterations.hi = htonl( 0 );
         problem.LoadState( &contestwork, 0, benchsize, whichcrunch ); // RC5 core selection
 
-        //LogScreen("Benchmarking the %s core... ", ((whichcrunch)?("second"):("first")));
+        //if (!quietly)
+        //  LogScreen("Benchmarking the %s core... ", ((whichcrunch)?("second"):("first")));
         problem.Run( 0 ); //threadnum
         double elapsed = CliGetKeyrateForProblemNoSave( &problem );
-        //LogScreen( "%.1f kkeys/sec\n", (elapsed / 1000.0) );
+        //if (!quietly)
+        //  LogScreen( "%.1f kkeys/sec\n", (elapsed / 1000.0) );
 
         if (cputype < 0 || elapsed < fasttime)
           {cputype = whichcrunch; fasttime = elapsed;}
@@ -218,18 +226,12 @@ s32 Client::SelectCore(void)
   #endif
   whichcrunch = cputype;
   
-  LogScreen( "Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
+  if (!quietly)
+    LogScreen( "Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
 #elif (CLIENT_CPU == CPU_68K)
-  static int detectedtype = -1;
 
   if (cputype == -1)
-    {
-    if (detectedtype == -1)
-      detectedtype = GetProcessorType(0);
-    if (detectedtype == -1)
-      detectedtype = 0;
-    cputype = (s32)detectedtype;
-    }
+    cputype = 0;
     
   const char *corename = NULL;
   if (cputype == 4 || cputype == 5 ) // there is no 68050, so type5=060
@@ -242,10 +244,10 @@ s32 Client::SelectCore(void)
     rc5_unit_func = rc5_unit_func_000_030;
     corename = "000/010/020/030";
     }
-  LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename ); 
+  if (!quietly)
+    LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename ); 
 
 #elif (CLIENT_CPU == CPU_X86)
-  static s32 detectedtype = -1;
   int selppro_des = 0;
   const char *selmsg_rc5 = NULL, *selmsg_des = NULL;
   
@@ -254,7 +256,7 @@ s32 Client::SelectCore(void)
   else if (cputype == -1)
     {
     if (detectedtype == -1)
-      detectedtype = GetProcessorType(0);
+      detectedtype = GetProcessorType(quietly);
     cputype = (detectedtype & 0xFF);
     }
   if (detectedtype == -1) /* we need detection for mmx cores */
@@ -340,8 +342,9 @@ s32 Client::SelectCore(void)
   if (!selmsg_rc5)
     selmsg_rc5 = GetCoreNameFromCoreType(cputype);
     
-  LogScreen( "DES: selecting %s core.\n"
-             "RC5: selecting %s core.\n", selmsg_des, selmsg_rc5 );
+  if (!quietly)
+    LogScreen( "DES: selecting %s core.\n"
+               "RC5: selecting %s core.\n", selmsg_des, selmsg_rc5 );
       
   #undef DESUNITFUNC61
   #undef DESUNITFUNC62
@@ -349,24 +352,17 @@ s32 Client::SelectCore(void)
   #undef DESUNITFUNC52
 
 #elif (CLIENT_CPU == CPU_ARM)
-  static s32 detectedtype = -1;
-#if (CLIENT_OS == OS_RISCOS)
-  if (cputype == -1)              //was ArmID(). Now in cpucheck.cpp
-    detectedtype = GetProcessorType(0); // will return -1 if unable to identify
-#endif
-  if (cputype == -1)
-    cputype = detectedtype;
-
   if (cputype == -1)
     {
     const s32 benchsize = 50000*2; // pipeline count is 2
     double fasttime[2] = { 0, 0 };
     s32 fastcoretest[2] = { -1, -1 };
   
-    LogScreen("Automatically selecting fastest core...\n"
-              "This is a guess based on a small test of each core.\n"
-	      "If you know what processor this machine has, then please\n"
-	      "please set it in the client's configuration.\n");
+    if (!quietly)
+      LogScreen("Manually selecting fastest core...\n"
+                "This is a guess based on a small test of each core.\n"
+                "If you know what processor this machine has, then please\n"
+                "please set it in the client's configuration.\n");
 
     for (int contestid = 0; contestid < 2; contestid++)
       {
@@ -426,7 +422,8 @@ s32 Client::SelectCore(void)
       cputype = 1;
     detectedtype = cputype;
     }
-  LogScreen("Selecting %s code.\n",GetCoreNameFromCoreType(cputype));
+  if (!quietly)
+    LogScreen("Selecting %s code.\n",GetCoreNameFromCoreType(cputype));
     
   // select the correct core engine
   switch(cputype)
