@@ -1,6 +1,6 @@
                                                     
- RC5-DES 2.7020.403b Client for NetWare 3.11 and above
- Released 24 May 1998 by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ RC5-DES Client for NetWare 3.11 and above
+ Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
                                                           
  Welcome to the new RC5-DES (Project Monarch) Client for NetWare.
  This version is a unified client for both SMP and non-SMP machines.
@@ -9,17 +9,17 @@
     2.0  Notes: NetWare specific issues.
     3.0  Help! 
    
-    Refer to the online FAQ at
-    http://www.distributed.net/FAQ/client-2.7.html
-    for non-NetWare specific issues or command line and ini file options.
+    Refer to the enclosed rc5des.txt or browse the online FAQ at
+    http://www.distributed.net/FAQ/client-2.7.html for non-NetWare 
+    specific issues or command line and ini file options.
 
-    NetWare 3.11 specific note:
+    NetWare 3.1x specific note:
      
-    A3112.NLM is required by this version of the client. NetWare 3.11
+    A3112.NLM is required by this version of the client. NetWare 3.x 
     users who do not have this file in their SYS:/SYSTEM directory may 
-    obtain it from Novell (it is part of the latest CLIB update, 
-    ie LIB311.EXE (October '95)). The updates are also available from 
-    http://fb14.uni-mainz.de/~rc5des/
+    obtain it from Novell (it is part of the latest (October '95) CLIB 
+    update, ie LIB311.EXE or LIB312.EXE. The updates are also available 
+    from http://fb14.uni-mainz.de/~rc5des/
     
  1.0  Getting started ------------------------------------------------
  
@@ -42,7 +42,7 @@
     clients at your site.
  
  2.0  Notes: ---------------------------------------------------------
- 
+
     As mentioned above, is version of the client is for both SMP and 
     non-SMP machines; that is, it will run with one thread if running 
     on a single processor machine and will run with two blocks per 
@@ -51,7 +51,7 @@
 
     This version of the client can also be loaded more than one time. 
     Unloading and reloading the client for executing -fetch, -flush or 
-    -update is therefore no longer neccesary. 
+    -update is therefore no longer necessary. 
 
     The following switches cause the client to use the system 
     console screen for display rather than output to its own screen:
@@ -65,7 +65,7 @@
     Beginning with version 2.7020.403, the client will, when possible, 
     insert itself into the Idle Loop (called the 'Polling Loop' on 
     NetWare 3.x) just like PSERVER does, which allows it to control 
-    processor usage far more exactly than it could before. Thus, it 
+    processor usage far more precisely than it could before. Thus, it 
     will appear as if the client was using no processing power at all.
     However, due to the added overhead, this also brings a slight loss 
     of client performance with it. To disable this option use '-nopoll' 
@@ -111,7 +111,7 @@
        This is only an example. Your internet guru knows the correct 
        values. NOTE: THE FILE IS CALLED RESOLV.CFG (without a second 'E')
     
-    Other non-network hotspots to watch out for are:
+    Other non-network hot spots to watch out for are:
     a) If you get a startup message saying:
           Cannot find public symbol XXX
-       read the NetWare 3.x specific note in section 2.
+       read the section on "Getting Started".
