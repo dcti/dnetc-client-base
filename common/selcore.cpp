@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.72 2000/07/05 11:20:59 oliver Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.73 2000/08/09 19:28:19 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -983,6 +983,23 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
 /* ------------------------------------------------------------- */
 
+#if defined(HAVE_OGR_CORES)
+  #if (CLIENT_CPU == CPU_POWERPC)
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
+      extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
+  #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table_000(void);
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table_020(void);
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table_030(void);
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table_040(void);
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table_060(void);
+  #else
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
+  #endif
+#endif    
+
+/* ------------------------------------------------------------- */
+
 int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
                        int *client_cpuP, Problem *problem )
 {                               
@@ -1400,17 +1417,17 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
   if (contestid == OGR)
   {
     #if (CLIENT_CPU == CPU_POWERPC)
-      extern CoreDispatchTable *ogr_get_dispatch_table();
-      extern CoreDispatchTable *vec_ogr_get_dispatch_table();
+      //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
+      //extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
       unit_func.ogr = ogr_get_dispatch_table(); //default
       //if (coresel == 1)    // our vec_ogr core
       //  unit_func.ogr = vec_ogr_get_dispatch_table();
     #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
-      extern CoreDispatchTable *ogr_get_dispatch_table_000();
-      extern CoreDispatchTable *ogr_get_dispatch_table_020();
-      extern CoreDispatchTable *ogr_get_dispatch_table_030();
-      extern CoreDispatchTable *ogr_get_dispatch_table_040();
-      extern CoreDispatchTable *ogr_get_dispatch_table_060();
+      //extern CoreDispatchTable *ogr_get_dispatch_table_000(void);
+      //extern CoreDispatchTable *ogr_get_dispatch_table_020(void);
+      //extern CoreDispatchTable *ogr_get_dispatch_table_030(void);
+      //extern CoreDispatchTable *ogr_get_dispatch_table_040(void);
+      //extern CoreDispatchTable *ogr_get_dispatch_table_060(void);
       if (coresel == 4)
         unit_func.ogr = ogr_get_dispatch_table_060();
       else if (coresel == 3)
@@ -1425,7 +1442,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         coresel = 0;
       }
     #else
-      extern CoreDispatchTable *ogr_get_dispatch_table();
+      //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
       unit_func.ogr = ogr_get_dispatch_table();
       coresel = 0;
     #endif

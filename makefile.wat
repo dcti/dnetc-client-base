@@ -6,7 +6,7 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.27.2.14 2000/07/02 17:14:51 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.15 2000/08/09 19:28:19 cyp Exp $
 
 BASENAME = dnetc
 
@@ -45,8 +45,7 @@ BASENAME = dnetc
 %cscstd_DEFALL   = -DHAVE_CSC_CORES -Icsc -DMMX_CSC
 %cscstd_SYMALIAS = 
 #---
-%ogrstd_LINKOBJS = output\ogr.obj output\ogr_sup.obj &
-                   output\choosedat.obj output\crc32.obj 
+%ogrstd_LINKOBJS = output\ogr.obj output\ogr_dat.obj output\ogr_sup.obj
 %ogrstd_DEFALL   = -DHAVE_OGR_CORES -Iogr
 %ogrstd_SYMALIAS = #
 #---
@@ -573,15 +572,15 @@ output\csc-6b-i.obj : csc\x86\csc-6b-i.asm $(%dependall) .AUTODEPEND
 
 # ----------------------------------------------------------------
 
-output\ogr.obj : ogr\ogr.cpp $(%dependall) .AUTODEPEND
+output\ogr.obj : ogr\ansi\ogr.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\choosedat.obj : ogr\choosedat.cpp $(%dependall) .AUTODEPEND
+output\ogr_dat.obj : ogr\ansi\ogr_dat.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\crc32.obj : ogr\crc32.cpp $(%dependall) .AUTODEPEND
+output\ogr_sup.obj : ogr\ansi\ogr_sup.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
