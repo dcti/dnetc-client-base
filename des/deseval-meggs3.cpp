@@ -1,5 +1,8 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.4  1998/06/15 09:21:53  jlawson
+// eliminated unused label warning
+//
 // Revision 1.3  1998/06/14 08:27:07  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -9,7 +12,7 @@
 //
 //
 
-static char *id="@(#)$Id: deseval-meggs3.cpp,v 1.3 1998/06/14 08:27:07 friedbait Exp $";
+static char *id="@(#)$Id: deseval-meggs3.cpp,v 1.4 1998/06/15 09:21:53 jlawson Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -999,8 +1002,9 @@ slice whack16(slice *P, slice *C, slice *K)
 				
 				// and dependent boxes in round 2
 				regen23 = 0x7dff;
-				
+/*				
 			changeR15S3:
+*/
 				for (int i = 0; i < 16; ++i) {
 					// fix box in round 15
 					{
