@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.18 2000/06/03 23:22:17 oliver Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.19 2000/07/12 14:06:18 oliver Exp $"
 
 #include "cputypes.h"
 
@@ -94,6 +94,9 @@
   #ifdef sleep
   #undef usleep
   #endif
+  // in platforms/amiga/amTime.c
+  #define sleep(x)  amigaSleep(x,0)
+  #define usleep(x) amigaSleep(0,x)
   }
 #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
   //Jul '99: It appears Sol/Sparc and/or Sol/ultra have a
