@@ -3,6 +3,17 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.67  1999/01/21 19:34:52  michmarc
+// changes to the #ifdef around GetProcessorType broke the link setp on
+// some platforms.
+//     ((CLIENT_CPU != CPU_ALPHA) && (CLIENT_OS != OS_DEC_UNIX))
+// to
+//     ((CLIENT_CPU != CPU_ALPHA) || (CLIENT_OS != OS_DEC_UNIX))
+// It should be using the stub except on Alpha/Dec, and the logical inverse
+// of (Alpha && DecUnix) is (!Alpha || !DecUnix)
+//
+// [Maybe this time it will actually link on all platforms.]
+//
 // Revision 1.66  1999/01/19 12:13:17  patrick
 //
 // changes to the #ifdef around GetProcessorType broke the link setp on some
@@ -239,7 +250,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.66 1999/01/19 12:13:17 patrick Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.67 1999/01/21 19:34:52 michmarc Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -449,7 +460,7 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
     (CLIENT_CPU != CPU_68K) && \
     (CLIENT_CPU != CPU_POWERPC) && \
     (CLIENT_CPU != CPU_ARM) && \
-    ((CLIENT_CPU != CPU_ALPHA) && (CLIENT_OS != OS_DEC_UNIX))
+    ((CLIENT_CPU != CPU_ALPHA) || (CLIENT_OS != OS_DEC_UNIX))
 int GetProcessorType(int quietly)
 {
   if (!quietly)
