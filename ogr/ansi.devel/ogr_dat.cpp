@@ -1,3 +1,4 @@
+/* $Id: ogr_dat.cpp,v 1.1.2.2 2000/08/09 13:25:41 cyp Exp $ */
 
 #ifdef __cplusplus
 extern "C" const unsigned char ogr_choose_dat[];
