@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.24  1999/02/20 03:07:17  gregh
+// Add OGR options to configuration data.
+//
 // Revision 1.23  1999/02/09 23:41:39  cyp
 // Lurk iface mask changes: a) default iface mask no longer needs to be known
 // outside lurk; b) iface mask now supports wildcards; c) redid help text.
@@ -76,7 +79,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.23 1999/02/09 23:41:39 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.24 1999/02/20 03:07:17 gregh Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -196,7 +199,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "DO NOT SHARE CHECKPOINTS BETWEEN CLIENTS. Avoid the use of checkpoints unless\n"
   "your client is running in an environment where it might not be able to shutdown\n"
   "properly.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,10,NULL,NULL,0,0},
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,12,NULL,NULL,0,0},
 
 /* ------------------------------------------------------------ */
 
@@ -505,7 +508,15 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "Enter any valid shell command or script name to use to shutdown a\n"
   "network connection previously initiated with the script/command specified\n"
   "in the \"Command/script to start dialup\" option.\n"
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,17,NULL,NULL,0,0}
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,17,NULL,NULL,0,0},
+//42
+{ "in3", CFGTXT("OGR In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "ogr",
+  CFGTXT(""
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,10,NULL,NULL,0,0},
+//43
+{ "out3",CFGTXT("OGR Out-Buffer Path/Name"), "buff-out" EXTN_SEP "ogr",
+  CFGTXT(""
+  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,11,NULL,NULL,0,0}
 };
 
 // --------------------------------------------------------------------------

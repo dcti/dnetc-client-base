@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.h,v $
+// Revision 1.11  1999/02/20 03:07:17  gregh
+// Add OGR options to configuration data.
+//
 // Revision 1.10  1999/02/07 16:00:09  cyp
 // Lurk changes: genericified variable names, made less OS-centric.
 //
@@ -94,7 +97,11 @@
 #define CONF_CONNPROFILE          39 /* CONF_MENU_NET */
 #define CONF_CONNSTARTCMD         40 /* CONF_MENU_NET */
 #define CONF_CONNSTOPCMD          41 /* CONF_MENU_NET */
-#define CONF_OPTION_COUNT         42
+
+#define CONF_OGRIN                42 /* CONF_MENU_BUFF */
+#define CONF_OGROUT               43 /* CONF_MENU_BUFF */
+
+#define CONF_OPTION_COUNT         44
 
 #define CONF_MENU_UNDEF            0
 #define CONF_MENU_BUFF             1

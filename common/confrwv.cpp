@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.44  1999/02/20 03:07:17  gregh
+// Add OGR options to configuration data.
+//
 // Revision 1.43  1999/02/09 03:16:41  remi
 // ReadConfig() now calls dialup.GetDefaultIFaceMask() to get
 // the default value of connifacemask[].
@@ -185,7 +188,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.43 1999/02/09 03:16:41 remi Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.44 1999/02/20 03:07:17 gregh Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -309,6 +312,8 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   GetPrivateProfileStringB( sect, "out", client->out_buffer_file[0], client->out_buffer_file[0], sizeof(client->out_buffer_file[0]), fn );
   GetPrivateProfileStringB( sect, "in2", client->in_buffer_file[1], client->in_buffer_file[1], sizeof(client->in_buffer_file[1]), fn );
   GetPrivateProfileStringB( sect, "out2", client->out_buffer_file[1], client->out_buffer_file[1], sizeof(client->out_buffer_file[1]), fn );
+  GetPrivateProfileStringB( sect, "in3", client->in_buffer_file[2], client->in_buffer_file[2], sizeof(client->in_buffer_file[2]), fn );
+  GetPrivateProfileStringB( sect, "out3", client->out_buffer_file[2], client->out_buffer_file[2], sizeof(client->out_buffer_file[2]), fn );
 
   #if defined(LURK)
   i = dialup.GetCapabilityFlags();
@@ -412,6 +417,8 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileStr( sect, "out", client->out_buffer_file[0], fn, NULL );
     __XSetProfileStr( sect, "in2", client->in_buffer_file[1], fn, NULL );
     __XSetProfileStr( sect, "out2", client->out_buffer_file[1], fn, NULL );
+    __XSetProfileStr( sect, "in3", client->in_buffer_file[2], fn, NULL );
+    __XSetProfileStr( sect, "out3", client->out_buffer_file[2], fn, NULL );
 
     __XSetProfileInt( sect, "frequent", client->connectoften, fn, 0, 1 );
     __XSetProfileInt( sect, "preferredblocksize", client->preferred_blocksize, fn, 31, 0 );
