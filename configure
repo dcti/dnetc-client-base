@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.76  1998/07/15 06:23:22  cramer
+# added -fno-handle-exceptions for gcc targets.  That should work for any gcc.
+# Those that support the new naming (-fno-exceptions) will emit a warning
+# and continue processing.
+#
 # Revision 1.75  1998/07/12 16:21:42  cyruspatel
 # Removed -fno-exceptions. This apparently does not work with an older gcc.
 #
@@ -288,7 +293,7 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
     -fexpensive-optimizations -fomit-frame-pointer \
     -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
     -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
-    -fno-inline-functions'
+    -fno-inline-functions -fno-handle-exceptions'
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
