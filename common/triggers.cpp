@@ -2,6 +2,10 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+// $Log: triggers.cpp,v $
+// Revision 1.8.2.2  1998/11/08 11:52:07  remi
+// Lots of $Log tags.
+//
 // Synchronized with official 1.8
 
 // --------------------------------------------------------------------------

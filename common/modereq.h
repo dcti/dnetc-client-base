@@ -2,6 +2,11 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+// $Log: modereq.h,v $
+// Revision 1.5.2.2  1998/11/08 11:51:35  remi
+// Lots of $Log tags.
+//
+
 #ifndef __MODEREQ_H__
 #define __MODEREQ_H__
 

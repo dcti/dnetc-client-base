@@ -2,6 +2,10 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+// $Log: client.cpp,v $
+// Revision 1.152.2.2  1998/11/08 11:50:22  remi
+// Lots of $Log tags.
+//
 // Sync with :
 //   Revision 1.152  1998/11/08 01:01:41  silby
 //   Buncha hacks to get win32gui to compile, lots of cleanup to do.

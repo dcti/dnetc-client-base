@@ -3,6 +3,11 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+// $Log: logstuff.cpp,v $
+// Revision 1.21.2.2  1998/11/08 11:51:26  remi
+// Lots of $Log tags.
+//
+
 // Synchronized with official 1.21
 
 //-------------------------------------------------------------------------

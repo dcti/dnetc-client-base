@@ -4,6 +4,11 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+// $Log: client.h,v $
+// Revision 1.94.2.2  1998/11/08 11:50:31  remi
+// Lots of $Log tags.
+//
+
 #ifndef __CLIBASICS_H__
 #define __CLIBASICS_H__
 

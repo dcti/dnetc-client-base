@@ -2,6 +2,11 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+// $Log: selcore-conflict.cpp,v $
+// Revision 1.20.2.2  1998/11/08 11:51:53  remi
+// Lots of $Log tags.
+//
+
 #include "cputypes.h"
 #include "client.h"   // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h" // basic (even if port-specific) #includes

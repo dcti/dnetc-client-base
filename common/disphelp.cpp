@@ -2,6 +2,11 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+// $Log: disphelp.cpp,v $
+// Revision 1.47.2.2  1998/11/08 11:51:21  remi
+// Lots of $Log tags.
+//
+
 #include <stdio.h>
 #include "client.h"
 #include "selcore.h"

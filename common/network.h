@@ -4,6 +4,11 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+// $Log: network.h,v $
+// Revision 1.40.2.2  1998/11/08 11:51:36  remi
+// Lots of $Log tags.
+//
+
 // Sychronized with official 1.40
 
 #ifndef NETWORK_H

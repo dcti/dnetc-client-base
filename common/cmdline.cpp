@@ -2,6 +2,11 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+// $Log: cmdline.cpp,v $
+// Revision 1.92.2.2  1998/11/08 11:50:51  remi
+// Lots of $Log tags.
+//
+
 #include "cputypes.h"
 #include "client.h"    // Client class
 #include "baseincs.h"  // basic (even if port-specific) #includes
