@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,7 +9,7 @@
  * Created March 2001 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *probmem_cpp(void) {
-return "@(#)$Id: coremem.cpp,v 1.2 2002/09/02 00:35:42 andreasb Exp $"; }
+return "@(#)$Id: coremem.cpp,v 1.2.4.1 2003/01/16 00:33:46 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -18,8 +18,10 @@ return "@(#)$Id: coremem.cpp,v 1.2 2002/09/02 00:35:42 andreasb Exp $"; }
 #include "util.h"     /* trace */
 #include "coremem.h"  /* ourselves */
 
-#if defined(HAVE_MULTICRUNCH_VIA_FORK) && \
-  ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_HPUX))
+
+#if defined(HAVE_MULTICRUNCH_VIA_FORK)
+
+#if ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_HPUX))
     /* MAP_ANON|MAP_SHARED is completely unsupported in linux */
     /* <=2.2.2, and flakey in 2.2.3. MAP_SHARED is broken in 2.0 */
     /* MAP_SHARED is broken on HPUX <= 9.0 */
@@ -28,10 +30,26 @@ return "@(#)$Id: coremem.cpp,v 1.2 2002/09/02 00:35:42 andreasb Exp $"; }
 #define USE_SYSV_SHM
 #endif
 
-void *cmem_alloc(unsigned int sz)
+// 0 = shared memory (default)
+// 1 = malloc (only for -numcpu 0)
+static int selected_allocator = -1;
+#define default_allocator 0
+
+/* you may call this exactly one time before calling cmem_alloc/cmem_free */
+void cmem_select_allocator(int which)
+{
+  if (selected_allocator < 0)
+  {
+    if (which == 1) /* malloc for -numcpu 0 */
+      selected_allocator = 1;
+    else
+      selected_allocator = 0; /* default */
+  }
+}
+
+static void *__shm_cmem_alloc(unsigned int sz)
 {
   void *mem = ((void *)0);
-#if defined(HAVE_MULTICRUNCH_VIA_FORK)
   sz += sizeof(void *);
   #if 0 /* may be needed some places */
   {
@@ -47,7 +65,7 @@ void *cmem_alloc(unsigned int sz)
     {
       mem = (void *)shmat(shmid, 0, 0 );
       shmctl( shmid, IPC_RMID, 0);
-    } 
+    }
     TRACE_OUT((0,"shmat(%d)=>%p\n", shmid, mem));
   }
   #elif defined(MAP_ANON) /* BSD style */
@@ -56,7 +74,7 @@ void *cmem_alloc(unsigned int sz)
     if (mem == ((void *)-1))
       mem = (void *)0;
     TRACE_OUT((0,"mmap(0, %u, ..., MAP_ANON|MAP_SHARED, -1, 0)=%p\n%s\n",
-                  sz, mem, ((mem)?(""):(strerror(errno))) )); 
+                  sz, mem, ((mem)?(""):(strerror(errno))) ));
   }
   #else /* SysV style */
   {
@@ -69,7 +87,7 @@ void *cmem_alloc(unsigned int sz)
       close(fd);
     }
     TRACE_OUT((0, "mmap(0, %u, ..., MAP_SHARED, fd=%d, 0)=%p\n%s\n",
-                  sz, fd, mem, ((mem)?(""):(strerror(errno))) )); 
+                  sz, fd, mem, ((mem)?(""):(strerror(errno))) ));
   }
   #endif
   if (mem)
@@ -80,20 +98,16 @@ void *cmem_alloc(unsigned int sz)
     p += sizeof(void *);
     mem = (void *)p;
   }
-#else
-  mem = malloc(sz);
-#endif      
   return mem;
-}    
-  
-int cmem_free(void *mem)
-{    
-#if defined(HAVE_MULTICRUNCH_VIA_FORK)
+}
+
+static int __shm_cmem_free(void *mem)
+{
   {
     char *p = (char *)mem;
     p -= sizeof(void *);
     mem = (void *)p;
-  }  
+  }
   #if defined(USE_SYSV_SHM)
   TRACE_OUT((0,"shmdt(%p)\n", mem));
   return shmdt((char *)mem);
@@ -101,8 +115,56 @@ int cmem_free(void *mem)
   TRACE_OUT((0,"munmap(%p,%u)\n", mem, *((unsigned int *)mem)));
   return munmap((void *)mem, *((unsigned int *)mem));
   #endif
-#else
+}
+
+static void *__malloc_cmem_alloc(unsigned int sz)
+{
+  void *mem = ((void *)0);
+  mem = malloc(sz);
+  return mem;
+}
+
+static int __malloc_cmem_free(void *mem)
+{
   free(mem);
   return 0;
-#endif  
-}  
+}
+
+void *cmem_alloc(unsigned int sz)
+{
+  if (selected_allocator < 0)
+    cmem_select_allocator(default_allocator);
+
+  if (selected_allocator == 1)
+    return __malloc_cmem_alloc(sz);
+  else
+    return __shm_cmem_alloc(sz);
+}
+
+int cmem_free(void *mem)
+{
+  if (selected_allocator < 0)
+    cmem_select_allocator(default_allocator);
+
+  if (selected_allocator == 1)
+    return __malloc_cmem_free(mem);
+  else
+    return __shm_cmem_free(mem);
+}
+
+#else /* defined(HAVE_MULTICRUNCH_VIA_FORK) */
+
+void *cmem_alloc(unsigned int sz)
+{
+  void *mem = ((void *)0);
+  mem = malloc(sz);
+  return mem;
+}
+
+int cmem_free(void *mem)
+{
+  free(mem);
+  return 0;
+}
+
+#endif /* defined(HAVE_MULTICRUNCH_VIA_FORK) */

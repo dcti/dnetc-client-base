@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.3 2003/01/13 01:20:03 andreasb Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.4 2003/01/16 00:33:46 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -33,6 +33,7 @@ return "@(#)$Id: cmdline.cpp,v 1.160.2.3 2003/01/13 01:20:03 andreasb Exp $"; }
 #include "confrwv.h"   // ConfigRead()
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "triggers.h"  // TRIGGER_PAUSE_SIGNAL
+#include "coremem.h"   // cmem_select_allocator()
 #include "cmdline.h"   // ourselves
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
@@ -1627,10 +1628,20 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         {
           skip_next = 1;
           if (run_level != 0)
-            ;
+          {
+            #if defined(HAVE_MULTICRUNCH_VIA_FORK)
+            if (atoi(argvalue) == 0)
+              LogScreenRaw("Use of shared memory has been disabled.\n");
+            #endif
+          }
           else
           {
             client->numcpu = atoi(argvalue);
+            #if defined(HAVE_MULTICRUNCH_VIA_FORK)
+            if (client->numcpu == 0)
+              cmem_select_allocator(1); /* use plain malloc()/free() instead of
+                                           shared memory */
+            #endif
             *inimissing = 0; // Don't complain if the inifile is missing
           }
         }
