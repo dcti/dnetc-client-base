@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.195  1998/11/15 10:55:42  remi
+// Bring back the cputype config screen.
+//
 // Revision 1.194  1998/11/09 20:05:16  cyp
 // Did away with client.cktime altogether. Time-to-Checkpoint is calculated
 // dynamically based on problem completion state and is now the greater of 1
@@ -269,7 +272,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.194 1998/11/09 20:05:16 cyp Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.195 1998/11/15 10:55:42 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -590,7 +593,7 @@ static optionstruct options[OPTION_COUNT]=
   "for.  While auto-detection is preferrable for most processor families, you may\n"
   "wish to set the processor type manually if detection fails or your machine's\n"
   "processor is detected incorrectly.\n"
-  ),0,2,0,
+  ),4,2,2,
   NULL,NULL,0,0},
 //17
 { "messagelen", CFGTXT("Log by mail spool size (bytes)"), "0", 
@@ -912,7 +915,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
     options[CONF_DESOUT].thevariable=(char *)(&out_buffer_file[1][0]);
     options[CONF_PAUSEFILE].thevariable=(char *)(&pausefile[0]);
     
-    options[CONF_CPUTYPE].optionscreen=0;
+    options[CONF_CPUTYPE].optionscreen=0; // no config screen if only one core
     options[CONF_CPUTYPE].choicemax=0;
     options[CONF_CPUTYPE].choicemin=0;
     const char *corename = GetCoreNameFromCoreType(0);
@@ -935,6 +938,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       options[CONF_CPUTYPE].choicelist=&cputypetable[1];
       options[CONF_CPUTYPE].choicemin=-1;
       options[CONF_CPUTYPE].choicemax=tablesize-2;
+      options[CONF_CPUTYPE].optionscreen=4;
       }
     
     
