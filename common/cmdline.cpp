@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.17 2004/05/22 15:47:44 kakace Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.18 2004/06/22 20:33:57 kakace Exp $"; }
 
 //#define TRACE
 
@@ -1719,13 +1719,32 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         havemode = 1;
         if (argvalue)
         {
-          if (__arg2cname(argvalue,CONTEST_COUNT) < CONTEST_COUNT)
-            skip_next = 1;
-          
-          if (argvalue2)
+          int contest = __arg2cname(argvalue, CONTEST_COUNT);
+          if (contest >= CONTEST_COUNT || !IsProblemLoadPermitted(-1, contest))
           {
-            client->corenumtotestbench = atoi(argvalue2);
-            skip_next = 2;
+            sprintf(scratch, "Unknown contest \"%.30s\".\n", argvalue);
+            ConOutErr(scratch);
+            retcode = 3;
+          }
+          else
+          {
+            skip_next = 1;
+            if (argvalue2)
+            {
+              unsigned int corenum = atoi(argvalue2);
+              if (corecount_for_contest(contest) > corenum)
+              {
+                client->corenumtotestbench = corenum;
+                skip_next = 2;
+              }
+              else
+              {
+                sprintf(scratch, "Core #%d doesn't exist for contest \"%.30s\".\n",
+                      corenum, argvalue);
+                ConOutErr(scratch);
+                retcode = 3;
+              }
+            }
           }
         }
       }
