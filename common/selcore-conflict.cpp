@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.35 2000/01/01 21:25:31 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.36 2000/01/01 22:13:17 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -1409,6 +1409,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     return coresel;
   }
+
+  threadindex = threadindex; /* possibly unused. shaddup compiler */
   return -1; /* core selection failed */
 }
 
