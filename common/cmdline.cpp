@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: cmdline.cpp,v $
+// Revision 1.92.2.5  1998/11/15 15:41:17  remi
+// I forget to include -c and -cputype option handling...
+//
 // Revision 1.92.2.4  1998/11/15 11:10:52  remi
 // Synced with :
 //  Revision 1.98  1998/11/15 11:00:16  remi
@@ -11,7 +14,6 @@
 //
 // Revision 1.92.2.3  1998/11/11 03:09:41  remi
 // Synced with :
-//
 //  Revision 1.96  1998/11/10 21:45:59  cyp
 //  ParseCommandLine() is now one-pass. (a second pass is available so that
 //  lusers can see the override messages on the screen)
@@ -22,11 +24,6 @@
 // Revision 1.92.2.2  1998/11/08 11:50:51  remi
 // Lots of $Log tags.
 //
-
-#if (!defined(lint) && defined(__showids__))
-const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.92.2.4 1998/11/15 11:10:52 remi Exp $"; }
-#endif
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -65,6 +62,23 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         }
       else if (*thisarg == 0)
         { //nothing
+        }
+      else if ( strcmp( thisarg, "-c" ) == 0 || strcmp( thisarg, "-cputype" ) == 0)
+        {
+        if (nextarg)
+          {
+          skip_next = 1;
+          if (run_level!=0)
+            {
+            if (logging_is_initialized)
+              LogScreenRaw("Setting cputype to %u\n", (unsigned int)(cputype));
+            }
+          else
+            {
+            cputype = (s32) atoi( nextarg );
+            inimissing = 0; // Don't complain if the inifile is missing
+            }
+          }
         }
       else if (
           ( strcmp( thisarg, "-cpuinfo"     ) == 0 ) ||
