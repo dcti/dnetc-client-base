@@ -580,11 +580,9 @@ s32 Client::Fetch( u8 contest, Network *netin )
 #endif
 #endif
       u32 percent2 = ((count*10000)/((inthreshold[contest]-more)+count));
-#ifdef NEW_STATS_AND_LOGMSG_STUFF
 	 LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
           CliGetTimeString(NULL,1), count, ((inthreshold[contest]-more)+count),
-			 percent2/100, percent2%100 );
-#endif
+          percent2/100, percent2%100 );
 #if !defined(NOMAIN)           // these two must match
     } else {                 // use simple output for redirected stdout
       Log( "<" );
@@ -624,7 +622,7 @@ s32 Client::ForceFlush( u8 contest , Network *netin )
     ret = Flush(contest, netin);
     temp2 = temp1;
     temp1 = CountBufferOutput(contest);
-    Log("[%s] %d blocks remain in %s\n",Time(), temp1,ini_out_buffer_file[contest]);
+    Log("[%s] %d blocks remain in %s\n",Time(), temp1, ini_out_buffer_file[contest]);
   }
   return ret;
 }
@@ -955,11 +953,9 @@ s32 Client::Flush( u8 contest , Network *netin )
 #endif
 #endif
         u32 percent2 = ((count*10000)/(more+count));
-#ifdef NEW_STATS_AND_LOGMSG_STUFF
         LogScreenf( "\r[%s] Sent block %u of %u (%u.%02u%% transferred) ",
                     CliGetTimeString(NULL,1), count, more+count,
                     percent2/100, percent2%100 );
-#endif
 #if !defined(NOMAIN)           // these two must match
       } else {                 // use simple output for redirected stdout
         Log( ">" );
@@ -1054,9 +1050,7 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
   }
   if (contest == 0) {
     if (randomchanged) {
-      if (0==WriteContestandPrefixConfig()) {
-        randomchanged=0;
-      }
+      if (!WriteContestandPrefixConfig()) randomchanged=0;
     }
   }
 
@@ -1089,10 +1083,6 @@ u32 Client::Benchmark( u8 contest, u32 numk )
 {
   u32 numkeys = 10000000L;
   u32 percent2;
-
-#if (CLIENT_OS == OS_NETWARE)  //non-preemptive, so better do a task switch
-  usleep(225000);    //sleep quart sec so we don't get suspended for hogging cpu time
-#endif               //after all, this is probably the first switch since app start
 
   if (SelectCore()) return 0;
   if (numk != 0) numkeys=max(numk,1000000L);
@@ -1127,8 +1117,17 @@ u32 Client::Benchmark( u8 contest, u32 numk )
 #endif
 
   (problem[0]).percent = 0;
+#if (CLIENT_OS == OS_NETWARE)
+  //A normal .Run() with such a large timeslice would cause the OS to
+  //suspend this thread for hogging the CPU, so we run with a small 
+  //timeslice and yield frequently.
+  while ( (problem[0]).Run( 2000 / PIPELINE_COUNT , 0 ) == 0 )
+  {                             //normal ThreadSwitch on NetWare 3.x
+    CliThreadSwitchLowPriority(); //or ThreadSwitchLowPriority on NetWare 4.x
+#else
   while ( (problem[0]).Run( 100000L / PIPELINE_COUNT , 0 ) == 0 )
   {
+#endif
     if (!percentprintingoff)
     {
       percent2 = (problem[0]).CalcPercent();
@@ -1144,10 +1143,6 @@ u32 Client::Benchmark( u8 contest, u32 numk )
 #endif
     if ( SignalTriggered ) return 0;
   }
-
-#if (CLIENT_OS == OS_NETWARE)  //non-preemptive, so better do a task switch
-  usleep(225000);  //sleep quart sec just in case disk/net ios pending
-#endif
 
 #ifdef NEW_STATS_AND_LOGMSG_STUFF
   u32 rate = (u32)CliGetKeyrateForProblem( &(problem[0]) ); //and update stats
@@ -1231,6 +1226,8 @@ s32 Client::SelfTest( u8 contest )
     {
       #if (CLIENT_OS == OS_WIN16)
       SurrenderCPU();
+      #elif (CLIENT_OS == OS_NETWARE)
+      CliThreadSwitchLowPriority();
       #endif
 
       (problem[0]).GetResult( &rc5result );
@@ -1436,7 +1433,9 @@ u32 log2x(u32 x)
 s32 Client::Run( void )
 {
   FileEntry fileentry;
-#if defined(MULTITHREAD)
+#if !defined(MULTITHREAD)
+  s32 run;
+#else
   char buffer[MAXCPUS][4][40];
   #if (CLIENT_OS == OS_BEOS)
     static char * thstart[MAXCPUS][4];
@@ -1832,13 +1831,15 @@ PreferredIsDone1:
         if (numcputemp > 1)
         {
           LogScreenPercentMulti((u32) cpu_i%numcputemp,
-            (u32) problem[cpu_i].percent, 0, problem[cpu_i].restart );
+            (u32) problem[cpu_i].percent, 0, (bool) problem[cpu_i].restart );
           cpu_i++;
         }
         else
+        {
           LogScreenPercentSingle((u32) problem[cpu_i].percent, 0,
-                                        problem[cpu_i].restart );
-        problem[cpu_i].restart = false;
+                                        (bool)problem[cpu_i].restart );
+        }
+        problem[cpu_i].restart = 0;
       }
     }
   } //if (!percentprintingoff)
@@ -1887,10 +1888,6 @@ PreferredIsDone1:
           }
         }
     }
-    #elif (CLIENT_OS == OS_NETWARE)
-      //In the event that we get suspended (for hogging the cpu), the AES
-      //process will resume the main thread so we can shut down gracefully.
-      CliKickWatchdog(); //wonder what the RSPCA will say to that?
     #endif
 
     //------------------------------------
@@ -1898,56 +1895,55 @@ PreferredIsDone1:
     //------------------------------------
 #if (CLIENT_OS == OS_OS2) && defined(MULTITHREADED)
     {
-       if(lurk)
+      if(lurk)
+      {
+        const s32 index = 68;     // index to check if connected
+        s32  s, rc, tmpmode;
+        char netstat[128];
+
+        netstat[index] = 0;       // clear the bit
+        // Get routing data
+        s = socket(PF_INET, SOCK_DGRAM, 0);
+        rc = ioctl(s, SIOSTATRT, netstat, 128);
+        soclose(s);
+
+        if(rc != 0)
+        {
+          Log("Unable to get routing information, lurk mode disabled\n");
+          lurk = 0;
+        }
+        else
+        {
+          if(!netstat[index])
           {
-          const s32 index = 68;     // index to check if connected
-          s32  s, rc, tmpmode;
-          char netstat[128];
-
-          netstat[index] = 0;       // clear the bit
-          // Get routing data
-          s = socket(PF_INET, SOCK_DGRAM, 0);
-          rc = ioctl(s, SIOSTATRT, netstat, 128);
-          soclose(s);
-
-          if(rc != 0)
-             {
-             Log("Unable to get routing information, lurk mode disabled\n");
-             lurk = 0;
-             }
-          else
-             {
-             if(!netstat[index])
-                {
-                tmpmode = 0;
-                if(connectstatus != tmpmode)    // No connection
-                   {
-                   Log("TCP/IP Connection Disconnected");
-                   connectstatus = tmpmode;
-                   if(lurk == 2)
-                      {
-                      Log(" - Offline Mode");
-                      offlinemode = 1;
-                      }
-                   Log("\n");
-                   }
-                }
-             else if(netstat[index])
-                {
-                tmpmode = 1;
-                connectrequested = 2;     // update blocks in all cases
-                if(connectstatus != tmpmode)
-                   {
-                   // Only put out message the first time.
-                   Log("TCP/IP Connection Detected\n");
-                   connectstatus = tmpmode;
-                   if(lurk == 2)
-                      offlinemode = 0;
-                   }
-                }
-             }
+            tmpmode = 0;
+            if(connectstatus != tmpmode)    // No connection
+            {
+              Log("TCP/IP Connection Disconnected");
+              connectstatus = tmpmode;
+              if(lurk == 2)
+              {
+                Log(" - Offline Mode");
+                offlinemode = 1;
+              }
+              Log("\n");
+            }
           }
-    }
+          else if(netstat[index])
+          {
+            tmpmode = 1;
+            connectrequested = 2;     // update blocks in all cases
+            if(connectstatus != tmpmode)
+            {
+              // Only put out message the first time.
+              Log("TCP/IP Connection Detected\n");
+              connectstatus = tmpmode;
+              if(lurk == 2) offlinemode = 0;
+            }
+          }
+        }
+     }
+  }
 #endif
 
     //------------------------------------
@@ -2091,12 +2087,12 @@ PreferredIsDone1:
           {
             if (numcputemp > 1)
                 LogScreenPercentMulti((u32) cpu_i%numcputemp, (u32) percent2,
-                (u32) problem[cpu_i].percent, problem[cpu_i].restart);
+                (u32) problem[cpu_i].percent, (bool) problem[cpu_i].restart);
             else
               LogScreenPercentSingle((u32) percent2, (u32) problem[cpu_i].percent,
-                problem[cpu_i].restart);
+                (bool) problem[cpu_i].restart);
               problem[cpu_i].percent = percent2;
-              problem[cpu_i].restart = false;
+              problem[cpu_i].restart = 0;
           }
         }
       }
@@ -2134,7 +2130,7 @@ PreferredIsDone1:
             len = max(.01, ((double)stop.tv_sec - lenhi) + ((double)stop.tv_usec - lenlo)/1000000.0 );
 
             (problem[cpu_i]).timehi = (u32) len;
-            (problem[cpu_i]).timelo = (u32) ((len - (u32) len) * 1000000.0);
+            (problem[cpu_i]).timelo = (u32) ( ((u32) (len*1000000.0)) % 1000000L);
 
             if ((ntohl( rc5result.iterations.lo ) * (tmpcontest == 1 ? 2 : 1)) == 0)
               strcpy(keyscompleted,"4294967296");
@@ -2219,15 +2215,12 @@ PreferredIsDone1:
           if (strcmp(checkpoint_file[1],"none") != 0)
             unlink(checkpoint_file[1]);
 
-			 //---------------------
-			 // See if the request to quit after the completed block
-			 //---------------------
-			 if(exitcode == 1)
-				 {
-				 TimeToQuit=1; // Time to quit
-				 }
+          //---------------------
+          // See if the request to quit after the completed block
+          //---------------------
+          if(exitcode == 1) TimeToQuit=1; // Time to quit
 
-			 //---------------------
+          //---------------------
           //now load another block for this contest
           //---------------------
 
@@ -2278,6 +2271,7 @@ PreferredIsDone1:
               }
             }
           }
+
 
           if (count < 0)
           {
@@ -2333,8 +2327,10 @@ PreferredIsDone1:
                               CliGetMessageForFileentryLoaded( &fileentry ) );
             Log( "[%s] %d %s Blocks remain in file %s\n"
                  " %s  %d %s Blocks are in file %s\n",
-                 CliGetTimeString(NULL,1), count, CliGetContestNameFromID(fileentry.contest),(nodiskbuffers? "(memory-in)":ini_in_buffer_file[fileentry.contest]),
-                 CliGetTimeString(NULL,0), CountBufferOutput(fileentry.contest), CliGetContestNameFromID(fileentry.contest), (nodiskbuffers? "(memory-out)":ini_out_buffer_file[fileentry.contest]) );
+                 CliGetTimeString(NULL,1), count, CliGetContestNameFromID(fileentry.contest),
+                 (nodiskbuffers ? "(memory-in)" : ini_in_buffer_file[fileentry.contest]),
+                 CliGetTimeString(NULL,0), CountBufferOutput(fileentry.contest), CliGetContestNameFromID(fileentry.contest), 
+                 (nodiskbuffers ? "(memory-out)" : ini_out_buffer_file[fileentry.contest]) );
 
           }
           #else
@@ -2347,8 +2343,9 @@ PreferredIsDone1:
                  "[%s] %d Blocks are in file %s\n",
                  Time(), (fileentry.contest == 1 ? "DES":"RC5"),tmpblkcnt,tmpblksize,
                  ntohl( fileentry.key.hi ), ntohl( fileentry.key.lo ),
-                 Time(), count, (nodiskbuffers? "(memory-in)":ini_in_buffer_file[fileentry.contest]),
-                 Time(), CountBufferOutput(fileentry.contest), (nodiskbuffers? "(memory-out)":ini_out_buffer_file[fileentry.contest]),
+                 Time(), count, (nodiskbuffers ? "(memory-in)": ini_in_buffer_file[fileentry.contest]),
+                 Time(), CountBufferOutput(fileentry.contest),
+                 (nodiskbuffers ? "(memory-out)" : ini_out_buffer_file[fileentry.contest]), 
                  ((load_problem_count>1)?("ready to process"):("being processed")));
 
             gettimeofday( &stop, &dummy );
@@ -2363,7 +2360,8 @@ PreferredIsDone1:
 
           (problem[cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
         } // end (if 'found' or 'nothing')
-        DoCheckpoint();
+        
+        DoCheckpoint( load_problem_count );
       } // end(if finished)
     } // endfor(cpu_i)
 
@@ -2473,10 +2471,10 @@ PreferredIsDone1:
       // ----------------
 
       SignalTriggered = 1; // will make other threads exit
+      LogScreen("Quitting...\n");
 
       #if defined(MULTITHREAD)
       {
-        LogScreen("Quitting...\n");
 
         // Wait for all threads to end...
         for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
@@ -2576,7 +2574,7 @@ PreferredIsDone1:
           //Checkpoints may be slightly late (a few seconds). However,
           //this eliminates checkpoint catchup due to pausefiles/clock
           //changes/other nasty things that change the clock
-          DoCheckpoint();
+          DoCheckpoint(load_problem_count);
         }
       } // Checkpointing
     }
@@ -2640,7 +2638,7 @@ PreferredIsDone1:
 
 // ---------------------------------------------------------------------------
 
-void Client::DoCheckpoint()
+void Client::DoCheckpoint( int load_problem_count )
 {
   FileEntry fileentry;
 
@@ -2649,12 +2647,8 @@ void Client::DoCheckpoint()
     if (strcmp(checkpoint_file[j],"none") != 0)
     {
       unlink(checkpoint_file[j]); // Remove prior checkpoint information (if any).
-#if defined(MULTITHREAD)
-      for (s32 cpu_i=0 ; cpu_i < 2 * numcputemp ; cpu_i++)
-#else
-      for (s32 cpu_i=0 ; cpu_i < 1 ; cpu_i++)
-                        //numcputemp will be 1 in this case
-#endif
+
+      for (s32 cpu_i=0 ; cpu_i < load_problem_count ; cpu_i++)
       {
         fileentry.contest = (u8) (problem[cpu_i]).RetrieveState( (ContestWork *) &fileentry , 0 );
         if (fileentry.contest == j)
@@ -2881,7 +2875,7 @@ int main( int argc, char *argv[] )
     {
       strcpy( client.inifilename, argv[0] );
       char *slash = NULL;
-      #if (CLIENT_OS != OS_MACOS) && (CLIENT_OS != OS_VMS) && (CLIENT_OS != OS_RISCOS)
+      #if (CLIENT_OS != OS_MACOS) && (CLIENT_OS != OS_RISCOS)
       slash = strrchr( client.inifilename, '/' );
       #endif
       #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_DOSWIN) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
@@ -3158,68 +3152,7 @@ int main( int argc, char *argv[] )
     }
     else
     {
-#if (CLIENT_OS == OS_VMS)
-  #if defined(MULTINET)
-      client.LogScreen( "Compiled for OpenVMS with Multinet support\n\n" );
-  #elif defined(__VMS_UCX__)
-      client.LogScreen( "Compiled for OpenVMS with UCX support\n\n" );
-  #elif defined(NONETWORK)
-      client.LogScreen( "Compiled for OpenVMS with no network support\n\n" );
-  #endif
-#endif
-    #if (CLIENT_OS == OS_NETWARE)
-      //NetWare will end only displaying the last (25-2) lines
-      ConsolePrintf("RC5DES: Unrecognized option: \"%s\"\r\n"
-                    "        Refer to RC5DES.DOC for a list of valid command line switches\r\n",
-                    argv[i]);
-    #else
-      printf( "Usage: %s [-config | -test | -benchmark[2] | -flush | -fetch | -update\n"
-              "             -runoffline | -runbuffers | -run]\n"
-              "-config     start the configuration menu -test        tests for client errors\n"
-              "-flush      flush all output buffers     -fetch       fill all input buffers\n"
-              "-forceflush ignore most errors & retry   -forcefetch  ignore most errors & retry\n"
-              "-update     fetch + flush                -run         Normal run (default)\n"
-              "-runoffline Don't attempt any flush/fetches (generate random if needed)\n"
-              "-runbuffers Like -runoffline, but exit when the current buffer is empty\n"
-              "-benchmark  tests the client speed (benchmark2 for a quick test)\n"
-              "Other Options (append to command line)...\n"
-              "-a address   proxy server address        -p port      proxy server port\n"
-              "-e email     email for notifications     -c cpu       cpu type\n"
-              "-l logfile   Log filename                -b blocks    # rc5 buffers (-bin/-bout)\n"
-              "                                         -b2 blocks   # des buffers (-bin2/-bout2)\n"
-              "-h hours     time limit in hours         -n count     blocks to complete\n"
-              "-until HHMM  Quit at HHMM (eg 0700)\n"
-              "-u uuehttp   UUE/HTTP Mode               -nice [0-2]  Niceness\n"
-              "-ha address  http proxy address          -hp port     http proxy port\n"
-              "-in  filenm  Override buffer input name  -out filenm  Override buffer output nm\n"
-              "-ini filenm  Override default INI file   -smtplen len Mail msg length (0 = off)\n"
-              "-smtpsrvr nm SMTP server name            -smtpport pt SMTP mail server port #\n"
-              "-smtpfrom id Source mailid for mail      -smtpdest id Destination id for mail\n"
-              "-ckpoint fn  Set rc5 checkpoint file     -cktime min  Set checkpoint interval\n"
-              "-ckpoint2 fn Set des checkpoint file to fn\n"
-              "-nettimeout x Set network timeout to x   -noexitfilecheck No 'exitrc5" EXTN_SEP "now' check\n"
-              "-pausefile fn Pause when file fn found   -exitfilechecktime t check frequency\n"
-#if (CLIENT_OS == OS_WIN32)
-              "-install     Install service             -uninstall   Uninstall service\n"
-              "-lurk        Detect modem connections    -lurkonly    Only comm. on mdm connect\n"
-  #if !defined(WINNTSERVICE)
-              "-hide        Hide from the win95 desktop "
-  #endif
-#endif
-#if (CLIENT_OS == OS_OS2)
-              "-lurk        Detect modem connections    -lurkonly    Only comm. on mdm connect\n"
-              "-install     Install into Startup Folder -uninstall   Uninstall from Startup\n"
-              "-hide        Install detached (hidden)   "
-#endif
-#if defined(MULTITHREAD)
-              "-numcpu n    Configure for 'n' CPUs.\n"
-#endif
-              "-percentoff  No percentage progress      -nodisk      No disk buffer files\n"
-              "-frequent    Attempt updates often       -quiet       Don't print screen output\n"
-              "-forceunlock fn  Unlock file 'fn'        -nofallback  Don't fallback to r.d.n\n"
-              "-processdes x Process DES? 1=yes, 0=no   -blsize n    Preferred blksize (2^n)\n"
-              , argv[0]);
-    #endif //not-netware
+    client.DisplayHelp(argv[i]);
     retcode = 0;
     }
   }
@@ -3235,16 +3168,20 @@ int main( int argc, char *argv[] )
     // prompt the user to do the configuration if there wasn't an ini file
     if ( inimissing )
     {
-      if (client.Configure()==1) client.WriteConfig();
+      if (client.Configure() ==1 ) client.WriteConfig();
       retcode = 0;
     }
   }
 
+  if (retcode == OK_TO_RUN)
+  {
+    if (client.RunStartup()) 
+      retcode = 0;
+  }  
 
   if (retcode == OK_TO_RUN)
   {
     // otherwise we are running
-    if (client.RunStartup()) return 0;
     #if defined(NONETWORK)
       client.offlinemode=1;
     #endif

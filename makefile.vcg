@@ -14,23 +14,6 @@ all: rc5desg
 
 EXENAMEG = rc5desg.exe
 
-RC5_SRCS =                   \
-        common/client.cpp    \
-        common/problem.cpp   \
-        common/autobuff.cpp  \
-        common/iniread.cpp   \
-        common/network.cpp   \
-        common/scram.cpp     \
-        common/mail.cpp      \
-        common/cliconfig.cpp \
-        common/clitime.cpp   \
-        common/clirate.cpp   \
-        common/clisrate.cpp  \
-        common/clicdata.cpp  \
-        common/buffwork.cpp  \
-        common/convdes.cpp   \
-        des/des-x86.cpp
-
 GUI_OBJS =                    \
         output/guiapp.obj     \
         output/guibase.obj    \
@@ -45,7 +28,8 @@ GUI_OBJS =                    \
 
 RC5_OBJS =                    \
         output/client.obj     \
-        output/problem.obj    \
+        output/threadcd.obj   \
+        output/disphelp.obj   \
         output/autobuff.obj   \
         output/iniread.obj    \
         output/network.obj    \
@@ -57,6 +41,7 @@ RC5_OBJS =                    \
         output/clisrate.obj   \
         output/clicdata.obj   \
         output/buffwork.obj   \
+        output/problem.obj    \
         output/des-x86.obj    \
         output/convdes.obj
 

@@ -19,6 +19,7 @@
 #include "clirate.h"  // for CliGetKeyrateFor[Problem|Contest]()
 #include "clicdata.h" // for CliGetContestInfo[Base|Summary]Data()
 
+
 #ifndef _U32LimitDouble_
   #define _U32LimitDouble_  ((double)(0xFFFFFFFFul))
   #define U64TODOUBLE( hi, lo ) ((double)((((double)(hi))* \

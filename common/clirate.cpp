@@ -64,7 +64,7 @@ double CliGetKeyrateForProblem( Problem *prob )
   if (CliGetContestInfoBaseData( contestid, NULL, &count )) //clicdata.cpp
     return ((double)(0));   //clicdata.cpp says no such contest
 
-  keys= U64TODOUBLE(ntohl(rc5result.keysdone.hi),ntohl(rc5result.keysdone.lo));
+  keys = U64TODOUBLE(ntohl(rc5result.keysdone.hi),ntohl(rc5result.keysdone.lo));
   if (count>1) //iteration-to-keycount-multiplication-factor
     keys = (keys)*((double)(count));
   if (prob->startpercent) //slight misnomer. factor is *100000 not *100
@@ -73,33 +73,34 @@ double CliGetKeyrateForProblem( Problem *prob )
     return ((double)(0));
 
   additive = 1;
-  for (int i=0;i<(MAXCPUS*2);i++)
-    {
+  for (int i = 0; i < (MAXCPUS*2); i++)
+  {
     if (addedqpos==-1)
-      { addedqueue[i].key.lo = addedqueue[i].key.hi = 0;
-        addedqueue[i].contest = -1;
-        if (i==((MAXCPUS*2)-1)) addedqpos = 0;
-      }
-    else if (addedqueue[i].key.hi==rc5result.key.hi &&
-        addedqueue[i].key.lo==rc5result.key.lo &&
+    {
+      addedqueue[i].key.lo = addedqueue[i].key.hi = 0;
+      addedqueue[i].contest = -1;
+      if (i == ((MAXCPUS*2)-1)) addedqpos = 0;
+    }
+    else if (addedqueue[i].key.hi == rc5result.key.hi &&
+        addedqueue[i].key.lo == rc5result.key.lo &&
         addedqueue[i].contest == contestid )
-      {
+    {
       additive=0;
       break;
-      }
     }
+  }
 
   if (additive)
-    {
-    addedqueue[addedqpos].key.hi=rc5result.key.hi;
-    addedqueue[addedqpos].key.lo=rc5result.key.lo;
-    addedqueue[addedqpos].contest=contestid;
-    if ((++addedqpos)>=(MAXCPUS*2))
+  {
+    addedqueue[addedqpos].key.hi = rc5result.key.hi;
+    addedqueue[addedqpos].key.lo = rc5result.key.lo;
+    addedqueue[addedqpos].contest = contestid;
+    if ((++addedqpos) >= (MAXCPUS*2))
       addedqpos=0;
 
     count = 1; //number of blocks to add to clicdata.cpp information
     CliAddContestInfoSummaryData( contestid, &count, &keys, &tv );
-    }
+  }
 
   return ((double)(keys))/
        (((double)(tv.tv_sec))+(((double)(tv.tv_usec))/((double)(1000000))));

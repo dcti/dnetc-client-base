@@ -1030,11 +1030,9 @@ return 0;
 
 //----------------------------------------------------------------------------
 
-
 #if !defined(NOCONFIG)
 void Client::clearscreen( void )
 // Clears the screen. (Platform specific ifdefs go inside of it.)
-
 {
 #if (CLIENT_OS == OS_WIN32)
   HANDLE hStdout;
@@ -1053,10 +1051,15 @@ void Client::clearscreen( void )
 #elif (CLIENT_OS == OS_OS2)
   BYTE space[] = " ";
   VioScrollUp(0, 0, -1, -1, -1, space, 0);
+#elif (CLIENT_OS == OS_DOS)
+  __clearscreen();  //in platform/dos/clearscr.asm
+#elif (CLIENT_OS == OS_NETWARE)
+  clrscr();
 #elif (CLIENT_OS == OS_RISCOS)
   riscos_clear_screen();
+#else
+  printf("\x1B" "[2J\r"); //ANSI cls  '\r' is in case ansi is not supported
 #endif
-
 }
 #endif
 

@@ -12,10 +12,9 @@
 // For GUIs and such
 //#define NOMAIN
 
-#define NEW_STATS_AND_LOGMSG_STUFF   //if you want a 'better looking' screen
-#define NEW_LOGSCREEN_PERCENT_SINGLE //if the percbar is to stay < 80 chars
-//#define PERCBAR_ON_ONE_LINE //prints percs for all (max 16) threads on one line
-                     //platform must support "\r" to return to start of line
+#define NEW_STATS_AND_LOGMSG_STUFF    //if you want a 'better looking' screen
+#define NEW_LOGSCREEN_PERCENT_SINGLE  //if the percbar is to stay < 80 chars
+//#define PERCBAR_ON_ONE_LINE         //percents for all threads on 1 line
 
 
 #ifndef CLIENT_H
@@ -36,6 +35,7 @@
 #include "scram.h"
 #include "mail.h"
 #include "convdes.h"
+#include "sleepdef.h"
 
 #define OPTION_SECTION "parameters"
 
@@ -88,7 +88,7 @@ extern "C" {
   #endif
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C"
-    {
+  {
     #include <stdarg.h>
     #include <machine/endian.h>
     #include <kernel.h>
@@ -100,7 +100,7 @@ extern "C" {
 
     #define fileno(f) ((f)->__file)
     #define isatty(f) ((f) == 0)
-    }
+  }
   extern bool riscos_in_taskwindow;
 #elif (CLIENT_OS == OS_VMS)
   #include <types.h>
@@ -130,8 +130,9 @@ extern "C" {
   #include <share.h>
   #if defined(DJGPP)
     #include <dir.h>
-  #else //if (!defined(DJGPP))
-    #include <dos.h> //sleep, usleep
+    #define ntohl(x) ((((x)<<24) & 0xFF000000) | (((x)<<8) & 0x00FF0000) | (((x)>>8) & 0x0000FF00) | (((x)>>24) & 0x000000FF))
+    #define htonl(x) ((((x)<<24) & 0xFF000000) | (((x)<<8) & 0x00FF0000) | (((x)>>8) & 0x0000FF00) | (((x)>>24) & 0x000000FF))
+  #else
     #include <sys/stat.h> //S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP
   #endif
 #elif (CLIENT_OS == OS_BEOS)
@@ -203,8 +204,6 @@ extern "C" {
 
 #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
   extern "C" int nice(int);
-  extern "C" void usleep(unsigned int);
-  extern "C" int ftruncate(int, off_t);
   extern "C" int gethostname(char *, int); // Keep g++ happy.
 #endif
 
@@ -221,32 +220,19 @@ extern "C" {
 
 // --------------------------------------------------------------------------
 
-#ifndef NEW_STATS_AND_LOGMSG_STUFF
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
-#ifdef __WATCOMC__
-  // disable "Warning! W481: col(1) class/enum has the same name as the function/variable 'timezone'"
-  #pragma warning 481 9 ;
+#ifdef max
+#undef max
 #endif
-struct timezone
-{
-  int  tz_minuteswest;    /* of Greenwich */
-  int  tz_dsttime;        /* type of dst correction to apply */
-};
-#endif
-#endif
-
-#if ((CLIENT_OS == OS_DOS) && defined(DOS4G))
-#define ntohl(x) ((((x)<<24) & 0xFF000000) | (((x)<<8) & 0x00FF0000) | (((x)>>8) & 0x0000FF00) | (((x)>>24) & 0x000000FF))
-#define htonl(x) ((((x)<<24) & 0xFF000000) | (((x)<<8) & 0x00FF0000) | (((x)>>8) & 0x0000FF00) | (((x)>>24) & 0x000000FF))
-#endif
-
 #define max(a,b)            (((a) > (b)) ? (a) : (b))
-#if (CLIENT_OS == OS_OS2)
+
+#ifdef min
 #undef min
 #endif
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16)
+// --------------------------------------------------------------------------
+
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_NETWARE)
 #define PATH_SEP   "\\"
 #define PATH_SEP_C '\\'
 #define EXTN_SEP   "."
@@ -520,9 +506,12 @@ public:
   s32 CkpointToBufferInput(u8 contest);
     // Copies info in checkpint file back to input buffer
 
-  void DoCheckpoint(void);
+  void DoCheckpoint( int load_problem_count );
     // Make the checkpoint file represent current blocks being worked on
 
+
+  void DisplayHelp( char * unrecognized_option );
+    // Displays the interactive command line help screen.
 
 #if defined(NEEDVIRTUALMETHODS)
   virtual s32  Configure( void );
@@ -674,25 +663,23 @@ public:
 
 // --------------------------------------------------------------------------
 
-#if (CLIENT_CPU == CPU_X86)
-  #ifdef __WATCOMC__
-    #define x86ident _x86ident
-//    #define checklocks _checklocks
-  #endif
-  #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
-    extern "C" u32 x86ident( void ) asm ("x86ident");
-  #else
-    extern "C" u32 x86ident( void );
-  #endif
-//  extern "C" u16 checklocks( void );
-#endif
-
 #ifdef NEW_STATS_AND_LOGMSG_STUFF
-  #include "clitime.h" //CliTimer, CliGetTimeString
-  #include "clirate.h"  //CliGetKeyrateForProblem
-  #include "clisrate.h" //CliGetSummaryStringForContest, CliGetMessageForFileentryLoaded, CliGetMessageForProblemCompleted
+  #include "clitime.h"
+  #include "clirate.h"
+  #include "clisrate.h"
   #define Time() (CliGetTimeString(NULL,1))
 #else
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
+    #ifdef __WATCOMC__
+      // disable "Warning! W481: col(1) class/enum has the same name as the function/variable 'timezone'"
+      #pragma warning 481 9 ;
+    #endif
+    struct timezone
+    {
+      int  tz_minuteswest;    /* of Greenwich */
+      int  tz_dsttime;        /* type of dst correction to apply */
+    };
+  #endif
   #if (((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K)) ||   \
      (CLIENT_OS == OS_MACOS) ||                              \
      (CLIENT_OS == OS_SCO) ||                                \
@@ -706,6 +693,21 @@ public:
   extern "C" gettimeofday(struct timeval *tv, struct timezone *);
   #endif
 #endif //#ifdef NEW_STATS_AND_LOGMSG_STUFF
+
+// --------------------------------------------------------------------------
+
+#if (CLIENT_CPU == CPU_X86)
+  #ifdef __WATCOMC__
+    #define x86ident _x86ident
+//    #define checklocks _checklocks
+  #endif
+  #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
+    extern "C" u32 x86ident( void ) asm ("x86ident");
+  #else
+    extern "C" u32 x86ident( void );
+  #endif
+//  extern "C" u16 checklocks( void );
+#endif
 
 
 extern Problem problem[2*MAXCPUS];
@@ -729,3 +731,4 @@ extern rasgetconnectstatusT rasgetconnectstatus;
 
 
 #endif
+

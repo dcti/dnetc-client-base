@@ -15,7 +15,7 @@ EXENAME = rc5des.exe
 
 BASESRCS = client.cpp problem.cpp autobuff.cpp iniread.cpp \
   network.cpp scram.cpp mail.cpp cliconfig.cpp buffwork.cpp \
-  clicdata.cpp clirate.cpp clisrate.cpp clitime.cpp \
+  clicdata.cpp clirate.cpp clisrate.cpp clitime.cpp threadcd.cpp \
 	convdes.cpp des-x86.cpp
 
 BASEOBJS = rg-486.obj rg-6x86.obj rg-k5.obj rg-k6.obj \

@@ -1,7 +1,12 @@
 .386p
-.model flat
+
+;.model flat    ; some use small model, so use appropriate cmdline switch
+                ; eg /mf or /ms for WASM, 
+
 _TEXT   segment dword public use32 'CODE'
 align 4
+
+
 public _rc5_unit_func_6x86
 _rc5_unit_func_6x86 proc near
 

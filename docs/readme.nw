@@ -1,17 +1,26 @@
                                                     
- RC5-DES 2.7014.397 Client for NetWare 3.11 and above
- Released 22 February 1998 by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ RC5-DES 2.7020.403b Client for NetWare 3.11 and above
+ Released 24 May 1998 by Cyrus Patel <cyp@fb14.uni-mainz.de>
                                                           
- Welcome to the new RC5-DES 2.7014 [Project Monarch] Client for NetWare.
+ Welcome to the new RC5-DES (Project Monarch) Client for NetWare.
+ This version is a unified client for both SMP and non-SMP machines.
 
-   1.0  Getting started
-   2.0  Notes: NetWare specific issues.
-   3.0  Ode to niceness ('When is the client using too much juice?')
-   4.0  Help! 
+    1.0  Getting started
+    2.0  Notes: NetWare specific issues.
+    3.0  Help! 
    
-   Refer to RC5.DOC for non-NetWare specific issues or command line 
-   and ini file options.
-   
+    Refer to the online FAQ at
+    http://www.distributed.net/FAQ/client-2.7.html
+    for non-NetWare specific issues or command line and ini file options.
+
+    NetWare 3.11 specific note:
+     
+    A3112.NLM is required by this version of the client. NetWare 3.11
+    users who do not have this file in their SYS:/SYSTEM directory may 
+    obtain it from Novell (it is part of the latest CLIB update, 
+    ie LIB311.EXE (October '95)). The updates are also available from 
+    http://fb14.uni-mainz.de/~rc5des/
+    
  1.0  Getting started ------------------------------------------------
  
     Just copy the client into a directory of your choice and fire it up
@@ -23,127 +32,46 @@
     need to configure SYS:/ETC/RESOLV.CFG. The HELP section at the end of
     this document has details.
 
+    The client does not *require* TCPIP (ie it will run offline if TCPIP 
+    is not detected), but will use it if available. The client has not 
+    been tested SFTIII, although it should work fine in that environment. 
+    Feedback to the porter :) <cyp@fb14.uni-mainz.de> is much appreciated.
+
+    Please contact me at the address above if you have access to a 
+    NetWare 3.11 machine and are interested in running the pre-release 
+    clients at your site.
+ 
  2.0  Notes: ---------------------------------------------------------
  
-    General notes:
-    
-      Once you move to RC5DES, do not *ever* go back to RC564. To run
-      RC5 blocks instead of DES blocks start with '-prefer 1' or 
-      change the ini file setting 'preferredcontest=1' or run -config
-      and change the 'Preferred Contest' setting there.
+    As mentioned above, is version of the client is for both SMP and 
+    non-SMP machines; that is, it will run with one thread if running 
+    on a single processor machine and will run with two blocks per 
+    thread on multi-processor (or 'numcpu' is specified in rc5des.ini 
+    to be greater than one) machines.
 
-      This edition of the client comes in SMP and non-SMP versions. Although
-      they will both run in the "wrong" environment, selecting an 
-      inappropriate version may result in a sub-optimal key rate.
+    This version of the client can also be loaded more than one time. 
+    Unloading and reloading the client for executing -fetch, -flush or 
+    -update is therefore no longer neccesary. 
 
-      The client does not *require* TCPIP (ie it will run offline if TCPIP 
-      is not detected), but will use it if available. The client has not 
-      been tested SFTIII, although it should work fine in that environment. 
-      Feedback to the porter :) <cyp@fb14.uni-mainz.de> is much appreciated.
+    The following switches cause the client to use the system 
+    console screen for display rather than output to its own screen:
+    -fetch, -flush, -update, -benchmark, -benchmark2 and -test.
 
-      Please contact me at the address above if you have access to a 
-      NetWare 3.11 machine and are interested in running the pre-release 
-      clients at your site.
+    Some users have noted that some load-sensitive tasks such as 
+    file server backup would not run well when the client 
+    was active. This was traced to what appeared as 'high' processor
+    utilization which caused those jobs to reschedule themselves 
+    because they believed the file server to be heavily loaded. 
+    Beginning with version 2.7020.403, the client will, when possible, 
+    insert itself into the Idle Loop (called the 'Polling Loop' on 
+    NetWare 3.x) just like PSERVER does, which allows it to control 
+    processor usage far more exactly than it could before. Thus, it 
+    will appear as if the client was using no processing power at all.
+    However, due to the added overhead, this also brings a slight loss 
+    of client performance with it. To disable this option use '-nopoll' 
+    on the command line. 
 
-    NetWare 3.11 and NetWare 3.12
-     
-       A3112.NLM is required by this version of the client. NetWare 3.11
-       and NetWare 3.12 users who do not have this file in their 
-       SYS:/SYSTEM directory may obtain it from Novell (it is part of 
-       the latest CLIB  update, ie LIB311.EXE (October '95) or LIB312.EXE 
-       (December '95)). The updates are also available from 
-       http://fb14.uni-mainz.de/~rc5des/
-
-    NetWare 4.x
-    
-       Never, ever, ever, SET Upgrade Low Priority Threads = ON
-       Yes, I know the server tells you do so. It is *wrong*.
-       The server generates this message when an NLM yields too often,
-       ie there is almost always an entry in the run queue. 
-       Because low priority threads only run when the run queue is
-       empty, they never get a chance.
-
-       By setting Upgrade Low Priority Threads = ON, you effectively say
-       low priority processes such as NDS synchronisation and disk 
-       compression have the same priority as other processes, and since
-       these processes are I/O intensive file server performance will 
-       suffer. Such bad performance is usually noticed first when trying
-       to login. 
-       
-       The rate at which NLMs are put on the run queue is directly related
-       to the frequency at which they yield. The faster an NLM yields, the
-       faster it will be placed on the run queue. 
-       
-       In the case of RC5DES, this is usually easily fixed by increasing
-       the niceness level. The higher the niceness level, the slower the
-       client will yield, but this may also cause the server to be less
-       responsive than you would like it to be. Another method is to
-       use the SMP client instead of the non-SMP client and specifying
-       numcpu=-2 (minus 2) in RC5DES.INI. This causes the SMP client to
-       spin up two threads (regardless how many CPUs are really installed)
-       and divides the load between them. Thus, the rate at which each
-       thread is placed on the run queue is reduced, but the combined check
-       rate stays high.
-       
-       Another alternative for NLMs that use CLIB, (that included most 
-       NLMs, including RC5DES) is the use of a CLIB option that affects
-       the rate at which NLMs are placed on the run queue. Appending 
-       '(CLIB_OPT)/Y' to the command line (all upper case) causes CLIB 
-       to convert all normal thread switch instructions to thread switches 
-       with a delay, ie the process, instead of being put back on the 
-       run queue immediately, will be placed on a delay queue first. 
-       
-       More information on run queues and yielding is available at
-       http://www.avanti-tech.com/tips.html
-    
- 3.0  Ode to niceness ------------------------------------------------
-
-    The 'niceness' mechanism was completely rewritten for RC5DES. 
-    
-    At 'niceness' level 0, the client is super nice and users probably 
-    will not even notice any loss of performance. At 'niceness' level 1, 
-    the  server is slightly less responsive, but provides a better key 
-    check rate than at niceness 0. The highest 'niceness' level, level two, 
-    will give you the best check rate, but may affect server performance.
-
-    My guide to whether I have set the niceness level too high 
-    is the 'Send OK But Deferred' count displayed in MONITOR.NLM's
-    LAN/WAN Driver Information. The niceness level is probably too
-    high if it keeps incrementing with every server access (an 
-    indication that the driver isn't getting to do it's thing often 
-    enough). Another indication that the server is not getting around
-    to doing things in order is the "hold-off" count on the packet 
-    burst statistics screen. SET Enable Packet Burst Statistics Screen
-    = ON   The "hold-off" count is the rightmost one on the second line
-    (#16) on the lower portion of the screen. It indicates the number of
-    times the server received a duplicate request from a client and 
-    therefore sent a "hold off" reply because the server was still 
-    processing the original request. Keep the packet burst screen on
-    only for as short a time as possible. As with all statistics, 
-    these ones only means something when you know what the norm is.
-    For more information on packet burst diagnostics, refer to the 
-    Novell Research AppNote dated Febuary '96 titled: "Inside the 
-    NetWare Server's Packet Burst Statistics Screen". http://
-    developer.novell.com/research/appnotes/1996/february/02/index.htm
-
-    Activity indicators are displayed in the top right corner of the 
-    screen. The first indicator is file server utilization in percent,
-    the second indicator is a 'heartbeat' monitor that, under ideal
-    circumstances, should 'beat' twice about per second. Note: A file 
-    server utilization of 100% does not mean the file server is saturated.
-    It is simply an indicator of how often the file server polled all
-    processes for work. An excellent technical interpretation of file 
-    server utilization is at http://www.avanti-tech.com/tips.html
-    
-    The indicators are color coded depending on the state of the server. 
-    Both indicators are blue when load is within acceptable limits, the 
-    system utilization turns green when the server has CPU time to burn
-    and turns red when the server is overloaded. The 'heartbeat' follows
-    the color of the system utilization indicator unless the client is
-    in a forced yield, such as when disk I/O occurs, in which case it 
-    turns green.
-    
- 4.0  Help! ----------------------------------------------------------
+ 3.0  Help: ----------------------------------------------------------
 
     Please report problems, suggestions to the port maintainer
     Cyrus Patel <cyp@fb14.uni-mainz.de>  Don't fret if you don't get 
@@ -154,10 +82,10 @@
     send a message to <majordomo@llamas.net> with "subscribe rc5" as the 
     message text).
 
-    90% of the problems that come to my attention are network related.
-    While the trouble may not be on your end (such as when the proxies
-    are overloaded and refusing connections), here are some things to
-    check for:
+    90% of the problems that are brought to my attention are network 
+    related. While the trouble may not be on your end (such as when the 
+    proxies are overloaded and refusing connections), here are some 
+    things to check for:
 
     a) Is the TCP/IP stack correctly configured?
        Your BIND statement should look *minimally* something like this: 
@@ -174,13 +102,7 @@
                       Your network guru will know this too.
        Do *not* use leading zeros in IP address components (would 
        otherwise be interpreted as an octal number).
-    b) Is your network interface card correctly configured?
-       Does the NetWare SETting 'Maximum Physical Receive Packet Size'
-       exceed the limits of the card? Try adding 
-          SET Maximum Physical Receive Packet Size = 2048
-       to your STARTUP.NCF. You will need to DOWN, EXIT and restart the
-       server for the changes to become effective.
-    c) Is your SYS:/ETC/RESOLV.CFG correctly configured?
+    b) Is your SYS:/ETC/RESOLV.CFG correctly configured?
        The contents should look *minimally* something like this: 
           domain arl.mil
           search hosts dns
@@ -190,39 +112,6 @@
        values. NOTE: THE FILE IS CALLED RESOLV.CFG (without a second 'E')
     
     Other non-network hotspots to watch out for are:
-    a) Filenames specified in the config file or on the command line
-       cannot be relative, ie cannot contain .\ or ..\  This is a 
-       restriction imposed by a bug in the NetWare 3.x CLIB. Beginning 
-       with version 2.64.321 the client will avoid crashing altogether 
-       by silently ignoring any filename with a relative path and 
-       using the default name instead.
-    b) Avoid using a server name in filenames. Although this is not a 
-       problem just yet, it may become one in a future client release 
-       that will allow the client to run on servers that are not directly 
-       connected to the internet, or do not have the TCPIP stack loaded.
-    c) If you have buffer errors all the time (specially after starting
-       the client), then your buffer files may have been corrupted (it 
-       happens). Move your buff-in.rc5, buff-out.rc5 and ckpoint.rc5
-       somewhere safe and restart the client. If the problem goes away,
-       then file corruption was almost definitely the cause.
-    d) If the CPU type is reported incorrectly get in touch with me at
-       your lesiure. An incorrectly reported CPU type is not serious.
-       If autodetection appears to hang your machine it is serious and
-       if you can't even get the client to unload because the machine is 
-       frozen or has abended, it is critical. Please get in touch with
-       me as soon as possible. As an interim step, you may wish to
-       run the client with a user defined CPU type. Start the client 
-       with the -config option to select the appropriate type.
-    e) An error that says 
-          NLM requires MATHLIB or MATHLIBC!
-          ABNORMAL NLM TERMINATION in:
-          RC5-64 .......
-       indicates that I goofed while removing all indirect calls to the 
-       floating point parser in MATHLIB[C]. Let me know!!!!
-    f) If you get a NetWare 4 system warning saying:
-          An NLM has been loaded that does not allow low 
-          priority threads to be run.
-       read the NetWare 4.x specific note in section 2.
-    g) If you have trouble logging in on a NetWare 4.x server
-       read the NetWare 4.x specific note in section 2.
-
+    a) If you get a startup message saying:
+          Cannot find public symbol XXX
+       read the NetWare 3.x specific note in section 2.

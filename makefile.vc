@@ -5,30 +5,17 @@
 
 OPTS_MSVC = -O1 -MD -Irc5 -Ides -Icommon -DPIPELINE_COUNT=2 -D_CPU_32BIT_ -DMULTITHREAD -D__WIN32__
 
+
+all: rc5des
+
 # --------------------------------------------
 
 EXENAME = rc5des.exe
 
-RC5_SRCS =                   \
-        common/client.cpp    \
-        common/problem.cpp   \
-        common/autobuff.cpp  \
-        common/iniread.cpp   \
-        common/network.cpp   \
-        common/scram.cpp     \
-        common/mail.cpp      \
-        common/cliconfig.cpp \
-        common/clitime.cpp   \
-        common/clirate.cpp   \
-        common/clisrate.cpp  \
-        common/clicdata.cpp  \
-        common/buffwork.cpp  \
-        common/convdes.cpp   \
-        des/des-x86.cpp
-
 RC5_OBJS =                    \
         output/client.obj     \
-        output/problem.obj    \
+        output/threadcd.obj   \
+        output/disphelp.obj   \
         output/autobuff.obj   \
         output/iniread.obj    \
         output/network.obj    \
@@ -40,6 +27,7 @@ RC5_OBJS =                    \
         output/clisrate.obj   \
         output/clicdata.obj   \
         output/buffwork.obj   \
+        output/problem.obj    \
         output/des-x86.obj    \
         output/convdes.obj
 
@@ -65,11 +53,10 @@ RC5_LIBS = wsock32.lib advapi32.lib
         cl -c $(OPTS_MSVC) -Fo$@ $**
 
 {platforms/win32-os2}.asm{platforms/win32-os2}.obj:
-#      	touch $@
 
-all: rc5v2
+# --------------------------------------------
 
-rc5v2: $(RC5_OBJS) $(PREBUILT_OBJS)
+rc5des: $(RC5_OBJS) $(PREBUILT_OBJS)
         cl $(OPTS_MSVC) -Fe$(EXENAME) $(RC5_LIBS) $**
 
 clean:

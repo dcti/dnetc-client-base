@@ -9,29 +9,28 @@
 CC=wpp386
 CCASM=wasm
 LINK=wlink
-TASM=tasm32.exe
-TOPT=/ml /zi /m
-%HAVE_TASM = 1              #set to 1 if you have it
 
-%LINKOBJS = common\cliconfig.obj common\autobuff.obj common\buffwork.obj &
-           common\mail.obj platforms\win32-os2\BDESLOW.OBJ common\client.obj &
-           common\iniread.obj common\network.obj common\problem.obj &
-           common\scram.obj des\des-x86.obj common\convdes.obj &
-           common\clitime.obj common\clicdata.obj common\clirate.obj &
-           common\clisrate.obj &
-           platforms\win32-os2\RG-486.OBJ platforms\win32-os2\RG-6X86.OBJ &
-           platforms\win32-os2\RG-K5.OBJ platforms\win32-os2\RG-K6.OBJ &
-           platforms\win32-os2\RC5P5BRF.OBJ platforms\win32-os2\RG-P6.OBJ &
-           platforms\win32-os2\BBDESLOW.OBJ platforms\win32-os2\X86IDENT.OBJ
+%VERSION  = 70.21          
+%VERSTRING= v2.7021.405    
+
+%LINKOBJS = output\cliconfig.obj output\autobuff.obj common\buffwork.obj &
+           output\mail.obj output\BDESLOW.OBJ output\client.obj &
+           output\iniread.obj output\network.obj output\problem.obj &
+           output\scram.obj output\des-x86.obj output\convdes.obj &
+           output\clitime.obj output\clicdata.obj output\clirate.obj &
+           output\clisrate.obj &
+           output\RG-486.OBJ output\RG-6X86.OBJ &
+           output\RG-K5.OBJ output\RG-K6.OBJ &
+           output\RC5P5BRF.OBJ output\RG-P6.OBJ &
+           output\BBDESLOW.OBJ output\X86IDENT.OBJ 
            # this list can be added to in the platform specific section
 
-%VERSION  = 70.10          #may be redefined in the platform specific section
 %STACKSIZE= 32767          #may be redefined in the platform specific section
-%AFLAGS   =                #may be defined in the platform specific section
+%AFLAGS   = /5s /fp3 /mf   #may be defined in the platform specific section
 %LFLAGS   =                #may be defined in the platform specific section
-%CFLAGS   =                #may be defined in the platform specific section
+%CFLAGS   = /6s /fp3 /ei /mf #may be defined in the platform specific section
 %OPT_SIZE = /s /os /zp1    #may be redefined in the platform specific section
-%OPT_SPEED= /oantrlexih /oi+ /zp8 #redefine in platform specific section
+%OPT_SPEED= /oneatx /oh /oi+ /zp8 #redefine in platform specific section
 %LIBPATH  =                #may be defined in the platform specific section
 %LIBFILES =                #may be defined in the platform specific section
 %EXTOBJS  =                #extra objs (made elsewhere) but need linking here
@@ -41,9 +40,6 @@ TOPT=/ml /zi /m
 %COPYRIGHT=                #may be defined in the platform specific section
 %FORMAT   =                #may be defined in the platform specific section
 
-!ifdef HAVE_TASM
-%have_tasm=1
-!endif
 !ifdef SILENT
 .silent
 !endif
@@ -62,228 +58,231 @@ noplatform: .symbolic
 #-----------------------------------------------------------------------
 
 clean :
-  *erase rc5des.lnk
-  *erase rc5des*.exe
-  *erase *.bak
-  *erase common\*.bak
-  *erase common\*.err
-  *erase common\*.obj
-  *erase des\*.bak
-  *erase des\*.err
-  *erase des\*.obj
-  *erase rc5\*.bak
-  *erase rc5\*.err
-  *erase rc5\*.obj
-  *erase platforms\win32-os2\*.bak
-  @set isused=1
+  erase rc5des.lnk
+  erase rc5des*.exe
+  erase *.bak
+  erase output\*.obj
+  erase common\*.bak
+  erase common\*.err
+  erase des\*.bak
+  erase des\*.err
+  erase rc5\*.bak
+  erase rc5\*.err
+  erase platforms\win32-os2\*.bak
 
 zip :
   *zip -r zip *
+
+output\cliconfig.obj : common\cliconfig.cpp common\client.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[: 
+  #cd ..
   @set isused=1
 
-common\cliconfig.obj : common\cliconfig.cpp common\client.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) cliconfig.cpp
-  *cd ..
+output\client.obj : common\client.cpp common\client.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\client.obj : common\client.cpp common\client.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) client.cpp
-  *cd ..
+output\problem.obj : common\problem.cpp common\problem.h common\network.h common\cputypes.h common\autobuff.h makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\problem.obj : common\problem.cpp common\problem.h common\network.h common\cputypes.h common\autobuff.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) problem.cpp
-  *cd ..
+output\convdes.obj : common\convdes.cpp makefile.wat  
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\convdes.obj : common\convdes.cpp configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) convdes.cpp
-  *cd ..
+output\clitime.obj : common\clitime.cpp common\clitime.h makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\clitime.obj : common\clitime.cpp common\clitime.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) clitime.cpp
-  *cd ..
+output\clicdata.obj : common\clicdata.cpp common\clicdata.h   makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\clicdata.obj : common\clicdata.cpp common\clicdata.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) clicdata.cpp
-  *cd ..
+output\clirate.obj : common\clirate.cpp common\clirate.h  makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\clirate.obj : common\clirate.cpp common\clirate.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) clirate.cpp
-  *cd ..
+output\clisrate.obj : common\clisrate.cpp common\clisrate.h makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\clisrate.obj : common\clisrate.cpp common\clisrate.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) clisrate.cpp
-  *cd ..
+output\clistime.obj : common\clistime.cpp common\clistime.h makefile.wat  
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\clistime.obj : common\clistime.cpp common\clistime.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) clistime.cpp
-  *cd ..
+output\deseval-meggs2.obj : des\deseval-meggs2.cpp makefile.wat
+  #cd des
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-des\deseval-meggs2.obj : des\deseval-meggs2.cpp configure
-  *cd des
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) deseval-meggs2.cpp
-  *cd ..
+output\deseval-meggs3.obj : des\deseval-meggs3.cpp makefile.wat
+  #cd des
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-des\deseval-meggs3.obj : des\deseval-meggs3.cpp configure
-  *cd des
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) deseval-meggs3.cpp
-  *cd ..
+output\deseval-slice-meggs.obj : des\deseval-slice-meggs.cpp makefile.wat
+  #cd des
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-des\deseval-slice-meggs.obj : des\deseval-slice-meggs.cpp configure
-  *cd des
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) deseval-slice-meggs.cpp
-  *cd ..
+output\des-x86.obj : des\des-x86.cpp common\problem.h makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ /fo=$^@ /fr=$[: /i$[:;common
+  #cd ..
   @set isused=1
 
-des\des-x86.obj : des\des-x86.cpp common\problem.h configure
-  *cd des
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) des-x86.cpp
-  *cd ..
+output\autobuff.obj : common\autobuff.cpp common\autobuff.h common\cputypes.h makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\autobuff.obj : common\autobuff.cpp common\autobuff.h common\cputypes.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) autobuff.cpp
-  *cd ..
+output\network.obj : common\network.cpp common\network.h common\cputypes.h common\autobuff.h makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\network.obj : common\network.cpp common\network.h common\cputypes.h common\autobuff.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) network.cpp
-  *cd ..
+output\iniread.obj : common\iniread.cpp common\iniread.h common\cputypes.h makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\iniread.obj : common\iniread.cpp common\iniread.h common\cputypes.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) iniread.cpp
-  *cd ..
+output\scram.obj : common\scram.cpp common\scram.h common\cputypes.h makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\scram.obj : common\scram.cpp common\scram.h common\cputypes.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) scram.cpp
-  *cd ..
+output\mail.obj : common\mail.cpp common\mail.h common\network.h common\client.h common\cputypes.h common\autobuff.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\mail.obj : common\mail.cpp common\mail.h common\network.h common\client.h common\cputypes.h common\autobuff.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) mail.cpp
-  *cd ..
+output\buffwork.obj : common\buffwork.cpp common\client.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h makefile.wat
+  #cd common
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..
   @set isused=1
 
-common\buffwork.obj : common\buffwork.cpp common\client.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h configure
-  *cd common
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) buffwork.cpp
-  *cd ..
+output\rg-486.obj : platforms\win32-os2\rg-486.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\win32-os2\rg-486.obj : platforms\win32-os2\rg-486.asm configure
-  *cd platforms\win32-os2
-  *$(CCASM) $(%AFLAGS) rg-486.asm
-  *cd ..\..
+output\rg-6x86.obj : platforms\win32-os2\rg-6x86.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\win32-os2\rg-6x86.obj : platforms\win32-os2\rg-6x86.asm configure
-  *cd platforms\win32-os2
-  *$(CCASM) $(%AFLAGS) rg-6x86.asm
-  *cd ..\..
+output\rc5p5brf.obj : platforms\win32-os2\rc5p5brf.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\win32-os2\rc5p5brf.obj : platforms\win32-os2\rc5p5brf.asm configure
-  *cd platforms\win32-os2
-  *$(CCASM) $(%AFLAGS) rc5p5brf.asm
-  *cd ..\..
+output\rg-p5.obj : platforms\win32-os2\rg-p5.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\win32-os2\rg-p5.obj : platforms\win32-os2\rg-p5.asm configure
-  *cd platforms\win32-os2
-  *$(CCASM) $(%AFLAGS) rg-p5.asm
-  *cd ..\..
+output\rg-p6.obj : platforms\win32-os2\rg-p6.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\win32-os2\rg-p6.obj : platforms\win32-os2\rg-p6.asm configure
-  *cd platforms\win32-os2
-  *$(CCASM) $(%AFLAGS) rg-p6.asm
-  *cd ..\..
+output\rg-k5.obj : platforms\win32-os2\rg-k5.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\win32-os2\rg-k5.obj : platforms\win32-os2\rg-k5.asm configure
-  *cd platforms\win32-os2
-  *$(CCASM) $(%AFLAGS) rg-k5.asm
-  *cd ..\..
+output\rg-k6.obj : platforms\win32-os2\rg-k6.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\win32-os2\rg-k6.obj : platforms\win32-os2\rg-k6.asm configure
-  *cd platforms\win32-os2
-  *$(CCASM) $(%AFLAGS) rg-k6.asm
-  *cd ..\..
+output\bdeslow.obj: platforms\win32-os2\bdeslow.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\win32-os2\bdeslow.obj: platforms\win32-os2\bdeslow.asm platforms\win32-os2\bdesmac.inc platforms\win32-os2\bdeschg.inc platforms\win32-os2\bdesdat.inc
-  *cd platforms\win32-os2
-  @if not $(%have_tasm).==. *$(TASM) $(TOPT) bdeslow.asm
-  *cd ..\..
+output\Bbdeslow.obj: platforms\win32-os2\Bbdeslow.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\win32-os2\Bbdeslow.obj: platforms\win32-os2\Bbdeslow.asm platforms\win32-os2\Bbdesmac.inc platforms\win32-os2\Bbdeschg.inc platforms\win32-os2\Bbdesdat.inc
-  *cd platforms\win32-os2
-  @if not $(%have_tasm).==. *$(TASM) $(TOPT) Bbdeslow.asm
-  *cd ..\..
+output\bdeshgh.obj: platforms\win32-os2\bdeshgh.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\win32-os2\bdeshgh.obj: platforms\win32-os2\bdeshgh.asm
-  *cd platforms\win32-os2
-  @if not $(%have_tasm).==. *$(TASM) $(TOPT) bdeshgh.asm
-  *cd ..\..
+output\Bbdeshgh.obj: platforms\win32-os2\Bbdeshgh.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\win32-os2\Bbdeshgh.obj: platforms\win32-os2\Bbdeshgh.asm
-  *cd platforms\win32-os2
-  @if not $(%have_tasm).==. *$(TASM) $(TOPT) Bbdeshgh.asm
-  *cd ..\..
+output\x86ident.obj : platforms\win32-os2\x86ident.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\win32-os2\x86ident.obj : platforms\win32-os2\x86ident.asm configure
-  *cd platforms\win32-os2
-  *$(CCASM) $(%AFLAGS) x86ident.asm
-  *cd ..\..
+output\chklocks.obj : platforms\win32-os2\chklocks.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\win32-os2\chklocks.obj : platforms\win32-os2\chklocks.asm configure
-  *cd platforms\win32-os2
-  *$(CCASM) $(%AFLAGS) chklocks.asm
-  *cd ..\..
+output\clearscr.obj : platforms\win32-os2\clearscr.asm makefile.wat
+  #cd platforms\win32-os2
+  *$(CCASM) $(%AFLAGS) $[@ /fo=$^@ /fr=$[: /i$[:
+  #cd ..\..
   @set isused=1
 
-platforms\netware\netware.obj : platforms\netware\netware.cpp common\client.h configure
-  *cd platforms\netware
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) netware.cpp
-  *cd ..\..
+output\netware.obj : platforms\netware\netware.cpp common\client.h makefile.wat 
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:;common
+  @set isused=1
+
+output\hbyname.obj : platforms\netware\hbyname.cpp makefile.wat
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ /fo=$^@ /fr=$[: /i$[:
   @set isused=1
 
 #-----------------------------------------------------------------------
 
 platform: .symbolic
   @set isused=
-  @if not ($(HAVE_TASM)).==. @set have_tasm=1
   @for %i in ($(%LINKOBJS)) do @%make %i
   @if not exist $(%BINNAME) @set isused=1
   @if $(%isused).==. @echo All targets are up to date
@@ -320,17 +319,17 @@ platlink: .symbolic
 #---------------------- platform specific settings come here ----------
 
 dos: .symbolic                                       # DOS/DOS4GW
-     @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
-     @set LFLAGS    = sys dos4g
-     @set VERSION   = #dos4gw doesn't support version switch
-     @set CFLAGS    = /5s /fp5 /mf /bt=dos /DDOS4G /DNONETWORK
-     @set OPT_SIZE  = /oantrlexih /zp4
-     @set OPT_SPEED = /oantrlexih /oi+ /zp8
+     @set AFLAGS    = /5s /fp3 /bt=dos /mf # no such thing as /bt=dos4g
+     @set LFLAGS    = sys dos4g op dosseg op eliminate op stub=platform/dos/d4GwStUb.CoM
+     @set CFLAGS    = /6s /fp3 /fpc /zm /ei /mf /bt=dos /dDOS4G /DNONETWORK /I$(%watcom)\h
+     @set OPT_SIZE  = /s /os /zp1
+     @set OPT_SPEED = /oneatx /oh /oi+ /zp8
+     @set LINKOBJS  = $(%LINKOBJS) output\clearscr.obj
      @set LIBFILES  =
      @set MODULES   =
      @set EXTOBJS   =
      @set IMPORTS   =
-     @set BINNAME   = $(LNKbasename)D.exe
+     @set BINNAME   = $(LNKbasename).com
      @%make platform
 
 os2: .symbolic                                       # OS/2
@@ -386,44 +385,30 @@ wsv: .symbolic                               # winnt service
      @set BINNAME   = $(LNKbasename)srv.exe
      @%make platform
 
-netware_all: .symbolic                       # NetWare NLM
-     @set AFLAGS    = /5s /fp5 /bt=NETWARE /ms
-     @set LFLAGS    = op nod op scr 'none' op map op osname='NetWare NLM' #symtrace xxx sys netware
-     ##   CFLAGS    = /fpc /5 /fpc /ei /ms /bt=netware /i$(%watcom)\novh /bm /DMULTITHREAD
-     @set OPT_SIZE  = /oantrlexih /zp4   #/s /os /zp1
-     @set OPT_SPEED = /oantrlexih /oi+ /zp8
-     ###  LIBFILES  = plibmt3s,clib3s,math387s,emu387#, #if compiled with /bm use 'plibmt3s' instead
-     @set MODULES   = clib a3112 #tcpip #netdb
+netware: .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
+     @set STACKSIZE = 16384 # 32767
+     @set AFLAGS    = /5s /fp3 /bt=netware /ms
+     @set LFLAGS    = op multiload op nod op scr 'none' op map op osname='NetWare NLM' # symtrace systemConsoleScreen  #sys netware
+     @set OPT_SIZE  = /os /s /zp1 
+     @set OPT_SPEED = /oneatx /oh /oi+ /zp8  
+     @set CFLAGS    = /6s /fp3 /ei /ms /d__NETWARE__ /dMULTITHREAD /i$(inc_386) $(wcc386opt) #/fpc /bt=netware /i$(%watcom)\novh #/bm
+     @set LIBFILES =  nwwatemu,plib3s #plibmt3s,clib3s,math387s,emu387
+     @set MODULES   = clib a3112 # tcpip netdb
      @set EXTOBJS   =
-     @set LINKOBJS  = $(%LINKOBJS) netware.obj
-     @set IMPORTS   = NumberOfPollingLoops gethostname CRescheduleMyself &
-                      ExternalPublicList InternalPublicList Alloc &
-                      MaximumNumberOfPollingLoops GetNestedInterruptLevel &
-                      AllocateResourceTag CurrentTime GetCurrentTime &
-                      GetProcessorSpeedRating OutputToScreenWithPointer &
-                      systemConsoleScreen DiskIOsPending activeScreen &
+     @set LINKOBJS  = $(%LINKOBJS) output\netware.obj output\hbyname.obj
+     @set IMPORTS   = GetNestedInterruptLevel AllocateResourceTag &
+                      GetCurrentTime OutputToScreenWithPointer OutputToScreen &
                       ActivateScreen ImportPublicSymbol UnImportPublicSymbol &
                       ScheduleNoSleepAESProcessEvent CancelNoSleepAESProcessEvent &
-                      NDirtyBlocks CRescheduleLast RingTheBell &
-                      OutputToScreenWithPointer &
+                      ScheduleSleepAESProcessEvent CancelSleepAESProcessEvent &
+                      RingTheBell GetFileServerMajorVersionNumber Alloc &
                       @$(%watcom)\novi\clib.imp @$(%watcom)\novi\mathlib.imp
-     @set LIBPATH   = $(%watcom)\lib386 $(%watcom)\lib386\netware
+     @set LIBPATH   = platform\netware\watavoid $(%watcom)\lib386 $(%watcom)\lib386\netware
      @set BINNAME   = $(LNKbasename).nlm
      @set COPYRIGHT ='Visit http://www.distibuted.net/ for more information'
-     @set VERSION   = 2.70.10
-     @set FORMAT    = Novell NLM 'RC5-DES v2.7021.404 Client [Project Monarch]'
+     @set FORMAT    = Novell NLM 'RC5-DES $(%VERSTRING) Client'
      @%make platform
-
-netware_smp: .symbolic                            # NetWare NLM (SMP)
-     @set CFLAGS   = /fpc /5 /fpc /ei /ms /bt=netware /i$(%watcom)\novh &
-                     /bm /DMULTITHREAD
-     @set LIBFILES = plibmt3s,clib3s,math387s,emu387
-     @%make netware_all
-     @\develop\sdkcd13\nwsdk\tools\nlmpackx $(LNKbasename).nlm $(LNKbasename).nlx
-     @del $(LNKbasename).nlm
-     @ren $(LNKbasename).nlx $(LNKbasename).nlm
-
-netware: .symbolic                            # NetWare NLM (non-SMP)
-     @set CFLAGS   = /fpc /5 /fpc /ei /ms /bt=netware /i$(%watcom)\novh
-     @set LIBFILES = plib3s,clib3s,math387s,emu387
-     @%make netware_all
+     @\develop\sdkcdall\nlmdump\nlm_dos.exe *$(LNKbasename).nlm /b:$(LNKbasename).map 
+     #@\develop\sdkcd13\nwsdk\tools\nlmpackx $(LNKbasename).nlm $(LNKbasename).nlx
+     #@del $(LNKbasename).nlm
+     #@ren $(LNKbasename).nlx $(LNKbasename).nlm
