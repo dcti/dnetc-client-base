@@ -1,4 +1,4 @@
-/* Created by Michael Feiri (michael.feiri@mfeiri.lake.de) 
+/* Created by Michael Feiri (michael.feiri@mfeiri.lake.de)
  *
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
@@ -16,7 +16,7 @@
 #include "modereq.h"
 #include "problem.h"
 #include "probman.h"
-#include <Sound.h>
+//#include <Sound.h>        // macos
 #include "client.h"
 #include "clicdata.h"
 #include "clitime.h"
@@ -52,13 +52,13 @@ bool HandleRequest_Version(MiniHttpRequest *request, MiniHttpResponse *response)
                   "  </versioninfo>\r"
                   "</dcti>",
                   CliGetFullVersionDescriptor() // alternatively use CLIENT_VERSIONSTRING
-                  
+
                   // %s request->RequestMethod          GET or POST
                   // %s request->RequestUri.GetHead()   complete file location (including ?etc)
                   // %s request->Headers.GetHead()      the entire header
                   // %s request->ContentBody.GetHead()  entire content only used by POST?
                   // %i request->ContentLength          contentlength  only used by POST?
-                        
+
                   // request->GetDocumentUri((AutoBuff)&value);                file location (without ?etc)
                   // request->GetFormVariable("something",(AutoBuff)&value);   single form inputs
                   // request->GetHeader("user-agEnt",(AutoBuff)&value);        single header info pieces
@@ -86,6 +86,7 @@ int FillStruct(char *buffer, Problem *thisprob, int prob_i)
                   prob_i,//thisprob->threadindex,
                   CliGetContestNameFromID( thisprob->contest ), // __getprojsectname( unsigned int ci ) as in confrwv.cpp
                   (thisprob->CalcPermille()/10));
+   return 0;
 }
 
 bool HandleRequest_Status(MiniHttpRequest *request, MiniHttpResponse *response)
@@ -97,7 +98,7 @@ bool HandleRequest_Status(MiniHttpRequest *request, MiniHttpResponse *response)
   char cusbuff[1024];
   Problem *thisprob;
   struct timeval tv;
-  
+
   thisprob = GetProblemPointerFromIndex(prob_i); // is counting on at least one thread a safe thing?
   FillStruct(cusbuff,thisprob,prob_i);
   tv.tv_sec = thisprob->completion_timehi;  //wall clock time
@@ -107,9 +108,9 @@ bool HandleRequest_Status(MiniHttpRequest *request, MiniHttpResponse *response)
 
   while (((thisprob = GetProblemPointerFromIndex(prob_i)) != NULL) && prob_i <= 26)
   {
-   FillStruct(buf2,thisprob,prob_i);
-   strcat(cusbuff,buf2);
-   prob_i++;
+    FillStruct(buf2,thisprob,prob_i);
+    strcat(cusbuff,buf2);
+    prob_i++;
   }
 
   sprintf( buffer,"<?xml version=\"1.0\"?>\r"
@@ -146,7 +147,7 @@ bool HandleRequest_Status(MiniHttpRequest *request, MiniHttpResponse *response)
                   GetNumberOfDetectedProcessors(),
                   CliGetTimeString( &tv, 2 ),               // totaltime by thread #0
                   cusbuff
-                  
+
                   );
 
   response->ContentBody = buffer;
@@ -195,7 +196,7 @@ bool ProcessClientPacket(MiniHttpDaemonConnection *client)
         }
         else if (strcmp(DocumentUri.GetHead(), "/Status-1/status.xml") == 0)
         {
-          haveResponse = HandleRequest_Status(&request, &response);          
+          haveResponse = HandleRequest_Status(&request, &response);
         }
         else if (strcmp(DocumentUri.GetHead(), "/Event-1/eventlist.xml") == 0)
         {
@@ -222,7 +223,7 @@ bool ProcessClientPacket(MiniHttpDaemonConnection *client)
       {
         if (strcmp(DocumentUri.GetHead(), "/Event-1/set.xml") == 0)
         {
-          
+
 
         }
         else if (strcmp(DocumentUri.GetHead(), "/config/option.xml") == 0)
