@@ -1,7 +1,7 @@
 
  distributed.net client for x86 DOS (PC-,MS-,DR- or whatever) 5.0 and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- document revision $Id: readme.dos,v 1.6.2.2 1999/10/11 18:44:23 cyp Exp $
+ document revision $Id: readme.dos,v 1.6.2.3 2000/10/31 03:21:23 cyp Exp $
 
  Welcome to the distributed.net client.
 
@@ -14,8 +14,7 @@
    
  1.0  Getting started ------------------------------------------------
  
-    Just unpack the client in a directory of your choice and fire it up.
-
+    Just unpack the client in a directory of your choice and fire it up.
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done, the 
     configuration file will be saved in the same directory as the 
@@ -32,8 +31,8 @@
  2.0  Notes: ---------------------------------------------------------
 
     The DOS client is still unable to communicate over a network link
-    (I'm working on it though) due principally to the lack of a 
-    standardized network programming interface. 
+    due principally to the lack of a standardized network programming 
+    interface. 
     
     It can however share buffers with any other client, across shared
     network disks if need be. Checkpoint files however *cannot* be shared.
@@ -51,6 +50,23 @@
     Beginning with v2.7100.416, the DOS client no longer assumes that the 
     buffer files are in the current directory. The default path is now
     the client's directory.
+
+    DesqView: At some point support for DesqView broke. :(
+    Unfortunately, I no longer have a machine that runs Desqview, so I 
+    can't check/fix this, but its possible that I broke the Desqview 
+    recognition (and 'niceness' towards it) at some point, or the 
+    pmode/w is doing something bad with QEMM.
+    If you have some programming skill, and the Watcom compiler, you 
+    might want to take a look at the DOS specific source 
+    and see whether you find any blatant bug in it.
+    (source archive is at http://www.distributed.net/source The DOS 
+    specific code is under client\platform\DOS)
+    Nonetheless, the client never worked well with Desqview. It doesn't 
+    make interrupts often enough for the DesqView scheduler to work very 
+    efficiently, and TAME et al won't help either. In return, DesqView 
+    will 'starve' the client for cpu time, and the crunch rate will be 
+    worthless.
+    DesqView was cool, too bad it disappeared.  
 
     Note: DOS, Win16 and OS/2 ports may squawk about a missing TZ= variable
     in the environment. Set it in your autoexec (or wherever). For example:
