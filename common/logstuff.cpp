@@ -5,6 +5,15 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: logstuff.cpp,v $
+// Revision 1.21.2.8  1999/01/23 14:08:00  remi
+// Synced with :
+//
+//  Revision 1.29  1999/01/21 21:55:56  cyp
+//  added reentrancy protection (log->mail->network->log->mail->... ad nauseum)
+//
+//  Revision 1.28  1999/01/17 14:41:16  cyp
+//  Added leading/trailing whitespace stripping and "none" check to logfilename.
+//
 // Revision 1.21.2.7  1999/01/17 12:40:51  remi
 // Synced with :
 //
@@ -48,7 +57,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.21.2.7 1999/01/17 12:40:51 remi Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.21.2.8 1999/01/23 14:08:00 remi Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -132,6 +141,10 @@ static void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int /
 // a (va_list *) instead to avoid this problem
 void LogWithPointer( int loggingTo, const char *format, va_list *arglist ) 
 {
+  static int recursion_check = 0;
+  if ((++recursion_check) > 2) /* log->mail->network */
+    loggingTo &= ~LOGTO_MAIL;
+
   char msgbuffer[MAX_LOGENTRY_LEN];
   unsigned int msglen = 0;
   char *buffptr, *obuffptr;
@@ -140,6 +153,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
   
   msgbuffer[0]=0;
   loggingTo &= (logstatics.loggingTo|LOGTO_RAWMODE);
+
 
   if ( !format || !*format )
     loggingTo = LOGTO_NONE;
@@ -234,7 +248,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
         msglen++;
         memmove( msgbuffer+1, msgbuffer, msglen );
         msgbuffer[0] = '\n';
-	// CRAMER - should this even be here? (I think not)
+  // CRAMER - should this even be here? (I think not)
         logstatics.stableflag = 1;
         }
       }  
