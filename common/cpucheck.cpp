@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.34  1998/10/30 00:07:19  foxyloxy
+//
+// Rectify some deviations from the standard of "-1" means detection
+// failed.
+//
 // Revision 1.33  1998/10/11 00:43:20  cyp
 // Implemented 'quietly' in SelectCore() and ValidateProcessorCount()
 //
@@ -121,7 +126,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.33 1998/10/11 00:43:20 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.34 1998/10/30 00:07:19 foxyloxy Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -157,8 +162,6 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       system_info the_info;
       get_system_info(&the_info);
       cpucount = the_info.cpu_count;
-      if (cpucount < 1)
-        cpucount = 1;
       }
     #elif (CLIENT_OS == OS_WIN32)
       {
@@ -174,11 +177,11 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       }
     #elif (CLIENT_OS == OS_OS2)
       {
-      int rc = DosQuerySysInfo(QSV_NUMPROCESSORS, QSV_NUMPROCESSORS,
+      int rc = (int) DosQuerySysInfo(QSV_NUMPROCESSORS, QSV_NUMPROCESSORS,
                   &cpucount, sizeof(cpucount));
-      // check if call is valid if not, default to one
+      // check if call is valid if not, default to -1
       if (rc!=0 || cpucount < 1)
-        cpucount = 1;
+        cpucount = -1;
       }
     #elif (CLIENT_OS == OS_LINUX)
       { // cramer -- yes, I'm cheating, but it's the only way...
@@ -196,7 +199,6 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       }
     #elif (CLIENT_OS == OS_IRIX)
       {
-      #error "please check GetNumberOfDetectedProcessors()"
       cpucount = (int)prctl( PR_MAXPPROCS, 0, 0);
       }
     #elif (CLIENT_OS == OS_SOLARIS)
