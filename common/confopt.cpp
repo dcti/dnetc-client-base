@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.1 1999/05/30 17:12:19 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.2 1999/06/06 22:23:41 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -384,7 +384,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
 //35
 { CFGTXT("Automatically select a distributed.net keyserver?"), "1",
   CFGTXT(
-  "Set this option to 'Yes' UNLESS your client will not be communicating\n"
+  "Set this option to 'Yes' UNLESS your client will be communicating\n"
   "with a personal proxy (instead of one of the main distributed.net\n"
   "keyservers) OR your client will be connecting through an HTTP proxy\n"
   "(firewall) and you have been explicitely advised by distributed.net\n"
