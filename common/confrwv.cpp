@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.92.2.6 2003/12/13 12:57:14 kakace Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.92.2.7 2004/05/27 20:28:01 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -34,7 +34,6 @@ static const char *OPTSECT_CPU      = "processor-usage";
 static const char *OPTSECT_TRIGGERS = "triggers";
 static const char *OPTSECT_DISPLAY  = "display";
 
-static const char *DEFAULT_EXITFLAGFILENAME = "exitrc5"EXTN_SEP"now";
 #define OLD_PREFERREDBLOCKSIZE_DEFAULT 30 /* for converting old .inis */
 
 /* ------------------------------------------------------------------------ */

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.149.2.2 2003/05/25 00:20:31 andreasb Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.149.2.3 2004/05/27 20:28:01 snikkel Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "problem.h"  /* WorkRecord, CONTEST_COUNT */
@@ -21,6 +21,7 @@
 #define BUFFER_DEFAULT_OUT_BASENAME "buff-out"
 #define MINCLIENTOPTSTRLEN   64 /* no asciiz var is smaller than this */
 #define NO_OUTBUFFER_THRESHOLDS /* no longer have outthresholds */
+#define DEFAULT_EXITFLAGFILENAME "exitdnetc"EXTN_SEP"now"
 
 struct membuffstruct 
 { 

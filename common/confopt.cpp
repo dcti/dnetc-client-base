@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.51.4.15 2004/05/23 16:30:37 kakace Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.51.4.16 2004/05/27 20:28:01 snikkel Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -91,7 +91,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 },
 { 
   CONF_EXITFILE                , /* CONF_MENU_MISC */
-  CFGTXT("Exit flagfile Path/Name"),"",
+  CFGTXT("Exit flagfile Path/Name"),DEFAULT_EXITFLAGFILENAME,
   CFGTXT(
   "While running, the client will occasionally look for the the presence of\n"
   "this file. If it exists, the client will immediately exit and will not\n"
