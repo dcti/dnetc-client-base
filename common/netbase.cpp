@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.8 2000/11/12 04:27:12 cyp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.9 2000/11/20 20:24:16 teichp Exp $"; }
 
 #define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -1039,7 +1039,7 @@ static int __bsd_quick_disco_look(SOCKET fd, int fdr_is_ready)
   if (!fdr_is_ready)
   {
     struct timeval tv;
-    struct fd_set rfds;
+    fd_set rfds;
     FD_ZERO(&rfds);
     FD_SET(fd,&rfds);
     tv.tv_sec = 0; 
@@ -1168,20 +1168,20 @@ static int net_look( SOCKET fd, int events, int *revents, int mstimeout )
       #elif defined(SOCK_STREAM)
       struct timeval tv;
       struct timeval *tvP;
-      struct fd_set wfds, rfds, xfds;
-      struct fd_set *wfdsP, *rfdsP;
+      fd_set wfds, rfds, xfds;
+      fd_set *wfdsP, *rfdsP;
 
       FD_ZERO(&xfds);
       FD_SET(fd,&xfds);
 
-      rfdsP = (struct fd_set *)0;
+      rfdsP = (fd_set *)0;
       if ((events & (ps_T_LISTEN|ps_T_DATA))!=0)
       {
         rfdsP = &rfds;
         FD_ZERO(rfdsP);
         FD_SET(fd,rfdsP);
       } 
-      wfdsP = (struct fd_set *)0;
+      wfdsP = (fd_set *)0;
       if ((events & (ps_T_CONNECT|ps_T_GODATA))!=0)
       {
         wfdsP = &wfds;
@@ -1423,8 +1423,8 @@ static int net_poll1( SOCKET fd, int events, int *revents, int mstimeout )
     int retry_count = 0;
     struct timeval tv;
     struct timeval *tvP;
-    struct fd_set wfds, rfds, xfds;
-    struct fd_set *wfdsP, *rfdsP;
+     wfds, rfds, xfds;
+    fd_set *wfdsP, *rfdsP;
 
     /* this has to be outside the loop in case tv is modified */
     tvP = (struct timeval *)0;
@@ -1436,14 +1436,14 @@ static int net_poll1( SOCKET fd, int events, int *revents, int mstimeout )
       tv.tv_usec = (mstimeout%1000)*1000;
       tvP = &tv;
     }
-    rfdsP = (struct fd_set *)0;
+    rfdsP = (fd_set *)0;
     if ((events & POLLIN)!=0)
     {
       rfdsP = &rfds;
       FD_ZERO(rfdsP);
       FD_SET(fd,rfdsP);
     }
-    wfdsP = (struct fd_set *)0;
+    wfdsP = (fd_set *)0;
     if ((events & POLLOUT)!=0)
     {
       wfdsP = &wfds;
@@ -2374,7 +2374,7 @@ int net_accept( SOCKET listen_fd, SOCKET *conn_fdP,
       if (revents == ps_T_LISTEN)
         rc = 1;
 #else          
-      struct fd_set fdr;
+      fd_set fdr;
       struct timeval tv;
       FD_ZERO( &fdr );
       FD_SET( listen_fd, &fdr );
