@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.39 2001/02/03 18:36:20 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.40 2001/02/12 09:25:51 mfeiri Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -2458,6 +2458,13 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
       }
 
       int s = workstub->stub.diffs[i];
+      
+      #pragma warning This does not work
+      if (s <= (32*5))
+        if (lev->dist[(s-1)>>5] & (0x80000000>>((s-1)&0x1f)))//#define BITOFLIST(x) 0x80000000>>((x-1)&0x1f)
+          return CORE_E_STUB;
+      #pragma warning This does not work
+      
       //dump(oStateDepth, lev, 0);
 
 // The following line is the same as:  oState->Levels[i+1].cnt2 = oState->Levels[i].cnt2 + s;
@@ -2465,7 +2472,8 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
 // because:  lev == oState->Levels[i+1]
 // AND because we replace the count below, this assignment isn't needed at all!
 
-      cnt2 += s;
+      if ((cnt2 += s) > limit)
+        return CORE_E_STUB;
 
       while (s>=32) {
         COMP_LEFT_LIST_RIGHT_32(lev);
