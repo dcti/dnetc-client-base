@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.52  1998/12/22 15:58:24  jcmichot
+// *** empty log message ***
+//
 // Revision 1.51  1998/12/14 05:15:08  dicamillo
 // Mac OS updates to eliminate use of MULTITHREAD and have a singe client
 // for MT and non-MT machines.
@@ -180,7 +183,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.51 1998/12/14 05:15:08 dicamillo Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.52 1998/12/22 15:58:24 jcmichot Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -291,6 +294,10 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     #elif (CLIENT_OS == OS_RISCOS)
       {
       cpucount = riscos_count_cpus();
+      }
+	#elif (CLIENT_OS == OS_QNX)
+      {
+      cpucount = 1;
       }
 	#elif (CLIENT_OS == OS_MACOS)
 	  {
@@ -531,6 +538,9 @@ int GetProcessorType(int quietly)
 #ifdef __WATCOMC__
   #define x86ident _x86ident
 #endif
+#if (CLIENT_OS == OS_QNX)
+  #define x86ident _x86ident
+#endif
 #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
   extern "C" u32 x86ident( void ) asm ("x86ident");
 #else
@@ -548,7 +558,6 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
   char *article = NULL; //"an" "a"
   char *vendorname = NULL; //"Cyrix", "Centaur", "AMD", "Intel", ""
   static struct _cpuxref *cpuxref = NULL;
-
   u32 detectedvalue = x86ident(); //must be interpreted
   int vendorid = (int)(detectedvalue >> 16);
   int cpuidb  = (int)(detectedvalue & 0xffff);

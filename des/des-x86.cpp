@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.22  1998/12/22 15:58:24  jcmichot
+// *** empty log message ***
+//
 // Revision 1.21  1998/12/02 20:56:42  silby
 // Changed Multithread -> CLIENT_SUPPORTS_SMP
 //
@@ -65,7 +68,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_x86_cpp(void) {
-return "@(#)$Id: des-x86.cpp,v 1.21 1998/12/02 20:56:42 silby Exp $"; }
+return "@(#)$Id: des-x86.cpp,v 1.22 1998/12/22 15:58:24 jcmichot Exp $"; }
 #endif
 
 
@@ -85,7 +88,8 @@ return "@(#)$Id: des-x86.cpp,v 1.21 1998/12/02 20:56:42 silby Exp $"; }
     ((CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86) && defined(__ELF__)) || \
     ((CLIENT_OS == OS_BSDI) && (CLIENT_CPU == CPU_X86) && defined(__ELF__)) || \
     ((CLIENT_OS == OS_FREEBSD) && (CLIENT_CPU == CPU_X86) && defined(__ELF__)) || \
-    ((CLIENT_OS == OS_BEOS) && (CLIENT_CPU == CPU_X86) && defined(__ELF__))
+    ((CLIENT_OS == OS_BEOS) && (CLIENT_CPU == CPU_X86) && defined(__ELF__)) || \
+	((CLIENT_OS == OS_QNX))
  #define bryd_des _bryd_des
  #define bbryd_des _bbryd_des
  #define p1bryd_des _p1bryd_des

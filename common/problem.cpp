@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.57  1998/12/22 15:58:24  jcmichot
+// *** empty log message ***
+//
 // Revision 1.56  1998/12/19 04:30:23  chrisb
 // fixed a broken comment which was giving errors
 //
@@ -154,7 +157,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.56 1998/12/19 04:30:23 chrisb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.57 1998/12/22 15:58:24 jcmichot Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -368,9 +371,11 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   if (contest == 1)
     {
     #if defined(MMX_BITSLICER)
+    #if defined(MMX_RC5)
     if ((detectedtype & 0x100) != 0)
       unit_func = des_unit_func_mmx;
     else
+    #endif
     #endif
       {
       if (cputype == 2 || cputype == 3 || cputype == 5)

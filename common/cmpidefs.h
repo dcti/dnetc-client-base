@@ -9,6 +9,9 @@
 */
 //  
 // $Log: cmpidefs.h,v $
+// Revision 1.11  1998/12/22 15:58:24  jcmichot
+// *** empty log message ***
+//
 // Revision 1.10  1998/12/08 05:38:18  dicamillo
 // Add defines for MacOS.
 //
@@ -61,8 +64,8 @@
   #define strncmpi(x,y,n)  strnicmp(x,y,n)
   // SDK knows strcmpi but not strncmpi
 #elif (CLIENT_OS == OS_QNX)
-  // already knows strcmpi
-  // already knows strncmpi
+  #define strcmpi(x,y)  strcasecmp(x,y)
+  #define strncmpi(x,y,n)  strncasecmp(x,y,n)
 #elif (CLIENT_OS == OS_VMS)
   // strcmpi() has no equivalent in DEC C++ 5.0  (not true if based
   // on MS C)  #define NO_STRCASECMP

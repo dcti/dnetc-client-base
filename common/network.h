@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.43  1998/12/22 15:58:24  jcmichot
+// *** empty log message ***
+//
 // Revision 1.42  1998/12/21 17:54:23  cyp
 // (a) Network connect is now non-blocking. (b) timeout param moved from
 // network::Get() to object scope.
@@ -252,6 +255,10 @@ extern "C" {
   #define read(sock, buff, len) recv(sock, (unsigned char*)buff, len, 0)
   #define close(sock) closesocket(sock)
 #else
+
+#if (CLIENT_OS == OS_QNX)
+  #include <sys/select.h>
+#endif
   #include <sys/types.h>
   #include <sys/socket.h>
   #include <netinet/in.h>

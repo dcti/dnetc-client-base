@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.38  1998/12/22 15:58:24  jcmichot
+// *** empty log message ***
+//
 // Revision 1.37  1998/12/15 07:00:21  dicamillo
 // Use "_" instead of "/" in Mac header file names for CVS.
 //
@@ -285,6 +288,10 @@ extern "C" {
   #endif
 #elif (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_ARM)
   #include <sys/time.h>
+#elif (CLIENT_OS == OS_QNX)
+  #include <sys/time.h>
+  #include <sys/select.h>
+  #define strncmpi strncasecmp
 #elif (CLIENT_OS == OS_DYNIX)
   #include <unistd.h> // sleep(3c)
   struct timezone

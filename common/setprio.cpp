@@ -9,6 +9,9 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.44  1998/12/22 15:58:24  jcmichot
+// *** empty log message ***
+//
 // Revision 1.43  1998/12/09 08:33:20  silby
 // Freebsd fixes
 //
@@ -62,7 +65,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.43 1998/12/09 08:33:20 silby Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.44 1998/12/22 15:58:24 jcmichot Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -223,10 +226,11 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       SetTaskPri(FindTask(NULL), pri ); 
       }
   #elif (CLIENT_OS == OS_QNX)
-    if ( niceness == 0 )      setprio( 0, getprio(0)-1 );
-    else if ( niceness == 1 ) setprio( 0, getprio(0)+1 );
+	setprio( 0, prio-3 );
+    // if ( niceness == 0 )      setprio( 0, getprio(0)-3 );
+    // else if ( niceness == 1 ) setprio( 0, getprio(0)+3 );
     // else                  /* nothing */;
-    #error FIXME: SetPriority needs to be scaled from 0 (lowest/idle prio) to 9 (normal)
+    // #error FIXME: SetPriority needs to be scaled from 0 (lowest/idle prio) to 9 (normal)
   #elif (CLIENT_OS == OS_IRIX)
     if ( set_for_thread )
       {

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.55  1998/12/22 15:58:24  jcmichot
+// *** empty log message ***
+//
 // Revision 1.54  1998/12/21 18:43:58  cyp
 // Removed 'unused'/'unimplemented' sil[l|b]yness added in recent version.
 // See client.h for full comment.
@@ -208,7 +211,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.54 1998/12/21 18:43:58 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.55 1998/12/22 15:58:24 jcmichot Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -423,6 +426,8 @@ static void yield_pump( void *tv_p )
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OPENBSD)
+    NonPolledUSleep( 0 ); /* yield */
+  #elif (CLIENT_OS == OS_QNX)
     NonPolledUSleep( 0 ); /* yield */
   #else
     #error where is your yield function?

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.177  1998/12/22 15:58:24  jcmichot
+// *** empty log message ***
+//
 // Revision 1.176  1998/12/12 12:28:49  cyp
 // win16/win32 change: win16/win32 console code needs access to the client
 // object so that it can force a shutdown when it gets an endsession message.
@@ -145,7 +148,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.176 1998/12/12 12:28:49 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.177 1998/12/22 15:58:24 jcmichot Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -235,7 +238,11 @@ Client::Client()
   dialup.dialwhenneeded=0;
 #endif
   contestdone[0]=contestdone[1]=0;
+#if defined(__QNX__)
+  srand( (unsigned) time(NULL)/*(unsigned) CliTimer( NULL )->tv_usec*/ );
+#else
   srand( (unsigned) CliTimer( NULL )->tv_usec );
+#endif
   InitRandom();
 #if defined(MMX_BITSLICER) || defined(MMX_RC5)
   usemmx = 1;
