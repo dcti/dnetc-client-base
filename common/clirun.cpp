@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.73 2000/11/02 18:29:44 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.74 2000/11/09 19:33:12 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -206,12 +206,16 @@ static void __cruncher_yield__(int is_non_preemptive_cruncher)
 void Go_mt( void * parm )
 {
 #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
-  /* AmigaOS provides no way to pass parameters to sub-tasks! */
-  if (!(AttemptSemaphore(&StartThreadArgs.ts_Lock)))
+  /* AmigaOS provides no direct way to pass parameters to sub-tasks! */
+  struct Process *thisproc = (struct Process *)FindTask(NULL);
+  if (!thisproc->pr_Arguments)
   {
-    parm = (thread_param_block *)StartThreadArgs.ts_Args;
+     struct ThreadArgsMsg *msg;
+     WaitPort(&(thisproc->pr_MsgPort));
+     msg = (struct ThreadArgsMsg *)GetMsg(&(thisproc->pr_MsgPort));
+     parm = msg->tp_Params;
+     ReplyMsg((struct Message *)msg);
   }
-  ReleaseSemaphore(&StartThreadArgs.ts_Lock);
 #endif
 
   struct thread_param_block *thrparams = (thread_param_block *)parm;
@@ -941,16 +945,23 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         sprintf(threadname, "%s crunch #%d", utilGetAppName(),
                                              thrparams->threadnum + 1 );
         #if (CLIENT_CPU == CPU_68K)
-        ObtainSemaphore(&StartThreadArgs.ts_Lock);
-        StartThreadArgs.ts_Args = thrparams;
-        thrparams->threadID = (int)CreateNewProcTags(NP_Entry, (ULONG)Go_mt,
-                                                     NP_StackSize, 8192,
-                                                     NP_Name, (ULONG)threadname,
-                                                     TAG_END);
-        if (!thrparams->threadID)
+        struct Process *proc;
+        if ((proc = CreateNewProcTags(NP_Entry, (ULONG)Go_mt,
+                                      NP_StackSize, 8192,
+                                      NP_Name, (ULONG)threadname,
+                                      TAG_END)))
         {
-           ReleaseSemaphore(&StartThreadArgs.ts_Lock);
+           struct Process *thisproc = (struct Process *)FindTask(NULL);
+           struct ThreadArgsMsg argsmsg;
+           argsmsg.tp_ExecMessage.mn_Node.ln_Type = NT_MESSAGE;
+           argsmsg.tp_ExecMessage.mn_ReplyPort = &(thisproc->pr_MsgPort);
+           argsmsg.tp_ExecMessage.mn_Length = sizeof(struct ThreadArgsMsg);
+           argsmsg.tp_Params = thrparams;
+           PutMsg(&(proc->pr_MsgPort),(struct Message *)&argsmsg);
+           WaitPort(&(thisproc->pr_MsgPort));
+           GetMsg(&(thisproc->pr_MsgPort));
         }
+        thrparams->threadID = (int)proc;
         #else
         #ifndef __POWERUP__
         struct TagItem tags[5];
