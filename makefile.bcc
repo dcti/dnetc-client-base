@@ -16,7 +16,7 @@ PLATPATH = platforms
 
 
 BCCOPTS = /a4 /Vv /x- /xd- /RT- /r /k- /d /w /O2 /O /OS /tWM \
-    /I$(COMMONPATH) /DPIPELINE_COUNT=2 /D_CPU_32BIT_ /DMULTITHREAD
+    /I$(COMMONPATH) /D_CPU_32BIT_ /DMULTITHREAD
 
 TASMOPTS = /t /q /m /ml 
 
@@ -41,29 +41,30 @@ all: rc5des
 # --------------------------------------------
 
 RC5_OBJS =                    \
-        $(OUTPUTPATH)/client.obj     \
-        $(OUTPUTPATH)/cpucheck.obj   \
-        $(OUTPUTPATH)/threadcd.obj   \
-        $(OUTPUTPATH)/disphelp.obj   \
-        $(OUTPUTPATH)/autobuff.obj   \
-        $(OUTPUTPATH)/iniread.obj    \
-        $(OUTPUTPATH)/network.obj    \
-        $(OUTPUTPATH)/scram.obj      \
-        $(OUTPUTPATH)/mail.obj       \
-        $(OUTPUTPATH)/cliconfig.obj  \
-        $(OUTPUTPATH)/clitime.obj    \
-        $(OUTPUTPATH)/clirate.obj    \
-        $(OUTPUTPATH)/clisrate.obj   \
-        $(OUTPUTPATH)/clicdata.obj   \
-        $(OUTPUTPATH)/buffwork.obj   \
-        $(OUTPUTPATH)/convdes.obj    \
-        $(OUTPUTPATH)/problem.obj    \
-        $(OUTPUTPATH)/des-x86.obj    \
-        $(OUTPUTPATH)/pathwork.obj   \
-        $(OUTPUTPATH)/cliident.obj   \
-        $(OUTPUTPATH)/logstuff.obj   \
-        $(OUTPUTPATH)/buffupd.obj    \
-        $(OUTPUTPATH)/triggers.obj
+	$(OUTPUTPATH)/client.obj     \
+	$(OUTPUTPATH)/cpucheck.obj   \
+	$(OUTPUTPATH)/threadcd.obj   \
+	$(OUTPUTPATH)/disphelp.obj   \
+	$(OUTPUTPATH)/autobuff.obj   \
+	$(OUTPUTPATH)/iniread.obj    \
+	$(OUTPUTPATH)/network.obj    \
+	$(OUTPUTPATH)/scram.obj      \
+	$(OUTPUTPATH)/mail.obj       \
+	$(OUTPUTPATH)/cliconfig.obj  \
+	$(OUTPUTPATH)/clitime.obj    \
+	$(OUTPUTPATH)/clirate.obj    \
+	$(OUTPUTPATH)/clisrate.obj   \
+	$(OUTPUTPATH)/clicdata.obj   \
+	$(OUTPUTPATH)/buffwork.obj   \
+	$(OUTPUTPATH)/convdes.obj    \
+	$(OUTPUTPATH)/problem.obj    \
+	$(OUTPUTPATH)/des-x86.obj    \
+	$(OUTPUTPATH)/pathwork.obj   \
+	$(OUTPUTPATH)/cliident.obj   \
+	$(OUTPUTPATH)/logstuff.obj   \
+	$(OUTPUTPATH)/buffupd.obj    \
+	$(OUTPUTPATH)/lurk.obj       \
+	$(OUTPUTPATH)/triggers.obj
 
 PREBUILT_OBJS =                   \
         $(OUTPUTPATH)/rg-486.obj   \
