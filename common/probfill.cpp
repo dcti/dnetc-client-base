@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.49 2000/11/04 18:54:03 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.50 2000/11/04 18:57:19 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -390,7 +390,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                      ((resultcode==RESULT_NOTHING)?("NOTHING"):("FOUND")) );
             else if (finito) /* finished non-test packet */ 
             {
-              char *p = strchr(pktid,':'); /* HACK! to supress too long */
+              char *p = strrchr(pktid,':'); /* HACK! to supress too long */
               if (p) *p = '\0';            /* crypto "Completed" lines */
               sprintf( dcountbuf, "%u.%02u stats units", 
                                   swucount/100, swucount%100);
