@@ -1,0 +1,19 @@
+$Id: README,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+
+This benchmark suite is for x86/linux.
+
+You have to install the following programs to use it:
+
+1. perfctr (you need to patch your kernel for this)
+       http://www.csd.uu.se/~mikpe/linux/perfctr/
+
+2. PCL - Performance Counter Library
+       http://www.fz-juelich.de/zam/PCL/ 
+
+
+To benchmark the cores you first have to build the client as usually. Don't
+forget to test it! (dnetc -test)
+Then run make here to build a bench program for every RC5-72 core in the 
+client.
+Run the pclbench-* test programs to get some nice instruction/cycle count
+and other performance counter figures.

@@ -1,0 +1,17 @@
+# $Id: pclbench.mk.SunOS.in,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+
+BASEDIR	= ../..
+CC      = CC
+CFLAGS  = -xO5 -I$(BASEDIR)/common
+LDLIBS	= -L. -lpcl -lcpc
+
+TARGETS = @TARGETS@
+
+
+all: $(TARGETS)
+
+clean:
+	-rm -f $(TARGETS)
+
+# generated targets follow
+
