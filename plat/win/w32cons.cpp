@@ -7,7 +7,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.1.2.2 2001/01/24 19:00:01 cyp Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.1.2.3 2001/01/24 21:39:19 cyp Exp $"; }
 
 #define TRACE
 //define any/all/some of the following to TRACE_OUT(x) for sectional tracing
@@ -4762,9 +4762,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
     }
     case WM_WINDOWPOSCHANGING:
     {
-      /* This isn't strictly necessary, and is only here to
-         prevent the user from using some external utility to
-         show the window when the client isn't expecting it.
+      /* Enforce hidden when the original SW_ state was SW_HIDE.
          Trying to adjust the rect from here will NOT work:
          Neither IsIconic() nor IsZoomed() are meaningful
          at this point, and although it might be possible to
@@ -4777,9 +4775,10 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
         #if defined(__WINDOWS_386__) /* convert 16:16 pointer to 16:32 */
           pwp = (WINDOWPOS FAR *)(MK_FP32((void *)pwp));
         #endif
-        if ((pwp->flags & SWP_SHOWWINDOW)==0 && console->nCmdShow == SW_HIDE)
+        if (/* (pwp->flags & SWP_SHOWWINDOW)==0 && */
+            console->nCmdShow == SW_HIDE)
         {
-          pwp->flags ^= SWP_SHOWWINDOW;
+          pwp->flags &= ~SWP_SHOWWINDOW;
           pwp->flags |= SWP_HIDEWINDOW;
         }
       }
@@ -4816,17 +4815,6 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
     {
       if (console && !console->rate_view.hwnd && console->needsnaphandler)
         return __w16Handle_NCLBUTTONDOWN(console, hwnd, message, wParam, lParam);
-      return DefWindowProc(hwnd, message, wParam, lParam);
-    }
-    case WM_SHOWWINDOW:
-    {
-      if (wParam && console)
-      {
-        if (console->nCmdShow == SW_HIDE)
-        {
-          return 0; 
-        }
-      }
       return DefWindowProc(hwnd, message, wParam, lParam);
     }
     case WM_SIZE:
@@ -5632,9 +5620,9 @@ LRESULT CALLBACK __w16WindowFunc(HWND hwnd, UINT message,
   LRESULT lResult;
 
   ++nestinglevel;
-  TRACE_FLOW((+1, "__w16WindowFunc: nesttinglevel=%d, msg: 0x%04x, wParam: 0x%04x, lParam: 0x%08x\n", nestinglevel, message, wParam, lParam ));
+  TRACE_FLOW((+1, "__w16WindowFunc: nest=%d vis=%d msg: 0x%04x, wParam: 0x%04x, lParam: 0x%08x\n", nestinglevel, IsWindowVisible(hwnd), message, wParam, lParam ));
   lResult = __w16WindowFuncInternal(nestinglevel, hwnd, message, wParam, lParam );
-  TRACE_FLOW((-1, "__w16WindowFunc: lResult=%ld (0x%lx)\n", lResult, lResult ));
+  TRACE_FLOW((-1, "__w16WindowFunc: vis=%d lResult=%ld (0x%lx)\n", IsWindowVisible(hwnd), lResult, lResult ));
   --nestinglevel;
 
   return lResult;
