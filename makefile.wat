@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.41 2003/11/19 03:29:25 lightning Exp $
+## $Id: makefile.wat,v 1.42 2003/12/12 04:53:06 lightning Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -117,7 +117,9 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 #%rc564mmxamd_SYMALIAS = #
 #---
 %rc572std_LINKOBJS = output\r72-ses1.obj output\r72-ses2.obj output\r72-dg2.obj &
-                   output\r72-dg3.obj output\r72-dg3a.obj output\r72-ss2.obj output\r72-sgp3.obj
+                   output\r72-dg3.obj output\r72-dg3a.obj output\r72-ss2.obj output\r72-sgp3.obj &
+                   output\r72-go2.obj
+
 %rc572std_DEFALL   = /DHAVE_RC5_72_CORES
 %rc572std_SYMALIAS = #
 #---
@@ -774,6 +776,14 @@ output\r72-dg3a.obj : rc5-72\x86\r72-dg3a.asm $(%dependall)
   @set isused=1
 
 output\r72-ss2.obj : rc5-72\x86\r72-ss2.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
+  @set isused=1
+
+output\r72-sgp3.obj : rc5-72\x86\r72-sgp3.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
+  @set isused=1
+
+output\r72-go2.obj : rc5-72\x86\r72-go2.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
   @set isused=1
 
