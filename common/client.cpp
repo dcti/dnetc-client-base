@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.56 2000/02/10 16:46:41 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.57 2000/02/11 16:23:48 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -362,7 +362,7 @@ static int ClientMain( int argc, char *argv[] )
                                         ("exitrc5" EXTN_SEP "now")),
                                        client->pausefile,
                                        client->pauseplist,
-                                       client->restartoninichange,
+                                       ((domodes)?(0):(client->restartoninichange)),
                                        client->inifilename )==0)
       {
         TRACE_OUT((0,"initializeconnectivity\n"));
@@ -384,7 +384,7 @@ static int ClientMain( int argc, char *argv[] )
                                client->logname, 
                                client->logfiletype, 
                                client->logfilelimit, 
-                               client->messagelen, 
+                               ((domodes)?(0):(client->messagelen)),
                                client->smtpsrvr, 
                                client->smtpport, 
                                client->smtpfrom, 
