@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6bits-bitslicer.cpp,v $
+// Revision 1.1.2.5  1999/10/30 14:59:01  remi
+// cosmetic improvements.
+//
 // Revision 1.1.2.4  1999/10/26 20:48:52  remi
 // Moved tp1[] and tp2[] to the 16-byte aligned memory pool.
 //
@@ -23,7 +26,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_bitslicer_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-bitslicer.cpp,v 1.1.2.4 1999/10/26 20:48:52 remi Exp $"; }
+return "@(#)$Id: csc-6bits-bitslicer.cpp,v 1.1.2.5 1999/10/30 14:59:01 remi Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
@@ -69,6 +72,10 @@ ulong
 PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 ( ulong key[2][64], const u8 keyB[8], const ulong msg[64], const ulong cipher[64], char *membuffer )
 {
+  ulong cfr[64];
+  //ulong (*cfr)[64] = (ulong(*)[64])membuffer;
+  //membuffer += (sizeof(*cfr) + 15) & 0xFFFFFFF0;
+
   //ulong subkey[9+2][64];
   ulong (*subkey)[9+2][64] = (ulong (*)[9+2][64])membuffer;
   membuffer += (sizeof(*subkey) + 15) & 0xFFFFFFF0;
@@ -81,10 +88,6 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   ulong (*tp1)[4][8] = (ulong (*)[4][8])membuffer;
   membuffer += (sizeof(*tp1) + 15) & 0xFFFFFFF0;
   ulong (*tp2)[4][8] = (ulong (*)[4][8])membuffer;
-  //membuffer += (sizeof(*tp2) + 15) & 0xFFFFFFF0;
-  
-  ulong cfr[64];
-  //ulong (*cfr)[64] = (ulong(*)[64])membuffer;
 
 
   ulong *skp;  // subkey[n]
@@ -95,7 +98,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   ulong x0,x1,x2,x3,x4,x5,x6,x7, y1,y3,y5,y7;
   ulong xy56, xy34, xy12, xy70;
 
-  //printf( "subkey=%p cfr=%p tp1=%p tp2=%p\n", &subkey, &cfr, &tp1, &tp2 );
+  //printf( "subkey=%p cfr=%p tp1=%p tp2=%p\n", subkey, cfr, tp1, tp2 );
   //exit( 0 );
 
 #define APPLY_MP0(adr, adl)							\
