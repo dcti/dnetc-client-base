@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.27.2.1 2002/11/11 18:06:49 jlawson Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.27.2.2 2002/11/24 17:51:59 pfeffi Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -129,6 +129,9 @@ static const char *h_ident_table[] =
   (const char *)__W32UTIL_H__,
   (const char *)__W32SVC_H__,
   #endif
+  #if (CLIENT_OS == OS_OS2)
+  (const char *)__OS2DEFS_H__,
+  #endif
   (const char *)0
 };
 
@@ -176,6 +179,9 @@ extern const char *w32cons_cpp(void);
 extern const char *w32pre_cpp(void);
 extern const char *w32util_cpp(void);
 extern const char *w32svc_cpp(void);
+#endif
+#if (CLIENT_OS == OS_OS2)
+extern const char *os2inst_cpp(void);
 #endif
 
 static const char * (*ident_table[])(void) = 
@@ -226,6 +232,9 @@ static const char * (*ident_table[])(void) =
   w32pre_cpp,
   w32util_cpp,
   w32svc_cpp,
+  #endif
+  #if (CLIENT_OS == OS_OS2)
+  os2inst_cpp,
   #endif
   ((const char * (*)(void))0)  
 };
