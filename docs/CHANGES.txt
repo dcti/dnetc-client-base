@@ -21,11 +21,13 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.77 2001/01/25 13:56:18 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.78 2001/02/03 22:04:42 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
+
+2.8012.467
 
 2.8012.466  new: x86: most unix-ish clients now support the RC5/SMC core.
             imp: some: even faster OGR core.
@@ -39,6 +41,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.77 2001/01/25 13:56:18 cyp Exp $
             fix: win32: workaround for time bug on some win2k HALs.
             fix: all: suffices weren't lowercase for remote buffer filenames.
             fix: win32: client -install'ed to run hidden appeared on desktop
+            chg: x86: AMD 5x86 uses core #6 (rather than core #0) for RC5
 
 2.8012.465  imp: m68k-netbsd: faster OGR core
             fix: bsdos-aout client is finally working again with OGR
