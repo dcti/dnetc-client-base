@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.66  1999/01/06 09:54:29  chrisb
+// fixes to the RISC OS timeslice stuff for DES - now runs about 2.5 times as fast
+//
 // Revision 1.65  1999/01/02 01:04:19  silby
 // Changed scheduled update to MODEREQ_FQUIET.
 //
@@ -254,7 +257,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.65 1999/01/02 01:04:19 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.66 1999/01/06 09:54:29 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -406,8 +409,8 @@ struct thread_param_block
   #define TIMER_GRANULARITY       1000000
   #define MIN_RUNS_PER_TIME_GRAIN     2
   #define MAX_RUNS_PER_TIME_GRAIN     5
-  #define INITIAL_TIMESLICE_RC5    512
-  #define INITIAL_TIMESLICE_DES    512
+  #define INITIAL_TIMESLICE_RC5    65536
+  #define INITIAL_TIMESLICE_DES    131072
   #define MIN_SANE_TIMESLICE_RC5    256
   #define MIN_SANE_TIMESLICE_DES    256
   #define MAX_SANE_TIMESLICE_RC5   1048576

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.62  1999/01/06 09:54:29  chrisb
+// fixes to the RISC OS timeslice stuff for DES - now runs about 2.5 times as fast
+//
 // Revision 1.61  1999/01/01 02:45:16  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -172,7 +175,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.61 1999/01/01 02:45:16 cramer Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.62 1999/01/06 09:54:29 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -328,6 +331,8 @@ Problem::~Problem()
     _kernel_swi_regs r;
     r.r[0] = 0;
     _kernel_swi(RC5PC_RetriveBlock,&r,&r);
+    _kernel_swi(RC5PC_Off,&r,&r);
+    
     }
 #endif
 }
@@ -594,6 +599,7 @@ ConInKey(-1);
     rc5pc.iterations.lo = contestwork.iterations.lo;
     rc5pc.timeslice = tslice;
 
+    _kernel_swi(RC5PC_On,&r,&r);
     r.r[1] = (int)&rc5pc;
     _kernel_swi(RC5PC_AddBlock,&r,&r);
     if (r.r[0] == -1)
@@ -1007,7 +1013,6 @@ s32 Problem::Run( u32 /*unused*/ )
            */
           rc5pcr = (volatile RC5PCstruct *)r.r[1];
 
-//LogScreen("x86: Keysdone %08lx",contestwork.keysdone.lo);
           
           if (r.r[2]==1)
           {
@@ -1021,6 +1026,7 @@ s32 Problem::Run( u32 /*unused*/ )
               if (rc5pcr->result == RESULT_FOUND)
               {
                   contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+//printf("x86:FF Keysdone %08lx\n",contestwork.keysdone.lo);
 
                   rc5result.key.hi = contestwork.key.hi;
                   rc5result.key.lo = contestwork.key.lo;
@@ -1035,12 +1041,14 @@ s32 Problem::Run( u32 /*unused*/ )
               else
               {
                   contestwork.keysdone.lo = contestwork.iterations.lo;
+//printf("x86:FN Keysdone %08lx\n",contestwork.keysdone.lo);
               }
 
           }
           else
           {
               contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+//printf("x86:NF Keysdone %08lx\n",contestwork.keysdone.lo);
           }
       }
 #endif
@@ -1049,11 +1057,20 @@ s32 Problem::Run( u32 /*unused*/ )
     {
     // protect the innocent
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
+//    static unsigned long arse;
 
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
-    timeslice = (1ul << nbits) / pipeline_count;
+    timeslice = (1ul << nbits);// / pipeline_count;
     kiter = des_unit_func ( &rc5unitwork, nbits );
+/*
+if (arse != timeslice)
+ {
+     arse = timeslice;
+printf("DES: timeslice is %d, nbits is %d\n",timeslice,nbits);
+printf("DES: kiter is %d\n",kiter);
+ }
+*/
     contestwork.keysdone.lo += kiter;
     if (kiter < timeslice)
       {
