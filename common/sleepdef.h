@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: sleepdef.h,v $
+// Revision 1.10  1998/07/16 20:12:58  nordquist
+// DYNIX port changes.
+//
 // Revision 1.9  1998/06/29 06:58:12  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -119,6 +122,9 @@
   extern "C" {
   #include <unistd.h>
   }
+#elif (CLIENT_OS == OS_DYNIX)
+  // DYNIX doesn't have nanosleep() or usleep()
+  #define usleep(x) sleep(1)
 #else
   #include <unistd.h> //gcc has both sleep() and usleep()
 #endif
