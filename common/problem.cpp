@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.133 1999/12/08 02:27:03 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.134 1999/12/08 05:41:01 remi Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -179,6 +179,9 @@ return "@(#)$Id: problem.cpp,v 1.133 1999/12/08 02:27:03 cyp Exp $"; }
   extern "C" s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *iterations, void *membuff );
   extern "C" s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
   extern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
+#if (CLIENT_CPU == CPU_X86) && defined(MMX_CSC)
+  extern "C" s32 csc_unit_func_6b_mmx ( RC5UnitWork *, u32 *iterations, void *membuff );
+#endif
 #endif
 
 /* ------------------------------------------------------------- */
@@ -643,6 +646,8 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       case 2 : problem->unit_func = csc_unit_func_1k_i;
                break;
       case 3 : problem->unit_func = csc_unit_func_1k;
+               break;
+      case 4 : problem->unit_func = csc_unit_func_6b_mmx;
                break;
     }
     return coresel;

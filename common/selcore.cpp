@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.64 1999/12/08 00:30:25 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.65 1999/12/08 05:41:02 remi Exp $"; }
 
 
 #include "cputypes.h"
@@ -135,6 +135,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "6 bit - called", 
       "1 key - inline", 
       "1 key - called",
+      NULL, /* room for the MMX bitslicer */
       NULL
     }
   };  
@@ -156,7 +157,10 @@ static const char **__corenames_for_contest( unsigned int cont_i )
         corenames_table[RC5][5] = "BRF Kx/MMX"; /* is this k6-2 only? */
         #endif
         #ifdef MMX_BITSLICER
-        corenames_table[DES][2] = "MMX bitslice"; 
+        corenames_table[DES][2] = "MMX DES bitslicer";
+        #endif
+        #if defined(MMX_CSC)
+	corenames_table[CSC][4] = "6 bit - MMX bitslicer";
         #endif
       }
     }
@@ -526,7 +530,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         if (det == 1)       //PPC 601
           cindex = 2;       // G1: 16k L1 cache - 1 key inline
         else if (det == 12) //PPC 7400
-          cindex = 0;       // G4: L1 cache 64k - 6 bit inline
+          cindex = 0;       // G4: 64k L1 cache - 6 bit inline
         //don't know about the rest
       }
       selcorestatics.corenum[CSC] = cindex;
@@ -604,21 +608,27 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         if (detected_type >= 0)
         {
           int cindex = -1; 
-          // this is only valid for nasm'd cores or GCC 2.95 and up
-          switch ( detected_type & 0xff )
-          {
-            case 0: cindex = 3; break; // P5             == 1key - called
-            case 1: cindex = 3; break; // 386/486        == 1key - called
-            case 2: cindex = 2; break; // PII/PIII       == 1key - inline
-            case 3: cindex = 3; break; // Cx6x86         == 1key - called
-            case 4: cindex = 2; break; // K5             == 1key - inline
-            case 5: cindex = 0; break; // K6/K6-2/K6-3   == 6bit - inline
-            case 6: cindex = 3; break; // Cyrix 486      == 1key - called
-            case 7: cindex = 3; break; // orig Celeron   == 1key - called
-            case 8: cindex = 3; break; // PPro           == 1key - called
-            case 9: cindex = 0; break; // AMD K7         == 6bit - inline
-            //no default
-          }
+          if ((detected_type & 0x100) != 0 && /* have mmx */
+             __corecount_for_contest(contestid) > 2) /* have mmx-bitslicer */
+            cindex = 4; /* mmx bitslicer */
+          else
+	  {
+	    // this is only valid for nasm'd cores or GCC 2.95 and up
+	    switch ( detected_type & 0xff )
+	    {
+              case 0: cindex = 3; break; // P5             == 1key - called
+              case 1: cindex = 3; break; // 386/486        == 1key - called
+              case 2: cindex = 2; break; // PII/PIII       == 1key - inline
+              case 3: cindex = 3; break; // Cx6x86         == 1key - called
+              case 4: cindex = 2; break; // K5             == 1key - inline
+              case 5: cindex = 0; break; // K6/K6-2/K6-3   == 6bit - inline
+              case 6: cindex = 3; break; // Cyrix 486      == 1key - called
+              case 7: cindex = 3; break; // orig Celeron   == 1key - called
+              case 8: cindex = 3; break; // PPro           == 1key - called
+              case 9: cindex = 0; break; // AMD K7         == 6bit - inline
+              //no default
+	    }
+	  }
           selcorestatics.corenum[CSC] = cindex;
         }
       }

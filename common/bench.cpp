@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.42 1999/12/08 05:37:39 remi Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.43 1999/12/08 05:41:01 remi Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -41,6 +41,15 @@ static void __show_notbest_msg(unsigned int contestid)
     {
       #if (!defined(MMX_RC5))        /* all non-nasm platforms (bsdi etc) */
         not_supported = "RC5/P5/MMX";
+      #endif
+    }
+  }
+  else if (contestid == CSC)
+  {
+    if ((detectedtype & 0x100) != 0) /* mmx */
+    {
+      #if (!defined(MMX_CSC))
+        not_supported = "CSC/MMX bitslice";
       #endif
     }
   }
