@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.22 2004/01/10 10:11:32 pstadt Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.23 2004/04/29 18:19:11 oliver Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -321,7 +321,9 @@
 
   static inline void fastlock_lock(fastlock_t *l) {
     while (fastlock_trylock(l) <= 0) {
-# if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS) || (defined(__unix__))
+# if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+      NonPolledUSleep(1000);
+# elif defined(__unix__)
       NonPolledUSleep(1);
 # else
 #  error "What's up Doc?"
@@ -437,7 +439,9 @@
 
   static inline void fastlock_lock(fastlock_t *l) {
     while (fastlock_trylock(l) <= 0) {
-# if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS) || (defined(__unix__))
+# if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+      NonPolledUSleep(1000);
+# elif defined(__unix__)
       NonPolledUSleep(1);
 # else
 #  error "What's up Doc?"
