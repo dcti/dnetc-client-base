@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.20  1998/12/20 17:39:50  cyp
+// Minor tweaks for contestdone 'advertising' such as immediate write of
+// contestdone flags after a successful fetch/flush. Also added hardcoded DES
+// switchover time frames and preferred_contest to 1 (if DES is supported).
+//
 // Revision 1.19  1998/12/16 05:50:54  cyp
 // Removed connectoften support. Client::Run() does a better job.
 //
@@ -35,11 +40,11 @@
 // Probfill now handles blockcount limits; can resize the loaded problem
 // table; closes checkpoint files when the problem table is closed; can
 // be called asynchronously from Client::Run() in the event that the client
-// is shutdown by an 'external' source such as the win16 message handler.
+// is shutdown by an 'external' source such as the windoze message handler.
 //
 // Revision 1.11  1998/11/29 14:38:04  cyp
 // Fixed missing outthreshold check. Added connectoften support (haven't
-// tested yet). But why, why, why isn't the inthreshold check code working?
+// tested yet). 
 //
 // Revision 1.10  1998/11/28 19:47:13  cyp
 // __IndividualProblemLoad() retries all contests buffers after a buffer
@@ -71,8 +76,8 @@
 // Made test block completion notice more verbose.
 //
 // Revision 1.2  1998/10/03 23:59:50  remi
-// Removed extraneous #if defined(KWAN) && defined(MEGGS). MMX_BITSLICER is now
-// defined only when the MMX DES core is compiled.
+// Removed extraneous #if defined(KWAN) && defined(MEGGS). MMX_BITSLICER is
+// now defined only when the MMX DES core is compiled.
 //
 // Revision 1.1  1998/09/28 01:16:08  cyp
 // Spun off from client.cpp
@@ -81,7 +86,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.19 1998/12/16 05:50:54 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.20 1998/12/20 17:39:50 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -165,15 +170,92 @@ static const char *__WrapOrTruncateLogLine( char *buffer, int dowrap )
 #include "iniread.h"
 #include "pathwork.h"
 
+#define TIME_BASED_CONTEST_CHANGE_HINT
+
 // update contestdone and randomprefix .ini entries
 static void __RefreshRandomPrefix( Client *client )
-{                        
+{       
+  #ifdef TIME_BASED_CONTEST_CHANGE_HINT
+  static struct { /* time is in GMT (PST == GMT-8) */
+    /* 
+       if you don't know the time_t value, leave it at 0. 
+       it will be calc'd and you see the debug output.
+    */
+    int year,mon,day,hour,min; time_t starttime; } timestart[]= {
+      { 1999,  1,  2, 9+8, 00, (time_t)0x368e5090L }, /* des-ii-3 mock */
+      { 1999,  1, 13, 9+8, 00, (time_t)0x369cd110L }, /* des-ii-3 */
+      { 1999,  7, 13, 9+9, 00, (time_t)0x378b7ea0L }  /* des-ii-4 */
+    };
+
+  if (client->contestdone[1]) /* DES only */
+    {
+    unsigned int i;
+    time_t timediff = (time_t)(-1), timenow = 0;
+    for (i=0;i<(sizeof(timestart)/sizeof(timestart[0]));i++)
+      {
+      if (timestart[i].year!=0)
+        {
+        if (timenow == 0)
+          timenow = CliTimer(NULL)->tv_sec;
+        
+        if (timestart[i].starttime == 0)
+          {
+          struct tm tmnow;
+          if (timediff == (time_t)(-1))
+            {
+            memset((void *)&tmnow,0,sizeof(struct tm));
+            tmnow.tm_mday = 2;  tmnow.tm_year = 70;
+            timediff = mktime(&tmnow);
+            timediff = (timediff == (time_t)(-1))?(0):((24*60*60)-timediff);
+            }
+          tmnow.tm_year = timestart[i].year-1900;
+          tmnow.tm_mon  = timestart[i].mon-1;
+          tmnow.tm_mday = timestart[i].day;
+          tmnow.tm_hour = timestart[i].hour;
+          tmnow.tm_min  = timestart[i].min; 
+          tmnow.tm_sec  = tmnow.tm_wday = tmnow.tm_yday = tmnow.tm_isdst = 0;
+          
+          if ((timestart[i].starttime = mktime(&tmnow)) != (time_t)(-1))
+            timestart[i].starttime += timediff;
+
+          if (timestart[i].starttime == ((time_t)(-1)))
+            {
+            timestart[i].starttime = 0;
+            }
+          else if (timenow <= timestart[i].starttime)
+            {
+            /* stuff so that we can set the static time_t s later */
+            timeval tv; tv.tv_usec=0; tv.tv_sec = timestart[i].starttime;
+            LogScreen("DES event scheduled at %s (0x%08x)\n",
+                                  CliGetTimeString(&tv,1), tv.tv_sec);
+            }
+          }
+
+        if (timestart[i].starttime!=0 && timenow > timestart[i].starttime)
+          {
+          timestart[i].year = 0; /* don't do this period again */
+          if ((timestart[i].starttime & 1)==0)
+            {
+            /* add a little space so all clients don't hit simultaneously */
+            timestart[i].starttime += ((time_t)((rand()%(60*60))|1));
+            }
+          if (timenow < (timestart[i].starttime+((time_t)(3*60*60))))
+            {
+            client->contestdone[1] = 0;
+            client->randomchanged = 1;
+            }
+          }
+        }
+      } 
+    }   
+  #endif
+                 
   if (client->stopiniio == 0 && client->nodiskbuffers == 0)
     {
     const char *OPTION_SECTION = "parameters";
     IniSection ini;
     unsigned int cont_i;
-    s32 randomprefix, doneflags;
+    s32 randomprefix, flagbits;
     int inierror = (ini.ReadIniFile( 
                        GetFullPathForFilename( client->inifilename ) ) != 0);
     int inichanged = 0;
@@ -182,10 +264,32 @@ static void __RefreshRandomPrefix( Client *client )
       {
       randomprefix = (s32)(client->randomprefix);
       ini.setrecord(OPTION_SECTION, "randomprefix", IniString(randomprefix));
-      doneflags = 0;
+
+      flagbits = 0;
       for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-        doneflags |= ((client->contestdone[cont_i])?(1<<cont_i):(0));
-      ini.setrecord(OPTION_SECTION, "contestdoneflags", IniString(doneflags));
+        {
+        flagbits |= ((client->contestdone[cont_i])?(1<<cont_i):(0));
+
+        char buffer[32];
+        if (cont_i==0) strcpy(buffer,"contestdone");
+        else sprintf(buffer,"contestdone%u", cont_i+1 );
+        if (client->contestdone[cont_i])
+          {
+//LogScreen("write: client->contestdone[%u] ==> %u\n", cont_i, client->contestdone[cont_i]);
+          ini.setrecord(OPTION_SECTION, buffer, 
+              IniString((client->contestdone[cont_i])?("1"):("0")));
+//LogScreen("write: end\n");
+          }
+        else
+          {
+//LogScreen("erase: client->contestdone[%u] ==> %u\n", cont_i, client->contestdone[cont_i]);
+          IniRecord *inirec;
+          if ((inirec=ini.findfirst(OPTION_SECTION, buffer))!=NULL)
+            inirec->values.Erase();
+//LogScreen("erase: end\n");
+          }
+        }
+      ini.setrecord(OPTION_SECTION, "contestdoneflags", IniString(flagbits));
       client->randomchanged = 0;
       inichanged = 1;
       }
@@ -194,31 +298,39 @@ static void __RefreshRandomPrefix( Client *client )
       randomprefix = ini.getkey(OPTION_SECTION, "randomprefix", "0")[0];
       if (randomprefix) client->randomprefix = randomprefix;
 
-      static int doneoldoptions = 0;
-      if (doneoldoptions == 0)
+      u32 oldflags=0, newflags=0;
+
+      IniRecord *inirec;
+      if ((inirec=ini.findfirst(OPTION_SECTION, "contestdoneflags"))!=NULL)
+        newflags = ini.getkey(OPTION_SECTION, "contestdoneflags", "0")[0];
+      else
         {
-        doneoldoptions = 1;
         for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
           {
           char buffer[32];
           if (cont_i==0) strcpy(buffer,"contestdone");
           else sprintf(buffer,"contestdone%u", cont_i+1 );
-          IniRecord *inirec;
-          while ((inirec=ini.findfirst(OPTION_SECTION, buffer))!=NULL)
-            {
-            doneflags = ini.getkey(OPTION_SECTION, buffer, "0")[0];
-            if (doneflags != 0)
-               client->contestdone[cont_i] = 1;
-            inirec->values.Erase();
-            inirec = ini.findfirst(OPTION_SECTION, buffer);
-            inichanged = 1;
-            }
+          flagbits = ini.getkey(OPTION_SECTION, buffer, "0")[0];
+          newflags |= ((flagbits)?(1<<cont_i):(0)); 
           }
         }
-      doneflags = ini.getkey(OPTION_SECTION, "contestdoneflags", "0")[0];
+      oldflags = 0;
       for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-        client->contestdone[cont_i]=((doneflags & (1<<cont_i))!=0);
-      }
+        {
+        oldflags |= ((client->contestdone[cont_i])?(1<<cont_i):(0)); 
+        client->contestdone[cont_i]=(((newflags&(1<<cont_i))==0)?(0):(1));
+//LogScreen("read: client->contestdone[%u] ==> %u\n", cont_i, client->contestdone[cont_i]);
+        }
+      if (newflags != oldflags)
+        {
+        for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+          {
+          if ((newflags & (1<<cont_i)) != (oldflags & (1<<cont_i)))
+            CliClearContestInfoSummaryData( cont_i );
+          }
+        RaiseRestartRequestTrigger();
+        }
+      }   
     
     if (inichanged)
       ini.WriteIniFile( GetFullPathForFilename( client->inifilename ) );
@@ -398,7 +510,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   s32 cputype;
 
   cputype           = client->cputype; /* needed for FILEENTRY_CPU macro */
-  contest_preferred = (client->preferred_contest_id == 0)?(0):(1);
+  contest_preferred = 1; //(client->preferred_contest_id == 0)?(0):(1);
   contest_alternate = (contest_preferred == 0)?(1):(0);
   contest_count     = 2;
     
@@ -422,6 +534,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       contest_selected = ((cont_i)?(contest_alternate):(contest_preferred));
       if ( client->contestdone[contest_selected] == 0)
         {
+//LogScreen("beginning getblock %u\n", contest_selected );        
         longcount = client->GetBufferRecord( &fileentry, contest_selected, 0 );
         if (longcount >= 0)
           {
@@ -436,12 +549,15 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       {
       didupdate = 
         client->BufferUpdate((BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
+      if (client->randomchanged)        
+        __RefreshRandomPrefix( client );
       if (didupdate < 0)
         break;
       if (didupdate!=0)
         *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
       if ((didupdate & BUFFERUPDATE_FETCH) == 0) /* didn't fetch */
         break;
+      didupdate = 1; /* don't try another network update */
       resetloop = 1; /* we refreshed buffers, so retry all */
       }
     }  
@@ -501,9 +617,13 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       didrandom = 1;
       __RefreshRandomPrefix(client); //get/put an up-to-date prefix 
 
-      u32 randomprefix = ( ( (u32)(client->randomprefix) ) + 1 ) & 0xFF;
+      u32 randomprefix = (0xff & (((u32)(client->randomprefix))+1));
+      client->randomprefix = randomprefix;
+      client->randomchanged=1;
+      
       fileentry.key.lo = htonl( Random( NULL, 0 ) & 0xF0000000L );
-      fileentry.key.hi = htonl( (Random( NULL, 0 ) & 0x00FFFFFFL) + ( randomprefix << 24) ); // 64 bits significant
+      fileentry.key.hi = htonl( (Random( NULL, 0 ) & 0x00FFFFFFL) + 
+                              ( randomprefix << 24) ); // 64 bits significant
       fileentry.iv.lo = htonl( 0xD5D5CE79L );
       fileentry.iv.hi = htonl( 0xFCEA7550L );
       fileentry.cypher.lo = htonl( 0x550155BFL );
@@ -590,6 +710,15 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
    loaded_problems_count[cont_i]=loaded_normalized_key_count[cont_i]=0;
    saved_problems_count[cont_i] =saved_normalized_key_count[cont_i]=0;
    }
+
+
+  static time_t nextrandomcheck = (time_t)0;
+  time_t timenow = CliTimer(NULL)->tv_sec;
+  if (nextrandomcheck <= timenow)
+    {
+    __RefreshRandomPrefix(this); //get/put an up-to-date prefix 
+    nextrandomcheck = (timenow + (time_t)(10*60));
+    }
 
   /* ============================================================= */
 
@@ -763,8 +892,10 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
       bufupd_pending = 0;
     }
   if (randomchanged)
+    {
     __RefreshRandomPrefix(this); //get/put an up-to-date prefix 
-
+    nextrandomcheck = (timenow + (time_t)(10*60));
+    }
 
   /* ============================================================ */
 
