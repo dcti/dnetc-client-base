@@ -3,8 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common.h,v $
-// Revision 1.2  1999/10/11 18:15:09  cyp
-// sync'd from release branch
+// Revision 1.3  1999/11/01 17:25:52  cyp
+// sync from release
+//
+// Revision 1.1.2.4  1999/11/01 17:23:23  cyp
+// renamed transX(...) to csc_transX(...) to avoid potential (future) symbol
+// collisions.
 //
 // Revision 1.1.2.3  1999/10/08 14:20:24  remi
 // More extern "C" declarations
@@ -21,7 +25,7 @@
 //
 
 #ifndef __CSC_COMMON_H
-#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.2 1999/10/11 18:15:09 cyp Exp $"
+#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.3 1999/11/01 17:25:52 cyp Exp $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -72,15 +76,16 @@ extern const ulong csc_tabc[9][64];
 // bitslice version of e and e'
 extern const ulong csc_tabe[2][64];
 
-// table-lookup implementation of transP()
+// table-lookup implementation of csc_transP()
 extern const u8 csc_tabp[256];
+
 #ifdef __cplusplus
 }
 #endif
 
 // ------------------------------------------------------------------
-inline void transF( ulong t00, ulong t01, ulong t02, ulong t03,
-		    ulong &out1, ulong &out2, ulong &out3, ulong &out4 ) 
+inline void csc_transF( ulong t00, ulong t01, ulong t02, ulong t03,
+		        ulong &out1, ulong &out2, ulong &out3, ulong &out4 ) 
 {
 // out1 <- 0xff0f
 // out2 <- 0xf3f3
@@ -105,8 +110,8 @@ inline void transF( ulong t00, ulong t01, ulong t02, ulong t03,
 }
 
 // ------------------------------------------------------------------
-inline void transG( ulong t00, ulong t01, ulong t02, ulong t03,
-		    ulong &out1, ulong &out2, ulong &out3, ulong &out4 ) 
+inline void csc_transG( ulong t00, ulong t01, ulong t02, ulong t03,
+		        ulong &out1, ulong &out2, ulong &out3, ulong &out4 ) 
 {
 // out1 <- 0xb1b1
 // out2 <- 0x7722
@@ -138,36 +143,43 @@ inline void transG( ulong t00, ulong t01, ulong t02, ulong t03,
 }
 
 // ------------------------------------------------------------------
-#if defined( INLINE_TRANSP ) && !defined( __IN_CSC_COMMON_CPP )
-#define transP transPi
 
-inline void transP( ulong in7, ulong in6, ulong in5, ulong in4, 
-		    ulong in3, ulong in2, ulong in1, ulong in0,
-		    ulong &out7, ulong &out6, ulong &out5, ulong &out4, 
-		    ulong &out3, ulong &out2, ulong &out1, ulong &out0 ) 
+#ifdef CSC_TRANSP_CLASS
+#undef CSC_TRANSP_CLASS
+#endif
+#if defined( __IN_CSC_COMMON_CPP )      /* need callable csc_transp here */
+  #define CSC_TRANSP_CLASS extern "C" 
+#elif defined( INLINE_TRANSP )          /* use the inline version */
+  //#define csc_transP csc_transPi
+  #define CSC_TRANSP_CLASS inline
+#else                              /* reference the one in csc_common.cpp */
+  extern "C" void csc_transP( ulong in7, ulong in6, ulong in5, ulong in4, 
+ 	                ulong in3, ulong in2, ulong in1, ulong in0,
+		        ulong &out7, ulong &out6, ulong &out5, ulong &out4, 
+  		        ulong &out3, ulong &out2, ulong &out1, ulong &out0 );
+#endif
+#ifdef CSC_TRANSP_CLASS
+CSC_TRANSP_CLASS void csc_transP( ulong in7, ulong in6, ulong in5, ulong in4, 
+		        ulong in3, ulong in2, ulong in1, ulong in0,
+		        ulong &out7, ulong &out6, ulong &out5, ulong &out4, 
+  		        ulong &out3, ulong &out2, ulong &out1, ulong &out0 ) 
 {
   // y = f(xr) ^ xl
-  transF( in3, in2, in1, in0,	// in
-	  in7, in6, in5, in4 );	// xor-out
+  csc_transF( in3, in2, in1, in0,	// in
+	      in7, in6, in5, in4 );	// xor-out
   // zr = g(y) ^ xr
-  transG( in7, in6, in5, in4,	// in
-	  in3, in2, in1, in0 );	// xor-out  
+  csc_transG( in7, in6, in5, in4,	// in
+	      in3, in2, in1, in0 );	// xor-out  
   // zl = f(zr) ^ y
-  transF( in3, in2, in1, in0,	// in
-	  in7, in6, in5, in4 );	// xor-out
+  csc_transF( in3, in2, in1, in0,	// in
+ 	      in7, in6, in5, in4 );	// xor-out
   // output
   out7 = in7; out6 = in6; out5 = in5; out4 = in4;
   out3 = in3; out2 = in2; out1 = in1; out0 = in0;
 }
-#else
-#ifdef __cplusplus
-extern "C"
-#endif
-void transP( ulong in7, ulong in6, ulong in5, ulong in4, 
-	     ulong in3, ulong in2, ulong in1, ulong in0,
-	     ulong &out7, ulong &out6, ulong &out5, ulong &out4, 
-	     ulong &out3, ulong &out2, ulong &out1, ulong &out0 );
+#undef CSC_TRANSP_CLASS
 #endif
 
-#endif
+#endif /* ifndef __CSC_COMMON_H */
 
+// ------------------------------------------------------------------

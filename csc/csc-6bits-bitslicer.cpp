@@ -3,8 +3,22 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6bits-bitslicer.cpp,v $
-// Revision 1.2  1999/10/11 18:15:09  cyp
-// sync'd from release branch
+// Revision 1.3  1999/11/01 17:25:51  cyp
+// sync from release
+//
+// Revision 1.1.2.6  1999/11/01 17:23:23  cyp
+// renamed transX(...) to csc_transX(...) to avoid potential (future) symbol
+// collisions.
+//
+// Revision 1.1.2.5  1999/10/30 14:59:01  remi
+// cosmetic improvements.
+//
+// Revision 1.1.2.4  1999/10/26 20:48:52  remi
+// Moved tp1[] and tp2[] to the 16-byte aligned memory pool.
+//
+// Revision 1.1.2.3  1999/10/24 23:54:53  remi
+// Use Problem::core_membuffer instead of stack for CSC cores.
+// Align frequently used memory to 16-byte boundary in CSC cores.
 //
 // Revision 1.1.2.2  1999/10/08 00:07:01  cyp
 // made (mostly) all extern "C" {}
@@ -19,7 +33,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_bitslicer_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-bitslicer.cpp,v 1.2 1999/10/11 18:15:09 cyp Exp $"; }
+return "@(#)$Id: csc-6bits-bitslicer.cpp,v 1.3 1999/11/01 17:25:51 cyp Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
@@ -40,15 +54,49 @@ return "@(#)$Id: csc-6bits-bitslicer.cpp,v 1.2 1999/10/11 18:15:09 cyp Exp $"; }
 extern "C" {
 ulong
 PASTE(cscipher_bitslicer_,CSC_SUFFIX)
-( ulong key[2][64], const u8 keyB[8], const ulong msg[64], const ulong cipher[64] );
+( ulong key[2][64], const u8 keyB[8], const ulong msg[64], const ulong cipher[64], char *membuffer );
 }
 #endif
 
+/*
+  Memory usage :
+  	- key	    :  512 bytes -+
+	- plain     :  256 bytes  | allocated in csc-6bit-driver.cpp
+	- cipher    :  256 bytes -+
+  	- subkey    : 2816 bytes
+	- cfr       :  256 bytes
+	- tp1+tp2   :  256 bytes
+	- totwiddle :  696 bytes
+	- tcp+tep   : 2816 bytes
+	- loc.var.  :   64 bytes
+		      ----
+                      7928 bytes (or 15856 bytes on a 64-bit cpu)
+ */
+
+//#include <stdio.h>
+
 ulong
 PASTE(cscipher_bitslicer_,CSC_SUFFIX)
-( ulong key[2][64], const u8 keyB[8], const ulong msg[64], const ulong cipher[64] )
+( ulong key[2][64], const u8 keyB[8], const ulong msg[64], const ulong cipher[64], char *membuffer )
 {
-  ulong subkey[9+2][64];
+  ulong cfr[64];
+  //ulong (*cfr)[64] = (ulong(*)[64])membuffer;
+  //membuffer += (sizeof(*cfr) + 15) & 0xFFFFFFF0;
+
+  //ulong subkey[9+2][64];
+  ulong (*subkey)[9+2][64] = (ulong (*)[9+2][64])membuffer;
+  membuffer += (sizeof(*subkey) + 15) & 0xFFFFFFF0;
+
+  //ulong *totwiddle[6][7*(1+3)+1];
+  ulong *(*totwiddle)[6][7*(1+3)+1] = (ulong *(*)[6][7*(1+3)+1])membuffer;
+  membuffer += (sizeof(*totwiddle) + 15) & 0xFFFFFFF0;
+
+  //ulong tp1[4][8], tp2[4][8];
+  ulong (*tp1)[4][8] = (ulong (*)[4][8])membuffer;
+  membuffer += (sizeof(*tp1) + 15) & 0xFFFFFFF0;
+  ulong (*tp2)[4][8] = (ulong (*)[4][8])membuffer;
+
+
   ulong *skp;  // subkey[n]
   ulong *skp1; // subkey[n-1]
   const ulong *tcp; // pointer to tabc[] (bitslice values of c0..c8)
@@ -56,15 +104,21 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   // temp. variables used in the encryption process
   ulong x0,x1,x2,x3,x4,x5,x6,x7, y1,y3,y5,y7;
   ulong xy56, xy34, xy12, xy70;
-  ulong cfr[64];
 
-#define APPLY_MP0(adr, adl)							\
-  transP( tp1[adr/16][7], tp1[adr/16][6], tp1[adr/16][5], tp1[adr/16][4],	\
-	  tp1[adr/16][3], tp1[adr/16][2], tp1[adr/16][1], tp1[adr/16][0],	\
+  //printf( "subkey=%p cfr=%p tp1=%p tp2=%p\n", subkey, cfr, tp1, tp2 );
+  //exit( 0 );
+
+#define APPLY_MP0(adr, adl)			    \
+  csc_transP( (*tp1)[adr/16][7], (*tp1)[adr/16][6], \
+              (*tp1)[adr/16][5], (*tp1)[adr/16][4], \
+	      (*tp1)[adr/16][3], (*tp1)[adr/16][2], \
+	      (*tp1)[adr/16][1], (*tp1)[adr/16][0], \
 	  cfr[adl+7], cfr[adl+6], cfr[adl+5], cfr[adl+4],			\
 	  cfr[adl+3], cfr[adl+2], cfr[adl+1], cfr[adl+0] );			\
-  transP( tp2[adr/16][7], tp2[adr/16][6], tp2[adr/16][5], tp2[adr/16][4],	\
-	  tp2[adr/16][3], tp2[adr/16][2], tp2[adr/16][1], tp2[adr/16][0],	\
+  csc_transP( (*tp2)[adr/16][7], (*tp2)[adr/16][6], \
+              (*tp2)[adr/16][5], (*tp2)[adr/16][4], \
+              (*tp2)[adr/16][3], (*tp2)[adr/16][2], \
+	      (*tp2)[adr/16][1], (*tp2)[adr/16][0], \
 	  cfr[adr+7], cfr[adr+6], cfr[adr+5], cfr[adr+4],			\
 	  cfr[adr+3], cfr[adr+2], cfr[adr+1], cfr[adr+0] )
 
@@ -77,7 +131,8 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   x5 = cfr[adl+5] ^ (skp[5+8] ^= skp[5+8-128]);				\
   x6 = cfr[adl+6] ^ (skp[6+8] ^= skp[6+8-128]);				\
   x7 = cfr[adl+7] ^ (skp[7+8] ^= skp[7+8-128]);				\
-  transP( x7 ^ (y7   =      cfr[adr+7] ^ (skp[7] ^= skp[7-128])),	\
+  csc_transP(                                                           \
+          x7 ^ (y7   =      cfr[adr+7] ^ (skp[7] ^= skp[7-128])),	\
 	  x6 ^ (xy56 = x5 ^ cfr[adr+6] ^ (skp[6] ^= skp[6-128])),	\
 	  x5 ^ (y5   =      cfr[adr+5] ^ (skp[5] ^= skp[5-128])),	\
 	  x4 ^ (xy34 = x3 ^ cfr[adr+4] ^ (skp[4] ^= skp[4-128])),	\
@@ -87,7 +142,8 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	  x0 ^ (xy70 = x7 ^ cfr[adr+0] ^ (skp[0] ^= skp[0-128])),	\
 	  cfr[adl+7], cfr[adl+6], cfr[adl+5], cfr[adl+4],		\
 	  cfr[adl+3], cfr[adl+2], cfr[adl+1], cfr[adl+0] );		\
-  transP( x6 ^ y7, xy56, x4 ^ y5, xy34,					\
+  csc_transP(                                                           \
+          x6 ^ y7, xy56, x4 ^ y5, xy34,					\
 	  x2 ^ y3, xy12, x0 ^ y1, xy70,					\
 	  cfr[adr+7], cfr[adr+6], cfr[adr+5], cfr[adr+4],		\
 	  cfr[adr+3], cfr[adr+2], cfr[adr+1], cfr[adr+0] );		\
@@ -98,43 +154,42 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   x2 = cfr[adl+2] ^ tep[2+8]; x3 = cfr[adl+3] ^ tep[3+8];		\
   x4 = cfr[adl+4] ^ tep[4+8]; x5 = cfr[adl+5] ^ tep[5+8];		\
   x6 = cfr[adl+6] ^ tep[6+8]; x7 = cfr[adl+7] ^ tep[7+8];		\
-  transP( x7 ^ (y7   =      cfr[adr+7] ^ tep[7]),			\
-	  x6 ^ (xy56 = x5 ^ cfr[adr+6] ^ tep[6]),			\
-	  x5 ^ (y5   =      cfr[adr+5] ^ tep[5]),			\
-	  x4 ^ (xy34 = x3 ^ cfr[adr+4] ^ tep[4]),			\
-	  x3 ^ (y3   =      cfr[adr+3] ^ tep[3]),			\
-	  x2 ^ (xy12 = x1 ^ cfr[adr+2] ^ tep[2]),			\
-	  x1 ^ (y1   =      cfr[adr+1] ^ tep[1]),			\
-	  x0 ^ (xy70 = x7 ^ cfr[adr+0] ^ tep[0]),			\
+  csc_transP( x7 ^ (y7   =      cfr[adr+7] ^ tep[7]),			\
+	      x6 ^ (xy56 = x5 ^ cfr[adr+6] ^ tep[6]),			\
+	      x5 ^ (y5   =      cfr[adr+5] ^ tep[5]),			\
+	      x4 ^ (xy34 = x3 ^ cfr[adr+4] ^ tep[4]),			\
+	      x3 ^ (y3   =      cfr[adr+3] ^ tep[3]),			\
+	      x2 ^ (xy12 = x1 ^ cfr[adr+2] ^ tep[2]),			\
+	      x1 ^ (y1   =      cfr[adr+1] ^ tep[1]),			\
+	      x0 ^ (xy70 = x7 ^ cfr[adr+0] ^ tep[0]),			\
 	  cfr[adl+7], cfr[adl+6], cfr[adl+5], cfr[adl+4],		\
 	  cfr[adl+3], cfr[adl+2], cfr[adl+1], cfr[adl+0] );		\
-  transP( x6 ^ y7, xy56, x4 ^ y5, xy34,					\
-	  x2 ^ y3, xy12, x0 ^ y1, xy70,					\
+  csc_transP( x6 ^ y7, xy56, x4 ^ y5, xy34,					\
+   	      x2 ^ y3, xy12, x0 ^ y1, xy70,					\
 	  cfr[adr+7], cfr[adr+6], cfr[adr+5], cfr[adr+4],		\
 	  cfr[adr+3], cfr[adr+2], cfr[adr+1], cfr[adr+0] );		\
   tep += 16;
 
 
   // global initializations
-  memcpy( &subkey[0], &key[1], sizeof(subkey[0]) );
-  memcpy( &subkey[1], &key[0], sizeof(subkey[1]) );
+  memcpy( &(*subkey)[0], &key[1], sizeof((*subkey)[0]) );
+  memcpy( &(*subkey)[1], &key[0], sizeof((*subkey)[1]) );
   int hs = 0;
 
   // cache initialization
-  subkey[2][56] = subkey[2][48] = subkey[2][40] = subkey[2][32] = subkey[2][24] = _0;
-  subkey[2][16] = subkey[2][ 8] = subkey[2][ 0] = _1;
+  (*subkey)[2][56] = (*subkey)[2][48] = 
+  (*subkey)[2][40] = (*subkey)[2][32] = (*subkey)[2][24] = _0;
+  (*subkey)[2][16] = (*subkey)[2][ 8] = (*subkey)[2][ 0] = _1;
   tcp = &csc_tabc[0][8];
-  skp = &subkey[2][1];
-  skp1 = &subkey[1][8];
+  skp = &(*subkey)[2][1];
+  skp1 = &(*subkey)[1][8];
   {
   for( int n=7; n; n--,tcp+=8,skp1+=8,skp++ )
-    transP( skp1[7] ^ tcp[7], skp1[6] ^ tcp[6], skp1[5] ^ tcp[5], skp1[4] ^ tcp[4],
+    csc_transP( 
+            skp1[7] ^ tcp[7], skp1[6] ^ tcp[6], skp1[5] ^ tcp[5], skp1[4] ^ tcp[4],
 	    skp1[3] ^ tcp[3], skp1[2] ^ tcp[2], skp1[1] ^ tcp[1], skp1[0] ^ tcp[0],
 	    skp[56], skp[48], skp[40], skp[32], skp[24], skp[16], skp[ 8], skp[ 0] );
   }
-
-  ulong *totwiddle[6][7*(1+3)+1];
-  ulong tp1[4][8], tp2[4][8];
 
   // bit 0 : average of 11.41 bits to twiddle
   // bit 1 : average of 11.12 bits to twiddle
@@ -147,25 +202,25 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   for( int i=2; i<8; i++ ) {
     u8 x = keyB[7-i] ^ csc_tabp[7-i]; x = csc_tabp[x] ^ csc_tabp[x ^ (1<<6)];
     int ntt = 0;
-    totwiddle[i-2][ntt++] = &subkey[1][i*8+6];
+    (*totwiddle)[i-2][ntt++] = &(*subkey)[1][i*8+6];
     for( int j=0; j<8; j++ ) {
       if( x & (1<<j) ) {
 	unsigned n = j*8+i;
-	totwiddle[i-2][ntt++] = &subkey[2][n];
-	totwiddle[i-2][ntt++] = &tp1[n/16][n & 7];
+	(*totwiddle)[i-2][ntt++] = &(*subkey)[2][n];
+	(*totwiddle)[i-2][ntt++] = &(*tp1)[n/16][n & 7];
 	if( (n & 15) <= 7 )
-	  totwiddle[i-2][ntt++] = &tp2[n/16][n & 15];
+	  (*totwiddle)[i-2][ntt++] = &(*tp2)[n/16][n & 15];
 	else {
-	  totwiddle[i-2][ntt++] = &tp2[n/16][(n+1) & 7];
+	  (*totwiddle)[i-2][ntt++] = &(*tp2)[n/16][(n+1) & 7];
 	  if( n & 1 )
-	    totwiddle[i-2][ntt++] = &tp1[n/16][(n+1) & 7];
+	    (*totwiddle)[i-2][ntt++] = &(*tp1)[n/16][(n+1) & 7];
 	}
       }
     }
-    totwiddle[i-2][ntt] = NULL;
+    (*totwiddle)[i-2][ntt] = NULL;
   }
 
-  skp = &subkey[2][0];
+  skp = &(*subkey)[2][0];
   {
   for( int n=0; n<4; n++ ) {
     x0 = msg[n*16+8+0] ^ skp[0+8]; x1 = msg[n*16+8+1] ^ skp[1+8];
@@ -173,19 +228,19 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
     x4 = msg[n*16+8+4] ^ skp[4+8]; x5 = msg[n*16+8+5] ^ skp[5+8];
     x6 = msg[n*16+8+6] ^ skp[6+8]; x7 = msg[n*16+8+7] ^ skp[7+8];
 
-    tp1[n][7] = x7 ^ (y7 = msg[n*16+7] ^ skp[7]);
-    tp1[n][6] = x6 ^ (tp2[n][6] = x5 ^ msg[n*16+6] ^ skp[6]);
-    tp1[n][5] = x5 ^ (y5 = msg[n*16+5] ^ skp[5]);
-    tp1[n][4] = x4 ^ (tp2[n][4] = x3 ^ msg[n*16+4] ^ skp[4]);
-    tp1[n][3] = x3 ^ (y3 = msg[n*16+3] ^ skp[3]);
-    tp1[n][2] = x2 ^ (tp2[n][2] = x1 ^ msg[n*16+2] ^ skp[2]);
-    tp1[n][1] = x1 ^ (y1 = msg[n*16+1] ^ skp[1]);
-    tp1[n][0] = x0 ^ (tp2[n][0] = x7 ^ msg[n*16+0] ^ skp[0]);
+    (*tp1)[n][7] = x7 ^ (y7 = msg[n*16+7] ^ skp[7]);
+    (*tp1)[n][6] = x6 ^ ((*tp2)[n][6] = x5 ^ msg[n*16+6] ^ skp[6]);
+    (*tp1)[n][5] = x5 ^ (y5 = msg[n*16+5] ^ skp[5]);
+    (*tp1)[n][4] = x4 ^ ((*tp2)[n][4] = x3 ^ msg[n*16+4] ^ skp[4]);
+    (*tp1)[n][3] = x3 ^ (y3 = msg[n*16+3] ^ skp[3]);
+    (*tp1)[n][2] = x2 ^ ((*tp2)[n][2] = x1 ^ msg[n*16+2] ^ skp[2]);
+    (*tp1)[n][1] = x1 ^ (y1 = msg[n*16+1] ^ skp[1]);
+    (*tp1)[n][0] = x0 ^ ((*tp2)[n][0] = x7 ^ msg[n*16+0] ^ skp[0]);
 
-    tp2[n][7] = x6 ^ y7;
-    tp2[n][5] = x4 ^ y5;
-    tp2[n][3] = x2 ^ y3;
-    tp2[n][1] = x0 ^ y1;
+    (*tp2)[n][7] = x6 ^ y7;
+    (*tp2)[n][5] = x4 ^ y5;
+    (*tp2)[n][3] = x2 ^ y3;
+    (*tp2)[n][1] = x0 ^ y1;
 
     skp += 16;
   }
@@ -216,12 +271,13 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
     APPLY_Me( 24, 56);
 
     // ROUNDS 2..8
-    skp = &subkey[3][0];
-    skp1 = &subkey[2][0];
+    skp = &(*subkey)[3][0];
+    skp1 = &(*subkey)[2][0];
     tcp = &csc_tabc[1][0];
     for( int sk=7; sk; sk-- ) {
       for( int n=8; n; n--,tcp+=8,skp1+=8,skp++ )
-	transP( skp1[7] ^ tcp[7], skp1[6] ^ tcp[6], skp1[5] ^ tcp[5], skp1[4] ^ tcp[4],
+	csc_transP( 
+	        skp1[7] ^ tcp[7], skp1[6] ^ tcp[6], skp1[5] ^ tcp[5], skp1[4] ^ tcp[4],
 		skp1[3] ^ tcp[3], skp1[2] ^ tcp[2], skp1[1] ^ tcp[1], skp1[0] ^ tcp[0],
 		skp[56], skp[48], skp[40], skp[32], skp[24], skp[16], skp[ 8], skp[ 0] );
       skp -= 8;
@@ -246,7 +302,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
     ulong result = _1;
     {
     for( int n=0; n<8; n++,tcp+=8,skp1+=8,skp++ ) {
-      transP( skp1[7] ^ tcp[7], skp1[6] ^ tcp[6], skp1[5] ^ tcp[5], skp1[4] ^ tcp[4],
+      csc_transP( skp1[7] ^ tcp[7], skp1[6] ^ tcp[6], skp1[5] ^ tcp[5], skp1[4] ^ tcp[4],
 	      skp1[3] ^ tcp[3], skp1[2] ^ tcp[2], skp1[1] ^ tcp[1], skp1[0] ^ tcp[0],
 	      skp[56], skp[48], skp[40], skp[32], skp[24], skp[16], skp[ 8], skp[ 0] );
       result &= ~(cipher[56+n] ^ cfr[56+n] ^ skp[56] ^ skp[56-128]); if( !result ) goto stepper;
@@ -259,36 +315,36 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
       result &= ~(cipher[ 0+n] ^ cfr[ 0+n] ^ skp[ 0] ^ skp[ 0-128]); if( !result ) goto stepper;
     }
     }
-    memcpy( &key[0], &subkey[1], sizeof(key[0]) );
-  //memcpy( &key[1], &subkey[0], sizeof(key[1]) );
+    memcpy( &key[0], &(*subkey)[1], sizeof(key[0]) );
+  //memcpy( &key[1], &(*subkey)[0], sizeof(key[1]) );
     return result;
 
   stepper:
     // increment the key in gray order
     hs++;
     // bits 6
-    if( hs & (1 << 0) ) { //subkey[1][22] = ~subkey[1][22];
-      for( ulong **p = &totwiddle[0][0]; *p; p++ ) **p ^= _1;
+    if( hs & (1 << 0) ) { //(*subkey)[1][22] = ~subkey[1][22];
+      for( ulong **p = &(*totwiddle)[0][0]; *p; p++ ) **p ^= _1;
       continue;
     }
-    if( hs & (1 << 1) ) { //subkey[1][30] = ~subkey[1][30];
-      for( ulong **p = &totwiddle[1][0]; *p; p++ ) **p ^= _1;
+    if( hs & (1 << 1) ) { //(*subkey)[1][30] = ~(*subkey)[1][30];
+      for( ulong **p = &(*totwiddle)[1][0]; *p; p++ ) **p ^= _1;
       continue;
     }
-    if( hs & (1 << 2) ) { //subkey[1][38] = ~subkey[1][38];
-      for( ulong **p = &totwiddle[2][0]; *p; p++ ) **p ^= _1;
+    if( hs & (1 << 2) ) { //(*subkey)[1][38] = ~(*subkey)[1][38];
+      for( ulong **p = &(*totwiddle)[2][0]; *p; p++ ) **p ^= _1;
       continue;
     }
-    if( hs & (1 << 3) ) { //subkey[1][46] = ~subkey[1][46];
-      for( ulong **p = &totwiddle[3][0]; *p; p++ ) **p ^= _1;
+    if( hs & (1 << 3) ) { //(*subkey)[1][46] = ~(*subkey)[1][46];
+      for( ulong **p = &(*totwiddle)[3][0]; *p; p++ ) **p ^= _1;
       continue;
     }
-    if( hs & (1 << 4) ) { //subkey[1][54] = ~subkey[1][54];
-      for( ulong **p = &totwiddle[4][0]; *p; p++ ) **p ^= _1;
+    if( hs & (1 << 4) ) { //(*subkey)[1][54] = ~(*subkey)[1][54];
+      for( ulong **p = &(*totwiddle)[4][0]; *p; p++ ) **p ^= _1;
       continue;
     }
-    if( hs & (1 << 5) ) { //subkey[1][62] = ~subkey[1][62];
-      for( ulong **p = &totwiddle[5][0]; *p; p++ ) **p ^= _1;
+    if( hs & (1 << 5) ) { //(*subkey)[1][62] = ~(*subkey)[1][62];
+      for( ulong **p = &(*totwiddle)[5][0]; *p; p++ ) **p ^= _1;
       continue;
     }
     break;
