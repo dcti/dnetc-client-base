@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.129 1999/12/02 05:15:03 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.130 1999/12/04 15:58:47 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -28,14 +28,11 @@ return "@(#)$Id: problem.cpp,v 1.129 1999/12/02 05:15:03 cyp Exp $"; }
 #include "problem.h"  //ourselves
 #if (CLIENT_OS == OS_RISCOS)
 #include "../platforms/riscos/riscos_x86.h"
-extern "C" void riscos_upcall_6(void);
 #endif
 
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
 
-/* ------------------------------------------------------------- */
-
-#undef PIPELINE_COUNT //obsolete
+/* ------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_X86)
   extern "C" u32 rc5_unit_func_486( RC5UnitWork * , u32 iterations );
@@ -47,127 +44,603 @@ extern "C" void riscos_upcall_6(void);
   extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_k6_mmx( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
-#elif (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
-  #if (CLIENT_OS == OS_AIX)
-    extern "C" s32 crunch_allitnil( RC5UnitWork *work, u32 iterations);
-    extern "C" s32 crunch_lintilla( RC5UnitWork *work, u32 iterations);
-    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-  #elif (CLIENT_OS == OS_WIN32) //NT PPC has poor assembly
-    #define HAVE_ANSI2RG_UNIT_FUNC
-    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-  #else
-    extern "C" s32 rc5_unit_func_g1( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
-    extern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
-    extern "C" s32 rc5_unit_func_vec( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
-  #endif
-#elif (CLIENT_CPU == CPU_POWER) //CPU_POWER must always come _after_ CPU_POWERPC
-  #define HAVE_ANSI2RG_UNIT_FUNC
-  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-#elif (CLIENT_CPU == CPU_68K)
-  #if defined(__GCC__) || defined(__GNUC__) /* hpux, next, linux, sun3 */
-    #define RC5_SINGLE_STEPPER
-    #define HAVE_ONLY_SINGLE_PIPELINE //the default is 2
-    extern "C" u32 rc5_unit_func( RC5UnitWork * ); //rc5/68k/crunch.68k.gcc.s
-  #elif (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)
-    extern "C" __asm u32 rc5_unit_func_000_030
-      ( register __a0 RC5UnitWork *, register __d0 unsigned long iterations );
-    extern "C" __asm u32 rc5_unit_func_040_060
-      ( register __a0 RC5UnitWork *, register __d0 unsigned long iterations );
-  #else
-    #define RC5_SINGLE_STEPPER
-    #define HAVE_ONLY_SINGLE_PIPELINE //the default is 2
-    #include "../rc5/rc5ansi1-b2.cpp"
-  #endif
 #elif (CLIENT_CPU == CPU_ARM)
   extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * , unsigned long t);
   extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * , unsigned long t);
   extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * , unsigned long t);
-#elif (CLIENT_CPU == CPU_SPARC)
-  #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
-    #define HAVE_ONLY_SINGLE_PIPELINE //the default is 2
-    //rc5/ultra/rc5-ultra-crunch.cpp
-    extern "C" u32 rc5_unit_func_ultrasparc_crunch( register RC5UnitWork * , u32 iterations);
-  #else
-    #define HAVE_ANSI2RG_UNIT_FUNC
-    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-  #endif
+#elif (CLIENT_CPU == CPU_S390)
+  //rc5/ansi/2-rg.c
+  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+#elif (CLIENT_CPU == CPU_PA_RISC)
+  // rc5/parisc/parisc.cpp encapulates parisc.s, 2 pipelines
+  extern "C" u32 rc5_parisc_unit_func( RC5UnitWork *, u32 );
+#elif (CLIENT_CPU == CPU_88K) //OS_DGUX
+  //rc5/ansi/2-rg.c
+  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
 #elif (CLIENT_CPU == CPU_MIPS)
   #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX)
-    #define HAVE_ANSI2RG_UNIT_FUNC
-    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-  #elif (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX)
+    //rc5/ansi/2-rg.c
+    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SINIX)
     //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
-    extern "C" u32 rc5_unit_func_mips_crunch( register RC5UnitWork *, u32 iterations );
+    extern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 );
   #else
     #error "What's up, Doc?"
   #endif
+#elif (CLIENT_CPU == CPU_SPARC)
+  #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
+    //rc5/ultra/rc5-ultra-crunch.cpp
+    extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
+  #else
+    //rc5/ansi/2-rg.c
+    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+  #endif
+#elif (CLIENT_CPU == CPU_68K)
+  #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)
+    extern "C" __asm u32 rc5_unit_func_000_030
+        ( register __a0 RC5UnitWork *, register __d0 unsigned long );
+    extern "C" __asm u32 rc5_unit_func_040_060
+        ( register __a0 RC5UnitWork *, register __d0 unsigned long );
+  #elif defined(__GCC__) || defined(__GNUC__) /* hpux, next, linux, sun3 */
+    // rc5/68k/rc5_68k_crunch.c around rc5/68k/crunch.68k.gcc.s
+    extern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
+  #else
+    // rc5/ansi/rc5ansi1-b2.cpp
+    extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
+  #endif
+#elif (CLIENT_CPU == CPU_VAX)
+  // rc5/ansi/rc5ansi1-b2.cpp
+  extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
+#elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+  #if (CLIENT_CPU == CPU_POWER)
+    // rc5/ansi/2-rg.c
+    extern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *, u32, void *);
+  #endif /* not else ! */
+  #if (CLIENT_CPU == CPU_POWERPC)
+    #if (CLIENT_OS == OS_WIN32) //NT has poor PPC assembly
+      // rc5/ansi/2-rg.c
+      extern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *, u32, void *);
+      #define rc5_unit_func_g2_g3  rc5_ansi_rg_unified_form
+      #define rc5_unit_func_g1     rc5_unit_func_g2_g3
+      #define rc5_unit_func_vec    rc5_unit_func_g2_g3
+    #elif (CLIENT_OS == OS_AIX)
+      extern "C" u32 rc5_unit_func_g1( RC5UnitWork *, u32 *, void *);
+      extern "C" u32 rc5_unit_func_g2_g3( RC5UnitWork *, u32 *, void *);
+      #define rc5_unit_func_vec    rc5_unit_func_g2_g3
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_BEOS)
+      // Be OS isn't supported on 601 machines
+      // There is no 601 PPC board for the Amiga
+      extern "C" u32 rc5_unit_func_g2_g3( RC5UnitWork *, u32 *, void *);
+      #define rc5_unit_func_g1     rc5_unit_func_g2_g3
+      #define rc5_unit_func_vec    rc5_unit_func_g2_g3
+    #else
+      extern "C" s32 rc5_unit_func_g1( RC5UnitWork *, u32 *, void *);
+      extern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *, u32 *, void *);
+      extern "C" s32 rc5_unit_func_vec( RC5UnitWork *, u32 *, void *);
+    #endif
+  #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
   #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
-    #include <machine/cpuconf.h>
     #error these cores are missing the 'u32 iterations' argument.
     extern u32 rc5_alpha_osf_ev4( RC5UnitWork * );
     extern u32 rc5_alpha_osf_ev5( RC5UnitWork * );
   #elif (CLIENT_OS == OS_WIN32) /* asm */
     extern "C" u32 rc5_unit_func( RC5UnitWork *, unsigned long iterations );
   #else
-     extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, unsigned long /* NOT u32 */);
+    extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, unsigned long /* NOT u32 */);
   #endif
-#elif (CLIENT_CPU == CPU_S390)
-  #define HAVE_ANSI2RG_UNIT_FUNC
-  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-#elif (CLIENT_CPU == CPU_PA_RISC) /* hppa */
-  #define RC5_SINGLE_STEPPER
-  #include "../rc5/parisc/parisc.cpp" /* encap for parisc.s, 2 pipelines */
-#elif (CLIENT_CPU == CPU_88K) //OS_DGUX
-  #define HAVE_ANSI2RG_UNIT_FUNC
-  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-#elif (CLIENT_CPU == CPU_VAX)
-  #define RC5_SINGLE_STEPPER
-  #define HAVE_ONLY_SINGLE_PIPELINE //the default is 2
-  #include "../rc5/rc5ansi1-b2.cpp"
 #else
-  #error "How did you get here?"  
+  #error "How did you get here?" 
+#endif    
+
+/* ------------------------------------------------------------- */
+
+#if defined(HAVE_DES_CORES)
+#if (CLIENT_CPU == CPU_ARM)
+   extern "C" u32 des_unit_func_arm( RC5UnitWork * , unsigned long );
+   extern "C" u32 des_unit_func_strongarm( RC5UnitWork * , unsigned long );
+#elif (CLIENT_CPU == CPU_ALPHA) 
+   #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
+     extern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 nbbits );
+     extern u32 des_alpha_osf_ev5( RC5UnitWork * , u32 nbbits );
+   #else
+     extern "C" u32 des_unit_func_alpha_dworz( RC5UnitWork * , u32 nbbits );
+   #endif
+#elif (CLIENT_CPU == CPU_X86)
+   extern u32 p1des_unit_func_p5( RC5UnitWork * , u32 nbbits );
+   extern u32 p1des_unit_func_pro( RC5UnitWork * , u32 nbbits );
+   extern u32 p2des_unit_func_p5( RC5UnitWork * , u32 nbbits );
+   extern u32 p2des_unit_func_pro( RC5UnitWork * , u32 nbbits );
+   extern u32 des_unit_func_mmx( RC5UnitWork * , u32 nbbits, char *coremem );
+   extern u32 des_unit_func_slice( RC5UnitWork * , u32 nbbits );
+#else
+   extern u32 des_unit_func( RC5UnitWork * , u32 nbbits );
+#endif
 #endif
 
-/* ------------------------------------------------------------------- */
-#ifdef HAVE_DES_CORES
-  #if (CLIENT_CPU == CPU_X86)
-    extern u32 p1des_unit_func_p5( RC5UnitWork * , u32 nbbits );
-    extern u32 p1des_unit_func_pro( RC5UnitWork * , u32 nbbits );
-    extern u32 p2des_unit_func_p5( RC5UnitWork * , u32 nbbits );
-    extern u32 p2des_unit_func_pro( RC5UnitWork * , u32 nbbits );
-    extern u32 des_unit_func_mmx( RC5UnitWork * , u32 nbbits, char *coremem );
-    extern u32 des_unit_func_slice( RC5UnitWork * , u32 nbbits );
- #elif (CLIENT_CPU == CPU_ARM)
-    extern "C" u32 des_unit_func_arm( RC5UnitWork * , unsigned long );
-    extern "C" u32 des_unit_func_strongarm( RC5UnitWork * , unsigned long );
- #elif (CLIENT_CPU == CPU_ALPHA)
-    #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
-    extern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 nbbits );
-    extern u32 des_alpha_osf_ev5( RC5UnitWork * , u32 nbbits );
+/* ------------------------------------------------------------- */
+
+#if defined(HAVE_OGR_CORES)
+  extern CoreDispatchTable *ogr_get_dispatch_table(void);
+#endif  
+
+/* ------------------------------------------------------------- */
+
+#if defined(HAVE_CSC_CORES)
+  extern "C" s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *iterations, void *membuff );
+  extern "C" s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *iterations, void *membuff );
+  extern "C" s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
+  extern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
+#endif
+
+/* ------------------------------------------------------------- */
+static int __core_picker(Problem *problem, unsigned int contestid)
+{                               /* must return a valid core selection # */
+  int coresel;
+  problem->pipeline_count = 2; /* most cases */
+  problem->client_cpu = CLIENT_CPU; /* usual case */
+
+  coresel = selcoreGetSelectedCoreForContest( contestid );
+  if (coresel < 0)
+    return -1;
+
+  if (contestid == RC5) /* avoid switch */
+  {
+    #if (CLIENT_CPU == CPU_ARM)
+    if (coresel == 0)
+    {
+      problem->rc5_unit_func = rc5_unit_func_arm_1;
+      problem->pipeline_count = 1;
+    }
+    else if (coresel == 1)
+    {
+      problem->rc5_unit_func = rc5_unit_func_arm_2;
+      problem->pipeline_count = 2;
+    }
+    else /* (coresel == 2, default) */
+    {
+      problem->rc5_unit_func = rc5_unit_func_arm_3;
+      problem->pipeline_count = 3;
+      coresel = 2;
+    }
+    #elif (CLIENT_CPU == CPU_S390)
+    {
+      //rc5/ansi/2-rg.c
+      //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+      problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
+      problem->pipeline_count = 2;
+      coresel = 0;
+    }
+    #elif (CLIENT_CPU == CPU_PA_RISC)
+    {
+      // /rc5/parisc/parisc.cpp encapulates parisc.s, 2 pipelines
+      //xtern "C" u32 rc5_parisc_unit_func( RC5UnitWork *, u32 );
+      problem->rc5_unit_func = rc5_parisc_unit_func;
+      problem->pipeline_count = 2;
+      coresel = 0;
+    }
+    #elif (CLIENT_CPU == CPU_88K) //OS_DGUX
+    {
+      //rc5/ansi/2-rg.c
+      //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+      problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
+      problem->pipeline_count = 2;
+      coresel = 0;
+    }
+    #elif (CLIENT_CPU == CPU_MIPS)
+    {
+      #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX)
+      {
+        //rc5/ansi/2-rg.c
+        //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+        problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
+        problem->pipeline_count = 2;
+        coresel = 0;
+      }
+      #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SINIX)
+      {
+        //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
+        //xtern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 );
+        problem->rc5_unit_func = rc5_unit_func_mips_crunch;
+        problem->pipeline_count = 2;
+        coresel = 0;
+      }  
+      #else
+        #error "What's up, Doc?"
+      #endif
+    }
+    #elif (CLIENT_CPU == CPU_SPARC)
+    {
+      #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
+      {
+        //rc5/ultra/rc5-ultra-crunch.cpp
+        //xtern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
+        rc5_unit_func = rc5_unit_func_ultrasparc_crunch;
+        problem->pipeline_count = 1;
+        coresel = 0;
+      }
+      #else
+      {
+        //rc5/ansi/2-rg.c
+        //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+        rc5_unit_func = rc5_ansi_2_rg_unit_func;
+        problem->pipeline_count = 2;
+        coresel = 0;
+      }
+      #endif
+    }
+    #elif (CLIENT_CPU == CPU_68K)
+    {
+      #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)
+      {
+        //xtern "C" __asm u32 rc5_unit_func_000_030( register __a0 RC5UnitWork *, register __d0 unsigned long );
+        //xtern "C" __asm u32 rc5_unit_func_040_060( register __a0 RC5UnitWork *, register __d0 unsigned long );
+        if (coresel == 1 )
+        {
+          problem->pipeline_count = 2;
+          problem->rc5_unit_func = rc5_unit_func_040_060;
+          coresel = 1;
+        }
+        else
+        {
+          problem->pipeline_count = 2;
+          problem->rc5_unit_func = rc5_unit_func_000_030;
+          coresel = 0;
+        }
+      }
+      #elif defined(__GCC__) || defined(__GNUC__) /* hpux, next, linux, sun3 */
+      {
+        // rc5/68k/rc5_68k_crunch.c around rc5/68k/crunch.68k.gcc.s
+        //xtern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
+        problem->rc5_unit_func = rc5_68k_crunch_unit_func;
+        problem->pipeline_count = 1; //the default is 2
+        coresel = 0;
+      }
+      #else 
+      {
+        // rc5/ansi/rc5ansi1-b2.cpp
+        //xtern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
+        problem->rc5_unit_func = rc5_ansi_1_b2_rg_unit_func;
+        problem->pipeline_count = 1; //the default is 2
+        coresel = 0;
+      }
+      #endif
+    }
+    #elif (CLIENT_CPU == CPU_VAX)
+    {
+      // rc5/ansi/rc5ansi1-b2.cpp
+      //xtern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
+      problem->rc5_unit_func = rc5_ansi_1_b2_rg_unit_func;
+      problem->pipeline_count = 1; //the default is 2
+      coresel = 0;
+    }
+    #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+    {
+      #if (CLIENT_CPU == CPU_POWER) && !defined(_AIXALL) //not hybrid
+      {
+        // rc5/ansi/2-rg.c
+        //xtern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *, u32, void *);
+        problem->unit_func = rc5_ansi_rg_unified_form ; //POWER cpu
+        problem->pipeline_count = 1; //unified form doesn't need this
+      }
+      #else //((CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL))
+      { 
+        #if (CLIENT_OS == OS_WIN32)
+          // rc5/ansi/2-rg.c
+          //xtern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *, u32, void *);
+          //#define rc5_unit_func_g2_g3  rc5_ansi_rg_unified_form
+          //#define rc5_unit_func_g1     rc5_unit_func_g2_g3
+          //#define rc5_unit_func_vec    rc5_unit_func_g2_g3
+        #elif (CLIENT_OS == OS_AIX)
+          //xtern "C" u32 rc5_unit_func_g1( RC5UnitWork *, u32 *, void *);
+          //xtern "C" u32 rc5_unit_func_g2_g3( RC5UnitWork *, u32 *, void *);
+          //#define rc5_unit_func_vec   rc5_unit_func_g2_g3
+        #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_BEOS)
+          // Be OS isn't supported on 601 machines
+          // There is no 601 PPC board for the Amiga
+          //xtern "C" u32 rc5_unit_func_g2_g3( RC5UnitWork *, u32 *, void *);
+          //#define rc5_unit_func_g1 rc5_unit_func_g2_g3
+          //#define rc5_unit_func_vec rc5_unit_func_g2_g3
+        #else
+          //xtern "C" s32 rc5_unit_func_g1( RC5UnitWork *, u32 *, void *);
+          //xtern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *, u32 *, void *);
+          //xtern "C" s32 rc5_unit_func_vec( RC5UnitWork *, u32 *, void *);
+        #endif
+        int gotcore = 0;
+
+        problem->client_cpu = CPU_POWERPC;
+        #if defined(_AIXALL) //ie POWER/POWERPC hybrid client
+        if (((GetProcessorType(1) & 0x02000000) != 0)) //ARCH_IS_POWER
+        {
+          problem->client_cpu = CPU_POWER;
+          // our coresel numbers have different meanings, depending on what
+          // architecture we are running on. By default, the coresel values
+          // (ie, what selcore returns) are the same as "normal" PPC.
+          if (coresel == 0) //core #0 is "RG AIXALL" on POWER, 
+          {                 //           and lintilla on PPC
+            // rc5/ansi/2-rg.c
+            problem->unit_func = rc5_ansi_rg_unified_form ; //POWER cpu
+            problem->pipeline_count = 1; //unified form doesn't need this
+            gotcore = 1;
+            coresel = 0;
+          }
+        }
+        #endif
+        if (!gotcore && coresel == 0)     // G1 (PPC 601)
+        {  
+          problem->unit_func = rc5_unit_func_g1;
+          problem->pipeline_count = 1; //unified form doesn't need this
+          gotcore = 1;
+        }  
+        else if (!gotcore && coresel == 2) // G4 (PPC 7500)
+        {
+          problem->unit_func = rc5_unit_func_vec;
+          problem->pipeline_count = 1; //unified form doesn't need this
+          gotcore = 1;
+        }
+        if (!gotcore)                     // the rest (G2/G3)
+        {
+          problem->unit_func = rc5_unit_func_g2_g3;
+          problem->pipeline_count = 1; //unified form doesn't need this
+          coresel = 1;
+        }
+      }
+      #endif
+    }
+    #elif (CLIENT_CPU == CPU_X86)
+    {
+      static int ismmx = -1;
+      if (coresel < 0 || coresel > 5)
+        coresel = 0;
+      if (ismmx == -1)
+      {
+        long det = GetProcessorType(1 /* quietly */);
+        ismmx = (det >= 0) ? (det & 0x100) : 0;
+      }
+      problem->pipeline_count = 2; /* most cases */
+      if (coresel == 1)   // Intel 386/486
+      {
+        problem->rc5_unit_func = rc5_unit_func_486;
+        #if defined(SMC) 
+        if (problem->threadindex == 0)
+          problem->rc5_unit_func =  rc5_unit_func_486_smc;
+        #endif
+      }
+      else if (coresel == 2) // Ppro/PII
+        problem->rc5_unit_func = rc5_unit_func_p6;
+      else if (coresel == 3) // 6x86(mx)
+        problem->rc5_unit_func = rc5_unit_func_6x86;
+      else if (coresel == 4) // K5
+        problem->rc5_unit_func = rc5_unit_func_k5;
+      else if (coresel == 5) // K6/K6-2/K7
+      {
+        problem->rc5_unit_func = rc5_unit_func_k6;
+        #if defined(MMX_RC5_AMD)
+        if (ismmx)
+        { 
+          problem->rc5_unit_func = rc5_unit_func_k6_mmx;
+          problem->pipeline_count = 4;
+        }
+        #endif
+      }
+      else // Pentium (0/6) + others
+      {
+        problem->rc5_unit_func = rc5_unit_func_p5;
+        #if defined(MMX_RC5)
+        if (ismmx)
+        { 
+          problem->rc5_unit_func = rc5_unit_func_p5_mmx;
+          problem->pipeline_count = 4; // RC5 MMX core is 4 pipelines
+        }
+        #endif
+        coresel = 0;
+      }
+    }
+    #elif (CLIENT_CPU == CPU_ALPHA)
+    {
+      #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
+      {
+        //#error these cores are missing the 'u32 iterations' argument.
+        //xtern u32 rc5_alpha_osf_ev4( RC5UnitWork * );
+        //xtern u32 rc5_alpha_osf_ev5( RC5UnitWork * );
+        if (coresel == 1) /* EV5, EV56, PCA56, EV6 */
+        {
+          problem->pipeline_count = 2;
+          problem->rc5_unit_func = rc5_alpha_osf_ev5;
+        }
+        else // EV3_CPU, EV4_CPU, LCA4_CPU, EV45_CPU and default
+        {
+          problem->pipeline_count = 2;
+          problem->rc5_unit_func = rc5_alpha_osf_ev4; 
+          coresel = 0;
+        }
+      }
+      #elif (CLIENT_OS == OS_WIN32) /* asm */
+      {
+        //xtern "C" u32 rc5_unit_func( RC5UnitWork *, unsigned long iterations );
+        problem->rc5_unit_func = ::rc5_unit_func;
+        problem->pipeline_count = 2;
+        coresel = 0;
+      }
+      #else
+      {
+        //xtern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, unsigned long /* NOT u32 */);
+        problem->rc5_unit_func = rc5_unit_func_axp_bmeyer;
+        problem->pipeline_count = 2;
+        coresel = 0;
+      }
+      #endif
+    }
     #else
-    extern "C" u32 des_unit_func_alpha_dworz( RC5UnitWork * , u32 nbbits );
+    {
+      #error "How did you get here?"  
+    }
     #endif
- #else
-    extern u32 des_unit_func( RC5UnitWork * , u32 nbbits );
- #endif
-#endif
-/* ------------------------------------------------------------------- */
-#ifdef HAVE_CSC_CORES
-extern "C" {
-s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *iterations, void *membuff );
-s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *iterations, void *membuff );
-s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
-s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
+    return coresel;
+  }
+  
+  /* ================================================================== */
+  
+  #ifdef HAVE_DES_CORES
+  if (contestid == DES)
+  {
+    #if (CLIENT_CPU == CPU_ARM)
+    {
+      //xtern "C" u32 des_unit_func_arm( RC5UnitWork * , unsigned long );
+      //xtern "C" u32 des_unit_func_strongarm( RC5UnitWork * , unsigned long );
+      if (coresel == 0)
+        problem->des_unit_func = des_unit_func_arm;
+      else /* (coresel == 1, default) */
+      {
+        problem->des_unit_func = des_unit_func_strongarm;
+        coresel = 1;
+      }
+    }
+    #elif (CLIENT_CPU == CPU_ALPHA) 
+    {
+      #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
+      {
+        //xtern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 nbbits );
+        //xtern u32 des_alpha_osf_ev5( RC5UnitWork * , u32 nbbits );
+        if (coresel == 1) /* EV5, EV56, PCA56, EV6 */
+          problem->des_unit_func = des_alpha_osf_ev5;
+        else // EV3_CPU, EV4_CPU, LCA4_CPU, EV45_CPU and default
+          problem->des_unit_func = des_alpha_osf_ev4;
+      }
+      #else
+      {
+        //xtern "C" u32 des_unit_func_alpha_dworz( RC5UnitWork * , u32 nbbits );
+        problem->des_unit_func = des_unit_func_alpha_dworz;
+      }
+      #endif
+    }
+    #elif (CLIENT_CPU == CPU_X86)
+    {
+      //xtern u32 p1des_unit_func_p5( RC5UnitWork * , u32 nbbits );
+      //xtern u32 p1des_unit_func_pro( RC5UnitWork * , u32 nbbits );
+      //xtern u32 p2des_unit_func_p5( RC5UnitWork * , u32 nbbits );
+      //xtern u32 p2des_unit_func_pro( RC5UnitWork * , u32 nbbits );
+      //xtern u32 des_unit_func_mmx( RC5UnitWork * , u32 nbbits, char *coremem );
+      //xtern u32 des_unit_func_slice( RC5UnitWork * , u32 nbbits );
+      u32 (*slicit)(RC5UnitWork *,u32,char *) = 
+                   ((u32 (*)(RC5UnitWork *,u32,char *))0);
+      #if defined(CLIENT_SUPPORTS_SMP)
+      slicit = (u32 (*)(RC5UnitWork *,u32,char *))des_unit_func_slice; //kwan
+      #endif
+      #if defined(MMX_BITSLICER) 
+      {
+        static int ismmx = -1;
+        if (ismmx == -1)
+        {
+          long det = GetProcessorType(1 /* quietly */);
+          ismmx = (det >= 0) ? (det & 0x100) : 0;
+        }
+        if (ismmx) 
+          slicit = des_unit_func_mmx;
+      }
+      #endif  
+      if (slicit && coresel > 1) /* not standard bryd and not ppro bryd */
+      {                /* coresel=2 is valid only if we have a slice core */
+        coresel = 2;
+        problem->des_unit_func = slicit;
+      }
+      else 
+      {
+        #if defined(CLIENT_SUPPORTS_SMP) 
+        // bryd is not thread safe, so make sure that when 
+        // running benchmark/test asychronously (ie from a gui), 
+        // we pick a core that isn't in use.
+        unsigned int thrindex = problem->threadindex;
+        if (thrindex == 0 && !problem->threadindex_is_valid)
+        { /* !threadindex_is_valid==not probman controlled==benchmark/test*/
+          while (GetProblemPointerFromIndex(thrindex))
+            thrindex++;
+        }
+        #endif
+        if (coresel == 1) /* movzx bryd */
+        {
+          problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p1des_unit_func_pro;
+          #if defined(CLIENT_SUPPORTS_SMP) 
+          if (thrindex > 0)  /* not first thread */
+          {
+            if (thrindex == 1)  /* second thread */
+              problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p2des_unit_func_pro;
+            else if (thrindex == 2) /* third thread */
+              problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p1des_unit_func_p5;
+            else if (thrindex == 3) /* fourth thread */
+              problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p2des_unit_func_p5;
+            else                    /* fifth...nth thread */
+              problem->des_unit_func = slicit;
+          }
+          #endif /* if defined(CLIENT_SUPPORTS_SMP)  */
+        }
+        else             /* normal bryd */
+        {
+          coresel = 0;
+          problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p1des_unit_func_p5;
+          #if defined(CLIENT_SUPPORTS_SMP) 
+          if (thrindex > 0)  /* not first thread */
+          {
+            if (thrindex == 1)  /* second thread */
+              problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p2des_unit_func_p5;
+            else if (thrindex == 2) /* third thread */
+              problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p1des_unit_func_pro;
+            else if (thrindex == 3) /* fourth thread */
+              problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p2des_unit_func_pro;
+            else                    /* fifth...nth thread */
+              problem->des_unit_func = slicit;
+          }
+          #endif /* if defined(CLIENT_SUPPORTS_SMP)  */
+        }
+      }
+    }
+    #endif
+    return coresel;
+  }
+  #endif /* #ifdef HAVE_DES_CORES */
+
+  /* ================================================================== */
+
+  #if defined(HAVE_OGR_CORES)
+  if (contestid == OGR)
+  {
+    return 0;
+  }
+  #endif
+
+  /* ================================================================== */
+
+  #ifdef HAVE_CSC_CORES
+  if( contestid == CSC ) // CSC
+  {
+    //xtern "C" s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *iterations, void *membuff );
+    //xtern "C" s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *iterations, void *membuff );
+    //xtern "C" s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
+    //xtern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
+
+    problem->unit_func = csc_unit_func_1k_i; /* default */
+    switch( coresel ) 
+    {
+      case 0 : problem->unit_func = csc_unit_func_6b_i;
+               break;
+      case 1 : problem->unit_func = csc_unit_func_6b;
+               break;
+      default: coresel = 2;
+      case 2 : problem->unit_func = csc_unit_func_1k_i;
+               break;
+      case 3 : problem->unit_func = csc_unit_func_1k;
+               break;
+    }
+    return coresel;
+  }
+  #endif /* #ifdef HAVE_CSC_CORES */
+
+  /* ================================================================== */
+
+  return -1; /* core selection failed */
 }
-#endif
-/* ------------------------------------------------------------------- */
-#ifdef HAVE_OGR_CORES
-extern CoreDispatchTable *ogr_get_dispatch_table(void);
-#endif
-/* ------------------------------------------------------------------- */
 
-
+/* ------------------------------------------------------------- */
 
 Problem::Problem(long _threadindex /* defaults to -1L */)
 {
@@ -179,49 +652,55 @@ Problem::Problem(long _threadindex /* defaults to -1L */)
      how objects are allocated/how rc5unitwork is addressed, so let me know.
                                                        -cyp Jun 14 1999
   */
-  RC5UnitWork *w = &rc5unitwork;
-  unsigned long ww = ((unsigned long)w);
-  #if (CLIENT_CPU == CPU_ALPHA) /* needs to be longword aligned */
-  ww &= 0x7; /* (sizeof(longword)-1); */
-  #else
-  ww &= (sizeof(int)-1); /* int alignment */
-  #endif        
-  if (ww) 
+  
   {
-    Log("rc5unitwork for problem %d is misaligned!\n", threadindex);
-    RaiseExitRequestTrigger();
-    return;
-  }  
+    RC5UnitWork *w = &rc5unitwork;
+    unsigned long ww = ((unsigned long)w);
+  
+    #if (CLIENT_CPU == CPU_ALPHA) /* sizeof(long) can be either 4 or 8 */
+    ww &= 0x7; /* (sizeof(longword)-1); */
+    #else
+    ww &= (sizeof(int)-1); /* int alignment */
+    #endif        
+    if (ww) 
+    {
+      Log("rc5unitwork for problem %d is misaligned!\n", threadindex);
+      RaiseExitRequestTrigger();
+      return;
+    }  
+  }
 //LogScreen("Problem created. threadindex=%u\n",threadindex);
 
   initialized = 0;
   started = 0;
   
-#ifdef STRESS_THREADS_AND_BUFFERS 
-  static int runlevel = 0;
-  if (runlevel != -12345)
+  #ifdef STRESS_THREADS_AND_BUFFERS 
   {
-    if ((++runlevel) != 1)
+    static int runlevel = 0;
+    if (runlevel != -12345)
     {
-      --runlevel;
-      return;
+      if ((++runlevel) != 1)
+      {
+        --runlevel;
+        return;
+      }
+      RaisePauseRequestTrigger();
+      LogScreen("Warning! STRESS_THREADS_AND_BUFFERS is defined.\n"
+                "Are you sure that the client is pointing at\n"
+                "a test proxy? If so, type 'yes': ");
+      char getyes[10];
+      ConInStr(getyes,4,0);
+      ClearPauseRequestTrigger();
+      if (strcmpi(getyes,"yes") != 0)
+      {
+        runlevel = +12345;
+        RaiseExitRequestTrigger();
+        return;
+      }
+      runlevel = -12345;
     }
-    RaisePauseRequestTrigger();
-    LogScreen("Warning! STRESS_THREADS_AND_BUFFERS is defined.\n"
-              "Are you sure that the client is pointing at\n"
-              "a test proxy? If so, type 'yes': ");
-    char getyes[10];
-    ConInStr(getyes,4,0);
-    ClearPauseRequestTrigger();
-    if (strcmpi(getyes,"yes") != 0)
-    {
-      runlevel = +12345;
-      RaiseExitRequestTrigger();
-      return;
-    }
-    runlevel = -12345;
   }
-#endif    
+  #endif    
 }
 
 /* ------------------------------------------------------------------- */
@@ -229,8 +708,10 @@ Problem::Problem(long _threadindex /* defaults to -1L */)
 Problem::~Problem()
 {
   started = 0; // nothing to do. - suppress compiler warning
-#if (CLIENT_OS == OS_RISCOS)
-  if (GetProblemIndexFromPointer(this) == 1)
+
+#if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
+  if (GetNumberOfDetectedProcessors() > 1 && /* have x86 card */
+      GetProblemIndexFromPointer(this) == 1)
   {
     _kernel_swi_regs r;
     r.r[0] = 0;
@@ -344,311 +825,6 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
 
 /* ------------------------------------------------------------------- */
 
-static int __core_picker(Problem *problem, unsigned int contestid)
-{                               /* must return a valid core selection # */
-  int coresel;
-  problem->pipeline_count = 2; /* most cases */
-
-  coresel = selcoreGetSelectedCoreForContest( contestid );
-  if (coresel < 0)
-    return -1;
-
-  if (contestid == RC5) /* avoid switch */
-  {
-    #if (CLIENT_CPU == CPU_ARM)
-    if (coresel == 0)
-    {
-      problem->rc5_unit_func = rc5_unit_func_arm_1;
-      problem->pipeline_count = 1;
-    }
-    else if (coresel == 1)
-    {
-      problem->rc5_unit_func = rc5_unit_func_arm_2;
-      problem->pipeline_count = 2;
-    }
-    else /* (coresel == 2, default) */
-    {
-      coresel = 2;
-      problem->rc5_unit_func = rc5_unit_func_arm_3;
-      problem->pipeline_count = 3;
-    }
-    #elif (CLIENT_CPU == CPU_68K)
-    {
-      if (coresel == 4 || coresel == 5 ) // there is no 68050, so type5=060
-        problem->rc5_unit_func = rc5_unit_func_040_060;
-      else //if (coresel == 0 || coresel == 1 || coresel == 2 || coresel == 3)
-      {
-        problem->rc5_unit_func = rc5_unit_func_000_030;
-        coresel = 0;
-      }
-      problem->pipeline_count = 2;
-    }
-    #elif (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
-    {
-      #if defined(_AIXALL) //ie POWER/POWERPC hybrid client
-      //our coresel numbers have different meanings, depending on what
-      //architecture we are running on. By default, the coresel values
-      //(ie, what selcore returns) are the same as "normal" PPC.
-      if (coresel == 0) //core #0 is "RG AIXALL" on POWER, and lintilla on PPC
-      {                 //there is no #1 core on POWER.
-        if (GetProcessorType(1) == 0) //this is POWER!
-          coresel = 2; //that was easy. Only one usable core.
-      }
-      #endif
-      
-      if (coresel == 0) // G1 (PPC 601)
-      {  
-        #if (CLIENT_OS == OS_AIX)
-          problem->rc5_unit_func = crunch_allitnil;
-          problem->pipeline_count = 1;
-        #elif ((CLIENT_OS != OS_AMIGAOS) && (CLIENT_OS != OS_BEOS) && \
-           (CLIENT_OS != OS_WIN32))
-          problem->rc5_unit_func = rc5_unit_func_g1;  // G1 (PPC 601)
-          problem->pipeline_count = 1;
-        #else
-          coresel = 1; //fall through
-        #endif
-      }
-      if (coresel == 2) // POWER or G4
-      {
-        #if defined(_AIXALL)
-          problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ; //POWER cpu
-          problem->pipeline_count = 2;
-        #elif (CLIENT_OS == OS_MACOS)
-          problem->rc5_unit_func = rc5_unit_func_vec; // G4
-          problem->pipeline_count = 1;
-        #else
-          coresel = 1; //fall through
-        #endif
-      }
-      if (coresel != 0 && coresel != 2)
-      {
-        #if (CLIENT_OS == OS_AIX)
-          problem->rc5_unit_func = crunch_lintilla;
-          problem->pipeline_count = 1;
-        #elif (CLIENT_OS == OS_WIN32) //win32 has poor assembly
-          problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
-          problem->pipeline_count = 2;
-        #else
-          problem->rc5_unit_func = rc5_unit_func_g2_g3; // G2-G3 (PPC 603-750)
-          problem->pipeline_count = 1;
-        #endif
-        coresel = 1;
-      }
-    }
-    #elif (CLIENT_CPU == CPU_POWER) //POWER must always come _after_ POWERPC
-    {
-      problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ; //POWER cpu
-      problem->pipeline_count = 2;
-    }
-    #elif (CLIENT_CPU == CPU_X86)
-    {
-      static int ismmx = -1;
-      if (coresel < 0 || coresel > 5)
-        coresel = 0;
-      if (ismmx == -1)
-      {
-        long det = GetProcessorType(1 /* quietly */);
-        ismmx = (det >= 0) ? (det & 0x100) : 0;
-      }
-      problem->pipeline_count = 2; /* most cases */
-      if (coresel == 1)   // Intel 386/486
-      {
-        problem->x86_unit_func = rc5_unit_func_486;
-        #if defined(SMC) 
-        if (problem->threadindex == 0)
-          problem->x86_unit_func =  rc5_unit_func_486_smc;
-        #endif
-      }
-      else if (coresel == 2) // Ppro/PII
-        problem->x86_unit_func = rc5_unit_func_p6;
-      else if (coresel == 3) // 6x86(mx)
-        problem->x86_unit_func = rc5_unit_func_6x86;
-      else if (coresel == 4) // K5
-        problem->x86_unit_func = rc5_unit_func_k5;
-      else if (coresel == 5) // K6/K6-2/K7
-      {
-        problem->x86_unit_func = rc5_unit_func_k6;
-        #if defined(MMX_RC5_AMD)
-        if (ismmx)
-        { 
-          problem->x86_unit_func = rc5_unit_func_k6_mmx;
-          problem->pipeline_count = 4;
-        }
-        #endif
-      }
-      else // Pentium (0/6) + others
-      {
-        problem->x86_unit_func = rc5_unit_func_p5;
-        #if defined(MMX_RC5)
-        if (ismmx)
-        { 
-          problem->x86_unit_func = rc5_unit_func_p5_mmx;
-          problem->pipeline_count = 4; // RC5 MMX core is 4 pipelines
-        }
-        #endif
-        coresel = 0;
-      }
-    }
-    #elif (CLIENT_CPU == CPU_ALPHA)
-    {
-      problem->pipeline_count = 2;
-      #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
-      if (coresel == 1) /* EV5, EV56, PCA56, EV6 */
-        problem->rc5_unit_func = rc5_alpha_osf_ev5;
-      else // EV3_CPU, EV4_CPU, LCA4_CPU, EV45_CPU and default
-        problem->rc5_unit_func = rc5_alpha_osf_ev4; 
-      #elif (CLIENT_OS == OS_WIN32)
-        problem->rc5_unit_func = ::rc5_unit_func;
-      #else
-        problem->rc5_unit_func = rc5_unit_func_axp_bmeyer;
-      #endif
-    }
-    #else
-      #if defined(HAVE_ONLY_SINGLE_PIPELINE) //the default is 2
-      problem->pipeline_count = 1;
-      #endif
-    #endif
-    return coresel;
-  }
-  
-  #ifdef HAVE_DES_CORES
-  if (contestid == DES)
-  {
-    #if (CLIENT_CPU == CPU_ARM)
-    {
-      if (coresel == 0)
-        problem->des_unit_func = des_unit_func_arm;
-      else /* (coresel == 1, default) */
-      {
-        problem->des_unit_func = des_unit_func_strongarm;
-        coresel = 1;
-      }
-    }
-    #elif (CLIENT_CPU == CPU_ALPHA) 
-    {
-      #if (CLIENT_OS == OS_DEC_UNIX)
-      if (coresel == 1) /* EV5, EV56, PCA56, EV6 */
-        problem->des_unit_func = des_alpha_osf_ev5;
-      else // EV3_CPU, EV4_CPU, LCA4_CPU, EV45_CPU and default
-        problem->des_unit_func = des_alpha_osf_ev4;
-      #elif (CLIENT_OS == OS_WIN32)
-        problem->des_unit_func = des_unit_func_alpha_dworz;
-      #else
-        problem->des_unit_func = des_unit_func_alpha_dworz;
-      #endif
-    }
-    #elif (CLIENT_CPU == CPU_X86)
-    {
-      u32 (*slicit)(RC5UnitWork *,u32) = ((u32 (*)(RC5UnitWork *,u32))0);
-      #if defined(CLIENT_SUPPORTS_SMP)
-      slicit = des_unit_func_slice; //kwan
-      #endif
-      #if defined(MMX_BITSLICER) 
-      {
-        static int ismmx = -1;
-        if (ismmx == -1)
-        {
-          long det = GetProcessorType(1 /* quietly */);
-          ismmx = (det >= 0) ? (det & 0x100) : 0;
-        }
-        if (ismmx) 
-          slicit = (u32 (*)(RC5UnitWork *,u32))des_unit_func_mmx;
-      }
-      #endif  
-      if (slicit && coresel > 1) /* not standard bryd and not ppro bryd */
-      {                /* coresel=2 is valid only if we have a slice core */
-        coresel = 2;
-        problem->x86_unit_func = slicit;
-      }
-      else 
-      {
-        #if defined(CLIENT_SUPPORTS_SMP) 
-        // bryd is not thread safe, so make sure that when 
-        // running benchmark/test asychronously (ie from a gui), 
-        // we pick a core that isn't in use.
-        unsigned int thrindex = problem->threadindex;
-        if (thrindex == 0 && !problem->threadindex_is_valid)
-        { /* !threadindex_is_valid==not probman controlled==benchmark/test*/
-          while (GetProblemPointerFromIndex(thrindex))
-            thrindex++;
-        }
-        #endif
-        if (coresel == 1) /* movzx bryd */
-        {
-          problem->x86_unit_func = p1des_unit_func_pro;
-          #if defined(CLIENT_SUPPORTS_SMP) 
-          if (thrindex > 0)  /* not first thread */
-          {
-            if (thrindex == 1)  /* second thread */
-              problem->x86_unit_func = p2des_unit_func_pro;
-            else if (thrindex == 2) /* third thread */
-              problem->x86_unit_func = p1des_unit_func_p5;
-            else if (thrindex == 3) /* fourth thread */
-              problem->x86_unit_func = p2des_unit_func_p5;
-            else                    /* fifth...nth thread */
-              problem->x86_unit_func = slicit;
-          }
-          #endif /* if defined(CLIENT_SUPPORTS_SMP)  */
-        }
-        else             /* normal bryd */
-        {
-          coresel = 0;
-          problem->x86_unit_func = p1des_unit_func_p5;
-          #if defined(CLIENT_SUPPORTS_SMP) 
-          if (thrindex > 0)  /* not first thread */
-          {
-            if (thrindex == 1)  /* second thread */
-              problem->x86_unit_func = p2des_unit_func_p5;
-            else if (thrindex == 2) /* third thread */
-              problem->x86_unit_func = p1des_unit_func_pro;
-            else if (thrindex == 3) /* fourth thread */
-              problem->x86_unit_func = p2des_unit_func_pro;
-            else                    /* fifth...nth thread */
-              problem->x86_unit_func = slicit;
-          }
-          #endif /* if defined(CLIENT_SUPPORTS_SMP)  */
-        }
-      }
-    }
-    #endif
-    return coresel;
-  }
-  #endif /* #ifdef HAVE_DES_CORES */
-
-  #if defined(HAVE_OGR_CORES)
-  if (contestid == OGR)
-  {
-    return 0;
-  }
-  #endif
-
-  #ifdef HAVE_CSC_CORES
-  if( contestid == CSC ) // CSC
-  {
-    problem->pipeline_count = 1;
-    problem->unit_func = csc_unit_func_1k_i; /* default */
-    switch( coresel ) 
-    {
-      case 0 : problem->unit_func = csc_unit_func_6b_i;
-               break;
-      case 1 : problem->unit_func = csc_unit_func_6b;
-               break;
-      default: coresel = 2;
-      case 2 : problem->unit_func = csc_unit_func_1k_i;
-               break;
-      case 3 : problem->unit_func = csc_unit_func_1k;
-               break;
-    }
-    return coresel;
-  }
-  #endif /* #ifdef HAVE_CSC_CORES */
-
-  return -1; /* core selection failed */
-}
-
-/* ------------------------------------------------------------------- */
-
 int Problem::LoadState( ContestWork * work, unsigned int contestid, 
                               u32 _iterations, int /* was _cputype */ )
 {
@@ -673,6 +849,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   startpermille = permille = 0;
   loaderflags = 0;
   contest = contestid;
+  client_cpu = CLIENT_CPU; /* usual case */
   tslice = _iterations;
   coresel = __core_picker(this, contestid );
   if (coresel < 0 || 
@@ -684,9 +861,13 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   switch (contest) 
   {
     case RC5:
+    #if defined(HAVE_DES_CORES)
     case DES:
+    #endif
+    #if defined(HAVE_CSC_CORES)
     case CSC: // HAVE_CSC_CORES
-
+    #endif
+    {
       // copy over the state information
       contestwork.crypto.key.hi = ( work->crypto.key.hi );
       contestwork.crypto.key.lo = ( work->crypto.key.lo );
@@ -730,12 +911,10 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
                         ((double)(contestwork.crypto.iterations.lo)))) );
       }     
       break;
-
+    }
+    #if defined(HAVE_OGR_CORES)
     case OGR:
-
-      #if !defined(HAVE_OGR_CORES)
-      return -1;
-      #else
+    {
       contestwork.ogr = work->ogr;
       contestwork.ogr.nodes.lo = 0;
       contestwork.ogr.nodes.hi = 0;
@@ -754,13 +933,16 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
                       + contestwork.ogr.workstub.stub.diffs[contestwork.ogr.workstub.stub.length+1]/10;
       }
       break;
-      #endif
-
+    }  
+    #endif
+    default:  
+      return -1;
   }
 
   //---------------------------------------------------------------
-#if 0 //(CLIENT_OS == OS_RISCOS)
-  if (threadindex == 1 /*x86 thread*/)
+#if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
+  if (threadindex == 1 &&                  /* reserved for x86 thread*/
+      GetNumberOfDetectedProcessors() > 1) /* have x86 card */
   {
     RC5PCstruct rc5pc;
     _kernel_oserror *err;
@@ -779,7 +961,9 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
     rc5pc.iterations.hi = contestwork.iterations.hi;
     rc5pc.iterations.lo = contestwork.iterations.lo;
     rc5pc.timeslice = tslice;
-  
+
+    client_cpu = CPU_X86;
+ 
     err = _kernel_swi(RC5PC_On,&r,&r);
     if (err)
       LogScreen("Failed to start x86 card");
@@ -832,38 +1016,6 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
 
 /* ------------------------------------------------------------- */
 
-#if defined(RC5_SINGLE_STEPPER)
-u32 rc5_singlestep_core_wrapper( RC5UnitWork * rc5unitwork, u32 iterations )
-{                                
-  u32 kiter = 0;
-  int keycount = iterations;
-  int pipeline_count = 2; /* the default */
-  #if defined(HAVE_ONLY_SINGLE_PIPELINE) //the default is 2
-  pipeline_count = 1; 
-  #endif
-  
-  //LogScreenf ("rc5unitwork = %08X:%08X (%X)\n", rc5unitwork.L0.hi, rc5unitwork.L0.lo, keycount);
-  while ( keycount-- ) // iterations ignores the number of pipelines
-  {
-    u32 result = rc5_unit_func( rc5unitwork );
-    if ( result )
-    {
-      kiter += result-1;
-      break;
-    }
-    else
-    {
-      // "mangle-increment" the key number by the number of pipelines
-      __IncrementKey (&(rc5unitwork->L0), pipeline_count, 0 );
-      kiter += pipeline_count;
-    }
-  }
-  return kiter;
-}  
-#endif
-
-/* ------------------------------------------------------------- */
-
 int Problem::Run_RC5(u32 *iterationsP, int *resultcode)
 {
   u32 kiter = 0;
@@ -896,43 +1048,15 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
 
   iterations /= pipeline_count;
 
-  #if defined(RC5_SINGLE_STEPPER)
-    kiter = rc5_singlestep_core_wrapper( &rc5unitwork, iterations );
-  #elif (CLIENT_CPU == CPU_X86)
-    kiter = (*x86_unit_func)( &rc5unitwork, iterations );
-  #elif (CLIENT_CPU == CPU_MIPS) && \
-        (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX)
-    //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
-    kiter = rc5_unit_func_mips_crunch( &rc5unitwork, iterations );
-  #elif (CLIENT_CPU == CPU_SPARC) && \
-        (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
-    //rc5/ultra/rc5-ultra-crunch.cpp
-    kiter = rc5_unit_func_ultrasparc_crunch( &rc5unitwork, iterations);
-  #elif (CLIENT_CPU == CPU_68K)
-    kiter = (*rc5_unit_func)( &rc5unitwork, iterations );
-  #elif (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
-    #if (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_WIN32) \
-      || (CLIENT_OS == OS_BEOS) || (CLIENT_OS == AMIGAOS)
-    //lintilla or allitnill or ansi core  
-    kiter = (*rc5_unit_func)( &rc5unitwork, iterations );
-    #else //rc5_unit_func_g[*] wrappers around lintilla/allitnil
+  #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
+    kiter = (iterations*pipeline_count)-(*rc5_unit_func)(&rc5unitwork,iterations);
+  #elif (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC)
     kiter = iterations; 
-    *resultcode = (*rc5_unit_func)( &rc5unitwork,&kiter);
-    #endif
-  #elif (CLIENT_CPU == CPU_POWER) //POWER must always come _after_ PPC
-    kiter = (*rc5_unit_func)( &rc5unitwork, iterations );
-  #elif (CLIENT_CPU == CPU_ARM)
-    kiter = rc5_unit_func(&rc5unitwork, iterations);
-  #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-    kiter = (iterations*pipeline_count)-rc5_unit_func(&rc5unitwork,iterations);
-  #elif (CLIENT_CPU == CPU_ALPHA)
-    kiter = rc5_unit_func(&rc5unitwork, iterations);
-  #elif defined(HAVE_ANSI2RG_UNIT_FUNC)
-    kiter = rc5_ansi_2_rg_unit_func( &rc5unitwork, iterations );
+    *resultcode = (*unit_func)( &rc5unitwork, &kiter, core_membuffer );
   #else
-    #error "What's up, Doc?"                
+    kiter = (*rc5_unit_func)(&rc5unitwork, iterations);
   #endif
-
+  
   iterations *= pipeline_count;
   *iterationsP = iterations;
 
@@ -1069,44 +1193,43 @@ int Problem::Run_DES(u32 *iterationsP, int *resultcode)
   u32 iterations = *iterationsP;
   
   #if (CLIENT_CPU == CPU_X86)
-  u32 min_bits = 8;  /* bryd and kwan cores only need a min of 256 */
-  u32 max_bits = 24; /* these are the defaults if !MEGGS && !DES_ULTRA */
-
-  #if defined(MMX_BITSLICER)
-  if (((u32 (*)(RC5UnitWork *,u32, char *))(x86_unit_func) == des_unit_func_mmx))
   {
-    #if defined(BITSLICER_WITH_LESS_BITS)
-    min_bits = 16;
-    #else
-    min_bits = 20;
+    u32 nbits = 1;
+    u32 min_bits = 8;  /* bryd and kwan cores only need a min of 256 */
+    u32 max_bits = 24; /* these are the defaults if !MEGGS && !DES_ULTRA */
+    #if defined(MMX_BITSLICER)
+    {
+      if (des_unit_func == des_unit_func_mmx)
+      {
+        #if defined(BITSLICER_WITH_LESS_BITS)
+        min_bits = 16;
+        #else
+        min_bits = 20;
+        #endif
+        max_bits = min_bits; /* meggs driver has equal MIN and MAX */
+      }
+    }
     #endif
-    max_bits = min_bits; /* meggs driver has equal MIN and MAX */
+    while (iterations > (1ul << nbits)) nbits++;
+    if (nbits < min_bits) nbits = min_bits;
+    else if (nbits > max_bits) nbits = max_bits;
+    iterations = (1ul << nbits);
+    kiter = (*des_unit_func)( &rc5unitwork, nbits, core_membuffer );
   }
-  #endif
-  u32 nbits=1; while (iterations > (1ul << nbits)) nbits++;
-
-  if (nbits < min_bits) nbits = min_bits;
-  else if (nbits > max_bits) nbits = max_bits;
-  iterations = (1ul << nbits);
-
-  #if defined(MMX_BITSLICER)
-  if (((u32 (*)(RC5UnitWork *,u32, char *))(x86_unit_func) == des_unit_func_mmx))
-    kiter = des_unit_func_mmx( &rc5unitwork, nbits, core_membuffer );
-  else
-  #endif
-  kiter = (*x86_unit_func)( &rc5unitwork, nbits );
   #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-  u32 nbits = 20;  // FROM des-slice-dworz.cpp
-  iterations = (1ul << nbits);
-  kiter = des_unit_func ( &rc5unitwork, nbits );
+  {
+    u32 nbits = 20;  // from des-slice-dworz.cpp
+    iterations = (1ul << nbits);
+    kiter = des_unit_func ( &rc5unitwork, nbits );
+  }
   #else
-  u32 nbits=1; while (iterations > (1ul << nbits)) nbits++;
-
-  if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
-  else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
-  iterations = (1ul << nbits);
-
-  kiter = des_unit_func ( &rc5unitwork, nbits );
+  {
+    u32 nbits=1; while (iterations > (1ul << nbits)) nbits++;
+    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
+    else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
+    iterations = (1ul << nbits);
+    kiter = des_unit_func ( &rc5unitwork, nbits );
+  }
   #endif
 
   *iterationsP = iterations;
@@ -1370,14 +1493,17 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
 int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
 {
   prob_index = prob_index; /* possibly unused */
+
+  #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
+  if (prob_index == 1 && /* thread number reserved for x86 card */
+     contest_i != RC5 && /* RISC OS x86 thread only supports RC5 */
+     GetNumberOfDetectedProcessors() > 1) /* have x86 card */
+    return 0;
+  #endif
   switch (contest_i)
   {
     case RC5: 
     {
-      #if (CLIENT_OS == OS_RISCOS) /* RISC OS x86 thread only supports RC5 */
-      if (prob_index == 1 && contest_i != RC5)
-        return 0;
-      #endif
       return 1;
     }
     case DES:
