@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.104 1999/04/17 07:38:37 gregh Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.105 1999/04/18 15:04:57 patrick Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -71,12 +71,16 @@ extern "C" void riscos_upcall_6(void);
   extern u32 des_unit_func_mmx( RC5UnitWork * , u32 nbbits, char *coremem );
   extern u32 des_unit_func_slice( RC5UnitWork * , u32 nbbits );
 #elif (CLIENT_OS == OS_AIX)     // this has to stay BEFORE CPU_POWERPC
+  #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWER)
   extern "C" s32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice );
+  #endif
+  #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWERPC)
   extern "C" s32 crunch_allitnil( RC5UnitWork *work, u32 iterations);
   extern "C" s32 crunch_lintilla( RC5UnitWork *work, u32 iterations);
+  #endif
 
   extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
-#elif (CLIENT_CPU == CPU_POWERPC) 
+#elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX) 
   #if (CLIENT_OS == OS_WIN32)   // NT PPC doesn't have good assembly
   extern u32 rc5_unit_func( RC5UnitWork *  ); //rc5ansi2-rg.cpp
   #else
@@ -394,38 +398,38 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   #endif
 #endif
 #if (CLIENT_OS == OS_AIX)
-  #ifdef _AIXALL
   static int detectedtype = -1;
   if (detectedtype == -1)
     detectedtype = GetProcessorType(1 /* quietly */);
-
+ 
+  #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWERPC)
   switch (detectedtype) {
-  case 0:                  // PPC 601
+  case 1:                  // PPC 601
     rc5_unit_func = crunch_allitnil;
     pipeline_count = 1;
     break;
-  case 1:                  // other PPC
+  case 2:                  // other PPC
     rc5_unit_func = crunch_lintilla;
     pipeline_count = 1;
     break;
-  case 2:                  // that's POWER
+  case 0:                  // that's POWER
   default:
+  #ifdef _AIXALL
     rc5_unit_func = rc5_ansi_2_rg_unit_func ;
     pipeline_count = 2;
+  #else			// no POWER support
+    rc5_unit_func = crunch_allitnil;
+    pipeline_count = 1;
+  #endif
     break;
   } /* endswitch */
   #elif (CLIENT_CPU == CPU_POWER)
-    rc5_unit_func = rc5_ansi_2_rg_unit_func;
-    pipeline_count = 2;
-  #elif (CLIENT_CPU == CPU_POWERPC)
-    pipeline_count = 1;
-    if (cputype == 0)
-      rc5_unit_func = crunch_allitnil;
-    else
-      rc5_unit_func = crunch_lintilla;
+  rc5_unit_func = rc5_ansi_2_rg_unit_func;
+  pipeline_count = 2;
+  #else
+    #error "Systemtype not supported"
   #endif
-// keep the next an ELIF !!!!
-#elif (CLIENT_CPU == CPU_POWERPC)
+#elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX)
   if (contest == RC5)
   {
     rc5_unit_func = crunch_lintilla;
@@ -726,7 +730,8 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
   #elif ((CLIENT_CPU == CPU_SPARC) && (ULTRA_CRUNCH == 1)) || \
         ((CLIENT_CPU == CPU_MIPS) && (MIPS_CRUNCH == 1)) 
     kiter = crunch( &rc5unitwork, timeslice );
-  #elif (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_POWERPC)
+  #elif (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_POWERPC) || \
+	(CLIENT_CPU == CPU_POWER)
     kiter = (*rc5_unit_func)( &rc5unitwork, timeslice );
   #elif (CLIENT_CPU == CPU_ARM)
     #if (CLIENT_OS == OS_RISCOS)
