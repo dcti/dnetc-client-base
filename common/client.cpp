@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.164  1998/11/17 04:39:33  silby
+// Gave GetBuildOrEnvDescription the fixing it was pining for.
+//
 // Revision 1.163  1998/11/16 22:31:09  cyp
 // Cleaned up banner(s) and made use of CLIENT_OS_NAME.
 //
@@ -98,7 +101,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.163 1998/11/16 22:31:09 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.164 1998/11/17 04:39:33 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -214,10 +217,10 @@ static const char *GetBuildOrEnvDescription(void)
   */
 
   #if ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
-  static buffer[64];
+  static char buffer[64];
   int major, minor;
   w32ConGetWinVersion(&major,&minor);
-  sprintf(buffer,"Running under Windows%s %u.%u", (major>20)?("NT"):(""), major%20, minor );
+  sprintf(buffer,"Running under Windows%s %u.%u", (major>20)?(" NT"):(""), major%20, minor );
   return buffer;
   #else
   return "";
