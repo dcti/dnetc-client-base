@@ -1347,6 +1347,12 @@ A:  This is a known problem; for now, simply buffer more blocks than you
 plan on needing. We will probably add a more exact count to future clients.
 There is no ETA at this time.
 
+Q:  What happens if my client finds the key?  Does it let me know or
+do anything special?
+
+A:  No, the client treats a success just like a normal block and flushes
+it during the next network transaction.
+
 12. Firewall support / Network protocol description
 ---------------------------------------------------
 
