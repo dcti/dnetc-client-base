@@ -2155,7 +2155,15 @@ PreferredIsDone1:
           if (strcmp(checkpoint_file[1],"none") != 0)
             unlink(checkpoint_file[1]);
 
-          //---------------------
+			 //---------------------
+			 // See if the request to quit after the completed block
+			 //---------------------
+			 if(exitcode == 1)
+				 {
+				 TimeToQuit=1; // Time to quit
+				 }
+
+			 //---------------------
           //now load another block for this contest
           //---------------------
 
@@ -2206,7 +2214,6 @@ PreferredIsDone1:
               }
             }
           }
-
 
           if (count < 0)
           {
