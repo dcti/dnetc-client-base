@@ -115,6 +115,7 @@ extern "C" {
     #define INCL_ERRORS             /* DOS error values */
     #define INCL_DOSMISC            /* DosQuerySysInfo() */
     #define INCL_WINWORKPLACE       /* Workplace shell objects */
+    #define INCL_VIO                /* OS/2 text graphics functions */
     #include <os2.h>
   #endif
   extern "C" {
