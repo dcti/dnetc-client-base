@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.2 2000/08/11 15:44:07 oliver Exp $
+ * $Id: ogr.cpp,v 1.1.2.3 2000/08/13 17:56:01 cyp Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,9 +16,10 @@
 #undef NO_BITOFLIST_OVER_MEMTABLE   /* the default is "no" */
 #endif
 
-/* optimization for machines with small or no data cache (< 128K) */
-/* no gain or loss for machines with big cache */
+/* opt for machines that have a small data cache or invalidate it often */
+/* (mostly) no gain or loss for idle machines with big cache */
 #if (defined(__PPC__) || defined(ASM_PPC)) || \
+  (defined(__WATCOMC__) && defined(__386__)) || \
   (defined(__GNUC__) && (defined(ASM_SPARC) || defined(ASM_ALPHA) \
                          || defined(ASM_X86) ))
   #define HAVE_REVERSE_FFS_INSN /* have 'ffs from highbit' instruction */
@@ -319,25 +320,38 @@ static int found_one(struct State *oState)
 #elif defined(ASM_ALPHA) && defined(__GNUC__)
   #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
-  { i = ~i; __asm__ ("cntlzw %0,%0" : : "r" (i)); return i+1; }
+  { i = ~i; __asm__ ("cntlzw %0,%0" : "=r"(i) : "0" (i)); return i+1; }
 #elif defined(ASM_SPARC) && defined(__GNUC__)    
   #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
-  { register int count; __asm__ ("scan %1,0,%0" : "r=" ((unsigned int)(~i))
-    : "r" ((unsigned int)(count)) );  return count+1; }
-#elif defined(ASM_X86) && defined(__GNUC__)
-  static __inline__ int LOOKUP_FIRSTBLANK(int t)
-  {
-    int s; t=~t; 
-     __asm__( "movl $33, %%ebx 
-              orl  %%ebx, %%ebx
-              bsrl %%eax, %%eax
-              jz   0f
-              subl %%eax, %%ebx
-              decl %%ebx
-              0:" : "=b"(s) : "a"(t) : "%eax", "%ebx", "cc");
-    return s;
-  }  
+  { register int count; __asm__ ("scan %1,0,%0" : "r=" (count)
+    : "r" ((unsigned int)(~i)) );  return count+1; }
+#elif defined(ASM_X86) && defined(__GNUC__) || \
+      defined(__386__) && defined(__WATCOMC__)
+  #if defined(__GNUC__)      
+    #define asm_lookup_first_0(result,input) \
+              __asm__("notl %1\n\t"     \
+		      "movl $33,%0\n\t" \
+		      "bsrl %1,%1\n\t"  \
+		      "jz   0f\n\t"     \
+		      "subl %1,%0\n\t"  \
+		      "decl %0\n\t"     \
+		      "0:"              \
+		      :"=r"(result), "=r"(input) : "1"(input) : "cc" );
+    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i) 
+    { register unsigned int s; asm_lookup_first_0(s,i); return s; }
+  #else /* WATCOMC */
+    int LOOKUP_FIRSTBLANK(unsigned int);
+    #pragma aux LOOKUP_FIRSTBLANK =  \
+                      "not  eax"     \
+		      "mov  edx,21h" \
+                      "bsr  eax,eax" \
+                      "jz   f0"      \
+                      "sub  edx,eax" \
+                      "decl edx"     \
+                      "f0:"          \
+		      value [edx] parm [eax] modify exact [eax edx] nomemory;
+  #endif
 #else
   #error FIRSTBLANK_OVER_MEMTABLE is not defined, and no code to match
 #endif
