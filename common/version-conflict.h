@@ -5,6 +5,20 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: version-conflict.h,v $
+// Revision 1.22.2.5  1998/12/28 15:55:08  remi
+// Synced with :
+//  Revision 1.28  1998/12/25 09:25:22  cyp
+//  voila! .423
+//
+//  Revision 1.27  1998/12/20 17:53:02  cyp
+//  .422: other things that go bump in the night. :)
+//
+//  Revision 1.26  1998/12/01 00:34:17  cyp
+//  Bump to 421.
+//
+//  Revision 1.25  1998/11/13 15:52:13  silby
+//  Bumping to 420.
+//
 // Revision 1.22.2.4  1998/11/15 15:39:07  remi
 // Fixed CLIENT_BUILD
 //
@@ -22,10 +36,10 @@
 
 #define CLIENT_CONTEST      71
 #define CLIENT_BUILD        02
-#define CLIENT_BUILD_FRAC   420
+#define CLIENT_BUILD_FRAC   423
 
-#define CLIENT_VERSIONSTRING    "v2.7102.420-TEST"
-#define CLIENT_VERSIONSTRING2   "2.7102.420-TEST"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7102.423-TEST"
+#define CLIENT_VERSIONSTRING2   "2.7102.423-TEST"        // no leading "v"
 
 #endif // _VERSION_H
 
