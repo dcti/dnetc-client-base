@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.62 1999/11/28 19:56:32 lyndon Exp $
+# @(#)$Id: configure,v 1.222.2.63 1999/11/28 21:33:06 lyndon Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -114,7 +114,7 @@ OPTS_GCC_SUN68K="$OPTS_GCC -O2 -DASM_68K -D_SUN68K_"
 
 #-- MIPS
 
-OPTS_CC_MIPS='-O2 -xansi -DASM_MIPS'
+OPTS_CC_MIPS="-n32 -O3 -Olimit=0 -xansi -DASM_MIPS"
 OPTS_GCC_MIPS="$OPTS_GCC -O6 -DASM_MIPS"
 OPTS_EGCS_MIPS="$OPTS_EGCS -Os -DASM_MIPS" 
 
@@ -381,8 +381,193 @@ case "$1" in
 
 ###### MIPS based platforms
 
+# IRIX w/MIPSpro compilers.
+#
+# The following targets generate builds targetted to specific
+# SGI platforms, taking into account CPU type, L1/L2 cache
+# sizes, etc. All builds are to the n32 ABI.
+#
+# Note that we lose out on a lot of optimization capability because
+# the dnetc code calls itself C++ when it's in fact C. Optimizing
+# C++ is much tougher for the compilers, but hey! cool is more
+# important than correct :-P
+#
+# The code currently compiles multithreaded, however I expect to
+# be able to get performance as good as (or better than) the
+# rc5 mips-crunch core by running single threaded and using the MIPSpro
+# compiler internal multithreading support against a generic ANSI core.
+# This will require Makefile modifications to allow us to compile
+# C code with the C compiler (vs. running it through the C++ front-end);
+# in order to get the optimizations only available to native C code.
+#
+# The targets assume MIPSpro compilers at release 7.2 or newer,
+# and an Irix 6.3 or newer build platform.
+#
+# Run "hinv -c processor" to see which binary is applicable for
+# your platform.
+#
+# lyndon@orthanc.ab.ca (Sun Nov 28 14:04:16 MST 1999)
+
+    *mips-cc-ip19)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip19 \
+			-DCLIENT_OS_NAME=\"Irix (IP19)\" \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip19"
+	;;
+
+    *mips-cc-ip20)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip20 \
+			-DCLIENT_OS_NAME=\"Irix (IP20)\" \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip20"
+	;;
+
+    *mips-cc-ip21)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip21 \
+			-DCLIENT_OS_NAME=\"Irix (IP21)\" \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip21"
+	;;
+
+    *mips-cc-ip22_4k)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip22_4k \
+			-DCLIENT_OS_NAME=\"Irix (IP22/R4K)" \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip22_4k"
+	;;
+
+    *mips-cc-ip22_5k)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip22_5k \
+			-DCLIENT_OS_NAME=\"Irix (IP22/R5K)\" \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip22_5k"
+	;;
+
+    *mips-cc-ip24)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip24 \
+			-DCLIENT_OS_NAME=\"Irix (IP24)\" \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip24"
+	;;
+
+    *mips-cc-ip25)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip25 \
+			-DCLIENT_OS_NAME=\"Irix (IP25)\" \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip25"
+	;;
+
+    *mips-cc-ip26)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip26 \
+			-DCLIENT_OS_NAME=\"Irix (IP26)\" \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip26"
+	;;
+
+    *mips-cc-ip27)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip27 \
+			-DCLIENT_OS_NAME=\"Irix (IP27)\" \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip27"
+	;;
+
+    *mips-cc-ip28)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip28 \
+			-DCLIENT_OS_NAME=\"Irix (IP28)\" \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip28"
+	;;
+
+    *mips-cc-ip30)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip30 \
+			-DCLIENT_OS_NAME=\"Irix (IP30)\" \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip30"
+	;;
+
+    *mips-cc-ip32_5k)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip32_5k \
+			-DCLIENT_OS_NAME=\"Irix (IP32/R5K)\" \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip32_5k"
+	;;
+
+    *mips-cc-ip32_10k)
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip32_10k \
+			-DCLIENT_OS_NAME=\"Irix (IP32/R10K)\" \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="irix6-mips-ip32_10k"
+	;;
+
+# END of MIPSpro targets.
+
 # If compiling on Irix 5 you must -D_irix5_ now to get the usleep()
-# wrapper.
+# replacement.
 
     *mips-linux)	# For Cobalt Qube - doesn't work yet - Peter
 	TARGET_CC="gcc"
