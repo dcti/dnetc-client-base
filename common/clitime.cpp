@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.51 2001/02/06 14:18:19 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.52 2001/03/20 19:59:55 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -31,9 +31,10 @@ extern "C" void _ReleaseSpinLock(long *);
   #include <sys/resource.h>
   #undef THREADS_HAVE_OWN_ACCOUNTING
   #if !defined(CLIENT_SUPPORTS_SMP) || \
+      defined(HAVE_MULTICRUNCH_VIA_FORK) || \
       (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
     // if threads have their own pid, then we can use getrusage() to
-    // obtain thread-time, otherwise resort to something else (eg gettimeofday)
+    // obtain thread-time, otherwise resort to something else
     #define THREADS_HAVE_OWN_ACCOUNTING
   #endif
 #endif
