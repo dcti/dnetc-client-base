@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.15 1999/09/18 18:02:29 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.16 1999/09/22 03:07:25 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -290,13 +290,15 @@ int Client::Main( int argc, const char *argv[] )
               TRACE_OUT((-1,"client.run\n"));
               restart = CheckRestartRequestTrigger();
             }
+            TRACE_OUT((0,"deinitialize logging\n"));
             DeinitializeLogging();
+            TRACE_OUT((0,"deinitialize console\n"));
             DeinitializeConsole();
           }
-          TRACE_OUT((0,"deinitializeconsole\n"));
+          TRACE_OUT((0,"deinitialize connectivity\n"));
           DeinitializeConnectivity(); //netinit.cpp
         }
-        TRACE_OUT((0,"deinitializeconnectivity\n"));
+        TRACE_OUT((0,"deinitialize triggers\n"));
         DeinitializeTriggers();
       }
     }
