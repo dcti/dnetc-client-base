@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.39  1998/12/29 09:27:50  dicamillo
+// For MacOS, add macConOut routine.
+//
 // Revision 1.38  1998/12/22 15:58:24  jcmichot
 // *** empty log message ***
 //
@@ -311,6 +314,7 @@ extern "C" {
   #include "mac_extras.h"
   #include <console.h>
   #include <Multiprocessing.h>
+  void macConOut(char *msg);
   void YieldToMain(char force_events);
   u32 GetTimesliceToUse(u32 contestid);
   void tick_sleep(unsigned long tickcount);
