@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.3 2003/01/04 10:25:41 pfeffi Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.4 2003/01/04 10:38:59 pfeffi Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -80,7 +80,7 @@ struct thread_param_block
     thread_t threadID;
   #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
     pthread_t threadID;
-  #elif (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN32)
     unsigned long threadID;
   #elif (CLIENT_OS == OS_NETWARE)
     long threadID;
@@ -90,6 +90,12 @@ struct thread_param_block
     thread_id threadID;
   #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
     MPTaskID threadID;
+  #elif (CLIENT_OS == OS_OS2)
+    #if defined(__EMX__)
+      int threadID;
+    #else
+      unsigned long threadID;
+    #endif
   #else
     int threadID;
   #endif
@@ -668,7 +674,7 @@ static int __StopThread( struct thread_param_block *thrparams )
       #elif (CLIENT_OS == OS_OS2)
       DosSetPriority( 2, PRTYC_REGULAR, 0, (ULONG)thrparams->threadID); /* thread to normal prio */
       if (!thrparams->hasexited)
-        DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
+        DosWaitThread( (PTID)&(thrparams->threadID), DCWW_WAIT);
       #elif (CLIENT_OS == OS_WIN32)
       while (!thrparams->hasexited)
         Sleep(100);
@@ -1009,7 +1015,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       }
       #elif (CLIENT_OS == OS_OS2)
       {
-        thrparams->threadID = _beginthread( Go_mt, NULL, 8192, (void *)thrparams );
+        thrparams->threadID = _beginthread( Go_mt, NULL, 32768, (void *)thrparams );
         success = ( thrparams->threadID != -1);
       }
       #elif (CLIENT_OS == OS_NETWARE)
