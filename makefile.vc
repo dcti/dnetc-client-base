@@ -80,7 +80,7 @@ RC5_LIBS = wsock32.lib advapi32.lib
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
 
 {$(RC5PATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
-	nasm -o $(@:/=\) -f coff -i $(RC5PATH:/=\)\nasm\ $(**:/=\)
+	nasm -o $(@:/=\) -f win32 -i $(RC5PATH:/=\)\nasm\ $(**:/=\)
 
 
 {$(DESPATH)}.cpp{$(OUTPUTPATH)}.obj:
