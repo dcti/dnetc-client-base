@@ -176,7 +176,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
     }
     if (!done)
     {
-      printf( "Unrecognized option '%s'\n"
+      printf( "\nUnrecognized option '%s'\n"
          "Press enter/space to display a list of valid command line\n"
          "options or press any other key to quit... ", unrecognized_option );
       int i = readkeypress();
@@ -231,8 +231,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
       break;
     }
   }
-  printf("\n");
-  clearscreen();
+  printf("\n\n");
   return;
 }
 #endif
