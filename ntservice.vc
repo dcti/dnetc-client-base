@@ -2,7 +2,7 @@
 # feel free to generalize to do Win32 Alpha as well
 # see http://www.distributed.net/
 
-EXENAME = rc5des.exe
+EXENAME = rc5desrv.exe
 OUTPUTPATH = output
 COMMONPATH = common
 DESPATH = des
@@ -10,7 +10,7 @@ RC5PATH = rc5
 PLATPATH = platforms
 
 OPTS_MSVC = -nologo -W3 -O1 -MT -I$(RC5PATH) -I$(DESPATH) \
-  -I$(COMMONPATH) -DPIPELINE_COUNT=2 -D_CPU_32BIT_ \
+  -I$(COMMONPATH) -D_CPU_32BIT_ \
   -DMULTITHREAD -D__WIN32__ -DNDEBUG -GR- -GX- -GA -GF \
   -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN -DWINNTSERVICE
 
@@ -39,10 +39,11 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/cpucheck.obj   \
 	$(OUTPUTPATH)/pathwork.obj   \
 	$(OUTPUTPATH)/cliident.obj   \
-        $(OUTPUTPATH)/logstuff.obj   \
-        $(OUTPUTPATH)/buffupd.obj    \
-        $(OUTPUTPATH)/triggers.obj   \
-        $(OUTPUTPATH)/des-slice-meggs.obj
+	$(OUTPUTPATH)/lurk.obj \
+	$(OUTPUTPATH)/logstuff.obj   \
+	$(OUTPUTPATH)/buffupd.obj    \
+	$(OUTPUTPATH)/des-slice-meggs.obj \
+	$(OUTPUTPATH)/triggers.obj   
 
 PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/rg-486.obj   \
@@ -56,8 +57,9 @@ PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/p1bdespro.obj  \
 	$(OUTPUTPATH)/p2bdespro.obj  \
 	$(OUTPUTPATH)/x86ident.obj  \
-        $(OUTPUTPATH)/sboxes-mmx.obj \
-        $(OUTPUTPATH)/deseval-meggs3-mmx.obj
+	$(OUTPUTPATH)/sboxes-mmx.obj \
+	$(OUTPUTPATH)/rc5mmx.obj \
+	$(OUTPUTPATH)/deseval-meggs3-mmx.obj
 
 RC5_LIBS = wsock32.lib advapi32.lib
 
@@ -70,10 +72,14 @@ RC5_LIBS = wsock32.lib advapi32.lib
 	tasm32 /t /m /ml /i$(DESPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
 
 {$(DESPATH)/mmx-bitslice}.obj{$(OUTPUTPATH)}.obj:
-        copy $(**:/=\), $(@:/=\)
+	copy $(**:/=\), $(@:/=\)
 
 {$(RC5PATH)}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
+
+{$(RC5PATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
+	nasm -o $(@:/=\) -f coff -i $(RC5PATH:/=\)\nasm\ $(**:/=\)
+
 
 {$(DESPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
