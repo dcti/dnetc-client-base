@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.1 1999/06/10 23:12:21 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.2 1999/08/09 16:35:11 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -19,7 +19,7 @@ return "@(#)$Id: confmenu.cpp,v 1.41.2.1 1999/06/10 23:12:21 cyp Exp $"; }
 #include "base64.h"   // base64_[en|de]code()
 #include "lurk.h"     // lurk stuff
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
-#include "network.h"  // base64_encode()
+//#include "network.h"  // base64_encode()
 #include "confopt.h"  // the option table
 
 /* ----------------------------------------------------------------------- */
@@ -144,7 +144,7 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
   
   conf_options[CONF_FWALLHOSTNAME].thevariable=(char *)(&httpproxy[0]);
   conf_options[CONF_FWALLHOSTPORT].thevariable=&httpport;
-  struct { char username[128], password[128]; } userpass;
+  struct { char username[sizeof(httpid)], password[sizeof(httpid)]; } userpass;
   userpass.username[0] = userpass.password[0] = 0;
   
   if (httpid[0] == 0)
@@ -152,16 +152,16 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
   else if (uuehttpmode==UUEHTTPMODE_UUEHTTP || uuehttpmode==UUEHTTPMODE_HTTP)
   {
     char *p;
-    if (strlen( httpid ) > 80) /* not rfc compliant (max 76) */
+    if (strlen(httpid) >= (sizeof(userpass)-1)) /* mime says maxlen=76 */
       userpass.username[0]=0;
-    else if (base64_decode(userpass.username, httpid )!=0) 
-      userpass.username[0]=0;                         /* bit errors */
+    else if (base64_decode(userpass.username, httpid, sizeof(userpass), strlen(httpid) )<0) 
+      userpass.username[0]=0;                         /* parity errors */
     else if ((p = strchr( userpass.username, ':' )) == NULL)
       userpass.username[0]=0;                         /* wrong format */
     else
     {
       *p++ = 0;
-      strcpy(userpass.password,p);
+      memmove(userpass.password,p,sizeof(userpass.password));
     }
   }
   else if (uuehttpmode == UUEHTTPMODE_SOCKS4) 
@@ -1012,7 +1012,7 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
       {
         strcat(userpass.username,":");
         strcat(userpass.username,userpass.password);
-        base64_encode(httpid,userpass.username);
+        base64_encode(httpid,userpass.username, sizeof(httpid),strlen(userpass.username));
       }
     }
     else if (uuehttpmode == UUEHTTPMODE_SOCKS4)
