@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.10 2003/11/04 14:06:33 kakace Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.11 2003/11/09 03:11:08 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -352,6 +352,12 @@ int selcoreGetPreselectedCoreForProject_rc572()
         }
         #endif
       }
+  }
+  // ===============================================================
+  #elif (CLIENT_CPU == CPU_X86_64)
+  {
+    // for now, all x86-64 processors just use the first core.
+    cindex = 0;
   }
   // ===============================================================
   #elif (CLIENT_CPU == CPU_ARM)
