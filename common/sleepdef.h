@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37.2.1 2003/01/19 22:49:51 snake Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37.2.2 2003/03/10 23:23:10 bdragon Exp $"
 
 #include "cputypes.h"
 
@@ -76,7 +76,7 @@
   #include <sys/types.h>
   // found in <unistd.h>, but requires _XOPEN_SOURCE_EXTENDED,
   // which causes more trouble...
-//  extern "C" int usleep(useconds_t);
+  extern "C" int usleep(useconds_t);
 #elif (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
   #ifdef _irix5_
