@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.23 2001/01/08 23:44:04 mfeiri Exp $
+ * $Id: ogr.cpp,v 1.1.2.24 2001/01/11 02:29:36 andreasb Exp $
  */
 #include "baseincs.h"
 #include <stdio.h>  /* printf for debugging */
@@ -178,12 +178,12 @@
 #endif
 
 
-/* If CHOOSEBITS == 12 we can strength reduce the multiply -- which is slow
+/* If CHOOSE_MARKS == 12 we can strength reduce the multiply -- which is slow
    on MANY processors -- from "12*(x)" to "((x)<<3)+((x)<<2)" in choose(x,y).
    Note that very smart compilers can sometimes do a better job at replacing
    the original statement with intrinsics than we can do by inserting these
    shift operations (e.g.: MrC). Thanks to Chris Cox for this optimization.
-   If CHOOSEBITS != 12 this setting will have no effect.
+   If CHOOSE_MARKS != 12 this setting will have no effect.
 */
 #ifndef OGROPT_STRENGTH_REDUCE_CHOOSE
 #define OGROPT_STRENGTH_REDUCE_CHOOSE 1 /* the default is "yes" */
@@ -223,29 +223,31 @@
 #endif
 #include "ogr.h"
 
-#define CHOOSEBITS 12
-#define MAXBITS    12
-#define ttmMAXBITS (32-MAXBITS)
+// maximum number of marks supported by ogr_choose_dat
+#define CHOOSE_MARKS      12
+// number of bits from the beginning of dist bitmaps supported by ogr_choose_dat
+#define CHOOSE_DIST_BITS  12
+#define ttmDISTBITS (32-CHOOSE_DIST_BITS)
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
 #ifdef HAVE_STATIC_CHOOSEDAT  /* choosedat table is static, pre-generated */
-   extern const unsigned char ogr_choose_dat[]; /* this is in choosedat.h|c */
-   #if (CHOOSEBITS == 12 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
+   extern const unsigned char ogr_choose_dat[]; /* this is in ogr_dat.cpp */
+   #if (CHOOSE_MARKS == 12 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
       // strength reduce the multiply -- which is slow on MANY processors
       #define choose(x,y) (ogr_choose_dat[((x)<<3)+((x)<<2)+(y+3)]) /*+3 skips header */
    #else
-      #define choose(x,y) (ogr_choose_dat[CHOOSEBITS*(x)+(y+3)]) /*+3 skips header */
+      #define choose(x,y) (ogr_choose_dat[CHOOSE_MARKS*(x)+(y+3)]) /*+3 skips header */
    #endif
 #else
    static const unsigned char *choosedat;/* set in init_load_choose() */
-   #if (CHOOSEBITS == 12 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
+   #if (CHOOSE_MARKS == 12 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
       // strength reduce the multiply -- which is slow on MANY processors
       #define choose(x,y) (choosedat[((x)<<3)+((x)<<2)+(y)])
    #else
-      #define choose(x,y) (choosedat[CHOOSEBITS*(x)+(y)])
+      #define choose(x,y) (choosedat[CHOOSE_MARKS*(x)+(y)])
    #endif
 #endif
 
@@ -1841,7 +1843,7 @@ static int init_load_choose(void)
 #ifndef HAVE_STATIC_CHOOSEDAT
   #error choose_dat needs to be created/loaded here
 #endif
-  if (MAXBITS != ogr_choose_dat[2]) {
+  if (CHOOSE_DIST_BITS != ogr_choose_dat[2]) {
     return CORE_E_FORMAT;
   }
 #ifndef HAVE_STATIC_CHOOSEDAT
@@ -1883,11 +1885,11 @@ static int init_load_choose(void)
     crc32 = CRC32(crc32, ogr_choose_dat[0]);
     crc32 = CRC32(crc32, ogr_choose_dat[1]);
     crc32 = CRC32(crc32, ogr_choose_dat[2]); /* This varies a lot */
-    for (j = 0; j < (1 << MAXBITS); j++) {
-      for (i = 0; i < CHOOSEBITS; ++i) crc32 = CRC32(crc32, choose(j, i));
+    for (j = 0; j < (1 << CHOOSE_DIST_BITS); j++) {
+      for (i = 0; i < CHOOSE_MARKS; ++i) crc32 = CRC32(crc32, choose(j, i));
     }
     crc32 = ~crc32;
-    if (chooseCRC32[MAXBITS] != crc32) {
+    if (chooseCRC32[CHOOSE_DIST_BITS] != crc32) {
       /* printf("Your choose.dat (CRC=%08x) is corrupted! Oh well, continuing anyway.\n", crc32); */
       return CORE_E_FORMAT;
     }
@@ -2246,11 +2248,11 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
           limit = oState->max - OGR[oState->maxdepthm1 - oState->depth];
           limit = limit < oState->half_length ? limit : oState->half_length;
         } else {
-          limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - oState->depth);
+          limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepthm1 - oState->depth);
           limit = limit < oState->max - oState->marks[oState->half_depth]-1 ? limit : oState->max - oState->marks[oState->half_depth]-1;
         }
       } else {
-        limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - oState->depth);
+        limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepthm1 - oState->depth);
       }
       lev->limit = limit;
       register int s = workstub->stub.diffs[i];
@@ -2313,12 +2315,12 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
           limit = oStateMax - OGR[maxMinusDepth];
           limit = (limit < oStateHalfLength) ? limit : oStateHalfLength;
         } else {
-          limit = oStateMax - choose(dist0 >> ttmMAXBITS, maxMinusDepth);
+          limit = oStateMax - choose(dist0 >> ttmDISTBITS, maxMinusDepth);
         int tempLimit = oStateMax - oState->Levels[oStateHalfDepth].cnt2-1;
           limit = (limit < tempLimit) ? limit : tempLimit;
         }
       } else {
-        limit = oStateMax - choose(dist0 >> ttmMAXBITS, maxMinusDepth);
+        limit = oStateMax - choose(dist0 >> ttmDISTBITS, maxMinusDepth);
       }
 
       int s = workstub->stub.diffs[i];
@@ -2447,12 +2449,12 @@ static int ogr_cycle(void *state, int *pnodes)
             limit = oStateMax - OGR[maxMinusDepth];
             limit = (limit < oStateHalfLength) ? limit : oStateHalfLength;
          } else {
-            limit = oStateMax - choose(dist0 >> ttmMAXBITS, maxMinusDepth);
+            limit = oStateMax - choose(dist0 >> ttmDISTBITS, maxMinusDepth);
             int tempLimit = oStateMax - levHalfDepth->cnt2 - 1;
             limit = (limit < tempLimit) ? limit : tempLimit;
          }
       } else {
-         limit = oStateMax - choose(dist0 >> ttmMAXBITS, maxMinusDepth);
+         limit = oStateMax - choose(dist0 >> ttmDISTBITS, maxMinusDepth);
       }
 
       nodes++;
@@ -2464,17 +2466,7 @@ static int ogr_cycle(void *state, int *pnodes)
          U comp0 = VEC_TO_INT(compV0,3);
       #endif
       if (comp0 < 0xfffffffe) {
-         #if defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
          int s = LOOKUP_FIRSTBLANK( comp0 );
-         #else
-         int s;
-         if (comp0 < 0xffff0000)
-           s = ogr_first_blank[comp0 >> 16];
-         else {
-           /* s = 16 + ogr_first_blank[comp0 & 0x0000ffff]; slow code */
-           s = 16 + ogr_first_blank[comp0 - 0xffff0000];
-         }
-         #endif
          if ((cnt2 += s) > limit)   goto up; /* no spaces left */
          COMP_LEFT_LIST_RIGHT(lev, s);
       } else { /* s>32 */
@@ -2557,11 +2549,11 @@ static int ogr_cycle(void *state, int *pnodes)
         limit = oState->max - OGR[oState->maxdepthm1 - depth];
         limit = limit < oState->half_length ? limit : oState->half_length;
       } else {
-        limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - depth);
+        limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepthm1 - depth);
         limit = limit < oState->max - oState->marks[oState->half_depth]-1 ? limit : oState->max - oState->marks[oState->half_depth]-1;
       }
     } else {
-      limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - depth);
+      limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepthm1 - depth);
     }
 
 #ifdef OGR_DEBUG
@@ -2577,17 +2569,7 @@ stay:
     if (oState->LOGGING) printf("comp0=%08x\n", comp0);
 #endif
     if (comp0 < 0xfffffffe) {
-      #if defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
       int s = LOOKUP_FIRSTBLANK( comp0 );
-      #else
-      int s;
-      if (comp0 < 0xffff0000)
-        s = ogr_first_blank[comp0 >> 16];
-      else {
-        /* s = 16 + ogr_first_blank[comp0 & 0x0000ffff]; slow code */
-        s = 16 + ogr_first_blank[comp0 - 0xffff0000];
-      }
-      #endif
 #ifdef OGR_DEBUG
   if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
 #endif
