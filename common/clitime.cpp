@@ -13,18 +13,11 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.28 2000/06/01 16:03:27 michmarc Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.29 2000/06/01 19:01:11 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
 #include "clitime.h"  // keep the prototypes in sync
-
-#if (CLIENT_OS == OS_WIN32) && (CLIENT_CPU == CPU_ALPHA)
-extern "C" int _AcquireSpinLockCount(long *, int);
-#pragma intrinsic(_AcquireSpinLockCount)
-extern "C" void _ReleaseSpinLock(long *);
-#pragma intrinsic(_ReleaseSpinLock)
-#endif
 
 #if defined(__unix__) && !defined(__EMX__)
   #define HAVE_GETRUSAGE
@@ -371,9 +364,30 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
     #elif (CLIENT_OS == OS_NETWARE)
     {
-      /* wrapper (for scaling/emu) around GetHighResolutionTimer() */
-      if (nwCliGetHardwareClock(tv)!=0) /* microsecs since boot */
-        return -1;
+      /* atomic_xchg()/MPKYieldThread() are stubbed/emulated in nwmpk.c */
+      /* GetHighResolutionTimer() is stubbed/emulated in nwlemu.c */
+      static long splbuf[4] = {0,0,0,0}; /* space for 64bit alignment */
+      static unsigned long wrap_count = 0, last_ctr = 0;
+      char *splcp = (char *)&splbuf[0]; unsigned long *spllp;
+      unsigned long ctr, l_wrap_count = 0;
+      int locktries = 0, lacquired = 0;
+
+      splcp += (8-(((unsigned long)splcp) & 7));
+      spllp = (unsigned long *)splcp;
+      while (!lacquired)
+      {
+        if (atomic_xchg(spllp,1)==0)
+          lacquired = 1;
+        if (!lacquired && ((++locktries)&0x0f)==0)
+          MPKYieldThread();
+      }
+      ctr = GetHighResolutionTimer(); /* 100us count since boot */
+      l_wrap_count = wrap_count;
+      if (ctr < last_ctr)
+        wrap_count = ++l_wrap_count;
+      last_ctr = ctr;
+      *spllp = 0;
+      __clks2tv( 10000, ctr, l_wrap_count, tv );
     }
     #elif (CLIENT_OS == OS_RISCOS)
     {
@@ -491,7 +505,7 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
     #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
     {
-      hrtime_t hirestime = gethrtime();
+      hrtime_t hirestime = gethrtime(); /* nanosecs since boot */
       hirestime /= 1000; /* nanosecs to microsecs */
       tv.tv_sec = (time_t)(hirestime / 1000000);
       tv.tv_usec = (unsigned long)(hirestime % 1000000);
