@@ -6,6 +6,9 @@
 ; based on deseval.c from Matthew Kwan's bitslicing DES key search.
 ;
 ; $Log: des-slice-sa.s,v $
+; Revision 1.9  1998/06/26 08:19:31  kbracey
+; Typo fixed.
+;
 ; Revision 1.8  1998/06/26 07:43:05  cberry
 ; Yet more new cores from Steve Lee.
 ;
@@ -28,7 +31,7 @@
 
 	AREA	fastdesarea, CODE, READONLY
 
-        DCB     "@(#)$Id: des-slice-sa.s,v 1.8 1998/06/26 07:43:05 cberry Exp $", 0
+        DCB     "@(#)$Id: des-slice-sa.s,v 1.9 1998/06/26 08:19:31 kbracey Exp $", 0
         ALIGN
 
         EXPORT	des_unit_func_strongarm
@@ -839,7 +842,7 @@ foundkey
 cachedcode_start
 
 
-	GET	kwab-sboxes-arm.h
+	GET	kwan-sboxes-arm.h
 
 timingloop
         ADD      r2,r13,#&208
