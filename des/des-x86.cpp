@@ -6,7 +6,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_x86_cpp(void) {
-return "@(#)$Id: des-x86.cpp,v 1.25.2.3 1999/12/08 00:14:37 cyp Exp $"; }
+return "@(#)$Id: des-x86.cpp,v 1.25.2.4 2000/01/03 12:33:08 snake Exp $"; }
 #endif
 
 
@@ -27,7 +27,7 @@ return "@(#)$Id: des-x86.cpp,v 1.25.2.3 1999/12/08 00:14:37 cyp Exp $"; }
 //this should really be compiler (and not OS) dependant
 #if defined(__WATCOMC__) || (CLIENT_OS == OS_SOLARIS) || \
     ((CLIENT_OS == OS_LINUX) && defined(__ELF__)) || \
-    ((CLIENT_OS == OS_BSDI) && defined(__ELF__)) || \
+    ((CLIENT_OS == OS_BSDOS) && defined(__ELF__)) || \
     ((CLIENT_OS == OS_FREEBSD) && defined(__ELF__)) || \
     ((CLIENT_OS == OS_BEOS) && defined(__ELF__)) || \
     ((CLIENT_OS == OS_QNX))
