@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.90 2002/09/24 16:33:59 jlawson Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.91 2002/09/25 01:10:55 trashover Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -789,7 +789,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
   // While no core benchmark data is available, run microbenchs for every target
   if (contestid == RC5_72)
-    selcorestatics.corenum[RC5_72] = -1;
+    selcorestatics.corenum[RC5_72] =  selcorestatics.user_cputype[RC5_72];
   
   // PROJECT_NOT_HANDLED("you may add your pre-selected core depending on arch and cpu here")
   #if (CLIENT_CPU == CPU_ALPHA)
