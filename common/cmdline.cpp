@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.113  1999/01/04 02:49:09  cyp
+// Enforced single checkpoint file for all contests.
+//
 // Revision 1.112  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -121,7 +124,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.112 1999/01/01 02:45:15 cramer Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.113 1999/01/04 02:49:09 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -270,6 +273,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                             (unsigned long)(getpid()), binname );
             if (system( buffer ) != 0)
               {
+              //ConOutErr( buffer ); /* show the command */
               sprintf(buffer, "%s failed. Unable to get pid list.", thisarg );
               ConOutErr( buffer );
               }
@@ -418,6 +422,12 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         #if (CLIENT_OS == OS_RISCOS)
         if (run_level == 0)
           guiriscos=1;
+        #endif
+        }
+      else if ( strcmp( thisarg, "-guistart" ) == 0) 
+        {
+        #if (CLIENT_OS == OS_WIN32)
+        //handled by GUI command line parser
         #endif
         }
       else if ( strcmp( thisarg, "-guirestart" ) == 0) 
@@ -877,12 +887,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             }
           else
             {
-            #ifdef OLDNICENESS
-            niceness = (s32) atoi( nextarg );
-            #else          
             priority = (s32) atoi( nextarg );
             priority = ((priority==2)?(8):((priority==1)?(4):(0)));
-            #endif
             inimissing = 0; // Don't complain if the inifile is missing
             }
           }
@@ -899,10 +905,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             }
           else
             {
-            #ifndef OLDNICENESS
             priority = (s32) atoi( nextarg );
             inimissing = 0; // Don't complain if the inifile is missing
-            #endif
             }
           }
         }
@@ -1013,16 +1017,16 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         if (nextarg)
           {
           skip_next = 1;
-          int conid = (( strcmp( thisarg, "-ckpoint2" ) == 0 ) ? (1) : (0));
           if (run_level!=0)
             {
             if (logging_is_initialized)
-              LogScreenRaw("Setting %s checkpoint file to %s\n", 
-                    ((conid)?("DES"):("RC5")), checkpoint_file[conid] );
+              LogScreenRaw("Setting checkpoint file to %s\n", 
+                                                 checkpoint_file );
+                                             
             }
           else
             {
-            strcpy(checkpoint_file[conid], nextarg );
+            strcpy(checkpoint_file, nextarg );
             }
           }
         }
@@ -1105,13 +1109,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         skip_next = 1;
         havemode = 1;
         }
-      #if defined(WIN32GUI)
-      else if ( strcmp(thisarg, "-guistart" ) == 0)
-        {
-        // Do nothing, gui wrapper handles this, code just
-        // Here to prevent erroring out.
-        }
-      #endif
       else if (run_level==0)
         {
         quietmode = 0;
@@ -1298,4 +1295,3 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
     *retcodeP = 0;
   return terminate_app;
 }
-

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: checkpt.cpp,v $
+// Revision 1.3  1999/01/04 02:49:10  cyp
+// Enforced single checkpoint file for all contests.
+//
 // Revision 1.2  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -13,7 +16,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.2 1999/01/01 02:45:14 cramer Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.3 1999/01/04 02:49:10 cyp Exp $"; }
 #endif
 
 #include "client.h"   // FileHeader, Client class
@@ -33,54 +36,33 @@ return "@(#)$Id: checkpt.cpp,v 1.2 1999/01/01 02:45:14 cramer Exp $"; }
 int Client::CheckpointAction( int action, unsigned int load_problem_count )
 {
   FileEntry fileentry;
-  unsigned int prob_i, cont_i, cont_count, recovered;
-  int do_checkpoint, retval = 0;
+  unsigned int prob_i, cont_i, recovered;
   unsigned long remaining, lastremaining;
-  char *ckfile;
-
-  cont_count = 2;
-  #ifdef COMBINE_ALL_CHECKPOINTS_IN_ONE_FILE
-  cont_count = 1;
-  #endif
-
-  do_checkpoint = 0;
-  if (nodiskbuffers == 0)
-    {
-    for (cont_i = 0; cont_i < cont_count; cont_i++)
-      {
-      if ( IsFilenameValid( checkpoint_file[cont_i] ) )
-        do_checkpoint = 1;
-      }
-    }
+  int do_checkpoint = (nodiskbuffers==0 && IsFilenameValid( checkpoint_file ));
 
   if ( action == CHECKPOINT_OPEN )
     {
     if (do_checkpoint)
       {
       recovered = 0;
-  
-      for ( cont_i = 0; cont_i < cont_count; cont_i++ )
+      if ( DoesFileExist( checkpoint_file ))
         {
-        ckfile = &(checkpoint_file[cont_i][0]);
-        if ( DoesFileExist( ckfile ))
+        lastremaining = 0;
+        while (BufferGetFileRecord( checkpoint_file, &fileentry, &remaining ) == 0) 
+                               //returns <0 on ioerr, >0 if norecs
           {
-          lastremaining = 0;
-          while (BufferGetFileRecord( ckfile, &fileentry, &remaining ) == 0) 
-            //returns <0 on ioerr, >0 if norecs               
+          if (lastremaining != 0)
             {
-            if (lastremaining != 0)
+            if (lastremaining <= remaining)
               {
-              if (lastremaining <= remaining)
-                {
-                recovered = 0;
-                break;
-                }
+              recovered = 0;
+              break;
               }
-            lastremaining = remaining;
-            if ( PutBufferRecord( &fileentry ) > 0 )
-              {
-              recovered++;              
-              }
+            }
+          lastremaining = remaining;
+          if ( PutBufferRecord( &fileentry ) > 0 )
+            {
+            recovered++;              
             }
           }
         }
@@ -91,25 +73,16 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
         }
       action = CHECKPOINT_CLOSE;
       }
-    retval = (do_checkpoint == 0); /* return !0 if don't do checkpoints */
     }  
 
   /* --------------------------------- */
 
   if ( action == CHECKPOINT_CLOSE || action == CHECKPOINT_REFRESH )
     {
-    for (cont_i = 0; cont_i < cont_count; cont_i++)
+    if (do_checkpoint)
       {
-      ckfile = &(checkpoint_file[cont_i][0]);
-      if ( IsFilenameValid( ckfile ) )
-        {
-        EraseCheckpointFile( ckfile ); 
-        }
+      EraseCheckpointFile( checkpoint_file ); 
       }
-    #ifdef COMBINE_ALL_CHECKPOINTS_IN_ONE_FILE
-    if ( IsFilenameValid( checkpoint_file[1] ) )
-      unlink( checkpoint_file[1] );
-    #endif
     }
 
   /* --------------------------------- */
@@ -123,17 +96,11 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
         Problem *thisprob = GetProblemPointerFromIndex(prob_i);
         if ( thisprob )
           {
-          cont_i = (unsigned int)thisprob->RetrieveState(
-                                             (ContestWork *) &fileentry, 0);
-          if (cont_i == 0 || cont_i == 1)
+          if (thisprob->IsInitialized())
             {
-            #ifdef COMBINE_ALL_CHECKPOINTS_IN_ONE_FILE
-            ckfile = &(checkpoint_file[0][0]);
-            #else
-            ckfile = &(checkpoint_file[cont_i][0]);
-            #endif
-  
-            if ( IsFilenameValid( ckfile ) )
+            cont_i = (unsigned int)thisprob->RetrieveState(
+                                    (ContestWork *) &fileentry, 0);
+            if (cont_i == 0 || cont_i == 1 )
               {
               fileentry.contest = (u8)cont_i;
               fileentry.op      = htonl( OP_DATA );
@@ -144,12 +111,12 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
               fileentry.checksum=
                  htonl( Checksum( (u32 *) &fileentry, (sizeof(FileEntry)/4)-2));
               Scramble( ntohl( fileentry.scramble ),
-                           (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
+                         (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
                            
-              if (BufferPutFileRecord( ckfile, &fileentry, NULL ) < 0) 
+              if (BufferPutFileRecord( checkpoint_file, &fileentry, NULL ) < 0) 
                 {                        /* returns <0 on ioerr */
                 //Log( "Checkpoint %u, Buffer Error \"%s\"\n", 
-                //                     prob_i+1, ckfile );
+                //                     prob_i+1, checkpoint_file );
                 //break;
                 }
               }
@@ -157,9 +124,7 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
           } 
         }  // for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
       } // if ( !nodiskbuffers )
-  
-    retval = (do_checkpoint == 0); /* return !0 if don't do checkpoints */
     }
   
-  return retval;
+  return (do_checkpoint == 0); /* return !0 if don't do checkpoints */
 }  

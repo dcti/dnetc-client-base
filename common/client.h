@@ -1,6 +1,6 @@
 // Hey, Emacs, this a -*-C++-*- file !
 
-// Copyright distributed.net 1997-1999 - All Rights Reserved
+// Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
@@ -12,8 +12,8 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
-// Revision 1.111  1999/01/01 02:45:14  cramer
-// Part 1 of 1999 Copyright updates...
+// Revision 1.112  1999/01/04 02:49:09  cyp
+// Enforced single checkpoint file for all contests.
 //
 // Revision 1.110  1998/12/25 02:32:11  silby
 // ini writing functions are now not part of client object.
@@ -406,8 +406,6 @@ struct membuffstruct
 class Client
 {
 public:
-  char exename[64];
-  char exepath[128];
   int  quietmode;
   char inifilename[128];
   char id[64];
@@ -416,11 +414,7 @@ public:
   s32  blockcount;
   s32  minutes;
   s32  timeslice;
-  #ifdef OLDNICENESS
-  s32  niceness;
-  #else
   s32  priority;
-  #endif
   char keyproxy[64];
   s32  keyport;
   char httpproxy[64];
@@ -439,7 +433,7 @@ public:
 
   char logname[128];
   char exit_flag_file[128];
-  char checkpoint_file[CONTEST_COUNT][128];
+  char checkpoint_file[128];
   char pausefile[128];
 
   s32 numcpu;
@@ -454,9 +448,6 @@ public:
   long GetBufferRecord( FileEntry *data, unsigned int contest, int use_out_file);
   long GetBufferCount( unsigned int contest, int use_out_file, unsigned long *normcountP );
   
-  //s32 membuffcount[2][2];
-  //FileEntry *membuff[2][MAXBLOCKSPERBUFFER][2];
-
   s32 nofallback;
   u32 randomprefix;
   int randomchanged;
@@ -502,15 +493,12 @@ public:
     // returns !0 if checkpointing is disabled
 
 #if defined(NEEDVIRTUALMETHODS)
-  virtual s32  Configure( void );
+  virtual int Configure( void );
     // runs the interactive configuration setup
 #else
-  s32  Configure( void );
+  int  Configure( void );
     // runs the interactive configuration setup
 #endif
-
-  s32  ConfigureGeneral( s32 currentmenu );
-    // part of the interactive setup
 
 // Now a seperate module
 //  int ReadConfig( void );
