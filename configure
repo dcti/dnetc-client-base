@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.104 2003/10/28 17:11:58 teichp Exp $
+# @(#)$Id: configure,v 1.288.2.105 2003/11/11 02:45:59 kakace Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -63,7 +63,7 @@ TARGET_YASM="yasm"     #<- set this to "" if you have no yasm
 TARGET_YASM_FMT="elf"
 TARGET_STRIP="strip"
 TARGET_OGR_MULTI=""    #<-can be used to compile ogr.cpp with differing gcc opts
-TARGET_IS_CROSSCOMPILE="" #
+TARGET_IS_CROSSCOMPILE=""
 
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
@@ -159,9 +159,10 @@ add_sources() # $1=os, $2=arch, $3=custom
   elif [ "$1" = "os2" ]; then
     COMMON_SRCS="plat/os2/os2inst.cpp ${COMMON_SRCS}"
   elif [ "$1" = "macosx" ]; then
-    COMMON_SRCS="plat/macosx/c_install.c \
-                 plat/macosx/temperature.c \
-                 ${COMMON_SRCS}"
+    COMMON_SRCS="plat/macosx/c_install.cpp ${COMMON_SRCS}"
+    if [ "$2" = "ppc" ]; then     # Apple-specific
+      COMMON_SRCS="plat/macosx/temperature.cpp ${COMMON_SRCS}"
+    fi
   elif [ "$1" = "digital-unix" ]; then
     COMMON_SRCS="plat/dunix/temperature.c \
                  ${COMMON_SRCS}"
@@ -481,7 +482,7 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_MWCC_SRCS"
       elif [ "$TARGET_CC" = "xlC" ]; then
         TARGET_ADDASMS="$TARGET_ADDASMS $XLC_LINTILLA_ASMS"
-      elif [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
+      elif [ "${1}" = "macosx" ]; then
         TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_APPLE_SRCS"
         if [ "X$3" = "X" ]; then #mach3+
           TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5ALTIVEC_SRCS"
@@ -503,19 +504,15 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5-72/ppc/r72-KKS2pipes.toc.s \
                                         rc5-72/ppc/r72-KKS604e.toc.s"
       elif [ "${1}" = "macosx" ]; then
-        # macosx and macosxserver (apple cc) have their own asm cores
+        # macosx has its own asm cores
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-ppc-mh-2.osx.s \
                                         rc5-72/ppc/r72-603e-mh-1-addi.osx.s \
                                         rc5-72/ppc/r72-604e-mh-1-addi.osx.s \
                                         rc5-72/ppc/r72-KKS2pipes.osx.s \
-                                        rc5-72/ppc/r72-KKS604e.osx.s"
-
-        # mach3+ ?
-        if [ "X$3" = "X" ]; then
-          TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/ppc/r72-KKS7400.osx.s \
-                                          rc5-72/ppc/r72-KKS7450.osx.s \
-                                          rc5-72/ppc/r72-KKS970.osx.s"
-	fi
+                                        rc5-72/ppc/r72-KKS604e.osx.s \
+                                        rc5-72/ppc/r72-KKS7400.osx.s \
+                                        rc5-72/ppc/r72-KKS7450.osx.s \
+                                        rc5-72/ppc/r72-KKS970.osx.s"
       else
         # generic gas targets
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-ppc-mh-2.gas.s \
@@ -533,11 +530,7 @@ add_sources() # $1=os, $2=arch, $3=custom
 
     if [ "$HAVE_OGR" = "1" ]; then
       #DEFAULT_OGR="1" # this is just an addition to default core
-      if [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
-        if [ "X$3" = "X" ]; then #mach3+
-          TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
-        fi
-      elif [ "X$3" = "Xaltivec" ] ; then
+      if [ "${1}" = "macosx" ]; then
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
       fi
     fi # HAVE_OGR
@@ -755,6 +748,7 @@ gcc_get_ver() {
     #gcc_v="Reading specs from blah\nConfigured with: blah\nThread model: blah\ngcc version 3.2"
     #gcc_v="NeXT Computer, Inc. version cc-437.2.6, gcc version 2.5.8"
     #gcc_v="Apple Computer, Inc. GCC version 1175, based on gcc version 3.1 20020420 (prerelease)"
+    #gcc_v="gcc version 3.3 20030304 (Apple Computer, Inc. build 1495)"
 
     gccver_line=`echo $gcc_v|tail -1|tr '-' ' '`
     #echo "gccver_line=#$gccver_line#"
@@ -776,13 +770,13 @@ gcc_get_ver() {
         elif [ "$ver_word" = "version" -a "$lastwas" = "driver" ]; then
           lastwas="driver"
         elif [ "$ver_word" = "version" -a "$lastwas" = "GCC" ]; then
-          lastwas="AppleGCC" # captialized GCC indicates the Apple version
+          lastwas="AppleGCC" # capitalized GCC indicates the Apple version
         else
           lastwas="$ver_word"
         fi
       fi
     done
-    echo "ver_num=#$ver_num#"
+    #echo "ver_num=#$ver_num#"
     if [ "${ver_num}X" = "X" ]; then
       gccver=0
     else
@@ -842,6 +836,7 @@ generate_gcc_opts() {
   #WARNING WARNING: don't use 2.8.x at all.
   OPTS_295_PLUS="-fstrict-aliasing" #-fno-exceptions -fno-rtti
   OPTS_310_PLUS="-fstrict-aliasing -fno-exceptions -fno-rtti"
+
   OPTS_GCC258="${OPTS_GCC258_WARN} ${OPTS_GCC_BASE} ${OPTS_258_PLUS}"
   OPTS_GCC272="${OPTS_GCC272_WARN} ${OPTS_GCC_BASE} ${OPTS_272_PLUS}"
   OPTS_GCC295="${OPTS_GCC272_WARN} ${OPTS_GCC_BASE} ${OPTS_295_PLUS}"
@@ -884,6 +879,7 @@ generate_gcc_opts() {
   opts272=""
   opts295=""
   opts310=""
+  opts330=""          # Will be equal to opts310 if left blank
   arch="internal-$1"  # do it this way to hide from "./configure list"
   case "$arch" in
 
@@ -985,6 +981,9 @@ generate_gcc_opts() {
         opts272="$OPTS_GCC272 -O6 -DASM_PPC -funroll-loops"
         opts295="$OPTS_GCC295 -O3 -DASM_PPC -funroll-loops"
         opts310="$OPTS_GCC310 -O3 -DASM_PPC -funroll-loops"
+        if [ "${2}" = "macosx" ]; then  # Special flag for AppleGCC 3.3
+          opts330="$OPTS_GCC310 -fastf -DASM_PPC"
+        fi
         ;;
 
     *internal-ppc603e)
@@ -1057,17 +1056,21 @@ generate_gcc_opts() {
   # ------
 
   gccopts="$opts295" # 2.96 and 3.0 are not recommended
-  if [ $gccver -ge 3010000 ]; then
-    gccopts="$opts310" # 3.1 and above
+
+  if [ -z "$opts330" ]; then
+     opts330="$opts310"
   fi
-  if [ $gccver -lt 2960000 ]; then
+
+  if [ $gccver -ge 3030000 ]; then
+    gccopts="$opts330" # 3.3 and above
+  elif [ $gccver -ge 3010000 ]; then
+    gccopts="$opts310" # 3.1 and 3.2
+  elif [ $gccver -lt 2070200 ]; then
+    gccopts="$opts258"
+  elif [ $gccver -lt 2900000 ]; then
+    gccopts="$opts272"
+  else [ $gccver -lt 2960000 ]
     gccopts="$opts295"
-    if [ $gccver -lt 2900000 ]; then
-      gccopts="$opts272"
-      if [ $gccver -lt 2070200 ]; then
-        gccopts="$opts258"
-      fi
-    fi
   fi
   OPTS_GCC="$gccopts"
 }
@@ -2039,22 +2042,14 @@ case "$1" in
         #add_sources "netbsd" "ppc" "altivec" # not yet AltiVec
         ;;
 
-    *ppc-macosxserver) # [mfeiri] (MACH 2.x based: MXS 1.x, Darwin 0.x, Rhapsody)
-        TARGET_CC="c++"
-        #generate_gcc_opts "ppc" "macosx"
-        TARGET_CCFLAGS="-O6"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="macosxserver-ppc"
-        add_sources "macosx" "ppc" "mach2"
-        ;;
-
-    *ppc-macosx)       # [mfeiri] (MACH 3.x based: MacOSXDP, Darwin 1.0)
-        #TARGET_CC="c++"
+    *ppc-macosx)       # [mfeiri] (MACH 3.x based: MacOS X, Darwin)
         generate_gcc_opts "ppc" "macosx"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -faltivec -mdynamic-no-pic" # -force_cpusubtype_ALL 
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -mcpu=powerpc -faltivec -mdynamic-no-pic"
         TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
-        TARGET_DOCFILES="docs/readme.macosx.rtf"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme.osx.html"   #platform specific docfile
         TARGET_TARBALL="macosx-ppc"
+        TARGET_ASFLAGS="-force_cpusubtype_ALL"
+        TARGET_GENMAN=""
         add_sources "macosx" "ppc"
         ;;
 
