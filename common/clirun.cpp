@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.80 2000/11/12 22:53:24 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.81 2000/12/14 19:35:18 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1435,16 +1435,17 @@ int ClientRun( Client *client )
 
     if (!dontSleep)
     {             
+      int i = 0;
       SetGlobalPriority( client->priority );
-      if (isPaused)
-        NonPolledSleep(3); //sleep(3);
-      else
-      {
-        int i = 0;
-        while ((i++)<5
-              && !__CheckClearIfRefillNeeded(thread_data_table,0) 
-              && !CheckExitRequestTriggerNoIO()
-              && ModeReqIsSet(-1)==0)
+      while ((i++)<5
+            && !__CheckClearIfRefillNeeded(thread_data_table,0) 
+            && !CheckExitRequestTriggerNoIO()
+            && ModeReqIsSet(-1)==0)
+      {      
+        ClientEventSyncPost(CLIEVENT_CLIENT_RUNIDLE, i); 
+        if (isPaused)
+          NonPolledSleep(1);
+        else 
           sleep(1);
       }
       SetGlobalPriority( 9 );
