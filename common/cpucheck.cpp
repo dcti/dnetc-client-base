@@ -9,18 +9,14 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.48 2000/06/20 15:00:16 oliver Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.49 2000/06/28 15:12:53 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
 #include "cpucheck.h"  //just to keep the prototypes in sync.
 #include "logstuff.h"  //LogScreen()/LogScreenRaw()
 
-#if (CLIENT_OS == OS_SOLARIS)
-#  include <unistd.h>    // cramer - sysconf()
-#elif (CLIENT_OS == OS_IRIX)
-#  include <sys/prctl.h>
-#elif (CLIENT_OS == OS_DEC_UNIX)
+#if (CLIENT_OS == OS_DEC_UNIX)
 #  include <unistd.h>
 #  include <sys/sysinfo.h>
 #  include <machine/hal_sysinfo.h>
@@ -30,10 +26,6 @@ return "@(#)$Id: cpucheck.cpp,v 1.79.2.48 2000/06/20 15:00:16 oliver Exp $"; }
 #  include <Multiprocessing.h>
 #elif (CLIENT_OS == OS_AIX)
 #  include <sys/systemcfg.h>
-#elif ((CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
-       (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS))
-#  include <sys/param.h>
-#  include <sys/sysctl.h>
 #elif (CLIENT_OS == OS_MACOSX)
 #  include <mach/mach.h>
 #endif
