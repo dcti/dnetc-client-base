@@ -1,7 +1,7 @@
 
   distributed.net's RC5DES client
 
-  Copyright distributed.net 1997-1999 - All Rights Reserved
+  Copyright distributed.net 1997-1998 - All Rights Reserved
   For use in distributed.net projects only.
   Any other distribution violates copyright.
 
@@ -44,7 +44,6 @@
                  great deal with references to documentation available
                  online or built-in to the client, cleaned up and
                  reorganized the file.
-
                                                                      
  1.0  Introduction ---------------------------------------------------
 
@@ -204,9 +203,8 @@
      MS Proxy Server       WinNT       HTTP Proxy
      Novell BorderManager  NetWare     HTTP Proxy
      Purveyor HTTP Proxy   VMS/NetWare HTTP Proxy
-     Wingate 2.x           Win32       HTTP Proxy,  http://www.wingate.com
-                                       Port Mapping,
-                                       SOCKS, telnet
+     Wingate 2.x           Win32       HTTP Proxy   http://www.wingate.com
+                                       Port Mapping
      AltaVista 97 proxy    Unix/Win32  HTTP
 
   5.2  Flushing and fetching via e-mail ----
@@ -268,8 +266,8 @@
        send a message to <majordomo@lists.distributed.net> with 
        "subscribe rc5" as the message text).
 
-     - A public database of known problems and incompatibilities is 
-       available at http://www.distributed.net/cgi/buglist.cgi
+     - The distributed.net bug tracking system is at
+       http://www.distributed.net/bugs/
 
      - More user support is available from <rc5help@distributed.net> 
        as well as from our regional support representatives listed at 
@@ -288,3 +286,5 @@
        usually very busy and it may take weeks before they get around 
        to answering your message.
        
+
+Revision $Id: rc5des.txt,v 1.32 1999/04/11 19:27:25 cyp Exp $
