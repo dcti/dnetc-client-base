@@ -1,5 +1,6 @@
-Choosing the correct Irix client.
-$Id: readme.irix,v 1.1.2.2 1999/11/29 21:48:56 lyndon Exp $
+$Id: readme.irix,v 1.1.2.3 2000/01/18 23:24:22 lyndon Exp $
+
+		Choosing the correct Irix client.
 
 As of release 2.8002, system specific builds of the client are
 available. These builds are targetted at particular SGI motherboard/CPU
@@ -38,6 +39,18 @@ contact lyndon@distributed.net.
 
 ===================================================================
 Irix client build information (for *-irix6-mips-ipXX packages only).
+
+2.8005
+------
+The Irix specific scheduling code has been removed. If you want to
+run the client 'weightless' you can launch it with:
+
+	npri -w dnetc ...
+
+Note: If you launch the client using npri you'll have to use -9
+to kill it. (This means you'll lose any work in progress when the
+system shuts down, since the client won't see the SIGTERM and
+therefore won't clean itself up.)
 
 2.8002
 ------
