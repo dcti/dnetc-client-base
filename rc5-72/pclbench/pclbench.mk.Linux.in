@@ -1,6 +1,6 @@
-# $Id: pclbench.mk.Linux.in,v 1.1.2.1 2003/04/01 15:45:04 andreasb Exp $
+# $Id: pclbench.mk.Linux.in,v 1.1.2.2 2003/04/01 15:52:49 andreasb Exp $
 
-BASEDIR	= ../../..
+BASEDIR	= ../..
 CC	= gcc
 CFLAGS	= -O2 -I$(BASEDIR)/common -Wall
 LDLIBS	= -lpcl

@@ -1,6 +1,6 @@
-# $Id: pclbench.mk.SunOS.in,v 1.1.2.1 2003/04/01 15:45:04 andreasb Exp $
+# $Id: pclbench.mk.SunOS.in,v 1.1.2.2 2003/04/01 15:52:49 andreasb Exp $
 
-BASEDIR	= ../../..
+BASEDIR	= ../..
 CC      = CC
 CFLAGS  = -xO5 -I$(BASEDIR)/common
 LDLIBS	= -L. -lpcl -lcpc

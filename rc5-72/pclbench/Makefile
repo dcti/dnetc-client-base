@@ -1,8 +1,8 @@
-# $Id: Makefile,v 1.1.2.2 2003/04/01 15:45:04 andreasb Exp $
+# $Id: Makefile,v 1.1.2.3 2003/04/01 15:52:49 andreasb Exp $
 
 all: pclbench
 
-BASEDIR		= ../../..
+BASEDIR		= ../..
 COREOBJFILES	= $(wildcard $(BASEDIR)/output/r72*.o)
 
 pclbench: pclbench.mk
