@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.76 2002/09/02 00:35:41 andreasb Exp $
+# $Id: makefile.vc,v 1.77 2002/09/02 02:43:26 andreasb Exp $
 #
 
 BASENAME = dnetc
@@ -73,7 +73,7 @@ OPTS_LINK_DEBUG = /release
 
 OPTS_MSVC = -nologo -D__WIN32__ \
             -W4 -WX -MT -GR- -GX- -GA -GF -GM -Gy \
-            -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG) -DXMLSERVE
+            -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG)
 	    ## *** +++++++++++++++++++++++++++++++++++++++++
 OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
             ## *** SOMETHING IS BROKEN IF YOU NEED MORE
@@ -131,9 +131,6 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/selftest.obj   \
         $(OUTPUTPATH)/setprio.obj    \
         $(OUTPUTPATH)/triggers.obj   \
-        $(OUTPUTPATH)/xmlserve.obj   \
-        $(OUTPUTPATH)/netio.obj   \
-        $(OUTPUTPATH)/minihttp.obj   \
         $(OUTPUTPATH)/util.obj
 OPTS_MSVC = $(OPTS_MSVC) -I$(COMMONPATH) -DLURK
 !if exist( "$(COMMONPATH:/=\)\buffpriv.cpp" )

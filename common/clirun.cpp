@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.125 2002/09/02 00:35:41 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.126 2002/09/02 02:43:26 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -34,10 +34,6 @@ return "@(#)$Id: clirun.cpp,v 1.125 2002/09/02 00:35:41 andreasb Exp $"; }
 #include "modereq.h"   // ModeReq[Set|IsSet|Run]()
 #include "clievent.h"  // ClientEventSyncPost() and constants
 #include "coremem.h"   // cmem_alloc(), cmem_free()
-
-#ifdef XMLSERVE
-#include "xmlserve.h"
-#endif
 
 // --------------------------------------------------------------------------
 
@@ -1286,11 +1282,6 @@ int ClientRun( Client *client )
   int checkpointsDisabled = (client->nodiskbuffers != 0);
   int dontSleep=0, isPaused=0, wasPaused=0, timeMonoError = 0;
 
-#ifdef XMLSERVE
-  SOCKET mainListener;
-  MiniHttpDaemonConnection *connections[MAX_CONNECTIONS];
-#endif
-
   ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0, 0 );
 
   // =======================================
@@ -1631,34 +1622,6 @@ int ClientRun( Client *client )
   }
   #endif
 
-
-  // --------------------------------------
-  // Setup the HTTP listener for XMLSERVE
-  // --------------------------------------
-
-#ifdef XMLSERVE
-
-#if (CLIENT_OS == OS_WIN32)
-  // initialize the socket system.
-  WSADATA wsadata;
-  WSAStartup(MAKEWORD(1,1), &wsadata);
-#endif
-
-  // blank out the connection placeholders.
-  for (int i = 0; i < MAX_CONNECTIONS; i++)
-    connections[i] = NULL;
-
-  // create the listener socket.
-  if (netio_openlisten(mainListener, LISTENADDRESS,
-        LISTENPORT, true) < 0)
-  {
-    Log( "Error: Cannot setup primary listener on port %d!\n",
-        (int) LISTENPORT);
-    return 0;
-  }
-
-#endif
-
   //============================= MAIN LOOP =====================
   //now begin looping until we have a reason to quit
   //------------------------------------
@@ -1965,153 +1928,6 @@ int ClientRun( Client *client )
       }
     }
 
-
-    //----------------------------------------
-    // XMLSERVE
-    //----------------------------------------
-
-#ifdef XMLSERVE
-
-    fd_set readfds, writefds, errorfds;
-    int sockmax;
-    int readcnt, writecnt, errorcnt;
-    struct timeval tv;
-
-    // Reset the socket select structures.
-    FD_ZERO(&readfds);
-    FD_ZERO(&writefds);
-    FD_ZERO(&errorfds);
-    sockmax = 0;
-    readcnt = writecnt = errorcnt = 0;
-
-    // Add primary listener socket.
-    if (mainListener != INVALID_SOCKET)
-      __fdsetsockadd(mainListener, &readfds, &sockmax, &readcnt);
-
-    // Add the Clients.
-    for (int j = 0; j < MAX_CONNECTIONS; j++)
-    {
-      if (connections[j] != NULL &&
-        connections[j]->IsConnected() &&
-        connections[j]->GetSocket() != INVALID_SOCKET)
-      {
-        if (connections[j]->HavePendingData())
-          __fdsetsockadd(connections[j]->GetSocket(),
-              &writefds, &sockmax, &writecnt);
-
-        __fdsetsockadd(connections[j]->GetSocket(),
-            &readfds, &sockmax, &readcnt);
-
-        __fdsetsockadd(connections[j]->GetSocket(),
-            &errorfds, &sockmax, &errorcnt);
-      }
-    }
-
-    //
-    // determine which sockets are ready to read/write.
-    //
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
-    int haverwx = netio_select(sockmax + 1, &readfds, &writefds, &errorfds, &tv);
-    if (haverwx < 0)    // should only get here on socket errors.
-    {
-      // Select() failed, so just clear the result sets and pause
-      // for the amount of time it should have maximally blocked.
-      // Drop through, since we must let the idle timeout checks occur.
-      FD_ZERO(&readfds);
-      FD_ZERO(&writefds);
-      FD_ZERO(&errorfds);
-      //sleep(1);
-    }
-
-
-    //
-    // First, check the listeners and accept any new connections.
-    //
-    if (haverwx > 0 &&
-        mainListener != INVALID_SOCKET &&
-        FD_ISSET(mainListener, &readfds) )
-    {
-      SOCKET newclient;
-      u32 clientaddr;
-
-      if (netio_accept(mainListener, &newclient, &clientaddr, NULL, false) >= 0)
-      {
-        for (int newslot = 0;; newslot++)
-        {
-          if (newslot >= MAX_CONNECTIONS)
-          {
-            /*Log("Client: [%s] No available slots to accept new client.\n",
-                netio_ntoa(clientaddr));*/
-            netio_close(newclient);
-            break;
-          }
-          if (!connections[newslot])
-          {
-            /*Log("Client: [%s] Accepted new client connection.\n",
-                netio_ntoa(clientaddr));*/
-            connections[newslot] = new MiniHttpDaemonConnection(newclient, clientaddr);
-            dontSleep = 1;
-            break;
-          }
-        }
-      }
-    }
-
-    //
-    // Check for client connection activity and handle any requests.
-    //
-    for (int jj = 0; jj < MAX_CONNECTIONS; jj++)
-    {
-      if (connections[jj] != NULL)
-      {
-        bool read_ready = false, write_ready = false;
-        bool closeneeded = false;
-
-        if (haverwx > 0 && connections[jj]->GetSocket() != INVALID_SOCKET)
-        {
-          SOCKET sock = connections[jj]->GetSocket();
-          read_ready =  FD_ISSET(sock, &readfds) != 0;
-          write_ready = FD_ISSET(sock, &writefds) != 0;
-          closeneeded = FD_ISSET(sock, &errorfds) != 0;
-        }
-
-        if (!closeneeded && read_ready &&
-            !connections[jj]->FetchIncoming())
-          closeneeded = true;
-        if (!closeneeded && connections[jj]->IsComplete())
-        {
-          /*Log("content is complete. reading\n");*/
-            dontSleep = 1;
-          if (!ProcessClientPacket(connections[jj],client))
-            closeneeded = true;
-        }
-        if (!closeneeded && write_ready &&
-            connections[jj]->HavePendingData() &&
-            !connections[jj]->FlushOutgoing())
-        {
-          closeneeded = true;
-          write_ready = false;
-        }
-        if (!closeneeded && connections[jj]->GetLastActivity() > CLIENTIDLETIMEOUT)
-        {
-          /*Log("Client: [%s] %d secs idle. Closing connection.\n",
-              netio_ntoa(connections[jj]->GetAddress()),
-              (int)connections[jj]->GetLastActivity() );*/
-          closeneeded = true;
-        }
-        if (closeneeded || !connections[jj]->IsConnected())
-        {
-          /*Log("Client: Closing client connection with %s\n",
-              netio_ntoa(connections[jj]->GetAddress()));*/
-          delete connections[jj];
-          connections[jj] = NULL;
-        }
-      }
-    }
-
-#endif
-
     //----------------------------------------
     // If not quitting, then handle mode requests
     //----------------------------------------
@@ -2162,19 +1978,6 @@ int ClientRun( Client *client )
       __StopThread( thrdatap );
     }
   }
-
-#ifdef XMLSERVE
-
-  // ----------------
-  // Close the HTTP listeners for XMLSERVE
-  // ----------------
-
-  netio_close(mainListener);
-  for (int k = 0; k < MAX_CONNECTIONS; k++)
-    if (connections[k] != NULL)
-      delete connections[k];
-
-#endif
 
   // ----------------
   // Close the async "process" handler
