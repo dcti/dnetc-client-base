@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.108 2001/04/05 23:16:14 teichp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.109 2001/04/06 16:11:15 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -72,7 +72,8 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
     { /* OGR */
-      "GARSP 5.13",
+      "GARSP 5.13-A",
+      "GARSP 5.13-B",
       NULL
     },
   #elif (CLIENT_CPU == CPU_ARM)
@@ -1237,6 +1238,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       extern "C" CoreDispatchTable *ogr_get_dispatch_table_030(void);
       extern "C" CoreDispatchTable *ogr_get_dispatch_table_040(void);
       extern "C" CoreDispatchTable *ogr_get_dispatch_table_060(void);
+  #elif (CLIENT_CPU == CPU_X86)      
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table(void); //A
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table_nobsr(void); //B
   #else
       extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
   #endif
@@ -1745,6 +1749,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         unit_func.ogr = ogr_get_dispatch_table_000();
         coresel = 0;
       }
+    #elif (CLIENT_CPU == CPU_X86)
+      if (coresel == 0) //A
+        unit_func.ogr = ogr_get_dispatch_table(); //A
+      else 
+      {
+        unit_func.ogr = ogr_get_dispatch_table_nobsr(); //B
+        coresel = 1;
+      }  
     #else
       //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
       unit_func.ogr = ogr_get_dispatch_table();
