@@ -3,7 +3,7 @@
 @ Any other distribution or use of this source violates copyright.
 @
 @ Author: Peter Teichmann <dnet@peter-teichmann.de>
-@ $Id: r72arm1-gnu-elf.S,v 1.1.2.1 2002/11/23 01:50:34 andreasb Exp $
+@ $Id: r72arm1-gnu-elf.S,v 1.1.2.2 2003/04/07 22:14:35 teichp Exp $
 
 #define	WORK	r0
 #define	L0	r2
@@ -16,6 +16,12 @@
 #define	A	r8
 #define	C	r9
 #define	Q	r10
+
+@ S[10], S[11] and S[12] are kept in registers. This saves 12 cycles
+@ for 2x3 loads and 2x3 stores.
+#define S_10	r11
+#define	S_11	r12
+#define S_12	r14
 
 .text
 	.align	5
@@ -85,10 +91,47 @@ skip:
 	BLOCKA	7, S3, S2, S1, L1, L0
 	BLOCKA	8, S1, S3, S2, L2, L1
 	BLOCKA	9, S2, S1, S3, L0, L2
-	BLOCKA	10, S3, S2, S1, L1, L0
-	BLOCKA	11, S1, S3, S2, L2, L1
-	BLOCKA	12, S2, S1, S3, L0, L2
-	BLOCKA	13, S3, S2, S1, L1, L0
+
+@	BLOCKA	10, S3, S2, S1, L1, L0
+	add	S3, S2, Q
+	add	S2, S2, S1, ror#29
+	add	S_10 /*S2*/, S2, L0
+	add	C, L0, S_10 /*S2*/, ror#29
+	add	L1, L1, C
+	rsb	C, C, #32
+	mov	L1, L1, ror C
+//	str	S2, [sp, #10*4]
+
+@	BLOCKA	11, S1, S3, S2, L2, L1
+	add	S1, S3, Q
+	add	S3, S3, S_10 /*S2*/, ror#29
+	add	S_11 /*S3*/, S3, L1
+	add	C, L1, S_11 /*S3*/, ror#29
+	add	L2, L2, C
+	rsb	C, C, #32
+	mov	L2, L2, ror C
+//	str	S3, [sp, #11*4]
+
+@	BLOCKA	12, S2, S1, S3, L0, L2
+	add	S2, S1, Q
+	add	S1, S1, S_11 /*S3*/, ror#29
+	add	S_12 /*S1*/, S1, L2
+	add	C, L2, S_12 /*S1*/, ror#29
+	add	L0, L0, C
+	rsb	C, C, #32
+	mov	L0, L0, ror C
+//	str	S1, [sp, #12*4]
+
+@	BLOCKA	13, S3, S2, S1, L1, L0
+	add	S3, S2, Q
+	add	S2, S2, S_12 /*S1*/, ror#29
+	add	S2, S2, L0
+	add	C, L0, S2, ror#29
+	add	L1, L1, C
+	rsb	C, C, #32
+	mov	L1, L1, ror C
+	str	S2, [sp, #13*4]
+
 	BLOCKA	14, S1, S3, S2, L2, L1
 	BLOCKA	15, S2, S1, S3, L0, L2
 	BLOCKA	16, S3, S2, S1, L1, L0
@@ -148,11 +191,57 @@ skip:
 	BLOCKB	6, S1, S2, L2, L1	
 	BLOCKB	7, S2, S1, L0, L2	
 	BLOCKB	8, S1, S2, L1, L0	
-	BLOCKB	9, S2, S1, L2, L1	
-	BLOCKB	10, S1, S2, L0, L2	
-	BLOCKB	11, S2, S1, L1, L0	
-	BLOCKB	12, S1, S2, L2, L1	
-	BLOCKB	13, S2, S1, L0, L2	
+
+@	BLOCKB	9, S2, S1, L2, L1
+	add	S2, L1, S2, ror #29
+	add	S2, S2, S1, ror #29
+//	ldr	S1, [sp, #10*4]
+	add	C, L1, S2, ror #29
+	add	L2, L2, C
+	rsb	C, C, #32
+	mov	L2, L2, ror C
+	str	S2, [sp, #9*4]
+
+@	BLOCKB	10, S1, S2, L0, L2
+	add	S1, L2, S_10 /*S1*/, ror #29
+	add	S_10 /*S1*/, S1, S2, ror #29
+//	ldr	S2, [sp, #11*4]
+	add	C, L2, S_10 /*S1*/, ror #29
+	add	L0, L0, C
+	rsb	C, C, #32
+	mov	L0, L0, ror C
+//	str	S1, [sp, #10*4]
+
+@	BLOCKB	11, S2, S1, L1, L0
+	add	S2, L0, S_11 /*S2*/, ror #29
+	add	S_11 /*S2*/, S2, S_10 /*S1*/, ror #29
+//	ldr	S1, [sp, #12*4]
+	add	C, L0, S_11 /*S2*/, ror #29
+	add	L1, L1, C
+	rsb	C, C, #32
+	mov	L1, L1, ror C
+//	str	S2, [sp, #11*4]
+
+@	BLOCKB	12, S1, S2, L2, L1
+	add	S1, L1, S_12 /*S1*/, ror #29
+	add	S_12 /*S1*/, S1, S_11 /*S2*/, ror #29
+	ldr	S2, [sp, #13*4]
+	add	C, L1, S_12 /*S1*/, ror #29
+	add	L2, L2, C
+	rsb	C, C, #32
+	mov	L2, L2, ror C
+//	str	S1, [sp, #12*4]	
+
+@	BLOCKB	13, S2, S1, L0, L2
+	add	S2, L2, S2, ror #29
+	add	S2, S2, S_12 /*S1*/, ror #29
+	ldr	S1, [sp, #14*4]
+	add	C, L2, S2, ror #29
+	add	L0, L0, C
+	rsb	C, C, #32
+	mov	L0, L0, ror C
+	str	S2, [sp, #13*4]	
+
 	BLOCKB	14, S1, S2, L1, L0	
 	BLOCKB	15, S2, S1, L2, L1	
 	BLOCKB	16, S1, S2, L0, L2	
@@ -242,10 +331,60 @@ skip:
 	BLOCKC	6, S1, S2, L1, L0, A, B
 	BLOCKC	7, S2, S1, L2, L1, B, A
 	BLOCKC	8, S1, S2, L0, L2, A, B
-	BLOCKC	9, S2, S1, L1, L0, B, A
-	BLOCKC	10, S1, S2, L2, L1, A, B
-	BLOCKC	11, S2, S1, L0, L2, B, A
-	BLOCKC	12, S1, S2, L1, L0, A, B
+
+
+@	BLOCKC	9, S2, S1, L1, L0, B, A
+	add	S2, L0, S2, ror #29
+	add	S2, S2, S1, ror #29
+//	ldr	S1, [sp, #10*4]
+	add	C, L0, S2, ror #29
+	add	L1, L1, C
+	rsb	C, C, #32
+	mov	L1, L1, ror C
+	eor	B, B, A
+	rsb	C, A, #32
+	mov	B, B, ror C
+	add	B, B, S2, ror #29
+
+@	BLOCKC	10, S1, S2, L2, L1, A, B
+	add	S1, L1, S_10 /*S1*/, ror #29
+	add	S1, S1, S2, ror #29
+//	ldr	S2, [sp, #11*4]
+	add	C, L1, S1, ror #29
+	add	L2, L2, C
+	rsb	C, C, #32
+	mov	L2, L2, ror C
+	eor	A, A, B
+	rsb	C, B, #32
+	mov	A, A, ror C
+	add	A, A, S1, ror #29
+
+@	BLOCKC	11, S2, S1, L0, L2, B, A
+	add	S2, L2, S_11 /*S2*/, ror #29
+	add	S2, S2, S1, ror #29
+//	ldr	S1, [sp, #12*4]
+	add	C, L2, S2, ror #29
+	add	L0, L0, C
+	rsb	C, C, #32
+	mov	L0, L0, ror C
+	eor	B, B, A
+	rsb	C, A, #32
+	mov	B, B, ror C
+	add	B, B, S2, ror #29
+
+@	BLOCKC	12, S1, S2, L1, L0, A, B
+	add	S1, L0, S_12 /*S1*/, ror #29
+	add	S1, S1, S2, ror #29
+	ldr	S2, [sp, #13*4]
+	add	C, L0, S1, ror #29
+	add	L1, L1, C
+	rsb	C, C, #32
+	mov	L1, L1, ror C
+	eor	A, A, B
+	rsb	C, B, #32
+	mov	A, A, ror C
+	add	A, A, S1, ror #29
+
 	BLOCKC	13, S2, S1, L2, L1, B, A
 	BLOCKC	14, S1, S2, L0, L2, A, B
 	BLOCKC	15, S2, S1, L1, L0, B, A
