@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore.cpp,v $
+// Revision 1.15  1998/10/08 21:23:02  blast
+// Fixed Automatic CPU detection that cyp had written a little strangely
+// for 68K CPU's under AmigaOS.
+// It was good thinking but it would've reported the wrong cpu type,
+// and also, there is no 68050, cyp :)
+//
 // Revision 1.14  1998/10/08 11:05:28  cyp
 // Moved AmigaOS 68k hardware detection code from selcore.cpp to cpucheck.cpp
 //
@@ -63,7 +69,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.14 1998/10/08 11:05:28 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.15 1998/10/08 21:23:02 blast Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -113,7 +119,7 @@ static const char *cputypetable[]=
 static const char *cputypetable[]=
   {
   "Motorola 68000", "Motorola 68010", "Motorola 68020", "Motorola 68030",
-  "Motorola 68040", "Motorola 68050", "Motorola 68060"    
+  "Motorola 68040", "Motorola 68060"
   };
 #else
   #define NO_CPUTYPE_TABLE
@@ -224,10 +230,10 @@ s32 Client::SelectCore(void)
     }
     
   const char *corename = NULL;
-  if (cputype == 4 || cputype == 5 || cputype == 6 )
+  if (cputype == 4 || cputype == 5 ) // there is no 68050, so type5=060
     {
     rc5_unit_func = rc5_unit_func_040_060;
-    corename = "040/050/060";
+    corename = "040/060";
     }
   else //if (cputype == 0 || cputype == 1 || cputype == 2 || cputype == 3)
     {

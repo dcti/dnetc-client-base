@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.30  1998/10/08 21:23:04  blast
+// Fixed Automatic CPU detection that cyp had written a little strangely
+// for 68K CPU's under AmigaOS.
+// It was good thinking but it would've reported the wrong cpu type,
+// and also, there is no 68050, cyp :)
+//
 // Revision 1.29  1998/10/08 16:47:17  cyp
 // Fixed a missing ||
 //
@@ -106,7 +112,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.29 1998/10/08 16:47:17 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.30 1998/10/08 21:23:04 blast Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -278,12 +284,18 @@ int GetProcessorType(int quietly)
   if (detectedtype == -1)
     {
     flags = (long)(SysBase->AttnFlags);
-    detectedtype = 0; /* assume a 000 */
-    if (flags & AFF_68010) detectedtype = 1;
-    if (flags & AFF_68020) detectedtype = 2;
-    if (flags & AFF_68030) detectedtype = 3;
-    if (flags & AFF_68040) detectedtype = 4;
-    if (flags & (1L<<7))   detectedtype = 6; //Cyberstorm et al.
+    if ((flags & AFF_68060) && (flags & AFF_68040) && (flags & AFF_68030)
+	detectedtype = 5; // Phase5 060 boards at least report this...
+    else if ((flags & AFF_68040) && (flags & AFF_68030))
+	detectedtype = 4; // 68040
+    else if ((flags & AFF_68030) && (flags & AFF_68020))
+	detectedtype = 3; // 68030
+    else if ((flags & AFF_68020) && (flags & AFF_68010))
+	detectedtype = 2; // 68020
+    else if ((flags & AFF_68010)
+	detectedtype = 1; // 68010
+    else
+	detectedtype = 0; // Assume a 68000
     }
   if (!quietly)
     LogScreen("Automatic processor detection found a 680%u0\n", detectedtype);
