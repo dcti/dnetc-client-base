@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.64 2000/06/10 18:58:41 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.65 2000/06/22 19:26:01 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -64,6 +64,7 @@ Problem::~Problem()
 {
   __problem_counter--;
   initialized = started = 0;
+  running = 0;
 }
 
 /* ------------------------------------------------------------------- */
@@ -254,34 +255,21 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
 
 /* ------------------------------------------------------------------- */
 
+/* LoadState() and RetrieveState() work in pairs. A LoadState() without
+   a previous RetrieveState(,,purge) will fail, and vice-versa.
+*/
 int Problem::LoadState( ContestWork * work, unsigned int contestid, 
               u32 _iterations, int expected_cputype, 
               int expected_corenum, int expected_os,
               int expected_buildfrac )
 {
-  if (started && last_resultcode == RESULT_WORKING)
+  if (initialized)
   {
+    /* This can only happen if RetrieveState(,,purge) was not called */
     Log("BUG! BUG! BUG! LoadState() on active problem!\n");
     return -1;
   }
-
-  #if 0 /* IF THIS IS NEEDED THEN THE CLIENT IS THOROUGHLY FUBARED */
-  if (running) 
-  {
-    //Log("LoadState() while Run() ...\n");
-    /* wait until Run() has finished, otherwise Run() will overwrite the new state */
-    for (int i = 0; i < 50 && running; ++i)
-      NonPolledUSleep(100000);//usleep(100000);
-    if (running) /* don't load the new state if Run() doesn't finish */
-    {
-      //Log("Still Run()ning. LoadState() failed!\n");
-      started = 0; /* let Run() fail */
-      return -1;
-    }
-  }
-  #endif
   
-  initialized = 0; /* Run() won't start any more */
   last_resultcode = -1;
   started = initialized = 0;
   timehi = timelo = 0;
@@ -428,14 +416,34 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
 
   //---------------------------------------------------------------
 
+  completion_timelo = completion_timehi = 0;
+  runtime_sec = runtime_usec = 0;
+  memset((void *)&profiling, 0, sizeof(profiling));
+  {
+    timehi = 0;
+    struct timeval tv;
+    if (CliGetMonotonicClock(&tv) != 0)
+    {
+      if (CliGetMonotonicClock(&tv) != 0)
+        timehi = 0xfffffffful;
+    }
+    if (timehi == 0)
+    {
+      timehi = tv.tv_sec; 
+      timelo = tv.tv_usec;
+    }
+  }  
+
   last_resultcode = RESULT_WORKING;
   initialized = 1;
-
   return( 0 );
 }
 
 /* ------------------------------------------------------------------- */
 
+/* LoadState() and RetrieveState() work in pairs. A LoadState() without
+   a previous RetrieveState(,,purge) will fail, and vice-versa.
+*/
 int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dopurge )
 {
   if (!initialized)
@@ -459,7 +467,11 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
   if (contestid)
     *contestid = contest;
   if (dopurge)
+  {
     initialized = 0;
+    while (running) /* need to guarantee that no Run() will occur on a */
+      usleep(1000); /* purged problem. */
+  }    
   if (last_resultcode < 0)
     return -1;
   return ( last_resultcode );
@@ -947,49 +959,34 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
 
   last_runtime_is_invalid = 1; /* haven't changed runtime fields yet */
 
-  if ( !initialized )
-    return ( -1 );
-
-  if ( last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
-    return ( last_resultcode );
-
-  if (++running > 1) /* What happened here? Who else called Run(), too? */
+  if ( !initialized ) 
   {
-    Log("Error: Multiple Run() calls ...\n"); /* shouldn't occur */
+    return ( -1 );
+  }  
+  if ((++running) > 1)
+  {
     --running;
     return -1;
-  }
-  
-  if (!started)
-  {
-    timehi = 0;
-    if (CliGetMonotonicClock(&tv) != 0)
-    {
-      if (CliGetMonotonicClock(&tv) != 0)
-        timehi = 0xfffffffful;
-    }
-    if (timehi == 0)
-    {
-      timehi = tv.tv_sec; 
-      timelo = tv.tv_usec;
-    }
-    completion_timelo = completion_timehi = 0;
-    runtime_sec = runtime_usec = 0;
-    memset((void *)&profiling, 0, sizeof(profiling));
-    started=1;
+  }  
 
 #ifdef STRESS_THREADS_AND_BUFFERS 
-    contest = RC5;
+  if (contest == RC5 && !started)
+  {
     contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
     contestwork.crypto.keysdone.hi = contestwork.crypto.iterations.hi;
     contestwork.crypto.keysdone.lo = contestwork.crypto.iterations.lo;
     runtime_usec = 1; /* ~1Tkeys for a 2^20 packet */
     completion_timelo = 1;
     last_resultcode = RESULT_NOTHING;
-    --running;
-    return RESULT_NOTHING;
-#endif    
-  }
+    started = 1;
+  }  
+#endif
+
+  if ( last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
+  {
+    running--;
+    return ( last_resultcode );
+  }  
 
   /* 
     On return from the Run_XXX contestwork must be in a state that we
@@ -1007,6 +1004,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     may choose to return -1, but keep core_resultcode at RESULT_WORKING.
   */
 
+  started = 1;
   last_runtime_usec = last_runtime_sec = 0;
   runstart_secs = 0xfffffffful;
   using_ptime = s_using_ptime;
@@ -1052,16 +1050,13 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
 
   if (retcode < 0) /* don't touch tslice or runtime as long as < 0!!! */
   {
-    --running;
+    running--;
     return -1;
   }
-  if (!started) /* LoadState was called while we were running - state was overwritten! */
-                /* shouldn't occur any more */  
+  if (!started || !initialized) /* LoadState() called while we were running */
   {
     //Log( "Error: LoadState() while Run()ning (thread %u)!\n", threadindex );
-    last_resultcode = -1; // "Discarded (core error)": discard the overwritten block
-    --running;
-    return -1;
+    core_resultcode = -1; // "Discarded (core error)": discard the overwritten block
   }
   
   core_run_count++;
@@ -1069,7 +1064,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
                        using_ptime, &s_using_ptime, core_resultcode );
   tslice = iterations;
   last_resultcode = core_resultcode;
-  --running;
+  running--;
   return last_resultcode;
 }
 
