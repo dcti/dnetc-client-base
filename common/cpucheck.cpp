@@ -3,8 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.4  1998/06/22 09:37:47  cyruspatel
+// Fixed another cosmetic bug.
+//
 // Revision 1.3  1998/06/22 03:40:23  cyruspatel
-// Fixed numcputemp/cpu_count variable mixup. (thanks Silby!)
+// Fixed a numcputemp/cpu_count variable mixup. (thanks Silby)
 //
 // Revision 1.1  1998/06/21 17:12:02  cyruspatel
 // Created from code spun off from cliconfig.cpp
@@ -14,7 +17,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cpucheck.cpp,v 1.3 1998/06/22 03:40:23 cyruspatel Exp $";
+static const char *id="@(#)$Id: cpucheck.cpp,v 1.4 1998/06/22 09:37:47 cyruspatel Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -117,7 +120,8 @@ void Client::ValidateProcessorCount( void )
     if ( numcputemp > 1 )
       {
       numcputemp = 1;
-      LogScreen("Core routines not yet updated for thread safe operation.  Using 1 processor.\n");
+      LogScreen("Core routines not yet updated for thread safe operation. "
+                "Using 1 processor.\n");
       }
   #endif
   return;
@@ -150,12 +154,10 @@ int Client::GetProcessorType()
   char *pronoun = NULL; //"an" "a"
   char *vendorname = NULL; //"a Cyrix", "a Centaur", "an AMD", "an Intel"
   int coretouse = 0; // the core the client should use of the 5(6?)
-  unsigned int vendorid, cpuidb, pos;
-  u32 detectedvalue;
 
-  detectedvalue = x86ident(); //must be interpreted
-  vendorid = (detectedvalue >> 16);
-  cpuidb  = (detectedvalue & 0xffff);
+  u32 detectedvalue = x86ident(); //must be interpreted
+  int vendorid = (int)(detectedvalue >> 16);
+  int cpuidb  = (int)(detectedvalue & 0xffff);
 
   if ( vendorid == 0x7943) // Cyrix CPU
     {
@@ -248,6 +250,7 @@ int Client::GetProcessorType()
     }
   else // we have a mfg's table
     {
+    unsigned int pos;
     for (pos=0 ; ; pos++)
       {
       if ( (cpuxref[pos].cpuname)==NULL )
