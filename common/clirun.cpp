@@ -1,8 +1,11 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.63  1999/01/01 02:45:14  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.62  1998/12/31 10:24:36  dicamillo
 // Change Mac OS yield call.
 //
@@ -241,7 +244,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.62 1998/12/31 10:24:36 dicamillo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.63 1999/01/01 02:45:14 cramer Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU

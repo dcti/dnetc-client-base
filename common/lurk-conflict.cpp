@@ -1,8 +1,11 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk-conflict.cpp,v $
+// Revision 1.12  1999/01/01 02:45:15  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.11  1998/12/01 19:49:14  cyp
 // Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
 // then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
@@ -30,7 +33,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.11 1998/12/01 19:49:14 cyp Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.12 1999/01/01 02:45:15 cramer Exp $"; }
 #endif
 
 /* --------------------------------- */

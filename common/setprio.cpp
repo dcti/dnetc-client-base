@@ -1,4 +1,4 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
@@ -9,6 +9,9 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.45  1999/01/01 02:45:16  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.44  1998/12/22 15:58:24  jcmichot
 // *** empty log message ***
 //
@@ -65,7 +68,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.44 1998/12/22 15:58:24 jcmichot Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.45 1999/01/01 02:45:16 cramer Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU

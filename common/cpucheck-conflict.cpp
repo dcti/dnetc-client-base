@@ -1,8 +1,11 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.54  1999/01/01 02:45:15  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.53  1998/12/23 10:54:37  myshkin
 // Added code to _GetRawPPCIdentification to read /proc/cpuinfo on linux-ppc.
 // Added *ppc-gcc272 entry to configure (until I successfully upgrade to egcs).
@@ -187,7 +190,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.53 1998/12/23 10:54:37 myshkin Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.54 1999/01/01 02:45:15 cramer Exp $"; }
 #endif
 
 #include "cputypes.h"

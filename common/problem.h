@@ -1,10 +1,13 @@
 // Hey, Emacs, this a -*-C++-*- file !
 
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.34  1999/01/01 02:45:16  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.33  1998/12/25 03:08:57  cyp
 // x86 Bryd is runnable on upto 4 threads (threads 3 and 4 use the two
 // non-optimal cores, ie pro cores on a p5 machine and vice versa).

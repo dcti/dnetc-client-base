@@ -1,8 +1,11 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.17  1999/01/01 02:45:15  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.16  1998/12/31 09:18:54  silby
 // Client now honors autoreadkeyserver ini option.
 // (Needed so that people can use us80.v27.distributed.net
@@ -91,7 +94,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.16 1998/12/31 09:18:54 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.17 1999/01/01 02:45:15 cramer Exp $"; }
 #endif
 
 #include "cputypes.h"

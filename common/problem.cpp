@@ -1,8 +1,11 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.61  1999/01/01 02:45:16  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.60  1998/12/28 21:37:54  cramer
 // Misc. cleanups for the disappearing RC5CORECOPY junk and minor stuff to
 // get a solaris client to build.
@@ -169,7 +172,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.60 1998/12/28 21:37:54 cramer Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.61 1999/01/01 02:45:16 cramer Exp $"; }
 #endif
 
 #include "cputypes.h"

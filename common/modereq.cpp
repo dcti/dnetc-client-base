@@ -1,4 +1,4 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.17  1999/01/01 02:45:15  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.16  1998/12/28 21:05:55  cyp
 // Removed CLIENT_OS specific stuff. MacOS! Get in line!
 //
@@ -65,7 +68,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.16 1998/12/28 21:05:55 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.17 1999/01/01 02:45:15 cramer Exp $"; }
 #endif
 
 #include "client.h"   //client class

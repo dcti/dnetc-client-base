@@ -1,8 +1,11 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.112  1999/01/01 02:45:15  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.111  1998/12/26 10:01:35  silby
 // cmdline now ignores -guistart when WIN32GUI defined
 //
@@ -118,7 +121,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.111 1998/12/26 10:01:35 silby Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.112 1999/01/01 02:45:15 cramer Exp $"; }
 #endif
 
 #include "cputypes.h"

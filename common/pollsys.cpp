@@ -1,5 +1,5 @@
 // Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
@@ -27,6 +27,9 @@
 // does away with the 'timeslice factor' crutch.
 //
 // $Log: pollsys.cpp,v $
+// Revision 1.6  1999/01/01 02:45:16  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.5  1998/11/06 04:26:26  cyp
 // Fixed a bug that would show up if the number of procedures registered was
 // an uneven number >= 11.
@@ -49,7 +52,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.5 1998/11/06 04:26:26 cyp Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.6 1999/01/01 02:45:16 cramer Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------

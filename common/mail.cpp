@@ -1,10 +1,13 @@
 // Created by Tim Charron (tcharron@interlog.com) 97.9.17
 // Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.27  1999/01/01 02:45:15  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.26  1998/12/21 17:54:23  cyp
 // (a) Network connect is now non-blocking. (b) timeout param moved from
 // network::Get() to object scope.
@@ -105,7 +108,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.26 1998/12/21 17:54:23 cyp Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.27 1999/01/01 02:45:15 cramer Exp $"; }
 #endif
 
 #include "network.h"

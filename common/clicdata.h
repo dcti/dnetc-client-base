@@ -1,6 +1,6 @@
 // Hey, Emacs, this a -*-C++-*- file !
 
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
@@ -12,6 +12,9 @@
    integrity and ease maintenance. 
 */
 // $Log: clicdata.h,v $
+// Revision 1.14  1999/01/01 02:45:14  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.13  1998/12/22 23:03:22  silby
 // Moved rc5 cipher/iv/etc back into rsadata.h - should be in there
 // because the file is shared with the proxy source.

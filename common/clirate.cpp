@@ -1,4 +1,4 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
@@ -6,6 +6,9 @@
 // problem and for obtaining the total/average keyrate for an entire contest.
 //
 // $Log: clirate.cpp,v $
+// Revision 1.16  1999/01/01 02:45:14  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.15  1998/10/04 11:35:25  remi
 // Id tags fun.
 //
@@ -75,7 +78,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.15 1998/10/04 11:35:25 remi Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.16 1999/01/01 02:45:14 cramer Exp $"; }
 #endif
 
 #include "cputypes.h" //for u64 define

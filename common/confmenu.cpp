@@ -1,8 +1,11 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.10  1999/01/01 02:45:15  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.9  1998/12/30 19:19:28  cyp
 // Fixed broken offlinemode (not being able to change).
 //
@@ -55,7 +58,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.9 1998/12/30 19:19:28 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.10 1999/01/01 02:45:15 cramer Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32

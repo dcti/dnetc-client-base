@@ -1,10 +1,13 @@
 // Hey, Emacs, this a -*-C++-*- file !
 
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version.h,v $
+// Revision 1.30  1999/01/01 02:45:16  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.29  1998/12/28 23:12:43  cyp
 // .424 and counting...
 //

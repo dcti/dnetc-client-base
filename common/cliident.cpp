@@ -1,4 +1,4 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
@@ -11,6 +11,9 @@
 */ 
 //
 // $Log: cliident.cpp,v $
+// Revision 1.12  1999/01/01 02:45:14  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.11  1998/12/29 22:35:42  cyp
 // removed guistuff.cpp
 //
@@ -48,7 +51,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.11 1998/12/29 22:35:42 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.12 1999/01/01 02:45:14 cramer Exp $"; } 
 #endif
 
 //-----------------------------------------------------------------------
@@ -136,7 +139,7 @@ probman_cpp,
 console_cpp
 };
 
-//"@(#)$Id: cliident.cpp,v 1.11 1998/12/29 22:35:42 cyp Exp $"
+//"@(#)$Id: cliident.cpp,v 1.12 1999/01/01 02:45:14 cramer Exp $"
 
 void CliIdentifyModules(void)
 {

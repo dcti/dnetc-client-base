@@ -1,8 +1,11 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.36  1999/01/01 02:45:16  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.35  1998/12/28 21:23:09  cyp
 // Added event support.
 //
@@ -33,7 +36,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.35 1998/12/28 21:23:09 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.36 1999/01/01 02:45:16 cramer Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------

@@ -1,8 +1,11 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mac_client.cpp,v $
+// Revision 1.5  1999/01/01 02:45:15  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.4  1998/12/16 22:40:31  dicamillo
 // Fixed commenting error (missing //) in previous log entry.
 //
@@ -18,7 +21,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *mac_client_cpp(void) {
-return "@(#)$Id: mac_client.cpp,v 1.4 1998/12/16 22:40:31 dicamillo Exp $"; }
+return "@(#)$Id: mac_client.cpp,v 1.5 1999/01/01 02:45:15 cramer Exp $"; }
 #endif
 
 // This file contains the routines added to the Client class for the Mac_Client

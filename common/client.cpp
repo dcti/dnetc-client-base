@@ -1,8 +1,11 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.178  1999/01/01 02:45:14  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.177  1998/12/22 15:58:24  jcmichot
 // *** empty log message ***
 //
@@ -148,7 +151,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.177 1998/12/22 15:58:24 jcmichot Exp $"; }
+return "@(#)$Id: client.cpp,v 1.178 1999/01/01 02:45:14 cramer Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -283,7 +286,7 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       {
       LogScreenRaw( "\nRC5DES " CLIENT_VERSIONSTRING 
                  " client - a project of distributed.net\n"
-                 "Copyright 1997-1998 distributed.net\n" );
+                 "Copyright 1997-1999 distributed.net\n" );
       
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");

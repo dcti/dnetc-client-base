@@ -1,10 +1,13 @@
 // Hey, Emacs, this a -*-C++-*- file !
 
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.58  1999/01/01 02:45:15  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.57  1999/01/01 01:17:41  silby
 // Added dctistrg module so that a portable string
 // lowercasing function can be added.
@@ -165,7 +168,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.57 1999/01/01 01:17:41 silby Exp $"; }
+return "@(#)$Id: network.cpp,v 1.58 1999/01/01 02:45:15 cramer Exp $"; }
 #endif
 
 //----------------------------------------------------------------------

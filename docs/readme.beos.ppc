@@ -9,7 +9,7 @@ This version supports multiple CPUs, and also sets thread priorities using the "
 Future plans for the BeOS version include making it into a standalone program and providing a full user interface.
 
 Credits:
-The RC5DES client is a project of distributed.net, Copyright © distributed.net, 1997, 1998.
+The RC5DES client is a project of distributed.net, Copyright © distributed.net, 1997, 1998, 1999.
 RC5 assembly core by Dan Oetting.
 DES search routines Copyright Matthew Kwan.  Additional DES code by Andrew Meggs.
 This port by Peter DiCamillo at Brown University, Peter_DiCamillo@brown.edu.

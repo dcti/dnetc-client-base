@@ -6,6 +6,9 @@
 ##                       or anything else defined at the end of this makefile
 ##
 ## $Log: makefile.wat,v $
+## Revision 1.25  1999/01/01 02:45:14  cramer
+## Part 1 of 1999 Copyright updates...
+##
 ## Revision 1.24  1998/11/16 22:42:21  cyp
 ## Brought up to date
 ##
@@ -96,7 +99,7 @@
 ## Import 5/23/98 client tree
 ## 
 
-## $Id: makefile.wat,v 1.24 1998/11/16 22:42:21 cyp Exp $
+## $Id: makefile.wat,v 1.25 1999/01/01 02:45:14 cramer Exp $
 
 %VERMINOR = 418b      # for zip - fixit if not the same as version.h
 %VERMAJOR = 7100      # for NetWare copyright: v2.$(%VERMAJOR).$(%VERMINOR)
@@ -777,7 +780,7 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
      @set ZIPPER    = c:\util\pkzip
      @set DOCFILES  = docs\readme.nw docs\rc5des.txt docs\readme.txt
      @set BINNAME   = $(LNKbasename).nlm
-     @set COPYRIGHT = 'Copyright 1997-1998 distributed.net\r\n  Visit http://www.distibuted.net/ for more information'
+     @set COPYRIGHT = 'Copyright 1997-1999 distributed.net\r\n  Visit http://www.distibuted.net/ for more information'
      @set FILEVER   = 0.0   # don't tag with version #
      @set FORMAT    = Novell NLM 'RC5DES Client for NetWare' #'RC5DES v2.$(%VERMAJOR).$(%VERMINOR) Client for NetWare'
 

@@ -1,6 +1,6 @@
 // Hey, Emacs, this a -*-C++-*- file !
 
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
@@ -8,6 +8,9 @@
 // the time. 'time' is always stored/passed/returned in timeval format.
 // 
 // $Log: clitime.h,v $
+// Revision 1.11  1999/01/01 02:45:15  cramer
+// Part 1 of 1999 Copyright updates...
+//
 // Revision 1.10  1998/11/25 06:02:46  dicamillo
 // Update because BeOS also needs "sys/time.h".
 //
