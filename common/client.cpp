@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.118  1998/08/07 10:59:11  cberry
+// Changed handling of -benchmarkXXX so it performs the benchmark rather than giving the menu.
+//
 // Revision 1.117  1998/08/05 18:28:40  cyruspatel
 // Converted more printf()s to LogScreen()s, changed some Log()/LogScreen()s
 // to LogRaw()/LogScreenRaw()s, ensured that DeinitializeLogging() is called,
@@ -112,7 +115,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.117 1998/08/05 18:28:40 cyruspatel Exp $.
+// Tweaked $Id: client.cpp,v 1.118 1998/08/07 10:59:11 cberry Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -288,7 +291,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.117 1998/08/05 18:28:40 cyruspatel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.118 1998/08/07 10:59:11 cberry Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -3221,12 +3224,7 @@ int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
       else  //one of them failed
         retcode = 1; 
       }
-    else if (( strcmp( argv[i], "-benchmark2rc5" ) == 0 ) ||
-             ( strcmp( argv[i], "-benchmark2des" ) == 0 ) ||
-             ( strcmp( argv[i], "-benchmark2" ) == 0 ) ||
-             ( strcmp( argv[i], "-benchmarkrc5" ) == 0 ) ||
-             ( strcmp( argv[i], "-benchmarkdes" ) == 0 ) ||
-             ( strcmp( argv[i], "-benchmark" ) == 0 ))
+    else if (strcmp( argv[i], "-benchmark" ) == 0 )
       {
       int dobench = '1'; 
       if ( isatty(fileno(stdout)) )
@@ -3270,6 +3268,35 @@ int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
       if ( !SignalTriggered && ( dobench == '4' || dobench == '6' ))
         Benchmark(2, 0 );
       retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
+      }
+    else if( strcmp( argv[i], "-benchmark2" ) == 0 )
+      {
+	  Benchmark(1, 1000000L);
+	  if (!SignalTriggered)
+	  {
+	      Benchmark(2, 1000000L);
+	  }
+	  retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
+      }
+    else if( strcmp( argv[i], "-benchmark2rc5" ) == 0 )
+      {
+	  Benchmark(1, 1000000L);
+	  retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
+      }
+    else if( strcmp( argv[i], "-benchmark2des" ) == 0 )
+      {
+	  Benchmark(2, 1000000L);
+	  retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
+      }
+    else if( strcmp( argv[i], "-benchmarkrc5" ) == 0 )
+      {
+	  Benchmark(1, 0);
+	  retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
+      }
+    else if( strcmp( argv[i], "-benchmarkdes" ) == 0 )
+      {
+	  Benchmark(2, 0);
+	  retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
       }
     else if ( strcmp( argv[i], "-cpuinfo" ) == 0 )
       {
