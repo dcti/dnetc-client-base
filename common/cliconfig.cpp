@@ -174,7 +174,7 @@ optionstruct options[OPTION_COUNT]=
 { "cktime", "Interval between saving of checkpoints (minutes):","5",
   "",4,2,0},
 //35
-{ "nettimeout", "Network Timeout (seconds)", "30"," ",3,2,0},
+{ "nettimeout", "Network Timeout (seconds)", "60"," ",3,2,0},
 //36
 { "exitfilechecktime", "Exit file check time (seconds)","30","",4,2,0},
 //37
@@ -354,7 +354,9 @@ printf("------------------------------------------------------------\n\n");
            || (choice == CONF_QUIETMODE)
            || (choice == CONF_NOEXITFILECHECK)
            || (choice == CONF_PERCENTOFF)
+#if defined(MULTITHREAD)
            || (choice == CONF_FREQUENT)
+#endif
            || (choice == CONF_NODISK)
            || (choice == CONF_NOFALLBACK)
            || (choice == CONF_CKTIME)
