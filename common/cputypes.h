@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.28 2000/03/20 14:27:55 jbaker Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.29 2000/03/23 20:41:45 jbaker Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -22,7 +22,7 @@
 #define CPU_PA_RISC     5
 #define CPU_68K         6
 #define CPU_SPARC       7
-/* #define CPU_UNUSED_1 8 - please recycle */
+#define CPU_SH4		8
 #define CPU_POWER       9
 #define CPU_VAX         10
 #define CPU_ARM         11
@@ -195,9 +195,23 @@
   #if defined(__QNXNTO__)
     #define CLIENT_OS_NAME "Neutrino"
     #define CLIENT_OS	    OS_NTO2
+    #if defined(__i386__) || defined(ASM_X86)
+      #define CLIENT_CPU    CPU_X86
+    #elif defined(ASM_PPC)
+      #define CLIENT_CPU    CPU_POWERPC
+    #elif defined(ASM_MIPS) || defined(ASM_MIPS)
+      #define CLIENT_CPU    CPU_MIPS
+    #elif defined(ASM_ARM)
+      #define CLIENT_CPU    CPU_ARM
+    #elif defined(ASM_SH4)
+      #define CLIENT_CPU    CPU_SH4
+    #endif
   #else
     #define CLIENT_OS_NAME  "QNX"
     #define CLIENT_OS       OS_QNX
+    #if defined(__i386__) || defined(ASM_X86)
+      #define CLIENT_CPU    CPU_X86
+    #endif
   #endif
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
