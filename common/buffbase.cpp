@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.36.2.6 2004/06/24 20:59:59 kakace Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.36.2.7 2004/06/26 19:37:01 kakace Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -27,6 +27,20 @@ return "@(#)$Id: buffbase.cpp,v 1.36.2.6 2004/06/24 20:59:59 kakace Exp $"; }
 #include "clitime.h"  // CliClock(), CliTimer()
 #include "buffupd.h"  // BUFFERUPDATE_FETCH / BUFFERUPDATE_FLUSH
 #include "buffbase.h" //ourselves
+
+struct membuffstruct 
+{ 
+  unsigned long count; 
+  unsigned long maxcount;
+  WorkRecord **buff;
+};
+
+static struct {
+  struct membuffstruct in, out;
+} membufftable[CONTEST_COUNT];
+
+#define MEMBUFF_COUNT_MAX 20000   // 20000 records
+#define MEMBUFF_STEPS       200   // 200 records
 
 /* --------------------------------------------------------------------- */
 
@@ -98,14 +112,22 @@ static int BufferPutMemRecord( struct membuffstruct *membuff,
   int retcode = -1;
   WorkRecord *dest;
 
-  if (membuff->count == 0)
+  if (membuff->count == membuff->maxcount && membuff->maxcount < MEMBUFF_COUNT_MAX)
   {
     unsigned int i;
-    for (i = 0; i < (sizeof(membuff->buff)/sizeof(membuff->buff[0])); i++)
-      membuff->buff[i]=NULL;
+    unsigned long newmax = membuff->maxcount + MEMBUFF_STEPS;
+    void *resizedbuff;
+    resizedbuff = realloc(membuff->buff, newmax * sizeof(void *));
+    if (resizedbuff != NULL)
+    {
+      membuff->buff = (WorkRecord **) resizedbuff;
+      membuff->maxcount = newmax;
+      for (i = membuff->count; i < membuff->maxcount; i++)
+        membuff->buff[i]=NULL;
+    }
   }
 
-  if (membuff->count < (sizeof(membuff->buff)/sizeof(membuff->buff[0])))
+  if (membuff->count < membuff->maxcount)
   {
     dest = (WorkRecord *)malloc(sizeof(WorkRecord));
     if (dest != NULL)
@@ -272,9 +294,9 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
     }
     else
     {
-      membuff = &(client->membufftable[tmp_contest].in);
+      membuff = &(membufftable[tmp_contest].in);
       if (tmp_use_out_file)
-        membuff = &(client->membufftable[tmp_contest].out);
+        membuff = &(membufftable[tmp_contest].out);
       tmp_retcode = BufferPutMemRecord( membuff, data, &count );
                /* returns <0 on ioerr, >0 if norecs */
     }
@@ -326,9 +348,9 @@ long GetBufferRecord( Client *client, WorkRecord* data,
     }
     else
     {
-      membuff = &(client->membufftable[contest].in);
+      membuff = &(membufftable[contest].in);
       if (use_out_file)
-        membuff = &(client->membufftable[contest].out);
+        membuff = &(membufftable[contest].out);
                  /* returns <0 on ioerr, >0 if norecs */
       retcode = BufferGetMemRecord( membuff, data, &count );
     }
@@ -385,9 +407,9 @@ long GetBufferRecord( Client *client, WorkRecord* data,
         }
         else
         {
-          membuff = &(client->membufftable[tmp_contest].in);
+          membuff = &(membufftable[tmp_contest].in);
           if (tmp_use_out_file)
-            membuff = &(client->membufftable[tmp_contest].out);
+            membuff = &(membufftable[tmp_contest].out);
                  /* returns <0 on ioerr, >0 if norecs */
           tmp_retcode = BufferPutMemRecord( membuff, data, NULL );
         }
@@ -460,11 +482,11 @@ int BufferAssertIsBufferFull( Client *client, unsigned int contest )
     }
     else
     {
-      struct membuffstruct *membuff = &(client->membufftable[contest].in);
+      struct membuffstruct *membuff = &(membufftable[contest].in);
       if ( BufferCountMemRecords( membuff, contest, &reccount, NULL ) != 0)
         isfull = 1;
       else
-        isfull=(reccount >= (sizeof(membuff->buff)/sizeof(membuff->buff[0])));
+        isfull = (membuff->maxcount >= MEMBUFF_COUNT_MAX);
     }
   }
   return isfull;
@@ -499,9 +521,9 @@ long GetBufferCount( Client *client, unsigned int contest,
     }
     else
     {
-      membuff = &(client->membufftable[contest].in);
+      membuff = &(membufftable[contest].in);
       if (use_out_file)
-        membuff = &(client->membufftable[contest].out);
+        membuff = &(membufftable[contest].out);
       retcode = BufferCountMemRecords( membuff, contest, &reccount, swu_countP );
     }
     if (retcode == 0 && swu_countP)

@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.75 2004/06/24 21:14:50 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.76 2004/06/26 19:37:11 kakace Exp $
 ==========================================================================
 
 2.9000
@@ -44,6 +44,8 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.75 2004/06/24 21:14:50 kakace Exp 
                       server connections/remote buffers (#3648)
             imp: all: Client no longer exit when no OGR-P2 work is available
                       (#3680, #3691)
+            fix: all: Memory buffers are now preserved on restart (#2833)
+            imp: all: Increased the maximum size of memory buffers.
 
 2.9008-491  chg: all: Disabled OGR (Phase 1) contest
             fix: all: Client didn't stop as instructed (#3672)

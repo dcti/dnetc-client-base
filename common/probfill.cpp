@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.87.2.13 2004/06/26 16:22:01 kakace Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.87.2.14 2004/06/26 19:37:01 kakace Exp $"; }
 
 //#define TRACE
 
@@ -1066,7 +1066,7 @@ unsigned int LoadSaveProblems(Client *client,
       // close checkpoint file immediately after saving the problems to disk
       CheckpointAction( client, CHECKPOINT_CLOSE, 0 );
     }
-    else /* no disk buffers */
+    else if (!CheckRestartRequestTrigger()) /* no disk buffers */
     {
       TRACE_BUFFUPD((0, "BufferUpdate: reason = LoadSaveProblem && unload all && membuffers\n"));
       BufferUpdate(client,BUFFERUPDATE_FLUSH,0);

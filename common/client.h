@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.149.2.6 2004/06/24 20:58:40 kakace Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.149.2.7 2004/06/26 19:37:01 kakace Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "problem.h"  /* WorkRecord, CONTEST_COUNT */
@@ -22,12 +22,6 @@
 #define MINCLIENTOPTSTRLEN   64 /* no asciiz var is smaller than this */
 #define NO_OUTBUFFER_THRESHOLDS /* no longer have outthresholds */
 #define DEFAULT_EXITFLAGFILENAME "exitdnet"EXTN_SEP"now"
-
-struct membuffstruct 
-{ 
-  unsigned long count; 
-  WorkRecord *buff[500];
-};
 
 // ------------------
 
@@ -56,7 +50,6 @@ typedef struct
 
   /* -- buffers -- */
   int  nodiskbuffers;
-  struct { struct membuffstruct in, out; } membufftable[CONTEST_COUNT];
   char in_buffer_basename[MINCLIENTOPTSTRLEN*2];
   char out_buffer_basename[MINCLIENTOPTSTRLEN*2];
   char checkpoint_file[MINCLIENTOPTSTRLEN*2];
