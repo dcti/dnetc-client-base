@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.18 1999/12/16 06:11:49 dakidd Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.19 1999/12/19 10:05:26 mfeiri Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -177,12 +177,12 @@ int ConOut(const char *msg)
       w32ConOut(msg);
     #elif (CLIENT_OS == OS_OS2 && defined(OS2_PM))
       os2conout(msg);
-    #elif (CLIENT_OS == OS_MACOS)
-      extern MacConOut(const char *);
-      MacConOut(msg);
     #else
       fwrite( msg, sizeof(char), strlen(msg), stdout);
       fflush(stdout);
+      #if (CLIENT_OS == OS_MACOS)
+      MacShowCursor(); // restore cursor
+      #endif
     #endif
     return 0;
   }
@@ -314,8 +314,10 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         if (ch == EOF) ch = 0;
       }
       #elif (CLIENT_OS == OS_MACOS)
-       ch = getch(); /* sometimes we do console input ;-) - Mindmorph */
-       if (ch == 3) ch = 13; // Hack to get "enter" key to equal "return" key.
+      { 
+        ch = getch();
+        if (ch == 3) ch = 13; /* In MacOS its common that "enter" equals "return". */
+      }
       #else
       {
         setvbuf(stdin, (char *)NULL, _IONBF, 0);
