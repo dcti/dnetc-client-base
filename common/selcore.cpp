@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.42 2003/04/04 20:21:39 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.43 2003/04/04 23:17:40 oliver Exp $"; }
 
 //#define TRACE
 
@@ -249,14 +249,18 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.42 2003/04/04 20:21:39 andreasb Exp $"; }
     extern "C" s32 CDECL rc5_72_unit_func_030_mh_1( RC5_72UnitWork *, u32 *, void *);
     extern "C" s32 CDECL rc5_72_unit_func_040_mh_1( RC5_72UnitWork *, u32 *, void *);
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-    extern "C" s32 CDECL rc5_72_unit_func_ppc_mh_2( RC5_72UnitWork *, u32 *, void *);
-    extern "C" s32 CDECL rc5_72_unit_func_mh603e_addi( RC5_72UnitWork *, u32 *, void *);
-    extern "C" s32 CDECL rc5_72_unit_func_mh604e_addi( RC5_72UnitWork *, u32 *, void *);
-    extern "C" s32 CDECL rc5_72_unit_func_KKS2pipes( RC5_72UnitWork *, u32 *, void *);
-    extern "C" s32 CDECL rc5_72_unit_func_KKS604e( RC5_72UnitWork *, u32 *, void *);
-    #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
-      extern "C" s32 CDECL rc5_72_unit_func_KKS7400( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 CDECL rc5_72_unit_func_KKS7450( RC5_72UnitWork *, u32 *, void *);
+    #if (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
+      #if (CLIENT_OS != OS_WIN32) //NT has poor PPC assembly
+        extern "C" s32 CDECL rc5_72_unit_func_ppc_mh_2( RC5_72UnitWork *, u32 *, void *);
+        extern "C" s32 CDECL rc5_72_unit_func_mh603e_addi( RC5_72UnitWork *, u32 *, void *);
+        extern "C" s32 CDECL rc5_72_unit_func_mh604e_addi( RC5_72UnitWork *, u32 *, void *);
+        extern "C" s32 CDECL rc5_72_unit_func_KKS2pipes( RC5_72UnitWork *, u32 *, void *);
+        extern "C" s32 CDECL rc5_72_unit_func_KKS604e( RC5_72UnitWork *, u32 *, void *);
+        #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+          extern "C" s32 CDECL rc5_72_unit_func_KKS7400( RC5_72UnitWork *, u32 *, void *);
+          extern "C" s32 CDECL rc5_72_unit_func_KKS7450( RC5_72UnitWork *, u32 *, void *);
+        #endif
+      #endif
     #endif
   #elif (CLIENT_CPU == CPU_SPARC)
     extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
@@ -492,8 +496,8 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "KKS 604e",      /* gas and OSX format */
       "KKS 7400",      /* gas and OSX format, AltiVec only */
       "KKS 7450",      /* gas and OSX format, AltiVec only */
-      "MH 1-pipe",     /* gas format */
-      "MH 1-pipe 604e",/* gas format */
+      "MH 1-pipe",     /* gas and OSX format */
+      "MH 1-pipe 604e",/* gas and OSX format */
       NULL
     },
   #elif (CLIENT_CPU == CPU_SPARC)
@@ -612,6 +616,10 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
       if ((cindex >= 4) && (cindex <= 7))
         cindex = 8;			/* "MH 1-pipe" */
       #endif
+      if (have_pwr && cindex > 2)       /* asm cores */
+        cindex = 0;			/* "ANSI 4-pipe" */
+      if (!have_pwr && cindex <= 2)     /* ANSI cores */
+        cindex = 8;                     /* "MH 1-pipe" */
       if (!have_vec && cindex == 6)     /* "KKS 7400" */
         cindex = 4;                     /* "KKS 2pipes" */
       if (!have_vec && cindex == 7)     /* "KKS 7450" */
@@ -1282,6 +1290,12 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         case 0x000A: cindex = 9; break; // 604ev          == MH 1-pipe 604e
         default:     cindex =-1; break; // no default
       }
+      #if defined(_AIXALL)             /* Power/PPC hybrid */
+      if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER?
+        cindex = -1;                   /* one of the ANSI cores */
+      #elif (CLIENT_CPU == CPU_POWER)  /* Power only */
+      cindex = -1;                     /* one of the ANSI cores */
+      #endif
       #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
       if (( detected_type & (1L<<25) ) != 0) //altivec?
       {
@@ -2352,26 +2366,31 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_ss_2;
         pipeline_count = 2;
         break;
-
-     #else /* the ansi cores */
+     #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+      #if (CLIENT_CPU == CPU_POWER) || defined(_AIXALL) || (CLIENT_OS == OS_WIN32)
       case 0:
         unit_func.gen_72 = rc5_72_unit_func_ansi_4;
         pipeline_count = 4;
+        #if defined(_AIXALL)
+        client_cpu = CPU_POWER;
+        #endif
         break;
       case 1:
         unit_func.gen_72 = rc5_72_unit_func_ansi_2;
         pipeline_count = 2;
+        #if defined(_AIXALL)
+        client_cpu = CPU_POWER;
+        #endif
         break;
       case 2:
-      default:
         unit_func.gen_72 = rc5_72_unit_func_ansi_1;
         pipeline_count = 1;
-        coresel = 2; // yes, we explicitly set coresel in the default case !
+        #if defined(_AIXALL)
+        client_cpu = CPU_POWER;
+        #endif
         break;
-     #endif
-
-     /* additional cores */
-     #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+      #endif
+      #if ((CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)) && (CLIENT_OS != OS_WIN32)
       case 3:
           unit_func.gen_72 = rc5_72_unit_func_ppc_mh_2;
           pipeline_count = 2;
@@ -2395,14 +2414,36 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           break;
       #endif
       case 8:
+      default:
         unit_func.gen_72 = rc5_72_unit_func_mh603e_addi;
         pipeline_count = 1;
+        coresel = 8;
         break;
       case 9:
         unit_func.gen_72 = rc5_72_unit_func_mh604e_addi;
         pipeline_count = 1;
         break;
-     #elif (CLIENT_CPU == CPU_SPARC)
+      #endif
+
+     #else /* the ansi cores */
+      case 0:
+        unit_func.gen_72 = rc5_72_unit_func_ansi_4;
+        pipeline_count = 4;
+        break;
+      case 1:
+        unit_func.gen_72 = rc5_72_unit_func_ansi_2;
+        pipeline_count = 2;
+        break;
+      case 2:
+      default:
+        unit_func.gen_72 = rc5_72_unit_func_ansi_1;
+        pipeline_count = 1;
+        coresel = 2; // yes, we explicitly set coresel in the default case !
+        break;
+     #endif
+
+     /* additional cores */
+     #if (CLIENT_CPU == CPU_SPARC)
        case 3:
          unit_func.gen_72 = rc5_72_unit_func_KKS_2;
          pipeline_count = 2;
