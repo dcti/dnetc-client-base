@@ -4,6 +4,13 @@
 
 // This file contains functions for obtaining/formatting/manipulating
 // the time. 'time' is always stored/passed/returned in timeval format.
+//
+// $Log: clitime.cpp,v $
+// Revision 1.11  1998/06/14 08:12:45  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+
 
 /* Portability notes:
    CliTimer() requires porting so that it returns the time

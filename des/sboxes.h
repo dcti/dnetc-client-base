@@ -1,3 +1,11 @@
+/*
+ * $Log: sboxes.h,v $
+ * Revision 1.2  1998/06/14 08:13:29  friedbait
+ * 'Log' keywords added to maintain automatic change history
+ *
+ * 
+ */
+
 #ifndef _SBOXES_H
 #define _SBOXES_H
 

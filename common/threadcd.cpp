@@ -1,6 +1,13 @@
 // Copyright distributed.net 1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Log: threadcd.cpp,v $
+// Revision 1.4  1998/06/14 08:13:12  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+
 
 /* module history:
    04 June 1998 - slapped together - Cyrus Patel <cyp@fb14.uni-mainz.de>

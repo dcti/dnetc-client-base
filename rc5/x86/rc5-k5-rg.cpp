@@ -1,7 +1,12 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
+//
+// $Log: rc5-k5-rg.cpp,v $
+// Revision 1.2  1998/06/14 08:13:36  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
 // AMD K5 optimized version
 // Rémi Guyomarch <rguyom@mail.dotcom.fr>
 //

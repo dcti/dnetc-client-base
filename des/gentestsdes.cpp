@@ -1,3 +1,10 @@
+//
+// $Log: gentestsdes.cpp,v $
+// Revision 1.2  1998/06/14 08:13:25  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+
 Date sent:        Sun, 11 Jan 1998 19:37:00 +0100
 From:             Remi Guyomarch <rguyom@mail.dotcom.fr>
 Organization:     Me ? Organized ?

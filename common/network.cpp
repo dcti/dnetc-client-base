@@ -4,7 +4,13 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// $Id: network.cpp,v 1.17 1998/06/13 23:33:18 cyruspatel Exp $
+//
+// $Log: network.cpp,v $
+// Revision 1.18  1998/06/14 08:13:00  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+//      network.cpp,v 1.17 1998/06/13 23:33:18 cyruspatel
 //                      Fixed NetWare stuff and added #include "sleepdef.h"
 //                      (which should now warn if macros are not the same)
 //

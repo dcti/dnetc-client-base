@@ -1,6 +1,12 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+// 
+// $Log: rotate.h,v $
+// Revision 1.3  1998/06/14 08:13:55  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+// 
 
 #ifndef __ROTATE_H__
 #define __ROTATE_H__

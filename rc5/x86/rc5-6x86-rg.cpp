@@ -1,7 +1,13 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-//torment.ntr.net K6 233 sean@ntr.net
+// torment.ntr.net K6 233 sean@ntr.net
+//
+// $Log: rc5-6x86-rg.cpp,v $
+// Revision 1.2  1998/06/14 08:13:34  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
 
 // Cyrix 6x86 optimized version
 //

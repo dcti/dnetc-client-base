@@ -4,6 +4,13 @@
 
 // This file contains functions for calculating the keyrate for a completed
 // problem and for obtaining the total/average keyrate for an entire contest.
+//
+// $Log: clirate.cpp,v $
+// Revision 1.8  1998/06/14 08:12:38  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+
 
 /* module history:
    01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>

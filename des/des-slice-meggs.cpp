@@ -1,6 +1,12 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Log: des-slice-meggs.cpp,v $
+// Revision 1.6  1998/06/14 08:13:17  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
 
 // encapsulate the bitslice SolNET code
 

@@ -1,6 +1,12 @@
 // Copyright distributed.net 1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+// 
+// $Log: sleepdef.h,v $
+// Revision 1.3  1998/06/14 08:13:10  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+// 
 
 // This include file ensures that sleep() and usleep() are valid.
 // They MUST actually block/yield for approx. the duration requested.

@@ -6,6 +6,12 @@
 
 // This file contains functions for obtaining/formatting/manipulating 
 // the time. 'time' is always stored/passed/returned in timeval format.
+// 
+// $Log: clitime.h,v $
+// Revision 1.5  1998/06/14 08:12:46  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+// 
 
 /* module history:
    01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>

@@ -4,7 +4,12 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// $Id: network.h,v 1.12 1998/06/13 23:33:20 cyruspatel Exp $
+// $Log: network.h,v $
+// Revision 1.13  1998/06/14 08:13:02  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+// 
+//       network.h,v 1.12 1998/06/13 23:33:20 cyruspatel Exp  
 //                      Fixed NetWare stuff and added #include "sleepdef.h"
 //                      (which should now warn if macros are not the same)
 //

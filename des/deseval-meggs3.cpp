@@ -1,3 +1,9 @@
+//
+// $Log: deseval-meggs3.cpp,v $
+// Revision 1.2  1998/06/14 08:13:21  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
 
 #include <stdio.h>
 #include <stdlib.h>

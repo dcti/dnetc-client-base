@@ -1,6 +1,13 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Log: rc5p5brf.cpp,v $
+// Revision 1.2  1998/06/14 08:13:54  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+
 
 // Pentium optimized version
 // Rémi Guyomarch - rguyom@mail.dotcom.fr - 97/07/13

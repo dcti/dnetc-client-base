@@ -1,6 +1,13 @@
 /*
   INI file reading/processing class for C++
 
+  
+  $Log: iniread.cpp,v $
+  Revision 1.5  1998/06/14 08:12:53  friedbait
+  'Log' keywords added to maintain automatic change history
+
+  
+
   version 2.0 (May 25, 1997)
   by Jeff Lawson
   jlawson@hmc.edu     or    JeffLawson@aol.com

@@ -5,6 +5,11 @@
 
 converted. rcv style .h by dave avery may 98
 
+ * $Log: kwan-sboxes.h,v $
+ * Revision 1.2  1998/06/14 08:13:26  friedbait
+ * 'Log' keywords added to maintain automatic change history
+ *
+ * 
  */
 
 #ifndef KWAN

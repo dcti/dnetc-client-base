@@ -3,6 +3,12 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+// 
+// $Log: mail.h,v $
+// Revision 1.6  1998/06/14 08:12:59  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+// 
 
 #ifndef MAIL_H
 #define MAIL_H

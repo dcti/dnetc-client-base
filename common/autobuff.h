@@ -3,6 +3,12 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+// 
+// $Log: autobuff.h,v $
+// Revision 1.5  1998/06/14 08:12:26  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+// 
 #ifndef __AUTOBUFF_H__
 #define __AUTOBUFF_H__
 

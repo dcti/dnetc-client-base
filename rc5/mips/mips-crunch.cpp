@@ -4,6 +4,12 @@
  * it runs 3 to 9% faster than the rc5-ansi stuff on different MIPS
  * based machines!!
  * Marco.Walther@mch.sni.de
+ *
+ * $Log: mips-crunch.cpp,v $
+ * Revision 1.4  1998/06/14 08:13:30  friedbait
+ * 'Log' keywords added to maintain automatic change history
+ *
+ *
  */
 
 /* dual-key, mixed round 3 and encryption, A1/A2 use for last value,

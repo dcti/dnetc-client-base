@@ -1,6 +1,12 @@
 /* dual-key, mixed round 3 and encryption, A1/A2 use for last value,
  * non-arrayed S1/S2 tables, direct use of last value, run-time
  * generation of S0[]
+ *
+ * $Log: rc5-ultra-crunch.cpp,v $
+ * Revision 1.4  1998/06/14 08:13:41  friedbait
+ * 'Log' keywords added to maintain automatic change history
+ *
+ *
  */
 
 #include <stdio.h>

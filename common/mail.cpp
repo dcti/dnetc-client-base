@@ -2,6 +2,13 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Log: mail.cpp,v $
+// Revision 1.9  1998/06/14 08:12:56  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+
 
 
 #undef SHOWMAIL               // define showmail to see mail transcript on stdout

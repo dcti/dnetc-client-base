@@ -1,3 +1,10 @@
+//
+// $Log: sboxes-kwan3.cpp,v $
+// Revision 1.2  1998/06/14 08:13:27  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+
 #include "sboxes.h"
 
 #ifndef KWAN

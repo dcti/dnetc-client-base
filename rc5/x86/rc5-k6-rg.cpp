@@ -1,7 +1,13 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
+//
+// $Log: rc5-k6-rg.cpp,v $
+// Revision 1.2  1998/06/14 08:13:37  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+//
 // K6 optimized version
 // Rémi Guyomarch - rguyom@mail.dotcom.fr
 //

@@ -1,4 +1,10 @@
 // Hey, Emacs, this a -*-C++-*- file !
+// 
+// $Log: iniread.h,v $
+// Revision 1.10  1998/06/14 08:12:55  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+// 
 
 /*
   INI file reading/processing class for C++

@@ -1,6 +1,12 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Log: autobuff.cpp,v $
+// Revision 1.3  1998/06/14 08:12:23  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
 
 #include "autobuff.h"
 

@@ -6,6 +6,12 @@
 
 // This file contains functions for calculating the keyrate for a completed
 // problem and for obtaining the total/average keyrate for an entire contest.
+// 
+// $Log: clirate.h,v $
+// Revision 1.5  1998/06/14 08:12:39  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+// 
 
 /* module history:
    01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>

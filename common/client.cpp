@@ -1,6 +1,13 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Log: client.cpp,v $
+// Revision 1.46  1998/06/14 08:12:33  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+
 
 
 #include "client.h"

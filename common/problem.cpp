@@ -1,8 +1,11 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
+//
 // $Log: problem.cpp,v $
+// Revision 1.16  1998/06/14 08:13:04  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
 // Revision 1.15  1998/06/14 00:06:07  remi
 // Added $Log.
 //

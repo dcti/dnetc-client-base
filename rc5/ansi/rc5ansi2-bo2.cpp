@@ -4,6 +4,13 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Log: rc5ansi2-bo2.cpp,v $
+// Revision 1.4  1998/06/14 08:13:49  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+
 
 /*  This file is included from rc5.cpp so we can use __inline__.  */
 

@@ -3,6 +3,12 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+// 
+// $Log: problem.h,v $
+// Revision 1.9  1998/06/14 08:13:06  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+// 
 
 #ifndef _PROBLEM_H_
 #define _PROBLEM_H_

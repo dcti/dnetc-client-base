@@ -4,6 +4,13 @@
 
 // This file contains functions for formatting keyrate/time/summary data
 // statistics obtained from clirate.cpp into strings suitable for display.
+//
+// $Log: clisrate.cpp,v $
+// Revision 1.14  1998/06/14 08:12:41  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+
 
 /* module history:
    01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>

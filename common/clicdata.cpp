@@ -7,6 +7,13 @@
 // contest summary data (totalblocks, totaliterations, totaltime).
 // The data itself is hidden from other modules to protect integrity and
 // ease maintenance.
+//
+// $Log: clicdata.cpp,v $
+// Revision 1.5  1998/06/14 08:12:30  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+
 
 /* module history:
    01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
