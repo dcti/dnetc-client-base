@@ -21,11 +21,16 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.56 2000/07/01 10:28:00 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.57 2000/07/06 05:17:33 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
+
+2.8010.463  imp: all: client always fetches the largest packet possible
+                 and then splits it locally into sub-packets. Greatly
+                 improves network throughput and reduces server load.
+            fix: win32: .462 client was taking long to shutdown.
 
 2.8010.462  fix: many: removed os-level file locking introduced in .459,
                  didn't work reliably on some file systems, and was not
