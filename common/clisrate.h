@@ -37,14 +37,14 @@ const char *CliGetKeyrateStringForProblem( Problem *prob );
 // combines CliGetKeyrateForContest() and CliGetKeyrateAsString()
 const char *CliGetKeyrateStringForContest( int contestid );
 
-// "4 RC5 Blocks 12:34:56.78 - [123456789 kps]"
+// "4 RC5 Blocks 12:34:56.78 - [123456789 keys/s]"
 const char *CliGetSummaryStringForContest( int contestid );
 
 // [time] Queued RC5 1*2^30 block 68E0D85A:A0000000 (10.25% done)
 const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry );
 
 // [time] Completed RC5 block 68E0D85A:A0000000 (123456789 keys)
-//           123:45:67:89 - [987654321 kps]
+//           123:45:67:89 - [987654321 keys/s]
 const char *CliGetMessageForProblemCompleted( Problem *problem );
 
 // breaks 'message' into (max) two lines with correct word wrap

@@ -43,7 +43,7 @@ char *CliGetKeyrateAsString( char *buffer, double rate )
 
 // ---------------------------------------------------------------------------
 
-// "4 RC5 Blocks 12:34:56.78 - [123456789 kps]"
+// "4 RC5 Blocks 12:34:56.78 - [123456789 keys/s]"
 const char *CliGetSummaryStringForContest( int contestid )
 {
   static char str[70];
@@ -64,7 +64,7 @@ const char *CliGetSummaryStringForContest( int contestid )
     keyrateP = "---.-- ";
   }
     
-  sprintf(str, "%d %s Block%s %s%c- [%skps]", 
+  sprintf(str, "%d %s Block%s %s%c- [%skeys/s]", 
        blocks, name, ((blocks==1)?(""):("s")), 
        CliGetTimeString( &ttime, 2 ), ((!blocks)?(0):(' ')), keyrateP );
   return str;
@@ -150,7 +150,7 @@ const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
 // ---------------------------------------------------------------------------
 
 // Completed RC5 block 68E0D85A:A0000000 (123456789 keys)
-//          123:45:67:89 - [987654321 kps]
+//          123:45:67:89 - [987654321 keys/s]
 const char *CliGetMessageForProblemCompleted( Problem *prob )
 {
   static char str[160];

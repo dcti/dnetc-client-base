@@ -1921,6 +1921,12 @@ void CliSignalHandler( int sig )
     /* see above. allow default handling otherwise may have infinite loop */
   #elif (CLIENT_OS == OS_BEOS)
     // nothing.  don't need to reregister signal handler
+  #elif (CLIENT_OS == OS_IRIX) && defined(__GNUC__)
+    signal( SIGHUP, (void(*)(...)) CliSignalHandler );
+    signal( SIGQUIT, (void(*)(...)) CliSignalHandler );
+    signal( SIGTERM, (void(*)(...)) CliSignalHandler );
+    signal( SIGINT, (void(*)(...)) CliSignalHandler );
+    signal( SIGSTOP, (void(*)(...)) CliSignalHandler );
   #elif (CLIENT_OS != OS_MACOS)
     signal( SIGHUP, CliSignalHandler );
     signal( SIGQUIT, CliSignalHandler );
@@ -1952,6 +1958,12 @@ void CliSetupSignals( void )
   #elif (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS)
     signal( SIGINT, CliSignalHandler );
     signal( SIGTERM, CliSignalHandler );
+  #elif (CLIENT_OS == OS_IRIX) && defined(__GNUC__)
+    signal( SIGHUP, (void(*)(...)) CliSignalHandler );
+    signal( SIGQUIT, (void(*)(...)) CliSignalHandler );
+    signal( SIGTERM, (void(*)(...)) CliSignalHandler );
+    signal( SIGINT, (void(*)(...)) CliSignalHandler );
+    signal( SIGSTOP, (void(*)(...)) CliSignalHandler );
   #elif (CLIENT_OS != OS_MACOS)
     signal( SIGHUP, CliSignalHandler );
     signal( SIGQUIT, CliSignalHandler );

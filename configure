@@ -151,7 +151,7 @@ case "$1" in
 	TARGET_LIBS="-lsocket -lnsl -lc -L/usr/ucblib -lucb"
 	;;
 
-    *mips-cc)
+    *mips-cc)                # IRIX CC is slower than mips-gcc targets
         #  mips-crunch.cpp doesn't compile with CC
 	RC5CORECOPY="rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
@@ -159,17 +159,17 @@ case "$1" in
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
-    *mips-gcc)
+    *mips-gcc-crunch)        # faster than mips-gcc for IRIX
+        RC5CORECOPY="mips-crunch.cpp"
+        TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN"
+        TARGET_ADDSRCS="$SLICE_SRCS3"
+        ;;
+
+    *mips-gcc)               # faster than mips-cc for IRIX
         RC5CORECOPY="rc5ansi2-rg.cpp"
         TARGET_CCFLAGS="$OPTS_GCC_MIPS -DBIT_32 -DPIPELINE_COUNT=2 -DKWAN"
         TARGET_ADDSRCS="$SLICE_SRCS3"
         ;;
-
-    *mips-gcc)
-	RC5CORECOPY="rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_MIPS -DBIT_32 -DPIPELINE_COUNT=2 -DKWAN"
-	TARGET_ADDSRCS="$SLICE_SRCS3"
-	;;
 
 
 ###### HPUX
