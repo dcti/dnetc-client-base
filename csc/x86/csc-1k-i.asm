@@ -2,13 +2,7 @@
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
-; $Log: csc-1k-i.asm,v $
-; Revision 1.1.2.2  1999/11/07 01:31:16  remi
-; Increased code alignment.
-;
-; Revision 1.1.2.1  1999/11/06 00:26:13  cyp
-; they're here! (see also bench.res for 'ideal' combination)
-;
+; CSC-1key-inline core (VC): Hand converted 1999/11/06 (cyp)
 ;
 
 global          csc_unit_func_1k_i,_csc_unit_func_1k_i
@@ -17,9 +11,17 @@ extern          csc_tabc,csc_tabe,csc_bit_order
 extern          convert_key_from_inc_to_csc,convert_key_from_csc_to_inc
 
 %include "csc-mac.inc"
+%include "csc-tran.inc" ; macros for csc_trans[F|G]
+
+;extern csc_transF,csc_transG
+;%define _call_or_inline_csc_transF call csc_transF
+;%define _call_or_inline_csc_transG call csc_transG
+
+%define _call_or_inline_csc_transF _inline_csc_transF
+%define _call_or_inline_csc_transG _inline_csc_transG
 
 __DATASECT__
-    db  "@(#)$Id: csc-1k-i.asm,v 1.1.2.2 1999/11/07 01:31:16 remi Exp $",0
+    db  "@(#)$Id: csc-1k-i.asm,v 1.1.2.3 1999/11/07 19:52:04 cyp Exp $",0
 
 __CODESECT__
     align 32
@@ -2340,7 +2342,7 @@ X$3:
     mov       dword ptr [esp+0x100],edx
     push      eax
     push      edx
-    call      csc_transF
+    _call_or_inline_csc_transF
     mov       eax,dword ptr [esp+0x8c]
     mov       ecx,dword ptr [esp+0x6c]
     mov       edx,dword ptr [esp+0x58]
@@ -2442,7 +2444,7 @@ X$3:
     mov       dword ptr [esp+0x14c],edx
     push      eax
     push      edx
-    call      csc_transF
+    _call_or_inline_csc_transF
     mov       ecx,dword ptr [csc_tabe+0xe0]
     mov       eax,edi
     mov       edx,dword ptr [csc_tabe+0xe8]
@@ -2632,7 +2634,7 @@ X$3:
     mov       eax,dword ptr [esp+0x110]
     push      eax
     push      edx
-    call      csc_transF
+    _call_or_inline_csc_transF
     mov       eax,dword ptr [esp+0x8c]
     mov       edx,dword ptr [esp+0x6c]
     mov       ecx,dword ptr [esp+0x60]
@@ -2729,7 +2731,7 @@ X$3:
     mov       ecx,dword ptr [esp+0x188]
     push      ecx
     push      eax
-    call      csc_transF
+    _call_or_inline_csc_transF
     mov       eax,dword ptr [esp+0x2e0]
     mov       edx,dword ptr [csc_tabe+0x120]
     mov       esi,dword ptr [csc_tabe+0x124]
@@ -2935,7 +2937,7 @@ X$3:
     mov       eax,dword ptr [esp+0x6c]
     push      eax
     push      edx
-    call      csc_transF
+    _call_or_inline_csc_transF
     mov       edx,dword ptr [esp+0xdc]
     mov       ecx,dword ptr [esp+0xe8]
     mov       eax,dword ptr [esp+0xe0]
@@ -3049,7 +3051,7 @@ X$3:
     push      edx
     push      esi
     mov       dword ptr [esp+0x84],eax
-    call      csc_transF
+    _call_or_inline_csc_transF
     mov       eax,dword ptr [esp+0xe8]
     mov       edx,dword ptr [esp+0xb4]
     mov       dword ptr [esp+0x1e0],eax
@@ -3245,7 +3247,7 @@ X$3:
     mov       dword ptr [esp+0x11c],edx
     push      eax
     push      edx
-    call      csc_transF
+    _call_or_inline_csc_transF
     mov       ecx,dword ptr [esp+0x90]
     add       esp,0x00000020
     mov       dword ptr [esp+0x260],ecx
@@ -3355,7 +3357,7 @@ X$3:
     push      edx
     push      esi
     mov       dword ptr [esp+0xf4],eax
-    call      csc_transF
+    _call_or_inline_csc_transF
     mov       eax,dword ptr [esp+0x90]
     mov       edx,dword ptr [esp+0xb4]
     mov       ecx,dword ptr [esp+0xb0]
@@ -3519,7 +3521,7 @@ X$3:
     mov       eax,dword ptr [esp+0x2c]
     mov       dword ptr [esp+0xa4],ecx
     push      eax
-    call      csc_transG
+    _call_or_inline_csc_transG
     mov       edx,dword ptr [esp+0xec]
     mov       eax,dword ptr [esp+0xac]
     mov       ecx,edx
@@ -3611,7 +3613,7 @@ X$3:
     mov       eax,dword ptr [esp+0x28]
     push      eax
     push      esi
-    call      csc_transG
+    _call_or_inline_csc_transG
     mov       ecx,dword ptr [esp+0x44]
     mov       eax,dword ptr [esp+0x90]
     mov       edx,ecx
@@ -3774,7 +3776,7 @@ X$3:
     push      edx
     push      eax
     mov       dword ptr [esp+0x30],edx
-    call      csc_transG
+    _call_or_inline_csc_transG
     add       esp,0x00000020
     lea       ecx,[esp+0x3c]
     lea       edx,[esp+0x20]
@@ -3792,7 +3794,7 @@ X$3:
     push      eax
     push      ecx
     push      edx
-    call      csc_transF
+    _call_or_inline_csc_transF
     mov       eax,dword ptr [esp+0x44]
     mov       edx,dword ptr [esp+0x40]
     mov       ecx,dword ptr [esp+0x30]
@@ -3864,7 +3866,7 @@ X$3:
     push      esi
     push      ecx
     mov       dword ptr [esp+0x5c],eax
-    call      csc_transG
+    _call_or_inline_csc_transG
     add       esp,0x00000020
     lea       eax,[esp+0xe0]
     lea       ecx,[esp+0x3c]
@@ -3882,7 +3884,7 @@ X$3:
     push      edx
     push      eax
     push      ecx
-    call      csc_transF
+    _call_or_inline_csc_transF
     mov       edx,dword ptr [esp+0x30]
     mov       eax,dword ptr [esp+0x40]
     mov       ecx,dword ptr [esp+0x5c]
@@ -3959,7 +3961,7 @@ X$4:
     mov       ecx,dword ptr [esp+0xfc]
     push      eax
     push      ecx
-    call      csc_transF
+    _call_or_inline_csc_transF
     add       esp,0x00000020
     lea       edx,[esp+0x7c]
     lea       eax,[esp+0x24]
@@ -3977,7 +3979,7 @@ X$4:
     push      ecx
     push      edx
     push      eax
-    call      csc_transG
+    _call_or_inline_csc_transG
     add       esp,0x00000020
     lea       ecx,[esp+0xe8]
     lea       edx,[esp+0x9c]
@@ -3995,7 +3997,7 @@ X$4:
     push      eax
     push      ecx
     push      edx
-    call      csc_transF
+    _call_or_inline_csc_transF
     mov       eax,dword ptr [esp+0x12c]
     mov       ecx,dword ptr [esp+0xa4]
     add       esp,0x00000020
@@ -4098,100 +4100,6 @@ X$5:
     pop       ebp
     pop       ebx
     add       esp,0x000002c0
-    ret       
-
-__CODESECT__
-    align 32
-csc_transF:
-    mov       edx,dword ptr [esp+0x4]
-    mov       eax,dword ptr [esp+0x20]
-    mov       ecx,edx
-    push      ebx
-    mov       ebx,dword ptr [eax]
-    push      esi
-    mov       esi,dword ptr [esp+0x18]
-    push      edi
-    not       ecx
-    mov       edi,ecx
-    or        edi,esi
-    xor       ebx,edi
-    mov       edi,dword ptr [esp+0x14]
-    mov       dword ptr [eax],ebx
-    mov       eax,edi
-    or        eax,edx
-    xor       eax,ecx
-    mov       ecx,dword ptr [esp+0x20]
-    mov       edx,dword ptr [ecx]
-    xor       edx,eax
-    mov       dword ptr [ecx],edx
-    mov       ecx,dword ptr [esp+0x18]
-    mov       edx,dword ptr [esp+0x24]
-    xor       eax,ecx
-    or        eax,edi
-    mov       edi,dword ptr [edx]
-    xor       edi,eax
-    xor       eax,esi
-    or        eax,ecx
-    mov       ecx,dword ptr [esp+0x28]
-    mov       dword ptr [edx],edi
-    pop       edi
-    mov       edx,dword ptr [ecx]
-    pop       esi
-    xor       edx,eax
-    pop       ebx
-    mov       dword ptr [ecx],edx
-    ret       
-
-__CODESECT__
-    align 32
-csc_transG:
-    mov       ecx,dword ptr [esp+0x10]
-    mov       eax,dword ptr [esp+0x4]
-    push      ebx
-    mov       ebx,dword ptr [esp+0x10]
-    push      ebp
-    push      esi
-    mov       edx,ecx
-    mov       esi,ecx
-    or        edx,eax
-    and       esi,ebx
-    xor       edx,esi
-    mov       esi,dword ptr [esp+0x24]
-    push      edi
-    mov       ebp,dword ptr [esi]
-    xor       ebp,edx
-    mov       dword ptr [esi],ebp
-    mov       ebp,dword ptr [esp+0x18]
-    mov       esi,ecx
-    or        esi,ebp
-    xor       esi,eax
-    mov       eax,dword ptr [esp+0x30]
-    mov       edi,esi
-    or        edi,edx
-    xor       edi,ecx
-    xor       dword ptr [eax],edi
-    mov       eax,ecx
-    and       eax,ebp
-    or        ecx,ebx
-    xor       eax,ecx
-    mov       ecx,dword ptr [esp+0x24]
-    mov       ebx,eax
-    or        eax,edx
-    mov       ebp,dword ptr [ecx]
-    xor       eax,edi
-    not       ebx
-    xor       ebp,ebx
-    xor       eax,esi
-    mov       dword ptr [ecx],ebp
-    mov       ecx,dword ptr [esp+0x2c]
-    not       eax
-    mov       edx,dword ptr [ecx]
-    pop       edi
-    xor       edx,eax
-    pop       esi
-    pop       ebp
-    mov       dword ptr [ecx],edx
-    pop       ebx
     ret       
 
 __CODESECT__
