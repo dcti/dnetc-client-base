@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.13 2003/03/08 22:15:02 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.14 2003/03/28 17:28:56 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -31,6 +31,8 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.13 2003/03/08 22:15:02 andreasb Exp $"; 
 #  include <mach/mach.h>
 #elif (CLIENT_OS == OS_DYNIX)
 #  include <sys/tmp_ctl.h>
+#elif (CLIENT_OS == OS_SOLARIS)
+#  include <string.h>
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -1412,6 +1414,7 @@ static long __GetRawProcessorID(const char **cpuname)
   static long detectedtype = -2L; /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
   
+#if (CLIENT_OS != OS_SOLARIS)
   /* from linux kernel - last synced with kernel 2.4.19 */
   static struct { int psr_impl, psr_vers; const char *name; } cpuridtable[] = {
   /* from linux/arch/sparc/kernel/cpu.c */
@@ -1523,6 +1526,86 @@ static long __GetRawProcessorID(const char **cpuname)
   if (cpuname)
     *cpuname = detectedname;
   return detectedtype;
+#elif (CLIENT_OS == OS_SOLARIS)
+  FILE *prtconf;
+  char buf[256], name[256], *work_s, *work_t;
+  int i, foundcpu = 0;
+  static struct { int rid; const char *raw_name, *name; } cpuridtable[] =
+  {
+  /* sun4 */
+  /* sun4c */
+  { 1, "Sun 4/20", "SPARCstation SLC"},
+  { 2, "Sun 4/25", "SPARCstation ELC"},
+  { 3, "Sun 4/40", "SPARCstation IPC"},
+  { 4, "Sun 4/50", "SPARCstation IPX"},
+  { 5, "Sun 4/60", "SPARCstation 1"}, 
+  { 6, "Sun 4/65", "SPARCstation 1+"},
+  { 7, "Sun 4/75", "SPARCstation 2"},
+  /* sun4m */
+  { 8, "TMS390S10", "microSPARC"},
+  { 9, "MB86904", "microSPARC II"},
+  {10, "MB86907", "TurboSPARC"},
+  {11, "TMS390Z50", "SuperSPARC"},
+  {12, "TMS390Z55", "SuperSPARC SC"},
+  {13, "RT620", "hyperSPARC"},  
+  {14, "RT625", "hyperSPARC"},
+  /* sun4d */
+  /* sun4u */
+  {15, "UltraSPARC", "UltraSPARC-I"},
+  {16, "UltraSPARC-II", "UltraSPARC-II"},
+  {17, "UltraSPARC-IIi", "UltraSPARC-IIi"},
+  {18, "UltraSPARC-IIe", "UltraSPARC-IIe"},
+  {19, "UltraSPARC-III+", "UltraSPARC-III"}
+  };
+
+  detectedtype = -1L;  /* detection supported, but failed */
+
+  /* parse the prtconf output looking for the cpu name */
+  strncpy (name, "", 256);
+  /* 'prtconf -vp' outputs the detailed device node list from openboot ROM */
+  if ((prtconf = popen ("/usr/sbin/prtconf -vp", "r")) != NULL) {	
+    while (fgets(buf, 256, prtconf) != NULL) {
+      if (strstr (buf, "Node") != NULL) {  /* if new device node, clear name */
+        strncpy (name, "", 256);
+      }
+      if (strstr (buf, "'cpu'") != NULL) {  /* if device is cpu */
+        foundcpu = 1;
+        if (strlen (name) != 0) {  /* if we have device name already */
+          break;
+        }
+      }
+      if ((work_s = strstr (buf, "name:")) != NULL) {  /* if value is 
+                                                          device name */
+        /* extract cpu name, format: "name:  '<manufacturer>,<cpu name>' */
+        if ((work_s = strstr (buf, ",")) != NULL) {
+          work_s++;
+          work_t = strstr (work_s, "'");
+          *(work_t) = '\0';
+          strncpy (name, work_s, 256);
+          if (foundcpu == 1) {  /* if we know device is cpu */
+            break;
+          }
+        }
+      }
+    }
+    pclose (prtconf);
+    if (strlen (name) != 0) {  /* if we found a cpu name */
+      detectedtype = 0;
+      for (i = 1; i <= (sizeof(cpuridtable)/sizeof(cpuridtable[0])); i++) {
+        if (strcmp (name, cpuridtable[i-1].raw_name) == 0) {  /* found cpu ID */
+          detectedname = cpuridtable[i-1].name;
+          detectedtype = cpuridtable[i-1].rid;
+          break;
+        }
+      }
+    }
+  }
+  if (detectedtype == 0) {  /* if we found an unknown cpu name, no ID */
+    detectedname = name;
+  }
+  *cpuname = detectedname;
+  return detectedtype;
+#endif
 }
 #endif
 

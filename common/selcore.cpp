@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.34 2003/03/27 10:53:34 snake Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.35 2003/03/28 17:28:56 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -1529,6 +1529,35 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
     #elif (CLIENT_OS == OS_LINUX)
     // run micro benchmark
     #endif
+  }
+  else if (projectid == RC5_72)
+  {
+    if (detected_type > 0)
+    {
+      switch (detected_type)
+      {
+        case  1: cindex =-1; break; // SPARCstation SLC == ?
+        case  2: cindex =-1; break; // SPARCstation ELC == ?
+        case  3: cindex =-1; break; // SPARCstation IPC == ?
+        case  4: cindex =-1; break; // SPARCstation IPX == ?
+        case  5: cindex =-1; break; // SPARCstation 1   == ?
+        case  6: cindex =-1; break; // SPARCstation 1+  == ?
+        case  7: cindex = 2; break; // SPARCstation 2   == ANSI 1-pipe 
+        case  8: cindex =-1; break; // microSPARC       == ?
+        case  9: cindex = 2; break; // microSPARC II    == ANSI 1-pipe
+        case 10: cindex =-1; break; // TurboSPARC       == ?
+        case 11: cindex = 2; break; // SuperSPARC       == ANSI 1-pipe
+        case 12: cindex = 0; break; // SuperSPARC SC    == ANSI 4-pipe
+        case 13: cindex =-1; break; // hyperSPARC       == ?
+        case 14: cindex =-1; break; // hyperSPARC       == ?
+        case 15: cindex = 1; break; // UltraSPARC-I     == ANSI 2-pipe
+        case 16: cindex = 1; break; // UltraSPARC-II    == ANSI 2-pipe
+        case 17: cindex = 1; break; // UltraSPARC-IIi   == ANSI 2-pipe
+        case 18: cindex = 1; break; // UltraSPARC-IIe   == ANSI 2-pipe
+        case 19: cindex = 0; break; // UltraSPARC-III   == ANSI 4-pipe
+        default: cindex =-1; break; // no default 
+      }
+    }
   }
   #elif (CLIENT_OS == OS_PS2LINUX) // OUCH !!!! SELECT_BY_CPU !!!!! FIXME
   #error Please make this decision by CLIENT_CPU!
