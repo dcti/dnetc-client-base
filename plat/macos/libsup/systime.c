@@ -2,7 +2,7 @@
  * Created for use in distributed.net projects, but incorporation
  * in other libraries is encouraged.
  *
- * $Id: systime.c,v 1.1.2.1 2001/01/21 15:17:32 cyp Exp $
+ * $Id: systime.c,v 1.1.2.2 2001/07/27 07:43:34 mfeiri Exp $
  *
  * POSIX/ANSI time and date functions for MacOS.
  * 
@@ -74,16 +74,16 @@ extern "C" {
 /*                    BEGIN HARDWARE/OS PRIMITIVES                        */
 /* ====================================================================== */
 
-#include <Timer.h>
-#include <LowMem.h>
-#include <DriverServices.h>
+#include <DateTimeUtils.h>  // Set/GetDateTime
+#include <DriverServices.h> // UpTime
 
 /* returns resolution: 1,000,000,000 if using Uptime(), else 1,000,000 */
 static unsigned long __kern_get_nano_uptime(unsigned long *secs, 
                                             unsigned long *nsecs)
 {
   /* For discussion of several timing-related routines available on the Mac:
-     http://developer.apple.com/dev/techsupport/develop/issue29/minow.html
+     http://www.idevgames.com/downloads/tutorials/Ollmann/TimeTechniques.sit
+     and http://developer.apple.com/dev/techsupport/develop/issue29/minow.html
   */     
   #if defined(__POWERPC__)  
   static int use_nano = -1; /* undetermined */
@@ -106,20 +106,21 @@ static unsigned long __kern_get_nano_uptime(unsigned long *secs,
   #endif  /* __POWERPC__ */
   /* __MC68K__ or NuBus PowerMacs */
   {    
-    UnsignedWide now; 
+    UnsignedWide now;
+    unsigned long long usecs;
     Microseconds(&now); /* Microseconds (toolbox call) */
-    *nsecs = ((now.lo % 1000000ul) * 1000ul);
-    *secs = (((((unsigned long long)now.hi)<<32)+((unsigned long long)now.lo))/
-                ((unsigned long long)1000000));
+    usecs = (((((unsigned long long)now.hi)<<32) 
+             + ((unsigned long long)now.lo));
+    *nsecs = ((unsigned long)(usecs % 1000000ul)) * 1000ul;
+    *secs = ((unsigned long)(usecs / 1000000ul));
   }
   return 1000000ul;
 }  
 
 static unsigned long __kern_get_secs_since_Jan1_1904(void)
 {
-  //#define TICKS ((unsigned long *)0x16a) // equals LMGetTicks()
-  #define TIME ((unsigned long *)0x20c) // equals GetDateTime()/ReadDateTime
-  unsigned long since_jan1_1904 = (*TIME);
+  unsigned long since_jan1_1904;
+  GetDateTime(&since_jan1_1904);
   return since_jan1_1904;
 }
 
