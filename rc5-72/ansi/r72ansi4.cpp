@@ -1,3 +1,11 @@
+/* 
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/
+const char *rc5ansi4_cpp(void) {
+return "@(#)$Id: r72ansi4.cpp,v 1.7 2002/09/25 21:24:18 acidblood Exp $"; }
+
 #include "problem.h"
 #define P 0xB7E15163
 #define Q 0x9E3779B9
