@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.6 1999/11/03 07:11:51 gregh Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.7 1999/11/03 18:24:12 gregh Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -137,10 +137,6 @@ static const u32 ogr_test_cases[TEST_CASE_COUNT][8] = {
   {~0x001BE4B3, 22, 1, 8, 5, 29, 27, 37},
   {~0x00441720, 23, 1, 2, 4, 5, 8, 10},
   { 0x000EFA83, 23, 3, 4, 10, 44, 5, 25},
-  {~0x0027C638, 23, 3, 4, 10, 44, 5, 26},
-  {~0x15B8C5D7, 24, 1, 2, 4, 5, 8, 10},
-  { 0x000ADD64, 24, 9, 24, 4, 1, 59, 25},
-  {~0x003C3A07, 24, 9, 24, 4, 1, 59, 26},
   //{0, 25, 12, 17, 10, 33, 19, 55},
   //{0, 26, 1, 32, 50, 21, 6, 14},
   //{0, 27, 3, 12, 26, 25, 29, 2},
