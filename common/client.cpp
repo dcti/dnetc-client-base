@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.95  1998/07/12 12:51:36  cyruspatel
+// Added static functions for use by ::Run() et al: IsFilenameValid() which
+// checks for zero length and "none" filenames, and DoesFileExist() which
+// expands the filename to the full path (if not DONT_USE_PATHWORK) before
+// doing an access(filename, 0) check.
+//
 // Revision 1.94  1998/07/12 09:05:59  silby
 // Fixed path handling code *again* so that the .ini name will follow the executible's name. This is how it's been done for hundreds of releases, now is a bad time to change.
 //
@@ -30,7 +36,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.94 1998/07/12 09:05:59 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.95 1998/07/12 12:51:36 cyruspatel Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -206,7 +212,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.94 1998/07/12 09:05:59 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.95 1998/07/12 12:51:36 cyruspatel Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -1591,6 +1597,22 @@ s32 Client::SelfTest( u8 contest )
 
 // ---------------------------------------------------------------------------
 
+static int IsFilenameValid( const char *filename )
+{ return ( *filename != 0 && strcmp( filename, "none" ) != 0 ); }
+
+static int DoesFileExist( const char *filename )
+{ 
+  if ( !IsFilenameValid( filename ) )
+    return 0;
+#ifdef DONT_USE_PATHWORK
+  return ( access( filename, 0 ) == 0 );
+#else
+  return ( access( GetFullPathForFilename( filename ), 0 ) == 0 );
+#endif
+}
+
+// ---------------------------------------------------------------------------
+
 #if defined(MULTITHREAD)
 void Go_mt( void * parm )
 {
@@ -1761,16 +1783,16 @@ s32 Client::Run( void )
   // Recover blocks from checkpoint files
   // --------------------------------------
 
-  if ( (checkpoint_file[0][0])!=0 &&  strcmp(checkpoint_file[0],"none") != 0)
-  {
+  if ( DoesFileExist( checkpoint_file[0] ) )
+    {
     s32 recovered = CkpointToBufferInput(0); // Recover any checkpointed information in case we abnormally quit.
     if (recovered != 0) Log("Recovered %d block%s from RC5 checkpoint file\n",recovered,recovered==1?"":"s");
-  }
-  if ( (checkpoint_file[1][0])!=0 && strcmp(checkpoint_file[1],"none") != 0)
-  {
+    }
+  if ( DoesFileExist( checkpoint_file[1] ) )
+    {
     s32 recovered = CkpointToBufferInput(1); // Recover any checkpointed information in case we abnormally quit.
     if (recovered != 0) Log("Recovered %d block%s from DES checkpoint file\n",recovered,recovered==1?"":"s");
-  }
+    }
 
   // --------------------------------------
   // Select an appropriate core, niceness and timeslice setting
@@ -2418,11 +2440,10 @@ PreferredIsDone1:
 
           // Checkpoint info just became outdated...
 
-          if ((checkpoint_file[0][0])!=0 && strcmp(checkpoint_file[0],"none") != 0)
+          if ( DoesFileExist( checkpoint_file[0] ) )
             EraseCheckpointFile(checkpoint_file[0]); //buffwork.cpp
-          if ((checkpoint_file[1][0])!=0 && strcmp(checkpoint_file[1],"none") != 0)
+          if ( DoesFileExist( checkpoint_file[1] ) )
             EraseCheckpointFile(checkpoint_file[1]); //buffwork.cpp
-
 
           //---------------------
           // See if the request to quit after the completed block
@@ -2648,7 +2669,7 @@ PreferredIsDone1:
         //----------------------------------------
         // Found an "exitrc5.now" flag file?
         //----------------------------------------
-        if( access( GetFullPathForFilename(exit_flag_file), 0 ) == 0 )
+        if( DoesFileExist( exit_flag_file ) )
         {
           Log( "[%s] Found \"exitrc5" EXTN_SEP "now\" file.  Exiting.\n", Time() );
           TimeToQuit = 1;
@@ -2660,8 +2681,7 @@ PreferredIsDone1:
     // Does a pausefile exist?
     //------------------------------------
 
-    pausefilefound = ( *pausefile != 0 && strcmp(pausefile,"none") != 0 &&
-          access( pausefile, 0 ) == 0 ? 1 : 0 );
+    pausefilefound = DoesFileExist( pausefile );
 
     //----------------------------------------
     // Are we quitting?
@@ -2740,9 +2760,9 @@ PreferredIsDone1:
       // Shutting down: delete checkpoint files
       // ----------------
 
-      if ((checkpoint_file[0][0]) != 0 && strcmp(checkpoint_file[0],"none") != 0)
+      if ( DoesFileExist( checkpoint_file[0] ) )
         EraseCheckpointFile(checkpoint_file[0]);
-      if ((checkpoint_file[1][0]) != 0 && strcmp(checkpoint_file[1],"none") != 0)
+      if ( DoesFileExist( checkpoint_file[1] ) )
         EraseCheckpointFile(checkpoint_file[1]);
 
       // ----------------
@@ -2767,11 +2787,11 @@ PreferredIsDone1:
     if (!TimeToQuit)
     {
       // Time to checkpoint?
-      if ( (((checkpoint_file[0][0]) != 0 && (strcmp(checkpoint_file[0],"none") != 0)) || 
-            ((checkpoint_file[1][0]) != 0 && (strcmp(checkpoint_file[1],"none") != 0)))
+      if ((IsFilenameValid( checkpoint_file[0] ) || 
+           IsFilenameValid( checkpoint_file[1] ))
            && (!nodiskbuffers) && (!pausefilefound))
-      {
-        if ( (!TimeToQuit ) && ( ( (s32) time( NULL ) ) > ( (s32) nextcheckpointtime ) ) )
+        {
+       if ( (!TimeToQuit ) && ( ( (s32) time( NULL ) ) > ( (s32) nextcheckpointtime ) ) )
 
         {
           nextcheckpointtime = time(NULL) + checkpoint_min * 60;
@@ -2801,7 +2821,7 @@ void Client::DoCheckpoint( int load_problem_count )
 
   for (int j = 0; j < 2; j++)
   {
-    if ((checkpoint_file[j][0])!=0 && strcmp(checkpoint_file[j],"none") != 0)
+    if ( IsFilenameValid(checkpoint_file[j] ) )
     {
       EraseCheckpointFile(checkpoint_file[j]); // Remove prior checkpoint information (if any).
 
@@ -2919,7 +2939,7 @@ void Client::Log( const char *format, ...)
   // print it out and log it
   LogScreen(logstr);
 
-  if ( (*logname != 0) && (strcmp( logname, "none" ) != 0) )
+  if ( IsFilenameValid( logname ) )
     {
 #ifdef DONT_USE_PATHWORK
       FILE *file = fopen ( logname, "a" );
@@ -3047,16 +3067,7 @@ int main( int argc, char *argv[] )
   }
   else
   {
-#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
-  #if defined(DJGPP)
-    char fndrive[MAXDRIVE], fndir[MAXDIR], fname[MAXFILE], fext[MAXEXT];
-    fnsplit(argv[0], fndrive, fndir, fname, fext);
-    fnmerge(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
-    strcpy(client.exepath, fndrive);   // have the drive
-    strcat(client.exepath, fndir);     // append dir for fully qualified path
-    strcpy(client.exename, fname);     // exe filename
-    strcat(client.exename, fext);      // tack on extention
-  #else // __WATCOM__ || __TURBOC__ || MSVC
+  #if (CLIENT_OS == OS_WIN32) 
     char fndrive[_MAX_DRIVE], fndir[_MAX_DIR], fname[_MAX_FNAME], fext[_MAX_FNAME];
     _splitpath(argv[0], fndrive, fndir, fname, fext);
     _makepath(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
@@ -3065,31 +3076,42 @@ int main( int argc, char *argv[] )
     strcpy(client.exename, fname);     // exe filename
     strcat(client.exename, fext);      // tack on extention
   #endif
-#elif (CLIENT_OS == OS_NETWARE) //also ok for dos,win,os2,vms,mac,amiga,*ix
-    client.inifilename[0] = 0;
-    if (argv[0] != NULL && ((strlen(argv[0])+5) < sizeof(client.inifilename)) )
-    {
+  #ifdef DONT_USE_PATHWORK 
+    #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
+        (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || \ 
+        (CLIENT_OS == OS_OS2)
+      #if defined(DJGPP)
+        char fndrive[MAXDRIVE], fndir[MAXDIR], fname[MAXFILE], fext[MAXEXT];
+        fnsplit(argv[0], fndrive, fndir, fname, fext);
+        fnmerge(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
+      #else // __WATCOM__ || __TURBOC__ || MSVC
+        char fndrive[_MAX_DRIVE], fndir[_MAX_DIR], fname[_MAX_FNAME], fext[_MAX_FNAME];
+        _splitpath(argv[0], fndrive, fndir, fname, fext);
+        _makepath(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
+      #endif
+      strcpy(client.exepath, fndrive);   // have the drive
+      strcat(client.exepath, fndir);     // append dir for fully qualified path
+      strcpy(client.exename, fname);     // exe filename
+      strcat(client.exename, fext);      // tack on extention
+    #elif (CLIENT_OS == OS_NETWARE) //also ok for dos,win,os2,vms,mac,amiga,*ix
+      client.inifilename[0] = 0;
+      if (argv[0] != NULL && ((strlen(argv[0])+5) < sizeof(client.inifilename)) )
+        {
+        strcpy( client.inifilename, argv[0] );
+        char *slash = strrchr( client.inifilename, '/' );
+        slash = max( slash, strrchr( client.inifilename, '\\') );
+        slash = max( slash, strrchr( client.inifilename, ':') );
+        if (slash) *(slash+1) = 0;
+         else client.inifilename[0] = 0;
+        }
+      strcat( client.inifilename, "rc5des" EXTN_SEP "ini" );
+    #elif (CLIENT_OS == OS_VMS)
+      strcpy( client.inifilename, "rc5des" EXTN_SEP "ini" );
+    #else
       strcpy( client.inifilename, argv[0] );
-      char *slash = NULL;
-      #if (CLIENT_OS != OS_MACOS) && (CLIENT_OS != OS_RISCOS)
-      slash = strrchr( client.inifilename, '/' );
-      #endif
-      #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S)
-      slash = max( slash, strrchr( client.inifilename, '\\') );
-      #endif
-      #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_VMS)
-      slash = max( slash, strrchr( client.inifilename, ':') );
-      #endif
-      if (slash) *(slash+1) = 0;
-      else client.inifilename[0] = 0;
-    }
-    strcat( client.inifilename, "rc5des" EXTN_SEP "ini" );
-#elif (CLIENT_OS == OS_VMS)
-    strcpy( client.inifilename, "rc5des" EXTN_SEP "ini" );
-#else
-    strcpy( client.inifilename, argv[0] );
-    strcat( client.inifilename, EXTN_SEP "ini" );
-#endif
+      strcat( client.inifilename, EXTN_SEP "ini" );
+    #endif
+  #endif //DONT_USE_PATHWORK
   }
 
   // See if there's a command line parameter to override the INI filename...
