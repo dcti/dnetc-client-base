@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.6  1998/10/26 04:15:31  cyp
+// Replaces use of the IS_A_TTY() macro with a call to ConIsScreen()
+//
 // Revision 1.5  1998/10/11 00:46:29  cyp
 // Benchmark() is now standalone.
 //
@@ -27,7 +30,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.5 1998/10/11 00:46:29 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.6 1998/10/26 04:15:31 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -41,7 +44,7 @@ return "@(#)$Id: bench.cpp,v 1.5 1998/10/11 00:46:29 cyp Exp $"; }
 #include "clisrate.h"  // CliGetKeyrateAsString()
 #include "cpucheck.h"  // GetTimesliceBaseline()
 #include "logstuff.h"  // LogScreen()
-#include "console.h"   // IS_STDOUT_A_TTY()
+#include "console.h"   // ConIsScreen()
 #include "bench.h"     // ourselves
 
 // --------------------------------------------------------------------------
@@ -114,11 +117,9 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
   problem.percent = 0;
   sm0 = "%cBenchmarking %s with 1*2^%d tests (%u keys):%s%c%u%%";
   cm1 = '\n'; 
-  cm3 = 0;
-  if (IS_STDOUT_A_TTY()) //console.h
-    cm3 = '\r';
+  cm2 = ((ConIsScreen())?(' '):(0));
+  cm3 = ((cm2)?('\r'):(0)); //console.h
   sm4 = ((cm3)?(""):("\n"));
-  cm2 = ((cm3)?(' '):(0));
   run = 0;
 
   do{
