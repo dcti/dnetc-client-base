@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.29 2004/06/24 21:13:28 kakace Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.30 2004/07/06 22:34:51 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -369,7 +369,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         {
           case 0x00: cindex = 2; break; // P5             == ANSI 1-pipe
           case 0x01: cindex = 2; break; // 386/486        == ANSI 1-pipe
-          case 0x02: cindex = 1; break; // PII/PIII       == ANSI 2-pipe
+          case 0x02: cindex = 1; break; // PII            == ANSI 2-pipe
           case 0x03: cindex = 2; break; // Cx6x86         == ANSI 1-pipe
           case 0x04: cindex = 2; break; // K5             == ANSI 1-pipe
           case 0x05: cindex = 1; break; // K6             == ANSI 2-pipe
