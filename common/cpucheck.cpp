@@ -3,16 +3,16 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.48  1998/12/04 12:09:01  chrisb
+// fixed typo
+//
+// Revision 1.47  1998/12/04 16:44:30  cyp
+// Noticed and fixed MacOS's returning raw cpu type numbers to SelectCore().
+// Fixed a long description header in ProcessorIndentification stuff. Tried
+// to make cpu detection stuff more cpu- and less os- centric.
+//
 // Revision 1.46  1998/12/01 19:49:14  cyp
-// Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
-// then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
-// are CORE_SUPPORTS_SMP, OS_SUPPORTS_SMP. If both CORE_* and OS_* support
-// SMP, then CLIENT_SUPPORTS_SMP is defined as well. This should keep thread
-// strangeness (as foxy encountered it) out of the picture. threadcd.h
-// (and threadcd.cpp) are no longer used, so those two can disappear as well.
-// Editorial note: The term "multi-threaded" is (and has always been)
-// virtually meaningless as far as the client is concerned. The phrase we
-// should be using is "SMP-aware".
+// Cleaned up MULT1THREAD #define. See cputypes.h log entry for details.
 //
 // Revision 1.45  1998/12/01 11:24:11  chrisb
 // more riscos x86 changes
@@ -48,7 +48,6 @@
 // Added MacOS PowerPC detection stuff
 //
 // Revision 1.34  1998/10/30 00:07:19  foxyloxy
-//
 // Rectify some deviations from the standard of "-1" means detection
 // failed.
 //
@@ -170,7 +169,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.46 1998/12/01 19:49:14 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.48 1998/12/04 12:09:01 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -330,142 +329,173 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
 
 // --------------------------------------------------------------------------
 
-#if (!((CLIENT_CPU == CPU_X86) || \
-      ((CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)) || \
-      ((CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_MACOS)) || \
-      ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS)) ))
+#if (CLIENT_CPU != CPU_X86) && \
+    (CLIENT_CPU != CPU_68K) && \
+    (CLIENT_CPU != CPU_POWERPC) && \
+    (CLIENT_CPU != CPU_ARM)
 int GetProcessorType(int quietly)
 { 
   if (!quietly)
     LogScreen("Automatic processor detection is not supported.\n");
   return -1; 
 }
+#define CPU_AUTODETECT_IS_UNSUPPORTED
 #endif
 
 // --------------------------------------------------------------------------
 
-#if ((CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS))
-int GetProcessorType(int quietly)
-{    
-  int detectedtype = -1;
-  long flags = (long)(SysBase->AttnFlags);
-
-  if ((flags & AFF_68060) && (flags & AFF_68040) && (flags & AFF_68030))
-    detectedtype = 5; // Phase5 060 boards at least report this...
-  else if ((flags & AFF_68040) && (flags & AFF_68030))
-    detectedtype = 4; // 68040
-  else if ((flags & AFF_68030) && (flags & AFF_68020))
-    detectedtype = 3; // 68030
-  else if ((flags & AFF_68020) && (flags & AFF_68010))
-    detectedtype = 2; // 68020
-  else if (flags & AFF_68010)
-    detectedtype = 1; // 68010
-  else
-    detectedtype = -1;
-  if (!quietly)
+#if (CLIENT_CPU == CPU_68K)
+static int __GetRaw68KIdentification(const char **cpuname)
+{
+  static int detectedtype = -2; /* -1==failed, -2==not supported */
+  static char descr[8];
+  
+  if (detectedtype == -2)
     {
-    if (detectedtype == -1)
-      LogScreen("Processor detection failed. A 68000 is assumed\n");
+    #if (CLIENT_OS == OS_AMIGAOS)
+    long flags = (long)(SysBase->AttnFlags);
+
+    if ((flags & AFF_68060) && (flags & AFF_68040) && (flags & AFF_68030))
+      detectedtype = 5; // Phase5 060 boards at least report this...
+    else if ((flags & AFF_68040) && (flags & AFF_68030))
+      detectedtype = 4; // 68040
+    else if ((flags & AFF_68030) && (flags & AFF_68020))
+      detectedtype = 3; // 68030
+    else if ((flags & AFF_68020) && (flags & AFF_68010))
+      detectedtype = 2; // 68020
+    else if (flags & AFF_68010)
+      detectedtype = 1; // 68010
+    else
+      detectedtype = -1;
+    #endif
+    #if (CLIENT_OS == OS_MACOS)
+    // Note: gestaltProcessorType is used so that if the 68K client is run on
+    // on PPC machine for test purposes, it will get the type of the 68K 
+    // emulator. Also, gestaltNativeCPUType is not present in early versions of 
+    // System 7. (For more info, see Gestalt.h)
+    long result;
+    if (Gestalt(gestaltProcessorType, &result) == noErr)
+      {
+      switch(result) 
+        {
+        case gestalt68000: detectedtype = 0;  break;
+        case gestalt68010: detectedtype = 1;  break;
+        case gestalt68020: detectedtype = 2;  break;
+        case gestalt68030: detectedtype = 3;  break;
+        case gestalt68040: detectedtype = 4;  break;
+        default:           detectedtype =-1;  break; //(should never happen)
+        }
+      }
+    #endif
+    }
+ 
+  if (cpuname)
+    {
+    if (detectedtype < 0)
+      *cpuname = "unknown";
     else
       {
       int x68k = detectedtype; if (x68k == 5) x68k = 6;
-      LogScreen("Automatic processor detection found a Motorola 680%d0\n",x68k);
+      sprintf(descr, "680%d0", x68k);
+      *cpuname = (const char *)(&descr[0]);
       }
     }
-  if (detectedtype == -1)
-    detectedtype = 0; // Assume a 68000
-  return (detectedtype);
-}    
-#endif
+  return detectedtype;
+}  
+
+int GetProcessorType(int quietly)
+{
+  const char *cpuname;
+  int rawid = __GetRaw68KIdentification(&cpuname);
+  int coretouse = -1;
+
+  if (!quietly)
+    {
+    if (rawid < 0)
+      LogScreen("Automatic processor detection %s.\n",
+                        ((rawid == -1)?("failed"):("is not supported")) );
+    else
+      LogScreen("Automatic processor detection found\na Motorola %s\n",cpuname);
+    }
+  coretouse = ((rawid < 0) ? (-1) : (rawid));
+  return (coretouse);
+}
+#endif /* (CLIENT_CPU == CPU_68K) */
 
 // --------------------------------------------------------------------------
 
-#if ((CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC))
-int GetProcessorType(int quietly)
+#if (CLIENT_CPU == CPU_POWERPC)
+static int __GetRawPPCIdentification(const char **cpuname)
 {
-  // Note: need to use gestaltNativeCPUtype in order to get the correct value
-  // for G3 upgrade cards in a 601 machine.
-  // The value for detectedtype is the Gestalt result - 0x101 (gestaltCPU601).
-
-  long result;
-  const char *cpu_description = NULL;
-  int detectedtype = -1;
+  static int detectedtype = -2; /* -1 == failed, -2 == not supported */
   
-  if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
+  if (detectedtype == -2)
     {
-    switch(result) 
+    #if (CLIENT_OS == OS_MACOS)
+    // Note: need to use gestaltNativeCPUtype in order to get the correct 
+    // value for G3 upgrade cards in a 601 machine.
+    // The value for detectedtype is the Gestalt result - 0x101 (gestaltCPU601).
+    long result;
+    if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
       {
-      case gestaltCPU601:           
-             detectedtype = 0; cpu_description = "601"; break; // IBM 601
-      case gestaltCPU603:
-             detectedtype = 2; cpu_description = "603"; break;
-      case gestaltCPU604:
-             detectedtype = 3; cpu_description = "604"; break;
-      case gestaltCPU603e:
-             detectedtype = 5; cpu_description = "603e"; break;
-      case gestaltCPU603ev:
-             detectedtype = 6; cpu_description = "603ev"; break;
-      case gestaltCPU750: 
-             detectedtype = 7; cpu_description = "740/750/\"G3\""; break;
-      case gestaltCPU604e:
-             detectedtype = 8; cpu_description = "604e"; break;
-      case gestaltCPU604ev:
-             detectedtype = 9; cpu_description = "604ev/Mach5"; break;
-      default:
-             detectedtype =-1; cpu_description = NULL; break;
+      switch(result) 
+        {
+        case gestaltCPU601:   detectedtype = 0; break; // IBM 601
+        case gestaltCPU603:   detectedtype = 2; break; 
+        case gestaltCPU604:   detectedtype = 3; break; 
+        case gestaltCPU603e:  detectedtype = 5; break;
+        case gestaltCPU603ev: detectedtype = 6; break;
+        case gestaltCPU750:   detectedtype = 7; break;
+        case gestaltCPU604e:  detectedtype = 8; break;
+        case gestaltCPU604ev: detectedtype = 9; break;
+        default:              detectedtype =-1; break;
+              }
+      }
+    #endif
+    }
+
+  if (cpuname)
+    {
+    switch (detectedtype)
+      {
+      case 0:  *cpuname = "601"; break;
+      case 2:  *cpuname = "603"; break;
+      case 3;  *cpuname = "604"; break;
+      case 5:  *cpuname = "603e"; break;
+      case 6:  *cpuname = "603ev"; break;
+      case 7:  *cpuname = "740/750/G3"; break;
+      case 8:  *cpuname = "604e"; break;
+      case 9:  *cpuname = "604ev/Mach5"; break;
+      default: *cpuname = "unknown";
       }
     }
-  if (!quietly)
-    {
-    if (detectedtype == -1)
-      LogScreen("Processor detection failed. A PPC603 is assumed.\n");
-    else
-      LogScreen("Automatic processor detection found a PowerPC %s\n", cpu_description);
-    }
-  if (detectedtype == -1)
-    detectedtype = 2;  // assume 603 if unknown
-  return (detectedtype);
-}
-#endif
+    
+  return detectedtype;
+}  
 
-// --------------------------------------------------------------------------
-
-#if ((CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_68K))
 int GetProcessorType(int quietly)
 {
-  // Note: gestaltProcessorType is used so that if the 68K client is run on
-  // on PPC machine for test purposes, it will get the type of the 68K emulator.
-  // Also, gestaltNativeCPUType is not present in early versions of System 7.
-  // (For more info, see Gestalt.h)
-
-  long result;
-  int detectedtype = -1;
-
-  if (Gestalt(gestaltProcessorType, &result) == noErr)
-    {
-    switch(result) 
-      {
-      case gestalt68000: detectedtype = 0;  break;
-      case gestalt68010: detectedtype = 1;  break;
-      case gestalt68020: detectedtype = 2;  break;
-      case gestalt68030: detectedtype = 3;  break;
-      case gestalt68040: detectedtype = 4;  break;
-      default:           detectedtype =-1;  break; //(should never happen)
-      }
-    }
+  const char *cpu_desc = NULL;
+  int rawid = __GetRawPPCIdentification(&cpu_descr);
+  int coretouse = -1; /* use manual detection */
+  
   if (!quietly)
     {
-    if (detectedtype<0)
-      LogScreen("Processor detection failed. A 68000 is assumed.\n");
+    if (rawid < 0)
+      LogScreen("Automatic processor detection %s.\n",
+                        ((rawid == -1)?("failed"):("is not supported")) );
     else
-      LogScreen("Automatic processor detection found a Motorola 680%d0\n", detectedtype);
+      LogScreen("Automatic processor detection found\na PowerPC %s\n",cpu_desc);
     }
-  if (detectedtype < 0)
-    detectedtype = 0;  // assume 68000  
-
-  return (detectedtype);
+  if (rawid < 0)
+    coretouse = -1;
+  else if (rawid == 0) 
+    coretouse = 0; /* 601 */
+  else
+    coretouse = 1; /* 603/604/750 */
+  return (coretouse);
 }
-#endif
+#endif /* (CLIENT_CPU == CPU_POWERPC) */
 
 // --------------------------------------------------------------------------
 
@@ -641,18 +671,25 @@ int GetProcessorType(int quietly)
 
 // --------------------------------------------------------------------------
 
-#if ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS))
+#if (CLIENT_CPU == CPU_ARM)
+
+#if (CLIENT_OS != OS_RISCOS)
+static u32 __GetARMIdentification(void)
+{ return 0x0; }
+#define CPU_AUTODETECT_IS_UNSUPPORTED
+#endif
+
+
+#if (CLIENT_OS == OS_RISCOS)
 
 #include <setjmp.h>
-
 static jmp_buf ARMident_jmpbuf;
-
 static void ARMident_catcher(int)
-{
-  longjmp(ARMident_jmpbuf, 1);
+{ 
+  longjmp(ARMident_jmpbuf, 1); 
 }
 
-static u32 GetARMIdentification(void)
+static u32 __GetARMIdentification(void)
 {
   static u32 detectedvalue = 0x0;
 
@@ -703,11 +740,12 @@ static u32 GetARMIdentification(void)
   }
   return detectedvalue;
 }  
+#endif /* OS_RISCOS */
 
 int GetProcessorType(int quietly)
 {
-  u32 detectedvalue = GetARMIdentification(); //must be interpreted
-  int coretouse; // the core the client should use
+  u32 detectedvalue = __GetARMIdentification(); //must be interpreted
+  int coretouse = -1; // the core the client should use
   char apd[40];
 
   apd[0]=0;
@@ -748,7 +786,7 @@ int GetProcessorType(int quietly)
   return coretouse;
 }
 
-#endif //Arm/riscos cpucheck
+#endif /* CLIENT_CPU == CPU_ARM */
 
 // --------------------------------------------------------------------------
 
@@ -782,7 +820,10 @@ unsigned int GetTimesliceBaseline(void)
 void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscpus, const char ** sfoundcpus )
 {
   const char *maxcpu_s, *foundcpu_s, *cpuid_s;
-#if (CLIENT_CPU == CPU_X86)    
+
+#if defined(CPU_AUTODETECT_IS_UNSUPPORTED)  
+  cpuid_s = "none\n\t(client does not support identification)";
+#elif (CLIENT_CPU == CPU_X86)    
   static char cpuid_b[12];
   int vendorid, cpuidb;                     
   __GetProcessorXRef( &cpuidb, &vendorid, NULL, NULL );
@@ -790,39 +831,45 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
   cpuid_s = ((const char *)(&cpuid_b[0]));      
 #elif ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS))
   static char cpuid_b[50];
-  u32 cpuidb = GetARMIdentification();
+  u32 cpuidb = __GetARMIdentification();
   if (cpuidb == 0x0200)
     strcpy(cpuid_b, "ARM 2 or ARM 250");
   else if (cpuidb == 0x0A10)
     strcpy(cpuid_b, "StrongARM 110");
   else
-    {
     sprintf( cpuid_b, "%X", cpuidb );
-    }
   if (riscos_count_cpus() == 2)
-    {
     strcat(cpuid_b,riscos_x86_determine_name());
-    }
   cpuid_s = ((const char *)(&cpuid_b[0]));      
-#else
-  cpuid_s = "none (client does not support identification)";
-#endif    
+#elif (CLIENT_CPU == CPU_POWERPC)
+  int cpuidb = __GetPPCIdentification(&cpuid_s);
+  if (cpuidb < 0)
+    cpuid_s = ((cpuidb==-1)?("?\n\t(identification failed)"):
+              ("none\n\t(client does not support identification)"));    
+#elif (CLIENT_CPU == CPU_68K)
+  int cpuidb = __Get68kIdentification(&cpuid_s);
+  if (cpuidb < 0)
+    cpuid_s = ((cpuidb==-1)?("?\n\t(identification failed)"):
+              ("none\n\t(client does not support identification)"));    
+#else         
+  cpuid_s = "?";
+#endif  
 
   #if defined(CLIENT_SUPPORTS_SMP)
     static char maxcpu_b[80]; 
     sprintf( maxcpu_b, "%d", (int)GetNumberOfSupportedProcessors() ); 
     maxcpu_s = ((const char *)(&maxcpu_b[0]));
   #elif (!defined(CORES_SUPPORT_SMP))
-    maxcpu_s = "1 (cores are not thread-safe)";
+    maxcpu_s = "1\n\t(cores are not thread-safe)";
   #elif (CLIENT_OS == OS_RISCOS)
-    maxcpu_s = "2 (with RiscPC x86 card)";
+    maxcpu_s = "2\n\t(with RiscPC x86 card)";
   #else
-    maxcpu_s = "1 (OS or client-build does not support threads)";
+    maxcpu_s = "1\n\t(OS or client-build does not support threads)";
   #endif  
 
   int cpucount = GetNumberOfDetectedProcessors();
   if (cpucount < 1)
-    foundcpu_s = "1 (OS does not support detection)";
+    foundcpu_s = "1\n\t(OS does not support detection)";
   else
     {  
     static char foundcpu_b[6]; 
@@ -843,9 +890,9 @@ void DisplayProcessorInformation(void)
   const char *scpuid, *smaxscpus, *sfoundcpus;
   GetProcessorInformationStrings( &scpuid, &smaxscpus, &sfoundcpus );
   
-  LogScreen("Automatic processor identification tag:\n\t%s\n"
-   "Number of processors detected by this client:\n\t%s\n"
-   "Number of processors supported by each instance of this client:\n\t%s\n",
+  LogScreen("Automatic processor identification tag: %s\n"
+   "Number of processors detected by this client: %s\n"
+   "Number of processors supported by this client: %s\n",
    scpuid, sfoundcpus, smaxscpus );
   return;
 }     
