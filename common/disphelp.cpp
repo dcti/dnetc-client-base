@@ -10,10 +10,7 @@
 #include "client.h"
 
 
-/*
-  NetBSD: Feel free to remove the CPU_ARM bit.
- */
-#if ((CLIENT_OS == OS_LINUX) || ((CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_ARM)))
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)
 #include <termios.h>
 #endif
 
@@ -32,7 +29,7 @@ static int readkeypress()
   if (!ch) ch = (getch() << 8);
 #elif (CLIENT_OS == OS_RISCOS)
   ch = _swi(OS_ReadC, _RETURN(0));
-#elif ((CLIENT_OS == OS_LINUX) || ((CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_ARM)))
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)
   struct termios stored;
   struct termios newios;
 
