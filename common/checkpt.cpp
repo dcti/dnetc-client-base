@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: checkpt.cpp,v $
+// Revision 1.8  1999/02/21 21:44:58  cyp
+// tossed all redundant byte order changing. all host<->net order conversion
+// as well as scram/descram/checksumming is done at [get|put][net|disk] points
+// and nowhere else.
+//
 // Revision 1.7  1999/02/03 05:41:40  cyp
 // fallback to rev 1.4
 //
@@ -22,7 +27,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.7 1999/02/03 05:41:40 cyp Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.8 1999/02/21 21:44:58 cyp Exp $"; }
 #endif
 
 #include "client.h"   // FileHeader, Client class
@@ -34,7 +39,6 @@ return "@(#)$Id: checkpt.cpp,v 1.7 1999/02/03 05:41:40 cyp Exp $"; }
 #include "probfill.h" // FILEENTRY_xxx macros
 #include "version.h"  // CLIENT_* defines used by FILEENTRY_* macros
 #include "logstuff.h" // LogScreen()
-#include "network.h"  // gawd, htonl(), ntohl()
 #include "checkpt.h"  // ourselves
 
 /* ----------------------------------------------------------------- */
@@ -65,7 +69,7 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
         {
         lastremaining = 0;
         while (BufferGetFileRecord( checkpoint_file, &fileentry, &remaining ) == 0) 
-                               //returns <0 on ioerr, >0 if norecs
+                               //returns <0 on ioerr/scramfail, ==0 if norecs
           {
           if (lastremaining != 0)
             {
@@ -116,18 +120,16 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
             {
             cont_i = (unsigned int)thisprob->RetrieveState(
                                     (ContestWork *) &fileentry, 0);
-            if (cont_i == 0 || cont_i == 1 )
+            if (cont_i < CONTEST_COUNT /* 0,1,2...*/ )
               {
               fileentry.contest = (u8)cont_i;
-              fileentry.op      = htonl( OP_DATA );
+              fileentry.op      = OP_DATA;
               fileentry.cpu     = FILEENTRY_CPU;
               fileentry.os      = FILEENTRY_OS;
               fileentry.buildhi = FILEENTRY_BUILDHI; 
               fileentry.buildlo = FILEENTRY_BUILDLO;
-              fileentry.checksum=
-                 htonl( Checksum( (u32 *) &fileentry, (sizeof(FileEntry)/4)-2));
-              Scramble( ntohl( fileentry.scramble ),
-                         (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
+              fileentry.checksum= 0;
+              fileentry.scramble= 0;
                            
               if (BufferPutFileRecord( checkpoint_file, &fileentry, NULL ) < 0) 
                 {                        /* returns <0 on ioerr */

@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.45  1999/02/21 21:44:59  cyp
+// tossed all redundant byte order changing. all host<->net order conversion
+// as well as scram/descram/checksumming is done at [get|put][net|disk] points
+// and nowhere else.
+//
 // Revision 1.44  1999/02/20 03:07:17  gregh
 // Add OGR options to configuration data.
 //
@@ -65,7 +70,7 @@
 // Fixed incorrect test in ValidateConfig for priority.  It can now exceed 0.
 //
 // Revision 1.28  1999/01/10 15:17:48  remi
-// Added "network.h" to the list of includes (needed for htonl() and ntohl())
+// Added "network.h" to the list of includes (needed for h.tonl() and n.tohl())
 //
 // Revision 1.27  1999/01/09 00:52:12  silby
 // descontestclosed and scheduledupdate time back
@@ -188,14 +193,13 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.44 1999/02/20 03:07:17 gregh Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.45 1999/02/21 21:44:59 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
 #include "client.h"    // Client class
 #include "baseincs.h"  // atoi() etc
 #include "iniread.h"   // 
-#include "scram.h"     // InitRandom2(id)
 #include "pathwork.h"  // GetFullPathForFilename()
 #include "lurk.h"      // lurk stuff
 #include "cpucheck.h"  // GetProcessorType() for mmx stuff

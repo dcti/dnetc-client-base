@@ -3,9 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.83  1999/02/21 21:44:59  cyp
+// tossed all redundant byte order changing. all host<->net order conversion
+// as well as scram/descram/checksumming is done at [get|put][net|disk] points
+// and nowhere else.
+//
 // Revision 1.82  1999/02/20 14:38:37  remi
 // - In ::Run(), rc5unitwork and refL0 are in host byte order, not in
-//   network byte order, so deleted all ntohl/htonl in Log() calls.
+//   network byte order, so deleted all n.tohl/h.tonl in Log() calls.
 // - Modified IncrementKey() (now __IncrementKey) to allow it to
 //   increment by more than 2^8 iters. Created __SwitchRC5Format().
 // - Added an RC5 key incrementation check.
@@ -16,7 +21,7 @@
 //
 // Revision 1.80  1999/02/17 19:09:13  remi
 // Fix for non-x86 targets : an RC5 key should always be 'mangle-incremented',
-// whatever endianess we have. But htonl()/ntohl() does work for DES, so I
+// whatever endianess we have. But h.tonl()/n.tohl() does work for DES, so I
 // added a contest parameter to IncrementKey().
 //
 // Revision 1.79  1999/02/17 07:49:43  gregh
@@ -251,13 +256,12 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.82 1999/02/20 14:38:37 remi Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.83 1999/02/21 21:44:59 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
 #include "baseincs.h"
 #include "problem.h"
-#include "network.h" // for timeval and htonl/ntohl
 #include "clitime.h" //for CliTimer() which gets a timeval of the current time
 #include "logstuff.h" //LogScreen()
 #include "cpucheck.h"
@@ -652,18 +656,18 @@ ConInKey(-1);
   //----------------------------------------------------------------
 
   // copy over the state information
-  contestwork.key.hi = ntohl( work->key.hi );
-  contestwork.key.lo = ntohl( work->key.lo );
-  contestwork.iv.hi = ntohl( work->iv.hi );
-  contestwork.iv.lo = ntohl( work->iv.lo );
-  contestwork.plain.hi = ntohl( work->plain.hi );
-  contestwork.plain.lo = ntohl( work->plain.lo );
-  contestwork.cypher.hi = ntohl( work->cypher.hi );
-  contestwork.cypher.lo = ntohl( work->cypher.lo );
-  contestwork.keysdone.hi = ntohl( work->keysdone.hi );
-  contestwork.keysdone.lo = ntohl( work->keysdone.lo );
-  contestwork.iterations.hi = ntohl( work->iterations.hi );
-  contestwork.iterations.lo = ntohl( work->iterations.lo );
+  contestwork.key.hi = ( work->key.hi );
+  contestwork.key.lo = ( work->key.lo );
+  contestwork.iv.hi = ( work->iv.hi );
+  contestwork.iv.lo = ( work->iv.lo );
+  contestwork.plain.hi = ( work->plain.hi );
+  contestwork.plain.lo = ( work->plain.lo );
+  contestwork.cypher.hi = ( work->cypher.hi );
+  contestwork.cypher.lo = ( work->cypher.lo );
+  contestwork.keysdone.hi = ( work->keysdone.hi );
+  contestwork.keysdone.lo = ( work->keysdone.lo );
+  contestwork.iterations.hi = ( work->iterations.hi );
+  contestwork.iterations.lo = ( work->iterations.lo );
 
   //determine starting key number. accounts for carryover & highend of keysdone
   u64 key;
@@ -765,12 +769,12 @@ s32 Problem::GetResult( RC5Result * result )
     return ( -1 );
 
   // note that all but result go back to network byte order at this point.
-  result->key.hi = htonl( rc5result.key.hi );
-  result->key.lo = htonl( rc5result.key.lo );
-  result->keysdone.hi = htonl( rc5result.keysdone.hi );
-  result->keysdone.lo = htonl( rc5result.keysdone.lo );
-  result->iterations.hi = htonl( rc5result.iterations.hi );
-  result->iterations.lo = htonl( rc5result.iterations.lo );
+  result->key.hi = ( rc5result.key.hi );
+  result->key.lo = ( rc5result.key.lo );
+  result->keysdone.hi = ( rc5result.keysdone.hi );
+  result->keysdone.lo = ( rc5result.keysdone.lo );
+  result->iterations.hi = ( rc5result.iterations.hi );
+  result->iterations.lo = ( rc5result.iterations.lo );
   result->result = rc5result.result;
 
   return ( contest );
@@ -781,18 +785,18 @@ s32 Problem::GetResult( RC5Result * result )
 s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
 {
   // store back the state information
-  work->key.hi = htonl( contestwork.key.hi );
-  work->key.lo = htonl( contestwork.key.lo );
-  work->iv.hi = htonl( contestwork.iv.hi );
-  work->iv.lo = htonl( contestwork.iv.lo );
-  work->plain.hi = htonl( contestwork.plain.hi );
-  work->plain.lo = htonl( contestwork.plain.lo );
-  work->cypher.hi = htonl( contestwork.cypher.hi );
-  work->cypher.lo = htonl( contestwork.cypher.lo );
-  work->keysdone.hi = htonl( contestwork.keysdone.hi );
-  work->keysdone.lo = htonl( contestwork.keysdone.lo );
-  work->iterations.hi = htonl( contestwork.iterations.hi );
-  work->iterations.lo = htonl( contestwork.iterations.lo );
+  work->key.hi = ( contestwork.key.hi );
+  work->key.lo = ( contestwork.key.lo );
+  work->iv.hi = ( contestwork.iv.hi );
+  work->iv.lo = ( contestwork.iv.lo );
+  work->plain.hi = ( contestwork.plain.hi );
+  work->plain.lo = ( contestwork.plain.lo );
+  work->cypher.hi = ( contestwork.cypher.hi );
+  work->cypher.lo = ( contestwork.cypher.lo );
+  work->keysdone.hi = ( contestwork.keysdone.hi );
+  work->keysdone.lo = ( contestwork.keysdone.lo );
+  work->iterations.hi = ( contestwork.iterations.hi );
+  work->iterations.lo = ( contestwork.iterations.lo );
 
   if (setflags) 
     {

@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.18  1999/02/21 21:44:58  cyp
+// tossed all redundant byte order changing. all host<->net order conversion
+// as well as scram/descram/checksumming is done at [get|put][net|disk] points
+// and nowhere else.
+//
 // Revision 1.17  1999/01/31 20:19:07  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -67,13 +72,12 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.17 1999/01/31 20:19:07 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.18 1999/02/21 21:44:58 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
 #include "problem.h"   // Problem class
-#include "network.h"   // ntohl()/htonl()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "clitime.h"   // CliTimerDiff(), CliGetTimeString()
 #include "clirate.h"   // CliGetKeyrateForProblemNoSave()
@@ -184,11 +188,16 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
       itersize++;      //twice as fast as RC5.
     hourstobuffer = 3; // 3 Hours for DES
     }
-  else
+  else if (contestid == 0)
     {
     keycountshift = 0;
     contestid = 0;
     hourstobuffer = (3*24); // 3 Days for RC5
+    }
+  else 
+    {
+    LogScreen("Error: Contest %u cannot be benchmarked\n", contestid);
+    return 0;
     }
 
   tslice = 0x10000;
@@ -201,18 +210,18 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
     tslice = GetTimesliceToUse(contestid);
   #endif
   
-  contestwork.key.lo = htonl( 0 );
-  contestwork.key.hi = htonl( 0 );
-  contestwork.iv.lo = htonl( 0 );
-  contestwork.iv.hi = htonl( 0 );
-  contestwork.plain.lo = htonl( 0 );
-  contestwork.plain.hi = htonl( 0 );
-  contestwork.cypher.lo = htonl( 0 );
-  contestwork.cypher.hi = htonl( 0 );
-  contestwork.keysdone.lo = htonl( 0 );
-  contestwork.keysdone.hi = htonl( 0 );
-  contestwork.iterations.lo = htonl( (1<<itersize) );
-  contestwork.iterations.hi = htonl( 0 );
+  contestwork.key.lo = ( 0 );
+  contestwork.key.hi = ( 0 );
+  contestwork.iv.lo = ( 0 );
+  contestwork.iv.hi = ( 0 );
+  contestwork.plain.lo = ( 0 );
+  contestwork.plain.hi = ( 0 );
+  contestwork.cypher.lo = ( 0 );
+  contestwork.cypher.hi = ( 0 );
+  contestwork.keysdone.lo = ( 0 );
+  contestwork.keysdone.hi = ( 0 );
+  contestwork.iterations.lo = ( (1<<itersize) );
+  contestwork.iterations.hi = ( 0 );
 
   problem.LoadState( &contestwork, contestid, tslice, cputype );
 

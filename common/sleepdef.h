@@ -21,6 +21,11 @@
 */
 //
 // $Log: sleepdef.h,v $
+// Revision 1.19  1999/02/21 21:44:59  cyp
+// tossed all redundant byte order changing. all host<->net order conversion
+// as well as scram/descram/checksumming is done at [get|put][net|disk] points
+// and nowhere else.
+//
 // Revision 1.18  1998/12/08 06:00:38  dicamillo
 // Add definitions for MacOS.
 //
@@ -64,8 +69,7 @@
 //
 // Revision 1.6  1998/06/22 01:05:03  cyruspatel
 // DOS changes. Fixes various compile-time errors: removed extraneous ')' in
-// sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
-// (is now inline asm), added NO!NETWORK wrapper around Network::Resolve()
+// sleepdef.h.
 //
 // Revision 1.5  1998/06/15 09:12:56  jlawson
 // moved more sleep defines into sleepdef.h

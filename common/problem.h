@@ -5,12 +5,17 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.40  1999/02/21 21:44:59  cyp
+// tossed all redundant byte order changing. all host<->net order conversion
+// as well as scram/descram/checksumming is done at [get|put][net|disk] points
+// and nowhere else.
+//
 // Revision 1.39  1999/02/21 09:58:37  silby
 // Removed prototype for IncrementKey
 //
 // Revision 1.38  1999/02/17 19:09:13  remi
 // Fix for non-x86 targets : an RC5 key should always be 'mangle-incremented',
-// whatever endianess we have. But htonl()/ntohl() does work for DES, so I
+// whatever endianess we have. But h.tonl()/n.tohl() does work for DES, so I
 // added a contest parameter to IncrementKey().
 //
 // Revision 1.37  1999/02/15 06:26:36  silby
@@ -238,13 +243,11 @@ public:
     // Load state into internal structures.
     // state is invalid (will generate errors) until this is called.
     // returns: -1 on error, 0 is OK
-    // Note: data is all in Network Byte order (going in)( Big Endian )
 
   s32 RetrieveState( ContestWork * work , s32 setflags );
     // Retrieve state from internal structures.
     // state is invalid (will generate errors) immediately after this is called, if setflags==1.
     // returns: -1 on error, 0 is OK
-    // Note: data is all in Network Byte order (coming out)( Big Endian )
 
   s32 Run( u32 /* unused */ );
     // Runs calling rc5_unit for timeslice times...
@@ -256,7 +259,6 @@ public:
   s32 GetResult( RC5Result * result );
     // fetch the results... act based on result code...
     // returns: contest=0 (RC5), contest=1 (DES), or -1 = invalid data (state not loaded).
-    // Note: data (except result) is all in Network Byte order ( Big Endian )
 
   u32 CalcPercent() { return (u32)( ((double)(100.0)) *
     /* Return the % completed in the current block, to nearest 1%. */

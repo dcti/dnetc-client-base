@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.36  1999/02/21 21:44:59  cyp
+// tossed all redundant byte order changing. all host<->net order conversion
+// as well as scram/descram/checksumming is done at [get|put][net|disk] points
+// and nowhere else.
+//
 // Revision 1.35  1999/02/09 04:23:06  dworz
 // fixed a typo on line 166
 // include machine/cpuconf.h only when CLIENT_OS!=OS_LINUX
@@ -134,7 +139,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.35 1999/02/09 04:23:06 dworz Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.36 1999/02/21 21:44:59 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -167,8 +172,8 @@ static const char *cputypetable[]=
   };
 #elif (CLIENT_CPU == CPU_ALPHA)
   #if ((CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_LINUX))
-	#if (CLIENT_OS != OS_LINUX)
-  	  #include <machine/cpuconf.h>
+        #if (CLIENT_OS != OS_LINUX)
+          #include <machine/cpuconf.h>
     #endif
     static const char *cputypetable[]=
      {
@@ -292,13 +297,13 @@ int Client::SelectCore(int quietly)
         Problem problem;
         ContestWork contestwork;
 
-        contestwork.key.lo = contestwork.key.hi = htonl( 0 );
-        contestwork.iv.lo = contestwork.iv.hi = htonl( 0 );
-        contestwork.plain.lo = contestwork.plain.hi = htonl( 0 );
-        contestwork.cypher.lo = contestwork.cypher.hi = htonl( 0 );
-        contestwork.keysdone.lo = contestwork.keysdone.hi = htonl( 0 );
-        contestwork.iterations.lo = htonl( benchsize );
-        contestwork.iterations.hi = htonl( 0 );
+        contestwork.key.lo = contestwork.key.hi = 0;
+        contestwork.iv.lo = contestwork.iv.hi = 0;
+        contestwork.plain.lo = contestwork.plain.hi = 0;
+        contestwork.cypher.lo = contestwork.cypher.hi = 0;
+        contestwork.keysdone.lo = contestwork.keysdone.hi = 0;
+        contestwork.iterations.lo = ( benchsize );
+        contestwork.iterations.hi = 0;
         problem.LoadState( &contestwork, 0, benchsize, whichcrunch ); // RC5 core selection
 
         problem.Run( 0 ); //threadnum
@@ -440,13 +445,13 @@ int Client::SelectCore(int quietly)
         {
         Problem problem;
         ContestWork contestwork;
-        contestwork.key.lo = contestwork.key.hi = htonl( 0 );
-        contestwork.iv.lo = contestwork.iv.hi = htonl( 0 );
-        contestwork.plain.lo = contestwork.plain.hi = htonl( 0 );
-        contestwork.cypher.lo = contestwork.cypher.hi = htonl( 0 );
-        contestwork.keysdone.lo = contestwork.keysdone.hi = htonl( 0 );
-        contestwork.iterations.lo = htonl( benchsize );
-        contestwork.iterations.hi = htonl( 0 );
+        contestwork.key.lo = contestwork.key.hi = 0;
+        contestwork.iv.lo = contestwork.iv.hi = 0;
+        contestwork.plain.lo = contestwork.plain.hi = 0;
+        contestwork.cypher.lo = contestwork.cypher.hi = 0;
+        contestwork.keysdone.lo = contestwork.keysdone.hi = 0;
+        contestwork.iterations.lo = benchsize;
+        contestwork.iterations.hi = 0;
         problem.LoadState( &contestwork , contestid, benchsize, whichcrunch ); 
 
         if (contestid == 0)

@@ -8,6 +8,11 @@
 // ----------------------------------------------------------------------
 //
 // $Log: clirate.cpp,v $
+// Revision 1.19  1999/02/21 21:44:59  cyp
+// tossed all redundant byte order changing. all host<->net order conversion
+// as well as scram/descram/checksumming is done at [get|put][net|disk] points
+// and nowhere else.
+//
 // Revision 1.18  1999/01/29 18:57:36  jlawson
 // fixed formatting.
 //
@@ -87,20 +92,15 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.18 1999/01/29 18:57:36 jlawson Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.19 1999/02/21 21:44:59 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" //for u64 define
 #include "problem.h"  //uses Problem and RC5Result class definitions 
+#include "baseincs.h" //timeval
 #include "clicdata.h" //Cli[Add|Get]ContestInfoSummaryData, CliGetContestInfoBaseData
 #include "clitime.h"  //CliTimerDiff
 #include "clirate.h"  //keep the prototypes in sync.
-#include "network.h"  // for ntohl and timeval
-
-// ---------------------------------------------------------------------------
-
-#define LASTDONE_LIST_SIZE (16) //the number of block id's we cache 
-                                //to see if we've already added them
 
 // ---------------------------------------------------------------------------
 
@@ -146,7 +146,7 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   if (CliGetContestInfoBaseData( contestid, NULL, &count )) //clicdata.cpp
     return ((double)(0));   //clicdata.cpp says no such contest
 
-  keys = U64TODOUBLE(ntohl(rc5result.keysdone.hi),ntohl(rc5result.keysdone.lo));
+  keys = U64TODOUBLE(rc5result.keysdone.hi,rc5result.keysdone.lo);
   if (count>1) //iteration-to-keycount-multiplication-factor
     keys = (keys)*((double)(count));
   if (prob->startpercent) //slight misnomer. factor is *100000 not *100
@@ -155,10 +155,10 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
     return ((double)(0));
 
   if (doSave)
-  {
+    {
     count = 1; //number of blocks to add to clicdata.cpp information
     CliAddContestInfoSummaryData( contestid, &count, &keys, &tv );
-  }
+    }
 
   return ((double)(keys))/
        (((double)(tv.tv_sec))+(((double)(tv.tv_usec))/((double)(1000000L))));

@@ -11,6 +11,11 @@
 // ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.118  1999/02/21 21:44:58  cyp
+// tossed all redundant byte order changing. all host<->net order conversion
+// as well as scram/descram/checksumming is done at [get|put][net|disk] points
+// and nowhere else.
+//
 // Revision 1.117  1999/02/20 02:56:59  gregh
 // Added IDCONTEST_OGR
 //
@@ -274,7 +279,7 @@
 //
 // Revision 1.44  1998/06/22 01:04:56  cyruspatel
 // DOS changes. Fixes various compile-time errors: removed extraneous ')' in
-// sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
+// sleepdef.h, resolved h.tonl()/n.tohl() conflict with same def in client.h
 // (is now inline asm), added NO!NETWORK wrapper around Network::Resolve()
 //
 // Revision 1.43  1998/06/21 17:10:26  cyruspatel
@@ -398,8 +403,8 @@ typedef struct Packet
   u32  ip;            // IP Address (proxy filled)             |       |
   u32  iterationshi;  // number of iterations (the high 32bits)|       |
   char other[20];     // extra space                           |       |
-  u32  rc564contestdone; //  set to htonl(0xBEEFF00D) by the proxies if the rc564 contest is finished
-  u32  descontestdone;   //   set to htonl(0xBEEFF00D) by the proxies if current des contest is over
+  u32  rc564contestdone; //  set to h.tonl(0xBEEFF00D) by the proxies if the rc564 contest is finished
+  u32  descontestdone;   //   set to h.tonl(0xBEEFF00D) by the proxies if current des contest is over
   u32  contestid;     // contest identifier                    |       |
   u32  build;         // build number                          |       |
   u32  os;            // OS - see defines                      |       |

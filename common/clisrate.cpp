@@ -8,6 +8,11 @@
 // ----------------------------------------------------------------------
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.37  1999/02/21 21:44:59  cyp
+// tossed all redundant byte order changing. all host<->net order conversion
+// as well as scram/descram/checksumming is done at [get|put][net|disk] points
+// and nowhere else.
+//
 // Revision 1.36  1999/02/21 10:33:20  silby
 // Update for large block support.
 //
@@ -60,7 +65,7 @@
 // of 3 digits from the right.
 //
 // Revision 1.22  1998/07/08 08:11:07  cyruspatel
-// Added '#include "network.h"' for ntohl()/htonl() prototypes.
+// Added '#include "network.h"' for n.tohl()/h.tonl() prototypes.
 //
 // Revision 1.21  1998/07/07 21:55:25  cyruspatel
 // client.h has been split into client.h and baseincs.h 
@@ -143,7 +148,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.36 1999/02/21 10:33:20 silby Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.37 1999/02/21 21:44:59 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // for u64
@@ -153,7 +158,6 @@ return "@(#)$Id: clisrate.cpp,v 1.36 1999/02/21 10:33:20 silby Exp $"; }
 #include "clitime.h"   // for CliTimer(), CliTimerDiff(), CliGetTimeString()
 #include "clirate.h"   // for CliGetKeyrateFor[Problem|Contest]()
 #include "clicdata.h"  // for CliGetContestInfo[Base|Summary]Data()
-#include "network.h"   // for ntohl()/htonl()
 #include "clisrate.h"  // included just to keep prototypes accurate
 
 /*
@@ -208,11 +212,12 @@ static char *num_sep(char *number)
    * we simply return what we got and don't do anything.
    */
 
-  if (strlen(number) >= STR_LEN)
+  digits = strlen(number);
+
+  if (digits >= STR_LEN)
     return(number);
 
   strcpy(num_string, number);
-  digits = strlen(num_string);
   rp = num_string + digits - 1;
   wp = num_string + STR_LEN;
   *wp-- = '\0';
@@ -242,24 +247,24 @@ static char *__CliGetKeyrateAsString( char *buffer, double rate, double limit )
   if (rate<=((double)(0)))  // unfinished (-2) or error (-1) or impossible (0)
     strcpy( buffer, "---.-- " );
   else
-  {
+    {
     unsigned int t1, t2 = 0;
     const char *t3[]={"","k","M","G","T"}; // "", "kilo", "mega", "giga", "tera"
     while (t2<=5 && (((double)(rate))>=((double)(limit))) )
-    {
+      {
       t2++;
       rate = ((double)(rate)) / ((double)(1000));
-    }
+      }
     if (t2 > 4)
       strcpy( buffer, "***.** " ); //overflow (rate>1.0 TKeys. Str>25 chars)
     else
-    {
+      {
       t1 = (unsigned int)(rate);
       sprintf( buffer, "%u.%02u %s", t1,
          ((unsigned int)((((double)(rate-((double)(t1)))))*((double)(100)))),
          t3[t2] );
+      }
     }
-  }
   return buffer;
 }
 
@@ -282,20 +287,20 @@ const char *CliGetSummaryStringForContest( int contestid )
   struct timeval ttime;
 
   if ( CliIsContestIDValid( contestid ) ) //clicdata.cpp
-  {
+    {
     CliGetContestInfoBaseData( contestid, &name, NULL ); //clicdata.cpp
     CliGetContestInfoSummaryData( contestid, &blocks, NULL, &ttime ); //ditto
     keyrateP=__CliGetKeyrateAsString(keyrate,
           CliGetKeyrateForContest(contestid),((double)(1000)));
-  }
+    }
   else
-  {
+    {
     name = "???";
     blocks = 0;
     ttime.tv_sec = 0;
     ttime.tv_usec = 0;
     keyrateP = "---.-- ";
-  }
+    }
 
   sprintf(str, "%d %s block%s %s%c- [%skeys/s]", 
        blocks, name, ((blocks==1)?(""):("s")),
@@ -305,9 +310,9 @@ const char *CliGetSummaryStringForContest( int contestid )
 
 // ---------------------------------------------------------------------------
 
-// return iter/keysdone/whatever as string. set inNetOrder if 'u'
-// needs ntohl()ing first, set contestID = -1 to have the ID ignored
-const char *CliGetU64AsString( u64 *u, int inNetOrder, int contestid )
+// return iter/keysdone/whatever as string. 
+// set contestID = -1 to have the ID ignored
+const char *CliGetU64AsString( u64 *u, int /*inNetOrder*/, int contestid )
 {
   static char str[32];
   unsigned int i;
@@ -316,12 +321,6 @@ const char *CliGetU64AsString( u64 *u, int inNetOrder, int contestid )
 
   norm.hi = u->hi;
   norm.lo = u->lo;
-
-  if (inNetOrder)
-  {
-    norm.hi = ntohl( norm.hi );
-    norm.lo = ntohl( norm.lo );
-  }
 
   d = U64TODOUBLE(norm.hi, norm.lo);
   if (CliGetContestInfoBaseData( contestid, NULL, &i )==0 && i>1) //clicdata
@@ -332,10 +331,10 @@ const char *CliGetU64AsString( u64 *u, int inNetOrder, int contestid )
   norm.lo = (unsigned int)(d - (((double)(norm.hi))*1000000000.0));
   d = d / 1000000000.0;
   if (d > 0)
-  {
+    {
     i = (unsigned int)(d / 1000000000.0);
     norm.hi = (unsigned int)(d - (((double)(i))*1000000000.0));
-  }
+    }
 
   if (i)            sprintf( str, "%u%09u%09u", (unsigned) i, (unsigned) norm.hi, (unsigned) norm.lo );
   else if (norm.hi) sprintf( str, "%u%09u", (unsigned) norm.hi, (unsigned) norm.lo );
@@ -355,29 +354,29 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   RC5Result rc5result;
   struct timeval tv;
   char keyrate[32];
+  unsigned int /* size=1, count=32, */ itermul;
   unsigned int mulfactor;
   const char *keyrateP, *name;
   int contestid = prob->GetResult( &rc5result );
 
   if (CliGetContestInfoBaseData( contestid, &name, &mulfactor )==0) //clicdata
-  {
+    {
     keyrateP = CliGetKeyrateAsString( keyrate, 
         ((doSave) ? ( CliGetKeyrateForProblem( prob ) ) :
                     ( CliGetKeyrateForProblemNoSave( prob ) ))  );
-  }
+    }
   else
-  {
+    {
     keyrateP = "---.-- ";
     name = "???";
-  }
+    }
 
   tv.tv_sec = prob->timehi;
   tv.tv_usec = prob->timelo;
   CliTimerDiff( &tv, &tv, NULL );
 
-  unsigned int /* size=1, count=32, */ itermul;
-  itermul = (ntohl(rc5result.iterations.lo) >> 28) +
-            (ntohl(rc5result.iterations.hi)*16);
+  itermul = (((rc5result.iterations.lo) >> 28) +
+             ((rc5result.iterations.hi) * 16) );
 
 //"Completed one RC5 block 00000000:00000000 (4*2^28 keys)\n"
 //"%s - [%skeys/sec]\n"
@@ -385,8 +384,8 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   sprintf( str, "Completed one %s block %08lX:%08lX (%u*2^28 keys)\n"
                 "%s - [%skeys/sec]\n",  
                 name, 
-                (unsigned long) ntohl( rc5result.key.hi ) ,
-                (unsigned long) ntohl( rc5result.key.lo ),
+                (unsigned long) ( rc5result.key.hi ) ,
+                (unsigned long) ( rc5result.key.lo ),
                 (unsigned int)(itermul),
                 CliGetTimeString( &tv, 2 ),
                 keyrateP );
@@ -402,117 +401,6 @@ const char *CliGetMessageForProblemCompleted( Problem *prob )
 
 const char *CliGetMessageForProblemCompletedNoSave( Problem *prob )
 { return __CliGetMessageForProblemCompleted( prob, 0 ); }
-
-// ---------------------------------------------------------------------------
-
-const char *CliReformatMessage( const char *header, const char *message )
-{
-  static char strspace[160];
-
-  unsigned int prelen, linelen, doquote = (header!=NULL);
-  char buffer[84];
-  char *bptr, *sptr;
-  const char *mptr = message;
-
-  strspace[0]=0;
-  if (mptr && *mptr)
-  {
-    while (*mptr == ' ' || *mptr == '\n')
-      mptr++;
-
-    sprintf( strspace, "[%s] ", CliGetTimeString(NULL,1) );
-    prelen = strlen( strspace );
-    if (header && *header) strcat( strspace, header );
-    if (doquote) strcat( strspace, "\"" );
-
-    //first line
-
-    linelen = strlen( strspace );
-    bptr = buffer;
-
-    while (linelen < 78)
-    {
-      if (!*mptr)
-        break;
-      if (*mptr=='\n')
-      {
-        mptr++;
-        break;
-      }
-      *bptr++ = *mptr++;
-      linelen++;
-    }
-    if (linelen >= 78)
-    {
-      *bptr = 0;
-      if ((sptr = strrchr( buffer, ' '))!=NULL)
-      {
-        mptr -= (bptr-sptr);
-        bptr = sptr;
-      }
-    }
-    while (*mptr==' ' || *mptr=='\n')
-      mptr++;
-    if (!*mptr && doquote)
-      *bptr++ = '\"';
-    *bptr++='\n';
-    *bptr=0;
-
-    strcat(strspace, buffer );
-
-    //second line
-
-    if (*mptr)
-    {
-      bptr = strspace+strlen( strspace );
-      for (linelen=0;linelen<prelen;linelen++)
-        *bptr++ = ' ';
-      *bptr = 0;
-
-      linelen = prelen;
-      bptr = buffer;
-
-      while (linelen < 78)
-      {
-        if (!*mptr)
-          break;
-        if (*mptr=='\n')
-        {
-          mptr++;
-          break;
-        }
-        *bptr++ = *mptr++;
-        linelen++;
-      }
-      if (linelen >= 78)
-      {
-        *bptr = 0;
-        if ((sptr = strrchr( buffer, ' '))!=NULL)
-        {
-          mptr -= (bptr-sptr);
-          bptr = sptr;
-        }
-      }
-      if (!*mptr && doquote)
-        *bptr++ = '\"';
-      *bptr++='\n';
-      *bptr=0;
-
-      strcat(strspace, buffer );
-    }
-
-    //end of second line
-
-    bptr = strspace;                 //convert non-breaking space
-    while (*bptr)
-    {
-      if (*bptr == (char) 0xFF)
-        *bptr = ' ';
-      bptr++;
-    }
-  }
-  return (const char *)(strspace);
-}
 
 // ---------------------------------------------------------------------------
 

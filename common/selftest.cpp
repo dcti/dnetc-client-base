@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.41  1999/02/21 21:44:59  cyp
+// tossed all redundant byte order changing. all host<->net order conversion
+// as well as scram/descram/checksumming is done at [get|put][net|disk] points
+// and nowhere else.
+//
 // Revision 1.40  1999/01/26 17:28:50  michmarc
 // Made the failed test message look nicer.
 //
@@ -56,7 +61,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.40 1999/01/26 17:28:50 michmarc Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.41 1999/02/21 21:44:59 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -66,7 +71,6 @@ return "@(#)$Id: selftest.cpp,v 1.40 1999/01/26 17:28:50 michmarc Exp $"; }
 #include "problem.h"   // Problem class
 #include "convdes.h"   // convert_key_from_des_to_inc 
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
-#include "network.h"   // ntohl()/htonl()
 #include "logstuff.h"  // LogScreen()
 #include "clicdata.h"  // CliGetContestNameFromID() 
 #include "clievent.h"  // ClientEventSyncPost()
@@ -269,18 +273,18 @@ int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to 
         }
       }
 
-    contestwork.key.lo = htonl( contestwork.key.lo );
-    contestwork.key.hi = htonl( contestwork.key.hi );
-    contestwork.iv.lo = htonl( (*test_cases)[testnum][2] );
-    contestwork.iv.hi = htonl( (*test_cases)[testnum][3] );
-    contestwork.plain.lo = htonl( (*test_cases)[testnum][4] );
-    contestwork.plain.hi = htonl( (*test_cases)[testnum][5] );
-    contestwork.cypher.lo = htonl( (*test_cases)[testnum][6] );
-    contestwork.cypher.hi = htonl( (*test_cases)[testnum][7] );
-    contestwork.keysdone.lo = htonl( 0 );
-    contestwork.keysdone.hi = htonl( 0 );
-    contestwork.iterations.lo = htonl( 0x00020000L ); // 17 bits instead of 16
-    contestwork.iterations.hi = htonl( 0 );
+    contestwork.key.lo = ( contestwork.key.lo );
+    contestwork.key.hi = ( contestwork.key.hi );
+    contestwork.iv.lo =  ( (*test_cases)[testnum][2] );
+    contestwork.iv.hi =  ( (*test_cases)[testnum][3] );
+    contestwork.plain.lo = ( (*test_cases)[testnum][4] );
+    contestwork.plain.hi = ( (*test_cases)[testnum][5] );
+    contestwork.cypher.lo = ( (*test_cases)[testnum][6] );
+    contestwork.cypher.hi = ( (*test_cases)[testnum][7] );
+    contestwork.keysdone.lo = ( 0 );
+    contestwork.keysdone.hi = ( 0 );
+    contestwork.iterations.lo = ( 0x00020000L ); // 17 bits instead of 16
+    contestwork.iterations.hi = ( 0 );
 
     problem.LoadState( &contestwork, contest, 0x1000, cputype);
 
@@ -300,9 +304,9 @@ int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to 
     
     if ( rc5result.result == RESULT_FOUND )
       {
-      solutionfound.lo = ntohl( rc5result.key.lo ) + ntohl( rc5result.keysdone.lo );
-      solutionfound.hi = ntohl( rc5result.key.hi ) + ntohl( rc5result.keysdone.hi );
-      if (solutionfound.lo < ntohl( rc5result.key.lo )) 
+      solutionfound.lo = ( rc5result.key.lo ) + ( rc5result.keysdone.lo );
+      solutionfound.hi = ( rc5result.key.hi ) + ( rc5result.keysdone.hi );
+      if (solutionfound.lo < ( rc5result.key.lo )) 
         solutionfound.hi++; // wrap occured ?
       if (solutionfound.lo != expectedsolution.lo || solutionfound.hi != expectedsolution.hi)
         {
@@ -319,10 +323,10 @@ int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to 
           u32 hi = (*test_cases)[testnum][1];
           u32 lo = (*test_cases)[testnum][0];
 
-          u32 hi2 = ntohl( rc5result.key.hi ) + 
-              (u32) ntohl( rc5result.keysdone.hi );
-          u32 lo2 = ntohl( rc5result.key.lo ) + 
-              (u32) ntohl( rc5result.keysdone.lo );
+          u32 hi2 = ( rc5result.key.hi ) + 
+              (u32) ( rc5result.keysdone.hi );
+          u32 lo2 = ( rc5result.key.lo ) + 
+              (u32) ( rc5result.keysdone.lo );
           convert_key_from_inc_to_des (&hi2, &lo2);
           LogScreen("Test %02d Passed: %08X:%08X - %08X:%08X\n", testnum + 1,
             (u32) hi2, (u32) lo2, (u32) hi, (u32) lo);

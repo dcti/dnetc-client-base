@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.34  1999/02/21 21:44:59  cyp
+// tossed all redundant byte order changing. all host<->net order conversion
+// as well as scram/descram/checksumming is done at [get|put][net|disk] points
+// and nowhere else.
+//
 // Revision 1.33  1999/02/13 00:15:13  silby
 // Updated iter2norm to handle 64-bit blocks.
 //
@@ -139,7 +144,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.33 1999/02/13 00:15:13 silby Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.34 1999/02/21 21:44:59 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -147,11 +152,10 @@ return "@(#)$Id: probfill.cpp,v 1.33 1999/02/13 00:15:13 silby Exp $"; }
 #include "client.h"    // CONTEST_COUNT, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "problem.h"   // Problem class
-#include "scram.h"     // Descramble()
-#include "network.h"   // sheesh... htonl()/ntohl()
 #include "logstuff.h"  // Log()/LogScreen()
 #include "clitime.h"   // CliGetTimeString()
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
+#include "scram.h"     // Random()
 #include "clisrate.h"  // CliGetMessageFor... et al.
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "clirate.h"   // CliGetKeyrateForProblem()
@@ -252,15 +256,14 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       client->consecutivesolutions[cont_i]++; 
       if (client->keyport == 3064)
         LogScreen("Test block success detected!\n");
-      fileentry.op = htonl( OP_SUCCESS_MULTI );
-      fileentry.key.lo = htonl( ntohl( fileentry.key.lo ) +
-                          ntohl( fileentry.keysdone.lo ) );
+      fileentry.op = ( OP_SUCCESS_MULTI );
+      fileentry.key.lo += fileentry.keysdone.lo;
       }
     else
       {
       if (client->keyport == 3064)
         LogScreen("Test block success was not detected!\n");
-      fileentry.op = htonl( OP_DONE_MULTI );
+      fileentry.op = OP_DONE_MULTI;
       }
 
     fileentry.os      = CLIENT_OS;
@@ -270,13 +273,10 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 #endif
     fileentry.buildhi = CLIENT_CONTEST;
     fileentry.buildlo = CLIENT_BUILD;
-    strncpy( fileentry.id, client->id , sizeof(fileentry.id)-1); // set owner's id
+    strncpy( fileentry.id, client->id , sizeof(fileentry.id)); // set owner's id
     fileentry.id[sizeof(fileentry.id)-1]=0; //in case id>58 bytes, truncate.
-
-    fileentry.checksum =
-        htonl( Checksum( (u32 *) &fileentry, (sizeof(FileEntry)/4)-2) );
-    Scramble( ntohl( fileentry.scramble ),
-                (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
+    fileentry.checksum = 0; // \ filled in by 
+    fileentry.scramble = 0; // / PutBufferRecord
 
     // send it back...
     if ( (longcount = client->PutBufferRecord( &fileentry )) < 0)
@@ -300,8 +300,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         CliGetKeyrateForProblem( thisprob ); //add to totals
         }
       norm_key_count = 
-          (unsigned int)__iter2norm( ntohl(rc5result.iterations.lo),
-                                     ntohl(rc5result.iterations.hi) );
+          (unsigned int)__iter2norm( rc5result.iterations.lo,
+                                     rc5result.iterations.hi );
 
       ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
       }
@@ -316,30 +316,27 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     *contest = cont_i;
     *is_empty = 1; /* will soon be */
 
-    unsigned long keyhi = ntohl( fileentry.key.hi );
-    unsigned long keylo = ntohl( fileentry.key.lo );
+    unsigned long keyhi = ( fileentry.key.hi );
+    unsigned long keylo = ( fileentry.key.lo );
     unsigned long percent = (unsigned long) ( (double) 10000.0 *
-                           ((double) ntohl(fileentry.keysdone.lo) /
-                            (double) ntohl(fileentry.iterations.lo) ) );
+                           ((double) (fileentry.keysdone.lo) /
+                            (double) (fileentry.iterations.lo) ) );
     norm_key_count = 
-       (unsigned int)__iter2norm( ntohl(fileentry.iterations.lo),
-                                  ntohl(fileentry.iterations.hi) );
+       (unsigned int)__iter2norm( (fileentry.iterations.lo),
+                                  (fileentry.iterations.hi) );
 
     s32 cputype       = client->cputype; /* needed for FILEENTRY_CPU macro */
     #if (CLIENT_OS == OS_RISCOS)
     if (prob_i == 1) cputype = CPU_X86; 
     #endif
     
-    fileentry.op      = htonl( OP_DATA );
+    fileentry.op      = OP_DATA;
     fileentry.cpu     = FILEENTRY_CPU; /* uses cputype variable */
     fileentry.os      = FILEENTRY_OS;
     fileentry.buildhi = FILEENTRY_BUILDHI; 
     fileentry.buildlo = FILEENTRY_BUILDLO;
-
-    fileentry.checksum =
-          htonl( Checksum( (u32 *) &fileentry, ( sizeof(FileEntry)/4)-2));
-    Scramble( ntohl( fileentry.scramble ),
-                       (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
+    fileentry.checksum = 0; // } filled in by
+    fileentry.scramble = 0; // } PutBufferRecord()
 
     const char *msg = NULL;
     if (client->PutBufferRecord( &fileentry ) < 0)  // send it back...
@@ -461,15 +458,11 @@ Log("Loadblock::getfromdisk(contest = %u) -> %s\n",
     {
     *load_needed = 0;
     
-    // LoadWork expects things descrambled.
-    Descramble( ntohl( fileentry.scramble ),
-                (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-
     if (fileentry.contest != 1)
       fileentry.contest=0;
 
-    if ( (ntohl(fileentry.keysdone.lo)!=0) || 
-         (ntohl(fileentry.keysdone.hi)!=0) )
+    if ( ((fileentry.keysdone.lo)!=0) || 
+         ((fileentry.keysdone.hi)!=0) )
       {
       // If this is a partial block, and completed by a different 
       // cpu/os/build, then reset the keysdone to 0...
@@ -478,16 +471,16 @@ Log("Loadblock::getfromdisk(contest = %u) -> %s\n",
           (fileentry.cpu     != FILEENTRY_CPU) || /* uses 'cputype' variable */
           (fileentry.buildlo != FILEENTRY_BUILDLO))
         {
-        fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
+        fileentry.keysdone.lo = fileentry.keysdone.hi = 0;
         //LogScreen("Read partial block from another cpu/os/build.\n"
         // "Marking entire block as unchecked.\n");
         }
-      else if ((ntohl(fileentry.iterations.lo) & 0x00000001L) == 1)
+      else if (((fileentry.iterations.lo) & 0x00000001L) == 1)
         {
         // If a block was finished with an 'odd' number of keys done, 
         // then make redo the last key
-        fileentry.iterations.lo = htonl((ntohl(fileentry.iterations.lo) & 0xFFFFFFFEL) + 1);
-        fileentry.key.lo = htonl(ntohl(fileentry.key.lo) & 0xFEFFFFFFL);
+        fileentry.iterations.lo = fileentry.iterations.lo & 0xFFFFFFFEL;
+        fileentry.key.lo        = fileentry.key.lo & 0xFEFFFFFFL;
         }
       }
     } 
@@ -508,30 +501,29 @@ Log("Loadblock::getfromdisk(contest = %u) -> %s\n",
       RefreshRandomPrefix(client); //get/put an up-to-date prefix 
 
       u32 randomprefix = ( ( (u32)(client->randomprefix) ) + 1 ) & 0xFF;
-      fileentry.key.lo = htonl( Random( NULL, 0 ) & 0xF0000000L );
-      fileentry.key.hi = htonl( (Random( NULL, 0 ) & 0x00FFFFFFL) + 
-                              ( randomprefix << 24) ); // 64 bits significant
+      fileentry.key.lo = Random( NULL, 0 ) & 0xF0000000L;
+      fileentry.key.hi = (Random( NULL, 0 ) & 0x00FFFFFFL) + 
+                              ( randomprefix << 24); // 64 bits significant
       //constants are in clicdata.h
-      fileentry.iv.lo = htonl( RC564_IVLO );         //htonl( 0xD5D5CE79L );
-      fileentry.iv.hi = htonl( RC564_IVHI );         //htonl( 0xFCEA7550L );
-      fileentry.cypher.lo = htonl( RC564_CYPHERLO ); //htonl( 0x550155BFL );
-      fileentry.cypher.hi = htonl( RC564_CYPHERHI ); //htonl( 0x4BF226DCL );
-      fileentry.plain.lo = htonl( RC564_PLAINLO );   //htonl( 0x20656854L );
-      fileentry.plain.hi = htonl( RC564_PLAINHI );   //htonl( 0x6E6B6E75L );
-      fileentry.keysdone.lo = htonl( 0 );
-      fileentry.keysdone.hi = htonl( 0 );
-      fileentry.iterations.lo = htonl( 0x10000000L );
-      fileentry.iterations.hi = htonl( 0 );
+      fileentry.iv.lo = ( RC564_IVLO );         //( 0xD5D5CE79L );
+      fileentry.iv.hi = ( RC564_IVHI );         //( 0xFCEA7550L );
+      fileentry.cypher.lo = ( RC564_CYPHERLO ); //( 0x550155BFL );
+      fileentry.cypher.hi = ( RC564_CYPHERHI ); //( 0x4BF226DCL );
+      fileentry.plain.lo = ( RC564_PLAINLO );   //( 0x20656854L );
+      fileentry.plain.hi = ( RC564_PLAINHI );   //( 0x6E6B6E75L );
+      fileentry.keysdone.lo = ( 0 );
+      fileentry.keysdone.hi = ( 0 );
+      fileentry.iterations.lo = ( 0x10000000L );
+      fileentry.iterations.hi = ( 0 );
       fileentry.id[0] = 0;
-      fileentry.op = htonl( OP_DATA );
+      fileentry.op = ( OP_DATA );
       fileentry.os = 0;
       fileentry.cpu = 0;
       fileentry.buildhi = 0;
       fileentry.buildlo = 0;
       fileentry.contest = 0; // Random blocks are always RC5, not DES.
-      fileentry.checksum =
-         htonl( Checksum( (u32 *)&fileentry, ( sizeof(FileEntry) / 4 ) - 2 ) );
-      fileentry.scramble = htonl( Random( NULL, 0 ) );
+      fileentry.checksum = 0;
+      fileentry.scramble = 0;
       }
     }
 
@@ -545,8 +537,8 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
     *contest = (unsigned int)(fileentry.contest);
     thisprob->LoadState( (ContestWork *) &fileentry , 
           (u32) (fileentry.contest), client->timeslice, client->cputype );
-    norm_key_count = (unsigned int)__iter2norm(ntohl(fileentry.iterations.lo),
-                                               ntohl(fileentry.iterations.hi));
+    norm_key_count = (unsigned int)__iter2norm((fileentry.iterations.lo),
+                                               (fileentry.iterations.hi));
 
     ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
 
@@ -557,8 +549,8 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
 
       Log("Loaded %s%s %u*2^28 block %08lX:%08lX%c(%u.%02u%% done)",
               cont_name, ((didrandom)?(" random"):("")), norm_key_count,
-              (unsigned long) ntohl( fileentry.key.hi ),
-              (unsigned long) ntohl( fileentry.key.lo ),
+              (unsigned long) ( fileentry.key.hi ),
+              (unsigned long) ( fileentry.key.lo ),
               ((startpercent!=0 && startpercent<=10000)?(' '):(0)),
               (startpercent/100), (startpercent%100) );
       }

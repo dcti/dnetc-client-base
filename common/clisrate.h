@@ -10,6 +10,11 @@
 // ----------------------------------------------------------------------
 // 
 // $Log: clisrate.h,v $
+// Revision 1.17  1999/02/21 21:44:59  cyp
+// tossed all redundant byte order changing. all host<->net order conversion
+// as well as scram/descram/checksumming is done at [get|put][net|disk] points
+// and nowhere else.
+//
 // Revision 1.16  1999/01/29 19:04:48  jlawson
 // fixed formatting.
 //
@@ -98,9 +103,9 @@
 // return value is a pointer to buffer.
 char *CliGetKeyrateAsString( char *buffer, double rate );
 
-// return iter/keysdone/whatever as string. set inNetOrder if 'u'
-// needs ntohl()ing first, set contestID = -1 to have the ID ignored
-const char *CliGetU64AsString( u64 *u, int inNetOrder, int contestID );
+// return iter/keysdone/whatever as string. 
+// set contestID = -1 to have the ID ignored
+const char *CliGetU64AsString( u64 *u, int /*inNetOrder*/, int contestID );
 
 // combines CliGetKeyrateForProblem() and CliGetKeyrateAsString()
 const char *CliGetKeyrateStringForProblem( Problem *prob );
@@ -120,10 +125,6 @@ const char *CliGetMessageForProblemCompleted( Problem *problem );
 
 // same as above, but does not affect cumulative stats
 const char *CliGetMessageForProblemCompletedNoSave( Problem *problem );
-
-// breaks 'message' into (max) two lines with correct word wrap
-// forced newlines ('\n') and non-breaking space ('\xFF') are supported
-const char *CliReformatMessage( const char *header, const char *message );
 
 #endif // ifdef _CLICSTAT_H_
 
