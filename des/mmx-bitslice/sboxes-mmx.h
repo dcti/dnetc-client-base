@@ -1,6 +1,9 @@
 
 //
 // $Log: sboxes-mmx.h,v $
+// Revision 1.3  1998/07/08 18:51:37  remi
+// There is 14 locals in older sboxes, not 15.
+//
 // Revision 1.2  1998/07/08 15:47:15  remi
 // Added $Log
 //
@@ -16,7 +19,7 @@ typedef struct {
 	slice a1,a2,a3,a4,a5,a6;
 	slice i0,i1,i2,i3;
 	slice *o0,*o1,*o2,*o3;
-	slice locals[15];
+	slice locals[14];
 } stOldMmxParams;
 
 typedef struct {
