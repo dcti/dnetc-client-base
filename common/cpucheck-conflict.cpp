@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.1 1999/05/28 03:08:18 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.2 1999/06/06 13:35:48 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -82,11 +82,10 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD) || \
         (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_OPENBSD)
     { /* comment out if inappropriate for your *bsd - cyp (25/may/1999) */
-      int mib[2]; int ncpus;
-      size_t len = sizeof(ncpus);
-      mib[0] = CTL_HW;
-      mib[1] = HW_NCPU;
-      if (sysctl( &mib[0], 2, &ncpus, &len, NULL, 0 ) == 0)
+      int ncpus; size_t len = sizeof(ncpus);
+      //int mib[2]; mib[0] = CTL_HW; mib[1] = HW_NCPU;
+      //if (sysctl( &mib[0], 2, &ncpus, &len, NULL, 0 ) == 0)
+      if (sysctlbyname("hw.ncpu", &ncpus, &len, NULL, 0 ) == 0)
         cpucount = ncpus;
     }
     #elif (CLIENT_OS == OS_BEOS)
@@ -1275,4 +1274,3 @@ void DisplayProcessorInformation(void)
 }
 
 /* ---------------------------------------------------------------------- */
-
