@@ -6,6 +6,11 @@
 ;    98/5/12  not use nested macro for A.09.X
 ;    98/5/14  change base code to rc5ansi2-bo1.cpp
 
+; $Log: parisc.s,v $
+; Revision 1.2  1998/07/09 02:51:06  remi
+; Added $Log tag
+;
+	
 	.CODE
 
 ; r0  : always zero
