@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.10 1999/11/24 19:11:12 chrisb Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.11 1999/11/25 13:26:35 chrisb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -288,15 +288,11 @@ int InitializeTriggers( const char *exitfile, const char *pausefile )
 
 // =======================================================================
 
-#if (CLIENT_OS == OS_RISCOS)
-extern "C" void CliSignalHandler(int sig);
-#endif
-
 void __PollDrivenBreakCheck( void ) /* not static to avoid compiler warnings */
 {
   #if (CLIENT_OS == OS_RISCOS)
   if (_kernel_escape_seen())
-    CliSignalHandler(SIGINT);
+      RaiseExitRequestTrigger();
   #elif (CLIENT_OS == OS_AMIGAOS)
   if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
     RaiseExitRequestTrigger();
@@ -398,9 +394,6 @@ extern "C" void CliSignalHandler( int sig )
   ClearRestartRequestTrigger();
   RaiseExitRequestTrigger();
 
-  #if (CLIENT_OS == OS_RISCOS)
-    _kernel_escape_seen();  // clear escape trigger
-  #endif
   signal(sig,SIG_IGN);
 }  
 #endif //ifndef CLISIGHANDLER_IS_SPECIAL
