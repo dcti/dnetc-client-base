@@ -11,6 +11,11 @@
    to functions in modules in your own platform area.   - cyp
 */
 // $Log: console.cpp,v $
+// Revision 1.33  1999/01/19 15:37:25  patrick
+//
+// had to add sys/select.h for AIX 4.1 compiles. AIX 4.2 and later has the
+// stuff in sys/time.h, which is included as default.
+//
 // Revision 1.32  1999/01/19 09:46:48  patrick
 //
 // changed behaviour for OS2-EMX to be more *ix like, added some casts.
@@ -122,7 +127,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.32 1999/01/19 09:46:48 patrick Exp $"; }
+return "@(#)$Id: console.cpp,v 1.33 1999/01/19 15:37:25 patrick Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -134,6 +139,9 @@ return "@(#)$Id: console.cpp,v 1.32 1999/01/19 09:46:48 patrick Exp $"; }
 #include "triggers.h"
 #include "console.h" //also has CLICONS_SHORTNAME, CLICONS_LONGNAME
 #include "sleepdef.h" //usleep
+#if (CLIENT_OS==OS_AIX)
+#include <sys/select.h>		// only needed if compiled on AIX 4.1
+#endif
 
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || \
     (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
