@@ -17,6 +17,9 @@
                return ID==0, and set cpuname to the raw name (eg "PCA56" )
 */
 // $Log: cpucheck.cpp,v $
+// Revision 1.75  1999/04/03 20:30:36  sampo
+// Fixed some typos, removed codenames from end of some PowerPC processor names.
+//
 // Revision 1.74  1999/04/02 20:56:41  jlawson
 // standardized naming of raw cpu type identification functions and cleaned
 // many other aspects and formatting of common cpu reporting.
@@ -284,7 +287,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.74 1999/04/02 20:56:41 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.75 1999/04/03 20:30:36 sampo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -604,7 +607,7 @@ static long __GetRawProcessorID(const char **cpuname)
     {
       if (((long)(cpuridtable[n].rid)) == detectedtype )
       {
-        strcpy( namebuf "Motorola " );
+        strcpy( namebuf, "Motorola " );
         strcat( namebuf, cpuridtable[n].name );
         detectedname = (const char *)&namebuf[0];
         break;
@@ -636,7 +639,7 @@ static long __GetRawProcessorID(const char **cpuname)
                 {       7, "603ev"           },
                 {       8, "740/750/G3"      },
                 {       9, "604e"            },
-                {      10, "604ev/Mach5"     }
+                {      10, "604ev"		     }
                 };
 
   #if (CLIENT_OS == OS_MACOS)
@@ -672,9 +675,9 @@ static long __GetRawProcessorID(const char **cpuname)
            { "604",                  4  },
            { "603e",                 6  },
            { "603ev",                7  },
-           { "750 (Arthur)",         8  },
+           { "750",         		 8  },
            { "604e",                 9  },
-           { "604ev5 (MachV)",      10  }
+           { "604ev",      			10  }
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
@@ -710,7 +713,7 @@ static long __GetRawProcessorID(const char **cpuname)
     {
       if (((long)(cpuridtable[n].rid)) == detectedtype )
       {
-        strcpy( namebuf "PowerPC " );
+        strcpy( namebuf, "PowerPC " );
         strcat( namebuf, cpuridtable[n].name );
         detectedname = (const char *)&namebuf[0];
         break;
