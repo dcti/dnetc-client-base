@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.70 1999/12/13 03:30:08 cyp Exp $
+# $Id: makefile.vc,v 1.71 1999/12/16 18:18:25 michmarc Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -69,6 +69,7 @@ OPTS_LINK_DEBUG = /release
 # -Ox == -Og -Oi -Ot -Oy -Ob1 -Gs
 
 OPTS_MSVC = -nologo -I$(COMMONPATH) -I$(PLATSRCPATH) -I$(OGRSRCPATH) \
+            -I$(CSCSRCPATH) -I$(DESSRCPATH) \
             -DMULTITHREAD -D__WIN32__ -DLURK \
             -W3 -MT -GR- -GX- -GA -GF \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG) 
@@ -298,7 +299,7 @@ $(RES_FILE):    $(RC_FILE)
 # --------------------------------------------
 
 $(BASENAME): $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(CUI_OBJS) $(RES_FILE)
-        #the screensaver's 4.0 tag will be adjusted to 3.10 by the _client_ if running on a 3.x platform
+# the screensaver's 4.0 tag will be adjusted to 3.10 by the _client_ if running on a 3.x platform
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).scr /version:4.00 $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE) 
         link $(OPTS_LINK) /SUBSYSTEM:CONSOLE /OUT:$(BASENAME).com /version:3.10 $(OPTS_LIBS) $(CUI_OBJS)
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).exe /version:3.10 $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
