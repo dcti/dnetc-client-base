@@ -3,9 +3,6 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
-// Revision 1.48  1998/12/04 12:09:01  chrisb
-// fixed typo
-//
 // Revision 1.47  1998/12/04 16:44:30  cyp
 // Noticed and fixed MacOS's returning raw cpu type numbers to SelectCore().
 // Fixed a long description header in ProcessorIndentification stuff. Tried
@@ -169,7 +166,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.48 1998/12/04 12:09:01 chrisb Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.47 1998/12/04 16:44:30 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -689,7 +686,7 @@ static void ARMident_catcher(int)
   longjmp(ARMident_jmpbuf, 1); 
 }
 
-static u32 __GetARMIdentification(void)
+static u32 ___GetARMIdentification(void)
 {
   static u32 detectedvalue = 0x0;
 
