@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.21 1999/11/19 00:11:23 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.22 1999/11/22 00:45:00 elric Exp $"; }
 
 
 #include "cputypes.h"
@@ -66,7 +66,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
     { /* DES */
       "Standard ARM core", /* "ARM 3, 610, 700, 7500, 7500FE" or  "ARM 710" */
-      "StrongARM optimized core", /"ARM 810, StrongARM 110" or "ARM 2, 250" */
+      "StrongARM optimized core", /* "ARM 810, StrongARM 110" or "ARM 2, 250" */
       NULL
     },
   #elif (CLIENT_CPU == CPU_68K)
