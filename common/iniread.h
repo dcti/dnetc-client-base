@@ -8,7 +8,7 @@
 //
 
 #ifndef __INIREAD_H__
-#define __INIREAD_H__
+#define __INIREAD_H__ "@(#)$Id: iniread.h,v 1.27 1999/04/04 16:36:32 cyp Exp $"
 
 #ifdef PROXYTYPE      // compiling proxy
   // proxy needs automatic tokenizing of ini values.
@@ -478,4 +478,3 @@ int WritePrivateProfileIntB( const char *sect, const char *key,
 /////////////////////////////////////////////////////////////////////////////
 
 #endif /* ifndef __INIREAD_H__ */
-
