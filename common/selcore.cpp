@@ -11,7 +11,7 @@
  * ----------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.40 1999/04/05 19:46:04 patrick Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.41 1999/04/05 20:16:26 patrick Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -149,7 +149,7 @@ int Client::SelectCore(int quietly)
     cputype = detectedtype & 0xFF;
     }
     
-#if (CLIENT_CPU == CPU_POWERPC)
+#if (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
   #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_AMIGAOS))
     // Be OS isn't supported on 601 machines
     // There is no 601 PPC board for the Amiga
@@ -170,19 +170,24 @@ int Client::SelectCore(int quietly)
 
       double fasttime = 0;
       int whichcrunch;      
+#if (CLIENT_OS == OS_AIX)
+      // this might work for PPC but POWER CPUs should coredump
+      for (whichcrunch = 0; whichcrunch < 3; whichcrunch++)
+#else
       for (whichcrunch = 0; whichcrunch < 2; whichcrunch++)
+#endif
         {
         const s32 benchsize = 500000L;
         Problem problem;
         ContestWork contestwork;
 
-        contestwork.key.lo = contestwork.key.hi = 0;
-        contestwork.iv.lo = contestwork.iv.hi = 0;
-        contestwork.plain.lo = contestwork.plain.hi = 0;
-        contestwork.cypher.lo = contestwork.cypher.hi = 0;
-        contestwork.keysdone.lo = contestwork.keysdone.hi = 0;
-        contestwork.iterations.lo = ( benchsize );
-        contestwork.iterations.hi = 0;
+        contestwork.crypto.key.lo        = contestwork.crypto.key.hi        = 0;
+        contestwork.crypto.iv.lo         = contestwork.crypto.iv.hi         = 0;
+        contestwork.crypto.plain.lo      = contestwork.crypto.plain.hi      = 0;
+        contestwork.crypto.cypher.lo     = contestwork.crypto.cypher.hi     = 0;
+        contestwork.crypto.keysdone.lo   = contestwork.crypto.keysdone.hi   = 0;
+        contestwork.crypto.iterations.lo = ( benchsize );
+        contestwork.crypto.iterations.hi = 0;
         problem.LoadState( &contestwork, 0, benchsize, whichcrunch ); // RC5 core selection
 
         problem.Run( 0 ); //threadnum
