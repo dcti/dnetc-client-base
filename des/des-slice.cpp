@@ -1,55 +1,20 @@
-// Copyright distributed.net 1997 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: des-slice.cpp,v $
-// Revision 1.10  1999/04/04 04:13:42  jlawson
-// changed tabs to spaces. eliminated signed comparison warning in debug.
-//
-// Revision 1.9  1999/02/21 09:51:39  silby
-// Changes for large block support.
-//
-// Revision 1.8  1998/12/20 03:16:15  cyp
-// Trivial change to suppress a pedantic compile-time warning.
-//
-// Revision 1.7  1998/12/14 12:12:54  cyp
-// Worked around BIT_64/BIT_32 conflicts when building x86 clients.
-//
-// Revision 1.6  1998/07/08 23:42:07  remi
-// Added support for CliIdentifyModules().
-//
-// Revision 1.5  1998/07/01 03:12:46  blast
-// AmigaOS changes...
-//
-// Revision 1.4  1998/06/20 10:04:18  cyruspatel
-// Modified so x86 make with /DKWAN will work: Renamed des_unit_func() in
-// des_slice to des_unit_func_slice() to resolve conflict with (*des_unit_func)().
-// Added prototype in problem.h, cliconfig x86/SelectCore() is /DKWAN aware.
-//
-// Revision 1.3  1998/06/14 08:27:03  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.2  1998/06/14 08:13:18  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
-
-// encapsulate the bitslice SolNET code
-#if (!defined(lint) && defined(__showids__))
+/* 
+ * Copyright distributed.net 1997 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * --------------------------------------------------------------
+ * This module encapsulates the bitslice SolNET code
+ * --------------------------------------------------------------
+*/
 const char *des_slice_cpp(void) {
-return "@(#)$Id: des-slice.cpp,v 1.10 1999/04/04 04:13:42 jlawson Exp $"; }
-#endif
+return "@(#)$Id: des-slice.cpp,v 1.11 1999/04/06 07:49:32 cyp Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "problem.h"
 #include "convdes.h"
-
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
 
 #if ((CLIENT_CPU == CPU_X86) && !defined(BIT_32)) //x86 platforms probably
 #if defined(BIT_64)                               //have BIT_64 defined for
