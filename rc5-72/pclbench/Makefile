@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1.2.3 2003/04/01 15:52:49 andreasb Exp $
+# $Id: Makefile,v 1.1.2.4 2003/04/01 22:35:36 andreasb Exp $
 
 all: pclbench
 
@@ -13,7 +13,7 @@ pclbench.mk: pclbench.mk.*.in $(COREOBJFILES)
 	for core in $(COREOBJFILES) ; do \
 		funcname=`nm $$core | grep rc5_72_unit_func | sed -e 's/.*rc5_72_unit_func_//;s/_$$//' | head -1` ; \
 		test -n "$$funcname" && targets="$$targets pclbench-$$funcname" ; \
-		test -n "$$funcname" && echo "pclbench-$$funcname: pclbench.cpp $$core" >> $@.tmp ; \
+		test -n "$$funcname" && echo "pclbench-$$funcname: pclbench.cpp config.h $$core" >> $@.tmp ; \
 		test -n "$$funcname" && echo "	\$$(CC) \$$(CFLAGS) -DCOREFUNC=$$funcname pclbench.cpp $$core \$$(LDLIBS) -o \$$@" >> $@.tmp ; \
 		test -n "$$funcname" && echo "" >> $@.tmp ; \
 	    done ; \
