@@ -16,7 +16,7 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.31 1999/11/08 02:29:35 cyp Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.32 1999/11/08 02:46:06 cyp Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -384,7 +384,8 @@ static unsigned long ini_doit( int dowrite, const char *sect,
               else
               {
                 success=0;
-                while (success<(bufflen-1) && success<valuelen)
+                while (((unsigned int)success)<(bufflen-1) && 
+		       ((long)success)<valuelen)
                   buffer[success++]=data[valueoff++];
                 buffer[success++]=0;
                 break;
