@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.43  1998/11/16 16:44:07  remi
+// Allow some targets to use deseval.cpp instead of Meggs' bitslicers.
+//
 // Revision 1.42  1998/11/14 14:12:05  cyp
 // Fixed assignment of -1 to an unsigned variable.
 //
@@ -104,7 +107,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.42 1998/11/14 14:12:05 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.43 1998/11/16 16:44:07 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -144,6 +147,9 @@ return "@(#)$Id: problem.cpp,v 1.42 1998/11/14 14:12:05 cyp Exp $"; }
   u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
 #else
   #include "rc5stub.cpp"
+  #if defined(KWAN) && !defined(MEGGS)
+    #define des_unit_func des_unit_func_slice
+  #endif
   extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
 #endif
 
