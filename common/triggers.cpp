@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.8 1999/10/11 18:22:02 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.9 1999/11/03 19:38:30 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -298,6 +298,8 @@ void __PollDrivenBreakCheck( void ) /* not static to avoid compiler warnings */
     RaiseExitRequestTrigger();
   #elif (CLIENT_OS == OS_NETWARE)
     nwCliCheckForUserBreak(); //in nwccons.cpp
+  #elif (CLIENT_OS == OS_WIN32)
+    w32ConOut("");    /* benign call to keep ^C handling alive */
   #elif (CLIENT_OS == OS_DOS)
     _asm mov ah,0x0b  /* benign dos call (kbhit()) */
     _asm int 0x21     /* to keep int23h (^C) handling alive */
@@ -346,6 +348,7 @@ void CliSetupSignals( void )
   __assert_statics(); 
   SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, FALSE );
   SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, TRUE );
+  RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
 }
 #endif
 
