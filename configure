@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.170 2000/07/03 13:22:10 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.171 2000/07/05 11:26:51 oliver Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1909,7 +1909,7 @@ case "$1" in
                         platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
                         ogr/ogr_sup.cpp ogr/crc32.cpp ogr/choosedat.cpp"
 	TARGET_ADDASMS="rc5/68k/rc5-000_010-jg.s rc5/68k/rc5-020_030-jg.s \
-                        rc5/68k/rc5-040-jg.s rc5/68k/rc5-060-jg.s"
+                        rc5/68k/rc5-040_060-jg.s"
         TARGET_ADDOBJS="output/ogr000.o output/ogr020.o output/ogr030.o \
                         output/ogr040.o output/ogr060.o /gg/lib/libnix/swapstack.o"
         TARGET_TARBALL="amigaos-68k"
