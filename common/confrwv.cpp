@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.27 2000/04/16 19:27:18 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.28 2000/04/21 18:28:33 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -382,7 +382,7 @@ static int __parse_timestring(const char *source, int oldstyle_hours_compat )
 // Analyzes a hostname and determines if it is a distributed.net round-robin.
 // Returns the following values:
 //     <0 = not applicable, non-distributed.net servername.
-//      0 = inacceptable distributed.net servername
+//      0 = unacceptable distributed.net servername (or blank)
 //     >0 = acceptable distributed.net servername.
 static int confopt_IsHostnameDNetHost( const char * hostname )
 {
@@ -993,19 +993,23 @@ int ReadConfig(Client *client)
                                 &(client->keyport) );
   //NetOpen() gets (autofindkeyserver)?(""):(client->keyproxy))
   {
+    // This table specifies the effective client->autofindkeyserver
+    // value, and whether to blank or keep the client->keyproxy.
+    //                          autofind=1    autofind=0   autofind=blank
+    //user-custom address (-1)    1,keep        0,keep        0,keep
+    //blank or bad address (0)    1,blank       1,blank       1,blank
+    //good d.net address (+1)     1,keep        0,keep        0,keep
+
     int hostnametype = confopt_IsHostnameDNetHost(client->keyproxy);
-    if (hostnametype == 0) /* a d.net host, but bad */
+    if (hostnametype == 0) // blank or a bad d.net host.
     {                           
       client->autofindkeyserver = 1;
       client->keyproxy[0] = '\0';
     }
-    else if ((client->autofindkeyserver = GetPrivateProfileIntB( OPTSECT_NET, 
-                "autofindkeyserver", -12345, fn )) == -12345) /* no such key */
+    else
     {
-      client->autofindkeyserver = 0; /* don't autofind ... unless ... */
-      if (hostnametype >= 0) // a blank or d.net servername, so force autofind.
-        client->autofindkeyserver = 1;
-      //the hostname itself has already been validated above, so don't clear it.  
+      client->autofindkeyserver = GetPrivateProfileIntB( OPTSECT_NET, 
+                "autofindkeyserver", 0, fn );
     }
   }  
   client->nettimeout = GetPrivateProfileIntB( OPTSECT_NET, "nettimeout", client->nettimeout, fn );
@@ -1281,10 +1285,23 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileInt( OPTSECT_NET, "nofallback", client->nofallback, fn, 0, 't');
 
     _readwrite_fwallstuff( 1, fn, client );
+
+
+    // This table specifies what gets written to the ini file, based
+    // on the client->autofindkeyserver and client->keyproxy values.
+    //                              autofind=1    autofind=0
+    //    user-custom address (-1)   yes,keep       no,keep
+    //    blank or bad address (0)  null,blank    null,blank
+    //    good d.net address (+1)    yes,keep       no,keep
+    // The explicit writing of "no" for those two cases is technically
+    // not necessary due to loading assumptions, but it's clearer.
+
     p = NULL;
     if (confopt_IsHostnameDNetHost(client->keyproxy) == 0)
-      client->keyproxy[0] = 0;        /* d.net host, but invalid */
-    else if (!client->autofindkeyserver)
+      client->keyproxy[0] = '\0';        /* d.net host, but invalid */
+    else if (client->autofindkeyserver)
+      p = "yes";
+    else
       p = "no";
     WritePrivateProfileStringB( OPTSECT_NET, "autofindkeyserver", p, fn );
     _readwrite_hostname_and_port( 1, fn, OPTSECT_NET, "keyserver",
