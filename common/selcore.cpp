@@ -11,7 +11,7 @@
  * ----------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.1 1999/09/16 21:27:20 remi Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.2 1999/09/17 17:12:08 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -34,10 +34,10 @@ static const char *cputypetable[]=
   {
   "Pentium, Am486, Cx486/5x86/MediaGX",
   "80386 & 80486",
-  "Pentium Pro & Pentium II",
+  "Pentium Pro/II/III",
   "Cyrix 6x86/6x86MX/M2",
   "AMD K5",
-  "AMD K6"
+  "AMD K6/K7"
   //core 6 is "reserved" (was Pentium MMX)
   };
 #elif ((CLIENT_CPU == CPU_ALPHA) && ((CLIENT_OS == OS_DEC_UNIX) || \
