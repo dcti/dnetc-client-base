@@ -1,6 +1,6 @@
 ;
 ; $Log: bdeslow.asm,v $
-; Revision 1.1  1998/06/17 19:26:26  cyruspatel
+; Revision 1.6  1998/06/17 19:31:41  cyruspatel
 ; moved generic intel asm bdeslow.asm, bbdeslow.asm files to ./client/des/
 ; modified model definition directives to work with any (intel asm)
 ; assembler - model is overridden to flat unless small model was explicitely
