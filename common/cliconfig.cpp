@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.89  1998/06/15 06:18:28  dicamillo
+// Updates for BeOS
+//
 // Revision 1.88  1998/06/14 11:20:46  ziggyb
 // Added the did_detect_message variable to the os/2 build
 //
@@ -21,7 +24,7 @@
 
 #include "client.h"
 
-static char *id="@(#)$Id: cliconfig.cpp,v 1.88 1998/06/14 11:20:46 ziggyb Exp $";
+static char *id="@(#)$Id: cliconfig.cpp,v 1.89 1998/06/15 06:18:28 dicamillo Exp $";
 
 // --------------------------------------------------------------------------
 
@@ -2434,8 +2437,6 @@ void CliSignalHandler( int sig )
     signal( SIGINT, CliSignalHandler );
   #elif (CLIENT_OS == OS_NETWARE)
     /* see above. allow default handling otherwise may have infinite loop */
-  #elif (CLIENT_OS == OS_BEOS)
-    // nothing.  don't need to reregister signal handler
   #elif (CLIENT_OS == OS_IRIX) && defined(__GNUC__)
     signal( SIGHUP, (void(*)(...)) CliSignalHandler );
     signal( SIGQUIT, (void(*)(...)) CliSignalHandler );

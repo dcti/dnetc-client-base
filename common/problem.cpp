@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.20  1998/06/15 06:18:37  dicamillo
+// Updates for BeOS
+//
 // Revision 1.19  1998/06/15 00:12:24  skand
 // fix id marker so it won't interfere when another .cpp file is #included here
 //
@@ -20,7 +23,7 @@
 // Added $Log.
 //
 
-static char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.19 1998/06/15 00:12:24 skand Exp $";
+static char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.20 1998/06/15 06:18:37 dicamillo Exp $";
 
 #define NEW_STATS_AND_LOGMSG_STUFF
 
@@ -66,7 +69,7 @@ static char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.19 1998/06/15 00:12:24 ska
 extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
 #endif
 
-#if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
+#if (CLIENT_CPU == CPU_X86)
   extern u32 Bdes_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
 #endif
 
@@ -259,15 +262,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
-#if (CLIENT_OS == OS_BEOS)
-    if (threadnum == 0) {
-      kiter = des_unit_func ( &rc5unitwork, nbits );
-    } else {
-      kiter = Bdes_unit_func ( &rc5unitwork, nbits );
-    }
-#else
     kiter = des_unit_func ( &rc5unitwork, nbits );
-#endif
   }
 
   contestwork.keysdone.lo += kiter;

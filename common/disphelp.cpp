@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.17  1998/06/15 06:18:35  dicamillo
+// Updates for BeOS
+//
 // Revision 1.16  1998/06/14 08:26:47  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -18,14 +21,14 @@
 // call DisplayHelp() from main with the 'unrecognized option' argv[x]
 // or NULL or "-help" or "help" (or whatever)
 
-static char *id="@(#)$Id: disphelp.cpp,v 1.16 1998/06/14 08:26:47 friedbait Exp $";
+static char *id="@(#)$Id: disphelp.cpp,v 1.17 1998/06/15 06:18:35 dicamillo Exp $";
 
 #include "client.h"
 
 
 //#define NOPAGER        // define if you don't like the built-in pager
 
-#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BEOS)
 #include <termios.h>
 #define TERMIOSPAGER
 #endif

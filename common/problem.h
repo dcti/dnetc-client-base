@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.11  1998/06/15 06:18:39  dicamillo
+// Updates for BeOS
+//
 // Revision 1.10  1998/06/14 15:17:05  remi
 // UltraSparc DES core integration.
 //
@@ -19,11 +22,7 @@
 #include "cputypes.h"
 
 #ifndef PIPELINE_COUNT
- #if ((CLIENT_OS == OS_BEOS) && (CLIENT_CPU == CPU_POWERPC))
- #define PIPELINE_COUNT  1
- #else
  #define PIPELINE_COUNT  2  // normally 1, but 2+ if we do more then one unit in parallel
- #endif
 #endif
 
 #if !defined(MEGGS) && !defined(DES_ULTRA)

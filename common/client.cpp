@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.49  1998/06/15 06:18:32  dicamillo
+// Updates for BeOS
+//
 // Revision 1.48  1998/06/14 12:24:15  ziggyb
 // Fixed the OS/2 lurk mode so that it updates less freqently. It only
 // does a -update after a completed block. I've also OS2 defined -fetch/-flush
@@ -21,7 +24,7 @@
 //
 //
 
-static char *id="@(#)$Id: client.cpp,v 1.48 1998/06/14 12:24:15 ziggyb Exp $";
+static char *id="@(#)$Id: client.cpp,v 1.49 1998/06/15 06:18:32 dicamillo Exp $";
 
 #include "client.h"
 
@@ -1502,12 +1505,11 @@ s32 Client::Run( void )
   #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_NETWARE)
     unsigned long threadid[MAXCPUS];
   #elif (CLIENT_OS == OS_BEOS)
-    thread_id the_threads[MAXCPUS];
+    thread_id threadid[MAXCPUS];
     char thread_name[32];
     char thread_error;
     long be_priority;
     static status_t be_exit_value;
-    unsigned long threadid[MAXCPUS];
   #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
     pthread_attr_t thread_sched[MAXCPUS];
     pthread_t threadid[MAXCPUS];
@@ -1820,11 +1822,11 @@ PreferredIsDone1:
             sprintf(thread_name, "crunch#%d (RC5)", cpu_i + 1);
           else
             sprintf(thread_name, "crunch#%d (DES)", cpu_i + 1);
-          the_threads[cpu_i] = spawn_thread((long (*)(void *)) Go_mt, thread_name,
+          threadid[cpu_i] = spawn_thread((long (*)(void *)) Go_mt, thread_name,
                 be_priority, (void *)thstart[cpu_i]);
-          thread_error = (the_threads[cpu_i] < B_NO_ERROR);
+          thread_error = (threadid[cpu_i] < B_NO_ERROR);
           if (!thread_error)
-            thread_error =  (resume_thread(the_threads[cpu_i]) != B_NO_ERROR);
+            thread_error =  (resume_thread(threadid[cpu_i]) != B_NO_ERROR);
           if (thread_error)
             threadid[cpu_i] = NULL; //0
 #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
@@ -2612,7 +2614,7 @@ PreferredIsDone1:
 #elif (CLIENT_OS == OS_WIN32)
         WaitForSingleObject((HANDLE)threadid[cpu_i], INFINITE);
 #elif (CLIENT_OS == OS_BEOS)
-        wait_for_thread(the_threads[cpu_i], &be_exit_value);
+        wait_for_thread(threadid[cpu_i], &be_exit_value);
 #elif (CLIENT_OS == OS_NETWARE)
         CliWaitForThreadExit( threadid[cpu_i] );
 #else
