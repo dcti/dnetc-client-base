@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.44 2000/10/26 15:00:10 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.45 2000/10/27 02:14:41 cyp Exp $"; }
 
 //#define TRACE
 
@@ -1432,7 +1432,7 @@ static void __XSetProfileInt( const char *sect, const char *key,
 
 int ConfigWrite(Client *client)
 {
-  char buffer[64]; int i, rc = -1;
+  char buffer[64]; int rc = -1;
   unsigned int cont_i;
   const char *p;
   const char *fn = GetFullPathForFilename( client->inifilename );
