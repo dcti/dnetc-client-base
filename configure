@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.181  1999/01/31 13:57:57  snake
+#
+# target bsdi4 with ELF and MMX support adapted, no mt yet
+#
 # Revision 1.180  1999/01/29 04:15:34  pct
 # Updates for the initial attempt at a multithreaded/multicored Digital
 # Unix Alpha client.  Sorry if these changes cause anyone any grief.
@@ -1272,12 +1276,13 @@ case "$1" in
 
     *alpha-openbsd)
 	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
+	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 \
 			-DBIT_64 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-ltermcap"
+	#TARGET_LIBS="-ltermcap"
 	;;
 
     *alpha-linux)
@@ -1793,15 +1798,13 @@ case "$1" in
 
 ####### BSD/OS 4.0 with ELF format
     *x86-bsdi4)
-	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
+	TARGET_AS="g++ -c"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-DPIPELINE_COUNT=2 -D__ELF__"
+	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
-			  -d__showids__ -d__ELF__ \
-			  -f elf"
        ;;
 
 ####### Intel X86 SCO5
