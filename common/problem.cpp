@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.150 2002/09/15 21:45:49 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.151 2002/09/22 18:43:01 jlawson Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -418,6 +418,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
 {
   switch (contestid)  
   {
+    #if defined(HAVE_OLD_CRYPTO)
     case RC5:
     case DES:
     case CSC:
@@ -434,6 +435,24 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       work->crypto.keysdone.hi = ( 0 );
       work->crypto.iterations.lo = ( 0 );
       work->crypto.iterations.hi = ( 1 );
+      return contestid;
+    }
+    #endif
+    case RC5_72:
+    {
+      work->bigcrypto.key.lo = ( 0 );
+      work->bigcrypto.key.hi = ( 0 );
+      work->bigcrypto.key.vhi = ( 0 );
+      work->bigcrypto.iv.lo = ( 0 );
+      work->bigcrypto.iv.hi = ( 0 );
+      work->bigcrypto.plain.lo = ( 0 );
+      work->bigcrypto.plain.hi = ( 0 );
+      work->bigcrypto.cypher.lo = ( 0 );
+      work->bigcrypto.cypher.hi = ( 0 );
+      work->bigcrypto.keysdone.lo = ( 0 );
+      work->bigcrypto.keysdone.hi = ( 0 );
+      work->bigcrypto.iterations.lo = ( 0 );
+      work->bigcrypto.iterations.hi = ( 1 );
       return contestid;
     }
     #if defined(HAVE_OGR_CORES)
@@ -465,6 +484,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
 
 /* ------------------------------------------------------------------- */
 
+#ifdef HAVE_RC564_CORES
 static int last_rc5_prefix = -1;
 
 static int __gen_random_work(unsigned int contestid, ContestWork * work)
@@ -494,6 +514,7 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
   work->crypto.iterations.hi = 0;
   return contestid;
 }
+#endif
 
 /* ------------------------------------------------------------------- */
 
@@ -559,9 +580,13 @@ static int __InternalLoadState( InternalProblem *thisprob,
   //has to be done before anything else
   if (work == CONTESTWORK_MAGIC_RANDOM) /* ((const ContestWork *)0) */
   {
+#ifdef HAVE_RC564_CORES
     contestid = __gen_random_work(contestid, &for_magic);
     work = &for_magic;
     genned_random = 1;
+#else
+    return -2;
+#endif
   }
   else if (work == CONTESTWORK_MAGIC_BENCHMARK) /* ((const ContestWork *)1) */
   {
@@ -638,62 +663,108 @@ static int __InternalLoadState( InternalProblem *thisprob,
 
   //----------------------------------------------------------------
 
-  if (thisprob->pub_data.contest == RC5)
+  switch (thisprob->pub_data.contest)
   {
-    if (!thisprob->pub_data.is_random &&
-       (work->crypto.iterations.hi || work->crypto.iterations.lo >= (1L<<28)))
+  #if defined(HAVE_OLD_CRYPTO)
+  case RC5:
+  case DES:
+  case CSC:
     {
-      last_rc5_prefix = (int)(work->crypto.key.hi >> 24);
-    }    
-  }
-  if (thisprob->pub_data.contest == RC5
-   || thisprob->pub_data.contest == DES
-   || thisprob->pub_data.contest == CSC)
-  {
-    // copy over the state information
-    thisprob->priv_data.contestwork.crypto.key.hi = ( work->crypto.key.hi );
-    thisprob->priv_data.contestwork.crypto.key.lo = ( work->crypto.key.lo );
-    thisprob->priv_data.contestwork.crypto.iv.hi = ( work->crypto.iv.hi );
-    thisprob->priv_data.contestwork.crypto.iv.lo = ( work->crypto.iv.lo );
-    thisprob->priv_data.contestwork.crypto.plain.hi = ( work->crypto.plain.hi );
-    thisprob->priv_data.contestwork.crypto.plain.lo = ( work->crypto.plain.lo );
-    thisprob->priv_data.contestwork.crypto.cypher.hi = ( work->crypto.cypher.hi );
-    thisprob->priv_data.contestwork.crypto.cypher.lo = ( work->crypto.cypher.lo );
-    thisprob->priv_data.contestwork.crypto.keysdone.hi = ( work->crypto.keysdone.hi );
-    thisprob->priv_data.contestwork.crypto.keysdone.lo = ( work->crypto.keysdone.lo );
-    thisprob->priv_data.contestwork.crypto.iterations.hi = ( work->crypto.iterations.hi );
-    thisprob->priv_data.contestwork.crypto.iterations.lo = ( work->crypto.iterations.lo );
-
-    if (thisprob->priv_data.contestwork.crypto.keysdone.lo || thisprob->priv_data.contestwork.crypto.keysdone.hi)
-    {
-      if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
-          CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
-      {
-        thisprob->priv_data.contestwork.crypto.keysdone.lo = thisprob->priv_data.contestwork.crypto.keysdone.hi = 0;
-        thisprob->pub_data.was_reset = 1;
+      if (thisprob->pub_data.contest == RC5) {
+        if (!thisprob->pub_data.is_random &&
+            (work->crypto.iterations.hi || work->crypto.iterations.lo >= (1L<<28))) {
+          last_rc5_prefix = (int)(work->crypto.key.hi >> 24);
+        }    
       }
-    }
-    //determine starting key number. accounts for carryover & highend of keysdone
-    thisprob->priv_data.rc5unitwork.L0.hi = thisprob->priv_data.contestwork.crypto.key.hi + thisprob->priv_data.contestwork.crypto.keysdone.hi +
-       ((((thisprob->priv_data.contestwork.crypto.key.lo & 0xffff) + (thisprob->priv_data.contestwork.crypto.keysdone.lo & 0xffff)) +
-         ((thisprob->priv_data.contestwork.crypto.key.lo >> 16) + (thisprob->priv_data.contestwork.crypto.keysdone.lo >> 16))) >> 16);
-    thisprob->priv_data.rc5unitwork.L0.lo = thisprob->priv_data.contestwork.crypto.key.lo + thisprob->priv_data.contestwork.crypto.keysdone.lo;
-    if (thisprob->pub_data.contest == RC5)
-      __SwitchRC5Format(&(thisprob->priv_data.rc5unitwork.L0.hi), &(thisprob->priv_data.rc5unitwork.L0.lo));
-    thisprob->priv_data.refL0.lo = thisprob->priv_data.rc5unitwork.L0.lo;
-    thisprob->priv_data.refL0.hi = thisprob->priv_data.rc5unitwork.L0.hi;
-    // set up the unitwork structure
-    thisprob->priv_data.rc5unitwork.plain.hi = thisprob->priv_data.contestwork.crypto.plain.hi ^ thisprob->priv_data.contestwork.crypto.iv.hi;
-    thisprob->priv_data.rc5unitwork.plain.lo = thisprob->priv_data.contestwork.crypto.plain.lo ^ thisprob->priv_data.contestwork.crypto.iv.lo;
-    thisprob->priv_data.rc5unitwork.cypher.hi = thisprob->priv_data.contestwork.crypto.cypher.hi;
-    thisprob->priv_data.rc5unitwork.cypher.lo = thisprob->priv_data.contestwork.crypto.cypher.lo;
+    
+      // copy over the state information
+      thisprob->priv_data.contestwork.crypto.key.hi = ( work->crypto.key.hi );
+      thisprob->priv_data.contestwork.crypto.key.lo = ( work->crypto.key.lo );
+      thisprob->priv_data.contestwork.crypto.iv.hi = ( work->crypto.iv.hi );
+      thisprob->priv_data.contestwork.crypto.iv.lo = ( work->crypto.iv.lo );
+      thisprob->priv_data.contestwork.crypto.plain.hi = ( work->crypto.plain.hi );
+      thisprob->priv_data.contestwork.crypto.plain.lo = ( work->crypto.plain.lo );
+      thisprob->priv_data.contestwork.crypto.cypher.hi = ( work->crypto.cypher.hi );
+      thisprob->priv_data.contestwork.crypto.cypher.lo = ( work->crypto.cypher.lo );
+      thisprob->priv_data.contestwork.crypto.keysdone.hi = ( work->crypto.keysdone.hi );
+      thisprob->priv_data.contestwork.crypto.keysdone.lo = ( work->crypto.keysdone.lo );
+      thisprob->priv_data.contestwork.crypto.iterations.hi = ( work->crypto.iterations.hi );
+      thisprob->priv_data.contestwork.crypto.iterations.lo = ( work->crypto.iterations.lo );
+      
+      if (thisprob->priv_data.contestwork.crypto.keysdone.lo || thisprob->priv_data.contestwork.crypto.keysdone.hi)
+        {
+          if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
+              CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
+            {
+              thisprob->priv_data.contestwork.crypto.keysdone.lo = thisprob->priv_data.contestwork.crypto.keysdone.hi = 0;
+              thisprob->pub_data.was_reset = 1;
+            }
+        }
 
-    thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.crypto.keysdone.hi;
-    thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.crypto.keysdone.lo;
-    thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
-  }
+      //determine starting key number. accounts for carryover & highend of keysdone
+      thisprob->priv_data.rc5unitwork.L0.hi = thisprob->priv_data.contestwork.crypto.key.hi + thisprob->priv_data.contestwork.crypto.keysdone.hi +
+        ((((thisprob->priv_data.contestwork.crypto.key.lo & 0xffff) + (thisprob->priv_data.contestwork.crypto.keysdone.lo & 0xffff)) +
+          ((thisprob->priv_data.contestwork.crypto.key.lo >> 16) + (thisprob->priv_data.contestwork.crypto.keysdone.lo >> 16))) >> 16);
+      thisprob->priv_data.rc5unitwork.L0.lo = thisprob->priv_data.contestwork.crypto.key.lo + thisprob->priv_data.contestwork.crypto.keysdone.lo;
+      if (thisprob->pub_data.contest == RC5)
+        __SwitchRC5Format(&(thisprob->priv_data.rc5unitwork.L0.hi), &(thisprob->priv_data.rc5unitwork.L0.lo));
+      thisprob->priv_data.refL0.lo = thisprob->priv_data.rc5unitwork.L0.lo;
+      thisprob->priv_data.refL0.hi = thisprob->priv_data.rc5unitwork.L0.hi;
+      // set up the unitwork structure
+      thisprob->priv_data.rc5unitwork.plain.hi = thisprob->priv_data.contestwork.crypto.plain.hi ^ thisprob->priv_data.contestwork.crypto.iv.hi;
+      thisprob->priv_data.rc5unitwork.plain.lo = thisprob->priv_data.contestwork.crypto.plain.lo ^ thisprob->priv_data.contestwork.crypto.iv.lo;
+      thisprob->priv_data.rc5unitwork.cypher.hi = thisprob->priv_data.contestwork.crypto.cypher.hi;
+      thisprob->priv_data.rc5unitwork.cypher.lo = thisprob->priv_data.contestwork.crypto.cypher.lo;
+      
+      thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.crypto.keysdone.hi;
+      thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.crypto.keysdone.lo;
+      thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
+
+      break;
+    }
+  #endif
+
+  case RC5_72:
+    {
+      // copy over the state information
+      thisprob->priv_data.contestwork.bigcrypto.key.vhi = ( work->bigcrypto.key.vhi );
+      thisprob->priv_data.contestwork.bigcrypto.key.hi = ( work->bigcrypto.key.hi );
+      thisprob->priv_data.contestwork.bigcrypto.key.lo = ( work->bigcrypto.key.lo );
+      thisprob->priv_data.contestwork.bigcrypto.iv.hi = ( work->bigcrypto.iv.hi );
+      thisprob->priv_data.contestwork.bigcrypto.iv.lo = ( work->bigcrypto.iv.lo );
+      thisprob->priv_data.contestwork.bigcrypto.plain.hi = ( work->bigcrypto.plain.hi );
+      thisprob->priv_data.contestwork.bigcrypto.plain.lo = ( work->bigcrypto.plain.lo );
+      thisprob->priv_data.contestwork.bigcrypto.cypher.hi = ( work->bigcrypto.cypher.hi );
+      thisprob->priv_data.contestwork.bigcrypto.cypher.lo = ( work->bigcrypto.cypher.lo );
+      thisprob->priv_data.contestwork.bigcrypto.keysdone.hi = ( work->bigcrypto.keysdone.hi );
+      thisprob->priv_data.contestwork.bigcrypto.keysdone.lo = ( work->bigcrypto.keysdone.lo );
+      thisprob->priv_data.contestwork.bigcrypto.iterations.hi = ( work->bigcrypto.iterations.hi );
+      thisprob->priv_data.contestwork.bigcrypto.iterations.lo = ( work->bigcrypto.iterations.lo );
+      thisprob->priv_data.contestwork.bigcrypto.check.count = ( work->bigcrypto.check.count );
+      thisprob->priv_data.contestwork.bigcrypto.check.lo = ( work->bigcrypto.check.lo );
+      thisprob->priv_data.contestwork.bigcrypto.check.hi = ( work->bigcrypto.check.hi );
+      thisprob->priv_data.contestwork.bigcrypto.check.vhi = ( work->bigcrypto.check.vhi );
+      
+      if (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo || thisprob->priv_data.contestwork.bigcrypto.keysdone.hi)
+        {
+          if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
+              CLIENT_OS != expected_os || CLIENT_BUILD_FRAC != expected_buildfrac)
+            {
+              thisprob->priv_data.contestwork.bigcrypto.keysdone.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.hi = 0;
+              thisprob->priv_data.contestwork.bigcrypto.check.count = 0;
+              thisprob->priv_data.contestwork.bigcrypto.check.hi = thisprob->priv_data.contestwork.bigcrypto.check.lo = 0;
+              thisprob->priv_data.contestwork.bigcrypto.check.vhi = 0;
+              thisprob->pub_data.was_reset = 1;
+            }
+        }
+
+      // TODO: acidblood/trashover      
+      break;
+    }
+
+
   #if defined(HAVE_OGR_CORES)
-  else if (thisprob->pub_data.contest == OGR)
+  case OGR:
   {
     int r;
     thisprob->priv_data.contestwork.ogr = work->ogr;
@@ -731,8 +802,13 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.ogr.nodes.lo;
       thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
     }
+    break;
   }
   #endif
+
+  default:
+    PROJECT_NOT_HANDLED(thisprob->pub_data.contest);
+  }
 
   //---------------------------------------------------------------
 
@@ -902,6 +978,12 @@ int ProblemRetrieveState( void *__thisprob,
 static int Run_RC5(InternalProblem *thisprob, /* already validated */
                    u32 *keyscheckedP /* count of ... */, int *resultcode)
 {
+#ifndef HAVE_RC564_CORES
+  thisprob = thisprob;
+  *keyscheckedP = 0;
+  *resultcode = -1;
+  return -1;
+#else
   s32 rescode = -1;
 
   /* a brace to ensure 'keystocheck' is not referenced in the common part */
@@ -1050,6 +1132,7 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
   // more to do, come back later.
   *resultcode = RESULT_WORKING;
   return RESULT_WORKING;    // Done with this round
+#endif
 }
 
 /* ------------------------------------------------------------- */
