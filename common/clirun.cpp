@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.38  1998/11/25 06:01:26  dicamillo
+// Update for BeOS priorities and NonPolledUSleep for BeOS.
+//
 // Revision 1.37  1998/11/19 20:39:20  cyp
 // Fixed "not doing checkpoints" problem. There is only one checkpoint file
 // now.
@@ -144,7 +147,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.37 1998/11/19 20:39:20 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.38 1998/11/25 06:01:26 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -370,6 +373,8 @@ static void yield_pump( void *tv_p )
     #endif
   #elif (CLIENT_OS == OS_MACOS)
     WaitNextEvent( everyEvent, &event, 0, nil );
+  #elif (CLIENT_OS == OS_BEOS)
+    NonPolledUSleep( 0 ); /* yield */
   #else
     #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */
@@ -837,10 +842,10 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       #elif (CLIENT_OS == OS_BEOS)
         char thread_name[32];
         long be_priority;
-      
-        #error "please check be_prio (priority is now 0-9 [9 is highest/normal])"
-        be_priority = ((10*(B_LOW_PRIORITY + B_NORMAL_PRIORITY + 1))/
-                                     (9-(thrparams->priority)))/10;
+     
+	// B_LOW_PRIORITY is 5 and B_NORMAL_PRIORITY is 10
+	be_priority = thrparams->priority + 1; 
+
         #ifdef OLDNICENESS
         switch(niceness)
           {
