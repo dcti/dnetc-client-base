@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.38 2000/06/13 17:57:50 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.39 2000/06/14 21:00:10 cyp Exp $"; }
 
 //#define TRACE
 
@@ -987,6 +987,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
 
 int ReadConfig(Client *client)
 {
+  int foundinifile = 1;
   char buffer[64];
   const char *cont_name;
   unsigned int cont_i;
@@ -998,15 +999,20 @@ int ReadConfig(Client *client)
   {
     fn = GetFullPathForFilename( "rc5des" EXTN_SEP "ini" );
     if ( access( fn, 0 ) != 0 )
-      return +1; /* fall into config */
+      foundinifile = 0;
   }
+  /* must actually go through settings even if file doesn't exist */
+  /* in order to load client with default values. */
 
   client->randomchanged = 0;
   RefreshRandomPrefix( client );
 
   TRACE_OUT((+1,"ReadConfig()\n"));
 
-  __remapObsoleteParameters( client, fn ); /* load obsolete options */
+  if (foundinifile)
+  {
+    __remapObsoleteParameters( client, fn ); /* load obsolete options */
+  }  
 
   if (GetPrivateProfileStringB( OPTION_SECTION, "id", "", client->id, sizeof(client->id), fn ))
   {
@@ -1159,7 +1165,7 @@ int ReadConfig(Client *client)
 
   TRACE_OUT((-1,"ReadConfig()\n"));
 
-  return 0;
+  return ((foundinifile) ? (0) : (+1));
 }
 
 // --------------------------------------------------------------------------
@@ -1258,7 +1264,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileStr( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, fn, NULL );
     __XSetProfileStr( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, fn, NULL );
     __XSetProfileStr( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, fn, NULL );
-    __XSetProfileInt( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn, 1, 1 );
+    __XSetProfileInt( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn, 1, 'y' );
     __XSetProfileStr( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, fn, NULL );
     __XSetProfileInt( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn, 0, 0 );
 

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.36 2000/06/13 01:10:05 mfeiri Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.37 2000/06/14 21:00:10 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -27,6 +27,7 @@ static const char *lurkmodetable[] =
 // --------------------------------------------------------------------------
 
 #define CFGTXT(x) (x)
+#define ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME "Additional buffer-level checking"
 
 struct optionstruct conf_options[] = {
 { 
@@ -188,8 +189,21 @@ struct optionstruct conf_options[] = {
 { 
   CONF_PERCENTOFF              , /* CONF_MENU_MISC */
   CFGTXT("Disable the crunch-o-meter (packet progress indicator)?"),"no",
-  CFGTXT(""
-  ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
+  /*CFGTXT(*/
+  "When left enabled, the client will display an indicator that reflects the\n"
+  "approximate position of each of the first 26 crunchers (a...z) relative\n"
+  "to the packet each cruncher is processing.\n"
+  #if 0
+  "When left enabled, the client will display an indicator that reflects\n"
+  "the approximate position the first 26 crunchers are at when working on\n"
+  "a packet.\n"
+  #endif
+  "\n"
+  "For linear crunching, for instance RC5, the indicator is fairly accurate,\n"
+  "but for non-linear crunching, such as OGR, the indicator is only a crude\n"
+  "approximation since the total amount of work in a packet cannot be\n"
+  "determined until the packet has been processed completely.\n"
+  /*)*/,CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 { 
   CONF_COMPLETIONSOUNDON       , /* CONF_MENU_MISC */
@@ -328,14 +342,14 @@ struct optionstruct conf_options[] = {
   "\n"
   "It is possible to have the client rotate through this list, updating\n"
   "its buffers only once for each pass. To do so, 'Dialup-link detection'\n"
-  "and 'Buffer-level check frequency' must be disabled since a buffer update\n"
-  "(new work being made available) would otherwise cause the client to go back\n"
-  "to the beginning of the load order.\n"
+  "and '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"' must be disabled since a buffer\n"
+  "update (new work being made available) would otherwise cause the client\n"
+  "to go back to the beginning of the load order.\n"
   /*) */,CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 
   CONF_FREQUENT                , /* CONF_MENU_BUFF */
-  CFGTXT("Additional buffer-level checking"),"0 (none)",
+  CFGTXT(ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME),"0 (none)",
   /*CFGTXT(*/
   "The following options are extensions to normal threshold management and are\n"
   "not usually necessary.\n"
@@ -395,7 +409,7 @@ struct optionstruct conf_options[] = {
   "should be used instead. If that too is unspecified, then the client will\n"
   "use defaults.\n"
   "\n"
-  "* See also: 'Buffer-level check frequency'\n"
+  "* See also: '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
   ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,1,0xffff,NULL,NULL
 },
 { 
@@ -415,7 +429,7 @@ struct optionstruct conf_options[] = {
   "unprocessed packet cannot be predicted.\n"
 #endif
   "\n"
-  "* See also: 'Buffer-level check frequency'\n"
+  "* See also: '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
   ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,0,336,NULL,NULL
 },
 
@@ -514,6 +528,7 @@ struct optionstruct conf_options[] = {
   "             in the \"Log file limit\" option is reached.\n"
   "3) fifo      the oldest lines in the file will be discarded when the size\n"
   "             of the file exceeds the limit in the \"Log file limit\" option.\n"
+  "             This option is not supported on MacOS, AmigaOS and VMS.\n"
   "4) rotate    a new file will be created when the rotation interval specified\n"
   "             in the \"Log file limit\" option is exceeded.\n"
   ),CONF_MENU_LOG,CONF_TYPE_INT,NULL,NULL /*logtypes[]*/,0,0,NULL,NULL
