@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __TRIGGERS_H__
-#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.3 2000/01/22 01:20:25 cyp Exp $"
+#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.4 2000/01/22 22:20:51 cyp Exp $"
 
 #if defined(__unix__)
   /* These constants define symbolically the signal names used by the
@@ -14,7 +14,6 @@
    * might like, so here we provide a mechanism to allow per-platform
    * selection of the appropriate signal pair.
    */
-  #include "baseincs.h"
   #if (CLIENT_OS == OS_BEOS)
     /* Even though the BeOS build defines __unix__ for most purposes,
      * SIGCONT is reserved by the native thread suspend/resume mechanism
