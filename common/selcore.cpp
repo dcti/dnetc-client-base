@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.121 2001/10/05 22:33:27 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.122 2001/10/23 22:49:28 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -810,7 +810,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     if (selcorestatics.corenum[RC5] < 0 && detected_type > 0)
     {
       int cindex = -1;
-      switch ( detected_type )
+      switch ( detected_type & 0xffff) // only compare the low PVR bits
       {
         case 0x0001: cindex = 0; break; // 601            == allitnil
         case 0x0003: cindex = 1; break; // 603            == lintilla
@@ -833,7 +833,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       #if defined(__VEC__)             /* OS+compiler support altivec */
       if (( detected_type & (1L<<25) ) != 0) //altivec?
         {
-          switch ( detected_type )
+          switch ( detected_type & 0xffff) // only compare the low PVR bits
           {
             case 0x000C: cindex = 4; break; // 7400/7410 (G4) == crunch-vec
             case 0x8000: cindex = 5; break; // 7450 (G4+)     == crunch-vec-7450
