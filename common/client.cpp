@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.223 1999/11/08 02:02:36 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.224 1999/11/09 19:01:06 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -178,6 +178,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       LogScreenRaw( "RISCOS/PC Card support by Dominic Plunkett\n");
       #endif
       #endif
+      #if defined(HAVE_DES_CORES)
       #if defined(KWAN) && defined(MEGGS)
       LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n"
                     "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
@@ -189,6 +190,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       #endif
       #if (CLIENT_CPU == CPU_X86)
       LogScreenRaw( "DES search routines Copyright 1997-1998, Svend Olaf Mikkelsen\n");
+      #endif
       #endif
       #if (CLIENT_OS == OS_DOS)
       LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");

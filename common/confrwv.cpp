@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.68 1999/11/08 02:02:39 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.69 1999/11/09 19:01:06 cyp Exp $"; }
 
 //#define TRACE
 
@@ -95,7 +95,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
     {
       if (i >= PREFERREDBLOCKSIZE_MIN && 
           i <= PREFERREDBLOCKSIZE_MAX && 
-	  i != PREFERREDBLOCKSIZE_DEFAULT)
+          i != PREFERREDBLOCKSIZE_DEFAULT)
       {
         client->preferred_blocksize[RC5] = i;
         client->preferred_blocksize[DES] = i;
@@ -306,16 +306,20 @@ int ReadConfig(Client *client)
   const char *sect = OPTION_SECTION;
   const char *cont_name;
   unsigned int cont_i;
+  const char *fn = client->inifilename;
   char *p; int i;
 
-  client->randomchanged = 0;
-  RefreshRandomPrefix( client );
-
-  const char *fn = client->inifilename;
   fn = GetFullPathForFilename( fn );
 
   if ( access( fn, 0 ) != 0 ) 
-    return +1; /* fall into config */
+  {
+    fn = GetFullPathForFilename( "rc5des" EXTN_SEP "ini" );
+    if ( access( fn, 0 ) != 0 ) 
+      return +1; /* fall into config */
+  }
+
+  client->randomchanged = 0;
+  RefreshRandomPrefix( client );
     
   TRACE_OUT((+1,"ReadConfig()\n"));
 
@@ -518,8 +522,8 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
   unsigned int cont_i;
   const char *cont_name;
   const char *sect = OPTION_SECTION;
-
   const char *fn = client->inifilename;
+  
   fn = GetFullPathForFilename( fn );
   if ( !writefull && access( fn, 0 )!=0 )
     writefull = 1;
@@ -579,7 +583,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
         {
           __XSetProfileInt( cont_name, "core", client->coretypes[cont_i], fn, -1, 0 );
           __XSetProfileInt( cont_name, "preferred-blocksize", 
-	    client->preferred_blocksize[cont_i], fn, PREFERREDBLOCKSIZE_DEFAULT, 0 );
+            client->preferred_blocksize[cont_i], fn, PREFERREDBLOCKSIZE_DEFAULT, 0 );
         }
       }
     }
