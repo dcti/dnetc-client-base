@@ -8,22 +8,22 @@
 ;# Any other distribution or use of this source violates copyright.
 ;#
 ;#============================================================================
-;# Platform/assembler specific implementation :
-;# - External symbols ("cycle_ppc_hybrid" and "found_one") have no
-;#   underscore prefix.
-;# - Some simplified mnemonics are used.
-;# - hi16() and lo16() directives have been replaced with @h and @l.
-;# - Stack frame based upon Mac OS/AIX ABI.
-;# - CTR, CR0, CR1, GPR0 and GPR3-GPR12 are volatile (not saved).
+;# Special notes :
+;# - The code extensively use simplified mnemonics.
+;# - Source code compatible with GAS and Apple's AS.
+;# - Built-in implementation of found_one().
+;# - Use a custom stack frame (leaf procedure).
+;# - CTR, CR0, CR1, GPR0 and GPR3-GPR12 are volatile (not preserved).
 ;#
-;# $Id: OGR_PPC_hybrid.gas.s,v 1.1.2.2 2004/07/14 01:49:52 piru Exp $
+;# $Id: OGR_PPC_hybrid.gas.s,v 1.1.2.3 2004/07/16 13:24:27 kakace Exp $
 ;#
 ;#============================================================================
 
 
     .text                               
-    .align    5                         
-    .globl    cycle_ppc_hybrid         
+    .align    4                         
+    .globl    cycle_ppc_hybrid          ;# elf
+    .globl    _cycle_ppc_hybrid         ;# a.out
 
 
 ;# Bitmaps dependencies (offsets)
@@ -36,23 +36,10 @@
 .set          LEVEL_COMP0,        52    ;# comp[0] scalar
 
 
-;# Constants
-.set          CORE_S_CONTINUE, 1        
-.set          CORE_S_OK, 0              
-.set          DIST_SHIFT, 20            
-.set          DIST_BITS, 12             
-
-;# Parameters for rlwinm (choose addressing)
-.set          DIST_SH, 32-DIST_SHIFT    
-.set          DIST_MB, 32-DIST_BITS     
-.set          DIST_ME, 31               
-
-
 ;# Structure members dependencies (offsets)
 .set          STATE_DEPTH,        192   
 .set          STATE_LEVELS,       256   
 .set          SIZEOF_LEVEL,       128   
-.set          LEVEL_SHIFT,        7     ;# sizeof(struct Level) is a multiple of 2
 .set          STATE_MAX,          0     ;# OGR[stub.marks-1] = length max
 .set          STATE_MAXDEPTHM1,   8     ;# stub.marks - 1
 .set          STATE_STARTDEPTH,   188   ;# workstub->stub.length
@@ -65,8 +52,39 @@
 .set          OGR_SHIFT,          2     
 
 
+;# Constants
+.set          CORE_S_SUCCESS, 2         
+.set          CORE_S_CONTINUE, 1        
+.set          CORE_S_OK, 0              
+.set          BITMAP_LENGTH, 160        ;# bitmap : 5 * 32-bits
+.set          DIST_SHIFT, 20            
+.set          DIST_BITS, 12             
+
+
+;# Parameters for rlwinm (choose addressing)
+.set          DIST_SH, 32-DIST_SHIFT    
+.set          DIST_MB, 32-DIST_BITS     
+.set          DIST_ME, 31               
+
+
 ;#============================================================================
-;# Register aliases (GAS)
+;# Custom stack frame
+
+.set          FIRST_NV_GPR, 13          ;# Save r13..r31
+.set          GPRSaveArea, (32-FIRST_NV_GPR) * 4 
+.set          FIRST_NV_VR, 20           ;# Save v20..
+.set          VRSaveArea, (28 - FIRST_NV_VR) * 16 
+
+.set          aStorage, 4               ;# Private storage area
+.set          aDiffs, 16                ;# diffs control array
+.set          wVRSave,-(GPRSaveArea+4)  
+.set          aVectorArea, 1040         ;# Vectors save area
+.set          localTop, aVectorArea + 4 + VRSaveArea 
+.set          FrameSize, (localTop + GPRSaveArea + 15) & (-16) 
+
+
+;#============================================================================
+;# Register aliases (GAS). Ignored by Apple's AS
 
 ;.set         r0,0                      
 ;.set         r1,1                      
@@ -133,61 +151,60 @@
 
 
 ;#============================================================================
-;# Mac OS/AIX stack frame
-.set          FIRST_NV_GPR, 13          ;# Save r13..r31
-.set          GPRSaveArea, (32-FIRST_NV_GPR) * 4 
-.set          FIRST_NV_VR, 20           ;# Save v20..
-.set          VRSaveArea, (28 - FIRST_NV_VR) * 16 
-
-.set          wSaveLR, 8                ;# Save LR
-.set          aStorage, 28              ;# Private storage area
-.set          wVRSave,-(GPRSaveArea+4)  
-.set          aVectorArea, 48           ;# Vectors save area
-.set          localTop, aVectorArea + 4 + VRSaveArea 
-.set          FrameSize, (localTop + GPRSaveArea + 15) & (-16) 
-
-
-;#============================================================================
 ;# int cycle_ppc_hybrid(void *state (r3)
 ;#                      int *pnodes (r4)
 ;#                      const unsigned char *choose (r5)
 ;#                      const int *OGR (r6)
 
-cycle_ppc_hybrid:                      
-    ;# Allocate the new stack frame
-    mflr      r9                        
-    stw       r9,wSaveLR(r1)            ;# ...in caller's stack
+cycle_ppc_hybrid:                       ;# elf entry point (SVR4/EABI ABI)
+    mflr      r0                        
+    stw       r0,4(r1)                  ;# Store LR at offset 4 in caller's stack
+    bl        L_ogr_cycle_common        ;# Call common code
+    lwz       r0,4(r1)                  ;# restore LR
+    mtlr      r0                        
+    blr                                 
+
+_cycle_ppc_hybrid:                      ;# a.out entry point (Mac OS/AIX ABI)
+    mflr      r0                        
+    stw       r0,8(r1)                  ;# Store LR at offset 8 in caller's stack
+    bl        L_ogr_cycle_common        ;# Call common code
+    lwz       r0,8(r1)                  ;# restore LR
+    mtlr      r0                        
+    blr                                 
+
+    ;# Allocate the new stack frame (common code)
+L_ogr_cycle_common:                           
     mr        r8,r1                     ;# Caller's stack pointer
-    clrlwi    r11,r1,27                 ;# keep the low-order 4 bits
-    subfic    r11,r11,-FrameSize        ;# Frame size, including padding
-    stwux     r1,r1,r11                 
+    clrlwi    r10,r1,27                 ;# keep the low-order 4 bits
+    subfic    r10,r10,-FrameSize        ;# Frame size, including padding
+    stwux     r1,r1,r10                 
 
     ;# Save non-volatile registers
     stmw      r13,-GPRSaveArea(r8)      ;# Save GPRs
 
     ;# Save vector registers
-    mfspr     r10,VRsave                
-    oris      r11,r10,0xffff            ;# Use vector v0...v27
-    stw       r10,wVRSave(r8)           
-    ori       r11,r11,0xfff0            
-    mtspr     VRsave,r11                
+    mfspr     r9,VRsave                 
+    oris      r10,r9,0xffff             ;# Use vector v0...v27
+    stw       r9,wVRSave(r8)            
+    ori       r10,r10,0xfff0            
+    mtspr     VRsave,r10                
 
-    li        r11,aVectorArea           
-    stvx      v27,r11,r1                
-    addi      r11,r11,16                
-    stvx      v26,r11,r1                
-    addi      r11,r11,16                
-    stvx      v25,r11,r1                
-    addi      r11,r11,16                
-    stvx      v24,r11,r1                
-    addi      r11,r11,16                
-    stvx      v23,r11,r1                
-    addi      r11,r11,16                
-    stvx      v22,r11,r1                
-    addi      r11,r11,16                
-    stvx      v21,r11,r1                
-    addi      r11,r11,16                
-    stvx      v20,r11,r1                
+    li        r10,aVectorArea           
+    stvx      v27,r10,r1                
+    addi      r10,r10,16                
+    stvx      v26,r10,r1                
+    addi      r10,r10,16                
+    stvx      v25,r10,r1                
+    addi      r10,r10,16                
+    stvx      v24,r10,r1                
+    addi      r10,r10,16                
+    stvx      v23,r10,r1                
+    addi      r10,r10,16                
+    stvx      v22,r10,r1                
+    addi      r10,r10,16                
+    stvx      v21,r10,r1                
+    addi      r10,r10,16                
+    stvx      v20,r10,r1                
 
 
 ;#============================================================================
@@ -225,20 +242,26 @@ cycle_ppc_hybrid:
 ;#   v26 := list[1] bitmap
 ;#   v27 := comp bitmap
 
+    ;# Dirty trick to cope with GAS vs AS syntax issues
+    ;lis      r27,(L_switch_cases-64)@h 
+    ;ori      r27,r27,(L_switch_cases-64)@l 
+    ;.if      0                         ;# Skip over Apple's AS code
+    lis       r27,hi16(L_switch_cases-64) 
+    ori       r27,r27,lo16(L_switch_cases-64) 
+    ;.endif                             
+
     lwz       r16,STATE_DEPTH(r3)       ;# oState->depth
     mr        r13,r3                    ;# Copy oState
-    lis       r27,(L_switch_cases-64)@h
     lwz       r19,STATE_HALFDEPTH(r3)   ;# oState->half_depth
     addi      r14,r3,STATE_LEVELS       ;# &oState->Levels[0]
-    ori       r27,r27,(L_switch_cases-64)@l
     lwz       r28,STATE_MAXDEPTHM1(r3)  ;# oState->maxdepthm1
     li        r17,0                     ;# nodes = 0
     addi      r16,r16,1                 ;# ++depth
     lwz       r20,STATE_HALFDEPTH2(r13) ;# oState->half_depth2
     li        r3,CORE_S_CONTINUE        ;# retval
-    slwi      r7,r19,LEVEL_SHIFT        
+    mulli     r7,r19,SIZEOF_LEVEL       
     lwz       r18,STATE_MAX(r13)        ;# oStateMax
-    slwi      r8,r16,LEVEL_SHIFT        
+    mulli     r8,r16,SIZEOF_LEVEL       
     sub       r0,r28,r16                ;# remainingDepth = maxdepthm1 - depth
     lwz       r22,0(r4)                 ;# nodes max = *pnodes
     add       r15,r14,r7                ;# &oState->Levels[half_depth]
@@ -251,44 +274,44 @@ cycle_ppc_hybrid:
     ;# SETUP_TOP_STATE
     ;# - Initialize vector constants required to shift bitmaps
     ;# - Load current state
-    lwz       r31,LEVEL_COMP0(r14)      ;# comp0 bitmap
-    vspltisb  v1,1                      ;# VSHIFT_B1
+    vspltisw  v11,1                     ;# VSHIFT_L1 = vector (1)
     li        r9,STATE_DISTV            
-    lwz       r29,STATE_DIST0(r13)      ;# dist0 bitmap
-    vspltisb  v2,2                      ;# VSHIFT_B2
+    vspltisb  v1,1                      ;# VSHIFT_B1 = vector (1)
     li        r12,LEVEL_COMPV           
-    lwz       r30,LEVEL_LIST0(r14)      ;# list0 bitmap
-    vspltisb  v3,3                      ;# VSHIFT_B3
-    lwz       r21,LEVEL_CNT2(r14)       ;# level->cnt2
-    vspltisb  v4,4                      ;# VSHIFT_B4
+    vspltisb  v4,4                      ;# VSHIFT_B4 = vector (4)
     li        r11,LEVEL_LISTV1          
-    lvx       v24,r9,r13                ;# dist vector
-    vspltisb  v5,5                      ;# VSHIFT_B5
-    lvx       v27,r12,r14               ;# comp vector
-    vspltisb  v6,6                      ;# VSHIFT_B6
-    lvx       v25,0,r14                 ;# listV0 vector
-    vspltisb  v7,7                      ;# VSHIFT_B7
-    lvx       v26,r11,r14               ;# listV1 vector
-    vspltisw  v11,1                     ;# VSHIFT_L1
-    vsubuwm   v0,v0,v0                  ;# ZEROS
-    vspltisw  v18,8                     ;# VSHIFT_L8
-    vnor      v19,v0,v0                 ;# ONES
-    vspltisw  v12,2                     ;# VSHIFT_L2
+    vspltisw  v12,2                     ;# VSHIFT_L2 = vector (2)
+    vadduwm   v2,v1,v1                  ;# VSHIFT_B2 = vector (2)
+    vspltisw  v13,3                     ;# VSHIFT_L3 = vector (3)
+    vadduwm   v5,v4,v1                  ;# VSHIFT_B5 = vector (5)
+    vspltisw  v14,4                     ;# VSHIFT_L4 = vector (4)
+    vadduwm   v3,v2,v1                  ;# VSHIFT_B3 = vector (3)
+    vspltisw  v15,5                     ;# VSHIFT_L5 = vector (5)
+    vadduwm   v6,v4,v2                  ;# VSHIFT_B6 = vector (6)
+    vspltisw  v16,6                     ;# VSHIFT_L6 = vector (6)
+    vadduwm   v7,v4,v3                  ;# VSHIFT_B7 = vector (7)
+    vspltisw  v17,7                     ;# VSHIFT_L7 = vector (7)
+    vsubuwm   v0,v0,v0                  ;# ZEROS = vector (0)
+    vspltisw  v18,8                     ;# VSHIFT_L8 = vector (8)
+    vnor      v19,v0,v0                 ;# ONES = vector (-1)
+    lwz       r31,LEVEL_COMP0(r14)      ;# comp0 bitmap
     vadduwm   v21,v18,v18               ;# VSHIFT_L16
-    vspltisw  v13,3                     ;# VSHIFT_L3
+    lwz       r29,STATE_DIST0(r13)      ;# dist0 bitmap
     vadduwm   v22,v21,v18               ;# VSHIFT_L24
+    lwz       r30,LEVEL_LIST0(r14)      ;# list0 bitmap
     vmrglw    v20,v0,v11                ;# = (0, 1, 0, 1)
+    lwz       r21,LEVEL_CNT2(r14)       ;# level->cnt2
     vadduwm   v23,v21,v21               ;# VSHIFT_L32
+    lvx       v24,r9,r13                ;# dist vector
     vmrglw    v20,v20,v0                ;# = (0, 0, 1, 0)
-    vspltisw  v14,4                     ;# VSHIFT_L4
+    lvx       v27,r12,r14               ;# comp vector
     rlwinm    r7,r29,DIST_SH+2,DIST_MB-2,DIST_ME-2 
+    lvx       v25,0,r14                 ;# listV0 vector
     rlwinm    r0,r29,DIST_SH+3,DIST_MB-3,DIST_ME-3 
-    vspltisw  v15,5                     ;# VSHIFT_L5
-    vor       v25,v25,v20               ;# listV0 |= ZEROBIT
+    lvx       v26,r11,r14               ;# listV1 vector
     add       r0,r7,r0                  ;# (dist0 >> DIST_SHIFT) * DIST_BITS
-    vspltisw  v16,6                     ;# VSHIFT_L6
     lbzx      r25,r5,r0                 ;# choose(dist0 >> ttmDISTBITS, remainingDepth)
-    vspltisw  v17,7                     ;# VSHIFT_L7
+    vor       v25,v25,v20               ;# listV0 |= ZEROBIT
     b         L_comp_limit              
     nop                                 
 
@@ -877,13 +900,13 @@ L_switch_cases:
 
 L_end_switch:                           
     cmpw      r16,r28                   ;# depth == maxdepthm1 ?
-    addi      r7,r12,SIZEOF_LEVEL       
     stw       r21,LEVEL_CNT2(r14)       ;# store cnt2
     beq-      L_check_Golomb            ;# Last mark placed : check for Golombness
 
     ;# PUSH_LEVEL_UPDATE_STATE(lev)
     vor       v24,v24,v26               ;# distV |= listV1
     stvx      v26,r11,r14               ;# store listV1
+    addi      r7,r12,SIZEOF_LEVEL       
     vor       v27,v27,v24               ;# compV |= distV
     stvx      v25,0,r14                 ;# store listV0
     vor       v25,v25,v20               ;# listV0 |= ZEROBIT
@@ -904,41 +927,69 @@ L_end_switch:
     b         L_comp_limit              
 
 L_check_Golomb:                           
-    ;# Last mark placed : verify the Golombness
-    not       r23,r31                   ;# c0neg = ~comp0
-    stw       r4,aStorage(r1)           ;# Backup registers
-    mr        r3,r13                    
-    stw       r5,aStorage+4(r1)         
-    srwi      r23,r23,1                 ;# Prepare c0neg
-    stw       r6,aStorage+8(r1)         
-    bl        found_one                 ;# retval = found_one(oState)
-    cmpwi     r3,CORE_S_CONTINUE        ;# retval == CORE_S_CONTINUE ?
-    ;# Restore unsaved registers
-    vspltisw  v11,1                     ;# VSHIFT_L1 = vector (1)
-    lwz       r6,aStorage+8(r1)         ;# ogr
+    ;# Last mark placed : verify the Golombness = found_one()
+    ;# This part is seldom used.
+
+    ;# Reset the diffs array
+    srwi      r8,r18,5                  ;# maximum2 = oState->max / 32
+    li        r7,aDiffs                 ;# diffs array
+    addi      r8,r8,1                   
+    mtctr     r8                        
+
+L_clrloop:                              
+    stvx      v0,r7,r1                  
+    addi      r7,r7,16                  
+    bdnz      L_clrloop                 
+
+    addi      r12,r13,STATE_LEVELS      ;# &oState->Level[0]
+    li        r9,1                      ;# Initial depth
+    addi      r10,r12,SIZEOF_LEVEL      ;# levels[i=1]
+
+L_iLoop:                                
+    lwz       r7,LEVEL_CNT2(r10)        ;# levels[i].cnt2
+    mr        r11,r12                   ;# levels[j=0]
+    addi      r9,r9,1                   ;# ++i
+
+L_jLoop:                                
+    lwz       r8,LEVEL_CNT2(r11)        ;# levels[j].cnt2
+    addi      r11,r11,SIZEOF_LEVEL      ;# ++j
+    sub       r8,r7,r8                  ;# diffs = levels[i].cnt2 - levels[j].cnt2
+    cmpwi     r8,BITMAP_LENGTH          ;# diffs <= BITMAPS * 32 ?
+    add       r0,r8,r8                  ;# 2*diffs
+    cmpw      cr1,r0,r18                ;# 2*diff <= maximum ?
+    addi      r0,r1,aDiffs              ;# &diffs[0]
+    ble       L_next_i                  ;# diffs <= BITMAPS * 32 : break
+    bgt       cr1,L_next_j              ;# diffs > maximum : continue
+
+    lbzux     r0,r8,r0                  ;# diffs[diffs]
+    cmpwi     r0,0                      ;# diffs[diffs] != 0 ?
+    ori       r0,r0,1                   
+    bne       L_not_golomb              ;# retval = CORE_S_CONTINUE
+    stb       r0,0(r8)                  ;# Update the array
+
+L_next_j:                               
+    cmpw      r11,r10                   ;# &diffs[j] < &diffs[i] ?
+    blt       L_jLoop                   
+L_next_i:                               
+    addi      r10,r10,SIZEOF_LEVEL      
+    cmpw      r9,r28                    ;# i <= maxdepthm1 ?
+    ble       L_iLoop                   
+
+    li        r3,CORE_S_SUCCESS         ;# Ruler is Golomb
+    ;# Restore clobbered registers
     li        r9,STATE_DISTV            
-    vspltisb  v1,1                      ;# VSHIFT_B1 = vector (1)
-    lwz       r5,aStorage+4(r1)         ;# choose
     li        r12,LEVEL_COMPV           
-    vspltisb  v4,4                      ;# VSHIFT_B4 = vector (4)
-    lwz       r4,aStorage(r1)           ;# pnodes
-    vspltisw  v12,2                     ;# VSHIFT_L2 = vector (2)
-    vadduwm   v2,v1,v1                  ;# VSHIFT_B2 = vector (2)
     li        r11,LEVEL_LISTV1          
-    vspltisw  v13,3                     ;# VSHIFT_L3 = vector (3)
-    vadduwm   v5,v4,v1                  ;# VSHIFT_B5 = vector (5)
-    vspltisw  v14,4                     ;# VSHIFT_L4 = vector (4)
-    vadduwm   v3,v2,v1                  ;# VSHIFT_B3 = vector (3)
-    vspltisw  v15,5                     ;# VSHIFT_L5 = vector (5)
-    vadduwm   v6,v4,v2                  ;# VSHIFT_B6 = vector (6)
-    vspltisw  v16,6                     ;# VSHIFT_L6 = vector (6)
-    vadduwm   v7,v4,v3                  ;# VSHIFT_B7 = vector (7)
-    vspltisw  v17,7                     ;# VSHIFT_L7 = vector (7)
-    vsubuwm   v0,v0,v0                  ;# ZEROS = vector (0)
-    vspltisw  v18,8                     ;# VSHIFT_L8 = vector (8)
-    vnor      v19,v0,v0                 ;# ONES = vector (-1)
-    beq       L_stay                    ;# Not Golomb : iterate
-    b         L_exit_loop               
+    b         L_exit_loop               ;# Found it !
+
+L_not_golomb:                           
+    ;# Restore clobbered registers
+    li        r9,STATE_DISTV            
+    li        r12,LEVEL_COMPV           
+    li        r11,LEVEL_LISTV1          
+    not       r23,r31                   ;# c0neg = ~comp0
+    srwi      r23,r23,1                 ;# Prepare c0neg
+    b         L_stay                    ;# Not Golomb : iterate
 
     .align    4                         
 L_up_level:                             
@@ -983,30 +1034,28 @@ L_exit_loop:
 ;# Epilog
 
     ;# Restore vector registers
-    li        r8,aVectorArea            
-    lvx       v27,r8,r1                 
-    addi      r8,r8,16                  
-    lvx       v26,r8,r1                 
-    addi      r8,r8,16                  
-    lvx       v25,r8,r1                 
-    addi      r8,r8,16                  
-    lvx       v24,r8,r1                 
-    addi      r8,r8,16                  
-    lvx       v23,r8,r1                 
-    addi      r8,r8,16                  
-    lvx       v22,r8,r1                 
-    addi      r8,r8,16                  
-    lvx       v21,r8,r1                 
-    addi      r8,r8,16                  
-    lvx       v20,r8,r1                 
+    li        r7,aVectorArea            
+    lvx       v27,r7,r1                 
+    addi      r7,r7,16                  
+    lvx       v26,r7,r1                 
+    addi      r7,r7,16                  
+    lvx       v25,r7,r1                 
+    addi      r7,r7,16                  
+    lvx       v24,r7,r1                 
+    addi      r7,r7,16                  
+    lvx       v23,r7,r1                 
+    addi      r7,r7,16                  
+    lvx       v22,r7,r1                 
+    addi      r7,r7,16                  
+    lvx       v21,r7,r1                 
+    addi      r7,r7,16                  
+    lvx       v20,r7,r1                 
 
     ;# Restore non-volatile registers
     lwz       r5,0(r1)                  ;# Obtains caller's stack pointer
     lmw       r13,-GPRSaveArea(r5)      ;# Restore GPRs
-    lwz       r7,wVRSave(r5)            ;# Restore VRsave
-    mtspr     VRsave,r7                 
-    lwz       r6,wSaveLR(r5)            ;# ...from caller's stack
-    mtlr      r6                        
+    lwz       r6,wVRSave(r5)            ;# Restore VRsave
+    mtspr     VRsave,r6                 
     mr        r1,r5                     
     blr                                 
 

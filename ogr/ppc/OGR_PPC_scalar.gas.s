@@ -8,35 +8,54 @@
 ;# Any other distribution or use of this source violates copyright.
 ;#
 ;#============================================================================
-;# Platform/assembler specific implementation :
-;# - External symbols ("cycle_ppc_scalar" and "found_one") have no
-;#   underscore prefix.
-;# - Some simplified mnemonics are used.
-;# - ha16() and lo16() directives have been replaced with @ha and @l.
-;# - Stack frame based upon Mac OS/AIX ABI.
-;# - CTR, CR0, CR1, GPR0 and GPR3-GPR12 are volatile (not saved).
+;# Special notes :
+;# - The code extensively use simplified mnemonics.
+;# - Source code compatible with GAS and Apple's AS.
+;# - Built-in implementation of found_one().
+;# - Use a custom stack frame (leaf procedure).
+;# - CTR, CR0, CR1, GPR0 and GPR3-GPR12 are volatile (not preserved).
 ;#
-;# $Id: OGR_PPC_scalar.gas.s,v 1.1.2.1 2004/07/14 01:11:47 piru Exp $
+;# $Id: OGR_PPC_scalar.gas.s,v 1.1.2.2 2004/07/16 13:24:27 kakace Exp $
 ;#
 ;#============================================================================
 
 
     .text                               
-    .align    5                         
-    .globl    cycle_ppc_scalar         
+    .align    4                         
+    .globl    cycle_ppc_scalar          ;# elf
+    .globl    _cycle_ppc_scalar         ;# a.out
 
 
 ;# Bitmaps dependencies (offsets)
-.set          LEVEL_LIST          ,56   ;# list[] bitmap
-.set          LEVEL_COMP          ,96   ;# comp[] bitmap
-.set          STATE_DIST          ,224  ;# dist[] bitmap
+.set          LEVEL_LIST          ,0    ;# list[] bitmap
+.set          LEVEL_COMP          ,40   ;# comp[] bitmap
+.set          STATE_DIST          ,200  ;# dist[] bitmap
+
+
+;# Structure members dependencies (offsets)
+.set          STATE_DEPTH,        192   
+.set          STATE_LEVELS,       220   
+.set          SIZEOF_LEVEL,       72    
+.set          STATE_MAX,          0     ;# OGR[stub.marks-1] = length max
+.set          STATE_MAXDEPTHM1,   8     ;# stub.marks - 1
+.set          STATE_STARTDEPTH,   188   ;# workstub->stub.length
+.set          STATE_HALFDEPTH,    16    
+.set          STATE_HALFDEPTH2,   20    
+.set          STATE_HALFLENGTH,   12    
+.set          LEVEL_CNT2,         64    
+.set          LEVEL_LIMIT,        68    
+.set          SIZEOF_OGR,         4     
+.set          OGR_SHIFT,          2     
 
 
 ;# Constants
+.set          CORE_S_SUCCESS, 2         
 .set          CORE_S_CONTINUE, 1        
 .set          CORE_S_OK, 0              
+.set          BITMAP_LENGTH, 160        ;# bitmap : 5 * 32-bits
 .set          DIST_SHIFT, 20            
 .set          DIST_BITS, 12             
+
 
 ;# Parameters for rlwinm (choose addressing)
 .set          DIST_SH, 32-DIST_SHIFT    
@@ -44,25 +63,23 @@
 .set          DIST_ME, 31               
 
 
-;# Structure members dependencies (offsets)
-.set          STATE_DEPTH,        192   
-.set          STATE_LEVELS,       256   
-.set          SIZEOF_LEVEL,       128   
-.set          LEVEL_SHIFT,        7     ;# sizeof(struct Level) is a multiple of 2
-.set          STATE_MAX,          0     ;# OGR[stub.marks-1] = length max
-.set          STATE_MAXDEPTHM1,   8     ;# stub.marks - 1
-.set          STATE_STARTDEPTH,   188   ;# workstub->stub.length
-.set          STATE_HALFDEPTH,    16    
-.set          STATE_HALFDEPTH2,   20    
-.set          STATE_HALFLENGTH,   12    
-.set          LEVEL_CNT2,         120   
-.set          LEVEL_LIMIT,        124   
-.set          SIZEOF_OGR,         4     
-.set          OGR_SHIFT,          2     
+;#============================================================================
+;# Custom stack frame
+
+.set          FIRST_NV_GPR, 13          ;# Save r13..r31
+.set          GPRSaveArea, (32-FIRST_NV_GPR) * 4 
+
+.set          aStorage, 4               ;# Private storage area
+.set          aDiffs, 32                ;# diffs control array
+.set          localTop, 1056            
+.set          FrameSize, (localTop + GPRSaveArea + 15) & (-16) 
+
+.set          oState, aStorage + 20     
+.set          pNodes, aStorage + 24     
 
 
 ;#============================================================================
-;# Register aliases (GAS)
+;# Register aliases (GAS). Ignored by Apple's AS
 
 ;.set         r0,0                      
 ;.set         r1,1                      
@@ -99,33 +116,33 @@
 
 
 ;#============================================================================
-;# Mac OS/AIX stack frame
-.set          FIRST_NV_GPR, 13          ;# Save r13..r31
-.set          GPRSaveArea, (32-FIRST_NV_GPR) * 4 
-
-.set          wSaveLR, 8                ;# Save LR
-.set          aStorage, 28              ;# Private storage area
-.set          localTop, 80              
-.set          FrameSize, (localTop + GPRSaveArea + 15) & (-16) 
-
-.set          oState, aStorage + 36     
-.set          pNodes, aStorage + 40     
-
-
-;#============================================================================
 ;# int cycle_ppc_scalar(void *state (r3)
 ;#                      int *pnodes (r4)
 ;#                      const unsigned char *choose (r5)
 ;#                      const int *OGR (r6)
 
-cycle_ppc_scalar:                      
-    ;# Allocate the new stack frame
-    mflr      r9                        
-    stw       r9,wSaveLR(r1)            ;# ...in caller's stack
+cycle_ppc_scalar:                       ;# elf entry point (SVR4/EABI ABI)
+    mflr      r0                        
+    stw       r0,4(r1)                  ;# Store LR at offset 4 in caller's stack
+    bl        L_ogr_cycle_common        ;# Call common code
+    lwz       r0,4(r1)                  ;# restore LR
+    mtlr      r0                        
+    blr                                 
+
+_cycle_ppc_scalar:                      ;# a.out entry point (Mac OS/AIX ABI)
+    mflr      r0                        
+    stw       r0,8(r1)                  ;# Store LR at offset 8 in caller's stack
+    bl        L_ogr_cycle_common        ;# Call common code
+    lwz       r0,8(r1)                  ;# restore LR
+    mtlr      r0                        
+    blr                                 
+
+    ;# Allocate the new stack frame (common code)
+L_ogr_cycle_common:                           
     mr        r8,r1                     ;# Caller's stack pointer
-    clrlwi    r11,r1,27                 ;# keep the low-order 4 bits
-    subfic    r11,r11,-FrameSize        ;# Frame size, including padding
-    stwux     r1,r1,r11                 
+    clrlwi    r10,r1,27                 ;# keep the low-order 4 bits
+    subfic    r10,r10,-FrameSize        ;# Frame size, including padding
+    stwux     r1,r1,r10                 
 
     ;# Save non-volatile registers
     stmw      r13,-GPRSaveArea(r8)      ;# Save GPRs
@@ -163,8 +180,8 @@ cycle_ppc_scalar:
     addi      r3,r3,STATE_LEVELS        ;# &oState->Levels[0]
     stw       r4,pNodes(r1)             ;# Save pNodes
     add       r5,r5,r0                  ;# &choose[remainingDepth]
-    slwi      r8,r9,LEVEL_SHIFT         
-    slwi      r12,r12,LEVEL_SHIFT       
+    mulli     r8,r9,SIZEOF_LEVEL        
+    mulli     r12,r12,SIZEOF_LEVEL      
     lwz       r4,0(r4)                  ;# max nodes = *pnodes
     add       r6,r6,r7                  ;# &OGR[remainingDepth]
     add       r12,r3,r12                ;# &oState->Levels[halfdepth]
@@ -240,10 +257,15 @@ L_stay_1:                               ;# newbit == 1
     add       r16,r16,r0                ;# cnt2 += firstbit
     slwi      r7,r0,6                   ;# firstbit * 64 = Offset of each 'case' block
     cmpw      r16,r8                    ;# cnt2 > limit ?
-    addis     r7,r7,(L_switch_cases-64)@ha
+    ;# Dirty trick to cope with GAS vs AS syntax
+    ;addis    r7,r7,(L_switch_cases-64)@ha 
+    ;bgt      L_up_level                ;# Go back to the preceding mark
+    ;addi     r7,r7,(L_switch_cases-64)@l 
+    ;.if      0                         ;# Skip over Apple's AS code
+    addis     r7,r7,ha16(L_switch_cases-64) 
     bgt       L_up_level                ;# Go back to the preceding mark
-
-    addi      r7,r7,(L_switch_cases-64)@l 
+    addi      r7,r7,lo16(L_switch_cases-64) 
+    ;.endif                             
     rotlw     r27,r27,r0                ;# rotate comp0
     mtctr     r7                        
     rotlw     r28,r28,r0                ;# rotate comp1
@@ -290,10 +312,15 @@ L_stay_0:                               ;# newbit == 0
     add       r16,r16,r0                ;# cnt2 += firstbit
     slwi      r7,r0,6                   ;# firstbit * 64 = Offset of each 'case' block
     cmpw      r16,r8                    ;# cnt2 > limit ?
-    addis     r7,r7,(L_switch_cases-64)@ha
+    ;# Dirty trick to cope with GAS vs AS syntax
+    ;addis    r7,r7,(L_switch_cases-64)@ha 
+    ;bgt      L_up_level                ;# Go back to the preceding mark
+    ;addi     r7,r7,(L_switch_cases-64)@l 
+    ;.if      0                         ;# Skip over Apple's AS code
+    addis     r7,r7,ha16(L_switch_cases-64) 
     bgt       L_up_level                ;# Go back to the preceding mark
-
-    addi      r7,r7,(L_switch_cases-64)@l
+    addi      r7,r7,lo16(L_switch_cases-64) 
+    ;.endif                             
     rotlw     r27,r27,r0                ;# rotate comp0
     mtctr     r7                        
     rotlw     r28,r28,r0                ;# rotate comp1
@@ -918,37 +945,81 @@ L_end_switch:
     b         L_comp_limit              
 
 L_check_Golomb:                           
-    ;# Last mark placed : verify the Golombness
+    ;# Last mark placed : verify the Golombness = found_one()
+    ;# This part is seldom used
+
     ;# Backup volatile registers
     stw       r3,aStorage+0(r1)         
     stw       r4,aStorage+4(r1)         
     stw       r5,aStorage+8(r1)         
     stw       r6,aStorage+12(r1)        
     stw       r8,aStorage+16(r1)        
-    stw       r9,aStorage+20(r1)        
-    stw       r10,aStorage+24(r1)       
-    stw       r11,aStorage+28(r1)       
-    stw       r12,aStorage+32(r1)       
-    lwz       r3,oState(r1)             
-    bl        found_one                 ;# retval = found_one(oState)
-    cmpwi     r3,CORE_S_CONTINUE        ;# retval == CORE_S_CONTINUE ?
-    not       r0,r27                    ;# c0neg = ~comp0
-    mr        r7,r3                     ;# backup result code
-    srwi      r0,r0,1                   ;# Prepare c0neg
+    ;# Reset the diffs array
+    srwi      r8,r11,3                  ;# maximum2 = oState->max / 8
+    lwz       r6,oState(r1)             
+    li        r7,aDiffs                 ;# diffs array
+    addi      r8,r8,1                   
+    mtctr     r8                        
+    li        r0,0                      
+
+L_clrloop:                              
+    stwx      r0,r7,r1                  ;# diffs[k] = 0
+    addi      r7,r7,4                   
+    bdnz      L_clrloop                 
+
+    addi      r6,r6,STATE_LEVELS        ;# &oState->Level[0]
+    li        r3,1                      ;# Initial depth
+    addi      r4,r6,SIZEOF_LEVEL        ;# levels[i=1]
+
+L_iLoop:                                
+    lwz       r7,LEVEL_CNT2(r4)         ;# levels[i].cnt2
+    mr        r5,r6                     ;# levels[j=0]
+    addi      r3,r3,1                   ;# ++i
+
+L_jLoop:                                
+    lwz       r8,LEVEL_CNT2(r5)         ;# levels[j].cnt2
+    addi      r5,r5,SIZEOF_LEVEL        ;# ++j
+    sub       r8,r7,r8                  ;# diffs = levels[i].cnt2 - levels[j].cnt2
+    cmpwi     r8,BITMAP_LENGTH          ;# diffs <= BITMAPS * 32 ?
+    add       r0,r8,r8                  ;# 2*diffs
+    cmpw      cr1,r0,r11                ;# 2*diff <= maximum ?
+    addi      r0,r1,aDiffs              ;# &diffs[0]
+    ble       L_next_i                  ;# diffs <= BITMAPS * 32 : break
+    bgt       cr1,L_next_j              ;# diffs > maximum : continue
+
+    lbzux     r0,r8,r0                  ;# diffs[diffs]
+    cmpwi     r0,0                      ;# diffs[diffs] != 0 ?
+    ori       r0,r0,1                   
+    bne       L_not_golomb              ;# retval = CORE_S_CONTINUE
+    stb       r0,0(r8)                  ;# Update the array
+
+L_next_j:                               
+    cmpw      r5,r4                     ;# &diffs[j] < &diffs[i] ?
+    blt       L_jLoop                   
+L_next_i:                               
+    addi      r4,r4,SIZEOF_LEVEL        
+    cmpw      r3,r15                    ;# i <= maxdepthm1 ?
+    ble       L_iLoop                   
+
+    li        r0,CORE_S_SUCCESS         ;# Ruler is Golomb
     ;# Restore volatile registers
     lwz       r3,aStorage+0(r1)         
     lwz       r4,aStorage+4(r1)         
     lwz       r5,aStorage+8(r1)         
     lwz       r6,aStorage+12(r1)        
     lwz       r8,aStorage+16(r1)        
-    lwz       r9,aStorage+20(r1)        
-    lwz       r10,aStorage+24(r1)       
-    lwz       r11,aStorage+28(r1)       
-    lwz       r12,aStorage+32(r1)       
-    beq       L_stay_0                  ;# Not Golomb : iterate
+    b         L_save_state              ;# Found it !
 
-    mr        r0,r7                     ;# Restore result code
-    b         L_save_state              
+L_not_golomb:                           
+    ;# Restore volatile registers
+    lwz       r3,aStorage+0(r1)         
+    lwz       r4,aStorage+4(r1)         
+    lwz       r5,aStorage+8(r1)         
+    lwz       r6,aStorage+12(r1)        
+    lwz       r8,aStorage+16(r1)        
+    not       r0,r27                    ;# c0neg = ~comp0
+    srwi      r0,r0,1                   ;# Prepare c0neg
+    b         L_stay_0                  ;# Not Golomb : iterate
 
 L_exit_loop_OK:                           
     li        r0,CORE_S_OK              
@@ -987,8 +1058,6 @@ L_save_state:
     ;# Restore non-volatile registers
     lwz       r5,0(r1)                  ;# Obtains caller's stack pointer
     lmw       r13,-GPRSaveArea(r5)      ;# Restore GPRs
-    lwz       r6,wSaveLR(r5)            ;# ...from caller's stack
-    mtlr      r6                        
     mr        r1,r5                     
     blr                                 
 
