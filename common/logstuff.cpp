@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.60 2001/05/06 11:01:08 teichp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.61 2001/05/14 16:49:34 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -884,10 +884,10 @@ int LogGetContestLiveRate(unsigned int contest_i,
 
 // ---------------------------------------------------------------------------
 
-
 //#define NO_PERCENTOMATIC_BATON
 
-void LogScreenPercent( unsigned int load_problem_count )
+static int __do_crunchometer( int event_disp_format, 
+                              unsigned int load_problem_count )
 {
   unsigned int percent = 0, restartperc, endperc, prob_i, cont_i;
   unsigned int selprob_i = logstatics.perc_callcount % load_problem_count;
@@ -896,7 +896,7 @@ void LogScreenPercent( unsigned int load_problem_count )
   unsigned int prob_count[CONTEST_COUNT];
 
   if (!logstatics.crunchmeter || ( logstatics.loggingTo & LOGTO_SCREEN ) == 0 )
-    return;
+    return -1;
 
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
@@ -905,7 +905,7 @@ void LogScreenPercent( unsigned int load_problem_count )
       active_contests++;
   }
   if (active_contests == 0)
-    return;
+    return -1;
 
   #define DISPFORMAT_AUTO  -1
   #define DISPFORMAT_PERC   0
@@ -923,13 +923,14 @@ void LogScreenPercent( unsigned int load_problem_count )
      (prob_count[OGR] > 0 || load_problem_count >= sizeof(pbuf)))
       disp_format = DISPFORMAT_COUNT; //or DISPFORMAT_RATE for rate;
     /* anything else is percent */
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-    if ((w32ConGetType() & 0xffff) == (((int)('g'))+(((int)('t'))<<8)))
-    {                                          /* gui + tray */
-      disp_format = DISPFORMAT_RATE;
-      //event_only  = 1; /* don't logscreen it */
-    }
-    #endif
+  }
+
+  if (event_disp_format >= 0)
+  {
+    if (disp_format == event_disp_format) /* already done in pass 0 */
+      return disp_format;
+    disp_format = event_disp_format;
+    event_only  = 1;
   }
 
   buffer[0] = '\0';
@@ -957,7 +958,7 @@ void LogScreenPercent( unsigned int load_problem_count )
                              &some_done, &ratehi, &ratelo, 
                              &wtimehi, &wtimelo, &ctimehi, &ctimelo) < 1)
     {
-      return; /* no rate available yet */
+      return disp_format; /* no rate available yet */
     }
     if (some_done)
     {
@@ -1190,7 +1191,22 @@ void LogScreenPercent( unsigned int load_problem_count )
     }
   } /* percent based dotdotdot */
   logstatics.perc_callcount++;
-  return;
+  return disp_format;
+}
+
+void LogScreenPercent( unsigned int load_problem_count )
+{
+  int disp_format = __do_crunchometer( -1, load_problem_count );
+  if (disp_format < 0)
+    return;
+
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  if (disp_format != DISPFORMAT_RATE &&
+     (w32ConGetType() & 0xffff) == (((int)('g'))+(((int)('t'))<<8)))
+  {                                          /* gui + tray */
+    __do_crunchometer( DISPFORMAT_RATE, load_problem_count );
+  }
+  #endif
 }
 
 // ------------------------------------------------------------------------
