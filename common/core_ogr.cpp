@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.29.2.2 2004/08/10 18:20:56 jlawson Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.29.2.3 2004/08/11 01:21:27 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -62,6 +62,8 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.29.2.2 2004/08/10 18:20:56 jlawson Exp $";
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm3(void);
 #elif (CLIENT_CPU == CPU_AMD64)
     extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void);
+#elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
+    extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void); 
 #else
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
 #endif
@@ -103,7 +105,11 @@ int InitializeCoreTable_ogr(int first_time)
       #elif (CLIENT_CPU == CPU_VAX)
         ogr_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_SPARC)
-        ogr_get_dispatch_table();
+        #if (SIZEOF_LONG == 8)
+          ogr64_get_dispatch_table
+        #else
+          ogr_get_dispatch_table();
+        #endif
       #elif (CLIENT_CPU == CPU_AMD64)
         //ogr_get_dispatch_table();
         ogr64_get_dispatch_table();
@@ -471,6 +477,9 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
     unit_func.ogr = ogr_get_dispatch_table_arm2();
     coresel = 1;
   }
+#elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
+  unit_func.ogr = ogr64_get_dispatch_table();
+  coresel = 0;
 #else
   //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
   unit_func.ogr = ogr_get_dispatch_table();
