@@ -4,7 +4,7 @@
 ; For use by distributed.net. 
 ;
 ; based on r72-dg2 and RC5-64 'RG/HB re-pair II' cores
-; $Id: r72-go2.asm,v 1.1.2.4 2003/05/26 23:43:53 andreasb Exp $
+; $Id: r72-go2.asm,v 1.1.2.5 2003/09/23 10:27:56 andreasb Exp $
 
 %define P	  0xB7E15163
 %define Q	  0x9E3779B9
