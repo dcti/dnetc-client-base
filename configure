@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.186 2000/08/30 22:24:21 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.187 2000/08/31 16:48:35 lyndon Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -363,7 +363,6 @@ OPTS_CC_MIPSPRO="-O3 -IPA -LNO:opt=1 -xansi -DMIPSpro"
 
 # Common across all MIPSpro compiles:
 OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DMULTITHREAD -DHAVE_OGR_CORES"
-OPTS_MIPSPRO_SRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 OPTS_MIPSPRO_DOCS="docs/readme._ix"
 
 # Common to a specific ABI:
@@ -614,7 +613,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} \
 			-DCLIENT_OS_NAME=\"\\\"Irix (generic-n32)\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_32}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}
@@ -625,7 +624,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} \
 			-DCLIENT_OS_NAME=\"\\\"Irix (generic-64)\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}
@@ -636,7 +635,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip19 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP19\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -647,7 +646,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip20 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP20\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -658,7 +657,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip21 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP21\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -669,7 +668,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip22_4k \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP22/R4K\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -680,7 +679,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip22_5k \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP22/R5K\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -691,7 +690,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip24 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP24\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -702,7 +701,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip25 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP25\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -713,7 +712,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip26 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP26\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -724,7 +723,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip27 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP27\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -735,7 +734,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} -TARG:platform=ip27 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP27-64\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -746,7 +745,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip28 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP28\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -757,7 +756,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip30 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP30\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -768,7 +767,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip32_5k \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -779,7 +778,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="-ISA -LNO ${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip32_10k \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
@@ -790,7 +789,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} -TARG:platform=ip32_10k \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K-64\\\"\""
-	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
+	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
