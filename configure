@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.100  1998/09/30 07:41:01  snake
+#
+# BSD/OS also needs <errno.h>, maybe we should include it for all BSD like OS's
+#
 # Revision 1.99  1998/09/29 08:00:41  remi
 # Added a new Sparc-Linux entry.
 #
@@ -1011,6 +1015,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -f aoutb"
        ;;
 
 ####### Intel X86 SCO5

@@ -10,6 +10,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.21  1998/09/30 07:41:05  snake
+//
+// BSD/OS also needs <errno.h>, maybe we should include it for all BSD like OS's
+//
 // Revision 1.20  1998/09/29 23:14:19  silby
 // Fix for the syntax of the last fix. :)
 //
@@ -217,7 +221,7 @@ extern "C" {
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
   #include <sys/time.h>
   #include <unistd.h>
-  #if (((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS==OS_FREEBSD))
+  #if (((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS==OS_FREEBSD) || (CLIENT_OS==OS_BSDI))
     #include <errno.h> // glibc2 has errno only here
   #endif
 #elif (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_ARM)
