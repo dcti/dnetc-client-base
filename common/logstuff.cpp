@@ -10,10 +10,10 @@
  * Formed of the sand, and fit to shift and break.
  * ------------------------------------------------------
 */
-#define TRACE
+//#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.19 2000/05/08 18:22:39 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.20 2000/05/08 18:29:56 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
