@@ -101,7 +101,7 @@ common/cmdline.o_68k\
 common/logstuff.o_68k\
 common/triggers.o_68k\
 common/buffupd.o_68k\
-common/selcore.o_68k
+common/selcore.o_68k\
 common/guistuff.o_68k\ 
 common/clirun.o_68k\
 common/pollsys.o_68k\  
@@ -263,7 +263,7 @@ common/logstuff.o_68k	:	common/logstuff.cpp
 common/triggers.o_68k	:	common/triggers.cpp
 common/buffupd.o_68k	:	common/buffupd.cpp
 common/selcore.o_68k	:	common/selcore.cpp
-common/guistruff.o_68k	:	common/guistuff.cpp
+common/guistuff.o_68k	:	common/guistuff.cpp
 common/clirun.o_68k     :       common/clirun.cpp
 common/pollsys.o_68k    :       common/pollsys.cpp
 common/probman.o_68k    :       common/probman.cpp
