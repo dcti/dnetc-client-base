@@ -9,6 +9,9 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.43  1998/12/09 08:33:20  silby
+// Freebsd fixes
+//
 // Revision 1.42  1998/12/04 17:15:51  cyp
 // OS/2 change: priority is only set for crunchers. Main thread always runs
 // at normal priority.
@@ -59,7 +62,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.42 1998/12/04 17:15:51 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.43 1998/12/09 08:33:20 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -242,8 +245,8 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       }
   #else
     #if (CLIENT_OS == OS_FREEBSD)
-    #define PRI_OTHER_MAX=10;
-    #define PRI_OTHER_MIN=20;
+    #define PRI_OTHER_MAX 10
+    #define PRI_OTHER_MIN 20
     #endif
     if ( set_for_thread )
       {
