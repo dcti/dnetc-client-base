@@ -17,7 +17,7 @@ OPTS_MSVCG = -nologo -W3 -O1 -I$(RC5PATH) -I$(DESPATH) \
   -D_CPU_32BIT_ -D__WIN32__ -DNOMAIN -DNOCONFIG \
   -DNEEDVIRTUALMETHODS -GR- -GX- -GA -GF \
   -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN -DWIN32GUI \
-  -DCORE_SUPPORTS_SMP -DMMX_RC5
+  -DLURK -DMMX_RC5
 
 !ifdef WIN32S
 OPTS_MSVCG = -ML $(OPTS_MSVCG)
@@ -96,7 +96,7 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/rg6x86.obj  \
 	$(OUTPUTPATH)/rc5-rgk6.obj \
 	$(OUTPUTPATH)/rc5mmx.obj   \
-        $(OUTPUTPATH)/deseval-mmx.obj \
+	$(OUTPUTPATH)/deseval-mmx.obj \
 	$(OUTPUTPATH)/deseval.obj \
 	$(OUTPUTPATH)/des-slice.obj \
 	$(OUTPUTPATH)/sboxes-kwan4.obj \
