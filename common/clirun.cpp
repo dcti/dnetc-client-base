@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.23 1999/12/12 14:31:44 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.24 1999/12/13 06:16:28 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -734,9 +734,17 @@ static int __gsc_flag_allthreads(struct thread_param_block *thrparam,
     ispause = 1;
   while (thrparam)
   {
-    if (isexit)
-      thrparam->do_exit = isexit;
-    thrparam->do_suspend = ispause;
+    if (whichflag == 'c')
+    {
+      if (!thrparam->is_suspended)
+        return -1;
+    }
+    else
+    {
+      if (isexit)
+        thrparam->do_exit = isexit;
+      thrparam->do_suspend = ispause;
+    }  
     thrparam = thrparam->next;
   }
   return 0;
@@ -1356,12 +1364,28 @@ int ClientRun( Client *client )
 
     if (!TimeToQuit && ModeReqIsSet(-1))
     {
+      int did_suspend = 0;
+      if (ModeReqIsSet(MODEREQ_TEST_MASK|MODEREQ_BENCHMARK_MASK))
+      {
+        if (!wasPaused) /* read that as 'isPaused' */
+        {
+          __gsc_flag_allthreads(thread_data_table, 's'); //suspend 'em
+          did_suspend = 1;
+        }
+        while (__gsc_flag_allthreads(thread_data_table, 'c'))
+        {
+          /* if we got here, then we must be running real threads */
+          NonPolledUSleep(250000); 
+        }
+      }
       //For interactive benchmarks, assume that we have "normal priority"
       //at this point and threads are running at lower priority. If that is
       //not the case, then benchmarks are going to return wrong results.
       //The messy way around that is to suspend the threads.
       ModeReqRun(client);
       dontSleep = 1; //go quickly through the loop
+      if (did_suspend)
+        __gsc_flag_allthreads(thread_data_table, 0 ); //un-suspend 'em
     }
   }  // End of MAIN LOOP
 
