@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.10  1998/11/28 19:47:13  cyp
+// __IndividualProblemLoad() retries all contests buffers after a buffer
+// (net) update.
+//
 // Revision 1.9  1998/11/26 06:56:17  cyp
 // Overhauled __IndividualProblemLoad() and added support for new buffer
 // methods.
@@ -41,7 +45,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.9 1998/11/26 06:56:17 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.10 1998/11/28 19:47:13 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -62,6 +66,8 @@ return "@(#)$Id: probfill.cpp,v 1.9 1998/11/26 06:56:17 cyp Exp $"; }
 #include "checkpt.h"   // 
 #include "buffupd.h"   // BUFFERUPDATE_FETCH define
 #include "probfill.h"  // ourselves.
+
+#define CONTEST_COUNT (2)
 
 // =======================================================================
 // each individual problem load+save generates 4 or more messages lines 
@@ -295,7 +301,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   unsigned int contest_count, contest_selected;
   unsigned int contest_preferred, contest_alternate;
   long longcount;
-  int didupdate, didload, didrandom;
+  int didupdate, didload, didrandom, resetloop;
   s32 cputype;
 
   cputype           = client->cputype; /* needed for FILEENTRY_CPU macro */
@@ -304,14 +310,13 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   contest_count     = 2;
     
   #if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
-  if ( prob_i >= 4 )
+  /* Must do RC5.  DES x86 cores aren't multithread safe. */
+  if ( prob_i != 0 && prob_i != 1 ) /* Not the 1st or 2nd cracking thread... */
     {
     #if (defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS))
     if ( des_unit_func != des_unit_func_mmx ) // if not using mmx cores
     #endif
       {
-      // Not the 1st or 2nd cracking thread...
-      // Must do RC5.  DES x86 cores aren't multithread safe.
       contest_preferred = contest_alternate = 0;
       contest_count     = 1;
       }
@@ -326,40 +331,41 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     }
   #endif
 
-  didrandom = didload = 0;
-  
-  for (cont_i = 0;(didload == 0 && cont_i < contest_count); cont_i++)
-    {
-    contest_selected = ((cont_i)?(contest_alternate):(contest_preferred));
-    didupdate = 0;
+  didrandom = didload = didupdate = 0;
+  resetloop = 1;
 
-    while (client->contestdone[contest_selected] == 0)
+  while (resetloop && didload == 0)
+    {
+    resetloop = 0;
+    for (cont_i = 0;(didload == 0 && cont_i < contest_count); cont_i++)
       {
-      longcount = client->GetBufferRecord( &fileentry, contest_selected, 0 );
-      if (longcount >= 0)
+      contest_selected = ((cont_i)?(contest_alternate):(contest_preferred));
+      if ( client->contestdone[contest_selected] == 0)
         {
-        didload = 1;
-        break;
-        }
-      if (client->nonewblocks || client->offlinemode || didupdate != 0) 
-        {                                     /* net update not permitted */
-        didload = -1;
-        break;
-        }
-      didupdate = 1;
-      if ( ((unsigned long)(client->inthreshold[contest_selected])) < 
-           ((unsigned long)(load_problem_count)))
-        client->inthreshold[contest_selected] = load_problem_count;
-      if (client->BufferUpdate(BUFFERUPDATE_FETCH,0) < 0)
-        {
-        didload = -1;
-        break;
+        longcount = client->GetBufferRecord( &fileentry, contest_selected, 0 );
+        if (longcount >= 0)
+          {
+          didload = 1;
+          break;
+          }
         }
       }
-    }
+    if (didupdate == 0 && didload == 0 && client->nonewblocks == 0)
+      {
+      didupdate = 
+        client->BufferUpdate((BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
+      if (didupdate < 0)
+        break;
+      if ((didupdate & BUFFERUPDATE_FETCH) == 0) /* didn't fetch */
+        break;
+      resetloop = 1; /* we refreshed buffers, so retry all */
+      }
+    }  
     
-  if (didload > 0) /* normal load from buffer succeeded */
+  if (didload) /* normal load from buffer succeeded */
     {
+    *load_needed = 0;
+    
     // LoadWork expects things descrambled.
     Descramble( ntohl( fileentry.scramble ),
                 (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
@@ -395,17 +401,18 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         }
       }
     } 
-  else /* if (didload <= 0) *//* normal load from buffer failed */
+  else /* normal load from buffer failed */
     {
     if (client->contestdone[contest_preferred] && 
         client->contestdone[contest_alternate])
-      didload = -2;
+      *load_needed = -2;
     else if (client->nonewblocks)
-      didload = -3;
+      *load_needed = -3;
     else if (client->blockcount < 0) /* no random blocks permitted */
-      didload = -1;
+      *load_needed = -1;
     else /* random blocks permitted */
       {
+      *load_needed = 0;
       didload = 1;
       didrandom = 1;
       __RefreshRandomPrefix(client); //get/put an up-to-date prefix 
@@ -436,12 +443,9 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       }
     }
     
-  if (didload <= 0)
+  if (didload) /* success */
     {
-    *load_needed = 1;
-    }
-  else /*if (didload > 0)  *//* success */
-    {
+    *load_needed = 0;
     if (load_problem_count <= COMBINEMSG_THRESHOLD)
       {
       const char *name;
@@ -501,6 +505,15 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
     if (i<=0)
       return 0;
     load_problem_count = (unsigned int)i;
+
+    for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+      {
+      if ( ((unsigned long)(inthreshold[cont_i])) < 
+         ((unsigned long)(load_problem_count)))
+        {
+        inthreshold[cont_i] = load_problem_count;
+        }
+      }
     }
   else
     {
