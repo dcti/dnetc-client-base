@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.24 2000/03/09 07:38:11 jlawson Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.25 2000/03/09 07:49:36 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -251,7 +251,7 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
   {
     FILE *fp = fopen(fn, mode);
     if (fp != NULL) {
-      if (flock(fp, LOCK_EX | LOCK_NB) < 0) {
+      if (flock(fileno(fp), LOCK_EX | LOCK_NB) < 0) {
         fclose(fp);
         fp = NULL;
       }
