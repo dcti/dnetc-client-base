@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.66 1999/04/09 19:40:58 patrick Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.67 1999/04/13 06:49:26 cyp Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -230,6 +230,7 @@ protected:
   SOCKET sock;            // socket file handle
   int isnonblocking;     // whether the socket could be set non-blocking
   int reconnected;       // set to 1 once a connect succeeds 
+  int shown_connection;
 
   char fwall_hostname[64]; //intermediate
   int  fwall_hostport;

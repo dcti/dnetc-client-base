@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.94 1999/04/11 10:23:43 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.95 1999/04/13 06:49:25 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -239,6 +239,7 @@ Network::Network( const char * servname, int servport, int _nofallback,
   server_port = servport;
 
   reconnected = 0;
+  shown_connection = 0;
   nofallback = _nofallback;
   sock = INVALID_SOCKET;
   iotimeout = _iotimeout; /* if iotimeout is <0, use blocking calls */
@@ -342,7 +343,7 @@ int Network::Open( SOCKET insock)
 
 void Network::ShowConnection(void)
 {
-  if (verbose_level > 0 && !reconnected)
+  if (verbose_level > 0 && !shown_connection)
   {
     const char *targethost = svc_hostname;
     unsigned int len = strlen( targethost );
@@ -373,6 +374,7 @@ void Network::ShowConnection(void)
             fwall_hostname, (unsigned int)fwall_hostport );
     }
   }
+  shown_connection = 1;
   return;
 }
 
@@ -388,6 +390,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
   gotuubegin = gothttpend = 0;
   httplength = 0;
   mode = startmode;
+
 
   do
   {
@@ -459,6 +462,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         }
       }
 
+
       if (!NetCheckIsOK())
       {
         success = 0;
@@ -486,7 +490,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
           // unrecoverable error. retry won't help
           triesleft = 0;
         }
-        else if (svc_hostaddr == 0) /* always 1 unless http */
+        else if (svc_hostaddr == 0) /* always true unless http */
         {
           if ( Resolve(svc_hostname, &svc_hostaddr, svc_hostport ) < 0 )
           {
@@ -505,7 +509,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         conn_hostname = fwall_hostname;
         conn_hostport = fwall_hostport;
       }
-      else /* resolve for non-proxied connect */
+      else if (svc_hostaddr == 0) /* resolve for non-proxied connect */
       {
         if (Resolve( svc_hostname, &svc_hostaddr, svc_hostport ) < 0) 
         {
@@ -552,9 +556,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       }
       #endif
       
-      if (success)
-        reconnected = 1;
-      else //if (!success)   /* connect failed */
+      if (!success)   /* connect failed */
       {
         if (verbose_level > 0)
         {
@@ -611,9 +613,13 @@ int Network::Open( void )               // returns -1 on error, 0 on success
     /* ---- clean up ---- */
       
     if (success)
+    {
+      reconnected = 1;
       return 0;
+    }
       
     Close();
+    svc_hostaddr = 0;
     
     if ((--triesleft) <= 0)
       break;
