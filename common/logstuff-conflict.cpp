@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.19  1998/11/03 00:38:11  cyp
+// Modified percbar stuff to deal with the one-problem/thread change.
+//
 // Revision 1.18  1998/10/26 04:14:35  cyp
 // Replaced IS_A_TTY() with ConIsScreen()
 //
@@ -72,7 +75,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.18 1998/10/26 04:14:35 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.19 1998/11/03 00:38:11 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -88,6 +91,7 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.18 1998/10/26 04:14:35 cyp Exp $"; }
 #include "console.h"   // for ConOut() and ConIsScreen()
 #include "logstuff.h"  // keep the prototypes in sync
 #include "guistuff.h"  // Hooks for the GUIs
+#include "triggers.h"  // don't print percbar if pause/exit/restart triggered
 
 //-------------------------------------------------------------------------
 
@@ -611,67 +615,53 @@ static void GetPercDataForThread( unsigned int selthread, unsigned int /*numthre
 void LogScreenPercent( unsigned int load_problem_count )
 {
   static unsigned int lastperc = 0, displevel = 0;
-  unsigned int method, percent, restartperc, specperc, equals;
-  unsigned int selthread, numthreads = (load_problem_count+1)>>1;
+  unsigned int percent, restartperc, specperc, equals, prob_i;
   char ch; char buffer[88];
   char *bufptr = &buffer[0];
+  unsigned char pbuf[30]; /* 'a'-'z' */
+  specperc=0;
+
+  if (CheckExitRequestTrigger() || CheckPauseRequestTrigger())
+    return;
 
   if (logstatics.percprint && ( logstatics.loggingTo & LOGTO_SCREEN ) != 0 )
     {
-    method = 2; //LogScreenPercentSingle() type bar for multiple threads
-    if ( load_problem_count <= 2 )
-      method = 0;  //old LogScreenPercentSingle()
-    #if (defined(PERCBAR_ON_ONE_LINE)) /* max 13 threads */
-    else if (ConIsScreen() && (numthreads*sizeof("A:00% "))<79 ) 
-      method = 3; //"\rA:10% B:20% C:30% D:40% E:50% ... M:99%" on *one* line
-    #elif (defined(FORCE_OLD_LOGSCREENPERCENTMULTI))
-    else
-      method = 1; //old LogScreenPercentMulti()
-    #endif
-    
     if (!logstatics.lastwasperc)
       lastperc = 0; 
 
-    if ( method == 1 ) //old LogScreenPercentMulti()
+    for (prob_i = 0; prob_i < load_problem_count; prob_i++)    
       {
-      for (selthread = 0; selthread < numthreads; selthread++)    
+      Problem *selprob = GetProblemPointerFromIndex(prob_i);
+
+      percent = lastperc = 0; int startperc_i = 0;
+      if (selprob)
         {
-        GetPercDataForThread( selthread<<1, numthreads, &percent, &lastperc, &restartperc );
-        if (restartperc) restartperc = (restartperc & 0xFD)|1;
-        for ( ++lastperc; lastperc <= percent ; lastperc++ )
+        startperc_i = selprob->startpercent / 1000;
+        lastperc  = selprob->percent;
+
+        if ( selprob->finished )
+          percent = 100;
+        else if ( selprob->started )
+          percent = selprob->CalcPercent();
+        if ( percent == 0 )
           {
-          if ( lastperc == 100 )
-            { sprintf( bufptr, "%c:100%% ", selthread+'a' ); 
-              bufptr+=sizeof("a:100% "); break; }
-          else if ( ( lastperc % 10 ) == 0 ) 
-            { sprintf( bufptr, "%c:%02d%% ", selthread+'a', lastperc ); 
-              bufptr+=sizeof("a:90% "); }
-          else if ( ( lastperc & 1 ) == 0 ) 
-            { *bufptr++ = ((lastperc==restartperc)?('R'):('.')); }
+          percent = startperc_i;
+          lastperc = 0;
           }
+        selprob->percent = percent;
         }
-      }
-    else if ( method == 2 || method == 0 ) //single bar for all threads
-      {
-      unsigned char pbuf[50];
-      specperc=0;
-      for (selthread = 0; selthread < numthreads; selthread++)    
-        {
-        GetPercDataForThread(selthread<<1,numthreads,&percent,NULL,&restartperc);
-        if (percent != lastperc) 
-          UpdatePercentBar();// Trigger GUI percent bar to update
-        if (percent > specperc)
-          specperc = percent;
-        if (percent && ((percent>90)?((percent&1)!=0):((percent&1)==0)))
-          percent--;  //make sure that it is visible
-        if (numthreads > 1 && numthreads < sizeof(pbuf))
-          {
-//printf(" T%d:%d%%", selthread, percent );
-//fflush(stdout);          
-          pbuf[selthread] = (unsigned char)(percent);
-          }
-        }
-      if (numthreads < 2)
+      restartperc = ((lastperc == 0)?(startperc_i):(0));
+
+      if (percent != lastperc) 
+        UpdatePercentBar();// Trigger GUI percent bar to update
+      if (percent > specperc)
+        specperc = percent;
+      if (percent && ((percent>90)?((percent&1)!=0):((percent&1)==0)))
+        percent--;  //make sure that it is visible
+      if (load_problem_count <= 26) /* a-z */
+        pbuf[prob_i] = (unsigned char)(percent);
+
+      if (load_problem_count == 1)
         {
         restartperc = (!restartperc || percent == 100) ? 0 :
             ( restartperc - ((restartperc > 90) ? (restartperc & 1) : 
@@ -700,17 +690,15 @@ void LogScreenPercent( unsigned int load_problem_count )
         else if (((percent&1)?(percent<90):(percent>90)))
           {
           ch = '.';
-          if (numthreads > 1 && numthreads < sizeof(pbuf) && 
+          if (load_problem_count > 1 && load_problem_count <= 26 /*a-z*/ && 
                          ConIsScreen() && specperc < 100)
             {
             equals = 0;
-            for ( selthread=0; selthread<numthreads; selthread++ )
+            for ( prob_i=0; prob_i<load_problem_count; prob_i++ )
               {
-//printf(" t%d:%d%%:P:%d%%E%d:D%d", selthread, percent, pbuf[selthread], equals, displevel );
-//fflush(stdout);          
-              if ( pbuf[selthread] == (unsigned char)(percent) )
+              if ( pbuf[prob_i] == (unsigned char)(percent) )
                 {
-                ch = (char)('a'+selthread);
+                ch = (char)('a'+prob_i);
                 if ( (++equals)>displevel )
                   break;
                 }
@@ -720,47 +708,8 @@ void LogScreenPercent( unsigned int load_problem_count )
           }
         }
       displevel++;
-      if (displevel >= numthreads)
+      if (displevel >= load_problem_count)
         displevel=0;
-      }
-    #if 0
-    else if ( method == 0 ) //old LogScreenPercentSingle()
-      {
-      GetPercDataForThread( 0, 1, &percent, NULL, &restartperc);
-      if ( percent > lastperc )
-        {
-        restartperc = (!restartperc || percent == 100) ? 0 :
-         ( percent - ((percent > 90) ? (percent & 1) : (1 - (percent & 1))) );
-        for ( specperc = lastperc+1; (specperc <= percent) ; specperc++ )
-          {
-          if ( specperc == 100 )
-            { strcat( bufptr, "100" ); bufptr+=3; }
-          else if ( specperc  == restartperc )
-            { *bufptr++ = 'R'; }
-          else if ( ( specperc  % 10 ) == 0 )
-            { sprintf( bufptr, "%d%%", (int)(specperc) ); bufptr+=3; }
-          else if ((specperc&1)?(specperc<90):(specperc>90))
-            { *bufptr++='.'; }
-          }
-        lastperc = percent;
-        }
-      }
-    #endif
-    else if ( method == 3 ) //PERCBAR_ON_ONE_LINE. Requires stdoutisatty
-      {
-      *bufptr++='\r';
-      #if (CLIENT_OS != OS_WIN32) //looks lousy with a proportional font
-      sprintf( bufptr, " %s  ", CliGetTimeString(NULL,0) );
-      if ((strlen(bufptr)+(sizeof("A:00% ")*numthreads)) < 79)
-        bufptr += strlen(bufptr);
-      #endif
-      for ( selthread = 0; selthread < numthreads; selthread++)
-        {
-        GetPercDataForThread( selthread<<1, numthreads, &percent, NULL, NULL );
-        sprintf( bufptr, ((percent<100)?("%c:%02d%% "):("%c:%d ")),
-                selthread+'a', percent );
-        bufptr+=sizeof("A:00% ");
-        }
       }
 
     if ( bufptr > (&buffer[0]))
