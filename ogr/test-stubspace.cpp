@@ -3,8 +3,7 @@
 
 #include "stubsplit.h"
 
-int marks;
-int depth;
+int marks, depth, threshold;
 int stubsx;
 long long stubs;
 
@@ -13,6 +12,15 @@ int callback(void *userdata, struct Stub *stub)
   if (stub->length < depth) {
     stub_split(stub, callback, 0);
   } else {
+    if (threshold > 0) {
+      int t = 0;
+      for (int i = 0; i < stub->length; i++) {
+        t += stub->diffs[i];
+      }
+      if (t > threshold) {
+        return 1;
+      }
+    }
     stubsx++;
     if (stubsx == 1000000) {
       stubs += stubsx;
@@ -31,12 +39,15 @@ int callback(void *userdata, struct Stub *stub)
 int main(int argc, char *argv[])
 {
   if (argc < 3) {
-    printf("Usage: test-stubsplit marks depth\n");
+    printf("Usage: test-stubsplit marks depth [threshold]\n");
     return 1;
   }
 
   marks = atoi(argv[1]);
   depth = atoi(argv[2]);
+  if (argc >= 4) {
+    threshold = atoi(argv[3]);
+  }
   
   struct Stub stub;
   stub.marks = marks;
