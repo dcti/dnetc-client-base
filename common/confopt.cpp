@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.29 2000/04/16 19:27:20 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.30 2000/04/21 13:05:02 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -310,8 +310,9 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "to keep your client busy for a specified number of hours.  This causes\n"
   "the work unit threshold option to be constantly recalculated based on the\n"
   "current speed of your client on your machine.\n\n"
-  "For fixed (static) connections, you should set this to a low value, like\n"
-  "three to six hours.  For dialup connections, set this based on how often\n"
+  "For fixed (static) connections, you should set this to a low value, eg\n"
+  "three to six hours. For dialup connections, set this to a value high\n"
+  "enough to ensure that the client will not prematurely run out of work.\n"
 #ifdef HAVE_OGR_CORES
   "\n"
   "Currently not implemented for OGR because the amount of work in an\n"
