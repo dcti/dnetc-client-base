@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.18 2002/12/28 22:49:55 sod75 Exp $
+# @(#)$Id: configure,v 1.288.2.19 2002/12/29 02:56:05 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -229,7 +229,6 @@ add_sources() # $1=os, $2=arch, $3=custom
       if [ "X$TARGET_NASM" != "X" -a "X$TARGET_NASM_FMT" != "X" ]; then
         # -- nasm/rc5 --
         #DEFAULT_RC5_72="0"     # allow the ANSI C cores still
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_RC5_72_ASM_CORES"
         TARGET_ADDNASMS="$TARGET_ADDNASMS \
                          rc5-72/x86/r72-ses1.asm \
                          rc5-72/x86/r72-ses2.asm \

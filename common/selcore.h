@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16 2002/10/28 16:40:22 rick Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.1 2002/12/29 02:56:05 andreasb Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -14,9 +14,32 @@
 #endif
 
 
+#if (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ )
+  #define CDECL cdecl
+#elif (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+  #error "can we '#define CDECL __regargs' here and get rid of the special handling below?"
+#endif
+#ifndef CDECL
+  #define CDECL /* nothing */
+#endif
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef s32 gen_func( RC5UnitWork *, u32 *, void * );
+#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+typedef u32 __regargs rc5_func( RC5UnitWork *, u32 );
+#else
+typedef u32 CDECL rc5_func( RC5UnitWork *, u32 );
+#endif
+typedef u32 des_func( RC5UnitWork *, u32 *, char * );
+#if defined(HAVE_OGR_CORES)
+typedef CoreDispatchTable *ogr_func;
+#endif
+typedef s32 CDECL gen_72_func( RC5_72UnitWork *, u32 *, void * );
+
 
 typedef union
 {
@@ -26,10 +49,8 @@ typedef union
   /* old style: RC5-64, DES */
   #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
   u32 __regargs (*rc5)( RC5UnitWork *, u32 iterations );
-  #elif (CLIENT_OS == OS_QNX ) && !defined( __QNXNTO__ )
-  u32 cdecl (*rc5)( RC5UnitWork *, u32 iterations );
   #else
-  u32 (*rc5)( RC5UnitWork *, u32 iterations );
+  u32 CDECL (*rc5)( RC5UnitWork *, u32 iterations );
   #endif
   #if defined(HAVE_DES_CORES)
   u32 (*des)( RC5UnitWork *, u32 *iterations, char *membuf );
@@ -41,11 +62,8 @@ typedef union
   #endif
 
   /* generic prototype: RC5-72 */
-  #if (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__)
-  s32 cdecl (*gen_72)( RC5_72UnitWork *, u32 *iterations, void *memblk );
-  #else
-  s32 (*gen_72)( RC5_72UnitWork *, u32 *iterations, void *memblk );
-  #endif
+  s32 CDECL (*gen_72)( RC5_72UnitWork *, u32 *iterations, void *memblk );
+
   #if 0
   PROJECT_NOT_HANDLED("in unit_func_union");
   #endif

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.5 2002/12/28 13:29:16 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.6 2002/12/29 02:56:05 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -40,14 +40,217 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.5 2002/12/28 13:29:16 acidblood Exp $"; }
     extern "C" smc_dpmi_ds_alias_alloc(void);
     extern "C" smc_dpmi_ds_alias_free(void);
   #endif
-  #if (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ )
-  extern "C" u32 cdecl rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
-  #endif
-  extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
   static int x86_smc_initialized = -1;
 #endif
 
-/* ------------------------------------------------------------------------ */
+/* ======================================================================== */
+
+/* all the core prototypes
+   note: we may have more prototypes here than cores in the client 
+   note2: if you need some 'cdecl' value define it in selcore.h to CDECL */
+
+#if 0
+// available ANSI cores:
+// 2 pipeline: rc5/ansi/rc5ansi_2-rg.cpp
+//   extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
+//   extern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
+//                                    u32 *iterations, void *scratch_area );
+// 1 pipeline: rc5/ansi/rc5ansi1-b2.cpp
+//   extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 iterations );
+#endif                                                                
+
+#if defined(HAVE_RC5_64_CORES)
+
+  // default ansi cores  
+  // rc5/ansi/rc5ansi1-b2.cpp
+  extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 iterations );
+  // rc5/ansi/rc5ansi_2-rg.cpp
+  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
+  // rc5/ansi/rc5ansi_4-rg.cpp
+  extern "C" u32 rc5_unit_func_ansi_4_rg( RC5UnitWork *, u32 iterations );
+
+#if (CLIENT_CPU == CPU_X86)
+  extern "C" u32 CDECL rc5_unit_func_486( RC5UnitWork * , u32 iterations );
+  extern "C" u32 CDECL rc5_unit_func_p5( RC5UnitWork * , u32 iterations );
+  extern "C" u32 CDECL rc5_unit_func_p6( RC5UnitWork * , u32 iterations );
+  extern "C" u32 CDECL rc5_unit_func_6x86( RC5UnitWork * , u32 iterations );
+  extern "C" u32 CDECL rc5_unit_func_k5( RC5UnitWork * , u32 iterations );
+  extern "C" u32 CDECL rc5_unit_func_k6( RC5UnitWork * , u32 iterations );
+  extern "C" u32 CDECL rc5_unit_func_p5_mmx( RC5UnitWork * , u32 iterations );
+  extern "C" u32 CDECL rc5_unit_func_k6_mmx( RC5UnitWork * , u32 iterations );
+  extern "C" u32 CDECL rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
+  extern "C" u32 CDECL rc5_unit_func_k7( RC5UnitWork * , u32 iterations );
+  extern "C" u32 CDECL rc5_unit_func_p7( RC5UnitWork *, u32 iterations );
+#elif (CLIENT_CPU == CPU_ARM)
+  extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * , u32 );
+  extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * , u32 );
+  extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * , u32 );
+  #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
+  extern "C" u32 rc5_unit_func_x86( RC5UnitWork * , u32 );
+  #endif
+#elif (CLIENT_CPU == CPU_PA_RISC)
+  // rc5/parisc/parisc.cpp encapulates parisc.s, 2 pipelines
+  // extern "C" u32 rc5_parisc_unit_func( RC5UnitWork *, u32 );
+  // unused ???
+#elif (CLIENT_CPU == CPU_MIPS)
+  #if (CLIENT_OS == OS_SINIX) || (CLIENT_OS == OS_QNX) || \
+      (CLIENT_OS == OS_PS2LINUX)
+    //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
+    extern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 );
+  #endif
+#elif (CLIENT_CPU == CPU_SPARC)
+  #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
+      (CLIENT_OS == OS_LINUX)
+    //rc5/ultra/rc5-ultra-crunch.cpp
+    extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
+  #endif
+#elif (CLIENT_CPU == CPU_68K)
+  #if defined(__GCC__) || defined(__GNUC__) || \
+      (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS)
+    extern "C" u32 rc5_unit_func_000_010re( RC5UnitWork *, u32 );
+    extern "C" u32 rc5_unit_func_020_030( RC5UnitWork *, u32 );
+    extern "C" u32 rc5_unit_func_060re( RC5UnitWork *, u32 );
+  #elif (CLIENT_OS == OS_MACOS)
+    // rc5/68k/crunch.68k.a.o
+    extern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
+  #endif
+#elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+  #if (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
+    #if (CLIENT_OS != OS_WIN32) //NT has poor PPC assembly
+      // rc5/ppc/rc5_*.cpp
+      // although Be OS isn't supported on 601 machines and there is
+      // is no 601 PPC board for the Amiga, lintilla depends on allitnil,
+      // so we have both anyway, we may as well support both.
+      // rc5ansi_2-rg.cpp for AIX is allready prototyped above
+      extern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
+      extern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
+      extern "C" u32 rc5_unit_func_lintilla_604_compat( RC5UnitWork *, u32 );
+      #if defined(__VEC__) /* OS+compiler support altivec */
+        extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
+        extern "C" u32 rc5_unit_func_vec_7450_compat( RC5UnitWork *, u32 );
+      #endif
+    #endif
+  #endif
+#elif (CLIENT_CPU == CPU_ALPHA)
+  #if (CLIENT_OS == OS_WIN32) /* little-endian asm */
+    //rc5/alpha/rc5-alpha-nt.s
+    extern "C" u32 rc5_unit_func_ntalpha_michmarc( RC5UnitWork *, u32 );
+  #else
+    //axp-bmeyer.cpp around axp-bmeyer.s
+    extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
+  #endif
+#elif (CLIENT_CPU == CPU_UNKNOWN)   || (CLIENT_CPU == CPU_S390) || \
+      (CLIENT_CPU == CPU_S390X)     || (CLIENT_CPU == CPU_IA64) || \
+      (CLIENT_CPU == CPU_SH4)       || (CLIENT_CPU == CPU_88K)     \
+      (CLIENT_CPU == CPU_VAX)
+  // only use already prototyped ansi cores
+#else
+  #error "How did you get here?" 
+#endif    
+
+#endif
+
+/* ------------------------------------------------------------- */
+
+#if defined(HAVE_DES_CORES)
+/* DES cores take the 'iterations_to_do', adjust it to min/max/nbbits
+  and store it back in 'iterations_to_do'. all return 'iterations_done'.
+*/   
+#if (CLIENT_CPU == CPU_ARM)
+  //des/arm/des-arm-wrappers.cpp
+  extern u32 des_unit_func_slice_arm( RC5UnitWork * , u32 *iter, char *coremem );
+  extern u32 des_unit_func_slice_strongarm(RC5UnitWork *, u32 *iter, char *coremem);
+#elif (CLIENT_CPU == CPU_ALPHA) 
+  //des/alpha/des-slice-dworz.cpp
+  extern u32 des_unit_func_slice_dworz( RC5UnitWork * , u32 *iter, char *);
+#elif (CLIENT_CPU == CPU_X86)
+  extern u32 p1des_unit_func_p5( RC5UnitWork * , u32 *iter, char *coremem );
+  extern u32 p1des_unit_func_pro( RC5UnitWork * , u32 *iter, char *coremem );
+  extern u32 p2des_unit_func_p5( RC5UnitWork * , u32 *iter, char *coremem );
+  extern u32 p2des_unit_func_pro( RC5UnitWork * , u32 *iter, char *coremem );
+  extern u32 des_unit_func_mmx( RC5UnitWork * , u32 *iter, char *coremem );
+  extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
+#elif defined(MEGGS)
+  //des/des-slice-meggs.cpp
+  extern u32 des_unit_func_meggs( RC5UnitWork * , u32 *iter, char *coremem );
+#else
+  //all rvs based drivers (eg des/ultrasparc/des-slice-ultrasparc.cpp)
+  extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
+#endif
+#endif
+
+/* ------------------------------------------------------------- */
+
+#if defined(HAVE_CSC_CORES)
+  extern "C" s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *iterations, void *membuff );
+  #if (CLIENT_CPU != CPU_ARM) // ARM only has one CSC core
+  extern "C" s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *iterations, void *membuff );
+  extern "C" s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
+  extern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
+  #endif
+  #if (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
+  extern "C" s32 csc_unit_func_6b_mmx ( RC5UnitWork *, u32 *iterations, void *membuff );
+  #endif
+#endif
+
+/* ------------------------------------------------------------- */
+
+#if defined(HAVE_OGR_CORES)
+  #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
+    #if defined(_AIXALL)      /* AIX hybrid client */
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_power(void);
+    #endif
+    #if defined(__VEC__)      /* compiler supports AltiVec */
+    extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
+    #endif
+  #elif (CLIENT_CPU == CPU_ALPHA)
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix(void);
+  #elif (CLIENT_CPU == CPU_68K)
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_000(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_020(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_030(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_040(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_060(void);
+  #elif (CLIENT_CPU == CPU_X86)      
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table(void); //A
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_nobsr(void); //B
+  #else
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
+  #endif
+#endif    
+
+/* ------------------------------------------------------------- */
+
+#if defined(HAVE_RC5_72_CORES)
+
+  // These are the standard ANSI cores that are available for all platforms.
+  extern "C" s32 CDECL rc5_72_unit_func_ansi_4( RC5_72UnitWork *, u32 *, void * );
+  extern "C" s32 CDECL rc5_72_unit_func_ansi_2( RC5_72UnitWork *, u32 *, void * );
+  extern "C" s32 CDECL rc5_72_unit_func_ansi_1( RC5_72UnitWork *, u32 *, void * );
+
+  // These are assembly-optimized versions for each platform.
+  #if (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
+    extern "C" s32 CDECL rc5_72_unit_func_ses( RC5_72UnitWork *, u32 *, void *);
+    extern "C" s32 CDECL rc5_72_unit_func_ses_2( RC5_72UnitWork *, u32 *, void *);
+    extern "C" s32 CDECL rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
+    extern "C" s32 CDECL rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
+    extern "C" s32 CDECL rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
+    extern "C" s32 CDECL rc5_72_unit_func_ss_2( RC5_72UnitWork *, u32 *, void *);
+  #elif (CLIENT_CPU == CPU_ARM)
+    extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
+    extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
+  #endif
+
+#endif
+
+/* ------------------------------------------------------------- */
+
+// PROJECT_NOT_HANDLED("add your core function prototype(s) here")
+
+/* ======================================================================== */
+
 
 static const char **__corenames_for_contest( unsigned int cont_i )
 {
@@ -1328,267 +1531,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
 /* ---------------------------------------------------------------------- */
 
-#if 0
-// available ANSI cores:
-// 2 pipeline: rc5/ansi/rc5ansi_2-rg.cpp
-//   extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-//   extern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
-//                                    u32 *iterations, void *scratch_area );
-// 1 pipeline: rc5/ansi/rc5ansi1-b2.cpp
-//   extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 iterations );
-#endif                                                                
-
-#if (CLIENT_CPU == CPU_UNKNOWN)
-  // rc5/ansi/rc5ansi_2-rg.cpp
-  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-#elif (CLIENT_CPU == CPU_X86)
-  #if (CLIENT_OS == OS_QNX) && !defined(__QNXNTO__)
-  extern "C" u32 cdecl rc5_unit_func_486( RC5UnitWork * , u32 iterations );
-  extern "C" u32 cdecl rc5_unit_func_p5( RC5UnitWork * , u32 iterations );
-  extern "C" u32 cdecl rc5_unit_func_p6( RC5UnitWork * , u32 iterations );
-  extern "C" u32 cdecl rc5_unit_func_6x86( RC5UnitWork * , u32 iterations );
-  extern "C" u32 cdecl rc5_unit_func_k5( RC5UnitWork * , u32 iterations );
-  extern "C" u32 cdecl rc5_unit_func_k6( RC5UnitWork * , u32 iterations );
-  extern "C" u32 cdecl rc5_unit_func_p5_mmx( RC5UnitWork * , u32 iterations );
-  extern "C" u32 cdecl rc5_unit_func_k6_mmx( RC5UnitWork * , u32 iterations );
-// extern "C" u32 cdecl rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
-  extern "C" u32 cdecl rc5_unit_func_k7( RC5UnitWork * , u32 iterations );
-  extern "C" u32 cdecl rc5_unit_func_p7( RC5UnitWork *, u32 iterations );
-  #else
-  extern "C" u32 rc5_unit_func_486( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_p5( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_p6( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_6x86( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_k5( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_k6( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_k6_mmx( RC5UnitWork * , u32 iterations );
-  //extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_k7( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_p7( RC5UnitWork *, u32 iterations );
-  #endif
-
-#elif (CLIENT_CPU == CPU_ARM)
-  extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * , u32 );
-  extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * , u32 );
-  extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * , u32 );
-  #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
-  extern "C" u32 rc5_unit_func_x86( RC5UnitWork * , u32 );
-  #endif
-#elif (CLIENT_CPU == CPU_S390)
-  // rc5/ansi/rc5ansi_2-rg.cpp
-  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-#elif (CLIENT_CPU == CPU_S390X)
-  // rc5/ansi/rc5ansi_2-rg.cpp
-  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-#elif (CLIENT_CPU == CPU_IA64)
-  // rc5/ansi/rc5ansi_4-rg.cpp
-  extern "C" u32 rc5_unit_func_ansi_4_rg( RC5UnitWork *, u32 iterations );
-#elif (CLIENT_CPU == CPU_PA_RISC)
-  // rc5/parisc/parisc.cpp encapulates parisc.s, 2 pipelines
-  // extern "C" u32 rc5_parisc_unit_func( RC5UnitWork *, u32 );
-  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
-#elif (CLIENT_CPU == CPU_SH4)
-  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
-#elif (CLIENT_CPU == CPU_88K) //OS_DGUX
-  // rc5/ansi/rc5ansi_2-rg.cpp
-  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-#elif (CLIENT_CPU == CPU_MIPS)
-  #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX) || \
-      (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD) || \
-      (CLIENT_OS == OS_QNX)
-    // rc5/ansi/rc5ansi_2-rg.cpp
-    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-  #elif (CLIENT_OS == OS_SINIX) || (CLIENT_OS == OS_QNX)
-    //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
-    extern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 );
-  #elif (CLIENT_OS == OS_PS2LINUX)
-    // rc5/ansi/rc5ansi_2-rg.cpp
-    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-    //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
-    extern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 );
-  #else
-    #error "What's up, Doc?"
-  #endif
-#elif (CLIENT_CPU == CPU_SPARC)
-  #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_LINUX))
-    //rc5/ultra/rc5-ultra-crunch.cpp
-    extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
-    // rc5/ansi/2-rg.cpp
-    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-  #else
-    // rc5/ansi/2-rg.cpp
-    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-  #endif
-#elif (CLIENT_CPU == CPU_68K)
-  #if defined(__GCC__) || defined(__GNUC__) || \
-      (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS)
-    extern "C" u32 rc5_unit_func_000_010re( RC5UnitWork *, u32 );
-    extern "C" u32 rc5_unit_func_020_030( RC5UnitWork *, u32 );
-    extern "C" u32 rc5_unit_func_060re( RC5UnitWork *, u32 );
-  #elif (CLIENT_OS == OS_MACOS)
-    // rc5/68k/crunch.68k.a.o
-    extern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
-  #else
-    // rc5/ansi/rc5ansi1-b2.cpp
-    extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
-  #endif
-#elif (CLIENT_CPU == CPU_VAX)
-  // rc5/ansi/rc5ansi1-b2.cpp
-  extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
-#elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-  #if (CLIENT_CPU == CPU_POWER) || defined(_AIXALL)
-    // rc5/ansi/rc5ansi_2-rg.cpp
-    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-  #endif
-  #if (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
-    #if (CLIENT_OS == OS_WIN32) //NT has poor PPC assembly
-      // rc5/ansi/rc5ansi_2-rg.cpp
-      extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-    #else
-      // rc5/ppc/rc5_*.cpp
-      // although Be OS isn't supported on 601 machines and there is
-      // is no 601 PPC board for the Amiga, lintilla depends on allitnil,
-      // so we have both anyway, we may as well support both.
-      // rc5ansi_2-rg.cpp for AIX is allready prototyped above
-      extern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
-      extern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
-      extern "C" u32 rc5_unit_func_lintilla_604_compat( RC5UnitWork *, u32 );
-      #if defined(__VEC__) /* OS+compiler support altivec */
-        extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
-        extern "C" u32 rc5_unit_func_vec_7450_compat( RC5UnitWork *, u32 );
-      #endif
-    #endif
-  #endif
-#elif (CLIENT_CPU == CPU_ALPHA)
-  #if (CLIENT_OS == OS_WIN32) /* little-endian asm */
-    //rc5/alpha/rc5-alpha-nt.s
-    extern "C" u32 rc5_unit_func_ntalpha_michmarc( RC5UnitWork *, u32 );
-  #else
-    //axp-bmeyer.cpp around axp-bmeyer.s
-    extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
-  #endif
-#else
-  #error "How did you get here?" 
-#endif    
-
-/* ------------------------------------------------------------- */
-
-#if defined(HAVE_DES_CORES)
-/* DES cores take the 'iterations_to_do', adjust it to min/max/nbbits
-  and store it back in 'iterations_to_do'. all return 'iterations_done'.
-*/   
-#if (CLIENT_CPU == CPU_ARM)
-   //des/arm/des-arm-wrappers.cpp
-   extern u32 des_unit_func_slice_arm( RC5UnitWork * , u32 *iter, char *coremem );
-   extern u32 des_unit_func_slice_strongarm(RC5UnitWork *, u32 *iter, char *coremem);
-#elif (CLIENT_CPU == CPU_ALPHA) 
-     //des/alpha/des-slice-dworz.cpp
-     extern u32 des_unit_func_slice_dworz( RC5UnitWork * , u32 *iter, char *);
-#elif (CLIENT_CPU == CPU_X86)
-   extern u32 p1des_unit_func_p5( RC5UnitWork * , u32 *iter, char *coremem );
-   extern u32 p1des_unit_func_pro( RC5UnitWork * , u32 *iter, char *coremem );
-   extern u32 p2des_unit_func_p5( RC5UnitWork * , u32 *iter, char *coremem );
-   extern u32 p2des_unit_func_pro( RC5UnitWork * , u32 *iter, char *coremem );
-   extern u32 des_unit_func_mmx( RC5UnitWork * , u32 *iter, char *coremem );
-   extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
-#elif defined(MEGGS)
-   //des/des-slice-meggs.cpp
-   extern u32 des_unit_func_meggs( RC5UnitWork * , u32 *iter, char *coremem );
-#else
-   //all rvs based drivers (eg des/ultrasparc/des-slice-ultrasparc.cpp)
-   extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
-#endif
-#endif
-
-/* ------------------------------------------------------------- */
-
-#if defined(HAVE_CSC_CORES)
-  extern "C" s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *iterations, void *membuff );
-  #if (CLIENT_CPU != CPU_ARM) // ARM only has one CSC core
-  extern "C" s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *iterations, void *membuff );
-  extern "C" s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
-  extern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
-  #endif
-  #if (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
-  extern "C" s32 csc_unit_func_6b_mmx ( RC5UnitWork *, u32 *iterations, void *membuff );
-  #endif
-#endif
-
-/* ------------------------------------------------------------- */
-
-#if defined(HAVE_OGR_CORES)
-  #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
-      #if defined(_AIXALL)      /* AIX hybrid client */
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table_power();
-      #endif
-      #if defined(__VEC__)      /* compilor supports AltiVec */
-      extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
-      #endif
-  #elif (CLIENT_CPU == CPU_ALPHA)
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix(void);
-  #elif (CLIENT_CPU == CPU_68K)
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table_000(void);
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table_020(void);
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table_030(void);
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table_040(void);
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table_060(void);
-  #elif (CLIENT_CPU == CPU_X86)      
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table(void); //A
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table_nobsr(void); //B
-  #else
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
-  #endif
-#endif    
-
-
-/* ------------------------------------------------------------- */
-
-#if defined(HAVE_RC5_72_CORES)
-
-// These are the standard ANSI cores that are available for all platforms.
-
-#if (CLIENT_OS == OS_QNX) && !defined(__QNXNTO__)
-  extern "C" s32 cdecl rc5_72_unit_func_ansi_4( RC5_72UnitWork *, u32 *, void * );
-  extern "C" s32 cdecl rc5_72_unit_func_ansi_2( RC5_72UnitWork *, u32 *, void * );
-  extern "C" s32 cdecl rc5_72_unit_func_ansi_1( RC5_72UnitWork *, u32 *, void * );
-#else
-  extern "C" s32 rc5_72_unit_func_ansi_4( RC5_72UnitWork *, u32 *, void * );
-  extern "C" s32 rc5_72_unit_func_ansi_2( RC5_72UnitWork *, u32 *, void * );
-  extern "C" s32 rc5_72_unit_func_ansi_1( RC5_72UnitWork *, u32 *, void * );
-#endif
-// These are assembly-optimized versions for each platform.
-  #if (CLIENT_CPU == CPU_X86) && defined(HAVE_RC5_72_ASM_CORES)
-    #if (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ )
-      extern "C" s32 cdecl rc5_72_unit_func_ses( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 cdecl rc5_72_unit_func_ses_2( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 cdecl rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 cdecl rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 cdecl rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 cdecl rc5_72_unit_func_ss_2( RC5_72UnitWork *, u32 *, void *);
-    #else
-      extern "C" s32 rc5_72_unit_func_ses( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 rc5_72_unit_func_ses_2( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 rc5_72_unit_func_ss_2( RC5_72UnitWork *, u32 *, void *);
-    #endif
-  #endif
-  #if (CLIENT_CPU == CPU_ARM)
-      extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
-  #endif
-#endif
-
-/* ------------------------------------------------------------- */
-
-// PROJECT_NOT_HANDLED("add your core function prototype(s) here")
-
-/* ------------------------------------------------------------- */
-
 int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
                        int *client_cpuP, struct selcore *selinfo )
 {                               
@@ -2170,7 +2112,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         break;
      #endif
 
-     #if (CLIENT_CPU == CPU_X86) && defined(HAVE_RC5_72_ASM_CORES)
+     #if (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
       case 3:
         unit_func.gen_72 = rc5_72_unit_func_ses;
         pipeline_count = 1;
