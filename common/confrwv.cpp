@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.26  1999/01/08 20:27:44  silby
+// Fixed scheduledupdatetime and descontestclosed not being
+// read from the ini.
+//
 // Revision 1.25  1999/01/07 20:14:55  cyp
 // fixed priority=. Readini quote handling _really_ needs rewriting.
 //
@@ -116,7 +120,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.25 1999/01/07 20:14:55 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.26 1999/01/08 20:27:44 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -128,7 +132,6 @@ return "@(#)$Id: confrwv.cpp,v 1.25 1999/01/07 20:14:55 cyp Exp $"; }
 #include "lurk.h"      // lurk stuff
 #include "cpucheck.h"  // GetProcessorType() for mmx stuff
 #include "confopt.h"   // conf_option table
-#include "network.h"   // ntohl()
 #include "triggers.h"  // RaiseRestartRequestTrigger()
 #include "clicdata.h"  // CliClearContestData()
 #include "confrwv.h"   // Outselves
@@ -611,6 +614,7 @@ void RefreshRandomPrefix( Client *client, int no_trigger )
     IniSection ini;
     unsigned int cont_i;
     s32 randomprefix, flagbits;
+    s32 descontestclosed, scheduledupdatetime;
     int inierror = (ini.ReadIniFile( 
                        GetFullPathForFilename( client->inifilename ) ) != 0);
     int inichanged = 0;
@@ -642,9 +646,9 @@ void RefreshRandomPrefix( Client *client, int no_trigger )
         }
       ini.setrecord(OPTION_SECTION, "contestdoneflags", IniString(flagbits));
       ini.setrecord(OPTION_SECTION, "descontestclosed",
-                    IniString((s32)htonl(client->descontestclosed)));
+                    IniString((s32)client->descontestclosed));
       ini.setrecord(OPTION_SECTION, "scheduledupdatetime",
-                    IniString((s32)htonl(client->scheduledupdatetime)));
+                    IniString((s32)client->scheduledupdatetime));
       client->randomchanged = 0;
       inichanged = 1;
       }
@@ -652,6 +656,13 @@ void RefreshRandomPrefix( Client *client, int no_trigger )
       {  
       randomprefix = ini.getkey(OPTION_SECTION, "randomprefix", "0")[0];
       if (randomprefix) client->randomprefix = randomprefix;
+      descontestclosed=ini.getkey(OPTION_SECTION,
+                                             "descontestclosed","0")[0];
+      if (descontestclosed) client->descontestclosed=descontestclosed;
+      scheduledupdatetime=ini.getkey(OPTION_SECTION,
+                                     "scheduledupdatetime","0")[0];
+      if (scheduledupdatetime)
+        client->scheduledupdatetime=scheduledupdatetime;
 
       u32 oldflags=0, newflags=0;
 
