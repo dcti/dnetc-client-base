@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.75 2005/01/20 19:22:52 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.76 2005/01/20 19:48:01 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1087,9 +1087,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0410, CPU_F_I486,       6, "486S/Se/S2/DX/DX2" },
           {  0x0440, CPU_F_I586,       3, "GX/MediaGX" },
           {  0x0490, CPU_F_I586,       3, "5x86"      },
-          {  0x0520, CPU_F_I586,       3, "6x86/MI"   },
-          {  0x0540, CPU_F_I586,       3, "GX/GXm"       },
-          {  0x0600, CPU_F_I586,       3, "6x86MX/MII"},
+          {  0x0520, CPU_F_I586,    0x10, "6x86/MI"   },
+          {  0x0540, CPU_F_I586,    0x10, "GX/GXm"       },
+          {  0x0600, CPU_F_I586,    0x11, "6x86MX/MII"},
           /* The VIA Cyrix III is CentaurHauls */
           {  0x0000, 0,               -1, NULL        }
           }; internalxref = &cyrixxref[0]; 

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.33 2004/11/29 20:09:08 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.34 2005/01/20 19:48:01 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -349,19 +349,21 @@ int selcoreGetPreselectedCoreForProject_rc572()
 		                 break;
           case 0x01: cindex = 0; break; // 386/486        == SES 1-pipe
           case 0x02: cindex = 1; break; // Pentium II     == SES 2-pipe
-          case 0x03: cindex = 5; break; // Cx6x86         == SS 2-pipe (#3580, #3665)
-          case 0x04: cindex = 2; break; // K5             == DG 2-pipe
+          case 0x03: cindex = 7; break; // Cyrix Model 4  == SGP 3-pipe (#3665)
+          case 0x04: cindex = 7; break; // K5             == SGP 3-pipe
           case 0x05: cindex = 5; break; // K6             == SS 2-pipe (#3293)
           case 0x06: cindex = 0; break; // Cx486          == SES 1-pipe
           case 0x07: cindex =-1; break; // orig Celeron   == unused?
           case 0x08: cindex = 1; break; // PPro           == SES 2-pipe (#3708)
           case 0x09: cindex = 6; break; // K7             == GO 2-pipe
-          case 0x0A: cindex =-1; break; // Centaur C6     == ?
+          case 0x0A: cindex = 5; break; // Centaur C6     == SS 2-pipe (#3809)
           case 0x0B: cindex = 7; break; // Pentium 4      == SGP 3-pipe
           case 0x0C: cindex = 4; break; // Via C3         == DG 3-pipe alt (#3477)
           case 0x0D: cindex = 3; break; // Pentium M      == DG 3-pipe
           case 0x0E: cindex = 6; break; // Pentium III    == GO 2-pipe (#3602)
-          case 0x0F: cindex = 7; break; // Via C3 Nehemiah== SGP 3-pipe (#3621)
+          case 0x0F: cindex = 7; break; // Via C3 Nehemiah == SGP 3-pipe (#3621)
+          case 0x10: cindex = 5; break; // Cyrix Model 5  == SS 2-pipe (#3580)
+          case 0x11: cindex = 4; break; // Cyrix Model 6  == DG 3-pipe alt (#3809)
           default:   cindex =-1; break; // no default
         }
         #else
@@ -370,7 +372,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x00: cindex = 2; break; // P5             == ANSI 1-pipe
           case 0x01: cindex = 2; break; // 386/486        == ANSI 1-pipe
           case 0x02: cindex = 1; break; // PII            == ANSI 2-pipe
-          case 0x03: cindex = 2; break; // Cx6x86         == ANSI 1-pipe
+          case 0x03: cindex = 2; break; // Cyrix Model 4  == ANSI 1-pipe
           case 0x04: cindex = 2; break; // K5             == ANSI 1-pipe
           case 0x05: cindex = 1; break; // K6             == ANSI 2-pipe
           case 0x06: cindex = 2; break; // Cx486          == ANSI 1-pipe
@@ -382,7 +384,9 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x0C: cindex =-1; break; // Via C3         == ?
           case 0x0D: cindex =-1; break; // Pentium M      == ?  
           case 0x0E: cindex =-1; break; // Pentium III    == ?
-          case 0x0F: cindex =-1; break; // Via C3 Nehemiah== ?
+          case 0x0F: cindex =-1; break; // Via C3 Nehemiah == ?
+          case 0x10: cindex =-1; break; // Cyrix Model 5  == ?
+          case 0x11: cindex =-1; break; // Cyrix Model 6  == ?
           default:   cindex =-1; break; // no default
         }
         #endif

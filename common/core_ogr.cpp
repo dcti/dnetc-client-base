@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.33 2004/08/18 21:59:41 snikkel Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.34 2005/01/20 19:48:01 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -346,8 +346,8 @@ int selcoreGetPreselectedCoreForProject_ogr()
           case 0x00: cindex = 1; break; // P5           == without BSR (B)
           case 0x01: cindex = 1; break; // 386/486      == without BSR (B)
           case 0x02: cindex = 0; break; // PII          == with BSR (A)
-          case 0x03: cindex = 0; break; // Cx6x86       == with BSR (A)
-          case 0x04: cindex = 1; break; // K5           == without BSR (B)
+          case 0x03: cindex = 0; break; // Cyrix Model 4 == with BSR (A)
+          case 0x04: cindex = 0; break; // K5           == with BSR (A) (#3809)
           #if defined(__GNUC__) || defined(__WATCOMC__) || defined(__BORLANDC__)
           case 0x05: cindex = 1; break; // K6/K6-2/K6-3 == without BSR (B)  #2228
           #elif defined(_MSC_VER)
@@ -377,6 +377,8 @@ int selcoreGetPreselectedCoreForProject_ogr()
           #endif
           case 0x0E: cindex = 0; break; // Pentium III  == with BSR (A)
           case 0x0F: cindex = 1; break; // Via C3 Nehemiah == without BSR (B)
+          case 0x10: cindex = 0; break; // Cyrix Model 5 == with BSR (A)
+          case 0x11: cindex = 0; break; // Cyrix Model 6 == with BSR (A)
           default:   cindex =-1; break; // no default
         }
       }
