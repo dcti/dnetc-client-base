@@ -3,6 +3,9 @@
 
 /*
  * $Log: des_ultra_crunch.c,v $
+ * Revision 1.5  1998/06/23 21:03:02  remi
+ * Changes from the author. 5% speedup.
+ *
  * Revision 1.4  1998/06/16 06:27:37  remi
  * - Integrated some patches in the UltraSparc DES code.
  * - Cleaned-up C++ style comments in the UltraSparc DES code.
@@ -19,7 +22,7 @@
  *
  */
 
-static char *id="@(#)$Id: des_ultra_crunch.c,v 1.4 1998/06/16 06:27:37 remi Exp $";
+static char *id="@(#)$Id: des_ultra_crunch.c,v 1.5 1998/06/23 21:03:02 remi Exp $";
 
 /* defines are set in configure & Makefile when compiling DCTI client */
 #ifndef IN_DCTI_CLIENT
@@ -482,8 +485,7 @@ test_benchmark (OUTER_LOOP_SLICE *key_base, OUTER_LOOP_SLICE *plain_base,
  */
 
 /* create some linked-lists */
-    work = (struct Benchmark_Work *)
-	memalign (64, sizeof (struct Benchmark_Work));
+    work = (struct Benchmark_Work *) valloc (sizeof (struct Benchmark_Work));
 
 /* make sure sentinel pointer indicates end of list */
     work_record_initialize (1, &work->work_sentinel, &work->Keys.Keys[0],
@@ -596,8 +598,7 @@ test_unbenchmark ( OUTER_LOOP_SLICE *key_base, OUTER_LOOP_SLICE *plain_base,
  */
 
 /* create some linked-lists */
-    work = (struct Benchmark_Work *)
-	memalign (64, sizeof (struct Benchmark_Work));
+    work = (struct Benchmark_Work *) valloc (sizeof (struct Benchmark_Work));
 
 /* make sure sentinel pointer indicates end of list */
     work_record_initialize (1, &work->work_sentinel, &work->Keys.Keys[0],
@@ -892,7 +893,7 @@ main()
 #endif
 
 #ifdef TIME_WHACK16
-    printf ("Testing 100,000,000 keys\n");
+    printf ("Testing 100 * 2^20 or 104,857,600 keys\n");
     key_data[6] ^= SLICE_1;		/* 6 is never varied in this test */
 
     for (i = 0; i < ((REQUIRED_SIZE == 4) ? 200 : 100); i++)
@@ -1731,8 +1732,7 @@ whack16 (OUTER_LOOP_SLICE *plain_base,
  */
 
 /* create some linked-lists */
-    work = (struct Contest_Work *)
-	memalign (64, sizeof (struct Contest_Work));
+    work = (struct Contest_Work *) valloc (sizeof (struct Contest_Work));
 
 /* make sure sentinel pointer indicates end of list */
     work_record_initialize (1, &work->work_sentinel, &work->Keys.Keys[0],
