@@ -5,14 +5,13 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3.2.13 2002/10/03 18:02:34 rick Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3.2.14 2002/10/09 21:33:15 andreasb Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
 #if defined(HAVE_OGR_CORES)
 #include "ogr.h"
 #endif
-
 
 
 typedef union
@@ -22,9 +21,9 @@ typedef union
     #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
     u32 __regargs (*rc5)( RC5UnitWork * , u32 iterations );
     #elif (CLIENT_OS == OS_QNX ) && !defined( __QNXNTO__ )
-    u32 cdecl (*rc5)(RC5UnitWork * , u32 iterations );
+    u32 cdecl (*rc5)( RC5UnitWork * , u32 iterations );
     #else
-    u32 (*rc5)(RC5UnitWork * , u32 iterations );
+    u32 (*rc5)( RC5UnitWork * , u32 iterations );
     #endif
     #if defined(HAVE_DES_CORES)
     u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );

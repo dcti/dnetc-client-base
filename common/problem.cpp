@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.123 2002/10/03 18:02:34 rick Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.124 2002/10/09 21:33:15 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -972,7 +972,7 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
       else if (*keyscheckedP == keystocheck)
         rescode = RESULT_WORKING; /* synonymous with RESULT_NOTHING */
       else
-	rescode = -1;
+        rescode = -1;
     }
   } /* brace to ensure that 'keystocheck' is not referenced beyond here */
   /* -- the code from here on down is identical to that of CSC -- */

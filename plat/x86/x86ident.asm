@@ -7,7 +7,7 @@
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.1.2.3 2002/10/03 18:02:34 rick Exp $
+; $Id: x86ident.asm,v 1.1.2.4 2002/10/09 21:33:15 andreasb Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -451,5 +451,5 @@ _cx4x86:        or      ah, 4          ; 486 class CPU
                 jmp     _end           ; model 0=Cx486SLC/DLC/SRx/DRx,
                                        ; model 1=Cx486S/DX/DX2/DX4, 4=MediaGX
 
-		endp
-		end
+                endp
+                end
