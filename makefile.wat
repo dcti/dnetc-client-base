@@ -6,7 +6,7 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.27.2.11 2000/06/02 17:48:12 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.12 2000/06/02 19:00:38 cyp Exp $
 
 BASENAME = dnetc
 
@@ -17,18 +17,20 @@ BASENAME = dnetc
 %LINKOBJS = output\problem.obj  &
             output\confrwv.obj   output\autobuff.obj  output\buffbase.obj &
             output\mail.obj      output\client.obj    output\disphelp.obj &
-            output\iniread.obj   output\network.obj   output\scram.obj    &
+            output\iniread.obj   output\network.obj   output\netres.obj   &
             output\clitime.obj   output\clicdata.obj  output\clirate.obj  &
             output\clisrate.obj  output\cpucheck.obj  output\pathwork.obj &
             output\cliident.obj  output\checkpt.obj   output\x86ident.obj &
-            output\logstuff.obj  output\triggers.obj  output\buffupd.obj  &
+            output\logstuff.obj  output\triggers.obj  output\random.obj   &
             output\selcore.obj   output\netinit.obj   output\cmdline.obj  &
             output\selftest.obj  output\pollsys.obj   output\probman.obj  &
             output\probfill.obj  output\clievent.obj  output\bench.obj    &
             output\clirun.obj    output\setprio.obj   output\console.obj  &
             output\modereq.obj   output\confmenu.obj  output\confopt.obj  &
-            output\util.obj      output\base64.obj    output\random.obj   &
-            output\netres.obj    output\buffpriv.obj
+            output\util.obj      output\base64.obj    
+%PRIVMODS = common\buffpriv.cpp  common\buffupd.cpp   common\scram.cpp
+%PRIVOBJS = output\buffpriv.obj  output\buffupd.obj   output\scram.obj
+%PUBOBJS =  output\buffpub.obj
             # this list can be added to in the platform specific section
             # 49 std OBJ's (+3 desmmx, +1 rc5mmx, +2 mt, +x plat specific)
 
@@ -409,6 +411,10 @@ output\buffbase.obj : common\buffbase.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: 
   @set isused=1
 
+output\buffpub.obj : common\buffpub.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
 output\buffpriv.obj : common\buffpriv.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: 
   @set isused=1
@@ -718,7 +724,11 @@ platform: .symbolic
   @set AFLAGS    = $(%AFLAGS) /q              ## assemble quietly
   @set CFLAGS    = $(%CFLAGS) $(%DEFALL)      ## tack on global defines
   @set isused=0
+  @for %i in ($(%PRIVMODS)) do @if not exist %i @set isused=1
+  @if not $(%isused).==0. @set LINKOBJS=$(%LINKOBJS) $(%PUBOBJS)
+  @if $(%isused).==0. @set LINKOBJS=$(%LINKOBJS) $(%PRIVOBJS)
   @set LINKOBJS= $(%COREOBJS) $(%LINKOBJS) 
+  @set isused=0
   @if not exist $(%BINNAME) @set isused=1
   @for %i in ($(%LINKOBJS)) do @%make %i
   @for %i in ($(%PRELINKDEPS)) do @%make %i
