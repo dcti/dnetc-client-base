@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.31  1999/01/14 18:05:44  cyp
+// Fixed erroneous increment of client->randomprefix.
+//
 // Revision 1.30  1999/01/01 02:45:16  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -129,7 +132,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.30 1999/01/01 02:45:16 cramer Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.31 1999/01/14 18:05:44 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -322,11 +325,12 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
        (unsigned int)__iter2norm( ntohl(fileentry.iterations.lo) );
 
     s32 cputype       = client->cputype; /* needed for FILEENTRY_CPU macro */
+    #if (CLIENT_OS == OS_RISCOS)
+    if (prob_i == 1) cputype = CPU_X86; 
+    #endif
+    
     fileentry.op      = htonl( OP_DATA );
-    fileentry.cpu     = FILEENTRY_CPU;
-#if (CLIENT_OS == OS_RISCOS)
-    fileentry.cpu     = (prob_i == 0)?FILEENTRY_CPU:FILEENTRY_RISCOS_X86_CPU;
-#endif
+    fileentry.cpu     = FILEENTRY_CPU; /* uses cputype variable */
     fileentry.os      = FILEENTRY_OS;
     fileentry.buildhi = FILEENTRY_BUILDHI; 
     fileentry.buildlo = FILEENTRY_BUILDLO;
@@ -380,15 +384,16 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   int didupdate, didload, didrandom, resetloop;
   s32 cputype;
 
-  cputype           = client->cputype; /* needed for FILEENTRY_CPU macro */
   contest_preferred = (client->preferred_contest_id == 0)?(0):(1);
   contest_alternate = (contest_preferred == 0)?(1):(0);
   contest_count     = 2;
+  cputype           = client->cputype; /* needed for FILEENTRY_CPU macro */
     
-  #if (CLIENT_OS == OS_RISCOS)
   /* RISC OS x86 thread currently only supports RC5 */
+  #if (CLIENT_OS == OS_RISCOS)
   if (prob_i == 1)
     {
+    cputype = CPU_X86;
     contest_preferred = contest_alternate = 0;
     contest_count     = 1;
     }
@@ -406,7 +411,8 @@ Log("Loadblock::Start Preferred contest: %u\n", contest_preferred);
     resetloop = 0;
     for (cont_i = 0;(didload == 0 && cont_i < contest_count); cont_i++)
       {
-      contest_selected = ((cont_i)?(contest_alternate):(contest_preferred));
+      contest_selected = ((cont_i==0)?(contest_preferred):(contest_alternate));
+
 #ifdef DEBUG
 Log("Loadblock::loop %u (contest %u), isdone: %s\n", cont_i, 
       contest_selected, (client->contestdone[contest_selected])?"Yes":"No" );
@@ -468,12 +474,7 @@ Log("Loadblock::getfromdisk(contest = %u) -> %s\n",
       // cpu/os/build, then reset the keysdone to 0...
       if ((fileentry.os      != FILEENTRY_OS) ||
           (fileentry.buildhi != FILEENTRY_BUILDHI) || 
-#if (CLIENT_OS == OS_RISCOS)
-          ((prob_i == 0) && (fileentry.cpu != FILEENTRY_CPU)) ||
-          ((prob_i == 1) && (fileentry.cpu != FILEENTRY_RISCOS_X86_CPU)) ||
-#else
-          (fileentry.cpu     != FILEENTRY_CPU) ||
-#endif
+          (fileentry.cpu     != FILEENTRY_CPU) || /* uses 'cputype' variable */
           (fileentry.buildlo != FILEENTRY_BUILDLO))
         {
         fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
@@ -505,10 +506,7 @@ Log("Loadblock::getfromdisk(contest = %u) -> %s\n",
       didrandom = 1;
       RefreshRandomPrefix(client); //get/put an up-to-date prefix 
 
-      u32 randomprefix = (0xff & (((u32)(client->randomprefix))+1));
-      client->randomprefix = randomprefix;
-      client->randomchanged=1;
-      
+      u32 randomprefix = ( ( (u32)(client->randomprefix) ) + 1 ) & 0xFF;
       fileentry.key.lo = htonl( Random( NULL, 0 ) & 0xF0000000L );
       fileentry.key.hi = htonl( (Random( NULL, 0 ) & 0x00FFFFFFL) + 
                               ( randomprefix << 24) ); // 64 bits significant
