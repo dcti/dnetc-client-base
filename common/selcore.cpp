@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.12 1999/10/24 10:45:42 remi Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.13 1999/10/24 11:14:08 remi Exp $"; }
 
 
 #include "cputypes.h"
@@ -510,10 +510,10 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 	  selcorestatics.corenum[CSC] = 3; // 1key - called
 	  break;
 	case 3:  // Ppro/PII/Celeron/PIII
-	case 5:  // K5
+	case 4:  // K5
 	  selcorestatics.corenum[CSC] = 2; // 1key - inline
 	  break;
-	case 6:  // K6/K6-2/K6-3
+	case 5:  // K6/K6-2/K6-3
 	  selcorestatics.corenum[CSC] = 0; // 6bit - inline
 	  break;
 	}
