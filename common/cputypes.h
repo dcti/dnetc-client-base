@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.23 2000/01/28 07:37:55 mfeiri Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.24 2000/02/01 20:52:53 ivo Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -201,8 +201,13 @@
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME  "Solaris"
-  #define CLIENT_OS       OS_SOLARIS
+  #if defined(sunos)
+    #define CLIENT_OS_NAME  "SunOS"
+    #define CLIENT_OS       OS_SUNOS
+  #else
+    #define CLIENT_OS_NAME  "Solaris"
+    #define CLIENT_OS       OS_SOLARIS
+  #endif
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
   #elif defined(__sparc) || defined(ASM_SPARC)
