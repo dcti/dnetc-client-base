@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.7.2.3 2000/07/14 22:48:01 oliver Exp $
+ Document revision $Id: readme.amiga,v 1.7.2.4 2000/08/22 14:08:52 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -38,9 +38,9 @@
 
      The PowerUp PPC version requires:
      - A 603e or higher PPC processor. Tested on 603e and 604e.
-     - Phase5's ppc.library version 46.30 or higher.
-     - Also works under WarpUp with PPCLibEmu 0.7e (although you
-       should really use the native WarpOS version instead).
+     - Ralph Schmidt's ppc.library version 46.30 or higher.
+     - Also works under WarpUp with PPCLibEmu 0.8a or higher (although
+       you should really use the native WarpOS version instead).
        
  2.0  Getting started ------------------------------------------------
 
