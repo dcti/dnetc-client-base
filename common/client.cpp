@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.151  1998/11/04 21:28:01  cyp
+// Removed redundant ::hidden option. ::quiet was always equal to ::hidden.
+//
 // Revision 1.150  1998/11/02 04:40:13  cyp
 // Removed redundant ::numcputemp. ::numcpu does it all.
 //
@@ -54,7 +57,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.150 1998/11/02 04:40:13 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.151 1998/11/04 21:28:01 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -148,7 +151,6 @@ Client::Client()
   nettimeout=60;
   noexitfilecheck=0;
   exitfilechecktime=30;
-  runhidden=0;
 #if defined(LURK)
   dialup.lurkmode=0;
   dialup.dialwhenneeded=0;
@@ -248,10 +250,10 @@ int Client::Main( int argc, const char *argv[], int restarted )
   //set up break handlers
   if (InitializeTriggers(NULL, NULL)==0) //CliSetupSignals();
     {
-    //get -ini options/defaults, then ReadConfig(), then get -quiet/-hidden
+    //get -ini options/defaults, then ReadConfig(), then get -quiet
     if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0) //!0 if "mode"
       {                                                
-      if (InitializeConsole(runhidden||quietmode) == 0) //initialize conio
+      if (InitializeConsole(quietmode) == 0) //initialize conio
         {
         int autoclosecon = 1; // let console close without user intervention
         InitializeLogging(0); //enable only screen logging for now

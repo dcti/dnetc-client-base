@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.93  1998/11/04 21:28:12  cyp
+// Removed redundant ::hidden option. ::quiet was always equal to ::hidden.
+//
 // Revision 1.92  1998/11/02 04:40:10  cyp
 // Removed redundant ::numcputemp. ::numcpu does it all.
 //
@@ -391,8 +394,6 @@ public:
   s32 preferred_blocksize;
   s32 contestdone[2];
 
-  int runhidden;      // previously win95hidden, os2hidden, netwarehidden...
-  
 #if defined(MMX_BITSLICER) || defined(MMX_RC5)
   int usemmx;
 #endif
@@ -492,23 +493,16 @@ public:
   s32  ConfigureGeneral( s32 currentmenu );
     // part of the interactive setup
 
-  static s32 findmenuoption( s32 menu, s32 option);
-    // Returns the id of the option that matches the menu and option
-    // requested. Will return -1 if not found.
-
-  void setupoptions( void );
-    // Sets all the pointers/etc for optionstruct options
-
-  s32  ReadConfig( void );
+  int ReadConfig( void );
     // returns -1 if no ini exits, 0 otherwise
 
   void ValidateConfig( void );
     // verifies configuration and forces valid values
 
-  s32  WriteConfig( void );
+  int  WriteConfig( void );
     // returns -1 on error, 0 otherwise
 
-  s32  WriteFullConfig( void ); 
+  int  WriteFullConfig( void ); 
     // returns -1 on error, 0 otherwise
 
   s32  WriteContestandPrefixConfig( void );

@@ -3,8 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
-// Revision 1.190  1998/10/30 04:38:33  foxyloxy
+// Revision 1.191  1998/11/04 21:27:52  cyp
+// Removed redundant ::hidden option. ::quiet was always equal to ::hidden.
 //
+// Revision 1.190  1998/10/30 04:38:33  foxyloxy
 // If we don't have an .ini file, we don't need to read it.
 //
 // Revision 1.189  1998/10/26 02:48:40  cyp
@@ -256,7 +258,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.190 1998/10/30 04:38:33 foxyloxy Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.191 1998/11/04 21:27:52 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -808,7 +810,23 @@ static int _IsHostnameDNetHost( const char * hostname )
       strcmpi(dot, ".distributed.net") == 0);
 }           
 
+static findmenuoption( s32 menu, s32 option)
+    // Returns the id of the option that matches the menu and option
+    // requested. Will return -1 if not found.
+{
+s32 returnvalue=-1;
+s32 temp;
 
+for (temp=0; temp < OPTION_COUNT; temp++)
+  {
+  if ((options[temp].optionscreen==menu) &&
+      (options[temp].menuposition==option))
+
+     returnvalue=temp;
+  };
+
+return returnvalue;
+}
 
 // --------------------------------------------------------------------------
 
@@ -823,8 +841,155 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
 
   do                    //note: don't return or break from inside 
     {                   //the loop. Let it fall through instead. - cyp
-    setupoptions();
 
+    /* ------ Sets all the pointers/etc for optionstruct options ------- */
+
+    if (strcmpi(id,"rc5@distributed.net") == 0)
+      id[0]=0; /*is converted back to 'rc5@distributed.net' in ValidateConfig()*/
+    
+    options[CONF_ID].thevariable=(char *)(&id[0]);
+    options[CONF_THRESHOLDI].thevariable=&inthreshold[0];
+    options[CONF_THRESHOLDO].thevariable=&outthreshold[0];
+    options[CONF_THRESHOLDI2].thevariable=&inthreshold[1];
+    options[CONF_THRESHOLDO2].thevariable=&outthreshold[1];
+    options[CONF_THRESHOLDO].comments=options[CONF_THRESHOLDI2].comments=
+    options[CONF_THRESHOLDO2].comments=options[CONF_THRESHOLDI].comments;
+    options[CONF_COUNT].thevariable=&blockcount;
+    options[CONF_HOURS].thevariable=(char *)(&hours[0]);
+    options[CONF_TIMESLICE].thevariable=&timeslice;
+    
+    #if !((CLIENT_OS==OS_MACOS) || (CLIENT_OS==OS_RISCOS) || (CLIENT_OS==OS_WIN16))
+    options[CONF_TIMESLICE].optionscreen=0;
+    #endif
+    #ifdef OLDNICENESS
+    options[CONF_NICENESS].thevariable=&niceness;
+    #else
+    options[CONF_NICENESS].thevariable=&priority;
+    #endif
+    
+    options[CONF_UUEHTTPMODE].thevariable=&uuehttpmode;
+    options[CONF_KEYPROXY].thevariable=(char *)(&keyproxy[0]);
+    options[CONF_KEYPORT].thevariable=&keyport;
+    options[CONF_HTTPPROXY].thevariable=(char *)(&httpproxy[0]);
+    options[CONF_HTTPPORT].thevariable=&httpport;
+    options[CONF_HTTPID].thevariable=(char *)(&httpid[0]);
+    options[CONF_MESSAGELEN].thevariable=&messagelen;
+    options[CONF_SMTPSRVR].thevariable=(char *)(&smtpsrvr[0]);
+    options[CONF_SMTPPORT].thevariable=&smtpport;
+    options[CONF_SMTPFROM].thevariable=(char *)(&smtpfrom[0]);
+    options[CONF_SMTPDEST].thevariable=(char *)(&smtpdest[0]);
+    options[CONF_SMTPFROM].defaultsetting=
+    options[CONF_SMTPDEST].defaultsetting=(char *)options[CONF_ID].thevariable;
+    options[CONF_NUMCPU].thevariable=&numcpu;
+    options[CONF_RANDOMPREFIX].thevariable=&randomprefix;
+    options[CONF_PREFERREDBLOCKSIZE].thevariable=&preferred_blocksize;
+    options[CONF_PROCESSDES].thevariable=&preferred_contest_id;
+    options[CONF_QUIETMODE].thevariable=&quietmode;
+    options[CONF_NOEXITFILECHECK].thevariable=&noexitfilecheck;
+    options[CONF_PERCENTOFF].thevariable=&percentprintingoff;
+    options[CONF_FREQUENT].optionscreen=0;
+    options[CONF_FREQUENT].thevariable=&connectoften;
+    options[CONF_NODISK].thevariable=&nodiskbuffers;
+    options[CONF_NOFALLBACK].thevariable=&nofallback;
+    options[CONF_CKTIME].thevariable=&checkpoint_min;
+    options[CONF_NETTIMEOUT].thevariable=&nettimeout;
+    options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
+    options[CONF_OFFLINEMODE].thevariable=&offlinemode;
+    
+    options[CONF_LOGNAME].thevariable=(char *)(&logname[0]);
+    options[CONF_CHECKPOINT].thevariable=(char *)(&checkpoint_file[0][0]);
+    options[CONF_CHECKPOINT2].thevariable=(char *)(&checkpoint_file[1][0]);
+    options[CONF_RC5IN].thevariable=(char *)(&in_buffer_file[0][0]);
+    options[CONF_RC5OUT].thevariable=(char *)(&out_buffer_file[0][0]);
+    options[CONF_DESIN].thevariable=(char *)(&in_buffer_file[1][0]);
+    options[CONF_DESOUT].thevariable=(char *)(&out_buffer_file[1][0]);
+    options[CONF_PAUSEFILE].thevariable=(char *)(&pausefile[0]);
+    
+    options[CONF_CPUTYPE].optionscreen=0;
+    options[CONF_CPUTYPE].choicemax=0;
+    options[CONF_CPUTYPE].choicemin=0;
+    const char *corename = GetCoreNameFromCoreType(0);
+    if (corename && *corename)
+      {
+      static const char *cputypetable[10];
+      unsigned int tablesize = 2;
+      cputypetable[0]="Autodetect";
+      cputypetable[1]=corename;
+      do
+        {
+        corename = GetCoreNameFromCoreType(tablesize-1);
+        if (!corename || !*corename)
+          break;
+        cputypetable[tablesize++]=corename;
+        } while (tablesize<((sizeof(cputypetable)/sizeof(cputypetable[0]))));
+      options[CONF_CPUTYPE].name="cputype";
+      options[CONF_CPUTYPE].defaultsetting="-1";
+      options[CONF_CPUTYPE].thevariable=&cputype;
+      options[CONF_CPUTYPE].choicelist=&cputypetable[1];
+      options[CONF_CPUTYPE].choicemin=-1;
+      options[CONF_CPUTYPE].choicemax=tablesize-2;
+      }
+    
+    
+    #if (!defined(LURK))
+    options[CONF_LURKMODE].optionscreen=0;
+    options[CONF_DIALWHENNEEDED].optionscreen=0;
+    options[CONF_CONNECTNAME].optionscreen=0;
+    #else
+    options[CONF_LURKMODE].thevariable=&dialup.lurkmode;
+    options[CONF_DIALWHENNEEDED].thevariable=&dialup.dialwhenneeded;
+    options[CONF_CONNECTNAME].thevariable=&dialup.connectionname;
+    
+    char *connectnames = dialup.GetEntryList(&options[CONF_CONNECTNAME].choicemax);
+    
+    if (options[CONF_CONNECTNAME].choicemax < 1)
+      {
+      options[CONF_CONNECTNAME].optionscreen=0;
+      options[CONF_CONNECTNAME].choicelist=NULL;
+      }
+    else
+      {
+      static char *connectnamelist[10];
+      if (options[CONF_CONNECTNAME].choicemax>10)
+        options[CONF_CONNECTNAME].choicemax=10;
+      for (int i=0;i<((int)(options[CONF_CONNECTNAME].choicemax));i++)
+        connectnamelist[i]=&(connectnames[i*60]);
+      options[CONF_CONNECTNAME].choicelist=(const char **)(&connectnamelist[0]);
+      options[CONF_CONNECTNAME].choicemin=0;
+      options[CONF_CONNECTNAME].choicemax--;
+      };
+    #endif
+
+    if (messagelen != 0)
+      {
+      options[CONF_SMTPSRVR].optionscreen=2;
+      options[CONF_SMTPPORT].optionscreen=2;
+      options[CONF_SMTPDEST].optionscreen=2;
+      options[CONF_SMTPFROM].optionscreen=2;
+      }
+      else
+      {
+      options[CONF_SMTPSRVR].optionscreen=0;
+      options[CONF_SMTPPORT].optionscreen=0;
+      options[CONF_SMTPDEST].optionscreen=0;
+      options[CONF_SMTPFROM].optionscreen=0;
+      };
+    
+    if (uuehttpmode > 1) /* not telnet and not normal */
+      {
+      options[CONF_HTTPPROXY].optionscreen=3;
+      options[CONF_HTTPPORT].optionscreen=3;
+      options[CONF_HTTPID].optionscreen=3;
+      }
+      else
+      {
+      options[CONF_HTTPPROXY].optionscreen=0;
+      options[CONF_HTTPPORT].optionscreen=0;
+      options[CONF_HTTPID].optionscreen=0;
+      };
+      
+    /* -------------------- end setup options --------------------- */
+    
     int lkg_autofind = (autofindkeyserver != 0);
     char lkg_keyproxy[sizeof(keyproxy)];
     strcpy( lkg_keyproxy, keyproxy );
@@ -1259,12 +1424,11 @@ s32 Client::Configure( void )
 //A return of 1 indicates to save the changed configuration
 //A return of -1 indicates to NOT save the changed configuration
 {
-#if defined(NOCONFIG)
-  return 1;
-#else
+  int returnvalue = 1;
+#if !defined(NOCONFIG)
   unsigned int choice;
   char parm[128];
-  int returnvalue=0;
+  returnvalue=0;
 
   if (!ConIsScreen())
     {
@@ -1272,14 +1436,15 @@ s32 Client::Configure( void )
     returnvalue = -1;
     }
 
+  
   while (returnvalue == 0)
     {
     ConClear(); //in logstuff.cpp
     LogScreenRaw(CONFMENU_CAPTION, "");
     for (choice=1;choice<(sizeof(menutable)/sizeof(menutable[0]));choice++)
       LogScreenRaw(" %u) %s\n",choice, menutable[choice-1]);
-    LogScreenRaw(" 9) Discard settings and exit\n");
-    LogScreenRaw(" 0) Save settings and exit\n\n");
+    LogScreenRaw("\n 9) Discard settings and exit"
+                 "\n 0) Save settings and exit\n\n");
 
     if (isstringblank(id) || strcmpi(id,"rc5@distributed.net")==0)
       LogScreenRaw("Note: You have not yet provided a distributed.net ID.\n"
@@ -1298,188 +1463,14 @@ s32 Client::Configure( void )
     else if (choice >0 && choice<(sizeof(menutable)/sizeof(menutable[0])))
       ConfigureGeneral(choice);
     }
-
+#endif
   return returnvalue;
-#endif
 }
+
 
 //----------------------------------------------------------------------------
 
-#if !defined(NOCONFIG)
-s32 Client::findmenuoption( s32 menu, s32 option)
-    // Returns the id of the option that matches the menu and option
-    // requested. Will return -1 if not found.
-{
-s32 returnvalue=-1;
-s32 temp;
-
-for (temp=0; temp < OPTION_COUNT; temp++)
-  {
-  if ((options[temp].optionscreen==menu) &&
-      (options[temp].menuposition==option))
-
-     returnvalue=temp;
-  };
-
-return returnvalue;
-}
-#endif
-
-//----------------------------------------------------------------------------
-
-#if !defined(NOCONFIG)
-void Client::setupoptions( void )
-// Sets all the pointers/etc for optionstruct options
-{
-if (strcmpi(id,"rc5@distributed.net") == 0)
-  id[0]=0; /*is converted back to 'rc5@distributed.net' in ValidateConfig()*/
-
-options[CONF_ID].thevariable=(char *)(&id[0]);
-options[CONF_THRESHOLDI].thevariable=&inthreshold[0];
-options[CONF_THRESHOLDO].thevariable=&outthreshold[0];
-options[CONF_THRESHOLDI2].thevariable=&inthreshold[1];
-options[CONF_THRESHOLDO2].thevariable=&outthreshold[1];
-options[CONF_THRESHOLDO].comments=options[CONF_THRESHOLDI2].comments=
-options[CONF_THRESHOLDO2].comments=options[CONF_THRESHOLDI].comments;
-options[CONF_COUNT].thevariable=&blockcount;
-options[CONF_HOURS].thevariable=(char *)(&hours[0]);
-options[CONF_TIMESLICE].thevariable=&timeslice;
-
-#if !((CLIENT_OS==OS_MACOS) || (CLIENT_OS==OS_RISCOS) || (CLIENT_OS==OS_WIN16))
-options[CONF_TIMESLICE].optionscreen=0;
-#endif
-#ifdef OLDNICENESS
-options[CONF_NICENESS].thevariable=&niceness;
-#else
-options[CONF_NICENESS].thevariable=&priority;
-#endif
-
-options[CONF_UUEHTTPMODE].thevariable=&uuehttpmode;
-options[CONF_KEYPROXY].thevariable=(char *)(&keyproxy[0]);
-options[CONF_KEYPORT].thevariable=&keyport;
-options[CONF_HTTPPROXY].thevariable=(char *)(&httpproxy[0]);
-options[CONF_HTTPPORT].thevariable=&httpport;
-options[CONF_HTTPID].thevariable=(char *)(&httpid[0]);
-options[CONF_MESSAGELEN].thevariable=&messagelen;
-options[CONF_SMTPSRVR].thevariable=(char *)(&smtpsrvr[0]);
-options[CONF_SMTPPORT].thevariable=&smtpport;
-options[CONF_SMTPFROM].thevariable=(char *)(&smtpfrom[0]);
-options[CONF_SMTPDEST].thevariable=(char *)(&smtpdest[0]);
-options[CONF_SMTPFROM].defaultsetting=
-options[CONF_SMTPDEST].defaultsetting=(char *)options[CONF_ID].thevariable;
-options[CONF_NUMCPU].thevariable=&numcpu;
-options[CONF_RANDOMPREFIX].thevariable=&randomprefix;
-options[CONF_PREFERREDBLOCKSIZE].thevariable=&preferred_blocksize;
-options[CONF_PROCESSDES].thevariable=&preferred_contest_id;
-options[CONF_QUIETMODE].thevariable=&quietmode;
-options[CONF_NOEXITFILECHECK].thevariable=&noexitfilecheck;
-options[CONF_PERCENTOFF].thevariable=&percentprintingoff;
-options[CONF_FREQUENT].optionscreen=0;
-options[CONF_FREQUENT].thevariable=&connectoften;
-options[CONF_NODISK].thevariable=&nodiskbuffers;
-options[CONF_NOFALLBACK].thevariable=&nofallback;
-options[CONF_CKTIME].thevariable=&checkpoint_min;
-options[CONF_NETTIMEOUT].thevariable=&nettimeout;
-options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
-options[CONF_OFFLINEMODE].thevariable=&offlinemode;
-
-options[CONF_LOGNAME].thevariable=(char *)(&logname[0]);
-options[CONF_CHECKPOINT].thevariable=(char *)(&checkpoint_file[0][0]);
-options[CONF_CHECKPOINT2].thevariable=(char *)(&checkpoint_file[1][0]);
-options[CONF_RC5IN].thevariable=(char *)(&in_buffer_file[0][0]);
-options[CONF_RC5OUT].thevariable=(char *)(&out_buffer_file[0][0]);
-options[CONF_DESIN].thevariable=(char *)(&in_buffer_file[1][0]);
-options[CONF_DESOUT].thevariable=(char *)(&out_buffer_file[1][0]);
-options[CONF_PAUSEFILE].thevariable=(char *)(&pausefile[0]);
-
-options[CONF_CPUTYPE].optionscreen=0;
-options[CONF_CPUTYPE].choicemax=0;
-options[CONF_CPUTYPE].choicemin=0;
-const char *corename = GetCoreNameFromCoreType(0);
-if (corename && *corename)
-  {
-  static const char *cputypetable[10];
-  unsigned int tablesize = 2;
-  cputypetable[0]="Autodetect";
-  cputypetable[1]=corename;
-  do
-    {
-    corename = GetCoreNameFromCoreType(tablesize-1);
-    if (!corename || !*corename)
-      break;
-    cputypetable[tablesize++]=corename;
-    } while (tablesize<((sizeof(cputypetable)/sizeof(cputypetable[0]))));
-  options[CONF_CPUTYPE].name="cputype";
-  options[CONF_CPUTYPE].defaultsetting="-1";
-  options[CONF_CPUTYPE].thevariable=&cputype;
-  options[CONF_CPUTYPE].choicelist=&cputypetable[1];
-  options[CONF_CPUTYPE].choicemin=-1;
-  options[CONF_CPUTYPE].choicemax=tablesize-2;
-  }
-
-
-#if (!defined(LURK))
-options[CONF_LURKMODE].optionscreen=0;
-options[CONF_DIALWHENNEEDED].optionscreen=0;
-options[CONF_CONNECTNAME].optionscreen=0;
-#else
-options[CONF_LURKMODE].thevariable=&dialup.lurkmode;
-options[CONF_DIALWHENNEEDED].thevariable=&dialup.dialwhenneeded;
-options[CONF_CONNECTNAME].thevariable=&dialup.connectionname;
-
-char *connectnames = dialup.GetEntryList(&options[CONF_CONNECTNAME].choicemax);
-
-if (options[CONF_CONNECTNAME].choicemax < 1)
-  {
-  options[CONF_CONNECTNAME].optionscreen=0;
-  options[CONF_CONNECTNAME].choicelist=NULL;
-  }
-else
-  {
-  static char *connectnamelist[10];
-  if (options[CONF_CONNECTNAME].choicemax>10)
-    options[CONF_CONNECTNAME].choicemax=10;
-  for (int i=0;i<((int)(options[CONF_CONNECTNAME].choicemax));i++)
-    connectnamelist[i]=&(connectnames[i*60]);
-  options[CONF_CONNECTNAME].choicelist=(const char **)(&connectnamelist[0]);
-  options[CONF_CONNECTNAME].choicemin=0;
-  options[CONF_CONNECTNAME].choicemax--;
-  };
-#endif
-
-if (messagelen != 0)
-  {
-  options[CONF_SMTPSRVR].optionscreen=2;
-  options[CONF_SMTPPORT].optionscreen=2;
-  options[CONF_SMTPDEST].optionscreen=2;
-  options[CONF_SMTPFROM].optionscreen=2;
-  }
-  else
-  {
-  options[CONF_SMTPSRVR].optionscreen=0;
-  options[CONF_SMTPPORT].optionscreen=0;
-  options[CONF_SMTPDEST].optionscreen=0;
-  options[CONF_SMTPFROM].optionscreen=0;
-  };
-
-if (uuehttpmode > 1) /* not telnet and not normal */
-  {
-  options[CONF_HTTPPROXY].optionscreen=3;
-  options[CONF_HTTPPORT].optionscreen=3;
-  options[CONF_HTTPID].optionscreen=3;
-  }
-  else
-  {
-  options[CONF_HTTPPROXY].optionscreen=0;
-  options[CONF_HTTPPORT].optionscreen=0;
-  options[CONF_HTTPID].optionscreen=0;
-  };
-}
-#endif
-
-//----------------------------------------------------------------------------
-
-s32 Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
+int Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
 {
   IniSection ini;
   s32 inierror, tempconfig;
@@ -1487,8 +1478,8 @@ s32 Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   char *p;
 
   inierror = ini.ReadIniFile( GetFullPathForFilename( inifilename ) );
+  if (inierror) return -1;
 
-  if (inierror) return( inierror ? -1 : 0 );
   INIGETKEY(CONF_ID).copyto(id, sizeof(id));
   INIGETKEY(CONF_THRESHOLDI).copyto(buffer, sizeof(buffer));
   p = strchr( buffer, ':' );
@@ -1578,6 +1569,10 @@ s32 Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   if (tempconfig) nodiskbuffers=1;
   tempconfig=ini.getkey(OPTION_SECTION, "quiet", "0")[0];
   if (tempconfig) quietmode=1;
+  tempconfig=ini.getkey(OPTION_SECTION, "win95hidden", "0")[0]; //obsolete
+  if (tempconfig) quietmode=1;
+  tempconfig=ini.getkey(OPTION_SECTION, "runhidden", "0")[0]; //obsolete
+  if (tempconfig) quietmode=1;
   tempconfig=ini.getkey(OPTION_SECTION, "nofallback", "0")[0];
   if (tempconfig) nofallback=1;
   tempconfig=ini.getkey(OPTION_SECTION, "cktime", "0")[0];
@@ -1588,12 +1583,6 @@ s32 Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   if (tempconfig) noexitfilecheck=1;
   tempconfig=ini.getkey(OPTION_SECTION, "exitfilechecktime", "30")[0];
   if (tempconfig) exitfilechecktime=max(tempconfig,1);
-#if ((CLIENT_OS==OS_WIN32) && (!defined(WINNTSERVICE)))
-  tempconfig=ini.getkey(OPTION_SECTION, "win95hidden", "0")[0]; //obsolete
-  if (tempconfig) runhidden=1;
-  tempconfig=ini.getkey(OPTION_SECTION, "runhidden", "0")[0]; //now known as...
-  if (tempconfig) runhidden=1;
-#endif
 #if defined(LURK)
   tempconfig=ini.getkey(OPTION_SECTION, "lurk", "0")[0];
   if (tempconfig) dialup.lurkmode=1;
@@ -1732,6 +1721,7 @@ void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
 #if defined(NEEDVIRTUALMETHODS)
   InternalValidateConfig();
 #endif
+
   InitRandom2( id );
 }
 
@@ -1740,7 +1730,7 @@ void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
 //Some OS's write run-time stuff to the .ini, so we protect
 //the ini by only allowing that client's internal settings to change.
 
-s32 Client::WriteConfig(void)  
+int Client::WriteConfig(void)  
 {
   IniSection ini;
 
@@ -1758,14 +1748,14 @@ s32 Client::WriteConfig(void)
     tempptr->values.Erase();    
   if ((tempptr = ini.findfirst(OPTION_SECTION, "win95hidden"))!=NULL)
     tempptr->values.Erase();    
-  INISETKEY( CONF_QUIETMODE, ((runhidden || quietmode)?("1"):("0")) );
+  INISETKEY( CONF_QUIETMODE, ((quietmode)?("1"):("0")) );
 
   return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
 }
 
 // --------------------------------------------------------------------------
 
-s32 Client::WriteFullConfig(void) //construct a brand-spanking-new config
+int Client::WriteFullConfig(void) //construct a brand-spanking-new config
 {
   IniSection ini;
   char buffer[64];
@@ -1874,7 +1864,7 @@ s32 Client::WriteFullConfig(void) //construct a brand-spanking-new config
     tempptr->values.Erase();    
   if ((tempptr = ini.findfirst(OPTION_SECTION, "win95hidden"))!=NULL)
     tempptr->values.Erase();    
-  INISETKEY( CONF_QUIETMODE, ((runhidden || quietmode)?("1"):("0")) );
+  INISETKEY( CONF_QUIETMODE, ((quietmode)?("1"):("0")) );
 
   if (offlinemode == 1)
     ini.setrecord(OPTION_SECTION, "runoffline", IniString("1"));

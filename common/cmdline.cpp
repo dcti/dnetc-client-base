@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.92  1998/11/04 21:28:19  cyp
+// Removed redundant ::hidden option. ::quiet was always equal to ::hidden.
+//
 // Revision 1.91  1998/10/26 03:19:57  cyp
 // More tags fun.
 //
@@ -41,7 +44,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.91 1998/10/26 03:19:57 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.92 1998/11/04 21:28:19 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -96,7 +99,9 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
 
   if (runlevel >= 0) // this is only to protect against an invalid runlevel
     {
-    inifilename[0]=0; //so we know when it changes
+    int quietmode_override = -1;
+    
+    inifilename[0] = 0; //so we know when it changes
     if (runlevel == 0)
       ModeReqClear(-1); // clear all mode request bits
 
@@ -122,12 +127,12 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         {
         #if (CLIENT_OS == OS_WIN32)
           win32CliInstallService(0);
-          do_break = 1;
+          do_break = -1;
           retcode = 0;
         #endif
         #if (CLIENT_OS == OS_OS2)
           os2CliInstallClient(0);
-          do_break = 1;
+          do_break = -1;
           retcode = 0;
         #endif
         }
@@ -135,12 +140,12 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         {
         #if (CLIENT_OS == OS_OS2)
           os2CliUninstallClient(0);
-          do_break = 1;
+          do_break = -1;
           retcode = 0;
         #endif
         #if (CLIENT_OS == OS_WIN32) 
           win32CliUninstallService(0);
-          do_break = 1;
+          do_break = -1;
           retcode = 0;
         #endif
         }
@@ -152,17 +157,14 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           strcpy( inifilename, nextarg );
           }
         }
-      else if ( strcmp( thisarg, "-hide" ) == 0 )     
+      else if ( strcmp( thisarg, "-hide" ) == 0 ||   
+                strcmp( thisarg, "-quiet" ) == 0 )
         {
-        runhidden = quietmode = 1;
-        }                // previously win95hidden, os2hidden, netwarehidden...
-      else if ( strcmp( thisarg, "-quiet" ) == 0 )        
-        {
-        quietmode = 1;
+        quietmode_override = 1;
         }
       else if ( strcmp( thisarg, "-noquiet" ) == 0 )      
         {
-        runhidden = quietmode = 0;
+        quietmode_override = 0;
         }
       } //for ... next
 
@@ -211,12 +213,10 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
 
       if (runlevel == 0)
         {
-        int save_hidden = (runhidden != 0);
-        int save_quiet  = (quietmode != 0);
         if ( ReadConfig() != 0)
           ModeReqSet( MODEREQ_CONFIG );
-        runhidden = (save_hidden != 0);
-        quietmode = (save_quiet != 0);
+        if ( quietmode_override >= 0)
+          quietmode = quietmode_override;
         }
       } //if (!do_break)
     } //if (runlevel >= 0)
@@ -697,7 +697,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         }
       else if (runlevel > 0)
         {
-        quietmode = runhidden = 0;
+        quietmode = 0;
         DisplayHelp(thisarg);
         retcode = 1;
         do_break = 1;
@@ -727,7 +727,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         {
         if (!inimissing)
           {
-          quietmode = runhidden = 0;
+          quietmode = 0;
           do_break = 1;
           int do_mode = 0;
           
@@ -748,7 +748,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         }
       else if ( strcmp(thisarg, "-ident" ) == 0)
         {
-        quietmode = runhidden = 0;
+        quietmode = 0;
         do_break = 1;
         inimissing = 0; // Don't complain if the inifile is missing
         ModeReqClear(-1); //clear all - only do -ident
@@ -757,7 +757,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         }
       else if ( strcmp( thisarg, "-cpuinfo" ) == 0 )
         {
-        quietmode = runhidden = 0;
+        quietmode = 0;
         do_break = 1;
         inimissing = 0; // Don't complain if the inifile is missing
         ModeReqClear(-1); //clear all - only do -cpuinfo
@@ -766,7 +766,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         }
       else if ( strcmp( thisarg, "-test" ) == 0 )
         {
-        quietmode = runhidden = 0;
+        quietmode = 0;
         do_break = 1;
         inimissing = 0; // Don't complain if the inifile is missing
         ModeReqClear(-1); //clear all - only do -test
@@ -775,7 +775,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         }
       else if (strncmp( thisarg, "-benchmark", 10 ) == 0)
         {
-        quietmode = runhidden = 0;
+        quietmode = 0;
         do_break = 1;
         int do_mode = 0;
         thisarg += 10;
@@ -801,7 +801,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         {
         if (!inimissing)
           {
-          quietmode = runhidden = 0;
+          quietmode = 0;
           do_break = 1;
           retcode = -1;
           ModeReqClear(-1); //clear all - only do -forceunlock
@@ -811,7 +811,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         }
       else if ( strcmp( thisarg, "-config" ) == 0 )
         {
-        quietmode = runhidden = 0;
+        quietmode = 0;
         do_break = 1;
         retcode = 0;
         ModeReqClear(-1); //clear all - only do -config

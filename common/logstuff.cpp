@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.cpp,v $
+// Revision 1.21  1998/11/04 21:28:21  cyp
+// Removed redundant ::hidden option. ::quiet was always equal to ::hidden.
+//
 // Revision 1.20  1998/11/03 18:33:35  cyp
 // Stack overflows caused by LogScreenPercent() are (hopefully) fixed now.
 //
@@ -78,7 +81,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.20 1998/11/03 18:33:35 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.21 1998/11/04 21:28:21 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -744,7 +747,7 @@ void Client::InitializeLogging(int spools_on)
   logstatics.spoolson = (spools_on != 0);
   logstatics.percprint = (percentprintingoff == 0);
 
-  if ( !quietmode && !runhidden )
+  if ( !quietmode )
     {
     logstatics.loggingTo |= LOGTO_SCREEN;
     logstatics.stableflag = 0;   //assume next log screen needs a '\n' first
