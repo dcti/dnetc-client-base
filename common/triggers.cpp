@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: triggers.cpp,v $
+// Revision 1.8.2.5  1999/01/09 11:49:02  remi
+// Synced with :
+//
+//  Revision 1.12  1999/01/05 01:35:57  cramer
+//  Fixed the "Broken Pipe" exits under solaris.
+//
 // Revision 1.8.2.4  1999/01/04 02:33:08  remi
 // Synced with :
 //
@@ -26,7 +32,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.8.2.4 1999/01/04 02:33:08 remi Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.8.2.5 1999/01/09 11:49:02 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -416,6 +422,14 @@ void CliSetupSignals( void )
     signal( SIGTERM, CliSignalHandler );
     signal( SIGINT, CliSignalHandler );
     signal( SIGSTOP, CliSignalHandler );
+  #elif (CLIENT_OS == OS_SOLARIS)
+    // SIGPIPE is a fatal error in Solaris?
+    signal( SIGHUP, CliSignalHandler );
+    signal( SIGQUIT, CliSignalHandler );
+    signal( SIGTERM, CliSignalHandler );
+    signal( SIGINT, CliSignalHandler );
+    signal( SIGSTOP, CliSignalHandler );
+    signal( SIGPIPE, SIG_IGN );
   #else
     signal( SIGHUP, CliSignalHandler );
     signal( SIGQUIT, CliSignalHandler );
