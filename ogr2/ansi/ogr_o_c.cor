@@ -10,9 +10,21 @@
  *
  */
 const char *ogr_core(void) {
-return "@(#)$Id: ogr_o_c.cor,v 1.1.2.2 2001/01/19 02:29:34 andreasb Exp $"; }
+return "@(#)$Id: ogr_o_c.cor,v 1.1.2.3 2001/01/25 01:27:58 andreasb Exp $"; }
 
 #if ( (OGROPT_ALTERNATE_CYCLE == 1) || (OGROPT_ALTERNATE_CYCLE == 2))
+
+#if defined(OGR_CORE_HAS_NAME)
+const char* ogr_name()
+{
+  #if (OGROPT_ALTERNATE_CYCLE == 1)
+  return "DO/CC";
+  #elif (OGROPT_ALTERNATE_CYCLE == 2)
+  return "DO/CC Vector";
+  #endif
+}
+#endif
+
 
 /***********************************************************************************
  * The following macros define the BITLIST CLASS
