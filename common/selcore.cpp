@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.17 2003/02/17 02:01:21 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.18 2003/02/17 17:46:11 mfeiri Exp $"; }
 
 //#define TRACE
 
@@ -385,9 +385,9 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
     { /* OGR */
-      "GARSP 5.13 PPC-scalar",
-      "GARSP 5.13 PowerRS",    /* _AIXALL only */
-      "GARSP 5.13 PPC-vector", /* altivec only */
+      "GARSP 5.13 Scalar",
+      "GARSP 5.13 PowerRS",  /* _AIXALL only */
+      "GARSP 5.13 Vector",   /* altivec only */
       NULL
     },
   #elif (CLIENT_CPU == CPU_SPARC)
