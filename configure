@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.44 1999/11/15 21:03:41 ivo Exp $
+# @(#)$Id: configure,v 1.222.2.45 1999/11/15 21:50:46 ivo Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -426,7 +426,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *mips-gcc-irix5-crunch)	# [ivo] faster than mips-gcc for IRIX
+    *mips-gcc-irix5-crunch)	# faster than mips-gcc for IRIX
         DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -D_irix5_ \
@@ -455,6 +455,22 @@ case "$1" in
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
+
+    *mips-irix)     # [ivo] generic mips-irix target
+        DELETECHARS="'/.\$\-'"
+        RC5CORECOPY="rc5/mips/mips-crunch.cpp"
+        TARGET_CC="gcc"
+        TARGET_CCFLAGS="$OPTS_GCC_MIPS   \
+                        -DHAVE_DES_CORES -DHAVE_CSC_CORES \
+                        -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
+        #TARGET_LIBS="-lpthread"
+        #TARGET_LDFLAGS="-mips3"
+	TARGET_STRIP="touch"
+	TARGET_TARBALL="mips-irix5"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        ;;
+
 
     *mips-gcc-ultrix)	# For mips based DEC Ultrix machines
 	DELETECHARS="'/.\$\-'"
