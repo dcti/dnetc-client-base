@@ -1,0 +1,262 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Win32 Distributed.net Readme</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<style type="text/css">
+<!--
+a:link {
+  color:	#036; 
+  background-color: 	transparent; 
+}
+
+a:hover {
+  color:	#630; 
+  background-color: 	transparent; 
+}
+body {
+  background-color:	#eee;
+  color:	#000;
+  margin:		0;
+}
+.contentcontainer {
+  float:	left;
+  padding:	0;
+  width:	90%;
+  BORDER-LEFT: #999999 59px solid;
+  margin-top: 0px;
+}
+.content {
+  color:	#000;
+  background-color:	transparent;
+  margin-top:		0;
+  padding-left:	40px;
+  font:	14px/14px helvetica, sans-serif;
+  line-height:	16px;
+}
+h1 {
+  background-color:	#333;
+  color:	#eee;
+  width:	100%;
+  margin:		0px;
+  height:		46px;
+  font-family: helvetica, Arial, sans-serif;
+  font-weight: normal;
+  font-size: 36px;
+  letter-spacing: 0.1em
+}
+
+h2 {
+  background-color:	#bbb;
+  border:	solid 1px #333;
+  padding:	2px 0 3px 3px;
+  color:	#000;
+  font:	bold 15px/17px verdana, sans-serif;
+}
+-->
+</style>
+</head>
+
+<body>
+<h1> distributed.net</h1>
+<div class="contentcontainer"> 
+<div class="content"> 
+<p>&nbsp;</p>
+<h2>Welcome to the distributed.net client for OS X</h2>
+<p>This document covers information specific to the client for Mac OS X. For 
+  non-platform specific information, refer to other enclosed documentation 
+  or browse the online FAQ at <a href="http://www.distributed.net/FAQ">http://www.distributed.net/FAQ</a> 
+  or <a href="http://www.distributed.net/docs">http://www.distributed.net/docs/</a>.</p>
+<ul>
+  <li><a href"#started">Getting started</a></li>
+  <li><a href="#silent">Running the client in the silent mode.</a></li>
+  <li><a href="faq">Frequently Asked Questions on OS X</a></li>
+  <li><a href="bugs">Problems and bugs</a></li>
+  <li><a href="credits">Credits and thanks</a></li>
+</ul>
+<a name="started"></a>       
+<h2>Getting Started</h2>
+<p>The first step is to download the client and unpack the archive. Presumably, if you
+  are reading this, you have done so. Once that is complete, you may place the dnetc
+  folder anywhere you wish on the hard drive.</p> 
+<p>This client is a command line client. To run it, you will need to open a Terminal
+  window using Terminal.app. Navigate to the dnetc folder (you can do this by typing
+  "cd" and then dragging the dnetc folder to the Terminal window, and hitting Return).</p>
+<p>Once there, you can start the client's configuration by typing :<br>
+  <code>./dnetc -config</code></p>
+<p>The "./" indicates that you are running a command from the current directory. 
+  The "<code>-config</code>" is a switch which tells dnetc to start configuration 
+  mode. It will do this automatically if you have never configured it before, 
+  but using the switch will always start config mode.</p>
+<p>You will be introduced to a text-driven menu with fairly self-explanatory options. 
+  Primarily, you will want to configure your distributed.net ID. Again, any 
+  of these options can be changed later by starting dnetc with the <code>-config</code> 
+  switch.</p>
+<p>When you are finished, save and quit from the menu system. The client will exit. To
+  begin processing, type :<br>
+  <code>./dnetc</code></p>
+<p>You can then hide Terminal, minimize the window to the Dock, or just leave 
+  it there. You can see other command line options for the client by starting 
+  it with the <code>-help</code> switch.</p>  
+<p>Additional guides to the various configuration options are available online. 
+  <a href="http://www.distributed.net/docs">http://www.distributed.net/docs</a></p>  
+<a name="silent"></a>
+<h2>Running the client in silent mode</h2>
+<p>It may be desirable to run the client in the background; that is, to close the
+  Terminal window that it is running in, but have it continue processing. There are two
+  ways of doing this : either temporarily, or by default.</p>
+<p>1. To always run in silent mode, first stop any running clients :<br>
+  <code>./dnetc -shutdown</code></p>
+<p>Then open the configuration menu :<br>
+  <code>./dnetc -config</code></p>
+<p>Select the General Client Options menu, and go to option number 11 (Run detached/disable
+  all screen output). Enable this option. Note that if you are running the client in
+  silent mode, you may wish to enable logging, so that you can check its activity. This
+  is option 4 on the main menu (Logging Options). When you are finished, save and quit.</p>
+<p>Finally start the client using the command :<br>
+  <code>./dnetc</code></p>
+<p>This will start the now-silent client into the background. You may then close
+  Terminal if you wish.</p>
+<p>2. To run in silent mode just once, first stop any running clients :<br>
+  <code>./dnetc -shutdown</code></p>
+<p>Then start the client again with the following switch :<br>
+  <code>./dnetc -quiet</code></p>
+<p>This will start the now-silent client into the background. You may then close 
+  Terminal if you wish. Similarly, if you have configured the client to always 
+  run quiet as above, you can prevent it from doing so with the <code>-noquiet</code> 
+  switch.</p>
+<a name="faq"></a>
+<h2>Frequently Asked Questions on Mac OS X</h2>
+<p><strong>Q:</strong> What are the changes in this version of the client?<br>
+  <strong>A:</strong> Check the CHANGES.txt document included in this distribution.</p>
+  <p><strong>Q:</strong> Where is the (what-used-to-be-) GUI version of the client?<br>
+  <strong>A:</strong> Any GUI features not included in this client will be 
+  released as portable, open source add-on utilities. However, since distributed.net 
+  is a volunteer organization, we rely on users to contribute code. Please 
+  contact us if you're interested. See also <a href="http://www.distributed.net/download/addons.php">http://www.distributed.net/download/addons.php</a></p>
+  <p><strong>Q:</strong> How do I check if a silent client is running?<br>
+  <strong>A:</strong> Open a Terminal window and type : <code>ps -aux | grep 
+  dnetc</code> If you see any processes named dnetc then it is running. Alternatively, 
+  you can check your logfile to see if it is being updated. (You might type 
+  <code>tail &lt;logfile&gt;</code> where <code>&lt;logfile&gt;</code> is 
+  the name of your log file.)</p>
+  <p><strong>Q:</strong> How do I quit the client if it is running?<br>
+  <strong>A:</strong> Just type : <code>./dnetc -shutdown</code> The client 
+  will report how many clients were found and stopped. If it fails, you can 
+  always use the "kill" command to stop it.</p>
+  <p><strong>Q:</strong> How can I setup the client that it starts up automatically 
+    when I boot up my computer?<br>
+    <strong>A:</strong> Use the -install switch on dnetc. You will be prompted 
+    for your password. Note that you must be a member of the 'admin' group in 
+    order to do this. You can also -uninstall at a later date. Note: If you move 
+    the directory, you will have to <code>-uninstall</code> then <code>-install</code> 
+    again.</p>
+  <p><strong>Q:</strong> This version of the client seems much slower than XYZ previous 
+    version of the client. What gives?<br>
+    <strong>A:</strong> Probably what you are noticing is that sometime around 
+    build 464, we made the client "nicer" to other programs; that is, we made 
+    it a lower priority process. This was to make sure that it did not interfere 
+    with the use of the computer in any way. If you want to experiment with higher 
+    priority settings, use these steps to change the priority:<br>
+<ul>
+      <li><code>./dnetc -shutdown</code></li>
+      <li><code>./dnetc -config</code></li>
+  <li>Performance related options</li>
+  <li>Priority level (make your changes here)</li>
+  <li>Save and quit</li>
+      <li><code>./dnetc</code></li>
+</ul>
+  But be warned ! This may slow down other applications.</p>
+<p><strong>Q:</strong> I want to run the client and XYZ simultaneously, but 
+  XYZ destroys my crunch rate. What can I do ?<br>
+  <strong>A:</strong> Probably not much. Most of the problems that are suited 
+  to distributed computing are heavily CPU-intensive. Remember, dnetc is intended 
+  to only use up idle time on your computer. Ideally, your use of the computer 
+  should not be affected by its presence. This is why it is set to a very 
+  low priority by default. See the previous answer, "this version seems slower" 
+  for details on changing priority.</p>
+  <p><strong>Q:</strong> The client seems to slow down my application XYZ. What 
+    can I do?<br>
+    <strong>A:</strong> Open the configuration menu (<code>./dnetc -config</code>) 
+    and go to General Client Options. Select "Pause if running". Type in the name 
+    of your application (e.g. XYZ) and then exit the client. This will cause the 
+    client to pause if it detects that application is running. Make sure you don't 
+    leave it open all the time, or dnetc will never run</p>
+<p><strong>Q:</strong> I want to run the client as a screen saver. How do 
+  I do this ?<br>
+    <strong>A:</strong> At this time, there is no screen saver module for the 
+    client under Mac OS X, however this should not be difficult to implement. 
+    If you get around to it before we do, let us know.</p>
+<p><strong>Q:</strong> Can I share my client's buffers with other (non-macos) 
+  clients ? ["sharing" is simultaneous access via file-sharing, but also manual 
+  transfer of the buffer files from one machine to another]<br>
+  <strong>A:</strong> In general, this is not recommended. However, you can 
+  use the -import switch to accomplish this task. See the -help for more info. 
+  If you need to share buffers between many clients, you may wish to consider 
+  setting up a personal proxy. For more info on perproxies, visit : 
+  <a href="http://www.distributed.net/download/proxies.html">http://www.distributed.net/download/proxies.html</a></p>
+<p><strong>Q:</strong> How do I completely remove the client from my system?<br>
+  <strong>A:</strong> If you used the <code>-install</code> switch, use the 
+  <code>-uninstall</code> switch. Then, quit any running instances of the 
+  client, and then simply delete the folder containing the client.</p>
+  <p><strong>Q:</strong> My computer runs too hot. What can I do?<br>
+  <strong>A:</strong> If you have a G3, an old G4 or one of the new Macs with 
+  specific temperature sensors, you can activate temperature monitoring. Open 
+  the configuration menu (<code>./dnetc -config</code>) and go to General 
+  Client Options. Define the temperature thresholds (option 9), then activate 
+  the monitoring (option 8). Please note this function relies upon dedicated 
+  hardware (either the Thermal Assist Unit embedded into some PowerPC processors, 
+  or machine-specific sensors). As such, it may or may not work as expected.</p>
+<a name="bugs"></a>
+<h2>Problems and bugs</h2>
+<p>If you suspect you have found a bug in the client, here are the steps you should
+take to help us diagnose and fix the problem.</p>
+<ol>
+  <li> Visit the client download page and verify that you have the latest release 
+  of the client for Mac OS X. <a href="http://www.distributed.net/download/clients.html">http://www.distributed.net/download/clients.html</a></li>
+  <li>See if you can reproduce the problem. How does the bug occur ? What happens
+  when it does ?<br>
+  If it is a crash, try enabling Crash Reporter. You can do this by starting
+  the Mac OS X Console, which is located in /Applications/Utilities/Console.app.
+  Open it and go to Preferences, and select the Crashes tab. Check both boxes.
+  If you receive a crash log, save it, as this may be useful info.</li>
+  <li>Visit distributed.net's Bugzilla system, our bug reporting and tracking 
+  site. Here, you can report your bug and stay in contact with distributed.net 
+  QA and developers as we try to fix your bug. <a href="http://www.distributed.net/bugs">http://www.distributed.net/bugs/</a></li>
+  <li>When reporting a bug, please give us as many details as possible.</li>
+    <ul>
+      <li>What version of Mac OS X are you running ?<br>
+      (e.g. Mac OS X 10.3, build 7B85)</li>
+      <li>What is the full version descriptor of the client you are running ?<br>
+      (e.g. dnetc v2.9007-486-CTR-03110414 for Mac OS X (Darwin 7.0.0))</li>
+      <li>What sort of Mac are you running this on ?
+      (e.g. Power Mac G5/1.8, iBook G4/933 14" , etc)</li>
+    </ul>
+</ol>
+<p>The more details you can give us, the easier it will be for us to fix your 
+  bug. Thank you for helping us improve the client !</p>
+<h2>Credits and Thanks</h2>
+<p>Thanks to everybody involved in the development of the client for Mac OS X and the beta
+  testing process, who have helped make it what it is, including (in no particular order) :
+<ul>
+<li>Dan Oetting (Fantastic optimizations and other valuable input)</li>
+<li>Chris Cox (OGR optimizations and great help during WWDC 2K)</li>
+<li>Nate "sampo" Begeman (OGR optimizations, XML drafts, bug fixes)</li>
+<li>Cyrus Patel (Lead developer at dnet and an awesome helper)</li>
+<li>Don Bruder (Contributor of code snippets and a logfile grapher)</li>
+<li>Michael Nahrath (Maintainer of JavaVis and ever-encouraging)</li>
+<li>Evan Vetere (Dearly missed "end-user relations" guy)</li>
+<li>Matt "Zebe" Lee (docs, bug fixes, and Bugzilla management)</li>
+<li>Andrew Meggs and Peter DiCamillo (ported previous clients)</li>
+<li>Benjamin "thumper^" Kaufman For work on this document.</li>
+<li>All members of the dmac beta list hosted by Joseph McLean</li>
+<li>Everybody who provides feedback through Bugzilla</li>
+</ul>
+</p> 
+<p>And finally, thanks to everyone who runs dnetc on their computers. Without you there wouldn't
+be much of a point in doing the client, so keep on cracking ! Maybe YOU can find the key using
+this client.</p> 
+
+</div>
+</body>
+</html>
