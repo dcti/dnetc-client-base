@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.176  1998/08/20 02:11:43  silby
+// Changed MMX option to specify that it was for DES MMX cores only.
+//
 // Revision 1.175  1998/08/20 00:10:26  silby
 // Change in syntax to make GCC happy.
 //
@@ -195,7 +198,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.175 1998/08/20 00:10:26 silby Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.176 1998/08/20 02:11:43 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -506,7 +509,7 @@ static optionstruct options[OPTION_COUNT]=
 { "pausefile",CFGTXT("Pausefile Path/Name"),"none",CFGTXT("(blank = no pausefile)"),6,1,3,NULL},
 //44
 #ifdef MMX_BITSLICER
-{ "usemmx",CFGTXT("Use MMX instructions?"),"1",CFGTXT(""),4,3,4,NULL},
+{ "usemmx",CFGTXT("Use MMX DES cores if possible?"),"1",CFGTXT(""),4,3,4,NULL},
 #else
 { "usemmx", CFGTXT("Use MMX...not applicable in this client"), "-1", CFGTXT("(default -1)"),0,2,0,
   NULL,NULL,0,0},
