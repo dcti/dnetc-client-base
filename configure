@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.61 1999/11/28 17:57:07 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.62 1999/11/28 19:56:32 lyndon Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1572,7 +1572,7 @@ if [ "X$TARGET_TARBALL" != "X" ]; then
   if  [ "$TARGET_ARCTYPE" = "zip" ]; then
     echo "Zip support is not in place"  
   else     # tgz
-    echo "	tar -cvzf ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.tar.gz ${TARGET_BINNAME} \${DOCFILES}" >>Makefile
+    echo "	tar -cvf - ${TARGET_BINNAME} \${DOCFILES} | gzip > ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.tar.gz" >>Makefile
   fi
   echo "" >> Makefile  
 
