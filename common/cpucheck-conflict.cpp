@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.7 1999/07/10 14:45:17 ivo Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.8 1999/09/18 18:07:59 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -82,22 +82,14 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   if (cpucount == -2)
   {
     cpucount = -1;
-    #if (CLIENT_OS == OS_FREEBSD) ||  \
-        (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_OPENBSD)
+    #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
+        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
     { /* comment out if inappropriate for your *bsd - cyp (25/may/1999) */
-      int ncpus; size_t len = sizeof(ncpus);
-      //int mib[2]; mib[0] = CTL_HW; mib[1] = HW_NCPU;
-      //if (sysctl( &mib[0], 2, &ncpus, &len, NULL, 0 ) == 0)
-      if (sysctlbyname("hw.ncpu", &ncpus, &len, NULL, 0 ) == 0)
-        cpucount = ncpus;
-    }
-    #elif (CLIENT_OS == OS_NETBSD) // may only be relevant t ARM
-    {
       int ncpus; size_t len = sizeof(ncpus);
       int mib[2]; mib[0] = CTL_HW; mib[1] = HW_NCPU;
       if (sysctl( &mib[0], 2, &ncpus, &len, NULL, 0 ) == 0)
+      //if (sysctlbyname("hw.ncpu", &ncpus, &len, NULL, 0 ) == 0)
         cpucount = ncpus;
-
     }
     #elif (CLIENT_OS == OS_HPUX)
     {
@@ -133,9 +125,8 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     #elif (CLIENT_OS == OS_LINUX)
     {
       #if (CLIENT_CPU == CPU_ARM)
-	cpucount = 1;
+        cpucount = 1;
       #else
-
       FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
       cpucount = 0;
       if ( cpuinfo )
@@ -505,7 +496,7 @@ static long __GetRawProcessorID(const char **cpuname)
                 {       7, "603ev"           },
                 {       8, "740/750/G3"      },
                 {       9, "604e"            },
-                {      10, "604ev"		     }
+                {      10, "604ev"                   }
                 };
 
   #if (CLIENT_OS == OS_MACOS)
@@ -541,9 +532,9 @@ static long __GetRawProcessorID(const char **cpuname)
            { "604",                  4  },
            { "603e",                 6  },
            { "603ev",                7  },
-           { "750",         		 8  },
+           { "750",                      8  },
            { "604e",                 9  },
-           { "604ev",      			10  }
+           { "604ev",                           10  }
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
@@ -628,11 +619,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     detectedname = (const char *)&namebuf[0];
     detectedtype = 0; /* assume not found */
   
-    if ( vendorid == 0x7943 ) // Cyrix CPU
+    if ( vendorid == 0x7943 /* 'yC' */ ) // Cyrix CPU
     {
       static struct cpuxref cyrixxref[]={
-          {    0x40, 0512,     0, "486"       }, // use Pentium core
-          {  0x0440, 0512,     0, "MediaGX"   },
+          {    0x40,  512,     0, "486"       }, // use Pentium core
+          {  0x0440,  512,     0, "MediaGX"   },
           {  0x0490, 1185,     0, "5x86"      },
           {  0x0520, 2090,     3, "6x86"      }, // "Cyrix 6x86/6x86MX/M2"
           {  0x0540, 1200,     0, "GXm"       }, // use Pentium core here too
@@ -645,7 +636,17 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       #endif                      // des is unaffected. both 0/1 use p5 core
       cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
     }
-    else if ( vendorid == 0x6543 ) //centaur/IDT cpu
+    else if ( vendorid == 0x6952 /* 'iR' */  ) //"RiseRiseRiseRise"
+    {
+      static struct cpuxref risexref[]={
+          {  0x0500, 1500,     0, "mP6" }, /* (0.25 æm) */
+          {  0x0500, 1500,     0, "mP6" }, /* (0.18 æm) */
+          {  0x0000, 2115,     0, NULL  } //default core == P5
+          }; internalxref = &risexref[0];
+      vendorname = "Rise ";
+      cpuidbmask = 0xfff0;
+    }
+    else if ( vendorid == 0x6543 /* 'eC' */ ) //"CentaurHauls"
     {
       static struct cpuxref centaurxref[]={
           {  0x0540, 1200,0x100, "C6"          }, // use Pentium core
@@ -653,45 +654,66 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0000, 1346,    0, NULL          }  // default core == Pentium
           }; internalxref = &centaurxref[0];
       vendorname = "Centaur/IDT ";
-      cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
+      cpuidbmask = 0xfff0;
     }
-    else if ( vendorid == 0x7541 ) // AMD CPU
+    else if ( vendorid == 0x654E /* 'eN' */  ) //"NexGenDriven"
+    {   
+      static struct cpuxref nexgenxref[]={
+          {  0x0500, 1500,     0, "Nx586" },
+          {  0x0000, 1500,     0, NULL  } //no such thing
+          }; internalxref = &nexgenxref[0];
+      vendorname = "NexGen ";
+      cpuidbmask = 0xfff0;
+    }
+    else if ( vendorid == 0x4D55 /* 'MU' */  ) //"UMC UMC UMC "
+    {   
+      static struct cpuxref umcxref[]={
+          {  0x0410, 1500,     0, "U5D" },
+          {  0x0420, 1500,     0, "U5S" },
+          {  0x0400, 1500,     0, NULL  }
+          }; internalxref = &umcxref[0];
+      vendorname = "UMC ";
+      cpuidbmask = 0xfff0;
+    }
+    else if ( vendorid == 0x7541 /* 'uA' */ ) // "AuthenticAMD"
     {
       static struct cpuxref amdxref[]={
-          {  0x0040, 0512,     0, "486"        },   // "Pentium, Pentium MMX, Cyrix 486/5x86/MediaGX, AMD 486",
-          {  0x0430, 0512,     0, "486DX2"     },
-          {  0x0470, 0512,     0, "486DX2WB" },
-          {  0x0480, 0512,     0, "486DX4"     },
-          {  0x0490, 0512,     0, "486DX4WB" },
-          {  0x04E0, 1185,     0, "5x86"       },
-          {  0x04F0, 1185,     0, "5x86WB"     },
+          {  0x0040,  512,     0, "486"      }, // "Pentium, Pentium MMX, Cyrix 486/5x86/MediaGX, AMD 486",
+          {  0x0430,  512,     0, "486DX2"   },
+          {  0x0470,  512,     0, "486DX2WB" },
+          {  0x0480,  512,     0, "486DX4"   },
+          {  0x0490,  512,     0, "486DX4WB" },
+          {  0x04E0, 1185,     0, "5x86"     },
+          {  0x04F0, 1185,     0, "5x86WB"   },
           {  0x0500, 2353,     4, "K5 PR75, PR90, or PR100" }, // use K5 core
           {  0x0510, 2353,     4, "K5 PR120 or PR133" },
           {  0x0520, 2353,     4, "K5 PR166" },
           {  0x0530, 2353,     4, "K5 PR200" },
-          {  0x0560, 1611, 0x105, "K6"         },
-          {  0x0570, 1611, 0x105, "K6"         },
-          {  0x0580, 1690, 0x105, "K6-2"       },
-          {  0x0590, 1690, 0x105, "K6-3"       },
-          {  0x0000, 1690,     5, NULL         }   // for the future - default core = K6
+          {  0x0560, 1611, 0x105, "K6"       },
+          {  0x0570, 1611, 0x105, "K6"       },
+          {  0x0580, 1690, 0x105, "K6-2"     },
+          {  0x0590, 1690, 0x105, "K6-3"     },
+          {  0x0610, 4096, 0x105, "K7"       }, /* K6 core or PII core? */
+          {  0x0620, 4096, 0x105, "K7"       },
+          {  0x0000, 4096,     5, NULL       }   // for the future - default core = K6
           }; internalxref = &amdxref[0];
       vendorname = "AMD ";
       cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
     }
-    else if ( vendorid == 0x6E49 || vendorid == 0x6547 ) // Intel CPU
+    else if ( vendorid == 0x6E49 /* 'nI' */ || vendorid == 0x6547 /* 'eG' */ ) // Intel CPU
     {
       static struct cpuxref intelxref[]={
-          {  0x0030, 0426,     1, "80386"      },   // generic 386/486 core
-          {  0x0040, 0512,     1, "80486"      },
-          {  0x0400, 0512,     1, "486DX 25 or 33" },
-          {  0x0410, 0512,     1, "486DX 50" },
-          {  0x0420, 0512,     1, "486SX" },
-          {  0x0430, 0512,     1, "486DX2" },
-          {  0x0440, 0512,     1, "486SL" },
-          {  0x0450, 0512,     1, "486SX2" },
-          {  0x0470, 0512,     1, "486DX2WB" },
-          {  0x0480, 0512,     1, "486DX4" },
-          {  0x0490, 0512,     1, "486DX4WB" },
+          {  0x0030,  426,     1, "80386"      },   // generic 386/486 core
+          {  0x0040,  512,     1, "80486"      },
+          {  0x0400,  512,     1, "486DX 25 or 33" },
+          {  0x0410,  512,     1, "486DX 50" },
+          {  0x0420,  512,     1, "486SX" },
+          {  0x0430,  512,     1, "486DX2" },
+          {  0x0440,  512,     1, "486SL" },
+          {  0x0450,  512,     1, "486SX2" },
+          {  0x0470,  512,     1, "486DX2WB" },
+          {  0x0480,  512,     1, "486DX4" },
+          {  0x0490,  512,     1, "486DX4WB" },
           {  0x0500, 1416,     0, "Pentium" }, //stepping A
           {  0x0510, 1416,     0, "Pentium" },
           {  0x0520, 1416,     0, "Pentium" },
@@ -712,7 +734,6 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         vendorname = ""; //not for generic 386/486
       cpuidbmask = 0x0ff0; //strip type AND stepping bits.
     }
-  
     if (internalxref != NULL) /* we know about this vendor */
     {
       unsigned int pos;
@@ -836,14 +857,14 @@ static long __GetRawProcessorID(const char **cpuname )
         {
           static struct 
            { const char *sig;  int rid; } sigs[] ={
-	       { "arm2",       0x200},
-	       { "arm250",     0x250},
-	       { "arm3",       0x3},
-	       { "arm6",       0x600},
-	       { "arm610",     0x610},
-	       { "arm7",       0x700},
-	       { "arm710",     0x710},
-	       { "sa110",      0xA10}
+               { "arm2",       0x200},
+               { "arm250",     0x250},
+               { "arm3",       0x3},
+               { "arm6",       0x600},
+               { "arm610",     0x610},
+               { "arm7",       0x700},
+               { "arm710",     0x710},
+               { "sa110",      0xA10}
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
@@ -856,26 +877,26 @@ static long __GetRawProcessorID(const char **cpuname )
             }
           }
 
-	  detectedname = ((const char *)&(namebuf[0]));
-	  switch (detectedtype)
-	  {
-	  case 0x200: strcpy( namebuf, "ARM 2 or 250" ); 
-	      break;
-	  case 0xA10: strcpy( namebuf, "StrongARM 110" ); 
-	      break;
-	  case 0x3:
-	  case 0x600:
-	  case 0x610:
-	  case 0x700:
-	  case 0x7500:
-	  case 0x7500FEL:
-	  case 0x710:
-	  case 0x810: sprintf( namebuf, "ARM %lX", detectedtype );
-	      break;
-	  default:    sprintf( namebuf, "%lX (unknown)", detectedtype );
-	      detectedtype = 0;
-	      break;
-	  }
+          detectedname = ((const char *)&(namebuf[0]));
+          switch (detectedtype)
+          {
+          case 0x200: strcpy( namebuf, "ARM 2 or 250" ); 
+              break;
+          case 0xA10: strcpy( namebuf, "StrongARM 110" ); 
+              break;
+          case 0x3:
+          case 0x600:
+          case 0x610:
+          case 0x700:
+          case 0x7500:
+          case 0x7500FEL:
+          case 0x710:
+          case 0x810: sprintf( namebuf, "ARM %lX", detectedtype );
+              break;
+          default:    sprintf( namebuf, "%lX (unknown)", detectedtype );
+              detectedtype = 0;
+              break;
+          }
           break;
         }
       }
@@ -891,50 +912,50 @@ static long __GetRawProcessorID(const char **cpuname )
       mib[0]=CTL_HW; mib[1]=HW_MODEL;
       if (sysctl(mib, 2,&buffer[0], &len, NULL, 0 ) == 0)
       {
-	  int n = 0;
-	  char *p;
+          int n = 0;
+          char *p;
           static struct 
-	  { const char *sig;  int rid; } sigs[] ={
-	      { "ARM2",       0X200},
-	      { "ARM250",     0X250},
-	      { "ARM3",       0X3},
-	      { "ARM6",       0X600},
-	      { "ARM610",     0X610},
-	      { "ARM7",       0X700},
-	      { "ARM710",     0X710},
-	      { "SA-110",     0XA10}
+          { const char *sig;  int rid; } sigs[] ={
+              { "ARM2",       0X200},
+              { "ARM250",     0X250},
+              { "ARM3",       0X3},
+              { "ARM6",       0X600},
+              { "ARM610",     0X610},
+              { "ARM7",       0X700},
+              { "ARM710",     0X710},
+              { "SA-110",     0XA10}
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
           {
-	      unsigned int l = strlen( sigs[n].sig );
-	      if ((!p[l] || isspace(p[l])) && memcmp( p, sigs[n].sig, l)==0)
-	      {
-		  detectedtype = (long)sigs[n].rid;
-		  break;
-	      }
+              unsigned int l = strlen( sigs[n].sig );
+              if ((!p[l] || isspace(p[l])) && memcmp( p, sigs[n].sig, l)==0)
+              {
+                  detectedtype = (long)sigs[n].rid;
+                  break;
+              }
           }
-	  
-	  detectedname = ((const char *)&(namebuf[0]));
-	  switch (detectedtype)
-	  {
-	  case 0x200: strcpy( namebuf, "ARM 2 or 250" ); 
-	      break;
-	  case 0xA10: strcpy( namebuf, "StrongARM 110" ); 
-	      break;
-	  case 0x3:
-	  case 0x600:
-	  case 0x610:
-	  case 0x700:
-	  case 0x7500:
-	  case 0x7500FEL:
-	  case 0x710:
-	  case 0x810: sprintf( namebuf, "ARM %lX", detectedtype );
-	      break;
-	  default:    sprintf( namebuf, "%lX (unknown)", detectedtype );
-	      detectedtype = 0;
-	      break;
-	  }
+          
+          detectedname = ((const char *)&(namebuf[0]));
+          switch (detectedtype)
+          {
+          case 0x200: strcpy( namebuf, "ARM 2 or 250" ); 
+              break;
+          case 0xA10: strcpy( namebuf, "StrongARM 110" ); 
+              break;
+          case 0x3:
+          case 0x600:
+          case 0x610:
+          case 0x700:
+          case 0x7500:
+          case 0x7500FEL:
+          case 0x710:
+          case 0x810: sprintf( namebuf, "ARM %lX", detectedtype );
+              break;
+          default:    sprintf( namebuf, "%lX (unknown)", detectedtype );
+              detectedtype = 0;
+              break;
+          }
       }
   }
   #endif
@@ -1275,7 +1296,7 @@ int GetProcessorType(int quietly)
     coretouse = ((rawid <= 0) ? (-1) : ((int)rawid));
     #elif (CLIENT_OS == OS_AIX)
     if (rawid && ARCH_IS_POWER) // POWER
-	coretouse=0;
+        coretouse=0;
     else if (rawid == 1) 
         coretouse=1;            // PowerPC 601
     else
