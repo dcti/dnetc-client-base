@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.9  1998/11/10 23:01:28  silby
+// Fixed a & that should've been a && - was breaking updates.
+//
 // Revision 1.8  1998/11/10 21:37:47  cyp
 // added support for -forceunlock.
 //
@@ -35,7 +38,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.8 1998/11/10 21:37:47 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.9 1998/11/10 23:01:28 silby Exp $"; }
 #endif
 
 #include "client.h"   //client class
@@ -213,7 +216,7 @@ int ModeReqRun(Client *client)
             if (!(client->contestdone[contest]))
               {
               runcode = 0;
-              if ( dofetch & doflush )
+              if ( dofetch && doflush )
                 runcode=(int)(client->Update(contest ,1,1, doforce));
               else if ( dofetch )
                 runcode=(int)((doforce)?(client->ForceFetch(contest)):(client->Fetch(contest)));
