@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.65  1999/01/11 20:59:34  patrick
+// updated to not raise an error if RC5ANSICORE is defined
+//
 // Revision 1.64  1999/01/11 05:45:10  pct
 // Ultrix modifications for updated client.
 //
@@ -181,7 +184,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.64 1999/01/11 05:45:10 pct Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.65 1999/01/11 20:59:34 patrick Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -296,7 +299,10 @@ extern void CliSignalHandler(int);
 #else
   extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
   extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
-  #error Please declare/prototype cores by CLIENT_CPU if you are not using ansi*.cpp cores.
+  #ifndef RC5ANSICORE   
+    // Hey, this error makes no sense for ANSI cores, so why not #ifdef (patrick)
+    #error Please declare/prototype cores by CLIENT_CPU if you are not using ansi*.cpp cores.
+  #endif
 #endif
 
 /* ------------------------------------------------------------------- */
