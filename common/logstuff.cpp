@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.26 2000/09/17 11:46:32 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.27 2000/09/22 16:08:16 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -48,6 +48,7 @@ return "@(#)$Id: logstuff.cpp,v 1.37.2.26 2000/09/17 11:46:32 cyp Exp $"; }
 
 #endif /* logstuff.h defines */
 
+#define ASSUMED_SCREEN_WIDTH 80
 // ========================================================================
 
 static struct
@@ -56,6 +57,7 @@ static struct
   char loggingTo;            // LOGTO_xxx bitfields
   char spoolson;             // mail/file logging and time stamping is on/off.
   char percprint;            // percentprinting is enabled
+  char percbaton;            // percent baton is enabled
 
   void *mailmessage;         //handle returned from smtp_construct_message()
   char basedir[256];         //filled if user's 'logfile' is not qualified
@@ -77,6 +79,7 @@ static struct
   LOGTO_NONE,   // loggingTo
   0,      // spoolson
   0,      // percprint
+  0,      // percbaton
   NULL,   // *mailmessage
   {0},    // basedir[]
   {0},    // logfile[]
@@ -98,7 +101,24 @@ static void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int /
     if ( msglen && (msgbuffer[msglen-1] == '\n' || ConIsScreen() ) )
     {
       if (strlen( msgbuffer ) == msglen) //we don't do binary data
-        ConOut( msgbuffer );             //which shouldn't happen anyway.
+      {                                  //which shouldn't happen anyway.
+        if (*msgbuffer == '\r') 
+        {
+          const char *p;
+          char blankline[ASSUMED_SCREEN_WIDTH+1];
+          memset(blankline,' ',sizeof(blankline));
+          blankline[sizeof(blankline)-1] = '\0';
+          blankline[0] = '\r';
+          p = strchr(msgbuffer,'\n');
+          if (p && (((unsigned int)(p-msgbuffer))<sizeof(blankline)-1))
+          {
+            memcpy(blankline,msgbuffer,(p-msgbuffer));
+            msgbuffer = p;
+          }  
+          ConOut( blankline );
+        }  
+        ConOut( msgbuffer );             
+      }  
     }
     else
       ConOut( "" ); //flush.
@@ -459,7 +479,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
     do
     {
       while (*buffptr == '\r' || *buffptr=='\n' )
-          buffptr++;
+        buffptr++;
       if (*buffptr == ' ' || *buffptr == '\t')
       {
         obuffptr = buffptr;
@@ -507,7 +527,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
     #ifdef ASSERT_WIDTH_80  //"show" where badly formatted lines are cropping up
     //if (ConIsScreen())
     {
-      int scrwidth = 80; /* assume this for consistancy */
+      int scrwidth = ASSUMED_SCREEN_WIDTH; /* assume this for consistancy */
       buffptr = &msgbuffer[0];
       do{
         while (*buffptr == '\r' || *buffptr == '\n' )
@@ -648,14 +668,15 @@ const char *LogGetCurrentLogFilename( void )
 
 // ---------------------------------------------------------------------------
 
+//#define NO_PERCENTOMATIC_BATON
+
 void LogScreenPercent( unsigned int load_problem_count )
 {
-  static unsigned int displevel = 0, lastperc = 0;
+  static unsigned int displevel = 0, lastperc = 0, batonpos = 0;
   unsigned int percent, restartperc, endperc, equals, prob_i;
   int istty, multiperc;
-  char ch; char buffer[88];
-  char *bufptr = &buffer[0];
-  unsigned char pbuf[30]; /* 'a'-'z' */
+  char ch; char batonchar; char buffer[88];
+  char *bufptr; unsigned char pbuf[30]; /* 'a'-'z' */
 
   if (!logstatics.percprint || ( logstatics.loggingTo & LOGTO_SCREEN ) == 0 )
     return;
@@ -696,9 +717,20 @@ void LogScreenPercent( unsigned int load_problem_count )
     lastperc = 0;
   multiperc = (load_problem_count > 1 && load_problem_count <= 26 /*a-z*/
                  && lastperc == 0 && istty && endperc < 100);
-  if (lastperc == 0 && endperc > 0 && istty )
-    *bufptr++ = '\r';
 
+  batonchar = 0;                 
+  bufptr = &buffer[0];
+  if (lastperc == 0 && endperc > 0 && istty )
+  {
+    #ifndef NO_PERCENTOMATIC_BATON
+    if (logstatics.percbaton && !ConIsGUI()) /* not macos and not win GUI */
+    {                              /* where window repaints are expensive */
+      const char batonchars[4] = {'|','/','-','\\'};
+      batonchar = batonchars[(++batonpos) % sizeof(batonchars)];
+    }  
+    #endif
+    *bufptr++ = '\r';
+  }  
   for (percent = lastperc+1; percent <= endperc; percent++)
   {
     if ( percent >= 100 )
@@ -738,6 +770,8 @@ void LogScreenPercent( unsigned int load_problem_count )
     displevel=0;
   lastperc = endperc;
 
+  if (batonchar)
+    *bufptr++ = batonchar;
   *bufptr = '\0';
   if ( (buffer[0]==0) || (buffer[0]=='\r' && buffer[1]==0) )
     ;
@@ -935,6 +969,7 @@ void InitializeLogging( int noscreen, int nopercent, const char *logfilename,
 {
   DeinitializeLogging();
   logstatics.percprint = (nopercent == 0);
+  logstatics.percbaton = (nopercent == 0 /*&& nobaton == 0 */);
   logstatics.spoolson = 1;
 
   if ( noscreen == 0 )
