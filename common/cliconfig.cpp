@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.125  1998/07/04 23:24:25  jlawson
+// integer cast warnings on win16 resolved and other formatting cleanup.
+//
 // Revision 1.124  1998/07/04 21:05:23  silby
 // Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong should be fixed.
 //
@@ -158,7 +161,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.124 1998/07/04 21:05:23 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.125 1998/07/04 23:24:25 jlawson Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -1097,7 +1100,7 @@ void Client::killwhitespace( char *string )
 
 int Client::isstringblank( char *string )
 {
-  u32 counter, length, summation = 0;
+  int counter, length, summation = 0;
 
   if (string == NULL || !*string)
     return 1;
@@ -1412,7 +1415,7 @@ void Client::ValidateConfig( void )
   strcpy(mailmessage.smtp,smtpsrvr);
   strcpy(mailmessage.rc5id,id);
   mailmessage.messagelen=messagelen;
-  mailmessage.port=smtpport;
+  mailmessage.port=(int)smtpport;
 
   //validate numcpu is now in SelectCore(); //1998/06/21 cyrus
 
@@ -1949,11 +1952,11 @@ if (lurk > 0) StartLurk(); //only start lurk if it needs to be started
 
 s32 Client::SelectCore(void)
 {
-static int previouscputype=0xBEEFD00DL;// An unknown proc type, I hope
+  static s32 previouscputype = 0xBEEFD00DL;// An unknown proc type, I hope
 
-if (previouscputype == cputype) return 0;// We already autodetected.
+  if (previouscputype == cputype) return 0;// We already autodetected.
 
-previouscputype=cputype;// Set this so we know next time this proc is run.
+  previouscputype = cputype;// Set this so we know next time this proc is run.
 
   ValidateProcessorCount(); //in cpucheck.cpp
 
@@ -1970,10 +1973,10 @@ previouscputype=cputype;// Set this so we know next time this proc is run.
   double fasttime = 0;
   whichcrunch = 1;
 #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_WIN32)
-  const int benchsize = 500000;
+  const s32 benchsize = 500000L;
   double fasttime = 0;
   LogScreen( "| RC5 PowerPC assembly by Dan Oetting at USGS\n");
-  int fastcore = cputype;
+  s32 fastcore = cputype;
   if (fastcore == -1)
   {
     for (whichcrunch = 0; whichcrunch < 2; whichcrunch++)
@@ -2035,81 +2038,84 @@ previouscputype=cputype;// Set this so we know next time this proc is run.
   */
 #elif (CLIENT_CPU == CPU_X86)
   // benchmark all cores
-  int fastcore = cputype;
-  if (fastcore == -1) fastcore=GetProcessorType();  //was x86id(); now in cpucheck.cpp
+  s32 fastcore = cputype;
+  if (fastcore == -1) fastcore = GetProcessorType();  //was x86id(); now in cpucheck.cpp
     // Will return 0 if unable to identify.
 
-// Old "try every code" speed detect removed; it was never right, and
-// x86id gets almost all processors now anyway.
-
-LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
+  // Old "try every code" speed detect removed; it was never right, and
+  // x86id gets almost all processors now anyway.
+  LogScreenf("Selecting %s code\n", cputypetable[(int)fastcore+1]);
 
   // select the correct core engine
+  #ifdef KWAN
+    #define DESUNITFUNC51 des_unit_func_slice
+    #define DESUNITFUNC52 des_unit_func_slice
+    #define DESUNITFUNC61 des_unit_func_slice
+    #define DESUNITFUNC62 des_unit_func_slice
+  #elif defined(MULTITHREAD)
+    #define DESUNITFUNC51 p1des_unit_func_p5
+    #define DESUNITFUNC52 p2des_unit_func_p5
+    #define DESUNITFUNC61 p1des_unit_func_pro
+    #define DESUNITFUNC62 p2des_unit_func_pro
+  #else
+    #define DESUNITFUNC51 p1des_unit_func_p5
+    #define DESUNITFUNC52 NULL
+    #define DESUNITFUNC61 p1des_unit_func_pro
+    #define DESUNITFUNC62 NULL
+  #endif
   switch(fastcore)
   {
-    #ifdef KWAN
-       #define DESUNITFUNC61 des_unit_func_slice
-       #define DESUNITFUNC62 des_unit_func_slice
-       #define DESUNITFUNC51 des_unit_func_slice
-       #define DESUNITFUNC52 des_unit_func_slice
-    #elif defined(MULTITHREAD)
-       #define DESUNITFUNC51 p1des_unit_func_p5
-       #define DESUNITFUNC52 p2des_unit_func_p5
-       #define DESUNITFUNC61 p1des_unit_func_pro
-       #define DESUNITFUNC62 p2des_unit_func_pro
-    #else
-       #define DESUNITFUNC51 p1des_unit_func_p5
-       #define DESUNITFUNC52 NULL
-       #define DESUNITFUNC61 p1des_unit_func_pro
-       #define DESUNITFUNC62 NULL
-    #endif
-
-    case 1:rc5_unit_func = rc5_unit_func_486;
-           des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
-           des_unit_func2 = DESUNITFUNC52; //p2des_unit_func_p5;
-           break;
-    case 2:rc5_unit_func = rc5_unit_func_p6;
-           des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-           des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
-           break;
-    case 3:rc5_unit_func = rc5_unit_func_6x86;
-           des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-           des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
-           break;
-    case 4:rc5_unit_func = rc5_unit_func_k5;
-           des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
-           des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
-           break;
-    case 5:rc5_unit_func = rc5_unit_func_k6;
-           des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-           des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
-           break;
-    default:rc5_unit_func = rc5_unit_func_p5;
-           des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
-           des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
-           break;
-    #undef DESUNITFUNC61
-    #undef DESUNITFUNC62
-    #undef DESUNITFUNC51
-    #undef DESUNITFUNC52
+    case 1:
+      rc5_unit_func = rc5_unit_func_486;
+      des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
+      des_unit_func2 = DESUNITFUNC52; //p2des_unit_func_p5;
+      break;
+    case 2:
+      rc5_unit_func = rc5_unit_func_p6;
+      des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+      des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+      break;
+    case 3:
+      rc5_unit_func = rc5_unit_func_6x86;
+      des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+      des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+      break;
+    case 4:
+      rc5_unit_func = rc5_unit_func_k5;
+      des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
+      des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
+      break;
+    case 5:
+      rc5_unit_func = rc5_unit_func_k6;
+      des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+      des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+      break;
+    default:
+      rc5_unit_func = rc5_unit_func_p5;
+      des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
+      des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
+      break;
   }
+  #undef DESUNITFUNC61
+  #undef DESUNITFUNC62
+  #undef DESUNITFUNC51
+  #undef DESUNITFUNC52
 #elif (CLIENT_CPU == CPU_ARM)
-  int fastcore = cputype;
-#if (CLIENT_OS == OS_RISCOS)
-  if (fastcore == -1)              //was ArmID(). Now in cpucheck.cpp
-    fastcore = GetProcessorType(); // will return -1 if unable to identify
-#endif
+  s32 fastcore = cputype;
+  #if (CLIENT_OS == OS_RISCOS)
+    if (fastcore == -1)              //was ArmID(). Now in cpucheck.cpp
+      fastcore = GetProcessorType(); // will return -1 if unable to identify
+  #endif
   if (fastcore == -1)
   {
-    const int benchsize = 50000;
+    const s32 benchsize = 50000;
     double fasttime[2] = { 0, 0 };
-    int fastcoretest[2] = { -1, -1 };
+    s32 fastcoretest[2] = { -1, -1 };
 
     LogScreen("Automatically selecting fastest core...\n"
               "This is just a guess based on a small test of each core.  If you know what CPU\n"
               "this machine has, then set it in the Performance section of the choices.\n");
     fflush(stdout);
-//    for (int i = 0; i < 6; i++)
     for (int j = 0; j < 2; j++)
     for (int i = 0; i < 2; i++)
     {
@@ -2127,8 +2133,14 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
       // select the correct core engine
       switch(i)
       {
-        case 1:  rc5_unit_func = rc5_unit_func_strongarm; des_unit_func = des_unit_func_strongarm; break;
-        default: rc5_unit_func = rc5_unit_func_arm;       des_unit_func = des_unit_func_arm;       break;
+        case 1:
+          rc5_unit_func = rc5_unit_func_strongarm;
+          des_unit_func = des_unit_func_strongarm;
+          break;
+        default:
+          rc5_unit_func = rc5_unit_func_arm;
+          des_unit_func = des_unit_func_arm;
+          break;
       }
 
       struct timeval start, stop;
@@ -2149,24 +2161,28 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
     CliClearContestInfoSummaryData( 1 ); //clear the totals for contest 1
   }
 
-LogScreenf("Selecting %s code.\n",cputypetable[fastcore+1]);
+  LogScreenf("Selecting %s code.\n",cputypetable[(int)(fastcore+1)]);
 
   // select the correct core engine
   switch(fastcore)
   {
-    case 0:rc5_unit_func = rc5_unit_func_arm;
-           des_unit_func = des_unit_func_arm;
-           break;
+    case 0:
+      rc5_unit_func = rc5_unit_func_arm;
+      des_unit_func = des_unit_func_arm;
+      break;
     default:
-    case 1:rc5_unit_func = rc5_unit_func_strongarm;
-           des_unit_func = des_unit_func_strongarm;
-           break;
-    case 2:rc5_unit_func = rc5_unit_func_arm;
-           des_unit_func = des_unit_func_strongarm;
-           break;
-    case 3:rc5_unit_func = rc5_unit_func_strongarm;
-           des_unit_func = des_unit_func_arm;
-           break;
+    case 1:
+      rc5_unit_func = rc5_unit_func_strongarm;
+      des_unit_func = des_unit_func_strongarm;
+      break;
+    case 2:
+      rc5_unit_func = rc5_unit_func_arm;
+      des_unit_func = des_unit_func_strongarm;
+      break;
+    case 3:
+      rc5_unit_func = rc5_unit_func_strongarm;
+      des_unit_func = des_unit_func_arm;
+      break;
   }
 
 #endif
