@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.10  1998/07/06 09:17:23  jlawson
+// eliminated unused value assignment warning.
+//
 // Revision 1.9  1998/07/05 12:42:40  cyruspatel
 // Created cpucheck.h to support makefiles that rely on autodependancy info
 // to detect file changes.
@@ -40,7 +43,7 @@
 #include "cpucheck.h" //just to keep the prototypes in sync.
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cpucheck-conflict.cpp,v 1.9 1998/07/05 12:42:40 cyruspatel Exp $";
+static const char *id="@(#)$Id: cpucheck-conflict.cpp,v 1.10 1998/07/06 09:17:23 jlawson Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -293,7 +296,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
 
 int Client::GetProcessorType()
 {
-  int coretouse = 0; // the core the client should. Default is Pentium
+  int coretouse;
   int vendorid, cpuidb;                           
   char *pronoun, *vendorname;
   struct _cpuxref *cpuxref = 
