@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.41 2000/05/29 14:56:10 friedbait Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.42 2000/05/29 21:45:08 friedbait Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -386,13 +386,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
             TRACE_OUT((0,"sps: ACLineStatus = 0x%02x, BatteryFlag = 0x%02x\n",
                        line_stat, bat_stat));
 
-            if (line_stat == 1)           /* we have AC power */
-                return 0;
-            if (line_stat == 0) {         /* we are running on battery */
-                if ((bat_flags & 8) != 0) /* but charging */
-                    return 0;             /* return not-on-battery */
-                return 1;                 /* yes, we are on battery */
-            }
+            if (line_stat == 1) return 0; /* we have AC power */
+            return 1;                     /* we don't have AC */
         }
     }
 #endif
