@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: threadcd.h,v $
+// Revision 1.5  1998/06/16 05:38:08  dicamillo
+// Added #include for BeOS for OS.h
+//
 // Revision 1.4  1998/06/14 08:13:14  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -39,7 +42,7 @@
    typedef long THREADID;
    extern int CliWaitForThreadExit( int threadID );
 #elif (CLIENT_OS == OS_BEOS)
-   #error threadcd.h needs an include //replace this with appropriate includes
+   #include <OS.h>
    typedef thread_id THREADID;
 #elif (CLIENT_OS == OS_DOS)
    typedef int THREADID ; //dummy
