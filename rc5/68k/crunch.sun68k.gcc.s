@@ -1,3 +1,9 @@
+#
+# $Log: crunch.sun68k.gcc.s,v $
+# Revision 1.2  1998/06/14 10:30:29  friedbait
+# 'Log' keyword added.
+#
+#
 # Based on crunch.68k.gcc.s, modified to comply with the syntax that
 # Sun's as wants.
 

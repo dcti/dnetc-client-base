@@ -1,4 +1,10 @@
-
+/*
+ * $Log: rc5-sa-gnu.s,v $
+ * Revision 1.2  1998/06/14 10:30:42  friedbait
+ * 'Log' keyword added.
+ *
+ *
+ */
 	.text
 	.global _rc5_unit_func_strongarm
 	.align

@@ -1,3 +1,9 @@
+#
+# $Log: crunch_allitnil_552.ppc.s,v $
+# Revision 1.2  1998/06/14 10:30:30  friedbait
+# 'Log' keyword added.
+#
+#
 # allitnil -- the 601 companion for lintilla
  .file	"crunch-ppc.cpp"
 gcc2_compiled.:

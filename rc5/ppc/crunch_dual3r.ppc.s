@@ -1,4 +1,9 @@
-	
+;
+; $Log: crunch_dual3r.ppc.s,v $
+; Revision 1.2  1998/06/14 10:30:33  friedbait
+; 'Log' keyword added.
+;
+;	
 	EXPORT	crunch_dual3r[DS]
 	EXPORT	.crunch_dual3r[PR]
 	

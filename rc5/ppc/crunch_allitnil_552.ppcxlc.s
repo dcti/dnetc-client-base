@@ -1,3 +1,9 @@
+#
+# $Log: crunch_allitnil_552.ppcxlc.s,v $
+# Revision 1.2  1998/06/14 10:30:31  friedbait
+# 'Log' keyword added.
+#
+#
 # allitnil -- the 601 companion for lintilla
  .rename	H.10.NO_SYMBOL{PR},""
  .rename	H.01.crunch_allitnil{TC},"crunch_allitnil"

@@ -1,3 +1,9 @@
+#//
+#// $Log: crunch_lintilla.ppcxlc.s,v $
+#// Revision 1.2  1998/06/14 10:30:35  friedbait
+#// 'Log' keyword added.
+#//
+#//
 #// IMPORTANT: This function only tests the low word of the encryption result.
 #// If a hit is returned you must verify that the high word is also correct
 #// by calling another cracking function.

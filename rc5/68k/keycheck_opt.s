@@ -1,4 +1,9 @@
-
+;
+; $Log: keycheck_opt.s,v $
+; Revision 1.2  1998/06/14 10:30:40  friedbait
+; 'Log' keyword added.
+;
+;
 ; The code is a bit smaller now. This should causes less cache misses for
 ; 68020/68030 based machines. But 68020 doesn't have a data cache. So I
 ; don't know if this code will be faster or not with a 68020.

@@ -1,3 +1,9 @@
+#
+# $Log: crunch.ppc.s,v $
+# Revision 1.2  1998/06/14 10:30:28  friedbait
+# 'Log' keyword added.
+#
+#
 # GNU C++ 2.7.2
 # -O6 -fdefer-pop -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks
 # -fexpensive-optimizations -fthread-jumps -fstrength-reduce -funroll-loops

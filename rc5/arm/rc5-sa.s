@@ -3,6 +3,11 @@
 ;
 ; Steve Lee, Chris Berry, Tim Dobson 1997,1998
 ;
+; $Log: rc5-sa.s,v $
+; Revision 1.3  1998/06/14 10:30:44  friedbait
+; 'Log' keyword added.
+;
+;
 
         AREA    fastrc5area, CODE, READONLY
 

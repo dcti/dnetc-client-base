@@ -1,3 +1,9 @@
+#
+# $Log: crunch_lintilla_296.ppc.s,v $
+# Revision 1.2  1998/06/14 10:30:36  friedbait
+# 'Log' keyword added.
+#
+#
  .file	"crunch-ppc.cpp"
 gcc2_compiled.:
  .section	".text"
