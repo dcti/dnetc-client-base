@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.74 2000/11/09 19:33:12 oliver Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.75 2000/11/10 03:13:33 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -72,6 +72,8 @@ struct thread_param_block
     unsigned long threadID;
   #elif (CLIENT_OS == OS_NETWARE)
     long threadID;
+  #elif (CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)
+    long threadID;
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
   #elif (CLIENT_OS == OS_MACOS)
@@ -95,9 +97,6 @@ struct thread_param_block
   struct __dyn_timeslice_struct *dyn_timeslice_table;  
   struct __dyn_timeslice_struct rt_dyn_timeslice_table[CONTEST_COUNT];
   struct thread_param_block *next;
-  #if (CLIENT_OS == OS_LINUX) && defined(THREAD_BY_CLONE)
-  char clone_stack[8192];
-  #endif
 };
 
 // ----------------------------------------------------------------------
@@ -148,7 +147,9 @@ static void __cruncher_yield__(int is_non_preemptive_cruncher)
     if (riscos_in_taskwindow)
       riscos_upcall_6();
   #elif (CLIENT_OS == OS_LINUX)
-    #if defined(__ELF__) && !defined(THREAD_BY_CLONE)
+    #if defined(HAVE_KTHREADS) /* kernel threads */
+    kthread_yield();
+    #elif defined(__ELF__)
     sched_yield();
     #else // a.out libc4
     NonPolledUSleep( 0 ); /* yield */
@@ -340,7 +341,7 @@ void Go_mt( void * parm )
     thrparams->dyn_timeslice_table[2].usec = 4000000;  // OGR
     #endif
   }
-#elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
+#elif defined(_POSIX_THREADS_SUPPORTED) /* cputypes.h */
   if (thrparams->realthread)
   {
     sigset_t signals_to_block;
@@ -589,8 +590,8 @@ static int __StopThread( struct thread_param_block *thrparams )
       #elif (CLIENT_OS == OS_NETWARE)
       while (!thrparams->hasexited)
         delay(100);
-      #elif (CLIENT_OS == OS_LINUX) && defined(THREAD_BY_CLONE)
-      waitpid( thrparams->threadID, NULL, 0 );
+      #elif (CLIENT_OS==OS_LINUX) && defined(HAVE_KTHREADS) /*kernel threads*/
+      kthread_join( thrparams->threadID );
       #elif (CLIENT_OS == OS_FREEBSD)
       while (!thrparams->hasexited) 
         NonPolledUSleep(100000);
@@ -832,39 +833,17 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           } /* if parent or child */
         } /* thrparam inheritance ok */
       } /* FreeBSD >= 3.0 (+ SMP kernel optional) + global inheritance ok */
-      #elif (CLIENT_OS == OS_LINUX) && defined(THREAD_BY_CLONE)
+      #elif (CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)
       {
         if (thrparams->threadnum == 0) /* first thread */
           use_poll_process = 1;
         else
         {
-          pid_t pid;
-          void (*fn)(void *) = (void (*)(void *))Go_mt;
-          void **newstack; char *stacktop = thrparams->clone_stack;
-          stacktop = (stacktop-16)+sizeof(thrparams->clone_stack); 
-          stacktop -= (((unsigned long)stacktop) & (sizeof(long)-1));
-          newstack = (void **)stacktop;
-          *--newstack = (void *)thrparams;
-          SetGlobalPriority(thrparams->priority);
-          __asm__ __volatile__(
-                "int $0x80\n\t"   /* pid = clone( newstack, flags ); */
-                "testl %0,%0\n\t" /* if (pid == 0)       */
-                "jne 1f\n\t"      /* {                   */  
-                "call *%3\n\t"    /*   rc = (*fn)(*esp); */ 
-                "movl %2,%0\n\t"  /*                     */
-                "int $0x80\n\t"   /*   exit(rc);         */
-                "1:\t"            /* }                   */
-                :"=a" (pid)       /* return pid;         */
-                :"0" (__NR_clone), "i" (__NR_exit), "r" (fn), 
-                 "b" (CLONE_VM|CLONE_FS/*|CLONE_FILES*/|CLONE_SIGHAND|0),
-                 "c" (newstack) );
-          success = 0;
-          if (pid > 0)
-          {
-            thrparams->threadID = pid;
-            success = 1;
-          }
-        }
+          SetGlobalPriority(thrparams->priority); /* so priority is inherited */
+          thrparams->threadID = kthread_create( (void (*)(void *))Go_mt, 
+                                                8192, (void *)thrparams );
+          success = (thrparams->threadID > 0);
+        }          
       }
       #elif (CLIENT_OS == OS_WIN32)
       {

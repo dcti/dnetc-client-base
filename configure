@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.201 2000/11/09 22:50:17 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.202 2000/11/10 03:15:23 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -115,6 +115,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   elif [ "$1" = "linux" ]; then 
     COMMON_SRCS="platforms/linux/li_inst.c ${COMMON_SRCS}"
     if [ "$2" = "x86" ]; then #maybe others as well
+      COMMON_SRCS="platforms/linux/li_kthread.c ${COMMON_SRCS}"
       #(obsolete) TARGET_CCFLAGS="$TARGET_CCFLAGS -DUNIVERSALRESOLVER"
       COMMON_SRCS="platforms/linux/resolv.c ${COMMON_SRCS}"
     fi

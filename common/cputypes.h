@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.37 2000/11/02 18:29:46 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.38 2000/11/10 03:13:34 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -468,16 +468,11 @@
   #include <sys/mman.h>     /* minherit() */
 #elif (CLIENT_OS == OS_LINUX) && \
   !defined(MULTITHREAD) && (CLIENT_CPU == CPU_X86)
+  #define HAVE_KTHREADS /* platforms/linux/li_kthread.c */
   /* uses clone() instead of pthreads ... */
-  #define THREAD_BY_CLONE
   /* ... but first thread is polled ... */
-  #define DYN_TIMESLICE
-  #include <linux/unistd.h>
-  #include <linux/sched.h>
-  //#include <sys/types.h>
-  #include <sys/wait.h>
-  typedef pid_t THREADID;
   #define OS_SUPPORTS_SMP
+  typedef long THREADID;
 #elif defined(MULTITHREAD)
   /* 
   Q: can't we simply use if defined(_POSIX_THREADS), as this is often defined
@@ -501,6 +496,8 @@
     #define PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_GLOBAL
     #define pthread_sigmask(a,b,c)
   #elif (CLIENT_OS == OS_MACOSX)
+    #define pthread_sigmask(a,b,c) //no
+  #elif (CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)
     #define pthread_sigmask(a,b,c) //no
   #elif (CLIENT_OS == OS_AIX)
 	/* only for AIX 4.1??? */
@@ -704,10 +701,12 @@ extern "C" {
   typedef unsigned long long ui64;
   typedef signed long long si64;
 #elif (defined(__WATCOMC__) && (__WATCOMC__ >= 11))
+  #if (CLIENT_OS != OS_NETWARE) /* only if intrinsic (no %,/,[vfs]printf) */
   #define HAVE_I64
   #define SIZEOF_LONGLONG 8
   typedef unsigned __int64 ui64;
   typedef __int64 si64;
+  #endif
 #elif (defined(_MSC_VER) && (_MSC_VER >= 11)) /* VC++ >= 5.0 */
   #define HAVE_I64
   #define SIZEOF_LONGLONG 8

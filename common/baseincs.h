@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.44 2000/11/02 18:29:44 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.45 2000/11/10 03:13:33 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -225,6 +225,10 @@
   #define NULL 0 /* defines NULL to be ((void *)0) */
   #if defined(_MIT_POSIX_THREADS)
     #define sched_yield() pthread_yield()
+  #elif defined(HAVE_KTHREADS)
+    extern "C" int kthread_join( long );
+    extern "C" long kthread_create( void (*)(void *), int , void * );
+    extern "C" int kthread_yield(void);
   #elif defined(__ELF__) && !defined(_LINUX_SCHED_H)
     #include <sched.h>
   #endif
@@ -312,4 +316,3 @@
 #endif
 
 #endif /* __BASEINCS_H__ */
-
