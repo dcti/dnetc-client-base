@@ -6,7 +6,7 @@
 //
 
 #ifndef __LURK_H__
-#define __LURK_H__ "@(#)$Id: lurk.h,v 1.21.2.4 2000/09/20 18:15:51 cyp Exp $"
+#define __LURK_H__ "@(#)$Id: lurk.h,v 1.21.2.5 2000/09/20 18:22:49 cyp Exp $"
 
 /* lurk: fetch/flush if modem goes online but also go online if fetch/flush needed */
 #define CONNECT_LURK         0x01 
@@ -38,32 +38,28 @@ struct dialup_conf
 class Lurk
 {
 public:
-
+  Lurk(); 
+  ~Lurk();
+  // initialization/stop. -> 0=success, !0 = failure
+  int Start(int nonetworking, struct dialup_conf *);  
+  int Stop(void);
+  
+  // state info
+  int IsWatching(void); //Start() was ok and CONNECT_LURK|LURKONLY|DOD */
+  int IsWatcherPassive(void); //Start was ok and lurkmode is CONNECT_LURKONLY
+  int IsConnected(void); // test (and say) connection state
   const char **GetConnectionProfileList(void); //get the list of conn profiles
   int GetCapabilityFlags(void);      //return supported CONNECT_* bits 
-
-  // methods used for lurk
-  int CheckIfConnectRequested(void); // -> 0=no, !0=yes
-  int CheckForStatusChange(void);    // -> 0 = nochange, !0 connection dropped
 
   // methods used for dialup initiation/hangup
   int DialIfNeeded(int ignore_lurkonly_flag); // -> 0=success, !0 = failure
   int HangupIfNeeded(void);          // -> 0=success, !0 = failure
 
-  // initialization/stop.
-  int Start(int nonetworking, struct dialup_conf *);  
-                                     // Start -> 0=success, !0 = failure
-  int Stop(void);                    // Stop  -> 0=success, !0 = failure
-
-  // test if we are currently connected. (verbose version of InternalIsConnected)
-  int IsConnected(void);
-
-  // constructor and destructor.
-  Lurk(); 
-  ~Lurk();
-  int IsWatching(void); //Start() was ok and CONNECT_LURK|LURKONLY|DOD */
-  int IsWatcherPassive(void); //Start was ok and lurkmode is CONNECT_LURKONLY
-  
+  #if 0 /* unused - IsConnected() does everything we need */
+  // methods used for lurk
+  int CheckIfConnectRequested(void); // -> 0=no, !0=yes
+  int CheckForStatusChange(void);    // -> 0 = nochange, !0 connection dropped
+  #endif
 protected:
   int InternalIsConnected(void); /* workhorse */
   int islurkstarted;      //was lurk.Start() successful?
