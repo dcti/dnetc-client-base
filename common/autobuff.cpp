@@ -9,6 +9,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: autobuff.cpp,v $
+// Revision 1.13  1999/03/08 14:55:40  jlawson
+// eliminated stray cvs tag.
+//
 // Revision 1.12  1999/02/28 02:29:04  jlawson
 // merged stepline functionality from proxy codebase.
 //
@@ -20,7 +23,6 @@
 //
 // Revision 1.9  1998/07/08 23:30:33  remi
 // Cleared a GCC warning.
-// Tweaked $Id: autobuff.cpp,v 1.12 1999/02/28 02:29:04 jlawson Exp $.
 //
 // Revision 1.8  1998/07/08 09:23:17  jlawson
 // eliminated integer type warnings on win16
@@ -45,7 +47,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *autobuff_cpp(void) {
-return "@(#)$Id: autobuff.cpp,v 1.12 1999/02/28 02:29:04 jlawson Exp $"; }
+return "@(#)$Id: autobuff.cpp,v 1.13 1999/03/08 14:55:40 jlawson Exp $"; }
 #endif
 
 #include <string.h>
