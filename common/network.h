@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.9 2000/05/25 14:40:56 cyp Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.10 2000/06/04 11:01:58 oliver Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -110,18 +110,17 @@ extern "C" {
   extern "C" {
   #include "platforms/amiga/amiga.h"
   #include <assert.h>
-  #include <clib/socket_protos.h>
-  #include <pragmas/socket_pragmas.h>
+  #define _KERNEL
+  #include <sys/socket.h>
+  #undef _KERNEL
+  #ifndef __MAIL_CPP__
+    #include <proto/socket.h>
+  #endif
   #include <sys/ioctl.h>
   #include <sys/time.h>
-  #include <netdb.h>
-  extern struct Library *SocketBase;
   #define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
-  #ifndef __PPC__
-     #define inet_addr(host) inet_addr((unsigned char *)host)
-     #define gethostbyname(host) gethostbyname((unsigned char *)host)
-  #endif
   typedef int SOCKET;
+  extern struct Library *SocketBase;
   }
 #elif (CLIENT_OS == OS_BEOS)
   #include <sys/types.h>
