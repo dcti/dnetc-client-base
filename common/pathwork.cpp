@@ -21,7 +21,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.14 1999/04/04 17:47:59 cyp Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.15 1999/05/09 03:41:01 silby Exp $"; }
 
 #include <stdio.h>
 #include <string.h>
@@ -313,7 +313,12 @@ const char *GetFullPathForFilename( const char *filename )
   else if (strlen(pathBuffer)+strlen(filename)+1 > sizeof(pathBuffer))
     outpath = "";
   else
-    outpath = strcat(pathBuffer, filename);
+    {
+    if (*pathBuffer)
+      outpath = strcat(pathBuffer, filename);
+    else
+      outpath = filename;
+    }
 
   #ifdef DEBUG_PATHWORK
   printf( "got \"%s\" returning \"%s\"\n", filename, outpath );
