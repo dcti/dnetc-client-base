@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi4_cpp(void) {
-return "@(#)$Id: rc5ansi4.cpp,v 1.8 2002/10/03 22:06:58 andreasb Exp $"; }
+return "@(#)$Id: rc5ansi4.cpp,v 1.9 2002/10/15 15:12:17 acidblood Exp $"; }
 
 #include "problem.h"
 #define P 0xB7E15163
@@ -32,21 +32,127 @@ u32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
     L1[1] = L2[1] = L3[1] = L4[1] = rc5_72unitwork->L0.mid;
     L1[0] = L2[0] = L3[0] = L4[0] = rc5_72unitwork->L0.lo;
 
-    for (S1[0] = S2[0] = S3[0] = S4[0] = P, i = 1; i < 26; i++)
-      S1[i] = S2[i] = S3[i] = S4[i] = S1[i-1] + Q;
+#define KEY_INIT(i) S1[i] = S2[i] = S3[i] = S4[i] = P + i*Q;
 
-    for (A1 = A2 = A3 = A4 = B1 = B2 = B3 = B4 = i = j = k = 0;
-         k < 3*26; k++, i = (i + 1) % 26, j = (j + 1) % 3)
-    {
-      A1 = S1[i] = ROTL(S1[i]+(A1+B1),3);
-      A2 = S2[i] = ROTL(S2[i]+(A2+B2),3);
-      A3 = S3[i] = ROTL(S3[i]+(A3+B3),3);
-      A4 = S4[i] = ROTL(S4[i]+(A4+B4),3);
-      B1 = L1[j] = ROTL(L1[j]+(A1+B1),(A1+B1));
-      B2 = L2[j] = ROTL(L2[j]+(A2+B2),(A2+B2));
-      B3 = L3[j] = ROTL(L3[j]+(A3+B3),(A3+B3));
-      B4 = L4[j] = ROTL(L4[j]+(A4+B4),(A4+B4));
-    }
+	KEY_INIT(0);
+	KEY_INIT(1);
+	KEY_INIT(2);
+	KEY_INIT(3);
+	KEY_INIT(4);
+	KEY_INIT(5);
+	KEY_INIT(6);
+	KEY_INIT(7);
+	KEY_INIT(8);
+	KEY_INIT(9);
+	KEY_INIT(10);
+	KEY_INIT(11);
+	KEY_INIT(12);
+	KEY_INIT(13);
+	KEY_INIT(14);
+	KEY_INIT(15);
+	KEY_INIT(16);
+	KEY_INIT(17);
+	KEY_INIT(18);
+	KEY_INIT(19);
+	KEY_INIT(20);
+	KEY_INIT(21);
+	KEY_INIT(22);
+	KEY_INIT(23);
+	KEY_INIT(24);
+	KEY_INIT(25);
+
+#define ROTL_BLOCK(i,j) \
+    A1 = S1[i] = ROTL(S1[i]+(A1+B1),3); \
+    A2 = S2[i] = ROTL(S2[i]+(A2+B2),3); \
+    A3 = S3[i] = ROTL(S3[i]+(A3+B3),3); \
+    A4 = S4[i] = ROTL(S4[i]+(A4+B4),3); \
+    B1 = L1[j] = ROTL(L1[j]+(A1+B1),(A1+B1)); \
+    B2 = L2[j] = ROTL(L2[j]+(A2+B2),(A2+B2)); \
+    B3 = L3[j] = ROTL(L3[j]+(A3+B3),(A3+B3)); \
+    B4 = L4[j] = ROTL(L4[j]+(A4+B4),(A4+B4)); 
+
+    A1 = A2 = A3 = A4 = B1 = B2 = B3 = B4 = i = j = k = 0;
+    ROTL_BLOCK(0,0);
+    ROTL_BLOCK(1,1);
+    ROTL_BLOCK(2,2);
+    ROTL_BLOCK(3,0);
+    ROTL_BLOCK(4,1);
+    ROTL_BLOCK(5,2);
+    ROTL_BLOCK(6,0);
+    ROTL_BLOCK(7,1);
+    ROTL_BLOCK(8,2);
+    ROTL_BLOCK(9,0);
+    ROTL_BLOCK(10,1);
+    ROTL_BLOCK(11,2);
+    ROTL_BLOCK(12,0);
+    ROTL_BLOCK(13,1);
+    ROTL_BLOCK(14,2);
+    ROTL_BLOCK(15,0);
+    ROTL_BLOCK(16,1);
+    ROTL_BLOCK(17,2);
+    ROTL_BLOCK(18,0);
+    ROTL_BLOCK(19,1);
+    ROTL_BLOCK(20,2);
+    ROTL_BLOCK(21,0);
+    ROTL_BLOCK(22,1);
+    ROTL_BLOCK(23,2);
+    ROTL_BLOCK(24,0);
+    ROTL_BLOCK(25,1);
+
+    ROTL_BLOCK(0,2);
+    ROTL_BLOCK(1,0);
+    ROTL_BLOCK(2,1);
+    ROTL_BLOCK(3,2);
+    ROTL_BLOCK(4,0);
+    ROTL_BLOCK(5,1);
+    ROTL_BLOCK(6,2);
+    ROTL_BLOCK(7,0);
+    ROTL_BLOCK(8,1);
+    ROTL_BLOCK(9,2);
+    ROTL_BLOCK(10,0);
+    ROTL_BLOCK(11,1);
+    ROTL_BLOCK(12,2);
+    ROTL_BLOCK(13,0);
+    ROTL_BLOCK(14,1);
+    ROTL_BLOCK(15,2);
+    ROTL_BLOCK(16,0);
+    ROTL_BLOCK(17,1);
+    ROTL_BLOCK(18,2);
+    ROTL_BLOCK(19,0);
+    ROTL_BLOCK(20,1);
+    ROTL_BLOCK(21,2);
+    ROTL_BLOCK(22,0);
+    ROTL_BLOCK(23,1);
+    ROTL_BLOCK(24,2);
+    ROTL_BLOCK(25,0);
+
+    ROTL_BLOCK(0,1);
+    ROTL_BLOCK(1,2);
+    ROTL_BLOCK(2,0);
+    ROTL_BLOCK(3,1);
+    ROTL_BLOCK(4,2);
+    ROTL_BLOCK(5,0);
+    ROTL_BLOCK(6,1);
+    ROTL_BLOCK(7,2);
+    ROTL_BLOCK(8,0);
+    ROTL_BLOCK(9,1);
+    ROTL_BLOCK(10,2);
+    ROTL_BLOCK(11,0);
+    ROTL_BLOCK(12,1);
+    ROTL_BLOCK(13,2);
+    ROTL_BLOCK(14,0);
+    ROTL_BLOCK(15,1);
+    ROTL_BLOCK(16,2);
+    ROTL_BLOCK(17,0);
+    ROTL_BLOCK(18,1);
+    ROTL_BLOCK(19,2);
+    ROTL_BLOCK(20,0);
+    ROTL_BLOCK(21,1);
+    ROTL_BLOCK(22,2);
+    ROTL_BLOCK(23,0);
+    ROTL_BLOCK(24,1);
+    ROTL_BLOCK(25,2);
+
     A1 = rc5_72unitwork->plain.lo + S1[0];
     A2 = rc5_72unitwork->plain.lo + S2[0];
     A3 = rc5_72unitwork->plain.lo + S3[0];
@@ -55,17 +161,30 @@ u32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
     B2 = rc5_72unitwork->plain.hi + S2[1];
     B3 = rc5_72unitwork->plain.hi + S3[1];
     B4 = rc5_72unitwork->plain.hi + S4[1];
-    for (i=1; i<=12; i++)
-    {
-      A1 = ROTL(A1^B1,B1)+S1[2*i];
-      A2 = ROTL(A2^B2,B2)+S2[2*i];
-      A3 = ROTL(A3^B3,B3)+S3[2*i];
-      A4 = ROTL(A4^B4,B4)+S4[2*i];
-      B1 = ROTL(B1^A1,A1)+S1[2*i+1];
-      B2 = ROTL(B2^A2,A2)+S2[2*i+1];
-      B3 = ROTL(B3^A3,A3)+S3[2*i+1];
-      B4 = ROTL(B4^A4,A4)+S4[2*i+1];
-    }
+
+#define FINAL_BLOCK(i) \
+    A1 = ROTL(A1^B1,B1)+S1[2*i]; \
+    A2 = ROTL(A2^B2,B2)+S2[2*i]; \
+    A3 = ROTL(A3^B3,B3)+S3[2*i]; \
+    A4 = ROTL(A4^B4,B4)+S4[2*i]; \
+    B1 = ROTL(B1^A1,A1)+S1[2*i+1]; \
+    B2 = ROTL(B2^A2,A2)+S2[2*i+1]; \
+    B3 = ROTL(B3^A3,A3)+S3[2*i+1]; \
+    B4 = ROTL(B4^A4,A4)+S4[2*i+1];
+
+    FINAL_BLOCK(1);
+    FINAL_BLOCK(2);
+    FINAL_BLOCK(3);
+    FINAL_BLOCK(4);
+    FINAL_BLOCK(5);
+    FINAL_BLOCK(6);
+    FINAL_BLOCK(7);
+    FINAL_BLOCK(8);
+    FINAL_BLOCK(9);
+    FINAL_BLOCK(10);
+    FINAL_BLOCK(11);
+    FINAL_BLOCK(12);
+
     if (A1 == rc5_72unitwork->cypher.lo)
 	{
       ++rc5_72unitwork->check.count;
