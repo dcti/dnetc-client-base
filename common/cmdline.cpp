@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.12 1999/06/11 19:02:04 patrick Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.13 1999/06/13 16:07:22 cyp Exp $"; }
 
 //#define TRACE
 
@@ -25,12 +25,13 @@ return "@(#)$Id: cmdline.cpp,v 1.133.2.12 1999/06/11 19:02:04 patrick Exp $"; }
 #include "pathwork.h"  // InitWorkingDirectoryFromSamplePaths();
 #include "lurk.h"      // dialup object
 #include "util.h"      // trace
+#include "sleepdef.h"  // usleep()
 #include "modereq.h"   // get/set/clear mode request bits
 #include "console.h"   // ConOutErr()
 #include "clitime.h"   // CliTimer() for -until setting
-#include "cmdline.h"   // ourselves
 #include "confrwv.h"   // ValidateConfig()
 #include "clicdata.h"  // CliGetContestNameFromID()
+#include "cmdline.h"   // ourselves
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
