@@ -4,14 +4,11 @@
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * ---------------------------------------------------------------------
- * Simple public versions of private functions with the same name, 
- * for use in the public-source code distributions.
- * ---------------------------------------------------------------------
- */
+ * Public source buffer handling stuff
+*/
 
-const char *buffupd_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.3 2000/04/14 12:59:06 cyp Exp $"; }
+const char *buffpub_cpp(void) {
+return "@(#)$Id: buffpub.cpp,v 1.1.2.4 2000/05/08 11:17:08 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -31,9 +28,7 @@ return "@(#)$Id: buffpub.cpp,v 1.1.2.3 2000/04/14 12:59:06 cyp Exp $"; }
 #include "random.h"   //Random()
 #include "version.h"  //needed by FILEENTRY_x macros
 #include "probfill.h" //FILEENTRY_x macros
-#include "buffshim.h" //BUFFEROPEN/BUFFEROPENCREATE/BUFFERCREATE macros
 #include "buffbase.h" //the functions we're intending to export.
-
 
 /* --------------------------------------------------------------------- */
 
@@ -49,7 +44,7 @@ int BufferZapFileRecords( const char *filename )
   filename = GetFullPathForFilename( filename );
   if (!DoesFileExist( filename )) //file doesn't exist, which is ok
     return 0;
-  file = BUFFERCREATE( filename ); //truncate the file to zero length
+  file = fopen( filename, "w" ); //truncate the file to zero length
   if (!file)
   {
     remove(filename); //write failed, so delete it
@@ -64,27 +59,39 @@ int BufferZapFileRecords( const char *filename )
 
 static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
 {
+  /* OSs that require "b" for fopen() */
+  #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
+       (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_MACOS) || \
+       (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
+       (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_OS2) || \
+       (CLIENT_OS == OS_WIN16))
+  #define BUFFOPEN_MODE "b"
+  #else
+  #define BUFFOPEN_MODE ""
+  #endif
+
   FILE *file = NULL;
-  int failed = 0;
   u32 filelen;
+  int failed = 0;
+  const char *qfname = GetFullPathForFilename( filename );
 
-  filename = GetFullPathForFilename( filename );
-
-  if (!DoesFileExist( filename )) // file doesn't exist, so create it
+  if (!DoesFileExist( qfname )) // file doesn't exist, so create it
   {
-    if ((file = BUFFERCREATE( filename ))==NULL)
+    file = fopen( qfname, "w+" BUFFOPEN_MODE );
+    if (file == NULL)
       failed = 1;
     else // file created. may be an exclusive open, so close and reopen
       fclose( file );
   }
   if (failed == 0)
   {
-    if (!DoesFileExist( filename )) // file still doesn't exist
+    if (!DoesFileExist( qfname )) // file still doesn't exist
     {
       Log("Error opening buffer file... Access was denied.\n" );
       return NULL;
     }
-    if ((file = BUFFEROPEN( filename ))==NULL)
+    file = fopen( qfname, "r+" BUFFOPEN_MODE );
+    if (file == NULL)
       failed = 1;
   }
   if (failed != 0)
