@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.51 1999/11/22 00:29:34 elric Exp $
+# @(#)$Id: configure,v 1.222.2.52 1999/11/22 12:48:02 chrisb Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1307,7 +1307,7 @@ case "$1" in
 			-J/home/cberry/play/riscoslib/CLib \
 			-D__showids__ \
 			-DCOMPAT_INET4 -D__riscos \
-			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
+			 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="platforms/riscos/riscos.cpp"
 	TARGET_ADDASMS="platforms/riscos/riscosasm.s \
 			rc5/arm/rc5-arm-1.s rc5/arm/rc5-arm-2.s rc5/arm/rc5-arm-3.s \
