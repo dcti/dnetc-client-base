@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.16 1999/11/29 22:47:30 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.17 1999/12/05 00:29:01 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -192,6 +192,11 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     #elif (CLIENT_OS == OS_RISCOS)
     {
       cpucount = riscos_count_cpus();
+    }
+    #elif (CLIENT_OS == OS_MACOS)
+    {
+      cpucount = 1;
+      // Multiprocessor support for MacOS will be reintroduced in a later update
     }
     #elif ( (CLIENT_OS == OS_DEC_UNIX) && defined(OS_SUPPORTS_SMP))
     {
@@ -478,7 +483,7 @@ static long __GetRawProcessorID(const char **cpuname)
                 {       8, "740/750/G3"      },
                 {       9, "604e"            },
                 {      10, "604ev"           },
-                {      11, "7400/G4"         }
+                {      12, "7400/G4"         }
                 };
 
   #if (CLIENT_OS == OS_MACOS)
@@ -486,13 +491,10 @@ static long __GetRawProcessorID(const char **cpuname)
   {
     // Note: need to use gestaltNativeCPUtype in order to get the correct
     // value for G3 upgrade cards in a 601 machine.
-    long result, processorAttributes = 0;
+    long result;
     detectedtype = -1;
-    if (Gestalt(gestaltPowerPCProcessorFeatures, &processorAttributes) != noErr)
-      processorAttributes = 0;
-    if ((gestaltPowerPCHasVectorInstructions & processorAttributes) != 0)
-      detectedtype = 11; // AltiVec
-    else if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
+    
+    if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
       detectedtype = result - 0x100L;
   }
   #elif (CLIENT_OS == OS_LINUX)
