@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.74 2000/07/11 02:44:52 mfeiri Exp $
+# $Id: makefile.vc,v 1.75 2000/07/11 10:57:07 mfeiri Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -71,7 +71,7 @@ OPTS_LINK_DEBUG = /release
 
 OPTS_MSVC = -nologo -I$(COMMONPATH) -I$(PLATSRCPATH) -I$(OGRSRCPATH) \
             -I$(CSCSRCPATH) -DMULTITHREAD -D__WIN32__ -DLURK \
-            -W3 -MT -GR- -GX- -GA -GF \
+            -DXMLSERVE -W3 -MT -GR- -GX- -GA -GF \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG) 
 OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
 OPTS_LINK = /nologo /incremental:no /version:3.10 \
@@ -130,6 +130,9 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/selftest.obj   \
         $(OUTPUTPATH)/setprio.obj    \
         $(OUTPUTPATH)/triggers.obj   \
+        $(OUTPUTPATH)/xmlserve.obj   \
+        $(OUTPUTPATH)/netio.obj   \
+        $(OUTPUTPATH)/minihttp.obj   \
         $(OUTPUTPATH)/util.obj
 
 PLAT_OBJS =                          \
