@@ -18,15 +18,20 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.36 2000/07/11 04:08:18 mfeiri Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.37 2002/09/02 00:35:42 andreasb Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
 #include <ctype.h>   /* tolower()/isctrl(). do not use isspace()! */
 #include <stdlib.h>  /* malloc()/free()/atoi() */
 #include <limits.h>  /* UINT_MAX */
-#if defined(__BORLANDC__) || defined(_MSC_VER) /*don't dare use the 'uni' word*/
+
+#if defined(__BORLANDC__) || defined(_MSC_VER)
 #include <io.h>      /* access() */
+#elif defined(__riscos)
+extern "C" { /* headers are unsafe for c++ */
+#include <unistd.h>
+}
 #else
 #include <unistd.h>  /* access() */
 #endif
@@ -482,7 +487,6 @@ static unsigned long ini_doit( int dowrite, const char *sect,
         }
         else if (!changed) /* no old key in section */
         {
-          long i;
           if (sectoffend == 0)
             sectoffend = filelen;
           /*can't use isspace(data[sectoffend-1])*/

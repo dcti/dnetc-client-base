@@ -1,58 +1,65 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.12 2000/06/02 06:24:56 jlawson Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.13 2002/09/02 00:35:42 andreasb Exp $"
 
-#define LOGFILETYPE_NONE    0 //
+/* this is shared with Configure() */
+#define LOGFILETYPE_NONE    0 //no logging to file
 #define LOGFILETYPE_NOLIMIT 1 //unlimited (or limit == -1)
 #define LOGFILETYPE_RESTART 2 //then logLimit is in KByte 
 #define LOGFILETYPE_FIFO    3 //then logLimit is in KByte (minimum 100K)
 #define LOGFILETYPE_ROTATE  4 //then logLimit is in days
 
+/* this is shared with anything that uses LogTo() */
 #define LOGTO_NONE       0x00 
 #define LOGTO_SCREEN     0x01
 #define LOGTO_FILE       0x02
 #define LOGTO_MAIL       0x04
 #define LOGTO_RAWMODE    0x80    
 
-#define MAX_LOGENTRY_LEN 1024 //don't make this smaller than 1K!
-
-#define ASSERT_WIDTH_80     //show where badly formatted lines are cropping up
-
 /* ---------------------------------------------------- */
+
+#if defined(__GNUC__)
+#define __CHKFMT_PRINTF __attribute__((format(printf,1,2)))
+#define __CHKFMT_LOGTO  __attribute__((format(printf,2,3)))
+#else
+#define __CHKFMT_PRINTF 
+#define __CHKFMT_LOGTO 
+#endif
 
 //Flush mail and if last screen write didn't end with a LF then do that now. 
 extern void LogFlush( int forceflush );
 
 //Log message to screen only. Make adjustments, like fixing a missing datestamp
-extern void LogScreen( const char *format, ... );
+extern void LogScreen( const char *format, ... ) __CHKFMT_PRINTF;
 
 //Log to mail+file+screen. Make adjustments.
-extern void Log( const char *format, ... );
+extern void Log( const char *format, ... ) __CHKFMT_PRINTF;
 
 //Log message in raw form (no adjustments) to screen only.
-extern void LogScreenRaw( const char *format, ... );
+extern void LogScreenRaw( const char *format, ... ) __CHKFMT_PRINTF;
 
 //Log to mail+file+screen. No adjustments.
-extern void LogRaw( const char *format, ... );
+extern void LogRaw( const char *format, ... ) __CHKFMT_PRINTF;
 
 //Log to LOGTO_* flags (RAW implies screen)
-extern void LogTo( int towhat, const char *format, ... );
+extern void LogTo( int towhat, const char *format, ... ) __CHKFMT_LOGTO;
 
 //display percent bar. (bar is now always compound form)
 extern void LogScreenPercent( unsigned int load_problem_count );
 
-//Return name of last accessed logfile, or NULL if not logging to file, 
+//Return name of current logfile, or NULL if not logging to file,
 //or "" if logfile hasn't been accessed yet.
-extern const char *LogGetCurrentLogFilename( void );
+extern const char *LogGetCurrentLogFilename(char *buffer, unsigned int len);
 
 //init/deinit prototypes
 void DeinitializeLogging(void);
-void InitializeLogging( int noscreen, int nopercent, const char *logfilename, 
+void InitializeLogging( int noscreen, int nopercent, int nopercbaton,
+                        const char *logfilename, 
                         const char *logfiletype, const char *logfilelimit, 
                         long mailmsglen, const char *smtpsrvr, 
                         unsigned int smtpport, const char *smtpfrom, 

@@ -1,57 +1,19 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.146 2000/07/11 04:24:59 mfeiri Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.147 2002/09/02 00:35:41 andreasb Exp $"
 
-
-// ------------------
-
-enum {
-  RC5, // http://www.rsa.com/rsalabs/97challenge/
-  DES, // http://www.rsa.com/rsalabs/des3/index.html
-  OGR, // http://members.aol.com/golomb20/
-  CSC  // http://www.cie-signaux.fr/security/index.htm
-};
-#define CONTEST_COUNT       4  /* RC5,DES,OGR,CSC */
-
-// ------------------
-
-#include "problem.h"           /* ContestWork structure */
-#include "lurk.h"              /* client structure copy of lurk_conf */
-
-// ------------------
-
-#ifndef MIPSpro
-#pragma pack(1)               /* no padding allowed */
-#endif /* ! MIPSpro */
-
-typedef struct
-{
-  ContestWork work;/* {key,iv,plain,cypher,keysdone,iter} or {stub,pad} */
-  u32  resultcode; /* core state: RESULT_WORKING:0|NOTHING:1|FOUND:2 */
-  char id[59];     /* d.net id of worker that last used this */
-  u8   contest;    /* 0=rc5,1=des,etc. If this is changed, make this u32 */
-  u8   cpu;        /* 97.11.25 If this is ever changed, make this u32 */
-  u8   os;         /* 97.11.25 If this is ever changed, make this u32 */
-  u8   buildhi;    /* 97.11.25 If this is ever changed, make this u32 */
-  u8   buildlo;    /* 97.11.25 If this is ever changed, make this u32 */
-} WorkRecord;
-
-#ifndef MIPSpro
-# pragma pack()
-#endif /* ! MIPSpro */
-
-// ------------------
+#include "problem.h" /* WorkRecord, CONTEST_COUNT */
+#include "lurk.h"    /* lurk_conf structure */
 
 #define __TEXTIFY(x) #x
 #define _TEXTIFY(x) __TEXTIFY(x)
 
-#define BUFTHRESHOLD_DEFAULT             24  /* Now in work units */
-#define PREFERREDBLOCKSIZE_DEFAULT       30
+#define PREFERREDBLOCKSIZE_DEFAULT       31  /* was 30, now 31 */
 #define PREFERREDBLOCKSIZE_MIN           28
 #define PREFERREDBLOCKSIZE_MAX           33
 #define BUFFER_DEFAULT_IN_BASENAME  "buff-in"
@@ -67,22 +29,25 @@ struct membuffstruct
 
 // ------------------
 
-#define PROJECTFLAGS_CLOSED 0x01 /* updated only from net. never saved to disk */
-/* user-disabled projects don't have a flag (yet). They are 'invisible' to all
-   but the configuration functions ('invalid' slot in the loadorder_map)
+/* project flags are updated only from net. never saved to disk
+ * user-disabled projects don't have a flag. They are 'invisible' to all
+ * but the configuration functions ('invalid' slot in the loadorder_map)
 */
+#define PROJECTFLAGS_CLOSED     0x01
+#define PROJECTFLAGS_SUSPENDED  0x02 /* no data available */
+
+// ------------------
 
 typedef struct
 {
   /* non-user-configurable */
   int  nonewblocks;
-  int  randomchanged;
-  int  randomprefix;
   int  rc564closed;
   int  stopiniio;
   u32  scheduledupdatetime;
   char inifilename[MINCLIENTOPTSTRLEN*2];
-  u32  last_buffupd_time; /* monotonic. goes with max_buffupd_interval */
+  u32  last_buffupd_time; /* monotonic. goes with max_buffupd_[retry_]interval */
+  int  last_buffupd_failed_time;
   char project_flags[CONTEST_COUNT]; /* do NOT save to disk! */
 
   /* -- general -- */
@@ -90,7 +55,8 @@ typedef struct
   int  quietmode;
   int  blockcount;
   int  minutes;
-  int  percentprintingoff;
+  int  crunchmeter;
+  int  corenumtotestbench;
 
   /* -- buffers -- */
   int  nodiskbuffers;
@@ -105,7 +71,6 @@ typedef struct
     char keyproxy[MINCLIENTOPTSTRLEN];
     int  keyport;
     char httpproxy[MINCLIENTOPTSTRLEN];
-    int  httpport;
     int  uuehttpmode;
     char httpid[MINCLIENTOPTSTRLEN*2];
   int  noupdatefromfile;
@@ -118,6 +83,7 @@ typedef struct
   int inthreshold[CONTEST_COUNT]; 
   int timethreshold[CONTEST_COUNT];  /* in hours */
   int max_buffupd_interval; /* the better 'outthreshold'. in minutes */
+  int max_buffupd_retry_interval;
   #if (!defined(NO_OUTBUFFER_THRESHOLDS))
   int outthreshold[CONTEST_COUNT];
   #endif
@@ -144,7 +110,6 @@ typedef struct
   char logfilelimit[MINCLIENTOPTSTRLEN]; /* "nnn K|M|days" etc */
   int  messagelen;
   char smtpsrvr[MINCLIENTOPTSTRLEN];
-  int  smtpport;
   char smtpfrom[MINCLIENTOPTSTRLEN];
   char smtpdest[MINCLIENTOPTSTRLEN];
 
@@ -153,8 +118,6 @@ typedef struct
 // ------------------
 
 void ResetClientData(Client *client); /* reset everything */
-unsigned int ClientGetInThreshold(Client *client, int contestid, int force = 0 );
-unsigned int ClientGetOutThreshold(Client *client, int contestid, int force = 0 );
 int ClientRun(Client *client);  /* run the loop, do the work */
 
 // ------------------

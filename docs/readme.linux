@@ -1,0 +1,85 @@
+
+ distributed.net client for Linux/x86
+ document revision $Id: readme.linux,v 1.2 2002/09/02 00:35:45 andreasb Exp $
+                                                          
+ Welcome to the distributed.net client.
+
+ This document covers information specific to the client for Linux/x86.
+ Refer to other enclosed documentation or browse the online FAQ at
+ http://www.distributed.net/FAQ for non-platform-specific documentation.
+
+    1.0  Getting started
+    2.0  Linux/x86 specific notes
+   
+ 1.0  Getting started ------------------------------------------------
+ 
+    Just unpack/unzip/untar the client in a directory of your choice and 
+    fire it up.
+
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done.
+
+    Then, simply restart the client. From that point on it will use the 
+    saved configuration.
+    
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the '-config' option.
+    A list of command line options is available by starting the client 
+    with '-help' or '--help'.
+
+    A complete step-by-step guide to running your first client is 
+    available at: http://www.distributed.net/docs/tutor_clients.html
+
+ 2.0  Notes: ---------------------------------------------------------
+
+    Beginning with v2.7101, the client's default directory is the 
+    one the configuration file is located in, which in turn is assumed to
+    be in the same directory the binary is in (if the binary was started
+    with an explicit path spec). To specify another configuration file 
+    use the -ini switch.
+    
+    Beginning with v2.7102, multi-threaded clients can be forced to run
+    single-threaded by setting the number of CPUs (the numcpu= option in
+    the configuration file or the -numcpu switch on the command line) to
+    zero.
+    
+    Also beginning with v2.7102, the restriction on the number of processors
+    has been lifted. The client will run with as many processors as are
+    available (the client will attempt autodetection if numcpu is -1). If
+    your client does not support processor or processor-count autodetection
+    and you know how to accomplish this on your platform send a code snippet 
+    to <coders@distributed.net>
+
+    Also (herewith officially) beginning with v2.7102, the client is always
+    nohup'able. Sensibly enough, -HUP causes a restart. Beginning with this 
+    release, *nix'ish clients also support -hide/-quiet mode. User level
+    '>/dev/null &' is deprecated, since it does not allow the client to warn
+    the user when it fails to start. With -hide/-quiet you can be sure that
+    the client has started successfully if you do not get a message to the
+    contrary. 
+    
+    Beginning with v2.7110.442, the process name (as seen from ps or top) is 
+    uniform 'rc5des'/'dnetc'. This is to facilitate scripted or system-wide 
+		--pause, --unpause, --shutdown and --restart
+    
+    Due to hostname resolving problems with various incompatible libc/glibc
+    library versions, client versions 2.8011-463 and later won't rely on
+    the libc resolver any longer, but parse the output of the 'host' command
+    instead. So the 'host' command is a prerequisite for proper client
+    operation. 'host' is usually found in a package called 'bind-utils'.
+    
+    In case you get an error message similar to
+            Net::failed to resolve name "us.v27.distributed.net"
+            ENOENT: no entry for requested name
+    please check, whether the 'host' command is installed and in your path.
+    
+    Beginning with v2.8011.464, the client supports the -[un]install switch
+    for creation/removal of SYSV-style rc.d scripts.
+    
+    The client needs SYSV IPC for its operation, otherwise you will get an
+    "Insufficient memory to allocate problem data" error. If you get this 
+    error, you need to recompile your kernel with CONFIG_SYSVIPC enabled.
+    
+    As of November 7th, 1998, much of the client source, including all the 
+    core crunch code that was previously scattered about, is available 
+    online at http://www.distributed.net/source/

@@ -1,13 +1,13 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __TRIGGERS_H__
-#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.8 2000/06/02 06:25:01 jlawson Exp $"
+#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.9 2002/09/02 00:35:43 andreasb Exp $"
 
-#if defined(__unix__) && !defined(__EMX__)
+#if defined(SIGCONT) && defined(SIGTSTP)
   /* These constants define symbolically the signal names used by the
    * dnetc -pause / -unpause mechanism.  The idea is that the "usual"
    * alternatives, SIGTSTP and SIGCONT, aren't as portable as one
@@ -67,5 +67,8 @@ extern int CheckPauseRequestTriggerNoIO(void);
 //don't fire the next restart cycle caused by config file change
 //won't prevent a restart if one has already been signalled
 int OverrideNextConffileChangeTrigger(void);
+
+//SIG_BLOCK as appropriate
+int TriggersSetThreadSigMask(void);
 
 #endif //__TRIGGERS_H__

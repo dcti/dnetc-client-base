@@ -1,5 +1,5 @@
 /* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,10 +12,9 @@
  * non-zero if the client should not use checkpointing. The checkpoint 
  * interval is controlled from Run()
  * -----------------------------------------------------------------
- *
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.19 2000/07/11 04:29:17 mfeiri Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.20 2002/09/02 00:35:41 andreasb Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()
@@ -50,21 +49,20 @@ int CheckpointAction( Client *client, int action, unsigned int load_problem_coun
     while (len>0 && isspace(client->checkpoint_file[len-1]))
       client->checkpoint_file[--len]=0;
     do_checkpoint = (client->nodiskbuffers==0 && 
-                     IsFilenameValid( client->checkpoint_file ));
+                     client->checkpoint_file[0] &&
+                     strcmp(client->checkpoint_file,"none")!=0);
+    /* old ini's and command line support for 'ckpoint=none' */
   }
 
   if ( action == CHECKPOINT_OPEN )
   {
     if (do_checkpoint)
     {
-      if ( DoesFileExist( client->checkpoint_file ))
+      long recovered = BufferImportFileRecords( client, client->checkpoint_file, 0 );
+      if (recovered > 0)  
       {
-        long recovered = BufferImportFileRecords( client, client->checkpoint_file, 0 );
-        if (recovered > 0)  
-        {
-          Log("Recovered %d checkpoint packet%s\n", recovered, 
+        Log("Recovered %ld checkpoint packet%s\n", recovered, 
             ((recovered == 1)?(""):("s")) );
-        }
       }
       action = CHECKPOINT_CLOSE;
     }
@@ -90,26 +88,29 @@ int CheckpointAction( Client *client, int action, unsigned int load_problem_coun
         Problem *thisprob = GetProblemPointerFromIndex(prob_i);
         if ( thisprob )
         {
-          if (thisprob->IsInitialized())
+          if (ProblemIsInitialized(thisprob))
           {
             WorkRecord work;
             unsigned int cont_i;
             memset((void *)&work, 0, sizeof(WorkRecord));
-            thisprob->RetrieveState((ContestWork *)&work, &cont_i, 0);
-            if (cont_i < CONTEST_COUNT /* 0,1,2...*/ )
+            if (ProblemRetrieveState(thisprob, &work.work, &cont_i, 0, 0) >= 0)
             {
-              work.resultcode = RESULT_WORKING;
-              work.contest = (u8)cont_i;
-              work.cpu     = FILEENTRY_CPU(thisprob->client_cpu,thisprob->coresel);
-              work.os      = FILEENTRY_OS;
-              work.buildhi = FILEENTRY_BUILDHI; 
-              work.buildlo = FILEENTRY_BUILDLO;
+              if (cont_i < CONTEST_COUNT)
+              {
+                work.resultcode = RESULT_WORKING;
+                work.contest = (u8)cont_i;
+                work.cpu     = FILEENTRY_CPU(thisprob->pub_data.client_cpu,thisprob->pub_data.coresel);
+                work.os      = FILEENTRY_OS;
+                work.buildhi = FILEENTRY_BUILDHI; 
+                work.buildlo = FILEENTRY_BUILDLO;
 
-              if (BufferPutFileRecord( client->checkpoint_file, &work, NULL ) < 0) 
-              {                        /* returns <0 on ioerr */
-                //Log( "Checkpoint %u, Buffer Error \"%s\"\n", 
-                //                     prob_i+1, client->checkpoint_file );
-                //break;
+                if (BufferPutFileRecord( client->checkpoint_file, &work, 
+                                         NULL, BUFFER_FLAGS_CHECKPOINT ) < 0) 
+                {                        /* returns <0 on ioerr */
+                  //Log( "Checkpoint %u, Buffer Error \"%s\"\n", 
+                  //                     prob_i+1, client->checkpoint_file );
+                  //break;
+                }
               }
             }
           } 

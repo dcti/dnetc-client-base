@@ -1,6 +1,8 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * ----------------------------------------------------------------------
@@ -20,11 +22,10 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.25 2000/07/11 04:23:35 mfeiri Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.26 2002/09/02 00:35:41 andreasb Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
-#include "autobuff.h"
 #include "base64.h"
 #include "bench.h"
 #include "client.h" /* client.h needs to before buff*.h */
@@ -35,8 +36,7 @@ return "@(#)$Id: cliident.cpp,v 1.25 2000/07/11 04:23:35 mfeiri Exp $"; }
 #include "clicdata.h"
 #include "clievent.h"
 #include "cliident.h"
-#include "clirate.h"
-#include "clisrate.h"
+#include "clisync.h"
 #include "clitime.h"
 #include "cmdline.h"
 #include "confopt.h"
@@ -51,7 +51,8 @@ return "@(#)$Id: cliident.cpp,v 1.25 2000/07/11 04:23:35 mfeiri Exp $"; }
 #include "mail.h"
 #include "memfile.h"
 #include "modereq.h"
-#include "network.h"
+#include "netbase.h"
+#include "netconn.h"
 #include "pathwork.h"
 #include "pollsys.h"
 #include "probfill.h"
@@ -66,10 +67,16 @@ return "@(#)$Id: cliident.cpp,v 1.25 2000/07/11 04:23:35 mfeiri Exp $"; }
 #include "triggers.h"
 #include "util.h"
 #include "version.h"
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+#include "w32sock.h"
+#include "w32cons.h"
+#include "w32pre.h"
+#include "w32util.h"
+#include "w32svc.h"
+#endif
 
 static const char *h_ident_table[] = 
 {
-  (const char *)__AUTOBUFF_H__,
   (const char *)__BASE64_H__,
   (const char *)__BASEINCS_H__,
   (const char *)__BENCH_H__,
@@ -81,8 +88,7 @@ static const char *h_ident_table[] =
   (const char *)__CLIENT_H__,
   (const char *)__CLIEVENT_H__,
   (const char *)__CLIIDENT_H__,
-  (const char *)__CLIRATE_H__,
-  (const char *)__CLISRATE_H__,
+  (const char *)__CLISYNC_H__,
   (const char *)__CLITIME_H__,
   (const char *)__CMDLINE_H__,
   (const char *)__CONFOPT_H__,
@@ -98,7 +104,8 @@ static const char *h_ident_table[] =
   (const char *)__MAIL_H__,
 //(const char *)__MEMFILE_H__,
   (const char *)__MODEREQ_H__,
-  (const char *)__NETWORK_H__,
+  (const char *)__NETBASE_H__,
+  (const char *)__NETCONN_H__,
   (const char *)__PATHWORK_H__,
   (const char *)__POLLSYS_H__,
   (const char *)__PROBFILL_H__,
@@ -112,10 +119,17 @@ static const char *h_ident_table[] =
   (const char *)__SLEEPDEF_H__,
   (const char *)__TRIGGERS_H__,
   (const char *)__UTIL_H__,
-  (const char *)__VERSION_H__
+  (const char *)__VERSION_H__,
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  (const char *)__W32SOCK_H__,
+  (const char *)__W32CONS_H__,
+  (const char *)__W32PRE_H__,
+  (const char *)__W32UTIL_H__,
+  (const char *)__W32SVC_H__,
+  #endif
+  (const char *)0
 };
 
-extern const char *autobuff_cpp(void);
 extern const char *base64_cpp(void);
 extern const char *bench_cpp(void);
 extern const char *buffbase_cpp(void);
@@ -125,9 +139,7 @@ extern const char *clicdata_cpp(void);
 extern const char *client_cpp(void);
 extern const char *clievent_cpp(void);
 //extern const char *cliident_cpp(void);
-extern const char *clirate_cpp(void);
 extern const char *clirun_cpp(void);
-extern const char *clisrate_cpp(void);
 extern const char *clitime_cpp(void);
 extern const char *cmdline_cpp(void);
 extern const char *confmenu_cpp(void);
@@ -143,9 +155,8 @@ extern const char *lurk_cpp(void);
 extern const char *mail_cpp(void);
 extern const char *memfile_cpp(void);
 extern const char *modereq_cpp(void);
-extern const char *netinit_cpp(void);
-extern const char *netres_cpp(void);
-extern const char *network_cpp(void);
+extern const char *netbase_cpp(void);
+extern const char *netconn_cpp(void);
 extern const char *pathwork_cpp(void);
 extern const char *pollsys_cpp(void);
 extern const char *probfill_cpp(void);
@@ -156,10 +167,16 @@ extern const char *selftest_cpp(void);
 extern const char *setprio_cpp(void);
 extern const char *triggers_cpp(void);
 extern const char *util_cpp(void);
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+extern const char *w32sock_cpp(void);
+extern const char *w32cons_cpp(void);
+extern const char *w32pre_cpp(void);
+extern const char *w32util_cpp(void);
+extern const char *w32svc_cpp(void);
+#endif
 
-static const char * (*ident_table[])() = 
+static const char * (*ident_table[])(void) = 
 {
-  autobuff_cpp,
   base64_cpp,
   bench_cpp,
   buffbase_cpp,
@@ -169,9 +186,7 @@ static const char * (*ident_table[])() =
   client_cpp,
   clievent_cpp,
   cliident_cpp,
-  clirate_cpp,
   clirun_cpp,
-  clisrate_cpp,
   clitime_cpp,
   cmdline_cpp,
   confmenu_cpp,
@@ -189,9 +204,8 @@ static const char * (*ident_table[])() =
   mail_cpp,
 //memfile_cpp,
   modereq_cpp,
-  netinit_cpp,
-  netres_cpp,
-  network_cpp,
+  netbase_cpp,
+  netconn_cpp,
   pathwork_cpp,
   pollsys_cpp,
   probfill_cpp,
@@ -201,7 +215,15 @@ static const char * (*ident_table[])() =
   selftest_cpp,
   setprio_cpp,
   triggers_cpp,
-  util_cpp
+  util_cpp,
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  w32sock_cpp,
+  w32cons_cpp,
+  w32pre_cpp,
+  w32util_cpp,
+  w32svc_cpp,
+  #endif
+  ((const char * (*)(void))0)  
 };
 
 
@@ -251,9 +273,12 @@ void CliIdentifyModules(void)
   unsigned int idline = sizeof(h_ident_table); /* squelch warning */
   for (idline = 0; idline < (sizeof(ident_table)/sizeof(ident_table[0])); idline++)
   {
-    char buffer[80];
-    if (split_line( buffer, (*ident_table[idline])(), sizeof(buffer)))
-      LogScreenRaw( "%s\n", buffer );
+    if (ident_table[idline])
+    {
+      char buffer[80];
+      if (split_line( buffer, (*ident_table[idline])(), sizeof(buffer)))
+        LogScreenRaw( "%s\n", buffer );
+    }
   }
   return;
 }  
@@ -278,7 +303,10 @@ time_t CliGetNewestModuleTime(void)
     {
       p = ((const char *)0);
       if (pos < cppidcount)
-        p = (*ident_table[pos])();
+      {
+        if (ident_table[pos])
+          p = (*ident_table[pos])();
+      }
       else
         p = h_ident_table[pos-cppidcount];
       if (split_line( buffer, p, sizeof(buffer)))

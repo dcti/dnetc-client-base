@@ -1,12 +1,12 @@
-/* Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
- *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
+ * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
 */ 
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.15 2000/06/02 06:24:58 jlawson Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.16 2002/09/02 00:35:43 andreasb Exp $"; }
 
 #include "baseincs.h"  // malloc()/NULL/memset()
 #include "problem.h"   // Problem class
@@ -19,7 +19,15 @@ static struct
   Problem **probtable;
   unsigned int tablesize;
   unsigned int probcount;
-} probmanstatics = {NULL,0,0};
+} probmanstatics = {((Problem **)0),0,0};
+
+// -----------------------------------------------------------------------
+
+// returns the number of problems managed by ProblemManager
+unsigned int GetManagedProblemCount(void)
+{
+  return probmanstatics.probcount;
+}
 
 // -----------------------------------------------------------------------
 
@@ -27,7 +35,7 @@ Problem *GetProblemPointerFromIndex(unsigned int probindex)
 {
   if (probmanstatics.probcount && probindex < probmanstatics.probcount )
     return probmanstatics.probtable[probindex];
-  return NULL;
+  return ((Problem *)0);
 }  
 
 // -----------------------------------------------------------------------
@@ -50,18 +58,33 @@ int GetProblemIndexFromPointer( Problem *prob )
 
 // -----------------------------------------------------------------------
 
+// InitializeProblemManager() allocates maxnumproblems, and returns that
+// value, or returns error value of -1 if it could not allocate the number
+// of problems requested.
+
+// XXX
+// if this is in fact the wrong behaviour, for example, the client should
+// return success if it only allocated *some* of the crunchers, then we can
+// change the code to reflect this, but this seems more bulletproof. feel
+// free to prove me wrong.  - sampo.
+
 int InitializeProblemManager(unsigned int maxnumproblems)
 {
   unsigned int i, probcount;
   
-  if (maxnumproblems == 0 || probmanstatics.probtable!= NULL)
+  if (maxnumproblems == 0 || probmanstatics.probtable != ((Problem **)0))
     return -1;
   if (((int)(maxnumproblems)) < 0)
-    maxnumproblems = (16*1024);
+    maxnumproblems = (16*1024);     // XXX
+                                    // a comment to explain this magic
+                                    // number would be nice.  Why not 128
+                                    // as in GetMaxCrunchersPermitted() ?
+                                    // a #define for magic numbers would be
+                                    // good.
 
   probmanstatics.probtable=(Problem **)
                              malloc(maxnumproblems * sizeof(Problem *));
-  if (probmanstatics.probtable == NULL)
+  if (probmanstatics.probtable == ((Problem **)0))
     return -1;
 
   probmanstatics.tablesize = maxnumproblems;
@@ -71,15 +94,20 @@ int InitializeProblemManager(unsigned int maxnumproblems)
   probcount = 0;
   for (i=0;i<maxnumproblems;i++)
   {
-    probmanstatics.probtable[i]=new Problem();
-    if (probmanstatics.probtable[i]==NULL)
+    probmanstatics.probtable[i]=ProblemAlloc();
+    if (probmanstatics.probtable[i]==((Problem *)0))
       break;
     probcount++;
   }
-  if (probcount == 0)
+  if (probcount != maxnumproblems)
   {
+    unsigned int j;
+    
+    for(j=0; j<probcount; j++)
+        ProblemFree(probmanstatics.probtable[j]);
+        
     free((void *)probmanstatics.probtable);
-    probmanstatics.probtable = NULL;
+    probmanstatics.probtable = ((Problem **)0);
     probmanstatics.probcount = 0;
     probmanstatics.tablesize = 0;
     return -1;
@@ -94,63 +122,21 @@ int DeinitializeProblemManager(void)
 {
   Problem **probtable = probmanstatics.probtable;
 
-  if (probtable!= NULL)
+  if (probtable != ((Problem **)0))
   {
     for (;probmanstatics.probcount>0;probmanstatics.probcount--)
     {
       if (probtable[probmanstatics.probcount-1])
-        delete probtable[probmanstatics.probcount-1];
-      probtable[probmanstatics.probcount-1] = NULL;
+        ProblemFree(probtable[probmanstatics.probcount-1]);
+      probtable[probmanstatics.probcount-1] = ((Problem *)0);
     }
     free((void *)probtable);
   }
 
   probmanstatics.probcount = 0;
   probmanstatics.tablesize = 0;
-  probmanstatics.probtable = NULL;
+  probmanstatics.probtable = ((Problem **)0);
   return 0;
 }
-
-// -----------------------------------------------------------------------
-
-#if (CLIENT_OS == OS_FREEBSD)
-#include <sys/mman.h>
-int TBF_MakeProblemsVMInheritable(void)
-{
-  Problem **probtable = probmanstatics.probtable;
-  unsigned int probcount  = probmanstatics.probcount;
-
-  if (probtable != NULL && probcount != 0)
-  {
-    unsigned int i;  
-    int failed = 0, mflag = 0; /*VM_INHERIT_SHARE*/ /*MAP_SHARED|MAP_INHERIT*/;
-
-    for (i=0;(!failed && i<probcount);i++)
-    {
-      if (probtable[i]==NULL)
-        break;
-      failed = (minherit((void *)probtable[i],sizeof(Problem),mflag)!=0);
-      //if (failed)
-      //  fprintf(stderr,"probman_inherit:1:%u %s\n",i,strerror(errno));
-    }
-    if (!failed)
-    {
-      failed = (minherit((void *)probtable, 
-          probmanstatics.tablesize * sizeof(Problem *), mflag)!=0);
-      //if (failed)
-      //  perror("probman_inherit:2");
-    }
-    if (!failed)
-    {
-      failed=(minherit((void*)&probmanstatics,sizeof(probmanstatics),mflag)!=0);
-      //if (failed)
-      //  perror("probman_inherit:3");
-    }
-    if (!failed)
-      return 0;
-  }   
-  return -1;
-}
-#endif
 
 // -----------------------------------------------------------------------

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.28 2000/06/02 06:24:53 jlawson Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.29 2002/09/02 00:35:41 andreasb Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
@@ -24,19 +24,21 @@ return "@(#)$Id: clicdata.cpp,v 1.28 2000/06/02 06:24:53 jlawson Exp $"; }
 static struct contestInfo
 {
   const char *ContestName;
+  const char *UnitName;
   int ContestID;
   unsigned int Iter2KeyFactor; /* by how much must iterations/keysdone
                         be multiplied to get the number of keys checked. */
   unsigned int BlocksDone;
-  double IterDone;
+  struct { u32 hi, lo; } IterDone, TotalIterDone;
   struct timeval TimeDone;
   unsigned int UnitsDone;
   unsigned int BestTime;  /* in seconds */
-} conStats[] = {  { "RC5", 0,  1, 0, 0, {0,0}, 0, 0 },
-                  { "DES", 1,  2, 0, 0, {0,0}, 0, 0 },
-                  { "OGR", 2,  1, 0, 0, {0,0}, 0, 0 },
-                  { "CSC", 3,  1, 0, 0, {0,0}, 0, 0 },
-                  {  NULL,-1,  0, 0, 0, {0,0}, 0, 0 }  };
+  int BestTimeWasForced;
+} conStats[] = {  { "RC5", "keys",  0,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "DES", "keys",  1,  2, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "OGR", "nodes", 2,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "CSC", "keys",  3,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  {  NULL,   NULL, -1,  0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
 
 /* ----------------------------------------------------------------------- */
 
@@ -72,6 +74,56 @@ int CliGetContestIDFromName( char *name )
 
 // ---------------------------------------------------------------------------
 
+// returns the expected time to complete a work unit, in seconds
+// if force is true, then a microbenchmark will be done to get the
+// rate if no work on this contest has been completed yet.
+int CliGetContestWorkUnitSpeed( int contestid, int force, int *was_forced)
+{
+  struct contestInfo *conInfo =
+                       __internalCliGetContestInfoVectorForID( contestid );
+  if (conInfo)
+  {
+    if ((conInfo->BestTime == 0) && force)
+    {
+      // This may trigger a mini-benchmark, which will get the speed
+      // we need and not waste time.
+      selcoreGetSelectedCoreForContest( contestid );
+
+      if (conInfo->BestTime == 0)
+        TBenchmark(contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK);
+      if (conInfo->BestTime)
+        conInfo->BestTimeWasForced = 1;
+    }
+    if (was_forced) /* ever (besttime was via benchmark) */
+      *was_forced = conInfo->BestTimeWasForced;
+    return conInfo->BestTime;
+  }
+  return 0;  
+}
+
+// ---------------------------------------------------------------------------
+
+// set new record speed for a contest, returns !0 on success
+// XXX we only call this function once, from problem.cpp line 2362
+//     and we don't check it's return value.  should we convert this
+//     to void, or handle a failed call in problem.cpp, or what?
+int CliSetContestWorkUnitSpeed( int contestid, unsigned int sec)
+{
+  struct contestInfo *conInfo =
+                       __internalCliGetContestInfoVectorForID( contestid );
+  if (conInfo && sec)
+  {
+    if ((conInfo->BestTime == 0) || (conInfo->BestTime > sec))
+    {
+      conInfo->BestTime = sec;
+      return 1; /* success */
+    }
+  }  
+  return 0; /* failed */
+}
+    
+// ---------------------------------------------------------------------------
+
 // obtain constant data for a contest. name/iter2key may be NULL
 // returns 0 if success, !0 if error (bad contestID).
 int CliGetContestInfoBaseData( int contestid, const char **name, unsigned int *iter2key )
@@ -95,8 +147,12 @@ int CliClearContestInfoSummaryData( int contestid )
   if (!conInfo)
     return -1;
   conInfo->BlocksDone = 0;
-  conInfo->IterDone = (double)(0);
+  conInfo->IterDone.hi = conInfo->IterDone.lo = 0;
+  conInfo->TotalIterDone.hi = conInfo->TotalIterDone.lo = 0;
   conInfo->TimeDone.tv_sec = conInfo->TimeDone.tv_usec = 0;
+  conInfo->UnitsDone = 0;
+  conInfo->BestTime = 0;
+  conInfo->BestTimeWasForced = 0;
   return 0;
 }  
 
@@ -105,32 +161,36 @@ int CliClearContestInfoSummaryData( int contestid )
 // obtain summary data for a contest. unrequired args may be NULL
 // returns 0 if success, !0 if error (bad contestID).
 int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
-      double *totaliter, struct timeval *totaltime, unsigned int *totalunits)
+                                  u32 *doneiterhi, u32 *doneiterlo,
+                                  struct timeval *totaltime, 
+                                  unsigned int *totalunits )
 {
   struct contestInfo *conInfo =
                       __internalCliGetContestInfoVectorForID( contestid );
   if (!conInfo)
     return -1;
   if (totalblocks) *totalblocks = conInfo->BlocksDone;
-  if (totaliter)   *totaliter   = conInfo->IterDone;
+  if (doneiterhi)  *doneiterhi  = conInfo->IterDone.hi;
+  if (doneiterlo)  *doneiterlo  = conInfo->IterDone.lo;
   if (totalunits)  *totalunits  = conInfo->UnitsDone;
   if (totaltime)
   {
-    totaltime->tv_sec = conInfo->TimeDone.tv_sec;
-    totaltime->tv_usec = conInfo->TimeDone.tv_usec;
-//#if 0  
+    struct timeval tv;
+    tv.tv_sec = conInfo->TimeDone.tv_sec;
+    tv.tv_usec = conInfo->TimeDone.tv_usec;
     if (conInfo->BlocksDone > 1)
     {
       //get time since first call to CliTimer() (time when 1st prob started)
-      CliClock(totaltime);
-      if (totaltime->tv_sec >= conInfo->TimeDone.tv_sec)
-      {
-        //no overlap means non-mt or only single thread
-        totaltime->tv_sec = conInfo->TimeDone.tv_sec;
-        totaltime->tv_usec = conInfo->TimeDone.tv_usec;
+      struct timeval tv2;
+      CliClock(&tv2);
+      if (tv2.tv_sec < tv.tv_sec) 
+      {   //no overlap means non-mt or only single thread
+        tv.tv_sec = tv2.tv_sec;
+        tv.tv_usec = tv2.tv_usec;
       }
     }
-//#endif
+    totaltime->tv_sec = tv.tv_sec;
+    totaltime->tv_usec = tv.tv_usec;
   }
   return 0;
 }
@@ -139,75 +199,35 @@ int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
 
 // add data to the summary data for a contest.
 // returns 0 if added successfully, !0 if error (bad contestID).
-int CliAddContestInfoSummaryData( int contestid, unsigned int *addblocks,
-        double *additer, struct timeval *addtime, unsigned int *addunits)
+int CliAddContestInfoSummaryData( int contestid, 
+                                  u32 iter_hi, u32 iter_lo, 
+                                  const struct timeval *addtime,
+                                  unsigned int addunits )
+
 {
   struct contestInfo *conInfo =
                        __internalCliGetContestInfoVectorForID( contestid );
-  if (!conInfo)
+  if (!conInfo || !addtime)
     return -1;
-  if (addblocks) conInfo->BlocksDone += (*addblocks);
-  if (additer)   conInfo->IterDone = conInfo->IterDone + (*additer);
-  if (addunits)  conInfo->UnitsDone += (*addunits);
-  if (addtime)
+  conInfo->BlocksDone++;
+  iter_lo += conInfo->IterDone.lo;
+  if (iter_lo < conInfo->IterDone.lo)
+    conInfo->IterDone.hi++;
+  conInfo->IterDone.lo  = iter_lo;
+  conInfo->IterDone.hi += iter_hi;
+  conInfo->UnitsDone += addunits;
+  conInfo->TimeDone.tv_sec += addtime->tv_sec;
+  conInfo->TimeDone.tv_usec += addtime->tv_usec;
+  if (conInfo->TimeDone.tv_usec > 1000000L)
   {
-    conInfo->TimeDone.tv_sec += addtime->tv_sec;
-    if ((conInfo->TimeDone.tv_usec += addtime->tv_usec) > 1000000L)
-    {
-      conInfo->TimeDone.tv_sec += (conInfo->TimeDone.tv_usec / 1000000L);
-      conInfo->TimeDone.tv_usec %= 1000000L;
-    }
+    conInfo->TimeDone.tv_sec += (conInfo->TimeDone.tv_usec / 1000000L);
+    conInfo->TimeDone.tv_usec %= 1000000L;
   }
-
   return 0;
 }
 
 // ---------------------------------------------------------------------------
 
-// returns the expected time to complete a work unit, in seconds
-// if force is true, then a microbenchmark will be done to get the
-// rate if no work on this contest has been completed yet.
-int CliGetContestWorkUnitSpeed( int contestid, int force)
-{
-  struct contestInfo *conInfo =
-                       __internalCliGetContestInfoVectorForID( contestid );
-  if (!conInfo)
-    return 0;
-
-  if ((conInfo->BestTime == 0) && force)
-  {
-    // This may trigger a mini-benchmark, which will get the speed
-    // we need and not waste time.
-    selcoreGetSelectedCoreForContest( contestid );
-
-    if (conInfo->BestTime == 0)
-      TBenchmark(contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK);
-  }
-
-  return conInfo->BestTime;
-}
-
-// ---------------------------------------------------------------------------
-
-// sets a possible new value for best time; returns true
-// if this speed was a new record
-int CliSetContestWorkUnitSpeed( int contestid, unsigned int sec)
-{
-  struct contestInfo *conInfo =
-                       __internalCliGetContestInfoVectorForID( contestid );
-  if (!conInfo || !sec)
-    return false;
-
-  if ((conInfo->BestTime == 0) || (conInfo->BestTime > sec))
-  {
-    conInfo->BestTime = sec;
-    return true;
-  }
-
-  return false;
-}
-    
-// ---------------------------------------------------------------------------
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestid)
@@ -224,6 +244,18 @@ const char *CliGetContestNameFromID(int contestid)
                      __internalCliGetContestInfoVectorForID( contestid );
   if (conInfo)
     return conInfo->ContestName;
+  return ((const char *)("???"));
+}
+
+// ---------------------------------------------------------------------------
+
+// Return a usable contest unit name.
+const char *CliGetContestUnitFromID(int contestid)
+{
+  struct contestInfo *conInfo =
+                     __internalCliGetContestInfoVectorForID( contestid );
+  if (conInfo)
+    return conInfo->UnitName;
   return ((const char *)("???"));
 }
 

@@ -1,6 +1,6 @@
 
- distributed.net client for Win32 (Win9x/WinNT/Win32s)
- document revision $Id: readme.w32,v 1.7 2000/07/11 02:38:59 mfeiri Exp $
+ distributed.net client for Win32 (Win9x/WinNT/Win2K/WinXP/Win32s)
+ document revision $Id: readme.w32,v 1.8 2002/09/02 00:35:45 andreasb Exp $
 
  Welcome to the distributed.net client.
 
@@ -85,7 +85,7 @@
     Installation involves...
     a) simply copying the *.scr file included with the client 
        distribution to one of the following locations: 
-       on Win95:  your \WINDOWS\ or \WINDOWS\SYSTEM\ directory
+       on Win9x:  your \WINDOWS\ or \WINDOWS\SYSTEM\ directory
        on WinNT:  your \WINNT\ or \WINNT\SYSTEM32\ directory
     b) Once you have copied it, go to the Display properties in the Control
        Panel and select the distributed.net screen saver as the active 
@@ -147,7 +147,8 @@
  3.0  FAQ: -----------------------------------------------------------
 
     Q: What are the changes in this version of the client?
-    A: Read CHANGES.txt as included with this distribution!
+    A: They are listed in the file CHANGES.txt, included with this
+       client distribution.
 
     Q: Where is the (what-used-to-be-) GUI version of the client?
     A: The "GUI" features not in the non-"GUI" client, are/will be
@@ -177,10 +178,10 @@
        'kerneltoys' pack or at http://www.distributed.net/addon.html)
        
     Q: What are the client's service keys/ID? 
-    A: if you use NT, it will be in the service manager. The client's 
+    A: If you use NT, it will be in the service manager. The client's 
        service ID (shortname) is "dnetc" for v2.80xx and later, and
        "rc5desnt" or "bovrc5nt" for pre-2.80xx clients. 
-       On win9x (win9x doesn't have a service manager), the client is 
+       On Win9x (Win9x doesn't have a service manager), the client is 
        registered with the registry as "distributed.net client" (or 
        "bovwin32" in very old versions) under HKEY_LOCAL_MACHINE in
        \Software\Microsoft\Windows\CurrentVersion\RunService
@@ -212,6 +213,18 @@
        "have a valid shell" check fails. The solution is to
        check 'interact with desktop' in the scheduler config and 
        install the service with "-quiet -install".
+
+    Q: I run the client from the Startup menu of Windows (it fires up 
+       alone every time I log into Windows). I want it to be minimized 
+       when it starts... How do I do that?
+    A: The way you would for any application:
+       - highlight the name in the menu
+       - right-click. A menu will pop up menu.
+         -> select "Properties" (last option on the menu that appears)
+            -> change to the "Shortcut" tab in the "Properties" dialog
+               -> in the "Run:" dropdown menu (second from the bottom), 
+                  change "Normal Window" to "Minimized"
+            -> click "OK"
      
     Q: I use LITESTEP (or other alternative shell) and get a warning 
        when I try to install the client as a service. Whats the deal?
@@ -221,9 +234,9 @@
        the LiteMAN module fixes whatever it is in Litestep thats broken. 
        Here's the link: http://www.litestep.org/binaries/liteman-b3.zip
        
-    Q: I want to run the client and XXX simultaneously, but XXX
+    Q: I want to run the client and XYZ simultaneously, but XYZ
        destroys my crunch rate. What can I do?
-    A: Uninstall XXX :)
+    A: Uninstall XYZ :)
     
     Q: I want to run the client as a screen saver. How do I do this?
     A: Beginning with v2.7112.444, the client release archive includes a
@@ -240,7 +253,7 @@
        assignment is brain dead beyond belief. Read the text in the 
        config screen before you fiddle with the priority setting!
 
-    Q: My client's window shows characters in a wierd font. Is the 
+    Q: My client's window shows characters in a weird font. Is the 
        client trying to access a font not on my system?
     A: No. The client never loads fonts by name. It loads by type/family,
        that is, only fonts of fixed-pitch (every 'character' has the same
@@ -271,21 +284,42 @@
        Generally speaking, if you were happy with the way lurk worked 
        before, you probably do need the 'Dialup interfaces' option now.
 
+       *NOTE*: If you are running WinGate (NAT) proxy on the same machine
+       that the client is on, and wish the client to go online only if
+       a connection is already open, then you CANNOT use RAS - you must
+       tell the client to use the 'Dialup Interfaces' (specify 'ppp*').
+
     Q: Can I share my win32 client's buffers with non-win32 clients?
        ["sharing" is simultaneous access via file-sharing, but also 
        manual transfer of the buffer files from one machine to another]
-    A: Theoretically, yes. It is however a good idea to ensure that 
-       clients sharing buffers all have the same version number. For 
-       instance, if you share buffers between 2.7110.440 and other 
-       older clients, you must ensure that the client newer than 2.7109
-       do not request "big-block"s from the keyservers (ensure 
-       'preferred-packet-size' is less than 32). Read the general FAQ 
-       for specifics.
+    A: Yes. It is however a good idea to ensure that clients sharing 
+       buffers all have the same version number. For instance, if your
+       share buffers between 2.7110.440 and other older clients, you must 
+       ensure that the client newer than 2.7109 do not request "big-block"s 
+       from the keyservers (ensure 'preferred-packet-size' is less than 32). 
+       Read the general FAQ for specifics.
        SAMBA note: Samba supports "opportunistic locking", which implies
        that the Samba client's view of the remote volume is cached. This
        option is on by default. Consequently, if you are accessing data 
        on a samba mount both via Samba and via the native-FS, you *must* 
        "veto oplock <paths>" in your Samba configuration.
+
+    Q: I have troble minimizing the client. It sits on the taskbar for 
+       several seconds before finally moving to the tray.
+    A: On 16 Jan 2001, at 12:11, Brian Carpenter <brian@nihilism.net> wrote:
+       > I think I found the problem.   Norton Systemworks 2001 by default,
+       > runs a tray icon manager for their software(Norton System Doctor,
+       > Norton Anti-Virus, etc etc).  I turned off the tray icon manager and
+       > rebooted, and the client then minimizes to the systray with no lag.
+
+    Q: I have trouble using the client in conjunction with MS-proxy, and
+       keep getting HTTP error: '407 Proxy authentication required' 
+    A: From: Alexei Anatski (chatskiy@email.com)
+       > The problem is that MS Proxy is usually configured to requre NTLM 
+       > (NT Domain) authentication. So far only IE is capable of this. 
+       > Solution is to install "Winsock-proxy" client from MS Proxy Setup. 
+       > It works at socket level so any application can use it transparently. 
+       > You may need assistance from your system administrator. 
 
     Q: How do I completely remove the this client from my system?
     A: First run the client with the '-uninstall' switch to ensure that 

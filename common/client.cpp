@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.248 2000/07/11 04:28:03 mfeiri Exp $"; }
+return "@(#)$Id: client.cpp,v 1.249 2002/09/02 00:35:41 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -18,17 +18,16 @@ return "@(#)$Id: client.cpp,v 1.248 2000/07/11 04:28:03 mfeiri Exp $"; }
 #include "clievent.h"  // ClientEventSyncPost(),_CLIENT_STARTED|FINISHED
 #include "random.h"    // InitRandom()
 #include "pathwork.h"  // EXTN_SEP
-#include "clicdata.h"  // CliGetContestWorkUnitSpeed()
-#include "cpucheck.h"  // GetNumberOfDetectedProcessors()
 #include "util.h"      // projectmap_build(), trace, utilCheckIfBetaExpired
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
 #include "cmdline.h"   // ParseCommandLine() and load config
 #include "clitime.h"   // [De]InitializeTimers(),CliTimer()
+#include "netbase.h"   // net_[de]initialize()
+#include "buffbase.h"  // [De]InitializeBuffers()
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
 #include "selcore.h"   // [De]InitializeCoreTable()
-#include "network.h"   // [De]InitializeConnectivity()
 
 /* ------------------------------------------------------------------------ */
 
@@ -37,234 +36,21 @@ void ResetClientData(Client *client)
   /* everything here should also be validated in the appropriate subsystem,
      so if zeroing here causes something to break elsewhere, the subsystem
      init needs fixing.
-     Variables are initialized in the same order that they are declared in
-     the client object. Keep it that way to ensure we don't miss something.
      When creating new variables, name them such that the default is 0/"",
      eg 'nopauseonbatterypower'.
-   */
+  */
 
   int contest;
   memset((void *)client,0,sizeof(Client));
 
-  /* non-user-configurable variables */
-  client->nonewblocks=0;
-  client->randomchanged=0;
-  client->randomprefix=100;
-  client->rc564closed=0;
-  client->stopiniio=0;
-  client->scheduledupdatetime = 0;
-  client->inifilename[0]=0;
-  client->last_buffupd_time = 0;
-  memset(&(client->project_flags[0]),0,sizeof(client->project_flags));
-
-  /* -- general -- */
-  client->id[0]='\0';
-  client->quietmode=0;
-  client->blockcount = 0;
-  client->minutes = 0;
-  client->percentprintingoff=0;
-
-  /* -- buffers -- */
-  client->nodiskbuffers=0;
-  memset((void *)&(client->membufftable[0]),0,sizeof(client->membufftable));
-  client->in_buffer_basename[0] = '\0';
-  client->out_buffer_basename[0] = '\0';
-  client->checkpoint_file[0]=0;
-  client->offlinemode = 0;
-    /* -- net -- */
-    client->nettimeout=60;
-    client->nofallback=0;
-    client->autofindkeyserver=1;
-    client->keyproxy[0] = 0;
-    client->keyport = 0;
-    client->httpproxy[0] = 0;
-    client->httpport = 0;
-    client->uuehttpmode = 0;
-    client->httpid[0] = 0;
-  client->noupdatefromfile = 0;
-    client->remote_update_dir[0] = '\0';
-  #ifdef LURK 
-  memset(&(client->lurk_conf),0,sizeof(client->lurk_conf));
-  #endif
-  client->connectoften=0;
-  memset(&(client->inthreshold[0]),0,sizeof(client->inthreshold));
-  memset(&(client->timethreshold[0]),0,sizeof(client->timethreshold));
-  client->max_buffupd_interval = 0;
-  #if (!defined(NO_OUTBUFFER_THRESHOLDS))
-  memset(&(client->outhreshold),0,sizeof(client->outhreshold));
-  #endif
-  memset(&(client->preferred_blocksize[0]),0,sizeof(client->preferred_blocksize));
+  client->nettimeout=60;
+  client->autofindkeyserver=1;
+  client->crunchmeter=-1;
   projectmap_build(client->loadorder_map,"");
-
-  /* -- perf -- */
   client->numcpu = -1;
-  client->priority = 0;
+  client->corenumtotestbench = -1;
   for (contest=0; contest<CONTEST_COUNT; contest++)
     client->coretypes[contest] = -1;
-
-  /* triggers */
-  client->restartoninichange=0;
-  client->pauseplist[0]=0;
-  client->pausefile[0]=0;
-  client->exitflagfile[0]=0;
-  client->nopauseifnomainspower=0;
-  client->watchcputempthresh=0;
-  client->cputempthresh[0]=0;
-
-  /* -- log -- */
-  client->logname[0]= 0;
-  client->logfiletype[0] = 0;
-  client->logfilelimit[0] = 0;
-  client->messagelen = 0;
-  client->smtpport = 25;
-  client->smtpsrvr[0]=0;
-  client->smtpfrom[0]=0;
-  client->smtpdest[0]=0;
-}
-
-// --------------------------------------------------------------------------
-
-static int numcpusinuse = -1; /* *real* count */
-void ClientSetNumberOfProcessorsInUse(int num) /* from probfill.cpp */
-{
-  numcpusinuse = num;
-}
-
-int ClientGetNumberOfProcessorsInUse(void) /* from probfill.cpp */
-{
-  return numcpusinuse;
-}
-
-unsigned int ClientGetInThreshold(Client *client, 
-                                  int contestid, int force /*=0*/)
-{
-  // If inthreshold is <=0, then use time exclusively.
-  // If time threshold is 0, then use inthreshold exclusively.
-  // If inthreshold is <=0, AND time is 0, then use BUFTHRESHOLD_DEFAULT
-  // If inthreshold > 0 AND time > 0, then use MAX(inthreshold, effective_workunits(time))
-  int thresh = BUFTHRESHOLD_DEFAULT;
-
-  // OGR time threshold NYI
-  client->timethreshold[OGR] = 0;
-
-  if (contestid < CONTEST_COUNT)
-  {
-    thresh = client->inthreshold[contestid];
-    if (thresh <= 0)
-      thresh = BUFTHRESHOLD_DEFAULT; /* default (if time is also zero) */
-
-    if (client->timethreshold[contestid] > 0) /* use time */
-    {
-      int proc;
-      unsigned int sec;
-      int timethresh = 0;
-      proc = GetNumberOfDetectedProcessors();
-      if (proc < 1)
-        proc = 1;
-
-      // get the speed
-      sec = CliGetContestWorkUnitSpeed(contestid, force);
-      if (sec != 0) /* we have a rate */
-        timethresh = 1 + (client->timethreshold[contestid] * 3600 * proc/sec);
-        
-      if (timethresh > client->inthreshold[contestid])
-        thresh = timethresh;
-    }
-  }
-  return thresh;
-}
-
-/* 
-   How thresholds affect contest rotation and contest fallover:
-
-   For contest rotation, outthreshold checks (and connectoften) must be 
-   disabled, otherwise the client will update before it hits the end of 
-   the load_order, resulting in more work becoming available for all 
-   projects.
-   Inversely, for contest fallover, outthreshold checks (or connectoften) 
-   must be enabled.
-
-   Example scenarios:
-   1) User wants to run both OGR and RC5, allocating 3 times as much cpu
-      time to OGR than to RC5. These would be the required settings:
-      load_order=OGR,RC5      (the order in which the client LOOKs for work)
-      inthresholds=OGR=6,RC5=2    (OGR thresh is 3 times RC5 thresh)
-      outthresholds=OGR=0,RC5=0 (disable outthresh checking)  
-      what happens: 
-         client looks for work. OGR is available. does OGR.
-         (repeat OGR inthresh times)
-         client looks for work, no OGR is available, RC5 is. does RC5.
-         (repeat RC5 inthresh times)
-         client looks for work, no OGR, no RC5 available. 
-                fetches&flushes. 
-         client looks for work. OGR is available. does OGR.
-   2) User wants to run OGR as long as OGR is available, the do RC5 (until 
-      OGR is available again).
-      load_order=OGR,RC5
-      inthresholds=OGR=<something>,RC5=<something>
-      outthresholds=OGR=<not zero and less than inthresh>,RC5=<whatever>
-      what happens: 
-         client looks for work. OGR is available. does OGR.
-         (repeat OGR outhresh times) 
-         out threshold now crossed. flushes&fetches.
-         client looks for work. OGR is available. does OGR.
-   3) User wants to run ONLY contest XXX.
-      load_order=XXX,<all others>=0
-      if contest XXX is NOT RC5, and no work is available, the client
-      will exit. if contest XXX is RC5, and no work is available, it will
-      do randoms.
-*/
-
-unsigned int ClientGetOutThreshold(Client *client, 
-                                   int contestid, int /* force */)
-{
-  int outthresh = 0;  /* returns zero if outthresholds are not to be checked */
-  client = client; /* shaddup compiler. */
-
-  if (contestid < CONTEST_COUNT)
-  {
-    #if (!defined(NO_OUTBUFFER_THRESHOLDS))
-    outthresh = client->outthreshold[contestid]; /* never time driven */
-    if (outthresh != 0) /* outthresh=0 => outthresh=inthresh => return 0 */
-    {
-      unsigned int inthres = ClientGetInThreshold(client, contestid, 0);
-      if (inthresh > 0) /* no error */
-      {
-        if (outthresh <= 0) /* relative to inthresh */
-        {
-          /*
-          a) if the outthreshold (as per .ini) is <=0, then outthreshold is 
-          to be interpreted as a value relative to the (computed) inthreshold.
-          ie, computed_outthreshold = computed_intthreshold + ini_outthreshold.
-          [thus an ini_threshold equal to zero implies rule c)]
-          */
-          outthresh = inthresh + outthresh;
-        }
-        if (outthresh >= inthresh)
-        {
-          /*
-          b) if the outthreshold (according to the .ini) was > inthresh
-          then inthreshold rules are effective because outthresh can never
-          be greater than inthresh (inthresh will have been checked first).
-          (The exception is when using shared buffers, and another client 
-          fetches but does not flush).
-          Consequence: Only inthreshold is effective and outthresh 
-          doesn't need to be checked. ClientGetOutThreshold() returns 0.
-          c) if the outthreshold (according to the .ini) was equal to inthresh
-          there there is usually no point checking outthresh because 
-          the result of both checks would be the same. (The exception is 
-          when using shared buffers, and another client fetches but does
-          not flush).
-          Consequence: inthreshold is effective and outthresh 
-          doesn't need to be checked. ClientGetOutThreshold() returns 0.
-          */
-          outthresh = 0;
-        }
-      }
-    }
-    #endif
-  }
-  return ((unsigned int)outthresh);      
 }
 
 // --------------------------------------------------------------------------
@@ -291,9 +77,9 @@ static const char *GetBuildOrEnvDescription(void)
   minor = GetFileServerMinorVersionNumber();
   revision = GetFileServerRevisionNumber();
   #if 0 /* hmm, this is wrong. NetWare 4.02 != 4.2 */
-  if (minor < 10) 
+  if (minor < 10)
     minor *= 10; /* .02 => .20 */
-  #endif  
+  #endif
   revision = ((revision == 0 || revision > 26)?(0):(revision + ('a'-1)));
   GetServerConfigurationInfo(&servType, &loaderType);
   if (servType == 0 && loaderType > 1) /* OS/2/UnixWare/etc loader */
@@ -322,13 +108,12 @@ static const char *GetBuildOrEnvDescription(void)
     return buffer;
   }
   return "";
-#elif (CLIENT_OS == OS_NEXTSTEP)
-  return "";
 #elif (CLIENT_OS == OS_AMIGAOS)
   static char buffer[40];
   #ifdef __PPC__
     #ifdef __POWERUP__
-    sprintf(buffer,"OS %s, PowerUp %ld.%ld",amigaGetOSVersion(),PPCVersion(),PPCRevision());
+    #define PPCINFOTAG_EMULATION (TAG_USER + 0x1f0ff)
+    sprintf(buffer,"OS %s, PowerUp%s %ld.%ld",amigaGetOSVersion(),((PPCGetAttr(PPCINFOTAG_EMULATION) == 'WARP') ? " Emu" : ""),PPCVersion(),PPCRevision());
     #else
     #define LIBVER(lib) *((UWORD *)(((UBYTE *)lib)+20))
     #define LIBREV(lib) *((UWORD *)(((UBYTE *)lib)+22))
@@ -340,7 +125,7 @@ static const char *GetBuildOrEnvDescription(void)
   return buffer;
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
-  if (uname(&ut)==0) 
+  if (uname(&ut)==0)
   {
     #if (CLIENT_OS == OS_AIX)
     // on AIX version is the major and release the minor
@@ -371,7 +156,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     if (level == 0)
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
-                    "Copyright 1997-2000, distributed.net\n");
+                    "Copyright 1997-2002, distributed.net\n");
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
       #endif
@@ -383,8 +168,8 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
       #endif
       #if (CLIENT_CPU == CPU_ARM)
-      LogScreenRaw( "ARM assembly by Steve Lee\n");
-      #if (CLIENT_OS == OS_RISCOS)
+      LogScreenRaw( "RC5 ARM assembly by Steve Lee\n");
+      #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
       LogScreenRaw( "RISCOS/PC Card support by Dominic Plunkett\n");
       #endif
       #endif
@@ -440,9 +225,9 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
        * machine and we try to use more than one CPU.
        */
       if (geteuid() == 0) {
-	LogScreenRaw("* Cannot run as the superuser on Irix.\n"
-		     "* Please run the client under a non-zero uid.\n\n");
-	exit(1);
+	       LogScreenRaw("* Cannot run as the superuser on Irix.\n"
+		                  "* Please run the client under a non-zero uid.\n\n");
+         exit(1);
       }
       #endif /* CLIENT_OS == OS_IRIX */
 
@@ -460,7 +245,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
 
 static int ClientMain( int argc, char *argv[] )
 {
-  Client *client;
+  Client *client = (Client *)0;
   int retcode = 0;
   int restart = 0;
 
@@ -471,10 +256,6 @@ static int ClientMain( int argc, char *argv[] )
     ConOutErr( "Unable to initialize timers." );
     return -1;
   }
-
-  srand( (unsigned) time(NULL) );
-  InitRandom();
-
   client = (Client *)malloc(sizeof(Client));
   if (!client)
   {
@@ -482,22 +263,24 @@ static int ClientMain( int argc, char *argv[] )
     ConOutErr( "Unable to initialize client. Out of memory." );
     return -1;
   }
-  
+  srand( (unsigned) time(NULL) );
+  InitRandom();
+
   do
   {
     int restarted = restart;
     restart = 0;
 
     ResetClientData(client); /* reset everything in the object */
-    ClientEventSyncPost( CLIEVENT_CLIENT_STARTED, *((long*)(&client)) );
+    ClientEventSyncPost( CLIEVENT_CLIENT_STARTED, &client, -1 );
     //ReadConfig() and parse command line - returns !0 if shouldn't continue
 
     TRACE_OUT((0,"Client.parsecmdline restarted?: %d\n", restarted));
-    if (ParseCommandline(client,0,argc,(const char **)argv,&retcode,0)==0)
+    if (!ParseCommandline(client,0,argc,(const char **)argv,&retcode,restarted))
     {
       int domodes = ModeReqIsSet(-1); /* get current flags */
       TRACE_OUT((0,"initializetriggers\n"));
-      if (InitializeTriggers(domodes, 
+      if (InitializeTriggers(domodes,
                              ((domodes)?(""):(client->exitflagfile)),
                              client->pausefile,
                              client->pauseplist,
@@ -513,71 +296,77 @@ static int ClientMain( int argc, char *argv[] )
         if (!CheckExitRequestTrigger())
         {
           TRACE_OUT((0,"initializeconnectivity\n"));
-          if (InitializeConnectivity() == 0) //do global initialization
+          if (net_initialize() == 0) //do global initialization
           {
             #ifdef LURK /* start must come just after initializeconnectivity */
-            TRACE_OUT((0,"dialup.Start()\n")); /*and always before initlogging*/
-            dialup.Start(client->offlinemode, &(client->lurk_conf));
+            TRACE_OUT((0,"LurkStart()\n")); /*and always before initlogging*/
+            LurkStart(client->offlinemode, &(client->lurk_conf));
             #endif
             TRACE_OUT((0,"initializeconsole\n"));
             if (InitializeConsole(&(client->quietmode),domodes) == 0)
             {
               //some plats need to wait for user input before closing the screen
               int con_waitforuser = 0; //only used if doing modes (and !-config)
-  
+
               TRACE_OUT((+1,"initializelogging\n"));
               InitializeLogging( (client->quietmode!=0),
-                                 (client->percentprintingoff!=0),
+                                 client->crunchmeter,
+                                 0, /* nobaton */
                                  client->logname,
                                  client->logfiletype,
                                  client->logfilelimit,
                                  ((domodes)?(0):(client->messagelen)),
-                                 client->smtpsrvr,
-                                 client->smtpport,
+                                 client->smtpsrvr, 0,
                                  client->smtpfrom,
                                  client->smtpdest,
                                  client->id );
               TRACE_OUT((-1,"initializelogging\n"));
-              if ((domodes & MODEREQ_CONFIG)==0)
-              {
-                PrintBanner(client->id,0,restarted,0);
 
-                TRACE_OUT((+1,"parsecmdline(1)\n"));
-                ParseCommandline( client, 1, argc, (const char **)argv, NULL,
-                                      (client->quietmode==0)); //show overrides
-                TRACE_OUT((-1,"parsecmdline(1)\n"));
-              }
-              InitRandom2( client->id );
-              TRACE_OUT((+1,"initcoretable\n"));
-              InitializeCoreTable( &(client->coretypes[0]) );
-              TRACE_OUT((-1,"initcoretable\n"));
-              ClientSetNumberOfProcessorsInUse(-1); /* reset */
-
-              if (domodes)
+              if (BufferInitialize(client) == 0)
               {
-                con_waitforuser = ((domodes & ~MODEREQ_CONFIG)!=0);
-                if ((domodes & MODEREQ_CONFIG)==0) 
-                { /* avoid printing/logging banners for nothing */
-                  PrintBanner(client->id,1,restarted,((domodes & MODEREQ_CMDLINE_HELP)!=0));
+                InitRandom2( client->id );
+
+                TRACE_OUT((+1,"initcoretable\n"));
+                if (InitializeCoreTable( &(client->coretypes[0]) ) == 0)
+                {
+                  if ((domodes & MODEREQ_CONFIG)==0)
+                  {
+                    PrintBanner(client->id,0,restarted,0);
+       
+                    TRACE_OUT((+1,"parsecmdline(1)\n"));
+                    if (!client->quietmode)
+                    {                 //show overrides
+                      ParseCommandline( client, 1, argc, (const char **)argv,
+                                        &retcode, restarted );
+                    }
+                    TRACE_OUT((-1,"parsecmdline(1)\n"));
+                  }
+                  if (domodes)
+                  {
+                    con_waitforuser = ((domodes & ~MODEREQ_CONFIG)!=0);
+                    if ((domodes & MODEREQ_CONFIG)==0)
+                    { /* avoid printing/logging banners for nothing */
+                      PrintBanner(client->id,1,restarted,((domodes & MODEREQ_CMDLINE_HELP)!=0));
+                    }
+                    TRACE_OUT((+1,"modereqrun\n"));
+                    ModeReqRun( client );
+                    TRACE_OUT((-1,"modereqrun\n"));
+                    restart = 0; /* *never* restart when doing modes */
+                  }
+                  else if (!utilCheckIfBetaExpired(1)) /* prints message */
+                  {
+                    con_waitforuser = 0;
+                    PrintBanner(client->id,2,restarted,0);
+                    TRACE_OUT((+1,"client.run\n"));
+                    retcode = ClientRun(client);
+                    TRACE_OUT((-1,"client.run\n"));
+                    restart = CheckRestartRequestTrigger();
+                  }
+                  TRACE_OUT((0,"deinit coretable\n"));
+                  DeinitializeCoreTable();
                 }
-                TRACE_OUT((+1,"modereqrun\n"));
-                ModeReqRun( client );
-                TRACE_OUT((-1,"modereqrun\n"));
-                restart = 0; /* *never* restart when doing modes */
+                BufferDeinitialize(client);
               }
-              else if (!utilCheckIfBetaExpired(1)) /* prints message */
-              {
-                con_waitforuser = 0;
-                PrintBanner(client->id,2,restarted,0);
-                TRACE_OUT((+1,"client.run\n"));
-                retcode = ClientRun(client);
-                TRACE_OUT((-1,"client.run\n"));
-                restart = CheckRestartRequestTrigger();
-              }
-
-              ClientSetNumberOfProcessorsInUse(-1); /* reset */
-              TRACE_OUT((0,"deinit coretable\n"));
-              DeinitializeCoreTable();
 
               TRACE_OUT((0,"deinitialize logging\n"));
               DeinitializeLogging();
@@ -585,18 +374,18 @@ static int ClientMain( int argc, char *argv[] )
               DeinitializeConsole(con_waitforuser);
             } /* if (InitializeConsole() == 0) */
             #ifdef LURK
-            TRACE_OUT((0,"dialup.Stop()\n"));
-            dialup.Stop(); /* just before DeinitializeConnectivity() */
+            TRACE_OUT((0,"LurkStop()\n"));
+            LurkStop(); /* just before DeinitializeConnectivity() */
             #endif
             TRACE_OUT((0,"deinitialize connectivity\n"));
-            DeinitializeConnectivity(); //netinit.cpp
+            net_deinitialize(!restart /* final call */);
           } /* if (InitializeConnectivity() == 0) */
         } /* if (!CheckExitRequestTrigger()) */
         TRACE_OUT((0,"deinitialize triggers\n"));
         DeinitializeTriggers();
       }
     }
-    ClientEventSyncPost( CLIEVENT_CLIENT_FINISHED, (long)restart );
+    ClientEventSyncPost( CLIEVENT_CLIENT_FINISHED, &restart, sizeof(restart) );
     TRACE_OUT((0,"client.parsecmdline restarting?: %d\n", restart));
   } while (restart);
 
@@ -619,7 +408,12 @@ int main( void )
   ClientMain(1,argv);
   return 0;
 }
-#elif (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
+#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+//if you get compile or link errors it is probably because you compiled with
+//STRICT, which is a no-no when using cpp (think 'overloaded')
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include "w32pre.h"       // prelude
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* parse the command line and call the bootstrap */
   TRACE_OUT((+1,"WinMain()\n"));
@@ -627,7 +421,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int 
   TRACE_OUT((-1,"WinMain()\n"));
   return rc;
 }
-#elif defined(__unix__) && !defined(__EMX__)
+#elif defined(__unix__)
 int main( int argc, char *argv[] )
 {
   /* the SPT_* constants refer to sendmail source (conf.[c|h]) */
@@ -637,6 +431,22 @@ int main( int argc, char *argv[] )
   {
     char *p = strrchr( argv[0], '/' );
     needchange = (strcmp( ((p)?(p+1):(argv[0])), defname )!=0);
+
+    #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+    /* discard dir component from argv[0] when started from init.d */
+    if (!needchange && *argv[0] == '/' && strlen(argv[0]) > (strlen(defname)+10))
+    {
+      int i;
+      for (i = 1; i < (argc-1); i++)
+      {
+        if (strcmp(argv[i],"-ini")==0 || strcmp(argv[i],"--ini")==0)
+        {
+          needchange = 1;
+          break;
+        }
+      }
+    }
+    #endif
   }
   #if (CLIENT_OS == OS_HPUX)                         //SPT_TYPE == SPT_PSTAT
   if (needchange)
@@ -668,7 +478,7 @@ int main( int argc, char *argv[] )
       /* yes, it stays open */
     }
   }
-  #elif 0 /* eg, Rhapsody */                  /* SPT_TYPE==SPT_PSSTRINGS */
+  #elif (CLIENT_OS == OS_MACOSX)                  /* SPT_TYPE==SPT_PSSTRINGS */
   if (needchange)
   {
     PS_STRINGS->ps_nargvstr = 1;
@@ -697,13 +507,14 @@ int main( int argc, char *argv[] )
     char *q = "RC5PROG";
     int didset = 0;
     #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
-        (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_BEOS)
+        (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_BEOS) || \
+        (CLIENT_OS == OS_DEC_UNIX)
     char *m = (char *)malloc( strlen(q)+1+strlen(argv[0])+1 );
     if (m) {
       didset=(0==putenv(strcat(strcat(strcpy(m,q),"="),argv[0]))); //BSD4.3
       free((void *)m);
     }
-    #elif (CLIENT_OS != OS_NEXTSTEP)
+    #else
     didset = (setenv( q, argv[0], 1 ) == 0); //SYSV7 and posix
     #endif
     if (didset)
@@ -747,9 +558,10 @@ int main( int argc, char *argv[] )
         buffer[sizeof(buffer)-5]='\0';
         strcat( buffer, ".ini" );
         #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
-            (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_BEOS)
+            (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_BEOS) || \
+	    (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_DEC_UNIX)
         putenv( buffer );                 //BSD4.3
-        #elif (CLIENT_OS != OS_NEXTSTEP)
+        #else
         setenv("RC5INI", &buffer[7], 1 ); //SYSV7 and posix
         #endif
       }
@@ -783,9 +595,13 @@ int main( int argc, char *argv[] )
 #elif (CLIENT_OS == OS_RISCOS)
 int main( int argc, char *argv[] )
 {
+  __riscosify_control = __RISCOSIFY_NO_PROCESS;
   riscos_in_taskwindow = riscos_check_taskwindow();
   if (riscos_find_local_directory(argv[0]))
+  {
+    printf("Unable to determine local directory.\n");
     return -1;
+  }
   return ClientMain( argc, argv );
 }
 #elif (CLIENT_OS == OS_NETWARE)
@@ -802,8 +618,8 @@ int main( int argc, char *argv[] )
 int main( int argc, char *argv[] )
 {
   int rc = 20;
-  if (amigaInit())
-  {  
+  if (amigaInit(&argc,&argv))
+  {
     rc = ClientMain( argc, argv );
     if (rc) rc = 5; //Warning
     amigaExit();

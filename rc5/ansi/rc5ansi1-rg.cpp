@@ -1,13 +1,20 @@
+// Copyright distributed.net 1997-2002 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+
 // dual-key, mixed round 3 and encryption, A1/A2 use for last value,
 // non-arrayed S1/S2 tables, run-time generation of S0[]
 
-// Copyright distributed.net 1997 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
 // $Log: rc5ansi1-rg.cpp,v $
+// Revision 1.7  2002/09/02 00:35:55  andreasb
+// sync: merged changes from release-2-7111 branch between
+//       2000-07-11 and release-2-7111_20020901 into trunk
+//
+// Revision 1.6.2.1  2002/04/12 23:56:56  andreasb
+// 2002 copyright update - round 2
+//
 // Revision 1.6  1998/07/08 22:59:43  remi
-// Lots of $Id$ stuff.
+// Lots of $Id: rc5ansi1-rg.cpp,v 1.7 2002/09/02 00:35:55 andreasb Exp $ stuff.
 //
 // Revision 1.5  1998/06/14 08:27:27  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
@@ -67,7 +74,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi1_rg_cpp (void) {
-return "@(#)$Id: rc5ansi1-rg.cpp,v 1.6 1998/07/08 22:59:43 remi Exp $"; }
+return "@(#)$Id: rc5ansi1-rg.cpp,v 1.7 2002/09/02 00:35:55 andreasb Exp $"; }
 #endif
 
 #include "problem.h"

@@ -1,4 +1,4 @@
-// Copyright distributed.net 1997 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net p/ojects only.
 // Any other distribution or use of this source violates copyright.
 //
@@ -11,7 +11,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_bo2_cpp (void) {
-return "@(#)$Id: rc5-digital-unix-alpha-ev5.cpp,v 1.2 1999/12/08 02:07:07 cyp Exp $"; }
+return "@(#)$Id: rc5-digital-unix-alpha-ev5.cpp,v 1.3 2002/09/02 00:35:55 andreasb Exp $"; }
 #endif
 
 #include "stdio.h"

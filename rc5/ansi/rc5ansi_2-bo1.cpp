@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -15,7 +15,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi_2_bo1_cpp (void) {
-return "@(#)$Id: rc5ansi_2-bo1.cpp,v 1.2 2000/07/11 01:50:13 mfeiri Exp $"; }
+return "@(#)$Id: rc5ansi_2-bo1.cpp,v 1.3 2002/09/02 00:35:55 andreasb Exp $"; }
 #endif
 
 #define PIPELINE_COUNT = 2

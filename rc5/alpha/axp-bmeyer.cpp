@@ -1,8 +1,8 @@
-// Copyright distributed.net 1997 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
-// @(#)$Id: axp-bmeyer.cpp,v 1.5 2000/07/11 01:53:01 mfeiri Exp $
+// @(#)$Id: axp-bmeyer.cpp,v 1.6 2002/09/02 00:35:55 andreasb Exp $
 
 // dual-key, mixed round 3 and encryption, A1/A2 use for last value,
 // non-arrayed S1/S2 tables

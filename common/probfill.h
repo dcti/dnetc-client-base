@@ -1,20 +1,42 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __PROBFILL_H__
-#define __PROBFILL_H__ "@(#)$Id: probfill.h,v 1.15 2000/06/02 06:24:58 jlawson Exp $"
+#define __PROBFILL_H__ "@(#)$Id: probfill.h,v 1.16 2002/09/02 00:35:43 andreasb Exp $"
 
 #define PROBFILL_ANYCHANGED  1
 #define PROBFILL_GETBUFFERRS 2
 #define PROBFILL_UNLOADALL   3
 #define PROBFILL_RESIZETABLE 4
 
+#include "client.h"
+
 unsigned int LoadSaveProblems(Client *client,
                               unsigned int load_problem_count,int mode);
 /* returns number of actually loaded problems */
+
+unsigned int ClientGetInThreshold(Client *client, int contestid, int force );
+
+// --------------------------------------------------------------------------
+
+/* Buffer counts obtained from ProbfillGetBufferInfo() are for 
+** informational use (by frontends etc) only. Don't shortcut 
+** any of the common code calls to GetBufferCount().
+** Threshold info is updated by probfill, blk/swu_count is
+** updated via called by GetBufferCount() [buffbase.cpp] whenever 
+** both swu_count and blk_count were determined.
+*/
+int ProbfillGetBufferCounts( unsigned int contest, int is_out_type,
+                             long *threshold, int *thresh_in_swu,
+                             long *blk_count, long *swu_count, 
+                             unsigned int *till_completion );
+
+int ProbfillCacheBufferCounts( Client *client,
+                               unsigned int cont_i, int is_out_type,
+                               long blk_count, long swu_count);
 
 // --------------------------------------------------------------------------
 
@@ -24,6 +46,8 @@ extern int SetProblemLoaderFlags( const char *loaderflags_map /* 1 char per cont
 
 // --------------------------------------------------------------------------
 
+/* the following macros are used by probfill and when scanning a buffer */
+/* for "most suitable packet" */
 #define FILEENTRY_OS         CLIENT_OS
 #define FILEENTRY_BUILDHI    ((CLIENT_BUILD_FRAC >> 8) & 0xff)
 #define FILEENTRY_BUILDLO    ((CLIENT_BUILD_FRAC     ) & 0xff)

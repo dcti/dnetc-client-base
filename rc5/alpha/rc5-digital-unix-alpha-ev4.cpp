@@ -1,12 +1,12 @@
-// dual-key, mixed round 3 and encryption, A1/A2 use for last value,
-// non-arrayed S1/S2 tables, direct use of last value, run-time
-// generation of S0[]
-
-// Copyright distributed.net 1997 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // This file is based on rc5/rc5ansi2-rg2.cpp
+
+// dual-key, mixed round 3 and encryption, A1/A2 use for last value,
+// non-arrayed S1/S2 tables, direct use of last value, run-time
+// generation of S0[]
 
 //*run-time generation of S0[] :
 //
@@ -25,7 +25,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_rg2_cpp (void) {
-return "@(#)$Id: rc5-digital-unix-alpha-ev4.cpp,v 1.2 1999/12/08 02:07:07 cyp Exp $"; }
+return "@(#)$Id: rc5-digital-unix-alpha-ev4.cpp,v 1.3 2002/09/02 00:35:55 andreasb Exp $"; }
 #endif
 
 #include "problem.h"

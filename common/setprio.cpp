@@ -1,19 +1,22 @@
-/* Copyright distributed.net 1997-2000 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * ------------------------------------------------------------------
  *  'prio' is a value on the scale of 0 to 9, where 0 is the lowest
  *  priority and 9 is the highest priority [9 is what the priority would 
- *  be if priority were not set, ie is 'normal' priority.] 
+ *  be if priority were not set, ie is 'normal' priority. Unices don't
+ *  re-nice() if the prio is 9 (assume external control)] 
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.59 2000/07/11 03:46:37 mfeiri Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.60 2002/09/02 00:35:43 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
+#include "sleepdef.h"  // sleep(), usleep()
 
 /* -------------------------------------------------------------------- */
 
@@ -49,8 +52,10 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     int threadprio = 0, classprio = 0;
     HANDLE our_thrid = GetCurrentThread();  // Win32 pseudo-handle constant.
 
-    if (set_for_thread && !win32ConIsLiteUI()) // full-GUI crunchers always
-      prio = 0;                                // run at idle prio
+    if (set_for_thread && (w32ConGetType() & 0xff)=='G') 
+    { // crunchers in a 'fat-'GUI client always run at idle prio
+      prio = 0;
+    }
   
     /* ************************** Article ID: Q106253 *******************
                               process priority class
@@ -193,42 +198,36 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
   }
   #elif (CLIENT_OS == OS_AMIGAOS)
   {
+    #ifdef __PPC__
+      if ( set_for_thread )
+      {
+        SetTaskPri(FindTask(NULL),3);
+      }
+      #ifdef __POWERUP__
+      int pri = -(((133*(9-prio))+5)/10); /* scale from 0-9 to -120 to zero */
+      PPCSetTaskAttrsTags(PPCFindTask(NULL),PPCTASKINFOTAG_PRIORITY,pri,TAG_END);
+      #else
+      struct TaskPPC *task = FindTaskPPC(NULL);
+      int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
+      SetNiceValue(task, newnice );
+      #endif
+    #else
     if ( set_for_thread )
     {
-      //nothing - non threaded
+       int pri = -(((133*(9-prio))+5)/10); /* scale from 0-9 to -120 to zero */
+       SetTaskPri(FindTask(NULL), pri );
     }
-    else
-    {
-      #ifdef __PPC__
-        #ifdef __POWERUP__
-        int pri = -(((133*(9-prio))+5)/10); /* scale from 0-9 to -120 to zero */
-        PPCSetTaskAttr(PPCTASKINFOTAG_PRIORITY,pri);
-        #else
-        struct TaskPPC *task = FindTaskPPC(NULL);
-        int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
-        SetNiceValue(task, newnice );
-        #endif
-      #else
-      int pri = -(((133*(9-prio))+5)/10); /* scale from 0-9 to -120 to zero */
-      SetTaskPri(FindTask(NULL), pri );
-      #endif
-    }
+    #endif
   }
   #elif (CLIENT_OS == OS_QNX)
   {
-    if ( set_for_thread )
-    {
-      // nothing - non threaded
-    }
-    else
-    {
-      setprio( 0, prio-3 );
-    }
-  }
-  #elif (CLIENT_OS == OS_NTO2)
-  {
+    #if defined(__QNXNTO__) /* neutrino */
     if (set_for_thread)
       setprio(0,prio+1);
+    #else
+    if (!set_for_thread) /* actually always non-threaded */
+      setprio( 0, prio-3 );
+    #endif
   }
   #else // all other UNIX-like environments
   {
@@ -264,6 +263,9 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
         rtp.prio = RTP_PRIO_MAX - ((RTP_PRIO_MAX * prio) / 9); //0 is highest
         if ( rtprio( RTP_SET, 0, &rtp ) != 0 )
           return -1;
+      #elif defined(HAVE_MULTICRUNCH_VIA_FORK)
+      int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
+      nice( newnice );
       #elif (!defined(_POSIX_THREADS_SUPPORTED)) //defined in cputypes.h
         /* nothing - native threads, inherit */
       #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
@@ -277,16 +279,18 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
             #define PRI_OTHER_MIN 20
           #endif
         #endif
-        if (prio < 9 && prio >= 0)
+        #if defined(PRI_OTHER_MIN) && defined(PRI_OTHER_MAX)
+        if (prio < 9)
         {
           int newprio = ((((PRI_OTHER_MAX - PRI_OTHER_MIN) * prio) / 10) + 
                                                              PRIO_OTHER_MIN);
           if (pthread_setprio(pthread_self(), newprio) < 0)
             return -1;
-        }    
+        }
+        #endif    
       #endif
     }
-    else
+    else if (prio < 9) /* prio=9 means "don't change it" (external control) */
     {
       static int oldnice = 0; /* nothing to do if newnice is also zero */
       int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */

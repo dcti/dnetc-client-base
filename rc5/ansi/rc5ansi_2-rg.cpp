@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -20,7 +20,7 @@
 */
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi_2_rg_cpp (void) {
-return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.5 2000/07/11 02:27:41 mfeiri Exp $"; }
+return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.6 2002/09/02 00:35:55 andreasb Exp $"; }
 #endif
 //
 //*Run-time generation of S0[] :

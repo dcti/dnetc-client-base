@@ -1,8 +1,8 @@
 
   distributed.net client documentation
-  document revision $Id: dnetc.txt,v 1.3 2000/07/11 02:38:32 mfeiri Exp $
+  document revision $Id: dnetc.txt,v 1.4 2002/09/02 00:35:45 andreasb Exp $
 
-  Copyright distributed.net 1997-2000 - All Rights Reserved
+  Copyright distributed.net 1997-2002 - All Rights Reserved
   For use in distributed.net projects only.
   Any other distribution violates copyright.
 
@@ -29,18 +29,16 @@
     a part of the world's largest computer, distributed.net. The client 
     you have downloaded is capable of working on two of distributed.net's
     ongoing projects: The brute-force decryption of a RC5-64 message, and
-    the brute force decryption of a DES message. The RC5-64 contest is a
-    long-term contest, which may take a couple of years to solve. The DES
-    contests, run twice a year, are short (refer to the DES contest 
-    documentation for details). As a result, this client will work on DES 
-    during DES contests, and switch back to RC5-64 when no DES contest is 
-    running. No user intervention is required for this switchover.
+    the search for Optimal Golomb Rulers (OGR). Both are long-term projects
+    that will go on for some time. Because the RC5-64 contest has a finite
+    number of keys to test, however, the OGR contest is selected as the
+    default.
 
  2.0  General system requirements ------------------------------------
 
     The system requirements for the client vary from platform to platform
-    and are detailed in the readme.* you should have received when you
-    downloaded the client.
+    and are detailed in the platform-specific readme.* you should have
+    received when you downloaded the client.
 
     In general, all that is required is:
     - a 32-bit processor
@@ -77,13 +75,10 @@
 
     Clients are (barring a few exceptions) *only* available from 
     http://www.distributed.net/download/ or from ftp servers linked from 
-    that page. They are occasionally available directly from distributed.net 
-    coders in the #distributed channel on EFNet IRC. FreeBSD clients are 
-    also available on FreeBSD distribution CDs. 
+    that page. FreeBSD clients are also available on FreeBSD CD-ROMs. 
 
-    Once you have downloaded the client, it is a simple matter of getting
-    going. Simply unpack/unzip/unarc the archive you downloaded and fire 
-    it up. 
+    Once you have downloaded the client, starting it is easy. Simply
+    unpack/unzip/unarc the archive you downloaded and fire it up. 
     
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done, the 
@@ -96,8 +91,10 @@
     accepted as-is. Refer to the Help! section at the end of this document
     for sources of assistance.
 
-    A "Complete Step-by-Step Guide to Running Your First Client" is 
-    available from http://distributed.net/faq/
+    A complete step-by-step guide to running your first client is 
+    available at: http://www.distributed.net/docs/tutor_clients.html
+    There is also a great deal of useful information at the
+    FAQ-O-Matic: http://distributed.net/faq/
 
     The client's configuration may be adjusted at any time by starting 
     the client with the -config switch. A list of other command line 
@@ -112,6 +109,11 @@
      files formats have changed, and this will help prevent compatibility 
      problems. If you are sharing buffer files between multiple clients, 
      please make sure that the clients have compatible buffer formats.
+
+     If you use a personal proxy with your client, please make sure
+     that you upgrade it at the same time as your client. Clients in
+     version 2.800x or later will only work with personal proxy builds
+     of at least build 311 (313 or later recommended).
 
                                                                           
  5.0  Fetching and flushing work -------------------------------------
@@ -131,7 +133,7 @@
      convention: <us|euro|asia|aussie|jp>[port].v27.distributed.net .
      The "port" is an optional field and may be either "80" or "23".
      All other numbers cause the client to ignore it and automatically
-     select a hostname (see next para).
+     select a hostname (see next paragraph).
      
      It is generally not necessary to set a specific distributed.net
      keyserver hostname. The client can automatically pick one in your 
@@ -170,10 +172,10 @@
      advantages if you have a number of clients running inside the 
      firewall, is to use a distributed.net personal proxy on the 
      firewall machine. Personal proxies may be downloaded from 
-     http://www.distributed.net/download/. Configuration guides for setting 
-     up a personal proxy are beyond the scope of this document, but for 
-     the client, configuration is the same as that for a "datapipe" (in 
-     the section above).
+     http://www.distributed.net/download/. Configuration guides for
+     setting up a personal proxy are beyond the scope of this document,
+     but for the client, configuration is the same as that for a
+     "datapipe" (in the section above).
 
      If your firewall permits access to telnet ports (port 23), or
      to HTTP ports (port 80), simply set the "Keyserver port" to that
@@ -210,7 +212,7 @@
 	select one based on the naming conventions described in the 
 	beginning of this section.
 	
-     Firewall software Known to work with the distributed.net client.
+     Firewall software known to work with the distributed.net client.
 
      Software              Platform    Method       Download from
      --------------------- ----------- ------------ -------------------
@@ -272,19 +274,19 @@
      find help (in order of responsiveness).
 
      - The quickest way to get question(s) answered about the operation 
-       and setup of the client is to connect to an EFNet IRC server and 
-       join the channel #distributed. Although there are dozens of EFNet
-       servers world-wide, the following should give you a starting point:
-       In the U.S: irc.cs.cmu.edu:6667, ingenue.eecs.berkeley.edu:6667,
-       piglet.cc.utexas.edu:6667. In Europe: irc.homelien.no:6667, 
-       irc.df.lth.se:6667, or efnet.demon.co.uk:6667 
+       and setup of the client is to connect to the distributed.net IRC
+       network and join the channel #distributed. To connect, point your
+       IRC client at the server irc.distributed.net. This is an alias
+       for all the public IRC servers on the network. For more info on
+       using IRC and distributed.net, see the IRC Tutorial:
+       http://www.distributed.net/docs/tutor_irc.html
 
      - If you need further assistance with client use or operation, refer 
-       to the the list of "Frequently asked Questions" (FAQs) available 
-       online at http://www.distributed.net/faq/  Documents cover every 
-       aspect of running a client including "The Complete Step by Step 
-       Guide to Running Your First Client", "How To Join A Team", and 
-       the popular "Statistics Server FAQ".
+       to the distributed.net FAQ-O-Matic (Frequently Asked Questions)
+       available online at: http://www.distributed.net/faq/
+       Documents there include every aspect of running the client,
+       common questions about distributed.net projects, and the ever-
+       popular statistics questions.
 
      - If you don't mind your mailbox receiving a few messages a day, 
        you may consider subscribing to the general client mailing list
@@ -295,10 +297,10 @@
      - More user support is available from <help@distributed.net> 
        as well as from our regional support representatives listed at 
        http://www.distributed.net/regional/index.html
-    
+     
      - If you believe you have found a bug in the client or would like 
-       to make a suggestion, please use the bug tracking pages at 
-       http://www.distributed.net/bugs/  
+       to make a suggestion, please use our Bugzilla bug tracking pages
+       located at: http://www.distributed.net/bugs/  
        DO NOT FORGET TO PROVIDE THE **FULL** VERSION NUMBER OF YOUR CLIENT
        Don't fret if you don't get a response right away - porters are 
        usually very busy and it may take weeks before they get around to 

@@ -1,0 +1,8 @@
+$Id: readme-dynix,v 1.2 2002/09/02 00:35:45 andreasb Exp $
+
+Additional information for DYNIX/ptx clients.
+=============================================
+
+The 2.8XXX series of clients are built on DYNIX/ptx 4.4.8. They will
+run on DYNIX/ptx 4.4.6, but might not run on earlier versions.
+

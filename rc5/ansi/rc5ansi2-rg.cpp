@@ -1,11 +1,18 @@
+// Copyright distributed.net 1997-2002 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+
 // dual-key, mixed round 3 and encryption, A1/A2 use for last value,
 // non-arrayed S1/S2 tables, run-time generation of S0[]
 
-// Copyright distributed.net 1997 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
 // $Log: rc5ansi2-rg.cpp,v $
+// Revision 1.9  2002/09/02 00:35:55  andreasb
+// sync: merged changes from release-2-7111 branch between
+//       2000-07-11 and release-2-7111_20020901 into trunk
+//
+// Revision 1.8.2.1  2002/04/12 23:56:57  andreasb
+// 2002 copyright update - round 2
+//
 // Revision 1.8  1999/04/09 18:15:28  snake
 //
 // fixed for pipeline stuff and 32bit checking
@@ -14,7 +21,7 @@
 // added DEFINE RC5ANSICORE so that problem.cpp will not raise an error
 //
 // Revision 1.6  1998/07/08 22:59:50  remi
-// Lots of $Id: rc5ansi2-rg.cpp,v 1.8 1999/04/09 18:15:28 snake Exp $ stuff.
+// Lots of $Id: rc5ansi2-rg.cpp,v 1.9 2002/09/02 00:35:55 andreasb Exp $ stuff.
 //
 // Revision 1.5  1998/06/14 08:27:34  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
@@ -55,7 +62,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_rg_cpp (void) {
-return "@(#)$Id: rc5ansi2-rg.cpp,v 1.8 1999/04/09 18:15:28 snake Exp $"; }
+return "@(#)$Id: rc5ansi2-rg.cpp,v 1.9 2002/09/02 00:35:55 andreasb Exp $"; }
 #endif
 
 #include "problem.h"

@@ -1,8 +1,23 @@
-// Copyright distributed.net 1997 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
+// $Id: rotate.h,v 1.7 2002/09/02 00:35:55 andreasb Exp $
+//
 // $Log: rotate.h,v $
+// Revision 1.7  2002/09/02 00:35:55  andreasb
+// sync: merged changes from release-2-7111 branch between
+//       2000-07-11 and release-2-7111_20020901 into trunk
+//
+// Revision 1.5.2.5  2002/04/12 23:56:57  andreasb
+// 2002 copyright update - round 2
+//
+// Revision 1.5.2.4  2001/05/20 21:30:22  andreasb
+// disable sparc specific SHL/SHR macros when using Sun CC
+//
+// Revision 1.5.2.3  2001/02/09 04:16:57  sampo
+// let ia64 use alpha rotate macro, 50% speedup
+//
 // Revision 1.6  2000/07/11 02:27:43  mfeiri
 // sync
 //
@@ -10,7 +25,6 @@
 // Makes ansi cores usable for 68k NetBSDs (maybe faster than crunch core)
 //
 // Revision 1.5.2.1  1999/12/31 20:05:04  patrick
-//
 //
 // added ansi_increment for increment inside ansi cores
 //
@@ -81,7 +95,7 @@ static __inline__ void ansi_increment( RC5UnitWork *rc5unitwork ) {
 #undef key
 #endif // USE_ANSI_INCREMENT
 
-#if (CLIENT_CPU == CPU_SPARC)
+#if (CLIENT_CPU == CPU_SPARC) && !defined(__SUNPRO_CC)
 
 #define SHL(x, s) ((u32) ((x) << (s) ))
 #define SHR(x, s) ((u32) ((x) >> (32 - (s)) ))
@@ -245,7 +259,7 @@ static __inline__ u32 ROTL3(u32 x)
 	return res;
 }
 
-#elif (CLIENT_CPU == CPU_ALPHA)
+#elif (CLIENT_CPU == CPU_ALPHA || CLIENT_CPU == CPU_IA64)
 
 //// This is based on the post on the rc5 list by micha (mbruck@ins-coin.de)
 //// It'll work on any DEC Alpha platform and maybe others

@@ -5,6 +5,14 @@
 ;
 ;
 ; $Log: rc5-arm-1.s,v $
+; Revision 1.3  2002/09/02 00:35:55  andreasb
+; sync: merged changes from release-2-7111 branch between
+;       2000-07-11 and release-2-7111_20020901 into trunk
+;
+; Revision 1.2.2.2  2000/11/20 20:29:48  teichp
+; Reverted to an older version because this one got into an endless loop
+; for test number 3.
+;
 ; Revision 1.2  1999/01/06 14:45:21  chrisb
 ; changed to allow cores to increment the high word of the key, so they pass -test. rc5-arm-3.s coming soon.
 ;
@@ -16,7 +24,7 @@
 	
 	AREA	fastrc5area, CODE
 
-        DCB     "@(#)$Id: rc5-arm-1.s,v 1.2 1999/01/06 14:45:21 chrisb Exp $", 0
+        DCB     "@(#)$Id: rc5-arm-1.s,v 1.3 2002/09/02 00:35:55 andreasb Exp $", 0
         ALIGN
 
 	EXPORT	rc5_unit_func_arm_1

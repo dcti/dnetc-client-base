@@ -1,6 +1,6 @@
 /* Hey, Emacs, this is *not* a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.6 2000/06/02 06:24:53 jlawson Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.7 2002/09/02 00:35:41 andreasb Exp $"
 
 typedef enum
 {
@@ -30,11 +30,19 @@ typedef enum
   RESULT_FOUND   = 2
 } Resultcode;
 
+#ifndef MIPSpro
+#pragma pack(1)
+#endif
+
 typedef struct
 {
   struct {u32 hi,lo;} plain;  /* plaintext (already mixed with iv!) */
   struct {u32 hi,lo;} cypher; /* cyphertext */
   struct {u32 hi,lo;} L0;     /* key, changes with every unit * PIPELINE_COUNT. */
 } RC5UnitWork;
+
+#ifndef MIPSpro
+#pragma pack()
+#endif
 
 #endif /* __CCOREIO_H__ */

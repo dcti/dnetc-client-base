@@ -1,10 +1,12 @@
 /*
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.23 2000/07/11 03:42:54 mfeiri Exp $"; }
+return "@(#)$Id: util.cpp,v 1.24 2002/09/02 00:35:43 andreasb Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -19,17 +21,54 @@ return "@(#)$Id: util.cpp,v 1.23 2000/07/11 03:42:54 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------- */
 
+static char __trace_tracing_filename[10] = {0};
+void trace_setsrc( const char *filename )
+{ 
+  unsigned int i;
+  register const char *q = (const char *)0;
+  register const char *p = "";
+  if (filename)
+  {
+    p = &filename[strlen(filename)];
+    while (p > filename)
+    {
+      --p;
+      #if (CLIENT_OS == OS_RISCOS)
+      if (*p == '.')
+      #else
+      if (*p == ':' || *p == '/' || *p == '\\')
+      #endif
+      {
+        p++;
+        break;
+      }
+      if (*p == '.')
+        q = p;      
+    }
+  }      
+  strncpy(__trace_tracing_filename,p,sizeof(__trace_tracing_filename));
+  i = ((q)?(q-p):(sizeof(__trace_tracing_filename)-1));
+  __trace_tracing_filename[i] = '\0';
+  i = strlen(__trace_tracing_filename);
+  while (i < (sizeof(__trace_tracing_filename)-1))
+    __trace_tracing_filename[i++] = ' ';
+  __trace_tracing_filename[sizeof(__trace_tracing_filename)-1] = '\0';
+  return;
+}  
+
 void trace_out( int indlevel, const char *format, ... )
 {
   static int indentlevel = -1; /* uninitialized */
   const char *tracefile = "trace"EXTN_SEP"out";
+  int old_errno = errno;
   FILE *file;
   va_list arglist;
   va_start (arglist, format);
 
   if (indentlevel == -1) /* uninitialized */
   {
-    remove(tracefile);
+    unlink(tracefile); /* } both needed for */
+    remove(tracefile); /* } some odd reason */
     indentlevel = 0;
   }
 
@@ -39,9 +78,11 @@ void trace_out( int indlevel, const char *format, ... )
   if (file)
   {
     char buffer[64];
-    time_t t = time(NULL);
-    struct tm *lt = localtime( &t );
-    fprintf(file, "%02d:%02d:%02d: ", lt->tm_hour, lt->tm_min, lt->tm_sec);
+    struct timeval tv;
+    if (CliClock(&tv)!=0)
+      tv.tv_sec = tv.tv_usec = 0;
+    fprintf(file, "%05d.%03d: %s ", (int)tv.tv_sec, (int)(tv.tv_usec/1000),
+                  __trace_tracing_filename );
     if (indentlevel > 0)
     {
       size_t spcs = ((size_t)indentlevel);
@@ -58,6 +99,7 @@ void trace_out( int indlevel, const char *format, ... )
   }
   if (indlevel > 0)
     indentlevel += 2;
+  errno = old_errno;
   return;
 }
 
@@ -93,8 +135,9 @@ int utilCheckIfBetaExpired(int print_msg)
       if (CliClock(&tv) == 0)
       {
         if (last_seen == ((time_t)-1)) //let it through once
-          last_seen = tv.tv_sec;
-        else if (tv.tv_sec < last_seen || (tv.tv_sec - last_seen) > 10*60)
+          last_seen = 0;
+        else if (last_seen == 0 || tv.tv_sec < last_seen || 
+                 (tv.tv_sec - last_seen) > 10*60)
         {
           expirationtime.tv_sec -= now;
           LogScreen("*** This BETA release expires in %s. ***\n",
@@ -432,60 +475,6 @@ const char *projectmap_build( char *buf, const char *strtomap )
   return map;
 }
 
-/* ------------------------------------------------------------------ */
-
-int IsFilenameValid( const char *filename )
-{
-  if (!filename)
-    return 0;
-  while (*filename && isspace(*filename))
-    filename++;
-  return (*filename && strcmp( filename, "none" ) != 0); /* case sensitive */
-}
-
-int DoesFileExist( const char *filename )
-{
-  if ( !IsFilenameValid( filename ) )
-    return 0;
-  return ( access( GetFullPathForFilename( filename ), 0 ) == 0 );
-}
-
-int GetFileLengthFromStream( FILE *file, unsigned long *length )
-{
-  #if (CLIENT_OS == OS_WIN32)
-    DWORD result = GetFileSize((HANDLE)_get_osfhandle(fileno(file)),NULL);
-    if (result == ((DWORD)-1)) return -1;
-    *length = (unsigned long)result;
-  #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16)
-    unsigned long result = filelength( fileno(file) );
-    if (result == ((unsigned long)-1L)) return -1;
-    *length = result;
-  #elif (CLIENT_OS == OS_RISCOS)
-    if (riscos_get_filelength(fileno(file),(unsigned long *)length) != 0)
-      return -1;
-  #else
-    struct stat statbuf;
-    #if (CLIENT_OS == OS_NETWARE)
-    unsigned long inode;
-    int vno;
-    if (FEMapHandleToVolumeAndDirectory( fileno(file), &vno, &inode )!=0)
-      { vno = 0; inode = 0; }
-    if ( vno == 0 && inode == 0 )
-    {                                       /* file on DOS partition */
-      unsigned long result = filelength( fileno(file) );  // ugh! uses seek
-      if (result == ((unsigned long)-1L)) return -1;
-      *length = result;
-      return 0;
-    }
-    #endif
-    if ( fstat( fileno( file ), &statbuf ) != 0) return -1;
-    *length = (unsigned long)statbuf.st_size;
-    //if (*length != statbuf.st_size) /* overflow */
-    //  return -1;
-  #endif
-  return 0;
-}
-
 /* --------------------------------------------------------------------- */
 
 const char *utilSetAppName(const char *newname)
@@ -498,10 +487,16 @@ const char *utilSetAppName(const char *newname)
    no longer (as of Nov/2000) used.
   */
   static int initialized = -1;
-  static char appname[32];
+  #if (CLIENT_CONTEST < 80)
+  /* put the asciiz name here so the user has something to patch :) */
+  static char appname[32] = {'r','c','5','d','e','s','\0'};
+  #else
+  /* put the asciiz name here so the user has something to patch :) */
+  static char appname[32] = {'d','n','e','t','c','\0'};
+  #endif
+
   if (newname != NULL)
   {
-    /* this is bogus behavior that is never really used */
     unsigned int len;
     const char *sep = EXTN_SEP;
     while (*newname == ' ' || *newname == '\t')
@@ -527,15 +522,8 @@ const char *utilSetAppName(const char *newname)
     #endif
     initialized = 1;
   }
-  if (initialized > 0) /* always true */
-    return (const char *)&appname[0];
+  return (const char *)&appname[0];
 
-  /* put the asciiz name here so the user has something to patch :) */
-  #if (CLIENT_CONTEST < 80)
-  return "rc5des";
-  #else
-  return "dnetc";
-  #endif
 }
 
 const char *utilGetAppName(void)
@@ -546,13 +534,18 @@ const char *utilGetAppName(void)
 /* --------------------------------------------------------------------- */
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
-      (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
+      (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
+      (CLIENT_OS == OS_PS2LINUX)
   #include <dirent.h>         // for direct read of /proc/
 #elif (CLIENT_OS == OS_BEOS)
   #include <kernel/OS.h>      // get_next_team_info()
   #include <kernel/image.h>   // get_next_image_info()
 #elif (CLIENT_OS == OS_WIN32)
+  #define WIN32_LEAN_AND_MEAN
+  #include <windows.h>
   #include <tlhelp32.h> /* toolhlp32 structures and function prototypes */
+#elif (CLIENT_OS == OS_WIN16)
+  #include <windows.h>
 #endif
 #ifdef __unix__
   #include <fcntl.h>
@@ -752,7 +745,6 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           if (Process32First(hSnapshot, &pe))
           {
             DWORD ourownpid = GetCurrentProcessId();
-            int dirmatch_optimization_rule = -1; /* not determined yet */
             unsigned int basenamepos, basenamelen, suffixlen;
 
             /* Name matching: if any component (path,name,extension) of 
@@ -941,14 +933,41 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       }
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #elif (defined(__unix__)) && (CLIENT_OS != OS_NEXTSTEP) && !defined(__EMX__)
+    #elif (CLIENT_OS == OS_AMIGAOS)
+    {
+      num_found = 0;
+      long taskptr;
+
+      #ifndef __PPC__
+      /* 68K */
+      taskptr = (long)FindTask(procname);
+      #else
+      #ifndef __POWERUP__
+      /* WarpOS */
+      taskptr = (long)FindTaskPPC((char *)procname);
+      #else
+      /* PowerUp */
+      taskptr = (long)PPCFindTask((char *)procname);
+      #endif
+      #endif
+
+      if (taskptr)
+      {
+         if (pidlist)
+            pidlist[num_found] = taskptr;
+         num_found++;
+      }
+    }
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    #elif defined(__unix__)
     {
       char *p, *foundname;
       pid_t thatpid, ourpid = getpid();
       size_t linelen; char buffer[1024];
       int usefullpathcmp = (strchr( procname, '/' ) != ((char *)0));
       #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
-          (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
+          (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
+          (CLIENT_OS == OS_PS2LINUX)
       {
         DIR *dirp = opendir("/proc");
         if (dirp)
@@ -957,7 +976,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           while ((dp = readdir(dirp)) != ((struct dirent *)0))
           {
             FILE *file;
-            pid_t thatpid = (pid_t)atoi(dp->d_name);
+            thatpid = (pid_t)atoi(dp->d_name);
             if (num_found < 0)
               num_found = 0;
             if (thatpid == 0 /* .,..,curproc,etc */ || thatpid == ourpid)
@@ -1007,7 +1026,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       }
       #endif
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      #if (CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_HPUX)
+      #if (CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_HPUX) && (CLIENT_OS != OS_PS2LINUX)
       {
         /* this part is only needed for operating systems that do not read /proc
            OR do not have a reliable method to set the name as read from /proc
@@ -1017,17 +1036,24 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         const char *pscmd = ((char *)NULL);
         #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
             (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
-            (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX)
+            (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX) || \
+            (CLIENT_OS == OS_PS2LINUX)
         pscmd = "ps ax|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
         /* fbsd: "ps ax -o pid -o command 2>/dev/null"; */ /* bsd + -o ext */
         /* lnux: "ps ax --format pid,comm 2>/dev/null"; */ /* bsd + gnu -o */
         #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
               (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
         pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
+	#elif (CLIENT_OS == OS_DYNIX)
+	pscmd = "/bin/ps -ef -o pid -o comm 2>/dev/null";     /*svr4/posix*/
         #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
         pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
-        #elif (CLIENT_OS == OS_NTO2)
-        pscmd = "ps -A -o pid,comm 2>/dev/null";
+        #elif (CLIENT_OS == OS_QNX)
+          #if defined(__QNXNTO__) /* neutrino */
+          pscmd = "ps -A -o pid,comm 2>/dev/null";
+          #else
+          pscmd = "ps -A -F"%p %c" 2>/dev/null";
+          #endif
         #else
         #error fixme: select an appropriate ps syntax (or use another method to get pidlist)
         #error "this part is only needed for OSs that do not have another way"
@@ -1150,6 +1176,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       }
       #endif /* spawn ps */
       thatpid = thatpid; /* shaddup compiler */
+      p=p;
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #endif /* #if (defined(__unix__)) */
@@ -1157,4 +1184,3 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
 
   return num_found;
 }
-

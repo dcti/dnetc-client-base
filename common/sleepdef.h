@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.35 2000/07/11 03:45:26 mfeiri Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.36 2002/09/02 00:35:43 andreasb Exp $"
 
 #include "cputypes.h"
 
@@ -94,6 +94,9 @@
   #ifdef sleep
   #undef usleep
   #endif
+  // in platforms/amiga/amTime.c
+  #define sleep(x)  amigaSleep(x,0)
+  #define usleep(x) amigaSleep(0,x)
   }
 #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
   //Jul '99: It appears Sol/Sparc and/or Sol/ultra have a
@@ -111,13 +114,13 @@
   #undef usleep
   #define usleep(x) {struct timeval tv__={0,(x)};select(0,NULL,NULL,NULL,&tv__);}
 #elif (CLIENT_OS == OS_RISCOS)
-  extern "C" {
   #include <unistd.h>
-  }
+  #include <riscos_sup.h>
 #elif (CLIENT_OS == OS_DYNIX)
   // DYNIX doesn't have nanosleep() or usleep(), but has poll()
   #undef usleep
   #define usleep(x) poll(NULL, 0, (x)/1000);
+  #include <poll.h>
 #elif (CLIENT_OS == OS_ULTRIX)
   #include <sys/time.h>
   #define usleep(x) {struct timeval tv__={0,(x)};select(0,NULL,NULL,NULL,&tv__);}

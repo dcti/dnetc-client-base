@@ -1,15 +1,21 @@
-/* Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
- *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ *
+ * -----------------------------------------------------------------
+ * NOTE: this file (the problem loader/saver) knows nothing about
+ *       individual contests. It is problem.cpp's job to provide 
+ *       all the information it needs to load/save a problem.
+ *       KEEP IT THAT WAY!
+ * -----------------------------------------------------------------
 */
-
-//#define STRESS_RANDOMGEN
-//#define STRESS_RANDOMGEN_ALL_KEYSPACE
-
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.80 2000/07/11 03:51:22 mfeiri Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.81 2002/09/02 00:35:43 andreasb Exp $"; }
+
+//#define TRACE
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -18,29 +24,24 @@ return "@(#)$Id: probfill.cpp,v 1.80 2000/07/11 03:51:22 mfeiri Exp $"; }
 #include "problem.h"   // Problem class
 #include "logstuff.h"  // Log()/LogScreen()
 #include "clitime.h"   // CliGetTimeString()
-#include "cpucheck.h"  // GetNumberOfDetectedProcessors()
-#include "random.h"    // Random()
-#include "selcore.h"   // selcoreSelectCore()
-#include "clisrate.h"  // CliGetMessageFor... et al.
-#include "clicdata.h"  // CliGetContestNameFromID()
-#include "clirate.h"   // CliGetKeyrateForProblem()
 #include "probman.h"   // GetProblemPointerFromIndex()
+#include "clicdata.h"  // CliGetContestNameFromID,CliGetContestWorkUnitSpeed
+#include "cpucheck.h"  // GetNumberOfDetectedProcessors() [for thresh fxns]
 #include "checkpt.h"   // CHECKPOINT_CLOSE define
 #include "triggers.h"  // RaiseExitRequestTrigger()
 #include "buffupd.h"   // BUFFERUPDATE_FETCH/_FLUSH define
 #include "buffbase.h"  // GetBufferCount,Get|PutBufferRecord,etc
 #include "modereq.h"   // ModeReqSet() and MODEREQ_[FETCH|FLUSH]
+#include "clievent.h"  // ClientEventSyncPost
+#include "util.h"      // trace
 #include "probfill.h"  // ourselves.
-#include "rsadata.h"   // Get cipher/etc for random blocks
-#include "confrwv.h"   // Needed to trigger .ini to be updated
-#include "clievent.h"  // ClientEventSyncPost( int event_id, long parm )
 
 // =======================================================================
 // each individual problem load+save generates 4 or more messages lines 
 // (+>=3 lines for every load+save cycle), so we suppress/combine individual 
 // load/save messages if the 'load_problem_count' exceeds COMBINEMSG_THRESHOLD
 // into a single line 'Loaded|Saved n RC5|DES packets from|to filename'.
-#define COMBINEMSG_THRESHOLD 4 // anything above this and we don't show 
+#define COMBINEMSG_THRESHOLD 8 // anything above this and we don't show 
                                // individual load/save messages
 // =======================================================================   
 
@@ -48,16 +49,295 @@ int SetProblemLoaderFlags( const char *loaderflags_map )
 {
   unsigned int prob_i = 0;
   Problem *thisprob;
-  while ((thisprob = GetProblemPointerFromIndex(prob_i)) != NULL)
+  while ((thisprob = GetProblemPointerFromIndex(prob_i)) != 0)
   {
-    if (thisprob->IsInitialized())
-      thisprob->loaderflags |= loaderflags_map[thisprob->contest];
+    if (ProblemIsInitialized(thisprob))
+      thisprob->pub_data.loaderflags |= loaderflags_map[thisprob->pub_data.contest];
     prob_i++;
   }
   return ((prob_i == 0)?(-1):((int)prob_i));
 }  
 
 /* ----------------------------------------------------------------------- */
+
+static void __get_num_c_and_p(Client *client, int contestid,
+                              unsigned int *numcrunchersP, 
+                              unsigned int *numprocsP) 
+{
+  int numcrunchers = ProblemCountLoaded(contestid);
+  int numprocs = client->numcpu;
+  if (numprocs < 0) /* auto-detect */
+    numprocs = GetNumberOfDetectedProcessors();
+  if (numprocs < 1) /* forced single cpu (0) or failed auto-detect (-1) */
+    numprocs = 1;  
+  if (!numcrunchers)
+    numcrunchers = numprocs;
+  if (numcrunchersP)
+    *numcrunchersP = numcrunchers;
+  if (numprocsP)
+    *numprocsP = numprocs;
+}
+
+
+static unsigned int __get_thresh_secs(Client *client, int contestid,
+                                      int force, unsigned int stats_units,
+                                      unsigned int *numcrunchersP)
+{
+  int was_forced; unsigned int sec;
+
+  /* somebody keeps freaking playing with client->numcpu dependancy */
+  /* is it so difficult to understand that some users explictely specify */
+  /* a number of crunchers not equal to the number of cpus in the machine? */
+  /* (not necessarily crunchers less than cpus either) */
+
+  // get the speed - careful!: if CliGetContestWorkUnitSpeed
+  // uses benchmark (was_forced) to get the speed, then the speed is 
+  // per-cpu, not per-cruncher. Otherwise, its per-cruncher.
+  sec = CliGetContestWorkUnitSpeed(contestid, force, &was_forced);
+
+  if (sec != 0) /* we have a rate */
+  {
+    unsigned int divx, numcrunchers, numprocs;
+    __get_num_c_and_p( client, contestid, &numcrunchers, &numprocs );
+
+    if (numcrunchersP)
+      *numcrunchersP = numcrunchers;
+
+    divx = 0;
+    if (was_forced) /* work unit speed is per-cpu */
+      divx = numprocs;
+    else            /* work unit speed is per-cruncher */
+      divx = numcrunchers;
+    
+    if (stats_units) /* get projected time to completion */
+      sec = (stats_units * sec) / (divx * 100); /* statsunits=workunits*100 */
+    else             /* get number of stats units per day */
+      sec = (100 * 24 * 3600 * divx) / sec; 
+  }
+  return sec;
+}
+
+/* ----------------------------------------------------------------------- */
+
+/* Buffer counts obtained from ProbfillGetBufferInfo() are for 
+** informational use (by frontends etc) only. Don't shortcut 
+** any of the common code calls to GetBufferCount()
+*/
+static struct { 
+  struct { 
+      long blk;
+      long swu; 
+  } counts[2];
+  long threshold; 
+  unsigned int till_completion; 
+} buffer_counts[CONTEST_COUNT] = {
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 }
+  #if (CONTEST_COUNT != 4)
+    #error static initializer expects CONTEST_COUNT == 4
+  #endif
+};
+
+int ProbfillGetBufferCounts( unsigned int contest, int is_out_type,
+                             long *threshold, int *thresh_in_swu,
+                             long *blk_count, long *swu_count, 
+                             unsigned int *till_completion )
+{
+  int rc = -1;
+  if (contest < CONTEST_COUNT)
+  {
+    if (threshold) 
+      *threshold = buffer_counts[contest].threshold;
+    if (thresh_in_swu)
+      *thresh_in_swu = (contest != OGR);
+    if (till_completion)
+      *till_completion = buffer_counts[contest].till_completion;
+    if (is_out_type)
+      is_out_type = 1;
+    if (blk_count)
+      *blk_count = buffer_counts[contest].counts[is_out_type].blk;
+    if (swu_count)
+      *swu_count = buffer_counts[contest].counts[is_out_type].swu;
+    rc = 0;
+  }
+  return rc;
+}
+
+/* --------------------------------------------------------------------- */
+
+/* called by GetBufferCount() [buffbase.cpp] whenever both
+** swu_count and blk_count were determined.
+** In-buffer:
+**     When fetching and when a block is loaded, and
+**     if 'frequent-check'ing is enabled, then every frequent check cycle
+** Out-buffer:
+**     When flushing and when a block is completed.
+*/
+int ProbfillCacheBufferCounts( Client *client,
+                               unsigned int cont_i, int is_out_type,
+                               long blk_count, long swu_count)
+{
+  if (cont_i < CONTEST_COUNT && blk_count >= 0 && swu_count >= 0)
+  {
+    if (is_out_type)
+      is_out_type = 1;
+    buffer_counts[cont_i].counts[is_out_type].blk = blk_count;
+    buffer_counts[cont_i].counts[is_out_type].swu = swu_count;
+    if (!is_out_type && client)
+    {
+      buffer_counts[cont_i].till_completion = 
+             __get_thresh_secs(client, cont_i, 0, swu_count, 0 );
+    }
+  }
+  return 0;
+}
+
+/* --------------------------------------------------------------------- */
+
+unsigned int ClientGetInThreshold(Client *client, 
+                                  int contestid, int force )
+{
+  // If inthreshold is == 0, then use time threshold.
+  // If inthreshold is == 0, AND time is 0, then use BUFTHRESHOLD_DEFAULT
+  // If inthreshold > 0 AND time > 0, then use MAX(inthreshold, effective_workunits(time))
+  unsigned int numcrunchers = 0; /* unknown */
+  unsigned int bufthresh = 0; /* unknown */
+
+  // OGR time threshold NYI
+  client->timethreshold[OGR] = 0;
+
+  if (contestid >= CONTEST_COUNT)
+  {
+    return 1000; // XXX return 1000 when in an invalid state.  this should be
+                 // changed or documented.
+  }
+  if (client->inthreshold[contestid] > 0)
+  {
+    bufthresh = client->inthreshold[contestid] * 100;
+  }
+  if (client->timethreshold[contestid] > 0) /* use time */
+  {
+    unsigned int secs, timethresh = 0;
+    secs = __get_thresh_secs(client, contestid, force, 0, &numcrunchers );
+
+    if (secs) /* number of stats units per 24 hour period */
+      timethresh = 1 + (client->timethreshold[contestid] * secs / 24);
+    if (timethresh > bufthresh)
+      bufthresh = timethresh;
+  }
+  if (numcrunchers < 1) /* undetermined */
+  {
+    __get_num_c_and_p( client, contestid, &numcrunchers, 0 );
+  }
+  if (bufthresh < 1) /* undetermined */
+  {
+    #define BUFTHRESHOLD_DEFAULT_PER_CRUNCHER (24*100)  /* in stats units */
+    bufthresh = BUFTHRESHOLD_DEFAULT_PER_CRUNCHER * numcrunchers;
+    #undef BUFTHRESHOLD_DEFAULT_PER_CRUNCHER
+  }
+  if (bufthresh < (numcrunchers * 100)) /* ensure at least 1.00 stats */
+  {                                     /* units per per cruncher */
+    bufthresh = numcrunchers * 100;
+  }
+  buffer_counts[contestid].threshold = bufthresh;  
+  return bufthresh;
+}
+
+/* 
+   How thresholds affect contest rotation and contest fallover:
+
+   For contest rotation, outthreshold checks (and connectoften) must be 
+   disabled, otherwise the client will update before it hits the end of 
+   the load_order, resulting in more work becoming available for all 
+   projects.
+   Inversely, for contest fallover, outthreshold checks (or connectoften) 
+   must be enabled.
+
+   Example scenarios:
+   1) User wants to run both OGR and RC5, allocating 3 times as much cpu
+      time to OGR than to RC5. These would be the required settings:
+      load_order=OGR,RC5      (the order in which the client LOOKs for work)
+      inthresholds=OGR=6,RC5=2    (OGR thresh is 3 times RC5 thresh)
+      outthresholds=OGR=0,RC5=0 (disable outthresh checking)  
+      what happens: 
+         client looks for work. OGR is available. does OGR.
+         (repeat OGR inthresh times)
+         client looks for work, no OGR is available, RC5 is. does RC5.
+         (repeat RC5 inthresh times)
+         client looks for work, no OGR, no RC5 available. 
+                fetches&flushes. 
+         client looks for work. OGR is available. does OGR.
+   2) User wants to run OGR as long as OGR is available, the do RC5 (until 
+      OGR is available again).
+      load_order=OGR,RC5
+      inthresholds=OGR=<something>,RC5=<something>
+      outthresholds=OGR=<not zero and less than inthresh>,RC5=<whatever>
+      what happens: 
+         client looks for work. OGR is available. does OGR.
+         (repeat OGR outhresh times) 
+         out threshold now crossed. flushes&fetches.
+         client looks for work. OGR is available. does OGR.
+   3) User wants to run ONLY contest XXX.
+      load_order=XXX,<all others>=0
+      if contest XXX is NOT RC5, and no work is available, the client
+      will exit. if contest XXX is RC5, and no work is available, it will
+      do randoms.
+*/
+
+static unsigned int ClientGetOutThreshold(Client *client, 
+                                   int contestid, int /* force */)
+{
+  int outthresh = 0;  /* returns zero if outthresholds are not to be checked */
+  client = client; /* shaddup compiler. */
+
+  if (contestid < CONTEST_COUNT)
+  {
+#if (!defined(NO_OUTBUFFER_THRESHOLDS))
+    outthresh = client->outthreshold[contestid]; /* never time driven */
+    if (outthresh != 0) /* outthresh=0 => outthresh=inthresh => return 0 */
+    {
+      unsigned int inthres = ClientGetInThreshold(client, contestid, 0);
+      if (inthresh > 0) /* no error */
+      {
+        if (outthresh <= 0) /* relative to inthresh */
+        {
+          /*
+          a) if the outthreshold (as per .ini) is <=0, then outthreshold is 
+          to be interpreted as a value relative to the (computed) inthreshold.
+          ie, computed_outthreshold = computed_intthreshold + ini_outthreshold.
+          [thus an ini_threshold equal to zero implies rule c) below]
+          */
+          outthresh = inthresh + outthresh;
+        }
+        if (outthresh >= inthresh)
+        {
+          /*
+          b) if the outthreshold (according to the .ini) was > inthresh
+          then inthreshold rules are effective because outthresh can never
+          be greater than inthresh (inthresh will have been checked first).
+          (The exception is when using shared buffers, and another client 
+          fetches but does not flush).
+          Consequence: Only inthreshold is effective and outthresh 
+          doesn't need to be checked. ClientGetOutThreshold() returns 0.
+          c) if the outthreshold (according to the .ini) was equal to inthresh
+          there there is usually no point checking outthresh because 
+          the result of both checks would be the same. (The exception is 
+          when using shared buffers, and another client fetches but does
+          not flush).
+          Consequence: inthreshold is effective and outthresh 
+          doesn't need to be checked. ClientGetOutThreshold() returns 0.
+          */
+          outthresh = 0;
+        }
+      }
+    }
+#endif
+  }
+  return 100 * ((unsigned int)outthresh);      
+}
+
 
 /* determine if out buffer threshold has been crossed, and if so, set 
    the flush_required flag
@@ -93,201 +373,180 @@ static int __check_outbufthresh_limit( Client *client, unsigned int cont_i,
 static unsigned int __IndividualProblemSave( Problem *thisprob, 
                 unsigned int prob_i, Client *client, int *is_empty, 
                 unsigned load_problem_count, unsigned int *contest,
-                int *bufupd_pending, int unconditional_unload )
+                int *bufupd_pending, int unconditional_unload,
+                int abortive_action )
 {                    
-  unsigned int norm_key_count = 0;
-  *contest = 0;
-  *is_empty = 0;
+  unsigned int did_save = 0;
+  prob_i = prob_i; /* shaddup compiler. we need this */
 
-  if ( thisprob->IsInitialized()==0 )  
-  {
-    *is_empty = 1; 
-    prob_i = prob_i; //get rid of warning
-  }
-  else 
+  *contest = 0;
+  *is_empty = 1; /* assume not initialized */
+  if ( ProblemIsInitialized(thisprob) )  
   {
     WorkRecord wrdata;
     int resultcode;
     unsigned int cont_i;
     memset( (void *)&wrdata, 0, sizeof(WorkRecord));
-    resultcode = thisprob->RetrieveState( &wrdata.work, &cont_i, 0 );
+    resultcode = ProblemRetrieveState( thisprob, &wrdata.work, &cont_i, 0, 0 );
 
-    if (resultcode == RESULT_FOUND || resultcode == RESULT_NOTHING )
-    {
-      long longcount;
+    *is_empty = 0; /* assume problem is in use */
+
+    if (resultcode == RESULT_FOUND || resultcode == RESULT_NOTHING ||
+       unconditional_unload || resultcode < 0 /* core error */ ||
+      (thisprob->pub_data.loaderflags & (PROBLDR_DISCARD|PROBLDR_FORCEUNLOAD)) != 0) 
+    { 
+      int finito = (resultcode==RESULT_FOUND || resultcode==RESULT_NOTHING);
+      const char *action_msg = 0;
+      const char *reason_msg = 0;
+      int discarded = 0;
+      char ratebuf[32];
+      char dcountbuf[64]; /* we use this as scratch space too */
+      struct timeval tv;
+      ProblemInfo info;
+      info.rate.ratebuf = ratebuf;
+      info.rate.size = sizeof(ratebuf);
+
       *contest = cont_i;
       *is_empty = 1; /* will soon be */
-
-      if (client->keyport == 3064)
-      {
-        LogScreen("Test success was %sdetected!\n",
-           (wrdata.resultcode == RESULT_NOTHING ? "not " : "") );
-      }
 
       wrdata.contest = (u8)(cont_i);
       wrdata.resultcode = resultcode;
-      wrdata.os      = CLIENT_OS;
-      #if (CLIENT_OS == OS_RISCOS)
-      if (prob_i == 1)
-        wrdata.cpu   = CPU_X86;
-      else
-      #endif
-      wrdata.cpu     = CLIENT_CPU;
-      wrdata.buildhi = CLIENT_CONTEST;
-      wrdata.buildlo = CLIENT_BUILD;
-      strncpy( wrdata.id, client->id , sizeof(wrdata.id));
-      wrdata.id[sizeof(wrdata.id)-1]=0;
-
-      switch (cont_i) 
-      {
-        case RC5:
-        case DES:
-        case CSC:
-        {
-          norm_key_count = 
-             (unsigned int)__iter2norm( (wrdata.work.crypto.iterations.lo),
-                                      (wrdata.work.crypto.iterations.hi) );
-          break;
-        }
-        case OGR:
-        {
-          norm_key_count = 1;
-          break;
-        }
-      }
-      
-      // send it back... error messages is printed by PutBufferRecord
-      if ( (longcount = PutBufferRecord( client, &wrdata )) >= 0)
-      {
-        //---------------------
-        // update the totals for this contest
-        //---------------------
-
-        if (load_problem_count <= COMBINEMSG_THRESHOLD)
-        {
-          Log( CliGetMessageForProblemCompleted( thisprob ) );
-        }
-        else /* stop the log file from being cluttered with load/save msgs */
-        {
-          CliGetKeyrateForProblem( thisprob ); //add to totals
-        }
-
-        if (cont_i != OGR)
-        {
-          double rate = CliGetKeyrateForProblemNoSave( thisprob );
-          if (rate > 0.0)
-            CliSetContestWorkUnitSpeed(cont_i, (int)((1<<28)/rate + 0.5));
-        }
-
-        /* adjust bufupd_pending if outthresh has been crossed */
-        if (__check_outbufthresh_limit( client, cont_i, -1, 0,bufupd_pending))
-        {
-          //Log("1. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
-        }       
-
-      }
-      ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
-    }
-    else if (unconditional_unload || resultcode < 0 /* core error */ ||
-      (thisprob->loaderflags & (PROBLDR_DISCARD|PROBLDR_FORCEUNLOAD)) != 0) 
-    {                           
-      unsigned int permille = 0;
-      const char *msg = NULL;
-
-      *contest = cont_i;
-      *is_empty = 1; /* will soon be */
-
       wrdata.contest    = (u8)cont_i;
       wrdata.resultcode = resultcode;
-      wrdata.cpu        = FILEENTRY_CPU(thisprob->client_cpu,
-                                        thisprob->coresel);
+      wrdata.cpu        = FILEENTRY_CPU(thisprob->pub_data.client_cpu,
+                                        thisprob->pub_data.coresel);
       wrdata.os         = FILEENTRY_OS;      //CLIENT_OS
       wrdata.buildhi    = FILEENTRY_BUILDHI; //(CLIENT_BUILDFRAC >> 8)
       wrdata.buildlo    = FILEENTRY_BUILDLO; //CLIENT_BUILDFRAC & 0xff
 
-      if ((thisprob->loaderflags & PROBLDR_DISCARD)!=0)
+      if (finito)
       {
-        msg = "Discarded (project disabled/closed)";
-        norm_key_count = 0;
+        wrdata.os      = CLIENT_OS;
+        #if (CLIENT_OS == OS_RISCOS)
+        if (prob_i == 1)
+          wrdata.cpu   = CPU_X86;
+        else
+        #endif
+        wrdata.cpu     = CLIENT_CPU;
+        wrdata.buildhi = CLIENT_CONTEST;
+        wrdata.buildlo = CLIENT_BUILD;
+        strncpy( wrdata.id, client->id , sizeof(wrdata.id));
+        wrdata.id[sizeof(wrdata.id)-1]=0;
+        ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, &prob_i, sizeof(prob_i) );
+      }
+
+      if ((thisprob->pub_data.loaderflags & PROBLDR_DISCARD)!=0)
+      {
+        action_msg = "Discarded";
+        reason_msg = "project disabled/closed";
+        discarded = 1;
       }
       else if (resultcode < 0)
       {
-        msg = "Discarded (core error)";
-        norm_key_count = 0;
+        action_msg = "Discarded";
+        reason_msg = "core error";
+        discarded = 1;
       }
-      else if (PutBufferRecord( client, &wrdata ) < 0)  // send it back...
+      else if (PutBufferRecord( client, &wrdata ) < 0)
       {
-        msg = "Unable to save";
-        norm_key_count = 0;
+        action_msg = "Discarded";
+        reason_msg = "buffer error - unable to save";
+        discarded = 1;
       }
       else
       {
-        switch (cont_i) 
-        {
-          case RC5:
-          case DES:
-          case CSC:
-                  norm_key_count = (unsigned int)__iter2norm( 
-                                      (wrdata.work.crypto.iterations.lo),
-                                      (wrdata.work.crypto.iterations.hi) );
-                  break;
-          case OGR:
-                  norm_key_count = 1;
-                  break;
-        }
-        permille = (unsigned int)thisprob->CalcPermille();
+        did_save = 1;
         if (client->nodiskbuffers)
-        {
-//Log("2. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
           *bufupd_pending |= BUFFERUPDATE_FLUSH;
-        }
-        if (load_problem_count <= COMBINEMSG_THRESHOLD)
-          msg = "Saved";
-      }
-      if (msg)
-      {
-        char workpacket[80];
-        workpacket[0] = '\0';
-        switch (cont_i) 
-        {
-          case RC5:
-          case DES:
-          case CSC:
-          {
-            unsigned int packet_iter_size = // can't use norm_key_count: zero on error
-              (unsigned int) __iter2norm((wrdata.work.crypto.iterations.lo),
-                                         (wrdata.work.crypto.iterations.hi));
-            sprintf(workpacket, " %u*2^28 packet %08lX:%08lX", packet_iter_size,
-                    (unsigned long) ( wrdata.work.crypto.key.hi ),
-                    (unsigned long) ( wrdata.work.crypto.key.lo ) );
-            break;
-          }
-          #ifdef HAVE_OGR_CORES
-          case OGR:
-          {
-            sprintf(workpacket," stub %s", ogr_stubstr(&wrdata.work.ogr.workstub.stub) );
-            break;
-          }
-          #endif
-        }
-        char perdone[48]; 
-        perdone[0]='\0';
-        if (permille!=0 && permille<=1000)
-          sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
-        Log("%s %s%s%s\n", msg, CliGetContestNameFromID(cont_i), workpacket, perdone);
-      }
-    } /* unconditional unload */
-    
-    if (*is_empty) /* we can purge the object now */
-      thisprob->RetrieveState( NULL, NULL, 1 );
-  }
+        if (__check_outbufthresh_limit( client, cont_i, -1, 0,bufupd_pending))
+        { /* adjust bufupd_pending if outthresh has been crossed */
+          //Log("1. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
+        }       
 
-  return norm_key_count;
+        if (load_problem_count > COMBINEMSG_THRESHOLD)
+          ; /* nothing */
+        else if (thisprob->pub_data.was_truncated)
+        {
+          action_msg = "Skipped";
+          discarded  = 1;
+          reason_msg = thisprob->pub_data.was_truncated;
+        }
+        else if (!finito)
+          action_msg = "Saved";
+        else
+          action_msg = "Completed";
+      }
+      if (ProblemGetInfo( thisprob, &info, P_INFO_E_TIME   | P_INFO_SWUCOUNT | P_INFO_C_PERMIL |
+                                           P_INFO_SIGBUF   | P_INFO_RATEBUF  | P_INFO_TCOUNT   |
+                                           P_INFO_CCOUNT   | P_INFO_DCOUNT   | P_INFO_EXACT_PE ) != -1)
+      {
+        tv.tv_sec = info.elapsed_secs; tv.tv_usec = info.elapsed_usecs;
+
+        if (finito && !discarded && !info.is_test_packet)
+          CliAddContestInfoSummaryData(cont_i,info.ccounthi,info.ccountlo,&tv,info.swucount);
+
+        if (action_msg)
+        {
+          if (reason_msg) /* was discarded */
+          {
+            //[....] Discarded CSC 12345678:ABCDEF00 4*2^28
+            //       (project disabled/closed)
+            Log("%s: %s %s%c(%s)\n", info.name, action_msg, info.sigbuf,
+                                     ((strlen(reason_msg)>10)?('\n'):(' ')),
+                                     reason_msg );
+          }
+          else
+          {
+            U64stringify(dcountbuf, (15<sizeof(dcountbuf))?15:sizeof(dcountbuf), 
+                         info.dcounthi, info.dcountlo, 2, info.unit);
+            if (finito && info.is_test_packet) /* finished test packet */
+              strcat( strcpy( dcountbuf,"Test: RESULT_"),
+                     ((resultcode==RESULT_NOTHING)?("NOTHING"):("FOUND")) );
+            else if (finito) /* finished non-test packet */ 
+            {
+              char *p = strrchr(info.sigbuf,':'); /* HACK! to supress too long */
+              if (p) *p = '\0';            /* crypto "Completed" lines */
+              sprintf( dcountbuf, "%u.%02u stats units",
+                                  info.swucount/100, info.swucount%100);
+            }
+            else if (info.c_permille > 0)
+              sprintf( dcountbuf, "%u.%u0%% done", info.c_permille/10, info.c_permille%10);
+            else
+              strcat( dcountbuf, " done" );
+
+            //[....] RC5: Saved 12345678:ABCDEF00 4*2^28 (5.20% done)
+            //       1.23:45:67:89 - [987,654,321 keys/s]
+            //[....] OGR: Saved 25/1-6-13-8-16-18 (12.34 Mnodes done)
+            //       1.23:45:67:89 - [987,654,321 nodes/s]
+            //[....] RC5: Completed 68E0D85A:A0000000 4*2^28 (4.00 stats units)
+            //       1.23:45:67:89 - [987,654,321 keys/s]
+            //[....] OGR: Completed 22/1-3-5-7 (12.30 stats units)
+            //       1.23:45:67:89 - [987,654,321 nodes/s]
+            Log("%s: %s %s (%s)\n%s - [%s/s]\n", 
+              info.name, action_msg, info.sigbuf, dcountbuf,
+              CliGetTimeString( &tv, 2 ), info.rate.ratebuf );
+            if (finito && info.show_exact_iterations_done)
+            {
+              Log("%s: %s [%s]\n", info.name, info.sigbuf,
+                  ProblemComputeRate(cont_i, 0, 0, info.tcounthi, info.tcountlo, 
+                                     0, 0, dcountbuf, sizeof(dcountbuf)));
+            }
+          } /* if (reason_msg) else */
+        } /* if (action_msg) */
+      } /* if (thisprob->GetProblemInfo( ... ) != -1) */
+    
+      /* we can purge the object now */
+      /* we don't wait when aborting. thread might be hung */
+      ProblemRetrieveState( thisprob, NULL, NULL, 1, abortive_action /*==dontwait*/ );
+
+    } /* unload needed */
+  } /* is initialized */
+
+  return did_save;
 }
 
 /* ----------------------------------------------------------------------- */
 
-#ifndef STRESS_RANDOMGEN
 //     Internal function that loads 'wrdata' with a new workrecord
 //     from the next open contest with available blocks.
 // Return value:
@@ -297,7 +556,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 //     contests for the thread in question.
 //
 // Note that 'return_single_count' IS ALL IT TAKES TO DISABLE ROTATION.
-//
 static long __loadapacket( Client *client, 
                            WorkRecord *wrdata /*where to load*/, 
                            int /*ign_closed*/,  
@@ -312,10 +570,8 @@ static long __loadapacket( Client *client,
     unsigned int selproject = (unsigned int)client->loadorder_map[cont_i];
     if (selproject >= CONTEST_COUNT) /* user disabled */
       continue;
-//LogScreen("loadapacket 1: trying contest %u for problem %u\n", selproject, prob_i);
     if (!IsProblemLoadPermitted( (long)prob_i, selproject ))
     {
-//LogScreen("loadapacket 2: contest %u. load not permitted.\n", selproject );
       continue; /* problem.cpp - result depends on #defs, threadsafety etc */
     }
     bufcount = -1;
@@ -324,9 +580,8 @@ static long __loadapacket( Client *client,
     else         /* haven't got a packet yet */
     {
       bufcount = GetBufferRecord( client, wrdata, selproject, 0 );
-//LogScreen("loadapacket 2: contest %u count %ld\n", selproject, bufcount );
       if (bufcount >= 0) /* no error */
-        wrdata = NULL;     /* don't load again */
+        wrdata = 0;     /* don't load again */
     }
     if (bufcount >= 0) /* no error */
     {  
@@ -339,71 +594,12 @@ static long __loadapacket( Client *client,
   }
   return totalcount;
 }  
-#endif
 
 /* ---------------------------------------------------------------------- */
 
 #define NOLOAD_NONEWBLOCKS       -3
 #define NOLOAD_ALLCONTESTSCLOSED -2
 #define NOLOAD_NORANDOM          -1
-
-int __gen_random( Client *client, WorkRecord *wrdata )
-{
-  u32 randomprefix, rnd;
-  int norandom = 1;
-
-  if ((client->rc564closed == 0) && (client->blockcount >= 0))
-  {
-    unsigned int iii;
-    for (iii=0;norandom && iii<CONTEST_COUNT;iii++)
-    {
-      if (client->loadorder_map[iii] == 0 /* rc5 is enabled in map */)
-        norandom = 0;
-    }
-  }  
-  if (norandom)
-    return NOLOAD_NORANDOM; /* -1 */
-  if (client->nonewblocks)
-    return NOLOAD_NONEWBLOCKS; /* -3 */
-
-  /* random blocks permitted */
-  RefreshRandomPrefix(client); //get/put an up-to-date prefix 
-
-  if (client->randomprefix == 0)
-    client->randomprefix = 100;
-
-  randomprefix = ( (u32)(client->randomprefix) + 1 ) & 0xFF;
-  rnd = Random(NULL,0);
-
-#if defined(STRESS_RANDOMGEN) && defined(STRESS_RANDOMGEN_ALL_KEYSPACE)
-  ++client->randomprefix;
-  if (client->randomprefix > 0xff)
-    client->randomprefix = 100
-#endif
-      
-  wrdata->id[0]                 = 0;
-  wrdata->resultcode            = RESULT_WORKING;
-  wrdata->os                    = 0;
-  wrdata->cpu                   = 0;
-  wrdata->buildhi               = 0;
-  wrdata->buildlo               = 0;
-  wrdata->contest               = RC5; // Random blocks are always RC5
-  wrdata->work.crypto.key.lo    = (rnd & 0xF0000000L);
-  wrdata->work.crypto.key.hi    = (rnd & 0x00FFFFFFL) + (randomprefix<<24);
-  //constants are in rsadata.h
-  wrdata->work.crypto.iv.lo     = ( RC564_IVLO );     //( 0xD5D5CE79L );
-  wrdata->work.crypto.iv.hi     = ( RC564_IVHI );     //( 0xFCEA7550L );
-  wrdata->work.crypto.cypher.lo = ( RC564_CYPHERLO ); //( 0x550155BFL );
-  wrdata->work.crypto.cypher.hi = ( RC564_CYPHERHI ); //( 0x4BF226DCL );
-  wrdata->work.crypto.plain.lo  = ( RC564_PLAINLO );  //( 0x20656854L );
-  wrdata->work.crypto.plain.hi  = ( RC564_PLAINHI );  //( 0x6E6B6E75L );
-  wrdata->work.crypto.keysdone.lo = 0;
-  wrdata->work.crypto.keysdone.hi = 0;
-  wrdata->work.crypto.iterations.lo = 1L<<28;
-  wrdata->work.crypto.iterations.hi = 0;
-
-  return 0;
-}
 
 /* ---------------------------------------------------------------------- */
 
@@ -413,167 +609,221 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
                     unsigned int *loaded_for_contest,
                     int *bufupd_pending )
 {
-  WorkRecord wrdata;
-  unsigned int norm_key_count = 0;
-  int didload = 0, didrandom = 0;
-  int update_on_current_contest_exhaust_flag = (client->connectoften & 4);
-  long bufcount = -1;
-  
-#ifndef STRESS_RANDOMGEN
-  bufcount = __loadapacket( client, &wrdata, 1, prob_i, 
-                            update_on_current_contest_exhaust_flag );
-  if (bufcount < 0 && client->nonewblocks == 0)
+  unsigned int did_load = 0;
+  int retry_due_to_failed_loadstate = 0;
+
+  do /* while (retry_due_to_failed_loadstate) */
   {
-//Log("3. BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0)\n");
-    int didupdate = 
-       BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
-    if (!(didupdate < 0))
-    {
-      if (didupdate!=0)
-        *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
-      if ((didupdate & BUFFERUPDATE_FETCH) != 0) /* fetched successfully */
-        bufcount = __loadapacket( client, &wrdata, 0, prob_i,
-                                  update_on_current_contest_exhaust_flag );
-    }
-  }
-#endif
-  
-  if (bufcount >= 0) /* load from file succeeded */
-  {
-    int client_cpu = 0, coresel;
+    WorkRecord wrdata;
+    int update_on_current_contest_exhaust_flag = (client->connectoften & 4);
+    long bufcount;
+    int may_do_random_rc5_blocks, cont_i;
 
-    if (client->randomchanged)        
-      RefreshRandomPrefix( client );
-
-    /* if the total number of packets in buffers is less than the number 
-       of crunchers running then try to fetch *now*. This means that the
-       effective _total_ minimum threshold is always >= num crunchers
-    */   
-    if (((unsigned long)(bufcount)) < (load_problem_count - prob_i))
+    may_do_random_rc5_blocks = 0;
+    for (cont_i = 0; cont_i < CONTEST_COUNT; ++cont_i)
     {
-//Log("4. *bufupd_pending |= BUFFERUPDATE_FETCH;\n"
-//    "   buffcount=%ld, loadproblemcount=%d, prob_i=%d\n",bufcount,load_problem_count,prob_i);
-      *bufupd_pending |= BUFFERUPDATE_FETCH;
+      if (client->loadorder_map[cont_i] == RC5) {
+        /* RC5 must be enabled to do randoms */
+        may_do_random_rc5_blocks = 1;
+        break;
+      }
     }
-    coresel = selcoreSelectCore( wrdata.contest, prob_i, &client_cpu, NULL );
-    if (coresel < 0)
-    {
-      bufcount = -1; /* core select failed */
-    }
-    else
-    {
-      didload = 1;
-      *load_needed = 0;
-    }
-  } 
+    if (client->rc564closed)
+      may_do_random_rc5_blocks = 0;
 
-  if (bufcount < 0) /* normal load from buffer failed */
-  {
-    *load_needed = __gen_random( client, &wrdata );
-    if (*load_needed == 0) /* no err */
+    retry_due_to_failed_loadstate = 0;
+    bufcount = __loadapacket( client, &wrdata, 1, prob_i, 
+                              update_on_current_contest_exhaust_flag );
+
+    if (bufcount < 0 && client->nonewblocks == 0)
     {
-      didload = 1;
-      didrandom = 1;
+      //Log("3. BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0)\n");
+      TRACE_BUFFUPD((0, "BufferUpdate: reason = __IndividualProblemLoad && no more blocks\n"));
+      int didupdate = 
+         BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
+      if (!(didupdate < 0))
+      {
+        if (didupdate!=0)
+          *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
+        if ((didupdate & BUFFERUPDATE_FETCH) != 0) /* fetched successfully */
+          bufcount = __loadapacket( client, &wrdata, 0, prob_i,
+                                    update_on_current_contest_exhaust_flag );
+      }
     }
-  }
 
-  #ifdef DEBUG
-  Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Success"):("Failed")) );
-  #endif
-
-  /* ------------------------------- */
-    
-  if (didload) /* success */
-  {
-    char msgbuf[80]; 
-    u32 timeslice = 0x10000;
-    int expected_cpu = FILEENTRY_CPU_TO_CPUNUM( wrdata.cpu );
-    int expected_core = FILEENTRY_CPU_TO_CORENUM( wrdata.cpu );
-    int expected_os  = FILEENTRY_OS_TO_OS( wrdata.os );
-    int expected_build=FILEENTRY_BUILD_TO_BUILD(wrdata.buildhi,wrdata.buildlo);
-    
-    #if (defined(INIT_TIMESLICE) && (INIT_TIMESLICE > 64))
-    timeslice = INIT_TIMESLICE;
-    #endif
-    
-    msgbuf[0] = '\0';
     *load_needed = 0;
-    *loaded_for_contest = (unsigned int)(wrdata.contest);
+    if (bufcount >= 0) /* load from file suceeded */
+      *load_needed = 0;
+    else if (!may_do_random_rc5_blocks || client->blockcount < 0)
+      *load_needed = NOLOAD_NORANDOM; /* -1 */
+    else if (client->nonewblocks)
+      *load_needed = NOLOAD_NONEWBLOCKS;
+    else  /* using randoms is permitted */
+      *load_needed = 0;
 
-    thisprob->LoadState( &wrdata.work, *loaded_for_contest, timeslice, 
-         expected_cpu, expected_core, expected_os, expected_build );
-    thisprob->loaderflags = 0;
-
-    msgbuf[0] = '\0';
-    switch (wrdata.contest) 
+    TRACE_BUFFUPD((0, "__Indiv...Load: bufcount = %d, load_needed = %d\n", bufcount, *load_needed));
+    if (*load_needed == 0)
     {
-      case RC5:
-      case DES:
-      case CSC:
-      {
-        norm_key_count = (unsigned int)__iter2norm((wrdata.work.crypto.iterations.lo),
-                                                   (wrdata.work.crypto.iterations.hi));
-        sprintf(msgbuf, "%s %u*2^28 packet %08lX:%08lX", 
-                ((didrandom)?(" random"):("")), norm_key_count,
-                (unsigned long) ( wrdata.work.crypto.key.hi ),
-                (unsigned long) ( wrdata.work.crypto.key.lo ) );
-        break;
-      }
-      #ifdef HAVE_OGR_CORES
-      case OGR:
-      {
-        norm_key_count = 1;
-        sprintf(msgbuf," stub %s", ogr_stubstr(&wrdata.work.ogr.workstub.stub) );
-        break;
-      }
+      u32 timeslice = 0x10000;
+      int expected_cpu = 0, expected_core = 0;
+      int expected_os  = 0, expected_build = 0;
+      const ContestWork *work = &wrdata.work;
+      int res = -1;
+        
+      #if (defined(INIT_TIMESLICE) && (INIT_TIMESLICE >= 64))
+      timeslice = INIT_TIMESLICE;
       #endif
-    }
 
-    if (load_problem_count <= COMBINEMSG_THRESHOLD && msgbuf[0])
-    {
-      char perdone[48]; 
-      unsigned int permille = (unsigned int)(thisprob->startpermille);
-      perdone[0]='\0';
-      if (permille!=0 && permille<=1000)
-        sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
-      Log("Loaded %s%s%s\n%s",
-         CliGetContestNameFromID(*loaded_for_contest), msgbuf, perdone,
-           (thisprob->was_reset ? ("Packet was from a different core/"
-           "client cpu/os/build.\n"):("")) );
-    } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
+      if (bufcount < 0) /* normal load from buffer failed */
+      {                 /* so generate random */
+        work = CONTESTWORK_MAGIC_RANDOM;       
+        *loaded_for_contest = 0; /* don't care. just to initialize */
+      }
+      else
+      {
+        *loaded_for_contest = (unsigned int)(wrdata.contest);
+        expected_cpu = FILEENTRY_CPU_TO_CPUNUM( wrdata.cpu );
+        expected_core = FILEENTRY_CPU_TO_CORENUM( wrdata.cpu );
+        expected_os  = FILEENTRY_OS_TO_OS( wrdata.os );
+        expected_build = FILEENTRY_BUILD_TO_BUILD(wrdata.buildhi,wrdata.buildlo);
+        work = &wrdata.work;
+        
+        /* if the total number of packets in buffers is less than the number 
+           of crunchers running then post a fetch request. This means that the
+           effective minimum threshold is always >= num crunchers
+        */
+        if (((unsigned long)(bufcount)) < (load_problem_count - prob_i))
+        {
+          *bufupd_pending |= BUFFERUPDATE_FETCH;
+        } 
+      }
 
-    ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
+      /* loadstate can fail if it selcore fails or the previous problem */
+      /* hadn't been purged, or the contest isn't available or ... */
 
-  } /* if (didload) */
+      res = ProblemLoadState( thisprob, work, *loaded_for_contest, timeslice,
+                    expected_cpu, expected_core, expected_os, expected_build );
+      
+      if (res != 0)
+      {
+        /* The problem with LoadState() failing is that it implicitely
+        ** causes the block to be discarded, which means, that the 
+        ** keyserver network will reissue it - a senseless undertaking
+        ** if the data itself is invalid.
+        */
+        if (res != -2)
+        {
+          retry_due_to_failed_loadstate = 1;
+        }
+        else
+        {
+          // should never happen
+          Log("Serious ProblemLoadState() error! Aborting!\n");
+          RaiseExitRequestTrigger();
+        }
+      }
+      else
+      {
+        *load_needed = 0;
+        did_load = 1; 
 
-  return norm_key_count;
+        ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, &prob_i, sizeof(prob_i) );
+    
+        if (load_problem_count <= COMBINEMSG_THRESHOLD)
+        {
+          ProblemInfo info;
+          if (ProblemGetInfo( thisprob, &info, P_INFO_S_PERMIL | P_INFO_SIGBUF   |
+                                               P_INFO_DCOUNT   | P_INFO_EXACT_PE ) != -1)
+          {
+            const char *extramsg = ""; 
+            char ddonebuf[15];
+            char perdone[32]; 
+  
+            *loaded_for_contest = thisprob->pub_data.contest;
+            if (thisprob->pub_data.was_reset)
+              extramsg="\nPacket was from a different core/client cpu/os/build.";
+            else if (info.s_permille > 0 && info.s_permille < 1000)
+            {
+              sprintf(perdone, " (%u.%u0%% done)", (info.s_permille/10), (info.s_permille%10));
+              extramsg = perdone;
+            }
+            else if (info.dcounthi || info.dcountlo)
+            {
+              strcat( strcat( strcpy(perdone, " ("), U64stringify(ddonebuf, sizeof(ddonebuf), 
+                                                                  info.dcounthi, info.dcountlo,
+                                                                  2, info.unit)),
+                                                     " done)"); 
+              extramsg = perdone;
+            }
+            
+            Log("%s: Loaded %s%s%s\n",
+                 info.name, ((thisprob->pub_data.is_random)?("random "):("")),
+                 info.sigbuf, extramsg );
+          } /* if (thisprob->GetProblemInfo(...) != -1) */
+        } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
+      } /* if (LoadState(...) != -1) */
+    } /* if (*load_needed == 0) */
+  } while (retry_due_to_failed_loadstate);
+
+  return did_load;
 }    
 
 // --------------------------------------------------------------------
 
-unsigned int LoadSaveProblems(Client *pass_client,
+static int __post_summary_for_contest(unsigned int contestid)
+{
+  u32 iterhi, iterlo; int rc = -1;
+  unsigned int packets, swucount;
+  struct timeval ttime;
+
+  TRACE_OUT((+1,"__post_summary_for_contest(%u)\n",contestid));
+
+  if (CliGetContestInfoSummaryData( contestid, &packets, &iterhi, &iterlo,
+                                    &ttime, &swucount ) == 0)
+  {
+    if (packets)
+    {
+      char ratebuf[15];
+      TRACE_OUT((0,"pkts=%u, iter=%u:%u, time=%u:%u, swucount=%u\n", packets, 
+                    iterhi, iterlo, ttime.tv_sec, ttime.tv_usec, swucount ));
+      Log("%s: Summary: %u packet%s (%u.%02u stats units)\n%s%c- [%s/s]\n",
+          CliGetContestNameFromID(contestid), 
+          packets, ((packets==1)?(""):("s")), 
+          swucount/100, swucount%100, 
+          CliGetTimeString(&ttime,2), ((packets)?(' '):(0)), 
+          ProblemComputeRate( contestid, ttime.tv_sec, ttime.tv_usec, 
+                            iterhi, iterlo, 0, 0, ratebuf, sizeof(ratebuf)) );
+    }                            
+    rc = 0;
+  }
+
+  TRACE_OUT((-1,"__post_summary_for_contest()\n"));
+  return rc;
+}
+
+// --------------------------------------------------------------------
+
+unsigned int LoadSaveProblems(Client *client,
                               unsigned int load_problem_count,int mode)
 {
   /* Some platforms need to stop asynchronously, for example, Win16 which
      gets an ENDSESSION message and has to exit then and there. So also 
      win9x when running as a service where windows suspends all threads 
      except the window thread. For these (and perhaps other platforms)
-     we save our last state so calling with (NULL,0,PROBFILL_UNLOADALL)
-     saves the problem states.
+     we save our last state so calling with (0,0,0) will save the
+     problem states (without hanging). see 'abortive_action' below.
   */
-  static Client *client = (Client *)NULL;
+  static Client *previous_client = 0;
   static unsigned int previous_load_problem_count = 0, reentrant_count = 0;
+  static int abortive_action = 0;
 
   unsigned int retval = 0;
-  int changed_flag;
+  int changed_flag, first_time;
 
   int allclosed, prob_step,bufupd_pending;  
-  unsigned int prob_for, prob_first, prob_last;
-  unsigned int norm_key_count, cont_i;
+  unsigned int cont_i, prob_for, prob_first, prob_last;
   unsigned int loaded_problems_count[CONTEST_COUNT];
-  unsigned int loaded_normalized_key_count[CONTEST_COUNT];
   unsigned int saved_problems_count[CONTEST_COUNT];
-  unsigned int saved_normalized_key_count[CONTEST_COUNT];
   unsigned long totalBlocksDone; /* all contests */
   
   unsigned int total_problems_loaded, total_problems_saved;
@@ -589,10 +839,19 @@ unsigned int LoadSaveProblems(Client *pass_client,
 
   /* ============================================================= */
 
-  if (pass_client)
-    client = pass_client;
-  if (!client)
-    return 0;
+  if (abortive_action) /* already aborted once */
+  {                    /* no probfill action can happen again */
+    return 0;          
+  }
+  if (!client)             /* abnormal end */
+  {
+    client = previous_client;
+    if (!client)
+      return 0;
+    abortive_action = 1;
+    mode = PROBFILL_UNLOADALL;
+  }
+  previous_client = client;
   if ((++reentrant_count) > 1)
   {
     --reentrant_count;
@@ -604,6 +863,7 @@ unsigned int LoadSaveProblems(Client *pass_client,
   prob_first = 0;
   prob_step  = 0;
   prob_last  = 0;
+  first_time = 0;
 
   if (load_problem_count == 0) /* only permitted if unloading all */
   {
@@ -619,6 +879,7 @@ unsigned int LoadSaveProblems(Client *pass_client,
     prob_first = 0;
     prob_last  = (load_problem_count - 1);
     prob_step  = 1; 
+    first_time = 1;
   }
   else if (mode == PROBFILL_RESIZETABLE)
   {            /* [(previousload_problem_count-1) ... load_problem_count] */
@@ -631,23 +892,25 @@ unsigned int LoadSaveProblems(Client *pass_client,
     prob_first = 0;
     prob_last  = (load_problem_count - 1);
     prob_step  = -1;
-  }  
+  }
+  
+  TRACE_BUFFUPD((+1, "LoadSaveProblems(%d)\n", mode));
 
   /* ============================================================= */
 
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
     unsigned int blocksdone;
-    if (CliGetContestInfoSummaryData( cont_i, &blocksdone, NULL, NULL, NULL )==0)
+    if (CliGetContestInfoSummaryData( cont_i, &blocksdone, NULL, NULL, NULL, NULL )==0)
       totalBlocksDone += blocksdone;
-   
-    loaded_problems_count[cont_i]=loaded_normalized_key_count[cont_i]=0;
-    saved_problems_count[cont_i] =saved_normalized_key_count[cont_i]=0;
+    loaded_problems_count[cont_i] = 0;
+    saved_problems_count[cont_i] = 0;
   }
 
   /* ============================================================= */
 
-  ClientEventSyncPost(CLIEVENT_PROBLEM_TFILLSTARTED, (long)load_problem_count);
+  ClientEventSyncPost(CLIEVENT_PROBLEM_TFILLSTARTED, &load_problem_count, 
+                                                sizeof(load_problem_count));
 
   for (prob_for = 0; prob_for <= (prob_last - prob_first); prob_for++)
   {
@@ -658,7 +921,7 @@ unsigned int LoadSaveProblems(Client *pass_client,
       prob_i = prob_last - prob_for;
       
     thisprob = GetProblemPointerFromIndex( prob_i );
-    if (thisprob == NULL)
+    if (thisprob == 0)
     {
       if (prob_step < 0)
         continue;
@@ -668,19 +931,20 @@ unsigned int LoadSaveProblems(Client *pass_client,
     // -----------------------------------
 
     load_needed = 0;
-    norm_key_count = __IndividualProblemSave( thisprob, prob_i, client, 
-          &load_needed, load_problem_count, &cont_i, &bufupd_pending,
-          (mode == PROBFILL_UNLOADALL || mode == PROBFILL_RESIZETABLE ) );
-    if (load_needed)
-      empty_problems++;
-    if (norm_key_count)
+    if (__IndividualProblemSave( thisprob, prob_i, client, 
+        &load_needed, load_problem_count, &cont_i, &bufupd_pending,
+        (mode == PROBFILL_UNLOADALL || mode == PROBFILL_RESIZETABLE ),
+        abortive_action ))
     {
       changed_flag = 1;
       total_problems_saved++;
-      saved_normalized_key_count[cont_i] += norm_key_count;
       saved_problems_count[cont_i]++;
       totalBlocksDone++;
     }
+    if (load_needed)
+      empty_problems++;
+
+    TRACE_BUFFUPD((0, "__IndividualProblemSave ==> bufupd_pending = %d\n", bufupd_pending));
 
     //---------------------------------------
 
@@ -694,8 +958,15 @@ unsigned int LoadSaveProblems(Client *pass_client,
       else
       {
         load_needed = 0;
-        norm_key_count = __IndividualProblemLoad( thisprob, prob_i, client, 
-                &load_needed, load_problem_count, &cont_i, &bufupd_pending );
+        if (__IndividualProblemLoad( thisprob, prob_i, client, 
+            &load_needed, load_problem_count, &cont_i, &bufupd_pending ))
+        {
+          empty_problems--;
+          total_problems_loaded++;
+          loaded_problems_count[cont_i]++;
+          changed_flag = 1;
+        }
+        TRACE_BUFFUPD((0, "__IndividualProblemLoad ==> bufupd_pending = %d\n", bufupd_pending));
         if (load_needed)
         {
           getbuff_errs++;
@@ -707,171 +978,41 @@ unsigned int LoadSaveProblems(Client *pass_client,
           else if (load_needed == NOLOAD_NORANDOM)
             norandom_count++;
         }
-        if (norm_key_count)
-        {
-          empty_problems--;
-          total_problems_loaded++;
-          loaded_normalized_key_count[cont_i] += norm_key_count;
-          loaded_problems_count[cont_i]++;
-          changed_flag = 1;
-        }
       }
     } //if (load_needed)
   } //for (prob_i = 0; prob_i < load_problem_count; prob_i++ )
 
   ClientEventSyncPost(CLIEVENT_PROBLEM_TFILLFINISHED,
-     (long)((previous_load_problem_count==0)?(total_problems_loaded):(total_problems_saved)));
+     ((previous_load_problem_count==0)?(&total_problems_loaded):(&total_problems_saved)),
+     sizeof(total_problems_loaded));
 
   /* ============================================================= */
-
-  for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
-  {
-    if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
-    {
-      const char *cont_name = CliGetContestNameFromID(cont_i);
-
-      if (loaded_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD )
-      {
-        Log( "Loaded %u %s packet%s (%u work unit%s) from %s\n", 
-              loaded_problems_count[cont_i], cont_name,
-              ((loaded_problems_count[cont_i]==1)?(""):("s")),
-              loaded_normalized_key_count[cont_i],
-              ((loaded_normalized_key_count[cont_i]==1)?(""):("s")),
-              (client->nodiskbuffers ? "(memory-in)" : 
-              BufferGetDefaultFilename( cont_i, 0, 
-                                        client->in_buffer_basename )) );
-      }
-
-      if (saved_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD)
-      {
-        Log( "Saved %u %s packet%s (%u work unit%s) to %s\n", 
-              saved_problems_count[cont_i], cont_name,
-              ((saved_problems_count[cont_i]==1)?(""):("s")),
-              saved_normalized_key_count[cont_i],
-              ((saved_normalized_key_count[cont_i]==1)?(""):("s")),
-              (mode == PROBFILL_UNLOADALL)?
-                (client->nodiskbuffers ? "(memory-in)" : 
-                BufferGetDefaultFilename( cont_i, 0, 
-                                          client->in_buffer_basename ) ) :
-                (client->nodiskbuffers ? "(memory-out)" : 
-                BufferGetDefaultFilename( cont_i, 1, 
-                                          client->out_buffer_basename )) );
-      }
-
-      if (totalBlocksDone > 0 /* && client->randomchanged == 0 */)
-      {
-        // To suppress "odd" problem completion count summaries (and not be
-        // quite so verbose) we only display summaries if the number of
-        // completed problems is even divisible by the number of processors.
-        // Requires a working GetNumberOfDetectedProcessors() [cpucheck.cpp]
-        // also check randomchanged in case a contest was closed/opened and
-        // statistics haven't been reset
-        #if 0
-        int cpustmp; unsigned int cpus = 1;
-        if ((cpustmp = GetNumberOfDetectedProcessors()) > 1)
-          cpus = (unsigned int)cpustmp;
-        if (load_problem_count > cpus)
-          cpus = load_problem_count;
-        if ((totalBlocksDone%cpus) == 0 )
-        #endif
-        {
-          Log( "Summary: %s\n", CliGetSummaryStringForContest(cont_i) );
-        }
-      }
-
-      /* -------------------------------------------------------------- */
-
-      unsigned int inout;
-      for (inout=0;inout<=1;inout++)
-      {
-        unsigned long norm_count;
-        long block_count = GetBufferCount( client, cont_i, inout, &norm_count );
-        if (block_count >= 0) /* no error */ 
-        {
-          char buffer[128+sizeof(client->in_buffer_basename)];
-          /* we don't check in-buffer here since we need cumulative count */
-          if (inout != 0) /* out-buffer */ 
-          {
-            /* adjust bufupd_pending if outthresh has been crossed */
-            if (__check_outbufthresh_limit( client, cont_i, block_count, 
-                                            norm_count, &bufupd_pending ))
-            {
-              //Log("5. bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
-            }
-          }
-          sprintf(buffer, 
-              "%ld %s packet%s (%lu work unit%s) %s in\n%s",
-              block_count, 
-              cont_name, 
-              ((block_count == 1)?(""):("s")),  
-              norm_count,
-              ((norm_count == 1)?(""):("s")),
-              ((inout!= 0 || mode == PROBFILL_UNLOADALL)?
-                 ((block_count==1)?("is"):("are")):
-                 ((block_count==1)?("remains"):("remain"))),
-              ((inout== 0)?
-                  (client->nodiskbuffers ? "(memory-in)" : 
-                   BufferGetDefaultFilename( cont_i, 0, 
-                   client->in_buffer_basename ) ) :
-                   (client->nodiskbuffers ? "(memory-out)": 
-                   BufferGetDefaultFilename( cont_i, 1, 
-                   client->out_buffer_basename ) ))
-             );
-          if (strlen(buffer) < 55) /* fits on a single line, so unwrap */
-          {
-            char *nl = strrchr( buffer, '\n' );
-            if (nl) *nl = ' ';
-          }               
-          Log( "%s\n", buffer );
-          
-          if (inout == 0)  /* in */
-          {
-            /* compute number of processors _in_use_ */
-            int proc = GetNumberOfDetectedProcessors();
-            if (proc < 1)
-              proc = 1;
-            if (load_problem_count < (unsigned int)proc)
-              proc = load_problem_count;
-            if (proc > 0)
-            {
-              extern void ClientSetNumberOfProcessorsInUse(int num);
-              timeval tv;
-              ClientSetNumberOfProcessorsInUse(proc); /* client.cpp */
-              tv.tv_usec = 0;
-              tv.tv_sec = norm_count * 
-                        CliGetContestWorkUnitSpeed( cont_i, 0 ) / 
-                        proc;
-              if (tv.tv_sec > 0)          
-                Log("Projected ideal time to completion: %s\n", 
-                             CliGetTimeString( &tv, 2));
-            }
-          }
-
-        } //if (block_count >= 0)
-      } //  for (inout=0;inout<=1;inout++)
-    } //if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
-  } //for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-
-  /* ============================================================ */
 
   if (mode == PROBFILL_UNLOADALL)
   {
     previous_load_problem_count = 0;
     if (client->nodiskbuffers == 0)
+    {
+      // close checkpoint file immediately after saving the problems to disk
       CheckpointAction( client, CHECKPOINT_CLOSE, 0 );
-    else {
+    }
+    else /* no disk buffers */
+    {
+      TRACE_BUFFUPD((0, "BufferUpdate: reason = LoadSaveProblem && unload all && membuffers\n"));
       BufferUpdate(client,BUFFERUPDATE_FLUSH,0);
-      for(int i = 0; i < CONTEST_COUNT; i++)
+      /* in case the flush fails, empty the membuf table manually */
+      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
       {
-          for(unsigned long j = 0; j < client->membufftable[i].in.count; j++)
-            free(client->membufftable[i].in.buff[j]);
-          for(unsigned long k = 0; k < client->membufftable[i].out.count; k++)
-            free(client->membufftable[i].out.buff[k]);
+        WorkRecord data;
+        while (GetBufferCount(client, cont_i, 0, 0)>0)
+          GetBufferRecord( client, &data, cont_i, 0 );
+        while (GetBufferCount(client, cont_i, 0, 0)>0)
+          GetBufferRecord( client, &data, cont_i, 1);
       }
     }
     retval = total_problems_saved;
   }
-  else
+  else /* if (mode != PROBFILL_UNLOADALL) */
   {
     /* 
     =============================================================
@@ -888,6 +1029,8 @@ unsigned int LoadSaveProblems(Client *pass_client,
       int req = MODEREQ_FLUSH; // always flush while fetching
       if (!CheckExitRequestTriggerNoIO()) //((bufupd_pending & BUFFERUPDATE_FETCH)!=0)
         req |= MODEREQ_FETCH;
+      TRACE_BUFFUPD((0, "ModeReqSet(flush=%d, fetch=%d, fquiet=1)\n", 
+                        (req & MODEREQ_FLUSH) != 0, (req & MODEREQ_FETCH) != 0));
       ModeReqSet( req|MODEREQ_FQUIET ); /* delegate to the client.run loop */
     }
 
@@ -927,8 +1070,139 @@ unsigned int LoadSaveProblems(Client *pass_client,
     else  
       retval = total_problems_loaded;
   }  
-  
+
+  /* ============================================================= */
+
+  for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
+  {
+    int show_totals = 0;
+    if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
+      show_totals = 1;
+
+    if (first_time || show_totals)
+    {
+      unsigned int inout;
+      const char *cont_name = CliGetContestNameFromID(cont_i);
+
+      if (loaded_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD )
+      {
+        Log( "%s: Loaded %u packet%s from %s\n", 
+              cont_name, loaded_problems_count[cont_i],
+              ((loaded_problems_count[cont_i]==1)?(""):("s")),
+              (client->nodiskbuffers ? "(memory-in)" : 
+              BufferGetDefaultFilename( cont_i, 0, 
+                                        client->in_buffer_basename )) );
+      }
+
+      if (saved_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD
+       && (client->nodiskbuffers == 0 || (mode != PROBFILL_UNLOADALL)))
+      {
+        Log( "%s: Saved %u packet%s to %s\n", 
+              cont_name, saved_problems_count[cont_i],
+              ((saved_problems_count[cont_i]==1)?(""):("s")),
+              (mode == PROBFILL_UNLOADALL)?
+                (client->nodiskbuffers ? "(memory-in)" : 
+                BufferGetDefaultFilename( cont_i, 0, 
+                                          client->in_buffer_basename ) ) :
+                (client->nodiskbuffers ? "(memory-out)" : 
+                BufferGetDefaultFilename( cont_i, 1, 
+                                          client->out_buffer_basename )) );
+      }
+
+      if (show_totals && totalBlocksDone > 0)
+      {
+        // To suppress "odd" problem completion count summaries (and not be
+        // quite so verbose) we only display summaries if the number of
+        // completed problems is even divisible by the number of processors.
+        // Requires a working GetNumberOfDetectedProcessors() [cpucheck.cpp]
+        #if 0
+        int cpustmp; unsigned int cpus = 1;
+        if ((cpustmp = GetNumberOfDetectedProcessors()) > 1)
+          cpus = (unsigned int)cpustmp;
+        if (load_problem_count > cpus)
+          cpus = load_problem_count;
+        if ((totalBlocksDone%cpus) == 0 )
+        #endif
+        {
+          __post_summary_for_contest(cont_i);
+        }
+      }
+
+      /* -------------------------------------------------------------- */
+
+      for (inout=0;inout<=1;inout++)
+      {
+        unsigned long stats_count;
+        long block_count = GetBufferCount( client, cont_i, inout, &stats_count );
+
+        if (show_totals && block_count >= 0) /* no error */ 
+        {
+          char buffer[(3*80)+sizeof(client->in_buffer_basename)];
+          int len;
+
+          len = sprintf(buffer, "%s: %ld packet%s ", 
+                cont_name, block_count, ((block_count == 1)?(""):("s")) );
+          if (stats_count)
+            len += sprintf( &buffer[len], "(%lu.%02lu stats units) ",
+                            stats_count/100,stats_count%100);
+          len += sprintf( &buffer[len], "%s in\n%s",
+              ((inout!= 0 || mode == PROBFILL_UNLOADALL)?
+                 ((block_count==1)?("is"):("are")):
+                 ((block_count==1)?("remains"):("remain"))),
+              ((inout== 0)?
+                  (client->nodiskbuffers ? "(memory-in)" : 
+                   BufferGetDefaultFilename( cont_i, 0, 
+                   client->in_buffer_basename ) ) :
+                   (client->nodiskbuffers ? "(memory-out)": 
+                   BufferGetDefaultFilename( cont_i, 1, 
+                   client->out_buffer_basename ) ))
+             );
+          if (len < 55) /* fits on a single line, so unwrap */
+          {
+            char *nl = strrchr( buffer, '\n' );
+            if (nl) *nl = ' ';
+          }               
+          if (inout != 0) /* out-buffer */ 
+          {
+            /* adjust bufupd_pending if outthresh has been crossed */
+            /* we don't check in-buffer here since we need cumulative count */
+            if (__check_outbufthresh_limit( client, cont_i, block_count, 
+                                            stats_count, &bufupd_pending ))
+            {
+              //Log("5. bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
+            }
+          }
+          else /*in*/ if (stats_count && (mode!=PROBFILL_UNLOADALL))
+          {
+            timeval tv;
+            tv.tv_sec = __get_thresh_secs(client, cont_i, 0, stats_count, 0 );
+            if (tv.tv_sec > 0)          
+            {
+              tv.tv_usec = 0;
+              len += sprintf(&buffer[len],
+                       "\nProjected ideal time to completion: %s", 
+                       CliGetTimeString( &tv, 2));
+            }
+          }
+          Log( "%s\n", buffer );
+        } //if (block_count >= 0)
+
+      } //  for (inout=0;inout<=1;inout++)
+    } //if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
+  } //for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+
+  /* ============================================================ */
+
+  if (mode == PROBFILL_UNLOADALL)
+  {
+    previous_load_problem_count = 0;
+    previous_client = (Client *)0;
+    if (!CheckRestartRequestTrigger())
+      Log("Shutdown complete.\n");
+  }
   --reentrant_count;
+
+  TRACE_BUFFUPD((-1, "LoadSaveProblems => %d\n", retval));
 
   return retval;
 }  

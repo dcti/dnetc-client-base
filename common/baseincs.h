@@ -1,17 +1,13 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.83 2000/07/11 05:05:14 mfeiri Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.84 2002/09/02 00:35:41 andreasb Exp $"
 
 #include "cputypes.h"
-
-#if (CLIENT_OS == OS_RISCOS)
- extern "C" { /* headers are unsafe for c++ */
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,10 +24,6 @@
   #include <sys/utsname.h> /* uname() */
 #endif
 
-#if (CLIENT_OS == OS_RISCOS)
-} /* End the extern needed to handle unsafe standard headers. */
-#endif
-
 /* ------------------------------------------------------------------ */
 
 #if (CLIENT_OS == OS_IRIX)
@@ -40,12 +32,15 @@
   #include <sys/prctl.h>
   #include <sys/schedctl.h>
   #include <fcntl.h>
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_HPUX)
   #include <unistd.h>
   #include <sys/types.h>
   #include <fcntl.h>
   #include <sys/param.h>
   #include <sys/pstat.h>
+  #include <sched.h>
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_OS2)
   #if defined(__WATCOMC__)
     #include "os2defs.h"
@@ -67,58 +62,47 @@
   #include <fcntl.h>
   #include <io.h>
   #include <sys/time.h>         /* timeval */
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
   #if defined(OS2_PM)
-    #include "platforms/os2gui/os2cons.h"
+    #include "plat/os2/os2cons.h"
   #endif
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
     #define QSV_NUMPROCESSORS     26
   #endif
 #elif (CLIENT_OS == OS_AMIGAOS)
-  #include "platforms/amiga/amiga.h"
+  #include "plat/amigaos/amiga.h"
   #include <sys/unistd.h>
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
-  extern "C" {
+  #include <unixlib/local.h>
   #include <sys/fcntl.h>
+  #include <netinet/in.h>
   #include <unistd.h>
   #include <stdarg.h>
-  #include <machine/endian.h>
+  #include <endian.h>
   #include <sys/time.h>
-  #include <swis.h>
-  extern unsigned int ARMident(), IOMDident();
-  extern void riscos_clear_screen();
-  extern int riscos_check_taskwindow();
-  extern void riscos_backspace();
-  extern int riscos_count_cpus();
-  extern char *riscos_x86_determine_name();
-  extern int riscos_find_local_directory(const char *argv0);
-  extern char *riscos_localise_filename(const char *filename);
-  extern int riscos_get_filelength(int fd, unsigned long *fsizeP);
-  extern int riscos_get_file_modified(const char *filename, unsigned long *timestampP);
-  extern void riscos_upcall_6(void); //yield
-  extern int getch();
-  #define fileno(f) ((f)->__file)
-  #define isatty(f) ((f) == 0)
-  #define tzset() /* nothing */
-  } /* extern "C" */
+  #include <sys/ioctl.h>
+  #include <netdb.h>
+  #include <sys/swis.h>
+  #include <kernel.h>
+  #include <riscos_sup.h>
   extern s32 guiriscos, guirestart;
   extern int riscos_in_taskwindow;
 #elif (CLIENT_OS == OS_VMS)
   #include <fcntl.h>
   #include <types.h>
   #define unlink remove
+  #ifdef __VMS_UCX__
+    #include <netinet/in.h> //ntohl/htonl/ntohs/htons
+  #elif defined(MULTINET)
+    #include "multinet_root:[multinet.include.netinet]in.h"
+  #endif
 #elif (CLIENT_OS == OS_SCO)
   #include <fcntl.h>
   #include <sys/time.h>
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-  #if (CLIENT_OS == OS_WIN32) || !defined(__WINDOWS_386__)
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
-    #include <winsock.h>      // timeval
-  #else
-    #include <windows.h>
-    #include "w32sock.h"
-  #endif
+  #include <windows.h>
   #include <sys/timeb.h>
   #include <process.h>
   #include <conio.h>
@@ -134,6 +118,7 @@
   #ifndef SH_DENYNO
     #include <share.h>
   #endif
+  #include "w32sock.h"      //ntohl/htonl/ntohs/htons/timeval
   #include "w32util.h"
   #include "w32svc.h"       // service
   #include "w32cons.h"      // console
@@ -164,7 +149,7 @@
   #include <share.h>
   #include <fcntl.h>
   #include <dos.h> //for drive functions in pathwork.cpp
-  #include "platforms/dos/clidos.h" //gettimeofday(), usleep() etc
+  #include "plat/dos/clidos.h" //gettimeofday(), usleep() etc
   #if defined(__WATCOMC__)
     #include <direct.h> //getcwd
   #elif defined(__TURBOC__)
@@ -175,6 +160,7 @@
   #include <unistd.h>
   #include <fcntl.h>
   #include <sys/time.h>  // timeval
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_NETWARE)
   #include <sys/time.h> //timeval
   #include <unistd.h> //isatty, chdir, getcwd, access, unlink, chsize, O_...
@@ -182,7 +168,8 @@
   #include <share.h> //SH_DENYNO
   #include <nwfile.h> //sopen()
   #include <fcntl.h> //O_... constants
-  #include "platforms/netware/netware.h" //for stuff in netware.cpp
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
+  #include "plat/netware/netware.h" //for stuff in netware.cpp
 #elif (CLIENT_OS == OS_SUNOS)
   #include <fcntl.h>
   #include <unistd.h>
@@ -203,17 +190,30 @@
   #include <thread.h>
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int);
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_AIX)
   #include <unistd.h>   // nice()
+  #include <fcntl.h> /* O_RDWR etc */
   #include <strings.h>    // bzero(), strcase...,
   #include <sys/select.h> // fd_set on AIX 4.1
   // clock_gettime is called getclock (used in clitime.cpp)
   #define clock_gettime(a,b) (getclock(a,b))
-#elif (CLIENT_OS == OS_LINUX)
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
   #include <sys/time.h>
   #include <sys/file.h>
   #include <unistd.h>
-  #if defined(__ELF__)
+  #include <fcntl.h> /* O_RDWR etc */
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
+  #undef NULL    /* some broken header unconditionally */
+  #define NULL 0 /* defines NULL to be ((void *)0) */
+  #if defined(_MIT_POSIX_THREADS)
+    #define sched_yield() pthread_yield()
+  #elif defined(HAVE_KTHREADS)
+    extern "C" int kthread_join( long );
+    extern "C" long kthread_create( void (*)(void *), int , void * );
+    extern "C" int kthread_yield(void);
+  #elif defined(__ELF__) && !defined(_LINUX_SCHED_H)
     #include <sched.h>
   #endif
 #elif (CLIENT_OS == OS_MACOS)
@@ -224,14 +224,20 @@
   extern "C" int clock_gettime(int clktype, struct timespec *tsp);
   #include <unistd.h>
   #define fileno(f) ((f)->handle)
-#elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_RHAPSODY)
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
+#elif (CLIENT_OS == OS_MACOSX)
   //rhapsody is mach 2.x based and altivec unsafe
   #include <sys/time.h>
+  #include <sys/vmparam.h> //USRSTACK
+  #include <sys/exec.h>  //PS_STRINGS
   #include <sys/sysctl.h>
   #include <unistd.h>
+  #include <fcntl.h> /* O_RDWR etc */
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_FREEBSD)
   #include <sys/time.h>
   #include <unistd.h>
+  #include <fcntl.h> /* O_RDWR etc */
   #include <sys/param.h>
   #include <sys/sysctl.h>
   #if defined(__FreeBSD__) && (__FreeBSD__ < 3)
@@ -245,37 +251,41 @@
   #include <sys/param.h>
   #include <sys/sysctl.h>
   #include <unistd.h>
+  #include <fcntl.h> /* O_RDWR etc */
 #elif (CLIENT_OS == OS_BSDOS)
   #include <sys/time.h>
   #include <sys/param.h>
   #include <sys/sysctl.h>
   #include <unistd.h>
   #include <sched.h>
+  #include <fcntl.h> /* O_RDWR etc */
 #elif (CLIENT_OS == OS_NETBSD)
   #include <sys/time.h>
   #include <sys/param.h>
   #include <sys/sysctl.h>
   #include <unistd.h>
+  #include <fcntl.h> /* O_RDWR etc */
 #elif (CLIENT_OS == OS_QNX)
   #include <sys/time.h>
-  #include <sys/select.h>
-  #include <process.h>
-  #include <env.h>
-#elif (CLIENT_OS == OS_NTO2)
-  #include <sys/time.h>
-  #include <strings.h>
-  #include <unistd.h>
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
+  #if defined(__QNXNTO__) /* neutrino */
   #include <sched.h>
   #include <sys/syspage.h>
+  #else
+  #include <process.h>
+  #include <env.h>
+  #endif
+  #include <fcntl.h> /* O_RDWR etc */
 #elif (CLIENT_OS == OS_DYNIX)
   #include <unistd.h> // sleep(3c)
-  struct timezone { int tz_minuteswest, tz_dsttime; };
-  extern "C" int gethostname(char *, int);
-  extern "C" int gettimeofday(struct timeval *, struct timezone *);
+  #include <fcntl.h> /* O_RDWR etc */
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
   #include <machine/cpuconf.h>
   #include <sys/time.h>
+  #include <fcntl.h> /* O_RDWR etc */
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_NEXTSTEP)
   #include <bsd/sys/time.h>
   #include <sys/types.h>
@@ -287,6 +297,7 @@
   #define       CLOCKS_PER_SEC          CLK_TCK
   extern "C" int sleep(unsigned int seconds);
   extern "C" int usleep(unsigned int useconds);
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #endif
 
 #endif /* __BASEINCS_H__ */

@@ -6,11 +6,10 @@
 */
 
 #ifndef __CONFRWV_H__
-#define __CONFRWV_H__ "@(#)$Id: confrwv.h,v 1.14 2000/06/02 06:24:55 jlawson Exp $"
+#define __CONFRWV_H__ "@(#)$Id: confrwv.h,v 1.15 2002/09/02 00:35:41 andreasb Exp $"
 
-int ReadConfig(Client *client);
-int WriteConfig(Client *client, int writefull /* defaults to 0*/);
-void RefreshRandomPrefix( Client *client );
-
+int  ConfigRead(Client *client);
+int  ConfigWrite(Client *client);
+void ConfigWriteUniversalNews( Client *client );
 
 #endif /* __CONFRWV_H__ */

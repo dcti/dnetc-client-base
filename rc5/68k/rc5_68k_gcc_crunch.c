@@ -1,13 +1,13 @@
 /*
  * This is the wrapper around rc5_unit_func
- * @(#)$Id: rc5_68k_gcc_crunch.c,v 1.4 2000/07/11 01:51:41 mfeiri Exp $
+ * @(#)$Id: rc5_68k_gcc_crunch.c,v 1.5 2002/09/02 00:35:54 andreasb Exp $
 */
 
 #include "cputypes.h"
 #include "problem.h"
 #define PIPELINE_COUNT 1 /* this is how many the core is expecting */
 #define USE_ANSI_INCREMENT
-#include "rotate.h"
+#include "ansi/rotate.h"
 
 #ifdef __cplusplus
 extern "C" {

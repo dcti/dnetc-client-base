@@ -1,8 +1,17 @@
-// Copyright distributed.net 1997 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-// 
+//
+// $Id: rotate-digital-unix-alpha-ev5.h,v 1.2 2002/09/02 00:35:55 andreasb Exp $
+//
 // $Log: rotate-digital-unix-alpha-ev5.h,v $
+// Revision 1.2  2002/09/02 00:35:55  andreasb
+// sync: merged changes from release-2-7111 branch between
+//       2000-07-11 and release-2-7111_20020901 into trunk
+//
+// Revision 1.1.2.1  2002/04/12 23:56:56  andreasb
+// 2002 copyright update - round 2
+//
 // Revision 1.1  1999/01/29 04:15:36  pct
 // Updates for the initial attempt at a multithreaded/multicored Digital
 // Unix Alpha client.  Sorry if these changes cause anyone any grief.

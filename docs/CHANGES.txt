@@ -21,16 +21,169 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.11 2000/07/11 02:38:28 mfeiri Exp $
+Version change log: $Id: CHANGES.txt,v 1.12 2002/09/02 00:35:45 andreasb Exp $
 ==========================================================================
 
 2.8000
 ------
 
-2.8010.463  imp: all: client always fetches the largest packet possible
+2.8019.473  fix: static: rebuilt all static clients to fix CA-2002-19:
+                    "Buffer Overflow in Multiple DNS Resolver Libraries"
+            chg: all: increased buff-in.* limit to 2000 packets
+            imp: x86: improved P4 RC5 core (ak-p7) (#2542)
+            new: x86: detect latest Pentium III (#2778) and Athlon XP (#2783)
+            chg: linux: enable /proc/apm support for non-x86 (#2643)
+            fix: all: processed RC5 random blocks even if RC5 was disabled
+            fix: amigaos: fixed problems with font requester opening in
+                          GUI prefs window when clicking other gadgets
+            imp: amigaos: can be shutdown by pressing escape key in GUI
+
+2.8018.472  fix: macosx: fix crash in battery pause code from #2465 (#2615)
+            fix: macosx: config menu displayed erroneous message that pause
+                         on battery was not supported.
+            fix: win32: core throughput: summary column not zeroed (#2630)
+            chg: x86: reorganized intel cpu recognition
+            new: x86: detect Celeron 4 (#2673), VIA C3 (#2725)
+            new: PlayStation2 Linux port
+
+2.8017.471  (not publicly released)
+            new: x86: P4 RC5 core (ak-p7)
+            imp: x86: better intel and AMD chip identification. (#2448, #2424)
+            fix: x86: Win2K, WinXP: disabled crashing RC5 SMC core. (#2399)
+            new: alpha: OGR core for processors supporting the CIX extension.
+            imp: sparc: improved OGR core. (#2480)
+            fix: ppc: linux kernel cpu string additions. (#2407)
+            new: all: configurable frequent update failure retry interval.
+            fix: all: client ignores "--" on command line by itself. (#2474)
+            fix: all: Errors in generated man page (#2451)
+            fix: all: lurking caused ENETDOWN on -fetch/-flush/-update (#2417)
+            fix: hpux: threading, timing fixes (#2371)
+            fix: fbsd: occasionally not responding to SIG(INT/TERM) (#1985)
+            fix: decunix: also not responding to SIG(INT/TERM) (#1613)
+            fix: linux: no alpha SMP support (#2142)
+            new: macosx: platform-specific read me doc (#2580)
+            new: macosx: now supports -[un]install for /Library/StartupItems/
+            fix: macosx: Mach/mem leaks in pause-if-on-battery code. (#2465)
+            new: amigaos: can now be installed and/or run via Workbench
+            new: amigaos: built-in ReAction GUI added
+            new: amigaos: now supports -[un]install for WBStartup
+            fix: amigaos: now compatible with TermiteTCP (#2570)
+
+2.8016.470  new: ppc: new AltiVec RC5 core for the PPC 7450 by Dan Oetting.
+            fix: all: flushed when 1 packet was left in in-buffer (#2209).
+            fix: all: time threshold ignored on command line -update (#2286).
+            fix: all: packets lost by -import and unwritable buffers (#2298).
+            imp: all: suppress logfile pollution with remote buffer errors.
+            imp: macos: temperature sensing for dual G3 and G4 systems.
+            fix: macosx: the 7450 is now correctly recognized as a G4 CPU.
+            
+2.8015.469  new: x86: two OGR cores now.
+            new: x86/win16/win32/netware: added support for the RC5 SMC core.
+            new: win32: RAS profile names are now supported in the
+                      "Interfaces to Watch" list.
+            new: *ix: support for shell-style tilde expansion for filenames.
+            chg: all: The list of cores depends on the architecture only.
+                      Cores not applicable to a particular cpu/os will be 
+                      marked as 'n/a' and won't benchmark etc.
+            imp: some: faster 68k and PPC OGR cores.
+
+2.8014.468  fix: all: bad results caused by build .466.
+            fix: all: packets were saved and reloaded after buffer update.
+            fix: all: current packet wasn't discarded on contest closure.
+            fix: all: exited without crunching with "-n 1" option.
+            new: *ix: all clients for unix are inherently SMP capable, 
+                      even if the OS does not have/support threads.
+                      
+2.8013.467  new: 68k: new, faster RC5 cores (previously only available in
+                 the AmigaOS client)
+            new: x86: new, faster RC5 core for the P4.
+            new: ia64: new 4 pipeline ansi core, used by ia64.
+            imp: all: add support for a second argument to -test/-bench, the
+                 number to use.  example: 'dnetc -test rc5 8' 
+            imp: some: OGR behaves more predictably on non-preemptive systems.
+            new: macos: dnetc can now find its support files in the active
+                 systems "Application Support" or "Preferences" folder.
+
+2.8012.466  new: x86: most unix-ish clients now support the RC5/SMC core.
+            imp: some: even faster OGR core.
+            chg: all: reverted default crunch-meter for ogr to 'absolute' type.
+            imp: win32 cui: tweaked for considerably improved display speed.
+            fix: win32 cui: redirection to file works as it did prior to .465.
+            chg: all: the list of available cores is a superset of all cores
+                 available for a particular architecture, some of which may
+                 not be available for a particular client/OS/hardware flavour.
+            fix: riscos: time and timezone oddities.
+            fix: win32: workaround for time bug on some win2k HALs.
+            fix: all: suffices weren't lowercase for remote buffer filenames.
+            fix: win32: client -install'ed to run hidden appeared on desktop
+            chg: x86: AMD 5x86 uses core #6 (rather than core #0) for RC5
+
+2.8012.465  imp: m68k-netbsd: faster OGR core
+            fix: bsdos-aout client is finally working again with OGR
+            fix: all: -n -1 (exit on empty buffers) works again.
+            fix: win32: restore from tray works again
+            fix: win16: text appearing as a single line fixed
+            new: win32: rate and in-buffer threshold available as 'tip' when
+                 client is minimized and the 'Core Throughput' view is active.
+
+2.8011.464  imp: many: OGR cores improved - should now be slightly faster
+            new: many: AltiVec OGR cruncher by Dan Oetting and Chris Cox
+            new: AmigaOS: added full lurk functionality
+            new: AmigaOS: -shutdown, -restart and -(un)pause support added
+            new: AmigaOS: "Pause if running" support now enabled
+            new: all: command line options may be passed via a 'dnetc_opt=' 
+                 (or 'DNETC_OPT=') environment variable.
+            new: *nix: command line options may be overridden by a command
+                 file in [/usr/local]/etc/. Refer to the man page for details.
+            new: *nix: optional -multiok=0 switch to prohibit multiple 
+                 instances of the client from running at the same time.
+            new: linux: now supports -[un]install for SYSV-style rc.d
+            chg: rc5: random-prefix is no longer written to the .ini
+            chg: all: If a dialup connection had been previously initiated 
+                 by the client AND the link drops while doing network i/o,
+                 the client will dial again.
+            new: the crunch-o-meter displays a twirling baton (by default) if
+                 not running with a GUI window and output is not redirected.
+            imp: networking layer rewritten from scratch. It is also a lot
+                 more chatty, and prints very specific messages on error.
+            new: client can be configured with multiple keyserver names.
+            fix: all: no more uneccesary connects when using frequent-checks
+            fix: all: mail sent correctly on shutdown.
+            fix: all: no longer discards work-to-do on fetch.
+            fix: win9x: client no longer hangs on sys shutdown
+            chg: all: smtp/firewall hostname settings have different semantics
+                 (port # is appended to the name in the form hostname:port)
+            chg: all: the default keserver port (when port number is zero) 
+                 for HTTP encoding is 80. The default HTTP proxy port is 8080.
+            fix: all: for 'rotate' log file types: if the interval (limit)
+                 is specified in days then the date in the filename reflects
+                 the date of the first day of that interval.
+            new: all: by default displays a different crunch-o-meter when an
+                 OGR packet is being worked on. (any sug. for improvement?)
+            chg: minor adjustments to Loaded/Saved/Completed/Summary messages
+                 for project independance (format doesn't have to be processed
+                 differently for different projects). Inexact percentages 
+                 (ie, for OGR) are no longer displayed at load/save time.
+            new: win16/32: crunch-o-scope, menus et al. (christmas present :)
+            new: AmigaOS: fifo log file type now enabled
+            new: macos: temp. sensing support for single CPU G3 and G4 Macs
+            new: macos: LURK support for users of OT-PPP or RemoteAccess
+            chg: nonpreemptive systems yield much more when running OGR
+            new: macos: pause-on-battery support for battery driven macs
+            new: macosx: pause-on-battery support for battery driven macs
+
+2.8010.463  fix: linux/x86: resolved various dns lookup, lib and
+                 portability issues by building against static libc5
+                 client runs on all elf kernels, 2.0.x - 2.4.x-preX
+            imp: all: client always fetches the largest packet possible
                  and then splits it locally into sub-packets. Greatly
                  improves network throughput and reduces server load.
             fix: win32: .462 client was taking long to shutdown.
+            chg: AmigaOS: 68060 core is now used on 040s too (it's faster)
+            new: AmigaOS: added support for threads
+            fix: AmigaOS: networking now works in the PowerUp client
+            fix: AmigaOS: fixed timing problems in the PPC clients that
+                 mainly only affected overclocked CPUs
 
 2.8010.462  fix: many: removed os-level file locking introduced in .459,
                  didn't work reliably on some file systems, and was not
@@ -103,7 +256,7 @@ Version change log: $Id: CHANGES.txt,v 1.11 2000/07/11 02:38:28 mfeiri Exp $
             fix: all: will now flush to a proxy/server that is empty.
             fix: all: setting clock back during network ops could hang.
             fix: all: block counts during fetching do not fluctuate anymore.
-            fix: FreeBsd: timezone use for automatic keyserver pick works.
+            fix: fbsd: timezone use for automatic keyserver pick works.
             chg: many: file system locking on buffers where supported.
 
 2.8007.458  fix: all: the annoying OGR 1 node bug finally fixed

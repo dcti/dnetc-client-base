@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -18,7 +18,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_rg_cpp (void) {
-return "@(#)$Id: 2-rg.c,v 1.8 2000/07/11 02:27:38 mfeiri Exp $"; }
+return "@(#)$Id: 2-rg.c,v 1.9 2002/09/02 00:35:55 andreasb Exp $"; }
 #endif
 
 #include "cputypes.h"

@@ -1,5 +1,9 @@
 /* Hey, Emacs, this a -*-C++-*- file !
 **
+** Copyright distributed.net 1998-2002 - All Rights Reserved
+** For use in distributed.net projects only.
+** Any other distribution or use of this source violates copyright.
+**
 ** memfile.c created 1998/08/16 Cyrus Patel <cyp@fb14.uni-mainz.de>
 **
 ** This code is POSIXly correct. Please keep it that way.
@@ -13,7 +17,7 @@
 **
 */
 #ifndef __MEMFILE_H__
-#define __MEMFILE_H__ "@(#)$Id: memfile.h,v 1.2 1999/04/05 17:56:52 cyp Exp $"
+#define __MEMFILE_H__ "@(#)$Id: memfile.h,v 1.3 2002/09/02 00:35:42 andreasb Exp $"
 
 #include <stdio.h>   /* required for the size_t typedef */
 

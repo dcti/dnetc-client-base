@@ -1,7 +1,9 @@
-/* Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * This module contains functions for raising/checking flags normally set
  * (asynchronously) by user request. Encapsulating the flags in 
@@ -16,7 +18,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.29 2000/07/11 03:45:33 mfeiri Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.30 2002/09/02 00:35:43 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -140,7 +142,11 @@ int CheckExitRequestTriggerNoIO(void)
 { 
   __assert_statics(); 
   if (trigstatics.exittrig.pollproc)
+#ifdef CRUNCHERS_CALL_THIS_DIRECTLY
     (*trigstatics.exittrig.pollproc)(0 /* io_cycle_NOT_allowed */);
+#else
+    (*trigstatics.exittrig.pollproc)(1 /* io_cycle_IS_allowed */);
+#endif     
   return (trigstatics.exittrig.trigger); 
 } 
 int CheckPauseRequestTriggerNoIO(void) 
@@ -197,13 +203,9 @@ static void __PollExternalTrigger(struct trigstruct *trig, int undoable)
 static unsigned long __get_file_time(const char *filename)
 {
   unsigned long filetime = 0; /* returns zero on error */
-#if (CLIENT_OS == OS_RISCOS)
-  riscos_get_file_modified(filename,(unsigned long *)(&filetime));
-#else
   struct stat statblk;
   if (stat( filename, &statblk ) == 0)
     filetime = (unsigned long)statblk.st_mtime;
-#endif
   return filetime;
 }    
 
@@ -315,6 +317,14 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 #elif (CLIENT_OS == OS_FREEBSD) && (CLIENT_CPU == CPU_X86)
 #include <fcntl.h>
 #include <machine/apm_bios.h>
+#elif (CLIENT_OS == OS_MACOS)
+#include <Power.h>
+#elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+#include <IOKit/IOKitLib.h>
+#include <IOKit/pwr_mgt/IOPMLib.h>
+#include <IOKit/pwr_mgt/IOPM.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <mach/mach_init.h> /* for bootstrap_port */
 #endif
 
 static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
@@ -331,7 +341,9 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       else
         getsps = (FARPROC)0;
     }
-    if (getsps)
+    if (!getsps)
+      trigstatics.pause_if_no_mains_power = 0;
+    else  
     {    
       SYSTEM_POWER_STATUS sps;
       sps.ACLineStatus = 255;
@@ -347,63 +359,91 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
     }
     #elif (CLIENT_OS == OS_LINUX)
     {
-      /*  linux support from 
-       *  Friedemann Baitinger (aka 'friedbait'), fb@baiti.net
-      */
-      #define PROC_APM "/proc/apm"
-
-      int disableme = 1; // if this is still set when we get to the end, 
-                         // then disable further apm checking.
-      if (access(PROC_APM, R_OK) == 0) /* have apm support in the kernel? */
+      static long time_last = 0;
+      long time_now = (time(0)/60); /* not more than once per minute */
+      if (time_now != time_last)
       {
-        FILE *fd = fopen(PROC_APM, "r" );
-        disableme = 0; /* be optimistic */
-        if (fd)
+        int disableme= 1; // if this is still set when we get to the end
+                          // then disable further apm checking
+        char buffer[256]; // must be big enough for complete read of /proc/apm
+                          // nn.nn nn.nn 0xnn 0xnn 0xnn 0xnn [-]nnn% [-]nnnn *s\n
+        int readsz = -1;
+        int fd = open( "/proc/apm", O_RDONLY );
+
+        time_last = time_now;
+
+        if (fd == -1)
         {
-          unsigned int kmaj      = 0;
-          unsigned int kmin      = 0;
-          unsigned int amaj      = 0;
-          unsigned int amin      = 0;
-          unsigned int apm_flags = 0;
-          unsigned int line_stat = 0;
-          unsigned int bat_stat  = 0;
-          unsigned int bat_flags = 0;
+          if (errno == ENOMEM || errno == EAGAIN) /*ENOENT,ENXIO,EIO,EPERM */
+            disableme = 0;  /* ENOMEM because apm kmallocs a struct per open */
+            
+          TRACE_OUT((0,"sps: open(\"/proc/apm\",O_RDONLY) => %s, disableme=%d\n", strerror(errno), disableme));
+          #if defined(TRACE) /* real-life example (1.2 is similar) */
+          readsz = strlen(strcpy(buffer, "1.13 1.2 0x07 0xff 0xff 0xff -1% -1 ?"));
+          #endif
+        }
+        else 
+        {
+          readsz = read( fd, buffer, sizeof(buffer));
+          close(fd);
+        }
 
-          if ( 8 != fscanf(fd, "%u.%u %u.%u 0x%02x 0x%02x 0x%02x 0x%02x",
-                               &kmaj, &kmin, &amaj, &amin, &apm_flags,
-                               &line_stat, &bat_stat, &bat_flags))
-          {
-            /* got less than 8 args. make major version something we
-             * don't want to process further.
-            */
-            kmaj = 0;
-          }
-          fclose(fd);
-          
-          if (kmaj == 1) 
-          {
-            /*
-             * /proc layout is kernel version dependent. Layout may
-             * change but it always starts with a major version number
-             * as long as that is '1' the format we have parsed is valid
-             * in all other cases we don't really know what we have got.
-             * Of course if major goes to '2' we will add a switch/case
-             * support the new layout too.
-             */
-            TRACE_OUT((0,"sps: ACLineStatus = 0x%02x, BatteryFlag = 0x%02x\n",
-                       line_stat, bat_stat));
-
-            if (line_stat == 1) return 0; /* we have AC power */
-            return 1;                     /* we don't have AC */
-          }
-          disableme = 1; /* unknown major version. disable further checks */
-        } /* if (fd) */
-      } /* if (access) */
-
-      if (disableme) /* disable further checks */
-      {
-        trigstatics.pause_if_no_mains_power = 0;
-      }
+        /* read should never fail for /proc/apm, and the size must be less 
+           than sizeof(buffer) otherwise its some /proc/apm that we
+           don't know how to parse.
+        */   
+        if (readsz > 0 && ((unsigned int)readsz) < sizeof(buffer))
+        {
+          unsigned int drv_maj, drv_min; /* "1.2","1.9","1.10","1.12,"1.13" etc*/
+          int bios_maj, bios_min; /* %d.%d */
+          int bios_flags, ac_line_status, batt_status, batt_flag; /* 0x%02x */
+          /* remaining fields are percentage, time_units, units. (%d %d %s) */
+  
+          buffer[readsz-1] = '\0';
+          if (sscanf( buffer, "%u.%u %d.%d 0x%02x 0x%02x 0x%02x 0x%02x",
+                              &drv_maj, &drv_min, &bios_maj, &bios_min,
+                              &bios_flags, &ac_line_status, 
+                              &batt_status, &batt_flag ) == 8 )
+          {			      
+            TRACE_OUT((0,"sps: drvver:%u.%u biosver:%d.%d biosflags:0x%02x "
+                         "ac_line_status=0x%02x, batt_status=0x%02x\n",
+                         drv_maj, drv_min, bios_maj, bios_min, bios_flags,
+                         ac_line_status, batt_status ));      
+            if (drv_maj == 1)
+            {
+              #define _APM_16_BIT_SUPPORT   (1<<0)
+              #define _APM_32_BIT_SUPPORT   (1<<1)
+              //      _APM_IDLE_SLOWS_CLOCK (1<<2)
+              #define _APM_BIOS_DISABLED    (1<<3)
+              //      _APM_BIOS_DISENGAGED  (1<<4)	      
+              if ((bios_flags & (_APM_16_BIT_SUPPORT | _APM_32_BIT_SUPPORT))!=0
+                && (bios_flags & _APM_BIOS_DISABLED) == 0)
+              { 
+                disableme = 0;
+                ac_line_status &= 0xff; /* its a char */
+                /* From /usr/src/[]/arch/i386/apm.c for (1.2)1996-(1.13)2/2000
+                   3) AC Line Status:
+                      0x00: Off-line
+                      0x01: On-line
+                      0x02: On backup-power (APM BIOS 1.1+ only)
+                      0xff: Unknown
+                */      
+                if (ac_line_status == 1)
+                  return 0; /* we are not on battery */
+                if (ac_line_status != 0xff) /* 0x00, 0x02 */
+                  return 1; /* yes we are on battery */
+                /* fallthrough, return -1 */    
+              }
+            } /* drv_maj == 1 */
+          } /* sscanf() == 8 */ 
+        } /* readsz */
+    
+        if (disableme) /* disable further checks */
+        {
+          TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
+          trigstatics.pause_if_no_mains_power = 0;
+        }
+      }  
     } /* #if (linux) */
     #elif (CLIENT_OS == OS_FREEBSD) && (CLIENT_CPU == CPU_X86)
     {
@@ -484,6 +524,52 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       // We seem to have no apm driver in the kernel, so disable it.
       trigstatics.pause_if_no_mains_power = 0;
     } /* #if (NetBSD && i386) */
+    #elif (CLIENT_OS == OS_MACOS)
+    long pmgrAttributes;
+    if (Gestalt(gestaltPowerMgrAttr, &pmgrAttributes)==noErr)
+    {
+      if (pmgrAttributes & (1<<gestaltPMgrExists))
+      {
+        Byte status, power;
+        BatteryStatus(&status,&power);
+        if ((chargerConnMask & status) !=0)
+          return 0; /* we have AC power */
+        else
+          return 1; /* we don't have AC */
+      }
+    }
+    // We seem to have no PowerManager, so disable battery checking.
+    trigstatics.pause_if_no_mains_power = 0;
+    #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+    mach_port_t master;
+    /* Initialize the connection to IOKit */
+    if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess )
+    {
+      io_connect_t pmcon = IOPMFindPowerManagement(master);
+      if(pmcon!=0)
+      {
+        CFArrayRef cfarray;
+        /* Get the battery State information */
+        if( IOPMCopyBatteryInfo(master, &cfarray) == kIOReturnSuccess)
+        {
+          long flags;
+          CFDictionaryRef dict = (CFDictionaryRef)CFArrayGetValueAtIndex(cfarray, 0);
+          CFNumberRef cfnum = (CFNumberRef)CFDictionaryGetValue(dict, CFSTR(kIOBatteryFlagsKey));
+          CFNumberGetValue(cfnum, kCFNumberLongType, &flags);
+          CFRelease(cfarray);
+          IOServiceClose(pmcon);
+          if( flags & kIOBatteryChargerConnect )
+            return 0; /* we have AC power */
+          else
+            return 1; /* we don't have AC */
+        } else {
+          /* Only do this if we -haven't- executed the if{} above. */
+          IOServiceClose(pmcon);
+        } /* if( IOPMCopyBatteryInfo(master, &cfarray) == kIOReturnSuccess) */
+      } /* if(pmcon!=0)*/
+    } /* if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess ) */
+    /* We dont seem to have a PowerManager, disable battery checking. */
+    trigstatics.pause_if_no_mains_power = 0;
     #endif
   }  
   return -1; /* unknown */
@@ -527,17 +613,29 @@ static void __PollDrivenBreakCheck(int io_cycle_allowed)
   */
   io_cycle_allowed = io_cycle_allowed; /* shaddup compiler */
   #if (CLIENT_OS == OS_RISCOS)
-  if (_kernel_escape_seen())
-      RaiseExitRequestTrigger();
+/* This hs no equivalent in Unixlib but strange as it is, it seems to be not
+   necessary */  
+//  if (_kernel_escape_seen())
+//      RaiseExitRequestTrigger();
   #elif (CLIENT_OS == OS_AMIGAOS)
-  if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
-    RaiseExitRequestTrigger();
+  ULONG trigs;
+  if ( (trigs = amigaGetTriggerSigs()) )  // checks for ^C and other sigs
+  {
+    if ( trigs & DNETC_MSG_SHUTDOWN )
+      RaiseExitRequestTrigger();
+    if ( trigs & DNETC_MSG_RESTART )
+      RaiseRestartRequestTrigger();
+    if ( trigs & DNETC_MSG_PAUSE )
+      RaisePauseRequestTrigger();
+    if ( trigs & DNETC_MSG_UNPAUSE )
+      ClearPauseRequestTrigger();
+  }
   #elif (CLIENT_OS == OS_NETWARE)
   if (io_cycle_allowed)
     nwCliCheckForUserBreak(); //in nwccons.cpp
-  #elif (CLIENT_OS == OS_WIN16)
+  #elif (CLIENT_OS == OS_WIN16) /* always thread safe */
     w32ConOut("");    /* benign call to keep ^C handling alive */
-  #elif (CLIENT_OS == OS_WIN16)
+  #elif (CLIENT_OS == OS_WIN32)
   if (io_cycle_allowed)
     w32ConOut("");    /* benign call to keep ^C handling alive */
   #elif (CLIENT_OS == OS_DOS)
@@ -615,7 +713,7 @@ int CheckPauseRequestTrigger(void)
     {
       custom_now_active = "(defrag running)";
       custom_now_inactive = "(defrag no longer running)";
-      if (FindWindow("MSDefragWClass1",NULL))
+      if (utilGetPIDList( "#MSDefragWClass1", NULL, 0 ) > 0)
         trigstatics.pausetrig.trigger |= TRIGSETBY_CUSTOM;
       else
         trigstatics.pausetrig.trigger &= ~TRIGSETBY_CUSTOM;
@@ -624,7 +722,7 @@ int CheckPauseRequestTrigger(void)
 
     if (trigstatics.pauseplist[0] != NULL)
     {
-      int index, nowcleared = -1;
+      int idx, nowcleared = -1;
       const char **pp = &trigstatics.pauseplist[0];
 
       /* the use of "nowcleared" is a hack for the sake of optimization
@@ -634,45 +732,45 @@ int CheckPauseRequestTrigger(void)
       */
       if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_APPACTIVE) != 0)
       {
-        index = trigstatics.lastactivep;
-        TRACE_OUT((+1,"y1: index=%d,'%s'\n", index, pp[index]));
-        if (utilGetPIDList( pp[index], NULL, 0 ) <= 0)
+        idx = trigstatics.lastactivep;
+        TRACE_OUT((+1,"y1: idx=%d,'%s'\n", idx, pp[idx]));
+        if (utilGetPIDList( pp[idx], NULL, 0 ) <= 0)
         {
           /* program is no longer running. */
           Log("%s... ('%s' inactive)\n",
               (((trigstatics.pausetrig.laststate 
                    & ~TRIGPAUSEBY_APPACTIVE)!=0)?("Pause level lowered"):
               ("Running again after pause")), 
-              __mangle_pauseapp_name(pp[index],1 /* unmangle */) );
+              __mangle_pauseapp_name(pp[idx],1 /* unmangle */) );
           trigstatics.pausetrig.laststate &= ~TRIGPAUSEBY_APPACTIVE;
           trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_APPACTIVE;
           trigstatics.lastactivep = 0;
-          nowcleared = index;
+          nowcleared = idx;
         }
         TRACE_OUT((-1,"y2: nowcleared=%d\n", nowcleared));
       }
       if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_APPACTIVE) == 0)
       {
-        index = 0;
-        while (pp[index] != NULL)
+        idx = 0;
+        while (pp[idx] != NULL)
         {
-          TRACE_OUT((+1,"z1: %d, '%s'\n",index, pp[index]));
-          if (index == nowcleared)
+          TRACE_OUT((+1,"z1: %d, '%s'\n",idx, pp[idx]));
+          if (idx == nowcleared)
           {
             /* if this matched, then we came from the transition
                above and know that this is definitely not running.
             */   
           }
-          else if (utilGetPIDList( pp[index], NULL, 0 ) > 0)
+          else if (utilGetPIDList( pp[idx], NULL, 0 ) > 0)
           {
             /* Triggered program is now running. */
             trigstatics.pausetrig.trigger |= TRIGPAUSEBY_APPACTIVE;
-            trigstatics.lastactivep = index;
-            app_now_active = __mangle_pauseapp_name(pp[index],1 /* unmangle */);
+            trigstatics.lastactivep = idx;
+            app_now_active = __mangle_pauseapp_name(pp[idx],1 /* unmangle */);
             break;
           }
           TRACE_OUT((-1,"z2\n"));
-          index++;
+          idx++;
         }
       }
     }
@@ -847,7 +945,7 @@ static void __init_signal_handlers( int doingmodes )
 // -----------------------------------------------------------------------
 
 #ifndef CLISIGHANDLER_IS_SPECIAL
-#if (CLIENT_OS == OS_IRIX) //or #if defined(SA_NOCLDSTOP) for posix compat
+#if defined(SA_NOCLDSTOP) && (CLIENT_OS != OS_NETWARE)
 static void (*SETSIGNAL(int signo, void (*proc)(int)))(int)
 {
   struct sigaction sa, osa;
@@ -894,11 +992,73 @@ extern "C" void CliSignalHandler( int sig )
   }  
   #endif
   ClearRestartRequestTrigger();
+//printf("\ngot sig %d\n", sig);
   RaiseExitRequestTrigger();
 
+#if (CLIENT_OS != OS_FREEBSD) && (CLIENT_OS != OS_DEC_UNIX)
   SETSIGNAL(sig,SIG_IGN);
+#endif
 }  
 #endif //ifndef CLISIGHANDLER_IS_SPECIAL
+
+// -----------------------------------------------------------------------
+
+#if ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) || \
+   defined(HAVE_MULTICRUNCH_VIA_FORK)
+/* forward all signals to the parent process */
+static void sig_forward_to_parent( int nsig ) 
+{ 
+  kill(getppid(), nsig); 
+}
+#endif
+
+int TriggersSetThreadSigMask(void)
+{
+#if ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) \
+    || defined(HAVE_MULTICRUNCH_VIA_FORK)
+  /* setup signal forwarding */
+
+  int sigs[] = { SIGINT, SIGTERM, SIGKILL, SIGHUP, SIGCONT,
+                 SIGTSTP, SIGTTIN, SIGTTOU };
+  unsigned int nsig;
+  for (nsig = 0; nsig < (sizeof(sigs)/sizeof(sigs[0])); nsig++)
+  {
+    SETSIGNAL( sigs[nsig], sig_forward_to_parent );
+  }
+
+#elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) \
+    || defined(_POSIX_THREADS_SUPPORTED)
+
+  int sigs[] = { SIGINT, SIGTERM, SIGKILL, SIGHUP, SIGCONT,
+                 SIGTSTP, SIGTTIN, SIGTTOU };
+  unsigned int nsig;
+
+  sigset_t signals_to_block;
+  sigemptyset(&signals_to_block);
+
+  for (nsig = 0; nsig < (sizeof(sigs)/sizeof(sigs[0])); nsig++)
+  {
+    sigaddset(&signals_to_block, sigs[nsig] );
+  }
+
+  #if defined(_POSIX_THREADS_SUPPORTED) /* must be first */
+    #if (CLIENT_OS == OS_AIX)
+    sigthreadmask(SIG_BLOCK, &signals_to_block, NULL);
+    #elif ((CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)) \
+       || (CLIENT_OS == OS_DGUX) || (CLIENT_OS == OS_MACOSX)
+    /* nothing - no pthread_sigmask() and no alternative */
+    #else  
+    pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL);
+    #endif
+  #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
+  thr_sigsetmask(SIG_BLOCK, &signals_to_block, NULL);
+  #elif defined(HAVE_MULTICRUNCH_VIA_FORK) || \
+        ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS))
+  sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
+  #endif
+#endif
+  return 0;
+}  
 
 // -----------------------------------------------------------------------
 
@@ -907,8 +1067,8 @@ static void __init_signal_handlers( int doingmodes )
 {
   __assert_statics(); 
   doingmodes = doingmodes; /* possibly unused */
-  #if (CLIENT_OS == OS_SOLARIS)
-  SETSIGNAL( SIGPIPE, SIG_IGN );
+  #if defined(SIGPIPE) //needed by at least solaris and fbsd
+  SETSIGNAL( SIGPIPE, SIG_IGN ); 
   #endif
   #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
   RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
@@ -920,24 +1080,25 @@ static void __init_signal_handlers( int doingmodes )
   #if defined(SIGHUP)
   SETSIGNAL( SIGHUP, CliSignalHandler );   //restart
   #endif
-  #if defined(TRIGGER_PAUSE_SIGNAL)  // signal-based pause/unpause mechanism?
-  if (!doingmodes)
+  #if defined(__unix__) && defined(TRIGGER_PAUSE_SIGNAL)
+  if (!doingmodes)                  // signal-based pause/unpause mechanism?
   {
-    #if defined(__unix__) && (CLIENT_OS != OS_BEOS) && (CLIENT_OS != OS_NEXTSTEP)
-    // stop the shell from seeing SIGTSTP and putting the client
-    // into the background when we '-pause' it.
+    #if ((CLIENT_OS == OS_QNX) && defined(__QNXNTO__)) || \
+         (CLIENT_OS == OS_BEOS)
+       /* nothing */          
+    #else          
+    // stop the shell from seeing SIGTSTP and putting the client into 
+    // the background when we '-pause' it.
+    if( getpgrp() != getpid() ) 
+      setpgid( 0, 0 );  // 
     // porters : those calls are POSIX.1, 
     // - on BSD you might need to change setpgid(0,0) to setpgrp()
     // - on SYSV you might need to change getpgrp() to getpgid(0)
-  #if (CLIENT_OS != OS_NTO2)
-    if( getpgrp() != getpid() )
-      setpgid( 0, 0 );
-  #endif
     #endif
     SETSIGNAL( TRIGGER_PAUSE_SIGNAL, CliSignalHandler );  //pause
     SETSIGNAL( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue
   }
-  #endif
+  #endif /* defined(__unix__) && defined(TRIGGER_PAUSE_SIGNAL) */
   #if defined(SIGQUIT)
   SETSIGNAL( SIGQUIT, CliSignalHandler );  //shutdown
   #endif
@@ -1082,7 +1243,7 @@ static void _init_cputemp( const char *p ) /* cpu temperature string */
 static void _init_pauseplist( const char *plist )
 {
   const char *p = plist;
-  unsigned int wpos = 0, index = 0, len;
+  unsigned int wpos = 0, idx = 0, len;
   while (*p)
   {
     while (*p && (isspace(*p) || *p == '|'))
@@ -1108,8 +1269,8 @@ static void _init_pauseplist( const char *plist )
         memcpy( &(trigstatics.pauseplistbuffer[wpos]), plist, len );
         wpos += len;
         trigstatics.pauseplistbuffer[wpos++] = '\0';
-        trigstatics.pauseplist[index++] = __mangle_pauseapp_name(appname,0);
-        if (index == ((sizeof(trigstatics.pauseplist)/
+        trigstatics.pauseplist[idx++] = __mangle_pauseapp_name(appname,0);
+        if (idx == ((sizeof(trigstatics.pauseplist)/
                        sizeof(trigstatics.pauseplist[0]))-1) )
         {
           break;
@@ -1133,11 +1294,11 @@ static void _init_pauseplist( const char *plist )
     for (len = 0; len < 2; len++)
     {
       const char *clist;
-      if (index == ((sizeof(trigstatics.pauseplist)/
+      if (idx == ((sizeof(trigstatics.pauseplist)/
                    sizeof(trigstatics.pauseplist[0]))-1) )
         break;
       clist = __mangle_pauseapp_name( ((len==0)?("defrag"):("scandisk")),0);
-      for (wpos = 0; wpos < index; wpos++)
+      for (wpos = 0; wpos < idx; wpos++)
       {
         if ( strcmp( trigstatics.pauseplist[wpos], clist ) == 0 )
         {
@@ -1146,11 +1307,11 @@ static void _init_pauseplist( const char *plist )
         }
       }
       if (clist)
-        trigstatics.pauseplist[index++] = clist;
+        trigstatics.pauseplist[idx++] = clist;
     }
   }
   #endif
-  trigstatics.pauseplist[index] = (const char *)0;
+  trigstatics.pauseplist[idx] = (const char *)0;
 }
 
 /* ---------------------------------------------------------------- */
@@ -1203,18 +1364,9 @@ int DeinitializeTriggers(void)
   huptrig = trigstatics.huptrig.trigger;
   /* clear everything to ensure we don't use IO after DeInit */
   memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
+  ClearRestartRequestTrigger(); /* consume possibly unused static function */
   return huptrig;
 }  
 
 /* ---------------------------------------------------------------- */
 
-#if (CLIENT_OS == OS_FREEBSD)
-#include <sys/mman.h>
-int TBF_MakeTriggersVMInheritable(void)
-{
-  int mflag = 0; /*VM_INHERIT_SHARE*/ /*MAP_SHARED|MAP_INHERIT*/;
-  if (minherit((void*)&trigstatics,sizeof(trigstatics),mflag)!=0)
-    return -1;
-  return 0;
-}  
-#endif

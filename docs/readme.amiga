@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.9 2000/07/11 02:38:38 mfeiri Exp $
+ Document revision $Id: readme.amiga,v 1.10 2002/09/02 00:35:45 andreasb Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -12,18 +12,25 @@
     1.0  System requirements
     2.0  Getting started
     3.0  AmigaOS client specific notes
-         3.1 Setting the time zone
-         3.2 Myzar - GUI front-end for the client
-         3.3 Core selection (68k)
-    4.0  Credits & thank yous
+         3.1 Ensuring stack size is large enough
+         3.2 Setting the time zone
+         3.3 Packets and work units?
+         3.4 Dial-up detection caveats
+    4.0  GUI for AmigaOS clients
+         4.1 Preferences and options
+         4.2 ARexx commands 
+         4.3 Myzar - MUI front-end for the client
+    5.0  Credits & thank yous
 
  1.0  System requirements --------------------------------------------
 
      - AmigaOS 2.04 or greater (3.0 if you're running the PPC client)
      - A TCP stack compatible with AmiTCP 3.0 or newer.
-       There are several, such as Miami, for example.
+       There are several, such as Miami, Genesis, TermiteTCP for example.
        Also AS225R2 with a special emulation library, look on the Amiga 
        effort homepage/misc section for the archive link (address below).
+     - ClassAct or ReAction GUI classes are required in order to use the
+       built-in GUI (will use shell output if not present).
 
     There are three versions of the client: a 68k version (with cores
     optimized for each CPU) and two PPC versions (WarpOS and PowerUp).
@@ -38,13 +45,21 @@
 
      The PowerUp PPC version requires:
      - A 603e or higher PPC processor. Tested on 603e and 604e.
-     - Phase5's ppc.library version 46.28 or higher.
-     - Also works under WarpUp with PPCLibEmu 0.7e (although you
-       should really use the native WarpOS version instead).
-       
+     - Ralph Schmidt's ppc.library version 46.30 or higher.
+       Available from ftp://ftp.meanmachine.ch/pub/amiga/ppclib/
+     - Stack must be set to at least 200000 bytes.
+     - Also works under WarpUp with PPCLibEmu 0.8a or higher (although
+       you should really use the native WarpOS version instead, of course).
+
  2.0  Getting started ------------------------------------------------
 
-    Just copy the client into a directory of your choice and fire it up.
+    To install the client, drag the client's drawer to a location of your
+    choice and fire it up.  If you would like the client to be started
+    automatically each time your boot, click the "Add to WBStartup" icon
+    or run the client from a shell using the '-install' option - this
+    will install an icon to your WBStartup drawer, which will run the
+    client from where you actually placed the client's drawer (DO NOT copy
+    the client into your WBStartup drawer).
 
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done, the 
@@ -53,9 +68,9 @@
     use the saved configuration.
     
     The configuration options are fairly self-explanatory and can be run
-    at any time by starting the client with the '-config' option.
-    A list of command line options is available by starting the client 
-    with '-help'.
+    at any time by starting the client with the '-config' option or
+    selecting 'Configure' in the GUI's menus.  A list of command line
+    options is available by starting the client with '-help'.
 
     A detailed guide to the various configuration options is available
     online at http://www.distributed.net/FAQ/
@@ -72,7 +87,20 @@
     The usage section on the Amiga effort pages contains all you need to
     know to change this.
 
-  3.1  Setting the time zone -----------------------------------------
+  3.1  Ensuring stack size is large enough ---------------------------
+
+    The 68k client always allocates its own 64K stack, which is enough for
+    the client to operate, so you should not need any special stack
+    settings in this.  Similarly with the WarpOS version, WarpOS programs
+    always get assigned a largish stack.  However, if you're using the
+    PowerUp version, you will need to set the stack to at least 200000
+    bytes, otherwise the client will exit telling you to increase the
+    stack size (instead of running with the potential for crashes to
+    happen).  Stack size can be increased by calling the stack command
+    before running the client or by adjusting the stack value in the
+    client's icon.
+
+  3.2  Setting the time zone -----------------------------------------
 
     The client always displays the current time in UTC - not your local
     time!  For this to work correctly, you need to ensure your timezone
@@ -86,50 +114,80 @@
     in the UK, you would set the timezone to GMT when not in dst, and
     to 1 hour from GMT (a zone to the right) when in dst.
 
-  3.2  Myzar - GUI front-end for the client --------------------------
+  3.3  Packets and work units?
 
-    Myzar is a GUI front-end for the Amiga port of client. It is not a
-    simple interface to start/stop the shell-based client, but a complex
-    and full-featured front-end. No more ugly-looking shells floating
-    around your WB, filled with unreadable data, and no more fiddling with
-    CLI parameters. And, more importantly, it makes using and running the
-    client so much easier.
+    If you are upgrading from the old 2.710x clients, you may not be
+    familiar with the new terminology that has replaced "blocks".  The
+    new clients refer to "packets" and "work units".  Descriptions of
+    their meanings can be found at
+    http://www.distributed.net/faq/cache/138.html
 
-    If you're going to use this client, then I really do recommend that
-    you install Myzar too: http://www.crosswinds.net/~myzar/ . Note that
-    the new clients aren't fully compatible with Myzar 2.0 - you'll need
-    2.1 or higher for full functionality with the current clients.
+  3.4  Dial-up detection caveats
 
-  3.3  Core selection (68k)
+    If you choose to enable the dial-up detection feature of the client,
+    please be aware that you will not be able to exit your TCP/IP stack
+    software until the "Detected IP-link drop" message has been shown by
+    the client (which happens within 5 seconds of going offline).  If
+    you try to exit before that, the client will still be using
+    bsdsocket.library, and your TCP/IP software will most likely complain.
 
-    In most cases, you needn't worry about this section, as the 68k client
-    automatically selects the RC5 and OGR core code that is best to your
-    CPU.  For example, if your Amiga has an 060, the client will detect
-    this and use cores optimized for the 060.
+    Also note that if you want to make use of the "automatic go online"
+    feature (dials your ISP automatically when the client runs out of
+    work), you will need to be using Miami, MiamiDx or Genesis.  This
+    feature is not supported for other TCP/IP stack software.
 
-    However, it is possible that the 060 core may be faster on some 040
-    cards, than the auto-selected 040 optimized core.  So, 040 owners may
-    wish to try manually selecting the 060 core to see if it's any faster.
-    This can be done by firing the client up on configuration mode (use
-    the -config option) and selecting core #3 from the performance related
-    options menu.  If you do try this, please let me know (via the address
-    at the top of this readme) your conclusions and type of 040 card that
-    you are using.
+ 4.0  GUI for AmigaOS clients-----------------------------------------
 
-    For OGR, the auto-selected core is most likely going to be the fastest
-    for you machine.  However, if you wish to experiment by trying the
-    cores for other CPUs, you can do so by using the '-c' command line
-    option (the OGR core cannot be selected in the config menu).  For
-    example '-c ogr 0' will force the client to use the 68000 OGR core
-    Beware: do not attempt to use any of the cores that are meant for
-    higher CPUs, as this will cause a crash.  For example, if you own an
-    030, you can try the 68000 and 020 cores, but not the 040/060 cores.
+    The clients now have their own simple built-in GUI (ClassAct/ReAction),
+    which is enabled when running the client from Workbench (e.g. by
+    double-clicking it's icon).  If starting the client from the Shell,
+    the client will run in console mode, as before.  In GUI mode, the
+    console output will be shown in the GUI, and the client(s) may be
+    controlled by the menus.  If running both 68k and PPC clients, the
+    clients will automatically share the same window.
 
- 4.0  Credits & thank yous--------------------------------------------
+  4.1  Preferences and options ---------------------------------------
+
+    The GUI maybe be configured to your liking by using the preferences
+    window, which can be accessed from the settings menu.  Additionally,
+    the following tooltypes can be used in the client's icon:
+
+    HIDE
+
+      Specify this tooltype to cause the client to not open a window on
+      startup, and show an icon and/or tools menu item (defaults to
+      both, but may be changed in the preferences) on the Workbench
+      instead.
+
+  4.2  ARexx commands
+
+    It is possible to control the clients with ARexx, via the DNETC.1
+    port.  The following commands are available (will affect both
+    clients if you are running both 68K and PPC clients):
+
+    QUIT    - Shutdown the client(s) and exit
+    HIDE    - Iconify/hide the GUI
+    SHOW    - Uniconify/show the GUII
+    PAUSE   - Pause the client(s)
+    UNPAUSE - Unpause the client(s)
+    UPDATE  - Flush the client(s) buffers and fetch new packets
+    FETCH   - Fetch new packets for the client(s)
+    FLUSH   - Flush the client(s) buffers
+    RESTART - Restart the clients(s)
+
+  4.3  Myzar - alternative front-end for the client ------------------
+
+    Myzar is a front-end for the client, and uses MUI.  Myzar preceded
+    the built-in GUI, and if you prefer to use Myzar then it will still
+    work fine with the new GUI enabled clients.  Myzar can be downloaded
+    from http://www.crosswinds.net/~myzar/ . Note that the console output
+    of the current clients isn't fully compatible with Myzar.
+
+ 5.0  Credits & thank yous--------------------------------------------
  
     -- Thanks to everybody involved in the development of the Amiga client
        and the beta testing process, who have helped make it what it is,
-       including (in random order):
+       including (in no particular order):
 
        - Kriton Kyrimis (multi-core 68k OGR cores, support and ideas)
        - Tony Preston (support, testing, views and overall managament)
@@ -137,10 +195,10 @@
        - Roberto Ragusa (PPC 604e optimized RC5 core)
        - Stefan Smietanowski (for porting previous clients to the Amiga -
          some crucial parts of his code are used in this version)
-
-    -- Roberto Patriarca - author of the Myzar GUI front-end.
-
-    -- Thomas Tavoly - coordinator of the Amiga RC5 Team.
+       - Roberto Patriarca (Myzar)
+       - Thomas Tavoly (coordinator of the Amiga RC5 Team)
+       - Jacek Rzeuski (keyrate chart class code for Myzar)
+       - Dirk Stoecker (laborious testing of PowerUp client betas)
 
     -- The whole Amiga RC5 Team
        Without you there wouldn't be much of a point in doing the client, 
@@ -148,5 +206,5 @@
 
     -- Finally, thanks to everybody involved with the gcc and libnix ports
        for AmigaOS, especially for version for WarpUp.  Thanks also to
-       Sebastian Jedruszkiewicz for help with the PowerUp version of the
-       client.
+       Sebastian Jedruszkiewicz for help with stripping the PowerUp
+       version of the client, and Sam Jordan for his knowledge and support.

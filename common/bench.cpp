@@ -1,10 +1,12 @@
 /* 
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.51 2000/07/11 04:39:43 mfeiri Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.52 2002/09/02 00:35:41 andreasb Exp $"; }
+
+//#define TRACE
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -12,188 +14,73 @@ return "@(#)$Id: bench.cpp,v 1.51 2000/07/11 04:39:43 mfeiri Exp $"; }
 #include "problem.h"   // Problem class
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "clitime.h"   // CliGetTimeString()
-#include "clisrate.h"  // CliGetKeyrateAsString()
 #include "clicdata.h"  // GetContestNameFromID()
 #include "selcore.h"   // selcoreGet[SelectedCoreForContest|DisplayName]()
-#include "cpucheck.h"  // GetProcessorType()
+#include "pollsys.h"   // NonPolledUSleep()
 #include "logstuff.h"  // LogScreen()
 #include "clievent.h"  // event post etc.
 #include "bench.h"     // ourselves
-
-/* ----------------------------------------------------------------- */
-
-static void __show_notbest_msg(unsigned int contestid)
-{
-  #if (CLIENT_CPU == CPU_X86) && \
-      (!defined(SMC) || !defined(MMX_RC5) || !defined(MMX_BITSLICER))
-  int corenum = selcoreGetSelectedCoreForContest( contestid );
-  unsigned int detectedtype = GetProcessorType(1);
-  const char *not_supported = NULL;
-  if (contestid == RC5)
-  {
-    if (corenum == 1) /* 486 */
-    {
-      #if (!defined(SMC))            /* currently only linux */
-        not_supported = "RC5/486/SMC";
-      #endif
-    }
-    else if (corenum == 0 && (detectedtype & 0x100)!=0) /* P5 + mmx */
-    {
-      #if (!defined(MMX_RC5))        /* all non-nasm platforms (bsdi etc) */
-        not_supported = "RC5/P5/MMX";
-      #endif
-    }
-  }
-  else if (contestid == CSC)
-  {
-    if ((detectedtype & 0x100) != 0) /* mmx */
-    {
-      #if (!defined(MMX_CSC))
-        not_supported = "CSC/MMX bitslice";
-      #endif
-    }
-  }
-  else if (contestid == DES)
-  {
-    if ((detectedtype & 0x100) != 0) /* mmx */
-    {
-      #if (!defined(MMX_BITSLICER))
-        not_supported = "DES/MMX bitslice";
-      #endif
-    }
-  }
-  if (not_supported)
-    LogScreen( "Note: this client does not support\nthe %s core.\n", not_supported );
-  #endif
-
-  contestid = contestid;  
-  return;
-}
-
-/* ----------------------------------------------------------------- */
-
-static double __calc_rate( unsigned int contestid, 
-                           const ContestWork *contestwork, 
-                           int last_run_result, 
-                           u32 keysdone_already_hi,
-                           u32 keysdone_already_lo,
-                           const struct timeval *totalruntime, 
-                           const char *contname, 
-                           int corenum, int corecpu, int print_it )
-{                         
-  double rate;
-  const char *rateunit = "";
-  double keysdone = (double)keysdone_already_lo + 
-                    (double)keysdone_already_hi * 4294967296.0 /* 2^32 */;
-  corecpu = corecpu; /* unused */
-  
-  switch (contestid)
-  {
-    case RC5:
-    case DES:
-    case CSC:
-    {
-      unsigned int multiplier;
-      if ( last_run_result == RESULT_WORKING )
-        keysdone = keysdone +
-        (double)contestwork->crypto.keysdone.lo + 
-        (double)contestwork->crypto.keysdone.hi * 4294967296.0 /* 2^32 */;
-      if (CliGetContestInfoBaseData( contestid, NULL, &multiplier ) == 0)
-      {
-        if (multiplier > 1) //iteration-to-keycount multiplication-factor
-          keysdone = (keysdone)*((double)(multiplier));
-      }
-      rateunit = "keys/sec";
-      break;
-    }
-    case OGR:
-    {
-      if ( last_run_result == RESULT_WORKING )
-        keysdone = keysdone +
-        (double)contestwork->ogr.nodes.lo + 
-        (double)contestwork->ogr.nodes.hi * 4294967296.0 /* 2^32 */;
-      rateunit = "nodes/sec";
-      break;
-    }      
-  }        
-
-  rate = keysdone;  /* guard against divide by zero */
-  if (totalruntime->tv_sec != 0 || totalruntime->tv_usec != 0)
-    rate = keysdone / (((double)(totalruntime->tv_sec))+
-                   (((double)(totalruntime->tv_usec))/((double)(1000000L))));
-
-  if (print_it)
-  {
-    char ratestr[32];
-    Log("\rBenchmark for %s core #%d (%s)\n%s [%s%s]\n",
-         contname, corenum, selcoreGetDisplayName(contestid, corenum),
-	 CliGetTimeString( totalruntime, 2 ),
-         CliGetKeyrateAsString( ratestr, rate ), rateunit );
-  }
-  return (rate);
-}
-
-/* ----------------------------------------------------------------- */
+#include "util.h"      // TRACE_OUT
 
 #define TBENCHMARK_CALIBRATION 0x80
 
+#if (CONTEST_COUNT != 4)
+  #error static initializer expects CONTEST_COUNT == 4
+#endif
+unsigned long bestrate_tab[CONTEST_COUNT] = {0,0,0,0};
+
+/* -------------------------------------------------------------------- */
+
+/* BenchGetBestRate() is always per-processor */
+unsigned long BenchGetBestRate(unsigned int contestid)
+{
+  if (contestid < CONTEST_COUNT)
+  { 
+    if (bestrate_tab[contestid] == 0)
+    { 
+      // This may trigger a mini-benchmark, which will get the speed
+      // we need and not waste time.
+      selcoreGetSelectedCoreForContest( contestid );
+    }
+    if (bestrate_tab[contestid] == 0)
+    { 
+      TBenchmark(contestid, 2, 
+                 TBENCHMARK_CALIBRATION|TBENCHMARK_QUIET|TBENCHMARK_IGNBRK);
+    }
+    return bestrate_tab[contestid];
+  }
+  return 0;
+}
+
+/* -------------------------------------------------------------------- */
+
+static inline void __BenchSetBestRate(unsigned int contestid, unsigned long rate)
+{
+  if (contestid < CONTEST_COUNT)
+  { 
+    if (rate > bestrate_tab[contestid])
+      bestrate_tab[contestid] = rate;
+  }
+  return;
+}
+
+/* -------------------------------------------------------------------- */
+
+/* TBenchmark() is always per-processor */
 long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 {
-  long retvalue;
-  int run, scropen; u32 tslice; 
-  struct { int yps, did_adjust; } non_preemptive_os;
   /* non-preemptive os minimum yields per second */
-  Problem *problem;
-  unsigned long last_permille;
-  ContestWork contestwork, tmp_work;
-  const char *contname;
-  struct timeval totalruntime;
-  u32 keysdone_hi, keysdone_lo;
-  unsigned int workunitsec = 0;
+  struct { int yps, did_adjust; } non_preemptive_os;
+  long retvalue = -1L; /* assume error */
+  Problem *thisprob; 
+  u32 tslice; 
 
-  contname = CliGetContestNameFromID(contestid);
-  if (!contname)
-    return 0;
   if (!IsProblemLoadPermitted(-1 /*any thread*/, contestid))
     return 0;
 
-  switch (contestid)
-  {
-    case RC5:
-    case DES:
-    case CSC:
-    {
-      contestwork.crypto.key.lo = ( 0 );
-      contestwork.crypto.key.hi = ( 0 );
-      contestwork.crypto.iv.lo = ( 0 );
-      contestwork.crypto.iv.hi = ( 0 );
-      contestwork.crypto.plain.lo = ( 0 );
-      contestwork.crypto.plain.hi = ( 0 );
-      contestwork.crypto.cypher.lo = ( 0 );
-      contestwork.crypto.cypher.hi = ( 0 );
-      contestwork.crypto.keysdone.lo = ( 0 );
-      contestwork.crypto.keysdone.hi = ( 0 );
-      contestwork.crypto.iterations.lo = ( (1<<20) );
-      contestwork.crypto.iterations.hi = ( 0 );
-      break;
-    }
-    case OGR:
-    {
-      contestwork.ogr.workstub.stub.marks = 24;
-      contestwork.ogr.workstub.worklength = 
-      contestwork.ogr.workstub.stub.length = 7;
-      contestwork.ogr.workstub.stub.diffs[0] = 2;
-      contestwork.ogr.workstub.stub.diffs[1] = 22;
-      contestwork.ogr.workstub.stub.diffs[2] = 32;
-      contestwork.ogr.workstub.stub.diffs[3] = 21;
-      contestwork.ogr.workstub.stub.diffs[4] = 5;
-      contestwork.ogr.workstub.stub.diffs[5] = 1;
-      contestwork.ogr.workstub.stub.diffs[6] = 12;
-      contestwork.ogr.nodes.lo = 0;
-      contestwork.ogr.nodes.hi = 0;
-      break;
-    }
-  }
+  TRACE_OUT((+1,"TBenchmark(%u, %u, %d)\n",contestid,numsecs,flags));
+  
+  /* ++++++ determine initial 'timeslice' +++++ */
 
   tslice = 0; /* zero means 'use calibrated value' */
   non_preemptive_os.yps = 0; /* assume preemptive OS */
@@ -245,7 +132,19 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     if ( res == -1 ) /* LoadState failed */
     {
       if ((flags & TBENCHMARK_QUIET) == 0)
+      {
+      #if ((CLIENT_OS == OS_WIN32) && defined(SMC))
+        // HACK! to ignore failed benchmark for x86 rc5 smc core #7 if
+        // started from menu and another cruncher is active in background.
+        if (contestid == RC5 && selcoreGetSelectedCoreForContest(contestid) == 7)
+          LogScreen("\rCan't benchmark core #7 while another cruncher\nis running in the background.\n");
+        else
+          LogScreen("\rCalibration failed!\n");
+      #else
         LogScreen("\rCalibration failed!\n");
+      #endif
+      }
+      TRACE_OUT((-1,"TBenchmark()=-1 (Calibration failed)\n"));
       return -1;
     }  
     tslice = (((u32)res) + 0xFFF) & 0xFFFFF000;
@@ -253,6 +152,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     //  LogScreen("\rCalibrating ... done. (%lu)\n", (unsigned long)tslice );
     if (non_preemptive_os.yps)
       tslice /= non_preemptive_os.yps;
+//  else
+//    tslice <<= 1; /* try for two second steps */
   }
   if (tslice == 0)
   { 
@@ -260,188 +161,186 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     if (non_preemptive_os.yps)
       tslice = 4096;
   }
-  
-  totalruntime.tv_sec = 0;
-  totalruntime.tv_usec = 0;
-  scropen = run = -1;
-  keysdone_lo = 0;
-  keysdone_hi = 0;
-  last_permille = 1001;
-  
-  /* --------------------------- */
 
-  problem = new Problem();
-  run = RESULT_WORKING;
-
-  while (((unsigned int)totalruntime.tv_sec) < numsecs)
+  /* ++++++ run the benchmark +++++ */
+  
+  thisprob = ProblemAlloc();
+  if (thisprob)
   {
-    run = RESULT_WORKING;
-    problem->RetrieveState(&tmp_work, NULL, 1); //unload state (if previous)
-    if ( problem->LoadState( &contestwork, contestid, tslice, 0, 0, 0, 0) != 0)
-      run = -1;
-    else if ((flags & TBENCHMARK_QUIET) == 0 && scropen < 0)
+    if ( ProblemLoadState( thisprob, CONTESTWORK_MAGIC_BENCHMARK, 
+                             contestid, tslice, 0, 0, 0, 0) == 0)
     {
-      scropen = 1;
-      __show_notbest_msg(contestid);
-      LogScreen("%s: Benchmarking ... ", contname );
-    }
-    while ( run == RESULT_WORKING )
-    {
-      if (non_preemptive_os.yps) /* is this a non-preemptive environment? */
+      const char *contname = CliGetContestNameFromID(contestid);
+      int silent = 1, run = RESULT_WORKING; u32 bestlo = 0, besthi = 0;
+      unsigned long last_permille = 1001;
+
+      //ClientEventSyncPost(CLIEVENT_BENCHMARK_STARTED, (long)thisprob );
+      if ((flags & TBENCHMARK_QUIET) == 0)
       {
-        if (non_preemptive_os.did_adjust < 30 /* don't do this too often */
-           && totalruntime.tv_sec >= (2+non_preemptive_os.did_adjust))
+        silent = 0;
+        LogScreen("%s: Benchmarking ... ", contname );
+      }
+
+      /* Sleep a bit to a) try to begin the while loop at the top of a 
+      ** scheduling quantum, b) Also, per-contest bench can be very stressful 
+      ** if there are a lot of cores per contest.
+      */
+      NonPolledUSleep(50000); /* 50 millisecs */
+
+      while ( run == RESULT_WORKING )
+      {
+        unsigned long permille; u32 ratehi, ratelo;
+
+        if (non_preemptive_os.yps) /* is this a non-preemptive environment? */
         {
-          if (problem->RetrieveState(&tmp_work, NULL, 0) >= 0)
+          if (!thisprob->pub_data.last_runtime_is_invalid &&
+             non_preemptive_os.did_adjust < 30 /* don't do this too often */
+             && thisprob->pub_data.runtime_sec >= ((u32)(2+non_preemptive_os.did_adjust)))
           {
-            double rate = __calc_rate(contestid, &tmp_work, run, 
-                                      keysdone_hi, keysdone_lo, 
-                                      &totalruntime, contname, 
-                                      problem->coresel, problem->client_cpu, 0);
-            u32 newtslice = (u32)(rate/((double)non_preemptive_os.yps));
+            u32 newtslice;
+            ProblemInfo info;
+            if (ProblemGetInfo(thisprob, &info, P_INFO_RATE) == -1)
+            {
+              run = -2;
+              break;
+            }
+            ratelo = info.ratelo;
+            newtslice = (u32)(ratelo/((u32)non_preemptive_os.yps));
             if (newtslice > (tslice + (tslice/10)))
             {
               non_preemptive_os.did_adjust++;
               numsecs++; /* bench for a bit more */
             }
             if (newtslice > tslice)
-              tslice = newtslice;
+              thisprob->pub_data.tslice = tslice = newtslice;
           }
+          #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
+          w32Yield(); /* pump waiting messages */
+          #elif (CLIENT_OS == OS_MACOS)
+          macosSmartYield(6);
+          #elif (CLIENT_OS == OS_RISCOS)
+          riscos_upcall_6();
+          #elif (CLIENT_OS == OS_NETWARE)
+          ThreadSwitchLowPriority();
+          #endif
         }
-        #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
-        w32Yield(); /* pump waiting messages */
-        #elif (CLIENT_OS == OS_MACOS)
-        macosSmartYield();
-        #elif (CLIENT_OS == OS_RISCOS)
-        riscos_upcall_6();
-        #elif (CLIENT_OS == OS_NETWARE)
-        ThreadSwitchLowPriority();
-        #endif
-      }
-      run = problem->Run();
-      if ( run < 0 )
-        break;
-      else if ((flags & TBENCHMARK_IGNBRK)==0 && 
-                CheckExitRequestTriggerNoIO())
-      {
-        run = -1; /* error */
-        if (scropen > 0)
-          LogScreen("\r%s: Benchmarking ... *Break*       ", contname );
-        break;
-      }
-      else
-      {
-        struct timeval runtime;
-        runtime.tv_sec = totalruntime.tv_sec  + problem->runtime_sec;
-        runtime.tv_usec = totalruntime.tv_usec + problem->runtime_usec;
-        if (runtime.tv_usec >= 1000000)
+        else /* preemptive environment */ 
+             if (!thisprob->pub_data.last_runtime_is_invalid)
         {
-          runtime.tv_usec -= 1000000;
-          runtime.tv_sec++;
-        }
-        if (scropen > 0)
-        {
-          unsigned long permille = (((runtime.tv_sec * 1000) + 
-                                    (runtime.tv_usec / 1000)) ) / numsecs;
-          if (permille >= 1000)
-            permille = 1000;
-          if (last_permille != (permille / 10))
-          {    
-            LogScreen("\r%s: Benchmarking ... %u.%02u%% done", 
-                       contname, (unsigned int)(permille/10), 
-                                 (unsigned int)((permille%10)*10) );
-            last_permille = (permille / 10);
-          }                                 
-        }
-        if ( run != RESULT_WORKING) /* finished this block */
-        {
-          if ( problem->RetrieveState(&tmp_work, NULL, 0) >= 0 )
+          ProblemInfo info;
+          if (ProblemGetInfo(thisprob, &info, P_INFO_DCOUNT) == -1)
           {
-            u32 old_lo, frag_hi = 0, frag_lo = 0;
-            switch( contestid ) 
-            {
-              case RC5:
-              case DES:
-              case CSC:
-                frag_hi = tmp_work.crypto.keysdone.hi;
-                frag_lo = tmp_work.crypto.keysdone.lo;
-                break;
-              case OGR:
-                frag_hi = tmp_work.ogr.nodes.hi;
-                frag_lo = tmp_work.ogr.nodes.lo;
-                break;
-            }        
-            old_lo = keysdone_lo; 
-            keysdone_lo += frag_lo;
-            keysdone_hi += frag_hi;
-            if ( keysdone_lo < old_lo || keysdone_lo < frag_lo )
-              keysdone_hi++;
+            run = -2;
+            break;
           }
-          totalruntime.tv_sec = runtime.tv_sec;
-          totalruntime.tv_usec = runtime.tv_usec;
+          ProblemComputeRate( contestid, thisprob->pub_data.runtime_sec, 
+                                         thisprob->pub_data.runtime_usec,
+                                         info.dcounthi, info.dcountlo,
+                                         &ratehi, &ratelo, 0, 0 );
+
+          tslice = thisprob->pub_data.tslice;
+          if (ratehi > besthi || (ratehi == besthi && ratelo > bestlo))
+          {
+            bestlo = ratelo; 
+            besthi = ratehi;
+//printf("\noldtslice=%u, newtslice=%u %s\n", tslice, ratelo, "BEST!");
+          }
+          else
+          { 
+            ratehi = besthi;
+            ratelo = bestlo;
+//printf("\noldtslice=%u, newtslice=%u %s\n", tslice, ratelo, "");
+          }
+          if (ratehi)
+            ratelo = 0x0fffffff;
+          if (ratelo > tslice || contestid == OGR)
+            tslice = thisprob->pub_data.tslice = ratelo;
         }
-        else if ( ((unsigned int)runtime.tv_sec) >= numsecs )
+        run = ProblemRun(thisprob);
+        if ( run < 0 )
         {
-          totalruntime.tv_sec = runtime.tv_sec;
-          totalruntime.tv_usec = runtime.tv_usec;
+          run = -1;
+          break;
+        }   
+        if ((flags & TBENCHMARK_IGNBRK)==0 && CheckExitRequestTriggerNoIO())
+        {
+          if (!silent)
+            LogScreen("\r%s: Benchmarking ... *Break*", contname );
+          run = -3;
           break;
         }
+        permille = 1000; /* assume finished */
+        if (run == RESULT_WORKING) /* not finished */
+        {
+          permille = ((thisprob->pub_data.runtime_sec  * 1000) + 
+                      (thisprob->pub_data.runtime_usec / 1000)) / numsecs;
+          if (permille > 1000)
+            permille = 1000;
+        }
+        if (permille == 1000 || last_permille != (permille / 10))
+        {    
+          if (!silent)
+            LogScreen("\r%s: Benchmarking ... %u.%02u%% done", 
+                       contname, (unsigned int)(permille/10), 
+                               (unsigned int)((permille%10)*10) );
+          last_permille = (permille / 10);
+          //ClientEventSyncPost(CLIEVENT_BENCHMARK_BENCHING, (long)problem );
+        }                                 
+        if (permille == 1000) /* time is up or ran out of work */
+        {
+          char ratebuf[32];
+          ProblemInfo info;
+          info.rate.ratebuf = ratebuf;
+          info.rate.size = sizeof(ratebuf);
+          
+          if (ProblemGetInfo(thisprob, &info, P_INFO_E_TIME | P_INFO_RATEBUF |
+                                              P_INFO_RATE) == -1)
+          {
+            run = -4;
+            break;
+          }
+          
+          if (bestlo || besthi)
+          {
+            ProblemComputeRate( contestid, 0, 0, besthi, bestlo, &(info.ratehi),
+                                &(info.ratelo), info.rate.ratebuf, info.rate.size );
+          }
+          retvalue = (long)info.ratelo;
+          #if (ULONG_MAX > 0xfffffffful)
+          retvalue = (((long)info.ratehi) << 32) + info.ratelo;
+          #endif
+          __BenchSetBestRate(contestid, retvalue);
+          if (!silent)
+          {
+            struct timeval tv; 
+            tv.tv_sec = info.elapsed_secs; tv.tv_usec = info.elapsed_usecs;
+            LogScreen("\r");
+            Log("%s: Benchmark for core #%d (%s)\n%s [%s/sec]\n",
+               contname, thisprob->pub_data.coresel, 
+               selcoreGetDisplayName(contestid, thisprob->pub_data.coresel),
+               CliGetTimeString( &tv, 2 ), info.rate.ratebuf );
+          }
+          //ClientEventSyncPost(CLIEVENT_BENCHMARK_FINISHED, (long)problem );
+          break;
+        } /* permille == 1000 */
+      } /* while ( run == RESULT_WORKING ) */
+
+      if (!silent)
+      {
+        if (run < 0) /* error */
+        {
+          LogScreen("\r");
+          if (run != -3) /* break */
+            Log("%s: Benchmark failed (error: %d).", contname, run );
+        }
       }
-    }
-    if ( run < 0 )
-      break;
+      ProblemRetrieveState(thisprob, NULL, NULL, 1, 0); //purge the problem
+
+    } /* if (LoadState() == 0) */
+
+    ProblemFree(thisprob);
   }
-  if (run < 0) /* errors or ^C */
-    run = -1; /* core error */
-  else if (problem->RetrieveState(&contestwork, NULL, 0) < 0)
-    run = -1; /* core error */
-  if (scropen > 0 && run < 0)
-    LogScreen("\n");
-  problem->RetrieveState(&tmp_work, NULL, 1); //unload state (regardless of 'run')
 
-  /* --------------------------- */
-  
-  retvalue = -1; /* assume error */
-  if (run >= 0) /* no errors, no ^C */
-    retvalue = (long)__calc_rate(contestid, &contestwork, run, 
-                         keysdone_hi, keysdone_lo, 
-                         &totalruntime, contname, 
-                         problem->coresel, problem->client_cpu,
-                         (!(flags & TBENCHMARK_QUIET)) );
-
-  delete problem;
-  
-  workunitsec = 0;
-  switch (contestid)
-  {
-    case RC5:
-    case DES:
-    case CSC:
-      workunitsec = 1 + (1<<28)/retvalue;
-      break;
-
-    case OGR:
-      // NYI
-      workunitsec = 0;
-      break;
-  };
-
-  CliSetContestWorkUnitSpeed(contestid, workunitsec);
-
+  TRACE_OUT((-1,"TBenchmark()=%d\n", retvalue));
   return retvalue;
 }  
-
-// ---------------------------------------------------------------------------
-
-//old style
-u32 Benchmark( unsigned int contestid, u32 numkeys, int * /*numblocks*/)
-{                                                        
-  unsigned int numsecs = 8;
-  if (numkeys == 0)
-    numsecs = 32;  
-  else if ( numkeys >= (1 << 23)) /* 1<<23 used to be our "long" bench */
-    numsecs = 16;                 /* our "short" bench used to be 1<<20 */
-  TBenchmark( contestid, numsecs, 0 );
-  return 0;
-}
-

@@ -1,12 +1,12 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.23 2000/07/11 04:15:33 mfeiri Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.24 2002/09/02 00:35:41 andreasb Exp $"
 
 enum /* anonymous */
 {
@@ -22,7 +22,7 @@ enum /* anonymous */
   CONF_CPUTEMPTHRESHOLDS       , /* CONF_MENU_MISC */
   CONF_PAUSEIFBATTERY          , /* CONF_MENU_MISC */
   CONF_QUIETMODE               , /* CONF_MENU_MISC */
-  CONF_PERCENTOFF              , /* CONF_MENU_MISC */
+  CONF_CRUNCHMETER             , /* CONF_MENU_MISC */
   CONF_COMPLETIONSOUNDON       , /* CONF_MENU_MISC */
 
   CONF_MENU_BUFF_PLACEHOLDER   , /* 15 */
@@ -38,22 +38,22 @@ enum /* anonymous */
   CONF_LOADORDER               , /* CONF_MENU_BUFF "DES,OGR,RC5" */
   CONF_FREQUENT                , /* CONF_MENU_BUFF */
   CONF_FREQUENT_FREQUENCY      , /* CONF_MENU_BUFF */
+  CONF_FREQUENT_RETRY_FREQUENCY, /* CONF_MENU_BUFF */
   CONF_PREFERREDBLOCKSIZE      , /* CONF_MENU_BUFF */
   CONF_THRESHOLDI              , /* CONF_MENU_BUFF */
   CONF_THRESHOLDT              , /* CONF_MENU_BUFF */
 
-  CONF_MENU_PERF_PLACEHOLDER   , /* 29 */
+  CONF_MENU_PERF_PLACEHOLDER   , /* 30 */
   CONF_CPUTYPE                 , /* CONF_MENU_PERF */
   CONF_NUMCPU                  , /* CONF_MENU_PERF 0 ... */
   CONF_NICENESS                , /* CONF_MENU_PERF priority */
 
-  CONF_MENU_LOG_PLACEHOLDER    , /* 33 */
+  CONF_MENU_LOG_PLACEHOLDER    , /* 34 */
   CONF_LOGTYPE                 , /* CONF_MENU_LOG */
   CONF_LOGNAME                 , /* CONF_MENU_LOG */
   CONF_LOGLIMIT                , /* CONF_MENU_LOG */
   CONF_MESSAGELEN              , /* CONF_MENU_LOG */
   CONF_SMTPSRVR                , /* CONF_MENU_LOG */
-  CONF_SMTPPORT                , /* CONF_MENU_LOG */
   CONF_SMTPFROM                , /* CONF_MENU_LOG */
   CONF_SMTPDEST                , /* CONF_MENU_LOG */
 
@@ -64,7 +64,6 @@ enum /* anonymous */
   CONF_NOFALLBACK              , /* CONF_MENU_NET */
   CONF_FWALLTYPE               , /* CONF_MENU_NET */
   CONF_FWALLHOSTNAME           , /* CONF_MENU_NET */
-  CONF_FWALLHOSTPORT           , /* CONF_MENU_NET */
   CONF_FWALLUSERNAME           , /* CONF_MENU_NET */
   CONF_FWALLPASSWORD           , /* CONF_MENU_NET */
   CONF_FORCEHTTP               , /* CONF_MENU_NET */

@@ -1,0 +1,8 @@
+##base _DnetcBase
+##bias 30
+##public
+dnetcguiOpen(cpu,programname,iconify,vstring)(d0,a0,a1,a2)
+dnetcguiClose(params)(a0)
+dnetcguiHandleMsgs(signals)(d0)
+dnetcguiConsoleOut(cpu,output,overwrite)(d0/a0/d1)
+##end

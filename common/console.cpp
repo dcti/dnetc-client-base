@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -14,13 +14,12 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.73 2000/07/11 04:11:20 mfeiri Exp $"; }
+return "@(#)$Id: console.cpp,v 1.74 2002/09/02 00:35:41 andreasb Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
 #include "cputypes.h"
 #include "baseincs.h"
-#include "network.h"
 #include "version.h"  //CLIENT_VERSIONSTRING
 #include "clitime.h"
 #include "triggers.h"
@@ -37,13 +36,15 @@ return "@(#)$Id: console.cpp,v 1.73 2000/07/11 04:11:20 mfeiri Exp $"; }
   || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
   || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDOS) \
   || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) \
-  || (CLIENT_OS==OS_NTO2) || (CLIENT_OS==OS_MACOSX) || (CLIENT_OS==OS_RHAPSODY))
+  || ((CLIENT_OS==OS_MACOSX) && !defined(__RHAPSODY__)) \
+  || ((CLIENT_OS==OS_QNX) && defined(__QNXNTO__)) \
+  || (CLIENT_OS==OS_DYNIX)) || (CLIENT_OS == OS_PS2LINUX)
 #include <termios.h>
-#define TERMIOS_IS_AVAILABLE
+#define HAVE_TERMIOS
 #endif
-#if (defined(__unix__) && !defined(__EMX__)) || (CLIENT_OS == OS_VMS) || \
-    (CLIENT_OS == OS_OS390) || (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RHAPSODY)
-#define TERM_IS_ANSI_COMPLIANT
+#if defined(__unix__) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390) || \
+                  (CLIENT_OS == OS_NEXTSTEP) || (CLIENT_OS == OS_AMIGAOS)
+#define HAVE_ANSICOMPLIANTTERM /* tty understands basic ansi sequences */
 #endif
 #if defined(__unix__)
 #include <sys/ioctl.h>
@@ -116,6 +117,8 @@ int InitializeConsole(int *runhidden,int doingmodes)
      #if defined(__EMX__)
      v_init();
      #endif
+    #elif (CLIENT_OS == OS_AMIGAOS)
+    retcode = amigaInitializeConsole(constatics.runhidden,doingmodes);
     #endif
 
     if (retcode != 0)
@@ -144,7 +147,8 @@ int InitializeConsole(int *runhidden,int doingmodes)
 int ConIsGUI(void)
 {
   #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-  return (!win32ConIsLiteUI()); /* do we have a light GUI or a full GUI? */
+  /* => 'C'=native console, 'c'=pipe console, 'g'=lite GUI, 'G'=fat GUI */
+  return ((w32ConGetType() & 0xff)=='G' || (w32ConGetType() & 0xff)=='g');
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
   return 1;
   #elif (CLIENT_OS == OS_RISCOS)
@@ -152,6 +156,8 @@ int ConIsGUI(void)
   return (guiriscos!=0);
   #elif (CLIENT_OS == OS_MACOS) && !defined(MAC_FBA)
   return 1;
+  #elif (CLIENT_OS == OS_AMIGAOS)
+  return amigaConIsGUI();
   #else
   return 0;
   #endif
@@ -198,6 +204,8 @@ int ConOut(const char *msg)
       os2conout(msg);
     #elif (CLIENT_OS == OS_MACOS)
       macosConOut(msg);
+    #elif (CLIENT_OS == OS_AMIGAOS)
+      amigaConOut(msg);
     #else
       fwrite( msg, sizeof(char), strlen(msg), stdout);
       fflush(stdout);
@@ -223,6 +231,8 @@ int ConOutModal(const char *msg)
        NULL, MB_OK | MB_INFORMATION | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
     ConsolePrintf( "%s\r\n", msg );
+  #elif (CLIENT_OS == OS_AMIGAOS)
+    amigaConOutModal(msg);
   #else
     fprintf( stderr, "%s\n", msg );
     fflush( stderr );
@@ -247,6 +257,8 @@ int ConOutErr(const char *msg)
            NULL, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
     ConsolePrintf( "%s: %s\r\n", utilGetAppName(), msg );
+  #elif (CLIENT_OS == OS_AMIGAOS)
+    amigaConOutErr(msg);
   #else
     fprintf( stderr, "%s: %s\n", utilGetAppName(), msg );
     fflush( stderr );
@@ -263,14 +275,18 @@ int ConOutErr(const char *msg)
 
 int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
 {
-  timeval timenow, timestop;
   int ch = -1;
 
   if (constatics.initlevel > 0 && constatics.conisatty)
   {
+    timeval timenow, timestop;
+    timestop.tv_sec = 0;
+    timestop.tv_usec = 0;
+
     if (timeout_millisecs > 0)
     {
-      CliTimer(&timestop);
+      if (CliClock(&timestop) != 0)
+        return -1;
       timestop.tv_sec += timeout_millisecs/1000;
       timestop.tv_usec += ( timeout_millisecs % 1000 )*1000;
       timestop.tv_sec += ( timestop.tv_usec / 1000000 );
@@ -282,7 +298,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
     {
       #if (CLIENT_OS == OS_RISCOS)
       {
-        ch = _swi(OS_ReadC, _RETURN(0));
+          ch = _kernel_osrdch();
       }
       #elif (CLIENT_OS == OS_MACOS)
       {
@@ -332,7 +348,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         fflush(stdout);
         ch = getch();
       }
-      #elif (defined(TERMIOS_IS_AVAILABLE))
+      #elif (defined(HAVE_TERMIOS))
       {
         struct termios stored;
         struct termios newios;
@@ -343,7 +359,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         #if (CLIENT_OS == OS_BEOS)
         newios.c_lflag &= ~(ECHO|ECHONL);  /* BeOS does not have (non-Posix?) ECHOPRT and ECHOCTL */
         #else
-        #if (CLIENT_OS == OS_NTO2)
+        #if (CLIENT_OS == OS_QNX) && defined(__QNXNTO__)
         newios.c_lflag &= ~(ECHO|ECHONL|ECHOCTL);
         #else
         newios.c_lflag &= ~(ECHO|ECHONL|ECHOPRT|ECHOCTL); /* no echo at all */
@@ -474,7 +490,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
 
       for (ch = 0; scratch[ch] != 0; ch++)
       {
-        #ifdef TERM_IS_ANSI_COMPLIANT
+        #ifdef HAVE_ANSICOMPLIANTTERM
         ConOut("\033" "[1D" );
         #elif (CLIENT_OS == OS_RISCOS)
         if (scratch[ch+1]!=0) /* not the first char */
@@ -529,7 +545,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
       {
         if (pos > 0)
         {
-          #ifdef TERM_IS_ANSI_COMPLIANT
+          #ifdef HAVE_ANSICOMPLIANTTERM
           ConOut("\033" "[1D" " " "\033" "[1D");
           #elif (CLIENT_OS == OS_RISCOS)
           riscos_backspace();
@@ -543,10 +559,10 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
       {
         char x[2];
         buffer[pos++] = (char)ch;
-        if (!(isalpha(ch) || isspace(ch) || isdigit(ch) || ispunct(ch)))
-          ch = '?';
-        else if ((flags & CONINSTR_ASPASSWORD) != 0)
+        if ((flags & CONINSTR_ASPASSWORD) != 0)
           ch = '*';
+        else if (!(isalpha(ch) || isspace(ch) || isdigit(ch) || ispunct(ch)))
+          ch = '?';
         x[0]=(char)ch;
         x[1]=0;
         ConOut(x);
@@ -602,7 +618,7 @@ int ConSetPos( int col, int row )  /* zero-based */
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
   {
-    #if defined(TERM_IS_ANSI_COMPLIANT)
+    #if defined(HAVE_ANSICOMPLIANTTERM)
     printf("\033" "[%d;%dH", row+1, col+1 );
     return 0;
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
@@ -635,11 +651,14 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
   {
     static const int var[3] = { 133, 135, -1 };
     int value[3];
+    _kernel_swi_regs regs;
+    
     if (!riscos_in_taskwindow)
     {
-      if (_swix(OS_ReadVduVariables, _INR(0,1), var, value) == 0)
+      regs.r[0]=(int)var;
+      regs.r[1]=(int)value;
+      if (_kernel_swi(XOS_Bit|OS_ReadVduVariables, &regs, &regs) == 0)
       {
-        // nlines = TWBRow - TWTRow + 1
         height = value[0] - value[1] + 1;
       }
     }
@@ -673,7 +692,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX) || \
         (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
         (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_MACOSX) || \
-        (CLIENT_OS == OS_RHAPSODY)
+	(CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_PS2LINUX)
     /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
@@ -691,7 +710,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       width   = winsz.ts_cols;
       height  = winsz.ts_lines;
     }
-  #elif (CLIENT_OS == OS_NTO2)
+  #elif (CLIENT_OS == OS_QNX) && defined(__QNXNTO__)
     tcgetsize(fileno(stdout), &height, &width);
   #elif (CLIENT_OS == OS_AMIGAOS)
     amigaConGetSize( &width, &height);
@@ -821,7 +840,7 @@ int ConClear(void)
     #elif (CLIENT_OS == OS_RISCOS)
       riscos_clear_screen();
       return 0;
-    #elif defined(TERM_IS_ANSI_COMPLIANT)
+    #elif defined(HAVE_ANSICOMPLIANTTERM)
       printf("\033" "[2J" "\033" "[H" "\r       \r" );
       /* ANSI cls  '\r space \r' is in case ansi is not supported */
       return 0;

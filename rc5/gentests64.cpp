@@ -1,5 +1,10 @@
-/**************************************************************************/
-/* REF.C                                                                  */
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: gentests64.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $
+*/
 /**************************************************************************/
 /*                                                                        */
 /* This code is used to provide test cases for RC5-32/12/8                */

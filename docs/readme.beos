@@ -1,13 +1,11 @@
  distributed.net client for BeOS (x86 and PowerPC)
  Released by Christopher Tate <ctate@be.com>
- document revision $Id: readme.beos,v 1.4 2000/07/11 02:38:40 mfeiri Exp $
-
+ document revision $Id: readme.beos,v 1.5 2002/09/02 00:35:45 andreasb Exp $
 
  Welcome to the distributed.net client.
 
  This document covers information specific to the client for BeOS.
  Refer to other enclosed documentation or browse the online FAQ at
-
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
@@ -33,8 +31,10 @@
     A list of command line options is available by starting the client 
     with '-help' or '--help'.
 
-    A "Complete Step-by-Step Guide to Running Your First Client" is 
-    available at http://distributed.net/FAQ/
+    A complete step-by-step guide to running your first client is 
+    available at: http://www.distributed.net/docs/tutor_clients.html
+
+
 
  2.0  Notes: ---------------------------------------------------------
 

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.58 2000/07/11 04:17:25 mfeiri Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.59 2002/09/02 00:35:41 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -24,6 +24,7 @@ return "@(#)$Id: confmenu.cpp,v 1.58 2000/07/11 04:17:25 mfeiri Exp $"; }
 #include "clicdata.h" // GetContestNameFromID()
 #include "util.h"     // projectmap_*()
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
+#include "confrwv.h"  // ConfigRead()/ConfigWrite()
 #include "confopt.h"  // the option table
 #include "confmenu.h" // ourselves
 
@@ -33,8 +34,13 @@ return "@(#)$Id: confmenu.cpp,v 1.58 2000/07/11 04:17:25 mfeiri Exp $"; }
 static const char *CONFMENU_CAPTION="distributed.net client configuration: %s\n"
 "--------------------------------------------------------------------------\n";
 
-static int __have_xxx_cores(unsigned int cont_i)
+static int __is_opt_available_for_project(unsigned int cont_i, int menuoption)
 {
+  if (menuoption == CONF_CPUTYPE)
+  {
+    if (selcoreValidateCoreIndex(cont_i,1) < 0) /* second core doesn't exist */
+      return 0;    /* ie only one core, so disable CONF_CPUTYPE opt */
+  }
   switch (cont_i)
   {
     case RC5: return 1;
@@ -42,17 +48,22 @@ static int __have_xxx_cores(unsigned int cont_i)
     case DES: return 1;
     #endif
     #if defined(HAVE_OGR_CORES)
-    case OGR: return 1;
+    case OGR: return (menuoption != CONF_THRESHOLDT &&
+                      menuoption != CONF_PREFERREDBLOCKSIZE);
     #endif
     #if defined(HAVE_CSC_CORES)
     case CSC: return 1;
     #endif
+    default: break;
   }
   return 0;
 }
 
 
-static int __enumcorenames(const char **corenames, int index, void * /*unused*/)
+#if 0 
+/* one column per contest, max 3 contests */
+static int __enumcorenames_wide(const char **corenames, 
+                                int idx, void * /*unused*/)
 {
   char scrline[80];
   unsigned int cont_i, i, colwidth, nextpos;
@@ -62,15 +73,17 @@ static int __enumcorenames(const char **corenames, int index, void * /*unused*/)
   have_xxx_table[0] = 0; /* shaddup "perhaps unused" */
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
-    have_xxx_table[cont_i] = (cont_i != OGR /* only one core */
-                  &&  __have_xxx_cores(cont_i)); /* HAVE_XXX_CORES define */
-    if (have_xxx_table[cont_i])
+    have_xxx_table[cont_i] = 0;
+    if (__is_opt_available_for_project(cont_i,CONF_CPUTYPE)) 
+    {             /* HAVE_XXX_CORES defined and more than 1 core */
+      have_xxx_table[cont_i] = 1;
       colcount++;
+    }  
   }
   
   colwidth = (sizeof(scrline)-2)/(colcount);
 
-  if (index == 0)
+  if (idx == 0)
   {
     nextpos = 0;
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
@@ -113,7 +126,7 @@ static int __enumcorenames(const char **corenames, int index, void * /*unused*/)
     {
       if (have_xxx_table[cont_i])
       {
-        const char *xxx = "-1) Auto-select";
+        const char *xxx = " -1) Auto-select";
         if (!xxx) xxx = "";
         if ((i = strlen( xxx )) > colwidth)
           i = colwidth;
@@ -136,10 +149,13 @@ static int __enumcorenames(const char **corenames, int index, void * /*unused*/)
     if (have_xxx_table[cont_i])
     {
       i = 0;
-      if (corenames[cont_i]) /* have a corename at this index */
+      if (corenames[cont_i]) /* have a corename at this idx */
       {
-        char xxx[4+32];
-        i = sprintf(xxx,"%2d) %-30.30s", index, corenames[cont_i] );
+        char xxx[4+32]; char iname[8]; 
+        strcpy(iname,"n/a"); 
+        if (selcoreValidateCoreIndex(cont_i,idx) == idx)
+          sprintf(iname, "%3d", idx);
+        i = sprintf(xxx,"%s) %-29.29s", iname, corenames[cont_i] );
         if (i > colwidth)
           i = colwidth;
         strncpy( &scrline[nextpos], xxx, i );
@@ -156,6 +172,90 @@ static int __enumcorenames(const char **corenames, int index, void * /*unused*/)
 
   return +1; /* keep going */
 }      
+#endif
+
+struct enumcoredata
+{
+  int linepos;
+  unsigned int cont_i;
+};
+
+
+/* N rows per contest, upto 3 corenames per row */
+static int __enumcorenames(unsigned int cont_i, const char *corename, 
+                           int idx, void *arg)
+{
+  if (__is_opt_available_for_project(cont_i, CONF_CPUTYPE))
+  {
+    struct enumcoredata *ecd = (struct enumcoredata *)arg;
+    int which = ((ecd->cont_i == cont_i)?(1):(0));
+
+    for (; which < 2; which++)
+    {
+      char label[80]; 
+      char contnamepad[32]; 
+      unsigned int len;
+      int need_pre_lf;
+      
+      if (which == 0)
+        strcpy( label, "-1) Auto select" ); 
+      else
+      {
+        len = 0;
+        if (selcoreValidateCoreIndex(cont_i,idx) == idx)
+          len = sprintf(label, "%2d) ", idx);
+        else
+          len = strlen(strcpy(label, "n/a "));
+        strncpy( &label[len], corename, sizeof(label)-len );
+        label[sizeof(label)-1] = '\0';
+      }
+
+      len = strlen(label);
+      {
+        unsigned int maxlen = len;
+        if (maxlen > 75)
+          len = maxlen = 75;
+        else if (maxlen > 50)
+          maxlen = 75;
+        else if (maxlen > 25)
+          maxlen = 50;        
+        else
+          maxlen = 25;
+        for (;len < maxlen; len++)
+          label[len] = ' ';
+        len = maxlen;
+        label[len] = '\0';
+      }
+
+      need_pre_lf = 0;
+      if (ecd->linepos != 0)
+      {
+        if (ecd->cont_i != cont_i ||
+            (ecd->linepos + len) > 78)
+        {
+          need_pre_lf = 1;
+          ecd->linepos = 0;
+        }
+      }
+
+      contnamepad[0] = '\0';
+      if (ecd->linepos == 0)
+      {
+        if (ecd->cont_i != cont_i)
+          sprintf(contnamepad, "%-3.3s:", CliGetContestNameFromID(cont_i));
+        else
+          strcpy(contnamepad,"    ");
+      }
+    
+      LogScreenRaw( "%s%s%s", ((need_pre_lf)?("\n"):("")), 
+                                contnamepad, label );     
+      ecd->linepos += len;
+      ecd->cont_i = cont_i;
+    } /* for for (; which < 2; which++) */
+  }
+  return +1;
+}
+
 
 /* ----------------------------------------------------------------------- */
 
@@ -232,10 +332,7 @@ static void __strip_inappropriates_from_alist( char *alist, int menuoption )
   unsigned int cont_i;
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
-    if ((cont_i == OGR && ( menuoption == CONF_THRESHOLDT ||
-                            menuoption == CONF_PREFERREDBLOCKSIZE ||
-                            menuoption == CONF_CPUTYPE ))
-       || !__have_xxx_cores(cont_i))
+    if (!__is_opt_available_for_project(cont_i,menuoption))
     {
       __strip_project_from_alist( alist, cont_i  );
     }
@@ -245,7 +342,7 @@ static void __strip_inappropriates_from_alist( char *alist, int menuoption )
 
 /* ----------------------------------------------------------------------- */
 
-int Configure( Client *client ) /* returns >0==success, <0==cancelled */
+static int __configure( Client *client ) /* returns >0==success, <0==cancelled */
 {
   struct __userpass { 
     char username[MINCLIENTOPTSTRLEN*2]; 
@@ -277,7 +374,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   pauseifbattery = !client->nopauseifnomainspower;
   conf_options[CONF_PAUSEIFBATTERY].thevariable=&(pauseifbattery);
   conf_options[CONF_QUIETMODE].thevariable=&(client->quietmode);
-  conf_options[CONF_PERCENTOFF].thevariable=&(client->percentprintingoff);
+  conf_options[CONF_CRUNCHMETER].thevariable=&(client->crunchmeter);
   conf_options[CONF_QUIETMODE].thevariable=&(client->quietmode);
   conf_options[CONF_COMPLETIONSOUNDON].thevariable=NULL; /* not available yet */
 
@@ -294,12 +391,11 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   conf_options[CONF_REMOTEUPDATEDIR].thevariable=&(client->remote_update_dir[0]);
   conf_options[CONF_FREQUENT].thevariable=&(client->connectoften);
   conf_options[CONF_FREQUENT_FREQUENCY].thevariable=&(client->max_buffupd_interval);
+  conf_options[CONF_FREQUENT_RETRY_FREQUENCY].thevariable=&(client->max_buffupd_retry_interval);
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
     preferred_blocksize[cont_i] = client->preferred_blocksize[cont_i];
-    if (cont_i == OGR) /* always (for now?) */
-      preferred_blocksize[cont_i] = -1; /* (auto) */
-    else if (preferred_blocksize[cont_i] < 1)  
+    if (preferred_blocksize[cont_i] < 1)  
       preferred_blocksize[cont_i] = -1; /* (auto) */
     else if (preferred_blocksize[cont_i] < PREFERREDBLOCKSIZE_MIN)
       preferred_blocksize[cont_i] = PREFERREDBLOCKSIZE_MIN;
@@ -346,7 +442,6 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   conf_options[CONF_LOGLIMIT].thevariable=&logkblimit[0];
   conf_options[CONF_MESSAGELEN].thevariable=&(client->messagelen);
   conf_options[CONF_SMTPSRVR].thevariable=&(client->smtpsrvr[0]);
-  conf_options[CONF_SMTPPORT].thevariable=&(client->smtpport);
   conf_options[CONF_SMTPFROM].thevariable=&(client->smtpfrom[0]);
   conf_options[CONF_SMTPDEST].thevariable=&(client->smtpdest[0]);
   conf_options[CONF_SMTPFROM].defaultsetting=(char *)conf_options[CONF_ID].thevariable;
@@ -394,7 +489,6 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   conf_options[CONF_FWALLTYPE].choicemax=(int)((sizeof(fwall_types)/sizeof(fwall_types[0]))-1);
   
   conf_options[CONF_FWALLHOSTNAME].thevariable=&(client->httpproxy[0]);
-  conf_options[CONF_FWALLHOSTPORT].thevariable=&(client->httpport);
   userpass.username[0] = userpass.password[0] = 0;
   
   if (client->httpid[0])
@@ -418,7 +512,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   conf_options[CONF_CONNSTOPCMD].thevariable=NULL;
 
   #if defined(LURK)
-  int dupcap = dialup.GetCapabilityFlags();
+  int dupcap = LurkGetCapabilityFlags();
   if ((dupcap & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
   {
     conf_options[CONF_LURKMODE].thevariable=&(client->lurk_conf.lurkmode);
@@ -437,7 +531,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
     }
     if ((dupcap & CONNECT_DODBYPROFILE)!=0)
     {
-      const char **connectnames = dialup.GetConnectionProfileList();
+      const char **connectnames = LurkGetConnectionProfileList();
       conf_options[CONF_CONNPROFILE].thevariable=&(client->lurk_conf.connprofile[0]);
       conf_options[CONF_CONNPROFILE].choicemin = 
       conf_options[CONF_CONNPROFILE].choicemax = 0;
@@ -459,9 +553,15 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 
   /* ------------------- CONF_MENU_PERF ------------------ */  
 
+  conf_options[CONF_CPUTYPE].thevariable=NULL; /* assume not avail */
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-     client->coretypes[cont_i] = selcoreValidateCoreIndex(cont_i,client->coretypes[cont_i]);
-  conf_options[CONF_CPUTYPE].thevariable = &(client->coretypes[0]);
+  {
+    if (__is_opt_available_for_project(cont_i, CONF_CPUTYPE))
+    {
+      client->coretypes[cont_i] = selcoreValidateCoreIndex(cont_i,client->coretypes[cont_i]);
+      conf_options[CONF_CPUTYPE].thevariable = &(client->coretypes[0]);
+    }  
+  }
   conf_options[CONF_NICENESS].thevariable = &(client->priority);
   conf_options[CONF_NUMCPU].thevariable = &(client->numcpu);
 
@@ -501,6 +601,11 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
     {
       conf_options[CONF_CPUTEMPTHRESHOLDS].disabledtext=
                   ((client->watchcputempthresh)?(NULL):("n/a"));
+      #if (CLIENT_OS != OS_MACOS)
+      conf_options[CONF_PAUSEIFCPUTEMPHIGH].disabledtext=
+      conf_options[CONF_CPUTEMPTHRESHOLDS].disabledtext=
+                  "n/a [only supported on MacOS/PPC]";
+      #endif
     }
     else if (whichmenu == CONF_MENU_BUFF)
     {
@@ -524,12 +629,21 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_FREQUENT_FREQUENCY].disabledtext=
                   ((client->offlinemode && noremotedir) ? na : NULL );
+      conf_options[CONF_FREQUENT_RETRY_FREQUENCY].disabledtext=
+                  ((client->offlinemode && noremotedir) ? na : NULL );
       conf_options[CONF_PREFERREDBLOCKSIZE].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_THRESHOLDI].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_THRESHOLDT].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
+
+      if (client->max_buffupd_interval == 0)
+        conf_options[CONF_FREQUENT_RETRY_FREQUENCY].disabledtext=
+                    "n/a [buffer check interval is default]";
+      if (!client->connectoften)
+        conf_options[CONF_FREQUENT_RETRY_FREQUENCY].disabledtext=
+                    "n/a [need additional buffer level checking]";
     }
     else if (whichmenu == CONF_MENU_LOG)
     {
@@ -544,7 +658,6 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                     logtype != LOGFILETYPE_NOLIMIT) ? (NULL) : 
                   ("n/a [inappropriate for log type]"));
       conf_options[CONF_SMTPSRVR].disabledtext=
-      conf_options[CONF_SMTPPORT].disabledtext=
       conf_options[CONF_SMTPDEST].disabledtext=
       conf_options[CONF_SMTPFROM].disabledtext=
                   ((client->messagelen > 0)?(NULL):
@@ -561,7 +674,6 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
       if (fwall_type == FWALL_TYPE_NONE)
       {
         conf_options[CONF_FWALLHOSTNAME].disabledtext=
-        conf_options[CONF_FWALLHOSTPORT].disabledtext=
         conf_options[CONF_FWALLUSERNAME].disabledtext=
         conf_options[CONF_FWALLPASSWORD].disabledtext=
               "n/a [firewall support disabled]";
@@ -576,7 +688,6 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
         }
         if (client->httpproxy[0] == 0)
         {
-          conf_options[CONF_FWALLHOSTPORT].disabledtext=
           conf_options[CONF_FWALLUSERNAME].disabledtext=
           conf_options[CONF_FWALLPASSWORD].disabledtext=
                 "n/a [firewall hostname missing]";
@@ -941,8 +1052,16 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           
           if (editthis == CONF_CPUTYPE) /* ugh! */
           {
-            selcoreEnumerateWide( __enumcorenames, NULL ); 
+            #if 1 /* N rows per contest */
+            struct enumcoredata ecd;
+            ecd.linepos = 0;
+            ecd.cont_i = ((unsigned int)-1);
+            selcoreEnumerate( __enumcorenames, &ecd ); 
+            LogScreenRaw("\n\n");
+            #else /* one column per contest */
+            selcoreEnumerateWide( __enumcorenames_wide, NULL ); 
             LogScreenRaw("\n");
+            #endif
           }
           if (conf_options[editthis].choicelist !=NULL)
           {
@@ -1039,7 +1158,27 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           }
           else if (conf_options[editthis].type == CONF_TYPE_IARRAY)
           {
-            newval_isok = 1; /* never rejected */
+            newval_isok = 1;
+            if (editthis == CONF_CPUTYPE) 
+            {
+              /* merge with previous is done later - this is just to check
+              ** that the numbers that the user _does_ provide are ok.
+              ** (there is no min/max range adjustment done for cputype)
+              */
+              int iarray[CONTEST_COUNT];
+              for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+                iarray[cont_i] = -1; /* default for validation purposes */
+              utilScatterOptionListToArraysEx(parm, &iarray[0], NULL,NULL, NULL );
+              for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+              {
+                if (__is_opt_available_for_project(cont_i, editthis) &&
+                   iarray[cont_i] != selcoreValidateCoreIndex(cont_i,iarray[cont_i]))
+                {
+                  newval_isok = 0; /* reject it */
+                  break;
+                }  
+              }    
+            }
           }
           else //if (conf_options[editthis].type==CONF_TYPE_ASCIIZ)
           {
@@ -1201,21 +1340,46 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           strncpy( (char *)conf_options[editthis].thevariable, parm, 
                    MINCLIENTOPTSTRLEN );
           ((char *)conf_options[editthis].thevariable)[MINCLIENTOPTSTRLEN-1]=0;
+          if (editthis == CONF_LOADORDER)
+          {
+            projectmap_build(client->loadorder_map, loadorder );
+            conf_options[CONF_LOADORDER].thevariable = 
+              strcpy(loadorder, projectmap_expand( client->loadorder_map ) );
+          }
         }
         else if ( conf_options[editthis].type == CONF_TYPE_IARRAY)
         {
-          int *vecta = (int *)conf_options[editthis].thevariable;
-          int *vectb = NULL;
-          unsigned int cont_i;
+          int *vecta = NULL, *vectb = NULL;
+          int iarray_a[CONTEST_COUNT], iarray_b[CONTEST_COUNT];
+          iarray_a[0] = iarray_b[0] = 0;
+          vecta = (int *)conf_options[editthis].thevariable;
           #if !defined(NO_OUTBUFFER_THRESHOLDS)
           if ( editthis == CONF_THRESHOLDI )  // don't have a
             vectb = &(outthreshold[0]); // THRESHOLDO any more
           #endif  
+          for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+          {
+            iarray_a[cont_i] = vecta[cont_i];
+            if (vectb)
+             iarray_b[cont_i] = vectb[cont_i];
+          }   
+          vecta = &iarray_a[0];
+          if (vectb) 
+            vectb = &iarray_b[0];
           utilScatterOptionListToArraysEx(parm,vecta, vectb,NULL, NULL );
+          vecta = (int *)conf_options[editthis].thevariable;
+          #if !defined(NO_OUTBUFFER_THRESHOLDS)
+          if ( editthis == CONF_THRESHOLDI )  // don't have a
+            vectb = &(outthreshold[0]); // THRESHOLDO any more
+          #endif  
           if (editthis == CONF_CPUTYPE) 
           {
             for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-              vecta[cont_i] = selcoreValidateCoreIndex(cont_i,vecta[cont_i]);
+            {
+              vecta[cont_i] = -1; /* autosel */
+              if (__is_opt_available_for_project(cont_i, editthis))
+                vecta[cont_i] = selcoreValidateCoreIndex(cont_i,iarray_a[cont_i]);
+            }    
           }
           else 
           {
@@ -1226,26 +1390,30 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
             {
               for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
               {
-                if (vecta[cont_i] == mdef)
-                  ; /* default */
-                else if (vecta[cont_i] < mmin)
-                  vecta[cont_i] = mmin;
-                else if (vecta[cont_i] > mmax)
-                  vecta[cont_i] = mmax;
-                if (vectb)
+                if (__is_opt_available_for_project(cont_i, editthis))
                 {
-                  if (vectb[cont_i] == mdef)
-                    ; /* default */
-                  else if (editthis == CONF_THRESHOLDI)
-                  {  /* outthresh must only be < inthresh and can be <=0 */
-                    if (vectb[cont_i] > vecta[cont_i])
-                      vectb[cont_i] = vecta[cont_i];
-                  }
-                  else if (vectb[cont_i] < mmin)
-                    vectb[cont_i] = mmin;
-                  else if (vectb[cont_i] > mmax)
-                    vectb[cont_i] = mmax;
-                }
+                  int v = iarray_a[cont_i];
+                  if (v == mdef)      v = mdef;
+                  else if (v < mmin)  v = mmin;
+                  else if (v > mmax)  v = mmax;
+                  vecta[cont_i] = v;
+                  if (vectb)
+                  {
+                    v = iarray_b[cont_i];
+                    if (v == mdef)    v = mdef;
+                    else if (editthis == CONF_THRESHOLDI)
+                    { 
+                      /* outthresh must only be < inthresh and can be <=0 */
+                      if (v > iarray_a[cont_i])
+                        v = iarray_a[cont_i];
+                      else if (v < 0)
+                        v = -1;  
+                    }
+                    else if (v < mmin) v = mmin;
+                    else if (v > mmax) v = mmax;
+                    vectb[cont_i] = v;
+                  } 
+                }  
               }
             }
           } 
@@ -1306,8 +1474,6 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
     else if (client->nettimeout < 5)
       client->nettimeout = 5;
 
-    projectmap_build(client->loadorder_map, loadorder );
-
     client->uuehttpmode = 0;
     if (fwall_type == FWALL_TYPE_SOCKS4)
       client->uuehttpmode = UUEHTTPMODE_SOCKS4;
@@ -1332,5 +1498,47 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 
   //fini
     
-  return returnvalue;
+  return returnvalue; /* <0=exit+nosave, >0=exit+save */
 }
+
+
+/* returns <0=error, 0=success+nosave, >0=success+save */
+int Configure( Client *sample_client, int nottycheck ) 
+{                                   
+  int rc = -1; /* assume error */
+  if (!nottycheck && !ConIsScreen())
+  {
+    ConOutErr("Screen output is redirected/not available. Please use --config\n");
+  }
+  else
+  {  
+    Client *newclient = (Client *)malloc(sizeof(Client));
+    if (!newclient)
+    {
+      ConOutErr("Unable to configure. (Insufficient memory)");  
+    }
+    else
+    {
+      ResetClientData(newclient);
+      strcpy(newclient->inifilename, sample_client->inifilename );
+      if (ConfigRead(newclient) < 0) /* <0=fatalerror, 0=no error, >0=inimissing */
+      {
+        ConOutErr("Unable to configure. (Fatal error reading/parsing .ini)");
+      }	
+      else if ( __configure(newclient) < 0 ) /* nosave */
+      {
+        rc = 0; /* success+nosave */
+      }	
+      else if (ConfigWrite(newclient) < 0)
+      {
+        ConOutErr("Unable to save one or more settings to the .ini");
+      }	
+      else  
+      {
+        rc = +1; /* success+saved */
+      }	
+      free((void *)newclient);
+    }  	  
+  }    
+  return rc;
+}  

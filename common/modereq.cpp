@@ -1,26 +1,26 @@
-/* Created by Cyrus Patel <cyp@fb14.uni-mainz.de> 
- *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de> 
  *
  * ---------------------------------------------------------------
  * This file contains functions for getting/setting/clearing
  * "mode" requests (--flush,--fetch etc) and the like. Client::Run() will 
  * clear/run the modes when appropriate.
  * ---------------------------------------------------------------
-*/    
+*/
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.37 2000/06/02 06:24:57 jlawson Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.38 2002/09/02 00:35:42 andreasb Exp $"; }
+
+//#define TRACE
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
-#include "triggers.h" //CheckExitRequestTrigger() [used by bench stuff]
-#include "logstuff.h" //LogScreen() [used by update/fetch/flush stuff]
-#include "modereq.h"  //our constants
 #include "triggers.h" //RaiseRestartRequestTrigger/CheckExitRequestTriggerNoIO
-#include "console.h"  //Clear the screen after config if restarting
-#include "confrwv.h"  //load/save after successful Configure()
+#include "modereq.h"  //our constants
+#include "util.h"     //trace
 
 #include "disphelp.h" //"mode" DisplayHelp()
 #include "cpucheck.h" //"mode" DisplayProcessorInformation()
@@ -185,7 +185,10 @@ int ModeReqRun(Client *client)
              || (sel_contests & (1L<<contest)) != 0)
             {
               if ((bits & (MODEREQ_BENCHMARK_ALLCORE))!=0)
-                selcoreBenchmark( contest, benchsecs );
+                if(client->corenumtotestbench < 0)
+                  selcoreBenchmark( contest, benchsecs, -1 );
+                else
+                  selcoreBenchmark( contest, benchsecs, client->corenumtotestbench);
               else
                 TBenchmark( contest, benchsecs, 0 );
             }
@@ -205,42 +208,17 @@ int ModeReqRun(Client *client)
       }
       if ((bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART)) != 0)
       {
-        /* <BovineMoo> okay, so if -config is 
-        //   explicitly specified, then do not check isatty().
-        */
-        int ttycheckok = 1;
-        if (!modereq.cmdline_config) /* not started by cmdline --config */
-        {
-          if (!ConIsScreen())
-          {
-            ConOutErr("Screen output is redirected/not available. Please use --config\n");
-            ttycheckok = 0;
-          }
-        }
-        if (ttycheckok && client)
-        {
-          Client *newclient = (Client *)malloc(sizeof(Client));
-          if (!newclient)
-            LogScreen("Unable to configure. (Insufficient memory)");
-          else
-          {
-	    ResetClientData(newclient);
-            strcpy(newclient->inifilename, client->inifilename );
-            if ( ReadConfig(newclient) >= 0 ) /* no or non-fatal error */
-            {
-              if ( Configure(newclient) > 0 ) /* success */
-              {
-                WriteConfig(newclient,1);
-                retval |= (bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART));
-              }
-              if ((bits & MODEREQ_CONFRESTART) != 0)
-                restart = 1;
-            }
-            free((void *)newclient);
-          }
-        }
+	/* cmdline_config is set if there is an explicit --config on the cmdline */
+	/* Configure() returns <0=error,0=exit+nosave,>0=exit+save */
+	Configure(client,(!(!modereq.cmdline_config))/* nottycheck */);
+        /* it used to be such that restart would only be posted on an exit+save */
+        /* but now we restart for other retvals too, otherwise the GUI windows */
+        /* end up with half-assed content */
+        if ((bits & MODEREQ_CONFRESTART) != 0)
+          restart = 1;
         modereq.cmdline_config = 0;
         modereq.reqbits &= ~(MODEREQ_CONFIG | MODEREQ_CONFRESTART);
+        retval |= (bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART));
       }
       if ((bits & (MODEREQ_FETCH | MODEREQ_FLUSH)) != 0)
       {
@@ -250,6 +228,7 @@ int ModeReqRun(Client *client)
           int interactive = ((bits & MODEREQ_FQUIET) == 0);
           domode  = ((bits & MODEREQ_FETCH) ? BUFFERUPDATE_FETCH : 0);
           domode |= ((bits & MODEREQ_FLUSH) ? BUFFERUPDATE_FLUSH : 0);
+          TRACE_BUFFUPD((0, "BufferUpdate: reason = ModeReqRun\n"));
           domode = BufferUpdate( client, domode, interactive );
           if (domode & BUFFERUPDATE_FETCH)
             retval |= MODEREQ_FETCH;
@@ -313,10 +292,18 @@ int ModeReqRun(Client *client)
             {
               if ((bits & (MODEREQ_TEST_ALLCORE))!=0)
               {
-                if (selcoreSelfTest( contest ) < 0)
-                  testfailed = 1;
+                if (client->corenumtotestbench < 0)
+                {
+                  if (selcoreSelfTest( contest, -1 ) < 0)
+                    testfailed = 1;
+                }
+                else
+                {
+                  if (selcoreSelfTest( contest, client->corenumtotestbench ) < 0)
+                    testfailed = 1;
+                }
               }
-              else if ( SelfTest( contest ) < 0 ) 
+              else if ( SelfTest( contest ) < 0 )
                  testfailed = 1;
             }
           }

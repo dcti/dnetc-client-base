@@ -1,4 +1,5 @@
-/* Copyright distributed.net 1997 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +9,7 @@
 */
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi1_b2_cpp (void) {
-return "@(#)$Id: rc5ansi1-b2.cpp,v 1.7 1999/12/02 01:52:46 cyp Exp $"; }
+return "@(#)$Id: rc5ansi1-b2.cpp,v 1.8 2002/09/02 00:35:55 andreasb Exp $"; }
 #endif
 
 #include "problem.h"

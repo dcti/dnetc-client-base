@@ -1,4 +1,4 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
@@ -14,10 +14,14 @@
 // -----------------------------------------------------------------
 
 const char *random_cpp(void) {
-return "@(#)$Id: random.cpp,v 1.4 1999/04/05 14:34:58 jlawson Exp $"; }
+return "@(#)$Id: random.cpp,v 1.5 2002/09/02 00:35:43 andreasb Exp $"; }
 
 #include "cputypes.h" /* u32 */
 #include <time.h>     /* time() */
+
+#if (CLIENT_OS == OS_DEC_UNIX)
+#include "baseincs.h"
+#endif
 
 #define IL_RMULT 1103515245L
 static u32 IL_StandardRandom_seed;
