@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.27 1999/10/30 15:04:56 remi Exp $
+# @(#)$Id: configure,v 1.222.2.28 1999/10/31 13:06:26 remi Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -151,7 +151,7 @@ OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
 OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86"
 OPTS_GCC272_X86="$OPTS_GCC272 -O6 -m486 -DASM_X86"
 
-OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentiumpro -malign-functions=5 -DASM_X86"
+OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentiumpro -malign-functions=5 -malign-loops=4 -DASM_X86"
 
 #-- DYNIX
 
