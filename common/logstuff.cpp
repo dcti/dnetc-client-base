@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.44 2000/12/14 19:24:45 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.45 2000/12/15 00:33:47 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1148,6 +1148,8 @@ void LogScreenPercent( unsigned int load_problem_count )
     if (endperc < 100 && logstatics.percbaton)
     { /* implies conistty and !gui (window repaints are _expensive_) */
       static const char batonchars[] = {'|','/','-','\\'};
+      if (bufptr == &buffer[0]) /* didn't prepend '\r' */
+        *bufptr++ = '\r';       /* so do it now */
       *bufptr++=(char)batonchars[logstatics.perc_callcount%sizeof(batonchars)];
     }  
     #endif
