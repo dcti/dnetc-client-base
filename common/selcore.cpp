@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.50 2000/01/28 07:26:17 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.51 2000/02/07 16:07:26 ivo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -775,7 +775,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
 #elif (CLIENT_CPU == CPU_PA_RISC)
   // rc5/parisc/parisc.cpp encapulates parisc.s, 2 pipelines
-  extern "C" u32 rc5_parisc_unit_func( RC5UnitWork *, u32 );
+  // extern "C" u32 rc5_parisc_unit_func( RC5UnitWork *, u32 );
+  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
 #elif (CLIENT_CPU == CPU_88K) //OS_DGUX
   // rc5/ansi/rc5ansi_2-rg.cpp
   extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
@@ -971,8 +972,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     #elif (CLIENT_CPU == CPU_PA_RISC)
     {
       // /rc5/parisc/parisc.cpp encapulates parisc.s, 2 pipelines
-      //xtern "C" u32 rc5_parisc_unit_func( RC5UnitWork *, u32 );
-      unit_func.rc5 = rc5_parisc_unit_func;
+      //extern "C" u32 rc5_parisc_unit_func( RC5UnitWork *, u32 );
+      unit_func.rc5 = rc5_unit_func_ansi_2_rg;
       pipeline_count = 2;
       coresel = 0;
     }
